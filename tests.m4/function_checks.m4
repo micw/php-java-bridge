@@ -26,4 +26,9 @@ AC_CHECK_DECLS([AF_LOCAL, PF_LOCAL],,,
 
 dnl add -lsocket to the link line of the module and the server part
  AC_CHECK_LIB(socket, socket, LIBS="$LIBS -lsocket")
+
+dnl add -lrt for solaris x86
+ AC_CHECK_LIB(rt, sem_init, LIBS="$LIBS -lrt")
+
 ])
+ 
