@@ -34,10 +34,50 @@ public class JavaBridge implements Runnable {
     // SIGSEGV received in clRemoveClassesFromJIT at 0x4010b8ea in
     // [...]/classic/libjvm.so. Processing terminated. Bleh!
     ClassLoader cl = new ClassLoader() {
+	    // Read the class from input stream and return bytes or null
+	    private byte[] read (InputStream in, int length) throws java.io.IOException {
+		int c, pos;
+		byte[] b = new byte[length];
+		    
+		for(pos=0; (c=in.read(b, pos, b.length-pos))<length-pos; pos+=c) {
+		    if(c<0) { in.close(); return null; }
+		}
+	
+		in.close();
+		return b;
+	    }
+
+	    // Read the class in 8K chunks until EOF, return bytes or null
+	    private byte[] readChunks(InputStream in) throws java.io.IOException {
+		int c, pos;
+		int len = 8192;
+		byte[] b = new byte[len];
+
+		Collection buffers = new ArrayList();
+		while(true) {
+		    for(pos=0; (c=in.read(b, pos, len-pos))<len-pos; pos+=c) {
+			if(c<0) break;
+		    }
+		    if(c<0) break;
+		    buffers.add(b);
+		    b=new byte[len];
+		}
+		byte[] result = new byte[buffers.size() * len + pos];
+		int p=0;
+		for (Iterator i=buffers.iterator(); i.hasNext(); p+=len){
+		    byte[] _b = (byte[])i.next();
+		    System.arraycopy(_b, 0, result, p, len);
+		}
+		System.arraycopy(b, 0, result, p, pos);
+		in.close();
+		return result;
+	    }	
+
 	    byte[] load(URL u, String name) {
-		logDebug("load class " + name + " from " + u);
+		logMessage("try to load class " + name + " from " + u);
 		try {
-		    int c, pos, pt;
+		    byte b[]=null;
+		    int pt;
 		    String p, h, f;
 		    
 		    p = u.getProtocol(); h = u.getHost(); 
@@ -47,16 +87,15 @@ public class JavaBridge implements Runnable {
 		    URLConnection con = url.openConnection();
 		    con.connect();
 		    int length = con.getContentLength();
-		    byte[] b = new byte[length];
-		    
 		    InputStream in = con.getInputStream();
-		    for(pos=0; (c=in.read(b, pos, b.length-pos))<length-pos; pos+=c) {
-			if(c<0) { in.close(); return null; }
-		    }
-		    
-		    in.close();
-		    
+
+		    if(length > 0) 
+			b = read(in, length);
+		    else if(length < 0) // bug in gcj
+			b = readChunks(in);
+
 		    return b;
+
 		} catch (Exception e) {
 		    return null;
 		}

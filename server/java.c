@@ -2,7 +2,7 @@
 /* wrapper for the GNU java library */
 void usage(char*name){
   fprintf(stderr, "Usage: %s <socketname> <logLevel> <logFile>\n", name);
-  fprintf(stderr, "For example: %s /var/run/.php-java-bridge_socket 4 /var/log/php-java-bridge.log\n", name);
+  fprintf(stderr, "Example: %s /var/run/.php-java-bridge_socket 4 /var/log/php-java-bridge.log\n", name);
   exit(1);
 }
 main(int argc,char**argv){
