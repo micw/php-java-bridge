@@ -9,12 +9,16 @@
 #include "protocol.h"
 
 static void swrite(const  void  *ptr,  size_t  size,  size_t  nmemb,  FILE *stream) {
-  int n = fwrite(ptr, size, nmemb, stream);
+  int n;
+  fflush(stream);
+  n = fwrite(ptr, size, nmemb, stream);
   //printf("write char:.:%d\n", (unsigned int) ((char*)ptr)[0]);
   assert(n==nmemb);
 }
 static void sread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
-  int n = fread(ptr, size, nmemb, stream);
+  int n;
+  fflush(stream);
+  n = fread(ptr, size, nmemb, stream);
   //printf("read char:.:%d\n", (unsigned int) ((char*)ptr)[0]);
   assert(n==nmemb);
 }

@@ -67,13 +67,17 @@ static int check_error(proxyenv *jenv, int nr TSRMLS_DC) {
 
 
 static void swrite(const  void  *ptr,  size_t  size,  size_t  nmemb,  FILE *stream) {
-  int n = fwrite(ptr, size, nmemb, stream);
+  int n;
+  fflush(stream);
+  n = fwrite(ptr, size, nmemb, stream);
   //printf("write char:::%d\n", (unsigned int) ((char*)ptr)[0]);
   assert(n==nmemb);
   if(n!=nmemb) exit(6);
 }
 static void sread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
-  int n = fread(ptr, size, nmemb, stream);
+  int n;
+  fflush(stream);
+  n = fread(ptr, size, nmemb, stream);
   //printf("read char:::%d\n", (unsigned int) ((char*)ptr)[0]);
   assert(n==nmemb);
   if(n!=nmemb) exit(7);

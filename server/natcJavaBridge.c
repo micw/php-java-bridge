@@ -120,7 +120,9 @@ static void logMemoryError(JNIEnv *jenv, char *file, int pos) {
 
 static void swrite(const  void  *ptr,  size_t  size,  size_t  nmemb,  struct peer*peer) {
   FILE*stream=peer->stream;
-  int n = fwrite(ptr, size, nmemb, stream);
+  int n;
+  fflush(stream);
+  n = fwrite(ptr, size, nmemb, stream);
   //printf("write char:::%d\n", (unsigned int) ((char*)ptr)[0]);
   if(n!=nmemb) {
 	if(peer->tran) {		/* first clear the java stack, then longjmp */
@@ -133,7 +135,9 @@ static void swrite(const  void  *ptr,  size_t  size,  size_t  nmemb,  struct pee
 }
 static void sread(void *ptr, size_t size, size_t nmemb, struct peer *peer) {
   FILE*stream=peer->stream;
-  int n = fread(ptr, size, nmemb, stream);
+  int n;
+  fflush(stream);
+  n = fread(ptr, size, nmemb, stream);
   //printf("read char:::%d\n", (unsigned int) ((char*)ptr)[0]);
   if(n!=nmemb) {
 	if(peer->tran) {		/* first clear the java stack, then longjmp */
