@@ -204,7 +204,7 @@ public class JavaBridge implements Runnable {
 	bridge.uid=uid;
 	bridge.gid=gid;
 	thread.setContextClassLoader(bridge.cl);
-	logMessage("Request from client with uid/gid "+uid+"/"+gid);
+	logDebug("Request from client with uid/gid "+uid+"/"+gid);
 	thread.start();
     }
 
@@ -413,10 +413,11 @@ public class JavaBridge implements Runnable {
 	    } catch (Throwable t) {
 		t.printStackTrace();
 	    }
-	    if(JavaBridge.logLevel>3) System.out.println("Java log         : " + logFile);
+
 	    try {
 		if(s.length>2) {
 		    logFile=s[2];
+		    if(JavaBridge.logLevel>3) System.out.println("Java log         : " + logFile);
 		    if(logFile==null||logFile.trim().length()==0)
 			JavaBridge.logStream=System.out;
 		    else {
@@ -444,10 +445,31 @@ public class JavaBridge implements Runnable {
     //
     // Logging
     //
+    static boolean haveDateFormat=true;
+    private static Object _form;
+    private static String now() {
+	if(!haveDateFormat) return String.valueOf(System.currentTimeMillis());
+	try {
+	    if(_form==null)
+		_form = new java.text.SimpleDateFormat("MMM dd HH:mm:ss");
+	    return ((java.text.SimpleDateFormat)_form).format(new Date());
+	} catch (Throwable t) {
+	    haveDateFormat=false;
+	    return now();
+	}
+    }
+
     public static void println(int level, String msg) {
-	StringBuffer b = new StringBuffer(String.valueOf(System.currentTimeMillis()));
-	b.append(" [JavaBridge ");
-	b.append(level); b.append("]: ");
+	StringBuffer b = new StringBuffer(now());
+	b.append(" JavaBridge ");
+	switch(level) {
+	case 1: b.append("FATAL"); break;
+	case 2: b.append("ERROR"); break;
+	case 3: b.append("INFO "); break;
+	case 4: b.append("DEBUG"); break;
+	default: b.append(level); break;
+	}
+	b.append(": ");
 	b.append(msg);
 	logStream.println(b);
     }
@@ -644,9 +666,9 @@ public class JavaBridge implements Runnable {
 			weight+=9999;
 		} else if (parms[i].isArray()) {
 		    if (args[i] instanceof java.util.Hashtable) {
-			Enumeration enum = ((Hashtable)args[i]).elements();
-			if(enum.hasMoreElements()) {
-			    Object elem = enum.nextElement();
+			Enumeration enumeration = ((Hashtable)args[i]).elements();
+			if(enumeration.hasMoreElements()) {
+			    Object elem = enumeration.nextElement();
 			    Class c=parms[i].getComponentType();
 			    if (elem instanceof Number) {
 				if(elem instanceof Double) {

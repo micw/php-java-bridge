@@ -15,7 +15,7 @@ void java_swrite(const  void  *ptr,  size_t  size,  size_t  nmemb,  SFILE *strea
   int n = SFWRITE(ptr, size, nmemb, stream);
   //printf("write char:::%d\n", (unsigned int) ((char*)ptr)[0]);
   assert(n==nmemb);
-  if(n!=nmemb) exit(6);
+  if(n!=nmemb) exit(7);
 }
 
 #define sread java_sread
@@ -135,7 +135,7 @@ static jbyte *GetByteArrayElements (proxyenv *env, jbyteArray array, jboolean *i
   sread(&dummy, sizeof dummy, 1, (*env)->peer);
   sread(&count, sizeof count, 1, (*env)->peer);
   result=(jbyte*)calloc(count, sizeof*result);
-  assert(result);
+  assert(result); if(!result) exit(6);
   sread(result, sizeof*result, count, (*env)->peer);
   assert(isCopy);
   if(isCopy) *isCopy=dummy;
@@ -262,9 +262,9 @@ static jboolean IsInstanceOf(proxyenv *env, jobject obj, jobject clazz) {
 proxyenv *java_createSecureEnvironment(SFILE *peer, int (*handle_request)(proxyenv *env)) {
   proxyenv *env;  
   env=(proxyenv*)malloc(sizeof *env);     
-  if(!env) exit(9);
+  if(!env) return 0;
   *env=(proxyenv)calloc(1, sizeof **env); 
-  if(!*env) exit(9);
+  if(!*env) {free(env); return 0;}
 
   (*env)->peer = peer;
   (*env)->handle_request = handle_request;

@@ -1,18 +1,50 @@
+2004-12-19  Jost Boekemeier  <jostb@intern>
+
+	* client.c, bind.c, server/natcJavaBridge.c, server/JavaBridge.java, server/acinclude.m4, server/configure.in, config.m4, java.c: 
+	Support credentials on Linux, only.
+
+	* client.c (java_connect_to_server): Connect if not already
+	connected. Replaces all old init checks.
+	
+	* java.c (PHP_RINIT_FUNCTION): Don't connect until a java method
+	is called.
+	
+	* client.c, bind.c, java.c: Use java_connect_to_server.
+
+	* init_cfg.c.in (init_socket): Fixed typo.
+
+	* php-java-bridge: Require sh instead of bash. Create PID in /tmp
+	if /var/run does not exist.
+
+	* README: Require GNU make.
+
+	* README: Removed documentation about secure mode. Privilege
+	dropping cannot be supported in java. Users should use java
+	security instead.  In the future we'll use our bridge JVM as a
+	relay to access beans deployed in WebSphere, WebLogic or 9iAS and
+	these AS have their own policy anyway.
+
+	* server/configure.in: Use links instead of modifying the include
+	path. Require versions for automake and autoconf.
+
+	* server/JavaBridge.java (now): New function to workaround a bug
+	in GNU java (calendar not available).
+
+	* server/JavaBridge.java (println): New function.
+
+	* server/JavaBridge.java (select): enum is a keyword since 1.5
+	
+	
 2004-12-12  Jost Boekemeier  <jostb@intern>
 
 	* tests.m4/java_check_abstract_namespace.m4,
 	tests.m4/java_check_struct_ucred.m4: New tests.
 	
-	* client.c, bind.c, server/natcJavaBridge.c,
-	server/JavaBridge.java, server/acinclude.m4, server/configure.in,
-	config.m4, java.c: Use abstract namespace and struct ucred, if
-	available.  This means that a) the communication channel is no
-	longer visible and b) that only authorised users can connect to
-	the server (checked by the kernel). The user cannot gain higher
-	permissions than the permissions that he/she already has.  This
-	feature works *only* on recent Solaris versions, modern BSD
-	variants and Linux.  It relies on certain features in the thread
-	system and the kernel.
+	* client.c, bind.c, server/natcJavaBridge.c, server/JavaBridge.java, server/acinclude.m4, server/configure.in, config.m4, java.c: 
+	Use abstract namespace and struct ucred, if available.  This means
+	that a) the communication channel is no longer visible and b) that
+	only authorised users can connect to the server (checked by the
+	kernel). 
 
 	* server/JavaBridge.java (println): New procedure.
 	(HandleRequests): Log the user ID and the group ID of the user

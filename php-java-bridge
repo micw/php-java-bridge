@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Start the server part of the PHP/Java Bridge.  This script will be
 # called by when the php-java-bridge service is started.
@@ -9,6 +9,14 @@ LANG=C
 
 export LANG PATH LD_LIBRARY_PATH
 PID=/var/run/php-java-bridge.pid
+
+(echo $$ >${PID}) >/dev/null 2>/dev/null
+if test -w ${PID} && test $$ = `cat ${PID}` && rm -f ${PID}
+then 
+    true
+else 
+    PID=/tmp/php-java-bridge.pid 
+fi
 
 # if called with non-zero args, invoke
 if test $# != 0; then
@@ -58,4 +66,4 @@ rm -f /tmp/phpinfo.$$
 echo Starting java with the command: "$cmd"
 
 # invoke
-/bin/sh -c "$0 $cmd"&
+/bin/sh -c "/bin/sh $0 $cmd"&

@@ -15,21 +15,6 @@ PHP_ARG_WITH(java, for java support,
 
 
 if test "$PHP_JAVA" != "no"; then
-
-        AC_MSG_CHECKING(whether to enable java secure mode)
-	AC_ARG_ENABLE(secure-mode,
-	[  --enable-secure-mode    Enable java secure mode],[
-	  if test "$enableval" = "yes" ; then
-           SECURE=--enable-secure-mode
-	   AC_MSG_RESULT(yes)
-          else
-           SECURE=--disable-secure-mode
-           AC_MSG_RESULT(no)
-          fi
-       ],[
-         AC_MSG_RESULT(no)
-       ])
-
        JAVA_FUNCTION_CHECKS
        PTHREADS_CHECK
        PTHREADS_ASSIGN_VARS
@@ -69,6 +54,5 @@ if test "$PHP_JAVA" != "no"; then
 # an artificial target so that the server/ part gets compiled
 	PHP_ADD_MAKEFILE_FRAGMENT
 	PHP_SUBST(JAVA_SHARED_LIBADD)
-	PHP_SUBST(SECURE)
 	PHP_MODULES="$PHP_MODULES \$(phplibdir)/libnatcJavaBridge.la"
 fi

@@ -26,9 +26,7 @@ ZEND_DECLARE_MODULE_GLOBALS(java)
 
 PHP_RINIT_FUNCTION(java) 
 {
-    extern int java_connect_to_server(struct cfg*cfg TSRMLS_DC);
 	assert(!JG(jenv));
-	java_connect_to_server(&JG(cfg) TSRMLS_CC);
 	return SUCCESS;
 }
 PHP_RSHUTDOWN_FUNCTION(java)
@@ -47,36 +45,30 @@ PHP_RSHUTDOWN_FUNCTION(java)
 PHP_FUNCTION(java_last_exception_get)
 {
   jlong result = 0;
+  proxyenv *jenv = java_connect_to_server(&JG(cfg) TSRMLS_CC);
+  if(!jenv) {RETURN_NULL();}
 
   if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT;
 
   result = (jlong)(long)return_value;
-  
-  if(!JG(jenv)) {
-	php_error(E_ERROR, "java not initialized");
-	return;
-  }
 
-  (*JG(jenv))->LastException(JG(jenv), JG(php_reflect), 
-							 JG(lastEx), result);
+  (*jenv)->LastException(jenv, JG(php_reflect), 
+						 JG(lastEx), result);
 }
 
 PHP_FUNCTION(java_last_exception_clear)
 {
+  proxyenv *jenv = java_connect_to_server(&JG(cfg) TSRMLS_CC);
   jlong result = 0;
   jvalue args[0];
+  if(!jenv) {RETURN_NULL();}
 
   if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT;
 
   result = (jlong)(long)return_value;
   
-  if(!JG(jenv)) {
-	php_error(E_ERROR, "java not initialized");
-	return;
-  }
-
-  (*JG(jenv))->CallVoidMethodA(0, JG(jenv), JG(php_reflect), 
-							   JG(clearEx), args);
+  (*jenv)->CallVoidMethodA(0, jenv, JG(php_reflect), 
+						   JG(clearEx), args);
 }
 
 PHP_FUNCTION(java_set_library_path)
@@ -84,8 +76,9 @@ PHP_FUNCTION(java_set_library_path)
   zval **path;
   jlong result = 0;
   jstring p;
-  proxyenv *jenv =JG(jenv);
+  proxyenv *jenv = java_connect_to_server(&JG(cfg) TSRMLS_CC);
   jvalue args[1];
+  if(!jenv) {RETURN_NULL();}
 
   if (ZEND_NUM_ARGS()!=1 || zend_get_parameters_ex(1, &path) == FAILURE) 
 	WRONG_PARAM_COUNT;
@@ -93,17 +86,12 @@ PHP_FUNCTION(java_set_library_path)
   convert_to_string_ex(path);
 
   result = (jlong)(long)return_value;
-  
-  if(!JG(jenv)) {
-	php_error(E_ERROR, "java not initialized");
-	return;
-  }
 
   BEGIN_TRANSACTION(jenv);
-  p = (*JG(jenv))->NewStringUTF(JG(jenv), Z_STRVAL_PP(path));
+  p = (*jenv)->NewStringUTF(jenv, Z_STRVAL_PP(path));
   args[0].l=p;
-  (*JG(jenv))->CallVoidMethodA(1, JG(jenv), JG(php_reflect), 
-							   JG(setJarPath), args);
+  (*jenv)->CallVoidMethodA(1, jenv, JG(php_reflect), 
+						   JG(setJarPath), args);
   END_TRANSACTION(jenv);
 }
 
@@ -121,17 +109,14 @@ PHP_FUNCTION(java_instanceof)
   zval **pobj, **pclass;
   jobject obj, class;
   jboolean result;
+  proxyenv *jenv = java_connect_to_server(&JG(cfg) TSRMLS_CC);
+  if(!jenv) {RETURN_NULL();}
 
   if (ZEND_NUM_ARGS()!=2 || zend_get_parameters_ex(2, &pobj, &pclass) == FAILURE) 
 	WRONG_PARAM_COUNT;
 
   convert_to_object_ex(pobj);
   convert_to_object_ex(pclass);
-
-  if(!JG(jenv)) {
-	php_error(E_ERROR, "java not initialized");
-	return;
-  }
 
   obj = NULL;
   if((Z_TYPE_PP(pobj) == IS_OBJECT) && check_type(*pobj, php_java_class_entry)){
@@ -152,7 +137,7 @@ PHP_FUNCTION(java_instanceof)
 	return;
   }
 
-  result = (*JG(jenv))->IsInstanceOf(JG(jenv), obj, class);
+  result = (*jenv)->IsInstanceOf(jenv, obj, class);
   if(result == JNI_TRUE) {
 	RETURN_TRUE;
   } else {
@@ -272,9 +257,10 @@ static void init_server()
   extern int java_test_server(struct cfg*cfg TSRMLS_DC);
   extern void java_start_server(struct cfg*cfg TSRMLS_DC);
 
-  if(java_test_server(&JG(cfg) TSRMLS_CC)==FAILURE) 
+  if(java_test_server(&JG(cfg) TSRMLS_CC)==FAILURE) {
 	java_start_server(&JG(cfg) TSRMLS_CC);
-  java_test_server(&JG(cfg) TSRMLS_CC);
+	java_test_server(&JG(cfg) TSRMLS_CC);
+  }
 }
 
 #ifdef ZEND_ENGINE_2
@@ -372,7 +358,7 @@ PHP_METHOD(java, __destruct)
   zval **argv;
   int argc = ZEND_NUM_ARGS();
   jobject obj;
-  
+
   argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
   if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
 	php_error(E_ERROR, "Couldn't fetch arguments into array.");
@@ -406,11 +392,12 @@ PHP_METHOD(java, __get)
 }
 PHP_METHOD(java, offsetExists)
 {
-  proxyenv *jenv =JG(jenv);
+  proxyenv *jenv = java_connect_to_server(&JG(cfg) TSRMLS_CC);
   zval **argv;
   int argc;
   jobject obj, map;
   jvalue args[1];
+  if(!jenv) {RETURN_NULL();}
 
   argc = ZEND_NUM_ARGS();
   argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
@@ -423,7 +410,7 @@ PHP_METHOD(java, offsetExists)
 
   BEGIN_TRANSACTION(jenv);
   args[0].l=obj;
-  map = (*JG(jenv))->CallObjectMethodA(1, JG(jenv), JG(php_reflect), JG(getPhpMap), args);
+  map = (*jenv)->CallObjectMethodA(1, jenv, JG(php_reflect), JG(getPhpMap), args);
 
   php_java_invoke("offsetExists", map, argc, argv, return_value);
   END_TRANSACTION(jenv);
@@ -434,8 +421,9 @@ PHP_METHOD(java, offsetGet)
   zval **argv;
   int argc;
   jobject obj, map;
-  proxyenv *jenv =JG(jenv);
+  proxyenv *jenv = java_connect_to_server(&JG(cfg) TSRMLS_CC);
   jvalue args[1];
+  if(!jenv) {RETURN_NULL();}
 
   argc = ZEND_NUM_ARGS();
   argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
@@ -447,7 +435,7 @@ PHP_METHOD(java, offsetGet)
   assert(obj);
   BEGIN_TRANSACTION(jenv);
   args[0].l=obj;
-  map = (*JG(jenv))->CallObjectMethodA(1, JG(jenv), JG(php_reflect), JG(getPhpMap), args);
+  map = (*jenv)->CallObjectMethodA(1, jenv, JG(php_reflect), JG(getPhpMap), args);
 
   php_java_invoke("offsetGet", map, argc, argv, return_value);
   END_TRANSACTION(jenv);
@@ -459,8 +447,9 @@ PHP_METHOD(java, offsetSet)
   zval **argv;
   int argc;
   jobject obj, map;
-  proxyenv *jenv = JG(jenv);
+  proxyenv *jenv = java_connect_to_server(&JG(cfg) TSRMLS_CC);
   jvalue args[1];
+  if(!jenv) {RETURN_NULL();}
 
   argc = ZEND_NUM_ARGS();
   argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
@@ -485,8 +474,9 @@ PHP_METHOD(java, offsetUnset)
   zval **argv;
   int argc;
   jobject obj, map;
-  proxyenv *jenv = JG(jenv);
+  proxyenv *jenv = java_connect_to_server(&JG(cfg) TSRMLS_CC);
   jvalue args[1];
+  if(!jenv) {RETURN_NULL();}
 
   argc = ZEND_NUM_ARGS();
   argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);

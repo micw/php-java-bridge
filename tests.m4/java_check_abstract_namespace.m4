@@ -65,7 +65,7 @@ int main() {
   rm -f test.socket
   if test "$have_abstract_namespace" = "yes"; then
 	AC_MSG_RESULT(yes)
-	AC_DEFINE(HAVE_ABSTRACT_NAMESPACE,1, [Define if your system supports the Linux/BSD abstract namespace])
+	AC_DEFINE(HAVE_ABSTRACT_NAMESPACE,1, [Define if your system supports the linux abstract namespace])
   else
 	AC_MSG_RESULT(no)
   fi

@@ -17,7 +17,7 @@ AC_DEFUN(JAVA_FUNCTION_CHECKS,[
 #endif
  ])
 
-AC_CHECK_DECLS([AF_LOCAL, PF_LOCAL],,CPPFLAGS="$CPPFLAGS -DPF_LOCAL=PF_INET -DAF_LOCAL=AF_INET", 
+AC_CHECK_DECLS([AF_LOCAL, PF_LOCAL],,, 
 [
 #include <sys/types.h>
 #include <sys/socket.h>

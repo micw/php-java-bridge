@@ -19,6 +19,12 @@
 # include <netinet/in.h>
 #else
 # include <sys/un.h>
+# ifndef HAVE_DECL_AF_LOCAL
+#  define AF_LOCAL AF_UNIX
+# endif
+# ifndef HAVE_DECL_PF_LOCAL
+#  define PF_LOCAL PF_UNIX
+# endif
 #endif
 
 #include <jni.h>
@@ -94,5 +100,7 @@ ZEND_END_MODULE_GLOBALS(java)
 extern void java_get_server_args(struct cfg*cfg, 
 								 char*env[N_SENV], 
 								 char*args[N_SARGS]);
+
+extern proxyenv *java_connect_to_server(struct cfg*cfg TSRMLS_DC);
 
 #endif

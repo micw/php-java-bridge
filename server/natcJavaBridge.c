@@ -20,6 +20,12 @@
 #  include <netinet/in.h>
 # else
 #  include <sys/un.h>
+#  ifndef HAVE_DECL_AF_LOCAL
+#   define AF_LOCAL AF_UNIX
+#  endif
+#  ifndef HAVE_DECL_PF_LOCAL
+#   define PF_LOCAL PF_UNIX
+#  endif
 # endif
 #endif
 
@@ -38,7 +44,6 @@
 
 /* miscellaneous */
 #include <stdio.h>
-#include <assert.h>
 #include <errno.h>
 #include <unistd.h>
 
@@ -51,6 +56,11 @@
 # endif
 #endif
 
+#undef NDEBUG
+#ifndef JAVA_COMPILE_DEBUG
+#define NDEBUG
+#endif
+#include <assert.h>
 #include "protocol.h"
 #include "sio.c"
 
@@ -843,27 +853,9 @@ static int recv_cred(int sock, int *uid, int *gid) {
   }  
   return ret;
 }
-
-# ifdef JAVA_SECURE_MODE				
-/* Drop privileges and run the request-handling thread with the same
-   privileges that the authenticated user has.  WARNING: Some JVM's,
-   for example IBM JDK1.4.1 or GNU Java 3.3.3 will crash when a java
-   thread has non-default privileges.  However, this feature does work
-   on Linux or BSD with Sun JDK >= 1.4.2_02 or Sun JDK >= 1.5 and you
-   are encouraged to enable it whenever possible.
-*/
-static int set_cred(int uid, int gid) {
-  int ret = setgid(gid);
-  if(ret!=-1) ret = setuid(uid);
-  return ret;
-}
-# else
-# define set_cred(a, b) 0
-# endif	/* secure mode */
 #else  /* struct ucred missing */
 #define prep_cred(a) 0
 #define recv_cred(a, b, c) 0
-#define set_cred(a, b) 0
 #endif
 
 JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jobject instance, jint socket, jint uid, jint gid)
@@ -871,8 +863,6 @@ JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jobject instan
   jobject globalRef;
   SFILE *peer = SFDOPEN(socket, "r+");
   if(!peer) {logSysFatal(env, "could not fdopen socket"); return;}
-  if(uid!=-1)
-	if(-1==set_cred(uid, gid)) logSysFatal(env, "could drop privileges");
 
   logChannel(env, "create new communication channel", (unsigned long)peer);
   globalRef = connection_startup(env);
@@ -986,7 +976,7 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
 #if !defined(HAVE_ABSTRACT_NAMESPACE) && !defined(CFG_JAVA_SOCKET_INET)
   chmod(sockname, 0666); // the childs usually run as "nobody"
 #endif
-  n = listen(sock, 10);
+  n = listen(sock, 20);
   if(n==-1) {logSysFatal(env, "could not listen to socket"); return;}
 
   while(1) {

@@ -46,7 +46,7 @@
 
 const char * const java_bridge_version = BRIDGE_VERSION;
 
-#ifdef CFG_JAVA_SOCKET_ANON
+#ifdef HAVE_ABSTRACT_NAMESPACE
 static void init_socket(struct cfg*cfg) {
   static const char * const bridge="@java-bridge-";
   size_t len = strlen(bridge)+ sizeof(uid_t)*2+ sizeof(time_t)*2; //assuming byte=8bit
@@ -63,7 +63,7 @@ static void init_socket(struct cfg*cfg) {
 static void init_socket(struct cfg*cfg) {
 	int n;
 	char*s=SOCKNAME;
-	char *sockname=malloc(strlen(s+1));
+	char *sockname=malloc(strlen(s)+1);
 	assert(sockname); if(!sockname) exit(6);
 	strcpy(sockname, s);
 	n = mkstemp(sockname);

@@ -322,39 +322,6 @@ static int handle_requests(proxyenv *env) {
   while(handle_request(env));
   return 0;
 }
-#ifdef HAVE_STRUCT_UCRED
-static int send_cred(int sock) {
-  int ret;
-  struct msghdr msg = {0};
-  struct cmsghdr *cmsg;
-  struct ucred *p_ucred, ucred = {getpid(), getuid(), getgid()};
-  char buf[CMSG_SPACE(sizeof ucred)];  /* ancillary data buffer */
-
-  msg.msg_control = buf;
-  msg.msg_controllen = sizeof buf;
-
-  cmsg = CMSG_FIRSTHDR(&msg);
-  cmsg->cmsg_level = SOL_SOCKET;
-  cmsg->cmsg_type = SCM_CREDENTIALS;
-  cmsg->cmsg_len = CMSG_LEN(sizeof ucred);
-
-  /* Initialize the payload: */
-  p_ucred = (struct ucred *)CMSG_DATA(cmsg);
-  memcpy(p_ucred, &ucred, sizeof *p_ucred);
-
-  /* Sum of the length of all control messages in the buffer: */
-  msg.msg_controllen = cmsg->cmsg_len;
-
-  ret = sendmsg(sock, &msg, 0);
-#ifdef JAVA_COMPILE_DEBUG
-  return ret;
-#else
-  return 0;
-#endif
-}
-#else
-#define send_cred(a) 0
-#endif
 
 static int java_do_test_server(struct cfg*cfg TSRMLS_DC) {
   char term=0;
@@ -370,8 +337,6 @@ static int java_do_test_server(struct cfg*cfg TSRMLS_DC) {
   if(sock==-1) return FAILURE;
   n = connect(sock,(struct sockaddr*)&cfg->saddr, sizeof cfg->saddr);
   if(n!=-1) {
-	if(-1==send_cred(sock)) 
-	  php_error(E_WARNING, "php_mod_java(%d): Could not send credentials: %s",81, strerror(errno));
 	c = read(sock, &ob, sizeof ob);
 	c = (c==sizeof ob) ? write(sock, &term, sizeof term) : 0;
   }
@@ -397,14 +362,17 @@ int java_test_server(struct cfg*cfg TSRMLS_DC) {
 }
 
 #define JAVA_METHOD(name, strname, class, param) \
-  JG(name) = (*JG(jenv))->GetMethodID(JG(jenv), JG(class), strname, param);\
-  if(check_error(JG(jenv), strname TSRMLS_CC)) return FAILURE;
+  JG(name) = (*jenv)->GetMethodID(jenv, JG(class), strname, param);\
+  if(check_error(jenv, strname TSRMLS_CC)) return 0;
 
-int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
+proxyenv *java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
   jobject local_php_reflect;
   jclass local_class;
   int sock, n=-1;
   SFILE *peer;
+  proxyenv *jenv =JG(jenv);
+
+  if(jenv) return jenv;
 
 #ifndef CFG_JAVA_SOCKET_INET
   sock = socket (PF_LOCAL, SOCK_STREAM, 0);
@@ -414,43 +382,45 @@ int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
   if(sock!=-1) {
 	n = connect(sock,(struct sockaddr*)&cfg->saddr, sizeof cfg->saddr);
   }
-  if(-1==send_cred(sock)) 
-	php_error(E_WARNING, "php_mod_java(%d): Could not send credentials: %s",82, strerror(errno));
   if(n==-1) { 
-	php_error(E_WARNING, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge?",52, strerror(errno));
-	return FAILURE;
+	php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge?",52, strerror(errno));
+	return 0;
   }
   peer = SFDOPEN(sock, "r+");
   assert(peer);
-  if(!peer) return FAILURE;
-
-  JG(jenv)=java_createSecureEnvironment(peer, handle_requests);
-
-  if(SFREAD(&local_php_reflect, sizeof local_php_reflect, 1, peer)!=1) {
-	php_error(E_WARNING, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge?",58, strerror(errno));
-	return FAILURE;
+  if(!peer) { 
+	php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge?",53, strerror(errno));
+	return 0;
   }
 
-  BEGIN_TRANSACTION(JG(jenv));
+  jenv=java_createSecureEnvironment(peer, handle_requests);
+  assert(jenv); 
+
+  if(jenv&&SFREAD(&local_php_reflect, sizeof local_php_reflect, 1, peer)!=1) {
+	php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge?",58, strerror(errno));
+	return 0;
+  }
+
+  BEGIN_TRANSACTION(jenv);
   /* java bridge class */
-  local_class = (*JG(jenv))->FindClass(JG(jenv), "JavaBridge");
-  if(check_error(JG(jenv), "local_php_class" TSRMLS_CC)) return FAILURE;
-  JG(reflect_class) = (*JG(jenv))->NewGlobalRef(JG(jenv), local_class);
-  if(check_error(JG(jenv), "reflect_class" TSRMLS_CC)) return FAILURE;
+  local_class = (*jenv)->FindClass(jenv, "JavaBridge");
+  if(check_error(jenv, "local_php_class" TSRMLS_CC)) return 0;
+  JG(reflect_class) = (*jenv)->NewGlobalRef(jenv, local_class);
+  if(check_error(jenv, "reflect_class" TSRMLS_CC)) return 0;
   
   /* java bridge instance */
-  JG(php_reflect) = (*JG(jenv))->NewGlobalRef(JG(jenv), local_php_reflect);
-  if(check_error(JG(jenv), "php_reflect" TSRMLS_CC)) return FAILURE;
+  JG(php_reflect) = (*jenv)->NewGlobalRef(jenv, local_php_reflect);
+  if(check_error(jenv, "php_reflect" TSRMLS_CC)) return 0;
 
   JAVA_METHOD(setJarPath, "setJarLibraryPath", reflect_class, "(Ljava/lang/String;)V");
   JAVA_METHOD(clearEx, "clearException", reflect_class, "()V");
   JAVA_METHOD(lastEx, "lastException", reflect_class, "(JJ)V");
   JAVA_METHOD(getPhpMap, "getPhpMap", reflect_class, "(Ljava/lang/Object;)LJavaBridge$PhpMap;");
 
-  local_class = (*JG(jenv))->FindClass(JG(jenv), "JavaBridge$PhpMap");
-  if(check_error(JG(jenv), "local_iterator_class" TSRMLS_CC)) return FAILURE;
-  JG(iterator_class) = (*JG(jenv))->NewGlobalRef(JG(jenv), local_class);
-  if(check_error(JG(jenv), "iterator_class" TSRMLS_CC)) return FAILURE;
+  local_class = (*jenv)->FindClass(jenv, "JavaBridge$PhpMap");
+  if(check_error(jenv, "local_iterator_class" TSRMLS_CC)) return 0;
+  JG(iterator_class) = (*jenv)->NewGlobalRef(jenv, local_class);
+  if(check_error(jenv, "iterator_class" TSRMLS_CC)) return 0;
 
   JAVA_METHOD(moveForward, "moveForward", iterator_class, "()Ljava/lang/Object;");
   JAVA_METHOD(hasMore, "hasMore", iterator_class, "()Ljava/lang/Object;");
@@ -460,8 +430,9 @@ int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
   JAVA_METHOD(gsp, "GetSetProp", reflect_class, "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;JJ)V");
   JAVA_METHOD(co, "CreateObject", reflect_class, "(Ljava/lang/String;Z[Ljava/lang/Object;JJ)V");
 
-  END_TRANSACTION(JG(jenv));
-  return SUCCESS;
+  END_TRANSACTION(jenv);
+
+  return JG(jenv)=jenv;
 }
 
 #ifndef PHP_WRAPPER_H

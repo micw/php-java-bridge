@@ -23,30 +23,6 @@ short recv_cred(int sock, struct ucred *peercred) {
   return 0;
 }
 
-short send_cred(int sock) {
-  struct msghdr msg = {0};
-  struct cmsghdr *cmsg;
-  struct ucred *p_ucred, ucred = {getpid(), getuid(), getgid()};
-  char buf[CMSG_SPACE(sizeof ucred)];  /* ancillary data buffer */
-
-  msg.msg_control = buf;
-  msg.msg_controllen = sizeof buf;
-
-  cmsg = CMSG_FIRSTHDR(&msg);
-  cmsg->cmsg_level = SOL_SOCKET;
-  cmsg->cmsg_type = SCM_CREDENTIALS;
-  cmsg->cmsg_len = CMSG_LEN(sizeof ucred);
-
-  /* Initialize the payload: */
-  p_ucred = (struct ucred *)CMSG_DATA(cmsg);
-  memcpy(p_ucred, &ucred, sizeof *p_ucred);
-
-  /* Sum of the length of all control messages in the buffer: */
-  msg.msg_controllen = cmsg->cmsg_len;
-
-  return (short)sendmsg(sock, &msg, 0);
-}
-
 int main() {
   struct sockaddr_un saddr;
   FILE *peer;
@@ -55,7 +31,7 @@ int main() {
 
   saddr.sun_family = AF_UNIX;
   memset(saddr.sun_path, 0, sizeof saddr.sun_path);
-  *strcpy(saddr.sun_path, "test.socket")=0;;
+  strcpy(saddr.sun_path, "test.socket");
   unlink(saddr.sun_path);
   if(!(pid=fork())) {
     sock = socket (PF_UNIX, SOCK_STREAM, 0); if(!sock) exit(10);
@@ -84,8 +60,6 @@ int main() {
 
   n = connect(sock,(struct sockaddr*)&saddr, sizeof saddr); if(n==-1) exit(25);
 
-  n=send_cred(sock); if(n==-1) exit(27);
-
   peer = fdopen(sock, "r"); if(!peer) exit(55);
 
   if(fread(&probe1R, sizeof(probe1R), 1, peer)!=1) return 95; 
@@ -108,7 +82,7 @@ int main() {
   rm -f test.socket
   if test "$have_struct_ucred" = "yes"; then
 	AC_MSG_RESULT(yes)
-	AC_DEFINE(HAVE_STRUCT_UCRED,1, [Define if your system supports struct ucred the Linux/BSD way.])
+	AC_DEFINE(HAVE_STRUCT_UCRED,1, [Define if your system supports struct ucred.])
   else
 	AC_MSG_RESULT(no)
   fi

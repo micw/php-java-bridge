@@ -45,9 +45,10 @@ int java_get_jobject_from_object(pval*object, jobject*obj)
 
 void php_java_invoke(char*name, jobject object, int arg_count, zval**arguments, pval*presult TSRMLS_DC) 
 {
-  proxyenv *jenv = JG(jenv);
+  proxyenv *jenv = java_connect_to_server(&JG(cfg) TSRMLS_CC);
   jlong result = (jlong)(long)presult;
   jstring method;
+  if(!jenv) {ZVAL_NULL(presult); return;}
 
   BEGIN_TRANSACTION(jenv);
   method = (*jenv)->NewStringUTF(jenv, name);
@@ -62,15 +63,9 @@ void php_java_invoke(char*name, jobject object, int arg_count, zval**arguments, 
 
 void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, short constructor, short createInstance, pval *object, int arg_count, zval**arguments)
 {
-  proxyenv *jenv;
   jlong result = 0;
-
-  /* check if we're initialized */
-  jenv = JG(jenv);
-  if(!jenv) {
-	php_error(E_ERROR, "java not initialized");
-	return;
-  }
+  proxyenv *jenv = java_connect_to_server(&JG(cfg) TSRMLS_CC);
+  if(!jenv) {ZVAL_NULL(object); return;}
 
   BEGIN_TRANSACTION(jenv);
   if (constructor) {
@@ -255,7 +250,8 @@ php_java_getset_property (char* name, pval* object, jobjectArray value, zval *pr
  */
 short php_java_get_property_handler(char*name, zval *object, zval *presult TSRMLS_DC)
 {
-  proxyenv *jenv = JG(jenv);
+  proxyenv *jenv = java_connect_to_server(&JG(cfg) TSRMLS_CC);
+  if(!jenv) {ZVAL_NULL(presult); return;}
 
   BEGIN_TRANSACTION(jenv);
   php_java_getset_property(name, object, 0, presult TSRMLS_CC);
@@ -270,7 +266,8 @@ short php_java_get_property_handler(char*name, zval *object, zval *presult TSRML
  */
 short php_java_set_property_handler(char*name, zval *object, zval *value, zval *presult TSRMLS_DC)
 {
-  proxyenv *jenv = JG(jenv);
+  proxyenv *jenv = java_connect_to_server(&JG(cfg) TSRMLS_CC);
+  if(!jenv) {ZVAL_NULL(presult); return;}
 
   BEGIN_TRANSACTION(jenv);
   php_java_getset_property(name, object, php_java_makeArray(1, &value TSRMLS_CC), presult TSRMLS_CC);
