@@ -140,7 +140,7 @@ static void doLog (JNIEnv *jenv, char *msg, jmethodID logMessageID) {
 static void logDebug(JNIEnv *jenv, char *msg) {
   static jmethodID logMessageID=NULL;
   assert(bridge);
-  if(!bridge) return;
+  if(logLevel<=3 || !bridge) return;
   if(!logMessageID)
 	logMessageID = (*jenv)->GetStaticMethodID(jenv, bridge, "logDebug", "(Ljava/lang/String;)V");
   doLog(jenv, msg, logMessageID);
@@ -148,7 +148,7 @@ static void logDebug(JNIEnv *jenv, char *msg) {
 static void logError(JNIEnv *jenv, char *msg) {
   static jmethodID logMessageID=NULL;
   assert(bridge);
-  if(!bridge) return;
+  if(logLevel<=1 || !bridge) return;
   if(!logMessageID)
 	logMessageID = (*jenv)->GetStaticMethodID(jenv, bridge, "logError", "(Ljava/lang/String;)V");
   doLog(jenv, msg, logMessageID);
@@ -156,7 +156,7 @@ static void logError(JNIEnv *jenv, char *msg) {
 static void logFatal(JNIEnv *jenv, char *msg) {
   static jmethodID logMessageID=NULL;
   assert(bridge);
-  if(!bridge) return;
+  if(logLevel<=0 || !bridge) return;
   if(!logMessageID)
 	logMessageID = (*jenv)->GetStaticMethodID(jenv, bridge, "logFatal", "(Ljava/lang/String;)V");
   doLog(jenv, msg, logMessageID);
@@ -210,7 +210,8 @@ static void id(struct peer*peer, char id) {
 
 static jobject objFromPtr(JNIEnv *env, void*val) {
   jobject obj = (*env)->NewObject (env, longClass, longCtor, (jlong)(unsigned long)val);
-  assert(obj);
+  assert(obj); if(!obj) logFatal(env, "allocate object"); 
+
   return obj;
 }
 static void* ptrFromObj(JNIEnv *env, jobject val) {
@@ -220,7 +221,10 @@ static void* ptrFromObj(JNIEnv *env, jobject val) {
 }
 
 static void logRcv(JNIEnv*env, char c) {
-  char*s=malloc(20);
+  char*s;
+  if(logLevel<=3) return;
+
+  s=malloc(20);
   assert(s);
   if(!s) return;
   sprintf(s, "recv: %i", (unsigned int)c);
@@ -330,12 +334,20 @@ static jobject initHash(JNIEnv *env) {
   jobject objectHash = (*env)->NewGlobalRef(env, hash);
   return objectHash;
 }
+static jobject getObjectHash(struct peer *peer) {
+  if(!peer->objectHash) peer->objectHash=initHash(peer->jenv);
+  if(!peer->objectHash) {
+	logFatal(peer->jenv, "could not create hash table"); 
+	peer->objectHash=peer->globalRef;
+  }
+  return peer->objectHash;
+}
 static int handle_request(struct peer*peer, JNIEnv *env) {
   char c;
 
   //logDebug(env, "waiting for request from client");
   sread(&c, 1, 1, peer);
-  if(logLevel>=4) logRcv(env, c);
+  logRcv(env, c);
   switch(c) {
   case PROTOCOL_END: {
 	return 0;
@@ -528,7 +540,7 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	ob2=objFromPtr(env, result);
 	assert(ob1 && ob2);
 	if(!ob1 || !ob2) return -41;
-	(*env)->CallObjectMethod(env, peer->objectHash, hashPut, ob1, ob2);
+	(*env)->CallObjectMethod(env, getObjectHash(peer), hashPut, ob1, ob2);
 	break;
   }
   case GETMETHODID: { 
@@ -580,7 +592,7 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	ob1=objFromPtr(env, key);
 	ob2=objFromPtr(env, result);
 	if(!ob1||!ob2) return -41;
-	(*env)->CallObjectMethod(env, peer->objectHash, hashPut, ob1, ob2);
+	(*env)->CallObjectMethod(env, getObjectHash(peer), hashPut, ob1, ob2);
 	break;
   }
   case NEWBYTEARRAY: {
@@ -671,7 +683,7 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	sread(&mode, sizeof mode, 1, peer);
 	ob=objFromPtr(env, elems);
 	assert(ob); if(!ob) return -41;
-	val = (*env)->CallObjectMethod(env, peer->objectHash, hashRemove, ob);
+	val = (*env)->CallObjectMethod(env, getObjectHash(peer), hashRemove, ob);
 	assert(val); if(!val) return -41;
 	assert(!mode);
 	(*env)->ReleaseByteArrayElements(env, array, ptrFromObj(env, val), mode);
@@ -687,7 +699,7 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	sread(&elems, sizeof elems, 1, peer);
 	ob=objFromPtr(env, elems);
 	if(!ob) return -41;
-	val = (*env)->CallObjectMethod(env, peer->objectHash, hashRemove, ob);
+	val = (*env)->CallObjectMethod(env, getObjectHash(peer), hashRemove, ob);
 	assert(val);
 	if(!val) return -41;
 	(*env)->ReleaseStringUTFChars(env, array, ptrFromObj(env, val));
@@ -749,8 +761,7 @@ JNIEXPORT jint JNICALL Java_JavaBridge_handleRequest(JNIEnv*env, jclass self, jo
   SFILE *file = (SFILE*)(long)socket;
   struct peer peer;
   int val=40;
-  peer.objectHash=initHash(env);
-  if(!peer.objectHash) {logFatal(env, "could not create hash table"); goto _exit;}
+  peer.objectHash=0;
   peer.stream=file;
   peer.jenv=env;
   peer.tran=0;
@@ -758,30 +769,25 @@ JNIEXPORT jint JNICALL Java_JavaBridge_handleRequest(JNIEnv*env, jclass self, jo
   val=setjmp(peer.env);
   if(val) {
   _exit: 
-	(*env)->DeleteGlobalRef(env, peer.objectHash);
+	if (peer.objectHash && peer.objectHash!=globalRef) 
+	  (*env)->DeleteGlobalRef(env, peer.objectHash);
 	return -val;
   }
   val=handle_request(&peer, env);
-  (*env)->DeleteGlobalRef(env, peer.objectHash);
+  if (peer.objectHash && peer.objectHash!=globalRef) 
+	(*env)->DeleteGlobalRef(env, peer.objectHash);
   return val;
 }
 static void logIntValue(JNIEnv*env, char*t, unsigned long i) {
-  char*s=malloc(160);
+  char*s;
+  if(logLevel<=3) return;
+
+  s=malloc(160);
   assert(s);
   if(!s) return;
   sprintf(s, "%s: %lx",t,i);
   logDebug(env, s);
   free(s);
-}
-static void logChannel(JNIEnv*env, char*t, unsigned long i) {
- if(logLevel>2) logIntValue(env, t, i);
-}
-
-static jobject connection_startup(JNIEnv *env) {
-  jobject hash = (*env)->NewObject(env, hashClass, init);
-  jobject globalRef = (*env)->NewGlobalRef(env, hash);
-
-  return globalRef;
 }
 
 static void connection_cleanup (JNIEnv *env, jobject globalRef) {
@@ -801,7 +807,6 @@ static void connection_cleanup (JNIEnv *env, jobject globalRef) {
 	  }
 	}
   }
-  (*env)->DeleteGlobalRef(env, globalRef);
 }
 JNIEXPORT jboolean JNICALL Java_JavaBridge_trampoline(JNIEnv*env, jclass self, jobject globalRef, jlong socket, jboolean jump)
 {
@@ -814,7 +819,7 @@ JNIEXPORT jboolean JNICALL Java_JavaBridge_trampoline(JNIEnv*env, jclass self, j
 	  Java_JavaBridge_handleRequest(env, bridge, globalRef, socket);
 	  
 	if(term>=0) {
-	  logChannel(env, "end packet", term);
+	  logIntValue(env, "end packet", term);
 	  switch (term) { 
 	  case TRANSACTION_BEGIN: 
 		if((*env)->CallStaticBooleanMethod(env, bridge, trampoline, 
@@ -862,15 +867,12 @@ static int recv_cred(int sock, int *uid, int *gid) {
 #define recv_cred(a, b, c) 0
 #endif
 
-JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jobject instance, jint socket, jint uid, jint gid)
+JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jobject instance, jobject globalRef, jint socket, jint uid, jint gid)
 {
-  jobject globalRef;
   SFILE *peer = SFDOPEN(socket, "r+");
   if(!peer) {logSysFatal(env, "could not fdopen socket"); return;}
 
-  logChannel(env, "create new communication channel", (unsigned long)peer);
-  globalRef = connection_startup(env);
-  if(!globalRef){logFatal(env, "could not allocate global hash");if(peer) SFCLOSE(peer);return;}
+  logIntValue(env, "create new communication channel", (unsigned long)peer);
 
   if(peer && (SFWRITE(&instance, sizeof instance, 1, peer)!=1)) {
 	logSysFatal(env, "could not send instance, child not listening"); connection_cleanup(env, globalRef); SFCLOSE(peer);return;
@@ -879,7 +881,7 @@ JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jobject instan
   (*env)->CallStaticBooleanMethod(env, bridge, trampoline, globalRef, (jlong)(long)peer, JNI_TRUE);
   connection_cleanup(env, globalRef);
 
-  logChannel(env, "terminate communication channel", (unsigned long)peer);
+  logIntValue(env, "terminate communication channel", (unsigned long)peer);
   if(peer) SFCLOSE(peer);
 
   leave();
@@ -1142,7 +1144,7 @@ JNINativeMethod javabridge[]={
   {"hashIndexUpdate", "(JJJ)J", Java_JavaBridge_hashIndexUpdate},
   {"setException", "(JJLjava/lang/Throwable;[B)V", Java_JavaBridge_setException},
   {"startNative", "(ILjava/lang/String;)V", Java_JavaBridge_startNative},
-  {"handleRequests", "(III)V", Java_JavaBridge_handleRequests},
+  {"handleRequests", "(Ljava/lang/Object;III)V", Java_JavaBridge_handleRequests},
   {"handleRequest", "(Ljava/lang/Object;J)I", Java_JavaBridge_handleRequest},
   {"trampoline", "(Ljava/lang/Object;JZ)Z", Java_JavaBridge_trampoline},
   {"openLog", "(Ljava/lang/String;)Z", Java_JavaBridge_openLog},
@@ -1229,6 +1231,7 @@ void java_bridge_main_gcj(int argc, char**_argv)
   meths[0].meth[5].signature="(JJLjava.lang.Object;)Z";
   meths[0].meth[9].signature="(JJLjava.lang.Throwable;[B)V";
   meths[0].meth[10].signature="(ILjava.lang.String;)V";
+  meths[0].meth[11].signature="(Ljava.lang.Object;III)V";
   meths[0].meth[12].signature="(Ljava.lang.Object;J)I";
   meths[0].meth[13].signature="(Ljava.lang.Object;JZ)Z";
   meths[0].meth[14].signature="(Ljava.lang.String;)Z";

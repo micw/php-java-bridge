@@ -3,18 +3,25 @@
 # Start the server part of the PHP/Java Bridge.  This script will be
 # called by when the php-java-bridge service is started.
 
-PATH=/bin:/usr/bin:$PATH:
-LD_LIBRARY_PATH=/lib:/usr/lib:$LD_LIBRARY_PATH
 LANG_SYSTEM="${LANG-en_US.UTF-8}"
 LANG=C
 
-export LANG PATH LD_LIBRARY_PATH
-PID=/var/run/php-java-bridge.pid
+# do some magic to avoid loading broken libraries from local
+# installations if we are installed in one of the system directories.
+instdir=`basename $0`
+case $instdir in
+    /usr/bin|/usr/sbin|/bin|/sbin)
+    PATH=/sbin:/bin:/usr/sbin:/usr/bin:$PATH:
+    LD_LIBRARY_PATH=/lib:/usr/lib:$LD_LIBRARY_PATH
+    export PATH LD_LIBRARY_PATH
+esac
 
+# save the PID of the PHP/Java Bridge 
+PID=/var/run/php-java-bridge.pid_test
 (echo $$ >${PID}) >/dev/null 2>/dev/null
 if test -w ${PID} && test $$ = `cat ${PID}` && rm -f ${PID}
 then 
-    true
+    PID=/var/run/php-java-bridge.pid
 else 
     PID=/tmp/php-java-bridge.pid 
 fi
@@ -23,10 +30,11 @@ fi
 if test $# != 0; then
   pid=$PID
   trap 'kill `cat $pid`; rm -f $pid' 2 15
+  ext=$1; shift
   eval $1; shift
   eval $1; shift
   export JAVA_HOME LD_LIBRARY_PATH
-  java=$1; shift
+  java="${ext}/RunJavaBridge"
   LANG="$LANG_SYSTEM" 
   $java "$@" &
   echo $! >$pid
@@ -62,11 +70,16 @@ fi
 
 cmd=`fgrep java /tmp/phpinfo.$$ |
      sed 's/<[/a-z ="0-9]*>//g' | 
-     sed -n "/^.*java command[^A-Z]*/s///p"`
+     sed -n '/^.*java command[^A-Z]*/s///p'`
+
+ext=`fgrep extension_dir /tmp/phpinfo.$$ | head -1 |
+     sed 's/<[TtRr][/a-z ="0-9]*>/ => /g' | 
+     sed 's/<[/a-z ="0-9]*>//g' | 
+     sed 's/^.*=> //'`
 
 rm -f /tmp/phpinfo.$$
 echo Starting java with the command: "$cmd"
 
 # invoke
 LANG="$LANG_SYSTEM"
-/bin/sh -c "/bin/sh $0 $cmd"&
+/bin/sh -c "/bin/sh $0 $ext $cmd"&

@@ -4,6 +4,9 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+/* stat */
+#include <sys/stat.h>
+
 /* fcntl */
 #include <fcntl.h>
 
@@ -32,13 +35,20 @@
 
 #include "php_java.h"
 
-void java_get_server_args(char*env[N_SENV], char*args[N_SARGS]) {
+#ifndef EXTENSION_DIR
+#error EXTENSION_DIR must point to the PHP extension directory
+#endif
+
+static void java_get_server_args(char*env[N_SENV], char*args[N_SARGS]) {
+  static const char separator[2] = {ZEND_PATHS_SEPARATOR, 0};
   char *s, *p;
   char*program=cfg->java;
   char*cp=cfg->classpath;
   char*lib_path=cfg->ld_library_path;
+  char*sys_libpath=getenv("LD_LIBRARY_PATH");
   char*home=cfg->java_home;
 
+  if(!lib_path) sys_libpath="";
   args[0]=strdup(program);
   s="-Djava.library.path=";
   p=malloc(strlen(s)+strlen(lib_path)+1);
@@ -67,24 +77,95 @@ void java_get_server_args(char*env[N_SENV], char*args[N_SARGS]) {
   env[0] = p;					/* java home */
 
   s="LD_LIBRARY_PATH=";
-  p=malloc(strlen(s)+strlen(lib_path)+1);
-  strcpy(p, s); strcat(p, lib_path);
+  p=malloc(strlen(s)+strlen(lib_path)+1+strlen(sys_libpath)+1);
+  strcpy(p, s); strcat(p, lib_path); 
+  strcat(p, separator); strcat(p, sys_libpath);
   env[1] = p;					/* library path */
   env[2] = NULL;
 }
+
+static const char* const wrapper = EXTENSION_DIR/**/"/RunJavaBridge";
+static short use_wrapper() {
+  struct stat buf;
+  short use_wrapper=0;
+
+  if(!stat(wrapper, &buf) && (S_IFREG&buf.st_mode)) {
+	if(getuid()==buf.st_uid)
+	  use_wrapper=(S_IXUSR&buf.st_mode);
+	else if(getgid()==buf.st_gid)
+	  use_wrapper=(S_IXGRP&buf.st_mode);
+	else 
+	  use_wrapper=(S_IXOTH&buf.st_mode);
+  }
+
+  return use_wrapper;
+}
+  
+char*java_get_server_string() {
+  short must_use_wrapper = use_wrapper();
+  int i;
+  char*s;
+  char*env[N_SENV];
+  char*args[N_SARGS];
+  unsigned int length = 0;
+
+  java_get_server_args(env, args);
+  if(must_use_wrapper)
+	length+=strlen(wrapper)+1;
+
+  for(i=0; i< (sizeof env)/(sizeof*env); i++) {
+	if(!env[i]) break;
+	length+=strlen(env[i])+1;
+  }
+  for(i=0; i< (sizeof args)/(sizeof*args); i++) {
+	size_t l;
+	if(!args[i]) break;
+	l=strlen(args[i]);
+	length+=(l?l:2)+1;
+  }
+  s=malloc(length+1);
+  assert(s); if(!s) exit(9);
+
+  *s=0;
+  for(i=0; i< (sizeof env)/(sizeof*env); i++) {
+	if(!env[i]) break;
+	strcat(s, env[i]); strcat(s, " ");
+	free(env[i]);
+  }
+  if(must_use_wrapper) {
+	strcat(s, wrapper);
+	strcat(s, " ");
+  }
+  for(i=0; i< (sizeof args)/(sizeof*args); i++) {
+	if(!args[i]) break;
+	if(!strlen(args[i])) strcat(s,"'");
+	strcat(s, args[i]);
+	if(!strlen(args[i])) strcat(s,"'");
+	strcat(s, " ");
+	free(args[i]);
+  }
+  s[length]=0;
+  return s;
+}
+
 static void exec_vm() {
+#ifdef CFG_JAVA_INPROCESS
+  extern int java_bridge_main(int argc, char**argv) ;
   static char*env[N_SENV];
   static char*args[N_SARGS];
   java_get_server_args(env, args);
   putenv(env[0]);
   putenv(env[1]);
-#ifdef CFG_JAVA_INPROCESS
- {
-   extern int java_bridge_main(int argc, char**argv) ;
-   java_bridge_main(N_SARGS, args);
- }
-#else 
- execv(args[0], args);
+  java_bridge_main(N_SARGS, args);
+#else
+  static char*env[N_SENV];
+  static char*_args[N_SARGS+1];
+  char **args=_args+1;
+  java_get_server_args(env, args);
+  putenv(env[0]);
+  putenv(env[1]);
+  if(use_wrapper()) *--args = strdup(wrapper);
+  execv(args[0], args);
 #endif
 }
 

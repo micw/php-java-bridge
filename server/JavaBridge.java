@@ -3,13 +3,11 @@
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
-import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.net.Socket;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.io.*;
@@ -200,7 +198,7 @@ public class JavaBridge implements Runnable {
     static native long hashIndexUpdate(long array, long peer, long key);
 
     static native void setException(long result, long peer, Throwable value, byte strValue[]);
-    native void handleRequests(int peer, int uid, int gid);
+    native void handleRequests(Object globalRef, int socket, int uid, int gid);
     static native int handleRequest(Object globalRef, long peer);
     static native boolean trampoline(Object globalRef, long peer, boolean jump);
 
@@ -220,7 +218,7 @@ public class JavaBridge implements Runnable {
     // Communication with client in a new thread
     //
     private int peer, uid, gid;
-    public void run() { handleRequests(peer, uid, gid); }
+    public void run() { handleRequests(new Hashtable(), peer, uid, gid); }
     public static void HandleRequests(int peer, int uid, int gid) {  
 		JavaBridge bridge = new JavaBridge();
 		Thread thread = new Thread(bridge);

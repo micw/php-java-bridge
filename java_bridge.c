@@ -13,7 +13,7 @@
 #include <string.h>
 
 
-ZEND_DECLARE_MODULE_GLOBALS(java)
+ZEND_EXTERN_MODULE_GLOBALS(java)
 
 static jobjectArray php_java_makeArray(int argc, pval** argv TSRMLS_DC);
 static jobject php_java_makeObject(pval* arg TSRMLS_DC);
@@ -118,7 +118,7 @@ static jobject php_java_makeObject(pval* arg TSRMLS_DC)
     case IS_STRING:
       result=(*jenv)->NewByteArray(jenv, Z_STRLEN_P(arg));
       (*jenv)->SetByteArrayRegion(jenv, (jbyteArray)result, 0,
-        Z_STRLEN_P(arg), Z_STRVAL_P(arg));
+        Z_STRLEN_P(arg), (jbyte*) Z_STRVAL_P(arg));
       break;
 
     case IS_OBJECT:

@@ -1,0 +1,32 @@
+#################################
+# php-java-bridge.te
+# SELinux rules for the javabridge_t domain
+#
+# javabridge_exec_t is the type of the javabridge 
+# executable "RunJavaBridge", see php-java-bridge.fc
+
+daemon_domain(javabridge);
+log_domain(javabridge);
+tmp_domain(javabridge);
+
+allow javabridge_t bin_t:dir { search };
+allow javabridge_t bin_t:file { execute execute_no_trans read };
+
+allow javabridge_t { etc_t etc_runtime_t }:file { getattr read };
+
+allow javabridge_t { initrc_tmp_t tmp_t }:dir { add_name getattr read remove_name search write };
+allow javabridge_t { initrc_tmp_t tmp_t }:file { create execute read unlink write };
+
+allow javabridge_t javabridge_t:file { getattr read };
+
+allow javabridge_t javabridge_t:unix_stream_socket { accept getattr getopt bind connect create listen setopt read write };
+
+# FIXME
+allow javabridge_t ld_so_cache_t:file { execute };
+allow javabridge_t proc_t:file { getattr read };
+
+# FIXME allow httpd/php
+allow user_t javabridge_t:unix_stream_socket { connectto };
+
+# FIXME
+# allow javabridge_t policy_src_t:dir { search };

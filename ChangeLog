@@ -1,3 +1,110 @@
+2005-01-27  Jost Boekemeier  <jostb@intern>
+	
+	* tests.php5/exception.php: Extract cause.
+	
+	* README: Note about 5.0.3 dl() issue added.
+
+	* test.php: Output phpinfo().
+
+	* bind.c (use_wrapper): New function; we must call the SELinux
+	wrapper if it exists.
+	(java_get_server_string): New function.
+
+	* java.c (get_server_args): Removed.
+	(PHP_MINFO_FUNCTION): Use java_get_server_string instead of
+	get_server_args.
+
+	* php_java.h (java_get_server_args): Replaced by
+	java_get_server_string.
+	
+	
+2005-01-26  Jost Boekemeier  <jostb@intern>
+
+	* INSTALL, README: Security Enhanced Linux (SEL) supported.
+
+	* README: Removed support for Mac OSX. Recommend RHEL/IBM JDK1.4.1
+	on Mac/PPC instead.
+	
+	* unsupported/gcc3.4-broken-jni-method-lookup.patch: New file.
+	
+	* unsupported/php5-crash-in-evaluator-shutdown_workaround.patch:
+	Moved here.
+	
+	* examples/bench/bench.php, examples/bench/excel_antitest.php,
+	examples/bench/exceltest.jar, examples/bench/ExcelTest.java,
+	examples/bench/README: New files
+
+	* examples/j2ee/documentBean.jar,
+	examples/j2ee/documentClient.php, examples/j2ee/globals.php,
+	examples/j2ee/README, examples/j2ee/src/DocumentBean.java,
+	examples/j2ee/src/DocumentHome.java,
+	examples/j2ee/src/DocumentRemote.java,
+	examples/j2ee/src/Page.java, examples/j2ee/src/README,
+	examples/j2ee/src/META-INF/ejb-jar.xml,
+	examples/j2ee/src/META-INF/sun-ejb-jar.xml: New files.
+	
+	* examples/languages/scheme-demo.php, examples/languages/README: New
+	files.
+
+	* scheme-demo.php: Removed, now in examples.
+
+	* tests.php5/bench.php, tests.php5/excel_antitest.php,
+	tests.php5/ExcelTest.java, tests.php5/exceltest.jar: Removed, now
+	in examples.
+	
+2005-01-25  Jost Boekemeier  <jostb@intern>
+
+	* bind.c (java_get_server_args): Append library path.
+	
+	* client.c, java_bridge.c (ZEND_DECLARE_MODULE_GLOBALS): Removed.
+	(ZEND_EXTERN_MODULE_GLOBALS): Added.
+
+	* client.c (check_error): Removed.
+	(java_connect_to_server): Do not call check_error, assume out of
+	memory when the server cannot return global refs.
+	
+	* config.m4: Removed obsolete checks.
+
+	* server/autogen.sh: Removed.
+	
+	* server/configure.gnu.in: New file, from autogen.sh.
+	
+	* config.m4: Create server/configure.gnu from configure.gnu.in
+
+	* php-java-bridge: Only change LD_LIBRARY_PATH and PATH if the
+	script is installed in one of the standard directories.  Invoke
+	RunJavaBridge which is tagged with the SEL security context.
+
+2005-01-24  Jost Boekemeier  <jostb@intern>
+
+	* php-java-bridge.te, php-java-bridge.fc, RunJavaBridge.c.in: New
+	files for Security Enhanced Linux.
+
+	* server/Makefile_unix.am: Create RunJavaBridge.
+	
+	* Makefile.frag (install_policy): New target to install the
+	SELinux policy files.
+
+	* php-java-bridge.spec: Install SELinux policy files.
+
+	* README: Update from index.html
+
+	* README.GNU_JAVA: New file.
+
+	* README: Note about UTF-8 added.
+
+	* server/acinclude.m4: No longer include tests from PHP
+
+	* server/JavaBridge.java (run, handleRequests): Pass down Hash.
+	server/natcJavaBridge.c
+	(connection_startup): Obsolete.
+
+	* server/natcJavaBridge.c: Avoid calling JNI when logLevel is too
+	low.
+	(getObjectHash): New function.
+	(handleRequest): Use getObjectHash() in order to avoid allocating
+	a hash too often.
+
 2005-01-07  Jost Boekemeier  <jostb@intern>
 
 	* server/JavaBridge.java

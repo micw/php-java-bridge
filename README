@@ -1,8 +1,8 @@
-What is the PHP/Java bridge?
+What is the PHP/Java Bridge?
 ----------------------------
 
-  The PHP/Java bridge is PHP module which connects the PHP object system
-  with the Java object system. It implements JSR 223 (where applicable)
+  The PHP/Java Bridge is PHP module which connects the PHP object system
+  with the java object system. It implements JSR 223 (where applicable)
   and can be used to access java based applications from PHP
   scripts. The PHP/Java Bridge communicates with the java VM through
   local sockets using an efficient communication protocol. Each
@@ -10,11 +10,10 @@ What is the PHP/Java bridge?
   communicates with a corresponding thread spawned by the java VM.
 
   Requests from more than one client may either be routed to a single
-  application server running the PHP/Java Bridge or each HTTP server may
-  own a PHP/Java Bridge and communicate with a java application server
-  by exchanging java value objects. If the bridge does not detect a
-  running java application server, it starts a private java process to
-  serve further requests.
+  application server running the PHP/Java Bridge or each client may
+  own a PHP/Java Bridge and communicate with a J2EE application server
+  by exchanging java value objects; client stub classes (ejb/j2ee client .jar) 
+  can be loaded at run-time. 
 
   The bridge adds the following primitives to PHP:
 
@@ -121,9 +120,9 @@ What is the PHP/Java bridge?
   bridge and the PHP/Java bridge at the same time.
 
   The module has been tested on a Mandrake Linux System (Version 9.2),
-  on RedHat Enterprise 3, RedHat Fedora Core 1 and 2, Solaris 9 (Sparc,
-  64 bit JVM) and Windows with RedHat Cygwin, but it should run on all
-  Unix-like operating systems including HP-UX, MacOS-X, WinXP/Cygwin.
+  on RedHat Enterprise 3, RedHat Fedora Core 1..3, Solaris 8..10 (Sparc,
+  64 bit JVM), FreeBSD 5.3 and Windows with RedHat Cygwin, but it should 
+  run on all Unix-like operating systems including HP-UX, WinXP.
 
 
   Custom java libraries (.jar files) can be stored in the following
@@ -150,12 +149,13 @@ What is the PHP/Java bridge?
       requires a compilation of the entire PHP library. If you want to
       do this, please see the Windows install description below.
 
-   3. Permanently activated in the global php.ini file.  This is
-      recommended, see below.
+   3. Permanently activated in the global php.ini file and started as
+      a sub-component of the HTTP server.  Recommended for test
+      installations only.
 
    4. Permanently activated in the global php.ini file with an
-      external java process.  Recommended for web servers, see below.
-      This mode is used by the RPM package available for RedHat
+      external java process.  Recommended for production servers, see
+      below. This mode is used by the RPM package available for RedHat
       Enterprise Linux.
 
    5. Compiled with the GNU Java library.  You can either start
@@ -180,7 +180,7 @@ Build and execution instructions:
           ./configure --with-java=/opt/IBMJava2-14 &&
           make &&
           su -c "make install"
-        
+
   If your administrator allows you to dynamically load extensions, you
   can now test the extension by invoking the test.php with the 
   command: php ./test.php.
@@ -198,9 +198,19 @@ Build and execution instructions:
           [java]
           java.log_level=1
           java.log_file=/var/log/php-java-bridge.log
-          # It is recommended to enable the following option and
-          # to start a JVM as a separate process.
-          #java.socketname=/var/run/.php-java-bridge_socket
+          # Comment out the following option if you want to
+          # start the bridge automatically as a sub-process 
+          # of the web-server, not recommended
+          java.socketname=/var/run/.php-java-bridge_socket
+
+  Re-start the web-server, for example with the command:
+
+          apachectl restart
+
+  Copy the php-java-bridge executable into the /usr/sbin directory
+  and start the bridge, if it isn't already running.
+
+          sh /usr/sbin/php-java-bridge
 
   After the module is activated verify that the module is running by
   typing:
@@ -220,101 +230,19 @@ Build and execution instructions:
   phpinfo() to see the original values.
 
 ---------------------------------------------
-   Starting the Java VM as a separate process
-   ------------------------------------------
+  Starting the PHP/Java Bridge automatically
+  ------------------------------------------
 
-  If you want to run the extension in the web-server, you should enable
-  the java.socketname option and start the java VM before you start the
-  web-server.  The java VM can be started with the supplied script. For
-  example with the command:
+  When the java.socketname option is not set, the web-server will
+  start or re-start the bridge automatically as a sub-component when the
+  http service is started or re-started.
 
-    sh php-java-bridge
-
-  The script "php-java-bridge.service" can be used on SysV based init
-  systems to automatically start and stop the bridge as a system
-  service.  Please see the RedHat RPM download for an example.
-
-------------------------------------
-  Using GNU Java
-  --------------
-
-  In case you don't want to ship a JVM or JRE with your product,
-  you can use GNU gcc to compile the java part and your classes
-  into native code. 
-  In the directory php-java-bridge_1.x.y type:
-
-   gcj --version  # must be gcj 3.3.3 or above!
-
-   phpize && ./configure && make &&  su -c "make install"
-
-  This creates a native, dynamic linked executable in the PHP
-  extension directory.  It can be started with the command:
-
-      `php-config --extension-dir`/java <java.socketname> <loglevel> <log-file>
-
-  For example:
-
-      `php-config --extension-dir`/java /var/run/.php-java-bridge_socket 1 "" |
-        tee /var/log/php-java-bridge.log
-
-  Then direct the bridge to the server-socket by hard-coding the
-  java.socketname to /var/run/.php-java-bridge_socket (as described
-  in the install instructions) and re-start the apache service.
-
-  If you now invoke the test.php file, you should see the
-  output from GNU Java (e.g.):
-
-   ./test.php | fgrep java.vendor
-     java.vendor -> Free Software Foundation, Inc.
-     java.vendor.url -> http://gcc.gnu.org/java/
-
-  GNU gcc is a "ahead of time" compiler. That means that classes
-  which are added after compilation must be interpreted by the
-  GNU java interpreter.  There's no "just in time" compiler.
-  To compile your classes with the java executable you can append 
-  the classes, java or jar files at the end of the java_SOURCES
-  line of the server/Makefile.am.  For example:
-    
-  java_SOURCES= java.c JavaBridge.java my_file.java
-
-  Then type "make install" to re-install the binary. 
-
-  If you want to compile the server part as a separate component;
-  the server sub-directory is driven by autoconf and has been
-  configured with the command:
-
-     sh autogen.sh
-     dir=../modules
-     ./configure --with-java --libdir=$dir --datadir=$dir --bindir=$dir
-
-  After you have created the executables you can distribute the 
-  contents of the php-java-bridge-x.y.z/modules directory. It
-  should contain the files "java", "libnatcJavaBridge.so", "java.so"
-  (autoconf/libtool creates other files, you can delete them). The
-  java.so is the PHP module, the other files are required to start the
-  server part.  The "java" executable may need other system libraries, 
-  for example "gcj.so" and "gcc_s.so". They should be installed on the 
-  target system.
-
-  Additional shared libraries can be copied into the php extension
-  directory (see command "php-config --extension-dir"), additional
-  java libraries (.jar files) can be installed in the sub-directory
-  lib/ of the php extension directory.
-
-  GNU Java still has some limitations.  Because the SUN java classes
-  are not free software, all GNU java classes had to be written from
-  scratch.  It may happen that the GNU java classes contain bugs or
-  have certain limitations.  For example con.getContentLength()
-  constantly returns -1; length not available.
-   
-  However, GNU java is already good enough to be used as a bridge
-  between PHP and the "real" java application server such as BEA
-  WebLogic. It can be used to implement the presentation- and,
-  depending on the project, even the service layer.
-
-  | -----------------WEB SERVER --------------------- | -- APP SERVER --|
-    Web-Server |<LOCAL SOCKETS>| PHP/Java Bridge |<TCP/IP>|  Java Apps   
-    php <-low level communication -> gnu jvm <- value objects -> sun jvm
+  However, when running the bridge in a production environment, it is
+  recommended to start the PHP/Java Bridge as a system service,
+  independent of the web-server. The script "php-java-bridge.service"
+  can be used on SysV based init systems to automatically start and stop
+  the bridge as a system service.  Please see the RedHat RPM download
+  for an example.
 
 ------------------------------------
   64 Bit issues
@@ -438,4 +366,113 @@ Build and execution instructions:
    4: Log debug messages, including the c/s communication protocol.
 
   The default log level is 1.
+
+------------------------------------
+  UTF-8
+  -----
+  
+  The PHP/Java Bridge uses the java VM's default "file.encoding" to
+  convert characters into the host representation.  On Unix the java VM
+  determines the host representation by looking at the LANG environment
+  variable.
+
+  In order to use UTF-8 in your PHP scripts, the LANG environment
+  variable must be set to an UTF-8 locale, for example en_US.UTF-8. This
+  is default on all modern operating systems, but certain components may
+  select a different locale. Apache for example runs with the C locale
+  and if the PHP/Java bridge is started automatically as a sub-component
+  of apache, it will inherit this setting. -- This is one of the reasons
+  why it is recommended to start the bridge as a system service outside of
+  apache.
+
+  You can check the file.encoding with the test.php script, see above.
+------------------------------------
+  Macintosh/PPC Installation
+  --------------------------
+  
+  The PHP/Java Bridge doesn't compile on OSX 10.2 or earlier because
+  certain functionality (sys/poll) is missing.  OSX 10.3 has issues
+  with the dynamic loader and the Apple Java VM, which cannot run
+  the bridge reliably.
+
+  If you want to run the Bridge on a Mac/PPC, please install IBM java
+  1.4.1 or above on RedHat Enterprise Linux for Power PC, please see
+
+    http://www-106.ibm.com/developerworks/java/jdk/linux/tested.html
+
+  for details.  
+
+---------------------------------------------
+  GCJ/GNU Java issues
+  -------------------
+  
+  gcc3.4 cannot invoke virtual functions from jni code.  Please apply
+  the gcc3.4-broken-jni-method-lookup.patch or use gcc 3.3.3 or gcc 4.x
+  instead.
+
+  Running the PHP/Java Bridge under GCJ/GNU Java is supported on Linux
+  and Solaris only.  If you run FreeBSD 5.3, please use Sun, Blackdown
+  or IBM java instead.
+
+------------------------------------
+  Security Enhanced Linux
+  -----------------------
+
+  SELinux is an implementation of a flexible and fine-grained
+  mandatory access control architecture implemented in the Linux kernel.
+  It is used in recent Linux distributions such as Debian or RedHat
+  Fedora Core 3.
+
+  A system component running on a SELinux kernel must declare
+  exactly a) which resources of the operating system it needs in order
+  to function properly and b) what it provides to other components.
+
+  The PHP/Java Bridge distribution contains two policy files,
+  "php-java-bridge.te" and "php-java-bridge.fc". The
+  "php-java-bridge.te" declares the javabridge_t domain and the
+  resources it requires.  All domains are granted connect, read and
+  write to the PHP/Java Bridge server socket, which is
+  "@var/run/.php-java-bridge_socket" in the Linux abstract namespace,
+  and file create/read/write in the tmp_t.  Everything else (connections
+  to other servers, file access, ...) is currently denied.
+
+  The "php-java-bridge.fc" contains the file contexts for the PHP/Java
+  Bridge and the log.
+
+  Installation:
+  -------------
+  The following discussion assumes that you have a RedHat Linux system
+  and you are running SELinux with the targeted policy.
+
+   1. Install selinux-policy-targeted-sources-*.rpm, for example with
+      the command:
+
+        rpm -i selinux-policy-targeted-sources-1.17.30-2.19.noarch.rpm
+
+   2. Install the policy files with the command:
+
+        su -c "make install_policy"
+
+   3. Inject the new policy rules into the kernel. On RedHat Fedora
+      Core 3 and above the command is:
+
+        su -c "make -C /etc/selinux/targeted/src/policy reload"
+      
+  If the default policy is too restrictive and e.g. you want to use the
+  PHP/Java Bridge to connect to your J2EE server(s) you can temporarily set 
+  the policy to Permissive, for example with the command "setenforce
+  Permissive" and connect to the server. Then extract the permissions
+  from the audit log, for example with the command "audit2allow -d". Then
+  append them at the end of the "php-java-bridge.te" file and load the
+  updated policy into the kernel. Don't forget to switch back, for
+  example with "setenforce Enforcing".
+
+------------------------------------
+  PHP 5 issues
+  ------------
+
+  Versions 5.0.0 up to 5.0.3 cannot load the Bridge from the dl()
+  function.  If you use one of these versions, please either apply the
+  php5-crash-in-evaluator-shutdown_workaround.patch or add an entry to
+  the php.ini, see install instructions above.
 

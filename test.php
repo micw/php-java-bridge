@@ -7,6 +7,8 @@ if (!extension_loaded('java')) {
     exit;
   }
 }
+phpinfo();
+print "\n\n";
 
 $v = new java("java.lang.System");
 $arr=$v->getProperties();

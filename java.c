@@ -887,47 +887,9 @@ PHP_MINIT_FUNCTION(java)
   
   return SUCCESS;
 }
-static char*get_server_args() {
-  int i;
-  char*s;
-  char*env[N_SENV];
-  char*args[N_SARGS];
-  unsigned int length = 0;
-
-  java_get_server_args(env, args);
-
-  for(i=0; i< (sizeof env)/(sizeof*env); i++) {
-	if(!env[i]) break;
-	length+=strlen(env[i])+1;
-  }
-  for(i=0; i< (sizeof args)/(sizeof*args); i++) {
-	size_t l;
-	if(!args[i]) break;
-	l=strlen(args[i]);
-	length+=(l?l:2)+1;
-  }
-  s=malloc(length+1);
-  assert(s);
-  *s=0;
-  for(i=0; i< (sizeof env)/(sizeof*env); i++) {
-	if(!env[i]) break;
-	strcat(s, env[i]); strcat(s, " ");
-	free(env[i]);
-  }
-  for(i=0; i< (sizeof args)/(sizeof*args); i++) {
-	if(!args[i]) break;
-	if(!strlen(args[i])) strcat(s,"'");
-	strcat(s, args[i]);
-	if(!strlen(args[i])) strcat(s,"'");
-	strcat(s, " ");
-	free(args[i]);
-  }
-  s[length]=0;
-  return s;
-}
 PHP_MINFO_FUNCTION(java)
 {
-  char*s=get_server_args();
+  char*s=java_get_server_string();
   int status = java_test_server();
   
   php_info_print_table_start();

@@ -46,7 +46,7 @@ rm -rf $RPM_BUILD_ROOT
 echo >filelist
 
 mod_dir=`cat install.log | sed -n '/Installing shared extensions:/s///p' | awk '{print $1}'`
-files='JavaBridge.class JavaBridge$1.class JavaBridge$2.class JavaBridge$3.class JavaBridge$4.class JavaBridge$PhpMap.class java.so libnatcJavaBridge.so'
+files='JavaBridge.class JavaBridge$1.class JavaBridge$2.class JavaBridge$3.class JavaBridge$4.class JavaBridge$PhpMap.class java.so libnatcJavaBridge.so RunJavaBridge'
 mkdir -p $RPM_BUILD_ROOT/$mod_dir
 for i in $files; 
   do cp $mod_dir/$i $RPM_BUILD_ROOT/$mod_dir/$i; 
@@ -79,6 +79,8 @@ cp php-java-bridge.service $RPM_BUILD_ROOT/etc/init.d/php-java-bridge
 chmod +x $RPM_BUILD_ROOT/etc/init.d/php-java-bridge
 echo /etc/init.d/php-java-bridge >>filelist
 
+mkdir -p $RPM_BUILD_ROOT/var/log/php-java-bridge
+echo /var/log/php-java-bridge >>filelist
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -118,5 +120,5 @@ chkconfig php-java-bridge off
 
 %files -f filelist
 %defattr(-,root,root)
-%doc README INSTALL LICENSE ChangeLog test.php
+%doc README README.GNU_JAVA INSTALL LICENSE ChangeLog test.php php-java-bridge.te php-java-bridge.fc
 

@@ -107,8 +107,7 @@ ZEND_END_MODULE_GLOBALS(java)
 #endif
 
 
-extern void java_get_server_args(char*env[N_SENV], 
-								 char*args[N_SARGS]);
+extern char* java_get_server_string();
 
 extern proxyenv *java_connect_to_server(TSRMLS_D);
 extern void java_start_server();

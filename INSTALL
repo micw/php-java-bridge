@@ -1,6 +1,11 @@
 Installation from RPM
 ---------------------
 
+NOTE: If you run a SELinux kernel, you must install the policy files
+before you can run the PHP/Java Bridge. The php-java-bridge RPM
+contains the policy files in the /usr/share/doc directory. I is
+assumed that you know how to install them.
+
 * Install a J2RE, for example with the command:
   rpm -i IBMJava2-JRE-1.4.1-8.i386.rpm
 
@@ -32,6 +37,11 @@ and your php and web-pages in /var/www/html.
 
 Installation from source code
 -----------------------------
+
+NOTE: If you run a SELinux kernel, you must install the policy files
+before you can run the PHP/Java Bridge. The php-java-bridge source
+tarball contains the policy files in the root directory. I is assumed
+that you know how to install them.
 
 The following software components must be installed on your computer:
 

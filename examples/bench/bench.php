@@ -18,18 +18,22 @@ $excel = new java("ExcelTest");
 $excel->createWorkbook("/dev/null", 1, 1);
 
 // test starts
+$sys->gc();
 $start = $sys->currentTimeMillis();
 $excel = new java("ExcelTest");
 $excel->createWorkbook("$here/$java_output", 200, 200);
+$sys->gc();
 $t_java = $sys->currentTimeMillis() - $start;
 
 include("$here/excel_antitest.php");
+$sys->gc();
 $start = $sys->currentTimeMillis();
 createWorkbook("$here/$php_output", 200, 200);
+$sys->gc();
 $t_php = $sys->currentTimeMillis() - $start;
 
 echo "Created excel file $java_output via compiled java in $t_java ms.\n";
-echo "Created excel file $php_output via interpreted PHP and java reflection calls in $t_php ms.\n";
+echo "Created excel file $php_output via interpreted PHP and java reflection calls in $t_php ms. (" . $t_php/$t_java .")\n";
 
 /*
        java class             php function           java class      php function

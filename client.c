@@ -27,31 +27,8 @@
 #include "java_bridge.h"
 #include "php_java.h"
 
-ZEND_DECLARE_MODULE_GLOBALS(java)
+ZEND_EXTERN_MODULE_GLOBALS(java)
 
-#ifdef JAVA_COMPILE_DEBUG
-static int check_error(proxyenv *jenv, char*msg TSRMLS_DC) {
-  jthrowable error = (*(jenv))->ExceptionOccurred(jenv);
-  jvalue args[0];
-  jclass errClass;
-  jmethodID toString;
-  jobject errString;
-  const char *errAsUTF;
-  jboolean isCopy;
-  if(!error) return 0;
-  (*jenv)->ExceptionClear(jenv);
-  errClass = (*jenv)->GetObjectClass(jenv, error);
-  toString = (*jenv)->GetMethodID(jenv, errClass, "toString", "()Ljava/lang/String;");
-  errString = (*jenv)->CallObjectMethodA(0, jenv, error, toString, args);
-  errAsUTF = (*jenv)->GetStringUTFChars(jenv, errString, &isCopy);
-  fprintf(stdout, "php_mod_java(%s): %s",msg, errAsUTF);
-  php_error(E_ERROR, "php_mod_java(%s): %s",msg, errAsUTF);
-  if(isCopy) (*jenv)->ReleaseStringUTFChars(jenv, errString, errAsUTF);
-  return 1;
-}
-#else
-#define check_error(a, b) 0
-#endif
 
 #define swrite java_swrite
 extern void java_swrite(const  void  *ptr,  size_t  size,  size_t  nmemb,  SFILE *stream);
@@ -319,7 +296,7 @@ static int handle_requests(proxyenv *env) {
 
 #define JAVA_METHOD(name, strname, class, param) \
   JG(name) = (*jenv)->GetMethodID(jenv, JG(class), strname, param);\
-  if(check_error(jenv, strname TSRMLS_CC)) return 0;
+  if(!JG(name)) exit(9) 		/* out of memory or some other fatal error */
 
 proxyenv *java_connect_to_server(TSRMLS_D) {
   jobject local_php_reflect;
@@ -360,13 +337,13 @@ proxyenv *java_connect_to_server(TSRMLS_D) {
   BEGIN_TRANSACTION(jenv);
   /* java bridge class */
   local_class = (*jenv)->FindClass(jenv, "JavaBridge");
-  if(check_error(jenv, "local_php_class" TSRMLS_CC)) return 0;
+  if(!local_class) exit(9);
   JG(reflect_class) = (*jenv)->NewGlobalRef(jenv, local_class);
-  if(check_error(jenv, "reflect_class" TSRMLS_CC)) return 0;
+  if(!JG(reflect_class)) exit(9);
   
   /* java bridge instance */
   JG(php_reflect) = (*jenv)->NewGlobalRef(jenv, local_php_reflect);
-  if(check_error(jenv, "php_reflect" TSRMLS_CC)) return 0;
+  if(!JG(php_reflect)) exit(9);
 
   JAVA_METHOD(setJarPath, "setJarLibraryPath", reflect_class, "(Ljava/lang/String;)V");
   JAVA_METHOD(clearEx, "clearException", reflect_class, "()V");
@@ -374,9 +351,9 @@ proxyenv *java_connect_to_server(TSRMLS_D) {
   JAVA_METHOD(getPhpMap, "getPhpMap", reflect_class, "(Ljava/lang/Object;)LJavaBridge$PhpMap;");
 
   local_class = (*jenv)->FindClass(jenv, "JavaBridge$PhpMap");
-  if(check_error(jenv, "local_iterator_class" TSRMLS_CC)) return 0;
+  if(!local_class) exit(9);
   JG(iterator_class) = (*jenv)->NewGlobalRef(jenv, local_class);
-  if(check_error(jenv, "iterator_class" TSRMLS_CC)) return 0;
+  if(!JG(iterator_class)) exit(9);
 
   JAVA_METHOD(moveForward, "moveForward", iterator_class, "()Ljava/lang/Object;");
   JAVA_METHOD(hasMore, "hasMore", iterator_class, "()Ljava/lang/Object;");

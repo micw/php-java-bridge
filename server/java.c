@@ -1,3 +1,5 @@
+/*-*- mode: C; tab-width:4 -*-*/
+
 #include <stdlib.h>
 #include <stdio.h>
 

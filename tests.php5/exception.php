@@ -22,9 +22,12 @@ try {
     // should throw exception "Exception$Ex"
     $e->inner->meth(42);
     return 2;
-  } catch (java_exception $ex) {
-    echo "exception ". $ex->toString() ." --> " . $ex->getID() . "\n";
-    return ($ex->getID() == 42) ? 0 : 3; 
+  } catch (java_exception $exception) {
+    echo "An exception occured: $exception\n";
+
+    $cause = $exception->getCause();
+    echo "exception ". $cause ." --> " . $cause->getID() . "\n";
+    return ($cause->getID() == 42) ? 0 : 3; 
   }
 } catch (exception $err) {
   print "$err \n";

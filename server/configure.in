@@ -21,8 +21,8 @@ AM_PROG_GCJ
 AC_PROG_LIBTOOL
 AC_STDC_HEADERS
 
-AC_ARG_WITH(java,  [--with-java[=JAVA_HOME] Include java support], PHP_JAVA="$withval", PHP_JAVA="yes")
-AC_ARG_WITH(extdir,  [--with-extdir[=DIR] Diretory which contains the shared java extension], EXTENSION_DIR="$withval", EXTENSION_DIR="`php-config --extension-dir`")
+AC_ARG_WITH(java,  [  --with-java[[=JAVA_HOME]]	Include java support], PHP_JAVA="$withval", PHP_JAVA="yes")
+AC_ARG_WITH(extdir,  [  --with-extdir[[=DIR]]	Diretory which contains the shared java extension], EXTENSION_DIR="$withval", EXTENSION_DIR="`php-config --extension-dir`")
 
 JAVA_FUNCTION_CHECKS
 PTHREADS_CHECK
@@ -33,8 +33,11 @@ JAVA_CHECK_ABSTRACT_NAMESPACE
 JAVA_CHECK_STRUCT_UCRED
 
 AM_CPPFLAGS="${AM_CPPFLAGS} -DEXTENSION_DIR=\"\\\"\$(EXTENSION_DIR)\\\"\""
+if test "$PHP_JAVA" != "yes"; then
 AM_CPPFLAGS="${AM_CPPFLAGS} `for i in \`find $PHP_JAVA/include -follow -type d -print\`; do echo -n "-I$i "; done`"
+fi
 
+AC_CONFIG_FILES([RunJavaBridge.c])
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(EXTENSION_DIR)
 AC_SUBST(PHP_JAVA)
