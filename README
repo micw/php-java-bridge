@@ -146,7 +146,47 @@ Build and execution instructions:
            # checking web
              wget -olog -O-  http://localhost/phpinfo.php|fgrep "java status"
  
-           
+------------------------------------
+   Using GNU Java
+
+   In case you don't want to ship a JVM or JRE with your product
+   you can use GNU gcc to compile the java part and your classes
+   into native code. 
+   In the directory php-java-bridge_1.x.y/modules type:
+
+   gcj --version  # must be gcj 3.2.3 or above!
+   gcj -fjni -oJavaBridge.srv --main=JavaBridge JavaBridge.class \
+                                          -L`pwd` -lnatcJavaBridge
+
+   This creates a native executable in the current directory which
+   does not need java anymore.  It can be started with the command:
+
+      ./JavaBridge.srv <java.socketname> <loglevel> <log-file>
+
+   For example:
+
+      ./JavaBridge.srv /tmp/.php_java 5 "" | tee /tmp/java.log
+
+
+   Then point the bridge to the socket /tmp/.php_java by hard-coding 
+   the java.socketname to /tmp/.php_java (as described in the install
+   instructions) and re-start the apache service.
+
+   If you now invoke the test.php file, you should see the
+   output from GNU Java (e.g.):
+
+   ./test.php | fgrep java.vendor
+     java.vendor -> Free Software Foundation, Inc.
+     java.vendor.url -> http://gcc.gnu.org/java/
+
+   Now you can package the JavaBridge and the libraries it needs
+   (at least libnatcJavaBridge.so, libgcc_s.so.1 and libgcj.so.3, see
+   output of ldd command) into an RPM and make sure that your client
+   starts the JavaBridge before the httpd service gets started. -- On
+   RedHat the init.d/httpd is started as 85/15, so it should be
+   sufficient to start the JavaBridge executable as #84 and stop it
+   as #16.
+
 ------------------------------------
 
         

@@ -29,4 +29,6 @@
 	jdk1.4 correctly.
 	* bind.c: Pass modified environment on to the child process.
 
+2004-09-11  Jost Boekemeier  <jost2345@mail.yahoo.de>
 
+	* README: Describe GNU Java support
