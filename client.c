@@ -130,11 +130,13 @@ static  void  setResultFromObject  (proxyenv *jenv,  pval *presult, jobject valu
 
 static  void  setResultFromArray  (proxyenv *jenv,  pval *presult) {
   array_init( presult );
+  INIT_PZVAL( presult );
 }
 
 static  pval*nextElement  (proxyenv *jenv,  pval *handle) {
   pval *result;
   ALLOC_ZVAL(result);
+  zval_add_ref(&result);
   zend_hash_next_index_insert(Z_ARRVAL_P(handle), &result, sizeof(zval *), NULL);
   return result;
 }
@@ -142,7 +144,10 @@ static  pval*nextElement  (proxyenv *jenv,  pval *handle) {
 static  pval*hashIndexUpdate  (proxyenv *jenv,  pval *handle, jlong key) {
   pval *result;
   ALLOC_ZVAL(result);
-  zend_hash_index_update(Z_ARRVAL_P(handle), (unsigned long)key, &result, sizeof(zval *), NULL);
+  if(key) {
+	zval_add_ref(&result);
+	zend_hash_index_update(Z_ARRVAL_P(handle), (unsigned long)key, &result, sizeof(zval *), NULL);
+  }
   return result;
 }
 
@@ -151,7 +156,10 @@ static pval*hashUpdate  (proxyenv *jenv, pval *handle, jbyteArray key) {
   pval pkey;
   ALLOC_ZVAL(result);
   setResultFromString(jenv, &pkey, key);
-  zend_hash_update(Z_ARRVAL_P(handle), Z_STRVAL(pkey), Z_STRLEN(pkey)+1, &result, sizeof(zval *), NULL);
+  if(key) {
+	zval_add_ref(&result);
+	zend_hash_update(Z_ARRVAL_P(handle), Z_STRVAL(pkey), Z_STRLEN(pkey)+1, &result, sizeof(zval *), NULL);
+  }
   return result;
 }
 

@@ -8,5 +8,12 @@
 	* bind.c: wait until the JVM is initialized
 
 	Initialize the cfg vars correctly so that only one VM is started
-	(or no VM at all on apache 1.3).
 	* java.c, init_cfg: set the defaults _after_ the cfg changes.
+
+2004-09-09  Jost Boekemeier  <jost2345@mail.yahoo.de>
+	
+	Initialize PVAL's so that they have a proper ref-count.  Otherwise 
+	either the bridge or the JVM might crash (or both).
+	* java.c: Allocate pval's correctly.
+	
+
