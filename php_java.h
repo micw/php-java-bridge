@@ -17,6 +17,9 @@
 #endif
 
 /* socket */
+#ifdef __MINGW32__
+# include <winsock2.h>
+#else
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -33,10 +36,10 @@
 # endif
 # endif
 #endif
+#endif 
 
 #include "protocol.h"
 
-extern int le_jobject;
 extern zend_module_entry java_module_entry;
 extern zend_class_entry *php_java_class_entry;
 extern zend_class_entry *php_java_class_class_entry;

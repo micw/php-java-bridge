@@ -68,7 +68,7 @@ static  void  setResultFromException  (pval *presult, long value) {
 
   ALLOC_ZVAL(handle);
   Z_TYPE_P(handle) = IS_LONG;
-  Z_LVAL_P(handle) = zend_list_insert(value, le_jobject);
+  Z_LVAL_P(handle) = value;
   pval_copy_constructor(handle);
   INIT_PZVAL(handle);
 #ifndef ZEND_ENGINE_2
@@ -91,7 +91,7 @@ static  void  setResultFromObject  (pval *presult, long value) {
 
   ALLOC_ZVAL(handle);
   Z_TYPE_P(handle) = IS_LONG;
-  Z_LVAL_P(handle) = zend_list_insert((void*)value, le_jobject);
+  Z_LVAL_P(handle) = value;
   pval_copy_constructor(handle);
   INIT_PZVAL(handle);
 #ifndef ZEND_ENGINE_2
@@ -247,7 +247,7 @@ proxyenv *java_connect_to_server(TSRMLS_D) {
   free(server);
 #ifndef ZEND_ENGINE_2
   // we want arrays as values
-  { char c=2; write(sock, &c, sizeof c); }
+  { char c=2; send(sock, &c, sizeof c, 0); }
 #endif
 
   return JG(jenv) = java_createSecureEnvironment(sock, handle_request);

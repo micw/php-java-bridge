@@ -15,7 +15,9 @@ import java.lang.reflect.Modifier;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Vector;
 
 
@@ -28,6 +30,7 @@ public class JavaBridge implements Runnable {
 
     // list of objects in use in the current script
     GlobalRef globalRef;
+    static HashMap sessionHash = new HashMap();
 
     JavaBridgeClassLoader cl=new JavaBridgeClassLoader();
 
@@ -95,20 +98,17 @@ public class JavaBridge implements Runnable {
 		r.handleRequests();
 	    }
 	} catch (Throwable e) {
-	    // TODO Auto-generated catch block
-	    e.printStackTrace();
+	    Util.printStackTrace(e);
 	}
 	try {
 	    in.close();
 	} catch (IOException e1) {
-	    // TODO Auto-generated catch block
-	    e1.printStackTrace();
+	    Util.printStackTrace(e1);
 	}
 	try {
 	    out.close();
 	} catch (IOException e2) {
-	    // TODO Auto-generated catch block
-	    e2.printStackTrace();
+	    Util.printStackTrace(e2);
 	}
     }
 
@@ -262,16 +262,16 @@ public class JavaBridge implements Runnable {
 	    } else { //PHP 5
 	    	response.writeObject(value);
 	    }
-	} else if (value instanceof java.util.Hashtable) {
+	} else if (value instanceof java.util.Map) {
 
-	    Hashtable ht = (Hashtable) value; 
+	    Map ht = (Map) value; 
 	    if (response.sendArraysAsValues()) {
 		// Since PHP 5 this is dead code, setResultFromArray
 		// behaves like setResultFromObject and returns
 		// false. See PhpMap.
 		response.writeCompositeBegin_h();
-		for (Enumeration e = ht.keys(); e.hasMoreElements(); ) {
-		    Object key = e.nextElement();
+		for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
+		    Object key = e.next();
 		    long slot;
 		    if (key instanceof Number && 
 			!(key instanceof Double || key instanceof Float)) {
@@ -343,11 +343,13 @@ public class JavaBridge implements Runnable {
 			     Object args[], Response response) {
 	try {
 	    Vector matches = new Vector();
+	    Vector candidates = new Vector();
 	    Constructor selected = null;
 
 	    if(createInstance) {
 		Constructor cons[] = Class.forName(name, true, cl).getConstructors();
 		for (int i=0; i<cons.length; i++) {
+		    candidates.addElement(cons[i]);
 		    if (cons[i].getParameterTypes().length == args.length) {
 			matches.addElement(cons[i]);
 		    }
@@ -358,7 +360,7 @@ public class JavaBridge implements Runnable {
 
 	    if (selected == null) {
 		if (args.length > 0) {
-		    throw new InstantiationException("No matching constructor found. " + "Matches: " + String.valueOf(matches));
+		    throw new InstantiationException("No matching constructor found. " + "Candidates: " + String.valueOf(candidates));
 		} else {
 		    // for classes which have no visible constructor, return the class
 		    // useful for classes like java.lang.System and java.util.Calendar.
@@ -378,16 +380,6 @@ public class JavaBridge implements Runnable {
 		throw new RuntimeException(); // abort
 	    }
 	    Util.printStackTrace(e);
-	    // Special handling of our connection abort
-	    // throwable.  We can't use our own (inner)
-	    // exception class because that would mean we
-	    // have to deal with a classname that contains
-	    // a $ sign in its name during the bridge
-	    // install procedure
-	    if(e.getMessage()!=null &&
-	       e.getMessage().startsWith("child aborted connection during"))
-		throw new RuntimeException();
-
 	    setException(response, e, createInstance?"CreateInstance":"ReferenceClass", null, name, args);
 	}
     }
@@ -419,10 +411,10 @@ public class JavaBridge implements Runnable {
 		    if (!(args[i] instanceof byte[]) && !(args[i] instanceof String))
 			weight+=9999;
 		} else if (parms[i].isArray()) {
-		    if (args[i] instanceof java.util.Hashtable) {
-			Enumeration enumeration = ((Hashtable)args[i]).elements();
-			if(enumeration.hasMoreElements()) {
-			    Object elem = enumeration.nextElement();
+		    if (args[i] instanceof java.util.Map) {
+			Iterator iterator = ((Map)args[i]).values().iterator();
+			if(iterator.hasNext()) {
+			    Object elem = iterator.next();
 			    Class c=parms[i].getComponentType();
 			    if (elem instanceof Number) {
 				if(elem instanceof Double) {
@@ -526,14 +518,14 @@ public class JavaBridge implements Runnable {
 		if (c == Float.TYPE)   result[i]=new Float(n.floatValue());
 		if (c == Long.TYPE && !(n instanceof Long)) 
 		    result[i]=new Long(n.longValue());
-	    } else if (args[i] instanceof Hashtable && parms[i].isArray()) {
+	    } else if (args[i] instanceof Map && parms[i].isArray()) {
 		try {
-		    Hashtable ht = (Hashtable)args[i];
+		    Map ht = (Map)args[i];
 		    size = ht.size();
 
 		    // Verify that the keys are Long, and determine maximum
-		    for (Enumeration e = ht.keys(); e.hasMoreElements(); ) {
-			int index = ((Long)e.nextElement()).intValue();
+		    for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
+			int index = ((Long)e.next()).intValue();
 			if (index >= size) size = index+1;
 		    }
 
@@ -577,7 +569,8 @@ public class JavaBridge implements Runnable {
     {
 	try {
 	    Vector matches = new Vector();
-
+	    Vector candidates = new Vector();
+	    
 	    // gather
 	    for (Class jclass = object.getClass();;jclass=(Class)object) {
 		while (!Modifier.isPublic(jclass.getModifiers())) {
@@ -595,9 +588,11 @@ public class JavaBridge implements Runnable {
 		}
 		Method methods[] = jclass.getMethods();
 		for (int i=0; i<methods.length; i++) {
-		    if (methods[i].getName().equalsIgnoreCase(method) &&
-			methods[i].getParameterTypes().length == args.length) {
-			matches.addElement(methods[i]);
+		    if (methods[i].getName().equalsIgnoreCase(method)) {
+		    	candidates.addElement(methods[i]);
+		    	if(methods[i].getParameterTypes().length == args.length) {
+		    		matches.addElement(methods[i]);
+		    	}
 		    }
 		}
 
@@ -605,7 +600,7 @@ public class JavaBridge implements Runnable {
 		if (!(object instanceof Class) || (jclass==object)) break;
 	    }
 	    Method selected = (Method)select(matches, args);
-	    if (selected == null) throw new NoSuchMethodException(String.valueOf(method) + "(" + Util.argsToString(args) + "). " + "Matches: " + String.valueOf(matches));
+	    if (selected == null) throw new NoSuchMethodException(String.valueOf(method) + "(" + Util.argsToString(args) + "). " + "Candidates: " + String.valueOf(candidates));
 
 	    Object coercedArgs[] = coerce(selected.getParameterTypes(), args);
 	    setResult(response, selected.invoke(object, coercedArgs));
@@ -618,15 +613,6 @@ public class JavaBridge implements Runnable {
 		throw new RuntimeException(); // abort
 	    }
 	    Util.printStackTrace(e);
-	    // Special handling of our connection abort
-	    // throwable.  We can't use our own (inner)
-	    // exception class because that would mean we
-	    // have to deal with a classname that contains
-	    // a $ sign in its name during the bridge
-	    // install procedure
-	    if(e.getMessage()!=null &&
-	       e.getMessage().startsWith("child aborted connection during"))
-		throw new RuntimeException();
 	    setException(response, e, "Invoke", object, method, args);
 	}
     }
@@ -717,7 +703,7 @@ public class JavaBridge implements Runnable {
 		// try a second time with the object itself, if it is of type Class
 		if (!(object instanceof Class) || (jclass==object)) break;
 	    }
-	    throw new NoSuchFieldException(String.valueOf(prop) + " (with args:" + Util.argsToString(args) + "). " + "Matches: " + String.valueOf(matches));
+	    throw new NoSuchFieldException(String.valueOf(prop) + " (with args:" + Util.argsToString(args) + "). " + "Candidates: " + String.valueOf(matches));
 
 	} catch (Throwable e) {
 	    if(e instanceof OutOfMemoryError || 
@@ -727,15 +713,6 @@ public class JavaBridge implements Runnable {
 		throw new RuntimeException(); // abort
 	    }
 	    Util.printStackTrace(e);
-	    // Special handling of our connection abort
-	    // throwable.  We can't use our own (inner)
-	    // exception class because that would mean we
-	    // have to deal with a classname that contains
-	    // a $ sign in its name during the bridge
-	    // install procedure
-	    if(e.getMessage()!=null &&
-	       e.getMessage().startsWith("child aborted connection during"))
-		throw new RuntimeException();
 	    setException(response, e, set?"SetProperty":"GetProperty", object, prop, args);
 	}
     }
@@ -759,4 +736,28 @@ public class JavaBridge implements Runnable {
 	Class clazz = Util.GetClass(c);
 	return clazz.isInstance(ob);
     }
+    
+    public Session getSession(String name, Map vars) {
+    	synchronized(JavaBridge.sessionHash) {
+    		Session ref = null;
+	    	if(!JavaBridge.sessionHash.containsKey(name)) {
+		    	if(vars==null) throw new NullPointerException("Session " + name + "does not exist and \"vars\" is null.");
+		    	ref = new Session(name);
+		    	ref.putAll(vars);
+	    	} else {
+	    		ref = (Session) JavaBridge.sessionHash.get(name);
+	    		ref.destroy();
+	    		
+	    		Session s = new Session(name);
+	    		s.putAll(vars);
+	    		s.putAll(ref.map);
+	    		s.isNew=false;
+	    		ref=s;
+	    	}
+	    	
+		JavaBridge.sessionHash.put(name, ref);
+		return ref;
+    	}
+    }
+
 }

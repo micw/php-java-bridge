@@ -39,9 +39,8 @@ obtained from:
 
 and
 
-   http://www.gnu.org/software/chicken  or
-   http://call-with-current-continuation.org
-
+   http://directory.fsf.org/chicken.html  or
+   http://www.call-with-current-continuation.org/chicken.html
 
 The Scheme code in example #3 calls the libxslt.so library to apply
 the XSLT transformation. It is part of the GNOME project and can be

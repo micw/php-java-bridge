@@ -105,6 +105,7 @@ static short use_wrapper() {
   struct stat buf;
   short use_wrapper=0;
 
+#ifndef __MINGW32__
   if(!stat(wrapper, &buf) && (S_IFREG&buf.st_mode)) {
 	if(getuid()==buf.st_uid)
 	  use_wrapper=(S_IXUSR&buf.st_mode);
@@ -113,6 +114,7 @@ static short use_wrapper() {
 	else 
 	  use_wrapper=(S_IXOTH&buf.st_mode);
   }
+#endif
 
   return use_wrapper;
 }
@@ -203,6 +205,7 @@ static int test_local_server() {
 char* java_test_server(int *_socket) {
   int sock;
 
+#ifndef __MINGW32__
   if(cfg->hosts && strlen(cfg->hosts)) {
 	char *host, *hosts = strdup(cfg->hosts);
 	
@@ -242,6 +245,7 @@ char* java_test_server(int *_socket) {
 	}
 	free(hosts);
   }
+#endif	  
 
   if(-1!=(sock=test_local_server())) {
 	if(_socket) {
@@ -255,6 +259,7 @@ char* java_test_server(int *_socket) {
 }
 
 static int wait_server() {
+#ifndef __MINGW32__
   struct pollfd pollfd[1] = {{cfg->err, POLLIN, 0}};
   int count=15, sock;
   
@@ -268,6 +273,9 @@ static int wait_server() {
   }
   close(sock);
   return (cfg->cid && count)?SUCCESS:FAILURE;
+#else
+  return SUCCESS;
+#endif
 }
 
 /*
@@ -280,12 +288,15 @@ static short can_fork() {
 /* handle keyboard interrupt */
 static int s_pid=0;
 static void s_kill(int sig) {
+#ifndef __MINGW32__
   if(s_pid) kill(s_pid, SIGTERM);
+#endif
 }
 
 void java_start_server() {
   int pid=0, err=0, p[2];
   char *test_server;
+#ifndef __MINGW32__
   if(!(test_server=java_test_server(0))) {
 	if(can_fork()) {
 	  if(pipe(p)!=-1) {
@@ -318,13 +329,16 @@ void java_start_server() {
 	cfg->cid=pid;
 	cfg->err=p[0];
 	wait_server();
-  } else {
-	cfg->cid=cfg->err=0;
-	free(test_server);
-  }
+  } else
+#endif /* MINGW32 */
+	{
+	  cfg->cid=cfg->err=0;
+	  free(test_server);
+	}
 }
 
 static void wait_for_daemon() {
+#ifndef __MINGW32__
   struct pollfd pollfd[1] = {{cfg->err, POLLIN, 0}};
   int err, c;
 
@@ -350,6 +364,7 @@ static void wait_for_daemon() {
 	close(cfg->err);
 	cfg->err=0;
   }
+#endif
 }
 
 void php_java_shutdown_library() 

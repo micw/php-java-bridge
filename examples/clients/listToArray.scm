@@ -11,7 +11,7 @@
 (define-values (inp outp) (tcp-connect HOST PORT))
 (define buf (make-string 65535))
 
-;; read a until the top-level /> was received				       
+;; read chars until the top-level <.*/> was received 
 (define read-document(lambda (buf inp)
     (let* ((last #\  )
 	   (level 0)
@@ -35,8 +35,8 @@
 	(begin (string-set! buf i c))))))
 
 ;; real work starts here
-(write 2 outp)
-  ;; create a java.util.ArrayList, add 3 entries to it ...
+(write 2 outp) ; arrays as values  , see PROTOCOL.TXT
+;; create a java.util.ArrayList, add 3 entries to it ...
 (display "<C value=\"java.util.ArrayList\" p=\"I\" id=\"0\"></C>" outp)
 (read-document buf inp) ;discard received document
 (display "<I value=\"1\" method=\"add\" p=\"I\" id=\"0\"><String v=\"ENTRY 1\"/></I>" outp)

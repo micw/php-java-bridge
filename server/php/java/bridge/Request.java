@@ -6,14 +6,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 
 public class Request implements IDocHandler {
 
     private Parser parser;
     private JavaBridge bridge;
     private static class Args {
-    	Hashtable ht;
+    	HashMap ht;
     	ArrayList array;
     	private int count;
     	
@@ -27,7 +27,7 @@ public class Request implements IDocHandler {
    	
    	void add(Object val) {
     		if(composite!=0) {
-			if(ht==null) ht=new Hashtable();
+			if(ht==null) ht=new HashMap();
     			if(key!=null) {
     				ht.put(key, val);
     			}

@@ -24,9 +24,17 @@
 }
 
 static void flush(proxyenv *env) {
-   send((*env)->peer, (*env)->send, (*env)->send_len, 0);
-   (*env)->send_len=0;
-   (*env)->handle_request(env);
+  size_t s=0, size = (*env)->send_len;
+  ssize_t n=0;
+
+ res: 
+  errno=0;
+  while((size>s)&&((n=send((*env)->peer, (*env)->send+s, size-s, 0)) > 0)) 
+	s+=n;
+  if(size>s && !n && errno==EINTR) goto res; // Solaris, see INN FAQ
+
+  (*env)->send_len=0;
+  (*env)->handle_request(env);
 }
 #define GROW_QUOTE() \
   if(pos+1>=newlen) { \

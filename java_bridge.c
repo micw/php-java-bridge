@@ -30,16 +30,32 @@ static short checkError(pval *value TSRMLS_DC)
   return 0;
 }
 
+static short is_type (zval *pobj, zend_class_entry *class TSRMLS_DC) {
+#ifdef ZEND_ENGINE_2
+  //FIXME: Check parent
+  return (zend_get_class_entry(pobj TSRMLS_CC) == class);
+#else
+  return pobj->type == IS_OBJECT && pobj->value.obj.ce->name_length==4 && !strncmp(pobj->value.obj.ce->name, "java", 4);
+#endif
+}
+
+static short is_java_type(zval *obj TSRMLS_DC) {
+  return (is_type(obj, php_java_class_entry TSRMLS_CC)||
+		  is_type(obj, php_java_class_class_entry TSRMLS_CC)||
+		  is_type(obj, php_java_jsr_class_class_entry TSRMLS_CC));
+}
+
 int java_get_jobject_from_object(pval*object, long *obj TSRMLS_DC)
 {
   pval **handle;
-  int type, n;
+  int n=-1;
 
-  n = zend_hash_index_find(Z_OBJPROP_P(object), 0, (void**) &handle);
+  if(is_java_type(object TSRMLS_CC))
+	n = zend_hash_index_find(Z_OBJPROP_P(object), 0, (void**) &handle);
   if(n==-1) { *obj=0; return 0; }
 
-  *obj = (long)zend_list_find(Z_LVAL_PP(handle), &type);
-  return type;
+  *obj=**(long**)handle;
+  return 1;
 }
 
 void php_java_invoke(char*name, long object, int arg_count, zval**arguments, pval*presult TSRMLS_DC) 
@@ -102,7 +118,7 @@ static void writeArgument(pval* arg TSRMLS_DC)
 
     case IS_OBJECT:
 	  java_get_jobject_from_object(arg, &result TSRMLS_CC);
-	  assert(result);
+	  if(!result) php_error(E_WARNING, "Argument is not (or does not contain) Java object(s).");
 	  (*jenv)->writeObject(jenv, result);
       break;
 
@@ -181,7 +197,6 @@ static void writeArguments(int argc, pval** argv TSRMLS_DC)
 short php_java_get_property_handler(char*name, zval *object, zval *presult)
 {
   long obj;
-  int type;
   proxyenv *jenv;
 
   TSRMLS_FETCH();
@@ -190,11 +205,11 @@ short php_java_get_property_handler(char*name, zval *object, zval *presult)
   if(!jenv) {ZVAL_NULL(presult); return FAILURE;}
 
   /* get the object */
-  type = java_get_jobject_from_object(object, &obj TSRMLS_CC);
+  java_get_jobject_from_object(object, &obj TSRMLS_CC);
 
   ZVAL_NULL(presult);
 
-  if (!obj || (type!=le_jobject)) {
+  if (!obj) {
     php_error(E_ERROR,
       "Attempt to access a Java property on a non-Java object");
   } else {
@@ -212,7 +227,6 @@ short php_java_get_property_handler(char*name, zval *object, zval *presult)
 short php_java_set_property_handler(char*name, zval *object, zval *value, zval *presult)
 {
   long obj;
-  int type;
   proxyenv *jenv;
 
   TSRMLS_FETCH();
@@ -221,11 +235,11 @@ short php_java_set_property_handler(char*name, zval *object, zval *value, zval *
   if(!jenv) {ZVAL_NULL(presult); return FAILURE; }
 
   /* get the object */
-  type = java_get_jobject_from_object(object, &obj TSRMLS_CC);
+  java_get_jobject_from_object(object, &obj TSRMLS_CC);
 
   ZVAL_NULL(presult);
 
-  if (!obj || (type!=le_jobject)) {
+  if (!obj) {
     php_error(E_ERROR,
       "Attempt to access a Java property on a non-Java object");
   } else {
@@ -235,19 +249,6 @@ short php_java_set_property_handler(char*name, zval *object, zval *value, zval *
 	(*jenv)->writeInvokeEnd(jenv);
   }
   return checkError(presult TSRMLS_CC) ? FAILURE : SUCCESS;
-}
-
-/*
- * delete the object we've allocated during setResultFromObject
- */
-void php_java_destructor(zend_rsrc_list_entry *rsrc TSRMLS_DC)
-{
-  // Disabled. In PHP 4 this was called *after* connection shutdown,
-  // which is much too late.  The server part now does its own
-  // resource tracking.
-/* 	void *jobject = (void *)rsrc->ptr; */
-/* 	assert(JG(jenv)); */
-/* 	if (JG(jenv)) (*JG(jenv))->DeleteGlobalRef(JG(jenv), jobject); */
 }
 
 #ifndef PHP_WRAPPER_H

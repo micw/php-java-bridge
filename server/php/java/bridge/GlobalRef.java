@@ -15,7 +15,9 @@ public class GlobalRef {
     }
 	
     public Object get(int id) {
-	return globalRef[--id];
+	Object o = globalRef[--id];
+	if(o==null) throw new NullPointerException();
+	return o;
     }
 	
     public void remove(int id) {

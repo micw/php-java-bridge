@@ -1,4 +1,4 @@
-PHP/Java Bridge protocol version 1.0
+PHP/Java Bridge protocol version 1.0.0
 
 Requests are marked with "->", responses with "<-".  The server
 continues to process requests until EOF. Only the first character is
@@ -39,7 +39,7 @@ it more than once. The M (GetMethod) request responds with a method
 (CallMethod) requests. [I]nvoke should be used instead of M/F. It is a
 little bit slower but easier to handle.
 
-All aquired [O]bject handles may be destroyed by invoking [U]nref.
+All aquired [O]bject handles may be destroyed by invoking U (destroy).
 However, this isn't necessary either.  The server tracks all handles
 and automatically destroys them after EOF. It is an error to further
 reference destroyed handles.
@@ -144,7 +144,7 @@ m: long
 i: long
 
 ->
-Unref:
+Destroy:
 <U v=object />
 v: long
 

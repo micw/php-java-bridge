@@ -47,12 +47,13 @@ public class Parser {
     int len=SLEN;
     byte s[]= new byte[len];
     byte ch, mask=(byte)~0;
-    static final short BEGIN=0, KEY=1, VAL=2, ENTITY=3, BLOB=4, VOID=5; short type=VOID;
+    // VOJD is VOID for f... windows (VOID is in winsock2.h)
+    static final short BEGIN=0, KEY=1, VAL=2, ENTITY=3, BLOB=4, VOJD=5; short type=VOJD;
     short level=0, eor=0, blen=0; boolean in_dquote, eot=false;
     int pos=0, c=0, i=0, i0=0, e;
 
     void RESET() {
-    	type=VOID;
+    	type=VOJD;
      	mask=~(byte)0;
     	level=0;
     	eor=0;
@@ -146,19 +147,22 @@ public class Parser {
 			CALL_BEGIN();
 		    }
 		    tag[0].n=tag[1].n=tag[2].n=0; i0=i=0;      		/* RESET */
-		    type=VOID;
+		    type=VOJD;
 		    if(level==0) eor=1; 
 		    break;
 		case '\0':
-		    if(mask==0) {type=BLOB; mask=0; break;}
-		    if(type==VOID) mask=~0;
+		    if(mask!=0) {type=BLOB; mask=0; break;}
 				
 		    if(0!=blen) {
 			APPEND(ch);
-			if(0==--blen) type=VOID;
-		    }
-		    else {
-			blen=ch;
+			--blen;
+		    } else {
+		    	if(type==VOJD) {
+		    		mask=~0;
+		    	} else {
+		    		type=VOJD;
+		    		blen=ch;
+		    	}
 		    }
 		    break;
 		case ';':

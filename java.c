@@ -24,6 +24,14 @@
 ZEND_DECLARE_MODULE_GLOBALS(java)
 struct cfg *cfg = 0;
 
+#ifdef __MINGW32__
+static int java_errno=0;
+int *__errno (void) { return &java_errno; }
+#define php_info_print_table_row(a, b, c) \
+   php_info_print_table_row_ex(a, "java", b, c)
+#endif
+
+
 PHP_RINIT_FUNCTION(java) 
 {
 	assert(!JG(jenv));
@@ -83,15 +91,6 @@ PHP_FUNCTION(java_set_library_path)
   (*jenv)->writeInvokeEnd(jenv);
 }
 
-static short check_type (zval *pobj, zend_class_entry *class TSRMLS_DC) {
-#ifdef ZEND_ENGINE_2
-  if (zend_get_class_entry(pobj TSRMLS_CC) != class)
-	return 0;
-  else
-#endif
-	return 1;
-}
-
 PHP_FUNCTION(java_instanceof)
 {
   zval **pobj, **pclass;
@@ -106,23 +105,16 @@ PHP_FUNCTION(java_instanceof)
   convert_to_object_ex(pclass);
 
   obj = 0;
-  if((Z_TYPE_PP(pobj) == IS_OBJECT) && check_type(*pobj, php_java_class_entry TSRMLS_CC)){
-	java_get_jobject_from_object(*pobj, &obj TSRMLS_CC);
-  }
+  java_get_jobject_from_object(*pobj, &obj TSRMLS_CC);
   if(!obj) {
-	zend_error(E_WARNING, "Parameter #1 for %s() must be a java object", get_active_function_name(TSRMLS_C));
+	zend_error(E_ERROR, "Parameter #1 for %s() must be a java object", get_active_function_name(TSRMLS_C));
 	return;
   }
 
   class = 0;
-  if((Z_TYPE_PP(pclass) == IS_OBJECT) &&
-	 (check_type(*pclass, php_java_class_entry TSRMLS_CC)||
-	  check_type(*pclass, php_java_class_class_entry TSRMLS_CC)||
-	  check_type(*pclass, php_java_jsr_class_class_entry TSRMLS_CC))){
-	java_get_jobject_from_object(*pclass, &class TSRMLS_CC);
-  }
+  java_get_jobject_from_object(*pclass, &class TSRMLS_CC);
   if(!class) {
-	zend_error(E_WARNING, "Parameter #2 for %s() must be a java object", get_active_function_name(TSRMLS_C));
+	zend_error(E_ERROR, "Parameter #2 for %s() must be a java object", get_active_function_name(TSRMLS_C));
 	return;
   }
 
@@ -132,11 +124,30 @@ PHP_FUNCTION(java_instanceof)
   (*jenv)->writeInvokeEnd(jenv);
 }
 
+PHP_FUNCTION(java_session_get)
+{
+  zval **argv;
+  int argc = ZEND_NUM_ARGS();
+  
+  if (argc!=2) WRONG_PARAM_COUNT;
+
+  argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
+  if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
+	php_error(E_ERROR, "Couldn't fetch arguments into array.");
+	RETURN_NULL();
+  }
+
+  php_java_invoke("getSession", 0, argc, argv, return_value TSRMLS_CC);
+
+  efree(argv);
+}
+
 function_entry java_functions[] = {
 	PHP_FE(java_last_exception_get, NULL)
 	PHP_FE(java_last_exception_clear, NULL)
 	PHP_FE(java_set_library_path, NULL)
 	PHP_FE(java_instanceof, NULL)
+	PHP_FE(java_session_get, NULL)
 	{NULL, NULL, NULL}
 };
 
@@ -157,7 +168,6 @@ zend_module_entry java_module_entry = {
 ZEND_GET_MODULE(java)
 #endif
 
-int  le_jobject;
 int java_ini_updated, java_ini_last_updated;
 zend_class_entry *php_java_class_entry;
 zend_class_entry *php_java_class_class_entry;
@@ -376,9 +386,11 @@ PHP_METHOD(java, __destruct)
 
   if(JG(jenv))
 	(*JG(jenv))->writeUnref(JG(jenv), obj);
+#ifndef __MINGW32__
   else
 	if(atoi(cfg->logLevel)>=4)
 	  fputs("PHP bug, an object destructor was called after module shutdown\n", stderr);
+#endif
 
   efree(argv);
   RETURN_TRUE;
@@ -892,11 +904,6 @@ PHP_MINIT_FUNCTION(java)
 	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
 
 #endif
-  
-  /* Register the resource, with destructor (arg 1) and text
-	 description (arg 3), the other arguments are just standard
-	 placeholders */
-  le_jobject = zend_register_list_destructors_ex(php_java_destructor, NULL, "java", module_number);
   
   ZEND_INIT_MODULE_GLOBALS(java, php_java_alloc_globals_ctor, NULL);
   

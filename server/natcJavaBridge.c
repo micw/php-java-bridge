@@ -235,11 +235,11 @@ JNIEXPORT jint JNICALL Java_php_java_bridge_JavaBridge_sread
 {
   int socket = (int)peer;
   jbyte *buffer = (*env)->GetByteArrayElements(env, _buffer, JNI_FALSE);
-  size_t n;
+  ssize_t n;
   assert(nmemb);
  res: errno=0;
   n=recv(socket, buffer, nmemb, 0);
-  if(errno==EINTR) goto res; // Solaris, see INN FAQ
+  if(!n && errno==EINTR) goto res; // Solaris, see INN FAQ
   (*env)->ReleaseByteArrayElements(env, _buffer, buffer, 0);
   return n;
 }
@@ -248,11 +248,15 @@ JNIEXPORT jint JNICALL Java_php_java_bridge_JavaBridge_swrite
 {
   int socket = (int)peer;
   jbyte *buffer = (*env)->GetByteArrayElements(env, _buffer, JNI_FALSE);
-  size_t n;
+  size_t s=0, size = (size_t) nmemb;
+  ssize_t n = 0;
   assert(nmemb);
+
  res: errno=0;
-  n=send(socket, buffer, nmemb, 0);
-  if(errno==EINTR) goto res; // Solaris, see INN FAQ
+  while((size>s)&&((n=send(socket, buffer+s, size-s, 0)) > 0))
+	s+=n;
+  if(size>s && !n && errno==EINTR) goto res; // Solaris, see INN FAQ
+
   (*env)->ReleaseByteArrayElements(env, _buffer, buffer, 0);
   return n;
 }

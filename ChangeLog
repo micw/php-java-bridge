@@ -1,3 +1,73 @@
+2005-03-05  Jost Boekemeier <jostb@intern>
+
+	* server/php/java/bridge/Session.java: New file.
+	
+	* tests.php5/session.php: New test.
+
+	* PROTOCOL.TXT: Renamed Unref to Destroy.
+
+	* client.c (setResultFromException, setResultFromObject): Do not
+	store head of resource list but the object handle so that we can
+	store java values in the $_SESSION var. Remove obsolete resoure
+	list.
+	
+	* java_bridge.c (php_java_destructor): No longer necessary.
+	
+	* java.c (le_jobject): No longer necessary.
+
+	* client.c (is_java_type, is_type): New functions.
+	(java_get_jobject_from_object): Use is_type, return 0 if object is not a java object.
+	(php_java_invoke): Issue a warning if received a non-java object.
+	
+	* java.c (check_type): Renamed to is_type and moved to client.c
+	(java_session_get): New function.
+	(MINIT): register_list_destructors no longer necessary.
+	
+	* parser.c (parse): Renamed VOID to VOJD. Reason: winsock2.h
+	exports a VOID type... oh billy boy...
+	(parse): Use ssize_t for socket operations.
+	(parse): Use recv instead of read (for winsock2).
+	(parse): Add Solaris' errno=EINTR nonsense.
+	(parse): Correct typo in blob handling.
+
+	* server/php/java/bidge/Parser.java (parse): Updated with code from parser.c.
+	
+	* server/php/java/bridge/*.java: Replaced all Hashtables by HashMap in order
+	to store null values.
+
+	* server/php/java/bridge/JavaBridge.java (getSession): New method
+
+	* server/php/java/bridge/JavaBridge.java
+	(Invoke, GetSetProp, CreateObject): Removed obsolete "connection
+	abort" handler. Store candidates instead of matches for error
+	reporting.
+
+	* server/php/java/bridge/GlobalRef.java (get): Throw NullPointer
+	if value is null (we do not store null values in the global ref, a
+	null is represented as id="0" or id="").
+
+	* server/natcJavaBridge.c (send, recv): Add solaris' EINTR handling.
+
+	* protocol.c (flush): Use send instead of write (for winsock2).
+	(flush): Add slowlaris EINTR handling
+	
+	* bind.c, client.c, java_bridge.c: Add MINGW32 #ifdefs.
+
+	* protocol.h: Default level is now 2 (on unix).
+
+	* protocol.c (replaceQuote): Fixed typo; store correct len and terminate with 0.
+
+	* update_policy.sh.in (EXTENSION_DIR): Replace all values in a line.
+
+	* examples/clients/README, examples/clients/getProperties.py,
+	examples/clients/getProperties.scm,
+	examples/clients/listToArray.scm,
+	examples/clients/formatArray.xsl: New client examples written in
+	Scheme and Python.
+
+	* server/RunJavaBridge.c.in (usage, main): Updated for 2.0.0
+	
+	
 2005-02-13  Jost Boekemeier  <jostb@intern>
 
 	* PROTOCOL.TXT: New file

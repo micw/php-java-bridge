@@ -2,7 +2,9 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <unistd.h>
+#include <errno.h>
 
+#include "php_java.h"
 #include "parser.h"
 
 #define RECV_SIZE 8192 // initial size of the receive buffer
@@ -28,7 +30,7 @@
   i0=i; \
 }
 #define RESET() { \
-  type=VOID;\
+  type=VOJD;\
   mask=~(unsigned char)0; \
   level=0; \
   eor=0; \
@@ -49,16 +51,21 @@ short parse(proxyenv *env, parser_cb_t *cb) {
   parser_tag_t tag[] = {{0, v1}, {0, v2}, {0, v3}};
   unsigned char buf[RECV_SIZE];
   unsigned char ch, mask=~(unsigned char)0;
-  enum {BEGIN, KEY, VAL, ENTITY, BLOB, VOID} type = VOID;
+  // VOJD is VOID for f... windows (VOID is in winsock2.h)
+  enum {BEGIN, KEY, VAL, ENTITY, BLOB, VOJD} type = VOJD;
   short level=0, in_dquote=0, eor=0, blen=0;
-  size_t pos=0, c=0, i=0, i0=0, e;
+  ssize_t pos=0, c=0; size_t i=0, i0=0, e;
   unsigned char *s=(*env)->s;
   assert(s); if(!s) return 1;
 
   while(!eor) {
     if(c==pos) { 
-      pos=read((*env)->peer, buf, RECV_SIZE);
-      if(!pos) break;
+    res: 
+      errno=0;
+      pos=recv((*env)->peer, buf, RECV_SIZE, 0);
+      if(!pos && errno==EINTR) goto res; // Solaris, see INN FAQ
+
+      if(pos<=0) break;
       c=0; 
     }
     switch((ch=buf[c])&mask) 
@@ -90,19 +97,22 @@ short parse(proxyenv *env, parser_cb_t *cb) {
 	  CALL_BEGIN();
 	}
 	tag[0].n=tag[1].n=tag[2].n=0; i0=i=0;      		/* RESET */
-	type=VOID;
+	type=VOJD;
 	if(level==0) eor=1; 
 	break;
       case '\0':
-	if(mask==0) {type=BLOB; mask=0; break;}
-	if(type==VOID) mask=~(unsigned char)0;
+	if(mask!=0) {type=BLOB; mask=0; break;}
 				
 	if(0!=blen) {
 	  APPEND(ch);
-	  if(0==--blen) type=VOID;
-	}
-	else {
-	  blen=ch;
+	  --blen;
+	} else {
+	  if(type==VOJD) {
+	    mask=~0;
+	  } else {
+	    type=VOJD;
+	    blen=ch;
+	  }
 	}
 	break;
       case ';':
