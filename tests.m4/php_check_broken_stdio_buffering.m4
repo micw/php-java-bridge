@@ -70,7 +70,7 @@ int main() {
   return ret;
 }
 ],
-[hava_broken_stdio_buffering=no],
+[have_broken_stdio_buffering=no],
 [have_broken_stdio_buffering=yes])
 ])
 
