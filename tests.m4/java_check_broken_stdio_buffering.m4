@@ -1,5 +1,4 @@
-
-AC_DEFUN([PHP_CHECK_BROKEN_STDIO_BUFFERING],[
+AC_DEFUN([JAVA_CHECK_BROKEN_STDIO_BUFFERING],[
   AC_MSG_CHECKING([for broken stdio buffering])
   AC_CACHE_VAL(have_broken_stdio_buffering,[
   AC_TRY_RUN([
