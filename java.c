@@ -27,7 +27,7 @@ PHP_RINIT_FUNCTION(java)
 }
 PHP_RSHUTDOWN_FUNCTION(java)
 {
-  if (JG(php_reflect)) (*JG(jenv))->DeleteGlobalRef(JG(jenv), JG(php_reflect));
+   if (JG(php_reflect)) (*JG(jenv))->DeleteGlobalRef(JG(jenv), JG(php_reflect));
   if(JG(jenv)&&*JG(jenv)&&(*JG(jenv))->peer) fclose((*JG(jenv))->peer);
   if(JG(jenv)&&*JG(jenv)) free(*JG(jenv));
   if(JG(jenv)) free(JG(jenv));

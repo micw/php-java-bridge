@@ -81,11 +81,6 @@ static int readpid(int fd) {
 void java_start_server(struct cfg*cfg) {
   int pid=0, p[2];
 
-  {
-	struct stat buf;
-	unlink(cfg->sockname);
-	assert(stat(cfg->sockname, &buf));
-  }
   if(pipe(p)!=-1) {
 	if(can_fork()) {
 	  if(!fork()) {

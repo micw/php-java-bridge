@@ -291,8 +291,13 @@ int php_java_set_property_handler(zend_property_reference *property_reference, p
  */
 void php_java_destructor(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 {
-	void *jobject = (void *)rsrc->ptr;
-	if (JG(jenv)) (*JG(jenv))->DeleteGlobalRef(JG(jenv), jobject);
+  // Disabled
+  // This was called *after* connection shutdown, which is
+  // much too late.  The server part now does its own 
+  // resource tracking.
+/* 	void *jobject = (void *)rsrc->ptr; */
+/* 	assert(JG(jenv)); */
+/* 	if (JG(jenv)) (*JG(jenv))->DeleteGlobalRef(JG(jenv), jobject); */
 }
 
 static void wait_for_daemon(TSRMLS_D) {

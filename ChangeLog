@@ -95,5 +95,35 @@
 	* natcJavaBridge.c (Java_JavaBridge_startNative): Linux handles
 	accept different than the BSD variants.  Check errno.
 
+	Starting java as a daemon should solve the sub-process problem.
 	* bind.c (java_start_server): Start java as a daemon, if possible.
 	(readpid): New function.
+	* java_bridge.c (php_java_shutdown_library): Wait for daemon
+	(wait_for_daemon): New function
+	* README: Delete the note about Apache 1.3.
+	
+	Correctly shut down the connection in rshutdown
+	* java.c (PHP_RSHUTDOWN_FUNCTION): Delete global refs and close
+	file descriptors.
+	
+
+2004-09-23  Jost Boekemeier  <jostb@mail.yahoo.de>
+
+	Use a guard thread instead of a async signal to shutdown the server.
+	* natcJavaBridge.c (mutex, cond, count, block): New variables.
+	(exit_sig): removed
+	(block_sig, enter, leave, guard_requests): New functions.
+	(initGlobals): initialization added
+	(handle_requests): update thread count
+	(Java_JavaBridge_startNative): terminate after guard has terminated.
+	* README: Note about dynamic loading via dl() added.
+		
+        The bridge must do its own resource tracking because php4 calls 
+	the php_java_destructor too late (*after* rshutdown!).
+	* java_bridge.c (php_java_destructor): Code disabled.
+	* natcJavaBridge.c (enumClass, hashKeys, enumMore, enumNext): New
+	globals.
+	(initGlobals): initialization
+	(connection_startup, connection_cleanup): New functions.
+	(handle_requests, handle_request_impl, handle_request): Trace global
+	refs.

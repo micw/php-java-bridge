@@ -43,11 +43,16 @@ if(!expr) { \
 
 static jclass exceptionClass=NULL;
 
+static jclass enumClass=NULL;
 static jclass hashClass=NULL;
 static jmethodID init=NULL;
 
 static jmethodID hashPut=NULL;
 static jmethodID hashRemove=NULL;
+static jmethodID hashKeys=NULL;
+
+static jmethodID enumMore=NULL;
+static jmethodID enumNext=NULL;
 
 static jclass longClass=NULL;
 static jmethodID longCtor=NULL;
@@ -71,6 +76,7 @@ struct peer {
   short tran;					/* if we must return to java first */
   FILE*stream;
   jobject objectHash;
+  jobject globalRef;
 };
 static void doLog (JNIEnv *jenv, char *msg, jmethodID logMessageID) {
   jstring str;
@@ -206,11 +212,16 @@ static void initGlobals(JNIEnv *env) {
   jobject hash;
 
   exceptionClass = (*env)->FindClass(env, "java/lang/Throwable");
+  enumClass = (*env)->FindClass(env, "java/util/Enumeration");
   hashClass = (*env)->FindClass(env, "java/util/Hashtable");
   init = (*env)->GetMethodID(env, hashClass, "<init>", "()V");
   hash = (*env)->NewObject(env, hashClass, init);
   hashPut = (*env)->GetMethodID(env, hashClass, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
   hashRemove = (*env)->GetMethodID(env, hashClass, "remove", "(Ljava/lang/Object;)Ljava/lang/Object;");
+  hashKeys = (*env)->GetMethodID(env, hashClass, "keys", "()Ljava/util/Enumeration;");
+  
+  enumMore = (*env)->GetMethodID(env, enumClass, "hasMoreElements", "()Z");
+  enumNext = (*env)->GetMethodID(env, enumClass, "nextElement", "()Ljava/lang/Object;");
   longClass = (*env)->FindClass (env, "java/lang/Long");
   longCtor = (*env)->GetMethodID(env, longClass, "<init>", "(J)V");
   longValue = (*env)->GetMethodID(env, longClass, "longValue", "()J");
@@ -356,9 +367,12 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	break;
   }
   case DELETEGLOBALREF: {
-	jobject ref;
+	jobject ref, ob, ob2;
 	sread(&ref, sizeof ref, 1, peer);
 	(*env)->DeleteGlobalRef(env, ref);
+	ob = objFromPtr(env, ref);
+	ob2 = (*env)->CallObjectMethod(env, peer->globalRef, hashRemove, ob);
+	assert(ob2);
 	break;
   }
   case DELETELOCALREF: {
@@ -483,10 +497,14 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
   }
   case NEWGLOBALREF: {
 	jobject result;
-	jobject obj;
+	jobject obj, ob;
 	sread(&obj, sizeof obj, 1, peer);
 	result = (*env)->NewGlobalRef(env, obj);
+	ob=objFromPtr(env, result);
 	swrite(&result, sizeof result, 1, peer);
+	assert(ob);
+	assert(!(*env)->CallObjectMethod(env, peer->globalRef, hashRemove, ob));
+	if(ob) (*env)->CallObjectMethod(env, peer->globalRef, hashPut, ob, ob);
 	break;
   }
   case NEWOBJECT: {
@@ -598,7 +616,7 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
   }
   return 1;
 }
-static int handle_request_impl(FILE*file, JNIEnv *env) {
+static int handle_request_impl(FILE*file, JNIEnv *env, jobject globalRef) {
   struct peer peer;
   int val;
   peer.objectHash=initHash(env);
@@ -606,6 +624,7 @@ static int handle_request_impl(FILE*file, JNIEnv *env) {
   peer.stream=file;
   peer.jenv=env;
   peer.tran=0;
+  peer.globalRef=globalRef;
   val=setjmp(peer.env);
   if(val) {
 	(*env)->DeleteGlobalRef(env, peer.objectHash);
@@ -627,8 +646,28 @@ static void logChannel(JNIEnv*env, char*t, int i) {
  if(logLevel>2) logIntValue(env, t, i);
 }
 
+static jobject connection_startup(JNIEnv *env) {
+  jobject hash = (*env)->NewObject(env, hashClass, init);
+  jobject globalRef = (*env)->NewGlobalRef(env, hash);
+
+  return globalRef;
+}
+
+static void connection_cleanup (JNIEnv *env, jobject globalRef) {
+  jobject enumeration, ref;
+  /* cleanup global refs that the client left */
+  enumeration=(*env)->CallObjectMethod(env, globalRef, hashKeys);
+  while((*env)->CallBooleanMethod(env, enumeration, enumMore)) {
+	ref = (*env)->CallObjectMethod(env, enumeration, enumNext);
+	jobject jo=(*env)->CallObjectMethod(env, globalRef, hashRemove, ref);
+	(*env)->DeleteGlobalRef(env, ptrFromObj(env,ref));
+  }
+  (*env)->DeleteGlobalRef(env, globalRef);
+}
+
 struct param {int s; JNIEnv *env; JavaVM *vm;};
 static void *handle_requests(void *p) {
+  jobject globalRef;
   JNIEnv *env;
   struct param *param = (struct param*)p;
   FILE *peer;
@@ -641,14 +680,19 @@ static void *handle_requests(void *p) {
   peer = fdopen(param->s, "r+");
   if(!peer) logSysError(env, "could not fdopen socket");
 
+  globalRef = connection_startup(env);
+  if(!globalRef){logError(env, "could not allocate global hash");fclose(peer);free(p);return NULL;}
+
   while(peer && !feof(peer)) {
-	int term = handle_request_impl(peer, env);
+	int term = handle_request_impl(peer, env, globalRef);
 	if(term>=0) logChannel(env, "end packet", term);
 	else {
 	  logIntValue(env, "communication broken", term);
 	  break;
 	}
   }
+  connection_cleanup(env, globalRef);
+
   logChannel(env, "terminate communication channel", param->s);
   (*param->vm)->DetachCurrentThread(param->vm);
   if(peer) fclose(peer);
@@ -660,7 +704,7 @@ static void *handle_requests(void *p) {
 }
 
 
-  
+
 JNIEXPORT void JNICALL Java_JavaBridge_startNative
   (JNIEnv *env, jclass self, jint _logLevel, jstring _sockname)
 {
