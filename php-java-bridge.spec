@@ -120,5 +120,4 @@ chkconfig php-java-bridge off
 
 %files -f filelist
 %defattr(-,root,root)
-%doc README README.GNU_JAVA INSTALL LICENSE ChangeLog test.php php-java-bridge.te php-java-bridge.fc
-
+%doc README README.GNU_JAVA INSTALL LICENSE ChangeLog test.php php-java-bridge.te php-java-bridge.fc 

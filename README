@@ -120,7 +120,7 @@ What is the PHP/Java Bridge?
   bridge and the PHP/Java bridge at the same time.
 
   The module has been tested on a Mandrake Linux System (Version 9.2),
-  on RedHat Enterprise 3, RedHat Fedora Core 1..3, Solaris 8..10 (Sparc,
+  on RedHat Enterprise 3, RedHat Fedora Core 1..3, Solaris 9..10 (Sparc,
   64 bit JVM), FreeBSD 5.3 and Windows with RedHat Cygwin, but it should 
   run on all Unix-like operating systems including HP-UX, WinXP.
 
@@ -335,6 +335,22 @@ Build and execution instructions:
   for example if you want to run the server part of the bridge on a
   unix machine, but opening a port on a web-server can be dangerous.
 
+  Furthermore it is possible to compile the server part of the bridge
+  for a win32 target on any unix operating system by using a cross
+  compiler:
+
+    cd server
+    /opt/jdk1.4/bin/javac JavaBridge.java
+    i386-pc-mingw32-gcc  -I. -DEXTENSION_DIR=\".\"  -c natcJavaBridge.c 
+    i386-pc-mingw32-dllwrap --export-all-symbols -k  \
+                       -o natcJavaBridge.dll natcJavaBridge.o -lws2_32
+     
+  After that you can copy natcJavaBridge.dll and JavaBridge*.class to
+  your windows machine and start the server part of the bridge as usual,
+  for example with:
+    
+    c:\jdk1.4\bin\java.exe JavaBridge 9047 3 ""
+      
 ------------------------------------
   Loading on-demand with dl()
   ---------------------------
@@ -459,8 +475,8 @@ Build and execution instructions:
   The PHP/Java Bridge distribution contains two policy files,
   "php-java-bridge.te" and "php-java-bridge.fc". The
   "php-java-bridge.te" declares the javabridge_t domain and the
-  resources it requires.  All domains are granted connect, read and
-  write to the PHP/Java Bridge server socket, which is
+  resources it requires.  httpd and user domains are granted connect, 
+  read and write to the PHP/Java Bridge server socket, which is
   "@var/run/.php-java-bridge_socket" in the Linux abstract namespace,
   and file create/read/write in the tmp_t.  Everything else (connections
   to other servers, file access, ...) is currently denied.
@@ -488,8 +504,8 @@ Build and execution instructions:
         su -c "make -C /etc/selinux/targeted/src/policy reload"
       
   If the default policy is too restrictive and e.g. you want to use the
-  PHP/Java Bridge to connect to your J2EE server(s) you can temporarily set 
-  the policy to Permissive, for example with the command "setenforce
+  PHP/Java Bridge to connect to your J2EE server(s), you can temporarily 
+  set the policy to Permissive, for example with the command "setenforce
   Permissive" and connect to the server. Then extract the permissions
   from the audit log, for example with the command "audit2allow -d". Then
   append them at the end of the "php-java-bridge.te" file and load the
@@ -500,7 +516,7 @@ Build and execution instructions:
   PHP 5 issues
   ------------
 
-  Versions 5.0.0 up to 5.0.3 cannot load the Bridge from the dl()
+  Versions 5.0.0 up to 5.0.3RC cannot load the Bridge from the dl()
   function.  If you use one of these versions, please either apply the
   php5-crash-in-evaluator-shutdown_workaround.patch or add an entry to
   the php.ini, see install instructions above.

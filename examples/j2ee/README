@@ -38,9 +38,13 @@ this directory.
      
      $app_server/domains/domain1/applications/j2ee-modules/documentBean/
 
+   and the j2ee.jar from the directory
+
+     $app_server/lib
+
    into the current directory. 
 
-   Examine globals.php and change $app_server and $app_url if necessary.
+   Examine globals.php and change $app_url if necessary.
 
 
 4. Start the PHP/Java Bridge if it is not already running.
@@ -51,8 +55,3 @@ this directory.
      php documentClient.php
 
    It should return "This document has 2 pages."
-
-
-
-
-   
