@@ -11,6 +11,7 @@ if test "$PHP_JAVA" != "no"; then
        JAVA_FUNCTION_CHECKS
        PTHREADS_CHECK
        PTHREADS_ASSIGN_VARS
+       PTHREADS_FLAGS
        JAVA_CHECK_BROKEN_STDIO_BUFFERING
 
 # the JAVA_HOME directory
