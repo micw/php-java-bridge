@@ -419,7 +419,7 @@ Build and execution instructions:
    * -DCFG_JAVA_INPROCESS: Do not use exec() but call the JVM directly.
      Experimental.
      
-  Example: make CFLAGS="-m64"
+  Example: make CFLAGS="-m64 -DJAVA_COMPILE_DEBUG"
 
 ------------------------------------
   Log levels

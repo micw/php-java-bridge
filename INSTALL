@@ -35,9 +35,9 @@ Installation from source code
 
 The following software components must be installed on your computer:
 
-* an operating system, for example RedHat Enterprise Linux Version 3
+* an operating system, for example RedHat Enterprise Linux
 
-* a Java VM, for example Sun JDK 1.4.2_02
+* a Java VM, for example IBM JDK 1.4.1
 
 The following software components are required to run PHP scripts with
 java code embedded via a web-server.  It is assumed that these
@@ -61,8 +61,8 @@ INST=/usr/local
 su - -c "service httpd stop"
 
 # compile and install apache 2
-gunzip < httpd_2.x.y.tar.gz | tar xf -
-cd httpd_2.x.y
+gunzip < httpd-2.x.y.tar.gz | tar xf -
+cd httpd-2.x.y
 ./configure  --enable-module=so --prefix=$INST
 make && su -c "make install"
 cd ..
@@ -70,10 +70,7 @@ cd ..
 # compile and install php 4.3
 bunzip2 < php-4.3.x.tar.bz2 | tar xf -
 cd php-4.3.x
-./configure --prefix=$INST \
---with-mysql \
---without-java \
---with-apxs2=$INST/bin/apxs
+./configure --prefix=$INST --without-java --with-apxs2=$INST/bin/apxs
 make && su -c "make install"
 # now activate php in the httpd.conf
 su -c "echo 'AddType application/x-httpd-php .php' >>$INST/conf/httpd.conf"
@@ -81,12 +78,11 @@ cd ..
 
 # compile and install the php/java bridge
 bunzip2 < php-java-bridge_1.x.y.tar.bz2 | tar xf -
-cd php-java-bridge_1.x.y
+cd php-java-bridge-1.x.y
 export PATH=$INST/bin:$PATH 
 export LD_LIBRARY_PATH=$INST/lib:$LD_LIBRARY_PATH
 phpize
-./configure --prefix=$INST \
---with-java=/opt/IBMJava2-141
+./configure --with-java=/opt/IBMJava2-141
 make && su -c "make install"
 # now activate the bridge in php.ini
 su -c "touch $INST/lib/php.ini && echo -e 'extension=java.so\n[java]' >>$INST/lib/php.ini"

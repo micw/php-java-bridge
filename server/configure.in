@@ -34,7 +34,7 @@ JAVA_CHECK_STRUCT_UCRED
 
 # find includes eg. -I/opt/jdk1.4/include -I/opt/jdk1.4/include/linux
 if test "$PHP_JAVA" != "yes"; then
-PHP_EVAL_INCLINE(`for i in \`find -follow $PHP_JAVA/include -type d -print\`; do echo -n "-I$i "; done`)
+PHP_EVAL_INCLINE(`for i in \`find $PHP_JAVA/include -follow -type d -print\`; do echo -n "-I$i "; done`)
 fi
 
 AM_CPPFLAGS="${AM_CPPFLAGS} -DEXTENSION_DIR=\"\\\"\$(EXTENSION_DIR)\\\"\""
