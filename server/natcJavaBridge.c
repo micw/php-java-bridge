@@ -733,7 +733,7 @@ JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jobject instan
   if(!globalRef){logError(env, "could not allocate global hash");if(peer) SFCLOSE(peer);return;}
 
   if(peer && (SFWRITE(&instance, sizeof instance, 1, peer)!=1)) {
-	logSysError(env, "could not send instance, child not listening"); SFCLOSE(peer);return;
+	logSysError(env, "could not send instance, child not listening"); connection_cleanup(env, globalRef); SFCLOSE(peer);return;
   }
   enter();
   while(peer && !SFEOF(peer)) {
@@ -761,12 +761,6 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
   struct sockaddr_un saddr;
   int sock, n;
   SFILE *peer;
-
-  /* catch signals not used by the VM, see
-	 http://www-106.ibm.com/developerworks/ibm/library/i-signalhandling/
-     (exit will call our atexit_bridge)
-  */
-  signal(SIGABRT, exit);
 
   logLevel = _logLevel;
   bridge = self;
