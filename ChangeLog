@@ -162,3 +162,34 @@
 
 	* java_bridge.c (wait_for_daemon): gcj uses the 2 internaly(!), we
 	must send it twice to kill it. 
+
+2004-10-23  Jost Boekemeier  <jostb@diego.intern>
+
+	Added support for Solaris 64 and Solaris broken stdio.
+	* protocol.h, proxyenv.c, client.c, natcJavaBridge.c: Use SFREAD ... instead of fread.
+	* sio.c, sio.h: New files
+	* tests.m4/function_checks.m4, tests.m4/java_check_broken_gcc_installation.m4, tests.m4/java_check_broken_stdio_buffering.m4, tets.m4/threads.m4: New files
+
+	* LICENSE: Correct author.
+
+	Correct classpath problem
+	* natcJavaBridge.c, client.c: Client receives the bridge instance as first element.
+	* JavaBridge.java: Start a new thread, set the context classloader on java level.
+	* natcJavaBridge.c: Do not call attachCurrentThread, which is broken in gcj.
+
+	Added support for static binaries.
+	* natcJavaBridge.c, bind.c: Invoke jniRegisterNatives.
+
+	Use GNU autoconf to configure the server part separately. Share the
+	test macros from PHP and the java module with the server part.
+	* Makefile.frag: rewritten
+	* server/acinclude.m4, server/autogen.sh, server/configure.in: new files
+	* config.m4: Include all tests in tests.m4.
+
+	Win98 support.
+	* sio.h: Do not depend on HAVE_CONFIG_H
+	* natcJavaBridge: Win98 does not support sigwait
+
+	* function_checks.m4 (lsocket): test rewritten
+
+	* README: Solaris, 64 bit VM's and Win98 are supported
