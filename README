@@ -1,14 +1,14 @@
 What is the PHP/Java bridge?
 ----------------------------
 
-  The PHP/Java bridge connects the PHP object system with the Java
-  object system. It can be used to access java based applications 
-  running in a java application server. The PHP/Java bridge communicates 
-  with the application server through local sockets using an efficient
-  communication protocol.  This means that only one JVM runs to serve
-  all clients within a multi-process HTTP-Server.  Each client process
-  communicates with a corresponding thread spawned by the running
-  application server.
+  The PHP/Java Bridge is a PHP 4 module which connects the PHP object
+  system with the Java object system. It can be used to access java
+  based applications running in a java application server. The
+  PHP/Java bridge communicates with the application server through local
+  sockets using an efficient communication protocol.  This means that
+  only one JVM runs to serve all clients within a multi-process
+  HTTP-Server.  Each client process communicates with a corresponding
+  thread spawned by the running application server.
 
   If the bridge does not detect a running java application server, 
   it starts a private java process to serve further requests.
@@ -20,7 +20,7 @@ What is the PHP/Java bridge?
     garbage collected. That means that static classes cannot be used to
     hold session data unless the session keeps a reference to them. In any
     case it is better to use a java.util.Properties object or a database
-    instead.
+    instead to store session data.
      <?php
      java_set_library_path("file:c:/mytest.jar");
      $mytest = new java("mytest");
@@ -57,9 +57,10 @@ What is the PHP/Java bridge?
   PHP/Java bridge at the same time.
 
   The module has been tested on a Mandrake Linux System (Version 9.2),
-  on RedHat Enterprise 3, RedHat Fedora Core 1 and 2, Solaris9 (Sparc)
-  and Windows98 with RedHat Cygwin, but it should run on all Unix-like
-  operating systems including HP-UX, MacOS-X, WinXP/Cygwin.  
+  on RedHat Enterprise 3, RedHat Fedora Core 1 and 2, Solaris9 (Sparc,
+  64 Bit JVM) and Windows98 with RedHat Cygwin, but it should run on
+  all Unix-like operating systems including HP-UX, MacOS-X,
+  WinXP/Cygwin.
 
   Custom java libraries (.jar files) can be stored in the following
   locations:
@@ -67,7 +68,7 @@ What is the PHP/Java bridge?
    1. Somewhere on a HTTP or FTP server, see PHP function
       java_set_library_path.
 
-   2. In the sub-directory "lib" of the PHP extension directory if it
+   2. In the sub-directory "lib" of the PHP extension directory, if it
       exists and is accessible when the JVM starts the bridge.
       This is usually "`php-config --extension-dir`/lib".
 
@@ -131,11 +132,11 @@ Build and execution instructions:
 
           extension = java.so
           [java]
-          java.log_level=5
-          java.log_file=/tmp/java.log
+          java.log_level=1
+          java.log_file=/var/log/php-java-bridge.log
           # It is recommended to enable the following option and
           # to start a JVM as a separate process.
-          #java.socketname=/tmp/.php_java
+          #java.socketname=/var/run/.php-java-bridge_socket
 
   After the module is activated, verify that the module is running by
   typing:
@@ -163,14 +164,14 @@ Build and execution instructions:
   web-server.  The java VM can be started either via the
   "php-java-bridge" script or by typing the following command:
 
-            JAVA_HOME=<java.home> <java.home>/bin/java \
+            JAVA_HOME=<java.java_home> <java.java> \
                                         -Djava.library.path=<java.libpath>
                                         -Djava.class.path=<java.classpath> 
                                         -Djava.awt.headless=true  
                                         JavaBridge 
                                         <java.socketname>
-                                        <loglevel>
-                                        <log-file>
+                                        <java.log_level>
+                                        <java.log_file>
 
   For example in a gnome-terminal type:
 
@@ -179,9 +180,9 @@ Build and execution instructions:
                     -Djava.class.path  =/usr/lib/php4 \
                     -Djava.awt.headless=true \
                      JavaBridge \
-                     /tmp/.php_java \ 
-                     5 \
-                     "" | tee /tmp/java.log
+                     /var/run/.php-java-bridge_socket \ 
+                     1 \
+                     "" | tee /var/log/php-java-bridge.log
 
   If you are unsure how to start the java process, please look at the
   output of the above phpinfo() command.  One of the last lines shows
@@ -212,12 +213,12 @@ Build and execution instructions:
 
    For example:
 
-      `php-config --extension-dir`/java /tmp/.php_java 5 "" | tee /tmp/java.log
+      `php-config --extension-dir`/java /var/run/.php-java-bridge_socket 1 "" | 
+        tee /var/log/php-java-bridge.log
 
-
-   Then point the bridge to the socket /tmp/.php_java by hard-coding 
-   the java.socketname to /tmp/.php_java (as described in the install
-   instructions) and re-start the apache service.
+   Then direct the bridge to the server socket by hard-coding the
+   java.socketname to /var/run/.php-java-bridge_socket (as described
+   in the install instructions) and re-start the apache service.
 
    If you now invoke the test.php file, you should see the
    output from GNU Java (e.g.):
@@ -246,13 +247,18 @@ Build and execution instructions:
      ./configure --with-java --libdir=$dir --datadir=$dir --bindir=$dir
 
    After you have created the executables you can distribute the 
-   contents of the php-java-bridge-x.y.z/modules directory which
-   should contain the files "java", libnatcJavaBridge.so and java.so.
-   The java.so is the PHP module, the other files are required
-   to start the server part.  The java executable may need other
-   system libraries, for example gcj.so and gcc_s.so which should
-   be installed on the target system or copied/linked into the
-   extension-dir (see php-config --extension-dir).
+   contents of the php-java-bridge-x.y.z/modules directory. It
+   should contain the files "java", libnatcJavaBridge.so, and java.so
+   (autoconf/libtool creates other files, you can delete them). The
+   java.so is the PHP module, the other files are required to start the
+   server part.  The java executable may need other system libraries, for
+   example gcj.so and gcc_s.so which should be installed on the target
+   system.
+
+   Additional shared libraries can be copied into the php extension
+   directory (see command "php-config --extension-dir"), additional
+   java libraries (.jar files) can be installed in the sub-directory
+   lib/ of the php extension directory.
 
 ------------------------------------
   64 Bit issues
@@ -357,8 +363,51 @@ Build and execution instructions:
   system it is recommended to compile PHP in save mode (which switches
   off the dl() function) and to activate all modules in the global
   php ini file.
-------------------------------------
 
+------------------------------------
+  Recognized CFLAGS
+  -----------------
+
+  During compilation you can use the following CFLAGS.
+
+   * -DNDEBUG: Disables the assert() statement and other debug code.
+   
+   * -O0 -g3: Include full debug information into the binary.
+
+   * -m64: Build 64 bit code. Required if you run a 64 bit JVM.
+
+   * -m32: Build 32 bit code. Required if you run a 32 bit JVM on a 64
+     bit system.
+
+   * -DCFG_JAVA_SOCKET_ANON: Use the BSD/Linux abstract namespace instead
+     of creating a socket file.  Will only work on modern Linux/BSD
+     implementations but not on MacOS X for example (struct ucred is
+     non-standard).  Experimental. 
+
+   * -DCFG_JAVA_INPROCESS: Do not use exec() but call the JVM directly.
+     Experimental.
+     
+  Example: make CFLAGS="-m64 -DNDEBUG"
+
+------------------------------------
+  Log levels
+  ----------
+
+  You can set the java.log_level to 5 values:
+
+   0: Log nothing, not even fatal errors.
+
+   1: Log fatal system errors such as "out of memory error".
+
+   2: Log java errors and java exceptions.
+
+   3: Log info messages such as "loading jar xyz.jar from http://xy.com"
+
+   4: Log debug messages, including the c/s communication protocol.
+
+  The default log level is 1.
+
+------------------------------------
         
    This module is based on the ext/java module written by Sam Ruby.
    His original comments follow.
