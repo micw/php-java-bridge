@@ -1,8 +1,9 @@
 What is the PHP/Java bridge?
 ----------------------------
 
-  The PHP/Java bridge allows one to access java based applications
-  running in a java application server running on the local host.  The
+  The PHP/Java bridge connects the PHP object system with the Java object 
+  system. For example it can be used to access java based applications running 
+  in a java application server which is running on the local host.  The
   PHP/Java bridge communicates with the application server through local
   sockets using an efficient communication protocol.  This means that
   only one JVM runs to serve all clients within a multi-process
@@ -37,7 +38,7 @@ Build and execution instructions:
           su <password>
           make install
 
-   If your administrator allows you to dynamically load extensions you
+   If your administrator allows you to dynamically load extensions, you
    can now test the extension by invoking the test.php with the 
    command: php ./test.php.
 
