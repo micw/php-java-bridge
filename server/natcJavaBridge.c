@@ -30,6 +30,7 @@
 
 
 #include "protocol.h"
+#include "sio.c"
 
 #define ID(peer, name) \
 if(logLevel>=LOG_DEBUG) logDebug(env, "send: "/**/#name); \
@@ -76,7 +77,7 @@ struct peer {
   jmp_buf savepoint;			/* jump back to java */
   JNIEnv *jenv;
   short tran;					/* if we must return to java first */
-  FILE*stream;
+  SFILE*stream;
   jobject objectHash;
   jobject globalRef;
 };
@@ -119,10 +120,8 @@ static void logMemoryError(JNIEnv *jenv, char *file, int pos) {
 }
 
 static void swrite(const  void  *ptr,  size_t  size,  size_t  nmemb,  struct peer*peer) {
-  FILE*stream=peer->stream;
-  int n;
-  fflush(stream);
-  n = fwrite(ptr, size, nmemb, stream);
+  SFILE*stream=peer->stream;
+  int n = SFWRITE(ptr, size, nmemb, stream);
   //printf("write char:::%d\n", (unsigned int) ((char*)ptr)[0]);
   if(n!=nmemb) {
 	if(peer->tran) {		/* first clear the java stack, then longjmp */
@@ -134,10 +133,8 @@ static void swrite(const  void  *ptr,  size_t  size,  size_t  nmemb,  struct pee
 
 }
 static void sread(void *ptr, size_t size, size_t nmemb, struct peer *peer) {
-  FILE*stream=peer->stream;
-  int n;
-  fflush(stream);
-  n = fread(ptr, size, nmemb, stream);
+  SFILE*stream=peer->stream;
+  int n = SFREAD(ptr, size, nmemb, stream);
   //printf("read char:::%d\n", (unsigned int) ((char*)ptr)[0]);
   if(n!=nmemb) {
 	if(peer->tran) {		/* first clear the java stack, then longjmp */
@@ -652,7 +649,7 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
   }
   return 1;
 }
-static int handle_request_impl(FILE*file, JNIEnv *env, jobject globalRef) {
+static int handle_request_impl(SFILE*file, JNIEnv *env, jobject globalRef) {
   struct peer peer;
   int val;
   peer.objectHash=initHash(env);
@@ -712,18 +709,19 @@ static void connection_cleanup (JNIEnv *env, jobject globalRef) {
 JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jobject instance, jlong socket)
 {
   jobject globalRef;
-  FILE *peer = (FILE*)(long)socket;
+  SFILE *peer = (SFILE*)(long)socket;
   block_sig();
   enter();
   logChannel(env, "create new communication channel", socket);
 
   globalRef = connection_startup(env);
-  if(!globalRef){logError(env, "could not allocate global hash");if(peer) fclose(peer);return;}
+  if(!globalRef){logError(env, "could not allocate global hash");if(peer) SFCLOSE(peer);return;}
 
-  if(peer && (fwrite(&instance, sizeof instance, 1, peer)!=1)) {
-	logSysError(env, "could not send instance, child not listening"); fclose(peer);return;
+  if(peer && (SFWRITE(&instance, sizeof instance, 1, peer)!=1)) {
+	logSysError(env, "could not send instance, child not listening"); SFCLOSE(peer);return;
   }
-  while(peer && !feof(peer)) {
+  while(peer && !SFEOF(peer)) {
+	if(SFERROR(peer)) { logSysError(env, "communication error"); break; }
 	int term = handle_request_impl(peer, env, globalRef);
 	if(term>=0) logChannel(env, "end packet", term);
 	else {
@@ -734,7 +732,7 @@ JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jobject instan
   connection_cleanup(env, globalRef);
 
   logChannel(env, "terminate communication channel", socket);
-  if(peer) fclose(peer);
+  if(peer) SFCLOSE(peer);
 
   leave();
 }
@@ -746,7 +744,7 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
 {
   struct sockaddr_un saddr;
   int sock, n;
-  FILE *peer;
+  SFILE *peer;
 
   signal(SIGBUS, exit);
   signal(SIGILL, exit);
@@ -796,7 +794,7 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
 	socket = accept(sock, NULL, 0); 
 	if(socket==-1) {logSysError(env, "socket accept failed"); return;}
 	//if(errno) goto res;
-	peer = fdopen(socket, "r+");
+	peer = SFDOPEN(socket, "r+");
 	if(!peer) {logSysError(env, "could not fdopen socket");goto res;}
 
     (*env)->CallStaticVoidMethod(env, bridge, handleRequests,(jlong)(long)peer);

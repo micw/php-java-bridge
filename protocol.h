@@ -5,6 +5,8 @@
 
 /* peer */
 #include <stdio.h>
+#include "sio.h"
+
 /* jni */
 #include <jni.h>
 
@@ -69,7 +71,7 @@
 
 typedef struct proxyenv_ *proxyenv;
 struct proxyenv_ {
-  FILE *peer;
+  SFILE *peer;
 
   void (*LastException)(proxyenv *env, jobject php_reflect, jmethodID lastEx, jlong result);
   void (*CreateObject)(proxyenv *env, jobject php_reflect, jmethodID invoke, jstring classname, jobjectArray array, jlong result);
@@ -100,5 +102,5 @@ struct proxyenv_ {
   void (*SetObjectArrayElement) (proxyenv *env, jobjectArray array, jsize index, jobject val);
   int (*handle_request)(proxyenv *env);
 };
-extern proxyenv *java_createSecureEnvironment(FILE *peer, int (*handle_request)(proxyenv *env));
+extern proxyenv *java_createSecureEnvironment(SFILE *peer, int (*handle_request)(proxyenv *env));
 #endif

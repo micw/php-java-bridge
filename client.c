@@ -66,18 +66,14 @@ static int check_error(proxyenv *jenv, int nr TSRMLS_DC) {
 }
 
 
-static void swrite(const  void  *ptr,  size_t  size,  size_t  nmemb,  FILE *stream) {
-  int n;
-  fflush(stream);
-  n = fwrite(ptr, size, nmemb, stream);
+static void swrite(const  void  *ptr,  size_t  size,  size_t  nmemb,  SFILE *stream) {
+  int n = SFWRITE(ptr, size, nmemb, stream);
   //printf("write char:::%d\n", (unsigned int) ((char*)ptr)[0]);
   assert(n==nmemb);
   if(n!=nmemb) exit(6);
 }
-static void sread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
-  int n;
-  fflush(stream);
-  n = fread(ptr, size, nmemb, stream);
+static void sread(void *ptr, size_t size, size_t nmemb, SFILE *stream) {
+  int n = SFREAD(ptr, size, nmemb, stream);
   //printf("read char:::%d\n", (unsigned int) ((char*)ptr)[0]);
   assert(n==nmemb);
   if(n!=nmemb) exit(7);
@@ -180,7 +176,7 @@ static  void  setException  (proxyenv *jenv,  pval *presult, jbyteArray value) {
 static int handle_request(proxyenv *env) {
   jlong result;
   char c;
-  FILE *peer=(*env)->peer;
+  SFILE *peer=(*env)->peer;
   sread(&c, 1, 1, peer);
 
   switch(c) {
@@ -314,7 +310,7 @@ int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
   jobject local_php_reflect;
   jmethodID init;
   int sock, s, i, n=-1, len;
-  FILE *peer;
+  SFILE *peer;
 
   sock = socket (PF_UNIX, SOCK_STREAM, 0);
   if(sock!=-1) {
@@ -330,13 +326,13 @@ int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
 	php_error(E_WARNING, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge?",52, strerror(errno));
 	return FAILURE;
   }
-  peer = fdopen(sock, "r+");
+  peer = SFDOPEN(sock, "r+");
   assert(peer);
   if(!peer) return FAILURE;
 
   JG(jenv)=java_createSecureEnvironment(peer, handle_requests);
 
-  if(fread(&local_php_reflect, sizeof local_php_reflect, 1, peer)!=1) {
+  if(SFREAD(&local_php_reflect, sizeof local_php_reflect, 1, peer)!=1) {
 	php_error(E_WARNING, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge?",58, strerror(errno));
 	return FAILURE;
   }

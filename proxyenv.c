@@ -7,18 +7,15 @@
 #include <stdlib.h>
 
 #include "protocol.h"
+#include "sio.c"
 
-static void swrite(const  void  *ptr,  size_t  size,  size_t  nmemb,  FILE *stream) {
-  int n;
-  fflush(stream);
-  n = fwrite(ptr, size, nmemb, stream);
+static void swrite(const  void  *ptr,  size_t  size,  size_t  nmemb,  SFILE *stream) {
+  int n = SFWRITE(ptr, size, nmemb, stream);
   //printf("write char:.:%d\n", (unsigned int) ((char*)ptr)[0]);
   assert(n==nmemb);
 }
-static void sread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
-  int n;
-  fflush(stream);
-  n = fread(ptr, size, nmemb, stream);
+static void sread(void *ptr, size_t size, size_t nmemb, SFILE *stream) {
+  int n = SFREAD(ptr, size, nmemb, stream);
   //printf("read char:.:%d\n", (unsigned int) ((char*)ptr)[0]);
   assert(n==nmemb);
 }
@@ -272,7 +269,7 @@ static void SetObjectArrayElement (proxyenv *env, jobjectArray array, jsize inde
 }
 
 
-proxyenv *java_createSecureEnvironment(FILE *peer, int (*handle_request)(proxyenv *env)) {
+proxyenv *java_createSecureEnvironment(SFILE *peer, int (*handle_request)(proxyenv *env)) {
   proxyenv *env;  
   env=(proxyenv*)malloc(sizeof *env);     
   if(!env) exit(9);
