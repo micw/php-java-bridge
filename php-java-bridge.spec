@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version `cat VERSION`
+%define version 1.0.6
 %define release 1
 Name: php-java-bridge
 Summary: PHP Hypertext Preprocessor to Java Bridge
@@ -21,7 +21,7 @@ Provides: php-java-bridge
 BuildRoot: /var/tmp/php-java-bridge-%{version}
 
 %description 
-The PHP/Java bridge allows one to access java based applications running in a java application server running on the local host.  The PHP/Java bridge communicates with the application server through local sockets using an efficient communication protocol.  This means that only one JVM runs to serve all clients within a multi-process HTTP-Server.  Each client process communicates with a corresponding thread spawned by the running application server.  
+The PHP/Java bridge allows one to access java based applications running in a java application server.  The PHP/Java bridge communicates with the application server through local sockets using an efficient communication protocol.  This means that only one JVM runs to serve all clients within a multi-process HTTP-Server.  Each client process communicates with a corresponding thread spawned by the running application server.  
 
 %prep
 
@@ -45,7 +45,7 @@ rm -rf $RPM_BUILD_ROOT
 echo >filelist
 
 mod_dir=`cat install.log | sed -n '/Installing shared extensions:/s///p' | awk '{print $1}'`
-files="JavaBridge.class java.so libnatcJavaBridge.so"
+files='JavaBridge.class JavaBridge$1.class java.so libnatcJavaBridge.so'
 mkdir -p $RPM_BUILD_ROOT/$mod_dir
 for i in $files; 
   do cp $mod_dir/$i $RPM_BUILD_ROOT/$mod_dir/$i; 
@@ -63,7 +63,7 @@ java.log_file=/var/log/php-java-bridge.log
 # comment out the following line if you want to start java
 # automatically as a sub-process of the Apache 2.0 
 # service -- not recommended.
-java.socketname=/tmp/.php-java-bridge
+java.socketname=/var/run/.php-java-bridge_socket
 
 
 EOF

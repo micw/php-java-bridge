@@ -12,6 +12,9 @@
 /* setenv */
 #include <stdlib.h>
 
+/* signal */
+#include <signal.h>
+
 /* miscellaneous */
 #include <stdio.h>
 #include <assert.h>
@@ -105,6 +108,11 @@ void java_start_server(struct cfg*cfg) {
 			exec_vm(cfg); 
 			exit(105);
 		  }
+		  /* protect guard */
+		  signal(SIGHUP, SIG_IGN); 
+		  signal(SIGINT, SIG_IGN); 
+		  signal(SIGTERM, SIG_IGN);
+
 		  write(p[1], &pid, sizeof pid);
 		  waitpid(pid, &err, 0);
 		  write(p[1], &err, sizeof err);
