@@ -32,12 +32,9 @@ JAVA_CHECK_BROKEN_STDIO_BUFFERING
 JAVA_CHECK_ABSTRACT_NAMESPACE
 JAVA_CHECK_STRUCT_UCRED
 
-# find includes eg. -I/opt/jdk1.4/include -I/opt/jdk1.4/include/linux
-if test "$PHP_JAVA" != "yes"; then
-PHP_EVAL_INCLINE(`for i in \`find $PHP_JAVA/include -follow -type d -print\`; do echo -n "-I$i "; done`)
-fi
-
 AM_CPPFLAGS="${AM_CPPFLAGS} -DEXTENSION_DIR=\"\\\"\$(EXTENSION_DIR)\\\"\""
+AM_CPPFLAGS="${AM_CPPFLAGS} `for i in \`find $PHP_JAVA/include -follow -type d -print\`; do echo -n "-I$i "; done`"
+
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(EXTENSION_DIR)
 AC_SUBST(PHP_JAVA)
