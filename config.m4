@@ -1,22 +1,12 @@
-# before we start we copy all tests into ./java_tests.m4 and then
-# include this file
-
-syscmd([if test -d tests.m4/; then
-# standalone 
-here=`pwd`; cd tests.m4; cat `echo *.m4` >$here/java_tests.m4; cd $here
-elif test -d ext/java/tests.m4/; then
-# embedded, do not include threads.m4, which was copied from PHP
- here=`pwd`; cd ext/java/tests.m4; cat `echo *.m4|sed 's*threads.m4**'` >$here/java_tests.m4; cd $here
-fi
-])
+sinclude(tests.m4/function_checks.m4)
+sinclude(tests.m4/threads.m4)
+sinclude(tests.m4/java_check_broken_stdio_buffering.m4)
+sinclude(tests.m4/java_check_broken_gcc_installation.m4)
 
 # the server part needs them
 if test -d ext/java/tests.m4/; then
 ln -f acinclude.m4 ext/java/
 fi
-
-sinclude([java_tests.m4])
-
 
 PHP_ARG_WITH(java, for java support,
 [  --with-java[=JAVA_HOME]        Include java support])
@@ -43,6 +33,9 @@ if test "$PHP_JAVA" != "no"; then
 # find includes eg. -I/opt/jdk1.4/include -I/opt/jdk1.4/include/linux
         if test "$PHP_JAVA" != "yes"; then
 	 PHP_EVAL_INCLINE(`for i in \`find $PHP_JAVA/include -type d -print\`; do echo -n "-I$i "; done`)
+	 COND_GCJ=0
+	else
+	 COND_GCJ=1
 	fi
 
 # create java.so, compile with -DEXTENSION_DIR="\"$(EXTENSION_DIR)\""
@@ -50,6 +43,7 @@ if test "$PHP_JAVA" != "no"; then
 # create init_cfg.c from the template (same as AC_CONFIG_FILES)
 	BRIDGE_VERSION="`cat $ext_builddir/VERSION`"
 	sed "s*@PHP_JAVA@*${PHP_JAVA}*
+	     s*@COND_GCJ@*${COND_GCJ}*
              s*@PHP_JAVA_BIN@*${PHP_JAVA_BIN}*
              s*@BRIDGE_VERSION@*${BRIDGE_VERSION}*" \
           <$ext_builddir/init_cfg.c.in >$ext_builddir/init_cfg.c

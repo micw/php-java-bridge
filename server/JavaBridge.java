@@ -21,6 +21,9 @@ public class JavaBridge implements Runnable {
     // class hash
     private static final HashMap classes = new HashMap(); 
 
+    // the list of jar files in which we search for user classes.
+    static private Collection sysUrls = null;
+
     // the list of jar files in which we search for user classes.  can
     // be changed with setLibraryPath
     private Collection urls = null;
@@ -55,7 +58,6 @@ public class JavaBridge implements Runnable {
 		    
 		    return b;
 		} catch (Exception e) {
-		    printStackTrace(e);
 		    return null;
 		}
 	    }
@@ -72,12 +74,15 @@ public class JavaBridge implements Runnable {
 			return ClassLoader.getSystemClassLoader().loadClass(name);
 		    } catch (ClassNotFoundException e) {};
 		    
-		    if(urls!=null) 
+		    Collection[] allUrls = {urls, sysUrls};
+		    for(int n=0; b==null && n<allUrls.length; n++) {
+			Collection urls = allUrls[n];
+			if(urls!=null) 
 			for (Iterator i=urls.iterator(); i.hasNext(); ) 
 			    if ((b=load((URL)i.next(), name))!=null) break;
-		    
+		    }
 		    if (b==null) throw new ClassNotFoundException(name + " not found in path: " + urls.toString());
-		    
+
 		    if((c = this.defineClass(name, b, 0, b.length)) != null) classes.put(name, new WeakReference(c));
 		}
 		return c;
@@ -120,6 +125,40 @@ public class JavaBridge implements Runnable {
 	thread.start();
     }
 
+    //
+    // add all jars found in the phpConfigDir/lib and /usr/share/java
+    // to our classpath
+    //
+    static void addSystemLibraries(String phpConfigDir) {
+	try {
+	    String[] paths = {phpConfigDir+"/lib", "/usr/share/java"};
+	    for(int i=0; i<paths.length; i++) {
+		File d = new File(paths[i]);
+		String[] files=d.list();
+		if(files==null) continue;
+		for(int j=0; j<files.length; j++) {
+		    String file = files[j];
+		    int len = file.length();
+		    if(len<4) continue;
+		    if(!file.endsWith(".jar")) continue;
+		    try {
+			URL url;
+			file = "jar:file:" + d.getAbsolutePath() + File.separator + file + "!/";
+			url = new URL(file);
+			if(sysUrls==null) sysUrls=new ArrayList();
+			logDebug("added system library: " + url);
+			sysUrls.add(url);
+		    }  catch (MalformedURLException e1) {
+			printStackTrace(e1);
+		    }
+		}
+	    }
+	} catch (Exception t) {
+	    printStackTrace(t);
+	}
+    }
+    
+		
     //
     // init
     //
@@ -181,11 +220,16 @@ public class JavaBridge implements Runnable {
     public static void main(String s[]) {
 	try {
 	    System.loadLibrary("natcJavaBridge");
+	} catch (Throwable t) {
+	    t.printStackTrace();
+	    System.exit(9);
+	}
+	try {
 	    init(s);
 	} catch (Throwable t) {
-	    JavaBridge.printStackTrace(t);
+	    t.printStackTrace();
+	    System.exit(9);
 	}
-		
     }
 
     //

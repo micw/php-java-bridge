@@ -42,6 +42,11 @@ if(!expr) { \
   exit(9); \
 }
 
+#ifndef EXTENSION_DIR
+#error EXTENSION_DIR must point to the PHP extension directory
+#endif
+
+
 static jclass exceptionClass=NULL;
 
 static jclass enumClass=NULL;
@@ -217,6 +222,8 @@ static void initGlobals(JNIEnv *env) {
   pthread_t thread;
   sigset_t d;
   jobject hash;
+  jmethodID addSystemLibraries;
+  jstring arg;
 
   exceptionClass = (*env)->FindClass(env, "java/lang/Throwable");
   enumClass = (*env)->FindClass(env, "java/util/Enumeration");
@@ -232,6 +239,11 @@ static void initGlobals(JNIEnv *env) {
 
   handleRequests = (*env)->GetStaticMethodID(env, bridge, "HandleRequests", "(J)V");
 
+  addSystemLibraries = (*env)->GetStaticMethodID(env, bridge, "addSystemLibraries", "(Ljava/lang/String;)V");
+  arg = (*env)->NewStringUTF(env, EXTENSION_DIR);
+  (*env)->CallStaticVoidMethod(env, bridge, addSystemLibraries, arg);
+  (*env)->DeleteLocalRef(env, arg);
+  
   longClass = (*env)->FindClass (env, "java/lang/Long");
   longCtor = (*env)->GetMethodID(env, longClass, "<init>", "(J)V");
   longValue = (*env)->GetMethodID(env, longClass, "longValue", "()J");

@@ -78,7 +78,7 @@ PHP_FUNCTION(java_last_exception_clear)
 							  clearEx);
 }
 
-PHP_FUNCTION(java_set_jar_library_path)
+PHP_FUNCTION(java_set_library_path)
 {
   zval **path;
   jlong result = 0;
@@ -110,7 +110,7 @@ PHP_FUNCTION(java_set_jar_library_path)
 function_entry java_functions[] = {
 	PHP_FE(java_last_exception_get, NULL)
 	PHP_FE(java_last_exception_clear, NULL)
-	PHP_FE(java_set_jar_library_path, NULL)
+	PHP_FE(java_set_library_path, NULL)
 	{NULL, NULL, NULL}
 };
 

@@ -9,7 +9,7 @@ if (!extension_loaded('java')) {
 
 $system = new java("java.lang.System");
 $t1=$system->currentTimeMillis();
-java_set_jar_library_path("http://php-java-bridge.sourceforge.net/kawa.jar"); //load scheme interpreter
+java_set_library_path("http://php-java-bridge.sourceforge.net/kawa.jar"); //load scheme interpreter
 $s = new java("kawa.standard.Scheme");
 for($i=0; $i<100; $i++) {
   $res=$s->eval("

@@ -6,11 +6,12 @@ AM_CONFIG_HEADER(config.h)
 AC_CONFIG_AUX_DIR(.)
 AC_PROG_CC
 AC_PROG_CPP
-AM_PROG_LIBTOOL
+AM_PROG_GCJ
+AC_PROG_LIBTOOL
 AC_STDC_HEADERS
 
 AC_ARG_WITH(java,  [--with-java[=JAVA_HOME] Include java support], PHP_JAVA="$withval", PHP_JAVA="yes")
-AC_ARG_WITH(extdir,  [--with-extdir[=DIR] Diretory which contains the shared java extension], EXT_DIR="$withval", EXT_DIR="`php-config --extension-dir`")
+AC_ARG_WITH(extdir,  [--with-extdir[=DIR] Diretory which contains the shared java extension], EXTENSION_DIR="$withval", EXTENSION_DIR="`php-config --extension-dir`")
 
 JAVA_FUNCTION_CHECKS
 PTHREADS_CHECK
@@ -21,16 +22,16 @@ JAVA_CHECK_BROKEN_STDIO_BUFFERING
 # find includes eg. -I/opt/jdk1.4/include -I/opt/jdk1.4/include/linux
 if test "$PHP_JAVA" != "yes"; then
 PHP_EVAL_INCLINE(`for i in \`find $PHP_JAVA/include -type d -print\`; do echo -n "-I$i "; done`)
-else
-AM_PROG_GCJ
-# LIBTOOL="${LIBTOOL} --tag=CC"
 fi
 
+AM_CPPFLAGS="${AM_CPPFLAGS} -DEXTENSION_DIR=\"\\\"\$(EXTENSION_DIR)\\\"\""
+AC_SUBST(AM_CPPFLAGS)
 INCLUDES="$INCLUDES -I.. -I."
 AC_SUBST(INCLUDES)
-AC_SUBST(EXT_DIR)
+AC_SUBST(EXTENSION_DIR)
 AC_SUBST(PHP_JAVA)
 AM_CONDITIONAL([COND_GCJ], [test "$PHP_JAVA" = "yes"])
+AM_CONDITIONAL([COND_WIN_NO_DLL], [case $host_os in cygwin* | mingw* | pw32*) test $enable_win32_dll = no ;; *) false;; esac])
 
 AC_OUTPUT(Makefile)
 

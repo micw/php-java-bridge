@@ -1,0 +1,94 @@
+/*-*- mode: C; tab-width:4 -*-*/
+
+/* mkstemp */
+#include <stdlib.h>
+
+/* time */
+#include <time.h>
+
+/* assert */
+#include <assert.h>
+
+#include "protocol.h"
+#include "php_java.h"
+
+
+#ifndef EXTENSION_DIR
+#error EXTENSION_DIR must point to the PHP extension directory
+#endif
+#define JAVA_HOME "@PHP_JAVA@"
+
+#ifndef CFG_CLASSPATH
+#define CFG_CLASSPATH EXTENSION_DIR
+#endif
+#ifndef CFG_LD_LIBRARY_PATH
+#define CFG_LD_LIBRARY_PATH EXTENSION_DIR
+#endif
+
+#ifndef CFG_JAVA
+#if @COND_GCJ@ == 1
+#define CFG_JAVA EXTENSION_DIR/**/"/java"
+#else
+#define CFG_JAVA "@PHP_JAVA_BIN@"
+#endif
+#endif
+
+#ifndef CFG_JAVA_HOME
+#if @COND_GCJ@ == 1
+#define CFG_JAVA_HOME EXTENSION_DIR
+#else
+#define CFG_JAVA_HOME "@PHP_JAVA@"
+#endif
+#endif
+
+#ifndef BRIDGE_VERSION
+#define BRIDGE_VERSION "@BRIDGE_VERSION@"
+#endif
+
+const char * const java_bridge_version = BRIDGE_VERSION;
+
+#ifdef CFG_JAVA_SOCKET_ANON
+static void init_socket(struct cfg*cfg) {
+  static const char * const bridge="@java-bridge-";
+  size_t len = strlen(bridge)+ sizeof(uid_t)*2+ sizeof(time_t)*2; //assuming byte=8bit
+
+  char *sockname=malloc(len+1);
+  assert(sockname); if(!sockname) exit(6);
+
+  snprintf(sockname, len+1, "%s%lx%lx", bridge, 
+		   (unsigned long)getuid(),(unsigned long)time(0));
+  cfg->sockname=sockname;
+}
+#else
+static void init_socket(struct cfg*cfg) {
+	int n;
+	char*s=SOCKNAME;
+	char *sockname=malloc(strlen(s+1));
+	assert(sockname); if(!sockname) exit(6);
+	strcpy(sockname, s);
+	n = mkstemp(sockname);
+	assert(n); if(!n) exit(6);
+	cfg->sockname=sockname;
+}
+#endif
+void java_init_cfg(struct cfg *cfg) {
+  if(!(java_ini_updated&U_SOCKNAME)) {
+	init_socket(cfg);
+  }
+  if(!(java_ini_updated&U_CLASSPATH)) cfg->classpath=strdup(CFG_CLASSPATH);
+  if(!(java_ini_updated&U_LIBRARY_PATH)) cfg->ld_library_path=strdup(CFG_LD_LIBRARY_PATH);
+  if(!(java_ini_updated&U_JAVA)) cfg->java=strdup(CFG_JAVA);
+  if(!(java_ini_updated&U_JAVA_HOME)) cfg->java_home=strdup(CFG_JAVA_HOME);
+  if(!(java_ini_updated&U_LOGLEVEL)) cfg->logLevel=strdup("0");
+  if(!(java_ini_updated&U_LOGFILE)) cfg->logFile=strdup("");
+}
+
+void java_destroy_cfg(int java_ini_updated, struct cfg*cfg) {
+  if((java_ini_updated&U_SOCKNAME)) free(cfg->sockname);
+  if((java_ini_updated&U_CLASSPATH)) free(cfg->classpath);
+  if((java_ini_updated&U_LIBRARY_PATH)) free(cfg->ld_library_path);
+  if((java_ini_updated&U_JAVA)) free(cfg->java);
+  if((java_ini_updated&U_JAVA_HOME)) free(cfg->java_home);
+  if((java_ini_updated&U_LOGLEVEL)) free(cfg->logLevel);
+  if((java_ini_updated&U_LOGFILE)) free(cfg->logFile);
+}

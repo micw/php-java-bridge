@@ -1,0 +1,31 @@
+# -*- mode: Makefile; -*-
+if COND_WIN_NO_DLL
+bin_PROGRAMS=java
+java_SOURCES= java.c JavaBridge.java natcJavaBridge.c
+java_LDFLAGS=-rpath $(EXTENSION_DIR)
+AM_GCJFLAGS=-fjni
+
+else 
+lib_LTLIBRARIES = libnatcJavaBridge.la
+libnatcJavaBridge_la_SOURCES = natcJavaBridge.c
+libnatcJavaBridge_la_LDFLAGS = -shared -avoid-version -prefer-pic
+libnatcJavaBridge_la_LIBADD =
+
+if COND_GCJ
+# create java executable with GNU GCC when --with-java was given
+bin_PROGRAMS=java
+java_SOURCES= java.c JavaBridge.java
+java_LDADD=libnatcJavaBridge.la
+java_LDFLAGS=-rpath $(EXTENSION_DIR)
+AM_GCJFLAGS=-fjni
+
+else 
+# use a real VM when --with-java=$JAVA_HOME was given
+
+dist_data_DATA=JavaBridge.class JavaBridge$$1.class #JavaBridge.$$2.class
+
+JavaBridge.class: JavaBridge.java
+	$(PHP_JAVA)/bin/javac JavaBridge.java
+
+endif
+endif

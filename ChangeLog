@@ -1,57 +1,128 @@
-2004-08-29  Jost Boekemeier  <jost2345@mail.yahoo.de>
+2004-10-24  Jost Boekemeier  <jostb@diego.intern>
 
-	* php-java-bridge 1.0.0 released.
-
-
-2004-08-30  Jost Boekemeier  <jost2345@mail.yahoo.de>
-
-	* bind.c: wait until the JVM is initialized
-
-	Initialize the cfg vars correctly so that only one VM is started
-	* java.c, init_cfg: set the defaults _after_ the cfg changes.
-
-	* php-java-bridge 1.0.1 released.
-
-2004-09-09  Jost Boekemeier  <jost2345@mail.yahoo.de>
+	* README: Document java_set_library_path
+	* java.c, scheme_demo.php: Renamed java_set_jar_library_path to java_set_library_path
+	* 
 	
-	Initialize PVAL's so that they have a proper ref-count.  Otherwise 
-	either the bridge or the JVM might crash (or both).
-	* java.c: Allocate pval's correctly.
+	* server/JavaBridge.java, server/natcJavaBridge.c, server/configure.in: Load libraries from /usr/share/java or from ext_dir/lib
 
-	* php-java-bridge 1.0.2 released.
+	* ChangeLog: Changed order, latest at top
 
-2004-09-10  Jost Boekemeier  <jost2345@mail.yahoo.de>
+	* config.m4: Do not build DLLs for win98
 
-	* java.c: Display empty string as ''.
+	* server/acinclude.m4: rewritten.
 
-	REL3 or RH9 running a non-NPTL kernel require to set the
-	environment variable LD_ASSUME_KERNEL=2.4.19 in order to run
-	jdk1.4 correctly.
-	* bind.c: Pass modified environment on to the child process.
+	* server/configure.in: AC_PROG_LIBTOOL should recognize
+	AM_PROG_GCJ
+	
+2004-10-23  Jost Boekemeier  <jostb@diego.intern>
 
-2004-09-12  Jost Boekemeier  <jost2345@mail.yahoo.de>
+	Added support for Solaris 64 and Solaris broken stdio.
+	* protocol.h, proxyenv.c, client.c, natcJavaBridge.c: Use SFREAD ... instead of fread.
+	* sio.c, sio.h: New files
+	* tests.m4/function_checks.m4, tests.m4/java_check_broken_gcc_installation.m4, tests.m4/java_check_broken_stdio_buffering.m4, tets.m4/threads.m4: New files
 
-	* README: GNU Java supported
+	* LICENSE: Correct author.
 
-	The SUN Java implementation may store objects on the stack.
-	Objects on the heap may reference them. So in this JVM we cannot
-	simply longjmp to clear the stack, because some heap objects may
-	still refer to dead locations.  The result would be that the VM
-	will barf when the GC tries to follow these phantom references.
-	* natcJavaBridge.c: Longjmp to the last savepoint, then return
-	back to java, throw an exception to return to one of the three
-	native main methods and then jump back to the loop.  This fixes a
-	crash in the SUN VM which occured after apache has aborted the
-	connection.
+	Correct classpath problem
+	* natcJavaBridge.c, client.c: Client receives the bridge instance as first element.
+	* JavaBridge.java: Start a new thread, set the context classloader on java level.
+	* natcJavaBridge.c: Do not call attachCurrentThread, which is broken in gcj.
 
-	* php-java-bridge 1.0.3 released.
+	Added support for static binaries.
+	* natcJavaBridge.c, bind.c: Invoke jniRegisterNatives.
 
-2004-09-15  Jost Boekemeier  <jost2345@mail.yahoo.de>
+	Use GNU autoconf to configure the server part separately. Share the
+	test macros from PHP and the java module with the server part.
+	* Makefile.frag: rewritten
+	* server/acinclude.m4, server/autogen.sh, server/configure.in: new files
+	* config.m4: Include all tests in tests.m4.
 
-	* JavaBridge.java: The bridge now catches errors and runtime
-	exceptions such as "class not found" and reports them to the
-	client.
+	Win98 support.
+	* sio.h: Do not depend on HAVE_CONFIG_H
+	* natcJavaBridge: Win98 does not support sigwait
 
+	* function_checks.m4 (lsocket): test rewritten
+
+	* README: Solaris, 64 bit VM's and Win98 are supported
+	
+2004-09-27  Jost Boekemeier  <jost2345@mail.yahoo.de>
+
+	* JavaBridge.java (findClass): Store the classes into a weak-value 
+	hash so that classes don't get loaded multiple times (some JVM's
+	don't have a class GC).
+
+	* natcJavaBridge (handle_request, connection_cleanup): Count
+	the # of handles the client has aquired.
+
+	* java_bridge.c (wait_for_daemon): gcj uses the 2 internaly(!), we
+	must send it twice to kill it. 
+	
+2004-09-26  Jost Boekemeier  <jost2345@mail.yahoo.de>
+
+	* natcJavaBridge.c (Java_JavaBridge_startNative): do not restart
+	when signal arrived, this caused problems on some OS.
+
+	It is now possible to set the library path at run-time e.g.:
+	java_set_jar_library_path(";file:c:/test.jar;http://foo.com/xy.jar");
+	* Javabridge.java (setJarLibraryPath, load, findClass): New methods.
+	(CreateObject): Load classes via our own classloader.
+	* java.c (java_set_jar_library_path): New function.
+	* client.c (java_connect_to_server): Call constructor.
+	* sample.php: Use new function.
+
+	* java.c (java_last_exception_clear, java_last_exception_get):
+	Check if java is initialized.
+
+	* client.c (abort_on_error): Renamed to check_error.
+
+	* client.c (java_do_test_server): Check return value from close().
+
+	* php-java-bridge 1.0.5 released.
+
+2004-09-23  Jost Boekemeier  <jost2345@mail.yahoo.de>
+
+	Use a guard thread instead of a async signal to shutdown the server.
+	* natcJavaBridge.c (mutex, cond, count, block): New variables.
+	(exit_sig): removed
+	(block_sig, enter, leave, guard_requests): New functions.
+	(initGlobals): initialization added
+	(handle_requests): update thread count
+	(Java_JavaBridge_startNative): terminate after guard has terminated.
+	* README: Note about dynamic loading via dl() added.
+		
+        The bridge must do its own resource tracking because php4 calls 
+	the php_java_destructor too late (*after* rshutdown!).
+	* java_bridge.c (php_java_destructor): Code disabled.
+	* natcJavaBridge.c (enumClass, hashKeys, enumMore, enumNext): New
+	globals.
+	(initGlobals): initialization
+	(connection_startup, connection_cleanup): New functions.
+	(handle_requests, handle_request_impl, handle_request): Trace global
+	refs.
+	
+2004-09-21  Jost Boekemeier  <jost2345@mail.yahoo.de>
+
+        * java.c (PHP_MINIT_FUNCTION): Fixed a typo that caused a massive
+	memory leak on the java side of the bridge.  The DeleteGlobalRef
+	was never called and since Java does not release the memory when
+	a client detaches from the VM (thanks, Sun!) the memory remained
+	locked until the VM ran out of memory.
+
+	* natcJavaBridge.c (Java_JavaBridge_startNative): Linux handles
+	accept different than the BSD variants.  Check errno.
+
+	Starting java as a daemon should solve the sub-process problem.
+	* bind.c (java_start_server): Start java as a daemon, if possible.
+	(readpid): New function.
+	* java_bridge.c (php_java_shutdown_library): Wait for daemon
+	(wait_for_daemon): New function
+	* README: Delete the note about Apache 1.3.
+	
+	Correctly shut down the connection in rshutdown
+	* java.c (PHP_RSHUTDOWN_FUNCTION): Delete global refs and close
+	file descriptors.
+	
 2004-09-19  Jost Boekemeier  <jostb@diego.intern>
 
         Allocate pval's correctly, part II -- the previous change for 1.0.2
@@ -84,112 +155,55 @@
 	* php-java-bridge 1.0.4 released.
 	
 
-2004-09-21  Jost Boekemeier  <jost2345@mail.yahoo.de>
+2004-09-15  Jost Boekemeier  <jost2345@mail.yahoo.de>
 
-        * java.c (PHP_MINIT_FUNCTION): Fixed a typo that caused a massive
-	memory leak on the java side of the bridge.  The DeleteGlobalRef
-	was never called and since Java does not release the memory when
-	a client detaches from the VM (thanks, Sun!) the memory remained
-	locked until the VM ran out of memory.
+	* JavaBridge.java: The bridge now catches errors and runtime
+	exceptions such as "class not found" and reports them to the
+	client.
 
-	* natcJavaBridge.c (Java_JavaBridge_startNative): Linux handles
-	accept different than the BSD variants.  Check errno.
+2004-09-12  Jost Boekemeier  <jost2345@mail.yahoo.de>
 
-	Starting java as a daemon should solve the sub-process problem.
-	* bind.c (java_start_server): Start java as a daemon, if possible.
-	(readpid): New function.
-	* java_bridge.c (php_java_shutdown_library): Wait for daemon
-	(wait_for_daemon): New function
-	* README: Delete the note about Apache 1.3.
+	* README: GNU Java supported
+
+	The SUN Java implementation may store objects on the stack.
+	Objects on the heap may reference them. So in this JVM we cannot
+	simply longjmp to clear the stack, because some heap objects may
+	still refer to dead locations.  The result would be that the VM
+	will barf when the GC tries to follow these phantom references.
+	* natcJavaBridge.c: Longjmp to the last savepoint, then return
+	back to java, throw an exception to return to one of the three
+	native main methods and then jump back to the loop.  This fixes a
+	crash in the SUN VM which occured after apache has aborted the
+	connection.
+
+	* php-java-bridge 1.0.3 released.
 	
-	Correctly shut down the connection in rshutdown
-	* java.c (PHP_RSHUTDOWN_FUNCTION): Delete global refs and close
-	file descriptors.
+2004-09-10  Jost Boekemeier  <jost2345@mail.yahoo.de>
+
+	* java.c: Display empty string as ''.
+
+	REL3 or RH9 running a non-NPTL kernel require to set the
+	environment variable LD_ASSUME_KERNEL=2.4.19 in order to run
+	jdk1.4 correctly.
+	* bind.c: Pass modified environment on to the child process.
+
+2004-09-09  Jost Boekemeier  <jost2345@mail.yahoo.de>
 	
+	Initialize PVAL's so that they have a proper ref-count.  Otherwise 
+	either the bridge or the JVM might crash (or both).
+	* java.c: Allocate pval's correctly.
 
-2004-09-23  Jost Boekemeier  <jost2345@mail.yahoo.de>
+	* php-java-bridge 1.0.2 released.
 
-	Use a guard thread instead of a async signal to shutdown the server.
-	* natcJavaBridge.c (mutex, cond, count, block): New variables.
-	(exit_sig): removed
-	(block_sig, enter, leave, guard_requests): New functions.
-	(initGlobals): initialization added
-	(handle_requests): update thread count
-	(Java_JavaBridge_startNative): terminate after guard has terminated.
-	* README: Note about dynamic loading via dl() added.
-		
-        The bridge must do its own resource tracking because php4 calls 
-	the php_java_destructor too late (*after* rshutdown!).
-	* java_bridge.c (php_java_destructor): Code disabled.
-	* natcJavaBridge.c (enumClass, hashKeys, enumMore, enumNext): New
-	globals.
-	(initGlobals): initialization
-	(connection_startup, connection_cleanup): New functions.
-	(handle_requests, handle_request_impl, handle_request): Trace global
-	refs.
+2004-08-30  Jost Boekemeier  <jost2345@mail.yahoo.de>
+
+	* bind.c: wait until the JVM is initialized
+
+	Initialize the cfg vars correctly so that only one VM is started
+	* java.c, init_cfg: set the defaults _after_ the cfg changes.
+
+	* php-java-bridge 1.0.1 released.
 	
-	
-2004-09-26  Jost Boekemeier  <jost2345@mail.yahoo.de>
+2004-08-29  Jost Boekemeier  <jost2345@mail.yahoo.de>
 
-	* natcJavaBridge.c (Java_JavaBridge_startNative): do not restart
-	when signal arrived, this caused problems on some OS.
-
-	It is now possible to set the library path at run-time e.g.:
-	java_set_jar_library_path(";file:c:/test.jar;http://foo.com/xy.jar");
-	* Javabridge.java (setJarLibraryPath, load, findClass): New methods.
-	(CreateObject): Load classes via our own classloader.
-	* java.c (java_set_jar_library_path): New function.
-	* client.c (java_connect_to_server): Call constructor.
-	* sample.php: Use new function.
-
-	* java.c (java_last_exception_clear, java_last_exception_get):
-	Check if java is initialized.
-
-	* client.c (abort_on_error): Renamed to check_error.
-
-	* client.c (java_do_test_server): Check return value from close().
-
-	* php-java-bridge 1.0.5 released.
-
-2004-09-27  Jost Boekemeier  <jost2345@mail.yahoo.de>
-
-	* JavaBridge.java (findClass): Store the classes into a weak-value 
-	hash so that classes don't get loaded multiple times (some JVM's
-	don't have a class GC).
-
-	* natcJavaBridge (handle_request, connection_cleanup): Count
-	the # of handles the client has aquired.
-
-	* java_bridge.c (wait_for_daemon): gcj uses the 2 internaly(!), we
-	must send it twice to kill it. 
-
-2004-10-23  Jost Boekemeier  <jostb@diego.intern>
-
-	Added support for Solaris 64 and Solaris broken stdio.
-	* protocol.h, proxyenv.c, client.c, natcJavaBridge.c: Use SFREAD ... instead of fread.
-	* sio.c, sio.h: New files
-	* tests.m4/function_checks.m4, tests.m4/java_check_broken_gcc_installation.m4, tests.m4/java_check_broken_stdio_buffering.m4, tets.m4/threads.m4: New files
-
-	* LICENSE: Correct author.
-
-	Correct classpath problem
-	* natcJavaBridge.c, client.c: Client receives the bridge instance as first element.
-	* JavaBridge.java: Start a new thread, set the context classloader on java level.
-	* natcJavaBridge.c: Do not call attachCurrentThread, which is broken in gcj.
-
-	Added support for static binaries.
-	* natcJavaBridge.c, bind.c: Invoke jniRegisterNatives.
-
-	Use GNU autoconf to configure the server part separately. Share the
-	test macros from PHP and the java module with the server part.
-	* Makefile.frag: rewritten
-	* server/acinclude.m4, server/autogen.sh, server/configure.in: new files
-	* config.m4: Include all tests in tests.m4.
-
-	Win98 support.
-	* sio.h: Do not depend on HAVE_CONFIG_H
-	* natcJavaBridge: Win98 does not support sigwait
-
-	* function_checks.m4 (lsocket): test rewritten
-
-	* README: Solaris, 64 bit VM's and Win98 are supported
+	* php-java-bridge 1.0.0 released.
