@@ -63,21 +63,14 @@ struct peer {
   jobject objectHash;
 };
 static void doLog (JNIEnv *jenv, char *msg, jmethodID logMessageID) {
+  jstring str;
   assert(logMessageID);
   if(!logMessageID) return;
-  jstring str = (*jenv)->NewStringUTF(jenv, msg);
+  str = (*jenv)->NewStringUTF(jenv, msg);
   assert(str);
-  if(!str) return;
+  if(!str) return; 
   (*jenv)->CallStaticVoidMethod(jenv, bridge, logMessageID, str);
   (*jenv)->DeleteLocalRef(jenv, str);
-}
-static void logMessage(JNIEnv *jenv, char *msg) {
-  static jmethodID logMessageID=NULL;
-  assert(bridge);
-  if(!bridge) return;
-  if(!logMessageID)
-	logMessageID = (*jenv)->GetStaticMethodID(jenv, bridge, "logMessage", "(Ljava/lang/String;)V");
-  doLog(jenv, msg, logMessageID);
 }
 static void logDebug(JNIEnv *jenv, char *msg) {
   static jmethodID logMessageID=NULL;
@@ -102,7 +95,7 @@ static void logSysError(JNIEnv *jenv, char *msg) {
 }
 static void logMemoryError(JNIEnv *jenv, char *file, int pos) {
   static char s[512];
-  sprintf(s, "system error: out of memory error in: %s, line: %s", file, pos);
+  sprintf(s, "system error: out of memory error in: %s, line: %d", file, pos);
   logError(jenv, s);
   abort();
 }
@@ -127,6 +120,7 @@ static void id(struct peer*peer, char id) {
 static jobject objFromPtr(JNIEnv *env, void*val) {
   jobject obj = (*env)->NewObject (env, longClass, longCtor, (jlong)(unsigned long)val);
   assert(obj);
+  return obj;
 }
 static void* ptrFromObj(JNIEnv *env, jobject val) {
   jlong result = (*env)->CallLongMethod(env, val, longValue);
@@ -151,13 +145,16 @@ static void atexit_bridge() {
 	pthread_attr_destroy(&attr);
   }
 }
+static jmp_buf signal_env;
 static void exit_sig(int dummy) {
-  exit(0);
+  longjmp(signal_env, 1);
 }
 static void initGlobals(JNIEnv *env) {
+  jobject hash;
+
   hashClass = (*env)->FindClass(env, "java/util/Hashtable");
   init = (*env)->GetMethodID(env, hashClass, "<init>", "()V");
-  jobject hash = (*env)->NewObject(env, hashClass, init);
+  hash = (*env)->NewObject(env, hashClass, init);
   hashPut = (*env)->GetMethodID(env, hashClass, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
   hashRemove = (*env)->GetMethodID(env, hashClass, "remove", "(Ljava/lang/Object;)Ljava/lang/Object;");
   longClass = (*env)->FindClass (env, "java/lang/Long");
@@ -225,7 +222,6 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
   case CREATEOBJECT: {
 	jobject php_reflect;
 	jmethodID invoke;
-	jobject obj;
 	jstring method;
 	jobjectArray array;
 	jlong result;
@@ -303,7 +299,7 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
   }
   case FINDCLASS: {
 	jclass clazz;
-	short len;
+	size_t len;
 	char *name;
 	sread(&len, sizeof len, 1, peer);
 	name=malloc(len+1);
@@ -328,7 +324,7 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	jbyte *result;
 	jboolean isCopy;
 	jarray array;
-	short count;
+	size_t count;
 	sread(&array, sizeof array, 1, peer);
 	count = (*env)->GetArrayLength(env, array);
 	result = (*env)->GetByteArrayElements(env, array, &isCopy);
@@ -343,7 +339,7 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
   case GETMETHODID: { 
 	jmethodID id;
 	jclass clazz;
-	short len;
+	size_t len;
 	char *name;
 	char *sig;
 	sread(&clazz, sizeof clazz, 1, peer);
@@ -375,7 +371,7 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	void *key;
 	jboolean isCopy;
 	char*result;
-	short length;
+	size_t length;
 	jstring str;
 	sread(&str, sizeof str, 1, peer);
 	result = (char*)(*env)->GetStringUTFChars(env, str, &isCopy);
@@ -408,7 +404,7 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	jobject result;
 	jclass clazz;
 	jmethodID methodID;
-	short len;
+	size_t len;
 	jvalue *args;
 	sread(&len, sizeof len, 1, peer);
 	sread(&clazz, sizeof clazz, 1, peer);
@@ -435,7 +431,7 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
   } 
   case NEWSTRINGUTF: {
 	jstring result;
-	short len;
+	size_t len;
 	char *utf;
 	sread(&len, sizeof len, 1, peer);
 	utf=malloc(len+1);
@@ -452,7 +448,6 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	jarray array;
 	jbyte *elems;
 	jint mode;
-	short count;
 	sread(&array, sizeof array, 1, peer);
 	sread(&elems, sizeof elems, 1, peer);
 	sread(&mode, sizeof mode, 1, peer);
@@ -465,10 +460,9 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
   case RELEASESTRINGUTFCHARS: {
 	jobject val;
 	jstring array;
-	short count;
 	char*elems;
 	sread(&array, sizeof array, 1, peer);
-	sread(&elems, sizeof elems, count, peer);
+	sread(&elems, sizeof elems, 1, peer);
 	val = (*env)->CallObjectMethod(env, peer->objectHash, hashRemove, objFromPtr(env, elems));
 	assert(val);
 	(*env)->ReleaseStringUTFChars(env, array, ptrFromObj(env, val));
@@ -510,7 +504,8 @@ static int handle_request_impl(FILE*file, JNIEnv *env) {
   int val;
   peer.objectHash=initHash(env);
   if(!peer.objectHash) {logError(env, "could not create hash table"); return -40;}
-  if(val=setjmp(peer.env)) {
+  val=setjmp(peer.env);
+  if(val) {
 	(*env)->DeleteGlobalRef(env, peer.objectHash);
 	return -val;
   }
@@ -536,10 +531,9 @@ static void *handle_requests(void *p) {
   JNIEnv *env;
   struct param *param = (struct param*)p;
   FILE *peer;
-  int _s=param->s;
   int err = (*param->vm)->AttachCurrentThread(param->vm, (void**)&env, NULL);
 
-  if(err) {logError(env, "could not attach to java vm"); free(p); return;}
+  if(err) {logError(env, "could not attach to java vm"); free(p); return NULL;}
   logChannel(env, "create new communication channel", param->s);
   peer = fdopen(param->s, "r+");
   if(!peer) logSysError(env, "could not fdopen socket");
@@ -551,10 +545,8 @@ static void *handle_requests(void *p) {
 	  logIntValue(env, "communication broken", term);
 	  break;
 	}
-	assert(_s==param->s);
   }
   logChannel(env, "terminate communication channel", param->s);
-	assert(_s==param->s);
   (*param->vm)->DetachCurrentThread(param->vm);
   if(peer) fclose(peer);
   close(param->s);
@@ -571,6 +563,9 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
   pthread_t thread;
   struct sockaddr_un saddr;
   int sock, n;
+
+  if(setjmp(signal_env)) return; //sigkill arrived
+
   initGlobals(env);
   logLevel = _logLevel;
   bridge = self;
@@ -610,7 +605,6 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
 	if(n) {logError(env, "could not get java vm"); return;}
 	pthread_create(&thread, &attr, handle_requests, param);
   }
-  exit_bridge();
 }
 
 

@@ -37,7 +37,7 @@ void java_init_cfg(struct cfg *cfg) {
   if(!cfg->ld_library_path) cfg->ld_library_path=strdup(CFG_LD_LIBRARY_PATH);
   if(!cfg->java) cfg->java=strdup(CFG_JAVA);
   if(!cfg->java_home) cfg->java_home=strdup(CFG_JAVA_HOME);
-  if(!cfg->logLevel) cfg->logLevel=strdup("5");
+  if(!cfg->logLevel) cfg->logLevel=strdup("0");
   if(!cfg->logFile) cfg->logFile=strdup("");
 
   cfg->saddr.sun_family = AF_UNIX;

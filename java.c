@@ -9,6 +9,10 @@
 #include <assert.h>
 #include <errno.h>
 
+#include "php.h"
+#include "php_globals.h"
+#include "ext/standard/info.h"
+
 #include "php_java.h"
 #include "java_bridge.h"
 #include "protocol.h"
@@ -41,7 +45,6 @@ PHP_FUNCTION(java_last_exception_get)
   (*JG(jenv))->LastException(JG(jenv), JG(php_reflect), lastEx, 
 							  result);
 }
-
 PHP_FUNCTION(java_last_exception_clear)
 {
   jlong result = 0;
@@ -97,7 +100,7 @@ static PHP_INI_MH(OnIniClassPath)
 {
 	if (new_value) {
 	  if(JG(cfg).classpath) free(JG(cfg).classpath);
-	  JG(cfg).classpath =(new_value);
+	  JG(cfg).classpath =strdup(new_value);
 	}
 	return SUCCESS;
 }
@@ -105,7 +108,7 @@ static PHP_INI_MH(OnIniLibPath)
 {
 	if (new_value) {
 	  if(JG(cfg).ld_library_path) free(JG(cfg).ld_library_path);
-	  JG(cfg).ld_library_path = (new_value);
+	  JG(cfg).ld_library_path = strdup(new_value);
 	}
 	return SUCCESS;
 }
@@ -113,7 +116,7 @@ static PHP_INI_MH(OnIniJava)
 {
 	if (new_value) {
 	  if(JG(cfg).java) free(JG(cfg).java);
-		JG(cfg).java = (new_value);
+		JG(cfg).java = strdup(new_value);
 	}
 	return SUCCESS;
 }
@@ -121,7 +124,7 @@ static PHP_INI_MH(OnIniJavaHome)
 {
 	if (new_value) {
 	  if(JG(cfg).java_home) free(JG(cfg).java_home);
-	  JG(cfg).java_home = (new_value);
+	  JG(cfg).java_home = strdup (new_value);
 	}
 	return SUCCESS;
 }
@@ -129,7 +132,7 @@ static PHP_INI_MH(OnIniLogLevel)
 {
 	if (new_value) {
 	  if(JG(cfg).logLevel) free(JG(cfg).logLevel);
-	  JG(cfg).logLevel = (new_value);
+	  JG(cfg).logLevel = strdup(new_value);
 	}
 	return SUCCESS;
 }
@@ -137,20 +140,19 @@ static PHP_INI_MH(OnIniLogFile)
 {
 	if (new_value) {
 	  if(JG(cfg).logFile) free(JG(cfg).logFile);
-	  JG(cfg).logFile = (new_value);
+	  JG(cfg).logFile = strdup(new_value);
 	}
 	return SUCCESS;
 }
-
 PHP_INI_BEGIN()
-	 PHP_INI_ENTRY("java.socketname", NULL, PHP_INI_ALL, OnIniSockname)
-	 PHP_INI_ENTRY("java.classpath", NULL, PHP_INI_ALL, OnIniClassPath)
-	 PHP_INI_ENTRY("java.libpath",   NULL, PHP_INI_ALL, OnIniLibPath)
-	 PHP_INI_ENTRY("java.java",   NULL, PHP_INI_ALL, OnIniJava)
-	 PHP_INI_ENTRY("java.java_home",   NULL, PHP_INI_ALL, OnIniJavaHome)
+	 PHP_INI_ENTRY("java.socketname", NULL, PHP_INI_SYSTEM, OnIniSockname)
+	 PHP_INI_ENTRY("java.classpath", NULL, PHP_INI_SYSTEM, OnIniClassPath)
+	 PHP_INI_ENTRY("java.libpath",   NULL, PHP_INI_SYSTEM, OnIniLibPath)
+	 PHP_INI_ENTRY("java.java",   NULL, PHP_INI_SYSTEM, OnIniJava)
+	 PHP_INI_ENTRY("java.java_home",   NULL, PHP_INI_SYSTEM, OnIniJavaHome)
 
-	 PHP_INI_ENTRY("java.log_level",   NULL, PHP_INI_ALL, OnIniLogLevel)
-	 PHP_INI_ENTRY("java.log_file",   NULL, PHP_INI_ALL, OnIniLogFile)
+	 PHP_INI_ENTRY("java.log_level",   NULL, PHP_INI_SYSTEM, OnIniLogLevel)
+	 PHP_INI_ENTRY("java.log_file",   NULL, PHP_INI_SYSTEM, OnIniLogFile)
 PHP_INI_END()
 
 
@@ -161,7 +163,6 @@ static void php_java_alloc_globals_ctor(zend_java_globals *java_globals TSRMLS_D
 
 PHP_MINIT_FUNCTION(java)
 {
-	static char buf[80];
 	/* function definitions found in bridge.c */
 	INIT_OVERLOADED_CLASS_ENTRY(php_java_class_entry, "java", NULL,
 								php_java_call_function_handler,
@@ -187,7 +188,7 @@ PHP_MINIT_FUNCTION(java)
 	return java_test_server(&JG(cfg) TSRMLS_CC) || SUCCESS;
 }
 static char*get_server_args(struct cfg*cfg) {
-  int i, p;
+  int i;
   char*s;
   char*env[2];
   char*args[9];
@@ -247,6 +248,8 @@ PHP_MINFO_FUNCTION(java)
 
 PHP_MSHUTDOWN_FUNCTION(java) 
 {
+  extern void php_java_shutdown_library(TSRMLS_D);
+
   UNREGISTER_INI_ENTRIES();
   php_java_shutdown_library(TSRMLS_C);
   return SUCCESS;

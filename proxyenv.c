@@ -3,6 +3,8 @@
 #include <stdarg.h>
 #include <assert.h>
 #include <errno.h>
+#include <string.h>
+#include <stdlib.h>
 
 #include "protocol.h"
 
@@ -119,7 +121,7 @@ static jthrowable ExceptionOccurred (proxyenv *env) {
   return result;
 }
 static jclass FindClass (proxyenv *env, const char *name) {
-  short len=strlen(name);
+  size_t len=strlen(name);
   jclass clazz;
   id(env, FINDCLASS);
   swrite(&len, sizeof len, 1, (*env)->peer);
@@ -135,7 +137,7 @@ static jsize GetArrayLength (proxyenv *env, jarray array) {
   return result;
 }
 static jbyte *GetByteArrayElements (proxyenv *env, jbyteArray array, jboolean *isCopy) {
-  short count;
+  size_t count;
   jboolean dummy;
   jbyte *result;
   id(env, GETBYTEARRAYELEMENTS);
@@ -152,7 +154,7 @@ static jbyte *GetByteArrayElements (proxyenv *env, jbyteArray array, jboolean *i
 }
 static jmethodID GetMethodID (proxyenv *env, jclass clazz, const char *name, const char *sig) {
   jmethodID mid;
-  short len;
+  size_t len;
   id(env, GETMETHODID);
   swrite(&clazz, sizeof clazz, 1, (*env)->peer);
   len=strlen(name);
@@ -172,7 +174,7 @@ static jclass GetObjectClass (proxyenv *env, jobject obj) {
   return result;
 }
 static const char* GetStringUTFChars (proxyenv *env, jstring str, jboolean *isCopy) {
-  short count;
+  size_t count;
   char *result;
   jboolean dummy;
   id(env, GETSTRINGUTFCHARS);
@@ -230,7 +232,7 @@ static jobjectArray NewObjectArray (proxyenv *env, jsize len, jclass clazz, jobj
 }
 static jstring NewStringUTF (proxyenv *env, const char *utf) {
   jstring result;
-  short length=strlen(utf);
+  size_t length=strlen(utf);
   id(env, NEWSTRINGUTF);
   swrite(&length, sizeof length, 1, (*env)->peer);
   swrite(utf, sizeof*utf, length, (*env)->peer);
@@ -238,7 +240,6 @@ static jstring NewStringUTF (proxyenv *env, const char *utf) {
   return result;
 }
 static void ReleaseByteArrayElements (proxyenv *env, jbyteArray array, jbyte *elems, jint mode) {
-  short count;
   id(env, RELEASEBYTEARRAYELEMENTS);
   swrite(&array, sizeof array, 1, (*env)->peer);
   swrite(&elems, sizeof elems, 1, (*env)->peer);
@@ -247,7 +248,6 @@ static void ReleaseByteArrayElements (proxyenv *env, jbyteArray array, jbyte *el
   free(elems);
 }
 static void ReleaseStringUTFChars (proxyenv *env, jstring array, const char*elems) {
-  short count;
   id(env, RELEASESTRINGUTFCHARS);
   swrite(&array, sizeof array, 1, (*env)->peer);
   swrite(&elems, sizeof elems, 1, (*env)->peer);
