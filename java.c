@@ -9,7 +9,7 @@
 #include <assert.h>
 #include <errno.h>
 
-#include "php.h"
+#include "php_wrapper.h"
 #include "php_globals.h"
 #include "ext/standard/info.h"
 
@@ -33,6 +33,7 @@ PHP_RINIT_FUNCTION(java)
 PHP_RSHUTDOWN_FUNCTION(java)
 {
   if (JG(php_reflect)) (*JG(jenv))->DeleteGlobalRef(JG(jenv), JG(php_reflect));
+  if (JG(reflect_class)) (*JG(jenv))->DeleteGlobalRef(JG(jenv), JG(reflect_class));
   if(JG(jenv)&&*JG(jenv)&&(*JG(jenv))->peer) SFCLOSE((*JG(jenv))->peer);
   if(JG(jenv)&&*JG(jenv)) free(*JG(jenv));
   if(JG(jenv)) free(JG(jenv));
@@ -81,6 +82,7 @@ PHP_FUNCTION(java_set_library_path)
   zval **path;
   jlong result = 0;
   jstring p;
+  proxyenv *jenv =JG(jenv);
 
   if (ZEND_NUM_ARGS()!=1 || zend_get_parameters_ex(1, &path) == FAILURE) 
 	WRONG_PARAM_COUNT;
@@ -94,14 +96,16 @@ PHP_FUNCTION(java_set_library_path)
 	return;
   }
 
+  BEGIN_TRANSACTION(jenv);
   p = (*JG(jenv))->NewStringUTF(JG(jenv), Z_STRVAL_PP(path));
   (*JG(jenv))->CallVoidMethod(2, JG(jenv), JG(php_reflect), 
 							  JG(setJarPath), p);
+  END_TRANSACTION(jenv);
 }
 
 static short check_type (zval *pobj, zend_class_entry *class) {
 #ifdef ZEND_ENGINE_2
-  if (zend_get_class_entry(pobj) != php_java_class_entry)
+  if (zend_get_class_entry(pobj) != class)
 	return 0;
   else
 #endif
@@ -135,7 +139,8 @@ PHP_FUNCTION(java_instanceof)
   }
 
   class = NULL;
-  if((Z_TYPE_PP(pclass) == IS_OBJECT) && check_type(*pclass, php_java_class_entry)){
+  if((Z_TYPE_PP(pclass) == IS_OBJECT) && 
+	 (check_type(*pclass, php_java_class_entry)||check_type(*pclass, php_java_class_class_entry))){
 	java_get_jobject_from_object(*pclass, &class);
   }
   if(!class) {
@@ -178,7 +183,7 @@ ZEND_GET_MODULE(java)
 
 int  le_jobject;
 int java_ini_updated, java_ini_last_updated;
-zend_class_entry *php_java_class_entry, *php_java_exception_class_entry;
+zend_class_entry *php_java_class_entry, *php_java_class_class_entry, *php_java_exception_class_entry;
 #ifdef ZEND_ENGINE_2
 zend_object_handlers php_java_handlers;
 #endif
@@ -376,7 +381,8 @@ PHP_METHOD(java, __destruct)
   if(JG(jenv))
 	(*JG(jenv))->DeleteGlobalRef(JG(jenv), obj);
   else
-	fputs("PHP bug, an object destructor was called after module shutdown", stderr);
+	if(atoi(JG(cfg).logLevel)>=4)
+	  fputs("PHP bug, an object destructor was called after module shutdown\n", stderr);
 
   efree(argv);
 }
@@ -395,6 +401,7 @@ PHP_METHOD(java, __get)
 }
 PHP_METHOD(java, offsetExists)
 {
+  proxyenv *jenv =JG(jenv);
   zval **argv;
   int argc;
   jobject obj, map;
@@ -407,10 +414,12 @@ PHP_METHOD(java, offsetExists)
   }
   java_get_jobject_from_object(getThis(), &obj);
   assert(obj);
+
+  BEGIN_TRANSACTION(jenv);
   map = (*JG(jenv))->CallObjectMethod(1, JG(jenv), JG(php_reflect), JG(getPhpMap), obj);
 
   php_java_invoke("offsetExists", map, argc, argv, return_value);
-
+  END_TRANSACTION(jenv);
 }
 PHP_METHOD(java, offsetGet)
 {
@@ -592,8 +601,22 @@ static int iterator_current_key(zend_object_iterator *iter, char **str_key, uint
   }
 
   if(iterator->type == HASH_KEY_IS_STRING) {
-	*str_key_len = Z_STRLEN_P(presult);
-	*str_key = estrndup(Z_STRVAL_P(presult), *str_key_len);
+	size_t strlen = Z_STRLEN_P(presult);
+	*str_key = emalloc(strlen+1);
+	memcpy(*str_key, Z_STRVAL_P(presult), strlen);
+	(*str_key)[strlen]=0;
+
+	// len+1 is due to a bug in php. It assignes the len with
+	// key->value.str.len = str_key_len-1; In the evaluator the
+	// obtained length is always increased by one, except for the
+	// return value from iterator_current_key.  So we must do this
+	// ourselfs.  The author's intention was probably to discard the
+	// termination character, but that's pointless, if php expects our
+	// string to be null terminated why does it ask for the string
+	// length?  And if it doesn't expect a null terminated string, why
+	// does it decrease the obtained length by one?
+	*str_key_len = strlen+1;
+
   } else {
 	ulong i =(unsigned long)atol((char*)Z_STRVAL_P(presult));
 	*int_key = i;
@@ -801,7 +824,8 @@ PHP_MINIT_FUNCTION(java)
   INIT_CLASS_ENTRY(ce, "java_class", java_class_functions);
   parent = (zend_class_entry *) php_java_class_entry;
 
-  zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
+  php_java_class_class_entry = 
+	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
 #endif
   
   /* Register the resource, with destructor (arg 1) and text

@@ -28,7 +28,7 @@
 #include <jni.h>
 
 /* php */
-#include "php.h"
+#include "php_wrapper.h"
 
 
 #include "protocol.h"
@@ -371,6 +371,7 @@ int java_test_server(struct cfg*cfg TSRMLS_DC) {
 
 int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
   jobject local_php_reflect;
+  jclass local_class;
   int sock, n=-1;
   SFILE *peer;
 
@@ -405,7 +406,9 @@ int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
 
   BEGIN_TRANSACTION(JG(jenv));
   /* java bridge class */
-  JG(reflect_class) = (*JG(jenv))->FindClass(JG(jenv), "JavaBridge");
+  local_class = (*JG(jenv))->FindClass(JG(jenv), "JavaBridge");
+  if(check_error(JG(jenv), "local_php_class" TSRMLS_CC)) return FAILURE;
+  JG(reflect_class) = (*JG(jenv))->NewGlobalRef(JG(jenv), local_class);
   if(check_error(JG(jenv), "reflect_class" TSRMLS_CC)) return FAILURE;
   
   /* java bridge instance */
@@ -417,7 +420,9 @@ int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
   JAVA_METHOD(lastEx, "lastException", reflect_class, "(JJ)V");
   JAVA_METHOD(getPhpMap, "getPhpMap", reflect_class, "(Ljava/lang/Object;)LJavaBridge$PhpMap;");
 
-  JG(iterator_class) = (*JG(jenv))->FindClass(JG(jenv), "JavaBridge$PhpMap");
+  local_class = (*JG(jenv))->FindClass(JG(jenv), "JavaBridge$PhpMap");
+  if(check_error(JG(jenv), "local_iterator_class" TSRMLS_CC)) return FAILURE;
+  JG(iterator_class) = (*JG(jenv))->NewGlobalRef(JG(jenv), local_class);
   if(check_error(JG(jenv), "iterator_class" TSRMLS_CC)) return FAILURE;
 
   JAVA_METHOD(moveForward, "moveForward", iterator_class, "()Ljava/lang/Object;");

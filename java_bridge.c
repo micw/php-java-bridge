@@ -1,7 +1,6 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
 #include <stdlib.h>
-#include "php.h"
 #include "php_java.h"
 #include "java_bridge.h"
 #include <jni.h>
@@ -38,7 +37,7 @@ int java_get_jobject_from_object(pval*object, jobject*obj)
   int type, n;
 
   n = zend_hash_index_find(Z_OBJPROP_P(object), 0, (void**) &handle);
-  if(!n) { *obj=0; return 0; }
+  if(n==-1) { *obj=0; return 0; }
 
   *obj = zend_list_find(Z_LVAL_PP(handle), &type);
   return type;
@@ -236,8 +235,6 @@ php_java_getset_property (char* name, pval* object, jobjectArray value, zval *pr
   jstring propName;
   proxyenv *jenv = JG(jenv);
 
-  BEGIN_TRANSACTION(jenv);
-
   propName = (*jenv)->NewStringUTF(jenv, name);
 
   /* get the object */
@@ -253,8 +250,6 @@ php_java_getset_property (char* name, pval* object, jobjectArray value, zval *pr
     /* invoke the method */
     (*jenv)->GetSetProp(jenv, JG(php_reflect), JG(gsp), obj, propName, value, result);
   }
-
-  END_TRANSACTION(jenv);
 }
 
 /**
@@ -262,7 +257,12 @@ php_java_getset_property (char* name, pval* object, jobjectArray value, zval *pr
  */
 short php_java_get_property_handler(char*name, zval *object, zval *presult TSRMLS_DC)
 {
+  proxyenv *jenv = JG(jenv);
+
+  BEGIN_TRANSACTION(jenv);
   php_java_getset_property(name, object, 0, presult TSRMLS_CC);
+  END_TRANSACTION(jenv);
+
   return checkError(presult TSRMLS_CC) ? FAILURE : SUCCESS;
 }
 
@@ -272,7 +272,12 @@ short php_java_get_property_handler(char*name, zval *object, zval *presult TSRML
  */
 short php_java_set_property_handler(char*name, zval *object, zval *value, zval *presult TSRMLS_DC)
 {
+  proxyenv *jenv = JG(jenv);
+
+  BEGIN_TRANSACTION(jenv);
   php_java_getset_property(name, object, php_java_makeArray(1, &value TSRMLS_CC), presult TSRMLS_CC);
+  END_TRANSACTION(jenv);
+
   return checkError(presult TSRMLS_CC) ? FAILURE : SUCCESS;
 }
 

@@ -27,7 +27,7 @@
 #include <errno.h>
 
 /* path and dir separators */
-#include "php.h"
+#include "php_wrapper.h"
 #include "zend.h"
 
 #include "php_java.h"

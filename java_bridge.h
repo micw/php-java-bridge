@@ -4,7 +4,7 @@
 #define JAVA_BRIDGE_H
 
 /* PHP Includes */
-#include "php.h"
+#include "php_wrapper.h"
 #include "zend_compile.h"
 #include "php_ini.h"
 #include "php_globals.h"
