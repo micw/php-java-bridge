@@ -19,6 +19,7 @@
 
 #ifdef ZEND_ENGINE_2
 #include "zend_interfaces.h"
+#include "zend_exceptions.h"
 #endif
 
 ZEND_DECLARE_MODULE_GLOBALS(java)
@@ -368,8 +369,7 @@ PHP_METHOD(java, __set)
 }
 PHP_METHOD(java, __destruct)
 {
-  zval **argv, **handle;
-  int type;
+  zval **argv;
   int argc = ZEND_NUM_ARGS();
   jobject obj;
   
@@ -380,7 +380,7 @@ PHP_METHOD(java, __destruct)
   }
   
   java_get_jobject_from_object(getThis(), &obj);
-  assert(obj); if(!obj) RETURN_FALSE;
+  if(!obj) RETURN_TRUE;			/* may happen when java is not initalized */
 
   if(JG(jenv))
 	(*JG(jenv))->DeleteGlobalRef(JG(jenv), obj);
@@ -482,8 +482,8 @@ PHP_METHOD(java, offsetSet)
 
 PHP_METHOD(java, offsetUnset)
 {
-  zval **argv, **handle;
-  int type, argc;
+  zval **argv;
+  int argc;
   jobject obj, map;
   proxyenv *jenv = JG(jenv);
   jvalue args[1];

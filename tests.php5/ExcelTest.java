@@ -4,17 +4,17 @@ import org.apache.poi.hssf.util.*;
 /*
  * Used by bench.php
  *
- * Create a 100x100 excel sheet and write it to the file "workbook.xls
+ * Create a excel sheet and write it to the file "workbook.xls
  */
 public class ExcelTest {
     public static void main(String s[]) {
 	try {
-	    createWorkbook("workbook.xls");
+	    createWorkbook("workbook.xls", 100, 100);
 	} catch (Exception e) {
 	    e.printStackTrace();
 	}
     }
-    public static void createWorkbook(String name) throws Exception {
+    public static void createWorkbook(String name, int dx, int dy) throws Exception {
 	HSSFWorkbook wb = new HSSFWorkbook();
 	HSSFSheet sheet = wb.createSheet("new sheet");
 	HSSFRow row = sheet.createRow(0);
@@ -32,11 +32,11 @@ public class ExcelTest {
 	style.setFillForegroundColor(HSSFColor.ORANGE.index);
 	style.setFillPattern(style.SOLID_FOREGROUND);
 	
-	for (int x = 0; x < 100; x++) {
+	for (int x = 0; x < dx; x++) {
 	    
 	    // Create a row and put some cells in it. Rows are 0 based.
 	    row = sheet.createRow(x);
-	    for (int y = 0; y < 100; y++) {
+	    for (int y = 0; y < dy; y++) {
 		cell = row.createCell((short)y);
 		cell.setCellValue(String.valueOf(x) + " . " +  String.valueOf(y));
 		cell.setCellStyle(style);

@@ -143,16 +143,25 @@ void java_start_server(struct cfg*cfg TSRMLS_DC) {
 
 
 static void wait_for_daemon(struct cfg*cfg TSRMLS_DC) {
-  struct pollfd pollfd[1] = {cfg->err, POLLIN, 0};
+  struct pollfd pollfd[1] = {{cfg->err, POLLIN, 0}};
   int err, c;
 
   assert(cfg->err);
   assert(cfg->cid);
-  for(c=10; c>0 && cfg->cid && (!cfg->err || (cfg->err && !(err=poll(pollfd, 1, 0)))); c--) {
-	kill(cfg->cid, SIGTERM);
-	sleep(1);
+
+  /* first kill is trapped, second kill is received with default
+	 handler. If the server still exists, we send it a -9 */
+  for(c=3; c>0 && cfg->cid; c--) {
+	if (!(!cfg->err || (cfg->err && !(err=poll(pollfd, 1, 0))))) break;
+	if(c>1) {
+	  kill(cfg->cid, SIGTERM);
+	  sleep(1);
+	  if (!(!cfg->err || (cfg->err && !(err=poll(pollfd, 1, 0))))) break;
+	  sleep(4);
+	} else {
+	  kill(cfg->cid, SIGKILL);
+	}
   }
-  if(!c) kill(cfg->cid, SIGKILL);
   if(cfg->err) {
 	if((read(cfg->err, &err, sizeof err))!=sizeof err) err=0;
 	//printf("VM terminated with code: %ld\n", err);

@@ -2,23 +2,22 @@
 /*
  * This file is part of bench.php.
  *
- * Create a 100x100 excel sheet and write it to the file
+ * Create a 200x200 excel sheet and write it to the file
  * "workbook_php.xls
  *
  * It is called "antitest" because it shows how the PHP/Java bridge
  * should _not_ be used:
  *
- * This test generates 10000 cells using more than n*10000 java reflection
+ * This test generates 40000 cells using more than n*40000 java reflection
  * calls (n is ~ 3..5). The code is a) interpreted and b) calls are routed
  * through the java reflection machinery and through the methods in
  * JavaBridge.java.  
  *
- * PHP code which does this will execute three times slower
- * than code interpreted by the java VM and up to 100 times slower
+ * PHP code which does this will execute 10 times slower
  * than native, java JIT compiled, code.
  */
 
-function createWorkbook($name) {
+function createWorkbook($name, $dx, $dy) {
 $wb = new java("org.apache.poi.hssf.usermodel.HSSFWorkbook");
 $sheet = $wb->createSheet("new sheet");
 $row = $sheet->createRow(0);
@@ -38,9 +37,9 @@ $orange = new java ('org.apache.poi.hssf.util.HSSFColor$ORANGE');
 $style->setFillForegroundColor($orange->index);
 $style->setFillPattern($style->SOLID_FOREGROUND);
 
-for ($x = 0; $x < 100; $x++) {
+for ($x = 0; $x < $dx; $x++) {
   $row = $sheet->createRow($x);
-  for ($y = 0; $y < 100; $y++) {
+  for ($y = 0; $y < $dy; $y++) {
     $cell = $row->createCell($y);
     $cell->setCellValue("$x . $y");
     $cell->setCellStyle($style);

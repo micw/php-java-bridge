@@ -91,7 +91,6 @@ static jobject CallObjectMethodA (short count, proxyenv *env, jobject obj, jmeth
   return result;
 }
 static void CallVoidMethodA (short count, proxyenv *env, jobject obj, jmethodID methodID, const jvalue *args) {
-  jobject result;
   id(env, CALLVOIDMETHOD);
   swrite(&count, sizeof count, 1, (*env)->peer);
   swrite(&obj, sizeof obj, 1, (*env)->peer);

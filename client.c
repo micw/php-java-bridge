@@ -20,16 +20,14 @@
 #include <assert.h>
 #include <errno.h>
 
-#ifdef ZEND_ENGINE_2
-#include "zend_exceptions.h"
-#endif
-
 /* jni */
 #include <jni.h>
 
 /* php */
 #include "php_wrapper.h"
-
+#ifdef ZEND_ENGINE_2
+#include "zend_exceptions.h"
+#endif
 
 #include "protocol.h"
 #include "java_bridge.h"
@@ -37,7 +35,7 @@
 
 ZEND_DECLARE_MODULE_GLOBALS(java)
 
-
+#ifdef JAVA_COMPILE_DEBUG
 static int check_error(proxyenv *jenv, char*msg TSRMLS_DC) {
   jthrowable error = (*(jenv))->ExceptionOccurred(jenv);
   jvalue args[0];
@@ -57,6 +55,9 @@ static int check_error(proxyenv *jenv, char*msg TSRMLS_DC) {
   if(isCopy) (*jenv)->ReleaseStringUTFChars(jenv, errString, errAsUTF);
   return 1;
 }
+#else
+#define check_error(a, b) 0
+#endif
 
 #define swrite java_swrite
 extern void java_swrite(const  void  *ptr,  size_t  size,  size_t  nmemb,  SFILE *stream);
@@ -211,10 +212,8 @@ static int handle_request(proxyenv *env) {
 	sread(&jvalue, sizeof jvalue, 1, peer);
 	if(jvalue)
 	  setResultFromString(env, (pval*)(long)result, jvalue);
-#ifdef ZEND_ENGINE_2
 	else
 	  ZVAL_NULL((pval*)(long)result);
-#endif
 	break;
   }
   case SETRESULTFROMLONG: {
@@ -351,7 +350,7 @@ static int java_do_test_server(struct cfg*cfg TSRMLS_DC) {
   return (n!=-1 && e!=-1 && c==1)?SUCCESS:FAILURE;
 }
 int java_test_server(struct cfg*cfg TSRMLS_DC) {
-  struct pollfd pollfd[1] = {cfg->err, POLLIN, 0};
+  struct pollfd pollfd[1] = {{cfg->err, POLLIN, 0}};
   int count=15;
 
   if(java_do_test_server(cfg TSRMLS_CC)==SUCCESS) return SUCCESS;

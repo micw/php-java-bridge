@@ -56,7 +56,11 @@ PHP_MSHUTDOWN_FUNCTION(java);
 PHP_MINFO_FUNCTION(java);
 
 struct cfg {
+#ifdef CFG_JAVA_SOCKET_INET
+  struct sockaddr_in saddr;
+#else
   struct sockaddr_un saddr;
+#endif
   int cid; // server's process id
   int err; // file descriptor: server's return code
   char*sockname;

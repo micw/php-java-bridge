@@ -94,8 +94,6 @@ void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, sho
 						  php_java_makeArray(arg_count-1, arguments+1 TSRMLS_CC), result);
   } else {
 
-    pval **handle;
-    int type;
     jobject obj;
     jstring method;
 
@@ -117,8 +115,6 @@ static jobject php_java_makeObject(pval* arg TSRMLS_DC)
 {
   proxyenv *jenv = JG(jenv);
   jobject result;
-  pval **handle;
-  int type;
   jmethodID makeArg;
   jclass hashClass;
   jvalue args[2];
@@ -232,7 +228,6 @@ static void
 php_java_getset_property (char* name, pval* object, jobjectArray value, zval *presult TSRMLS_DC)
 {
   jlong result = 0;
-  pval **pobject;
   jobject obj;
   int type;
   jstring propName;

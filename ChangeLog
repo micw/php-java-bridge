@@ -1,3 +1,13 @@
+2004-12-03  Jost Boekemeier  <jostb@timon.intern.de>
+
+	* server/natcJavaBridge.c (Java_JavaBridge_startNative): Do not
+	catch SIGPWR, which is used by the Boehm GC.
+	(post): Next kill should kill.
+
+	* bind.c (wait_for_daemon): kill three times, if necessary.
+
+	* client. (handle_request): Do not discard retval for PHP 4.
+
 2004-12-01  Jost Boekemeier  <jostb@intern>
 
 	* php_wrapper.h: New file 

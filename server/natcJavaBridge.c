@@ -3,7 +3,7 @@
 /* longjump */
 #include <setjmp.h>
 
-#/* socket */
+/* socket */
 #include <sys/types.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -297,7 +297,6 @@ static void initGlobals(JNIEnv *env) {
 #ifndef __MINGW32__
   {
 	pthread_t thread;
-	sigset_t d;
 	pthread_attr_init(&attr);
 	pthread_cond_init(&cond, NULL);
 	pthread_mutex_init(&mutex, NULL);
@@ -510,7 +509,7 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	ob1=objFromPtr(env, key);
 	ob2=objFromPtr(env, result);
 	assert(ob1 && ob2);
-	if(!ob1 || !ob2) return;
+	if(!ob1 || !ob2) return -41;
 	(*env)->CallObjectMethod(env, peer->objectHash, hashPut, ob1, ob2);
 	break;
   }
@@ -562,7 +561,7 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	sread(&key, sizeof key, 1, peer);
 	ob1=objFromPtr(env, key);
 	ob2=objFromPtr(env, result);
-	if(!ob1||!ob2) return;
+	if(!ob1||!ob2) return -41;
 	(*env)->CallObjectMethod(env, peer->objectHash, hashPut, ob1, ob2);
 	break;
   }
@@ -653,9 +652,9 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	sread(&elems, sizeof elems, 1, peer);
 	sread(&mode, sizeof mode, 1, peer);
 	ob=objFromPtr(env, elems);
-	assert(ob); if(!ob) return;
+	assert(ob); if(!ob) return -41;
 	val = (*env)->CallObjectMethod(env, peer->objectHash, hashRemove, ob);
-	assert(val); if(!val) return;
+	assert(val); if(!val) return -41;
 	assert(!mode);
 	(*env)->ReleaseByteArrayElements(env, array, ptrFromObj(env, val), mode);
 	(*env)->DeleteLocalRef(env, val);
@@ -669,10 +668,10 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	sread(&array, sizeof array, 1, peer);
 	sread(&elems, sizeof elems, 1, peer);
 	ob=objFromPtr(env, elems);
-	if(!ob) return;
+	if(!ob) return -41;
 	val = (*env)->CallObjectMethod(env, peer->objectHash, hashRemove, ob);
 	assert(val);
-	if(!val) return;
+	if(!val) return -41;
 	(*env)->ReleaseStringUTFChars(env, array, ptrFromObj(env, val));
 	(*env)->DeleteLocalRef(env, val);
 	(*env)->DeleteLocalRef(env, ob);
@@ -712,7 +711,7 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	/* jni crashes if we pass an object object instead of a class
 	   object  */
 	clazz1 = (*env)->CallStaticObjectMethod(env, bridge, getClass, clazz);
-	result = (*env)->IsInstanceOf(env, obj, clazz1);
+	result = clazz1 ? (*env)->IsInstanceOf(env, obj, clazz1) : JNI_FALSE;
 	swrite(&result, sizeof result, 1, peer);
 	break;
   }
@@ -836,10 +835,12 @@ JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jobject instan
 }
 
 
+#ifndef __MINGW32__
 static void post(int i) {
   sem_post((sem_t*)&cond_sig);
-  signal(SIGTERM, post);
+  signal(SIGTERM, SIG_DFL);
 }
+#endif
 
 JNIEXPORT jboolean JNICALL Java_JavaBridge_openLog
   (JNIEnv *env, jclass self, jstring _logfile)
@@ -890,8 +891,9 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
   bridge = self;
   initGlobals(env);
 
+#ifndef __MINGW32__
   signal(SIGTERM, post);
-  signal(SIGPWR, post);
+#endif
 
   if(_sockname!=NULL) {
 	jboolean isCopy;

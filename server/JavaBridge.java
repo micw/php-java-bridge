@@ -187,6 +187,7 @@ public class JavaBridge implements Runnable {
     public Object MakeArg(long l)    { return new Long(l); }
     public Object MakeArg(double d)  { return new Double(d); }
     public static Class GetClass(Object obj) {
+	if(obj==null) return null;
 	return obj instanceof Class?(Class)obj:obj.getClass();
     }
 	
