@@ -808,7 +808,7 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
 	if(count==-1) {pthread_mutex_unlock(&mutex); return;}
 	pthread_mutex_unlock(&mutex);
 	socket = accept(sock, NULL, 0); 
-	if(socket==-1) {logSysError(env, "socket accept failed"); return;}
+	if(socket==-1) {logDebug(env, "socket accept failed"); return;}
 	//if(errno) goto res;
 	peer = SFDOPEN(socket, "r+");
 	if(!peer) {logSysError(env, "could not fdopen socket");goto res;}
