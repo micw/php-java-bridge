@@ -367,18 +367,30 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	break;
   }
   case DELETEGLOBALREF: {
+	long c;
 	jobject ref, ob, ob2;
 	sread(&ref, sizeof ref, 1, peer);
 	(*env)->DeleteGlobalRef(env, ref);
 	ob = objFromPtr(env, ref);
 	ob2 = (*env)->CallObjectMethod(env, peer->globalRef, hashRemove, ob);
 	assert(ob2);
+	c = (long)ptrFromObj(env,(void*)ob2);
+	assert(c>0);
+	if(--c>0) {
+	  jobject val = objFromPtr(env, (void*)c);
+	  assert(val);
+	  if(val) {
+		(*env)->CallObjectMethod(env, peer->globalRef, hashPut, ob, val);
+		(*env)->DeleteLocalRef(env, val);
+	  }
+	}
 	break;
   }
   case DELETELOCALREF: {
 	jobject ref;
 	sread(&ref, sizeof ref, 1, peer);
-	(*env)->DeleteLocalRef(env, ref);
+	/* disabled, problems with gcj */
+	//(*env)->DeleteLocalRef(env, ref);
 	break;
   }
   case EXCEPTIONCLEAR: {
@@ -497,14 +509,29 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
   }
   case NEWGLOBALREF: {
 	jobject result;
-	jobject obj, ob;
+	jobject obj, ob, ob2;
 	sread(&obj, sizeof obj, 1, peer);
 	result = (*env)->NewGlobalRef(env, obj);
 	ob=objFromPtr(env, result);
 	swrite(&result, sizeof result, 1, peer);
 	assert(ob);
-	assert(!(*env)->CallObjectMethod(env, peer->globalRef, hashRemove, ob));
-	if(ob) (*env)->CallObjectMethod(env, peer->globalRef, hashPut, ob, ob);
+	ob2=(*env)->CallObjectMethod(env, peer->globalRef, hashRemove, ob);
+	if(ob&&ob2) {
+	  long c = (long)ptrFromObj(env,ob2);
+	  ob2 = objFromPtr(env,(void*)(++c));
+	  assert(ob2);
+	  if(ob2) {
+		(*env)->CallObjectMethod(env, peer->globalRef, hashPut, ob, ob2);
+		(*env)->DeleteLocalRef(env, ob2);
+	  }		
+	} else {
+	  ob2 = objFromPtr(env,(void*)1);
+	  assert(ob2);
+	  if(ob&&ob2) { 
+		(*env)->CallObjectMethod(env, peer->globalRef, hashPut, ob, ob2);
+		(*env)->DeleteLocalRef(env, ob2);
+	  }
+	}
 	break;
   }
   case NEWOBJECT: {
@@ -654,13 +681,21 @@ static jobject connection_startup(JNIEnv *env) {
 }
 
 static void connection_cleanup (JNIEnv *env, jobject globalRef) {
-  jobject enumeration, ref;
+  long c;
+  jobject enumeration, ref, ob2;
   /* cleanup global refs that the client left */
   enumeration=(*env)->CallObjectMethod(env, globalRef, hashKeys);
   while((*env)->CallBooleanMethod(env, enumeration, enumMore)) {
 	ref = (*env)->CallObjectMethod(env, enumeration, enumNext);
-	jobject jo=(*env)->CallObjectMethod(env, globalRef, hashRemove, ref);
-	(*env)->DeleteGlobalRef(env, ptrFromObj(env,ref));
+	ob2=(*env)->CallObjectMethod(env, globalRef, hashRemove, ref);
+	assert(ob2);
+	if(ob2) {
+	  c = (int)ptrFromObj(env,ob2);
+	  assert(c>0);
+	  while(c-->0) {
+		(*env)->DeleteGlobalRef(env, ptrFromObj(env,ref));
+	  }
+	}
   }
   (*env)->DeleteGlobalRef(env, globalRef);
 }

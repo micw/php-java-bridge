@@ -84,7 +84,7 @@
 	* php-java-bridge 1.0.4 released.
 	
 
-2004-09-21  Jost Boekemeier  <jostb@mail.yahoo.de>
+2004-09-21  Jost Boekemeier  <jost2345@mail.yahoo.de>
 
         * java.c (PHP_MINIT_FUNCTION): Fixed a typo that caused a massive
 	memory leak on the java side of the bridge.  The DeleteGlobalRef
@@ -107,7 +107,7 @@
 	file descriptors.
 	
 
-2004-09-23  Jost Boekemeier  <jostb@mail.yahoo.de>
+2004-09-23  Jost Boekemeier  <jost2345@mail.yahoo.de>
 
 	Use a guard thread instead of a async signal to shutdown the server.
 	* natcJavaBridge.c (mutex, cond, count, block): New variables.
@@ -129,7 +129,7 @@
 	refs.
 	
 	
-2004-09-26  Jost Boekemeier  <jostb@mail.yahoo.de>
+2004-09-26  Jost Boekemeier  <jost2345@mail.yahoo.de>
 
 	* natcJavaBridge.c (Java_JavaBridge_startNative): do not restart
 	when signal arrived, this caused problems on some OS.
@@ -150,3 +150,15 @@
 	* client.c (java_do_test_server): Check return value from close().
 
 	* php-java-bridge 1.0.5 released.
+
+2004-09-27  Jost Boekemeier  <jost2345@mail.yahoo.de>
+
+	* JavaBridge.java (findClass): Store the classes into a weak-value 
+	hash so that classes don't get loaded multiple times (some JVM's
+	don't have a class GC).
+
+	* natcJavaBridge (handle_request, connection_cleanup): Count
+	the # of handles the client has aquired.
+
+	* java_bridge.c (wait_for_daemon): gcj uses the 2 internaly(!), we
+	must send it twice to kill it. 

@@ -8,6 +8,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.Socket;
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.io.*;
 import java.net.*;
@@ -564,19 +565,28 @@ public class JavaBridge extends ClassLoader {
 	       return null;
 	   }
        }
-   
+       private static final HashMap classes = new HashMap(); 
        public Class findClass(String name) throws ClassNotFoundException {
+	   Class c = null;
 	   byte[] b = null;
-	   try {
-	       return ClassLoader.getSystemClassLoader().loadClass(name);
-	   } catch (ClassNotFoundException e) {};
-   
-	   if(urls!=null) 
-	       for (Iterator i=urls.iterator(); i.hasNext(); ) 
-		   if ((b=load((URL)i.next(), name))!=null) break;
-   
-           if (b==null) throw new ClassNotFoundException(name + " not found");
-   
-           return this.defineClass(name, b, 0, b.length);
+
+	   synchronized(classes) {
+	       Object o = classes.get(name);
+	       if(o!=null) o = ((WeakReference)o).get();
+	       if(o!=null) c = (Class)o;
+	       if(c!=null) return c;
+	       try {
+		   return ClassLoader.getSystemClassLoader().loadClass(name);
+	       } catch (ClassNotFoundException e) {};
+	       
+	       if(urls!=null) 
+		   for (Iterator i=urls.iterator(); i.hasNext(); ) 
+		       if ((b=load((URL)i.next(), name))!=null) break;
+	       
+	       if (b==null) throw new ClassNotFoundException(name + " not found");
+	       
+	       if((c = this.defineClass(name, b, 0, b.length)) != null) classes.put(name, new WeakReference(c));
+	   }
+	   return c;
        }
 }

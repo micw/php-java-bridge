@@ -303,11 +303,16 @@ void php_java_destructor(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 static void wait_for_daemon(TSRMLS_D) {
   struct stat buf;
   struct cfg *cfg=&JG(cfg);
-  while(!stat(cfg->sockname, &buf))
+  int c;
+  assert(cfg->sockname);
+  for(c=60; c>0 && (!stat(cfg->sockname, &buf)); c--) {
+	kill(JG(cfg).cid, SIGTERM);
 	sleep(1);
+  }
+  if(!c) unlink(cfg->sockname);
 }
 
 void php_java_shutdown_library(TSRMLS_D) 
 {
-  if(JG(cfg).cid) {kill(JG(cfg).cid, SIGTERM); wait_for_daemon();}
+  if(JG(cfg).cid) wait_for_daemon();
 }
