@@ -47,7 +47,22 @@ static void java_get_server_args(char*env[N_SENV], char*args[N_SARGS]) {
   char*lib_path=cfg->ld_library_path;
   char*sys_libpath=getenv("LD_LIBRARY_PATH");
   char*home=cfg->java_home;
-
+#ifdef CFG_JAVA_SOCKET_INET
+  static char socket_prefix[]="INET:";
+#else
+  static char socket_prefix[]="LOCAL:";
+#endif
+  char *sockname;
+  if(cfg->can_fork) {			/* send a prefix so that the server
+								   does not select a different
+								   protocol */
+	sockname = malloc((sizeof socket_prefix)+strlen(cfg->sockname));
+	strcpy(sockname, socket_prefix);
+	strcat(sockname, cfg->sockname);
+  } else {
+	sockname=strdup(cfg->sockname);
+  }
+  
   if(!sys_libpath) sys_libpath="";
   args[0]=strdup(program);
   s="-Djava.library.path=";
@@ -66,7 +81,8 @@ static void java_get_server_args(char*env[N_SENV], char*args[N_SARGS]) {
   //strcpy(p, s); strcat(p, home);
   //args[4] = p;					/* java home */
   args[4] = strdup("php.java.bridge.JavaBridge");
-  args[5] = strdup(cfg->sockname);
+
+  args[5] = sockname;
   args[6] = strdup(cfg->logLevel);
   args[7] = strdup(cfg->logFile);
   args[8] = NULL;
@@ -258,7 +274,7 @@ static int wait_server() {
  return 0 if user has hard-coded the socketname
 */
 static short can_fork() {
-  return (java_ini_updated&U_SOCKNAME)==0;
+  return cfg->can_fork;
 }
 
 /* handle keyboard interrupt */

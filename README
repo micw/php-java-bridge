@@ -432,6 +432,9 @@ Build and execution instructions:
    * -m32: Build 32 bit code. Required if you run a 32 bit JVM on a 64
      bit system.
 
+   * -DCFG_JAVA_SOCKET_INET: Disables local ("unix domain")
+     sockets on systems which support them.
+
   Example: make CFLAGS="-m64"
 
 ------------------------------------

@@ -241,7 +241,7 @@ proxyenv *java_connect_to_server(TSRMLS_D) {
   if(jenv) return jenv;
 
   if(!(server=java_test_server(&sock))) {
-	  php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge?",52, strerror(errno));
+	  php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge and set the java.socketname or java.hosts option?",52, strerror(errno));
 	  return 0;
   }
   free(server);

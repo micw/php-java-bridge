@@ -13,14 +13,14 @@ public class LocalServerSocket implements ISocketFactory {
     private int peer;
 	
     public static ISocketFactory create(String name, int backlog) throws IOException {
+	if(name.startsWith("INET:")) return null;
+
 	return new LocalServerSocket(name==null?DefaultSocketname:name, backlog);
     }
     private LocalServerSocket(String name, int backlog)
 	throws IOException {
 	if(name==null) name=DefaultSocketname;
 	if(name.startsWith("LOCAL:")) name=name.substring(6);
-    	else if(name.startsWith("INET:")) 
-	    throw new IOException("local socketname must start with 'LOCAL:'");
 	this.backlog=backlog;
 	this.name=name;
 	if(0==(this.peer=JavaBridge.startNative(Util.logLevel, backlog, name))) throw new IOException("Unix domain sockets not available.");

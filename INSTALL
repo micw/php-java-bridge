@@ -30,9 +30,10 @@ Browse to http://localhost/phpinfo.php and search for the
 output of the php java bridge module (the entry should be: 
 "java.support: Enabled").
 
-Then install your java classes in java.libpath (see output of
-phpinfo), your java libraries (.jar files) in /usr/share/java or in
-java.libpath/lib and your php and web-pages in /var/www/html.
+Then install your your java libraries (.jar files) in /usr/share/java
+or in java.libpath/lib and your php and web-pages in /var/www/html.
+Individual classes (.class files) cannot be loaded, please create a
+.zip or .jar file, for example with the command: jar cvf cls.zip *.class
 --------------------------------------------------
 --------------------------------------------------
 

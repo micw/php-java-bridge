@@ -26,7 +26,7 @@
 #define LOG_ERROR 2
 #define LOG_INFO 3 /* default level */
 #define LOG_DEBUG 4
-#define DEFAULT_LEVEL "1"
+#define DEFAULT_LEVEL "2"
 
 #define N_SARGS 9				/* # of server args for exec */
 #define N_SENV 3				/* # of server env entries */

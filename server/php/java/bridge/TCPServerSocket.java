@@ -15,12 +15,13 @@ public class TCPServerSocket implements ISocketFactory {
 	int p;
 	if(name==null) name=DefaultSocketname;
 	if(name.startsWith("INET:")) name=name.substring(5);
-	else if(name.startsWith("LOCAL:")) 
-	    throw new IOException("tcp socketname must start with 'INET:'");
+	else if(name.startsWith("LOCAL:")) return null;
+	    
 	try {
 	    p=Integer.parseInt(name);
 	} catch (NumberFormatException e) {
 	    Util.logError("Could not parse TCP socket number: " + e + ". Using default: " + DefaultSocketname);
+	    p=Integer.parseInt(DefaultSocketname);
 	}
 	return new TCPServerSocket(p, backlog);
     }
