@@ -36,9 +36,7 @@ LD_LIBRARY_PATH=/lib:/usr/lib
 # calculate java dir
 java_dir=`head -1 /etc/sysconfig/java`
 phpize
-# FIXME: Will work only on a NPTL kernel or >= 2.6
-#./configure --prefix=/usr --with-java=$java_dir --enable-secure-mode
-./configure --prefix=/usr --with-java=$java_dir --disable-secure-mode
+./configure --prefix=/usr --with-java=$java_dir
 make
 
 %install

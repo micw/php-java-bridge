@@ -134,7 +134,7 @@ static short can_fork() {
 
 /* handle keyboard interrupt */
 static int s_pid=0;
-void s_kill(int sig) {
+static void s_kill(int sig) {
   if(s_pid) kill(s_pid, SIGTERM);
 }
 
