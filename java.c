@@ -44,6 +44,7 @@ PHP_RSHUTDOWN_FUNCTION(java)
 	  if((*JG(jenv))->peer) close((*JG(jenv))->peer);
 	  if((*JG(jenv))->s) free((*JG(jenv))->s);
 	  if((*JG(jenv))->send) free((*JG(jenv))->send);
+	  if((*JG(jenv))->server_name) free((*JG(jenv))->server_name);
 	  free(*JG(jenv));
 	}
 	free(JG(jenv));
@@ -144,19 +145,14 @@ PHP_FUNCTION(java_get_session)
 
 PHP_FUNCTION(java_get_server_name)
 {
-  char *name;
-  int socket;
-
+  proxyenv *jenv;
   if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT;
 
-  name=java_test_server(&socket);
-  if(name) close(socket);
-  if(!name) {
-	RETURN_NULL();
-  } else {
-	ZVAL_STRING(return_value, name, 1);
-	free(name);
+  jenv = java_try_connect_to_server(TSRMLS_C);
+  if(jenv && (*jenv)->server_name) {
+	RETURN_STRING((*jenv)->server_name, 1);
   }
+  RETURN_NULL();
 }
 
 function_entry java_functions[] = {

@@ -19,6 +19,7 @@
 /* socket */
 #ifdef __MINGW32__
 # include <winsock2.h>
+# define close closesocket
 #else
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -111,6 +112,7 @@ ZEND_END_MODULE_GLOBALS(java)
 
 extern char* java_get_server_string();
 
+extern proxyenv *java_try_connect_to_server(TSRMLS_D);
 extern proxyenv *java_connect_to_server(TSRMLS_D);
 extern void java_start_server();
 

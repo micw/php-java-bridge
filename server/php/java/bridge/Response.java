@@ -70,7 +70,7 @@ public class Response {
     static final byte[] Pn="<P t=\"N\" v=\"".getBytes();
     static final byte[] Ps="<P t=\"S\" v=\"".getBytes();
     static final byte[] Pe="</P>".getBytes();
-    static final byte[] quote="&quote;".getBytes();
+    static final byte[] quote="&quot;".getBytes();
     static final byte[] amp="&amp;".getBytes();
     void writeString(byte s[]) {
     	

@@ -234,23 +234,30 @@ static void handle_request(proxyenv *env) {
   parse(env, &cb);
 }
 
-proxyenv *java_connect_to_server(TSRMLS_D) {
+static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {
   char *server;
   int sock;
   proxyenv *jenv =JG(jenv);
   if(jenv) return jenv;
 
   if(!(server=java_test_server(&sock))) {
-	  php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge and set the java.socketname or java.hosts option?",52, strerror(errno));
+	  if (bail) 
+		php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge and set the java.socketname or java.hosts option?",52, strerror(errno));
 	  return 0;
   }
-  free(server);
 #ifndef ZEND_ENGINE_2
   // we want arrays as values
   { char c=2; send(sock, &c, sizeof c, 0); }
 #endif
 
-  return JG(jenv) = java_createSecureEnvironment(sock, handle_request);
+  return JG(jenv) = java_createSecureEnvironment(sock, handle_request, server);
+}
+proxyenv *java_connect_to_server(TSRMLS_D) {
+  return try_connect_to_server(1 TSRMLS_CC);
+}
+proxyenv *java_try_connect_to_server(TSRMLS_D) {
+  
+  return try_connect_to_server(0 TSRMLS_CC);
 }
 
 #ifndef PHP_WRAPPER_H

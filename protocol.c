@@ -38,16 +38,16 @@ static void flush(proxyenv *env) {
   (*env)->handle_request(env);
 }
 #define GROW_QUOTE() \
-  if(pos+1>=newlen) { \
+  if(pos+8>=newlen) { \
     newlen=newlen+newlen/10; \
-    new=realloc(new, newlen+1); \
+    new=realloc(new, newlen+8); \
     assert(new); if(!new) exit(9); \
   } 
 static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
   static const char quote[]="&quote;";
   static const char amp[]="&amp;";
-  register size_t newlen=len+len/10, pos=0;
-  char c, *s, *new = malloc(newlen+1);
+  register size_t newlen=len+8+len/10, pos=0;
+  char c, *s, *new = malloc(newlen);
   register short j;
   assert(new); if(!new) exit(9);
   
@@ -216,7 +216,7 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
 
  
 
- proxyenv *java_createSecureEnvironment(int peer, void (*handle_request)(proxyenv *env)) {
+ proxyenv *java_createSecureEnvironment(int peer, void (*handle_request)(proxyenv *env), char *server_name) {
    proxyenv *env;  
    env=(proxyenv*)malloc(sizeof *env);     
    if(!env) return 0;
@@ -232,6 +232,8 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    (*env)->send=malloc(SEND_SIZE);
    if(!(*env)->send) {free((*env)->s); free(*env); free(env); return 0;}
    (*env)->send_len=0;
+   
+   (*env)->server_name = server_name;
 
    (*env)->writeInvokeBegin=InvokeBegin;
    (*env)->writeInvokeEnd=InvokeEnd;

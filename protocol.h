@@ -45,6 +45,8 @@ struct proxyenv_ {
   unsigned char*send;
   size_t send_len, send_size;
 
+  char *server_name;
+
   void (*handle_request)(proxyenv *env);
 
   void (*writeCreateObjectBegin)(proxyenv *env, char*name, size_t strlen, char createInstance, void *result);
@@ -70,6 +72,6 @@ struct proxyenv_ {
   void (*writeUnref)(proxyenv *env, long object);
 };
 
-extern proxyenv *java_createSecureEnvironment(int peer, void (*handle_request)(proxyenv *env));
+extern proxyenv *java_createSecureEnvironment(int peer, void (*handle_request)(proxyenv *env), char*server);
 
 #endif

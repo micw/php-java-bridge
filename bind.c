@@ -205,7 +205,6 @@ static int test_local_server() {
 char* java_test_server(int *_socket) {
   int sock;
 
-#ifndef __MINGW32__
   if(cfg->hosts && strlen(cfg->hosts)) {
 	char *host, *hosts = strdup(cfg->hosts);
 	
@@ -222,6 +221,7 @@ char* java_test_server(int *_socket) {
 	  if(!port) port=atoi(DEFAULT_PORT);
 	  saddr.sin_family = AF_INET;
 	  saddr.sin_port=htons(port);
+#ifndef __MINGW32__
 	  if(!isdigit(*host)) {
 		struct hostent *hostent = gethostbyname(host);
 		if(hostent) {
@@ -232,7 +232,10 @@ char* java_test_server(int *_socket) {
 	  } else {
 		inet_aton(host, &saddr.sin_addr);
 	  }
-	  
+#else
+	  saddr.sin_addr.s_addr = inet_addr(host);
+#endif
+
 	  sock = socket (PF_INET, SOCK_STREAM, 0);
 	  if(-1==sock) continue;
 	  if (-1==connect(sock,(struct sockaddr*)&saddr, sizeof (struct sockaddr))) {
@@ -247,7 +250,6 @@ char* java_test_server(int *_socket) {
 	}
 	free(hosts);
   }
-#endif	  
 
   if(-1!=(sock=test_local_server())) {
 	if(_socket) {

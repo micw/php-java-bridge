@@ -34,7 +34,8 @@ server and the bridge.
 
           extension = php_java.dll
           [java]
-  
+          java.hosts="127.0.0.1:9167"
+
 * Copy the test.php into your web-server document root and browse to:
 
     http://localhost/test.php
@@ -61,17 +62,22 @@ Known Windows Issues
   .jar files into %JAVA_HOME\jre\lib\ext instead and then re-start the
   java VM.
 
-* java.hosts option switched off. The windows version can only connect
-  to a single host: 127.0.0.1:9167.
-
-* The windows binary cannot be run as a sub-process of the Apache web
-  server.
-
 * Windows 98 does not support UTF-8.  To force the bridge to use UTF-8
-  anyway, start it with:
-  java -Dfile.encoding=UTF-8 JavaBridge.jar
+  anyway, start it with: java -Dfile.encoding=UTF-8 JavaBridge.jar
 
-* Due to cr -> cr/lf conversion the bridge expects one more character
-  at the end of the stream and reports this if the log level is >=1.
-  The message is harmless and can be switched off by using log level 0,
-  which is default on windows.
+* Both, the CGI version and the apache or isapi module are
+  supported. But it is recommended to use the CGI version:
+
+  Due to bugs in PHP5 the module version may leak resources.  You can
+  test this by starting the bridge with the command: java -jar
+  JavaBridge.jar 9167 5 "" and then type: php-cgi.exe -i. If you see a
+  "java.net.SocketException: Connection reset" exception message, this
+  means that your PHP version cannot handle resources correctly. -- The
+  exception means that PHP did not call the RSHUTDOWN hook and that the
+  socket was destroyed by the operating system upon CGI termination. If
+  this happens with the module version, the socket will stay open and
+  the operating system will run out of socket handles after some time.
+
+  The leak described above happens very seldom, for example if 
+  the PHP script is very short. But it may happen, not only with
+  the PHP/Java Bridge but also with SOAP and other modules.
