@@ -115,7 +115,7 @@ public class JavaBridge implements Runnable {
 	JavaBridge bridge = new JavaBridge();
 	Thread thread = new Thread(bridge);
 	bridge.peer=peer;
-	//thread.setContextClassLoader(bridge);
+	thread.setContextClassLoader(bridge);
 	thread.start();
     }
 
