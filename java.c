@@ -46,12 +46,17 @@ PHP_FUNCTION(java_last_exception_get)
 
   result = (jlong)(long)return_value;
   
+  if(!JG(jenv)) {
+	php_error(E_ERROR, "java not initialized");
+	return;
+  }
   lastEx = (*JG(jenv))->GetMethodID(JG(jenv), JG(reflect_class), 
           "lastException", "(JJ)V");
 
   (*JG(jenv))->LastException(JG(jenv), JG(php_reflect), lastEx, 
 							  result);
 }
+
 PHP_FUNCTION(java_last_exception_clear)
 {
   jlong result = 0;
@@ -61,6 +66,10 @@ PHP_FUNCTION(java_last_exception_clear)
 
   result = (jlong)(long)return_value;
   
+  if(!JG(jenv)) {
+	php_error(E_ERROR, "java not initialized");
+	return;
+  }
   clearEx = (*JG(jenv))->GetMethodID(JG(jenv), JG(reflect_class), 
           "clearException", "()V");
 
@@ -68,9 +77,39 @@ PHP_FUNCTION(java_last_exception_clear)
 							  clearEx);
 }
 
+PHP_FUNCTION(java_set_jar_library_path)
+{
+  zval **path;
+  jlong result = 0;
+  jmethodID setJarPath;
+  jstring p;
+
+  if (ZEND_NUM_ARGS()!=1 || zend_get_parameters_ex(1, &path) == FAILURE) 
+	WRONG_PARAM_COUNT;
+
+  convert_to_string_ex(path);
+
+  result = (jlong)(long)return_value;
+  
+  if(!JG(jenv)) {
+	php_error(E_ERROR, "java not initialized");
+	return;
+  }
+  setJarPath = (*JG(jenv))->GetMethodID(JG(jenv), JG(reflect_class), 
+										"setJarLibraryPath", 
+										"(Ljava/lang/String;)V");
+
+  p = (*JG(jenv))->NewStringUTF(JG(jenv), Z_STRVAL_PP(path));
+  (*JG(jenv))->CallVoidMethod(2, JG(jenv), JG(php_reflect), 
+							  setJarPath, p);
+
+  (*JG(jenv))->DeleteLocalRef(JG(jenv), p);
+}
+
 function_entry java_functions[] = {
 	PHP_FE(java_last_exception_get, NULL)
 	PHP_FE(java_last_exception_clear, NULL)
+	PHP_FE(java_set_jar_library_path, NULL)
 	{NULL, NULL, NULL}
 };
 

@@ -9,9 +9,12 @@ if (!extension_loaded('java')) {
   }
 }
 
+// were to load libraries from (example):
+java_set_jar_library_path("http://somewhere.org/lib1.jar;file:c:/lib2.jar");
+
 $v = new java("java.lang.System");
 $arr=$v->getProperties();
 foreach ($arr as $key => $value) {
-		print $key . " -> " .  $value . "\n";
+  print $key . " -> " .  $value . "\n";
 }
 ?>

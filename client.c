@@ -46,7 +46,7 @@
 ZEND_DECLARE_MODULE_GLOBALS(java)
 
 
-static int abort_on_error(proxyenv *jenv, int nr TSRMLS_DC) {
+static int check_error(proxyenv *jenv, int nr TSRMLS_DC) {
   jthrowable error = (*(jenv))->ExceptionOccurred(jenv);
   if(!error) return 0;
   jclass errClass;
@@ -273,15 +273,15 @@ static int handle_requests(proxyenv *env) {
 static int java_do_test_server(struct cfg*cfg TSRMLS_DC) {
   char term=0;
   int sock;
-  int n, c;
+  int n, c, e;
   sock = socket (PF_UNIX, SOCK_STREAM, 0);
   assert(sock);
   if(!sock) return FAILURE;
   n = connect(sock,(struct sockaddr*)&cfg->saddr, sizeof cfg->saddr);
   if(n!=-1) c = write(sock, &term, sizeof term);
-  close(sock);
+  e = close(sock);
 
-  return (n!=-1 && c==1)?SUCCESS:FAILURE;
+  return (n!=-1 && e!=-1 && c==1)?SUCCESS:FAILURE;
 }
 int java_test_server(struct cfg*cfg TSRMLS_DC) {
   int count=15;
@@ -294,6 +294,7 @@ int java_test_server(struct cfg*cfg TSRMLS_DC) {
   return (cfg->cid && count)?SUCCESS:FAILURE;
 }
 int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
+  jmethodID init;
   int sock, s, i, n, len;
   FILE *fd;
 
@@ -312,12 +313,20 @@ int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
   JG(jenv)=java_createSecureEnvironment(peer, handle_requests);
   
   JG(reflect_class) = (*JG(jenv))->FindClass(JG(jenv), "JavaBridge");
-  if(abort_on_error(JG(jenv), 3 TSRMLS_CC)) return FAILURE;
+  if(check_error(JG(jenv), 3 TSRMLS_CC)) return FAILURE;
   
   jobject local_php_reflect = (*JG(jenv))->AllocObject(JG(jenv), JG(reflect_class));
-  if(abort_on_error(JG(jenv), 4 TSRMLS_CC)) return FAILURE;
+  if(check_error(JG(jenv), 4 TSRMLS_CC)) return FAILURE;
   
   JG(php_reflect) = (*JG(jenv))->NewGlobalRef(JG(jenv), local_php_reflect);
-  if(abort_on_error(JG(jenv), 5 TSRMLS_CC)) return FAILURE;
+  if(check_error(JG(jenv), 5 TSRMLS_CC)) return FAILURE;
+
+  init =
+	(*JG(jenv))->GetMethodID(JG(jenv), JG(reflect_class), "<init>", "()V");
+  if(check_error(JG(jenv), 5 TSRMLS_CC)) return FAILURE;
+
+  (*JG(jenv))->CallVoidMethod(0, JG(jenv), JG(php_reflect), init);
+  if(check_error(JG(jenv), 5 TSRMLS_CC)) return FAILURE;
+
   return SUCCESS;
 }

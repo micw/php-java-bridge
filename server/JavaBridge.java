@@ -8,13 +8,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.Socket;
-import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.Properties;
-import java.util.Vector;
+import java.util.*;
 import java.io.*;
+import java.net.*;
 
-public class JavaBridge {
+public class JavaBridge extends ClassLoader {
 
 	static PrintStream logStream;
 	static int logLevel;
@@ -40,7 +38,6 @@ public class JavaBridge {
 	public Object MakeArg(boolean b) { return new Boolean(b); }
 	public Object MakeArg(long l)    { return new Long(l); }
 	public Object MakeArg(double d)  { return new Double(d); }
-
 
 	static void init(String s[]) {
 		String logFile=null;
@@ -187,7 +184,7 @@ public class JavaBridge {
 		try {
 			Vector matches = new Vector();
 
-			Constructor cons[] = Class.forName(name).getConstructors();
+			Constructor cons[] = Class.forName(name, true, this).getConstructors();
 			for (int i=0; i<cons.length; i++) {
 				if (cons[i].getParameterTypes().length == args.length) {
 					matches.addElement(cons[i]);
@@ -202,7 +199,7 @@ public class JavaBridge {
 				} else {
 					// for classes which have no visible constructor, return the class
 					// useful for classes like java.lang.System and java.util.Calendar.
-					setResult(result, peer, Class.forName(name));
+					setResult(result, peer, Class.forName(name, true, this));
 					return;
 				}
 			}
@@ -494,4 +491,92 @@ public class JavaBridge {
 			setException(result, peer, e);
 		}
 	}
+
+       // the list of jar files in which we search for user classes.
+       // can be changed with setLibraryPath
+       private Collection urls=null;
+
+       // Set the library path for the java bridge. Examples:
+       // setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");
+       // setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");
+       // The first char must be the token separator.
+       void setJarLibraryPath(String _path) {
+	   if(_path==null || _path.length()<2) return;
+
+	   // add a token separator if first char is alnum
+	   if((_path.charAt(0)>='A' && _path.charAt(0)<='Z') ||
+	      (_path.charAt(0)>='a' && _path.charAt(0)<='z') ||
+	      (_path.charAt(0)>='0' && _path.charAt(0)<='9'))
+	       _path = ";" + _path;
+
+	   String path = _path.substring(1);
+	   StringTokenizer st = new StringTokenizer(path, _path.substring(0, 1));
+	   urls = new ArrayList();
+	   while (st.hasMoreTokens()) {
+	       URL url;
+	       String p, s;
+	       s = st.nextToken();
+	       
+	       try {
+		   url = new URL(s);
+		   p = url.getProtocol(); 
+	       } catch (MalformedURLException e) {
+		   printStackTrace(e);
+		   continue;
+	       }
+   
+	       if(p.equals("jar")) {
+		   urls.add(url);
+		   continue;
+               }
+	       try {
+		   urls.add(new URL("jar:"+s+"!/"));
+	       } catch (MalformedURLException e) {
+		   printStackTrace(e);
+	       }
+	   }
+       }
+       
+   
+       byte[] load(URL u, String name) {
+	   try {
+	       int c, pos, pt;
+	       String p, h, f;
+   
+	       p = u.getProtocol(); h = u.getHost(); 
+	       pt = u.getPort(); f = u.getFile();
+	       URL url = new URL(p ,h , pt, f+name.replace('.','/')+".class");
+   
+	       URLConnection con = url.openConnection();
+	       con.connect();
+	       int length = con.getContentLength();
+	       byte[] b = new byte[length];
+   
+               InputStream in = con.getInputStream();
+	       for(pos=0; (c=in.read(b, pos, b.length-pos))<length-pos; pos+=c) {
+		   if(c<0) { in.close(); return null; }
+	       }
+   
+	       in.close();
+   
+	       return b;
+           } catch (Exception e) {
+	       return null;
+	   }
+       }
+   
+       public Class findClass(String name) throws ClassNotFoundException {
+	   byte[] b = null;
+	   try {
+	       return ClassLoader.getSystemClassLoader().loadClass(name);
+	   } catch (ClassNotFoundException e) {};
+   
+	   if(urls!=null) 
+	       for (Iterator i=urls.iterator(); i.hasNext(); ) 
+		   if ((b=load((URL)i.next(), name))!=null) break;
+   
+           if (b==null) throw new ClassNotFoundException(name + " not found");
+   
+           return this.defineClass(name, b, 0, b.length);
+       }
 }

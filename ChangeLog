@@ -127,3 +127,26 @@
 	(connection_startup, connection_cleanup): New functions.
 	(handle_requests, handle_request_impl, handle_request): Trace global
 	refs.
+	
+	
+2004-09-26  Jost Boekemeier  <jostb@mail.yahoo.de>
+
+	* natcJavaBridge.c (Java_JavaBridge_startNative): do not restart
+	when signal arrived, this caused problems on some OS.
+
+	It is now possible to set the library path at run-time e.g.:
+	java_set_jar_library_path(";file:c:/test.jar;http://foo.com/xy.jar");
+	* Javabridge.java (setJarLibraryPath, load, findClass): New methods.
+	(CreateObject): Load classes via our own classloader.
+	* java.c (java_set_jar_library_path): New function.
+	* client.c (java_connect_to_server): Call constructor.
+	* sample.php: Use new function.
+
+	* java.c (java_last_exception_clear, java_last_exception_get):
+	Check if java is initialized.
+
+	* client.c (abort_on_error): Renamed to check_error.
+
+	* client.c (java_do_test_server): Check return value from close().
+
+	* php-java-bridge 1.0.5 released.

@@ -749,7 +749,7 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
 	pthread_mutex_unlock(&mutex);
 	param->s = accept(sock, NULL, 0); 
 	if(param->s==-1) {logSysError(env, "socket accept failed"); return;}
-	if(errno) goto res; 		
+	//if(errno) goto res;
 
 	param->env = env;
 	n=(*env)->GetJavaVM(env, &param->vm);
