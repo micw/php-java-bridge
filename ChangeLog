@@ -1,3 +1,10 @@
+2005-01-04  Jost Boekemeier  <jostb@intern>
+
+	* server/JavaBridge.java: Changed indent.
+	
+	* server/JavaBridge.java (getResource, findResource): New methods
+	needed to load resources from the private classloader.
+	
 2005-01-02  Jost Boekemeier  <jostb@intern>
 
 	* server/configure.in, config.m4: follow symlinks to find the
