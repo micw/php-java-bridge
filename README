@@ -134,12 +134,12 @@ Build and execution instructions:
 
    gcj --version  # must be gcj 3.2.3 or above!
    echo "main(int argc,char**argv){java_bridge_main_gcj(argc,argv);}">start.c
-   gcj --static -g0 -O2 -fjni -oJavaBridge.srv start.c \
+   gcj --static -fjni -oJavaBridge.srv start.c \
        ../server/JavaBridge.java \
        ../server/natcJavaBridge.c \
        [...insert additional paths to .java classes here...] \
-       -I$JAVA_HOME/include -I$JAVA_HOME/include/linux  \
-       -I..
+       -I.. -I$JAVA_HOME/include -I$JAVA_HOME/include/linux
+
 
    This creates a native, static linked executable in the current
    directory which does not need any libraries anymore.  It can be
@@ -165,9 +165,9 @@ Build and execution instructions:
 
    It is recommended to compile the executable against shared
    libraries (ommit the above --static).  If you do this, you
-   must package the JavaBridge.srv and the libraries it needs
+   must package the JavaBridge.srv with the libraries it needs
    (at least libnatcJavaBridge.so, libgcc_s.so.1 and libgcj.so.3, see
-   output of ldd command) into an RPM.
+   output of ldd command).
 
    On the installation system and make sure that your client
    starts the JavaBridge before the httpd service gets started. -- On
