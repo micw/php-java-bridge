@@ -1031,7 +1031,7 @@ void java_bridge_main_gcj(int argc, char**_argv)
   meths[0].meth[4].signature="(JJLjava.lang.Object;)V";
   meths[0].meth[10].signature="(ILjava.lang.String;)V";
 	
-  if(!argv) exit(6);
+  if(!_argv) exit(6);
   if(argc==4) {
 	argv=calloc(N_SARGS, sizeof*argv);
 	argv[N_SARGS-4]=_argv[1];			/* socketname */
