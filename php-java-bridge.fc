@@ -1,6 +1,0 @@
-#################################
-# php-java-bridge.fc
-# SELinux file contexts for the bridge
-#
-/usr/lib/php4/RunJavaBridge		--	system_u:object_r:javabridge_exec_t
-# /var/log/php-java-bridge.log		--	system_u:object_r:javabridge_log_t

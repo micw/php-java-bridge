@@ -79,8 +79,8 @@ cp php-java-bridge.service $RPM_BUILD_ROOT/etc/init.d/php-java-bridge
 chmod +x $RPM_BUILD_ROOT/etc/init.d/php-java-bridge
 echo /etc/init.d/php-java-bridge >>filelist
 
-mkdir -p $RPM_BUILD_ROOT/var/log/php-java-bridge
-echo /var/log/php-java-bridge >>filelist
+mkdir $RPM_BUILD_ROOT/$mod_dir/lib
+echo $mod_dir/lib >>filelist
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -112,12 +112,24 @@ java.java=$java
 EOF2
 
 chkconfig php-java-bridge on
-service php-java-bridge start
+echo "PHP/Java Bridge installed. Start with:"
+echo "service php-java-bridge restart"
+echo
+if test -f /etc/selinux/config; then
+	te=/etc/selinux/%{__policy_tree}/src/policy/domains/program/php-java-bridge.te
+	fc=/etc/selinux/%{__policy_tree}/src/policy/file_contexts/program/php-java-bridge.fc
+    echo "SECURITY ENHANCED LINUX"
+    echo "-----------------------"
+	echo "You are running a SELinx system. Please install the policy sources:"
+	echo "rpm -i selinux-policy-%{__policy_tree}-sources-*.rpm"
+	echo "sh %{_docdir}/php-java-bridge-%{version}/update_policy.sh \\"
+    echo "                          /etc/selinux/%{__policy_tree}/src/policy"
+	echo "Please see INSTALL and README documents for more information."
+fi
 
 %preun
-service php-java-bridge stop
 chkconfig php-java-bridge off
 
 %files -f filelist
 %defattr(-,root,root)
-%doc README README.GNU_JAVA INSTALL LICENSE ChangeLog test.php php-java-bridge.te php-java-bridge.fc 
+%doc README README.GNU_JAVA INSTALL LICENSE ChangeLog test.php php-java-bridge.te php-java-bridge.fc update_policy.sh

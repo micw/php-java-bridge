@@ -1,11 +1,6 @@
 Installation from RPM
 ---------------------
 
-NOTE: If you run a SELinux kernel, you must install the policy files
-before you can run the PHP/Java Bridge. The php-java-bridge RPM
-contains the policy files in the /usr/share/doc directory. It is
-assumed that you know how to install them.
-
 * Install a J2RE, for example with the command:
   rpm -i IBMJava2-JRE-1.4.1-8.i386.rpm
 
@@ -18,6 +13,15 @@ assumed that you know how to install them.
 * Install the php-java-bridge, for example with the command:
   rpm -i php-java-bridge-X.Y.Z-1.i386.rpm
 
+* IF you have SECURITY ENHANCED LINUX, install the SEL policy sources
+  if they are not installed. For example with the command:
+  rpm -i selinux-policy-targeted-sources-1.17.30-2.19.noarch.rpm
+  Then update the policy with the command:
+  su -c "sh update_policy.sh /etc/selinux/{strict||targeted}/src/policy reload"
+  The value for "strict||targeted" depends on your setting in
+  /etc/selinux/config. The "update_policy.sh" file can be found in the 
+  documentation folder of the bridge: /usr/share/doc/php-java-bridge*.
+
 Start the web-server with the command: service httpd restart.
 Start the bridge with the command: service php-java-bridge restart
 
@@ -28,8 +32,9 @@ Browse to http://localhost/phpinfo.php and search for the
 output of the php java bridge module (the entry should be: 
 "java.support: Enabled").
 
-Then install your java classes in java.libpath (see output of phpinfo)
-and your php and web-pages in /var/www/html.
+Then install your java classes in java.libpath (see output of
+phpinfo), your java libraries (.jar files) in /usr/share/java or in
+java.libpath/lib and your php and web-pages in /var/www/html.
 --------------------------------------------------
 --------------------------------------------------
 
@@ -40,8 +45,8 @@ Installation from source code
 
 NOTE: If you run a SELinux kernel, you must install the policy files
 before you can run the PHP/Java Bridge. The php-java-bridge source
-tarball contains the policy files in the root directory. It is assumed
-that you know how to install them.
+tarball contains the policy files in the root directory. Please see
+the README file.
 
 The following software components must be installed on your computer:
 

@@ -1,0 +1,32 @@
+#!/bin/sh
+
+if test $# != 1; then
+  echo "Usage: $0 <policy-src-path>"
+  echo "Example: $0 /etc/selinux/targeted/src/policy"
+  exit 1;
+fi
+
+if ! test -f ${1}/Makefile; then
+  echo "ERROR: SEL policy sources not installed. Please install them."
+  exit 2;
+fi
+
+PATH=/usr/sbin:/sbin:$PATH
+
+enforce=`getenforce`
+setenforce 0
+domains=${1}/domains
+contexts=${1}/file_contexts
+cp -v `dirname $0`/php-java-bridge.te $domains/program &&
+cp -v `dirname $0`/php-java-bridge.fc $contexts/program &&
+make -C $1 reload &&
+setfiles -v ${1}/file_contexts/file_contexts @EXTENSION_DIR@/RunJavaBridge
+err=$?
+setenforce $enforce
+if test $err != 0; then
+    echo "ERROR: $err."
+    exit 1
+else
+    echo "SELinux policy files for php-java-bridge installed."
+    exit 0
+fi

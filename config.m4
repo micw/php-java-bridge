@@ -48,9 +48,11 @@ if test "$PHP_JAVA" != "no"; then
         else
 	    AC_CONFIG_SUBDIRS(server)
         fi
-	sed "s*@EXTENSION_DIR@*${EXTENSION_DIR}*
-             s*@phplibdir@*`pwd`/modules*" \
-          <$ext_builddir/server/configure.gnu.in >$ext_builddir/server/configure.gnu
+        for i in ${ext_builddir}/server/configure.gnu php-java-bridge.fc update_policy.sh; do
+          sed "s*@EXTENSION_DIR@*${EXTENSION_DIR}*
+               s*@phplibdir@*`pwd`/modules*" \
+            <${i}.in >${i}
+        done
 
 # an artificial target so that the server/ part gets compiled
 	PHP_ADD_MAKEFILE_FRAGMENT

@@ -1,5 +1,7 @@
 2005-02-01  Jost Boekemeier  <jostb@intern>
 
+	* server/JavaBridge.java (findResources): New method.
+	
 	* java.c (iterator_current_key, init_current_data): PHP does not
 	necessarily return "clean" zvals. Zero out the allocated zval so
 	that setResultFromObject can initialize it properly.  This fixes a

@@ -85,7 +85,7 @@ What is the PHP/Java Bridge?
        $entries[0] ="Jakob der Luegner, Jurek Becker 1937--1997";
        $entries[1] ="Mutmassungen ueber Jakob, Uwe Johnson, 1934--1984";
        $entries[2] ="Die Blechtrommel, Guenter Grass, 1927--";
-       for ($i = 0; $i < 3; $i++) {
+       for ($i = 0; $i < $Array->getLength($entries); $i++) {
           echo "$i: " . $entries[$i] ."\n";
        }
 
@@ -312,7 +312,7 @@ Build and execution instructions:
 
      Then configure and compile php as usual:
 
-      ./configure --with-java=$JAVA_HOME
+      ./configure --with-java=%JAVA_HOME%
       make
 
   This will create a php binary with the PHP/Java Bridge included.
@@ -494,14 +494,9 @@ Build and execution instructions:
 
         rpm -i selinux-policy-targeted-sources-1.17.30-2.19.noarch.rpm
 
-   2. Install the policy files with the command:
+   2. Update the policy files with the PHP/Java Bridge policy:
 
-        su -c "make install_policy"
-
-   3. Inject the new policy rules into the kernel. On RedHat Fedora
-      Core 3 and above the command is:
-
-        su -c "make -C /etc/selinux/targeted/src/policy reload"
+        su -c "sh update_policy.sh /etc/selinux/targeted/src/policy"
       
   If the default policy is too restrictive and e.g. you want to use the
   PHP/Java Bridge to connect to your J2EE server(s), you can temporarily 
@@ -520,4 +515,12 @@ Build and execution instructions:
   function.  If you use one of these versions, please either apply the
   php5-crash-in-evaluator-shutdown_workaround.patch or add an entry to
   the php.ini, see install instructions above.
+
+------------------------------------
+  Mailing List
+  ------------
+
+  Please report bugs/problems to the mailing list:
+
+    php-java-bridge-users@lists.sourceforge.net
 

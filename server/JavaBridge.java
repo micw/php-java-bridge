@@ -73,32 +73,27 @@ public class JavaBridge implements Runnable {
 				return result;
 			}	
 
-			byte[] load(URL u, String name) {
+			byte[] load(URL u, String name) throws Exception {
 				logMessage("try to load class " + name + " from " + u);
-				try {
-					byte b[]=null;
-					int pt;
-					String p, h, f;
-		    
-					p = u.getProtocol(); h = u.getHost(); 
-					pt = u.getPort(); f = u.getFile();
-					URL url = new URL(p ,h , pt, f+name.replace('.','/')+".class");
-		    
-					URLConnection con = url.openConnection();
-					con.connect();
-					int length = con.getContentLength();
-					InputStream in = con.getInputStream();
-
-					if(length > 0) 
-						b = read(in, length);
-					else if(length < 0) // bug in gcj
-						b = readChunks(in);
-
-					return b;
-
-				} catch (Exception e) {
-					return null;
-				}
+				byte b[]=null;
+				int pt;
+				String p, h, f;
+				
+				p = u.getProtocol(); h = u.getHost(); 
+				pt = u.getPort(); f = u.getFile();
+				URL url = new URL(p ,h , pt, f+name.replace('.','/')+".class");
+				
+				URLConnection con = url.openConnection();
+				con.connect();
+				int length = con.getContentLength();
+				InputStream in = con.getInputStream();
+				
+				if(length > 0) 
+					b = read(in, length);
+				else if(length < 0) // bug in gcj
+					b = readChunks(in);
+				
+				return b;
 			}
 			public Class findClass(String name) throws ClassNotFoundException {
 				Class c = null;
@@ -114,13 +109,22 @@ public class JavaBridge implements Runnable {
 					} catch (ClassNotFoundException e) {};
 		    
 					Collection[] allUrls = {urls, sysUrls};
+					ArrayList list = new ArrayList();
 					for(int n=0; b==null && n<allUrls.length; n++) {
 						Collection urls = allUrls[n];
 						if(urls!=null) 
-							for (Iterator i=urls.iterator(); i.hasNext(); ) 
-								if ((b=load((URL)i.next(), name))!=null) break;
+							for (Iterator i=urls.iterator(); i.hasNext(); ) {
+								URL url = (URL)i.next();
+								try {
+									if ((b=load(url, name))!=null) break;
+								} catch (Exception e) {
+									Vector v = new Vector();
+									v.add(url); v.add(e);
+									list.add(v);
+								}
+							}
 					}
-					if (b==null) throw new ClassNotFoundException(name + " neither found in path: " + String.valueOf(urls) + " nor in the system path: "+ String.valueOf(sysUrls));
+					if (b==null) throw new ClassNotFoundException(name + " not found: " + String.valueOf(list));
 
 					if((c = this.defineClass(name, b, 0, b.length)) != null) classes.put(name, new WeakReference(c));
 				}
@@ -147,6 +151,18 @@ public class JavaBridge implements Runnable {
 							if ((res=getResource((URL)i.next(), name))!=null) return res;
 				}
 				return null;
+			}
+			public Enumeration findResources(String name) {
+				URL res;
+				Hashtable e = new Hashtable();
+				Collection[] allUrls = {urls, sysUrls};
+				for(int n=0; n<allUrls.length; n++) {
+					Collection urls = allUrls[n];
+					if(urls!=null) 
+						for (Iterator i=urls.iterator(); i.hasNext(); ) 
+							if ((res=getResource((URL)i.next(), name))!=null) e.put(new Object(), res);
+				}
+				return e.elements();
 			}
 		};
 
