@@ -29,7 +29,7 @@ static void flush(proxyenv *env) {
    (*env)->handle_request(env);
 }
 #define GROW_QUOTE() \
-  if(pos==newlen) { \
+  if(pos+1>=newlen) { \
     newlen=newlen+newlen/10; \
     new=realloc(new, newlen); \
     assert(new); if(!new) exit(9); \
@@ -52,6 +52,7 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
 	  GROW_QUOTE();
 	}
   }
+  new[newlen]=0;
   *ret_len=newlen;
   return new;
 }
