@@ -5,10 +5,10 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_BROKEN_STDIO		/* MacOS X and all Solaris versions */
-
-#include <stdio.h>
-
+#ifdef HAVE_BROKEN_STDIO
+				/* Workaround for broken stdio
+				   implementations on Solaris and
+				   Windows */
 typedef struct {
   short eof:1;
   short err:1;

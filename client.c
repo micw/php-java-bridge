@@ -1,27 +1,13 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
-/* socket */
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-/* select */
-#include <sys/select.h>
-
 /* execve */
 #include <unistd.h>
 #include <sys/types.h>
-
-/* dynamic loader */
-#include <dlfcn.h>
 
 /* strings */
 #include <string.h>
 /* setenv */
 #include <stdlib.h>
-
-/* posix threads implementation */
-#include <pthread.h>
 
 /* wait */
 #include <sys/types.h>
@@ -279,7 +265,11 @@ static int java_do_test_server(struct cfg*cfg TSRMLS_DC) {
   int n, c, e;
   jobject ob;
 
-  sock = socket (PF_UNIX, SOCK_STREAM, 0);
+#ifdef CFG_JAVA_SOCKET_INET
+  sock = socket (PF_LOCAL, SOCK_STREAM, 0);
+#else
+  sock = socket (PF_INET, SOCK_STREAM, 0);
+#endif
   if(sock==-1) return FAILURE;
 #ifdef CFG_JAVA_SOCKET_ANON
   *cfg->saddr.sun_path=0;
@@ -312,7 +302,11 @@ int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
   int sock, s, i, n=-1, len;
   SFILE *peer;
 
-  sock = socket (PF_UNIX, SOCK_STREAM, 0);
+#ifdef CFG_JAVA_SOCKET_INET
+  sock = socket (PF_LOCAL, SOCK_STREAM, 0);
+#else
+  sock = socket (PF_INET, SOCK_STREAM, 0);
+#endif
   if(sock!=-1) {
 #ifdef CFG_JAVA_SOCKET_ANON	
 	*cfg->saddr.sun_path=0;

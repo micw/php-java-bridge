@@ -5,12 +5,16 @@
 
 #/* socket */
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <sys/stat.h>
-
-/* select */
-#include <sys/select.h>
+#ifdef __MINGW32__
+# include <winsock2.h>
+#else
+# include <sys/socket.h>
+# ifdef CFG_JAVA_SOCKET_INET
+#  include <netinet/in.h>
+# else
+#  include <sys/un.h>
+# endif
+#endif
 
 /* strings */
 #include <string.h>
@@ -20,7 +24,9 @@
 #include <signal.h>
 
 /* posix threads implementation */
-#include <pthread.h>
+#ifndef __MINGW32__
+# include <pthread.h>
+#endif
 
 /* miscellaneous */
 #include <stdio.h>
@@ -28,6 +34,14 @@
 #include <errno.h>
 #include <unistd.h>
 
+#ifdef __MINGW32__
+# ifndef HAVE_BROKEN_STDIO
+# define HAVE_BROKEN_STDIO
+# endif
+# ifndef CFG_JAVA_SOCKET_INET
+# define CFG_JAVA_SOCKET_INET
+# endif
+#endif
 
 #include "protocol.h"
 #include "sio.c"
@@ -71,11 +85,13 @@ static jclass bridge=NULL;
 
 static char*sockname=NULL;
 
+#ifndef __MINGW32__
 static pthread_attr_t attr;
 static pthread_mutex_t mutex;
-static pthread_cond_t cond;
 static int count=0;
+static pthread_cond_t cond;
 static sigset_t block;
+#endif
 
 struct peer {
   jmp_buf env;					/* exit from the loop */
@@ -176,51 +192,61 @@ static void logRcv(JNIEnv*env, char c) {
 
 static void atexit_bridge() {
   if(sockname) {
-	unlink(sockname); 
-	free(sockname);
-	sockname=NULL;
+#ifndef __MINGW32__
+# if !defined(CFG_JAVA_SOCKET_ANON) && !defined(CFG_JAVA_SOCKET_INET)
+  unlink(sockname);
+# endif
 	pthread_attr_destroy(&attr);
 	pthread_mutex_destroy(&mutex);
 	pthread_cond_destroy(&cond);
+#endif
+	free(sockname);
+	sockname=NULL;
   }
 }
 
 static void block_sig() {
+#ifndef __MINGW32__
   sigset_t d;
   pthread_sigmask(SIG_BLOCK, &block, &d);
+#endif
 }
 
 static void enter() {
+#ifndef __MINGW32__
   pthread_mutex_lock(&mutex);
   assert(count>=0);
   count++;
   pthread_mutex_unlock(&mutex);
+#endif
 }
 
 static void leave() {
+#ifndef __MINGW32__
   pthread_mutex_lock(&mutex);
   assert(count>0);
   if(!--count) pthread_cond_signal(&cond);
   pthread_mutex_unlock(&mutex);
+#endif
 }
 
 static void *guard_requests(void *p) {
+#ifndef __MINGW32__
   int sig;
   block_sig();
 #ifdef HAVE_SIGWAIT
   sigwait(&block, &sig);
 #else
-  sigsuspend(&block); // FIXME
+  sigsuspend(&block);
 #endif
   pthread_mutex_lock(&mutex);
   if(count) pthread_cond_wait(&cond, &mutex);
   count=-1;
   pthread_mutex_unlock(&mutex);
+#endif
 }
 
 static void initGlobals(JNIEnv *env) {
-  pthread_t thread;
-  sigset_t d;
   jobject hash;
   jmethodID addSystemLibraries;
   jstring arg;
@@ -250,14 +276,20 @@ static void initGlobals(JNIEnv *env) {
 
   atexit(atexit_bridge);
 
-  pthread_attr_init(&attr);
-  pthread_cond_init(&cond, NULL);
-  pthread_mutex_init(&mutex, NULL);
-  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-
-  sigemptyset(&block);
-  sigaddset(&block, SIGTERM);
-  pthread_create(&thread, &attr, guard_requests, 0);
+#ifndef __MINGW32__
+  {
+	pthread_t thread;
+	sigset_t d;
+	pthread_attr_init(&attr);
+	pthread_cond_init(&cond, NULL);
+	pthread_mutex_init(&mutex, NULL);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+	
+	sigemptyset(&block);
+	sigaddset(&block, SIGTERM);
+	pthread_create(&thread, &attr, guard_requests, 0);
+  }
+#endif
 }
 static jobject initHash(JNIEnv *env) {
   jobject hash = (*env)->NewObject(env, hashClass, init);
@@ -758,7 +790,11 @@ JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jobject instan
 JNIEXPORT void JNICALL Java_JavaBridge_startNative
   (JNIEnv *env, jclass self, jint _logLevel, jstring _sockname)
 {
+#ifndef CFG_JAVA_SOCKET_INET
   struct sockaddr_un saddr;
+#else
+  struct sockaddr_in saddr;
+#endif
   int sock, n;
   SFILE *peer;
 
@@ -776,19 +812,26 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
 	sockname = strdup(s);
   }
   /* socket */
-  saddr.sun_family = AF_UNIX;
+#ifndef CFG_JAVA_SOCKET_INET
+  saddr.sun_family = AF_LOCAL;
   memset(saddr.sun_path, 0, sizeof saddr.sun_path);
   strcpy(saddr.sun_path, sockname);
-#ifndef CFG_JAVA_SOCKET_ANON
+# ifndef CFG_JAVA_SOCKET_ANON
   unlink(sockname);
-#else
+# else
   *saddr.sun_path=0;
+# endif
+  sock = socket (PF_LOCAL, SOCK_STREAM, 0);
+#else
+  saddr.sin_family = AF_INET;
+  saddr.sin_port=htons(atoi(sockname));
+  saddr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
+  sock = socket (PF_INET, SOCK_STREAM, 0);
 #endif
-  sock = socket (PF_UNIX, SOCK_STREAM, 0);
   if(!sock) {logSysError(env, "could not create socket"); return;}
   n = bind(sock,(struct sockaddr*)&saddr, sizeof saddr);
   if(n==-1) {logSysError(env, "could not bind socket"); return;}
-#ifndef CFG_JAVA_SOCKET_ANON
+#if !defined(CFG_JAVA_SOCKET_ANON) && !defined(CFG_JAVA_SOCKET_INET)
   chmod(sockname, 0666); // the childs usually run as "nobody"
 #endif
   n = listen(sock, 10);
@@ -798,9 +841,11 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
 	int socket;
 
   res:errno=0; 
+#ifndef __MINGW32__
 	pthread_mutex_lock(&mutex);
 	if(count==-1) {pthread_mutex_unlock(&mutex); return;}
 	pthread_mutex_unlock(&mutex);
+#endif
 	socket = accept(sock, NULL, 0); 
 	if(socket==-1) {logDebug(env, "socket accept failed"); return;}
 	//if(errno) goto res;

@@ -15,7 +15,7 @@ size_t sfwrite(const void  *ptr,  size_t  size,  size_t  nmemb,  SFILE *stream) 
   //assert(nmemb>0);
   while(nmemb--) {
     s = n = 0;
-    while((size>s)&&((n=write(stream->file, ptr+s+c, size-s)) > 0)) s+=n;
+    while((size>s)&&((n=send(stream->file, ptr+s+c, size-s, 0)) > 0)) s+=n;
     c += s;
     if(n == -1) { stream->eof = 1; break; }
   }
@@ -28,7 +28,7 @@ size_t sfread(void  *ptr,  size_t  size,  size_t  nmemb,  SFILE *stream) {
   //assert(nmemb>0);
   while(nmemb--) {
     s = n = 0;
-    while((size>s)&&((n=read(stream->file, ptr+s+c, size-s)) > 0)) s+=n;
+    while((size>s)&&((n=recv(stream->file, ptr+s+c, size-s, 0)) > 0)) s+=n;
     c += s;
     if(n == -1) { stream->eof = 1; break; }
   }

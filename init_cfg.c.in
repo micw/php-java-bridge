@@ -59,7 +59,8 @@ static void init_socket(struct cfg*cfg) {
 		   (unsigned long)getuid(),(unsigned long)time(0));
   cfg->sockname=sockname;
 }
-#else
+#else 
+#ifndef CFG_JAVA_SOCKET_INET
 static void init_socket(struct cfg*cfg) {
 	int n;
 	char*s=SOCKNAME;
@@ -69,6 +70,10 @@ static void init_socket(struct cfg*cfg) {
 	n = mkstemp(sockname);
 	assert(n); if(!n) exit(6);
 	cfg->sockname=sockname;
+}
+#else 
+static void init_socket(struct cfg*cfg) {
+  cfg->sockname = strdup("9147");
 }
 #endif
 void java_init_cfg(struct cfg *cfg) {

@@ -15,7 +15,11 @@
 /* socket */
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/un.h>
+#ifdef CFG_JAVA_SOCKET_INET
+# include <netinet/in.h>
+#else
+# include <sys/un.h>
+#endif
 
 #include <jni.h>
 

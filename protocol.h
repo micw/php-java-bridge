@@ -9,6 +9,12 @@
 
 /* jni */
 #include <jni.h>
+#ifdef __MINGW32__
+/* on windows: work around a bug in the declaration of the following
+   methods */
+extern jint JNICALL JNI_GetDefaultJavaVMInitArgs (void *);
+extern jint JNICALL JNI_CreateJavaVM (JavaVM **, void **, void *);
+#endif
 
 /* 
  * we create a unix domain socket with the name .php_java_bridge in

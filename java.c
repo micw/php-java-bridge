@@ -238,10 +238,17 @@ PHP_MINIT_FUNCTION(java)
 	if(REGISTER_INI_ENTRIES()==SUCCESS) {
 	  /* set the default values for all undefined */
 	  extern void java_init_cfg(struct cfg *cfg);
+
 	  java_init_cfg(&JG(cfg));
+#ifndef CFG_JAVA_SOCKET_INET
 	  JG(cfg).saddr.sun_family = AF_UNIX;
 	  memset(JG(cfg).saddr.sun_path, 0, sizeof JG(cfg).saddr.sun_path);
 	  strcpy(JG(cfg).saddr.sun_path, JG(cfg).sockname);
+#else
+	  JG(cfg).saddr.sin_family = AF_INET;
+	  JG(cfg).saddr.sin_port=htons(atoi(JG(cfg).sockname));
+	  JG(cfg).saddr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
+#endif
 	}
 	init_server();
 
