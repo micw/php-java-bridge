@@ -14,7 +14,7 @@
 
 #define IS_EXCEPTION 86
 
-extern void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, pval *object, int argc, zval**argv TSRMLS_DC);
+extern void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, short constructor, short createInstance, pval *object, int argc, zval**argv TSRMLS_DC);
 extern short php_java_set_property_handler(char*name, zval *object, zval *value, zval *return_value);
 extern short php_java_get_property_handler(char*name, zval *object, zval *return_value);
 

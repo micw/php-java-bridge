@@ -1,3 +1,9 @@
+2004-11-21  Jost Boekemeier  <jostb@intern>
+
+	* README, server/natcJavaBridge.c, server/JavaBridge.java,
+	INSTALL, client.c, java_bridge.c, java_bridge.h, java_bridge,
+	protocol.h, proxyenv.c, java.c: New "java_class" constructor.
+	
 2004-11-20  Jost Boekemeier  <jostb@intern>
 
 	* server/JavaBridge.c (findClass): Use String.valueOf instead of

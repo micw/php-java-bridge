@@ -80,7 +80,7 @@ struct proxyenv_ {
   SFILE *peer;
 
   void (*LastException)(proxyenv *env, jobject php_reflect, jmethodID lastEx, jlong result);
-  void (*CreateObject)(proxyenv *env, jobject php_reflect, jmethodID invoke, jstring classname, jobjectArray array, jlong result);
+  void (*CreateObject)(proxyenv *env, jobject php_reflect, jmethodID invoke, jstring classname, jboolean createInstance, jobjectArray array, jlong result);
   void (*Invoke)(proxyenv *env, jobject php_reflect, jmethodID invoke, jobject obj, jstring method, jobjectArray array, jlong result);
   void (*GetSetProp)(proxyenv *env, jobject php_reflect, jmethodID gsp, jobject obj, jstring propName, jobjectArray value, jlong result);
 

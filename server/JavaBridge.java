@@ -349,18 +349,22 @@ public class JavaBridge implements Runnable {
     //
     // Create an new instance of a given class
     //
-    public void CreateObject(String name, Object args[], long result, long peer) {
+    public void CreateObject(String name, boolean createInstance,
+			     Object args[], long result, long peer) {
 	try {
 	    Vector matches = new Vector();
+	    Constructor selected = null;
 
-	    Constructor cons[] = Class.forName(name, true, cl).getConstructors();
-	    for (int i=0; i<cons.length; i++) {
-		if (cons[i].getParameterTypes().length == args.length) {
-		    matches.addElement(cons[i]);
+	    if(!createInstance) {
+		Constructor cons[] = Class.forName(name, true, cl).getConstructors();
+		for (int i=0; i<cons.length; i++) {
+		    if (cons[i].getParameterTypes().length == args.length) {
+			matches.addElement(cons[i]);
+		    }
 		}
-	    }
 
-	    Constructor selected = (Constructor)select(matches, args);
+		selected = (Constructor)select(matches, args);
+	    }
 
 	    if (selected == null) {
 		if (args.length > 0) {

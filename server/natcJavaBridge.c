@@ -354,6 +354,7 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	jobject php_reflect;
 	jmethodID invoke;
 	jstring method;
+	jboolean createInstance;
 	jobjectArray array;
 	jlong result;
 	jthrowable abort;
@@ -361,10 +362,11 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	sread(&php_reflect, sizeof php_reflect,1, peer);
 	sread(&invoke, sizeof invoke,1, peer);
 	sread(&method, sizeof method,1, peer);
+	sread(&createInstance, sizeof createInstance,1, peer);
 	sread(&array, sizeof array,1, peer);
 	sread(&result, sizeof result,1, peer);
 	peer->tran=1;
-	(*env)->CallVoidMethod(env, php_reflect, invoke, method, array, result, (jlong)(long)peer);
+	(*env)->CallVoidMethod(env, php_reflect, invoke, method, createInstance, array, result, (jlong)(long)peer);
 	abort = (*env)->ExceptionOccurred(env);
 	if(abort) { /* connection aborted by client, java stack cleared */
 	  (*env)->ExceptionClear(env);

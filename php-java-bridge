@@ -43,6 +43,7 @@ then true
 else
     if test -s $PID; then
 	echo "PHP/Java Bridge already running with pid `cat $PID`" >&2
+	rm -f /tmp/phpinfo.$$	
     else
 	echo "Error: java.socketname option not set in php .ini file, see output of phpinfo()." >&2
     fi

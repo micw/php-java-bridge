@@ -54,11 +54,12 @@ static void LastException(proxyenv *env, jobject php_reflect, jmethodID lastEx, 
   swrite(&result, sizeof result, 1, (*env)->peer);
   (*env)->handle_request(env);
 }
-static void CreateObject(proxyenv *env, jobject php_reflect, jmethodID invoke, jstring method, jobjectArray array, jlong result) {
+static void CreateObject(proxyenv *env, jobject php_reflect, jmethodID invoke, jstring method, jboolean createInstance, jobjectArray array, jlong result) {
   id(env, CREATEOBJECT);
   swrite(&php_reflect, sizeof php_reflect, 1, (*env)->peer);
   swrite(&invoke, sizeof invoke, 1, (*env)->peer);
   swrite(&method, sizeof method, 1, (*env)->peer);
+  swrite(&createInstance, sizeof createInstance, 1, (*env)->peer);
   swrite(&array, sizeof array, 1, (*env)->peer);
   swrite(&result, sizeof result, 1, (*env)->peer);
   (*env)->handle_request(env);

@@ -318,13 +318,13 @@ static int java_do_test_server(struct cfg*cfg TSRMLS_DC) {
   return (n!=-1 && e!=-1 && c==1)?SUCCESS:FAILURE;
 }
 int java_test_server(struct cfg*cfg TSRMLS_DC) {
+  struct pollfd pollfd[1] = {cfg->err, POLLIN, 0};
   int count=15;
 
   if(java_do_test_server(cfg TSRMLS_CC)==SUCCESS) return SUCCESS;
 
   /* wait for the server that has just started */
   while(cfg->cid && (java_do_test_server(cfg TSRMLS_CC)==FAILURE) && --count) {
-	struct pollfd pollfd[1] = {cfg->err, POLLIN, 0};
 	if(cfg->err && poll(pollfd, 1, 0)) 
 	  return FAILURE; /* server terminated with error code */
 	php_error(E_NOTICE, "php_mod_java(%d): waiting for server another %d seconds",57, count);

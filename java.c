@@ -222,7 +222,25 @@ PHP_METHOD(java, java)
 	}
 
 	php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU,
-								   "java",
+								   "java", 1, 0,
+								   getThis(),
+								   argc, argv);
+	efree(argv);
+}
+
+PHP_METHOD(java, java_class)
+{
+	zval **argv;
+	int argc = ZEND_NUM_ARGS();
+
+	argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
+	if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
+		php_error(E_ERROR, "Couldn't fetch arguments into array.");
+		RETURN_NULL();
+	}
+
+	php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU,
+								   "java", 1, 1, 
 								   getThis(),
 								   argc, argv);
 	efree(argv);
@@ -253,7 +271,7 @@ PHP_METHOD(java, __call)
 	}
 
 	php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU,
-								   Z_STRVAL(*argv[0]),
+								   Z_STRVAL(*argv[0]), 0, 0,
 								   getThis(),
 								   xargc, xargv);
 								   
@@ -264,7 +282,7 @@ PHP_METHOD(java, __tostring)
 {
   /* FIXME: better use String.valueOf() instead */
 	php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU,
-								   "tostring", getThis(), 0, NULL);
+								   "tostring", 0, 0, getThis(), 0, NULL);
 }
 
 PHP_METHOD(java, __set)
@@ -297,6 +315,7 @@ PHP_METHOD(java, __get)
 }
 
 static function_entry java_class_functions[] = {
+	PHP_ME(java, java_class, NULL, 0)
 	PHP_ME(java, java, NULL, 0)
 	PHP_ME(java, __call, NULL, 0)
 	PHP_ME(java, __tostring, NULL, 0)
@@ -328,11 +347,14 @@ call_function_handler(INTERNAL_FUNCTION_PARAMETERS, zend_property_reference *pro
   char *name = Z_STRVAL(function_name->element);
   int arg_count = ZEND_NUM_ARGS();
   pval **arguments = (pval **) emalloc(sizeof(pval *)*arg_count);
+  short createInstance = !strcmp("java_class", name);
+  short constructor = !strcmp("java", name) || createInstance;
 
   getParametersArray(ht, arg_count, arguments);
 
   php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU, 
-								 name, object, 
+								 name, constructor, createInstance, 
+								 object, 
 								 arg_count, arguments);
 
   efree(arguments);
@@ -420,6 +442,10 @@ PHP_MINIT_FUNCTION(java)
 	parent = (zend_class_entry *) zend_exception_get_default();
 	php_java_exception_class_entry =
 	  zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
+
+	INIT_CLASS_ENTRY(ce, "java_class", java_class_functions);
+	parent = (zend_class_entry *) php_java_class_entry;
+	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
 #endif
 
 	/* Register the resource, with destructor (arg 1) and text

@@ -32,7 +32,7 @@ static short checkError(pval *value TSRMLS_DC)
   return 0;
 }
 
-void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, pval *object, int arg_count, zval**arguments)
+void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, short constructor, short createInstance, pval *object, int arg_count, zval**arguments)
 {
   proxyenv *jenv;
   jlong result = 0;
@@ -44,12 +44,12 @@ void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, pva
 	return;
   }
 
-  if (!strcmp("java", name)) {
+  if (constructor) {
     /* construct a Java object:
        First argument is the class name.  Any additional arguments will
        be treated as constructor parameters. */
     jmethodID co = (*jenv)->GetMethodID(jenv, JG(reflect_class), "CreateObject",
-      "(Ljava/lang/String;[Ljava/lang/Object;JJ)V");
+      "(Ljava/lang/String;Z[Ljava/lang/Object;JJ)V");
     jstring className;
     result = (jlong)(long)object;
 
@@ -62,7 +62,8 @@ void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, pva
 	assert(className);
 	/* create a new object */
 	(*jenv)->CreateObject(jenv, JG(php_reflect), co,
-      className, php_java_makeArray(arg_count-1, arguments+1 TSRMLS_CC), result);
+						  className, createInstance?JNI_TRUE:JNI_FALSE, 
+						  php_java_makeArray(arg_count-1, arguments+1 TSRMLS_CC), result);
 
     (*jenv)->DeleteLocalRef(jenv, className);
 

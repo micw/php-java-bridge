@@ -45,7 +45,7 @@ components are not already installed on your computer. If they are,
 change the install directory or skip the compilation/install steps for
 these components:
 
-* PHP 4.3.x
+* PHP 4.3.x or above, for example 5.0.1
 
 * the PHP/Java Bridge version 1.x
 
