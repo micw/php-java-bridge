@@ -1,0 +1,116 @@
+What is the PHP/Java bridge?
+
+	 The PHP/Java bridge can access java based applications running in
+	 a java application server running on the local host.  The
+	 PHP/Java bridge communicates with the application server through
+	 local sockets using an efficient communication protocol.  This
+	 means that only one JVM runs to serve all clients within a
+	 multi-process HTTP-Server.  Each client process communicates with
+	 a corresponding thread spawned by the running application server.
+
+	 If the bridge detects that a java application server is not
+	 already running, it starts one to serve further requests.
+
+	 There is one example provided: test.php.  You can either invoke
+	 the test.php by typing ./test.php or copy the example into the
+	 document root of you web-server and invoke the file using the
+	 browser.
+
+
+Build and execution instructions:
+
+	  In the directory java type:
+
+	  php --version  # must be PHP 4.3.3 or above!
+	  phpize && ./configure --with-java=/opt/jdk1.4 && make
+
+	  su <password>
+	  make install
+
+	  and then activate the extension by adding the following lines to
+	  the php.ini or add a file java.ini to the directory that
+	  contains the php module descriptions (usually /etc/php/) with
+	  the following content:
+
+	  extension = java.so
+	  [java]
+	  java.log_level=5
+	  java.log_file=/tmp/java.log
+	  java.socketname=/tmp/.php_java
+
+	  After the module is activated, verify that the module is running
+	  by typing:
+
+	  echo "<?php phpinfo()?>" | php | fgrep "java status"
+
+	  If you want to test the extension in the Web-Server, you must
+	  restart the Web-Server after you have installed the extension.
+
+	  This module has been tested on a Mandrake Linux System (Version
+	  9.2), but it should run on all Unix-like operating systems
+	  including RedHat9, Solaris, Mac.   
+
+	  However, the extension currently does not compile on systems
+	  which do not support fork()/exec().  On these systems you must
+	  disable the code in bind.c and start the java application server
+	  yourself.  Fortunately all modern operating systems -- except
+	  Windows -- support fork()/exec()
+
+
+	  Other configuration options which should have been set up by the
+	  configure script but which can be changed later are:
+
+	  java.libpath  = <system dependent path to natcJavaBridge.so>
+	  java.classpath= <system dependent path to JavaBridge.class>
+	  java.home     = <system dependent path to the java install dir>
+
+	  If you change the above values, please fist look at the output
+	  of phpinfo() so see the original values.
+
+
+   This module is based on the ext/java module written by Sam Ruby.
+   His original comments follow.
+
+   A few things to note:
+
+     1) new Java() will create an instance of a class if a suitable constructor
+        is available.  If no parameters are passed and the default constructor
+        is useful as it provides access to classes like "java.lang.System"
+        which expose most of their functionallity through static methods.
+
+     2) Accessing a member of an instance will first look for bean properties
+        then public fields.  In other words, "print $date.time" will first
+        attempt to be resolved as "$date.getTime()", then as "$date.time";
+
+     3) Both static and instance members can be accessed on an object with
+        the same syntax.  Furthermore, if the java object is of type
+        "java.lang.Class", then static members of the class (fields and
+        methods) can be accessed.
+
+     4) Exceptions raised result in PHP warnings, and null results.  The
+        warnings may be eliminated by prefixing the method call with an
+        "@" sign.  The following APIs may be used to retrieve and reset
+        the last error:
+
+          java_last_exception_get()
+          java_last_exception_clear()
+
+     5) Overload resolution is in general a hard problem given the
+        differences in types between the two languages.  The PHP Java
+	extension employs a simple, but fairly effective, metric for
+	determining which overload is the best match.  
+
+	Additionally, method names in PHP are not case sensitive, potentially
+	increasing the number of overloads to select from.
+
+	Once a method is selected, the parameters are cooerced if necessary, 
+	possibly with a loss of data (example: double precision floating point
+	numbers will be converted to boolean).
+
+     6) In the tradition of PHP, arrays and hashtables may pretty much
+        be used interchangably.  Note that hashtables in PHP may only be
+        indexed by integers or strings; and that arrays of primitive types
+        in Java can not be sparse.  Also note that these constructs are
+        passed by value, so may be expensive in terms of memory and time.
+
+
