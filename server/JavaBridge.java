@@ -666,6 +666,7 @@ public class JavaBridge implements Runnable {
     // setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");
     // The first char must be the token separator.
     public void setJarLibraryPath(String _path) {
+	urls = new ArrayList();
 	if(_path==null || _path.length()<2) return;
 
 	// add a token separator if first char is alnum
@@ -676,7 +677,6 @@ public class JavaBridge implements Runnable {
 
 	String path = _path.substring(1);
 	StringTokenizer st = new StringTokenizer(path, _path.substring(0, 1));
-	urls = new ArrayList();
 	while (st.hasMoreTokens()) {
 	    URL url;
 	    String p, s;
