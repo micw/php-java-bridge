@@ -15,27 +15,33 @@ What is the PHP/Java bridge?
 
   The bridge adds the following primitives to PHP:
 
-  * new java("<classname>"): Instanciates the class <classname>
-
-  * java_set_library_path("<jar1>;<jar2>"): Makes additional libraries
-     available to the current script.  The <jar> can either be  
-     a "http:", "ftp:", "file:" or a "jar:" location.  After script
-     execution the referenced classes may be garbage collected.  That
-     means that static classes cannot be used to hold session data;
-     use a Properties object instead. 
-     
+  * new java("CLASSNAME"): Instanciates or references the class
+    CLASSNAME. After script execution the referenced classes may be
+    garbage collected. That means that static classes cannot be used to
+    hold session data unless the session keeps a reference to them. In any
+    case it is better to use a java.util.Properties object or a database
+    instead.
      <?php
-      java_set_library_path("file:c:/mytest.jar");
-      $mytest = new java("mytest");
-      print $mytest->add(1, 2);
+     java_set_library_path("file:c:/mytest.jar");
+     $mytest = new java("mytest");
+     // count() increments and returns value of a static variable
+     print $mytest->count();
+     print $mytest->count();
+     java_set_library_path("");
+     $mytest = new java("mytest");
+     print $mytest->count();
      ?>
-     ==> 3
-
+     ==> 1 2 3
      <?php
-      $mytest = new java("mytest");
-      print $mytest
+     java_set_library_path("file:c:/mytest.jar");
+     $mytest = new java("mytest");
+     print $mytest->count();
      ?>
-     ==> Result undefined, mytest may have been garbage collected.
+     ==> Result undefined, may either be 1 or 4.
+
+  * java_set_library_path("JAR1;JAR2"): Makes additional libraries
+    available to the current script. JAR can either be a "http:", "ftp:",
+    "file:" or a "jar:" location.
 
   * java_last_exception_get(): Returns the last exception instance or
      null.
@@ -46,30 +52,9 @@ What is the PHP/Java bridge?
   test.php by typing ./test.php or copy the example into the document
   root of you web-server and invoke the file using the browser.
 
-  The PHP/Java bridge is meant as a replacement for the ext/java bridge
-  shipped with PHP 4.  It is not possible to run the build-in bridge and
-  the PHP/Java bridge at the same time.
-
-
-Build and execution instructions:
----------------------------------
-
-  In the directory php-java-bridge_1.x.y type:
-
-          java -version        # 1.3 or above (1.4.2_02 or IBM JVM recommended)
-          gcc --version        # 3.2.3 or above.
-          apachectl -version   # Apache 1.3 or above.
-          php-config --version # PHP 4.3.2 or above. For PHP5 see below.
-
-          phpize && ./configure --with-java=/opt/IBMJava2-14
-          make CFLAGS="-DNDEBUG"
-
-          su <password>
-          make install
-
-  If your administrator allows you to dynamically load extensions, you
-  can now test the extension by invoking the test.php with the 
-  command: php ./test.php.
+  The PHP/Java bridge is a replacement for the ext/java bridge shipped
+  with PHP 4.  It is not possible to run the build-in bridge and the
+  PHP/Java bridge at the same time.
 
   The module has been tested on a Mandrake Linux System (Version 9.2),
   on RedHat Enterprise 3, RedHat Fedora Core 1 and 2, Solaris9 (Sparc)
@@ -114,9 +99,27 @@ Build and execution instructions:
       You can even compile the PHP/Java Bridge + GNU/Java directly
       into PHP to create a huge PHP binary or library.
 
-  You have already installed the bridge in mode #1.  The following
-  sections describe the other options.
- 
+
+Build and execution instructions:
+---------------------------------
+
+  In the directory php-java-bridge_1.x.y type:
+
+          java -version        # 1.3 or above (1.4.2_02 or IBM JVM recommended)
+          gcc --version        # 3.2.3 or above.
+          apachectl -version   # Apache 1.3 or above.
+          php-config --version # PHP 4.3.2 or above. For PHP5 see below.
+
+          phpize && ./configure --with-java=/opt/IBMJava2-14
+          make CFLAGS="-DNDEBUG"
+
+          su <password>
+          make install
+
+  If your administrator allows you to dynamically load extensions, you
+  can now test the extension by invoking the test.php with the 
+  command: php ./test.php.
+
 ------------------------------------
    Permanently activate the module
    -------------------------------
@@ -248,7 +251,8 @@ Build and execution instructions:
    The java.so is the PHP module, the other files are required
    to start the server part.  The java executable may need other
    system libraries, for example gcj.so and gcc_s.so which should
-   be installed on the target system.
+   be installed on the target system or copied/linked into the
+   extension-dir (see php-config --extension-dir).
 
 ------------------------------------
   64 Bit issues
