@@ -20,7 +20,7 @@ What is the PHP/Java bridge?
     garbage collected. That means that static classes cannot be used to
     hold session data unless the session keeps a reference to them. In any
     case it is better to use a java.util.Properties object or a database
-    instead to store session data.
+    to store session data.
      <?php
      java_set_library_path("file:c:/mytest.jar");
      $mytest = new java("mytest");
@@ -194,71 +194,86 @@ Build and execution instructions:
   service.
 
 ------------------------------------
-   Using GNU Java
-   --------------
+  Using GNU Java
+  --------------
 
-   In case you don't want to ship a JVM or JRE with your product,
-   you can use GNU gcc to compile the java part and your classes
-   into native code. 
-   In the directory php-java-bridge_1.x.y type:
+  In case you don't want to ship a JVM or JRE with your product,
+  you can use GNU gcc to compile the java part and your classes
+  into native code. 
+  In the directory php-java-bridge_1.x.y type:
 
    gcj --version  # must be gcj 3.3.3 or above!
    phpize && ./configure --with-java
    make install
 
-   This creates a native, dynamic linked executable in the PHP
-   extension directory.  It can be started with the command:
+  This creates a native, dynamic linked executable in the PHP
+  extension directory.  It can be started with the command:
 
       `php-config --extension-dir`/java <java.socketname> <loglevel> <log-file>
 
-   For example:
+  For example:
 
       `php-config --extension-dir`/java /var/run/.php-java-bridge_socket 1 "" |
         tee /var/log/php-java-bridge.log
 
-   Then direct the bridge to the server-socket by hard-coding the
-   java.socketname to /var/run/.php-java-bridge_socket (as described
-   in the install instructions) and re-start the apache service.
+  Then direct the bridge to the server-socket by hard-coding the
+  java.socketname to /var/run/.php-java-bridge_socket (as described
+  in the install instructions) and re-start the apache service.
 
-   If you now invoke the test.php file, you should see the
-   output from GNU Java (e.g.):
+  If you now invoke the test.php file, you should see the
+  output from GNU Java (e.g.):
 
    ./test.php | fgrep java.vendor
      java.vendor -> Free Software Foundation, Inc.
      java.vendor.url -> http://gcc.gnu.org/java/
 
-   GNU gcc is a "ahead of time" compiler. That means that classes
-   which are added after compilation must be interpreted by the
-   GNU java interpreter.  There's no "just in time" compiler.
-   To compile your classes with the java executable you can append 
-   the classes, java or jar files at the end of the java_SOURCES
-   line of the server/Makefile.am.  For example:
+  GNU gcc is a "ahead of time" compiler. That means that classes
+  which are added after compilation must be interpreted by the
+  GNU java interpreter.  There's no "just in time" compiler.
+  To compile your classes with the java executable you can append 
+  the classes, java or jar files at the end of the java_SOURCES
+  line of the server/Makefile.am.  For example:
     
-   java_SOURCES= java.c JavaBridge.java my_file.java
+  java_SOURCES= java.c JavaBridge.java my_file.java
 
-   Then type "make install" to re-install the binary. 
+  Then type "make install" to re-install the binary. 
 
-   If you want to compile the server part as a separate component;
-   the server sub-directory is driven by autoconf and has been
-   configured with the command:
+  If you want to compile the server part as a separate component;
+  the server sub-directory is driven by autoconf and has been
+  configured with the command:
 
      sh autogen.sh
      dir=../modules
      ./configure --with-java --libdir=$dir --datadir=$dir --bindir=$dir
 
-   After you have created the executables you can distribute the 
-   contents of the php-java-bridge-x.y.z/modules directory. It
-   should contain the files "java", "libnatcJavaBridge.so", "java.so"
-   (autoconf/libtool creates other files, you can delete them). The
-   java.so is the PHP module, the other files are required to start the
-   server part.  The "java" executable may need other system libraries, 
-   for example "gcj.so" and "gcc_s.so". They should be installed on the 
-   target system.
+  After you have created the executables you can distribute the 
+  contents of the php-java-bridge-x.y.z/modules directory. It
+  should contain the files "java", "libnatcJavaBridge.so", "java.so"
+  (autoconf/libtool creates other files, you can delete them). The
+  java.so is the PHP module, the other files are required to start the
+  server part.  The "java" executable may need other system libraries, 
+  for example "gcj.so" and "gcc_s.so". They should be installed on the 
+  target system.
 
-   Additional shared libraries can be copied into the php extension
-   directory (see command "php-config --extension-dir"), additional
-   java libraries (.jar files) can be installed in the sub-directory
-   lib/ of the php extension directory.
+  Additional shared libraries can be copied into the php extension
+  directory (see command "php-config --extension-dir"), additional
+  java libraries (.jar files) can be installed in the sub-directory
+  lib/ of the php extension directory.
+
+  GNU Java still has some limitations.  Because the SUN java classes
+  are not free software, all GNU java classes had to be written from
+  scratch.  It may happen that the GNU java classes contain bugs or
+  have certain limitations.  For example con.getContentLength()
+  constantly returns -1; length not available.
+   
+  However, GNU java is already good enough to be used as a bridge
+  between PHP and the "real" java application server such as BEA
+  WebLogic. It can be used to implement the presentation- and,
+  depending on the project, even the service layer.
+
+  | -----------------WEB SERVER --------------------- | -- APP SERVER --|
+    Web-Server |<LOCAL SOCKETS>| PHP/Java Bridge |<TCP/IP>|  Java Apps   
+    php <-low level communication -> gnu jvm <- value objects -> sun jvm
 
 ------------------------------------
   64 Bit issues
