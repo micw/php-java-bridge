@@ -225,7 +225,7 @@ static void initGlobals(JNIEnv *env) {
   enumMore = (*env)->GetMethodID(env, enumClass, "hasMoreElements", "()Z");
   enumNext = (*env)->GetMethodID(env, enumClass, "nextElement", "()Ljava/lang/Object;");
 
-  handleRequests = (*env)->GetStaticMethodID(env, bridge, "HandleRequests", "(I)V");
+  handleRequests = (*env)->GetStaticMethodID(env, bridge, "HandleRequests", "(J)V");
 
   longClass = (*env)->FindClass (env, "java/lang/Long");
   longCtor = (*env)->GetMethodID(env, longClass, "<init>", "(J)V");
@@ -666,15 +666,15 @@ static int handle_request_impl(FILE*file, JNIEnv *env, jobject globalRef) {
   (*env)->DeleteGlobalRef(env, peer.objectHash);
   return val;
 }
-static void logIntValue(JNIEnv*env, char*t, int i) {
+static void logIntValue(JNIEnv*env, char*t, unsigned long i) {
   char*s=malloc(160);
   assert(s);
   if(!s) return;
-  sprintf(s, "%s: %i",t,i);
+  sprintf(s, "%s: %lx",t,i);
   logDebug(env, s);
   free(s);
 }
-static void logChannel(JNIEnv*env, char*t, int i) {
+static void logChannel(JNIEnv*env, char*t, unsigned long i) {
  if(logLevel>2) logIntValue(env, t, i);
 }
 
@@ -705,19 +705,20 @@ static void connection_cleanup (JNIEnv *env, jobject globalRef) {
   (*env)->DeleteGlobalRef(env, globalRef);
 }
 
-JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jclass self, jint socket)
+JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jobject instance, jlong socket)
 {
   jobject globalRef;
-  FILE *peer;
+  FILE *peer = (FILE*)(long)socket;
   block_sig();
   enter();
   logChannel(env, "create new communication channel", socket);
-  peer = fdopen(socket, "r+");
-  if(!peer) logSysError(env, "could not fdopen socket");
 
   globalRef = connection_startup(env);
-  if(!globalRef){logError(env, "could not allocate global hash");fclose(peer);return;}
+  if(!globalRef){logError(env, "could not allocate global hash");if(peer) fclose(peer);return;}
 
+  if(peer && (fwrite(&instance, sizeof instance, 1, peer)!=1)) {
+	logSysError(env, "could not send instance, child not listening"); fclose(peer);return;
+  }
   while(peer && !feof(peer)) {
 	int term = handle_request_impl(peer, env, globalRef);
 	if(term>=0) logChannel(env, "end packet", term);
@@ -730,7 +731,6 @@ JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jclass self, j
 
   logChannel(env, "terminate communication channel", socket);
   if(peer) fclose(peer);
-  close(socket);
 
   leave();
 }
@@ -742,6 +742,7 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
 {
   struct sockaddr_un saddr;
   int sock, n;
+  FILE *peer;
 
   signal(SIGBUS, exit);
   signal(SIGILL, exit);
@@ -791,8 +792,10 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
 	socket = accept(sock, NULL, 0); 
 	if(socket==-1) {logSysError(env, "socket accept failed"); return;}
 	//if(errno) goto res;
+	peer = fdopen(socket, "r+");
+	if(!peer) {logSysError(env, "could not fdopen socket");goto res;}
 
-    (*env)->CallStaticVoidMethod(env, bridge, handleRequests, socket);
+    (*env)->CallStaticVoidMethod(env, bridge, handleRequests,(jlong)(long)peer);
   }
 }
 
@@ -927,7 +930,7 @@ JNINativeMethod javabridge[]={
   {"hashIndexUpdate", "(JJJ)J", Java_JavaBridge_hashIndexUpdate},
   {"setException", "(JJ[B)V", Java_JavaBridge_setException},
   {"startNative", "(ILjava/lang/String;)V", Java_JavaBridge_startNative},
-  {"handleRequests", "(I)V", Java_JavaBridge_handleRequests},
+  {"handleRequests", "(J)V", Java_JavaBridge_handleRequests},
 };
 
 static struct NativeMethods {
@@ -987,7 +990,7 @@ void java_bridge_main(int argc, char**argv)
   arr = (*jenv)->NewObjectArray(jenv, argc, stringClass, 0);
   assert(arr); if(!arr) exit(9);
 
-  int off=6;
+  int off=N_SARGS-4;
   for (i=0; (i+6)<argc; i++) {
 	jstring arg;
 	if(!argv[i+off]) break;
@@ -1012,13 +1015,13 @@ void java_bridge_main_gcj(int argc, char**_argv)
 	
   if(!argv) exit(6);
   if(argc==4) {
-	argv=calloc(10, sizeof*argv);
-	argv[6]=_argv[1];			/* socketname */
-	argv[7]=_argv[2];			/* logLevel */
-	argv[8]=_argv[3];			/* logFile */
-	argv[9]=0;					/* last arg */
+	argv=calloc(N_SARGS, sizeof*argv);
+	argv[N_SARGS-4]=_argv[1];			/* socketname */
+	argv[N_SARGS-3]=_argv[2];			/* logLevel */
+	argv[N_SARGS-2]=_argv[3];			/* logFile */
+	argv[N_SARGS-1]=0;					/* last arg */
   } else {
 	argv=_argv;
   }
-  java_bridge_main(10, argv);
+  java_bridge_main(N_SARGS, argv);
 }
