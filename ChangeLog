@@ -83,3 +83,14 @@
 
 	* php-java-bridge 1.0.4 released.
 	
+
+2004-09-21  Jost Boekemeier  <jostb@mail.yahoo.de>
+
+        * java.c (PHP_MINIT_FUNCTION): Fixed a typo that caused a massive
+	memory leak on the java side of the bridge.  The DeleteGlobalRef
+	was never called and since Java does not release the memory when
+	a client detaches from the VM (thanks, Sun!) the memory remained
+	locked until the VM ran out of memory.
+
+	* natcJavaBridge.c (Java_JavaBridge_startNative): Linux handles
+	accept different than the BSD variants.  Check errno.

@@ -1,4 +1,37 @@
-Installation from source code.
+Installation from RPM
+---------------------
+
+* Install a J2RE, for example with the command:
+  rpm -i IBMJava2-JRE-1.4.1-8.i386.rpm
+
+* Install PHP, for example with the command: 
+  rpm -i php-4.3.2-8.ent.i386.rpm
+
+* Install the web-server, for example with the command:
+  rpm -i httpd-2.0.46-25.ent.i386.rpm
+
+* Install the php-java-bridge, for example with the command:
+  rpm -i php-java-bridge-1.0.5-1.i386.rpm
+
+Start the web-server with the command: service httpd restart.
+Start the bridge with the command: service php-java-bridge restart
+
+Create a simple php file in /var/www/html, for example with
+the command: echo "<?php phpinfo(); ?>" >/var/www/html/phpinfo.php.
+
+Browse to http://localhost/phpinfo.php and search for the 
+output of the php java bridge module (the entry should be: 
+"java.support: Enabled").
+
+Then install your java classes in java.libpath (see output of phpinfo)
+and your php and web-pages in /var/www/html.
+--------------------------------------------------
+--------------------------------------------------
+
+
+
+Installation from source code
+-----------------------------
 
 The following software components must be installed on your computer:
 

@@ -185,7 +185,7 @@ PHP_MINIT_FUNCTION(java)
 	/* Register the resource, with destructor (arg 1) and text
 	   description (arg 3), the other arguments are just standard
 	   placeholders */
-	le_jobject = zend_register_list_destructors_ex(NULL, php_java_destructor, "java", module_number);
+	le_jobject = zend_register_list_destructors_ex(php_java_destructor, NULL, "java", module_number);
 
 	ZEND_INIT_MODULE_GLOBALS(java, php_java_alloc_globals_ctor, NULL);
 

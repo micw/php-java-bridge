@@ -654,8 +654,11 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
   while(1) {
 	struct param *param = malloc(sizeof*param);
 	if(!param) {logMemoryError(env, __FILE__, __LINE__); return;}
-	param->s = accept(sock, NULL, 0);
+
+res:errno=0; param->s = accept(sock, NULL, 0); 
 	if(param->s==-1) {logSysError(env, "socket accept failed"); return;}
+	if(errno) goto res; 		
+
 	param->env = env;
 	n=(*env)->GetJavaVM(env, &param->vm);
 	if(n) {logError(env, "could not get java vm"); return;}
