@@ -1,3 +1,12 @@
+2004-10-28  Boekemeier  <jost2345@intern>
+
+	* README: Document java.log_level
+	
+	* server/natcJavaBridge.java: log jars as info, not debug.
+
+	* server/Makefile.am: Removed
+	* server/Makefile.in: New file
+
 2004-10-26  Boekemeier  <jost2345@intern>
 
 	Split the unix and windows functionality into two makefiles to

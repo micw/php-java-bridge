@@ -146,7 +146,7 @@ public class JavaBridge implements Runnable {
 			file = "jar:file:" + d.getAbsolutePath() + File.separator + file + "!/";
 			url = new URL(file);
 			if(sysUrls==null) sysUrls=new ArrayList();
-			logDebug("added system library: " + url);
+			logMessage("added system library: " + url);
 			sysUrls.add(url);
 		    }  catch (MalformedURLException e1) {
 			printStackTrace(e1);
