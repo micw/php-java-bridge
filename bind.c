@@ -169,10 +169,10 @@ void java_start_server() {
 		if((read(p[0], &pid, sizeof pid))!=(sizeof pid)) pid=0;
 	  }
 	}
-	java_wait_server();
   }
   cfg->cid=pid;
   cfg->err=p[0];
+  java_wait_server();
 }
 
 
