@@ -1,42 +1,57 @@
-#!/usr/bin/guile -s
-!#
 
-;; PHP/Java Bridge test client written in GUILE/Scheme.
-;; Run this example with: guile -s listToArray.scm
+;; PHP/Java Bridge test client written in Chicken/SCHEME.
+;; Run this example with: csi listToArray
 
-(use-modules (ice-9 rw))
+(load-library 'tcp)
+(load-library 'posix)
 
 (define HOST "127.0.0.1")
-(define PORT 9176)
+(define PORT 9167)
 
+(define-values (inp outp) (tcp-connect HOST PORT))
 (define buf (make-string 65535))
-(define (error-handler key . args) 
-  (display "Please start the bridge, for example with java -jar JavaBridge.jar 9176 5 \"\"")
-  (newline)
-  (exit 1))
 
-(let ((s (socket AF_INET SOCK_STREAM 0)))
+;; read a until the top-level /> was received				       
+(define read-document(lambda (buf inp)
+    (let* ((last #\  )
+	   (level 0)
+	   (quote #f)
+	   (more
+	    (lambda (c)
+	      (let ((more-chars 
+		     (lambda (c)
+		       (cond 
+			( [char=? #\/ c] [set! level (- level (if (char=? #\< last) 2 1))] )
+			( [char=? #\< c] [set! level (+ 1 level)] ))
+		       (set! last c)
+		       (and (char=? #\> c) (= 0 level)))))
 
-  (let ((connect (lambda () (connect s AF_INET (inet-aton HOST) PORT)))) 
-    (catch #t connect error-handler))
+		(if quote 
+		    (begin (if (char=? #\" c) (begin (set! quote #f) #f) #f)) 
+		    (begin (if (char=? #\" c) (begin (set! quote #t) #f) (more-chars c))) )))))
+      
+      (do ((i 0 (+ 1 i)) (c (read-char inp) (read-char inp)))
+	  ((more c) (begin (string-set! buf i c) (+ i 1)))
+	(begin (string-set! buf i c))))))
 
-  (display (list->string '(#\02)) s)	; we want arrays as values, see PROTOCOL.TXT
-
+;; real work starts here
+(write 2 outp)
   ;; create a java.util.ArrayList, add 3 entries to it ...
-  (display "<C value=\"java.util.ArrayList\" p=\"I\" id=\"0\"></C>" s)
-  (read-string!/partial buf s)
-  (display "<I value=\"1\" method=\"add\" p=\"I\" id=\"0\"><String v=\"ENTRY 1\"/></I>" s)
-  (read-string!/partial buf s)
-  (display "<I value=\"1\" method=\"add\" p=\"I\" id=\"0\"><String v=\"ENTRY 2\"/></I>" s)
-  (read-string!/partial buf s)
-  (display "<I value=\"1\" method=\"add\" p=\"I\" id=\"0\"><String v=\"LAST ENTRY\"/></I>" s)
-  (read-string!/partial buf s)
+(display "<C value=\"java.util.ArrayList\" p=\"I\" id=\"0\"></C>" outp)
+(read-document buf inp) ;discard received document
+(display "<I value=\"1\" method=\"add\" p=\"I\" id=\"0\"><String v=\"ENTRY 1\"/></I>" outp)
+(read-document buf inp)
+(display "<I value=\"1\" method=\"add\" p=\"I\" id=\"0\"><String v=\"ENTRY 2\"/></I>" outp)
+(read-document buf inp)
+(display "<I value=\"1\" method=\"add\" p=\"I\" id=\"0\"><String v=\"LAST ENTRY\"/></I>" outp)
+(read-document buf inp)
 
-  ;; ... and ask for the array
-  (display "<I value=\"1\" m=\"toArray\" p=\"Invoke\" id=\"0\"></I>" s)
-  (let ((count (read-string!/partial buf s))) ; System: object=1
+;; ... and ask for the array
+(display "<I value=\"1\" m=\"toArray\" p=\"Invoke\" id=\"0\"></I>" outp)
+(let ((count (read-document buf inp)))
+  (display "Received:") (newline)
+  ;; should have received an array of three values
+  (display (substring buf 0 count))
+  (newline))
 
-    (display "Received:") (newline)
-    ;; should have received an array of three values
-    (display (substring buf 0 count))
-    (newline)))
+(exit 0)

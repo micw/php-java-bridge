@@ -12,7 +12,8 @@
 
 void usage(char*name){
   fprintf(stderr, "Usage: %s <socketname> <logLevel> <logFile>\n", name);
-  fprintf(stderr, "Example: %s /var/run/.php-java-bridge_socket 4 /var/log/php-java-bridge.log\n", name);
+  fprintf(stderr, "Example 1: %s /var/run/.php-java-bridge_socket 4 /var/log/php-java-bridge.log\n", name);
+  fprintf(stderr, "Example 2: %s INET:9167 3 \"\" \n", name);
   exit(1);
 }
 
@@ -45,10 +46,10 @@ int main(int argc, char**_argv){
   if(argc==4) {
     argv=calloc(9, sizeof*argv);
     argv[0]=vm;
-    argv[1]=stringcat("-Djava.class.path=", EXTENSION_DIR);
+    argv[1]=stringcat("-Djava.class.path=", EXTENSION_DIR/**/"/JavaBridge.jar");
     argv[2]=stringcat("-Djava.library.path=", EXTENSION_DIR);
     argv[3]=stringdup("-Djava.awt.headless=true");
-    argv[4]=stringdup("JavaBridge");
+    argv[4]=stringdup("php.java.bridge.JavaBridge");
     argv[5]=stringdup(_argv[1]); /* socketname */
     argv[6]=stringdup(_argv[2]); /* logLevel */
     argv[7]=stringdup(_argv[3]); /* logFile */

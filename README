@@ -113,7 +113,7 @@ What is the PHP/Java Bridge?
 
   There is one example provided: test.php. You can either invoke the
   test.php by typing ./test.php or copy the example into the document
-  root of you web-server and evaluate the file using the browser.
+  root of you web server and evaluate the file using the browser.
 
   The PHP/Java bridge is a replacement for the experimental ext/java
   bridge shipped with PHP 4. It is not possible to run the build-in
@@ -158,11 +158,7 @@ What is the PHP/Java Bridge?
       below. This mode is used by the RPM package available for RedHat
       Enterprise Linux.
 
-   5. Compiled with the GNU Java library.  You can either start
-      GNU Java as a separate process (just like a "real" Java VM) or
-      compile the GNU Java library into the PHP/Java Bridge.
-      You can even compile the PHP/Java Bridge + GNU/Java directly
-      into PHP to create a huge PHP binary or library.
+   5. Compiled with the GNU Java library.  
 
 
 Build and execution instructions:
@@ -205,7 +201,7 @@ Build and execution instructions:
           #java.hosts="localhost:9167;192.168.6.30:8009"
 
 
-  Re-start the web-server, for example with the command:
+  Re-start the web server, for example with the command:
 
           apachectl restart
 
@@ -224,7 +220,7 @@ Build and execution instructions:
   edit and enable the java.hosts option and re-start the web server.
   Start the backends on all hosts, for example with the command:
 
-          java -jar JavaBridge.jar 9176 3 ""
+          java -jar JavaBridge.jar INET:9167 3 ""
 
   On Security Enhanced Linux the communication via TCP/IP sockets is
   switched off for security reasons.
@@ -237,7 +233,7 @@ Build and execution instructions:
           apachectl restart
           pstree | fgrep httpd
 
-  Starting or re-starting the bridge with the apache web-server is
+  Starting or re-starting the bridge with the apache web server is
   convenient during development but not recommended for production
   systems, see UTF-8 section below.  This option cannot be used on
   Security Enhanced Linux.
@@ -269,13 +265,13 @@ Build and execution instructions:
   Starting the PHP/Java Bridge automatically
   ------------------------------------------
 
-  When the java.socketname option is not set, the web-server will
+  When the java.socketname option is not set, the web server will
   start or re-start the bridge automatically as a sub-component when the
   http service is started or re-started.
 
   However, when running the bridge in a production environment, it is
   recommended to start the PHP/Java Bridge as a system service,
-  independent of the web-server. The script "php-java-bridge.service"
+  independent of the web server. The script "php-java-bridge.service"
   can be used on SysV based init systems to automatically start and stop
   the bridge as a system service.  Please see the RedHat RPM download
   for an example.
@@ -381,7 +377,7 @@ Build and execution instructions:
 
   This will create a php binary with the PHP/Java Bridge included.
   You can then copy the executable into the CGI directory of your IIS
-  Web-Server.
+  web server.
 
   To also install the server part into the modules directory:
 
@@ -483,7 +479,7 @@ Build and execution instructions:
   with the dynamic loader and the Apple Java VM, which cannot run
   the bridge reliably.
 
-  If you want to run the Bridge on a Mac/PPC, please install IBM java
+  If you want to run the Bridge on a PPC, please install IBM java
   1.4.1 or above on RedHat Enterprise Linux for Power PC, please see
 
     http://www-106.ibm.com/developerworks/java/jdk/linux/tested.html

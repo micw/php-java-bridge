@@ -20,7 +20,8 @@ contexts=${1}/file_contexts
 cp -v `dirname $0`/php-java-bridge.te $domains/program &&
 cp -v `dirname $0`/php-java-bridge.fc $contexts/program &&
 make -C $1 reload &&
-setfiles -v ${1}/file_contexts/file_contexts @EXTENSION_DIR@/RunJavaBridge @EXTENSION_DIR@/java.so @EXTENSION_DIR@/libnatcJavaBridge.so
+EXT=@EXTENSION_DIR@
+setfiles -v ${1}/file_contexts/file_contexts ${EXT}/RunJavaBridge ${EXT}/java.so ${EXT}/libnatcJavaBridge.so
 err=$?
 setenforce $enforce
 if test $err != 0; then
