@@ -1,3 +1,29 @@
+2005-02-03  Jost Boekemeier  <jostb@intern>
+
+	* tests.php5/ArrayArray.java, tests.php5/arrayArray.jar,
+	arrayArray.php: New tests.
+
+	* php-java-bridge.fc: Removed
+
+	* php-java-bridge.fc.in: New from php-java-bridge.fc
+
+	* Makefile.frag (install_policy): Removed
+
+	* update_policy.sh.in: New from Makefile.frag
+
+	* INSTALL, README: Section about SELinux updated.
+
+	* config.m4: Create php-java-bridge.fc and update_policy.sh.
+
+	* php-java-bridge.te: Updated.
+
+	* php-java-bridge.spec: Updated SELinux section.
+
+	* examples/j2ee/globals.php, examples/j2ee/README: Cleaned up.
+	
+	* tests.m4/function_checks.m4 (sem_init): Add real-time lib if
+	necessary (solaris x86).
+	
 2005-02-01  Jost Boekemeier  <jostb@intern>
 
 	* server/JavaBridge.java (findResources): New method.
