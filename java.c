@@ -311,15 +311,7 @@ PHP_MINFO_FUNCTION(java)
 	else
 	  php_info_print_table_row(2, "java.log_file", JG(cfg).logFile);
 	php_info_print_table_row(2, "java.log_level", JG(cfg).logLevel);
-	if(status==SUCCESS) {
-	  php_info_print_table_row(2, "java status", "running");
-	} else {
-#ifndef CFG_JAVA_SOCKET_ANON
-	  php_info_print_table_row(2, "java not running.");
-#else
-	  php_info_print_table_row(2, "java not running, start with:", s);
-#endif
-	}
+	php_info_print_table_row(2, "java status", (status==SUCCESS)?"running":"not running");
 	php_info_print_table_end();
 
 	free(s);

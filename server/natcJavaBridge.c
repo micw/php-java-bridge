@@ -964,7 +964,7 @@ void java_bridge_main(int argc, char**argv)
   jclass reflectClass, stringClass;
   jobjectArray arr;
   jmethodID init;
-  int i, err;
+  int i, err, off;
   vm_args.version = JNI_VERSION_1_2; /* New in 1.1.2: VM version */
   /* Get the default initialization arguments and set the class 
    * path */
@@ -990,7 +990,7 @@ void java_bridge_main(int argc, char**argv)
   arr = (*jenv)->NewObjectArray(jenv, argc, stringClass, 0);
   assert(arr); if(!arr) exit(9);
 
-  int off=N_SARGS-4;
+  off = N_SARGS-4;
   for (i=0; (i+6)<argc; i++) {
 	jstring arg;
 	if(!argv[i+off]) break;

@@ -65,7 +65,7 @@ Build and execution instructions:
   After the module is activated, verify that the module is running by
   typing:
 
-          echo "<?php phpinfo()?>" | php | fgrep "java"
+          echo "<?php phpinfo()?>" | php | fgrep "java status"
 
   If you want to test the extension in the web-server, you should enable
   the java.socketname option and start the java VM before you start the

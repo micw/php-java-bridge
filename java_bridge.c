@@ -193,13 +193,14 @@ static jobject php_java_makeObject(pval* arg TSRMLS_DC)
 
 static jobjectArray php_java_makeArray(int argc, pval** argv TSRMLS_DC)
 {
+  jobjectArray result;
   jobject arg;
   int i;
   proxyenv *jenv = JG(jenv);
 
   jclass objectClass = (*jenv)->FindClass(jenv, "java/lang/Object");
   assert(objectClass);
-  jobjectArray result = (*jenv)->NewObjectArray(jenv, argc, objectClass, 0);
+  result = (*jenv)->NewObjectArray(jenv, argc, objectClass, 0);
   assert(result);
   for (i=0; i<argc; i++) {
     arg = php_java_makeObject(argv[i] TSRMLS_CC);

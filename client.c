@@ -48,12 +48,12 @@ ZEND_DECLARE_MODULE_GLOBALS(java)
 
 static int check_error(proxyenv *jenv, int nr TSRMLS_DC) {
   jthrowable error = (*(jenv))->ExceptionOccurred(jenv);
-  if(!error) return 0;
   jclass errClass;
   jmethodID toString;
   jobject errString;
   const char *errAsUTF;
   jboolean isCopy;
+  if(!error) return 0;
   (*jenv)->ExceptionClear(jenv);
   errClass = (*jenv)->GetObjectClass(jenv, error);
   toString = (*jenv)->GetMethodID(jenv, errClass, "toString", "()Ljava/lang/String;");
@@ -111,6 +111,7 @@ static  void  setResultFromBoolean  (proxyenv *jenv, pval *presult, jboolean val
 
 static  void  setResultFromObject  (proxyenv *jenv,  pval *presult, jobject value) {
   /* wrap the java object in a pval object */
+  jobject _ob;
   pval *handle;
   TSRMLS_FETCH();
   
@@ -122,7 +123,7 @@ static  void  setResultFromObject  (proxyenv *jenv,  pval *presult, jobject valu
 
   ALLOC_ZVAL(handle);
   Z_TYPE_P(handle) = IS_LONG;
-  jobject _ob= (*jenv)->NewGlobalRef(jenv, value);
+  _ob= (*jenv)->NewGlobalRef(jenv, value);
   Z_LVAL_P(handle) = zend_list_insert(_ob, le_jobject);
   pval_copy_constructor(handle);
   INIT_PZVAL(handle);
@@ -306,9 +307,10 @@ int java_test_server(struct cfg*cfg TSRMLS_DC) {
   return (cfg->cid && count)?SUCCESS:FAILURE;
 }
 int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
+  jobject local_php_reflect;
   jmethodID init;
   int sock, s, i, n=-1, len;
-  FILE *fd;
+  FILE *peer;
 
   sock = socket (PF_UNIX, SOCK_STREAM, 0);
   if(sock!=-1) {
@@ -324,13 +326,12 @@ int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
 	php_error(E_WARNING, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge?",52, strerror(errno));
 	return FAILURE;
   }
-  FILE *peer = fdopen(sock, "r+");
+  peer = fdopen(sock, "r+");
   assert(peer);
   if(!peer) return FAILURE;
 
   JG(jenv)=java_createSecureEnvironment(peer, handle_requests);
 
-  jobject local_php_reflect;
   if(fread(&local_php_reflect, sizeof local_php_reflect, 1, peer)!=1) {
 	php_error(E_WARNING, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge?",58, strerror(errno));
 	return FAILURE;

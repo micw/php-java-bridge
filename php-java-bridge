@@ -15,7 +15,8 @@ if ! test $# = 0; then
   pid=/var/run/php-java-bridge.pid
   trap 'kill `cat $pid`; rm -f $pid' 2 15
   eval $1; shift
-  export JAVA_HOME
+  eval $1; shift
+  export JAVA_HOME LD_LIBRARY_PATH
   java=$1; shift
   $java "$@" &
   echo $! >$pid
@@ -27,18 +28,21 @@ fi
 # called with zero args, construct args
 echo "<?php phpinfo();?>" | php 2>/dev/null >/tmp/phpinfo.$$
   
-if ! sed 's/<[/a-z ="0-9]*>//g' /tmp/phpinfo.$$ | 
+if ! fgrep java /tmp/phpinfo.$$ |
+     sed 's/<[/a-z ="0-9]*>//g' |
      grep -q "java support.*Enabled"
 then echo "Error: PHP/Java Bridge module not installed."; exit 1
 fi
 
-if  sed 's/<[/a-z ="0-9]*>//g' /tmp/phpinfo.$$ | 
+if  fgrep java /tmp/phpinfo.$$ |
+    sed 's/<[/a-z ="0-9]*>//g' | 
     grep -q 'java status.*running'
 then echo "PHP/Java Bridge already running or socketname option not set in /etc/php.d/java.ini"; exit 2;
 fi
 
-cmd=`sed 's/<[/a-z ="0-9]*>//g' /tmp/phpinfo.$$ | 
-     sed -n "/^.*java not running, start with:[^A-Z]*/s///p"`
+cmd=`fgrep java /tmp/phpinfo.$$ |
+     sed 's/<[/a-z ="0-9]*>//g' | 
+     sed -n "/^.*java command[^A-Z]*/s///p"`
 
 rm -f /tmp/phpinfo.$$
 echo Starting java with the command: "$cmd"
