@@ -70,11 +70,13 @@ static void swrite(const  void  *ptr,  size_t  size,  size_t  nmemb,  FILE *stre
   int n = fwrite(ptr, size, nmemb, stream);
   //printf("write char:::%d\n", (unsigned int) ((char*)ptr)[0]);
   assert(n==nmemb);
+  if(n!=nmemb) exit(6);
 }
 static void sread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
   int n = fread(ptr, size, nmemb, stream);
   //printf("read char:::%d\n", (unsigned int) ((char*)ptr)[0]);
   assert(n==nmemb);
+  if(n!=nmemb) exit(7);
 }
 static void id(proxyenv *env, char id) {
   swrite(&id, sizeof id, 1, (*env)->peer);
@@ -275,9 +277,14 @@ static int java_do_test_server(struct cfg*cfg TSRMLS_DC) {
   int sock;
   int n, c, e;
   sock = socket (PF_UNIX, SOCK_STREAM, 0);
-  assert(sock);
-  if(!sock) return FAILURE;
+  if(sock==-1) return FAILURE;
+#ifdef CFG_JAVA_SOCKET_ANON
+  *cfg->saddr.sun_path=0;
+#endif
   n = connect(sock,(struct sockaddr*)&cfg->saddr, sizeof cfg->saddr);
+#ifdef CFG_JAVA_SOCKET_ANON
+  *cfg->saddr.sun_path='@';
+#endif
   if(n!=-1) c = write(sock, &term, sizeof term);
   e = close(sock);
 
@@ -295,20 +302,31 @@ int java_test_server(struct cfg*cfg TSRMLS_DC) {
 }
 int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
   jmethodID init;
-  int sock, s, i, n, len;
+  int sock, s, i, n=-1, len;
   FILE *fd;
 
-  if(java_do_test_server(cfg TSRMLS_CC)==FAILURE) return FAILURE;
+  if(java_do_test_server(cfg TSRMLS_CC)==FAILURE) {
+	php_error(E_WARNING, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge?",56, strerror(errno));
+	return FAILURE;
+  }
 
   sock = socket (PF_UNIX, SOCK_STREAM, 0);
-  assert(sock);
-  n = connect(sock,(struct sockaddr*)&cfg->saddr, sizeof cfg->saddr);
+  if(sock!=-1) {
+#ifdef CFG_JAVA_SOCKET_ANON	
+	*cfg->saddr.sun_path=0;
+#endif
+	n = connect(sock,(struct sockaddr*)&cfg->saddr, sizeof cfg->saddr);
+#ifdef CFG_JAVA_SOCKET_ANON	
+	*cfg->saddr.sun_path='@';
+#endif
+  }
   if(n==-1) { 
 	php_error(E_WARNING, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge?",52, strerror(errno));
 	return FAILURE;
   }
   FILE *peer = fdopen(sock, "r+");
   assert(peer);
+  if(!peer) return FAILURE;
 
   JG(jenv)=java_createSecureEnvironment(peer, handle_requests);
   
