@@ -130,7 +130,9 @@ PHP_FUNCTION(java_instanceof)
 
   class = NULL;
   if((Z_TYPE_PP(pclass) == IS_OBJECT) && 
-	 (check_type(*pclass, php_java_class_entry)||check_type(*pclass, php_java_class_class_entry))){
+	 (check_type(*pclass, php_java_class_entry)||
+	  check_type(*pclass, php_java_class_class_entry)||
+	  check_type(*pclass, php_java_jsr_class_class_entry))){
 	java_get_jobject_from_object(*pclass, &class TSRMLS_CC);
   }
   if(!class) {
@@ -173,7 +175,11 @@ ZEND_GET_MODULE(java)
 
 int  le_jobject;
 int java_ini_updated, java_ini_last_updated;
-zend_class_entry *php_java_class_entry, *php_java_class_class_entry, *php_java_exception_class_entry;
+zend_class_entry *php_java_class_entry;
+zend_class_entry *php_java_class_class_entry;
+zend_class_entry *php_java_jsr_class_class_entry;
+zend_class_entry *php_java_exception_class_entry;
+
 #ifdef ZEND_ENGINE_2
 zend_object_handlers php_java_handlers;
 #endif
@@ -719,7 +725,7 @@ call_function_handler(INTERNAL_FUNCTION_PARAMETERS, zend_property_reference *pro
   char *name = Z_STRVAL(function_name->element);
   int arg_count = ZEND_NUM_ARGS();
   pval **arguments = (pval **) emalloc(sizeof(pval *)*arg_count);
-  short createInstance = strcmp("java_class", name);
+  short createInstance = strcmp("java_class", name) && strcmp("javaclass", name);
   short constructor = !strcmp("java", name) || !createInstance;
 
   getParametersArray(ht, arg_count, arguments);
@@ -788,6 +794,9 @@ PHP_MINIT_FUNCTION(java)
   INIT_CLASS_ENTRY(ce, "java_class", NULL);
   parent = (zend_class_entry *) php_java_class_entry;
   zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
+  INIT_CLASS_ENTRY(ce, "javaclass", NULL);
+  parent = (zend_class_entry *) php_java_class_entry;
+  zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
 #else
   zend_class_entry ce;
   zend_internal_function call, get, set;
@@ -805,30 +814,42 @@ PHP_MINIT_FUNCTION(java)
   memcpy(&php_java_handlers, zend_get_std_object_handlers(), sizeof php_java_handlers);
   //php_java_handlers.clone_obj = clone;
   php_java_handlers.cast_object = cast;
-  ce.get_iterator = get_iterator;
-  ce.create_object = create_object;
 
   php_java_class_entry =
 	zend_register_internal_class(&ce TSRMLS_CC);
+  php_java_class_entry->get_iterator = get_iterator;
+  php_java_class_entry->create_object = create_object;
   zend_class_implements(php_java_class_entry TSRMLS_CC, 1, zend_ce_arrayaccess);
+
   INIT_OVERLOADED_CLASS_ENTRY(ce, "java_exception", 
 							  java_class_functions, 
 							  (zend_function*)&call, 
 							  (zend_function*)&get, 
 							  (zend_function*)&set);
   
-  ce.get_iterator = get_iterator;
-  ce.create_object = create_object;
-
   parent = (zend_class_entry *) zend_exception_get_default();
   php_java_exception_class_entry =
 	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
+  // only cast and clone; no iterator, no array access
+  php_java_exception_class_entry->create_object = create_object;
   
   INIT_CLASS_ENTRY(ce, "java_class", java_class_functions);
   parent = (zend_class_entry *) php_java_class_entry;
 
   php_java_class_class_entry = 
 	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
+
+  /* compatibility with the jsr implementation */
+  INIT_CLASS_ENTRY(ce, "javaclass", java_class_functions);
+  parent = (zend_class_entry *) php_java_class_entry;
+  php_java_jsr_class_class_entry = 
+	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
+
+  INIT_CLASS_ENTRY(ce, "javaexception", java_class_functions);
+  parent = (zend_class_entry *) php_java_exception_class_entry;
+  php_java_exception_class_entry = 
+	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
+
 #endif
   
   /* Register the resource, with destructor (arg 1) and text

@@ -1,3 +1,22 @@
+2005-01-05  Jost Boekemeier  <jostb@intern>
+
+	* server/JavaBridge.java
+	(setException): Store method name, object, and arguments, print
+	original cause.
+	(Invoke, GetSetProp, CreateObject): Pass name, object and
+	arguments.
+
+	* server/JavaBridge.java (argsToString): Check if args is null.
+
+	* server/JavaBridge.java (GetSetProp): Invocation or field access
+	may fail if object is class and getter/setter/field is not static.
+	Throw a NoSuchFieldException if no getter/setter or field was
+	found.
+
+	* php-java-bridge: Do not destroy LANG, which is needed by the VM
+	to select the default file.encoding (usually UTF-8).  If LANG is
+	not set, use en_US.UTF-8 as default.
+	
 2005-01-04  Jost Boekemeier  <jostb@intern>
 
 	* server/JavaBridge.java: Changed indent.

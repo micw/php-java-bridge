@@ -46,6 +46,7 @@
 
 const char * const java_bridge_version = BRIDGE_VERSION;
 
+#ifndef CFG_JAVA_SOCKET_INET
 #ifdef HAVE_ABSTRACT_NAMESPACE
 static void init_socket() {
   static const char * const bridge="@java-bridge-";
@@ -58,7 +59,6 @@ static void init_socket() {
   cfg->sockname=sockname;
 }
 #else 
-#ifndef CFG_JAVA_SOCKET_INET
 static void init_socket() {
 	int n;
 	char*s=SOCKNAME;
@@ -69,11 +69,11 @@ static void init_socket() {
 	assert(n); if(!n) exit(6);
 	cfg->sockname=sockname;
 }
+#endif
 #else 
 static void init_socket() {
   cfg->sockname = strdup("9147");
 }
-#endif
 #endif
 void java_init_cfg() {
   if(!(java_ini_updated&U_SOCKNAME)) {

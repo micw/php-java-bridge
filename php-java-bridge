@@ -5,6 +5,7 @@
 
 PATH=/bin:/usr/bin:$PATH:
 LD_LIBRARY_PATH=/lib:/usr/lib:$LD_LIBRARY_PATH
+LANG_SYSTEM="${LANG-en_US.UTF-8}"
 LANG=C
 
 export LANG PATH LD_LIBRARY_PATH
@@ -26,6 +27,7 @@ if test $# != 0; then
   eval $1; shift
   export JAVA_HOME LD_LIBRARY_PATH
   java=$1; shift
+  LANG="$LANG_SYSTEM" 
   $java "$@" &
   echo $! >$pid
   wait
@@ -66,4 +68,5 @@ rm -f /tmp/phpinfo.$$
 echo Starting java with the command: "$cmd"
 
 # invoke
+LANG="$LANG_SYSTEM"
 /bin/sh -c "/bin/sh $0 $cmd"&

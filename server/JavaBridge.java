@@ -602,14 +602,45 @@ public class JavaBridge implements Runnable {
     }
 
 
-    void setException(long result, long peer, Throwable e) {
+    private static String argsToString(Object args[]) {
+		StringBuffer buffer = new StringBuffer("");
+		if(args!=null) {
+			for(int i=0; i<args.length; i++) {
+				buffer.append(String.valueOf(GetClass(args[i])));
+				if(i+1<args.length) buffer.append(", ");
+			}
+		}
+		return buffer.toString();
+    }
+
+    void setException(long result, long peer, Throwable e, String method, Object obj, String name, Object args[]) {
 		if (e instanceof InvocationTargetException) {
 			Throwable t = ((InvocationTargetException)e).getTargetException();
 			if (t!=null) e=t;
 		}
 
-		lastException = e;
-		JavaBridge.setException(result, peer, e, e.toString().getBytes());
+		StringBuffer buf=new StringBuffer(method);
+		buf.append(" failed: ");
+		if(obj!=null) {
+			buf.append("[");
+			buf.append(String.valueOf(obj));
+			buf.append("]->"); 
+		} else {
+			buf.append("new ");
+		}
+		buf.append(name); 
+		String arguments = argsToString(args);
+		if(arguments.length()>0) {
+			buf.append("(");
+			buf.append(arguments);
+			buf.append(")");
+		}
+		buf.append(".");
+		buf.append(" Cause: ");
+		buf.append(String.valueOf(e));
+		
+		lastException = new Exception(buf.toString(), e);
+		JavaBridge.setException(result, peer, lastException, lastException.toString().getBytes());
     }
 
     //
@@ -634,7 +665,7 @@ public class JavaBridge implements Runnable {
 
 			if (selected == null) {
 				if (args.length > 0) {
-					throw new InstantiationException("No matching constructor found");
+					throw new InstantiationException("No matching constructor found. " + "Matches: " + String.valueOf(matches));
 				} else {
 					// for classes which have no visible constructor, return the class
 					// useful for classes like java.lang.System and java.util.Calendar.
@@ -658,7 +689,7 @@ public class JavaBridge implements Runnable {
 			   e.getMessage().startsWith("child aborted connection during"))
 				throw new RuntimeException();
 
-			setException(result, peer, e);
+			setException(result, peer, e, createInstance?"CreateInstance":"ReferenceClass", null, name, args);
 		}
     }
 
@@ -839,14 +870,6 @@ public class JavaBridge implements Runnable {
 		return result;
     }
 
-    private static String argsToString(Object args[]) {
-		StringBuffer buffer = new StringBuffer("");
-		for(int i=0; i<args.length; i++) {
-			buffer.append(String.valueOf(GetClass(args[i])));
-			if(i+1<args.length) buffer.append(", ");
-		}
-		return buffer.toString();
-    }
     //
     // Invoke a method on a given object
     //
@@ -883,7 +906,7 @@ public class JavaBridge implements Runnable {
 				if (!(object instanceof Class) || (jclass==object)) break;
 			}
 			Method selected = (Method)select(matches, args);
-			if (selected == null) throw new NoSuchMethodException(String.valueOf(method) + "(" + argsToString(args) + ") " + "matches: " + String.valueOf(matches));
+			if (selected == null) throw new NoSuchMethodException(String.valueOf(method) + "(" + argsToString(args) + "). " + "Matches: " + String.valueOf(matches));
 
 			Object coercedArgs[] = coerce(selected.getParameterTypes(), args);
 			setResult(result, peer, selected.invoke(object, coercedArgs));
@@ -899,7 +922,7 @@ public class JavaBridge implements Runnable {
 			if(e.getMessage()!=null &&
 			   e.getMessage().startsWith("child aborted connection during"))
 				throw new RuntimeException();
-			setException(result, peer, e);
+			setException(result, peer, e, "Invoke", object, method, args);
 		}
     }
 
@@ -909,7 +932,10 @@ public class JavaBridge implements Runnable {
     public void GetSetProp
 		(Object object, String prop, Object args[], long result, long peer)
     {
+		boolean set = (args!=null && args.length>0);
+
 		try {
+			ArrayList matches = new ArrayList();
 
 			for (Class jclass = object.getClass();;jclass=(Class)object) {
 				while (!Modifier.isPublic(jclass.getModifiers())) {
@@ -924,38 +950,65 @@ public class JavaBridge implements Runnable {
 						}
 					}
 				}
-				BeanInfo beanInfo = Introspector.getBeanInfo(jclass);
-				PropertyDescriptor props[] = beanInfo.getPropertyDescriptors();
-				for (int i=0; i<props.length; i++) {
-					if (props[i].getName().equalsIgnoreCase(prop)) {
-						Method method;
-						if (args!=null && args.length>0) {
-							method=props[i].getWriteMethod();
-							args = coerce(method.getParameterTypes(), args);
-						} else {
-							method=props[i].getReadMethod();
-						}
-						setResult(result, peer, method.invoke(object, args));
-						return;
-					}
-				}
 
-				java.lang.reflect.Field jfields[] = jclass.getFields();
-				for (int i=0; i<jfields.length; i++) {
-					if (jfields[i].getName().equalsIgnoreCase(prop)) {
-						if (args!=null && args.length>0) {
-							args = coerce(new Class[] {jfields[i].getType()}, args);
-							jfields[i].set(object, args[0]);
-						} else {
-							setResult(result, peer, jfields[i].get(object));
+				// first search for the field *exactly*
+				try {
+					java.lang.reflect.Field jfields[] = jclass.getFields();
+					for (int i=0; i<jfields.length; i++) {
+						if (jfields[i].getName().equals(prop)) {
+							matches.add(jfields[i].getName());
+							if (set) {
+								args = coerce(new Class[] {jfields[i].getType()}, args);
+								jfields[i].set(object, args[0]);
+							} else {
+								setResult(result, peer, jfields[i].get(object));
+							}
+							return;
 						}
-						return;
 					}
-				}
+				} catch (Exception ee) {/* may happen when field is not static */}
+
+				// search for a getter/setter, ignore case
+				try {
+					BeanInfo beanInfo = Introspector.getBeanInfo(jclass);
+					PropertyDescriptor props[] = beanInfo.getPropertyDescriptors();
+					for (int i=0; i<props.length; i++) {
+						if (props[i].getName().equalsIgnoreCase(prop)) {
+							Method method;
+							if (set) {
+								method=props[i].getWriteMethod();
+								args = coerce(method.getParameterTypes(), args);
+							} else {
+								method=props[i].getReadMethod();
+							}
+							matches.add(method);
+							setResult(result, peer, method.invoke(object, args));
+							return;
+						}
+					}
+				} catch (Exception ee) {/* may happen when method is not static */}
+
+				// search for the field, ignore case
+				try {
+					java.lang.reflect.Field jfields[] = jclass.getFields();
+					for (int i=0; i<jfields.length; i++) {
+						if (jfields[i].getName().equalsIgnoreCase(prop)) {
+							matches.add(prop);
+							if (set) {
+								args = coerce(new Class[] {jfields[i].getType()}, args);
+								jfields[i].set(object, args[0]);
+							} else {
+								setResult(result, peer, jfields[i].get(object));
+							}
+							return;
+						}
+					}
+				} catch (Exception ee) {/* may happen when field is not static */}
 
 				// try a second time with the object itself, if it is of type Class
 				if (!(object instanceof Class) || (jclass==object)) break;
 			}
+			throw new NoSuchFieldException(String.valueOf(prop) + " (with args:" + argsToString(args) + "). " + "Matches: " + String.valueOf(matches));
 
 		} catch (Throwable e) {
 			printStackTrace(e);
@@ -968,7 +1021,7 @@ public class JavaBridge implements Runnable {
 			if(e.getMessage()!=null &&
 			   e.getMessage().startsWith("child aborted connection during"))
 				throw new RuntimeException();
-			setException(result, peer, e);
+			setException(result, peer, e, set?"SetProperty":"GetProperty", object, prop, args);
 		}
     }
 

@@ -39,7 +39,11 @@
 
 extern int le_jobject;
 extern zend_module_entry java_module_entry;
-extern zend_class_entry *php_java_class_entry, *php_java_class_class_entry, *php_java_exception_class_entry;
+extern zend_class_entry *php_java_class_entry;
+extern zend_class_entry *php_java_class_class_entry;
+extern zend_class_entry *php_java_jsr_class_class_entry; 
+extern zend_class_entry *php_java_exception_class_entry;
+
 #ifdef ZEND_ENGINE_2
 extern zend_object_handlers php_java_handlers;
 #endif

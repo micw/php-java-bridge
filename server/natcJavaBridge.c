@@ -834,8 +834,7 @@ JNIEXPORT jboolean JNICALL Java_JavaBridge_trampoline(JNIEnv*env, jclass self, j
 #ifdef HAVE_STRUCT_UCRED
 
 /* Prepare the socket to receive auth information directly from the
-   kernel.  Will work on Solaris, Linux and modern BSD operating
-   systems and only if the socket is of type LOCAL (UNIX). 
+   kernel. 
  */
 static int prep_cred(int sock) {
   static const int true = 1;
@@ -967,13 +966,13 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
 # endif
   sock = socket (PF_LOCAL, SOCK_STREAM, 0);
   if(!sock) {logSysFatal(env, "could not create socket"); return;}
+  if (-1==prep_cred(sock)) logSysFatal(env, "socket cannot receive credentials");
 #else
   saddr.sin_family = AF_INET;
   saddr.sin_port=htons(atoi(sockname));
   saddr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
   sock = socket (PF_INET, SOCK_STREAM, 0);
   if(!sock) {logSysFatal(env, "could not create socket"); return;}
-  if (-1==prep_cred(sock)) logSysFatal(env, "socket cannot receive credentials");
 #endif
   n = bind(sock,(struct sockaddr*)&saddr, sizeof saddr);
   if(n==-1) {logSysFatal(env, "could not bind socket"); return;}
