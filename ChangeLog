@@ -1,13 +1,17 @@
+2005-01-31  Jost Boekemeier  <jostb@intern>
+
+	* php-java-bridge.fc, php-java-bridge.te: Cleanup for release.
+
+        * README: Windows section rewritten
+
+	* bind.c (java_get_server_args): Fixed typo.
+
 2005-01-28  Jost Boekemeier  <jostb@intern>
 	
 	* java.c (PHP_MINIT_FUNCTION): For java_class, javaclass and
 	javaexception: Do not override parent methods with themselfs. PHP
 	5.0.3 doesn't like that...
 	
-	* README: Removed windows install description.
-	
-	* README.WINDOWS: New file from README.
-
 	* config.m4: Embedding into PHP works again.  Use m4_include so
 	that autoheader scans the included files.
 	
