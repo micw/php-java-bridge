@@ -202,7 +202,11 @@ static void leave() {
 static void *guard_requests(void *p) {
   int sig;
   block_sig();
+#ifdef HAVE_SIGWAIT
   sigwait(&block, &sig);
+#else
+  sigsuspend(&block); // FIXME
+#endif
   pthread_mutex_lock(&mutex);
   if(count) pthread_cond_wait(&cond, &mutex);
   count=-1;

@@ -1,17 +1,17 @@
 What is the PHP/Java bridge?
 ----------------------------
 
-  The PHP/Java bridge connects the PHP object system with the Java object 
-  system. For example it can be used to access java based applications
-  running in a java application server which is running on the local host.
-  The PHP/Java bridge communicates with the application server through 
-  local sockets using an efficient communication protocol.  This means
-  that only one JVM runs to serve all clients within a multi-process
+  The PHP/Java bridge connects the PHP object system with the Java
+  object system. For example it can be used to access java based
+  applications running in a java application server. The PHP/Java
+  bridge communicates with the application server through local
+  sockets using an efficient communication protocol.  This means that
+  only one JVM runs to serve all clients within a multi-process
   HTTP-Server.  Each client process communicates with a corresponding
   thread spawned by the running application server.
 
   If the bridge detects that a java application server is not already
-  running, it starts one to serve further requests.
+  running, it starts a private java process to serve further requests.
 
   There is one example provided: test.php.  You can either invoke the
   test.php by typing ./test.php or copy the example into the document
@@ -69,7 +69,8 @@ Build and execution instructions:
 
   If you want to test the extension in the web-server, you should enable
   the java.socketname option and start the java VM before you start the
-  web-server.  The java VM can then be started as follows
+  web-server.  The java VM can then be started either via the 
+  "php-java-bridge" script or by typing the following command:
 
             JAVA_HOME=<java.home> <java.home>/bin/java \
                                         -Djava.library.path=<java.libpath>
@@ -101,15 +102,9 @@ Build and execution instructions:
   service.
 
   This module has been tested on a Mandrake Linux System (Version 9.2),
-  on RedHat Enterprise 3, RedHat Fedora Core 1 and 2, but it should run
-  on all Unix-like operating systems including Solaris, Mac.
-
-  However, the extension currently does not compile on systems which do
-  not support fork()/exec().  On these systems you must disable the code
-  in bind.c and start the java application server yourself.  Fortunately
-  all modern operating systems -- except Windows -- support
-  fork()/exec()
-
+  on RedHat Enterprise 3, RedHat Fedora Core 1 and 2, Solaris9 (Sparc)
+  and Windows98 with RedHat Cygwin, but it should run on all Unix-like
+  operating systems including HP-UX, MacOS-X, WinXP/Cygwin.  
 
   Other configuration options which should have been set up by the
   configure script but which can be changed later are:
@@ -127,29 +122,23 @@ Build and execution instructions:
    Using GNU Java
    --------------
 
-   In case you don't want to ship a JVM or JRE with your product
+   In case you don't want to ship a JVM or JRE with your product,
    you can use GNU gcc to compile the java part and your classes
    into native code. 
-   In the directory php-java-bridge_1.x.y/modules type:
+   In the directory php-java-bridge_1.x.y type:
 
-   gcj --version  # must be gcj 3.2.3 or above!
-   echo "main(int argc,char**argv){java_bridge_main_gcj(argc,argv);}">start.c
-   gcj --static -fjni -oJavaBridge.srv start.c \
-       ../server/JavaBridge.java \
-       ../server/natcJavaBridge.c \
-       [...insert additional paths to .java classes here...] \
-       -I.. -I$JAVA_HOME/include -I$JAVA_HOME/include/linux
+   gcj --version  # must be gcj 3.3.3 or above!
+   phpize && ./configure --with-java
+   make install
 
+   This creates a native, dynamic linked executable in the PHP
+   extension directory.  It can be started with the command:
 
-   This creates a native, static linked executable in the current
-   directory which does not need any libraries anymore.  It can be
-   started with the command:
-
-      ./JavaBridge.srv <java.socketname> <loglevel> <log-file>
+      `php-config --extension-dir`/java <java.socketname> <loglevel> <log-file>
 
    For example:
 
-      ./JavaBridge.srv /tmp/.php_java 5 "" | tee /tmp/java.log
+      `php-config --extension-dir`/java /tmp/.php_java 5 "" | tee /tmp/java.log
 
 
    Then point the bridge to the socket /tmp/.php_java by hard-coding 
@@ -163,17 +152,87 @@ Build and execution instructions:
      java.vendor -> Free Software Foundation, Inc.
      java.vendor.url -> http://gcc.gnu.org/java/
 
-   It is recommended to compile the executable against shared
-   libraries (ommit the above --static).  If you do this, you
-   must package the JavaBridge.srv with the libraries it needs
-   (at least libnatcJavaBridge.so, libgcc_s.so.1 and libgcj.so.3, see
-   output of ldd command).
+   GNU gcc is a "ahead of time" compiler. That means that classes
+   which are added after compilation must be interpreted by the
+   GNU java interpreter.  There's no "just in time" compiler.
+   To compile your classes with the java executable, you can append 
+   the classes, java or jar files at the end of the java_SOURCES
+   line of the server/Makefile.am.  For example:
+    
+   java_SOURCES= java.c JavaBridge.java my_file.java
 
-   On the installation system and make sure that your client
-   starts the JavaBridge before the httpd service gets started. -- On
-   RedHat the init.d/httpd is started as 85/15, so it should be
-   sufficient to start the JavaBridge executable as #84 and stop it
-   as #16.
+   Then type "make install" to re-install the binary. 
+
+   If you want to compile the server part as a separate component;
+   the server sub-directory is driven by autoconf and has been
+   configured with the command:
+
+     sh autogen.sh
+     dir=../modules
+     ./configure --with-java --libdir=$dir --datadir=$dir --bindir=$dir
+
+
+   After you have created the executables you can distribute the 
+   contents of the php-java-bridge-x.y.z/modules directory which
+   should contain the files "java", libnatcJavaBridge.so and java.so.
+   The java.so is the PHP module, the other files are required
+   to start the server part.  The java executable may need other
+   system libraries, for example gcj.so and gcc_s.so which should
+   be installed on the target system.
+
+------------------------------------
+  64 Bit issues
+  -------------
+  
+  It is possible to compile the bridge into 64 bit code:
+
+          phpize && ./configure --with-java=$JAVA_HOME
+          make CFLAGS="-DNDEBUG -m64"
+  
+  The installation expects that the default JVM found in
+  $JAVA_HOME/bin/java is a 64 bit VM. Unfortunately this is not the
+  case with the SUN JDK (Linux and Solaris) which install the 64bit VM
+  in some sub-directory of $JAVA_HOME/bin. On Solaris9 this is
+  $JAVA_HOME/bin/sparcv9. The location on Linux may depend on the
+  architecture.
+
+  Since there is not standard installation directory and we cannot
+  blindly search all sub-directories, it is your job to direct the bridge
+  to the 64 bit JVM.  The relevant php.ini entry is java.java, see install
+  instructions above.  
+
+  A Sun JVM that reads a wrong elf class will silently terminate after
+  the LoadLibrary.  The Sun VM does *not* indicate an error condition
+  or throw an exception.
+
+------------------------------------
+  Windows issues
+  --------------
+
+  This operating system has some unusal problems with shared libraries
+  (DLL's). It is not possible to link with a shared library that is
+  not installed or not in the path; this OS requires that programs or
+  libraries must be linked with concrete instances.
+
+  Since it is not possible to compile the bridge as a standalone
+  module, we will compile it with PHP.
+
+  1. Install the source code of PHP 4.3.x.
+
+  2. Install RedHat's Cygwin (PHP needs autoconf).
+
+  3. Delete the java sub-directory from php-4.3.x/ext and replace it
+     with our php-java-bridge. Rename ext/php-java-bridge to
+     ext/java.
+
+  4. Invoke autoconf to update our java module within the PHP build
+     tree and then compile php as usual:
+ 
+      autoconf && ./configure --with-java && make
+
+  This will create a php binary with the PHP/Java Bridge included.
+  You can then copy the executable into the CGI directory of your IIS
+  Web-Server.
 
 ------------------------------------
   PHP 5 support

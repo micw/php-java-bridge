@@ -1,7 +1,9 @@
 #ifndef SIO_H
 #define SIO_H
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #ifdef HAVE_BROKEN_STDIO		/* MacOS X and all Solaris versions */
 

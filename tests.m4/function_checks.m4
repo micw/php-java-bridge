@@ -19,13 +19,8 @@ AC_DEFUN(JAVA_FUNCTION_CHECKS,[
 
  AC_CHECK_FUNCS(longjmp perror snprintf tempnam \
   strerror strdup unlink putenv execv fork \
-  memcpy memmove sigset)
+  memcpy memmove sigwait)
 
 dnl add -lsocket to the link line of the module and the server part
- AC_CHECK_LIB(socket, socket, 
-  PHP_ADD_LIBRARY(socket,, LIBNATCJAVABRIDGE_SHARED_LIBADD) 
-  PHP_ADD_LIBRARY(socket,, JAVA_SHARED_LIBADD))
- PHP_SUBST(JAVA_SHARED_LIBADD)
- PHP_SUBST(LIBNATCJAVABRIDGE_SHARED_LIBADD)
-
+ AC_CHECK_LIB(socket, socket, LIBS="$LIBS -lsocket")
 ])
