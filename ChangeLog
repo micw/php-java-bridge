@@ -1,8 +1,8 @@
 2005-02-04  Jost Boekemeier  <jostb@intern>
 
-	INSTALL: document worker MPM
+	* INSTALL: document worker MPM
 
-	client.c, java.c: ZTS
+	* client.c, java.c: ZTS
 
 2005-02-03  Jost Boekemeier  <jostb@intern>
 
