@@ -2,26 +2,27 @@ What is the PHP/Java bridge?
 ----------------------------
 
   The PHP/Java bridge connects the PHP object system with the Java
-  object system. For example it can be used to access java based
-  applications running in a java application server. The PHP/Java
-  bridge communicates with the application server through local
-  sockets using an efficient communication protocol.  This means that
-  only one JVM runs to serve all clients within a multi-process
-  HTTP-Server.  Each client process communicates with a corresponding
-  thread spawned by the running application server.
+  object system. It can be used to access java based applications 
+  running in a java application server. The PHP/Java bridge communicates 
+  with the application server through local sockets using an efficient
+  communication protocol.  This means that only one JVM runs to serve
+  all clients within a multi-process HTTP-Server.  Each client process
+  communicates with a corresponding thread spawned by the running
+  application server.
 
-  If the bridge detects that a java application server is not already
-  running, it starts a private java process to serve further requests.
+  If the bridge does not detect a running java application server, 
+  it starts a private java process to serve further requests.
 
   The bridge adds the following primitives to PHP:
 
-  * new java("<classname>"): Instanciates the java class.
+  * new java("<classname>"): Instanciates the class <classname>
 
   * java_set_library_path("<jar1>;<jar2>"): Makes additional libraries
-    available to the current script.  The <jar> can be either be
-    a "http:", "ftp:", "file:" or a "jar:" location.  After the script
-    execution the classes used by the script may or may not be garbage
-    collected:
+     available to the current script.  The <jar> can either be  
+     a "http:", "ftp:", "file:" or a "jar:" location.  After script
+     execution the referenced classes may be garbage collected.  That
+     means that static classes cannot be used to hold session data;
+     use a Properties object instead. 
      
      <?php
       java_set_library_path("file:c:/mytest.jar");
@@ -37,7 +38,7 @@ What is the PHP/Java bridge?
      ==> Result undefined, mytest may have been garbage collected.
 
   * java_last_exception_get(): Returns the last exception instance or
-    null.
+     null.
 
   * java_last_exception_clear(): Clears the error condition.
 
@@ -55,7 +56,7 @@ Build and execution instructions:
 
   In the directory php-java-bridge_1.x.y type:
 
-          java -version        # 1.3 or above (1.4.2_02 or IBM Java recommended).
+          java -version        # 1.3 or above (1.4.2_02 or IBM JVM recommended)
           gcc --version        # 3.2.3 or above.
           apachectl -version   # Apache 1.3 or above.
           php-config --version # PHP 4.3.2 or above. For PHP5 see below.
@@ -70,18 +71,23 @@ Build and execution instructions:
   can now test the extension by invoking the test.php with the 
   command: php ./test.php.
 
+  The module has been tested on a Mandrake Linux System (Version 9.2),
+  on RedHat Enterprise 3, RedHat Fedora Core 1 and 2, Solaris9 (Sparc)
+  and Windows98 with RedHat Cygwin, but it should run on all Unix-like
+  operating systems including HP-UX, MacOS-X, WinXP/Cygwin.  
+
   Custom java libraries (.jar files) can be stored in the following
-  places:
+  locations:
 
-   1. In the script jar_library_path of the current PHP script, if
-       set (see PHP_FUNCTION(java_set_library_path)).
+   1. Somewhere on a HTTP or FTP server, see PHP function
+      java_set_library_path.
 
-   2. In the sub-directory "lib" of the PHP extension directory:
-      "`php-config --extension-dir`/lib" if it exists when the
-      java VM starts the bridge.
+   2. In the sub-directory "lib" of the PHP extension directory if it
+      exists and is accessible when the JVM starts the bridge.
+      This is usually "`php-config --extension-dir`/lib".
 
-   3. In the /usr/share/java/ directory, if it exists when the 
-      java VM starts the bridge.
+   3. In the /usr/share/java/ directory, if it exists and is accessible
+      when the JVM starts the bridge.
 
 
   The PHP/Java Bridge can operate in 5 different modes:
@@ -90,18 +96,17 @@ Build and execution instructions:
       starts a new Java VM for each request.  But this mode does not
       require any administrative privileges.
 
-   2. Compiled into the PHP binary or library.  This is not
-      recommended because it requires that you mus compile PHP
-      yourself.  If you want to do this, please see the Windows
-      install description below.
+   2. Compiled into PHP.  This is not recommended because it
+      requires a compilation of the entire PHP library. If you want to
+      do this, please see the Windows install description below.
 
    3. Permanently activated in the global php.ini file.  This is
       recommended, see below.
 
-   4. Permanently activated with the Java VM running as a
-      separate process.  Recommended for web servers, see below.
-      This mode is used in the binary RPM package available for
-      RedHat Enterprise Linux.
+   4. Permanently activated in the global php.ini file with an
+      external java process.  Recommended for web servers, see below.
+      This mode is used by the RPM package available for RedHat
+      Enterprise Linux.
 
    5. Compiled with the GNU Java library.  You can either start
       GNU Java as a separate process (just like a "real" Java VM) or
@@ -109,7 +114,8 @@ Build and execution instructions:
       You can even compile the PHP/Java Bridge + GNU/Java directly
       into PHP to create a huge PHP binary or library.
 
-  The following sections describe each of these options.
+  You have already installed the bridge in mode #1.  The following
+  sections describe the other options.
  
 ------------------------------------
    Permanently activate the module
@@ -132,6 +138,18 @@ Build and execution instructions:
   typing:
 
           echo "<?php phpinfo()?>" | php | fgrep "java status"
+
+  Other configuration options which should have been set up by the
+  configure script but which can be changed later are:
+
+          java.libpath   = <system dependent path to natcJavaBridge.so>
+          java.classpath = <system dependent path to JavaBridge.class>
+          java.java_home = <system dependent path to the java install dir>
+          java.java      = <system dependent path to the java binary>
+          java.socketname= <hard-coded socketname to start the VM separately>
+
+  If you change the above values, please first look at the output of
+  phpinfo() so see the original values.
 
 ---------------------------------------------
    Starting the Java VM as a separate process
@@ -170,23 +188,6 @@ Build and execution instructions:
   starts the JVM and the "php-java-bridge.service" can be used on SysV
   based init systems to automatically start and stop the bridge as a
   service.
-
-  This module has been tested on a Mandrake Linux System (Version 9.2),
-  on RedHat Enterprise 3, RedHat Fedora Core 1 and 2, Solaris9 (Sparc)
-  and Windows98 with RedHat Cygwin, but it should run on all Unix-like
-  operating systems including HP-UX, MacOS-X, WinXP/Cygwin.  
-
-  Other configuration options which should have been set up by the
-  configure script but which can be changed later are:
-
-          java.libpath   = <system dependent path to natcJavaBridge.so>
-          java.classpath = <system dependent path to JavaBridge.class>
-          java.java_home = <system dependent path to the java install dir>
-          java.java      = <system dependent path to the java binary>
-          java.socketname= <hard-coded socketname to start the VM separately>
-
-  If you change the above values, please first look at the output of
-  phpinfo() so see the original values.
 
 ------------------------------------
    Using GNU Java
@@ -241,7 +242,6 @@ Build and execution instructions:
      dir=../modules
      ./configure --with-java --libdir=$dir --datadir=$dir --bindir=$dir
 
-
    After you have created the executables you can distribute the 
    contents of the php-java-bridge-x.y.z/modules directory which
    should contain the files "java", libnatcJavaBridge.so and java.so.
@@ -290,7 +290,6 @@ Build and execution instructions:
   creating shared libraries on this system.  Instead we will
   compile the extension into PHP:
 
-
   1. Install the source code of PHP 4.3.x.
 
   2. Install RedHat's Cygwin (PHP needs autoconf).
@@ -303,7 +302,6 @@ Build and execution instructions:
       sinclude(ext/java/tests.m4/function_checks.m4)
       sinclude(ext/java/tests.m4/java_check_broken_stdio_buffering.m4)
       sinclude(ext/java/tests.m4/java_check_broken_gcc_installation.m4)
-
 
   4. Invoke autoconf to register our java module within the PHP build
      tree and then compile php as usual:
