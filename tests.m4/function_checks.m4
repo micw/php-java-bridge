@@ -1,4 +1,4 @@
-AC_DEFUN(JAVA_FUNCTION_CHECKS,[
+AC_DEFUN([JAVA_FUNCTION_CHECKS],[
 
  AC_CHECK_HEADERS([ \
    sys/param.h sys/types.h sys/time.h assert.h fcntl.h \
@@ -23,10 +23,6 @@ AC_CHECK_DECLS([AF_LOCAL, PF_LOCAL],,,
 #include <sys/socket.h>
 #include <sys/un.h>
 ])
-
- AC_CHECK_FUNCS(longjmp perror snprintf tempnam \
-  strerror strdup unlink putenv execv fork \
-  memcpy memmove sigwait)
 
 dnl add -lsocket to the link line of the module and the server part
  AC_CHECK_LIB(socket, socket, LIBS="$LIBS -lsocket")

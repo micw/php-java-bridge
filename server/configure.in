@@ -4,6 +4,8 @@ m4_bpatsubst(m4_include([../VERSION]),[
 ]), 
 [php-java-bridge-users@lists.sourceforge.net], 
 [php-java-bridge])
+AC_CONFIG_AUX_DIR(.)
+AC_CONFIG_LINKS(sio.h:../sio.h sio.c:../sio.c protocol.h:../protocol.h)
 
 dnl autoconf >2.57
 AC_PREREQ(2.57)
@@ -13,8 +15,6 @@ dnl automake >1.6.3
 AM_INIT_AUTOMAKE([1.6.3])
 AM_CONFIG_HEADER(config.h)
 
-AC_CONFIG_AUX_DIR(.)
-AC_CONFIG_LINKS(sio.h:../sio.h sio.c:../sio.c protocol.h:../protocol.h)
 AC_PROG_CC
 AC_PROG_CPP
 AM_PROG_GCJ

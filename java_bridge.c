@@ -31,7 +31,7 @@ static short checkError(pval *value TSRMLS_DC)
   return 0;
 }
 
-int java_get_jobject_from_object(pval*object, jobject*obj)
+int java_get_jobject_from_object(pval*object, jobject*obj TSRMLS_DC)
 {
   pval **handle;
   int type, n;
@@ -45,7 +45,7 @@ int java_get_jobject_from_object(pval*object, jobject*obj)
 
 void php_java_invoke(char*name, jobject object, int arg_count, zval**arguments, pval*presult TSRMLS_DC) 
 {
-  proxyenv *jenv = java_connect_to_server(&JG(cfg) TSRMLS_CC);
+  proxyenv *jenv = java_connect_to_server(TSRMLS_C);
   jlong result = (jlong)(long)presult;
   jstring method;
   if(!jenv) {ZVAL_NULL(presult); return;}
@@ -64,7 +64,7 @@ void php_java_invoke(char*name, jobject object, int arg_count, zval**arguments, 
 void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, short constructor, short createInstance, pval *object, int arg_count, zval**arguments)
 {
   jlong result = 0;
-  proxyenv *jenv = java_connect_to_server(&JG(cfg) TSRMLS_CC);
+  proxyenv *jenv = java_connect_to_server(TSRMLS_C);
   if(!jenv) {ZVAL_NULL(object); return;}
 
   BEGIN_TRANSACTION(jenv);
@@ -92,7 +92,7 @@ void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, sho
     jobject obj;
     jstring method;
 
-	java_get_jobject_from_object(object, &obj);
+	java_get_jobject_from_object(object, &obj TSRMLS_CC);
 	assert(obj);
 
     method = (*jenv)->NewStringUTF(jenv, name);
@@ -122,7 +122,7 @@ static jobject php_java_makeObject(pval* arg TSRMLS_DC)
       break;
 
     case IS_OBJECT:
-	  java_get_jobject_from_object(arg, &result);
+	  java_get_jobject_from_object(arg, &result TSRMLS_CC);
 	  assert(result);
       break;
 
@@ -231,7 +231,7 @@ php_java_getset_property (char* name, pval* object, jobjectArray value, zval *pr
   propName = (*jenv)->NewStringUTF(jenv, name);
 
   /* get the object */
-  type = java_get_jobject_from_object(object, &obj);
+  type = java_get_jobject_from_object(object, &obj TSRMLS_CC);
   result = (jlong)(long) presult;
 
   ZVAL_NULL(presult);
@@ -248,10 +248,14 @@ php_java_getset_property (char* name, pval* object, jobjectArray value, zval *pr
 /**
  * php_java_get_property_handler
  */
-short php_java_get_property_handler(char*name, zval *object, zval *presult TSRMLS_DC)
+short php_java_get_property_handler(char*name, zval *object, zval *presult)
 {
-  proxyenv *jenv = java_connect_to_server(&JG(cfg) TSRMLS_CC);
-  if(!jenv) {ZVAL_NULL(presult); return;}
+  proxyenv *jenv;
+
+  TSRMLS_FETCH();
+
+  jenv = java_connect_to_server(TSRMLS_C);
+  if(!jenv) {ZVAL_NULL(presult); return FAILURE;}
 
   BEGIN_TRANSACTION(jenv);
   php_java_getset_property(name, object, 0, presult TSRMLS_CC);
@@ -264,10 +268,14 @@ short php_java_get_property_handler(char*name, zval *object, zval *presult TSRML
 /**
  * php_java_set_property_handler
  */
-short php_java_set_property_handler(char*name, zval *object, zval *value, zval *presult TSRMLS_DC)
+short php_java_set_property_handler(char*name, zval *object, zval *value, zval *presult)
 {
-  proxyenv *jenv = java_connect_to_server(&JG(cfg) TSRMLS_CC);
-  if(!jenv) {ZVAL_NULL(presult); return;}
+  proxyenv *jenv;
+
+  TSRMLS_FETCH();
+
+  jenv = java_connect_to_server(TSRMLS_C);
+  if(!jenv) {ZVAL_NULL(presult); return FAILURE; }
 
   BEGIN_TRANSACTION(jenv);
   php_java_getset_property(name, object, php_java_makeArray(1, &value TSRMLS_CC), presult TSRMLS_CC);

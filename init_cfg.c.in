@@ -47,20 +47,19 @@
 const char * const java_bridge_version = BRIDGE_VERSION;
 
 #ifdef HAVE_ABSTRACT_NAMESPACE
-static void init_socket(struct cfg*cfg) {
+static void init_socket() {
   static const char * const bridge="@java-bridge-";
-  size_t len = strlen(bridge)+ sizeof(uid_t)*2+ sizeof(time_t)*2; //assuming byte=8bit
+  size_t len = strlen(bridge)+ sizeof(pid_t)*2; //assuming byte=8bit
 
   char *sockname=malloc(len+1);
   assert(sockname); if(!sockname) exit(6);
 
-  snprintf(sockname, len+1, "%s%lx%lx", bridge, 
-		   (unsigned long)getuid(),(unsigned long)time(0));
+  snprintf(sockname, len+1, "%s%lx", bridge,(unsigned long)getpid());
   cfg->sockname=sockname;
 }
 #else 
 #ifndef CFG_JAVA_SOCKET_INET
-static void init_socket(struct cfg*cfg) {
+static void init_socket() {
 	int n;
 	char*s=SOCKNAME;
 	char *sockname=malloc(strlen(s)+1);
@@ -71,14 +70,14 @@ static void init_socket(struct cfg*cfg) {
 	cfg->sockname=sockname;
 }
 #else 
-static void init_socket(struct cfg*cfg) {
+static void init_socket() {
   cfg->sockname = strdup("9147");
 }
 #endif
 #endif
-void java_init_cfg(struct cfg *cfg) {
+void java_init_cfg() {
   if(!(java_ini_updated&U_SOCKNAME)) {
-	init_socket(cfg);
+	init_socket();
   }
   if(!(java_ini_updated&U_CLASSPATH)) cfg->classpath=strdup(CFG_CLASSPATH);
   if(!(java_ini_updated&U_LIBRARY_PATH)) cfg->ld_library_path=strdup(CFG_LD_LIBRARY_PATH);
@@ -88,7 +87,7 @@ void java_init_cfg(struct cfg *cfg) {
   if(!(java_ini_updated&U_LOGFILE)) cfg->logFile=strdup("");
 }
 
-void java_destroy_cfg(int java_ini_updated, struct cfg*cfg) {
+void java_destroy_cfg(int java_ini_updated) {
   if(!(java_ini_updated&U_SOCKNAME)) free(cfg->sockname);
   if(!(java_ini_updated&U_CLASSPATH)) free(cfg->classpath);
   if(!(java_ini_updated&U_LIBRARY_PATH)) free(cfg->ld_library_path);

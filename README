@@ -1,105 +1,130 @@
 What is the PHP/Java bridge?
 ----------------------------
 
-  The PHP/Java Bridge is a PHP module which connects the PHP object
-  system with the Java object system. It can be used to access java
-  based applications running in a java application server. The
-  PHP/Java bridge communicates with the application server through local
-  sockets using an efficient communication protocol.  This means that
-  only one JVM runs to serve all clients within a multi-process
-  HTTP-Server.  Each client process communicates with a corresponding
-  thread spawned by the running application server.
+  The PHP/Java bridge is PHP module which connects the PHP object system
+  with the Java object system. It implements JSR 223 (where applicable)
+  and can be used to access java based applications from PHP
+  scripts. The PHP/Java Bridge communicates with the java VM through
+  local sockets using an efficient communication protocol. Each
+  request-handling PHP process of a multi-process HTTP server
+  communicates with a corresponding thread spawned by the java VM.
 
-  If the bridge does not detect a running java application server, 
-  it starts a private java process to serve further requests.
+  Requests from more than one client may either be routed to a single
+  application server running the PHP/Java Bridge or each HTTP server may
+  own a PHP/Java Bridge and communicate with a java application server
+  by exchanging java value objects. If the bridge does not detect a
+  running java application server, it starts a private java process to
+  serve further requests.
 
   The bridge adds the following primitives to PHP:
 
-  * new java("CLASSNAME"): References and instanciates the class
-    CLASSNAME. After script execution the referenced classes may be
-    garbage collected. To access classes within other classes the
-    class$innerClass syntax must be used instead of the normal dot
-    notation. Examples:
+   * new java("CLASSNAME"): References and instanciates the class
+     CLASSNAME. After script execution the referenced classes may be
+     garbage collected. Example:
 
-      $String = new java("java.lang.String");
-      print $String->valueOf(null);
+       $String = new java("java.lang.String");
+       print $String->valueOf(null);
 
-      $hello = new java("java.lang.String", "hello");
-      print $hello;
+       $hello = new java("java.lang.String", "hello");
+       print $hello;
 
-      $inner = new java('package.testClass$innerClass');
-      $inner->value = 2;
+       // access the inner class AQUA within HSSFColor, note the $ syntax.
+       $Color = new java('org.apache.poi.hssf.util.HSSFColor$AQUA');
+       print $Color->index;
 
-  * new java_class("CLASSNAME"): References the class CLASSNAME but
-    does not call a constructor. The object returned is the class
-    object. After script execution the referenced classes may be garbage
-    collected. Example:
+   * new java_class("CLASSNAME"): References the class CLASSNAME
+     without creating an instance. The object returned is the class object
+     itself, not an object of the class. After script execution the
+     referenced classes may be garbage collected. Example:
 
-      $Class = new java_class("java.lang.Object");
-      $obj = $Class->newInstance();
+       $Object = new java_class("java.lang.Object");
+       $obj = $Object->newInstance();
 
-  * java_set_library_path("JAR1;JAR2"): Makes additional libraries
-    available to the current script. JAR can either be a "http:", "ftp:",
-    "file:" or a "jar:" location. Example:
-     
-      $file=new java("java.io.File", "WEB_INF/web.xml");
+   * java_set_library_path("JAR1;JAR2"): Makes additional libraries
+     available to the current script. JAR can either be a "http:", "ftp:",
+     "file:" or a "jar:" location. Example:
 
-      java_set_library_path("file:c:/xerces.jar;http://localhost/jdom.jar");
-      $builder = new java("org.jdom.input.SAXBuilder");
-      $doc = $builder->build($file);
-      $root = $doc->getRootElement();
-      $servlets = $root->getChildren("servlet");
-      java_set_library_path("");
+       $file=new java("java.io.File", "WEB_INF/web.xml");
 
-      echo "this file has " . $servlets->size() . " servlets\n";
+       java_set_library_path("file:c:/xerces.jar;http://localhost/jdom.jar");
+       $builder = new java("org.jdom.input.SAXBuilder");
+       $doc = $builder->build($file);
+       $root = $doc->getRootElement();
+       $servlets = $root->getChildren("servlet");
+       java_set_library_path("");
 
-  * java_exception: A java exception class. Available in PHP 5 and
-    above only. Example:
+       echo "this file has " . $servlets->size() . " servlets\n";
 
-      try {
-       new java("java.lang.String", null);
-      } catch(java_exception $ex) {
-         $trace = new java("java.io.ByteArrayOutputStream");
-         $ex->printStackTrace(new java("java.io.PrintStream", $trace));
-         print "java stack trace: $trace\n";
-      }
+   * java_exception: A java exception class. Available in PHP 5 and
+     above only. Example:
 
-  * java_instanceof(OBJECT, CLASS): Tests if the java object OBJECT is
-    an instance of the java class CLASS or not. Example:
+       try {
+         new java("java.lang.String", null);
+       } catch(java_exception $ex) {
+          $trace = new java("java.io.ByteArrayOutputStream");
+          $ex->printStackTrace(new java("java.io.PrintStream", $trace));
+          print "java stack trace: $trace\n";
+       }
 
-      foreach($list as $key=>$value) {
-        if($value instanceof java)
-          if(java_instanceof($value, $ListClass))
-            ...
-      }
+   * foreach(COLLECTION): It is possible to iterate over values of
+     java classes that implement java.util.Collection or 
+     java.util.Map. Available in PHP 5 and above only. Example:
 
-  * java_last_exception_get(): Returns the last exception instance or
-    null. Example:
+       $conversion = new java("java.util.Properties");
+       $conversion->put("long", "java.lang.Byte java.lang.Short java.lang.Integer");
+       $conversion->put("boolean", "java.lang.Boolean");
+       foreach ($conversion as $key=>$value)
+          echo "$key => $value\n";
 
-      if(java_last_exception_get()) 
-        java_last_exception_get()->getMessage();
+   * [index]: It is possible to access elements of java arrays or
+     elements of java classes that implement the java.util.Map
+     interface. Available in PHP 5 and above only. Example:
 
-  * java_last_exception_clear(): Clears the error condition. Example:
+       $Array = new java_class("java.lang.reflect.Array");
+       $String = new java_class("java.lang.String");
+       $entries = $Array->newInstance($String, 3);
+       $entries[0] ="Jakob der Luegner, Jurek Becker 1937--1997";
+       $entries[1] ="Mutmassungen ueber Jakob, Uwe Johnson, 1934--1984";
+       $entries[2] ="Die Blechtrommel, Guenter Grass, 1927--";
+       for ($i = 0; $i < 3; $i++) {
+          echo "$i: " . $entries[$i] ."\n";
+       }
 
-      java_last_exception_clear();
-      while(!java_last_exception_get()) {
-        ...
-      }
+   * java_instanceof(JAVA_OBJ, JAVA_CLASS): Tests if JAVA_OBJ is an
+     instance of JAVA_CLASS. Example:
 
-  There is one example provided: test.php.  You can either invoke the
+       $Collection=new java_class("java.util.Collection");
+       $list = new java("java.util.ArrayList");
+       $list->add(0);
+       $list->add(null);
+       $list->add(new java("java.lang.Object"));
+       $list->add(new java("java.util.ArrayList"));
+       foreach ($list as $value) {
+          if($value instanceof java && java_instanceof($value, $Collection))
+            /* iterate through nested ArrayList */
+          else
+            echo "$value\n";
+       }
+
+   * java_last_exception_get(): Returns the last exception instance
+     or null. Since PHP 5 you can use try/catch instead.
+
+   * java_last_exception_clear(): Clears the error condition. Since
+     PHP 5 you can use try/catch instead.
+
+  There is one example provided: test.php. You can either invoke the
   test.php by typing ./test.php or copy the example into the document
-  root of you web-server and invoke the file using the browser.
+  root of you web-server and evaluate the file using the browser.
 
-  The PHP/Java bridge is a replacement for the ext/java bridge shipped
-  with PHP 4.  It is not possible to run the build-in bridge and the
-  PHP/Java bridge at the same time.  Since version 1.0.7 the bridge is
-  implements with the proposed jsr223 (where applicable).
+  The PHP/Java bridge is a replacement for the experimental ext/java
+  bridge shipped with PHP 4. It is not possible to run the build-in
+  bridge and the PHP/Java bridge at the same time.
 
   The module has been tested on a Mandrake Linux System (Version 9.2),
-  on RedHat Enterprise 3, RedHat Fedora Core 1 and 2, Solaris9 (Sparc,
-  64 Bit JVM) and Windows98 with RedHat Cygwin, but it should run on
-  all Unix-like operating systems including HP-UX, MacOS-X,
-  WinXP/Cygwin.
+  on RedHat Enterprise 3, RedHat Fedora Core 1 and 2, Solaris 9 (Sparc,
+  64 bit JVM) and Windows with RedHat Cygwin, but it should run on all
+  Unix-like operating systems including HP-UX, MacOS-X, WinXP/Cygwin.
+
 
   Custom java libraries (.jar files) can be stored in the following
   locations:

@@ -9,12 +9,6 @@
 /* setenv */
 #include <stdlib.h>
 
-/* wait */
-#include <sys/types.h>
-#include <sys/wait.h>
-/* poll */
-#include <sys/poll.h>
-
 /* miscellaneous */
 #include <stdio.h>
 #include <assert.h>
@@ -323,49 +317,11 @@ static int handle_requests(proxyenv *env) {
   return 0;
 }
 
-static int java_do_test_server(struct cfg*cfg TSRMLS_DC) {
-  char term=0;
-  int sock;
-  int n, c, e;
-  jobject ob;
-
-#ifndef CFG_JAVA_SOCKET_INET
-  sock = socket (PF_LOCAL, SOCK_STREAM, 0);
-#else
-  sock = socket (PF_INET, SOCK_STREAM, 0);
-#endif
-  if(sock==-1) return FAILURE;
-  n = connect(sock,(struct sockaddr*)&cfg->saddr, sizeof cfg->saddr);
-  if(n!=-1) {
-	c = read(sock, &ob, sizeof ob);
-	c = (c==sizeof ob) ? write(sock, &term, sizeof term) : 0;
-  }
-  e = close(sock);
-
-  return (n!=-1 && e!=-1 && c==1)?SUCCESS:FAILURE;
-}
-int java_test_server(struct cfg*cfg TSRMLS_DC) {
-  struct pollfd pollfd[1] = {{cfg->err, POLLIN, 0}};
-  int count=15;
-
-  if(java_do_test_server(cfg TSRMLS_CC)==SUCCESS) return SUCCESS;
-
-  /* wait for the server that has just started */
-  while(cfg->cid && (java_do_test_server(cfg TSRMLS_CC)==FAILURE) && --count) {
-	if(cfg->err && poll(pollfd, 1, 0)) 
-	  return FAILURE; /* server terminated with error code */
-	php_error(E_NOTICE, "php_mod_java(%d): waiting for server another %d seconds",57, count);
-	
-	sleep(1);
-  }
-  return (cfg->cid && count)?SUCCESS:FAILURE;
-}
-
 #define JAVA_METHOD(name, strname, class, param) \
   JG(name) = (*jenv)->GetMethodID(jenv, JG(class), strname, param);\
   if(check_error(jenv, strname TSRMLS_CC)) return 0;
 
-proxyenv *java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
+proxyenv *java_connect_to_server(TSRMLS_D) {
   jobject local_php_reflect;
   jclass local_class;
   int sock, n=-1;

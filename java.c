@@ -23,6 +23,7 @@
 #endif
 
 ZEND_DECLARE_MODULE_GLOBALS(java)
+struct cfg *cfg = 0;
 
 PHP_RINIT_FUNCTION(java) 
 {
@@ -45,7 +46,7 @@ PHP_RSHUTDOWN_FUNCTION(java)
 PHP_FUNCTION(java_last_exception_get)
 {
   jlong result = 0;
-  proxyenv *jenv = java_connect_to_server(&JG(cfg) TSRMLS_CC);
+  proxyenv *jenv = java_connect_to_server(TSRMLS_C);
   if(!jenv) {RETURN_NULL();}
 
   if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT;
@@ -58,7 +59,7 @@ PHP_FUNCTION(java_last_exception_get)
 
 PHP_FUNCTION(java_last_exception_clear)
 {
-  proxyenv *jenv = java_connect_to_server(&JG(cfg) TSRMLS_CC);
+  proxyenv *jenv = java_connect_to_server(TSRMLS_C);
   jlong result = 0;
   jvalue args[0];
   if(!jenv) {RETURN_NULL();}
@@ -76,7 +77,7 @@ PHP_FUNCTION(java_set_library_path)
   zval **path;
   jlong result = 0;
   jstring p;
-  proxyenv *jenv = java_connect_to_server(&JG(cfg) TSRMLS_CC);
+  proxyenv *jenv = java_connect_to_server(TSRMLS_C);
   jvalue args[1];
   if(!jenv) {RETURN_NULL();}
 
@@ -109,7 +110,7 @@ PHP_FUNCTION(java_instanceof)
   zval **pobj, **pclass;
   jobject obj, class;
   jboolean result;
-  proxyenv *jenv = java_connect_to_server(&JG(cfg) TSRMLS_CC);
+  proxyenv *jenv = java_connect_to_server(TSRMLS_C);
   if(!jenv) {RETURN_NULL();}
 
   if (ZEND_NUM_ARGS()!=2 || zend_get_parameters_ex(2, &pobj, &pclass) == FAILURE) 
@@ -120,7 +121,7 @@ PHP_FUNCTION(java_instanceof)
 
   obj = NULL;
   if((Z_TYPE_PP(pobj) == IS_OBJECT) && check_type(*pobj, php_java_class_entry)){
-	java_get_jobject_from_object(*pobj, &obj);
+	java_get_jobject_from_object(*pobj, &obj TSRMLS_CC);
   }
   if(!obj) {
 	zend_error(E_WARNING, "Parameter #1 for %s() must be a java object", get_active_function_name(TSRMLS_C));
@@ -130,7 +131,7 @@ PHP_FUNCTION(java_instanceof)
   class = NULL;
   if((Z_TYPE_PP(pclass) == IS_OBJECT) && 
 	 (check_type(*pclass, php_java_class_entry)||check_type(*pclass, php_java_class_class_entry))){
-	java_get_jobject_from_object(*pclass, &class);
+	java_get_jobject_from_object(*pclass, &class TSRMLS_CC);
   }
   if(!class) {
 	zend_error(E_WARNING, "Parameter #2 for %s() must be a java object", get_active_function_name(TSRMLS_C));
@@ -180,7 +181,7 @@ zend_object_handlers php_java_handlers;
 static PHP_INI_MH(OnIniSockname)
 {
 	if (new_value) {
-	  JG(cfg).sockname=new_value;
+	  cfg->sockname=new_value;
 	  java_ini_updated|=U_SOCKNAME;
 	}
 	return SUCCESS;
@@ -188,7 +189,7 @@ static PHP_INI_MH(OnIniSockname)
 static PHP_INI_MH(OnIniClassPath)
 {
 	if (new_value) {
-	  JG(cfg).classpath =new_value;
+	  cfg->classpath =new_value;
 	  java_ini_updated|=U_CLASSPATH;
 	}
 	return SUCCESS;
@@ -196,7 +197,7 @@ static PHP_INI_MH(OnIniClassPath)
 static PHP_INI_MH(OnIniLibPath)
 {
 	if (new_value) {
-	  JG(cfg).ld_library_path = new_value;
+	  cfg->ld_library_path = new_value;
 	  java_ini_updated|=U_LIBRARY_PATH;
 	}
 	return SUCCESS;
@@ -204,7 +205,7 @@ static PHP_INI_MH(OnIniLibPath)
 static PHP_INI_MH(OnIniJava)
 {
   if (new_value) {
-	JG(cfg).java = new_value;
+	cfg->java = new_value;
 	java_ini_updated|=U_JAVA;
   }
   return SUCCESS;
@@ -212,7 +213,7 @@ static PHP_INI_MH(OnIniJava)
 static PHP_INI_MH(OnIniJavaHome)
 {
 	if (new_value) {
-	  JG(cfg).java_home = new_value;
+	  cfg->java_home = new_value;
 	  java_ini_updated|=U_JAVA_HOME;
 	}
 	return SUCCESS;
@@ -220,7 +221,7 @@ static PHP_INI_MH(OnIniJavaHome)
 static PHP_INI_MH(OnIniLogLevel)
 {
 	if (new_value) {
-	  JG(cfg).logLevel = new_value;
+	  cfg->logLevel = new_value;
 	  java_ini_updated|=U_LOGLEVEL;
 	}
 	return SUCCESS;
@@ -228,7 +229,7 @@ static PHP_INI_MH(OnIniLogLevel)
 static PHP_INI_MH(OnIniLogFile)
 {
 	if (new_value) {
-	  JG(cfg).logFile = new_value;
+	  cfg->logFile = new_value;
 	  java_ini_updated|=U_LOGFILE;
 	}
 	return SUCCESS;
@@ -250,17 +251,6 @@ static void php_java_alloc_globals_ctor(zend_java_globals *java_globals TSRMLS_D
   java_globals->php_reflect=0;
   java_globals->jenv=0;
   java_globals->reflect_class=0;
-}
-
-static void init_server()
-{
-  extern int java_test_server(struct cfg*cfg TSRMLS_DC);
-  extern void java_start_server(struct cfg*cfg TSRMLS_DC);
-
-  if(java_test_server(&JG(cfg) TSRMLS_CC)==FAILURE) {
-	java_start_server(&JG(cfg) TSRMLS_CC);
-	java_test_server(&JG(cfg) TSRMLS_CC);
-  }
 }
 
 #ifdef ZEND_ENGINE_2
@@ -371,7 +361,7 @@ PHP_METHOD(java, __destruct)
   if(JG(jenv))
 	(*JG(jenv))->DeleteGlobalRef(JG(jenv), obj);
   else
-	if(atoi(JG(cfg).logLevel)>=4)
+	if(atoi(cfg->logLevel)>=4)
 	  fputs("PHP bug, an object destructor was called after module shutdown\n", stderr);
 
   efree(argv);
@@ -392,7 +382,7 @@ PHP_METHOD(java, __get)
 }
 PHP_METHOD(java, offsetExists)
 {
-  proxyenv *jenv = java_connect_to_server(&JG(cfg) TSRMLS_CC);
+  proxyenv *jenv = java_connect_to_server(TSRMLS_C);
   zval **argv;
   int argc;
   jobject obj, map;
@@ -421,7 +411,7 @@ PHP_METHOD(java, offsetGet)
   zval **argv;
   int argc;
   jobject obj, map;
-  proxyenv *jenv = java_connect_to_server(&JG(cfg) TSRMLS_CC);
+  proxyenv *jenv = java_connect_to_server(TSRMLS_C);
   jvalue args[1];
   if(!jenv) {RETURN_NULL();}
 
@@ -447,7 +437,7 @@ PHP_METHOD(java, offsetSet)
   zval **argv;
   int argc;
   jobject obj, map;
-  proxyenv *jenv = java_connect_to_server(&JG(cfg) TSRMLS_CC);
+  proxyenv *jenv = java_connect_to_server(TSRMLS_C);
   jvalue args[1];
   if(!jenv) {RETURN_NULL();}
 
@@ -474,7 +464,7 @@ PHP_METHOD(java, offsetUnset)
   zval **argv;
   int argc;
   jobject obj, map;
-  proxyenv *jenv = java_connect_to_server(&JG(cfg) TSRMLS_CC);
+  proxyenv *jenv = java_connect_to_server(TSRMLS_C);
   jvalue args[1];
   if(!jenv) {RETURN_NULL();}
 
@@ -751,14 +741,12 @@ get_property_handler(zend_property_reference *property_reference)
   zend_overloaded_element *property;
   char *name;
 
-  TSRMLS_FETCH();
-
   element = property_reference->elements_list->head;
   property=(zend_overloaded_element *)element->data;
   name =  Z_STRVAL(property->element);
   object = property_reference->object;
 
-  php_java_get_property_handler(name, object, &presult TSRMLS_CC);
+  php_java_get_property_handler(name, object, &presult);
 
   pval_destructor(&property->element);
   return presult;
@@ -773,14 +761,12 @@ set_property_handler(zend_property_reference *property_reference, pval *value)
   zend_overloaded_element *property;
   char *name;
 
-  TSRMLS_FETCH();
-
   element = property_reference->elements_list->head;
   property=(zend_overloaded_element *)element->data;
   name =  Z_STRVAL(property->element);
   object = property_reference->object;
 
-  result = php_java_set_property_handler(name, object, value, &dummy TSRMLS_CC);
+  result = php_java_set_property_handler(name, object, value, &dummy);
 
   pval_destructor(&property->element);
   return result;
@@ -852,25 +838,27 @@ PHP_MINIT_FUNCTION(java)
   
   ZEND_INIT_MODULE_GLOBALS(java, php_java_alloc_globals_ctor, NULL);
   
+  assert(!cfg);
+  if(!cfg) cfg = malloc(sizeof *cfg); if(!cfg) exit(9);
   if(REGISTER_INI_ENTRIES()==SUCCESS) {
 	/* set the default values for all undefined */
-	extern void java_init_cfg(struct cfg *cfg);
+	extern void java_init_cfg();
 	
-	java_init_cfg(&JG(cfg));
+	java_init_cfg();
 #ifndef CFG_JAVA_SOCKET_INET
-	JG(cfg).saddr.sun_family = AF_LOCAL;
-	memset(JG(cfg).saddr.sun_path, 0, sizeof JG(cfg).saddr.sun_path);
-	strcpy(JG(cfg).saddr.sun_path, JG(cfg).sockname);
+	cfg->saddr.sun_family = AF_LOCAL;
+	memset(cfg->saddr.sun_path, 0, sizeof cfg->saddr.sun_path);
+	strcpy(cfg->saddr.sun_path, cfg->sockname);
 # ifdef HAVE_ABSTRACT_NAMESPACE
-	*JG(cfg).saddr.sun_path=0;
+	*cfg->saddr.sun_path=0;
 # endif
 #else
-	JG(cfg).saddr.sin_family = AF_INET;
-	JG(cfg).saddr.sin_port=htons(atoi(JG(cfg).sockname));
-	JG(cfg).saddr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
+	cfg->saddr.sin_family = AF_INET;
+	cfg->saddr.sin_port=htons(atoi(cfg->sockname));
+	cfg->saddr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
 #endif
   }
-  init_server();
+  java_start_server();
   
   assert(!java_ini_last_updated);
   java_ini_last_updated=java_ini_updated;
@@ -878,14 +866,14 @@ PHP_MINIT_FUNCTION(java)
   
   return SUCCESS;
 }
-static char*get_server_args(struct cfg*cfg) {
+static char*get_server_args() {
   int i;
   char*s;
   char*env[N_SENV];
   char*args[N_SARGS];
   unsigned int length = 0;
 
-  java_get_server_args(cfg, env, args);
+  java_get_server_args(env, args);
 
   for(i=0; i< (sizeof env)/(sizeof*env); i++) {
 	if(!env[i]) break;
@@ -918,23 +906,22 @@ static char*get_server_args(struct cfg*cfg) {
 }
 PHP_MINFO_FUNCTION(java)
 {
-  extern int java_test_server(struct cfg*cfg TSRMLS_DC);
-  char*s=get_server_args(&JG(cfg));
-  int status = java_test_server(&JG(cfg) TSRMLS_CC);
+  char*s=get_server_args();
+  int status = java_test_server();
   
   php_info_print_table_start();
   php_info_print_table_row(2, "java support", "Enabled");
   php_info_print_table_row(2, "java bridge", java_bridge_version);
   php_info_print_table_row(2, "java command", s);
-  php_info_print_table_row(2, "java.libpath", JG(cfg).ld_library_path);
-  php_info_print_table_row(2, "java.classpath", JG(cfg).classpath);
-  php_info_print_table_row(2, "java.java_home", JG(cfg).java_home);
-  php_info_print_table_row(2, "java.java", JG(cfg).java);
-  if(strlen(JG(cfg).logFile)==0) 
+  php_info_print_table_row(2, "java.libpath", cfg->ld_library_path);
+  php_info_print_table_row(2, "java.classpath", cfg->classpath);
+  php_info_print_table_row(2, "java.java_home", cfg->java_home);
+  php_info_print_table_row(2, "java.java", cfg->java);
+  if(strlen(cfg->logFile)==0) 
 	php_info_print_table_row(2, "java.log_file", "<stdout>");
   else
-	php_info_print_table_row(2, "java.log_file", JG(cfg).logFile);
-  php_info_print_table_row(2, "java.log_level", JG(cfg).logLevel);
+	php_info_print_table_row(2, "java.log_file", cfg->logFile);
+  php_info_print_table_row(2, "java.log_level", cfg->logLevel);
   php_info_print_table_row(2, "java status", (status==SUCCESS)?"running":"not running");
   php_info_print_table_end();
   
@@ -943,14 +930,18 @@ PHP_MINFO_FUNCTION(java)
 
 PHP_MSHUTDOWN_FUNCTION(java) 
 {
-  extern void php_java_shutdown_library(struct cfg*cfg TSRMLS_DC);
-  extern void java_destroy_cfg(int, struct cfg*cfg TSRMLS_DC);
+  extern void php_java_shutdown_library();
+  extern void java_destroy_cfg(int);
   
-  java_destroy_cfg(java_ini_last_updated, &JG(cfg) TSRMLS_CC);
+  java_destroy_cfg(java_ini_last_updated);
   java_ini_last_updated=0;
 
   UNREGISTER_INI_ENTRIES();
-  php_java_shutdown_library(&JG(cfg) TSRMLS_CC);
+  php_java_shutdown_library();
+
+  assert(cfg);
+  if(cfg) { free(cfg); cfg = 0; }
+
   return SUCCESS;
 }
 

@@ -8,9 +8,13 @@
 #endif
 
 #include "php_wrapper.h"
+#include "php_config.h"
 #include "zend_compile.h"
 #include "php_ini.h"
 #include "php_globals.h"
+#ifdef ZTS
+#include "TSRM.h"
+#endif
 
 /* socket */
 #include <sys/types.h>
@@ -19,11 +23,13 @@
 # include <netinet/in.h>
 #else
 # include <sys/un.h>
+# ifdef HAVE_CONFIG_H
 # ifndef HAVE_DECL_AF_LOCAL
 #  define AF_LOCAL AF_UNIX
 # endif
 # ifndef HAVE_DECL_PF_LOCAL
 #  define PF_LOCAL PF_UNIX
+# endif
 # endif
 #endif
 
@@ -77,6 +83,7 @@ struct cfg {
   char*logLevel;
   char*logFile;
 };
+extern struct cfg *cfg;
 
 ZEND_BEGIN_MODULE_GLOBALS(java)
   proxyenv *jenv;
@@ -84,7 +91,6 @@ ZEND_BEGIN_MODULE_GLOBALS(java)
   jclass  reflect_class, iterator_class;
   jmethodID clearEx, lastEx, setJarPath, invoke, gsp, co;
   jmethodID getPhpMap, hasMore, getType, moveForward;
-  struct cfg cfg;
 ZEND_END_MODULE_GLOBALS(java)
 
 
@@ -97,10 +103,11 @@ ZEND_END_MODULE_GLOBALS(java)
 #endif
 
 
-extern void java_get_server_args(struct cfg*cfg, 
-								 char*env[N_SENV], 
+extern void java_get_server_args(char*env[N_SENV], 
 								 char*args[N_SARGS]);
 
-extern proxyenv *java_connect_to_server(struct cfg*cfg TSRMLS_DC);
+extern proxyenv *java_connect_to_server(TSRMLS_D);
+extern void java_start_server();
+extern int java_test_server();
 
 #endif

@@ -32,7 +32,7 @@
 
 #include "php_java.h"
 
-void java_get_server_args(struct cfg*cfg, char*env[N_SENV], char*args[N_SARGS]) {
+void java_get_server_args(char*env[N_SENV], char*args[N_SARGS]) {
   char *s, *p;
   char*program=cfg->java;
   char*cp=cfg->classpath;
@@ -72,10 +72,10 @@ void java_get_server_args(struct cfg*cfg, char*env[N_SENV], char*args[N_SARGS]) 
   env[1] = p;					/* library path */
   env[2] = NULL;
 }
-static void exec_vm(struct cfg*cfg) {
+static void exec_vm() {
   static char*env[N_SENV];
   static char*args[N_SARGS];
-  java_get_server_args(cfg, env, args);
+  java_get_server_args(env, args);
   putenv(env[0]);
   putenv(env[1]);
 #ifdef CFG_JAVA_INPROCESS
@@ -86,6 +86,43 @@ static void exec_vm(struct cfg*cfg) {
 #else 
  execv(args[0], args);
 #endif
+}
+
+int java_test_server() {
+  char term=0;
+  int sock;
+  int n, c, e;
+  jobject ob;
+
+#ifndef CFG_JAVA_SOCKET_INET
+  sock = socket (PF_LOCAL, SOCK_STREAM, 0);
+#else
+  sock = socket (PF_INET, SOCK_STREAM, 0);
+#endif
+  if(sock==-1) return FAILURE;
+  n = connect(sock,(struct sockaddr*)&cfg->saddr, sizeof cfg->saddr);
+  if(n!=-1) {
+	c = read(sock, &ob, sizeof ob);
+	c = (c==sizeof ob) ? write(sock, &term, sizeof term) : 0;
+  }
+  e = close(sock);
+
+  return (n!=-1 && e!=-1 && c==1)?SUCCESS:FAILURE;
+}
+
+static int java_wait_server() {
+  struct pollfd pollfd[1] = {{cfg->err, POLLIN, 0}};
+  int count=15;
+
+  /* wait for the server that has just started */
+  while(cfg->cid && (java_test_server()==FAILURE) && --count) {
+	if(cfg->err && poll(pollfd, 1, 0)) 
+	  return FAILURE; /* server terminated with error code */
+	php_error(E_NOTICE, "php_mod_java(%d): waiting for server another %d seconds",57, count);
+	
+	sleep(1);
+  }
+  return (cfg->cid && count)?SUCCESS:FAILURE;
 }
 
 /*
@@ -101,42 +138,45 @@ void s_kill(int sig) {
   if(s_pid) kill(s_pid, SIGTERM);
 }
 
-void java_start_server(struct cfg*cfg TSRMLS_DC) {
+void java_start_server() {
   int pid=0, err=0, p[2];
-  if(pipe(p)!=-1) {
-	if(can_fork()) {
-	  if(!(pid=fork())) {		/* daemon */
-		close(p[0]);
-		if(!fork()) {			/* guard */
-		  if(!(pid=fork())) {	/* java */
-			setsid();
-			close(p[1]);
-			exec_vm(cfg); 
-			exit(105);
-		  }
-		  /* protect guard */
-		  signal(SIGHUP, SIG_IGN); 
-		  s_pid=pid; signal(SIGINT, s_kill); 
-		  signal(SIGTERM, SIG_IGN);
-
-		  write(p[1], &pid, sizeof pid);
-		  waitpid(pid, &err, 0);
-		  write(p[1], &err, sizeof err);
+  if(java_test_server() == FAILURE) {
+	if(pipe(p)!=-1) {
+	  if(can_fork()) {
+		if(!(pid=fork())) {		/* daemon */
+		  close(p[0]);
+		  if(!fork()) {			/* guard */
+			if(!(pid=fork())) {	/* java */
+			  setsid();
+			  close(p[1]);
+			  exec_vm(); 
+			  exit(105);
+			}
+			/* protect guard */
+			signal(SIGHUP, SIG_IGN); 
+			s_pid=pid; signal(SIGINT, s_kill); 
+			signal(SIGTERM, SIG_IGN);
+			
+			write(p[1], &pid, sizeof pid);
+			waitpid(pid, &err, 0);
+			write(p[1], &err, sizeof err);
+			exit(0);
+		  } 
 		  exit(0);
-		} 
-		exit(0);
+		}
+		close(p[1]);
+		wait(&err);
+		if((read(p[0], &pid, sizeof pid))!=(sizeof pid)) pid=0;
 	  }
-	  close(p[1]);
-	  wait(&err);
-	  if((read(p[0], &pid, sizeof pid))!=(sizeof pid)) pid=0;
 	}
+	java_wait_server();
   }
   cfg->cid=pid;
   cfg->err=p[0];
 }
 
 
-static void wait_for_daemon(struct cfg*cfg TSRMLS_DC) {
+static void wait_for_daemon() {
   struct pollfd pollfd[1] = {{cfg->err, POLLIN, 0}};
   int err, c;
 
@@ -164,9 +204,9 @@ static void wait_for_daemon(struct cfg*cfg TSRMLS_DC) {
   }
 }
 
-void php_java_shutdown_library(struct cfg*cfg TSRMLS_DC) 
+void php_java_shutdown_library() 
 {
-  if(cfg->cid) wait_for_daemon(cfg TSRMLS_CC);
+  if(cfg->cid) wait_for_daemon();
 }
 
 
