@@ -1,3 +1,8 @@
+2004-11-11  Boekemeier  <jost2345@intern>
+
+	* server/natcJavaBridge.c, sio.c, sio.h, protocol.h, java.c, init_cfg.c.in, client.c: 
+	Disable threads and use TCP sockets on windows.
+	
 2004-11-03  Boekemeier  <jost2345@intern>
 
 	* init_cfg.c.in (java_destroy_cfg): Free the memory _we_ have
