@@ -993,8 +993,8 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
 #ifndef __MINGW32__
 	if(bridge_shutdown) while(1) sleep(65535);
 #endif
+	if(errno==EINTR) goto res; // Solaris, see INN FAQ
 	if(socket==-1) {logSysFatal(env, "socket accept failed"); return;}
-	//if(errno) goto res;
 	if(-1==recv_cred(socket, &uid, &gid)) logSysFatal(env, "could not get credentials");
     (*env)->CallStaticVoidMethod(env, bridge, handleRequests,socket, uid, gid);
   }
