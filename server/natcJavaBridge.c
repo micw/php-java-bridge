@@ -20,11 +20,15 @@
 #  include <netinet/in.h>
 # else
 #  include <sys/un.h>
-#  ifndef HAVE_DECL_AF_LOCAL
+#  ifdef HAVE_CONFIG_H
+#  if !HAVE_DECL_AF_LOCAL
 #   define AF_LOCAL AF_UNIX
 #  endif
-#  ifndef HAVE_DECL_PF_LOCAL
+#  endif
+#  ifdef HAVE_CONFIG_H
+#  if !HAVE_DECL_PF_LOCAL
 #   define PF_LOCAL PF_UNIX
+#  endif
 #  endif
 # endif
 #endif
