@@ -110,5 +110,5 @@ chkconfig php-java-bridge off
 
 %files -f filelist
 %defattr(-,root,root)
-%doc README INSTALL LICENSE ChangeLog
+%doc README INSTALL LICENSE ChangeLog test.php
 

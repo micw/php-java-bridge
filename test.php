@@ -11,6 +11,6 @@ if (!extension_loaded('java')) {
 $v = new java("java.lang.System");
 $arr=$v->getProperties();
 foreach ($arr as $key => $value) {
-  print $key . " -> " .  $value . "\n";
+  print $key . " -> " .  $value . "<br>\n";
 }
 ?>

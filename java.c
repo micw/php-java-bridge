@@ -101,6 +101,15 @@ PHP_FUNCTION(java_set_library_path)
   (*JG(jenv))->DeleteLocalRef(JG(jenv), p);
 }
 
+static short check_type (zval *pobj, zend_class_entry *class) {
+#ifdef ZEND_ENGINE_2
+  if (zend_get_class_entry(pobj) != php_java_class_entry)
+	return 0;
+  else
+#endif
+	return 1;
+}
+
 PHP_FUNCTION(java_instanceof)
 {
   zval **pobj, **pclass, **handle;
@@ -121,7 +130,7 @@ PHP_FUNCTION(java_instanceof)
   }
 
   n = FAILURE;
-  if ((Z_TYPE_PP(pobj) == IS_OBJECT) && (zend_get_class_entry(*pobj) == php_java_class_entry)) {
+  if((Z_TYPE_PP(pobj) == IS_OBJECT) && check_type(*pobj, php_java_class_entry)){
 	n = zend_hash_index_find(Z_OBJPROP_PP(pobj), 0, (void**) &handle);
   }
   if(n==FAILURE) {
@@ -132,7 +141,7 @@ PHP_FUNCTION(java_instanceof)
   assert(obj);
 
   n = FAILURE;
-  if ((Z_TYPE_PP(pobj) == IS_OBJECT) && (zend_get_class_entry(*pobj) == php_java_class_entry)) {
+  if((Z_TYPE_PP(pobj) == IS_OBJECT) && check_type(*pobj, php_java_class_entry)){
 	n = zend_hash_index_find(Z_OBJPROP_PP(pclass), 0, (void**) &handle);
   }
   if(n==FAILURE) {

@@ -205,7 +205,7 @@ public class JavaBridge implements Runnable {
 
 	if(value.getClass().isArray()) {
 	    return 
-		new PhpMap(value, null) {
+		new PhpMap(value, (Object)null) {
 		    boolean valid;
 		    int i;
 		    long length;
@@ -252,7 +252,7 @@ public class JavaBridge implements Runnable {
 	}
 	if(value instanceof Collection) {
 	    return 
-		new PhpMap(value, null) {
+		new PhpMap(value, (Object)null) {
 		    Object currentKey;
 		    int i;
 		    Iterator iter;
@@ -422,10 +422,9 @@ public class JavaBridge implements Runnable {
 
 
     public static void printStackTrace(Throwable t) {
-	if(logLevel>1) t.printStackTrace(logStream);
-    }
-    public static void printFatalStackTrace(Throwable t) {
-	if(logLevel>1) t.printStackTrace(logStream);
+	if(logLevel > 0)
+	    if ((t instanceof Error) || logLevel > 1) 
+		t.printStackTrace(logStream);
     }
     public static void logDebug(String msg) {
 	if(logLevel>3) logStream.println(msg);
