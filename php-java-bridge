@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+
 # Start the server part of the PHP/Java Bridge.  This script will be
 # called by when the php-java-bridge service is started.
 
