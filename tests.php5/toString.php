@@ -1,6 +1,10 @@
 #!/usr/bin/php
 <?php
 
+if(!extension_loaded('java')) {
+  dl('java.' . PHP_SHLIB_SUFFIX);
+}
+
 $Object = new java_class ("java.lang.Object");
 $object = $Object->newInstance();
 

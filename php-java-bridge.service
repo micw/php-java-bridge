@@ -3,7 +3,7 @@
 # php-java-bridge      Startup script for the PHP/Java Bridge
 #
 # chkconfig: - 84 16
-# description: The PHP/Java bridge allows one to access java based \
+# description: The PHP/Java Bridge allows PHP scripts to access java based \
 #                        applications running in a java application server 
 # processname: php-java-bridge
 # pidfile: /var/run/php-java-bridge.pid

@@ -1,5 +1,11 @@
 #!/usr/bin/php
+
 <?php
+
+if(!extension_loaded('java')) {
+  dl('java.' . PHP_SHLIB_SUFFIX);
+}
+
 try {
   try {
     new java("java.lang.String", null);

@@ -1,4 +1,10 @@
+#!/usr/bin/php
+
 <?php
+
+if(!extension_loaded('java')) {
+  dl('java.' . PHP_SHLIB_SUFFIX);
+}
 
 $ListClass=new java_class("java.util.ArrayList");
 $list = new java("java.util.ArrayList");

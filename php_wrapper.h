@@ -1,5 +1,9 @@
-/* 
+#ifndef PHP_WRAPPER_H
+#define PHP_WRAPPER_H
 
+#include "php.h"
+
+/* 
 PHP 5.0.1 defines the following nonsense:
 
 #if HAVE_ASSERT_H
@@ -14,16 +18,9 @@ PHP 5.0.1 defines the following nonsense:
 Revert it!
 */
 
-#ifdef NDEBUG
-# include "php.h"
-# ifndef NDEBUG
-#  warning php.h undefines NDEBUG. Please report this PHP bug. An API file must not change NDEBUG
-#  define NDEBUG 1
-# endif
-#else
-# include "php.h"
-# ifdef NDEBUG
-#  warning php.h defines NDEBUG. Please report this PHP bug. An API file must not change NDEBUG
-#  undef NDEBUG
-# endif
+#undef NDEBUG
+#ifndef JAVA_COMPILE_DEBUG
+#define NDEBUG
+#endif
+
 #endif

@@ -121,6 +121,7 @@ static jobject php_java_makeObject(pval* arg TSRMLS_DC)
   int type;
   jmethodID makeArg;
   jclass hashClass;
+  jvalue args[2];
 
   switch (Z_TYPE_P(arg)) {
     case IS_STRING:
@@ -137,22 +138,22 @@ static jobject php_java_makeObject(pval* arg TSRMLS_DC)
     case IS_BOOL:
       makeArg = (*jenv)->GetMethodID(jenv, JG(reflect_class), "MakeArg",
         "(Z)Ljava/lang/Object;");
-      result = (*jenv)->CallObjectMethod(1, jenv, JG(php_reflect), makeArg, 
-										 (jboolean)(Z_LVAL_P(arg)));
+	  args[0].z=(jboolean)(Z_LVAL_P(arg));
+      result = (*jenv)->CallObjectMethodA(1, jenv, JG(php_reflect), makeArg, args);
       break;
 
     case IS_LONG:
       makeArg = (*jenv)->GetMethodID(jenv, JG(reflect_class), "MakeArg",
         "(J)Ljava/lang/Object;");
-      result = (*jenv)->CallObjectMethod(1, jenv, JG(php_reflect), makeArg, 
-										 (jlong)(Z_LVAL_P(arg)));
+	  args[0].j=(jlong)(Z_LVAL_P(arg));
+      result = (*jenv)->CallObjectMethodA(1, jenv, JG(php_reflect), makeArg, args);
       break;
 
     case IS_DOUBLE:
       makeArg = (*jenv)->GetMethodID(jenv, JG(reflect_class), "MakeArg",
         "(D)Ljava/lang/Object;");
-      result = (*jenv)->CallObjectMethod(1, jenv, JG(php_reflect), makeArg,
-        (jdouble)(Z_DVAL_P(arg)));
+	  args[0].d=(jdouble)(Z_DVAL_P(arg));
+      result = (*jenv)->CallObjectMethodA(1, jenv, JG(php_reflect), makeArg, args);
       break;
 
     case IS_ARRAY:
@@ -167,10 +168,11 @@ static jobject php_java_makeObject(pval* arg TSRMLS_DC)
 
       hashClass = (*jenv)->FindClass(jenv, "java/util/Hashtable");
       init = (*jenv)->GetMethodID(jenv, hashClass, "<init>", "()V");
-      result = (*jenv)->NewObject(0, jenv, hashClass, init);
+      result = (*jenv)->NewObjectA(0, jenv, hashClass, init, args);
 
       put = (*jenv)->GetMethodID(jenv, hashClass, "put",
-        "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+								 "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+      result = (*jenv)->NewObjectA(0, jenv, hashClass, init, args);
 
       /* Iterate through hash */
       zend_hash_internal_pointer_reset(Z_ARRVAL_P(arg));
@@ -192,8 +194,9 @@ static jobject php_java_makeObject(pval* arg TSRMLS_DC)
           default: /* HASH_KEY_NON_EXISTANT */
             jkey = 0;
         }
-        jold = (*jenv)->CallObjectMethod(2, jenv, result, put, 
-										 jkey, jval);
+		args[0].l=jkey;
+		args[1].l=jval;
+        jold = (*jenv)->CallObjectMethodA(2, jenv, result, put, args);
         zend_hash_move_forward(Z_ARRVAL_P(arg));
       }
 
@@ -293,3 +296,7 @@ void php_java_destructor(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 /* 	assert(JG(jenv)); */
 /* 	if (JG(jenv)) (*JG(jenv))->DeleteGlobalRef(JG(jenv), jobject); */
 }
+
+#ifndef PHP_WRAPPER_H
+#error must include php_wrapper.h
+#endif

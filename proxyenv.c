@@ -7,6 +7,7 @@
 #include <stdlib.h>
 
 #include "protocol.h"
+#include "php_wrapper.h"
 #include "sio.c"
 
 #define swrite java_swrite
@@ -79,37 +80,23 @@ static jobject AllocObject (proxyenv *env, jclass clazz) {
   sread(&result, sizeof result, 1, (*env)->peer);
   return result;
 }
-static jobject CallObjectMethod (short count, proxyenv *env, jobject obj, jmethodID methodID, ...) {
-  va_list args;
-  jvalue arg;
+static jobject CallObjectMethodA (short count, proxyenv *env, jobject obj, jmethodID methodID, const jvalue *args) {
   jobject result;
   id(env, CALLOBJECTMETHOD);
   swrite(&count, sizeof count, 1, (*env)->peer);
   swrite(&obj, sizeof obj, 1, (*env)->peer);
   swrite(&methodID, sizeof methodID, 1, (*env)->peer);
-  va_start(args, methodID);
-  while(count--) {
-	arg=va_arg(args,jvalue );
-	swrite(&arg, sizeof arg, 1, (*env)->peer);
-  }
-  va_end(args);
+  swrite(args, sizeof*args, count, (*env)->peer);
   sread(&result, sizeof result, 1, (*env)->peer);
   return result;
 }
-static void CallVoidMethod (short count, proxyenv *env, jobject obj, jmethodID methodID, ...) {
-  va_list args;
-  jvalue arg;
+static void CallVoidMethodA (short count, proxyenv *env, jobject obj, jmethodID methodID, const jvalue *args) {
   jobject result;
   id(env, CALLVOIDMETHOD);
   swrite(&count, sizeof count, 1, (*env)->peer);
   swrite(&obj, sizeof obj, 1, (*env)->peer);
   swrite(&methodID, sizeof methodID, 1, (*env)->peer);
-  va_start(args, methodID);
-  while(count--) {
-	arg=va_arg(args, jvalue);
-	swrite(&arg, sizeof arg, 1, (*env)->peer);
-  }
-  va_end(args);
+  swrite(args, sizeof*args, count, (*env)->peer);
 }
 static void DeleteGlobalRef (proxyenv *env, jobject gref) {
   id(env, DELETEGLOBALREF);
@@ -208,20 +195,13 @@ static jobject NewGlobalRef (proxyenv *env, jobject lobj) {
   sread(&result, sizeof result, 1, (*env)->peer);
   return result;
 }
-static jobject NewObject (short count, proxyenv *env, jclass clazz, jmethodID methodID, ...) {
-  va_list args;
-  jvalue arg;
+static jobject NewObjectA (short count, proxyenv *env, jclass clazz, jmethodID methodID, const jvalue *args) {
   jobject result;
   id(env, NEWOBJECT);
   swrite(&count, sizeof count, 1, (*env)->peer);
   swrite(&clazz, sizeof clazz, 1, (*env)->peer);
   swrite(&methodID, sizeof methodID, 1, (*env)->peer);
-  va_start(args, methodID);
-  while(count--) {
-	arg=va_arg(args, jvalue);
-	swrite(&arg, sizeof arg, 1, (*env)->peer);
-  }
-  va_end(args);
+  swrite(args, sizeof*args, count, (*env)->peer);
   sread(&result, sizeof result, 1, (*env)->peer);
   return result;
 }
@@ -295,8 +275,8 @@ proxyenv *java_createSecureEnvironment(SFILE *peer, int (*handle_request)(proxye
   (*env)->Invoke=Invoke;
   (*env)->CreateObject=CreateObject;
   (*env)->AllocObject=AllocObject;
-  (*env)->CallObjectMethod=CallObjectMethod;
-  (*env)->CallVoidMethod=CallVoidMethod;
+  (*env)->CallObjectMethodA=CallObjectMethodA;
+  (*env)->CallVoidMethodA=CallVoidMethodA;
   (*env)->DeleteGlobalRef=DeleteGlobalRef;
   (*env)->ExceptionClear=ExceptionClear;
   (*env)->ExceptionOccurred=ExceptionOccurred;
@@ -308,7 +288,7 @@ proxyenv *java_createSecureEnvironment(SFILE *peer, int (*handle_request)(proxye
   (*env)->GetStringUTFChars=GetStringUTFChars;
   (*env)->NewByteArray=NewByteArray;
   (*env)->NewGlobalRef=NewGlobalRef;
-  (*env)->NewObject=NewObject;
+  (*env)->NewObjectA=NewObjectA;
   (*env)->NewObjectArray=NewObjectArray;
   (*env)->NewStringUTF=NewStringUTF;
   (*env)->ReleaseByteArrayElements=ReleaseByteArrayElements;
@@ -319,3 +299,7 @@ proxyenv *java_createSecureEnvironment(SFILE *peer, int (*handle_request)(proxye
 
   return env;
 } 
+
+#ifndef PHP_WRAPPER_H
+#error must include php_wrapper.h
+#endif

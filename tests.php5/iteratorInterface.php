@@ -1,4 +1,10 @@
+#!/usr/bin/php
+
 <?php
+
+if(!extension_loaded('java')) {
+  dl('java.' . PHP_SHLIB_SUFFIX);
+}
 
 $conversion = new  java("java.util.Properties");
 $conversion->put("long", "java.lang.Byte java.lang.Short java.lang.Integer");

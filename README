@@ -149,11 +149,10 @@ Build and execution instructions:
           apachectl -version   # Apache 1.3 or above.
           php-config --version # PHP 4.3.2 or above.
 
-          phpize && ./configure --with-java=/opt/IBMJava2-14
-          make CFLAGS="-DNDEBUG"
-
-          su <password>
-          make install
+          phpize && 
+          ./configure --with-java=/opt/IBMJava2-14 &&
+          make &&
+          su -c "make install"
 
   If your administrator allows you to dynamically load extensions, you
   can now test the extension by invoking the test.php with the 
@@ -320,7 +319,7 @@ Build and execution instructions:
   It is possible to compile the bridge into 64 bit code:
 
           phpize && ./configure --with-java=$JAVA_HOME
-          make CFLAGS="-DNDEBUG -m64"
+          make CFLAGS="-m64"
   
   The scripts expect that the default JVM found in
   $JAVA_HOME/bin/java is a 64 bit VM. Unfortunately this is not true
@@ -402,9 +401,11 @@ Build and execution instructions:
 
   During compilation you can use the following CFLAGS.
 
-   * -DNDEBUG: Disables the assert() statement and other debug code.
+   * -DJAVA_COMPILE_DEBUG: Enables the assert() statement and other
+     debug code.
    
-   * -O0 -g3: Include full debug information into the binary.
+   * -DJAVA_COMPILE_DEBUG -O0 -g3: Include full debug information into
+     the binary.
 
    * -m64: Build 64 bit code. Required if you run a 64 bit JVM.
 
@@ -419,7 +420,7 @@ Build and execution instructions:
    * -DCFG_JAVA_INPROCESS: Do not use exec() but call the JVM directly.
      Experimental.
      
-  Example: make CFLAGS="-m64 -DNDEBUG"
+  Example: make CFLAGS="-m64"
 
 ------------------------------------
   Log levels

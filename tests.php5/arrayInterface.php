@@ -1,4 +1,9 @@
+#!/usr/bin/php
+
 <?php 
+if(!extension_loaded('java')) {
+  dl('java.' . PHP_SHLIB_SUFFIX);
+}
 
 $Array = new java_class("java.lang.reflect.Array");
 $String = new java_class("java.lang.String");

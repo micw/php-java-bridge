@@ -40,6 +40,7 @@ ZEND_DECLARE_MODULE_GLOBALS(java)
 
 static int check_error(proxyenv *jenv, char*msg TSRMLS_DC) {
   jthrowable error = (*(jenv))->ExceptionOccurred(jenv);
+  jvalue args[0];
   jclass errClass;
   jmethodID toString;
   jobject errString;
@@ -49,7 +50,7 @@ static int check_error(proxyenv *jenv, char*msg TSRMLS_DC) {
   (*jenv)->ExceptionClear(jenv);
   errClass = (*jenv)->GetObjectClass(jenv, error);
   toString = (*jenv)->GetMethodID(jenv, errClass, "toString", "()Ljava/lang/String;");
-  errString = (*jenv)->CallObjectMethod(0, jenv, error, toString);
+  errString = (*jenv)->CallObjectMethodA(0, jenv, error, toString, args);
   errAsUTF = (*jenv)->GetStringUTFChars(jenv, errString, &isCopy);
   fprintf(stdout, "php_mod_java(%s): %s",msg, errAsUTF);
   php_error(E_ERROR, "php_mod_java(%s): %s",msg, errAsUTF);
@@ -99,8 +100,7 @@ static  void  setResultFromException  (proxyenv *jenv,  pval *presult, jthrowabl
   pval *handle;
   TSRMLS_FETCH();
   
-  if ((Z_TYPE_P(presult) != IS_OBJECT) 
-	  || (zend_get_class_entry(presult) != php_java_exception_class_entry)) {
+  if (Z_TYPE_P(presult) != IS_OBJECT) {
 	object_init_ex(presult, php_java_exception_class_entry);
 	presult->is_ref=1;
     presult->refcount=1;
@@ -112,7 +112,9 @@ static  void  setResultFromException  (proxyenv *jenv,  pval *presult, jthrowabl
   Z_LVAL_P(handle) = zend_list_insert(_ob, le_jobject);
   pval_copy_constructor(handle);
   INIT_PZVAL(handle);
-  zval_add_ref(&handle);
+#ifndef ZEND_ENGINE_2
+  zval_add_ref(&handle); // FIXME, this should be unnecessary
+#endif
   zend_hash_index_update(Z_OBJPROP_P(presult), 0, &handle, sizeof(pval *), NULL);
 }
 #endif
@@ -135,7 +137,9 @@ static  void  setResultFromObject  (proxyenv *jenv,  pval *presult, jobject valu
   Z_LVAL_P(handle) = zend_list_insert(_ob, le_jobject);
   pval_copy_constructor(handle);
   INIT_PZVAL(handle);
-  zval_add_ref(&handle);
+#ifndef ZEND_ENGINE_2
+  zval_add_ref(&handle); // FIXME, this should be unnecessary
+#endif
   zend_hash_index_update(Z_OBJPROP_P(presult), 0, &handle, sizeof(pval *), NULL);
 
 }
@@ -183,11 +187,9 @@ static  void  setException  (proxyenv *jenv,  pval *presult, jthrowable value, j
   Z_TYPE_P(presult)=IS_EXCEPTION;
 #else
   zval *exception;
-  setResultFromException(jenv, presult, value);
-  MAKE_STD_ZVAL(exception);
-  memcpy(exception, presult, sizeof *exception);
-  zval_copy_ctor(exception);
-  INIT_PZVAL(exception);
+  setResultFromObject(jenv, presult, value); /* discarded */
+  MAKE_STD_ZVAL(exception); 
+  setResultFromException(jenv, exception, value); 
   zend_throw_exception_object(exception TSRMLS_CC);
 #endif
 }
@@ -436,3 +438,7 @@ int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
   END_TRANSACTION(JG(jenv));
   return SUCCESS;
 }
+
+#ifndef PHP_WRAPPER_H
+#error must include php_wrapper.h
+#endif

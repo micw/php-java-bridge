@@ -5,6 +5,9 @@
 
 #/* socket */
 #include <sys/types.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #ifdef __MINGW32__
 # include <winsock2.h>
 #else
@@ -110,11 +113,9 @@ struct peer {
 };
 static void doLog (JNIEnv *jenv, char *msg, jmethodID logMessageID) {
   jstring str;
-  assert(logMessageID);
-  if(!logMessageID) return;
+  if(!logMessageID) { fputs(msg, stderr); fputs("\n", stderr); fflush(stderr); return; }
   str = (*jenv)->NewStringUTF(jenv, msg);
-  assert(str);
-  if(!str) return; 
+  if(!str) { fputs(msg, stderr); fputs("\n", stderr); fflush(stderr); return; }
   (*jenv)->CallStaticVoidMethod(jenv, bridge, logMessageID, str);
   (*jenv)->DeleteLocalRef(jenv, str);
 }
@@ -278,7 +279,7 @@ static void initGlobals(JNIEnv *env) {
 
   handleRequests = (*env)->GetStaticMethodID(env, bridge, "HandleRequests", "(J)V");
   handleRequest = (*env)->GetStaticMethodID(env, bridge, "HandleRequest", "(Ljava/lang/Object;J)I");
-  trampoline = (*env)->GetStaticMethodID(env, bridge, "Trampoline", "(Ljava/lang/Object;JZ)V");
+  trampoline = (*env)->GetStaticMethodID(env, bridge, "Trampoline", "(Ljava/lang/Object;JZ)Z");
 
   addSystemLibraries = (*env)->GetStaticMethodID(env, bridge, "addSystemLibraries", "(Ljava/lang/String;)V");
   arg = (*env)->NewStringUTF(env, EXTENSION_DIR);
@@ -784,7 +785,7 @@ static void connection_cleanup (JNIEnv *env, jobject globalRef) {
   }
   (*env)->DeleteGlobalRef(env, globalRef);
 }
-JNIEXPORT void JNICALL Java_JavaBridge_trampoline(JNIEnv*env, jclass self, jobject globalRef, jlong socket, jboolean jump)
+JNIEXPORT jboolean JNICALL Java_JavaBridge_trampoline(JNIEnv*env, jclass self, jobject globalRef, jlong socket, jboolean jump)
 {
   SFILE *peer = (SFILE*)(long)socket;
   while(peer && !SFEOF(peer)) {
@@ -798,16 +799,19 @@ JNIEXPORT void JNICALL Java_JavaBridge_trampoline(JNIEnv*env, jclass self, jobje
 	  logChannel(env, "end packet", term);
 	  switch (term) { 
 	  case TRANSACTION_BEGIN: 
-		(*env)->CallStaticVoidMethod(env, bridge, trampoline, globalRef, socket, JNI_FALSE);
+		if((*env)->CallStaticBooleanMethod(env, bridge, trampoline, 
+										globalRef, socket, JNI_FALSE)==JNI_FALSE) return JNI_FALSE;
 		break;
 	  case TRANSACTION_END:
-		return;
+		return JNI_TRUE;
 	  }
 	} else {
 	  logIntValue(env, "communication broken", term);
-	  break;
+	  return JNI_FALSE;
 	}
   }
+  assert(0);
+  return JNI_FALSE;
 }
 JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jobject instance, jlong socket)
 {
@@ -822,7 +826,7 @@ JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jobject instan
 	logSysFatal(env, "could not send instance, child not listening"); connection_cleanup(env, globalRef); SFCLOSE(peer);return;
   }
   enter();
-  (*env)->CallStaticVoidMethod(env, bridge, trampoline, globalRef, socket, JNI_TRUE);
+  (*env)->CallStaticBooleanMethod(env, bridge, trampoline, globalRef, socket, JNI_TRUE);
   connection_cleanup(env, globalRef);
 
   logChannel(env, "terminate communication channel", socket);
@@ -835,6 +839,40 @@ JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jobject instan
 static void post(int i) {
   sem_post((sem_t*)&cond_sig);
   signal(SIGTERM, post);
+}
+
+JNIEXPORT jboolean JNICALL Java_JavaBridge_openLog
+  (JNIEnv *env, jclass self, jstring _logfile)
+{
+#ifndef __MINGW__
+  char*logfile=NULL;
+
+  assert(_logfile);
+
+  if(_logfile!=NULL) {
+	jboolean isCopy;
+	const char*sname = (*env)->GetStringUTFChars(env, _logfile, &isCopy);
+	logfile=strdup(sname);
+	(*env)->ReleaseStringUTFChars(env, _logfile, sname);
+  } else {
+	char *s = LOGFILE;
+	if(s && strlen(s)>0) logfile = strdup(s);
+  }
+
+  if(logfile) {
+	int fd, null;
+	fd = open(logfile, O_WRONLY | O_CREAT | O_APPEND | O_TRUNC, 0644);
+	if(fd==-1) return JNI_FALSE;
+	null = open("/dev/null", O_RDONLY);
+	if(null!=-1) dup2 (null,0); 
+	if(fd!=-1) { 
+	  if(dup2(fd,1)==-1) return JNI_FALSE;
+	  if(dup2(fd,2)==-1) return JNI_FALSE;
+	}
+	return JNI_TRUE;
+  }
+#endif
+  return JNI_FALSE;
 }
 
 JNIEXPORT void JNICALL Java_JavaBridge_startNative
@@ -1053,7 +1091,8 @@ JNINativeMethod javabridge[]={
   {"startNative", "(ILjava/lang/String;)V", Java_JavaBridge_startNative},
   {"handleRequests", "(J)V", Java_JavaBridge_handleRequests},
   {"handleRequest", "(Ljava/lang/Object;J)I", Java_JavaBridge_handleRequest},
-  {"trampoline", "(Ljava/lang/Object;JZ)V", Java_JavaBridge_trampoline},
+  {"trampoline", "(Ljava/lang/Object;JZ)Z", Java_JavaBridge_trampoline},
+  {"openLog", "(Ljava/lang/String;)Z", Java_JavaBridge_openLog},
 };
 
 static struct NativeMethods {
@@ -1138,7 +1177,8 @@ void java_bridge_main_gcj(int argc, char**_argv)
   meths[0].meth[9].signature="(JJLjava.lang.Throwable;[B)V";
   meths[0].meth[10].signature="(ILjava.lang.String;)V";
   meths[0].meth[12].signature="(Ljava.lang.Object;J)I";
-  meths[0].meth[13].signature="(Ljava.lang.Object;JZ)V";
+  meths[0].meth[13].signature="(Ljava.lang.Object;JZ)Z";
+  meths[0].meth[14].signature="(Ljava.lang.String;)Z";
 
   if(!_argv) exit(6);
   if(argc==4) {

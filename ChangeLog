@@ -1,3 +1,63 @@
+2004-12-01  Jost Boekemeier  <jostb@intern>
+
+	* php_wrapper.h: New file 
+
+	* java.c, bind.c, client.c, java.c, java_bridge.c, java_bridge.h,
+	php_java.h, proxyenv.c: Do not use php.h directly but include
+	php_wrapper.h to avoid problems with NDEBUG.
+
+	* README: Replaced NDEBUG with JAVA_COMPILE_DEBUG
+
+	* proxyenv.c, protocol.h
+	(CallObjectMethod, CallVoidMethod, NewObject): Functions removed.
+	(CallObjectMethodA, CallVoidMethodA, NewObjectA): New functions.
+	
+	* java.c, client.c, java.c, java_bridge.c: Use new functions in
+	order to avoid varargs problems.
+
+	* client.c (setResultFromException, setResultFromObject): Fix
+	memory leak.
+
+	* client.c (setException): correctly set the result, then throw
+	and exception.
+
+	* client.c (java_connect_to_server), java.c
+	(PHP_RSHUTDOWN_FUNCTION): Global ref for the reflect_class.
+
+	* php_java.h, java.c (php_java_class_class_entry): New global.
+	
+	* java.c (java__destruct): Issue a warning if PHP 5 calls the
+	destructor after the module doesn't exist anymore.  -- PHP 5 first
+	unmaps the module and then shuts down the evaluator which in turn
+	calls the destructors for the objects it manages.  This is a bug
+	because the classes and their handlers do not exist anymore.  If
+	the module was loaded via dl(), PHP 5 will crash in shutdown.
+	(java_instanceof): check for object class or class class.
+	
+	* java.c (create_object): Use ALLOC_HASHTABLE instead of
+	ALLOC_HASHTABLE_REL.
+	(iterator_current_key): PHP 5 wants the string length +1.
+
+	* java_bridge.c (php_java_getset_property): Remove transaction
+	(php_java_get_property_handler): Protect by transaction.
+	(php_java_getset_property): Protect by transaction.
+
+	* php-java-bridge.service: Changed description.
+
+	* protocol.h (LOGFILE): New constant
+
+	* server/natcJavaBridge.c, server/JavaBridge.java (trampoline):
+	Return if communication is broken.
+	(openLog): New function.
+
+	* server/JavaBridge.java (coerce): Better error reporting.
+	(argsToString): New function.
+	(select): Identify component type.
+
+	* tests.php/ArrayToString, tests.php5/ExcelTest.java,
+	tests.php5/arrayToString.php, tests.php5/arrayToString.jar,
+	tests.php5/bench.php, tests.php5/excel_antitest.php: New files.
+	
 2004-11-28  Jost Boekemeier  <jostb@intern>
 
 	* test.php: use <br>

@@ -165,3 +165,8 @@ void php_java_shutdown_library(struct cfg*cfg TSRMLS_DC)
 {
   if(cfg->cid) wait_for_daemon(cfg TSRMLS_CC);
 }
+
+
+#ifndef PHP_WRAPPER_H
+#error must include php_wrapper.h
+#endif

@@ -28,11 +28,11 @@ public class JavaBridge implements Runnable {
     // be changed with setLibraryPath
     private Collection urls = null;
 
-    // We now *must* use an inner class and handle all those x$y.class
-    // garbage during installation because the IBM 1.4.1 JVM crashes if
-    // JavaBridge implements both Runnable and extends ClassLoader:
-    // SIGSEGV received in clRemoveClassesFromJIT at 0x4010b8ea in
-    // [...]/classic/libjvm.so. Processing terminated. Bleh!
+    //
+    // private classloader used to load classes from the
+    // JarLibraryPath and from jar files deployed in the
+    // /usr/share/java directory
+    //
     ClassLoader cl = new ClassLoader() {
 	    // Read the class from input stream and return bytes or null
 	    private byte[] read (InputStream in, int length) throws java.io.IOException {
@@ -128,6 +128,10 @@ public class JavaBridge implements Runnable {
 	    }
 	};
 
+    //
+    // allows php to access and iterate over arrays, maps and
+    // collections.
+    //
     public static abstract class PhpMap {
 	Object value;
 	Object keyType; //null: key is integer (array), !null: key is string (hash)
@@ -154,6 +158,7 @@ public class JavaBridge implements Runnable {
     //
     // Native methods
     //
+    static native boolean openLog(String logFile);
     static native void startNative(int logLevel, String sockname);
     static native void setResultFromString(long result, long peer, byte value[]);
     static native void setResultFromLong(long result, long peer, long value);
@@ -173,7 +178,7 @@ public class JavaBridge implements Runnable {
     static native void setException(long result, long peer, Throwable value, byte strValue[]);
     native void handleRequests(long peer);
     static native int handleRequest(Object globalRef, long peer);
-    static native void trampoline(Object globalRef, long peer, boolean jump);
+    static native boolean trampoline(Object globalRef, long peer, boolean jump);
 
     //
     // Helper routines for the C implementation
@@ -200,10 +205,10 @@ public class JavaBridge implements Runnable {
     }
 
     //
-    // used by the trampoline: clear all local refs
+    // A trampoline, called  for each packet, to clear local refs.
     //
     public static int HandleRequest(Object globalRef, long peer) { return handleRequest (globalRef, peer); }
-    public static void Trampoline(Object globalRef, long peer, boolean jump) { trampoline (globalRef, peer, jump); }
+    public static boolean Trampoline(Object globalRef, long peer, boolean jump) { return trampoline (globalRef, peer, jump); }
 
     //
     // Return map for the value (PHP 5 only)
@@ -404,18 +409,22 @@ public class JavaBridge implements Runnable {
 	    } catch (Throwable t) {
 		t.printStackTrace();
 	    }
+	    if(JavaBridge.logLevel>3) System.out.println("Java log         : " + logFile);
 	    try {
 		if(s.length>2) {
 		    logFile=s[2];
 		    if(logFile==null||logFile.trim().length()==0)
 			JavaBridge.logStream=System.out;
-		    else
-			JavaBridge.logStream=new java.io.PrintStream(new java.io.FileOutputStream(logFile));
+		    else {
+			if(!openLog(logFile))
+			    JavaBridge.logStream=new java.io.PrintStream(new java.io.FileOutputStream(logFile));
+			else
+			    JavaBridge.logStream=System.out;
+		    }
 		}
 	    }catch (Throwable t) {
 		t.printStackTrace();
 	    }
-	    if(JavaBridge.logLevel>3) System.out.println("Java log         :" + logFile);
 	    JavaBridge.logMessage("Java logFile     : " + logFile);
 	    JavaBridge.logMessage("Java logLevel    : " + JavaBridge.logLevel);
 	    JavaBridge.logMessage("Java socket      : " + sockname);
@@ -428,7 +437,9 @@ public class JavaBridge implements Runnable {
     }
 
 
-
+    //
+    // Logging
+    //
     public static void printStackTrace(Throwable t) {
 	if(logLevel > 0)
 	    if ((t instanceof Error) || logLevel > 1) 
@@ -621,19 +632,49 @@ public class JavaBridge implements Runnable {
 		    if (!(args[i] instanceof byte[]) && !(args[i] instanceof String))
 			weight+=9999;
 		} else if (parms[i].isArray()) {
-		    if (args[i] instanceof java.util.Hashtable)
-			weight+=256;
-		    else
+		    if (args[i] instanceof java.util.Hashtable) {
+			Enumeration enum = ((Hashtable)args[i]).elements();
+			if(enum.hasMoreElements()) {
+			    Object elem = enum.nextElement();
+			    Class c=parms[i].getComponentType();
+			    if (elem instanceof Number) {
+				if(elem instanceof Double) {
+				    if (c==Float.TYPE) weight+=11;
+				    else if (c==Double.TYPE) weight+=10;
+				    else weight += 256;
+				} else {				
+				    if (c==Boolean.TYPE) weight+=15;
+				    else if (c==Character.TYPE) weight+=14;
+				    else if (c==Byte.TYPE) weight+=13;
+				    else if (c==Short.TYPE) weight+=12;
+				    else if (c==Integer.TYPE) weight+=11;
+				    else if (c==Long.TYPE) weight+=10;
+				    else weight += 256;
+				}
+			    } else if (elem instanceof Boolean) {
+				if (c!=Boolean.TYPE) weight+=256;
+			    } else
+				weight += 256;
+			} else
+			    weight+=256;
+		    } else
 			weight+=9999;
 		} else if (parms[i].isPrimitive()) {
 		    Class c=parms[i];
 		    if (args[i] instanceof Number) {
-			if (c==Boolean.TYPE) weight+=5;
-			if (c==Character.TYPE) weight+=4;
-			if (c==Byte.TYPE) weight+=3;
-			if (c==Short.TYPE) weight+=2;
-			if (c==Integer.TYPE) weight++;
-			if (c==Float.TYPE) weight++;
+			if(args[i] instanceof Double) {
+			    if (c==Float.TYPE) weight++;
+			    else if (c==Double.TYPE) weight+=0;
+			    else weight += 256;
+			} else {
+			    if (c==Boolean.TYPE) weight+=5;
+			    else if (c==Character.TYPE) weight+=4;
+			    else if (c==Byte.TYPE) weight+=3;
+			    else if (c==Short.TYPE) weight+=2;
+			    else if (c==Integer.TYPE) weight++;
+			    else if (c==Long.TYPE) weight+=0;
+			    else weight += 256;
+			}
 		    } else if (args[i] instanceof Boolean) {
 			if (c!=Boolean.TYPE) weight+=9999;
 		    } else if (args[i] instanceof String) {
@@ -648,7 +689,6 @@ public class JavaBridge implements Runnable {
 		    weight+=9999;
 		}
 	    } 
-
 	    if (weight < best) {
 		if (weight == 0) return element;
 		best = weight;
@@ -667,6 +707,9 @@ public class JavaBridge implements Runnable {
     //
     private static Object[] coerce(Class parms[], Object args[]) {
 	Object result[] = args;
+	Class targetType = null;
+	int size = 0;
+
 	for (int i=0; i<args.length; i++) {
 	    if (args[i] instanceof byte[] && !parms[i].isArray()) {
 		Class c = parms[i];
@@ -699,7 +742,7 @@ public class JavaBridge implements Runnable {
 	    } else if (args[i] instanceof Hashtable && parms[i].isArray()) {
 		try {
 		    Hashtable ht = (Hashtable)args[i];
-		    int size = ht.size();
+		    size = ht.size();
 
 		    // Verify that the keys are Long, and determine maximum
 		    for (Enumeration e = ht.keys(); e.hasMoreElements(); ) {
@@ -709,7 +752,7 @@ public class JavaBridge implements Runnable {
 
 		    Object tempArray[] = new Object[size];
 		    Class tempTarget[] = new Class[size];
-		    Class targetType = parms[i].getComponentType();
+		    targetType = parms[i].getComponentType();
 
 		    // flatten the hash table into an array
 		    for (int j=0; j<size; j++) {
@@ -730,6 +773,7 @@ public class JavaBridge implements Runnable {
 
 		    result[i]=array;
 		} catch (Exception e) {
+		    logError("Error: " + String.valueOf(e) + " could not create array of type: " + targetType + ", size: " + size);
 		    printStackTrace(e);
 		    // leave result[i] alone...
 		}
@@ -738,6 +782,14 @@ public class JavaBridge implements Runnable {
 	return result;
     }
 
+    private static String argsToString(Object args[]) {
+	StringBuffer buffer = new StringBuffer("");
+	for(int i=0; i<args.length; i++) {
+	    buffer.append(String.valueOf(GetClass(args[i])));
+	    if(i+1<args.length) buffer.append(", ");
+	}
+	return buffer.toString();
+    }
     //
     // Invoke a method on a given object
     //
@@ -774,7 +826,7 @@ public class JavaBridge implements Runnable {
 		if (!(object instanceof Class) || (jclass==object)) break;
 	    }
 	    Method selected = (Method)select(matches, args);
-	    if (selected == null) throw new NoSuchMethodException(method);
+	    if (selected == null) throw new NoSuchMethodException(String.valueOf(method) + "(" + argsToString(args) + ") " + "matches: " + String.valueOf(matches));
 
 	    Object coercedArgs[] = coerce(selected.getParameterTypes(), args);
 	    setResult(result, peer, selected.invoke(object, coercedArgs));

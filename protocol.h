@@ -26,6 +26,11 @@ extern jint JNICALL JNI_CreateJavaVM (JavaVM **, void **, void *);
 #endif 
 #define SOCKNAME P_tmpdir/**/"/.php_java_bridge"/**/"XXXXXX"
 
+/*
+ * default log file is System.out
+ */
+#define LOGFILE ""
+
 #define LOG_OFF 0
 #define LOG_FATAL 1
 #define LOG_ERROR 2
@@ -87,8 +92,8 @@ struct proxyenv_ {
   void (*GetSetProp)(proxyenv *env, jobject php_reflect, jmethodID gsp, jobject obj, jstring propName, jobjectArray value, jlong result);
 
   jobject (*AllocObject) (proxyenv *env, jclass clazz);
-  jobject (*CallObjectMethod) (short count, proxyenv *env, jobject obj, jmethodID methodID, ...);
-  void (*CallVoidMethod) (short count, proxyenv *env, jobject obj, jmethodID methodID, ...);
+  jobject (*CallObjectMethodA) (short count, proxyenv *env, jobject obj, jmethodID methodID, const jvalue*args);
+  void (*CallVoidMethodA) (short count, proxyenv *env, jobject obj, jmethodID methodID, const jvalue*args);
   void (*DeleteGlobalRef) (proxyenv *env, jobject gref);
   void (*ExceptionClear) (proxyenv *env);
   jthrowable (*ExceptionOccurred) (proxyenv *env);
@@ -100,7 +105,7 @@ struct proxyenv_ {
   const char* (*GetStringUTFChars) (proxyenv *env, jstring str, jboolean *isCopy);
   jbyteArray (*NewByteArray) (proxyenv *env, jsize len);
   jobject (*NewGlobalRef) (proxyenv *env, jobject lobj);
-  jobject (*NewObject) (short count, proxyenv *env, jclass clazz, jmethodID methodID, ...);
+  jobject (*NewObjectA) (short count, proxyenv *env, jclass clazz, jmethodID methodID, const jvalue*args);
   jobjectArray (*NewObjectArray) (proxyenv *env, jsize len, jclass clazz, jobject init);
   jstring (*NewStringUTF) (proxyenv *env, const char *utf);
   void (*ReleaseByteArrayElements) (proxyenv *env, jbyteArray array, jbyte *elems, jint mode);
