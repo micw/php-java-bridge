@@ -1,3 +1,11 @@
+2004-10-26  Boekemeier  <jost2345@intern>
+
+	Split the unix and windows functionality into two makefiles to
+	work around a problem in autoconf
+	* server/Makefile_unix.am, server/Makefile_windows.am: New files
+	* server/Makefile.am: Rewritten
+	* server/autogen.sh: return value from autoconf
+
 2004-10-24  Jost Boekemeier  <jostb@diego.intern>
 
 	* README: Document java_set_library_path
