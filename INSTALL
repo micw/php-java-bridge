@@ -11,7 +11,7 @@ Installation from RPM
   rpm -i httpd-2.0.46-25.ent.i386.rpm
 
 * Install the php-java-bridge, for example with the command:
-  rpm -i php-java-bridge-1.0.5-1.i386.rpm
+  rpm -i php-java-bridge-X.Y.Z-1.i386.rpm
 
 Start the web-server with the command: service httpd restart.
 Start the bridge with the command: service php-java-bridge restart
@@ -36,6 +36,7 @@ Installation from source code
 The following software components must be installed on your computer:
 
 * an operating system, for example RedHat Enterprise Linux Version 3
+
 * a Java VM, for example Sun JDK 1.4.2_02
 
 The following software components are required to run PHP scripts with
@@ -45,7 +46,9 @@ change the install directory or skip the compilation/install steps for
 these components:
 
 * PHP 4.3.x
+
 * the PHP/Java Bridge version 1.x
+
 * a web-server, for example Apache 2.x
 
 
