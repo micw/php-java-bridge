@@ -86,6 +86,32 @@ static  void  setResultFromBoolean  (proxyenv *jenv, pval *presult, jboolean val
   Z_LVAL_P(presult)=value;
 }
 
+#ifdef ZEND_ENGINE_2
+static  void  setResultFromException  (proxyenv *jenv,  pval *presult, jthrowable value) {
+  /* wrap the java object in a pval object */
+  jlong result;
+  jobject _ob;
+  pval *handle;
+  TSRMLS_FETCH();
+  
+  if ((Z_TYPE_P(presult) != IS_OBJECT) 
+	  || (zend_get_class_entry(presult) != php_java_exception_class_entry)) {
+	object_init_ex(presult, php_java_exception_class_entry);
+	presult->is_ref=1;
+    presult->refcount=1;
+  }
+
+  ALLOC_ZVAL(handle);
+  Z_TYPE_P(handle) = IS_LONG;
+  _ob= (*jenv)->NewGlobalRef(jenv, value);
+  Z_LVAL_P(handle) = zend_list_insert(_ob, le_jobject);
+  pval_copy_constructor(handle);
+  INIT_PZVAL(handle);
+  zval_add_ref(&handle);
+  zend_hash_index_update(Z_OBJPROP_P(presult), 0, &handle, sizeof(pval *), NULL);
+}
+#endif
+
 static  void  setResultFromObject  (proxyenv *jenv,  pval *presult, jobject value) {
   /* wrap the java object in a pval object */
   jobject _ob;
@@ -144,9 +170,19 @@ static pval*hashUpdate  (proxyenv *jenv, pval *handle, jbyteArray key) {
   return result;
 }
 
-static  void  setException  (proxyenv *jenv,  pval *presult, jbyteArray value) {
-  setResultFromString(jenv, presult, value);
+static  void  setException  (proxyenv *jenv,  pval *presult, jthrowable value, jbyteArray strValue) {
+#ifndef ZEND_ENGINE_2
+  setResultFromString(jenv, presult, strValue);
   Z_TYPE_P(presult)=IS_EXCEPTION;
+#else
+  zval *exception;
+  setResultFromException(jenv, presult, value);
+  MAKE_STD_ZVAL(exception);
+  memcpy(exception, presult, sizeof *exception);
+  zval_copy_ctor(exception);
+  INIT_PZVAL(exception);
+  zend_throw_exception_object(exception TSRMLS_CC);
+#endif
 }
 
 
@@ -226,10 +262,12 @@ static int handle_request(proxyenv *env) {
 	break;
   }
   case SETEXCEPTION: {
-	jbyteArray jvalue;
+	jthrowable jvalue;
+	jbyteArray jstrValue;
 	sread(&result, sizeof result, 1, peer);
 	sread(&jvalue, sizeof jvalue, 1, peer);
-	setException(env, (pval*)(long)result, jvalue);
+	sread(&jstrValue, sizeof jstrValue, 1, peer);
+	setException(env, (pval*)(long)result, jvalue, jstrValue);
 	break;
   }
   default: {

@@ -21,24 +21,14 @@ static jobject php_java_makeObject(pval* arg TSRMLS_DC);
 
 static short checkError(pval *value TSRMLS_DC)
 {
-  if (Z_TYPE_P(value) == IS_EXCEPTION) {
 #ifndef ZEND_ENGINE_2
+  if (Z_TYPE_P(value) == IS_EXCEPTION) {
     php_error(E_WARNING, "%s", Z_STRVAL_P(value));
-#else
-{
-  jlong result; zval *exception;
-  MAKE_STD_ZVAL(exception);
-  zval_copy_ctor(exception);
-  INIT_PZVAL(exception);
-  result = (jlong)(long)exception;
-  (*JG(jenv))->LastException(JG(jenv), JG(php_reflect), JG(lastEx), result);
-  zend_throw_exception_object(exception TSRMLS_CC);
-}
-#endif
 	efree(Z_STRVAL_P(value));
     ZVAL_FALSE(value);
     return 1;
   };
+#endif
   return 0;
 }
 

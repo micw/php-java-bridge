@@ -141,7 +141,7 @@ public class JavaBridge implements Runnable {
     static native long nextElement(long array, long peer);
     static native long hashUpdate(long array, long peer, byte key[]);
     static native long hashIndexUpdate(long array, long peer, long key);
-    static native void setException(long result, long peer, byte value[]);
+    static native void setException(long result, long peer, Throwable value, byte strValue[]);
     native void handleRequests(long peer);
 	
     //
@@ -343,7 +343,7 @@ public class JavaBridge implements Runnable {
 	}
 
 	lastException = e;
-	JavaBridge.setException(result, peer, e.toString().getBytes());
+	JavaBridge.setException(result, peer, e, e.toString().getBytes());
     }
 
     //

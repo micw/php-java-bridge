@@ -123,7 +123,7 @@ ZEND_GET_MODULE(java)
 
 int  le_jobject;
 int java_ini_updated, java_ini_last_updated;
-zend_class_entry *php_java_class_entry;
+zend_class_entry *php_java_class_entry, *php_java_exception_class_entry;
 
 static PHP_INI_MH(OnIniSockname)
 {
@@ -260,6 +260,13 @@ PHP_METHOD(java, __call)
 	efree(argv);
 	efree(xargv);
 }
+PHP_METHOD(java, __tostring)
+{
+  /* FIXME: better use String.valueOf() instead */
+	php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU,
+								   "tostring", getThis(), 0, NULL);
+}
+
 PHP_METHOD(java, __set)
 {
   zval **argv;
@@ -292,6 +299,7 @@ PHP_METHOD(java, __get)
 static function_entry java_class_functions[] = {
 	PHP_ME(java, java, NULL, 0)
 	PHP_ME(java, __call, NULL, 0)
+	PHP_ME(java, __tostring, NULL, 0)
 	PHP_ME(java, __get, NULL, 0)
 	PHP_ME(java, __set, NULL, 0)
 };
@@ -383,7 +391,7 @@ PHP_MINIT_FUNCTION(java)
 	zend_register_internal_class(&php_java_class_entry TSRMLS_CC);
 #else
 	zend_class_entry ce;
-	zend_class_entry *parent = (zend_class_entry *) zend_exception_get_default();
+	zend_class_entry *parent;
 	zend_internal_function call, get, set;
 
 	make_lambda(&call, ZEND_FN(java___call));
@@ -397,6 +405,16 @@ PHP_MINIT_FUNCTION(java)
 								(zend_function*)&set);
 	
 	php_java_class_entry =
+	  zend_register_internal_class(&ce TSRMLS_CC);
+
+	INIT_OVERLOADED_CLASS_ENTRY(ce, "java_exception", 
+								java_class_functions, 
+								(zend_function*)&call, 
+								(zend_function*)&get, 
+								(zend_function*)&set);
+	
+	parent = (zend_class_entry *) zend_exception_get_default();
+	php_java_exception_class_entry =
 	  zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
 #endif
 

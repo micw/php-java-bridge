@@ -966,13 +966,14 @@ JNIEXPORT jlong JNICALL Java_JavaBridge_hashUpdate
 }
 
 JNIEXPORT void JNICALL Java_JavaBridge_setException
-  (JNIEnv *env, jclass self, jlong result, jlong _peer, jbyteArray value)
+  (JNIEnv *env, jclass self, jlong result, jlong _peer, jthrowable value, jbyteArray strValue)
 {
   struct peer*peer=(struct peer*)(long)_peer;
   if(setjmp(peer->savepoint)) return;
   ID(peer, SETEXCEPTION);
   swrite(&result, sizeof result, 1, peer);
   swrite(&value, sizeof value, 1, peer);
+  swrite(&strValue, sizeof strValue, 1, peer);
   while(handle_request(peer, env));
 }
 JNINativeMethod javabridge[]={
@@ -985,7 +986,7 @@ JNINativeMethod javabridge[]={
   {"nextElement", "(JJ)J", Java_JavaBridge_nextElement},
   {"hashUpdate", "(JJ[B)J", Java_JavaBridge_hashUpdate},
   {"hashIndexUpdate", "(JJJ)J", Java_JavaBridge_hashIndexUpdate},
-  {"setException", "(JJ[B)V", Java_JavaBridge_setException},
+  {"setException", "(JJLjava/lang/Throwable;[B)V", Java_JavaBridge_setException},
   {"startNative", "(ILjava/lang/String;)V", Java_JavaBridge_startNative},
   {"handleRequests", "(J)V", Java_JavaBridge_handleRequests},
 };
@@ -1068,6 +1069,7 @@ void java_bridge_main_gcj(int argc, char**_argv)
   char **argv;
   /* someone should really fix this bug in gcj */
   meths[0].meth[4].signature="(JJLjava.lang.Object;)V";
+  meths[0].meth[9].signature="(JJLjava.lang.Throwable;[B)V";
   meths[0].meth[10].signature="(ILjava.lang.String;)V";
 	
   if(!_argv) exit(6);

@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 1.0.6
+%define version 1.1.0
 %define release 1
 Name: php-java-bridge
 Summary: PHP Hypertext Preprocessor to Java Bridge

@@ -1,7 +1,7 @@
 What is the PHP/Java bridge?
 ----------------------------
 
-  The PHP/Java Bridge is a PHP 4 module which connects the PHP object
+  The PHP/Java Bridge is a PHP module which connects the PHP object
   system with the Java object system. It can be used to access java
   based applications running in a java application server. The
   PHP/Java bridge communicates with the application server through local
@@ -44,9 +44,10 @@ What is the PHP/Java bridge?
     "file:" or a "jar:" location.
 
   * java_last_exception_get(): Returns the last exception instance or
-    null.
+    null. Since PHP 5 you can use try/catch instead.
 
-  * java_last_exception_clear(): Clears the error condition.
+  * java_last_exception_clear(): Clears the error condition. Since PHP
+    5 you can use try/catch instead.
 
   There is one example provided: test.php.  You can either invoke the
   test.php by typing ./test.php or copy the example into the document
@@ -109,7 +110,7 @@ Build and execution instructions:
           java -version        # 1.3 or above (1.4.2_02 or IBM JVM recommended)
           gcc --version        # 3.2.3 or above.
           apachectl -version   # Apache 1.3 or above.
-          php-config --version # PHP 4.3.2 or above. For PHP5 see below.
+          php-config --version # PHP 4.3.2 or above.
 
           phpize && ./configure --with-java=/opt/IBMJava2-14
           make CFLAGS="-DNDEBUG"
@@ -338,27 +339,6 @@ Build and execution instructions:
   Web-Server.
 
 ------------------------------------
-  PHP 5 support
-  -------------
-
-  The PHP/Java bridge currently does not support the new PHP 5 object 
-  system.
-
-  Zend is working with Sun Microsystems to define a standard
-  script interface for java, please see 
-
-    http://www.jcp.org/en/jsr/detail?id=223
-
-  for details.  When available this interface will allow PHP 5 to
-  communicate with the JVM more efficiently; e.g. it will be possible 
-  to compile and then execute code multiple times.
-  However, it may take some time (a few years probably) until a stable
-  solution is available.
-
-  Until an official PHP5/Java binding based on JSR-223 exists,
-  please use PHP 4 with the PHP/Java Bridge.
-
-------------------------------------
   Loading on-demand with dl()
   ---------------------------
 
@@ -421,52 +401,4 @@ Build and execution instructions:
    4: Log debug messages, including the c/s communication protocol.
 
   The default log level is 1.
-
-------------------------------------
-        
-   This module is based on the ext/java module written by Sam Ruby.
-   His original comments follow.
-
-   A few things to note:
-
-     1) new Java() will create an instance of a class if a suitable constructor
-        is available.  If no parameters are passed and the default constructor
-        is useful as it provides access to classes like "java.lang.System"
-        which expose most of their functionallity through static methods.
-
-     2) Accessing a member of an instance will first look for bean properties
-        then public fields.  In other words, "print $date.time" will first
-        attempt to be resolved as "$date.getTime()", then as "$date.time";
-
-     3) Both static and instance members can be accessed on an object with
-        the same syntax.  Furthermore, if the java object is of type
-        "java.lang.Class", then static members of the class (fields and
-        methods) can be accessed.
-
-     4) Exceptions raised result in PHP warnings, and null results.  The
-        warnings may be eliminated by prefixing the method call with an
-        "@" sign.  The following APIs may be used to retrieve and reset
-        the last error:
-
-          java_last_exception_get()
-          java_last_exception_clear()
-
-     5) Overload resolution is in general a hard problem given the
-        differences in types between the two languages.  The PHP Java
-        extension employs a simple, but fairly effective, metric for
-        determining which overload is the best match.  
-
-        Additionally, method names in PHP are not case sensitive, potentially
-        increasing the number of overloads to select from.
-
-        Once a method is selected, the parameters are cooerced if necessary, 
-        possibly with a loss of data (example: double precision floating point
-        numbers will be converted to boolean).
-
-     6) In the tradition of PHP, arrays and hashtables may pretty much
-        be used interchangably.  Note that hashtables in PHP may only be
-        indexed by integers or strings; and that arrays of primitive types
-        in Java can not be sparse.  Also note that these constructs are
-        passed by value, so may be expensive in terms of memory and time.
-
 
