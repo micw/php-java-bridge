@@ -5,7 +5,6 @@
 
 /* peer */
 #include <stdio.h>
-#include "sio.h"
 
 /* 
  * we create a unix domain socket with the name .php_java_bridge in
@@ -34,7 +33,16 @@
 
 typedef struct proxyenv_ *proxyenv;
 struct proxyenv_ {
-  SFILE *peer;
+  int peer;
+
+  /* used by the parser implementation */
+  unsigned char*s;
+  size_t len;
+
+  /* the send buffer */
+  unsigned char*send;
+  size_t send_len;
+
   int (*handle_request)(proxyenv *env);
 
   void (*writeCreateObjectBegin)(proxyenv *env, char*name, size_t strlen, short createInstance, void *result);
@@ -58,6 +66,6 @@ struct proxyenv_ {
   void (*writePairEnd)(proxyenv *env);
 };
 
-extern proxyenv *java_createSecureEnvironment(SFILE *peer, int (*handle_request)(proxyenv *env));
+extern proxyenv *java_createSecureEnvironment(int peer, int (*handle_request)(proxyenv *env));
 
 #endif

@@ -1,13 +1,11 @@
+/*-*- mode: Java; tab-width:8 -*-*/
+
 package php.java.bridge;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
-
-/*
- * Created on Feb 13, 2005
- *
- * TODO To change the template for this generated file go to
- * Window - Preferences - Java - Code Style - Code Templates
- */
 
 public class Request implements IDocHandler {
 
@@ -19,7 +17,16 @@ public class Request implements IDocHandler {
 	this.parser=new Parser(bridge, this);
 	this.args=new ArrayList();
     }
-
+    static final byte[] ZERO={0};
+    boolean initOptions(InputStream in, OutputStream out) throws IOException {
+    	switch(parser.initOptions(in)) {
+    	case Parser.PING: out.write(ZERO, 0, 1); return false;
+    	case Parser.IO_ERROR: 
+    	case Parser.EOF: return false;
+    	}
+    	return true;
+    }
+ 
     // args for Invoke, Create, see protocol.txt
     int id;
     byte t, ch;
@@ -30,36 +37,36 @@ public class Request implements IDocHandler {
 	switch (ch=tag[0].strings[0].string[0]) {
 	case 'I': {
 	    t=ch;
-	    int i=Integer.parseInt((new String(st[0].string)), 16);
+	    int i=Integer.parseInt(st[0].getStringValue(), 10);
 	    vo=bridge.globalRef.get(i);
-	    m=new String(st[1].string);
-	    p=st[1].string[0]=='P';
-	    id=Integer.parseInt((new String(st[0].string)), 16);
+	    m=st[1].getStringValue();
+	    p=st[2].string[0]=='P';
+	    id=Integer.parseInt(st[3].getStringValue(), 10);
 	    break;
 	}
 	case 'C': {
 	    t=ch;
-	    vs=new String(st[0].string);
+	    vs=st[0].getStringValue();
 	    p=st[1].string[0]=='C';
-	    id=Integer.parseInt((new String(st[0].string)), 16);
+	    id=Integer.parseInt(st[2].getStringValue(), 10);
 	    break;
 	}
 	case 'F':
 	case 'M': {
 	    t=ch;
-	    int i=Integer.parseInt((new String(st[0].string)), 16);
+	    int i=Integer.parseInt(st[0].getStringValue(), 10);
 	    vo=bridge.globalRef.get(i);
-	    m=new String(st[1].string);
-	    id=Integer.parseInt((new String(st[0].string)), 16);
+	    m=st[1].getStringValue();
+	    id=Integer.parseInt(st[2].getStringValue(), 10);
 	    break;
 	}
 	case 'U': {
-	    int i=Integer.parseInt((new String(st[0].string)), 16);
+	    int i=Integer.parseInt(st[0].getStringValue(), 10);
 	    bridge.globalRef.remove(id);
 	    break;
 	}
-	case 'S': {
-	    args.add(st[0].string);
+	case 'S': {// TODO avoid newString(..).getBytes() here.
+	    args.add(st[0].getStringValue().getBytes());
 	    break;
 	}
 	case 'B': {
@@ -67,19 +74,19 @@ public class Request implements IDocHandler {
 	    break;
 	}
 	case 'L': {
-	    args.add(new Long(Long.parseLong((new String(st[0].string)), 16)));
+	    args.add(new Long(Long.parseLong(st[0].getStringValue(), 10)));
 	    break;
 	}
 	case 'D': {
-	    args.add(new Double(Double.parseDouble(new String(st[0].string))));
+	    args.add(new Double(Double.parseDouble(st[0].getStringValue())));
 	    break;
 	}
 	case 'O': {
 	    if(0==st[0].length)
 		vo=null;
 	    else {
-		int i=Integer.parseInt((new String(st[0].string)), 16);
-		args.add(bridge.globalRef.get(id));
+		int i=Integer.parseInt(st[0].getStringValue(), 10);
+		args.add(bridge.globalRef.get(i));
 	    }
 	    break;
 	}
@@ -88,9 +95,11 @@ public class Request implements IDocHandler {
     public void end(ParserString[] string) {
     }
 
-    void handleRequests() {
-	while(0!=parser.parse(bridge.peer)){
-	    Response res=new Response(bridge, id);
+    void handleRequests() throws IOException {
+    	Response res=new Response(bridge);
+	bridge.globalRef=new GlobalRef(bridge);
+	while(Parser.OK==parser.parse(bridge.in)){
+	    res.setResult(id, parser.options);
 	    switch(t){
 	    case 'I':
 		if(p) 
@@ -113,6 +122,8 @@ public class Request implements IDocHandler {
 		//GetMethod(v, m, args, res);
 		break;
 	    }
+	    res.flush();
+	    args.clear();
 	}
 	bridge.globalRef=null;
     }

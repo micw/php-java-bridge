@@ -1,14 +1,9 @@
+/*-*- mode: Java; tab-width:8 -*-*/
+
 package php.java.bridge;
 
 import java.io.PrintStream;
 import java.util.Date;
-
-/*
- * Created on Feb 13, 2005
- *
- * TODO To change the template for this generated file go to
- * Window - Preferences - Java - Code Style - Code Templates
- */
 
 public class Util {
     public static PrintStream logStream;

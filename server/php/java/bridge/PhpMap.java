@@ -1,10 +1,7 @@
+/*-*- mode: Java; tab-width:8 -*-*/
+
+
 package php.java.bridge;
-/*
- * Created on Feb 13, 2005
- *
- * TODO To change the template for this generated file go to
- * Window - Preferences - Java - Code Style - Code Templates
- */
 
 public abstract class PhpMap {
     Object value;

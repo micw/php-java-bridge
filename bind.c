@@ -183,8 +183,8 @@ int java_test_server() {
   n = connect(sock,(struct sockaddr*)&cfg->saddr, sizeof cfg->saddr);
   if(n!=-1) {
 	char ob;
-	c = read(sock, &ob, sizeof ob);
-	c = (c==sizeof ob) ? write(sock, &term, sizeof term) : 0;
+	c = write(sock, &term, sizeof term);
+	c = (c==sizeof ob) ? read(sock, &ob, sizeof ob) : 0;
   }
   e = close(sock);
 

@@ -1,3 +1,5 @@
+/*-*- mode: Java; tab-width:8 -*-*/
+
 package php.java.bridge;
 
 import java.io.File;
@@ -15,13 +17,6 @@ import java.util.Iterator;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
-/*
- * Created on Feb 13, 2005
- *
- * TODO To change the template for this generated file go to
- * Window - Preferences - Java - Code Style - Code Templates
- */
-
 public class JavaBridgeClassLoader extends ClassLoader {
     // class hash
     private static final HashMap classes = new HashMap(); 
@@ -33,38 +28,6 @@ public class JavaBridgeClassLoader extends ClassLoader {
     // be changed with setLibraryPath
     private Collection urls = null;		
 
-    //
-    // add all jars found in the phpConfigDir/lib and /usr/share/java
-    // to our classpath
-    //
-    static void addSystemLibraries(String phpConfigDir) {
-	try {
-	    String[] paths = {phpConfigDir+"/lib", "/usr/share/java"};
-	    for(int i=0; i<paths.length; i++) {
-		File d = new File(paths[i]);
-		String[] files=d.list();
-		if(files==null) continue;
-		for(int j=0; j<files.length; j++) {
-		    String file = files[j];
-		    int len = file.length();
-		    if(len<4) continue;
-		    if(!file.endsWith(".jar")) continue;
-		    try {
-			URL url;
-			file = "jar:file:" + d.getAbsolutePath() + File.separator + file + "!/";
-			url = new URL(file);
-			if(sysUrls==null) sysUrls=new ArrayList();
-			Util.logMessage("added system library: " + url);
-			sysUrls.add(url);
-		    }  catch (MalformedURLException e1) {
-			Util.printStackTrace(e1);
-		    }
-		}
-	    }
-	} catch (Exception t) {
-	    Util.printStackTrace(t);
-	}
-    }
     // Read the class from input stream and return bytes or null
     private byte[] read (InputStream in, int length) throws java.io.IOException {
 	int c, pos;

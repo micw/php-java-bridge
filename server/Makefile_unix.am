@@ -1,0 +1,33 @@
+# -*- mode: Makefile; -*-
+
+lib_LTLIBRARIES = libnatcJavaBridge.la
+libnatcJavaBridge_la_SOURCES = natcJavaBridge.c
+libnatcJavaBridge_la_LDFLAGS = -shared -avoid-version -prefer-pic
+libnatcJavaBridge_la_LIBADD =
+
+if COND_GCJ
+# create java executable with GNU GCC when --with-java was given
+bin_PROGRAMS=java RunJavaBridge
+RunJavaBridge_SOURCES= RunJavaBridge.c
+java_SOURCES= java.c php/java/bridge/GlobalRef.java php/java/bridge/IDocHandler.java php/java/bridge/JavaBridgeClassLoader.java php/java/bridge/JavaBridge.java php/java/bridge/Parser.java php/java/bridge/ParserString.java php/java/bridge/ParserTag.java php/java/bridge/PhpMap.java php/java/bridge/Request.java php/java/bridge/Response.java php/java/bridge/Util.java
+
+
+
+java_LDADD=libnatcJavaBridge.la
+java_LDFLAGS=-rpath $(EXTENSION_DIR)
+AM_GCJFLAGS=-fjni
+
+else 
+# use a real VM when --with-java=$JAVA_HOME was given
+
+bin_PROGRAMS=RunJavaBridge
+RunJavaBridge_SOURCES=RunJavaBridge.c
+
+dist_data_DATA=php/java/bridge/GlobalRef.class php/java/bridge/IDocHandler.class php/java/bridge/JavaBridge$$1.class php/java/bridge/JavaBridge$$2.class php/java/bridge/JavaBridge$$3.class php/java/bridge/JavaBridge.class php/java/bridge/JavaBridgeClassLoader.class php/java/bridge/Parser.class php/java/bridge/ParserString.class php/java/bridge/ParserTag.class php/java/bridge/PhpMap.class php/java/bridge/Request.class php/java/bridge/Response.class php/java/bridge/Util.class
+
+
+
+.java.class:
+	$(PHP_JAVA)/bin/javac $?
+
+endif

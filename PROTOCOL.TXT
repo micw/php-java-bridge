@@ -19,16 +19,16 @@ Example:
      $o = new java("java.lang.Long", 6);
      $o->toString(); // discard result
 
-->  <CreateInstance value="java.lang.Long" predicate="Instance" id="0x78532"> 
+->  <CreateInstance value="java.lang.Long" predicate="Instance" id="78532"> 
       <Long value="6"/> 
     </CreateInstance>
 
-<-  <Object value="0x1" id="0x78532"/>
+<-  <Object value="0x1" id="78532"/>
 
-->  <Invoke value="0x1" method="toString" predicate="Invoke" id="0x0">
+->  <Invoke value="0x1" method="toString" predicate="Invoke" id="0">
     </Invoke>
 
-<-  <String value="6" id="0x0"/>
+<-  <String value="6" id="0"/>
 
 
 
@@ -98,7 +98,7 @@ writeCompositeEnd()
 ->  (or <->, see below)
 writePairBegin_s(char *key, size_t strlen)
 writePairBegin_n(unsigned long key)
-<P t=[N|S] v=key> <[O|D|..|S] id=0 [i=ID] /> ...ARG...
+<P t=[N|S] v=key> ...ARG...
 writePairEnd()
 </P>
 

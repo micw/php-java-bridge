@@ -31,9 +31,15 @@ PHP_RINIT_FUNCTION(java)
 }
 PHP_RSHUTDOWN_FUNCTION(java)
 {
-  if(JG(jenv)&&*JG(jenv)&&(*JG(jenv))->peer) SFCLOSE((*JG(jenv))->peer);
-  if(JG(jenv)&&*JG(jenv)) free(*JG(jenv));
-  if(JG(jenv)) free(JG(jenv));
+  if(JG(jenv)) {
+	if(*JG(jenv)) {
+	  if((*JG(jenv))->peer) close((*JG(jenv))->peer);
+	  if((*JG(jenv))->s) free((*JG(jenv))->s);
+	  if((*JG(jenv))->send) free((*JG(jenv))->send);
+	  free(*JG(jenv));
+	}
+	free(JG(jenv));
+  }
   JG(jenv) = NULL;
   return SUCCESS;
 }

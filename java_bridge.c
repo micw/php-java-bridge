@@ -45,7 +45,6 @@ int java_get_jobject_from_object(pval*object, long *obj TSRMLS_DC)
 void php_java_invoke(char*name, long object, int arg_count, zval**arguments, pval*presult TSRMLS_DC) 
 {
   proxyenv *jenv = java_connect_to_server(TSRMLS_C);
-  long result = (long)presult;
 
   (*jenv)->writeInvokeBegin(jenv, object, name, 0, 'I', (void*)presult);
   writeArguments(arg_count, arguments TSRMLS_CC);
@@ -71,8 +70,8 @@ void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, sho
     }
 
 	/* create a new object */
-	(*jenv)->writeCreateObjectBegin(jenv, name, 0, createInstance, (void*)result);
-	writeArguments(arg_count, arguments TSRMLS_CC);
+	(*jenv)->writeCreateObjectBegin(jenv, Z_STRVAL_P(arguments[0]), Z_STRLEN_P(arguments[0]), createInstance, (void*)result);
+	writeArguments(--arg_count, ++arguments TSRMLS_CC);
 	(*jenv)->writeCreateObjectEnd(jenv);
 
   } else {
@@ -122,7 +121,6 @@ static void writeArgument(pval* arg TSRMLS_DC)
     case IS_ARRAY:
       {
       zval **value;
-      zval key;
       char *string_key;
       ulong num_key;
 	  short wrote_begin=0;
@@ -166,15 +164,11 @@ static void writeArgument(pval* arg TSRMLS_DC)
 
 static void writeArguments(int argc, pval** argv TSRMLS_DC)
 {
-  long arg;
   int i;
-  proxyenv *jenv = JG(jenv);
 
-  (*jenv)->writeCompositeBegin_a(jenv);
   for (i=0; i<argc; i++) {
     writeArgument(argv[i] TSRMLS_CC);
   }
-  (*jenv)->writeCompositeEnd(jenv);
 }
 
 /**
@@ -182,7 +176,7 @@ static void writeArguments(int argc, pval** argv TSRMLS_DC)
  */
 short php_java_get_property_handler(char*name, zval *object, zval *presult)
 {
-  long obj, result = 0;
+  long obj;
   int type;
   proxyenv *jenv;
 
@@ -213,7 +207,7 @@ short php_java_get_property_handler(char*name, zval *object, zval *presult)
  */
 short php_java_set_property_handler(char*name, zval *object, zval *value, zval *presult)
 {
-  long obj, result = 0;
+  long obj;
   int type;
   proxyenv *jenv;
 

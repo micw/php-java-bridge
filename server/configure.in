@@ -1,0 +1,49 @@
+AC_INIT(
+[PHP/Java Bridge], 
+m4_bpatsubst(m4_include([../VERSION]),[
+]), 
+[php-java-bridge-users@lists.sourceforge.net], 
+[php-java-bridge])
+AC_CONFIG_AUX_DIR(.)
+AC_CONFIG_LINKS(protocol.h:../protocol.h)
+
+dnl autoconf >2.53
+AC_PREREQ(2.53)
+AC_CONFIG_SRCDIR(natcJavaBridge.c)
+
+dnl automake >1.6.3
+AM_INIT_AUTOMAKE([1.6.3])
+AM_CONFIG_HEADER(config.h)
+
+AC_PROG_CC
+AC_PROG_CPP
+AM_PROG_GCJ
+AC_PROG_LIBTOOL
+AC_STDC_HEADERS
+
+AC_ARG_WITH(java,  [  --with-java[[=JAVA_HOME]]	Include java support], PHP_JAVA="$withval", PHP_JAVA="yes")
+AC_ARG_WITH(extdir,  [  --with-extdir[[=DIR]]	Diretory which contains the shared java extension], EXTENSION_DIR="$withval", EXTENSION_DIR="`php-config --extension-dir`")
+
+JAVA_FUNCTION_CHECKS
+PTHREADS_CHECK
+PTHREADS_ASSIGN_VARS
+PTHREADS_FLAGS
+JAVA_CHECK_BROKEN_STDIO_BUFFERING
+JAVA_CHECK_ABSTRACT_NAMESPACE
+JAVA_CHECK_STRUCT_UCRED
+
+AM_CPPFLAGS="${AM_CPPFLAGS} -DEXTENSION_DIR=\"\\\"\$(EXTENSION_DIR)\\\"\""
+if test "$PHP_JAVA" != "yes"; then
+AM_CPPFLAGS="${AM_CPPFLAGS} `for i in \`find $PHP_JAVA/include -follow -type d -print\`; do echo -n "-I$i "; done`"
+fi
+
+AC_CONFIG_FILES([RunJavaBridge.c])
+AC_SUBST(AM_CPPFLAGS)
+AC_SUBST(EXTENSION_DIR)
+AC_SUBST(PHP_JAVA)
+AM_CONDITIONAL([COND_GCJ], [test "$PHP_JAVA" = "yes"])
+case $host_os in cygwin* | mingw* | pw32*) test $enable_win32_dll = no ;; *) false;; esac
+COND_WIN_NO_DLL=$?
+AC_SUBST(COND_WIN_NO_DLL)
+AC_OUTPUT(Makefile_unix Makefile_windows Makefile)
+

@@ -8,74 +8,83 @@
 
 #include "protocol.h"
 #include "php_wrapper.h"
-#include "sio.c"
 
-// FIXME: Don't use fprintf
+// FIXME: Don't use sprintf
+static void flush(proxyenv *env) {
+  send((*env)->peer, (*env)->send, (*env)->send_len, 0);
+  (*env)->send_len=0;
+  (*env)->handle_request(env);
+}
 static void CreateObjectBegin(proxyenv *env, char*name, size_t strlen, short createInstance, void *result) {
-  fprintf((*env)->peer, "<C v=\"%s\" p=\"%c\" i=\"%lx\">", name, createInstance?'C':'I', result);
+  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<C v=\"%s\" p=\"%c\" i=\"%ld\">", name, createInstance?'C':'I', result);
 }
 static void CreateObjectEnd(proxyenv *env) {
-  fprintf((*env)->peer, "</C>");
-  (*env)->handle_request(env);
+  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "</C>");
+
+  flush(env);
 }
 static void InvokeBegin(proxyenv *env, long object, char*method, size_t strlen, short property, void* result) {
-  fprintf((*env)->peer, "<I v=\"%lx\" m=\"%s\" p=\"%c\" i=\"%lx\">", object, method, property?'P':'I', result);
+  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<I v=\"%ld\" m=\"%s\" p=\"%c\" i=\"%ld\">", object, method, property?'P':'I', result);
 }
 static void InvokeEnd(proxyenv *env) {
-  fprintf((*env)->peer, "</I>");
-  (*env)->handle_request(env);
+  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "</I>");
+
+  flush(env);
 }
 static void GetMethodBegin(proxyenv *env, long object, char*method, size_t strlen, void* result) {
-  fprintf((*env)->peer, "<M v=\"%lx\" m=\"%s\" i=\"%lx\">", object, method, result);
+  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<M v=\"%ld\" m=\"%s\" i=\"%ld\">", object, method, result);
 }
 static void GetMethodEnd(proxyenv *env) {
-  fprintf((*env)->peer, "</M>");
-  (*env)->handle_request(env);
+  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "</M>");
+
+  flush(env);
 }
 static void CallMethodBegin(proxyenv *env, long object, long method, void* result) {
-  fprintf((*env)->peer, "<F v=\"%lx\" m=\"%lx\" i=\"%lx\">", object, method, result);
+  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<F v=\"%ld\" m=\"%ld\" i=\"%ld\">", object, method, result);
 }
 static void CallMethodEnd(proxyenv *env) {
-  fprintf((*env)->peer, "</F>");
-  (*env)->handle_request(env);
+  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "</F>");
+
+  flush(env);
 }
 
 static void String(proxyenv *env, char*name, size_t strlen) {
-  fprintf((*env)->peer, "<S v=\"%s\"/>", name);
+  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<S v=\"%s\"/>", name);
 }
 static void Boolean(proxyenv *env, short boolean) {
-  fprintf((*env)->peer, "<B v=\"%c\"/>", boolean?'T':'F');
+  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<B v=\"%c\"/>", boolean?'T':'F');
 }
 static void Long(proxyenv *env, long l) {
-  fprintf((*env)->peer, "<L v=\"%lx\"/>", l);
+  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<L v=\"%ld\"/>", l);
 }
 static void Double(proxyenv *env, double d) {
-  fprintf((*env)->peer, "<L v=\"%d\"/>", d);
+  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<L v=\"%e\"/>", d);
 }
 static void Object(proxyenv *env, long object) {
-  fprintf((*env)->peer, "<O v=\"%lx\"/>", object);
+  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<O v=\"%ld\"/>", object);
 }
 static void CompositeBegin_a(proxyenv *env) {
-  fprintf((*env)->peer, "<X t=\"A\"");
+  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<X t=\"A\"");
 }
 static void CompositeBegin_h(proxyenv *env) {
-  fprintf((*env)->peer, "<X t=\"H\"");
+  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<X t=\"H\"");
 }
 static void CompositeEnd(proxyenv *env) {
-  fprintf((*env)->peer, "</X>");
+  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "</X>");
 }
 static void PairBegin_s(proxyenv *env, char*key, size_t strlen) {
-  fprintf((*env)->peer, "<P t=\"S\" v=\"%s\">", key);
+  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<P t=\"S\" v=\"%s\">", key);
 }
 static void PairBegin_n(proxyenv *env, unsigned long key) {
-  fprintf((*env)->peer, "<P t=\"N\" v=\"%lx\">", key);
+  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<P t=\"N\" v=\"%ld\">", key);
 }
 static void PairEnd(proxyenv *env) {
-  fprintf((*env)->peer, "</P>");
+  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "</P>");
 }
+
 
 
-proxyenv *java_createSecureEnvironment(SFILE *peer, int (*handle_request)(proxyenv *env)) {
+proxyenv *java_createSecureEnvironment(int peer, int (*handle_request)(proxyenv *env)) {
   proxyenv *env;  
   env=(proxyenv*)malloc(sizeof *env);     
   if(!env) return 0;
@@ -84,6 +93,12 @@ proxyenv *java_createSecureEnvironment(SFILE *peer, int (*handle_request)(proxye
 
   (*env)->peer = peer;
   (*env)->handle_request = handle_request;
+  (*env)->len = 2; //FIXME: use 255
+  (*env)->s=malloc((*env)->len);
+  if(!(*env)->s) {free(*env); free(env); return 0;}
+  (*env)->send=malloc(8192);
+  if(!(*env)->send) {free((*env)->s); free(*env); free(env); return 0;}
+  (*env)->send_len=0;
 
   (*env)->writeInvokeBegin=InvokeBegin;
   (*env)->writeInvokeEnd=InvokeEnd;

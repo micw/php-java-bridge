@@ -1,10 +1,10 @@
+/*-*- mode: Java; tab-width:8 -*-*/
+
 package php.java.bridge;
-/*
- * Created on Feb 13, 2005
- *
- * TODO To change the template for this generated file go to
- * Window - Preferences - Java - Code Style - Code Templates
- */
+
+import java.io.IOException;
+import java.io.InputStream;
+
 
 public class Parser {
     // parse return codes
@@ -15,21 +15,51 @@ public class Parser {
     Parser(JavaBridge bridge, IDocHandler handler) {
 	this.handler=handler;
 	this.bridge = bridge;
-	tag=new ParserTag[]{new ParserTag(bridge, 1), new ParserTag(bridge, MAX_ARGS), new ParserTag(bridge, MAX_ARGS) };
+	tag=new ParserTag[]{new ParserTag(1), new ParserTag(MAX_ARGS), new ParserTag(MAX_ARGS) };
     }
+    
+    byte options;
+    short initOptions(InputStream in) throws IOException {
+	if((pos=in.read(buf, 0, BUF_SIZE)) >0) { 
 
-    static final byte[] ZERO={0};
+	    /*
+	     * Special handling if the first byte is neither a space nor "<"
+	     * 
+	     */
+	    switch(ch=buf[c]) {
+	    case '<': case '\t': case '\f': case '\n': case '\r': case ' ': break;
+	    case 0:		
+		// PING
+		return PING;
+
+		// OPTIONS
+	    default: options=(byte) (ch&3); c++;
+	    }
+	}
+	return OK; //TOTO: check for eof
+    }
+    
     static final int BUF_SIZE = 5;//FIXME: use 8K
     static final int MAX_ARGS = 10;
     ParserTag tag[] = null;
     byte buf[] = new byte[BUF_SIZE];
     int len=2;//FIXME: use 255
     byte s[]= new byte[len];
-    byte ch, mask;
+    byte ch, mask=(byte)~0;
     static final short BEGIN=0, KEY=1, VAL=2, ENTITY=3, BLOB=4, VOID=5; short type=VOID;
     short level=0, eor=0, blen=0; boolean in_dquote;
     int pos=0, c=0, i=0, i0=0, e;
 
+    void RESET() {
+    	type=VOID;
+     	mask=~(byte)0;
+    	level=0;
+    	eor=0;
+    	blen=0;
+    	in_dquote=false;
+    	i=0;
+    	i0=0;
+    }
     void APPEND(byte c) {
 	if(i>=len-1) {
 	    int newlen=len*2;
@@ -41,15 +71,33 @@ public class Parser {
 	s[i++]=c; 
     }
     void CALL_BEGIN() {
-	handler.begin((ParserTag[])tag);
+    	if(Util.logLevel>=4) {
+	    StringBuffer buf=new StringBuffer("--> <");   
+	    buf.append(tag[0].strings[0].getStringValue());
+	    buf.append("> ");
+    		
+	    for(int i=0; i<tag[1].n; i++) {
+		buf.append(tag[1].strings[i].getStringValue()); buf.append("=\""); buf.append(tag[2].strings[i].getStringValue());buf.append("\" ");
+	    }
+	    buf.append(">");
+	    Util.logDebug(buf.toString());
+    	}
+	handler.begin(tag);
     }
     void CALL_END() {
+    	if(Util.logLevel>=4) {
+	    StringBuffer buf=new StringBuffer("--> </");   
+	    buf.append(tag[0].strings[0].getStringValue());
+	    buf.append(">");
+	    Util.logDebug(buf.toString());
+    	}
 	handler.end(tag[0].strings);
     }
     void PUSH(int t) { 
 	ParserString str[] = tag[t].strings;
 	short n = tag[t].n;
 	s[i]=0;
+	if(str[n]==null) str[n]=new ParserString();
 	str[n].string=s;
 	str[n].off=i0;
 	str[n].length=i-i0;
@@ -57,30 +105,14 @@ public class Parser {
 	APPEND((byte)0);
 	i0=i;
     }
-    short parse(long peer) {
-    	byte options;
-	pos=JavaBridge.sread(peer, buf, BUF_SIZE); 
-
-	/*
-	 * Special handling if the first byte is neither a space nor "<"
-	 * 
-	 */
-	switch(ch=buf[c]) {
-	case '<': case '\t': case '\f': case '\n': case '\r': case ' ': break;
-	case 0:		
-	    // PING
-	    JavaBridge.swrite(peer, ZERO, 1);
-	    return PING;
-
-	    // OPTIONS
-	default: options=(byte) (ch&3); c++;
-	}
-
-	while(eor==0) {
+    short parse(InputStream in) throws IOException {
+  
+    	while(eor==0) {
 	    if(c==pos) { 
-		if(0!=JavaBridge.seof(peer)) return EOF;
 
-		pos=JavaBridge.sread(peer, buf, BUF_SIZE); 
+	    	pos=in.read(buf, 0, BUF_SIZE); 
+		if(0==pos) return EOF;
+
 		c=0; 
 
 	    }
@@ -114,7 +146,7 @@ public class Parser {
 		    }
 		    tag[0].n=tag[1].n=tag[2].n=0; i0=i=0;      		/* RESET */
 		    type=VOID;
-		    if(level==0) eor=1;
+		    if(level==0) eor=1; 
 		    break;
 		case '\0':
 		    if(mask==0) {type=BLOB; mask=0; break;}
@@ -130,13 +162,13 @@ public class Parser {
 		    break;
 		case ';':
 		    if(type==ENTITY) {
-			switch (s[e]) {
-			case 'l': s[e]='<'; break; /* lt */
-			case 'g': s[e]='>'; break; /* gt */
-			case 'a': s[e]=(byte) (s[e+1]=='m'?'&':'\''); break; /* amp, apos */
-			case 'q': s[e]='"'; break; /* quot */
+			switch (s[e+1]) {
+			case 'l': s[e]='<'; i=e+1; break; /* lt */
+			case 'g': s[e]='>'; i=e+1; break; /* gt */
+			case 'a': s[e]=(byte) (s[e+2]=='m'?'&':'\''); i=e+1; break; /* amp, apos */
+			case 'q': s[e]='"'; i=e+1; break; /* quot */
 			}
-			i=e+1;
+			type=VAL; //& escapes may only appear in values
 		    }
 		    break;
 		case '&': 
@@ -156,7 +188,7 @@ public class Parser {
 		} /* ------------------ End of ansi C block ---------------- */
 	    c++;
 	}
-	s=null;
+   	RESET();
 	return OK;
     }
 }

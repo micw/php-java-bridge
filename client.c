@@ -160,53 +160,63 @@ struct parse_ctx {
 void begin(parser_tag_t tag[3], parser_cb_t *cb){
   struct parse_ctx *ctx=(struct parse_ctx*)cb->ctx;
   parser_string_t *st=tag[2].strings;
-  zval*id=(zval*)strtol(st[0].string, 0, 16);
-  if(id) ctx->id=id;
-  switch (tag[0].strings[0].string[0]) {
-  case 'C':
-	setResultFromArray((pval*)id);
-	ctx->composite_type=*st[1].string;
+  pval *id;
+
+  switch ((*tag[0].strings[0].string)[tag[0].strings[0].off]) {
+  case 'X':
+	ctx->id=(zval*)strtol(PARSER_GET_STRING(st, 2), 0, 10);
+	setResultFromArray(ctx->id);
+	ctx->composite_type=*PARSER_GET_STRING(st, 0);
+	ctx->id=(zval*)strtol(PARSER_GET_STRING(st, 1), 0, 10);
 	break;
   case 'P':
 	if(ctx->composite_type=='H') { /* hash table */
-	  if(*st[1].string=='N')	/* number */
-		ctx->val=hashIndexUpdate(ctx->id, strtol(st[2].string, 0, 10));
+	  ctx->id=(zval*)strtol(PARSER_GET_STRING(st, 2), 0, 10);
+	  if(*PARSER_GET_STRING(st, 0)=='N')	/* number */
+		ctx->val=hashIndexUpdate(ctx->id, strtol(PARSER_GET_STRING(st, 1), 0, 10));
 	  else
-		ctx->val=hashUpdate(ctx->id, st[2].string, st[2].length);
+		ctx->val=hashUpdate(ctx->id, PARSER_GET_STRING(st, 1), st[1].length);
 	}
 	else {						/* array */
+	  ctx->id=(zval*)strtol(PARSER_GET_STRING(st, 1), 0, 10);
+	  ctx->id=(zval*)strtol(PARSER_GET_STRING(st, 0), 0, 10);
 	  ctx->id=nextElement(ctx->id);
 	}
 	break;
   case 'S':
-	setResultFromString(ctx->id, st[1].string, st[1].length);
+	ctx->id=(zval*)strtol(PARSER_GET_STRING(st, 1), 0, 10);
+	setResultFromString(ctx->id, PARSER_GET_STRING(st, 0), st[0].length);
 	break;
   case 'B':
-	setResultFromBoolean(ctx->id, *st[1].string!='0');
+	ctx->id=(zval*)strtol(PARSER_GET_STRING(st, 1), 0, 10);
+	setResultFromBoolean(ctx->id, *PARSER_GET_STRING(st, 0)!='0');
 	break;
   case 'L':
-	setResultFromLong(ctx->id, strtol(st[1].string, 0, 10));
+	ctx->id=(zval*)strtol(PARSER_GET_STRING(st, 1), 0, 10);
+	setResultFromLong(ctx->id, strtol(PARSER_GET_STRING(st, 0), 0, 10));
 	break;
   case 'D':
-	setResultFromDouble(ctx->id, atof(st[1].string));
+	ctx->id=(zval*)strtol(PARSER_GET_STRING(st, 1), 0, 10);
+	setResultFromDouble(ctx->id, atof(PARSER_GET_STRING(st, 0)));
 	break;
   case 'O':
-	if(!st[1].length) {
+	ctx->id=(zval*)strtol(PARSER_GET_STRING(st, 1), 0, 10);
+	if(!st[0].length) {
 	  ZVAL_NULL(ctx->id);
 	} else {
-	  setResultFromObject(ctx->id, strtol(st[1].string, 0, 16));
+	  setResultFromObject(ctx->id, strtol(PARSER_GET_STRING(st, 0), 0, 10));
 	}
 	break;
   }
 }
 static int handle_request(proxyenv *env) {
-  parser_cb_t cb;
-  parse((*env)->peer, &cb);
+  struct parse_ctx ctx = {0,0,0};
+  parser_cb_t cb = {begin, 0, &ctx};
+  parse(env, &cb);
 }
 
 proxyenv *java_connect_to_server(TSRMLS_D) {
   int sock, n=-1;
-  SFILE *peer;
   proxyenv *jenv =JG(jenv);
 
   if(jenv) return jenv;
@@ -223,14 +233,8 @@ proxyenv *java_connect_to_server(TSRMLS_D) {
 	php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge?",52, strerror(errno));
 	return 0;
   }
-  peer = SFDOPEN(sock, "r+");
-  assert(peer);
-  if(!peer) { 
-	php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge?",53, strerror(errno));
-	return 0;
-  }
 
-  return java_createSecureEnvironment(peer, handle_request);
+  return JG(jenv) = java_createSecureEnvironment(sock, handle_request);
 }
 
 #ifndef PHP_WRAPPER_H
