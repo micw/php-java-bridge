@@ -342,12 +342,5 @@ int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
   JG(php_reflect) = (*JG(jenv))->NewGlobalRef(JG(jenv), local_php_reflect);
   if(check_error(JG(jenv), 5 TSRMLS_CC)) return FAILURE;
 
-  init =
-	(*JG(jenv))->GetMethodID(JG(jenv), JG(reflect_class), "<init>", "()V");
-  if(check_error(JG(jenv), 5 TSRMLS_CC)) return FAILURE;
-
-  (*JG(jenv))->CallVoidMethod(0, JG(jenv), JG(php_reflect), init);
-  if(check_error(JG(jenv), 5 TSRMLS_CC)) return FAILURE;
-
-  return SUCCESS;
+   return SUCCESS;
 }

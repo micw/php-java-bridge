@@ -75,7 +75,7 @@ public class JavaBridge implements Runnable {
 			for (Iterator i=urls.iterator(); i.hasNext(); ) 
 			    if ((b=load((URL)i.next(), name))!=null) break;
 		    
-		    if (b==null) throw new ClassNotFoundException(name + " not found");
+		    if (b==null) throw new ClassNotFoundException(name + " not found in path: " + urls.toString());
 		    
 		    if((c = this.defineClass(name, b, 0, b.length)) != null) classes.put(name, new WeakReference(c));
 		}
@@ -585,9 +585,9 @@ public class JavaBridge implements Runnable {
 	if(_path==null || _path.length()<2) return;
 
 	// add a token separator if first char is alnum
-	if((_path.charAt(0)>='A' && _path.charAt(0)<='Z') ||
-	   (_path.charAt(0)>='a' && _path.charAt(0)<='z') ||
-	   (_path.charAt(0)>='0' && _path.charAt(0)<='9'))
+	char c=_path.charAt(0);
+	if((c>='A' && c<='Z') || (c>='a' && c<='z') ||
+	   (c>='0' && c<='9') || (c!='.' || c!='/'))
 	    _path = ";" + _path;
 
 	String path = _path.substring(1);
@@ -597,13 +597,19 @@ public class JavaBridge implements Runnable {
 	    URL url;
 	    String p, s;
 	    s = st.nextToken();
-	       
+
 	    try {
 		url = new URL(s);
 		p = url.getProtocol(); 
 	    } catch (MalformedURLException e) {
-		printStackTrace(e);
-		continue;
+		try {
+		    s = "file:" + s;
+		    url = new URL(s);
+		    p = url.getProtocol();
+		}  catch (MalformedURLException e1) {
+		    printStackTrace(e1);
+		    continue;
+		}
 	    }
    
 	    if(p.equals("jar")) {

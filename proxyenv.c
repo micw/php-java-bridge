@@ -270,8 +270,10 @@ static void SetObjectArrayElement (proxyenv *env, jobjectArray array, jsize inde
 
 proxyenv *java_createSecureEnvironment(FILE *peer, int (*handle_request)(proxyenv *env)) {
   proxyenv *env;  
-  env=(proxyenv*)malloc(sizeof *env);
-  *env=(proxyenv)calloc(1, sizeof **env);
+  env=(proxyenv*)malloc(sizeof *env);     
+  if(!env) exit(9);
+  *env=(proxyenv)calloc(1, sizeof **env); 
+  if(!*env) exit(9);
 
   (*env)->peer = peer;
   (*env)->handle_request = handle_request;

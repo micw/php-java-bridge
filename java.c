@@ -132,7 +132,7 @@ ZEND_GET_MODULE(java)
 #endif
 
 int  le_jobject;
-int java_ini_updated = 0;
+int java_ini_updated, java_ini_last_updated;
 zend_class_entry php_java_class_entry;
 
 static PHP_INI_MH(OnIniSockname)
@@ -220,7 +220,6 @@ static void init_server()
 
 PHP_MINIT_FUNCTION(java)
 {
-    short updated=0;
 	/* function definitions found in bridge.c */
 	INIT_OVERLOADED_CLASS_ENTRY(php_java_class_entry, "java", NULL,
 								php_java_call_function_handler,
@@ -243,13 +242,12 @@ PHP_MINIT_FUNCTION(java)
 	  JG(cfg).saddr.sun_family = AF_UNIX;
 	  memset(JG(cfg).saddr.sun_path, 0, sizeof JG(cfg).saddr.sun_path);
 	  strcpy(JG(cfg).saddr.sun_path, JG(cfg).sockname);
-      updated=1; 
 	}
-
 	init_server();
 
-	if(updated) 
-	  java_ini_updated=0;
+	assert(!java_ini_last_updated);
+	java_ini_last_updated=java_ini_updated;
+	java_ini_updated=0;
 
 	return SUCCESS;
 }
@@ -320,6 +318,10 @@ PHP_MINFO_FUNCTION(java)
 PHP_MSHUTDOWN_FUNCTION(java) 
 {
   extern void php_java_shutdown_library(TSRMLS_D);
+  extern void java_destroy_cfg(int, struct cfg*);
+
+  java_destroy_cfg(java_ini_last_updated, &JG(cfg));
+  java_ini_last_updated=0;
 
   UNREGISTER_INI_ENTRIES();
   php_java_shutdown_library(TSRMLS_C);
