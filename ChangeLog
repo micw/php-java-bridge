@@ -1,5 +1,8 @@
 2005-01-02  Jost Boekemeier  <jostb@intern>
 
+	* server/configure.in, config.m4: follow symlinks to find the
+	include directories.
+	
 	* README: Updated documentation from index.html
 	
 	* php_java.h: Use php_config.h.

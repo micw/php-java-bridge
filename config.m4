@@ -35,7 +35,7 @@ if test "$PHP_JAVA" != "no"; then
 
 # find includes eg. -I/opt/jdk1.4/include -I/opt/jdk1.4/include/linux
         if test "$PHP_JAVA" != "yes"; then
-	 PHP_EVAL_INCLINE(`for i in \`find $PHP_JAVA/include -type d -print\`; do echo -n "-I$i "; done`)
+	 PHP_EVAL_INCLINE(`for i in \`find -follow $PHP_JAVA/include -type d -print\`; do echo -n "-I$i "; done`)
 	 COND_GCJ=0
 	else
 	 COND_GCJ=1
