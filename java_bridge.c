@@ -32,17 +32,33 @@ static short checkError(pval *value TSRMLS_DC)
   return 0;
 }
 
+int java_get_jobject_from_object(pval*object, jobject*obj)
+{
+  pval **handle;
+  int type, n;
+
+  n = zend_hash_index_find(Z_OBJPROP_P(object), 0, (void**) &handle);
+  if(!n) { *obj=0; return 0; }
+
+  *obj = zend_list_find(Z_LVAL_PP(handle), &type);
+  return type;
+}
+
 void php_java_invoke(char*name, jobject object, int arg_count, zval**arguments, pval*presult TSRMLS_DC) 
 {
   proxyenv *jenv = JG(jenv);
   jlong result = (jlong)(long)presult;
-  jstring method = (*jenv)->NewStringUTF(jenv, name);
+  jstring method;
+
+  BEGIN_TRANSACTION(jenv);
+  method = (*jenv)->NewStringUTF(jenv, name);
 
   assert(method); if(!method) exit(6);
 
   (*jenv)->Invoke(jenv, JG(php_reflect), JG(invoke),
 				  object, method,
 				  php_java_makeArray(arg_count, arguments TSRMLS_CC), result);
+  END_TRANSACTION(jenv);
 }
 
 void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, short constructor, short createInstance, pval *object, int arg_count, zval**arguments)
@@ -57,6 +73,7 @@ void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, sho
 	return;
   }
 
+  BEGIN_TRANSACTION(jenv);
   if (constructor) {
     /* construct a Java object:
        First argument is the class name.  Any additional arguments will
@@ -76,9 +93,6 @@ void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, sho
 	(*jenv)->CreateObject(jenv, JG(php_reflect), JG(co),
 						  className, createInstance?JNI_TRUE:JNI_FALSE, 
 						  php_java_makeArray(arg_count-1, arguments+1 TSRMLS_CC), result);
-
-    (*jenv)->DeleteLocalRef(jenv, className);
-
   } else {
 
     pval **handle;
@@ -86,17 +100,18 @@ void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, sho
     jobject obj;
     jstring method;
 
-    zend_hash_index_find(Z_OBJPROP_P(object), 0, (void**) &handle);
-    obj = zend_list_find(Z_LVAL_PP(handle), &type);
+	java_get_jobject_from_object(object, &obj);
+	assert(obj);
+
     method = (*jenv)->NewStringUTF(jenv, name);
     result = (jlong)(long)return_value;
     /* invoke a method on the given object */
     (*jenv)->Invoke(jenv, JG(php_reflect), JG(invoke),
       obj, method, php_java_makeArray(arg_count, arguments TSRMLS_CC), result);
-
-    (*jenv)->DeleteLocalRef(jenv, method);
   }
   checkError((pval*)(long)result TSRMLS_CC);
+
+  END_TRANSACTION(jenv);
 }
 
 static jobject php_java_makeObject(pval* arg TSRMLS_DC)
@@ -116,8 +131,8 @@ static jobject php_java_makeObject(pval* arg TSRMLS_DC)
       break;
 
     case IS_OBJECT:
-      zend_hash_index_find(Z_OBJPROP_P(arg), 0, (void*)&handle);
-      result = zend_list_find(Z_LVAL_PP(handle), &type);
+	  java_get_jobject_from_object(arg, &result);
+	  assert(result);
       break;
 
     case IS_BOOL:
@@ -180,7 +195,6 @@ static jobject php_java_makeObject(pval* arg TSRMLS_DC)
         }
         jold = (*jenv)->CallObjectMethod(2, jenv, result, put, 
 										 jkey, jval);
-        if (Z_TYPE_PP(value) != IS_OBJECT) (*jenv)->DeleteLocalRef(jenv, jval);
         zend_hash_move_forward(Z_ARRVAL_P(arg));
       }
 
@@ -208,31 +222,26 @@ static jobjectArray php_java_makeArray(int argc, pval** argv TSRMLS_DC)
   for (i=0; i<argc; i++) {
     arg = php_java_makeObject(argv[i] TSRMLS_CC);
     (*jenv)->SetObjectArrayElement(jenv, result, i, arg);
-    if (Z_TYPE_P(argv[i]) != IS_OBJECT) (*jenv)->DeleteLocalRef(jenv, arg);
   }
   return result;
 }
 
-static short
+static void
 php_java_getset_property (char* name, pval* object, jobjectArray value, zval *presult TSRMLS_DC)
 {
   jlong result = 0;
   pval **pobject;
   jobject obj;
   int type;
-
-  /* get the property name */
   jstring propName;
+  proxyenv *jenv = JG(jenv);
 
-  proxyenv *jenv;
-  jenv = JG(jenv);
+  BEGIN_TRANSACTION(jenv);
 
   propName = (*jenv)->NewStringUTF(jenv, name);
 
   /* get the object */
-  zend_hash_index_find(Z_OBJPROP_P(object),
-    0, (void **) &pobject);
-  obj = zend_list_find(Z_LVAL_PP(pobject), &type);
+  type = java_get_jobject_from_object(object, &obj);
   result = (jlong)(long) presult;
 
   ZVAL_NULL(presult);
@@ -245,7 +254,7 @@ php_java_getset_property (char* name, pval* object, jobjectArray value, zval *pr
     (*jenv)->GetSetProp(jenv, JG(php_reflect), JG(gsp), obj, propName, value, result);
   }
 
-  (*jenv)->DeleteLocalRef(jenv, propName);
+  END_TRANSACTION(jenv);
 }
 
 /**

@@ -37,7 +37,6 @@ extern jint JNICALL JNI_CreateJavaVM (JavaVM **, void **, void *);
 #define CALLOBJECTMETHOD 2
 #define CALLVOIDMETHOD 3
 #define DELETEGLOBALREF 4
-#define DELETELOCALREF 5
 #define EXCEPTIONCLEAR 6
 #define EXCEPTIONOCCURRED 7
 #define FINDCLASS 8
@@ -72,6 +71,8 @@ extern jint JNICALL JNI_CreateJavaVM (JavaVM **, void **, void *);
 #define CREATEOBJECT 51
 #define GETSETPROP 52
 #define LASTEXCEPTION 53
+#define TRANSACTION_BEGIN 54
+#define TRANSACTION_END 55
 
 #define N_SARGS 9				/* # of server args for exec */
 #define N_SENV 3				/* # of server env entries */
@@ -89,7 +90,6 @@ struct proxyenv_ {
   jobject (*CallObjectMethod) (short count, proxyenv *env, jobject obj, jmethodID methodID, ...);
   void (*CallVoidMethod) (short count, proxyenv *env, jobject obj, jmethodID methodID, ...);
   void (*DeleteGlobalRef) (proxyenv *env, jobject gref);
-  void (*DeleteLocalRef) (proxyenv *env, jobject obj);
   void (*ExceptionClear) (proxyenv *env);
   jthrowable (*ExceptionOccurred) (proxyenv *env);
   jclass (*FindClass) (proxyenv *env, const char *name);
@@ -110,5 +110,14 @@ struct proxyenv_ {
   jboolean (*IsInstanceOf) (proxyenv *env, jobject obj, jobject clazz);
   int (*handle_request)(proxyenv *env);
 };
+
 extern proxyenv *java_createSecureEnvironment(SFILE *peer, int (*handle_request)(proxyenv *env));
+extern void java_id(proxyenv *env, char id);
+extern void java_sread(void *ptr, size_t size, size_t nmemb, SFILE *stream);
+extern void java_swrite(const  void  *ptr,  size_t  size,  size_t  nmemb,  SFILE *stream);
+
+/* Use these instead of DeleteLocalRef */
+#define BEGIN_TRANSACTION(proxyenv) java_id(proxyenv, TRANSACTION_BEGIN)
+#define END_TRANSACTION(proxyenv) java_id(proxyenv, TRANSACTION_END)
+
 #endif

@@ -97,8 +97,6 @@ PHP_FUNCTION(java_set_library_path)
   p = (*JG(jenv))->NewStringUTF(JG(jenv), Z_STRVAL_PP(path));
   (*JG(jenv))->CallVoidMethod(2, JG(jenv), JG(php_reflect), 
 							  JG(setJarPath), p);
-
-  (*JG(jenv))->DeleteLocalRef(JG(jenv), p);
 }
 
 static short check_type (zval *pobj, zend_class_entry *class) {
@@ -112,11 +110,9 @@ static short check_type (zval *pobj, zend_class_entry *class) {
 
 PHP_FUNCTION(java_instanceof)
 {
-  zval **pobj, **pclass, **handle;
-  jobject obj;
-  jclass class;
+  zval **pobj, **pclass;
+  jobject obj, class;
   jboolean result;
-  int type, n;
 
   if (ZEND_NUM_ARGS()!=2 || zend_get_parameters_ex(2, &pobj, &pclass) == FAILURE) 
 	WRONG_PARAM_COUNT;
@@ -129,27 +125,23 @@ PHP_FUNCTION(java_instanceof)
 	return;
   }
 
-  n = FAILURE;
+  obj = NULL;
   if((Z_TYPE_PP(pobj) == IS_OBJECT) && check_type(*pobj, php_java_class_entry)){
-	n = zend_hash_index_find(Z_OBJPROP_PP(pobj), 0, (void**) &handle);
+	java_get_jobject_from_object(*pobj, &obj);
   }
-  if(n==FAILURE) {
+  if(!obj) {
 	zend_error(E_WARNING, "Parameter #1 for %s() must be a java object", get_active_function_name(TSRMLS_C));
 	return;
   }
-  obj = zend_list_find(Z_LVAL_PP(handle), &type);
-  assert(obj);
 
-  n = FAILURE;
-  if((Z_TYPE_PP(pobj) == IS_OBJECT) && check_type(*pobj, php_java_class_entry)){
-	n = zend_hash_index_find(Z_OBJPROP_PP(pclass), 0, (void**) &handle);
+  class = NULL;
+  if((Z_TYPE_PP(pclass) == IS_OBJECT) && check_type(*pclass, php_java_class_entry)){
+	java_get_jobject_from_object(*pclass, &class);
   }
-  if(n==FAILURE) {
+  if(!class) {
 	zend_error(E_WARNING, "Parameter #2 for %s() must be a java object", get_active_function_name(TSRMLS_C));
 	return;
   }
-  class = zend_list_find(Z_LVAL_PP(handle), &type);
-  assert(class);
 
   result = (*JG(jenv))->IsInstanceOf(JG(jenv), obj, class);
   if(result == JNI_TRUE) {
@@ -269,8 +261,10 @@ static void php_java_alloc_globals_ctor(zend_java_globals *java_globals TSRMLS_D
 static void init_server()
 {
   extern int java_test_server(struct cfg*cfg TSRMLS_DC);
+  extern void java_start_server(struct cfg*cfg TSRMLS_DC);
+
   if(java_test_server(&JG(cfg) TSRMLS_CC)==FAILURE) 
-	java_start_server(&JG(cfg));
+	java_start_server(&JG(cfg) TSRMLS_CC);
   java_test_server(&JG(cfg) TSRMLS_CC);
 }
 
@@ -364,6 +358,28 @@ PHP_METHOD(java, __set)
   
   efree(argv);
 }
+PHP_METHOD(java, __destruct)
+{
+  zval **argv, **handle;
+  int type;
+  int argc = ZEND_NUM_ARGS();
+  jobject obj;
+  
+  argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
+  if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
+	php_error(E_ERROR, "Couldn't fetch arguments into array.");
+	RETURN_NULL();
+  }
+  
+  java_get_jobject_from_object(getThis(), &obj);
+  assert(obj);
+  if(JG(jenv))
+	(*JG(jenv))->DeleteGlobalRef(JG(jenv), obj);
+  else
+	fputs("PHP bug, an object destructor was called after module shutdown", stderr);
+
+  efree(argv);
+}
 PHP_METHOD(java, __get)
 {
   zval **argv;
@@ -379,8 +395,8 @@ PHP_METHOD(java, __get)
 }
 PHP_METHOD(java, offsetExists)
 {
-  zval **argv, **handle;
-  int type, argc;
+  zval **argv;
+  int argc;
   jobject obj, map;
 
   argc = ZEND_NUM_ARGS();
@@ -389,8 +405,8 @@ PHP_METHOD(java, offsetExists)
 	php_error(E_ERROR, "Couldn't fetch arguments into array.");
 	RETURN_NULL();
   }
-  zend_hash_index_find(Z_OBJPROP_P(getThis()), 0, (void**) &handle);
-  obj = zend_list_find(Z_LVAL_PP(handle), &type);
+  java_get_jobject_from_object(getThis(), &obj);
+  assert(obj);
   map = (*JG(jenv))->CallObjectMethod(1, JG(jenv), JG(php_reflect), JG(getPhpMap), obj);
 
   php_java_invoke("offsetExists", map, argc, argv, return_value);
@@ -398,9 +414,10 @@ PHP_METHOD(java, offsetExists)
 }
 PHP_METHOD(java, offsetGet)
 {
-  zval **argv, **handle;
-  int type, argc;
+  zval **argv;
+  int argc;
   jobject obj, map;
+  proxyenv *jenv =JG(jenv);
 
   argc = ZEND_NUM_ARGS();
   argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
@@ -408,19 +425,21 @@ PHP_METHOD(java, offsetGet)
 	php_error(E_ERROR, "Couldn't fetch arguments into array.");
 	RETURN_NULL();
   }
-  zend_hash_index_find(Z_OBJPROP_P(getThis()), 0, (void**) &handle);
-  obj = zend_list_find(Z_LVAL_PP(handle), &type);
+  java_get_jobject_from_object(getThis(), &obj);
+  assert(obj);
+  BEGIN_TRANSACTION(jenv);
   map = (*JG(jenv))->CallObjectMethod(1, JG(jenv), JG(php_reflect), JG(getPhpMap), obj);
 
   php_java_invoke("offsetGet", map, argc, argv, return_value);
-
+  END_TRANSACTION(jenv);
 }
 
 PHP_METHOD(java, offsetSet)
 {
-  zval **argv, **handle;
-  int type, argc;
+  zval **argv;
+  int argc;
   jobject obj, map;
+  proxyenv *jenv = JG(jenv);
 
   argc = ZEND_NUM_ARGS();
   argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
@@ -428,12 +447,14 @@ PHP_METHOD(java, offsetSet)
 	php_error(E_ERROR, "Couldn't fetch arguments into array.");
 	RETURN_NULL();
   }
-  zend_hash_index_find(Z_OBJPROP_P(getThis()), 0, (void**) &handle);
-  obj = zend_list_find(Z_LVAL_PP(handle), &type);
-  map = (*JG(jenv))->CallObjectMethod(1, JG(jenv), JG(php_reflect), JG(getPhpMap), obj);
+  java_get_jobject_from_object(getThis(), &obj);
+  assert(obj);
+
+  BEGIN_TRANSACTION(jenv);
+  map = (*jenv)->CallObjectMethod(1, jenv, JG(php_reflect), JG(getPhpMap), obj);
 
   php_java_invoke("offsetSet", map, argc, argv, return_value);
-
+  END_TRANSACTION(jenv);
 }
 
 PHP_METHOD(java, offsetUnset)
@@ -441,6 +462,7 @@ PHP_METHOD(java, offsetUnset)
   zval **argv, **handle;
   int type, argc;
   jobject obj, map;
+  proxyenv *jenv = JG(jenv);
 
   argc = ZEND_NUM_ARGS();
   argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
@@ -448,12 +470,14 @@ PHP_METHOD(java, offsetUnset)
 	php_error(E_ERROR, "Couldn't fetch arguments into array.");
 	RETURN_NULL();
   }
-  zend_hash_index_find(Z_OBJPROP_P(getThis()), 0, (void**) &handle);
-  obj = zend_list_find(Z_LVAL_PP(handle), &type);
-  map = (*JG(jenv))->CallObjectMethod(1, JG(jenv), JG(php_reflect), JG(getPhpMap), obj);
+  java_get_jobject_from_object(getThis(), &obj);
+  assert(obj);
+
+  BEGIN_TRANSACTION(jenv);
+  map = (*jenv)->CallObjectMethod(1, jenv, JG(php_reflect), JG(getPhpMap), obj);
 
   php_java_invoke("offsetUnset", map, argc, argv, return_value);
-
+  END_TRANSACTION(jenv);
 }
 
 static
@@ -474,6 +498,7 @@ static function_entry java_class_functions[] = {
   PHP_ME(java, __tostring, NULL, 0)
   PHP_ME(java, __get, NULL, 0)
   PHP_ME(java, __set, NULL, 0)
+  PHP_ME(java, __destruct, NULL, 0)
   PHP_ME(java, offsetExists,  arginfo_array_offsetGet, ZEND_ACC_PUBLIC)
   PHP_ME(java, offsetGet,     arginfo_array_offsetGet, ZEND_ACC_PUBLIC)
   PHP_ME(java, offsetSet,     arginfo_array_offsetSet, ZEND_ACC_PUBLIC)
@@ -502,15 +527,11 @@ static int cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_
   if (type==IS_STRING) {
 	jobject obj;
 	zval free_obj;
-	zval **handle;
-	int type, n;
 
 	if (should_free)
 	  free_obj = *writeobj;
 
-	n = zend_hash_index_find(Z_OBJPROP_P(readobj), 0, (void**) &handle);
-	assert(n);
-	obj = zend_list_find(Z_LVAL_PP(handle), &type);
+	java_get_jobject_from_object(readobj, &obj);
 	assert(obj);
 	php_java_invoke("tostring", obj,  0, 0, writeobj);
 	if (should_free)
@@ -558,7 +579,6 @@ static void iterator_current_data(zend_object_iterator *iter, zval ***data TSRML
 
 static int iterator_current_key(zend_object_iterator *iter, char **str_key, uint *str_key_len, ulong *int_key TSRMLS_DC)
 {
-  proxyenv *jenv = JG(jenv);
   java_iterator *iterator = (java_iterator *)iter;
   zval *presult;
   
@@ -594,12 +614,15 @@ static void init_current_data(java_iterator *iterator TSRMLS_DC)
 static void iterator_move_forward(zend_object_iterator *iter TSRMLS_DC)
 {
   java_iterator *iterator = (java_iterator *)iter;
+  proxyenv *jenv = JG(jenv);
   if (iterator->current_object) {
 	zval_ptr_dtor((zval**)&iterator->current_object);
 	iterator->current_object = NULL;
   }
-  if((*JG(jenv))->CallObjectMethod(0, JG(jenv), iterator->java_iterator, JG(moveForward)))
+  BEGIN_TRANSACTION(jenv);
+  if((*jenv)->CallObjectMethod(0, jenv, iterator->java_iterator, JG(moveForward)))
 	init_current_data(iterator TSRMLS_CC);
+  END_TRANSACTION(jenv);
 }
 
 static zend_object_iterator_funcs java_iterator_funcs = {
@@ -616,17 +639,16 @@ static zend_object_iterator *get_iterator(zend_class_entry *ce, zval *object TSR
   proxyenv *jenv = JG(jenv);
   java_iterator *iterator = emalloc(sizeof *iterator);
 
-  zval **handle;
-  int type;
   jobject java_iterator, obj;
 
   object->refcount++;
   iterator->intern.data = (void*)object;
   iterator->intern.funcs = &java_iterator_funcs;
 
-  zend_hash_index_find(Z_OBJPROP_P(object), 0, (void**) &handle);
-  obj = zend_list_find(Z_LVAL_PP(handle), &type);
+  java_get_jobject_from_object(object, &obj);
   assert(obj);
+
+  BEGIN_TRANSACTION(jenv);
   java_iterator = (*jenv)->CallObjectMethod(1, jenv, JG(php_reflect), JG(getPhpMap), obj);
   if (!java_iterator) return NULL;
 
@@ -641,6 +663,8 @@ static zend_object_iterator *get_iterator(zend_class_entry *ce, zval *object TSR
   if((*jenv)->CallObjectMethod(0, jenv, java_iterator, JG(hasMore))) {
 	init_current_data(iterator TSRMLS_CC);
   }
+  END_TRANSACTION(jenv);
+
   return (zend_object_iterator*)iterator;
 }
 
@@ -777,8 +801,7 @@ PHP_MINIT_FUNCTION(java)
   INIT_CLASS_ENTRY(ce, "java_class", java_class_functions);
   parent = (zend_class_entry *) php_java_class_entry;
 
-  zend_class_entry *php_java_class_class_entry = 
-	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
+  zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
 #endif
   
   /* Register the resource, with destructor (arg 1) and text
@@ -851,35 +874,36 @@ static char*get_server_args(struct cfg*cfg) {
 }
 PHP_MINFO_FUNCTION(java)
 {
-	char*s=get_server_args(&JG(cfg));
-	int status = java_test_server(&JG(cfg) TSRMLS_CC);
-
-	php_info_print_table_start();
-	php_info_print_table_row(2, "java support", "Enabled");
-	php_info_print_table_row(2, "java bridge", java_bridge_version);
+  extern int java_test_server(struct cfg*cfg TSRMLS_DC);
+  char*s=get_server_args(&JG(cfg));
+  int status = java_test_server(&JG(cfg) TSRMLS_CC);
+  
+  php_info_print_table_start();
+  php_info_print_table_row(2, "java support", "Enabled");
+  php_info_print_table_row(2, "java bridge", java_bridge_version);
 #ifndef CFG_JAVA_SOCKET_ANON
-	php_info_print_table_row(2, "java command", s);
+  php_info_print_table_row(2, "java command", s);
 #endif
-	php_info_print_table_row(2, "java.libpath", JG(cfg).ld_library_path);
-	php_info_print_table_row(2, "java.classpath", JG(cfg).classpath);
-	php_info_print_table_row(2, "java.java_home", JG(cfg).java_home);
-	php_info_print_table_row(2, "java.java", JG(cfg).java);
-	if(strlen(JG(cfg).logFile)==0) 
-	  php_info_print_table_row(2, "java.log_file", "<stdout>");
-	else
-	  php_info_print_table_row(2, "java.log_file", JG(cfg).logFile);
-	php_info_print_table_row(2, "java.log_level", JG(cfg).logLevel);
-	php_info_print_table_row(2, "java status", (status==SUCCESS)?"running":"not running");
-	php_info_print_table_end();
-
-	free(s);
+  php_info_print_table_row(2, "java.libpath", JG(cfg).ld_library_path);
+  php_info_print_table_row(2, "java.classpath", JG(cfg).classpath);
+  php_info_print_table_row(2, "java.java_home", JG(cfg).java_home);
+  php_info_print_table_row(2, "java.java", JG(cfg).java);
+  if(strlen(JG(cfg).logFile)==0) 
+	php_info_print_table_row(2, "java.log_file", "<stdout>");
+  else
+	php_info_print_table_row(2, "java.log_file", JG(cfg).logFile);
+  php_info_print_table_row(2, "java.log_level", JG(cfg).logLevel);
+  php_info_print_table_row(2, "java status", (status==SUCCESS)?"running":"not running");
+  php_info_print_table_end();
+  
+  free(s);
 }
 
 PHP_MSHUTDOWN_FUNCTION(java) 
 {
   extern void php_java_shutdown_library(struct cfg*cfg TSRMLS_DC);
   extern void java_destroy_cfg(int, struct cfg*cfg TSRMLS_DC);
-
+  
   java_destroy_cfg(java_ini_last_updated, &JG(cfg) TSRMLS_CC);
   java_ini_last_updated=0;
 

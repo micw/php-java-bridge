@@ -172,7 +172,9 @@ public class JavaBridge implements Runnable {
 
     static native void setException(long result, long peer, Throwable value, byte strValue[]);
     native void handleRequests(long peer);
-  
+    static native int handleRequest(Object globalRef, long peer);
+    static native void trampoline(Object globalRef, long peer, boolean jump);
+
     //
     // Helper routines for the C implementation
     //
@@ -196,6 +198,12 @@ public class JavaBridge implements Runnable {
 	thread.setContextClassLoader(bridge.cl);
 	thread.start();
     }
+
+    //
+    // used by the trampoline: clear all local refs
+    //
+    public static int HandleRequest(Object globalRef, long peer) { return handleRequest (globalRef, peer); }
+    public static void Trampoline(Object globalRef, long peer, boolean jump) { trampoline (globalRef, peer, jump); }
 
     //
     // Return map for the value (PHP 5 only)
@@ -299,7 +307,7 @@ public class JavaBridge implements Runnable {
 	}
 	if(value instanceof Map) {
 	    return
-		new PhpMap(value, this){
+		new PhpMap(value, value){
 		    Object currentKey;
 		    Iterator iter;
 		    

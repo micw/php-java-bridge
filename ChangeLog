@@ -1,3 +1,59 @@
+2004-11-28  Jost Boekemeier  <jostb@intern>
+
+	* test.php: use <br>
+	
+	* php-java-bridge.spec: test.php added
+	
+	* java_bridge.c (java_get_jobject_from_object): new function.
+	
+	* server/JavaBridge.java (handleRequest, HandleRequest,
+	trampoline, Trampoline): New methods.
+	(getPhpMap): Cast null to (Object)null in order to appease gnu
+	java. Pass value, not this.
+	(printStackTrace): Print trace if fatal or level >=2
+
+	* client.c (java_instanceof): rewritten.
+	(java__destruct): new function.
+
+
+	Until now local variables were not deallocated until script
+	termination.  A long running php script could provoke out of
+	memory conditions on the server side. In order to allow long
+	running scripts and in order to make client side programming
+	easier and more robust, the server now maintains both, global
+	_and_ local refs.  The JNI DeleteLocalRef should not be used
+	anymore. To protect variables from beeing garbage collected, the
+	new protocol requests BEGIN/END_TRANSACTION(env) must be used.  If
+	the client does not call END_TRANSACTION, the server will
+	automatically terminate all transactions at the end of the
+	script. If the client does not call BEGIN_TRANSACTION and calls a
+	method that creates and returns a new object, the object will be
+	reclaimed immediately after the client has received it
+	(i.e. the received object becomes invalid). Server replies
+	(protocol #101..110) are an exception; the values they return
+	remain valid until client acknowledges the reply (as usual).
+	
+	* protocol.h, proxyenv.c (DELETELOCALREF, DeleteLocalRef): Removed
+	(BEGIN_TRANSACTION, END_TRANSACTION): New macros
+	(TRANSACTION_BEGIN, TRANSACTION_END): New constants
+
+	* server/natcJavaBridge.c (trampoline, handleRequest): New globals.
+	(DELETEGLOBALREF): Removed.
+	(TRANSACTION_BEGIN, TRANSACTION_END): New protocol requests.
+	(handle_request_impl): Removed. (replaced by handleRequest)
+	(handleRequest): New function
+	(trampoline): New function
+	(handleRequests): Rewritten (code moved to trampoline)
+	(javabridge): Define handleRequest and trampoline
+	
+	* client.c (java_connect_to_server, java_set_library_path,
+	java_instanceof, offsetExists, offsetGet, offsetSet, offsetUnset,
+	cast, iterator_move_forward, get_iterator,
+	php_java_call_function_handler, php_java_makeObject,
+	php_java_getset_property): Use TRANSACTION_BEGIN/END instead of
+	DeleteLocalRef. Use java_get_jobject_from_object.
+	
+	
 2004-11-26  Jost Boekemeier  <jostb@intern>
 
 	* php-java-bridge: use sh to start the sub-process so that only

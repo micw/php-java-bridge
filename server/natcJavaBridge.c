@@ -76,6 +76,8 @@ static jmethodID enumMore=NULL;
 static jmethodID enumNext=NULL;
 
 static jmethodID handleRequests=NULL;
+static jmethodID handleRequest=NULL;
+static jmethodID trampoline=NULL;
 
 static jclass longClass=NULL;
 static jmethodID longCtor=NULL;
@@ -275,6 +277,8 @@ static void initGlobals(JNIEnv *env) {
   enumNext = (*env)->GetMethodID(env, enumClass, "nextElement", "()Ljava/lang/Object;");
 
   handleRequests = (*env)->GetStaticMethodID(env, bridge, "HandleRequests", "(J)V");
+  handleRequest = (*env)->GetStaticMethodID(env, bridge, "HandleRequest", "(Ljava/lang/Object;J)I");
+  trampoline = (*env)->GetStaticMethodID(env, bridge, "Trampoline", "(Ljava/lang/Object;JZ)V");
 
   addSystemLibraries = (*env)->GetStaticMethodID(env, bridge, "addSystemLibraries", "(Ljava/lang/String;)V");
   arg = (*env)->NewStringUTF(env, EXTENSION_DIR);
@@ -452,13 +456,6 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 		(*env)->DeleteLocalRef(env, val);
 	  }
 	}
-	break;
-  }
-  case DELETELOCALREF: {
-	jobject ref;
-	sread(&ref, sizeof ref, 1, peer);
-	/* disabled, problems with gcj */
-	//(*env)->DeleteLocalRef(env, ref);
 	break;
   }
   case EXCEPTIONCLEAR: {
@@ -718,13 +715,20 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	swrite(&result, sizeof result, 1, peer);
 	break;
   }
+  case TRANSACTION_BEGIN: 
+  case TRANSACTION_END: 
+	return c;
+
   default: {
 	logError(env, "protocol error: recv unknown token");
   }
   }
   return 1;
 }
-static int handle_request_impl(SFILE*file, JNIEnv *env, jobject globalRef) {
+
+JNIEXPORT jint JNICALL Java_JavaBridge_handleRequest(JNIEnv*env, jclass self, jobject globalRef, jlong socket)
+{
+  SFILE *file = (SFILE*)(long)socket;
   struct peer peer;
   int val;
   peer.objectHash=initHash(env);
@@ -780,7 +784,31 @@ static void connection_cleanup (JNIEnv *env, jobject globalRef) {
   }
   (*env)->DeleteGlobalRef(env, globalRef);
 }
-
+JNIEXPORT void JNICALL Java_JavaBridge_trampoline(JNIEnv*env, jclass self, jobject globalRef, jlong socket, jboolean jump)
+{
+  SFILE *peer = (SFILE*)(long)socket;
+  while(peer && !SFEOF(peer)) {
+	jint term;
+	if(SFERROR(peer)) { logSysError(env, "communication error"); break; }
+    term = (jump==JNI_TRUE) ? 
+	  (*env)->CallStaticIntMethod(env, bridge, handleRequest, globalRef, socket) : 
+	  Java_JavaBridge_handleRequest(env, bridge, globalRef, socket);
+	  
+	if(term>=0) {
+	  logChannel(env, "end packet", term);
+	  switch (term) { 
+	  case TRANSACTION_BEGIN: 
+		(*env)->CallStaticVoidMethod(env, bridge, trampoline, globalRef, socket, JNI_FALSE);
+		break;
+	  case TRANSACTION_END:
+		return;
+	  }
+	} else {
+	  logIntValue(env, "communication broken", term);
+	  break;
+	}
+  }
+}
 JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jobject instance, jlong socket)
 {
   jobject globalRef;
@@ -794,15 +822,7 @@ JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jobject instan
 	logSysFatal(env, "could not send instance, child not listening"); connection_cleanup(env, globalRef); SFCLOSE(peer);return;
   }
   enter();
-  while(peer && !SFEOF(peer)) {
-	if(SFERROR(peer)) { logSysError(env, "communication error"); break; }
-	int term = handle_request_impl(peer, env, globalRef);
-	if(term>=0) logChannel(env, "end packet", term);
-	else {
-	  logIntValue(env, "communication broken", term);
-	  break;
-	}
-  }
+  (*env)->CallStaticVoidMethod(env, bridge, trampoline, globalRef, socket, JNI_TRUE);
   connection_cleanup(env, globalRef);
 
   logChannel(env, "terminate communication channel", socket);
@@ -1032,6 +1052,8 @@ JNINativeMethod javabridge[]={
   {"setException", "(JJLjava/lang/Throwable;[B)V", Java_JavaBridge_setException},
   {"startNative", "(ILjava/lang/String;)V", Java_JavaBridge_startNative},
   {"handleRequests", "(J)V", Java_JavaBridge_handleRequests},
+  {"handleRequest", "(Ljava/lang/Object;J)I", Java_JavaBridge_handleRequest},
+  {"trampoline", "(Ljava/lang/Object;JZ)V", Java_JavaBridge_trampoline},
 };
 
 static struct NativeMethods {
@@ -1115,7 +1137,9 @@ void java_bridge_main_gcj(int argc, char**_argv)
   meths[0].meth[5].signature="(JJLjava.lang.Object;)Z";
   meths[0].meth[9].signature="(JJLjava.lang.Throwable;[B)V";
   meths[0].meth[10].signature="(ILjava.lang.String;)V";
-	
+  meths[0].meth[12].signature="(Ljava.lang.Object;J)I";
+  meths[0].meth[13].signature="(Ljava.lang.Object;JZ)V";
+
   if(!_argv) exit(6);
   if(argc==4) {
 	argv=calloc(N_SARGS, sizeof*argv);

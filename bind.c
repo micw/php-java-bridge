@@ -18,6 +18,9 @@
 /* poll */
 #include <sys/poll.h>
 
+/* wait */
+#include <sys/wait.h>
+
 /* miscellaneous */
 #include <stdio.h>
 #include <assert.h>
@@ -104,8 +107,8 @@ void s_kill(int sig) {
   if(s_pid) kill(s_pid, SIGTERM);
 }
 
-void java_start_server(struct cfg*cfg) {
-  int pid=0, err=0, p[2], p1[2];
+void java_start_server(struct cfg*cfg TSRMLS_DC) {
+  int pid=0, err=0, p[2];
   if(pipe(p)!=-1) {
 	if(can_fork()) {
 	  if(!(pid=fork())) {		/* daemon */

@@ -20,6 +20,10 @@
 #include <assert.h>
 #include <errno.h>
 
+#ifdef ZEND_ENGINE_2
+#include "zend_exceptions.h"
+#endif
+
 /* jni */
 #include <jni.h>
 
@@ -91,7 +95,6 @@ static  void  setResultFromBoolean  (proxyenv *jenv, pval *presult, jboolean val
 #ifdef ZEND_ENGINE_2
 static  void  setResultFromException  (proxyenv *jenv,  pval *presult, jthrowable value) {
   /* wrap the java object in a pval object */
-  jlong result;
   jobject _ob;
   pval *handle;
   TSRMLS_FETCH();
@@ -137,6 +140,7 @@ static  void  setResultFromObject  (proxyenv *jenv,  pval *presult, jobject valu
 
 }
 
+#ifndef ZEND_ENGINE_2
 static  void  setResultFromArray  (proxyenv *jenv,  pval *presult) {
   array_init( presult );
   INIT_PZVAL( presult );
@@ -171,6 +175,7 @@ static pval*hashUpdate  (proxyenv *jenv, pval *handle, jbyteArray key) {
   zend_hash_update(Z_ARRVAL_P(handle), Z_STRVAL(pkey), Z_STRLEN(pkey)+1, &result, sizeof(zval *), NULL);
   return result;
 }
+#endif
 
 static  void  setException  (proxyenv *jenv,  pval *presult, jthrowable value, jbyteArray strValue) {
 #ifndef ZEND_ENGINE_2
@@ -366,8 +371,7 @@ int java_test_server(struct cfg*cfg TSRMLS_DC) {
 
 int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
   jobject local_php_reflect;
-  jmethodID init;
-  int sock, s, i, n=-1, len;
+  int sock, n=-1;
   SFILE *peer;
 
 #ifndef CFG_JAVA_SOCKET_INET
@@ -399,6 +403,7 @@ int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
 	return FAILURE;
   }
 
+  BEGIN_TRANSACTION(JG(jenv));
   /* java bridge class */
   JG(reflect_class) = (*JG(jenv))->FindClass(JG(jenv), "JavaBridge");
   if(check_error(JG(jenv), "reflect_class" TSRMLS_CC)) return FAILURE;
@@ -423,5 +428,6 @@ int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
   JAVA_METHOD(gsp, "GetSetProp", reflect_class, "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;JJ)V");
   JAVA_METHOD(co, "CreateObject", reflect_class, "(Ljava/lang/String;Z[Ljava/lang/Object;JJ)V");
 
+  END_TRANSACTION(JG(jenv));
   return SUCCESS;
 }

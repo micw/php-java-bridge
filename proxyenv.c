@@ -115,10 +115,6 @@ static void DeleteGlobalRef (proxyenv *env, jobject gref) {
   id(env, DELETEGLOBALREF);
   swrite(&gref, sizeof gref, 1, (*env)->peer);
 }
-static void DeleteLocalRef (proxyenv *env, jobject obj) {
-  id(env, DELETELOCALREF);
-  swrite(&obj, sizeof obj, 1, (*env)->peer);
-}
 static void ExceptionClear (proxyenv *env) {
   id(env, EXCEPTIONCLEAR);
 }
@@ -302,7 +298,6 @@ proxyenv *java_createSecureEnvironment(SFILE *peer, int (*handle_request)(proxye
   (*env)->CallObjectMethod=CallObjectMethod;
   (*env)->CallVoidMethod=CallVoidMethod;
   (*env)->DeleteGlobalRef=DeleteGlobalRef;
-  (*env)->DeleteLocalRef=DeleteLocalRef;
   (*env)->ExceptionClear=ExceptionClear;
   (*env)->ExceptionOccurred=ExceptionOccurred;
   (*env)->FindClass=FindClass;
