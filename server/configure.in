@@ -31,7 +31,8 @@ AC_SUBST(INCLUDES)
 AC_SUBST(EXTENSION_DIR)
 AC_SUBST(PHP_JAVA)
 AM_CONDITIONAL([COND_GCJ], [test "$PHP_JAVA" = "yes"])
-AM_CONDITIONAL([COND_WIN_NO_DLL], [case $host_os in cygwin* | mingw* | pw32*) test $enable_win32_dll = no ;; *) false;; esac])
-
-AC_OUTPUT(Makefile_unix Makefile_windows)
+case $host_os in cygwin* | mingw* | pw32*) test $enable_win32_dll = no ;; *) false;; esac
+COND_WIN_NO_DLL=$?
+AC_SUBST(COND_WIN_NO_DLL)
+AC_OUTPUT(Makefile_unix Makefile_windows Makefile)
 
