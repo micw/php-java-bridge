@@ -55,6 +55,7 @@ extern jint JNICALL JNI_CreateJavaVM (JavaVM **, void **, void *);
 #define RELEASESTRINGUTFCHARS 20
 #define SETBYTEARRAYREGION 21
 #define SETOBJECTARRAYELEMENT 22
+#define ISINSTANCEOF 23
 
 #define SETRESULTFROMSTRING 101
 #define SETRESULTFROMLONG 102
@@ -106,6 +107,7 @@ struct proxyenv_ {
   void (*ReleaseStringUTFChars) (proxyenv *env, jstring array, const char*elems);
   void (*SetByteArrayRegion) (proxyenv *env, jbyteArray array, jsize start, jsize len, jbyte *buf);
   void (*SetObjectArrayElement) (proxyenv *env, jobjectArray array, jsize index, jobject val);
+  jboolean (*IsInstanceOf) (proxyenv *env, jobject obj, jclass clazz);
   int (*handle_request)(proxyenv *env);
 };
 extern proxyenv *java_createSecureEnvironment(SFILE *peer, int (*handle_request)(proxyenv *env));

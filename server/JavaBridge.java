@@ -128,6 +128,29 @@ public class JavaBridge implements Runnable {
 	    }
 	};
 
+    public static abstract class PhpMap {
+	Object value;
+	Object keyType; //null: key is integer (array), !null: key is string (hash)
+	public PhpMap(Object value, Object keyType) {
+	    this.value=value;
+	    this.keyType=keyType;
+	    init();
+	}
+	abstract void init();
+	public abstract Object currentData();
+	public abstract byte[] currentKey();
+	public abstract Object moveForward();
+	public abstract Object hasMore();
+	public Object getType() {
+	    return keyType;
+	}
+
+	public abstract boolean offsetExists(Object pos);
+	public abstract Object offsetGet(Object pos);
+	public abstract void offsetSet(Object pos, Object val);
+	public abstract void offsetUnset(Object pos); //remove
+    };
+	
     //
     // Native methods
     //
@@ -137,7 +160,7 @@ public class JavaBridge implements Runnable {
     static native void setResultFromDouble(long result, long peer, double value);
     static native void setResultFromBoolean(long result, long peer, boolean value);
     static native void setResultFromObject(long result, long peer, Object value);
-    static native void setResultFromArray(long result, long peer);
+    static native boolean setResultFromArray(long result, long peer, Object value);
     static native long nextElement(long array, long peer);
     static native long hashUpdate(long array, long peer, byte key[]);
     static native long hashIndexUpdate(long array, long peer, long key);
@@ -162,6 +185,151 @@ public class JavaBridge implements Runnable {
 	bridge.peer=peer;
 	thread.setContextClassLoader(bridge.cl);
 	thread.start();
+    }
+
+    //
+    // Return an iterator for the value (PHP 5 only)
+    //
+    public PhpMap getPhpMap(Object value) { 
+	logDebug("returning map for "+ value.getClass());
+
+	if(value.getClass().isArray()) {
+	    return 
+		new PhpMap(value, null) {
+		    boolean valid;
+		    int i;
+		    long length;
+		    
+		    void init() {
+			i=0;
+			length = Array.getLength(value);
+			valid=length>0;
+		    }
+		    public Object currentData() {
+			if(!valid) return null;
+			return Array.get(value, i);
+		    }
+		    public byte[] currentKey() {
+			if(!valid) return null;
+			return String.valueOf(i).getBytes();
+		    }
+		    public Object moveForward() {
+			valid=++i<length;
+			return valid?this:null;
+		    }
+		    public Object hasMore() {
+			return valid?this:null;
+		    }
+
+		    public boolean offsetExists(Object pos) {
+			int i = ((Long)pos).intValue();
+			return (i>0 && i<length && (Array.get(value, i)!=this));
+		    }
+		    public Object offsetGet(Object pos) {
+			int i = ((Long)pos).intValue();
+			Object o = Array.get(value, i);
+			return o==this ? null : o;
+		    }
+		    public void offsetSet(Object pos, Object val) {
+			int i = ((Long)pos).intValue();
+			Array.set(value, i, val);
+		    }
+		    public void offsetUnset(Object pos) {
+			int i = ((Long)pos).intValue();
+			Array.set(value, i, this);
+		    }
+		};
+	}
+	if(value instanceof Collection) {
+	    return 
+		new PhpMap(value, null) {
+		    Object currentKey;
+		    int i;
+		    Iterator iter;
+		    
+		    void init() {
+			iter = ((Collection)value).iterator();
+			i = 0;
+			currentKey=null;
+			if(iter.hasNext()) {
+			    currentKey=iter.next();
+			}
+		    }
+		    public Object currentData() {
+			return currentKey;
+		    }
+		    public byte[] currentKey() {
+			return String.valueOf(i).getBytes();
+		    }
+		    public Object moveForward() {
+			if(iter.hasNext()) {
+			    i++;
+			    currentKey = iter.next();
+			    return String.valueOf(i).getBytes();
+			} else {
+			    return null;
+			}
+		    }
+		    public Object hasMore() {
+			return currentKey;
+		    }
+
+		    // Should we really care?
+		    public boolean offsetExists(Object pos) {
+			return false;
+		    }
+		    public Object offsetGet(Object pos) {
+			return null;
+		    }
+		    public void offsetSet(Object pos, Object val) {
+		    }
+		    public void offsetUnset(Object pos) {
+		    }
+		};
+	}
+	if(value instanceof Map) {
+	    return
+		new PhpMap(value, this){
+		    Object currentKey;
+		    Iterator iter;
+		    
+		    void init() {
+			iter = ((Map)value).keySet().iterator();
+			currentKey=null;
+			if(iter.hasNext()) {
+			    currentKey=iter.next();
+			}
+		    }
+		    public Object currentData() {
+			if(currentKey==null) return null;
+			return ((Map)value).get(currentKey);
+		    }
+		    public byte[] currentKey() {
+			return String.valueOf(currentKey).getBytes();
+		    }
+		    public Object moveForward() {
+			currentKey = iter.hasNext() ? iter.next() : null;
+			return currentKey;
+		    }
+		    public Object hasMore() {
+			return currentKey;
+		    }
+
+		    public boolean offsetExists(Object pos) {
+			return ((Map)value).containsKey(pos);
+		    }
+		    public Object offsetGet(Object pos) {
+			return ((Map)value).get(pos);
+		    }
+		    public void offsetSet(Object pos, Object val) {
+			((Map)value).put(pos, val);
+		    }
+		    public void offsetUnset(Object pos) {
+			((Map)value).remove(pos);
+		    }
+		};
+	}
+	return null;
     }
 
     //
@@ -275,9 +443,9 @@ public class JavaBridge implements Runnable {
     // Helper routines which encapsulate the native methods
     //
     static void setResult(long result, long peer, Object value) {
-	if (value == null) return;
-
-	if (value instanceof byte[]) {
+	if (value == null) {
+	    JavaBridge.setResultFromString(result, peer, null);
+	} else if (value instanceof byte[]) {
 	    JavaBridge.setResultFromString(result, peer, (byte[])value);
 	} else if (value instanceof java.lang.String) {
 	    JavaBridge.setResultFromString(result, peer, ((String)value).getBytes());
@@ -299,24 +467,27 @@ public class JavaBridge implements Runnable {
 	} else if (value.getClass().isArray()) {
 
 	    long length = Array.getLength(value);
-	    JavaBridge.setResultFromArray(result, peer);
-	    for (int i=0; i<length; i++) {
-		setResult(JavaBridge.nextElement(result, peer), peer, Array.get(value, i));
+	    if(JavaBridge.setResultFromArray(result, peer, value)) {
+		// only for PHP 4, for PHP 5 see getPhpMap()
+		for (int i=0; i<length; i++) {
+		    setResult(JavaBridge.nextElement(result, peer), peer, Array.get(value, i));
+		}
 	    }
-
 	} else if (value instanceof java.util.Hashtable) {
 
 	    Hashtable ht = (Hashtable) value; 
-	    JavaBridge.setResultFromArray(result, peer);
-	    for (Enumeration e = ht.keys(); e.hasMoreElements(); ) {
-		Object key = e.nextElement();
-		long slot;
-		if (key instanceof Number && 
-		    !(key instanceof Double || key instanceof Float))
-		    slot = JavaBridge.hashIndexUpdate(result, peer, ((Number)key).longValue());
-		else
-		    slot = JavaBridge.hashUpdate(result, peer, key.toString().getBytes());
-		setResult(slot, peer, ht.get(key));
+	    if (JavaBridge.setResultFromArray(result, peer, value)) {
+		// only for PHP 4, for PHP 5 see getPhpMap()
+		for (Enumeration e = ht.keys(); e.hasMoreElements(); ) {
+		    Object key = e.nextElement();
+		    long slot;
+		    if (key instanceof Number && 
+			!(key instanceof Double || key instanceof Float))
+			slot = JavaBridge.hashIndexUpdate(result, peer, ((Number)key).longValue());
+		    else
+			slot = JavaBridge.hashUpdate(result, peer, key.toString().getBytes());
+		    setResult(slot, peer, ht.get(key));
+		}
 	    }
 
 	} else {
@@ -355,7 +526,7 @@ public class JavaBridge implements Runnable {
 	    Vector matches = new Vector();
 	    Constructor selected = null;
 
-	    if(!createInstance) {
+	    if(createInstance) {
 		Constructor cons[] = Class.forName(name, true, cl).getConstructors();
 		for (int i=0; i<cons.length; i++) {
 		    if (cons[i].getParameterTypes().length == args.length) {

@@ -68,8 +68,9 @@ struct cfg {
 ZEND_BEGIN_MODULE_GLOBALS(java)
   proxyenv *jenv;
   jobject php_reflect;
-  jclass  reflect_class;
-  jmethodID clearEx, lastEx, setJarPath;
+  jclass  reflect_class, iterator_class;
+  jmethodID clearEx, lastEx, setJarPath, invoke, gsp, co;
+  jmethodID getPhpMap, hasMore, getType, moveForward;
   struct cfg cfg;
 ZEND_END_MODULE_GLOBALS(java)
 

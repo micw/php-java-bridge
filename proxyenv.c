@@ -275,6 +275,14 @@ static void SetObjectArrayElement (proxyenv *env, jobjectArray array, jsize inde
   swrite(&val, sizeof val, 1, (*env)->peer);
 }
 
+static jboolean IsInstanceOf(proxyenv *env, jobject obj, jclass clazz) {
+  jboolean result;
+  id(env, ISINSTANCEOF);
+  swrite(&obj, sizeof obj, 1, (*env)->peer);
+  swrite(&clazz, sizeof clazz, 1, (*env)->peer);
+  sread(&result, sizeof result, 1, (*env)->peer);
+  return result;
+}
 
 proxyenv *java_createSecureEnvironment(SFILE *peer, int (*handle_request)(proxyenv *env)) {
   proxyenv *env;  
@@ -312,6 +320,7 @@ proxyenv *java_createSecureEnvironment(SFILE *peer, int (*handle_request)(proxye
   (*env)->ReleaseStringUTFChars=ReleaseStringUTFChars;
   (*env)->SetByteArrayRegion=SetByteArrayRegion;
   (*env)->SetObjectArrayElement=SetObjectArrayElement;
+  (*env)->IsInstanceOf=IsInstanceOf;
 
   return env;
 } 

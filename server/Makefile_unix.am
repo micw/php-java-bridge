@@ -16,7 +16,7 @@ AM_GCJFLAGS=-fjni
 else 
 # use a real VM when --with-java=$JAVA_HOME was given
 
-dist_data_DATA=JavaBridge.class JavaBridge$$1.class #JavaBridge.$$2.class
+dist_data_DATA=JavaBridge.class JavaBridge$$1.class JavaBridge$$2.class JavaBridge$$3.class JavaBridge$$4.class JavaBridge$$PhpMap.class
 
 JavaBridge.class: JavaBridge.java
 	$(PHP_JAVA)/bin/javac JavaBridge.java

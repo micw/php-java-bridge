@@ -32,6 +32,19 @@ static short checkError(pval *value TSRMLS_DC)
   return 0;
 }
 
+void php_java_invoke(char*name, jobject object, int arg_count, zval**arguments, pval*presult TSRMLS_DC) 
+{
+  proxyenv *jenv = JG(jenv);
+  jlong result = (jlong)(long)presult;
+  jstring method = (*jenv)->NewStringUTF(jenv, name);
+
+  assert(method); if(!method) exit(6);
+
+  (*jenv)->Invoke(jenv, JG(php_reflect), JG(invoke),
+				  object, method,
+				  php_java_makeArray(arg_count, arguments TSRMLS_CC), result);
+}
+
 void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, short constructor, short createInstance, pval *object, int arg_count, zval**arguments)
 {
   proxyenv *jenv;
@@ -48,8 +61,7 @@ void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, sho
     /* construct a Java object:
        First argument is the class name.  Any additional arguments will
        be treated as constructor parameters. */
-    jmethodID co = (*jenv)->GetMethodID(jenv, JG(reflect_class), "CreateObject",
-      "(Ljava/lang/String;Z[Ljava/lang/Object;JJ)V");
+
     jstring className;
     result = (jlong)(long)object;
 
@@ -61,7 +73,7 @@ void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, sho
     className=(*jenv)->NewStringUTF(jenv, Z_STRVAL_P(arguments[0]));
 	assert(className);
 	/* create a new object */
-	(*jenv)->CreateObject(jenv, JG(php_reflect), co,
+	(*jenv)->CreateObject(jenv, JG(php_reflect), JG(co),
 						  className, createInstance?JNI_TRUE:JNI_FALSE, 
 						  php_java_makeArray(arg_count-1, arguments+1 TSRMLS_CC), result);
 
@@ -74,15 +86,12 @@ void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, sho
     jobject obj;
     jstring method;
 
-
-    jmethodID invoke = (*jenv)->GetMethodID(jenv, JG(reflect_class), "Invoke",
-      "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;JJ)V");
     zend_hash_index_find(Z_OBJPROP_P(object), 0, (void**) &handle);
     obj = zend_list_find(Z_LVAL_PP(handle), &type);
     method = (*jenv)->NewStringUTF(jenv, name);
     result = (jlong)(long)return_value;
     /* invoke a method on the given object */
-    (*jenv)->Invoke(jenv, JG(php_reflect), invoke,
+    (*jenv)->Invoke(jenv, JG(php_reflect), JG(invoke),
       obj, method, php_java_makeArray(arg_count, arguments TSRMLS_CC), result);
 
     (*jenv)->DeleteLocalRef(jenv, method);
@@ -233,9 +242,7 @@ php_java_getset_property (char* name, pval* object, jobjectArray value, zval *pr
       "Attempt to access a Java property on a non-Java object");
   } else {
     /* invoke the method */
-    jmethodID gsp = (*jenv)->GetMethodID(jenv, JG(reflect_class), "GetSetProp",
-      "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;JJ)V");
-    (*jenv)->GetSetProp(jenv, JG(php_reflect), gsp, obj, propName, value, result);
+    (*jenv)->GetSetProp(jenv, JG(php_reflect), JG(gsp), obj, propName, value, result);
   }
 
   (*jenv)->DeleteLocalRef(jenv, propName);

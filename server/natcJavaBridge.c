@@ -481,7 +481,7 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	void *key;
 	jbyte *result;
 	jboolean isCopy;
-	jarray array;
+	jbyteArray array;
 	size_t count;
 	sread(&array, sizeof array, 1, peer);
 	count = (*env)->GetArrayLength(env, array);
@@ -494,6 +494,7 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 
 	ob1=objFromPtr(env, key);
 	ob2=objFromPtr(env, result);
+	assert(ob1 && ob2);
 	if(!ob1 || !ob2) return;
 	(*env)->CallObjectMethod(env, peer->objectHash, hashPut, ob1, ob2);
 	break;
@@ -630,17 +631,16 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
   }
   case RELEASEBYTEARRAYELEMENTS: {
 	jobject val, ob;
-	jarray array;
+	jbyteArray array;
 	jbyte *elems;
 	jint mode;
 	sread(&array, sizeof array, 1, peer);
 	sread(&elems, sizeof elems, 1, peer);
 	sread(&mode, sizeof mode, 1, peer);
 	ob=objFromPtr(env, elems);
-	if(!ob) return;
+	assert(ob); if(!ob) return;
 	val = (*env)->CallObjectMethod(env, peer->objectHash, hashRemove, ob);
-	assert(val);
-	if(!val) return;
+	assert(val); if(!val) return;
 	assert(!mode);
 	(*env)->ReleaseByteArrayElements(env, array, ptrFromObj(env, val), mode);
 	(*env)->DeleteLocalRef(env, val);
@@ -686,6 +686,16 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	sread(&index, sizeof index, 1, peer);
 	sread(&val, sizeof val, 1, peer);
 	(*env)->SetObjectArrayElement(env, array, index, val);
+	break;
+  }
+  case ISINSTANCEOF: {
+	jobject obj;
+	jclass clazz;
+	jboolean result;
+	sread(&obj, sizeof obj, 1, peer);
+	sread(&clazz, sizeof clazz, 1, peer);
+	result = (*env)->IsInstanceOf(env, obj, clazz);
+	swrite(&result, sizeof result, 1, peer);
 	break;
   }
   default: {
@@ -913,14 +923,18 @@ JNIEXPORT void JNICALL Java_JavaBridge_setResultFromObject
   while(handle_request(peer, env));
 }
 
-JNIEXPORT void JNICALL Java_JavaBridge_setResultFromArray
-  (JNIEnv *env, jclass self, jlong result, jlong _peer)
+JNIEXPORT jboolean JNICALL Java_JavaBridge_setResultFromArray
+  (JNIEnv *env, jclass self, jlong result, jlong _peer, jobject value)
 {
+  jboolean send_content;
   struct peer*peer=(struct peer*)(long)_peer;
-  if(setjmp(peer->savepoint)) return;
+  if(setjmp(peer->savepoint)) return JNI_FALSE;
   ID(peer, SETRESULTFROMARRAY);
   swrite(&result, sizeof result, 1, peer);
+  swrite(&value, sizeof value, 1, peer);
+  sread(&send_content, sizeof send_content, 1, peer);
   while(handle_request(peer, env));
+  return send_content;
 }
 
 JNIEXPORT jlong JNICALL Java_JavaBridge_nextElement
@@ -983,7 +997,7 @@ JNINativeMethod javabridge[]={
   {"setResultFromDouble", "(JJD)V", Java_JavaBridge_setResultFromDouble},
   {"setResultFromBoolean", "(JJZ)V", Java_JavaBridge_setResultFromBoolean},
   {"setResultFromObject", "(JJLjava/lang/Object;)V", Java_JavaBridge_setResultFromObject},
-  {"setResultFromArray", "(JJ)V", Java_JavaBridge_setResultFromArray},
+  {"setResultFromArray", "(JJLjava/lang/Object;)Z", Java_JavaBridge_setResultFromArray},
   {"nextElement", "(JJ)J", Java_JavaBridge_nextElement},
   {"hashUpdate", "(JJ[B)J", Java_JavaBridge_hashUpdate},
   {"hashIndexUpdate", "(JJJ)J", Java_JavaBridge_hashIndexUpdate},
@@ -1070,6 +1084,7 @@ void java_bridge_main_gcj(int argc, char**_argv)
   char **argv;
   /* someone should really fix this bug in gcj */
   meths[0].meth[4].signature="(JJLjava.lang.Object;)V";
+  meths[0].meth[5].signature="(JJLjava.lang.Object;)Z";
   meths[0].meth[9].signature="(JJLjava.lang.Throwable;[B)V";
   meths[0].meth[10].signature="(ILjava.lang.String;)V";
 	

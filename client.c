@@ -34,7 +34,7 @@
 ZEND_DECLARE_MODULE_GLOBALS(java)
 
 
-static int check_error(proxyenv *jenv, int nr TSRMLS_DC) {
+static int check_error(proxyenv *jenv, char*msg TSRMLS_DC) {
   jthrowable error = (*(jenv))->ExceptionOccurred(jenv);
   jclass errClass;
   jmethodID toString;
@@ -47,8 +47,8 @@ static int check_error(proxyenv *jenv, int nr TSRMLS_DC) {
   toString = (*jenv)->GetMethodID(jenv, errClass, "toString", "()Ljava/lang/String;");
   errString = (*jenv)->CallObjectMethod(0, jenv, error, toString);
   errAsUTF = (*jenv)->GetStringUTFChars(jenv, errString, &isCopy);
-  fprintf(stdout, "php_mod_java(%d): %s",nr, errAsUTF);
-  php_error(E_ERROR, "php_mod_java(%d): %s",nr, errAsUTF);
+  fprintf(stdout, "php_mod_java(%s): %s",msg, errAsUTF);
+  php_error(E_ERROR, "php_mod_java(%s): %s",msg, errAsUTF);
   if(isCopy) (*jenv)->ReleaseStringUTFChars(jenv, errString, errAsUTF);
   return 1;
 }
@@ -202,7 +202,12 @@ static int handle_request(proxyenv *env) {
 	jbyteArray jvalue;
 	sread(&result, sizeof result, 1, peer);
 	sread(&jvalue, sizeof jvalue, 1, peer);
-	setResultFromString(env, (pval*)(long)result, jvalue);
+	if(jvalue)
+	  setResultFromString(env, (pval*)(long)result, jvalue);
+#ifdef ZEND_ENGINE_2
+	else
+	  ZVAL_NULL((pval*)(long)result);
+#endif
 	break;
   }
   case SETRESULTFROMLONG: {
@@ -234,8 +239,20 @@ static int handle_request(proxyenv *env) {
 	break;
   }
   case SETRESULTFROMARRAY: {
+	jobject jvalue;
+#ifdef ZEND_ENGINE_2
+	static const jboolean send_content = JNI_FALSE;
+#else
+	static const jboolean send_content = JNI_TRUE;
+#endif
  	sread(&result, sizeof result, 1, peer);
+ 	sread(&jvalue, sizeof jvalue, 1, peer);
+	swrite(&send_content, sizeof send_content, 1, peer);
+#ifdef ZEND_ENGINE_2
+	setResultFromObject(env, (pval*)(long)result, jvalue);
+#else
 	setResultFromArray(env, (pval*)(long)result);
+#endif
 	break;
   }
   case NEXTELEMENT: {
@@ -333,6 +350,10 @@ int java_test_server(struct cfg*cfg TSRMLS_DC) {
   }
   return (cfg->cid && count)?SUCCESS:FAILURE;
 }
+
+#define JAVA_METHOD(name, strname, class, param) \
+  JG(name) = (*JG(jenv))->GetMethodID(JG(jenv), JG(class), strname, param);\
+  if(check_error(JG(jenv), strname TSRMLS_CC)) return FAILURE;
 int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
   jobject local_php_reflect;
   jmethodID init;
@@ -370,27 +391,27 @@ int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
 
   /* java bridge class */
   JG(reflect_class) = (*JG(jenv))->FindClass(JG(jenv), "JavaBridge");
-  if(check_error(JG(jenv), 3 TSRMLS_CC)) return FAILURE;
+  if(check_error(JG(jenv), "reflect_class" TSRMLS_CC)) return FAILURE;
   
   /* java bridge instance */
   JG(php_reflect) = (*JG(jenv))->NewGlobalRef(JG(jenv), local_php_reflect);
-  if(check_error(JG(jenv), 5 TSRMLS_CC)) return FAILURE;
+  if(check_error(JG(jenv), "php_reflect" TSRMLS_CC)) return FAILURE;
 
-  /* library path */
-  JG(setJarPath) = (*JG(jenv))->GetMethodID(JG(jenv), JG(reflect_class), 
-										"setJarLibraryPath", 
-										"(Ljava/lang/String;)V");
-  if(check_error(JG(jenv), 7 TSRMLS_CC)) return FAILURE;
+  JAVA_METHOD(setJarPath, "setJarLibraryPath", reflect_class, "(Ljava/lang/String;)V");
+  JAVA_METHOD(clearEx, "clearException", reflect_class, "()V");
+  JAVA_METHOD(lastEx, "lastException", reflect_class, "(JJ)V");
+  JAVA_METHOD(getPhpMap, "getPhpMap", reflect_class, "(Ljava/lang/Object;)LJavaBridge$PhpMap;");
 
-  /* clear exeption */
-  JG(clearEx) = (*JG(jenv))->GetMethodID(JG(jenv), JG(reflect_class), 
-										 "clearException", "()V");
-  if(check_error(JG(jenv), 9 TSRMLS_CC)) return FAILURE;
+  JG(iterator_class) = (*JG(jenv))->FindClass(JG(jenv), "JavaBridge$PhpMap");
+  if(check_error(JG(jenv), "iterator_class" TSRMLS_CC)) return FAILURE;
 
-  /* last exception */
-  JG(lastEx) = (*JG(jenv))->GetMethodID(JG(jenv), JG(reflect_class), 
-										"lastException", "(JJ)V");
-  if(check_error(JG(jenv), 11 TSRMLS_CC)) return FAILURE;
+  JAVA_METHOD(moveForward, "moveForward", iterator_class, "()Ljava/lang/Object;");
+  JAVA_METHOD(hasMore, "hasMore", iterator_class, "()Ljava/lang/Object;");
+  JAVA_METHOD(getType, "getType", iterator_class, "()Ljava/lang/Object;");
+  
+  JAVA_METHOD(invoke, "Invoke", reflect_class, "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;JJ)V");
+  JAVA_METHOD(gsp, "GetSetProp", reflect_class, "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;JJ)V");
+  JAVA_METHOD(co, "CreateObject", reflect_class, "(Ljava/lang/String;Z[Ljava/lang/Object;JJ)V");
 
   return SUCCESS;
 }

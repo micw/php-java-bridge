@@ -1,3 +1,48 @@
+2004-11-24  Jost Boekemeier  <jostb@timon.intern>
+
+	* instanceof.php, iteratorInterface.php, arrayInterface.php,
+	array.php, Array.java, array.jar: new files in tests.php5
+	
+	* client.c (handle_request): Do not discard null results for PHP 5
+
+	
+	PHP 5 Iterator interface:
+	
+	* php_java.h (clearEx, lastEx, setJarPath, getPhpMap, invoke, gsp,
+	co, hasMore, getType, moveForward): New globals.
+	
+	* client.c (java_connect_to_server): Init globals
+	
+	* java_bridge.c, java_bridge.h (php_java_invoke): New function.
+	
+	* java_bridge.c (php_java_call_function_handler): Use globals
+	
+	* java.c (java_iterator, iterator_dtor, iterator_valid,
+	iterator_current_key, init_current_data, iterator_move_forward,
+	java_iterator_funcs, get_iterator): New functions/structures.
+	(PHP_MINIT_FUNCTION): Rewritten.
+	
+	* server/JavaBridge.java (PhpMap): New abstract class.
+	(getPhpMap): Factory.
+	
+	* protocol.h, proxyenv.c, server/handleRequest.c (IsInstanceOf):
+	New protocol request.
+	
+	* php-java-bridge.spec, server/MakefileUnix.am: Fiddle with the
+	new generated JavaBridge$$foo1,2,3xyz output classes. Fortunately
+	they don't have slashes or backslashes in their names ...
+
+	
+	PHP 5 array interface:
+	
+	* java.c (offsetExists, offsetGet, offsetSet, offsetUnset,
+	arginfo_array_offsetSet, arginfo_array_offsetGet): New
+	functions/structures for PHP 5.
+	(PHP_MINIT_FUNCTION): Rewritten.
+	
+	
+	* server/natcJavaBridge.c (handle_request): Fixed typo.
+	
 2004-11-21  Jost Boekemeier  <jostb@intern>
 
 	* README, server/natcJavaBridge.c, server/JavaBridge.java,

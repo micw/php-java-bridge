@@ -45,7 +45,7 @@ rm -rf $RPM_BUILD_ROOT
 echo >filelist
 
 mod_dir=`cat install.log | sed -n '/Installing shared extensions:/s///p' | awk '{print $1}'`
-files='JavaBridge.class JavaBridge$1.class java.so libnatcJavaBridge.so'
+files='JavaBridge.class JavaBridge$1.class JavaBridge$2.class JavaBridge$3.class JavaBridge$4.class JavaBridge$PhpMap.class java.so libnatcJavaBridge.so'
 mkdir -p $RPM_BUILD_ROOT/$mod_dir
 for i in $files; 
   do cp $mod_dir/$i $RPM_BUILD_ROOT/$mod_dir/$i; 
