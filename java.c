@@ -41,7 +41,6 @@ PHP_RSHUTDOWN_FUNCTION(java)
 PHP_FUNCTION(java_last_exception_get)
 {
   jlong result = 0;
-  jmethodID lastEx;
 
   if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT;
 
@@ -51,17 +50,14 @@ PHP_FUNCTION(java_last_exception_get)
 	php_error(E_ERROR, "java not initialized");
 	return;
   }
-  lastEx = (*JG(jenv))->GetMethodID(JG(jenv), JG(reflect_class), 
-          "lastException", "(JJ)V");
 
-  (*JG(jenv))->LastException(JG(jenv), JG(php_reflect), lastEx, 
-							  result);
+  (*JG(jenv))->LastException(JG(jenv), JG(php_reflect), 
+							 JG(lastEx), result);
 }
 
 PHP_FUNCTION(java_last_exception_clear)
 {
   jlong result = 0;
-  jmethodID clearEx;
 
   if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT;
 
@@ -71,18 +67,15 @@ PHP_FUNCTION(java_last_exception_clear)
 	php_error(E_ERROR, "java not initialized");
 	return;
   }
-  clearEx = (*JG(jenv))->GetMethodID(JG(jenv), JG(reflect_class), 
-          "clearException", "()V");
 
   (*JG(jenv))->CallVoidMethod(1, JG(jenv), JG(php_reflect), 
-							  clearEx);
+							  JG(clearEx));
 }
 
 PHP_FUNCTION(java_set_library_path)
 {
   zval **path;
   jlong result = 0;
-  jmethodID setJarPath;
   jstring p;
 
   if (ZEND_NUM_ARGS()!=1 || zend_get_parameters_ex(1, &path) == FAILURE) 
@@ -96,13 +89,10 @@ PHP_FUNCTION(java_set_library_path)
 	php_error(E_ERROR, "java not initialized");
 	return;
   }
-  setJarPath = (*JG(jenv))->GetMethodID(JG(jenv), JG(reflect_class), 
-										"setJarLibraryPath", 
-										"(Ljava/lang/String;)V");
 
   p = (*JG(jenv))->NewStringUTF(JG(jenv), Z_STRVAL_PP(path));
   (*JG(jenv))->CallVoidMethod(2, JG(jenv), JG(php_reflect), 
-							  setJarPath, p);
+							  JG(setJarPath), p);
 
   (*JG(jenv))->DeleteLocalRef(JG(jenv), p);
 }
@@ -219,43 +209,6 @@ static void init_server()
 }
 
 #ifdef ZEND_ENGINE_2
-static void print_array(int argc, pval** argv)
-{
-	int i;
-  for (i=0; i<argc; i++) {
-	  pval*arg=argv[i];
-	  switch (Z_TYPE_P(arg)) {
-	  case IS_STRING:
-		  puts(Z_STRVAL_P(arg));
-      break;
-
-    case IS_OBJECT:
-		puts("object");
-      break;
-
-    case IS_BOOL:
-		puts("bool");
-      break;
-
-    case IS_LONG:
-		puts("long");
-      break;
-
-    case IS_DOUBLE:
-		puts("double");
-      break;
-
-    case IS_ARRAY:
-      {
-		  puts("array");
-      }
-
-      break;
-	  default:
-		puts("bleh");
-	  }
-  }
-}
 
 PHP_METHOD(java, java)
 {
@@ -267,8 +220,6 @@ PHP_METHOD(java, java)
 		php_error(E_ERROR, "Couldn't fetch arguments into array.");
 		RETURN_NULL();
 	}
-	puts("java called");
-	print_array(argc, argv);
 
 	php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU,
 								   "java",
@@ -301,10 +252,6 @@ PHP_METHOD(java, __call)
 			xargv[i++] = *param;
 	}
 
-	print_array(argc, argv);
-	puts("call called");
-	print_array(argc, argv);
-
 	php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU,
 								   Z_STRVAL(*argv[0]),
 								   getThis(),
@@ -324,30 +271,21 @@ PHP_METHOD(java, __set)
 	RETURN_NULL();
   }
   
-  puts("set called");
-  print_array(argc, argv);
-  
-  php_java_set_property_handler(Z_STRVAL(*argv[0]), getThis(), argv[1]);
+  php_java_set_property_handler(Z_STRVAL(*argv[0]), getThis(), argv[1], return_value);
   
   efree(argv);
 }
 PHP_METHOD(java, __get)
 {
-  pval presult;
   zval **argv;
   int argc = ZEND_NUM_ARGS();
-  
   argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
   if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
 	php_error(E_ERROR, "Couldn't fetch arguments into array.");
 	RETURN_NULL();
   }
   
-  puts("get called");
-  print_array(argc, argv);
-  
-  presult = php_java_get_property_handler(Z_STRVAL(*argv[0]), getThis());
-  
+  php_java_get_property_handler(Z_STRVAL(*argv[0]), getThis(), return_value);
   efree(argv);
 }
 
@@ -445,6 +383,7 @@ PHP_MINIT_FUNCTION(java)
 	zend_register_internal_class(&php_java_class_entry TSRMLS_CC);
 #else
 	zend_class_entry ce;
+	zend_class_entry *parent = (zend_class_entry *) zend_exception_get_default();
 	zend_internal_function call, get, set;
 
 	make_lambda(&call, ZEND_FN(java___call));
@@ -457,7 +396,8 @@ PHP_MINIT_FUNCTION(java)
 								(zend_function*)&get, 
 								(zend_function*)&set);
 	
-	php_java_class_entry = zend_register_internal_class(&ce TSRMLS_CC);
+	php_java_class_entry =
+	  zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
 #endif
 
 	/* Register the resource, with destructor (arg 1) and text

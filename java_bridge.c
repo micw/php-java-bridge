@@ -16,10 +16,31 @@
 
 ZEND_DECLARE_MODULE_GLOBALS(java)
 
-static int checkError(pval *value);
 static jobjectArray php_java_makeArray(int argc, pval** argv TSRMLS_DC);
 static jobject php_java_makeObject(pval* arg TSRMLS_DC);
 
+static short checkError(pval *value TSRMLS_DC)
+{
+  if (Z_TYPE_P(value) == IS_EXCEPTION) {
+#ifndef ZEND_ENGINE_2
+    php_error(E_WARNING, "%s", Z_STRVAL_P(value));
+#else
+{
+  jlong result; zval *exception;
+  MAKE_STD_ZVAL(exception);
+  zval_copy_ctor(exception);
+  INIT_PZVAL(exception);
+  result = (jlong)(long)exception;
+  (*JG(jenv))->LastException(JG(jenv), JG(php_reflect), JG(lastEx), result);
+  zend_throw_exception_object(exception TSRMLS_CC);
+}
+#endif
+	efree(Z_STRVAL_P(value));
+    ZVAL_FALSE(value);
+    return 1;
+  };
+  return 0;
+}
 
 void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, pval *object, int arg_count, zval**arguments)
 {
@@ -75,7 +96,7 @@ void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, pva
 
     (*jenv)->DeleteLocalRef(jenv, method);
   }
-  checkError((pval*)(long)result);
+  checkError((pval*)(long)result TSRMLS_CC);
 }
 
 static jobject php_java_makeObject(pval* arg TSRMLS_DC)
@@ -192,10 +213,9 @@ static jobjectArray php_java_makeArray(int argc, pval** argv TSRMLS_DC)
   return result;
 }
 
-static pval 
-php_java_getset_property (char* name, pval* object, jobjectArray value TSRMLS_DC)
+static short
+php_java_getset_property (char* name, pval* object, jobjectArray value, zval *presult TSRMLS_DC)
 {
-  pval presult;
   jlong result = 0;
   pval **pobject;
   jobject obj;
@@ -213,8 +233,9 @@ php_java_getset_property (char* name, pval* object, jobjectArray value TSRMLS_DC
   zend_hash_index_find(Z_OBJPROP_P(object),
     0, (void **) &pobject);
   obj = zend_list_find(Z_LVAL_PP(pobject), &type);
-  result = (jlong)(long) &presult;
-  Z_TYPE(presult) = IS_NULL;
+  result = (jlong)(long) presult;
+
+  ZVAL_NULL(presult);
 
   if (!obj || (type!=le_jobject)) {
     php_error(E_ERROR,
@@ -227,39 +248,25 @@ php_java_getset_property (char* name, pval* object, jobjectArray value TSRMLS_DC
   }
 
   (*jenv)->DeleteLocalRef(jenv, propName);
-  return presult;
-}
-
-static int checkError(pval *value)
-{
-  if (Z_TYPE_P(value) == IS_EXCEPTION) {
-    php_error(E_WARNING, "%s", Z_STRVAL_P(value));
-    efree(Z_STRVAL_P(value));
-    ZVAL_FALSE(value);
-    return 1;
-  };
-  return 0;
 }
 
 /**
  * php_java_get_property_handler
  */
-pval php_java_get_property_handler(char*name, pval *object)
+short php_java_get_property_handler(char*name, zval *object, zval *presult TSRMLS_DC)
 {
-  pval presult = php_java_getset_property(name, object, 0 TSRMLS_CC);
-  checkError(&presult);
-  return presult;
+  php_java_getset_property(name, object, 0, presult TSRMLS_CC);
+  return checkError(presult TSRMLS_CC) ? FAILURE : SUCCESS;
 }
 
 
 /**
  * php_java_set_property_handler
  */
-int php_java_set_property_handler(char*name, pval *object, pval *value)
+short php_java_set_property_handler(char*name, zval *object, zval *value, zval *presult TSRMLS_DC)
 {
-  pval presult = 
-	php_java_getset_property(name, object, php_java_makeArray(1, &value TSRMLS_CC) TSRMLS_CC);
-  return checkError(&presult) ? FAILURE : SUCCESS;
+  php_java_getset_property(name, object, php_java_makeArray(1, &value TSRMLS_CC), presult TSRMLS_CC);
+  return checkError(presult TSRMLS_CC) ? FAILURE : SUCCESS;
 }
 
 /*

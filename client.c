@@ -321,11 +321,30 @@ int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
 	php_error(E_WARNING, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge?",58, strerror(errno));
 	return FAILURE;
   }
+
+  /* java bridge class */
   JG(reflect_class) = (*JG(jenv))->FindClass(JG(jenv), "JavaBridge");
   if(check_error(JG(jenv), 3 TSRMLS_CC)) return FAILURE;
   
+  /* java bridge instance */
   JG(php_reflect) = (*JG(jenv))->NewGlobalRef(JG(jenv), local_php_reflect);
   if(check_error(JG(jenv), 5 TSRMLS_CC)) return FAILURE;
 
-   return SUCCESS;
+  /* library path */
+  JG(setJarPath) = (*JG(jenv))->GetMethodID(JG(jenv), JG(reflect_class), 
+										"setJarLibraryPath", 
+										"(Ljava/lang/String;)V");
+  if(check_error(JG(jenv), 7 TSRMLS_CC)) return FAILURE;
+
+  /* clear exeption */
+  JG(clearEx) = (*JG(jenv))->GetMethodID(JG(jenv), JG(reflect_class), 
+										 "clearException", "()V");
+  if(check_error(JG(jenv), 9 TSRMLS_CC)) return FAILURE;
+
+  /* last exception */
+  JG(lastEx) = (*JG(jenv))->GetMethodID(JG(jenv), JG(reflect_class), 
+										"lastException", "(JJ)V");
+  if(check_error(JG(jenv), 11 TSRMLS_CC)) return FAILURE;
+
+  return SUCCESS;
 }

@@ -69,6 +69,7 @@ ZEND_BEGIN_MODULE_GLOBALS(java)
   proxyenv *jenv;
   jobject php_reflect;
   jclass  reflect_class;
+  jmethodID clearEx, lastEx, setJarPath;
   struct cfg cfg;
 ZEND_END_MODULE_GLOBALS(java)
 
