@@ -342,7 +342,7 @@ call_function_handler(INTERNAL_FUNCTION_PARAMETERS, zend_property_reference *pro
 static pval 
 get_property_handler(zend_property_reference *property_reference)
 {
-  pval presult;
+  pval presult, *object;
   zend_llist_element *element;
   zend_overloaded_element *property;
   char *name;
@@ -352,8 +352,9 @@ get_property_handler(zend_property_reference *property_reference)
   element = property_reference->elements_list->head;
   property=(zend_overloaded_element *)element->data;
   name =  Z_STRVAL(property->element);
+  object = property_reference->object;
 
-  presult = php_java_get_property_handler(char* name, pval* object TSRMLS_CC);
+  php_java_get_property_handler(name, object, &presult TSRMLS_CC);
 
   pval_destructor(&property->element);
   return presult;
@@ -363,6 +364,7 @@ static int
 set_property_handler(zend_property_reference *property_reference, pval *value)
 {
   int result;
+  pval dummy, *object;
   zend_llist_element *element;
   zend_overloaded_element *property;
   char *name;
@@ -372,8 +374,9 @@ set_property_handler(zend_property_reference *property_reference, pval *value)
   element = property_reference->elements_list->head;
   property=(zend_overloaded_element *)element->data;
   name =  Z_STRVAL(property->element);
+  object = property_reference->object;
 
-  result = php_java_set_property_handler(name, object, value TSRMLS_CC);
+  result = php_java_set_property_handler(name, object, value, &dummy TSRMLS_CC);
 
   pval_destructor(&property->element);
   return result;
@@ -383,12 +386,13 @@ set_property_handler(zend_property_reference *property_reference, pval *value)
 PHP_MINIT_FUNCTION(java)
 {
 #ifndef ZEND_ENGINE_2
-  INIT_OVERLOADED_CLASS_ENTRY(php_java_class_entry, "java", NULL,
-								call_function_handler,
-								get_property_handler,
-								set_property_handler);
+  zend_class_entry ce;
+  INIT_OVERLOADED_CLASS_ENTRY(ce, "java", NULL,
+							  call_function_handler,
+							  get_property_handler,
+							  set_property_handler);
 
-	zend_register_internal_class(&php_java_class_entry TSRMLS_CC);
+	php_java_class_entry = zend_register_internal_class(&ce TSRMLS_CC);
 #else
 	zend_class_entry ce;
 	zend_class_entry *parent;

@@ -20,8 +20,7 @@ Provides: php-java-bridge
 
 BuildRoot: /var/tmp/php-java-bridge-%{version}
 
-%description 
-The PHP/Java bridge allows one to access java based applications running in a java application server.  The PHP/Java bridge communicates with the application server through local sockets using an efficient communication protocol.  This means that only one JVM runs to serve all clients within a multi-process HTTP-Server.  Each client process communicates with a corresponding thread spawned by the running application server.  
+%description Java module/extension for the PHP script language.
 
 %prep
 
@@ -84,9 +83,19 @@ echo /etc/init.d/php-java-bridge >>filelist
 rm -rf $RPM_BUILD_ROOT
 %post
 # calculate java_dir again
-jre=`rpm -q --whatprovides j2re`
-java=`rpm -ql $jre | grep 'bin/java$'`
-java_dir=`head -1 /etc/sysconfig/java`
+jre=`rpm -q --whatprovides j2re | head -1`
+java=`rpm -ql $jre | grep 'bin/java$' | head -1`
+if test -s /etc/sysconfig/java; then
+# IBM and RedHat 
+	java_dir=`head -1 /etc/sysconfig/java`
+else
+# Sun JDK RPM nonsense
+	java_dir=`dirname $java`
+	java_dir=`dirname $java_dir`
+	if test X`basename $java_dir` = Xjre; then
+		java_dir=`dirname $java_dir`;
+	fi
+fi
 cat <<EOF2 >>/etc/php.d/java.ini
 java.java_home=$java_dir
 java.java=$java

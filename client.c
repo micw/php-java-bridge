@@ -294,7 +294,7 @@ static int java_do_test_server(struct cfg*cfg TSRMLS_DC) {
   int n, c, e;
   jobject ob;
 
-#ifdef CFG_JAVA_SOCKET_INET
+#ifndef CFG_JAVA_SOCKET_INET
   sock = socket (PF_LOCAL, SOCK_STREAM, 0);
 #else
   sock = socket (PF_INET, SOCK_STREAM, 0);

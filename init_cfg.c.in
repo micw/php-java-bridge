@@ -16,7 +16,6 @@
 #ifndef EXTENSION_DIR
 #error EXTENSION_DIR must point to the PHP extension directory
 #endif
-#define JAVA_HOME "@PHP_JAVA@"
 
 #ifndef CFG_CLASSPATH
 #define CFG_CLASSPATH EXTENSION_DIR
@@ -75,6 +74,7 @@ static void init_socket(struct cfg*cfg) {
 static void init_socket(struct cfg*cfg) {
   cfg->sockname = strdup("9147");
 }
+#endif
 #endif
 void java_init_cfg(struct cfg *cfg) {
   if(!(java_ini_updated&U_SOCKNAME)) {

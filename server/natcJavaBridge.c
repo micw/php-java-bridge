@@ -26,6 +26,7 @@
 /* posix threads implementation */
 #ifndef __MINGW32__
 # include <pthread.h>
+# include <semaphore.h>
 #endif
 
 /* miscellaneous */
@@ -90,7 +91,8 @@ static pthread_attr_t attr;
 static pthread_mutex_t mutex;
 static int count=0;
 static pthread_cond_t cond;
-static sigset_t block;
+static volatile sem_t cond_sig;
+static volatile short bridge_shutdown = 0;
 #endif
 
 struct peer {
@@ -196,20 +198,14 @@ static void atexit_bridge() {
 # if !defined(CFG_JAVA_SOCKET_ANON) && !defined(CFG_JAVA_SOCKET_INET)
   unlink(sockname);
 # endif
-	pthread_attr_destroy(&attr);
-	pthread_mutex_destroy(&mutex);
-	pthread_cond_destroy(&cond);
+  sem_destroy((sem_t*)&cond_sig);
+  pthread_attr_destroy(&attr);
+  pthread_mutex_destroy(&mutex);
+  pthread_cond_destroy(&cond);
 #endif
-	free(sockname);
-	sockname=NULL;
+  free(sockname);
+  sockname=NULL;
   }
-}
-
-static void block_sig() {
-#ifndef __MINGW32__
-  sigset_t d;
-  pthread_sigmask(SIG_BLOCK, &block, &d);
-#endif
 }
 
 static void enter() {
@@ -232,17 +228,17 @@ static void leave() {
 
 static void *guard_requests(void *p) {
 #ifndef __MINGW32__
-  int sig;
-  block_sig();
-#ifdef HAVE_SIGWAIT
-  sigwait(&block, &sig);
-#else
-  sigsuspend(&block);
-#endif
+  int err;
+
+ again: 
+  err = sem_wait((sem_t*)&cond_sig); 
+  if(err==-1 && errno==EINTR) goto again; /* handle ctrl-z */
+ 
   pthread_mutex_lock(&mutex);
+  bridge_shutdown=1;
   if(count) pthread_cond_wait(&cond, &mutex);
-  count=-1;
   pthread_mutex_unlock(&mutex);
+  exit(0);
 #endif
 }
 
@@ -285,8 +281,7 @@ static void initGlobals(JNIEnv *env) {
 	pthread_mutex_init(&mutex, NULL);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 	
-	sigemptyset(&block);
-	sigaddset(&block, SIGTERM);
+	sem_init((sem_t*)&cond_sig, 0, 0);
 	pthread_create(&thread, &attr, guard_requests, 0);
   }
 #endif
@@ -758,7 +753,6 @@ JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jobject instan
 {
   jobject globalRef;
   SFILE *peer = (SFILE*)(long)socket;
-  block_sig();
   logChannel(env, "create new communication channel", socket);
 
   globalRef = connection_startup(env);
@@ -786,6 +780,10 @@ JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jobject instan
 }
 
 
+static void post(int i) {
+  sem_post((sem_t*)&cond_sig);
+  signal(SIGTERM, post);
+}
 
 JNIEXPORT void JNICALL Java_JavaBridge_startNative
   (JNIEnv *env, jclass self, jint _logLevel, jstring _sockname)
@@ -801,6 +799,9 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
   logLevel = _logLevel;
   bridge = self;
   initGlobals(env);
+
+  signal(SIGTERM, post);
+  signal(SIGPWR, post);
 
   if(_sockname!=NULL) {
 	jboolean isCopy;
@@ -841,12 +842,10 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
 	int socket;
 
   res:errno=0; 
-#ifndef __MINGW32__
-	pthread_mutex_lock(&mutex);
-	if(count==-1) {pthread_mutex_unlock(&mutex); return;}
-	pthread_mutex_unlock(&mutex);
-#endif
 	socket = accept(sock, NULL, 0); 
+#ifndef __MINGW32__
+	if(bridge_shutdown) while(1) sleep(65535);
+#endif
 	if(socket==-1) {logDebug(env, "socket accept failed"); return;}
 	//if(errno) goto res;
 	peer = SFDOPEN(socket, "r+");

@@ -8,11 +8,11 @@ LD_LIBRARY_PATH=/lib:/usr/lib:$LD_LIBRARY_PATH
 LANG=C
 
 export LANG PATH LD_LIBRARY_PATH
-
+PID=/var/run/php-java-bridge.pid
 
 # if called with non-zero args, invoke
 if test $# != 0; then
-  pid=/var/run/php-java-bridge.pid
+  pid=$PID
   trap 'kill `cat $pid`; rm -f $pid' 2 15
   eval $1; shift
   eval $1; shift
@@ -33,7 +33,7 @@ if fgrep java /tmp/phpinfo.$$ |
      grep "java support.*Enabled" >/dev/null
 then true;
 else
- echo "Error: PHP/Java Bridge module not installed."; exit 1
+ echo "Error: PHP/Java Bridge module not installed." >&2; exit 1
 fi
 
 if  fgrep java /tmp/phpinfo.$$ |
@@ -41,7 +41,12 @@ if  fgrep java /tmp/phpinfo.$$ |
     grep 'java status.*not running' >/dev/null
 then true
 else
-    echo "PHP/Java Bridge already running or socketname option not set in /etc/php.d/java.ini"; exit 2;
+    if test -s $PID; then
+	echo "PHP/Java Bridge already running with pid `cat $PID`" >&2
+    else
+	echo "Error: java.socketname option not set in php .ini file, see output of phpinfo()." >&2
+    fi
+    exit 2;
 fi
 
 cmd=`fgrep java /tmp/phpinfo.$$ |

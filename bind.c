@@ -98,6 +98,12 @@ static short can_fork() {
 #endif
 }
 
+/* handle keyboard interrupt */
+static int s_pid=0;
+void s_kill(int sig) {
+  if(s_pid) kill(s_pid, SIGTERM);
+}
+
 void java_start_server(struct cfg*cfg) {
   int pid=0, err=0, p[2], p1[2];
   if(pipe(p)!=-1) {
@@ -113,7 +119,7 @@ void java_start_server(struct cfg*cfg) {
 		  }
 		  /* protect guard */
 		  signal(SIGHUP, SIG_IGN); 
-		  signal(SIGINT, SIG_IGN); 
+		  s_pid=pid; signal(SIGINT, s_kill); 
 		  signal(SIGTERM, SIG_IGN);
 
 		  write(p[1], &pid, sizeof pid);
