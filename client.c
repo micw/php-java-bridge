@@ -322,6 +322,40 @@ static int handle_requests(proxyenv *env) {
   while(handle_request(env));
   return 0;
 }
+#ifdef HAVE_STRUCT_UCRED
+static int send_cred(int sock) {
+  int ret;
+  struct msghdr msg = {0};
+  struct cmsghdr *cmsg;
+  struct ucred *p_ucred, ucred = {getpid(), getuid(), getgid()};
+  char buf[CMSG_SPACE(sizeof ucred)];  /* ancillary data buffer */
+
+  msg.msg_control = buf;
+  msg.msg_controllen = sizeof buf;
+
+  cmsg = CMSG_FIRSTHDR(&msg);
+  cmsg->cmsg_level = SOL_SOCKET;
+  cmsg->cmsg_type = SCM_CREDENTIALS;
+  cmsg->cmsg_len = CMSG_LEN(sizeof ucred);
+
+  /* Initialize the payload: */
+  p_ucred = (struct ucred *)CMSG_DATA(cmsg);
+  memcpy(p_ucred, &ucred, sizeof *p_ucred);
+
+  /* Sum of the length of all control messages in the buffer: */
+  msg.msg_controllen = cmsg->cmsg_len;
+
+  ret = sendmsg(sock, &msg, 0);
+#ifdef JAVA_COMPILE_DEBUG
+  return ret;
+#else
+  return 0;
+#endif
+}
+#else
+#define send_cred(a) 0
+#endif
+
 static int java_do_test_server(struct cfg*cfg TSRMLS_DC) {
   char term=0;
   int sock;
@@ -334,14 +368,10 @@ static int java_do_test_server(struct cfg*cfg TSRMLS_DC) {
   sock = socket (PF_INET, SOCK_STREAM, 0);
 #endif
   if(sock==-1) return FAILURE;
-#ifdef CFG_JAVA_SOCKET_ANON
-  *cfg->saddr.sun_path=0;
-#endif
   n = connect(sock,(struct sockaddr*)&cfg->saddr, sizeof cfg->saddr);
-#ifdef CFG_JAVA_SOCKET_ANON
-  *cfg->saddr.sun_path='@';
-#endif
   if(n!=-1) {
+	if(-1==send_cred(sock)) 
+	  php_error(E_WARNING, "php_mod_java(%d): Could not send credentials: %s",81, strerror(errno));
 	c = read(sock, &ob, sizeof ob);
 	c = (c==sizeof ob) ? write(sock, &term, sizeof term) : 0;
   }
@@ -382,14 +412,10 @@ int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
   sock = socket (PF_INET, SOCK_STREAM, 0);
 #endif
   if(sock!=-1) {
-#ifdef CFG_JAVA_SOCKET_ANON	
-	*cfg->saddr.sun_path=0;
-#endif
 	n = connect(sock,(struct sockaddr*)&cfg->saddr, sizeof cfg->saddr);
-#ifdef CFG_JAVA_SOCKET_ANON	
-	*cfg->saddr.sun_path='@';
-#endif
   }
+  if(-1==send_cred(sock)) 
+	php_error(E_WARNING, "php_mod_java(%d): Could not send credentials: %s",82, strerror(errno));
   if(n==-1) { 
 	php_error(E_WARNING, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge?",52, strerror(errno));
 	return FAILURE;

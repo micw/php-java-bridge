@@ -1,6 +1,8 @@
 sinclude(tests.m4/function_checks.m4)
 sinclude(tests.m4/threads.m4)
 sinclude(tests.m4/java_check_broken_stdio_buffering.m4)
+sinclude(tests.m4/java_check_struct_ucred.m4)
+sinclude(tests.m4/java_check_abstract_namespace.m4)
 sinclude(tests.m4/java_check_broken_gcc_installation.m4)
 
 # the server part needs them
@@ -14,12 +16,28 @@ PHP_ARG_WITH(java, for java support,
 
 if test "$PHP_JAVA" != "no"; then
 
+        AC_MSG_CHECKING(whether to enable java secure mode)
+	AC_ARG_ENABLE(secure-mode,
+	[  --enable-secure-mode    Enable java secure mode],[
+	  if test "$enableval" = "yes" ; then
+           SECURE=--enable-secure-mode
+	   AC_MSG_RESULT(yes)
+          else
+           SECURE=--disable-secure-mode
+           AC_MSG_RESULT(no)
+          fi
+       ],[
+         AC_MSG_RESULT(no)
+       ])
+
        JAVA_FUNCTION_CHECKS
        PTHREADS_CHECK
        PTHREADS_ASSIGN_VARS
        PTHREADS_FLAGS
        JAVA_CHECK_BROKEN_STDIO_BUFFERING
        JAVA_CHECK_BROKEN_GCC_INSTALLATION
+       JAVA_CHECK_ABSTRACT_NAMESPACE
+       JAVA_CHECK_STRUCT_UCRED
        if test "$have_broken_gcc_installation" = "yes"; then
          AC_MSG_WARN([YOUR GCC INSTALLATION IS BROKEN. It tries to link with the same library for -m32 and -m64 builds. This will result in a "wrong ELF class" error at runtime. Although you can work around this bug at runtime by changing the LD_LIBRARY_PATH, we recommend to re-install the gcc compiler before you continue to install the PHP/Java Bridge.])
 	  sleep 30
@@ -51,5 +69,6 @@ if test "$PHP_JAVA" != "no"; then
 # an artificial target so that the server/ part gets compiled
 	PHP_ADD_MAKEFILE_FRAGMENT
 	PHP_SUBST(JAVA_SHARED_LIBADD)
+	PHP_SUBST(SECURE)
 	PHP_MODULES="$PHP_MODULES \$(phplibdir)/libnatcJavaBridge.la"
 fi

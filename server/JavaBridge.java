@@ -176,7 +176,7 @@ public class JavaBridge implements Runnable {
     static native long hashIndexUpdate(long array, long peer, long key);
 
     static native void setException(long result, long peer, Throwable value, byte strValue[]);
-    native void handleRequests(long peer);
+    native void handleRequests(int peer, int uid, int gid);
     static native int handleRequest(Object globalRef, long peer);
     static native boolean trampoline(Object globalRef, long peer, boolean jump);
 
@@ -195,13 +195,16 @@ public class JavaBridge implements Runnable {
     // 
     // Communication with client in a new thread
     //
-    private long peer;
-    public void run() { handleRequests(peer); }
-    public static void HandleRequests(long peer) {  
+    private int peer, uid, gid;
+    public void run() { handleRequests(peer, uid, gid); }
+    public static void HandleRequests(int peer, int uid, int gid) {  
 	JavaBridge bridge = new JavaBridge();
 	Thread thread = new Thread(bridge);
 	bridge.peer=peer;
+	bridge.uid=uid;
+	bridge.gid=gid;
 	thread.setContextClassLoader(bridge.cl);
+	logMessage("Request from client with uid/gid "+uid+"/"+gid);
 	thread.start();
     }
 
@@ -441,22 +444,29 @@ public class JavaBridge implements Runnable {
     //
     // Logging
     //
+    public static void println(int level, String msg) {
+	StringBuffer b = new StringBuffer(String.valueOf(System.currentTimeMillis()));
+	b.append(" [JavaBridge ");
+	b.append(level); b.append("]: ");
+	b.append(msg);
+	logStream.println(b);
+    }
     public static void printStackTrace(Throwable t) {
 	if(logLevel > 0)
 	    if ((t instanceof Error) || logLevel > 1) 
 		t.printStackTrace(logStream);
     }
     public static void logDebug(String msg) {
-	if(logLevel>3) logStream.println(msg);
+	if(logLevel>3) println(4, msg);
     }
     public static void logFatal(String msg) {
-	if(logLevel>0) logStream.println(msg);
+	if(logLevel>0) println(1, msg);
     }
     public static void logError(String msg) {
-	if(logLevel>1) logStream.println(msg);
+	if(logLevel>1) println(2, msg);
     }
     public static void logMessage(String msg) {
-	if(logLevel>2) logStream.println(msg);
+	if(logLevel>2) println(3, msg);
     }
 
     public static void main(String s[]) {

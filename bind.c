@@ -92,13 +92,7 @@ static void exec_vm(struct cfg*cfg) {
  return 0 if user has hard-coded the socketname
 */
 static short can_fork() {
-#ifndef CFG_JAVA_SOCKET_ANON
   return (java_ini_updated&U_SOCKNAME)==0;
-#else
-  return 1;						/* ignore the already running JVM and
-								   start a new JVM with the anonymous
-								   socket */
-#endif
 }
 
 /* handle keyboard interrupt */

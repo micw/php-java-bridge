@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 1.0.7
+%define version 1.0.8
 %define release 1
 Name: php-java-bridge
 Summary: PHP Hypertext Preprocessor to Java Bridge
@@ -13,7 +13,8 @@ BuildRequires: php-devel >= 4.3.6
 BuildRequires: gcc >= 3.3.3
 BuildRequires: httpd j2sdk
 Requires: php >= 4.3.2
-Requires: httpd j2re
+Requires: httpd 
+Requires: j2re >= 1.4.2
 Provides: php-java-bridge
 
 
@@ -35,8 +36,10 @@ LD_LIBRARY_PATH=/lib:/usr/lib
 # calculate java dir
 java_dir=`head -1 /etc/sysconfig/java`
 phpize
-./configure --prefix=/usr --with-java=$java_dir
-make CFLAGS="-DNDEBUG"
+# FIXME: Will work only on a NPTL kernel or >= 2.6
+#./configure --prefix=/usr --with-java=$java_dir --enable-secure-mode
+./configure --prefix=/usr --with-java=$java_dir --disable-secure-mode
+make
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -83,19 +86,26 @@ echo /etc/init.d/php-java-bridge >>filelist
 rm -rf $RPM_BUILD_ROOT
 %post
 # calculate java_dir again
-jre=`rpm -q --whatprovides j2re | head -1`
+pkgid=`rpm -q --whatprovides j2re --queryformat "%{PKGID} %{VERSION}\n" | sed 's/\./0/g;s/_/./' |sort -r -k 2,2 -n | head -1 | awk '{print $1}'`
+jre=`rpm  -q --pkgid $pkgid`
 java=`rpm -ql $jre | grep 'bin/java$' | head -1`
-if test -s /etc/sysconfig/java; then
-# IBM and RedHat 
-	java_dir=`head -1 /etc/sysconfig/java`
-else
+
+# Do not rely on sysconfig anymore but use the most recent rpm, see
+# pkgid above. The reason is that we prefer 1.4.2 or jdk1.5 over
+# old 1.4.1 installations. When IBM/RedHat ships a 1.4.2_02 or 1.5
+# RPM, we'll change it back.
+
+# if test -s /etc/sysconfig/java; then
+# # IBM and RedHat 
+# 	java_dir=`head -1 /etc/sysconfig/java`
+# else
 # Sun JDK RPM nonsense
 	java_dir=`dirname $java`
 	java_dir=`dirname $java_dir`
 	if test X`basename $java_dir` = Xjre; then
 		java_dir=`dirname $java_dir`;
 	fi
-fi
+# fi
 cat <<EOF2 >>/etc/php.d/java.ini
 java.java_home=$java_dir
 java.java=$java

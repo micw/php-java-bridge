@@ -871,6 +871,9 @@ PHP_MINIT_FUNCTION(java)
 	JG(cfg).saddr.sun_family = AF_LOCAL;
 	memset(JG(cfg).saddr.sun_path, 0, sizeof JG(cfg).saddr.sun_path);
 	strcpy(JG(cfg).saddr.sun_path, JG(cfg).sockname);
+# ifdef HAVE_ABSTRACT_NAMESPACE
+	*JG(cfg).saddr.sun_path=0;
+# endif
 #else
 	JG(cfg).saddr.sin_family = AF_INET;
 	JG(cfg).saddr.sin_port=htons(atoi(JG(cfg).sockname));
@@ -932,9 +935,7 @@ PHP_MINFO_FUNCTION(java)
   php_info_print_table_start();
   php_info_print_table_row(2, "java support", "Enabled");
   php_info_print_table_row(2, "java bridge", java_bridge_version);
-#ifndef CFG_JAVA_SOCKET_ANON
   php_info_print_table_row(2, "java command", s);
-#endif
   php_info_print_table_row(2, "java.libpath", JG(cfg).ld_library_path);
   php_info_print_table_row(2, "java.classpath", JG(cfg).classpath);
   php_info_print_table_row(2, "java.java_home", JG(cfg).java_home);

@@ -27,7 +27,7 @@ What is the PHP/Java bridge?
       $hello = new java("java.lang.String", "hello");
       print $hello;
 
-      $inner = new java("package.testClass$innerClass");
+      $inner = new java('package.testClass$innerClass');
       $inner->value = 2;
 
   * new java_class("CLASSNAME"): References the class CLASSNAME but
@@ -153,7 +153,7 @@ Build and execution instructions:
           php-config --version # PHP 4.3.2 or above.
 
           phpize && 
-          ./configure --with-java=/opt/IBMJava2-14 &&
+          ./configure --with-java=/opt/IBMJava2-14 --disable-secure-mode &&
           make &&
           su -c "make install"
         
@@ -415,15 +415,49 @@ Build and execution instructions:
    * -m32: Build 32 bit code. Required if you run a 32 bit JVM on a 64
      bit system.
 
-   * -DCFG_JAVA_SOCKET_ANON: Use the BSD/Linux abstract namespace instead
-     of creating a socket file.  Will only work on modern Linux/BSD
-     implementations but not on MacOS X for example (struct ucred is
-     non-standard).  Experimental. 
-
    * -DCFG_JAVA_INPROCESS: Do not use exec() but call the JVM directly.
      Experimental.
      
   Example: make CFLAGS="-m64"
+
+------------------------------------
+  Recognized configure options
+  ----------------------------
+
+  The top-level configure script recognizes the following options:
+
+  * --enable-secure-mode: Changes the privileges of the
+   request-handling java thread to run with the same permissions that the
+   authentificated user has.  This mode makes it impossible for a local
+   intruder to gain higher privileges by attacking the java VM or the
+   PHP/Java Bridge.  Furthermore the user credentials are checked
+   directly by the kernel and are passed to the server via a secure
+   channel. Thus it is impossible to access the PHP/Java Bridge server
+   without having a valid user account.
+
+   This feature works only on certain operating systems and only with
+   java VM's which support running threads with non-default privileges: 
+   a) the operating system must be able to pass user credentials via a
+   secure channel and b) the java VM must be prepared to deal with
+   user-threads that have changed their user ID and group ID to match the
+   credentials passed by the kernel.  Operating systems which support
+   this are BSD, Solaris and Linux. Java VM's which can handle java
+   threads with reduced permissions are Sun JDK 1.4.2_02 and above and
+   Sun JDK 1.5. 
+
+   Operating systems which do not support this feature are MacOS X,
+   older BSD variants, HP-UX and Linux kernel before version 2.3. Java
+   VM's which crash when thread privileges are changed include IBM JDK
+   1.4.1 and GNU Java (all versions); these VM's crash when the
+   user-threads try to notify their parents by sending a pthread signal,
+   something that doesn't work anymore because the user-threads have the
+   necessary permissions revoked. Default is --disable-secure-mode.
+
+  * --with-java=JAVA_HOME: Use the java VM located in the directory
+    JAVA_HOME/bin.  Default is no java, which means use GNU GCC/GCJ
+    to compile java into native code.  
+
+    Example: ./configure --with-java=/opt/jdk1.5
 
 ------------------------------------
   Log levels

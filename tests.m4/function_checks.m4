@@ -17,6 +17,13 @@ AC_DEFUN(JAVA_FUNCTION_CHECKS,[
 #endif
  ])
 
+AC_CHECK_DECLS([AF_LOCAL, PF_LOCAL],,CPPFLAGS="$CPPFLAGS -DPF_LOCAL=PF_INET -DAF_LOCAL=AF_INET", 
+[
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+])
+
  AC_CHECK_FUNCS(longjmp perror snprintf tempnam \
   strerror strdup unlink putenv execv fork \
   memcpy memmove sigwait)

@@ -1,5 +1,9 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 /* longjump */
 #include <setjmp.h>
 
@@ -213,7 +217,7 @@ static void logRcv(JNIEnv*env, char c) {
 static void atexit_bridge() {
   if(sockname) {
 #ifndef __MINGW32__
-# if !defined(CFG_JAVA_SOCKET_ANON) && !defined(CFG_JAVA_SOCKET_INET)
+# if !defined(HAVE_ABSTRACT_NAMESPACE) && !defined(CFG_JAVA_SOCKET_INET)
   unlink(sockname);
 # endif
   sem_destroy((sem_t*)&cond_sig);
@@ -277,7 +281,7 @@ static void initGlobals(JNIEnv *env) {
   enumMore = (*env)->GetMethodID(env, enumClass, "hasMoreElements", "()Z");
   enumNext = (*env)->GetMethodID(env, enumClass, "nextElement", "()Ljava/lang/Object;");
 
-  handleRequests = (*env)->GetStaticMethodID(env, bridge, "HandleRequests", "(J)V");
+  handleRequests = (*env)->GetStaticMethodID(env, bridge, "HandleRequests", "(III)V");
   handleRequest = (*env)->GetStaticMethodID(env, bridge, "HandleRequest", "(Ljava/lang/Object;J)I");
   trampoline = (*env)->GetStaticMethodID(env, bridge, "Trampoline", "(Ljava/lang/Object;JZ)Z");
 
@@ -812,12 +816,65 @@ JNIEXPORT jboolean JNICALL Java_JavaBridge_trampoline(JNIEnv*env, jclass self, j
   assert(0);
   return JNI_FALSE;
 }
-JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jobject instance, jlong socket)
+
+#ifdef HAVE_STRUCT_UCRED
+
+/* Prepare the socket to receive auth information directly from the
+   kernel.  Will work on Solaris, Linux and modern BSD operating
+   systems and only if the socket is of type LOCAL (UNIX). 
+ */
+static int prep_cred(int sock) {
+  static const int true = 1;
+  int ret = setsockopt(sock, SOL_SOCKET, SO_PASSCRED, (void*)&true, sizeof true);
+  return ret;
+}
+
+/* Receive authentification information (enforced by the BSD or Linux
+   kernel). It is impossible to fake the auth information.
+ */
+static int recv_cred(int sock, int *uid, int *gid) {
+  struct ucred ucred;
+  socklen_t so_len = sizeof ucred;
+  int n = getsockopt(sock, SOL_SOCKET, SO_PEERCRED, &ucred, &so_len);
+  int ret = (n==-1 || so_len!=sizeof ucred) ? -1 : 0;
+  if(ret!=-1) {
+	*uid=ucred.uid;
+	*gid=ucred.gid;
+  }  
+  return ret;
+}
+
+# ifdef JAVA_SECURE_MODE				
+/* Drop privileges and run the request-handling thread with the same
+   privileges that the authenticated user has.  WARNING: Some JVM's,
+   for example IBM JDK1.4.1 or GNU Java 3.3.3 will crash when a java
+   thread has non-default privileges.  However, this feature does work
+   on Linux or BSD with Sun JDK >= 1.4.2_02 or Sun JDK >= 1.5 and you
+   are encouraged to enable it whenever possible.
+*/
+static int set_cred(int uid, int gid) {
+  int ret = setgid(gid);
+  if(ret!=-1) ret = setuid(uid);
+  return ret;
+}
+# else
+# define set_cred(a, b) 0
+# endif	/* secure mode */
+#else  /* struct ucred missing */
+#define prep_cred(a) 0
+#define recv_cred(a, b, c) 0
+#define set_cred(a, b) 0
+#endif
+
+JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jobject instance, jint socket, jint uid, jint gid)
 {
   jobject globalRef;
-  SFILE *peer = (SFILE*)(long)socket;
-  logChannel(env, "create new communication channel", socket);
+  SFILE *peer = SFDOPEN(socket, "r+");
+  if(!peer) {logSysFatal(env, "could not fdopen socket"); return;}
+  if(uid!=-1)
+	if(-1==set_cred(uid, gid)) logSysFatal(env, "could drop privileges");
 
+  logChannel(env, "create new communication channel", (unsigned long)peer);
   globalRef = connection_startup(env);
   if(!globalRef){logFatal(env, "could not allocate global hash");if(peer) SFCLOSE(peer);return;}
 
@@ -825,10 +882,10 @@ JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jobject instan
 	logSysFatal(env, "could not send instance, child not listening"); connection_cleanup(env, globalRef); SFCLOSE(peer);return;
   }
   enter();
-  (*env)->CallStaticBooleanMethod(env, bridge, trampoline, globalRef, socket, JNI_TRUE);
+  (*env)->CallStaticBooleanMethod(env, bridge, trampoline, globalRef, (jlong)(long)peer, JNI_TRUE);
   connection_cleanup(env, globalRef);
 
-  logChannel(env, "terminate communication channel", socket);
+  logChannel(env, "terminate communication channel", (unsigned long)peer);
   if(peer) SFCLOSE(peer);
 
   leave();
@@ -909,41 +966,41 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
   saddr.sun_family = AF_LOCAL;
   memset(saddr.sun_path, 0, sizeof saddr.sun_path);
   strcpy(saddr.sun_path, sockname);
-# ifndef CFG_JAVA_SOCKET_ANON
+# ifndef HAVE_ABSTRACT_NAMESPACE
   unlink(sockname);
 # else
   *saddr.sun_path=0;
 # endif
   sock = socket (PF_LOCAL, SOCK_STREAM, 0);
+  if(!sock) {logSysFatal(env, "could not create socket"); return;}
 #else
   saddr.sin_family = AF_INET;
   saddr.sin_port=htons(atoi(sockname));
   saddr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
   sock = socket (PF_INET, SOCK_STREAM, 0);
-#endif
   if(!sock) {logSysFatal(env, "could not create socket"); return;}
+  if (-1==prep_cred(sock)) logSysFatal(env, "socket cannot receive credentials");
+#endif
   n = bind(sock,(struct sockaddr*)&saddr, sizeof saddr);
   if(n==-1) {logSysFatal(env, "could not bind socket"); return;}
-#if !defined(CFG_JAVA_SOCKET_ANON) && !defined(CFG_JAVA_SOCKET_INET)
+#if !defined(HAVE_ABSTRACT_NAMESPACE) && !defined(CFG_JAVA_SOCKET_INET)
   chmod(sockname, 0666); // the childs usually run as "nobody"
 #endif
   n = listen(sock, 10);
   if(n==-1) {logSysFatal(env, "could not listen to socket"); return;}
 
   while(1) {
-	int socket;
+	int socket, uid=-1, gid=-1;
 
   res:errno=0; 
 	socket = accept(sock, NULL, 0); 
 #ifndef __MINGW32__
 	if(bridge_shutdown) while(1) sleep(65535);
 #endif
-	if(socket==-1) {logSysError(env, "socket accept failed"); return;}
+	if(socket==-1) {logSysFatal(env, "socket accept failed"); return;}
 	//if(errno) goto res;
-	peer = SFDOPEN(socket, "r+");
-	if(!peer) {logSysFatal(env, "could not fdopen socket");goto res;}
-
-    (*env)->CallStaticVoidMethod(env, bridge, handleRequests,(jlong)(long)peer);
+	if(-1==recv_cred(socket, &uid, &gid)) logSysFatal(env, "could not get credentials");
+    (*env)->CallStaticVoidMethod(env, bridge, handleRequests,socket, uid, gid);
   }
 }
 
@@ -1091,7 +1148,7 @@ JNINativeMethod javabridge[]={
   {"hashIndexUpdate", "(JJJ)J", Java_JavaBridge_hashIndexUpdate},
   {"setException", "(JJLjava/lang/Throwable;[B)V", Java_JavaBridge_setException},
   {"startNative", "(ILjava/lang/String;)V", Java_JavaBridge_startNative},
-  {"handleRequests", "(J)V", Java_JavaBridge_handleRequests},
+  {"handleRequests", "(III)V", Java_JavaBridge_handleRequests},
   {"handleRequest", "(Ljava/lang/Object;J)I", Java_JavaBridge_handleRequest},
   {"trampoline", "(Ljava/lang/Object;JZ)Z", Java_JavaBridge_trampoline},
   {"openLog", "(Ljava/lang/String;)Z", Java_JavaBridge_openLog},
