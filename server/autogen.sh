@@ -6,3 +6,4 @@ autoconf
 libtoolize -f
 ln -s `which libtool` .
 automake -a --foreign 
+exit 0
