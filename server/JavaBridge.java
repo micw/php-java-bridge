@@ -73,8 +73,10 @@ public class JavaBridge extends ClassLoader {
 			JavaBridge.logMessage("Java logLevel    : " + JavaBridge.logLevel);
 			JavaBridge.logMessage("Java socket      : " + sockname);
 			JavaBridge.startNative(JavaBridge.logLevel, sockname);
+			System.exit(0);
 		} catch (Throwable t) {
 			printStackTrace(t);
+			System.exit(1);
 		}
 	}
 
