@@ -435,7 +435,7 @@ PHP_MINIT_FUNCTION(java)
 
 	  java_init_cfg(&JG(cfg));
 #ifndef CFG_JAVA_SOCKET_INET
-	  JG(cfg).saddr.sun_family = AF_UNIX;
+	  JG(cfg).saddr.sun_family = AF_LOCAL;
 	  memset(JG(cfg).saddr.sun_path, 0, sizeof JG(cfg).saddr.sun_path);
 	  strcpy(JG(cfg).saddr.sun_path, JG(cfg).sockname);
 #else

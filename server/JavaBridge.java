@@ -120,7 +120,7 @@ public class JavaBridge implements Runnable {
 			for (Iterator i=urls.iterator(); i.hasNext(); ) 
 			    if ((b=load((URL)i.next(), name))!=null) break;
 		    }
-		    if (b==null) throw new ClassNotFoundException(name + " not found in path: " + urls.toString());
+		    if (b==null) throw new ClassNotFoundException(name + " neither found in path: " + String.valueOf(urls) + " nor in the system path: "+ String.valueOf(sysUrls));
 
 		    if((c = this.defineClass(name, b, 0, b.length)) != null) classes.put(name, new WeakReference(c));
 		}

@@ -12,6 +12,8 @@
 /* wait */
 #include <sys/types.h>
 #include <sys/wait.h>
+/* poll */
+#include <sys/poll.h>
 
 /* miscellaneous */
 #include <stdio.h>
@@ -317,10 +319,16 @@ static int java_do_test_server(struct cfg*cfg TSRMLS_DC) {
 }
 int java_test_server(struct cfg*cfg TSRMLS_DC) {
   int count=15;
+
   if(java_do_test_server(cfg TSRMLS_CC)==SUCCESS) return SUCCESS;
+
   /* wait for the server that has just started */
-  while(cfg->cid && (java_do_test_server(cfg TSRMLS_CC)==FAILURE) && count--) {
+  while(cfg->cid && (java_do_test_server(cfg TSRMLS_CC)==FAILURE) && --count) {
+	struct pollfd pollfd[1] = {cfg->err, POLLIN, 0};
+	if(cfg->err && poll(pollfd, 1, 0)) 
+	  return FAILURE; /* server terminated with error code */
 	php_error(E_NOTICE, "php_mod_java(%d): waiting for server another %d seconds",57, count);
+	
 	sleep(1);
   }
   return (cfg->cid && count)?SUCCESS:FAILURE;

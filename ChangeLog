@@ -1,3 +1,9 @@
+2004-11-20  Jost Boekemeier  <jostb@intern>
+
+	* server/JavaBridge.c (findClass): Use String.valueOf instead of
+	.toString so that we get the proper ClassNotFoundException instead
+	of a null pointer exception.
+	
 2004-11-18  Jost Boekemeier  <jostb@intern>
 
 	* README: Removed sections about Sun's JSR 223 and outdated notes

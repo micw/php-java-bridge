@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 1.1.0
+%define version 1.0.7
 %define release 1
 Name: php-java-bridge
 Summary: PHP Hypertext Preprocessor to Java Bridge
@@ -20,7 +20,8 @@ Provides: php-java-bridge
 
 BuildRoot: /var/tmp/php-java-bridge-%{version}
 
-%description Java module/extension for the PHP script language.
+%description 
+Java module/extension for the PHP script language.
 
 %prep
 
@@ -63,7 +64,6 @@ java.log_file=/var/log/php-java-bridge.log
 # automatically as a sub-process of the Apache 2.0 
 # service -- not recommended.
 java.socketname=/var/run/.php-java-bridge_socket
-
 
 EOF
 echo /etc/php.d/java.ini >>filelist
