@@ -20,6 +20,7 @@ if ! test $# = 0; then
   $java "$@" &
   echo $! >$pid
   wait
+  rm -f $pid;
   exit 0
 fi
 

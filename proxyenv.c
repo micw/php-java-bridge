@@ -251,7 +251,7 @@ static void ReleaseStringUTFChars (proxyenv *env, jstring array, const char*elem
   id(env, RELEASESTRINGUTFCHARS);
   swrite(&array, sizeof array, 1, (*env)->peer);
   swrite(&elems, sizeof elems, 1, (*env)->peer);
-  free(elems);
+  free((char*)elems);
 }
 static void SetByteArrayRegion (proxyenv *env, jbyteArray array, jsize start, jsize len, jbyte *buf) {
   id(env, SETBYTEARRAYREGION);

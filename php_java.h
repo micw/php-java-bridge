@@ -24,6 +24,7 @@
 extern int le_jobject;
 extern zend_module_entry java_module_entry;
 extern zend_class_entry php_java_class_entry;
+extern const char * const java_bridge_version;
 
 extern int java_ini_updated;
 #define U_LOGFILE (1<<1)
@@ -47,9 +48,12 @@ PHP_MINIT_FUNCTION(java);
 PHP_MSHUTDOWN_FUNCTION(java);
 PHP_MINFO_FUNCTION(java);
 
+#define N_SARGS 10				/* # of server args for exec */
+#define N_SENV 3				/* # of server env entries */
 struct cfg {
   struct sockaddr_un saddr;
-  int cid; //server's process id
+  int cid; // server's process id
+  int err; // file descriptor: server's return code
   char*sockname;
   char*classpath;	
   char*ld_library_path;
@@ -75,5 +79,9 @@ ZEND_END_MODULE_GLOBALS(java)
 # define JG(v) (java_globals.v)
 #endif
 
+
+extern void java_get_server_args(struct cfg*cfg, 
+								 char*env[N_SENV], 
+								 char*args[N_SARGS]);
 
 #endif
