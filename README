@@ -35,7 +35,7 @@ What is the PHP/Java bridge?
     object. After script execution the referenced classes may be garbage
     collected. Example:
 
-      $Class = new java_class("java.lang.String");
+      $Class = new java_class("java.lang.Object");
       $obj = $Class->newInstance();
 
   * java_set_library_path("JAR1;JAR2"): Makes additional libraries
@@ -92,7 +92,10 @@ What is the PHP/Java bridge?
 
   The PHP/Java bridge is a replacement for the ext/java bridge shipped
   with PHP 4.  It is not possible to run the build-in bridge and the
-  PHP/Java bridge at the same time.
+  PHP/Java bridge at the same time.  Since version 1.0.7 the bridge is
+  compatible with the proposed jsr223 (where applicable).  However,
+  instead of writing javaclass() and javaexception, you can use
+  java_class() and java_exception.
 
   The module has been tested on a Mandrake Linux System (Version 9.2),
   on RedHat Enterprise 3, RedHat Fedora Core 1 and 2, Solaris9 (Sparc,
@@ -153,7 +156,7 @@ Build and execution instructions:
           ./configure --with-java=/opt/IBMJava2-14 &&
           make &&
           su -c "make install"
-
+        
   If your administrator allows you to dynamically load extensions, you
   can now test the extension by invoking the test.php with the 
   command: php ./test.php.
@@ -240,8 +243,8 @@ Build and execution instructions:
   In the directory php-java-bridge_1.x.y type:
 
    gcj --version  # must be gcj 3.3.3 or above!
-   phpize && ./configure --with-java
-   make install
+
+   phpize && ./configure && make &&  su -c "make install"
 
   This creates a native, dynamic linked executable in the PHP
   extension directory.  It can be started with the command:
@@ -432,7 +435,7 @@ Build and execution instructions:
 
    1: Log fatal system errors such as "out of memory error".
 
-   2: Log java errors and java exceptions.
+   2: Log java exceptions.
 
    3: Log info messages such as "loading jar xyz.jar from http://xy.com"
 
