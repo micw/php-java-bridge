@@ -26,7 +26,7 @@ Build and execution instructions:
 
           In the directory php-java-bridge_1.x.y type:
 
-          php --version  # must be PHP 4.3.2 or above!
+          php --version  # must be PHP 4.3.2 or above! For PHP5 see below.
           phpize && ./configure --with-java=/opt/IBMJava2-141/ && make
 
           su <password>
@@ -103,7 +103,7 @@ Build and execution instructions:
          re-start the apache service.
 
 ------------------------------------
-         QUICK INSTALL:
+         QUICK INSTALL
 
            su - -c "service httpd stop"
            INST=/usr/local
@@ -187,6 +187,25 @@ Build and execution instructions:
    sufficient to start the JavaBridge executable as #84 and stop it
    as #16.
 
+------------------------------------
+  PHP 5 support
+
+  The PHP/Java bridge currently does not support the new PHP 5 object 
+  system.
+
+  Zend is working with Sun Microsystems to define a standard
+  script interface for java, please see 
+
+    http://www.jcp.org/en/jsr/detail?id=223
+
+  for details.  When available this interface will allow PHP 5 to
+  communicate with the JVM more efficiently; e.g. it will be possible 
+  to compile and then execute code multiple times.
+  However, it may take some time (a few years probably) until a stable
+  solution is available.
+
+  Until an official PHP5/Java binding based on JSR-223 doesn't
+  exist, please use PHP 4 with the PHP/Java Bridge.
 ------------------------------------
 
         
