@@ -205,7 +205,7 @@ void begin(parser_tag_t tag[3], parser_cb_t *cb){
 	break;
   case 'D':
 	GET_RESULT(1);
-	setResultFromDouble(ctx->id, atof(PARSER_GET_STRING(st, 0)));
+	setResultFromDouble(ctx->id, zend_string_to_double(PARSER_GET_STRING(st, 0), st[0].length));
 	break;
   case 'O':
 	GET_RESULT(1);

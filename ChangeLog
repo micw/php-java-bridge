@@ -1,3 +1,19 @@
+2005-03-13  Jost Boekemeier <jostb@intern>
+
+	* php_java_snprintf.c: New file
+
+	* protocol.c: Use php_java_snprintf() in order to avoid surprises
+	with certain locales (DK locale formats 1234.00 as 1.234,00).
+
+	* protocol.c (PRECISION): New const.
+	(Double): Use precision.
+
+	* config.m4: Add php_java_snprintf.c
+
+	* client.c (begin): Use send_string_to_double in order to avoid
+	surprises with certain locales.
+
+	
 2005-03-11  Jost Boekemeier <jostb@intern>
 
 	* INSTALL.WINDOWS: java.hosts and module version supported. CGI
@@ -18,8 +34,7 @@
 	* php_java.h (closesocket): Alias for close on windows in order to
 	shut down the windows socket.
 
-	* php-java-bridgge.spec, VERSION: New version
-	
+	* php-java-bridge.spec, VERSION: New version
 		
 2005-03-09  Jost Boekemeier <jostb@intern>
 
@@ -731,7 +746,7 @@
 	* README: Removed sections about Sun's JSR 223 and outdated notes
 	from Sam Ruby.
 
-	* VERSION, php-java-bridge.spec: Version 1.1.0
+	* VERSION, php-java-bridge.spec: Version
 
 	True try/catch handling.
 	* client.c, server/natcJavaBridge.c, server/JavaBridge.java: Pass
