@@ -22,7 +22,7 @@ What is the PHP/Java bridge?
       $String = new java("java.lang.String");
       print $String->valueOf(null);
 
-      $hello = new java("java.lang.String", "hello")
+      $hello = new java("java.lang.String", "hello");
       print $hello;
 
   * java_set_library_path("JAR1;JAR2"): Makes additional libraries
