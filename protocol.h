@@ -26,10 +26,12 @@
 #define LOG_ERROR 2
 #define LOG_INFO 3 /* default level */
 #define LOG_DEBUG 4
+#define DEFAULT_LEVEL "4" //FIXME Change to 1 for release
 
-
-#define N_SARGS 9		/* # of server args for exec */
-#define N_SENV 3		/* # of server env entries */
+#define N_SARGS 9				/* # of server args for exec */
+#define N_SENV 3				/* # of server env entries */
+#define DEFAULT_PORT "9167"		/* default port for tcp/ip */
+#define DEFAULT_HOST "127.0.0.1"
 
 typedef struct proxyenv_ *proxyenv;
 struct proxyenv_ {
@@ -41,13 +43,13 @@ struct proxyenv_ {
 
   /* the send buffer */
   unsigned char*send;
-  size_t send_len;
+  size_t send_len, send_size;
 
   int (*handle_request)(proxyenv *env);
 
-  void (*writeCreateObjectBegin)(proxyenv *env, char*name, size_t strlen, short createInstance, void *result);
+  void (*writeCreateObjectBegin)(proxyenv *env, char*name, size_t strlen, char createInstance, void *result);
   void (*writeCreateObjectEnd)(proxyenv *env);
-  void (*writeInvokeBegin)(proxyenv *env, long object, char*method, size_t strlen, short property, void* result);
+  void (*writeInvokeBegin)(proxyenv *env, long object, char*method, size_t strlen, char property, void* result);
   void (*writeInvokeEnd)(proxyenv *env);
   void (*writeGetMethodBegin)(proxyenv *env, long object, char*method, size_t strlen, void* result);
   void (*writeGetMethodEnd)(proxyenv *env);
@@ -63,7 +65,9 @@ struct proxyenv_ {
   void (*writeCompositeEnd)(proxyenv *env);
   void (*writePairBegin_s)(proxyenv *env, char*key, size_t strlen);
   void (*writePairBegin_n)(proxyenv *env, unsigned long key);
+  void (*writePairBegin)(proxyenv *env);
   void (*writePairEnd)(proxyenv *env);
+  void (*writeUnref)(proxyenv *env, long object);
 };
 
 extern proxyenv *java_createSecureEnvironment(int peer, int (*handle_request)(proxyenv *env));

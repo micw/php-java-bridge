@@ -5,14 +5,15 @@ package php.java.bridge;
 import java.io.IOException;
 import java.io.InputStream;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
 public class LocalSocketInputStream extends InputStream {
 
     int peer;
-    public LocalSocketInputStream(int peer) {
+    LocalSocket socket;
+    
+    public LocalSocketInputStream(LocalSocket socket, int peer) {
 	super();
 	this.peer=peer;
+	this.socket=socket;
     }
 
     public int read() throws IOException {
@@ -20,6 +21,10 @@ public class LocalSocketInputStream extends InputStream {
     }
     public int read(byte b[], int dummy, int len) throws IOException {
 	return JavaBridge.sread(peer, b, len);
+    }
+
+    public void close() throws IOException {
+    	socket.close();
     }
 
 }

@@ -204,5 +204,42 @@ public class JavaBridgeClassLoader extends ClassLoader {
 	    }
 	}
     }
+    //
+    // add all jars found in the phpConfigDir/lib and /usr/share/java
+    // to our classpath
+    //
+    static void initClassLoader(String phpConfigDir) {
+	try {
+	    String[] paths;
+	    if(null!=phpConfigDir) 
+		paths = new String[] {phpConfigDir+"/lib", "/usr/share/java"};
+	    else
+		paths = new String[] {"/usr/share/java"};
+			
+	    for(int i=0; i<paths.length; i++) {
+		File d = new File(paths[i]);
+		String[] files=d.list();
+		if(files==null) continue;
+		for(int j=0; j<files.length; j++) {
+		    String file = files[j];
+		    int len = file.length();
+		    if(len<4) continue;
+		    if(!file.endsWith(".jar")) continue;
+		    try {
+			URL url;
+			file = "jar:file:" + d.getAbsolutePath() + File.separator + file + "!/";
+			url = new URL(file);
+			if(sysUrls==null) sysUrls=new ArrayList();
+			Util.logMessage("added system library: " + url);
+			sysUrls.add(url);
+		    }  catch (MalformedURLException e1) {
+			Util.printStackTrace(e1);
+		    }
+		}
+	    }
+	} catch (Exception t) {
+	    Util.printStackTrace(t);
+	}
+    }
 
 } 

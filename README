@@ -224,13 +224,17 @@ Build and execution instructions:
   configure script but which can be changed later are:
 
           java.libpath   = <system dependent path to natcJavaBridge.so>
-          java.classpath = <system dependent path to JavaBridge.class>
+          java.classpath = <system dependent path to JavaBridge.jar>
           java.java_home = <system dependent path to the java install dir>
           java.java      = <system dependent path to the java binary>
           java.socketname= <hard-coded socketname to start the VM separately>
+          java.hosts     = <add. bridge hosts e.g.: server1:8091;server2:9001>
 
-  If you change the above values, please first look at the output of
-  phpinfo() to see the original values.
+  Please first look at the output of phpinfo() to see the original
+  values.  The java.hosts setting specifies additional hosts which running
+  the PHP/Java Bridge. If not set or if the bridge cannot connect to one
+  of these servers nor to java.socketname, the bridge will start a
+  private java VM.
 
 ---------------------------------------------
   Starting the PHP/Java Bridge automatically
@@ -246,6 +250,37 @@ Build and execution instructions:
   can be used on SysV based init systems to automatically start and stop
   the bridge as a system service.  Please see the RedHat RPM download
   for an example.
+
+---------------------------------------------
+  Deploying into a J2EE/EJB server
+  --------------------------------
+
+  The following description applies to the Sun J2EE application
+  server.
+
+1. Start your application server, for example with the command:
+
+     $app_server/bin/asadmin start-domain domain1
+
+
+2. Log into your application server, for example by visiting
+
+     http://localhost:4848/asadmin
+
+   and open
+
+     Application Server -> Applications -> EJB Modules
+
+   Click on  "Deploy..."  and deploy JavaBridge.jar.
+
+
+3. Direct the PHP/Java Bridge to the application server by setting 
+   the java.hosts to the application server host.  For example:
+
+      java.hosts=SERVER1
+
+
+4. Re-start apache to activate the new setting.
 
 ------------------------------------
   64 Bit issues
@@ -325,32 +360,11 @@ Build and execution instructions:
       make install-modules
 
   Windows uses TCP/IP sockets instead of unix domain sockets. If you
-  want to change the java.socketname from its default (which is 9047),
+  want to change the java.socketname from its default (which is 9167),
   you must use an integer. For example:
 
-    java.socketname=8009
+    java.socketname=9168
 
-  The host is currently hard-coded (in natcJavaBridge.c and in java.c)
-  to 127.0.0.1, which is the local interface.  You can change this,
-  for example if you want to run the server part of the bridge on a
-  unix machine, but opening a port on a web-server can be dangerous.
-
-  Furthermore it is possible to compile the server part of the bridge
-  for a win32 target on any unix operating system by using a cross
-  compiler:
-
-    cd server
-    /opt/jdk1.4/bin/javac JavaBridge.java
-    i386-pc-mingw32-gcc  -I. -DEXTENSION_DIR=\".\"  -c natcJavaBridge.c 
-    i386-pc-mingw32-dllwrap --export-all-symbols -k  \
-                       -o natcJavaBridge.dll natcJavaBridge.o -lws2_32
-     
-  After that you can copy natcJavaBridge.dll and JavaBridge*.class to
-  your windows machine and start the server part of the bridge as usual,
-  for example with:
-    
-    c:\jdk1.4\bin\java.exe JavaBridge 9047 3 ""
-      
 ------------------------------------
   Loading on-demand with dl()
   ---------------------------
@@ -511,7 +525,7 @@ Build and execution instructions:
   PHP 5 issues
   ------------
 
-  Versions 5.0.0 up to 5.0.3RC cannot load the Bridge from the dl()
+  Versions 5.0.0 up to 5.0.3 cannot load the Bridge from the dl()
   function.  If you use one of these versions, please either apply the
   php5-crash-in-evaluator-shutdown_workaround.patch or add an entry to
   the php.ini, see install instructions above.

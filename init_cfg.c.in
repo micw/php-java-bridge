@@ -72,22 +72,24 @@ static void init_socket() {
 #endif
 #else 
 static void init_socket() {
-  cfg->sockname = strdup("9147");
+  cfg->sockname = strdup(DEFAULT_PORT);
 }
 #endif
 void java_init_cfg() {
   if(!(java_ini_updated&U_SOCKNAME)) {
 	init_socket();
   }
+  if(!(java_ini_updated&U_HOSTS)) cfg->hosts=strdup(DEFAULT_HOST/**/":"/**/DEFAULT_PORT);
   if(!(java_ini_updated&U_CLASSPATH)) cfg->classpath=strdup(CFG_CLASSPATH);
   if(!(java_ini_updated&U_LIBRARY_PATH)) cfg->ld_library_path=strdup(CFG_LD_LIBRARY_PATH);
   if(!(java_ini_updated&U_JAVA)) cfg->java=strdup(CFG_JAVA);
   if(!(java_ini_updated&U_JAVA_HOME)) cfg->java_home=strdup(CFG_JAVA_HOME);
-  if(!(java_ini_updated&U_LOGLEVEL)) cfg->logLevel=strdup("0");
+  if(!(java_ini_updated&U_LOGLEVEL)) cfg->logLevel=strdup(DEFAULT_LEVEL);
   if(!(java_ini_updated&U_LOGFILE)) cfg->logFile=strdup("");
 }
 
 void java_destroy_cfg(int java_ini_updated) {
+  if(!(java_ini_updated&U_HOSTS)) free(cfg->hosts);
   if(!(java_ini_updated&U_SOCKNAME)) free(cfg->sockname);
   if(!(java_ini_updated&U_CLASSPATH)) free(cfg->classpath);
   if(!(java_ini_updated&U_LIBRARY_PATH)) free(cfg->ld_library_path);

@@ -70,7 +70,7 @@ void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, sho
     }
 
 	/* create a new object */
-	(*jenv)->writeCreateObjectBegin(jenv, Z_STRVAL_P(arguments[0]), Z_STRLEN_P(arguments[0]), createInstance, (void*)result);
+	(*jenv)->writeCreateObjectBegin(jenv, Z_STRVAL_P(arguments[0]), Z_STRLEN_P(arguments[0]), createInstance?'I':'C', (void*)result);
 	writeArguments(--arg_count, ++arguments TSRMLS_CC);
 	(*jenv)->writeCreateObjectEnd(jenv);
 
@@ -135,7 +135,7 @@ static void writeArgument(pval* arg TSRMLS_DC)
 			  (*jenv)->writeCompositeBegin_h(jenv); 
 			}
 			(*jenv)->writePairBegin_s(jenv, string_key, strlen(string_key));
-			(*jenv)->writeObject(jenv, (long)*value);
+			writeArgument(*value TSRMLS_CC);
 			(*jenv)->writePairEnd(jenv);
             break;
           case HASH_KEY_IS_LONG:
@@ -144,7 +144,7 @@ static void writeArgument(pval* arg TSRMLS_DC)
 			  (*jenv)->writeCompositeBegin_h(jenv); 
 			}
 			(*jenv)->writePairBegin_n(jenv, num_key);
-			(*jenv)->writeObject(jenv, (long)*value);
+			writeArgument(*value TSRMLS_CC);
 			(*jenv)->writePairEnd(jenv);
             break;
           default: /* HASH_KEY_NON_EXISTANT */
@@ -152,7 +152,9 @@ static void writeArgument(pval* arg TSRMLS_DC)
 			  wrote_begin=1; 
 			  (*jenv)->writeCompositeBegin_a(jenv); 
 			}
-			(*jenv)->writeObject(jenv, (long)*value);
+			(*jenv)->writePairBegin(jenv);
+			writeArgument(*value TSRMLS_CC);
+			(*jenv)->writePairEnd(jenv);
         }
         zend_hash_move_forward(Z_ARRVAL_P(arg));
       }
@@ -226,7 +228,7 @@ short php_java_set_property_handler(char*name, zval *object, zval *value, zval *
       "Attempt to access a Java property on a non-Java object");
   } else {
     /* invoke the method */
-	(*jenv)->writeInvokeBegin(jenv, (long)object, name, 0, 'P', (void*)presult);
+	(*jenv)->writeInvokeBegin(jenv, obj, name, 0, 'P', (void*)presult);
 	writeArgument(value TSRMLS_CC);
 	(*jenv)->writeInvokeEnd(jenv);
   }

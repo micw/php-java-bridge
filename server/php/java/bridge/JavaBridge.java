@@ -4,7 +4,6 @@ package php.java.bridge;
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -21,8 +20,6 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
@@ -30,6 +27,9 @@ import java.util.Vector;
 
 public class JavaBridge implements Runnable {
 
+    public static final String DEFAULT_PORT = "9167";
+    public static final int DEFAULT_LOG_LEVEL = 5; //FIXME: change to 1 for release
+    	
     public static final int BACKLOG = 20;
 
     // class hash
@@ -42,8 +42,11 @@ public class JavaBridge implements Runnable {
     // be changed with setLibraryPath
     private Collection urls = null;
 
+    // For PHP4's last_exception_get.
+    public Throwable lastException = null;
+
     // list of objects in use in the current script
-    GlobalRef globalRef;	
+    GlobalRef globalRef;
 
     JavaBridgeClassLoader cl=new JavaBridgeClassLoader();
 
@@ -98,6 +101,8 @@ public class JavaBridge implements Runnable {
        
     // native accept fills these
     int uid =-1, gid =-1;
+
+    private static boolean haveNatcJavaBridge=true;
 	
     // 
     // Communication with client in a new thread
@@ -108,7 +113,7 @@ public class JavaBridge implements Runnable {
 	    if(r.initOptions(in, out)) {
 		r.handleRequests();
 	    }
-	} catch (IOException e) {
+	} catch (Throwable e) {
 	    // TODO Auto-generated catch block
 	    e.printStackTrace();
 	}
@@ -127,184 +132,13 @@ public class JavaBridge implements Runnable {
     }
 
     //
-    // Return map for the value (PHP 5 only)
-    //
-    public PhpMap getPhpMap(Object value) { 
-	Util.logDebug("returning map for "+ value.getClass());
-
-	if(value.getClass().isArray()) {
-	    return 
-		new PhpMap(value, (Object)null) {
-		    boolean valid;
-		    int i;
-		    long length;
-		    
-		    void init() {
-			i=0;
-			length = Array.getLength(this.value);
-			valid=length>0;
-		    }
-		    public Object currentData() {
-			if(!valid) return null;
-			return Array.get(this.value, i);
-		    }
-		    public byte[] currentKey() {
-			if(!valid) return null;
-			return String.valueOf(i).getBytes();
-		    }
-		    public Object moveForward() {
-			valid=++i<length;
-			return valid?this:null;
-		    }
-		    public Object hasMore() {
-			return valid?this:null;
-		    }
-
-		    public boolean offsetExists(Object pos) {
-			int i = ((Long)pos).intValue();
-			return (i>0 && i<length && (Array.get(this.value, i)!=this));
-		    }
-		    public Object offsetGet(Object pos) {
-			int i = ((Long)pos).intValue();
-			Object o = Array.get(this.value, i);
-			return o==this ? null : o;
-		    }
-		    public void offsetSet(Object pos, Object val) {
-			int i = ((Long)pos).intValue();
-			Array.set(this.value, i, val);
-		    }
-		    public void offsetUnset(Object pos) {
-			int i = ((Long)pos).intValue();
-			Array.set(this.value, i, this);
-		    }
-		};
-	}
-	if(value instanceof Collection) {
-	    return 
-		new PhpMap(value, (Object)null) {
-		    Object currentKey;
-		    int i;
-		    Iterator iter;
-		    
-		    void init() {
-			iter = ((Collection)(this.value)).iterator();
-			i = 0;
-			currentKey=null;
-			if(iter.hasNext()) {
-			    currentKey=iter.next();
-			}
-		    }
-		    public Object currentData() {
-			return currentKey;
-		    }
-		    public byte[] currentKey() {
-			return String.valueOf(i).getBytes();
-		    }
-		    public Object moveForward() {
-			if(iter.hasNext()) {
-			    i++;
-			    currentKey = iter.next();
-			    return String.valueOf(i).getBytes();
-			} else {
-			    return null;
-			}
-		    }
-		    public Object hasMore() {
-			return currentKey;
-		    }
-
-		    // Should we really care?
-		    public boolean offsetExists(Object pos) {
-			return false;
-		    }
-		    public Object offsetGet(Object pos) {
-			return null;
-		    }
-		    public void offsetSet(Object pos, Object val) {
-		    }
-		    public void offsetUnset(Object pos) {
-		    }
-		};
-	}
-	if(value instanceof Map) {
-	    return
-		new PhpMap(value, value){
-		    Object currentKey;
-		    Iterator iter;
-		    
-		    void init() {
-			iter = ((Map)(this.value)).keySet().iterator();
-			currentKey=null;
-			if(iter.hasNext()) {
-			    currentKey=iter.next();
-			}
-		    }
-		    public Object currentData() {
-			if(currentKey==null) return null;
-			return ((Map)(this.value)).get(currentKey);
-		    }
-		    public byte[] currentKey() {
-			return String.valueOf(currentKey).getBytes();
-		    }
-		    public Object moveForward() {
-			currentKey = iter.hasNext() ? iter.next() : null;
-			return currentKey;
-		    }
-		    public Object hasMore() {
-			return currentKey;
-		    }
-
-		    public boolean offsetExists(Object pos) {
-			return ((Map)(this.value)).containsKey(pos);
-		    }
-		    public Object offsetGet(Object pos) {
-			return ((Map)(this.value)).get(pos);
-		    }
-		    public void offsetSet(Object pos, Object val) {
-			((Map)(this.value)).put(pos, val);
-		    }
-		    public void offsetUnset(Object pos) {
-			((Map)(this.value)).remove(pos);
-		    }
-		};
-	}
-	return null;
-    }
-
-    //
     // add all jars found in the phpConfigDir/lib and /usr/share/java
     // to our classpath
     //
     static void initGlobals(String phpConfigDir) {
-	try {
-	    String[] paths;
-	    if(null!=phpConfigDir) 
-		paths = new String[] {phpConfigDir+"/lib", "/usr/share/java"};
-	    else
-		paths = new String[] {"/usr/share/java"};
-			
-	    for(int i=0; i<paths.length; i++) {
-		File d = new File(paths[i]);
-		String[] files=d.list();
-		if(files==null) continue;
-		for(int j=0; j<files.length; j++) {
-		    String file = files[j];
-		    int len = file.length();
-		    if(len<4) continue;
-		    if(!file.endsWith(".jar")) continue;
-		    try {
-			URL url;
-			file = "jar:file:" + d.getAbsolutePath() + File.separator + file + "!/";
-			url = new URL(file);
-			if(sysUrls==null) sysUrls=new ArrayList();
-			Util.logMessage("added system library: " + url);
-			sysUrls.add(url);
-		    }  catch (MalformedURLException e1) {
-			Util.printStackTrace(e1);
-		    }
-		}
-	    }
-	} catch (Exception t) {
+    	try {
+    		JavaBridgeClassLoader.initClassLoader(phpConfigDir);
+    	} catch (Exception t) {
 	    Util.printStackTrace(t);
 	}
     }
@@ -321,12 +155,13 @@ public class JavaBridge implements Runnable {
 	    if(s.length>0) {
 		sockname=s[0];
 	    } else {
-		Util.logFatal("No socket.  You must pass the socket filename, for example /tmp/.report_bridge");
-		System.exit(12);
+		sockname=DEFAULT_PORT;
 	    }
 	    try {
 		if(s.length>1) {
 		    Util.logLevel=Integer.parseInt(s[1]);
+		} else {
+			Util.logLevel=DEFAULT_LOG_LEVEL;
 		}
 	    } catch (Throwable t) {
 		Util.printStackTrace(t);
@@ -341,7 +176,13 @@ public class JavaBridge implements Runnable {
 	    }catch (Throwable t) {
 		Util.printStackTrace(t);
 	    }
-	    if(!openLog(logFile)) {
+	    boolean redirectOutput = false;
+		try {
+	    	redirectOutput = openLog(logFile);
+	    } catch (Throwable t) {
+	    }
+	    
+	    if(!redirectOutput) {
 		try {
 		    Util.logStream=new java.io.PrintStream(new java.io.FileOutputStream(logFile));
 		} catch (Exception e) {
@@ -353,7 +194,7 @@ public class JavaBridge implements Runnable {
 	    }
 	    try {
 		socket = LocalServerSocket.create(sockname, BACKLOG);
-	    } catch (Exception e) {
+	    } catch (Throwable e) {
 	    }
 	    if(null==socket) socket = new TCPServerSocket(Integer.parseInt(sockname), BACKLOG);
 	    Util.logMessage("Java logFile     : " + logFile);
@@ -381,8 +222,9 @@ public class JavaBridge implements Runnable {
 	try {
 	    System.loadLibrary("natcJavaBridge");
 	} catch (Throwable t) {
-	    Util.printStackTrace(t);
-	    System.exit(9);
+		haveNatcJavaBridge=false;
+	    //Util.printStackTrace(t);
+	    //System.exit(9);
 	}
 	try {
 	    init(s);
@@ -426,9 +268,13 @@ public class JavaBridge implements Runnable {
 		// false. See PhpMap.
 		response.writeCompositeBegin_a();
 		for (int i=0; i<length; i++) {
+                    response.writePairBegin();
 		    setResult(response, Array.get(value, i));
+		    response.writePairEnd();
 		}
 		response.writeCompositeEnd();
+	    } else { //PHP 5
+	    	response.writeObject(value);
 	    }
 	} else if (value instanceof java.util.Hashtable) {
 
@@ -450,21 +296,15 @@ public class JavaBridge implements Runnable {
 			response.writePairBegin_s(String.valueOf(key));
 			setResult(response, ht.get(key));
 		    }
-		    response.writeCompositeEnd();
+		    response.writePairEnd();
 		}
+		response.writeCompositeEnd();
+	    } else { //PHP 5
+	    	response.writeObject(value);
 	    }
 	} else {
 	    response.writeObject(value);
 	}
-    }
-    Throwable lastException = null;
-
-    void lastException(Response response) {
-	setResult(response, lastException);
-    }
-
-    void clearException() {
-	lastException = null;
     }
     public static void logDebug(String msg) {
 	Util.logDebug(msg);
@@ -536,7 +376,7 @@ public class JavaBridge implements Runnable {
 		} else {
 		    // for classes which have no visible constructor, return the class
 		    // useful for classes like java.lang.System and java.util.Calendar.
-		    setResult(response, Class.forName(name, true, cl));
+		    response.writeObject(Class.forName(name, true, cl));
 		    return;
 		}
 	    }
@@ -836,12 +676,14 @@ public class JavaBridge implements Runnable {
 		    for (int i=0; i<jfields.length; i++) {
 			if (jfields[i].getName().equals(prop)) {
 			    matches.add(jfields[i].getName());
+			    Object res=null;
 			    if (set) {
 				args = coerce(new Class[] {jfields[i].getType()}, args);
 				jfields[i].set(object, args[0]);
 			    } else {
-				setResult(response, jfields[i].get(object));
+			    	res=jfields[i].get(object);
 			    }
+			    setResult(response, res);
 			    return;
 			}
 		    }
@@ -873,12 +715,14 @@ public class JavaBridge implements Runnable {
 		    for (int i=0; i<jfields.length; i++) {
 			if (jfields[i].getName().equalsIgnoreCase(prop)) {
 			    matches.add(prop);
+			    Object res=null;
 			    if (set) {
 				args = coerce(new Class[] {jfields[i].getType()}, args);
 				jfields[i].set(object, args[0]);
 			    } else {
-				setResult(response, jfields[i].get(object));
+				res = jfields[i].get(object);
 			    }
+			    setResult(response, res);
 			    return;
 			}
 		    }
@@ -908,6 +752,13 @@ public class JavaBridge implements Runnable {
 		throw new RuntimeException();
 	    setException(response, e, set?"SetProperty":"GetProperty", object, prop, args);
 	}
+    }
+
+    //
+    // Return map for the value (PHP 5 only)
+    //
+    public static PhpMap getPhpMap(Object value) {
+	return PhpMap.getPhpMap(value);
     }
 
     // Set the library path for the java bridge. Examples:
@@ -955,5 +806,10 @@ public class JavaBridge implements Runnable {
 		Util.printStackTrace(e);
 	    }
 	}
+    }
+
+    public static boolean InstanceOf(Object ob, Object c) {
+	Class clazz = Util.GetClass(c);
+	return clazz.isInstance(c);
     }
 }

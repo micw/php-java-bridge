@@ -9,119 +9,189 @@
 #include "protocol.h"
 #include "php_wrapper.h"
 
-// FIXME: Don't use sprintf
-static void flush(proxyenv *env) {
-  send((*env)->peer, (*env)->send, (*env)->send_len, 0);
-  (*env)->send_len=0;
-  (*env)->handle_request(env);
-}
-static void CreateObjectBegin(proxyenv *env, char*name, size_t strlen, short createInstance, void *result) {
-  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<C v=\"%s\" p=\"%c\" i=\"%ld\">", name, createInstance?'C':'I', result);
-}
-static void CreateObjectEnd(proxyenv *env) {
-  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "</C>");
+#define SLEN 256 // initial length of the parser string
+#define SEND_SIZE 8192 // initial size of the send buffer
 
-  flush(env);
-}
-static void InvokeBegin(proxyenv *env, long object, char*method, size_t strlen, short property, void* result) {
-  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<I v=\"%ld\" m=\"%s\" p=\"%c\" i=\"%ld\">", object, method, property?'P':'I', result);
-}
-static void InvokeEnd(proxyenv *env) {
-  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "</I>");
+#define ILEN 40 // integer, double representation.
+#define FLEN 160 // the max len of the following format strings
 
-  flush(env);
-}
-static void GetMethodBegin(proxyenv *env, long object, char*method, size_t strlen, void* result) {
-  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<M v=\"%ld\" m=\"%s\" i=\"%ld\">", object, method, result);
-}
-static void GetMethodEnd(proxyenv *env) {
-  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "</M>");
 
-  flush(env);
-}
-static void CallMethodBegin(proxyenv *env, long object, long method, void* result) {
-  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<F v=\"%ld\" m=\"%ld\" i=\"%ld\">", object, method, result);
-}
-static void CallMethodEnd(proxyenv *env) {
-  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "</F>");
-
-  flush(env);
+#define GROW(size) { \
+  if((*env)->send_len+size>=(*env)->send_size) { \
+	(*env)->send=realloc((*env)->send, (*env)->send_size*=2); \
+	assert((*env)->send); if(!(*env)->send) exit(9); \
+  } \
 }
 
-static void String(proxyenv *env, char*name, size_t strlen) {
-  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<S v=\"%s\"/>", name);
-}
-static void Boolean(proxyenv *env, short boolean) {
-  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<B v=\"%c\"/>", boolean?'T':'F');
-}
-static void Long(proxyenv *env, long l) {
-  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<L v=\"%ld\"/>", l);
-}
-static void Double(proxyenv *env, double d) {
-  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<L v=\"%e\"/>", d);
-}
-static void Object(proxyenv *env, long object) {
-  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<O v=\"%ld\"/>", object);
-}
-static void CompositeBegin_a(proxyenv *env) {
-  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<X t=\"A\"");
-}
-static void CompositeBegin_h(proxyenv *env) {
-  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<X t=\"H\"");
-}
-static void CompositeEnd(proxyenv *env) {
-  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "</X>");
-}
-static void PairBegin_s(proxyenv *env, char*key, size_t strlen) {
-  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<P t=\"S\" v=\"%s\">", key);
-}
-static void PairBegin_n(proxyenv *env, unsigned long key) {
-  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<P t=\"N\" v=\"%ld\">", key);
-}
-static void PairEnd(proxyenv *env) {
-  (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "</P>");
-}
+ static void flush(proxyenv *env) {
+   send((*env)->peer, (*env)->send, (*env)->send_len, 0);
+   (*env)->send_len=0;
+   (*env)->handle_request(env);
+ }
+ static void CreateObjectBegin(proxyenv *env, char*name, size_t len, char createInstance, void *result) {
+   assert(createInstance=='C' || createInstance=='I');
+   if(!len) len=strlen(name);
+   GROW(FLEN+ILEN+len);
+   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<C v=\"%s\" p=\"%c\" i=\"%ld\">", name, createInstance, result);
+   assert((*env)->send_len<=(*env)->send_size);
+ }
+ static void CreateObjectEnd(proxyenv *env) {
+   GROW(FLEN);
+   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "</C>");
+   assert((*env)->send_len<=(*env)->send_size);
+   flush(env);
+ }
+ static void InvokeBegin(proxyenv *env, long object, char*method, size_t len, char property, void* result) {
+   assert(property=='I' || property=='P');
+   if(!len) len=strlen(method);
+   GROW(FLEN+ILEN+len+ILEN);
+   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<I v=\"%ld\" m=\"%s\" p=\"%c\" i=\"%ld\">", object, method, property, result);
+   assert((*env)->send_len<=(*env)->send_size);
+ }
+ static void InvokeEnd(proxyenv *env) {
+   GROW(FLEN);
+   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "</I>");
+   assert((*env)->send_len<=(*env)->send_size);
+   flush(env);
+ }
+ static void GetMethodBegin(proxyenv *env, long object, char*method, size_t len, void* result) {
+   if(!len) len=strlen(method);
+   GROW(FLEN+ILEN+len+ILEN);
+   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<M v=\"%ld\" m=\"%s\" i=\"%ld\">", object, method, result);
+   assert((*env)->send_len<=(*env)->send_size);
+ }
+ static void GetMethodEnd(proxyenv *env) {
+   GROW(FLEN);
+   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "</M>");
+   assert((*env)->send_len<=(*env)->send_size);
+   flush(env);
+ }
+ static void CallMethodBegin(proxyenv *env, long object, long method, void* result) {
+   GROW(FLEN+ILEN+ILEN+ILEN);
+   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<F v=\"%ld\" m=\"%ld\" i=\"%ld\">", object, method, result);
+   assert((*env)->send_len<=(*env)->send_size);
+ }
+ static void CallMethodEnd(proxyenv *env) {
+   GROW(FLEN);
+   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "</F>");
+   assert((*env)->send_len<=(*env)->send_size);
+   flush(env);
+ }
 
-
+ static void String(proxyenv *env, char*name, size_t len) {
+   if(!len) len=strlen(name);
+   GROW(FLEN+len);
+   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<S v=\"%s\"/>", name);
+   assert((*env)->send_len<=(*env)->send_size);
+ }
+ static void Boolean(proxyenv *env, short boolean) {
+   GROW(FLEN);
+   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<B v=\"%c\"/>", boolean?'T':'F');
+   assert((*env)->send_len<=(*env)->send_size);
+ }
+ static void Long(proxyenv *env, long l) {
+   GROW(FLEN+ILEN);
+   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<L v=\"%ld\"/>", l);
+   assert((*env)->send_len<=(*env)->send_size);
+ }
+ static void Double(proxyenv *env, double d) {
+   GROW(FLEN+ILEN);
+   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<D v=\"%e\"/>", d);
+   assert((*env)->send_len<=(*env)->send_size);
+ }
+ static void Object(proxyenv *env, long object) {
+   GROW(FLEN+ILEN);
+   if(!object) 
+	 (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<O v=\"\"/>");
+   else
+	 (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<O v=\"%ld\"/>", object);
+   assert((*env)->send_len<=(*env)->send_size);
+ }
+ static void CompositeBegin_a(proxyenv *env) {
+   GROW(FLEN);
+   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<X t=\"A\">");
+   assert((*env)->send_len<=(*env)->send_size);
+ }
+ static void CompositeBegin_h(proxyenv *env) {
+   GROW(FLEN);
+   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<X t=\"H\">");
+   assert((*env)->send_len<=(*env)->send_size);
+ }
+ static void CompositeEnd(proxyenv *env) {
+   GROW(FLEN);
+   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "</X>");
+   assert((*env)->send_len<=(*env)->send_size);
+ }
+ static void PairBegin_s(proxyenv *env, char*key, size_t len) {
+   if(!len) len=strlen(key);
+   GROW(FLEN+len);
+   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<P t=\"S\" v=\"%s\">", key);
+   assert((*env)->send_len<=(*env)->send_size);
+ }
+ static void PairBegin_n(proxyenv *env, unsigned long key) {
+   GROW(FLEN+ILEN);
+   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<P t=\"N\" v=\"%ld\">", key);
+   assert((*env)->send_len<=(*env)->send_size);
+ }
+ static void PairBegin(proxyenv *env) {
+   GROW(FLEN);
+   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<P>");
+   assert((*env)->send_len<=(*env)->send_size);
+ }
+ static void PairEnd(proxyenv *env) {
+   GROW(FLEN);
+   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "</P>");
+   assert((*env)->send_len<=(*env)->send_size);
+ }
+ static void Unref(proxyenv *env, long object) {
+   GROW(FLEN+ILEN);
+   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<U v=\"%ld\"/>", object);
+   assert((*env)->send_len<=(*env)->send_size);
+ }
 
-proxyenv *java_createSecureEnvironment(int peer, int (*handle_request)(proxyenv *env)) {
-  proxyenv *env;  
-  env=(proxyenv*)malloc(sizeof *env);     
-  if(!env) return 0;
-  *env=(proxyenv)calloc(1, sizeof **env); 
-  if(!*env) {free(env); return 0;}
+ 
 
-  (*env)->peer = peer;
-  (*env)->handle_request = handle_request;
-  (*env)->len = 2; //FIXME: use 255
-  (*env)->s=malloc((*env)->len);
-  if(!(*env)->s) {free(*env); free(env); return 0;}
-  (*env)->send=malloc(8192);
-  if(!(*env)->send) {free((*env)->s); free(*env); free(env); return 0;}
-  (*env)->send_len=0;
+ proxyenv *java_createSecureEnvironment(int peer, int (*handle_request)(proxyenv *env)) {
+   proxyenv *env;  
+   env=(proxyenv*)malloc(sizeof *env);     
+   if(!env) return 0;
+   *env=(proxyenv)calloc(1, sizeof **env); 
+   if(!*env) {free(env); return 0;}
 
-  (*env)->writeInvokeBegin=InvokeBegin;
-  (*env)->writeInvokeEnd=InvokeEnd;
-  (*env)->writeCreateObjectBegin=CreateObjectBegin;
-  (*env)->writeCreateObjectEnd=CreateObjectEnd;
-  (*env)->writeGetMethodBegin=GetMethodBegin;
-  (*env)->writeGetMethodEnd=GetMethodEnd;
-  (*env)->writeCallMethodBegin=CallMethodBegin;
-  (*env)->writeCallMethodEnd=CallMethodEnd;
-  (*env)->writeString=String;
-  (*env)->writeBoolean=Boolean;
-  (*env)->writeLong=Long;
-  (*env)->writeDouble=Double;
-  (*env)->writeObject=Object;
-  (*env)->writeCompositeBegin_a=CompositeBegin_a;
-  (*env)->writeCompositeBegin_h=CompositeBegin_h;
-  (*env)->writeCompositeEnd=CompositeEnd;
-  (*env)->writePairBegin_s=PairBegin_s;
-  (*env)->writePairBegin_n=PairBegin_n;
-  (*env)->writePairEnd=PairEnd;
+   (*env)->peer = peer;
+   (*env)->handle_request = handle_request;
+   (*env)->len = SLEN; 
+   (*env)->s=malloc((*env)->len);
+   if(!(*env)->s) {free(*env); free(env); return 0;}
+   (*env)->send_size=SEND_SIZE;
+   (*env)->send=malloc(SEND_SIZE);
+   if(!(*env)->send) {free((*env)->s); free(*env); free(env); return 0;}
+   (*env)->send_len=0;
 
-  return env;
-} 
+   (*env)->writeInvokeBegin=InvokeBegin;
+   (*env)->writeInvokeEnd=InvokeEnd;
+   (*env)->writeCreateObjectBegin=CreateObjectBegin;
+   (*env)->writeCreateObjectEnd=CreateObjectEnd;
+   (*env)->writeGetMethodBegin=GetMethodBegin;
+   (*env)->writeGetMethodEnd=GetMethodEnd;
+   (*env)->writeCallMethodBegin=CallMethodBegin;
+   (*env)->writeCallMethodEnd=CallMethodEnd;
+   (*env)->writeString=String;
+   (*env)->writeBoolean=Boolean;
+   (*env)->writeLong=Long;
+   (*env)->writeDouble=Double;
+   (*env)->writeObject=Object;
+   (*env)->writeCompositeBegin_a=CompositeBegin_a;
+   (*env)->writeCompositeBegin_h=CompositeBegin_h;
+   (*env)->writeCompositeEnd=CompositeEnd;
+   (*env)->writePairBegin=PairBegin;
+   (*env)->writePairBegin_s=PairBegin_s;
+   (*env)->writePairBegin_n=PairBegin_n;
+   (*env)->writePairEnd=PairEnd;
+   (*env)->writeUnref=Unref;
+
+   return env;
+ }
 
 #ifndef PHP_WRAPPER_H
 #error must include php_wrapper.h

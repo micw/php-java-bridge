@@ -19,9 +19,9 @@
 /* socket */
 #include <sys/types.h>
 #include <sys/socket.h>
-#ifdef CFG_JAVA_SOCKET_INET
-# include <netinet/in.h>
-#else
+#include <netinet/in.h>
+#include <netdb.h>
+#ifndef CFG_JAVA_SOCKET_INET
 # include <sys/un.h>
 # ifdef HAVE_CONFIG_H
 # if !HAVE_DECL_AF_LOCAL
@@ -55,6 +55,7 @@ extern int java_ini_updated;
 #define U_LIBRARY_PATH (1<<5)
 #define U_CLASSPATH (1<<6)
 #define U_SOCKNAME (1<<7)
+#define U_HOSTS (1<<8)
 
 
 #define phpext_java_ptr &java_module_entry
@@ -78,6 +79,7 @@ struct cfg {
   int cid; // server's process id
   int err; // file descriptor: server's return code
   char*sockname;
+  char*hosts;
   char*classpath;	
   char*ld_library_path;
   char*java;

@@ -23,8 +23,9 @@ public class TCPServerSocket implements ISocketFactory {
     }
 
     public Socket accept(JavaBridge bridge) throws IOException {
-	Util.logDebug("Request from unknown client");
-	return sock.accept();
+	Socket s = sock.accept();
+    	Util.logDebug("Request from unknown client");
+	return s;
     }
 
 }

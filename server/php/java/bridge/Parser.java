@@ -7,8 +7,11 @@ import java.io.InputStream;
 
 
 public class Parser {
-    // parse return codes
-    static final short OK=0, PING=1, EOF=2, IO_ERROR=3;
+    static final int RECV_SIZE = 8192; // initial size of the receive buffer
+    static final int MAX_ARGS = 100; // max # of method arguments
+    static final int SLEN = 256; // initial length of the parser string
+
+    static final short OK=0, PING=1, EOF=2, IO_ERROR=3;    // parse return codes
 
     private final JavaBridge bridge;
     IDocHandler handler;
@@ -20,7 +23,7 @@ public class Parser {
     
     byte options;
     short initOptions(InputStream in) throws IOException {
-	if((pos=in.read(buf, 0, BUF_SIZE)) >0) { 
+	if((pos=in.read(buf, 0, RECV_SIZE)) >0) { 
 
 	    /*
 	     * Special handling if the first byte is neither a space nor "<"
@@ -36,18 +39,16 @@ public class Parser {
 	    default: options=(byte) (ch&3); c++;
 	    }
 	}
-	return OK; //TOTO: check for eof
+	return OK; //TODO: check for eof
     }
     
-    static final int BUF_SIZE = 5;//FIXME: use 8K
-    static final int MAX_ARGS = 10;
     ParserTag tag[] = null;
-    byte buf[] = new byte[BUF_SIZE];
-    int len=2;//FIXME: use 255
+    byte buf[] = new byte[RECV_SIZE];
+    int len=SLEN;
     byte s[]= new byte[len];
     byte ch, mask=(byte)~0;
     static final short BEGIN=0, KEY=1, VAL=2, ENTITY=3, BLOB=4, VOID=5; short type=VOID;
-    short level=0, eor=0, blen=0; boolean in_dquote;
+    short level=0, eor=0, blen=0; boolean in_dquote, eot=false;
     int pos=0, c=0, i=0, i0=0, e;
 
     void RESET() {
@@ -56,7 +57,7 @@ public class Parser {
     	level=0;
     	eor=0;
     	blen=0;
-    	in_dquote=false;
+    	eot=in_dquote=false;
     	i=0;
     	i0=0;
     }
@@ -74,12 +75,12 @@ public class Parser {
     	if(Util.logLevel>=4) {
 	    StringBuffer buf=new StringBuffer("--> <");   
 	    buf.append(tag[0].strings[0].getStringValue());
-	    buf.append("> ");
+	    buf.append(" ");
     		
 	    for(int i=0; i<tag[1].n; i++) {
 		buf.append(tag[1].strings[i].getStringValue()); buf.append("=\""); buf.append(tag[2].strings[i].getStringValue());buf.append("\" ");
 	    }
-	    buf.append(">");
+	    buf.append(eot?"/>":">");
 	    Util.logDebug(buf.toString());
     	}
 	handler.begin(tag);
@@ -110,14 +111,14 @@ public class Parser {
     	while(eor==0) {
 	    if(c==pos) { 
 
-	    	pos=in.read(buf, 0, BUF_SIZE); 
-		if(0==pos) return EOF;
+	    	pos=in.read(buf, 0, RECV_SIZE); 
+		if(pos<=0) return EOF;
 
 		c=0; 
 
 	    }
 	    switch((ch=buf[c])&mask) 
-		{/* --- This block must be compilable with an ansi C compiler  --- */
+		{/* --- This block must be compilable with an ansi C compiler or javac --- */
 		case '<':
 		    level++;
 		    type=BEGIN;
@@ -135,6 +136,7 @@ public class Parser {
 		case '/': if(in_dquote) {APPEND(ch); break;}
 		    if(type==BEGIN) level--;
 		    level--;
+		    eot=true; // used for debugging only
 		    break;
 		case '>': if(in_dquote) {APPEND(ch); break;}
 		    if(type==BEGIN){

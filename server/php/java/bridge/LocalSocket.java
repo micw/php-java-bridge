@@ -10,16 +10,27 @@ import java.net.Socket;
 public class LocalSocket extends Socket {
     private OutputStream ostream;
     private InputStream istream;
+    private boolean closed=true;
+    private int peer;
 	
     public LocalSocket(int peer) {
-	this.ostream = new LocalSocketOutputStream(peer);
-	this.istream = new LocalSocketInputStream(peer);
+    	closed=false;
+    	this.peer=peer;
+	this.ostream = new LocalSocketOutputStream(this, peer);
+	this.istream = new LocalSocketInputStream(this, peer);
     }
     public OutputStream getOutputStream() throws IOException {
 	return ostream;
     }
     public InputStream getInputStream() throws IOException {
 	return istream;
+    }
+    public synchronized void close() throws IOException {
+	synchronized(this) {
+	    if (closed) return;
+	    closed = true;
+	    JavaBridge.sclose(peer);
+	}
     }
 		
 	

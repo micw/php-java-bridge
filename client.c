@@ -6,6 +6,8 @@
 
 /* strings */
 #include <string.h>
+#include <ctype.h>
+
 /* setenv */
 #include <stdlib.h>
 
@@ -152,10 +154,10 @@ static  void  setException  (pval *presult, long value, char *strValue, size_t l
 #endif
 }
 
+#define GET_RESULT(pos) if(!ctx->id) {ctx->id=(zval*)strtol(PARSER_GET_STRING(st, pos), 0, 10);}
 struct parse_ctx {
   char composite_type;			/* A|H */
-  zval*id;
-  pval*val;
+  zval*id, *container;
 };
 void begin(parser_tag_t tag[3], parser_cb_t *cb){
   struct parse_ctx *ctx=(struct parse_ctx*)cb->ctx;
@@ -164,43 +166,50 @@ void begin(parser_tag_t tag[3], parser_cb_t *cb){
 
   switch ((*tag[0].strings[0].string)[tag[0].strings[0].off]) {
   case 'X':
-	ctx->id=(zval*)strtol(PARSER_GET_STRING(st, 2), 0, 10);
-	setResultFromArray(ctx->id);
+#ifndef ZEND_ENGINE_2
+	GET_RESULT(1);
+	setResultFromArray(ctx->container=ctx->id);
 	ctx->composite_type=*PARSER_GET_STRING(st, 0);
-	ctx->id=(zval*)strtol(PARSER_GET_STRING(st, 1), 0, 10);
+#else
+	assert(0);
+#endif
+
 	break;
   case 'P':
+#ifndef ZEND_ENGINE_2
 	if(ctx->composite_type=='H') { /* hash table */
-	  ctx->id=(zval*)strtol(PARSER_GET_STRING(st, 2), 0, 10);
+	  GET_RESULT(2);
 	  if(*PARSER_GET_STRING(st, 0)=='N')	/* number */
-		ctx->val=hashIndexUpdate(ctx->id, strtol(PARSER_GET_STRING(st, 1), 0, 10));
+		ctx->id=hashIndexUpdate(ctx->container, strtol(PARSER_GET_STRING(st, 1), 0, 10));
 	  else
-		ctx->val=hashUpdate(ctx->id, PARSER_GET_STRING(st, 1), st[1].length);
+		ctx->id=hashUpdate(ctx->container, PARSER_GET_STRING(st, 1), st[1].length);
 	}
 	else {						/* array */
-	  ctx->id=(zval*)strtol(PARSER_GET_STRING(st, 1), 0, 10);
-	  ctx->id=(zval*)strtol(PARSER_GET_STRING(st, 0), 0, 10);
-	  ctx->id=nextElement(ctx->id);
+	  GET_RESULT(1);
+	  ctx->id=nextElement(ctx->container);
 	}
+#else
+	assert(0);
+#endif
 	break;
   case 'S':
-	ctx->id=(zval*)strtol(PARSER_GET_STRING(st, 1), 0, 10);
+	GET_RESULT(1);
 	setResultFromString(ctx->id, PARSER_GET_STRING(st, 0), st[0].length);
 	break;
   case 'B':
-	ctx->id=(zval*)strtol(PARSER_GET_STRING(st, 1), 0, 10);
-	setResultFromBoolean(ctx->id, *PARSER_GET_STRING(st, 0)!='0');
+	GET_RESULT(1);
+	setResultFromBoolean(ctx->id, *PARSER_GET_STRING(st, 0)=='T');
 	break;
   case 'L':
-	ctx->id=(zval*)strtol(PARSER_GET_STRING(st, 1), 0, 10);
+	GET_RESULT(1);
 	setResultFromLong(ctx->id, strtol(PARSER_GET_STRING(st, 0), 0, 10));
 	break;
   case 'D':
-	ctx->id=(zval*)strtol(PARSER_GET_STRING(st, 1), 0, 10);
+	GET_RESULT(1);
 	setResultFromDouble(ctx->id, atof(PARSER_GET_STRING(st, 0)));
 	break;
   case 'O':
-	ctx->id=(zval*)strtol(PARSER_GET_STRING(st, 1), 0, 10);
+	GET_RESULT(1);
 	if(!st[0].length) {
 	  ZVAL_NULL(ctx->id);
 	} else {
@@ -215,24 +224,68 @@ static int handle_request(proxyenv *env) {
   parse(env, &cb);
 }
 
+static int try_servers() {
+  if(cfg->hosts && strlen(cfg->hosts)) {
+	char *host, *hosts = strdup(cfg->hosts);
+	
+	assert(hosts); if(!hosts) return 0;
+	for(host=strtok(hosts, ";"); host; host=strtok(0, ";")) {
+	  struct sockaddr_in addr;
+	  char *_port = strrchr(host, ':');
+	  int port = 0, sock;
+
+	  if(_port) { 
+		*_port++=0;
+		if(strlen(_port)) port=atoi(_port);
+	  }
+	  if(!port) port=DEFAULT_PORT;
+	  cfg->saddr.sin_family = AF_INET;
+	  cfg->saddr.sin_port=htons(port);
+	  if(!isdigit(*host)) {
+		struct hostent *hostent = gethostbyname(host);
+		if(hostent) {
+		  memcpy(&cfg->saddr.sin_addr,hostent->h_addr,sizeof(struct in_addr));
+		} else {
+		  inet_aton(host, &cfg->saddr.sin_addr);
+		}
+	  }
+	  sock = socket (PF_INET, SOCK_STREAM, 0);
+	  if(sock==-1) continue;
+	  if(-1!=connect(sock,(struct sockaddr*)&cfg->saddr, sizeof cfg->saddr)) {
+		free(hosts);
+		return sock;
+	  }
+	}
+	free(hosts);
+  }
+  return 0;
+}
+
 proxyenv *java_connect_to_server(TSRMLS_D) {
   int sock, n=-1;
   proxyenv *jenv =JG(jenv);
+  zval *map;
 
   if(jenv) return jenv;
 
+  if(!(sock=try_servers())) {
 #ifndef CFG_JAVA_SOCKET_INET
-  sock = socket (PF_LOCAL, SOCK_STREAM, 0);
+	sock = socket (PF_LOCAL, SOCK_STREAM, 0);
 #else
-  sock = socket (PF_INET, SOCK_STREAM, 0);
+	sock = socket (PF_INET, SOCK_STREAM, 0);
 #endif
-  if(sock!=-1) {
-	n = connect(sock,(struct sockaddr*)&cfg->saddr, sizeof cfg->saddr);
+	if(sock!=-1) {
+	  n = connect(sock,(struct sockaddr*)&cfg->saddr, sizeof cfg->saddr);
+	}
+	if(n==-1) { 
+	  php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge?",52, strerror(errno));
+	  return 0;
+	}
   }
-  if(n==-1) { 
-	php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge?",52, strerror(errno));
-	return 0;
-  }
+#ifndef ZEND_ENGINE_2
+  // we want arrays as values
+  { char c=2; write(sock, &c, sizeof c); }
+#endif
 
   return JG(jenv) = java_createSecureEnvironment(sock, handle_request);
 }

@@ -1,18 +1,17 @@
-PHP/Java Bridge protocol version 0.9
+PHP/Java Bridge protocol version 1.0
 
 Requests are marked with "->", responses with "<-".  The server
-continues to process requests until EOF. For all tags only the first
-character is significant.
+continues to process requests until EOF. Only the first character is
+significant.
 
 The communication must begin with [C]reateInstance. After that
 [I]nvoke may be used. The server responds with a single ARG which also
-carries the last session context ID. The session context ID is your
-session context, for example the location of a cell where the response
+carries the last request context ID. The request context ID is your
+request context, for example the location of a cell where the response
 should be stored; a structure or something like that. In PHP for
 example we allocate a pval and pass it as the ID to the Invoke or
 Create request. When the response arrives, we receive our ID along
-with the result so we know exactly where to store the result we have
-received).
+with the result so we know exactly where to store the result).
 
 Example:
 
@@ -23,9 +22,9 @@ Example:
       <Long value="6"/> 
     </CreateInstance>
 
-<-  <Object value="0x1" id="78532"/>
+<-  <Object value="1" id="78532"/>
 
-->  <Invoke value="0x1" method="toString" predicate="Invoke" id="0">
+->  <Invoke value="1" method="toString" predicate="Invoke" id="0">
     </Invoke>
 
 <-  <String value="6" id="0"/>
@@ -50,16 +49,19 @@ reference destroyed handles.
 Main requests:
 
 ->
-writeCreateObjectBegin(char*name, size_t strlen, short referenceClass_or_createInstance, void *id);
-<C v=name p=[C|I] i=ID> ...ARGS...
+writeCreateObjectBegin(char*name, size_t strlen, char reference[C]lass_or_create[I]nstance, void *id);
+<C v=name p=C|I i=ID> ...ARGS...
 writeCreateObjectEnd()
 </C>
 
 ->
-writeInvokeBegin(long object, char*method, size_t strlen, short examineProperty_or_Invoke, void*id);
+writeInvokeBegin(long object, char*method, size_t strlen, char examine[P]roperty_or_[I]nvoke, void*id);
 <I v=object m=method p=P|I i=ID> ...ARGS...
 writeInvokeEnd()
 </I>
+
+When v=0, the call is directed to the current request-handling
+instance of the java bridge.
 
 
 
@@ -70,7 +72,7 @@ writeString(char*str, size_t strlen)
 
 <->
 writeBoolean(short b)
-<B v=[T|F] [i=ID] />
+<B v=T|F [i=ID] />
 
 <->
 writeLong(long l)
@@ -84,21 +86,24 @@ writeDouble(double d)
 writeObject(long object)
 <O v=object [i=ID] />
 
+NULL values can be send as either v="" or v="0"
+
 <-
 Exception
-<E v=object m=stringRepresentation [i=ID] />
+<E v=object m=stringRepresentation i=ID />
 
 ->  (or <->, see below)
 writeCompositeBegin_a()
 writeCompositeBegin_h()
-<X t=[A|H] [i=ID] /> ...[PAIR|ARG]...
+<X t=A|H [i=ID] /> ...[PAIR|ARG]...
 writeCompositeEnd()
 </X>
 
 ->  (or <->, see below)
-writePairBegin_s(char *key, size_t strlen)
-writePairBegin_n(unsigned long key)
-<P t=[N|S] v=key> ...ARG...
+writePairBegin_s(char *key, size_t strlen) // if X t=H
+writePairBegin_n(unsigned long key)  // if X t=H
+writePairBegin()  // if X t=A
+<P [t=N|S v=key]> ...ARG...
 writePairEnd()
 </P>
 
@@ -128,9 +133,8 @@ NOTES:
 If the first byte is neither a "<" nor a space, bits 0 and 1
 have a special meaning:
 
-Bit 0: Client sends and receives embedded BLOB fields; values are
-embedded as binary data: 1. byte zero, 2. byte length, followed by up
-to 255 bytes blob data.
+Bit 0: Client sends and receives embedded binary fields: 1. byte zero,
+2. byte length, followed by up to 255 bytes data.
 
 Bit 1: Client wants arrays as values. The server will return X and P
 instead of O.
