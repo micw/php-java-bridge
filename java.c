@@ -185,7 +185,6 @@ ZEND_GET_MODULE(java)
 int java_ini_updated, java_ini_last_updated;
 zend_class_entry *php_java_class_entry;
 zend_class_entry *php_java_class_class_entry;
-zend_class_entry *php_java_jsr_class_class_entry;
 zend_class_entry *php_java_exception_class_entry;
 
 #ifdef ZEND_ENGINE_2
@@ -294,6 +293,24 @@ PHP_METHOD(java, java)
 	efree(argv);
 }
 
+PHP_METHOD(java, mono)
+{
+	zval **argv;
+	int argc = ZEND_NUM_ARGS();
+
+	argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
+	if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
+		php_error(E_ERROR, "Couldn't fetch arguments into array.");
+		RETURN_NULL();
+	}
+
+	php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU,
+								   "mono", 1, 1,
+								   getThis(),
+								   argc, argv);
+	efree(argv);
+}
+
 PHP_METHOD(java, java_class)
 {
 	zval **argv;
@@ -312,8 +329,26 @@ PHP_METHOD(java, java_class)
 	efree(argv);
 }
 
+PHP_METHOD(java, mono_class)
+{
+	zval **argv;
+	int argc = ZEND_NUM_ARGS();
+
+	argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
+	if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
+		php_error(E_ERROR, "Couldn't fetch arguments into array.");
+		RETURN_NULL();
+	}
+
+	php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU,
+								   "mono", 1, 0, 
+								   getThis(),
+								   argc, argv);
+	efree(argv);
+}
+
 // exact copy of java_class for jsr223 compatibility
-PHP_METHOD(java, javaclass)
+PHP_METHOD(java, monoclass)
 {
 	zval **argv;
 	int argc = ZEND_NUM_ARGS();
@@ -326,6 +361,25 @@ PHP_METHOD(java, javaclass)
 
 	php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU,
 								   "java", 1, 0, 
+								   getThis(),
+								   argc, argv);
+	efree(argv);
+}
+
+// exact copy of java_class for jsr223 compatibility
+PHP_METHOD(java, monoclass)
+{
+	zval **argv;
+	int argc = ZEND_NUM_ARGS();
+
+	argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
+	if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
+		php_error(E_ERROR, "Couldn't fetch arguments into array.");
+		RETURN_NULL();
+	}
+
+	php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU,
+								   "mono", 1, 0, 
 								   getThis(),
 								   argc, argv);
 	efree(argv);
@@ -792,16 +846,36 @@ php_java_call_function_handler4(INTERNAL_FUNCTION_PARAMETERS, zend_property_refe
   char *name = Z_STRVAL(function_name->element);
   int arg_count = ZEND_NUM_ARGS();
   pval **arguments = (pval **) emalloc(sizeof(pval *)*arg_count);
-  short createInstance = strcmp("java_class", name) && strcmp("javaclass", name);
-  short constructor = !strcmp("java", name) || !createInstance;
+  short createInstance;
+  short constructor;
+  short is_mono;
+  zval *zval0;
 
   getParametersArray(ht, arg_count, arguments);
 
+  if(!strncmp("mono", name, 4) && arg_count>0) {
+	size_t len=4+Z_STRLEN(*arguments[0]);
+	char *arg0=emalloc(len+1);
+	strcpy(arg0, "cli.");
+	strncat(arg0, Z_STRVAL(*arguments[0]), len-4);
+	MAKE_STD_ZVAL(zval0);
+	ZVAL_NULL(zval0);
+	ZVAL_STRINGL(zval0, arg0, len, 0);
+	arguments[0]=zval0;
+	is_mono=1;
+	createInstance = strcmp("mono_class", name) && strcmp("monoclass", name);
+	constructor = !strcmp("mono", name) || !createInstance;
+  } else {
+	is_mono=0;
+	createInstance = strcmp("java_class", name) && strcmp("javaclass", name);
+	constructor = !strcmp("java", name) || !createInstance;
+  }
   php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU, 
 								 name, constructor, createInstance, 
 								 object, 
 								 arg_count, arguments);
 
+  if(is_mono) zval_ptr_dtor(&zval0);
   efree(arguments);
   pval_destructor(&function_name->element);
 }
@@ -864,6 +938,16 @@ PHP_MINIT_FUNCTION(java)
   INIT_CLASS_ENTRY(ce, "javaclass", NULL);
   parent = (zend_class_entry *) php_java_class_entry;
   zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
+
+  INIT_CLASS_ENTRY(ce, "mono", NULL);
+  parent = (zend_class_entry *) php_java_class_entry;
+  zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
+  INIT_CLASS_ENTRY(ce, "mono_class", NULL);
+  parent = (zend_class_entry *) php_java_class_entry;
+  zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
+  INIT_CLASS_ENTRY(ce, "monoclass", NULL);
+  parent = (zend_class_entry *) php_java_class_entry;
+  zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
 #else
   zend_class_entry ce;
   zend_internal_function call, get, set;
@@ -909,13 +993,20 @@ PHP_MINIT_FUNCTION(java)
   /* compatibility with the jsr implementation */
   INIT_CLASS_ENTRY(ce, "javaclass", php_java_class_functions);
   parent = (zend_class_entry *) php_java_class_entry;
-  php_java_jsr_class_class_entry = 
-	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
+  zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
 
   INIT_CLASS_ENTRY(ce, "javaexception", php_java_class_functions);
   parent = (zend_class_entry *) php_java_exception_class_entry;
   php_java_exception_class_entry = 
 	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
+
+  INIT_CLASS_ENTRY(ce, "mono", php_java_class_functions);
+  parent = (zend_class_entry *) php_java_class_entry;
+  zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
+
+  INIT_CLASS_ENTRY(ce, "monoclass", php_java_class_functions);
+  parent = (zend_class_entry *) php_java_class_entry;
+  zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
 
 #endif
   

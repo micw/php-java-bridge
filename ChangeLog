@@ -1,3 +1,19 @@
+2005-03-15  Jost Boekemeier <jostb@intern>
+
+	* java.c (php_java_jsr_class_class_entry): Obsolete.
+	(mono, mono_class, monoclass): New methods.
+	(php_java_call_function_handler4): Mono support added.
+	(PHP_MINIT_FUNCTION): Mono support added.
+
+	* server/php/java/bridge/JavaBridge.java (select): Prefer more
+	specific args.
+
+	* tests.mono+net/bench.php, tests.mono+net/excel_antitest.php,
+	tests.mono+net/helloworld.php, tests.mono+net/load_assembly.php,
+	tests.mono+net/params.php, tests.mono+net/parms.php,
+	tests.mono+net/sample_lib.cs, tests.mono+net/sample_lib.dll,
+	tests.mono+net/stack.php: New tests.
+	
 2005-03-13  Jost Boekemeier <jostb@intern>
 
 	* php_java_snprintf.c: New file
@@ -13,6 +29,7 @@
 	* client.c (begin): Use send_string_to_double in order to avoid
 	surprises with certain locales.
 
+	* php-java-bridge 2.0.4 released.
 	
 2005-03-11  Jost Boekemeier <jostb@intern>
 
@@ -36,6 +53,9 @@
 
 	* php-java-bridge.spec, VERSION: New version
 		
+	* php-java-bridge 2.0.3 released
+	
+	
 2005-03-09  Jost Boekemeier <jostb@intern>
 
 	* PROTOCOL.TXT: Document Bit 0 as reserved.

@@ -403,9 +403,11 @@ public class JavaBridge implements Runnable {
 
 	    for (int i=0; i<parms.length; i++) {
 		if (parms[i].isInstance(args[i])) {
-		    for (Class c=parms[i]; (c=c.getSuperclass()) != null; ) {
-			if (!c.isInstance(args[i])) break;
-			weight++;
+		    for (Class c=args[i].getClass(); (c=c.getSuperclass()) != null; ) {
+			if (!parms[i].isAssignableFrom(c)) break;
+			weight+=256; // prefer more specific arg, for
+				     // example AbstractMap hashMap
+				     // over Object hashMap.
 		    }
 		} else if (parms[i].isAssignableFrom(java.lang.String.class)) {
 		    if (!(args[i] instanceof byte[]) && !(args[i] instanceof String))
