@@ -55,6 +55,7 @@ public class JavaBridge implements Runnable {
 		    
 		    return b;
 		} catch (Exception e) {
+		    printStackTrace(e);
 		    return null;
 		}
 	    }

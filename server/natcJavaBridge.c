@@ -711,7 +711,6 @@ JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jobject instan
   jobject globalRef;
   SFILE *peer = (SFILE*)(long)socket;
   block_sig();
-  enter();
   logChannel(env, "create new communication channel", socket);
 
   globalRef = connection_startup(env);
@@ -720,6 +719,7 @@ JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jobject instan
   if(peer && (SFWRITE(&instance, sizeof instance, 1, peer)!=1)) {
 	logSysError(env, "could not send instance, child not listening"); SFCLOSE(peer);return;
   }
+  enter();
   while(peer && !SFEOF(peer)) {
 	if(SFERROR(peer)) { logSysError(env, "communication error"); break; }
 	int term = handle_request_impl(peer, env, globalRef);
