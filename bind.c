@@ -48,7 +48,7 @@ static void java_get_server_args(char*env[N_SENV], char*args[N_SARGS]) {
   char*sys_libpath=getenv("LD_LIBRARY_PATH");
   char*home=cfg->java_home;
 
-  if(!sys_lib_path) sys_libpath="";
+  if(!sys libpath) sys_libpath="";
   args[0]=strdup(program);
   s="-Djava.library.path=";
   p=malloc(strlen(s)+strlen(lib_path)+1);
