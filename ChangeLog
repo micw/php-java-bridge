@@ -1,3 +1,11 @@
+2004-11-02  Jost Boekemeier  <jostb@intern>
+
+	* java.c (PHP_MSHUTDOWN_FUNCTION): Reverted last change (code
+	disabled). This caused a loop in malloc_consolidate in apache 2.0.
+	
+	* php-java-bridge 1.0.6a released
+	
+	
 2004-10-31  Jost Boekemeier  <jostb@intern>
 
 	* bind.c (java_start_server): Protect guard; a dead guard isn't
