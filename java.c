@@ -833,19 +833,19 @@ PHP_MINIT_FUNCTION(java)
   // only cast and clone; no iterator, no array access
   php_java_exception_class_entry->create_object = create_object;
   
-  INIT_CLASS_ENTRY(ce, "java_class", java_class_functions);
+  INIT_CLASS_ENTRY(ce, "java_class", NULL);
   parent = (zend_class_entry *) php_java_class_entry;
 
   php_java_class_class_entry = 
 	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
 
   /* compatibility with the jsr implementation */
-  INIT_CLASS_ENTRY(ce, "javaclass", java_class_functions);
+  INIT_CLASS_ENTRY(ce, "javaclass", NULL);
   parent = (zend_class_entry *) php_java_class_entry;
   php_java_jsr_class_class_entry = 
 	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
 
-  INIT_CLASS_ENTRY(ce, "javaexception", java_class_functions);
+  INIT_CLASS_ENTRY(ce, "javaexception", NULL);
   parent = (zend_class_entry *) php_java_exception_class_entry;
   php_java_exception_class_entry = 
 	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);

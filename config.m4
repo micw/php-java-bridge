@@ -1,9 +1,9 @@
-sinclude(tests.m4/function_checks.m4)
-sinclude(tests.m4/threads.m4)
-sinclude(tests.m4/java_check_broken_stdio_buffering.m4)
-sinclude(tests.m4/java_check_struct_ucred.m4)
-sinclude(tests.m4/java_check_abstract_namespace.m4)
-sinclude(tests.m4/java_check_broken_gcc_installation.m4)
+m4_include(tests.m4/function_checks.m4)
+m4_include(tests.m4/threads.m4)
+m4_include(tests.m4/java_check_broken_stdio_buffering.m4)
+m4_include(tests.m4/java_check_struct_ucred.m4)
+m4_include(tests.m4/java_check_abstract_namespace.m4)
+m4_include(tests.m4/java_check_broken_gcc_installation.m4)
 
 PHP_ARG_WITH(java, for java support,
 [  --with-java[=JAVA_HOME]        Include java support])
@@ -43,7 +43,11 @@ if test "$PHP_JAVA" != "no"; then
           <$ext_builddir/init_cfg.c.in >$ext_builddir/init_cfg.c
 
 # bootstrap the server's configure script
-	AC_CONFIG_SUBDIRS(server)
+	if test -d ext/java/server; then
+	    AC_CONFIG_SUBDIRS(ext/java/server)
+        else
+	    AC_CONFIG_SUBDIRS(server)
+        fi
 	sed "s*@EXTENSION_DIR@*${EXTENSION_DIR}*
              s*@phplibdir@*`pwd`/modules*" \
           <$ext_builddir/server/configure.gnu.in >$ext_builddir/server/configure.gnu

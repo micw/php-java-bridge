@@ -1,3 +1,17 @@
+2005-01-28  Jost Boekemeier  <jostb@intern>
+	
+	* java.c (PHP_MINIT_FUNCTION): For java_class, javaclass and
+	javaexception: Do not override parent methods with themselfs. PHP
+	5.0.3 doesn't like that...
+	
+	* README: Removed windows install description.
+	
+	* README.WINDOWS: New file from README.
+
+	* config.m4: Embedding into PHP works again.  Use m4_include so
+	that autoheader scans the included files.
+	
+	
 2005-01-27  Jost Boekemeier  <jostb@intern>
 	
 	* tests.php5/exception.php: Extract cause.

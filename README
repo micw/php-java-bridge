@@ -185,6 +185,9 @@ Build and execution instructions:
   can now test the extension by invoking the test.php with the 
   command: php ./test.php.
 
+  Please see the output of ./configure --help=recursive for further
+  configure options.
+
 ------------------------------------
    Permanently activate the module
    -------------------------------
@@ -290,21 +293,47 @@ Build and execution instructions:
 
   3. Delete the java sub-directory from php-4.3.x/ext and replace it
      with our php-java-bridge. Rename ext/php-java-bridge to
-     ext/java.  Update the "sinclude" paths in
+     ext/java.  Update the "m4_include" paths in
      php-4.3.x/ext/java/config.m4 so that they start with "ext/java/":
 
-      sinclude(ext/java/tests.m4/function_checks.m4)
-      sinclude(ext/java/tests.m4/java_check_broken_stdio_buffering.m4)
-      sinclude(ext/java/tests.m4/java_check_broken_gcc_installation.m4)
+      m4_include(ext/java/tests.m4/function_checks.m4)
+      m4_include(ext/java/tests.m4/java_check_broken_stdio_buffering.m4)
+      ...
+      m4_include(ext/java/tests.m4/java_check_broken_gcc_installation.m4)
 
   4. Invoke autoconf to register our java module within the PHP build
-     tree and then compile php as usual:
+     tree:
  
-      autoconf && ./configure --with-java && make
+      buildconf.bat --force 
+
+     Instead of running "buildconf" you can also use autoconf directly:
+
+      aclocal && autoheader && autoconf && libtoolize -f && automake
+
+     Then configure and compile php as usual:
+
+      ./configure --with-java=$JAVA_HOME
+      make
 
   This will create a php binary with the PHP/Java Bridge included.
   You can then copy the executable into the CGI directory of your IIS
   Web-Server.
+
+  To also install the server part into the modules directory:
+
+      make install
+      make install-modules
+
+  Windows uses TCP/IP sockets instead of unix domain sockets. If you
+  want to change the java.socketname from its default (which is 9047),
+  you must use an integer. For example:
+
+    java.socketname=8009
+
+  The host is currently hard-coded (in natcJavaBridge.c and in java.c)
+  to 127.0.0.1, which is the local interface.  You can change this,
+  for example if you want to run the server part of the bridge on a
+  unix machine, but opening a port on a web-server can be dangerous.
 
 ------------------------------------
   Loading on-demand with dl()
