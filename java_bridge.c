@@ -303,13 +303,4 @@ void php_java_shutdown_library(TSRMLS_D)
 
   JG(php_reflect) = NULL;
   JG(jenv) = NULL;
-
-  if(JG(cfg).sockname) free(JG(cfg).sockname);
-  if(JG(cfg).classpath) free(JG(cfg).classpath);
-  if(JG(cfg).ld_library_path) free(JG(cfg).ld_library_path);
-  if(JG(cfg).java) free(JG(cfg).java);
-  if(JG(cfg).java_home) free(JG(cfg).java_home);
-  if(JG(cfg).logLevel) free(JG(cfg).logLevel);
-  if(JG(cfg).logFile) free(JG(cfg).logFile);
-
 }

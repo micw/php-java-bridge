@@ -68,7 +68,8 @@ Build and execution instructions:
 
 	  java.libpath   = <system dependent path to natcJavaBridge.so>
 	  java.classpath = <system dependent path to JavaBridge.class>
-	  java.home      = <system dependent path to the java install dir>
+	  java.java_home = <system dependent path to the java install dir>
+	  java.java      = <system dependent path to the java binary>
 	  java.socketname= <hard-coded socketname for debugging>
 
 	  If you change the above values, please fist look at the output

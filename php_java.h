@@ -25,6 +25,15 @@ extern int le_jobject;
 extern zend_module_entry java_module_entry;
 extern zend_class_entry php_java_class_entry;
 
+extern int java_ini_updated;
+#define U_LOGFILE (1<<1)
+#define U_LOGLEVEL (1<<2)
+#define U_JAVA_HOME (1<<3)
+#define U_JAVA (1<<4)
+#define U_LIBRARY_PATH (1<<5)
+#define U_CLASSPATH (1<<6)
+#define U_SOCKNAME (1<<7)
+
 
 #define phpext_java_ptr &java_module_entry
 

@@ -91,56 +91,56 @@ zend_class_entry php_java_class_entry;
 static PHP_INI_MH(OnIniSockname)
 {
 	if (new_value) {
-	  if(JG(cfg).sockname) free(JG(cfg).sockname);
-	  JG(cfg).sockname=strdup(new_value);
+	  JG(cfg).sockname=new_value;
+	  java_ini_updated|=U_SOCKNAME;
 	}
 	return SUCCESS;
 }
 static PHP_INI_MH(OnIniClassPath)
 {
 	if (new_value) {
-	  if(JG(cfg).classpath) free(JG(cfg).classpath);
-	  JG(cfg).classpath =strdup(new_value);
+	  JG(cfg).classpath =new_value;
+	  java_ini_updated|=U_CLASSPATH;
 	}
 	return SUCCESS;
 }
 static PHP_INI_MH(OnIniLibPath)
 {
 	if (new_value) {
-	  if(JG(cfg).ld_library_path) free(JG(cfg).ld_library_path);
-	  JG(cfg).ld_library_path = strdup(new_value);
+	  JG(cfg).ld_library_path = new_value;
+	  java_ini_updated|=U_LIBRARY_PATH;
 	}
 	return SUCCESS;
 }
 static PHP_INI_MH(OnIniJava)
 {
-	if (new_value) {
-	  if(JG(cfg).java) free(JG(cfg).java);
-		JG(cfg).java = strdup(new_value);
-	}
-	return SUCCESS;
+  if (new_value) {
+	JG(cfg).java = new_value;
+	java_ini_updated|=U_JAVA;
+  }
+  return SUCCESS;
 }
 static PHP_INI_MH(OnIniJavaHome)
 {
 	if (new_value) {
-	  if(JG(cfg).java_home) free(JG(cfg).java_home);
-	  JG(cfg).java_home = strdup (new_value);
+	  JG(cfg).java_home = new_value;
+	  java_ini_updated|=U_JAVA_HOME;
 	}
 	return SUCCESS;
 }
 static PHP_INI_MH(OnIniLogLevel)
 {
 	if (new_value) {
-	  if(JG(cfg).logLevel) free(JG(cfg).logLevel);
-	  JG(cfg).logLevel = strdup(new_value);
+	  JG(cfg).logLevel = new_value;
+	  java_ini_updated|=U_LOGLEVEL;
 	}
 	return SUCCESS;
 }
 static PHP_INI_MH(OnIniLogFile)
 {
 	if (new_value) {
-	  if(JG(cfg).logFile) free(JG(cfg).logFile);
-	  JG(cfg).logFile = strdup(new_value);
+	  JG(cfg).logFile = new_value;
+	  java_ini_updated|=U_LOGFILE;
 	}
 	return SUCCESS;
 }
@@ -158,7 +158,17 @@ PHP_INI_END()
 
 static void php_java_alloc_globals_ctor(zend_java_globals *java_globals TSRMLS_DC)
 {
-	memset(java_globals, 0, sizeof(zend_java_globals));
+  java_globals->php_reflect=0;
+  java_globals->jenv=0;
+  java_globals->reflect_class=0;
+}
+
+static void init_server()
+{
+  extern int java_test_server(struct cfg*cfg TSRMLS_DC);
+  if(java_test_server(&JG(cfg) TSRMLS_CC)==FAILURE) 
+	java_start_server(&JG(cfg));
+  java_test_server(&JG(cfg) TSRMLS_CC);
 }
 
 PHP_MINIT_FUNCTION(java)
@@ -177,15 +187,18 @@ PHP_MINIT_FUNCTION(java)
 	le_jobject = zend_register_list_destructors_ex(NULL, php_java_destructor, "java", module_number);
 
 	ZEND_INIT_MODULE_GLOBALS(java, php_java_alloc_globals_ctor, NULL);
-	REGISTER_INI_ENTRIES();
 
-	extern void java_init_cfg(struct cfg*cfg);
-	java_init_cfg(&JG(cfg));
-	extern int java_test_server(struct cfg*cfg TSRMLS_DC);
-	if(java_test_server(&JG(cfg) TSRMLS_CC)==FAILURE) 
-	  java_start_server(&JG(cfg));
+	if(REGISTER_INI_ENTRIES()==SUCCESS) {
+	  /* set the default values for all undefined */
+	  extern void java_init_cfg(struct cfg *cfg);
+	  java_init_cfg(&JG(cfg));
+	  JG(cfg).saddr.sun_family = AF_UNIX;
+	  strcpy(JG(cfg).saddr.sun_path, JG(cfg).sockname);
+	  java_ini_updated=0; 
+	}
 
-	return java_test_server(&JG(cfg) TSRMLS_CC) || SUCCESS;
+	init_server();
+	return SUCCESS;
 }
 static char*get_server_args(struct cfg*cfg) {
   int i;
