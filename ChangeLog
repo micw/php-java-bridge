@@ -1,5 +1,8 @@
 2005-01-31  Jost Boekemeier  <jostb@intern>
 
+	* tests.php5/arrayInterface.php: Use Array.getLength instead of
+	explicit value.
+	
 	* php-java-bridge.fc, php-java-bridge.te: Cleanup for release.
 
         * README: Windows section rewritten

@@ -15,7 +15,7 @@ $entries[3] ="Die Verfolgung und Ermordung Jean Paul Marats dargestellt durch di
 $entries[4] ="Der Mann mit den Messern, Heinrich Böll, 1917--1985";
 $entries[5] ="Biedermann und die Brandstifter, Max Frisch, 1911--1991";
 $entries[6] ="Seelandschaft mit Pocahontas, Arno Schmidt, 1914--1979";
-for ($i = 0; $i < 7; $i++) { 
+for ($i = 0; $i < $Array->getLength($entries); $i++) { 
   echo "$i: $entries[$i]\n";
 }
 
