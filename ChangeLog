@@ -2,7 +2,6 @@
 
 	* README: Document java_set_library_path
 	* java.c, scheme_demo.php: Renamed java_set_jar_library_path to java_set_library_path
-	* 
 	
 	* server/JavaBridge.java, server/natcJavaBridge.c, server/configure.in: Load libraries from /usr/share/java or from ext_dir/lib
 
