@@ -199,24 +199,43 @@ Build and execution instructions:
 
           extension = java.so
           [java]
-          java.log_level=1
-          java.log_file=/var/log/php-java-bridge.log
-          # Comment out the following option if you want to
-          # start the bridge automatically as a sub-process 
-          # of the web-server, not recommended
-          java.socketname=/var/run/.php-java-bridge_socket
+          java.log_level="3"
+          java.log_file="/var/log/php-java-bridge.log"
+
+          # local bridge
+          java.socketname="/var/run/.php-java-bridge_socket"
+
+          # list of additional servers running the bridge
+          #java.hosts="localhost:9167;192.168.6.30:8009;..."
+
 
   Re-start the web-server, for example with the command:
 
           apachectl restart
 
-  Copy the php-java-bridge executable into the /usr/sbin directory
-  and start the bridge, if it isn't already running.
+
+  OPTION 1:
+  If you want to run the bridge on an array of servers (see
+  java.hosts), start them now. Example command (on all servers):
+
+          java -jar JavaBridge.jar 9176 3 ""
+
+  OPTION 2:
+  If you want to run only one local bridge, copy the php-java-bridge
+  executable into the /usr/sbin directory and start it with the command:
 
           sh /usr/sbin/php-java-bridge
 
-  After the module is activated verify that the module is running by
-  typing:
+  OPTION 3:
+  If you want to run only one bridge as a sub-process or apache, disable
+  the java.host and java.socketname settings, re-start apache and check 
+  if it has started the bridge as a sub-process:
+
+          apachectl restart
+          pstree | fgrep httpd
+
+
+  Check the status:
 
           echo "<?php phpinfo()?>" | php | fgrep "java status"
 
@@ -403,9 +422,6 @@ Build and execution instructions:
    * -m32: Build 32 bit code. Required if you run a 32 bit JVM on a 64
      bit system.
 
-   * -DCFG_JAVA_INPROCESS: Do not use exec() but call the JVM directly.
-     Experimental.
-     
   Example: make CFLAGS="-m64"
 
 ------------------------------------
