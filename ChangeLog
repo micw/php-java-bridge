@@ -1,4 +1,10 @@
-2004-12-03  Jost Boekemeier  <jostb@timon.intern.de>
+2004-12-04  Jost Boekemeier  <jostb@intern>
+
+	* java.c (function_entry): Set the arginfo for __call, __get, __set.
+
+	* php5-crash-in-evaluator-shutdown_workaround.patch: New file.
+	
+2004-12-03  Jost Boekemeier  <jostb@intern>
 
 	* server/natcJavaBridge.c (Java_JavaBridge_startNative): Do not
 	catch SIGPWR, which is used by the Boehm GC.

@@ -507,12 +507,16 @@ PHP_METHOD(java, offsetUnset)
 }
 
 static
-ZEND_BEGIN_ARG_INFO(arginfo_array_offsetGet, 0)
+ZEND_BEGIN_ARG_INFO(arginfo_zero, 0)
+ZEND_END_ARG_INFO();
+
+static
+ZEND_BEGIN_ARG_INFO(arginfo_get, 0)
 	 ZEND_ARG_INFO(0, index)
 ZEND_END_ARG_INFO();
 
 static
-ZEND_BEGIN_ARG_INFO(arginfo_array_offsetSet, 0)
+ZEND_BEGIN_ARG_INFO(arginfo_set, 0)
 	 ZEND_ARG_INFO(0, index)
 	 ZEND_ARG_INFO(0, newval)
 ZEND_END_ARG_INFO();
@@ -520,15 +524,15 @@ ZEND_END_ARG_INFO();
 static function_entry java_class_functions[] = {
   PHP_ME(java, java_class, NULL, 0)
   PHP_ME(java, java, NULL, 0)
-  PHP_ME(java, __call, NULL, 0)
-  PHP_ME(java, __tostring, NULL, 0)
-  PHP_ME(java, __get, NULL, 0)
-  PHP_ME(java, __set, NULL, 0)
-  PHP_ME(java, __destruct, NULL, 0)
-  PHP_ME(java, offsetExists,  arginfo_array_offsetGet, ZEND_ACC_PUBLIC)
-  PHP_ME(java, offsetGet,     arginfo_array_offsetGet, ZEND_ACC_PUBLIC)
-  PHP_ME(java, offsetSet,     arginfo_array_offsetSet, ZEND_ACC_PUBLIC)
-  PHP_ME(java, offsetUnset,   arginfo_array_offsetGet, ZEND_ACC_PUBLIC)
+  PHP_ME(java, __call, arginfo_set, ZEND_ACC_PUBLIC)
+  PHP_ME(java, __tostring, arginfo_zero, ZEND_ACC_PUBLIC)
+  PHP_ME(java, __get, arginfo_get, ZEND_ACC_PUBLIC)
+  PHP_ME(java, __set, arginfo_set, ZEND_ACC_PUBLIC)
+  PHP_ME(java, __destruct, arginfo_zero, ZEND_ACC_PUBLIC)
+  PHP_ME(java, offsetExists,  arginfo_get, ZEND_ACC_PUBLIC)
+  PHP_ME(java, offsetGet,     arginfo_get, ZEND_ACC_PUBLIC)
+  PHP_ME(java, offsetSet,     arginfo_set, ZEND_ACC_PUBLIC)
+  PHP_ME(java, offsetUnset,   arginfo_get, ZEND_ACC_PUBLIC)
 };
 
 
