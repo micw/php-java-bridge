@@ -1,3 +1,13 @@
+2004-11-03  Boekemeier  <jost2345@intern>
+
+	* init_cfg.c.in (java_destroy_cfg): Free the memory _we_ have
+	allocated, not the memory that apache has allocated. Otherwise
+	apache 2.0 will loop in malloc_consolidate.
+	* java.c (PHP_MSHUTDOWN_FUNCTION): Code re-enabled.
+
+	* server/JavaBridge.java (init): Log the log file name only if
+	level >= logdebug
+
 2004-11-02  Jost Boekemeier  <jostb@intern>
 
 	* java.c (PHP_MSHUTDOWN_FUNCTION): Reverted last change (code

@@ -320,10 +320,7 @@ PHP_MSHUTDOWN_FUNCTION(java)
   extern void php_java_shutdown_library(TSRMLS_D);
   extern void java_destroy_cfg(int, struct cfg*);
 
-  // DISABLED: This will cause malloc_consolidate to spin in
-  // an infinite loop.  Releasing the memory isn't necessary
-  // anyway because the exit() call does this for us
-/*   java_destroy_cfg(java_ini_last_updated, &JG(cfg)); */
+  java_destroy_cfg(java_ini_last_updated, &JG(cfg));
   java_ini_last_updated=0;
 
   UNREGISTER_INI_ENTRIES();

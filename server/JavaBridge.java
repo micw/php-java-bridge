@@ -229,7 +229,7 @@ public class JavaBridge implements Runnable {
 	    }catch (Throwable t) {
 		t.printStackTrace();
 	    }
-	    if(JavaBridge.logLevel>0) System.out.println("Java log         :" + logFile);
+	    if(JavaBridge.logLevel>3) System.out.println("Java log         :" + logFile);
 	    JavaBridge.logMessage("Java logFile     : " + logFile);
 	    JavaBridge.logMessage("Java logLevel    : " + JavaBridge.logLevel);
 	    JavaBridge.logMessage("Java socket      : " + sockname);

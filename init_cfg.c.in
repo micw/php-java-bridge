@@ -84,11 +84,11 @@ void java_init_cfg(struct cfg *cfg) {
 }
 
 void java_destroy_cfg(int java_ini_updated, struct cfg*cfg) {
-  if((java_ini_updated&U_SOCKNAME)) free(cfg->sockname);
-  if((java_ini_updated&U_CLASSPATH)) free(cfg->classpath);
-  if((java_ini_updated&U_LIBRARY_PATH)) free(cfg->ld_library_path);
-  if((java_ini_updated&U_JAVA)) free(cfg->java);
-  if((java_ini_updated&U_JAVA_HOME)) free(cfg->java_home);
-  if((java_ini_updated&U_LOGLEVEL)) free(cfg->logLevel);
-  if((java_ini_updated&U_LOGFILE)) free(cfg->logFile);
+  if(!(java_ini_updated&U_SOCKNAME)) free(cfg->sockname);
+  if(!(java_ini_updated&U_CLASSPATH)) free(cfg->classpath);
+  if(!(java_ini_updated&U_LIBRARY_PATH)) free(cfg->ld_library_path);
+  if(!(java_ini_updated&U_JAVA)) free(cfg->java);
+  if(!(java_ini_updated&U_JAVA_HOME)) free(cfg->java_home);
+  if(!(java_ini_updated&U_LOGLEVEL)) free(cfg->logLevel);
+  if(!(java_ini_updated&U_LOGFILE)) free(cfg->logFile);
 }
