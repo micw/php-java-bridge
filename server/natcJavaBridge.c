@@ -38,7 +38,7 @@ id(peer, name);
 #define ASSERTM(expr) \
 if(!expr) { \
   logMemoryError(env, __FILE__, __LINE__); \
-  exit(6); \
+  exit(9); \
 }
 
 static jclass exceptionClass=NULL;
@@ -747,6 +747,10 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
   struct sockaddr_un saddr;
   int sock, n;
 
+  signal(SIGBUS, exit);
+  signal(SIGILL, exit);
+/*   signal(SIGSEGV, exit); */
+/*   signal(SIGPWR, exit); */
   initGlobals(env);
   logLevel = _logLevel;
   bridge = self;
@@ -760,17 +764,22 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
 	char *s = SOCKNAME;
 	sockname = strdup(s);
   }
-
   /* socket */
   saddr.sun_family = AF_UNIX;
+  memset(saddr.sun_path, 0, sizeof saddr.sun_path);
   strcpy(saddr.sun_path, sockname);
-  unlink(sockname); 
-
+#ifndef CFG_JAVA_SOCKET_ANON
+  unlink(sockname);
+#else
+  *saddr.sun_path=0;
+#endif
   sock = socket (PF_UNIX, SOCK_STREAM, 0);
   if(!sock) {logSysError(env, "could not create socket"); return;}
   n = bind(sock,(struct sockaddr*)&saddr, sizeof saddr);
   if(n==-1) {logSysError(env, "could not bind socket"); return;}
+#ifndef CFG_JAVA_SOCKET_ANON
   chmod(sockname, 0666); // the childs usually run as "nobody"
+#endif
   n = listen(sock, 10);
   if(n==-1) {logSysError(env, "could not listen to socket"); return;}
 
@@ -911,4 +920,88 @@ JNIEXPORT void JNICALL Java_JavaBridge_setException
   swrite(&result, sizeof result, 1, peer);
   swrite(&value, sizeof value, 1, peer);
   while(handle_request(peer, env));
+}
+
+JNINativeMethod javabridge[]={
+  {"setResultFromString", "(JJ[B)V", Java_JavaBridge_setResultFromString},
+  {"setResultFromLong", "(JJJ)V", Java_JavaBridge_setResultFromLong},
+  {"setResultFromDouble", "(JJD)V", Java_JavaBridge_setResultFromDouble},
+  {"setResultFromBoolean", "(JJZ)V", Java_JavaBridge_setResultFromBoolean},
+  {"setResultFromObject", "(JJLjava/lang/Object;)V", Java_JavaBridge_setResultFromObject},
+  {"setResultFromArray", "(JJ)V", Java_JavaBridge_setResultFromArray},
+  {"nextElement", "(JJ)J", Java_JavaBridge_nextElement},
+  {"hashUpdate", "(JJ[B)J", Java_JavaBridge_hashUpdate},
+  {"hashIndexUpdate", "(JJJ)J", Java_JavaBridge_hashIndexUpdate},
+  {"setException", "(JJ[B)V", Java_JavaBridge_setException},
+  {"startNative", "(ILjava/lang/String;)V", Java_JavaBridge_startNative},
+};
+
+static struct NativeMethods {
+  char*class;
+  JNINativeMethod*meth;
+  int n;
+} meths[]={
+  {"JavaBridge", javabridge, (sizeof javabridge)/(sizeof *javabridge)},
+};
+
+static void jniRegisterNatives (JNIEnv *env) 
+{
+  int i;
+  jint r;
+  jclass k;
+
+  for(i=0; i<((sizeof meths)/(sizeof*meths)); i++) {
+	k = (*env)->FindClass (env, meths[i].class);
+	assert(k); if(!k) exit(9);
+	r = (*env)->RegisterNatives (env, k, meths[i].meth, meths[i].n);
+	assert(r==JNI_OK); if(r!=JNI_OK) exit(9);
+  }
+}
+
+void java_bridge_main(int argc, char**argv) 
+{
+  JavaVMOption options[]={{argv[1], 0}, {argv[2], 0}, {argv[3], 0}};
+  JavaVM *jvm;
+  JNIEnv *jenv;
+  JavaVMInitArgs vm_args; /* JDK 1.2 VM initialization arguments */
+  jclass reflectClass, stringClass;
+  jobjectArray arr;
+  jmethodID init;
+  int i, err;
+  vm_args.version = JNI_VERSION_1_2; /* New in 1.1.2: VM version */
+  /* Get the default initialization arguments and set the class 
+   * path */
+  JNI_GetDefaultJavaVMInitArgs(&vm_args);
+  vm_args.nOptions=sizeof(options)/sizeof*options;
+  vm_args.options=options;
+  vm_args.ignoreUnrecognized=JNI_TRUE;
+
+  /* load and initialize a Java VM, return a JNI interface 
+   * pointer in env */
+  err=JNI_CreateJavaVM(&jvm, (void*)&jenv, &vm_args);
+  assert(!err); if(err) exit(9);
+  jniRegisterNatives(jenv);
+  reflectClass = (*jenv)->FindClass(jenv, "JavaBridge");
+  assert(reflectClass); if(!reflectClass) exit(9);
+  init = (*jenv)->GetStaticMethodID(jenv, reflectClass, "init", "([Ljava/lang/String;)V");
+  assert(init); if(!init) exit(9);
+  stringClass = (*jenv)->FindClass(jenv, "java/lang/String");
+  assert(stringClass); if(!stringClass) exit(9);
+  arr = (*jenv)->NewObjectArray(jenv, argc, stringClass, 0);
+  assert(arr); if(!arr) exit(9);
+
+  int off=6;
+  for (i=0; i<argc; i++) {
+	jstring arg;
+	if(!argv[i+off]) break;
+    arg = (*jenv)->NewStringUTF(jenv, argv[i+off]);
+	assert(arg); if(!arg) exit(9);
+    (*jenv)->SetObjectArrayElement(jenv, arr, i, arg);
+  }
+  (*jenv)->CallStaticVoidMethod(jenv, reflectClass, init, arr);
+  (*jvm)->DestroyJavaVM(jvm);
+
+  assert(0);
+  while(1)			  /* DestroyJavaVM should already block forever */
+	sleep(65535);
 }
