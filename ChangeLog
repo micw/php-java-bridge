@@ -1,3 +1,7 @@
+2005-02-05  Jost Boekemeier  <jostb@intern>
+	
+        * php-java-bridge 1.0.8 released
+	
 2005-02-04  Jost Boekemeier  <jostb@intern>
 
 	* INSTALL: document worker MPM

@@ -69,10 +69,10 @@ java.socketname=/var/run/.php-java-bridge_socket
 EOF
 echo /etc/php.d/java.ini >>filelist
 
-mkdir -p $RPM_BUILD_ROOT/usr/bin
-cp php-java-bridge $RPM_BUILD_ROOT/usr/bin
-chmod +x $RPM_BUILD_ROOT/usr/bin/php-java-bridge
-echo /usr/bin/php-java-bridge >>filelist
+mkdir -p $RPM_BUILD_ROOT/usr/sbin
+cp php-java-bridge $RPM_BUILD_ROOT/usr/sbin
+chmod +x $RPM_BUILD_ROOT/usr/sbin/php-java-bridge
+echo /usr/sbin/php-java-bridge >>filelist
 
 mkdir -p $RPM_BUILD_ROOT/etc/init.d
 cp php-java-bridge.service $RPM_BUILD_ROOT/etc/init.d/php-java-bridge
