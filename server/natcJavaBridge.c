@@ -748,15 +748,16 @@ JNIEXPORT jint JNICALL Java_JavaBridge_handleRequest(JNIEnv*env, jclass self, jo
 {
   SFILE *file = (SFILE*)(long)socket;
   struct peer peer;
-  int val;
+  int val=40;
   peer.objectHash=initHash(env);
-  if(!peer.objectHash) {logFatal(env, "could not create hash table"); return -40;}
+  if(!peer.objectHash) {logFatal(env, "could not create hash table"); goto _exit;}
   peer.stream=file;
   peer.jenv=env;
   peer.tran=0;
   peer.globalRef=globalRef;
   val=setjmp(peer.env);
   if(val) {
+  _exit: 
 	(*env)->DeleteGlobalRef(env, peer.objectHash);
 	return -val;
   }

@@ -678,6 +678,12 @@ public class JavaBridge implements Runnable {
 			JavaBridge.setResultFromObject(result, peer, selected.newInstance(coercedArgs));
 
 		} catch (Throwable e) {
+			if(e instanceof OutOfMemoryError || 
+			   ((e instanceof InvocationTargetException) && 
+				((InvocationTargetException)e).getTargetException() instanceof OutOfMemoryError)) {
+				logStream.println("FATAL: OutOfMemoryError");
+				throw new RuntimeException(); // abort
+			}
 			printStackTrace(e);
 			// Special handling of our connection abort
 			// throwable.  We can't use our own (inner)
@@ -912,6 +918,12 @@ public class JavaBridge implements Runnable {
 			setResult(result, peer, selected.invoke(object, coercedArgs));
 
 		} catch (Throwable e) {
+			if(e instanceof OutOfMemoryError || 
+			   ((e instanceof InvocationTargetException) && 
+				((InvocationTargetException)e).getTargetException() instanceof OutOfMemoryError)) {
+				logStream.println("FATAL: OutOfMemoryError");
+				throw new RuntimeException(); // abort
+			}
 			printStackTrace(e);
 			// Special handling of our connection abort
 			// throwable.  We can't use our own (inner)
@@ -1011,6 +1023,12 @@ public class JavaBridge implements Runnable {
 			throw new NoSuchFieldException(String.valueOf(prop) + " (with args:" + argsToString(args) + "). " + "Matches: " + String.valueOf(matches));
 
 		} catch (Throwable e) {
+			if(e instanceof OutOfMemoryError || 
+			   ((e instanceof InvocationTargetException) && 
+				((InvocationTargetException)e).getTargetException() instanceof OutOfMemoryError)) {
+				logStream.println("FATAL: OutOfMemoryError");
+				throw new RuntimeException(); // abort
+			}
 			printStackTrace(e);
 			// Special handling of our connection abort
 			// throwable.  We can't use our own (inner)

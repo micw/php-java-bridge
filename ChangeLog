@@ -1,3 +1,15 @@
+2005-01-07  Jost Boekemeier  <jostb@intern>
+
+	* server/JavaBridge.java
+	(CreateObject, Invoke, GetSetProp): The server must survive a out
+	of memory conditions. Check for OutOfMemoryError and abort the
+	client-connection immediately, release all memory the client has
+	allocated without client-notification.
+
+	* server/natcJavaBridge.c
+	(Java_JavaBridge_handleRequest): Release object hash after
+	OutOfMemoryError.
+	
 2005-01-05  Jost Boekemeier  <jostb@intern>
 
 	* server/JavaBridge.java
