@@ -15,7 +15,6 @@
 
 #include "php_java.h"
 #include "java_bridge.h"
-#include "protocol.h"
 
 #ifdef ZEND_ENGINE_2
 #include "zend_interfaces.h"
@@ -32,68 +31,63 @@ PHP_RINIT_FUNCTION(java)
 }
 PHP_RSHUTDOWN_FUNCTION(java)
 {
-  if (JG(php_reflect)) (*JG(jenv))->DeleteGlobalRef(JG(jenv), JG(php_reflect));
-  if (JG(reflect_class)) (*JG(jenv))->DeleteGlobalRef(JG(jenv), JG(reflect_class));
   if(JG(jenv)&&*JG(jenv)&&(*JG(jenv))->peer) SFCLOSE((*JG(jenv))->peer);
   if(JG(jenv)&&*JG(jenv)) free(*JG(jenv));
   if(JG(jenv)) free(JG(jenv));
-
-  JG(php_reflect) = NULL;
   JG(jenv) = NULL;
   return SUCCESS;
 }
 
 PHP_FUNCTION(java_last_exception_get)
 {
-  jlong result = 0;
-  proxyenv *jenv = java_connect_to_server(TSRMLS_C);
-  if(!jenv) {RETURN_NULL();}
+/*   jlong result = 0; */
+/*   proxyenv *jenv = java_connect_to_server(TSRMLS_C); */
+/*   if(!jenv) {RETURN_NULL();} */
 
-  if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT;
+/*   if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT; */
 
-  result = (jlong)(long)return_value;
+/*   result = (jlong)(long)return_value; */
 
-  (*jenv)->LastException(jenv, JG(php_reflect), 
-						 JG(lastEx), result);
+/*   (*jenv)->LastException(jenv, result); */
+//FIXME
 }
 
 PHP_FUNCTION(java_last_exception_clear)
 {
-  proxyenv *jenv = java_connect_to_server(TSRMLS_C);
-  jlong result = 0;
-  jvalue args[0];
-  if(!jenv) {RETURN_NULL();}
+/*   proxyenv *jenv = java_connect_to_server(TSRMLS_C); */
+/*   jlong result = 0; */
+/*   jvalue args[0]; */
+/*   if(!jenv) {RETURN_NULL();} */
 
-  if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT;
+/*   if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT; */
 
-  result = (jlong)(long)return_value;
+/*   result = (jlong)(long)return_value; */
   
-  (*jenv)->CallVoidMethodA(0, jenv, JG(php_reflect), 
-						   JG(clearEx), args);
+/*   (*jenv)->CallVoidMethodA(0, jenv, JG(php_reflect),  */
+/* 						   JG(clearEx), args); */
+//FIXME
 }
 
 PHP_FUNCTION(java_set_library_path)
 {
-  zval **path;
-  jlong result = 0;
-  jstring p;
-  proxyenv *jenv = java_connect_to_server(TSRMLS_C);
-  jvalue args[1];
-  if(!jenv) {RETURN_NULL();}
+/*   zval **path; */
+/*   jlong result = 0; */
+/*   jstring p; */
+/*   proxyenv *jenv = java_connect_to_server(TSRMLS_C); */
+/*   jvalue args[1]; */
+/*   if(!jenv) {RETURN_NULL();} */
 
-  if (ZEND_NUM_ARGS()!=1 || zend_get_parameters_ex(1, &path) == FAILURE) 
-	WRONG_PARAM_COUNT;
+/*   if (ZEND_NUM_ARGS()!=1 || zend_get_parameters_ex(1, &path) == FAILURE)  */
+/* 	WRONG_PARAM_COUNT; */
 
-  convert_to_string_ex(path);
+/*   convert_to_string_ex(path); */
 
-  result = (jlong)(long)return_value;
+/*   result = (jlong)(long)return_value; */
 
-  BEGIN_TRANSACTION(jenv);
-  p = (*jenv)->NewStringUTF(jenv, Z_STRVAL_PP(path));
-  args[0].l=p;
-  (*jenv)->CallVoidMethodA(1, jenv, JG(php_reflect), 
-						   JG(setJarPath), args);
-  END_TRANSACTION(jenv);
+/*   p = writeString(Z_STRVAL_PP(path)); */
+/*   args[0].l=p; */
+/*   (*jenv)->CallVoidMethodA(1, jenv, JG(php_reflect),  */
+/* 						   JG(setJarPath), args); */
 }
 
 static short check_type (zval *pobj, zend_class_entry *class TSRMLS_DC) {
@@ -107,45 +101,45 @@ static short check_type (zval *pobj, zend_class_entry *class TSRMLS_DC) {
 
 PHP_FUNCTION(java_instanceof)
 {
-  zval **pobj, **pclass;
-  jobject obj, class;
-  jboolean result;
-  proxyenv *jenv = java_connect_to_server(TSRMLS_C);
-  if(!jenv) {RETURN_NULL();}
+/*   zval **pobj, **pclass; */
+/*   jobject obj, class; */
+/*   jboolean result; */
+/*   proxyenv *jenv = java_connect_to_server(TSRMLS_C); */
+/*   if(!jenv) {RETURN_NULL();} */
 
-  if (ZEND_NUM_ARGS()!=2 || zend_get_parameters_ex(2, &pobj, &pclass) == FAILURE) 
-	WRONG_PARAM_COUNT;
+/*   if (ZEND_NUM_ARGS()!=2 || zend_get_parameters_ex(2, &pobj, &pclass) == FAILURE)  */
+/* 	WRONG_PARAM_COUNT; */
 
-  convert_to_object_ex(pobj);
-  convert_to_object_ex(pclass);
+/*   convert_to_object_ex(pobj); */
+/*   convert_to_object_ex(pclass); */
 
-  obj = NULL;
-  if((Z_TYPE_PP(pobj) == IS_OBJECT) && check_type(*pobj, php_java_class_entry TSRMLS_CC)){
-	java_get_jobject_from_object(*pobj, &obj TSRMLS_CC);
-  }
-  if(!obj) {
-	zend_error(E_WARNING, "Parameter #1 for %s() must be a java object", get_active_function_name(TSRMLS_C));
-	return;
-  }
+/*   obj = NULL; */
+/*   if((Z_TYPE_PP(pobj) == IS_OBJECT) && check_type(*pobj, php_java_class_entry TSRMLS_CC)){ */
+/* 	java_get_jobject_from_object(*pobj, &obj TSRMLS_CC); */
+/*   } */
+/*   if(!obj) { */
+/* 	zend_error(E_WARNING, "Parameter #1 for %s() must be a java object", get_active_function_name(TSRMLS_C)); */
+/* 	return; */
+/*   } */
 
-  class = NULL;
-  if((Z_TYPE_PP(pclass) == IS_OBJECT) && 
-	 (check_type(*pclass, php_java_class_entry TSRMLS_CC)||
-	  check_type(*pclass, php_java_class_class_entry TSRMLS_CC)||
-	  check_type(*pclass, php_java_jsr_class_class_entry TSRMLS_CC))){
-	java_get_jobject_from_object(*pclass, &class TSRMLS_CC);
-  }
-  if(!class) {
-	zend_error(E_WARNING, "Parameter #2 for %s() must be a java object", get_active_function_name(TSRMLS_C));
-	return;
-  }
+/*   class = NULL; */
+/*   if((Z_TYPE_PP(pclass) == IS_OBJECT) &&  */
+/* 	 (check_type(*pclass, php_java_class_entry TSRMLS_CC)|| */
+/* 	  check_type(*pclass, php_java_class_class_entry TSRMLS_CC)|| */
+/* 	  check_type(*pclass, php_java_jsr_class_class_entry TSRMLS_CC))){ */
+/* 	java_get_jobject_from_object(*pclass, &class TSRMLS_CC); */
+/*   } */
+/*   if(!class) { */
+/* 	zend_error(E_WARNING, "Parameter #2 for %s() must be a java object", get_active_function_name(TSRMLS_C)); */
+/* 	return; */
+/*   } */
 
-  result = (*jenv)->IsInstanceOf(jenv, obj, class);
-  if(result == JNI_TRUE) {
-	RETURN_TRUE;
-  } else {
-	RETURN_FALSE;
-  }
+/*   result = (*jenv)->IsInstanceOf(jenv, obj, class); */
+/*   if(result == JNI_TRUE) { */
+/* 	RETURN_TRUE; */
+/*   } else { */
+/* 	RETURN_FALSE; */
+/*   } */
 }
 
 function_entry java_functions[] = {
@@ -254,9 +248,7 @@ PHP_INI_END()
 
 static void php_java_alloc_globals_ctor(zend_java_globals *java_globals TSRMLS_DC)
 {
-  java_globals->php_reflect=0;
   java_globals->jenv=0;
-  java_globals->reflect_class=0;
 }
 
 #ifdef ZEND_ENGINE_2

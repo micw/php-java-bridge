@@ -33,8 +33,6 @@
 # endif
 #endif
 
-#include <jni.h>
-
 #include "protocol.h"
 
 extern int le_jobject;
@@ -91,10 +89,6 @@ extern struct cfg *cfg;
 
 ZEND_BEGIN_MODULE_GLOBALS(java)
   proxyenv *jenv;
-  jobject php_reflect;
-  jclass  reflect_class, iterator_class;
-  jmethodID clearEx, lastEx, setJarPath, invoke, gsp, co;
-  jmethodID getPhpMap, hasMore, getType, moveForward;
 ZEND_END_MODULE_GLOBALS(java)
 
 

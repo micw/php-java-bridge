@@ -173,7 +173,6 @@ int java_test_server() {
   char term=0;
   int sock;
   int n, c, e;
-  jobject ob;
 
 #ifndef CFG_JAVA_SOCKET_INET
   sock = socket (PF_LOCAL, SOCK_STREAM, 0);
@@ -183,6 +182,7 @@ int java_test_server() {
   if(sock==-1) return FAILURE;
   n = connect(sock,(struct sockaddr*)&cfg->saddr, sizeof cfg->saddr);
   if(n!=-1) {
+	char ob;
 	c = read(sock, &ob, sizeof ob);
 	c = (c==sizeof ob) ? write(sock, &term, sizeof term) : 0;
   }

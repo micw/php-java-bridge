@@ -1,0 +1,142 @@
+PHP/Java Bridge protocol version 0.9
+
+Requests are marked with "->", responses with "<-".  The server
+continues to process requests until EOF. For all tags only the first
+character is significant.
+
+The communication must begin with [C]reateInstance. After that
+[I]nvoke may be used. The server responds with a single ARG which also
+carries the last session context ID. The session context ID is your
+session context, for example the location of a cell where the response
+should be stored; a structure or something like that. In PHP for
+example we allocate a pval and pass it as the ID to the Invoke or
+Create request. When the response arrives, we receive our ID along
+with the result so we know exactly where to store the result we have
+received).
+
+Example:
+
+     $o = new java("java.lang.Long", 6);
+     $o->toString(); // discard result
+
+->  <CreateInstance value="java.lang.Long" predicate="Instance" id="0x78532"> 
+      <Long value="6"/> 
+    </CreateInstance>
+
+<-  <Object value="0x1" id="0x78532"/>
+
+->  <Invoke value="0x1" method="toString" predicate="Invoke" id="0x0">
+    </Invoke>
+
+<-  <String value="6" id="0x0"/>
+
+
+
+Optional requests:
+
+The optional M, F requests may be used to capture a method and invoke
+it more than once. The M (GetMethod) request responds with a method
+[O]bject which can be used as the third argument for all further F
+(CallMethod) requests. [I]nvoke should be used instead of M/F. It is a
+little bit slower but easier to handle.
+
+All aquired [O]bject handles may be destroyed by invoking [U]nref.
+However, this isn't necessary either.  The server tracks all handles
+and automatically destroys them after EOF. It is an error to further
+reference destroyed handles.
+
+
+
+Main requests:
+
+->
+writeCreateObjectBegin(char*name, size_t strlen, short referenceClass_or_createInstance, void *id);
+<C v=name p=[C|I] i=ID> ...ARGS...
+writeCreateObjectEnd()
+</C>
+
+->
+writeInvokeBegin(long object, char*method, size_t strlen, short examineProperty_or_Invoke, void*id);
+<I v=object m=method p=P|I i=ID> ...ARGS...
+writeInvokeEnd()
+</I>
+
+
+
+ARGS:
+<->
+writeString(char*str, size_t strlen)
+<S v=str [i=ID] />
+
+<->
+writeBoolean(short b)
+<B v=[T|F] [i=ID] />
+
+<->
+writeLong(long l)
+<L v=l [i=ID] />
+
+<->
+writeDouble(double d)
+<D v=d [i=ID] />
+
+<->
+writeObject(long object)
+<O v=object [i=ID] />
+
+<-
+Exception
+<E v=object m=stringRepresentation [i=ID] />
+
+->  (or <->, see below)
+writeCompositeBegin_a()
+writeCompositeBegin_h()
+<X t=[A|H] [i=ID] /> ...[PAIR|ARG]...
+writeCompositeEnd()
+</X>
+
+->  (or <->, see below)
+writePairBegin_s(char *key, size_t strlen)
+writePairBegin_n(unsigned long key)
+<P t=[N|S] v=key> <[O|D|..|S] id=0 [i=ID] /> ...ARG...
+writePairEnd()
+</P>
+
+
+
+OPTIONAL:
+->
+writeGetMethodBegin(long object, char*method, size_t strlen, void*id)
+<M v=object, m=method id=ID > ...ARGS...
+writeGetMethodEnd()
+</M>
+
+->
+writeCallMethodBegin(long object, long method, void*id);
+<F v=o m=method i=ID > ...ARGS...
+writeCallMethodEnd()
+</F>
+
+->
+writeUnref(Object ob)
+<U v=object />
+
+
+
+NOTES:
+
+If the first byte is neither a "<" nor a space, bits 0 and 1
+have a special meaning:
+
+Bit 0: Client sends and receives embedded BLOB fields; values are
+embedded as binary data: 1. byte zero, 2. byte length, followed by up
+to 255 bytes blob data.
+
+Bit 1: Client wants arrays as values. The server will return X and P
+instead of O.
+
+Both "features" are turned off by default.
+
+
+It is possible to "ping" the server by sending it the byte 0x0. If
+alive it will send back a 0x0.

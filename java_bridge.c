@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include "php_java.h"
 #include "java_bridge.h"
-#include <jni.h>
 
 /* miscellaneous */
 #include <stdio.h>
@@ -13,10 +12,10 @@
 #include <string.h>
 
 
-ZEND_EXTERN_MODULE_GLOBALS(java)
+static void writeArgument(pval* arg TSRMLS_DC);
+static void writeArguments(int argc, pval** argv TSRMLS_DC);
 
-static jobjectArray php_java_makeArray(int argc, pval** argv TSRMLS_DC);
-static jobject php_java_makeObject(pval* arg TSRMLS_DC);
+ZEND_EXTERN_MODULE_GLOBALS(java)
 
 static short checkError(pval *value TSRMLS_DC)
 {
@@ -31,7 +30,7 @@ static short checkError(pval *value TSRMLS_DC)
   return 0;
 }
 
-int java_get_jobject_from_object(pval*object, jobject*obj TSRMLS_DC)
+int java_get_jobject_from_object(pval*object, long *obj TSRMLS_DC)
 {
   pval **handle;
   int type, n;
@@ -39,200 +38,161 @@ int java_get_jobject_from_object(pval*object, jobject*obj TSRMLS_DC)
   n = zend_hash_index_find(Z_OBJPROP_P(object), 0, (void**) &handle);
   if(n==-1) { *obj=0; return 0; }
 
-  *obj = zend_list_find(Z_LVAL_PP(handle), &type);
+  *obj = (long)zend_list_find(Z_LVAL_PP(handle), &type);
   return type;
 }
 
-void php_java_invoke(char*name, jobject object, int arg_count, zval**arguments, pval*presult TSRMLS_DC) 
+void php_java_invoke(char*name, long object, int arg_count, zval**arguments, pval*presult TSRMLS_DC) 
 {
   proxyenv *jenv = java_connect_to_server(TSRMLS_C);
-  jlong result = (jlong)(long)presult;
-  jstring method;
-  if(!jenv) {ZVAL_NULL(presult); return;}
+  long result = (long)presult;
 
-  BEGIN_TRANSACTION(jenv);
-  method = (*jenv)->NewStringUTF(jenv, name);
-
-  assert(method); if(!method) exit(6);
-
-  (*jenv)->Invoke(jenv, JG(php_reflect), JG(invoke),
-				  object, method,
-				  php_java_makeArray(arg_count, arguments TSRMLS_CC), result);
-  END_TRANSACTION(jenv);
+  (*jenv)->writeInvokeBegin(jenv, object, name, 0, 'I', (void*)presult);
+  writeArguments(arg_count, arguments TSRMLS_CC);
+  (*jenv)->writeInvokeEnd(jenv);
 }
 
 void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, short constructor, short createInstance, pval *object, int arg_count, zval**arguments)
 {
-  jlong result = 0;
+  long result = 0;
   proxyenv *jenv = java_connect_to_server(TSRMLS_C);
   if(!jenv) {ZVAL_NULL(object); return;}
 
-  BEGIN_TRANSACTION(jenv);
   if (constructor) {
     /* construct a Java object:
        First argument is the class name.  Any additional arguments will
        be treated as constructor parameters. */
 
-    jstring className;
-    result = (jlong)(long)object;
+    result = (long)object;
 
     if (ZEND_NUM_ARGS() < 1) {
       php_error(E_ERROR, "Missing classname in new java() call");
       return;
     }
 
-    className=(*jenv)->NewStringUTF(jenv, Z_STRVAL_P(arguments[0]));
-	assert(className);
 	/* create a new object */
-	(*jenv)->CreateObject(jenv, JG(php_reflect), JG(co),
-						  className, createInstance?JNI_TRUE:JNI_FALSE, 
-						  php_java_makeArray(arg_count-1, arguments+1 TSRMLS_CC), result);
+	(*jenv)->writeCreateObjectBegin(jenv, name, 0, createInstance, (void*)result);
+	writeArguments(arg_count, arguments TSRMLS_CC);
+	(*jenv)->writeCreateObjectEnd(jenv);
+
   } else {
 
-    jobject obj;
-    jstring method;
+    long obj;
 
 	java_get_jobject_from_object(object, &obj TSRMLS_CC);
 	assert(obj);
 
-    method = (*jenv)->NewStringUTF(jenv, name);
-    result = (jlong)(long)return_value;
+    result = (long)return_value;
     /* invoke a method on the given object */
-    (*jenv)->Invoke(jenv, JG(php_reflect), JG(invoke),
-      obj, method, php_java_makeArray(arg_count, arguments TSRMLS_CC), result);
+	(*jenv)->writeInvokeBegin(jenv, obj, name, 0, 'I', (void*)result);
+	writeArguments(arg_count, arguments TSRMLS_CC);
+	(*jenv)->writeInvokeEnd(jenv);
   }
-  checkError((pval*)(long)result TSRMLS_CC);
-
-  END_TRANSACTION(jenv);
+  checkError((pval*)result TSRMLS_CC);
 }
 
-static jobject php_java_makeObject(pval* arg TSRMLS_DC)
+static void writeArgument(pval* arg TSRMLS_DC)
 {
   proxyenv *jenv = JG(jenv);
-  jobject result;
-  jmethodID makeArg;
-  jclass hashClass;
-  jvalue args[2];
+  long result;
 
   switch (Z_TYPE_P(arg)) {
     case IS_STRING:
-      result=(*jenv)->NewByteArray(jenv, Z_STRLEN_P(arg));
-      (*jenv)->SetByteArrayRegion(jenv, (jbyteArray)result, 0,
-        Z_STRLEN_P(arg), (jbyte*) Z_STRVAL_P(arg));
+      (*jenv)->writeString(jenv, Z_STRVAL_P(arg), Z_STRLEN_P(arg));
       break;
 
     case IS_OBJECT:
 	  java_get_jobject_from_object(arg, &result TSRMLS_CC);
 	  assert(result);
+	  (*jenv)->writeObject(jenv, result);
       break;
 
     case IS_BOOL:
-      makeArg = (*jenv)->GetMethodID(jenv, JG(reflect_class), "MakeArg",
-        "(Z)Ljava/lang/Object;");
-	  args[0].z=(jboolean)(Z_LVAL_P(arg));
-      result = (*jenv)->CallObjectMethodA(1, jenv, JG(php_reflect), makeArg, args);
+      (*jenv)->writeBoolean(jenv, Z_LVAL_P(arg));
       break;
 
     case IS_LONG:
-      makeArg = (*jenv)->GetMethodID(jenv, JG(reflect_class), "MakeArg",
-        "(J)Ljava/lang/Object;");
-	  args[0].j=(jlong)(Z_LVAL_P(arg));
-      result = (*jenv)->CallObjectMethodA(1, jenv, JG(php_reflect), makeArg, args);
+	  (*jenv)->writeLong(jenv, Z_LVAL_P(arg));
       break;
 
     case IS_DOUBLE:
-      makeArg = (*jenv)->GetMethodID(jenv, JG(reflect_class), "MakeArg",
-        "(D)Ljava/lang/Object;");
-	  args[0].d=(jdouble)(Z_DVAL_P(arg));
-      result = (*jenv)->CallObjectMethodA(1, jenv, JG(php_reflect), makeArg, args);
+	  (*jenv)->writeDouble(jenv, Z_DVAL_P(arg));
       break;
 
     case IS_ARRAY:
       {
-      jobject jkey, jval;
       zval **value;
       zval key;
       char *string_key;
       ulong num_key;
-      jobject jold;
-      jmethodID put, init;
-
-      hashClass = (*jenv)->FindClass(jenv, "java/util/Hashtable");
-      init = (*jenv)->GetMethodID(jenv, hashClass, "<init>", "()V");
-      result = (*jenv)->NewObjectA(0, jenv, hashClass, init, args);
-
-      put = (*jenv)->GetMethodID(jenv, hashClass, "put",
-								 "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
-      result = (*jenv)->NewObjectA(0, jenv, hashClass, init, args);
+	  short wrote_begin=0;
 
       /* Iterate through hash */
       zend_hash_internal_pointer_reset(Z_ARRVAL_P(arg));
       while(zend_hash_get_current_data(Z_ARRVAL_P(arg), (void**)&value) == SUCCESS) {
-        jval = php_java_makeObject(*value TSRMLS_CC);
-
         switch (zend_hash_get_current_key(Z_ARRVAL_P(arg), &string_key, &num_key, 0)) {
           case HASH_KEY_IS_STRING:
-            Z_TYPE(key) = IS_STRING;
-            Z_STRVAL(key) = string_key;
-            Z_STRLEN(key) = strlen(string_key);
-            jkey = php_java_makeObject(&key TSRMLS_CC);
+			if(!wrote_begin) { 
+			  wrote_begin=1; 
+			  (*jenv)->writeCompositeBegin_h(jenv); 
+			}
+			(*jenv)->writePairBegin_s(jenv, string_key, strlen(string_key));
+			(*jenv)->writeObject(jenv, (long)*value);
+			(*jenv)->writePairEnd(jenv);
             break;
           case HASH_KEY_IS_LONG:
-            Z_TYPE(key) = IS_LONG;
-            Z_LVAL(key) = num_key;
-            jkey = php_java_makeObject(&key TSRMLS_CC);
+			if(!wrote_begin) { 
+			  wrote_begin=1; 
+			  (*jenv)->writeCompositeBegin_h(jenv); 
+			}
+			(*jenv)->writePairBegin_n(jenv, num_key);
+			(*jenv)->writeObject(jenv, (long)*value);
+			(*jenv)->writePairEnd(jenv);
             break;
           default: /* HASH_KEY_NON_EXISTANT */
-            jkey = 0;
+			if(!wrote_begin) { 
+			  wrote_begin=1; 
+			  (*jenv)->writeCompositeBegin_a(jenv); 
+			}
+			(*jenv)->writeObject(jenv, (long)*value);
         }
-		args[0].l=jkey;
-		args[1].l=jval;
-        jold = (*jenv)->CallObjectMethodA(2, jenv, result, put, args);
         zend_hash_move_forward(Z_ARRVAL_P(arg));
       }
-
+	  if(wrote_begin) (*jenv)->writeCompositeEnd(jenv);
       break;
       }
-
-    default:
-      result=0;
   }
-
-  return result;
 }
 
-static jobjectArray php_java_makeArray(int argc, pval** argv TSRMLS_DC)
+static void writeArguments(int argc, pval** argv TSRMLS_DC)
 {
-  jobjectArray result;
-  jobject arg;
+  long arg;
   int i;
   proxyenv *jenv = JG(jenv);
 
-  jclass objectClass = (*jenv)->FindClass(jenv, "java/lang/Object");
-  assert(objectClass);
-  result = (*jenv)->NewObjectArray(jenv, argc, objectClass, 0);
-  assert(result);
+  (*jenv)->writeCompositeBegin_a(jenv);
   for (i=0; i<argc; i++) {
-    arg = php_java_makeObject(argv[i] TSRMLS_CC);
-    (*jenv)->SetObjectArrayElement(jenv, result, i, arg);
+    writeArgument(argv[i] TSRMLS_CC);
   }
-  return result;
+  (*jenv)->writeCompositeEnd(jenv);
 }
 
-static void
-php_java_getset_property (char* name, pval* object, jobjectArray value, zval *presult TSRMLS_DC)
+/**
+ * php_java_get_property_handler
+ */
+short php_java_get_property_handler(char*name, zval *object, zval *presult)
 {
-  jlong result = 0;
-  jobject obj;
+  long obj, result = 0;
   int type;
-  jstring propName;
-  proxyenv *jenv = JG(jenv);
+  proxyenv *jenv;
 
-  propName = (*jenv)->NewStringUTF(jenv, name);
+  TSRMLS_FETCH();
+
+  jenv = java_connect_to_server(TSRMLS_C);
+  if(!jenv) {ZVAL_NULL(presult); return FAILURE;}
 
   /* get the object */
   type = java_get_jobject_from_object(object, &obj TSRMLS_CC);
-  result = (jlong)(long) presult;
 
   ZVAL_NULL(presult);
 
@@ -241,26 +201,9 @@ php_java_getset_property (char* name, pval* object, jobjectArray value, zval *pr
       "Attempt to access a Java property on a non-Java object");
   } else {
     /* invoke the method */
-    (*jenv)->GetSetProp(jenv, JG(php_reflect), JG(gsp), obj, propName, value, result);
+	(*jenv)->writeInvokeBegin(jenv, obj, name, 0, 'P', (void*)presult);
+	(*jenv)->writeInvokeEnd(jenv);
   }
-}
-
-/**
- * php_java_get_property_handler
- */
-short php_java_get_property_handler(char*name, zval *object, zval *presult)
-{
-  proxyenv *jenv;
-
-  TSRMLS_FETCH();
-
-  jenv = java_connect_to_server(TSRMLS_C);
-  if(!jenv) {ZVAL_NULL(presult); return FAILURE;}
-
-  BEGIN_TRANSACTION(jenv);
-  php_java_getset_property(name, object, 0, presult TSRMLS_CC);
-  END_TRANSACTION(jenv);
-
   return checkError(presult TSRMLS_CC) ? FAILURE : SUCCESS;
 }
 
@@ -270,6 +213,8 @@ short php_java_get_property_handler(char*name, zval *object, zval *presult)
  */
 short php_java_set_property_handler(char*name, zval *object, zval *value, zval *presult)
 {
+  long obj, result = 0;
+  int type;
   proxyenv *jenv;
 
   TSRMLS_FETCH();
@@ -277,10 +222,20 @@ short php_java_set_property_handler(char*name, zval *object, zval *value, zval *
   jenv = java_connect_to_server(TSRMLS_C);
   if(!jenv) {ZVAL_NULL(presult); return FAILURE; }
 
-  BEGIN_TRANSACTION(jenv);
-  php_java_getset_property(name, object, php_java_makeArray(1, &value TSRMLS_CC), presult TSRMLS_CC);
-  END_TRANSACTION(jenv);
+  /* get the object */
+  type = java_get_jobject_from_object(object, &obj TSRMLS_CC);
 
+  ZVAL_NULL(presult);
+
+  if (!obj || (type!=le_jobject)) {
+    php_error(E_ERROR,
+      "Attempt to access a Java property on a non-Java object");
+  } else {
+    /* invoke the method */
+	(*jenv)->writeInvokeBegin(jenv, (long)object, name, 0, 'P', (void*)presult);
+	writeArgument(value TSRMLS_CC);
+	(*jenv)->writeInvokeEnd(jenv);
+  }
   return checkError(presult TSRMLS_CC) ? FAILURE : SUCCESS;
 }
 

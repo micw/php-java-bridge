@@ -1,3 +1,46 @@
+2005-02-13  Jost Boekemeier  <jostb@intern>
+
+	* PROTOCOL.TXT: New file
+
+	* bind.c (java_test_server): Removed reference to jni
+
+	* java.c (PHP_RSHUTDOWN_FUNCTION): Removed jni.
+	(java_last_exception_get): disabled
+	(java_last_exception_clear): disabled
+	(java_set_library_path): disabled
+	(java_instanceof): disabled 
+	(php_java_alloc_globals_ctor): Removed jni
+
+	* java_bridge.h, php_java.h: Removed jni
+
+	* java_bridge.c, client.c: Removed jni, new protocol added
+
+	* protocol.c, parser.c, parser.h: New files.
+
+	* protocol.h: Removed JNI protocol, added new XML protocol.
+
+	* proxyenv.c: Removed
+
+	* config.m4: Added protocol.c, parser.c
+	
+	* server/JavaBridge: Removed
+
+	* server/natcJavaBridge.c: Removed JNI protocol.
+	
+	* server/php/java/bridge/GlobalRef.java,
+	server/php/java/bridge/IDocHandler.java,
+	server/php/java/bridge/JavaBridge.java,
+	server/php/java/bridge/JavaBridgeClassLoader.java,
+	server/php/java/bridge/Parser.java,
+	server/php/java/bridge/ParserString.java,
+	server/php/java/bridge/ParserTag.java,
+	server/php/java/bridge/PhpMap.java,
+	server/php/java/bridge/Request.java,
+	server/php/java/bridge/Response.java,
+	server/php/java/bridge/Util.java: New files
+
+	* server/Makefile_unix.am: Compile new bridge classes.
+
 2005-02-05  Jost Boekemeier  <jostb@intern>
 	
         * php-java-bridge 1.0.8 released

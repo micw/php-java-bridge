@@ -1,20 +1,11 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
-#ifndef PROXY_PROTOCOL_H
-#define PROXY_PROTOCOL_H
+#ifndef JAVA_PROTOCOL_H
+#define JAVA_PROTOCOL_H
 
 /* peer */
 #include <stdio.h>
 #include "sio.h"
-
-/* jni */
-#include <jni.h>
-#ifdef __MINGW32__
-/* on windows: work around a bug in the declaration of the following
-   methods */
-extern jint JNICALL JNI_GetDefaultJavaVMInitArgs (void *);
-extern jint JNICALL JNI_CreateJavaVM (JavaVM **, void **, void *);
-#endif
 
 /* 
  * we create a unix domain socket with the name .php_java_bridge in
@@ -37,92 +28,36 @@ extern jint JNICALL JNI_CreateJavaVM (JavaVM **, void **, void *);
 #define LOG_INFO 3 /* default level */
 #define LOG_DEBUG 4
 
-#define PROTOCOL_END 0
-#define ALLOCOBJECT 1
-#define CALLOBJECTMETHOD 2
-#define CALLVOIDMETHOD 3
-#define DELETEGLOBALREF 4
-#define EXCEPTIONCLEAR 6
-#define EXCEPTIONOCCURRED 7
-#define FINDCLASS 8
-#define GETARRAYLENGTH 9
-#define GETBYTEARRAYELEMENTS 10
-#define GETMETHODID 11
-#define GETOBJECTCLASS 12
-#define GETSTRINGUTFCHARS 13
-#define NEWBYTEARRAY 14
-#define NEWGLOBALREF 15
-#define NEWOBJECT 16
-#define NEWOBJECTARRAY 17
-#define NEWSTRINGUTF 18
-#define RELEASEBYTEARRAYELEMENTS 19
-#define RELEASESTRINGUTFCHARS 20
-#define SETBYTEARRAYREGION 21
-#define SETOBJECTARRAYELEMENT 22
-#define ISINSTANCEOF 23
 
-#define SETRESULTFROMSTRING 101
-#define SETRESULTFROMLONG 102
-#define SETRESULTFROMDOUBLE 103
-#define SETRESULTFROMBOOLEAN 104
-#define SETRESULTFROMOBJECT 105
-#define SETRESULTFROMARRAY 106
-#define NEXTELEMENT 107
-#define HASHINDEXUPDATE 108
-#define HASHUPDATE 109
-#define SETEXCEPTION 110
-
-#define INVOKE 50
-#define CREATEOBJECT 51
-#define GETSETPROP 52
-#define LASTEXCEPTION 53
-#define TRANSACTION_BEGIN 54
-#define TRANSACTION_END 55
-
-#define N_SARGS 9				/* # of server args for exec */
-#define N_SENV 3				/* # of server env entries */
+#define N_SARGS 9		/* # of server args for exec */
+#define N_SENV 3		/* # of server env entries */
 
 typedef struct proxyenv_ *proxyenv;
 struct proxyenv_ {
   SFILE *peer;
-
-  void (*LastException)(proxyenv *env, jobject php_reflect, jmethodID lastEx, jlong result);
-  void (*CreateObject)(proxyenv *env, jobject php_reflect, jmethodID invoke, jstring classname, jboolean createInstance, jobjectArray array, jlong result);
-  void (*Invoke)(proxyenv *env, jobject php_reflect, jmethodID invoke, jobject obj, jstring method, jobjectArray array, jlong result);
-  void (*GetSetProp)(proxyenv *env, jobject php_reflect, jmethodID gsp, jobject obj, jstring propName, jobjectArray value, jlong result);
-
-  jobject (*AllocObject) (proxyenv *env, jclass clazz);
-  jobject (*CallObjectMethodA) (short count, proxyenv *env, jobject obj, jmethodID methodID, const jvalue*args);
-  void (*CallVoidMethodA) (short count, proxyenv *env, jobject obj, jmethodID methodID, const jvalue*args);
-  void (*DeleteGlobalRef) (proxyenv *env, jobject gref);
-  void (*ExceptionClear) (proxyenv *env);
-  jthrowable (*ExceptionOccurred) (proxyenv *env);
-  jclass (*FindClass) (proxyenv *env, const char *name);
-  jsize (*GetArrayLength) (proxyenv *env, jarray array);
-  jbyte *(*GetByteArrayElements) (proxyenv *env, jbyteArray array, jboolean *isCopy);
-  jmethodID (*GetMethodID) (proxyenv *env, jclass clazz, const char *name, const char *sig);
-  jclass (*GetObjectClass) (proxyenv *env, jobject obj);
-  const char* (*GetStringUTFChars) (proxyenv *env, jstring str, jboolean *isCopy);
-  jbyteArray (*NewByteArray) (proxyenv *env, jsize len);
-  jobject (*NewGlobalRef) (proxyenv *env, jobject lobj);
-  jobject (*NewObjectA) (short count, proxyenv *env, jclass clazz, jmethodID methodID, const jvalue*args);
-  jobjectArray (*NewObjectArray) (proxyenv *env, jsize len, jclass clazz, jobject init);
-  jstring (*NewStringUTF) (proxyenv *env, const char *utf);
-  void (*ReleaseByteArrayElements) (proxyenv *env, jbyteArray array, jbyte *elems, jint mode);
-  void (*ReleaseStringUTFChars) (proxyenv *env, jstring array, const char*elems);
-  void (*SetByteArrayRegion) (proxyenv *env, jbyteArray array, jsize start, jsize len, jbyte *buf);
-  void (*SetObjectArrayElement) (proxyenv *env, jobjectArray array, jsize index, jobject val);
-  jboolean (*IsInstanceOf) (proxyenv *env, jobject obj, jobject clazz);
   int (*handle_request)(proxyenv *env);
+
+  void (*writeCreateObjectBegin)(proxyenv *env, char*name, size_t strlen, short createInstance, void *result);
+  void (*writeCreateObjectEnd)(proxyenv *env);
+  void (*writeInvokeBegin)(proxyenv *env, long object, char*method, size_t strlen, short property, void* result);
+  void (*writeInvokeEnd)(proxyenv *env);
+  void (*writeGetMethodBegin)(proxyenv *env, long object, char*method, size_t strlen, void* result);
+  void (*writeGetMethodEnd)(proxyenv *env);
+  void (*writeCallMethodBegin)(proxyenv *env, long object, long method, void* result);
+  void (*writeCallMethodEnd)(proxyenv *env);
+  void (*writeString)(proxyenv *env, char*name, size_t strlen);
+  void (*writeBoolean)(proxyenv *env, short boolean);
+  void (*writeLong)(proxyenv *env, long l);
+  void (*writeDouble)(proxyenv *env, double d);
+  void (*writeObject)(proxyenv *env, long object);
+  void (*writeCompositeBegin_a)(proxyenv *env);
+  void (*writeCompositeBegin_h)(proxyenv *env);
+  void (*writeCompositeEnd)(proxyenv *env);
+  void (*writePairBegin_s)(proxyenv *env, char*key, size_t strlen);
+  void (*writePairBegin_n)(proxyenv *env, unsigned long key);
+  void (*writePairEnd)(proxyenv *env);
 };
 
 extern proxyenv *java_createSecureEnvironment(SFILE *peer, int (*handle_request)(proxyenv *env));
-extern void java_id(proxyenv *env, char id);
-extern void java_sread(void *ptr, size_t size, size_t nmemb, SFILE *stream);
-extern void java_swrite(const  void  *ptr,  size_t  size,  size_t  nmemb,  SFILE *stream);
-
-/* Use these instead of DeleteLocalRef */
-#define BEGIN_TRANSACTION(proxyenv) java_id(proxyenv, TRANSACTION_BEGIN)
-#define END_TRANSACTION(proxyenv) java_id(proxyenv, TRANSACTION_END)
 
 #endif

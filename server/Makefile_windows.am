@@ -1,6 +1,0 @@
-# -*- mode: Makefile; -*-
-
-bin_PROGRAMS=java
-java_SOURCES= java.c JavaBridge.java natcJavaBridge.c
-java_LDFLAGS=-rpath $(EXTENSION_DIR)
-AM_GCJFLAGS=-fjni

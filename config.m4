@@ -32,7 +32,7 @@ if test "$PHP_JAVA" != "no"; then
 	fi
 
 # create java.so, compile with -DEXTENSION_DIR="\"$(EXTENSION_DIR)\""
-	PHP_NEW_EXTENSION(java, java.c java_bridge.c client.c proxyenv.c bind.c init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\"])
+	PHP_NEW_EXTENSION(java, java.c java_bridge.c client.c parser.c protocol.c bind.c init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\"])
 # create init_cfg.c from the template (same as AC_CONFIG_FILES)
 	BRIDGE_VERSION="`cat $ext_builddir/VERSION`"
 	PHP_JAVA_BIN="${PHP_JAVA}/bin/java"

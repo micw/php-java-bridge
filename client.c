@@ -14,9 +14,6 @@
 #include <assert.h>
 #include <errno.h>
 
-/* jni */
-#include <jni.h>
-
 /* php */
 #include "php_wrapper.h"
 #ifdef ZEND_ENGINE_2
@@ -24,51 +21,40 @@
 #endif
 
 #include "protocol.h"
+#include "parser.h"
+
 #include "java_bridge.h"
 #include "php_java.h"
 
 ZEND_EXTERN_MODULE_GLOBALS(java)
 
 
-#define swrite java_swrite
-extern void java_swrite(const  void  *ptr,  size_t  size,  size_t  nmemb,  SFILE *stream);
-
-#define sread java_sread
-extern void java_sread(void *ptr, size_t size, size_t nmemb, SFILE *stream);
-
-#define id java_id
-extern void java_id(proxyenv *env, char id);
-
-static void setResultFromString (proxyenv *jenv,  pval *presult, jbyteArray jvalue){
-  jboolean isCopy;
-  jbyte *value = (*jenv)->GetByteArrayElements(jenv, jvalue, &isCopy);
+static void setResultFromString (pval *presult, char*s, size_t len){
   Z_TYPE_P(presult)=IS_STRING;
-  Z_STRLEN_P(presult)=(*jenv)->GetArrayLength(jenv, jvalue);
+  Z_STRLEN_P(presult)=len;
   Z_STRVAL_P(presult)=emalloc(Z_STRLEN_P(presult)+1);
-  memcpy(Z_STRVAL_P(presult), value, Z_STRLEN_P(presult));
+  memcpy(Z_STRVAL_P(presult), s, Z_STRLEN_P(presult));
   Z_STRVAL_P(presult)[Z_STRLEN_P(presult)]=0;
-  if (isCopy) (*jenv)->ReleaseByteArrayElements(jenv, jvalue, value, 0);
 }
-static  void  setResultFromLong  (proxyenv *jenv,  pval *presult, jlong value) {
+static  void  setResultFromLong  (pval *presult, long value) {
   Z_TYPE_P(presult)=IS_LONG;
-  Z_LVAL_P(presult)=(long)value;
+  Z_LVAL_P(presult)=value;
 }
 
 
-static void  setResultFromDouble  (proxyenv *jenv,  pval *presult, jdouble value) {
+static void  setResultFromDouble  (pval *presult, double value) {
   Z_TYPE_P(presult)=IS_DOUBLE;
   Z_DVAL_P(presult)=value;
 }
 
-static  void  setResultFromBoolean  (proxyenv *jenv, pval *presult, jboolean value) {
+static  void  setResultFromBoolean  (pval *presult, short value) {
   Z_TYPE_P(presult)=IS_BOOL;
   Z_LVAL_P(presult)=value;
 }
 
 #ifdef ZEND_ENGINE_2
-static  void  setResultFromException  (proxyenv *jenv,  pval *presult, jthrowable value) {
+static  void  setResultFromException  (pval *presult, long value) {
   /* wrap the java object in a pval object */
-  jobject _ob;
   pval *handle;
   TSRMLS_FETCH();
   
@@ -80,8 +66,7 @@ static  void  setResultFromException  (proxyenv *jenv,  pval *presult, jthrowabl
 
   ALLOC_ZVAL(handle);
   Z_TYPE_P(handle) = IS_LONG;
-  _ob= (*jenv)->NewGlobalRef(jenv, value);
-  Z_LVAL_P(handle) = zend_list_insert(_ob, le_jobject);
+  Z_LVAL_P(handle) = zend_list_insert(value, le_jobject);
   pval_copy_constructor(handle);
   INIT_PZVAL(handle);
 #ifndef ZEND_ENGINE_2
@@ -91,9 +76,8 @@ static  void  setResultFromException  (proxyenv *jenv,  pval *presult, jthrowabl
 }
 #endif
 
-static  void  setResultFromObject  (proxyenv *jenv,  pval *presult, jobject value) {
+static  void  setResultFromObject  (pval *presult, long value) {
   /* wrap the java object in a pval object */
-  jobject _ob;
   pval *handle;
   TSRMLS_FETCH();
   
@@ -105,8 +89,7 @@ static  void  setResultFromObject  (proxyenv *jenv,  pval *presult, jobject valu
 
   ALLOC_ZVAL(handle);
   Z_TYPE_P(handle) = IS_LONG;
-  _ob= (*jenv)->NewGlobalRef(jenv, value);
-  Z_LVAL_P(handle) = zend_list_insert(_ob, le_jobject);
+  Z_LVAL_P(handle) = zend_list_insert((void*)value, le_jobject);
   pval_copy_constructor(handle);
   INIT_PZVAL(handle);
 #ifndef ZEND_ENGINE_2
@@ -117,12 +100,12 @@ static  void  setResultFromObject  (proxyenv *jenv,  pval *presult, jobject valu
 }
 
 #ifndef ZEND_ENGINE_2
-static  void  setResultFromArray  (proxyenv *jenv,  pval *presult) {
+static  void  setResultFromArray  (pval *presult) {
   array_init( presult );
   INIT_PZVAL( presult );
 }
 
-static  pval*nextElement  (proxyenv *jenv,  pval *handle) {
+static  pval*nextElement  (pval *handle) {
   pval *result;
   zval_add_ref(&handle);
   ALLOC_ZVAL(result);
@@ -131,7 +114,7 @@ static  pval*nextElement  (proxyenv *jenv,  pval *handle) {
   return result;
 }
 
-static  pval*hashIndexUpdate  (proxyenv *jenv,  pval *handle, jlong key) {
+static  pval*hashIndexUpdate  (pval *handle, long key) {
   pval *result;
   zval_add_ref(&handle);
   ALLOC_ZVAL(result);
@@ -140,12 +123,12 @@ static  pval*hashIndexUpdate  (proxyenv *jenv,  pval *handle, jlong key) {
   return result;
 }
 
-static pval*hashUpdate  (proxyenv *jenv, pval *handle, jbyteArray key) {
+static pval*hashUpdate  (pval *handle, char *key, size_t len) {
   pval *result;
   pval pkey;
   zval_add_ref(&handle);
   ALLOC_ZVAL(result);
-  setResultFromString(jenv, &pkey, key);
+  setResultFromString(&pkey, key, len);
   assert(key);
   zval_add_ref(&result);
   zend_hash_update(Z_ARRVAL_P(handle), Z_STRVAL(pkey), Z_STRLEN(pkey)+1, &result, sizeof(zval *), NULL);
@@ -153,157 +136,75 @@ static pval*hashUpdate  (proxyenv *jenv, pval *handle, jbyteArray key) {
 }
 #endif
 
-static  void  setException  (proxyenv *jenv,  pval *presult, jthrowable value, jbyteArray strValue) {
+static  void  setException  (pval *presult, long value, char *strValue, size_t len) {
 #ifndef ZEND_ENGINE_2
-  setResultFromString(jenv, presult, strValue);
+  setResultFromString(presult, strValue, len);
   Z_TYPE_P(presult)=IS_EXCEPTION;
 #else
   zval *exception;
 
   TSRMLS_FETCH();
 
-  setResultFromObject(jenv, presult, value); /* discarded */
+  setResultFromObject(presult, value); /* discarded */
   MAKE_STD_ZVAL(exception); 
-  setResultFromException(jenv, exception, value); 
+  setResultFromException(exception, value); 
   zend_throw_exception_object(exception TSRMLS_CC);
 #endif
 }
 
-
+struct parse_ctx {
+  char composite_type;			/* A|H */
+  zval*id;
+  pval*val;
+};
+void begin(parser_tag_t tag[3], parser_cb_t *cb){
+  struct parse_ctx *ctx=(struct parse_ctx*)cb->ctx;
+  parser_string_t *st=tag[2].strings;
+  zval*id=(zval*)strtol(st[0].string, 0, 16);
+  if(id) ctx->id=id;
+  switch (tag[0].strings[0].string[0]) {
+  case 'C':
+	setResultFromArray((pval*)id);
+	ctx->composite_type=*st[1].string;
+	break;
+  case 'P':
+	if(ctx->composite_type=='H') { /* hash table */
+	  if(*st[1].string=='N')	/* number */
+		ctx->val=hashIndexUpdate(ctx->id, strtol(st[2].string, 0, 10));
+	  else
+		ctx->val=hashUpdate(ctx->id, st[2].string, st[2].length);
+	}
+	else {						/* array */
+	  ctx->id=nextElement(ctx->id);
+	}
+	break;
+  case 'S':
+	setResultFromString(ctx->id, st[1].string, st[1].length);
+	break;
+  case 'B':
+	setResultFromBoolean(ctx->id, *st[1].string!='0');
+	break;
+  case 'L':
+	setResultFromLong(ctx->id, strtol(st[1].string, 0, 10));
+	break;
+  case 'D':
+	setResultFromDouble(ctx->id, atof(st[1].string));
+	break;
+  case 'O':
+	if(!st[1].length) {
+	  ZVAL_NULL(ctx->id);
+	} else {
+	  setResultFromObject(ctx->id, strtol(st[1].string, 0, 16));
+	}
+	break;
+  }
+}
 static int handle_request(proxyenv *env) {
-  jlong result;
-  char c;
-  SFILE *peer=(*env)->peer;
-  sread(&c, 1, 1, peer);
-
-  switch(c) {
-  case PROTOCOL_END: {
-	return 0;
-  }
-  case SETRESULTFROMSTRING: {
-	jbyteArray jvalue;
-	sread(&result, sizeof result, 1, peer);
-	sread(&jvalue, sizeof jvalue, 1, peer);
-	if(jvalue)
-	  setResultFromString(env, (pval*)(long)result, jvalue);
-	else
-	  ZVAL_NULL((pval*)(long)result);
-	break;
-  }
-  case SETRESULTFROMLONG: {
-	jlong jvalue;
-	sread(&result, sizeof result, 1, peer);
-	sread(&jvalue, sizeof jvalue, 1, peer);
-	setResultFromLong(env, (pval*)(long)result, jvalue);
-	break;
-  }
-  case SETRESULTFROMDOUBLE: {
-	jdouble jvalue;
-	sread(&result, sizeof result, 1, peer);
-	sread(&jvalue, sizeof jvalue, 1, peer);
-	setResultFromDouble(env, (pval*)(long)result, jvalue);
-	break;
-  }
-  case SETRESULTFROMBOOLEAN: {
-	jboolean jvalue;
-	sread(&result, sizeof result, 1, peer);
-	sread(&jvalue, sizeof jvalue, 1, peer);
-	setResultFromBoolean(env, (pval*)(long)result, jvalue);
-	break;
-  }
-  case SETRESULTFROMOBJECT: {
-	jobject jvalue;
-	sread(&result, sizeof result, 1, peer);
-	sread(&jvalue, sizeof jvalue, 1, peer);
-	setResultFromObject(env, (pval*)(long)result, jvalue);
-	break;
-  }
-  case SETRESULTFROMARRAY: {
-	jobject jvalue;
-#ifdef ZEND_ENGINE_2
-	static const jboolean send_content = JNI_FALSE;
-#else
-	static const jboolean send_content = JNI_TRUE;
-#endif
- 	sread(&result, sizeof result, 1, peer);
- 	sread(&jvalue, sizeof jvalue, 1, peer);
-	swrite(&send_content, sizeof send_content, 1, peer);
-#ifdef ZEND_ENGINE_2
-	setResultFromObject(env, (pval*)(long)result, jvalue);
-#else
-	setResultFromArray(env, (pval*)(long)result);
-#endif
-	break;
-  }
-
-/*
- * The following is from Sam Ruby's original PHP 4 bridge. When the
- * result was an array or Hashtable, the ext/java extension copied the
- * entire(!) array or hash to the PHP interpreter.  Since PHP 5 this
- * is dead code.
- */
-#ifndef ZEND_ENGINE_2
-  case NEXTELEMENT: {
-	sread(&result, sizeof result, 1, peer);
-	result=(jlong)(long)nextElement(env, (pval*)(long)result);
-	id(env, 0);
-	swrite(&result, sizeof result, 1, peer);
-	break;
-  }
-  case HASHINDEXUPDATE: {
-	jlong jvalue;
-	sread(&result, sizeof result, 1, peer);
-	sread(&jvalue, sizeof jvalue, 1, peer);
-	result=(jlong)(long)hashIndexUpdate(env, (pval*)(long)result, jvalue);
-	id(env, 0);
-	swrite(&result, sizeof result, 1, peer);
-	break;
-  }
-  case HASHUPDATE: {
-	jbyteArray jvalue;
-	sread(&result, sizeof result, 1, peer);
-	sread(&jvalue, sizeof jvalue, 1, peer);
-	result=(jlong)(long)hashUpdate(env, (pval*)(long)result, jvalue);
-	id(env, 0);
-	swrite(&result, sizeof result, 1, peer);
-	break;
-  }
-#endif
-  case SETEXCEPTION: {
-	jthrowable jvalue;
-	jbyteArray jstrValue;
-	sread(&result, sizeof result, 1, peer);
-	sread(&jvalue, sizeof jvalue, 1, peer);
-	sread(&jstrValue, sizeof jstrValue, 1, peer);
-	setException(env, (pval*)(long)result, jvalue, jstrValue);
-	break;
-  }
-  default: {
-	php_error(E_ERROR, "php_mod_java(%d): %s, %i",61, "protocol error: ", (unsigned int)c);
-	id(env, 0);
-	return 0;
-  }
-  }
-
-  // acknowledge
-  id(env, 0); 
-  
-  return 1;
+  parser_cb_t cb;
+  parse((*env)->peer, &cb);
 }
-static int handle_requests(proxyenv *env) {
-  // continue to handle server requests until the server says the
-  // packet is finished (one of the three main methods has sent 0)
-  while(handle_request(env));
-  return 0;
-}
-
-#define JAVA_METHOD(name, strname, class, param) \
-  JG(name) = (*jenv)->GetMethodID(jenv, JG(class), strname, param);\
-  if(!JG(name)) exit(9) 		/* out of memory or some other fatal error */
 
 proxyenv *java_connect_to_server(TSRMLS_D) {
-  jobject local_php_reflect;
-  jclass local_class;
   int sock, n=-1;
   SFILE *peer;
   proxyenv *jenv =JG(jenv);
@@ -329,46 +230,7 @@ proxyenv *java_connect_to_server(TSRMLS_D) {
 	return 0;
   }
 
-  jenv=java_createSecureEnvironment(peer, handle_requests);
-  assert(jenv); 
-
-  if(jenv&&SFREAD(&local_php_reflect, sizeof local_php_reflect, 1, peer)!=1) {
-	php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge?",58, strerror(errno));
-	return 0;
-  }
-
-  BEGIN_TRANSACTION(jenv);
-  /* java bridge class */
-  local_class = (*jenv)->FindClass(jenv, "JavaBridge");
-  if(!local_class) exit(9);
-  JG(reflect_class) = (*jenv)->NewGlobalRef(jenv, local_class);
-  if(!JG(reflect_class)) exit(9);
-  
-  /* java bridge instance */
-  JG(php_reflect) = (*jenv)->NewGlobalRef(jenv, local_php_reflect);
-  if(!JG(php_reflect)) exit(9);
-
-  JAVA_METHOD(setJarPath, "setJarLibraryPath", reflect_class, "(Ljava/lang/String;)V");
-  JAVA_METHOD(clearEx, "clearException", reflect_class, "()V");
-  JAVA_METHOD(lastEx, "lastException", reflect_class, "(JJ)V");
-  JAVA_METHOD(getPhpMap, "getPhpMap", reflect_class, "(Ljava/lang/Object;)LJavaBridge$PhpMap;");
-
-  local_class = (*jenv)->FindClass(jenv, "JavaBridge$PhpMap");
-  if(!local_class) exit(9);
-  JG(iterator_class) = (*jenv)->NewGlobalRef(jenv, local_class);
-  if(!JG(iterator_class)) exit(9);
-
-  JAVA_METHOD(moveForward, "moveForward", iterator_class, "()Ljava/lang/Object;");
-  JAVA_METHOD(hasMore, "hasMore", iterator_class, "()Ljava/lang/Object;");
-  JAVA_METHOD(getType, "getType", iterator_class, "()Ljava/lang/Object;");
-  
-  JAVA_METHOD(invoke, "Invoke", reflect_class, "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;JJ)V");
-  JAVA_METHOD(gsp, "GetSetProp", reflect_class, "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;JJ)V");
-  JAVA_METHOD(co, "CreateObject", reflect_class, "(Ljava/lang/String;Z[Ljava/lang/Object;JJ)V");
-
-  END_TRANSACTION(jenv);
-
-  return JG(jenv)=jenv;
+  return java_createSecureEnvironment(peer, handle_request);
 }
 
 #ifndef PHP_WRAPPER_H

@@ -1,6 +1,0 @@
-# -*- mode: Makefile; -*-
-ifeq (@COND_WIN_NO_DLL@,0)
-include Makefile_windows
-else 
-include Makefile_unix
-endif
