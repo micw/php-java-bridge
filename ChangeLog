@@ -45,3 +45,11 @@
 	connection.
 
 	* php-java-bridge 1.0.3 released.
+
+2004-09-15  Jost Boekemeier  <jost2345@mail.yahoo.de>
+
+	* JavaBridge.java: The bridge now catches errors and runtime
+	exceptions such as "class not found" and reports them to the
+	client.
+
+	

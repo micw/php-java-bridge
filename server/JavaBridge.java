@@ -210,8 +210,18 @@ public class JavaBridge {
 			Object coercedArgs[] = coerce(selected.getParameterTypes(), args);
 			JavaBridge.setResultFromObject(result, peer, selected.newInstance(coercedArgs));
 
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			printStackTrace(e);
+			// Special handling of our connection abort
+			// throwable.  We can't use our own (inner)
+			// exception class because that would mean we
+			// have to deal with a classname that contains
+			// a $ sign in its name during the bridge
+			// install procedure
+			if(e.getMessage()!=null &&
+			   e.getMessage().startsWith("child aborted connection during"))
+			    throw new RuntimeException();
+
 			setException(result, peer, e);
 		}
 	}
@@ -401,8 +411,17 @@ public class JavaBridge {
 			Object coercedArgs[] = coerce(selected.getParameterTypes(), args);
 			setResult(result, peer, selected.invoke(object, coercedArgs));
 
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			printStackTrace(e);
+			// Special handling of our connection abort
+			// throwable.  We can't use our own (inner)
+			// exception class because that would mean we
+			// have to deal with a classname that contains
+			// a $ sign in its name during the bridge
+			// install procedure
+			if(e.getMessage()!=null &&
+			   e.getMessage().startsWith("child aborted connection during"))
+			    throw new RuntimeException();
 			setException(result, peer, e);
 		}
 	}
@@ -461,8 +480,17 @@ public class JavaBridge {
 				if (!(object instanceof Class) || (jclass==object)) break;
 			}
 
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			printStackTrace(e);
+			// Special handling of our connection abort
+			// throwable.  We can't use our own (inner)
+			// exception class because that would mean we
+			// have to deal with a classname that contains
+			// a $ sign in its name during the bridge
+			// install procedure
+			if(e.getMessage()!=null &&
+			   e.getMessage().startsWith("child aborted connection during"))
+			    throw new RuntimeException();
 			setException(result, peer, e);
 		}
 	}
