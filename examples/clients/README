@@ -1,0 +1,19 @@
+This folder contains examples which show how to connect to the
+PHP/Java Bridge from PYTHON and GUILE/Scheme.
+
+
+* getProperties.py: Connects to the PHP/Java Bridge, asks for
+  System.getProperties() and displays the first entry.
+
+* listToArray.scm: Connects to the PHP/Java Bridge, creates a
+  java.util.ArrayList and fills it with three entries. Then it receives
+  the entire array list from the server and displays it.
+
+These examples use the python and guile/scheme script languages. They
+can be obtained from:
+
+   http://www.python.org
+
+and
+
+   http://www.fsf.org/software/guile

@@ -12,11 +12,17 @@ public class TCPServerSocket implements ISocketFactory {
     private int port;
     
     public static ISocketFactory create(String name, int backlog) throws IOException {
+	int p;
 	if(name==null) name=DefaultSocketname;
 	if(name.startsWith("INET:")) name=name.substring(5);
-	if(name.startsWith("LOCAL:")) 
+	else if(name.startsWith("LOCAL:")) 
 	    throw new IOException("tcp socketname must start with 'INET:'");
-	return new TCPServerSocket(Integer.parseInt(name), backlog);
+	try {
+	    p=Integer.parseInt(name);
+	} catch (NumberFormatException e) {
+	    Util.logError("Could not parse TCP socket number: " + e + ". Using default: " + DefaultSocketname);
+	}
+	return new TCPServerSocket(p, backlog);
     }
     private TCPServerSocket(int port, int backlog)
 	throws IOException {
