@@ -22,10 +22,10 @@ AC_DEFUN(JAVA_FUNCTION_CHECKS,[
   memcpy memmove sigset)
 
 dnl add -lsocket to the link line of the module and the server part
- AC_CHECK_LIB(socket, socket, PHP_ADD_LIBRARY(socket,, JAVA_SHARED_LIBADD))
+ AC_CHECK_LIB(socket, socket, 
+  PHP_ADD_LIBRARY(socket,, LIBNATCJAVABRIDGE_SHARED_LIBADD) 
+  PHP_ADD_LIBRARY(socket,, JAVA_SHARED_LIBADD))
  PHP_SUBST(JAVA_SHARED_LIBADD)
-
- AC_CHECK_LIB(socket, socket, PHP_ADD_LIBRARY(socket,, LIBNATCJAVABRIDGE_SHARED_LIBADD))
  PHP_SUBST(LIBNATCJAVABRIDGE_SHARED_LIBADD)
 
 ])
