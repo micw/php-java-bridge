@@ -22,12 +22,19 @@ ZEND_DECLARE_MODULE_GLOBALS(java)
 PHP_RINIT_FUNCTION(java) 
 {
     extern int java_connect_to_server(struct cfg*cfg TSRMLS_DC);
-	if(JG(jenv)) return SUCCESS;
+	assert(!JG(jenv));
 	return java_connect_to_server(&JG(cfg) TSRMLS_CC) || SUCCESS;
 }
 PHP_RSHUTDOWN_FUNCTION(java)
 {
-	return SUCCESS;
+  if (JG(php_reflect)) (*JG(jenv))->DeleteGlobalRef(JG(jenv), JG(php_reflect));
+  if(JG(jenv)&&*JG(jenv)&&(*JG(jenv))->peer) fclose((*JG(jenv))->peer);
+  if(JG(jenv)&&*JG(jenv)) free(*JG(jenv));
+  if(JG(jenv)) free(JG(jenv));
+
+  JG(php_reflect) = NULL;
+  JG(jenv) = NULL;
+  return SUCCESS;
 }
 
 PHP_FUNCTION(java_last_exception_get)

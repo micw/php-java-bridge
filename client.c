@@ -290,13 +290,15 @@ int java_test_server(struct cfg*cfg TSRMLS_DC) {
   while(cfg->cid && (java_do_test_server(cfg TSRMLS_CC)==FAILURE) && count--) {
 	php_error(E_NOTICE, "php_mod_java(%d): waiting for server another %d seconds",57, count);
 	sleep(1);
-	if(waitpid(cfg->cid, NULL, WNOHANG))  cfg->cid=0; // child died
   }
   return (cfg->cid && count)?SUCCESS:FAILURE;
 }
 int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
   int sock, s, i, n, len;
   FILE *fd;
+
+  if(java_do_test_server(cfg TSRMLS_CC)==FAILURE) return FAILURE;
+
   sock = socket (PF_UNIX, SOCK_STREAM, 0);
   assert(sock);
   n = connect(sock,(struct sockaddr*)&cfg->saddr, sizeof cfg->saddr);

@@ -54,7 +54,6 @@ static void exec_vm(struct cfg*cfg) {
   static char*env[2];
   static char*args[9];
   java_get_server_args(cfg, env, args);
-
   putenv(env[0]);
   execv(args[0], args);
 }
@@ -66,12 +65,42 @@ static short can_fork() {
   return (java_ini_updated&U_SOCKNAME)==0;
 }
 
+static int readpid(int fd) {
+  int pid=0, c, err;
+
+  for(c=0; c<sizeof pid; c+=err) {
+	if((err=read(fd,((char*)&pid)+c, (sizeof pid)-c))<=0) {
+	  php_error(E_WARNING, "php_mod_java(%d): %s",93, "Could not read pid, child lost");
+	  pid=0;
+	  break;
+	}
+  }
+  return pid;
+}
+
 void java_start_server(struct cfg*cfg) {
-  int pid=0;
-  if(can_fork()) {
-	if(!(pid=fork())) {
-	  exec_vm(cfg);
-	  exit(errno&255);
+  int pid=0, p[2];
+
+  {
+	struct stat buf;
+	unlink(cfg->sockname);
+	assert(stat(cfg->sockname, &buf));
+  }
+  if(pipe(p)!=-1) {
+	if(can_fork()) {
+	  if(!fork()) {
+		close(p[0]);
+		if(!(pid=fork())) {
+		  exec_vm(cfg); 
+		  exit(errno&255);
+		}
+		write(p[1], &pid, sizeof pid); 
+		close(p[1]); 
+		exit(0);
+	  }
+	  close(p[1]);
+	  pid=readpid(p[0]);
+	  close(p[0]);
 	}
   }
   cfg->cid=pid;

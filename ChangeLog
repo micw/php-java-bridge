@@ -94,3 +94,6 @@
 
 	* natcJavaBridge.c (Java_JavaBridge_startNative): Linux handles
 	accept different than the BSD variants.  Check errno.
+
+	* bind.c (java_start_server): Start java as a daemon, if possible.
+	(readpid): New function.

@@ -18,6 +18,8 @@
 #include <sys/types.h>
 #include <signal.h>
 
+/* stat */
+#include <sys/stat.h>
 
 ZEND_DECLARE_MODULE_GLOBALS(java)
 
@@ -293,13 +295,14 @@ void php_java_destructor(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 	if (JG(jenv)) (*JG(jenv))->DeleteGlobalRef(JG(jenv), jobject);
 }
 
+static void wait_for_daemon(TSRMLS_D) {
+  struct stat buf;
+  struct cfg *cfg=&JG(cfg);
+  while(!stat(cfg->sockname, &buf))
+	sleep(1);
+}
+
 void php_java_shutdown_library(TSRMLS_D) 
 {
-  if(JG(cfg).cid) {kill(JG(cfg).cid, SIGTERM); waitpid(JG(cfg.cid), NULL, 0);}
-  if (JG(php_reflect)) (*JG(jenv))->DeleteGlobalRef(JG(jenv), JG(php_reflect));
-  if(JG(jenv)&&*JG(jenv)) free(*JG(jenv));
-  if(JG(jenv)) free(JG(jenv));
-
-  JG(php_reflect) = NULL;
-  JG(jenv) = NULL;
+  if(JG(cfg).cid) {kill(JG(cfg).cid, SIGTERM); wait_for_daemon();}
 }

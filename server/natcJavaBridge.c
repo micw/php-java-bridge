@@ -57,7 +57,12 @@ static jint logLevel=4;
 static jclass bridge=NULL;
 
 static char*sockname=NULL;
+
 static pthread_attr_t attr;
+static pthread_mutex_t mutex;
+static pthread_cond_t cond;
+static int count=0;
+static sigset_t block;
 
 struct peer {
   jmp_buf env;					/* exit from the loop */
@@ -161,13 +166,43 @@ static void atexit_bridge() {
 	free(sockname);
 	sockname=NULL;
 	pthread_attr_destroy(&attr);
+	pthread_mutex_destroy(&mutex);
+	pthread_cond_destroy(&cond);
   }
 }
-static void exit_sig(int dummy) {
-  atexit_bridge();
-  _exit(0);
+
+static void block_sig() {
+  sigset_t d;
+  pthread_sigmask(SIG_BLOCK, &block, &d);
 }
+
+static void enter() {
+  pthread_mutex_lock(&mutex);
+  assert(count>=0);
+  count++;
+  pthread_mutex_unlock(&mutex);
+}
+
+static void leave() {
+  pthread_mutex_lock(&mutex);
+  assert(count>0);
+  if(!--count) pthread_cond_signal(&cond);
+  pthread_mutex_unlock(&mutex);
+}
+
+static void *guard_requests(void *p) {
+  int sig;
+  block_sig();
+  sigwait(&block, &sig);
+  pthread_mutex_lock(&mutex);
+  if(count) pthread_cond_wait(&cond, &mutex);
+  count=-1;
+  pthread_mutex_unlock(&mutex);
+}
+
 static void initGlobals(JNIEnv *env) {
+  pthread_t thread;
+  sigset_t d;
   jobject hash;
 
   exceptionClass = (*env)->FindClass(env, "java/lang/Throwable");
@@ -181,7 +216,15 @@ static void initGlobals(JNIEnv *env) {
   longValue = (*env)->GetMethodID(env, longClass, "longValue", "()J");
 
   atexit(atexit_bridge);
-  signal(SIGTERM, exit_sig);
+
+  pthread_attr_init(&attr);
+  pthread_cond_init(&cond, NULL);
+  pthread_mutex_init(&mutex, NULL);
+  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+
+  sigemptyset(&block);
+  sigaddset(&block, SIGTERM);
+  pthread_create(&thread, &attr, guard_requests, 0);
 }
 static jobject initHash(JNIEnv *env) {
   jobject hash = (*env)->NewObject(env, hashClass, init);
@@ -589,6 +632,8 @@ static void *handle_requests(void *p) {
   JNIEnv *env;
   struct param *param = (struct param*)p;
   FILE *peer;
+  block_sig();
+  enter();
   int err = (*param->vm)->AttachCurrentThread(param->vm, (void**)&env, NULL);
 
   if(err) {logError(env, "could not attach to java vm"); free(p); return NULL;}
@@ -610,6 +655,7 @@ static void *handle_requests(void *p) {
   close(param->s);
 
   free(p);
+  leave();
   return NULL;
 }
 
@@ -635,8 +681,6 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
 	char *s = SOCKNAME;
 	sockname = strdup(s);
   }
-  pthread_attr_init(&attr);
-  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
   /* socket */
   saddr.sun_family = AF_UNIX;
@@ -655,7 +699,11 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
 	struct param *param = malloc(sizeof*param);
 	if(!param) {logMemoryError(env, __FILE__, __LINE__); return;}
 
-res:errno=0; param->s = accept(sock, NULL, 0); 
+  res:errno=0; 
+	pthread_mutex_lock(&mutex);
+	if(count==-1) {pthread_mutex_unlock(&mutex); return;}
+	pthread_mutex_unlock(&mutex);
+	param->s = accept(sock, NULL, 0); 
 	if(param->s==-1) {logSysError(env, "socket accept failed"); return;}
 	if(errno) goto res; 		
 
