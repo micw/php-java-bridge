@@ -133,7 +133,7 @@ ZEND_GET_MODULE(java)
 
 int  le_jobject;
 int java_ini_updated, java_ini_last_updated;
-zend_class_entry php_java_class_entry;
+zend_class_entry *php_java_class_entry;
 
 static PHP_INI_MH(OnIniSockname)
 {
@@ -218,15 +218,247 @@ static void init_server()
   java_test_server(&JG(cfg) TSRMLS_CC);
 }
 
+#ifdef ZEND_ENGINE_2
+static void print_array(int argc, pval** argv)
+{
+	int i;
+  for (i=0; i<argc; i++) {
+	  pval*arg=argv[i];
+	  switch (Z_TYPE_P(arg)) {
+	  case IS_STRING:
+		  puts(Z_STRVAL_P(arg));
+      break;
+
+    case IS_OBJECT:
+		puts("object");
+      break;
+
+    case IS_BOOL:
+		puts("bool");
+      break;
+
+    case IS_LONG:
+		puts("long");
+      break;
+
+    case IS_DOUBLE:
+		puts("double");
+      break;
+
+    case IS_ARRAY:
+      {
+		  puts("array");
+      }
+
+      break;
+	  default:
+		puts("bleh");
+	  }
+  }
+}
+
+PHP_METHOD(java, java)
+{
+	zval **argv;
+	int argc = ZEND_NUM_ARGS();
+
+	argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
+	if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
+		php_error(E_ERROR, "Couldn't fetch arguments into array.");
+		RETURN_NULL();
+	}
+	puts("java called");
+	print_array(argc, argv);
+
+	php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU,
+								   "java",
+								   getThis(),
+								   argc, argv);
+	efree(argv);
+}
+
+PHP_METHOD(java, __call)
+{
+	zval **xargv, **argv;
+	int i = 0, xargc, argc = ZEND_NUM_ARGS();
+	HashPosition pos;
+	zval **param;
+
+
+	argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
+	if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
+		php_error(E_ERROR, "Couldn't fetch arguments into array.");
+		RETURN_NULL();
+	}
+
+	/* function arguments in arg#2 */
+	xargc = zend_hash_num_elements(Z_ARRVAL_P(argv[1]));
+	xargv = safe_emalloc(sizeof(zval *), xargc, 0);
+	for (zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(argv[1]), &pos);
+		 zend_hash_get_current_data_ex(Z_ARRVAL_P(argv[1]), (void **) &param, &pos) == SUCCESS;
+		 zend_hash_move_forward_ex(Z_ARRVAL_P(argv[1]), &pos)) {
+			/*zval_add_ref(param);*/
+			xargv[i++] = *param;
+	}
+
+	print_array(argc, argv);
+	puts("call called");
+	print_array(argc, argv);
+
+	php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU,
+								   Z_STRVAL(*argv[0]),
+								   getThis(),
+								   xargc, xargv);
+								   
+	efree(argv);
+	efree(xargv);
+}
+PHP_METHOD(java, __set)
+{
+  zval **argv;
+  int argc = ZEND_NUM_ARGS();
+  
+  argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
+  if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
+	php_error(E_ERROR, "Couldn't fetch arguments into array.");
+	RETURN_NULL();
+  }
+  
+  puts("set called");
+  print_array(argc, argv);
+  
+  php_java_set_property_handler(Z_STRVAL(*argv[0]), getThis(), argv[1]);
+  
+  efree(argv);
+}
+PHP_METHOD(java, __get)
+{
+  pval presult;
+  zval **argv;
+  int argc = ZEND_NUM_ARGS();
+  
+  argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
+  if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
+	php_error(E_ERROR, "Couldn't fetch arguments into array.");
+	RETURN_NULL();
+  }
+  
+  puts("get called");
+  print_array(argc, argv);
+  
+  presult = php_java_get_property_handler(Z_STRVAL(*argv[0]), getThis());
+  
+  efree(argv);
+}
+
+static function_entry java_class_functions[] = {
+	PHP_ME(java, java, NULL, 0)
+	PHP_ME(java, __call, NULL, 0)
+	PHP_ME(java, __get, NULL, 0)
+	PHP_ME(java, __set, NULL, 0)
+};
+
+static void make_lambda(zend_internal_function *f,
+						void (*handler)(INTERNAL_FUNCTION_PARAMETERS))
+{
+	f->type = ZEND_INTERNAL_FUNCTION;
+	f->handler = handler;
+	f->function_name = NULL;
+	f->scope = NULL;
+	f->fn_flags = 0;
+	f->prototype = NULL;
+	f->num_args = 0;
+	f->arg_info = NULL;
+	f->pass_rest_by_reference = 0;
+}
+#else
+
+static void 
+call_function_handler(INTERNAL_FUNCTION_PARAMETERS, zend_property_reference *property_reference)
+{
+  pval *object = property_reference->object;
+  zend_overloaded_element *function_name = (zend_overloaded_element *)
+    property_reference->elements_list->tail->data;
+  char *name = Z_STRVAL(function_name->element);
+  int arg_count = ZEND_NUM_ARGS();
+  pval **arguments = (pval **) emalloc(sizeof(pval *)*arg_count);
+
+  getParametersArray(ht, arg_count, arguments);
+
+  php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU, 
+								 name, object, 
+								 arg_count, arguments);
+
+  efree(arguments);
+  pval_destructor(&function_name->element);
+}
+
+static pval 
+get_property_handler(zend_property_reference *property_reference)
+{
+  pval presult;
+  zend_llist_element *element;
+  zend_overloaded_element *property;
+  char *name;
+
+  TSRMLS_FETCH();
+
+  element = property_reference->elements_list->head;
+  property=(zend_overloaded_element *)element->data;
+  name =  Z_STRVAL(property->element);
+
+  presult = php_java_get_property_handler(char* name, pval* object TSRMLS_CC);
+
+  pval_destructor(&property->element);
+  return presult;
+}
+
+static int 
+set_property_handler(zend_property_reference *property_reference, pval *value)
+{
+  int result;
+  zend_llist_element *element;
+  zend_overloaded_element *property;
+  char *name;
+
+  TSRMLS_FETCH();
+
+  element = property_reference->elements_list->head;
+  property=(zend_overloaded_element *)element->data;
+  name =  Z_STRVAL(property->element);
+
+  result = php_java_set_property_handler(name, object, value TSRMLS_CC);
+
+  pval_destructor(&property->element);
+  return result;
+}
+#endif
+
 PHP_MINIT_FUNCTION(java)
 {
-	/* function definitions found in bridge.c */
-	INIT_OVERLOADED_CLASS_ENTRY(php_java_class_entry, "java", NULL,
-								php_java_call_function_handler,
-								php_java_get_property_handler,
-								php_java_set_property_handler);
+#ifndef ZEND_ENGINE_2
+  INIT_OVERLOADED_CLASS_ENTRY(php_java_class_entry, "java", NULL,
+								call_function_handler,
+								get_property_handler,
+								set_property_handler);
 
 	zend_register_internal_class(&php_java_class_entry TSRMLS_CC);
+#else
+	zend_class_entry ce;
+	zend_internal_function call, get, set;
+
+	make_lambda(&call, ZEND_FN(java___call));
+	make_lambda(&get, ZEND_FN(java___get));
+	make_lambda(&set, ZEND_FN(java___set));
+
+	INIT_OVERLOADED_CLASS_ENTRY(ce, "java", 
+								java_class_functions, 
+								(zend_function*)&call, 
+								(zend_function*)&get, 
+								(zend_function*)&set);
+	
+	php_java_class_entry = zend_register_internal_class(&ce TSRMLS_CC);
+#endif
 
 	/* Register the resource, with destructor (arg 1) and text
 	   description (arg 3), the other arguments are just standard
@@ -324,13 +556,13 @@ PHP_MINFO_FUNCTION(java)
 
 PHP_MSHUTDOWN_FUNCTION(java) 
 {
-  extern void php_java_shutdown_library(TSRMLS_D);
-  extern void java_destroy_cfg(int, struct cfg*);
+  extern void php_java_shutdown_library(struct cfg*cfg TSRMLS_DC);
+  extern void java_destroy_cfg(int, struct cfg*cfg TSRMLS_DC);
 
-  java_destroy_cfg(java_ini_last_updated, &JG(cfg));
+  java_destroy_cfg(java_ini_last_updated, &JG(cfg) TSRMLS_CC);
   java_ini_last_updated=0;
 
   UNREGISTER_INI_ENTRIES();
-  php_java_shutdown_library(TSRMLS_C);
+  php_java_shutdown_library(&JG(cfg) TSRMLS_CC);
   return SUCCESS;
 }

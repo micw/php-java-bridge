@@ -592,14 +592,14 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	jobject result;
 	jclass clazz;
 	jmethodID methodID;
-	size_t len;
+	short count;
 	jvalue *args;
-	sread(&len, sizeof len, 1, peer);
+	sread(&count, sizeof count, 1, peer);
 	sread(&clazz, sizeof clazz, 1, peer);
 	sread(&methodID, sizeof methodID, 1, peer);
-	args=calloc(len, sizeof *args);
+	args=calloc(count, sizeof *args);
 	ASSERTM(args);
-	sread(args, sizeof *args, len, peer);
+	sread(args, sizeof *args, count, peer);
 	result= (*env)->NewObjectA(env, clazz, methodID, args);
 	swrite(&result, sizeof result, 1, peer);
 	free(args);

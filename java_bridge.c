@@ -9,39 +9,23 @@
 /* miscellaneous */
 #include <stdio.h>
 #include <assert.h>
-#include <sys/poll.h>
 
-/* strings,errno */
+/* strings */
 #include <string.h>
-#include <errno.h>
 
-/*kill*/
-#include <sys/types.h>
-#include <signal.h>
-
-/* stat */
-#include <sys/stat.h>
 
 ZEND_DECLARE_MODULE_GLOBALS(java)
 
-static pval php_java_getset_property (zend_property_reference *property_reference, jobjectArray value TSRMLS_DC);
 static int checkError(pval *value);
 static jobjectArray php_java_makeArray(int argc, pval** argv TSRMLS_DC);
 static jobject php_java_makeObject(pval* arg TSRMLS_DC);
 
 
-void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, zend_property_reference *property_reference)
+void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, pval *object, int arg_count, zval**arguments)
 {
   proxyenv *jenv;
-  pval *object = property_reference->object;
-  zend_overloaded_element *function_name = (zend_overloaded_element *)
-    property_reference->elements_list->tail->data;
-
-  int arg_count = ZEND_NUM_ARGS();
   jlong result = 0;
-  pval **arguments = (pval **) emalloc(sizeof(pval *)*arg_count);
 
-  getParametersArray(ht, arg_count, arguments);
   /* check if we're initialized */
   jenv = JG(jenv);
   if(!jenv) {
@@ -49,7 +33,7 @@ void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, zend_property_
 	return;
   }
 
-  if (!strcmp("java", Z_STRVAL(function_name->element))) {
+  if (!strcmp("java", name)) {
     /* construct a Java object:
        First argument is the class name.  Any additional arguments will
        be treated as constructor parameters. */
@@ -59,7 +43,7 @@ void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, zend_property_
     result = (jlong)(long)object;
 
     if (ZEND_NUM_ARGS() < 1) {
-      php_error(E_ERROR, "Missing classname in new Jv() call");
+      php_error(E_ERROR, "Missing classname in new java() call");
       return;
     }
 
@@ -83,7 +67,7 @@ void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, zend_property_
       "(Ljava/lang/Object;Ljava/lang/String;[Ljava/lang/Object;JJ)V");
     zend_hash_index_find(Z_OBJPROP_P(object), 0, (void**) &handle);
     obj = zend_list_find(Z_LVAL_PP(handle), &type);
-    method = (*jenv)->NewStringUTF(jenv, Z_STRVAL(function_name->element));
+    method = (*jenv)->NewStringUTF(jenv, name);
     result = (jlong)(long)return_value;
     /* invoke a method on the given object */
     (*jenv)->Invoke(jenv, JG(php_reflect), invoke,
@@ -91,8 +75,6 @@ void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, zend_property_
 
     (*jenv)->DeleteLocalRef(jenv, method);
   }
-  efree(arguments);
-  pval_destructor(&function_name->element);
   checkError((pval*)(long)result);
 }
 
@@ -210,22 +192,8 @@ static jobjectArray php_java_makeArray(int argc, pval** argv TSRMLS_DC)
   return result;
 }
 
-
-/**
- * php_java_get_property_handler
- */
-pval php_java_get_property_handler(zend_property_reference *property_reference)
-{
-  pval presult;
-  TSRMLS_FETCH();
-
-  presult = php_java_getset_property(property_reference, 0 TSRMLS_CC);
-  checkError(&presult);
-  return presult;
-}
-
-static pval php_java_getset_property
-  (zend_property_reference *property_reference, jobjectArray value TSRMLS_DC)
+static pval 
+php_java_getset_property (char* name, pval* object, jobjectArray value TSRMLS_DC)
 {
   pval presult;
   jlong result = 0;
@@ -234,17 +202,15 @@ static pval php_java_getset_property
   int type;
 
   /* get the property name */
-  zend_llist_element *element = property_reference->elements_list->head;
-  zend_overloaded_element *property=(zend_overloaded_element *)element->data;
   jstring propName;
 
   proxyenv *jenv;
   jenv = JG(jenv);
 
-  propName = (*jenv)->NewStringUTF(jenv, Z_STRVAL(property->element));
+  propName = (*jenv)->NewStringUTF(jenv, name);
 
   /* get the object */
-  zend_hash_index_find(Z_OBJPROP_P(property_reference->object),
+  zend_hash_index_find(Z_OBJPROP_P(object),
     0, (void **) &pobject);
   obj = zend_list_find(Z_LVAL_PP(pobject), &type);
   result = (jlong)(long) &presult;
@@ -261,7 +227,6 @@ static pval php_java_getset_property
   }
 
   (*jenv)->DeleteLocalRef(jenv, propName);
-  pval_destructor(&property->element);
   return presult;
 }
 
@@ -276,15 +241,24 @@ static int checkError(pval *value)
   return 0;
 }
 
+/**
+ * php_java_get_property_handler
+ */
+pval php_java_get_property_handler(char*name, pval *object)
+{
+  pval presult = php_java_getset_property(name, object, 0 TSRMLS_CC);
+  checkError(&presult);
+  return presult;
+}
+
 
 /**
  * php_java_set_property_handler
  */
-int php_java_set_property_handler(zend_property_reference *property_reference, pval *value)
+int php_java_set_property_handler(char*name, pval *object, pval *value)
 {
-  pval presult;
-  TSRMLS_FETCH();
-  presult = php_java_getset_property(property_reference, php_java_makeArray(1, &value TSRMLS_CC) TSRMLS_CC);
+  pval presult = 
+	php_java_getset_property(name, object, php_java_makeArray(1, &value TSRMLS_CC) TSRMLS_CC);
   return checkError(&presult) ? FAILURE : SUCCESS;
 }
 
@@ -293,36 +267,10 @@ int php_java_set_property_handler(zend_property_reference *property_reference, p
  */
 void php_java_destructor(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 {
-  // Disabled
-  // This was called *after* connection shutdown, which is
-  // much too late.  The server part now does its own 
+  // Disabled. In PHP 4 this was called *after* connection shutdown,
+  // which is much too late.  The server part now does its own
   // resource tracking.
 /* 	void *jobject = (void *)rsrc->ptr; */
 /* 	assert(JG(jenv)); */
 /* 	if (JG(jenv)) (*JG(jenv))->DeleteGlobalRef(JG(jenv), jobject); */
-}
-
-static void wait_for_daemon(TSRMLS_D) {
-  struct cfg *cfg=&JG(cfg);
-  struct pollfd pollfd[1] = {cfg->err, POLLIN, 0};
-  int err, c;
-
-  assert(cfg->err);
-  assert(cfg->cid);
-  for(c=10; c>0 && cfg->cid && (!cfg->err || (cfg->err && !(err=poll(pollfd, 1, 0)))); c--) {
-	kill(JG(cfg).cid, SIGTERM);
-	sleep(1);
-  }
-  if(!c) kill(JG(cfg).cid, SIGKILL);
-  if(cfg->err) {
-	if((read(cfg->err, &err, sizeof err))!=sizeof err) err=0;
-	//printf("VM terminated with code: %ld\n", err);
-	close(cfg->err);
-	cfg->err=0;
-  }
-}
-
-void php_java_shutdown_library(TSRMLS_D) 
-{
-  if(JG(cfg).cid) wait_for_daemon();
 }

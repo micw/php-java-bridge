@@ -15,6 +15,9 @@
 /* signal */
 #include <signal.h>
 
+/* poll */
+#include <sys/poll.h>
+
 /* miscellaneous */
 #include <stdio.h>
 #include <assert.h>
@@ -129,3 +132,27 @@ void java_start_server(struct cfg*cfg) {
   cfg->err=p[0];
 }
 
+
+static void wait_for_daemon(struct cfg*cfg TSRMLS_DC) {
+  struct pollfd pollfd[1] = {cfg->err, POLLIN, 0};
+  int err, c;
+
+  assert(cfg->err);
+  assert(cfg->cid);
+  for(c=10; c>0 && cfg->cid && (!cfg->err || (cfg->err && !(err=poll(pollfd, 1, 0)))); c--) {
+	kill(cfg->cid, SIGTERM);
+	sleep(1);
+  }
+  if(!c) kill(cfg->cid, SIGKILL);
+  if(cfg->err) {
+	if((read(cfg->err, &err, sizeof err))!=sizeof err) err=0;
+	//printf("VM terminated with code: %ld\n", err);
+	close(cfg->err);
+	cfg->err=0;
+  }
+}
+
+void php_java_shutdown_library(struct cfg*cfg TSRMLS_DC) 
+{
+  if(cfg->cid) wait_for_daemon(cfg TSRMLS_CC);
+}

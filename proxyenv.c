@@ -9,20 +9,26 @@
 #include "protocol.h"
 #include "sio.c"
 
-static void swrite(const  void  *ptr,  size_t  size,  size_t  nmemb,  SFILE *stream) {
+#define swrite java_swrite
+void java_swrite(const  void  *ptr,  size_t  size,  size_t  nmemb,  SFILE *stream) {
   int n = SFWRITE(ptr, size, nmemb, stream);
-  //printf("write char:.:%d\n", (unsigned int) ((char*)ptr)[0]);
+  //printf("write char:::%d\n", (unsigned int) ((char*)ptr)[0]);
   assert(n==nmemb);
+  if(n!=nmemb) exit(6);
 }
-static void sread(void *ptr, size_t size, size_t nmemb, SFILE *stream) {
+
+#define sread java_sread
+void java_sread(void *ptr, size_t size, size_t nmemb, SFILE *stream) {
   int n = SFREAD(ptr, size, nmemb, stream);
-  //printf("read char:.:%d\n", (unsigned int) ((char*)ptr)[0]);
+  //printf("read char:::%d\n", (unsigned int) ((char*)ptr)[0]);
   assert(n==nmemb);
+  if(n!=nmemb) exit(7);
 }
-static void id(proxyenv *env, char id) {
+
+#define id java_id
+void java_id(proxyenv *env, char id) {
   swrite(&id, sizeof id, 1, (*env)->peer);
 }
-  
 
 /*
  * The following Invoke, CreateObject, GetSetProp and LastException  methods start everything

@@ -1,3 +1,29 @@
+2004-11-16  Jost Boekemeier  <jostb@intern>
+	
+	PHP 5 supported
+	* java_bridge.h, java_bridge.c (php_java_call_function_handler,
+	php_java_set_property_handler, php_java_get_property_handler),
+	php_java.h (php_java_class_entry): rewritten to use PHP 5 style
+	* java.c (javajava, java__call, java__set, java__get, make_lambda): New functions (PHP 5)
+	(call_function_handler, get_property_handler, set_property_handler): New functions (PHP 4)
+	(java_class_functions): New structure
+	(PHP_MINIT_FUNCION): rewritten
+	(PHP_MSHUTDOWN_FUNCTION): rewritten
+
+	* java_bridge.c (wait_for_daemon, php_java_shutdown_library): removed
+	* bind.c (wait_for_daemon, php_java_shutdown_library): new from java_bridge.c
+	* client.c (swrite, sread, id): removed
+	* proxyenv.c (java_swrite, java_sread, java_id): new from client.c
+
+	client.c (CFG_JAVA_SOCKET_INET): Fixed typo
+
+	The PHP 5 object system revealed a bug in the core protocol: If
+	someone managed to send a PHP array with an PHP type in it, the
+	client stopped working immediately.
+	* server/natcJavaBridge.c (handle_request NEWOBJECT): Accept a count
+	(short), not a length (size_t).
+	
+	
 2004-11-11  Boekemeier  <jost2345@intern>
 
 	* server/natcJavaBridge.c, sio.c, sio.h, protocol.h, java.c, init_cfg.c.in, client.c: 

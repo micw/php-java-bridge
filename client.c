@@ -51,23 +51,14 @@ static int check_error(proxyenv *jenv, int nr TSRMLS_DC) {
   return 1;
 }
 
+#define swrite java_swrite
+extern void java_swrite(const  void  *ptr,  size_t  size,  size_t  nmemb,  SFILE *stream);
 
-static void swrite(const  void  *ptr,  size_t  size,  size_t  nmemb,  SFILE *stream) {
-  int n = SFWRITE(ptr, size, nmemb, stream);
-  //printf("write char:::%d\n", (unsigned int) ((char*)ptr)[0]);
-  assert(n==nmemb);
-  if(n!=nmemb) exit(6);
-}
-static void sread(void *ptr, size_t size, size_t nmemb, SFILE *stream) {
-  int n = SFREAD(ptr, size, nmemb, stream);
-  //printf("read char:::%d\n", (unsigned int) ((char*)ptr)[0]);
-  assert(n==nmemb);
-  if(n!=nmemb) exit(7);
-}
-static void id(proxyenv *env, char id) {
-  swrite(&id, sizeof id, 1, (*env)->peer);
-}
+#define sread java_sread
+extern void java_sread(void *ptr, size_t size, size_t nmemb, SFILE *stream);
 
+#define id java_id
+extern void java_id(proxyenv *env, char id);
 
 static void setResultFromString (proxyenv *jenv,  pval *presult, jbyteArray jvalue){
   jboolean isCopy;
@@ -102,7 +93,7 @@ static  void  setResultFromObject  (proxyenv *jenv,  pval *presult, jobject valu
   TSRMLS_FETCH();
   
   if (Z_TYPE_P(presult) != IS_OBJECT) {
-	object_init_ex(presult, &php_java_class_entry);
+	object_init_ex(presult, php_java_class_entry);
 	presult->is_ref=1;
     presult->refcount=1;
   }
@@ -302,7 +293,7 @@ int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
   int sock, s, i, n=-1, len;
   SFILE *peer;
 
-#ifdef CFG_JAVA_SOCKET_INET
+#ifndef CFG_JAVA_SOCKET_INET
   sock = socket (PF_LOCAL, SOCK_STREAM, 0);
 #else
   sock = socket (PF_INET, SOCK_STREAM, 0);

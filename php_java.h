@@ -27,7 +27,7 @@
 
 extern int le_jobject;
 extern zend_module_entry java_module_entry;
-extern zend_class_entry php_java_class_entry;
+extern zend_class_entry *php_java_class_entry;
 extern const char * const java_bridge_version;
 
 extern int java_ini_updated;
