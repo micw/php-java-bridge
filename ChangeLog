@@ -21,10 +21,8 @@
 	javaexception: Do not override parent methods with themselfs. PHP
 	5.0.3 doesn't like that...
 	
-	* README: Removed windows install description.
+	* README: Updated windows install description.
 	
-	* README.WINDOWS: New file from README.
-
 	* config.m4: Embedding into PHP works again.  Use m4_include so
 	that autoheader scans the included files.
 	
