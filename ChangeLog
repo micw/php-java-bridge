@@ -43,3 +43,5 @@
 	native main methods and then jump back to the loop.  This fixes a
 	crash in the SUN VM which occured after apache has aborted the
 	connection.
+
+	* php-java-bridge 1.0.3 released.
