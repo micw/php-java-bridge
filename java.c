@@ -142,12 +142,26 @@ PHP_FUNCTION(java_get_session)
   efree(argv);
 }
 
+PHP_FUNCTION(java_get_server_name)
+{
+  char *name;
+  int socket;
+
+  if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT;
+
+  name=java_test_server(&socket);
+  if(name) close(sock);
+  ZVAL_STRING(return_value, name, 1);
+  free(name);
+}
+
 function_entry java_functions[] = {
 	PHP_FE(java_last_exception_get, NULL)
 	PHP_FE(java_last_exception_clear, NULL)
 	PHP_FE(java_set_library_path, NULL)
 	PHP_FE(java_instanceof, NULL)
 	PHP_FE(java_get_session, NULL)
+	PHP_FE(java_get_server_name, NULL)
 	{NULL, NULL, NULL}
 };
 
