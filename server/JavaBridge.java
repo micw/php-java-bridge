@@ -253,12 +253,12 @@ public class JavaBridge implements Runnable {
 		    
 					void init() {
 						i=0;
-						length = Array.getLength(value);
+						length = Array.getLength(this.value);
 						valid=length>0;
 					}
 					public Object currentData() {
 						if(!valid) return null;
-						return Array.get(value, i);
+						return Array.get(this.value, i);
 					}
 					public byte[] currentKey() {
 						if(!valid) return null;
@@ -274,20 +274,20 @@ public class JavaBridge implements Runnable {
 
 					public boolean offsetExists(Object pos) {
 						int i = ((Long)pos).intValue();
-						return (i>0 && i<length && (Array.get(value, i)!=this));
+						return (i>0 && i<length && (Array.get(this.value, i)!=this));
 					}
 					public Object offsetGet(Object pos) {
 						int i = ((Long)pos).intValue();
-						Object o = Array.get(value, i);
+						Object o = Array.get(this.value, i);
 						return o==this ? null : o;
 					}
 					public void offsetSet(Object pos, Object val) {
 						int i = ((Long)pos).intValue();
-						Array.set(value, i, val);
+						Array.set(this.value, i, val);
 					}
 					public void offsetUnset(Object pos) {
 						int i = ((Long)pos).intValue();
-						Array.set(value, i, this);
+						Array.set(this.value, i, this);
 					}
 				};
 		}
@@ -299,7 +299,7 @@ public class JavaBridge implements Runnable {
 					Iterator iter;
 		    
 					void init() {
-						iter = ((Collection)value).iterator();
+						iter = ((Collection)(this.value)).iterator();
 						i = 0;
 						currentKey=null;
 						if(iter.hasNext()) {
@@ -345,7 +345,7 @@ public class JavaBridge implements Runnable {
 					Iterator iter;
 		    
 					void init() {
-						iter = ((Map)value).keySet().iterator();
+						iter = ((Map)(this.value)).keySet().iterator();
 						currentKey=null;
 						if(iter.hasNext()) {
 							currentKey=iter.next();
@@ -353,7 +353,7 @@ public class JavaBridge implements Runnable {
 					}
 					public Object currentData() {
 						if(currentKey==null) return null;
-						return ((Map)value).get(currentKey);
+						return ((Map)(this.value)).get(currentKey);
 					}
 					public byte[] currentKey() {
 						return String.valueOf(currentKey).getBytes();
@@ -367,16 +367,16 @@ public class JavaBridge implements Runnable {
 					}
 
 					public boolean offsetExists(Object pos) {
-						return ((Map)value).containsKey(pos);
+						return ((Map)(this.value)).containsKey(pos);
 					}
 					public Object offsetGet(Object pos) {
-						return ((Map)value).get(pos);
+						return ((Map)(this.value)).get(pos);
 					}
 					public void offsetSet(Object pos, Object val) {
-						((Map)value).put(pos, val);
+						((Map)(this.value)).put(pos, val);
 					}
 					public void offsetUnset(Object pos) {
-						((Map)value).remove(pos);
+						((Map)(this.value)).remove(pos);
 					}
 				};
 		}

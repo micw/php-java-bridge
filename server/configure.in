@@ -7,8 +7,8 @@ m4_bpatsubst(m4_include([../VERSION]),[
 AC_CONFIG_AUX_DIR(.)
 AC_CONFIG_LINKS(sio.h:../sio.h sio.c:../sio.c protocol.h:../protocol.h)
 
-dnl autoconf >2.57
-AC_PREREQ(2.57)
+dnl autoconf >2.53
+AC_PREREQ(2.53)
 AC_CONFIG_SRCDIR(natcJavaBridge.c)
 
 dnl automake >1.6.3
