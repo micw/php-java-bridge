@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 #ifndef CFG_JAVA_SOCKET_INET
 # include <sys/un.h>
@@ -107,6 +108,7 @@ extern char* java_get_server_string();
 
 extern proxyenv *java_connect_to_server(TSRMLS_D);
 extern void java_start_server();
-extern int java_test_server();
+
+extern char* java_test_server(int *socket);
 
 #endif

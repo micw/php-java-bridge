@@ -43,7 +43,7 @@ jdk
 1.5:   18342 ms               42048 ms               2227 ms         21008 ms
 GNU:   36348 ms               73440 ms                 -                -
 
-  -> jni/reflection overhead ca. 2.0 (GNU) .. 3.1 (JDK 1.4)
+  -> net/reflection overhead ca. 2.0 (GNU) .. 3.1 (JDK 1.4)
   
 */
 ?>

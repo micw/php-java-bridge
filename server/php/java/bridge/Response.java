@@ -2,12 +2,13 @@
 
 package php.java.bridge;
 import java.io.IOException;
+import java.util.regex.Pattern;
 
 public class Response {
     StringBuffer buf;
     long result, peer;
     private byte options;
-    
+    private static Pattern quotePattern = java.util.regex.Pattern.compile("\"");
     private JavaBridge bridge;
     public Response(JavaBridge bridge) {
 	buf=new StringBuffer();
@@ -41,7 +42,8 @@ public class Response {
     static final String Ps="<P t=\"S\" v=\"";
     static final String Pe="</P>";
     void writeString(String s) {
-	buf.append(S); buf.append(s.replace("\"","&quot;"));
+    	
+	buf.append(S); buf.append(quotePattern.matcher(s).replaceAll("&quot;"));
 	buf.append(I); buf.append(String.valueOf(result));
 	buf.append(e);
     }

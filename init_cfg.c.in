@@ -18,7 +18,7 @@
 #endif
 
 #ifndef CFG_CLASSPATH
-#define CFG_CLASSPATH EXTENSION_DIR
+#define CFG_CLASSPATH EXTENSION_DIR/**/"/JavaBridge.jar"
 #endif
 #ifndef CFG_LD_LIBRARY_PATH
 #define CFG_LD_LIBRARY_PATH EXTENSION_DIR
@@ -79,7 +79,7 @@ void java_init_cfg() {
   if(!(java_ini_updated&U_SOCKNAME)) {
 	init_socket();
   }
-  if(!(java_ini_updated&U_HOSTS)) cfg->hosts=strdup(DEFAULT_HOST/**/":"/**/DEFAULT_PORT);
+  if(!(java_ini_updated&U_HOSTS)) cfg->hosts=strdup("");
   if(!(java_ini_updated&U_CLASSPATH)) cfg->classpath=strdup(CFG_CLASSPATH);
   if(!(java_ini_updated&U_LIBRARY_PATH)) cfg->ld_library_path=strdup(CFG_LD_LIBRARY_PATH);
   if(!(java_ini_updated&U_JAVA)) cfg->java=strdup(CFG_JAVA);

@@ -931,7 +931,7 @@ PHP_MINIT_FUNCTION(java)
 PHP_MINFO_FUNCTION(java)
 {
   char*s=java_get_server_string();
-  int status = java_test_server();
+  char*server = java_test_server(0);
   
   php_info_print_table_start();
   php_info_print_table_row(2, "java support", "Enabled");
@@ -945,12 +945,13 @@ PHP_MINFO_FUNCTION(java)
   else
 	php_info_print_table_row(2, "java.log_file", cfg->logFile);
   php_info_print_table_row(2, "java.log_level", cfg->logLevel);
-  php_info_print_table_row(2, "java.sockname", cfg->sockname);
   php_info_print_table_row(2, "java.hosts", cfg->hosts);
   php_info_print_table_row(2, "java command", s);
-  php_info_print_table_row(2, "java status", (status==SUCCESS)?"running":"not running");
+  php_info_print_table_row(2, "java status", server?"running":"not running");
+  php_info_print_table_row(2, "java server", server?server:"localhost");
   php_info_print_table_end();
   
+  free(server);
   free(s);
 }
 

@@ -12,35 +12,17 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.net.MalformedURLException;
 import java.net.Socket;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
-import java.util.StringTokenizer;
 import java.util.Vector;
 
 
 
 public class JavaBridge implements Runnable {
 
-    public static final String DEFAULT_PORT = "9167";
-    public static final int DEFAULT_LOG_LEVEL = 5; //FIXME: change to 1 for release
-    	
-    public static final int BACKLOG = 20;
-
-    // class hash
-    private static final HashMap classes = new HashMap(); 
-
-    // the list of jar files in which we search for user classes.
-    static private Collection sysUrls = null;
-
-    // the list of jar files in which we search for user classes.  can
-    // be changed with setLibraryPath
-    private Collection urls = null;
 
     // For PHP4's last_exception_get.
     public Throwable lastException = null;
@@ -154,14 +136,12 @@ public class JavaBridge implements Runnable {
 	try {
 	    if(s.length>0) {
 		sockname=s[0];
-	    } else {
-		sockname=DEFAULT_PORT;
-	    }
+	    } 
 	    try {
 		if(s.length>1) {
 		    Util.logLevel=Integer.parseInt(s[1]);
 		} else {
-			Util.logLevel=DEFAULT_LOG_LEVEL;
+			Util.logLevel=Util.DEFAULT_LOG_LEVEL;
 		}
 	    } catch (Throwable t) {
 		Util.printStackTrace(t);
@@ -193,13 +173,13 @@ public class JavaBridge implements Runnable {
 		logFile="<stdout>";
 	    }
 	    try {
-		socket = LocalServerSocket.create(sockname, BACKLOG);
+		socket = LocalServerSocket.create(sockname, Util.BACKLOG);
 	    } catch (Throwable e) {
 	    }
-	    if(null==socket) socket = new TCPServerSocket(Integer.parseInt(sockname), BACKLOG);
+	    if(null==socket) socket = TCPServerSocket.create(sockname, Util.BACKLOG);
 	    Util.logMessage("Java logFile     : " + logFile);
 	    Util.logMessage("Java logLevel    : " + Util.logLevel);
-	    Util.logMessage("Java socket      : " + sockname);
+	    Util.logMessage("Java socket      : " + socket);
 	    while(true) {
 		JavaBridge bridge = new JavaBridge();
 				
@@ -766,50 +746,11 @@ public class JavaBridge implements Runnable {
     // setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");
     // The first char must be the token separator.
     public void setJarLibraryPath(String _path) {
-	urls = new ArrayList();
-	if(_path==null || _path.length()<2) return;
-
-	// add a token separator if first char is alnum
-	char c=_path.charAt(0);
-	if((c>='A' && c<='Z') || (c>='a' && c<='z') ||
-	   (c>='0' && c<='9') || (c!='.' || c!='/'))
-	    _path = ";" + _path;
-
-	String path = _path.substring(1);
-	StringTokenizer st = new StringTokenizer(path, _path.substring(0, 1));
-	while (st.hasMoreTokens()) {
-	    URL url;
-	    String p, s;
-	    s = st.nextToken();
-
-	    try {
-		url = new URL(s);
-		p = url.getProtocol(); 
-	    } catch (MalformedURLException e) {
-		try {
-		    s = "file:" + s;
-		    url = new URL(s);
-		    p = url.getProtocol();
-		}  catch (MalformedURLException e1) {
-		    Util.printStackTrace(e1);
-		    continue;
-		}
-	    }
-   
-	    if(p.equals("jar")) {
-		urls.add(url);
-		continue;
-	    }
-	    try {
-		urls.add(new URL("jar:"+s+"!/"));
-	    } catch (MalformedURLException e) {
-		Util.printStackTrace(e);
-	    }
-	}
+    	cl.setJarLibraryPath(_path);
     }
 
     public static boolean InstanceOf(Object ob, Object c) {
 	Class clazz = Util.GetClass(c);
-	return clazz.isInstance(c);
+	return clazz.isInstance(ob);
     }
 }

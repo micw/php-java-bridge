@@ -13,11 +13,9 @@ public class Parser {
 
     static final short OK=0, PING=1, EOF=2, IO_ERROR=3;    // parse return codes
 
-    private final JavaBridge bridge;
     IDocHandler handler;
     Parser(JavaBridge bridge, IDocHandler handler) {
 	this.handler=handler;
-	this.bridge = bridge;
 	tag=new ParserTag[]{new ParserTag(1), new ParserTag(MAX_ARGS), new ParserTag(MAX_ARGS) };
     }
     
@@ -38,8 +36,10 @@ public class Parser {
 		// OPTIONS
 	    default: options=(byte) (ch&3); c++;
 	    }
+	} else {
+		return EOF;
 	}
-	return OK; //TODO: check for eof
+	return OK; 
     }
     
     ParserTag tag[] = null;
@@ -113,13 +113,12 @@ public class Parser {
 
 	    	pos=in.read(buf, 0, RECV_SIZE); 
 		if(pos<=0) return EOF;
-
 		c=0; 
 
 	    }
 	    switch((ch=buf[c])&mask) 
 		{/* --- This block must be compilable with an ansi C compiler or javac --- */
-		case '<':
+		case '<': if(in_dquote) {APPEND(ch); break;}
 		    level++;
 		    type=BEGIN;
 		    break;
@@ -169,8 +168,11 @@ public class Parser {
 			case 'g': s[e]='>'; i=e+1; break; /* gt */
 			case 'a': s[e]=(byte) (s[e+2]=='m'?'&':'\''); i=e+1; break; /* amp, apos */
 			case 'q': s[e]='"'; i=e+1; break; /* quot */
+			default: APPEND(ch);
 			}
 			type=VAL; //& escapes may only appear in values
+		    } else {
+		    	APPEND(ch);
 		    }
 		    break;
 		case '&': 

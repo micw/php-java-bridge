@@ -6,6 +6,9 @@ import java.io.PrintStream;
 import java.util.Date;
 
 public class Util {
+    public static final int DEFAULT_LOG_LEVEL = 1;
+    public static final int BACKLOG = 20;
+
     public static PrintStream logStream;
     public static int logLevel;
 

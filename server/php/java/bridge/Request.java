@@ -116,7 +116,9 @@ public class Request implements IDocHandler {
 		
 	case 'F':
 	case 'M': {
-	    break;
+		//FIXME: Split invoke
+		throw new NotImplementedException();
+		//break;
 	}
 	case 'U': {
 	    int i=Integer.parseInt(st[0].getStringValue(), 10);

@@ -9,7 +9,8 @@ if COND_GCJ
 # create java executable with GNU GCC when --with-java was given
 bin_PROGRAMS=java RunJavaBridge
 RunJavaBridge_SOURCES= RunJavaBridge.c
-java_SOURCES= java.c php/java/bridge/GlobalRef.java php/java/bridge/IDocHandler.java php/java/bridge/JavaBridgeClassLoader.java php/java/bridge/JavaBridge.java php/java/bridge/Parser.java php/java/bridge/ParserString.java php/java/bridge/ParserTag.java php/java/bridge/PhpMap.java php/java/bridge/Request.java php/java/bridge/Response.java php/java/bridge/Util.java
+java_SOURCES= java.c php/java/bridge/GlobalRef.java php/java/bridge/IDocHandler.java php/java/bridge/ISocketFactory.java php/java/bridge/JavaBridgeClassLoader.java php/java/bridge/JavaBridge.java php/java/bridge/LocalServerSocket.java php/java/bridge/LocalSocketInputStream.java php/java/bridge/LocalSocket.java php/java/bridge/LocalSocketOutputStream.java php/java/bridge/NotImplementedException.java php/java/bridge/Parser.java php/java/bridge/ParserString.java php/java/bridge/ParserTag.java php/java/bridge/PhpMap.java php/java/bridge/Request.java php/java/bridge/Response.java php/java/bridge/TCPServerSocket.java php/java/bridge/Util.java
+
 
 
 
@@ -23,11 +24,10 @@ else
 bin_PROGRAMS=RunJavaBridge
 RunJavaBridge_SOURCES=RunJavaBridge.c
 
-dist_data_DATA=php/java/bridge/GlobalRef.class php/java/bridge/IDocHandler.class php/java/bridge/JavaBridge$$1.class php/java/bridge/JavaBridge$$2.class php/java/bridge/JavaBridge$$3.class php/java/bridge/JavaBridge.class php/java/bridge/JavaBridgeClassLoader.class php/java/bridge/Parser.class php/java/bridge/ParserString.class php/java/bridge/ParserTag.class php/java/bridge/PhpMap.class php/java/bridge/Request.class php/java/bridge/Response.class php/java/bridge/Util.class
+dist_data_DATA=JavaBridge.jar
 
-
-
-.java.class:
-	$(PHP_JAVA)/bin/javac $?
+JavaBridge.jar:
+	$(PHP_JAVA)/bin/javac php/java/bridge/*.java
+	$(PHP_JAVA)/bin/jar cMf JavaBridge.jar META-INF/MANIFEST.MF php/java/bridge/*.class
 
 endif

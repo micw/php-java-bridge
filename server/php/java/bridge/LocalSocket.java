@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 
 public class LocalSocket extends Socket {
+
     private OutputStream ostream;
     private InputStream istream;
     private boolean closed=true;

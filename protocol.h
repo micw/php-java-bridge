@@ -26,7 +26,7 @@
 #define LOG_ERROR 2
 #define LOG_INFO 3 /* default level */
 #define LOG_DEBUG 4
-#define DEFAULT_LEVEL "4" //FIXME Change to 1 for release
+#define DEFAULT_LEVEL "1"
 
 #define N_SARGS 9				/* # of server args for exec */
 #define N_SENV 3				/* # of server env entries */
@@ -45,7 +45,7 @@ struct proxyenv_ {
   unsigned char*send;
   size_t send_len, send_size;
 
-  int (*handle_request)(proxyenv *env);
+  void (*handle_request)(proxyenv *env);
 
   void (*writeCreateObjectBegin)(proxyenv *env, char*name, size_t strlen, char createInstance, void *result);
   void (*writeCreateObjectEnd)(proxyenv *env);
@@ -70,6 +70,6 @@ struct proxyenv_ {
   void (*writeUnref)(proxyenv *env, long object);
 };
 
-extern proxyenv *java_createSecureEnvironment(int peer, int (*handle_request)(proxyenv *env));
+extern proxyenv *java_createSecureEnvironment(int peer, void (*handle_request)(proxyenv *env));
 
 #endif

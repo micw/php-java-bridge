@@ -113,7 +113,9 @@ public class JavaBridgeClassLoader extends ClassLoader {
 			    if ((b=load(url, name))!=null) break;
 			} catch (Exception e) {
 			    Vector v = new Vector();
-			    v.add(url); v.add(e);
+			    Throwable cause = e.getCause();
+			    Class clazz = cause==null?e.getClass():cause.getClass();
+			    v.add(url); v.add(clazz.getName());
 			    list.add(v);
 			}
 		    }

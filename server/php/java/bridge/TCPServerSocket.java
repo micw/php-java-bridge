@@ -7,14 +7,17 @@ import java.net.Socket;
 
 public class TCPServerSocket implements ISocketFactory {
 
+    public static final String DefaultSocketname = "9167";
     private ServerSocket sock;
-
-    public static ISocketFactory create(int port, int backlog) throws IOException {
-	return new TCPServerSocket(port, backlog);
+    private int port;
+    
+    public static ISocketFactory create(String name, int backlog) throws IOException {
+	return new TCPServerSocket(Integer.parseInt(name==null?DefaultSocketname:name), backlog);
     }
-    public TCPServerSocket(int port, int backlog)
+    private TCPServerSocket(int port, int backlog)
 	throws IOException {
-	sock=new ServerSocket(port, backlog);
+    	this.port=port;
+	this.sock=new ServerSocket(port, backlog);
 	JavaBridge.initGlobals(null);
     }
 	
@@ -27,5 +30,10 @@ public class TCPServerSocket implements ISocketFactory {
     	Util.logDebug("Request from unknown client");
 	return s;
     }
-
+    public String getSocketName() {
+    	return String.valueOf(port);
+    }
+    public String toString() {
+    	return "INET: " +getSocketName();
+    }
 }

@@ -146,9 +146,9 @@ static  void  setException  (pval *presult, long value, char *strValue, size_t l
   zval *exception;
 
   TSRMLS_FETCH();
-
-  setResultFromObject(presult, value); /* discarded */
+  ZVAL_NULL(presult);
   MAKE_STD_ZVAL(exception); 
+  ZVAL_NULL(exception);
   setResultFromException(exception, value); 
   zend_throw_exception_object(exception TSRMLS_CC);
 #endif
@@ -162,7 +162,6 @@ struct parse_ctx {
 void begin(parser_tag_t tag[3], parser_cb_t *cb){
   struct parse_ctx *ctx=(struct parse_ctx*)cb->ctx;
   parser_string_t *st=tag[2].strings;
-  pval *id;
 
   switch ((*tag[0].strings[0].string)[tag[0].strings[0].off]) {
   case 'X':
@@ -216,72 +215,36 @@ void begin(parser_tag_t tag[3], parser_cb_t *cb){
 	  setResultFromObject(ctx->id, strtol(PARSER_GET_STRING(st, 0), 0, 10));
 	}
 	break;
+  case 'E':
+	{
+	  char *stringRepresentation=PARSER_GET_STRING(st, 1);
+	  size_t len=st[1].length;
+	  long obj = strtol(PARSER_GET_STRING(st, 0), 0, 10);
+	  GET_RESULT(2);
+	  setException(ctx->id, obj, stringRepresentation, len);
+	  break;
+	}
+  default:
+	assert(0);
   }
 }
-static int handle_request(proxyenv *env) {
+static void handle_request(proxyenv *env) {
   struct parse_ctx ctx = {0,0,0};
   parser_cb_t cb = {begin, 0, &ctx};
   parse(env, &cb);
 }
 
-static int try_servers() {
-  if(cfg->hosts && strlen(cfg->hosts)) {
-	char *host, *hosts = strdup(cfg->hosts);
-	
-	assert(hosts); if(!hosts) return 0;
-	for(host=strtok(hosts, ";"); host; host=strtok(0, ";")) {
-	  struct sockaddr_in addr;
-	  char *_port = strrchr(host, ':');
-	  int port = 0, sock;
-
-	  if(_port) { 
-		*_port++=0;
-		if(strlen(_port)) port=atoi(_port);
-	  }
-	  if(!port) port=DEFAULT_PORT;
-	  cfg->saddr.sin_family = AF_INET;
-	  cfg->saddr.sin_port=htons(port);
-	  if(!isdigit(*host)) {
-		struct hostent *hostent = gethostbyname(host);
-		if(hostent) {
-		  memcpy(&cfg->saddr.sin_addr,hostent->h_addr,sizeof(struct in_addr));
-		} else {
-		  inet_aton(host, &cfg->saddr.sin_addr);
-		}
-	  }
-	  sock = socket (PF_INET, SOCK_STREAM, 0);
-	  if(sock==-1) continue;
-	  if(-1!=connect(sock,(struct sockaddr*)&cfg->saddr, sizeof cfg->saddr)) {
-		free(hosts);
-		return sock;
-	  }
-	}
-	free(hosts);
-  }
-  return 0;
-}
-
 proxyenv *java_connect_to_server(TSRMLS_D) {
-  int sock, n=-1;
+  char *server;
+  int sock;
   proxyenv *jenv =JG(jenv);
-  zval *map;
-
   if(jenv) return jenv;
 
-  if(!(sock=try_servers())) {
-#ifndef CFG_JAVA_SOCKET_INET
-	sock = socket (PF_LOCAL, SOCK_STREAM, 0);
-#else
-	sock = socket (PF_INET, SOCK_STREAM, 0);
-#endif
-	if(sock!=-1) {
-	  n = connect(sock,(struct sockaddr*)&cfg->saddr, sizeof cfg->saddr);
-	}
-	if(n==-1) { 
+  if(!(server=java_test_server(&sock))) {
 	  php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge?",52, strerror(errno));
 	  return 0;
-	}
   }
+  free(server);
 #ifndef ZEND_ENGINE_2
   // we want arrays as values
   { char c=2; write(sock, &c, sizeof c); }

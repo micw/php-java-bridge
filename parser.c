@@ -18,6 +18,7 @@
 #define PUSH(t) { \
   parser_string_t *str = tag[t].strings; \
   short n = tag[t].n; \
+  assert((t!=0) || (t==0 && !tag[0].n)); \
   s[i]=0; \
   str[n].string=&((*env)->s); \
   str[n].off=i0; \
@@ -62,7 +63,7 @@ short parse(proxyenv *env, parser_cb_t *cb) {
     }
     switch((ch=buf[c])&mask) 
       {/* --- This block must be compilable with an ansi C compiler or javac  --- */
-      case '<':
+      case '<': if(in_dquote) {APPEND(ch); break;}
 	level++;
 	type=BEGIN;
 	break;
@@ -111,8 +112,11 @@ short parse(proxyenv *env, parser_cb_t *cb) {
 	  case 'g': s[e]='>'; i=e+1; break; /* gt */
 	  case 'a': s[e]= (s[e+2]=='m'?'&':'\''); i=e+1; break; /* amp, apos */
 	  case 'q': s[e]='"'; i=e+1; break; /* quot */
+	  default: APPEND(ch);
 	  }
 	  type=VAL; //& escapes may only appear in values
+	} else {
+	  APPEND(ch);
 	}
 	break;
       case '&': 

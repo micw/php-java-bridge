@@ -7,7 +7,7 @@
 #include <stdlib.h>
 
 #include "protocol.h"
-#include "php_wrapper.h"
+#include "php_java.h"
 
 #define SLEN 256 // initial length of the parser string
 #define SEND_SIZE 8192 // initial size of the send buffer
@@ -23,16 +23,43 @@
   } \
 }
 
- static void flush(proxyenv *env) {
+static void flush(proxyenv *env) {
    send((*env)->peer, (*env)->send, (*env)->send_len, 0);
    (*env)->send_len=0;
    (*env)->handle_request(env);
- }
+}
+#define GROW_QUOTE() \
+  if(pos==newlen) { \
+    newlen=newlen+newlen/10; \
+    new=realloc(new, newlen); \
+    assert(new); if(!new) exit(9); \
+  } 
+static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
+  static const char quote[]="&quote;";
+  register size_t newlen=len+len/10, pos=0;
+  char c, *s, *new = malloc(newlen);
+  register short j;
+  assert(new); if(!new) exit(9);
+  
+  while(len--) {
+	if((c=*name++)=='&') {
+	  for(j=0; j< sizeof(quote); j++) {
+		new[pos++]=quote[j]; 
+		GROW_QUOTE();
+	  }
+	} else {
+	  new[pos++]=c;
+	  GROW_QUOTE();
+	}
+  }
+  *ret_len=newlen;
+  return new;
+}
  static void CreateObjectBegin(proxyenv *env, char*name, size_t len, char createInstance, void *result) {
    assert(createInstance=='C' || createInstance=='I');
    if(!len) len=strlen(name);
    GROW(FLEN+ILEN+len);
-   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<C v=\"%s\" p=\"%c\" i=\"%ld\">", name, createInstance, result);
+   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<C v=\"%s\" p=\"%c\" i=\"%ld\">", name, createInstance, (long)result);
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void CreateObjectEnd(proxyenv *env) {
@@ -45,7 +72,7 @@
    assert(property=='I' || property=='P');
    if(!len) len=strlen(method);
    GROW(FLEN+ILEN+len+ILEN);
-   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<I v=\"%ld\" m=\"%s\" p=\"%c\" i=\"%ld\">", object, method, property, result);
+   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<I v=\"%ld\" m=\"%s\" p=\"%c\" i=\"%ld\">", object, method, property, (long)result);
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void InvokeEnd(proxyenv *env) {
@@ -57,7 +84,7 @@
  static void GetMethodBegin(proxyenv *env, long object, char*method, size_t len, void* result) {
    if(!len) len=strlen(method);
    GROW(FLEN+ILEN+len+ILEN);
-   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<M v=\"%ld\" m=\"%s\" i=\"%ld\">", object, method, result);
+   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<M v=\"%ld\" m=\"%s\" i=\"%ld\">", object, method, (long) result);
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void GetMethodEnd(proxyenv *env) {
@@ -68,7 +95,7 @@
  }
  static void CallMethodBegin(proxyenv *env, long object, long method, void* result) {
    GROW(FLEN+ILEN+ILEN+ILEN);
-   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<F v=\"%ld\" m=\"%ld\" i=\"%ld\">", object, method, result);
+   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<F v=\"%ld\" m=\"%ld\" i=\"%ld\">", object, method, (long)result);
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void CallMethodEnd(proxyenv *env) {
@@ -78,11 +105,14 @@
    flush(env);
  }
 
- static void String(proxyenv *env, char*name, size_t len) {
-   if(!len) len=strlen(name);
+ static void String(proxyenv *env, char*name, size_t _len) {
+   size_t len;
+   if(!_len) _len=strlen(name);
+   name = replaceQuote(name, _len, &len);
    GROW(FLEN+len);
    (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<S v=\"%s\"/>", name);
    assert((*env)->send_len<=(*env)->send_size);
+   free(name);
  }
  static void Boolean(proxyenv *env, short boolean) {
    GROW(FLEN);
@@ -151,7 +181,7 @@
 
  
 
- proxyenv *java_createSecureEnvironment(int peer, int (*handle_request)(proxyenv *env)) {
+ proxyenv *java_createSecureEnvironment(int peer, void (*handle_request)(proxyenv *env)) {
    proxyenv *env;  
    env=(proxyenv*)malloc(sizeof *env);     
    if(!env) return 0;

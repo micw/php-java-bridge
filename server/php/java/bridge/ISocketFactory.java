@@ -8,4 +8,5 @@ import java.net.Socket;
 public interface ISocketFactory {
     public void close() throws IOException;
     public Socket accept(JavaBridge bridge) throws IOException;
+    public String getSocketName();
 }

@@ -161,6 +161,8 @@ static void writeArgument(pval* arg TSRMLS_DC)
 	  if(wrote_begin) (*jenv)->writeCompositeEnd(jenv);
       break;
       }
+  default:
+	(*jenv)->writeObject(jenv, 0);
   }
 }
 

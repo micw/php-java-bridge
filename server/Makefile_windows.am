@@ -1,6 +1,8 @@
 # -*- mode: Makefile; -*-
 
-bin_PROGRAMS=java
-java_SOURCES= java.c JavaBridge.java natcJavaBridge.c
-java_LDFLAGS=-rpath $(EXTENSION_DIR)
-AM_GCJFLAGS=-fjni
+dist_data_DATA=JavaBridge.jar
+
+JavaBridge.jar:
+	$(PHP_JAVA)/bin/javac php/java/bridge/*.java
+	$(PHP_JAVA)/bin/jar cMf JavaBridge.jar META-INF/MANIFEST.MF php/java/bridge/*.class
+

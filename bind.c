@@ -65,7 +65,7 @@ static void java_get_server_args(char*env[N_SENV], char*args[N_SARGS]) {
   //p=malloc(strlen(s)+strlen(home)+1);
   //strcpy(p, s); strcat(p, home);
   //args[4] = p;					/* java home */
-  args[4] = strdup("JavaBridge");
+  args[4] = strdup("php.java.bridge.JavaBridge");
   args[5] = strdup(cfg->sockname);
   args[6] = strdup(cfg->logLevel);
   args[7] = strdup(cfg->logFile);
@@ -169,40 +169,88 @@ static void exec_vm() {
 #endif
 }
 
-int java_test_server() {
-  char term=0;
-  int sock;
-  int n, c, e;
+
+static int test_local_server() {
+  int sock, n;
 
 #ifndef CFG_JAVA_SOCKET_INET
   sock = socket (PF_LOCAL, SOCK_STREAM, 0);
 #else
   sock = socket (PF_INET, SOCK_STREAM, 0);
 #endif
-  if(sock==-1) return FAILURE;
+  if(sock==-1) return -1;
   n = connect(sock,(struct sockaddr*)&cfg->saddr, sizeof cfg->saddr);
-  if(n!=-1) {
-	char ob;
-	c = write(sock, &term, sizeof term);
-	c = (c==sizeof ob) ? read(sock, &ob, sizeof ob) : 0;
-  }
-  e = close(sock);
-
-  return (n!=-1 && e!=-1 && c==1)?SUCCESS:FAILURE;
+  if(n==-1) { close(sock); return -1; }
+  return sock;
 }
 
-static int java_wait_server() {
-  struct pollfd pollfd[1] = {{cfg->err, POLLIN, 0}};
-  int count=15;
+char* java_test_server(int *_socket) {
+  int sock;
 
+  if(cfg->hosts && strlen(cfg->hosts)) {
+	char *host, *hosts = strdup(cfg->hosts);
+	
+	assert(hosts); if(!hosts) return 0;
+	for(host=strtok(hosts, ";"); host; host=strtok(0, ";")) {
+	  struct sockaddr_in saddr;
+	  char *_port = strrchr(host, ':'), *ret;
+	  int port = 0;
+	  
+	  if(_port) { 
+		*_port++=0;
+		if(strlen(_port)) port=atoi(_port);
+	  }
+	  if(!port) port=atoi(DEFAULT_PORT);
+	  saddr.sin_family = AF_INET;
+	  saddr.sin_port=htons(port);
+	  if(!isdigit(*host)) {
+		struct hostent *hostent = gethostbyname(host);
+		if(hostent) {
+		  memcpy(&saddr.sin_addr,hostent->h_addr,sizeof(struct in_addr));
+		} else {
+		  inet_aton(host, &saddr.sin_addr);
+		}
+	  }
+	  
+	  sock = socket (PF_INET, SOCK_STREAM, 0);
+	  if(-1==sock) continue;
+	  if (-1==connect(sock,(struct sockaddr*)&saddr, sizeof (struct sockaddr))) {
+		close(sock);
+		continue;
+	  }
+	  if(_socket) *_socket=sock;
+	  if(_port) _port[-1]=':';
+	  ret = strdup(host);
+	  free(hosts);
+	  return ret;
+	}
+	free(hosts);
+  }
+
+  if(-1!=(sock=test_local_server())) {
+	if(_socket) {
+	  *_socket=sock;
+	} else {
+	  close(sock);
+	}
+	return strdup(cfg->sockname);
+  }
+  return 0;
+}
+
+static int wait_server() {
+  struct pollfd pollfd[1] = {{cfg->err, POLLIN, 0}};
+  int count=15, sock;
+  
   /* wait for the server that has just started */
-  while(cfg->cid && (java_test_server()==FAILURE) && --count) {
+  while(cfg->cid && -1==(sock=test_local_server()) && --count) {
 	if(cfg->err && poll(pollfd, 1, 0)) 
 	  return FAILURE; /* server terminated with error code */
 	php_error(E_NOTICE, "php_mod_java(%d): waiting for server another %d seconds",57, count);
 	
 	sleep(1);
   }
+  close(sock);
   return (cfg->cid && count)?SUCCESS:FAILURE;
 }
 
@@ -221,9 +269,10 @@ static void s_kill(int sig) {
 
 void java_start_server() {
   int pid=0, err=0, p[2];
-  if(java_test_server() == FAILURE) {
-	if(pipe(p)!=-1) {
-	  if(can_fork()) {
+  char *test_server;
+  if(!(test_server=java_test_server(0))) {
+	if(can_fork()) {
+	  if(pipe(p)!=-1) {
 		if(!(pid=fork())) {		/* daemon */
 		  close(p[0]);
 		  if(!fork()) {			/* guard */
@@ -250,12 +299,14 @@ void java_start_server() {
 		if((read(p[0], &pid, sizeof pid))!=(sizeof pid)) pid=0;
 	  }
 	}
+  } else {
+	free(test_server);
+	return;
   }
   cfg->cid=pid;
   cfg->err=p[0];
-  java_wait_server();
+  wait_server();
 }
-
 
 static void wait_for_daemon() {
   struct pollfd pollfd[1] = {{cfg->err, POLLIN, 0}};
