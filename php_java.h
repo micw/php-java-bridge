@@ -48,8 +48,6 @@ PHP_MINIT_FUNCTION(java);
 PHP_MSHUTDOWN_FUNCTION(java);
 PHP_MINFO_FUNCTION(java);
 
-#define N_SARGS 10				/* # of server args for exec */
-#define N_SENV 3				/* # of server env entries */
 struct cfg {
   struct sockaddr_un saddr;
   int cid; // server's process id

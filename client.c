@@ -276,6 +276,8 @@ static int java_do_test_server(struct cfg*cfg TSRMLS_DC) {
   char term=0;
   int sock;
   int n, c, e;
+  jobject ob;
+
   sock = socket (PF_UNIX, SOCK_STREAM, 0);
   if(sock==-1) return FAILURE;
 #ifdef CFG_JAVA_SOCKET_ANON
@@ -285,7 +287,10 @@ static int java_do_test_server(struct cfg*cfg TSRMLS_DC) {
 #ifdef CFG_JAVA_SOCKET_ANON
   *cfg->saddr.sun_path='@';
 #endif
-  if(n!=-1) c = write(sock, &term, sizeof term);
+  if(n!=-1) {
+	c = read(sock, &ob, sizeof ob);
+	c = (c==sizeof ob) ? write(sock, &term, sizeof term) : 0;
+  }
   e = close(sock);
 
   return (n!=-1 && e!=-1 && c==1)?SUCCESS:FAILURE;
@@ -304,11 +309,6 @@ int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
   jmethodID init;
   int sock, s, i, n=-1, len;
   FILE *fd;
-
-  if(java_do_test_server(cfg TSRMLS_CC)==FAILURE) {
-	php_error(E_WARNING, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge?",56, strerror(errno));
-	return FAILURE;
-  }
 
   sock = socket (PF_UNIX, SOCK_STREAM, 0);
   if(sock!=-1) {
@@ -329,12 +329,14 @@ int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
   if(!peer) return FAILURE;
 
   JG(jenv)=java_createSecureEnvironment(peer, handle_requests);
-  
+
+  jobject local_php_reflect;
+  if(fread(&local_php_reflect, sizeof local_php_reflect, 1, peer)!=1) {
+	php_error(E_WARNING, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge?",58, strerror(errno));
+	return FAILURE;
+  }
   JG(reflect_class) = (*JG(jenv))->FindClass(JG(jenv), "JavaBridge");
   if(check_error(JG(jenv), 3 TSRMLS_CC)) return FAILURE;
-  
-  jobject local_php_reflect = (*JG(jenv))->AllocObject(JG(jenv), JG(reflect_class));
-  if(check_error(JG(jenv), 4 TSRMLS_CC)) return FAILURE;
   
   JG(php_reflect) = (*JG(jenv))->NewGlobalRef(JG(jenv), local_php_reflect);
   if(check_error(JG(jenv), 5 TSRMLS_CC)) return FAILURE;

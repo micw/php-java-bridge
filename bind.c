@@ -40,15 +40,17 @@ void java_get_server_args(struct cfg*cfg, char*env[N_SENV], char*args[N_SARGS]) 
   strcpy(p, s); strcat(p, cp);
   args[2] = p;					/* user classes */
   args[3] = strdup("-Djava.awt.headless=true");
-  s="-Djava.home=";
-  p=malloc(strlen(s)+strlen(home)+1);
-  strcpy(p, s); strcat(p, home);
-  args[4] = p;					/* java home */
-  args[5] = strdup("JavaBridge");
-  args[6] = strdup(cfg->sockname);
-  args[7] = strdup(cfg->logLevel);
-  args[8] = strdup(cfg->logFile);
-  args[9] = NULL;
+  /* disabled due to problems with IBM java, it could not find
+	 default mime table anymore */
+  //s="-Djava.home=";
+  //p=malloc(strlen(s)+strlen(home)+1);
+  //strcpy(p, s); strcat(p, home);
+  //args[4] = p;					/* java home */
+  args[4] = strdup("JavaBridge");
+  args[5] = strdup(cfg->sockname);
+  args[6] = strdup(cfg->logLevel);
+  args[7] = strdup(cfg->logFile);
+  args[8] = NULL;
 
   s="JAVA_HOME=";
   p=malloc(strlen(s)+strlen(home)+1);

@@ -64,6 +64,9 @@
 #define GETSETPROP 52
 #define LASTEXCEPTION 53
 
+#define N_SARGS 9				/* # of server args for exec */
+#define N_SENV 3				/* # of server env entries */
+
 typedef struct proxyenv_ *proxyenv;
 struct proxyenv_ {
   FILE *peer;

@@ -6,4 +6,4 @@ $(srcdir)/init_cfg.o: $(srcdir)/init_cfg.c
 $(srcdir)/server/natcJavaBridge.c : $(phplibdir)/JavaBridge.class
 
 $(phplibdir)/JavaBridge.class: $(srcdir)/server/JavaBridge.java
-	(cd $(srcdir)/server; ${PHP_JAVA}/bin/javac JavaBridge.java && cp JavaBridge.class $@)
+	(cd $(srcdir)/server; ${PHP_JAVA}/bin/javac JavaBridge.java && cp JavaBridge*.class `dirname $@`)
