@@ -26,10 +26,13 @@ Build and execution instructions:
 
           In the directory php-java-bridge_1.x.y type:
 
+          java -version      # 1.3 or above (1.4.2_02 or IBM Java recommended).
+          gcc --version      # 3.2.3 or above.
+          apachectl -version # Apache 2.x or above. For Apache 1.x see below.
+          php --version      # PHP 4.3.2 or above. For PHP5 see below.
 
-          apachectl -version # Apache 2.x or above! For Apache 1.x see below.
-          php --version      # PHP 4.3.2 or above! For PHP5 see below.
-          phpize && ./configure --with-java=/opt/IBMJava2-141/ && make
+          phpize && ./configure --with-java=/opt/IBMJava2-14
+          make CFLAGS="-DNDEBUG"
 
           su <password>
           make install
@@ -43,52 +46,19 @@ Build and execution instructions:
           [java]
           java.log_level=5
           java.log_file=/tmp/java.log
+          # It is recommended to enable the following option and
+          # to start a JVM as a separate process.
           #java.socketname=/tmp/.php_java
 
           After the module is activated, verify that the module is running
           by typing:
 
-          echo "<?php phpinfo()?>" | php | fgrep "java status"
+          echo "<?php phpinfo()?>" | php | fgrep "java"
 
           If you want to test the extension in the web-server, you must
-          restart the web-server after you have installed the extension.
-          When the config option java.socketname is not set, the web-server
-          will try to fork()/exec() the Java VM as a sub-process of the
-          web-server.
-          Please note that starting the VM this way is only supported
-          with the following software configurations:
-            * IBM JVM, PHP/Java Bridge version != 1.0.3, Apache 2.x, Unix
-            * SUN JVM, PHP/Java Bridge version any, Apache 2.x, Unix
-          If you want to use other JVM's or Apache 1.3 or you want
-          to use the bridge on Windows, you must start the JVM yourself
-          and set the java.socketname option.
-
-          This module has been tested on a Mandrake Linux System (Version
-          9.2), on RedHat Enterprise 3, RedHat Fedora Core 1 and 2, but 
-          it should run on all Unix-like operating systems including 
-          Solaris, Mac.   
-
-          However, the extension currently does not compile on systems
-          which do not support fork()/exec().  On these systems you must
-          disable the code in bind.c and start the java application server
-          yourself.  Fortunately all modern operating systems -- except
-          Windows -- support fork()/exec()
-
-
-          Other configuration options which should have been set up by the
-          configure script but which can be changed later are:
-
-          java.libpath   = <system dependent path to natcJavaBridge.so>
-          java.classpath = <system dependent path to JavaBridge.class>
-          java.java_home = <system dependent path to the java install dir>
-          java.java      = <system dependent path to the java binary>
-          java.socketname= <hard-coded socketname for debugging>
-
-          If you change the above values, please first look at the output
-          of phpinfo() so see the original values.
-
-          It is recommended to start the java process outside of the
-          http server.  You must start java as follows:
+          enable the java.socketname option and start the java VM
+          before you start the web-server.  The java VM can then be
+          started as follows
 
             JAVA_HOME=<java.home> <java.home>/bin/java \
                                         -Djava.library.path=<java.libpath>
@@ -110,9 +80,38 @@ Build and execution instructions:
                      5 \
                      "" | tee /tmp/java.log
 
-         Then point the bridge to the socket /tmp/.php_java by 
-         hard-coding the java.socketname to /tmp/.php_java and
-         re-start the apache service.
+          If you are unsure how to start the java process, please look at
+          the output of the above phpinfo() command.  One of the last lines
+          shows the command required to start the JVM.
+          The distribution contains two scripts tested on RedHat Enterprise
+          Linux 3.  They start the JVM based on the information from 
+          phpinfo(). The "php-java-bridge" command starts the JVM and
+          the "php-java-bridge.service" can be used on SysV based init
+          systems to automatically start and stop the bridge as a service.
+
+          This module has been tested on a Mandrake Linux System (Version
+          9.2), on RedHat Enterprise 3, RedHat Fedora Core 1 and 2, but 
+          it should run on all Unix-like operating systems including 
+          Solaris, Mac.   
+
+          However, the extension currently does not compile on systems
+          which do not support fork()/exec().  On these systems you must
+          disable the code in bind.c and start the java application server
+          yourself.  Fortunately all modern operating systems -- except
+          Windows -- support fork()/exec()
+
+
+          Other configuration options which should have been set up by the
+          configure script but which can be changed later are:
+
+          java.libpath   = <system dependent path to natcJavaBridge.so>
+          java.classpath = <system dependent path to JavaBridge.class>
+          java.java_home = <system dependent path to the java install dir>
+          java.java      = <system dependent path to the java binary>
+          java.socketname= <hard-coded socketname to start the VM separately>
+
+          If you change the above values, please first look at the output
+          of phpinfo() so see the original values.
 
 ------------------------------------
    Using GNU Java
@@ -172,8 +171,8 @@ Build and execution instructions:
   However, it may take some time (a few years probably) until a stable
   solution is available.
 
-  Until an official PHP5/Java binding based on JSR-223 doesn't
-  exist, please use PHP 4 with the PHP/Java Bridge.
+  Until an official PHP5/Java binding based on JSR-223 exists,
+  please use PHP 4 with the PHP/Java Bridge.
 ------------------------------------
   Apache 1.3 support
 

@@ -1,0 +1,56 @@
+#!/bin/bash
+#
+# php-java-bridge      Startup script for the PHP/Java Bridge
+#
+# chkconfig: - 84 16
+# description: The PHP/Java bridge allows one to access java based \
+#                        applications running in a java application server 
+# processname: php-java-bridge
+# pidfile: /var/run/php-java-bridge.pid
+# config: /etc/php.d/java.ini
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+prog=php-java-bridge
+RETVAL=0
+
+
+start() {
+        echo -n $"Starting $prog: "
+        daemon $prog
+        RETVAL=$?
+        echo
+        [ $RETVAL = 0 ] && touch /var/lock/subsys/$prog
+        return $RETVAL
+}
+stop() {
+	echo -n $"Stopping $prog: "
+	killproc $prog
+	RETVAL=$?
+	echo
+	[ $RETVAL = 0 ] && rm -f /var/lock/subsys/$prog /var/run/$prog.pid
+}
+
+# See how we were called.
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  status)
+        status $prog
+	RETVAL=$?
+	;;
+  restart)
+	stop
+	start
+	;;
+  *)
+	echo $"Usage: $prog {start|stop|reload|status}"
+	exit 1
+esac
+
+exit $RETVAL

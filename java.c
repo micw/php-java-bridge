@@ -173,6 +173,7 @@ static void init_server()
 
 PHP_MINIT_FUNCTION(java)
 {
+    short updated=0;
 	/* function definitions found in bridge.c */
 	INIT_OVERLOADED_CLASS_ENTRY(php_java_class_entry, "java", NULL,
 								php_java_call_function_handler,
@@ -194,10 +195,14 @@ PHP_MINIT_FUNCTION(java)
 	  java_init_cfg(&JG(cfg));
 	  JG(cfg).saddr.sun_family = AF_UNIX;
 	  strcpy(JG(cfg).saddr.sun_path, JG(cfg).sockname);
-	  java_ini_updated=0; 
+      updated=1; 
 	}
 
 	init_server();
+
+	if(updated) 
+	  java_ini_updated=0;
+
 	return SUCCESS;
 }
 static char*get_server_args(struct cfg*cfg) {

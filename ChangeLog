@@ -52,4 +52,34 @@
 	exceptions such as "class not found" and reports them to the
 	client.
 
+2004-09-19  Jost Boekemeier  <jostb@diego.intern>
+
+        Allocate pval's correctly, part II -- the previous change for 1.0.2
+	was incorrect: the php interpreter could not work reliable anymore if nextElement,
+	hashIndexUpdate or hashUpdate was called.
+	* client.c (nextElement, hashIndexUpdate, hashUpdate): Increment the refcount.
+
+	* php-java-bridge.spec, php-java-bridge.service, php-java-bridge:
+	New file.
+
+	* php.ini: Removed (now in php-java-bridge.spec).
+
+	* INSTALL, LICENSE: New file.
+	
+	Starting the JVM from the web-server caused several problems.  
+	Apache 1.3 even killed the server-part of the bridge.
+	* README: Recommend to start the JVM separately and to hardcode the 
+	java.socketname.
+	* bind.c (java_start_server): Do not start the server part of the
+	bridge if the user has hardcoded the java.socketname in java.ini.
+	(can_fork): New function.
+
+	* natcJavaBridge.c (handle_request): If the JVM ran out of memory
+	do nothing, send back null-pointer.
+	(exit_sig): Workaround for a bug in the IBM JVM. This VM should
+	not hang anymore when started as a sub-process from Apache --
+	starting the VM as a sub-process of Apache is now deprecated
+	anyway.
+
+	* php-java-bridge 1.0.4 released.
 	

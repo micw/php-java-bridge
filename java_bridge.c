@@ -201,7 +201,7 @@ static jobjectArray php_java_makeArray(int argc, pval** argv TSRMLS_DC)
   for (i=0; i<argc; i++) {
     arg = php_java_makeObject(argv[i] TSRMLS_CC);
     (*jenv)->SetObjectArrayElement(jenv, result, i, arg);
-    //if (Z_TYPE_P(argv[i]) != IS_OBJECT) (*jenv)->DeleteLocalRef(jenv, arg); //FIXME: Was soll das?
+    if (Z_TYPE_P(argv[i]) != IS_OBJECT) (*jenv)->DeleteLocalRef(jenv, arg);
   }
   return result;
 }
@@ -295,8 +295,7 @@ void php_java_destructor(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 
 void php_java_shutdown_library(TSRMLS_D) 
 {
-  if(JG(cfg).cid) kill(JG(cfg).cid, SIGTERM);
-
+  if(JG(cfg).cid) {kill(JG(cfg).cid, SIGTERM); waitpid(JG(cfg.cid), NULL, 0);}
   if (JG(php_reflect)) (*JG(jenv))->DeleteGlobalRef(JG(jenv), JG(php_reflect));
   if(JG(jenv)&&*JG(jenv)) free(*JG(jenv));
   if(JG(jenv)) free(JG(jenv));

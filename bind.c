@@ -60,17 +60,19 @@ static void exec_vm(struct cfg*cfg) {
 }
 
 /*
- return 1 if user has hard-coded the socketname
+ return 0 if user has hard-coded the socketname
 */
-static short cant_fork() {
-  return (java_ini_updated&U_SOCKNAME)!=0;
+static short can_fork() {
+  return (java_ini_updated&U_SOCKNAME)==0;
 }
 
 void java_start_server(struct cfg*cfg) {
-  int pid;
-  if(!(pid=(cant_fork() || fork()))) {
-	exec_vm(cfg);
-	exit(errno&255);
+  int pid=0;
+  if(can_fork()) {
+	if(!(pid=fork())) {
+	  exec_vm(cfg);
+	  exit(errno&255);
+	}
   }
   cfg->cid=pid;
 }

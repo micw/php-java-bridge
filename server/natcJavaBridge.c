@@ -357,6 +357,7 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	break;
   }
   case GETBYTEARRAYELEMENTS: {
+	jobject ob1, ob2;
 	void *key;
 	jbyte *result;
 	jboolean isCopy;
@@ -370,7 +371,11 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	swrite(&count, sizeof count, 1, peer);
 	swrite(result, sizeof *result, count, peer);
 	sread(&key, sizeof key, 1, peer);
-	(*env)->CallObjectMethod(env, peer->objectHash, hashPut, objFromPtr(env, key), objFromPtr(env, result));
+
+	ob1=objFromPtr(env, key);
+	ob2=objFromPtr(env, result);
+	if(!ob1 || !ob2) return;
+	(*env)->CallObjectMethod(env, peer->objectHash, hashPut, ob1, ob2);
 	break;
   }
   case GETMETHODID: { 
@@ -405,6 +410,7 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	break;
   }
   case GETSTRINGUTFCHARS: {
+	jobject ob1, ob2;
 	void *key;
 	jboolean isCopy;
 	char*result;
@@ -418,7 +424,10 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	swrite(&length, sizeof length, 1, peer);
 	swrite(result, sizeof*result, length, peer);
 	sread(&key, sizeof key, 1, peer);
-	(*env)->CallObjectMethod(env, peer->objectHash, hashPut, objFromPtr(env, key), objFromPtr(env, result));
+	ob1=objFromPtr(env, key);
+	ob2=objFromPtr(env, result);
+	if(!ob1||!ob2) return;
+	(*env)->CallObjectMethod(env, peer->objectHash, hashPut, ob1, ob2);
 	break;
   }
   case NEWBYTEARRAY: {
@@ -481,28 +490,38 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	break;
   }
   case RELEASEBYTEARRAYELEMENTS: {
-	jobject val;
+	jobject val, ob;
 	jarray array;
 	jbyte *elems;
 	jint mode;
 	sread(&array, sizeof array, 1, peer);
 	sread(&elems, sizeof elems, 1, peer);
 	sread(&mode, sizeof mode, 1, peer);
-	val = (*env)->CallObjectMethod(env, peer->objectHash, hashRemove, objFromPtr(env, elems));
+	ob=objFromPtr(env, elems);
+	if(!ob) return;
+	val = (*env)->CallObjectMethod(env, peer->objectHash, hashRemove, ob);
 	assert(val);
+	if(!val) return;
 	assert(!mode);
 	(*env)->ReleaseByteArrayElements(env, array, ptrFromObj(env, val), mode);
+	(*env)->DeleteLocalRef(env, val);
+	(*env)->DeleteLocalRef(env, ob);
 	break;
   }
   case RELEASESTRINGUTFCHARS: {
-	jobject val;
+	jobject val, ob;
 	jstring array;
 	char*elems;
 	sread(&array, sizeof array, 1, peer);
 	sread(&elems, sizeof elems, 1, peer);
-	val = (*env)->CallObjectMethod(env, peer->objectHash, hashRemove, objFromPtr(env, elems));
+	ob=objFromPtr(env, elems);
+	if(!ob) return;
+	val = (*env)->CallObjectMethod(env, peer->objectHash, hashRemove, ob);
 	assert(val);
+	if(!val) return;
 	(*env)->ReleaseStringUTFChars(env, array, ptrFromObj(env, val));
+	(*env)->DeleteLocalRef(env, val);
+	(*env)->DeleteLocalRef(env, ob);
 	break;
   }
   case SETBYTEARRAYREGION: {
@@ -544,7 +563,6 @@ static int handle_request_impl(FILE*file, JNIEnv *env) {
   peer.stream=file;
   peer.jenv=env;
   peer.tran=0;
-
   val=setjmp(peer.env);
   if(val) {
 	(*env)->DeleteGlobalRef(env, peer.objectHash);

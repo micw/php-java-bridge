@@ -124,6 +124,7 @@ static  void  setResultFromObject  (proxyenv *jenv,  pval *presult, jobject valu
   Z_LVAL_P(handle) = zend_list_insert(_ob, le_jobject);
   pval_copy_constructor(handle);
   INIT_PZVAL(handle);
+  zval_add_ref(&handle);
   zend_hash_index_update(Z_OBJPROP_P(presult), 0, &handle, sizeof(pval *), NULL);
 
 }
@@ -135,6 +136,7 @@ static  void  setResultFromArray  (proxyenv *jenv,  pval *presult) {
 
 static  pval*nextElement  (proxyenv *jenv,  pval *handle) {
   pval *result;
+  zval_add_ref(&handle);
   ALLOC_ZVAL(result);
   zval_add_ref(&result);
   zend_hash_next_index_insert(Z_ARRVAL_P(handle), &result, sizeof(zval *), NULL);
@@ -143,23 +145,22 @@ static  pval*nextElement  (proxyenv *jenv,  pval *handle) {
 
 static  pval*hashIndexUpdate  (proxyenv *jenv,  pval *handle, jlong key) {
   pval *result;
+  zval_add_ref(&handle);
   ALLOC_ZVAL(result);
-  if(key) {
-	zval_add_ref(&result);
-	zend_hash_index_update(Z_ARRVAL_P(handle), (unsigned long)key, &result, sizeof(zval *), NULL);
-  }
+  zval_add_ref(&result);
+  zend_hash_index_update(Z_ARRVAL_P(handle), (unsigned long)key, &result, sizeof(zval *), NULL);
   return result;
 }
 
 static pval*hashUpdate  (proxyenv *jenv, pval *handle, jbyteArray key) {
   pval *result;
   pval pkey;
+  zval_add_ref(&handle);
   ALLOC_ZVAL(result);
   setResultFromString(jenv, &pkey, key);
-  if(key) {
-	zval_add_ref(&result);
-	zend_hash_update(Z_ARRVAL_P(handle), Z_STRVAL(pkey), Z_STRLEN(pkey)+1, &result, sizeof(zval *), NULL);
-  }
+  assert(key);
+  zval_add_ref(&result);
+  zend_hash_update(Z_ARRVAL_P(handle), Z_STRVAL(pkey), Z_STRLEN(pkey)+1, &result, sizeof(zval *), NULL);
   return result;
 }
 

@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# Start the server part of the PHP/Java Bridge.  This script will be
+# called by when the php-java-bridge service is started.
+
+PATH=/bin:/usr/bin:$PATH
+LD_LIBRARY_PATH=/lib:/usr/lib:$LD_LIBRARY_PATH
+LANG=C
+
+export LANG PATH LD_LIBRARY_PATH
+
+
+# if called with non-zero args, invoke
+if ! test $# = 0; then
+  pid=/var/run/php-java-bridge.pid
+  trap 'kill `cat $pid`; rm -f $pid' 2 15
+  eval $1; shift
+  export JAVA_HOME
+  java=$1; shift
+  $java "$@" &
+  echo $! >$pid
+  wait
+  exit 0
+fi
+
+# called with zero args, construct args
+echo "<?php phpinfo();?>" | php 2>/dev/null >/tmp/phpinfo.$$
+  
+if ! sed 's/<[/a-z ="0-9]*>//g' /tmp/phpinfo.$$ | 
+     grep -q "java support.*Enabled"
+then echo "Error: PHP/Java Bridge module not installed."; exit 1
+fi
+
+if  sed 's/<[/a-z ="0-9]*>//g' /tmp/phpinfo.$$ | 
+    grep -q 'java status.*running'
+then echo "PHP/Java Bridge already running or socketname option not set in /etc/php.d/java.ini"; exit 2;
+fi
+
+cmd=`sed 's/<[/a-z ="0-9]*>//g' /tmp/phpinfo.$$ | 
+     sed -n "/^.*java not running, start with:[^A-Z]*/s///p"`
+
+rm -f /tmp/phpinfo.$$
+echo Starting java with the command: "$cmd"
+
+# invoke
+eval $0 "$cmd"&

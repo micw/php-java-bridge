@@ -1,4 +1,4 @@
-Installation guide:
+Installation from source code.
 
 The following software components must be installed on your computer:
 
@@ -27,7 +27,7 @@ su - -c "service httpd stop"
 # compile and install apache 2
 gunzip < httpd_2.x.y.tar.gz | tar xf -
 cd httpd_2.x.y
-./configure --prefix=$INST
+./configure  --enable-module=so --prefix=$INST
 make && su -c "make install"
 cd ..
 
