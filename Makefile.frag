@@ -18,4 +18,4 @@ $(srcdir)/server/JavaBridge.o: $(srcdir)/server/JavaBridge.java
 all: $(phplibdir)/java
 
 $(phplibdir)/java:  $(phplibdir)/libnatcJavaBridge.la
-	gcj -Wl,--rpath -Wl,$(INSTALL_ROOT)$(EXTENSION_DIR)/ -L$(phplibdir) -lnatcJavaBridge -o $@ $(srcdir)/server/java.c
+	if test "$(PHP_JAVA)" = "yes"; then gcj -Wl,--rpath -Wl,$(INSTALL_ROOT)$(EXTENSION_DIR)/ -L$(phplibdir) -lnatcJavaBridge -o $@ $(srcdir)/server/java.c; fi
