@@ -179,7 +179,7 @@ Build and execution instructions:
      java.vendor -> Free Software Foundation, Inc.
      java.vendor.url -> http://gcc.gnu.org/java/
 
-   Now you can package the JavaBridge and the libraries it needs
+   You can package the JavaBridge.srv and the libraries it needs
    (at least libnatcJavaBridge.so, libgcc_s.so.1 and libgcj.so.3, see
    output of ldd command) into an RPM and make sure that your client
    starts the JavaBridge before the httpd service gets started. -- On
