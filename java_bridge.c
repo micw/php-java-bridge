@@ -9,6 +9,7 @@
 /* miscellaneous */
 #include <stdio.h>
 #include <assert.h>
+#include <sys/poll.h>
 
 /* strings,errno */
 #include <string.h>
@@ -301,15 +302,23 @@ void php_java_destructor(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 }
 
 static void wait_for_daemon(TSRMLS_D) {
-  struct stat buf;
   struct cfg *cfg=&JG(cfg);
-  int c;
-  assert(cfg->sockname);
-  for(c=60; c>0 && (!stat(cfg->sockname, &buf)); c--) {
+  struct pollfd pollfd[1] = {cfg->err, POLLIN, 0};
+  int err, c;
+
+  assert(cfg->err);
+  assert(cfg->cid);
+  for(c=10; c>0 && cfg->cid && (!cfg->err || (cfg->err && !(err=poll(pollfd, 1, 0)))); c--) {
 	kill(JG(cfg).cid, SIGTERM);
 	sleep(1);
   }
-  if(!c) unlink(cfg->sockname);
+  if(!c) kill(JG(cfg).cid, SIGKILL);
+  if(cfg->err) {
+	if((read(cfg->err, &err, sizeof err))!=sizeof err) err=0;
+	//printf("VM terminated with code: %ld\n", err);
+	close(cfg->err);
+	cfg->err=0;
+  }
 }
 
 void php_java_shutdown_library(TSRMLS_D) 
