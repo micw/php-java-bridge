@@ -11,8 +11,7 @@ $entries[4] ="Der Mann mit den Messern, Heinrich Böll, 1917--1985";
 $entries[5] ="Biedermann und die Brandstifter, Max Frisch, 1911--1991";
 $entries[6] ="Seelandschaft mit Pocahontas, Arno Schmidt, 1914--1979";
 for ($i = 0; $i < 7; $i++) { 
-  $e = $i+1;
-  echo "$e: $entries[$i]\n";
+  echo "$i: $entries[$i]\n";
 }
 
 ?>

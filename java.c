@@ -120,17 +120,23 @@ PHP_FUNCTION(java_instanceof)
 	return;
   }
 
-  n = zend_hash_index_find(Z_OBJPROP_PP(pobj), 0, (void**) &handle);
+  n = FAILURE;
+  if ((Z_TYPE_PP(pobj) == IS_OBJECT) && (zend_get_class_entry(*pobj) == php_java_class_entry)) {
+	n = zend_hash_index_find(Z_OBJPROP_PP(pobj), 0, (void**) &handle);
+  }
   if(n==FAILURE) {
-	php_error(E_ERROR, "parameter #1 is not a java object");
+	zend_error(E_WARNING, "Parameter #1 for %s() must be a java object", get_active_function_name(TSRMLS_C));
 	return;
   }
   obj = zend_list_find(Z_LVAL_PP(handle), &type);
   assert(obj);
 
-  n = zend_hash_index_find(Z_OBJPROP_PP(pclass), 0, (void**) &handle);
+  n = FAILURE;
+  if ((Z_TYPE_PP(pobj) == IS_OBJECT) && (zend_get_class_entry(*pobj) == php_java_class_entry)) {
+	n = zend_hash_index_find(Z_OBJPROP_PP(pclass), 0, (void**) &handle);
+  }
   if(n==FAILURE) {
-	php_error(E_ERROR, "parameter #2 is not a java object");
+	zend_error(E_WARNING, "Parameter #2 for %s() must be a java object", get_active_function_name(TSRMLS_C));
 	return;
   }
   class = zend_list_find(Z_LVAL_PP(handle), &type);
@@ -172,6 +178,9 @@ ZEND_GET_MODULE(java)
 int  le_jobject;
 int java_ini_updated, java_ini_last_updated;
 zend_class_entry *php_java_class_entry, *php_java_exception_class_entry;
+#ifdef ZEND_ENGINE_2
+zend_object_handlers php_java_handlers;
+#endif
 
 static PHP_INI_MH(OnIniSockname)
 {
@@ -328,11 +337,9 @@ PHP_METHOD(java, __call)
 }
 PHP_METHOD(java, __tostring)
 {
-  /* FIXME: better use String.valueOf() instead */
 	php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU,
 								   "tostring", 0, 0, getThis(), 0, NULL);
 }
-
 PHP_METHOD(java, __set)
 {
   zval **argv;
@@ -466,6 +473,45 @@ static function_entry java_class_functions[] = {
 
 
 
+static zend_object_value create_object(zend_class_entry *class_type TSRMLS_DC)
+{
+  /* standard initialization, copied from parent zend_API.c */
+  zval *tmp;
+  zend_object *object;
+  zend_object_value obj = zend_objects_new(&object, class_type TSRMLS_CC);
+  ALLOC_HASHTABLE_REL(object->properties);
+  zend_hash_init(object->properties, 0, NULL, ZVAL_PTR_DTOR, 0);
+  zend_hash_copy(object->properties, &class_type->default_properties, (copy_ctor_func_t) zval_add_ref, (void *) &tmp, sizeof(zval *));
+
+  /* real work */
+  obj.handlers = (zend_object_handlers*)&php_java_handlers;
+  return obj;
+}
+
+static int cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_DC)
+{
+  if (type==IS_STRING) {
+	jobject obj;
+	zval free_obj;
+	zval **handle;
+	int type, n;
+
+	if (should_free)
+	  free_obj = *writeobj;
+
+	n = zend_hash_index_find(Z_OBJPROP_P(readobj), 0, (void**) &handle);
+	assert(n);
+	obj = zend_list_find(Z_LVAL_PP(handle), &type);
+	assert(obj);
+	php_java_invoke("tostring", obj,  0, 0, writeobj);
+	if (should_free)
+	  zval_dtor(&free_obj);
+	return SUCCESS;
+  }
+  return FAILURE;
+}
+
+
 typedef struct {
   zend_object_iterator intern;
   jobject java_iterator;
@@ -700,13 +746,15 @@ PHP_MINIT_FUNCTION(java)
 							  (zend_function*)&get, 
 							  (zend_function*)&set);
 
+  memcpy(&php_java_handlers, zend_get_std_object_handlers(), sizeof php_java_handlers);
+  //php_java_handlers.clone_obj = clone;
+  php_java_handlers.cast_object = cast;
   ce.get_iterator = get_iterator;
+  ce.create_object = create_object;
 
   php_java_class_entry =
 	zend_register_internal_class(&ce TSRMLS_CC);
   zend_class_implements(php_java_class_entry TSRMLS_CC, 1, zend_ce_arrayaccess);
-  php_java_class_entry->ce_flags=0;//??? FIXME
-
   INIT_OVERLOADED_CLASS_ENTRY(ce, "java_exception", 
 							  java_class_functions, 
 							  (zend_function*)&call, 
@@ -720,9 +768,8 @@ PHP_MINIT_FUNCTION(java)
   INIT_CLASS_ENTRY(ce, "java_class", java_class_functions);
   parent = (zend_class_entry *) php_java_class_entry;
 
-zend_class_entry *e=
-zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
- e->ce_flags=0;//??? FIXME
+  zend_class_entry *php_java_class_class_entry = 
+	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
 #endif
   
   /* Register the resource, with destructor (arg 1) and text

@@ -8,10 +8,10 @@ try {
     $trace = new java("java.io.ByteArrayOutputStream");
     $ex->printStackTrace(new java("java.io.PrintStream", $trace));
 
-    print $trace;
-   return 0;
+    echo "Exception occured:" . $trace . "\n";
+    return 0;
   }
 } catch (exception $err) {
-  print "An error occured: " . $err->toString() . "\n";
+  print "An error occured: $err\n";
   return 1;
 }

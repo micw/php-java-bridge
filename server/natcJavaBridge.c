@@ -81,6 +81,8 @@ static jclass longClass=NULL;
 static jmethodID longCtor=NULL;
 static jmethodID longValue=NULL;
 
+static jmethodID getClass=NULL;
+
 static jint logLevel=4;
 static jclass bridge=NULL;
 
@@ -130,15 +132,28 @@ static void logError(JNIEnv *jenv, char *msg) {
 	logMessageID = (*jenv)->GetStaticMethodID(jenv, bridge, "logError", "(Ljava/lang/String;)V");
   doLog(jenv, msg, logMessageID);
 }
+static void logFatal(JNIEnv *jenv, char *msg) {
+  static jmethodID logMessageID=NULL;
+  assert(bridge);
+  if(!bridge) return;
+  if(!logMessageID)
+	logMessageID = (*jenv)->GetStaticMethodID(jenv, bridge, "logFatal", "(Ljava/lang/String;)V");
+  doLog(jenv, msg, logMessageID);
+}
 static void logSysError(JNIEnv *jenv, char *msg) {
   char s[512];
   sprintf(s, "system error: %s: %s", msg, strerror(errno));
   logError(jenv, s);
 }
+static void logSysFatal(JNIEnv *jenv, char *msg) {
+  char s[512];
+  sprintf(s, "system error: %s: %s", msg, strerror(errno));
+  logFatal(jenv, s);
+}
 static void logMemoryError(JNIEnv *jenv, char *file, int pos) {
   static char s[512];
   sprintf(s, "system error: out of memory error in: %s, line: %d", file, pos);
-  logError(jenv, s);
+  logFatal(jenv, s);
   exit(9);
 }
 
@@ -270,6 +285,8 @@ static void initGlobals(JNIEnv *env) {
   longCtor = (*env)->GetMethodID(env, longClass, "<init>", "(J)V");
   longValue = (*env)->GetMethodID(env, longClass, "longValue", "()J");
 
+  getClass = (*env)->GetStaticMethodID(env, bridge, "GetClass", "(Ljava/lang/Object;)Ljava/lang/Class;");
+  assert(getClass);
   atexit(atexit_bridge);
 
 #ifndef __MINGW32__
@@ -689,12 +706,15 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	break;
   }
   case ISINSTANCEOF: {
-	jobject obj;
-	jclass clazz;
+	jobject obj, clazz;
+	jclass clazz1;
 	jboolean result;
 	sread(&obj, sizeof obj, 1, peer);
 	sread(&clazz, sizeof clazz, 1, peer);
-	result = (*env)->IsInstanceOf(env, obj, clazz);
+	/* jni crashes if we pass an object object instead of a class
+	   object  */
+	clazz1 = (*env)->CallStaticObjectMethod(env, bridge, getClass, clazz);
+	result = (*env)->IsInstanceOf(env, obj, clazz1);
 	swrite(&result, sizeof result, 1, peer);
 	break;
   }
@@ -708,7 +728,7 @@ static int handle_request_impl(SFILE*file, JNIEnv *env, jobject globalRef) {
   struct peer peer;
   int val;
   peer.objectHash=initHash(env);
-  if(!peer.objectHash) {logError(env, "could not create hash table"); return -40;}
+  if(!peer.objectHash) {logFatal(env, "could not create hash table"); return -40;}
   peer.stream=file;
   peer.jenv=env;
   peer.tran=0;
@@ -768,10 +788,10 @@ JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jobject instan
   logChannel(env, "create new communication channel", socket);
 
   globalRef = connection_startup(env);
-  if(!globalRef){logError(env, "could not allocate global hash");if(peer) SFCLOSE(peer);return;}
+  if(!globalRef){logFatal(env, "could not allocate global hash");if(peer) SFCLOSE(peer);return;}
 
   if(peer && (SFWRITE(&instance, sizeof instance, 1, peer)!=1)) {
-	logSysError(env, "could not send instance, child not listening"); connection_cleanup(env, globalRef); SFCLOSE(peer);return;
+	logSysFatal(env, "could not send instance, child not listening"); connection_cleanup(env, globalRef); SFCLOSE(peer);return;
   }
   enter();
   while(peer && !SFEOF(peer)) {
@@ -841,14 +861,14 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
   saddr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
   sock = socket (PF_INET, SOCK_STREAM, 0);
 #endif
-  if(!sock) {logSysError(env, "could not create socket"); return;}
+  if(!sock) {logSysFatal(env, "could not create socket"); return;}
   n = bind(sock,(struct sockaddr*)&saddr, sizeof saddr);
-  if(n==-1) {logSysError(env, "could not bind socket"); return;}
+  if(n==-1) {logSysFatal(env, "could not bind socket"); return;}
 #if !defined(CFG_JAVA_SOCKET_ANON) && !defined(CFG_JAVA_SOCKET_INET)
   chmod(sockname, 0666); // the childs usually run as "nobody"
 #endif
   n = listen(sock, 10);
-  if(n==-1) {logSysError(env, "could not listen to socket"); return;}
+  if(n==-1) {logSysFatal(env, "could not listen to socket"); return;}
 
   while(1) {
 	int socket;
@@ -858,10 +878,10 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
 #ifndef __MINGW32__
 	if(bridge_shutdown) while(1) sleep(65535);
 #endif
-	if(socket==-1) {logDebug(env, "socket accept failed"); return;}
+	if(socket==-1) {logSysError(env, "socket accept failed"); return;}
 	//if(errno) goto res;
 	peer = SFDOPEN(socket, "r+");
-	if(!peer) {logSysError(env, "could not fdopen socket");goto res;}
+	if(!peer) {logSysFatal(env, "could not fdopen socket");goto res;}
 
     (*env)->CallStaticVoidMethod(env, bridge, handleRequests,(jlong)(long)peer);
   }
@@ -937,6 +957,13 @@ JNIEXPORT jboolean JNICALL Java_JavaBridge_setResultFromArray
   return send_content;
 }
 
+/*
+ * The following is from Sam Ruby's original PHP 4 code. When the
+ * result was an array or Hashtable, the ext/java extension copied the
+ * entire(!) array or hash to the PHP interpreter.  Since PHP 5 this
+ * is dead code.
+ */
+#ifndef DISABLE_DEPRECATED
 JNIEXPORT jlong JNICALL Java_JavaBridge_nextElement
   (JNIEnv *env, jclass self, jlong array, jlong _peer)
 {
@@ -979,6 +1006,7 @@ JNIEXPORT jlong JNICALL Java_JavaBridge_hashUpdate
   while(handle_request(peer, env));
   return result;
 }
+#endif /* DISABLE_DEPRECATED */
 
 JNIEXPORT void JNICALL Java_JavaBridge_setException
   (JNIEnv *env, jclass self, jlong result, jlong _peer, jthrowable value, jbyteArray strValue)

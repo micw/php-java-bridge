@@ -14,6 +14,10 @@ foreach ($list as $key=>$value) {
   echo "$key => ";
   if($value instanceof java) {
     if(java_instanceof($value, $ListClass)) {
+
+      // second argument may also be an instance of a class
+      if(!java_instanceof($value, $list)) exit(1);
+
       echo "[I have found myself!] ";
     } else {
       echo "[found java object: " .$value->toString() . "] ";

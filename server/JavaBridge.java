@@ -160,19 +160,29 @@ public class JavaBridge implements Runnable {
     static native void setResultFromDouble(long result, long peer, double value);
     static native void setResultFromBoolean(long result, long peer, boolean value);
     static native void setResultFromObject(long result, long peer, Object value);
+
+    /*
+     * The following 4 methods are used in PHP 4 only. PHP 5 uses the
+     * PhpMap
+     */
     static native boolean setResultFromArray(long result, long peer, Object value);
     static native long nextElement(long array, long peer);
     static native long hashUpdate(long array, long peer, byte key[]);
     static native long hashIndexUpdate(long array, long peer, long key);
+
     static native void setException(long result, long peer, Throwable value, byte strValue[]);
     native void handleRequests(long peer);
-	
+  
     //
     // Helper routines for the C implementation
     //
     public Object MakeArg(boolean b) { return new Boolean(b); }
     public Object MakeArg(long l)    { return new Long(l); }
     public Object MakeArg(double d)  { return new Double(d); }
+    public static Class GetClass(Object obj) {
+	return obj instanceof Class?(Class)obj:obj.getClass();
+    }
+	
 
     // 
     // Communication with client in a new thread
@@ -188,7 +198,7 @@ public class JavaBridge implements Runnable {
     }
 
     //
-    // Return an iterator for the value (PHP 5 only)
+    // Return map for the value (PHP 5 only)
     //
     public PhpMap getPhpMap(Object value) { 
 	logDebug("returning map for "+ value.getClass());
@@ -376,7 +386,7 @@ public class JavaBridge implements Runnable {
 	    if(s.length>0) {
 		sockname=s[0];
 	    } else {
-		JavaBridge.logError("No socket.  You must pass the socket filename, for example /tmp/.report_bridge");
+		JavaBridge.logFatal("No socket.  You must pass the socket filename, for example /tmp/.report_bridge");
 		System.exit(12);
 	    }
 	    try {
@@ -412,13 +422,19 @@ public class JavaBridge implements Runnable {
 
 
     public static void printStackTrace(Throwable t) {
-	if(logLevel>0) t.printStackTrace(logStream);
+	if(logLevel>1) t.printStackTrace(logStream);
+    }
+    public static void printFatalStackTrace(Throwable t) {
+	if(logLevel>1) t.printStackTrace(logStream);
     }
     public static void logDebug(String msg) {
 	if(logLevel>3) logStream.println(msg);
     }
-    public static void logError(String msg) {
+    public static void logFatal(String msg) {
 	if(logLevel>0) logStream.println(msg);
+    }
+    public static void logError(String msg) {
+	if(logLevel>1) logStream.println(msg);
     }
     public static void logMessage(String msg) {
 	if(logLevel>2) logStream.println(msg);
@@ -468,7 +484,9 @@ public class JavaBridge implements Runnable {
 
 	    long length = Array.getLength(value);
 	    if(JavaBridge.setResultFromArray(result, peer, value)) {
-		// only for PHP 4, for PHP 5 see getPhpMap()
+		// Since PHP 5 this is dead code, setResultFromArray
+		// behaves like setResultFromObject and returns
+		// false. See PhpMap.
 		for (int i=0; i<length; i++) {
 		    setResult(JavaBridge.nextElement(result, peer), peer, Array.get(value, i));
 		}
@@ -477,7 +495,9 @@ public class JavaBridge implements Runnable {
 
 	    Hashtable ht = (Hashtable) value; 
 	    if (JavaBridge.setResultFromArray(result, peer, value)) {
-		// only for PHP 4, for PHP 5 see getPhpMap()
+		// Since PHP 5 this is dead code, setResultFromArray
+		// behaves like setResultFromObject and returns
+		// false. See PhpMap.
 		for (Enumeration e = ht.keys(); e.hasMoreElements(); ) {
 		    Object key = e.nextElement();
 		    long slot;

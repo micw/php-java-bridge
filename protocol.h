@@ -107,7 +107,7 @@ struct proxyenv_ {
   void (*ReleaseStringUTFChars) (proxyenv *env, jstring array, const char*elems);
   void (*SetByteArrayRegion) (proxyenv *env, jbyteArray array, jsize start, jsize len, jbyte *buf);
   void (*SetObjectArrayElement) (proxyenv *env, jobjectArray array, jsize index, jobject val);
-  jboolean (*IsInstanceOf) (proxyenv *env, jobject obj, jclass clazz);
+  jboolean (*IsInstanceOf) (proxyenv *env, jobject obj, jobject clazz);
   int (*handle_request)(proxyenv *env);
 };
 extern proxyenv *java_createSecureEnvironment(SFILE *peer, int (*handle_request)(proxyenv *env));

@@ -58,4 +58,4 @@ rm -f /tmp/phpinfo.$$
 echo Starting java with the command: "$cmd"
 
 # invoke
-eval $0 "$cmd"&
+/bin/sh -c "$0 $cmd"&

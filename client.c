@@ -255,6 +255,14 @@ static int handle_request(proxyenv *env) {
 #endif
 	break;
   }
+
+/*
+ * The following is from Sam Ruby's original PHP 4 bridge. When the
+ * result was an array or Hashtable, the ext/java extension copied the
+ * entire(!) array or hash to the PHP interpreter.  Since PHP 5 this
+ * is dead code.
+ */
+#ifndef ZEND_ENGINE_2
   case NEXTELEMENT: {
 	sread(&result, sizeof result, 1, peer);
 	result=(jlong)(long)nextElement(env, (pval*)(long)result);
@@ -280,6 +288,7 @@ static int handle_request(proxyenv *env) {
 	swrite(&result, sizeof result, 1, peer);
 	break;
   }
+#endif
   case SETEXCEPTION: {
 	jthrowable jvalue;
 	jbyteArray jstrValue;
@@ -354,6 +363,7 @@ int java_test_server(struct cfg*cfg TSRMLS_DC) {
 #define JAVA_METHOD(name, strname, class, param) \
   JG(name) = (*JG(jenv))->GetMethodID(JG(jenv), JG(class), strname, param);\
   if(check_error(JG(jenv), strname TSRMLS_CC)) return FAILURE;
+
 int java_connect_to_server(struct cfg*cfg TSRMLS_DC) {
   jobject local_php_reflect;
   jmethodID init;

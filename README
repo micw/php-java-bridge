@@ -15,15 +15,28 @@ What is the PHP/Java bridge?
 
   The bridge adds the following primitives to PHP:
 
-  * new java("CLASSNAME"): Instanciates or references the class
+  * new java("CLASSNAME"): References and instanciates the class
     CLASSNAME. After script execution the referenced classes may be
-    garbage collected. Examples:
+    garbage collected. To access classes within other classes the
+    class$innerClass syntax must be used instead of the normal dot
+    notation. Examples:
 
       $String = new java("java.lang.String");
       print $String->valueOf(null);
 
       $hello = new java("java.lang.String", "hello");
       print $hello;
+
+      $inner = new java("package.testClass$innerClass");
+      $inner->value = 2;
+
+  * new java_class("CLASSNAME"): References the class CLASSNAME but
+    does not call a constructor. The object returned is the class
+    object. After script execution the referenced classes may be garbage
+    collected. Example:
+
+      $Class = new java_class("java.lang.String");
+      $obj = $Class->newInstance();
 
   * java_set_library_path("JAR1;JAR2"): Makes additional libraries
     available to the current script. JAR can either be a "http:", "ftp:",
@@ -51,11 +64,20 @@ What is the PHP/Java bridge?
          print "java stack trace: $trace\n";
       }
 
+  * java_instanceof(OBJECT, CLASS): Tests if the java object OBJECT is
+    an instance of the java class CLASS or not. Example:
+
+      foreach($list as $key=>$value) {
+        if($value instanceof java)
+          if(java_instanceof($value, $ListClass))
+            ...
+      }
+
   * java_last_exception_get(): Returns the last exception instance or
     null. Example:
 
       if(java_last_exception_get()) 
-        java_last_exception_get()->toString();
+        java_last_exception_get()->getMessage();
 
   * java_last_exception_clear(): Clears the error condition. Example:
 

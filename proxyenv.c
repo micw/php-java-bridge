@@ -275,7 +275,7 @@ static void SetObjectArrayElement (proxyenv *env, jobjectArray array, jsize inde
   swrite(&val, sizeof val, 1, (*env)->peer);
 }
 
-static jboolean IsInstanceOf(proxyenv *env, jobject obj, jclass clazz) {
+static jboolean IsInstanceOf(proxyenv *env, jobject obj, jobject clazz) {
   jboolean result;
   id(env, ISINSTANCEOF);
   swrite(&obj, sizeof obj, 1, (*env)->peer);
