@@ -38,8 +38,10 @@ id(peer, name);
 #define ASSERTM(expr) \
 if(!expr) { \
   logMemoryError(env, __FILE__, __LINE__); \
-  longjmp(peer->env, 6); \
+  exit(6); \
 }
+
+static jclass exceptionClass=NULL;
 
 static jclass hashClass=NULL;
 static jmethodID init=NULL;
@@ -58,7 +60,10 @@ static char*sockname=NULL;
 static pthread_attr_t attr;
 
 struct peer {
-  jmp_buf env;
+  jmp_buf env;					/* exit from the loop */
+  jmp_buf savepoint;			/* jump back to java */
+  JNIEnv *jenv;
+  short tran;					/* if we must return to java first */
   FILE*stream;
   jobject objectHash;
 };
@@ -97,20 +102,33 @@ static void logMemoryError(JNIEnv *jenv, char *file, int pos) {
   static char s[512];
   sprintf(s, "system error: out of memory error in: %s, line: %d", file, pos);
   logError(jenv, s);
-  abort();
+  exit(9);
 }
 
 static void swrite(const  void  *ptr,  size_t  size,  size_t  nmemb,  struct peer*peer) {
   FILE*stream=peer->stream;
   int n = fwrite(ptr, size, nmemb, stream);
   //printf("write char:::%d\n", (unsigned int) ((char*)ptr)[0]);
-  if(n!=nmemb) longjmp(peer->env, 2);
+  if(n!=nmemb) {
+	if(peer->tran) {		/* first clear the java stack, then longjmp */
+	  (*peer->jenv)->ThrowNew(peer->jenv, exceptionClass, "child aborted connection during write");
+	  longjmp(peer->savepoint, 1);
+	} else
+	   longjmp(peer->env, 2);
+  }
+
 }
 static void sread(void *ptr, size_t size, size_t nmemb, struct peer *peer) {
   FILE*stream=peer->stream;
   int n = fread(ptr, size, nmemb, stream);
   //printf("read char:::%d\n", (unsigned int) ((char*)ptr)[0]);
-  if(n!=nmemb) longjmp(peer->env, 1);
+  if(n!=nmemb) {
+	if(peer->tran) {		/* first clear the java stack, then longjmp */
+	  (*peer->jenv)->ThrowNew(peer->jenv, exceptionClass, "child aborted connection during read");
+	  longjmp(peer->savepoint, 1);
+	} else
+	  longjmp(peer->env, 1);
+  }
 }
 
 static void id(struct peer*peer, char id) {
@@ -145,13 +163,13 @@ static void atexit_bridge() {
 	pthread_attr_destroy(&attr);
   }
 }
-static jmp_buf signal_env;
 static void exit_sig(int dummy) {
-  longjmp(signal_env, 1);
+  exit(0);
 }
 static void initGlobals(JNIEnv *env) {
   jobject hash;
 
+  exceptionClass = (*env)->FindClass(env, "java/lang/Throwable");
   hashClass = (*env)->FindClass(env, "java/util/Hashtable");
   init = (*env)->GetMethodID(env, hashClass, "<init>", "()V");
   hash = (*env)->NewObject(env, hashClass, init);
@@ -209,13 +227,22 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	jstring method;
 	jobjectArray array;
 	jlong result;
+	jthrowable abort;
+
 	sread(&php_reflect, sizeof php_reflect,1, peer);
 	sread(&invoke, sizeof invoke,1, peer);
 	sread(&obj, sizeof obj,1, peer);
 	sread(&method, sizeof method,1, peer);
 	sread(&array, sizeof array,1, peer);
 	sread(&result, sizeof result,1, peer);
+	peer->tran=1;
 	(*env)->CallVoidMethod(env, php_reflect, invoke, obj, method, array, result, (jlong)(long)peer);
+	abort = (*env)->ExceptionOccurred(env);
+	if(abort) {  /* connection aborted by client, java stack cleared */
+	  (*env)->ExceptionClear(env);
+	  peer->tran=0;
+	  longjmp(peer->env, 1);
+	}
 	ID(peer, 0);
 	break;
   }
@@ -225,12 +252,21 @@ static int handle_request(struct peer*peer, JNIEnv *env) {
 	jstring method;
 	jobjectArray array;
 	jlong result;
+	jthrowable abort;
+
 	sread(&php_reflect, sizeof php_reflect,1, peer);
 	sread(&invoke, sizeof invoke,1, peer);
 	sread(&method, sizeof method,1, peer);
 	sread(&array, sizeof array,1, peer);
 	sread(&result, sizeof result,1, peer);
+	peer->tran=1;
 	(*env)->CallVoidMethod(env, php_reflect, invoke, method, array, result, (jlong)(long)peer);
+	abort = (*env)->ExceptionOccurred(env);
+	if(abort) { /* connection aborted by client, java stack cleared */
+	  (*env)->ExceptionClear(env);
+	  peer->tran=0;
+	  longjmp(peer->env, 1);
+	}
 	ID(peer, 0);
 	break;
   }
@@ -504,12 +540,15 @@ static int handle_request_impl(FILE*file, JNIEnv *env) {
   int val;
   peer.objectHash=initHash(env);
   if(!peer.objectHash) {logError(env, "could not create hash table"); return -40;}
+  peer.stream=file;
+  peer.jenv=env;
+  peer.tran=0;
+
   val=setjmp(peer.env);
   if(val) {
 	(*env)->DeleteGlobalRef(env, peer.objectHash);
 	return -val;
   }
-  peer.stream=file;
   val=handle_request(&peer, env);
   (*env)->DeleteGlobalRef(env, peer.objectHash);
   return val;
@@ -564,8 +603,6 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
   struct sockaddr_un saddr;
   int sock, n;
 
-  if(setjmp(signal_env)) return; //sigkill arrived
-
   initGlobals(env);
   logLevel = _logLevel;
   bridge = self;
@@ -612,6 +649,7 @@ JNIEXPORT void JNICALL Java_JavaBridge_setResultFromString
   (JNIEnv *env, jclass self, jlong result, jlong _peer, jbyteArray value)
 {
   struct peer*peer=(struct peer*)(long)_peer;
+  if(setjmp(peer->savepoint)) return;
   ID(peer, SETRESULTFROMSTRING);
   swrite(&result, sizeof result, 1, peer);
   swrite(&value, sizeof value, 1, peer);
@@ -622,6 +660,7 @@ JNIEXPORT void JNICALL Java_JavaBridge_setResultFromLong
   (JNIEnv *env, jclass self, jlong result, jlong _peer, jlong value)
 {
   struct peer*peer=(struct peer*)(long)_peer;
+  if(setjmp(peer->savepoint)) return;
   ID(peer, SETRESULTFROMLONG);
   swrite(&result, sizeof result, 1, peer);
   swrite(&value, sizeof value, 1, peer);
@@ -632,6 +671,7 @@ JNIEXPORT void JNICALL Java_JavaBridge_setResultFromDouble
   (JNIEnv *env, jclass self, jlong result, jlong _peer, jdouble value)
 {
   struct peer*peer=(struct peer*)(long)_peer;
+  if(setjmp(peer->savepoint)) return;
   ID(peer, SETRESULTFROMDOUBLE);
   swrite(&result, sizeof result, 1, peer);
   swrite(&value, sizeof value, 1, peer);
@@ -642,6 +682,7 @@ JNIEXPORT void JNICALL Java_JavaBridge_setResultFromBoolean
   (JNIEnv *env, jclass self, jlong result, jlong _peer, jboolean value)
 {
   struct peer*peer=(struct peer*)(long)_peer;
+  if(setjmp(peer->savepoint)) return;
   ID(peer, SETRESULTFROMBOOLEAN);
   swrite(&result, sizeof result, 1, peer);
   swrite(&value, sizeof value, 1, peer);
@@ -652,6 +693,7 @@ JNIEXPORT void JNICALL Java_JavaBridge_setResultFromObject
   (JNIEnv *env, jclass self, jlong result, jlong _peer, jobject value)
 {
   struct peer*peer=(struct peer*)(long)_peer;
+  if(setjmp(peer->savepoint)) return;
   ID(peer, SETRESULTFROMOBJECT);
   swrite(&result, sizeof result, 1, peer);
   swrite(&value, sizeof value, 1, peer);
@@ -662,6 +704,7 @@ JNIEXPORT void JNICALL Java_JavaBridge_setResultFromArray
   (JNIEnv *env, jclass self, jlong result, jlong _peer)
 {
   struct peer*peer=(struct peer*)(long)_peer;
+  if(setjmp(peer->savepoint)) return;
   ID(peer, SETRESULTFROMARRAY);
   swrite(&result, sizeof result, 1, peer);
   while(handle_request(peer, env));
@@ -672,6 +715,7 @@ JNIEXPORT jlong JNICALL Java_JavaBridge_nextElement
 {
   jlong result;
   struct peer*peer=(struct peer*)(long)_peer;
+  if(setjmp(peer->savepoint)) return 0;
   ID(peer, NEXTELEMENT);
   swrite(&array, sizeof array, 1, peer);
   while(handle_request(peer, env));
@@ -685,6 +729,7 @@ JNIEXPORT jlong JNICALL Java_JavaBridge_hashIndexUpdate
 {
   jlong result;
   struct peer*peer=(struct peer*)(long)_peer;
+  if(setjmp(peer->savepoint)) return 0;
   ID(peer, HASHINDEXUPDATE);
   swrite(&array, sizeof array, 1, peer);
   swrite(&key, sizeof key, 1, peer);
@@ -698,6 +743,7 @@ JNIEXPORT jlong JNICALL Java_JavaBridge_hashUpdate
 {
   jlong result;
   struct peer*peer=(struct peer*)(long)_peer;
+  if(setjmp(peer->savepoint)) return 0;
   ID(peer, HASHUPDATE);
   swrite(&array, sizeof array, 1, peer);
   swrite(&key, sizeof key, 1, peer);
@@ -711,6 +757,7 @@ JNIEXPORT void JNICALL Java_JavaBridge_setException
   (JNIEnv *env, jclass self, jlong result, jlong _peer, jbyteArray value)
 {
   struct peer*peer=(struct peer*)(long)_peer;
+  if(setjmp(peer->savepoint)) return;
   ID(peer, SETEXCEPTION);
   swrite(&result, sizeof result, 1, peer);
   swrite(&value, sizeof value, 1, peer);

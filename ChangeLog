@@ -29,6 +29,17 @@
 	jdk1.4 correctly.
 	* bind.c: Pass modified environment on to the child process.
 
-2004-09-11  Jost Boekemeier  <jost2345@mail.yahoo.de>
+2004-09-12  Jost Boekemeier  <jost2345@mail.yahoo.de>
 
-	* README: Describe GNU Java support
+	* README: GNU Java supported
+
+	The SUN Java implementation may store objects on the stack.
+	Objects on the heap may reference them. So in this JVM we cannot
+	simply longjmp to clear the stack, because some heap objects may
+	still refer to dead locations.  The result would be that the VM
+	will barf when the GC tries to follow these phantom references.
+	* natcJavaBridge.c: Longjmp to the last savepoint, then return
+	back to java, throw an exception to return to one of the three
+	native main methods and then jump back to the loop.  This fixes a
+	crash in the SUN VM which occured after apache has aborted the
+	connection.
