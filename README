@@ -24,7 +24,7 @@ What is the PHP/Java bridge?
      <?php
      java_set_library_path("file:c:/mytest.jar");
      $mytest = new java("mytest");
-     // count() increments and returns value of a static variable
+     // count() increments and returns the value of a static variable
      print $mytest->count();
      print $mytest->count();
      java_set_library_path("");
@@ -44,7 +44,7 @@ What is the PHP/Java bridge?
     "file:" or a "jar:" location.
 
   * java_last_exception_get(): Returns the last exception instance or
-     null.
+    null.
 
   * java_last_exception_clear(): Clears the error condition.
 
@@ -104,7 +104,7 @@ What is the PHP/Java bridge?
 Build and execution instructions:
 ---------------------------------
 
-  In the directory php-java-bridge_1.x.y type:
+  In the directory php-java-bridge-1.x.y type:
 
           java -version        # 1.3 or above (1.4.2_02 or IBM JVM recommended)
           gcc --version        # 3.2.3 or above.
@@ -125,7 +125,7 @@ Build and execution instructions:
    Permanently activate the module
    -------------------------------
 
-  To permanently activate the extension for all users, please add the
+  To permanently activate the extension for all users please add the
   following lines to the php.ini or add a file java.ini to the
   directory that contains the php module descriptions (usually
   /etc/php.d/) with the following content:
@@ -138,7 +138,7 @@ Build and execution instructions:
           # to start a JVM as a separate process.
           #java.socketname=/var/run/.php-java-bridge_socket
 
-  After the module is activated, verify that the module is running by
+  After the module is activated verify that the module is running by
   typing:
 
           echo "<?php phpinfo()?>" | php | fgrep "java status"
@@ -153,7 +153,7 @@ Build and execution instructions:
           java.socketname= <hard-coded socketname to start the VM separately>
 
   If you change the above values, please first look at the output of
-  phpinfo() so see the original values.
+  phpinfo() to see the original values.
 
 ---------------------------------------------
    Starting the Java VM as a separate process
@@ -213,10 +213,10 @@ Build and execution instructions:
 
    For example:
 
-      `php-config --extension-dir`/java /var/run/.php-java-bridge_socket 1 "" | 
+      `php-config --extension-dir`/java /var/run/.php-java-bridge_socket 1 "" |
         tee /var/log/php-java-bridge.log
 
-   Then direct the bridge to the server socket by hard-coding the
+   Then direct the bridge to the server-socket by hard-coding the
    java.socketname to /var/run/.php-java-bridge_socket (as described
    in the install instructions) and re-start the apache service.
 
@@ -230,7 +230,7 @@ Build and execution instructions:
    GNU gcc is a "ahead of time" compiler. That means that classes
    which are added after compilation must be interpreted by the
    GNU java interpreter.  There's no "just in time" compiler.
-   To compile your classes with the java executable, you can append 
+   To compile your classes with the java executable you can append 
    the classes, java or jar files at the end of the java_SOURCES
    line of the server/Makefile.am.  For example:
     
@@ -248,12 +248,12 @@ Build and execution instructions:
 
    After you have created the executables you can distribute the 
    contents of the php-java-bridge-x.y.z/modules directory. It
-   should contain the files "java", libnatcJavaBridge.so, and java.so
+   should contain the files "java", "libnatcJavaBridge.so", "java.so"
    (autoconf/libtool creates other files, you can delete them). The
    java.so is the PHP module, the other files are required to start the
-   server part.  The java executable may need other system libraries, for
-   example gcj.so and gcc_s.so which should be installed on the target
-   system.
+   server part.  The "java" executable may need other system libraries, 
+   for example "gcj.so" and "gcc_s.so". They should be installed on the 
+   target system.
 
    Additional shared libraries can be copied into the php extension
    directory (see command "php-config --extension-dir"), additional
@@ -269,17 +269,17 @@ Build and execution instructions:
           phpize && ./configure --with-java=$JAVA_HOME
           make CFLAGS="-DNDEBUG -m64"
   
-  The installation expects that the default JVM found in
-  $JAVA_HOME/bin/java is a 64 bit VM. Unfortunately this is not the
-  case with the SUN JDK (Linux and Solaris) which install the 64bit VM
-  in some sub-directory of $JAVA_HOME/bin. On Solaris9 this is
-  $JAVA_HOME/bin/sparcv9. The location on Linux may depend on the
-  architecture.
+  The scripts expect that the default JVM found in
+  $JAVA_HOME/bin/java is a 64 bit VM. Unfortunately this is not true
+  for the SUN JDK (Linux and Solaris) installation. The SUN JDK
+  installs the 64 bit VM in some sub-directory of $JAVA_HOME/bin. On
+  Solaris9 this is $JAVA_HOME/bin/sparcv9. The location on Linux may
+  depend on the architecture.
 
   Since there is no standard installation directory and we cannot
-  blindly search all sub-directories, it is your job to direct the bridge
-  to the 64 bit JVM.  The relevant php.ini entry is java.java, see install
-  instructions above.  
+  blindly search all sub-directories, it is your job to direct the
+  bridge to the 64 bit JVM.  The relevant php.ini entry is java.java,
+  see install instructions above.
 
 ------------------------------------
   Windows Installation
