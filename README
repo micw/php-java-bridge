@@ -276,7 +276,7 @@ Build and execution instructions:
   $JAVA_HOME/bin/sparcv9. The location on Linux may depend on the
   architecture.
 
-  Since there is not standard installation directory and we cannot
+  Since there is no standard installation directory and we cannot
   blindly search all sub-directories, it is your job to direct the bridge
   to the 64 bit JVM.  The relevant php.ini entry is java.java, see install
   instructions above.  

@@ -7,6 +7,8 @@
 	* server/Makefile.am: Removed
 	* server/Makefile.in: New file
 
+	* server/java.c: Print usage().
+	
 2004-10-26  Boekemeier  <jost2345@intern>
 
 	Split the unix and windows functionality into two makefiles to
