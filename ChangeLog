@@ -1,5 +1,8 @@
 2005-02-03  Jost Boekemeier  <jostb@intern>
 
+	* server/JavaBridge.java (load, findClass): Store reason for
+	failure.
+	
 	* tests.php5/ArrayArray.java, tests.php5/arrayArray.jar,
 	arrayArray.php: New tests.
 
