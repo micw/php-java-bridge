@@ -105,6 +105,16 @@ What is the PHP/Java Bridge?
             echo "$value\n";
        }
 
+   * java_get_server_name(): Returns the name:<socket> of the server used by
+     this php instance. Example:
+
+      if(!($name=java_get_server_name())) {
+        echo "We're sorry, the java service is not available.\n";
+	exit(1);
+      } else {
+        echo "Java backend available on $name.\n";
+      }
+
    * java_last_exception_get(): Returns the last exception instance
      or null. Since PHP 5 you can use try/catch instead.
 
@@ -139,26 +149,39 @@ What is the PHP/Java Bridge?
       when the JVM starts the bridge.
 
 
-  The PHP/Java Bridge can operate in 5 different modes:
+  The PHP/Java Bridge can operate in 3 different modes:
 
-   1. Invoked from the dl() function.  This is very slow because it
-      starts a new Java VM for each request.  But this mode does not
-      require any administrative privileges.
+   1. Invoked from the dl() function. In this mode the bridge starts
+      when the HTTP server receives a client request and terminates after
+      the response is written. This is very slow because it starts a new
+      Java VM for each request. But it does not require any administrative
+      privileges.
 
-   2. Compiled into PHP.  This is not recommended because it
-      requires a compilation of the entire PHP library. If you want to
-      do this, please see the Windows install description below.
+   2. Permanently activated in the global php.ini file with an
+      internal java process running in the HTTP server domain. In this mode
+      the bridge starts when the HTTP server starts and terminates when the
+      HTTP server terminates. Recommended during development. 
 
-   3. Permanently activated in the global php.ini file and started as
-      a sub-component of the HTTP server.  Recommended for test
-      installations only.
+   3. Permanently activated in the global php.ini file with an
+      external java process. Recommended for production systems. This mode
+      is used by the RPM package available for RedHat Enterprise Linux. In
+      this mode the bridge starts and stops as a system service.
 
-   4. Permanently activated in the global php.ini file with an
-      external java process.  Recommended for production servers, see
-      below. This mode is used by the RPM package available for RedHat
-      Enterprise Linux.
+  Furthermore the PHP/Java Bridge can be:
 
-   5. Compiled with the GNU Java library.  
+   * Compiled into PHP. This is not recommended because it requires a
+      compilation of the entire PHP library. If you want to do this, please
+      read the README file. This should only be necessary if the OS does not
+      support shared libraries.
+
+   * Compiled with the GNU Java library. You can either start GNU Java
+     as a separate process (just like a "real" Java VM) or compile
+     everything into a PHP binary. This should only be necessary if there
+     is no official JRE available for the OS or one doesn't want to ship a
+     JRE with the product.
+
+   * Compiled with Novell's MONO (a ".NET" clone). This is currently
+     experimental.
 
 
 Build and execution instructions:

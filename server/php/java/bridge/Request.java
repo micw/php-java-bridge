@@ -125,8 +125,10 @@ public class Request implements IDocHandler {
 	    bridge.globalRef.remove(i);
 	    break;
 	}
-	case 'S': {// TODO avoid newString(..).getBytes() here.
-	    args.add(st[0].getStringValue().getBytes());
+	case 'S': {
+            byte[] bytes=new byte[st[0].length];
+            System.arraycopy(st[0].string,st[0].off,bytes,0,bytes.length);
+            args.add(bytes);
 	    break;
 	}
 	case 'B': {

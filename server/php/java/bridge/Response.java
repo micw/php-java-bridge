@@ -1,17 +1,46 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
 package php.java.bridge;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.regex.Pattern;
 
 public class Response {
-    StringBuffer buf;
+    private static class OutBuf extends ByteArrayOutputStream {
+    	void append(byte[] s) {
+    		try {
+    			write(s);
+		} catch (IOException e) {/*not possible*/}
+	}
+    	void append(String s) {
+    		try {
+    			this.write(s.getBytes());
+		} catch (IOException e) {/*not possible*/}
+	}
+    	void appendQuoted(byte[] s) {
+    		for(int i=0; i<s.length; i++) {
+    			byte ch;
+    			switch(ch=s[i]) {
+    			case '&':
+    				append(amp);
+    				break;
+    			case '\"':
+    				append(quote);
+    				break;
+    			default:
+    				write(ch);
+    			}
+    		}
+    	}
+    	void appendQuoted(String s) {
+    		appendQuoted(s.getBytes());
+    	}
+    }
+    OutBuf buf;
     long result, peer;
     private byte options;
-    private static Pattern quotePattern = java.util.regex.Pattern.compile("\"");
     private JavaBridge bridge;
     public Response(JavaBridge bridge) {
-	buf=new StringBuffer();
+	buf=new OutBuf();
 	this.bridge=bridge;
     }
     
@@ -24,31 +53,34 @@ public class Response {
     	return (options & 2)==2;
     }
     
-    static final String e="\"/>";
-    static final String c="\">";
-    static final String I="\" i=\"";
-    static final String S="<S v=\"";
-    static final String B="<B v=\"";
-    static final String L="<L v=\"";
-    static final String D="<D v=\"";
-    static final String E="<E v=\"";
-    static final String O="<O v=\"";
-    static final String m="\" m=\"";
-    static final String Xa="<X t=\"A";
-    static final String Xh="<X t=\"H";
-    static final String Xe="</X>";
-    static final String P="<P>";
-    static final String Pn="<P t=\"N\" v=\"";
-    static final String Ps="<P t=\"S\" v=\"";
-    static final String Pe="</P>";
-    void writeString(String s) {
+    static final byte[] e="\"/>".getBytes();
+    static final byte[] c="\">".getBytes();
+    static final byte[] I="\" i=\"".getBytes();
+    static final byte[] S="<S v=\"".getBytes();
+    static final byte[] B="<B v=\"".getBytes();
+    static final byte[] L="<L v=\"".getBytes();
+    static final byte[] D="<D v=\"".getBytes();
+    static final byte[] E="<E v=\"".getBytes();
+    static final byte[] O="<O v=\"".getBytes();
+    static final byte[] m="\" m=\"".getBytes();
+    static final byte[] Xa="<X t=\"A".getBytes();
+    static final byte[] Xh="<X t=\"H".getBytes();
+    static final byte[] Xe="</X>".getBytes();
+    static final byte[] P="<P>".getBytes();
+    static final byte[] Pn="<P t=\"N\" v=\"".getBytes();
+    static final byte[] Ps="<P t=\"S\" v=\"".getBytes();
+    static final byte[] Pe="</P>".getBytes();
+    static final byte[] quote="&quote;".getBytes();
+    static final byte[] amp="&amp;".getBytes();
+    void writeString(byte s[]) {
     	
-	buf.append(S); buf.append(quotePattern.matcher(s).replaceAll("&quot;"));
+	buf.append(S);
+	buf.appendQuoted(s);
 	buf.append(I); buf.append(String.valueOf(result));
 	buf.append(e);
     }
     void writeBoolean(boolean b) {
-	buf.append(B); buf.append(b==true?'T':'F');
+	buf.append(B); buf.write(b==true?'T':'F');
 	buf.append(I); buf.append(String.valueOf(result));
 	buf.append(e);
     }
@@ -71,7 +103,7 @@ public class Response {
     }
     void writeException(Object o, String str) {
 	buf.append(E); buf.append(String.valueOf(this.bridge.globalRef.append(o)));
-	buf.append(m); buf.append(String.valueOf(str));
+	buf.append(m); buf.appendQuoted(String.valueOf(str));
 	buf.append(I); buf.append(String.valueOf(result));
 	buf.append(e);
     }
@@ -89,7 +121,7 @@ public class Response {
 	buf.append(Xe);
     }
     void writePairBegin_s(String key) {
-	buf.append(Ps);	buf.append(key);
+	buf.append(Ps);	buf.appendQuoted(key);
 	buf.append(c);
     }
     void writePairBegin_n(int key) {
@@ -103,10 +135,10 @@ public class Response {
 	buf.append(Pe);
     }
     void flush() throws IOException {
-    	String s = buf.toString();
-	if(Util.logLevel>=4) Util.logDebug("<-- " +buf.toString());
-	byte[] b = s.getBytes();
-	bridge.out.write(b, 0, b.length);
-	buf.setLength(0);
+ 	if(Util.logLevel>=4) {
+		Util.logDebug("<-- " +buf.toString());
+	}
+	buf.writeTo(bridge.out);
+	buf.reset();
     }
 }

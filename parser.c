@@ -100,21 +100,6 @@ short parse(proxyenv *env, parser_cb_t *cb) {
 	type=VOJD;
 	if(level==0) eor=1; 
 	break;
-      case '\0':
-	if(mask!=0) {type=BLOB; mask=0; break;}
-				
-	if(0!=blen) {
-	  APPEND(ch);
-	  --blen;
-	} else {
-	  if(type==VOJD) {
-	    mask=~0;
-	  } else {
-	    type=VOJD;
-	    blen=ch;
-	  }
-	}
-	break;
       case ';':
 	if(type==ENTITY) {
 	  switch (s[e+1]) {

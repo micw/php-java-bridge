@@ -1,3 +1,41 @@
+2005-03-09  Jost Boekemeier <jostb@intern>
+
+	* PROTOCOL.TXT: Document Bit 0 as reserved.
+
+	* parser.c (parse): Removed blob.
+
+	* protocol.c (GROW): Grow by no less than required size.
+	(replaceQuote): &amp must be quoted, too.
+	(String): Require _len.
+	(String): Do not use sprintf to print the string, it may binary
+	data.
+
+	* server/php/java/bridge/JavaBridge.java (setResult): Do not
+	convert binary data into a string.
+	
+	* server/php/java/bridge/Parser.java (parse): Removed blob.
+
+	* server/php/java/bridge/Request.java (begin): Do not convert
+	binary data into a string.
+
+	* server/php/java/bridge/Response.java (OutBuf): New inner class
+	replaces StringBuffer in order to deal with binary data.
+
+	* tests.php5/binaryData.php, tests.php5/BinaryData.java,
+	tests.php5/binaryData.jar: New tests.
+
+	* tests.php5/session.php: Added dl().
+	
+	* java.c (java_get_server_name): New user function.
+
+	* README: Document java_get_server_name.
+
+	* php-java-bridgge.spec, VERSION: New version
+	
+	* php-java-bridge 2.0.2 released. It replaces 2.0.1 which was not
+	able to deal with binary data.
+	
+	
 2005-03-06  Jost Boekemeier <jostb@intern>
 
 	* server/Makefile_unix.am: Updated sources list.

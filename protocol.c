@@ -18,7 +18,8 @@
 
 #define GROW(size) { \
   if((*env)->send_len+size>=(*env)->send_size) { \
-	(*env)->send=realloc((*env)->send, (*env)->send_size*=2); \
+    size_t nsize = (*env)->send_len+size+SEND_SIZE; \
+	(*env)->send=realloc((*env)->send, (*env)->send_size=nsize); \
 	assert((*env)->send); if(!(*env)->send) exit(9); \
   } \
 }
@@ -44,22 +45,38 @@ static void flush(proxyenv *env) {
   } 
 static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
   static const char quote[]="&quote;";
+  static const char amp[]="&amp;";
   register size_t newlen=len+len/10, pos=0;
   char c, *s, *new = malloc(newlen+1);
   register short j;
   assert(new); if(!new) exit(9);
   
   while(len--) {
-	if((c=*name++)=='&') {
-	  for(j=0; j< sizeof(quote); j++) {
-		new[pos++]=quote[j]; 
+	switch (c=*name++) {
+	case '\"':
+	  {
+		for(j=0; j<(sizeof(quote)-1); j++) {
+		  new[pos++]=quote[j]; 
+		  GROW_QUOTE();
+		}
+	  } 
+	  break;
+	case '&':
+	  {
+		for(j=0; j<(sizeof(amp)-1); j++) {
+		  new[pos++]=amp[j]; 
+		  GROW_QUOTE();
+		}
+	  } 
+	  break;
+	default: 
+	  {
+		new[pos++]=c;
 		GROW_QUOTE();
 	  }
-	} else {
-	  new[pos++]=c;
-	  GROW_QUOTE();
 	}
   }
+
   new[pos]=0;
   *ret_len=pos;
   return new;
@@ -115,11 +132,20 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
  }
 
  static void String(proxyenv *env, char*name, size_t _len) {
-   size_t len;
-   if(!_len) _len=strlen(name);
+   static const char Sb[]="<S v=\"";
+   static const char Se[]="\"/>";
+   size_t send_len;
+   size_t len, slen;
+   assert(_len || !strlen(name));
    name = replaceQuote(name, _len, &len);
-   GROW(FLEN+len);
-   (*env)->send_len+=sprintf((*env)->send+(*env)->send_len, "<S v=\"%s\"/>", name);
+   send_len = (sizeof (Sb)-1) + (sizeof (Se)-1) + len;
+   GROW(send_len);
+   slen=(*env)->send_len;
+   memcpy((*env)->send+slen, Sb, sizeof(Sb)-1); slen+=sizeof(Sb)-1;
+   memcpy((*env)->send+slen, name, len); slen+=len;
+   memcpy((*env)->send+slen, Se, sizeof(Se)-1);
+
+   (*env)->send_len+=send_len;
    assert((*env)->send_len<=(*env)->send_size);
    free(name);
  }

@@ -1,5 +1,9 @@
 <?php
 
+if(!extension_loaded('java')) {
+  dl('java.' . PHP_SHLIB_SUFFIX);
+}
+
 $session=java_get_session("testSession", array("a" => 1, "b" => 5));
 
 $session->put("a", $session->get("a")+1);

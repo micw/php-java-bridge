@@ -227,9 +227,9 @@ public class JavaBridge implements Runnable {
 	if (value == null) {
 	    response.writeObject(null);
 	} else if (value instanceof byte[]) {
-	    response.writeString(new String((byte[])value));
+	    response.writeString((byte[])value);
 	} else if (value instanceof java.lang.String) {
-	    response.writeString(((String)value));
+	    response.writeString(((String)value).getBytes());
 	} else if (value instanceof java.lang.Number) {
 
 	    if (value instanceof java.lang.Integer ||

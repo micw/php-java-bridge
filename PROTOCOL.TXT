@@ -155,8 +155,7 @@ NOTES:
 If the first byte is neither a "<" nor a space, bits 0 and 1
 have a special meaning:
 
-Bit 0: Client sends and receives embedded binary fields: 1. byte zero,
-2. byte length, followed by up to 255 bytes data.
+Bit 0: Reserved.
 
 Bit 1: Client wants arrays as values. The server will return X and P
 instead of O.
