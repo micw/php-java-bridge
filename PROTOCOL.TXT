@@ -35,7 +35,7 @@ Optional requests:
 
 The optional M, F requests may be used to capture a method and invoke
 it more than once. The M (GetMethod) request responds with a method
-[O]bject which can be used as the third argument for all further F
+[O]bject which can be used as the argument for all further F
 (CallMethod) requests. [I]nvoke should be used instead of M/F. It is a
 little bit slower but easier to handle.
 
@@ -49,82 +49,104 @@ reference destroyed handles.
 Main requests:
 
 ->
-writeCreateObjectBegin(char*name, size_t strlen, char reference[C]lass_or_create[I]nstance, void *id);
+CreateInstance:
 <C v=name p=C|I i=ID> ...ARGS...
-writeCreateObjectEnd()
 </C>
+v: string
+p: char (Reference[C]lass, Create[I]nstance)
+i: long
 
 ->
-writeInvokeBegin(long object, char*method, size_t strlen, char examine[P]roperty_or_[I]nvoke, void*id);
+Invoke:
 <I v=object m=method p=P|I i=ID> ...ARGS...
-writeInvokeEnd()
 </I>
+v: long
+m: string
+p: char (examine[P]roperty, [I]nvoke method)
+i: long
 
 When v=0, the call is directed to the current request-handling
 instance of the java bridge.
 
 
 
-ARGS:
+ARGS or response:
 <->
-writeString(char*str, size_t strlen)
+String:
 <S v=str [i=ID] />
+v: string
+i: long (reply only)
 
 <->
-writeBoolean(short b)
+Boolean:
 <B v=T|F [i=ID] />
+v: char ([T]rue, [F]alse)
+i: long (reply only)
 
 <->
-writeLong(long l)
+Long:
 <L v=l [i=ID] />
+v: long
+i: long (reply only)
 
 <->
-writeDouble(double d)
+Double:
 <D v=d [i=ID] />
+v: double
+i: long (reply only)
 
 <->
-writeObject(long object)
+Object:
 <O v=object [i=ID] />
-
+v: long
+i: long (reply only)
 NULL values can be send as either v="" or v="0"
 
 <-
-Exception
+Exception:
 <E v=object m=stringRepresentation i=ID />
+v: long
+m: string
+i: long
 
 ->  (or <->, see below)
-writeCompositeBegin_a()
-writeCompositeBegin_h()
-<X t=A|H [i=ID] /> ...[PAIR|ARG]...
-writeCompositeEnd()
+Composite:
+<X t=A|H [i=ID] /> ...PAIR...
 </X>
+t: char ([A]rray, [H]ashtable)
+i: long (reply only)
 
 ->  (or <->, see below)
-writePairBegin_s(char *key, size_t strlen) // if X t=H
-writePairBegin_n(unsigned long key)  // if X t=H
-writePairBegin()  // if X t=A
+Pair:
 <P [t=N|S v=key]> ...ARG...
-writePairEnd()
 </P>
+t: char (key is [N]umeric, [S]tring or doesn't exist (if X=A))
+v: long (if X=H and t=N)
+v: string (if X=H and t=S)
 
 
 
-OPTIONAL:
+OPTIONAL requests:
 ->
-writeGetMethodBegin(long object, char*method, size_t strlen, void*id)
+MethodGet:
 <M v=object, m=method id=ID > ...ARGS...
-writeGetMethodEnd()
 </M>
+v: long
+m: string
+i: long
 
 ->
-writeCallMethodBegin(long object, long method, void*id);
-<F v=o m=method i=ID > ...ARGS...
-writeCallMethodEnd()
+CallMethod:
+<F v=object m=method i=ID > ...ARGS...
 </F>
+v: long
+m: long
+i: long
 
 ->
-writeUnref(Object ob)
+Unref:
 <U v=object />
+v: long
 
 
 

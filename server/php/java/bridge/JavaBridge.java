@@ -174,6 +174,7 @@ public class JavaBridge implements Runnable {
 	    try {
 		socket = LocalServerSocket.create(sockname, Util.BACKLOG);
 	    } catch (Throwable e) {
+		Util.logMessage("Local sockets not available:" + e + ". Trying TCP sockets instead");
 	    }
 	    if(null==socket) socket = TCPServerSocket.create(sockname, Util.BACKLOG);
 	    Util.logMessage("Java logFile     : " + logFile);

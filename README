@@ -201,12 +201,8 @@ Build and execution instructions:
           [java]
           java.log_level="3"
           java.log_file="/var/log/php-java-bridge.log"
-
-          # local bridge
           java.socketname="/var/run/.php-java-bridge_socket"
-
-          # list of additional servers running the bridge
-          #java.hosts="localhost:9167;192.168.6.30:8009;..."
+          #java.hosts="localhost:9167;192.168.6.30:8009"
 
 
   Re-start the web-server, for example with the command:
@@ -214,25 +210,37 @@ Build and execution instructions:
           apachectl restart
 
 
-  OPTION 1:
-  If you want to run the bridge on an array of servers (see
-  java.hosts), start them now. Example command (on all servers):
-
-          java -jar JavaBridge.jar 9176 3 ""
-
-  OPTION 2:
-  If you want to run only one local bridge, copy the php-java-bridge
-  executable into the /usr/sbin directory and start it with the command:
+  OPTION 1: You can use local sockets to connect to a local backend. 
+  Copy the executable php-java-bridge to /usr/sbin and start it with
+  the command:
 
           sh /usr/sbin/php-java-bridge
 
-  OPTION 3:
-  If you want to run only one bridge as a sub-process or apache, disable
-  the java.host and java.socketname settings, re-start apache and check 
-  if it has started the bridge as a sub-process:
+  This is the only option available on Security Enhanced Linux.
+
+
+  OPTION 2: You can use TCP/IP sockets to communicate with different
+  backends on different hosts. Disable the java.socketname option,
+  edit and enable the java.hosts option and re-start the web server.
+  Start the backends on all hosts, for example with the command:
+
+          java -jar JavaBridge.jar 9176 3 ""
+
+  On Security Enhanced Linux the communication via TCP/IP sockets is
+  switched off for security reasons.
+
+
+  OPTION 3: You can start the bridge as a sub-process of apache. Disable
+  java.hosts and java.socketname, re-start apache and check if apache
+  has started java as a sub-process.  For example with the commands:
 
           apachectl restart
           pstree | fgrep httpd
+
+  Starting or re-starting the bridge with the apache web-server is
+  convenient during development but not recommended for production
+  systems, see UTF-8 section below.  This option cannot be used on
+  Security Enhanced Linux.
 
 
   Check the status:
@@ -250,10 +258,12 @@ Build and execution instructions:
           java.hosts     = <add. bridge hosts e.g.: server1:8091;server2:9001>
 
   Please first look at the output of phpinfo() to see the original
-  values.  The java.hosts setting specifies additional hosts which running
-  the PHP/Java Bridge. If not set or if the bridge cannot connect to one
-  of these servers nor to java.socketname, the bridge will start a
-  private java VM.
+  values.  
+
+  The java.hosts setting specifies additional hosts running the
+  PHP/Java Bridge. If not set or if the bridge cannot connect to one of
+  these servers nor to java.socketname, the bridge will start a private
+  java VM.
 
 ---------------------------------------------
   Starting the PHP/Java Bridge automatically
@@ -530,9 +540,9 @@ Build and execution instructions:
       
   If the default policy is too restrictive and e.g. you want to use the
   PHP/Java Bridge to connect to your J2EE server(s), you can temporarily 
-  set the policy to Permissive, for example with the command "setenforce
-  Permissive" and connect to the server. Then extract the permissions
-  from the audit log, for example with the command "audit2allow -d". Then
+  set the policy to "permissive", for example with the command "setenforce
+  Permissive". Connect to the server, then extract the permissions
+  from the audit log, for example with the command "audit2allow -d", then
   append them at the end of the "php-java-bridge.te" file and load the
   updated policy into the kernel. Don't forget to switch back, for
   example with "setenforce Enforcing".
@@ -541,8 +551,10 @@ Build and execution instructions:
   PHP 5 issues
   ------------
 
-  Versions 5.0.0 up to 5.0.3 cannot load the Bridge from the dl()
-  function.  If you use one of these versions, please either apply the
+  All known PHP 5 versions crash when the dl() function is used. They
+  first unload the module and then try to invoke its shutdown method.
+
+  If you use one of these versions, please either apply the
   php5-crash-in-evaluator-shutdown_workaround.patch or add an entry to
   the php.ini, see install instructions above.
 

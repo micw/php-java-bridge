@@ -12,7 +12,11 @@ public class TCPServerSocket implements ISocketFactory {
     private int port;
     
     public static ISocketFactory create(String name, int backlog) throws IOException {
-	return new TCPServerSocket(Integer.parseInt(name==null?DefaultSocketname:name), backlog);
+	if(name==null) name=DefaultSocketname;
+	if(name.startsWith("INET:")) name=name.substring(5);
+	if(name.startsWith("LOCAL:")) 
+	    throw new IOException("tcp socketname must start with 'INET:'");
+	return new TCPServerSocket(Integer.parseInt(name), backlog);
     }
     private TCPServerSocket(int port, int backlog)
 	throws IOException {
@@ -34,6 +38,6 @@ public class TCPServerSocket implements ISocketFactory {
     	return String.valueOf(port);
     }
     public String toString() {
-    	return "INET: " +getSocketName();
+    	return "INET:" +getSocketName();
     }
 }

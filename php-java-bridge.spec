@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 1.0.8
+%define version 2.0.0
 %define release 1
 Name: php-java-bridge
 Summary: PHP Hypertext Preprocessor to Java Bridge
@@ -14,7 +14,7 @@ BuildRequires: gcc >= 3.3.3
 BuildRequires: httpd j2sdk
 Requires: php >= 4.3.2
 Requires: httpd 
-Requires: j2re >= 1.4.2
+Requires: j2re >= 1.4.0
 Provides: php-java-bridge
 
 
@@ -46,7 +46,7 @@ rm -rf $RPM_BUILD_ROOT
 echo >filelist
 
 mod_dir=`cat install.log | sed -n '/Installing shared extensions:/s///p' | awk '{print $1}'`
-files='JavaBridge.class JavaBridge$1.class JavaBridge$2.class JavaBridge$3.class JavaBridge$4.class JavaBridge$PhpMap.class java.so libnatcJavaBridge.so RunJavaBridge'
+files='JavaBridge.jar java.so libnatcJavaBridge.so RunJavaBridge'
 mkdir -p $RPM_BUILD_ROOT/$mod_dir
 for i in $files; 
   do cp $mod_dir/$i $RPM_BUILD_ROOT/$mod_dir/$i; 

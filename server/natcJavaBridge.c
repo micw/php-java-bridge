@@ -335,12 +335,12 @@ JNIEXPORT jint JNICALL Java_php_java_bridge_JavaBridge_accept
 }
 
 JNINativeMethod javabridge[]={
-  {"startNative", "(ILjava/lang/String;)V", Java_php_java_bridge_JavaBridge_startNative},
+  {"startNative", "(IILjava/lang/String;)I", Java_php_java_bridge_JavaBridge_startNative},
   {"openLog", "(Ljava/lang/String;)Z", Java_php_java_bridge_JavaBridge_openLog},
 
-  {"swrite", "(I[BII)I", Java_php_java_bridge_JavaBridge_swrite},
-  {"sread", "(I[BII)I", Java_php_java_bridge_JavaBridge_sread},
-  {"sclose", "(i)V", Java_php_java_bridge_JavaBridge_sclose},
+  {"swrite", "(I[BI)I", Java_php_java_bridge_JavaBridge_swrite},
+  {"sread", "(I[BI)I", Java_php_java_bridge_JavaBridge_sread},
+  {"sclose", "(I)V", Java_php_java_bridge_JavaBridge_sclose},
 };
 
 static struct NativeMethods {
@@ -348,7 +348,7 @@ static struct NativeMethods {
   JNINativeMethod*meth;
   int n;
 } meths[]={
-  {"JavaBridge", javabridge, (sizeof javabridge)/(sizeof *javabridge)},
+  {"php/java/bridge/JavaBridge", javabridge, (sizeof javabridge)/(sizeof *javabridge)},
 };
 
 static void jniRegisterNatives (JNIEnv *env)
@@ -391,7 +391,7 @@ void java_bridge_main(int argc, char**argv)
   err=JNI_CreateJavaVM(&jvm, (void*)&jenv, &vm_args);
   assert(!err); if(err) exit(9);
   jniRegisterNatives(jenv);
-  reflectClass = (*jenv)->FindClass(jenv, "JavaBridge");
+  reflectClass = (*jenv)->FindClass(jenv, "php/java/bridge/JavaBridge");
   assert(reflectClass); if(!reflectClass) exit(9);
   init = (*jenv)->GetStaticMethodID(jenv, reflectClass, "init", "([Ljava/lang/String;)V");
   assert(init); if(!init) exit(9);
@@ -420,7 +420,7 @@ void java_bridge_main_gcj(int argc, char**_argv)
 {
   char **argv;
   /* someone should really fix this bug in gcj */
-  meths[0].meth[0].signature="(ILjava.lang.String;)V";
+  meths[0].meth[0].signature="(IILjava.lang.String;)I";
   meths[0].meth[1].signature="(Ljava.lang.String;)Z";
 
   if(!_argv) exit(6);

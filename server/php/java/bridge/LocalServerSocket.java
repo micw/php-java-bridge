@@ -17,7 +17,10 @@ public class LocalServerSocket implements ISocketFactory {
     }
     private LocalServerSocket(String name, int backlog)
 	throws IOException {
-    	if(!name.startsWith(File.pathSeparator)) throw new IOException("Socketname not valid");
+	if(name==null) name=DefaultSocketname;
+	if(name.startsWith("LOCAL:")) name=name.substring(6);
+    	else if(name.startsWith("INET:")) 
+	    throw new IOException("local socketname must start with 'LOCAL:'");
 	this.backlog=backlog;
 	this.name=name;
 	if(0==(this.peer=JavaBridge.startNative(Util.logLevel, backlog, name))) throw new IOException("Unix domain sockets not available.");
@@ -36,6 +39,6 @@ public class LocalServerSocket implements ISocketFactory {
     	return name;
     }
     public String toString() {
-    	return "LOCAL: " +getSocketName();
+    	return "LOCAL:" +getSocketName();
     }
 }

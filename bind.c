@@ -299,13 +299,13 @@ void java_start_server() {
 		if((read(p[0], &pid, sizeof pid))!=(sizeof pid)) pid=0;
 	  }
 	}
+	cfg->cid=pid;
+	cfg->err=p[0];
+	wait_server();
   } else {
+	cfg->cid=cfg->err=0;
 	free(test_server);
-	return;
   }
-  cfg->cid=pid;
-  cfg->err=p[0];
-  wait_server();
 }
 
 static void wait_for_daemon() {

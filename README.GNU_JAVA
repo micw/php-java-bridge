@@ -6,7 +6,7 @@
   into native code. 
   In the directory php-java-bridge_1.x.y type:
 
-   gcj --version  # must be gcj 3.3.3 or above.
+   gcj --version  # must be gcj 4.0 or above.
 
    phpize && ./configure && make &&  su -c "make install"
 
