@@ -297,6 +297,25 @@ PHP_METHOD(java, java_class)
 	efree(argv);
 }
 
+// exact copy of java_class for jsr223 compatibility
+PHP_METHOD(java, javaclass)
+{
+	zval **argv;
+	int argc = ZEND_NUM_ARGS();
+
+	argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
+	if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
+		php_error(E_ERROR, "Couldn't fetch arguments into array.");
+		RETURN_NULL();
+	}
+
+	php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU,
+								   "java", 1, 0, 
+								   getThis(),
+								   argc, argv);
+	efree(argv);
+}
+
 PHP_METHOD(java, __call)
 {
 	zval **xargv, **argv;
@@ -508,6 +527,7 @@ ZEND_BEGIN_ARG_INFO(arginfo_set, 0)
 ZEND_END_ARG_INFO();
 
 static function_entry java_class_functions[] = {
+  PHP_ME(java, javaclass, NULL, 0)
   PHP_ME(java, java_class, NULL, 0)
   PHP_ME(java, java, NULL, 0)
   PHP_ME(java, __call, arginfo_set, ZEND_ACC_PUBLIC)
@@ -519,6 +539,7 @@ static function_entry java_class_functions[] = {
   PHP_ME(java, offsetGet,     arginfo_get, ZEND_ACC_PUBLIC)
   PHP_ME(java, offsetSet,     arginfo_set, ZEND_ACC_PUBLIC)
   PHP_ME(java, offsetUnset,   arginfo_get, ZEND_ACC_PUBLIC)
+  {NULL, NULL, NULL}
 };
 
 
@@ -536,6 +557,33 @@ static zend_object_value create_object(zend_class_entry *class_type TSRMLS_DC)
   /* real work */
   obj.handlers = (zend_object_handlers*)&php_java_handlers;
   return obj;
+}
+
+static zend_object_value create_exception_object(zend_class_entry *class_type TSRMLS_DC)
+{
+  /* standard initialization, copied from parent zend_exceptions.c */
+  zval tmp, obj;
+  zend_object *object;
+  zval *trace;
+  obj.value.obj = zend_objects_new(&object, class_type TSRMLS_CC);
+
+  ALLOC_HASHTABLE(object->properties);
+  zend_hash_init(object->properties, 0, NULL, ZVAL_PTR_DTOR, 0);
+  zend_hash_copy(object->properties, &class_type->default_properties, (copy_ctor_func_t) zval_add_ref, (void *) &tmp, sizeof(zval *));
+  
+  ALLOC_ZVAL(trace);
+  trace->is_ref = 0;
+  trace->refcount = 0;
+  zend_fetch_debug_backtrace(trace, 0 TSRMLS_CC);
+  
+  zend_update_property_string(zend_exception_get_default(), &obj, "file", sizeof("file")-1, zend_get_executed_filename(TSRMLS_C) TSRMLS_CC);
+  zend_update_property_long(zend_exception_get_default(), &obj, "line", sizeof("line")-1, zend_get_executed_lineno(TSRMLS_C) TSRMLS_CC);
+  zend_update_property(zend_exception_get_default(), &obj, "trace", sizeof("trace")-1, trace TSRMLS_CC);
+  
+  /* real work */
+  obj.value.obj.handlers = (zend_object_handlers*)&php_java_handlers;
+  
+  return obj.value.obj;
 }
 
 static int cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_DC)
@@ -599,6 +647,7 @@ static int iterator_current_key(zend_object_iterator *iter, char **str_key, uint
   zval *presult;
   
   MAKE_STD_ZVAL(presult);
+  ZVAL_NULL(presult);
   
   php_java_invoke("currentKey", iterator->java_iterator, 0, 0, presult);
 
@@ -635,6 +684,7 @@ static int iterator_current_key(zend_object_iterator *iter, char **str_key, uint
 static void init_current_data(java_iterator *iterator TSRMLS_DC) 
 {
   MAKE_STD_ZVAL(iterator->current_object);
+  ZVAL_NULL(iterator->current_object);
 
   php_java_invoke("currentData", iterator->java_iterator, 0, 0, iterator->current_object);
 }
@@ -831,21 +881,21 @@ PHP_MINIT_FUNCTION(java)
   php_java_exception_class_entry =
 	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
   // only cast and clone; no iterator, no array access
-  php_java_exception_class_entry->create_object = create_object;
+  php_java_exception_class_entry->create_object = create_exception_object;
   
-  INIT_CLASS_ENTRY(ce, "java_class", NULL);
+  INIT_CLASS_ENTRY(ce, "java_class", java_class_functions);
   parent = (zend_class_entry *) php_java_class_entry;
 
   php_java_class_class_entry = 
 	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
 
   /* compatibility with the jsr implementation */
-  INIT_CLASS_ENTRY(ce, "javaclass", NULL);
+  INIT_CLASS_ENTRY(ce, "javaclass", java_class_functions);
   parent = (zend_class_entry *) php_java_class_entry;
   php_java_jsr_class_class_entry = 
 	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
 
-  INIT_CLASS_ENTRY(ce, "javaexception", NULL);
+  INIT_CLASS_ENTRY(ce, "javaexception", java_class_functions);
   parent = (zend_class_entry *) php_java_exception_class_entry;
   php_java_exception_class_entry = 
 	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);

@@ -1,20 +1,28 @@
-2005-01-31  Jost Boekemeier  <jostb@intern>
+2005-02-01  Jost Boekemeier  <jostb@intern>
 
-	* tests.php5/arrayInterface.php: Use Array.getLength instead of
-	explicit value.
+	* java.c (iterator_current_key, init_current_data): PHP does not
+	necessarily return "clean" zvals. Zero out the allocated zval so
+	that setResultFromObject can initialize it properly.  This fixes a
+	bug in the iterator interface which was not able to iterate over
+	arrays of non-primitive types.
+
+	* java.c (javaclass): New method for jsr223 compatibility.
+	(java_class_functions): Terminate array with a NULL entry.
+	(create_exception_object): New from parent in order to implement
+	object casting.
+	(PHP_MINIT_FUNCTION): Use create_exception_object.
 	
-	* php-java-bridge.fc, php-java-bridge.te: Cleanup for release.
-
-        * README: Windows section rewritten
-
-	* bind.c (java_get_server_args): Fixed typo.
-
+	
 2005-01-28  Jost Boekemeier  <jostb@intern>
 	
 	* java.c (PHP_MINIT_FUNCTION): For java_class, javaclass and
 	javaexception: Do not override parent methods with themselfs. PHP
 	5.0.3 doesn't like that...
 	
+	* README: Removed windows install description.
+	
+	* README.WINDOWS: New file from README.
+
 	* config.m4: Embedding into PHP works again.  Use m4_include so
 	that autoheader scans the included files.
 	

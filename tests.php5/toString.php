@@ -6,6 +6,7 @@ if(!extension_loaded('java')) {
 }
 
 $Object = new java_class ("java.lang.Object");
+$ObjectC = new JavaClass ("java.lang.Object");
 $object = $Object->newInstance();
 
 // test __toString()
@@ -15,6 +16,7 @@ echo $Object; echo "\n";
 // test cast to string
 // should display "class java.lang.Object"
 echo "" . $Object . "\n";
+echo "" . $ObjectC . "\n";
 
 echo "$object\n";
 ?>
