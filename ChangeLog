@@ -1,3 +1,10 @@
+2004-10-30  Boekemeier  <jost2345@intern>
+
+	* server/natcJavaBridge.java (readChunks, read): New functions
+	(load): Use these to work around a bug in GNU java
+
+	* server/java.c (usage): New function
+
 2004-10-28  Boekemeier  <jost2345@intern>
 
 	* README: Document java.log_level
