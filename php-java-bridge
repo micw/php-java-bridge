@@ -1,9 +1,9 @@
 #!/bin/bash
-
+set -x
 # Start the server part of the PHP/Java Bridge.  This script will be
 # called by when the php-java-bridge service is started.
 
-PATH=/bin:/usr/bin:$PATH
+PATH=/bin:/usr/bin:$PATH:
 LD_LIBRARY_PATH=/lib:/usr/lib:$LD_LIBRARY_PATH
 LANG=C
 
@@ -11,7 +11,7 @@ export LANG PATH LD_LIBRARY_PATH
 
 
 # if called with non-zero args, invoke
-if ! test $# = 0; then
+if test $# != 0; then
   pid=/var/run/php-java-bridge.pid
   trap 'kill `cat $pid`; rm -f $pid' 2 15
   eval $1; shift
@@ -28,16 +28,20 @@ fi
 # called with zero args, construct args
 echo "<?php phpinfo();?>" | php 2>/dev/null >/tmp/phpinfo.$$
   
-if ! fgrep java /tmp/phpinfo.$$ |
+if fgrep java /tmp/phpinfo.$$ |
      sed 's/<[/a-z ="0-9]*>//g' |
-     grep -q "java support.*Enabled"
-then echo "Error: PHP/Java Bridge module not installed."; exit 1
+     grep "java support.*Enabled" >/dev/null
+then true;
+else
+ echo "Error: PHP/Java Bridge module not installed."; exit 1
 fi
 
 if  fgrep java /tmp/phpinfo.$$ |
     sed 's/<[/a-z ="0-9]*>//g' | 
-    grep -q 'java status.*running'
-then echo "PHP/Java Bridge already running or socketname option not set in /etc/php.d/java.ini"; exit 2;
+    grep 'java status.*not running' >/dev/null
+then true
+else
+    echo "PHP/Java Bridge already running or socketname option not set in /etc/php.d/java.ini"; exit 2;
 fi
 
 cmd=`fgrep java /tmp/phpinfo.$$ |
