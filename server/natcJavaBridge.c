@@ -746,11 +746,11 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
   int sock, n;
   SFILE *peer;
 
-  signal(SIGBUS, exit);
-  signal(SIGILL, exit);
-  /* do not catch these, the VM uses them internally */
-  /*   signal(SIGSEGV, exit); */
-  /*   signal(SIGPWR, exit); */
+  /* catch signals not used by the VM, see
+	 http://www-106.ibm.com/developerworks/ibm/library/i-signalhandling/
+     (exit will call our atexit_bridge)
+  */
+  signal(SIGABRT, exit);
 
   logLevel = _logLevel;
   bridge = self;
