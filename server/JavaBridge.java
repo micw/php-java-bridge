@@ -13,7 +13,7 @@ import java.util.*;
 import java.io.*;
 import java.net.*;
 
-public class JavaBridge extends ClassLoader {
+public class JavaBridge extends ClassLoader implements Runnable {
 
 	static PrintStream logStream;
 	static int logLevel;
@@ -32,6 +32,7 @@ public class JavaBridge extends ClassLoader {
 	static native long hashUpdate(long array, long peer, byte key[]);
 	static native long hashIndexUpdate(long array, long peer, long key);
 	static native void setException(long result, long peer, byte value[]);
+	static native void handleRequests(int socket);
 	
 	//
 	// Helper routines for the C implementation
@@ -40,6 +41,20 @@ public class JavaBridge extends ClassLoader {
 	public Object MakeArg(long l)    { return new Long(l); }
 	public Object MakeArg(double d)  { return new Double(d); }
 
+        // 
+        // Communication with client in a new thread
+        //
+        private int socket;
+        public void run() { handleRequests(socket);}
+        public static void HandleRequests(int socket) {  
+	    JavaBridge bridge = new JavaBridge();
+	    bridge.socket=socket;
+	    (new Thread(bridge)).start();
+	}
+
+       //
+       // init
+       //
 	static void init(String s[]) {
 		String logFile=null;
 		String sockname=null;

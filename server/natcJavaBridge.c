@@ -54,6 +54,8 @@ static jmethodID hashKeys=NULL;
 static jmethodID enumMore=NULL;
 static jmethodID enumNext=NULL;
 
+static jmethodID handleRequests=NULL;
+
 static jclass longClass=NULL;
 static jmethodID longCtor=NULL;
 static jmethodID longValue=NULL;
@@ -222,6 +224,9 @@ static void initGlobals(JNIEnv *env) {
   
   enumMore = (*env)->GetMethodID(env, enumClass, "hasMoreElements", "()Z");
   enumNext = (*env)->GetMethodID(env, enumClass, "nextElement", "()Ljava/lang/Object;");
+
+  handleRequests = (*env)->GetStaticMethodID(env, bridge, "HandleRequests", "(I)V");
+
   longClass = (*env)->FindClass (env, "java/lang/Long");
   longCtor = (*env)->GetMethodID(env, longClass, "<init>", "(J)V");
   longValue = (*env)->GetMethodID(env, longClass, "longValue", "()J");
@@ -700,23 +705,18 @@ static void connection_cleanup (JNIEnv *env, jobject globalRef) {
   (*env)->DeleteGlobalRef(env, globalRef);
 }
 
-struct param {int s; JNIEnv *env; JavaVM *vm;};
-static void *handle_requests(void *p) {
+JNIEXPORT void JNICALL Java_JavaBridge_handleRequests(JNIEnv*env, jclass self, jint socket)
+{
   jobject globalRef;
-  JNIEnv *env;
-  struct param *param = (struct param*)p;
   FILE *peer;
   block_sig();
   enter();
-  int err = (*param->vm)->AttachCurrentThread(param->vm, (void**)&env, NULL);
-
-  if(err) {logError(env, "could not attach to java vm"); free(p); return NULL;}
-  logChannel(env, "create new communication channel", param->s);
-  peer = fdopen(param->s, "r+");
+  logChannel(env, "create new communication channel", socket);
+  peer = fdopen(socket, "r+");
   if(!peer) logSysError(env, "could not fdopen socket");
 
   globalRef = connection_startup(env);
-  if(!globalRef){logError(env, "could not allocate global hash");fclose(peer);free(p);return NULL;}
+  if(!globalRef){logError(env, "could not allocate global hash");fclose(peer);return;}
 
   while(peer && !feof(peer)) {
 	int term = handle_request_impl(peer, env, globalRef);
@@ -728,14 +728,11 @@ static void *handle_requests(void *p) {
   }
   connection_cleanup(env, globalRef);
 
-  logChannel(env, "terminate communication channel", param->s);
-  (*param->vm)->DetachCurrentThread(param->vm);
+  logChannel(env, "terminate communication channel", socket);
   if(peer) fclose(peer);
-  close(param->s);
+  close(socket);
 
-  free(p);
   leave();
-  return NULL;
 }
 
 
@@ -743,17 +740,18 @@ static void *handle_requests(void *p) {
 JNIEXPORT void JNICALL Java_JavaBridge_startNative
   (JNIEnv *env, jclass self, jint _logLevel, jstring _sockname)
 {
-  pthread_t thread;
   struct sockaddr_un saddr;
   int sock, n;
 
   signal(SIGBUS, exit);
   signal(SIGILL, exit);
-/*   signal(SIGSEGV, exit); */
-/*   signal(SIGPWR, exit); */
-  initGlobals(env);
+  /* do not catch these, the VM uses them internally */
+  /*   signal(SIGSEGV, exit); */
+  /*   signal(SIGPWR, exit); */
+
   logLevel = _logLevel;
   bridge = self;
+  initGlobals(env);
 
   if(_sockname!=NULL) {
 	jboolean isCopy;
@@ -784,21 +782,17 @@ JNIEXPORT void JNICALL Java_JavaBridge_startNative
   if(n==-1) {logSysError(env, "could not listen to socket"); return;}
 
   while(1) {
-	struct param *param = malloc(sizeof*param);
-	if(!param) {logMemoryError(env, __FILE__, __LINE__); return;}
+	int socket;
 
   res:errno=0; 
 	pthread_mutex_lock(&mutex);
 	if(count==-1) {pthread_mutex_unlock(&mutex); return;}
 	pthread_mutex_unlock(&mutex);
-	param->s = accept(sock, NULL, 0); 
-	if(param->s==-1) {logSysError(env, "socket accept failed"); return;}
+	socket = accept(sock, NULL, 0); 
+	if(socket==-1) {logSysError(env, "socket accept failed"); return;}
 	//if(errno) goto res;
 
-	param->env = env;
-	n=(*env)->GetJavaVM(env, &param->vm);
-	if(n) {logError(env, "could not get java vm"); return;}
-	pthread_create(&thread, &attr, handle_requests, param);
+    (*env)->CallStaticVoidMethod(env, bridge, handleRequests, socket);
   }
 }
 
@@ -921,7 +915,6 @@ JNIEXPORT void JNICALL Java_JavaBridge_setException
   swrite(&value, sizeof value, 1, peer);
   while(handle_request(peer, env));
 }
-
 JNINativeMethod javabridge[]={
   {"setResultFromString", "(JJ[B)V", Java_JavaBridge_setResultFromString},
   {"setResultFromLong", "(JJJ)V", Java_JavaBridge_setResultFromLong},
@@ -934,6 +927,7 @@ JNINativeMethod javabridge[]={
   {"hashIndexUpdate", "(JJJ)J", Java_JavaBridge_hashIndexUpdate},
   {"setException", "(JJ[B)V", Java_JavaBridge_setException},
   {"startNative", "(ILjava/lang/String;)V", Java_JavaBridge_startNative},
+  {"handleRequests", "(I)V", Java_JavaBridge_handleRequests},
 };
 
 static struct NativeMethods {
@@ -944,7 +938,7 @@ static struct NativeMethods {
   {"JavaBridge", javabridge, (sizeof javabridge)/(sizeof *javabridge)},
 };
 
-static void jniRegisterNatives (JNIEnv *env) 
+static void jniRegisterNatives (JNIEnv *env)
 {
   int i;
   jint r;
@@ -960,7 +954,7 @@ static void jniRegisterNatives (JNIEnv *env)
 
 void java_bridge_main(int argc, char**argv) 
 {
-  JavaVMOption options[]={{argv[1], 0}, {argv[2], 0}, {argv[3], 0}};
+  JavaVMOption options[3];
   JavaVM *jvm;
   JNIEnv *jenv;
   JavaVMInitArgs vm_args; /* JDK 1.2 VM initialization arguments */
@@ -972,8 +966,11 @@ void java_bridge_main(int argc, char**argv)
   /* Get the default initialization arguments and set the class 
    * path */
   JNI_GetDefaultJavaVMInitArgs(&vm_args);
-  vm_args.nOptions=sizeof(options)/sizeof*options;
+  vm_args.nOptions=0;
   vm_args.options=options;
+  if(argv[1]) vm_args.options[vm_args.nOptions++].optionString=argv[1];
+  if(argv[2]) vm_args.options[vm_args.nOptions++].optionString=argv[2];
+  if(argv[3]) vm_args.options[vm_args.nOptions++].optionString=argv[3];
   vm_args.ignoreUnrecognized=JNI_TRUE;
 
   /* load and initialize a Java VM, return a JNI interface 
@@ -991,7 +988,7 @@ void java_bridge_main(int argc, char**argv)
   assert(arr); if(!arr) exit(9);
 
   int off=6;
-  for (i=0; i<argc; i++) {
+  for (i=0; (i+6)<argc; i++) {
 	jstring arg;
 	if(!argv[i+off]) break;
     arg = (*jenv)->NewStringUTF(jenv, argv[i+off]);
@@ -1004,4 +1001,24 @@ void java_bridge_main(int argc, char**argv)
   assert(0);
   while(1)			  /* DestroyJavaVM should already block forever */
 	sleep(65535);
+}
+
+void java_bridge_main_gcj(int argc, char**_argv) 
+{
+  char **argv;
+  /* someone should really fix this bug in gcj */
+  meths[0].meth[4].signature="(JJLjava.lang.Object;)V";
+  meths[0].meth[10].signature="(ILjava.lang.String;)V";
+	
+  if(!argv) exit(6);
+  if(argc==4) {
+	argv=calloc(10, sizeof*argv);
+	argv[6]=_argv[1];			/* socketname */
+	argv[7]=_argv[2];			/* logLevel */
+	argv[8]=_argv[3];			/* logFile */
+	argv[9]=0;					/* last arg */
+  } else {
+	argv=_argv;
+  }
+  java_bridge_main(10, argv);
 }

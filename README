@@ -27,10 +27,10 @@ Build and execution instructions:
 
   In the directory php-java-bridge_1.x.y type:
 
-          java -version      # 1.3 or above (1.4.2_02 or IBM Java recommended).
-          gcc --version      # 3.2.3 or above.
-          apachectl -version # Apache 1.3 or above.
-          php --version      # PHP 4.3.2 or above. For PHP5 see below.
+          java -version        # 1.3 or above (1.4.2_02 or IBM Java recommended).
+          gcc --version        # 3.2.3 or above.
+          apachectl -version   # Apache 1.3 or above.
+          php-config --version # PHP 4.3.2 or above. For PHP5 see below.
 
           phpize && ./configure --with-java=/opt/IBMJava2-14
           make CFLAGS="-DNDEBUG"
@@ -133,11 +133,17 @@ Build and execution instructions:
    In the directory php-java-bridge_1.x.y/modules type:
 
    gcj --version  # must be gcj 3.2.3 or above!
-   gcj -fjni -oJavaBridge.srv --main=JavaBridge JavaBridge.class \
-                                          -L`pwd` -lnatcJavaBridge
+   echo "main(int argc,char**argv){java_bridge_main_gcj(argc,argv);}">start.c
+   gcj --static -g0 -O2 -fjni -oJavaBridge.srv start.c \
+       ../server/JavaBridge.java \
+       ../server/natcJavaBridge.c \
+       [...insert additional paths to .java classes here...] \
+       -I$JAVA_HOME/include -I$JAVA_HOME/include/linux  \
+       -I..
 
-   This creates a native executable in the current directory which
-   does not need java anymore.  It can be started with the command:
+   This creates a native, static linked executable in the current
+   directory which does not need any libraries anymore.  It can be
+   started with the command:
 
       ./JavaBridge.srv <java.socketname> <loglevel> <log-file>
 
@@ -157,9 +163,13 @@ Build and execution instructions:
      java.vendor -> Free Software Foundation, Inc.
      java.vendor.url -> http://gcc.gnu.org/java/
 
-   You can package the JavaBridge.srv and the libraries it needs
+   It is recommended to compile the executable against shared
+   libraries (ommit the above --static).  If you do this, you
+   must package the JavaBridge.srv and the libraries it needs
    (at least libnatcJavaBridge.so, libgcc_s.so.1 and libgcj.so.3, see
-   output of ldd command) into an RPM and make sure that your client
+   output of ldd command) into an RPM.
+
+   On the installation system and make sure that your client
    starts the JavaBridge before the httpd service gets started. -- On
    RedHat the init.d/httpd is started as 85/15, so it should be
    sufficient to start the JavaBridge executable as #84 and stop it
