@@ -23,7 +23,9 @@ public class TCPServerSocket implements ISocketFactory {
 	    Util.logError("Could not parse TCP socket number: " + e + ". Using default: " + DefaultSocketname);
 	    p=Integer.parseInt(DefaultSocketname);
 	}
-	return new TCPServerSocket(p, backlog);
+	TCPServerSocket s = new TCPServerSocket(p, backlog);
+	new Listener(s.sock).listen();
+	return s;
     }
     private TCPServerSocket(int port, int backlog)
 	throws IOException {

@@ -65,8 +65,7 @@ void php_java_invoke(char*name, long object, int arg_count, zval**arguments, sho
 void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, short constructor, short createInstance, pval *object, int arg_count, zval**arguments)
 {
   long result = 0;
-  proxyenv *jenv = java_connect_to_server(TSRMLS_C);
-  if(!jenv) {ZVAL_NULL(object); return;}
+  proxyenv *jenv;
 
   if (constructor) {
     /* construct a Java object:
@@ -79,15 +78,41 @@ void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, sho
       php_error(E_ERROR, "Missing classname in new java() call");
       return;
     }
+	
+	if(strlen(name)>=4 && !strncmp(name, "mono", 4)) {
+								/* create a new mono object */
+	  char *cname, *mname;
+	  size_t clen;
+	  jenv = java_connect_to_mono(TSRMLS_C);
+	  if(!jenv) {ZVAL_NULL(object); return;}
 
-	/* create a new object */
-	(*jenv)->writeCreateObjectBegin(jenv, Z_STRVAL_P(arguments[0]), Z_STRLEN_P(arguments[0]), createInstance?'I':'C', (void*)result);
-	writeArguments(--arg_count, ++arguments, 0 TSRMLS_CC);
-	(*jenv)->writeCreateObjectEnd(jenv);
+	  cname = Z_STRVAL_P(arguments[0]);
+	  clen = Z_STRLEN_P(arguments[0]);
+	  mname = emalloc(clen+5);
+	  assert(mname); if(!mname) {ZVAL_NULL(object); return;}
+	  strcpy(mname, "cli.");
+	  memcpy(mname+4,cname, clen);
+	  (*jenv)->writeCreateObjectBegin(jenv, mname, clen+4, createInstance?'I':'C', (void*)result);
+	  writeArguments(--arg_count, ++arguments, 0 TSRMLS_CC);
+	  (*jenv)->writeCreateObjectEnd(jenv);
+	  efree(mname);
+	}
+	else {
+								/* create a new java object */
+	  jenv = java_connect_to_server(TSRMLS_C);
+	  if(!jenv) {ZVAL_NULL(object); return;}
+
+	  (*jenv)->writeCreateObjectBegin(jenv, Z_STRVAL_P(arguments[0]), Z_STRLEN_P(arguments[0]), createInstance?'I':'C', (void*)result);
+	  writeArguments(--arg_count, ++arguments, 0 TSRMLS_CC);
+	  (*jenv)->writeCreateObjectEnd(jenv);
+	}
 
   } else {
 
     long obj;
+
+	jenv = java_connect_to_server(TSRMLS_C);
+	if(!jenv) {ZVAL_NULL(object); return;}
 
 	java_get_jobject_from_object(object, &obj TSRMLS_CC);
 	assert(obj);
@@ -170,7 +195,8 @@ static void writeArgument(pval* arg, short ignoreNonJava TSRMLS_DC)
         }
         zend_hash_move_forward(Z_ARRVAL_P(arg));
       }
-	  if(wrote_begin) (*jenv)->writeCompositeEnd(jenv);
+	  if(!wrote_begin) (*jenv)->writeCompositeBegin_a(jenv); 
+	  (*jenv)->writeCompositeEnd(jenv);
       break;
       }
   default:

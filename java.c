@@ -348,7 +348,7 @@ PHP_METHOD(java, mono_class)
 }
 
 // exact copy of java_class for jsr223 compatibility
-PHP_METHOD(java, monoclass)
+PHP_METHOD(java, javaclass)
 {
 	zval **argv;
 	int argc = ZEND_NUM_ARGS();
@@ -419,8 +419,23 @@ PHP_METHOD(java, __call)
 }
 PHP_METHOD(java, __tostring)
 {
+  long result = 0;
+  
+  if(Z_TYPE_P(getThis()) == IS_OBJECT) {
+	java_get_jobject_from_object(getThis(), &result TSRMLS_CC);
+  }
+  if(result) {
+	proxyenv *jenv = java_connect_to_server(TSRMLS_C);
+	if(!jenv) {RETURN_NULL();}
+
+	(*jenv)->writeInvokeBegin(jenv, 0, "ObjectToString", 0, 'I', return_value);
+	(*jenv)->writeObject(jenv, result);
+	(*jenv)->writeInvokeEnd(jenv);
+  } else {
 	php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU,
 								   "tostring", 0, 0, getThis(), 0, NULL);
+  }
+
 }
 PHP_METHOD(java, __set)
 {
@@ -655,18 +670,25 @@ static zend_object_value create_exception_object(zend_class_entry *class_type TS
 static int cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_DC)
 {
   if (type==IS_STRING) {
-	long obj;
+	proxyenv *jenv = java_connect_to_server(TSRMLS_C);
+	long obj = 0;
 	zval free_obj;
 
 	if (should_free)
 	  free_obj = *writeobj;
 
-	java_get_jobject_from_object(readobj, &obj TSRMLS_CC);
-	assert(obj);
-	php_java_invoke("toString", obj,  0, 0, 0, writeobj TSRMLS_CC);
+	if(jenv && (Z_TYPE_P(readobj) == IS_OBJECT)) {
+	  java_get_jobject_from_object(readobj, &obj TSRMLS_CC);
+	}
+	if(obj) {
+	  (*jenv)->writeInvokeBegin(jenv, 0, "ObjectToString", 0, 'I', writeobj);
+	  (*jenv)->writeObject(jenv, obj);
+	  (*jenv)->writeInvokeEnd(jenv);
+	}
+
 	if (should_free)
 	  zval_dtor(&free_obj);
-	return SUCCESS;
+	return obj?SUCCESS:FAILURE;
   }
   return FAILURE;
 }
@@ -854,14 +876,6 @@ php_java_call_function_handler4(INTERNAL_FUNCTION_PARAMETERS, zend_property_refe
   getParametersArray(ht, arg_count, arguments);
 
   if(!strncmp("mono", name, 4) && arg_count>0) {
-	size_t len=4+Z_STRLEN(*arguments[0]);
-	char *arg0=emalloc(len+1);
-	strcpy(arg0, "cli.");
-	strncat(arg0, Z_STRVAL(*arguments[0]), len-4);
-	MAKE_STD_ZVAL(zval0);
-	ZVAL_NULL(zval0);
-	ZVAL_STRINGL(zval0, arg0, len, 0);
-	arguments[0]=zval0;
 	is_mono=1;
 	createInstance = strcmp("mono_class", name) && strcmp("monoclass", name);
 	constructor = !strcmp("mono", name) || !createInstance;
@@ -875,7 +889,6 @@ php_java_call_function_handler4(INTERNAL_FUNCTION_PARAMETERS, zend_property_refe
 								 object, 
 								 arg_count, arguments);
 
-  if(is_mono) zval_ptr_dtor(&zval0);
   efree(arguments);
   pval_destructor(&function_name->element);
 }
@@ -1043,7 +1056,7 @@ PHP_MINIT_FUNCTION(java)
 PHP_MINFO_FUNCTION(java)
 {
   char*s=java_get_server_string();
-  char*server = java_test_server(0);
+  char*server = java_test_server(0, 0);
   
   php_info_print_table_start();
   php_info_print_table_row(2, "java support", "Enabled");

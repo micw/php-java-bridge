@@ -36,6 +36,7 @@ public class JavaBridge implements Runnable {
 
     InputStream in; OutputStream out;
 
+    
     //
     // Native methods, only called  when loadLibrary succeeds.
     // These are necessary to deal with local sockets ("Unix domain sockets")
@@ -88,10 +89,20 @@ public class JavaBridge implements Runnable {
 
     private static boolean haveNatcJavaBridge=true;
 	
+    static Object loadLock=new Object();
+    static int load = 0;
+    public static int getLoad() {
+    	synchronized(loadLock) {
+    		return load;
+    	}
+    }
     // 
     // Communication with client in a new thread
     //
     public void run() { 
+    	synchronized(loadLock) {
+    		load++;
+    	}
     	Request r = new Request(this);
     	try {
 	    if(r.initOptions(in, out)) {
@@ -109,6 +120,10 @@ public class JavaBridge implements Runnable {
 	    out.close();
 	} catch (IOException e2) {
 	    Util.printStackTrace(e2);
+	}
+	
+	synchronized(loadLock) {
+		load--;
 	}
     }
 
@@ -737,6 +752,15 @@ public class JavaBridge implements Runnable {
     public static boolean InstanceOf(Object ob, Object c) {
 	Class clazz = Util.GetClass(c);
 	return clazz.isInstance(ob);
+    }
+
+    public static String ObjectToString(Object ob) {
+	StringBuffer buf = new StringBuffer("<");
+	buf.append(String.valueOf(ob.getClass()));
+	buf.append(": ");
+	buf.append(String.valueOf(ob));
+	buf.append(">");
+	return buf.toString();
     }
     
     public Session getSession(String name, Map vars) {

@@ -48,7 +48,7 @@ public class Parser {
     byte s[]= new byte[len];
     byte ch, mask=(byte)~0;
     // VOJD is VOID for f... windows (VOID is in winsock2.h)
-    static final short BEGIN=0, KEY=1, VAL=2, ENTITY=3, BLOB=4, VOJD=5; short type=VOJD;
+    static final short BEGIN=0, KEY=1, VAL=2, ENTITY=3, BLOB=4, VOJD=5, END=6; short type=VOJD;
     short level=0, eor=0, blen=0; boolean in_dquote, eot=false;
     int pos=0, c=0, i=0, i0=0, e;
 
@@ -134,13 +134,13 @@ public class Parser {
 		    type=VAL;
 		    break;
 		case '/': if(in_dquote) {APPEND(ch); break;}
-		    if(type==BEGIN) level--;
+		    if(type==BEGIN) { type=END; level--; }
 		    level--;
 		    eot=true; // used for debugging only
 		    break;
 		case '>': if(in_dquote) {APPEND(ch); break;}
-		    if(type==BEGIN){
-			PUSH(type);
+		    if(type==END){
+			PUSH(BEGIN);
 			CALL_END();
 		    } else {
 			if(type==VAL) PUSH(type);

@@ -52,7 +52,7 @@ short parse(proxyenv *env, parser_cb_t *cb) {
   unsigned char buf[RECV_SIZE];
   unsigned char ch, mask=~(unsigned char)0;
   // VOJD is VOID for f... windows (VOID is in winsock2.h)
-  enum {BEGIN, KEY, VAL, ENTITY, BLOB, VOJD} type = VOJD;
+  enum {BEGIN, KEY, VAL, ENTITY, BLOB, VOJD, END} type = VOJD;
   short level=0, in_dquote=0, eor=0, blen=0;
   ssize_t pos=0, c=0; size_t i=0, i0=0, e;
   unsigned char *s=(*env)->s;
@@ -85,12 +85,12 @@ short parse(proxyenv *env, parser_cb_t *cb) {
 	type=VAL;
 	break;
       case '/': if(in_dquote) {APPEND(ch); break;}
-	if(type==BEGIN) level--;
+	if(type==BEGIN) { type=END; level--; }
 	level--;
 	break;
       case '>': if(in_dquote) {APPEND(ch); break;}
-	if(type==BEGIN){
-	  PUSH(type);
+	if(type==END){
+	  PUSH(BEGIN);
 	  CALL_END();
 	} else {
 	  if(type==VAL) PUSH(type);

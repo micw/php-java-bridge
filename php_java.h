@@ -92,6 +92,7 @@ struct cfg {
   char*logLevel;
   char*logFile;
   short can_fork;				/* 0 if user has hard-coded the socketname */
+  int mc_socket;				/* used for multicasts -1: invalid */
 };
 extern struct cfg *cfg;
 
@@ -113,8 +114,9 @@ extern char* java_get_server_string();
 
 extern proxyenv *java_try_connect_to_server(TSRMLS_D);
 extern proxyenv *java_connect_to_server(TSRMLS_D);
+extern proxyenv *java_connect_to_mono(TSRMLS_D);
 extern void java_start_server();
 
-extern char* java_test_server(int *socket);
+extern char* java_test_server(int *socket, unsigned char spec);
 
 #endif

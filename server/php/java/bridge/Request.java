@@ -50,10 +50,11 @@ public class Request implements IDocHandler {
     		id=0;
     		key=null;
      	}
+    	private static final HashMap empty0=new HashMap();
     	void push() {
-    		if(ht!=null) {
+    		if(composite!=0) {
     			if(array==null) array=new ArrayList();
-    			array.add(ht);
+    			array.add(ht==null?empty0:ht);
     			ht=null;
     		}
     	}

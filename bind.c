@@ -34,6 +34,7 @@
 #include "zend.h"
 
 #include "php_java.h"
+#include "multicast.h"
 
 #ifndef EXTENSION_DIR
 #error EXTENSION_DIR must point to the PHP extension directory
@@ -202,9 +203,49 @@ static int test_local_server() {
   return sock;
 }
 
-char* java_test_server(int *_socket) {
-  int sock;
+static int test_server(int port) {
+  int sock, n;
+  struct sockaddr_in saddr;
 
+  sock = socket (PF_INET, SOCK_STREAM, 0);
+  if(sock==-1) return -1;
+  saddr.sin_family = AF_INET;
+  saddr.sin_port = htons(port);
+  saddr.sin_addr.s_addr=htonl(INADDR_ANY);  
+  n = connect(sock,(struct sockaddr*)&saddr, sizeof saddr);
+  if(n==-1) { close(sock); return -1; }
+  return sock;
+}
+
+char* java_test_server(int *_socket, unsigned char spec) {
+  int sock, port;
+
+  /* multicast */
+  php_java_send_multicast(cfg->mc_socket, spec);
+  port = php_java_recv_multicast(cfg->mc_socket, spec);
+
+  if(-1!=port) {
+	if(-1!=(sock=test_server(port))) {
+	  if(_socket) {
+		*_socket=sock;
+	  } else {
+		close(sock);
+	  }
+	  return strdup(GROUP_ADDR);
+	}
+  }
+
+  /* local server */
+  if(-1!=(sock=test_local_server())) {
+	if(_socket) {
+	  *_socket=sock;
+	} else {
+	  close(sock);
+	}
+	return strdup(cfg->sockname);
+  }
+
+  /* host list */
   if(cfg->hosts && strlen(cfg->hosts)) {
 	char *host, *hosts = strdup(cfg->hosts);
 	
@@ -250,15 +291,6 @@ char* java_test_server(int *_socket) {
 	}
 	free(hosts);
   }
-
-  if(-1!=(sock=test_local_server())) {
-	if(_socket) {
-	  *_socket=sock;
-	} else {
-	  close(sock);
-	}
-	return strdup(cfg->sockname);
-  }
   return 0;
 }
 
@@ -301,7 +333,7 @@ void java_start_server() {
   int pid=0, err=0, p[2];
   char *test_server;
 #ifndef __MINGW32__
-  if(!(test_server=java_test_server(0))) {
+  if(!(test_server=java_test_server(0, 0))) {
 	if(can_fork()) {
 	  if(pipe(p)!=-1) {
 		if(!(pid=fork())) {		/* daemon */

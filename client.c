@@ -177,14 +177,12 @@ void begin(parser_tag_t tag[3], parser_cb_t *cb){
   case 'P':
 #ifndef ZEND_ENGINE_2
 	if(ctx->composite_type=='H') { /* hash table */
-	  GET_RESULT(2);
 	  if(*PARSER_GET_STRING(st, 0)=='N')	/* number */
 		ctx->id=hashIndexUpdate(ctx->container, strtol(PARSER_GET_STRING(st, 1), 0, 10));
 	  else
 		ctx->id=hashUpdate(ctx->container, PARSER_GET_STRING(st, 1), st[1].length);
 	}
 	else {						/* array */
-	  GET_RESULT(1);
 	  ctx->id=nextElement(ctx->container);
 	}
 #else
@@ -234,13 +232,13 @@ static void handle_request(proxyenv *env) {
   parse(env, &cb);
 }
 
-static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {
+static proxyenv *try_connect_to_server(short bail, unsigned char spec TSRMLS_DC) {
   char *server;
   int sock;
   proxyenv *jenv =JG(jenv);
   if(jenv) return jenv;
 
-  if(!(server=java_test_server(&sock))) {
+  if(!(server=java_test_server(&sock, spec))) {
 	  if (bail) 
 		php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge and set the java.socketname or java.hosts option?",52, strerror(errno));
 	  return 0;
@@ -253,11 +251,15 @@ static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {
   return JG(jenv) = java_createSecureEnvironment(sock, handle_request, server);
 }
 proxyenv *java_connect_to_server(TSRMLS_D) {
-  return try_connect_to_server(1 TSRMLS_CC);
+  return try_connect_to_server(1, 0 TSRMLS_CC);
 }
 proxyenv *java_try_connect_to_server(TSRMLS_D) {
   
-  return try_connect_to_server(0 TSRMLS_CC);
+  return try_connect_to_server(0, 0 TSRMLS_CC);
+}
+proxyenv *java_connect_to_mono(TSRMLS_D) {
+  
+  return try_connect_to_server(1, 'M' TSRMLS_CC);
 }
 
 #ifndef PHP_WRAPPER_H
