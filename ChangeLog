@@ -1,3 +1,38 @@
+2005-03-06  Jost Boekemeier <jostb@intern>
+
+	* server/Makefile_unix.am: Updated sources list.
+	
+	* php-java-bridge 2.0.1 released
+	
+	
+2005-03-06  Jost Boekemeier <jostb@intern>
+
+	* java.c (java_session_get): Renamed to java_get_session.
+	(java_class_functions): Renamed to php_java_class functions in
+	order to check for java objects.
+	(call_function_handler): Renamed to
+	php_java_call_function_handler4.
+	
+	* tests.php5/session.php: Renamed java_session_get to
+	java_get_session.
+	
+	* java_bridge.c (is_type): Use php_java_class_functions and
+	php_java_call_function_handler4 (for php4) to determine if object
+	is a java object.
+	(is_java_type): Obsolete.
+	(writeArguments, writeArgument, php_java_invoke): Pass additional
+	boolean to ignore non-java objects.
+
+	* java.c (java_get_session): Accept $_SESSION variable and ignore
+	all non-java objects.
+
+	* INSTALL.WINDOWS: New file.
+
+	* php-java-bridge.spec, VERSION: Updated version.
+
+	* java.c (java_last_exception_get, java_last_exception_clear, java_set_library_path, java_instanceof): Re-enabled.
+	
+	
 2005-03-05  Jost Boekemeier <jostb@intern>
 
 	* server/php/java/bridge/Session.java: New file.

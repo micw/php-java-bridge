@@ -45,6 +45,7 @@ extern zend_class_entry *php_java_class_entry;
 extern zend_class_entry *php_java_class_class_entry;
 extern zend_class_entry *php_java_jsr_class_class_entry; 
 extern zend_class_entry *php_java_exception_class_entry;
+extern function_entry php_java_class_functions[];
 
 #ifdef ZEND_ENGINE_2
 extern zend_object_handlers php_java_handlers;

@@ -31,6 +31,12 @@ allow javabridge_t etc_t:file { getattr read };
 allow javabridge_t javabridge_t:process { getsched };
 allow javabridge_t ld_so_cache_t:file { execute };
 allow javabridge_t locale_t:file { execute };
+allow javabridge_t random_device_t:chr_file { getattr read append };
+allow javabridge_t urandom_device_t:chr_file { getattr read };
+# disallow TCP sockets
+dontaudit javabridge_t javabridge_t:tcp_socket { create };
+
+
 
 # lib/i386/client/classes.jsa
 allow javabridge_t lib_t:file { execute getattr read };

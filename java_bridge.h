@@ -14,7 +14,7 @@
 #define IS_EXCEPTION 86
 
 extern int java_get_jobject_from_object(zval *object, long *obj TSRMLS_DC);
-extern void php_java_invoke(char*name, long object, int arg_count, zval**arguments, pval*presult TSRMLS_DC) ;
+extern void php_java_invoke(char*name, long object, int arg_count, zval**arguments, short ignoreNonJava, pval*presult TSRMLS_DC) ;
 extern void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, short constructor, short createInstance, pval *object, int argc, zval**argv);
 extern short php_java_set_property_handler(char*name, zval *object, zval *value, zval *return_value);
 extern short php_java_get_property_handler(char*name, zval *object, zval *return_value);

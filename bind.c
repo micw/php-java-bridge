@@ -229,6 +229,8 @@ char* java_test_server(int *_socket) {
 		} else {
 		  inet_aton(host, &saddr.sin_addr);
 		}
+	  } else {
+		inet_aton(host, &saddr.sin_addr);
 	  }
 	  
 	  sock = socket (PF_INET, SOCK_STREAM, 0);

@@ -124,7 +124,7 @@ PHP_FUNCTION(java_instanceof)
   (*jenv)->writeInvokeEnd(jenv);
 }
 
-PHP_FUNCTION(java_session_get)
+PHP_FUNCTION(java_get_session)
 {
   zval **argv;
   int argc = ZEND_NUM_ARGS();
@@ -137,7 +137,7 @@ PHP_FUNCTION(java_session_get)
 	RETURN_NULL();
   }
 
-  php_java_invoke("getSession", 0, argc, argv, return_value TSRMLS_CC);
+  php_java_invoke("getSession", 0, argc, argv, 1, return_value TSRMLS_CC);
 
   efree(argv);
 }
@@ -147,7 +147,7 @@ function_entry java_functions[] = {
 	PHP_FE(java_last_exception_clear, NULL)
 	PHP_FE(java_set_library_path, NULL)
 	PHP_FE(java_instanceof, NULL)
-	PHP_FE(java_session_get, NULL)
+	PHP_FE(java_get_session, NULL)
 	{NULL, NULL, NULL}
 };
 
@@ -430,7 +430,7 @@ PHP_METHOD(java, offsetExists)
   (*jenv)->writeInvokeEnd(jenv);
   java_get_jobject_from_object(return_value, &obj TSRMLS_CC);
   assert(obj);
-  php_java_invoke("offsetExists", obj, argc, argv, return_value TSRMLS_CC);
+  php_java_invoke("offsetExists", obj, argc, argv, 0, return_value TSRMLS_CC);
   efree(argv);
 }
 PHP_METHOD(java, offsetGet)
@@ -455,7 +455,7 @@ PHP_METHOD(java, offsetGet)
   (*jenv)->writeInvokeEnd(jenv);
   java_get_jobject_from_object(return_value, &obj TSRMLS_CC);
   assert(obj);
-  php_java_invoke("offsetGet", obj, argc, argv, return_value TSRMLS_CC);
+  php_java_invoke("offsetGet", obj, argc, argv, 0, return_value TSRMLS_CC);
   efree(argv);
 }
 
@@ -480,7 +480,7 @@ PHP_METHOD(java, offsetSet)
   (*jenv)->writeInvokeEnd(jenv);
   java_get_jobject_from_object(return_value, &obj TSRMLS_CC);
   assert(obj);
-  php_java_invoke("offsetSet", obj, argc, argv, return_value TSRMLS_CC);
+  php_java_invoke("offsetSet", obj, argc, argv, 0, return_value TSRMLS_CC);
   efree(argv);
 }
 
@@ -505,7 +505,7 @@ PHP_METHOD(java, offsetUnset)
   (*jenv)->writeInvokeEnd(jenv);
   java_get_jobject_from_object(return_value, &obj TSRMLS_CC);
   assert(obj);
-  php_java_invoke("offsetUnset", obj, argc, argv, return_value TSRMLS_CC);
+  php_java_invoke("offsetUnset", obj, argc, argv, 0, return_value TSRMLS_CC);
   efree(argv);
 }
 
@@ -524,7 +524,7 @@ ZEND_BEGIN_ARG_INFO(arginfo_set, 0)
 	 ZEND_ARG_INFO(0, newval)
 ZEND_END_ARG_INFO();
 
-static function_entry java_class_functions[] = {
+function_entry php_java_class_functions[] = {
   PHP_ME(java, javaclass, NULL, 0)
   PHP_ME(java, java_class, NULL, 0)
   PHP_ME(java, java, NULL, 0)
@@ -595,7 +595,7 @@ static int cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_
 
 	java_get_jobject_from_object(readobj, &obj TSRMLS_CC);
 	assert(obj);
-	php_java_invoke("toString", obj,  0, 0, writeobj TSRMLS_CC);
+	php_java_invoke("toString", obj,  0, 0, 0, writeobj TSRMLS_CC);
 	if (should_free)
 	  zval_dtor(&free_obj);
 	return SUCCESS;
@@ -647,7 +647,7 @@ static int iterator_current_key(zend_object_iterator *iter, char **str_key, uint
   MAKE_STD_ZVAL(presult);
   ZVAL_NULL(presult);
   
-  php_java_invoke("currentKey", iterator->java_iterator, 0, 0, presult TSRMLS_CC);
+  php_java_invoke("currentKey", iterator->java_iterator, 0, 0, 0, presult TSRMLS_CC);
 
   if(ZVAL_IS_NULL(presult)) {
 	zval_ptr_dtor((zval**)&presult);
@@ -684,7 +684,7 @@ static void init_current_data(java_iterator *iterator TSRMLS_DC)
   MAKE_STD_ZVAL(iterator->current_object);
   ZVAL_NULL(iterator->current_object);
 
-  php_java_invoke("currentData", iterator->java_iterator, 0, 0, iterator->current_object TSRMLS_CC);
+  php_java_invoke("currentData", iterator->java_iterator, 0, 0, 0, iterator->current_object TSRMLS_CC);
 }
 
 static void iterator_move_forward(zend_object_iterator *iter TSRMLS_DC)
@@ -769,8 +769,8 @@ static void make_lambda(zend_internal_function *f,
 }
 #else
 
-static void 
-call_function_handler(INTERNAL_FUNCTION_PARAMETERS, zend_property_reference *property_reference)
+void 
+php_java_call_function_handler4(INTERNAL_FUNCTION_PARAMETERS, zend_property_reference *property_reference)
 {
   pval *object = property_reference->object;
   zend_overloaded_element *function_name = (zend_overloaded_element *)
@@ -838,7 +838,7 @@ PHP_MINIT_FUNCTION(java)
 #ifndef ZEND_ENGINE_2
   zend_class_entry ce;
   INIT_OVERLOADED_CLASS_ENTRY(ce, "java", NULL,
-							  call_function_handler,
+							  php_java_call_function_handler4,
 							  get_property_handler,
 							  set_property_handler);
 
@@ -859,7 +859,7 @@ PHP_MINIT_FUNCTION(java)
   make_lambda(&set, ZEND_FN(java___set));
   
   INIT_OVERLOADED_CLASS_ENTRY(ce, "java", 
-							  java_class_functions, 
+							  php_java_class_functions, 
 							  (zend_function*)&call, 
 							  (zend_function*)&get, 
 							  (zend_function*)&set);
@@ -875,7 +875,7 @@ PHP_MINIT_FUNCTION(java)
   zend_class_implements(php_java_class_entry TSRMLS_CC, 1, zend_ce_arrayaccess);
 
   INIT_OVERLOADED_CLASS_ENTRY(ce, "java_exception", 
-							  java_class_functions, 
+							  php_java_class_functions, 
 							  (zend_function*)&call, 
 							  (zend_function*)&get, 
 							  (zend_function*)&set);
@@ -886,19 +886,19 @@ PHP_MINIT_FUNCTION(java)
   // only cast and clone; no iterator, no array access
   php_java_exception_class_entry->create_object = create_exception_object;
   
-  INIT_CLASS_ENTRY(ce, "java_class", java_class_functions);
+  INIT_CLASS_ENTRY(ce, "java_class", php_java_class_functions);
   parent = (zend_class_entry *) php_java_class_entry;
 
   php_java_class_class_entry = 
 	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
 
   /* compatibility with the jsr implementation */
-  INIT_CLASS_ENTRY(ce, "javaclass", java_class_functions);
+  INIT_CLASS_ENTRY(ce, "javaclass", php_java_class_functions);
   parent = (zend_class_entry *) php_java_class_entry;
   php_java_jsr_class_class_entry = 
 	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
 
-  INIT_CLASS_ENTRY(ce, "javaexception", java_class_functions);
+  INIT_CLASS_ENTRY(ce, "javaexception", php_java_class_functions);
   parent = (zend_class_entry *) php_java_exception_class_entry;
   php_java_exception_class_entry = 
 	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);

@@ -12,8 +12,8 @@
 #include <string.h>
 
 
-static void writeArgument(pval* arg TSRMLS_DC);
-static void writeArguments(int argc, pval** argv TSRMLS_DC);
+static void writeArgument(pval* arg, short ignoreNonJava TSRMLS_DC);
+static void writeArguments(int argc, pval** argv, short ignoreNonJava TSRMLS_DC);
 
 ZEND_EXTERN_MODULE_GLOBALS(java)
 
@@ -30,19 +30,14 @@ static short checkError(pval *value TSRMLS_DC)
   return 0;
 }
 
-static short is_type (zval *pobj, zend_class_entry *class TSRMLS_DC) {
+static short is_type (zval *pobj TSRMLS_DC) {
 #ifdef ZEND_ENGINE_2
-  //FIXME: Check parent
-  return (zend_get_class_entry(pobj TSRMLS_CC) == class);
+  zend_class_entry *clazz = zend_get_class_entry(pobj TSRMLS_CC);
+  return clazz->builtin_functions == php_java_class_functions;
 #else
-  return pobj->type == IS_OBJECT && pobj->value.obj.ce->name_length==4 && !strncmp(pobj->value.obj.ce->name, "java", 4);
+  extern void php_java_call_function_handler4(INTERNAL_FUNCTION_PARAMETERS, zend_property_reference *property_reference);
+  return pobj->type == IS_OBJECT && pobj->value.obj.ce->handle_function_call==php_java_call_function_handler4;
 #endif
-}
-
-static short is_java_type(zval *obj TSRMLS_DC) {
-  return (is_type(obj, php_java_class_entry TSRMLS_CC)||
-		  is_type(obj, php_java_class_class_entry TSRMLS_CC)||
-		  is_type(obj, php_java_jsr_class_class_entry TSRMLS_CC));
 }
 
 int java_get_jobject_from_object(pval*object, long *obj TSRMLS_DC)
@@ -50,7 +45,7 @@ int java_get_jobject_from_object(pval*object, long *obj TSRMLS_DC)
   pval **handle;
   int n=-1;
 
-  if(is_java_type(object TSRMLS_CC))
+  if(is_type(object TSRMLS_CC))
 	n = zend_hash_index_find(Z_OBJPROP_P(object), 0, (void**) &handle);
   if(n==-1) { *obj=0; return 0; }
 
@@ -58,12 +53,12 @@ int java_get_jobject_from_object(pval*object, long *obj TSRMLS_DC)
   return 1;
 }
 
-void php_java_invoke(char*name, long object, int arg_count, zval**arguments, pval*presult TSRMLS_DC) 
+void php_java_invoke(char*name, long object, int arg_count, zval**arguments, short ignoreNonJava, pval*presult TSRMLS_DC) 
 {
   proxyenv *jenv = java_connect_to_server(TSRMLS_C);
 
   (*jenv)->writeInvokeBegin(jenv, object, name, 0, 'I', (void*)presult);
-  writeArguments(arg_count, arguments TSRMLS_CC);
+  writeArguments(arg_count, arguments, ignoreNonJava TSRMLS_CC);
   (*jenv)->writeInvokeEnd(jenv);
 }
 
@@ -87,7 +82,7 @@ void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, sho
 
 	/* create a new object */
 	(*jenv)->writeCreateObjectBegin(jenv, Z_STRVAL_P(arguments[0]), Z_STRLEN_P(arguments[0]), createInstance?'I':'C', (void*)result);
-	writeArguments(--arg_count, ++arguments TSRMLS_CC);
+	writeArguments(--arg_count, ++arguments, 0 TSRMLS_CC);
 	(*jenv)->writeCreateObjectEnd(jenv);
 
   } else {
@@ -100,13 +95,13 @@ void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, sho
     result = (long)return_value;
     /* invoke a method on the given object */
 	(*jenv)->writeInvokeBegin(jenv, obj, name, 0, 'I', (void*)result);
-	writeArguments(arg_count, arguments TSRMLS_CC);
+	writeArguments(arg_count, arguments, 0 TSRMLS_CC);
 	(*jenv)->writeInvokeEnd(jenv);
   }
   checkError((pval*)result TSRMLS_CC);
 }
 
-static void writeArgument(pval* arg TSRMLS_DC)
+static void writeArgument(pval* arg, short ignoreNonJava TSRMLS_DC)
 {
   proxyenv *jenv = JG(jenv);
   long result;
@@ -118,7 +113,8 @@ static void writeArgument(pval* arg TSRMLS_DC)
 
     case IS_OBJECT:
 	  java_get_jobject_from_object(arg, &result TSRMLS_CC);
-	  if(!result) php_error(E_WARNING, "Argument is not (or does not contain) Java object(s).");
+	  if(!ignoreNonJava && !result) 
+		php_error(E_WARNING, "Argument is not (or does not contain) Java object(s).");
 	  (*jenv)->writeObject(jenv, result);
       break;
 
@@ -151,7 +147,7 @@ static void writeArgument(pval* arg TSRMLS_DC)
 			  (*jenv)->writeCompositeBegin_h(jenv); 
 			}
 			(*jenv)->writePairBegin_s(jenv, string_key, strlen(string_key));
-			writeArgument(*value TSRMLS_CC);
+			writeArgument(*value, ignoreNonJava TSRMLS_CC);
 			(*jenv)->writePairEnd(jenv);
             break;
           case HASH_KEY_IS_LONG:
@@ -160,7 +156,7 @@ static void writeArgument(pval* arg TSRMLS_DC)
 			  (*jenv)->writeCompositeBegin_h(jenv); 
 			}
 			(*jenv)->writePairBegin_n(jenv, num_key);
-			writeArgument(*value TSRMLS_CC);
+			writeArgument(*value, ignoreNonJava TSRMLS_CC);
 			(*jenv)->writePairEnd(jenv);
             break;
           default: /* HASH_KEY_NON_EXISTANT */
@@ -169,7 +165,7 @@ static void writeArgument(pval* arg TSRMLS_DC)
 			  (*jenv)->writeCompositeBegin_a(jenv); 
 			}
 			(*jenv)->writePairBegin(jenv);
-			writeArgument(*value TSRMLS_CC);
+			writeArgument(*value, ignoreNonJava TSRMLS_CC);
 			(*jenv)->writePairEnd(jenv);
         }
         zend_hash_move_forward(Z_ARRVAL_P(arg));
@@ -182,12 +178,12 @@ static void writeArgument(pval* arg TSRMLS_DC)
   }
 }
 
-static void writeArguments(int argc, pval** argv TSRMLS_DC)
+static void writeArguments(int argc, pval** argv, short ignoreNonJava TSRMLS_DC)
 {
   int i;
 
   for (i=0; i<argc; i++) {
-    writeArgument(argv[i] TSRMLS_CC);
+    writeArgument(argv[i], ignoreNonJava TSRMLS_CC);
   }
 }
 
@@ -245,7 +241,7 @@ short php_java_set_property_handler(char*name, zval *object, zval *value, zval *
   } else {
     /* invoke the method */
 	(*jenv)->writeInvokeBegin(jenv, obj, name, 0, 'P', (void*)presult);
-	writeArgument(value TSRMLS_CC);
+	writeArgument(value, 0 TSRMLS_CC);
 	(*jenv)->writeInvokeEnd(jenv);
   }
   return checkError(presult TSRMLS_CC) ? FAILURE : SUCCESS;

@@ -1,6 +1,6 @@
 <?php
 
-$session=java_session_get("testSession", array("a" => 1, "b" => 5));
+$session=java_get_session("testSession", array("a" => 1, "b" => 5));
 
 $session->put("a", $session->get("a")+1);
 $session->put("b", $session->get("b")-1);
