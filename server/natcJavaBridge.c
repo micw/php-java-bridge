@@ -1,9 +1,5 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
-#ifndef _POSIX_PTHREAD_SEMANTICS
-#define _POSIX_PTHREAD_SEMANTICS /* We want posix threads */
-#endif
-
 /* longjump */
 #include <setjmp.h>
 

@@ -1,6 +1,6 @@
 #include "sio.h"
 
-#ifdef HAS_BROKEN_STDIO
+#ifdef HAVE_BROKEN_STDIO
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>

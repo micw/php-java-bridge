@@ -1,4 +1,5 @@
 sinclude(tests.m4/function_checks.m4)
+sinclude(tests.m4/threads.m4)
 sinclude(tests.m4/java_check_broken_stdio_buffering.m4)
 
 PHP_ARG_WITH(java, for java support,
@@ -8,6 +9,8 @@ PHP_ARG_WITH(java, for java support,
 if test "$PHP_JAVA" != "no"; then
 
        JAVA_FUNCTION_CHECKS
+       PTHREADS_CHECK
+       PTHREADS_ASSIGN_VARS
        JAVA_CHECK_BROKEN_STDIO_BUFFERING
 
 # the JAVA_HOME directory

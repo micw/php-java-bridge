@@ -3,7 +3,7 @@
 
 #include "config.h"
 
-#ifdef HAS_BROKEN_STDIO		/* MacOS X and all Solaris versions */
+#ifdef HAVE_BROKEN_STDIO		/* MacOS X and all Solaris versions */
 
 #include <stdio.h>
 

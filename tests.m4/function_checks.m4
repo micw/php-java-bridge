@@ -1,7 +1,26 @@
 AC_DEFUN(JAVA_FUNCTION_CHECKS,[
 
- AC_CHECK_FUNCS(longjmp perror socket snprintf tempnam \
-  strerror memcpy memmove sigset pthread_sigmask \
-  pthread_attr_setdetachstate pthread_attr_create)
+ AC_CHECK_HEADERS([ \
+   sys/param.h sys/types.h sys/time.h assert.h fcntl.h \
+   limits.h signal.h stdarg.h stdlib.h string.h \
+   syslog.h sys/ioctl.h sys/poll.h sys/select.h \
+   sys/socket.h sys/un.h sys/wait.h unistd.h 
+ ],[],[],[
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+ ])
+
+ AC_CHECK_FUNCS(longjmp perror snprintf tempnam \
+  strerror strdup unlink putenv execv fork \
+  memcpy memmove sigset)
+
+ PHP_CHECK_FUNC(socket, socket)
 
 ])
