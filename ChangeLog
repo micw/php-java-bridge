@@ -18,7 +18,7 @@
 	client.c (CFG_JAVA_SOCKET_INET): Fixed typo
 
 	The PHP 5 object system revealed a bug in the core protocol: If
-	someone managed to send a PHP array with an PHP type in it, the
+	someone managed to send a PHP array with an PHP OBJ type in it, the
 	client stopped working immediately.
 	* server/natcJavaBridge.c (handle_request NEWOBJECT): Accept a count
 	(short), not a length (size_t).
