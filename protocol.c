@@ -31,13 +31,13 @@ static void flush(proxyenv *env) {
 #define GROW_QUOTE() \
   if(pos+1>=newlen) { \
     newlen=newlen+newlen/10; \
-    new=realloc(new, newlen); \
+    new=realloc(new, newlen+1); \
     assert(new); if(!new) exit(9); \
   } 
 static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
   static const char quote[]="&quote;";
   register size_t newlen=len+len/10, pos=0;
-  char c, *s, *new = malloc(newlen);
+  char c, *s, *new = malloc(newlen+1);
   register short j;
   assert(new); if(!new) exit(9);
   

@@ -22,7 +22,7 @@ public class Request implements IDocHandler {
     	Object callObject;
     	String method;
     	boolean predicate;
-        int id;
+        long id;
         private Object key;
    	
    	void add(Object val) {
@@ -89,14 +89,14 @@ public class Request implements IDocHandler {
 	    args.callObject=i==0?bridge:bridge.globalRef.get(i);
 	    args.method=st[1].getStringValue();
 	    args.predicate=st[2].string[st[2].off]=='P';
-	    args.id=Integer.parseInt(st[3].getStringValue(), 10);
+	    args.id=Long.parseLong(st[3].getStringValue(), 10);
 	    break;
 	}
 	case 'C': {
 	    args.type=ch;
 	    args.callObject=st[0].getStringValue();
 	    args.predicate=st[1].string[st[1].off]=='C';
-	    args.id=Integer.parseInt(st[2].getStringValue(), 10);
+	    args.id=Long.parseLong(st[2].getStringValue(), 10);
 	    break;
 	}
 	case 'X': {
