@@ -23,11 +23,12 @@ PHP_RINIT_FUNCTION(java)
 {
     extern int java_connect_to_server(struct cfg*cfg TSRMLS_DC);
 	assert(!JG(jenv));
-	return java_connect_to_server(&JG(cfg) TSRMLS_CC) || SUCCESS;
+	java_connect_to_server(&JG(cfg) TSRMLS_CC);
+	return SUCCESS;
 }
 PHP_RSHUTDOWN_FUNCTION(java)
 {
-   if (JG(php_reflect)) (*JG(jenv))->DeleteGlobalRef(JG(jenv), JG(php_reflect));
+  if (JG(php_reflect)) (*JG(jenv))->DeleteGlobalRef(JG(jenv), JG(php_reflect));
   if(JG(jenv)&&*JG(jenv)&&(*JG(jenv))->peer) fclose((*JG(jenv))->peer);
   if(JG(jenv)&&*JG(jenv)) free(*JG(jenv));
   if(JG(jenv)) free(JG(jenv));
@@ -240,6 +241,7 @@ PHP_MINIT_FUNCTION(java)
 	  extern void java_init_cfg(struct cfg *cfg);
 	  java_init_cfg(&JG(cfg));
 	  JG(cfg).saddr.sun_family = AF_UNIX;
+	  memset(JG(cfg).saddr.sun_path, 0, sizeof JG(cfg).saddr.sun_path);
 	  strcpy(JG(cfg).saddr.sun_path, JG(cfg).sockname);
       updated=1; 
 	}
@@ -254,10 +256,9 @@ PHP_MINIT_FUNCTION(java)
 static char*get_server_args(struct cfg*cfg) {
   int i;
   char*s;
-  char*env[2];
-  char*args[9];
+  char*env[N_SENV];
+  char*args[N_SARGS];
   unsigned int length = 0;
-  extern void java_get_server_args(struct cfg*cfg, char*env[2], char*args[9]);
 
   java_get_server_args(cfg, env, args);
 
@@ -292,14 +293,19 @@ static char*get_server_args(struct cfg*cfg) {
 }
 PHP_MINFO_FUNCTION(java)
 {
+	char*s=get_server_args(&JG(cfg));
 	int status = java_test_server(&JG(cfg) TSRMLS_CC);
+
 	php_info_print_table_start();
 	php_info_print_table_row(2, "java support", "Enabled");
+	php_info_print_table_row(2, "java bridge", java_bridge_version);
+#ifndef CFG_JAVA_SOCKET_ANON
+	php_info_print_table_row(2, "java command", s);
+#endif
 	php_info_print_table_row(2, "java.libpath", JG(cfg).ld_library_path);
 	php_info_print_table_row(2, "java.classpath", JG(cfg).classpath);
 	php_info_print_table_row(2, "java.java_home", JG(cfg).java_home);
 	php_info_print_table_row(2, "java.java", JG(cfg).java);
-	php_info_print_table_row(2, "java.socketname", JG(cfg).sockname);
 	if(strlen(JG(cfg).logFile)==0) 
 	  php_info_print_table_row(2, "java.log_file", "<stdout>");
 	else
@@ -308,11 +314,15 @@ PHP_MINFO_FUNCTION(java)
 	if(status==SUCCESS) {
 	  php_info_print_table_row(2, "java status", "running");
 	} else {
-	  char*s=get_server_args(&JG(cfg));
+#ifndef CFG_JAVA_SOCKET_ANON
+	  php_info_print_table_row(2, "java not running.");
+#else
 	  php_info_print_table_row(2, "java not running, start with:", s);
-	  free(s);
+#endif
 	}
 	php_info_print_table_end();
+
+	free(s);
 }
 
 PHP_MSHUTDOWN_FUNCTION(java) 
