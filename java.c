@@ -150,9 +150,13 @@ PHP_FUNCTION(java_get_server_name)
   if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT;
 
   name=java_test_server(&socket);
-  if(name) close(sock);
-  ZVAL_STRING(return_value, name, 1);
-  free(name);
+  if(name) close(socket);
+  if(!name) {
+	RETURN_NULL();
+  } else {
+	ZVAL_STRING(return_value, name, 1);
+	free(name);
+  }
 }
 
 function_entry java_functions[] = {
