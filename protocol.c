@@ -52,8 +52,8 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
 	  GROW_QUOTE();
 	}
   }
-  new[newlen]=0;
-  *ret_len=newlen;
+  new[pos]=0;
+  *ret_len=pos;
   return new;
 }
  static void CreateObjectBegin(proxyenv *env, char*name, size_t len, char createInstance, void *result) {
