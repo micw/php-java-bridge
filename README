@@ -194,7 +194,7 @@ Build and execution instructions:
 
     <?php
     if (!extension_loaded('java')) {
-      if (!dl("../../tmp/java.so")) {
+      if (!dl("java.so")) {
         exit(1);
       }
     }
