@@ -164,7 +164,8 @@ static void atexit_bridge() {
   }
 }
 static void exit_sig(int dummy) {
-  exit(0);
+  atexit_bridge();
+  _exit(0);
 }
 static void initGlobals(JNIEnv *env) {
   jobject hash;

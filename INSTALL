@@ -1,0 +1,69 @@
+Installation guide:
+
+The following software components must be installed on your computer:
+
+* an operating system, for example RedHat Enterprise Linux Version 3
+* a Java VM, for example Sun JDK 1.4.2_02
+
+The following software components are required to run PHP scripts with
+java code embedded via a web-server.  It is assumed that these
+components are not already installed on your computer. If they are,
+change the install directory or skip the compilation/install steps for
+these components:
+
+* PHP 4.3.x
+* the PHP/Java Bridge version 1.x
+* a web-server, for example Apache 2.x
+
+
+Then choose a proper INST directory and type the following commands:
+
+# adjust install directory
+INST=/usr/local
+
+# stop the system http service 
+su - -c "service httpd stop"
+
+# compile and install apache 2
+gunzip < httpd_2.x.y.tar.gz | tar xf -
+cd httpd_2.x.y
+./configure --prefix=$INST
+make && su -c "make install"
+cd ..
+
+# compile and install php 4.3
+bunzip2 < php-4.3.x.tar.bz2 | tar xf -
+cd php-4.3.x
+./configure --prefix=$INST \
+--with-mysql \
+--without-java \
+--with-apxs2=$INST/bin/apxs
+make && su -c "make install"
+# now activate php in the httpd.conf
+su -c "echo 'AddType application/x-httpd-php .php' >>$INST/conf/httpd.conf"
+cd ..
+
+# compile and install the php/java bridge
+bunzip2 < php-java-bridge_1.x.y.tar.bz2 | tar xf -
+cd php-java-bridge_1.x.y
+export PATH=$INST/bin:$PATH 
+export LD_LIBRARY_PATH=$INST/lib:$LD_LIBRARY_PATH
+phpize
+./configure --prefix=$INST \
+--with-java=/opt/IBMJava2-141
+make && su -c "make install"
+# now activate the bridge in php.ini
+su -c "touch $INST/lib/php.ini && echo -e 'extension=java.so\n[java]' >>$INST/lib/php.ini"
+cd ..
+
+# create a file phpinfo.php in the document root directory 
+# of apache and start the http service
+su -c "echo '<?php phpinfo() ?>' >$INST/htdocs/phpinfo.php; chmod +xr $INST/htdocs/phpinfo.php; apachectl restart"
+
+# checking cli, should return "java running"
+echo '<?php phpinfo() ?>' | php | fgrep java
+
+# checking web, should return "java running"
+wget -olog -O-  http://localhost/phpinfo.php|fgrep java
+
+
