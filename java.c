@@ -215,8 +215,10 @@ static char*get_server_args(struct cfg*cfg) {
 	length+=strlen(env[i])+1;
   }
   for(i=0; i< (sizeof args)/(sizeof*args); i++) {
+	size_t l;
 	if(!args[i]) break;
-	length+=strlen(args[i])+1;
+	l=strlen(args[i]);
+	length+=(l?l:2)+1;
   }
   s=malloc(length+1);
   assert(s);
@@ -228,7 +230,10 @@ static char*get_server_args(struct cfg*cfg) {
   }
   for(i=0; i< (sizeof args)/(sizeof*args); i++) {
 	if(!args[i]) break;
-	strcat(s, args[i]); strcat(s, " ");
+	if(!strlen(args[i])) strcat(s,"'");
+	strcat(s, args[i]);
+	if(!strlen(args[i])) strcat(s,"'");
+	strcat(s, " ");
 	free(args[i]);
   }
   s[length]=0;

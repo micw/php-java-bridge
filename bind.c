@@ -54,7 +54,9 @@ static void exec_vm(struct cfg*cfg) {
   static char*env[2];
   static char*args[9];
   java_get_server_args(cfg, env, args);
-  execve(args[0], args, env);
+
+  putenv(env[0]);
+  execv(args[0], args);
 }
 
 

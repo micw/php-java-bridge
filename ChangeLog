@@ -10,10 +10,23 @@
 	Initialize the cfg vars correctly so that only one VM is started
 	* java.c, init_cfg: set the defaults _after_ the cfg changes.
 
+	* php-java-bridge 1.0.1 released.
+
 2004-09-09  Jost Boekemeier  <jost2345@mail.yahoo.de>
 	
 	Initialize PVAL's so that they have a proper ref-count.  Otherwise 
 	either the bridge or the JVM might crash (or both).
 	* java.c: Allocate pval's correctly.
-	
+
+	* php-java-bridge 1.0.2 released.
+
+2004-09-10  Jost Boekemeier  <jost2345@mail.yahoo.de>
+
+	* java.c: Display empty string as ''.
+
+	REL3 or RH9 running a non-NPTL kernel require to set the
+	environment variable LD_ASSUME_KERNEL=2.4.19 in order to run
+	jdk1.4 correctly.
+	* bind.c: Pass modified environment on to the child process.
+
 
