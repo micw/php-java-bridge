@@ -96,9 +96,9 @@ PHP_FUNCTION(java_set_library_path)
   END_TRANSACTION(jenv);
 }
 
-static short check_type (zval *pobj, zend_class_entry *class) {
+static short check_type (zval *pobj, zend_class_entry *class TSRMLS_DC) {
 #ifdef ZEND_ENGINE_2
-  if (zend_get_class_entry(pobj) != class)
+  if (zend_get_class_entry(pobj TSRMLS_CC) != class)
 	return 0;
   else
 #endif
@@ -120,7 +120,7 @@ PHP_FUNCTION(java_instanceof)
   convert_to_object_ex(pclass);
 
   obj = NULL;
-  if((Z_TYPE_PP(pobj) == IS_OBJECT) && check_type(*pobj, php_java_class_entry)){
+  if((Z_TYPE_PP(pobj) == IS_OBJECT) && check_type(*pobj, php_java_class_entry TSRMLS_CC)){
 	java_get_jobject_from_object(*pobj, &obj TSRMLS_CC);
   }
   if(!obj) {
@@ -130,9 +130,9 @@ PHP_FUNCTION(java_instanceof)
 
   class = NULL;
   if((Z_TYPE_PP(pclass) == IS_OBJECT) && 
-	 (check_type(*pclass, php_java_class_entry)||
-	  check_type(*pclass, php_java_class_class_entry)||
-	  check_type(*pclass, php_java_jsr_class_class_entry))){
+	 (check_type(*pclass, php_java_class_entry TSRMLS_CC)||
+	  check_type(*pclass, php_java_class_class_entry TSRMLS_CC)||
+	  check_type(*pclass, php_java_jsr_class_class_entry TSRMLS_CC))){
 	java_get_jobject_from_object(*pclass, &class TSRMLS_CC);
   }
   if(!class) {
@@ -380,7 +380,7 @@ PHP_METHOD(java, __destruct)
 	RETURN_FALSE;
   }
   
-  java_get_jobject_from_object(getThis(), &obj);
+  java_get_jobject_from_object(getThis(), &obj TSRMLS_CC);
   if(!obj) RETURN_TRUE;			/* may happen when java is not initalized */
 
   if(JG(jenv))
@@ -420,14 +420,14 @@ PHP_METHOD(java, offsetExists)
 	php_error(E_ERROR, "Couldn't fetch arguments into array.");
 	RETURN_NULL();
   }
-  java_get_jobject_from_object(getThis(), &obj);
+  java_get_jobject_from_object(getThis(), &obj TSRMLS_CC);
   assert(obj);
 
   BEGIN_TRANSACTION(jenv);
   args[0].l=obj;
   map = (*jenv)->CallObjectMethodA(1, jenv, JG(php_reflect), JG(getPhpMap), args);
 
-  php_java_invoke("offsetExists", map, argc, argv, return_value);
+  php_java_invoke("offsetExists", map, argc, argv, return_value TSRMLS_CC);
   END_TRANSACTION(jenv);
   efree(argv);
 }
@@ -446,13 +446,13 @@ PHP_METHOD(java, offsetGet)
 	php_error(E_ERROR, "Couldn't fetch arguments into array.");
 	RETURN_NULL();
   }
-  java_get_jobject_from_object(getThis(), &obj);
+  java_get_jobject_from_object(getThis(), &obj TSRMLS_CC);
   assert(obj);
   BEGIN_TRANSACTION(jenv);
   args[0].l=obj;
   map = (*jenv)->CallObjectMethodA(1, jenv, JG(php_reflect), JG(getPhpMap), args);
 
-  php_java_invoke("offsetGet", map, argc, argv, return_value);
+  php_java_invoke("offsetGet", map, argc, argv, return_value TSRMLS_CC);
   END_TRANSACTION(jenv);
   efree(argv);
 }
@@ -472,14 +472,14 @@ PHP_METHOD(java, offsetSet)
 	php_error(E_ERROR, "Couldn't fetch arguments into array.");
 	RETURN_NULL();
   }
-  java_get_jobject_from_object(getThis(), &obj);
+  java_get_jobject_from_object(getThis(), &obj TSRMLS_CC);
   assert(obj);
 
   BEGIN_TRANSACTION(jenv);
   args[0].l=obj;
   map = (*jenv)->CallObjectMethodA(1, jenv, JG(php_reflect), JG(getPhpMap), args);
 
-  php_java_invoke("offsetSet", map, argc, argv, return_value);
+  php_java_invoke("offsetSet", map, argc, argv, return_value TSRMLS_CC);
   END_TRANSACTION(jenv);
   efree(argv);
 }
@@ -499,14 +499,14 @@ PHP_METHOD(java, offsetUnset)
 	php_error(E_ERROR, "Couldn't fetch arguments into array.");
 	RETURN_NULL();
   }
-  java_get_jobject_from_object(getThis(), &obj);
+  java_get_jobject_from_object(getThis(), &obj TSRMLS_CC);
   assert(obj);
 
   BEGIN_TRANSACTION(jenv);
   args[0].l=obj;
   map = (*jenv)->CallObjectMethodA(1, jenv, JG(php_reflect), JG(getPhpMap), args);
 
-  php_java_invoke("offsetUnset", map, argc, argv, return_value);
+  php_java_invoke("offsetUnset", map, argc, argv, return_value TSRMLS_CC);
   END_TRANSACTION(jenv);
   efree(argv);
 }
@@ -595,9 +595,9 @@ static int cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_
 	if (should_free)
 	  free_obj = *writeobj;
 
-	java_get_jobject_from_object(readobj, &obj);
+	java_get_jobject_from_object(readobj, &obj TSRMLS_CC);
 	assert(obj);
-	php_java_invoke("tostring", obj,  0, 0, writeobj);
+	php_java_invoke("tostring", obj,  0, 0, writeobj TSRMLS_CC);
 	if (should_free)
 	  zval_dtor(&free_obj);
 	return SUCCESS;
@@ -649,7 +649,7 @@ static int iterator_current_key(zend_object_iterator *iter, char **str_key, uint
   MAKE_STD_ZVAL(presult);
   ZVAL_NULL(presult);
   
-  php_java_invoke("currentKey", iterator->java_iterator, 0, 0, presult);
+  php_java_invoke("currentKey", iterator->java_iterator, 0, 0, presult TSRMLS_CC);
 
   if(ZVAL_IS_NULL(presult)) {
 	zval_ptr_dtor((zval**)&presult);
@@ -686,7 +686,7 @@ static void init_current_data(java_iterator *iterator TSRMLS_DC)
   MAKE_STD_ZVAL(iterator->current_object);
   ZVAL_NULL(iterator->current_object);
 
-  php_java_invoke("currentData", iterator->java_iterator, 0, 0, iterator->current_object);
+  php_java_invoke("currentData", iterator->java_iterator, 0, 0, iterator->current_object TSRMLS_CC);
 }
 
 static void iterator_move_forward(zend_object_iterator *iter TSRMLS_DC)
@@ -726,7 +726,7 @@ static zend_object_iterator *get_iterator(zend_class_entry *ce, zval *object TSR
   iterator->intern.data = (void*)object;
   iterator->intern.funcs = &java_iterator_funcs;
 
-  java_get_jobject_from_object(object, &obj);
+  java_get_jobject_from_object(object, &obj TSRMLS_CC);
   assert(obj);
 
   BEGIN_TRANSACTION(jenv);

@@ -159,6 +159,9 @@ static  void  setException  (proxyenv *jenv,  pval *presult, jthrowable value, j
   Z_TYPE_P(presult)=IS_EXCEPTION;
 #else
   zval *exception;
+
+  TSRMLS_FETCH();
+
   setResultFromObject(jenv, presult, value); /* discarded */
   MAKE_STD_ZVAL(exception); 
   setResultFromException(jenv, exception, value); 
