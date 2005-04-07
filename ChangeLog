@@ -1,5 +1,13 @@
 2005-03-27  Jost Boekemeier <jostb@intern>
 
+	* VERSION, php-java-bridge.spec: New version
+	
+	* multicast.c: Added windows ifdefs 
+
+	* php-java-bridge 2.0.5 released.
+
+2005-03-27  Jost Boekemeier <jostb@intern>
+
 	* multicast.c, multicast.h: New files
 
 	* bind.c (test_server): New function.

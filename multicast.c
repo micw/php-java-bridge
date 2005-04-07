@@ -1,5 +1,6 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
+#ifndef __MINGW32__
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -9,11 +10,14 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
+#endif
 
 #include "multicast.h"
 
 
 int php_java_init_multicast() {
+  int sock = -1;
+#ifndef __MINGW32__
   int n;
   long s_true=1;
   struct sockaddr_in saddr;
@@ -27,17 +31,19 @@ int php_java_init_multicast() {
   saddr.sin_port = htons(GROUP_PORT);
   saddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-  int sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if(sock!=-1) {
     setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &s_true, sizeof s_true);
     setsockopt(sock, SOL_IP, IP_MULTICAST_LOOP, &s_true, sizeof s_true);
     setsockopt(sock, SOL_IP, IP_ADD_MEMBERSHIP, &ip_mreqn, sizeof ip_mreqn);
     bind(sock, (struct sockaddr*)&saddr, sizeof saddr);
   }
+#endif
   return sock;
 }
   
 void php_java_send_multicast(int sock, unsigned char spec) {
+#ifndef __MINGW32__
   unsigned char c[14] = {'R', spec, MAX_LOAD};
   struct sockaddr_in saddr;
   if(-1==sock) return;
@@ -46,12 +52,14 @@ void php_java_send_multicast(int sock, unsigned char spec) {
   saddr.sin_port = htons(GROUP_PORT);
   saddr.sin_addr.s_addr=inet_addr(GROUP_ADDR);  
   sendto(sock, c, sizeof c, 0, (struct sockaddr*)&saddr, sizeof saddr);
+#endif
 }
 
 static int readInt(unsigned char*buf) {
   return (buf[0]&0xFF)<<24|(buf[1]&0xFF)<<16|(buf[2]&0xFF)<<8|(buf[3]&0xFF);
 }
 int php_java_recv_multicast(int sock, unsigned char spec) {
+#ifndef __MINGW32__
   unsigned char c[14];
   int n;
   struct timeval time = {0, 10};
@@ -66,8 +74,11 @@ int php_java_recv_multicast(int sock, unsigned char spec) {
     if(n<0) return -1;
     if(!n) return -1;
     read(sock, c, sizeof c);
-  } while(c[0]=='R' || (spec!=0 && spec!=c[1]));
+  } while(c[0]!='r' || (spec!=0 && spec!=c[1]));
 
   return readInt(c+3);
+#else
+  return -1;
+#endif
 }
 
