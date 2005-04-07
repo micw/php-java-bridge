@@ -21,11 +21,10 @@ int php_java_init_multicast() {
   int n;
   long s_true=1;
   struct sockaddr_in saddr;
-  struct ip_mreqn ip_mreqn;
+  struct ip_mreq ip_mreq;
 
-  ip_mreqn.imr_multiaddr.s_addr=inet_addr(GROUP_ADDR);
-  ip_mreqn.imr_address.s_addr=htonl(INADDR_ANY);
-  ip_mreqn.imr_ifindex=0;
+  ip_mreq.imr_multiaddr.s_addr=inet_addr(GROUP_ADDR);
+  ip_mreq.imr_interface.s_addr=htonl(INADDR_ANY);
 
   saddr.sin_family = AF_INET;
   saddr.sin_port = htons(GROUP_PORT);
@@ -34,8 +33,8 @@ int php_java_init_multicast() {
   sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if(sock!=-1) {
     setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &s_true, sizeof s_true);
-    setsockopt(sock, SOL_IP, IP_MULTICAST_LOOP, &s_true, sizeof s_true);
-    setsockopt(sock, SOL_IP, IP_ADD_MEMBERSHIP, &ip_mreqn, sizeof ip_mreqn);
+    setsockopt(sock, IPPROTO_IP, IP_MULTICAST_LOOP, &s_true, sizeof s_true);
+    setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &ip_mreq, sizeof ip_mreq);
     bind(sock, (struct sockaddr*)&saddr, sizeof saddr);
   }
 #endif
