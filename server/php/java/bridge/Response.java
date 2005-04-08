@@ -52,6 +52,14 @@ public class Response {
     public boolean sendArraysAsValues() {
     	return (options & 2)==2;
     }
+    public boolean sendUTF8Strings() {
+    	return (options & 1)==1;
+    }
+
+    static final String UTF8="UTF-8";
+    private byte[] getBytes(String s) { 
+        return sendUTF8Strings()?s.getBytes(UTF8):s.getBytes();
+    }
     
     static final byte[] e="\"/>".getBytes();
     static final byte[] c="\">".getBytes();
@@ -78,6 +86,9 @@ public class Response {
 	buf.appendQuoted(s);
 	buf.append(I); buf.append(String.valueOf(result));
 	buf.append(e);
+    }
+    void writeString(String s) {
+	writeString(getBytes(s));
     }
     void writeBoolean(boolean b) {
 	buf.append(B); buf.write(b==true?'T':'F');

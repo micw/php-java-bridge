@@ -244,8 +244,11 @@ static proxyenv *try_connect_to_server(short bail, unsigned char spec TSRMLS_DC)
 	  return 0;
   }
 #ifndef ZEND_ENGINE_2
-  // we want arrays as values
-  { char c=2; send(sock, &c, sizeof c, 0); }
+  // we want arrays as values and UTF-8 strings
+  { char c=3; send(sock, &c, sizeof c, 0); }
+#else
+  // we want UTF-8 strings
+  { char c=1; send(sock, &c, sizeof c, 0); }
 #endif
 
   return JG(jenv) = java_createSecureEnvironment(sock, handle_request, server);
