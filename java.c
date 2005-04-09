@@ -34,8 +34,8 @@ int *__errno (void) { return &java_errno; }
 
 PHP_RINIT_FUNCTION(java) 
 {
-	assert(!JG(jenv));
-	return SUCCESS;
+  assert(!JG(jenv)); if(JG(jenv)) exit(18);
+  return SUCCESS;
 }
 PHP_RSHUTDOWN_FUNCTION(java)
 {
