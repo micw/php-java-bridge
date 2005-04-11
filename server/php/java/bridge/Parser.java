@@ -14,7 +14,9 @@ public class Parser {
     static final short OK=0, PING=1, EOF=2, IO_ERROR=3;    // parse return codes
 
     IDocHandler handler;
+    JavaBridge bridge;
     Parser(JavaBridge bridge, IDocHandler handler) {
+        this.bridge = bridge;
 	this.handler=handler;
 	tag=new ParserTag[]{new ParserTag(1), new ParserTag(MAX_ARGS), new ParserTag(MAX_ARGS) };
     }
@@ -82,7 +84,7 @@ public class Parser {
 		buf.append(tag[1].strings[i].getStringValue()); buf.append("=\""); buf.append(tag[2].strings[i].getStringValue());buf.append("\" ");
 	    }
 	    buf.append(eot?"/>":">");
-	    Util.logDebug(buf.toString());
+	    Util.logDebug(this.bridge + " " + buf.toString());
     	}
 	handler.begin(tag);
     }
