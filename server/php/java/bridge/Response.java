@@ -58,7 +58,12 @@ public class Response {
 
     static final String UTF8="UTF-8";
     private byte[] getBytes(String s) { 
-        return sendUTF8Strings()?s.getBytes(UTF8):s.getBytes();
+        try { 
+	    return sendUTF8Strings()?s.getBytes(UTF8):s.getBytes();
+        } catch (java.io.UnsupportedEncodingException e) { 
+	    Util.printStackTrace(e);
+	    return s.getBytes();
+	}
     }
     
     static final byte[] e="\"/>".getBytes();
@@ -147,7 +152,7 @@ public class Response {
     }
     void flush() throws IOException {
  	if(Util.logLevel>=4) {
-		Util.logDebug("<-- " +buf.toString());
+		Util.logDebug(this.bridge + " <-- " +buf.toString());
 	}
 	buf.writeTo(bridge.out);
 	buf.reset();
