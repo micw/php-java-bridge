@@ -238,6 +238,11 @@ static proxyenv *try_connect_to_server(short bail, unsigned char spec TSRMLS_DC)
   proxyenv *jenv =JG(jenv);
   if(jenv) return jenv;
 
+  if(JG(is_closed)) {
+		php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: Session is closed. -- This usually means that you have tried to access the server in your class' __destruct() method.",51);
+		return 0;
+  }
+
   if(!(server=java_test_server(&sock, spec))) {
 	  if (bail) 
 		php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge and set the java.socketname or java.hosts option?",52, strerror(errno));

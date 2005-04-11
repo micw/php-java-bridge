@@ -34,7 +34,10 @@ int *__errno (void) { return &java_errno; }
 
 PHP_RINIT_FUNCTION(java) 
 {
-  assert(!JG(jenv)); if(JG(jenv)) exit(18);
+  if(JG(jenv)) {
+	php_error(E_ERROR, "php_mod_java(%d): Synchronization problem, rinit with active connection called. Cannot continue, aborting now. Please report this to: php-java-bridge-users@lists.sourceforge.net",59);
+  }
+  JG(is_closed)=0;
   return SUCCESS;
 }
 PHP_RSHUTDOWN_FUNCTION(java)
@@ -50,6 +53,7 @@ PHP_RSHUTDOWN_FUNCTION(java)
 	free(JG(jenv));
   }
   JG(jenv) = NULL;
+  JG(is_closed)=1;
   return SUCCESS;
 }
 
@@ -271,6 +275,7 @@ PHP_INI_END()
 static void php_java_alloc_globals_ctor(zend_java_globals *java_globals TSRMLS_DC)
 {
   java_globals->jenv=0;
+  java_globals->is_closed=-1;
 }
 
 #ifdef ZEND_ENGINE_2
