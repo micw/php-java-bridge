@@ -3,14 +3,15 @@
 # Start the server part of the PHP/Java Bridge.  This script will be
 # called by when the php-java-bridge service is started.
 
-LANG_SYSTEM="${LANG-en_US.UTF-8}"
 LANG=C
+inst=user
 
 # do some magic to avoid loading broken libraries from local
 # installations if we are installed in one of the system directories.
 instdir=`basename $0`
 case $instdir in
     /usr/bin|/usr/sbin|/bin|/sbin)
+    inst=sys
     PATH=/sbin:/bin:/usr/sbin:/usr/bin:$PATH:
     LD_LIBRARY_PATH=/lib:/usr/lib:$LD_LIBRARY_PATH
     export PATH LD_LIBRARY_PATH
@@ -35,7 +36,6 @@ if test $# != 0; then
   eval $1; shift
   export JAVA_HOME LD_LIBRARY_PATH
   java="${ext}/RunJavaBridge"
-  LANG="$LANG_SYSTEM" 
   $java "$@" &
   echo $! >$pid
   wait
@@ -81,5 +81,9 @@ rm -f /tmp/phpinfo.$$
 echo Starting java with the command: "$cmd"
 
 # invoke
-LANG="$LANG_SYSTEM"
+if test "$inst" = "sys"; then
+# preserve name for status command
+/bin/sh -c "$0 $ext $cmd"&
+else
 /bin/sh -c "/bin/sh $0 $ext $cmd"&
+fi

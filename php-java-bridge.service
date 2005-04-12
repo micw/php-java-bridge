@@ -41,6 +41,7 @@ case "$1" in
 	stop
 	;;
   status)
+set -x
         status $prog
 	RETVAL=$?
 	;;
