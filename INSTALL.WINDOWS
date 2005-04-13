@@ -62,22 +62,5 @@ Known Windows Issues
   .jar files into %JAVA_HOME\jre\lib\ext instead and then re-start the
   java VM.
 
-* Windows 98 does not support UTF-8.  To force the bridge to use UTF-8
-  anyway, start it with: java -Dfile.encoding=UTF-8 JavaBridge.jar
-
 * Both, the CGI version and the apache or isapi module are
-  supported. But it is recommended to use the CGI version:
-
-  Due to bugs in PHP5 the module version may leak resources.  You can
-  test this by starting the bridge with the command: java -jar
-  JavaBridge.jar 9167 5 "" and then type: php-cgi.exe -i. If you see a
-  "java.net.SocketException: Connection reset" exception message, this
-  means that your PHP version cannot handle resources correctly. -- The
-  exception means that PHP did not call the RSHUTDOWN hook and that the
-  socket was destroyed by the operating system upon CGI termination. If
-  this happens with the module version, the socket will stay open and
-  the operating system will run out of socket handles after some time.
-
-  The leak described above happens very seldom, for example if 
-  the PHP script is very short. But it may happen, not only with
-  the PHP/Java Bridge but also with SOAP and other modules.
+  supported. But it is recommended to use the CGI version.

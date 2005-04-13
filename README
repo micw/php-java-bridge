@@ -221,8 +221,6 @@ Build and execution instructions:
           java.log_level="3"
           java.log_file="/var/log/php-java-bridge.log"
           java.socketname="/var/run/.php-java-bridge_socket"
-          #java.hosts="localhost:9167;192.168.6.30:8009"
-
 
   Re-start the web server, for example with the command:
 
@@ -230,28 +228,37 @@ Build and execution instructions:
 
 
   OPTION 1: You can use local sockets to connect to a local backend. 
-  Copy the executable php-java-bridge to /usr/sbin and start it with
-  the command:
+  Copy the executable php-java-bridge to /usr/sbin, make it executable 
+  with the command "chmod +x /usr/sbin/php-java-bridge" and start it:
 
-          sh /usr/sbin/php-java-bridge
+          /usr/sbin/php-java-bridge
 
   This is the only option available on Security Enhanced Linux.
 
 
   OPTION 2: You can use TCP/IP sockets to communicate with different
   backends on different hosts. Disable the java.socketname option,
-  edit and enable the java.hosts option and re-start the web server.
-  Start the backends on all hosts, for example with the command:
+  start the backends on all hosts and ports, for example with the 
+  commands:
 
-          java -jar JavaBridge.jar INET:9167 3 ""
+          java -jar JavaBridge.jar INET:9167 3 backend-1.log &
+          java -jar JavaBridge.jar INET:9168 3 backend-2.log &
+
+  and re-start the web server to activate this setting. A multicast
+  packet is send and the bridge selects the first backend which has
+  a load <20.  If, for some reason, multicasts don't work on your 
+  system you can use the java.hosts option instead. The following 
+  example directs the bridge to two backends running on the local host: 
+  java.hosts="127.0.0.1:9167;127.0.0.1:9168".
 
   On Security Enhanced Linux the communication via TCP/IP sockets is
-  switched off for security reasons.
+  currently switched off for security reasons.
 
 
   OPTION 3: You can start the bridge as a sub-process of apache. Disable
-  java.hosts and java.socketname, re-start apache and check if apache
-  has started java as a sub-process.  For example with the commands:
+  java.hosts and java.socketname, stop all backends and re-start apache.
+  Check if apache has started java as a sub-process.  For example with 
+  the commands:
 
           apachectl restart
           pstree | fgrep httpd
@@ -274,15 +281,22 @@ Build and execution instructions:
           java.java_home = <system dependent path to the java install dir>
           java.java      = <system dependent path to the java binary>
           java.socketname= <hard-coded socketname to start the VM separately>
-          java.hosts     = <add. bridge hosts e.g.: server1:8091;server2:9001>
+          java.hosts     = <add. bridge hosts e.g.: server1:9167;server2:9168>
 
   Please first look at the output of phpinfo() to see the original
   values.  
 
   The java.hosts setting specifies additional hosts running the
-  PHP/Java Bridge. If not set or if the bridge cannot connect to one of
-  these servers nor to java.socketname, the bridge will start a private
-  java VM.
+  PHP/Java Bridge; it should be used only if multicast datagrams 
+  don't work on your system.  
+
+  During startup the bridge checks how to connect to the backend(s):
+  1) it checks if a local VM is available (java.socketname).  
+  2) If not (or if the option is switched off), it checks java.hosts. 
+     If switched off, it sends out a multicast datagram.  
+  3) If there were no responses from the backend pool, the bridge 
+     starts a private java VM based on the information in the java 
+     section of the php.ini (java.java, ...). 
 
 ---------------------------------------------
   Starting the PHP/Java Bridge automatically
@@ -474,25 +488,6 @@ Build and execution instructions:
 
   The default log level is 1.
 
-------------------------------------
-  UTF-8
-  -----
-  
-  The PHP/Java Bridge uses the java VM's default "file.encoding" to
-  convert characters into the host representation.  On Unix the java VM
-  determines the host representation by looking at the LANG environment
-  variable.
-
-  In order to use UTF-8 in your PHP scripts, the LANG environment
-  variable must be set to an UTF-8 locale, for example en_US.UTF-8. This
-  is default on all modern operating systems, but certain components may
-  select a different locale. Apache for example runs with the C locale
-  and if the PHP/Java bridge is started automatically as a sub-component
-  of apache, it will inherit this setting. -- This is one of the reasons
-  why it is recommended to start the bridge as a system service outside of
-  apache.
-
-  You can check the file.encoding with the test.php script, see above.
 ------------------------------------
   Macintosh/PPC Installation
   --------------------------
