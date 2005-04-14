@@ -20,6 +20,8 @@
 #include "php_wrapper.h"
 #ifdef ZEND_ENGINE_2
 #include "zend_exceptions.h"
+#else
+#include "zend_stack.h"
 #endif
 
 #include "protocol.h"
@@ -31,7 +33,7 @@
 ZEND_EXTERN_MODULE_GLOBALS(java)
 
 
-static void setResultFromString (pval *presult, char*s, size_t len){
+	 static void setResultFromString (pval *presult, char*s, size_t len){
   Z_TYPE_P(presult)=IS_STRING;
   Z_STRLEN_P(presult)=len;
   Z_STRVAL_P(presult)=emalloc(Z_STRLEN_P(presult)+1);
@@ -155,9 +157,13 @@ static  void  setException  (pval *presult, long value, char *strValue, size_t l
 }
 
 #define GET_RESULT(pos) if(!ctx->id) {ctx->id=(zval*)strtol(PARSER_GET_STRING(st, pos), 0, 10);}
+struct stack_elem { 
+  zval *container;
+  char composite_type;          /* A|H */
+};
 struct parse_ctx {
-  char composite_type;			/* A|H */
-  zval*id, *container;
+  zval*id;
+  zend_stack containers;
 };
 void begin(parser_tag_t tag[3], parser_cb_t *cb){
   struct parse_ctx *ctx=(struct parse_ctx*)cb->ctx;
@@ -167,28 +173,34 @@ void begin(parser_tag_t tag[3], parser_cb_t *cb){
   case 'X':
 #ifndef ZEND_ENGINE_2
 	GET_RESULT(1);
-	setResultFromArray(ctx->container=ctx->id);
-	ctx->composite_type=*PARSER_GET_STRING(st, 0);
+	{
+      struct stack_elem stack_elem = { ctx->id, *PARSER_GET_STRING(st, 0) };
+	  zend_stack_push(&ctx->containers, &stack_elem, sizeof stack_elem);
+	  setResultFromArray(ctx->id);
 #else
-	assert(0);
+	  assert(0);
 #endif
-
-	break;
+	  break;
+	}
   case 'P':
 #ifndef ZEND_ENGINE_2
-	if(ctx->composite_type=='H') { /* hash table */
-	  if(*PARSER_GET_STRING(st, 0)=='N')	/* number */
-		ctx->id=hashIndexUpdate(ctx->container, strtol(PARSER_GET_STRING(st, 1), 0, 10));
-	  else
-		ctx->id=hashUpdate(ctx->container, PARSER_GET_STRING(st, 1), st[1].length);
-	}
-	else {						/* array */
-	  ctx->id=nextElement(ctx->container);
-	}
+	{ 
+      struct stack_elem *stack_elem;
+	  zend_stack_top(&ctx->containers, (void**)&stack_elem);
+	  if(stack_elem->composite_type=='H') { /* hash table */
+		if(*PARSER_GET_STRING(st, 0)=='N')	/* number */
+		  ctx->id=hashIndexUpdate(stack_elem->container, strtol(PARSER_GET_STRING(st, 1), 0, 10));
+		else
+		  ctx->id=hashUpdate(stack_elem->container, PARSER_GET_STRING(st, 1), st[1].length);
+	  }
+	  else {						/* array */
+		ctx->id=nextElement(stack_elem->container);
+	  }
 #else
-	assert(0);
+	  assert(0);
 #endif
-	break;
+	  break;
+	}
   case 'S':
 	GET_RESULT(1);
 	setResultFromString(ctx->id, PARSER_GET_STRING(st, 0), st[0].length);
@@ -226,10 +238,32 @@ void begin(parser_tag_t tag[3], parser_cb_t *cb){
 	assert(0);
   }
 }
+static void end(parser_string_t st[1], parser_cb_t *cb){
+  switch (*(st[0].string)[st[0].off]) {
+  case 'X': { 
+    int err;
+#ifndef ZEND_ENGINE_2
+	struct parse_ctx *ctx=(struct parse_ctx*)cb->ctx;
+    struct stack_elem *stack_elem;
+    err=zend_stack_del_top(&ctx->containers);
+    assert(SUCCESS==err);
+	if(SUCCESS==zend_stack_top(&ctx->containers, (void**)&stack_elem))
+	  //setResultFromArray(stack_elem->container);
+	  ;
+  }
+#else
+	assert(0);
+#endif
+  }
+}
 static void handle_request(proxyenv *env) {
   struct parse_ctx ctx = {0,0,0};
-  parser_cb_t cb = {begin, 0, &ctx};
+  parser_cb_t cb = {begin, end, &ctx};
+
+  zend_stack_init(&ctx.containers);
   parse(env, &cb);
+  assert(zend_stack_is_empty(&ctx.containers));
+  zend_stack_destroy(&ctx.containers);
 }
 
 static proxyenv *try_connect_to_server(short bail, unsigned char spec TSRMLS_DC) {
@@ -239,14 +273,14 @@ static proxyenv *try_connect_to_server(short bail, unsigned char spec TSRMLS_DC)
   if(jenv) return jenv;
 
   if(JG(is_closed)) {
-		php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: Session is closed. -- This usually means that you have tried to access the server in your class' __destruct() method.",51);
-		return 0;
+	php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: Session is closed. -- This usually means that you have tried to access the server in your class' __destruct() method.",51);
+	return 0;
   }
 
   if(!(server=java_test_server(&sock, spec))) {
-	  if (bail) 
-		php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge and set the java.socketname or java.hosts option?",52, strerror(errno));
-	  return 0;
+	if (bail) 
+	  php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge and set the java.socketname or java.hosts option?",52, strerror(errno));
+	return 0;
   }
 #ifndef ZEND_ENGINE_2
   // we want arrays as values and UTF-8 strings
