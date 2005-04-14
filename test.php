@@ -13,8 +13,8 @@ if (!extension_loaded('java')) {
     exit(2);
   }
 }
-//phpinfo();
-//print "\n\n";
+phpinfo();
+print "\n\n";
 
 $v = new java("java.lang.System");
 $arr=$v->getProperties();

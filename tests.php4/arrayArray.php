@@ -6,7 +6,7 @@ if(!extension_loaded('java')) {
 }
 
 $here=trim(`pwd`);
-java_set_library_path("$here/arrayArray.jar");
+java_set_library_path("$here/../tests.php5/arrayArray.jar");
 $ReflectArray = new java_class("java.lang.reflect.Array");
 $Array = new java_class("ArrayArray");
 $arrayArray=$Array->create(10);
