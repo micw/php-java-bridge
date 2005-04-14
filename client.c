@@ -247,9 +247,6 @@ static void end(parser_string_t st[1], parser_cb_t *cb){
     struct stack_elem *stack_elem;
     err=zend_stack_del_top(&ctx->containers);
     assert(SUCCESS==err);
-	if(SUCCESS==zend_stack_top(&ctx->containers, (void**)&stack_elem))
-	  //setResultFromArray(stack_elem->container);
-	  ;
   }
 #else
 	assert(0);
@@ -257,7 +254,7 @@ static void end(parser_string_t st[1], parser_cb_t *cb){
   }
 }
 static void handle_request(proxyenv *env) {
-  struct parse_ctx ctx = {0,0,0};
+  struct parse_ctx ctx = {0};
   parser_cb_t cb = {begin, end, &ctx};
 
   zend_stack_init(&ctx.containers);
