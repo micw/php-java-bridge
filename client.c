@@ -33,7 +33,7 @@
 ZEND_EXTERN_MODULE_GLOBALS(java)
 
 
-	 static void setResultFromString (pval *presult, char*s, size_t len){
+static void setResultFromString (pval *presult, char*s, size_t len){
   Z_TYPE_P(presult)=IS_STRING;
   Z_STRLEN_P(presult)=len;
   Z_STRVAL_P(presult)=emalloc(Z_STRLEN_P(presult)+1);
