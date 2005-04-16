@@ -610,13 +610,22 @@ public class JavaBridge implements Runnable {
 		while (!Modifier.isPublic(jclass.getModifiers())) {
 		    // OK, some joker gave us an instance of a non-public class
 		    // This often occurs in the case of enumerators
-		    // Substitute the first public interface in its place,
+		    // Substitute the matching first public interface in its place,
 		    // and barring that, try the superclass
 		    Class interfaces[] = jclass.getInterfaces();
-		    jclass=jclass.getSuperclass();
+		    Class superclass = jclass.getSuperclass();
 		    for (int i=interfaces.length; i-->0;) {
 			if (Modifier.isPublic(interfaces[i].getModifiers())) {
 			    jclass=interfaces[i];
+			    Method methods[] = jclass.getMethods();
+			    for (int j=0; j<methods.length; j++) {
+				if (methods[j].getName().equalsIgnoreCase(method)) {
+				    if(methods[j].getParameterTypes().length == args.length) {
+					break;
+				    }
+				}
+			    }
+			    if(i==methods.length) jclass=superclass;
 			}
 		    }
 		}
