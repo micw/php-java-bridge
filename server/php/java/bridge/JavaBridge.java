@@ -455,6 +455,9 @@ public class JavaBridge implements Runnable {
 			    weight+=256;
 		    } else
 			weight+=9999;
+		} else if (parms[i].isAssignableFrom(java.util.Collection.class)) {
+		    if (!(args[i] instanceof Map))
+			weight+=9999;
 		} else if (parms[i].isPrimitive()) {
 		    Class c=parms[i];
 		    if (args[i] instanceof Number) {
@@ -573,7 +576,21 @@ public class JavaBridge implements Runnable {
 		    Util.printStackTrace(e);
 		    // leave result[i] alone...
 		}
-	    }
+	    } else if (args[i] instanceof Map && (parms[i].isAssignableFrom(java.util.Collection.class))) {
+		try {
+		    Map ht = (Map)args[i];
+		    // Verify that the keys are Long
+		    for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
+			int index = ((Long)e.next()).intValue();
+		    }
+
+		    result[i]=((java.util.Map)(args[i])).values(); 
+		} catch (Exception e) {
+		    Util.logError("Error: " +  String.valueOf(e) + " Could not create java.util.Map.  You have probably passed an hashtable instead of an array. Please check that the keys are long.");
+		    Util.printStackTrace(e);
+		    // leave result[i] alone...
+		}
+	    } 
 	}
 	return result;
     }
