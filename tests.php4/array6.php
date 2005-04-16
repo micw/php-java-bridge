@@ -8,7 +8,7 @@ if(!extension_loaded('java')) {
 $here=trim(`pwd`);
 java_set_library_path("$here/array6.jar");
 
-$testvar = new Java('Array6);
+$testvar = new Java('Array6');
 $testobj = $testvar->test();
 echo $testobj[0][0][0][0][0][1];
 echo $testobj[0][0][0][0][1][0];
