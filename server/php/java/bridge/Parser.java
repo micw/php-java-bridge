@@ -93,7 +93,7 @@ public class Parser {
 	    StringBuffer buf=new StringBuffer("--> </");   
 	    buf.append(tag[0].strings[0].getStringValue());
 	    buf.append(">");
-	    Util.logDebug(buf.toString());
+	    Util.logDebug(this.bridge + " " + buf.toString());
     	}
 	handler.end(tag[0].strings);
     }
