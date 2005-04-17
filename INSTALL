@@ -61,7 +61,7 @@ these components:
 
 * PHP 4.3.x or above, for example 5.0.1
 
-* the PHP/Java Bridge version 1.x
+* the PHP/Java Bridge
 
 * a web-server, for example Apache 2.x
 
@@ -96,8 +96,8 @@ su -c "echo 'AddType application/x-httpd-php .php' >>$INST/conf/httpd.conf"
 cd ..
 
 # compile and install the php/java bridge
-bunzip2 < php-java-bridge_1.x.y.tar.bz2 | tar xf -
-cd php-java-bridge-1.x.y
+bunzip2 < php-java-bridge_p.x.y.tar.bz2 | tar xf -
+cd php-java-bridge-p.x.y
 export PATH=$INST/bin:$PATH 
 export LD_LIBRARY_PATH=$INST/lib:$LD_LIBRARY_PATH
 phpize

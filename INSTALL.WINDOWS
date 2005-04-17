@@ -21,8 +21,7 @@ server and the bridge.
 
   Open the file result.html with a browser.  Search for the "java
   status" entry, it should be "java status: running", and examine the
-  java properties at the bottom of the page. Search for "file.encoding",
-  it should be UTF-8.
+  java properties at the bottom of the page. 
 
 * Copy your java libraries (.jar files) into "java.ext.dirs" (see
   result.html). Copy the php_java.dll into the extension directory
@@ -34,7 +33,6 @@ server and the bridge.
 
           extension = php_java.dll
           [java]
-          java.hosts="127.0.0.1:9167"
 
 * Copy the test.php into your web-server document root and browse to:
 
@@ -64,3 +62,13 @@ Known Windows Issues
 
 * Both, the CGI version and the apache or isapi module are
   supported. But it is recommended to use the CGI version.
+
+* The windows version does not support multicast sockets and therefore
+  load balancing is not available.  However, it is possible to start 
+  additional backends which may take over if the local backend becomes
+  unavailable.  The following .ini entry directs the bridge to two
+  additional backends listening on ports 9169 and 9170:
+
+          extension = php_java.dll
+          [java]
+          java.hosts="127.0.0.1:9169;127.0.0.1:9170"
