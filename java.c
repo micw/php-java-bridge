@@ -876,7 +876,6 @@ php_java_call_function_handler4(INTERNAL_FUNCTION_PARAMETERS, zend_property_refe
   short createInstance;
   short constructor;
   short is_mono;
-  zval *zval0;
 
   getParametersArray(ht, arg_count, arguments);
 

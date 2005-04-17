@@ -244,7 +244,6 @@ static void end(parser_string_t st[1], parser_cb_t *cb){
     int err;
 #ifndef ZEND_ENGINE_2
 	struct parse_ctx *ctx=(struct parse_ctx*)cb->ctx;
-    struct stack_elem *stack_elem;
     err=zend_stack_del_top(&ctx->containers);
     assert(SUCCESS==err);
   }
@@ -276,7 +275,7 @@ static proxyenv *try_connect_to_server(short bail, unsigned char spec TSRMLS_DC)
 
   if(!(server=java_test_server(&sock, spec))) {
 	if (bail) 
-	  php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge and set the java.socketname or java.hosts option?",52, strerror(errno));
+	  php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge and set the java.socketname option?",52, strerror(errno));
 	return 0;
   }
 #ifndef ZEND_ENGINE_2

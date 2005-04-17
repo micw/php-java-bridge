@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <errno.h>
+#include <time.h>
 
 /* path and dir separators */
 #include "php_wrapper.h"
@@ -217,13 +218,35 @@ static int test_server(int port) {
   return sock;
 }
 
+/*
+ * Test for a running server.  Return the server name and the socket
+ * if _socket!=NULL.  Spec is either M ono or J ava.  As a special
+ * case it is called with (I)nit when the bridge starts; so that we
+ * can avoid checking the backend when there's no .ini entry in which
+ * case we have to start the backend outselfs if multicast or the host
+ * list fail.  Once the local backend is started, it is treated as if
+ * it were started by the user.
+ */
 char* java_test_server(int *_socket, unsigned char spec) {
   int sock, port;
+  int current_time = 0xFFFFFFFF&time(0);
+  unsigned char backend = spec=='I'?0:spec; // Mono or Java backend
+
+  php_java_send_multicast(cfg->mc_socket, backend, current_time);
+
+  /* local server, either started by the user before (I)nit or started by the bridge */
+  if (((spec == 'I' && (java_ini_updated&U_SOCKNAME)) && (-1!=(sock=test_local_server())))
+      || (spec != 'I' && (-1!=(sock=test_local_server())))) {
+	if(_socket) {
+	  *_socket=sock;
+	} else {
+	  close(sock);
+	}
+	return strdup(cfg->sockname);
+  }
 
   /* multicast */
-  php_java_send_multicast(cfg->mc_socket, spec);
-  port = php_java_recv_multicast(cfg->mc_socket, spec);
-
+  port = php_java_recv_multicast(cfg->mc_socket, backend, current_time);
   if(-1!=port) {
 	if(-1!=(sock=test_server(port))) {
 	  if(_socket) {
@@ -233,16 +256,6 @@ char* java_test_server(int *_socket, unsigned char spec) {
 	  }
 	  return strdup(GROUP_ADDR);
 	}
-  }
-
-  /* local server */
-  if(-1!=(sock=test_local_server())) {
-	if(_socket) {
-	  *_socket=sock;
-	} else {
-	  close(sock);
-	}
-	return strdup(cfg->sockname);
   }
 
   /* host list */
@@ -333,7 +346,7 @@ void java_start_server() {
   int pid=0, err=0, p[2];
   char *test_server;
 #ifndef __MINGW32__
-  if(!(test_server=java_test_server(0, 0))) {
+  if(!(test_server=java_test_server(0, 'I'))) {
 	if(can_fork()) {
 	  if(pipe(p)!=-1) {
 		if(!(pid=fork())) {		/* daemon */

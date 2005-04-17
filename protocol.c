@@ -54,7 +54,7 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
   static const char quote[]="&quot;";
   static const char amp[]="&amp;";
   register size_t newlen=len+8+len/10, pos=0;
-  char c, *s, *new = malloc(newlen);
+  char c, *new = malloc(newlen);
   register short j;
   assert(new); if(!new) exit(9);
   

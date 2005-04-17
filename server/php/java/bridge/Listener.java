@@ -15,7 +15,7 @@ public class Listener implements Runnable {
 	public static final int GROUP_PORT = 9167;
 	
 	MulticastSocket socket;
-	static final byte feature='J'; //[E]cma or [J]ava FIXME
+	static final byte feature='J'; //[M]mono or [J]ava FIXME: Use autoconf
 	private byte[] addr;
 	private int port;
 	
@@ -46,11 +46,13 @@ public class Listener implements Runnable {
 	 */
 	DatagramPacket createResponse(int load, DatagramPacket p) throws IOException {
 		byte[] b = new byte[3];
+		byte[] data = p.getData();
 		b[0]='r';
 		b[1]=feature;
 		b[2]=(byte) (load>255?255:(load&255));
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		out.write(b);
+		out.write(data, 3, 4); // send back timestamp
 
 		writeInt(out, port);
 
@@ -64,7 +66,7 @@ public class Listener implements Runnable {
 	}
 	public void run() {
 		
-		byte[] buf=new byte[3];			
+		byte[] buf=new byte[18];			
 		DatagramPacket packet = new DatagramPacket(buf, buf.length);
 		while(true) {
 			try {
