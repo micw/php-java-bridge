@@ -14,10 +14,10 @@
 
 #include "multicast.h"
 
-static int readInt(unsigned char*buf) {
+static unsigned long readInt(unsigned char*buf) {
   return (buf[0]&0xFF)<<24|(buf[1]&0xFF)<<16|(buf[2]&0xFF)<<8|(buf[3]&0xFF);
 }
-static void writeInt(unsigned char*buf, int i) {
+static void writeInt(unsigned char*buf, unsigned long i) {
   buf[0]=(i&(0xFF<<24))>>24;
   buf[1]=(i&(0xFF<<16))>>16;
   buf[2]=(i&(0xFF<<8))>>8;
@@ -49,13 +49,13 @@ int php_java_init_multicast() {
   return sock;
 }
   
-void php_java_send_multicast(int sock, unsigned char spec, int time) {
+void php_java_send_multicast(int sock, unsigned char spec, time_t time) {
 #ifndef __MINGW32__
   unsigned char c[18] = {'R', spec, MAX_LOAD};
   struct sockaddr_in saddr;
   if(-1==sock) return;
 
-  writeInt(c+3, time);
+  writeInt(c+3, (unsigned long)time);
   saddr.sin_family = AF_INET;
   saddr.sin_port = htons(GROUP_PORT);
   saddr.sin_addr.s_addr=inet_addr(GROUP_ADDR);  
@@ -63,7 +63,7 @@ void php_java_send_multicast(int sock, unsigned char spec, int time) {
 #endif
 }
 
-int php_java_recv_multicast(int sock, unsigned char spec, int time) {
+int php_java_recv_multicast(int sock, unsigned char spec, time_t time) {
 #ifndef __MINGW32__
   unsigned char c[18];
   int n;
@@ -75,17 +75,17 @@ int php_java_recv_multicast(int sock, unsigned char spec, int time) {
   FD_SET(sock, &set);
 
   do {
-    int t;
+    time_t t;
     n = select(sock+1, &set, 0, 0, &timeout);
     if(n<0) return -1;			/* error */
     if(!n) return -1;			/* timeout */
     n=read(sock, c, sizeof c);
     if(n!=sizeof c) continue;	/* broken packet */
-    t=readInt(c+3);
+    t=(time_t)readInt(c+3);
     if(t!=time) continue;		/* old packet */
   } while(c[0]!='r' || (spec!=0 && spec!=c[1]));
 
-  return readInt(c+7);
+  return (int)(0xffff & readInt(c+7));
 #else
   return -1;
 #endif

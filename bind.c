@@ -229,7 +229,7 @@ static int test_server(int port) {
  */
 char* java_test_server(int *_socket, unsigned char spec) {
   int sock, port;
-  int current_time = 0xFFFFFFFF&time(0);
+  time_t current_time = time(0);
   unsigned char backend = spec=='I'?0:spec; // Mono or Java backend
 
   php_java_send_multicast(cfg->mc_socket, backend, current_time);
