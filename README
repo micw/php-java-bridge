@@ -15,6 +15,17 @@ What is the PHP/Java Bridge?
   by exchanging java value objects; client stub classes (ejb/j2ee client .jar) 
   can be loaded at run-time. 
 
+  On Unix the PHP/Java Bridge also supports "failover" and "load
+  balancing". All backends automatically join a multicast group and the
+  PHP/Java Bridge automatically selects an appropriate backend based on
+  the multicast responses.
+
+  ECMA 335 based classes can be accessed if at least one JavaBridge.jar
+  is running inside a ECMA complient VM, for example Novell's MONO or
+  Microsoft's .NET. Special features such as varargs, reflection or
+  assembly loading are also supported.
+
+
   The bridge adds the following primitives to PHP:
 
    * new java("CLASSNAME"): References and instanciates the class
@@ -41,11 +52,15 @@ What is the PHP/Java Bridge?
 
    * java_set_library_path("JAR1;JAR2"): Makes additional libraries
      available to the current script. JAR can either be a "http:", "ftp:",
-     "file:" or a "jar:" location. Example:
+     "file:" or a "jar:" location. On Security Enhanced Linux .jar files
+     can only be loaded from a directory tagged with the lib_t security
+     context.  In the example below the xerces.jar will be loaded from 
+     either the current directory, from `php-config --extension-dir`/lib
+     or from /usr/share/java:
 
        $file=new java("java.io.File", "WEB_INF/web.xml");
 
-       java_set_library_path("file:c:/xerces.jar;http://localhost/jdom.jar");
+       java_set_library_path("xerces.jar;http://localhost/jdom.jar");
        $builder = new java("org.jdom.input.SAXBuilder");
        $doc = $builder->build($file);
        $root = $doc->getRootElement();
@@ -139,17 +154,22 @@ What is the PHP/Java Bridge?
   locations:
 
    1. Somewhere on a HTTP or FTP server, see PHP function
-      java_set_library_path.
+      java_set_library_path.  On Security Enhanced Linux the directory
+      containing .jar files must be tagged with the lib_t security context. 
 
    2. In the sub-directory "lib" of the PHP extension directory, if it
       exists and is accessible when the JVM starts the bridge.
-      This is usually "`php-config --extension-dir`/lib".
+      This is usually "`php-config --extension-dir`/lib".  On Security
+      Enhanced Linux this directory is tagged with the lib_t security
+      context and in java_set_library_path's search path.
 
    3. In the /usr/share/java/ directory, if it exists and is accessible
-      when the JVM starts the bridge.
+      when the JVM starts the bridge. On Security Enhanced Linux this
+      directory is tagged with the lib_t security context and in 
+      java_set_library_path's search path.
 
 
-  The PHP/Java Bridge can operate in 3 different modes:
+  The PHP/Java Bridge can operate in 4 different modes:
 
    1. Invoked from the dl() function. In this mode the bridge starts
       when the HTTP server receives a client request and terminates after
@@ -166,6 +186,13 @@ What is the PHP/Java Bridge?
       external java process. Recommended for production systems. This mode
       is used by the RPM package available for RedHat Enterprise Linux. In
       this mode the bridge starts and stops as a system service.
+
+   4. Permanently activated in the global php.ini file with an
+      external backend pool. Recommended for production systems which
+      require load balancing and failover. All backends are started
+      independently and automatically join a multicast group. The bridge
+      sends out a multicast datagram and selects the appropriate backend
+      based on the multicast responses.
 
   Furthermore the PHP/Java Bridge can be:
 
@@ -186,8 +213,11 @@ What is the PHP/Java Bridge?
 
 Build and execution instructions:
 ---------------------------------
+  NOTE: If you have Security Enhanced Linux, you must update the policy
+  and tag the files with the correct SEL contexts, please see below, or 
+  please install the binary RPM instead.
 
-  In the directory php-java-bridge-1.x.y type:
+  In the directory php-java-bridge-p.x.y type:
 
           java -version        # 1.3 or above (1.4.2_02 or IBM JVM recommended)
           gcc --version        # 3.2.3 or above.
@@ -233,7 +263,7 @@ Build and execution instructions:
 
           /usr/sbin/php-java-bridge
 
-  This is the only option available on Security Enhanced Linux.
+  This option is available on Security Enhanced Linux.
 
 
   OPTION 2: You can use TCP/IP sockets to communicate with different
@@ -251,8 +281,7 @@ Build and execution instructions:
   example directs the bridge to two backends running on the local host: 
   java.hosts="127.0.0.1:9167;127.0.0.1:9168".
 
-  On Security Enhanced Linux the communication via TCP/IP sockets is
-  currently switched off for security reasons.
+  This option is available on Security Enhanced Linux.
 
 
   OPTION 3: You can start the bridge as a sub-process of apache. Disable
@@ -288,7 +317,7 @@ Build and execution instructions:
 
   The java.hosts setting specifies additional hosts running the
   PHP/Java Bridge; it should be used only if multicast datagrams 
-  don't work on your system.  
+  don't work on your system.
 
 ---------------------------------------------
   Starting the PHP/Java Bridge automatically
