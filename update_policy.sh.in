@@ -21,7 +21,8 @@ cp -v `dirname $0`/php-java-bridge.te $domains/program &&
 cp -v `dirname $0`/php-java-bridge.fc $contexts/program &&
 make -C $1 reload &&
 EXT=@EXTENSION_DIR@
-setfiles -v ${1}/file_contexts/file_contexts ${EXT}/RunJavaBridge ${EXT}/java.so ${EXT}/libnatcJavaBridge.so
+mkdir ${EXT}/lib 2>/dev/null
+setfiles -v ${1}/file_contexts/file_contexts ${EXT}/RunJavaBridge ${EXT}/java.so ${EXT}/libnatcJavaBridge.so ${EXT}/lib
 err=$?
 setenforce $enforce
 if test $err != 0; then
