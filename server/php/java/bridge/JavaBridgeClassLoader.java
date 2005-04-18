@@ -15,6 +15,9 @@ public class JavaBridgeClassLoader extends URLClassLoader {
     public JavaBridgeClassLoader() {
     	super((URL[]) sysUrls.toArray(new URL[0]));
     }
+    // the local library directory (global one is /usr/share/java)
+    static private String phpLibDir;
+
     // the list of jar files in which we search for user classes.
     static private Collection sysUrls = null;
 
@@ -43,7 +46,15 @@ public class JavaBridgeClassLoader extends URLClassLoader {
 		p = url.getProtocol(); 
 	    } catch (MalformedURLException e) {
 		try {
-		    s = "file:" + s;
+		    if(new File(s).isFile()) {
+			s = "file:" + s;
+		    } else if (new File(phpLibDir + s).isFile()) {
+			s = "file:" + phpLibDir + s;
+		    } else if (new File("/usr/share/java/" + s).isFile()) {
+			s = "file:" + "/usr/share/java/" + s;
+		    } else {
+			s = "file:" + s;
+		    }
 		    url = new URL(s);
 		    p = url.getProtocol();
 		}  catch (MalformedURLException e1) {
@@ -59,6 +70,7 @@ public class JavaBridgeClassLoader extends URLClassLoader {
     // to our classpath
     //
     static void initClassLoader(String phpConfigDir) {
+        JavaBridgeClassLoader.phpLibDir=phpConfigDir + "/lib/";
 	sysUrls=new ArrayList();
 	try {
 	    String[] paths;
