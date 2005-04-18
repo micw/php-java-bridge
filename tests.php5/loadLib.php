@@ -22,8 +22,8 @@ try {
   java_set_library_path("array/array.jar");
   $testvar = new Java('Array');
   exit(0);
-} catch (Exception e) {
-  echo "Exception: " . e;
+} catch (Exception $e) {
+  echo "Exception: " . $e;
   exit(1);
 }
 ?>

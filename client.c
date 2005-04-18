@@ -177,11 +177,11 @@ void begin(parser_tag_t tag[3], parser_cb_t *cb){
       struct stack_elem stack_elem = { ctx->id, *PARSER_GET_STRING(st, 0) };
 	  zend_stack_push(&ctx->containers, &stack_elem, sizeof stack_elem);
 	  setResultFromArray(ctx->id);
+	  break;
+	}
 #else
 	  assert(0);
 #endif
-	  break;
-	}
   case 'P':
 #ifndef ZEND_ENGINE_2
 	{ 
@@ -196,11 +196,11 @@ void begin(parser_tag_t tag[3], parser_cb_t *cb){
 	  else {						/* array */
 		ctx->id=nextElement(stack_elem->container);
 	  }
+	  break;
+	}
 #else
 	  assert(0);
 #endif
-	  break;
-	}
   case 'S':
 	GET_RESULT(1);
 	setResultFromString(ctx->id, PARSER_GET_STRING(st, 0), st[0].length);
@@ -240,9 +240,10 @@ void begin(parser_tag_t tag[3], parser_cb_t *cb){
 }
 static void end(parser_string_t st[1], parser_cb_t *cb){
   switch (*(st[0].string)[st[0].off]) {
-  case 'X': { 
-    int err;
+  case 'X': 
 #ifndef ZEND_ENGINE_2
+  { 
+    int err;
 	struct parse_ctx *ctx=(struct parse_ctx*)cb->ctx;
     err=zend_stack_del_top(&ctx->containers);
     assert(SUCCESS==err);
