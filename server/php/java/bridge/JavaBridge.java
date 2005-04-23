@@ -32,7 +32,7 @@ public class JavaBridge implements Runnable {
     GlobalRef globalRef;
     static HashMap sessionHash = new HashMap();
 
-    JavaBridgeClassLoader cl=new JavaBridgeClassLoader();
+    static final JavaBridgeClassLoader cl=new JavaBridgeClassLoader();
 
     InputStream in; OutputStream out;
 
@@ -209,7 +209,7 @@ public class JavaBridge implements Runnable {
 		bridge.out=sock.getOutputStream();
 		// FIXME: Use thread pool
 		Thread thread = new Thread(bridge);
-		thread.setContextClassLoader(bridge.cl);
+		thread.setContextClassLoader(cl);
 		thread.start();
 	    }
 				
