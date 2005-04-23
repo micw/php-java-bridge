@@ -131,10 +131,14 @@ PHP_FUNCTION(java_instanceof)
 
 PHP_FUNCTION(java_get_session)
 {
+  proxyenv *jenv;
   zval **argv;
   int argc = ZEND_NUM_ARGS();
   
-  if (argc!=2) WRONG_PARAM_COUNT;
+  if (argc!=1) WRONG_PARAM_COUNT;
+
+  jenv=java_connect_to_server_no_multicast(TSRMLS_C);
+  if(!jenv) RETURN_NULL();
 
   argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
   if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {

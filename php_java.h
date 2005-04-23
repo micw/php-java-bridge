@@ -116,9 +116,13 @@ extern char* java_get_server_string();
 extern proxyenv *java_try_connect_to_server(TSRMLS_D);
 extern proxyenv *java_connect_to_server(TSRMLS_D);
 extern proxyenv *java_connect_to_mono(TSRMLS_D);
+extern proxyenv *java_connect_to_server_no_multicast(TSRMLS_D);
+extern proxyenv *java_connect_to_mono_no_multicast(TSRMLS_D);
 extern void java_start_server();
 
-/* spec: M ono, J ava or I nit */
+/* spec: M ono, J ava or I nit (lower-case m or j: no multicast) */
 extern char* java_test_server(int *socket, unsigned char spec);
+/* spec: m ono or j ava */
+extern char* java_test_server_no_multicast(int *socket, unsigned char spec);
 
 #endif

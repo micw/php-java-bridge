@@ -789,19 +789,16 @@ public class JavaBridge implements Runnable {
 	return buf.toString();
     }
     
-    public Session getSession(String name, Map vars) {
+    public Session getSession(String name) {
     	synchronized(JavaBridge.sessionHash) {
     		Session ref = null;
 	    	if(!JavaBridge.sessionHash.containsKey(name)) {
-		    	if(vars==null) throw new NullPointerException("Session " + name + "does not exist and \"vars\" is null.");
 		    	ref = new Session(name);
-		    	ref.putAll(vars);
 	    	} else {
 	    		ref = (Session) JavaBridge.sessionHash.get(name);
 	    		ref.destroy();
 	    		
 	    		Session s = new Session(name);
-	    		s.putAll(vars);
 	    		s.putAll(ref.map);
 	    		s.isNew=false;
 	    		ref=s;

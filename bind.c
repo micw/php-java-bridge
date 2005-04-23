@@ -33,6 +33,7 @@
 /* path and dir separators */
 #include "php_wrapper.h"
 #include "zend.h"
+#include "ext/session/php_session.h"
 
 #include "php_java.h"
 #include "multicast.h"
@@ -307,6 +308,121 @@ char* java_test_server(int *_socket, unsigned char spec) {
   return 0;
 }
 
+char* java_test_server_no_multicast(int *_socket, unsigned char spec) {
+  int sock, port;
+  time_t current_time = time(0);
+  unsigned char backend;
+  short is_new=1;
+  zval **tmp_port, *new_port;
+
+  assert(spec!='I');
+  /* local server */
+  if (-1!=(sock=test_local_server())) {
+	if(_socket) {
+	  *_socket=sock;
+	} else {
+	  close(sock);
+	}
+	return strdup(cfg->sockname);
+  }
+
+  /* backend pool.  retrieve the backend from the session var */
+#if HAVE_PHP_SESSION
+  if (PS(session_status) != php_session_active &&
+	  PS(session_status) != php_session_disabled) {
+	php_session_start(TSRMLS_C);
+  }
+
+  /* Find the backend */
+  port = -1;
+  if (zend_hash_find(Z_ARRVAL_P(PS(http_session_vars)), "_bogus_session_name", sizeof("_bogus_session_name"), (void **) &tmp_port) == SUCCESS &&
+	  Z_TYPE_PP(tmp_port) == IS_LONG) {
+	port = Z_LVAL_PP(tmp_port);
+  }
+  if(-1!=port) {
+	if(-1!=(sock=test_server(port))) {
+	  if(_socket) {
+		*_socket=sock;
+	  } else {
+		close(sock);
+	  }
+	  return strdup(GROUP_ADDR);
+	}
+  }
+
+  assert(port==-1);
+  /* no specific backend yet, select one */
+  if(spec=='j') backend='J'; else backend='M';
+  php_java_send_multicast(cfg->mc_socket, backend, current_time);
+  port = php_java_recv_multicast(cfg->mc_socket, backend, current_time);
+  if(-1!=port) {
+	int err;
+	if(-1!=(sock=test_server(port))) {
+	  if(_socket) {
+		*_socket=sock;
+	  } else {
+		close(sock);
+	  }
+	  MAKE_STD_ZVAL(new_port);
+	  Z_TYPE_P(new_port)=IS_LONG;
+	  Z_LVAL_P(new_port)=port;
+	  err = zend_hash_update(Z_ARRVAL_P(PS(http_session_vars)), "_bogus_session_name", sizeof("_bogus_session_name"), &new_port, sizeof(zval *), NULL);
+	  assert(err==SUCCESS);
+	  return strdup(GROUP_ADDR);
+	}
+  }
+#endif
+
+
+  /* host list */
+  if(cfg->hosts && strlen(cfg->hosts)) {
+	char *host, *hosts = strdup(cfg->hosts);
+	
+	assert(hosts); if(!hosts) return 0;
+	for(host=strtok(hosts, ";"); host; host=strtok(0, ";")) {
+	  struct sockaddr_in saddr;
+	  char *_port = strrchr(host, ':'), *ret;
+	  int port = 0;
+	  
+	  if(_port) { 
+		*_port++=0;
+		if(strlen(_port)) port=atoi(_port);
+	  }
+	  if(!port) port=atoi(DEFAULT_PORT);
+	  saddr.sin_family = AF_INET;
+	  saddr.sin_port=htons(port);
+#ifndef __MINGW32__
+	  if(!isdigit(*host)) {
+		struct hostent *hostent = gethostbyname(host);
+		if(hostent) {
+		  memcpy(&saddr.sin_addr,hostent->h_addr,sizeof(struct in_addr));
+		} else {
+		  inet_aton(host, &saddr.sin_addr);
+		}
+	  } else {
+		inet_aton(host, &saddr.sin_addr);
+	  }
+#else
+	  saddr.sin_addr.s_addr = inet_addr(host);
+#endif
+
+	  sock = socket (PF_INET, SOCK_STREAM, 0);
+	  if(-1==sock) continue;
+	  if (-1==connect(sock,(struct sockaddr*)&saddr, sizeof (struct sockaddr))) {
+		close(sock);
+		continue;
+	  }
+	  if(_socket) *_socket=sock;
+	  if(_port) _port[-1]=':';
+	  ret = strdup(host);
+	  free(hosts);
+	  return ret;
+	}
+	free(hosts);
+  }
+  return 0;
+}
+
 static int wait_server() {
 #ifndef __MINGW32__
   struct pollfd pollfd[1] = {{cfg->err, POLLIN, 0}};
@@ -328,7 +444,7 @@ static int wait_server() {
 }
 
 /*
- return 0 if user has hard-coded the socketname
+  return 0 if user has hard-coded the socketname
 */
 static short can_fork() {
   return cfg->can_fork;
