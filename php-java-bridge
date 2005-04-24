@@ -3,6 +3,7 @@
 # Start the server part of the PHP/Java Bridge.  This script will be
 # called by when the php-java-bridge service is started.
 
+LANG_SYSTEM="${LANG-en_US.UTF-8}"
 LANG=C
 inst=user
 
@@ -36,6 +37,8 @@ if test $# != 0; then
   eval $1; shift
   export JAVA_HOME LD_LIBRARY_PATH
   java="${ext}/RunJavaBridge"
+  LANG="$LANG_SYSTEM" 
+  unset LC_ALL
   $java "$@" &
   echo $! >$pid
   wait
@@ -81,6 +84,7 @@ rm -f /tmp/phpinfo.$$
 echo Starting java with the command: "$cmd"
 
 # invoke
+LANG="$LANG_SYSTEM"
 if test "$inst" = "sys"; then
 # preserve name for status command
 /bin/sh -c "$0 $ext $cmd"&

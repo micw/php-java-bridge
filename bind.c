@@ -308,11 +308,10 @@ char* java_test_server(int *_socket, unsigned char spec) {
   return 0;
 }
 
-char* java_test_server_no_multicast(int *_socket, unsigned char spec) {
+char* java_test_server_no_multicast(int *_socket, unsigned char spec TSRMLS_DC) {
   int sock, port;
   time_t current_time = time(0);
   unsigned char backend;
-  short is_new=1;
   zval **tmp_port, *new_port;
 
   assert(spec!='I');

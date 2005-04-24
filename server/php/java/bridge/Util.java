@@ -41,7 +41,15 @@ public class Util {
 	}
 	b.append(": ");
 	b.append(msg);
-	logStream.println(b);
+	byte[] bytes = null;
+	try {
+	    bytes = b.toString().getBytes(Response.UTF8);
+	} catch (java.io.UnsupportedEncodingException e) {
+	    Util.printStackTrace(e);
+	    bytes = b.toString().getBytes();
+	}
+	logStream.write(bytes, 0, bytes.length);
+	logStream.println("");
     }
     public static void printStackTrace(Throwable t) {
 	if(logLevel > 0)

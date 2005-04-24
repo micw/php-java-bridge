@@ -275,7 +275,7 @@ static proxyenv *try_connect_to_server(short bail, unsigned char spec TSRMLS_DC)
 	return 0;
   }
   no_multicast = (spec=='m' || spec=='j');
-  if(!(server=no_multicast?java_test_server_no_multicast(&sock, spec):java_test_server(&sock, spec))) {
+  if(!(server=no_multicast?java_test_server_no_multicast(&sock, spec TSRMLS_CC):java_test_server(&sock, spec))) {
 	if (bail) 
 	  php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge and set the java.socketname option?",52, strerror(errno));
 	return 0;

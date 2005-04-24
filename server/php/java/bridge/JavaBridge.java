@@ -32,7 +32,7 @@ public class JavaBridge implements Runnable {
     GlobalRef globalRef;
     static HashMap sessionHash = new HashMap();
 
-    static final JavaBridgeClassLoader cl=new JavaBridgeClassLoader();
+    JavaBridgeClassLoader cl=new JavaBridgeClassLoader();
 
     InputStream in; OutputStream out;
 
@@ -209,7 +209,7 @@ public class JavaBridge implements Runnable {
 		bridge.out=sock.getOutputStream();
 		// FIXME: Use thread pool
 		Thread thread = new Thread(bridge);
-		thread.setContextClassLoader(cl);
+		thread.setContextClassLoader(bridge.cl);
 		thread.start();
 	    }
 				
@@ -384,7 +384,7 @@ public class JavaBridge implements Runnable {
 		}
 	    }
 
-	    Object coercedArgs[] = coerce(selected.getParameterTypes(), args);
+	    Object coercedArgs[] = coerce(selected.getParameterTypes(), args, response);
 	    response.writeObject(selected.newInstance(coercedArgs));
 
 	} catch (Throwable e) {
@@ -455,7 +455,7 @@ public class JavaBridge implements Runnable {
 			    weight+=256;
 		    } else
 			weight+=9999;
-		} else if (parms[i].isAssignableFrom(java.util.Collection.class)) {
+		} else if ((java.util.Collection.class).isAssignableFrom(parms[i])) {
 		    if (!(args[i] instanceof Map))
 			weight+=9999;
 		} else if (parms[i].isPrimitive()) {
@@ -504,7 +504,7 @@ public class JavaBridge implements Runnable {
     // unfortunately PHP only supports wide formats, so to be practical
     // some (possibly lossy) conversions are required.
     //
-    private static Object[] coerce(Class parms[], Object args[]) {
+    private static Object[] coerce(Class parms[], Object args[], Response response) {
 	Object result[] = args;
 	Class targetType = null;
 	int size = 0;
@@ -512,7 +512,7 @@ public class JavaBridge implements Runnable {
 	for (int i=0; i<args.length; i++) {
 	    if (args[i] instanceof byte[] && !parms[i].isArray()) {
 		Class c = parms[i];
-		String s = new String((byte[])args[i]);
+		String s = response.newString((byte[])args[i]);
 		result[i] = s;
 		try {
 		    if (c == Boolean.TYPE) result[i]=new Boolean(s);
@@ -562,7 +562,7 @@ public class JavaBridge implements Runnable {
 		    }
 
 		    // coerce individual elements into the target type
-		    Object coercedArray[] = coerce(tempTarget, tempArray);
+		    Object coercedArray[] = coerce(tempTarget, tempArray, response);
         
 		    // copy the results into the desired array type
 		    Object array = Array.newInstance(targetType,size);
@@ -576,7 +576,7 @@ public class JavaBridge implements Runnable {
 		    Util.printStackTrace(e);
 		    // leave result[i] alone...
 		}
-	    } else if (args[i] instanceof Map && (parms[i].isAssignableFrom(java.util.Collection.class))) {
+	    } else if (args[i] instanceof Map && (java.util.Collection.class).isAssignableFrom(parms[i])) {
 		try {
 		    Map ht = (Map)args[i];
 		    // Verify that the keys are Long
@@ -614,20 +614,22 @@ public class JavaBridge implements Runnable {
 		    // and barring that, try the superclass
 		    Class interfaces[] = jclass.getInterfaces();
 		    Class superclass = jclass.getSuperclass();
-		    for (int i=interfaces.length; i-->0;) {
+		    boolean found=false;
+		    for (int i=interfaces.length; !found && i-->0;) {
 			if (Modifier.isPublic(interfaces[i].getModifiers())) {
 			    jclass=interfaces[i];
 			    Method methods[] = jclass.getMethods();
 			    for (int j=0; j<methods.length; j++) {
 				if (methods[j].getName().equalsIgnoreCase(method)) {
 				    if(methods[j].getParameterTypes().length == args.length) {
+					found=true;
 					break;
 				    }
 				}
 			    }
-			    if(i==methods.length) jclass=superclass;
 			}
 		    }
+		    if(!found) jclass = superclass;
 		}
 		Method methods[] = jclass.getMethods();
 		for (int i=0; i<methods.length; i++) {
@@ -645,7 +647,7 @@ public class JavaBridge implements Runnable {
 	    Method selected = (Method)select(matches, args);
 	    if (selected == null) throw new NoSuchMethodException(String.valueOf(method) + "(" + Util.argsToString(args) + "). " + "Candidates: " + String.valueOf(candidates));
 
-	    Object coercedArgs[] = coerce(selected.getParameterTypes(), args);
+	    Object coercedArgs[] = coerce(selected.getParameterTypes(), args, response);
 	    setResult(response, selected.invoke(object, coercedArgs));
 
 	} catch (Throwable e) {
@@ -693,7 +695,7 @@ public class JavaBridge implements Runnable {
 			    matches.add(jfields[i].getName());
 			    Object res=null;
 			    if (set) {
-				args = coerce(new Class[] {jfields[i].getType()}, args);
+				args = coerce(new Class[] {jfields[i].getType()}, args, response);
 				jfields[i].set(object, args[0]);
 			    } else {
 			    	res=jfields[i].get(object);
@@ -713,7 +715,7 @@ public class JavaBridge implements Runnable {
 			    Method method;
 			    if (set) {
 				method=props[i].getWriteMethod();
-				args = coerce(method.getParameterTypes(), args);
+				args = coerce(method.getParameterTypes(), args, response);
 			    } else {
 				method=props[i].getReadMethod();
 			    }
@@ -732,7 +734,7 @@ public class JavaBridge implements Runnable {
 			    matches.add(prop);
 			    Object res=null;
 			    if (set) {
-				args = coerce(new Class[] {jfields[i].getType()}, args);
+				args = coerce(new Class[] {jfields[i].getType()}, args, response);
 				jfields[i].set(object, args[0]);
 			    } else {
 				res = jfields[i].get(object);

@@ -5,7 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 public class Response {
-    private static class OutBuf extends ByteArrayOutputStream {
+    private class OutBuf extends ByteArrayOutputStream {
     	void append(byte[] s) {
     		try {
     			write(s);
@@ -13,7 +13,7 @@ public class Response {
 	}
     	void append(String s) {
     		try {
-    			this.write(s.getBytes());
+		    this.write(s.getBytes()); //used for objects only, not for UTF8 strings
 		} catch (IOException e) {/*not possible*/}
 	}
     	void appendQuoted(byte[] s) {
@@ -32,7 +32,7 @@ public class Response {
     		}
     	}
     	void appendQuoted(String s) {
-    		appendQuoted(s.getBytes());
+	    appendQuoted(getBytes(s));
     	}
     }
     OutBuf buf;
@@ -57,12 +57,20 @@ public class Response {
     }
 
     static final String UTF8="UTF-8";
-    private byte[] getBytes(String s) { 
+    byte[] getBytes(String s) { 
         try { 
 	    return sendUTF8Strings()?s.getBytes(UTF8):s.getBytes();
         } catch (java.io.UnsupportedEncodingException e) { 
 	    Util.printStackTrace(e);
 	    return s.getBytes();
+	}
+    }
+    String newString(byte[] b) {
+        try { 
+	    return sendUTF8Strings()?new String(b, UTF8):new String(b);
+        } catch (java.io.UnsupportedEncodingException e) { 
+	    Util.printStackTrace(e);
+	    return new String(b);
 	}
     }
     
@@ -86,7 +94,7 @@ public class Response {
     static final byte[] quote="&quot;".getBytes();
     static final byte[] amp="&amp;".getBytes();
     void writeString(byte s[]) {
-    	
+
 	buf.append(S);
 	buf.appendQuoted(s);
 	buf.append(I); buf.append(String.valueOf(result));
@@ -152,7 +160,7 @@ public class Response {
     }
     void flush() throws IOException {
  	if(Util.logLevel>=4) {
-		Util.logDebug(this.bridge + " <-- " +buf.toString());
+	    Util.logDebug(this.bridge + " <-- " +newString(buf.toByteArray()));
 	}
 	buf.writeTo(bridge.out);
 	buf.reset();

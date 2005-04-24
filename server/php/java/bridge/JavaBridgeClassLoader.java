@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.StringTokenizer;
+import java.util.HashMap;
+import java.lang.ref.WeakReference;
 
 public class JavaBridgeClassLoader extends URLClassLoader {
 	
@@ -20,6 +22,9 @@ public class JavaBridgeClassLoader extends URLClassLoader {
         // java_set_library_path("kawa.jar");
 	super(new URL[] {});	
     }
+    // class hash
+    private static final HashMap classes = new HashMap(); 
+
     // the local library directory (global one is /usr/share/java)
     static private String phpLibDir;
 
@@ -125,12 +130,20 @@ public class JavaBridgeClassLoader extends URLClassLoader {
     }
     protected Class findClass(String name) throws ClassNotFoundException { 
 	Class clazz=null;
-	try {
-	    clazz=super.findClass(name);
-	} catch (ClassNotFoundException e) {   
-	    Util.logMessage("Could not find class " + name + ". Adding all system libraries.  Please use java_set_library_path(\"...;<system library containing " + name + ">\") to avoid this message.");
-	    addSysUrls();
-	    clazz=super.findClass(name); 
+	synchronized(classes) {
+	    Object o = classes.get(name);
+	    if(o!=null) o = ((WeakReference)o).get();
+	    if(o!=null) clazz = (Class)o;
+	    if(clazz!=null) return clazz;
+	    
+	    try {
+		clazz=super.findClass(name);
+	    } catch (ClassNotFoundException e) {   
+		Util.logMessage("Could not find class " + name + ". Adding all system libraries.  Please use java_set_library_path(\"...;<system library containing " + name + ">\") to avoid this message.");
+		addSysUrls();
+		clazz=super.findClass(name); 
+	    }
+	    classes.put(name, new WeakReference(clazz));
 	}
 	return clazz;
     }

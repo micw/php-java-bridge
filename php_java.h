@@ -123,6 +123,6 @@ extern void java_start_server();
 /* spec: M ono, J ava or I nit (lower-case m or j: no multicast) */
 extern char* java_test_server(int *socket, unsigned char spec);
 /* spec: m ono or j ava */
-extern char* java_test_server_no_multicast(int *socket, unsigned char spec);
+extern char* java_test_server_no_multicast(int *socket, unsigned char spec TSRMLS_DC);
 
 #endif
