@@ -32,11 +32,11 @@ int php_java_init_multicast() {
   struct ip_mreq ip_mreq;
 
   ip_mreq.imr_multiaddr.s_addr=inet_addr(GROUP_ADDR);
-  ip_mreq.imr_interface.s_addr=htonl(INADDR_ANY);
+  ip_mreq.imr_interface.s_addr=htonl("127.0.0.1");//htonl(INADDR_ANY);
 
   saddr.sin_family = AF_INET;
   saddr.sin_port = htons(GROUP_PORT);
-  saddr.sin_addr.s_addr = htonl(INADDR_ANY);
+  saddr.sin_addr.s_addr = htonl("127.0.0.1"); //htonl(INADDR_ANY);
 
   sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if(sock!=-1) {
