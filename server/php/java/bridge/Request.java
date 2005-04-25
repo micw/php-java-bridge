@@ -57,6 +57,7 @@ public class Request implements IDocHandler {
     			array.add(ht==null?empty0:ht);
     			ht=null;
     		}
+                composite=0;
     	}
     	private static final Object[] empty = new Object[0];
     	Object[] getArgs() {
