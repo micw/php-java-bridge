@@ -6,6 +6,12 @@ if(!extension_loaded('java')) {
 }
 
 $string = new Java("java.lang.String", "Cześć! -- שלום -- Grüß Gott -- Dobrý deň -- Dobrý den -- こんにちは, ｺﾝﾆﾁﾊ", "UTF-8");
-print $string->toString();
+print $string->toString() . "\n";
+
+$here=trim(`pwd`);
+java_set_library_path("$here/arrayToString.jar");
+$ArrayToString = new JavaClass("ArrayToString");
+$ar=array("Cześć!", " שלום", " Grüß Gott", " Dobrý deň", " Dobrý den", " こんにちは, ｺﾝﾆﾁﾊ");
+print $ArrayToString->arrayToString($ar) . "\n";
 
 ?>
