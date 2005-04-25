@@ -67,7 +67,7 @@ int php_java_recv_multicast(int sock, unsigned char spec, time_t time) {
 #ifndef __MINGW32__
   unsigned char c[18];
   int n;
-  struct timeval timeout = {0, 10};
+  struct timeval timeout = {0, 90};
   fd_set set;
   if(-1==sock) return -1;
 
