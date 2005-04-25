@@ -77,11 +77,11 @@ public class Parser {
     void CALL_BEGIN() {
     	if(Util.logLevel>=4) {
 	    StringBuffer buf=new StringBuffer("--> <");   
-	    buf.append(tag[0].strings[0].getStringValue());
+	    buf.append(tag[0].strings[0].getUTF8StringValue());
 	    buf.append(" ");
     		
 	    for(int i=0; i<tag[1].n; i++) {
-		buf.append(tag[1].strings[i].getStringValue()); buf.append("=\""); buf.append(tag[2].strings[i].getStringValue());buf.append("\" ");
+		buf.append(tag[1].strings[i].getUTF8StringValue()); buf.append("=\""); buf.append(tag[2].strings[i].getUTF8StringValue());buf.append("\" ");
 	    }
 	    buf.append(eot?"/>":">");
 	    Util.logDebug(this.bridge + " " + buf.toString());
@@ -91,7 +91,7 @@ public class Parser {
     void CALL_END() {
     	if(Util.logLevel>=4) {
 	    StringBuffer buf=new StringBuffer("--> </");   
-	    buf.append(tag[0].strings[0].getStringValue());
+	    buf.append(tag[0].strings[0].getUTF8StringValue());
 	    buf.append(">");
 	    Util.logDebug(this.bridge + " " + buf.toString());
     	}

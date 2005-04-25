@@ -11,7 +11,7 @@ class ParserString {
     /*
      * Returns the UTF8 string representation. Useful for debugging only
      */
-    public String getStringValue() {
+    public String getUTF8StringValue() {
         try { 
 	    return new String(string, off, length, Response.UTF8);
         } catch (java.io.UnsupportedEncodingException e) { 
@@ -20,9 +20,15 @@ class ParserString {
 	}
     }
     /*
+     * Returns the ASCII string representation. Useful serialized objects, float, long.
+     */
+    public String getStringValue() {
+	return new String(string, off, length);
+    }
+    /*
      * Returns the UTF8 string representation. Useful for debugging only
      */
     public String toString() {
-    	return "{" + getStringValue() + " @:" + String.valueOf(off) + " l:" + String.valueOf(length) + "}";
+    	return "{" + getUTF8StringValue() + " @:" + String.valueOf(off) + " l:" + String.valueOf(length) + "}";
     }
 }
