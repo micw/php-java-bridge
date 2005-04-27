@@ -595,6 +595,74 @@ public class JavaBridge implements Runnable {
 	return result;
     }
 
+    static private abstract class ClassIterator {
+	Object object;
+	Class current;
+	String name;
+	Object args[];
+	boolean ignoreCase;
+
+	public static ClassIterator getInstance(Object object, String name, Object args[], boolean ignoreCase) {
+	    ClassIterator c = (object instanceof Class) ? new ClassClassIterator() : new ObjectClassIterator();
+	    c.object = object;
+	    c.name = name;
+	    c.ignoreCase = ignoreCase;
+	    c.current = null;
+	    return c;
+	}
+
+	protected Class findMatchingInterface(Class jclass) {
+
+	    if(jclass==null) return null;
+
+	    while (!Modifier.isPublic(jclass.getModifiers())) {
+		// OK, some joker gave us an instance of a non-public class
+		// This often occurs in the case of enumerators
+		// Substitute the matching first public interface in its place,
+		// and barring that, try the superclass
+		Class interfaces[] = jclass.getInterfaces();
+		Class superclass = jclass.getSuperclass();
+		for (int i=interfaces.length; i-->0;) {
+		    if (Modifier.isPublic(interfaces[i].getModifiers())) {
+			jclass=interfaces[i];
+			Method methods[] = jclass.getMethods();
+			for (int j=0; j<methods.length; j++) {
+			    String nm = methods[j].getName();
+			    boolean eq = ignoreCase ? nm.equalsIgnoreCase(name) : nm.equals(name); 
+			    if (eq && (methods[j].getParameterTypes().length == args.length)) {
+				return jclass;
+			    }
+			}
+		    }
+		}
+		return superclass;
+	    }
+	    return jclass;
+	}
+	public abstract Class getNext();
+    }
+	
+    static class ObjectClassIterator extends ClassIterator {
+	private Class next() {
+	    if (current == null) return current = object.getClass();
+	    return null;
+	}
+	public Class getNext() {
+	    return findMatchingInterface(next());
+	}
+    }
+
+    static class ClassClassIterator extends ClassIterator {
+	private Class next() {
+	    // check the class first, then the class class.
+	    if(current == null) return current = (Class)object;
+	    if(current == object) return current = object.getClass();
+	    return null;
+	}
+	public Class getNext() {
+	    return findMatchingInterface(next());
+	}
+    }
     //
     // Invoke a method on a given object
     //
@@ -604,33 +672,10 @@ public class JavaBridge implements Runnable {
 	try {
 	    Vector matches = new Vector();
 	    Vector candidates = new Vector();
-	    
+	    Class jclass;
+
 	    // gather
-	    for (Class jclass = object.getClass();;jclass=(Class)object) {
-		while (!Modifier.isPublic(jclass.getModifiers())) {
-		    // OK, some joker gave us an instance of a non-public class
-		    // This often occurs in the case of enumerators
-		    // Substitute the matching first public interface in its place,
-		    // and barring that, try the superclass
-		    Class interfaces[] = jclass.getInterfaces();
-		    Class superclass = jclass.getSuperclass();
-		    boolean found=false;
-		    for (int i=interfaces.length; !found && i-->0;) {
-			if (Modifier.isPublic(interfaces[i].getModifiers())) {
-			    jclass=interfaces[i];
-			    Method methods[] = jclass.getMethods();
-			    for (int j=0; j<methods.length; j++) {
-				if (methods[j].getName().equalsIgnoreCase(method)) {
-				    if(methods[j].getParameterTypes().length == args.length) {
-					found=true;
-					break;
-				    }
-				}
-			    }
-			}
-		    }
-		    if(!found) jclass = superclass;
-		}
+	    for (ClassIterator iter = ClassIterator.getInstance(object, method, args, true); (jclass=iter.getNext())!=null;) {
 		Method methods[] = jclass.getMethods();
 		for (int i=0; i<methods.length; i++) {
 		    if (methods[i].getName().equalsIgnoreCase(method)) {
@@ -640,9 +685,6 @@ public class JavaBridge implements Runnable {
 		    	}
 		    }
 		}
-
-		// try a second time with the object itself, if it is of type Class
-		if (!(object instanceof Class) || (jclass==object)) break;
 	    }
 	    Method selected = (Method)select(matches, args);
 	    if (selected == null) throw new NoSuchMethodException(String.valueOf(method) + "(" + Util.argsToString(args) + "). " + "Candidates: " + String.valueOf(candidates));
@@ -672,22 +714,10 @@ public class JavaBridge implements Runnable {
 
 	try {
 	    ArrayList matches = new ArrayList();
+	    Class jclass;
 
-	    for (Class jclass = object.getClass();;jclass=(Class)object) {
-		while (!Modifier.isPublic(jclass.getModifiers())) {
-		    // OK, some joker gave us an instance of a non-public class
-		    // Substitute the first public interface in its place,
-		    // and barring that, try the superclass
-		    Class interfaces[] = jclass.getInterfaces();
-		    jclass=jclass.getSuperclass();
-		    for (int i=interfaces.length; i-->0;) {
-			if (Modifier.isPublic(interfaces[i].getModifiers())) {
-			    jclass=interfaces[i];
-			}
-		    }
-		}
-
-		// first search for the field *exactly*
+	    // first search for the field *exactly*
+	    for (ClassIterator iter = ClassIterator.getInstance(object, prop, args, false); (jclass=iter.getNext())!=null;) {
 		try {
 		    java.lang.reflect.Field jfields[] = jclass.getFields();
 		    for (int i=0; i<jfields.length; i++) {
@@ -705,8 +735,10 @@ public class JavaBridge implements Runnable {
 			}
 		    }
 		} catch (Exception ee) {/* may happen when field is not static */}
+	    }
 
-		// search for a getter/setter, ignore case
+	    // search for a getter/setter, ignore case
+	    for (ClassIterator iter = ClassIterator.getInstance(object, prop, args, true); (jclass=iter.getNext())!=null;) {
 		try {
 		    BeanInfo beanInfo = Introspector.getBeanInfo(jclass);
 		    PropertyDescriptor props[] = beanInfo.getPropertyDescriptors();
@@ -744,9 +776,6 @@ public class JavaBridge implements Runnable {
 			}
 		    }
 		} catch (Exception ee) {/* may happen when field is not static */}
-
-		// try a second time with the object itself, if it is of type Class
-		if (!(object instanceof Class) || (jclass==object)) break;
 	    }
 	    throw new NoSuchFieldException(String.valueOf(prop) + " (with args:" + Util.argsToString(args) + "). " + "Candidates: " + String.valueOf(matches));
 
