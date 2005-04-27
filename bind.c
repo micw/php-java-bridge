@@ -42,6 +42,8 @@
 #error EXTENSION_DIR must point to the PHP extension directory
 #endif
 
+ZEND_EXTERN_MODULE_GLOBALS(java) /* HACK: pass down a struct to the multicaster */
+
 static void java_get_server_args(char*env[N_SENV], char*args[N_SARGS]) {
   static const char separator[2] = {ZEND_PATHS_SEPARATOR, 0};
   char *s, *p;

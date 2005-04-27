@@ -99,6 +99,7 @@ extern struct cfg *cfg;
 ZEND_BEGIN_MODULE_GLOBALS(java)
   proxyenv *jenv;
   short is_closed; 				/* PR1176522: GC must not re-open the connection */
+  short session_is_new;		/* HACK: pass down a struct to the multicaster */
 ZEND_END_MODULE_GLOBALS(java)
 
 
