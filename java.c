@@ -133,37 +133,30 @@ PHP_FUNCTION(java_instanceof)
 PHP_FUNCTION(java_get_session)
 {
   proxyenv *jenv;
-  zval **argv;
-  int argc = ZEND_NUM_ARGS();
+  zval **session;
   
-  if (argc!=1) WRONG_PARAM_COUNT;
-  
+  if (ZEND_NUM_ARGS()!=1 || zend_get_parameters_ex(1, &session) == FAILURE)
+	WRONG_PARAM_COUNT;
+
   if(JG(jenv)) {
 	php_error(E_ERROR, "This script has already selected a backend.  Please call java_get_session() before calling any of the java* or mono* functions.");
   }
 
-  argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
-  if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
-	php_error(E_ERROR, "Couldn't fetch arguments into array.");
-	RETURN_NULL();
-  }
-
+  JG(session_is_new)=0;
 #if HAVE_PHP_SESSION
   if (PS(session_status) != php_session_active &&
 	  PS(session_status) != php_session_disabled) {
-	PS(id)=estrdup(Z_STRVAL_P(argv[0]));
+	PS(id)=estrndup(Z_STRVAL_PP(session), Z_STRLEN_PP(session));
 	php_session_start(TSRMLS_C);
-	JG(session_is_new)=0;
 	jenv=java_connect_to_server_no_multicast(TSRMLS_C);
 	if(!jenv) RETURN_NULL();
-	//	if(JG(session_is_new)) {
-	  //php_java_invoke(// destroy old session
   }
 #endif
 
-  php_java_invoke("getSession", 0, argc, argv, 1, return_value TSRMLS_CC);
-
-  efree(argv);
+  (*jenv)->writeInvokeBegin(jenv, 0, "getSession", 0, 'I', return_value);
+  (*jenv)->writeString(jenv, Z_STRVAL_PP(session), Z_STRLEN_PP(session)); 
+  (*jenv)->writeBoolean(jenv, JG(session_is_new)); 
+  (*jenv)->writeInvokeEnd(jenv);
 }
 
 PHP_FUNCTION(java_get_server_name)

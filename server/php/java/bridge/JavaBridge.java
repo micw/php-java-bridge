@@ -603,7 +603,12 @@ public class JavaBridge implements Runnable {
 	boolean ignoreCase;
 
 	public static ClassIterator getInstance(Object object, String name, Object args[], boolean ignoreCase) {
-	    ClassIterator c = (object instanceof Class) ? new ClassClassIterator() : new ObjectClassIterator();
+	    ClassIterator c;
+	    if(object instanceof Class)
+		c = new ClassClassIterator();
+	    else
+		c = new ObjectClassIterator();
+
 	    c.object = object;
 	    c.name = name;
 	    c.ignoreCase = ignoreCase;
@@ -820,19 +825,19 @@ public class JavaBridge implements Runnable {
 	return buf.toString();
     }
     
-    public Session getSession(String name) {
+    public Session getSession(String name, boolean clientIsNew) {
     	synchronized(JavaBridge.sessionHash) {
     		Session ref = null;
 	    	if(!JavaBridge.sessionHash.containsKey(name)) {
 		    	ref = new Session(name);
 	    	} else {
 	    		ref = (Session) JavaBridge.sessionHash.get(name);
-	    		ref.destroy();
-	    		
-	    		Session s = new Session(name);
-	    		s.putAll(ref.map);
-	    		s.isNew=false;
-	    		ref=s;
+			if(clientIsNew) { // client side gc'ed, destroy server ref now!
+			    ref.destroy();
+			    ref = new Session(name);
+	    		} else {
+			    ref.isNew=false;
+			}
 	    	}
 	    	
 		JavaBridge.sessionHash.put(name, ref);
