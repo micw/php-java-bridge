@@ -12,6 +12,7 @@
 #include "php_wrapper.h"
 #include "php_globals.h"
 #include "ext/standard/info.h"
+#include "ext/session/php_session.h"
 
 #include "php_java.h"
 #include "java_bridge.h"
@@ -136,15 +137,29 @@ PHP_FUNCTION(java_get_session)
   int argc = ZEND_NUM_ARGS();
   
   if (argc!=1) WRONG_PARAM_COUNT;
-
-  jenv=java_connect_to_server_no_multicast(TSRMLS_C);
-  if(!jenv) RETURN_NULL();
+  
+  if(JG(jenv)) {
+	php_error(E_ERROR, "This script has already selected a backend.  Please call java_get_session() before calling any of the java* or mono* functions.");
+  }
 
   argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
   if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
 	php_error(E_ERROR, "Couldn't fetch arguments into array.");
 	RETURN_NULL();
   }
+
+#if HAVE_PHP_SESSION
+  if (PS(session_status) != php_session_active &&
+	  PS(session_status) != php_session_disabled) {
+	PS(id)=estrdup(Z_STRVAL_P(argv[0]));
+	php_session_start(TSRMLS_C);
+	JG(session_is_new)=0;
+	jenv=java_connect_to_server_no_multicast(TSRMLS_C);
+	if(!jenv) RETURN_NULL();
+	if(JG(session_is_new)) {
+	  php_java_invoke(// destroy old session
+  }
+#endif
 
   php_java_invoke("getSession", 0, argc, argv, 1, return_value TSRMLS_CC);
 
