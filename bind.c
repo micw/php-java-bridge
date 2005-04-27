@@ -327,47 +327,50 @@ char* java_test_server_no_multicast(int *_socket, unsigned char spec TSRMLS_DC) 
 
   /* backend pool.  retrieve the backend from the session var */
 #if HAVE_PHP_SESSION
-  if (PS(session_status) != php_session_active &&
-	  PS(session_status) != php_session_disabled) {
-	php_session_start(TSRMLS_C);
-  }
-
-  /* Find the backend */
-  port = -1;
-  if (zend_hash_find(Z_ARRVAL_P(PS(http_session_vars)), "_bogus_session_name", sizeof("_bogus_session_name"), (void **) &tmp_port) == SUCCESS &&
-	  Z_TYPE_PP(tmp_port) == IS_LONG) {
-	port = Z_LVAL_PP(tmp_port);
-  }
-  if(-1!=port) {
-	if(-1!=(sock=test_server(port))) {
-	  if(_socket) {
-		*_socket=sock;
-	  } else {
-		close(sock);
-	  }
-	  return strdup(GROUP_ADDR);
+  if (PS(session_status) == php_session_active) {
+	/* Find the backend */
+	port = -1;
+	if (zend_hash_find(Z_ARRVAL_P(PS(http_session_vars)), "_php_java_session_name", sizeof("_php_java_session_name"), (void **) &tmp_port) == SUCCESS &&
+		Z_TYPE_PP(tmp_port) == IS_LONG) {
+	  port = Z_LVAL_PP(tmp_port);
 	}
-  }
-
-  assert(port==-1);
-  /* no specific backend yet, select one */
-  if(spec=='j') backend='J'; else backend='M';
-  php_java_send_multicast(cfg->mc_socket, backend, current_time);
-  port = php_java_recv_multicast(cfg->mc_socket, backend, current_time);
-  if(-1!=port) {
-	int err;
-	if(-1!=(sock=test_server(port))) {
-	  if(_socket) {
-		*_socket=sock;
-	  } else {
-		close(sock);
+	if(-1!=port) {
+	  if(-1!=(sock=test_server(port))) {
+		if(_socket) {
+		  *_socket=sock;
+		} else {
+		  close(sock);
+		}
+		fprintf(stderr, "got session. Use port :%ld\n", (long)port); //FIXME remove debug code
+		return strdup(GROUP_ADDR);
 	  }
-	  MAKE_STD_ZVAL(new_port);
-	  Z_TYPE_P(new_port)=IS_LONG;
-	  Z_LVAL_P(new_port)=port;
-	  err = zend_hash_update(Z_ARRVAL_P(PS(http_session_vars)), "_bogus_session_name", sizeof("_bogus_session_name"), &new_port, sizeof(zval *), NULL);
-	  assert(err==SUCCESS);
-	  return strdup(GROUP_ADDR);
+	}
+	
+	fprintf(stderr, "new session. send out mc\n"); //FIXME remove debug code
+	assert(port==-1);
+	/* no specific backend yet, select one */
+	if(spec=='j') backend='J'; else backend='M';
+	php_java_send_multicast(cfg->mc_socket, backend, current_time);
+	port = php_java_recv_multicast(cfg->mc_socket, backend, current_time);
+	if(-1!=port) {
+	  int err;
+	  if(-1!=(sock=test_server(port))) {
+		if(_socket) {
+		  *_socket=sock;
+		} else {
+		  close(sock);
+		}
+		MAKE_STD_ZVAL(new_port);
+		Z_TYPE_P(new_port)=IS_LONG;
+		Z_LVAL_P(new_port)=port;
+		err = zend_hash_update(Z_ARRVAL_P(PS(http_session_vars)), "_php_java_session_name", sizeof("_php_java_session_name"), &new_port, sizeof(zval *), NULL);
+		assert(err==SUCCESS);
+		if(err!=SUCCESS) exit(5); fputs("new session success", stderr);
+
+		fprintf(stderr, "new session (%d) on port: %ld\n", err, port); //FIXME remove debug code
+		JG(session_is_new)=1;
+		return strdup(GROUP_ADDR);
+	  }
 	}
   }
 #endif

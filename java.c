@@ -156,8 +156,8 @@ PHP_FUNCTION(java_get_session)
 	JG(session_is_new)=0;
 	jenv=java_connect_to_server_no_multicast(TSRMLS_C);
 	if(!jenv) RETURN_NULL();
-	if(JG(session_is_new)) {
-	  php_java_invoke(// destroy old session
+	//	if(JG(session_is_new)) {
+	  //php_java_invoke(// destroy old session
   }
 #endif
 
