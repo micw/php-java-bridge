@@ -27,10 +27,22 @@ public class TCPServerSocket implements ISocketFactory {
 	new Listener(s.sock).listen();
 	return s;
     }
+
+    private static int findFreePort(int start) {
+	for (int port = start; port < start+100; port++) {
+	    try {
+		ServerSocket testSock = new ServerSocket(port);
+		testSock.close();
+	    } catch (IOException e) {continue;}
+	    return port;
+	}
+	return 0;
+    }
+
     private TCPServerSocket(int port, int backlog)
 	throws IOException {
-    	this.port=port;
-	this.sock=new ServerSocket(port, backlog);
+    	this.port = port==0?findFreePort(Integer.parseInt(DefaultSocketname)):port;
+	this.sock = new ServerSocket(port, backlog);
 	JavaBridge.initGlobals(null);
     }
 	
