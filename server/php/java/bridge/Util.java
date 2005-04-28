@@ -6,6 +6,9 @@ import java.io.PrintStream;
 import java.util.Date;
 
 public class Util {
+
+    public static final String UTF8 = "UTF-8";
+
     public static final int DEFAULT_LOG_LEVEL = 1;
     public static final int BACKLOG = 20;
 
@@ -43,7 +46,7 @@ public class Util {
 	b.append(msg);
 	byte[] bytes = null;
 	try {
-	    bytes = b.toString().getBytes(Response.UTF8);
+	    bytes = b.toString().getBytes(UTF8);
 	} catch (java.io.UnsupportedEncodingException e) {
 	    Util.printStackTrace(e);
 	    bytes = b.toString().getBytes();

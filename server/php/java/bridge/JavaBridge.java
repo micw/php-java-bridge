@@ -24,6 +24,8 @@ import java.util.Vector;
 
 public class JavaBridge implements Runnable {
 
+    // The client's file encoding, for example UTF-8.
+    String fileEncoding="UTF-8";
 
     // For PHP4's last_exception_get.
     public Throwable lastException = null;
@@ -809,6 +811,10 @@ public class JavaBridge implements Runnable {
     // The first char must be the token separator.
     public void setJarLibraryPath(String _path) {
     	cl.setJarLibraryPath(_path);
+    }
+
+    public void setFileEncoding(String fileEncoding) {
+	this.fileEncoding=fileEncoding;
     }
 
     public static boolean InstanceOf(Object ob, Object c) {

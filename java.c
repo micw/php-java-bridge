@@ -81,6 +81,22 @@ PHP_FUNCTION(java_last_exception_clear)
   (*jenv)->writeInvokeEnd(jenv);
 }
 
+PHP_FUNCTION(java_set_file_encoding)
+{
+  zval **enc;
+  proxyenv *jenv = java_connect_to_server(TSRMLS_C);
+  if(!jenv) {RETURN_NULL();}
+
+  if (ZEND_NUM_ARGS()!=1 || zend_get_parameters_ex(1, &enc) == FAILURE)
+	WRONG_PARAM_COUNT;
+
+  convert_to_string_ex(enc);
+
+  (*jenv)->writeInvokeBegin(jenv, 0, "setFileEncoding", 0, 'I', return_value);
+  (*jenv)->writeString(jenv, Z_STRVAL_PP(enc), Z_STRLEN_PP(enc));
+  (*jenv)->writeInvokeEnd(jenv);
+}
+
 PHP_FUNCTION(java_set_library_path)
 {
   zval **path;
@@ -174,6 +190,7 @@ PHP_FUNCTION(java_get_server_name)
 function_entry java_functions[] = {
 	PHP_FE(java_last_exception_get, NULL)
 	PHP_FE(java_last_exception_clear, NULL)
+	PHP_FE(java_set_file_encoding, NULL)
 	PHP_FE(java_set_library_path, NULL)
 	PHP_FE(java_instanceof, NULL)
 	PHP_FE(java_get_session, NULL)

@@ -7,13 +7,14 @@ class ParserString {
     byte[] string;
     int off;
     int length;
-    
+    private final String UTF8 = "UTF-8";
+
     /*
      * Returns the UTF8 string representation. Useful for debugging only
      */
     public String getUTF8StringValue() {
         try { 
-	    return new String(string, off, length, Response.UTF8);
+	    return new String(string, off, length, Util.UTF8);
         } catch (java.io.UnsupportedEncodingException e) { 
 	    Util.printStackTrace(e);
 	    return new String(string, off, length);

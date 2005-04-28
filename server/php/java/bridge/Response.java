@@ -38,6 +38,7 @@ public class Response {
     OutBuf buf;
     long result, peer;
     private byte options;
+    private String encoding;
     private JavaBridge bridge;
     public Response(JavaBridge bridge) {
 	buf=new OutBuf();
@@ -46,20 +47,20 @@ public class Response {
     
     public void setResult(long id, byte options) {
     	this.result=id;
+	this.encoding=this.bridge.fileEncoding;
     	this.options=options;
     }
     
     public boolean sendArraysAsValues() {
     	return (options & 2)==2;
     }
-    public boolean sendUTF8Strings() {
-    	return (options & 1)==1;
+    public String getEncoding() {
+    	return encoding;
     }
 
-    static final String UTF8="UTF-8";
     byte[] getBytes(String s) { 
         try { 
-	    return sendUTF8Strings()?s.getBytes(UTF8):s.getBytes();
+	    return s.getBytes(getEncoding());
         } catch (java.io.UnsupportedEncodingException e) { 
 	    Util.printStackTrace(e);
 	    return s.getBytes();
@@ -67,7 +68,7 @@ public class Response {
     }
     String newString(byte[] b) {
         try { 
-	    return sendUTF8Strings()?new String(b, UTF8):new String(b);
+	    return new String(b, getEncoding());
         } catch (java.io.UnsupportedEncodingException e) { 
 	    Util.printStackTrace(e);
 	    return new String(b);
