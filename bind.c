@@ -44,7 +44,10 @@
 
 ZEND_EXTERN_MODULE_GLOBALS(java) /* HACK: pass down a struct to the multicaster */
 
-static void java_get_server_args(char*env[N_SENV], char*args[N_SARGS]) {
+const static char inet_socket_prefix[]="INET:";
+const static char local_socket_prefix[]="LOCAL:";
+
+static void java_get_server_args(char*env[N_SENV], char*args[N_SARGS], short for_display) {
   static const char separator[2] = {ZEND_PATHS_SEPARATOR, 0};
   char *s, *p;
   char*program=cfg->java;
@@ -53,20 +56,24 @@ static void java_get_server_args(char*env[N_SENV], char*args[N_SARGS]) {
   char*sys_libpath=getenv("LD_LIBRARY_PATH");
   char*home=cfg->java_home;
 #ifdef CFG_JAVA_SOCKET_INET
-  static char socket_prefix[]="INET:";
+  const char* s_prefix = inet_socket_prefix;
 #else
-  static char socket_prefix[]="LOCAL:";
+  const char *s_prefix = local_socket_prefix;
 #endif
-  char *sockname;
-  if(cfg->can_fork) {			/* send a prefix so that the server
-								   does not select a different
-								   protocol */
-	sockname = malloc((sizeof socket_prefix)+strlen(cfg->sockname));
-	strcpy(sockname, socket_prefix);
-	strcat(sockname, cfg->sockname);
-  } else {
-	sockname=strdup(cfg->sockname);
+  char *sockname, *cfg_sockname=cfg->sockname, *cfg_logFile=cfg->logFile;
+
+  /* if socketname is off, show the user how to start a multicast
+	 backend */
+  if(for_display && !(java_ini_updated&U_SOCKNAME)) {
+	cfg_sockname="0";
+	s_prefix=inet_socket_prefix;
+	cfg_logFile="";
   }
+  /* send a prefix so that the server does not select a different
+   protocol */
+  sockname = malloc(strlen(s_prefix)+strlen(cfg_sockname)+1);
+  strcpy(sockname, s_prefix);
+  strcat(sockname, cfg_sockname);
   
   if(!sys_libpath) sys_libpath="";
   args[0]=strdup(program);
@@ -89,7 +96,7 @@ static void java_get_server_args(char*env[N_SENV], char*args[N_SARGS]) {
 
   args[5] = sockname;
   args[6] = strdup(cfg->logLevel);
-  args[7] = strdup(cfg->logFile);
+  args[7] = strdup(cfg_logFile);
   args[8] = NULL;
 
   s="JAVA_HOME=";
@@ -124,6 +131,9 @@ static short use_wrapper() {
   return use_wrapper;
 }
   
+/*
+ * Get a string of the server arguments. Useful for display only.
+ */
 char*java_get_server_string() {
   short must_use_wrapper = use_wrapper();
   int i;
@@ -132,7 +142,7 @@ char*java_get_server_string() {
   char*args[N_SARGS];
   unsigned int length = 0;
 
-  java_get_server_args(env, args);
+  java_get_server_args(env, args, 1);
   if(must_use_wrapper)
 	length+=strlen(wrapper)+1;
 
@@ -176,7 +186,7 @@ static void exec_vm() {
   extern int java_bridge_main(int argc, char**argv) ;
   static char*env[N_SENV];
   static char*args[N_SARGS];
-  java_get_server_args(env, args);
+  java_get_server_args(env, args, 0);
   putenv(env[0]);
   putenv(env[1]);
   java_bridge_main(N_SARGS, args);
@@ -184,7 +194,7 @@ static void exec_vm() {
   static char*env[N_SENV];
   static char*_args[N_SARGS+1];
   char **args=_args+1;
-  java_get_server_args(env, args);
+  java_get_server_args(env, args, 0);
   putenv(env[0]);
   putenv(env[1]);
   if(use_wrapper()) *--args = strdup(wrapper);
