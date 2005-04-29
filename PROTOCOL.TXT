@@ -155,13 +155,12 @@ NOTES:
 If the first byte is neither a "<" nor a space, bits 0 and 1
 have a special meaning:
 
-Bit 0: Client sends and receives UTF-8 strings.  If not set, the
-encoding depends on the LANG environment variable.
+Bit 0: Reserved.
 
 Bit 1: Client wants arrays as values. The server will return X and P
 instead of O.
 
-The default is 1 for PHP5 and 3 for PHP4.
+The default is 0 for PHP5 and 2 for PHP4.
 
 
 It is possible to "ping" the server by sending it the byte 0x0. If

@@ -11,9 +11,10 @@
    security context (see chcon(1)). */
 
 void usage(char*name){
-  fprintf(stderr, "Usage: %s <socketname> <logLevel> <logFile>\n", name);
-  fprintf(stderr, "Example 1: %s /var/run/.php-java-bridge_socket 4 /var/log/php-java-bridge.log\n", name);
+  fprintf(stderr, "Usage: %s [<socketname>] [<logLevel>] <logFile>\n", name);
+  fprintf(stderr, "Example 1: %s /var/run/.php-java-bridge_socket 1 /var/log/php-java-bridge.log\n", name);
   fprintf(stderr, "Example 2: %s INET:9167 3 \"\" \n", name);
+  fprintf(stderr, "Example 3: %s node1.log& %s node2.log& \n", name, name);
   exit(1);
 }
 
@@ -36,23 +37,23 @@ char *java="@PHP_JAVA@";
 int main(int argc, char**_argv){
   char **argv;
   char *vm;
-  if(argc<4) usage(_argv[0]);
+  if(argc<4 && argc!=2) usage(_argv[0]);
 
   if(strlen(java)==3&&!strcmp("yes",java))
     vm = stringcat(EXTENSION_DIR, "/java");
   else 
     vm = stringcat(java, "/bin/java");
 
-  if(argc==4) {
+  if(argc==4 || argc==2) {
     argv=calloc(9, sizeof*argv);
     argv[0]=vm;
     argv[1]=stringcat("-Djava.class.path=", EXTENSION_DIR/**/"/JavaBridge.jar");
     argv[2]=stringcat("-Djava.library.path=", EXTENSION_DIR);
     argv[3]=stringdup("-Djava.awt.headless=true");
     argv[4]=stringdup("php.java.bridge.JavaBridge");
-    argv[5]=stringdup(_argv[1]); /* socketname */
-    argv[6]=stringdup(_argv[2]); /* logLevel */
-    argv[7]=stringdup(_argv[3]); /* logFile */
+    argv[5]=argc==2?stringdup("INET:0"):stringdup(_argv[1]); /* socketname */
+    argv[6]=argc==2?stringdup("2"):stringdup(_argv[2]); /* logLevel */
+    argv[7]=stringdup(_argv[argc==2?1:3]); /* logFile */
     argv[8]=0;			/* last arg */
   } else {
     int i;

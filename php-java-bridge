@@ -9,7 +9,7 @@ inst=user
 
 # do some magic to avoid loading broken libraries from local
 # installations if we are installed in one of the system directories.
-instdir=`basename $0`
+instdir=`dirname $0`
 case $instdir in
     /usr/bin|/usr/sbin|/bin|/sbin)
     inst=sys
@@ -30,8 +30,14 @@ fi
 
 # if called with non-zero args, invoke
 if test $# != 0; then
-  pid=$PID
-  trap 'kill `cat $pid`; rm -f $pid' 2 15
+  pid=${PID}
+  log=/var/log/php-java-bridge
+  if test "$inst" = "user"; then
+      log=/tmp/php-java-bridge
+  fi
+
+  trap 'kill `cat ${pid}.[0-9]`; rm -f $pid' 2 15
+  is_multicast=$1; shift
   ext=$1; shift
   eval $1; shift
   eval $1; shift
@@ -39,10 +45,17 @@ if test $# != 0; then
   java="${ext}/RunJavaBridge"
   LANG="$LANG_SYSTEM" 
   unset LC_ALL
-  $java "$@" &
-  echo $! >$pid
+  if test $is_multicast != 0; then
+      for j in 0 1 2 3 4; do
+	  $java "$@" >${log}.${j}.log &
+	  echo $! >${pid}.${j}
+      done
+  else
+      $java "$@" &
+      echo $! >$pid
+  fi
   wait
-  rm -f $pid;
+  rm -f $pid.[0-9];
   exit 0
 fi
 
@@ -60,15 +73,16 @@ fi
 if  fgrep java /tmp/phpinfo.$$ |
     sed 's/<[/a-z ="0-9]*>//g' | 
     grep 'java status.*not running' >/dev/null
-then true
+then 
+    is_multicast=0
 else
     if test -s $PID; then
 	echo "PHP/Java Bridge already running with pid `cat $PID`" >&2
 	rm -f /tmp/phpinfo.$$	
+	exit 2;
     else
-	echo "Error: java.socketname option not set in php .ini file, see output of phpinfo()." >&2
+	is_multicast=1
     fi
-    exit 2;
 fi
 
 cmd=`fgrep java /tmp/phpinfo.$$ |
@@ -86,8 +100,8 @@ echo Starting java with the command: "$cmd"
 # invoke
 LANG="$LANG_SYSTEM"
 if test "$inst" = "sys"; then
-# preserve name for status command
-/bin/sh -c "$0 $ext $cmd"&
+ # preserve name for status command
+ /bin/sh -c "$0 $is_multicast $ext $cmd"&
 else
-/bin/sh -c "/bin/sh $0 $ext $cmd"&
+ /bin/sh -c "/bin/sh $0 $is_multicast $ext $cmd"&
 fi
