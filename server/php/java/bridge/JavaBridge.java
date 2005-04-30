@@ -127,6 +127,8 @@ public class JavaBridge implements Runnable {
 	synchronized(loadLock) {
 		load--;
 	}
+	
+	Session.expire();
     }
 
     //
@@ -831,7 +833,7 @@ public class JavaBridge implements Runnable {
 	return buf.toString();
     }
     
-    public Session getSession(String name, boolean clientIsNew) {
+    public Session getSession(String name, boolean clientIsNew, int timeout) {
     	synchronized(JavaBridge.sessionHash) {
     		Session ref = null;
 	    	if(!JavaBridge.sessionHash.containsKey(name)) {
@@ -850,5 +852,4 @@ public class JavaBridge implements Runnable {
 		return ref;
     	}
     }
-
 }

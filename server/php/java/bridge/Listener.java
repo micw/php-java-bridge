@@ -62,6 +62,8 @@ public class Listener implements Runnable {
 		out.write(address);
 		
 		b=out.toByteArray();
+
+		while(load-->0) try {Thread.sleep(8);} catch (InterruptedException ex) {}
 		return new DatagramPacket(b, b.length, p.getAddress(), p.getPort());
 	}
 	public void run() {

@@ -4,7 +4,7 @@
   In case you don't want to ship a JVM or JRE with your product,
   you can use GNU gcc to compile the java part and your classes
   into native code. 
-  In the directory php-java-bridge_1.x.y type:
+  In the directory php-java-bridge_p.x.y type:
 
    gcj --version  # must be gcj 4.0 or above.
 

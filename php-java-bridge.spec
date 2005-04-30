@@ -61,9 +61,9 @@ extension = java.so
 java.log_level=1
 java.log_file=/var/log/php-java-bridge.log
 
-# comment out the following line if you want to start java
-# automatically as a sub-process of the Apache 2.0 
-# service -- not recommended.
+# Comment out the following line if you want to start java
+# automatically as a sub-process of the Apache 2.0 service or if you
+# have already started multicast backends for failover/load balancing.
 java.socketname=/var/run/.php-java-bridge_socket
 
 EOF

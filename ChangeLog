@@ -1,3 +1,30 @@
+2005-04-30  Jost Boekemeier <jostb@intern>
+
+	* ABOUT.HTM: New file.
+
+	* multicast.c (java_test_server_no_multicast): Alway use the
+	backend stored in the session.
+
+	* java.c (java_get_session): Pass gc_maxlifetime as default
+	timeout to the session.
+
+	* multicast.c (php_java_recv_multicast): Timeout now 180ms, from
+	90ms.
+
+	* php-java-bridge: Start only 4 backends.  Users can add
+	additional backends if they want.
+
+	* php-java-bridge.spec: Updated comment.
+
+	* server/php/java/bridge/JavaBridge.java (run): expire session.
+
+	* server/php/java/bridge/Session.java (getSession): Added timeout.
+	(expire): New procedure.
+
+	* server/php/java/bridge/Listener.java (createResponse): Give idle
+	backends a chance.
+	
+	
 2005-04-29  Jost Boekemeier <jostb@intern>
 
 	* VERSION, php-java-bridge.spec: New version

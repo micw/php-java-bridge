@@ -9,206 +9,8 @@ What is the PHP/Java Bridge?
   request-handling PHP process of a multi-process HTTP server
   communicates with a corresponding thread spawned by the java VM.
 
-  Requests from more than one client may either be routed to a single
-  application server running the PHP/Java Bridge or each client may
-  own a PHP/Java Bridge and communicate with a J2EE application server
-  by exchanging java value objects; client stub classes (ejb/j2ee client .jar) 
-  can be loaded at run-time. 
-
-  On Unix the PHP/Java Bridge also supports "failover" and "load
-  balancing". All backends automatically join a multicast group and the
-  PHP/Java Bridge automatically selects an appropriate backend based on
-  the multicast responses.
-
-  ECMA 335 based classes can be accessed if at least one JavaBridge.jar
-  is running inside a ECMA complient VM, for example Novell's MONO or
-  Microsoft's .NET. Special features such as varargs, reflection or
-  assembly loading are also supported.
-
-
-  The bridge adds the following primitives to PHP:
-
-   * new java("CLASSNAME"): References and instanciates the class
-     CLASSNAME. After script execution the referenced classes may be
-     garbage collected. Example:
-
-       $String = new java("java.lang.String");
-       print $String->valueOf(null);
-
-       $hello = new java("java.lang.String", "hello");
-       print $hello;
-
-       // access the inner class AQUA within HSSFColor, note the $ syntax.
-       $Color = new java('org.apache.poi.hssf.util.HSSFColor$AQUA');
-       print $Color->index;
-
-   * new java_class("CLASSNAME"): References the class CLASSNAME
-     without creating an instance. The object returned is the class object
-     itself, not an object of the class. After script execution the
-     referenced classes may be garbage collected. Example:
-
-       $Object = new java_class("java.lang.Object");
-       $obj = $Object->newInstance();
-
-   * java_set_library_path("JAR1;JAR2"): Makes additional libraries
-     available to the current script. JAR can either be a "http:", "ftp:",
-     "file:" or a "jar:" location. On Security Enhanced Linux .jar files
-     can only be loaded from a directory tagged with the lib_t security
-     context.  In the example below the xerces.jar will be loaded from 
-     either the current directory, from `php-config --extension-dir`/lib
-     or from /usr/share/java:
-
-       $file=new java("java.io.File", "WEB_INF/web.xml");
-
-       java_set_library_path("xerces.jar;http://localhost/jdom.jar");
-       $builder = new java("org.jdom.input.SAXBuilder");
-       $doc = $builder->build($file);
-       $root = $doc->getRootElement();
-       $servlets = $root->getChildren("servlet");
-       java_set_library_path("");
-
-       echo "this file has " . $servlets->size() . " servlets\n";
-
-   * java_exception: A java exception class. Available in PHP 5 and
-     above only. Example:
-
-       try {
-         new java("java.lang.String", null);
-       } catch(java_exception $ex) {
-          $trace = new java("java.io.ByteArrayOutputStream");
-          $ex->printStackTrace(new java("java.io.PrintStream", $trace));
-          print "java stack trace: $trace\n";
-       }
-
-   * foreach(COLLECTION): It is possible to iterate over values of
-     java classes that implement java.util.Collection or 
-     java.util.Map. Available in PHP 5 and above only. Example:
-
-       $conversion = new java("java.util.Properties");
-       $conversion->put("long", "java.lang.Byte java.lang.Short java.lang.Integer");
-       $conversion->put("boolean", "java.lang.Boolean");
-       foreach ($conversion as $key=>$value)
-          echo "$key => $value\n";
-
-   * [index]: It is possible to access elements of java arrays or
-     elements of java classes that implement the java.util.Map
-     interface. Available in PHP 5 and above only. Example:
-
-       $Array = new java_class("java.lang.reflect.Array");
-       $String = new java_class("java.lang.String");
-       $entries = $Array->newInstance($String, 3);
-       $entries[0] ="Jakob der Luegner, Jurek Becker 1937--1997";
-       $entries[1] ="Mutmassungen ueber Jakob, Uwe Johnson, 1934--1984";
-       $entries[2] ="Die Blechtrommel, Guenter Grass, 1927--";
-       for ($i = 0; $i < $Array->getLength($entries); $i++) {
-          echo "$i: " . $entries[$i] ."\n";
-       }
-
-   * java_instanceof(JAVA_OBJ, JAVA_CLASS): Tests if JAVA_OBJ is an
-     instance of JAVA_CLASS. Example:
-
-       $Collection=new java_class("java.util.Collection");
-       $list = new java("java.util.ArrayList");
-       $list->add(0);
-       $list->add(null);
-       $list->add(new java("java.lang.Object"));
-       $list->add(new java("java.util.ArrayList"));
-       foreach ($list as $value) {
-          if($value instanceof java && java_instanceof($value, $Collection))
-            /* iterate through nested ArrayList */
-          else
-            echo "$value\n";
-       }
-
-   * java_get_server_name(): Returns the name:<socket> of the server used by
-     this php instance. Example:
-
-      if(!($name=java_get_server_name())) {
-        echo "We're sorry, the java service is not available.\n";
-	exit(1);
-      } else {
-        echo "Java backend available on $name.\n";
-      }
-
-   * java_last_exception_get(): Returns the last exception instance
-     or null. Since PHP 5 you can use try/catch instead.
-
-   * java_last_exception_clear(): Clears the error condition. Since
-     PHP 5 you can use try/catch instead.
-
-  There is one example provided: test.php. You can either invoke the
-  test.php by typing ./test.php or copy the example into the document
-  root of you web server and evaluate the file using the browser.
-
-  The PHP/Java bridge is a replacement for the experimental ext/java
-  bridge shipped with PHP 4. It is not possible to run the build-in
-  bridge and the PHP/Java bridge at the same time.
-
-  The module has been tested on a Mandrake Linux System (Version 9.2),
-  on RedHat Enterprise 3, RedHat Fedora Core 1..3, Solaris 9..10 (Sparc,
-  64 bit JVM), FreeBSD 5.3 and Windows with RedHat Cygwin, but it should 
-  run on all Unix-like operating systems including HP-UX, WinXP.
-
-
-  Custom java libraries (.jar files) can be stored in the following
-  locations:
-
-   1. Somewhere on a HTTP or FTP server, see PHP function
-      java_set_library_path.  On Security Enhanced Linux the directory
-      containing .jar files must be tagged with the lib_t security context. 
-
-   2. In the sub-directory "lib" of the PHP extension directory, if it
-      exists and is accessible when the JVM starts the bridge.
-      This is usually "`php-config --extension-dir`/lib".  On Security
-      Enhanced Linux this directory is tagged with the lib_t security
-      context and in java_set_library_path's search path.
-
-   3. In the /usr/share/java/ directory, if it exists and is accessible
-      when the JVM starts the bridge. On Security Enhanced Linux this
-      directory is tagged with the lib_t security context and in 
-      java_set_library_path's search path.
-
-
-  The PHP/Java Bridge can operate in 4 different modes:
-
-   1. Invoked from the dl() function. In this mode the bridge starts
-      when the HTTP server receives a client request and terminates after
-      the response is written. This is very slow because it starts a new
-      Java VM for each request. But it does not require any administrative
-      privileges.
-
-   2. Permanently activated in the global php.ini file with an
-      internal java process running in the HTTP server domain. In this mode
-      the bridge starts when the HTTP server starts and terminates when the
-      HTTP server terminates. Recommended during development. 
-
-   3. Permanently activated in the global php.ini file with an
-      external java process. Recommended for production systems. This mode
-      is used by the RPM package available for RedHat Enterprise Linux. In
-      this mode the bridge starts and stops as a system service.
-
-   4. Permanently activated in the global php.ini file with an
-      external backend pool. Recommended for production systems which
-      require load balancing and failover. All backends are started
-      independently and automatically join a multicast group. The bridge
-      sends out a multicast datagram and selects the appropriate backend
-      based on the multicast responses.
-
-  Furthermore the PHP/Java Bridge can be:
-
-   * Compiled into PHP. This is not recommended because it requires a
-      compilation of the entire PHP library. If you want to do this, please
-      read the README file. This should only be necessary if the OS does not
-      support shared libraries.
-
-   * Compiled with the GNU Java library. You can either start GNU Java
-     as a separate process (just like a "real" Java VM) or compile
-     everything into a PHP binary. This should only be necessary if there
-     is no official JRE available for the OS or one doesn't want to ship a
-     JRE with the product.
-
-   * Compiled with Novell's MONO (a ".NET" clone). This is currently
-     experimental.
+  Please read the ABOUT.HTM contained in the download archive or
+  http://php-java-bridge.sf.net for more information.
 
 
 Build and execution instructions:
@@ -219,7 +21,7 @@ Build and execution instructions:
 
   In the directory php-java-bridge-p.x.y type:
 
-          java -version        # 1.3 or above (1.4.2_02 or IBM JVM recommended)
+          java -version        # 1.4 or above (1.4.2_02 or IBM VM recommended)
           gcc --version        # 3.2.3 or above.
           apachectl -version   # Apache 1.3 or above.
           php-config --version # PHP 4.3.2 or above.
@@ -269,16 +71,20 @@ Build and execution instructions:
   OPTION 2: You can use TCP/IP sockets to communicate with different
   backends on different hosts. Disable the java.socketname option,
   start the backends on all hosts and ports, for example with the 
-  commands:
+  command:
 
-          java -jar JavaBridge.jar INET:9167 3 backend-1.log &
-          java -jar JavaBridge.jar INET:9168 3 backend-2.log &
+         /usr/sbin/php-java-bridge
 
-  and re-start the web server to activate this setting. A multicast
-  packet is send and the bridge selects the first backend which has
-  a load <12.  If, for some reason, multicasts don't work on your 
-  system you can use the java.hosts option instead. The following 
-  example directs the bridge to two backends running on the local host: 
+  and re-start the web server to activate this setting. The above
+  command starts 4 backends on the local host. Additional backends can
+  be started with (e.g.):
+         `
+        `php-config --extension-dir`/RunJavaBridge backend5.log
+
+  A multicast packet is send and the bridge selects the first backend
+  which has a load <12.  If, for some reason, multicasts don't work on
+  your system you can use the java.hosts option instead. The following
+  example directs the bridge to two backends running on the local host:
   java.hosts="127.0.0.1:9167;127.0.0.1:9168".
 
   This option is available on Security Enhanced Linux.
@@ -294,8 +100,7 @@ Build and execution instructions:
 
   Starting or re-starting the bridge with the apache web server is
   convenient during development but not recommended for production
-  systems, see UTF-8 section below.  This option cannot be used on
-  Security Enhanced Linux.
+  systems.  This option cannot be used on Security Enhanced Linux.
 
 
   Check the status:

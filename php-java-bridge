@@ -46,7 +46,7 @@ if test $# != 0; then
   LANG="$LANG_SYSTEM" 
   unset LC_ALL
   if test $is_multicast != 0; then
-      for j in 0 1 2 3 4; do
+      for j in 0 1 2 3; do
 	  $java "$@" >${log}.${j}.log &
 	  echo $! >${pid}.${j}
       done

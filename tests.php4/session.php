@@ -4,7 +4,7 @@ if(!extension_loaded('java')) {
   dl('java.' . PHP_SHLIB_SUFFIX);
 }
 
-$session=java_get_session("testSession");;
+$session=java_get_session("testSession");
 if($session->isNew()) {
   echo "new session\n";
   $session->put("a", 1);

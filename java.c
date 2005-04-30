@@ -172,6 +172,7 @@ PHP_FUNCTION(java_get_session)
   (*jenv)->writeInvokeBegin(jenv, 0, "getSession", 0, 'I', return_value);
   (*jenv)->writeString(jenv, Z_STRVAL_PP(session), Z_STRLEN_PP(session)); 
   (*jenv)->writeBoolean(jenv, JG(session_is_new)); 
+  (*jenv)->writeLong(jenv, PS(gc_maxlifetime)); 
   (*jenv)->writeInvokeEnd(jenv);
 }
 
