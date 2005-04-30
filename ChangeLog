@@ -1,5 +1,9 @@
 2005-04-30  Jost Boekemeier <jostb@intern>
+	
 	* ABOUT.HTM: New file.
+
+	* multicast.c (php_java_recv_multicast): Use 1s timeout. Solaris9
+	on X86 doesn't seem to support ms timeout!?
 	
 	* java.c (java_get_session): Allow external sessions.
 
