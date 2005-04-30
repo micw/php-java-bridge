@@ -1,6 +1,7 @@
 2005-04-30  Jost Boekemeier <jostb@intern>
-
 	* ABOUT.HTM: New file.
+	
+	* java.c (java_get_session): Allow external sessions.
 
 	* multicast.c (java_test_server_no_multicast): Alway use the
 	backend stored in the session.
