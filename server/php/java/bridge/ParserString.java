@@ -7,7 +7,6 @@ class ParserString {
     byte[] string;
     int off;
     int length;
-    private final String UTF8 = "UTF-8";
 
     /*
      * Returns the UTF8 string representation. Useful for debugging only

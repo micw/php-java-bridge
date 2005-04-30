@@ -1,3 +1,120 @@
+2005-04-29  Jost Boekemeier <jostb@intern>
+
+	* VERSION, php-java-bridge.spec: New version
+
+	* INSTALL.WINDOWS, INSTALL, README: update version
+
+	* PROTOCOL.TXT: Bit 0 is now reserved.
+
+	* README: Updated from index.html
+
+	* bind.c (java_get_server_args): If backend pool (socketname is
+	off), show the command to add another backend to the pool.
+	(java_test_server): Check local server first, special init
+	handling for local server autostart.
+	(java_test_server_no_multicast): New function used for
+	java_get_session().
+
+	* client.c (stack_elem): New struct.
+	(parse_ctx) maintain a container stack.
+	(begin): Use a real stack for multi-dimensional arrays.
+	(end): pop
+	(handle_request): init stack
+
+	* client.c (try_connect_to_server): Do not open a connection from
+	the garbage collector callback.
+	(java_connect_to_server_no_multicast): New function for
+	java_get_session().
+	(java_connect_to_mono_no_multicast): New function for
+	mono_get_session():
+
+	* java.c (PHP_RINIT_FUNCTION): Throw error if connection open.
+	(PHP_RSHUDOWN_FUNCTION): Set is_closed flag.
+	(java_set_file_encoding): New public function.
+	(java_get_session): Rewritten.
+	(php_java_alloc_globals_ctor): init is_closed flag.
+
+	* multicast.c (readInt): New function.
+	(writeInt): New function.
+	(php_java_init_multicast): Fixes for Solaris and MAC OSX
+	(php_java_send_multicast): Send current time.
+	(php_java_recv_multicast): No-response timeout to 90ms; gives the
+	garbage collector a chance. Discard broken or timed out packets.
+
+	* multicast.h (MAX_LOAD): Changed to 12 (from 20)
+
+	* php-java-bridge (inst): service status command works again.
+	(is_multicast): start 5 backends if socketname is switched off.
+
+	* php_java.h (is_closed): New global
+	(session_is_new): New global
+
+	* update_policy.sh.in (setfiles): tag php-ext-dirs/lib
+
+	* server/MNakefile_unix.am: Added php/java/bridge/Listener.java
+
+	* RunJavaBridge.c.in: Updated to support multicasts.
+
+	* server/php/java/bridge/JavaBridge.java (fileEncoding): New global.
+	(setResult): Use fileEncoding.
+	(setFileEncoding): New function.
+	(select): Use fileEncoding
+	(coerce): Use fileEncoding.
+	
+	* server/php/java/bridge/JavaBridge.java
+	(coerce): coerce collection to map.
+	(ClassIterator): New Class.
+	(ObjectClassIterator): New Class
+	(ClassClassIterator): New Class
+	(Invoke): Rewritten to use iterator
+	(GetSetProp): Rewritten to use iterator
+
+	* server/php/java/bridge/JavaBridge.java
+	(getSession): Rewritten
+
+	* server/php/java/bridge/JavaBridgeClassLoader.java
+	(JavaBridgeClassLoader): Must start with an empty list for
+	jpackage compatibility. User is required to name the .jar files
+	explicitly (via java_set_library_path).
+	(findClas): New method for backwards compatibility.
+	(findResource): New method for backwards compatibility.
+	(setJarLibraryPath): If .jar file is not absolut, search sys
+	directories (/usr/share/java and php-config-dir/lib/)
+	(initClassLoader): Do not add .jars anymore.
+	(addSysUrls): New function.
+	(classes): Hash re-added.  It was thrown out in 2.0.5 when we
+	extended from URLClassLoader.
+
+	* server/php/java/bridge/Listener.java (feature): New global autoconf var.
+	(createResponse): Send back timestamp.
+	(run): timestamp
+
+	* server/php/java/bridge/Parser.java (bridge): New global.
+	(CALL_BEGIN): Display debug as UTF8 data
+	(CALL_END): Display debug as UTF8 data
+
+	* server/php/java/bridge/ParserString.java (getUTF8StringValue): New function.
+	(toString): Use UTF8 encoding
+
+	* server/php/java/bridge/Request.java (push): Do not threat
+	non-composite arguments that follow a composite as composites.
+
+	* server/php/java/bridge/Response.java (Response): Use our fileEncoding.
+	(setResult): pass fileEncoding
+	(getEncoding): new function.
+	(getBytes): new function.
+	(writeString): new function.
+	(flush): Display output in UTF8
+	
+	* server/php/java/bridge/TCPServerSocket.java 
+	(findFreePort): New function
+	(TCPServerSocket): If port==0, use findFreePort
+
+	* server/php/java/bridge/Util.java
+	(UTF8): New const
+	(println): Display output in UTF8
+	
+	
 2005-03-27  Jost Boekemeier <jostb@intern>
 
 	* VERSION, php-java-bridge.spec: New version
@@ -62,7 +179,15 @@
 	* server/php/java/bridge/JavaBridge.java (getLoad): New function.
 	(run): Calculate load.
 	(loadLock): Lock object
-	
+
+	* php-java-bridge.multicasts.te: New file
+
+	* tests.php4/cache.php, tests.php4/utf8.php,
+	tests.php4/utf8-2.php, tests.php4/utf8-3.php,
+	tests.php4/xmlTransform.php, tests.php4/sendArray.php,
+	tests.php4/sendHash.php: New files
+
+	* tests.php5/loadLib.php, tests.php5/utf8.php: New tests.
 	
 2005-03-15  Jost Boekemeier <jostb@intern>
 
