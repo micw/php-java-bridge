@@ -164,11 +164,11 @@ PHP_FUNCTION(java_get_session)
 	  PS(session_status) != php_session_disabled) {
 	PS(id)=estrndup(Z_STRVAL_PP(session), Z_STRLEN_PP(session));
 	php_session_start(TSRMLS_C);
-	jenv=java_connect_to_server_no_multicast(TSRMLS_C);
-	if(!jenv) RETURN_NULL();
   }
 #endif
 
+  jenv=java_connect_to_server_no_multicast(TSRMLS_C);
+  if(!jenv) RETURN_NULL();
   (*jenv)->writeInvokeBegin(jenv, 0, "getSession", 0, 'I', return_value);
   (*jenv)->writeString(jenv, Z_STRVAL_PP(session), Z_STRLEN_PP(session)); 
   (*jenv)->writeBoolean(jenv, JG(session_is_new)); 
