@@ -48,6 +48,7 @@ const static char inet_socket_prefix[]="INET:";
 const static char local_socket_prefix[]="LOCAL:";
 
 static void java_get_server_args(char*env[N_SENV], char*args[N_SARGS], short for_display) {
+  extern int java_ini_last_updated;
   static const char separator[2] = {ZEND_PATHS_SEPARATOR, 0};
   char *s, *p;
   char*program=cfg->java;
@@ -64,7 +65,7 @@ static void java_get_server_args(char*env[N_SENV], char*args[N_SARGS], short for
 
   /* if socketname is off, show the user how to start a multicast
 	 backend */
-  if(for_display && !(java_ini_updated&U_SOCKNAME)) {
+  if(for_display && !(java_ini_last_updated&U_SOCKNAME)) {
 	cfg_sockname="0";
 	s_prefix=inet_socket_prefix;
 	cfg_logFile="";
