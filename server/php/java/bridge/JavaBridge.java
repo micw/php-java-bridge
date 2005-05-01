@@ -615,6 +615,7 @@ public class JavaBridge implements Runnable {
 
 	    c.object = object;
 	    c.name = name;
+	    c.args = args;
 	    c.ignoreCase = ignoreCase;
 	    c.current = null;
 	    return c;
@@ -644,7 +645,7 @@ public class JavaBridge implements Runnable {
 			}
 		    }
 		}
-		return superclass;
+		jclass = superclass;
 	    }
 	    return jclass;
 	}
