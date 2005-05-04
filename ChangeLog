@@ -1,5 +1,11 @@
 2005-05-01  Jost Boekemeier <jostb@intern>
 
+	* server/php/java/bridge/JavaBridgeClassLoader.java 
+	(classesBlackList): New global.
+	(resourcesBlackList): New global
+	(findClass): Do not search sysurls if blacklisted.
+	(findResources): Do not search sysurls if blacklisted.
+	
 	* server/php/java/bridge/JavaBridge.java (getInstance): Store
 	args.
 
@@ -18,14 +24,11 @@
 	
 	* java.c (java_get_session): Allow external sessions.
 
-	* multicast.c (java_test_server_no_multicast): Alway use the
+	* multicast.c (java_test_server_no_multicast): Always use the
 	backend stored in the session.
 
 	* java.c (java_get_session): Pass gc_maxlifetime as default
 	timeout to the session.
-
-	* multicast.c (php_java_recv_multicast): Timeout now 180ms, from
-	90ms.
 
 	* php-java-bridge: Start only 4 backends.  Users can add
 	additional backends if they want.
@@ -92,7 +95,7 @@
 	* php_java.h (is_closed): New global
 	(session_is_new): New global
 
-	* update_policy.sh.in (setfiles): tag php-ext-dirs/lib
+	* update_policy.sh.in (setfiles): tag java.libdir/lib
 
 	* server/MNakefile_unix.am: Added php/java/bridge/Listener.java
 

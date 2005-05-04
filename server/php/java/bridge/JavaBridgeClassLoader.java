@@ -22,6 +22,11 @@ public class JavaBridgeClassLoader extends URLClassLoader {
         // java_set_library_path("kawa.jar");
 	super(new URL[] {});	
     }
+
+    // classes/resources excluded from the search
+    private static final HashMap classesBlackList = new HashMap();
+    private static final HashMap resourcesBlackList = new HashMap();
+
     // class hash
     private static final HashMap classes = new HashMap(); 
 
@@ -128,6 +133,7 @@ public class JavaBridgeClassLoader extends URLClassLoader {
 	    addURL((URL)e.next());
 	}
     }
+
     protected Class findClass(String name) throws ClassNotFoundException { 
 	Class clazz=null;
 	synchronized(classes) {
@@ -139,20 +145,35 @@ public class JavaBridgeClassLoader extends URLClassLoader {
 	    try {
 		clazz=super.findClass(name);
 	    } catch (ClassNotFoundException e) {   
-		Util.logMessage("Could not find class " + name + ". Adding all system libraries.  Please use java_set_library_path(\"...;<system library containing " + name + ">\") to avoid this message.");
-		addSysUrls();
-		clazz=super.findClass(name); 
+		if(null==classesBlackList.get(name)) {
+		    try {
+			addSysUrls();
+			clazz=super.findClass(name); 
+		    } catch (ClassNotFoundException e2) {
+			classesBlackList.put(name, name);
+			throw e2;
+		    }
+		    Util.logMessage("Could not find class " + name + ". Adding all system libraries.  Please use java_set_library_path(\"...;<system library containing " + name + ">\") to avoid this message.");
+		}
+		classes.put(name, new WeakReference(clazz));
 	    }
-	    classes.put(name, new WeakReference(clazz));
 	}
 	return clazz;
     }
     public URL findResource(String name) {
 	URL url = super.findResource(name);
 	if(url==null) { 
-	    Util.logMessage("Could not find resource " + name + ". Adding all sysUrls.  Please use java_set_library_path(\"...;<system library containing " + name + ">\") to avoid this message.");
-	    addSysUrls();
-	    url = super.findResource(name);
+	    synchronized(resourcesBlackList) {
+		if(null==resourcesBlackList.get(name)) {
+		    addSysUrls();
+		    url = super.findResource(name);
+		    if(url==null) {
+			resourcesBlackList.put(name, name);
+			return null;
+		    }
+		    Util.logMessage("Could not find resource " + name + ". Adding all sysUrls.  Please use java_set_library_path(\"...;<system library containing " + name + ">\") to avoid this message.");
+		}
+	    }
 	}
 	return url;
     }

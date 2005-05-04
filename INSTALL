@@ -31,9 +31,23 @@ output of the php java bridge module (the entry should be:
 "java.support: Enabled").
 
 Then install your your java libraries (.jar files) in /usr/share/java
-or in java.libpath/lib and your php and web-pages in /var/www/html.
+or in java.libpath/lib (see output of phpinfo) and your php and
+web-pages in /var/www/html or one of their sub-directories.
+
 Individual classes (.class files) cannot be loaded, please create a
-.zip or .jar file, for example with the command: jar cvf cls.zip *.class
+.jar archive, for example with the command: 
+
+   jar cvf myLibrary-<version>.jar *.class 
+
+and copy the library to /usr/share/java or one of its sub-directories
+(if it is of general interest) or to java.libpath/lib, see output of
+phpinfo.php above or one of its sub-directories (if it should be
+visible to the PHP/Java Bridge only).  At run-time your library can be
+referenced with the command:
+
+   java_set_library_path("myLibrary-<version>.jar");
+
+Please see the README and ABOUT.HTM for details.
 --------------------------------------------------
 --------------------------------------------------
 
@@ -55,9 +69,9 @@ The following software components must be installed on your computer:
 
 The following software components are required to run PHP scripts with
 java code embedded via a web-server.  It is assumed that these
-components are not already installed on your computer. If they are,
-change the install directory or skip the compilation/install steps for
-these components:
+components are not already installed on your computer. If they are
+installed (including development packages), change the install
+directory or skip the compilation/install steps for these components:
 
 * PHP 4.3.x or above, for example 5.0.1
 
@@ -78,6 +92,15 @@ MPM=prefork #MPM=worker
 
 # stop the system http service 
 su - -c "service httpd stop"
+
+# If you don't have autoconf >= 2.57, automake >= 1.6.3 libtool >=
+# 1.4.3, or versions which do not match, for example autoconf 2.59 and
+# libtool 1.4.3, it is recommended to compile these before proceeding:
+for i in autoconf_2.57.tar.gz automake_1.6.3.tar.gz libtool_1.4.3.tar.gz; do
+ (cd autoconf-2.57;  ./configure --prefix=$INST && make && su -c "make install")
+ (cd automake-1.6.3; ./configure --prefix=$INST && make && su -c "make install")
+ (cd libtool-1.4.3;  ./configure --prefix=$INST && make && su -c "make install")
+done
 
 # compile and install apache 2
 gunzip < httpd-2.x.y.tar.gz | tar xf -

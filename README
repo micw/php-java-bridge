@@ -375,15 +375,67 @@ Build and execution instructions:
   example with "setenforce Enforcing".
 
 ------------------------------------
+  Loading user classes and libraries
+  ----------------------------------
+
+  Although it is possible to manipulate the java.classpath to direct
+  java to individual classes, this "feature" should not be used.
+
+  Custom libraries should be stored in one of the system directories,
+  either /usr/share/java (or one of its sub-directories) or
+  java.libpath/lib (or one of its sub-directories) and they shall have
+  the following format: <name>-<version>.jar.  For example:
+
+    /usr/share/java/batStore/batStore-1.0.jar.
+
+  The global repository /usr/share/java shall be used if the library
+  is for general interest, otherwise the java.libpath/lib repository may
+  be used.  Please look up the java.libpath from the output
+  of the test.php or from phpinfo(), please see the INSTALL file.
+  
+  When Security Enhanced Linux is configured to allow the PHP/Java
+  Bridge to make HTTP URL connections to different servers or if
+  Security Enhanced Linux is switched off in the linux kernel, java
+  libraries may also be loaded from HTTP URLs.
+
+  Java libraries can be created from .class files with the following
+  command:
+
+    jar cvf myLibrary-0.1.jar *.class 
+  
+
+  The libraries can be linked into the php files at run-time with the
+  command:
+
+    java_set_library_path("<library1>;<libraryN>");
+
+  For example:
+
+    <?php
+      // process order
+      java_set_library_path("j2ee.jar;batStore/batStore-1.0.jar");
+
+      order(...);
+    ?>
+
+  Since java does not yet support library versions, the PHP/Java
+  Bridge must be re-started when a new library version is deployed. This
+  means that the repositories shall contain only one version of batStore
+  at the same time. -- The ECMA 335 CLR supports this very well
+  so in theory the problem could be solved by compiling the .jar file
+  into a ECMA 335 dll (e.g. with the command: ikvmc batStore-1.0.jar)
+  and to use assembly loading instead, please see the
+  tests.mono+net/load_assembly.php for details).
+
+------------------------------------
   PHP 5 issues
   ------------
 
   All known PHP 5 versions crash when the dl() function is used. They
   first unload the module and then try to invoke its shutdown method.
 
-  If you use one of these versions, please either apply the
-  php5-crash-in-evaluator-shutdown_workaround.patch or add an entry to
-  the php.ini, see install instructions above.
+  If you use one of these versions, please add an entry to the
+  php.ini, see install instructions above.
 
 ------------------------------------
   Mailing List

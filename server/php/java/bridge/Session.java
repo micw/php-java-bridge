@@ -27,7 +27,7 @@ public class Session{
 	
     public Session(String name) {
 	this.name=name;
-	this.sessionCount++;
+	Session.sessionCount++;
 	this.map=new HashMap();
 	this.startTime=System.currentTimeMillis();
 	this.timeout=1440000;
