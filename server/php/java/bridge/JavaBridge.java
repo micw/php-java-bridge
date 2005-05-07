@@ -632,6 +632,8 @@ public class JavaBridge implements Runnable {
 	    else return new FindMatchingInterfaceForInvoke(name, args, ignoreCase);
 	}
 	Class findMatchingInterface(Class jclass) {
+	    if(jclass==null) return jclass;
+	    Util.logDebug("searching for matching interface for Invoke for class " + jclass);
 	    while (!Modifier.isPublic(jclass.getModifiers())) {
 		// OK, some joker gave us an instance of a non-public class
 		// This often occurs in the case of enumerators
@@ -668,6 +670,8 @@ public class JavaBridge implements Runnable {
 	}
 
 	Class findMatchingInterface(Class jclass) {
+	    if(jclass==null) return jclass;
+	    Util.logDebug("searching for matching interface for GetSetProp for class " + jclass);
 	    while (!Modifier.isPublic(jclass.getModifiers())) {
 		// OK, some joker gave us an instance of a non-public class
 		// This often occurs in the case of enumerators

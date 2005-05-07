@@ -1,3 +1,46 @@
+2005-05-07  Jost Boekemeier <jostb@intern>
+
+	* ABOUT.HTM: Updated from index.html
+
+	* README: Updated.
+
+	* java.c (require): New function.
+	(java_require): Alias for "java_set_library_path"
+	(java_set_library_path): Use require.
+	(java__destruct): Removed debug code.
+
+	* update-about.sh: New file
+
+	* server/php/java/bridge/JavaBridge.java
+	(canModifySecurityPermission): New global.
+	(MATCH_VOID_ICASE, MATCH_VOID_CASE): New symbols.
+	(FindMatchingInterface, FindMatchingInterfaceVoid,
+	FindMatchingInterfaceForInvoke,
+	FindMatchingInterfaceForGetSetProp): New classes.
+	(ClassIterator): rewritten to use FindMatchingInterface.
+	(GetSetProp, Invoke): rewritten to use setAccessible(true). If
+	that fails, because of security restrictions, re-start with the
+	appropriate FindMatchingInterface thunk.  But in the usual case
+	the performance should be much better.
+	(run): Log connection close.
+	
+	* server/php/java/bridge/JavaBridgeClassLoader.java
+	(updateJarLibraryPath): Renamed from setJarLibraryPath.
+	(findClass, findResource): Re-added log messages.
+	(findClass): add to the classes hash in the correct path.
+
+	* server/php/java/bridge/LocalServerSocket.java (accept): Display bridge instance.
+	
+	* server/php/java/bridge/TCPServerSocket (accept): Display bridge instance.
+
+	* server/php/java/bridge/Response.java (getFirstBytes): New method.
+	(flush): Show only first bytes in debug output.
+
+	* php-java-bridge/tests.php5/loadLib.php: Display test result.
+	
+	
+	
+	
 2005-05-01  Jost Boekemeier <jostb@intern>
 
 	* server/php/java/bridge/JavaBridgeClassLoader.java 
