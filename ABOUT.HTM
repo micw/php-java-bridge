@@ -15,7 +15,7 @@
 	</STYLE>
 </HEAD>
 <p>
-<!-- <a href="http://sourceforge.net"><img src="http://sourceforge.net/sflogo.php?group_id=117793&amp;type=1" width="88" height="31" border="0" alt="SourceForge.net Logo" /></a> -->
+
 </p>
 <BODY LANG="en-US" DIR="LTR">
 <P STYLE="margin-top: 0.42cm; page-break-after: avoid"><FONT ><FONT SIZE=4><B>What
@@ -50,13 +50,31 @@ is the PHP/Java bridge?</B></FONT></FONT></P>
       $hello = new java("java.lang.String", "hello");<br>
       print $hello;<br>
 <br>
+      // A complete example: <br>
+      // create a 2x2 excel sheet and return it to the client<br>
+      java_require("http://php-java-bridge.sf.net/poi.jar"); <br><br>
+      $workbook = new java("org.apache.poi.hssf.usermodel.HSSFWorkbook");<br>
+      $sheet = $workbook->createSheet("new sheet");<br>
+      $style = $workbook->createCellStyle();<br>
       // access the inner class AQUA within HSSFColor, note the $ syntax.<br>
-      $Color = new java('org.apache.poi.hssf.util.HSSFColor$AQUA');<br>
-      print $Color->index;<br><br>
+      $Aqua = new java_class('org.apache.poi.hssf.util.HSSFColor$AQUA');<br>
+      $style->setFillBackgroundColor($Aqua->index);<br>
+      $style->setFillPattern($style->BIG_SPOTS);<br><br>
+      for($x=0; $x<2; $x++) {<br>
+      &nbsp;$row = $sheet->createRow($y);<br>
+      &nbsp;for($y=0; $y=2; $y++) {<br>
+      &nbsp;&nbsp;$cell = $row->createCell($x);<br>
+      &nbsp;&nbsp;$cell->setCellValue("This is cell $x . $y");<br>
+      &nbsp;&nbsp;$cell->setCellStyle($style);<br>
+      &nbsp;}<br>
+      }<br><br>
+      // create and return the excel sheet to the client<br>
+      $memoryStream = new java ("java.io.ByteArrayOutputStream");<br>
+      $workbook->write($memoryStream);<br>
+      $memoryStream->close(); <br>
+      echo $memoryStream->getBytes();<br>
 
-      // create an instance of a .NET stack, push a java object<br>
-     $stack = new java("cli.System.Collections.Stack");<br>
-     $stack->Push($Color);<br><br>
+
 </code>
 </blockquote>
 <br>
@@ -83,25 +101,24 @@ is the PHP/Java bridge?</B></FONT></FONT></P>
       $obj = $Object->newInstance();<br><br>
       $Thread = new JavaClass("java.lang.Thread");<br>
       $Thread->sleep(10);<br><br>
-      $Console = new JavaClass("cli.System.Console");<br>
-      $Console->WriteLine("Java {0} printed on .NET {1}!", array($obj, $Console) );<br>
+<!--       $Console = new JavaClass("cli.System.Console");<br> -->
+<!--       $Console->WriteLine("Java {0} printed on .NET {1}!", array($obj, $Console) );<br> -->
 </code>
 </blockquote>
 <br>
 <li>
-  <code><strong>java_set_library_path</strong>("JAR1;JAR2")</code>: Makes additional libraries
+  <code><strong>java_require</strong>("JAR1;JAR2")</code>: Makes additional libraries
      available to the current script.  JAR can either be  
-     a "http:", "ftp:", "file:" or a "jar:" location. Example: <br><br>
+     a "http:", "ftp:", "file:" or a "jar:" location. On Security &quot;Enhanced Linux&quot; (<a href="README">please see the README</a>) the location must be tagged with a <em>lib_t</em> <a href="#sel">security context</a>. Example: <br><br>
 <blockquote>
 <code>
       $file=new java("java.io.File", "WEB_INF/web.xml");<br>
 <br>
-      java_set_library_path("file:c:/xerces.jar;http://localhost/jdom.jar");<br>
+      java_require("xerces.jar;jdom.jar");<br>
       $builder = new java("org.jdom.input.SAXBuilder");<br>
       $doc = $builder-&gt;build($file);<br>
       $root = $doc-&gt;getRootElement();<br>
       $servlets = $root-&gt;getChildren("servlet");<br>
-      java_set_library_path("");<br>
 <br>
       echo "this file has " . $servlets-&gt;size() . " servlets\n";<br>
 </code>
@@ -140,7 +157,7 @@ public class Cache {// Compile this class, create cache.jar and copy it to /usr/
 &nbsp;&nbsp;&nbsp; return instance;<br>
 }<br><br>
 &lt;?php<br>
-java_set_library_path(&quot;cache.jar&quot;);<br>
+java_require(&quot;cache.jar&quot;);<br>
 $Cache = new JavaClass(&quot;Cache&quot;);<br>
 $instance=$Cache->getInstance(); //instance will stay in the VM until the VM runs short of memory<br>
 ?&gt;<br>
@@ -241,7 +258,7 @@ BORDER="1"
 ><TD
 >java.lang.Object</TD
 ><TD
->An opaque object handle.  However, we guarantee that the first handle always starts with 1 and that the next handle is n+1 for all n < 1024 (useful if you work with the raw XML protocol, see the <a href="http://cvs.sourceforge.net/viewcvs.py/php-java-bridge/php-java-bridge/examples/clients/getProperties.py?view=markup">python</a> and <a href="http://cvs.sourceforge.net/viewcvs.py/php-java-bridge/php-java-bridge/examples/clients/listToArray.scm?rev=1.3&view=markup">scheme</a> examples).</TD
+>An opaque object handle.  However, we guarantee that the first handle always starts with 1 and that the next handle is n+1 for all n < 1024 (useful if you work with the raw <a href="PROTOCOL.TXT">XML protocol</a>, see the <a href="examples/clients/getProperties.py">python</a> and <a href="examples/clients/listToArray.scm">scheme</a> examples).</TD
 ><TD
 >$buf=new java("java.io.ByteArrayOutputStream");<br>
 $outbuf=new java("java.io.PrintStream", $buf);<br>
@@ -380,13 +397,13 @@ the PHP/Java bridge at the same time.</FONT></P>
 <ol>
 <li>
     Somewhere on a HTTP or FTP server, see PHP function
-      java_set_library_path. On Security Enhanced Linux <code>.jar</code> files can only be loaded from locations which are tagged with the <em>lib_t</em> security context.
+      java_require. <a name="sel">On Security Enhanced Linux <code>.jar</code> files can only be loaded from locations which are tagged with the <em>lib_t</em> security context</a>.
 
    <li> In the sub-directory "lib" of the PHP extension directory, if it
       exists and is accessible when the JVM starts the bridge.
       This is usually "`php-config --extension-dir`/lib".  On Security Enhanced Linux this directory is tagged with the <em>lib_t</em> security context.
 
-   <li> In the /usr/share/java/ directory, if it exists and is accessible
+   <li> In the <code>/usr/share/java/</code> directory, if it exists and is accessible
       when the JVM starts the bridge. On Security Enhanced Linux this directory is tagged with the <em>lib_t</em> security context.
 </ol>
 </FONT></P>
@@ -600,7 +617,7 @@ java.libpath="/tmp/"
 </center>
 <br><br>
 <P><FONT >For further
-information please read the <a href="http://cvs.sourceforge.net/viewcvs.py/php-java-bridge/php-java-bridge/README?view=markup">README</a>, <a href="http://cvs.sourceforge.net/viewcvs.py/php-java-bridge/php-java-bridge/INSTALL?view=markup">INSTALL</a> and <a href="http://cvs.sourceforge.net/viewcvs.py/php-java-bridge/php-java-bridge/INSTALL.WINDOWS?view=markup">INSTALL.WINDOWS</a> documents contained in
+information please read the <a href="README">README</a>, <a href="INSTALL">INSTALL</a> and <a href="INSTALL.WINDOWS">INSTALL.WINDOWS</a> documents contained in
 the download files.<p>
 <!-- There are several tutorials on the web which cover the old PHP 4 java extension, for example <a href="http://zez.org/article/articleview/26/1/"> this one</a>.  -->
 </FONT></P>
