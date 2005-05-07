@@ -40,7 +40,7 @@ public class JavaBridgeClassLoader extends URLClassLoader {
     // setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");
     // setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");
     // The first char must be the token separator.
-    public void setJarLibraryPath(String _path) {
+    public void updateJarLibraryPath(String _path) {
 	if(_path==null || _path.length()<2) return;
 
 	// add a token separator if first char is alnum
@@ -143,6 +143,7 @@ public class JavaBridgeClassLoader extends URLClassLoader {
 	    if(clazz!=null) return clazz;
 	    
 	    try {
+		Util.logMessage("try to load class " + name);
 		clazz=super.findClass(name);
 	    } catch (ClassNotFoundException e) {   
 		if(null==classesBlackList.get(name)) {
@@ -153,14 +154,15 @@ public class JavaBridgeClassLoader extends URLClassLoader {
 			classesBlackList.put(name, name);
 			throw e2;
 		    }
-		    Util.logMessage("Could not find class " + name + ". Adding all system libraries.  Please use java_set_library_path(\"...;<system library containing " + name + ">\") to avoid this message.");
+		    Util.logMessage("Could not find class " + name + ". Searching all system libraries.  Please use java_require(<systemLibrary>) to avoid this message.");
 		}
-		classes.put(name, new WeakReference(clazz));
 	    }
+	    classes.put(name, new WeakReference(clazz));
 	}
 	return clazz;
     }
     public URL findResource(String name) {
+	Util.logMessage("try to load resource " + name);
 	URL url = super.findResource(name);
 	if(url==null) { 
 	    synchronized(resourcesBlackList) {
@@ -171,7 +173,7 @@ public class JavaBridgeClassLoader extends URLClassLoader {
 			resourcesBlackList.put(name, name);
 			return null;
 		    }
-		    Util.logMessage("Could not find resource " + name + ". Adding all sysUrls.  Please use java_set_library_path(\"...;<system library containing " + name + ">\") to avoid this message.");
+		    Util.logMessage("Could not find resource " + name + ". Searching all system libraries.  Please use java_require(<systemLibrary>) to avoid this message.");
 		}
 	    }
 	}

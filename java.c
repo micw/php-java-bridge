@@ -97,8 +97,7 @@ PHP_FUNCTION(java_set_file_encoding)
   (*jenv)->writeInvokeEnd(jenv);
 }
 
-PHP_FUNCTION(java_set_library_path)
-{
+static void require(INTERNAL_FUNCTION_PARAMETERS) {
   zval **path;
   proxyenv *jenv = java_connect_to_server(TSRMLS_C);
   if(!jenv) {RETURN_NULL();}
@@ -111,6 +110,14 @@ PHP_FUNCTION(java_set_library_path)
   (*jenv)->writeInvokeBegin(jenv, 0, "setJarLibraryPath", 0, 'I', return_value);
   (*jenv)->writeString(jenv, Z_STRVAL_PP(path), Z_STRLEN_PP(path));
   (*jenv)->writeInvokeEnd(jenv);
+}
+PHP_FUNCTION(java_set_library_path)
+{
+  require(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+}
+PHP_FUNCTION(java_require)
+{
+  require(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
 PHP_FUNCTION(java_instanceof)

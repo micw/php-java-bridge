@@ -6,6 +6,17 @@ import java.io.IOException;
 
 public class Response {
     private class OutBuf extends ByteArrayOutputStream {
+	/*
+	 * Return up to 256 bytes. Useful for logging.
+	 */
+	byte[] getFirstBytes() {
+	    int c = count;
+	    if(c>256) c=256;
+	    byte[] ret = new byte[c];
+	    System.arraycopy(buf, 0, ret, 0, c);
+	    return ret;
+	}
+
     	void append(byte[] s) {
     		try {
     			write(s);
@@ -161,7 +172,7 @@ public class Response {
     }
     void flush() throws IOException {
  	if(Util.logLevel>=4) {
-	    Util.logDebug(this.bridge + " <-- " +newString(buf.toByteArray()));
+	    Util.logDebug(this.bridge + " <-- " +newString(buf.getFirstBytes()));
 	}
 	buf.writeTo(bridge.out);
 	buf.reset();

@@ -140,35 +140,11 @@ Build and execution instructions:
   for an example.
 
 ---------------------------------------------
-  Deploying into a J2EE/EJB server
-  --------------------------------
+  Deploying into a J2EE/EJB server or a 
+  standard servlet engine
+  -----------------------------
 
-  The following description applies to the Sun J2EE application
-  server.
-
-1. Start your application server, for example with the command:
-
-     $app_server/bin/asadmin start-domain domain1
-
-
-2. Log into your application server, for example by visiting
-
-     http://localhost:4848/asadmin
-
-   and open
-
-     Application Server -> Applications -> EJB Modules
-
-   Click on  "Deploy..."  and deploy JavaBridge.jar.
-
-
-3. Direct the PHP/Java Bridge to the application server by setting 
-   the java.hosts to the application server host.  For example:
-
-      java.hosts=SERVER1
-
-
-4. Re-start apache to activate the new setting.
+  [to be written for 2.0.7]
 
 ------------------------------------
   64 Bit issues
@@ -235,12 +211,12 @@ Build and execution instructions:
 
      Then configure and compile php as usual:
 
-      ./configure --with-java=%JAVA_HOME%
+      .\configure --with-java=%JAVA_HOME%
       make
 
   This will create a php binary with the PHP/Java Bridge included.
-  You can then copy the executable into the CGI directory of your IIS
-  web server.
+  You can then copy the sapi\cgi\php executable into the CGI directory 
+  of your IIS web server.
 
   To also install the server part into the modules directory:
 
@@ -391,7 +367,7 @@ Build and execution instructions:
   The global repository /usr/share/java shall be used if the library
   is for general interest, otherwise the java.libpath/lib repository may
   be used.  Please look up the java.libpath from the output
-  of the test.php or from phpinfo(), please see the INSTALL file.
+  of the test.php or from phpinfo().
   
   When Security Enhanced Linux is configured to allow the PHP/Java
   Bridge to make HTTP URL connections to different servers or if
@@ -407,13 +383,13 @@ Build and execution instructions:
   The libraries can be linked into the php files at run-time with the
   command:
 
-    java_set_library_path("<library1>;<libraryN>");
+    java_require("<library1>;<libraryN>");
 
   For example:
 
     <?php
       // process order
-      java_set_library_path("j2ee.jar;batStore/batStore-1.0.jar");
+      java_require("j2ee.jar;batStore/batStore-1.0.jar");
 
       order(...);
     ?>
@@ -436,6 +412,48 @@ Build and execution instructions:
 
   If you use one of these versions, please add an entry to the
   php.ini, see install instructions above.
+
+------------------------------------
+  UTF-8
+  -----
+  
+  Since PHP does not support Unicode the PHP/Java Bridge uses UTF-8 to
+  convert characters into the host representation. All strings are
+  created with new String(..., "UTF-8") and all internal String->byte[]
+  conversions use getBytes("UTF-8").
+  
+  If you have old PHP files which are not UTF-8 encoded, you can
+  change the default encoding with java_set_file_encoding().  For
+  example:
+
+    java_set_file_encoding("ISO-8859-1");
+
+  For a list of available encodings please see the documentation of
+  the JVM's file.encoding system property.
+
+  The java_set_file_encoding() primitive only affects java.lang.String
+  creation and internal conversions, it does not alter the JVM's
+  file.encoding system property nor does it change the behaviour of
+  methods which use the file.encoding property, getBytes() for
+  example.  If you use:
+  
+    $str=new String("Cześć! -- שלום -- Grüß Gott -- Dobrý deň");
+    echo $str->getBytes();
+
+  the output conversion depends on the file.encoding system property
+  which in turn depends on the process' LANG environment variable. You
+  can check the file.encoding with the test.php script, see above.
+
+  Please see the utf8*.php tests in the tests.php4 folder to see how
+  to use different input and output conversions.
+
+
+  To be portable please do not use conversions which depend on the
+  JVM's file.encoding. They are easy to avoid, the above example
+  should have been written as:
+
+    $str=new String("Cześć! -- שלום -- Grüß Gott -- Dobrý deň");
+    echo $str;
 
 ------------------------------------
   Mailing List

@@ -12,6 +12,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Field;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -599,32 +600,37 @@ public class JavaBridge implements Runnable {
 	return result;
     }
 
-    static private abstract class ClassIterator {
-	Object object;
-	Class current;
-	String name;
+    static abstract class FindMatchingInterface {
+	String name; 
 	Object args[];
 	boolean ignoreCase;
-
-	public static ClassIterator getInstance(Object object, String name, Object args[], boolean ignoreCase) {
-	    ClassIterator c;
-	    if(object instanceof Class)
-		c = new ClassClassIterator();
-	    else
-		c = new ObjectClassIterator();
-
-	    c.object = object;
-	    c.name = name;
-	    c.args = args;
-	    c.ignoreCase = ignoreCase;
-	    c.current = null;
-	    return c;
+	public FindMatchingInterface (String name, Object args[], boolean ignoreCase) {
+	    this.name=name;
+	    this.args=args;
+	    this.ignoreCase=ignoreCase;
 	}
+	abstract Class findMatchingInterface(Class jclass);
+    }
 
-	protected Class findMatchingInterface(Class jclass) {
+    private boolean canModifySecurityPermission = true;
+    private static final FindMatchingInterfaceVoid MATCH_VOID_ICASE = new FindMatchingInterfaceVoid(true);
+    private static final FindMatchingInterfaceVoid MATCH_VOID_CASE = new FindMatchingInterfaceVoid(false);
+    static class FindMatchingInterfaceVoid extends FindMatchingInterface {
+	public FindMatchingInterfaceVoid(boolean b) { super(null, null, b); }
+	Class findMatchingInterface(Class jclass) {
+	    return jclass;
+	}
+    }
 
-	    if(jclass==null) return null;
-
+    static class FindMatchingInterfaceForInvoke extends FindMatchingInterface {
+	protected FindMatchingInterfaceForInvoke(String name, Object args[], boolean ignoreCase) {
+	    super(name, args, ignoreCase);
+	}
+	public static FindMatchingInterface getInstance(String name, Object args[], boolean ignoreCase, boolean canModifySecurityPermission) {
+	    if(canModifySecurityPermission) return ignoreCase?MATCH_VOID_ICASE : MATCH_VOID_CASE;
+	    else return new FindMatchingInterfaceForInvoke(name, args, ignoreCase);
+	}
+	Class findMatchingInterface(Class jclass) {
 	    while (!Modifier.isPublic(jclass.getModifiers())) {
 		// OK, some joker gave us an instance of a non-public class
 		// This often occurs in the case of enumerators
@@ -649,6 +655,62 @@ public class JavaBridge implements Runnable {
 	    }
 	    return jclass;
 	}
+    }
+
+    static class FindMatchingInterfaceForGetSetProp extends FindMatchingInterface {
+	protected FindMatchingInterfaceForGetSetProp(String name, Object args[], boolean ignoreCase) {
+	    super(name, args, ignoreCase);
+	}
+	public static FindMatchingInterface getInstance(String name, Object args[], boolean ignoreCase, boolean canModifySecurityPermission) {
+	    if(canModifySecurityPermission) return ignoreCase?MATCH_VOID_ICASE : MATCH_VOID_CASE;
+	    else return new FindMatchingInterfaceForGetSetProp(name, args, ignoreCase);
+	}
+
+	Class findMatchingInterface(Class jclass) {
+	    while (!Modifier.isPublic(jclass.getModifiers())) {
+		// OK, some joker gave us an instance of a non-public class
+		// This often occurs in the case of enumerators
+		// Substitute the matching first public interface in its place,
+		// and barring that, try the superclass
+		Class interfaces[] = jclass.getInterfaces();
+		Class superclass = jclass.getSuperclass();
+		for (int i=interfaces.length; i-->0;) {
+		    if (Modifier.isPublic(interfaces[i].getModifiers())) {
+			jclass=interfaces[i];
+			Field jfields[] = jclass.getFields();
+			for (int j=0; j<jfields.length; j++) {
+			    String nm = jfields[j].getName();
+			    boolean eq = ignoreCase ? nm.equalsIgnoreCase(name) : nm.equals(name); 
+			    if (eq) {
+				return jclass;
+			    }
+			}
+		    }
+		}
+		jclass = superclass;
+	    }
+	    return jclass;
+	}
+    }
+
+    static private abstract class ClassIterator {
+	Object object;
+	Class current;
+	FindMatchingInterface match;
+
+	public static ClassIterator getInstance(Object object, FindMatchingInterface match) {
+	    ClassIterator c;
+	    if(object instanceof Class)
+		c = new ClassClassIterator();
+	    else
+		c = new ObjectClassIterator();
+
+	    c.match = match;
+	    c.object = object;
+	    c.current = null;
+	    return c;
+	}
+	
 	public abstract Class getNext();
     }
 	
@@ -658,7 +720,7 @@ public class JavaBridge implements Runnable {
 	    return null;
 	}
 	public Class getNext() {
-	    return findMatchingInterface(next());
+	    return match.findMatchingInterface(next());
 	}
     }
 
@@ -670,9 +732,10 @@ public class JavaBridge implements Runnable {
 	    return null;
 	}
 	public Class getNext() {
-	    return findMatchingInterface(next());
+	    return next();
 	}
     }
+
     //
     // Invoke a method on a given object
     //
@@ -683,23 +746,37 @@ public class JavaBridge implements Runnable {
 	    Vector matches = new Vector();
 	    Vector candidates = new Vector();
 	    Class jclass;
+	    boolean again;
+	    Object coercedArgs[] = null;
+	    Method selected = null;
 
 	    // gather
-	    for (ClassIterator iter = ClassIterator.getInstance(object, method, args, true); (jclass=iter.getNext())!=null;) {
-		Method methods[] = jclass.getMethods();
-		for (int i=0; i<methods.length; i++) {
-		    if (methods[i].getName().equalsIgnoreCase(method)) {
-		    	candidates.addElement(methods[i]);
-		    	if(methods[i].getParameterTypes().length == args.length) {
+	    do {
+		again = false;
+		for (ClassIterator iter = ClassIterator.getInstance(object, FindMatchingInterfaceForInvoke.getInstance(method, args, true, canModifySecurityPermission)); (jclass=iter.getNext())!=null;) {
+		    Method methods[] = jclass.getMethods();
+		    for (int i=0; i<methods.length; i++) {
+			if (methods[i].getName().equalsIgnoreCase(method)) {
+			    candidates.addElement(methods[i]);
+			    if(methods[i].getParameterTypes().length == args.length) {
 		    		matches.addElement(methods[i]);
-		    	}
+			    }
+			}
 		    }
 		}
-	    }
-	    Method selected = (Method)select(matches, args);
-	    if (selected == null) throw new NoSuchMethodException(String.valueOf(method) + "(" + Util.argsToString(args) + "). " + "Candidates: " + String.valueOf(candidates));
-
-	    Object coercedArgs[] = coerce(selected.getParameterTypes(), args, response);
+		selected = (Method)select(matches, args);
+		if (selected == null) throw new NoSuchMethodException(String.valueOf(method) + "(" + Util.argsToString(args) + "). " + "Candidates: " + String.valueOf(candidates));
+		
+		coercedArgs = coerce(selected.getParameterTypes(), args, response);
+		if(canModifySecurityPermission && !selected.isAccessible()) {
+		    try {
+			selected.setAccessible(true);
+		    } catch (java.lang.SecurityException ex) {
+			canModifySecurityPermission=false;
+			again=true;
+		    }
+		}
+	    } while(again);
 	    setResult(response, selected.invoke(object, coercedArgs));
 
 	} catch (Throwable e) {
@@ -721,19 +798,27 @@ public class JavaBridge implements Runnable {
 	(Object object, String prop, Object args[], Response response)
     {
 	boolean set = (args!=null && args.length>0);
-
 	try {
 	    ArrayList matches = new ArrayList();
 	    Class jclass;
 
 	    // first search for the field *exactly*
-	    for (ClassIterator iter = ClassIterator.getInstance(object, prop, args, false); (jclass=iter.getNext())!=null;) {
+	    again2:		// because of security exception
+	    for (ClassIterator iter = ClassIterator.getInstance(object, FindMatchingInterfaceForGetSetProp.getInstance(prop, args, false, canModifySecurityPermission)); (jclass=iter.getNext())!=null;) {
 		try {
-		    java.lang.reflect.Field jfields[] = jclass.getFields();
+		    Field jfields[] = jclass.getFields();
 		    for (int i=0; i<jfields.length; i++) {
 			if (jfields[i].getName().equals(prop)) {
 			    matches.add(jfields[i].getName());
 			    Object res=null;
+			    if(canModifySecurityPermission && !(jfields[i].isAccessible())) {
+				try {
+				    jfields[i].setAccessible(true);
+				} catch (java.lang.SecurityException e) {
+				    canModifySecurityPermission=false;
+				    break again2;
+				}
+			    }
 			    if (set) {
 				args = coerce(new Class[] {jfields[i].getType()}, args, response);
 				jfields[i].set(object, args[0]);
@@ -748,7 +833,8 @@ public class JavaBridge implements Runnable {
 	    }
 
 	    // search for a getter/setter, ignore case
-	    for (ClassIterator iter = ClassIterator.getInstance(object, prop, args, true); (jclass=iter.getNext())!=null;) {
+	    again1:		// because of security exception
+	    for (ClassIterator iter = ClassIterator.getInstance(object, FindMatchingInterfaceForInvoke.getInstance(prop, args, true, canModifySecurityPermission)); (jclass=iter.getNext())!=null;) {
 		try {
 		    BeanInfo beanInfo = Introspector.getBeanInfo(jclass);
 		    PropertyDescriptor props[] = beanInfo.getPropertyDescriptors();
@@ -762,19 +848,38 @@ public class JavaBridge implements Runnable {
 				method=props[i].getReadMethod();
 			    }
 			    matches.add(method);
+			    if(canModifySecurityPermission && !(method.isAccessible())) {
+				try {
+				    method.setAccessible(true);
+				} catch (java.lang.SecurityException e) {
+				    canModifySecurityPermission=false;
+				    break again1;
+				}
+			    }
 			    setResult(response, method.invoke(object, args));
 			    return;
 			}
 		    }
 		} catch (Exception ee) {/* may happen when method is not static */}
+	    }
 
-		// search for the field, ignore case
+	    // search for the field, ignore case
+	    again0:		// because of security exception
+	    for (ClassIterator iter = ClassIterator.getInstance(object, FindMatchingInterfaceForGetSetProp.getInstance(prop, args, true, canModifySecurityPermission)); (jclass=iter.getNext())!=null;) {
 		try {
 		    java.lang.reflect.Field jfields[] = jclass.getFields();
 		    for (int i=0; i<jfields.length; i++) {
 			if (jfields[i].getName().equalsIgnoreCase(prop)) {
 			    matches.add(prop);
 			    Object res=null;
+			    if(canModifySecurityPermission && !(jfields[i].isAccessible())) {
+				try {
+				    jfields[i].setAccessible(true);
+				} catch (java.lang.SecurityException e) {
+				    canModifySecurityPermission=false;
+				    break again0;
+				}
+			    }
 			    if (set) {
 				args = coerce(new Class[] {jfields[i].getType()}, args, response);
 				jfields[i].set(object, args[0]);
@@ -813,7 +918,7 @@ public class JavaBridge implements Runnable {
     // setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");
     // The first char must be the token separator.
     public void setJarLibraryPath(String _path) {
-    	cl.setJarLibraryPath(_path);
+    	cl.updateJarLibraryPath(_path);
     }
 
     public void setFileEncoding(String fileEncoding) {
