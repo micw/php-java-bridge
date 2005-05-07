@@ -10,10 +10,10 @@ public class Response {
 	 * Return up to 256 bytes. Useful for logging.
 	 */
 	byte[] getFirstBytes() {
-	    int c = count;
+	    int c = super.count;
 	    if(c>256) c=256;
 	    byte[] ret = new byte[c];
-	    System.arraycopy(buf, 0, ret, 0, c);
+	    System.arraycopy(super.buf, 0, ret, 0, c);
 	    return ret;
 	}
 
