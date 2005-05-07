@@ -130,7 +130,7 @@ public class JavaBridge implements Runnable {
 	}
 	
 	Session.expire();
-        Util.logDebug("Session terminated.");
+        Util.logDebug(this + " " + "Session terminated.");
     }
 
     //

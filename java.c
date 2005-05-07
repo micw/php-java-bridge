@@ -511,11 +511,6 @@ PHP_METHOD(java, __destruct)
 
   if(JG(jenv))
 	(*JG(jenv))->writeUnref(JG(jenv), obj);
-#ifndef __MINGW32__
-  else
-	if(atoi(cfg->logLevel)>=4)
-	  fputs("PHP bug, an object destructor was called after module shutdown\n", stderr);
-#endif
 
   efree(argv);
   RETURN_TRUE;
