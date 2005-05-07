@@ -21,6 +21,7 @@ copy("$here/array.jar", "$ext/lib/array/array.jar");
 try {
   java_set_library_path("array/array.jar");
   $testvar = new Java('Array');
+  echo "Test okay";
   exit(0);
 } catch (Exception $e) {
   echo "Exception: " . $e;
