@@ -772,7 +772,7 @@ public class JavaBridge implements Runnable {
 		    try {
 			selected.setAccessible(true);
 		    } catch (java.lang.SecurityException ex) {
-			Util.info("Security restriction:Cannot use setAccessible().");
+			Util.logMessage("Security restriction:Cannot use setAccessible().");
 			canModifySecurityPermission=false;
 			again=true;
 		    }
@@ -816,7 +816,7 @@ public class JavaBridge implements Runnable {
 				try {
 				    jfields[i].setAccessible(true);
 				} catch (java.lang.SecurityException e) {
-				    Util.info("Security restriction: Cannot use setAccessible().");
+				    Util.logMessage("Security restriction: Cannot use setAccessible().");
 				    canModifySecurityPermission=false;
 				    break again2;
 				}
@@ -854,7 +854,7 @@ public class JavaBridge implements Runnable {
 				try {
 				    method.setAccessible(true);
 				} catch (java.lang.SecurityException e) {
-				    Util.info("Security restriction:  Cannot use setAccessible().");
+				    Util.logMessage("Security restriction:  Cannot use setAccessible().");
 				    canModifySecurityPermission=false;
 				    break again1;
 				}
@@ -879,7 +879,7 @@ public class JavaBridge implements Runnable {
 				try {
 				    jfields[i].setAccessible(true);
 				} catch (java.lang.SecurityException e) {
-				    Util.info("Security restriction:   Cannot use setAccessible().");
+				    Util.logMessage("Security restriction:   Cannot use setAccessible().");
 				    canModifySecurityPermission=false;
 				    break again0;
 				}
