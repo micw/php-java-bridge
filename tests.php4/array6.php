@@ -16,4 +16,5 @@ echo $testobj[0][0][0][1][0][0];
 echo $testobj[0][0][1][0][0][0];
 echo $testobj[0][1][0][0][0][0];
 echo $testobj[1][0][0][0][0][0];
+echo "\n";
 ?>

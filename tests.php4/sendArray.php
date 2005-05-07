@@ -10,5 +10,5 @@ $v=new java("java.util.Vector", $ar);
 $Arrays=new java_class("java.util.Arrays");
 $l=$Arrays->asList($ar); 
 echo $l->size() . " " . $v->capacity();
-
+echo "\n";
 ?>

@@ -8,4 +8,5 @@ if(!extension_loaded('java')) {
 $h=array("k"=>"v", "k2"=>"v2");
 $m=new java("java.util.HashMap",$h);
 echo $m->size(); 
+echo "\n";
 ?>
