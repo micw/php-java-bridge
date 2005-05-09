@@ -47,12 +47,12 @@ is the PHP/Java bridge?</B></FONT></FONT></P>
      
 <blockquote>
 <code>
-      $hello = new java("java.lang.String", "hello");<br>
-      print $hello;<br>
-<br>
-      // A complete example: <br>
-      // create a 2x2 excel sheet and return it to the client<br>
+      &lt;?php<br>
+      header("Content-type: application/x-excel");<br>
+      header("Content-Disposition: attachment; filename=downloaded.xls");<br>
       java_require("http://php-java-bridge.sf.net/poi.jar"); <br><br>
+      
+      // create a 2x2 excel sheet and return it to the client<br>
       $workbook = new java("org.apache.poi.hssf.usermodel.HSSFWorkbook");<br>
       $sheet = $workbook->createSheet("new sheet");<br>
       $style = $workbook->createCellStyle();<br>
@@ -60,9 +60,9 @@ is the PHP/Java bridge?</B></FONT></FONT></P>
       $Aqua = new java_class('org.apache.poi.hssf.util.HSSFColor$AQUA');<br>
       $style->setFillBackgroundColor($Aqua->index);<br>
       $style->setFillPattern($style->BIG_SPOTS);<br><br>
-      for($x=0; $x<2; $x++) {<br>
+      for($y=0; $y<2; $y++) {<br>
       &nbsp;$row = $sheet->createRow($y);<br>
-      &nbsp;for($y=0; $y=2; $y++) {<br>
+      &nbsp;for($x=0; $x<2; $x++) {<br>
       &nbsp;&nbsp;$cell = $row->createCell($x);<br>
       &nbsp;&nbsp;$cell->setCellValue("This is cell $x . $y");<br>
       &nbsp;&nbsp;$cell->setCellStyle($style);<br>
@@ -72,7 +72,8 @@ is the PHP/Java bridge?</B></FONT></FONT></P>
       $memoryStream = new java ("java.io.ByteArrayOutputStream");<br>
       $workbook->write($memoryStream);<br>
       $memoryStream->close(); <br>
-      echo $memoryStream->getBytes();<br>
+      echo $memoryStream->toByteArray();<br>
+      ?&gt;<br>
 
 
 </code>
@@ -109,7 +110,7 @@ is the PHP/Java bridge?</B></FONT></FONT></P>
 <li>
   <code><strong>java_require</strong>("JAR1;JAR2")</code>: Makes additional libraries
      available to the current script.  JAR can either be  
-     a "http:", "ftp:", "file:" or a "jar:" location. On Security &quot;Enhanced Linux&quot; (<a href="README">please see the README</a>) the location must be tagged with a <em>lib_t</em> <a href="#sel">security context</a>. Example: <br><br>
+     a "http:", "ftp:", "file:" or a "jar:" location. On &quot;Security Enhanced Linux&quot; (<a href="README">please see the README</a>) the location must be tagged with a <em>lib_t</em> <a href="#sel">security context</a>. Example: <br><br>
 <blockquote>
 <code>
       $file=new java("java.io.File", "WEB_INF/web.xml");<br>
@@ -258,7 +259,7 @@ BORDER="1"
 ><TD
 >java.lang.Object</TD
 ><TD
->An opaque object handle.  However, we guarantee that the first handle always starts with 1 and that the next handle is n+1 for all n < 1024 (useful if you work with the raw <a href="PROTOCOL.TXT">XML protocol</a>, see the <a href="examples/clients/getProperties.py">python</a> and <a href="examples/clients/listToArray.scm">scheme</a> examples).</TD
+>An opaque object handle.  However, we guarantee that the first handle always starts with 1 and that the next handle is n+1 for all n < 1024 (useful if you work with the raw <a href="PROTOCOL.TXT">XML protocol</a>, see the <a href="examples/clients/README">python and scheme</a> examples).</TD
 ><TD
 >$buf=new java("java.io.ByteArrayOutputStream");<br>
 $outbuf=new java("java.io.PrintStream", $buf);<br>
@@ -390,6 +391,7 @@ the PHP/Java bridge at the same time.</FONT></P>
   and Windows with RedHat Cygwin, but it should run on all Unix-like
   operating systems including HP-UX, WinXP.  
 </FONT></P>
+<a name="sel">
 <P><FONT >
   Custom java libraries (.jar files) can be stored in the following
   locations:
@@ -397,7 +399,7 @@ the PHP/Java bridge at the same time.</FONT></P>
 <ol>
 <li>
     Somewhere on a HTTP or FTP server, see PHP function
-      java_require. <a name="sel">On Security Enhanced Linux <code>.jar</code> files can only be loaded from locations which are tagged with the <em>lib_t</em> security context</a>.
+      java_require. On Security Enhanced Linux <code>.jar</code> files can only be loaded from locations which are tagged with the <em>lib_t</em> security context.
 
    <li> In the sub-directory "lib" of the PHP extension directory, if it
       exists and is accessible when the JVM starts the bridge.
@@ -408,6 +410,7 @@ the PHP/Java bridge at the same time.</FONT></P>
 </ol>
 </FONT></P>
 </P>
+</a>
 <P><FONT > The PHP/Java Bridge can operate in 4 different modes: <ol>
   <li> Invoked from the dl() function.  In this mode the bridge starts
   when the HTTP server receives a client request and terminates after the response
