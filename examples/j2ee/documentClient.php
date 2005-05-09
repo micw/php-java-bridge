@@ -11,5 +11,3 @@ print $doc->analyze();
 destroyDocument($doc);
 
 ?>
-
-		

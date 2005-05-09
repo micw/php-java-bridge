@@ -31,7 +31,7 @@ this directory.
    Click on  "Deploy..."  and deploy documentBean.jar.
 
 
-3. Copy the documentClient.jar from the (remote-) directory 
+3. Copy the documentBeanClient.jar from the (remote-) directory 
      
      $app_server/domains/domain1/applications/j2ee-modules/documentBean/
 

@@ -4,7 +4,7 @@
 $app_url="iiop://localhost:3700"; // e.g.: "iiop://192.168.5.1:3700";
 
 $here=trim(`pwd`);
-client="$here/documentClient.jar";
+$client="$here/documentBeanClient.jar";
 $j2ee_jar="$here/j2ee.jar";
 java_set_library_path("$client;$j2ee_jar");
 
