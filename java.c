@@ -199,6 +199,7 @@ function_entry java_functions[] = {
 	PHP_FE(java_last_exception_get, NULL)
 	PHP_FE(java_last_exception_clear, NULL)
 	PHP_FE(java_set_file_encoding, NULL)
+	PHP_FE(java_require, NULL)
 	PHP_FE(java_set_library_path, NULL)
 	PHP_FE(java_instanceof, NULL)
 	PHP_FE(java_get_session, NULL)
