@@ -1,3 +1,8 @@
+2005-05-09  Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/TCPServerSocket.java
+	(create): Make IOExceptions in the multicast listener non-fatal.
+
 2005-05-07  Jost Boekemeier <jostb@intern>
 
 	* ABOUT.HTM: Updated from index.html
