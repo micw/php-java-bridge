@@ -123,7 +123,7 @@ public class JavaBridge implements Runnable {
 	load--;
 	
 	Session.expire();
-        Util.logDebug(this + " " + "Session terminated.");
+        Util.logDebug(this + " " + "request terminated.");
     }
 
     //
