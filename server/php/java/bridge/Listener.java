@@ -44,7 +44,7 @@ public class Listener implements Runnable {
 	/* (non-Javadoc)
 	 * @see java.lang.Runnable#run()
 	 */
-	DatagramPacket createResponse(int load, DatagramPacket p) throws IOException {
+	DatagramPacket createResponse(short load, DatagramPacket p) throws IOException {
 		byte[] b = new byte[3];
 		byte[] data = p.getData();
 		b[0]='r';
@@ -77,7 +77,7 @@ public class Listener implements Runnable {
 				byte[] data = packet.getData();
 				if(data[0]!='R') continue;
 				if(data[1]!=0 && data[1]!=feature) continue;
-				int load = JavaBridge.getLoad();
+				short load = JavaBridge.getLoad();
 				if(data[2]!=0 && load>data[2]) continue;
 				socket.send(createResponse(load, packet));
 			} catch (IOException e) {

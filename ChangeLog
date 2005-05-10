@@ -1,7 +1,29 @@
 2005-05-09  Boekemeier  <jostb@intern>
+         
+	* server/php/java/bridge/JavaBridge.java
+	(load, getLoad): changed to short
+	(loadLock): Obsolete
+	(run): Removed obsolete synchronized.
+
+	* server/php/java/bridge/Listener.java
+	(createResponse): load changed to short
+
+	* server/php/java/bridge/JavaBridge.java
+	(checkAccessible): New method
+	(Invoke, GetSetProp): Use checkAccessible instead of doing
+	everything on top-level.
+
+	(getSession): set timeout.
+
+	* server/php/java/bridge/Session.java
+	(Session): Use Hashtable instead of Hashmap to synchronize the
+	put/get/remove against each other.
+	
+2005-05-09  Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/TCPServerSocket.java
 	(create): Make IOExceptions in the multicast listener non-fatal.
+	See PR1198286.
 
 2005-05-07  Jost Boekemeier <jostb@intern>
 

@@ -2,12 +2,12 @@
 
 package php.java.bridge;
 
-import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Map;
 import java.util.Iterator;
 
 public class Session{
-    HashMap map;
+    Hashtable map;
     private String name;
     private static int sessionCount=0;
     boolean isNew=true;
@@ -28,7 +28,7 @@ public class Session{
     public Session(String name) {
 	this.name=name;
 	Session.sessionCount++;
-	this.map=new HashMap();
+	this.map=new Hashtable();
 	this.startTime=System.currentTimeMillis();
 	this.timeout=1440000;
     }
