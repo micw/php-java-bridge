@@ -96,11 +96,9 @@ su - -c "service httpd stop"
 # If you don't have autoconf >= 2.57, automake >= 1.6.3 libtool >=
 # 1.4.3, or versions which do not match, for example autoconf 2.59 and
 # libtool 1.4.3, it is recommended to compile these before proceeding:
-for i in autoconf_2.57.tar.gz automake_1.6.3.tar.gz libtool_1.4.3.tar.gz; do
  (cd autoconf-2.57;  ./configure --prefix=$INST && make && su -c "make install")
  (cd automake-1.6.3; ./configure --prefix=$INST && make && su -c "make install")
  (cd libtool-1.4.3;  ./configure --prefix=$INST && make && su -c "make install")
-done
 
 # compile and install apache 2
 gunzip < httpd-2.x.y.tar.gz | tar xf -
