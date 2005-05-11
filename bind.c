@@ -242,12 +242,15 @@ static int test_server(int port) {
  * it were started by the user.
  */
 char* java_test_server(int *_socket, unsigned char spec) {
-  int sock, port;
+  int sock, port, mc_socket;
+  short mcount = 0;
   time_t current_time = time(0);
   unsigned char backend = spec=='I'?0:spec; // Mono or Java backend
 
-  php_java_send_multicast(cfg->mc_socket, backend, current_time);
-
+  if(cfg->have_mc_backends) {
+	mc_socket = php_java_init_multicast();
+	php_java_send_multicast(mc_socket, backend, current_time);
+  }
   /* local server, either started by the user before (I)nit or started by the bridge */
   if (((spec == 'I' && (java_ini_updated&U_SOCKNAME)) && (-1!=(sock=test_local_server())))
       || (spec != 'I' && (-1!=(sock=test_local_server())))) {
@@ -260,16 +263,23 @@ char* java_test_server(int *_socket, unsigned char spec) {
   }
 
   /* multicast */
-  port = php_java_recv_multicast(cfg->mc_socket, backend, current_time);
-  if(-1!=port) {
-	if(-1!=(sock=test_server(port))) {
-	  if(_socket) {
-		*_socket=sock;
-	  } else {
-		close(sock);
+  if(cfg->have_mc_backends) {
+	do {
+	  port = php_java_recv_multicast(mc_socket, backend, current_time);
+	  if(-1!=port) {
+		if(-1!=(sock=test_server(port))) {
+		  if(_socket) {
+			*_socket=sock;
+		  } else {
+			close(sock);
+		  }
+		  close(mc_socket);
+		  return strdup(GROUP_ADDR);
+		}
 	  }
-	  return strdup(GROUP_ADDR);
-	}
+	  php_java_sleep_ms(MAX_PENALTY);
+	  php_java_send_multicast(mc_socket, backend, current_time);
+	} while(mcount++<MAX_TRIES);
   }
 
   /* host list */
@@ -322,7 +332,8 @@ char* java_test_server(int *_socket, unsigned char spec) {
 }
 
 char* java_test_server_no_multicast(int *_socket, unsigned char spec TSRMLS_DC) {
-  int sock, port = -1;
+  int sock, port = -1, err, mc_socket;
+  short mcount = 0;
   time_t current_time = time(0);
   unsigned char backend;
   zval **tmp_port, *new_port;
@@ -365,28 +376,34 @@ char* java_test_server_no_multicast(int *_socket, unsigned char spec TSRMLS_DC) 
 	assert(port==-1);
 	/* no specific backend yet, select one */
 	if(spec=='j') backend='J'; else backend='M';
-	php_java_send_multicast(cfg->mc_socket, backend, current_time);
-	port = php_java_recv_multicast(cfg->mc_socket, backend, current_time);
-	if(-1!=port) {
-	  int err;
-	  if(-1!=(sock=test_server(port))) {
-		if(_socket) {
-		  *_socket=sock;
-		} else {
-		  close(sock);
-		}
-		MAKE_STD_ZVAL(new_port);
-		Z_TYPE_P(new_port)=IS_LONG;
-		Z_LVAL_P(new_port)=port;
-		err = zend_hash_update(Z_ARRVAL_P(PS(http_session_vars)), "_php_java_session_name", sizeof("_php_java_session_name"), &new_port, sizeof(zval *), NULL);
-		assert(err==SUCCESS);
-		if(err==SUCCESS) {
-		//fprintf(stderr, "new session (%d) on port: %ld\n", err, port); //FIXME remove debug code
-		  JG(session_is_new)=1;
-		  return strdup(GROUP_ADDR);
+
+	mc_socket = php_java_init_multicast();
+	php_java_send_multicast(mc_socket, backend, current_time);
+	do {
+	  port = php_java_recv_multicast(mc_socket, backend, current_time);
+	  if(-1!=port) {
+		if(-1!=(sock=test_server(port))) {
+		  if(_socket) {
+			*_socket=sock;
+		  } else {
+			close(sock);
+		  }
+		  close(mc_socket);
+		  MAKE_STD_ZVAL(new_port);
+		  Z_TYPE_P(new_port)=IS_LONG;
+		  Z_LVAL_P(new_port)=port;
+		  err = zend_hash_update(Z_ARRVAL_P(PS(http_session_vars)), "_php_java_session_name", sizeof("_php_java_session_name"), &new_port, sizeof(zval *), NULL);
+		  assert(err==SUCCESS);
+		  if(err==SUCCESS) {
+			//fprintf(stderr, "new session (%d) on port: %ld\n", err, port); //FIXME remove debug code
+			JG(session_is_new)=1;
+			return strdup(GROUP_ADDR);
+		  }
 		}
 	  }
-	}
+	  php_java_sleep_ms(MAX_PENALTY);
+	  php_java_send_multicast(mc_socket, backend, current_time);
+	} while(mcount++<MAX_TRIES);
   }
 #endif
 

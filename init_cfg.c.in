@@ -90,7 +90,7 @@ void java_init_cfg() {
 	((java_ini_updated&U_SOCKNAME)==0)&&
 	((java_ini_updated&U_HOSTS)==0);
 
-  cfg->mc_socket = php_java_init_multicast();
+  cfg->have_mc_backends = php_java_multicast_backends_available();
 }
 
 void java_destroy_cfg(int java_ini_updated) {
@@ -102,5 +102,4 @@ void java_destroy_cfg(int java_ini_updated) {
   if(!(java_ini_updated&U_JAVA_HOME)) free(cfg->java_home);
   if(!(java_ini_updated&U_LOGLEVEL)) free(cfg->logLevel);
   if(!(java_ini_updated&U_LOGFILE)) free(cfg->logFile);
-  if(cfg->mc_socket!=-1) { close(cfg->mc_socket); cfg->mc_socket=-1; }
 }

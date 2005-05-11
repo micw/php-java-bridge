@@ -48,6 +48,41 @@ int php_java_init_multicast() {
 #endif
   return sock;
 }
+
+/*
+ * Stupid test if there are any backends registered
+ */
+short php_java_multicast_backends_available() {
+  int sock = -1;
+#ifndef __MINGW32__
+  long s_true=1;
+  long s_false=0;
+  struct sockaddr_in saddr;
+  struct ip_mreq ip_mreq;
+
+  ip_mreq.imr_multiaddr.s_addr=inet_addr(GROUP_ADDR);
+  ip_mreq.imr_interface.s_addr=inet_addr("127.0.0.1");//htonl(INADDR_ANY);
+
+  saddr.sin_family = AF_INET;
+  saddr.sin_port = htons(GROUP_PORT);
+  saddr.sin_addr.s_addr = inet_addr("127.0.0.1"); //htonl(INADDR_ANY);
+
+  sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  if(sock!=-1) {
+    if(-1==bind(sock, (struct sockaddr*)&saddr, sizeof saddr)) {
+	  close(sock);
+	  return 1;
+	}
+  }
+  close(sock);
+#endif
+  return 0;
+}
+  
+void php_java_sleep_ms(int ms) {
+  struct timeval timeout = {0, ms*1000};
+  select(0, 0, 0, 0, &timeout);
+}
   
 void php_java_send_multicast(int sock, unsigned char spec, time_t time) {
 #ifndef __MINGW32__
@@ -67,7 +102,7 @@ int php_java_recv_multicast(int sock, unsigned char spec, time_t time) {
 #ifndef __MINGW32__
   unsigned char c[18];
   int n;
-  struct timeval timeout = {1, 0};
+  struct timeval timeout = {0, 1000};
   fd_set set;
   if(-1==sock) return -1;
 

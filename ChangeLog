@@ -1,3 +1,42 @@
+2005-05-11  Boekemeier  <jostb@intern>
+	
+	* multicast.c
+	(php_java_sleep_ms): New function.
+	(php_java_multicast_backends_available): New function
+	
+	* multicast.h (MAX_TRIES, MAX_PENALTY, LOAD_PENALTY, MAX_LOAD):
+	New consts
+
+	* multicast.h (GROUP_PORT): Changed to 9168.
+
+	* server/php/java/bridge/Listener (GROUP_PORT): Changed to 9168.
+	
+	* bind.c (java_test_server): Do not share a single mc socket among
+	all instances.
+	
+	* init_cfg.c.in (java_init_cfg, java_destroy_cfg): Do not share a
+	single mc socket among all instances.
+
+	* init_cfg.c.in (java_init_cfg): Check if multicast backends are
+	available.
+	
+	* bind.c (java_test_server, java_test_setver_no_multicast): In the
+	worst case all backends are busy and wait up to MAX_PENALTY. Code
+	rewritten.
+
+	* multicast.c (php_java_recv_multicast): Use 1ms response timeout.
+	
+	* php_java.h (mc_socket): Renamed to have_mc_backends.
+
+	* server/php/java/bridge/JavaBridge.java (run): Notify Listener.
+	
+	* server/php/java/bridge/Listener.java (LOAD_PENALTY, MAX_LOAD):
+	New consts
+	(run): Do not respond if load gets too high.
+
+	* tests.php4/multicast.php: New test.
+	
+
 2005-05-09  Boekemeier  <jostb@intern>
          
 	* server/php/java/bridge/JavaBridge.java

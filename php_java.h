@@ -92,7 +92,7 @@ struct cfg {
   char*logLevel;
   char*logFile;
   short can_fork;				/* 0 if user has hard-coded the socketname */
-  int mc_socket;				/* used for multicasts -1: invalid */
+  short have_mc_backends;
 };
 extern struct cfg *cfg;
 

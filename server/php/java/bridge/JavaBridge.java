@@ -93,15 +93,20 @@ public class JavaBridge implements Runnable {
 
     private static boolean haveNatcJavaBridge=true;
 	
+    static Object loadLock=new Object();
     static short load = 0;
     public static short getLoad() {
-	return load;
+	synchronized(loadLock) {
+	    return load;
+	}
     }
     // 
     // Communication with client in a new thread
     //
     public void run() { 
-	load++;
+	synchronized(loadLock) {
+	    load++;
+	}
     	Request r = new Request(this);
     	try {
 	    if(r.initOptions(in, out)) {
@@ -120,7 +125,10 @@ public class JavaBridge implements Runnable {
 	} catch (IOException e2) {
 	    Util.printStackTrace(e2);
 	}
-	load--;
+	synchronized(loadLock) {
+	    load--;
+	    if(load<(Listener.MAX_LOAD-1)) loadLock.notifyAll();
+	}
 	
 	Session.expire();
         Util.logDebug(this + " " + "request terminated.");
