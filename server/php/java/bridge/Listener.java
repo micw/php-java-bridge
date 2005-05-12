@@ -33,10 +33,21 @@ public class Listener implements Runnable {
 		addr = socket.getInetAddress().getAddress();
 		port = socket.getLocalPort();
 	}
-	public void listen() throws IOException {
-		socket = new MulticastSocket(GROUP_PORT);
-		InetAddress group = InetAddress.getByName(GROUP_ADDR); 
-		socket.joinGroup(group);
+	public void listen()  {
+		try {
+			socket = new MulticastSocket(GROUP_PORT);
+		} catch (IOException e) {
+			Util.logMessage("Could not start multicast listener. Load balancing not available: " + e);
+			return;
+		}
+		try {
+			InetAddress group = InetAddress.getByName(GROUP_ADDR); 
+			socket.joinGroup(group);
+		} catch (IOException ex) {
+			socket.close();
+			Util.logMessage("Could not start multicast listener. Load balancing not available: " + ex);
+			return;
+		}
 		Thread t = new Thread(this);
 		t.start();
 	}
@@ -69,7 +80,6 @@ public class Listener implements Runnable {
 		out.write(address);
 		
 		b=out.toByteArray();
-
 		return new DatagramPacket(b, b.length, p.getAddress(), p.getPort());
 	}
 	public void run() {
@@ -81,23 +91,27 @@ public class Listener implements Runnable {
 				socket.receive(packet);
 				if(packet.getLength()!=buf.length) continue;
 				byte[] data = packet.getData();
+				Util.logDebug("packet:::" + data[0] + " " + data[2] + " load:" + JavaBridge.getLoad());
 				if(data[0]!='R') continue;
 				if(data[1]!=0 && data[1]!=feature) continue;
 				short load = JavaBridge.getLoad();
-				Util.logDebug("load:" + this + " " +load);
-				if(data[2]!=0 && load>data[2]) continue;
+				if(load>=MAX_LOAD) continue;
+				// FIXME: field temporarily used to transfer client pid
+				//if(data[2]!=0 && load>data[2]) continue;
 				socket.send(createResponse(load, packet));
-				try {Thread.sleep(LOAD_PENALTY*load);} catch (InterruptedException ex) {}
-				// do not respond if load gets too high
-				synchronized(JavaBridge.loadLock) {
-				    if(JavaBridge.getLoad()>=MAX_LOAD) {
-					try {
-					    Util.logDebug("waiting on lock:" + this +  " " +load);
-					    JavaBridge.loadLock.wait();
-					    Util.logDebug("done waiting on lock:" + this +  " " +load);
-					} catch (java.lang.InterruptedException bleh) {}
-				    }
-				}
+
+				// FIXME: doesn't work at all
+// 				try {Thread.sleep(LOAD_PENALTY*load);} catch (InterruptedException ex) {}
+// 				// do not respond if load gets too high
+// 				synchronized(JavaBridge.loadLock) {
+// 				    if(JavaBridge.getLoad()>=MAX_LOAD) {
+// 					try {
+// 					    Util.logDebug("waiting on lock:" + this +  " " +load);
+// 					    JavaBridge.loadLock.wait();
+// 					    Util.logDebug("done waiting on lock:" + this +  " " +load);
+// 					} catch (java.lang.InterruptedException bleh) {}
+// 				    }
+// 				}
 			} catch (IOException e) {
 			    Util.printStackTrace(e);
 			}

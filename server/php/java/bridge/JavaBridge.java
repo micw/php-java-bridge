@@ -749,7 +749,7 @@ public class JavaBridge implements Runnable {
 
     static class ClassClassIterator extends ClassIterator {
 	private Class next() {
-            boolean hasNext=null;
+            boolean hasNext=false;
 	    // check the class first, then the class class.
 	    if(current == null) { hasNext = true; return current = (Class)object;}
 	    if(hasNext) { hasNext = false; return object.getClass();}

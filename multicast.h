@@ -10,7 +10,7 @@
 #define MAX_LOAD 12  // ignore servers with a load higher than this value
 #define LOAD_PENALTY 8 // in ms, see Listener.java
 #define MAX_PENALTY (MAX_LOAD*LOAD_PENALTY)
-#define MAX_TRIES 120 // # of times we try to reach backends until we
+#define MAX_TRIES MAX_LOAD // # of times we try to reach backends until we
 					  // # throw an error
 
 extern int php_java_recv_multicast(int sock, unsigned char spec, time_t time);

@@ -28,6 +28,7 @@ int php_java_init_multicast() {
   int sock = -1;
 #ifndef __MINGW32__
   long s_true=1;
+  long s_false=0;
   struct sockaddr_in saddr;
   struct ip_mreq ip_mreq;
 
@@ -41,7 +42,7 @@ int php_java_init_multicast() {
   sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if(sock!=-1) {
     setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &s_true, sizeof s_true);
-    setsockopt(sock, IPPROTO_IP, IP_MULTICAST_LOOP, &s_true, sizeof s_true);
+    setsockopt(sock, IPPROTO_IP, IP_MULTICAST_LOOP, &s_false, sizeof s_false);
     setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &ip_mreq, sizeof ip_mreq);
     bind(sock, (struct sockaddr*)&saddr, sizeof saddr);
   }
@@ -69,6 +70,8 @@ short php_java_multicast_backends_available() {
 
   sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if(sock!=-1) {
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &s_false, sizeof s_false);
+    setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &ip_mreq, sizeof ip_mreq);
     if(-1==bind(sock, (struct sockaddr*)&saddr, sizeof saddr)) {
 	  close(sock);
 	  return 1;
@@ -86,7 +89,7 @@ void php_java_sleep_ms(int ms) {
   
 void php_java_send_multicast(int sock, unsigned char spec, time_t time) {
 #ifndef __MINGW32__
-  unsigned char c[18] = {'R', spec, MAX_LOAD};
+  unsigned char c[18] = {'R', spec, 0xff & getpid()}; //FIXME: use maxtime here
   struct sockaddr_in saddr;
   if(-1==sock) return;
 
@@ -102,7 +105,11 @@ int php_java_recv_multicast(int sock, unsigned char spec, time_t time) {
 #ifndef __MINGW32__
   unsigned char c[18];
   int n;
-  struct timeval timeout = {0, 1000};
+  struct timeval timeout = {0, 30000};// FIXME: round trips in the
+									  // local network are usually
+									  // below 10 ms, 30ms is too
+									  // much.
+
   fd_set set;
   if(-1==sock) return -1;
 

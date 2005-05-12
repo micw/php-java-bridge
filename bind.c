@@ -236,10 +236,8 @@ static int test_server(int port) {
  * Test for a running server.  Return the server name and the socket
  * if _socket!=NULL.  Spec is either M ono or J ava.  As a special
  * case it is called with (I)nit when the bridge starts; so that we
- * can avoid checking the backend when there's no .ini entry in which
- * case we have to start the backend outselfs if multicast or the host
- * list fail.  Once the local backend is started, it is treated as if
- * it were started by the user.
+ * can avoid certain checks. If all ckecks fail a local backend is
+ * started.
  */
 char* java_test_server(int *_socket, unsigned char spec) {
   int sock, port, mc_socket;
@@ -248,8 +246,8 @@ char* java_test_server(int *_socket, unsigned char spec) {
   unsigned char backend = spec=='I'?0:spec; // Mono or Java backend
 
   if(cfg->have_mc_backends) {
+	if(spec=='I') return strdup(GROUP_ADDR);
 	mc_socket = php_java_init_multicast();
-	php_java_send_multicast(mc_socket, backend, current_time);
   }
   /* local server, either started by the user before (I)nit or started by the bridge */
   if (((spec == 'I' && (java_ini_updated&U_SOCKNAME)) && (-1!=(sock=test_local_server())))
@@ -264,22 +262,26 @@ char* java_test_server(int *_socket, unsigned char spec) {
 
   /* multicast */
   if(cfg->have_mc_backends) {
-	do {
-	  port = php_java_recv_multicast(mc_socket, backend, current_time);
-	  if(-1!=port) {
-		if(-1!=(sock=test_server(port))) {
-		  if(_socket) {
-			*_socket=sock;
-		  } else {
-			close(sock);
+	while(1) {//FIXME: stop busy waiting after some time
+	  do {
+		php_java_send_multicast(mc_socket, backend, current_time);
+		port = php_java_recv_multicast(mc_socket, backend, current_time);
+		if(-1!=port) {
+		  if(-1!=(sock=test_server(port))) {
+			if(_socket) {
+			  *_socket=sock;
+			} else {
+			  close(sock);
+			}
+			close(mc_socket);
+			return strdup(GROUP_ADDR);
 		  }
-		  close(mc_socket);
-		  return strdup(GROUP_ADDR);
 		}
-	  }
-	  php_java_sleep_ms(MAX_PENALTY);
-	  php_java_send_multicast(mc_socket, backend, current_time);
-	} while(mcount++<MAX_TRIES);
+		php_java_sleep_ms(MAX_PENALTY);
+	  } while(mcount++<MAX_TRIES);
+	  php_error(E_WARNING, "php_mod_java(%d): waiting for backend another second. Please start more backends.",17);
+	  sleep(1);
+	}
   }
 
   /* host list */
@@ -377,33 +379,38 @@ char* java_test_server_no_multicast(int *_socket, unsigned char spec TSRMLS_DC) 
 	/* no specific backend yet, select one */
 	if(spec=='j') backend='J'; else backend='M';
 
-	mc_socket = php_java_init_multicast();
-	php_java_send_multicast(mc_socket, backend, current_time);
-	do {
-	  port = php_java_recv_multicast(mc_socket, backend, current_time);
-	  if(-1!=port) {
-		if(-1!=(sock=test_server(port))) {
-		  if(_socket) {
-			*_socket=sock;
-		  } else {
-			close(sock);
+	if(cfg->have_mc_backends) {
+	  mc_socket = php_java_init_multicast();
+	  while (1) {//FIXME: stop busy waiting after some time	  
+		do {
+		  php_java_send_multicast(mc_socket, backend, current_time);
+		  port = php_java_recv_multicast(mc_socket, backend, current_time);
+		  if(-1!=port) {
+			if(-1!=(sock=test_server(port))) {
+			  if(_socket) {
+				*_socket=sock;
+			  } else {
+				close(sock);
+			  }
+			  close(mc_socket);
+			  MAKE_STD_ZVAL(new_port);
+			  Z_TYPE_P(new_port)=IS_LONG;
+			  Z_LVAL_P(new_port)=port;
+			  err = zend_hash_update(Z_ARRVAL_P(PS(http_session_vars)), "_php_java_session_name", sizeof("_php_java_session_name"), &new_port, sizeof(zval *), NULL);
+			  assert(err==SUCCESS);
+			  if(err==SUCCESS) {
+				//fprintf(stderr, "new session (%d) on port: %ld\n", err, port); //FIXME remove debug code
+				JG(session_is_new)=1;
+				return strdup(GROUP_ADDR);
+			  }
+			}
 		  }
-		  close(mc_socket);
-		  MAKE_STD_ZVAL(new_port);
-		  Z_TYPE_P(new_port)=IS_LONG;
-		  Z_LVAL_P(new_port)=port;
-		  err = zend_hash_update(Z_ARRVAL_P(PS(http_session_vars)), "_php_java_session_name", sizeof("_php_java_session_name"), &new_port, sizeof(zval *), NULL);
-		  assert(err==SUCCESS);
-		  if(err==SUCCESS) {
-			//fprintf(stderr, "new session (%d) on port: %ld\n", err, port); //FIXME remove debug code
-			JG(session_is_new)=1;
-			return strdup(GROUP_ADDR);
-		  }
-		}
+		  php_java_sleep_ms(MAX_PENALTY);
+		} while(mcount++<MAX_TRIES);
+		php_error(E_WARNING, "php_mod_java(%d): waiting for backend another second. Please start more backends.",18);
+		sleep(1);
 	  }
-	  php_java_sleep_ms(MAX_PENALTY);
-	  php_java_send_multicast(mc_socket, backend, current_time);
-	} while(mcount++<MAX_TRIES);
+	}
   }
 #endif
 

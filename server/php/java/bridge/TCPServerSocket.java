@@ -24,11 +24,7 @@ public class TCPServerSocket implements ISocketFactory {
 	    p=Integer.parseInt(DefaultSocketname);
 	}
 	TCPServerSocket s = new TCPServerSocket(p, backlog);
-        try {
-	    new Listener(s.sock).listen();
-	} catch (Exception ex) {
-	    Util.logMessage("Could not start multicast listener. Load balancing not available: " + ex);
-	}
+        new Listener(s.sock).listen();
 	return s;
     }
 
