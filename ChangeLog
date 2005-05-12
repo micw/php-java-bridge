@@ -1,3 +1,25 @@
+2005-05-12  Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/TCPServerSocket.java (create):
+	moved error handling to Listener.java
+	
+	* server/php/java/bridge/Listener.java (run): rewritten.
+	(listen): Error handling from TCPServerSocket.java and close the
+	multicast socket after an error so that the clients don't detect
+	an open socket and interpret it as if multicast backends are
+	available.
+
+	* multicast.h (MAX_TRIES): Now 12 (from 120).
+
+	* multicast.c (php_java_recv_multicast): Assume 30ms for a round-trip (from 1ms).
+	(php_java_multicast_backends_available): Do not rely on socket defaults.
+	(php_java_init_multicast): Switch off MC_LOOP, which is not necessary.
+
+	* bind.c (java_test_server_no_multicast, java_test_server):
+	rewritten; issue a warning after we could not connect to a backend
+	after MAX_TRIES and continue.
+	
+	
 2005-05-11  Boekemeier  <jostb@intern>
 	
 	* multicast.c
