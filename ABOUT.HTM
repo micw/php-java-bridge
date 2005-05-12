@@ -30,7 +30,7 @@ is the PHP/Java bridge?</B></FONT></FONT></P>
   </FONT></P>
 <P><FONT > Requests from more than one HTTP server may either be routed to an application server running the PHP/Java Bridge or each HTTP server may own a PHP/Java Bridge and communicate with a J2EE java application server by exchanging java value objects; the necessary client-stub classes (ejb client .jar) can be loaded at run-time.
 </FONT></P>                                                                                            
-<P><FONT > On Unix the PHP/Java Bridge also supports "failover" and "load balancing". All backends automatically join a multicast group and the PHP/Java Bridge selects an appropriate backend based on the multicast responses.
+<P><FONT > On Unix the PHP/Java Bridge also supports "failover" and a very simple form of "load balancing". All backends automatically join a multicast group and the PHP/Java Bridge selects an appropriate backend based on the multicast responses.
 </FONT></P>                                                                                            
 <P><FONT > ECMA 335 based classes can be accessed if at least one JavaBridge.jar is running inside a ECMA complient VM, for example Novell's MONO or Microsoft's .NET.  Special features such as varargs, reflection or assembly loading are also supported. 
 </FONT></P>                                                                                            
