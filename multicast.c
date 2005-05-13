@@ -2,6 +2,10 @@
 
 #ifndef __MINGW32__
 #include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
+
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -13,6 +17,40 @@
 #endif
 
 #include "multicast.h"
+
+#if defined(__GNU_LIBRARY__) && !defined(_SEM_SEMUN_UNDEFINED)
+/* union semun is defined by including <sys/sem.h> */
+#else
+/* according to X/OPEN we have to define it ourselves */
+union semun {
+  int val;                  /* value for SETVAL */
+  struct semid_ds *buf;     /* buffer for IPC_STAT, IPC_SET */
+  unsigned short *array;    /* array for GETALL, SETALL */
+  /* Linux specific part: */
+  struct seminfo *__buf;    /* buffer for IPC_INFO */
+};
+#endif
+
+static void enter(int id) {
+  static struct sembuf ops = {0, -1, 0};
+  semop(id, &ops, 1);
+}
+static void leave(int id) {
+  static struct sembuf ops = {0, 1, 0};
+  semop(id, &ops, 1);
+}
+static int init() {
+  union semun val;
+  struct semid_ds buf;
+  int id = semget(0x9168, 1, IPC_CREAT | 0640);
+  val.buf = &buf;
+  semctl(id, 0, IPC_STAT, val);
+  if(!buf.sem_otime) {
+    val.val=1;
+    semctl(id, 0, SETVAL, val);
+  }
+  return id;
+}
 
 static unsigned long readInt(unsigned char*buf) {
   return (buf[0]&0xFF)<<24|(buf[1]&0xFF)<<16|(buf[2]&0xFF)<<8|(buf[3]&0xFF);
@@ -56,7 +94,6 @@ int php_java_init_multicast() {
 short php_java_multicast_backends_available() {
   int sock = -1;
 #ifndef __MINGW32__
-  long s_true=1;
   long s_false=0;
   struct sockaddr_in saddr;
   struct ip_mreq ip_mreq;
@@ -70,14 +107,16 @@ short php_java_multicast_backends_available() {
 
   sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if(sock!=-1) {
-    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &s_false, sizeof s_false);
-    setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &ip_mreq, sizeof ip_mreq);
-    if(-1==bind(sock, (struct sockaddr*)&saddr, sizeof saddr)) {
+	int id, err;
+	enter(id=init()); 
+    {
+	  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &s_false, sizeof s_false);
+	  err=bind(sock, (struct sockaddr*)&saddr, sizeof saddr);
 	  close(sock);
-	  return 1;
-	}
+	} 
+    leave(id);
+    if(-1==err) return 1;
   }
-  close(sock);
 #endif
   return 0;
 }

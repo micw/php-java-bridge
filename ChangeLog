@@ -1,3 +1,8 @@
+2005-05-13  Boekemeier  <jostb@intern>
+
+	* multicast.c (enter, leave, init): New functions.
+	(php_java_multicast_backends_available): Protect critical section.
+	
 2005-05-12  Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/JavaBridge.java (next): prevent loop;
