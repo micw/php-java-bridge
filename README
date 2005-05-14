@@ -2,12 +2,7 @@ What is the PHP/Java Bridge?
 ----------------------------
 
   The PHP/Java Bridge is PHP module which connects the PHP object system
-  with the java object system. It implements JSR 223 (where applicable)
-  and can be used to access java based applications from PHP
-  scripts. The PHP/Java Bridge communicates with the java VM through
-  local sockets using an efficient communication protocol. Each
-  request-handling PHP process of a multi-process HTTP server
-  communicates with a corresponding thread spawned by the java VM.
+  with the java or ECMA 335 object system.
 
   Please read the ABOUT.HTM contained in the download archive or
   http://php-java-bridge.sf.net for more information.
@@ -186,14 +181,14 @@ Build and execution instructions:
   creating shared libraries on this system.  Instead we will
   compile the extension into PHP:
 
-  1. Install the source code of PHP 4.3.x.
+  1. Install the source code of PHP 4.3.x or higher.
 
   2. Install RedHat's Cygwin (PHP needs autoconf).
 
-  3. Delete the java sub-directory from php-4.3.x/ext and replace it
-     with our php-java-bridge. Rename ext/php-java-bridge to
-     ext/java.  Update the "m4_include" paths in
-     php-4.3.x/ext/java/config.m4 so that they start with "ext/java/":
+  3. Delete the java sub-directory from php-4.3.x\ext. Copy the
+     php-java-bridge directory to the php-x.y.z\ext directory and
+     rename it to java.  Update the "m4_include" paths in
+     php-x.y.z\ext\java\config.m4 so that they start with "ext/java/":
 
       m4_include(ext/java/tests.m4/function_checks.m4)
       m4_include(ext/java/tests.m4/java_check_broken_stdio_buffering.m4)
@@ -207,7 +202,7 @@ Build and execution instructions:
 
      Instead of running "buildconf" you can also use autoconf directly:
 
-      aclocal && autoheader && autoconf && libtoolize -f && automake
+      autoconf
 
      Then configure and compile php as usual:
 
@@ -216,12 +211,10 @@ Build and execution instructions:
 
   This will create a php binary with the PHP/Java Bridge included.
   You can then copy the sapi\cgi\php executable into the CGI directory 
-  of your IIS web server.
+  of your IIS web server. Before you start the web server, you must
+  start the java bridge backend, for example by double-clicking on
+  .\modules\JavaBridge.jar.
 
-  To also install the server part into the modules directory:
-
-      make install
-      make install-modules
 
   Windows uses TCP/IP sockets instead of unix domain sockets. If you
   want to change the java.socketname from its default (which is 9167),

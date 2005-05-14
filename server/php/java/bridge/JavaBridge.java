@@ -748,8 +748,8 @@ public class JavaBridge implements Runnable {
     }
 
     static class ClassClassIterator extends ClassIterator {
+        boolean hasNext=false;
 	private Class next() {
-            boolean hasNext=false;
 	    // check the class first, then the class class.
 	    if(current == null) { hasNext = true; return current = (Class)object;}
 	    if(hasNext) { hasNext = false; return object.getClass();}
@@ -943,11 +943,11 @@ public class JavaBridge implements Runnable {
     }
 
     public static String ObjectToString(Object ob) {
-	StringBuffer buf = new StringBuffer("<");
+	StringBuffer buf = new StringBuffer("[");
 	buf.append(String.valueOf(ob.getClass()));
 	buf.append(": ");
 	buf.append(String.valueOf(ob));
-	buf.append(">");
+	buf.append("]");
 	return buf.toString();
     }
     
@@ -956,7 +956,7 @@ public class JavaBridge implements Runnable {
     		Session ref = null;
 	    	if(!JavaBridge.sessionHash.containsKey(name)) {
 		    	ref = new Session(name);
-			ref.setTimeout((long)timeout);
+			ref.setTimeout(1000*(long)timeout);
 	    	} else {
 	    		ref = (Session) JavaBridge.sessionHash.get(name);
 			if(clientIsNew) { // client side gc'ed, destroy server ref now!

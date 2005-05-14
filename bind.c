@@ -349,18 +349,7 @@ char* java_test_server_no_multicast(int *_socket, unsigned char spec TSRMLS_DC) 
 		Z_TYPE_PP(tmp_port) == IS_LONG) {
 	  port = Z_LVAL_PP(tmp_port);
 	}
-#endif
-  /* local server */
-  if ((-1==port) && (-1!=(sock=test_local_server()))) {
-	if(_socket) {
-	  *_socket=sock;
-	} else {
-	  close(sock);
-	}
-	return strdup(cfg->sockname);
-  }
 
-#if HAVE_PHP_SESSION
   /* backend pool.  retrieve the backend from the session var */
 	if(-1!=port) {
 	  if(-1!=(sock=test_server(port))) {
@@ -371,9 +360,28 @@ char* java_test_server_no_multicast(int *_socket, unsigned char spec TSRMLS_DC) 
 		}
 		//fprintf(stderr, "got session. Use port :%ld\n", (long)port); //FIXME remove debug code
 		return strdup(GROUP_ADDR);
+	  } else {
+		php_error(E_WARNING, "php_mod_java(%d): Session data lost.",16);
+		zend_hash_del(Z_ARRVAL_P(PS(http_session_vars)), "_php_java_session_name", sizeof("_php_java_session_name"));
 	  }
 	}
-	
+		
+#endif
+	/* session lost or no session yet */
+
+	/* local server */
+	assert(port==-1);
+	if ((-1!=(sock=test_local_server()))) {
+	  if(_socket) {
+	  *_socket=sock;
+	  } else {
+		close(sock);
+	  }
+	  return strdup(cfg->sockname);
+	}
+
+	/* no local server, select backend */
+#if HAVE_PHP_SESSION
 	//fprintf(stderr, "new session. send out mc\n"); //FIXME remove debug code
 	assert(port==-1);
 	/* no specific backend yet, select one */

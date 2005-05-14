@@ -3,15 +3,16 @@
 package php.java.bridge;
 
 import java.io.File;
+import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.StringTokenizer;
-import java.util.HashMap;
-import java.lang.ref.WeakReference;
 
 public class JavaBridgeClassLoader extends URLClassLoader {
 	
@@ -152,9 +153,13 @@ public class JavaBridgeClassLoader extends URLClassLoader {
 			clazz=super.findClass(name); 
 		    } catch (ClassNotFoundException e2) {
 			classesBlackList.put(name, name);
-			throw e2;
+			ClassNotFoundException e3 = new ClassNotFoundException(name + " not found in " + Arrays.asList(getURLs()), e2);
+			throw(e3);
 		    }
 		    Util.logMessage("Could not find class " + name + ". Searching all system libraries.  Please use java_require(<systemLibrary>) to avoid this message.");
+		} else { // already in blacklist
+	            ClassNotFoundException e3 = new ClassNotFoundException(name + " not found in the following java_require() path: " + Arrays.asList(getURLs()), e);
+		    throw(e3);
 		}
 	    }
 	    classes.put(name, new WeakReference(clazz));

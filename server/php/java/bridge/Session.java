@@ -73,6 +73,7 @@ public class Session{
 		if((ref.timeout !=0) && (ref.startTime+ref.timeout<=System.currentTimeMillis())) {
 		    sessionCount--;
 		    JavaBridge.sessionHash.remove(ref.name);
+		    Util.logDebug("Session " + ref.name + " expired.");
 		}
 	    }
 	}

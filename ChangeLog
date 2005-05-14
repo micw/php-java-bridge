@@ -1,3 +1,22 @@
+2005-05-14  Boekemeier  <jostb@intern>
+
+	* README: updated.
+
+	* server/php/java/bridge/JavaBridge.java
+	(next): Fixed typo.
+	(ObjectToString): Use "[" instead of "<".  When displaying
+	unencoded error strings a browser might confuse the "<" with a tag
+	start.
+	(getSession): Timeout was meant as seconds, not ms. The previous
+	code destroyed the session 1440ms after creation.
+	
+	* server/php/java/bridge/JavaBridgeClassLoader.java
+	(findClass): Verbose error message.
+
+	* bind.c (java_test_server_no_multicast): Add a warning if session
+	is lost. In any case, try to create a session on a local server
+	first, then try multicast backends.
+	
 2005-05-13  Boekemeier  <jostb@intern>
 
 	* multicast.c (enter, leave, init): New functions.
