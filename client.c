@@ -33,7 +33,7 @@
 ZEND_EXTERN_MODULE_GLOBALS(java)
 
 
-static void setResultFromString (pval *presult, char*s, size_t len){
+static void setResultFromString (pval *presult, unsigned char*s, size_t len){
   Z_TYPE_P(presult)=IS_STRING;
   Z_STRLEN_P(presult)=len;
   Z_STRVAL_P(presult)=emalloc(Z_STRLEN_P(presult)+1);
@@ -140,7 +140,7 @@ static pval*hashUpdate  (pval *handle, char *key, size_t len) {
 }
 #endif
 
-static  void  setException  (pval *presult, long value, char *strValue, size_t len) {
+static  void  setException  (pval *presult, long value, unsigned char *strValue, size_t len) {
 #ifndef ZEND_ENGINE_2
   setResultFromString(presult, strValue, len);
   Z_TYPE_P(presult)=IS_EXCEPTION;
@@ -156,7 +156,7 @@ static  void  setException  (pval *presult, long value, char *strValue, size_t l
 #endif
 }
 
-#define GET_RESULT(pos) if(!ctx->id) {ctx->id=(zval*)strtol(PARSER_GET_STRING(st, pos), 0, 10);}
+#define GET_RESULT(pos) if(!ctx->id) {ctx->id=(zval*)strtol((const char*)PARSER_GET_STRING(st, pos), 0, 10);}
 struct stack_elem { 
   zval *container;
   char composite_type;          /* A|H */
@@ -211,25 +211,25 @@ void begin(parser_tag_t tag[3], parser_cb_t *cb){
 	break;
   case 'L':
 	GET_RESULT(1);
-	setResultFromLong(ctx->id, strtol(PARSER_GET_STRING(st, 0), 0, 10));
+	setResultFromLong(ctx->id, strtol((const char*)PARSER_GET_STRING(st, 0), 0, 10));
 	break;
   case 'D':
 	GET_RESULT(1);
-	setResultFromDouble(ctx->id, zend_string_to_double(PARSER_GET_STRING(st, 0), st[0].length));
+	setResultFromDouble(ctx->id, zend_string_to_double((const char*)PARSER_GET_STRING(st, 0), st[0].length));
 	break;
   case 'O':
 	GET_RESULT(1);
 	if(!st[0].length) {
 	  ZVAL_NULL(ctx->id);
 	} else {
-	  setResultFromObject(ctx->id, strtol(PARSER_GET_STRING(st, 0), 0, 10));
+	  setResultFromObject(ctx->id, strtol((const char*)PARSER_GET_STRING(st, 0), 0, 10));
 	}
 	break;
   case 'E':
 	{
-	  char *stringRepresentation=PARSER_GET_STRING(st, 1);
+	  unsigned char *stringRepresentation=PARSER_GET_STRING(st, 1);
 	  size_t len=st[1].length;
-	  long obj = strtol(PARSER_GET_STRING(st, 0), 0, 10);
+	  long obj = strtol((const char*)PARSER_GET_STRING(st, 0), 0, 10);
 	  GET_RESULT(2);
 	  setException(ctx->id, obj, stringRepresentation, len);
 	  break;

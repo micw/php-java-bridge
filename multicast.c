@@ -10,26 +10,18 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/select.h>
-#include <sys/time.h>
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
 #include <stdio.h>
-#endif
 
 #include "multicast.h"
 
-#if defined(__GNU_LIBRARY__) && !defined(_SEM_SEMUN_UNDEFINED)
-/* union semun is defined by including <sys/sem.h> */
-#else
-/* according to X/OPEN we have to define it ourselves */
-union semun {
-  int val;                  /* value for SETVAL */
-  struct semid_ds *buf;     /* buffer for IPC_STAT, IPC_SET */
-  unsigned short *array;    /* array for GETALL, SETALL */
-  /* Linux specific part: */
-  struct seminfo *__buf;    /* buffer for IPC_INFO */
+union php_java_semun {
+  int val;
+  struct semid_ds *buf;
+  unsigned short *array;
 };
-#endif
 
 static void enter(int id) {
   static struct sembuf ops = {0, -1, 0};
@@ -40,7 +32,7 @@ static void leave(int id) {
   semop(id, &ops, 1);
 }
 static int init() {
-  union semun val;
+  union php_java_semun val;
   struct semid_ds buf;
   int id = semget(0x9168, 1, IPC_CREAT | 0640);
   val.buf = &buf;
@@ -61,6 +53,8 @@ static void writeInt(unsigned char*buf, unsigned long i) {
   buf[2]=(i&(0xFF<<8))>>8;
   buf[3]=i&0xFF;
 }
+#endif
+#include <sys/time.h>
 
 int php_java_init_multicast() {
   int sock = -1;
@@ -70,9 +64,11 @@ int php_java_init_multicast() {
   struct sockaddr_in saddr;
   struct ip_mreq ip_mreq;
 
+  memset(&ip_mreq, 0, sizeof ip_mreq);
   ip_mreq.imr_multiaddr.s_addr=inet_addr(GROUP_ADDR);
   ip_mreq.imr_interface.s_addr=inet_addr("127.0.0.1");//htonl(INADDR_ANY);
 
+  memset(&saddr, 0, sizeof saddr);
   saddr.sin_family = AF_INET;
   saddr.sin_port = htons(GROUP_PORT);
   saddr.sin_addr.s_addr = inet_addr("127.0.0.1"); //htonl(INADDR_ANY);
@@ -92,40 +88,67 @@ int php_java_init_multicast() {
  * Stupid test if there are any backends registered
  */
 short php_java_multicast_backends_available() {
-  int sock = -1;
+  short has_backend = 0;
 #ifndef __MINGW32__
+  int sock;
   long s_false=0;
-  struct sockaddr_in saddr;
+  long s_true=1;
+  struct sockaddr_in saddr, saddr2;
   struct ip_mreq ip_mreq;
 
+  memset(&saddr, 0, sizeof saddr);
   ip_mreq.imr_multiaddr.s_addr=inet_addr(GROUP_ADDR);
   ip_mreq.imr_interface.s_addr=inet_addr("127.0.0.1");//htonl(INADDR_ANY);
 
+  memset(&saddr, 0, sizeof saddr);
   saddr.sin_family = AF_INET;
   saddr.sin_port = htons(GROUP_PORT);
   saddr.sin_addr.s_addr = inet_addr("127.0.0.1"); //htonl(INADDR_ANY);
+
+  memset(&saddr2, 0, sizeof saddr);
+  saddr2.sin_family = AF_INET;
+  saddr2.sin_port = htons(GROUP_PORT);
+  saddr2.sin_addr.s_addr = inet_addr(GROUP_ADDR); 
 
   sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if(sock!=-1) {
 	int id, err;
 	enter(id=init()); 
-    {
+   {/* FIXME: Should protect this from signals.  If someone manages to
+	   stop the client in this section, one has to remove the
+	   semaphore manually (see commands ipcs -S and ipcrm -S). But
+	   since the load balancing code will be rewritten in java anyway
+	   (this file, large parts of bind.c and three functions in client
+	   will go away) I just keep this hack until the new code is in
+	   place */
+	  unsigned char c[1] = {'P'}; /* will be rejected as a broken packet */
+	  has_backend = 1;
 	  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &s_false, sizeof s_false);
 	  err=bind(sock, (struct sockaddr*)&saddr, sizeof saddr);
+	  if(err!=-1) has_backend = 0;
+	  if(has_backend) {
+		setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &s_true, sizeof s_true);
+		bind(sock, (struct sockaddr*)&saddr, sizeof saddr);
+		err = sendto(sock, c, sizeof c, 0, (struct sockaddr*)&saddr2, sizeof saddr2);
+		if(err==-1) {
+		  has_backend = 0;
+		}
+	  }
 	  close(sock);
 	} 
     leave(id);
-    if(-1==err) return 1;
   }
 #endif
-  return 0;
+  return has_backend;
 }
   
 void php_java_sleep_ms(int ms) {
+#ifndef __MINGW32__
   struct timeval timeout = {0, ms*1000};
   select(0, 0, 0, 0, &timeout);
+#endif
 }
-  
+
 void php_java_send_multicast(int sock, unsigned char spec, time_t time) {
 #ifndef __MINGW32__
   unsigned char c[18] = {'R', spec, 0xff & getpid()}; //FIXME: use maxtime here
@@ -133,6 +156,7 @@ void php_java_send_multicast(int sock, unsigned char spec, time_t time) {
   if(-1==sock) return;
 
   writeInt(c+3, (unsigned long)time);
+  memset(&saddr, 0, sizeof saddr);
   saddr.sin_family = AF_INET;
   saddr.sin_port = htons(GROUP_PORT);
   saddr.sin_addr.s_addr=inet_addr(GROUP_ADDR);  

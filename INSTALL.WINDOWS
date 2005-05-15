@@ -1,11 +1,10 @@
 Installing the PHP/Java Bridge on Windows
------------------------------------------
+----------------------------------------- 
 It is recommended to use the Linux or Unix version of the PHP/Java
 Bridge.  Especially the Linux version can be installed very easily
 (with the command rpm -i php-java-bridge*.rpm), supports fine-grained
-access control through SEL, struct ucred and the linux abstract
-namespace and allows one to audit the activity going through the web
-server and the bridge.
+access control through Security Enhanced Linux and allows one to audit
+the activity on the web server and the bridge.
 
 
 * Install a J2RE >= 1.4.0, for example Sun JDK 1.5.0
@@ -23,11 +22,9 @@ server and the bridge.
   status" entry, it should be "java status: running", and examine the
   java properties at the bottom of the page. 
 
-* Copy your java libraries (.jar files) into "java.ext.dirs" (see
-  result.html). Copy the php_java.dll into the extension directory
-  of your PHP 5.0.3 installation. (Or copy php-cgi.exe, php5ts.dll
-  and php_java.dll into the CGI bin folder of your web server and 
-  re-start the web server.)
+* Copy your java libraries (.jar files) into c:\php5\lib. Copy the
+  php_java.dll into the extension directory of your PHP 5.0.3
+  installation.
 
 * Add the following entry to your php.ini:
 
@@ -40,7 +37,7 @@ server and the bridge.
 
 * If you have problems, start the PHP/Java Bridge at log level 3
 
-    java -jar JavaBridge.jar 9167 3 output.log
+    java -jar JavaBridge.jar INET:9167 3 output.log
 
   or a higher log level and examine the output. Please report
   bugs/problems to the mailing list:
@@ -51,17 +48,16 @@ server and the bridge.
 Known Windows Issues 
 --------------------
 
-* Security Enhanced Linux not supported.
-
-* Local ("unix domain") sockets, struct ucred and the Linux abstract
-  namespace not supported.
-  
-* You cannot install your .jar files in /usr/share/java.  Install your
-  .jar files into %JAVA_HOME\jre\lib\ext instead and then re-start the
-  java VM.
+* You cannot install your .jar files in /usr/share/java. Please copy
+  them to c:\php5\lib, e.g. c:\php5\lib\batStore.jar. 
+  The libraries can be linked with the java_require() statement, for
+  example java_require('c:\php5\lib\batStore.jar');
 
 * Both, the CGI version and the apache or isapi module are
   supported. But it is recommended to use the CGI version.
+
+* All .ini entries except java.socketname and java.hosts are
+  meaningless.
 
 * The windows version does not support multicast sockets and therefore
   load balancing is not available.  However, it is possible to start 

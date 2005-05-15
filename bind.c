@@ -224,6 +224,7 @@ static int test_server(int port) {
 
   sock = socket (PF_INET, SOCK_STREAM, 0);
   if(sock==-1) return -1;
+  memset(&saddr, 0, sizeof saddr);
   saddr.sin_family = AF_INET;
   saddr.sin_port = htons(port);
   saddr.sin_addr.s_addr=htonl(INADDR_ANY);  
@@ -299,6 +300,7 @@ char* java_test_server(int *_socket, unsigned char spec) {
 		if(strlen(_port)) port=atoi(_port);
 	  }
 	  if(!port) port=atoi(DEFAULT_PORT);
+	  memset(&saddr, 0, sizeof saddr);
 	  saddr.sin_family = AF_INET;
 	  saddr.sin_port=htons(port);
 #ifndef __MINGW32__
@@ -438,6 +440,7 @@ char* java_test_server_no_multicast(int *_socket, unsigned char spec TSRMLS_DC) 
 		if(strlen(_port)) port=atoi(_port);
 	  }
 	  if(!port) port=atoi(DEFAULT_PORT);
+	  memset(&saddr, 0, sizeof saddr);
 	  saddr.sin_family = AF_INET;
 	  saddr.sin_port=htons(port);
 #ifndef __MINGW32__

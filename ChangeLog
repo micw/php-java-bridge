@@ -1,3 +1,41 @@
+2005-05-15  Boekemeier  <jostb@intern>
+
+	* INSTALL.WINDOWS: updated.
+
+	* README: updated.
+
+	* bind.c (test_server): zero out saddr (for old bsd).
+	(java_test_server): likewise
+	(java_test_server_no_multicast): likewise
+
+	* java.c (PHP_MINIT_FUNCTION): likewise
+
+	* multicast.c (php_java_init_multicast): likewise
+	(php_java_multicast_backends_available): likewise
+	(php_java_send_multicast): likewise
+
+	* protocol.c: likewise
+
+	* java.c (PHP_MINFO_FUNCTION): suppress obsolete entries on windows
+
+	* multicast.c (php_java_semun): replaces union semun which is
+	pre-defined on BSD
+        (php_java_multicast_backends_available): rewritten for BSD.
+	(php_java_sleep_ms): not used on windows, which doesn't have
+	timeval.
+
+	* php-java-bridge: start only two backends
+	
+	* client.c (setResultFromString): Avoid signedness warning
+	(setException): likewise
+	(GET_RESULT): likewise
+	(begin): likewise
+
+	* server/php/java/bridge/JavaBridgeClassLoader.java (findClass):
+	verbose error message
+
+	* php-java-bridge 2.0.6 released (windows version only)
+	
 2005-05-14  Boekemeier  <jostb@intern>
 
 	* README: updated.

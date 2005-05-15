@@ -1069,6 +1069,7 @@ PHP_MINIT_FUNCTION(java)
 	extern void java_init_cfg();
 	
 	java_init_cfg();
+	memset(&cfg->saddr, 0, sizeof cfg->saddr);
 #ifndef CFG_JAVA_SOCKET_INET
 	cfg->saddr.sun_family = AF_LOCAL;
 	memset(cfg->saddr.sun_path, 0, sizeof cfg->saddr.sun_path);
@@ -1098,6 +1099,7 @@ PHP_MINFO_FUNCTION(java)
   php_info_print_table_start();
   php_info_print_table_row(2, "java support", "Enabled");
   php_info_print_table_row(2, "java bridge", java_bridge_version);
+#ifndef __MINGW32__
   php_info_print_table_row(2, "java.libpath", cfg->ld_library_path);
   php_info_print_table_row(2, "java.classpath", cfg->classpath);
   php_info_print_table_row(2, "java.java_home", cfg->java_home);
@@ -1107,8 +1109,11 @@ PHP_MINFO_FUNCTION(java)
   else
 	php_info_print_table_row(2, "java.log_file", cfg->logFile);
   php_info_print_table_row(2, "java.log_level", cfg->logLevel);
+#endif
   php_info_print_table_row(2, "java.hosts", cfg->hosts);
+#ifndef __MINGW32__
   php_info_print_table_row(2, "java command", s);
+#endif
   php_info_print_table_row(2, "java status", server?"running":"not running");
   php_info_print_table_row(2, "java server", server?server:"localhost");
   php_info_print_table_end();

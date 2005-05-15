@@ -71,7 +71,7 @@ Build and execution instructions:
          /usr/sbin/php-java-bridge
 
   and re-start the web server to activate this setting. The above
-  command starts 4 backends on the local host. Additional backends can
+  command starts 2 backends on the local host. Additional backends can
   be started with (e.g.):
          `
         `php-config --extension-dir`/RunJavaBridge backend5.log

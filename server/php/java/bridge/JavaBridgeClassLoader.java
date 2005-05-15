@@ -153,12 +153,12 @@ public class JavaBridgeClassLoader extends URLClassLoader {
 			clazz=super.findClass(name); 
 		    } catch (ClassNotFoundException e2) {
 			classesBlackList.put(name, name);
-			ClassNotFoundException e3 = new ClassNotFoundException(name + " not found in " + Arrays.asList(getURLs()), e2);
+			ClassNotFoundException e3 = new ClassNotFoundException("The server could not find " + name + " in " + Arrays.asList(getURLs()), e2);
 			throw(e3);
 		    }
 		    Util.logMessage("Could not find class " + name + ". Searching all system libraries.  Please use java_require(<systemLibrary>) to avoid this message.");
 		} else { // already in blacklist
-	            ClassNotFoundException e3 = new ClassNotFoundException(name + " not found in the following java_require() path: " + Arrays.asList(getURLs()), e);
+	            ClassNotFoundException e3 = new ClassNotFoundException("The server could not find " +name + " in the 'java_require()' path: " + Arrays.asList(getURLs()), e);
 		    throw(e3);
 		}
 	    }
