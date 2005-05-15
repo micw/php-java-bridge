@@ -400,8 +400,9 @@ Build and execution instructions:
   PHP 5 issues
   ------------
 
-  All known PHP 5 versions crash when the dl() function is used. They
-  first unload the module and then try to invoke its shutdown method.
+  All PHP 5 versions < 5.0.4 crash when the dl() function is
+  used. They first unload the module and then try to invoke its
+  shutdown method.
 
   If you use one of these versions, please add an entry to the
   php.ini, see install instructions above.
