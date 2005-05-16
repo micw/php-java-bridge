@@ -15,6 +15,10 @@ allow httpd_t javabridge_t:unix_stream_socket { connectto };
 #allow user_t javabridge_t:unix_stream_socket { connectto };
 allow unconfined_t javabridge_t:unix_stream_socket { connectto };
 
+# FIXME: temp solution until the new load balancing code is in place
+dontaudit httpd_t unconfined_t:sem { associate getattr unix_read unix_write };
+
+
 # starting the bridge
 allow javabridge_t bin_t:dir { search };
 allow javabridge_t bin_t:file { execute execute_no_trans read };

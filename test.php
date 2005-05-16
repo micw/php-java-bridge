@@ -1,7 +1,7 @@
 #!/usr/bin/php
 <?php
 if (!extension_loaded('java')) {
-  if (version_compare("5.0.0", phpversion(), "<=")) {
+  if ((version_compare("5.0.0", phpversion(), "<=")) && (version_compare("5.0.4", phpversion(), ">"))) {
     echo "This PHP version does not support dl().\n";
     echo "Please add an extension=java.so or extension=php_java.dll entry to your php.ini file.\n";
     exit(1);

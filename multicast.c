@@ -35,11 +35,12 @@ static int init() {
   union php_java_semun val;
   struct semid_ds buf;
   int id = semget(0x9168, 1, IPC_CREAT | 0640);
+  if(id==-1) return -1;
   val.buf = &buf;
-  semctl(id, 0, IPC_STAT, val);
+  if(-1==semctl(id, 0, IPC_STAT, val)) return -1;
   if(!buf.sem_otime) {
     val.val=1;
-    semctl(id, 0, SETVAL, val);
+    if(-1==semctl(id, 0, SETVAL, val)) return -1;
   }
   return id;
 }
@@ -113,15 +114,17 @@ short php_java_multicast_backends_available() {
   sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if(sock!=-1) {
 	int id, err;
-	enter(id=init()); 
-   {/* FIXME: Should protect this from signals.  If someone manages to
-	   stop the client in this section, one has to remove the
+	id=init(); 
+	if(id != -1) {
+      unsigned char c[1] = {'P'}; /* will be rejected as a broken packet */
+	  enter(id);
+      /* FIXME: Should protect this from signals.  If someone manages
+	   to stop the client in this section, one has to remove the
 	   semaphore manually (see commands ipcs -S and ipcrm -S). But
 	   since the load balancing code will be rewritten in java anyway
 	   (this file, large parts of bind.c and three functions in client
 	   will go away) I just keep this hack until the new code is in
 	   place */
-	  unsigned char c[1] = {'P'}; /* will be rejected as a broken packet */
 	  has_backend = 1;
 	  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &s_false, sizeof s_false);
 	  err=bind(sock, (struct sockaddr*)&saddr, sizeof saddr);
@@ -135,8 +138,8 @@ short php_java_multicast_backends_available() {
 		}
 	  }
 	  close(sock);
+	  leave(id);
 	} 
-    leave(id);
   }
 #endif
   return has_backend;

@@ -1,3 +1,23 @@
+2005-05-16  Boekemeier  <jostb@intern>
+
+	* multicast.c (init): return error code if semaphores are not
+	available.
+	(php_java_multicast_backends_available): check error code.
+	
+	* php-java-bridge.te: Temporarily allow semaphores, until the new
+	load balancer code is in place.
+	
+	* VERSION, php-java-bridge.spec: updated version to 2.0.6
+	
+	* README: dl() works again since 5.0.4.
+	
+	* test.php: dito
+
+	* tests.php4/cache.php, tests.php4/utf8-2.php: added dl().
+
+	* php-java-bridge 2.0.6 released
+	
+	
 2005-05-15  Boekemeier  <jostb@intern>
 
 	* INSTALL.WINDOWS: updated.

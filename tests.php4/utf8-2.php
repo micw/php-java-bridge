@@ -1,6 +1,9 @@
 #!/usr/bin/php
 
 <?php
+if(!extension_loaded('java')) {
+  dl('java.' . PHP_SHLIB_SUFFIX);
+}
 
 // Start server with:
 // java -Dfile.encoding=ASCII -jar JavaBridge.jar INET:0 4 ""
