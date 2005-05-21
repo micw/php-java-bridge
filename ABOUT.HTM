@@ -151,16 +151,14 @@ if($session->get("b")==0) $session->destroy();<br>
 The <strong><code>java_get_session</code></strong> primitive is meant for values which <em>must</em> survive the current script.  If you want to cache data which is expensive to create, bind the data to a class.  Example:
 <blockquote>
 <code>
-public class Cache {// Compile this class, create cache.jar and copy it to /usr/share/java<br>
-&nbsp;&nbsp; static Cache instance=null;<br>
-&nbsp;&nbsp; public static synchronized Cache getInstance() {<br>
-&nbsp;&nbsp;&nbsp; if(instance==null) instance=makeInstance(); <br>
-&nbsp;&nbsp;&nbsp; return instance;<br>
+// Compile this class, create cache.jar and copy it to /usr/share/java<br>
+public class Cache {<br>
+&nbsp;&nbsp; public static Cache instance=makeInstance();<br>
 }<br><br>
 &lt;?php<br>
 java_require(&quot;cache.jar&quot;);<br>
 $Cache = new JavaClass(&quot;Cache&quot;);<br>
-$instance=$Cache->getInstance(); //instance will stay in the VM until the VM runs short of memory<br>
+$instance=$Cache->instance; //instance will stay in the VM until the VM runs short of memory<br>
 ?&gt;<br>
 </code>
 </blockquote>
