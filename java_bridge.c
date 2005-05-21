@@ -92,6 +92,7 @@ void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, sho
 	  assert(mname); if(!mname) {ZVAL_NULL(object); return;}
 	  strcpy(mname, "cli.");
 	  memcpy(mname+4,cname, clen);
+      mname[clen+4] = 0;
 	  (*jenv)->writeCreateObjectBegin(jenv, mname, clen+4, createInstance?'I':'C', (void*)result);
 	  writeArguments(--arg_count, ++arguments, 0 TSRMLS_CC);
 	  (*jenv)->writeCreateObjectEnd(jenv);

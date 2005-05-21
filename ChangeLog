@@ -1,3 +1,14 @@
+
+2005-05-21  Boekemeier <jostb@intern>
+
+	* server/php/java/bridge/JavaBridge.java (getSession): Timeout in
+	s.
+
+	* ABOUT.HTM: updated from index.html
+
+	* java_bridge.c (php_java_call_function_handler): mono string must
+	be zero terminated.
+	
 2005-05-16  Boekemeier  <jostb@intern>
 
 	* multicast.c (init): return error code if semaphores are not

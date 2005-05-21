@@ -962,7 +962,7 @@ public class JavaBridge implements Runnable {
 			if(clientIsNew) { // client side gc'ed, destroy server ref now!
 			    ref.destroy();
 			    ref = new Session(name);
-			    ref.setTimeout((long)timeout);
+			    ref.setTimeout(1000*(long)timeout);
 	    		} else {
 			    ref.isNew=false;
 			}
