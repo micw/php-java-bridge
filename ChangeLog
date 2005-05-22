@@ -1,4 +1,16 @@
+2005-05-22  Boekemeier <jostb@intern>
 
+	* tests.php4/xmlTransform.php: Test rewritten
+
+	* java.c (iterator_dtor): The dtor may be called after rshutdown:
+	check if jenv is still there. This bug appears on windows only.
+
+	* tests.mono+net/sample_lib.cs: Test rewritten.
+
+	* tests.mono+net/sample_lib.dll: re-generated
+
+	* tests.mono+net/load_assembly.php: Test rewritten
+	
 2005-05-21  Boekemeier <jostb@intern>
 
 	* server/php/java/bridge/JavaBridge.java (getSession): Timeout in

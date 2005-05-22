@@ -748,7 +748,9 @@ static void iterator_dtor(zend_object_iterator *iter TSRMLS_DC)
   if (iterator->current_object) zval_ptr_dtor((zval**)&iterator->current_object);
   
   if(iterator->java_iterator) {
-	(*JG(jenv))->writeUnref(JG(jenv), iterator->java_iterator);
+	/* check jenv because destructor may be called after request
+	   shutdown */
+	if(jenv) (*jenv)->writeUnref(jenv, iterator->java_iterator);
 	iterator->java_iterator = 0;
   }
   
