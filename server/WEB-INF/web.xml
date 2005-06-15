@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!DOCTYPE web-app
+    PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+    "http://java.sun.com/j2ee/dtds/web-app_2_3.dtd">
+
+<web-app>
+<!-- our servlet -->
+    <servlet>
+        <servlet-name>
+		PhpJavaServlet
+        </servlet-name>
+        <servlet-class>
+		php.java.servlet.PhpJavaServlet
+        </servlet-class>
+    </servlet>
+
+<!-- URL -->
+    <servlet-mapping>
+        <servlet-name>PhpJavaServlet</servlet-name> 
+        <url-pattern>/PhpJavaServlet</url-pattern>
+    </servlet-mapping>
+<!--     <servlet-mapping> -->
+<!--         <servlet-name> -->
+<!-- 		PhpJavaServlet -->
+<!--         </servlet-name> -->
+<!--         <url-pattern> -->
+<!-- 		*.php -->
+<!--         </url-pattern> -->
+<!--     </servlet-mapping> -->
+</web-app>
