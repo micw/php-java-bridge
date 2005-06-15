@@ -117,16 +117,24 @@ public abstract class PhpMap {
 			return currentKey==null?false:true;
 		    }
 
+		    void bail() {
+			throw new UnsupportedOperationException("A collection does not have an offset. You can only iterate over its values.");
+		    }
+
 		    // Should we really care?
 		    public boolean offsetExists(Object pos) {
+			bail();
 			return false;
 		    }
 		    public Object offsetGet(Object pos) {
+			bail();
 			return null;
 		    }
 		    public void offsetSet(Object pos, Object val) {
+			bail();
 		    }
 		    public void offsetUnset(Object pos) {
+			bail();
 		    }
 		};
 	}

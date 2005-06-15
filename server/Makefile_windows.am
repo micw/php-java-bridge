@@ -6,3 +6,8 @@ JavaBridge.jar:
 	$(PHP_JAVA)/bin/javac php/java/bridge/*.java
 	$(PHP_JAVA)/bin/jar cMf JavaBridge.jar META-INF/MANIFEST.MF php/java/bridge/*.class
 
+JavaBridge.war: JavaBridge.jar
+	$(PHP_JAVA)/bin/javac -classpath JavaBridge.jar php/java/servlet/*.java
+	mkdir -f WEB-INF/lib
+	cp JavaBridge.jar WEB-INF/lib
+	$(PHP_JAVA)/bin/jar cMf JavaBridge.jar META-INF/MANIFEST.MF WEB-INF/web.xml WEB-INF/lib/JavaBridge.jar php/java/servlet/*.class

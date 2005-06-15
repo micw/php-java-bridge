@@ -35,6 +35,23 @@ static void flush(proxyenv *env) {
   size_t s=0, size = (*env)->send_len;
   ssize_t n=0;
 
+  if(get_servlet_context()) {
+	char header[1024];
+	int header_length;
+#ifndef ZEND_ENGINE_2
+	static const char mode[] = "2";
+#else
+	static const char mode[] = "";
+#endif
+
+	if((*env)->cookie_name) 
+	  header_length=php_java_snprintf(header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: keep-alive\r\nCookie: %s=%s\r\nContent-Type: text/html\r\nContent-Length: %ld\r\n\r\n%s", get_servlet_context(), (*env)->cookie_name, (*env)->cookie_value, size+sizeof(mode)-1, mode);
+	else
+	  header_length=php_java_snprintf(header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: keep-alive\r\nContent-Type: text/html\r\nContent-Length: %ld\r\n\r\n%s", get_servlet_context(), size+sizeof(mode)-1, mode);
+
+	send((*env)->peer, header, header_length, 0);
+  }
+
  res: 
   errno=0;
   while((size>s)&&((n=send((*env)->peer, (*env)->send+s, size-s, 0)) > 0)) 
@@ -253,15 +270,21 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
 
    (*env)->peer = peer;
    (*env)->handle_request = handle_request;
+
+   /* parser variables */
+   (*env)->pos=(*env)->c = 0;
    (*env)->len = SLEN; 
    (*env)->s=malloc((*env)->len);
    if(!(*env)->s) {free(*env); free(env); return 0;}
+
+   /* send buffer */
    (*env)->send_size=SEND_SIZE;
    (*env)->send=malloc(SEND_SIZE);
    if(!(*env)->send) {free((*env)->s); free(*env); free(env); return 0;}
    (*env)->send_len=0;
    
    (*env)->server_name = server_name;
+   (*env)->cookie_name = (*env)->cookie_value = 0;
 
    (*env)->writeInvokeBegin=InvokeBegin;
    (*env)->writeInvokeEnd=InvokeEnd;

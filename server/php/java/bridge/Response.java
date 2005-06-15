@@ -176,5 +176,7 @@ public class Response {
 	}
 	buf.writeTo(bridge.out);
 	buf.reset();
+	bridge.out.flush();
+	//bridge.out.close();
     }
 }

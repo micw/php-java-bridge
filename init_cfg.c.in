@@ -11,7 +11,6 @@
 
 #include "protocol.h"
 #include "php_java.h"
-#include "multicast.h"
 
 #ifndef EXTENSION_DIR
 #error EXTENSION_DIR must point to the PHP extension directory
@@ -79,6 +78,7 @@ void java_init_cfg() {
   if(!(java_ini_updated&U_SOCKNAME)) {
 	init_socket();
   }
+  if(!(java_ini_updated&U_SERVLET)) cfg->servlet=strdup(DEFAULT_SERVLET);
   if(!(java_ini_updated&U_HOSTS)) cfg->hosts=strdup("");
   if(!(java_ini_updated&U_CLASSPATH)) cfg->classpath=strdup(CFG_CLASSPATH);
   if(!(java_ini_updated&U_LIBRARY_PATH)) cfg->ld_library_path=strdup(CFG_LD_LIBRARY_PATH);
@@ -89,11 +89,10 @@ void java_init_cfg() {
   cfg->can_fork=
 	((java_ini_updated&U_SOCKNAME)==0)&&
 	((java_ini_updated&U_HOSTS)==0);
-
-  cfg->have_mc_backends = php_java_multicast_backends_available();
 }
 
 void java_destroy_cfg(int java_ini_updated) {
+  if(!(java_ini_updated&U_SERVLET)) free(cfg->servlet);
   if(!(java_ini_updated&U_HOSTS)) free(cfg->hosts);
   if(!(java_ini_updated&U_SOCKNAME)) free(cfg->sockname);
   if(!(java_ini_updated&U_CLASSPATH)) free(cfg->classpath);
@@ -103,3 +102,16 @@ void java_destroy_cfg(int java_ini_updated) {
   if(!(java_ini_updated&U_LOGLEVEL)) free(cfg->logLevel);
   if(!(java_ini_updated&U_LOGFILE)) free(cfg->logFile);
 }
+
+static short is_servlet() {
+  extern int java_ini_last_updated;
+  return ((java_ini_last_updated&U_SERVLET)!=0) && cfg->servlet && strlen(cfg->servlet) && strncasecmp("off", cfg->servlet, 3);
+}
+
+char *get_servlet_context() {
+  if(!is_servlet()) return 0;
+
+  if(strncasecmp("on", cfg->servlet, 2)) return DEFAULT_SERVLET;
+  return cfg->servlet;
+}
+

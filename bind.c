@@ -36,18 +36,15 @@
 #include "ext/session/php_session.h"
 
 #include "php_java.h"
-#include "multicast.h"
 
 #ifndef EXTENSION_DIR
 #error EXTENSION_DIR must point to the PHP extension directory
 #endif
 
-ZEND_EXTERN_MODULE_GLOBALS(java) /* HACK: pass down a struct to the multicaster */
-
 const static char inet_socket_prefix[]="INET:";
 const static char local_socket_prefix[]="LOCAL:";
 
-static void java_get_server_args(char*env[N_SENV], char*args[N_SARGS], short for_display) {
+static void java_get_server_args(char*env[N_SENV], char*args[N_SARGS]) {
   extern int java_ini_last_updated;
   static const char separator[2] = {ZEND_PATHS_SEPARATOR, 0};
   char *s, *p;
@@ -63,13 +60,6 @@ static void java_get_server_args(char*env[N_SENV], char*args[N_SARGS], short for
 #endif
   char *sockname, *cfg_sockname=cfg->sockname, *cfg_logFile=cfg->logFile;
 
-  /* if socketname is off, show the user how to start a multicast
-	 backend */
-  if(for_display && !(java_ini_last_updated&U_SOCKNAME)) {
-	cfg_sockname="0";
-	s_prefix=inet_socket_prefix;
-	cfg_logFile="";
-  }
   /* send a prefix so that the server does not select a different
    protocol */
   sockname = malloc(strlen(s_prefix)+strlen(cfg_sockname)+1);
@@ -143,7 +133,7 @@ char*java_get_server_string() {
   char*args[N_SARGS];
   unsigned int length = 0;
 
-  java_get_server_args(env, args, 1);
+  java_get_server_args(env, args);
   if(must_use_wrapper)
 	length+=strlen(wrapper)+1;
 
@@ -195,7 +185,7 @@ static void exec_vm() {
   static char*env[N_SENV];
   static char*_args[N_SARGS+1];
   char **args=_args+1;
-  java_get_server_args(env, args, 0);
+  java_get_server_args(env, args);
   putenv(env[0]);
   putenv(env[1]);
   if(use_wrapper()) *--args = strdup(wrapper);
@@ -241,15 +231,10 @@ static int test_server(int port) {
  * started.
  */
 char* java_test_server(int *_socket, unsigned char spec) {
-  int sock, port, mc_socket;
-  short mcount = 0;
+  int sock, port;
   time_t current_time = time(0);
   unsigned char backend = spec=='I'?0:spec; // Mono or Java backend
 
-  if(cfg->have_mc_backends) {
-	if(spec=='I') return strdup(GROUP_ADDR);
-	mc_socket = php_java_init_multicast();
-  }
   /* local server, either started by the user before (I)nit or started by the bridge */
   if (((spec == 'I' && (java_ini_updated&U_SOCKNAME)) && (-1!=(sock=test_local_server())))
       || (spec != 'I' && (-1!=(sock=test_local_server())))) {
@@ -261,170 +246,6 @@ char* java_test_server(int *_socket, unsigned char spec) {
 	return strdup(cfg->sockname);
   }
 
-  /* multicast */
-  if(cfg->have_mc_backends) {
-	while(1) {//FIXME: stop busy waiting after some time
-	  do {
-		php_java_send_multicast(mc_socket, backend, current_time);
-		port = php_java_recv_multicast(mc_socket, backend, current_time);
-		if(-1!=port) {
-		  if(-1!=(sock=test_server(port))) {
-			if(_socket) {
-			  *_socket=sock;
-			} else {
-			  close(sock);
-			}
-			close(mc_socket);
-			return strdup(GROUP_ADDR);
-		  }
-		}
-		php_java_sleep_ms(MAX_PENALTY);
-	  } while(mcount++<MAX_TRIES);
-	  php_error(E_WARNING, "php_mod_java(%d): waiting for backend another second. Please start more backends.",17);
-	  sleep(1);
-	}
-  }
-
-  /* host list */
-  if(cfg->hosts && strlen(cfg->hosts)) {
-	char *host, *hosts = strdup(cfg->hosts);
-	
-	assert(hosts); if(!hosts) return 0;
-	for(host=strtok(hosts, ";"); host; host=strtok(0, ";")) {
-	  struct sockaddr_in saddr;
-	  char *_port = strrchr(host, ':'), *ret;
-	  int port = 0;
-	  
-	  if(_port) { 
-		*_port++=0;
-		if(strlen(_port)) port=atoi(_port);
-	  }
-	  if(!port) port=atoi(DEFAULT_PORT);
-	  memset(&saddr, 0, sizeof saddr);
-	  saddr.sin_family = AF_INET;
-	  saddr.sin_port=htons(port);
-#ifndef __MINGW32__
-	  if(!isdigit(*host)) {
-		struct hostent *hostent = gethostbyname(host);
-		if(hostent) {
-		  memcpy(&saddr.sin_addr,hostent->h_addr,sizeof(struct in_addr));
-		} else {
-		  inet_aton(host, &saddr.sin_addr);
-		}
-	  } else {
-		inet_aton(host, &saddr.sin_addr);
-	  }
-#else
-	  saddr.sin_addr.s_addr = inet_addr(host);
-#endif
-
-	  sock = socket (PF_INET, SOCK_STREAM, 0);
-	  if(-1==sock) continue;
-	  if (-1==connect(sock,(struct sockaddr*)&saddr, sizeof (struct sockaddr))) {
-		close(sock);
-		continue;
-	  }
-	  if(_socket) *_socket=sock;
-	  if(_port) _port[-1]=':';
-	  ret = strdup(host);
-	  free(hosts);
-	  return ret;
-	}
-	free(hosts);
-  }
-  return 0;
-}
-
-char* java_test_server_no_multicast(int *_socket, unsigned char spec TSRMLS_DC) {
-  int sock, port = -1, err, mc_socket;
-  short mcount = 0;
-  time_t current_time = time(0);
-  unsigned char backend;
-  zval **tmp_port, *new_port;
-
-  assert(spec!='I');
-
-#if HAVE_PHP_SESSION
-  if (PS(session_status) == php_session_active) {
-	/* Find the backend */
-	if (zend_hash_find(Z_ARRVAL_P(PS(http_session_vars)), "_php_java_session_name", sizeof("_php_java_session_name"), (void **) &tmp_port) == SUCCESS &&
-		Z_TYPE_PP(tmp_port) == IS_LONG) {
-	  port = Z_LVAL_PP(tmp_port);
-	}
-
-  /* backend pool.  retrieve the backend from the session var */
-	if(-1!=port) {
-	  if(-1!=(sock=test_server(port))) {
-		if(_socket) {
-		  *_socket=sock;
-		} else {
-		  close(sock);
-		}
-		//fprintf(stderr, "got session. Use port :%ld\n", (long)port); //FIXME remove debug code
-		return strdup(GROUP_ADDR);
-	  } else {
-		php_error(E_WARNING, "php_mod_java(%d): Session data lost.",16);
-		zend_hash_del(Z_ARRVAL_P(PS(http_session_vars)), "_php_java_session_name", sizeof("_php_java_session_name"));
-	  }
-	}
-		
-#endif
-	/* session lost or no session yet */
-
-	/* local server */
-	assert(port==-1);
-	if ((-1!=(sock=test_local_server()))) {
-	  if(_socket) {
-	  *_socket=sock;
-	  } else {
-		close(sock);
-	  }
-	  return strdup(cfg->sockname);
-	}
-
-	/* no local server, select backend */
-#if HAVE_PHP_SESSION
-	//fprintf(stderr, "new session. send out mc\n"); //FIXME remove debug code
-	assert(port==-1);
-	/* no specific backend yet, select one */
-	if(spec=='j') backend='J'; else backend='M';
-
-	if(cfg->have_mc_backends) {
-	  mc_socket = php_java_init_multicast();
-	  while (1) {//FIXME: stop busy waiting after some time	  
-		do {
-		  php_java_send_multicast(mc_socket, backend, current_time);
-		  port = php_java_recv_multicast(mc_socket, backend, current_time);
-		  if(-1!=port) {
-			if(-1!=(sock=test_server(port))) {
-			  if(_socket) {
-				*_socket=sock;
-			  } else {
-				close(sock);
-			  }
-			  close(mc_socket);
-			  MAKE_STD_ZVAL(new_port);
-			  Z_TYPE_P(new_port)=IS_LONG;
-			  Z_LVAL_P(new_port)=port;
-			  err = zend_hash_update(Z_ARRVAL_P(PS(http_session_vars)), "_php_java_session_name", sizeof("_php_java_session_name"), &new_port, sizeof(zval *), NULL);
-			  assert(err==SUCCESS);
-			  if(err==SUCCESS) {
-				//fprintf(stderr, "new session (%d) on port: %ld\n", err, port); //FIXME remove debug code
-				JG(session_is_new)=1;
-				return strdup(GROUP_ADDR);
-			  }
-			}
-		  }
-		  php_java_sleep_ms(MAX_PENALTY);
-		} while(mcount++<MAX_TRIES);
-		php_error(E_WARNING, "php_mod_java(%d): waiting for backend another second. Please start more backends.",18);
-		sleep(1);
-	  }
-	}
-  }
-#endif
-
-  assert(-1==port);
   /* host list */
   if(cfg->hosts && strlen(cfg->hosts)) {
 	char *host, *hosts = strdup(cfg->hosts);

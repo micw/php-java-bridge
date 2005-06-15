@@ -12,7 +12,6 @@
 #include "php_wrapper.h"
 #include "php_globals.h"
 #include "ext/standard/info.h"
-#include "ext/session/php_session.h"
 
 #include "php_java.h"
 #include "java_bridge.h"
@@ -49,6 +48,8 @@ PHP_RSHUTDOWN_FUNCTION(java)
 	  if((*JG(jenv))->s) free((*JG(jenv))->s);
 	  if((*JG(jenv))->send) free((*JG(jenv))->send);
 	  if((*JG(jenv))->server_name) free((*JG(jenv))->server_name);
+	  if((*JG(jenv))->cookie_name) free((*JG(jenv))->cookie_name);
+	  if((*JG(jenv))->cookie_value) free((*JG(jenv))->cookie_value);
 	  free(*JG(jenv));
 	}
 	free(JG(jenv));
@@ -165,21 +166,14 @@ PHP_FUNCTION(java_get_session)
 	php_error(E_ERROR, "This script has already selected a backend.  Please call java_get_session() before calling any of the java* or mono* functions.");
   }
 
-  JG(session_is_new)=0;
-#if HAVE_PHP_SESSION
-  if (PS(session_status) != php_session_active &&
-	  PS(session_status) != php_session_disabled) {
-	PS(id)=estrndup(Z_STRVAL_PP(session), Z_STRLEN_PP(session));
-	php_session_start(TSRMLS_C);
-  }
-#endif
+  convert_to_string_ex(session);
 
-  jenv=java_connect_to_server_no_multicast(TSRMLS_C);
+  jenv=java_connect_to_server(TSRMLS_C);
   if(!jenv) RETURN_NULL();
   (*jenv)->writeInvokeBegin(jenv, 0, "getSession", 0, 'I', return_value);
   (*jenv)->writeString(jenv, Z_STRVAL_PP(session), Z_STRLEN_PP(session)); 
-  (*jenv)->writeBoolean(jenv, JG(session_is_new)); 
-  (*jenv)->writeLong(jenv, PS(gc_maxlifetime)); 
+  (*jenv)->writeBoolean(jenv, 0); 
+  (*jenv)->writeLong(jenv, 1400); 
   (*jenv)->writeInvokeEnd(jenv);
 }
 
@@ -195,6 +189,18 @@ PHP_FUNCTION(java_get_server_name)
   RETURN_NULL();
 }
 
+PHP_FUNCTION(java_reset)
+{
+  proxyenv *jenv;
+  if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT;
+
+  jenv = java_connect_to_server(TSRMLS_C);
+  if(!jenv) RETURN_NULL();
+
+  (*jenv)->writeInvokeBegin(jenv, 0, "reset", 0, 'I', return_value);
+  (*jenv)->writeInvokeEnd(jenv);
+}
+
 function_entry java_functions[] = {
 	PHP_FE(java_last_exception_get, NULL)
 	PHP_FE(java_last_exception_clear, NULL)
@@ -204,6 +210,7 @@ function_entry java_functions[] = {
 	PHP_FE(java_instanceof, NULL)
 	PHP_FE(java_get_session, NULL)
 	PHP_FE(java_get_server_name, NULL)
+	PHP_FE(java_reset, NULL)
 	{NULL, NULL, NULL}
 };
 
@@ -238,6 +245,14 @@ static PHP_INI_MH(OnIniHosts)
 	if (new_value) {
 	  cfg->hosts=new_value;
 	  java_ini_updated|=U_HOSTS;
+	}
+	return SUCCESS;
+}
+static PHP_INI_MH(OnIniServlet)
+{
+	if (new_value) {
+	  cfg->servlet=new_value;
+	  java_ini_updated|=U_SERVLET;
 	}
 	return SUCCESS;
 }
@@ -298,6 +313,7 @@ static PHP_INI_MH(OnIniLogFile)
 	return SUCCESS;
 }
 PHP_INI_BEGIN()
+	 PHP_INI_ENTRY("java.servlet", NULL, PHP_INI_SYSTEM, OnIniServlet)
 	 PHP_INI_ENTRY("java.socketname", NULL, PHP_INI_SYSTEM, OnIniSockname)
 	 PHP_INI_ENTRY("java.hosts",   NULL, PHP_INI_SYSTEM, OnIniHosts)
 	 PHP_INI_ENTRY("java.classpath", NULL, PHP_INI_SYSTEM, OnIniClassPath)
@@ -711,6 +727,8 @@ static int cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_
 	proxyenv *jenv = java_connect_to_server(TSRMLS_C);
 	long obj = 0;
 	zval free_obj;
+
+	if(!jenv) return FAILURE;
 
 	if (should_free)
 	  free_obj = *writeobj;

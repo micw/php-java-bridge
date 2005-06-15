@@ -63,39 +63,27 @@ Build and execution instructions:
   This option is available on Security Enhanced Linux.
 
 
-  OPTION 2: You can use TCP/IP sockets to communicate with different
-  backends on different hosts. Disable the java.socketname option,
-  start the backends on all hosts and ports, for example with the 
-  command:
+  OPTION 2: You can deploy the PHP/Java Bridge into a standard
+  servlet engine or an application server. Rename JavaBridge.jar
+  into JavaBridge.war and deploy it using the application server's
+  tools. Disable the java.socketname option and set the java.hosts and
+  java.servlet options, for example: 
 
-         /usr/sbin/php-java-bridge
-
-  and re-start the web server to activate this setting. The above
-  command starts 2 backends on the local host. Additional backends can
-  be started with (e.g.):
-         `
-        `php-config --extension-dir`/RunJavaBridge backend5.log
-
-  A multicast packet is send and the bridge selects the first backend
-  which has a load <12.  If, for some reason, multicasts don't work on
-  your system you can use the java.hosts option instead. The following
-  example directs the bridge to two backends running on the local host:
-  java.hosts="127.0.0.1:9167;127.0.0.1:9168".
+          java.servlet="On"
+          java.hosts="127.0.0.1:8080"
 
   This option is available on Security Enhanced Linux.
 
 
   OPTION 3: You can start the bridge as a sub-process of apache. Disable
-  java.hosts and java.socketname, stop all backends and re-start apache.
+  java.url and java.socketname and re-start apache.
   Check if apache has started java as a sub-process.  For example with 
   the commands:
 
           apachectl restart
           pstree | fgrep httpd
 
-  Starting or re-starting the bridge with the apache web server is
-  convenient during development but not recommended for production
-  systems.  This option cannot be used on Security Enhanced Linux.
+  This option cannot be used on Security Enhanced Linux.
 
 
   Check the status:
@@ -139,7 +127,15 @@ Build and execution instructions:
   standard servlet engine
   -----------------------------
 
-  [to be written for 2.0.7]
+   FIXME
+
+   Create and deploy JavaBridge.war
+
+   Set:
+        java.hosts=<host>:<port>
+        java.servlet=On
+
+   
 
 ------------------------------------
   64 Bit issues

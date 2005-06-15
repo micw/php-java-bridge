@@ -23,10 +23,16 @@ else
 bin_PROGRAMS=RunJavaBridge
 RunJavaBridge_SOURCES=RunJavaBridge.c
 
-dist_data_DATA=JavaBridge.jar
+dist_data_DATA=JavaBridge.jar JavaBridge.war
 
 JavaBridge.jar:
 	$(PHP_JAVA)/bin/javac php/java/bridge/*.java
 	$(PHP_JAVA)/bin/jar cMf JavaBridge.jar META-INF/MANIFEST.MF php/java/bridge/*.class
+
+JavaBridge.war: JavaBridge.jar
+	$(PHP_JAVA)/bin/javac -classpath j2ee.jar  php/java/bridge/*.java php/java/servlet/*.java
+	-mkdir WEB-INF/lib
+	cp JavaBridge.jar WEB-INF/lib
+	$(PHP_JAVA)/bin/jar cMf JavaBridge.war META-INF/MANIFEST.MF WEB-INF/web.xml WEB-INF/lib/JavaBridge.jar php/java/servlet/*.class
 
 endif

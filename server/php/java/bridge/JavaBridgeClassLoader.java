@@ -184,4 +184,16 @@ public class JavaBridgeClassLoader extends URLClassLoader {
 	}
 	return url;
     }
+    
+    public static void reset() {
+    	synchronized(classes) {
+    		classes.clear();
+    	}
+    	synchronized(classesBlackList) {
+    		classesBlackList.clear();
+    	}
+    	synchronized(resourcesBlackList) {
+    		resourcesBlackList.clear();
+    	}
+    }
 } 

@@ -253,9 +253,27 @@ static void end(parser_string_t st[1], parser_cb_t *cb){
 #endif
   }
 }
+
+void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
+  proxyenv *ctx=(proxyenv*)cb->ctx;
+
+  switch ((*tag[0].strings[0].string)[tag[0].strings[0].off]) {
+  case 'S'://Set-Cookie:
+	{
+	  (*ctx)->cookie_name = estrdup(PARSER_GET_STRING(tag[1].strings, 0));
+	  (*ctx)->cookie_value = estrdup(PARSER_GET_STRING(tag[2].strings, 0));
+	  break;
+	}
+  }
+}
 static void handle_request(proxyenv *env) {
   struct parse_ctx ctx = {0};
   parser_cb_t cb = {begin, end, &ctx};
+
+  if(get_servlet_context()) {
+	parser_cb_t cb_header = {begin_header, 0, env};
+	parse_header(env, &cb_header);
+  }
 
   zend_stack_init(&ctx.containers);
   parse(env, &cb);
@@ -266,7 +284,6 @@ static void handle_request(proxyenv *env) {
 static proxyenv *try_connect_to_server(short bail, unsigned char spec TSRMLS_DC) {
   char *server;
   int sock;
-  short no_multicast;
   proxyenv *jenv =JG(jenv);
   if(jenv) return jenv;
 
@@ -274,15 +291,14 @@ static proxyenv *try_connect_to_server(short bail, unsigned char spec TSRMLS_DC)
 	php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: Session is closed. -- This usually means that you have tried to access the server in your class' __destruct() method.",51);
 	return 0;
   }
-  no_multicast = (spec=='m' || spec=='j');
-  if(!(server=no_multicast?java_test_server_no_multicast(&sock, spec TSRMLS_CC):java_test_server(&sock, spec))) {
+  if(!(server=java_test_server(&sock, spec))) {
 	if (bail) 
 	  php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge and set the java.socketname option?",52, strerror(errno));
 	return 0;
   }
 #ifndef ZEND_ENGINE_2
   // we want arrays as values
-  { char c=2; send(sock, &c, sizeof c, 0); }
+  if(!get_servlet_context()) { char c=2; send(sock, &c, sizeof c, 0); }
 #endif
 
   return JG(jenv) = java_createSecureEnvironment(sock, handle_request, server);
@@ -297,14 +313,6 @@ proxyenv *java_try_connect_to_server(TSRMLS_D) {
 proxyenv *java_connect_to_mono(TSRMLS_D) {
   
   return try_connect_to_server(1, 'M' TSRMLS_CC);
-}
-proxyenv *java_connect_to_server_no_multicast(TSRMLS_D) {
-  
-  return try_connect_to_server(1, 'j' TSRMLS_CC);
-}
-proxyenv *java_connect_to_mono_no_multicast(TSRMLS_D) {
-  
-  return try_connect_to_server(1, 'm' TSRMLS_CC);
 }
 
 #ifndef PHP_WRAPPER_H

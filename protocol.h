@@ -32,14 +32,19 @@
 #define N_SENV 3				/* # of server env entries */
 #define DEFAULT_PORT "9167"		/* default port for tcp/ip */
 #define DEFAULT_HOST "127.0.0.1"
+#define DEFAULT_SERVLET "/javabridge/PhpJavaServlet"
+
+#define RECV_SIZE 8192 // initial size of the receive buffer
+#define MAX_ARGS 100   // max # of method arguments
 
 typedef struct proxyenv_ *proxyenv;
 struct proxyenv_ {
   int peer;
 
   /* used by the parser implementation */
-  unsigned char*s;
-  size_t len;
+  unsigned char*s; size_t len; 
+  ssize_t pos, c; 
+  unsigned char recv_buf[RECV_SIZE];
 
   /* the send buffer */
   unsigned char*send;
@@ -47,6 +52,9 @@ struct proxyenv_ {
 
   char *server_name;
 
+  /* the cookie, for servlet engines only */
+  char *cookie_name, *cookie_value;
+  
   void (*handle_request)(proxyenv *env);
 
   void (*writeCreateObjectBegin)(proxyenv *env, char*name, size_t strlen, char createInstance, void *result);

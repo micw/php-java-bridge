@@ -24,7 +24,6 @@ public class TCPServerSocket implements ISocketFactory {
 	    p=Integer.parseInt(DefaultSocketname);
 	}
 	TCPServerSocket s = new TCPServerSocket(p, backlog);
-        new Listener(s.sock).listen();
 	return s;
     }
 

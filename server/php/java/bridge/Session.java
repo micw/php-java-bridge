@@ -65,7 +65,7 @@ public class Session{
 	map.putAll(vars);
     }
 
-    static void expire() {
+    public static void expire() {
 	if(JavaBridge.sessionHash==null) return;
     	synchronized(JavaBridge.sessionHash) {
 	    for(Iterator e = JavaBridge.sessionHash.values().iterator(); e.hasNext(); ) {
@@ -77,5 +77,18 @@ public class Session{
 		}
 	    }
 	}
+    }
+    
+    static void reset() {
+	if(JavaBridge.sessionHash==null) return;
+    	synchronized(JavaBridge.sessionHash) {
+	    for(Iterator e = JavaBridge.sessionHash.values().iterator(); e.hasNext(); ) {
+		Session ref = (Session)e.next();
+		sessionCount--;
+		JavaBridge.sessionHash.remove(ref.name);
+		Util.logDebug("Session " + ref.name + " destroyed.");
+	    }
+	}
+  	
     }
 }

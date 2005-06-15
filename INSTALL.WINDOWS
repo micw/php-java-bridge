@@ -12,30 +12,32 @@ the activity on the web server and the bridge.
 * Download and extract php-java-bridge_*-win32-php5.zip into the
   folder: c:\php5.
 
-* Double-Click on c:\php5\JavaBridge.jar
+* Double-click on c:\php5\JavaBridge.jar. Or deploy
+  c:\php5\JavaBridge.war into your servlet engine or java application
+  server and re-start it.
 
-* Open a command window in c:\php5 and type:
-
-   .\php-cgi test.php >result.html 
-
+* Double-click on c:\php5\test.bat.
   Open the file result.html with a browser.  Search for the "java
   status" entry, it should be "java status: running", and examine the
-  java properties at the bottom of the page. 
+  java properties at the bottom of the page. Search for the 
+  "extension_dir", it should be "c:\php5" for this test.
 
-* Copy your java libraries (.jar files) into c:\php5\lib. Copy the
-  php_java.dll into the extension directory of your PHP 5.0.3
-  installation.
 
-* Add the following entry to your php.ini:
+If the above test succeeded, install the php.ini, the php_java.dll and
+your java libraries (.jar files):
 
-          extension = php_java.dll
-          [java]
+* Copy or add the contents of the c:\php5\php.ini file to the
+  php.ini in the windows system directory (usually c:\winnt or
+  c:\windows) and edit it so that the "extension_dir" points to your
+  PHP 5 extension directory. Copy the php_java.dll into the
+  extension_dir and copy your java libraries (.jar files) into
+  extension_dir\lib.
 
 * Copy the test.php into your web-server document root and browse to:
 
     http://localhost/test.php
 
-* If you have problems, start the PHP/Java Bridge at log level 3
+* If there are problems, start the PHP/Java Bridge at log level 3
 
     java -jar JavaBridge.jar INET:9167 3 output.log
 
@@ -48,23 +50,11 @@ the activity on the web server and the bridge.
 Known Windows Issues 
 --------------------
 
-* You cannot install your .jar files in /usr/share/java. Please copy
-  them to c:\php5\lib, e.g. c:\php5\lib\batStore.jar. 
-  The libraries can be linked with the java_require() statement, for
-  example java_require('c:\php5\lib\batStore.jar');
+* All .ini entries except java.socketname, java.hosts and
+  java.servlet are meaningless.
 
-* Both, the CGI version and the apache or isapi module are
-  supported. But it is recommended to use the CGI version.
+* The windows version does not start or re-start automatically when
+  the web-server starts or re-starts.
 
-* All .ini entries except java.socketname and java.hosts are
-  meaningless.
-
-* The windows version does not support multicast sockets and therefore
-  load balancing is not available.  However, it is possible to start 
-  additional backends which may take over if the local backend becomes
-  unavailable.  The following .ini entry directs the bridge to two
-  additional backends listening on ports 9169 and 9170:
-
-          extension = php_java.dll
-          [java]
-          java.hosts="127.0.0.1:9169;127.0.0.1:9170"
+* Local ("unix domain") sockets, which are faster and more secure than
+  TCP sockets, are not available.

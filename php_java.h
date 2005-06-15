@@ -61,6 +61,7 @@ extern int java_ini_updated;
 #define U_CLASSPATH (1<<6)
 #define U_SOCKNAME (1<<7)
 #define U_HOSTS (1<<8)
+#define U_SERVLET (1<<9)
 
 
 #define phpext_java_ptr &java_module_entry
@@ -92,14 +93,13 @@ struct cfg {
   char*logLevel;
   char*logFile;
   short can_fork;				/* 0 if user has hard-coded the socketname */
-  short have_mc_backends;
+  char* servlet;				/* On or servlet context */
 };
 extern struct cfg *cfg;
 
 ZEND_BEGIN_MODULE_GLOBALS(java)
   proxyenv *jenv;
   short is_closed; 				/* PR1176522: GC must not re-open the connection */
-  short session_is_new;		/* HACK: pass down a struct to the multicaster */
 ZEND_END_MODULE_GLOBALS(java)
 
 
@@ -117,13 +117,12 @@ extern char* java_get_server_string();
 extern proxyenv *java_try_connect_to_server(TSRMLS_D);
 extern proxyenv *java_connect_to_server(TSRMLS_D);
 extern proxyenv *java_connect_to_mono(TSRMLS_D);
-extern proxyenv *java_connect_to_server_no_multicast(TSRMLS_D);
-extern proxyenv *java_connect_to_mono_no_multicast(TSRMLS_D);
 extern void java_start_server();
 
 /* spec: M ono, J ava or I nit (lower-case m or j: no multicast) */
 extern char* java_test_server(int *socket, unsigned char spec);
-/* spec: m ono or j ava */
-extern char* java_test_server_no_multicast(int *socket, unsigned char spec TSRMLS_DC);
+
+/* returns the servlet context or null */
+extern char *get_servlet_context();
 
 #endif

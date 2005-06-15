@@ -65,6 +65,7 @@ public class Request implements IDocHandler {
     	}
     }
     private Args args;
+    private Response res;
     
     public Request(JavaBridge bridge) {
 	this.bridge=bridge;
@@ -72,7 +73,7 @@ public class Request implements IDocHandler {
 	this.args=new Args();
     }
     static final byte[] ZERO={0};
-    boolean initOptions(InputStream in, OutputStream out) throws IOException {
+    public boolean initOptions(InputStream in, OutputStream out) throws IOException {
     	switch(parser.initOptions(in)) {
     	case Parser.PING: out.write(ZERO, 0, 1); return false;
     	case Parser.IO_ERROR: 
@@ -166,9 +167,8 @@ public class Request implements IDocHandler {
     	}
     	}
     }
-    void handleRequests() throws IOException {
-    	Response res=new Response(bridge);
-	bridge.globalRef=new GlobalRef(bridge);
+    public void handleRequests() throws IOException {
+    	res=new Response(bridge);
 	while(Parser.OK==parser.parse(bridge.in)){
 	    res.setResult(args.id, parser.options);
 	    switch(args.type){
@@ -201,6 +201,5 @@ public class Request implements IDocHandler {
 	    }
 	    args.reset();
 	}
-	bridge.globalRef=null;
     }
 }

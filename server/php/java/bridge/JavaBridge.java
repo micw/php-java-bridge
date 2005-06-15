@@ -7,17 +7,19 @@ import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Field;
-import java.lang.reflect.AccessibleObject;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Vector;
@@ -33,12 +35,13 @@ public class JavaBridge implements Runnable {
     public Throwable lastException = null;
 
     // list of objects in use in the current script
-    GlobalRef globalRef;
+    GlobalRef globalRef=new GlobalRef(this);
+
     static HashMap sessionHash = new HashMap();
 
-    JavaBridgeClassLoader cl=new JavaBridgeClassLoader();
+    public JavaBridgeClassLoader cl=new JavaBridgeClassLoader();
 
-    InputStream in; OutputStream out;
+    public InputStream in; public OutputStream out;
 
     
     //
@@ -52,7 +55,7 @@ public class JavaBridge implements Runnable {
      * @return true if it was possible to re-direct stdout and stderr.  
      * If yes, we can simply print to standard out.
      */
-    static native boolean openLog(String logFile);
+    public static native boolean openLog(String logFile);
     /**
      * Create a local ("Unix domain") socket for sockname and return the handle.
      * If it was possible to obtain the user credentials, setGlobals will be called with
@@ -104,9 +107,7 @@ public class JavaBridge implements Runnable {
     // Communication with client in a new thread
     //
     public void run() { 
-	synchronized(loadLock) {
-	    load++;
-	}
+	load++;
     	Request r = new Request(this);
     	try {
 	    if(r.initOptions(in, out)) {
@@ -125,11 +126,8 @@ public class JavaBridge implements Runnable {
 	} catch (IOException e2) {
 	    Util.printStackTrace(e2);
 	}
-	synchronized(loadLock) {
-	    load--;
-	    if(load<(Listener.MAX_LOAD-1)) loadLock.notifyAll();
-	}
-	
+	load--;
+	globalRef=null;
 	Session.expire();
         Util.logDebug(this + " " + "request terminated.");
     }
@@ -150,7 +148,7 @@ public class JavaBridge implements Runnable {
     //
     // init
     //
-    static void init(String s[]) {
+    public static void init(String s[]) {
 	String logFile=null;
 	String sockname=null;
 	ISocketFactory socket = null;
@@ -392,7 +390,13 @@ public class JavaBridge implements Runnable {
 	    }
 
 	    Object coercedArgs[] = coerce(selected.getParameterTypes(), args, response);
-	    response.writeObject(selected.newInstance(coercedArgs));
+	    try {
+	    	response.writeObject(selected.newInstance(coercedArgs));
+	    } catch (NoClassDefFoundError xerr) {
+	    	Util.logError("Error: Could not invoke constructor. A class referenced in the constructor method could not be found: " + xerr + ". Please correct this error or use \"new JavaClass()\" to avoid calling the constructor.");
+	    	JavaBridgeClassLoader.reset();
+	    	response.writeObject(Class.forName(name, true, cl));
+	    }
 
 	} catch (Throwable e) {
 	    if(e instanceof OutOfMemoryError || 
@@ -426,7 +430,12 @@ public class JavaBridge implements Runnable {
 	    for (int i=0; i<parms.length; i++) {
 		if (parms[i].isInstance(args[i])) {
 		    for (Class c=args[i].getClass(); (c=c.getSuperclass()) != null; ) {
-			if (!parms[i].isAssignableFrom(c)) break;
+			if (!parms[i].isAssignableFrom(c)) { 
+				if (args[i] instanceof byte[]) { //special case: when arg is a byte array we always prefer a String parameter (if it exists).
+					weight+=1;
+				}
+				break; 
+			}
 			weight+=256; // prefer more specific arg, for
 				     // example AbstractMap hashMap
 				     // over Object hashMap.
@@ -545,7 +554,8 @@ public class JavaBridge implements Runnable {
 		if (c == Float.TYPE)   result[i]=new Float(n.floatValue());
 		if (c == Long.TYPE && !(n instanceof Long)) 
 		    result[i]=new Long(n.longValue());
-	    } else if (args[i] instanceof Map && parms[i].isArray()) {
+	    } else if (args[i] instanceof Map) {
+	    	if(parms[i].isArray()) {
 		try {
 		    Map ht = (Map)args[i];
 		    size = ht.size();
@@ -583,21 +593,47 @@ public class JavaBridge implements Runnable {
 		    Util.printStackTrace(e);
 		    // leave result[i] alone...
 		}
-	    } else if (args[i] instanceof Map && (java.util.Collection.class).isAssignableFrom(parms[i])) {
+	    } else if ((java.util.Collection.class).isAssignableFrom(parms[i])) {
 		try {
 		    Map ht = (Map)args[i];
-		    // Verify that the keys are Long
+		    HashSet res = new HashSet();
 		    for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
-			int index = ((Long)e.next()).intValue();
+		    	Object key = e.next();
+		    	Object val = ht.get(key);
+			int index = ((Long)key).intValue();		    // Verify that the keys are Long
+		
+		    	if(val instanceof byte[]) val = response.newString((byte[])val); // always prefer strings over byte[]
+			res.add(val);
 		    }
 
-		    result[i]=((java.util.Map)(args[i])).values(); 
+		    result[i]=res; 
 		} catch (Exception e) {
-		    Util.logError("Error: " +  String.valueOf(e) + " Could not create java.util.Map.  You have probably passed an hashtable instead of an array. Please check that the keys are long.");
+		    Util.logError("Error: " +  String.valueOf(e) + " Could not create java.util.Map.  You have probably passed a hashtable instead of an array. Please check that the keys are long.");
 		    Util.printStackTrace(e);
 		    // leave result[i] alone...
 		}
-	    } 
+	    } if ((java.util.Hashtable.class).isAssignableFrom(parms[i])) {
+		try {
+			    Map ht = (Map)args[i];
+			    Hashtable res = new Hashtable();
+			    for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
+			    	Object key = e.next();
+			    	Object val = ht.get(key);
+			
+			    	if(key instanceof byte[]) key = response.newString((byte[])key); // always prefer strings over byte[]
+			    	if(val instanceof byte[]) val = response.newString((byte[])val); // always prefer strings over byte[]
+				res.put(key, val);
+			    }
+
+			    result[i]=res; 
+			} catch (Exception e) {
+			    Util.logError("Error: " +  String.valueOf(e) + " Could not create java.util.Hashtable.");
+			    Util.printStackTrace(e);
+			    // leave result[i] alone...
+			}
+	    	
+	    }
+	    }
 	}
 	return result;
     }
@@ -971,5 +1007,14 @@ public class JavaBridge implements Runnable {
 		JavaBridge.sessionHash.put(name, ref);
 		return ref;
     	}
+    }
+    
+    /**
+     * Reset the internal state of the PHP/Java Bridge.
+     *
+     */
+    public static void reset() {
+    	Session.reset();
+    	JavaBridgeClassLoader.reset();
     }
 }

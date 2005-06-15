@@ -60,7 +60,7 @@ public class Parser {
     	level=0;
     	eor=0;
     	blen=0;
-    	eot=in_dquote=false;
+    	in_dquote=false;
     	i=0;
     	i0=0;
     }
@@ -83,7 +83,7 @@ public class Parser {
 	    for(int i=0; i<tag[1].n; i++) {
 		buf.append(tag[1].strings[i].getUTF8StringValue()); buf.append("=\""); buf.append(tag[2].strings[i].getUTF8StringValue());buf.append("\" ");
 	    }
-	    buf.append(eot?"/>":">");
+	    buf.append(eot?"/>":">"); eot=false;
 	    Util.logDebug(this.bridge + " " + buf.toString());
     	}
 	handler.begin(tag);
