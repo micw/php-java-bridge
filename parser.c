@@ -37,7 +37,7 @@
   (*env)->c=0; (*env)->pos=0; \
 }
 #define CALL_BEGIN() { \
-  (*cb->begin)(tag, cb); \
+  if(cb->begin) (*cb->begin)(tag, cb); \
 }
 #define CALL_END() { \
   if(cb->end) (*cb->end)(tag[0].strings, cb); \
@@ -174,6 +174,8 @@ short parse_header(proxyenv *env, parser_cb_t *cb) {
 	if(type==KEY) { 
 	  PUSH(type);
 	  type=VAL;
+	} else {
+	  APPEND(ch);
 	}
 	break;
       default:

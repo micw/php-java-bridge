@@ -62,7 +62,7 @@ void php_java_invoke(char*name, long object, int arg_count, zval**arguments, sho
   (*jenv)->writeInvokeEnd(jenv);
 }
 
-void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, short constructor, short createInstance, pval *object, int arg_count, zval**arguments)
+void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, enum constructor constructor, short createInstance, pval *object, int arg_count, zval**arguments)
 {
   long result = 0;
   proxyenv *jenv;
@@ -79,7 +79,7 @@ void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, sho
       return;
     }
 	
-	if(strlen(name)>=4 && !strncmp(name, "mono", 4)) {
+	if(constructor==CONSTRUCT_MONO) {
 								/* create a new mono object */
 	  char *cname, *mname;
 	  size_t clen;

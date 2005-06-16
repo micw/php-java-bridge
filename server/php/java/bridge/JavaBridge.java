@@ -138,7 +138,7 @@ public class JavaBridge implements Runnable {
     //
     static void initGlobals(String phpConfigDir) {
     	try {
-    		JavaBridgeClassLoader.initClassLoader(phpConfigDir);
+	    JavaBridgeClassLoader.initClassLoader(phpConfigDir);
     	} catch (Exception t) {
 	    Util.printStackTrace(t);
 	}
@@ -160,7 +160,7 @@ public class JavaBridge implements Runnable {
 		if(s.length>1) {
 		    Util.logLevel=Integer.parseInt(s[1]);
 		} else {
-			Util.logLevel=Util.DEFAULT_LOG_LEVEL;
+		    Util.logLevel=Util.DEFAULT_LOG_LEVEL;
 		}
 	    } catch (Throwable t) {
 		Util.printStackTrace(t);
@@ -176,7 +176,7 @@ public class JavaBridge implements Runnable {
 		Util.printStackTrace(t);
 	    }
 	    boolean redirectOutput = false;
-		try {
+	    try {
 	    	redirectOutput = openLog(logFile);
 	    } catch (Throwable t) {
 	    }
@@ -228,7 +228,7 @@ public class JavaBridge implements Runnable {
 	try {
 	    System.loadLibrary("natcJavaBridge");
 	} catch (Throwable t) {
-		haveNatcJavaBridge=false;
+	    haveNatcJavaBridge=false;
 	    //Util.printStackTrace(t);
 	    //System.exit(9);
 	}
@@ -431,10 +431,10 @@ public class JavaBridge implements Runnable {
 		if (parms[i].isInstance(args[i])) {
 		    for (Class c=args[i].getClass(); (c=c.getSuperclass()) != null; ) {
 			if (!parms[i].isAssignableFrom(c)) { 
-				if (args[i] instanceof byte[]) { //special case: when arg is a byte array we always prefer a String parameter (if it exists).
-					weight+=1;
-				}
-				break; 
+			    if (args[i] instanceof byte[]) { //special case: when arg is a byte array we always prefer a String parameter (if it exists).
+				weight+=1;
+			    }
+			    break; 
 			}
 			weight+=256; // prefer more specific arg, for
 				     // example AbstractMap hashMap
@@ -556,83 +556,83 @@ public class JavaBridge implements Runnable {
 		    result[i]=new Long(n.longValue());
 	    } else if (args[i] instanceof Map) {
 	    	if(parms[i].isArray()) {
-		try {
-		    Map ht = (Map)args[i];
-		    size = ht.size();
+		    try {
+			Map ht = (Map)args[i];
+			size = ht.size();
 
-		    // Verify that the keys are Long, and determine maximum
-		    for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
-			int index = ((Long)e.next()).intValue();
-			if (index >= size) size = index+1;
-		    }
-
-		    Object tempArray[] = new Object[size];
-		    Class tempTarget[] = new Class[size];
-		    targetType = parms[i].getComponentType();
-
-		    // flatten the hash table into an array
-		    for (int j=0; j<size; j++) {
-			tempArray[j] = ht.get(new Long(j));
-			if (tempArray[j] == null && targetType.isPrimitive()) 
-			    throw new Exception("bail");
-			tempTarget[j] = targetType;
-		    }
-
-		    // coerce individual elements into the target type
-		    Object coercedArray[] = coerce(tempTarget, tempArray, response);
-        
-		    // copy the results into the desired array type
-		    Object array = Array.newInstance(targetType,size);
-		    for (int j=0; j<size; j++) {
-			Array.set(array, j, coercedArray[j]);
-		    }
-
-		    result[i]=array;
-		} catch (Exception e) {
-		    Util.logError("Error: " + String.valueOf(e) + " could not create array of type: " + targetType + ", size: " + size);
-		    Util.printStackTrace(e);
-		    // leave result[i] alone...
-		}
-	    } else if ((java.util.Collection.class).isAssignableFrom(parms[i])) {
-		try {
-		    Map ht = (Map)args[i];
-		    HashSet res = new HashSet();
-		    for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
-		    	Object key = e.next();
-		    	Object val = ht.get(key);
-			int index = ((Long)key).intValue();		    // Verify that the keys are Long
-		
-		    	if(val instanceof byte[]) val = response.newString((byte[])val); // always prefer strings over byte[]
-			res.add(val);
-		    }
-
-		    result[i]=res; 
-		} catch (Exception e) {
-		    Util.logError("Error: " +  String.valueOf(e) + " Could not create java.util.Map.  You have probably passed a hashtable instead of an array. Please check that the keys are long.");
-		    Util.printStackTrace(e);
-		    // leave result[i] alone...
-		}
-	    } if ((java.util.Hashtable.class).isAssignableFrom(parms[i])) {
-		try {
-			    Map ht = (Map)args[i];
-			    Hashtable res = new Hashtable();
-			    for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
-			    	Object key = e.next();
-			    	Object val = ht.get(key);
-			
-			    	if(key instanceof byte[]) key = response.newString((byte[])key); // always prefer strings over byte[]
-			    	if(val instanceof byte[]) val = response.newString((byte[])val); // always prefer strings over byte[]
-				res.put(key, val);
-			    }
-
-			    result[i]=res; 
-			} catch (Exception e) {
-			    Util.logError("Error: " +  String.valueOf(e) + " Could not create java.util.Hashtable.");
-			    Util.printStackTrace(e);
-			    // leave result[i] alone...
+			// Verify that the keys are Long, and determine maximum
+			for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
+			    int index = ((Long)e.next()).intValue();
+			    if (index >= size) size = index+1;
 			}
+
+			Object tempArray[] = new Object[size];
+			Class tempTarget[] = new Class[size];
+			targetType = parms[i].getComponentType();
+
+			// flatten the hash table into an array
+			for (int j=0; j<size; j++) {
+			    tempArray[j] = ht.get(new Long(j));
+			    if (tempArray[j] == null && targetType.isPrimitive()) 
+				throw new Exception("bail");
+			    tempTarget[j] = targetType;
+			}
+
+			// coerce individual elements into the target type
+			Object coercedArray[] = coerce(tempTarget, tempArray, response);
+        
+			// copy the results into the desired array type
+			Object array = Array.newInstance(targetType,size);
+			for (int j=0; j<size; j++) {
+			    Array.set(array, j, coercedArray[j]);
+			}
+
+			result[i]=array;
+		    } catch (Exception e) {
+			Util.logError("Error: " + String.valueOf(e) + " could not create array of type: " + targetType + ", size: " + size);
+			Util.printStackTrace(e);
+			// leave result[i] alone...
+		    }
+		} else if ((java.util.Collection.class).isAssignableFrom(parms[i])) {
+		    try {
+			Map ht = (Map)args[i];
+			HashSet res = new HashSet();
+			for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
+			    Object key = e.next();
+			    Object val = ht.get(key);
+			    int index = ((Long)key).intValue();		    // Verify that the keys are Long
+		
+			    if(val instanceof byte[]) val = response.newString((byte[])val); // always prefer strings over byte[]
+			    res.add(val);
+			}
+
+			result[i]=res; 
+		    } catch (Exception e) {
+			Util.logError("Error: " +  String.valueOf(e) + " Could not create java.util.Map.  You have probably passed a hashtable instead of an array. Please check that the keys are long.");
+			Util.printStackTrace(e);
+			// leave result[i] alone...
+		    }
+		} if ((java.util.Hashtable.class).isAssignableFrom(parms[i])) {
+		    try {
+			Map ht = (Map)args[i];
+			Hashtable res = new Hashtable();
+			for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
+			    Object key = e.next();
+			    Object val = ht.get(key);
+			
+			    if(key instanceof byte[]) key = response.newString((byte[])key); // always prefer strings over byte[]
+			    if(val instanceof byte[]) val = response.newString((byte[])val); // always prefer strings over byte[]
+			    res.put(key, val);
+			}
+
+			result[i]=res; 
+		    } catch (Exception e) {
+			Util.logError("Error: " +  String.valueOf(e) + " Could not create java.util.Hashtable.");
+			Util.printStackTrace(e);
+			// leave result[i] alone...
+		    }
 	    	
-	    }
+		}
 	    }
 	}
 	return result;
@@ -989,23 +989,23 @@ public class JavaBridge implements Runnable {
     
     public Session getSession(String name, boolean clientIsNew, int timeout) {
     	synchronized(JavaBridge.sessionHash) {
-    		Session ref = null;
-	    	if(!JavaBridge.sessionHash.containsKey(name)) {
-		    	ref = new Session(name);
-			ref.setTimeout(1000*(long)timeout);
-	    	} else {
-	    		ref = (Session) JavaBridge.sessionHash.get(name);
-			if(clientIsNew) { // client side gc'ed, destroy server ref now!
-			    ref.destroy();
-			    ref = new Session(name);
-			    ref.setTimeout(1000*(long)timeout);
-	    		} else {
-			    ref.isNew=false;
-			}
-	    	}
+	    Session ref = null;
+	    if(!JavaBridge.sessionHash.containsKey(name)) {
+		ref = new Session(name);
+		ref.setTimeout(1000*(long)timeout);
+	    } else {
+		ref = (Session) JavaBridge.sessionHash.get(name);
+		if(clientIsNew) { // client side gc'ed, destroy server ref now!
+		    ref.destroy();
+		    ref = new Session(name);
+		    ref.setTimeout(1000*(long)timeout);
+		} else {
+		    ref.isNew=false;
+		}
+	    }
 	    	
-		JavaBridge.sessionHash.put(name, ref);
-		return ref;
+	    JavaBridge.sessionHash.put(name, ref);
+	    return ref;
     	}
     }
     

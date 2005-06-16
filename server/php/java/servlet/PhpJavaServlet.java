@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -19,51 +20,21 @@ import php.java.bridge.Util;
 
 
 public class PhpJavaServlet extends HttpServlet {
-    public void init(ServletConfig config) throws ServletException {
-	// FIXME: parse config
-	String s[]= new String[]{"9167", "5", ""};
-	String sockname, logFile="";
-	try {
-	    if(s.length>0) {
-		sockname=s[0];
-	    } 
-	    try {
-		if(s.length>1) {
-		    Util.logLevel=Integer.parseInt(s[1]);
-		} else {
-		    Util.logLevel=Util.DEFAULT_LOG_LEVEL;
-		}
-	    } catch (Throwable t) {
-		Util.printStackTrace(t);
-	    }
+    public static class Logger extends Util.Logger {
+	private ServletContext ctx;
+	public Logger(ServletContext ctx) {
+	    this.ctx = ctx;
+	}
+	public void log(String s) { ctx.log(s); }
+	public String now() { return ""; }
+	public void printStackTrace(Throwable t) {
+	    ctx.log("JavaBridge Exception: ", t);
+	}
+    }
 
-	    try {
-		logFile="";
-		if(s.length>2) {
-		    logFile=s[2];
-		    if(Util.logLevel>3) System.out.println("Java log         : " + logFile);
-		}
-	    }catch (Throwable t) {
-		Util.printStackTrace(t);
-	    }
-	    boolean redirectOutput = false;
-	    try {
-		redirectOutput = JavaBridge.openLog(logFile);
-	    } catch (Throwable t) {
-	    }
-			    
-	    if(!redirectOutput) {
-		try {
-		    Util.logStream=new java.io.PrintStream(new java.io.FileOutputStream(logFile));
-		} catch (Exception e) {
-		    Util.logStream=System.out;
-		}
-	    } else {
-		Util.logStream=System.out;
-		logFile="<stdout>";
-	    }
-	} catch (Throwable t) {t.printStackTrace();}
-		
+    public void init(ServletConfig config) throws ServletException {
+	Util.logLevel=Util.DEFAULT_LOG_LEVEL; /* java.log_level in php.ini overrides */
+	Util.logger=new Logger(config.getServletContext());
     }
 
     public void doPut (HttpServletRequest req, HttpServletResponse res)

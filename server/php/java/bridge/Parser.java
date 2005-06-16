@@ -30,13 +30,17 @@ public class Parser {
 	     * 
 	     */
 	    switch(ch=buf[c]) {
-	    case '<': case '\t': case '\f': case '\n': case '\r': case ' ': break;
-	    case 0:		
+	    case '<': case '\t': case '\f': case '\n': case '\r': case ' ': 
+	    	break;
+	    case 0:	
 		// PING
 		return PING;
 
 		// OPTIONS
-	    default: options=(byte) (ch&3); c++;
+	    default:
+	    	if((ch&64)!=0) options=(byte) (ch&3); 
+	    	if((ch&128)!=0) Util.logLevel = (ch>>2)&7;
+	    	c++;
 	    }
 	} else {
 		return EOF;

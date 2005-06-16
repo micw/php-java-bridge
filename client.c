@@ -260,6 +260,8 @@ void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
   switch ((*tag[0].strings[0].string)[tag[0].strings[0].off]) {
   case 'S'://Set-Cookie:
 	{
+	  assert(!strcmp(PARSER_GET_STRING(tag[0].strings, 0), "Set-Cookie"));
+
 	  (*ctx)->cookie_name = estrdup(PARSER_GET_STRING(tag[1].strings, 0));
 	  (*ctx)->cookie_value = estrdup(PARSER_GET_STRING(tag[2].strings, 0));
 	  break;
@@ -271,7 +273,8 @@ static void handle_request(proxyenv *env) {
   parser_cb_t cb = {begin, end, &ctx};
 
   if(get_servlet_context()) {
-	parser_cb_t cb_header = {begin_header, 0, env};
+								/* set cookie only once */
+	parser_cb_t cb_header = {(*env)->cookie_name?0:begin_header, 0, env};
 	parse_header(env, &cb_header);
   }
 
@@ -296,10 +299,17 @@ static proxyenv *try_connect_to_server(short bail, unsigned char spec TSRMLS_DC)
 	  php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge and set the java.socketname option?",52, strerror(errno));
 	return 0;
   }
+
+  if(!get_servlet_context()) {
+	unsigned short level = (cfg->logLevel_val)>4?4:cfg->logLevel_val;
 #ifndef ZEND_ENGINE_2
   // we want arrays as values
-  if(!get_servlet_context()) { char c=2; send(sock, &c, sizeof c, 0); }
+	unsigned char c=128|64|(level<<2)|2;
+	#else
+	unsigned char c=128|64|(level<<2)|0;
 #endif
+	send(sock, &c, sizeof c, 0); 
+  }
 
   return JG(jenv) = java_createSecureEnvironment(sock, handle_request, server);
 }

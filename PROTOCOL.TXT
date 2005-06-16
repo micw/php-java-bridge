@@ -1,4 +1,4 @@
-PHP/Java Bridge protocol version 1.0.1
+PHP/Java Bridge protocol version 1.0.2
 
 Requests are marked with "->", responses with "<-".  The server
 continues to process requests until EOF. Only the first character is
@@ -152,15 +152,22 @@ v: long
 
 NOTES:
 
-If the first byte is neither a "<" nor a space, bits 0 and 1
-have a special meaning:
+If the first byte is neither a "<" nor a space, bits [0,1], [2,4] and
+[6,7] have a special meaning:
 
 Bit 0: Reserved.
 
 Bit 1: Client wants arrays as values. The server will return X and P
 instead of O.
 
-The default is 0 for PHP5 and 2 for PHP4.
+Bit 2,3,4: log level (from java.log_level)
+
+Bit 5: always 0
+
+Bit 6: set to 1 if bit[0,1] are used
+Bit 7: set to 1 if bit[2,4] are used
+
+The default is 0304 for PHP5 and 0306 for PHP4.
 
 
 It is possible to "ping" the server by sending it the byte 0x0. If

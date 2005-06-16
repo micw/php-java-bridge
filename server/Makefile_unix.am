@@ -29,10 +29,11 @@ JavaBridge.jar:
 	$(PHP_JAVA)/bin/javac php/java/bridge/*.java
 	$(PHP_JAVA)/bin/jar cMf JavaBridge.jar META-INF/MANIFEST.MF php/java/bridge/*.class
 
-JavaBridge.war: JavaBridge.jar
+JavaBridge.war: JavaBridge.jar j2ee.jar
 	$(PHP_JAVA)/bin/javac -classpath j2ee.jar  php/java/bridge/*.java php/java/servlet/*.java
-	-mkdir WEB-INF/lib
+	-mkdir WEB-INF/lib WEB-INF/classes
 	cp JavaBridge.jar WEB-INF/lib
-	$(PHP_JAVA)/bin/jar cMf JavaBridge.war META-INF/MANIFEST.MF WEB-INF/web.xml WEB-INF/lib/JavaBridge.jar php/java/servlet/*.class
+	cp -r php WEB-INF/classes
+	$(PHP_JAVA)/bin/jar cMf JavaBridge.war META-INF/MANIFEST.MF WEB-INF/web.xml WEB-INF/lib/JavaBridge.jar WEB-INF/classes/php/java/servlet/*.class
 
 endif

@@ -91,6 +91,7 @@ struct cfg {
   char*java;
   char*java_home;
   char*logLevel;
+  unsigned short logLevel_val;
   char*logFile;
   short can_fork;				/* 0 if user has hard-coded the socketname */
   char* servlet;				/* On or servlet context */

@@ -38,16 +38,19 @@ static void flush(proxyenv *env) {
   if(get_servlet_context()) {
 	char header[1024];
 	int header_length;
+	unsigned short level = cfg->logLevel_val>4?4:cfg->logLevel_val;
+
 #ifndef ZEND_ENGINE_2
-	static const char mode[] = "2";
+  // we want arrays as values
+	unsigned char mode=128|64|(level<<2)|2;
 #else
-	static const char mode[] = "";
+	unsigned char mode=128|64|(level<<2)|0;
 #endif
 
 	if((*env)->cookie_name) 
-	  header_length=php_java_snprintf(header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: keep-alive\r\nCookie: %s=%s\r\nContent-Type: text/html\r\nContent-Length: %ld\r\n\r\n%s", get_servlet_context(), (*env)->cookie_name, (*env)->cookie_value, size+sizeof(mode)-1, mode);
+	  header_length=php_java_snprintf(header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: keep-alive\r\nCookie: %s=%s\r\nContent-Type: text/html\r\nContent-Length: %ld\r\n\r\n%c", get_servlet_context(), (*env)->cookie_name, (*env)->cookie_value, size+1, mode);
 	else
-	  header_length=php_java_snprintf(header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: keep-alive\r\nContent-Type: text/html\r\nContent-Length: %ld\r\n\r\n%s", get_servlet_context(), size+sizeof(mode)-1, mode);
+	  header_length=php_java_snprintf(header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: keep-alive\r\nContent-Type: text/html\r\nContent-Length: %ld\r\n\r\n%c", get_servlet_context(), size+1, mode);
 
 	send((*env)->peer, header, header_length, 0);
   }

@@ -300,6 +300,7 @@ static PHP_INI_MH(OnIniLogLevel)
 {
 	if (new_value) {
 	  cfg->logLevel = new_value;
+	  cfg->logLevel_val=atoi(cfg->logLevel);
 	  java_ini_updated|=U_LOGLEVEL;
 	}
 	return SUCCESS;
@@ -346,7 +347,7 @@ PHP_METHOD(java, java)
 	}
 
 	php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU,
-								   "java", 1, 1,
+								   "java", CONSTRUCT_JAVA, 1,
 								   getThis(),
 								   argc, argv);
 	efree(argv);
@@ -364,7 +365,7 @@ PHP_METHOD(java, mono)
 	}
 
 	php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU,
-								   "mono", 1, 1,
+								   "mono", CONSTRUCT_MONO, 1,
 								   getThis(),
 								   argc, argv);
 	efree(argv);
@@ -382,7 +383,7 @@ PHP_METHOD(java, java_class)
 	}
 
 	php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU,
-								   "java", 1, 0, 
+								   "java", CONSTRUCT_JAVA, 0, 
 								   getThis(),
 								   argc, argv);
 	efree(argv);
@@ -400,7 +401,7 @@ PHP_METHOD(java, mono_class)
 	}
 
 	php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU,
-								   "mono", 1, 0, 
+								   "mono", CONSTRUCT_MONO, 0, 
 								   getThis(),
 								   argc, argv);
 	efree(argv);
@@ -419,7 +420,7 @@ PHP_METHOD(java, javaclass)
 	}
 
 	php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU,
-								   "java", 1, 0, 
+								   "java", CONSTRUCT_JAVA, 0, 
 								   getThis(),
 								   argc, argv);
 	efree(argv);
@@ -438,7 +439,7 @@ PHP_METHOD(java, monoclass)
 	}
 
 	php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU,
-								   "mono", 1, 0, 
+								   "mono", CONSTRUCT_MONO, 0, 
 								   getThis(),
 								   argc, argv);
 	efree(argv);
@@ -469,7 +470,7 @@ PHP_METHOD(java, __call)
 	}
 
 	php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU,
-								   Z_STRVAL(*argv[0]), 0, 0,
+								   Z_STRVAL(*argv[0]), CONSTRUCT_NONE, 0,
 								   getThis(),
 								   xargc, xargv);
 								   
@@ -492,7 +493,7 @@ PHP_METHOD(java, __tostring)
 	(*jenv)->writeInvokeEnd(jenv);
   } else {
 	php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU,
-								   "tostring", 0, 0, getThis(), 0, NULL);
+								   "tostring", CONSTRUCT_NONE, 0, getThis(), 0, NULL);
   }
 
 }
@@ -927,19 +928,16 @@ php_java_call_function_handler4(INTERNAL_FUNCTION_PARAMETERS, zend_property_refe
   int arg_count = ZEND_NUM_ARGS();
   pval **arguments = (pval **) emalloc(sizeof(pval *)*arg_count);
   short createInstance;
-  short constructor;
-  short is_mono;
+  enum constructor constructor = CONSTRUCT_NONE;
 
   getParametersArray(ht, arg_count, arguments);
 
   if(!strncmp("mono", name, 4) && arg_count>0) {
-	is_mono=1;
 	createInstance = strcmp("mono_class", name) && strcmp("monoclass", name);
-	constructor = !strcmp("mono", name) || !createInstance;
+	if(!strcmp("mono", name) || !createInstance) constructor = CONSTRUCT_MONO;
   } else {
-	is_mono=0;
 	createInstance = strcmp("java_class", name) && strcmp("javaclass", name);
-	constructor = !strcmp("java", name) || !createInstance;
+	if(!strcmp("java", name) || !createInstance) constructor = CONSTRUCT_JAVA;
   }
   php_java_call_function_handler(INTERNAL_FUNCTION_PARAM_PASSTHRU, 
 								 name, constructor, createInstance, 

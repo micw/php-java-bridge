@@ -13,27 +13,44 @@ public class Util {
     public static final int BACKLOG = 20;
 
     public static PrintStream logStream;
+    public static class Logger { // hook for servlet
+        static boolean haveDateFormat=true;
+        private static Object _form;
+        public String now() {
+	    if(!haveDateFormat) return String.valueOf(System.currentTimeMillis());
+	    try {
+		if(_form==null)
+		    _form = new java.text.SimpleDateFormat("MMM dd HH:mm:ss");
+		return ((java.text.SimpleDateFormat)_form).format(new Date());
+	    } catch (Throwable t) {
+		haveDateFormat=false;
+		return now();
+	    }
+	}
+   	public void log(String s) {
+	    byte[] bytes = null;
+	    try {
+		bytes = s.getBytes(UTF8);
+	    } catch (java.io.UnsupportedEncodingException e) {
+		Util.printStackTrace(e);
+		bytes = s.getBytes();
+	    }
+	    logStream.write(bytes, 0, bytes.length);
+	    logStream.println("");
+    	}
+   	public void printStackTrace(Throwable t) {
+	    t.printStackTrace(logStream);
+   	}
+    }
+    public static Logger logger = new Logger();
     public static int logLevel;
 
     //
     // Logging
     //
-    static boolean haveDateFormat=true;
-    private static Object _form;
-    private static String now() {
-	if(!haveDateFormat) return String.valueOf(System.currentTimeMillis());
-	try {
-	    if(_form==null)
-		_form = new java.text.SimpleDateFormat("MMM dd HH:mm:ss");
-	    return ((java.text.SimpleDateFormat)_form).format(new Date());
-	} catch (Throwable t) {
-	    haveDateFormat=false;
-	    return now();
-	}
-    }
 
     public static void println(int level, String msg) {
-	StringBuffer b = new StringBuffer(now());
+	StringBuffer b = new StringBuffer(logger.now());
 	b.append(" JavaBridge ");
 	switch(level) {
 	case 1: b.append("FATAL"); break;
@@ -44,20 +61,12 @@ public class Util {
 	}
 	b.append(": ");
 	b.append(msg);
-	byte[] bytes = null;
-	try {
-	    bytes = b.toString().getBytes(UTF8);
-	} catch (java.io.UnsupportedEncodingException e) {
-	    Util.printStackTrace(e);
-	    bytes = b.toString().getBytes();
-	}
-	logStream.write(bytes, 0, bytes.length);
-	logStream.println("");
+	logger.log(b.toString());
     }
     public static void printStackTrace(Throwable t) {
 	if(logLevel > 0)
 	    if ((t instanceof Error) || logLevel > 1) 
-		t.printStackTrace(logStream);
+	    	logger.printStackTrace(t);
     }
     public static void logDebug(String msg) {
 	if(logLevel>3) println(4, msg);

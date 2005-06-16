@@ -84,7 +84,10 @@ void java_init_cfg() {
   if(!(java_ini_updated&U_LIBRARY_PATH)) cfg->ld_library_path=strdup(CFG_LD_LIBRARY_PATH);
   if(!(java_ini_updated&U_JAVA)) cfg->java=strdup(CFG_JAVA);
   if(!(java_ini_updated&U_JAVA_HOME)) cfg->java_home=strdup(CFG_JAVA_HOME);
-  if(!(java_ini_updated&U_LOGLEVEL)) cfg->logLevel=strdup(DEFAULT_LEVEL);
+  if(!(java_ini_updated&U_LOGLEVEL)) {
+	cfg->logLevel=strdup(DEFAULT_LEVEL);
+	cfg->logLevel_val=atoi(DEFAULT_LEVEL);
+  }
   if(!(java_ini_updated&U_LOGFILE)) cfg->logFile=strdup("");
   cfg->can_fork=
 	((java_ini_updated&U_SOCKNAME)==0)&&
@@ -111,7 +114,7 @@ static short is_servlet() {
 char *get_servlet_context() {
   if(!is_servlet()) return 0;
 
-  if(strncasecmp("on", cfg->servlet, 2)) return DEFAULT_SERVLET;
+  if(!strncasecmp("on", cfg->servlet, 2)) return DEFAULT_SERVLET;
   return cfg->servlet;
 }
 
