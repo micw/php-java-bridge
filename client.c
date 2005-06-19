@@ -30,7 +30,7 @@
 #include "java_bridge.h"
 #include "php_java.h"
 
-ZEND_EXTERN_MODULE_GLOBALS(java)
+EXT_EXTERN_MODULE_GLOBALS(EXT)
 
 
 static void setResultFromString (pval *presult, unsigned char*s, size_t len){
@@ -58,12 +58,12 @@ static  void  setResultFromBoolean  (pval *presult, short value) {
 
 #ifdef ZEND_ENGINE_2
 static  void  setResultFromException  (pval *presult, long value) {
-  /* wrap the java object in a pval object */
+  /* wrap the vm object in a pval object */
   pval *handle;
   TSRMLS_FETCH();
   
   if (Z_TYPE_P(presult) != IS_OBJECT) {
-	object_init_ex(presult, php_java_exception_class_entry);
+	object_init_ex(presult, EXT_GLOBAL(exception_class_entry));
 	presult->is_ref=1;
     presult->refcount=1;
   }
@@ -81,12 +81,12 @@ static  void  setResultFromException  (pval *presult, long value) {
 #endif
 
 static  void  setResultFromObject  (pval *presult, long value) {
-  /* wrap the java object in a pval object */
+  /* wrap the vm object in a pval object */
   pval *handle;
   TSRMLS_FETCH();
   
   if (Z_TYPE_P(presult) != IS_OBJECT) {
-	object_init_ex(presult, php_java_class_entry);
+	object_init_ex(presult, EXT_GLOBAL(class_entry));
 	presult->is_ref=1;
     presult->refcount=1;
   }
@@ -113,6 +113,7 @@ static  pval*nextElement  (pval *handle) {
   pval *result;
   zval_add_ref(&handle);
   ALLOC_ZVAL(result);
+  ZVAL_NULL(result);
   zval_add_ref(&result);
   zend_hash_next_index_insert(Z_ARRVAL_P(handle), &result, sizeof(zval *), NULL);
   return result;
@@ -122,6 +123,7 @@ static  pval*hashIndexUpdate  (pval *handle, long key) {
   pval *result;
   zval_add_ref(&handle);
   ALLOC_ZVAL(result);
+  ZVAL_NULL(result);
   zval_add_ref(&result);
   zend_hash_index_update(Z_ARRVAL_P(handle), (unsigned long)key, &result, sizeof(zval *), NULL);
   return result;
@@ -132,6 +134,7 @@ static pval*hashUpdate  (pval *handle, char *key, size_t len) {
   pval pkey;
   zval_add_ref(&handle);
   ALLOC_ZVAL(result);
+  ZVAL_NULL(result);
   setResultFromString(&pkey, key, len);
   assert(key);
   zval_add_ref(&result);
@@ -165,7 +168,7 @@ struct parse_ctx {
   zval*id;
   zend_stack containers;
 };
-void begin(parser_tag_t tag[3], parser_cb_t *cb){
+static void begin(parser_tag_t tag[3], parser_cb_t *cb){
   struct parse_ctx *ctx=(struct parse_ctx*)cb->ctx;
   parser_string_t *st=tag[2].strings;
 
@@ -254,16 +257,31 @@ static void end(parser_string_t st[1], parser_cb_t *cb){
   }
 }
 
-void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
+static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
   proxyenv *ctx=(proxyenv*)cb->ctx;
+  char *str=PARSER_GET_STRING(tag[0].strings, 0);
 
-  switch ((*tag[0].strings[0].string)[tag[0].strings[0].off]) {
+  switch (*str) {
   case 'S'://Set-Cookie:
 	{
-	  assert(!strcmp(PARSER_GET_STRING(tag[0].strings, 0), "Set-Cookie"));
+	  char *cookie, *path;
+	  static const char setcookie[]="Set-Cookie";
+	  if(strcmp(str, setcookie) || ((*ctx)->cookie_name)) return;
+	  (*ctx)->cookie_name = strdup(PARSER_GET_STRING(tag[1].strings, 0));
+	  cookie = PARSER_GET_STRING(tag[2].strings, 0);
+	  if(path=strchr(cookie, ';')) *path=0;	/* strip off path */
+	  (*ctx)->cookie_value = strdup(cookie);
+	  assert((*ctx)->cookie_name && (*ctx)->cookie_value);
+	  if(!(*ctx)->cookie_name || !(*ctx)->cookie_value) exit(6);
+	  break;
+	}
 
-	  (*ctx)->cookie_name = estrdup(PARSER_GET_STRING(tag[1].strings, 0));
-	  (*ctx)->cookie_value = estrdup(PARSER_GET_STRING(tag[2].strings, 0));
+  case 'C'://Content-Length or Connection
+	{
+	  static const char con_connection[]="Connection", con_close[]="close";
+	  if(!strcmp(str, con_connection)&&!strcmp(PARSER_GET_STRING(tag[1].strings, 0), con_close)) {
+		(*ctx)->must_reopen = 1;
+	  }
 	  break;
 	}
   }
@@ -272,16 +290,41 @@ static void handle_request(proxyenv *env) {
   struct parse_ctx ctx = {0};
   parser_cb_t cb = {begin, end, &ctx};
 
-  if(get_servlet_context()) {
-								/* set cookie only once */
-	parser_cb_t cb_header = {(*env)->cookie_name?0:begin_header, 0, env};
-	parse_header(env, &cb_header);
+  if(EXT_GLOBAL (get_servlet_context) ()) {
+	parser_cb_t cb_header = {begin_header, 0, env};
+	EXT_GLOBAL (parse_header) (env, &cb_header);
   }
 
   zend_stack_init(&ctx.containers);
-  parse(env, &cb);
+  EXT_GLOBAL (parse) (env, &cb);
   assert(zend_stack_is_empty(&ctx.containers));
   zend_stack_destroy(&ctx.containers);
+
+  /* re-open a closed HTTP connection */
+  if((*env)->must_reopen) {
+	char*server; int sock;
+	(*env)->must_reopen = 0;
+	assert((*env)->peer); if((*env)->peer) close((*env)->peer);
+	server = EXT_GLOBAL(test_server)(&(*env)->peer, 0); /* FIXME: this is not very efficient */
+	assert(server); if(!server) exit(9);
+	free(server);
+  }
+
+}
+
+unsigned char EXT_GLOBAL (get_mode) () {
+#ifndef ZEND_ENGINE_2
+  // we want arrays as values
+  static const unsigned char arraysAsValues = 2;
+#else
+  static const unsigned char arraysAsValues = 0;
+#endif
+	unsigned short is_level = ((EXT_GLOBAL (ini_last_updated)&U_LOGLEVEL)!=0);
+	unsigned short level = 0;
+	if (is_level)
+	  level = EXT_GLOBAL(cfg)->logLevel_val>4?4:EXT_GLOBAL(cfg)->logLevel_val;
+
+	return (is_level<<7)|64|(level<<2)|arraysAsValues;
 }
 
 static proxyenv *try_connect_to_server(short bail, unsigned char spec TSRMLS_DC) {
@@ -291,38 +334,28 @@ static proxyenv *try_connect_to_server(short bail, unsigned char spec TSRMLS_DC)
   if(jenv) return jenv;
 
   if(JG(is_closed)) {
-	php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: Session is closed. -- This usually means that you have tried to access the server in your class' __destruct() method.",51);
+	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not connect to server: Session is closed. -- This usually means that you have tried to access the server in your class' __destruct() method.",51);
 	return 0;
   }
-  if(!(server=java_test_server(&sock, spec))) {
+  if(!(server=EXT_GLOBAL(test_server)(&sock, spec))) {
 	if (bail) 
-	  php_error(E_ERROR, "php_mod_java(%d): Could not connect to server: %s -- Have you started the java bridge and set the java.socketname option?",52, strerror(errno));
+	  php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not connect to server: %s -- Have you started the "/**/EXT_NAME()/**/" bridge and set the "/**/EXT_NAME()/**/".socketname option?",52, strerror(errno));
 	return 0;
   }
 
-  if(!get_servlet_context()) {
-	unsigned short level = (cfg->logLevel_val)>4?4:cfg->logLevel_val;
-#ifndef ZEND_ENGINE_2
-  // we want arrays as values
-	unsigned char c=128|64|(level<<2)|2;
-	#else
-	unsigned char c=128|64|(level<<2)|0;
-#endif
-	send(sock, &c, sizeof c, 0); 
+  if(!EXT_GLOBAL (get_servlet_context) ()) {
+	unsigned char mode = EXT_GLOBAL (get_mode) ();
+	send(sock, &mode, sizeof mode, 0); 
   }
 
-  return JG(jenv) = java_createSecureEnvironment(sock, handle_request, server);
+  return JG(jenv) = EXT_GLOBAL(createSecureEnvironment)(sock, handle_request, server);
 }
-proxyenv *java_connect_to_server(TSRMLS_D) {
+proxyenv *EXT_GLOBAL(connect_to_server)(TSRMLS_D) {
   return try_connect_to_server(1, 0 TSRMLS_CC);
 }
-proxyenv *java_try_connect_to_server(TSRMLS_D) {
+proxyenv *EXT_GLOBAL(try_connect_to_server)(TSRMLS_D) {
   
   return try_connect_to_server(0, 0 TSRMLS_CC);
-}
-proxyenv *java_connect_to_mono(TSRMLS_D) {
-  
-  return try_connect_to_server(1, 'M' TSRMLS_CC);
 }
 
 #ifndef PHP_WRAPPER_H

@@ -2,8 +2,8 @@
 
 <?php
 
-if(!extension_loaded('java')) {
-  dl('java.' . PHP_SHLIB_SUFFIX);
+if(!extension_loaded('mono')) {
+  dl('mono.' . PHP_SHLIB_SUFFIX);
 }
 
 $Console = new Mono('System.Console');

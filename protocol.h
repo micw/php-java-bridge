@@ -23,14 +23,26 @@
 
 #define LOG_OFF 0
 #define LOG_FATAL 1
-#define LOG_ERROR 2
-#define LOG_INFO 3 /* default level */
+#define LOG_ERROR 2 /* default level */
+#define LOG_INFO 3 
 #define LOG_DEBUG 4
 #define DEFAULT_LEVEL "2"
 
-#define N_SARGS 9				/* # of server args for exec */
-#define N_SENV 3				/* # of server env entries */
-#define DEFAULT_PORT "9167"		/* default port for tcp/ip */
+#define N_JAVA_SARGS 9
+#define N_JAVA_SENV 3 
+#define N_MONO_SARGS 5
+#define N_MONO_SENV 1
+#ifndef N_SARGS 
+# define N_SARGS N_JAVA_SARGS	/* # of server args for exec */
+#endif
+#ifndef N_SENV
+# define N_SENV N_JAVA_SENV		/* # of server env entries */
+#endif
+#define DEFAULT_MONO_PORT "9167" /* default port for tcp/ip */
+#define DEFAULT_JAVA_PORT "9267" /* default port for tcp/ip */
+#ifndef DEFAULT_PORT
+# define DEFAULT_PORT DEFAULT_JAVA_PORT /* init_cfg.h overrides */
+#endif
 #define DEFAULT_HOST "127.0.0.1"
 #define DEFAULT_SERVLET "/JavaBridge/PhpJavaServlet"
 
@@ -51,6 +63,10 @@ struct proxyenv_ {
   size_t send_len, send_size;
 
   char *server_name;
+
+  /* for servlets: re-open connection */
+  short must_reopen; 
+
 
   /* the cookie, for servlet engines only */
   char *cookie_name, *cookie_value;
@@ -79,7 +95,5 @@ struct proxyenv_ {
   void (*writePairEnd)(proxyenv *env);
   void (*writeUnref)(proxyenv *env, long object);
 };
-
-extern proxyenv *java_createSecureEnvironment(int peer, void (*handle_request)(proxyenv *env), char*server);
 
 #endif

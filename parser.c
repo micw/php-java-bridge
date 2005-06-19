@@ -43,7 +43,7 @@
   if(cb->end) (*cb->end)(tag[0].strings, cb); \
 }
 
-short parse(proxyenv *env, parser_cb_t *cb) {
+short EXT_GLOBAL (parse) (proxyenv *env, parser_cb_t *cb) {
   parser_string_t v1[1], v2[MAX_ARGS], v3[MAX_ARGS];
   parser_tag_t tag[] = {{0, v1}, {0, v2}, {0, v3}};
   unsigned char ch;
@@ -131,7 +131,7 @@ short parse(proxyenv *env, parser_cb_t *cb) {
   return 0;
 }
 
-short parse_header(proxyenv *env, parser_cb_t *cb) {
+short EXT_GLOBAL (parse_header) (proxyenv *env, parser_cb_t *cb) {
   parser_string_t v1[1], v2[1], v3[1];
   parser_tag_t tag[] = {{0, v1}, {0, v2}, {0, v3}};
   unsigned char ch;
@@ -157,7 +157,7 @@ short parse_header(proxyenv *env, parser_cb_t *cb) {
       case '\r': case '\f': case ' ': case '\t': break; /* skip */
       case '\n':
 	if(type==BEGIN) eor=1;
-	else if(type==VAL) {
+	else if(type==KEY || type==VAL) {
 	  PUSH(type); 
 	  CALL_BEGIN();
 	}

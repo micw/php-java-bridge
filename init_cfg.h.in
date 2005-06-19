@@ -1,0 +1,55 @@
+/*-*- mode: C; tab-width:4 -*-*/
+
+#ifndef INIT_CFG_H
+#define INIT_CFG_H
+
+#define JAVA 1
+#define MONO 2
+#define java java
+#define mono mono
+
+#define EXTENSION @EXTENSION@
+#if EXTENSION == JAVA
+#define EXT java
+#else
+
+#undef DEFAULT_PORT
+#define DEFAULT_PORT DEFAULT_MONO_PORT
+
+#undef N_SARGS
+#define N_SARGS N_MONO_SARGS
+#undef N_SENV
+#define N_SENV N_MONO_SENV
+#ifndef CFG_JAVA_SOCKET_INET
+# define CFG_JAVA_SOCKET_INET
+#endif
+#define EXT mono
+#endif
+
+#define EXT_CONCAT(prefix, ext, sep, fkt) prefix##ext##sep##fkt
+#define EXT_EXPAND(prefix, ext, sep, fkt) EXT_CONCAT(prefix, ext, sep, fkt)
+#define EXT_GLOBAL_EX(prefix, fkt, sep) EXT_EXPAND(prefix, EXT, sep, fkt)
+#define EXT_GLOBAL_N(fkt) EXT_EXPAND( , EXT, , fkt)
+#define EXT_GLOBAL(fkt) EXT_EXPAND( , EXT, _, fkt)
+
+#define EXT_DECLARE_MODULE_GLOBALS(ext) ZEND_DECLARE_MODULE_GLOBALS(ext)
+#define EXT_EXTERN_MODULE_GLOBALS(ext) ZEND_EXTERN_MODULE_GLOBALS(ext)
+#define EXT_INIT_MODULE_GLOBALS(a,b,c) ZEND_INIT_MODULE_GLOBALS(a,b,c);
+#define EXT_BEGIN_MODULE_GLOBALS(ext) ZEND_BEGIN_MODULE_GLOBALS(ext)
+#define EXT_END_MODULE_GLOBALS(ext) ZEND_END_MODULE_GLOBALS(ext)
+#define EXT_STR(ext) #ext
+#define EXT_STR_EXPAND(ext) EXT_STR(ext)
+#define EXT_NAME() EXT_STR_EXPAND(EXT)
+#define EXT_MINIT(ext) PHP_MINIT(ext)
+#define EXT_MSHUTDOWN(ext) PHP_MSHUTDOWN(ext)
+#define EXT_RINIT(ext) PHP_RINIT(ext)
+#define EXT_RSHUTDOWN(ext) PHP_RSHUTDOWN(ext)
+#define EXT_MINFO(ext) PHP_MINFO(ext)
+#define EXT_GET_MODULE(ext) ZEND_GET_MODULE(ext)
+#define EXT_METHOD(classname, name) PHP_METHOD(classname, name)
+#define EXT_FUNCTION(name) PHP_FUNCTION(name)
+#define EXT_ME(classname, name, arg_info, flags) ZEND_ME(classname, name, arg_info, flags)
+#define EXT_FN(name) ZEND_FN(name)
+#define EXT_TSRMG(id, type, element) TSRMG(id, type, element)
+
+#endif

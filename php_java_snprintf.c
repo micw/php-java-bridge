@@ -55,7 +55,7 @@
  * <panos@alumni.cs.colorado.edu> for xinetd.
  */
 
-#include "php_wrapper.h"
+#include "php_java.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -93,11 +93,11 @@ typedef enum {
 	PHP_JAVA_LM_SIZE_T,
 	PHP_JAVA_LM_LONG,
 	PHP_JAVA_LM_LONG_DOUBLE
-} php_java_length_modifier_e;
+} EXT_GLOBAL (length_modifier_e);
 
 typedef enum {
 	PHP_JAVA_NO = 0, PHP_JAVA_YES = 1
-} php_java_boolean_e;
+} EXT_GLOBAL (boolean_e);
 
 #if SIZEOF_LONG_LONG_INT
 # define PHP_JAVA_WIDE_INT		long long int
@@ -108,24 +108,24 @@ typedef enum {
 #else
 # define PHP_JAVA_WIDE_INT		long
 #endif
-typedef PHP_JAVA_WIDE_INT php_java_wide_int;
-typedef unsigned PHP_JAVA_WIDE_INT u_php_java_wide_int;
+typedef PHP_JAVA_WIDE_INT EXT_GLOBAL (wide_int);
+typedef unsigned PHP_JAVA_WIDE_INT EXT_GLOBAL (wide_int_u);
 
-typedef int php_java_bool_int;
+typedef int EXT_GLOBAL (bool_int);
 
-static char * php_java_cvt(double arg, int ndigits, int *decpt, int *sign, int eflag, char *buf);
-static char * php_java_ecvt(double arg, int ndigits, int *decpt, int *sign, char *buf);
-static char * php_java_fcvt(double arg, int ndigits, int *decpt, int *sign, char *buf);
-static char * php_java_gcvt(double number, int ndigit, char *buf, php_java_boolean_e altform);
+static char * EXT_GLOBAL (cvt) (double arg, int ndigits, int *decpt, int *sign, int eflag, char *buf);
+static char * EXT_GLOBAL (ecvt) (double arg, int ndigits, int *decpt, int *sign, char *buf);
+static char * EXT_GLOBAL (fcvt) (double arg, int ndigits, int *decpt, int *sign, char *buf);
+static char * EXT_GLOBAL (gcvt) (double number, int ndigit, char *buf, EXT_GLOBAL (boolean_e) altform);
 
 
-static char * php_java_conv_10(register php_java_wide_int num, register php_java_bool_int is_unsigned,
-	   register php_java_bool_int * is_negative, char *buf_end, register int *len);
+static char * EXT_GLOBAL (conv_10) (register EXT_GLOBAL (wide_int) num, register EXT_GLOBAL (bool_int) is_unsigned,
+	   register EXT_GLOBAL (bool_int) * is_negative, char *buf_end, register int *len);
 
-static char * php_java_conv_fp(register char format, register double num,
-		 php_java_boolean_e add_dp, int precision, php_java_bool_int * is_negative, char *buf, int *len);
+static char * EXT_GLOBAL (conv_fp) (register char format, register double num,
+		 EXT_GLOBAL (boolean_e) add_dp, int precision, EXT_GLOBAL (bool_int) * is_negative, char *buf, int *len);
 
-static char * php_java_conv_p2(register u_php_java_wide_int num, register int nbits,
+static char * EXT_GLOBAL (conv_p2) (register EXT_GLOBAL (wide_int_u) num, register int nbits,
 		 char format, char *buf_end, register int *len);
 
 /*
@@ -141,14 +141,14 @@ static char * php_java_conv_p2(register u_php_java_wide_int num, register int nb
  * is declared as buf[ 100 ], buf_end should be &buf[ 100 ])
  */
 static char *
-php_java_conv_10(register php_java_wide_int num, register php_java_bool_int is_unsigned,
-	   register php_java_bool_int * is_negative, char *buf_end, register int *len)
+EXT_GLOBAL (conv_10) (register EXT_GLOBAL (wide_int) num, register EXT_GLOBAL (bool_int) is_unsigned,
+	   register EXT_GLOBAL (bool_int) * is_negative, char *buf_end, register int *len)
 {
 	register char *p = buf_end;
-	register u_php_java_wide_int magnitude;
+	register EXT_GLOBAL (wide_int_u) magnitude;
 
 	if (is_unsigned) {
-		magnitude = (u_php_java_wide_int) num;
+		magnitude = (EXT_GLOBAL (wide_int_u)) num;
 		*is_negative = FALSE;
 	} else {
 		*is_negative = (num < 0);
@@ -163,18 +163,18 @@ php_java_conv_10(register php_java_wide_int num, register php_java_bool_int is_u
 		 *      d. add 1
 		 */
 		if (*is_negative) {
-			php_java_wide_int t = num + 1;
+			EXT_GLOBAL (wide_int) t = num + 1;
 
-			magnitude = ((u_php_java_wide_int) - t) + 1;
+			magnitude = ((EXT_GLOBAL (wide_int_u)) - t) + 1;
 		} else
-			magnitude = (u_php_java_wide_int) num;
+			magnitude = (EXT_GLOBAL (wide_int_u)) num;
 	}
 
 	/*
 	 * We use a do-while loop so that we write at least 1 digit 
 	 */
 	do {
-		register u_php_java_wide_int new_magnitude = magnitude / 10;
+		register EXT_GLOBAL (wide_int_u) new_magnitude = magnitude / 10;
 
 		*--p = (char)(magnitude - new_magnitude * 10 + '0');
 		magnitude = new_magnitude;
@@ -197,8 +197,8 @@ php_java_conv_10(register php_java_wide_int num, register php_java_bool_int is_u
  * in buf).
  */
 static char *
- php_java_conv_fp(register char format, register double num,
-		 php_java_boolean_e add_dp, int precision, php_java_bool_int * is_negative, char *buf, int *len)
+ EXT_GLOBAL (conv_fp) (register char format, register double num,
+		 EXT_GLOBAL (boolean_e) add_dp, int precision, EXT_GLOBAL (bool_int) * is_negative, char *buf, int *len)
 {
 	register char *s = buf;
 	register char *p;
@@ -206,9 +206,9 @@ static char *
 	char buf1[NDIG];
 
 	if (format == 'f')
-		p = php_java_fcvt(num, precision, &decimal_point, is_negative, buf1);
+		p = EXT_GLOBAL (fcvt) (num, precision, &decimal_point, is_negative, buf1);
 	else						/* either e or E format */
-		p = php_java_ecvt(num, precision + 1, &decimal_point, is_negative, buf1);
+		p = EXT_GLOBAL (ecvt) (num, precision + 1, &decimal_point, is_negative, buf1);
 
 	/*
 	 * Check for Infinity and NaN
@@ -252,12 +252,12 @@ static char *
 	if (format != 'f') {
 		char temp[EXPONENT_LENGTH];		/* for exponent conversion */
 		int t_len;
-		php_java_bool_int exponent_is_negative;
+		EXT_GLOBAL (bool_int) exponent_is_negative;
 
 		*s++ = format;			/* either e or E */
 		decimal_point--;
 		if (decimal_point != 0) {
-			p = php_java_conv_10((php_java_wide_int) decimal_point, FALSE, &exponent_is_negative,
+			p = EXT_GLOBAL (conv_10) ((EXT_GLOBAL (wide_int)) decimal_point, FALSE, &exponent_is_negative,
 						&temp[EXPONENT_LENGTH], &t_len);
 			*s++ = exponent_is_negative ? '-' : '+';
 
@@ -290,7 +290,7 @@ static char *
  * is declared as buf[ 100 ], buf_end should be &buf[ 100 ])
  */
 static char *
- php_java_conv_p2(register u_php_java_wide_int num, register int nbits,
+ EXT_GLOBAL (conv_p2) (register EXT_GLOBAL (wide_int_u) num, register int nbits,
 		 char format, char *buf_end, register int *len)
 {
 	register int mask = (1 << nbits) - 1;
@@ -315,7 +315,7 @@ static char *
  */
 
 /*
- *    php_java_ecvt converts to decimal
+ *    EXT_GLOBAL (ecvt) converts to decimal
  *      the number of digits is specified by ndigit
  *      decpt is set to the position of the decimal point
  *      sign is set to 0 for positive, 1 for negative
@@ -323,7 +323,7 @@ static char *
 
 
 static char *
-php_java_cvt(double arg, int ndigits, int *decpt, int *sign, int eflag, char *buf)
+EXT_GLOBAL (cvt) (double arg, int ndigits, int *decpt, int *sign, int eflag, char *buf)
 {
 	register int r2;
 	int mvl;
@@ -412,24 +412,24 @@ php_java_cvt(double arg, int ndigits, int *decpt, int *sign, int eflag, char *bu
 }
 
 static char *
-php_java_ecvt(double arg, int ndigits, int *decpt, int *sign, char *buf)
+EXT_GLOBAL (ecvt) (double arg, int ndigits, int *decpt, int *sign, char *buf)
 {
-	return (php_java_cvt(arg, ndigits, decpt, sign, 1, buf));
+	return (EXT_GLOBAL (cvt) (arg, ndigits, decpt, sign, 1, buf));
 }
 
 static char *
-php_java_fcvt(double arg, int ndigits, int *decpt, int *sign, char *buf)
+EXT_GLOBAL (fcvt) (double arg, int ndigits, int *decpt, int *sign, char *buf)
 {
-	return (php_java_cvt(arg, ndigits, decpt, sign, 0, buf));
+	return (EXT_GLOBAL (cvt) (arg, ndigits, decpt, sign, 0, buf));
 }
 
 /*
- * php_java_gcvt  - Floating output conversion to
+ * EXT_GLOBAL (gcvt)  - Floating output conversion to
  * minimal length string
  */
 
 static char *
-php_java_gcvt(double number, int ndigit, char *buf, php_java_boolean_e altform)
+EXT_GLOBAL (gcvt) (double number, int ndigit, char *buf, EXT_GLOBAL (boolean_e) altform)
 {
 	int sign, decpt;
 	register char *p1, *p2;
@@ -440,7 +440,7 @@ php_java_gcvt(double number, int ndigit, char *buf, php_java_boolean_e altform)
 		ndigit = NDIG - 2;	
 	}
 
-	p1 = php_java_ecvt(number, ndigit, &decpt, &sign, buf1);
+	p1 = EXT_GLOBAL (ecvt) (number, ndigit, &decpt, &sign, buf1);
 	p2 = buf;
 	if (sign)
 		*p2++ = '-';
@@ -599,8 +599,8 @@ static int format_converter(register buffy * odp, const char *fmt,
 	char prefix_char;
 
 	double fp_num;
-	php_java_wide_int i_num = (php_java_wide_int) 0;
-	u_php_java_wide_int ui_num;
+	EXT_GLOBAL (wide_int) i_num = (EXT_GLOBAL (wide_int)) 0;
+	EXT_GLOBAL (wide_int_u) ui_num;
 
 	char num_buf[NUM_BUF_SIZE];
 	char char_buf[2];			/* for printing %% and %<unknown> */
@@ -608,13 +608,13 @@ static int format_converter(register buffy * odp, const char *fmt,
 	/*
 	 * Flag variables
 	 */
-	php_java_length_modifier_e modifier;
-	php_java_boolean_e alternate_form;
-	php_java_boolean_e print_sign;
-	php_java_boolean_e print_blank;
-	php_java_boolean_e adjust_precision;
-	php_java_boolean_e adjust_width;
-	php_java_bool_int is_negative;
+	EXT_GLOBAL (length_modifier_e) modifier;
+	EXT_GLOBAL (boolean_e) alternate_form;
+	EXT_GLOBAL (boolean_e) print_sign;
+	EXT_GLOBAL (boolean_e) print_blank;
+	EXT_GLOBAL (boolean_e) adjust_precision;
+	EXT_GLOBAL (boolean_e) adjust_width;
+	EXT_GLOBAL (bool_int) is_negative;
 
 	sp = odp->nextb;
 	bep = odp->buf_end;
@@ -760,29 +760,29 @@ static int format_converter(register buffy * odp, const char *fmt,
 				case 'u':
 					switch(modifier) {
 						default:
-							i_num = (php_java_wide_int) va_arg(ap, unsigned int);
+							i_num = (EXT_GLOBAL (wide_int)) va_arg(ap, unsigned int);
 							break;
 						case PHP_JAVA_LM_LONG_DOUBLE:
 							goto fmt_error;
 						case PHP_JAVA_LM_LONG:
-							i_num = (php_java_wide_int) va_arg(ap, unsigned long int);
+							i_num = (EXT_GLOBAL (wide_int)) va_arg(ap, unsigned long int);
 							break;
 						case PHP_JAVA_LM_SIZE_T:
-							i_num = (php_java_wide_int) va_arg(ap, size_t);
+							i_num = (EXT_GLOBAL (wide_int)) va_arg(ap, size_t);
 							break;
 #if SIZEOF_LONG_LONG
 						case PHP_JAVA_LM_LONG_LONG:
-							i_num = (php_java_wide_int) va_arg(ap, u_php_java_wide_int);
+							i_num = (EXT_GLOBAL (wide_int)) va_arg(ap, EXT_GLOBAL (wide_int_u));
 							break;
 #endif
 #if SIZEOF_INTMAX_T
 						case PHP_JAVA_LM_INTMAX_T:
-							i_num = (php_java_wide_int) va_arg(ap, uintmax_t);
+							i_num = (EXT_GLOBAL (wide_int)) va_arg(ap, uintmax_t);
 							break;
 #endif
 #if SIZEOF_PTRDIFF_T
 						case PHP_JAVA_LM_PTRDIFF_T:
-							i_num = (php_java_wide_int) va_arg(ap, ptrdiff_t);
+							i_num = (EXT_GLOBAL (wide_int)) va_arg(ap, ptrdiff_t);
 							break;
 #endif
 					}
@@ -798,38 +798,38 @@ static int format_converter(register buffy * odp, const char *fmt,
 					if ((*fmt) != 'u') {
 						switch(modifier) {
 							default:
-								i_num = (php_java_wide_int) va_arg(ap, int);
+								i_num = (EXT_GLOBAL (wide_int)) va_arg(ap, int);
 								break;
 							case PHP_JAVA_LM_LONG_DOUBLE:
 								goto fmt_error;
 							case PHP_JAVA_LM_LONG:
-								i_num = (php_java_wide_int) va_arg(ap, long int);
+								i_num = (EXT_GLOBAL (wide_int)) va_arg(ap, long int);
 								break;
 							case PHP_JAVA_LM_SIZE_T:
 #if SIZEOF_SSIZE_T
-								i_num = (php_java_wide_int) va_arg(ap, ssize_t);
+								i_num = (EXT_GLOBAL (wide_int)) va_arg(ap, ssize_t);
 #else
-								i_num = (php_java_wide_int) va_arg(ap, size_t);
+								i_num = (EXT_GLOBAL (wide_int)) va_arg(ap, size_t);
 #endif
 								break;
 #if SIZEOF_LONG_LONG
 							case PHP_JAVA_LM_LONG_LONG:
-								i_num = (php_java_wide_int) va_arg(ap, php_java_wide_int);
+								i_num = (EXT_GLOBAL (wide_int)) va_arg(ap, EXT_GLOBAL (wide_int));
 								break;
 #endif
 #if SIZEOF_INTMAX_T
 							case PHP_JAVA_LM_INTMAX_T:
-								i_num = (php_java_wide_int) va_arg(ap, intmax_t);
+								i_num = (EXT_GLOBAL (wide_int)) va_arg(ap, intmax_t);
 								break;
 #endif
 #if SIZEOF_PTRDIFF_T
 							case PHP_JAVA_LM_PTRDIFF_T:
-								i_num = (php_java_wide_int) va_arg(ap, ptrdiff_t);
+								i_num = (EXT_GLOBAL (wide_int)) va_arg(ap, ptrdiff_t);
 								break;
 #endif
 						}
 					}
-					s = php_java_conv_10(i_num, (*fmt) == 'u', &is_negative,
+					s = EXT_GLOBAL (conv_10) (i_num, (*fmt) == 'u', &is_negative,
 								&num_buf[NUM_BUF_SIZE], &s_len);
 					FIX_PRECISION(adjust_precision, precision, s, s_len);
 
@@ -847,33 +847,33 @@ static int format_converter(register buffy * odp, const char *fmt,
 				case 'o':
 					switch(modifier) {
 						default:
-							ui_num = (u_php_java_wide_int) va_arg(ap, unsigned int);
+							ui_num = (EXT_GLOBAL (wide_int_u)) va_arg(ap, unsigned int);
 							break;
 						case PHP_JAVA_LM_LONG_DOUBLE:
 							goto fmt_error;
 						case PHP_JAVA_LM_LONG:
-							ui_num = (u_php_java_wide_int) va_arg(ap, unsigned long int);
+							ui_num = (EXT_GLOBAL (wide_int_u)) va_arg(ap, unsigned long int);
 							break;
 						case PHP_JAVA_LM_SIZE_T:
-							ui_num = (u_php_java_wide_int) va_arg(ap, size_t);
+							ui_num = (EXT_GLOBAL (wide_int_u)) va_arg(ap, size_t);
 							break;
 #if SIZEOF_LONG_LONG
 						case PHP_JAVA_LM_LONG_LONG:
-							ui_num = (u_php_java_wide_int) va_arg(ap, u_php_java_wide_int);
+							ui_num = (EXT_GLOBAL (wide_int_u)) va_arg(ap, EXT_GLOBAL (wide_int_u));
 							break;
 #endif
 #if SIZEOF_INTMAX_T
 						case PHP_JAVA_LM_INTMAX_T:
-							ui_num = (u_php_java_wide_int) va_arg(ap, uintmax_t);
+							ui_num = (EXT_GLOBAL (wide_int_u)) va_arg(ap, uintmax_t);
 							break;
 #endif
 #if SIZEOF_PTRDIFF_T
 						case PHP_JAVA_LM_PTRDIFF_T:
-							ui_num = (u_php_java_wide_int) va_arg(ap, ptrdiff_t);
+							ui_num = (EXT_GLOBAL (wide_int_u)) va_arg(ap, ptrdiff_t);
 							break;
 #endif
 					}
-					s = php_java_conv_p2(ui_num, 3, *fmt,
+					s = EXT_GLOBAL (conv_p2) (ui_num, 3, *fmt,
 								&num_buf[NUM_BUF_SIZE], &s_len);
 					FIX_PRECISION(adjust_precision, precision, s, s_len);
 					if (alternate_form && *s != '0') {
@@ -887,33 +887,33 @@ static int format_converter(register buffy * odp, const char *fmt,
 				case 'X':
 					switch(modifier) {
 						default:
-							ui_num = (u_php_java_wide_int) va_arg(ap, unsigned int);
+							ui_num = (EXT_GLOBAL (wide_int_u)) va_arg(ap, unsigned int);
 							break;
 						case PHP_JAVA_LM_LONG_DOUBLE:
 							goto fmt_error;
 						case PHP_JAVA_LM_LONG:
-							ui_num = (u_php_java_wide_int) va_arg(ap, unsigned long int);
+							ui_num = (EXT_GLOBAL (wide_int_u)) va_arg(ap, unsigned long int);
 							break;
 						case PHP_JAVA_LM_SIZE_T:
-							ui_num = (u_php_java_wide_int) va_arg(ap, size_t);
+							ui_num = (EXT_GLOBAL (wide_int_u)) va_arg(ap, size_t);
 							break;
 #if SIZEOF_LONG_LONG
 						case PHP_JAVA_LM_LONG_LONG:
-							ui_num = (u_php_java_wide_int) va_arg(ap, u_php_java_wide_int);
+							ui_num = (EXT_GLOBAL (wide_int_u)) va_arg(ap, EXT_GLOBAL (wide_int_u));
 							break;
 #endif
 #if SIZEOF_INTMAX_T
 						case PHP_JAVA_LM_INTMAX_T:
-							ui_num = (u_php_java_wide_int) va_arg(ap, uintmax_t);
+							ui_num = (EXT_GLOBAL (wide_int_u)) va_arg(ap, uintmax_t);
 							break;
 #endif
 #if SIZEOF_PTRDIFF_T
 						case PHP_JAVA_LM_PTRDIFF_T:
-							ui_num = (u_php_java_wide_int) va_arg(ap, ptrdiff_t);
+							ui_num = (EXT_GLOBAL (wide_int_u)) va_arg(ap, ptrdiff_t);
 							break;
 #endif
 					}
-					s = php_java_conv_p2(ui_num, 4, *fmt,
+					s = EXT_GLOBAL (conv_p2) (ui_num, 4, *fmt,
 								&num_buf[NUM_BUF_SIZE], &s_len);
 					FIX_PRECISION(adjust_precision, precision, s, s_len);
 					if (alternate_form && i_num != 0) {
@@ -959,7 +959,7 @@ static int format_converter(register buffy * odp, const char *fmt,
 						s = "inf";
 						s_len = 3;
 					} else {
-						s = php_java_conv_fp(*fmt, fp_num, alternate_form,
+						s = EXT_GLOBAL (conv_fp) (*fmt, fp_num, alternate_form,
 						 (adjust_precision == PHP_JAVA_NO) ? FLOAT_DIGITS : precision,
 									&is_negative, &num_buf[1], &s_len);
 						if (is_negative)
@@ -1007,7 +1007,7 @@ static int format_converter(register buffy * odp, const char *fmt,
 					/*
 					 * * We use &num_buf[ 1 ], so that we have room for the sign
 					 */
-					s = php_java_gcvt(fp_num, precision, &num_buf[1],
+					s = EXT_GLOBAL (gcvt) (fp_num, precision, &num_buf[1],
 							alternate_form);
 					if (*s == '-')
 						prefix_char = *s++;
@@ -1054,9 +1054,9 @@ static int format_converter(register buffy * odp, const char *fmt,
 					 * we print "%p" to indicate that we don't handle "%p".
 					 */
 				case 'p':
-					if (sizeof(char *) <= sizeof(u_php_java_wide_int)) {
-						ui_num = (u_php_java_wide_int)((size_t) va_arg(ap, char *));
-						s = php_java_conv_p2(ui_num, 4, 'x', 
+					if (sizeof(char *) <= sizeof(EXT_GLOBAL (wide_int_u))) {
+						ui_num = (EXT_GLOBAL (wide_int_u))((size_t) va_arg(ap, char *));
+						s = EXT_GLOBAL (conv_p2) (ui_num, 4, 'x', 
 								&num_buf[NUM_BUF_SIZE], &s_len);
 						if (ui_num != 0) {
 							*--s = 'x';
@@ -1164,7 +1164,7 @@ static void strx_printv(int *ccp, char *buf, size_t len, const char *format,
 }
 
 
-int php_java_snprintf(char *buf, size_t len, const char *format,...)
+int EXT_GLOBAL (snprintf) (char *buf, size_t len, const char *format,...)
 {
 	int cc;
 	va_list ap;
@@ -1176,7 +1176,7 @@ int php_java_snprintf(char *buf, size_t len, const char *format,...)
 }
 
 
-int php_java_vsnprintf(char *buf, size_t len, const char *format, va_list ap)
+int EXT_GLOBAL (vsnprintf) (char *buf, size_t len, const char *format, va_list ap)
 {
 	int cc;
 

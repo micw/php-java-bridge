@@ -2,8 +2,8 @@
 
 <?php
 
-if(!extension_loaded('java')) {
-  dl('java.' . PHP_SHLIB_SUFFIX);
+if(!extension_loaded('mono')) {
+  dl('mono.' . PHP_SHLIB_SUFFIX);
 }
 
 $s = new Mono('System.Collections.Stack');
@@ -14,5 +14,5 @@ if ($s->Contains('Mono')) {
 	print "Works like a perfect darling\n";
 }
 
-print $s->Pop() . ' ' . $s->Pop();
+print $s->Pop() . ' ' . $s->Pop() . "\n";
 ?>

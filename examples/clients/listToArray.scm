@@ -6,7 +6,7 @@
 (load-library 'posix)
 
 (define HOST "127.0.0.1")
-(define PORT 9167)
+(define PORT 9267)
 
 (define-values (inp outp) (tcp-connect HOST PORT))
 (define buf (make-string 65535))

@@ -39,10 +39,11 @@ public class JavaBridge implements Runnable {
 
     static HashMap sessionHash = new HashMap();
 
-    public JavaBridgeClassLoader cl=new JavaBridgeClassLoader();
+    public JavaBridgeClassLoader.Adaptor cl = new JavaBridgeClassLoader.Adaptor(this);
 
     public InputStream in; public OutputStream out;
 
+    int logLevel = Util.logLevel;
     
     //
     // Native methods, only called  when loadLibrary succeeds.
@@ -95,7 +96,7 @@ public class JavaBridge implements Runnable {
     int uid =-1, gid =-1;
 
     private static boolean haveNatcJavaBridge=true;
-	
+
     static Object loadLock=new Object();
     static short load = 0;
     public static short getLoad() {
@@ -107,29 +108,36 @@ public class JavaBridge implements Runnable {
     // Communication with client in a new thread
     //
     public void run() { 
-	load++;
     	Request r = new Request(this);
     	try {
-	    if(r.initOptions(in, out)) {
-		r.handleRequests();
-	    }
+	    if(!r.initOptions(in, out)) return;
 	} catch (Throwable e) {
-	    Util.printStackTrace(e);
+	    printStackTrace(e);
+	    return;
 	}
+	if(logLevel>3) logDebug("Request from client with uid/gid "+uid+"/"+gid);
+
+	load++;
+   	try {
+            r.handleRequests();
+    	} catch (Throwable e) {
+    	    printStackTrace(e);
+    	}
+
 	try {
 	    in.close();
 	} catch (IOException e1) {
-	    Util.printStackTrace(e1);
+	    printStackTrace(e1);
 	}
 	try {
 	    out.close();
 	} catch (IOException e2) {
-	    Util.printStackTrace(e2);
+	    printStackTrace(e2);
 	}
 	load--;
 	globalRef=null;
-	Session.expire();
-        Util.logDebug(this + " " + "request terminated.");
+	Session.expire(this);
+        logDebug("request terminated.");
     }
 
     //
@@ -167,11 +175,11 @@ public class JavaBridge implements Runnable {
 	    }
 
 	    try {
-		logFile="";
+		logFile="Bridge.log";
 		if(s.length>2) {
 		    logFile=s[2];
-		    if(Util.logLevel>3) System.out.println("Java log         : " + logFile);
 		}
+		if(Util.logLevel>3) System.out.println("Java log         : " + logFile);
 	    }catch (Throwable t) {
 		Util.printStackTrace(t);
 	    }
@@ -194,7 +202,7 @@ public class JavaBridge implements Runnable {
 	    try {
 		socket = LocalServerSocket.create(sockname, Util.BACKLOG);
 	    } catch (Throwable e) {
-		Util.logError("Local sockets not available:" + e + ". Try TCP sockets instead");
+		Util.logMessage("Local sockets not available:" + e + ". Try TCP sockets instead");
 	    }
 	    if(null==socket) 
 		socket = TCPServerSocket.create(sockname, Util.BACKLOG);
@@ -202,19 +210,19 @@ public class JavaBridge implements Runnable {
 	    if(null==socket) 
 		throw new Exception("Could not create socket: " + sockname);
 
-	    Util.logMessage("Java logFile     : " + logFile);
-	    Util.logMessage("Java logLevel    : " + Util.logLevel);
-	    Util.logMessage("Java socket      : " + socket);
+	    Util.logMessage("default logFile     : " + logFile);
+	    Util.logMessage("default logLevel    : " + Util.logLevel);
+	    Util.logMessage("default socket      : " + socket);
 
 	    while(true) {
 		JavaBridge bridge = new JavaBridge();
 				
-		Socket sock = socket.accept(bridge);
+		Socket sock = socket.accept();
 		bridge.in=sock.getInputStream();
 		bridge.out=sock.getOutputStream();
 		// FIXME: Use thread pool
 		Thread thread = new Thread(bridge);
-		thread.setContextClassLoader(bridge.cl);
+		thread.setContextClassLoader(bridge.cl.getClassLoader());
 		thread.start();
 	    }
 				
@@ -243,7 +251,7 @@ public class JavaBridge implements Runnable {
     //
     // Helper routines which encapsulate the native methods
     //
-    static void setResult(Response response, Object value) {
+    void setResult(Response response, Object value) {
 	if (value == null) {
 	    response.writeObject(null);
 	} else if (value instanceof byte[]) {
@@ -312,19 +320,24 @@ public class JavaBridge implements Runnable {
 	    response.writeObject(value);
 	}
     }
-    public static void logDebug(String msg) {
-	Util.logDebug(msg);
-    }
-    public static void logFatal(String msg) {
-	Util.logFatal(msg);
-    }
-    public static void logError(String msg) {
-	Util.logError(msg);
-    }
-    public static void logMessage(String msg) {
-	Util.logMessage(msg);
-    }
 
+    public void printStackTrace(Throwable t) {
+	if(logLevel > 0)
+	    if ((t instanceof Error) || logLevel > 1) 
+	    	Util.logger.printStackTrace(t);
+    }
+    public void logDebug(String msg) {
+	if(logLevel>3) Util.println(4, this + " " + msg);
+    }
+    public void logFatal(String msg) {
+	if(logLevel>0) Util.println(1, this + " " + msg);
+    }
+    public void logError(String msg) {
+	if(logLevel>1) Util.println(2, this + " " + msg);
+    }
+    public void logMessage(String msg) {
+	if(logLevel>2) Util.println(3, this + " " + msg);
+    }
 
     void setException(Response response, Throwable e, String method, Object obj, String name, Object args[]) {
 	if (e instanceof InvocationTargetException) {
@@ -367,7 +380,7 @@ public class JavaBridge implements Runnable {
 	    Constructor selected = null;
 
 	    if(createInstance) {
-		Constructor cons[] = Class.forName(name, true, cl).getConstructors();
+		Constructor cons[] = Class.forName(name, true, cl.getClassLoader()).getConstructors();
 		for (int i=0; i<cons.length; i++) {
 		    candidates.addElement(cons[i]);
 		    if (cons[i].getParameterTypes().length == args.length) {
@@ -384,7 +397,7 @@ public class JavaBridge implements Runnable {
 		} else {
 		    // for classes which have no visible constructor, return the class
 		    // useful for classes like java.lang.System and java.util.Calendar.
-		    response.writeObject(Class.forName(name, true, cl));
+		    response.writeObject(Class.forName(name, true, cl.getClassLoader()));
 		    return;
 		}
 	    }
@@ -393,9 +406,9 @@ public class JavaBridge implements Runnable {
 	    try {
 	    	response.writeObject(selected.newInstance(coercedArgs));
 	    } catch (NoClassDefFoundError xerr) {
-	    	Util.logError("Error: Could not invoke constructor. A class referenced in the constructor method could not be found: " + xerr + ". Please correct this error or use \"new JavaClass()\" to avoid calling the constructor.");
+	    	logError("Error: Could not invoke constructor. A class referenced in the constructor method could not be found: " + xerr + ". Please correct this error or use \"new JavaClass()\" to avoid calling the constructor.");
 	    	JavaBridgeClassLoader.reset();
-	    	response.writeObject(Class.forName(name, true, cl));
+	    	response.writeObject(Class.forName(name, true, cl.getClassLoader()));
 	    }
 
 	} catch (Throwable e) {
@@ -405,7 +418,7 @@ public class JavaBridge implements Runnable {
 		Util.logStream.println("FATAL: OutOfMemoryError");
 		throw new RuntimeException(); // abort
 	    }
-	    Util.printStackTrace(e);
+	    printStackTrace(e);
 	    setException(response, e, createInstance?"CreateInstance":"ReferenceClass", null, name, args);
 	}
     }
@@ -520,7 +533,7 @@ public class JavaBridge implements Runnable {
     // unfortunately PHP only supports wide formats, so to be practical
     // some (possibly lossy) conversions are required.
     //
-    private static Object[] coerce(Class parms[], Object args[], Response response) {
+    private Object[] coerce(Class parms[], Object args[], Response response) {
 	Object result[] = args;
 	Class targetType = null;
 	int size = 0;
@@ -540,7 +553,7 @@ public class JavaBridge implements Runnable {
 		    if (c == Character.TYPE && s.length()>0) 
 			result[i]=new Character(s.charAt(0));
 		} catch (NumberFormatException n) {
-		    Util.printStackTrace(n);
+		    printStackTrace(n);
 		    // oh well, we tried!
 		}
 	    } else if (args[i] instanceof Number && parms[i].isPrimitive()) {
@@ -589,8 +602,8 @@ public class JavaBridge implements Runnable {
 
 			result[i]=array;
 		    } catch (Exception e) {
-			Util.logError("Error: " + String.valueOf(e) + " could not create array of type: " + targetType + ", size: " + size);
-			Util.printStackTrace(e);
+			logError("Error: " + String.valueOf(e) + " could not create array of type: " + targetType + ", size: " + size);
+			printStackTrace(e);
 			// leave result[i] alone...
 		    }
 		} else if ((java.util.Collection.class).isAssignableFrom(parms[i])) {
@@ -608,8 +621,8 @@ public class JavaBridge implements Runnable {
 
 			result[i]=res; 
 		    } catch (Exception e) {
-			Util.logError("Error: " +  String.valueOf(e) + " Could not create java.util.Map.  You have probably passed a hashtable instead of an array. Please check that the keys are long.");
-			Util.printStackTrace(e);
+			logError("Error: " +  String.valueOf(e) + " Could not create java.util.Map.  You have probably passed a hashtable instead of an array. Please check that the keys are long.");
+			printStackTrace(e);
 			// leave result[i] alone...
 		    }
 		} if ((java.util.Hashtable.class).isAssignableFrom(parms[i])) {
@@ -627,8 +640,8 @@ public class JavaBridge implements Runnable {
 
 			result[i]=res; 
 		    } catch (Exception e) {
-			Util.logError("Error: " +  String.valueOf(e) + " Could not create java.util.Hashtable.");
-			Util.printStackTrace(e);
+			logError("Error: " +  String.valueOf(e) + " Could not create java.util.Hashtable.");
+			printStackTrace(e);
 			// leave result[i] alone...
 		    }
 	    	
@@ -639,10 +652,12 @@ public class JavaBridge implements Runnable {
     }
 
     static abstract class FindMatchingInterface {
+	JavaBridge bridge;
 	String name; 
 	Object args[];
 	boolean ignoreCase;
-	public FindMatchingInterface (String name, Object args[], boolean ignoreCase) {
+	public FindMatchingInterface (JavaBridge bridge, String name, Object args[], boolean ignoreCase) {
+	    this.bridge=bridge;
 	    this.name=name;
 	    this.args=args;
 	    this.ignoreCase=ignoreCase;
@@ -651,11 +666,11 @@ public class JavaBridge implements Runnable {
 	public boolean checkAccessible(AccessibleObject o) {return true;}
     }
 
-    private boolean canModifySecurityPermission = true;
-    private static final FindMatchingInterfaceVoid MATCH_VOID_ICASE = new FindMatchingInterfaceVoid(true);
-    private static final FindMatchingInterfaceVoid MATCH_VOID_CASE = new FindMatchingInterfaceVoid(false);
+    boolean canModifySecurityPermission = true;
+    static final FindMatchingInterfaceVoid MATCH_VOID_ICASE = new FindMatchingInterfaceVoid(true);
+    static final FindMatchingInterfaceVoid MATCH_VOID_CASE = new FindMatchingInterfaceVoid(false);
     static class FindMatchingInterfaceVoid extends FindMatchingInterface {
-	public FindMatchingInterfaceVoid(boolean b) { super(null, null, b); }
+	public FindMatchingInterfaceVoid(boolean b) { super(null, null, null, b); }
 	Class findMatchingInterface(Class jclass) {
 	    return jclass;
 	}
@@ -664,7 +679,6 @@ public class JavaBridge implements Runnable {
 		try {
 		    o.setAccessible(true);
 		} catch (java.lang.SecurityException ex) {
-		    Util.logMessage("Security restriction: Cannot use setAccessible(), reverting to interface searching.");
 		    return false;
 		}
 	    }
@@ -673,16 +687,17 @@ public class JavaBridge implements Runnable {
     }
 
     static class FindMatchingInterfaceForInvoke extends FindMatchingInterface {
-	protected FindMatchingInterfaceForInvoke(String name, Object args[], boolean ignoreCase) {
-	    super(name, args, ignoreCase);
+	protected FindMatchingInterfaceForInvoke(JavaBridge bridge, String name, Object args[], boolean ignoreCase) {
+	    super(bridge, name, args, ignoreCase);
 	}
-	public static FindMatchingInterface getInstance(String name, Object args[], boolean ignoreCase, boolean canModifySecurityPermission) {
+	public static FindMatchingInterface getInstance(JavaBridge bridge, String name, Object args[], boolean ignoreCase, boolean canModifySecurityPermission) {
 	    if(canModifySecurityPermission) return ignoreCase?MATCH_VOID_ICASE : MATCH_VOID_CASE;
-	    else return new FindMatchingInterfaceForInvoke(name, args, ignoreCase);
+	    else return new FindMatchingInterfaceForInvoke(bridge, name, args, ignoreCase);
 	}
 	Class findMatchingInterface(Class jclass) {
 	    if(jclass==null) return jclass;
-	    Util.logDebug("searching for matching interface for Invoke for class " + jclass);
+	    if(bridge.logLevel>3) 
+	    	if(bridge.logLevel>3)bridge.logDebug("searching for matching interface for Invoke for class " + jclass);
 	    while (!Modifier.isPublic(jclass.getModifiers())) {
 		// OK, some joker gave us an instance of a non-public class
 		// This often occurs in the case of enumerators
@@ -698,6 +713,7 @@ public class JavaBridge implements Runnable {
 			    String nm = methods[j].getName();
 			    boolean eq = ignoreCase ? nm.equalsIgnoreCase(name) : nm.equals(name); 
 			    if (eq && (methods[j].getParameterTypes().length == args.length)) {
+			    	if(bridge.logLevel>3) bridge.logDebug("matching interface for Invoke: " + jclass);
 				return jclass;
 			    }
 			}
@@ -705,22 +721,24 @@ public class JavaBridge implements Runnable {
 		}
 		jclass = superclass;
 	    }
+	    if(bridge.logLevel>3) bridge.logDebug("interface for Invoke: " + jclass);
 	    return jclass;
 	}
     }
 
     static class FindMatchingInterfaceForGetSetProp extends FindMatchingInterface {
-	protected FindMatchingInterfaceForGetSetProp(String name, Object args[], boolean ignoreCase) {
-	    super(name, args, ignoreCase);
+	protected FindMatchingInterfaceForGetSetProp(JavaBridge bridge, String name, Object args[], boolean ignoreCase) {
+	    super(bridge, name, args, ignoreCase);
 	}
-	public static FindMatchingInterface getInstance(String name, Object args[], boolean ignoreCase, boolean canModifySecurityPermission) {
+	public static FindMatchingInterface getInstance(JavaBridge bridge, String name, Object args[], boolean ignoreCase, boolean canModifySecurityPermission) {
 	    if(canModifySecurityPermission) return ignoreCase?MATCH_VOID_ICASE : MATCH_VOID_CASE;
-	    else return new FindMatchingInterfaceForGetSetProp(name, args, ignoreCase);
+	    else return new FindMatchingInterfaceForGetSetProp(bridge, name, args, ignoreCase);
 	}
 
 	Class findMatchingInterface(Class jclass) {
 	    if(jclass==null) return jclass;
-	    Util.logDebug("searching for matching interface for GetSetProp for class " + jclass);
+	    if(bridge.logLevel>3) 
+	    	if(bridge.logLevel>3)bridge.logDebug("searching for matching interface for GetSetProp for class "+ jclass);
 	    while (!Modifier.isPublic(jclass.getModifiers())) {
 		// OK, some joker gave us an instance of a non-public class
 		// This often occurs in the case of enumerators
@@ -736,6 +754,7 @@ public class JavaBridge implements Runnable {
 			    String nm = jfields[j].getName();
 			    boolean eq = ignoreCase ? nm.equalsIgnoreCase(name) : nm.equals(name); 
 			    if (eq) {
+			    	if(bridge.logLevel>3) bridge.logDebug("smatching interface for GetSetProp: "+ jclass);
 				return jclass;
 			    }
 			}
@@ -743,11 +762,12 @@ public class JavaBridge implements Runnable {
 		}
 		jclass = superclass;
 	    }
+	    if(bridge.logLevel>3) bridge.logDebug("interface for GetSetProp: "+ jclass);
 	    return jclass;
 	}
     }
 
-    static private abstract class ClassIterator {
+    private static abstract class ClassIterator {
 	Object object;
 	Class current;
 	FindMatchingInterface match;
@@ -817,7 +837,7 @@ public class JavaBridge implements Runnable {
 	    do {
 		again = false;
 		ClassIterator iter;
-		for (iter = ClassIterator.getInstance(object, FindMatchingInterfaceForInvoke.getInstance(method, args, true, canModifySecurityPermission)); (jclass=iter.getNext())!=null;) {
+		for (iter = ClassIterator.getInstance(object, FindMatchingInterfaceForInvoke.getInstance(this, method, args, true, canModifySecurityPermission)); (jclass=iter.getNext())!=null;) {
 		    Method methods[] = jclass.getMethods();
 		    for (int i=0; i<methods.length; i++) {
 			if (methods[i].getName().equalsIgnoreCase(method)) {
@@ -833,7 +853,9 @@ public class JavaBridge implements Runnable {
 		
 		coercedArgs = coerce(selected.getParameterTypes(), args, response);
 		if(!iter.checkAccessible(selected)) {
+		    logMessage("Security restriction: Cannot use setAccessible(), reverting to interface searching.");
 		    canModifySecurityPermission=false;
+		    candidates.clear(); matches.clear();
 		    again=true;
 		}
 	    } while(again);
@@ -846,7 +868,7 @@ public class JavaBridge implements Runnable {
 		Util.logStream.println("FATAL: OutOfMemoryError");
 		throw new RuntimeException(); // abort
 	    }
-	    Util.printStackTrace(e);
+	    printStackTrace(e);
 	    setException(response, e, "Invoke", object, method, args);
 	}
     }
@@ -864,7 +886,7 @@ public class JavaBridge implements Runnable {
 
 	    // first search for the field *exactly*
 	    again2:		// because of security exception
-	    for (ClassIterator iter = ClassIterator.getInstance(object, FindMatchingInterfaceForGetSetProp.getInstance(prop, args, false, canModifySecurityPermission)); (jclass=iter.getNext())!=null;) {
+	    for (ClassIterator iter = ClassIterator.getInstance(object, FindMatchingInterfaceForGetSetProp.getInstance(this, prop, args, false, canModifySecurityPermission)); (jclass=iter.getNext())!=null;) {
 		try {
 		    Field jfields[] = jclass.getFields();
 		    for (int i=0; i<jfields.length; i++) {
@@ -872,7 +894,9 @@ public class JavaBridge implements Runnable {
 			    matches.add(jfields[i].getName());
 			    Object res=null;
 			    if(!(iter.checkAccessible(jfields[i]))) {
+				logMessage("Security restriction: Cannot use setAccessible(), reverting to interface searching.");
 				canModifySecurityPermission=false;
+			        matches.clear();
 				break again2;
 			    }
 			    if (set) {
@@ -887,10 +911,11 @@ public class JavaBridge implements Runnable {
 		    }
 		} catch (Exception ee) {/* may happen when field is not static */}
 	    }
+	    matches.clear();
 
 	    // search for a getter/setter, ignore case
 	    again1:		// because of security exception
-	    for (ClassIterator iter = ClassIterator.getInstance(object, FindMatchingInterfaceForInvoke.getInstance(prop, args, true, canModifySecurityPermission)); (jclass=iter.getNext())!=null;) {
+	    for (ClassIterator iter = ClassIterator.getInstance(object, FindMatchingInterfaceForInvoke.getInstance(this, prop, args, true, canModifySecurityPermission)); (jclass=iter.getNext())!=null;) {
 		try {
 		    BeanInfo beanInfo = Introspector.getBeanInfo(jclass);
 		    PropertyDescriptor props[] = beanInfo.getPropertyDescriptors();
@@ -905,7 +930,9 @@ public class JavaBridge implements Runnable {
 			    }
 			    matches.add(method);
 			    if(!iter.checkAccessible(method)) {
+				logMessage("Security restriction: Cannot use setAccessible(), reverting to interface searching.");
 				canModifySecurityPermission=false;
+				matches.clear();
 				break again1;
 			    }
 			    setResult(response, method.invoke(object, args));
@@ -914,10 +941,11 @@ public class JavaBridge implements Runnable {
 		    }
 		} catch (Exception ee) {/* may happen when method is not static */}
 	    }
+	    matches.clear();
 
 	    // search for the field, ignore case
 	    again0:		// because of security exception
-	    for (ClassIterator iter = ClassIterator.getInstance(object, FindMatchingInterfaceForGetSetProp.getInstance(prop, args, true, canModifySecurityPermission)); (jclass=iter.getNext())!=null;) {
+	    for (ClassIterator iter = ClassIterator.getInstance(object, FindMatchingInterfaceForGetSetProp.getInstance(this, prop, args, true, canModifySecurityPermission)); (jclass=iter.getNext())!=null;) {
 		try {
 		    java.lang.reflect.Field jfields[] = jclass.getFields();
 		    for (int i=0; i<jfields.length; i++) {
@@ -925,7 +953,9 @@ public class JavaBridge implements Runnable {
 			    matches.add(prop);
 			    Object res=null;
 			    if(!(iter.checkAccessible(jfields[i]))) {
+				logMessage("Security restriction: Cannot use setAccessible(), reverting to interface searching.");
 				canModifySecurityPermission=false;
+				matches.clear();
 				break again0;
 			    }
 			    if (set) {
@@ -949,7 +979,7 @@ public class JavaBridge implements Runnable {
 		Util.logStream.println("FATAL: OutOfMemoryError");
 		throw new RuntimeException(); // abort
 	    }
-	    Util.printStackTrace(e);
+	    printStackTrace(e);
 	    setException(response, e, set?"SetProperty":"GetProperty", object, prop, args);
 	}
     }
@@ -957,8 +987,8 @@ public class JavaBridge implements Runnable {
     //
     // Return map for the value (PHP 5 only)
     //
-    public static PhpMap getPhpMap(Object value) {
-	return PhpMap.getPhpMap(value);
+    public PhpMap getPhpMap(Object value) {
+	return PhpMap.getPhpMap(value, this);
     }
 
     // Set the library path for the java bridge. Examples:
@@ -1013,8 +1043,8 @@ public class JavaBridge implements Runnable {
      * Reset the internal state of the PHP/Java Bridge.
      *
      */
-    public static void reset() {
-    	Session.reset();
+    public void reset() {
+    	Session.reset(this);
     	JavaBridgeClassLoader.reset();
     }
 }

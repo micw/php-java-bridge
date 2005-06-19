@@ -44,21 +44,22 @@
 const static char inet_socket_prefix[]="INET:";
 const static char local_socket_prefix[]="LOCAL:";
 
-static void java_get_server_args(char*env[N_SENV], char*args[N_SARGS]) {
-  extern int java_ini_last_updated;
+#if EXTENSION == JAVA
+static const char* const wrapper = EXTENSION_DIR/**/"/RunJavaBridge";
+static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS]) {
   static const char separator[2] = {ZEND_PATHS_SEPARATOR, 0};
   char *s, *p;
-  char*program=cfg->java;
-  char*cp=cfg->classpath;
-  char*lib_path=cfg->ld_library_path;
+  char*program=EXT_GLOBAL(cfg)->vm;
+  char*cp=EXT_GLOBAL(cfg)->classpath;
+  char*lib_path=EXT_GLOBAL(cfg)->ld_library_path;
   char*sys_libpath=getenv("LD_LIBRARY_PATH");
-  char*home=cfg->java_home;
+  char*home=EXT_GLOBAL(cfg)->vm_home;
 #ifdef CFG_JAVA_SOCKET_INET
   const char* s_prefix = inet_socket_prefix;
 #else
   const char *s_prefix = local_socket_prefix;
 #endif
-  char *sockname, *cfg_sockname=cfg->sockname, *cfg_logFile=cfg->logFile;
+  char *sockname, *cfg_sockname=EXT_GLOBAL(cfg)->sockname, *cfg_logFile=EXT_GLOBAL(cfg)->logFile;
 
   /* send a prefix so that the server does not select a different
    protocol */
@@ -86,7 +87,7 @@ static void java_get_server_args(char*env[N_SENV], char*args[N_SARGS]) {
   args[4] = strdup("php.java.bridge.JavaBridge");
 
   args[5] = sockname;
-  args[6] = strdup(cfg->logLevel);
+  args[6] = strdup(EXT_GLOBAL(cfg)->logLevel);
   args[7] = strdup(cfg_logFile);
   args[8] = NULL;
 
@@ -102,8 +103,31 @@ static void java_get_server_args(char*env[N_SENV], char*args[N_SARGS]) {
   env[1] = p;					/* library path */
   env[2] = NULL;
 }
+#elif EXTENSION == MONO
+static const char* const wrapper = EXTENSION_DIR/**/"/RunMonoBridge";
+static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS]) {
+  char*program=EXT_GLOBAL(cfg)->vm;
+#ifdef CFG_JAVA_SOCKET_INET
+  const char* s_prefix = inet_socket_prefix;
+#else
+  const char *s_prefix = local_socket_prefix;
+#endif
+  char *sockname, *cfg_sockname=EXT_GLOBAL(cfg)->sockname, *cfg_logFile=EXT_GLOBAL(cfg)->logFile;
 
-static const char* const wrapper = EXTENSION_DIR/**/"/RunJavaBridge";
+  args[0]=strdup(program);		/* mono */
+  args[1] = strdup(EXTENSION_DIR/**/"/MonoBridge.exe");
+  /* send a prefix so that the server does not select a different
+   protocol */
+/*   sockname = malloc(strlen(s_prefix)+strlen(cfg_sockname)+1); */
+/*   strcpy(sockname, s_prefix); */
+/*   strcat(sockname, cfg_sockname); */
+/*   args[2] = sockname; */
+  args[2] = strdup(EXT_GLOBAL(cfg)->logLevel);
+  args[3] = strdup(cfg_logFile);
+  args[4] = NULL;
+  env[0] = NULL;
+}
+#endif
 static short use_wrapper() {
   struct stat buf;
   short use_wrapper=0;
@@ -125,7 +149,7 @@ static short use_wrapper() {
 /*
  * Get a string of the server arguments. Useful for display only.
  */
-char*java_get_server_string() {
+char*EXT_GLOBAL(get_server_string)() {
   short must_use_wrapper = use_wrapper();
   int i;
   char*s;
@@ -133,7 +157,7 @@ char*java_get_server_string() {
   char*args[N_SARGS];
   unsigned int length = 0;
 
-  java_get_server_args(env, args);
+  EXT_GLOBAL(get_server_args)(env, args);
   if(must_use_wrapper)
 	length+=strlen(wrapper)+1;
 
@@ -174,20 +198,24 @@ char*java_get_server_string() {
 
 static void exec_vm() {
 #ifdef CFG_JAVA_INPROCESS
-  extern int java_bridge_main(int argc, char**argv) ;
+  extern int EXT_GLOBAL(bridge_main)(int argc, char**argv) ;
   static char*env[N_SENV];
   static char*args[N_SARGS];
-  java_get_server_args(env, args, 0);
-  putenv(env[0]);
-  putenv(env[1]);
-  java_bridge_main(N_SARGS, args);
+  EXT_GLOBAL(get_server_args)(env, args, 0);
+  if(N_SENV>2) {
+	putenv(env[0]);
+	putenv(env[1]);
+  }
+  EXT_GLOBAL(bridge_main)(N_SARGS, args);
 #else
   static char*env[N_SENV];
   static char*_args[N_SARGS+1];
   char **args=_args+1;
-  java_get_server_args(env, args);
-  putenv(env[0]);
-  putenv(env[1]);
+  EXT_GLOBAL(get_server_args)(env, args);
+  if(N_SENV>2) {
+	putenv(env[0]);
+	putenv(env[1]);
+  }
   if(use_wrapper()) *--args = strdup(wrapper);
   execv(args[0], args);
 #endif
@@ -203,7 +231,7 @@ static int test_local_server() {
   sock = socket (PF_INET, SOCK_STREAM, 0);
 #endif
   if(sock==-1) return -1;
-  n = connect(sock,(struct sockaddr*)&cfg->saddr, sizeof cfg->saddr);
+  n = connect(sock,(struct sockaddr*)&EXT_GLOBAL(cfg)->saddr, sizeof EXT_GLOBAL(cfg)->saddr);
   if(n==-1) { close(sock); return -1; }
   return sock;
 }
@@ -230,25 +258,25 @@ static int test_server(int port) {
  * can avoid certain checks. If all ckecks fail a local backend is
  * started.
  */
-char* java_test_server(int *_socket, unsigned char spec) {
+char* EXT_GLOBAL(test_server)(int *_socket, unsigned char spec) {
   int sock, port;
   time_t current_time = time(0);
   unsigned char backend = spec=='I'?0:spec; // Mono or Java backend
 
   /* local server, either started by the user before (I)nit or started by the bridge */
-  if (((spec == 'I' && (java_ini_updated&U_SOCKNAME)) && (-1!=(sock=test_local_server())))
+  if (((spec == 'I' && (EXT_GLOBAL(ini_updated)&U_SOCKNAME)) && (-1!=(sock=test_local_server())))
       || (spec != 'I' && (-1!=(sock=test_local_server())))) {
 	if(_socket) {
 	  *_socket=sock;
 	} else {
 	  close(sock);
 	}
-	return strdup(cfg->sockname);
+	return strdup(EXT_GLOBAL(cfg)->sockname);
   }
 
   /* host list */
-  if(cfg->hosts && strlen(cfg->hosts)) {
-	char *host, *hosts = strdup(cfg->hosts);
+  if(EXT_GLOBAL(cfg)->hosts && strlen(EXT_GLOBAL(cfg)->hosts)) {
+	char *host, *hosts = strdup(EXT_GLOBAL(cfg)->hosts);
 	
 	assert(hosts); if(!hosts) return 0;
 	for(host=strtok(hosts, ";"); host; host=strtok(0, ";")) {
@@ -298,19 +326,19 @@ char* java_test_server(int *_socket, unsigned char spec) {
 
 static int wait_server() {
 #ifndef __MINGW32__
-  struct pollfd pollfd[1] = {{cfg->err, POLLIN, 0}};
+  struct pollfd pollfd[1] = {{EXT_GLOBAL(cfg)->err, POLLIN, 0}};
   int count=15, sock;
   
   /* wait for the server that has just started */
-  while(cfg->cid && -1==(sock=test_local_server()) && --count) {
-	if(cfg->err && poll(pollfd, 1, 0)) 
+  while(EXT_GLOBAL(cfg)->cid && -1==(sock=test_local_server()) && --count) {
+	if(EXT_GLOBAL(cfg)->err && poll(pollfd, 1, 0)) 
 	  return FAILURE; /* server terminated with error code */
-	php_error(E_NOTICE, "php_mod_java(%d): waiting for server another %d seconds",57, count);
+	php_error(E_NOTICE, "php_mod_"/**/EXT_NAME()/**/"(%d): waiting for server another %d seconds",57, count);
 	
 	sleep(1);
   }
   close(sock);
-  return (cfg->cid && count)?SUCCESS:FAILURE;
+  return (EXT_GLOBAL(cfg)->cid && count)?SUCCESS:FAILURE;
 #else
   return SUCCESS;
 #endif
@@ -320,7 +348,7 @@ static int wait_server() {
   return 0 if user has hard-coded the socketname
 */
 static short can_fork() {
-  return cfg->can_fork;
+  return EXT_GLOBAL(cfg)->can_fork;
 }
 
 /* handle keyboard interrupt */
@@ -331,11 +359,11 @@ static void s_kill(int sig) {
 #endif
 }
 
-void java_start_server() {
+void EXT_GLOBAL(start_server)() {
   int pid=0, err=0, p[2];
   char *test_server;
 #ifndef __MINGW32__
-  if(!(test_server=java_test_server(0, 'I'))) {
+  if(!(test_server=EXT_GLOBAL(test_server)(0, 'I'))) {
 	if(can_fork()) {
 	  if(pipe(p)!=-1) {
 		if(!(pid=fork())) {		/* daemon */
@@ -364,50 +392,50 @@ void java_start_server() {
 		if((read(p[0], &pid, sizeof pid))!=(sizeof pid)) pid=0;
 	  }
 	}
-	cfg->cid=pid;
-	cfg->err=p[0];
+	EXT_GLOBAL(cfg)->cid=pid;
+	EXT_GLOBAL(cfg)->err=p[0];
 	wait_server();
   } else
 #endif /* MINGW32 */
 	{
-	  cfg->cid=cfg->err=0;
+	  EXT_GLOBAL(cfg)->cid=EXT_GLOBAL(cfg)->err=0;
 	  free(test_server);
 	}
 }
 
 static void wait_for_daemon() {
 #ifndef __MINGW32__
-  struct pollfd pollfd[1] = {{cfg->err, POLLIN, 0}};
+  struct pollfd pollfd[1] = {{EXT_GLOBAL(cfg)->err, POLLIN, 0}};
   int err, c;
 
-  assert(cfg->err);
-  assert(cfg->cid);
+  assert(EXT_GLOBAL(cfg)->err);
+  assert(EXT_GLOBAL(cfg)->cid);
 
   /* first kill is trapped, second kill is received with default
 	 handler. If the server still exists, we send it a -9 */
-  for(c=3; c>0 && cfg->cid; c--) {
-	if (!(!cfg->err || (cfg->err && !(err=poll(pollfd, 1, 0))))) break;
+  for(c=3; c>0 && EXT_GLOBAL(cfg)->cid; c--) {
+	if (!(!EXT_GLOBAL(cfg)->err || (EXT_GLOBAL(cfg)->err && !(err=poll(pollfd, 1, 0))))) break;
 	if(c>1) {
-	  kill(cfg->cid, SIGTERM);
+	  kill(EXT_GLOBAL(cfg)->cid, SIGTERM);
 	  sleep(1);
-	  if (!(!cfg->err || (cfg->err && !(err=poll(pollfd, 1, 0))))) break;
+	  if (!(!EXT_GLOBAL(cfg)->err || (EXT_GLOBAL(cfg)->err && !(err=poll(pollfd, 1, 0))))) break;
 	  sleep(4);
 	} else {
-	  kill(cfg->cid, SIGKILL);
+	  kill(EXT_GLOBAL(cfg)->cid, SIGKILL);
 	}
   }
-  if(cfg->err) {
-	if((read(cfg->err, &err, sizeof err))!=sizeof err) err=0;
+  if(EXT_GLOBAL(cfg)->err) {
+	if((read(EXT_GLOBAL(cfg)->err, &err, sizeof err))!=sizeof err) err=0;
 	//printf("VM terminated with code: %ld\n", err);
-	close(cfg->err);
-	cfg->err=0;
+	close(EXT_GLOBAL(cfg)->err);
+	EXT_GLOBAL(cfg)->err=0;
   }
 #endif
 }
 
-void php_java_shutdown_library() 
+void EXT_GLOBAL(shutdown_library)() 
 {
-  if(cfg->cid) wait_for_daemon();
+  if(EXT_GLOBAL(cfg)->cid) wait_for_daemon();
 }
 
 

@@ -9,7 +9,7 @@ public class Util {
 
     public static final String UTF8 = "UTF-8";
 
-    public static final int DEFAULT_LOG_LEVEL = 1;
+    public static final int DEFAULT_LOG_LEVEL = 2;
     public static final int BACKLOG = 20;
 
     public static PrintStream logStream;
@@ -51,7 +51,7 @@ public class Util {
 
     public static void println(int level, String msg) {
 	StringBuffer b = new StringBuffer(logger.now());
-	b.append(" JavaBridge ");
+	b.append(" VMBridge ");
 	switch(level) {
 	case 1: b.append("FATAL"); break;
 	case 2: b.append("ERROR"); break;

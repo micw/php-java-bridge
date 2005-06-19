@@ -7,7 +7,7 @@ import socket
 import sys
 
 HOST = 'localhost'    # The host running the server part of the bridge
-PORT = 9167           # The standard port of the bridge
+PORT = 9267           # The standard port of the bridge
 s = None
 for res in socket.getaddrinfo(HOST, PORT, 
 socket.AF_UNSPEC, socket.SOCK_STREAM):
@@ -26,7 +26,7 @@ socket.AF_UNSPEC, socket.SOCK_STREAM):
     break
 if s is None:
     print 'Could not connect to socket.'
-    print 'Please start the bridge, for example with java -jar JavaBridge.jar INET:9167 5 ""'
+    print 'Please start the bridge, for example with java -jar JavaBridge.jar INET:9267 5 ""'
     sys.exit(1)
 
 # ask for System.getProperties()

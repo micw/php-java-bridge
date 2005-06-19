@@ -29,9 +29,8 @@ public class LocalServerSocket implements ISocketFactory {
 	JavaBridge.sclose(this.peer);
     }
 
-    public Socket accept(JavaBridge bridge) throws IOException {
+    public Socket accept() throws IOException {
 	int peer = JavaBridge.accept(this.peer);
-	Util.logDebug(bridge + " " + "Request from client with uid/gid "+bridge.uid+"/"+bridge.gid);
 	return new LocalSocket(peer);
     }
     public String getSocketName() {

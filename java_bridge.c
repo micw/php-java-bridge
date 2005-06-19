@@ -15,7 +15,7 @@
 static void writeArgument(pval* arg, short ignoreNonJava TSRMLS_DC);
 static void writeArguments(int argc, pval** argv, short ignoreNonJava TSRMLS_DC);
 
-ZEND_EXTERN_MODULE_GLOBALS(java)
+EXT_EXTERN_MODULE_GLOBALS(EXT)
 
 static short checkError(pval *value TSRMLS_DC)
 {
@@ -33,14 +33,14 @@ static short checkError(pval *value TSRMLS_DC)
 static short is_type (zval *pobj TSRMLS_DC) {
 #ifdef ZEND_ENGINE_2
   zend_class_entry *clazz = zend_get_class_entry(pobj TSRMLS_CC);
-  return clazz->builtin_functions == php_java_class_functions;
+  return clazz->builtin_functions == EXT_GLOBAL(class_functions);
 #else
-  extern void php_java_call_function_handler4(INTERNAL_FUNCTION_PARAMETERS, zend_property_reference *property_reference);
-  return pobj->type == IS_OBJECT && pobj->value.obj.ce->handle_function_call==php_java_call_function_handler4;
+  extern void EXT_GLOBAL(call_function_handler4)(INTERNAL_FUNCTION_PARAMETERS, zend_property_reference *property_reference);
+  return pobj->type == IS_OBJECT && pobj->value.obj.ce->handle_function_call==EXT_GLOBAL(call_function_handler4);
 #endif
 }
 
-int java_get_jobject_from_object(pval*object, long *obj TSRMLS_DC)
+int EXT_GLOBAL(get_jobject_from_object)(pval*object, long *obj TSRMLS_DC)
 {
   pval **handle;
   int n=-1;
@@ -53,16 +53,16 @@ int java_get_jobject_from_object(pval*object, long *obj TSRMLS_DC)
   return 1;
 }
 
-void php_java_invoke(char*name, long object, int arg_count, zval**arguments, short ignoreNonJava, pval*presult TSRMLS_DC) 
+void EXT_GLOBAL(invoke)(char*name, long object, int arg_count, zval**arguments, short ignoreNonJava, pval*presult TSRMLS_DC) 
 {
-  proxyenv *jenv = java_connect_to_server(TSRMLS_C);
+  proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
 
   (*jenv)->writeInvokeBegin(jenv, object, name, 0, 'I', (void*)presult);
   writeArguments(arg_count, arguments, ignoreNonJava TSRMLS_CC);
   (*jenv)->writeInvokeEnd(jenv);
 }
 
-void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, enum constructor constructor, short createInstance, pval *object, int arg_count, zval**arguments)
+void EXT_GLOBAL(call_function_handler)(INTERNAL_FUNCTION_PARAMETERS, char*name, enum constructor constructor, short createInstance, pval *object, int arg_count, zval**arguments)
 {
   long result = 0;
   proxyenv *jenv;
@@ -75,47 +75,45 @@ void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, enu
     result = (long)object;
 
     if (ZEND_NUM_ARGS() < 1) {
-      php_error(E_ERROR, "Missing classname in new java() call");
+      php_error(E_ERROR, "Missing classname in new "/**/EXT_NAME()/**/" call");
       return;
     }
 	
-	if(constructor==CONSTRUCT_MONO) {
-								/* create a new mono object */
-	  char *cname, *mname;
-	  size_t clen;
-	  jenv = java_connect_to_mono(TSRMLS_C);
-	  if(!jenv) {ZVAL_NULL(object); return;}
-
-	  cname = Z_STRVAL_P(arguments[0]);
-	  clen = Z_STRLEN_P(arguments[0]);
-	  mname = emalloc(clen+5);
-	  assert(mname); if(!mname) {ZVAL_NULL(object); return;}
-	  strcpy(mname, "cli.");
-	  memcpy(mname+4,cname, clen);
-      mname[clen+4] = 0;
-	  (*jenv)->writeCreateObjectBegin(jenv, mname, clen+4, createInstance?'I':'C', (void*)result);
-	  writeArguments(--arg_count, ++arguments, 0 TSRMLS_CC);
-	  (*jenv)->writeCreateObjectEnd(jenv);
-	  efree(mname);
-	}
-	else {
-								/* create a new java object */
-	  jenv = java_connect_to_server(TSRMLS_C);
-	  if(!jenv) {ZVAL_NULL(object); return;}
-
-	  (*jenv)->writeCreateObjectBegin(jenv, Z_STRVAL_P(arguments[0]), Z_STRLEN_P(arguments[0]), createInstance?'I':'C', (void*)result);
-	  writeArguments(--arg_count, ++arguments, 0 TSRMLS_CC);
-	  (*jenv)->writeCreateObjectEnd(jenv);
-	}
-
+#if EXTENSION == JAVA
+	/* create a new vm object */
+	jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
+	if(!jenv) {ZVAL_NULL(object); return;}
+	
+	(*jenv)->writeCreateObjectBegin(jenv, Z_STRVAL_P(arguments[0]), Z_STRLEN_P(arguments[0]), createInstance?'I':'C', (void*)result);
+	writeArguments(--arg_count, ++arguments, 0 TSRMLS_CC);
+	(*jenv)->writeCreateObjectEnd(jenv);
+#elif EXTENSION == MONO
+	/* create a new vm object, prepend .cli */
+	char *cname, *mname;
+	size_t clen;
+	jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
+	if(!jenv) {ZVAL_NULL(object); return;}
+	
+	cname = Z_STRVAL_P(arguments[0]);
+	clen = Z_STRLEN_P(arguments[0]);
+	mname = emalloc(clen+5);
+	assert(mname); if(!mname) {ZVAL_NULL(object); return;}
+	strcpy(mname, "cli.");
+	memcpy(mname+4,cname, clen);
+	mname[clen+4] = 0;
+	(*jenv)->writeCreateObjectBegin(jenv, mname, clen+4, createInstance?'I':'C', (void*)result);
+	writeArguments(--arg_count, ++arguments, 0 TSRMLS_CC);
+	(*jenv)->writeCreateObjectEnd(jenv);
+	efree(mname);
+#endif
   } else {
 
     long obj;
 
-	jenv = java_connect_to_server(TSRMLS_C);
+	jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
 	if(!jenv) {ZVAL_NULL(object); return;}
 
-	java_get_jobject_from_object(object, &obj TSRMLS_CC);
+	EXT_GLOBAL(get_jobject_from_object)(object, &obj TSRMLS_CC);
 	assert(obj);
 
     result = (long)return_value;
@@ -138,7 +136,7 @@ static void writeArgument(pval* arg, short ignoreNonJava TSRMLS_DC)
       break;
 
     case IS_OBJECT:
-	  java_get_jobject_from_object(arg, &result TSRMLS_CC);
+	  EXT_GLOBAL(get_jobject_from_object)(arg, &result TSRMLS_CC);
 	  if(!ignoreNonJava && !result) 
 		php_error(E_WARNING, "Argument is not (or does not contain) Java object(s).");
 	  (*jenv)->writeObject(jenv, result);
@@ -215,20 +213,20 @@ static void writeArguments(int argc, pval** argv, short ignoreNonJava TSRMLS_DC)
 }
 
 /**
- * php_java_get_property_handler
+ * get_property_handler
  */
-short php_java_get_property_handler(char*name, zval *object, zval *presult)
+short EXT_GLOBAL(get_property_handler)(char*name, zval *object, zval *presult)
 {
   long obj;
   proxyenv *jenv;
 
   TSRMLS_FETCH();
 
-  jenv = java_connect_to_server(TSRMLS_C);
+  jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   if(!jenv) {ZVAL_NULL(presult); return FAILURE;}
 
   /* get the object */
-  java_get_jobject_from_object(object, &obj TSRMLS_CC);
+  EXT_GLOBAL(get_jobject_from_object)(object, &obj TSRMLS_CC);
 
   ZVAL_NULL(presult);
 
@@ -245,20 +243,20 @@ short php_java_get_property_handler(char*name, zval *object, zval *presult)
 
 
 /**
- * php_java_set_property_handler
+ * set_property_handler
  */
-short php_java_set_property_handler(char*name, zval *object, zval *value, zval *presult)
+short EXT_GLOBAL(set_property_handler)(char*name, zval *object, zval *value, zval *presult)
 {
   long obj;
   proxyenv *jenv;
 
   TSRMLS_FETCH();
 
-  jenv = java_connect_to_server(TSRMLS_C);
+  jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   if(!jenv) {ZVAL_NULL(presult); return FAILURE; }
 
   /* get the object */
-  java_get_jobject_from_object(object, &obj TSRMLS_CC);
+  EXT_GLOBAL(get_jobject_from_object)(object, &obj TSRMLS_CC);
 
   ZVAL_NULL(presult);
 

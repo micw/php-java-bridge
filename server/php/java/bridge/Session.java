@@ -57,7 +57,7 @@ public class Session{
 	}
     }
 	
-    public void destroySession() {
+    public void invalidate() {
 	destroy();
     }
 
@@ -65,7 +65,7 @@ public class Session{
 	map.putAll(vars);
     }
 
-    public static void expire() {
+    public static void expire(JavaBridge bridge) {
 	if(JavaBridge.sessionHash==null) return;
     	synchronized(JavaBridge.sessionHash) {
 	    for(Iterator e = JavaBridge.sessionHash.values().iterator(); e.hasNext(); ) {
@@ -73,20 +73,20 @@ public class Session{
 		if((ref.timeout !=0) && (ref.startTime+ref.timeout<=System.currentTimeMillis())) {
 		    sessionCount--;
 		    JavaBridge.sessionHash.remove(ref.name);
-		    Util.logDebug("Session " + ref.name + " expired.");
+		    if(bridge.logLevel>3) bridge.logDebug("Session " + ref.name + " expired.");
 		}
 	    }
 	}
     }
     
-    static void reset() {
+    static void reset(JavaBridge bridge) {
 	if(JavaBridge.sessionHash==null) return;
     	synchronized(JavaBridge.sessionHash) {
 	    for(Iterator e = JavaBridge.sessionHash.values().iterator(); e.hasNext(); ) {
 		Session ref = (Session)e.next();
 		sessionCount--;
 		JavaBridge.sessionHash.remove(ref.name);
-		Util.logDebug("Session " + ref.name + " destroyed.");
+		if(bridge.logLevel>3) bridge.logDebug("Session " + ref.name + " destroyed.");
 	    }
 	}
   	

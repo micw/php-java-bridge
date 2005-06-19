@@ -23,4 +23,6 @@ Revert it!
 #define NDEBUG
 #endif
 
+#include "init_cfg.h"
+
 #endif

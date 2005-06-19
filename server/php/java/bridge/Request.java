@@ -15,7 +15,7 @@ public class Request implements IDocHandler {
     private static class Args {
     	HashMap ht;
     	ArrayList array;
-    	private int count;
+    	int count;
     	
     	byte composite;
     	byte type;
@@ -23,7 +23,7 @@ public class Request implements IDocHandler {
     	String method;
     	boolean predicate;
         long id;
-        private Object key;
+        Object key;
    	
    	void add(Object val) {
     		if(composite!=0) {

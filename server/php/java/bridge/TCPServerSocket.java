@@ -52,10 +52,9 @@ public class TCPServerSocket implements ISocketFactory {
 	sock.close();
     }
 
-    public Socket accept(JavaBridge bridge) throws IOException {
+    public Socket accept() throws IOException {
 	Socket s = sock.accept();
-    	Util.logDebug(bridge + " " + "Request from unknown client");
-	return s;
+ 	return s;
     }
     public String getSocketName() {
     	return String.valueOf(port);

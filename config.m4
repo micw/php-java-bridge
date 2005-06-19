@@ -7,9 +7,12 @@ m4_include(tests.m4/java_check_broken_gcc_installation.m4)
 
 PHP_ARG_WITH(java, for java support,
 [  --with-java[=JAVA_HOME]        Include java support])
+AC_ARG_WITH(mono,  [  --with-mono[[=ikvmc.exe location]]             Include mono support], PHP_MONO="$enableval", PHP_MONO="no")
+PHP_ARG_ENABLE(servlet, for java servlet support,
+[  --enable-servlet[=JAR]         Include java servlet support. JAR must be the location of j2ee.jar or servlet.jar; creates JavaBridge.war])
 
 
-if test "$PHP_JAVA" != "no"; then
+if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
        JAVA_FUNCTION_CHECKS
        PTHREADS_CHECK
        PTHREADS_ASSIGN_VARS
@@ -31,16 +34,29 @@ if test "$PHP_JAVA" != "no"; then
 	 COND_GCJ=1
 	fi
 
+        if test "$PHP_MONO" != "no";then 
+# create mono.so, compile with -DEXTENSION_DIR="\"$(EXTENSION_DIR)\""
+	PHP_NEW_EXTENSION(mono, php_java_snprintf.c java.c java_bridge.c client.c parser.c protocol.c bind.c init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\"])
+          EXTENSION_NAME=MONO
+	  PHP_JAVA_BIN="mono"
+	  COND_GCJ=0
+        else 
 # create java.so, compile with -DEXTENSION_DIR="\"$(EXTENSION_DIR)\""
 	PHP_NEW_EXTENSION(java, php_java_snprintf.c java.c java_bridge.c client.c parser.c protocol.c bind.c init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\"])
+          EXTENSION_NAME=JAVA
+	  PHP_JAVA_BIN="${PHP_JAVA}/bin/java"
+        fi
+
 # create init_cfg.c from the template (same as AC_CONFIG_FILES)
 	BRIDGE_VERSION="`cat $ext_builddir/VERSION`"
-	PHP_JAVA_BIN="${PHP_JAVA}/bin/java"
-	sed "s*@PHP_JAVA@*${PHP_JAVA}*
+        for i in init_cfg.c init_cfg.h; do 
+	  sed "s*@PHP_JAVA@*${PHP_JAVA}*
 	     s*@COND_GCJ@*${COND_GCJ}*
              s*@PHP_JAVA_BIN@*${PHP_JAVA_BIN}*
+             s*@EXTENSION@*${EXTENSION_NAME}*
              s*@BRIDGE_VERSION@*${BRIDGE_VERSION}*" \
-          <$ext_builddir/init_cfg.c.in >$ext_builddir/init_cfg.c
+            <$ext_builddir/${i}.in >$ext_builddir/${i}
+        done
 
 # bootstrap the server's configure script
 	if test -d ext/java/server; then

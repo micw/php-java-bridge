@@ -33,8 +33,8 @@ public abstract class PhpMap {
     //
     // Return map for the value (PHP 5 only)
     //
-    public static PhpMap getPhpMap(Object value) { 
-	Util.logDebug("returning map for "+ value.getClass());
+    public static PhpMap getPhpMap(Object value, JavaBridge bridge) { 
+	if(bridge.logLevel>3) bridge.logDebug("returning map for "+ value.getClass());
 
 	if(value.getClass().isArray()) {
 	    return 

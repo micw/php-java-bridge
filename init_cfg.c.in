@@ -25,7 +25,7 @@
 
 #ifndef CFG_JAVA
 #if @COND_GCJ@ == 1
-#define CFG_JAVA EXTENSION_DIR/**/"/java"
+#define CFG_JAVA EXTENSION_DIR/**/EXT_NAME()
 #else
 #define CFG_JAVA "@PHP_JAVA_BIN@"
 #endif
@@ -43,7 +43,7 @@
 #define BRIDGE_VERSION "@BRIDGE_VERSION@"
 #endif
 
-const char * const java_bridge_version = BRIDGE_VERSION;
+const char * const EXT_GLOBAL (bridge_version) = BRIDGE_VERSION;
 
 #ifndef CFG_JAVA_SOCKET_INET
 #ifdef HAVE_ABSTRACT_NAMESPACE
@@ -55,7 +55,7 @@ static void init_socket() {
   assert(sockname); if(!sockname) exit(6);
 
   snprintf(sockname, len+1, "%s%lx", bridge,(unsigned long)getpid());
-  cfg->sockname=sockname;
+  EXT_GLOBAL(cfg)->sockname=sockname;
 }
 #else 
 static void init_socket() {
@@ -66,55 +66,54 @@ static void init_socket() {
 	strcpy(sockname, s);
 	n = mkstemp(sockname);
 	assert(n); if(!n) exit(6);
-	cfg->sockname=sockname;
+	EXT_GLOBAL(cfg)->sockname=sockname;
 }
 #endif
 #else 
 static void init_socket() {
-  cfg->sockname = strdup(DEFAULT_PORT);
+  EXT_GLOBAL(cfg)->sockname = strdup(DEFAULT_PORT);
 }
 #endif
-void java_init_cfg() {
-  if(!(java_ini_updated&U_SOCKNAME)) {
+void EXT_GLOBAL (init_cfg) () {
+  if(!(EXT_GLOBAL (ini_updated)&U_SOCKNAME)) {
 	init_socket();
   }
-  if(!(java_ini_updated&U_SERVLET)) cfg->servlet=strdup(DEFAULT_SERVLET);
-  if(!(java_ini_updated&U_HOSTS)) cfg->hosts=strdup("");
-  if(!(java_ini_updated&U_CLASSPATH)) cfg->classpath=strdup(CFG_CLASSPATH);
-  if(!(java_ini_updated&U_LIBRARY_PATH)) cfg->ld_library_path=strdup(CFG_LD_LIBRARY_PATH);
-  if(!(java_ini_updated&U_JAVA)) cfg->java=strdup(CFG_JAVA);
-  if(!(java_ini_updated&U_JAVA_HOME)) cfg->java_home=strdup(CFG_JAVA_HOME);
-  if(!(java_ini_updated&U_LOGLEVEL)) {
-	cfg->logLevel=strdup(DEFAULT_LEVEL);
-	cfg->logLevel_val=atoi(DEFAULT_LEVEL);
+  if(!(EXT_GLOBAL (ini_updated) &U_SERVLET)) EXT_GLOBAL(cfg)->servlet=strdup(DEFAULT_SERVLET);
+  if(!(EXT_GLOBAL (ini_updated) &U_HOSTS)) EXT_GLOBAL(cfg)->hosts=strdup("");
+  if(!(EXT_GLOBAL (ini_updated) &U_CLASSPATH)) EXT_GLOBAL(cfg)->classpath=strdup(CFG_CLASSPATH);
+  if(!(EXT_GLOBAL (ini_updated) &U_LIBRARY_PATH)) EXT_GLOBAL(cfg)->ld_library_path=strdup(CFG_LD_LIBRARY_PATH);
+  if(!(EXT_GLOBAL (ini_updated) &U_JAVA)) EXT_GLOBAL(cfg)->vm=strdup(CFG_JAVA);
+  if(!(EXT_GLOBAL (ini_updated) &U_JAVA_HOME)) EXT_GLOBAL(cfg)->vm_home=strdup(CFG_JAVA_HOME);
+  if(!(EXT_GLOBAL (ini_updated) &U_LOGLEVEL)) {
+	EXT_GLOBAL(cfg)->logLevel=strdup(DEFAULT_LEVEL);
+	EXT_GLOBAL(cfg)->logLevel_val=atoi(DEFAULT_LEVEL);
   }
-  if(!(java_ini_updated&U_LOGFILE)) cfg->logFile=strdup("");
-  cfg->can_fork=
-	((java_ini_updated&U_SOCKNAME)==0)&&
-	((java_ini_updated&U_HOSTS)==0);
+  if(!(EXT_GLOBAL (ini_updated) &U_LOGFILE)) EXT_GLOBAL(cfg)->logFile=strdup(LOGFILE);
+  EXT_GLOBAL(cfg)->can_fork=
+	((EXT_GLOBAL (ini_updated) &U_SOCKNAME)==0)&&
+	((EXT_GLOBAL (ini_updated) &U_HOSTS)==0);
 }
 
-void java_destroy_cfg(int java_ini_updated) {
-  if(!(java_ini_updated&U_SERVLET)) free(cfg->servlet);
-  if(!(java_ini_updated&U_HOSTS)) free(cfg->hosts);
-  if(!(java_ini_updated&U_SOCKNAME)) free(cfg->sockname);
-  if(!(java_ini_updated&U_CLASSPATH)) free(cfg->classpath);
-  if(!(java_ini_updated&U_LIBRARY_PATH)) free(cfg->ld_library_path);
-  if(!(java_ini_updated&U_JAVA)) free(cfg->java);
-  if(!(java_ini_updated&U_JAVA_HOME)) free(cfg->java_home);
-  if(!(java_ini_updated&U_LOGLEVEL)) free(cfg->logLevel);
-  if(!(java_ini_updated&U_LOGFILE)) free(cfg->logFile);
+void EXT_GLOBAL (destroy_cfg) (int EXT_GLOBAL (ini_updated) ) {
+  if(!(EXT_GLOBAL (ini_updated) &U_SERVLET)) free(EXT_GLOBAL(cfg)->servlet);
+  if(!(EXT_GLOBAL (ini_updated) &U_HOSTS)) free(EXT_GLOBAL(cfg)->hosts);
+  if(!(EXT_GLOBAL (ini_updated) &U_SOCKNAME)) free(EXT_GLOBAL(cfg)->sockname);
+  if(!(EXT_GLOBAL (ini_updated) &U_CLASSPATH)) free(EXT_GLOBAL(cfg)->classpath);
+  if(!(EXT_GLOBAL (ini_updated) &U_LIBRARY_PATH)) free(EXT_GLOBAL(cfg)->ld_library_path);
+  if(!(EXT_GLOBAL (ini_updated) &U_JAVA)) free(EXT_GLOBAL(cfg)->vm);
+  if(!(EXT_GLOBAL (ini_updated) &U_JAVA_HOME)) free(EXT_GLOBAL(cfg)->vm_home);
+  if(!(EXT_GLOBAL (ini_updated) &U_LOGLEVEL)) free(EXT_GLOBAL(cfg)->logLevel);
+  if(!(EXT_GLOBAL (ini_updated) &U_LOGFILE)) free(EXT_GLOBAL(cfg)->logFile);
 }
 
 static short is_servlet() {
-  extern int java_ini_last_updated;
-  return ((java_ini_last_updated&U_SERVLET)!=0) && cfg->servlet && strlen(cfg->servlet) && strncasecmp("off", cfg->servlet, 3);
+  return ((EXT_GLOBAL (ini_last_updated)&U_SERVLET)!=0) && EXT_GLOBAL(cfg)->servlet && strlen(EXT_GLOBAL(cfg)->servlet) && strncasecmp("off", EXT_GLOBAL(cfg)->servlet, 3);
 }
 
-char *get_servlet_context() {
+char *EXT_GLOBAL(get_servlet_context)() {
   if(!is_servlet()) return 0;
 
-  if(!strncasecmp("on", cfg->servlet, 2)) return DEFAULT_SERVLET;
-  return cfg->servlet;
+  if(!strncasecmp("on", EXT_GLOBAL(cfg)->servlet, 2)) return DEFAULT_SERVLET;
+  return EXT_GLOBAL(cfg)->servlet;
 }
 

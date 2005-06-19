@@ -7,11 +7,18 @@ libnatcJavaBridge_la_LIBADD =
 
 if COND_GCJ
 # create java executable with GNU GCC when --with-java was given
-bin_PROGRAMS=java RunJavaBridge
+bin_PROGRAMS=$(VM_BINARIES)
+EXTRA_PROGRAMS=java RunJavaBridge MonoBridge.exe RunMonoBridge
+
 RunJavaBridge_SOURCES= RunJavaBridge.c
-java_SOURCES= java.c php/java/bridge/GlobalRef.java php/java/bridge/IDocHandler.java php/java/bridge/ISocketFactory.java php/java/bridge/JavaBridgeClassLoader.java php/java/bridge/JavaBridge.java php/java/bridge/LocalServerSocket.java php/java/bridge/LocalSocketInputStream.java php/java/bridge/LocalSocket.java php/java/bridge/LocalSocketOutputStream.java php/java/bridge/NotImplementedException.java php/java/bridge/Parser.java php/java/bridge/ParserString.java php/java/bridge/ParserTag.java php/java/bridge/PhpMap.java php/java/bridge/Request.java php/java/bridge/Response.java php/java/bridge/Session.java php/java/bridge/TCPServerSocket.java php/java/bridge/Util.java php/java/bridge/Listener.java
+java_SOURCES= java.c php/java/bridge/GlobalRef.java php/java/bridge/IDocHandler.java php/java/bridge/ISocketFactory.java php/java/bridge/JavaBridgeClassLoader.java php/java/bridge/JavaBridge.java php/java/bridge/LocalServerSocket.java php/java/bridge/LocalSocketInputStream.java php/java/bridge/LocalSocket.java php/java/bridge/LocalSocketOutputStream.java php/java/bridge/NotImplementedException.java php/java/bridge/Parser.java php/java/bridge/ParserString.java php/java/bridge/ParserTag.java php/java/bridge/PhpMap.java php/java/bridge/Request.java php/java/bridge/Response.java php/java/bridge/Session.java php/java/bridge/TCPServerSocket.java php/java/bridge/Util.java
 
-
+MonoBridge.exe: $(PHP_MONO)
+	$(GCJ) -C php/java/bridge/*.java
+	fastjar cMf JavaBridge.jar META-INF/MANIFEST.MF php/java/bridge/*.class
+	mono $(PHP_MONO) JavaBridge.jar
+	mv JavaBridge.exe MonoBridge.exe
+	rm -f JavaBridge.jar
 
 java_LDADD=libnatcJavaBridge.la
 java_LDFLAGS=-rpath $(EXTENSION_DIR)
@@ -23,14 +30,15 @@ else
 bin_PROGRAMS=RunJavaBridge
 RunJavaBridge_SOURCES=RunJavaBridge.c
 
-dist_data_DATA=JavaBridge.jar JavaBridge.war
+dist_data_DATA=JavaBridge.jar $(JAVA_BRIDGE_WAR)
+EXTRA_DATA=JavaBridge.war
 
 JavaBridge.jar:
 	$(PHP_JAVA)/bin/javac php/java/bridge/*.java
 	$(PHP_JAVA)/bin/jar cMf JavaBridge.jar META-INF/MANIFEST.MF php/java/bridge/*.class
 
-JavaBridge.war: JavaBridge.jar j2ee.jar
-	$(PHP_JAVA)/bin/javac -classpath j2ee.jar  php/java/bridge/*.java php/java/servlet/*.java
+JavaBridge.war: JavaBridge.jar $(SERVLET)
+	$(PHP_JAVA)/bin/javac -classpath $(SERVLET) php/java/bridge/*.java php/java/servlet/*.java
 	-mkdir WEB-INF/lib WEB-INF/classes
 	cp JavaBridge.jar WEB-INF/lib
 	cp -r php WEB-INF/classes

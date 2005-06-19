@@ -40,7 +40,7 @@ $memoryStream = new java("java.io.ByteArrayOutputStream");
 $streamResult = new java("javax.xml.transform.stream.StreamResult", $memoryStream);
 $myTransformer->transform($src, $streamResult);
 $data = $memoryStream->toByteArray();
-echo $data;
+echo "$data\n";
 
 $fp = fopen("ellipse.svg", "w");
 fwrite($fp, $data);

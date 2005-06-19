@@ -23,7 +23,8 @@ Build and execution instructions:
           make null --version  # GNU make 3.79 or above
 
           phpize && 
-          ./configure --with-java=/opt/IBMJava2-14 &&
+          ./configure --with-java=/opt/IBMJava2-14 \
+                      --disable-servlet &&
           make &&
           su -c "make install"
 
@@ -60,30 +61,40 @@ Build and execution instructions:
 
           /usr/sbin/php-java-bridge
 
-  This option is available on Security Enhanced Linux.
+  This option can be used if "Security Enhanced Linux" is switched on.
 
 
   OPTION 2: You can deploy the PHP/Java Bridge into a standard
-  servlet engine or an application server. Rename JavaBridge.jar
-  into JavaBridge.war and deploy it using the application server's
-  tools. Disable the java.socketname option and set the java.hosts and
-  java.servlet options, for example: 
+  servlet engine or an application server. Deploy JavaBridge.war using
+  the application server's tools. Disable the java.socketname and
+  java.log_file option and set the java.hosts and java.servlet option,
+  for example:
 
+          [java]
+          java.log_level="3"
           java.servlet="On"
           java.hosts="127.0.0.1:8080"
 
-  This option is available on Security Enhanced Linux.
+  This option cannot be used if "Security Enhanced Linux" is switched
+  on.
 
 
   OPTION 3: You can start the bridge as a sub-process of apache. Disable
-  java.url and java.socketname and re-start apache.
-  Check if apache has started java as a sub-process.  For example with 
-  the commands:
+  java.socketname, java.servlet and java.hosts. For example:
+
+          extension = java.so
+          [java]
+          java.log_level="3"
+          java.log_file="/var/log/php-java-bridge.log"
+
+  Re-start apache and check if apache has started java as a
+  sub-process.  For example with the commands:
 
           apachectl restart
           pstree | fgrep httpd
 
-  This option cannot be used on Security Enhanced Linux.
+  This option cannot be used if "Security Enhanced Linux" is switched
+  on.
 
 
   Check the status:
@@ -97,23 +108,20 @@ Build and execution instructions:
           java.classpath = <system dependent path to JavaBridge.jar>
           java.java_home = <system dependent path to the java install dir>
           java.java      = <system dependent path to the java binary>
-          java.socketname= <hard-coded socketname to start the VM separately>
-          java.hosts     = <add. bridge hosts e.g.: server1:9167;server2:9168>
+          java.socketname= <local ("unix domain") communication channel>
+          java.hosts     = <add. bridge hosts e.g.: server1:9267;server2:9268>
+          java.servlet   = <On/Off>
 
   Please first look at the output of phpinfo() to see the original
   values.  
-
-  The java.hosts setting specifies additional hosts running the
-  PHP/Java Bridge; it should be used only if multicast datagrams 
-  don't work on your system.
 
 ---------------------------------------------
   Starting the PHP/Java Bridge automatically
   ------------------------------------------
 
-  When the java.socketname option is not set, the web server will
-  start or re-start the bridge automatically as a sub-component when the
-  http service is started or re-started.
+  When the java.socketname and java.hosts options are not set, the web
+  server will start or re-start the bridge automatically as a sub
+  component when the http service is started or re-started.
 
   However, when running the bridge in a production environment, it is
   recommended to start the PHP/Java Bridge as a system service,
@@ -123,19 +131,100 @@ Build and execution instructions:
   for an example.
 
 ---------------------------------------------
-  Deploying into a J2EE/EJB server or a 
-  standard servlet engine
-  -----------------------------
+  J2EE/EJB Server
+  ---------------
 
-   FIXME
+  The following description assumes that you use the Sun J2EE
+  application server and that your server is already installed in some
+  directory, for example in ~/SUNWappserver.  The environment variable
+  $app_server should point to this directory.
 
-   Create and deploy JavaBridge.war
+  1. Build a JavaBridge.war, for example with the command:
 
-   Set:
-        java.hosts=<host>:<port>
-        java.servlet=On
+       ./configure --with-java=/opt/IBMJava2-14 \ 
+                   --enable-servlet=$app_server/lib/j2ee.jar &&
+       make
 
-   
+     Open modules/JavaBridge.war and copy the libraries (.jar files)
+     you need into its "WEB-INF/lib" directory.
+
+
+  2. Start your application server, for example with the command:
+
+       $app_server/bin/asadmin start-domain domain1
+
+
+  3. Log into your application server, for example by visiting
+
+       http://localhost:4848/asadmin
+
+     and open
+
+       Application Server -> Applications -> Web Applications
+
+     Click on  "Deploy..."  and deploy modules/JavaBridge.war.
+
+
+  4. The php .ini file [java] section should contain only
+     java.log_level, java.servlet and java.hosts entries.  Example: 
+
+       [java]
+       ;;java.log_level="<level>"
+       java.log_level="3"
+
+       ;;java.servlet="<On|Off>"
+       java.servlet="On"
+
+       ;; java.hosts="<host1>:<port1>;<host2>:<port2>;..."
+       java.hosts="127.0.0.1:8080" 
+
+     The port# must be the HTTP port, usually 8000 or above.
+     On unix one can also use the host name, such as "localhost",
+     instead of the ip address.
+
+
+  The PHP/Java Bridge log output appears in the server log file, for
+  example in $app_server/domains/domain1/logs/server.log.
+
+  Libraries (.jar files) must be stored in the "WEB-INF/lib" folder
+  within the JavaBridge.war file or in some application server specific
+  "lib" directory. Access to libraries deployed in /usr/share/java is
+  denied by the application server.
+
+---------------------------------------------
+  Tomcat 4 or Tomcat 5 servlet engine
+  -----------------------------------
+
+  It is assumed that tomcat is already installed in some directory,
+  for example in /opt/tomcat4.  The environment variable CATALINA_HOME
+  should point to this directory.
+  
+  1. Build a JavaBridge.war, for example with the command:
+
+       ./configure --with-java=/opt/IBMJava2-14 \ 
+             --enable-servlet=$CATALINA_HOME/common/lib/servlet.jar &&
+       make
+     
+     and copy modules/JavaBridge.war to $CATALINA_HOME/webapps.
+
+  2. Start tomcat with the command 
+
+       $CATALINA_HOME/bin/catalina.sh start
+
+     or
+
+       $CATALINA_HOME/bin/catalina.sh run
+
+  4. The php .ini file [java] section should contain only
+     java.log_level, java.servlet and java.hosts entries.  Example: 
+
+       [java]
+       java.log_level="3"
+       java.servlet="On"
+       java.hosts="127.0.0.1:8080"
+
+  The PHP/Java Bridge log output appears in the server log file, for
+  example in $CATALINA_HOME/logs/localhost_log.*.txt  
 
 ------------------------------------
   64 Bit issues
@@ -213,10 +302,10 @@ Build and execution instructions:
 
 
   Windows uses TCP/IP sockets instead of unix domain sockets. If you
-  want to change the java.socketname from its default (which is 9167),
+  want to change the java.socketname from its default (which is 9267),
   you must use an integer. For example:
 
-    java.socketname=9168
+    java.socketname=9268
 
 ------------------------------------
   Loading on-demand with dl()
@@ -256,8 +345,9 @@ Build and execution instructions:
    * -m32: Build 32 bit code. Required if you run a 32 bit JVM on a 64
      bit system.
 
-   * -DCFG_JAVA_SOCKET_INET: Disables local ("unix domain")
-     sockets on systems which support them.
+   * -DCFG_JAVA_SOCKET_INET: Disables local ("unix domain") sockets on
+     systems which support them. This is needed on FreeBSD if the java VM
+     is a linux executable.
 
   Example: make CFLAGS="-m64"
 
@@ -277,7 +367,9 @@ Build and execution instructions:
 
    4: Log debug messages, including the c/s communication protocol.
 
-  The default log level is 1.
+  The default log level is 2.  If java.log_level is missing, the
+  backend uses the "default" log level supplied when the backend was
+  started (the second argument after java -jar JavaBridge.jar ...).
 
 ---------------------------------------------
   GCJ/GNU Java issues
@@ -384,11 +476,12 @@ Build and execution instructions:
     ?>
 
   Since java does not yet support library versions, the PHP/Java
-  Bridge must be re-started when a new library version is deployed. This
-  means that the repositories shall contain only one version of batStore
-  at the same time. -- The ECMA 335 CLR supports this very well
-  so in theory the problem could be solved by compiling the .jar file
-  into a ECMA 335 dll (e.g. with the command: ikvmc batStore-1.0.jar)
+  Bridge must be reset after a new library version has been deployed.
+  This can be done at runtime by calling the php function
+  "java_reset()".
+  (The ECMA 335 CLR supports multiple class versions very well so in
+  theory the problem could also be solved by compiling the .jar file
+  into a ECMA 335 dll, e.g. with the command: ikvmc batStore-1.0.jar,
   and to use assembly loading instead, please see the
   tests.mono+net/load_assembly.php for details).
 
@@ -407,7 +500,7 @@ Build and execution instructions:
   UTF-8
   -----
   
-  Since PHP does not support Unicode the PHP/Java Bridge uses UTF-8 to
+  Since PHP does not support unicode the PHP/Java Bridge uses UTF-8 to
   convert characters into the host representation. All strings are
   created with new String(..., "UTF-8") and all internal String->byte[]
   conversions use getBytes("UTF-8").

@@ -13,8 +13,8 @@
 void usage(char*name){
   fprintf(stderr, "Usage: %s [<socketname>] [<logLevel>] <logFile>\n", name);
   fprintf(stderr, "Example 1: %s /var/run/.php-java-bridge_socket 1 /var/log/php-java-bridge.log\n", name);
-  fprintf(stderr, "Example 2: %s INET:9167 3 \"\" \n", name);
-  fprintf(stderr, "Example 3: %s node1.log& %s node2.log& \n", name, name);
+  fprintf(stderr, "Example 2: %s INET:9267 3 \"\" \n", name);
+  fprintf(stderr, "Example 3: %s node.log\n", name);
   exit(1);
 }
 

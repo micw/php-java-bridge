@@ -39,7 +39,7 @@ public class Parser {
 		// OPTIONS
 	    default:
 	    	if((ch&64)!=0) options=(byte) (ch&3); 
-	    	if((ch&128)!=0) Util.logLevel = (ch>>2)&7;
+	    	if((ch&128)!=0) bridge.logLevel = (ch>>2)&7;
 	    	c++;
 	    }
 	} else {
@@ -79,7 +79,7 @@ public class Parser {
 	s[i++]=c; 
     }
     void CALL_BEGIN() {
-    	if(Util.logLevel>=4) {
+    	if(bridge.logLevel>=4) {
 	    StringBuffer buf=new StringBuffer("--> <");   
 	    buf.append(tag[0].strings[0].getUTF8StringValue());
 	    buf.append(" ");
@@ -88,16 +88,16 @@ public class Parser {
 		buf.append(tag[1].strings[i].getUTF8StringValue()); buf.append("=\""); buf.append(tag[2].strings[i].getUTF8StringValue());buf.append("\" ");
 	    }
 	    buf.append(eot?"/>":">"); eot=false;
-	    Util.logDebug(this.bridge + " " + buf.toString());
+	    bridge.logDebug(buf.toString());
     	}
 	handler.begin(tag);
     }
     void CALL_END() {
-    	if(Util.logLevel>=4) {
+    	if(bridge.logLevel>=4) {
 	    StringBuffer buf=new StringBuffer("--> </");   
 	    buf.append(tag[0].strings[0].getUTF8StringValue());
 	    buf.append(">");
-	    Util.logDebug(this.bridge + " " + buf.toString());
+	    bridge.logDebug(buf.toString());
     	}
 	handler.end(tag[0].strings);
     }

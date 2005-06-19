@@ -13,13 +13,17 @@
 
 #define IS_EXCEPTION 86
 
-extern int java_get_jobject_from_object(zval *object, long *obj TSRMLS_DC);
-extern void php_java_invoke(char*name, long object, int arg_count, zval**arguments, short ignoreNonJava, pval*presult TSRMLS_DC) ;
-enum constructor {CONSTRUCT_NONE, CONSTRUCT_JAVA, CONSTRUCT_MONO};
-extern void php_java_call_function_handler(INTERNAL_FUNCTION_PARAMETERS, char*name, enum constructor constructor, short createInstance, pval *object, int argc, zval**argv);
-extern short php_java_set_property_handler(char*name, zval *object, zval *value, zval *return_value);
-extern short php_java_get_property_handler(char*name, zval *object, zval *return_value);
+extern int EXT_GLOBAL(get_jobject_from_object)(zval *object, long *obj TSRMLS_DC);
+extern void EXT_GLOBAL(invoke)(char*name, long object, int arg_count, zval**arguments, short ignoreNonJava, pval*presult TSRMLS_DC) ;
+enum constructor {CONSTRUCTOR_NONE, CONSTRUCTOR};
+extern void EXT_GLOBAL(call_function_handler)(INTERNAL_FUNCTION_PARAMETERS, char*name, enum constructor constructor, short createInstance, pval *object, int argc, zval**argv);
+extern short EXT_GLOBAL(set_property_handler)(char*name, zval *object, zval *value, zval *return_value);
+extern short EXT_GLOBAL(get_property_handler)(char*name, zval *object, zval *return_value);
 
-extern void php_java_destructor(zend_rsrc_list_entry *rsrc TSRMLS_DC);
+extern void EXT_GLOBAL(destructor)(zend_rsrc_list_entry *rsrc TSRMLS_DC);
+
+extern proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, void (*handle_request)(proxyenv *env), char*server);
+
+unsigned char EXT_GLOBAL (get_mode) ();
 
 #endif

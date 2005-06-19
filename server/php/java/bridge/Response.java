@@ -73,7 +73,7 @@ public class Response {
         try { 
 	    return s.getBytes(getEncoding());
         } catch (java.io.UnsupportedEncodingException e) { 
-	    Util.printStackTrace(e);
+	    bridge.printStackTrace(e);
 	    return s.getBytes();
 	}
     }
@@ -81,7 +81,7 @@ public class Response {
         try { 
 	    return new String(b, getEncoding());
         } catch (java.io.UnsupportedEncodingException e) { 
-	    Util.printStackTrace(e);
+	    bridge.printStackTrace(e);
 	    return new String(b);
 	}
     }
@@ -171,8 +171,8 @@ public class Response {
 	buf.append(Pe);
     }
     void flush() throws IOException {
- 	if(Util.logLevel>=4) {
-	    Util.logDebug(this.bridge + " <-- " +newString(buf.getFirstBytes()));
+ 	if(bridge.logLevel>=4) {
+	    bridge.logDebug(" <-- " +newString(buf.getFirstBytes()));
 	}
 	buf.writeTo(bridge.out);
 	buf.reset();

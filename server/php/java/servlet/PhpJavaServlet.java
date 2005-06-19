@@ -28,7 +28,7 @@ public class PhpJavaServlet extends HttpServlet {
 	public void log(String s) { ctx.log(s); }
 	public String now() { return ""; }
 	public void printStackTrace(Throwable t) {
-	    ctx.log("JavaBridge Exception: ", t);
+	    ctx.log("VMBridge Exception: ", t);
 	}
     }
 
@@ -56,8 +56,11 @@ public class PhpJavaServlet extends HttpServlet {
 	} catch (Throwable e) {
 	    Util.printStackTrace(e);
 	}
-	Session.expire();
-        Util.logDebug(this + " " + "request terminated.");
+	Session.expire(bridge);
+	if(session.isNew())
+	    bridge.logDebug("first request terminated (session is new).");
+	else
+	    bridge.logDebug("request terminated (cont. session).");
         res.setContentLength(out.size());
         out.writeTo(res.getOutputStream());
     }

@@ -37,12 +37,18 @@ your java libraries (.jar files):
 
     http://localhost/test.php
 
-* If there are problems, start the PHP/Java Bridge at log level 3
+* If there are problems, edit your php.ini and set the java.log_level
+  to 3 or a higher log level and examine the log file of the servlet
+  engine or "Bridge.log" located in the same directory where the
+  JavaBridge.jar was started.
 
-    java -jar JavaBridge.jar INET:9167 3 output.log
+  If your php.ini does not have a java.log_level entry, the bridge
+  uses the log level supplied when it was started.  For example the
+  following command starts the backend with debug output enabled:
 
-  or a higher log level and examine the output. Please report
-  bugs/problems to the mailing list:
+    java -jar JavaBridge.jar INET:9267 4 Bridge.log
+
+ * Please report bugs/problems to the mailing list:
 
     php-java-bridge-users@lists.sourceforge.net
 
@@ -50,8 +56,8 @@ your java libraries (.jar files):
 Known Windows Issues 
 --------------------
 
-* All .ini entries except java.socketname, java.hosts and
-  java.servlet are meaningless.
+* All .ini entries except java.log_level, java.socketname, java.hosts
+  and java.servlet are meaningless.
 
 * The windows version does not start or re-start automatically when
   the web-server starts or re-starts.

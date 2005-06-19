@@ -17,9 +17,9 @@
 #define FLEN 160 // the max len of the following format strings
 
 #ifndef __MINGW32__
-extern int php_java_snprintf(char *buf, size_t len, const char *format,...);
+extern int EXT_GLOBAL(snprintf) (char *buf, size_t len, const char *format,...);
 #else
-#define php_java_snprintf ap_php_snprintf 
+#define EXT_GLOBAL(snprintf) ap_php_snprintf 
 #endif
 
 #define GROW(size) { \
@@ -35,22 +35,15 @@ static void flush(proxyenv *env) {
   size_t s=0, size = (*env)->send_len;
   ssize_t n=0;
 
-  if(get_servlet_context()) {
+  if(EXT_GLOBAL (get_servlet_context) ()) {
 	char header[1024];
 	int header_length;
-	unsigned short level = cfg->logLevel_val>4?4:cfg->logLevel_val;
-
-#ifndef ZEND_ENGINE_2
-  // we want arrays as values
-	unsigned char mode=128|64|(level<<2)|2;
-#else
-	unsigned char mode=128|64|(level<<2)|0;
-#endif
+	unsigned char mode = EXT_GLOBAL (get_mode) ();
 
 	if((*env)->cookie_name) 
-	  header_length=php_java_snprintf(header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: keep-alive\r\nCookie: %s=%s\r\nContent-Type: text/html\r\nContent-Length: %ld\r\n\r\n%c", get_servlet_context(), (*env)->cookie_name, (*env)->cookie_value, size+1, mode);
+	  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive; Timeout=120\r\nCookie: %s=%s\r\nContent-Type: text/html\r\nContent-Length: %ld\r\n\r\n%c", EXT_GLOBAL (get_servlet_context) (), (*env)->cookie_name, (*env)->cookie_value, size+1, mode);
 	else
-	  header_length=php_java_snprintf(header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: keep-alive\r\nContent-Type: text/html\r\nContent-Length: %ld\r\n\r\n%c", get_servlet_context(), size+1, mode);
+	  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive; Timeout=120\r\nContent-Type: text/html\r\nContent-Length: %ld\r\n\r\n%c", EXT_GLOBAL (get_servlet_context) (), size+1, mode);
 
 	send((*env)->peer, header, header_length, 0);
   }
@@ -113,13 +106,13 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    assert(createInstance=='C' || createInstance=='I');
    if(!len) len=strlen(name);
    GROW(FLEN+ILEN+len);
-   (*env)->send_len+=php_java_snprintf((char*)((*env)->send+(*env)->send_len), flen, "<C v=\"%s\" p=\"%c\" i=\"%ld\">", name, createInstance, (long)result);
+   (*env)->send_len+=EXT_GLOBAL(snprintf) ((char*)((*env)->send+(*env)->send_len), flen, "<C v=\"%s\" p=\"%c\" i=\"%ld\">", name, createInstance, (long)result);
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void CreateObjectEnd(proxyenv *env) {
    size_t flen;
    GROW(FLEN);
-   (*env)->send_len+=php_java_snprintf((char*)((*env)->send+(*env)->send_len), flen, "</C>");
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "</C>");
    assert((*env)->send_len<=(*env)->send_size);
    flush(env);
  }
@@ -128,13 +121,13 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    assert(property=='I' || property=='P');
    if(!len) len=strlen(method);
    GROW(FLEN+ILEN+len+ILEN);
-   (*env)->send_len+=php_java_snprintf((char*)((*env)->send+(*env)->send_len), flen, "<I v=\"%ld\" m=\"%s\" p=\"%c\" i=\"%ld\">", object, method, property, (long)result);
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<I v=\"%ld\" m=\"%s\" p=\"%c\" i=\"%ld\">", object, method, property, (long)result);
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void InvokeEnd(proxyenv *env) {
    size_t flen;
    GROW(FLEN);
-   (*env)->send_len+=php_java_snprintf((char*)((*env)->send+(*env)->send_len), flen, "</I>");
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "</I>");
    assert((*env)->send_len<=(*env)->send_size);
    flush(env);
  }
@@ -142,26 +135,26 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    size_t flen;
    if(!len) len=strlen(method);
    GROW(FLEN+ILEN+len+ILEN);
-   (*env)->send_len+=php_java_snprintf((char*)((*env)->send+(*env)->send_len), flen, "<M v=\"%ld\" m=\"%s\" i=\"%ld\">", object, method, (long) result);
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<M v=\"%ld\" m=\"%s\" i=\"%ld\">", object, method, (long) result);
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void GetMethodEnd(proxyenv *env) {
    size_t flen;
    GROW(FLEN);
-   (*env)->send_len+=php_java_snprintf((char*)((*env)->send+(*env)->send_len), flen, "</M>");
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "</M>");
    assert((*env)->send_len<=(*env)->send_size);
    flush(env);
  }
  static void CallMethodBegin(proxyenv *env, long object, long method, void* result) {
    size_t flen;
    GROW(FLEN+ILEN+ILEN+ILEN);
-   (*env)->send_len+=php_java_snprintf((char*)((*env)->send+(*env)->send_len), flen, "<F v=\"%ld\" m=\"%ld\" i=\"%ld\">", object, method, (long)result);
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<F v=\"%ld\" m=\"%ld\" i=\"%ld\">", object, method, (long)result);
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void CallMethodEnd(proxyenv *env) {
    size_t flen;
    GROW(FLEN);
-   (*env)->send_len+=php_java_snprintf((char*)((*env)->send+(*env)->send_len), flen, "</F>");
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "</F>");
    assert((*env)->send_len<=(*env)->send_size);
    flush(env);
  }
@@ -188,83 +181,83 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
  static void Boolean(proxyenv *env, short boolean) {
    size_t flen;
    GROW(FLEN);
-   (*env)->send_len+=php_java_snprintf((char*)((*env)->send+(*env)->send_len), flen, "<B v=\"%c\"/>", boolean?'T':'F');
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<B v=\"%c\"/>", boolean?'T':'F');
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void Long(proxyenv *env, long l) {
    size_t flen;
    GROW(FLEN+ILEN);
-   (*env)->send_len+=php_java_snprintf((char*)((*env)->send+(*env)->send_len), flen, "<L v=\"%ld\"/>", l);
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<L v=\"%ld\"/>", l);
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void Double(proxyenv *env, double d) {
    size_t flen;
    GROW(FLEN+ILEN);
-   (*env)->send_len+=php_java_snprintf((char*)((*env)->send+(*env)->send_len), flen, "<D v=\"%."/**/PRECISION/**/"e\"/>", d);
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<D v=\"%."/**/PRECISION/**/"e\"/>", d);
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void Object(proxyenv *env, long object) {
    size_t flen;
    GROW(FLEN+ILEN);
    if(!object) 
-	 (*env)->send_len+=php_java_snprintf((char*)((*env)->send+(*env)->send_len), flen, "<O v=\"\"/>");
+	 (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<O v=\"\"/>");
    else
-	 (*env)->send_len+=php_java_snprintf((char*)((*env)->send+(*env)->send_len),flen, "<O v=\"%ld\"/>", object);
+	 (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len),flen, "<O v=\"%ld\"/>", object);
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void CompositeBegin_a(proxyenv *env) {
    size_t flen;
    GROW(FLEN);
-   (*env)->send_len+=php_java_snprintf((char*)((*env)->send+(*env)->send_len), flen, "<X t=\"A\">");
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<X t=\"A\">");
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void CompositeBegin_h(proxyenv *env) {
    size_t flen;
    GROW(FLEN);
-   (*env)->send_len+=php_java_snprintf((char*)((*env)->send+(*env)->send_len), flen, "<X t=\"H\">");
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<X t=\"H\">");
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void CompositeEnd(proxyenv *env) {
    size_t flen;
    GROW(FLEN);
-   (*env)->send_len+=php_java_snprintf((char*)((*env)->send+(*env)->send_len), flen, "</X>");
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "</X>");
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void PairBegin_s(proxyenv *env, char*key, size_t len) {
    size_t flen;
    if(!len) len=strlen(key);
    GROW(FLEN+len);
-   (*env)->send_len+=php_java_snprintf((char*)((*env)->send+(*env)->send_len), flen, "<P t=\"S\" v=\"%s\">", key);
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<P t=\"S\" v=\"%s\">", key);
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void PairBegin_n(proxyenv *env, unsigned long key) {
    size_t flen;
    GROW(FLEN+ILEN);
-   (*env)->send_len+=php_java_snprintf((char*)((*env)->send+(*env)->send_len), flen, "<P t=\"N\" v=\"%ld\">", key);
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<P t=\"N\" v=\"%ld\">", key);
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void PairBegin(proxyenv *env) {
    size_t flen;
    GROW(FLEN);
-   (*env)->send_len+=php_java_snprintf((char*)((*env)->send+(*env)->send_len), flen, "<P>");
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<P>");
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void PairEnd(proxyenv *env) {
    size_t flen;
    GROW(FLEN);
-   (*env)->send_len+=php_java_snprintf((char*)((*env)->send+(*env)->send_len), flen, "</P>");
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "</P>");
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void Unref(proxyenv *env, long object) {
    size_t flen;
    GROW(FLEN+ILEN);
-   (*env)->send_len+=php_java_snprintf((char*)((*env)->send+(*env)->send_len), flen, "<U v=\"%ld\"/>", object);
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<U v=\"%ld\"/>", object);
    assert((*env)->send_len<=(*env)->send_size);
  }
 
  
 
- proxyenv *java_createSecureEnvironment(int peer, void (*handle_request)(proxyenv *env), char *server_name) {
+ proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, void (*handle_request)(proxyenv *env), char *server_name) {
    proxyenv *env;  
    env=(proxyenv*)malloc(sizeof *env);     
    if(!env) return 0;
@@ -287,6 +280,7 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    (*env)->send_len=0;
    
    (*env)->server_name = server_name;
+   (*env)->must_reopen = 0;
    (*env)->cookie_name = (*env)->cookie_value = 0;
 
    (*env)->writeInvokeBegin=InvokeBegin;

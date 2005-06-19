@@ -1,0 +1,67 @@
+/*-*- mode: C; tab-width:4 -*-*/
+
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <errno.h>
+#include <stdio.h>
+
+/* convenience and SELinux security wrapper for mmono.  This file is
+   called by the service script and should be tagged with appropriate
+   security context (see chcon(1)). */
+
+void usage(char*name){
+/*  fprintf(stderr, "Usage: %s [<socketname>] [<logLevel>] <logFile>\n", name); */
+/*   fprintf(stderr, "Example 1: %s INET:9167 3 \"\" \n", name); */
+/*   fprintf(stderr, "Example 2: %s node1.log\n", name); */
+  fprintf(stderr, "Usage: %s [<logLevel>] <logFile>\n", name);
+  fprintf(stderr, "Example 1: %s INET:9167 3 \"\" \n", name);
+  fprintf(stderr, "Example 2: %s node.log\n", name);
+  exit(1);
+}
+
+char *stringcat(char *s1, char *s2) {
+  char *s3=malloc(strlen(s1)+strlen(s2)+1);
+  *s3=0; strcat(s3,s1);
+  return strcat(s3,s2);
+}
+
+char *stringdup(char *s) {
+  if(!s) return s;
+  return strdup(s);
+}
+  
+#ifndef EXTENSION_DIR
+#error EXTENSION_DIR must point to the PHP extension directory
+#endif
+char *java="mono";
+
+int main(int argc, char**_argv){
+  char **argv;
+  char *vm;
+  if(argc<3 && argc!=2) usage(_argv[0]);
+
+  if(strlen(java)==3&&!strcmp("yes",java))
+    vm = stringcat(EXTENSION_DIR, "/mono");
+  else 
+    vm = stringdup(java);
+
+  if(argc==3 || argc==2) {
+    argv=calloc(5, sizeof*argv);
+    argv[0]=vm;
+    argv[1]=stringdup(EXTENSION_DIR/**/"/MonoBridge.exe");
+    //argv[2]=argc==2?stringdup("INET:0"):stringdup(_argv[1]); /* socketname */
+    argv[2]=argc==2?stringdup("2"):stringdup(_argv[1]); /* logLevel */
+    argv[3]=stringdup(_argv[argc==2?1:2]); /* logFile */
+    argv[4]=0;			/* last arg */
+  } else {
+    int i;
+    argv=calloc(argc, sizeof*argv);
+    for(i=0; i<argc-1; i++) 
+      argv[i]=stringdup(_argv[i+1]);
+    argv[i]=0;
+  }
+  execvp(argv[0], argv);
+  fprintf(stderr, "Could not execute %s: %s\n", argv[0], strerror(errno));
+  return 2;
+}
