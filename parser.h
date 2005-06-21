@@ -20,6 +20,7 @@ typedef struct parser_cb {
   void *ctx;
 } parser_cb_t;
 
-extern short parse(proxyenv *env, parser_cb_t *cb);
+extern short EXT_GLOBAL (parse)(proxyenv *env, parser_cb_t *cb);
+extern short EXT_GLOBAL (parse_header) (proxyenv *env, parser_cb_t *cb);
 
 #endif

@@ -39,14 +39,14 @@ your java libraries (.jar files):
 
 * If there are problems, edit your php.ini and set the java.log_level
   to 3 or a higher log level and examine the log file of the servlet
-  engine or "Bridge.log" located in the same directory where the
+  engine or "JavaBridge.log" located in the directory from which the
   JavaBridge.jar was started.
 
   If your php.ini does not have a java.log_level entry, the bridge
   uses the log level supplied when it was started.  For example the
   following command starts the backend with debug output enabled:
 
-    java -jar JavaBridge.jar INET:9267 4 Bridge.log
+    java -jar JavaBridge.jar INET:9267 4 JavaBridge.log
 
  * Please report bugs/problems to the mailing list:
 

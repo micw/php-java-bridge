@@ -129,8 +129,7 @@ extern proxyenv *EXT_GLOBAL(try_connect_to_server)(TSRMLS_D);
 extern proxyenv *EXT_GLOBAL(connect_to_server)(TSRMLS_D);
 extern void EXT_GLOBAL(start_server)();
 
-/* spec: M ono, J ava or I nit (lower-case m or j: no multicast) */
-extern char* EXT_GLOBAL(test_server)(int *socket, unsigned char spec);
+extern char* EXT_GLOBAL(test_server)(int *socket, short *is_local);
 
 /* returns the servlet context or null */
 extern char *EXT_GLOBAL(get_servlet_context)();

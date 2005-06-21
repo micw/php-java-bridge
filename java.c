@@ -19,16 +19,17 @@
 #ifdef ZEND_ENGINE_2
 #include "zend_interfaces.h"
 #include "zend_exceptions.h"
+#include "zend_builtin_functions.h"
 #endif
 
 EXT_DECLARE_MODULE_GLOBALS(EXT)
 struct cfg *EXT_GLOBAL (cfg)  = 0;
 
 #ifdef __MINGW32__
-static int EXT_GLOBAL(errno)=0;
-int *__errno (void) { return &EXT_GLOBAL(errno); }
+static int java_errno=0;
+int *__errno (void) { return &java_errno; }
 #define php_info_print_table_row(a, b, c) \
-   php_info_print_table_row_ex(a, EXT_NAME(), b, c)
+   php_info_print_table_row_ex(a, "java", b, c)
 #endif
 
 
@@ -137,14 +138,14 @@ EXT_FUNCTION(EXT_GLOBAL(instanceof))
   obj = 0;
   EXT_GLOBAL(get_jobject_from_object)(*pobj, &obj TSRMLS_CC);
   if(!obj) {
-	zend_error(E_ERROR, "Parameter #1 for %s() must be a "/**/EXT_NAME()/**/" object", get_active_function_name(TSRMLS_C));
+	zend_error(E_ERROR, "Argument #1 for %s() must be a "/**/EXT_NAME()/**/" object", get_active_function_name(TSRMLS_C));
 	return;
   }
 
   class = 0;
   EXT_GLOBAL(get_jobject_from_object)(*pclass, &class TSRMLS_CC);
   if(!class) {
-	zend_error(E_ERROR, "Parameter #2 for %s() must be a "/**/EXT_NAME()/**/" object", get_active_function_name(TSRMLS_C));
+	zend_error(E_ERROR, "Arument #2 for %s() must be a "/**/EXT_NAME()/**/" object", get_active_function_name(TSRMLS_C));
 	return;
   }
 
@@ -201,16 +202,46 @@ EXT_FUNCTION(EXT_GLOBAL(reset))
   (*jenv)->writeInvokeEnd(jenv);
 }
 
+EXT_FUNCTION(EXT_GLOBAL(get_values))
+{
+  proxyenv *jenv;
+  zval **pobj;
+  long obj;
+
+  jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
+  if(!jenv) RETURN_NULL();
+
+  if (ZEND_NUM_ARGS()!=1 || zend_get_parameters_ex(1, &pobj) == FAILURE)
+	WRONG_PARAM_COUNT;
+
+#ifdef ZEND_ENGINE_2
+  convert_to_object_ex(pobj);
+  obj = 0;
+  EXT_GLOBAL(get_jobject_from_object)(*pobj, &obj TSRMLS_CC);
+  if(!obj) {
+	zend_error(E_ERROR, "Argument for %s() must be a "/**/EXT_NAME()/**/" object", get_active_function_name(TSRMLS_C));
+	return;
+  }
+
+  (*jenv)->writeInvokeBegin(jenv, 0, "getValues", 0, 'I', return_value);
+  (*jenv)->writeObject(jenv, obj);
+  (*jenv)->writeInvokeEnd(jenv);
+#else
+  RETURN_ZVAL(*pobj, 0, 0);
+#endif
+}
+
 function_entry EXT_GLOBAL(functions)[] = {
-	PHP_FE(EXT_GLOBAL(last_exception_get), NULL)
-	PHP_FE(EXT_GLOBAL(last_exception_clear), NULL)
-	PHP_FE(EXT_GLOBAL(set_file_encoding), NULL)
-	PHP_FE(EXT_GLOBAL(require), NULL)
-	PHP_FE(EXT_GLOBAL(set_library_path), NULL)
-	PHP_FE(EXT_GLOBAL(instanceof), NULL)
-	PHP_FE(EXT_GLOBAL(get_session), NULL)
-	PHP_FE(EXT_GLOBAL(get_server_name), NULL)
-	PHP_FE(EXT_GLOBAL(reset), NULL)
+	EXT_FE(EXT_GLOBAL(last_exception_get), NULL)
+	EXT_FE(EXT_GLOBAL(last_exception_clear), NULL)
+	EXT_FE(EXT_GLOBAL(set_file_encoding), NULL)
+	EXT_FE(EXT_GLOBAL(require), NULL)
+	EXT_FE(EXT_GLOBAL(set_library_path), NULL)
+	EXT_FE(EXT_GLOBAL(instanceof), NULL)
+	EXT_FE(EXT_GLOBAL(get_session), NULL)
+	EXT_FE(EXT_GLOBAL(get_server_name), NULL)
+	EXT_FE(EXT_GLOBAL(reset), NULL)
+	EXT_FE(EXT_GLOBAL(get_values), NULL)
 	{NULL, NULL, NULL}
 };
 
@@ -874,7 +905,7 @@ EXT_GLOBAL(call_function_handler4)(INTERNAL_FUNCTION_PARAMETERS, zend_property_r
   int arg_count = ZEND_NUM_ARGS();
   pval **arguments = (pval **) emalloc(sizeof(pval *)*arg_count);
   short createInstance;
-  enum constructor constructor = CONSTRUCT_NONE;
+  enum constructor constructor = CONSTRUCTOR_NONE;
 
   getParametersArray(ht, arg_count, arguments);
 

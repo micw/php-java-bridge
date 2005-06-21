@@ -25,7 +25,7 @@
 
 #ifndef CFG_JAVA
 #if @COND_GCJ@ == 1
-#define CFG_JAVA EXTENSION_DIR/**/EXT_NAME()
+#define CFG_JAVA EXTENSION_DIR/**/"/"/**/EXT_NAME()
 #else
 #define CFG_JAVA "@PHP_JAVA_BIN@"
 #endif

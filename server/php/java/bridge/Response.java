@@ -5,15 +5,23 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 public class Response {
+    
+    // used in getFirstBytes() only
+    private static final byte append_for_OutBuf_getFirstBytes[] = new byte[] {'.', '.', '.' }; 
+    private static final byte append_none_for_OutBuf_getFirstBytes[] = new byte[0]; 
+
     private class OutBuf extends ByteArrayOutputStream {
-	/*
+	
+    	/*
 	 * Return up to 256 bytes. Useful for logging.
 	 */
 	byte[] getFirstBytes() {
 	    int c = super.count;
+	    byte[] append = (c>256) ? append_for_OutBuf_getFirstBytes : append_none_for_OutBuf_getFirstBytes;
 	    if(c>256) c=256;
-	    byte[] ret = new byte[c];
+	    byte[] ret = new byte[c+append.length];
 	    System.arraycopy(super.buf, 0, ret, 0, c);
+	    System.arraycopy(append, 0, ret, ret.length-append.length, append.length);
 	    return ret;
 	}
 
@@ -51,6 +59,18 @@ public class Response {
     private byte options;
     private String encoding;
     private JavaBridge bridge;
+
+    public static class ValuesHook {
+    	private Response res;
+    	public ValuesHook(Response res) {
+    	    this.res=res;
+    	}
+        public boolean sendArraysAsValues() {
+            return (res.options & 2)==2;
+        }
+    }
+    public ValuesHook hook = new ValuesHook(this);
+    
     public Response(JavaBridge bridge) {
 	buf=new OutBuf();
 	this.bridge=bridge;
@@ -62,9 +82,6 @@ public class Response {
     	this.options=options;
     }
     
-    public boolean sendArraysAsValues() {
-    	return (options & 2)==2;
-    }
     public String getEncoding() {
     	return encoding;
     }
@@ -176,5 +193,9 @@ public class Response {
 	}
 	buf.writeTo(bridge.out);
 	buf.reset();
+    }
+    
+    public String toString() {
+    	return newString(buf.getFirstBytes());
     }
 }

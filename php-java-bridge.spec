@@ -36,7 +36,7 @@ LD_LIBRARY_PATH=/lib:/usr/lib
 # calculate java dir
 java_dir=`head -1 /etc/sysconfig/java`
 phpize
-./configure --prefix=/usr --with-java=$java_dir
+./configure --prefix=/usr --with-java=$java_dir --disable-servlet
 make
 
 %install

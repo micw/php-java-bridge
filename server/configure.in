@@ -40,10 +40,16 @@ if test "$PHP_JAVA" != "yes"; then
 AM_CPPFLAGS="${AM_CPPFLAGS} `for i in \`find $PHP_JAVA/include -follow -type d -print\`; do echo -n "-I$i "; done`"
 fi
 
+TCP_SOCKETNAME="9167"
+EXTENSION_DISPLAY_NAME="MonoBridge"
 VM_BINARIES="MonoBridge.exe RunMonoBridge"
+
 if test "$PHP_MONO" = "no"; then
   MONO_BRIDGE_EXE=
+  TCP_SOCKETNAME="9267"
+  EXTENSION_DISPLAY_NAME="JavaBridge"
   VM_BINARIES="java RunJavaBridge"
+
 fi
 if test "$PHP_MONO" = "yes"; then
   PHP_MONO="`locate ikvmc.exe | head -1`"
@@ -67,11 +73,13 @@ if test "$SERVLET" = "yes"; then
   fi
 fi
 
-AC_CONFIG_FILES([RunJavaBridge.c RunMonoBridge.c])
+AC_CONFIG_FILES([RunJavaBridge.c RunMonoBridge.c php/java/bridge/global.properties])
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(EXTENSION_DIR)
 AC_SUBST(PHP_JAVA)
 AC_SUBST(PHP_MONO)
+AC_SUBST(TCP_SOCKETNAME)
+AC_SUBST(EXTENSION_DISPLAY_NAME)
 AC_SUBST(VM_BINARIES)
 AC_SUBST(SERVLET)
 AC_SUBST(JAVA_BRIDGE_WAR)

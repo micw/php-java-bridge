@@ -39,11 +39,14 @@ public class JavaBridge implements Runnable {
 
     static HashMap sessionHash = new HashMap();
 
-    public JavaBridgeClassLoader.Adaptor cl = new JavaBridgeClassLoader.Adaptor(this);
+    public JavaBridgeClassLoader.Bridge cl = new JavaBridgeClassLoader.Bridge(this);
 
     public InputStream in; public OutputStream out;
 
     int logLevel = Util.logLevel;
+
+    // the current request (if any)
+    Request request;
     
     //
     // Native methods, only called  when loadLibrary succeeds.
@@ -108,9 +111,9 @@ public class JavaBridge implements Runnable {
     // Communication with client in a new thread
     //
     public void run() { 
-    	Request r = new Request(this);
-    	try {
-	    if(!r.initOptions(in, out)) return;
+    	request = new Request(this);
+	try {
+	    if(!request.initOptions(in, out)) return;
 	} catch (Throwable e) {
 	    printStackTrace(e);
 	    return;
@@ -119,7 +122,7 @@ public class JavaBridge implements Runnable {
 
 	load++;
    	try {
-            r.handleRequests();
+            request.handleRequests();
     	} catch (Throwable e) {
     	    printStackTrace(e);
     	}
@@ -175,11 +178,11 @@ public class JavaBridge implements Runnable {
 	    }
 
 	    try {
-		logFile="Bridge.log";
+		logFile=Util.EXTENSION_NAME+".log";
 		if(s.length>2) {
 		    logFile=s[2];
 		}
-		if(Util.logLevel>3) System.out.println("Java log         : " + logFile);
+		if(Util.logLevel>3) System.out.println(Util.EXTENSION_NAME+" log: " + logFile);
 	    }catch (Throwable t) {
 		Util.printStackTrace(t);
 	    }
@@ -210,9 +213,9 @@ public class JavaBridge implements Runnable {
 	    if(null==socket) 
 		throw new Exception("Could not create socket: " + sockname);
 
-	    Util.logMessage("default logFile     : " + logFile);
-	    Util.logMessage("default logLevel    : " + Util.logLevel);
-	    Util.logMessage("default socket      : " + socket);
+	    Util.logMessage(Util.EXTENSION_NAME + " logFile         : " + logFile);
+	    Util.logMessage(Util.EXTENSION_NAME + " default logLevel: " + Util.logLevel);
+	    Util.logMessage(Util.EXTENSION_NAME + " socket          : " + socket);
 
 	    while(true) {
 		JavaBridge bridge = new JavaBridge();
@@ -276,7 +279,7 @@ public class JavaBridge implements Runnable {
 	} else if (value.getClass().isArray()) {
 
 	    long length = Array.getLength(value);
-	    if(response.sendArraysAsValues()) {
+	    if(response.hook.sendArraysAsValues()) {
 		// Since PHP 5 this is dead code, setResultFromArray
 		// behaves like setResultFromObject and returns
 		// false. See PhpMap.
@@ -293,7 +296,7 @@ public class JavaBridge implements Runnable {
 	} else if (value instanceof java.util.Map) {
 
 	    Map ht = (Map) value; 
-	    if (response.sendArraysAsValues()) {
+	    if (response.hook.sendArraysAsValues()) {
 		// Since PHP 5 this is dead code, setResultFromArray
 		// behaves like setResultFromObject and returns
 		// false. See PhpMap.
@@ -984,6 +987,28 @@ public class JavaBridge implements Runnable {
 	}
     }
 
+    private static class ForceValuesHook extends Response.ValuesHook {
+        public ForceValuesHook(Response res) {
+	    super(res);
+	}
+	public boolean sendArraysAsValues() {
+     	    return true;
+        }
+    }
+
+    /*
+     * for PHP5: convert Map or Collection into a PHP array,
+     * sends the entire Map or Collection to the client. This 
+     * is much more efficient than generating round-trips when 
+     * iterating through a Map or Collection.
+     */
+    public Object getValues(Object ob) {
+    	Response res = request.response; {
+    	    res.hook=new ForceValuesHook(res);
+    	}
+	return ob;
+    }
+    
     //
     // Return map for the value (PHP 5 only)
     //

@@ -5,6 +5,13 @@
 
 /* peer */
 #include <stdio.h>
+#ifdef __MINGW32__
+# include <winsock2.h>
+# define close closesocket
+#else
+# include <sys/types.h>
+# include <sys/socket.h>
+#endif
 
 /* 
  * we create a unix domain socket with the name .php_java_bridge in
@@ -64,9 +71,11 @@ struct proxyenv_ {
 
   char *server_name;
 
+  /* local server (not a servlet engine) */
+  short is_local;
+
   /* for servlets: re-open connection */
   short must_reopen; 
-
 
   /* the cookie, for servlet engines only */
   char *cookie_name, *cookie_value;

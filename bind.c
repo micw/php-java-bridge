@@ -236,41 +236,36 @@ static int test_local_server() {
   return sock;
 }
 
-static int test_server(int port) {
-  int sock, n;
-  struct sockaddr_in saddr;
-
-  sock = socket (PF_INET, SOCK_STREAM, 0);
-  if(sock==-1) return -1;
-  memset(&saddr, 0, sizeof saddr);
-  saddr.sin_family = AF_INET;
-  saddr.sin_port = htons(port);
-  saddr.sin_addr.s_addr=htonl(INADDR_ANY);  
-  n = connect(sock,(struct sockaddr*)&saddr, sizeof saddr);
-  if(n==-1) { close(sock); return -1; }
-  return sock;
+/*
+  return 0 if user has hard-coded the socketname
+*/
+static short can_fork() {
+  return EXT_GLOBAL(cfg)->can_fork;
 }
 
 /*
  * Test for a running server.  Return the server name and the socket
- * if _socket!=NULL.  Spec is either M ono or J ava.  As a special
- * case it is called with (I)nit when the bridge starts; so that we
- * can avoid certain checks. If all ckecks fail a local backend is
- * started.
+ * if _socket!=NULL. If all ckecks fail a local backend is started.
  */
-char* EXT_GLOBAL(test_server)(int *_socket, unsigned char spec) {
-  int sock, port;
-  time_t current_time = time(0);
-  unsigned char backend = spec=='I'?0:spec; // Mono or Java backend
+char* EXT_GLOBAL(test_server)(int *_socket, short *local) {
+  int sock;
+  short called_from_init = !(local && _socket);
+  short socketname_set = (EXT_GLOBAL(ini_last_updated)&U_SOCKNAME);
 
-  /* local server, either started by the user before (I)nit or started by the bridge */
-  if (((spec == 'I' && (EXT_GLOBAL(ini_updated)&U_SOCKNAME)) && (-1!=(sock=test_local_server())))
-      || (spec != 'I' && (-1!=(sock=test_local_server())))) {
+  if(local) *local=0;
+  /* check for local server if socketname set or (socketname not set
+	 and hosts not set), in which case we may have started a local
+	 backend ourselfs. Do not check if socketname not set and we are
+	 called from init, in which case we know that a local backend is
+	 not running. */
+  if (((socketname_set || can_fork()) && (socketname_set || !called_from_init))
+	  && -1!=(sock=test_local_server()) ) {
 	if(_socket) {
 	  *_socket=sock;
 	} else {
 	  close(sock);
 	}
+	if(local) *local=1;
 	return strdup(EXT_GLOBAL(cfg)->sockname);
   }
 
@@ -344,12 +339,6 @@ static int wait_server() {
 #endif
 }
 
-/*
-  return 0 if user has hard-coded the socketname
-*/
-static short can_fork() {
-  return EXT_GLOBAL(cfg)->can_fork;
-}
 
 /* handle keyboard interrupt */
 static int s_pid=0;
@@ -361,37 +350,34 @@ static void s_kill(int sig) {
 
 void EXT_GLOBAL(start_server)() {
   int pid=0, err=0, p[2];
-  char *test_server;
+  char *test_server = 0;
 #ifndef __MINGW32__
-  if(!(test_server=EXT_GLOBAL(test_server)(0, 'I'))) {
-	if(can_fork()) {
-	  if(pipe(p)!=-1) {
-		if(!(pid=fork())) {		/* daemon */
-		  close(p[0]);
-		  if(!fork()) {			/* guard */
-			if(!(pid=fork())) {	/* java */
-			  setsid();
-			  close(p[1]);
-			  exec_vm(); 
-			  exit(105);
-			}
-			/* protect guard */
-			signal(SIGHUP, SIG_IGN); 
-			s_pid=pid; signal(SIGINT, s_kill); 
-			signal(SIGTERM, SIG_IGN);
-			
-			write(p[1], &pid, sizeof pid);
-			waitpid(pid, &err, 0);
-			write(p[1], &err, sizeof err);
-			exit(0);
-		  } 
-		  exit(0);
+  if(can_fork() && !(test_server=EXT_GLOBAL(test_server)(0, 0)) && pipe(p)!=-1) {
+	if(!(pid=fork())) {		/* daemon */
+	  close(p[0]);
+	  if(!fork()) {			/* guard */
+		if(!(pid=fork())) {	/* java */
+		  setsid();
+		  close(p[1]);
+		  exec_vm(); 
+		  exit(105);
 		}
-		close(p[1]);
-		wait(&err);
-		if((read(p[0], &pid, sizeof pid))!=(sizeof pid)) pid=0;
-	  }
+		/* protect guard */
+		signal(SIGHUP, SIG_IGN); 
+		s_pid=pid; signal(SIGINT, s_kill); 
+		signal(SIGTERM, SIG_IGN);
+		
+		write(p[1], &pid, sizeof pid);
+		waitpid(pid, &err, 0);
+		write(p[1], &err, sizeof err);
+		exit(0);
+	  } 
+	  exit(0);
 	}
+	close(p[1]);
+	wait(&err);
+	if((read(p[0], &pid, sizeof pid))!=(sizeof pid)) pid=0;
+	
 	EXT_GLOBAL(cfg)->cid=pid;
 	EXT_GLOBAL(cfg)->err=p[0];
 	wait_server();

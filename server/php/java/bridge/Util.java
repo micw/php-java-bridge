@@ -2,10 +2,28 @@
 
 package php.java.bridge;
 
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Date;
+import java.util.Properties;
 
 public class Util {
+
+    static String TCP_SOCKETNAME = "9267";
+    static String EXTENSION_DIR = null;
+    static String EXTENSION_NAME = "JavaBridge";
+    static {
+        Properties p = new Properties();
+	try {
+	    InputStream in = Util.class.getResourceAsStream("global.properties");
+	    p.load(in);
+	} catch (Throwable t) {
+		printStackTrace(t);
+	};
+	TCP_SOCKETNAME = p.getProperty("TCP_SOCKETNAME", TCP_SOCKETNAME);
+	EXTENSION_DIR = p.getProperty("EXTENSION_DIR", EXTENSION_DIR);
+	EXTENSION_NAME = p.getProperty("EXTENSION_NAME", EXTENSION_NAME);
+    }
 
     public static final String UTF8 = "UTF-8";
 
@@ -51,7 +69,7 @@ public class Util {
 
     public static void println(int level, String msg) {
 	StringBuffer b = new StringBuffer(logger.now());
-	b.append(" VMBridge ");
+	b.append(" "); b.append(Util.EXTENSION_NAME); b.append(" ");
 	switch(level) {
 	case 1: b.append("FATAL"); break;
 	case 2: b.append("ERROR"); break;

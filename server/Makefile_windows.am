@@ -4,7 +4,7 @@ dist_data_DATA=JavaBridge.jar
 
 JavaBridge.jar:
 	$(PHP_JAVA)/bin/javac php/java/bridge/*.java
-	$(PHP_JAVA)/bin/jar cMf JavaBridge.jar META-INF/MANIFEST.MF php/java/bridge/*.class
+	$(PHP_JAVA)/bin/jar cMf JavaBridge.jar META-INF/MANIFEST.MF php/java/bridge/*.class php/java/bridge/*.properties
 
 JavaBridge.war: JavaBridge.jar $(SERVLET)
 	$(PHP_JAVA)/bin/javac -classpath $(SERVLET) php/java/bridge/*.java php/java/servlet/*.java

@@ -65,7 +65,7 @@ public class Request implements IDocHandler {
     	}
     }
     private Args args;
-    private Response res;
+    Response response;
     
     public Request(JavaBridge bridge) {
 	this.bridge=bridge;
@@ -168,35 +168,35 @@ public class Request implements IDocHandler {
     	}
     }
     public void handleRequests() throws IOException {
-    	res=new Response(bridge);
+    	response=new Response(bridge);
 	while(Parser.OK==parser.parse(bridge.in)){
-	    res.setResult(args.id, parser.options);
+	    response.setResult(args.id, parser.options);
 	    switch(args.type){
 	    case 'I':
 		if(args.predicate) 
-		    bridge.GetSetProp(args.callObject, args.method, args.getArgs(), res);
+		    bridge.GetSetProp(args.callObject, args.method, args.getArgs(), response);
 		else 
-		    bridge.Invoke(args.callObject, args.method, args.getArgs(), res);
-		    res.flush();
+		    bridge.Invoke(args.callObject, args.method, args.getArgs(), response);
+		    response.flush();
 		break;
 	    case 'C':
 		if(args.predicate)
-		    bridge.CreateObject((String)args.callObject, false, args.getArgs(), res); 
+		    bridge.CreateObject((String)args.callObject, false, args.getArgs(), response); 
 		else
-		    bridge.CreateObject((String)args.callObject, true, args.getArgs(), res);
-		    res.flush();
+		    bridge.CreateObject((String)args.callObject, true, args.getArgs(), response);
+		    response.flush();
 		break;
 	    case 'F':
 	    	throw new NotImplementedException();
 		//FIXME split invoke
-		//CallMethod(v, m, args, res);
-		//res.flush();
+		//CallMethod(v, m, args, response);
+		//response.flush();
 		//break;
 	    case 'M':
 	    	throw new NotImplementedException();
 		//FIXME split invoke
-		//GetMethod(v, m, args, res);
-		//res.flush();
+		//GetMethod(v, m, args, response);
+		//response.flush();
 		//break;
 	    }
 	    args.reset();

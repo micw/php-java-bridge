@@ -7,7 +7,7 @@ import java.net.Socket;
 
 public class TCPServerSocket implements ISocketFactory {
 
-    public static final String DefaultSocketname = "9167";
+    public static final String DefaultSocketname = Util.TCP_SOCKETNAME;
     private ServerSocket sock;
     private int port;
     
@@ -45,7 +45,7 @@ public class TCPServerSocket implements ISocketFactory {
 	    this.sock = new ServerSocket(port, backlog);    
 	    this.port = port;
 	}
-	JavaBridge.initGlobals(null);
+	JavaBridge.initGlobals(Util.EXTENSION_DIR);
     }
 	
     public void close() throws IOException {

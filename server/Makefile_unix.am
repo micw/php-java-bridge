@@ -11,11 +11,11 @@ bin_PROGRAMS=$(VM_BINARIES)
 EXTRA_PROGRAMS=java RunJavaBridge MonoBridge.exe RunMonoBridge
 
 RunJavaBridge_SOURCES= RunJavaBridge.c
-java_SOURCES= java.c php/java/bridge/GlobalRef.java php/java/bridge/IDocHandler.java php/java/bridge/ISocketFactory.java php/java/bridge/JavaBridgeClassLoader.java php/java/bridge/JavaBridge.java php/java/bridge/LocalServerSocket.java php/java/bridge/LocalSocketInputStream.java php/java/bridge/LocalSocket.java php/java/bridge/LocalSocketOutputStream.java php/java/bridge/NotImplementedException.java php/java/bridge/Parser.java php/java/bridge/ParserString.java php/java/bridge/ParserTag.java php/java/bridge/PhpMap.java php/java/bridge/Request.java php/java/bridge/Response.java php/java/bridge/Session.java php/java/bridge/TCPServerSocket.java php/java/bridge/Util.java
+java_SOURCES= java.c php/java/bridge/GlobalRef.java php/java/bridge/IDocHandler.java php/java/bridge/ISocketFactory.java php/java/bridge/JavaBridgeClassLoader.java php/java/bridge/JavaBridge.java php/java/bridge/LocalServerSocket.java php/java/bridge/LocalSocketInputStream.java php/java/bridge/LocalSocket.java php/java/bridge/LocalSocketOutputStream.java php/java/bridge/NotImplementedException.java php/java/bridge/Parser.java php/java/bridge/ParserString.java php/java/bridge/ParserTag.java php/java/bridge/PhpMap.java php/java/bridge/Request.java php/java/bridge/Response.java php/java/bridge/Session.java php/java/bridge/TCPServerSocket.java php/java/bridge/Util.java php/java/bridge/global.properties
 
 MonoBridge.exe: $(PHP_MONO)
 	$(GCJ) -C php/java/bridge/*.java
-	fastjar cMf JavaBridge.jar META-INF/MANIFEST.MF php/java/bridge/*.class
+	fastjar cMf JavaBridge.jar META-INF/MANIFEST.MF php/java/bridge/*.class php/java/bridge/*.properties
 	mono $(PHP_MONO) JavaBridge.jar
 	mv JavaBridge.exe MonoBridge.exe
 	rm -f JavaBridge.jar
@@ -35,7 +35,7 @@ EXTRA_DATA=JavaBridge.war
 
 JavaBridge.jar:
 	$(PHP_JAVA)/bin/javac php/java/bridge/*.java
-	$(PHP_JAVA)/bin/jar cMf JavaBridge.jar META-INF/MANIFEST.MF php/java/bridge/*.class
+	$(PHP_JAVA)/bin/jar cMf JavaBridge.jar META-INF/MANIFEST.MF php/java/bridge/*.class  php/java/bridge/*.properties
 
 JavaBridge.war: JavaBridge.jar $(SERVLET)
 	$(PHP_JAVA)/bin/javac -classpath $(SERVLET) php/java/bridge/*.java php/java/servlet/*.java

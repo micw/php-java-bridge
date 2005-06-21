@@ -138,7 +138,7 @@ short EXT_GLOBAL (parse_header) (proxyenv *env, parser_cb_t *cb) {
   // VOJD is VOID for f... windows (VOID is in winsock2.h)
   enum {BEGIN, KEY, VAL, VOJD, END} type = VOJD;
   short level=0, in_dquote=0, eor=0, blen=0;
-  register ssize_t pos=0, c=0; size_t i=0, i0=0, e;
+  register ssize_t pos=0, c=0; size_t i=0, i0=0;
   register unsigned char *s=(*env)->s;
   assert(s); if(!s) return 1;
 

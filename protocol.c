@@ -8,6 +8,7 @@
 
 #include "protocol.h"
 #include "php_java.h"
+#include "java_bridge.h"
 
 #define SLEN 256 // initial length of the parser string
 #define SEND_SIZE 8192 // initial size of the send buffer
@@ -19,7 +20,13 @@
 #ifndef __MINGW32__
 extern int EXT_GLOBAL(snprintf) (char *buf, size_t len, const char *format,...);
 #else
-#define EXT_GLOBAL(snprintf) ap_php_snprintf 
+# if EXTENSION == JAVA
+#  define java_ap_php_snprintf ap_php_snprintf 
+# elif EXTENSION == MONO
+#  define mono_ap_php_snprintf ap_php_snprintf 
+# else
+#  error unknown EXTENSION
+# endif
 #endif
 
 #define GROW(size) { \
@@ -35,7 +42,7 @@ static void flush(proxyenv *env) {
   size_t s=0, size = (*env)->send_len;
   ssize_t n=0;
 
-  if(EXT_GLOBAL (get_servlet_context) ()) {
+  if(!(*env)->is_local && EXT_GLOBAL (get_servlet_context) ()) {
 	char header[1024];
 	int header_length;
 	unsigned char mode = EXT_GLOBAL (get_mode) ();
@@ -257,7 +264,7 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
 
  
 
- proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, void (*handle_request)(proxyenv *env), char *server_name) {
+ proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, void (*handle_request)(proxyenv *env), char *server_name, short is_local) {
    proxyenv *env;  
    env=(proxyenv*)malloc(sizeof *env);     
    if(!env) return 0;
@@ -279,6 +286,8 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    if(!(*env)->send) {free((*env)->s); free(*env); free(env); return 0;}
    (*env)->send_len=0;
    
+   (*env)->is_local = is_local;
+
    (*env)->server_name = server_name;
    (*env)->must_reopen = 0;
    (*env)->cookie_name = (*env)->cookie_value = 0;

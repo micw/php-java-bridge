@@ -1,0 +1,33 @@
+;; -*- mode: Scheme; tab-width:4 -*-
+
+;; Rename this file to "php.ini" and copy it or its content to the
+;; "php.ini" in the windows system directory ("c:\winnt" or
+;; "c:\windows"). Adjust the "extension_dir" and copy the php_java.dll
+;; into this extension directory. Start the backend, either
+;; double-click on JavaBridge.jar or deploy JavaBridge.war into your
+;; servlet engine/application server and re-start it.
+
+extension_dir = "c:\php5"
+extension = php_java.dll
+[java]
+
+
+;; log level between 0 (log off) and 4 (log debug). The default "log
+;; file" is the standard output. The default level is 2.
+
+java.log_level=3
+
+
+;; If you don't have a servlet engine, double-click on JavaBridge.jar
+;; to start the backend and uncomment the following option.
+
+java.socketname=9267
+
+
+;; If you have a servlet engine or an application server, deploy
+;; JavaBridge.war and re-start the servlet engine or the application
+;; server. Comment out the "java.socketname" option and uncomment
+;; the following options.
+
+;java.hosts="127.0.0.1:8080"
+;java.servlet=On

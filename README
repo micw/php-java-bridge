@@ -500,7 +500,7 @@ Build and execution instructions:
   UTF-8
   -----
   
-  Since PHP does not support unicode the PHP/Java Bridge uses UTF-8 to
+  Since PHP does not support unicode, the PHP/Java Bridge uses UTF-8 to
   convert characters into the host representation. All strings are
   created with new String(..., "UTF-8") and all internal String->byte[]
   conversions use getBytes("UTF-8").

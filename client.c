@@ -103,7 +103,6 @@ static  void  setResultFromObject  (pval *presult, long value) {
 
 }
 
-#ifndef ZEND_ENGINE_2
 static  void  setResultFromArray  (pval *presult) {
   array_init( presult );
   INIT_PZVAL( presult );
@@ -129,7 +128,7 @@ static  pval*hashIndexUpdate  (pval *handle, long key) {
   return result;
 }
 
-static pval*hashUpdate  (pval *handle, char *key, size_t len) {
+static pval*hashUpdate  (pval *handle, unsigned char *key, size_t len) {
   pval *result;
   pval pkey;
   zval_add_ref(&handle);
@@ -141,7 +140,6 @@ static pval*hashUpdate  (pval *handle, char *key, size_t len) {
   zend_hash_update(Z_ARRVAL_P(handle), Z_STRVAL(pkey), Z_STRLEN(pkey)+1, &result, sizeof(zval *), NULL);
   return result;
 }
-#endif
 
 static  void  setException  (pval *presult, long value, unsigned char *strValue, size_t len) {
 #ifndef ZEND_ENGINE_2
@@ -171,10 +169,9 @@ struct parse_ctx {
 static void begin(parser_tag_t tag[3], parser_cb_t *cb){
   struct parse_ctx *ctx=(struct parse_ctx*)cb->ctx;
   parser_string_t *st=tag[2].strings;
-
+  
   switch ((*tag[0].strings[0].string)[tag[0].strings[0].off]) {
   case 'X':
-#ifndef ZEND_ENGINE_2
 	GET_RESULT(1);
 	{
       struct stack_elem stack_elem = { ctx->id, *PARSER_GET_STRING(st, 0) };
@@ -182,17 +179,13 @@ static void begin(parser_tag_t tag[3], parser_cb_t *cb){
 	  setResultFromArray(ctx->id);
 	  break;
 	}
-#else
-	  assert(0);
-#endif
   case 'P':
-#ifndef ZEND_ENGINE_2
 	{ 
       struct stack_elem *stack_elem;
 	  zend_stack_top(&ctx->containers, (void**)&stack_elem);
 	  if(stack_elem->composite_type=='H') { /* hash table */
 		if(*PARSER_GET_STRING(st, 0)=='N')	/* number */
-		  ctx->id=hashIndexUpdate(stack_elem->container, strtol(PARSER_GET_STRING(st, 1), 0, 10));
+		  ctx->id=hashIndexUpdate(stack_elem->container, strtol((const char*)PARSER_GET_STRING(st, 1), 0, 10));
 		else
 		  ctx->id=hashUpdate(stack_elem->container, PARSER_GET_STRING(st, 1), st[1].length);
 	  }
@@ -201,9 +194,6 @@ static void begin(parser_tag_t tag[3], parser_cb_t *cb){
 	  }
 	  break;
 	}
-#else
-	  assert(0);
-#endif
   case 'S':
 	GET_RESULT(1);
 	setResultFromString(ctx->id, PARSER_GET_STRING(st, 0), st[0].length);
@@ -244,22 +234,18 @@ static void begin(parser_tag_t tag[3], parser_cb_t *cb){
 static void end(parser_string_t st[1], parser_cb_t *cb){
   switch (*(st[0].string)[st[0].off]) {
   case 'X': 
-#ifndef ZEND_ENGINE_2
-  { 
-    int err;
-	struct parse_ctx *ctx=(struct parse_ctx*)cb->ctx;
-    err=zend_stack_del_top(&ctx->containers);
-    assert(SUCCESS==err);
-  }
-#else
-	assert(0);
-#endif
+	{ 
+	  int err;
+	  struct parse_ctx *ctx=(struct parse_ctx*)cb->ctx;
+	  err=zend_stack_del_top(&ctx->containers);
+	  assert(SUCCESS==err);
+	}
   }
 }
 
 static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
   proxyenv *ctx=(proxyenv*)cb->ctx;
-  char *str=PARSER_GET_STRING(tag[0].strings, 0);
+  char *str=(char*)PARSER_GET_STRING(tag[0].strings, 0);
 
   switch (*str) {
   case 'S'://Set-Cookie:
@@ -267,9 +253,9 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
 	  char *cookie, *path;
 	  static const char setcookie[]="Set-Cookie";
 	  if(strcmp(str, setcookie) || ((*ctx)->cookie_name)) return;
-	  (*ctx)->cookie_name = strdup(PARSER_GET_STRING(tag[1].strings, 0));
-	  cookie = PARSER_GET_STRING(tag[2].strings, 0);
-	  if(path=strchr(cookie, ';')) *path=0;	/* strip off path */
+	  (*ctx)->cookie_name = strdup((char*)PARSER_GET_STRING(tag[1].strings, 0));
+	  cookie = (char*)PARSER_GET_STRING(tag[2].strings, 0);
+	  if((path=strchr(cookie, ';'))) *path=0;	/* strip off path */
 	  (*ctx)->cookie_value = strdup(cookie);
 	  assert((*ctx)->cookie_name && (*ctx)->cookie_value);
 	  if(!(*ctx)->cookie_name || !(*ctx)->cookie_value) exit(6);
@@ -279,7 +265,7 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
   case 'C'://Content-Length or Connection
 	{
 	  static const char con_connection[]="Connection", con_close[]="close";
-	  if(!strcmp(str, con_connection)&&!strcmp(PARSER_GET_STRING(tag[1].strings, 0), con_close)) {
+	  if(!strcmp(str, con_connection)&&!strcmp((char*)PARSER_GET_STRING(tag[1].strings, 0), con_close)) {
 		(*ctx)->must_reopen = 1;
 	  }
 	  break;
@@ -290,7 +276,7 @@ static void handle_request(proxyenv *env) {
   struct parse_ctx ctx = {0};
   parser_cb_t cb = {begin, end, &ctx};
 
-  if(EXT_GLOBAL (get_servlet_context) ()) {
+  if(!(*env)->is_local && EXT_GLOBAL (get_servlet_context) ()) {
 	parser_cb_t cb_header = {begin_header, 0, env};
 	EXT_GLOBAL (parse_header) (env, &cb_header);
   }
@@ -302,7 +288,7 @@ static void handle_request(proxyenv *env) {
 
   /* re-open a closed HTTP connection */
   if((*env)->must_reopen) {
-	char*server; int sock;
+	char*server;
 	(*env)->must_reopen = 0;
 	assert((*env)->peer); if((*env)->peer) close((*env)->peer);
 	server = EXT_GLOBAL(test_server)(&(*env)->peer, 0); /* FIXME: this is not very efficient */
@@ -327,9 +313,10 @@ unsigned char EXT_GLOBAL (get_mode) () {
 	return (is_level<<7)|64|(level<<2)|arraysAsValues;
 }
 
-static proxyenv *try_connect_to_server(short bail, unsigned char spec TSRMLS_DC) {
+static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {
   char *server;
   int sock;
+  short is_local;
   proxyenv *jenv =JG(jenv);
   if(jenv) return jenv;
 
@@ -337,25 +324,25 @@ static proxyenv *try_connect_to_server(short bail, unsigned char spec TSRMLS_DC)
 	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not connect to server: Session is closed. -- This usually means that you have tried to access the server in your class' __destruct() method.",51);
 	return 0;
   }
-  if(!(server=EXT_GLOBAL(test_server)(&sock, spec))) {
+  if(!(server=EXT_GLOBAL(test_server)(&sock, &is_local))) {
 	if (bail) 
 	  php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not connect to server: %s -- Have you started the "/**/EXT_NAME()/**/" bridge and set the "/**/EXT_NAME()/**/".socketname option?",52, strerror(errno));
 	return 0;
   }
 
-  if(!EXT_GLOBAL (get_servlet_context) ()) {
+  if(is_local || !EXT_GLOBAL (get_servlet_context) ()) {
 	unsigned char mode = EXT_GLOBAL (get_mode) ();
 	send(sock, &mode, sizeof mode, 0); 
   }
 
-  return JG(jenv) = EXT_GLOBAL(createSecureEnvironment)(sock, handle_request, server);
+  return JG(jenv) = EXT_GLOBAL(createSecureEnvironment)(sock, handle_request, server, is_local);
 }
 proxyenv *EXT_GLOBAL(connect_to_server)(TSRMLS_D) {
-  return try_connect_to_server(1, 0 TSRMLS_CC);
+  return try_connect_to_server(1 TSRMLS_CC);
 }
 proxyenv *EXT_GLOBAL(try_connect_to_server)(TSRMLS_D) {
   
-  return try_connect_to_server(0, 0 TSRMLS_CC);
+  return try_connect_to_server(0 TSRMLS_CC);
 }
 
 #ifndef PHP_WRAPPER_H

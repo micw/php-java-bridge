@@ -39,7 +39,12 @@ public class Parser {
 		// OPTIONS
 	    default:
 	    	if((ch&64)!=0) options=(byte) (ch&3); 
-	    	if((ch&128)!=0) bridge.logLevel = (ch>>2)&7;
+	    	if((ch&128)!=0) {
+	    	    if(bridge.logLevel>3 && (bridge.logLevel!=((ch>>2)&7)))
+		        bridge.logDebug("Client changed its request log level to: " + ((ch>>2)&7));
+		            
+	    	    bridge.logLevel = (ch>>2)&7;
+	    	}
 	    	c++;
 	    }
 	} else {

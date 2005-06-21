@@ -18,12 +18,12 @@ public class JavaBridgeClassLoader extends URLClassLoader {
 	
     JavaBridge bridge;
 
-    public static class Adaptor {
+    public static class Bridge {
 	JavaBridgeClassLoader cl = null;
 	ClassLoader scl = null;
 	JavaBridge bridge;
 	
-	public Adaptor(JavaBridge bridge) {
+	public Bridge(JavaBridge bridge) {
 	    this.bridge = bridge;
 
 	    try {
