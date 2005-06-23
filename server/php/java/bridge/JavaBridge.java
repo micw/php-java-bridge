@@ -23,14 +23,64 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Vector;
+import java.util.Properties;
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.Stack;
+import java.io.FileOutputStream;
 
 
+public class JavaBridge extends Thread {
 
-public class JavaBridge implements Runnable {
+   /**
+    * Static Thread Pool
+    */
+    public static int poolSize = 20;
+    private static Stack threadPool = new Stack();
+    public static boolean stop = false;
+
+    // Synchronization object, JavaBridge Threads in the Pool are waiting on this object
+    private Object wait_lock = new Object();
+
+    // Static method which either creates or recycles a JavaBridge and starts it.
+    public static JavaBridge startBridge(InputStream in, OutputStream out) {
+      JavaBridge bt = null;
+      if (threadPool.isEmpty()) {
+        bt = new JavaBridge();
+        bt.in = in;
+        bt.out = out;
+        bt.start();
+      } else {
+        bt = (JavaBridge) threadPool.pop();
+        synchronized(bt.wait_lock) {
+          bt.in = in;
+          bt.out = out;
+          bt.wait_lock.notifyAll(); // Stop waiting on your wait_lock
+        }
+      }
+      return bt;
+  }
+
+  public static void stopAll() {
+    stop = true;
+    synchronized(threadPool) {
+      while (!threadPool.isEmpty()) {
+        JavaBridge b = (JavaBridge)threadPool.pop();
+        if (b!=null) b.interrupt();
+      }
+    }
+  }
+
+  /* Non static Member Variables below
+   *
+   * IMPORTANT:
+   * Every non static member variable which gets modified during a request should
+   * be reset to a neutral state in the reset() method below
+   *
+   */
 
     // The client's file encoding, for example UTF-8.
     String fileEncoding="UTF-8";
-
     // For PHP4's last_exception_get.
     public Throwable lastException = null;
 
@@ -44,19 +94,42 @@ public class JavaBridge implements Runnable {
     public InputStream in; public OutputStream out;
 
     int logLevel = Util.logLevel;
-
     // the current request (if any)
     Request request;
-    
+
+    boolean canModifySecurityPermission = true;
+
+    /**
+     * Reset the internal state of the PHP/Java Bridge.
+     *
+     * Gets called to reset everything before the JavaBridge is recycled
+     *
+     * IMPORTANT:
+     * Every non static member variable which gets modified during a request should
+     * be reset to a neutral state in this method
+     */
+    public void reset() {
+    	Session.reset(this);
+    	cl.reset();
+        lastException = null;
+        in = null;
+        out = null;
+        uid =-1;
+        gid =-1;
+        globalRef.clear();
+        request = null;
+    }
+
+
     //
     // Native methods, only called  when loadLibrary succeeds.
     // These are necessary to deal with local sockets ("Unix domain sockets")
     // which are much faster and more secure than standard TCP sockets.
-	
+
     /**
      * Open a system log file with the correct (Unix) permissions.
      * @param logFile The log file or "" for standard out
-     * @return true if it was possible to re-direct stdout and stderr.  
+     * @return true if it was possible to re-direct stdout and stderr.
      * If yes, we can simply print to standard out.
      */
     public static native boolean openLog(String logFile);
@@ -94,7 +167,7 @@ public class JavaBridge implements Runnable {
      * @param peer The socket handle
      */
     public static native void sclose(int peer);
-       
+
     // native accept fills these
     int uid =-1, gid =-1;
 
@@ -107,10 +180,50 @@ public class JavaBridge implements Runnable {
 	    return load;
 	}
     }
-    // 
-    // Communication with client in a new thread
+
+    public static boolean classic_classloader = true;
+
+    /**
+     * Factory method for JavaBridgeClassLoader creation
+     */
+     JavaBridgeClassLoader createJavaBridgeClassLoader() throws java.security.AccessControlException {
+	 		if (classic_classloader) {
+				return new ClassicJavaBridgeClassLoader(this);
+			} else {
+				return new DynamicJavaBridgeClassLoader(this);
+			}
+	 }
+
+         public void run() {
+                  while (!stop) {
+                    try {
+                    if ((in==null) || (out==null)) { // Do not wait, if work has already been assigned
+                      synchronized(wait_lock) {
+                        wait_lock.wait(); // Wait in Thread-Pool
+                      }
+                    }
+                  } catch (Exception ex) {
+                  }
+                  if (stop) break;
+                  if ((in!=null) && (out!=null)) {
+                    execute();
+                  }
+                  if (stop) break;
+                  if (threadPool.size()<poolSize) {
+                    reset(); // Reset everything, including in and out = null
+                    threadPool.push(this);
+                  } else {
+                    stop = true;
+                  }
+                }
+         }
+
     //
-    public void run() { 
+    // Communication with client in a new thread
+    // This *was* the original run() method. Now, run() calls this method but also handles
+    // the Thread pool stuff.
+    //
+    public void execute() {
     	request = new Request(this);
 	try {
 	    if(!request.initOptions(in, out)) return;
@@ -149,13 +262,45 @@ public class JavaBridge implements Runnable {
     //
     static void initGlobals(String phpConfigDir) {
     	try {
-	    JavaBridgeClassLoader.initClassLoader(phpConfigDir);
+            try {
+              Util.logMessage("Trying to open '"+phpConfigDir+File.separator+"PHPJavaBridge.ini'");
+              File iniFile = new File(phpConfigDir+File.separator+"PHPJavaBridge.ini");
+              Properties props = null;
+              if (iniFile.exists()) {
+                props = new Properties();
+                props.load(new FileInputStream(iniFile));
+              } else {
+                props = new Properties();
+                props.put("classloader","Classic");
+                props.put("thread_pool_size","20");
+                Util.logMessage("Ini File not found, creating '"+phpConfigDir+File.separator+"PHPJavaBridge.ini'");
+                try {
+                  FileOutputStream fout = new FileOutputStream(phpConfigDir+File.separator+"PHPJavaBridge.ini");
+                  props.store(fout, "PHPJavaBridge Properties");
+                  fout.close();
+                } catch (IOException ioe) {
+                  Util.printStackTrace(ioe);
+                }
+              }
+              classic_classloader = "Classic".equalsIgnoreCase((String)props.get("classloader"));
+
+              poolSize = Integer.parseInt((String)props.get("thread_pool_size"));
+            } catch (Exception ex) {
+              Util.printStackTrace(ex);
+            }
+            if (classic_classloader) {
+               Util.logMessage("Using classic classloader");
+               ClassicJavaBridgeClassLoader.initClassLoader(phpConfigDir);
+            } else {
+               Util.logMessage("Using dynamic classloader");
+               DynamicJavaBridgeClassLoader.initClassLoader(phpConfigDir);
+            }
     	} catch (Exception t) {
 	    Util.printStackTrace(t);
 	}
     }
-    
-		
+
+
     //
     // init
     //
@@ -166,7 +311,7 @@ public class JavaBridge implements Runnable {
 	try {
 	    if(s.length>0) {
 		sockname=s[0];
-	    } 
+	    }
 	    try {
 		if(s.length>1) {
 		    Util.logLevel=Integer.parseInt(s[1]);
@@ -191,7 +336,7 @@ public class JavaBridge implements Runnable {
 	    	redirectOutput = openLog(logFile);
 	    } catch (Throwable t) {
 	    }
-	    
+
 	    if(!redirectOutput) {
 		try {
 		    Util.logStream=new java.io.PrintStream(new java.io.FileOutputStream(logFile));
@@ -207,10 +352,10 @@ public class JavaBridge implements Runnable {
 	    } catch (Throwable e) {
 		Util.logMessage("Local sockets not available:" + e + ". Try TCP sockets instead");
 	    }
-	    if(null==socket) 
+	    if(null==socket)
 		socket = TCPServerSocket.create(sockname, Util.BACKLOG);
 
-	    if(null==socket) 
+	    if(null==socket)
 		throw new Exception("Could not create socket: " + sockname);
 
 	    Util.logMessage(Util.EXTENSION_NAME + " logFile         : " + logFile);
@@ -218,17 +363,12 @@ public class JavaBridge implements Runnable {
 	    Util.logMessage(Util.EXTENSION_NAME + " socket          : " + socket);
 
 	    while(true) {
-		JavaBridge bridge = new JavaBridge();
-				
 		Socket sock = socket.accept();
-		bridge.in=sock.getInputStream();
-		bridge.out=sock.getOutputStream();
-		// FIXME: Use thread pool
-		Thread thread = new Thread(bridge);
-		thread.setContextClassLoader(bridge.cl.getClassLoader());
-		thread.start();
+		InputStream in=sock.getInputStream();
+		OutputStream out=sock.getOutputStream();
+                JavaBridge bridge = JavaBridge.startBridge(in,out); // Uses thread pool
 	    }
-				
+
 	} catch (Throwable t) {
 	    Util.printStackTrace(t);
 	    System.exit(1);
@@ -294,8 +434,7 @@ public class JavaBridge implements Runnable {
 	    	response.writeObject(value);
 	    }
 	} else if (value instanceof java.util.Map) {
-
-	    Map ht = (Map) value; 
+	    Map ht = (Map) value;
 	    if (response.hook.sendArraysAsValues()) {
 		// Since PHP 5 this is dead code, setResultFromArray
 		// behaves like setResultFromObject and returns
@@ -304,7 +443,7 @@ public class JavaBridge implements Runnable {
 		for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
 		    Object key = e.next();
 		    long slot;
-		    if (key instanceof Number && 
+		    if (key instanceof Number &&
 			!(key instanceof Double || key instanceof Float)) {
 			response.writePairBegin_n(((Number)key).intValue());
 			setResult(response, ht.get(key));
@@ -326,7 +465,7 @@ public class JavaBridge implements Runnable {
 
     public void printStackTrace(Throwable t) {
 	if(logLevel > 0)
-	    if ((t instanceof Error) || logLevel > 1) 
+	    if ((t instanceof Error) || logLevel > 1)
 	    	Util.logger.printStackTrace(t);
     }
     public void logDebug(String msg) {
@@ -353,11 +492,11 @@ public class JavaBridge implements Runnable {
 	if(obj!=null) {
 	    buf.append("[");
 	    buf.append(String.valueOf(obj));
-	    buf.append("]->"); 
+	    buf.append("]->");
 	} else {
 	    buf.append("new ");
 	}
-	buf.append(name); 
+	buf.append(name);
 	String arguments = Util.argsToString(args);
 	if(arguments.length()>0) {
 	    buf.append("(");
@@ -367,7 +506,7 @@ public class JavaBridge implements Runnable {
 	buf.append(".");
 	buf.append(" Cause: ");
 	buf.append(String.valueOf(e));
-		
+
 	lastException = new Exception(buf.toString(), e);
 	response.writeException(lastException, lastException.toString());
     }
@@ -383,7 +522,7 @@ public class JavaBridge implements Runnable {
 	    Constructor selected = null;
 
 	    if(createInstance) {
-		Constructor cons[] = Class.forName(name, true, cl.getClassLoader()).getConstructors();
+		Constructor cons[] = cl.getClassLoader().loadClass(name).getConstructors();
 		for (int i=0; i<cons.length; i++) {
 		    candidates.addElement(cons[i]);
 		    if (cons[i].getParameterTypes().length == args.length) {
@@ -400,7 +539,7 @@ public class JavaBridge implements Runnable {
 		} else {
 		    // for classes which have no visible constructor, return the class
 		    // useful for classes like java.lang.System and java.util.Calendar.
-		    response.writeObject(Class.forName(name, true, cl.getClassLoader()));
+		    response.writeObject(cl.getClassLoader().loadClass(name));
 		    return;
 		}
 	    }
@@ -410,13 +549,13 @@ public class JavaBridge implements Runnable {
 	    	response.writeObject(selected.newInstance(coercedArgs));
 	    } catch (NoClassDefFoundError xerr) {
 	    	logError("Error: Could not invoke constructor. A class referenced in the constructor method could not be found: " + xerr + ". Please correct this error or use \"new JavaClass()\" to avoid calling the constructor.");
-	    	JavaBridgeClassLoader.reset();
-	    	response.writeObject(Class.forName(name, true, cl.getClassLoader()));
+	    	cl.reset();
+	    	response.writeObject(cl.getClassLoader().loadClass(name));
 	    }
 
 	} catch (Throwable e) {
-	    if(e instanceof OutOfMemoryError || 
-	       ((e instanceof InvocationTargetException) && 
+	    if(e instanceof OutOfMemoryError ||
+	       ((e instanceof InvocationTargetException) &&
 		((InvocationTargetException)e).getTargetException() instanceof OutOfMemoryError)) {
 		Util.logStream.println("FATAL: OutOfMemoryError");
 		throw new RuntimeException(); // abort
@@ -440,17 +579,17 @@ public class JavaBridge implements Runnable {
 	    int weight=0;
 
 	    Class parms[] = (element instanceof Method) ?
-		((Method)element).getParameterTypes() : 
+		((Method)element).getParameterTypes() :
 		((Constructor)element).getParameterTypes();
 
 	    for (int i=0; i<parms.length; i++) {
 		if (parms[i].isInstance(args[i])) {
 		    for (Class c=args[i].getClass(); (c=c.getSuperclass()) != null; ) {
-			if (!parms[i].isAssignableFrom(c)) { 
+			if (!parms[i].isAssignableFrom(c)) {
 			    if (args[i] instanceof byte[]) { //special case: when arg is a byte array we always prefer a String parameter (if it exists).
 				weight+=1;
 			    }
-			    break; 
+			    break;
 			}
 			weight+=256; // prefer more specific arg, for
 				     // example AbstractMap hashMap
@@ -470,7 +609,7 @@ public class JavaBridge implements Runnable {
 				    if (c==Float.TYPE) weight+=11;
 				    else if (c==Double.TYPE) weight+=10;
 				    else weight += 256;
-				} else {				
+				} else {
 				    if (c==Boolean.TYPE) weight+=15;
 				    else if (c==Character.TYPE) weight+=14;
 				    else if (c==Byte.TYPE) weight+=13;
@@ -519,7 +658,7 @@ public class JavaBridge implements Runnable {
 		} else {
 		    weight+=9999;
 		}
-	    } 
+	    }
 	    if (weight < best) {
 		if (weight == 0) return element;
 		best = weight;
@@ -553,7 +692,7 @@ public class JavaBridge implements Runnable {
 		    if (c == Integer.TYPE) result[i]=new Integer(s);
 		    if (c == Float.TYPE)   result[i]=new Float(s);
 		    if (c == Long.TYPE)    result[i]=new Long(s);
-		    if (c == Character.TYPE && s.length()>0) 
+		    if (c == Character.TYPE && s.length()>0)
 			result[i]=new Character(s.charAt(0));
 		} catch (NumberFormatException n) {
 		    printStackTrace(n);
@@ -568,7 +707,7 @@ public class JavaBridge implements Runnable {
 		if (c == Short.TYPE)   result[i]=new Short(n.shortValue());
 		if (c == Integer.TYPE) result[i]=new Integer(n.intValue());
 		if (c == Float.TYPE)   result[i]=new Float(n.floatValue());
-		if (c == Long.TYPE && !(n instanceof Long)) 
+		if (c == Long.TYPE && !(n instanceof Long))
 		    result[i]=new Long(n.longValue());
 	    } else if (args[i] instanceof Map) {
 	    	if(parms[i].isArray()) {
@@ -589,14 +728,14 @@ public class JavaBridge implements Runnable {
 			// flatten the hash table into an array
 			for (int j=0; j<size; j++) {
 			    tempArray[j] = ht.get(new Long(j));
-			    if (tempArray[j] == null && targetType.isPrimitive()) 
+			    if (tempArray[j] == null && targetType.isPrimitive())
 				throw new Exception("bail");
 			    tempTarget[j] = targetType;
 			}
 
 			// coerce individual elements into the target type
 			Object coercedArray[] = coerce(tempTarget, tempArray, response);
-        
+
 			// copy the results into the desired array type
 			Object array = Array.newInstance(targetType,size);
 			for (int j=0; j<size; j++) {
@@ -617,12 +756,12 @@ public class JavaBridge implements Runnable {
 			    Object key = e.next();
 			    Object val = ht.get(key);
 			    int index = ((Long)key).intValue();		    // Verify that the keys are Long
-		
+
 			    if(val instanceof byte[]) val = response.newString((byte[])val); // always prefer strings over byte[]
 			    res.add(val);
 			}
 
-			result[i]=res; 
+			result[i]=res;
 		    } catch (Exception e) {
 			logError("Error: " +  String.valueOf(e) + " Could not create java.util.Map.  You have probably passed a hashtable instead of an array. Please check that the keys are long.");
 			printStackTrace(e);
@@ -635,19 +774,19 @@ public class JavaBridge implements Runnable {
 			for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
 			    Object key = e.next();
 			    Object val = ht.get(key);
-			
+
 			    if(key instanceof byte[]) key = response.newString((byte[])key); // always prefer strings over byte[]
 			    if(val instanceof byte[]) val = response.newString((byte[])val); // always prefer strings over byte[]
 			    res.put(key, val);
 			}
 
-			result[i]=res; 
+			result[i]=res;
 		    } catch (Exception e) {
 			logError("Error: " +  String.valueOf(e) + " Could not create java.util.Hashtable.");
 			printStackTrace(e);
 			// leave result[i] alone...
 		    }
-	    	
+
 		}
 	    }
 	}
@@ -656,7 +795,7 @@ public class JavaBridge implements Runnable {
 
     static abstract class FindMatchingInterface {
 	JavaBridge bridge;
-	String name; 
+	String name;
 	Object args[];
 	boolean ignoreCase;
 	public FindMatchingInterface (JavaBridge bridge, String name, Object args[], boolean ignoreCase) {
@@ -669,7 +808,7 @@ public class JavaBridge implements Runnable {
 	public boolean checkAccessible(AccessibleObject o) {return true;}
     }
 
-    boolean canModifySecurityPermission = true;
+
     static final FindMatchingInterfaceVoid MATCH_VOID_ICASE = new FindMatchingInterfaceVoid(true);
     static final FindMatchingInterfaceVoid MATCH_VOID_CASE = new FindMatchingInterfaceVoid(false);
     static class FindMatchingInterfaceVoid extends FindMatchingInterface {
@@ -699,7 +838,7 @@ public class JavaBridge implements Runnable {
 	}
 	Class findMatchingInterface(Class jclass) {
 	    if(jclass==null) return jclass;
-	    if(bridge.logLevel>3) 
+	    if(bridge.logLevel>3)
 	    	if(bridge.logLevel>3)bridge.logDebug("searching for matching interface for Invoke for class " + jclass);
 	    while (!Modifier.isPublic(jclass.getModifiers())) {
 		// OK, some joker gave us an instance of a non-public class
@@ -714,7 +853,7 @@ public class JavaBridge implements Runnable {
 			Method methods[] = jclass.getMethods();
 			for (int j=0; j<methods.length; j++) {
 			    String nm = methods[j].getName();
-			    boolean eq = ignoreCase ? nm.equalsIgnoreCase(name) : nm.equals(name); 
+			    boolean eq = ignoreCase ? nm.equalsIgnoreCase(name) : nm.equals(name);
 			    if (eq && (methods[j].getParameterTypes().length == args.length)) {
 			    	if(bridge.logLevel>3) bridge.logDebug("matching interface for Invoke: " + jclass);
 				return jclass;
@@ -740,7 +879,7 @@ public class JavaBridge implements Runnable {
 
 	Class findMatchingInterface(Class jclass) {
 	    if(jclass==null) return jclass;
-	    if(bridge.logLevel>3) 
+	    if(bridge.logLevel>3)
 	    	if(bridge.logLevel>3)bridge.logDebug("searching for matching interface for GetSetProp for class "+ jclass);
 	    while (!Modifier.isPublic(jclass.getModifiers())) {
 		// OK, some joker gave us an instance of a non-public class
@@ -755,7 +894,7 @@ public class JavaBridge implements Runnable {
 			Field jfields[] = jclass.getFields();
 			for (int j=0; j<jfields.length; j++) {
 			    String nm = jfields[j].getName();
-			    boolean eq = ignoreCase ? nm.equalsIgnoreCase(name) : nm.equals(name); 
+			    boolean eq = ignoreCase ? nm.equalsIgnoreCase(name) : nm.equals(name);
 			    if (eq) {
 			    	if(bridge.logLevel>3) bridge.logDebug("smatching interface for GetSetProp: "+ jclass);
 				return jclass;
@@ -787,11 +926,11 @@ public class JavaBridge implements Runnable {
 	    c.current = null;
 	    return c;
 	}
-	
+
 	public abstract Class getNext();
 	public abstract boolean checkAccessible(AccessibleObject o);
     }
-	
+
     static class ObjectClassIterator extends ClassIterator {
 	private Class next() {
 	    if (current == null) return current = object.getClass();
@@ -853,7 +992,7 @@ public class JavaBridge implements Runnable {
 		}
 		selected = (Method)select(matches, args);
 		if (selected == null) throw new NoSuchMethodException(String.valueOf(method) + "(" + Util.argsToString(args) + "). " + "Candidates: " + String.valueOf(candidates));
-		
+
 		coercedArgs = coerce(selected.getParameterTypes(), args, response);
 		if(!iter.checkAccessible(selected)) {
 		    logMessage("Security restriction: Cannot use setAccessible(), reverting to interface searching.");
@@ -865,8 +1004,8 @@ public class JavaBridge implements Runnable {
 	    setResult(response, selected.invoke(object, coercedArgs));
 
 	} catch (Throwable e) {
-	    if(e instanceof OutOfMemoryError || 
-	       ((e instanceof InvocationTargetException) && 
+	    if(e instanceof OutOfMemoryError ||
+	       ((e instanceof InvocationTargetException) &&
 		((InvocationTargetException)e).getTargetException() instanceof OutOfMemoryError)) {
 		Util.logStream.println("FATAL: OutOfMemoryError");
 		throw new RuntimeException(); // abort
@@ -976,8 +1115,8 @@ public class JavaBridge implements Runnable {
 	    throw new NoSuchFieldException(String.valueOf(prop) + " (with args:" + Util.argsToString(args) + "). " + "Candidates: " + String.valueOf(matches));
 
 	} catch (Throwable e) {
-	    if(e instanceof OutOfMemoryError || 
-	       ((e instanceof InvocationTargetException) && 
+	    if(e instanceof OutOfMemoryError ||
+	       ((e instanceof InvocationTargetException) &&
 		((InvocationTargetException)e).getTargetException() instanceof OutOfMemoryError)) {
 		Util.logStream.println("FATAL: OutOfMemoryError");
 		throw new RuntimeException(); // abort
@@ -998,8 +1137,8 @@ public class JavaBridge implements Runnable {
 
     /*
      * for PHP5: convert Map or Collection into a PHP array,
-     * sends the entire Map or Collection to the client. This 
-     * is much more efficient than generating round-trips when 
+     * sends the entire Map or Collection to the client. This
+     * is much more efficient than generating round-trips when
      * iterating through a Map or Collection.
      */
     public Object getValues(Object ob) {
@@ -1008,7 +1147,7 @@ public class JavaBridge implements Runnable {
     	}
 	return ob;
     }
-    
+
     //
     // Return map for the value (PHP 5 only)
     //
@@ -1041,7 +1180,7 @@ public class JavaBridge implements Runnable {
 	buf.append("]");
 	return buf.toString();
     }
-    
+
     public Session getSession(String name, boolean clientIsNew, int timeout) {
     	synchronized(JavaBridge.sessionHash) {
 	    Session ref = null;
@@ -1058,18 +1197,11 @@ public class JavaBridge implements Runnable {
 		    ref.isNew=false;
 		}
 	    }
-	    	
+
 	    JavaBridge.sessionHash.put(name, ref);
 	    return ref;
     	}
     }
-    
-    /**
-     * Reset the internal state of the PHP/Java Bridge.
-     *
-     */
-    public void reset() {
-    	Session.reset(this);
-    	JavaBridgeClassLoader.reset();
-    }
+
+
 }

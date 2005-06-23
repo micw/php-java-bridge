@@ -42,15 +42,19 @@ public class PhpJavaServlet extends HttpServlet {
 	InputStream in; ByteArrayOutputStream out;
 	HttpSession session = req.getSession();
 	JavaBridge bridge = (JavaBridge) session.getAttribute("bridge");
+
 	if(bridge==null) {
-	    bridge = new JavaBridge();
+            in = req.getInputStream();
+            out = new ByteArrayOutputStream();
+	    bridge = JavaBridge.startBridge(in,out);
 	    session.setAttribute("bridge", bridge);
-	}
-	in=bridge.in=req.getInputStream();
-	bridge.out=out=new ByteArrayOutputStream();
+	} else {
+            in = bridge.in;
+            out = (ByteArrayOutputStream) bridge.out;
+        }
 	Request r = new Request(bridge);
 	try {
-	    if(r.initOptions(in, out)) {
+	    if(r.initOptions(bridge.in, bridge.out)) {
 		r.handleRequests();
 	    }
 	} catch (Throwable e) {
