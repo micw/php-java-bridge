@@ -1,3 +1,32 @@
+2005-06-23  Jost Boekemeier  <jostb@timon.intern.de>
+
+	* server/php/java/bridge/JavaBridge.java:
+	(JavaBridge): name thread "JavaBridge"
+	(classic_classloader): obsolete
+	(createJavaBridgeClassLoader): obsolete
+	(initGlobals): initialize poolSize from servlet or from
+	System.properties if not already initialized
+
+	* server/php/java/bridge/ClassicJavaBridgeClassLoader.java: obsolete
+	
+	* server/php/java/bridge/JavaBridgeClassLoader.java:
+	(Bridge): added documentation, create a DynamicJavaBridgeClassLoader.
+
+	* server/php/java/bridge/Util.java:
+	(THREAD_POOL_MAX_SIZE): New global, initialized from system
+	property "php.java.bridge.threads".
+
+	* server/php/java/servlet/PhpJavaServlet.java
+	(init): Init Util.THREAD_POOL_MAX_SIZE from the servlet context.
+	
+	* server/php/java/bridge/GlobalRef.java
+	(clear): disabled 
+
+	
+2005-05-20  Boekemeier <jostb@intern>
+
+	* FIXME: jost ChangeLog entries missing
+
 2005-05-22  Boekemeier <jostb@intern>
 
 	* tests.php4/xmlTransform.php: Test rewritten

@@ -35,6 +35,7 @@ public class PhpJavaServlet extends HttpServlet {
     public void init(ServletConfig config) throws ServletException {
 	Util.logLevel=Util.DEFAULT_LOG_LEVEL; /* java.log_level in php.ini overrides */
 	Util.logger=new Logger(config.getServletContext());
+	Util.THREAD_POOL_MAX_SIZE = config.getInitParameter("php.java.bridge.threads");
     }
 
     public void doPut (HttpServletRequest req, HttpServletResponse res)

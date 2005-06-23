@@ -4,6 +4,9 @@ package php.java.bridge;
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -22,12 +25,9 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Vector;
 import java.util.Properties;
-import java.io.File;
-import java.io.FileInputStream;
 import java.util.Stack;
-import java.io.FileOutputStream;
+import java.util.Vector;
 
 
 public class JavaBridge extends Thread {
@@ -35,12 +35,17 @@ public class JavaBridge extends Thread {
    /**
     * Static Thread Pool
     */
-    public static int poolSize = 20;
+    public static int poolSize = 0;
     private static Stack threadPool = new Stack();
     public static boolean stop = false;
 
     // Synchronization object, JavaBridge Threads in the Pool are waiting on this object
     private Object wait_lock = new Object();
+
+    // create a bridge thread
+    public JavaBridge() {
+	super(Util.EXTENSION_NAME);
+    }
 
     // Static method which either creates or recycles a JavaBridge and starts it.
     public static JavaBridge startBridge(InputStream in, OutputStream out) {
@@ -181,19 +186,7 @@ public class JavaBridge extends Thread {
 	}
     }
 
-    public static boolean classic_classloader = true;
-
-    /**
-     * Factory method for JavaBridgeClassLoader creation
-     */
-     JavaBridgeClassLoader createJavaBridgeClassLoader() throws java.security.AccessControlException {
-	 		if (classic_classloader) {
-				return new ClassicJavaBridgeClassLoader(this);
-			} else {
-				return new DynamicJavaBridgeClassLoader(this);
-			}
-	 }
-
+ 
          public void run() {
                   while (!stop) {
                     try {
@@ -262,7 +255,9 @@ public class JavaBridge extends Thread {
     //
     static void initGlobals(String phpConfigDir) {
     	try {
-            try {
+ 
+    	  // FIXME: This doesn't work on FC3 or when running the bridge in a J2EE AS (no file access permissions) 
+          try {
               Util.logMessage("Trying to open '"+phpConfigDir+File.separator+"PHPJavaBridge.ini'");
               File iniFile = new File(phpConfigDir+File.separator+"PHPJavaBridge.ini");
               Properties props = null;
@@ -282,19 +277,17 @@ public class JavaBridge extends Thread {
                   Util.printStackTrace(ioe);
                 }
               }
-              classic_classloader = "Classic".equalsIgnoreCase((String)props.get("classloader"));
-
-              poolSize = Integer.parseInt((String)props.get("thread_pool_size"));
+              poolSize = Integer.parseInt(props.getProperty("thread_pool_size", Util.THREAD_POOL_MAX_SIZE));
             } catch (Exception ex) {
               Util.printStackTrace(ex);
             }
-            if (classic_classloader) {
-               Util.logMessage("Using classic classloader");
-               ClassicJavaBridgeClassLoader.initClassLoader(phpConfigDir);
-            } else {
-               Util.logMessage("Using dynamic classloader");
-               DynamicJavaBridgeClassLoader.initClassLoader(phpConfigDir);
+            try {
+            	if(poolSize==0) poolSize= Integer.parseInt(Util.THREAD_POOL_MAX_SIZE);
+            } catch (Throwable t) {
+            	poolSize = 20;
             }
+            
+            DynamicJavaBridgeClassLoader.initClassLoader(phpConfigDir);
     	} catch (Exception t) {
 	    Util.printStackTrace(t);
 	}

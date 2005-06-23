@@ -25,9 +25,16 @@ public class GlobalRef {
 	globalRef[--id]=null;
     }
 
+    /* FIXME: What does this do?  
+     * We cannot destroy the entries until the client disconnects
+     * because it keeps referencing them. A client may destroy
+     * (protocol "U") individual entries, though.
+     * After request termination the global ref is destroyed
+     * anyway, so this method seems obsolete.
+     */
     public void clear() {
-      Arrays.fill(globalRef, null);
-      id = 0;
+      //Arrays.fill(globalRef, null);
+      //id = 0;
     }
 
     public int append(Object object) {

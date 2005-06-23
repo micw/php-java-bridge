@@ -12,11 +12,17 @@ public class Util {
     static String TCP_SOCKETNAME = "9267";
     static String EXTENSION_DIR = null;
     static String EXTENSION_NAME = "JavaBridge";
+    public static String THREAD_POOL_MAX_SIZE = "20";
     static {
         Properties p = new Properties();
 	try {
 	    InputStream in = Util.class.getResourceAsStream("global.properties");
 	    p.load(in);
+	} catch (Throwable t) {
+		printStackTrace(t);
+	};
+	try {
+	    THREAD_POOL_MAX_SIZE = System.getProperty("php.java.bridge.threads", THREAD_POOL_MAX_SIZE);
 	} catch (Throwable t) {
 		printStackTrace(t);
 	};

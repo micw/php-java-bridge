@@ -2,17 +2,6 @@
 
 package php.java.bridge;
 
-import java.io.File;
-import java.lang.ref.WeakReference;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.StringTokenizer;
 
 /**
  * Basic interface a Classloader needs to implement (apart from being a ClassLoader).
@@ -26,6 +15,11 @@ import java.util.StringTokenizer;
  */
 public interface JavaBridgeClassLoader {
 
+	/*
+	 * A bridge pattern which allows us to vary the class loader as run-time.
+	 * The decision is based on whether we are allowed to use a dynamic 
+	 * classloader or not.
+	 */
 	public static class Bridge {
 		JavaBridgeClassLoader cl = null;
 		ClassLoader scl = null;
@@ -34,7 +28,7 @@ public interface JavaBridgeClassLoader {
 		public Bridge(JavaBridge bridge) {
 			this.bridge = bridge;
 			try {
-				cl=bridge.createJavaBridgeClassLoader();
+				cl = new DynamicJavaBridgeClassLoader(bridge);
 			} catch (java.security.AccessControlException ex) {
 				scl = bridge.getClass().getClassLoader();
 			}
