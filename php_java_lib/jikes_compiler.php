@@ -74,7 +74,6 @@ function filter_unmodified(&$files, $src_dir, $class_dir) {
 		$class_file = $class_dir.substr($src_file, $pl, $el).'.class';
 		if (!file_exists($class_file)) {
 			$result[] = $src_file;
-			echo "File $class_file does not exist<br>";
 			continue;
 		}
 		if (filemtime($src_file)>filemtime($class_file)) { // Compare modification dates
@@ -129,6 +128,8 @@ function jikes_compile($src_path, $target_path, $verbose, $extra_classpath='') {
 		if ($extra_classpath!='') {
 			$classpath .= ":$extra_classpath";
 		}
+
+
 		$bootclasspath = $Properties->get("sun.boot.class.path");
 		$target_version = $Properties->get("java.specification.version");
         clearstatcache(); // Neccessary, otherwise file modification dates and calls to "file_exists" get cached.
@@ -164,19 +165,36 @@ function jikes_compile($src_path, $target_path, $verbose, $extra_classpath='') {
 * $src_path - The base directory where the java files reside
 * $target_path - [Optional] Target directory for class files
 * $extra_classpath - [Optional] additional jar files / classpaths used in the project.
+* $extra_lib_dirs - [Optional] additional directories to search for jar files
 * Paths separated by ';'
 */
-function java_autoproject($src_path, $target_path='', $extra_classpath='') {
+function java_autoproject($src_path, $target_path='', $extra_classpath='', $extra_lib_dirs='') {
 	if ($target_path=='') $target_path=$src_path;
 	$compiled_count = 0;
+	$ecp = '';
 	if ($extra_classpath!='') {
 		$ec = explode(';', $extra_classpath);
-		$ecp = implode(':', $ec);
-	} else {
-		$ecp = '';
+		foreach($ec as $cp) {
+			$cpl = '';
+			$cpl = @realpath($cp);
+			if ($cpl=='') $cpl = getcwd().'/'.$cp;
+			$ecp .= $cpl.':';
+		}
+	}
+	if ($extra_lib_dirs!='') {
+		$libdirs = explode(';',$extra_lib_dirs);
+		foreach ($libdirs as $libdir) {
+		    $glibdir='';
+			$glibdir = @realpath($libdir);
+			if ($glibdir=='') $glibdir = getcwd().'/'.$libdir;
+			$ecp .= ':'.implode(':',dir_pattern_scan($glibdir, '\.jar$', '/', 1));
+		}
+	}
+	if ($ecp!='') {
+		$extra_classpath = strtr($ecp, ':;', ';;');
 	}
 	try {
-		$compiled_count = jikes_compile($src_path, $target_path, true, $ecp);
+		$compiled_count = jikes_compile($src_path, $target_path, true, $ecp, $extra_lib_dirs);
 		if ($compiled_count>0) {
 			java_invalidate_library_path($target_path);
 		}
