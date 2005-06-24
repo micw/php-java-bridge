@@ -30,51 +30,9 @@ import java.util.Stack;
 import java.util.Vector;
 
 
-public class JavaBridge extends Thread {
+public class JavaBridge implements Runnable {
 
-   /**
-    * Static Thread Pool
-    */
-    public static int poolSize = 0;
-    private static Stack threadPool = new Stack();
-    public static boolean stop = false;
 
-    // Synchronization object, JavaBridge Threads in the Pool are waiting on this object
-    private Object wait_lock = new Object();
-
-    // create a bridge thread
-    public JavaBridge() {
-	super(Util.EXTENSION_NAME);
-    }
-
-    // Static method which either creates or recycles a JavaBridge and starts it.
-    public static JavaBridge startBridge(InputStream in, OutputStream out) {
-      JavaBridge bt = null;
-      if (threadPool.isEmpty()) {
-        bt = new JavaBridge();
-        bt.in = in;
-        bt.out = out;
-        bt.start();
-      } else {
-        bt = (JavaBridge) threadPool.pop();
-        synchronized(bt.wait_lock) {
-          bt.in = in;
-          bt.out = out;
-          bt.wait_lock.notifyAll(); // Stop waiting on your wait_lock
-        }
-      }
-      return bt;
-  }
-
-  public static void stopAll() {
-    stop = true;
-    synchronized(threadPool) {
-      while (!threadPool.isEmpty()) {
-        JavaBridge b = (JavaBridge)threadPool.pop();
-        if (b!=null) b.interrupt();
-      }
-    }
-  }
 
   /* Non static Member Variables below
    *
@@ -92,9 +50,9 @@ public class JavaBridge extends Thread {
     // list of objects in use in the current script
     GlobalRef globalRef=new GlobalRef(this);
 
-    static HashMap sessionHash = new HashMap();
+    public JavaBridgeClassLoader.Bridge cl = null;
 
-    public JavaBridgeClassLoader.Bridge cl = new JavaBridgeClassLoader.Bridge(this);
+    static HashMap sessionHash = new HashMap();
 
     public InputStream in; public OutputStream out;
 
@@ -104,16 +62,17 @@ public class JavaBridge extends Thread {
 
     boolean canModifySecurityPermission = true;
 
+   /*
     /**
      * Reset the internal state of the PHP/Java Bridge.
      *
-     * Gets called to reset everything before the JavaBridge is recycled
+     * Before recycling this JavaBridge use this code. (This is not used in the current implementation and might not be up to date)
      *
      * IMPORTANT:
      * Every non static member variable which gets modified during a request should
      * be reset to a neutral state in this method
      */
-    public void reset() {
+   public void reset() {
     	Session.reset(this);
     	cl.reset();
         lastException = null;
@@ -123,8 +82,8 @@ public class JavaBridge extends Thread {
         gid =-1;
         globalRef.clear();
         request = null;
+        canModifySecurityPermission = true;
     }
-
 
     //
     // Native methods, only called  when loadLibrary succeeds.
@@ -187,36 +146,12 @@ public class JavaBridge extends Thread {
     }
 
 
-         public void run() {
-                  while (!stop) {
-                    try {
-                    if ((in==null) || (out==null)) { // Do not wait, if work has already been assigned
-                      synchronized(wait_lock) {
-                        wait_lock.wait(); // Wait in Thread-Pool
-                      }
-                    }
-                  } catch (Exception ex) {
-                  }
-                  if (stop) break;
-                  if ((in!=null) && (out!=null)) {
-                    execute();
-                  }
-                  if (stop) break;
-                  if (threadPool.size()<poolSize) {
-                    reset(); // Reset everything, including in and out = null
-                    threadPool.push(this);
-                  } else {
-                    stop = true;
-                  }
-                }
-         }
+
 
     //
     // Communication with client in a new thread
-    // This *was* the original run() method. Now, run() calls this method but also handles
-    // the Thread pool stuff.
     //
-    public void execute() {
+    public void run() {
     	request = new Request(this);
 	try {
 	    if(!request.initOptions(in, out)) return;
@@ -244,7 +179,7 @@ public class JavaBridge extends Thread {
 	    printStackTrace(e2);
 	}
 	load--;
-	//globalRef=null; // Gets cleared for recycling by the reset method
+	globalRef=null;
 	Session.expire(this);
         logDebug("request terminated.");
     }
@@ -277,14 +212,14 @@ public class JavaBridge extends Thread {
                   Util.printStackTrace(ioe);
                 }
               }
-              poolSize = Integer.parseInt(props.getProperty("thread_pool_size", Util.THREAD_POOL_MAX_SIZE));
+              BridgeThread.poolSize = Integer.parseInt(props.getProperty("thread_pool_size", Util.THREAD_POOL_MAX_SIZE));
             } catch (Exception ex) {
               Util.printStackTrace(ex);
             }
             try {
-            	if(poolSize==0) poolSize= Integer.parseInt(Util.THREAD_POOL_MAX_SIZE);
+            	if(BridgeThread.poolSize==0) BridgeThread.poolSize= Integer.parseInt(Util.THREAD_POOL_MAX_SIZE);
             } catch (Throwable t) {
-            	poolSize = 20;
+            	BridgeThread.poolSize = 20;
             }
             DynamicJavaBridgeClassLoader.initClassLoader(phpConfigDir);
     	} catch (Exception t) {
@@ -358,7 +293,7 @@ public class JavaBridge extends Thread {
 		Socket sock = socket.accept();
 		InputStream in=sock.getInputStream();
 		OutputStream out=sock.getOutputStream();
-                JavaBridge bridge = JavaBridge.startBridge(in,out); // Uses thread pool
+                BridgeThread.startBridge(in, out); // Uses thread pool
 	    }
 
 	} catch (Throwable t) {
@@ -512,7 +447,6 @@ public class JavaBridge extends Thread {
 	    Vector matches = new Vector();
 	    Vector candidates = new Vector();
 	    Constructor selected = null;
-
 	    if(createInstance) {
 		Constructor cons[] = cl.getClassLoader().loadClass(name).getConstructors();
 		for (int i=0; i<cons.length; i++) {
@@ -760,6 +694,8 @@ public class JavaBridge extends Thread {
 			// leave result[i] alone...
 		    }
 		} if ((java.util.Hashtable.class).isAssignableFrom(parms[i])) {
+                // FIXME: This Conversion can convert, for example a Properties Object to a Hashtable
+                // when this is *not* what's wanted
 		    try {
 			Map ht = (Map)args[i];
 			Hashtable res = new Hashtable();
@@ -953,6 +889,17 @@ public class JavaBridge extends Thread {
 	}
     }
 
+    public static void logInvoke(Object obj, String method, Object args[]) {
+       String dmsg = "\nInvoking "+objectDebugDescription(obj)+"."+method+"(";
+       for (int t =0;t<args.length;t++) {
+          if (t>0) dmsg +=",";
+          dmsg += objectDebugDescription(args[t]);
+
+       }
+       dmsg += ");\n";
+       Util.logDebug(dmsg);
+    }
+
     //
     // Invoke a method on a given object
     //
@@ -964,35 +911,47 @@ public class JavaBridge extends Thread {
        Class jclass;
        boolean again;
        Object coercedArgs[] = null;
+       Class paramClasses[] = new Class[args.length];
+       for (int p=0;p<args.length;p++) {
+          paramClasses[p] = args[p].getClass();
+       }
        Method selected = null;
 	try {
-	    // gather
-	    do {
-		again = false;
-		ClassIterator iter;
-		for (iter = ClassIterator.getInstance(object, FindMatchingInterfaceForInvoke.getInstance(this, method, args, true, canModifySecurityPermission)); (jclass=iter.getNext())!=null;) {
-		    Method methods[] = jclass.getMethods();
-		    for (int i=0; i<methods.length; i++) {
-			if (methods[i].getName().equalsIgnoreCase(method)) {
-			    candidates.addElement(methods[i]);
-			    if(methods[i].getParameterTypes().length == args.length) {
-		    		matches.addElement(methods[i]);
-			    }
-			}
-		    }
-		}
-		selected = (Method)select(matches, args);
-		if (selected == null) throw new NoSuchMethodException(String.valueOf(method) + "(" + Util.argsToString(args) + "). " + "Candidates: " + String.valueOf(candidates));
-                coercedArgs = coerce(selected.getParameterTypes(), args, response);
-		if(!iter.checkAccessible(selected)) {
-		    logMessage("Security restriction: Cannot use setAccessible(), reverting to interface searching.");
-		    canModifySecurityPermission=false;
-		    candidates.clear(); matches.clear();
-		    again=true;
-		}
-	    } while(again);
-	    setResult(response, selected.invoke(object, coercedArgs));
-
+            try {
+              selected = object.getClass().getMethod(method, paramClasses); // Let's try to find the recommended method first
+              if (this.logLevel>4) logInvoke(object, method, args);
+              setResult(response, selected.invoke(object, args));
+	    } catch (NoSuchMethodException nsme) {
+            }
+            if (selected==null) {
+              // gather
+              do {
+                  again = false;
+                  ClassIterator iter;
+                  for (iter = ClassIterator.getInstance(object, FindMatchingInterfaceForInvoke.getInstance(this, method, args, true, canModifySecurityPermission)); (jclass=iter.getNext())!=null;) {
+                      Method methods[] = jclass.getMethods();
+                      for (int i=0; i<methods.length; i++) {
+                          if (methods[i].getName().equalsIgnoreCase(method)) {
+                              candidates.addElement(methods[i]);
+                              if(methods[i].getParameterTypes().length == args.length) {
+                                  matches.addElement(methods[i]);
+                              }
+                          }
+                      }
+                  }
+                  selected = (Method)select(matches, args);
+                  if (selected == null) throw new NoSuchMethodException(String.valueOf(method) + "(" + Util.argsToString(args) + "). " + "Candidates: " + String.valueOf(candidates));
+                  coercedArgs = coerce(selected.getParameterTypes(), args, response);
+                  if(!iter.checkAccessible(selected)) {
+                      logMessage("Security restriction: Cannot use setAccessible(), reverting to interface searching.");
+                      canModifySecurityPermission=false;
+                      candidates.clear(); matches.clear();
+                      again=true;
+                  }
+              } while(again);
+              if (this.logLevel>4) logInvoke(object, method, coercedArgs);
+              setResult(response, selected.invoke(object, coercedArgs));
+            }
 	} catch (Throwable e) {
 	    if(e instanceof OutOfMemoryError ||
 	       ((e instanceof InvocationTargetException) &&
@@ -1012,17 +971,22 @@ public class JavaBridge extends Thread {
                   for (int k=0;k<coercedArgs.length;k++) {
                       errMsg += "   ("+k+") "+objectDebugDescription(coercedArgs[k])+"\n";
                   }
+                  errMsg +=" Plain Arguments for this Method:\n";
+                  for (int k=0;k<args.length;k++) {
+                      errMsg += "   ("+k+") "+objectDebugDescription(args[k])+"\n";
+                  }
                   this.logError(errMsg);
+                  this.logDebug(globalRef.dump());
             }
 	    setException(response, e, "Invoke", object, method, args);
 	}
     }
 
-    private static String objectDebugDescription(Object obj) {
+    public static String objectDebugDescription(Object obj) {
       return "[Object "+System.identityHashCode(obj)+" - Class: "+ classDebugDescription(obj.getClass())+ "]";
     }
 
-    private static String classDebugDescription(Class cls) {
+    public static String classDebugDescription(Class cls) {
       return cls.getName() + ":ID" + System.identityHashCode(cls) + ":LOADER-ID"+System.identityHashCode(cls.getClassLoader());
     }
 
@@ -1157,6 +1121,12 @@ public class JavaBridge extends Thread {
     	    res.hook=new ForceValuesHook(res);
     	}
 	return ob;
+    }
+
+    public JavaBridge(InputStream in, OutputStream out, JavaBridgeClassLoader.Bridge cl) {
+      this.in = in;
+      this.out = out;
+      this.cl = cl;
     }
 
     //

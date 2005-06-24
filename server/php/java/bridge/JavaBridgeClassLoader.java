@@ -17,26 +17,24 @@ public interface JavaBridgeClassLoader {
 
 	/*
 	 * A bridge pattern which allows us to vary the class loader as run-time.
-	 * The decision is based on whether we are allowed to use a dynamic 
+	 * The decision is based on whether we are allowed to use a dynamic
 	 * classloader or not.
 	 */
 	public static class Bridge {
 		JavaBridgeClassLoader cl = null;
 		ClassLoader scl = null;
-		JavaBridge bridge;
 
-		public Bridge(JavaBridge bridge) {
-			this.bridge = bridge;
+		public Bridge() {
 			try {
-				cl = new DynamicJavaBridgeClassLoader(bridge);
+				cl = new DynamicJavaBridgeClassLoader();
 			} catch (java.security.AccessControlException ex) {
-				scl = bridge.getClass().getClassLoader();
+				scl = getClass().getClassLoader();
 			}
 		}
 
 		public void updateJarLibraryPath(String path)  {
 			if(cl==null) {
-			bridge.logMessage("You don't have permission to call java_set_library_path() or java_require(). Please store your libraries in the lib folder within JavaBridge.war");
+			Util.logMessage("You don't have permission to call java_set_library_path() or java_require(). Please store your libraries in the lib folder within JavaBridge.war");
 			return;
 			}
 

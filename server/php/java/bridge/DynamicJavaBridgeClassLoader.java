@@ -15,11 +15,9 @@ import java.util.Iterator;
 import java.util.StringTokenizer;
 
 public class DynamicJavaBridgeClassLoader extends DynamicClassLoader implements JavaBridgeClassLoader {
-    JavaBridge bridge;
 
-    public DynamicJavaBridgeClassLoader(JavaBridge bridge) {
+    public DynamicJavaBridgeClassLoader() {
         super();
-        this.bridge = bridge;
         addSysUrls();
      }
 
@@ -68,7 +66,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader implements 
 		    url = new URL(s);
 		    p = url.getProtocol();
 		}  catch (MalformedURLException e1) {
-		    bridge.printStackTrace(e1);
+		    Util.printStackTrace(e1);
 		    continue;
 		}
 	    }

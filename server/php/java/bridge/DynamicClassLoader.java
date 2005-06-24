@@ -30,7 +30,7 @@ import java.io.*;
 public class DynamicClassLoader extends SecureClassLoader {
 
   protected static HashMap classLoaderCache = new HashMap(); // Global Cache Map of Classpath=>Soft Reference=>URLClassLoaderEntry
-  protected static WeakHashMap parentCacheMap = new WeakHashMap(); // Holds global caches for parent Classloaders
+  protected static Map parentCacheMap = new WeakHashMap(); // Holds global caches for parent Classloaders
   public static long defaultCacheTimeout = 2000;  // By default minumum file modification check interval is 2 seconds, that should be fast enough :)
   public static boolean defaultLazy = true;  // By default lazy classpath addition
   private static final String nf = "not found"; // Dummy entry for cache maps if a class or resource can't be found.
@@ -71,6 +71,7 @@ public class DynamicClassLoader extends SecureClassLoader {
    * @param classpath
    */
   public static void invalidate(String classpath) {
+      Util.logDebug("DynamicClassLoader.invalidate("+classpath+")\n");
       classLoaderCache.remove(classpath);
   }
 
@@ -111,10 +112,12 @@ public class DynamicClassLoader extends SecureClassLoader {
     this.lazy = defaultLazy;
     this.instanceIndex = instanceCount++;
     // Load global cache for the parent
-    parentCache = (HashMap)parentCacheMap.get(parent);
-    if (parentCache==null) {
-      parentCache = new HashMap();
-      parentCacheMap.put(parent, parentCache);
+    synchronized(parentCacheMap) {
+      parentCache = (HashMap)parentCacheMap.get(parent);
+      if (parentCache==null) {
+        parentCache = new HashMap();
+        parentCacheMap.put(parent, parentCache);
+      }
     }
   }
 
@@ -124,15 +127,17 @@ public class DynamicClassLoader extends SecureClassLoader {
     this.cacheTimeout = defaultCacheTimeout;
     this.lazy = defaultLazy;
     // Load global cache for the parent
-    parentCache = (HashMap)parentCacheMap.get(parent);
-    if (parentCache==null) {
-      parentCache = new HashMap();
-      parentCacheMap.put(parent, parentCache);
+    synchronized(parentCacheMap) {
+      parentCache = (HashMap)parentCacheMap.get(parent);
+      if (parentCache==null) {
+        parentCache = new HashMap();
+        parentCacheMap.put(parent, parentCache);
+      }
     }
   }
 
   public void clear() {
-    Util.logDebug("DynamicClassLoader("+System.identityHashCode(this)+").clear()\n");
+    //Util.logDebug("DynamicClassLoader("+System.identityHashCode(this)+").clear()\n");
     classLoaders.clear();
     classPaths.clear();
     urlsToAdd.clear();
@@ -286,47 +291,53 @@ public class DynamicClassLoader extends SecureClassLoader {
       Class result = null;
       //Util.logDebug("DynamicClassLoader("+System.identityHashCode(this)+").loadClass("+name+")\n");
       //Util.logDebug("Trying parent\n");
-      Object c = parentCache.get(name);
-      if (c!=nf) {
-        if (c!=null) return (Class)c;
-        try {
-          result = super.loadClass(name);
-          parentCache.put(name, result);
-          return result;
-        } catch (ClassNotFoundException cnfe) {
-          parentCache.put(name, nf);
+      Object c = null;
+      synchronized(parentCache) {
+        c = parentCache.get(name);
+        if (c!=nf) {
+          if (c!=null) return (Class)c;
+          try {
+            result = super.loadClass(name);
+            parentCache.put(name, result);
+            return result;
+          } catch (ClassNotFoundException cnfe) {
+            parentCache.put(name, nf);
+          }
         }
       }
-
       Iterator iter = classPaths.iterator();
       URLClassLoaderEntry e = null;
       while (iter.hasNext()) {
         e = (URLClassLoaderEntry) classLoaders.get(iter.next());
         //Util.logDebug("Trying "+(System.identityHashCode(e.cl)+"\n"));
-        c = e.cache.get(name);
-        if (c!=nf) {
-          if (c!=null) return (Class)c;
-          try {
-            result = e.cl.loadClass(name);
-            e.cache.put(name, result);
-            return result;
-          } catch (ClassNotFoundException cnfe) {
-            e.cache.put(name, nf);
+        synchronized(e.cache) {
+          c = e.cache.get(name);
+          if (c!=nf) {
+            if (c!=null) return (Class)c;
+            try {
+              result = e.cl.loadClass(name);
+              e.cache.put(name, result);
+              return result;
+            } catch (ClassNotFoundException cnfe) {
+              e.cache.put(name, nf);
+            }
           }
         }
       }
       e = addDelayedURLs();
       while (e!=null) {
         //Util.logDebug("Trying "+(System.identityHashCode(e.cl)+"\n"));
-        c = e.cache.get(name);
-        if (c!=nf) {
-          if (c!=null) return (Class)c;
-          try {
-            result = e.cl.loadClass(name);
-            e.cache.put(name, result);
-            return result;
-          } catch (ClassNotFoundException cnfe) {
-            e.cache.put(name, nf);
+        synchronized(e.cache) {
+          c = e.cache.get(name);
+          if (c!=nf) {
+            if (c!=null) return (Class)c;
+            try {
+              result = e.cl.loadClass(name);
+              e.cache.put(name, result);
+              return result;
+            } catch (ClassNotFoundException cnfe) {
+              e.cache.put(name, nf);
+            }
           }
         }
         e = addDelayedURLs();
@@ -366,39 +377,46 @@ public class DynamicClassLoader extends SecureClassLoader {
 
   public URL findResource(String name)  {
       String cacheName = "@"+name; // definitely different from class-names
-      Object c = parentCache.get(cacheName);
-      if ((c!=nf) && (c!=null)) return (URL)c;
-      c = super.findResource(name);
-      if (c!=null) {
-        parentCache.put(cacheName, c);
-        return (URL)c;
-      } else {
-        parentCache.put(cacheName, nf);
+      Object c = null;
+      synchronized(parentCache) {
+        c = parentCache.get(cacheName);
+        if ((c!=nf) && (c!=null)) return (URL)c;
+        c = super.findResource(name);
+        if (c!=null) {
+          parentCache.put(cacheName, c);
+          return (URL)c;
+        } else {
+          parentCache.put(cacheName, nf);
+        }
       }
       Iterator iter = classPaths.iterator();
       URLClassLoaderEntry e = null;
       while (iter.hasNext()) {
         e = (URLClassLoaderEntry) classLoaders.get(iter.next());
-        c = e.cache.get(cacheName);
-        if ((c!=nf) && (c!=null)) return (URL)c;
-        c = e.cl.findResource(name);
-        if (c!=null) {
-          e.cache.put(cacheName, c);
-          return (URL)c;
-        } else {
-          e.cache.put(cacheName, nf);
+        synchronized (e.cache) {
+          c = e.cache.get(cacheName);
+          if ((c!=nf) && (c!=null)) return (URL)c;
+          c = e.cl.findResource(name);
+          if (c!=null) {
+            e.cache.put(cacheName, c);
+            return (URL)c;
+          } else {
+            e.cache.put(cacheName, nf);
+          }
         }
       }
       e = addDelayedURLs();
       while (e!=null) {
-        c = e.cache.get(cacheName);
-        if ((c!=nf) && (c!=null)) return (URL)c;
-        c = e.cl.findResource(name);
-        if (c!=null) {
-          e.cache.put(cacheName, c);
-          return (URL)c;
-        } else {
-          e.cache.put(cacheName, nf);
+        synchronized (e.cache) {
+          c = e.cache.get(cacheName);
+          if ((c!=nf) && (c!=null)) return (URL)c;
+          c = e.cl.findResource(name);
+          if (c!=null) {
+            e.cache.put(cacheName, c);
+            return (URL)c;
+          } else {
+            e.cache.put(cacheName, nf);
+          }
         }
         e = addDelayedURLs();
       }
