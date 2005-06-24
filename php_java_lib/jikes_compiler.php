@@ -165,7 +165,6 @@ function jikes_compile($src_path, $target_path, $verbose, $extra_classpath='') {
 * $src_path - The base directory where the java files reside
 * $target_path - [Optional] Target directory for class files
 * $extra_classpath - [Optional] additional jar files / classpaths used in the project.
-* $extra_lib_dirs - [Optional] additional directories to search for jar files
 * Paths separated by ';'
 */
 function java_autoproject($src_path, $target_path='', $extra_classpath='', $extra_lib_dirs='') {
@@ -193,19 +192,21 @@ function java_autoproject($src_path, $target_path='', $extra_classpath='', $extr
 	if ($ecp!='') {
 		$extra_classpath = strtr($ecp, ':;', ';;');
 	}
+	if ($extra_classpath!='') {
+		$cp = $target_path.";$extra_classpath";
+	} else {
+		$cp = $target_path;
+	}
 	try {
 		$compiled_count = jikes_compile($src_path, $target_path, true, $ecp, $extra_lib_dirs);
+
 		if ($compiled_count>0) {
-			java_invalidate_library_path($target_path);
+     		java_invalidate_library_path($cp);
 		}
 	} catch (JavaCompilationException $jce) {
 		echo $jce;
 	}
-	if ($extra_classpath!='') {
-		java_require($target_path.";$extra_classpath");
-	} else {
-		java_require($target_path);
-	}
+	java_require($cp);
 	return $compiled_count;
 }
 
