@@ -186,7 +186,7 @@ public class JavaBridge extends Thread {
 	}
     }
 
- 
+
          public void run() {
                   while (!stop) {
                     try {
@@ -244,7 +244,7 @@ public class JavaBridge extends Thread {
 	    printStackTrace(e2);
 	}
 	load--;
-	globalRef=null;
+	//globalRef=null; // Gets cleared for recycling by the reset method
 	Session.expire(this);
         logDebug("request terminated.");
     }
@@ -255,8 +255,8 @@ public class JavaBridge extends Thread {
     //
     static void initGlobals(String phpConfigDir) {
     	try {
- 
-    	  // FIXME: This doesn't work on FC3 or when running the bridge in a J2EE AS (no file access permissions) 
+
+    	  // FIXME: This doesn't work on FC3 or when running the bridge in a J2EE AS (no file access permissions)
           try {
               Util.logMessage("Trying to open '"+phpConfigDir+File.separator+"PHPJavaBridge.ini'");
               File iniFile = new File(phpConfigDir+File.separator+"PHPJavaBridge.ini");
@@ -286,7 +286,6 @@ public class JavaBridge extends Thread {
             } catch (Throwable t) {
             	poolSize = 20;
             }
-            
             DynamicJavaBridgeClassLoader.initClassLoader(phpConfigDir);
     	} catch (Exception t) {
 	    Util.printStackTrace(t);
@@ -960,14 +959,13 @@ public class JavaBridge extends Thread {
     public void Invoke
 	(Object object, String method, Object args[], Response response)
     {
+       Vector matches = new Vector();
+       Vector candidates = new Vector();
+       Class jclass;
+       boolean again;
+       Object coercedArgs[] = null;
+       Method selected = null;
 	try {
-	    Vector matches = new Vector();
-	    Vector candidates = new Vector();
-	    Class jclass;
-	    boolean again;
-	    Object coercedArgs[] = null;
-	    Method selected = null;
-
 	    // gather
 	    do {
 		again = false;
@@ -985,8 +983,7 @@ public class JavaBridge extends Thread {
 		}
 		selected = (Method)select(matches, args);
 		if (selected == null) throw new NoSuchMethodException(String.valueOf(method) + "(" + Util.argsToString(args) + "). " + "Candidates: " + String.valueOf(candidates));
-
-		coercedArgs = coerce(selected.getParameterTypes(), args, response);
+                coercedArgs = coerce(selected.getParameterTypes(), args, response);
 		if(!iter.checkAccessible(selected)) {
 		    logMessage("Security restriction: Cannot use setAccessible(), reverting to interface searching.");
 		    canModifySecurityPermission=false;
@@ -1004,8 +1001,29 @@ public class JavaBridge extends Thread {
 		throw new RuntimeException(); // abort
 	    }
 	    printStackTrace(e);
+            if (e instanceof IllegalArgumentException) {
+                  String errMsg = "\nInvoked "+method + " on "+objectDebugDescription(object)+"\n";
+                  errMsg += " Expected Arguments for this Method:\n";
+                  Class paramTypes[] = selected.getParameterTypes();
+                  for (int k=0;k<paramTypes.length;k++) {
+                      errMsg += "   ("+k+") "+classDebugDescription(paramTypes[k])+"\n";
+                  }
+                  errMsg +=" Given Arguments for this Method:\n";
+                  for (int k=0;k<coercedArgs.length;k++) {
+                      errMsg += "   ("+k+") "+objectDebugDescription(coercedArgs[k])+"\n";
+                  }
+                  this.logError(errMsg);
+            }
 	    setException(response, e, "Invoke", object, method, args);
 	}
+    }
+
+    private static String objectDebugDescription(Object obj) {
+      return "[Object "+System.identityHashCode(obj)+" - Class: "+ classDebugDescription(obj.getClass())+ "]";
+    }
+
+    private static String classDebugDescription(Class cls) {
+      return cls.getName() + ":ID" + System.identityHashCode(cls) + ":LOADER-ID"+System.identityHashCode(cls.getClassLoader());
     }
 
     //

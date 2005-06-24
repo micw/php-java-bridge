@@ -132,6 +132,7 @@ public class DynamicClassLoader extends SecureClassLoader {
   }
 
   public void clear() {
+    Util.logDebug("DynamicClassLoader("+System.identityHashCode(this)+").clear()\n");
     classLoaders.clear();
     classPaths.clear();
     urlsToAdd.clear();
@@ -180,6 +181,7 @@ public class DynamicClassLoader extends SecureClassLoader {
   }
 
   protected URLClassLoaderEntry realAddURLs(String classPath, URL urls[]) {
+      //Util.logDebug("DynamicClassLoader("+System.identityHashCode(this)+").realAddURLs(\""+classPath+"\","+getStringFromURLArray(urls)+")\n");
       URLClassLoaderEntry entry = getClassPathFromCache(classPath);
       if (entry==null) {
         entry = createURLClassLoader(classPath, urls);
@@ -192,10 +194,17 @@ public class DynamicClassLoader extends SecureClassLoader {
           }
         }
       }
+      if (entry!=null) {
+        if (!classLoaders.containsKey(classPath)) { // If already part of our classpath list, don't add duplicate
+          classPaths.add(classPath); // Bugfix, how could I miss this one ? (KL)
+        }
+        classLoaders.put(classPath, entry);
+      }
       return entry;
   }
 
   protected void lazyAddURLs(String classPath, URL urls[]) {
+      //Util.logDebug("DynamicClassLoader("+System.identityHashCode(this)+").lazyAddURLs(\""+classPath+"\","+getStringFromURLArray(urls)+")\n");
       Object params[] = new Object[] {classPath, urls};
       urlsToAdd.add(params);
   }
@@ -232,9 +241,9 @@ public class DynamicClassLoader extends SecureClassLoader {
   }
 
   protected URLClassLoaderEntry createURLClassLoader(String classPath, URL urls[]) {
+    //Util.logDebug("DynamicClassLoader("+System.identityHashCode(this)+").createURLClassLoader(\""+classPath+"\","+getStringFromURLArray(urls)+")\n");
     URLClassLoader cl = new URLClassLoader(urls, this.getParent());
     URLClassLoaderEntry entry = new URLClassLoaderEntry(cl, System.currentTimeMillis());
-    classLoaders.put(classPath, entry);
     SoftReference cacheEntry = new SoftReference(entry);
     classLoaderCache.put(classPath, cacheEntry);
     return entry;
@@ -275,6 +284,8 @@ public class DynamicClassLoader extends SecureClassLoader {
    */
   public Class loadClass(String name) throws ClassNotFoundException {
       Class result = null;
+      //Util.logDebug("DynamicClassLoader("+System.identityHashCode(this)+").loadClass("+name+")\n");
+      //Util.logDebug("Trying parent\n");
       Object c = parentCache.get(name);
       if (c!=nf) {
         if (c!=null) return (Class)c;
@@ -286,10 +297,12 @@ public class DynamicClassLoader extends SecureClassLoader {
           parentCache.put(name, nf);
         }
       }
+
       Iterator iter = classPaths.iterator();
       URLClassLoaderEntry e = null;
       while (iter.hasNext()) {
         e = (URLClassLoaderEntry) classLoaders.get(iter.next());
+        //Util.logDebug("Trying "+(System.identityHashCode(e.cl)+"\n"));
         c = e.cache.get(name);
         if (c!=nf) {
           if (c!=null) return (Class)c;
@@ -304,6 +317,7 @@ public class DynamicClassLoader extends SecureClassLoader {
       }
       e = addDelayedURLs();
       while (e!=null) {
+        //Util.logDebug("Trying "+(System.identityHashCode(e.cl)+"\n"));
         c = e.cache.get(name);
         if (c!=nf) {
           if (c!=null) return (Class)c;

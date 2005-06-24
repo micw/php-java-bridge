@@ -25,16 +25,24 @@ public class GlobalRef {
 	globalRef[--id]=null;
     }
 
-    /* FIXME: What does this do?  
+    /* FIXME: What does this do?
      * We cannot destroy the entries until the client disconnects
      * because it keeps referencing them. A client may destroy
      * (protocol "U") individual entries, though.
      * After request termination the global ref is destroyed
      * anyway, so this method seems obsolete.
+     *
+     * ANSWER:
+     * This clears the GlobalRef Object for recycling.
+     * It's faster and more efficient (in terms of Garbage Collector activity and memory management overhead)
+     * to clear and re-use this obect.
+     *
+     * FIX: I haven't seen the "globalRef = null;" statement in the execute method of the JavaBridge which resulted in a NullPointer Exception.
+     * This is fixed.
      */
     public void clear() {
-      //Arrays.fill(globalRef, null);
-      //id = 0;
+      Arrays.fill(globalRef, null);
+      id = 0;
     }
 
     public int append(Object object) {
