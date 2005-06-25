@@ -33,15 +33,6 @@ import java.util.Vector;
 public class JavaBridge implements Runnable {
 
 
-
-  /* Non static Member Variables below
-   *
-   * IMPORTANT:
-   * Every non static member variable which gets modified during a request should
-   * be reset to a neutral state in the reset() method below
-   *
-   */
-
     // The client's file encoding, for example UTF-8.
     String fileEncoding="UTF-8";
     // For PHP4's last_exception_get.
@@ -50,7 +41,7 @@ public class JavaBridge implements Runnable {
     // list of objects in use in the current script
     GlobalRef globalRef=new GlobalRef(this);
 
-    public JavaBridgeClassLoader.Bridge cl = null;
+    public JavaBridgeClassLoader cl = null;
 
     static HashMap sessionHash = new HashMap();
 
@@ -62,28 +53,6 @@ public class JavaBridge implements Runnable {
 
     boolean canModifySecurityPermission = true;
 
-   /*
-    /**
-     * Reset the internal state of the PHP/Java Bridge.
-     *
-     * Before recycling this JavaBridge use this code. (This is not used in the current implementation and might not be up to date)
-     *
-     * IMPORTANT:
-     * Every non static member variable which gets modified during a request should
-     * be reset to a neutral state in this method
-     */
-   public void reset() {
-    	Session.reset(this);
-    	cl.reset();
-        lastException = null;
-        in = null;
-        out = null;
-        uid =-1;
-        gid =-1;
-        globalRef.clear();
-        request = null;
-        canModifySecurityPermission = true;
-    }
 
     //
     // Native methods, only called  when loadLibrary succeeds.
@@ -152,6 +121,7 @@ public class JavaBridge implements Runnable {
     // Communication with client in a new thread
     //
     public void run() {
+    	cl = new JavaBridgeClassLoader(this, Thread.currentThread().getContextClassLoader());
     	request = new Request(this);
 	try {
 	    if(!request.initOptions(in, out)) return;
@@ -184,6 +154,7 @@ public class JavaBridge implements Runnable {
         logDebug("request terminated.");
     }
 
+/* Disabled for the release 2.0.7.  We'll probably want something more general in the future.
     //
     // add all jars found in the phpConfigDir/lib and /usr/share/java
     // to our classpath
@@ -226,7 +197,7 @@ public class JavaBridge implements Runnable {
 	    Util.printStackTrace(t);
 	}
     }
-
+*/
 
     //
     // init
@@ -289,11 +260,21 @@ public class JavaBridge implements Runnable {
 	    Util.logMessage(Util.EXTENSION_NAME + " default logLevel: " + Util.logLevel);
 	    Util.logMessage(Util.EXTENSION_NAME + " socket          : " + socket);
 
+	    int maxSize = 20;
+	    try {
+	    	maxSize = Integer.parseInt(Util.THREAD_POOL_MAX_SIZE);
+	    } catch (Throwable t) {
+	    	Util.printStackTrace(t);
+	    }
+	    if(maxSize>0) ThreadPool pool = new ThreadPool(Util.EXTENSION_NAME, maxSize);
+	    
 	    while(true) {
 		Socket sock = socket.accept();
-		InputStream in=sock.getInputStream();
-		OutputStream out=sock.getOutputStream();
-                BridgeThread.startBridge(in, out); // Uses thread pool
+		JavaBridge bridge = new JavaBridge(sock.getInputStream(), sock.getOutputStream());
+                if(maxSize>0) 
+		    pool.start(bridge); // Uses thread pool
+		else
+		    (new Thread()).start(bridge);
 	    }
 
 	} catch (Throwable t) {
@@ -1123,10 +1104,9 @@ public class JavaBridge implements Runnable {
 	return ob;
     }
 
-    public JavaBridge(InputStream in, OutputStream out, JavaBridgeClassLoader.Bridge cl) {
+    public JavaBridge(InputStream in, OutputStream out) {
       this.in = in;
       this.out = out;
-      this.cl = cl;
     }
 
     //

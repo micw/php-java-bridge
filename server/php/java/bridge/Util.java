@@ -11,7 +11,7 @@ public class Util {
 
     static String TCP_SOCKETNAME = "9267";
     static String EXTENSION_DIR = null;
-    static String EXTENSION_NAME = "JavaBridge";
+    public static String EXTENSION_NAME = "JavaBridge";
     public static String THREAD_POOL_MAX_SIZE = "20";
     static {
         Properties p = new Properties();

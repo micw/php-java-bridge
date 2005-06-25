@@ -45,7 +45,6 @@ public class TCPServerSocket implements ISocketFactory {
 	    this.sock = new ServerSocket(port, backlog);    
 	    this.port = port;
 	}
-	JavaBridge.initGlobals(Util.EXTENSION_DIR);
     }
 	
     public void close() throws IOException {

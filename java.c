@@ -45,7 +45,10 @@ PHP_RSHUTDOWN_FUNCTION(EXT)
 {
   if(JG(jenv)) {
 	if(*JG(jenv)) {
-	  if((*JG(jenv))->peer) close((*JG(jenv))->peer);
+	  if((*JG(jenv))->peer) {
+		EXT_GLOBAL(protocol_end)(JG(jenv));	/* free servlet session */
+		close((*JG(jenv))->peer);
+	  }
 	  if((*JG(jenv))->s) free((*JG(jenv))->s);
 	  if((*JG(jenv))->send) free((*JG(jenv))->send);
 	  if((*JG(jenv))->server_name) free((*JG(jenv))->server_name);

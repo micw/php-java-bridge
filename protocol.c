@@ -48,9 +48,9 @@ static void flush(proxyenv *env) {
 	unsigned char mode = EXT_GLOBAL (get_mode) ();
 
 	if((*env)->cookie_name) 
-	  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive; Timeout=120\r\nCookie: %s=%s\r\nContent-Type: text/html\r\nContent-Length: %ld\r\n\r\n%c", EXT_GLOBAL (get_servlet_context) (), (*env)->cookie_name, (*env)->cookie_value, size+1, mode);
+	  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nCookie: %s=%s\r\nContent-Type: text/html\r\nContent-Length: %ld\r\n\r\n%c", EXT_GLOBAL (get_servlet_context) (), (*env)->cookie_name, (*env)->cookie_value, size+1, mode);
 	else
-	  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive; Timeout=120\r\nContent-Type: text/html\r\nContent-Length: %ld\r\n\r\n%c", EXT_GLOBAL (get_servlet_context) (), size+1, mode);
+	  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %ld\r\n\r\n%c", EXT_GLOBAL (get_servlet_context) (), size+1, mode);
 
 	send((*env)->peer, header, header_length, 0);
   }
@@ -64,6 +64,25 @@ static void flush(proxyenv *env) {
   (*env)->send_len=0;
   (*env)->handle_request(env);
 }
+
+void EXT_GLOBAL (protocol_end) (proxyenv *env) {
+
+  if(!(*env)->is_local && EXT_GLOBAL (get_servlet_context) ()) {
+	size_t s=0;
+	ssize_t n=0;
+	char header[1024];
+	int header_length;
+	unsigned char mode = EXT_GLOBAL (get_mode) ();
+
+	if((*env)->cookie_name) 
+	  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nCookie: %s=%s\r\nContent-Type: text/html\r\nContent-Length: 0\r\n\r\n", EXT_GLOBAL (get_servlet_context) (), (*env)->cookie_name, (*env)->cookie_value);
+	else
+	  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nContent-Type: text/html\r\nContent-Length: 0\r\n\r\n", EXT_GLOBAL (get_servlet_context) ());
+
+	send((*env)->peer, header, header_length, 0);
+  }
+}
+
 #define GROW_QUOTE() \
   if(pos+8>=newlen) { \
     newlen=newlen+newlen/10; \

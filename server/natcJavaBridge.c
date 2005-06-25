@@ -156,6 +156,8 @@ static void atexit_bridge() {
 }
 
 static void initGlobals(JNIEnv *env) {
+  // FIXME: set uid and gid 
+  /*
   jmethodID initGlobals;
   jstring arg;
 
@@ -163,6 +165,7 @@ static void initGlobals(JNIEnv *env) {
   arg = (*env)->NewStringUTF(env, EXTENSION_DIR);
   (*env)->CallStaticVoidMethod(env, bridge, initGlobals, arg);
   (*env)->DeleteLocalRef(env, arg);
+  */
   atexit(atexit_bridge);
 }
 

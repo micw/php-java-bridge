@@ -14,9 +14,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 
-public class DynamicJavaBridgeClassLoader extends DynamicClassLoader implements JavaBridgeClassLoader {
+public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 
-    public DynamicJavaBridgeClassLoader() {
+    protected DynamicJavaBridgeClassLoader() {
         super();
         addSysUrls();
      }
@@ -129,5 +129,16 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader implements 
     public void reset() {
 		clear();
 	}
+
+    /*
+     * Create an instance of the dynamic java bridge classloader
+     * It may throw a security exception on certain systems, so don't
+     * use this method directly but create JavaBridgeClassLoader instead.
+     */
+    static DynamicJavaBridgeClassLoader newInstance() throws java.security.AccessControlException {
+    	DynamicJavaBridgeClassLoader cl = new DynamicJavaBridgeClassLoader();
+    	DynamicJavaBridgeClassLoader.initClassLoader(Util.EXTENSION_DIR);
+    	return cl;
+    }
 
 }

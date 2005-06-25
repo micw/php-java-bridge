@@ -1,3 +1,37 @@
+2005-06-25  Jost Boekemeier  <jostb@timon.intern.de>
+
+	* java.c (PHP_RSHUTDOWN_FUNCTION): shutdown servlet connection.
+	
+	* protocol.c (protocol_end): shutdown servlet connection.
+
+	* server/natcJavaBridge.c (initGlobals): disabled for 2.0.7
+	
+	* server/php/java/bridge/JavaBridge.java:
+	(run): Create a JavaBridgeClassLoader from the context.
+	(initGlobals): disabled for 2.0.7.  This method was used by the
+	native code in order to set the UID and GID and the
+	phpConfigDir. Since we now support servlet engines and application
+	servers, we want something more general for the next version.
+	(init): Temporarily added reference to ThreadPool until
+	BridgeThread is checked in.
+	(JavaBridge): Don't use ClassLoader, which isn't known.
+	
+	* server/php/java/bridge/JavaBridgeClassLoader: rewritten.  This
+	class is a bridge now.
+
+	* php-java-bridge/server/php/java/bridge/TCPServerSocket.java
+	(TCPServerSocket): do not call initGlobals anymore.
+	
+	* server/php/java/bridge/DynamicJavaBridgeClassLoader.java: 
+	(newInstance): new procedure.
+
+	* server/php/java/bridge/ThreadPool.java: New file.
+	
+	* server/php/java/bridge/Util.java
+	(EXTENSION_NAME): must be accessible from the servlet.
+	(doPut): properly shut down the connection.
+	
+
 2005-06-23  Jost Boekemeier  <jostb@timon.intern.de>
 
 	* server/php/java/bridge/JavaBridge.java:
