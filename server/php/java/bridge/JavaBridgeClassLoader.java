@@ -6,7 +6,7 @@ package php.java.bridge;
 /*
  * A bridge pattern which allows us to vary the class loader as run-time.
  * The decision is based on whether we are allowed to use a dynamic
- * classloader or not. 
+ * classloader or not (loader==null).
  */
 public class JavaBridgeClassLoader {
 
@@ -17,7 +17,11 @@ public class JavaBridgeClassLoader {
     public JavaBridgeClassLoader(JavaBridge bridge, ClassLoader loader) {
     	this.bridge = bridge;
     	this.cl = (DynamicJavaBridgeClassLoader)loader;
-    	if(this.cl==null) this.scl = bridge.getClass().getClassLoader(); 
+
+    	if(this.cl==null) 
+	    this.scl = bridge.getClass().getClassLoader(); 
+	else 
+	    cl.reset();
     }
 
     public void updateJarLibraryPath(String path)  {
