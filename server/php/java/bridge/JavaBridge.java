@@ -16,12 +16,12 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.Vector;
 
 
@@ -269,8 +269,11 @@ public class JavaBridge implements Runnable {
 		JavaBridge bridge = new JavaBridge(sock.getInputStream(), sock.getOutputStream());
                 if(maxSize>0) 
 		    pool.start(bridge); // Uses thread pool
-		else
-		    (new Thread(bridge)).start();
+		else {
+		    Thread t = new Thread(bridge);
+		    t.setContextClassLoader(DynamicJavaBridgeClassLoader.newInstance());
+		    t.start();
+		}
 	    }
 
 	} catch (Throwable t) {
@@ -654,7 +657,7 @@ public class JavaBridge implements Runnable {
 		} else if ((java.util.Collection.class).isAssignableFrom(parms[i])) {
 		    try {
 			Map ht = (Map)args[i];
-			Set res = (Set) parms[i].newInstance();
+			Collection res = (Collection) parms[i].newInstance();
 			for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
 			    Object key = e.next();
 			    Object val = ht.get(key);
@@ -1110,9 +1113,8 @@ public class JavaBridge implements Runnable {
      * iterating through a Map or Collection.
      */
     public Object getValues(Object ob) {
-    	Response res = request.response; {
-    	    res.hook=new ForceValuesHook(res);
-    	}
+    	Response res = request.response; 
+	res.hook=new ForceValuesHook(res);
 	return ob;
     }
 
