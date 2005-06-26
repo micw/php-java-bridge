@@ -3,15 +3,10 @@
 package php.java.bridge;
 
 import java.io.File;
-import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.StringTokenizer;
 
 public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
@@ -74,7 +69,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	}
         URL urls[] = new URL[toAdd.size()];
         toAdd.toArray(urls);
-        addURLs(oldp, urls, this.lazy); // Uses protected method to explicitly set the classpath entry that is added.
+        addURLs(oldp, urls, false); // Uses protected method to explicitly set the classpath entry that is added.
     }
     //
     // add all jars found in the phpConfigDir/lib and /usr/share/java
@@ -123,7 +118,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     public void addSysUrls() {
         URL urls[] = new URL[sysUrls.size()];
         sysUrls.toArray(urls);
-        this.addURLs(urls);
+        this.addURLs(urls, true);
     }
 
     public void reset() {
@@ -132,13 +127,18 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 
     /*
      * Create an instance of the dynamic java bridge classloader
-     * It may throw a security exception on certain systems, so don't
-     * use this method directly but create JavaBridgeClassLoader instead.
+     * It may return null due to security restrictions on certain systems, so don't
+     * use this method directly but call: 
+     * new JavaBridgeClassLoader(bridge, DynamicJavaBridgeClassLoader.newInstance()) instead.
      */
-    static DynamicJavaBridgeClassLoader newInstance() throws java.security.AccessControlException {
-    	DynamicJavaBridgeClassLoader cl = new DynamicJavaBridgeClassLoader();
-    	DynamicJavaBridgeClassLoader.initClassLoader(Util.EXTENSION_DIR);
-    	return cl;
-    }
+    public static DynamicJavaBridgeClassLoader newInstance() {
+    	try {
+            DynamicJavaBridgeClassLoader.initClassLoader(Util.EXTENSION_DIR);
+    	    DynamicJavaBridgeClassLoader cl = new DynamicJavaBridgeClassLoader();
+    	    return cl;
+   	} catch (java.security.AccessControlException e) {
+    	    return null;
+    	}
+     }
 
 }

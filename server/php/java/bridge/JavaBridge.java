@@ -4,9 +4,6 @@ package php.java.bridge;
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -21,12 +18,10 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Properties;
-import java.util.Stack;
+import java.util.Set;
 import java.util.Vector;
 
 
@@ -121,7 +116,7 @@ public class JavaBridge implements Runnable {
     // Communication with client in a new thread
     //
     public void run() {
-    	cl = new JavaBridgeClassLoader(this, Thread.currentThread().getContextClassLoader());
+    	cl = new JavaBridgeClassLoader(this, (DynamicJavaBridgeClassLoader) Thread.currentThread().getContextClassLoader());
     	request = new Request(this);
 	try {
 	    if(!request.initOptions(in, out)) return;
@@ -266,7 +261,8 @@ public class JavaBridge implements Runnable {
 	    } catch (Throwable t) {
 	    	Util.printStackTrace(t);
 	    }
-	    if(maxSize>0) ThreadPool pool = new ThreadPool(Util.EXTENSION_NAME, maxSize);
+	    ThreadPool pool = null;
+	    if(maxSize>0) pool = new ThreadPool(Util.EXTENSION_NAME, maxSize);
 	    
 	    while(true) {
 		Socket sock = socket.accept();
@@ -274,7 +270,7 @@ public class JavaBridge implements Runnable {
                 if(maxSize>0) 
 		    pool.start(bridge); // Uses thread pool
 		else
-		    (new Thread()).start(bridge);
+		    (new Thread(bridge)).start();
 	    }
 
 	} catch (Throwable t) {
@@ -658,7 +654,7 @@ public class JavaBridge implements Runnable {
 		} else if ((java.util.Collection.class).isAssignableFrom(parms[i])) {
 		    try {
 			Map ht = (Map)args[i];
-			HashSet res = new HashSet();
+			Set res = (Set) parms[i].newInstance();
 			for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
 			    Object key = e.next();
 			    Object val = ht.get(key);
@@ -674,12 +670,10 @@ public class JavaBridge implements Runnable {
 			printStackTrace(e);
 			// leave result[i] alone...
 		    }
-		} if ((java.util.Hashtable.class).isAssignableFrom(parms[i])) {
-                // FIXME: This Conversion can convert, for example a Properties Object to a Hashtable
-                // when this is *not* what's wanted
+		} else if ((java.util.Hashtable.class).isAssignableFrom(parms[i])) {
 		    try {
 			Map ht = (Map)args[i];
-			Hashtable res = new Hashtable();
+			Hashtable res = (Hashtable)parms[i].newInstance();
 			for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
 			    Object key = e.next();
 			    Object val = ht.get(key);
@@ -695,7 +689,25 @@ public class JavaBridge implements Runnable {
 			printStackTrace(e);
 			// leave result[i] alone...
 		    }
+		} else if ((java.util.Map.class).isAssignableFrom(parms[i])) {
+		    try {
+			Map ht = (Map)args[i];
+			Map res = (Map)parms[i].newInstance();
+			for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
+			    Object key = e.next();
+			    Object val = ht.get(key);
 
+			    if(key instanceof byte[]) key = response.newString((byte[])key); // always prefer strings over byte[]
+			    if(val instanceof byte[]) val = response.newString((byte[])val); // always prefer strings over byte[]
+			    res.put(key, val);
+			}
+
+			result[i]=res;
+		    } catch (Exception e) {
+			logError("Error: " +  String.valueOf(e) + " Could not create java.util.Hashtable.");
+			printStackTrace(e);
+			// leave result[i] alone...
+		    }
 		}
 	    }
 	}

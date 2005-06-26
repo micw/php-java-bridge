@@ -1,4 +1,24 @@
-2005-06-25  Jost Boekemeier  <jostb@timon.intern.de>
+2005-06-26  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/DynamicJavaBridgeClassLoader.java: 
+	(updateJarLibraryPath): add urls before sysUrls.
+	(addSysUrls): append at the end of the list.
+	(newInstance): rewritten
+
+	* server/php/java/bridge/DynamicJavaBridgeClassLoader.java:
+	(run): add cast to DynamicJavaBridgeClassLoader. This is safe
+	because run is only called from the standalone container, not from
+	the servlet.
+	(init): correctly initialize ThreadPool.
+	(coerce): create the correct target type. Otherwise we would
+	create and pass e.g. a Hashtable when a Properties object is
+	required.
+	
+	* server/php/java/servlet/PhpJavaServlet.java:
+	(doPut): update the in and out from the servlet context. Catch all
+	throwables and shut down the connection.
+	
+2005-06-25  Jost Boekemeier  <jostb@intern>
 
 	* java.c (PHP_RSHUTDOWN_FUNCTION): shutdown servlet connection.
 	
@@ -32,7 +52,7 @@
 	(doPut): properly shut down the connection.
 	
 
-2005-06-23  Jost Boekemeier  <jostb@timon.intern.de>
+2005-06-23  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/JavaBridge.java:
 	(JavaBridge): name thread "JavaBridge"

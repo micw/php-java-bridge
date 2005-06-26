@@ -3,8 +3,8 @@
 package php.java.bridge;
 
 import java.util.Hashtable;
-import java.util.Map;
 import java.util.Iterator;
+import java.util.Map;
 
 public class Session{
     Hashtable map;

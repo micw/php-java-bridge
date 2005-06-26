@@ -14,9 +14,9 @@ public class JavaBridgeClassLoader {
     ClassLoader scl = null;
     private JavaBridge bridge;
 
-    public JavaBridgeClassLoader(JavaBridge bridge, ClassLoader loader) {
+    public JavaBridgeClassLoader(JavaBridge bridge, DynamicJavaBridgeClassLoader loader) {
     	this.bridge = bridge;
-    	this.cl = (DynamicJavaBridgeClassLoader)loader;
+    	this.cl = loader;
 
     	if(this.cl==null) 
 	    this.scl = bridge.getClass().getClassLoader(); 
