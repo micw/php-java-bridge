@@ -263,11 +263,11 @@ public class JavaBridge implements Runnable {
 	    }
 	    ThreadPool pool = null;
 	    if(maxSize>0) pool = new ThreadPool(Util.EXTENSION_NAME, maxSize);
-	    
+
 	    while(true) {
 		Socket sock = socket.accept();
 		JavaBridge bridge = new JavaBridge(sock.getInputStream(), sock.getOutputStream());
-                if(maxSize>0) 
+                if(maxSize>0)
 		    pool.start(bridge); // Uses thread pool
 		else {
 		    Thread t = new Thread(bridge);
@@ -915,7 +915,7 @@ public class JavaBridge implements Runnable {
 	try {
             try {
               selected = object.getClass().getMethod(method, paramClasses); // Let's try to find the recommended method first
-              if (this.logLevel>4) logInvoke(object, method, args);
+              if (this.logLevel>4) logInvoke(object, method, args); // If we have a logLevel of 5 or above, do very detailed invocation logging
               setResult(response, selected.invoke(object, args));
 	    } catch (NoSuchMethodException nsme) {
             }
@@ -945,7 +945,7 @@ public class JavaBridge implements Runnable {
                       again=true;
                   }
               } while(again);
-              if (this.logLevel>4) logInvoke(object, method, coercedArgs);
+              if (this.logLevel>4) logInvoke(object, method, coercedArgs); // If we have a logLevel of 5 or above, do very detailed invocation logging
               setResult(response, selected.invoke(object, coercedArgs));
             }
 	} catch (Throwable e) {
@@ -957,22 +957,25 @@ public class JavaBridge implements Runnable {
 	    }
 	    printStackTrace(e);
             if (e instanceof IllegalArgumentException) {
-                  String errMsg = "\nInvoked "+method + " on "+objectDebugDescription(object)+"\n";
-                  errMsg += " Expected Arguments for this Method:\n";
-                  Class paramTypes[] = selected.getParameterTypes();
-                  for (int k=0;k<paramTypes.length;k++) {
-                      errMsg += "   ("+k+") "+classDebugDescription(paramTypes[k])+"\n";
-                  }
-                  errMsg +=" Given Arguments for this Method:\n";
-                  for (int k=0;k<coercedArgs.length;k++) {
-                      errMsg += "   ("+k+") "+objectDebugDescription(coercedArgs[k])+"\n";
-                  }
-                  errMsg +=" Plain Arguments for this Method:\n";
-                  for (int k=0;k<args.length;k++) {
-                      errMsg += "   ("+k+") "+objectDebugDescription(args[k])+"\n";
-                  }
-                  this.logError(errMsg);
-                  this.logDebug(globalRef.dump());
+                if (this.logLevel>3) {
+                    String errMsg = "\nInvoked "+method + " on "+objectDebugDescription(object)+"\n";
+                    errMsg += " Expected Arguments for this Method:\n";
+                    Class paramTypes[] = selected.getParameterTypes();
+                    for (int k=0;k<paramTypes.length;k++) {
+                        errMsg += "   ("+k+") "+classDebugDescription(paramTypes[k])+"\n";
+                    }
+                    errMsg +=" Plain Arguments for this Method:\n";
+                    for (int k=0;k<args.length;k++) {
+                        errMsg += "   ("+k+") "+objectDebugDescription(args[k])+"\n";
+                    }
+                    if (coercedArgs!=null) {
+                    errMsg +=" Coerced Arguments for this Method:\n";
+                      for (int k=0;k<coercedArgs.length;k++) {
+                          errMsg += "   ("+k+") "+objectDebugDescription(coercedArgs[k])+"\n";
+                      }
+                    }
+                    this.logDebug(errMsg);
+                }
             }
 	    setException(response, e, "Invoke", object, method, args);
 	}
@@ -1113,7 +1116,7 @@ public class JavaBridge implements Runnable {
      * iterating through a Map or Collection.
      */
     public Object getValues(Object ob) {
-    	Response res = request.response; 
+    	Response res = request.response;
 	res.hook=new ForceValuesHook(res);
 	return ob;
     }
