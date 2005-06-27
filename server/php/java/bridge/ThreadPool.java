@@ -14,7 +14,7 @@ public class ThreadPool {
      * environment.
      */
     private class Delegate extends Thread {
-	public Delegate() { super(name); threads++; }
+	public Delegate(String n) { super(n); threads++; }
 	public void run() {
 	    try {
 		while(true) getNextRunnable().run();
@@ -42,7 +42,7 @@ public class ThreadPool {
     public synchronized void start(Runnable r) {
 	runnables.add(r);
 	if(idles==0 && threads < poolMaxSize) {
-	    Delegate d = new Delegate();
+	    Delegate d = new Delegate(name);
             ClassLoader c = DynamicJavaBridgeClassLoader.newInstance();
             if (c!=null) {
 	      d.setContextClassLoader(c);

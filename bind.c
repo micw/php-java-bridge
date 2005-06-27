@@ -249,7 +249,7 @@ static short can_fork() {
  */
 char* EXT_GLOBAL(test_server)(int *_socket, short *local) {
   int sock;
-  short called_from_init = !(local && _socket);
+  short called_from_init = !(local || _socket);
   short socketname_set = (EXT_GLOBAL(ini_last_updated)&U_SOCKNAME);
 
   if(local) *local=0;

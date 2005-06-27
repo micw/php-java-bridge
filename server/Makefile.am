@@ -8,10 +8,13 @@ libnatcJavaBridge_la_LIBADD =
 if COND_GCJ
 # create java executable with GNU GCC when --with-java was given
 bin_PROGRAMS=$(VM_BINARIES)
-EXTRA_PROGRAMS=java RunJavaBridge MonoBridge.exe RunMonoBridge
+EXTRA_PROGRAMS=java RunJavaBridge RunMonoBridge
+
+dist_data_DATA=$(MONO_BRIDGE_EXE)
+EXTRA_DATA=MonoBridge.exe
 
 RunJavaBridge_SOURCES= RunJavaBridge.c
-java_SOURCES= java.c php/java/bridge/GlobalRef.java php/java/bridge/IDocHandler.java php/java/bridge/ISocketFactory.java php/java/bridge/JavaBridgeClassLoader.java php/java/bridge/JavaBridge.java php/java/bridge/LocalServerSocket.java php/java/bridge/LocalSocketInputStream.java php/java/bridge/LocalSocket.java php/java/bridge/LocalSocketOutputStream.java php/java/bridge/NotImplementedException.java php/java/bridge/Parser.java php/java/bridge/ParserString.java php/java/bridge/ParserTag.java php/java/bridge/PhpMap.java php/java/bridge/Request.java php/java/bridge/Response.java php/java/bridge/Session.java php/java/bridge/TCPServerSocket.java php/java/bridge/Util.java php/java/bridge/global.properties
+java_SOURCES= java.c php/java/bridge/GlobalRef.java php/java/bridge/IDocHandler.java php/java/bridge/ISocketFactory.java php/java/bridge/JavaBridgeClassLoader.java php/java/bridge/JavaBridge.java php/java/bridge/LocalServerSocket.java php/java/bridge/LocalSocketInputStream.java php/java/bridge/LocalSocket.java php/java/bridge/LocalSocketOutputStream.java php/java/bridge/NotImplementedException.java php/java/bridge/Parser.java php/java/bridge/ParserString.java php/java/bridge/ParserTag.java php/java/bridge/PhpMap.java php/java/bridge/Request.java php/java/bridge/Response.java php/java/bridge/Session.java php/java/bridge/TCPServerSocket.java php/java/bridge/Util.java php/java/bridge/global.properties php/java/bridge/DynamicJavaBridgeClassLoader.java php/java/bridge/DynamicClassLoader.java php/java/bridge/ThreadPool.java
 
 MonoBridge.exe: $(PHP_MONO)
 	$(GCJ) -C php/java/bridge/*.java

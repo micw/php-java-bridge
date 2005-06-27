@@ -1069,8 +1069,9 @@ PHP_MINIT_FUNCTION(EXT)
 }
 PHP_MINFO_FUNCTION(EXT)
 {
+  short is_local;
   char*s=EXT_GLOBAL(get_server_string) ();
-  char*server = EXT_GLOBAL(test_server) (0, 0);
+  char*server = EXT_GLOBAL(test_server) (0, &is_local);
   short is_level = ((EXT_GLOBAL (ini_last_updated)&U_LOGLEVEL)!=0);
 
   php_info_print_table_start();

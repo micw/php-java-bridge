@@ -80,6 +80,9 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     // before throwing a "ClassNotFoundException".
     //
     static void initClassLoader(String phpConfigDir) {
+
+	if(sysUrls!=null) return;
+
         DynamicJavaBridgeClassLoader.phpLibDir=phpConfigDir + "/lib/";
         DynamicJavaBridgeClassLoader.phpConfigDir=phpConfigDir;
 	sysUrls=new ArrayList();
@@ -122,8 +125,8 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     }
 
     public void reset() {
-		clear();
-	}
+	clear();
+    }
 
     /*
      * Create an instance of the dynamic java bridge classloader

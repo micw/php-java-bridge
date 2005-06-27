@@ -1,3 +1,33 @@
+2005-06-27  Jost Boekemeier  <jostb@intern>
+
+	* bind.c (test_server): set "called_from_init" only if called from
+	init, corrects a bug when displaying the java status (running/not
+	running).
+
+	* java.c (PHP_MINFO_FUNCTION): pass is_local.
+
+	* server/Makefile.am: New file from Makefile_unix.am
+
+	* server/Makefile.in: Removed
+
+	* server/Makefile_unix.am: Removed.
+
+	* server/Makefile_windows.am: Removed.
+
+	* server/configure.in (MONO_BRIDGE_EXE): New global.
+
+	* server/php/java/bridge/DynamicClassLoader (findResources):
+	renamed enum to enumeration because "enum" is a java 1.5 keyword.
+
+	* server/php/java/bridge/DynamicJavaBridgeClassLoader.java
+	(initClassLoader): Do nothing if initialized.
+
+	* server/php/java/bridge/ThreadPool (Delegate): Compiles with GNU
+	Java.
+
+	* tests.php4/sendProperties.php: New test.
+	
+
 2005-06-26  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/DynamicJavaBridgeClassLoader.java: 

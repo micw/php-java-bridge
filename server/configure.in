@@ -42,14 +42,15 @@ fi
 
 TCP_SOCKETNAME="9167"
 EXTENSION_DISPLAY_NAME="MonoBridge"
-VM_BINARIES="MonoBridge.exe RunMonoBridge"
+MONO_BRIDGE_EXE=MonoBridge.exe
+VM_BINARIES="${MONO_BRIDGE_EXE} RunMonoBridge"
 
 if test "$PHP_MONO" = "no"; then
   MONO_BRIDGE_EXE=
   TCP_SOCKETNAME="9267"
   EXTENSION_DISPLAY_NAME="JavaBridge"
   VM_BINARIES="java RunJavaBridge"
-
+  MONO_BRIDGE_EXE=
 fi
 if test "$PHP_MONO" = "yes"; then
   PHP_MONO="`locate ikvmc.exe | head -1`"
@@ -81,11 +82,9 @@ AC_SUBST(PHP_MONO)
 AC_SUBST(TCP_SOCKETNAME)
 AC_SUBST(EXTENSION_DISPLAY_NAME)
 AC_SUBST(VM_BINARIES)
+AC_SUBST(MONO_BRIDGE_EXE)
 AC_SUBST(SERVLET)
 AC_SUBST(JAVA_BRIDGE_WAR)
 AM_CONDITIONAL([COND_GCJ], [test "$PHP_MONO" != "no" || test "$PHP_JAVA" = "yes"])
-case $host_os in cygwin* | mingw* | pw32*) test $enable_win32_dll = no ;; *) false;; esac
-COND_WIN_NO_DLL=$?
-AC_SUBST(COND_WIN_NO_DLL)
-AC_OUTPUT(Makefile_unix Makefile_windows Makefile)
+AC_OUTPUT(Makefile)
 

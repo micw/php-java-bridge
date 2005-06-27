@@ -351,24 +351,24 @@ public class DynamicClassLoader extends SecureClassLoader {
   // Not cached
   public Enumeration findResources(String name) throws java.io.IOException {
       Vector result = null;
-      Enumeration enum = super.findResources(name);
-      while (enum.hasMoreElements()) {
-         result.add(enum.nextElement());
+      Enumeration enumeration = super.findResources(name);
+      while (enumeration.hasMoreElements()) {
+         result.add(enumeration.nextElement());
       }
       Iterator iter = classPaths.iterator();
       URLClassLoaderEntry e = null;
       while (iter.hasNext()) {
         e = (URLClassLoaderEntry) classLoaders.get(iter.next());
-        enum = e.cl.findResources(name);
-        while (enum.hasMoreElements()) {
-          result.add(enum.nextElement());
+        enumeration = e.cl.findResources(name);
+        while (enumeration.hasMoreElements()) {
+          result.add(enumeration.nextElement());
         }
       }
       e = addDelayedURLs();
       while (e!=null) {
-        enum = e.cl.findResources(name);
-        while (enum.hasMoreElements()) {
-          result.add(enum.nextElement());
+        enumeration = e.cl.findResources(name);
+        while (enumeration.hasMoreElements()) {
+          result.add(enumeration.nextElement());
         }
         e = addDelayedURLs();
       }
