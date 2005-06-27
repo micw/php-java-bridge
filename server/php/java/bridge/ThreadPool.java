@@ -22,7 +22,7 @@ public class ThreadPool {
 	}
     }
 
-    /* 
+    /*
      * Helper: Pull a runnable off the list of runnables. If there's
      * no work, sleep the thread until we receive a notify.
      */
@@ -43,7 +43,10 @@ public class ThreadPool {
 	runnables.add(r);
 	if(idles==0 && threads < poolMaxSize) {
 	    Delegate d = new Delegate();
-	    d.setContextClassLoader(DynamicJavaBridgeClassLoader.newInstance());
+            ClassLoader c = DynamicJavaBridgeClassLoader.newInstance();
+            if (c!=null) {
+	      d.setContextClassLoader(c);
+            }
 	    d.start();
 	}
 	else

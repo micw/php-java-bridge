@@ -116,37 +116,47 @@ public class JavaBridge implements Runnable {
     // Communication with client in a new thread
     //
     public void run() {
-    	cl = new JavaBridgeClassLoader(this, (DynamicJavaBridgeClassLoader) Thread.currentThread().getContextClassLoader());
-    	request = new Request(this);
-	try {
-	    if(!request.initOptions(in, out)) return;
-	} catch (Throwable e) {
-	    printStackTrace(e);
-	    return;
-	}
-	if(logLevel>3) logDebug("Request from client with uid/gid "+uid+"/"+gid);
+        try {
+          logDebug("START: JavaBridge.run()");
+          try {
+            cl = new JavaBridgeClassLoader(this, (DynamicJavaBridgeClassLoader) Thread.currentThread().getContextClassLoader());
+          } catch (ClassCastException ex) {
+            cl = new JavaBridgeClassLoader(this, null);
+          }
+          Util.logStream.flush();
+          request = new Request(this);
+          try {
+              Util.logStream.flush();
+              if(!request.initOptions(in, out)) return;
+          } catch (Throwable e) {
+              printStackTrace(e);
+              return;
+          }
+          if(logLevel>3) logDebug("Request from client with uid/gid "+uid+"/"+gid);
+          load++;
+          try {
+              request.handleRequests();
+          } catch (Throwable e) {
+              printStackTrace(e);
+          }
 
-	load++;
-   	try {
-            request.handleRequests();
-    	} catch (Throwable e) {
-    	    printStackTrace(e);
-    	}
-
-	try {
-	    in.close();
-	} catch (IOException e1) {
-	    printStackTrace(e1);
-	}
-	try {
-	    out.close();
-	} catch (IOException e2) {
-	    printStackTrace(e2);
-	}
-	load--;
-	globalRef=null;
-	Session.expire(this);
-        logDebug("request terminated.");
+          try {
+              in.close();
+          } catch (IOException e1) {
+              printStackTrace(e1);
+          }
+          try {
+              out.close();
+          } catch (IOException e2) {
+              printStackTrace(e2);
+          }
+          load--;
+          globalRef=null;
+          Session.expire(this);
+          Util.logDebug("END: JavaBridge.run()");
+        } catch (Throwable t) {
+          printStackTrace(t);
+        }
     }
 
 /* Disabled for the release 2.0.7.  We'll probably want something more general in the future.
@@ -263,13 +273,17 @@ public class JavaBridge implements Runnable {
 	    }
 	    ThreadPool pool = null;
 	    if(maxSize>0) pool = new ThreadPool(Util.EXTENSION_NAME, maxSize);
-
+            Util.logDebug("Starting to accept Socket connections");
+            DynamicJavaBridgeClassLoader.initClassLoader("/usr/share/java");
 	    while(true) {
 		Socket sock = socket.accept();
+                Util.logDebug("Socket connection accepted");
 		JavaBridge bridge = new JavaBridge(sock.getInputStream(), sock.getOutputStream());
-                if(maxSize>0)
+                if(maxSize>0) {
+                    Util.logDebug("Starting bridge from Thread Pool");
 		    pool.start(bridge); // Uses thread pool
-		else {
+		} else {
+                    Util.logDebug("Starting bridge from new Thread");
 		    Thread t = new Thread(bridge);
 		    t.setContextClassLoader(DynamicJavaBridgeClassLoader.newInstance());
 		    t.start();

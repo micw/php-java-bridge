@@ -16,7 +16,7 @@ public class Request implements IDocHandler {
     	HashMap ht;
     	ArrayList array;
     	int count;
-    	
+
     	byte composite;
     	byte type;
     	Object callObject;
@@ -24,7 +24,7 @@ public class Request implements IDocHandler {
     	boolean predicate;
         long id;
         Object key;
-   	
+
    	void add(Object val) {
     		if(composite!=0) {
 			if(ht==null) ht=new HashMap();
@@ -66,7 +66,7 @@ public class Request implements IDocHandler {
     }
     private Args args;
     Response response;
-    
+
     public Request(JavaBridge bridge) {
 	this.bridge=bridge;
 	this.parser=new Parser(bridge, this);
@@ -75,13 +75,21 @@ public class Request implements IDocHandler {
     static final byte[] ZERO={0};
     public boolean initOptions(InputStream in, OutputStream out) throws IOException {
     	switch(parser.initOptions(in)) {
-    	case Parser.PING: out.write(ZERO, 0, 1); return false;
-    	case Parser.IO_ERROR: 
-    	case Parser.EOF: return false;
-    	}
+
+    	case Parser.PING:
+            bridge.logDebug("PING - PONG - Closing Request");
+            out.write(ZERO, 0, 1);
+            return false;
+    	case Parser.IO_ERROR:
+            bridge.logDebug("IO_ERROR - Closing Request");
+            return false;
+    	case Parser.EOF:
+            bridge.logDebug("EOF - Closing Request");
+            return false;
+        }
     	return true;
     }
- 
+
     public void begin(ParserTag[] tag) {
 	ParserString[] st=tag[2].strings;
 	byte ch;
@@ -116,7 +124,7 @@ public class Request implements IDocHandler {
 			args.key=null;
 		break;
 	}
-		
+
 	case 'F':
 	case 'M': {
 		//FIXME: Split invoke
@@ -151,14 +159,14 @@ public class Request implements IDocHandler {
 		args.add(null);
 	    else {
 		int i=Integer.parseInt(st[0].getStringValue(), 10);
-		if(0==i) 
+		if(0==i)
 		    args.add(null);
 		else
 		    args.add(bridge.globalRef.get(i));
 	    }
 	    break;
 	}
-	}	
+	}
     }
     public void end(ParserString[] string) {
     	switch(string[0].string[0]) {
@@ -173,15 +181,15 @@ public class Request implements IDocHandler {
 	    response.setResult(args.id, parser.options);
 	    switch(args.type){
 	    case 'I':
-		if(args.predicate) 
+		if(args.predicate)
 		    bridge.GetSetProp(args.callObject, args.method, args.getArgs(), response);
-		else 
+		else
 		    bridge.Invoke(args.callObject, args.method, args.getArgs(), response);
 		    response.flush();
 		break;
 	    case 'C':
 		if(args.predicate)
-		    bridge.CreateObject((String)args.callObject, false, args.getArgs(), response); 
+		    bridge.CreateObject((String)args.callObject, false, args.getArgs(), response);
 		else
 		    bridge.CreateObject((String)args.callObject, true, args.getArgs(), response);
 		    response.flush();
