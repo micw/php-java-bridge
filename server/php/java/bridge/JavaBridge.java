@@ -103,12 +103,14 @@ public class JavaBridge implements Runnable {
 
     static Object loadLock=new Object();
     static short load = 0;
+
     public static short getLoad() {
 	synchronized(loadLock) {
 	    return load;
 	}
     }
 
+    private MethodCache methodCache = new MethodCache();
 
 
 
@@ -125,6 +127,7 @@ public class JavaBridge implements Runnable {
           }
           Util.logStream.flush();
           request = new Request(this);
+          
           try {
               Util.logStream.flush();
               if(!request.initOptions(in, out)) return;
@@ -274,7 +277,8 @@ public class JavaBridge implements Runnable {
 	    ThreadPool pool = null;
 	    if(maxSize>0) pool = new ThreadPool(Util.EXTENSION_NAME, maxSize);
             Util.logDebug("Starting to accept Socket connections");
-            DynamicJavaBridgeClassLoader.initClassLoader("/usr/share/java");
+            DynamicJavaBridgeClassLoader.initClassLoader(Util.EXTENSION_DIR);
+
 	    while(true) {
 		Socket sock = socket.accept();
                 Util.logDebug("Socket connection accepted");
@@ -925,19 +929,20 @@ public class JavaBridge implements Runnable {
        for (int p=0;p<args.length;p++) {
           paramClasses[p] = args[p].getClass();
        }
-       Method selected = null;
+       MethodCache.Entry entry = methodCache.getEntry(method, object.getClass(), paramClasses);
+       Method selected = (Method) methodCache.get(entry);
 	try {
-            try {
-              selected = object.getClass().getMethod(method, paramClasses); // Let's try to find the recommended method first
-              if (this.logLevel>4) logInvoke(object, method, args); // If we have a logLevel of 5 or above, do very detailed invocation logging
-              setResult(response, selected.invoke(object, args));
-	    } catch (NoSuchMethodException nsme) {
-            }
-            if (selected==null) {
+//            try {
+//              selected = object.getClass().getMethod(method, paramClasses); // Let's try to find the recommended method first
+//              if (this.logLevel>4) logInvoke(object, method, args); // If we have a logLevel of 5 or above, do very detailed invocation logging
+//              setResult(response, selected.invoke(object, args));
+//	    } catch (NoSuchMethodException nsme) {
+//            }
               // gather
               do {
                   again = false;
                   ClassIterator iter;
+           if (selected==null) {
                   for (iter = ClassIterator.getInstance(object, FindMatchingInterfaceForInvoke.getInstance(this, method, args, true, canModifySecurityPermission)); (jclass=iter.getNext())!=null;) {
                       Method methods[] = jclass.getMethods();
                       for (int i=0; i<methods.length; i++) {
@@ -951,17 +956,19 @@ public class JavaBridge implements Runnable {
                   }
                   selected = (Method)select(matches, args);
                   if (selected == null) throw new NoSuchMethodException(String.valueOf(method) + "(" + Util.argsToString(args) + "). " + "Candidates: " + String.valueOf(candidates));
-                  coercedArgs = coerce(selected.getParameterTypes(), args, response);
+                  methodCache.put(entry, selected);
                   if(!iter.checkAccessible(selected)) {
                       logMessage("Security restriction: Cannot use setAccessible(), reverting to interface searching.");
                       canModifySecurityPermission=false;
                       candidates.clear(); matches.clear();
                       again=true;
                   }
+              }
+                  coercedArgs = coerce(selected.getParameterTypes(), args, response);
               } while(again);
               if (this.logLevel>4) logInvoke(object, method, coercedArgs); // If we have a logLevel of 5 or above, do very detailed invocation logging
               setResult(response, selected.invoke(object, coercedArgs));
-            }
+//            }
 	} catch (Throwable e) {
 	    if(e instanceof OutOfMemoryError ||
 	       ((e instanceof InvocationTargetException) &&

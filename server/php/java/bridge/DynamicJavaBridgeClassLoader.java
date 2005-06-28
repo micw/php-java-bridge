@@ -79,7 +79,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     // compatibility we add all URLs we encountered during startup
     // before throwing a "ClassNotFoundException".
     //
-    static void initClassLoader(String phpConfigDir) {
+    static synchronized void initClassLoader(String phpConfigDir) {
 
 	if(sysUrls!=null) return;
 
@@ -136,7 +136,6 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
      */
     public static DynamicJavaBridgeClassLoader newInstance() {
     	try {
-            DynamicJavaBridgeClassLoader.initClassLoader(Util.EXTENSION_DIR);
     	    DynamicJavaBridgeClassLoader cl = new DynamicJavaBridgeClassLoader();
     	    return cl;
    	} catch (java.security.AccessControlException e) {

@@ -1,3 +1,18 @@
+2005-06-28  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/MethodCache.java: New file.
+
+	* server/php/java/bridge/JavaBridge.java (methodCache): New global.
+	(init): Use EXTENSION_DIR.
+	(Invoke): Use methodCache.
+
+	* server/php/java/bridge/DynamicJavaBridgeClassLoader.java
+	(initClassLoader): synchronized
+
+	* server/Makefile.am (java_SOURCES):
+	php/java/bridge/MethodCache.java added.
+	
+
 2005-06-27  Jost Boekemeier  <jostb@intern>
 
 	* bind.c (test_server): set "called_from_init" only if called from

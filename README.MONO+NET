@@ -50,8 +50,8 @@ Build and execution instructions:
 
 
   OPTION 1: You can use local sockets to connect to a local backend. 
-  Copy the executable php-java-bridge to /usr/sbin, make it executable 
-  with the command "chmod +x /usr/sbin/php-java-bridge" and start it:
+  Copy the executable php-mono-bridge to /usr/sbin, make it executable 
+  with the command "chmod +x /usr/sbin/php-mono-bridge" and start it:
 
           /usr/sbin/php-mono-bridge
 
@@ -64,7 +64,7 @@ Build and execution instructions:
           extension = java.so
           [java]
           java.log_level="3"
-          java.log_file="/var/log/php-java-bridge.log"
+          java.log_file="/var/log/php-mono-bridge.log"
 
   Re-start apache and check if apache has started mono as a
   sub-process.  For example with the commands:
@@ -83,8 +83,8 @@ Build and execution instructions:
   Other configuration options which should have been set up by the
   configure script but which can be changed later are:
 
-          mono.socketname= <local ("unix domain") communication channel>
-          mono.hosts     = <add. bridge hosts e.g.: server1:9267;server2:9268>
+          mono.socketname= <local TCP communication channel >
+          mono.hosts     = <add. bridge hosts e.g.: server1:9167;server2:9168>
 
   Please first look at the output of phpinfo() to see the original
   values.  
