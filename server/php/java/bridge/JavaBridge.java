@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
@@ -446,7 +447,7 @@ public class JavaBridge implements Runnable {
 	    Vector candidates = new Vector();
 	    Constructor selected = null;
 	    if(createInstance) {
-		Constructor cons[] = cl.getClassLoader().loadClass(name).getConstructors();
+		Constructor cons[] = cl.forName(name).getConstructors();
 		for (int i=0; i<cons.length; i++) {
 		    candidates.addElement(cons[i]);
 		    if (cons[i].getParameterTypes().length == args.length) {
@@ -463,7 +464,7 @@ public class JavaBridge implements Runnable {
 		} else {
 		    // for classes which have no visible constructor, return the class
 		    // useful for classes like java.lang.System and java.util.Calendar.
-		    response.writeObject(cl.getClassLoader().loadClass(name));
+		    response.writeObject(cl.forName(name));
 		    return;
 		}
 	    }
@@ -474,7 +475,7 @@ public class JavaBridge implements Runnable {
 	    } catch (NoClassDefFoundError xerr) {
 	    	logError("Error: Could not invoke constructor. A class referenced in the constructor method could not be found: " + xerr + ". Please correct this error or use \"new JavaClass()\" to avoid calling the constructor.");
 	    	cl.reset();
-	    	response.writeObject(cl.getClassLoader().loadClass(name));
+	    	response.writeObject(cl.forName(name));
 	    }
 
 	} catch (Throwable e) {
@@ -523,7 +524,7 @@ public class JavaBridge implements Runnable {
 		    if (!(args[i] instanceof byte[]) && !(args[i] instanceof String))
 			weight+=9999;
 		} else if (parms[i].isArray()) {
-		    if (args[i] instanceof java.util.Map) {
+		    if ((args[i] != null) && args[i].getClass() == Request.PhpArray.class) { 
 			Iterator iterator = ((Map)args[i]).values().iterator();
 			if(iterator.hasNext()) {
 			    Object elem = iterator.next();
@@ -633,7 +634,7 @@ public class JavaBridge implements Runnable {
 		if (c == Float.TYPE)   result[i]=new Float(n.floatValue());
 		if (c == Long.TYPE && !(n instanceof Long))
 		    result[i]=new Long(n.longValue());
-	    } else if (args[i] instanceof Map) {
+	    } else if ((args[i] != null) && args[i].getClass() == Request.PhpArray.class) {
 	    	if(parms[i].isArray()) {
 		    try {
 			Map ht = (Map)args[i];
@@ -668,14 +669,19 @@ public class JavaBridge implements Runnable {
 
 			result[i]=array;
 		    } catch (Exception e) {
-			logError("Error: " + String.valueOf(e) + " could not create array of type: " + targetType + ", size: " + size);
+			logError("Error: " + String.valueOf(e) + ". Could not create array of type: " + targetType + ", size: " + size);
 			printStackTrace(e);
 			// leave result[i] alone...
 		    }
 		} else if ((java.util.Collection.class).isAssignableFrom(parms[i])) {
 		    try {
 			Map ht = (Map)args[i];
-			Collection res = (Collection) parms[i].newInstance();
+			Collection res;
+			try {
+				res = (Collection) parms[i].newInstance();
+			} catch (java.lang.InstantiationException ex) {
+				res = (Collection) new HashSet();
+			}
 			for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
 			    Object key = e.next();
 			    Object val = ht.get(key);
@@ -687,14 +693,15 @@ public class JavaBridge implements Runnable {
 
 			result[i]=res;
 		    } catch (Exception e) {
-			logError("Error: " +  String.valueOf(e) + " Could not create java.util.Map.  You have probably passed a hashtable instead of an array. Please check that the keys are long.");
+			logError("Error: " +  String.valueOf(e) + ". Could not create Collection from Map.  You have probably passed a hashtable instead of an array. Please check that the keys are long.");
 			printStackTrace(e);
 			// leave result[i] alone...
 		    }
 		} else if ((java.util.Hashtable.class).isAssignableFrom(parms[i])) {
 		    try {
 			Map ht = (Map)args[i];
-			Hashtable res = (Hashtable)parms[i].newInstance();
+			Hashtable res;
+			res = (Hashtable)parms[i].newInstance();
 			for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
 			    Object key = e.next();
 			    Object val = ht.get(key);
@@ -706,14 +713,19 @@ public class JavaBridge implements Runnable {
 
 			result[i]=res;
 		    } catch (Exception e) {
-			logError("Error: " +  String.valueOf(e) + " Could not create java.util.Hashtable.");
+			logError("Error: " +  String.valueOf(e) + ". Could not create Hashtable from Map.");
 			printStackTrace(e);
 			// leave result[i] alone...
 		    }
 		} else if ((java.util.Map.class).isAssignableFrom(parms[i])) {
 		    try {
 			Map ht = (Map)args[i];
-			Map res = (Map)parms[i].newInstance();
+			Map res;
+			try {
+				res = (Map)parms[i].newInstance();
+			} catch (java.lang.InstantiationException ex) {
+				res = (Map) new HashMap();
+			}
 			for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
 			    Object key = e.next();
 			    Object val = ht.get(key);
@@ -725,7 +737,7 @@ public class JavaBridge implements Runnable {
 
 			result[i]=res;
 		    } catch (Exception e) {
-			logError("Error: " +  String.valueOf(e) + " Could not create java.util.Hashtable.");
+			logError("Error: " +  String.valueOf(e) + ". Could not create Map from Map.");
 			printStackTrace(e);
 			// leave result[i] alone...
 		    }
@@ -925,19 +937,9 @@ public class JavaBridge implements Runnable {
        Class jclass;
        boolean again;
        Object coercedArgs[] = null;
-       Class paramClasses[] = new Class[args.length];
-       for (int p=0;p<args.length;p++) {
-          paramClasses[p] = args[p].getClass();
-       }
-       MethodCache.Entry entry = methodCache.getEntry(method, object.getClass(), paramClasses);
+       MethodCache.Entry entry = methodCache.getEntry(method, Util.getClass(object), args);
        Method selected = (Method) methodCache.get(entry);
 	try {
-//            try {
-//              selected = object.getClass().getMethod(method, paramClasses); // Let's try to find the recommended method first
-//              if (this.logLevel>4) logInvoke(object, method, args); // If we have a logLevel of 5 or above, do very detailed invocation logging
-//              setResult(response, selected.invoke(object, args));
-//	    } catch (NoSuchMethodException nsme) {
-//            }
               // gather
               do {
                   again = false;
@@ -955,7 +957,8 @@ public class JavaBridge implements Runnable {
                       }
                   }
                   selected = (Method)select(matches, args);
-                  if (selected == null) throw new NoSuchMethodException(String.valueOf(method) + "(" + Util.argsToString(args) + "). " + "Candidates: " + String.valueOf(candidates));
+                  if (selected == null) 
+                  	throw new NoSuchMethodException(String.valueOf(method) + "(" + Util.argsToString(args) + "). " + "Candidates: " + String.valueOf(candidates));
                   methodCache.put(entry, selected);
                   if(!iter.checkAccessible(selected)) {
                       logMessage("Security restriction: Cannot use setAccessible(), reverting to interface searching.");
@@ -968,7 +971,6 @@ public class JavaBridge implements Runnable {
               } while(again);
               if (this.logLevel>4) logInvoke(object, method, coercedArgs); // If we have a logLevel of 5 or above, do very detailed invocation logging
               setResult(response, selected.invoke(object, coercedArgs));
-//            }
 	} catch (Throwable e) {
 	    if(e instanceof OutOfMemoryError ||
 	       ((e instanceof InvocationTargetException) &&
@@ -1167,7 +1169,7 @@ public class JavaBridge implements Runnable {
     }
 
     public static boolean InstanceOf(Object ob, Object c) {
-	Class clazz = Util.GetClass(c);
+	Class clazz = Util.getClass(c);
 	return clazz.isInstance(ob);
     }
 
@@ -1180,6 +1182,9 @@ public class JavaBridge implements Runnable {
 	return buf.toString();
     }
 
+    /*
+     * Return a session handle shared among all JavaBridge instances
+     */
     public Session getSession(String name, boolean clientIsNew, int timeout) {
     	synchronized(JavaBridge.sessionHash) {
 	    Session ref = null;
@@ -1202,5 +1207,12 @@ public class JavaBridge implements Runnable {
     	}
     }
 
-
+    /*
+     * Reset the global caches of the bridge.
+     * Currently this is the classloader and the session.
+     */
+    public void reset() {
+	Session.reset(this);
+	cl.reset();
+    }
 }

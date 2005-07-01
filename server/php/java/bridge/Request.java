@@ -12,8 +12,11 @@ public class Request implements IDocHandler {
 
     private Parser parser;
     private JavaBridge bridge;
+    public static class PhpArray extends HashMap { // for PHP's array()
+		private static final long serialVersionUID = 3905804162838115892L;
+	};
     private static class Args {
-    	HashMap ht;
+    	PhpArray ht; 
     	ArrayList array;
     	int count;
 
@@ -27,7 +30,7 @@ public class Request implements IDocHandler {
 
    	void add(Object val) {
     		if(composite!=0) {
-			if(ht==null) ht=new HashMap();
+			if(ht==null) ht=new PhpArray();
     			if(key!=null) {
     				ht.put(key, val);
     			}
@@ -50,7 +53,7 @@ public class Request implements IDocHandler {
     		id=0;
     		key=null;
      	}
-    	private static final HashMap empty0=new HashMap();
+    	private static final PhpArray empty0=new PhpArray();
     	void push() {
     		if(composite!=0) {
     			if(array==null) array=new ArrayList();

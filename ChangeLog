@@ -1,3 +1,80 @@
+2005-07-01  Jost Boekemeier  <jostb@intern>
+
+	* bind.c (get_server_args): for_display added.
+
+	* client.c (get_mode): pass loglevels > 4
+
+	* java.c (get_values): php4 doesn't have RETURN_ZVAL.
+
+	* java.ini: default log level is 2, not 3.
+
+	* php-java-bridge: removed is_multicast, discard output of daemon
+	(for FC 4).
+
+	* php-java-bridge.spec: rewritten for FC 4.
+
+	* php-java-bridge.te: rewritten for FC 4.
+
+	* update_policy.sh: install the policy *before* reloading it.
+	Until now one had to run the script twice!?!
+	
+	* server/Makefile.am: try fastjar, then jar.
+
+	* server/php/java/bridge/DynamicClassLoader.java: removed
+	reference to java.util.jar.* to avoid warnings from ecj.
+
+	* server/php/java/bridge/DynamicJavaBridgeClassLoader.java (DynamicJavaBridgeClassLoader): 
+	don't bother adding sys urls, we'll do this in clear() anyway.
+	(initClassLoader): /usr/share/java/ext added (new in FC4).
+	(addSysUrls): added synchronization.
+	(clear): new procedure.
+	(reset): reset the state, including the cache.
+	(newInstance): added synchronization.
+
+	* server/php/java/bridge/GlobalRef.java (GlobalRef): Documentation
+	added
+	(clear): removed. It is not possible to recycle a global ref (its
+	underlying data structure would grow without bounds).
+
+	* server/php/java/bridge/JavaBridge.java (CreateObject): use
+	cl.forName().
+	(select): check for null value.
+	(coerce): check for null value. If we cannot create a instance
+	from the template, we have received an interface. Create a
+	matching type instead.
+	(Invoke): Use Util.getClass() instead of v.getClass() to avoid NP
+	exceptions and surprises when object is already a class.
+	(getSession): added documentation
+	(reset): added documentation
+
+	* server/php/java/bridge/JavaBridgeClassLoader.java
+	(JavaBridgeClassLoader): call clear() when we recycle a loader,
+	not reset. reset() is used by the API java_reset().
+	(getClassLoader): obsolete
+	(forName): either use Class.forName() or call loadClass directly
+	when the DynamicClassLoader is used.
+
+	* server/php/java/bridge/MethodCache.java
+	(Entry): Compare symbols instead of strings.
+	(hasResult): new variable
+	(hashCode): cache result.
+	(noCache): new token
+	(get): check for noCache.
+	(put): check for noCache.
+	(getEntry): check for null values, return noCache if one of the
+	parameters is a collection or array.
+	(MethodCache): initialize noCache.
+
+	* server/php/java/bridge/Request.java
+	(PhpArray): new class
+
+	* server/php/java/bridge/Request.java
+	(GetClass): renamed to getClass.
+
+	* tests.php4/servlet_connection_re-open.php: re-written to work
+	with php4 and php5.
+	
+	
 2005-06-28  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/MethodCache.java: New file.

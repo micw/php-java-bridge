@@ -105,7 +105,7 @@ public class Util {
 	if(logLevel>2) println(3, msg);
     }
     //
-    public static Class GetClass(Object obj) {
+    public static Class getClass(Object obj) {
 	if(obj==null) return null;
 	return obj instanceof Class?(Class)obj:obj.getClass();
     }
@@ -113,7 +113,7 @@ public class Util {
 	StringBuffer buffer = new StringBuffer("");
 	if(args!=null) {
 	    for(int i=0; i<args.length; i++) {
-		buffer.append(String.valueOf(GetClass(args[i])));
+		buffer.append(String.valueOf(getClass(args[i])));
 		if(i+1<args.length) buffer.append(", ");
 	    }
 	}

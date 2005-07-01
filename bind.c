@@ -46,7 +46,7 @@ const static char local_socket_prefix[]="LOCAL:";
 
 #if EXTENSION == JAVA
 static const char* const wrapper = EXTENSION_DIR/**/"/RunJavaBridge";
-static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS]) {
+static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], short for_display) {
   static const char separator[2] = {ZEND_PATHS_SEPARATOR, 0};
   char *s, *p;
   char*program=EXT_GLOBAL(cfg)->vm;
@@ -61,6 +61,12 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS]) {
 #endif
   char *sockname, *cfg_sockname=EXT_GLOBAL(cfg)->sockname, *cfg_logFile=EXT_GLOBAL(cfg)->logFile;
 
+  /* if socketname is off, show the user how to start a TCP backend */
+  if(for_display && !(java_ini_last_updated&U_SOCKNAME)) {
+	cfg_sockname="0";
+	s_prefix=inet_socket_prefix;
+	cfg_logFile="";
+  }
   /* send a prefix so that the server does not select a different
    protocol */
   sockname = malloc(strlen(s_prefix)+strlen(cfg_sockname)+1);
@@ -105,7 +111,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS]) {
 }
 #elif EXTENSION == MONO
 static const char* const wrapper = EXTENSION_DIR/**/"/RunMonoBridge";
-static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS]) {
+static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], short for_display) {
   char*program=EXT_GLOBAL(cfg)->vm;
 #ifdef CFG_JAVA_SOCKET_INET
   const char* s_prefix = inet_socket_prefix;
@@ -116,6 +122,12 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS]) {
 
   args[0]=strdup(program);		/* mono */
   args[1] = strdup(EXTENSION_DIR/**/"/MonoBridge.exe");
+  /* if socketname is off, show the user how to start a TCP backend */
+/*   if(for_display && !(java_ini_last_updated&U_SOCKNAME)) { */
+/* 	cfg_sockname="0"; */
+/* 	s_prefix=inet_socket_prefix; */
+/* 	cfg_logFile=""; */
+/*   } */
   /* send a prefix so that the server does not select a different
    protocol */
 /*   sockname = malloc(strlen(s_prefix)+strlen(cfg_sockname)+1); */
@@ -157,7 +169,7 @@ char*EXT_GLOBAL(get_server_string)() {
   char*args[N_SARGS];
   unsigned int length = 0;
 
-  EXT_GLOBAL(get_server_args)(env, args);
+  EXT_GLOBAL(get_server_args)(env, args, 1);
   if(must_use_wrapper)
 	length+=strlen(wrapper)+1;
 
@@ -211,7 +223,7 @@ static void exec_vm() {
   static char*env[N_SENV];
   static char*_args[N_SARGS+1];
   char **args=_args+1;
-  EXT_GLOBAL(get_server_args)(env, args);
+  EXT_GLOBAL(get_server_args)(env, args, 0);
   if(N_SENV>2) {
 	putenv(env[0]);
 	putenv(env[1]);

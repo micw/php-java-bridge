@@ -21,7 +21,7 @@ public class JavaBridgeClassLoader {
     	if(this.cl==null) 
 	    this.scl = bridge.getClass().getClassLoader(); 
 	else 
-	    cl.reset();
+	    cl.clear();
     }
 
     public void updateJarLibraryPath(String path)  {
@@ -33,14 +33,18 @@ public class JavaBridgeClassLoader {
 	cl.updateJarLibraryPath(path);
     }
 
-    public ClassLoader getClassLoader() {
-	if(cl!=null) return (ClassLoader)cl;
-	return scl;
-    }
+//    public ClassLoader getClassLoader() {
+//	if(cl!=null) return (ClassLoader)cl;
+//	return scl;
+//    }
 
     public void reset() {
 	if (cl!=null) cl.reset();
     }
 
+    public Class forName(String name) throws ClassNotFoundException {
+    	if(cl==null) return Class.forName(name, false, scl);
+    	return cl.loadClass(name);
+    }
 
 }

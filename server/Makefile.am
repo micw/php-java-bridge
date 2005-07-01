@@ -18,7 +18,7 @@ java_SOURCES= java.c php/java/bridge/GlobalRef.java php/java/bridge/IDocHandler.
 
 MonoBridge.exe: $(PHP_MONO)
 	$(GCJ) -C php/java/bridge/*.java
-	fastjar cMf JavaBridge.jar META-INF/MANIFEST.MF php/java/bridge/*.class php/java/bridge/*.properties
+	fastjar cMf JavaBridge.jar META-INF/MANIFEST.MF php/java/bridge/*.class php/java/bridge/*.properties || jar cMf JavaBridge.jar META-INF/MANIFEST.MF php/java/bridge/*.class php/java/bridge/*.properties
 	mono $(PHP_MONO) JavaBridge.jar
 	mv JavaBridge.exe MonoBridge.exe
 	rm -f JavaBridge.jar

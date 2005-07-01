@@ -3,7 +3,6 @@ package php.java.bridge;
 import java.net.*;
 import java.security.*;
 import java.util.*;
-import java.util.jar.*;
 import java.lang.ref.*;
 import java.io.*;
 /**

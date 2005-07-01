@@ -37,7 +37,6 @@ if test $# != 0; then
   fi
 
   trap 'kill `cat ${pid}.[0-9]`; rm -f $pid' 2 15
-  is_multicast=$1; shift
   ext=$1; shift
   eval $1; shift
   eval $1; shift
@@ -45,15 +44,8 @@ if test $# != 0; then
   java="${ext}/RunJavaBridge"
   LANG="$LANG_SYSTEM" 
   unset LC_ALL
-  if test $is_multicast != 0; then
-      for j in 0 1; do
-	  $java "$@" >${log}.${j}.log &
-	  echo $! >${pid}.${j}
-      done
-  else
-      $java "$@" &
-      echo $! >$pid
-  fi
+  $java "$@" &
+  echo $! >$pid
   wait
   rm -f $pid.[0-9];
   exit 0
@@ -67,21 +59,22 @@ if fgrep java /tmp/phpinfo.$$ |
      grep "java support.*Enabled" >/dev/null
 then true;
 else
- echo "Error: PHP/Java Bridge module not installed." >&2; exit 1
+ echo "Error: PHP/Java Bridge module not installed (see file /tmp/phpinfo.$$)." >&2; exit 1
 fi
 
 if  fgrep java /tmp/phpinfo.$$ |
     sed 's/<[/a-z ="0-9]*>//g' | 
     grep 'java status.*not running' >/dev/null
 then 
-    is_multicast=0
+    true
 else
     if test -s $PID; then
 	echo "PHP/Java Bridge already running with pid `cat $PID`" >&2
 	rm -f /tmp/phpinfo.$$	
 	exit 2;
     else
-	is_multicast=1
+	echo "Error: java.socketname option not set in php .ini file, see output of phpinfo()." >&2
+	exit 3;
     fi
 fi
 
@@ -101,7 +94,7 @@ echo Starting java with the command: "$cmd"
 LANG="$LANG_SYSTEM"
 if test "$inst" = "sys"; then
  # preserve name for status command
- /bin/sh -c "$0 $is_multicast $ext $cmd"&
+ /bin/sh -c "$0 $ext $cmd"         >/dev/null 2>/dev/null </dev/null&
 else
- /bin/sh -c "/bin/sh $0 $is_multicast $ext $cmd"&
+ /bin/sh -c "/bin/sh $0 $ext $cmd" >/dev/null 2>/dev/null </dev/null&
 fi

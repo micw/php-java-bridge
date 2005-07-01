@@ -230,7 +230,7 @@ EXT_FUNCTION(EXT_GLOBAL(get_values))
   (*jenv)->writeObject(jenv, obj);
   (*jenv)->writeInvokeEnd(jenv);
 #else
-  RETURN_ZVAL(*pobj, 0, 0);
+  return_value = *pobj;
 #endif
 }
 

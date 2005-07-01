@@ -13,7 +13,6 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 
     protected DynamicJavaBridgeClassLoader() {
         super();
-        addSysUrls();
      }
 
     // the local library directory (global one is /usr/share/java)
@@ -73,25 +72,22 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     }
     //
     // add all jars found in the phpConfigDir/lib and /usr/share/java
-    // to the list of our URLs.  The user is expected to name .jar
+    // to the list of our URLs.  The user is expected to symbol .jar
     // libraries explicitly with java_set_library_path, e.g.
     // java_set_library_path("foo.jar;bar.jar"); For backward
     // compatibility we add all URLs we encountered during startup
     // before throwing a "ClassNotFoundException".
     //
     static synchronized void initClassLoader(String phpConfigDir) {
-
-	if(sysUrls!=null) return;
-
         DynamicJavaBridgeClassLoader.phpLibDir=phpConfigDir + "/lib/";
         DynamicJavaBridgeClassLoader.phpConfigDir=phpConfigDir;
 	sysUrls=new ArrayList();
 	try {
 	    String[] paths;
 	    if(null!=phpConfigDir)
-		paths = new String[] {phpConfigDir+"/lib", "/usr/share/java"};
+		paths = new String[] {phpConfigDir+"/lib", "/usr/share/java", "/usr/share/java/ext"};
 	    else
-		paths = new String[] {"/usr/share/java"};
+		paths = new String[] {"/usr/share/java", "/usr/share/java/ext"};
 
 	    for(int i=0; i<paths.length; i++) {
 		File d = new File(paths[i]);
@@ -120,12 +116,29 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 
     public void addSysUrls() {
         URL urls[] = new URL[sysUrls.size()];
-        sysUrls.toArray(urls);
-        this.addURLs(urls, true);
+	synchronized(getClass()) {
+            sysUrls.toArray(urls);
+	 }
+         this.addURLs(urls, true);
     }
 
+    /*
+     *  (non-Javadoc)
+     * @see php.java.bridge.DynamicClassLoader#clear()
+     */
+    public void clear() {
+    	super.clear();
+    	addSysUrls();
+    }
+    /*
+     * Reset all caches.
+     */
     public void reset() {
-	clear();
+	synchronized(getClass()) {
+	    initClassLoader(Util.EXTENSION_DIR);
+	    clear();
+	    clearCache();
+	}
     }
 
     /*
@@ -134,7 +147,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
      * use this method directly but call: 
      * new JavaBridgeClassLoader(bridge, DynamicJavaBridgeClassLoader.newInstance()) instead.
      */
-    public static DynamicJavaBridgeClassLoader newInstance() {
+    public static synchronized DynamicJavaBridgeClassLoader newInstance() {
     	try {
     	    DynamicJavaBridgeClassLoader cl = new DynamicJavaBridgeClassLoader();
     	    return cl;

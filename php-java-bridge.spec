@@ -6,15 +6,15 @@ Summary: PHP Hypertext Preprocessor to Java Bridge
 Group: Development/Languages
 Version: %{version}
 Release: %{release}
-Copyright: The PHP license (see "LICENSE" file included in distribution)
+License: The PHP license (see "LICENSE" file included in distribution)
 URL: http://www.sourceforge.net/projects/php-java-bridge
 Source0: http://osdn.dl.sourceforge.net/sourceforge/php-java-bridge/php-java-bridge_%{version}.tar.bz2
 BuildRequires: php-devel >= 4.3.6
 BuildRequires: gcc >= 3.3.3
-BuildRequires: httpd j2sdk
+BuildRequires: httpd
 Requires: php >= 4.3.2
 Requires: httpd 
-Requires: j2re >= 1.4.0
+Requires: jre >= 1.4.0
 Provides: php-java-bridge
 
 
@@ -34,7 +34,21 @@ PATH=/bin:/usr/bin
 LD_LIBRARY_PATH=/lib:/usr/lib
 
 # calculate java dir
+if test -s /etc/sysconfig/java; then
 java_dir=`head -1 /etc/sysconfig/java`
+else
+pkgid=`rpm -q --whatprovides java-devel --queryformat "%{PKGID} %{VERSION}\n" | sed 's/\./0/g;s/_/./' |sort -r -k 2,2 -n | head -1 | awk '{print $1}'`
+jdk=`rpm  -q --pkgid $pkgid`
+java=`rpm -ql $jdk | grep 'bin/java$' | head -1`
+java_dir=`dirname $java`
+java_dir=`dirname $java_dir`
+if test X`basename $java_dir` = Xjre; then
+  java_dir=`dirname $java_dir`;
+fi
+fi
+echo "using java_dir: $java_dir"
+if test X$java_dir = X; then echo "ERROR: java not installed" >2; exit 1; fi
+
 phpize
 ./configure --prefix=/usr --with-java=$java_dir --disable-servlet
 make
@@ -55,18 +69,7 @@ for i in $files;
 done
 
 mkdir -p $RPM_BUILD_ROOT/etc/php.d
-cat <<EOF >$RPM_BUILD_ROOT/etc/php.d/java.ini
-extension = java.so
-[java]
-java.log_level=1
-java.log_file=/var/log/php-java-bridge.log
-
-# Comment out the following line if you want to start java
-# automatically as a sub-process of the Apache 2.0 service or if you
-# have already started multicast backends for failover/load balancing.
-java.socketname=/var/run/.php-java-bridge_socket
-
-EOF
+cat java.ini | sed 's|^;java\.java_home[\t =].*$|java.java_home = @JAVA_HOME@|; s|^;java\.java[\t =].*$|java.java = @JAVA_JAVA@|' >$RPM_BUILD_ROOT/etc/php.d/java.ini
 echo /etc/php.d/java.ini >>filelist
 
 mkdir -p $RPM_BUILD_ROOT/usr/sbin
@@ -86,29 +89,20 @@ echo $mod_dir/lib >>filelist
 rm -rf $RPM_BUILD_ROOT
 %post
 # calculate java_dir again
-pkgid=`rpm -q --whatprovides j2re --queryformat "%{PKGID} %{VERSION}\n" | sed 's/\./0/g;s/_/./' |sort -r -k 2,2 -n | head -1 | awk '{print $1}'`
+pkgid=`rpm -q --whatprovides jre --queryformat "%{PKGID} %{VERSION}\n" | sed 's/\./0/g;s/_/./' |sort -r -k 2,2 -n | head -1 | awk '{print $1}'`
 jre=`rpm  -q --pkgid $pkgid`
 java=`rpm -ql $jre | grep 'bin/java$' | head -1`
-
-# Do not rely on sysconfig anymore but use the most recent rpm, see
-# pkgid above. The reason is that we prefer 1.4.2 or jdk1.5 over
-# old 1.4.1 installations. When IBM/RedHat ships a 1.4.2_02 or 1.5
-# RPM, we'll change it back.
-
-# if test -s /etc/sysconfig/java; then
-# # IBM and RedHat 
-# 	java_dir=`head -1 /etc/sysconfig/java`
-# else
-# Sun JDK RPM nonsense
-	java_dir=`dirname $java`
-	java_dir=`dirname $java_dir`
-	if test X`basename $java_dir` = Xjre; then
-		java_dir=`dirname $java_dir`;
-	fi
-# fi
-cat <<EOF2 >>/etc/php.d/java.ini
-java.java_home=$java_dir
-java.java=$java
+java_dir=`dirname $java`
+java_dir=`dirname $java_dir`
+if test X`basename $java_dir` = Xjre; then
+  java_dir=`dirname $java_dir`;
+fi
+export java_dir java
+ed /etc/php.d/java.ini <<EOF2 >/dev/null
+/@JAVA_HOME@/s||${java_dir-UNKNOWN}|
+/@JAVA_JAVA@/s||${java-UNKNOWN}|
+w
+q
 EOF2
 
 chkconfig php-java-bridge on

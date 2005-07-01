@@ -308,7 +308,7 @@ unsigned char EXT_GLOBAL (get_mode) () {
 	unsigned short is_level = ((EXT_GLOBAL (ini_last_updated)&U_LOGLEVEL)!=0);
 	unsigned short level = 0;
 	if (is_level)
-	  level = EXT_GLOBAL(cfg)->logLevel_val>4?4:EXT_GLOBAL(cfg)->logLevel_val;
+	  level = EXT_GLOBAL(cfg)->logLevel_val>7?7:EXT_GLOBAL(cfg)->logLevel_val;
 
 	return (is_level<<7)|64|(level<<2)|arraysAsValues;
 }
