@@ -98,7 +98,7 @@ if test X`basename $java_dir` = Xjre; then
   java_dir=`dirname $java_dir`;
 fi
 export java_dir java
-ed /etc/php.d/java.ini <<EOF2 >/dev/null
+ed -s /etc/php.d/java.ini <<EOF2
 /@JAVA_HOME@/s||${java_dir-UNKNOWN}|
 /@JAVA_JAVA@/s||${java-UNKNOWN}|
 w

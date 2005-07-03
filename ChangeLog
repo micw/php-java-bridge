@@ -1,3 +1,19 @@
+2005-07-03  Jost Boekemeier  <jostb@intern>
+
+	* java.c (PHP_MSHUTDOWN_FUNCTION): Use EXT_GLOBAL to access cfg.
+	Otherwise --enable-debug will fail.
+	
+	
+2005-07-02  Jost Boekemeier  <jostb@intern>
+
+	* php-java-bridge.spec: quiet ed.
+
+	* php-java-bridge.te: Don't use base_file_read_access, which is
+	broken on FC3.  Added sun java 1.5 settings.
+
+	* server/php/java/bridge/Response.java (OutBuf): Compile with mono
+	which cannot access private variables from inner classes.
+
 2005-07-01  Jost Boekemeier  <jostb@intern>
 
 	* bind.c (get_server_args): for_display added.

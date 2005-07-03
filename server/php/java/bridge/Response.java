@@ -56,7 +56,7 @@ public class Response {
     }
     OutBuf buf;
     long result, peer;
-    private byte options;
+    byte options;
     private String encoding;
     private JavaBridge bridge;
 

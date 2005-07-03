@@ -1113,7 +1113,7 @@ PHP_MSHUTDOWN_FUNCTION(EXT)
   UNREGISTER_INI_ENTRIES();
   EXT_GLOBAL(shutdown_library) ();
 
-  assert(cfg);
+  assert(EXT_GLOBAL (cfg));
   if(EXT_GLOBAL (cfg) ) { free(EXT_GLOBAL (cfg) ); EXT_GLOBAL (cfg) = 0; }
 
   return SUCCESS;
