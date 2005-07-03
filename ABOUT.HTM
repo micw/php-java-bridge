@@ -37,7 +37,7 @@ is the PHP/Java bridge?</B></FONT></FONT></P>
 <li> No need to write and deploy a public interface on the server side. The bridge uses reflection to determine what can or cannot be accessed in the local backend.
 <li> It is possible to load/unload java libraries at runtime.
 <li> On linux the c/s communication channel is not visible and the backend runs in its own "Security Enhanced Linux" domain.
-<li> Other modules such as XML-RPC do most of their work in the PHP module (C code), which makes them fulnerable to buffer overflows.  The PHP/Java Bridge module doesn't use any state on the web-server side, it simply forwards the java(...) statements to the local (java or .NET) backend. The local backend (which runs in a different domain than the web-server) can communicate with the enterprise application server using RMI/IIOP or other java technologies. An example which lets the backend communicate with an EJB server can be found in the examples/j2ee folder.
+<li> Other modules such as XML-RPC do most of their work in the PHP module (C code), which makes them fulnerable to buffer overflows.  The PHP/Java Bridge module doesn't use any state on the web-server side, it simply forwards the java(...) statements to the local (java or .NET) backend. The local backend (which runs in a different domain than the web-server) can communicate with the enterprise application server using RMI/IIOP or other java technologies. An example can be found in the examples/j2ee folder.
 </ul>
 <P><FONT > 
   The bridge adds the following primitives to PHP.  The type mappings are shown in <a href="#type-mapping">table 1</a>.
