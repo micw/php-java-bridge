@@ -12,7 +12,7 @@ public class LocalServerSocket implements ISocketFactory {
     private int peer;
 	
     public static ISocketFactory create(String name, int backlog) throws IOException {
-	if(name.startsWith("INET:")) return null;
+	if(name.startsWith("INET:") || name.startsWith("INET_LOCAL:")) return null;
 
 	return new LocalServerSocket(name==null?DefaultSocketname:name, backlog);
     }

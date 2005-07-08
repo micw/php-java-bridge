@@ -85,7 +85,7 @@ public class Session{
 	    for(Iterator e = JavaBridge.sessionHash.values().iterator(); e.hasNext(); ) {
 		Session ref = (Session)e.next();
 		sessionCount--;
-		JavaBridge.sessionHash.remove(ref.name);
+		e.remove();
 		if(bridge.logLevel>3) bridge.logDebug("Session " + ref.name + " destroyed.");
 	    }
 	}

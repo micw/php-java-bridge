@@ -26,7 +26,6 @@
 
 /* miscellaneous */
 #include <stdio.h>
-#include <assert.h>
 #include <errno.h>
 #include <time.h>
 
@@ -41,7 +40,7 @@
 #error EXTENSION_DIR must point to the PHP extension directory
 #endif
 
-const static char inet_socket_prefix[]="INET:";
+const static char inet_socket_prefix[]="INET_LOCAL:";
 const static char local_socket_prefix[]="LOCAL:";
 
 #if EXTENSION == JAVA
@@ -112,6 +111,9 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
 #elif EXTENSION == MONO
 static const char* const wrapper = EXTENSION_DIR/**/"/RunMonoBridge";
 static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], short for_display) {
+  const char executable[] = "/MonoBridge.exe";
+  const char ext_dir[] = "extension_dir";
+  char *p;
   char*program=EXT_GLOBAL(cfg)->vm;
 #ifdef CFG_JAVA_SOCKET_INET
   const char* s_prefix = inet_socket_prefix;
@@ -119,9 +121,15 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   const char *s_prefix = local_socket_prefix;
 #endif
   char *sockname, *cfg_sockname=EXT_GLOBAL(cfg)->sockname, *cfg_logFile=EXT_GLOBAL(cfg)->logFile;
-
+  char*home = EXT_GLOBAL(cfg)->vm_home;
+  if(!(EXT_GLOBAL(ini_last_updated)&U_JAVA_HOME)) {	/* look into extension_dir then */
+	char *ext = php_ini_string((char*)ext_dir, sizeof ext_dir, 0);
+	if(ext) home = ext;
+  }
   args[0]=strdup(program);		/* mono */
-  args[1] = strdup(EXTENSION_DIR/**/"/MonoBridge.exe");
+  p=malloc(strlen(home)+sizeof executable);
+  strcpy(p, home); strcat(p, executable);
+  args[1] = p;
   /* if socketname is off, show the user how to start a TCP backend */
 /*   if(for_display && !(java_ini_last_updated&U_SOCKNAME)) { */
 /* 	cfg_sockname="0"; */

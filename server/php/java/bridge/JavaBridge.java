@@ -103,7 +103,7 @@ public class JavaBridge implements Runnable {
     private static boolean haveNatcJavaBridge=true;
 
     static Object loadLock=new Object();
-    static short load = 0;
+    public static short load = 0;
 
     public static short getLoad() {
 	synchronized(loadLock) {
@@ -470,13 +470,7 @@ public class JavaBridge implements Runnable {
 	    }
 
 	    Object coercedArgs[] = coerce(selected.getParameterTypes(), args, response);
-	    try {
-	    	response.writeObject(selected.newInstance(coercedArgs));
-	    } catch (NoClassDefFoundError xerr) {
-	    	logError("Error: Could not invoke constructor. A class referenced in the constructor method could not be found: " + xerr + ". Please correct this error or use \"new JavaClass()\" to avoid calling the constructor.");
-	    	cl.reset();
-	    	response.writeObject(cl.forName(name));
-	    }
+    	    response.writeObject(selected.newInstance(coercedArgs));
 
 	} catch (Throwable e) {
 	    if(e instanceof OutOfMemoryError ||
@@ -484,6 +478,17 @@ public class JavaBridge implements Runnable {
 		((InvocationTargetException)e).getTargetException() instanceof OutOfMemoryError)) {
 		Util.logStream.println("FATAL: OutOfMemoryError");
 		throw new RuntimeException(); // abort
+	    }
+	    if(e instanceof NoClassDefFoundError ||
+	       ((e instanceof InvocationTargetException) &&
+		((InvocationTargetException)e).getTargetException() instanceof NoClassDefFoundError)) {
+	    	if(createInstance) {
+	    	  if(e instanceof InvocationTargetException) e = ((InvocationTargetException)e).getTargetException();
+	    	  logError("Error: Could not invoke constructor. A class referenced in the constructor method could not be found: " + e + ". Please correct this error or use \"new JavaClass()\" to avoid calling the constructor.");
+	    	  cl.clearCaches();
+	    	  CreateObject(name, false, args, response);
+	    	  return;
+	        }
 	    }
 	    printStackTrace(e);
 	    setException(response, e, createInstance?"CreateInstance":"ReferenceClass", null, name, args);

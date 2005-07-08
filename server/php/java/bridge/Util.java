@@ -10,7 +10,7 @@ import java.util.Properties;
 public class Util {
 
     static String TCP_SOCKETNAME = "9267";
-    static String EXTENSION_DIR = null;
+    public static String EXTENSION_DIR = null;
     public static String EXTENSION_NAME = "JavaBridge";
     public static String THREAD_POOL_MAX_SIZE = "20";
     static {

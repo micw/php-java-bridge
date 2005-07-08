@@ -1,6 +1,9 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 2.0.7pre
+%define version 2.0.7pre3
 %define release 1
+%define PHP_MAJOR_VERSION %(LANG=C rpm -q --queryformat "%{VERSION}" php | sed 's/\\\..*$//')
+%define have_sysconfig_java %(test -s /etc/sysconfig/java && echo 1 || echo 0)
+
 Name: php-java-bridge
 Summary: PHP Hypertext Preprocessor to Java Bridge
 Group: Development/Languages
@@ -9,10 +12,28 @@ Release: %{release}
 License: The PHP license (see "LICENSE" file included in distribution)
 URL: http://www.sourceforge.net/projects/php-java-bridge
 Source0: http://osdn.dl.sourceforge.net/sourceforge/php-java-bridge/php-java-bridge_%{version}.tar.bz2
-BuildRequires: php-devel >= 4.3.6
-BuildRequires: gcc >= 3.3.3
-BuildRequires: httpd
+
+
+BuildRequires: php-devel >= 4.3.2
+BuildRequires: gcc >= 3.2.3
+BuildRequires: httpd make 
+BuildRequires: libtool >= 1.4.3
+BuildRequires: automake >= 1.6.3
+BuildRequires: autoconf >= 2.57
+%if %{have_sysconfig_java} == 1
+BuildRequires: j2sdk >= 1.4.1
+%else
+BuildRequires: java-devel >= 1.4.2
+%endif
+
+
+# PHP 4 or PHP 5
+%if %{PHP_MAJOR_VERSION} == 4
 Requires: php >= 4.3.2
+Requires: php < 5.0.0
+%else
+Requires: php >= 5.0.4
+%endif
 Requires: httpd 
 Requires: jre >= 1.4.0
 Provides: php-java-bridge
@@ -25,6 +46,7 @@ BuildRoot: /var/tmp/php-java-bridge-%{version}
 Java module/extension for the PHP script language.
 
 %prep
+echo Building for PHP %{PHP_MAJOR_VERSION}. have_sysconfig_java: %{have_sysconfig_java}.
 
 %setup
 

@@ -38,8 +38,19 @@ public class JavaBridgeClassLoader {
 //	return scl;
 //    }
 
+   /*
+    * reset loader to the initial state
+    */
     public void reset() {
 	if (cl!=null) cl.reset();
+    }
+
+    /*
+    * clear all loader caches but
+    * not the input vectors
+    */
+    public void clearCaches() {
+	if (cl!=null) cl.clearCaches();
     }
 
     public Class forName(String name) throws ClassNotFoundException {

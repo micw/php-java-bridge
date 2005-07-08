@@ -34,10 +34,10 @@ is the PHP/Java bridge?</B></FONT></FONT></P>
 <P STYLE="margin-top: 0.42cm; page-break-after: avoid"><FONT ><FONT SIZE=4><B>How does it compare to SOAP or XML-RPC?</B></FONT></FONT></P>
 <ul>
 <li> The PHP/Java Bridge typically runs on the same computer as the PHP interpreter, so a very efficient protocol can be used. An example is provided which dynamically loads a java library and creates a 200x200 excel sheet using more than 40000 PHP/Java library calls.  The php example runs only 3-5 times slower than pure (jit-compiled) java code.
-<li> No need to write and deploy a public interface. The bridge uses reflection to determine what can be accessed in the local backend.
-<li> It is possible to load/unload java libraries at runtime.
+<li> It is not necessary to write and deploy a public interface. The bridge uses reflection to determine what can be accessed in the local backend.
+<li> The PHP scripts can load/unload java libraries at runtime.
 <li> On linux the c/s communication channel is not visible and the backend runs in its own "Security Enhanced Linux" domain.
-<li> Other modules such as XML-RPC do most of their work in the PHP module (in C code), which makes them vulnerable to buffer overflows.  The PHP/Java Bridge module doesn't use any state on the web-server side, it simply forwards the java(...) statements to the local backend. The local backend runs in a different process environment (and on SEL even in a different security domain), it can communicate with the enterprise application server using RMI/IIOP or other java technologies.
+<li> PHP modules such as XML-RPC do most of their work in the web-server (in C code), which makes them vulnerable to buffer overflows.  The PHP/Java Bridge module doesn't use any state on the web-server side, it simply forwards the java(...) statements to the local backend, which can communicate with the enterprise application server using RMI/IIOP or other java technologies.
 </ul>
 <P><FONT > 
   The bridge adds the following primitives to PHP.  The type mappings are shown in <a href="#type-mapping">table 1</a>.
@@ -375,9 +375,9 @@ the PHP/Java bridge at the same time.</FONT></P>
 </P>
 <P><FONT >
   The module has been tested on a Mandrake Linux System (Version 9.2),
-  on RedHat Enterprise 3, RedHat Fedora Core 1..3, FreeBSD 5.3, Solaris 9 (Sparc, 64 bit JVM)
+  on RedHat Enterprise 3, RedHat Fedora Core 1..4, FreeBSD 5.3, Solaris 9 (Sparc, 64 bit JVM)
   and Windows with RedHat Cygwin, but it should run on all Unix-like
-  operating systems including HP-UX, WinXP.  
+  operating systems.  
 </FONT></P>
 <P><FONT >
   Custom java libraries (.jar files) can be stored in the following
@@ -484,7 +484,7 @@ the instructions below (on Security Enhanced Linux please use the RPM or please 
 <BR><BR><code>extension = java.so<BR>[java]<BR>java.socketname="/var/run/.php-java-bridge_socket"</code><br><br>The advantage of this mode is that the java VM no longer depends on the web server and can be examined and re-started independently. The download file contains a script, <code>php-java-bridge.service</code>, which can be used to start/stop the PHP/Java Bridge as system service. All available <code>.ini</code> options are listed in <a href="#ini-options">table 2</a>.</A> </FONT>
 
 	</P>
-	<LI><P><FONT ><A name="mode4">In a production environment which requires <strong>load balancing and failover</strong> it is recommended deploy the backend into a servlet engine or an application server which support these features, tomcat 5 for example. Disable the <code>java.socketname</code>, enable the <code>java.hosts</code> and <code>java.servlet</code> options and start the application server. The <code>.ini</code> file should contain:
+	<LI><P><FONT ><A name="mode4">In a production environment which requires <strong>load balancing and failover</strong> it is recommended deploy the backend into a servlet engine or an application server which supports these features, tomcat 5 for example. Disable the <code>java.socketname</code>, enable the <code>java.hosts</code> and <code>java.servlet</code> options and start the application server. The <code>.ini</code> file should contain:
 <BR><BR><code>extension = java.so<BR>[java]<br>
 java.hosts=&quot;127.0.0.1:8080&quot<br>
 java.servlet="On"

@@ -6,7 +6,6 @@
 
 /* miscellaneous */
 #include <stdio.h>
-#include <assert.h>
 
 /* strings */
 #include <string.h>

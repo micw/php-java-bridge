@@ -6,9 +6,6 @@
 /* time */
 #include <time.h>
 
-/* assert */
-#include <assert.h>
-
 #include "protocol.h"
 #include "php_java.h"
 
@@ -113,7 +110,10 @@ static short is_servlet() {
 char *EXT_GLOBAL(get_servlet_context)() {
   if(!is_servlet()) return 0;
 
-  if(!strncasecmp("on", EXT_GLOBAL(cfg)->servlet, 2)) return DEFAULT_SERVLET;
+  if(!strncasecmp("on", EXT_GLOBAL(cfg)->servlet, 2) || !strncasecmp("1", EXT_GLOBAL(cfg)->servlet, 1)) return DEFAULT_SERVLET;
   return EXT_GLOBAL(cfg)->servlet;
 }
 
+#ifndef PHP_WRAPPER_H
+#error must include php_wrapper.h
+#endif

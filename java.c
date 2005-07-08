@@ -9,11 +9,10 @@
 #include <assert.h>
 #include <errno.h>
 
-#include "php_wrapper.h"
+#include "php_java.h"
 #include "php_globals.h"
 #include "ext/standard/info.h"
 
-#include "php_java.h"
 #include "java_bridge.h"
 
 #ifdef ZEND_ENGINE_2
@@ -353,11 +352,11 @@ PHP_INI_BEGIN()
 	 PHP_INI_ENTRY(EXT_NAME()/**/".hosts",   NULL, PHP_INI_SYSTEM, OnIniHosts)
 	 PHP_INI_ENTRY(EXT_NAME()/**/".classpath", NULL, PHP_INI_SYSTEM, OnIniClassPath)
 	 PHP_INI_ENTRY(EXT_NAME()/**/".libpath",   NULL, PHP_INI_SYSTEM, OnIniLibPath)
-	 PHP_INI_ENTRY(EXT_NAME()/**/"."/**/EXT_NAME()/**/"",   NULL, PHP_INI_SYSTEM, OnIniJava)
-	 PHP_INI_ENTRY(EXT_NAME()/**/"."/**/EXT_NAME()/**/"_home",   NULL, PHP_INI_SYSTEM, OnIniJavaHome)
+	 PHP_INI_ENTRY(EXT_NAME()/**/"."/**/EXT_NAME()/**/"",   NULL, PHP_INI_ALL, OnIniJava)
+	 PHP_INI_ENTRY(EXT_NAME()/**/"."/**/EXT_NAME()/**/"_home",   NULL, PHP_INI_ALL, OnIniJavaHome)
 
-	 PHP_INI_ENTRY(EXT_NAME()/**/".log_level",   NULL, PHP_INI_SYSTEM, OnIniLogLevel)
-	 PHP_INI_ENTRY(EXT_NAME()/**/".log_file",   NULL, PHP_INI_SYSTEM, OnIniLogFile)
+	 PHP_INI_ENTRY(EXT_NAME()/**/".log_level",   NULL, PHP_INI_ALL, OnIniLogLevel)
+	 PHP_INI_ENTRY(EXT_NAME()/**/".log_file",   NULL, PHP_INI_ALL, OnIniLogFile)
 PHP_INI_END()
 
 /* vm_alloc_globals_ctor(zend_vm_globals *vm_globals) */
@@ -1059,12 +1058,11 @@ PHP_MINIT_FUNCTION(EXT)
 	EXT_GLOBAL(cfg)->saddr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
 #endif
   }
-  EXT_GLOBAL(start_server) ();
-  
   assert(!EXT_GLOBAL(ini_last_updated));
   EXT_GLOBAL(ini_last_updated)=EXT_GLOBAL(ini_updated);
   EXT_GLOBAL(ini_updated)=0;
-  
+
+  EXT_GLOBAL(start_server) ();
   return SUCCESS;
 }
 PHP_MINFO_FUNCTION(EXT)
@@ -1080,10 +1078,10 @@ PHP_MINFO_FUNCTION(EXT)
 #if !defined(__MINGW32__) && EXTENSION == JAVA
   php_info_print_table_row(2, EXT_NAME()/**/".libpath", EXT_GLOBAL(cfg)->ld_library_path);
   php_info_print_table_row(2, EXT_NAME()/**/".classpath", EXT_GLOBAL(cfg)->classpath);
-  php_info_print_table_row(2, EXT_NAME()/**/"."/**/EXT_NAME()/**/"_home", EXT_GLOBAL(cfg)->vm_home);
-  php_info_print_table_row(2, EXT_NAME()/**/"."/**/EXT_NAME(), EXT_GLOBAL(cfg)->vm);
 #endif
 #ifndef __MINGW32__
+  php_info_print_table_row(2, EXT_NAME()/**/"."/**/EXT_NAME()/**/"_home", EXT_GLOBAL(cfg)->vm_home);
+  php_info_print_table_row(2, EXT_NAME()/**/"."/**/EXT_NAME(), EXT_GLOBAL(cfg)->vm);
   if(strlen(EXT_GLOBAL(cfg)->logFile)==0) 
 	php_info_print_table_row(2, EXT_NAME()/**/".log_file", "<stdout>");
   else
@@ -1091,6 +1089,9 @@ PHP_MINFO_FUNCTION(EXT)
   php_info_print_table_row(2, EXT_NAME()/**/".log_level", is_level ? EXT_GLOBAL(cfg)->logLevel : "no value (use backend's default level)");
 #endif
   php_info_print_table_row(2, EXT_NAME()/**/".hosts", EXT_GLOBAL(cfg)->hosts);
+#if EXTENSION == JAVA
+  php_info_print_table_row(2, EXT_NAME()/**/".servlet", EXT_GLOBAL(get_servlet_context) ()?EXT_GLOBAL(get_servlet_context) ():"Off");
+#endif
 #ifndef __MINGW32__
   php_info_print_table_row(2, EXT_NAME()/**/" command", s);
 #endif

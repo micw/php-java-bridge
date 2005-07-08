@@ -1,10 +1,5 @@
 Installing the PHP/Java Bridge on Windows
 ----------------------------------------- 
-It is recommended to use the Linux or Unix version of the PHP/Java
-Bridge.  Especially the Linux version can be installed very easily
-(with the command rpm -i php-java-bridge*.rpm), supports fine-grained
-access control through Security Enhanced Linux and allows one to audit
-the activity on the web server and the bridge.
 
 
 * Install a J2RE >= 1.4.0, for example Sun JDK 1.5.0

@@ -23,6 +23,7 @@ Revert it!
 #define NDEBUG
 #endif
 
+#include <assert.h>
 #include "init_cfg.h"
 
 #endif

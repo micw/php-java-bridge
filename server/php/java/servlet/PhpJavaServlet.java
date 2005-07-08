@@ -37,6 +37,7 @@ public class PhpJavaServlet extends HttpServlet {
     public void init(ServletConfig config) throws ServletException {
 	Util.logLevel=Util.DEFAULT_LOG_LEVEL; /* java.log_level in php.ini overrides */
 	Util.logger=new Logger(config.getServletContext());
+        DynamicJavaBridgeClassLoader.initClassLoader(Util.EXTENSION_DIR);
     }
 
     public void doPut (HttpServletRequest req, HttpServletResponse res)
@@ -53,13 +54,15 @@ public class PhpJavaServlet extends HttpServlet {
 	    if(req.getContentLength()==0) {
 		if(req.getHeader("Connection").equals("Close")) {
 		    session.invalidate();
+		    Session.expire(bridge);
+		    bridge.load--;
 		    bridge.logDebug("session closed.");
 		}
 		return;
 	    }
 	    bridge.in = in = req.getInputStream();
 	    bridge.out = out = new ByteArrayOutputStream();
-
+	    if(session.isNew()) bridge.load++;
 	    Request r = new Request(bridge);
 	    try {
 		if(r.initOptions(in, out)) {
@@ -68,7 +71,6 @@ public class PhpJavaServlet extends HttpServlet {
 	    } catch (Throwable e) {
 		Util.printStackTrace(e);
 	    }
-	    Session.expire(bridge);
 	    if(session.isNew())
 		bridge.logDebug("first request terminated (session is new).");
 	    else

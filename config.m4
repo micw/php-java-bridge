@@ -7,7 +7,7 @@ m4_include(tests.m4/java_check_broken_gcc_installation.m4)
 
 PHP_ARG_WITH(java, for java support,
 [  --with-java[=JAVA_HOME]        Include java support])
-AC_ARG_WITH(mono,  [  --with-mono[[=ikvmc.exe location]]             Include mono support], PHP_MONO="$enableval", PHP_MONO="no")
+AC_ARG_WITH(mono,  [  --with-mono[[=ikvmc.exe location]]             Include mono support], PHP_MONO="$withval", PHP_MONO="no")
 PHP_ARG_ENABLE(servlet, for java servlet support,
 [  --enable-servlet[=JAR]         Include java servlet support. JAR must be the location of j2ee.jar or servlet.jar; creates JavaBridge.war])
 
@@ -38,8 +38,9 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
 # create mono.so, compile with -DEXTENSION_DIR="\"$(EXTENSION_DIR)\""
 	PHP_NEW_EXTENSION(mono, php_java_snprintf.c java.c java_bridge.c client.c parser.c protocol.c bind.c init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\"])
           EXTENSION_NAME=MONO
-	  PHP_JAVA_BIN="mono"
+	  PHP_JAVA_BIN="/usr/bin/mono"
 	  COND_GCJ=0
+          PHP_JAVA=${EXTENSION_DIR}
         else 
 # create java.so, compile with -DEXTENSION_DIR="\"$(EXTENSION_DIR)\""
 	PHP_NEW_EXTENSION(java, php_java_snprintf.c java.c java_bridge.c client.c parser.c protocol.c bind.c init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\"])

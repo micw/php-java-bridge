@@ -15,7 +15,7 @@ void usage(char*name){
 /*   fprintf(stderr, "Example 1: %s INET:9167 3 \"\" \n", name); */
 /*   fprintf(stderr, "Example 2: %s node1.log\n", name); */
   fprintf(stderr, "Usage: %s [<logLevel>] <logFile>\n", name);
-  fprintf(stderr, "Example 1: %s INET:9167 3 \"\" \n", name);
+  fprintf(stderr, "Example 1: %s 3 \"\" \n", name);
   fprintf(stderr, "Example 2: %s node.log\n", name);
   exit(1);
 }
@@ -61,7 +61,7 @@ int main(int argc, char**_argv){
       argv[i]=stringdup(_argv[i+1]);
     argv[i]=0;
   }
-  execvp(argv[0], argv);
+  execv(argv[0], argv);
   fprintf(stderr, "Could not execute %s: %s\n", argv[0], strerror(errno));
   return 2;
 }

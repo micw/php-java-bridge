@@ -72,7 +72,7 @@ Build and execution instructions:
 
           [java]
           java.log_level="3"
-          java.servlet="On"
+          java.servlet=On
           java.hosts="127.0.0.1:8080"
 
   This option cannot be used if "Security Enhanced Linux" is switched
@@ -172,8 +172,8 @@ Build and execution instructions:
        ;;java.log_level="<level>"
        java.log_level="3"
 
-       ;;java.servlet="<On|Off>"
-       java.servlet="On"
+       ;;java.servlet=<On|Off>
+       java.servlet=On
 
        ;; java.hosts="<host1>:<port1>;<host2>:<port2>;..."
        java.hosts="127.0.0.1:8080" 
@@ -220,7 +220,7 @@ Build and execution instructions:
 
        [java]
        java.log_level="3"
-       java.servlet="On"
+       java.servlet=On
        java.hosts="127.0.0.1:8080"
 
   The PHP/Java Bridge log output appears in the server log file, for
@@ -346,8 +346,11 @@ Build and execution instructions:
      bit system.
 
    * -DCFG_JAVA_SOCKET_INET: Disables local ("unix domain") sockets on
-     systems which support them. This is needed on FreeBSD if the java VM
-     is a linux executable.
+      systems which support them. This is needed on FreeBSD if the java VM
+      is a linux executable. It is also needed on those Mac OSX platforms
+      which use special JNI libraries (Apple has made some incompatible
+      and undocumented changes to the JNI header structure so that we cannot
+      use the standard Sun or GNU Java JNI to create the natcJavaBridge.so).
 
   Example: make CFLAGS="-m64"
 

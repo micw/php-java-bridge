@@ -13,11 +13,10 @@
 
 /* miscellaneous */
 #include <stdio.h>
-#include <assert.h>
 #include <errno.h>
 
 /* php */
-#include "php_wrapper.h"
+#include "php_java.h"
 #ifdef ZEND_ENGINE_2
 #include "zend_exceptions.h"
 #else
@@ -28,7 +27,6 @@
 #include "parser.h"
 
 #include "java_bridge.h"
-#include "php_java.h"
 
 EXT_EXTERN_MODULE_GLOBALS(EXT)
 

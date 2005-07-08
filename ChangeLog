@@ -1,3 +1,81 @@
+2005-07-08  Jost Boekemeier  <jostb@intern>
+
+	* php-java-bridge.spec: Version 2.0.7pre3
+	
+	* VERSION: Version 2.0.7pre3
+	
+	* README: added note about CFG_JAVA_SOCKET_INET
+
+	* bind.c (ineet_socket_prefix): changed to INET_LOCAL in order to
+	create a local TCP socket.
+
+	* server/php/java/bridge/LocalServerSocket (create): check for
+	INET_LOCAL:
+
+	* server/php/java/bridge/TCPServerSocket
+	(create): check for INET_LOCAL:, store local flag.
+	(newServerSocket): new method.
+	(toString): display INET_LOCAL if necessary.
+
+	* server/php/java/servlet/PhpJavaServlet.java 
+	(init): init dynamic class loader
+	(doPut): expire only at the end of the session, update load.
+	
+	* java.c (MINFO): display servlet status
+	
+	* init_cfg.c.in (get_servlet_context): Check for boolean On.
+
+	* README: java.servlet <On|Off> is a boolean, not a string.
+	
+	
+2005-07-05  Jost Boekemeier  <jostb@intern>
+
+	* php-java-bridge.spec: Version 2.0.7pre2
+	
+	* VERSION: Version 2.0.7pre2
+	
+	* DynamicClassLoader.c (findResource): Fixed NP.
+	
+	* bind.c (get_server_args): Use extension_dir as default for
+	mono.mono_home.
+
+	* config.m4: Use withval, not enableval for --with-mono.
+	Use full path for mono executable.
+	
+	* init_cfg.c.in: Added php wrapper.
+
+	* java.c (MINIT): log_level, log_file, java_home and java_java
+	(mono_home and mono_mono) can be set by the user (INI_ALL).
+	(MINIT): set ini_last_updated early.
+	(MINFO): display mono.mono and mono.mono_home entries.
+
+	* php-java-bridge.spec: Require PHP4 for the RHEL and PHP5 for the
+	FC4 RPM.
+
+	* server/MonoBridge.c.in (usage): Correct display info.
+	(main): Use full path to execute mono.
+
+	* server/php/java/bridge/Session.java (reset): Avoid concurrent
+	modification.
+	
+	* server/php/java/bridge/DynamicClassLoader
+	(classLoaderCache): Changed type from HashMap to Hashtable in
+	order to avoid synchronization problems.
+	(clearCaches): New method.
+
+	* server/php/java/bridge/JavaBridge.java
+	(CreateObject): Correctly handle NoClassDefFoundError.
+
+	* server/php/java/bridge/JavaBrideClassLoader
+	(clearCaches): New method
+
+	* tests.php4/NoClassDefFount.java: New file
+
+	* tests.php4/noClassDefFound.php: New test.
+
+	* tests.php4/noClassDefFound.jar: New file.
+	
+	
 2005-07-03  Jost Boekemeier  <jostb@intern>
 
 	* java.c (PHP_MSHUTDOWN_FUNCTION): Use EXT_GLOBAL to access cfg.
@@ -215,10 +293,6 @@
 	(clear): disabled 
 
 	
-2005-05-20  Boekemeier <jostb@intern>
-
-	* FIXME: jost ChangeLog entries missing
-
 2005-05-22  Boekemeier <jostb@intern>
 
 	* tests.php4/xmlTransform.php: Test rewritten

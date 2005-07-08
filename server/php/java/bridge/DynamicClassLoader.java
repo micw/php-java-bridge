@@ -28,7 +28,7 @@ import java.io.*;
 
 public class DynamicClassLoader extends SecureClassLoader {
 
-  protected static HashMap classLoaderCache = new HashMap(); // Global Cache Map of Classpath=>Soft Reference=>URLClassLoaderEntry
+  protected static Hashtable classLoaderCache = new Hashtable(); // Global Cache Map of Classpath=>Soft Reference=>URLClassLoaderEntry
   protected static Map parentCacheMap = new WeakHashMap(); // Holds global caches for parent Classloaders
   public static long defaultCacheTimeout = 2000;  // By default minumum file modification check interval is 2 seconds, that should be fast enough :)
   public static boolean defaultLazy = true;  // By default lazy classpath addition
@@ -56,6 +56,19 @@ public class DynamicClassLoader extends SecureClassLoader {
     classLoaderCache.clear();
   }
 
+  /*
+   * Clear but keep the input vectors.
+   */
+  public void clearCaches() {
+      clearCache();
+      Iterator iter = classPaths.iterator();
+      long time = System.currentTimeMillis();
+      while (iter.hasNext()) {
+      	Object key = iter.next();
+        URLClassLoaderEntry entry = (URLClassLoaderEntry) classLoaders.get(key);
+        classLoaders.put(key, new URLClassLoaderEntry(entry.cl, entry.lastModified));
+      }     
+  }
   /**
    * Invalidates a given classpath, so that the corresponding classloader gets reloaded.
    * @param classpath
@@ -349,7 +362,7 @@ public class DynamicClassLoader extends SecureClassLoader {
 
   // Not cached
   public Enumeration findResources(String name) throws java.io.IOException {
-      Vector result = null;
+      Vector result = new Vector();
       Enumeration enumeration = super.findResources(name);
       while (enumeration.hasMoreElements()) {
          result.add(enumeration.nextElement());
