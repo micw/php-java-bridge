@@ -113,9 +113,13 @@ public class Response {
     static final byte[] E="<E v=\"".getBytes();
     static final byte[] O="<O v=\"".getBytes();
     static final byte[] m="\" m=\"".getBytes();
+    static final byte[] n="\" n=\"".getBytes();
+    static final byte[] p="\" p=\"".getBytes();
     static final byte[] Xa="<X t=\"A".getBytes();
     static final byte[] Xh="<X t=\"H".getBytes();
     static final byte[] Xe="</X>".getBytes();
+    static final byte[] A="<A v=\"".getBytes();
+    static final byte[] Ae="</A>".getBytes();
     static final byte[] P="<P>".getBytes();
     static final byte[] Pn="<P t=\"N\" v=\"".getBytes();
     static final byte[] Ps="<P t=\"S\" v=\"".getBytes();
@@ -186,6 +190,17 @@ public class Response {
     }
     void writePairEnd() {
 	buf.append(Pe);
+    }
+    public void writeApplyBegin(long object, int pos, String str, int argCount) {
+ 	buf.append(A); buf.append(String.valueOf(object));
+ 	buf.append(p); buf.appendQuoted(String.valueOf(pos));
+ 	buf.append(m); buf.appendQuoted(String.valueOf(str));
+ 	buf.append(n); buf.append(String.valueOf(argCount));
+ 	buf.append(I); buf.append(String.valueOf(result));
+ 	buf.append(c);
+    }
+    public void writeApplyEnd() {
+	buf.append(Ae);
     }
     void flush() throws IOException {
  	if(bridge.logLevel>=4) {

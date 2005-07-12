@@ -1,3 +1,4 @@
+
 /*-*- mode: Java; tab-width:8 -*-*/
 
 package php.java.bridge;
@@ -53,15 +54,15 @@ public class Parser {
 	return OK; 
     }
     
-    ParserTag tag[] = null;
-    byte buf[] = new byte[RECV_SIZE];
-    int len=SLEN;
-    byte s[]= new byte[len];
-    byte ch, mask=(byte)~0;
+    private ParserTag tag[] = null;
+    private byte buf[] = new byte[RECV_SIZE];
+    private int len=SLEN;
+    private byte s[]= new byte[len];
+    private byte ch, mask=(byte)~0;
     // VOJD is VOID for f... windows (VOID is in winsock2.h)
-    static final short BEGIN=0, KEY=1, VAL=2, ENTITY=3, BLOB=4, VOJD=5, END=6; short type=VOJD;
-    short level=0, eor=0, blen=0; boolean in_dquote, eot=false;
-    int pos=0, c=0, i=0, i0=0, e;
+    private static final short BEGIN=0, KEY=1, VAL=2, ENTITY=3, BLOB=4, VOJD=5, END=6; short type=VOJD;
+    private short level=0, eof=0, eor=0, blen=0; boolean in_dquote, eot=false;
+    private int pos=0, c=0, i=0, i0=0, e;
 
     void RESET() {
     	type=VOJD;
@@ -120,11 +121,12 @@ public class Parser {
     }
     short parse(InputStream in) throws IOException {
   
+    	if(eof!=0) return EOF;
+    	
     	while(eor==0) {
 	    if(c==pos) { 
-
 	    	pos=in.read(buf, 0, RECV_SIZE); 
-		if(pos<=0) return EOF;
+		if(pos<=0) return eof=EOF;
 		c=0; 
 
 	    }
@@ -193,6 +195,7 @@ public class Parser {
 	    c++;
 	}
    	RESET();
-	return OK;
+  
+   	return OK;
     }
 }

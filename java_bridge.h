@@ -13,6 +13,7 @@
 
 #define IS_EXCEPTION 86
 
+extern void EXT_GLOBAL(result)(pval* arg, short ignoreNonJava, pval*presult TSRMLS_DC);
 extern int EXT_GLOBAL(get_jobject_from_object)(zval *object, long *obj TSRMLS_DC);
 extern void EXT_GLOBAL(invoke)(char*name, long object, int arg_count, zval**arguments, short ignoreNonJava, pval*presult TSRMLS_DC) ;
 enum constructor {CONSTRUCTOR_NONE, CONSTRUCTOR};

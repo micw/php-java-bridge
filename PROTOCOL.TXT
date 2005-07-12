@@ -1,4 +1,4 @@
-PHP/Java Bridge protocol version 1.0.2
+PHP/Java Bridge protocol version 1.1
 
 Requests are marked with "->", responses with "<-".  The server
 continues to process requests until EOF. Only the first character is
@@ -32,12 +32,6 @@ Example:
 
 
 Optional requests:
-
-The optional M, F requests may be used to capture a method and invoke
-it more than once. The M (GetMethod) request responds with a method
-[O]bject which can be used as the argument for all further F
-(CallMethod) requests. [I]nvoke should be used instead of M/F. It is a
-little bit slower but easier to handle.
 
 All aquired [O]bject handles may be destroyed by invoking U (destroy).
 However, this isn't necessary either.  The server tracks all handles
@@ -103,6 +97,22 @@ i: long (reply only)
 NULL values can be send as either v="" or v="0"
 
 <-
+Apply:
+<A v=object p=pos# m=stringRepresentation n=param# i=ID> ...ARGS...
+</A>
+v: long
+p: long
+m: string
+n: long
+i: long
+
+->
+Result:
+<R i=ID> ...ARG...
+</R>
+i: long
+
+<-
 Exception:
 <E v=object m=stringRepresentation i=ID />
 v: long
@@ -127,22 +137,6 @@ v: string (if X=H and t=S)
 
 
 OPTIONAL requests:
-->
-MethodGet:
-<M v=object, m=method id=ID > ...ARGS...
-</M>
-v: long
-m: string
-i: long
-
-->
-CallMethod:
-<F v=object m=method i=ID > ...ARGS...
-</F>
-v: long
-m: long
-i: long
-
 ->
 Destroy:
 <U v=object />

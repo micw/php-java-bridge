@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class Request implements IDocHandler {
@@ -35,7 +36,7 @@ public class Request implements IDocHandler {
     				ht.put(key, val);
     			}
     			else {
-    				ht.put(new Integer(count++), val);
+    				ht.put(new Long(count++), val);
     			}
     		} else {
     			if(array==null) array=new ArrayList();
@@ -113,6 +114,11 @@ public class Request implements IDocHandler {
 	    args.id=Long.parseLong(st[2].getStringValue(), 10);
 	    break;
 	}
+	case 'R': {
+	    args.type=ch;
+	    args.id=Long.parseLong(st[0].getStringValue(), 10);
+	    break;
+	}
 	case 'X': {
 		args.composite=st[0].string[st[0].off];
 		break;
@@ -128,12 +134,6 @@ public class Request implements IDocHandler {
 		break;
 	}
 
-	case 'F':
-	case 'M': {
-		//FIXME: Split invoke
-		throw new NotImplementedException();
-		//break;
-	}
 	case 'U': {
 	    int i=Integer.parseInt(st[0].getStringValue(), 10);
 	    bridge.globalRef.remove(i);
@@ -188,29 +188,49 @@ public class Request implements IDocHandler {
 		    bridge.GetSetProp(args.callObject, args.method, args.getArgs(), response);
 		else
 		    bridge.Invoke(args.callObject, args.method, args.getArgs(), response);
-		    response.flush();
+		response.flush();
 		break;
 	    case 'C':
 		if(args.predicate)
 		    bridge.CreateObject((String)args.callObject, false, args.getArgs(), response);
 		else
 		    bridge.CreateObject((String)args.callObject, true, args.getArgs(), response);
-		    response.flush();
+		response.flush();
 		break;
-	    case 'F':
-	    	throw new NotImplementedException();
-		//FIXME split invoke
-		//CallMethod(v, m, args, response);
-		//response.flush();
-		//break;
-	    case 'M':
-	    	throw new NotImplementedException();
-		//FIXME split invoke
-		//GetMethod(v, m, args, response);
-		//response.flush();
-		//break;
 	    }
 	    args.reset();
 	}
+    }
+    public Object[] handleSubRequests() throws IOException {
+    	response.flush();
+    	Args current = args;
+    	args = new Args();
+	while(Parser.OK==parser.parse(bridge.in)){
+	    response.setResult(args.id, parser.options); 
+	    switch(args.type){
+	    case 'I':
+		if(args.predicate)
+		    bridge.GetSetProp(args.callObject, args.method, args.getArgs(), response);
+		else
+		    bridge.Invoke(args.callObject, args.method, args.getArgs(), response);
+		response.flush();   
+		break;
+	    case 'C':
+		if(args.predicate)
+		    bridge.CreateObject((String)args.callObject, false, args.getArgs(), response);
+		else
+		    bridge.CreateObject((String)args.callObject, true, args.getArgs(), response);
+		response.flush();   
+		break;
+	    case 'R':
+	    	Object[] retval = args.getArgs();
+	    	response.flush();
+	    	args = current;
+	    	return retval;
+	    }
+	    args.reset();
+	}
+	args = current;
+	return null;
     }
 }

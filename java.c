@@ -229,8 +229,54 @@ EXT_FUNCTION(EXT_GLOBAL(get_values))
   (*jenv)->writeObject(jenv, obj);
   (*jenv)->writeInvokeEnd(jenv);
 #else
-  return_value = *pobj;
+  COPY_PZVAL_TO_ZVAL(*return_value, *pobj);
 #endif
+}
+
+EXT_FUNCTION(EXT_GLOBAL(closure))
+{
+  proxyenv *jenv;
+  int key_type;
+  char *string_key;
+  ulong num_key;
+  zval **pobj, **pclass;
+  long obj, class;
+  zend_class_entry *ce = 0;
+
+  if (ZEND_NUM_ARGS()!=2 || zend_get_parameters_ex(2, &pobj, &pclass) == FAILURE)
+	WRONG_PARAM_COUNT;
+
+  //convert_to_object_ex(pobj);
+  //convert_to_object_ex(pclass);
+
+  jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
+  if(!jenv) RETURN_NULL();
+  if (Z_TYPE_PP(pobj) == IS_OBJECT) ce = Z_OBJCE_PP(pobj);
+  if (!ce) WRONG_PARAM_COUNT;	/* FIXME: proper message */
+
+  class = 0;
+  EXT_GLOBAL(get_jobject_from_object)(*pclass, &class TSRMLS_CC);
+  if(!class) {
+	zend_error(E_ERROR, "Argument #1 for %s() must be a "/**/EXT_NAME()/**/" object", get_active_function_name(TSRMLS_C));
+	return;
+  }
+
+  (*jenv)->writeInvokeBegin(jenv, 0, "makeClosure", 0, 'I', return_value);
+  (*jenv)->writeLong(jenv, (long)*pobj);
+  (*jenv)->writeObject(jenv, class); /* FIXME: check for array */
+  (*jenv)->writeCompositeBegin_a(jenv);
+
+  zend_hash_internal_pointer_reset(&ce->function_table);
+  while ((key_type = zend_hash_get_current_key(&ce->function_table, &string_key, &num_key, 1)) != HASH_KEY_NON_EXISTANT) {
+	if (key_type == HASH_KEY_IS_STRING) {
+	  (*jenv)->writePairBegin(jenv);
+	  (*jenv)->writeString(jenv, string_key, strlen(string_key));
+	  (*jenv)->writePairEnd(jenv);
+	}
+	zend_hash_move_forward(&ce->function_table);
+  }
+  (*jenv)->writeCompositeEnd(jenv);
+  (*jenv)->writeInvokeEnd(jenv);
 }
 
 function_entry EXT_GLOBAL(functions)[] = {
@@ -244,6 +290,7 @@ function_entry EXT_GLOBAL(functions)[] = {
 	EXT_FE(EXT_GLOBAL(get_server_name), NULL)
 	EXT_FE(EXT_GLOBAL(reset), NULL)
 	EXT_FE(EXT_GLOBAL(get_values), NULL)
+	EXT_FE(EXT_GLOBAL(closure), NULL)
 	{NULL, NULL, NULL}
 };
 

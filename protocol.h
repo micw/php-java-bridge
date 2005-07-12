@@ -86,6 +86,8 @@ struct proxyenv_ {
   void (*writeCreateObjectEnd)(proxyenv *env);
   void (*writeInvokeBegin)(proxyenv *env, long object, char*method, size_t strlen, char property, void* result);
   void (*writeInvokeEnd)(proxyenv *env);
+  void (*writeResultBegin)(proxyenv *env, void* result);
+  void (*writeResultEnd)(proxyenv *env);
   void (*writeGetMethodBegin)(proxyenv *env, long object, char*method, size_t strlen, void* result);
   void (*writeGetMethodEnd)(proxyenv *env);
   void (*writeCallMethodBegin)(proxyenv *env, long object, long method, void* result);

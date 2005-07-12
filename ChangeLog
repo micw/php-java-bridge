@@ -1,3 +1,48 @@
+2005-07-12  Jost Boekemeier  <jostb@intern>
+
+	* java.c (get_values): correctly assign variable for PHP4.
+	
+	* PROTOCOL.TXT: Removed optional M/F requests, added A(pply) and
+	R(esult) requests. Protocol version 1.1.
+
+	* client.c 
+	(setResultFromApply): New procedure.
+	(stack_elem): added variables for apply
+	(begin): parse apply
+	(end): parse apply
+
+	* java.c (closure): New user function
+
+	* java_bridge.c (result): new procedure
+
+	* protocol.c (ResultBegin, ResultEnd): New in 1.1.
+
+	* protocol.h (writeResultBegin, writeResultEnd): New protocol requests.
+
+	* server/php/java/bridge/JavaBridge.java (coerce): Must be called from PhpProcedure.
+	(makeClosure): New methods.
+
+	* server/php/java/bridge/JavaBridgeClassLoader.java (getClassLoader): enabled.
+
+	* server/php/java/bridge/Parser.java (tag, len, s, ch, mask, level,
+	type, eor, blen, in_dquote, eot): Changed to private.
+	(parse): check for EOF.
+
+	* server/php/java/bridge/Request.java (add): Key must be a Long,
+	otherwise we get class cast exceptions in coerce.  This bug was
+	not detected until now because PHP usually generates the keys for
+	us.
+	(begin): Parse 'R' request, removed M/F requests.
+	(handleSubRequests): New method.
+
+	* server/php/java/bridge/Response.java (p, n, A, Ae): New strings.
+	(writeApplyBegin): New procedure.
+	(writeApplyEnd): New procedure.
+
+	* server/php/java/servlet/PhpJavaServlet.java (doPut): Access load
+	in a static way.
+		
+	
 2005-07-08  Jost Boekemeier  <jostb@intern>
 
 	* php-java-bridge.spec: Version 2.0.7pre3

@@ -33,10 +33,10 @@ public class JavaBridgeClassLoader {
 	cl.updateJarLibraryPath(path);
     }
 
-//    public ClassLoader getClassLoader() {
-//	if(cl!=null) return (ClassLoader)cl;
-//	return scl;
-//    }
+    public ClassLoader getClassLoader() {
+	if(cl!=null) return (ClassLoader)cl;
+	return scl;
+    }
 
    /*
     * reset loader to the initial state

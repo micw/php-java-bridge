@@ -55,14 +55,14 @@ public class PhpJavaServlet extends HttpServlet {
 		if(req.getHeader("Connection").equals("Close")) {
 		    session.invalidate();
 		    Session.expire(bridge);
-		    bridge.load--;
+		    JavaBridge.load--;
 		    bridge.logDebug("session closed.");
 		}
 		return;
 	    }
 	    bridge.in = in = req.getInputStream();
 	    bridge.out = out = new ByteArrayOutputStream();
-	    if(session.isNew()) bridge.load++;
+	    if(session.isNew()) JavaBridge.load++;
 	    Request r = new Request(bridge);
 	    try {
 		if(r.initOptions(in, out)) {

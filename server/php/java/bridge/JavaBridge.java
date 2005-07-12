@@ -605,7 +605,7 @@ public class JavaBridge implements Runnable {
     // unfortunately PHP only supports wide formats, so to be practical
     // some (possibly lossy) conversions are required.
     //
-    private Object[] coerce(Class parms[], Object args[], Response response) {
+    Object[] coerce(Class parms[], Object args[], Response response) {
 	Object result[] = args;
 	Class targetType = null;
 	int size = 0;
@@ -1212,6 +1212,18 @@ public class JavaBridge implements Runnable {
     	}
     }
 
+    
+    public Object makeClosure(long object, Class iface, String name) {
+    	return PhpProcedure.createProxy(this, new String[] {name}, new Class[] {iface}, object);
+    }
+
+    public Object makeClosure(long object, Class iface, String names[]) {
+    	return PhpProcedure.createProxy(this, names, new Class[] {iface}, object);
+    }
+    
+    public Object makeClosure(long object, Class interfaces[], String names[]) {
+    	return PhpProcedure.createProxy(this, names, interfaces, object);
+    }
     /*
      * Reset the global caches of the bridge.
      * Currently this is the classloader and the session.

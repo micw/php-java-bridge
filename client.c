@@ -101,6 +101,59 @@ static  void  setResultFromObject  (pval *presult, long value) {
 
 }
 
+static void setResultFromApply(zval *presult, long pos, unsigned char*fname, size_t len, zval *object, zval *params)
+{
+  zval ***func_params, *func, *retval_ptr;
+  HashTable *func_params_ht;
+  char *name;
+  int count;
+  int current = 0;
+  zend_class_entry *ce = 0;
+  int key_type;
+  char *string_key;
+  ulong num_key;
+  
+  TSRMLS_FETCH();
+  
+  if(object) {
+	ce = Z_OBJCE_P(object);
+	zend_hash_internal_pointer_reset(&ce->function_table);
+	while ((key_type = zend_hash_get_current_key(&ce->function_table, &string_key, &num_key, 1)) != HASH_KEY_NON_EXISTANT) {
+	  if (key_type == HASH_KEY_IS_STRING) {
+		if(!pos) break;
+		pos--;
+	  }
+	  zend_hash_move_forward(&ce->function_table);
+	}
+	fname = (unsigned char*)string_key;
+	len = strlen(string_key);
+  }
+
+  MAKE_STD_ZVAL(func);
+  setResultFromString(func, fname, len);
+  
+
+  func_params_ht = Z_ARRVAL_P(params);
+  count = zend_hash_num_elements(func_params_ht);
+  func_params = safe_emalloc(sizeof(zval **), count, 0);
+  
+  for (zend_hash_internal_pointer_reset(func_params_ht);
+	   zend_hash_get_current_data(func_params_ht, (void **) &func_params[current]) == SUCCESS;
+	   zend_hash_move_forward(func_params_ht)
+	   ) {
+	current++;
+  }
+  
+  if (call_user_function_ex(object?0:EG(function_table), &object, func, &retval_ptr, count, func_params, 0, NULL TSRMLS_CC) != SUCCESS) {
+	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not call user function: %s.", 23, fname);
+  } else {
+	EXT_GLOBAL(result)(retval_ptr, 0, presult TSRMLS_CC);
+  }
+  
+  zval_ptr_dtor(&retval_ptr);
+  efree(func_params);
+}
+
 static  void  setResultFromArray  (pval *presult) {
   array_init( presult );
   INIT_PZVAL( presult );
@@ -157,8 +210,13 @@ static  void  setException  (pval *presult, long value, unsigned char *strValue,
 
 #define GET_RESULT(pos) if(!ctx->id) {ctx->id=(zval*)strtol((const char*)PARSER_GET_STRING(st, pos), 0, 10);}
 struct stack_elem { 
-  zval *container;
+  zval *container;				/* ctx->id */
   char composite_type;          /* A|H */
+
+  unsigned char *m;						/* see Apply in PROTOCOL.TXT */
+  size_t m_length;
+  long v, p, n;
+  zval *retval;
 };
 struct parse_ctx {
   zval*id;
@@ -169,6 +227,29 @@ static void begin(parser_tag_t tag[3], parser_cb_t *cb){
   parser_string_t *st=tag[2].strings;
   
   switch ((*tag[0].strings[0].string)[tag[0].strings[0].off]) {
+  case 'A':						/* receive apply args as normal array */
+	GET_RESULT(4);
+	{
+	  /* store array result in tmp_retval, keep ctx->id in retval */
+	  zval *tmp_retval;
+	  MAKE_STD_ZVAL(tmp_retval);
+	  ZVAL_NULL(tmp_retval);
+
+      struct stack_elem stack_elem = 
+		{ tmp_retval, 'A', 
+		  /*FIXME*/		  strdup(PARSER_GET_STRING(st, 2)), /* m */
+		  st[2].length,			/* m_length */
+		  strtol((const char*)PARSER_GET_STRING(st, 0), 0, 10), /* v */
+		  strtol((const char*)PARSER_GET_STRING(st, 1), 0, 10), /* p */
+		  strtol((const char*)PARSER_GET_STRING(st, 3), 0, 10), /* n */
+		  ctx->id
+		}; 
+
+	  zend_stack_push(&ctx->containers, &stack_elem, sizeof stack_elem);
+
+	  setResultFromArray(tmp_retval);
+	  break;
+	}
   case 'X':
 	GET_RESULT(1);
 	{
@@ -230,7 +311,19 @@ static void begin(parser_tag_t tag[3], parser_cb_t *cb){
   }
 }
 static void end(parser_string_t st[1], parser_cb_t *cb){
-  switch (*(st[0].string)[st[0].off]) {
+  char c = (*(st[0].string)[st[0].off]);
+  switch (c) {
+  case 'A': 
+	{ 
+	  int err;
+	  struct parse_ctx *ctx=(struct parse_ctx*)cb->ctx;
+      struct stack_elem *stack_elem;
+	  zend_stack_top(&ctx->containers, (void**)&stack_elem);
+	  setResultFromApply(stack_elem->retval, stack_elem->p, stack_elem->m, stack_elem->m_length, (zval*)stack_elem->v, stack_elem->container);
+	  err=zend_stack_del_top(&ctx->containers);
+	  assert(SUCCESS==err);
+
+	}
   case 'X': 
 	{ 
 	  int err;

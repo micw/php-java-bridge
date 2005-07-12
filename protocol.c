@@ -156,6 +156,19 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    assert((*env)->send_len<=(*env)->send_size);
    flush(env);
  }
+ static void ResultBegin(proxyenv *env, void*result) {
+   size_t flen;
+   GROW(FLEN+ILEN);
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<R i=\"%ld\">", (long)result);
+   assert((*env)->send_len<=(*env)->send_size);
+ }
+ static void ResultEnd(proxyenv *env) {
+   size_t flen;
+   GROW(FLEN);
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "</R>");
+   assert((*env)->send_len<=(*env)->send_size);
+   flush(env);
+ }
  static void GetMethodBegin(proxyenv *env, long object, char*method, size_t len, void* result) {
    size_t flen;
    if(!len) len=strlen(method);
@@ -312,6 +325,8 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
 
    (*env)->writeInvokeBegin=InvokeBegin;
    (*env)->writeInvokeEnd=InvokeEnd;
+   (*env)->writeResultBegin=ResultBegin;
+   (*env)->writeResultEnd=ResultEnd;
    (*env)->writeCreateObjectBegin=CreateObjectBegin;
    (*env)->writeCreateObjectEnd=CreateObjectEnd;
    (*env)->writeGetMethodBegin=GetMethodBegin;
