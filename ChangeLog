@@ -1,3 +1,20 @@
+2005-07-13  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/JavaBridge.java (coerce): Check for PhpProcedureProxy
+
+	* server/php/java/bridge/PhpProcedure.java: new file
+
+	* server/php/java/bridge/PhpProcedureProxy.java: new file
+
+	* server/php/java/bridge/Response.java (defaultValuesHook): new global
+	(Response): Initialize defaultValuesHook and hook
+	(reset): new method
+	(flush): call reset in order to clear the response buffer ant to restore the hook.
+
+	* tests.mono+net/gtk.php: New test
+
+	* tests.php4/swt.php: New test
+	
 2005-07-12  Jost Boekemeier  <jostb@intern>
 
 	* java.c (get_values): correctly assign variable for PHP4.

@@ -69,11 +69,12 @@ public class Response {
             return (res.options & 2)==2;
         }
     }
-    public ValuesHook hook = new ValuesHook(this);
+    public ValuesHook defaultValuesHook, hook; 
     
     public Response(JavaBridge bridge) {
 	buf=new OutBuf();
 	this.bridge=bridge;
+	hook = defaultValuesHook = new ValuesHook(this);
     }
     
     public void setResult(long id, byte options) {
@@ -207,9 +208,12 @@ public class Response {
 	    bridge.logDebug(" <-- " +newString(buf.getFirstBytes()));
 	}
 	buf.writeTo(bridge.out);
-	buf.reset();
+	reset();
     }
-    
+    void reset() {
+    	hook = defaultValuesHook;
+    	buf.reset();
+    }
     public String toString() {
     	return newString(buf.getFirstBytes());
     }

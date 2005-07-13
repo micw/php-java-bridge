@@ -6,11 +6,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
 public class Request implements IDocHandler {
 
+	static final Object[] empty = new Object[0];
     private Parser parser;
     private JavaBridge bridge;
     public static class PhpArray extends HashMap { // for PHP's array()
@@ -63,7 +63,6 @@ public class Request implements IDocHandler {
     		}
                 composite=0;
     	}
-    	private static final Object[] empty = new Object[0];
     	Object[] getArgs() {
     		return (array==null) ? empty : array.toArray();
     	}
@@ -224,13 +223,13 @@ public class Request implements IDocHandler {
 		break;
 	    case 'R':
 	    	Object[] retval = args.getArgs();
-	    	response.flush();
+	    	response.reset();
 	    	args = current;
 	    	return retval;
 	    }
 	    args.reset();
 	}
 	args = current;
-	return null;
+	return empty;
     }
 }

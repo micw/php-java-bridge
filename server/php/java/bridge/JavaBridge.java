@@ -611,6 +611,13 @@ public class JavaBridge implements Runnable {
 	int size = 0;
 
 	for (int i=0; i<args.length; i++) {
+		if (Util.getClass(args[i]) == PhpProcedureProxy.class) {
+			Class param = parms[i];
+			if(!param.isInterface())
+				args[i] = ((PhpProcedureProxy)args[i]).getProxy(param.getInterfaces());
+			else
+				args[i] = ((PhpProcedureProxy)args[i]).getProxy(new Class[] {param});
+		}
 	    if (args[i] instanceof byte[] && !parms[i].isArray()) {
 		Class c = parms[i];
 		String s = response.newString((byte[])args[i]);
@@ -1214,15 +1221,15 @@ public class JavaBridge implements Runnable {
 
     
     public Object makeClosure(long object, Class iface, String name) {
-    	return PhpProcedure.createProxy(this, new String[] {name}, new Class[] {iface}, object);
+    	return new PhpProcedureProxy(this, new String[] {name}, iface==null?null:new Class[] {iface}, object);
     }
 
     public Object makeClosure(long object, Class iface, String names[]) {
-    	return PhpProcedure.createProxy(this, names, new Class[] {iface}, object);
+    	return new PhpProcedureProxy(this, names, iface==null?null:new Class[] {iface}, object);
     }
     
     public Object makeClosure(long object, Class interfaces[], String names[]) {
-    	return PhpProcedure.createProxy(this, names, interfaces, object);
+    	return new PhpProcedureProxy(this, names, interfaces, object);
     }
     /*
      * Reset the global caches of the bridge.
