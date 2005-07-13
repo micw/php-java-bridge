@@ -240,6 +240,8 @@ EXT_FUNCTION(EXT_GLOBAL(closure))
   zval **pobj, **pclass;
   long obj, class = 0;
   zend_class_entry *ce = 0;
+  int key_type;
+  proxyenv *jenv;
   int argc = ZEND_NUM_ARGS();
 
   if (argc>2 || zend_get_parameters_ex(argc, &pobj, &pclass) == FAILURE)
