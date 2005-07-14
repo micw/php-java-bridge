@@ -1,3 +1,13 @@
+2005-07-14  Jost Boekemeier  <jostb@intern>
+
+	* tests.mono+net/gtk.php: Show how to call PHP code from java
+	or mono.
+	
+	* server/php/java/bridge/Response.java
+	(append_for_OutBuf_getFirstBytes,
+	append_none_for_OutBuf_getFirstBytes): must not be private because
+	methods within OutBuf reference them (needed for MONO).
+	
 2005-07-13  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/JavaBridge.java (coerce): Check for PhpProcedureProxy

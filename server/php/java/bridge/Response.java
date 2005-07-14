@@ -7,8 +7,8 @@ import java.io.IOException;
 public class Response {
     
     // used in getFirstBytes() only
-    private static final byte append_for_OutBuf_getFirstBytes[] = new byte[] {'.', '.', '.' }; 
-    private static final byte append_none_for_OutBuf_getFirstBytes[] = new byte[0]; 
+    static final byte append_for_OutBuf_getFirstBytes[] = new byte[] {'.', '.', '.' }; 
+    static final byte append_none_for_OutBuf_getFirstBytes[] = new byte[0]; 
 
     private class OutBuf extends ByteArrayOutputStream {
 	
