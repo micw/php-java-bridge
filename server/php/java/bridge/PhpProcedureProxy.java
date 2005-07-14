@@ -6,7 +6,7 @@ package php.java.bridge;
 /**
  * This class creates a procedure proxy proxy which evaluates to a
  * dynamic proxy in coerce(). If a user has supplied a type as the
- * second parameter to the closure() call, that type will be used for
+ * second argument to the closure() call, that type will be used for
  * the proxy. Otherwise the proxy is generic.
  */
 public class PhpProcedureProxy {
