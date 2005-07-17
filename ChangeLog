@@ -1,3 +1,52 @@
+2005-07-17  Jost Boekemeier  <jostb@intern>
+
+	* bind.c (get_server_args): New mono release fixes a bug, so we
+	can now send the socket# to the backend.
+
+	* client.c (setResultFromApply, begin, end): pass the cname
+        (handle_request): tail call from the setResultFromProcedure into
+	the handle_request loop.
+	
+	* PROTOCOL.TXT: pass the cname (the "php" name of the function),
+	not the index#
+	
+	* java.c (require): call mono setLibraryPath in order to load
+	CLR dll's.
+	(closure): rewritten
+
+	* java_bridge.c (result): allow passing null args.
+
+	* protocol.c (end): new procedure
+	(flush): call end.
+	(ResultEnd): do not auto-flush, we jump right back into the
+	handle_request and then do a tail-call to return from the
+	sub-request.
+
+	* server/RunMonoBridge.c.in: code enabled for latest mono version.
+
+	* server/php/java/bridge/JavaBridge.java (loadMethod, CLRAssembly): new
+	globals.
+        (init): initialize globals
+	(coerce): check for CLR
+	(setLibraryPath): new procedure
+	
+	* server/php/java/bridge/PhpProcedure.java
+	(setResultFromProcedure): pass cname
+
+	* server/php/java/bridge/Response.java (writeApplyBegin): pass
+	cname instead of pos.
+	
+        * examples/gui/swing-button, examples/gui/swt-button,
+	examples/gui/gtk-fileselector.php, examples/gui/gtk-button.php:
+	New examples.
+	
+2005-07-14  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/Response.java
+	(append_for_OutBuf_getFirstBytes,
+	append_none_for_OutBuf_getFirstBytes): must not be private because
+	methods within OutBuf reference them (needed for MONO).
+	
 2005-07-13  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/JavaBridge.java (coerce): Check for PhpProcedureProxy
