@@ -55,7 +55,10 @@ int EXT_GLOBAL(get_jobject_from_object)(pval*object, long *obj TSRMLS_DC)
 void EXT_GLOBAL(result) (pval* arg, short ignoreNonJava, pval*presult TSRMLS_DC) {
   proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   (*jenv)->writeResultBegin(jenv, presult);
-  writeArgument(arg, ignoreNonJava TSRMLS_CC);
+  if(arg)
+	writeArgument(arg, ignoreNonJava TSRMLS_CC);
+  else
+	(*jenv)->writeObject(jenv, 0);
   (*jenv)->writeResultEnd(jenv);
 }
 

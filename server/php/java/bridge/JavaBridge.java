@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.Vector;
 
 
@@ -47,8 +48,12 @@ public class JavaBridge implements Runnable {
     // the current request (if any)
     Request request;
 
+    // false if we detect that setAccessible is not possible
     boolean canModifySecurityPermission = true;
 
+    // method to load a CLR assembly
+    private static Method loadMethod = null;
+    private static Class CLRAssembly = null;
 
     //
     // Native methods, only called  when loadLibrary succeeds.
@@ -215,6 +220,10 @@ public class JavaBridge implements Runnable {
 	String logFile=null;
 	String sockname=null;
 	ISocketFactory socket = null;
+    	try {
+    	    CLRAssembly = Class.forName("cli.System.Reflection.Assembly");
+    	    loadMethod = CLRAssembly.getMethod("Load", new Class[] {String.class});
+    	} catch (Exception e) {}
 	try {
 	    if(s.length>0) {
 		sockname=s[0];
@@ -613,9 +622,17 @@ public class JavaBridge implements Runnable {
 	for (int i=0; i<args.length; i++) {
 		if (Util.getClass(args[i]) == PhpProcedureProxy.class) {
 			Class param = parms[i];
-			if(!param.isInterface())
+			if(!param.isInterface()) {
+			    if(CLRAssembly!=null) // CLR uses an inner method class
+			    	try {
+			    	    args[i] = ((PhpProcedureProxy)args[i]).getProxy(new Class[] {cl.forName(param.getName() + "$Method")});
+			    	} catch (ClassNotFoundException e) { 
+			    	    logDebug("Could not find CLR interface for: " + param);
+			    	    args[i] = ((PhpProcedureProxy)args[i]).getProxy(param.getInterfaces());
+			    	}
+			    else
 				args[i] = ((PhpProcedureProxy)args[i]).getProxy(param.getInterfaces());
-			else
+			} else
 				args[i] = ((PhpProcedureProxy)args[i]).getProxy(new Class[] {param});
 		}
 	    if (args[i] instanceof byte[] && !parms[i].isArray()) {
@@ -1176,10 +1193,32 @@ public class JavaBridge implements Runnable {
     	cl.updateJarLibraryPath(_path);
     }
 
+    // Set the library path for ECMA dll's
+    public void setLibraryPath(String _path) {
+        if(_path==null || _path.length()<2) return;
+
+        // add a token separator if first char is alnum
+	char c=_path.charAt(0);
+	if((c>='A' && c<='Z') || (c>='a' && c<='z') ||
+	   (c>='0' && c<='9') || (c!='.' || c!='/'))
+	    _path = ";" + _path;
+
+	String path = _path.substring(1);
+	StringTokenizer st = new StringTokenizer(path, _path.substring(0, 1));
+	while (st.hasMoreTokens()) {
+	    String s = st.nextToken();
+	    try {
+		loadMethod.invoke(CLRAssembly, new Object[] {s} );
+	    } catch (Exception e) {
+                logError("Could not load cli."+ s +".");
+	    }
+	}
+    }
+    
     public void setFileEncoding(String fileEncoding) {
 	this.fileEncoding=fileEncoding;
     }
-
+    
     public static boolean InstanceOf(Object ob, Object c) {
 	Class clazz = Util.getClass(c);
 	return clazz.isInstance(ob);

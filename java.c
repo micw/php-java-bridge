@@ -111,7 +111,11 @@ static void require(INTERNAL_FUNCTION_PARAMETERS) {
 
   convert_to_string_ex(path);
 
+#if EXTENSION == JAVA
   (*jenv)->writeInvokeBegin(jenv, 0, "setJarLibraryPath", 0, 'I', return_value);
+#else
+  (*jenv)->writeInvokeBegin(jenv, 0, "setLibraryPath", 0, 'I', return_value);
+#endif
   (*jenv)->writeString(jenv, Z_STRVAL_PP(path), Z_STRLEN_PP(path));
   (*jenv)->writeInvokeEnd(jenv);
 }
@@ -237,30 +241,39 @@ EXT_FUNCTION(EXT_GLOBAL(closure))
 {
   char *string_key;
   ulong num_key;
-  zval **pobj, **pclass;
+  zval **pobj, **pfkt, **pclass;
   long obj, class = 0;
-  zend_class_entry *ce = 0;
   int key_type;
   proxyenv *jenv;
   int argc = ZEND_NUM_ARGS();
+  HashTable *function_mappings = 0;
 
-  if (argc>2 || zend_get_parameters_ex(argc, &pobj, &pclass) == FAILURE)
+  TSRMLS_FETCH();
+  if (argc>3 || zend_get_parameters_ex(argc, &pobj, &pfkt, &pclass) == FAILURE)
 	WRONG_PARAM_COUNT;
 
   jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   if(!jenv) RETURN_NULL();
 
-  if (argc>1) {
+  if (argc>2) {
 	EXT_GLOBAL(get_jobject_from_object)(*pclass, &class TSRMLS_CC);
 	if(!class) {
-	  zend_error(E_ERROR, "Argument #2 for %s() must be a "/**/EXT_NAME()/**/" object", get_active_function_name(TSRMLS_C));
+	  zend_error(E_ERROR, "Argument #3 for %s() must be a "/**/EXT_NAME()/**/" object", get_active_function_name(TSRMLS_C));
 	  return;
 	}
   }
-
-  if(argc>0) {
-	if (Z_TYPE_PP(pobj) == IS_OBJECT) ce = Z_OBJCE_PP(pobj);
-	if (!ce) WRONG_PARAM_COUNT;	/* FIXME: proper message */
+	
+  if(argc>1) {
+	if (Z_TYPE_PP(pfkt) == IS_STRING) {
+	  char *str = Z_STRVAL_PP(pfkt);
+	  size_t length = Z_STRLEN_PP(pfkt);
+	  ALLOC_HASHTABLE(function_mappings);
+	  zend_hash_init(function_mappings, 0, NULL, ZVAL_PTR_DTOR, 0);
+	  zend_hash_add(function_mappings, str, length, str, length, 0);
+	} else {
+	  WRONG_PARAM_COUNT;		/* FIXME: check array */
+	}
+  } else if (Z_TYPE_PP(pobj) == IS_OBJECT) {
 	zval_add_ref(pobj);
   }
 
@@ -268,17 +281,19 @@ EXT_FUNCTION(EXT_GLOBAL(closure))
   (*jenv)->writeLong(jenv, (long)*pobj);
   (*jenv)->writeObject(jenv, class);
   (*jenv)->writeCompositeBegin_a(jenv);
-  if(ce) {
-	zend_hash_internal_pointer_reset(&ce->function_table);
-	while ((key_type = zend_hash_get_current_key(&ce->function_table, &string_key, &num_key, 1)) != HASH_KEY_NON_EXISTANT) {
+
+  if(function_mappings) {
+	zend_hash_internal_pointer_reset(function_mappings);
+	while ((key_type = zend_hash_get_current_key(function_mappings, &string_key, &num_key, 1)) != HASH_KEY_NON_EXISTANT) {
 	  if (key_type == HASH_KEY_IS_STRING) {
 		(*jenv)->writePairBegin(jenv);
 		(*jenv)->writeString(jenv, string_key, strlen(string_key));
 		(*jenv)->writePairEnd(jenv);
 	  }
-	  zend_hash_move_forward(&ce->function_table);
+	  zend_hash_move_forward(function_mappings);
 	}
   }
+
   (*jenv)->writeCompositeEnd(jenv);
   (*jenv)->writeInvokeEnd(jenv);
 }

@@ -33,11 +33,11 @@ is the PHP/Java bridge?</B></FONT></FONT></P>
 </FONT></P>                                                                                            
 <P STYLE="margin-top: 0.42cm; page-break-after: avoid"><FONT ><FONT SIZE=4><B>How does it compare to SOAP or XML-RPC?</B></FONT></FONT></P>
 <ul>
-<li> The PHP/Java Bridge typically runs on the same computer as the PHP interpreter, so a very efficient protocol can be used. An example is provided which dynamically loads a java library and creates a 200x200 excel sheet using more than 40000 PHP/Java library calls.  The php example runs only 3-5 times slower than pure (jit-compiled) java code.
+<li> The PHP/Java Bridge typically runs on the same computer as the PHP interpreter, so a very efficient protocol can be used. An example is provided which executes a mix of PHP/Java code nearly as fast as the pure java equivalent.
 <li> It is not necessary to write and deploy a public interface. The bridge uses reflection to determine what can be accessed in the local backend.
-<li> The PHP scripts can load/unload java libraries at runtime.
+<li> PHP scripts can load/unload java libraries at runtime.
 <li> On linux the c/s communication channel is not visible and the backend runs in its own "Security Enhanced Linux" domain.
-<li> PHP modules such as XML-RPC do most of their work in the web-server (in C code), which makes them vulnerable to buffer overflows.  The PHP/Java Bridge module doesn't use any state on the web-server side, it simply forwards the java(...) statements to the local backend, which can communicate with the enterprise application server using RMI/IIOP or other java technologies.
+<li> Other PHP modules such do most of their work in the web-server (in C code), which makes them vulnerable to buffer overflows.  The PHP/Java Bridge module doesn't use any state on the web-server side, it simply forwards the java(...) statements to the local backend, which can communicate with the enterprise application server using RMI/IIOP or other java technologies.
 </ul>
 <P><FONT > 
   The bridge adds the following primitives to PHP.  The type mappings are shown in <a href="#type-mapping">table 1</a>.
@@ -435,7 +435,7 @@ shared libraries.
       doesn't want to ship a JRE with the product. 
 
    <li> Compiled with Novell's MONO (a ".NET" clone). This is
- currently experimental.  </ul>
+ available as a separate download.  </ul>
 
 </FONT></P>
 <P STYLE="margin-top: 0.42cm; page-break-after: avoid"><BR><BR>

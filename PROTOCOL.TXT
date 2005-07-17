@@ -101,7 +101,7 @@ Apply:
 <A v=object p=pos# m=stringRepresentation n=param# i=ID> ...ARGS...
 </A>
 v: long
-p: long
+p: string
 m: string
 n: long
 i: long

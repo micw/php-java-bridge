@@ -192,7 +192,7 @@ public class Response {
     void writePairEnd() {
 	buf.append(Pe);
     }
-    public void writeApplyBegin(long object, int pos, String str, int argCount) {
+    public void writeApplyBegin(long object, String pos, String str, int argCount) {
  	buf.append(A); buf.append(String.valueOf(object));
  	buf.append(p); buf.appendQuoted(String.valueOf(pos));
  	buf.append(m); buf.appendQuoted(String.valueOf(str));

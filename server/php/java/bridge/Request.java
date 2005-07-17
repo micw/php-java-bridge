@@ -10,7 +10,6 @@ import java.util.HashMap;
 
 public class Request implements IDocHandler {
 
-	static final Object[] empty = new Object[0];
     private Parser parser;
     private JavaBridge bridge;
     public static class PhpArray extends HashMap { // for PHP's array()
@@ -63,6 +62,7 @@ public class Request implements IDocHandler {
     		}
                 composite=0;
     	}
+        private static final Object[] empty = new Object[0];
     	Object[] getArgs() {
     		return (array==null) ? empty : array.toArray();
     	}
@@ -200,6 +200,7 @@ public class Request implements IDocHandler {
 	    args.reset();
 	}
     }
+    private static final Object[] empty = new Object[] {null};
     public Object[] handleSubRequests() throws IOException {
     	response.flush();
     	Args current = args;

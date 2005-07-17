@@ -37,7 +37,7 @@ extern int EXT_GLOBAL(snprintf) (char *buf, size_t len, const char *format,...);
   } \
 }
 
-static void flush(proxyenv *env) {
+static void end(proxyenv *env) {
   size_t s=0, size = (*env)->send_len;
   ssize_t n=0;
 
@@ -61,6 +61,10 @@ static void flush(proxyenv *env) {
   if(size>s && !n && errno==EINTR) goto res; // Solaris, see INN FAQ
 
   (*env)->send_len=0;
+}
+
+static void flush(proxyenv *env) {
+  end(env);
   (*env)->handle_request(env);
 }
 
@@ -167,7 +171,7 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    GROW(FLEN);
    (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "</R>");
    assert((*env)->send_len<=(*env)->send_size);
-   flush(env);
+   end(env);
  }
  static void GetMethodBegin(proxyenv *env, long object, char*method, size_t len, void* result) {
    size_t flen;

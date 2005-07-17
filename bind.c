@@ -61,7 +61,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   char *sockname, *cfg_sockname=EXT_GLOBAL(cfg)->sockname, *cfg_logFile=EXT_GLOBAL(cfg)->logFile;
 
   /* if socketname is off, show the user how to start a TCP backend */
-  if(for_display && !(java_ini_last_updated&U_SOCKNAME)) {
+  if(for_display && !(EXT_GLOBAL(ini_last_updated)&U_SOCKNAME)) {
 	cfg_sockname="0";
 	s_prefix=inet_socket_prefix;
 	cfg_logFile="";
@@ -131,20 +131,20 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   strcpy(p, home); strcat(p, executable);
   args[1] = p;
   /* if socketname is off, show the user how to start a TCP backend */
-/*   if(for_display && !(java_ini_last_updated&U_SOCKNAME)) { */
-/* 	cfg_sockname="0"; */
-/* 	s_prefix=inet_socket_prefix; */
-/* 	cfg_logFile=""; */
-/*   } */
-  /* send a prefix so that the server does not select a different
-   protocol */
-/*   sockname = malloc(strlen(s_prefix)+strlen(cfg_sockname)+1); */
-/*   strcpy(sockname, s_prefix); */
-/*   strcat(sockname, cfg_sockname); */
-/*   args[2] = sockname; */
-  args[2] = strdup(EXT_GLOBAL(cfg)->logLevel);
-  args[3] = strdup(cfg_logFile);
-  args[4] = NULL;
+  if(for_display && !(EXT_GLOBAL(ini_last_updated)&U_SOCKNAME)) {
+	cfg_sockname="0";
+	s_prefix=inet_socket_prefix;
+	cfg_logFile="";
+  }
+  /* send a prefix so that the server does not select a different */
+  /* protocol */
+  sockname = malloc(strlen(s_prefix)+strlen(cfg_sockname)+1);
+  strcpy(sockname, s_prefix);
+  strcat(sockname, cfg_sockname);
+  args[2] = sockname;
+  args[3] = strdup(EXT_GLOBAL(cfg)->logLevel);
+  args[4] = strdup(cfg_logFile);
+  args[5] = NULL;
   env[0] = NULL;
 }
 #endif

@@ -37,7 +37,7 @@
 
 #define N_JAVA_SARGS 9
 #define N_JAVA_SENV 3 
-#define N_MONO_SARGS 5
+#define N_MONO_SARGS 6
 #define N_MONO_SENV 1
 #ifndef N_SARGS 
 # define N_SARGS N_JAVA_SARGS	/* # of server args for exec */

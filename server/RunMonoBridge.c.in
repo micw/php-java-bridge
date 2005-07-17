@@ -11,12 +11,9 @@
    security context (see chcon(1)). */
 
 void usage(char*name){
-/*  fprintf(stderr, "Usage: %s [<socketname>] [<logLevel>] <logFile>\n", name); */
-/*   fprintf(stderr, "Example 1: %s INET:9167 3 \"\" \n", name); */
-/*   fprintf(stderr, "Example 2: %s node1.log\n", name); */
-  fprintf(stderr, "Usage: %s [<logLevel>] <logFile>\n", name);
-  fprintf(stderr, "Example 1: %s 3 \"\" \n", name);
-  fprintf(stderr, "Example 2: %s node.log\n", name);
+  fprintf(stderr, "Usage: %s [<socketname>] [<logLevel>] <logFile>\n", name);
+  fprintf(stderr, "Example 1: %s INET:9167 3 \"\" \n", name);
+  fprintf(stderr, "Example 2: %s node1.log\n", name);
   exit(1);
 }
 
@@ -50,7 +47,7 @@ int main(int argc, char**_argv){
     argv=calloc(5, sizeof*argv);
     argv[0]=vm;
     argv[1]=stringdup(EXTENSION_DIR/**/"/MonoBridge.exe");
-    //argv[2]=argc==2?stringdup("INET:0"):stringdup(_argv[1]); /* socketname */
+    argv[2]=argc==2?stringdup("INET:0"):stringdup(_argv[1]); /* socketname */
     argv[2]=argc==2?stringdup("2"):stringdup(_argv[1]); /* logLevel */
     argv[3]=stringdup(_argv[argc==2?1:2]); /* logFile */
     argv[4]=0;			/* last arg */

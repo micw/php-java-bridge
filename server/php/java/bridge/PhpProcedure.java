@@ -17,10 +17,12 @@ public class PhpProcedure implements InvocationHandler {
     private JavaBridge bridge;
     private HashMap map;
     private long object;
+    private String[] names;
 	
-    protected PhpProcedure(JavaBridge bridge, long object) {
+    protected PhpProcedure(JavaBridge bridge, long object, String[] names) {
 	this.bridge = bridge;
 	this.object = object;
+	this.names = names;
     }
 
     private void addMethods(Class interfaces[]) {
@@ -33,7 +35,7 @@ public class PhpProcedure implements InvocationHandler {
 	}
     }
     public static Object createProxy(JavaBridge bridge, String names[], Class interfaces[], long object) {
-	PhpProcedure handler = new PhpProcedure(bridge, object);
+	PhpProcedure handler = new PhpProcedure(bridge, object, names);
 	Object proxy = Proxy.newProxyInstance(bridge.cl.getClassLoader(), interfaces, handler);
 	handler.addMethods(interfaces);
 	return proxy;
@@ -41,9 +43,16 @@ public class PhpProcedure implements InvocationHandler {
 	
 	private void setResultFromProcedure(Response response, Method method, Object[] args) {
 		Integer pos = (Integer)(map.get(method));
-		int nr = pos==null?pos.intValue():-1;
+		int nr = pos!=null?pos.intValue():-1;
+		
+		String cname, name = method.getName();
+		try {
+		    cname = names[nr];
+		} catch (ArrayIndexOutOfBoundsException e) { 
+		    cname = name;
+		}
 		int argsLength = args==null?0:args.length;
-		response.writeApplyBegin(object, nr, method.getName(), argsLength);
+		response.writeApplyBegin(object, cname, name, argsLength);
 		for (int i=0; i<argsLength; i++) {
 			response.writePairBegin();
 			bridge.setResult(response, args[i]);

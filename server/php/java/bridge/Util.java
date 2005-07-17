@@ -63,7 +63,7 @@ public class Util {
 	    logStream.println("");
     	}
    	public void printStackTrace(Throwable t) {
-	    t.printStackTrace(logStream);
+   	    t.printStackTrace(logStream);
    	}
     }
     public static Logger logger = new Logger();
