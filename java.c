@@ -226,14 +226,15 @@ EXT_FUNCTION(EXT_GLOBAL(get_values))
   EXT_GLOBAL(get_jobject_from_object)(*pobj, &obj TSRMLS_CC);
   if(!obj) {
 	zend_error(E_ERROR, "Argument for %s() must be a "/**/EXT_NAME()/**/" object", get_active_function_name(TSRMLS_C));
-	return;
+	RETURN_NULL();
   }
 
   (*jenv)->writeInvokeBegin(jenv, 0, "getValues", 0, 'I', return_value);
   (*jenv)->writeObject(jenv, obj);
   (*jenv)->writeInvokeEnd(jenv);
 #else
-  COPY_PZVAL_TO_ZVAL(*return_value, *pobj);
+  ZVAL_NULL(return_value);
+  REPLACE_ZVAL_VALUE(&return_value, *pobj, 1);
 #endif
 }
 
@@ -248,7 +249,6 @@ EXT_FUNCTION(EXT_GLOBAL(closure))
   int argc = ZEND_NUM_ARGS();
   HashTable *function_mappings = 0;
 
-  TSRMLS_FETCH();
   if (argc>3 || zend_get_parameters_ex(argc, &pobj, &pfkt, &pclass) == FAILURE)
 	WRONG_PARAM_COUNT;
 
@@ -271,9 +271,11 @@ EXT_FUNCTION(EXT_GLOBAL(closure))
 	  zend_hash_init(function_mappings, 0, NULL, ZVAL_PTR_DTOR, 0);
 	  zend_hash_add(function_mappings, str, length, str, length, 0);
 	} else {
-	  WRONG_PARAM_COUNT;		/* FIXME: check array */
+	  if(!ZVAL_IS_NULL(*pfkt)) WRONG_PARAM_COUNT;		/* FIXME: check array */
 	}
-  } else if (Z_TYPE_PP(pobj) == IS_OBJECT) {
+  } 
+
+  if (Z_TYPE_PP(pobj) == IS_OBJECT) {
 	zval_add_ref(pobj);
   }
 
@@ -298,6 +300,28 @@ EXT_FUNCTION(EXT_GLOBAL(closure))
   (*jenv)->writeInvokeEnd(jenv);
 }
 
+EXT_FUNCTION(EXT_GLOBAL(inspect)) {
+  zval **pobj;
+  long obj;
+  proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
+  if(!jenv) {RETURN_NULL();}
+
+  if (ZEND_NUM_ARGS()!=1 || zend_get_parameters_ex(1, &pobj) == FAILURE)
+	WRONG_PARAM_COUNT;
+
+  convert_to_object_ex(pobj);
+  obj = 0;
+  EXT_GLOBAL(get_jobject_from_object)(*pobj, &obj TSRMLS_CC);
+  if(!obj) {
+	zend_error(E_ERROR, "Argument for %s() must be a "/**/EXT_NAME()/**/" object", get_active_function_name(TSRMLS_C));
+	return;
+  }
+  (*jenv)->writeInvokeBegin(jenv, 0, "inspect", 0, 'I', return_value);
+  (*jenv)->writeObject(jenv, obj);
+  (*jenv)->writeInvokeEnd(jenv);
+}
+
+
 function_entry EXT_GLOBAL(functions)[] = {
 	EXT_FE(EXT_GLOBAL(last_exception_get), NULL)
 	EXT_FE(EXT_GLOBAL(last_exception_clear), NULL)
@@ -310,6 +334,7 @@ function_entry EXT_GLOBAL(functions)[] = {
 	EXT_FE(EXT_GLOBAL(reset), NULL)
 	EXT_FE(EXT_GLOBAL(get_values), NULL)
 	EXT_FE(EXT_GLOBAL(closure), NULL)
+	EXT_FE(EXT_GLOBAL(inspect), NULL)
 	{NULL, NULL, NULL}
 };
 
@@ -330,7 +355,7 @@ zend_module_entry EXT_GLOBAL(module_entry) = {
 EXT_GET_MODULE(EXT)
 #endif
 
-int EXT_GLOBAL(ini_updated), EXT_GLOBAL(ini_last_updated);
+int EXT_GLOBAL(ini_updated), EXT_GLOBAL(ini_user), EXT_GLOBAL(ini_set);
 zend_class_entry *EXT_GLOBAL(class_entry);
 zend_class_entry *EXT_GLOBAL(class_class_entry);
 zend_class_entry *EXT_GLOBAL(exception_class_entry);
@@ -342,7 +367,9 @@ zend_object_handlers EXT_GLOBAL(handlers);
 static PHP_INI_MH(OnIniHosts)
 {
 	if (new_value) {
-	  EXT_GLOBAL(cfg)->hosts=new_value;
+	  if((EXT_GLOBAL (ini_set) &U_HOSTS)) free(EXT_GLOBAL(cfg)->hosts);
+	  EXT_GLOBAL(cfg)->hosts=strdup(new_value);
+	  assert(EXT_GLOBAL(cfg)->hosts); if(!EXT_GLOBAL(cfg)->hosts) exit(6);
 	  EXT_GLOBAL(ini_updated)|=U_HOSTS;
 	}
 	return SUCCESS;
@@ -350,7 +377,9 @@ static PHP_INI_MH(OnIniHosts)
 static PHP_INI_MH(OnIniServlet)
 {
 	if (new_value) {
-	  EXT_GLOBAL(cfg)->servlet=new_value;
+	  if((EXT_GLOBAL (ini_set) &U_SERVLET)) free(EXT_GLOBAL(cfg)->servlet);
+	  EXT_GLOBAL(cfg)->servlet=strdup(new_value);
+	  assert(EXT_GLOBAL(cfg)->servlet); if(!EXT_GLOBAL(cfg)->servlet) exit(6);
 	  EXT_GLOBAL(ini_updated)|=U_SERVLET;
 	}
 	return SUCCESS;
@@ -358,7 +387,9 @@ static PHP_INI_MH(OnIniServlet)
 static PHP_INI_MH(OnIniSockname)
 {
 	if (new_value) {
-	  EXT_GLOBAL(cfg)->sockname=new_value;
+	  if((EXT_GLOBAL (ini_set) &U_SOCKNAME)) free(EXT_GLOBAL(cfg)->sockname);
+	  EXT_GLOBAL(cfg)->sockname=strdup(new_value);
+	  assert(EXT_GLOBAL(cfg)->sockname); if(!EXT_GLOBAL(cfg)->sockname) exit(6);
 	  EXT_GLOBAL(ini_updated)|=U_SOCKNAME;
 	}
 	return SUCCESS;
@@ -366,7 +397,9 @@ static PHP_INI_MH(OnIniSockname)
 static PHP_INI_MH(OnIniClassPath)
 {
 	if (new_value) {
-	  EXT_GLOBAL(cfg)->classpath =new_value;
+	  if((EXT_GLOBAL (ini_set) &U_CLASSPATH)) free(EXT_GLOBAL(cfg)->classpath);
+	  EXT_GLOBAL(cfg)->classpath =strdup(new_value);
+	  assert(EXT_GLOBAL(cfg)->classpath); if(!EXT_GLOBAL(cfg)->classpath) exit(6);
 	  EXT_GLOBAL(ini_updated)|=U_CLASSPATH;
 	}
 	return SUCCESS;
@@ -374,7 +407,9 @@ static PHP_INI_MH(OnIniClassPath)
 static PHP_INI_MH(OnIniLibPath)
 {
 	if (new_value) {
-	  EXT_GLOBAL(cfg)->ld_library_path = new_value;
+	  if((EXT_GLOBAL (ini_set) &U_LIBRARY_PATH)) free(EXT_GLOBAL(cfg)->ld_library_path);
+	  EXT_GLOBAL(cfg)->ld_library_path = strdup(new_value);
+	  assert(EXT_GLOBAL(cfg)->ld_library_path); if(!EXT_GLOBAL(cfg)->ld_library_path) exit(6);
 	  EXT_GLOBAL(ini_updated)|=U_LIBRARY_PATH;
 	}
 	return SUCCESS;
@@ -382,7 +417,9 @@ static PHP_INI_MH(OnIniLibPath)
 static PHP_INI_MH(OnIniJava)
 {
   if (new_value) {
-	EXT_GLOBAL(cfg)->vm = new_value;
+	if((EXT_GLOBAL (ini_set) &U_JAVA)) free(EXT_GLOBAL(cfg)->vm);
+	EXT_GLOBAL(cfg)->vm = strdup(new_value);
+	assert(EXT_GLOBAL(cfg)->vm); if(!EXT_GLOBAL(cfg)->vm) exit(6);
 	EXT_GLOBAL(ini_updated)|=U_JAVA;
   }
   return SUCCESS;
@@ -390,7 +427,9 @@ static PHP_INI_MH(OnIniJava)
 static PHP_INI_MH(OnIniJavaHome)
 {
 	if (new_value) {
-	  EXT_GLOBAL(cfg)->vm_home = new_value;
+	  if((EXT_GLOBAL (ini_set) &U_JAVA_HOME)) free(EXT_GLOBAL(cfg)->vm_home);
+	  EXT_GLOBAL(cfg)->vm_home = strdup(new_value);
+	  assert(EXT_GLOBAL(cfg)->vm_home); if(!EXT_GLOBAL(cfg)->vm_home) exit(6);
 	  EXT_GLOBAL(ini_updated)|=U_JAVA_HOME;
 	}
 	return SUCCESS;
@@ -398,7 +437,9 @@ static PHP_INI_MH(OnIniJavaHome)
 static PHP_INI_MH(OnIniLogLevel)
 {
 	if (new_value) {
-	  EXT_GLOBAL(cfg)->logLevel = new_value;
+	  if((EXT_GLOBAL (ini_set) &U_LOGLEVEL)) free(EXT_GLOBAL(cfg)->logLevel);
+	  EXT_GLOBAL(cfg)->logLevel = strdup(new_value);
+	  assert(EXT_GLOBAL(cfg)->logLevel); if(!EXT_GLOBAL(cfg)->logLevel) exit(6);
 	  EXT_GLOBAL(cfg)->logLevel_val=atoi(EXT_GLOBAL(cfg)->logLevel);
 	  EXT_GLOBAL(ini_updated)|=U_LOGLEVEL;
 	}
@@ -407,17 +448,19 @@ static PHP_INI_MH(OnIniLogLevel)
 static PHP_INI_MH(OnIniLogFile)
 {
 	if (new_value) {
-	  EXT_GLOBAL(cfg)->logFile = new_value;
+	  if((EXT_GLOBAL (ini_set) &U_LOGFILE)) free(EXT_GLOBAL(cfg)->logFile);
+	  EXT_GLOBAL(cfg)->logFile = strdup(new_value);
+	  assert(EXT_GLOBAL(cfg)->logFile); if(!EXT_GLOBAL(cfg)->logFile) exit(6);
 	  EXT_GLOBAL(ini_updated)|=U_LOGFILE;
 	}
 	return SUCCESS;
 }
 PHP_INI_BEGIN()
-	 PHP_INI_ENTRY(EXT_NAME()/**/".servlet", NULL, PHP_INI_SYSTEM, OnIniServlet)
-	 PHP_INI_ENTRY(EXT_NAME()/**/".socketname", NULL, PHP_INI_SYSTEM, OnIniSockname)
-	 PHP_INI_ENTRY(EXT_NAME()/**/".hosts",   NULL, PHP_INI_SYSTEM, OnIniHosts)
-	 PHP_INI_ENTRY(EXT_NAME()/**/".classpath", NULL, PHP_INI_SYSTEM, OnIniClassPath)
-	 PHP_INI_ENTRY(EXT_NAME()/**/".libpath",   NULL, PHP_INI_SYSTEM, OnIniLibPath)
+	 PHP_INI_ENTRY(EXT_NAME()/**/".servlet", NULL, PHP_INI_ALL, OnIniServlet)
+	 PHP_INI_ENTRY(EXT_NAME()/**/".socketname", NULL, PHP_INI_ALL, OnIniSockname)
+	 PHP_INI_ENTRY(EXT_NAME()/**/".hosts",   NULL, PHP_INI_ALL, OnIniHosts)
+	 PHP_INI_ENTRY(EXT_NAME()/**/".classpath", NULL, PHP_INI_ALL, OnIniClassPath)
+	 PHP_INI_ENTRY(EXT_NAME()/**/".libpath",   NULL, PHP_INI_ALL, OnIniLibPath)
 	 PHP_INI_ENTRY(EXT_NAME()/**/"."/**/EXT_NAME()/**/"",   NULL, PHP_INI_ALL, OnIniJava)
 	 PHP_INI_ENTRY(EXT_NAME()/**/"."/**/EXT_NAME()/**/"_home",   NULL, PHP_INI_ALL, OnIniJavaHome)
 
@@ -1028,6 +1071,30 @@ set_property_handler(zend_property_reference *property_reference, pval *value)
 }
 #endif
 
+/*
+ * check for CGI environment and set hosts so that we can connect back
+ * to the sever from which we were called.
+ */
+static void override_from_cgi() {
+  char *hosts;
+  if (getenv("SERVER_SOFTWARE")
+	  || getenv("SERVER_NAME")
+	  || getenv("GATEWAY_INTERFACE")
+	  || getenv("REQUEST_METHOD")) {
+	if (hosts=getenv("X_JAVABRIDGE_OVERRIDE_HOSTS")) {
+	  if((EXT_GLOBAL (ini_set) &U_HOSTS)) free(EXT_GLOBAL(cfg)->hosts);
+	  EXT_GLOBAL(cfg)->hosts=strdup(hosts);
+	  assert(EXT_GLOBAL(cfg)->hosts); if(!EXT_GLOBAL(cfg)->hosts) exit(6);
+	  EXT_GLOBAL (ini_updated)|=U_HOSTS;
+
+	  if((EXT_GLOBAL (ini_set) &U_SERVLET)) free(EXT_GLOBAL(cfg)->servlet);
+	  EXT_GLOBAL(cfg)->servlet=strdup("On");
+	  assert(EXT_GLOBAL(cfg)->servlet); if(!EXT_GLOBAL(cfg)->servlet) exit(6);
+	  EXT_GLOBAL (ini_updated)|=U_SERVLET;
+	}
+  }
+}
+
 PHP_MINIT_FUNCTION(EXT)
 {
   zend_class_entry *parent;
@@ -1105,6 +1172,7 @@ PHP_MINIT_FUNCTION(EXT)
   
   assert(!EXT_GLOBAL (cfg) );
   if(!EXT_GLOBAL (cfg) ) EXT_GLOBAL (cfg) = malloc(sizeof *EXT_GLOBAL (cfg) ); if(!EXT_GLOBAL (cfg) ) exit(9);
+
   if(REGISTER_INI_ENTRIES()==SUCCESS) {
 	/* set the default values for all undefined */
 	extern void EXT_GLOBAL(init_cfg) ();
@@ -1124,8 +1192,8 @@ PHP_MINIT_FUNCTION(EXT)
 	EXT_GLOBAL(cfg)->saddr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
 #endif
   }
-  assert(!EXT_GLOBAL(ini_last_updated));
-  EXT_GLOBAL(ini_last_updated)=EXT_GLOBAL(ini_updated);
+  override_from_cgi();
+  EXT_GLOBAL(ini_user)|=EXT_GLOBAL(ini_updated);
   EXT_GLOBAL(ini_updated)=0;
 
   EXT_GLOBAL(start_server) ();
@@ -1136,7 +1204,7 @@ PHP_MINFO_FUNCTION(EXT)
   short is_local;
   char*s=EXT_GLOBAL(get_server_string) ();
   char*server = EXT_GLOBAL(test_server) (0, &is_local);
-  short is_level = ((EXT_GLOBAL (ini_last_updated)&U_LOGLEVEL)!=0);
+  short is_level = ((EXT_GLOBAL (ini_user)&U_LOGLEVEL)!=0);
 
   php_info_print_table_start();
   php_info_print_table_row(2, EXT_NAME()/**/" support", "Enabled");
@@ -1156,7 +1224,7 @@ PHP_MINFO_FUNCTION(EXT)
 #endif
   php_info_print_table_row(2, EXT_NAME()/**/".hosts", EXT_GLOBAL(cfg)->hosts);
 #if EXTENSION == JAVA
-  php_info_print_table_row(2, EXT_NAME()/**/".servlet", EXT_GLOBAL(get_servlet_context) ()?EXT_GLOBAL(get_servlet_context) ():"Off");
+  php_info_print_table_row(2, EXT_NAME()/**/".servlet", EXT_GLOBAL(get_servlet_context) ()?"On":"Off");
 #endif
 #ifndef __MINGW32__
   php_info_print_table_row(2, EXT_NAME()/**/" command", s);
@@ -1174,8 +1242,8 @@ PHP_MSHUTDOWN_FUNCTION(EXT)
   extern void EXT_GLOBAL(shutdown_library) ();
   extern void EXT_GLOBAL(destroy_cfg) (int);
   
-  EXT_GLOBAL(destroy_cfg) (EXT_GLOBAL(ini_last_updated));
-  EXT_GLOBAL(ini_last_updated)=0;
+  EXT_GLOBAL(destroy_cfg) (EXT_GLOBAL(ini_set));
+  EXT_GLOBAL(ini_user) = EXT_GLOBAL(ini_set) = 0;
 
   UNREGISTER_INI_ENTRIES();
   EXT_GLOBAL(shutdown_library) ();

@@ -52,7 +52,7 @@ extern zend_object_handlers EXT_GLOBAL(handlers);
 #endif
 extern const char * const EXT_GLOBAL(bridge_version);
 
-extern int EXT_GLOBAL(ini_updated), EXT_GLOBAL (ini_last_updated);
+extern int EXT_GLOBAL(ini_updated), EXT_GLOBAL (ini_user), EXT_GLOBAL (ini_set);
 #define U_LOGFILE (1<<1)
 #define U_LOGLEVEL (1<<2)
 #define U_JAVA_HOME (1<<3)

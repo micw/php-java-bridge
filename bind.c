@@ -61,7 +61,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   char *sockname, *cfg_sockname=EXT_GLOBAL(cfg)->sockname, *cfg_logFile=EXT_GLOBAL(cfg)->logFile;
 
   /* if socketname is off, show the user how to start a TCP backend */
-  if(for_display && !(EXT_GLOBAL(ini_last_updated)&U_SOCKNAME)) {
+  if(for_display && !(EXT_GLOBAL(option_set_by_user) (U_SOCKNAME))) {
 	cfg_sockname="0";
 	s_prefix=inet_socket_prefix;
 	cfg_logFile="";
@@ -122,7 +122,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
 #endif
   char *sockname, *cfg_sockname=EXT_GLOBAL(cfg)->sockname, *cfg_logFile=EXT_GLOBAL(cfg)->logFile;
   char*home = EXT_GLOBAL(cfg)->vm_home;
-  if(!(EXT_GLOBAL(ini_last_updated)&U_JAVA_HOME)) {	/* look into extension_dir then */
+  if(!(EXT_GLOBAL(option_set_by_user) (U_JAVA_HOME))) {	/* look into extension_dir then */
 	char *ext = php_ini_string((char*)ext_dir, sizeof ext_dir, 0);
 	if(ext) home = ext;
   }
@@ -131,7 +131,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   strcpy(p, home); strcat(p, executable);
   args[1] = p;
   /* if socketname is off, show the user how to start a TCP backend */
-  if(for_display && !(EXT_GLOBAL(ini_last_updated)&U_SOCKNAME)) {
+  if(for_display && !(EXT_GLOBAL(option_set_by_user) (U_SOCKNAME))) {
 	cfg_sockname="0";
 	s_prefix=inet_socket_prefix;
 	cfg_logFile="";
@@ -260,7 +260,10 @@ static int test_local_server() {
   return 0 if user has hard-coded the socketname
 */
 static short can_fork() {
-  return EXT_GLOBAL(cfg)->can_fork;
+  return 
+	!(EXT_GLOBAL (option_set_by_user) (U_SOCKNAME)) &&
+	!(EXT_GLOBAL (option_set_by_user) (U_HOSTS)) &&
+	!(EXT_GLOBAL (option_set_by_user) (U_SERVLET));
 }
 
 /*
@@ -270,7 +273,12 @@ static short can_fork() {
 char* EXT_GLOBAL(test_server)(int *_socket, short *local) {
   int sock;
   short called_from_init = !(local || _socket);
-  short socketname_set = (EXT_GLOBAL(ini_last_updated)&U_SOCKNAME);
+
+								/* java.servlet=On forces
+								   java.socketname Off */
+  short socketname_set = 
+	(EXT_GLOBAL(option_set_by_user) (U_SOCKNAME)) && 
+	!(EXT_GLOBAL(option_set_by_user) (U_SERVLET));
 
   if(local) *local=0;
   /* check for local server if socketname set or (socketname not set

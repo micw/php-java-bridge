@@ -45,8 +45,12 @@ public class JavaBridge implements Runnable {
     public InputStream in; public OutputStream out;
 
     int logLevel = Util.logLevel;
-    // the current request (if any)
-    Request request;
+  
+    /*
+     * The current request (if any)
+     * Only for internal use 
+     */
+    public Request request;
 
     // false if we detect that setAccessible is not possible
     boolean canModifySecurityPermission = true;
@@ -1215,10 +1219,39 @@ public class JavaBridge implements Runnable {
 	}
     }
     
+    public String inspect(Object object) {
+        Class jclass;
+    	ClassIterator iter;
+        Vector fields = new Vector(), methods = new Vector();
+	StringBuffer buf = new StringBuffer("[");
+	buf.append(String.valueOf(Util.getClass(object)));
+	buf.append(":\nConstructors:\n");
+        for (iter = ClassIterator.getInstance(object, MATCH_VOID_CASE); (jclass=iter.getNext())!=null;) {
+        	Constructor[] constructors = jclass.getConstructors();
+                for(int i=0; i<constructors.length; i++) { buf.append(String.valueOf(constructors[i])); buf.append("\n"); }
+        }
+        buf.append("\nFields:\n");
+        for (iter = ClassIterator.getInstance(object, MATCH_VOID_CASE); (jclass=iter.getNext())!=null;) {
+        	Field jfields[] = jclass.getFields();
+                for(int i=0; i<jfields.length; i++) { buf.append(String.valueOf(jfields[i])); buf.append("\n"); }
+        }
+        buf.append("\nMethods:\n");
+        for (iter = ClassIterator.getInstance(object, MATCH_VOID_CASE); (jclass=iter.getNext())!=null;) {
+                Method jmethods[] = jclass.getMethods();
+                for(int i=0; i<jmethods.length; i++) { buf.append(String.valueOf(jmethods[i])); buf.append("\n"); }
+        }
+        buf.append("\nClasses:\n");
+        for (iter = ClassIterator.getInstance(object, MATCH_VOID_CASE); (jclass=iter.getNext())!=null;) {
+                Class jclasses[] = jclass.getClasses();
+                for(int i=0; i<jclasses.length; i++) { buf.append(String.valueOf(jclasses[i].getName())); buf.append("\n"); }
+        }
+	buf.append("]");
+	return buf.toString();
+    }
     public void setFileEncoding(String fileEncoding) {
 	this.fileEncoding=fileEncoding;
     }
-    
+
     public static boolean InstanceOf(Object ob, Object c) {
 	Class clazz = Util.getClass(c);
 	return clazz.isInstance(ob);

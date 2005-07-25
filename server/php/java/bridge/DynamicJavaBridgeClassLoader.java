@@ -11,17 +11,19 @@ import java.util.StringTokenizer;
 
 public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 
-    protected DynamicJavaBridgeClassLoader() {
-        super();
-     }
-
     // the local library directory (global one is /usr/share/java)
     static private String phpLibDir, phpConfigDir;
 
     // the list of jar files in which we search for user classes.
     static private Collection sysUrls = null;
 
-    // Set the library path for the java bridge. Examples:
+    protected DynamicJavaBridgeClassLoader(ClassLoader parent) {
+    	super(parent);
+    }
+    protected DynamicJavaBridgeClassLoader() {
+    	super();
+    }
+	// Set the library path for the java bridge. Examples:
     // setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");
     // setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");
     // The first char must be the token separator.
@@ -150,6 +152,14 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     public static synchronized DynamicJavaBridgeClassLoader newInstance() {
     	try {
     	    DynamicJavaBridgeClassLoader cl = new DynamicJavaBridgeClassLoader();
+    	    return cl;
+   	} catch (java.security.AccessControlException e) {
+    	    return null;
+    	}
+     }
+    public static synchronized DynamicJavaBridgeClassLoader newInstance(ClassLoader parent) {
+    	try {
+    	    DynamicJavaBridgeClassLoader cl = new DynamicJavaBridgeClassLoader(parent);
     	    return cl;
    	} catch (java.security.AccessControlException e) {
     	    return null;

@@ -1,10 +1,23 @@
 package php.java.bridge;
 
-import java.net.*;
-import java.security.*;
-import java.util.*;
-import java.lang.ref.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.lang.ref.SoftReference;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.net.URLConnection;
+import java.security.SecureClassLoader;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.Vector;
+import java.util.WeakHashMap;
 /**
  * <p>Title: php-java-bridge</p>
  * <p>

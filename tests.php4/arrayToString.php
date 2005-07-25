@@ -17,7 +17,7 @@ for($i=0; $i<$length; $i++) {
 }
 
 // ... and post it to java.  Should print integers
-print "integer array: ". $ArrayToString->arrayToString($arr) . "\n";
+print "integer array: ". $ArrayToString->arrayToString($arr) . "<br>\n";
 
 
 // double
@@ -26,7 +26,7 @@ for($i=0; $i<$length; $i++) {
 }
 
 // should print doubles
-print "double array: ". $ArrayToString->arrayToString($arr) . "\n";
+print "double array: ". $ArrayToString->arrayToString($arr) . "<br>\n";
 
 
 // boolean
@@ -35,6 +35,6 @@ for($i=0; $i<$length; $i++) {
 }
 
 // should print booleans
-print "boolean array: ". $ArrayToString->arrayToString($arr) ."\n";
+print "boolean array: ". $ArrayToString->arrayToString($arr) ."<br>\n";
 
 ?>

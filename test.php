@@ -17,7 +17,7 @@ phpinfo();
 print "\n\n";
 
 $v = new java("java.lang.System");
-$arr=$v->getProperties();
+$arr=java_get_values($v->getProperties());
 foreach ($arr as $key => $value) {
   print $key . " -> " .  $value . "<br>\n";
 }

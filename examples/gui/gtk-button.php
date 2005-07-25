@@ -21,6 +21,21 @@ class GtkDemo {
   }
   function clicked($sender, $e) {
     echo "clicked\n";
+    $win = new Mono("Gtk.Window", "phpinfo()");
+    $win->set_DefaultWidth(640);
+    $win->set_DefaultHeight(400);
+    $pane = new Mono("Gtk.ScrolledWindow");
+
+    $view = new Mono("Gtk.TextView");
+    $buffer = new Mono("Gtk.TextBuffer", new Mono("Gtk.TextTagTable"));
+    ob_start();
+    phpinfo();
+    $buffer->set_Text(ob_get_contents());
+    ob_end_clean();
+    $view->set_Buffer($buffer);
+    $pane->add($view);
+    $win->add($pane);
+    $win->ShowAll();
   }
   function init() {
     $this->Application = $Application = new Mono("Gtk.Application");
@@ -29,10 +44,10 @@ class GtkDemo {
     $win = new Mono("Gtk.Window", "Hello");
     $win->add_DeleteEvent (
 			   new Mono(
-				    "GtkSharp.DeleteEventHandler", 
+				    "Gtk.DeleteEventHandler", 
 				    mono_closure($this, "delete")));
 
-    $btn = new Mono("Gtk.Button", "Click Me");
+    $btn = new Mono("Gtk.Button", "Show output from phpinfo()");
 
     $btn->add_Clicked(
 		      new Mono(

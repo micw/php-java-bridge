@@ -127,9 +127,9 @@ static void setResultFromApply(zval *presult, unsigned char *cname, size_t clen,
 	   ) {
 	current++;
   }
-  
+
   if (call_user_function_ex(object?0:EG(function_table), &object, func, &retval_ptr, count, func_params, 0, NULL TSRMLS_CC) != SUCCESS) {
-	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not call user function: %s.", 23, fname);
+	php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not call user function: %s.", 23, cname);
   }
 #ifdef ZEND_ENGINE_2
   if(EG(exception)) {
@@ -393,12 +393,12 @@ unsigned char EXT_GLOBAL (get_mode) () {
 #else
   static const unsigned char arraysAsValues = 0;
 #endif
-	unsigned short is_level = ((EXT_GLOBAL (ini_last_updated)&U_LOGLEVEL)!=0);
-	unsigned short level = 0;
-	if (is_level)
-	  level = EXT_GLOBAL(cfg)->logLevel_val>7?7:EXT_GLOBAL(cfg)->logLevel_val;
-
-	return (is_level<<7)|64|(level<<2)|arraysAsValues;
+  unsigned short is_level = ((EXT_GLOBAL (ini_user)&U_LOGLEVEL)!=0);
+  unsigned short level = 0;
+  if (is_level)
+	level = EXT_GLOBAL(cfg)->logLevel_val>7?7:EXT_GLOBAL(cfg)->logLevel_val;
+  
+  return (is_level<<7)|64|(level<<2)|arraysAsValues;
 }
 
 static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {

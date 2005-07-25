@@ -13,6 +13,39 @@
         <servlet-class>
 		php.java.servlet.PhpJavaServlet
         </servlet-class>
+    <init-param>
+      <param-name>clientInputTimeout</param-name>
+      <param-value>100</param-value>
+    </init-param>
+    <init-param>
+      <param-name>debug</param-name>
+      <param-value>0</param-value>
+    </init-param>
+    <init-param>
+      <param-name>cgiPathPrefix</param-name>
+      <param-value>WEB-INF/cgi</param-value>
+    </init-param>
+    <init-param>
+
+    <!-- Your php binary, for example php.exe, php or /usr/bin/php. -->
+      <param-name>php_exec</param-name>
+      <param-value>php</param-value>
+    </init-param>
+    <init-param>
+
+    <!-- Default log_level is 2, java.log_level from your php.ini overrides. -->
+      <param-name>servlet_log_level</param-name>
+      <param-value>2</param-value>
+    </init-param>
+    <init-param>
+
+    <!-- Allow us to override the java.hosts, java.servlet and -->
+    <!-- java.socketname settings from your php.ini so that we can -->
+    <!-- use the current VM.  Switch this to Off if you want to -->
+    <!-- use the "standard" local VM, which is usually much faster. -->
+      <param-name>override_hosts</param-name>
+      <param-value>On</param-value>
+    </init-param>
     </servlet>
 
 <!-- URL -->
@@ -20,12 +53,11 @@
         <servlet-name>PhpJavaServlet</servlet-name> 
         <url-pattern>/PhpJavaServlet</url-pattern>
     </servlet-mapping>
-<!--     <servlet-mapping> -->
-<!--         <servlet-name> -->
-<!-- 		PhpJavaServlet -->
-<!--         </servlet-name> -->
-<!--         <url-pattern> -->
-<!-- 		*.php -->
-<!--         </url-pattern> -->
-<!--     </servlet-mapping> -->
+    <servlet-mapping>
+        <servlet-name>PhpJavaServlet</servlet-name>
+        <url-pattern>
+		*.php
+        </url-pattern>
+    </servlet-mapping>
+
 </web-app>

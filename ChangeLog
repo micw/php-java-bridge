@@ -1,3 +1,39 @@
+2005-07-24  Jost Boekemeier  <jostb@intern>
+
+	* PROTOCOL.TXT: updated documentation.
+
+	* init_cfg.c.in (option_set_by_user): new function
+	(is_servlet): obsolete
+	
+	* java.c (get_values): check for php4, if so, return the argument
+	without creating memory leaks.
+	(OnIniServlet, OnIniSockname, OnIniHosts, OnIniClassPath,
+	OnIniLibPath, OnIniJava, OnIniJavaHome, OnIniLogLevel,
+	OnIniLogFile): It is now possible to use these in php scripts,
+	e.g. ini_set("java.hosts", "127.0.0.1:8080");
+	
+	* bind.c (test_server): java.servlet forces java.socketname to
+	off.
+
+	* java.c (inspect): new function
+
+	* server/php/java/bridge/JavaBridge.java (inspect): new function.
+
+	* server/web.xml: added config options.
+
+	* examples/gui/gtk-button.php, examples/gui/gtk-fileselector.php,
+	examples/swing-button.php, examples/swt-button.php: New gui
+	examples.
+
+	* server/php/java/bridge/DynamicClassLoader (newInstance): create
+	a dynamic classloader with the servlet classloader as parent.
+
+
+	* server/php/java/servlet/CGIServlet.java: New file.
+
+	* server/php/java/servlet/PhpJavaServlet.java: extend fromm
+	CGIServlet.
+		
 2005-07-17  Jost Boekemeier  <jostb@intern>
 
 	* bind.c (get_server_args): New mono release fixes a bug, so we

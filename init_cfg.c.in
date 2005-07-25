@@ -86,12 +86,12 @@ void EXT_GLOBAL (init_cfg) () {
 	EXT_GLOBAL(cfg)->logLevel_val=atoi(DEFAULT_LEVEL);
   }
   if(!(EXT_GLOBAL (ini_updated) &U_LOGFILE)) EXT_GLOBAL(cfg)->logFile=strdup(LOGFILE);
-  EXT_GLOBAL(cfg)->can_fork=
-	((EXT_GLOBAL (ini_updated) &U_SOCKNAME)==0)&&
-	((EXT_GLOBAL (ini_updated) &U_HOSTS)==0);
+  
+  EXT_GLOBAL(ini_set)=~0;
 }
 
 void EXT_GLOBAL (destroy_cfg) (int EXT_GLOBAL (ini_updated) ) {
+  assert(EXT_GLOBAL(ini_updated) == ~0);
   if(!(EXT_GLOBAL (ini_updated) &U_SERVLET)) free(EXT_GLOBAL(cfg)->servlet);
   if(!(EXT_GLOBAL (ini_updated) &U_HOSTS)) free(EXT_GLOBAL(cfg)->hosts);
   if(!(EXT_GLOBAL (ini_updated) &U_SOCKNAME)) free(EXT_GLOBAL(cfg)->sockname);
@@ -103,12 +103,33 @@ void EXT_GLOBAL (destroy_cfg) (int EXT_GLOBAL (ini_updated) ) {
   if(!(EXT_GLOBAL (ini_updated) &U_LOGFILE)) free(EXT_GLOBAL(cfg)->logFile);
 }
 
-static short is_servlet() {
-  return ((EXT_GLOBAL (ini_last_updated)&U_SERVLET)!=0) && EXT_GLOBAL(cfg)->servlet && strlen(EXT_GLOBAL(cfg)->servlet) && strncasecmp("off", EXT_GLOBAL(cfg)->servlet, 3);
+/*
+ * return true only if the _user_ has set the option to true (not
+ * "off").
+ */
+short EXT_GLOBAL(option_set_by_user)(short option) {
+  char *entry = 0;
+
+  if((option & EXT_GLOBAL(ini_user))==0) return 0;
+
+  switch(option) {
+  case U_LOGFILE: entry = EXT_GLOBAL(cfg)->logFile; break;
+  case U_LOGLEVEL: entry = EXT_GLOBAL(cfg)->logLevel; break;
+  case U_JAVA_HOME: entry = EXT_GLOBAL(cfg)->vm_home; break;
+  case U_JAVA: entry = EXT_GLOBAL(cfg)->vm; break;
+  case U_LIBRARY_PATH: entry = EXT_GLOBAL(cfg)->ld_library_path; break;
+  case U_CLASSPATH: entry = EXT_GLOBAL(cfg)->classpath; break;
+  case U_SOCKNAME: entry = EXT_GLOBAL(cfg)->sockname; break;
+  case U_HOSTS: entry = EXT_GLOBAL(cfg)->hosts; break;
+  case U_SERVLET: entry = EXT_GLOBAL(cfg)->servlet; break;
+  default: assert(0);
+  }  
+
+  return entry && strncasecmp("off", entry, 3);
 }
 
 char *EXT_GLOBAL(get_servlet_context)() {
-  if(!is_servlet()) return 0;
+  if(!EXT_GLOBAL(option_set_by_user)(U_SERVLET)) return 0;
 
   if(!strncasecmp("on", EXT_GLOBAL(cfg)->servlet, 2) || !strncasecmp("1", EXT_GLOBAL(cfg)->servlet, 1)) return DEFAULT_SERVLET;
   return EXT_GLOBAL(cfg)->servlet;

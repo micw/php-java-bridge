@@ -14,7 +14,7 @@ dist_data_DATA=$(MONO_BRIDGE_EXE)
 EXTRA_DATA=MonoBridge.exe
 
 RunJavaBridge_SOURCES= RunJavaBridge.c
-java_SOURCES= java.c php/java/bridge/GlobalRef.java php/java/bridge/IDocHandler.java php/java/bridge/ISocketFactory.java php/java/bridge/JavaBridgeClassLoader.java php/java/bridge/JavaBridge.java php/java/bridge/LocalServerSocket.java php/java/bridge/LocalSocketInputStream.java php/java/bridge/LocalSocket.java php/java/bridge/LocalSocketOutputStream.java php/java/bridge/NotImplementedException.java php/java/bridge/Parser.java php/java/bridge/ParserString.java php/java/bridge/ParserTag.java php/java/bridge/PhpMap.java php/java/bridge/Request.java php/java/bridge/Response.java php/java/bridge/Session.java php/java/bridge/TCPServerSocket.java php/java/bridge/Util.java php/java/bridge/global.properties php/java/bridge/DynamicJavaBridgeClassLoader.java php/java/bridge/DynamicClassLoader.java php/java/bridge/ThreadPool.java php/java/bridge/MethodCache.java
+java_SOURCES= java.c php/java/bridge/GlobalRef.java php/java/bridge/IDocHandler.java php/java/bridge/ISocketFactory.java php/java/bridge/JavaBridgeClassLoader.java php/java/bridge/JavaBridge.java php/java/bridge/LocalServerSocket.java php/java/bridge/LocalSocketInputStream.java php/java/bridge/LocalSocket.java php/java/bridge/LocalSocketOutputStream.java php/java/bridge/NotImplementedException.java php/java/bridge/Parser.java php/java/bridge/ParserString.java php/java/bridge/ParserTag.java php/java/bridge/PhpMap.java php/java/bridge/Request.java php/java/bridge/Response.java php/java/bridge/Session.java php/java/bridge/TCPServerSocket.java php/java/bridge/Util.java php/java/bridge/global.properties php/java/bridge/DynamicJavaBridgeClassLoader.java php/java/bridge/DynamicClassLoader.java php/java/bridge/ThreadPool.java php/java/bridge/MethodCache.java php/java/bridge/PhpProcedureProxy.java php/java/bridge/PhpProcedure.java
 
 MonoBridge.exe: $(PHP_MONO)
 	$(GCJ) -C php/java/bridge/*.java
@@ -42,9 +42,19 @@ JavaBridge.jar:
 
 JavaBridge.war: JavaBridge.jar $(SERVLET)
 	$(PHP_JAVA)/bin/javac -classpath $(SERVLET) php/java/bridge/*.java php/java/servlet/*.java
-	-mkdir WEB-INF/lib WEB-INF/classes
+	-mkdir WEB-INF/lib WEB-INF/classes WEB-INF/cgi
 	cp JavaBridge.jar WEB-INF/lib
+	echo "Copy your PHP binary into this directory and give it execute permission." >WEB-INF/cgi/README
+	echo "For example:" >>WEB-INF/cgi/README
+	echo "" >>WEB-INF/cgi/README
+	echo "  cp /usr/bin/php ." >>WEB-INF/cgi/README
+	echo "  chmod +x php" >>WEB-INF/cgi/README
+	echo "" >>WEB-INF/cgi/README
+	echo "If this directory does not contain a php executable, the system default" >>WEB-INF/cgi/README
+	echo "PHP binary will be called." >>WEB-INF/cgi/README
 	cp -r php WEB-INF/classes
-	$(PHP_JAVA)/bin/jar cMf JavaBridge.war META-INF/MANIFEST.MF WEB-INF/web.xml WEB-INF/lib/JavaBridge.jar WEB-INF/classes/php/java/servlet/*.class
+	cp ../tests.php4/arrayToString.php ../test.php . 
+	cp ../tests.php4/arrayToString.jar WEB-INF/lib
+	$(PHP_JAVA)/bin/jar cMf JavaBridge.war arrayToString.php test.php META-INF/MANIFEST.MF WEB-INF/web.xml WEB-INF/cgi WEB-INF/lib/arrayToString.jar WEB-INF/lib/JavaBridge.jar WEB-INF/classes/php/java/servlet/*.class
 
 endif

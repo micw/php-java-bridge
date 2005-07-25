@@ -98,7 +98,7 @@ NULL values can be send as either v="" or v="0"
 
 <-
 Apply:
-<A v=object p=pos# m=stringRepresentation n=param# i=ID> ...ARGS...
+<A v=object p=cname m=fname n=param# i=ID> ...ARGS...
 </A>
 v: long
 p: string

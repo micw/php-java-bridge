@@ -31,9 +31,11 @@ class GtkFileSelectorDemo {
     $Application->Init();
 
     $filew = $this->filew = new Mono("Gtk.FileSelection", "Open a file ...");
-    $filew->add_DeleteEvent (new Mono("GtkSharp.DeleteEventHandler", mono_closure($this, "quit")));
-    $filew->get_OkButton()->add_Clicked (new Mono("System.EventHandler", mono_closure($this, "ok")));
-    $filew->get_CancelButton()->add_Clicked (new Mono("System.EventHandler", mono_closure($this, "quit")));
+    $filew->add_DeleteEvent (new Mono("Gtk.DeleteEventHandler", mono_closure($this, "quit")));
+    $b=$filew->get_OkButton();
+    $b->add_Clicked (new Mono("System.EventHandler", mono_closure($this, "ok")));
+    $b=$filew->get_CancelButton();
+    $b->add_Clicked (new Mono("System.EventHandler", mono_closure($this, "quit")));
     $filew->set_Filename ("penguin.png");
     $filew->Show();
   }
