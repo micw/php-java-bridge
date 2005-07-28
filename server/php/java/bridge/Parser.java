@@ -22,7 +22,6 @@ public class Parser {
 	tag=new ParserTag[]{new ParserTag(1), new ParserTag(MAX_ARGS), new ParserTag(MAX_ARGS) };
     }
     
-    byte options;
     short initOptions(InputStream in) throws IOException {
 	if((pos=in.read(buf, 0, RECV_SIZE)) >0) { 
 
@@ -39,7 +38,7 @@ public class Parser {
 
 		// OPTIONS
 	    default:
-	    	if((ch&64)!=0) options=(byte) (ch&3); 
+	    	if((ch&64)!=0) bridge.requestOptions=(byte) (ch&3); 
 	    	if((ch&128)!=0) {
 	    	    if(bridge.logLevel>3 && (bridge.logLevel!=((ch>>2)&7)))
 		        bridge.logDebug("Client changed its request log level to: " + ((ch>>2)&7));

@@ -13,8 +13,8 @@ public class Request implements IDocHandler {
     private Parser parser;
     private JavaBridge bridge;
     public static class PhpArray extends HashMap { // for PHP's array()
-		private static final long serialVersionUID = 3905804162838115892L;
-	};
+	private static final long serialVersionUID = 3905804162838115892L;
+    };
     private static class Args {
     	PhpArray ht; 
     	ArrayList array;
@@ -29,42 +29,42 @@ public class Request implements IDocHandler {
         Object key;
 
    	void add(Object val) {
-    		if(composite!=0) {
-			if(ht==null) ht=new PhpArray();
-    			if(key!=null) {
-    				ht.put(key, val);
-    			}
-    			else {
-    				ht.put(new Long(count++), val);
-    			}
-    		} else {
-    			if(array==null) array=new ArrayList();
-    			array.add(val);
-    		}
+	    if(composite!=0) {
+		if(ht==null) ht=new PhpArray();
+		if(key!=null) {
+		    ht.put(key, val);
+		}
+		else {
+		    ht.put(new Long(count++), val);
+		}
+	    } else {
+		if(array==null) array=new ArrayList();
+		array.add(val);
+	    }
     	}
     	void reset() {
-    		ht=null;
-    		array=null;
-    		count=0;
-    		composite=0;
-    		type=0;
-    		callObject=null;
-    		method=null;
-    		id=0;
-    		key=null;
+	    ht=null;
+	    array=null;
+	    count=0;
+	    composite=0;
+	    type=0;
+	    callObject=null;
+	    method=null;
+	    id=0;
+	    key=null;
      	}
     	private static final PhpArray empty0=new PhpArray();
     	void push() {
-    		if(composite!=0) {
-    			if(array==null) array=new ArrayList();
-    			array.add(ht==null?empty0:ht);
-    			ht=null;
-    		}
-                composite=0;
+	    if(composite!=0) {
+		if(array==null) array=new ArrayList();
+		array.add(ht==null?empty0:ht);
+		ht=null;
+	    }
+	    composite=0;
     	}
         private static final Object[] empty = new Object[0];
     	Object[] getArgs() {
-    		return (array==null) ? empty : array.toArray();
+	    return (array==null) ? empty : array.toArray();
     	}
     }
     private Args args;
@@ -119,18 +119,18 @@ public class Request implements IDocHandler {
 	    break;
 	}
 	case 'X': {
-		args.composite=st[0].string[st[0].off];
-		break;
+	    args.composite=st[0].string[st[0].off];
+	    break;
 	}
 	case 'P': {
-		if(args.composite=='H') {// hash
-			if(st[0].string[st[0].off]=='S')
-				args.key = st[1].getStringValue();
-			else
-				args.key = new Long(Long.parseLong(st[1].getStringValue(), 10));
-		} else // array
-			args.key=null;
-		break;
+	    if(args.composite=='H') {// hash
+		if(st[0].string[st[0].off]=='S')
+		    args.key = st[1].getStringValue();
+		else
+		    args.key = new Long(Long.parseLong(st[1].getStringValue(), 10));
+	    } else // array
+		args.key=null;
+	    break;
 	}
 
 	case 'U': {
@@ -180,7 +180,7 @@ public class Request implements IDocHandler {
     public void handleRequests() throws IOException {
     	response=new Response(bridge);
 	while(Parser.OK==parser.parse(bridge.in)){
-	    response.setResult(args.id, parser.options);
+	    response.setResult(args.id, bridge.requestOptions);
 	    switch(args.type){
 	    case 'I':
 		if(args.predicate)
@@ -206,7 +206,7 @@ public class Request implements IDocHandler {
     	Args current = args;
     	args = new Args();
 	while(Parser.OK==parser.parse(bridge.in)){
-	    response.setResult(args.id, parser.options); 
+	    response.setResult(args.id, bridge.requestOptions); 
 	    switch(args.type){
 	    case 'I':
 		if(args.predicate)

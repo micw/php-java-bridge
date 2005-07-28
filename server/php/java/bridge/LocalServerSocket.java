@@ -12,13 +12,13 @@ public class LocalServerSocket implements ISocketFactory {
     private int peer;
 	
     public static ISocketFactory create(String name, int backlog) throws IOException {
+	if(name==null) name=DefaultSocketname;
 	if(name.startsWith("INET:") || name.startsWith("INET_LOCAL:")) return null;
 
 	return new LocalServerSocket(name==null?DefaultSocketname:name, backlog);
     }
     private LocalServerSocket(String name, int backlog)
 	throws IOException {
-	if(name==null) name=DefaultSocketname;
 	if(name.startsWith("LOCAL:")) name=name.substring(6);
 	this.backlog=backlog;
 	this.name=name;

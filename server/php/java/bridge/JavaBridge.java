@@ -44,7 +44,7 @@ public class JavaBridge implements Runnable {
 
     public InputStream in; public OutputStream out;
 
-    int logLevel = Util.logLevel;
+    public int logLevel = Util.logLevel;
   
     /*
      * The current request (if any)
@@ -109,6 +109,9 @@ public class JavaBridge implements Runnable {
     // native accept fills these
     int uid =-1, gid =-1;
 
+    // The options from the request header
+    byte requestOptions;
+    
     private static boolean haveNatcJavaBridge=true;
 
     static Object loadLock=new Object();
@@ -129,101 +132,114 @@ public class JavaBridge implements Runnable {
     //
     public void run() {
         try {
-          logDebug("START: JavaBridge.run()");
-          try {
-            cl = new JavaBridgeClassLoader(this, (DynamicJavaBridgeClassLoader) Thread.currentThread().getContextClassLoader());
-          } catch (ClassCastException ex) {
-            cl = new JavaBridgeClassLoader(this, null);
-          }
-          Util.logStream.flush();
-          request = new Request(this);
+	    logDebug("START: JavaBridge.run()");
+	    try {
+		cl = new JavaBridgeClassLoader(this, (DynamicJavaBridgeClassLoader) Thread.currentThread().getContextClassLoader());
+	    } catch (ClassCastException ex) {
+		cl = new JavaBridgeClassLoader(this, null);
+	    }
+	    Util.logStream.flush();
+	    request = new Request(this);
           
-          try {
-              Util.logStream.flush();
-              if(!request.initOptions(in, out)) return;
-          } catch (Throwable e) {
-              printStackTrace(e);
-              return;
-          }
-          if(logLevel>3) logDebug("Request from client with uid/gid "+uid+"/"+gid);
-          load++;
-          try {
-              request.handleRequests();
-          } catch (Throwable e) {
-              printStackTrace(e);
-          }
+	    try {
+		Util.logStream.flush();
+		if(!request.initOptions(in, out)) return;
+	    } catch (Throwable e) {
+		printStackTrace(e);
+		return;
+	    }
+	    if(logLevel>3) logDebug("Request from client with uid/gid "+uid+"/"+gid);
+	    load++;
+	    try {
+		request.handleRequests();
+	    } catch (Throwable e) {
+		printStackTrace(e);
+	    }
 
-          try {
-              in.close();
-          } catch (IOException e1) {
-              printStackTrace(e1);
-          }
-          try {
-              out.close();
-          } catch (IOException e2) {
-              printStackTrace(e2);
-          }
-          load--;
-          globalRef=null;
-          Session.expire(this);
-          Util.logDebug("END: JavaBridge.run()");
+	    try {
+		in.close();
+	    } catch (IOException e1) {
+		printStackTrace(e1);
+	    }
+	    try {
+		out.close();
+	    } catch (IOException e2) {
+		printStackTrace(e2);
+	    }
+	    load--;
+	    globalRef=null;
+	    Session.expire(this);
+	    Util.logDebug("END: JavaBridge.run()");
         } catch (Throwable t) {
-          printStackTrace(t);
+	    printStackTrace(t);
         }
     }
 
-/* Disabled for the release 2.0.7.  We'll probably want something more general in the future.
+    /* Disabled for the release 2.0.7.  We'll probably want something more general in the future.
     //
     // add all jars found in the phpConfigDir/lib and /usr/share/java
     // to our classpath
     //
     static void initGlobals(String phpConfigDir) {
-    	try {
+    try {
 
-    	  // FIXME: This doesn't work on FC3 or when running the bridge in a J2EE AS (no file access permissions)
-          try {
-              Util.logMessage("Trying to open '"+phpConfigDir+File.separator+"PHPJavaBridge.ini'");
-              File iniFile = new File(phpConfigDir+File.separator+"PHPJavaBridge.ini");
-              Properties props = null;
-              if (iniFile.exists()) {
-                props = new Properties();
-                props.load(new FileInputStream(iniFile));
-              } else {
-                props = new Properties();
-                props.put("classloader","Classic");
-                props.put("thread_pool_size","20");
-                Util.logMessage("Ini File not found, creating '"+phpConfigDir+File.separator+"PHPJavaBridge.ini'");
-                try {
-                  FileOutputStream fout = new FileOutputStream(phpConfigDir+File.separator+"PHPJavaBridge.ini");
-                  props.store(fout, "PHPJavaBridge Properties");
-                  fout.close();
-                } catch (IOException ioe) {
-                  Util.printStackTrace(ioe);
-                }
-              }
-              BridgeThread.poolSize = Integer.parseInt(props.getProperty("thread_pool_size", Util.THREAD_POOL_MAX_SIZE));
-            } catch (Exception ex) {
-              Util.printStackTrace(ex);
-            }
-            try {
-            	if(BridgeThread.poolSize==0) BridgeThread.poolSize= Integer.parseInt(Util.THREAD_POOL_MAX_SIZE);
-            } catch (Throwable t) {
-            	BridgeThread.poolSize = 20;
-            }
-            DynamicJavaBridgeClassLoader.initClassLoader(phpConfigDir);
-    	} catch (Exception t) {
-	    Util.printStackTrace(t);
-	}
+    // FIXME: This doesn't work on FC3 or when running the bridge in a J2EE AS (no file access permissions)
+    try {
+    Util.logMessage("Trying to open '"+phpConfigDir+File.separator+"PHPJavaBridge.ini'");
+    File iniFile = new File(phpConfigDir+File.separator+"PHPJavaBridge.ini");
+    Properties props = null;
+    if (iniFile.exists()) {
+    props = new Properties();
+    props.load(new FileInputStream(iniFile));
+    } else {
+    props = new Properties();
+    props.put("classloader","Classic");
+    props.put("thread_pool_size","20");
+    Util.logMessage("Ini File not found, creating '"+phpConfigDir+File.separator+"PHPJavaBridge.ini'");
+    try {
+    FileOutputStream fout = new FileOutputStream(phpConfigDir+File.separator+"PHPJavaBridge.ini");
+    props.store(fout, "PHPJavaBridge Properties");
+    fout.close();
+    } catch (IOException ioe) {
+    Util.printStackTrace(ioe);
     }
-*/
+    }
+    BridgeThread.poolSize = Integer.parseInt(props.getProperty("thread_pool_size", Util.THREAD_POOL_MAX_SIZE));
+    } catch (Exception ex) {
+    Util.printStackTrace(ex);
+    }
+    try {
+    if(BridgeThread.poolSize==0) BridgeThread.poolSize= Integer.parseInt(Util.THREAD_POOL_MAX_SIZE);
+    } catch (Throwable t) {
+    BridgeThread.poolSize = 20;
+    }
+    DynamicJavaBridgeClassLoader.initClassLoader(phpConfigDir);
+    } catch (Exception t) {
+    Util.printStackTrace(t);
+    }
+    }
+    */
+    public static ISocketFactory bind(String sockname) throws Exception {
+	ISocketFactory socket = null;
+	try {
+	    socket = LocalServerSocket.create(sockname, Util.BACKLOG);
+	} catch (Throwable e) {
+	    Util.logMessage("Local sockets not available:" + e + ". Try TCP sockets instead");
+	}
+	if(null==socket)
+	    socket = TCPServerSocket.create(sockname, Util.BACKLOG);
 
+	if(null==socket)
+	    throw new Exception("Could not create socket: " + sockname);
+
+	return socket;
+    }
     //
     // init
     //
     public static void init(String s[]) {
 	String logFile=null;
 	String sockname=null;
-	ISocketFactory socket = null;
     	try {
     	    CLRAssembly = Class.forName("cli.System.Reflection.Assembly");
     	    loadMethod = CLRAssembly.getMethod("Load", new Class[] {String.class});
@@ -267,20 +283,12 @@ public class JavaBridge implements Runnable {
 		Util.logStream=System.out;
 		logFile="<stdout>";
 	    }
-	    try {
-		socket = LocalServerSocket.create(sockname, Util.BACKLOG);
-	    } catch (Throwable e) {
-		Util.logMessage("Local sockets not available:" + e + ". Try TCP sockets instead");
-	    }
-	    if(null==socket)
-		socket = TCPServerSocket.create(sockname, Util.BACKLOG);
-
-	    if(null==socket)
-		throw new Exception("Could not create socket: " + sockname);
-
+	    
+	    ISocketFactory socket = bind(sockname);
 	    Util.logMessage(Util.EXTENSION_NAME + " logFile         : " + logFile);
 	    Util.logMessage(Util.EXTENSION_NAME + " default logLevel: " + Util.logLevel);
 	    Util.logMessage(Util.EXTENSION_NAME + " socket          : " + socket);
+	    
 
 	    int maxSize = 20;
 	    try {
@@ -288,6 +296,7 @@ public class JavaBridge implements Runnable {
 	    } catch (Throwable t) {
 	    	Util.printStackTrace(t);
 	    }
+	    
 	    ThreadPool pool = null;
 	    if(maxSize>0) pool = new ThreadPool(Util.EXTENSION_NAME, maxSize);
             Util.logDebug("Starting to accept Socket connections");
@@ -496,11 +505,11 @@ public class JavaBridge implements Runnable {
 	       ((e instanceof InvocationTargetException) &&
 		((InvocationTargetException)e).getTargetException() instanceof NoClassDefFoundError)) {
 	    	if(createInstance) {
-	    	  if(e instanceof InvocationTargetException) e = ((InvocationTargetException)e).getTargetException();
-	    	  logError("Error: Could not invoke constructor. A class referenced in the constructor method could not be found: " + e + ". Please correct this error or use \"new JavaClass()\" to avoid calling the constructor.");
-	    	  cl.clearCaches();
-	    	  CreateObject(name, false, args, response);
-	    	  return;
+		    if(e instanceof InvocationTargetException) e = ((InvocationTargetException)e).getTargetException();
+		    logError("Error: Could not invoke constructor. A class referenced in the constructor method could not be found: " + e + ". Please correct this error or use \"new JavaClass()\" to avoid calling the constructor.");
+		    cl.clearCaches();
+		    CreateObject(name, false, args, response);
+		    return;
 	        }
 	    }
 	    printStackTrace(e);
@@ -624,21 +633,21 @@ public class JavaBridge implements Runnable {
 	int size = 0;
 
 	for (int i=0; i<args.length; i++) {
-		if (Util.getClass(args[i]) == PhpProcedureProxy.class) {
-			Class param = parms[i];
-			if(!param.isInterface()) {
-			    if(CLRAssembly!=null) // CLR uses an inner method class
-			    	try {
-			    	    args[i] = ((PhpProcedureProxy)args[i]).getProxy(new Class[] {cl.forName(param.getName() + "$Method")});
-			    	} catch (ClassNotFoundException e) { 
-			    	    logDebug("Could not find CLR interface for: " + param);
-			    	    args[i] = ((PhpProcedureProxy)args[i]).getProxy(param.getInterfaces());
-			    	}
-			    else
-				args[i] = ((PhpProcedureProxy)args[i]).getProxy(param.getInterfaces());
-			} else
-				args[i] = ((PhpProcedureProxy)args[i]).getProxy(new Class[] {param});
-		}
+	    if (Util.getClass(args[i]) == PhpProcedureProxy.class) {
+		Class param = parms[i];
+		if(!param.isInterface()) {
+		    if(CLRAssembly!=null) // CLR uses an inner method class
+			try {
+			    args[i] = ((PhpProcedureProxy)args[i]).getProxy(new Class[] {cl.forName(param.getName() + "$Method")});
+			} catch (ClassNotFoundException e) { 
+			    logDebug("Could not find CLR interface for: " + param);
+			    args[i] = ((PhpProcedureProxy)args[i]).getProxy(param.getInterfaces());
+			}
+		    else
+			args[i] = ((PhpProcedureProxy)args[i]).getProxy(param.getInterfaces());
+		} else
+		    args[i] = ((PhpProcedureProxy)args[i]).getProxy(new Class[] {param});
+	    }
 	    if (args[i] instanceof byte[] && !parms[i].isArray()) {
 		Class c = parms[i];
 		String s = response.newString((byte[])args[i]);
@@ -711,9 +720,9 @@ public class JavaBridge implements Runnable {
 			Map ht = (Map)args[i];
 			Collection res;
 			try {
-				res = (Collection) parms[i].newInstance();
+			    res = (Collection) parms[i].newInstance();
 			} catch (java.lang.InstantiationException ex) {
-				res = (Collection) new HashSet();
+			    res = (Collection) new HashSet();
 			}
 			for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
 			    Object key = e.next();
@@ -755,9 +764,9 @@ public class JavaBridge implements Runnable {
 			Map ht = (Map)args[i];
 			Map res;
 			try {
-				res = (Map)parms[i].newInstance();
+			    res = (Map)parms[i].newInstance();
 			} catch (java.lang.InstantiationException ex) {
-				res = (Map) new HashMap();
+			    res = (Map) new HashMap();
 			}
 			for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
 			    Object key = e.next();
@@ -949,14 +958,14 @@ public class JavaBridge implements Runnable {
     }
 
     public static void logInvoke(Object obj, String method, Object args[]) {
-       String dmsg = "\nInvoking "+objectDebugDescription(obj)+"."+method+"(";
-       for (int t =0;t<args.length;t++) {
-          if (t>0) dmsg +=",";
-          dmsg += objectDebugDescription(args[t]);
+	String dmsg = "\nInvoking "+objectDebugDescription(obj)+"."+method+"(";
+	for (int t =0;t<args.length;t++) {
+	    if (t>0) dmsg +=",";
+	    dmsg += objectDebugDescription(args[t]);
 
-       }
-       dmsg += ");\n";
-       Util.logDebug(dmsg);
+	}
+	dmsg += ");\n";
+	Util.logDebug(dmsg);
     }
 
     //
@@ -965,45 +974,45 @@ public class JavaBridge implements Runnable {
     public void Invoke
 	(Object object, String method, Object args[], Response response)
     {
-       Vector matches = new Vector();
-       Vector candidates = new Vector();
-       Class jclass;
-       boolean again;
-       Object coercedArgs[] = null;
-       MethodCache.Entry entry = methodCache.getEntry(method, Util.getClass(object), args);
-       Method selected = (Method) methodCache.get(entry);
+	Vector matches = new Vector();
+	Vector candidates = new Vector();
+	Class jclass;
+	boolean again;
+	Object coercedArgs[] = null;
+	MethodCache.Entry entry = methodCache.getEntry(method, Util.getClass(object), args);
+	Method selected = (Method) methodCache.get(entry);
 	try {
-              // gather
-              do {
-                  again = false;
-                  ClassIterator iter;
-           if (selected==null) {
-                  for (iter = ClassIterator.getInstance(object, FindMatchingInterfaceForInvoke.getInstance(this, method, args, true, canModifySecurityPermission)); (jclass=iter.getNext())!=null;) {
-                      Method methods[] = jclass.getMethods();
-                      for (int i=0; i<methods.length; i++) {
-                          if (methods[i].getName().equalsIgnoreCase(method)) {
-                              candidates.addElement(methods[i]);
-                              if(methods[i].getParameterTypes().length == args.length) {
-                                  matches.addElement(methods[i]);
-                              }
-                          }
-                      }
-                  }
-                  selected = (Method)select(matches, args);
-                  if (selected == null) 
+	    // gather
+	    do {
+		again = false;
+		ClassIterator iter;
+		if (selected==null) {
+		    for (iter = ClassIterator.getInstance(object, FindMatchingInterfaceForInvoke.getInstance(this, method, args, true, canModifySecurityPermission)); (jclass=iter.getNext())!=null;) {
+			Method methods[] = jclass.getMethods();
+			for (int i=0; i<methods.length; i++) {
+			    if (methods[i].getName().equalsIgnoreCase(method)) {
+				candidates.addElement(methods[i]);
+				if(methods[i].getParameterTypes().length == args.length) {
+				    matches.addElement(methods[i]);
+				}
+			    }
+			}
+		    }
+		    selected = (Method)select(matches, args);
+		    if (selected == null) 
                   	throw new NoSuchMethodException(String.valueOf(method) + "(" + Util.argsToString(args) + "). " + "Candidates: " + String.valueOf(candidates));
-                  methodCache.put(entry, selected);
-                  if(!iter.checkAccessible(selected)) {
-                      logMessage("Security restriction: Cannot use setAccessible(), reverting to interface searching.");
-                      canModifySecurityPermission=false;
-                      candidates.clear(); matches.clear();
-                      again=true;
-                  }
-              }
-                  coercedArgs = coerce(selected.getParameterTypes(), args, response);
-              } while(again);
-              if (this.logLevel>4) logInvoke(object, method, coercedArgs); // If we have a logLevel of 5 or above, do very detailed invocation logging
-              setResult(response, selected.invoke(object, coercedArgs));
+		    methodCache.put(entry, selected);
+		    if(!iter.checkAccessible(selected)) {
+			logMessage("Security restriction: Cannot use setAccessible(), reverting to interface searching.");
+			canModifySecurityPermission=false;
+			candidates.clear(); matches.clear();
+			again=true;
+		    }
+		}
+		coercedArgs = coerce(selected.getParameterTypes(), args, response);
+	    } while(again);
+	    if (this.logLevel>4) logInvoke(object, method, coercedArgs); // If we have a logLevel of 5 or above, do very detailed invocation logging
+	    setResult(response, selected.invoke(object, coercedArgs));
 	} catch (Throwable e) {
 	    if(e instanceof OutOfMemoryError ||
 	       ((e instanceof InvocationTargetException) &&
@@ -1025,10 +1034,10 @@ public class JavaBridge implements Runnable {
                         errMsg += "   ("+k+") "+objectDebugDescription(args[k])+"\n";
                     }
                     if (coercedArgs!=null) {
-                    errMsg +=" Coerced Arguments for this Method:\n";
-                      for (int k=0;k<coercedArgs.length;k++) {
-                          errMsg += "   ("+k+") "+objectDebugDescription(coercedArgs[k])+"\n";
-                      }
+			errMsg +=" Coerced Arguments for this Method:\n";
+			for (int k=0;k<coercedArgs.length;k++) {
+			    errMsg += "   ("+k+") "+objectDebugDescription(coercedArgs[k])+"\n";
+			}
                     }
                     this.logDebug(errMsg);
                 }
@@ -1038,11 +1047,11 @@ public class JavaBridge implements Runnable {
     }
 
     public static String objectDebugDescription(Object obj) {
-      return "[Object "+System.identityHashCode(obj)+" - Class: "+ classDebugDescription(obj.getClass())+ "]";
+	return "[Object "+System.identityHashCode(obj)+" - Class: "+ classDebugDescription(obj.getClass())+ "]";
     }
 
     public static String classDebugDescription(Class cls) {
-      return cls.getName() + ":ID" + System.identityHashCode(cls) + ":LOADER-ID"+System.identityHashCode(cls.getClassLoader());
+	return cls.getName() + ":ID" + System.identityHashCode(cls) + ":LOADER-ID"+System.identityHashCode(cls.getClassLoader());
     }
 
     //
@@ -1178,8 +1187,8 @@ public class JavaBridge implements Runnable {
     }
 
     public JavaBridge(InputStream in, OutputStream out) {
-      this.in = in;
-      this.out = out;
+	this.in = in;
+	this.out = out;
     }
 
     //
@@ -1227,23 +1236,23 @@ public class JavaBridge implements Runnable {
 	buf.append(String.valueOf(Util.getClass(object)));
 	buf.append(":\nConstructors:\n");
         for (iter = ClassIterator.getInstance(object, MATCH_VOID_CASE); (jclass=iter.getNext())!=null;) {
-        	Constructor[] constructors = jclass.getConstructors();
-                for(int i=0; i<constructors.length; i++) { buf.append(String.valueOf(constructors[i])); buf.append("\n"); }
+	    Constructor[] constructors = jclass.getConstructors();
+	    for(int i=0; i<constructors.length; i++) { buf.append(String.valueOf(constructors[i])); buf.append("\n"); }
         }
         buf.append("\nFields:\n");
         for (iter = ClassIterator.getInstance(object, MATCH_VOID_CASE); (jclass=iter.getNext())!=null;) {
-        	Field jfields[] = jclass.getFields();
-                for(int i=0; i<jfields.length; i++) { buf.append(String.valueOf(jfields[i])); buf.append("\n"); }
+	    Field jfields[] = jclass.getFields();
+	    for(int i=0; i<jfields.length; i++) { buf.append(String.valueOf(jfields[i])); buf.append("\n"); }
         }
         buf.append("\nMethods:\n");
         for (iter = ClassIterator.getInstance(object, MATCH_VOID_CASE); (jclass=iter.getNext())!=null;) {
-                Method jmethods[] = jclass.getMethods();
-                for(int i=0; i<jmethods.length; i++) { buf.append(String.valueOf(jmethods[i])); buf.append("\n"); }
+	    Method jmethods[] = jclass.getMethods();
+	    for(int i=0; i<jmethods.length; i++) { buf.append(String.valueOf(jmethods[i])); buf.append("\n"); }
         }
         buf.append("\nClasses:\n");
         for (iter = ClassIterator.getInstance(object, MATCH_VOID_CASE); (jclass=iter.getNext())!=null;) {
-                Class jclasses[] = jclass.getClasses();
-                for(int i=0; i<jclasses.length; i++) { buf.append(String.valueOf(jclasses[i].getName())); buf.append("\n"); }
+	    Class jclasses[] = jclass.getClasses();
+	    for(int i=0; i<jclasses.length; i++) { buf.append(String.valueOf(jclasses[i].getName())); buf.append("\n"); }
         }
 	buf.append("]");
 	return buf.toString();

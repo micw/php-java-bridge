@@ -226,15 +226,14 @@ static void begin(parser_tag_t tag[3], parser_cb_t *cb){
 
       struct stack_elem stack_elem = 
 		{ tmp_retval, 'A', 
-		  /*FIXME*/    strdup(PARSER_GET_STRING(st, 2)), /* m */
-		  /*FIXME*/    strdup(PARSER_GET_STRING(st, 1)), /* p */
+		  (unsigned char*)strdup((char*)PARSER_GET_STRING(st, 2)), /* m */
+		  (unsigned char*)strdup((char*)PARSER_GET_STRING(st, 1)), /* p */
 		  st[2].length,			/* m_length */
-		  st[1].length,			/* m_length */
+		  st[1].length,			/* p_length */
 		  strtol((const char*)PARSER_GET_STRING(st, 0), 0, 10), /* v */
 		  strtol((const char*)PARSER_GET_STRING(st, 3), 0, 10), /* n */
 		  ctx->id
 		}; 
-
 	  zend_stack_push(&ctx->containers, &stack_elem, sizeof stack_elem);
 
 	  setResultFromArray(tmp_retval);
@@ -341,6 +340,20 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
 	  }
 	  break;
 	}
+  case 'X':// Redirect
+	{
+	  char *hosts;
+	  static const char key_hosts[]="java.hosts";
+	  static const char redirect[]="X_JAVABRIDGE_OVERRIDE_HOSTS";
+	  if(strcmp(str, redirect)) return;
+	  hosts = (char*)PARSER_GET_STRING(tag[1].strings, 0);
+	  zend_alter_ini_entry((char*)key_hosts, sizeof key_hosts, 
+						   hosts, tag[1].strings[0].length+1, 
+						   ZEND_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
+
+	  (*ctx)->must_reopen = 2;
+	  break;
+	}
   }
 }
 static void handle_request(proxyenv *env) {
@@ -360,7 +373,11 @@ static void handle_request(proxyenv *env) {
   /* pull off A, if any */
   if(SUCCESS==zend_stack_top(&ctx.containers, (void**)&stack_elem))	{ 
 	int err;
+	assert(stack_elem->m); if(!stack_elem->m) exit(9);
+	assert(stack_elem->p); if(!stack_elem->p) exit(9);
 	setResultFromApply(stack_elem->retval, stack_elem->p, stack_elem->p_length, stack_elem->m, stack_elem->m_length, (zval*)stack_elem->v, stack_elem->container);
+	free(stack_elem->m);
+	free(stack_elem->p);
 	err=zend_stack_del_top(&ctx.containers);
 	assert(SUCCESS==err);
 	tail_call = 1;
@@ -373,9 +390,21 @@ static void handle_request(proxyenv *env) {
   /* re-open a closed HTTP connection */
   if((*env)->must_reopen) {
 	char*server;
+
+	if((*env)->must_reopen==2) { // redirect
+	  static const char key_servlet[] = "java.servlet";
+	  static const char key_off[] = "Off";
+	  static const char key_sockname[] = "java.socketname";
+	  zend_alter_ini_entry((char*)key_servlet, sizeof key_servlet, 
+						   (char*)key_off, sizeof key_off, 
+						   ZEND_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
+	  zend_alter_ini_entry((char*)key_sockname, sizeof key_sockname, 
+						   (char*)key_off, sizeof key_off, 
+						   ZEND_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
+	}
 	(*env)->must_reopen = 0;
 	assert((*env)->peer); if((*env)->peer) close((*env)->peer);
-	server = EXT_GLOBAL(test_server)(&(*env)->peer, 0); /* FIXME: this is not very efficient */
+	server = EXT_GLOBAL(test_server)(&(*env)->peer, 0);
 	assert(server); if(!server) exit(9);
 	free(server);
   }

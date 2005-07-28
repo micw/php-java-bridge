@@ -11,7 +11,7 @@ request context, for example the location of a cell where the response
 should be stored; a structure or something like that. In PHP for
 example we allocate a pval and pass it as the ID to the Invoke or
 Create request. When the response arrives, we receive our ID along
-with the result so we know exactly where to store the result).
+with the result so we know exactly where to store the result.
 
 Example:
 
@@ -34,9 +34,8 @@ Example:
 Optional requests:
 
 All aquired [O]bject handles may be destroyed by invoking U (destroy).
-However, this isn't necessary either.  The server tracks all handles
-and automatically destroys them after EOF. It is an error to further
-reference destroyed handles.
+However, the server tracks all handles and automatically destroys them
+after EOF. It is an error to further reference destroyed handles.
 
 
 
@@ -105,6 +104,9 @@ p: string
 m: string
 n: long
 i: long
+Result can be used to send back the result of the current apply
+call. If v is null, the function name p must be searched in the
+"current" environment.
 
 ->
 Result:

@@ -226,6 +226,71 @@ Build and execution instructions:
   The PHP/Java Bridge log output appears in the server log file, for
   example in $CATALINA_HOME/logs/localhost_log.*.txt  
 
+---------------------------------------------
+  Running JSP and PHP side by side
+  --------------------------------
+
+  It is possible to run PHP inside java. Unlike the JSR223 sample
+  implementation, which uses the JNI interface to load/call the native
+  php5 shared library[1], we use the CGI interface to call the PHP
+  binary and use a local channel to connect the two components. This is
+  not much slower[2] but more reliable. In case a PHP instance crashes,
+  it will not take down the whole servlet engine or application server.
+  
+  Please follow the AS or Tomcat installation instructions above, then
+  visit http://localhost:8080/JavaBridge and run the supplied JSP and PHP
+  examples.
+
+  In case the PHP binary could not be found, please adjust the
+  php_exec (see JavaBridge/WEB-INF/web.xml) setting, for example:
+
+      <param-name>php_exec</param-name>
+      <param-value>/usr/local/bin/php</param-value>
+
+  or
+
+      <param-name>php_exec</param-name>
+      <param-value>c:/PHP/php-cgi.exe</param-value>
+
+  You can also copy your php executable to the JavaBridge/WEB-INF/cgi
+  folder, please read the file JavaBridge/WEB-INF/cgi/README for
+  details.
+
+  In case your application server denies calling the CGI binary, add a
+  policy to the JavaBridge.war which allows execution of PHP. This is
+  AS specific. However, for a first test, switch off security checking
+  in general by adding the following to the application server's JRE
+  "java.policy" file:
+
+    grant {
+	permission java.security.AllPermission;
+    };
+
+
+  It should be noted that running PHP as an apache plugin is more
+  efficient than calling a CGI binary from tomcat. Please use the tomcat
+  mod_jk adapter to connect tomcat with apache. That way PHP is managed
+  by the apache pool, JSP files are forwarded via the mod_jk adapter and
+  PHP/Java calls via the PHP/Java bridge.
+
+[1] Loading the php5 shared library from a class within the web
+application doesn't work in tomcat5, because tomcat may load the web
+application more than once. From the tomcat5 release notes: "To avoid
+this problem, place classes that load native libraries outside of the
+web application, and ensure that the loadLibrary() call is executed
+only once during the lifetime of a particular JVM". This may explain
+jsr223's memory leaks when running on tomcat5.
+
+[2] total execution time for 10 queries for examples/bench/bench.php,
+ RHEL3 (AMD32, 1500mhz) 
+ Tomcat 4.0 
+ PHP 5.0.1 (from the jsr sample)
+ PHP/Java Bridge 2.0.8
+ jsr223 sample implemenentation (from 25.07.2005):
+
+jsr223: 2m58.769s 
+bridge: 2m59.343s
+
 ------------------------------------
   64 Bit issues
   -------------

@@ -156,7 +156,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
    	} catch (java.security.AccessControlException e) {
     	    return null;
     	}
-     }
+    }
     public static synchronized DynamicJavaBridgeClassLoader newInstance(ClassLoader parent) {
     	try {
     	    DynamicJavaBridgeClassLoader cl = new DynamicJavaBridgeClassLoader(parent);
@@ -164,6 +164,6 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
    	} catch (java.security.AccessControlException e) {
     	    return null;
     	}
-     }
-
+    }
+    
 }

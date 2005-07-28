@@ -66,6 +66,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.URLEncoder;
 import java.util.Date;
@@ -274,7 +275,6 @@ import javax.servlet.http.HttpSession;
  *
  * @author Martin T Dengler [root@martindengler.com]
  * @author Amy Roh
- * @version $Revision: 1.1 $, $Date: 2005/07/25 20:43:37 $
  * @since Tomcat 4.0
  *
  */
@@ -349,7 +349,7 @@ public class CGIServlet extends HttpServlet {
         } catch (Throwable t) {
             //NOOP
         }
-        log("init: loglevel set to " + debug);
+        //log("init: loglevel set to " + debug);
 
         // Identify the internal container resources we need
         //Wrapper wrapper = (Wrapper) getServletConfig();
@@ -632,8 +632,8 @@ public class CGIServlet extends HttpServlet {
             || (!cgiEnv.isValid())) {
             try {
                 ServletOutputStream out = res.getOutputStream();
-                out.println("<HTML><HEAD><TITLE>$Name:  $</TITLE></HEAD>");
-                out.println("<BODY>$Header: /cvsroot/php-java-bridge/php-java-bridge/server/php/java/servlet/Attic/CGIServlet.java,v 1.1 2005/07/25 20:43:37 jost2345 Exp $<p>");
+                out.println("<HTML><HEAD><TITLE>CGIServlet</TITLE></HEAD>");
+                out.println("<BODY>");
 
                 if (cgiEnv.isValid()) {
                     out.println(cgiEnv.toString());
@@ -683,18 +683,6 @@ public class CGIServlet extends HttpServlet {
 	    return new CGIEnvironment(req, servletContext);
 	}
 
-
-
-	/** For future testing use only; does nothing right now */
-    public static void main(String[] args) {
-        System.out.println("$Header: /cvsroot/php-java-bridge/php-java-bridge/server/php/java/servlet/Attic/CGIServlet.java,v 1.1 2005/07/25 20:43:37 jost2345 Exp $");
-    }
-
-
-
-
-
-
     /**
      * Encapsulates the CGI environment and rules to derive
      * that environment from the servlet container and request information.
@@ -703,7 +691,6 @@ public class CGIServlet extends HttpServlet {
      * </p>
      *
      * @author   Martin Dengler [root@martindengler.com]
-     * @version  $Revision: 1.1 $, $Date: 2005/07/25 20:43:37 $
      * @since    Tomcat 4.0
      *
      */
@@ -1325,7 +1312,6 @@ public class CGIServlet extends HttpServlet {
      * </p>
      *
      * @author    Martin Dengler [root@martindengler.com]
-     * @version   $Revision: 1.1 $, $Date: 2005/07/25 20:43:37 $
      */
 
     protected class CGIRunner {
@@ -1464,6 +1450,23 @@ public class CGIServlet extends HttpServlet {
         }
 
 
+        private void addHeader(String line) {
+        if (debug >= 2) {
+                    log("runCGI: addHeader(\"" + line + "\")");
+                }
+                if (line.startsWith("HTTP")) {
+                    //TODO: should set status codes (NPH support)
+                    /*
+                     * response.setStatus(getStatusCode(line));
+                     */
+                } else {
+                	try {
+                    response.addHeader
+                        (line.substring(0, line.indexOf(":")).trim(),
+                         line.substring(line.indexOf(":") + 1).trim());
+                	} catch (Exception e) {/*not a valid header*/}
+                }
+        }
 
         /**
          * Executes a CGI script with the desired environment, current working
@@ -1544,13 +1547,10 @@ public class CGIServlet extends HttpServlet {
              * with major modifications by Martin Dengler
              */
             Runtime rt = null;
-            BufferedReader commandsStdOut = null;
-            BufferedReader commandsStdErr = null;
             BufferedOutputStream commandsStdIn = null;
+            InputStream in = null; 
+            OutputStream out = null;
             Process proc = null;
-            byte[] bBuf = new byte[1024];
-            char[] cBuf = new char[1024];
-            int bufRead = -1;
 
             //create query arguments
             Enumeration paramNames = params.keys();
@@ -1571,92 +1571,30 @@ public class CGIServlet extends HttpServlet {
             }
 
             /*String postIn = getPostInput(params);
-            int contentLength = (postIn.length()
-                    + System.getProperty("line.separator").length());
-            if ("POST".equals(env.get("REQUEST_METHOD"))) {
-                env.put("CONTENT_LENGTH", new Integer(contentLength));
-            }*/
+	      int contentLength = (postIn.length()
+	      + System.getProperty("line.separator").length());
+	      if ("POST".equals(env.get("REQUEST_METHOD"))) {
+	      env.put("CONTENT_LENGTH", new Integer(contentLength));
+	      }*/
 
-        StringBuffer perlCommand = new StringBuffer("perl ");
-        if (command.endsWith(".pl") || command.endsWith(".cgi")) {
-            perlCommand.append(cmdAndArgs.toString());
-            cmdAndArgs = perlCommand;
-        }
+	    StringBuffer perlCommand = new StringBuffer("perl ");
+	    if (command.endsWith(".pl") || command.endsWith(".cgi")) {
+		perlCommand.append(cmdAndArgs.toString());
+		cmdAndArgs = perlCommand;
+	    }
 
             rt = Runtime.getRuntime();
             proc = rt.exec(cmdAndArgs.toString(), hashToStringArray(env), wd);
 
-            /*
-             * provide input to cgi
-             * First  -- parameters
-             * Second -- any remaining input
-             */
-            /*commandsStdIn = new BufferedOutputStream(proc.getOutputStream());
-            if (debug >= 2 ) {
-                log("runCGI stdin=[" + stdin + "], qs="
-                    + env.get("QUERY_STRING"));
-            }
-            if ("POST".equals(env.get("REQUEST_METHOD"))) {
-                if (debug >= 2) {
-                    log("runCGI: writing ---------------\n");
-                    log(postIn);
-                    log("runCGI: new content_length=" + contentLength
-                        + "---------------\n");
-                }
-                commandsStdIn.write(postIn.getBytes());
-            }
-            if (stdin != null) {
-                //REMIND: document this
-                /* assume if nothing is available after a time, that nothing is
-                 * coming...
-                 */
-                /*if (stdin.available() <= 0) {
-                    if (debug >= 2 ) {
-                        log("runCGI stdin is NOT available ["
-                            + stdin.available() + "]");
-                    }
-                    try {
-                        Thread.currentThread().sleep(iClientInputTimeout);
-                    } catch (InterruptedException ignored) {
-                    }
-                }
-                if (stdin.available() > 0) {
-                    if (debug >= 2 ) {
-                        log("runCGI stdin IS available ["
-                            + stdin.available() + "]");
-                    }
-                    bBuf = new byte[1024];
-                    bufRead = -1;
-                    try {
-                        while ((bufRead = stdin.read(bBuf)) != -1) {
-                            if (debug >= 2 ) {
-                                log("runCGI: read [" + bufRead
-                                    + "] bytes from stdin");
-                            }
-                            commandsStdIn.write(bBuf, 0, bufRead);
-                        }
-                        if (debug >= 2 ) {
-                            log("runCGI: DONE READING from stdin");
-                        }
-                    } catch (IOException ioe) {
-                        //REMIND: replace with logging
-                        //REMIND: should I throw this exception?
-                        log("runCGI: couldn't write all bytes.");
-                        ioe.printStackTrace();
-                    }
-                }
-            }
-            commandsStdIn.flush();
-            commandsStdIn.close();*/
-      String sContentLength = (String) env.get("CONTENT_LENGTH");
-      if(!"".equals(sContentLength)) {
-          commandsStdIn = new BufferedOutputStream(proc.getOutputStream());
-          byte[] content = new byte[Integer.parseInt(sContentLength)];
-          stdin.read(content);
-          commandsStdIn.write(content);
-          commandsStdIn.flush();
-          commandsStdIn.close();
-      }
+	    String sContentLength = (String) env.get("CONTENT_LENGTH");
+	    if(!"".equals(sContentLength)) {
+		commandsStdIn = new BufferedOutputStream(proc.getOutputStream());
+		byte[] content = new byte[Integer.parseInt(sContentLength)];
+		stdin.read(content);
+		commandsStdIn.write(content);
+		commandsStdIn.flush();
+		commandsStdIn.close();
+	    }
 
             /* we want to wait for the process to exit,  Process.waitFor()
              * is useless in our situation; see
@@ -1665,69 +1603,40 @@ public class CGIServlet extends HttpServlet {
              */
 
             boolean isRunning = true;
-            commandsStdOut = new BufferedReader
-                (new InputStreamReader(proc.getInputStream()));
-            commandsStdErr = new BufferedReader
-                (new InputStreamReader(proc.getErrorStream()));
-            BufferedWriter servletContainerStdout = null;
+            in=proc.getInputStream();
+            out=response.getOutputStream();
 
-            try {
-                if (response.getOutputStream() != null) {
-                    servletContainerStdout =
-                        new BufferedWriter(new OutputStreamWriter
-                            (response.getOutputStream()));
-                }
-            } catch (IOException ignored) {
-                //NOOP: no output will be written
-            }
-
+            String line = null;
+            byte[] buf = new byte[8192];// headers cannot be larger than this value!
+            int i=0, n, s=0;
+            boolean eoh=false;
             while (isRunning) {
-
                 try {
-                    //read stderr first
-// Doing this would hang the phpinfo() script (both, php4 and php5)
-//                    cBuf = new char[1024];
-//                    while ((bufRead = commandsStdErr.read(cBuf)) != -1) {
-//                        if (servletContainerStdout != null) {
-//                            servletContainerStdout.write(cBuf, 0, bufRead);
-//                        }
-//                    }
+                    while((n = in.read(buf, i, buf.length-i)) !=-1 ) {
+                    	int N = i + n;
+			// header
+                    	while(!eoh && i<N) {
+			    switch(buf[i++]) {
 
-                    //set headers
-                    String line = null;
-                    while (((line = commandsStdOut.readLine()) != null)
-                           && !("".equals(line))) {
-                        if (debug >= 2) {
-                            log("runCGI: addHeader(\"" + line + "\")");
-                        }
-                        if (line.startsWith("HTTP")) {
-                            //TODO: should set status codes (NPH support)
-                            /*
-                             * response.setStatus(getStatusCode(line));
-                             */
-                        } else {
-                        	try {
-                            response.addHeader
-                                (line.substring(0, line.indexOf(":")).trim(),
-                                 line.substring(line.indexOf(":") + 1).trim());
-                        	} catch (Exception e) {/*not a valid header*/}
-                        }
+			    case '\n':
+				if(s+2==i && buf[s]=='\r') {
+				    eoh=true;
+				} else {
+				    line = new String(buf, s, i-s-2, "ASCII");
+				    addHeader(line);
+				    s=i;
+                    		}
+			    }
+			}
+                    	
+			// body
+                     	if(eoh) {
+                     	    if(out!=null) out.write(buf, i, N-i);
+                     	    i=0;
+                     	}
                     }
-
-                    //write output
-                    cBuf = new char[1024];
-                    while ((bufRead = commandsStdOut.read(cBuf)) != -1) {
-                        if (servletContainerStdout != null) {
-                            if (debug >= 4) {
-                                log("runCGI: write(\"" + cBuf + "\")");
-                            }
-                            servletContainerStdout.write(cBuf, 0, bufRead);
-                        }
-                    }
-
-                    if (servletContainerStdout != null) {
-                        servletContainerStdout.flush();
-                    }
+                    
+                    if (out != null) out.flush();
 
                     proc.exitValue(); // Throws exception if alive
 
@@ -1740,8 +1649,6 @@ public class CGIServlet extends HttpServlet {
                     }
                 }
             } //replacement for Process.waitFor()
-
-
         }
 
 

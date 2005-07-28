@@ -1,3 +1,45 @@
+2005-07-28  Jost Boekemeier  <jostb@intern>
+
+	* README: Added note about JSP and session sharing between PHP and
+	JSP.
+
+	* client.c
+	(begin_header): Added re-direct to a local channel in order to
+	speed up the servlet implementation.
+	(handle_request): if re-directed, temporarily change the
+	java.socketname, java.hosts and java.servlet.
+	
+	* java.c
+	(PHP_INI_BEGIN): java.log_level, java.log_file, java.java and
+	java.java_home are user settings.
+	(OnIniServlet, OnIniSockname, OnIniHosts, OnIniClassPath,
+	OnIniLibPath): These cannot be set by the user.
+	(MINFO): Display entries only if they make sense.
+	
+	* client.c
+	(handle_request): free the m and p arguments.
+	
+	* examples/php+jsp/excel.php, examples/php+jsp/numberguess.jar,
+	examples/php+jsp/numberguess.php,
+	examples/php+jsp/numberguess.jsp, examples/php+jsp/oops.jsp,
+	examples/php+jsp/oops.php: New examples.
+
+	* server/Makefile.am: include the new examples.
+
+	* server/php/java/bridge/JavaBridge.java
+	(requestOptions): Share the options for all request instances,
+	needed for re-direct.
+	(bind): New from init.
+		
+	* server/php/java/servlet/CGIServlet.java
+	(run): rewritten.
+	
+	* server/php/java/servlet/PhpJavaServlet.java
+	(init): open a server socket for re-direct.
+	(destroy): close socket
+	(doGet): catch IOException, display descriptive message and throw
+	servlet exception.
+	
 2005-07-24  Jost Boekemeier  <jostb@intern>
 
 	* PROTOCOL.TXT: updated documentation.
@@ -10,7 +52,7 @@
 	(OnIniServlet, OnIniSockname, OnIniHosts, OnIniClassPath,
 	OnIniLibPath, OnIniJava, OnIniJavaHome, OnIniLogLevel,
 	OnIniLogFile): It is now possible to use these in php scripts,
-	e.g. ini_set("java.hosts", "127.0.0.1:8080");
+	e.g. ini_set("java.log_level", 4);
 	
 	* bind.c (test_server): java.servlet forces java.socketname to
 	off.
@@ -21,13 +63,8 @@
 
 	* server/web.xml: added config options.
 
-	* examples/gui/gtk-button.php, examples/gui/gtk-fileselector.php,
-	examples/swing-button.php, examples/swt-button.php: New gui
-	examples.
-
 	* server/php/java/bridge/DynamicClassLoader (newInstance): create
 	a dynamic classloader with the servlet classloader as parent.
-
 
 	* server/php/java/servlet/CGIServlet.java: New file.
 

@@ -161,17 +161,13 @@ EXT_FUNCTION(EXT_GLOBAL(instanceof))
   (*jenv)->writeInvokeEnd(jenv);
 }
 
-EXT_FUNCTION(EXT_GLOBAL(get_session))
+static void session(INTERNAL_FUNCTION_PARAMETERS)
 {
   proxyenv *jenv;
   zval **session;
   
   if (ZEND_NUM_ARGS()!=1 || zend_get_parameters_ex(1, &session) == FAILURE)
 	WRONG_PARAM_COUNT;
-
-  if(JG(jenv)) {
-	php_error(E_ERROR, "This script has already selected a backend.  Please call "/**/EXT_NAME()/**/"_get_session() before calling any of the "/**/EXT_NAME()/**/"functions.");
-  }
 
   convert_to_string_ex(session);
 
@@ -182,6 +178,16 @@ EXT_FUNCTION(EXT_GLOBAL(get_session))
   (*jenv)->writeBoolean(jenv, 0); 
   (*jenv)->writeLong(jenv, 1400); 
   (*jenv)->writeInvokeEnd(jenv);
+}
+
+EXT_FUNCTION(EXT_GLOBAL(session))
+{
+  session(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+}
+
+EXT_FUNCTION(EXT_GLOBAL(get_session))
+{
+  session(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
 EXT_FUNCTION(EXT_GLOBAL(get_server_name))
@@ -208,7 +214,8 @@ EXT_FUNCTION(EXT_GLOBAL(reset))
   (*jenv)->writeInvokeEnd(jenv);
 }
 
-EXT_FUNCTION(EXT_GLOBAL(get_values))
+
+static void values(INTERNAL_FUNCTION_PARAMETERS)
 {
   proxyenv *jenv;
   zval **pobj;
@@ -236,6 +243,16 @@ EXT_FUNCTION(EXT_GLOBAL(get_values))
   ZVAL_NULL(return_value);
   REPLACE_ZVAL_VALUE(&return_value, *pobj, 1);
 #endif
+}
+
+EXT_FUNCTION(EXT_GLOBAL(values))
+{
+  values(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+}
+
+EXT_FUNCTION(EXT_GLOBAL(get_values))
+{
+  values(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
 EXT_FUNCTION(EXT_GLOBAL(closure))
@@ -330,9 +347,11 @@ function_entry EXT_GLOBAL(functions)[] = {
 	EXT_FE(EXT_GLOBAL(set_library_path), NULL)
 	EXT_FE(EXT_GLOBAL(instanceof), NULL)
 	EXT_FE(EXT_GLOBAL(get_session), NULL)
+	EXT_FE(EXT_GLOBAL(session), NULL)
 	EXT_FE(EXT_GLOBAL(get_server_name), NULL)
 	EXT_FE(EXT_GLOBAL(reset), NULL)
 	EXT_FE(EXT_GLOBAL(get_values), NULL)
+	EXT_FE(EXT_GLOBAL(values), NULL)
 	EXT_FE(EXT_GLOBAL(closure), NULL)
 	EXT_FE(EXT_GLOBAL(inspect), NULL)
 	{NULL, NULL, NULL}
@@ -456,11 +475,11 @@ static PHP_INI_MH(OnIniLogFile)
 	return SUCCESS;
 }
 PHP_INI_BEGIN()
-	 PHP_INI_ENTRY(EXT_NAME()/**/".servlet", NULL, PHP_INI_ALL, OnIniServlet)
-	 PHP_INI_ENTRY(EXT_NAME()/**/".socketname", NULL, PHP_INI_ALL, OnIniSockname)
-	 PHP_INI_ENTRY(EXT_NAME()/**/".hosts",   NULL, PHP_INI_ALL, OnIniHosts)
-	 PHP_INI_ENTRY(EXT_NAME()/**/".classpath", NULL, PHP_INI_ALL, OnIniClassPath)
-	 PHP_INI_ENTRY(EXT_NAME()/**/".libpath",   NULL, PHP_INI_ALL, OnIniLibPath)
+	 PHP_INI_ENTRY(EXT_NAME()/**/".servlet", NULL, PHP_INI_SYSTEM, OnIniServlet)
+	 PHP_INI_ENTRY(EXT_NAME()/**/".socketname", NULL, PHP_INI_SYSTEM, OnIniSockname)
+	 PHP_INI_ENTRY(EXT_NAME()/**/".hosts",   NULL, PHP_INI_SYSTEM, OnIniHosts)
+	 PHP_INI_ENTRY(EXT_NAME()/**/".classpath", NULL, PHP_INI_SYSTEM, OnIniClassPath)
+	 PHP_INI_ENTRY(EXT_NAME()/**/".libpath",   NULL, PHP_INI_SYSTEM, OnIniLibPath)
 	 PHP_INI_ENTRY(EXT_NAME()/**/"."/**/EXT_NAME()/**/"",   NULL, PHP_INI_ALL, OnIniJava)
 	 PHP_INI_ENTRY(EXT_NAME()/**/"."/**/EXT_NAME()/**/"_home",   NULL, PHP_INI_ALL, OnIniJavaHome)
 
@@ -1210,16 +1229,20 @@ PHP_MINFO_FUNCTION(EXT)
   php_info_print_table_row(2, EXT_NAME()/**/" support", "Enabled");
   php_info_print_table_row(2, EXT_NAME()/**/" bridge", EXT_GLOBAL(bridge_version));
 #if !defined(__MINGW32__) && EXTENSION == JAVA
-  php_info_print_table_row(2, EXT_NAME()/**/".libpath", EXT_GLOBAL(cfg)->ld_library_path);
-  php_info_print_table_row(2, EXT_NAME()/**/".classpath", EXT_GLOBAL(cfg)->classpath);
+  if(is_local) {
+	php_info_print_table_row(2, EXT_NAME()/**/".libpath", EXT_GLOBAL(cfg)->ld_library_path);
+	php_info_print_table_row(2, EXT_NAME()/**/".classpath", EXT_GLOBAL(cfg)->classpath);
+  }
 #endif
 #ifndef __MINGW32__
-  php_info_print_table_row(2, EXT_NAME()/**/"."/**/EXT_NAME()/**/"_home", EXT_GLOBAL(cfg)->vm_home);
-  php_info_print_table_row(2, EXT_NAME()/**/"."/**/EXT_NAME(), EXT_GLOBAL(cfg)->vm);
-  if(strlen(EXT_GLOBAL(cfg)->logFile)==0) 
-	php_info_print_table_row(2, EXT_NAME()/**/".log_file", "<stdout>");
-  else
-	php_info_print_table_row(2, EXT_NAME()/**/".log_file", EXT_GLOBAL(cfg)->logFile);
+  if(is_local) {
+	php_info_print_table_row(2, EXT_NAME()/**/"."/**/EXT_NAME()/**/"_home", EXT_GLOBAL(cfg)->vm_home);
+	php_info_print_table_row(2, EXT_NAME()/**/"."/**/EXT_NAME(), EXT_GLOBAL(cfg)->vm);
+	if(strlen(EXT_GLOBAL(cfg)->logFile)==0) 
+	  php_info_print_table_row(2, EXT_NAME()/**/".log_file", "<stdout>");
+	else
+	  php_info_print_table_row(2, EXT_NAME()/**/".log_file", EXT_GLOBAL(cfg)->logFile);
+  }
   php_info_print_table_row(2, EXT_NAME()/**/".log_level", is_level ? EXT_GLOBAL(cfg)->logLevel : "no value (use backend's default level)");
 #endif
   php_info_print_table_row(2, EXT_NAME()/**/".hosts", EXT_GLOBAL(cfg)->hosts);
@@ -1227,7 +1250,9 @@ PHP_MINFO_FUNCTION(EXT)
   php_info_print_table_row(2, EXT_NAME()/**/".servlet", EXT_GLOBAL(get_servlet_context) ()?"On":"Off");
 #endif
 #ifndef __MINGW32__
-  php_info_print_table_row(2, EXT_NAME()/**/" command", s);
+  if(!server || is_local) {
+	php_info_print_table_row(2, EXT_NAME()/**/" command", s);
+  }
 #endif
   php_info_print_table_row(2, EXT_NAME()/**/" status", server?"running":"not running");
   php_info_print_table_row(2, EXT_NAME()/**/" server", server?server:"localhost");

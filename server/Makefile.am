@@ -52,9 +52,10 @@ JavaBridge.war: JavaBridge.jar $(SERVLET)
 	echo "" >>WEB-INF/cgi/README
 	echo "If this directory does not contain a php executable, the system default" >>WEB-INF/cgi/README
 	echo "PHP binary will be called." >>WEB-INF/cgi/README
+	cp ../examples/php+jsp/*.jar WEB-INF/lib
+	cp ../examples/php+jsp/*.php ../examples/php+jsp/*.jsp  .
 	cp -r php WEB-INF/classes
-	cp ../tests.php4/arrayToString.php ../test.php . 
-	cp ../tests.php4/arrayToString.jar WEB-INF/lib
-	$(PHP_JAVA)/bin/jar cMf JavaBridge.war arrayToString.php test.php META-INF/MANIFEST.MF WEB-INF/web.xml WEB-INF/cgi WEB-INF/lib/arrayToString.jar WEB-INF/lib/JavaBridge.jar WEB-INF/classes/php/java/servlet/*.class
+	cp ../test.php .
+	$(PHP_JAVA)/bin/jar cMf JavaBridge.war *.php *.jsp META-INF/MANIFEST.MF WEB-INF/web.xml WEB-INF/cgi WEB-INF/lib/*.jar WEB-INF/classes/php/java/servlet/*.class
 
 endif
