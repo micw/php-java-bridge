@@ -313,6 +313,7 @@ static void end(parser_string_t st[1], parser_cb_t *cb){
   }
 }
 
+static const char context[] = "X_JAVABRIDGE_CONTEXT";
 static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
   proxyenv *ctx=(proxyenv*)cb->ctx;
   char *str=(char*)PARSER_GET_STRING(tag[0].strings, 0);
@@ -342,20 +343,26 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
 	}
   case 'X':// Redirect
 	{
-	  char *hosts;
+	  char *key;
+	  static const char redirect[]="X_JAVABRIDGE_REDIRECT";
 	  static const char key_hosts[]="java.hosts";
-	  static const char redirect[]="X_JAVABRIDGE_OVERRIDE_HOSTS";
-	  if(strcmp(str, redirect)) return;
-	  hosts = (char*)PARSER_GET_STRING(tag[1].strings, 0);
-	  zend_alter_ini_entry((char*)key_hosts, sizeof key_hosts, 
-						   hosts, tag[1].strings[0].length+1, 
-						   ZEND_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
-
-	  (*ctx)->must_reopen = 2;
+	  if(!strcmp(str, redirect)) {
+		key = (char*)PARSER_GET_STRING(tag[1].strings, 0);
+		zend_alter_ini_entry((char*)key_hosts, sizeof key_hosts, 
+							 key, tag[1].strings[0].length+1, 
+							 ZEND_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
+		(*ctx)->must_reopen = 2;
+	  } else if(!strcmp(str, context)) {
+		if(!(*ctx)->servlet_redirect) {
+		  key = (char*)PARSER_GET_STRING(tag[1].strings, 0);
+		  (*ctx)->servlet_redirect = strdup(key);
+		}
+	  }
 	  break;
 	}
   }
 }
+
 static void handle_request(proxyenv *env) {
   short tail_call;
   struct parse_ctx ctx = {0};
@@ -391,22 +398,25 @@ static void handle_request(proxyenv *env) {
   if((*env)->must_reopen) {
 	char*server;
 
+	assert((*env)->peer); if((*env)->peer) close((*env)->peer);
+	server = EXT_GLOBAL(test_server)(&(*env)->peer, 0);
+	assert(server); if(!server) exit(9);
+	free(server);
+
 	if((*env)->must_reopen==2) { // redirect
-	  static const char key_servlet[] = "java.servlet";
-	  static const char key_off[] = "Off";
 	  static const char key_sockname[] = "java.socketname";
+	  static const char key_off[] = "Off";
+	  static const char key_servlet[] = "java.servlet";
 	  zend_alter_ini_entry((char*)key_servlet, sizeof key_servlet, 
 						   (char*)key_off, sizeof key_off, 
 						   ZEND_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
 	  zend_alter_ini_entry((char*)key_sockname, sizeof key_sockname, 
 						   (char*)key_off, sizeof key_off, 
 						   ZEND_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
+	  EXT_GLOBAL(send_context)(env);
 	}
+
 	(*env)->must_reopen = 0;
-	assert((*env)->peer); if((*env)->peer) close((*env)->peer);
-	server = EXT_GLOBAL(test_server)(&(*env)->peer, 0);
-	assert(server); if(!server) exit(9);
-	free(server);
   }
 
   if(tail_call) {
@@ -430,6 +440,28 @@ unsigned char EXT_GLOBAL (get_mode) () {
   return (is_level<<7)|64|(level<<2)|arraysAsValues;
 }
 
+/*
+ * adjust the standard environment for the current request.
+ */
+static proxyenv* adjust_environment(proxyenv *env TSRMLS_DC) {
+  static const char server[] = "_SERVER";
+  zval **data, **entry;
+
+/*   if (ht && zend_hash_find(&EG(symbol_table), (char*)server, sizeof server, (void **) &data)!=FAILURE */
+/* 	  && (Z_TYPE_PP(data)==IS_ARRAY)) { */
+/* 	/\* If we got a X_JAVABRIDGE_CONTEXT, modify the */
+/* 	   environment *\/ */
+/* 	if (zend_hash_find(Z_ARRVAL_PP(data), (char*)context, sizeof context, (void **) &entry)!=FAILURE */
+/* 		&& (Z_TYPE_PP(entry)==IS_STRING)) { */
+/* 	  (*env)->servlet_redirect = strdup(Z_STRVAL_PP(entry)); */
+/* 	} */
+/*   } */
+
+  char *ctx = getenv(context);
+  if(ctx) (*env)->servlet_redirect = strdup(ctx);
+
+  return env;
+}
 static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {
   char *server;
   int sock;
@@ -452,7 +484,7 @@ static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {
 	send(sock, &mode, sizeof mode, 0); 
   }
 
-  return JG(jenv) = EXT_GLOBAL(createSecureEnvironment)(sock, handle_request, server, is_local);
+  return JG(jenv) = adjust_environment(EXT_GLOBAL(createSecureEnvironment)(sock, handle_request, server, is_local) TSRMLS_CC);
 }
 proxyenv *EXT_GLOBAL(connect_to_server)(TSRMLS_D) {
   return try_connect_to_server(1 TSRMLS_CC);

@@ -1,17 +1,9 @@
 <!-- PHP version of numberguess.jsp -->
 
 <?php 
-
-if(!array_key_exists('guess', $_GET)) {		// start fresh
-  ($session=java_session("numberGuess"));
-  $session->destroy();
-}
-
-$session = java_session("numberGuess");
-if($session->isNew()) {
+$session = java_session("numberguess");
+if(!$numguess=$session->get("bean")) {
   $session->put("bean", $numguess=new java("num.NumberGuessBean"));
-} else {
-  $numguess=$session->get("bean");
 }
 if($_GET['guess']) {
   $numguess->setGuess($_GET['guess']);

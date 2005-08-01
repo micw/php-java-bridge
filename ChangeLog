@@ -1,3 +1,40 @@
+2005-07-31  Jost Boekemeier  <jostb@intern>
+
+	* bind.c (test_server): Close the socket if nobody is
+	interested. This fixes a leak which appeared when running
+	phpinfo().
+
+	* client.c (adjust_environment): New function.
+	(try_connect_to_server): Adjust environment in order to re-direct
+	to a local channel.
+
+	* protocol.c (getSessionFactory): New function.
+	(send_context): New function.
+	(end): Send the context.
+	
+	* java.c (RSHUTDOWN): free servlet_redirect.
+	
+	* examples/php+jsp/sessionSharing.php,
+	examples/php+jsp/sessionSharing.jsp: New files.
+
+	* server/php/java/bridge/ISession.java: New interface.
+
+	* server/php/java/bridge/JavaBridge.java (SessionFactory): New
+	class.
+	(getSession): rewritten.
+	(setSessionFactory): New procedure.
+
+	* server/php/java/servlet/Context.java,
+	server/php/java/servlet/ContextRunner.java,
+	server/php/java/servlet/SocketRunner.java,
+	server/php/java/servlet/HttpSessionFacade.java: New classes which
+	implements session sharing and local channel re-directs.
+
+	* server/php/java/servlet/PhpJavaServlet.java
+	(updateBridgeContext): New procedure which sets the
+	channel/session context.
+	
+	
 2005-07-28  Jost Boekemeier  <jostb@intern>
 
 	* README: Added note about JSP and session sharing between PHP and

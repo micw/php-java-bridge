@@ -125,7 +125,37 @@ public class JavaBridge implements Runnable {
 
     private MethodCache methodCache = new MethodCache();
 
-
+    public static class SessionFactory {
+	/**
+	 * @param name
+	 * @param clientIsNew
+	 * @param timeout
+	 */
+	public ISession getSession(String name, boolean clientIsNew, int timeout) {
+	    synchronized(JavaBridge.sessionHash) {
+		Session ref = null;
+		if(!JavaBridge.sessionHash.containsKey(name)) {
+		    ref = new Session(name);
+		    ref.setTimeout(timeout);
+		} else {
+		    ref = (Session) JavaBridge.sessionHash.get(name);
+		    if(clientIsNew) { // client side gc'ed, destroy server ref now!
+			ref.destroy();
+			ref = new Session(name);
+			ref.setTimeout(timeout);
+		    } else {
+			ref.isNew=false;
+		    }
+		}
+		    	    
+		JavaBridge.sessionHash.put(name, ref);
+		return ref;
+	    }
+			
+	}
+    }
+    private SessionFactory sessionFactory;
+    public static final SessionFactory defaultSessionFactory = new SessionFactory();
 
     //
     // Communication with client in a new thread
@@ -133,6 +163,7 @@ public class JavaBridge implements Runnable {
     public void run() {
         try {
 	    logDebug("START: JavaBridge.run()");
+	    setSessionFactory(defaultSessionFactory);
 	    try {
 		cl = new JavaBridgeClassLoader(this, (DynamicJavaBridgeClassLoader) Thread.currentThread().getContextClassLoader());
 	    } catch (ClassCastException ex) {
@@ -301,7 +332,7 @@ public class JavaBridge implements Runnable {
 	    if(maxSize>0) pool = new ThreadPool(Util.EXTENSION_NAME, maxSize);
             Util.logDebug("Starting to accept Socket connections");
             DynamicJavaBridgeClassLoader.initClassLoader(Util.EXTENSION_DIR);
-
+            
 	    while(true) {
 		Socket sock = socket.accept();
                 Util.logDebug("Socket connection accepted");
@@ -1276,30 +1307,13 @@ public class JavaBridge implements Runnable {
     }
 
     /*
-     * Return a session handle shared among all JavaBridge instances
+     * Return a session handle shared among all JavaBridge
+     * instances. If it is a HTTP session, the session is shared with
+     * the servlet or jsp.
      */
-    public Session getSession(String name, boolean clientIsNew, int timeout) {
-    	synchronized(JavaBridge.sessionHash) {
-	    Session ref = null;
-	    if(!JavaBridge.sessionHash.containsKey(name)) {
-		ref = new Session(name);
-		ref.setTimeout(1000*(long)timeout);
-	    } else {
-		ref = (Session) JavaBridge.sessionHash.get(name);
-		if(clientIsNew) { // client side gc'ed, destroy server ref now!
-		    ref.destroy();
-		    ref = new Session(name);
-		    ref.setTimeout(1000*(long)timeout);
-		} else {
-		    ref.isNew=false;
-		}
-	    }
-
-	    JavaBridge.sessionHash.put(name, ref);
-	    return ref;
-    	}
+    public ISession getSession(String name, boolean clientIsNew, int timeout) {
+    	return sessionFactory.getSession(name, clientIsNew, timeout);
     }
-
     
     public Object makeClosure(long object, Class iface, String name) {
     	return new PhpProcedureProxy(this, new String[] {name}, iface==null?null:new Class[] {iface}, object);
@@ -1319,5 +1333,13 @@ public class JavaBridge implements Runnable {
     public void reset() {
 	Session.reset(this);
 	cl.reset();
+    }
+    /**
+     * This method sets a new session factory. Used by the servlet to
+     * implement session sharing.
+     * @param sessionFactory The sessionFactory to set.
+     */
+    public void setSessionFactory(SessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
     }
 }

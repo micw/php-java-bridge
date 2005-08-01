@@ -25,6 +25,7 @@ extern void EXT_GLOBAL(destructor)(zend_rsrc_list_entry *rsrc TSRMLS_DC);
 
 extern proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, void (*handle_request)(proxyenv *env), char*server, short is_local);
 extern void EXT_GLOBAL (protocol_end) (proxyenv *env);
+extern void EXT_GLOBAL (send_context) (proxyenv *env);
 
 unsigned char EXT_GLOBAL (get_mode) ();
 

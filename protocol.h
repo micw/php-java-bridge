@@ -78,7 +78,7 @@ struct proxyenv_ {
   short must_reopen; 
 
   /* the cookie, for servlet engines only */
-  char *cookie_name, *cookie_value;
+  char *cookie_name, *cookie_value, *servlet_redirect;
   
   void (*handle_request)(proxyenv *env);
 

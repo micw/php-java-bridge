@@ -37,6 +37,12 @@ extern int EXT_GLOBAL(snprintf) (char *buf, size_t len, const char *format,...);
   } \
 }
 
+static char *getSessionFactory(proxyenv *env) {
+  static char invalid[] = "0";
+  register char *context = (*env)->servlet_redirect;
+  return context?context:invalid;
+}
+
 static void end(proxyenv *env) {
   size_t s=0, size = (*env)->send_len;
   ssize_t n=0;
@@ -47,9 +53,9 @@ static void end(proxyenv *env) {
 	unsigned char mode = EXT_GLOBAL (get_mode) ();
 
 	if((*env)->cookie_name) 
-	  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nCookie: %s=%s\r\nContent-Type: text/html\r\nContent-Length: %ld\r\n\r\n%c", EXT_GLOBAL (get_servlet_context) (), (*env)->cookie_name, (*env)->cookie_value, size+1, mode);
+	  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nCookie: %s=%s\r\nContent-Type: text/html\r\nContent-Length: %ld\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", EXT_GLOBAL (get_servlet_context) (), (*env)->cookie_name, (*env)->cookie_value, size+1, getSessionFactory(env), mode);
 	else
-	  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %ld\r\n\r\n%c", EXT_GLOBAL (get_servlet_context) (), size+1, mode);
+	  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %ld\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", EXT_GLOBAL (get_servlet_context) (), size+1, getSessionFactory(env), mode);
 
 	send((*env)->peer, header, header_length, 0);
   }
@@ -86,6 +92,17 @@ void EXT_GLOBAL (protocol_end) (proxyenv *env) {
   }
 }
 
+void EXT_GLOBAL (send_context)(proxyenv *env) {
+	size_t l = strlen((*env)->servlet_redirect);
+	char context[1024] = { 077, (l&0xFF000000)>>24, (l&0xFF0000)>>16, (l&0xFF00)>>8, l&0xFF};
+	int context_length = 5;
+	
+	context_length += EXT_GLOBAL(snprintf) (context+context_length, sizeof(context)-context_length, "%s", 
+										   (*env)->servlet_redirect);
+
+	send((*env)->peer, context, context_length, 0);
+}
+  
 #define GROW_QUOTE() \
   if(pos+8>=newlen) { \
     newlen=newlen+newlen/10; \
@@ -325,7 +342,7 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
 
    (*env)->server_name = server_name;
    (*env)->must_reopen = 0;
-   (*env)->cookie_name = (*env)->cookie_value = 0;
+   (*env)->cookie_name = (*env)->cookie_value = (*env)->servlet_redirect = 0;
 
    (*env)->writeInvokeBegin=InvokeBegin;
    (*env)->writeInvokeEnd=InvokeEnd;

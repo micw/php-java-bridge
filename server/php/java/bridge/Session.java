@@ -6,12 +6,12 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 
-public class Session{
-    Hashtable map;
-    private String name;
+public class Session implements ISession {
+    protected Hashtable map;
+    protected String name;
     private static int sessionCount=0;
     boolean isNew=true;
-    long startTime, timeout;
+    protected long startTime, timeout;
 	
     public Object get(Object ob) {
 	return map.get(ob);
@@ -25,7 +25,7 @@ public class Session{
 	return map.remove(ob);
     }
 	
-    public Session(String name) {
+    Session(String name) {
 	this.name=name;
 	Session.sessionCount++;
 	this.map=new Hashtable();
@@ -33,12 +33,12 @@ public class Session{
 	this.timeout=1440000;
     }
 
-    public void setTimeout(long timeout) {
-	this.timeout=timeout;
+    public void setTimeout(int timeout) {
+	this.timeout=timeout*1000;
     }
 	
-    public long getTimeout() {
-	return timeout;
+    public int getTimeout() {
+	return (int)(timeout/1000);
     }
 	
     public int getSessionCount() {
@@ -65,12 +65,19 @@ public class Session{
 	map.putAll(vars);
     }
 
-    public static void expire(JavaBridge bridge) {
+    /* (non-Javadoc)
+     * @see php.java.bridge.ISession#getAll()
+     */
+    public Map getAll() {
+	return map; // the client will receive a copy.
+    }
+
+    static void expire(JavaBridge bridge) {
 	if(JavaBridge.sessionHash==null) return;
     	synchronized(JavaBridge.sessionHash) {
 	    for(Iterator e = JavaBridge.sessionHash.values().iterator(); e.hasNext(); ) {
 		Session ref = (Session)e.next();
-		if((ref.timeout !=0) && (ref.startTime+ref.timeout<=System.currentTimeMillis())) {
+		if((ref.timeout >0) && (ref.startTime+ref.timeout<=System.currentTimeMillis())) {
 		    sessionCount--;
 		    JavaBridge.sessionHash.remove(ref.name);
 		    if(bridge.logLevel>3) bridge.logDebug("Session " + ref.name + " expired.");

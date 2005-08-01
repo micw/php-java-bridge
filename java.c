@@ -51,6 +51,7 @@ PHP_RSHUTDOWN_FUNCTION(EXT)
 	  if((*JG(jenv))->s) free((*JG(jenv))->s);
 	  if((*JG(jenv))->send) free((*JG(jenv))->send);
 	  if((*JG(jenv))->server_name) free((*JG(jenv))->server_name);
+	  if((*JG(jenv))->servlet_redirect) free((*JG(jenv))->servlet_redirect);
 	  if((*JG(jenv))->cookie_name) free((*JG(jenv))->cookie_name);
 	  if((*JG(jenv))->cookie_value) free((*JG(jenv))->cookie_value);
 	  free(*JG(jenv));
@@ -1094,22 +1095,24 @@ set_property_handler(zend_property_reference *property_reference, pval *value)
  * check for CGI environment and set hosts so that we can connect back
  * to the sever from which we were called.
  */
-static void override_from_cgi() {
+static void override_ini_from_cgi() {
+  static const char server[] = "_SERVER";
+  static const char key_hosts[]="java.hosts";
+  static const char key_servlet[] = "java.servlet";
+  static const char key_on[] = "On";
+  static const char override[] = "X_JAVABRIDGE_OVERRIDE_HOSTS";
   char *hosts;
   if (getenv("SERVER_SOFTWARE")
 	  || getenv("SERVER_NAME")
 	  || getenv("GATEWAY_INTERFACE")
 	  || getenv("REQUEST_METHOD")) {
 	if (hosts=getenv("X_JAVABRIDGE_OVERRIDE_HOSTS")) {
-	  if((EXT_GLOBAL (ini_set) &U_HOSTS)) free(EXT_GLOBAL(cfg)->hosts);
-	  EXT_GLOBAL(cfg)->hosts=strdup(hosts);
-	  assert(EXT_GLOBAL(cfg)->hosts); if(!EXT_GLOBAL(cfg)->hosts) exit(6);
-	  EXT_GLOBAL (ini_updated)|=U_HOSTS;
-
-	  if((EXT_GLOBAL (ini_set) &U_SERVLET)) free(EXT_GLOBAL(cfg)->servlet);
-	  EXT_GLOBAL(cfg)->servlet=strdup("On");
-	  assert(EXT_GLOBAL(cfg)->servlet); if(!EXT_GLOBAL(cfg)->servlet) exit(6);
-	  EXT_GLOBAL (ini_updated)|=U_SERVLET;
+	  zend_alter_ini_entry((char*)key_hosts, sizeof key_hosts, 
+						   hosts, strlen(hosts)+1, 
+						   ZEND_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
+	  zend_alter_ini_entry((char*)key_servlet, sizeof key_servlet, 
+						   (char*)key_on, sizeof key_on, 
+						   ZEND_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
 	}
   }
 }
@@ -1211,7 +1214,7 @@ PHP_MINIT_FUNCTION(EXT)
 	EXT_GLOBAL(cfg)->saddr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
 #endif
   }
-  override_from_cgi();
+  override_ini_from_cgi();
   EXT_GLOBAL(ini_user)|=EXT_GLOBAL(ini_updated);
   EXT_GLOBAL(ini_updated)=0;
 

@@ -337,6 +337,7 @@ char* EXT_GLOBAL(test_server)(int *_socket, short *local) {
 		continue;
 	  }
 	  if(_socket) *_socket=sock;
+	  else close(sock);
 	  if(_port) _port[-1]=':';
 	  ret = strdup(host);
 	  free(hosts);
