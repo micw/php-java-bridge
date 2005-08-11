@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
+import php.java.bridge.DynamicJavaBridgeClassLoader;
 import php.java.bridge.ISocketFactory;
 import php.java.bridge.JavaBridge;
 import php.java.bridge.Util;
@@ -53,7 +54,7 @@ class SocketRunner implements Runnable {
 	Socket socket=null;
 	
 	try {
-	    socket = this.socket.accept();
+	    try {socket = this.socket.accept();} catch (IOException ex) {return false;} // socket closed
 	    in = socket.getInputStream();
 	    out = socket.getOutputStream();
 	    int c = in.read();
@@ -72,7 +73,10 @@ class SocketRunner implements Runnable {
 	    if(PhpJavaServlet.threadPool!=null) {
 	        PhpJavaServlet.threadPool.start(runner);
 	    } else {
-	    	new Thread(runner).start();	    	
+	    	Thread t = new Thread(runner);
+		t.setContextClassLoader(DynamicJavaBridgeClassLoader.newInstance());
+	    	t.start();
+
 	    }
 	} catch (IOException e) {
             shutdownSocket(in, out, socket);

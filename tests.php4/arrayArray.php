@@ -1,11 +1,14 @@
 #!/usr/bin/php
 
 <?php
-if(!extension_loaded('java')) {
-  dl('java.' . PHP_SHLIB_SUFFIX);
+if (!extension_loaded('java')) {
+  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+    echo "java extension not installed.";
+    exit(2);
+  }
 }
 
-$here=trim(`pwd`);
+$here=getcwd();
 java_set_library_path("$here/arrayArray.jar");
 $ReflectArray = new java_class("java.lang.reflect.Array");
 $Array = new java_class("ArrayArray");

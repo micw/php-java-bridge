@@ -2,12 +2,15 @@
 
 <?php
 
-if(!extension_loaded('java')) {
-  dl('java.' . PHP_SHLIB_SUFFIX);
+if (!extension_loaded('java')) {
+  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+    echo "java extension not installed.";
+    exit(2);
+  }
 }
 
 try {
-  $here=trim(`pwd`);
+  $here=getcwd();
   java_set_library_path("$here/exception.jar");
   $e = new java("Exception");
 

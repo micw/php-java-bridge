@@ -9,7 +9,7 @@ import java.util.Properties;
 
 public class Util {
 
-    static String TCP_SOCKETNAME = "9267";
+    public static String TCP_SOCKETNAME = "9267";
     public static String EXTENSION_DIR = null;
     public static String EXTENSION_NAME = "JavaBridge";
     public static String THREAD_POOL_MAX_SIZE = "20";
@@ -19,12 +19,12 @@ public class Util {
 	    InputStream in = Util.class.getResourceAsStream("global.properties");
 	    p.load(in);
 	} catch (Throwable t) {
-		printStackTrace(t);
+	    printStackTrace(t);
 	};
 	try {
 	    THREAD_POOL_MAX_SIZE = System.getProperty("php.java.bridge.threads", THREAD_POOL_MAX_SIZE);
 	} catch (Throwable t) {
-		printStackTrace(t);
+	    printStackTrace(t);
 	};
 	TCP_SOCKETNAME = p.getProperty("TCP_SOCKETNAME", TCP_SOCKETNAME);
 	EXTENSION_DIR = p.getProperty("EXTENSION_DIR", EXTENSION_DIR);
@@ -61,6 +61,7 @@ public class Util {
 	    }
 	    logStream.write(bytes, 0, bytes.length);
 	    logStream.println("");
+	    logStream.flush();
     	}
    	public void printStackTrace(Throwable t) {
    	    t.printStackTrace(logStream);
@@ -87,6 +88,15 @@ public class Util {
 	b.append(msg);
 	logger.log(b.toString());
     }
+    public static void warn(String msg) {
+	if(logLevel<=0) return;
+    	StringBuffer b = new StringBuffer(logger.now());
+	b.append(" "); b.append(Util.EXTENSION_NAME); b.append(" ");
+	b.append("WARNING");
+	b.append(": ");
+	b.append(msg);
+	logger.log(b.toString());
+    }
     public static void printStackTrace(Throwable t) {
 	if(logLevel > 0)
 	    if ((t instanceof Error) || logLevel > 1) 
@@ -109,15 +119,46 @@ public class Util {
 	if(obj==null) return null;
 	return obj instanceof Class?(Class)obj:obj.getClass();
     }
-    public static String argsToString(Object args[]) {
-	StringBuffer buffer = new StringBuffer("");
-	if(args!=null) {
-	    for(int i=0; i<args.length; i++) {
-		buffer.append(String.valueOf(getClass(args[i])));
-		if(i+1<args.length) buffer.append(", ");
-	    }
+    public static void appendObject(Object obj, StringBuffer buf) {
+    	if(obj instanceof Class) {
+	    if(((Class)obj).isInterface()) 
+		buf.append("INTERFACE:");
+	    else
+		buf.append("CLASS:");
+	    buf.append(obj==null?"null":Util.getClass(obj).getName());
+    	} else {
+	    buf.append("INSTANCE:");
+	    buf.append(getClass(obj).getName());
+	    buf.append(":");
+	    String s = String.valueOf(obj);
+	    int l, l1;
+	    l = l1 = s.length();
+	    if(l>20) l=20;
+	    s=s.substring(0, l);
+	    buf.append(s);
+	    if(l1!=l) buf.append("[...]");
 	}
+    }
+    public static void appendParam(Object obj, StringBuffer buf) {
+    	buf.append("(");
+	buf.append(Util.getClass(obj).getName());
+	buf.append(")");
+    }
+    public static String argsToString(Object args[], Class[] params) {
+	StringBuffer buffer = new StringBuffer("");
+	appendArgs(args, params, buffer);
 	return buffer.toString();
     }
-
+    public static void appendArgs(Object args[], Class[] params, StringBuffer buf) {
+	if(args!=null) {
+	    for(int i=0; i<args.length; i++) {
+		if(params!=null) {
+		    appendParam(params[i], buf); 
+		}
+	    	appendObject(args[i], buf);
+		
+		if(i+1<args.length) buf.append(", ");
+	    }
+	}
+    }
 }

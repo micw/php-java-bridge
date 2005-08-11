@@ -2,8 +2,11 @@
 
 <?php
 
-if(!extension_loaded('mono')) {
-  dl('mono.' . PHP_SHLIB_SUFFIX);
+if (!extension_loaded('mono')) {
+  if (!(PHP_SHLIB_SUFFIX=="so" && dl('mono.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_mono.dll'))) {
+    echo "mono extension not installed.";
+    exit(2);
+  }
 }
 $Assembly=new MonoClass("System.Reflection.Assembly");
 $Assembly->Load("sample_lib");

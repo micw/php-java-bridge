@@ -40,10 +40,15 @@
 #endif
 #endif 
 
+#ifdef ZEND_ENGINE_2
+/* for try/catch emulation */
+#include <setjmp.h>
+#endif
 
 extern zend_module_entry EXT_GLOBAL(module_entry);
 extern zend_class_entry *EXT_GLOBAL(class_entry);
 extern zend_class_entry *EXT_GLOBAL(class_class_entry);
+extern zend_class_entry *EXT_GLOBAL(class_class_entry_jsr);
 extern zend_class_entry *EXT_GLOBAL(exception_class_entry);
 extern function_entry EXT_GLOBAL(class_functions[]);
 
@@ -66,18 +71,8 @@ extern int EXT_GLOBAL(ini_updated), EXT_GLOBAL (ini_user), EXT_GLOBAL (ini_set);
 
 #if EXTENSION == JAVA
 #define phpext_java_ptr &EXT_GLOBAL(module_entry)
-#ifdef PHP_WIN32
-#define PHP_JAVA_API __declspec(dllexport)
-#else
-#define PHP_JAVA_API
-#endif
 #elif EXTENSION == MONO
 #define phpext_mono_ptr &EXT_GLOBAL(module_entry)
-#ifdef PHP_WIN32
-#define PHP_MONO_API __declspec(dllexport)
-#else
-#define PHP_MONO_API
-#endif
 #else
 # error EXT must be mono or java.
 #endif
@@ -112,6 +107,15 @@ extern struct cfg *EXT_GLOBAL(cfg);
 EXT_BEGIN_MODULE_GLOBALS(EXT)
   proxyenv *jenv;
   short is_closed; 				/* PR1176522: GC must not re-open the connection */
+
+  /* for user CB's */
+  zval*exception;
+  jmp_buf php4_throw_buf;
+
+  zval **object;
+  zval *func;
+  zval **retval_ptr;
+  zval *func_params;
 EXT_END_MODULE_GLOBALS(EXT)
 
 

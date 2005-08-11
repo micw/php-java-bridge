@@ -20,9 +20,21 @@ static short checkError(pval *value TSRMLS_DC)
 {
 #ifndef ZEND_ENGINE_2
   if (Z_TYPE_P(value) == IS_EXCEPTION) {
-    php_error(E_WARNING, "%s", Z_STRVAL_P(value));
+
+								/* display the exception only if we do
+								   not abort a callback or if we abort
+								   a callback and this callback is not
+								   a method.  This is consistent with
+								   PHP5 behaviour, where we use
+								   call_user_func_array (which also
+								   reports the exception) when the
+								   callback is not a method. */
+    if(!JG(exception)||(JG(exception)&&!(JG(object)&&*JG(object))))
+	   php_error(E_WARNING, "%s", Z_STRVAL_P(value));
+
 	efree(Z_STRVAL_P(value));
     ZVAL_FALSE(value);
+	if(JG(exception)) longjmp(JG(php4_throw_buf), 1);
     return 1;
   };
 #endif
@@ -31,8 +43,11 @@ static short checkError(pval *value TSRMLS_DC)
 
 static short is_type (zval *pobj TSRMLS_DC) {
 #ifdef ZEND_ENGINE_2
-  zend_class_entry *clazz = zend_get_class_entry(pobj TSRMLS_CC);
-  return clazz->builtin_functions == EXT_GLOBAL(class_functions);
+  /* check if this class is a sub-class of java */
+  zend_class_entry *ce = Z_OBJCE_P(pobj), *parent;
+  for(parent=ce; parent->parent; parent=parent->parent)
+	;
+  return ce->builtin_functions == EXT_GLOBAL(class_functions);
 #else
   extern void EXT_GLOBAL(call_function_handler4)(INTERNAL_FUNCTION_PARAMETERS, zend_property_reference *property_reference);
   return pobj->type == IS_OBJECT && pobj->value.obj.ce->handle_function_call==EXT_GLOBAL(call_function_handler4);
@@ -61,7 +76,6 @@ void EXT_GLOBAL(result) (pval* arg, short ignoreNonJava, pval*presult TSRMLS_DC)
 	(*jenv)->writeObject(jenv, 0);
   (*jenv)->writeResultEnd(jenv);
 }
-
 
 void EXT_GLOBAL(invoke)(char*name, long object, int arg_count, zval**arguments, short ignoreNonJava, pval*presult TSRMLS_DC) 
 {

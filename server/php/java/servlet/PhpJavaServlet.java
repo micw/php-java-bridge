@@ -13,7 +13,6 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import php.java.bridge.DynamicJavaBridgeClassLoader;
 import php.java.bridge.JavaBridge;
@@ -85,6 +84,7 @@ public class PhpJavaServlet extends CGIServlet {
 	windowsLocation = new File("c:/php5/php-cgi.exe");
 	if(!windowsLocation.exists()) windowsLocation=null;
 	
+	Util.TCP_SOCKETNAME = "9567"; // "internal" pool for SocketRunner's channel redirects
 	socketRunner = new SocketRunner();
     }
 
@@ -154,15 +154,22 @@ public class PhpJavaServlet extends CGIServlet {
 	return new CGIEnvironment(req, servletContext);
     }
 
-    private Context updateBridgeContext(JavaBridge bridge, HttpServletRequest req, HttpServletResponse res) {
+    private Context getContext(HttpServletRequest req, HttpServletResponse res) {
     	Context ctx = null;
     	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
     	if(id!=null) ctx = (Context)Context.get(id);
-    	if(ctx!=null) bridge.setSessionFactory(ctx);
-    	else {
-    	    ctx = Context.addNew();
+    	if(ctx==null) {
+	    ctx = Context.addNew(null); // no session sharing
     	}
-    	ctx.bridge = bridge;
+    	if(ctx.bridge==null) {
+   	    ctx.bridge = new JavaBridge(null, null);
+    	    ctx.bridge.cl = new JavaBridgeClassLoader(ctx.bridge, DynamicJavaBridgeClassLoader.newInstance(getClass().getClassLoader()));
+    	    ctx.bridge.setSessionFactory(ctx);
+    	    JavaBridge.load++;
+	    ctx.bridge.logDebug("first request (session is new).");
+    	} else {
+    	    ctx.bridge.logDebug("cont. session");
+    	}
     	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
     	return ctx;
     }
@@ -170,27 +177,19 @@ public class PhpJavaServlet extends CGIServlet {
     public void handleHttpConnection (HttpServletRequest req, HttpServletResponse res)
 	throws ServletException, IOException {
 	InputStream in; ByteArrayOutputStream out;
-	HttpSession session = req.getSession();
-	JavaBridge bridge = (JavaBridge) session.getAttribute("bridge");
-	if(bridge==null) {
-	    bridge = new JavaBridge(null, null);
-	    bridge.cl =  new JavaBridgeClassLoader(bridge, DynamicJavaBridgeClassLoader.newInstance(getClass().getClassLoader()));
-	    Context ctx = updateBridgeContext(bridge, req, res);
-	    session.setAttribute("bridge", bridge);
-	    session.setAttribute("ctx", ctx);
-	}
+	Context ctx = getContext(req, res);
+	JavaBridge bridge = ctx.bridge;
+
 	if(req.getContentLength()==0) {
 	    if(req.getHeader("Connection").equals("Close")) {
-	    	((Context)session.getAttribute("ctx")).remove(); 
-	    	session.invalidate();
 		JavaBridge.load--;
 		bridge.logDebug("session closed.");
+		ctx.remove();
 	    }
 	    return;
 	}
 	bridge.in = in = req.getInputStream();
 	bridge.out = out = new ByteArrayOutputStream();
-	if(session.isNew()) JavaBridge.load++;
 	Request r = bridge.request = new Request(bridge);
 	try {
 	    if(r.initOptions(in, out)) {
@@ -199,19 +198,16 @@ public class PhpJavaServlet extends CGIServlet {
 	} catch (Throwable e) {
 	    Util.printStackTrace(e);
 	}
-	if(session.isNew())
-	    bridge.logDebug("first request terminated (session is new).");
-	else
-	    bridge.logDebug("request terminated (cont. session).");
 	res.setContentLength(out.size());
 	out.writeTo(res.getOutputStream());
     }
     public void handleSocketConnection (HttpServletRequest req, HttpServletResponse res)
 	throws ServletException, IOException {
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
-	JavaBridge bridge = new JavaBridge(sin=req.getInputStream(), sout = new ByteArrayOutputStream());
-	updateBridgeContext(bridge, req, res);
-	bridge.cl =  new JavaBridgeClassLoader(bridge, DynamicJavaBridgeClassLoader.newInstance(getClass().getClassLoader()));
+	Context ctx = getContext(req, res);
+	JavaBridge bridge = ctx.bridge;
+	bridge.in = sin=req.getInputStream();
+	bridge.out = sout = new ByteArrayOutputStream();
 	Request r = bridge.request = new Request(bridge);
         JavaBridge.load++;
 	try {
@@ -227,16 +223,16 @@ public class PhpJavaServlet extends CGIServlet {
 		if(bridge.logLevel>3) bridge.logDebug("re-directing to port# "+ socketRunner.socket.getSocketName());
 	    	sin.close();
 	    	resOut.close();
+	    	ctx.waitFor();
 	    }
 	    else {
 	        sin.close();
 	    }
-	} catch (IOException e) {
+	} catch (Exception e) {
 	    Util.printStackTrace(e);
 	    try {if(sin!=null) sin.close();} catch (IOException e1) {}
 	    try {if(resOut!=null) resOut.close();} catch (IOException e2) {}
 	}
-	JavaBridge.load--;
     }
     
     protected void doPut (HttpServletRequest req, HttpServletResponse res)

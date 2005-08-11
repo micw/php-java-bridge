@@ -1,3 +1,112 @@
+2005-08-09  Jost Boekemeier  <jostb@diego.intern.de>
+
+	* bind.c (get_server_args): extension_dir may be configured
+	dynamically, look into extension_dir/lib to load libraries and
+	shared libraries (.dll's).
+	(wait_server, start_server, wait_for_daemon): Start java
+	automatically on win32.
+
+	* init_cfg.h.in (CFG_LD_LIBRARY_PATH, CFG_CLASSPATH): Do not
+	hardcode these values, use extension_dir/lib instead.
+	
+	* client.c (call_user_cb, handle_exception): pass exceptions back
+	to the server.
+	(setResultFromApply): rewritten
+
+	* java.c (last_exception_get, last_exception_clear): New local
+	procedures in order to emulate try/catch on php4.
+	(closure): rewritten
+	(check_php4_exception, call_with_handler, call_with_params,
+	call_with_exception_handler, exception_handler): New procedures to
+	handle exceptions in callbacks.
+
+	* java_bridge.c (checkError): if called from java, jump right back
+	to the procedure from which we were called.  This can be used to
+	emulate try/catch in php4.
+	(is_type): It is now possible to extend from the Java proxy and to
+	override its methods.
+
+	* php_java.h: Removed declspec(dllexport), which never really
+	worked. Use gcc's autoimport, which also works with our cross
+	compiler.
+	(exception, php4_throw_buf, object, func, retval_ptr,
+	func_params): New variables used for exception handling during apply.
+
+	* protocol.c (Exception): Send exception to the server.
+	
+	* client.c (end): setCookie obsolete, we now use the context.
+	(adjust_environment): rewritten.
+	
+	* PROTOCOL.TXT: Send exceptions to the server.
+
+	* java.c (reset): Display a warning if reset() is called.	
+
+	* java.c (call_function_handler4): It is now possible to extend
+	from the java proxy and to override its methods.
+
+	* examples/XML/html->text.php: New example.
+	(examples/XML/DTD/xhtml-lat1.ent,
+	examples/XML/DTD/xhtml-special.ent,
+	examples/XML/DTD/xhtml-symbol.ent,
+	examples/XML/DTD/xhtml1-strict.dtd,
+	examples/XML/DTD/xhtml1-transitional.dtd): New files.
+
+	* server/php/java/bridge/DynamicClassLoader.java
+	(URLClassLoaderFactory): New internal class.
+	(setUrlClassLoaderFactory): New method.
+	(createURLClassLoader): create via URLClassLoaderFactory.
+
+	* server/php/java/bridge/DynamicJavaBridgeClassLoader.java
+	(updateJarLibraryPath): rewritten
+	(resolveLibraryName): New method which searches for native libraries.
+	(getUrlClassLoaderFactory): New method
+	(loadClass): New method
+	(newInstance): Use our factory in order to search for native libraries.
+
+	* server/php/java/bridge/JavaBridge.java
+	(setException): rewritten
+	(CreateObject): display a proper error message when a
+	NoClassDefFoundError occured instead of returning the class to the
+	client.
+	(setLibraryPath): Pass the contextDir (the dynamic extension_dir) to the loader.
+	(warn): New procedure.
+
+	* server/php/java/bridge/Request (Args): accept the exception
+	object from the client and re-throw in order to abort this frame.
+	(begin): handle Exeption.
+
+	* server/php/java/bridge/Util (warn, appendObject, appendArgs):
+	New procedures.
+
+	* server/php/java/servlet/PhpJavaServlet (handleSocketConnection): 
+	wait for the contextRunner.
+	(handleHttpConnection): rewritten
+	(getContext): new procedure.
+	(updateBridgeContext): replaced by getContext
+
+	* tests.php5/Callback.java, tests.php4/callback.php,
+	tests.php4/callback1.php, tests.php5/callback1.php,
+	tests.php5/callback.php, tests.php5/callback.jar: New tests.
+
+	* tests.php5/NoClassDefFound.java: added call test.
+	
+	* tests.php4/doesNotExist.jar, tests.php4/noClassDefFound.jar,
+	tests.php4/noClassDefFound1.php, tests.php4/noClassDefFound2.php:
+	New tests.
+
+	* php_java_lib/JSession.php: Allows one to store java values into
+	the $_SESSION var.
+
+	* tests.php5/session_vars.php: Test for JSession.php.
+
+	
+2005-08-02  Jost Boekemeier  <jostb@intern>
+
+	* client.c (adjust_environment): rewritten.
+
+	* server/php/java/servlet/CGIServlet.java (run): Removed obsolete
+	500ms delay.
+	
 2005-07-31  Jost Boekemeier  <jostb@intern>
 
 	* bind.c (test_server): Close the socket if nobody is

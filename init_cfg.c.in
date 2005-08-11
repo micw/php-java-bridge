@@ -14,10 +14,10 @@
 #endif
 
 #ifndef CFG_CLASSPATH
-#define CFG_CLASSPATH EXTENSION_DIR/**/"/JavaBridge.jar"
+#define CFG_CLASSPATH ""
 #endif
 #ifndef CFG_LD_LIBRARY_PATH
-#define CFG_LD_LIBRARY_PATH EXTENSION_DIR
+#define CFG_LD_LIBRARY_PATH ""
 #endif
 
 #ifndef CFG_JAVA
@@ -51,7 +51,7 @@ static void init_socket() {
   char *sockname=malloc(len+1);
   assert(sockname); if(!sockname) exit(6);
 
-  snprintf(sockname, len+1, "%s%lx", bridge,(unsigned long)getpid());
+  EXT_GLOBAL(snprintf)(sockname, len+1, "%s%lx", bridge,(unsigned long)getpid());
   EXT_GLOBAL(cfg)->sockname=sockname;
 }
 #else 
@@ -125,7 +125,7 @@ short EXT_GLOBAL(option_set_by_user)(short option) {
   default: assert(0);
   }  
 
-  return entry && strncasecmp("off", entry, 3);
+  return entry && strlen(entry) && strncasecmp("off", entry, 3);
 }
 
 char *EXT_GLOBAL(get_servlet_context)() {

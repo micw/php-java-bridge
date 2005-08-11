@@ -23,22 +23,21 @@ class ContextRunner implements Runnable {
     private OutputStream out;
     private Socket sock;
     private Request r;
-    private static final String ASCII = "ASCII";
 
-    private int readInt() throws IOException{
-	byte buf[] = new byte[4];
+    private int readLength() throws IOException{
+	byte buf[] = new byte[1];
 	in.read(buf);
 
-	return ((0xFF&buf[0])<<24) + ((0xFF&buf[1])<<16) + ((0xFF&buf[2])<<8) + (0xFF&buf[3]);
+	return (0xFF&buf[0]);
     }
     private String readString(int length) throws IOException {
 	byte buf[] = new byte[length];
 	in.read(buf);
-	return new String(buf, ASCII);
+	return new String(buf, PhpJavaServlet.ASCII);
     }
 
     private String readName() throws IOException {
-	return readString(readInt());
+	return readString(readLength());
     }
 
     void init(InputStream in, OutputStream out, Socket sock) throws IOException {
@@ -59,6 +58,7 @@ class ContextRunner implements Runnable {
 	} finally {
 	    ctx.remove();
 	    SocketRunner.shutdownSocket(in, out, sock);
+	    JavaBridge.load--;
 	}
     }
 }

@@ -101,13 +101,81 @@ static  void  setResultFromObject  (pval *presult, long value) {
 
 }
 
-static void setResultFromApply(zval *presult, unsigned char *cname, size_t clen, unsigned char*fname, size_t flen, zval *object, zval *params)
+/*
+ * Call a user function. Since our cross-compiler (which creates
+ * windows executables) does not allow us to access EG(exception),
+ * this is currently a two step process: We first jump into the
+ * evaluator in order to handle exceptions for us.  The evaluator will
+ * call the _call_with_exception_handler() thunk which calls the user
+ * function with our exception handler in place.  If the user function
+ * is in the current environment, we call it directly, asking
+ * _call_with_exception_handler to provide the parameter array.  If an
+ * exception occured, the _exception_handler procedure is called,
+ * which sets the JG(exception) and communicates the exception to the
+ * server.
+ *
+ * The current scheme allows us to support exception handling in PHP4:
+ * If we detect that the server's java_last_exception carries an
+ * exception after executing the thunk (in which case we can be sure
+ * that the thunk was aborted), we can call the _exception_handler
+ * with the exception. -- After that the communication continues as
+ * usual: the server receives the exception as the result of the apply
+ * call and might communicate the exception back to us which in turn
+ * causes an abortion of the next frame until either the server or the
+ * client catches the exception or there are no more frames available.
+ */ 
+static int call_user_cb(zval**object, zval*func, zval**retval_ptr, zval*func_params TSRMLS_DC) {
+  int retval;
+  static const char name[] = "call_with_exception_handler";
+#if defined(ZEND_ENGINE_2)
+  static const char call_with_exception_handler[] =
+	"try {"/**/EXT_NAME()/**/"_call_with_exception_handler();} catch (Exception $__JavaException) {"/**/EXT_NAME()/**/"_exception_handler($__JavaException);}";
+#else
+  static const char call_with_exception_handler[] =
+	EXT_NAME()/**/"_call_with_exception_handler();";
+#endif	
+  JG(object)=object;
+  JG(func)=func;
+  JG(retval_ptr)=retval_ptr;
+  JG(func_params)=func_params;
+
+  JG(exception)=0;
+  retval = zend_eval_string((char*)call_with_exception_handler, 0, (char*)name TSRMLS_CC);
+  return retval;
+}
+/*
+ * Check for exception and communication the exception back to the
+ * server.  Return true if an exception was handled.
+ */
+
+static short handle_exception(zval*presult TSRMLS_DC) {
+  short has_exception=0;
+  if(JG(exception)&&Z_TYPE_P(JG(exception))!=IS_NULL) {
+	proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
+	long result;
+	//php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Unhandled exception during callback in user function: %s.", 25, fname);
+	EXT_GLOBAL(get_jobject_from_object)(JG(exception), &result TSRMLS_CC);
+	if(!result)
+	  php_error(E_WARNING, "Exception is not a JavaException object.");
+	else {
+	  has_exception=1;
+	  (*jenv)->writeResultBegin(jenv, presult);
+	  (*jenv)->writeException(jenv, result, "php exception.", 0);
+	  (*jenv)->writeResultEnd(jenv);
+	}
+	zval_ptr_dtor(&JG(exception));
+#if defined(ZEND_ENGINE_2)
+	zend_clear_exception(TSRMLS_C);
+#endif
+}
+  return has_exception;
+}
+
+static void setResultFromApply(zval *presult, unsigned char *cname, size_t clen, unsigned char*fname, size_t flen, zval *object, zval *func_params)
 {
-  zval ***func_params, *func, *retval_ptr;
-  HashTable *func_params_ht;
+  short has_exception=0;
+  zval *func, *retval_ptr=0;
   char *name;
-  int count;
-  int current = 0;
   zend_class_entry *ce = 0;
   int key_type;
   char *string_key;
@@ -118,29 +186,14 @@ static void setResultFromApply(zval *presult, unsigned char *cname, size_t clen,
   MAKE_STD_ZVAL(func);
   setResultFromString(func, cname, clen);
 
-  func_params_ht = Z_ARRVAL_P(params);
-  count = zend_hash_num_elements(func_params_ht);
-  func_params = safe_emalloc(sizeof(zval **), count, 0);
-  for (zend_hash_internal_pointer_reset(func_params_ht);
-	   zend_hash_get_current_data(func_params_ht, (void **) &func_params[current]) == SUCCESS;
-	   zend_hash_move_forward(func_params_ht)
-	   ) {
-	current++;
-  }
-
-  if (call_user_function_ex(object?0:EG(function_table), &object, func, &retval_ptr, count, func_params, 0, NULL TSRMLS_CC) != SUCCESS) {
+  if (call_user_cb(&object, func, &retval_ptr, func_params TSRMLS_CC) != SUCCESS) {
 	php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not call user function: %s.", 23, cname);
   }
-#ifdef ZEND_ENGINE_2
-  if(EG(exception)) {
-	php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Unhandled exception during callback in user function: %s.", 25, fname);
-	zend_clear_exception(TSRMLS_C);
-  }
-#endif
-
-  EXT_GLOBAL(result)(retval_ptr, 0, presult TSRMLS_CC);
-  if(retval_ptr) zval_ptr_dtor(&retval_ptr);
-  efree(func_params);
+  if(!handle_exception(presult TSRMLS_CC)) 
+	EXT_GLOBAL(result)(retval_ptr, 0, presult TSRMLS_CC);
+  if(retval_ptr) 
+	zval_ptr_dtor(&retval_ptr);
+  zval_ptr_dtor(&func);
 }
 
 static  void  setResultFromArray  (pval *presult) {
@@ -313,26 +366,13 @@ static void end(parser_string_t st[1], parser_cb_t *cb){
   }
 }
 
-static const char context[] = "X_JAVABRIDGE_CONTEXT";
+static const char key_hosts[]="java.hosts";
+static const char key_servlet[] = "java.servlet";
 static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
   proxyenv *ctx=(proxyenv*)cb->ctx;
   char *str=(char*)PARSER_GET_STRING(tag[0].strings, 0);
 
   switch (*str) {
-  case 'S'://Set-Cookie:
-	{
-	  char *cookie, *path;
-	  static const char setcookie[]="Set-Cookie";
-	  if(strcmp(str, setcookie) || ((*ctx)->cookie_name)) return;
-	  (*ctx)->cookie_name = strdup((char*)PARSER_GET_STRING(tag[1].strings, 0));
-	  cookie = (char*)PARSER_GET_STRING(tag[2].strings, 0);
-	  if((path=strchr(cookie, ';'))) *path=0;	/* strip off path */
-	  (*ctx)->cookie_value = strdup(cookie);
-	  assert((*ctx)->cookie_name && (*ctx)->cookie_value);
-	  if(!(*ctx)->cookie_name || !(*ctx)->cookie_value) exit(6);
-	  break;
-	}
-
   case 'C'://Content-Length or Connection
 	{
 	  static const char con_connection[]="Connection", con_close[]="close";
@@ -344,8 +384,8 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
   case 'X':// Redirect
 	{
 	  char *key;
-	  static const char redirect[]="X_JAVABRIDGE_REDIRECT";
-	  static const char key_hosts[]="java.hosts";
+	  static const char context[] = "X_JAVABRIDGE_CONTEXT";
+	  static const char redirect[]= "X_JAVABRIDGE_REDIRECT";
 	  if(!strcmp(str, redirect)) {
 		key = (char*)PARSER_GET_STRING(tag[1].strings, 0);
 		zend_alter_ini_entry((char*)key_hosts, sizeof key_hosts, 
@@ -353,9 +393,9 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
 							 ZEND_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
 		(*ctx)->must_reopen = 2;
 	  } else if(!strcmp(str, context)) {
-		if(!(*ctx)->servlet_redirect) {
+		if(!(*ctx)->servlet_ctx) {
 		  key = (char*)PARSER_GET_STRING(tag[1].strings, 0);
-		  (*ctx)->servlet_redirect = strdup(key);
+		  (*ctx)->servlet_ctx = strdup(key);
 		}
 	  }
 	  break;
@@ -406,7 +446,6 @@ static void handle_request(proxyenv *env) {
 	if((*env)->must_reopen==2) { // redirect
 	  static const char key_sockname[] = "java.socketname";
 	  static const char key_off[] = "Off";
-	  static const char key_servlet[] = "java.servlet";
 	  zend_alter_ini_entry((char*)key_servlet, sizeof key_servlet, 
 						   (char*)key_off, sizeof key_off, 
 						   ZEND_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
@@ -444,22 +483,22 @@ unsigned char EXT_GLOBAL (get_mode) () {
  * adjust the standard environment for the current request.
  */
 static proxyenv* adjust_environment(proxyenv *env TSRMLS_DC) {
-  static const char server[] = "_SERVER";
-  zval **data, **entry;
-
-/*   if (ht && zend_hash_find(&EG(symbol_table), (char*)server, sizeof server, (void **) &data)!=FAILURE */
-/* 	  && (Z_TYPE_PP(data)==IS_ARRAY)) { */
-/* 	/\* If we got a X_JAVABRIDGE_CONTEXT, modify the */
-/* 	   environment *\/ */
-/* 	if (zend_hash_find(Z_ARRVAL_PP(data), (char*)context, sizeof context, (void **) &entry)!=FAILURE */
-/* 		&& (Z_TYPE_PP(entry)==IS_STRING)) { */
-/* 	  (*env)->servlet_redirect = strdup(Z_STRVAL_PP(entry)); */
-/* 	} */
-/*   } */
-
-  char *ctx = getenv(context);
-  if(ctx) (*env)->servlet_redirect = strdup(ctx);
-
+  static const char context[] = "$_SERVER['X_JAVABRIDGE_CONTEXT'];";
+  static const char override[] = "$_SERVER['X_JAVABRIDGE_OVERRIDE_HOSTS'];";
+  static const char key_on[] = "On";
+  zval val;
+  if((SUCCESS==zend_eval_string((char*)context, &val, "context" TSRMLS_CC)) && (Z_TYPE(val)==IS_STRING)) {
+	(*env)->servlet_ctx = strdup(Z_STRVAL(val));
+  }
+  if((SUCCESS==zend_eval_string((char*)override, &val, "override" TSRMLS_CC)) && (Z_TYPE(val)==IS_STRING)) {
+	zend_alter_ini_entry((char*)key_hosts, sizeof key_hosts, 
+						 Z_STRVAL(val), Z_STRLEN(val), 
+						 ZEND_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
+	zend_alter_ini_entry((char*)key_servlet, sizeof key_servlet, 
+						 (char*)key_on, sizeof key_on, 
+						 ZEND_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
+	
+  }
   return env;
 }
 static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {

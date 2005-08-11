@@ -1,4 +1,4 @@
-#!/usr/bin/php
+#!/usr/bin/php -nq
 
 <?php
 if (!extension_loaded('mono')) {
@@ -7,6 +7,7 @@ if (!extension_loaded('mono')) {
     exit(2);
   }
 }
+ini_set("max_execution_time", 0);
 
 class GtkFileSelectorDemo {
 

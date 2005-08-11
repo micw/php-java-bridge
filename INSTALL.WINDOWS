@@ -28,7 +28,10 @@ your java libraries (.jar files):
   extension_dir and copy your java libraries (.jar files) into
   extension_dir\lib.
 
-* Copy the test.php into your web-server document root and browse to:
+* If you don't have a servlet engine, enable the java.socketname
+  option in your php.ini file and double-click on JavaBridge.jar to
+  start the standalone backend once. Then copy the test.php into your
+  web-server document root and browse to:
 
     http://localhost/test.php
 
@@ -41,7 +44,7 @@ your java libraries (.jar files):
   uses the log level supplied when it was started.  For example the
   following command starts the backend with debug output enabled:
 
-    java -jar JavaBridge.jar INET:9267 4 JavaBridge.log
+    java -Djava.awt.headless=true -jar JavaBridge.jar INET:9267 4 JavaBridge.log
 
  * Please report bugs/problems to the mailing list:
 

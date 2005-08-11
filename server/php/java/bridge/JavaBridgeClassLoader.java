@@ -24,13 +24,18 @@ public class JavaBridgeClassLoader {
 	    cl.clear();
     }
 
-    public void updateJarLibraryPath(String path)  {
+    /**
+     * Append the path to the current library path
+     * @param path A file or url list, separated by ';' 
+     * @param extensionDir Usually ini_get("extension_dir"); 
+     */
+    public void updateJarLibraryPath(String path, String extensionDir)  {
 	if(cl==null) {
 	    bridge.logMessage("You don't have permission to call java_set_library_path() or java_require(). Please store your libraries in the lib folder within JavaBridge.war");
 	    return;
 	}
 
-	cl.updateJarLibraryPath(path);
+	cl.updateJarLibraryPath(path, extensionDir);
     }
 
     public ClassLoader getClassLoader() {
@@ -38,17 +43,17 @@ public class JavaBridgeClassLoader {
 	return scl;
     }
 
-   /*
-    * reset loader to the initial state
-    */
+    /*
+     * reset loader to the initial state
+     */
     public void reset() {
 	if (cl!=null) cl.reset();
     }
 
     /*
-    * clear all loader caches but
-    * not the input vectors
-    */
+     * clear all loader caches but
+     * not the input vectors
+     */
     public void clearCaches() {
 	if (cl!=null) cl.clearCaches();
     }

@@ -77,8 +77,8 @@ struct proxyenv_ {
   /* for servlets: re-open connection */
   short must_reopen; 
 
-  /* the cookie, for servlet engines only */
-  char *cookie_name, *cookie_value, *servlet_redirect;
+  /* for servlet engines only */
+  char *servlet_ctx;
   
   void (*handle_request)(proxyenv *env);
 
@@ -97,6 +97,7 @@ struct proxyenv_ {
   void (*writeLong)(proxyenv *env, long l);
   void (*writeDouble)(proxyenv *env, double d);
   void (*writeObject)(proxyenv *env, long object);
+  void (*writeException)(proxyenv *env, long object, char*str, size_t len);
   void (*writeCompositeBegin_a)(proxyenv *env);
   void (*writeCompositeBegin_h)(proxyenv *env);
   void (*writeCompositeEnd)(proxyenv *env);

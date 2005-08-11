@@ -459,8 +459,11 @@ public class JavaBridge implements Runnable {
     public void logMessage(String msg) {
 	if(logLevel>2) Util.println(3, this + " " + msg);
     }
-
-    void setException(Response response, Throwable e, String method, Object obj, String name, Object args[]) {
+    public void warn(String msg) {
+	if(logLevel>0) Util.warn(this + " " + msg);
+    }
+    
+    void setException(Response response, Throwable e, String method, Object obj, String name, Object args[], Class params[]) {
 	if (e instanceof InvocationTargetException) {
 	    Throwable t = ((InvocationTargetException)e).getTargetException();
 	    if (t!=null) e=t;
@@ -470,16 +473,16 @@ public class JavaBridge implements Runnable {
 	buf.append(" failed: ");
 	if(obj!=null) {
 	    buf.append("[");
-	    buf.append(String.valueOf(obj));
+	    Util.appendObject(obj, buf);
 	    buf.append("]->");
 	} else {
 	    buf.append("new ");
 	}
 	buf.append(name);
-	String arguments = Util.argsToString(args);
+	String arguments = Util.argsToString(args, params);
 	if(arguments.length()>0) {
 	    buf.append("(");
-	    buf.append(arguments);
+	    Util.appendArgs(args, params, buf);
 	    buf.append(")");
 	}
 	buf.append(".");
@@ -495,12 +498,15 @@ public class JavaBridge implements Runnable {
     //
     public void CreateObject(String name, boolean createInstance,
 			     Object args[], Response response) {
+	Class params[] = null;
 	try {
 	    Vector matches = new Vector();
 	    Vector candidates = new Vector();
 	    Constructor selected = null;
+	    
+	    Class clazz = cl.forName(name);
 	    if(createInstance) {
-		Constructor cons[] = cl.forName(name).getConstructors();
+		Constructor cons[] = clazz.getConstructors();
 		for (int i=0; i<cons.length; i++) {
 		    candidates.addElement(cons[i]);
 		    if (cons[i].getParameterTypes().length == args.length) {
@@ -517,12 +523,12 @@ public class JavaBridge implements Runnable {
 		} else {
 		    // for classes which have no visible constructor, return the class
 		    // useful for classes like java.lang.System and java.util.Calendar.
-		    response.writeObject(cl.forName(name));
+		    response.writeObject(clazz);
 		    return;
 		}
 	    }
 
-	    Object coercedArgs[] = coerce(selected.getParameterTypes(), args, response);
+	    Object coercedArgs[] = coerce(params=selected.getParameterTypes(), args, response);
     	    response.writeObject(selected.newInstance(coercedArgs));
 
 	} catch (Throwable e) {
@@ -535,16 +541,12 @@ public class JavaBridge implements Runnable {
 	    if(e instanceof NoClassDefFoundError ||
 	       ((e instanceof InvocationTargetException) &&
 		((InvocationTargetException)e).getTargetException() instanceof NoClassDefFoundError)) {
-	    	if(createInstance) {
-		    if(e instanceof InvocationTargetException) e = ((InvocationTargetException)e).getTargetException();
-		    logError("Error: Could not invoke constructor. A class referenced in the constructor method could not be found: " + e + ". Please correct this error or use \"new JavaClass()\" to avoid calling the constructor.");
-		    cl.clearCaches();
-		    CreateObject(name, false, args, response);
-		    return;
-	        }
+		if(e instanceof InvocationTargetException) e = ((InvocationTargetException)e).getTargetException();
+		cl.clearCaches();
+		e = new ClassNotFoundException("Unresolved external reference: "+e+". -- Unable to call the constructor because it or one of its parameters refer to the mentioned external class which is not available in the current \"java_require(<path>)\" url path. Remember that all interconnected classes must be loaded with a single java_require() call and that a class must not appear in more than one java_require() call. Please check the Java Bridge log file for details.", e);
 	    }
 	    printStackTrace(e);
-	    setException(response, e, createInstance?"CreateInstance":"ReferenceClass", null, name, args);
+	    setException(response, e, createInstance?"CreateInstance":"ReferenceClass", null, name, args, params);
 	}
     }
 
@@ -566,10 +568,19 @@ public class JavaBridge implements Runnable {
 		((Constructor)element).getParameterTypes();
 
 	    for (int i=0; i<parms.length; i++) {
-		if (parms[i].isInstance(args[i])) {
-		    for (Class c=args[i].getClass(); (c=c.getSuperclass()) != null; ) {
+	    	Object arg = args[i];
+	    	if(Util.getClass(arg) == PhpProcedureProxy.class) {
+		    PhpProcedureProxy proxy = ((PhpProcedureProxy)arg);
+		    if(proxy.suppliedInterfaces==null) {
+			if(!parms[i].isInterface()) weight+=9999;	    			
+		    } else {
+			arg = proxy.getProxy(null);
+		    }
+	    	}
+		if (parms[i].isInstance(arg)) {
+		    for (Class c=arg.getClass(); (c=c.getSuperclass()) != null; ) {
 			if (!parms[i].isAssignableFrom(c)) {
-			    if (args[i] instanceof byte[]) { //special case: when arg is a byte array we always prefer a String parameter (if it exists).
+			    if (arg instanceof byte[]) { //special case: when arg is a byte array we always prefer a String parameter (if it exists).
 				weight+=1;
 			    }
 			    break;
@@ -579,11 +590,11 @@ public class JavaBridge implements Runnable {
 				     // over Object hashMap.
 		    }
 		} else if (parms[i].isAssignableFrom(java.lang.String.class)) {
-		    if (!(args[i] instanceof byte[]) && !(args[i] instanceof String))
+		    if (!(arg instanceof byte[]) && !(arg instanceof String))
 			weight+=9999;
 		} else if (parms[i].isArray()) {
-		    if ((args[i] != null) && args[i].getClass() == Request.PhpArray.class) { 
-			Iterator iterator = ((Map)args[i]).values().iterator();
+		    if ((arg != null) && arg.getClass() == Request.PhpArray.class) { 
+			Iterator iterator = ((Map)arg).values().iterator();
 			if(iterator.hasNext()) {
 			    Object elem = iterator.next();
 			    Class c=parms[i].getComponentType();
@@ -610,12 +621,12 @@ public class JavaBridge implements Runnable {
 		    } else
 			weight+=9999;
 		} else if ((java.util.Collection.class).isAssignableFrom(parms[i])) {
-		    if (!(args[i] instanceof Map))
+		    if (!(arg instanceof Map))
 			weight+=9999;
 		} else if (parms[i].isPrimitive()) {
 		    Class c=parms[i];
-		    if (args[i] instanceof Number) {
-			if(args[i] instanceof Double) {
+		    if (arg instanceof Number) {
+			if(arg instanceof Double) {
 			    if (c==Float.TYPE) weight++;
 			    else if (c==Double.TYPE) weight+=0;
 			    else weight += 256;
@@ -628,11 +639,11 @@ public class JavaBridge implements Runnable {
 			    else if (c==Long.TYPE) weight+=0;
 			    else weight += 256;
 			}
-		    } else if (args[i] instanceof Boolean) {
+		    } else if (arg instanceof Boolean) {
 			if (c!=Boolean.TYPE) weight+=9999;
-		    } else if (args[i] instanceof String) {
-			if (c== Character.TYPE || ((String)args[i]).length()>0)
-			    weight+=((String)args[i]).length();
+		    } else if (arg instanceof String) {
+			if (c== Character.TYPE || ((String)arg).length()>0)
+			    weight+=((String)arg).length();
 			else
 			    weight+=64;
 		    } else {
@@ -1010,6 +1021,8 @@ public class JavaBridge implements Runnable {
 	Class jclass;
 	boolean again;
 	Object coercedArgs[] = null;
+	Class params[] = null;
+	
 	MethodCache.Entry entry = methodCache.getEntry(method, Util.getClass(object), args);
 	Method selected = (Method) methodCache.get(entry);
 	try {
@@ -1031,7 +1044,7 @@ public class JavaBridge implements Runnable {
 		    }
 		    selected = (Method)select(matches, args);
 		    if (selected == null) 
-                  	throw new NoSuchMethodException(String.valueOf(method) + "(" + Util.argsToString(args) + "). " + "Candidates: " + String.valueOf(candidates));
+                  	throw new NoSuchMethodException(String.valueOf(method) + "(" + Util.argsToString(args, params) + "). " + "Candidates: " + String.valueOf(candidates));
 		    methodCache.put(entry, selected);
 		    if(!iter.checkAccessible(selected)) {
 			logMessage("Security restriction: Cannot use setAccessible(), reverting to interface searching.");
@@ -1040,7 +1053,7 @@ public class JavaBridge implements Runnable {
 			again=true;
 		    }
 		}
-		coercedArgs = coerce(selected.getParameterTypes(), args, response);
+		coercedArgs = coerce(params=selected.getParameterTypes(), args, response);
 	    } while(again);
 	    if (this.logLevel>4) logInvoke(object, method, coercedArgs); // If we have a logLevel of 5 or above, do very detailed invocation logging
 	    setResult(response, selected.invoke(object, coercedArgs));
@@ -1051,6 +1064,14 @@ public class JavaBridge implements Runnable {
 		Util.logStream.println("FATAL: OutOfMemoryError");
 		throw new RuntimeException(); // abort
 	    }
+	    if(e instanceof NoClassDefFoundError ||
+	       ((e instanceof InvocationTargetException) &&
+		((InvocationTargetException)e).getTargetException() instanceof NoClassDefFoundError)) {
+		if(e instanceof InvocationTargetException) e = ((InvocationTargetException)e).getTargetException();
+		cl.clearCaches();
+		e = new ClassNotFoundException("Unresolved external reference: "+ e+ ". -- Unable to call the method because it or one of its parameters refer to the mentioned external class which is not available in the current \"java_require(<path>)\" url path. Remember that all interconnected classes must be loaded with a single java_require() call and that a class must not appear in more than one java_require() call. Please check the Java Bridge log file for details.", e);
+	    }
+	    
 	    printStackTrace(e);
             if (e instanceof IllegalArgumentException) {
                 if (this.logLevel>3) {
@@ -1073,7 +1094,7 @@ public class JavaBridge implements Runnable {
                     this.logDebug(errMsg);
                 }
             }
-	    setException(response, e, "Invoke", object, method, args);
+	    setException(response, e, "Invoke", object, method, args, params);
 	}
     }
 
@@ -1092,10 +1113,11 @@ public class JavaBridge implements Runnable {
 	(Object object, String prop, Object args[], Response response)
     {
 	boolean set = (args!=null && args.length>0);
+	Class params[] = null;
 	try {
 	    ArrayList matches = new ArrayList();
 	    Class jclass;
-
+	    
 	    // first search for the field *exactly*
 	    again2:		// because of security exception
 	    for (ClassIterator iter = ClassIterator.getInstance(object, FindMatchingInterfaceForGetSetProp.getInstance(this, prop, args, false, canModifySecurityPermission)); (jclass=iter.getNext())!=null;) {
@@ -1112,7 +1134,7 @@ public class JavaBridge implements Runnable {
 				break again2;
 			    }
 			    if (set) {
-				args = coerce(new Class[] {jfields[i].getType()}, args, response);
+				args = coerce(params=new Class[] {jfields[i].getType()}, args, response);
 				jfields[i].set(object, args[0]);
 			    } else {
 			    	res=jfields[i].get(object);
@@ -1136,7 +1158,7 @@ public class JavaBridge implements Runnable {
 			    Method method;
 			    if (set) {
 				method=props[i].getWriteMethod();
-				args = coerce(method.getParameterTypes(), args, response);
+				args = coerce(params=method.getParameterTypes(), args, response);
 			    } else {
 				method=props[i].getReadMethod();
 			    }
@@ -1171,7 +1193,7 @@ public class JavaBridge implements Runnable {
 				break again0;
 			    }
 			    if (set) {
-				args = coerce(new Class[] {jfields[i].getType()}, args, response);
+				args = coerce(params=new Class[] {jfields[i].getType()}, args, response);
 				jfields[i].set(object, args[0]);
 			    } else {
 				res = jfields[i].get(object);
@@ -1182,7 +1204,7 @@ public class JavaBridge implements Runnable {
 		    }
 		} catch (Exception ee) {/* may happen when field is not static */}
 	    }
-	    throw new NoSuchFieldException(String.valueOf(prop) + " (with args:" + Util.argsToString(args) + "). " + "Candidates: " + String.valueOf(matches));
+	    throw new NoSuchFieldException(String.valueOf(prop) + " (with args:" + Util.argsToString(args, params) + "). " + "Candidates: " + String.valueOf(matches));
 
 	} catch (Throwable e) {
 	    if(e instanceof OutOfMemoryError ||
@@ -1191,8 +1213,15 @@ public class JavaBridge implements Runnable {
 		Util.logStream.println("FATAL: OutOfMemoryError");
 		throw new RuntimeException(); // abort
 	    }
+	    if(e instanceof NoClassDefFoundError ||
+	       ((e instanceof InvocationTargetException) &&
+		((InvocationTargetException)e).getTargetException() instanceof NoClassDefFoundError)) {
+		if(e instanceof InvocationTargetException) e = ((InvocationTargetException)e).getTargetException();
+		cl.clearCaches();
+		e = new ClassNotFoundException("Unresolved external reference: "+e+ ". -- Unable to invoke a property because it or one of its parameters refer to the mentioned external class which is not available in the current \"java_require(<path>)\" url path. Remember that all interconnected classes must be loaded with a single java_require() call and that a class must not appear in more than one java_require() call. Please check the Java Bridge log file for details.", e);
+	    }
 	    printStackTrace(e);
-	    setException(response, e, set?"SetProperty":"GetProperty", object, prop, args);
+	    setException(response, e, set?"SetProperty":"GetProperty", object, prop, args, params);
 	}
     }
 
@@ -1229,16 +1258,20 @@ public class JavaBridge implements Runnable {
 	return PhpMap.getPhpMap(value, this);
     }
 
-    // Set the library path for the java bridge. Examples:
-    // setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");
-    // setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");
-    // The first char must be the token separator.
-    public void setJarLibraryPath(String _path) {
-    	cl.updateJarLibraryPath(_path);
+    /**
+     * Append the path to the current library path<br>
+     * Examples:<br>
+     * setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");<br>
+     * setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");<br>
+     * @param path A file or url list, usually separated by ';'
+     * @param extensionDir The php extension directory. 
+     */
+    public void setJarLibraryPath(String path, String extensionDir) {
+    	cl.updateJarLibraryPath(path, extensionDir);
     }
 
     // Set the library path for ECMA dll's
-    public void setLibraryPath(String _path) {
+    public void setLibraryPath(String _path, String extensionDir) {
         if(_path==null || _path.length()<2) return;
 
         // add a token separator if first char is alnum
@@ -1299,9 +1332,7 @@ public class JavaBridge implements Runnable {
 
     public static String ObjectToString(Object ob) {
 	StringBuffer buf = new StringBuffer("[");
-	buf.append(String.valueOf(ob.getClass()));
-	buf.append(": ");
-	buf.append(String.valueOf(ob));
+	Util.appendObject(ob, buf);
 	buf.append("]");
 	return buf.toString();
     }
@@ -1315,22 +1346,19 @@ public class JavaBridge implements Runnable {
     	return sessionFactory.getSession(name, clientIsNew, timeout);
     }
     
-    public Object makeClosure(long object, Class iface, String name) {
-    	return new PhpProcedureProxy(this, new String[] {name}, iface==null?null:new Class[] {iface}, object);
+    public Object makeClosure(long object, Map names) {
+    	return new PhpProcedureProxy(this, names, null, object);
     }
-
-    public Object makeClosure(long object, Class iface, String names[]) {
-    	return new PhpProcedureProxy(this, names, iface==null?null:new Class[] {iface}, object);
-    }
-    
-    public Object makeClosure(long object, Class interfaces[], String names[]) {
+    public Object makeClosure(long object, Map names, Class interfaces[]) {
     	return new PhpProcedureProxy(this, names, interfaces, object);
     }
+
     /*
      * Reset the global caches of the bridge.
      * Currently this is the classloader and the session.
      */
     public void reset() {
+	warn("Your PHP script has called the privileged procedure \"reset()\", which resets the backend to its initial state. Therefore all session variables and all caches are now gone.");
 	Session.reset(this);
 	cl.reset();
     }

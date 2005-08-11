@@ -48,7 +48,7 @@ public class Parser {
 	    	c++;
 	    }
 	} else {
-		return EOF;
+	    return EOF;
 	}
 	return OK; 
     }

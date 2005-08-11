@@ -60,14 +60,10 @@
 package php.java.servlet;
 
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.net.URLEncoder;
 import java.util.Date;
 import java.util.Enumeration;
@@ -307,6 +303,11 @@ public class CGIServlet extends HttpServlet {
      *    null)
      */
     private String cgiPathPrefix = null;
+
+    /**
+     * Header encoding
+     */
+    static final String ASCII = "ASCII";
 
 
     /**
@@ -683,6 +684,7 @@ public class CGIServlet extends HttpServlet {
 	    return new CGIEnvironment(req, servletContext);
 	}
 
+
     /**
      * Encapsulates the CGI environment and rules to derive
      * that environment from the servlet container and request information.
@@ -764,7 +766,9 @@ public class CGIServlet extends HttpServlet {
 
 
 
-        /**
+
+
+		/**
          * Uses the ServletContext to set some CGI variables
          *
          * @param  context   ServletContext for information provided by the
@@ -1570,22 +1574,9 @@ public class CGIServlet extends HttpServlet {
                 }
             }
 
-            /*String postIn = getPostInput(params);
-	      int contentLength = (postIn.length()
-	      + System.getProperty("line.separator").length());
-	      if ("POST".equals(env.get("REQUEST_METHOD"))) {
-	      env.put("CONTENT_LENGTH", new Integer(contentLength));
-	      }*/
-
-	    StringBuffer perlCommand = new StringBuffer("perl ");
-	    if (command.endsWith(".pl") || command.endsWith(".cgi")) {
-		perlCommand.append(cmdAndArgs.toString());
-		cmdAndArgs = perlCommand;
-	    }
-
             rt = Runtime.getRuntime();
             proc = rt.exec(cmdAndArgs.toString(), hashToStringArray(env), wd);
-
+            
 	    String sContentLength = (String) env.get("CONTENT_LENGTH");
 	    if(!"".equals(sContentLength)) {
 		commandsStdIn = new BufferedOutputStream(proc.getOutputStream());
@@ -1596,6 +1587,11 @@ public class CGIServlet extends HttpServlet {
 		commandsStdIn.close();
 	    }
 
+	    /* FIXME: Why do we need this at all? When the stream is closed, it's closed, no?!?
+	     * We do not care for the process exit value!
+	     * Check the URL mentioned below.
+	     * -> For release 2.0.8  (jost)
+	     */
             /* we want to wait for the process to exit,  Process.waitFor()
              * is useless in our situation; see
              * http://developer.java.sun.com/developer/
@@ -1603,6 +1599,7 @@ public class CGIServlet extends HttpServlet {
              */
 
             boolean isRunning = true;
+            proc.getErrorStream().close();
             in=proc.getInputStream();
             out=response.getOutputStream();
 
@@ -1610,6 +1607,7 @@ public class CGIServlet extends HttpServlet {
             byte[] buf = new byte[8192];// headers cannot be larger than this value!
             int i=0, n, s=0;
             boolean eoh=false;
+
             while (isRunning) {
                 try {
                     while((n = in.read(buf, i, buf.length-i)) !=-1 ) {
@@ -1622,7 +1620,7 @@ public class CGIServlet extends HttpServlet {
 				if(s+2==i && buf[s]=='\r') {
 				    eoh=true;
 				} else {
-				    line = new String(buf, s, i-s-2, "ASCII");
+				    line = new String(buf, s, i-s-2, ASCII);
 				    addHeader(line);
 				    s=i;
                     		}
@@ -1635,20 +1633,22 @@ public class CGIServlet extends HttpServlet {
                      	    i=0;
                      	}
                     }
-                    
-                    if (out != null) out.flush();
-
-                    proc.exitValue(); // Throws exception if alive
+                    // FIXME: Why do we need this?  Check the 4223650.html, see above. (jost)
+                    //proc.exitValue(); // Throws exception if alive
 
                     isRunning = false;
 
                 } catch (IllegalThreadStateException e) {
                     try {
-                        Thread.currentThread().sleep(500);
+                        Thread.sleep(500);
                     } catch (InterruptedException ignored) {
                     }
                 }
             } //replacement for Process.waitFor()
+            
+            if(out!=null) try {out.close();} catch (IOException e) {}
+            if(in!=null) try {in.close();} catch (IOException e) {}
+            if(stdin!=null) try {stdin.close();} catch (IOException e) {}
         }
 
 

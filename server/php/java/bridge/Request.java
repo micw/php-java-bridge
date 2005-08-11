@@ -23,6 +23,7 @@ public class Request implements IDocHandler {
     	byte composite;
     	byte type;
     	Object callObject;
+    	Throwable exception;
     	String method;
     	boolean predicate;
         long id;
@@ -118,6 +119,7 @@ public class Request implements IDocHandler {
 	    args.id=Long.parseLong(st[0].getStringValue(), 10);
 	    break;
 	}
+	
 	case 'X': {
 	    args.composite=st[0].string[st[0].off];
 	    break;
@@ -154,6 +156,19 @@ public class Request implements IDocHandler {
 	}
 	case 'D': {
 	    args.add(new Double(Double.parseDouble(st[0].getStringValue())));
+	    break;
+	}
+	case 'E': {
+	    if(0==st[0].length)
+		args.callObject=new Exception(st[1].getStringValue());
+	    else {
+		int i=Integer.parseInt(st[0].getStringValue(), 10);
+		if(0==i) {
+		    args.callObject=new Exception(st[1].getStringValue());
+		}
+		else
+		    args.callObject=bridge.globalRef.get(i);
+	    }
 	    break;
 	}
 	case 'O': {
@@ -201,7 +216,7 @@ public class Request implements IDocHandler {
 	}
     }
     private static final Object[] empty = new Object[] {null};
-    public Object[] handleSubRequests() throws IOException {
+    public Object[] handleSubRequests() throws IOException, Throwable {
     	response.flush();
     	Args current = args;
     	args = new Args();
@@ -223,10 +238,13 @@ public class Request implements IDocHandler {
 		response.flush();   
 		break;
 	    case 'R':
-	    	Object[] retval = args.getArgs();
-	    	response.reset();
+	    	Args ret = args;
 	    	args = current;
-	    	return retval;
+	    	response.reset();
+	    	
+	    	if(ret.callObject!=null) 
+	    	    throw (Throwable)ret.callObject;
+	    	return ret.getArgs();
 	    }
 	    args.reset();
 	}

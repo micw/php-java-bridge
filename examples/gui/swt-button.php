@@ -1,4 +1,4 @@
-#!/usr/bin/php
+#!/usr/bin/php -nq
 
 <?php
 
@@ -8,7 +8,7 @@ if (!extension_loaded('java')) {
     exit(2);
   }
 }
-
+ini_set("max_execution_time", 0);
 
 class ButtonDemo {
   var $shell, $display;

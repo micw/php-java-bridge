@@ -5,7 +5,9 @@ package php.java.bridge;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.StringTokenizer;
 
@@ -17,29 +19,45 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     // the list of jar files in which we search for user classes.
     static private Collection sysUrls = null;
 
+    // the current user's php libdir
+    private String contextDir = null;
+    
     protected DynamicJavaBridgeClassLoader(ClassLoader parent) {
     	super(parent);
     }
     protected DynamicJavaBridgeClassLoader() {
     	super();
     }
-	// Set the library path for the java bridge. Examples:
+    
+    private String getContextDir () {
+    	if(contextDir!=null) return contextDir;
+    	return phpLibDir;
+    }
+    // Set the library path for the java bridge. Examples:
     // setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");
     // setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");
     // The first char must be the token separator.
-    public void updateJarLibraryPath(String _path) {
-
-	ArrayList toAdd = new ArrayList();
-        if(_path==null || _path.length()<2) return;
-        String oldp = _path;
+    public void updateJarLibraryPath(String rawPath, String rawContextDir) {
+    	if(rawContextDir==null) throw new NullPointerException("contextDir cannot be null.");
+	if(contextDir==null) {
+	    contextDir=rawContextDir+File.separator+"lib"+File.separator;
+	    try {
+		this.addURL(new URL("file:"+contextDir), false);
+	    } catch (MalformedURLException e) {
+		Util.printStackTrace(e);
+	    }
+	}
+    	
+    	ArrayList toAdd = new ArrayList();
+        if(rawPath==null || rawPath.length()<2) return;
 	// add a token separator if first char is alnum
-	char c=_path.charAt(0);
+	char c=rawPath.charAt(0);
 	if((c>='A' && c<='Z') || (c>='a' && c<='z') ||
 	   (c>='0' && c<='9') || (c!='.' || c!='/'))
-	    _path = ";" + _path;
+	    rawPath = ";" + rawPath;
 
-	String path = _path.substring(1);
-	StringTokenizer st = new StringTokenizer(path, _path.substring(0, 1));
+	String path = rawPath.substring(1);
+	StringTokenizer st = new StringTokenizer(path, rawPath.substring(0, 1));
 	while (st.hasMoreTokens()) {
 	    URL url;
 	    String p, s;
@@ -50,16 +68,23 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 		p = url.getProtocol();
 	    } catch (MalformedURLException e) {
 		try {
-		    if(new File(s).isFile()) {
-			s = "file:" + s;
-		    } else if (new File(phpLibDir + s).isFile()) {
-			s = "file:" + phpLibDir + s;
-		    } else if (new File("/usr/share/java/" + s).isFile()) {
-			s = "file:" + "/usr/share/java/" + s;
+		    File f=null;
+		    StringBuffer buf= new StringBuffer();
+		    if((f=new File(s)).isFile() || f.isAbsolute()) {
+		    	buf.append(s);
+		    } else if ((f=new File(getContextDir() + s)).isFile()) {
+		    	buf.append(f.getAbsolutePath());
+		    } else if ((f=new File("/usr/share/java/" + s)).isFile()) {
+			buf.append(f.getAbsolutePath());
 		    } else {
-			s = "file:" + s;
+			buf.append(s);
 		    }
-		    url = new URL(s);
+		    if(f!=null && f.isDirectory()) {
+		    	int l = buf.length();
+		    	if(l>0 && buf.charAt(l-1) != File.separatorChar)
+		    	    buf.append(File.separatorChar);
+		    }
+		    url = new URL("file", null, buf.toString());
 		    p = url.getProtocol();
 		}  catch (MalformedURLException e1) {
 		    Util.printStackTrace(e1);
@@ -68,9 +93,10 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	    }
 	    toAdd.add(url);
 	}
-        URL urls[] = new URL[toAdd.size()];
+
+	URL urls[] = new URL[toAdd.size()];
         toAdd.toArray(urls);
-        addURLs(oldp, urls, false); // Uses protected method to explicitly set the classpath entry that is added.
+        addURLs(rawPath, urls, false); // Uses protected method to explicitly set the classpath entry that is added.
     }
     //
     // add all jars found in the phpConfigDir/lib and /usr/share/java
@@ -87,7 +113,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	try {
 	    String[] paths;
 	    if(null!=phpConfigDir)
-		paths = new String[] {phpConfigDir+"/lib", "/usr/share/java", "/usr/share/java/ext"};
+		paths = new String[] {phpConfigDir+File.separator+"lib", "/usr/share/java", "/usr/share/java/ext"};
 	    else
 		paths = new String[] {"/usr/share/java", "/usr/share/java/ext"};
 
@@ -120,8 +146,8 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
         URL urls[] = new URL[sysUrls.size()];
 	synchronized(getClass()) {
             sysUrls.toArray(urls);
-	 }
-         this.addURLs(urls, true);
+	}
+	this.addURLs(urls, true);
     }
 
     /*
@@ -129,6 +155,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
      * @see php.java.bridge.DynamicClassLoader#clear()
      */
     public void clear() {
+    	contextDir=null;
     	super.clear();
     	addSysUrls();
     }
@@ -142,7 +169,52 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	    clearCache();
 	}
     }
-
+    /**
+     * Searches for a library name in our classpath
+     * @param name the library name, e.g. natcJavaBridge.so
+     * @return never returns.  It throws a UnsatisfiedLinkError.
+     * @throws UnsatisfiedLinkError
+     */
+    protected String resolveLibraryName(String name) {
+	URL url =  findResource("lib"+name+".so");
+	if(url==null) url = findResource(name+".dll");
+	if(url!=null) return url.getFile();
+	throw new UnsatisfiedLinkError("Native library " + name + " could not be found in java_require() path.");
+    }
+    protected URLClassLoaderFactory getUrlClassLoaderFactory() {
+    	return new URLClassLoaderFactory() {
+    	        public URLClassLoader createUrlClassLoader(String classPath, URL urls[]) {
+		    return new URLClassLoader(urls) {
+    	                    protected Class findClass(String name) throws ClassNotFoundException {
+    	                    	if(Util.logLevel>2) Util.logMessage("trying to load class: " +name + " from: "+ Arrays.asList(this.getURLs()));
+    	                    	try {
+				    return super.findClass(name);
+				} catch (ClassNotFoundException e) {
+				    throw new ClassNotFoundException("Class " + name + " not found in: " + (Arrays.asList(this.getURLs()))+". Please load all interconnected classes in a single java_require() call, e.g. use java_require(foo;bar) instead of java_require(foo); java_require(bar).", e);
+				}
+			    }
+			    public URL findResource(String name)  {
+				if(Util.logLevel>2) Util.logMessage("trying to load resource: " +name + " from: "+ Arrays.asList(this.getURLs()));
+				return super.findResource(name);
+    	                	
+			    }
+			    protected String findLibrary(String name) {
+				if(Util.logLevel>2) Util.logMessage("trying to load library: " +name + " from: "+ Arrays.asList(this.getURLs()));
+				String s = super.findLibrary(name);
+				if(s!=null) return s;
+				return resolveLibraryName(name);
+			    }
+			};
+		}
+	    };
+    }
+    public Class loadClass(String name) throws ClassNotFoundException {
+	try {
+	    return super.loadClass(name); 
+	} catch (ClassNotFoundException e) {
+	    throw new ClassNotFoundException(("Could not find " + name + " in java_require() path"), e);    
+	}
+    }
     /*
      * Create an instance of the dynamic java bridge classloader
      * It may return null due to security restrictions on certain systems, so don't
@@ -150,20 +222,22 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
      * new JavaBridgeClassLoader(bridge, DynamicJavaBridgeClassLoader.newInstance()) instead.
      */
     public static synchronized DynamicJavaBridgeClassLoader newInstance() {
-    	try {
-    	    DynamicJavaBridgeClassLoader cl = new DynamicJavaBridgeClassLoader();
-    	    return cl;
-   	} catch (java.security.AccessControlException e) {
-    	    return null;
-    	}
+	try {
+	    DynamicJavaBridgeClassLoader cl = new DynamicJavaBridgeClassLoader();
+	    cl.setUrlClassLoaderFactory(cl.getUrlClassLoaderFactory());
+	    return cl;
+	} catch (java.security.AccessControlException e) {
+	    return null;
+	}
     }
     public static synchronized DynamicJavaBridgeClassLoader newInstance(ClassLoader parent) {
-    	try {
-    	    DynamicJavaBridgeClassLoader cl = new DynamicJavaBridgeClassLoader(parent);
-    	    return cl;
-   	} catch (java.security.AccessControlException e) {
-    	    return null;
-    	}
+	try {
+	    DynamicJavaBridgeClassLoader cl = new DynamicJavaBridgeClassLoader(parent);
+	    cl.setUrlClassLoaderFactory(cl.getUrlClassLoaderFactory());
+	    return cl;
+	} catch (java.security.AccessControlException e) {
+	    return null;
+	}
     }
     
 }

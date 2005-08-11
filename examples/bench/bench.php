@@ -2,11 +2,14 @@
 
 <?php
 
-if(!extension_loaded('java')) {
-  dl('java.' . PHP_SHLIB_SUFFIX);
+if (!extension_loaded('java')) {
+  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+    echo "java extension not installed.";
+    exit(2);
+  }
 }
 
-$here = trim(`pwd`);
+$here = getcwd();
 $java_output = "workbook_java.xls";
 $php_output = "workbook_php.xls";
 
@@ -36,14 +39,31 @@ echo "Created excel file $java_output via compiled java in $t_java ms.\n";
 echo "Created excel file $php_output via interpreted PHP and java reflection calls in $t_php ms. (" . $t_php/$t_java .")\n";
 
 /*
-       java class             php function           java class      php function
+Sample results on a 1.4GHZ i686, kernel 2.6.8
+
+--------------------------------------------------
+PHP/Java Bridge Version 1.0.8:
+       pure java              mix PHP/Java           pure java     mix PHP/Java
        interpreted (-Xint)    interpreted (-Xint)    compiled        compiled
 jdk
 1.4:   13367 ms               42919 ms               2325 ms         22276 ms
 1.5:   18342 ms               42048 ms               2227 ms         21008 ms
 GNU:   36348 ms               73440 ms                 -                -
+  -> jni/net/reflection overhead ca. 2.0 (GNU) .. 3.1 (JDK 1.4)
 
-  -> net/reflection overhead ca. 2.0 (GNU) .. 3.1 (JDK 1.4)
-  
+
+--------------------------------------------------
+PHP/Java Bridge Version 2.0.7:
+jdk
+1.4:   13929 ms               39723 ms               2349 ms         9232 ms
+GNU:   36365 ms               54082 ms                 -                -
+  -> net/reflection overhead ca. 1.5 (GNU) .. 2.85 (JDK 1.4)
+
+Note that the compiled PHP/Java mix is now 2.28 times faster (compared
+to PHP/Java Bridge version 1.0.8). Because we don't use the java
+native interface ("JNI") anymore, our high-level XML protocol code
+uses fewer round-trips, avoids expensive JNI lookups and can be JIT
+compiled.
+
 */
 ?>

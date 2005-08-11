@@ -170,7 +170,7 @@ Build and execution instructions:
 
        [java]
        ;;java.log_level="<level>"
-       java.log_level="3"
+       java.log_level="2"
 
        ;;java.servlet=<On|Off>
        java.servlet=On
@@ -219,7 +219,7 @@ Build and execution instructions:
      java.log_level, java.servlet and java.hosts entries.  Example: 
 
        [java]
-       java.log_level="3"
+       java.log_level="2"
        java.servlet=On
        java.hosts="127.0.0.1:8080"
 
@@ -431,7 +431,7 @@ bridge: 2m59.343s
 
    2: Log java exceptions.
 
-   3: Log info messages such as "loading jar xyz.jar from http://xy.com"
+   3: Log verbose, e.g.: "loading jar xyz.jar from http://xy.com"
 
    4: Log debug messages, including the c/s communication protocol.
 

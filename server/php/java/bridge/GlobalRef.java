@@ -38,13 +38,13 @@ public class GlobalRef {
     }
 
     public String dump() {
-      StringBuffer result = new StringBuffer();
-      for (int i=0;i<id;i++) {
-        if (globalRef[i]!=null) {
-          result.append("globalRef["+i+"]="+JavaBridge.objectDebugDescription(globalRef[i])+"\n");
-        }
-      }
-      return result.toString();
+	StringBuffer result = new StringBuffer();
+	for (int i=0;i<id;i++) {
+	    if (globalRef[i]!=null) {
+		result.append("globalRef["+i+"]="+JavaBridge.objectDebugDescription(globalRef[i])+"\n");
+	    }
+	}
+	return result.toString();
     }
 
     public int append(Object object) {

@@ -6,7 +6,8 @@ package php.java.bridge;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.HashMap;
+import java.util.Arrays;
+import java.util.Map;
 
 /**
  * This class takes the supplied PHP environment and creates a dynamic
@@ -15,58 +16,44 @@ import java.util.HashMap;
 public class PhpProcedure implements InvocationHandler {
 	
     private JavaBridge bridge;
-    private HashMap map;
     private long object;
-    private String[] names;
+    private Map names;
 	
-    protected PhpProcedure(JavaBridge bridge, long object, String[] names) {
+    protected PhpProcedure(JavaBridge bridge, long object, Map names) {
 	this.bridge = bridge;
 	this.object = object;
 	this.names = names;
     }
 
-    private void addMethods(Class interfaces[]) {
-	this.map = new HashMap();
-	for(int k=0; k<interfaces.length; k++) {
-	    Method methods[] = interfaces[k].getMethods();
-	    for(int i=0; i<methods.length; i++) {
-		map.put(methods[i], new Integer(i));
-	    }
-	}
-    }
-    public static Object createProxy(JavaBridge bridge, String names[], Class interfaces[], long object) {
+    public static Object createProxy(JavaBridge bridge, Map names, Class interfaces[], long object) {
 	PhpProcedure handler = new PhpProcedure(bridge, object, names);
 	Object proxy = Proxy.newProxyInstance(bridge.cl.getClassLoader(), interfaces, handler);
-	handler.addMethods(interfaces);
 	return proxy;
     }
 	
-	private void setResultFromProcedure(Response response, Method method, Object[] args) {
-		Integer pos = (Integer)(map.get(method));
-		int nr = pos!=null?pos.intValue():-1;
-		
-		String cname, name = method.getName();
-		try {
-		    cname = names[nr];
-		} catch (ArrayIndexOutOfBoundsException e) { 
-		    cname = name;
-		}
-		int argsLength = args==null?0:args.length;
-		response.writeApplyBegin(object, cname, name, argsLength);
-		for (int i=0; i<argsLength; i++) {
-			response.writePairBegin();
-			bridge.setResult(response, args[i]);
-			response.writePairEnd();
-		}
-		response.writeApplyEnd();
+    private void setResultFromProcedure(Response response, Method method, Object[] args) {
+	String name = method.getName();
+	String cname = (String)names.get(name);
+	if(cname==null) cname=name;
+	int argsLength = args==null?0:args.length;
+	response.writeApplyBegin(object, cname, name, argsLength);
+	for (int i=0; i<argsLength; i++) {
+	    response.writePairBegin();
+	    bridge.setResult(response, args[i]);
+	    response.writePairEnd();
+	}
+	response.writeApplyEnd();
     }
 	
     /* (non-Javadoc)
      * @see java.lang.reflect.InvocationHandler#invoke(java.lang.Object, java.lang.reflect.Method, java.lang.Object[])
      */
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+    	if(bridge.logLevel>3) bridge.logDebug("invoking callback: " + method);
 	setResultFromProcedure(bridge.request.response, method, args);
-	return bridge.coerce(new Class[] {method.getReturnType()}, bridge.request.handleSubRequests(), bridge.request.response)[0];
+	Object[] result = null;
+	result = bridge.request.handleSubRequests();
+	if(bridge.logLevel>3) bridge.logDebug("result from cb: " + Arrays.asList(result));
+	return bridge.coerce(new Class[] {method.getReturnType()}, result, bridge.request.response)[0];
     }
-	    
 }

@@ -25,28 +25,27 @@
       <param-name>cgiPathPrefix</param-name>
       <param-value>WEB-INF/cgi</param-value>
     </init-param>
-    <init-param>
-
-    <!-- Your php binary, for example php.exe, php or /usr/bin/php. -->
-      <param-name>php_exec</param-name>
-      <param-value>php</param-value>
-    </init-param>
-    <init-param>
-
-    <!-- Default log_level is 2, java.log_level from your php.ini overrides. -->
-      <param-name>servlet_log_level</param-name>
-      <param-value>2</param-value>
-    </init-param>
-    <init-param>
 
     <!-- Allow us to override the java.hosts, java.servlet and -->
     <!-- java.socketname settings from your php.ini so that we can -->
-    <!-- use the current VM.  Switch this to Off if you want to -->
-    <!-- use the "standard" local VM, which is usually much faster. -->
+    <!-- use the current VM. -->
+    <init-param>
       <param-name>override_hosts</param-name>
       <param-value>On</param-value>
     </init-param>
     </servlet>
+
+    <!-- Your php binary, for example php.exe, php or /usr/bin/php. -->
+    <init-param>
+      <param-name>php_exec</param-name>
+      <param-value>php</param-value>
+    </init-param>
+
+    <!-- Default log_level is 2, java.log_level from your php.ini overrides. -->
+    <init-param>
+      <param-name>servlet_log_level</param-name>
+      <param-value>2</param-value>
+    </init-param>
 
 <!-- URL -->
     <servlet-mapping>

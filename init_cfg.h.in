@@ -52,5 +52,6 @@
 #define EXT_FN(name) ZEND_FN(name)
 #define EXT_TSRMG(id, type, element) TSRMG(id, type, element)
 #define EXT_FE(name, arg_info) ZEND_FE(name, arg_info)
+#define EXT_MALIAS(classname, name, alias, arg_info, flags) ZEND_MALIAS(classname, name, alias, arg_info, flags)
 
 #endif

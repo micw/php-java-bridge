@@ -26,29 +26,29 @@ public class Response {
 	}
 
     	void append(byte[] s) {
-    		try {
-    			write(s);
-		} catch (IOException e) {/*not possible*/}
+	    try {
+		write(s);
+	    } catch (IOException e) {/*not possible*/}
 	}
     	void append(String s) {
-    		try {
-		    this.write(s.getBytes()); //used for objects only, not for UTF8 strings
-		} catch (IOException e) {/*not possible*/}
+	    try {
+		this.write(s.getBytes()); //used for objects only, not for UTF8 strings
+	    } catch (IOException e) {/*not possible*/}
 	}
     	void appendQuoted(byte[] s) {
-    		for(int i=0; i<s.length; i++) {
-    			byte ch;
-    			switch(ch=s[i]) {
-    			case '&':
-    				append(amp);
-    				break;
-    			case '\"':
-    				append(quote);
-    				break;
-    			default:
-    				write(ch);
-    			}
-    		}
+	    for(int i=0; i<s.length; i++) {
+		byte ch;
+		switch(ch=s[i]) {
+		case '&':
+		    append(amp);
+		    break;
+		case '\"':
+		    append(quote);
+		    break;
+		default:
+		    write(ch);
+		}
+	    }
     	}
     	void appendQuoted(String s) {
 	    appendQuoted(getBytes(s));

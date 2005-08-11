@@ -39,7 +39,7 @@ extern int EXT_GLOBAL(snprintf) (char *buf, size_t len, const char *format,...);
 
 static char *getSessionFactory(proxyenv *env) {
   static char invalid[] = "0";
-  register char *context = (*env)->servlet_redirect;
+  register char *context = (*env)->servlet_ctx;
   return context?context:invalid;
 }
 
@@ -52,10 +52,7 @@ static void end(proxyenv *env) {
 	int header_length;
 	unsigned char mode = EXT_GLOBAL (get_mode) ();
 
-	if((*env)->cookie_name) 
-	  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nCookie: %s=%s\r\nContent-Type: text/html\r\nContent-Length: %ld\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", EXT_GLOBAL (get_servlet_context) (), (*env)->cookie_name, (*env)->cookie_value, size+1, getSessionFactory(env), mode);
-	else
-	  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %ld\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", EXT_GLOBAL (get_servlet_context) (), size+1, getSessionFactory(env), mode);
+	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %ld\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", EXT_GLOBAL (get_servlet_context) (), size+1, getSessionFactory(env), mode);
 
 	send((*env)->peer, header, header_length, 0);
   }
@@ -83,22 +80,20 @@ void EXT_GLOBAL (protocol_end) (proxyenv *env) {
 	int header_length;
 	unsigned char mode = EXT_GLOBAL (get_mode) ();
 
-	if((*env)->cookie_name) 
-	  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nCookie: %s=%s\r\nContent-Type: text/html\r\nContent-Length: 0\r\n\r\n", EXT_GLOBAL (get_servlet_context) (), (*env)->cookie_name, (*env)->cookie_value);
-	else
-	  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nContent-Type: text/html\r\nContent-Length: 0\r\n\r\n", EXT_GLOBAL (get_servlet_context) ());
+	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nContent-Type: text/html\r\nContent-Length: 0\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n", EXT_GLOBAL (get_servlet_context) (),getSessionFactory(env));
 
 	send((*env)->peer, header, header_length, 0);
   }
 }
 
 void EXT_GLOBAL (send_context)(proxyenv *env) {
-	size_t l = strlen((*env)->servlet_redirect);
-	char context[1024] = { 077, (l&0xFF000000)>>24, (l&0xFF0000)>>16, (l&0xFF00)>>8, l&0xFF};
-	int context_length = 5;
+	size_t l = strlen((*env)->servlet_ctx);
+	char context[1024] = { 077, l&0xFF};
+	int context_length = 2;
 	
+	assert(l<256);
 	context_length += EXT_GLOBAL(snprintf) (context+context_length, sizeof(context)-context_length, "%s", 
-										   (*env)->servlet_redirect);
+										   (*env)->servlet_ctx);
 
 	send((*env)->peer, context, context_length, 0);
 }
@@ -264,6 +259,16 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
 	 (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len),flen, "<O v=\"%ld\"/>", object);
    assert((*env)->send_len<=(*env)->send_size);
  }
+ static void Exception(proxyenv *env, long object, char *str, size_t len) {
+   size_t flen;
+   if(!len) len=strlen(str);
+   GROW(FLEN+ILEN+len);
+   if(!object) 
+	 (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<E v=\"\" m=\"%s\"/>", str);
+   else
+	 (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len),flen, "<E v=\"%ld\" m=\"%s\"/>", object, str);
+   assert((*env)->send_len<=(*env)->send_size);
+ }
  static void CompositeBegin_a(proxyenv *env) {
    size_t flen;
    GROW(FLEN);
@@ -284,6 +289,7 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
  }
  static void PairBegin_s(proxyenv *env, char*key, size_t len) {
    size_t flen;
+   assert(strlen(key));
    if(!len) len=strlen(key);
    GROW(FLEN+len);
    (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<P t=\"S\" v=\"%s\">", key);
@@ -342,7 +348,7 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
 
    (*env)->server_name = server_name;
    (*env)->must_reopen = 0;
-   (*env)->cookie_name = (*env)->cookie_value = (*env)->servlet_redirect = 0;
+   (*env)->servlet_ctx = 0;
 
    (*env)->writeInvokeBegin=InvokeBegin;
    (*env)->writeInvokeEnd=InvokeEnd;
@@ -359,6 +365,7 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    (*env)->writeLong=Long;
    (*env)->writeDouble=Double;
    (*env)->writeObject=Object;
+   (*env)->writeException=Exception;
    (*env)->writeCompositeBegin_a=CompositeBegin_a;
    (*env)->writeCompositeBegin_h=CompositeBegin_h;
    (*env)->writeCompositeEnd=CompositeEnd;

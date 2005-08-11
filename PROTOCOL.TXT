@@ -1,4 +1,4 @@
-PHP/Java Bridge protocol version 1.1
+PHP/Java Bridge protocol version 1.2
 
 Requests are marked with "->", responses with "<-".  The server
 continues to process requests until EOF. Only the first character is
@@ -114,9 +114,9 @@ Result:
 </R>
 i: long
 
-<-
+<->
 Exception:
-<E v=object m=stringRepresentation i=ID />
+<E v=object m=stringRepresentation [i=ID] />
 v: long
 m: string
 i: long

@@ -58,9 +58,9 @@ public class MethodCache {
     public Entry getEntry (String name, Class clazz, Object args[]){
     	Class params[] = new Class[args.length];
     	for (int i=0; i<args.length; i++) {
-    		Class c = args[i] == null ? null : args[i].getClass();
-    		if(c == Request.PhpArray.class) return noCache;
-    		params[i] = c;
+	    Class c = args[i] == null ? null : args[i].getClass();
+	    if(c == Request.PhpArray.class) return noCache;
+	    params[i] = c;
     	}
 	return new Entry(name, clazz, params);
     }

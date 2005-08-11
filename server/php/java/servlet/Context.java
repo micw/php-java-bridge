@@ -54,17 +54,10 @@ class Context extends JavaBridge.SessionFactory {
     }
     public ISession getSession(String name, boolean clientIsNew, int timeout) {
     	if(sessionPromise==null) throw new NullPointerException("This context doesn't have a session proxy.");
-	HttpSessionFacade proxy = new HttpSessionFacade(sessionPromise, timeout);
-	return proxy;
+	return new HttpSessionFacade(sessionPromise, timeout);
     }
     public static Context addNew(HttpServletRequest req) {
      	Context ctx = new Context(req);
-    	Object old = contexts.put(ctx.getId(), ctx);
-    	if(old!=null) if(Util.logLevel>2) Util.logError("Removed stale context: " +old);
-    	return ctx;
-    }
-    public static Context addNew() {
-     	Context ctx = new Context();
     	Object old = contexts.put(ctx.getId(), ctx);
     	if(old!=null) if(Util.logLevel>2) Util.logError("Removed stale context: " +old);
     	return ctx;
@@ -73,10 +66,17 @@ class Context extends JavaBridge.SessionFactory {
     	return (Context)contexts.get(id);
     }
     
-    public void remove() {
+    private boolean removed=false;
+    public synchronized void remove() {
 	contexts.remove(getId());
+	removed=true;
+	bridge=null;
+	sessionPromise=null;
+	notify();
     }
-
+    public synchronized void waitFor() throws InterruptedException {
+    	if(!removed) wait();
+    }
     public String getId() { 
 	return id; 
     }

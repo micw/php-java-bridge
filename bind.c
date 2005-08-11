@@ -42,6 +42,7 @@
 
 const static char inet_socket_prefix[]="INET_LOCAL:";
 const static char local_socket_prefix[]="LOCAL:";
+const static char ext_dir[] = "extension_dir";
 
 #if EXTENSION == JAVA
 static const char* const wrapper = EXTENSION_DIR/**/"/RunJavaBridge";
@@ -53,6 +54,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   char*lib_path=EXT_GLOBAL(cfg)->ld_library_path;
   char*sys_libpath=getenv("LD_LIBRARY_PATH");
   char*home=EXT_GLOBAL(cfg)->vm_home;
+  char *ext = php_ini_string((char*)ext_dir, sizeof ext_dir, 0);
 #ifdef CFG_JAVA_SOCKET_INET
   const char* s_prefix = inet_socket_prefix;
 #else
@@ -71,6 +73,12 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   sockname = malloc(strlen(s_prefix)+strlen(cfg_sockname)+1);
   strcpy(sockname, s_prefix);
   strcat(sockname, cfg_sockname);
+
+								/* library path usually points to the
+								   extension dir */
+  if(!(EXT_GLOBAL(option_set_by_user) (U_LIBRARY_PATH))) {	/* look into extension_dir then */
+	if(ext) lib_path = ext;
+  }
   
   if(!sys_libpath) sys_libpath="";
   args[0]=strdup(program);
@@ -79,8 +87,16 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   strcpy(p, s); strcat(p, lib_path);
   args[1] = p;					/* library path */
   s="-Djava.class.path=";
-  p=malloc(strlen(s)+strlen(cp)+1);
-  strcpy(p, s); strcat(p, cp);
+								/* library path usually points to the
+								   extension dir */
+  if(ext && !(EXT_GLOBAL(option_set_by_user) (U_CLASSPATH))) {	/* look into extension_dir then */
+	static char bridge[]="/JavaBridge.jar";
+	p=malloc(strlen(s)+strlen(ext)+sizeof(bridge));
+	strcpy(p, s); strcat(p, ext); strcat(p, bridge);
+  } else {
+	p=malloc(strlen(s)+strlen(cp)+1);
+	strcpy(p, s); strcat(p, cp);
+  }
   args[2] = p;					/* user classes */
   args[3] = strdup("-Djava.awt.headless=true");
   /* disabled due to problems with IBM java, it could not find
@@ -111,8 +127,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
 #elif EXTENSION == MONO
 static const char* const wrapper = EXTENSION_DIR/**/"/RunMonoBridge";
 static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], short for_display) {
-  const char executable[] = "/MonoBridge.exe";
-  const char ext_dir[] = "extension_dir";
+  static const char executable[] = "/MonoBridge.exe";
   char *p;
   char*program=EXT_GLOBAL(cfg)->vm;
 #ifdef CFG_JAVA_SOCKET_INET
@@ -132,6 +147,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   args[1] = p;
   /* if socketname is off, show the user how to start a TCP backend */
   if(for_display && !(EXT_GLOBAL(option_set_by_user) (U_SOCKNAME))) {
+	static const char zero[] = "0";
 	cfg_sockname="0";
 	s_prefix=inet_socket_prefix;
 	cfg_logFile="";
@@ -169,7 +185,12 @@ static short use_wrapper() {
 /*
  * Get a string of the server arguments. Useful for display only.
  */
-char*EXT_GLOBAL(get_server_string)() {
+char*get_server_string(short for_display) {
+#ifndef __MINGW32__
+  static const char quote[] = "'";
+#else
+  static const char quote[] = "\"";
+#endif
   short must_use_wrapper = use_wrapper();
   int i;
   char*s;
@@ -177,14 +198,15 @@ char*EXT_GLOBAL(get_server_string)() {
   char*args[N_SARGS];
   unsigned int length = 0;
 
-  EXT_GLOBAL(get_server_args)(env, args, 1);
+  EXT_GLOBAL(get_server_args)(env, args, for_display);
   if(must_use_wrapper)
 	length+=strlen(wrapper)+1;
-
+#ifndef __MINGW32__
   for(i=0; i< (sizeof env)/(sizeof*env); i++) {
 	if(!env[i]) break;
 	length+=strlen(env[i])+1;
   }
+#endif
   for(i=0; i< (sizeof args)/(sizeof*args); i++) {
 	size_t l;
 	if(!args[i]) break;
@@ -195,25 +217,30 @@ char*EXT_GLOBAL(get_server_string)() {
   assert(s); if(!s) exit(9);
 
   *s=0;
+#ifndef __MINGW32__
   for(i=0; i< (sizeof env)/(sizeof*env); i++) {
 	if(!env[i]) break;
 	strcat(s, env[i]); strcat(s, " ");
 	free(env[i]);
   }
+#endif
   if(must_use_wrapper) {
 	strcat(s, wrapper);
 	strcat(s, " ");
   }
   for(i=0; i< (sizeof args)/(sizeof*args); i++) {
 	if(!args[i]) break;
-	if(!strlen(args[i])) strcat(s,"'");
+	if(!strlen(args[i])) strcat(s,quote);
 	strcat(s, args[i]);
-	if(!strlen(args[i])) strcat(s,"'");
+	if(!strlen(args[i])) strcat(s,quote);
 	strcat(s, " ");
 	free(args[i]);
   }
   s[length]=0;
   return s;
+}
+char*EXT_GLOBAL(get_server_string)() {
+  get_server_string(1);
 }
 
 static void exec_vm() {
@@ -349,9 +376,9 @@ char* EXT_GLOBAL(test_server)(int *_socket, short *local) {
 }
 
 static int wait_server() {
+  int count=15, sock;
 #ifndef __MINGW32__
   struct pollfd pollfd[1] = {{EXT_GLOBAL(cfg)->err, POLLIN, 0}};
-  int count=15, sock;
   
   /* wait for the server that has just started */
   while(EXT_GLOBAL(cfg)->cid && -1==(sock=test_local_server()) && --count) {
@@ -361,21 +388,30 @@ static int wait_server() {
 	
 	sleep(1);
   }
+#else
+
+  while(EXT_GLOBAL(cfg)->cid && -1==(sock=test_local_server()) && --count) {
+	php_error(E_NOTICE, "php_mod_"/**/EXT_NAME()/**/"(%d): waiting for server another %d seconds",57, count);
+	Sleep(1000);
+  }
+#endif
   close(sock);
   return (EXT_GLOBAL(cfg)->cid && count)?SUCCESS:FAILURE;
-#else
-  return SUCCESS;
-#endif
 }
 
 
 /* handle keyboard interrupt */
+#ifndef __MINGW32__
 static int s_pid=0;
 static void s_kill(int sig) {
-#ifndef __MINGW32__
   if(s_pid) kill(s_pid, SIGTERM);
-#endif
 }
+#else
+static PROCESS_INFORMATION s_pid;
+static void s_kill(int sig) {
+  if(s_pid.hProcess) TerminateProcess(s_pid.hProcess, 1);
+}
+#endif
 
 void EXT_GLOBAL(start_server)() {
   int pid=0, err=0, p[2];
@@ -410,12 +446,27 @@ void EXT_GLOBAL(start_server)() {
 	EXT_GLOBAL(cfg)->cid=pid;
 	EXT_GLOBAL(cfg)->err=p[0];
 	wait_server();
-  } else
+  } else 
+#else
+	if(can_fork() && !(test_server=EXT_GLOBAL(test_server)(0, 0))) {
+	  char *cmd = get_server_string(0);
+	  DWORD properties = CREATE_NEW_CONSOLE;
+	  STARTUPINFO su_info;
+	  PROCESS_INFORMATION p_info;
+
+	  ZeroMemory(&su_info, sizeof(STARTUPINFO));
+	  su_info.cb = sizeof(STARTUPINFO);
+	  EXT_GLOBAL(cfg)->cid=0;
+	  if(CreateProcess( NULL, cmd, NULL, NULL, 1, properties, NULL, NULL, &su_info, &s_pid)) {
+		EXT_GLOBAL(cfg)->cid=s_pid.dwProcessId;
+	  }
+	  wait_server();
+	} else
 #endif /* MINGW32 */
-	{
-	  EXT_GLOBAL(cfg)->cid=EXT_GLOBAL(cfg)->err=0;
-	  free(test_server);
-	}
+	  {
+		EXT_GLOBAL(cfg)->cid=EXT_GLOBAL(cfg)->err=0;
+	  }
+  if(test_server) free(test_server);
 }
 
 static void wait_for_daemon() {
@@ -445,6 +496,9 @@ static void wait_for_daemon() {
 	close(EXT_GLOBAL(cfg)->err);
 	EXT_GLOBAL(cfg)->err=0;
   }
+#else
+  s_kill(0);
+  Sleep(1000);
 #endif
 }
 

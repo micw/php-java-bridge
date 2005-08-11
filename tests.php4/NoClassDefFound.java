@@ -7,6 +7,9 @@ public class NoClassDefFound {
 	o = new DoesNotExist();
     }
 
+    public static Object call(DoesNotExist e) {
+	return e;
+    }
 
     public String toString() {
 	return String.valueOf(o);

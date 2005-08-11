@@ -40,7 +40,7 @@ If the above test succeeded, install the php.ini, the mono.so
   uses the log level supplied when it was started.  For example the
   following command starts the backend with debug output enabled:
 
-    mono MonoBridge.exe 4 MonoBridge.log
+    mono MonoBridge.exe INET:0 4 MonoBridge.log
 
  * Please report bugs/problems to the mailing list:
 
