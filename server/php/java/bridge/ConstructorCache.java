@@ -2,6 +2,7 @@
 
 package php.java.bridge;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 
@@ -10,19 +11,17 @@ import java.util.HashMap;
  * synchronization, so use this class per thread or per request
  * only.
  */
-public class MethodCache {
+public class ConstructorCache {
     HashMap map = new HashMap();
     static final Entry noCache = new Entry();
 	
     public static class Entry {
 	String symbol;
-	Class clazz;
 	Class params[];
 		
 	public Entry () {}
-	public Entry (String name, Class clazz, Class params[]) {
+	public Entry (String name, Class params[]) {
 	    this.symbol = name.intern();
-	    this.clazz = clazz;
 	    this.params = params;
 	}
 	private boolean hasResult = false;
@@ -32,14 +31,12 @@ public class MethodCache {
 	    for(int i=0; i<params.length; i++) {
 		result = result * 31 + (params[i] == null ? 0 : params[i].hashCode());
 	    }
-	    result = result * 31 + clazz.hashCode();
 	    result = result * 31 + symbol.hashCode();
 	    hasResult = true;
 	    return result;
 	}
 	public boolean equals(Object o) {
 	    Entry that = (Entry) o;
-	    if(clazz != that.clazz) return false;
 	    if(symbol != that.symbol) return false;
 	    if(params.length != that.params.length) return false;
 	    for(int i=0; i<params.length; i++) {
@@ -49,21 +46,21 @@ public class MethodCache {
 	}
     }
 	
-    public Method get(Entry entry) {
+    public Constructor get(Entry entry) {
     	if(entry==noCache) return null;
-	return (Method)map.get(entry);
+	return (Constructor)map.get(entry);
     }
-    public void put(Entry entry, Method method) {
+    public void put(Entry entry, Constructor method) {
     	if(entry!=noCache) map.put(entry, method);
     }
-    public Entry getEntry (String name, Class clazz, Object args[]){
+    public Entry getEntry (String name, Object args[]){
     	Class params[] = new Class[args.length];
     	for (int i=0; i<args.length; i++) {
 	    Class c = args[i] == null ? null : args[i].getClass();
 	    if(c == Request.PhpArray.class) return noCache;
 	    params[i] = c;
     	}
-	return new Entry(name, clazz, params);
+	return new Entry(name, params);
     }
     
 }

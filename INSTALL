@@ -34,19 +34,6 @@ Then install your your java libraries (.jar files) in /usr/share/java
 or in java.libpath/lib (see output of phpinfo) and your php and
 web-pages in /var/www/html or one of their sub-directories.
 
-Individual classes (.class files) cannot be loaded, please create a
-.jar archive, for example with the command: 
-
-   jar cvf myLibrary-<version>.jar *.class 
-
-and copy the library to /usr/share/java or one of its sub-directories
-(if it is of general interest) or to java.libpath/lib, see output of
-phpinfo.php above or one of its sub-directories (if it should be
-visible to the PHP/Java Bridge only).  At run-time your library can be
-referenced with the command:
-
-   java_set_library_path("myLibrary-<version>.jar");
-
 Please see the README and ABOUT.HTM for details.
 --------------------------------------------------
 --------------------------------------------------
@@ -122,7 +109,10 @@ cd php-java-bridge-p.x.y
 export PATH=$INST/bin:$PATH 
 export LD_LIBRARY_PATH=$INST/lib:$LD_LIBRARY_PATH
 phpize
-./configure --with-java=/opt/IBMJava2-141
+# If you don't have a servlet engine use:
+./configure --with-java=/opt/IBMJava2-141 --disable-servlet
+# If you have a servlet engine, locate j2ee.jar and use:
+#./configure --with-java=/opt/IBMJava2-141 --enable-servlet=/path/to/j2ee.jar
 make && su -c "make install"
 # now activate the bridge in php.ini
 su -c "touch $INST/lib/php.ini && echo -e 'extension=java.so\n[java]' >>$INST/lib/php.ini"
@@ -138,4 +128,44 @@ echo '<?php phpinfo() ?>' | php | fgrep java
 # checking web, should return "java running"
 wget -olog -O-  http://localhost/phpinfo.php|fgrep java
 
+
 
+Installation of Tomcat/mod jk
+-----------------------------
+
+Optionally you can install the tomcat servlet engine to serve .jsp
+files:
+
+Download and extract tomcat into a directory, for example /opt/tomcat5
+
+Download and install mod jk, for example
+jakarta-tomcat-connectors-1.2.14.1-src.tar.gz, extract the file into a
+folder and type the following commands:
+
+cd jakarta-tomcat-connectors-1.2.14.1-src/jk/native/
+./configure --with-apxs=$INST/bin/apxs && make && su -c "make install"
+
+# now activate mod_jk in the httpd.conf, mount the tomcat webapps
+# directory and ask tomcat to handle all .jsp files
+su -c "echo -e 'LoadModule jk_module modules/mod_jk.so\nJkAutoAlias /opt/tomcat5/webapps\nJkMount /*.jsp ajp13' >>$INST/conf/httpd.conf"
+
+Start tomcat, for example with the command /opt/tomcat5/catalina.sh
+
+Copy the JavaBridge.war file (which you should have created when
+compiling the PHP/Java Bridge, see flag "--enable-servlet" above) from
+the modules directory into the tomcat webapps directory, for example
+with the command:
+
+cp modules/JavaBridge.war /opt/tomcat5/webapps
+
+Check if tomcat has created the /opt/tomcat5/webapps/JavaBridge
+directory, if not, please check the tomcat logs for errors.
+
+Direct php to tomcat:
+su -c "echo -e 'extension=java.so\n[java]\njava.servlet=On\njava.hosts=127.0.0.1:8080' >$INST/lib/php.ini"
+
+Start or re-start apache, for example with:
+apachectl restart
+
+
+Visit http://localhost/JavaBridge and run the supplied examples.

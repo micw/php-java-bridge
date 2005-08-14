@@ -71,9 +71,6 @@ static  void  setResultFromException  (pval *presult, long value) {
   Z_LVAL_P(handle) = value;
   pval_copy_constructor(handle);
   INIT_PZVAL(handle);
-#ifndef ZEND_ENGINE_2
-  zval_add_ref(&handle); // FIXME, this should be unnecessary
-#endif
   zend_hash_index_update(Z_OBJPROP_P(presult), 0, &handle, sizeof(pval *), NULL);
 }
 #endif
@@ -94,9 +91,6 @@ static  void  setResultFromObject  (pval *presult, long value) {
   Z_LVAL_P(handle) = value;
   pval_copy_constructor(handle);
   INIT_PZVAL(handle);
-#ifndef ZEND_ENGINE_2
-  zval_add_ref(&handle); // FIXME, this should be unnecessary
-#endif
   zend_hash_index_update(Z_OBJPROP_P(presult), 0, &handle, sizeof(pval *), NULL);
 
 }
@@ -203,34 +197,26 @@ static  void  setResultFromArray  (pval *presult) {
 
 static  pval*nextElement  (pval *handle) {
   pval *result;
-  zval_add_ref(&handle);
-  ALLOC_ZVAL(result);
+  MAKE_STD_ZVAL(result);
   ZVAL_NULL(result);
-  zval_add_ref(&result);
   zend_hash_next_index_insert(Z_ARRVAL_P(handle), &result, sizeof(zval *), NULL);
   return result;
 }
 
 static  pval*hashIndexUpdate  (pval *handle, long key) {
   pval *result;
-  zval_add_ref(&handle);
-  ALLOC_ZVAL(result);
+  MAKE_STD_ZVAL(result);
   ZVAL_NULL(result);
-  zval_add_ref(&result);
   zend_hash_index_update(Z_ARRVAL_P(handle), (unsigned long)key, &result, sizeof(zval *), NULL);
   return result;
 }
 
 static pval*hashUpdate  (pval *handle, unsigned char *key, size_t len) {
   pval *result;
-  pval pkey;
-  zval_add_ref(&handle);
-  ALLOC_ZVAL(result);
+  MAKE_STD_ZVAL(result);
   ZVAL_NULL(result);
-  setResultFromString(&pkey, key, len);
   assert(key);
-  zval_add_ref(&result);
-  zend_hash_update(Z_ARRVAL_P(handle), Z_STRVAL(pkey), Z_STRLEN(pkey)+1, &result, sizeof(zval *), NULL);
+  zend_hash_update(Z_ARRVAL_P(handle), key, len+1, &result, sizeof(zval *), NULL);
   return result;
 }
 
@@ -425,6 +411,7 @@ static void handle_request(proxyenv *env) {
 	setResultFromApply(stack_elem->retval, stack_elem->p, stack_elem->p_length, stack_elem->m, stack_elem->m_length, (zval*)stack_elem->v, stack_elem->container);
 	free(stack_elem->m);
 	free(stack_elem->p);
+	zval_ptr_dtor(&stack_elem->container);
 	err=zend_stack_del_top(&ctx.containers);
 	assert(SUCCESS==err);
 	tail_call = 1;

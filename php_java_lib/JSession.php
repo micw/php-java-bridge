@@ -32,15 +32,15 @@ class JSessionProxy {
     return $this->java;
   }
   function __destruct() { 
-    return $this->java->__destruct(); 
+    if($this->java) return $this->java->__destruct(); 
   }
 }
 
 class JSessionAdapter extends JSessionProxy {
-  function __get($arg)       { return $this->java->__get($arg); }
-  function __put($key, $val) { return $this->java->__put($key, $val); }
-  function __call($m, $a)    { return $this->java->__call($m,$a); }
-  function __toString()      { return $this->java->__toString(); }
+  function __get($arg)       { if($this->java) return $this->java->__get($arg); }
+  function __put($key, $val) { if($this->java) return $this->java->__put($key, $val); }
+  function __call($m, $a)    { if($this->java) return $this->java->__call($m,$a); }
+  function __toString()      { if($this->java) return $this->java->__toString(); }
 }
 
 ?>

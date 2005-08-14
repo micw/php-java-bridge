@@ -226,15 +226,55 @@ Build and execution instructions:
   The PHP/Java Bridge log output appears in the server log file, for
   example in $CATALINA_HOME/logs/localhost_log.*.txt  
 
+------------------------------------
+  Sample settings for Apache/Tomcat
+  ---------------------------------
+
+  The recommended way to run jsp and php is to install Apache, PHP,
+  the PHP/Java Bridge, Tomcat and mod_jk.
+
+  Assuming that tomcat is installed in /opt/tomcat5, JavaBridge.war is
+  deployed in /opt/tomcat5/webapps, java.so (or php_java.dll) is
+  installed in the php modules directory, mod_jk and php5 are installed
+  in the apache modules directory, we recommend following settings:
+
+
+  The following setting in httpd.conf directs all .jsp requests to the
+  tomcat servlet engine:
+
+    httpd.conf:
+    ----------
+    LoadModule php5_module        modules/libphp5.so
+    LoadModule jk_module          modules/mod_jk.so
+
+    AddType application/x-httpd-php .php
+    JkAutoAlias /opt/tomcat5/webapps
+    JkMount /*.jsp ajp13
+
+
+  The following setting in php.ini directs all Java() ... calls to the
+  tomcat servlet engine:
+
+    php.ini:
+    --------
+    extension = java.so
+    ;; on windows: extension = php_java.dll
+    [java]
+    java.hosts     = "127.0.0.1:8080"
+    java.servlet   = On
+
 ---------------------------------------------
-  Running JSP and PHP side by side
-  --------------------------------
+  AS or Tomcat w/o Apache
+  -----------------------
+
+  Read the following instructions only if you don't want to use
+  Apache.
 
   It is possible to run PHP inside java. Unlike the JSR223 sample
   implementation, which uses the JNI interface to load/call the native
-  php5 shared library[1], we use the CGI interface to call the PHP
+  php5 shared library, we use the CGI interface to call the PHP
   binary and use a local channel to connect the two components. This is
-  not much slower[2] but more reliable. In case a PHP instance crashes,
+  not much slower[1] but more reliable. In case a PHP instance crashes,
   it will not take down the whole servlet engine or application server.
   
   Please follow the AS or Tomcat installation instructions above, then
@@ -267,21 +307,13 @@ Build and execution instructions:
     };
 
 
-  It should be noted that running PHP as an apache plugin is more
-  efficient than calling a CGI binary from tomcat. Please use the tomcat
-  mod_jk adapter to connect tomcat with apache. That way PHP is managed
-  by the apache pool, JSP files are forwarded via the mod_jk adapter and
-  PHP/Java calls via the PHP/Java bridge.
+  Running PHP as an apache plugin is more efficient than calling a CGI
+  binary from tomcat. Please use the tomcat mod_jk adapter to connect
+  tomcat with apache. That way PHP is managed by the apache pool, JSP
+  files are forwarded via the mod_jk adapter and PHP/Java calls via the
+  PHP/Java bridge.
 
-[1] Loading the php5 shared library from a class within the web
-application doesn't work in tomcat5, because tomcat may load the web
-application more than once. From the tomcat5 release notes: "To avoid
-this problem, place classes that load native libraries outside of the
-web application, and ensure that the loadLibrary() call is executed
-only once during the lifetime of a particular JVM". This may explain
-jsr223's memory leaks when running on tomcat5.
-
-[2] total execution time for 10 queries for examples/bench/bench.php,
+[1] total execution time for 10 queries for examples/bench/bench.php,
  RHEL3 (AMD32, 1500mhz) 
  Tomcat 4.0 
  PHP 5.0.1 (from the jsr sample)
@@ -290,7 +322,6 @@ jsr223's memory leaks when running on tomcat5.
 
 jsr223: 2m58.769s 
 bridge: 2m59.343s
-
 ------------------------------------
   64 Bit issues
   -------------

@@ -365,12 +365,12 @@ EXT_FUNCTION(EXT_GLOBAL(exception_handler))
 /**
  * Exception handler for php4
  */
-static void check_php4_exception() {
+static void check_php4_exception(TSRMLS_D) {
 #ifndef ZEND_ENGINE_2
   last_exception_get(JG(jenv), &JG(exception));
 #endif
 }
-static int allocate_php4_exception() {
+static int allocate_php4_exception(TSRMLS_D) {
 #ifndef ZEND_ENGINE_2
   MAKE_STD_ZVAL(JG(exception));
   ZVAL_NULL(JG(exception));
@@ -380,13 +380,13 @@ static int allocate_php4_exception() {
   return 1;
 }
 static void call_with_handler(char*handler, const char*name TSRMLS_DC) {
-	if(allocate_php4_exception())
+	if(allocate_php4_exception(TSRMLS_C))
 	  if(zend_eval_string((char*)handler, *JG(retval_ptr), (char*)name TSRMLS_CC)!=SUCCESS) { 
 		php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not call user function: %s.", 22, Z_STRVAL_P(JG(func)));
 	  }
 }
 static void call_with_params(int count, zval ***func_params TSRMLS_DC) {
-  if(allocate_php4_exception())	/* checked and destroyed in client. handle_exception() */
+  if(allocate_php4_exception(TSRMLS_C))	/* checked and destroyed in client. handle_exception() */
 	if (call_user_function_ex(0, JG(object), JG(func), JG(retval_ptr), count, func_params, 0, NULL TSRMLS_CC) != SUCCESS) {
 	  php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not call user function: %s.", 23, Z_STRVAL_P(JG(func)));
 	}
@@ -414,7 +414,7 @@ EXT_FUNCTION(EXT_GLOBAL(call_with_exception_handler))
 
 	MAKE_STD_ZVAL(*JG(retval_ptr)); ZVAL_NULL(*JG(retval_ptr)); 
 	call_with_handler(handler, name TSRMLS_CC);
-	check_php4_exception();
+	check_php4_exception(TSRMLS_C);
 	efree(handler);
 	RETURN_NULL();
   }
@@ -431,7 +431,7 @@ EXT_FUNCTION(EXT_GLOBAL(call_with_exception_handler))
   }
 
   call_with_params(count, func_params TSRMLS_CC);
-  check_php4_exception();
+  check_php4_exception(TSRMLS_C);
   efree(func_params);
   RETURN_NULL();
 }
@@ -639,6 +639,24 @@ EXT_METHOD(EXT, EXT)
 	efree(argv);
 }
 
+EXT_METHOD(EXT, EXT_GLOBAL(class))
+{
+	zval **argv;
+	int argc = ZEND_NUM_ARGS();
+
+	argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
+	if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
+		php_error(E_ERROR, "Couldn't fetch arguments into array.");
+		RETURN_NULL();
+	}
+
+	EXT_GLOBAL(call_function_handler)(INTERNAL_FUNCTION_PARAM_PASSTHRU,
+								   EXT_NAME(), CONSTRUCTOR, 0, 
+								   getThis(),
+								   argc, argv);
+	efree(argv);
+}
+
 EXT_METHOD(EXT, __call)
 {
 	zval **xargv, **argv;
@@ -708,23 +726,15 @@ EXT_METHOD(EXT, __set)
 }
 EXT_METHOD(EXT, __destruct)
 {
-  zval **argv;
   int argc = ZEND_NUM_ARGS();
   long obj;
 
-  argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
-  if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
-	php_error(E_ERROR, "Couldn't fetch arguments into array.");
-	RETURN_FALSE;
-  }
-  
   EXT_GLOBAL(get_jobject_from_object)(getThis(), &obj TSRMLS_CC);
   if(!obj) RETURN_TRUE;			/* may happen when vm is not initalized */
 
   if(JG(jenv))
 	(*JG(jenv))->writeUnref(JG(jenv), obj);
 
-  efree(argv);
   RETURN_TRUE;
 }
 EXT_METHOD(EXT, __get)
@@ -858,9 +868,11 @@ ZEND_END_ARG_INFO();
 
 function_entry EXT_GLOBAL(class_functions)[] = {
   EXT_ME(EXT, EXT, NULL, 0)
-  EXT_MALIAS(EXT, EXT_GLOBAL_N(class), EXT, NULL, 0)
-  EXT_MALIAS(EXT, EXT_GLOBAL(class), EXT, NULL, 0)
-  EXT_MALIAS(EXT, __construct, EXT, arginfo_set, ZEND_ACC_PUBLIC)
+  EXT_MALIAS(EXT, EXT_GLOBAL_N(exception), EXT, NULL, 0)
+  EXT_MALIAS(EXT, EXT_GLOBAL(exception), EXT, NULL, 0)
+  EXT_ME(EXT, EXT_GLOBAL(class), NULL, 0)
+  EXT_MALIAS(EXT, EXT_GLOBAL_N(class), EXT_GLOBAL(class), NULL, 0)
+  //EXT_MALIAS(EXT, __construct, EXT, arginfo_set, ZEND_ACC_PUBLIC)
   EXT_ME(EXT, __call, arginfo_set, ZEND_ACC_PUBLIC)
   EXT_ME(EXT, __tostring, arginfo_zero, ZEND_ACC_PUBLIC)
   EXT_ME(EXT, __get, arginfo_get, ZEND_ACC_PUBLIC)

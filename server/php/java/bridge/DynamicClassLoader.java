@@ -271,8 +271,8 @@ public class DynamicClassLoader extends SecureClassLoader {
 
   private URLClassLoaderFactory factory = new URLClassLoaderFactory();
   protected static class URLClassLoaderFactory {
-      public URLClassLoader createUrlClassLoader(String classPath, URL urls[]) {
-          return new URLClassLoader(urls);
+      public URLClassLoader createUrlClassLoader(String classPath, URL urls[], ClassLoader parent) {
+          return new URLClassLoader(urls, parent);
       }
   }
   public void setUrlClassLoaderFactory(URLClassLoaderFactory factory) {
@@ -280,7 +280,7 @@ public class DynamicClassLoader extends SecureClassLoader {
   }
   protected URLClassLoaderEntry createURLClassLoader(String classPath, URL urls[]) {
     //Util.logDebug("DynamicClassLoader("+System.identityHashCode(this)+").createURLClassLoader(\""+classPath+"\","+getStringFromURLArray(urls)+")\n");
-    URLClassLoader cl = factory.createUrlClassLoader(classPath, urls);
+    URLClassLoader cl = factory.createUrlClassLoader(classPath, urls, this.getParent());
     URLClassLoaderEntry entry = new URLClassLoaderEntry(cl, System.currentTimeMillis());
     SoftReference cacheEntry = new SoftReference(entry);
     classLoaderCache.put(classPath, cacheEntry);

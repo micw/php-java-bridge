@@ -114,6 +114,11 @@ public class Util {
     public static void logMessage(String msg) {
 	if(logLevel>2) println(3, msg);
     }
+    public static String getClassName(Object obj) {
+    	Class c = getClass(obj);
+    	if(c!=null) return c.getName();
+    	return "null";
+    }
     //
     public static Class getClass(Object obj) {
 	if(obj==null) return null;
@@ -122,21 +127,14 @@ public class Util {
     public static void appendObject(Object obj, StringBuffer buf) {
     	if(obj instanceof Class) {
 	    if(((Class)obj).isInterface()) 
-		buf.append("INTERFACE:");
+		buf.append("i:");
 	    else
-		buf.append("CLASS:");
-	    buf.append(obj==null?"null":Util.getClass(obj).getName());
+		buf.append("c:");
+	    buf.append(getClassName((obj)));
     	} else {
-	    buf.append("INSTANCE:");
-	    buf.append(getClass(obj).getName());
-	    buf.append(":");
-	    String s = String.valueOf(obj);
-	    int l, l1;
-	    l = l1 = s.length();
-	    if(l>20) l=20;
-	    s=s.substring(0, l);
-	    buf.append(s);
-	    if(l1!=l) buf.append("[...]");
+	    buf.append("o:\"");
+	    buf.append(String.valueOf(obj));
+	    buf.append("\"");
 	}
     }
     public static void appendParam(Object obj, StringBuffer buf) {

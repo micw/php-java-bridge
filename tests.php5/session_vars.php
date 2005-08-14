@@ -16,13 +16,18 @@ include("../php_java_lib/JSession.php");
 
 $ser="vector.ser";
 
+// load the session from the disc
 if(file_exists($ser)) {
   $file=fopen($ser,"r");
   $id=fgets($file);
   fclose($file);
   $v=unserialize($id);
-  echo $v;
-} else {
+  if(!$v->getJava())  $v=null; // because java backend was restarted
+}
+
+// either a new session or previous session destroyed
+if(!$v) {
+  echo "creating new session\n";
   $v=new JSessionAdapter(new java("java.util.Vector", array(1, true, -1.345e99, "hello", new java("java.lang.Object"))));
   $v->addElement($v->getJava());
   $id=serialize($v);
@@ -30,5 +35,7 @@ if(file_exists($ser)) {
   fwrite($file, $id);
   fclose($file);
 }
+
+echo $v;
 ?>
 

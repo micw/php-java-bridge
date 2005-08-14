@@ -8,11 +8,7 @@ if (!extension_loaded('java')) {
   }
 }
 
-$j_tfClass = new java_class("javax.xml.transform.TransformerFactory");
-$j_tf = $j_tfClass->newInstance();
-
 // create a svg picture with an ellipse in it
-// and print it out
 $FactoryClass = new JavaClass("javax.xml.parsers.DocumentBuilderFactory");
 $factory = $FactoryClass->newInstance();
 
@@ -37,14 +33,13 @@ $transFactory = $TransformerFactory->newInstance();
 $myTransformer = $transFactory->newTransformer();
 $src = new java("javax.xml.transform.dom.DOMSource", $myDocument);
 
-// print the picture to a memory buffer and return the contents of the
-// buffer to the client.
+// print the picture to a memory buffer...
 $memoryStream = new java("java.io.ByteArrayOutputStream");
 $streamResult = new java("javax.xml.transform.stream.StreamResult", $memoryStream);
 $myTransformer->transform($src, $streamResult);
 $data = $memoryStream->toByteArray();
-echo "$data\n";
 
+// ... and write it to the disc
 $fp = fopen("ellipse.svg", "w");
 fwrite($fp, $data);
 fclose($fp);

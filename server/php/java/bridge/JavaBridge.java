@@ -124,6 +124,7 @@ public class JavaBridge implements Runnable {
     }
 
     private MethodCache methodCache = new MethodCache();
+    private ConstructorCache constructorCache = new ConstructorCache();
 
     public static class SessionFactory {
 	/**
@@ -506,15 +507,20 @@ public class JavaBridge implements Runnable {
 	    
 	    Class clazz = cl.forName(name);
 	    if(createInstance) {
-		Constructor cons[] = clazz.getConstructors();
-		for (int i=0; i<cons.length; i++) {
-		    candidates.addElement(cons[i]);
-		    if (cons[i].getParameterTypes().length == args.length) {
-			matches.addElement(cons[i]);
+		ConstructorCache.Entry entry = constructorCache.getEntry(name, args);
+		selected = constructorCache.get(entry);
+		if(selected==null) {
+		    Constructor cons[] = clazz.getConstructors();
+		    for (int i=0; i<cons.length; i++) {
+			candidates.addElement(cons[i]);
+			if (cons[i].getParameterTypes().length == args.length) {
+			    matches.addElement(cons[i]);
+			}
 		    }
+		    
+		    selected = (Constructor)select(matches, args);
+		    if(selected!=null) constructorCache.put(entry, selected);
 		}
-
-		selected = (Constructor)select(matches, args);
 	    }
 
 	    if (selected == null) {
@@ -536,7 +542,7 @@ public class JavaBridge implements Runnable {
 	       ((e instanceof InvocationTargetException) &&
 		((InvocationTargetException)e).getTargetException() instanceof OutOfMemoryError)) {
 		Util.logStream.println("FATAL: OutOfMemoryError");
-		throw new RuntimeException(); // abort
+		throw new OutOfMemoryError(); // abort
 	    }
 	    if(e instanceof NoClassDefFoundError ||
 	       ((e instanceof InvocationTargetException) &&
@@ -614,6 +620,8 @@ public class JavaBridge implements Runnable {
 				}
 			    } else if (elem instanceof Boolean) {
 				if (c!=Boolean.TYPE) weight+=256;
+			    } else if (elem instanceof Character) {
+				    if (c!=Character.TYPE) weight+=256;
 			    } else
 				weight += 256;
 			} else
@@ -641,6 +649,8 @@ public class JavaBridge implements Runnable {
 			}
 		    } else if (arg instanceof Boolean) {
 			if (c!=Boolean.TYPE) weight+=9999;
+		    } else if (arg instanceof Character) {
+			    if (c!=Character.TYPE) weight+=9999;
 		    } else if (arg instanceof String) {
 			if (c== Character.TYPE || ((String)arg).length()>0)
 			    weight+=((String)arg).length();
@@ -1062,7 +1072,7 @@ public class JavaBridge implements Runnable {
 	       ((e instanceof InvocationTargetException) &&
 		((InvocationTargetException)e).getTargetException() instanceof OutOfMemoryError)) {
 		Util.logStream.println("FATAL: OutOfMemoryError");
-		throw new RuntimeException(); // abort
+		throw new OutOfMemoryError(); // abort
 	    }
 	    if(e instanceof NoClassDefFoundError ||
 	       ((e instanceof InvocationTargetException) &&
@@ -1211,7 +1221,7 @@ public class JavaBridge implements Runnable {
 	       ((e instanceof InvocationTargetException) &&
 		((InvocationTargetException)e).getTargetException() instanceof OutOfMemoryError)) {
 		Util.logStream.println("FATAL: OutOfMemoryError");
-		throw new RuntimeException(); // abort
+		throw new OutOfMemoryError(); // abort
 	    }
 	    if(e instanceof NoClassDefFoundError ||
 	       ((e instanceof InvocationTargetException) &&

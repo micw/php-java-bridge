@@ -27,7 +27,8 @@ public class PhpProcedure implements InvocationHandler {
 
     public static Object createProxy(JavaBridge bridge, Map names, Class interfaces[], long object) {
 	PhpProcedure handler = new PhpProcedure(bridge, object, names);
-	Object proxy = Proxy.newProxyInstance(bridge.cl.getClassLoader(), interfaces, handler);
+	ClassLoader loader = interfaces.length>0 ? interfaces[0].getClassLoader():bridge.cl.getClassLoader();   
+	Object proxy = Proxy.newProxyInstance(loader, interfaces, handler);
 	return proxy;
     }
 	
