@@ -619,22 +619,18 @@ bridge: 2m59.343s
   methods which use the file.encoding property, getBytes() for
   example.  If you use:
   
-    $str=new String("Cześć! -- שלום -- Grüß Gott -- Dobrý deň");
+    $str=new Java ("java.lang.String", "Cześć! -- שלום -- Gr");
     echo $str->getBytes();
 
   the output conversion depends on the file.encoding system property
   which in turn depends on the process' LANG environment variable. You
   can check the file.encoding with the test.php script, see above.
 
-  Please see the utf8*.php tests in the tests.php4 folder to see how
-  to use different input and output conversions.
-
-
   To be portable please do not use conversions which depend on the
   JVM's file.encoding. They are easy to avoid, the above example
   should have been written as:
 
-    $str=new String("Cześć! -- שלום -- Grüß Gott -- Dobrý deň");
+    $str=new Java ("java.lang.String", "Cześć! -- שלום -- Gr");
     echo $str;
 
 ------------------------------------

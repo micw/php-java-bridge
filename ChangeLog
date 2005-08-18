@@ -1,5 +1,22 @@
 2005-08-18  Jost Boekemeier  <jostb@intern>
 
+	Merged from Version-2-0-7 trunc:
+	
+	* server/php/java/bridge/JavaBridge (ObjectToString): Use
+	Util.getClass instead of ob.getClass() to avoid surprises when ob
+	is null or a class.
+	
+	* server/php/java/bridge/Request.java (add): Index must be long,
+	otherwise we get a class cast exception in coerce.  Fix copied
+	from 2.0.8pre.
+
+	* server/php/java/bridge/Response.java
+	(append_for_OutBuf_getFirstBytes): Must be accessible from the
+	inner class on Mono.
+	(append_none_for_OutBuf_getFirstBytes): likewise.
+	
+2005-08-18  Jost Boekemeier  <jostb@intern>
+
 	* bind.c (test_server): Pass sockaddr in order to implement
 	override redirect.
 
