@@ -297,7 +297,7 @@ static short can_fork() {
  * Test for a running server.  Return the server name and the socket
  * if _socket!=NULL. If all ckecks fail a local backend is started.
  */
-char* EXT_GLOBAL(test_server)(int *_socket, short *local) {
+char* EXT_GLOBAL(test_server)(int *_socket, short *local, struct sockaddr*_saddr) {
   int sock;
   short called_from_init = !(local || _socket);
 
@@ -368,6 +368,7 @@ char* EXT_GLOBAL(test_server)(int *_socket, short *local) {
 	  if(_port) _port[-1]=':';
 	  ret = strdup(host);
 	  free(hosts);
+	  if(_saddr) memcpy(_saddr, &saddr, sizeof (struct sockaddr));
 	  return ret;
 	}
 	free(hosts);
@@ -417,7 +418,7 @@ void EXT_GLOBAL(start_server)() {
   int pid=0, err=0, p[2];
   char *test_server = 0;
 #ifndef __MINGW32__
-  if(can_fork() && !(test_server=EXT_GLOBAL(test_server)(0, 0)) && pipe(p)!=-1) {
+  if(can_fork() && !(test_server=EXT_GLOBAL(test_server)(0, 0, 0)) && pipe(p)!=-1) {
 	if(!(pid=fork())) {		/* daemon */
 	  close(p[0]);
 	  if(!fork()) {			/* guard */
@@ -448,7 +449,7 @@ void EXT_GLOBAL(start_server)() {
 	wait_server();
   } else 
 #else
-	if(can_fork() && !(test_server=EXT_GLOBAL(test_server)(0, 0))) {
+	if(can_fork() && !(test_server=EXT_GLOBAL(test_server)(0, 0, 0))) {
 	  char *cmd = get_server_string(0);
 	  DWORD properties = CREATE_NEW_CONSOLE;
 	  STARTUPINFO su_info;

@@ -1,4 +1,54 @@
-2005-08-09  Jost Boekemeier  <jostb@diego.intern.de>
+2005-08-18  Jost Boekemeier  <jostb@intern>
+
+	* bind.c (test_server): Pass sockaddr in order to implement
+	override redirect.
+
+	* client.c (set_cookie): New procedure.
+	(begin_header): set the cookie from the backend, re-direct to the
+	correct backend, not to 127.0.0.1.
+	(handle_request): check for override redirect, for re-directs: do
+	not re-open before the correct port is set.
+	(adjust_environment): php 5.3 changes the header field from
+	X_JAVA_BRIDGE_... to HTTP_X_JAVA_BRIDGE!?!
+	(createSecureEnvironment): Store the original socket addr for
+	override redirect.
+
+	* java.c (RSHUTDOWN): free the override redirect vars.
+	(session): obtain a session from the backend
+
+	* protocol.c (get_cookies, end_session, check_context): New
+	functions
+
+	* protocol.h (IS_SERVLET_BACKEND, IS_OVERRIDE_REDIRECT): New macros
+	(peer0, peer_redirected, orig_peer_saddr): New session vars for override redirect.
+
+	* server/php/java/servlet/CGIServlet.java (run): rewritten.
+	
+	* server/php/java/servlet/Context.java (setSession): New method.
+	
+	* server/php/java/servlet/PhpJavaServlet.java (setSession): New
+	method.
+	(handleRedirectConnection): New method for redirect and override
+	redirect.
+	(handleHttpConnection): Close the io streams.
+	(handleSocketConnection): Check if the client needs a session
+	handle. If so, include the client and provide the requested
+	information for it. -- We use a short path here: instead of
+	connecting back to php, we only provide the session handle which
+	the client must send back to the browser. In case we were
+	re-directed to a local channel, temporarily revert the
+	re-direction and execute this statement (the getSession()) via the
+	HTTP tunnel.
+
+	* server/php/java/servlet/SocketRunner.java (SocketRunner): The
+	local channel socket may bind to all ports. When using
+	apache/mod_jk, clients cannot directly access the tomcat server
+	anyway.
+
+	* examples/php+jsp/sessionSharing.php: Create the session before
+	generating output.
+	
+2005-08-09  Jost Boekemeier  <jostb@intern>
 
 	* bind.c (get_server_args): extension_dir may be configured
 	dynamically, look into extension_dir/lib to load libraries and

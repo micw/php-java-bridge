@@ -49,12 +49,16 @@ class Context extends JavaBridge.SessionFactory {
 	this.sessionPromise = req;
 	id=String.valueOf(0xFFFF&getNext());
     }
+    public void setSession(HttpServletRequest req) {
+    	if(this.sessionPromise!=null) throw new IllegalStateException("This context already has a session proxy.");
+    	this.sessionPromise = req;
+    }
     private Context() {
     	this(null);
     }
     public ISession getSession(String name, boolean clientIsNew, int timeout) {
     	if(sessionPromise==null) throw new NullPointerException("This context doesn't have a session proxy.");
-	return new HttpSessionFacade(sessionPromise, timeout);
+	return new HttpSessionFacade(sessionPromise.getSession(), timeout);
     }
     public static Context addNew(HttpServletRequest req) {
      	Context ctx = new Context(req);

@@ -23,6 +23,14 @@ import php.java.bridge.Util;
 
 
 public class PhpJavaServlet extends CGIServlet {
+
+				// IO buffer size
+    static final int BUF_SIZE = 8192;
+
+				// "internal" pool for SocketRunner's
+				// channel redirects
+    static final String DEFAULT_CHANNEL = "9567";
+
     public static class Logger extends Util.Logger {
 	private ServletContext ctx;
 	public Logger(ServletContext ctx) {
@@ -63,6 +71,7 @@ public class PhpJavaServlet extends CGIServlet {
         try {
 	    value = getServletConfig().getInitParameter("servlet_log_level");
 	    if(value!=null && value.trim().length()!=0) Util.logLevel=Integer.parseInt(value);
+	    Util.logLevel=6; //FIXME
         } catch (Throwable t) {Util.printStackTrace(t);}      
 
         try {
@@ -84,7 +93,7 @@ public class PhpJavaServlet extends CGIServlet {
 	windowsLocation = new File("c:/php5/php-cgi.exe");
 	if(!windowsLocation.exists()) windowsLocation=null;
 	
-	Util.TCP_SOCKETNAME = "9567"; // "internal" pool for SocketRunner's channel redirects
+	Util.TCP_SOCKETNAME = DEFAULT_CHANNEL;
 	socketRunner = new SocketRunner();
     }
 
@@ -174,6 +183,39 @@ public class PhpJavaServlet extends CGIServlet {
     	return ctx;
     }
 
+    public void handleRedirectConnection(HttpServletRequest req, HttpServletResponse res) 
+	throws ServletException, IOException {
+	InputStream in; ByteArrayOutputStream out; OutputStream resOut;
+	Context ctx = getContext(req, res);
+	JavaBridge bridge = ctx.bridge;
+	ctx.setSession(req);
+	
+	// save old state
+	InputStream bin = bridge.in;
+	OutputStream bout = bridge.out;
+	Request br  = bridge.request;
+	
+	bridge.in = in = req.getInputStream();
+	bridge.out = out = new ByteArrayOutputStream();
+	Request r = bridge.request = new Request(bridge);
+	try {
+	    if(r.initOptions(in, out)) {
+		r.handleRequests();
+	    }
+	} catch (Throwable e) {
+	    Util.printStackTrace(e);
+	}
+	// restore state
+	bridge.in = bin; bridge.out = bout; bridge.request = br;
+	
+	res.setContentLength(out.size());
+	resOut = res.getOutputStream();
+	out.writeTo(resOut);
+	in.close();
+	resOut.close();
+	bridge.logDebug("redirect finished.");
+    }
+
     public void handleHttpConnection (HttpServletRequest req, HttpServletResponse res)
 	throws ServletException, IOException {
 	InputStream in; ByteArrayOutputStream out;
@@ -200,6 +242,8 @@ public class PhpJavaServlet extends CGIServlet {
 	}
 	res.setContentLength(out.size());
 	out.writeTo(res.getOutputStream());
+	in.close();
+	out.close();
     }
     public void handleSocketConnection (HttpServletRequest req, HttpServletResponse res)
 	throws ServletException, IOException {
@@ -212,7 +256,7 @@ public class PhpJavaServlet extends CGIServlet {
         JavaBridge.load++;
 	try {
 	    if(r.initOptions(sin, sout)) {
-		res.setHeader("X_JAVABRIDGE_REDIRECT", "127.0.0.1:"+socketRunner.socket.getSocketName());
+		res.setHeader("X_JAVABRIDGE_REDIRECT", socketRunner.socket.getSocketName());
 	    	r.handleRequests();
 
 		// redirect and re-open
@@ -223,7 +267,7 @@ public class PhpJavaServlet extends CGIServlet {
 		if(bridge.logLevel>3) bridge.logDebug("re-directing to port# "+ socketRunner.socket.getSocketName());
 	    	sin.close();
 	    	resOut.close();
-	    	ctx.waitFor();
+	    	//ctx.waitFor();
 	    }
 	    else {
 	        sin.close();
@@ -238,7 +282,9 @@ public class PhpJavaServlet extends CGIServlet {
     protected void doPut (HttpServletRequest req, HttpServletResponse res)
 	throws ServletException, IOException {
 	try {
-	    if(socketRunner.isAvailable()) 
+		if(req.getHeader("X_JAVABRIDGE_REDIRECT")!=null) 
+			handleRedirectConnection(req, res);
+	    else if(socketRunner.isAvailable()) 
 		handleSocketConnection(req, res); 
 	    else
 		handleHttpConnection(req, res);
@@ -249,10 +295,13 @@ public class PhpJavaServlet extends CGIServlet {
 	    try {req.getInputStream().close();} catch (IOException x2) {}
 	}
     }
+
+
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
 	throws ServletException, IOException {
+
     	try {
-    	    super.doGet(req, res);
+		super.doGet(req, res);
     	} catch (IOException e) {
     	    ServletException ex = new ServletException("An IO exception occured. Probably php was not installed as \"/usr/bin/php\" or \"c:/php5/php-cgi.exe\".\nPlease copy your PHP binary (\""+php+"\", see JavaBridge/WEB-INF/web.xml) into the JavaBridge/WEB-INF/cgi directory.\nSee webapps/JavaBridge/WEB-INF/cgi/README for details.", e);
     	    throw ex;

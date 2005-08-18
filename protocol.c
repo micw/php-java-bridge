@@ -48,13 +48,16 @@ static void end(proxyenv *env) {
   ssize_t n=0;
 
   if(!(*env)->is_local && EXT_GLOBAL (get_servlet_context) ()) {
-	char header[1024];
+	char header[SEND_SIZE];
 	int header_length;
 	unsigned char mode = EXT_GLOBAL (get_mode) ();
+	ssize_t n;
 
+	assert(!(*env)->peer_redirected || ((*env)->peer_redirected && (*env)->peer0));
 	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %ld\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", EXT_GLOBAL (get_servlet_context) (), size+1, getSessionFactory(env), mode);
 
-	send((*env)->peer, header, header_length, 0);
+	n=send((*env)->peer, header, header_length, 0);
+	assert(n==header_length);
   }
 
  res: 
@@ -66,8 +69,58 @@ static void end(proxyenv *env) {
   (*env)->send_len=0;
 }
 
+static char *get_cookies(zval *val, proxyenv *env) {
+  static const char zero[] = "", cookies[] = "\
+get_cookies();\
+function get_cookies() {\
+  $str=\"\";\
+  $first=true;\
+  foreach($_COOKIE as $k => $v) {\
+    $str = $str . ($first ? \"Cookie: $k=$v\":\"; $k=$v\");\
+    $first=false;\
+  }\
+  if(!$first) $str = $str . '\r\n';\
+  return $str;\
+}\
+";
+  TSRMLS_FETCH();
+  if((SUCCESS==zend_eval_string((char*)cookies, val, "cookies" TSRMLS_CC)) && (Z_TYPE_P(val)==IS_STRING)) {
+	return Z_STRVAL_P(val);
+  }
+  assert(0);
+  return (char*)zero;
+}  
+
+static void end_session(proxyenv *env) {
+  size_t s=0, size = (*env)->send_len;
+  ssize_t n;
+  zval val;
+  int peer0 = (*env)->peer0;
+  int peer = (*env)->peer;
+  char header[SEND_SIZE];
+  int header_length;
+  unsigned char mode = EXT_GLOBAL (get_mode) ();
+
+  (*env)->finish=end;
+  
+  assert(!(*env)->peer_redirected || ((*env)->peer_redirected && (*env)->peer0));
+  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %ld\r\nX_JAVABRIDGE_REDIRECT: 1\r\n%sX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", (*env)->servlet_context_string, size+1, get_cookies(&val, env), getSessionFactory(env), mode);
+  n=send(peer, header, header_length, 0);
+  assert(n==header_length);
+  n=0;
+
+ res: 
+  errno=0;
+  while((size>s)&&((n=send((*env)->peer, (*env)->send+s, size-s, 0)) > 0)) 
+	s+=n;
+  if(size>s && !n && errno==EINTR) goto res; // Solaris, see INN FAQ
+
+  (*env)->send_len=0;
+
+}
+
 static void flush(proxyenv *env) {
-  end(env);
+  (*env)->finish(env);
   (*env)->handle_request(env);
 }
 
@@ -75,27 +128,50 @@ void EXT_GLOBAL (protocol_end) (proxyenv *env) {
 
   if(!(*env)->is_local && EXT_GLOBAL (get_servlet_context) ()) {
 	size_t s=0;
-	ssize_t n=0;
-	char header[1024];
+	ssize_t n;
+	char header[SEND_SIZE];
 	int header_length;
-	unsigned char mode = EXT_GLOBAL (get_mode) ();
+
+	assert(!(*env)->peer_redirected);
 
 	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nContent-Type: text/html\r\nContent-Length: 0\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n", EXT_GLOBAL (get_servlet_context) (),getSessionFactory(env));
 
-	send((*env)->peer, header, header_length, 0);
+	n=send((*env)->peer, header, header_length, 0);
+	assert(n==header_length);
   }
 }
 
+void EXT_GLOBAL(check_context) (proxyenv *env TSRMLS_DC) {
+  if(!(*env)->is_local && IS_SERVLET_BACKEND(env)) {
+	if((*env)->peer_redirected) { /* override redirect */
+	  int sock = socket (PF_INET, SOCK_STREAM, 0);
+	  struct sockaddr *saddr = &(*env)->orig_peer_saddr;
+	  if (-1!=sock) {
+		if (-1!=connect(sock, saddr, sizeof (struct sockaddr))) {
+		  (*env)->peer0 = (*env)->peer;
+		  (*env)->peer = sock;
+		} else {				/* could not connect */
+		  close(sock);
+		  php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not connect to server: %s.",78, strerror(errno));
+		}
+	  } else
+		php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not create socket: %s.",79, strerror(errno));
+	}
+	(*env)->finish=end_session;
+  }
+}
 void EXT_GLOBAL (send_context)(proxyenv *env) {
 	size_t l = strlen((*env)->servlet_ctx);
-	char context[1024] = { 077, l&0xFF};
+	char context[SEND_SIZE] = { 077, l&0xFF};
 	int context_length = 2;
+	ssize_t n;
 	
 	assert(l<256);
 	context_length += EXT_GLOBAL(snprintf) (context+context_length, sizeof(context)-context_length, "%s", 
 										   (*env)->servlet_ctx);
 
-	send((*env)->peer, context, context_length, 0);
+	n=send((*env)->peer, context, context_length, 0);
+	assert(n==context_length);
 }
   
 #define GROW_QUOTE() \
@@ -322,7 +398,7 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
 
  
 
- proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, void (*handle_request)(proxyenv *env), char *server_name, short is_local) {
+ proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, void (*handle_request)(proxyenv *env), char *server_name, short is_local, struct sockaddr *saddr) {
    proxyenv *env;  
    env=(proxyenv*)malloc(sizeof *env);     
    if(!env) return 0;
@@ -330,6 +406,10 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    if(!*env) {free(env); return 0;}
 
    (*env)->peer = peer;
+   (*env)->peer0 = 0;
+   (*env)->peer_redirected = 0;
+   memcpy(&(*env)->orig_peer_saddr, saddr, sizeof (struct sockaddr));
+   
    (*env)->handle_request = handle_request;
 
    /* parser variables */
@@ -348,7 +428,7 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
 
    (*env)->server_name = server_name;
    (*env)->must_reopen = 0;
-   (*env)->servlet_ctx = 0;
+   (*env)->servlet_ctx = (*env)->servlet_context_string = 0;
 
    (*env)->writeInvokeBegin=InvokeBegin;
    (*env)->writeInvokeEnd=InvokeEnd;
@@ -374,6 +454,7 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    (*env)->writePairBegin_n=PairBegin_n;
    (*env)->writePairEnd=PairEnd;
    (*env)->writeUnref=Unref;
+   (*env)->finish=end;
 
    return env;
  }

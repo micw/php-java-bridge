@@ -25,7 +25,7 @@ class SocketRunner implements Runnable {
     ISocketFactory socket = null; 
     SocketRunner () {
         try {
-	    socket = JavaBridge.bind("INET_LOCAL:0");
+	    socket = JavaBridge.bind("INET:0");
 	    Thread t = new Thread(this, "JavaBridgeSocketRunner");
 	    t.setDaemon(true);
 	    t.start();

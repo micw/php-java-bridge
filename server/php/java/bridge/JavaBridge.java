@@ -1352,8 +1352,8 @@ public class JavaBridge implements Runnable {
      * instances. If it is a HTTP session, the session is shared with
      * the servlet or jsp.
      */
-    public ISession getSession(String name, boolean clientIsNew, int timeout) {
-    	return sessionFactory.getSession(name, clientIsNew, timeout);
+    public ISession getSession(String name, boolean clientIsNew, int timeout){
+    	    return sessionFactory.getSession(name, clientIsNew, timeout);
     }
     
     public Object makeClosure(long object, Map names) {

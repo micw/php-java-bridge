@@ -56,9 +56,24 @@
 #define RECV_SIZE 8192 // initial size of the receive buffer
 #define MAX_ARGS 100   // max # of method arguments
 
+/* checks if we use a servlet backend (re-directed or not) */
+#define IS_SERVLET_BACKEND(env) (((*env)->servlet_ctx || EXT_GLOBAL (get_servlet_context) ()))
+
+/* checks if the servlet backend uses HTTP, either because we do not
+   re-direct or because we override re-direct */
+#define IS_OVERRIDE_REDIRECT(env) (((*env)->peer0 || EXT_GLOBAL (get_servlet_context) ()))
+
 typedef struct proxyenv_ *proxyenv;
 struct proxyenv_ {
-  int peer;
+
+  /* peer */
+  int peer, peer0;				/* peer0 contains peer during override
+								   redirect */
+  short peer_redirected;		/* remains true during override
+								   redirect */
+  struct sockaddr orig_peer_saddr; /* only valid if peer is a servlet, it
+								   points to the original peer */
+
 
   /* used by the parser implementation */
   unsigned char*s; size_t len; 
@@ -78,7 +93,7 @@ struct proxyenv_ {
   short must_reopen; 
 
   /* for servlet engines only */
-  char *servlet_ctx;
+  char *servlet_ctx, *servlet_context_string;
   
   void (*handle_request)(proxyenv *env);
 
@@ -106,6 +121,7 @@ struct proxyenv_ {
   void (*writePairBegin)(proxyenv *env);
   void (*writePairEnd)(proxyenv *env);
   void (*writeUnref)(proxyenv *env, long object);
+  void (*finish)(proxyenv *env);
 };
 
 #endif

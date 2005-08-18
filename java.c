@@ -40,18 +40,22 @@ PHP_RINIT_FUNCTION(EXT)
   JG(is_closed)=0;
   return SUCCESS;
 }
+
 PHP_RSHUTDOWN_FUNCTION(EXT)
 {
   if(JG(jenv)) {
 	if(*JG(jenv)) {
 	  if((*JG(jenv))->peer) {
-		EXT_GLOBAL(protocol_end)(JG(jenv));	/* free servlet session */
+								/* end servlet session */
+		EXT_GLOBAL(protocol_end)(JG(jenv));
 		close((*JG(jenv))->peer);
+		if((*JG(jenv))->peer0) close((*JG(jenv))->peer0);
 	  }
 	  if((*JG(jenv))->s) free((*JG(jenv))->s);
 	  if((*JG(jenv))->send) free((*JG(jenv))->send);
 	  if((*JG(jenv))->server_name) free((*JG(jenv))->server_name);
 	  if((*JG(jenv))->servlet_ctx) free((*JG(jenv))->servlet_ctx);
+	  if((*JG(jenv))->servlet_context_string) free((*JG(jenv))->servlet_context_string);
 	  free(*JG(jenv));
 	}
 	free(JG(jenv));
@@ -180,7 +184,10 @@ static void session(INTERNAL_FUNCTION_PARAMETERS)
 
   jenv=EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   if(!jenv) RETURN_NULL();
-  (*jenv)->writeInvokeBegin(jenv, 0, "getSession", 0, 'I', return_value);
+ 
+  EXT_GLOBAL(check_context) (jenv TSRMLS_CC);				/* re-direct if no context was found */
+
+ (*jenv)->writeInvokeBegin(jenv, 0, "getSession", 0, 'I', return_value);
   (*jenv)->writeString(jenv, Z_STRVAL_PP(session), Z_STRLEN_PP(session)); 
   (*jenv)->writeBoolean(jenv, 0); 
   (*jenv)->writeLong(jenv, 1400); 
@@ -1333,7 +1340,7 @@ PHP_MINFO_FUNCTION(EXT)
 {
   short is_local;
   char*s=EXT_GLOBAL(get_server_string) ();
-  char*server = EXT_GLOBAL(test_server) (0, &is_local);
+  char*server = EXT_GLOBAL(test_server) (0, &is_local, 0);
   short is_level = ((EXT_GLOBAL (ini_user)&U_LOGLEVEL)!=0);
 
   php_info_print_table_start();

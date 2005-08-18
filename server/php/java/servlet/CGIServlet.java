@@ -1587,18 +1587,7 @@ public class CGIServlet extends HttpServlet {
 		commandsStdIn.close();
 	    }
 
-	    /* FIXME: Why do we need this at all? When the stream is closed, it's closed, no?!?
-	     * We do not care for the process exit value!
-	     * Check the URL mentioned below.
-	     * -> For release 2.0.8  (jost)
-	     */
-            /* we want to wait for the process to exit,  Process.waitFor()
-             * is useless in our situation; see
-             * http://developer.java.sun.com/developer/
-             *                               bugParade/bugs/4223650.html
-             */
 
-            boolean isRunning = true;
             proc.getErrorStream().close();
             in=proc.getInputStream();
             out=response.getOutputStream();
@@ -1608,88 +1597,34 @@ public class CGIServlet extends HttpServlet {
             int i=0, n, s=0;
             boolean eoh=false;
 
-            while (isRunning) {
-                try {
-                    while((n = in.read(buf, i, buf.length-i)) !=-1 ) {
-                    	int N = i + n;
-			// header
-                    	while(!eoh && i<N) {
-			    switch(buf[i++]) {
-
-			    case '\n':
-				if(s+2==i && buf[s]=='\r') {
-				    eoh=true;
-				} else {
-				    line = new String(buf, s, i-s-2, ASCII);
-				    addHeader(line);
-				    s=i;
-                    		}
-			    }
+	    while((n = in.read(buf, i, buf.length-i)) !=-1 ) {
+		int N = i + n;
+		// header
+		while(!eoh && i<N) {
+		    switch(buf[i++]) {
+			
+		    case '\n':
+			if(s+2==i && buf[s]=='\r') {
+			    eoh=true;
+			} else {
+			    line = new String(buf, s, i-s-2, ASCII);
+			    addHeader(line);
+			    s=i;
 			}
-                    	
-			// body
-                     	if(eoh) {
-                     	    if(out!=null) out.write(buf, i, N-i);
-                     	    i=0;
-                     	}
-                    }
-                    // FIXME: Why do we need this?  Check the 4223650.html, see above. (jost)
-                    //proc.exitValue(); // Throws exception if alive
-
-                    isRunning = false;
-
-                } catch (IllegalThreadStateException e) {
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException ignored) {
-                    }
-                }
-            } //replacement for Process.waitFor()
+		    }
+		}
+		
+		// body
+		if(eoh) {
+		    if(out!=null) out.write(buf, i, N-i);
+		    i=0;
+		}
+	    }
             
             if(out!=null) try {out.close();} catch (IOException e) {}
             if(in!=null) try {in.close();} catch (IOException e) {}
             if(stdin!=null) try {stdin.close();} catch (IOException e) {}
         }
-
-
-        /**
-         * Gets a string for input to a POST cgi script
-         *
-         * @param  params   Hashtable of query parameters to be passed to
-         *                  the CGI script
-         * @return          for use as input to the CGI script
-         */
-
-        protected String getPostInput(Hashtable params) {
-            String lineSeparator = System.getProperty("line.separator");
-            Enumeration paramNames = params.keys();
-            StringBuffer postInput = new StringBuffer("");
-            StringBuffer qs = new StringBuffer("");
-            if (paramNames != null && paramNames.hasMoreElements()) {
-                while (paramNames.hasMoreElements()) {
-                    String k = (String) paramNames.nextElement();
-                    String v = params.get(k).toString();
-                    if ((k.indexOf("=") < 0) && (v.indexOf("=") < 0)) {
-                        postInput.append(k);
-                        qs.append(k);
-                        postInput.append("=");
-                        qs.append("=");
-                        postInput.append(v);
-                        qs.append(v);
-                        postInput.append(lineSeparator);
-                        qs.append("&");
-                    }
-                }
-            }
-            qs.append(lineSeparator);
-            return qs.append(postInput).toString();
-        }
-
-
-
     } //class CGIRunner
-
-
-
 
 } //class CGIServlet

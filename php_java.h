@@ -133,7 +133,7 @@ extern proxyenv *EXT_GLOBAL(try_connect_to_server)(TSRMLS_D);
 extern proxyenv *EXT_GLOBAL(connect_to_server)(TSRMLS_D);
 extern void EXT_GLOBAL(start_server)();
 
-extern char* EXT_GLOBAL(test_server)(int *socket, short *is_local);
+extern char* EXT_GLOBAL(test_server)(int *socket, short *is_local, struct sockaddr*saddr);
 
 /* returns the servlet context or null */
 extern char *EXT_GLOBAL(get_servlet_context)();
