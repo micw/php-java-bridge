@@ -17,8 +17,8 @@
 <BODY LANG="en-US" DIR="LTR">
 <P STYLE="margin-top: 0.42cm; page-break-after: avoid"><FONT ><FONT SIZE=4><B>What
 is the PHP/Java bridge?</B></FONT></FONT></P>
-<P><FONT > The PHP/Java bridge
-  is  a PHP module which connects the PHP object system with the Java or <a href="http://www.ecma-international.org/publications/standards/Ecma-335.htm">ECMA 335</a>
+<P><FONT > The PHP/Java bridge 
+  is  a PHP module ("java.so" or "php_java.dll") with an associated backend ("JavaBridge.jar", "JavaBridge.war" or "MonoBridge.exe") which connect the PHP object system with the Java or <a href="http://www.ecma-international.org/publications/standards/Ecma-335.htm">ECMA 335</a>
   object system. It implements <A HREF="http://www.jcp.org/aboutJava/communityprocess/edr/jsr223/">JSR 223</A> (where applicable) and
   can be used to access CLR (e.g. VB.NET, C#) or Java (e.g. Java, KAWA, JRuby) based applications from PHP scripts. The PHP/Java Bridge communicates with the
   VM through local sockets using an efficient communication protocol.
@@ -27,25 +27,25 @@ is the PHP/Java bridge?</B></FONT></FONT></P>
   </FONT></P>
 <P><FONT > Requests from more than one HTTP server may either be routed to an application server running the PHP/Java Bridge or each HTTP server may own a PHP/Java Bridge and communicate with a J2EE java application server by exchanging java value objects; the necessary client-stub classes (ejb client .jar) can be loaded at run-time.
 </FONT></P>                                                                                            
-<P><FONT > ECMA 335 based classes can be accessed if at least one JavaBridge.jar is running inside a ECMA complient VM, for example Novell's MONO or Microsoft's .NET.  Special features such as varargs, reflection or assembly loading are also supported. 
+<P><FONT > ECMA 335 based classes can be accessed if at least one backend is running inside a ECMA complient VM, for example Novell's MONO or Microsoft's .NET.  Special features such as varargs, reflection or assembly loading are also supported. 
 </FONT></P>                                                                                            
 <P><FONT > Clustering and load balancing is available if the backend runs in a servlet environment supporting these features, tomcat 5 for example.
 </FONT></P>                                                                                            
-<P STYLE="margin-top: 0.42cm; page-break-after: avoid"><FONT ><FONT SIZE=4><B>How does it compare to SOAP or XML-RPC?</B></FONT></FONT></P>
+<P STYLE="margin-top: 0.42cm; page-break-after: avoid"><FONT ><FONT SIZE=4><B>How does it compare to SOAP, XML-RPC, ext/java or the JSR223 sample implementation?</B></FONT></FONT></P>
 <ul>
 <li> The PHP/Java Bridge typically runs on the same computer as the PHP interpreter, so a very efficient protocol can be used. An example is provided which executes a mix of PHP/Java code nearly as fast as the pure java equivalent.
-<li> It is not necessary to write and deploy a public interface. The bridge uses reflection to determine what can be accessed in the local backend.
+<li> It is not necessary to write and deploy a public interface. The bridge uses reflection once to determine what can be accessed in the backend.
 <li> PHP scripts can load/unload java libraries at runtime.
 <li> On linux the c/s communication channel is not visible and the backend runs in its own "Security Enhanced Linux" domain.
-<li> Other PHP modules such do most of their work in the web-server (in C code), which makes them vulnerable to buffer overflows.  The PHP/Java Bridge module doesn't use any state on the web-server side, it simply forwards the java(...) statements to the local backend, which can communicate with the enterprise application server using RMI/IIOP or other java technologies.
+<li> Other PHP modules do most of their work in the web-server (in C code), which makes them vulnerable to buffer overflows.  The PHP/Java Bridge module doesn't use any state on the web-server side, it simply forwards the java(...) statements to the backend, which can communicate with the enterprise application server using RMI/IIOP or other java technologies.
+<li> Unlike other attempts the PHP/Java Bridge does <em>not</em> use the java native interface ("JNI"). In case a php instance crashes, it will not take down the java application server or servlet engine.
 </ul>
 <P><FONT > 
   The bridge adds the following primitives to PHP.  The type mappings are shown in <a href="#type-mapping">table 1</a>.
 
 <ul>
 <li>
-  <code>new <strong>java</strong>("CLASSNAME")</code>: References and instanciates the class CLASSNAME.
-<code><strong>Java</strong></code> can also be used for <A HREF="http://www.jcp.org/aboutJava/communityprocess/edr/jsr223/">JSR 223</A> compatibility.
+  <code>new <strong>Java</strong>("CLASSNAME")</code>: References and instanciates the class CLASSNAME.
  After script
      execution the referenced classes may be garbage collected. Example: <br><br>
      
@@ -56,17 +56,17 @@ is the PHP/Java bridge?</B></FONT></FONT></P>
       header("Content-Disposition: attachment; filename=downloaded.xls");<br>
       java_require("http://php-java-bridge.sf.net/poi.jar"); <br><br>
       
-      // create a 2x2 excel sheet and return it to the client<br>
+      // create a 200x200 excel sheet and return it to the client<br>
       $workbook = new java("org.apache.poi.hssf.usermodel.HSSFWorkbook");<br>
       $sheet = $workbook->createSheet("new sheet");<br>
       $style = $workbook->createCellStyle();<br>
       // access the inner class AQUA within HSSFColor, note the $ syntax.<br>
-      $Aqua = new java_class('org.apache.poi.hssf.util.HSSFColor$AQUA');<br>
+      $Aqua = new JavaClass('org.apache.poi.hssf.util.HSSFColor$AQUA');<br>
       $style->setFillBackgroundColor($Aqua->index);<br>
       $style->setFillPattern($style->BIG_SPOTS);<br><br>
-      for($y=0; $y<2; $y++) {<br>
+      for($y=0; $y<200; $y++) {<br>
       &nbsp;$row = $sheet->createRow($y);<br>
-      &nbsp;for($x=0; $x<2; $x++) {<br>
+      &nbsp;for($x=0; $x<200; $x++) {<br>
       &nbsp;&nbsp;$cell = $row->createCell($x);<br>
       &nbsp;&nbsp;$cell->setCellValue("This is cell $x . $y");<br>
       &nbsp;&nbsp;$cell->setCellStyle($style);<br>
@@ -84,7 +84,7 @@ is the PHP/Java bridge?</B></FONT></FONT></P>
 </blockquote>
 <br>
 <li>
-  <code>new <strong>java_class</strong>("CLASSNAME")</code>: References the class CLASSNAME without creating an instance. The object returned is the class object itself, not an object of the class.  <code><strong>JavaClass</strong></code> can also be used for <A HREF="http://www.jcp.org/aboutJava/communityprocess/edr/jsr223/">JSR 223</A> compatibility.
+  <code>new <strong>JavaClass</strong>("CLASSNAME")</code>: References the class CLASSNAME without creating an instance. The object returned is the class object itself, not an object of the class.
  After script
      execution the referenced classes may be garbage collected. Example: <br><br>
      
@@ -116,9 +116,96 @@ is the PHP/Java bridge?</B></FONT></FONT></P>
 </blockquote>
 <br>
 <li>
-  <code>$session=<strong>java_get_session</strong>(SESSIONNAME)</code>: Creates or retrieves the session SESSIONNAME. The primitive returns a session handle which can be used to store and retrieve values which survive the current script.  The session can be closed with $session->destroy(). The <code><strong>java_get_session</strong></code> shall be used before creating java instances.  It selects a node from the load balancer and then directs all further <strong><code>java</code></strong> or <strong><code>java_class</code></strong> calls to that node. If the node becomes unavailable, the session is lost and a new session is created on a different node. 
+  <code><strong>java_closure</strong>(ENVIRONMENT, MAP, TYPE)</code>: Makes it possible to call PHP code from java.  It closes over the PHP environment and packages it up as a java class.  If the ENVIRONMENT is missing, the current environment is used. If MAP is missing, the PHP procedures must have the same name as the required procedures. If TYPE is missing, the generated class is "generic", i.e. the interface it implements is determined when the closure is applied. Example which uses PHP and Mono:<br>
+ <br><br>
+<blockquote>
+<code>
+class GtkDemo {<br>
+&nbsp;&nbsp;var $Application;<br>
+<br>
+&nbsp;&nbsp;function GtkDemo() {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;mono_require("gtk-sharp");	// link the gtk-sharp library<br>
+&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;function delete($sender, $e) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;echo "delete called\n";<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$this-&gt;Application-&gt;Quit();<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;function clicked($sender, $e) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;echo "clicked\n";<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;function init() {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$this-&gt;Application = $Application = new Mono("Gtk.Application");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$Application-&gt;Init();<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$win = new Mono("Gtk.Window", "Hello");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$win-&gt;add_DeleteEvent (<br>
+			&nbsp;&nbsp; new Mono(<br>
+				&nbsp;&nbsp;&nbsp;&nbsp;"GtkSharp.DeleteEventHandler", <br>
+				&nbsp;&nbsp;&nbsp;&nbsp;mono_closure($this, "delete")));<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$btn = new Mono("Gtk.Button", "Click Me");<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$btn-&gt;add_Clicked(<br>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;new Mono(<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "System.EventHandler",<br>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mono_closure($this, "clicked")));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$win-&gt;Add($btn);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$win-&gt;ShowAll();<br>
+&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;function run() {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$this-&gt;init();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$this-&gt;Application-&gt;Run();<br>
+&nbsp;&nbsp;}<br>
+}<br>
+<br&gt;<br>
+$demo = new GtkDemo();<br>
+$demo-&gt;run();<br>
+</code>
+</blockquote>
+The <strong>java_closure</strong> can also be used to emulate try/catch functionality in PHP4.  The following example calls the "strategy.call()" method which catches the exception raised in the php method m1() and calls the php method e($ex) with the raised exception as an argument:
+<blockquote>
+<code>
+interface IStrategy  {<br>
+&nbsp;&nbsp;public void m1();<br>
+&nbsp;&nbsp;public int m2();<br>
+&nbsp;&nbsp;public int e(Exception ex);<br>
+<br>
+&nbsp;&nbsp;public class Strategy  {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;public int call(IStrategy phpClosure)  {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try  {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m1();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return m2();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;} catch (Exception ex) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return e(ex);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;}<br>
+}<br>
+&lt;?php<br>
+function m1 ()  {<br>
+&nbsp;&nbsp;$str=new java("java.lang.String", null); //raises NP exception<br>
+&nbsp;&nbsp;echo "in m1"; //never reached <br>
+}<br>
+function m2 ()  {<br>
+&nbsp;&nbsp;echo "in m2";<br>
+&nbsp;&nbsp;return 1;<br>
+}<br>
+function e($ex)  {<br>
+&nbsp;&nbsp;echo "exception raised on php level: $ex";<br>
+&nbsp;&nbsp;return 2;<br>
+}<br>
+$s = new Java('IStrategy$Strategy');<br>
+$result = $s->call(java_closure());<br>
+echo $result; // should display 2<br>
+?&gt;<br>
+</code>
+</blockquote>
 
- Example:
+<br>
+<li>
+  <code>$session=<strong>java_get_session</strong>(SESSIONNAME)</code>: Creates or retrieves the session SESSIONNAME. The primitive returns a session handle which can be used to store and retrieve values which survive the current script.  The session can be invalidated with $session->destroy(). The <code><strong>java_get_session</strong></code> shall be used before creating java instances. If the backend is running in a servlet engine, Tomcat for example, the session handle is shared, i.e. it can be used to retrieve values stored by JSP scripts. Example:
 <blockquote>
 <code>
 $session=java_get_session("testSession");<br>
@@ -153,13 +240,13 @@ $instance=$Cache->instance; //instance will stay in the VM until the VM runs sho
 </code>
 </blockquote>
 <br>
-  <li> <code><strong>java_exception</strong></code>: A java exception class. Available in PHP 5 and
-    above only. <code><strong>JavaException</strong></code> can also be used for <A HREF="http://www.jcp.org/aboutJava/communityprocess/edr/jsr223/">JSR 223</A> compatibility. Example:<br><br>
+  <li> <code><strong>JavaException</strong></code>: A java exception class. Available in PHP 5 and
+    above only.  Example:<br><br>
 <blockquote>
 <code>
       try {<br>
        &nbsp;&nbsp;new java("java.lang.String", null);<br>
-      } catch(java_exception $ex) {<br>
+      } catch(JavaException $ex) {<br>
 &nbsp;&nbsp;         $trace = new java("java.io.ByteArrayOutputStream");<br>
 &nbsp;&nbsp;         $ex-&gt;printStackTrace(new java("java.io.PrintStream", $trace));<br>
 &nbsp;&nbsp;         print "java stack trace: $trace\n";<br>
@@ -182,8 +269,8 @@ $instance=$Cache->instance; //instance will stay in the VM until the VM runs sho
   <li> <code>[index]</code>: It is possible to access elements of java arrays or elements of java classes that implement the java.util.Map interface.  Available in PHP 5 and above only.  Example:<br><br>
 <blockquote>
 <code>
-$Array = new java_class("java.lang.reflect.Array");<br>
-$String = new java_class("java.lang.String");<br>
+$Array = new JavaClass("java.lang.reflect.Array");<br>
+$String = new JavaClass("java.lang.String");<br>
 $entries = $Array->newInstance($String, 3);<br>
 $entries[0] ="Jakob der L&uuml;gner, Jurek Becker 1937--1997";<br>
 $entries[1] ="Mutmassungen &uuml;ber Jakob, Uwe Johnson, 1934--1984";<br>
@@ -197,7 +284,7 @@ for ($i = 0; $i < $Array->getLength($entries); $i++) { <br>
   <li> <code><strong>java_instanceof</strong>(JAVA_OBJ, JAVA_CLASS)</code>: Tests if JAVA_OBJ is an instance of JAVA_CLASS.  Example:<br><br>
 <blockquote>
 <code>
-$Collection=new java_class("java.util.Collection");<br>
+$Collection=new JavaClass("java.util.Collection");<br>
 $list = new java("java.util.ArrayList");<br>
 $list->add(0);<br>
 $list->add(null);<br>
@@ -434,7 +521,7 @@ shared libraries.
       necessary if there is no official JRE available for the OS or one
       doesn't want to ship a JRE with the product. 
 
-   <li> Compiled with Novell's MONO (a ".NET" clone). This is
+   <li> Compiled with Novell's MONO (a ".NET" clone).  This is
  available as a separate download.  </ul>
 
 </FONT></P>
@@ -466,7 +553,7 @@ the instructions below (on Security Enhanced Linux please use the RPM or please 
 	tar xf -</code></FONT></P>
 	<LI><P STYLE="font-style: normal"><FONT >In
 	the directory php-java-bridge-v.x.y build the module
-	for a 32 bit JVM (if you run a 64 Bit JVM, use the <code>-m64</code> flag instead): <BR><BR><code>phpize &amp;&amp; ./configure
+	for a 32 bit JVM (if you run a 64 Bit JVM, use the <code>-m64</code> flag instead): <BR><BR><code>phpize &amp;&amp; ./configure --disable-servlet 
 	--with-java=/opt/IBMJava2-14 &amp;&amp; make CFLAGS=&quot;-m32&quot;</code></FONT></P>
 	<LI><P STYLE="font-style: normal"><FONT >Then
 	install the module as root. Type:<BR><BR><code>su -c 'make
