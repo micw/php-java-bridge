@@ -60,7 +60,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
 #else
   const char *s_prefix = local_socket_prefix;
 #endif
-  char *sockname, *cfg_sockname=EXT_GLOBAL(cfg)->sockname, *cfg_logFile=EXT_GLOBAL(cfg)->logFile;
+  char *sockname, *cfg_sockname=EXT_GLOBAL(get_sockname)(), *cfg_logFile=EXT_GLOBAL(cfg)->logFile;
 
   /* if socketname is off, show the user how to start a TCP backend */
   if(for_display && !(EXT_GLOBAL(option_set_by_user) (U_SOCKNAME))) {
@@ -91,8 +91,12 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
 								   extension dir */
   if(ext && !(EXT_GLOBAL(option_set_by_user) (U_CLASSPATH))) {	/* look into extension_dir then */
 	static char bridge[]="/JavaBridge.jar";
+	char *slash;
 	p=malloc(strlen(s)+strlen(ext)+sizeof(bridge));
-	strcpy(p, s); strcat(p, ext); strcat(p, bridge);
+	strcpy(p, s); strcat(p, ext); 
+	slash=p+strlen(p)-1;
+	if(*p&&*slash==ZEND_PATHS_SEPARATOR) *slash=0;
+	strcat(p, bridge);
   } else {
 	p=malloc(strlen(s)+strlen(cp)+1);
 	strcpy(p, s); strcat(p, cp);
@@ -128,14 +132,14 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
 static const char* const wrapper = EXTENSION_DIR/**/"/RunMonoBridge";
 static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], short for_display) {
   static const char executable[] = "/MonoBridge.exe";
-  char *p;
+  char *p, *slash;
   char*program=EXT_GLOBAL(cfg)->vm;
 #ifdef CFG_JAVA_SOCKET_INET
   const char* s_prefix = inet_socket_prefix;
 #else
   const char *s_prefix = local_socket_prefix;
 #endif
-  char *sockname, *cfg_sockname=EXT_GLOBAL(cfg)->sockname, *cfg_logFile=EXT_GLOBAL(cfg)->logFile;
+  char *sockname, *cfg_sockname=EXT_GLOBAL(get_sockname)(), *cfg_logFile=EXT_GLOBAL(cfg)->logFile;
   char*home = EXT_GLOBAL(cfg)->vm_home;
   if(!(EXT_GLOBAL(option_set_by_user) (U_JAVA_HOME))) {	/* look into extension_dir then */
 	char *ext = php_ini_string((char*)ext_dir, sizeof ext_dir, 0);
@@ -143,7 +147,11 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   }
   args[0]=strdup(program);		/* mono */
   p=malloc(strlen(home)+sizeof executable);
-  strcpy(p, home); strcat(p, executable);
+  strcpy(p, home); 
+  slash=p+strlen(p)-1;
+  if(*p&&*slash==ZEND_PATHS_SEPARATOR) *slash=0;
+  strcat(p, executable);
+
   args[1] = p;
   /* if socketname is off, show the user how to start a TCP backend */
   if(for_display && !(EXT_GLOBAL(option_set_by_user) (U_SOCKNAME))) {
@@ -321,7 +329,7 @@ char* EXT_GLOBAL(test_server)(int *_socket, short *local, struct sockaddr*_saddr
 	  close(sock);
 	}
 	if(local) *local=1;
-	return strdup(EXT_GLOBAL(cfg)->sockname);
+	return strdup(EXT_GLOBAL(get_sockname)());
   }
 
   /* host list */

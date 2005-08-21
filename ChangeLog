@@ -1,3 +1,36 @@
+2005-08-21  Jost Boekemeier  <jostb@intern>
+
+	* bind.c
+	(get_server_args): Only append a separator if the path doesn't end
+	with one.
+
+	* client.c 
+	(begin_header): Do not overwrite re-direct with re-open.
+	(adjust_environment): Avoid php warnings
+
+	* init_cfg.c.in (init_socket, init_cfg): keep the default
+	socketname.
+	(get_sockname): New function
+	
+	* java.c (OnIniSockname): The last fix broke the servlet re-direct
+	which needs to switch off the local socket. We now store the
+	default socketname in a separate variable and use get_sockname()
+	to retrieve the value.
+	(make_local_socket_info): New procedure.
+	
+	* php_java.h (is_cgi_servlet): New global.
+
+	* protocol.c (end): Send the context only if there are
+	statements following the re-direct.
+	(setResultWith_context): New function
+
+	* server/web.xml: Is now valid XML.
+
+	* server/php/java/bridge/JavaBridge.java (getSession): Print a
+	stacktrace if session is null.
+
+	
+	
 2005-08-18  Jost Boekemeier  <jostb@intern>
 
 	Merged from Version-2-0-7 trunc:

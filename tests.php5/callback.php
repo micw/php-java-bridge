@@ -10,7 +10,7 @@ if (!extension_loaded('java')) {
 function c1($s1, $o1) {
   echo "c1: $s1, $o1\n";
   // must display a php warning
-  throw new JavaException("java.lang.NullPointerException", "bleh!");
+  throw new JavaException("java.lang.Exception", "bleh!");
 
   // not reached 
   echo "ERROR.\n"; 

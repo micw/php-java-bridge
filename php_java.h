@@ -90,7 +90,7 @@ struct cfg {
 #endif
   int cid; // server's process id
   int err; // file descriptor: server's return code
-  char*sockname;
+  char*sockname, *default_sockname;
   char*hosts;
   char*classpath;	
   char*ld_library_path;
@@ -101,6 +101,7 @@ struct cfg {
   char*logFile;
   short can_fork;				/* 0 if user has hard-coded the socketname */
   char* servlet;				/* On or servlet context */
+  short is_cgi_servlet;			/* 1: cgi env available */
 };
 extern struct cfg *EXT_GLOBAL(cfg);
 
@@ -137,5 +138,8 @@ extern char* EXT_GLOBAL(test_server)(int *socket, short *is_local, struct sockad
 
 /* returns the servlet context or null */
 extern char *EXT_GLOBAL(get_servlet_context)();
+
+/* returns the local socketname or the default local socketname*/
+extern char *EXT_GLOBAL(get_sockname)();
 
 #endif

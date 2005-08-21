@@ -21,14 +21,18 @@ import php.java.bridge.Request;
 import php.java.bridge.ThreadPool;
 import php.java.bridge.Util;
 
-
+/**
+ * Handles requests from PHP clients. This servlet can either run PHP as a CGI 
+ * sub-process, when Apache is not available, or it can communicate with 
+ * Apache/php, which is recommended.
+ */
 public class PhpJavaServlet extends CGIServlet {
 
-				// IO buffer size
+    // IO buffer size
     static final int BUF_SIZE = 8192;
 
-				// "internal" pool for SocketRunner's
-				// channel redirects
+    // "internal" pool for SocketRunner's
+    // channel redirects
     static final String DEFAULT_CHANNEL = "9567";
 
     public static class Logger extends Util.Logger {
@@ -71,7 +75,6 @@ public class PhpJavaServlet extends CGIServlet {
         try {
 	    value = getServletConfig().getInitParameter("servlet_log_level");
 	    if(value!=null && value.trim().length()!=0) Util.logLevel=Integer.parseInt(value);
-	    Util.logLevel=6; //FIXME
         } catch (Throwable t) {Util.printStackTrace(t);}      
 
         try {
@@ -101,6 +104,10 @@ public class PhpJavaServlet extends CGIServlet {
     	super.destroy();
     	if(socketRunner!=null) socketRunner.destroy();
     }
+    
+    /**
+     * Adjust the standard tomcat CGI env. CGI only.
+     */
     protected class CGIEnvironment extends CGIServlet.CGIEnvironment {
     	protected String cgi_bin;
     	protected Context sessionFactory;
@@ -115,13 +122,16 @@ public class PhpJavaServlet extends CGIServlet {
 	protected boolean setCGIEnvironment(HttpServletRequest req) {
 	    boolean ret = super.setCGIEnvironment(req);
 	    if(ret) {
+	    	/* Inform the client that we are a cgi servlet and send the re-direct port */
 		if(override_hosts) 
 		    this.env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", "127.0.0.1:"+this.env.get("SERVER_PORT"));
+		else
+		    this.env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", "");
 		this.env.put("REDIRECT_STATUS", "1");
 		this.env.put("SCRIPT_FILENAME", this.env.get("PATH_TRANSLATED"));
 
-		// close over req in order to implement session sharing
-		
+		/* send the session context now, otherwise the client has to 
+		 * call handleRedirectConnection */
 		this.env.put("X_JAVABRIDGE_CONTEXT", Context.addNew(req).getId());
 	    }
 	    return ret;
@@ -154,7 +164,9 @@ public class PhpJavaServlet extends CGIServlet {
 		contextPath+servletPath+File.separator+display_cgi, File.separator+display_cgi, display_cgi};
 	}
     }
+    
     /**
+     * Create a cgi environment. Used by cgi only.
      * @param req The request
      * @param servletContext The servlet context
      * @return The new cgi environment.
@@ -163,13 +175,17 @@ public class PhpJavaServlet extends CGIServlet {
 	return new CGIEnvironment(req, servletContext);
     }
 
+    /**
+     * Get the current context handle.
+     * @param req
+     * @param res
+     * @return The context handle.
+     */
     private Context getContext(HttpServletRequest req, HttpServletResponse res) {
     	Context ctx = null;
     	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
     	if(id!=null) ctx = (Context)Context.get(id);
-    	if(ctx==null) {
-	    ctx = Context.addNew(null); // no session sharing
-    	}
+    	if(ctx==null) ctx = Context.addNew(null); // no session sharing
     	if(ctx.bridge==null) {
    	    ctx.bridge = new JavaBridge(null, null);
     	    ctx.bridge.cl = new JavaBridgeClassLoader(ctx.bridge, DynamicJavaBridgeClassLoader.newInstance(getClass().getClassLoader()));
@@ -182,14 +198,24 @@ public class PhpJavaServlet extends CGIServlet {
     	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
     	return ctx;
     }
-
+    
+    /**
+     * Handle the override re-direct for "java_get_session()" when php runs within apache. 
+     * Instead of connecting back to apache, we execute one statement and return the
+     * result and the allocated session.  Used by Apache only.
+     * 
+     * @param req
+     * @param res
+     * @throws ServletException
+     * @throws IOException
+     */
     public void handleRedirectConnection(HttpServletRequest req, HttpServletResponse res) 
 	throws ServletException, IOException {
 	InputStream in; ByteArrayOutputStream out; OutputStream resOut;
 	Context ctx = getContext(req, res);
 	JavaBridge bridge = ctx.bridge;
 	ctx.setSession(req);
-	
+	if(bridge.logLevel>3) bridge.logDebug("override redirect starts for " + ctx.getId());		
 	// save old state
 	InputStream bin = bridge.in;
 	OutputStream bout = bridge.out;
@@ -213,14 +239,24 @@ public class PhpJavaServlet extends CGIServlet {
 	out.writeTo(resOut);
 	in.close();
 	resOut.close();
-	bridge.logDebug("redirect finished.");
+	if(bridge.logLevel>3) bridge.logDebug("override redirect finished for " + ctx.getId());
     }
-
-    public void handleHttpConnection (HttpServletRequest req, HttpServletResponse res)
+    
+    /**
+     * Handle a standard HTTP tunnel connection. Used when the local channel is not available
+     * (security restrictions). Used by Apache and cgi.
+     * 
+     * @param req
+     * @param res
+     * @throws ServletException
+     * @throws IOException
+     */
+    protected void handleHttpConnection (HttpServletRequest req, HttpServletResponse res, boolean session)
 	throws ServletException, IOException {
 	InputStream in; ByteArrayOutputStream out;
 	Context ctx = getContext(req, res);
 	JavaBridge bridge = ctx.bridge;
+	if(session) ctx.setSession(req);
 
 	if(req.getContentLength()==0) {
 	    if(req.getHeader("Connection").equals("Close")) {
@@ -245,15 +281,27 @@ public class PhpJavaServlet extends CGIServlet {
 	in.close();
 	out.close();
     }
-    public void handleSocketConnection (HttpServletRequest req, HttpServletResponse res)
+    
+    /**
+     * Handle a redirected connection. The local channel is more than 50 
+     * times faster than the HTTP tunnel. Used by Apache and cgi.
+     * 
+     * @param req
+     * @param res
+     * @throws ServletException
+     * @throws IOException
+     */
+    protected void handleSocketConnection (HttpServletRequest req, HttpServletResponse res, boolean session)
 	throws ServletException, IOException {
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
 	Context ctx = getContext(req, res);
 	JavaBridge bridge = ctx.bridge;
+	if(session) ctx.setSession(req);
+
 	bridge.in = sin=req.getInputStream();
 	bridge.out = sout = new ByteArrayOutputStream();
 	Request r = bridge.request = new Request(bridge);
-        JavaBridge.load++;
+
 	try {
 	    if(r.initOptions(sin, sout)) {
 		res.setHeader("X_JAVABRIDGE_REDIRECT", socketRunner.socket.getSocketName());
@@ -278,16 +326,20 @@ public class PhpJavaServlet extends CGIServlet {
 	    try {if(resOut!=null) resOut.close();} catch (IOException e2) {}
 	}
     }
-    
+
+    /**
+     * Dispatcher for the "http tunnel", "local channel" or "override redirect".
+     */
     protected void doPut (HttpServletRequest req, HttpServletResponse res)
 	throws ServletException, IOException {
+    	short redirect = (short) req.getIntHeader("X_JAVABRIDGE_REDIRECT");
 	try {
-		if(req.getHeader("X_JAVABRIDGE_REDIRECT")!=null) 
-			handleRedirectConnection(req, res);
+	    if(redirect==1) 
+		handleRedirectConnection(req, res); /* override re-direct */
 	    else if(socketRunner.isAvailable()) 
-		handleSocketConnection(req, res); 
+		handleSocketConnection(req, res, redirect==2); /* re-direct */
 	    else
-		handleHttpConnection(req, res);
+		handleHttpConnection(req, res, redirect==2); /* standard http tunnel */
 
 	} catch (Throwable t) {
 	    Util.printStackTrace(t);
@@ -296,12 +348,17 @@ public class PhpJavaServlet extends CGIServlet {
 	}
     }
 
-
+    /**
+     * Used when running as a cgi binary only.
+     * 
+     *  (non-Javadoc)
+     * @see javax.servlet.http.HttpServlet#doGet(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
+     */
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
 	throws ServletException, IOException {
 
     	try {
-		super.doGet(req, res);
+	    super.doGet(req, res);
     	} catch (IOException e) {
     	    ServletException ex = new ServletException("An IO exception occured. Probably php was not installed as \"/usr/bin/php\" or \"c:/php5/php-cgi.exe\".\nPlease copy your PHP binary (\""+php+"\", see JavaBridge/WEB-INF/web.xml) into the JavaBridge/WEB-INF/cgi directory.\nSee webapps/JavaBridge/WEB-INF/cgi/README for details.", e);
     	    throw ex;

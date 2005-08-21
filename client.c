@@ -22,7 +22,6 @@
 #else
 #include "zend_stack.h"
 #endif
-#include "SAPI.h"
 
 #include "protocol.h"
 #include "parser.h"
@@ -352,27 +351,6 @@ static void end(parser_string_t st[1], parser_cb_t *cb){
 	break;
   }
 }
-static void set_cookie(char*key, size_t key_len, char*val, size_t val_len) {
-  static const char prefix[] = "Set-Cookie: ";
-  static const char eq[] = "=";
-  sapi_header_line ctr = {0};
-  size_t len = sizeof(prefix)+key_len+sizeof(eq)-1+val_len;
-  char *pos, *cookie = malloc(len);
-  
-  TSRMLS_FETCH();
-
-  assert(cookie); if(!cookie) exit(6);
-  pos = cookie;
-  memcpy(pos, prefix, sizeof(prefix)-1); pos+=sizeof(prefix)-1;
-  memcpy(pos, key, key_len); pos+=key_len;
-  memcpy(pos, eq, sizeof(eq)-1); pos+=sizeof(eq)-1;
-  memcpy(pos, val, val_len); pos+=val_len;
-  *pos=0;
-  ctr.line=cookie;
-  ctr.line_len=len-1;
-  sapi_header_op(SAPI_HEADER_ADD, &ctr TSRMLS_CC);
-  free(cookie);
-}
 
 static const char key_hosts[]="java.hosts";
 static const char key_servlet[] = "java.servlet";
@@ -388,9 +366,13 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
 	  if(strcmp(str, setcookie)) return;
 	  cookie_name = (char*)PARSER_GET_STRING(tag[1].strings, 0);
 	  cookie = (char*)PARSER_GET_STRING(tag[2].strings, 0);
-	  // if((path=strchr(cookie, ';'))) *path=0;	/* strip off path */
-	  set_cookie(cookie_name, tag[1].strings[0].length, 
-				 cookie, tag[2].strings[0].length);
+	  if((path=strchr(cookie, ';'))) { /* strip off path */
+		char*end;
+		*path++=0;
+		if(path=strchr(path, '=')) path++;
+		if(end=strchr(path, ';')) *end=0;
+	  }
+	  EXT_GLOBAL(setResultWith_context)(cookie_name, cookie, path);
 	  break;
 	}
 
@@ -398,7 +380,7 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
 	{
 	  static const char con_connection[]="Connection", con_close[]="close";
 	  if(!strcmp(str, con_connection)&&!strcmp((char*)PARSER_GET_STRING(tag[1].strings, 0), con_close)) {
-		(*ctx)->must_reopen = 1;
+		if(!(*ctx)->must_reopen) (*ctx)->must_reopen = 1;
 	  }
 	  break;
 	}
@@ -474,7 +456,6 @@ static void handle_request(proxyenv *env) {
 	close((*env)->peer);
 	(*env)->peer = (*env)->peer0;
 	(*env)->peer0 = 0;
-	(*env)->must_reopen = 0;
   }
 
   /* re-open a closed HTTP connection */
@@ -495,14 +476,12 @@ static void handle_request(proxyenv *env) {
 	  server = EXT_GLOBAL(test_server)(&(*env)->peer, 0, 0);
 	  assert(server); if(!server) exit(9);
 	  free(server);
-	  EXT_GLOBAL(send_context)(env);
 	} else {
 	  assert((*env)->peer); if((*env)->peer) close((*env)->peer);
 	  server = EXT_GLOBAL(test_server)(&(*env)->peer, 0, 0);
 	  assert(server); if(!server) exit(9);
 	  free(server);
 	}
-	(*env)->must_reopen = 0;
   }
 
   if(tail_call) {
@@ -530,8 +509,16 @@ unsigned char EXT_GLOBAL (get_mode) () {
  * adjust the standard environment for the current request.
  */
 static proxyenv* adjust_environment(proxyenv *env TSRMLS_DC) {
-  static const char context[] = "$_SERVER['X_JAVABRIDGE_CONTEXT']?$_SERVER['X_JAVABRIDGE_CONTEXT']:$_SERVER['HTTP_X_JAVABRIDGE_CONTEXT'];";
-  static const char override[] = "$_SERVER['X_JAVABRIDGE_OVERRIDE_HOSTS'];";
+  static const char context[] = "\
+array_key_exists('X_JAVABRIDGE_CONTEXT', $_SERVER)\
+?$_SERVER['X_JAVABRIDGE_CONTEXT']\
+:(array_key_exists('HTTP_X_JAVABRIDGE_CONTEXT', $_SERVER)?$_SERVER['HTTP_X_JAVABRIDGE_CONTEXT']:null);\
+";
+  static const char override[] = "\
+array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS', $_SERVER)\
+?$_SERVER['X_JAVABRIDGE_OVERRIDE_HOSTS']\
+:(array_key_exists('HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS', $_SERVER)?$_SERVER['HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS']:null);";
+
   static const char key_on[] = "On";
   zval val;
   char *servlet_context_string = EXT_GLOBAL (get_servlet_context) ();

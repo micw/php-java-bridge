@@ -44,8 +44,13 @@ static char *getSessionFactory(proxyenv *env) {
 }
 
 static void end(proxyenv *env) {
+  static send_context(proxyenv *env);
   size_t s=0, size = (*env)->send_len;
   ssize_t n=0;
+
+  /* send the context for the re-redirected connection */
+  if((*env)->must_reopen==2) send_context(env);
+  (*env)->must_reopen=0;
 
   if(!(*env)->is_local && EXT_GLOBAL (get_servlet_context) ()) {
 	char header[SEND_SIZE];
@@ -99,12 +104,13 @@ static void end_session(proxyenv *env) {
   int peer = (*env)->peer;
   char header[SEND_SIZE];
   int header_length;
+  short override_redirect = peer0?1:2;
   unsigned char mode = EXT_GLOBAL (get_mode) ();
 
   (*env)->finish=end;
   
   assert(!(*env)->peer_redirected || ((*env)->peer_redirected && (*env)->peer0));
-  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %ld\r\nX_JAVABRIDGE_REDIRECT: 1\r\n%sX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", (*env)->servlet_context_string, size+1, get_cookies(&val, env), getSessionFactory(env), mode);
+  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %ld\r\nX_JAVABRIDGE_REDIRECT: %d\r\n%sX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", (*env)->servlet_context_string, size+1, override_redirect, get_cookies(&val, env), getSessionFactory(env), mode);
   n=send(peer, header, header_length, 0);
   assert(n==header_length);
   n=0;
@@ -160,7 +166,7 @@ void EXT_GLOBAL(check_context) (proxyenv *env TSRMLS_DC) {
 	(*env)->finish=end_session;
   }
 }
-void EXT_GLOBAL (send_context)(proxyenv *env) {
+static send_context(proxyenv *env) {
 	size_t l = strlen((*env)->servlet_ctx);
 	char context[SEND_SIZE] = { 077, l&0xFF};
 	int context_length = 2;
@@ -173,6 +179,25 @@ void EXT_GLOBAL (send_context)(proxyenv *env) {
 	n=send((*env)->peer, context, context_length, 0);
 	assert(n==context_length);
 }
+
+void EXT_GLOBAL(setResultWith_context) (char*key, char*val, char*path) {
+  zval xval;
+  static char empty[] = "/";
+  static char cmd[] = "\
+$path=trim('%s');\
+setcookie('%s', '%s', 0, strncmp($_SERVER['PHP_SELF'], $path, strlen($path))?'/':$path);\
+";
+  char buf[1024];
+  int ret;
+
+  TSRMLS_FETCH();
+
+  if(!path) path = empty;
+  EXT_GLOBAL(snprintf)(buf, sizeof(buf), cmd, path, key, val);
+  ret = zend_eval_string(buf, 0, "setResultWith_cookie" TSRMLS_CC);
+  assert(SUCCESS==ret);
+}
+
   
 #define GROW_QUOTE() \
   if(pos+8>=newlen) { \

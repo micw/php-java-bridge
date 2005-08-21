@@ -230,16 +230,13 @@ Build and execution instructions:
   Sample settings for Apache/Tomcat
   ---------------------------------
 
-  The recommended way to run jsp and php is to install Apache, PHP,
-  the PHP/Java Bridge, Tomcat and mod_jk.
-
   Assuming that tomcat is installed in /opt/tomcat5, JavaBridge.war is
   deployed in /opt/tomcat5/webapps, java.so (or php_java.dll) is
   installed in the php modules directory, mod_jk and php5 are installed
   in the apache modules directory, we recommend following settings:
 
 
-  The following setting in httpd.conf directs all .jsp requests to the
+  The following settings in httpd.conf direct all .jsp requests to the
   tomcat servlet engine:
 
     httpd.conf:
@@ -249,10 +246,11 @@ Build and execution instructions:
 
     AddType application/x-httpd-php .php
     JkAutoAlias /opt/tomcat5/webapps
-    JkMount /*.jsp ajp13
+    JkMount /JavaBridge/*.jsp ajp13
+    JkMount /JavaBridge/ ajp13
 
 
-  The following setting in php.ini directs all Java() ... calls to the
+  The following settings in php.ini direct all Java() ... calls to the
   tomcat servlet engine:
 
     php.ini:

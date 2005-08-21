@@ -33,7 +33,6 @@
       <param-name>override_hosts</param-name>
       <param-value>On</param-value>
     </init-param>
-    </servlet>
 
     <!-- Your php binary, for example php.exe, php or /usr/bin/php. -->
     <init-param>
@@ -46,6 +45,7 @@
       <param-name>servlet_log_level</param-name>
       <param-value>2</param-value>
     </init-param>
+  </servlet>
 
 <!-- URL -->
     <servlet-mapping>
@@ -58,5 +58,4 @@
 		*.php
         </url-pattern>
     </servlet-mapping>
-
 </web-app>

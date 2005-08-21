@@ -85,7 +85,7 @@ public class callback3 implements org.xml.sax.DocumentHandler, org.xml.sax.Error
 
 	    parser.setDocumentHandler(handler);
 	    parser.setErrorHandler(handler);
-	    parser.parse(argv.length==0?"../examples/XML/phpinfo.xml":argv[0]);
+	    parser.parse(argv.length==0?"./phpinfo.xml":argv[0]);
 	    long t2=System.currentTimeMillis();
 	    System.err.println(result[i]=t2-t1);
 	}

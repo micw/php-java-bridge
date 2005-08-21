@@ -52,7 +52,7 @@ static void init_socket() {
   assert(sockname); if(!sockname) exit(6);
 
   EXT_GLOBAL(snprintf)(sockname, len+1, "%s%lx", bridge,(unsigned long)getpid());
-  EXT_GLOBAL(cfg)->sockname=sockname;
+  EXT_GLOBAL(cfg)->default_sockname = sockname;
 }
 #else 
 static void init_socket() {
@@ -63,18 +63,18 @@ static void init_socket() {
 	strcpy(sockname, s);
 	n = mkstemp(sockname);
 	assert(n); if(!n) exit(6);
-	EXT_GLOBAL(cfg)->sockname=sockname;
+	EXT_GLOBAL(cfg)->default_sockname = sockname;
 }
 #endif
 #else 
 static void init_socket() {
-  EXT_GLOBAL(cfg)->sockname = strdup(DEFAULT_PORT);
+  EXT_GLOBAL(cfg)->default_sockname = strdup(DEFAULT_PORT);
+  assert(EXT_GLOBAL(cfg)->default_sockname); if(!EXT_GLOBAL(cfg)->default_sockname) exit(6);
 }
 #endif
 void EXT_GLOBAL (init_cfg) () {
-  if(!(EXT_GLOBAL (ini_updated)&U_SOCKNAME)) {
-	init_socket();
-  }
+  init_socket();
+  if(!(EXT_GLOBAL (ini_updated) &U_SOCKNAME)) EXT_GLOBAL(cfg)->sockname=strdup(EXT_GLOBAL(cfg)->default_sockname);
   if(!(EXT_GLOBAL (ini_updated) &U_SERVLET)) EXT_GLOBAL(cfg)->servlet=strdup(DEFAULT_SERVLET);
   if(!(EXT_GLOBAL (ini_updated) &U_HOSTS)) EXT_GLOBAL(cfg)->hosts=strdup("");
   if(!(EXT_GLOBAL (ini_updated) &U_CLASSPATH)) EXT_GLOBAL(cfg)->classpath=strdup(CFG_CLASSPATH);
@@ -94,7 +94,10 @@ void EXT_GLOBAL (destroy_cfg) (int EXT_GLOBAL (ini_updated) ) {
   assert(EXT_GLOBAL(ini_updated) == ~0);
   if(!(EXT_GLOBAL (ini_updated) &U_SERVLET)) free(EXT_GLOBAL(cfg)->servlet);
   if(!(EXT_GLOBAL (ini_updated) &U_HOSTS)) free(EXT_GLOBAL(cfg)->hosts);
-  if(!(EXT_GLOBAL (ini_updated) &U_SOCKNAME)) free(EXT_GLOBAL(cfg)->sockname);
+
+  free(EXT_GLOBAL(cfg)->default_sockname);
+  if(!(EXT_GLOBAL (ini_updated) &U_SOCKNAME)) free(EXT_GLOBAL(cfg)->sockname); 
+
   if(!(EXT_GLOBAL (ini_updated) &U_CLASSPATH)) free(EXT_GLOBAL(cfg)->classpath);
   if(!(EXT_GLOBAL (ini_updated) &U_LIBRARY_PATH)) free(EXT_GLOBAL(cfg)->ld_library_path);
   if(!(EXT_GLOBAL (ini_updated) &U_JAVA)) free(EXT_GLOBAL(cfg)->vm);
@@ -133,6 +136,15 @@ char *EXT_GLOBAL(get_servlet_context)() {
 
   if(!strncasecmp("on", EXT_GLOBAL(cfg)->servlet, 2) || !strncasecmp("1", EXT_GLOBAL(cfg)->servlet, 1)) return DEFAULT_SERVLET;
   return EXT_GLOBAL(cfg)->servlet;
+}
+
+char *EXT_GLOBAL(get_sockname)() {
+  if(!EXT_GLOBAL(option_set_by_user)(U_SOCKNAME)) return EXT_GLOBAL(cfg)->default_sockname;
+
+  if(!strncasecmp("on", EXT_GLOBAL(cfg)->servlet, 2) || !strncasecmp("1", EXT_GLOBAL(cfg)->servlet, 1))
+	return EXT_GLOBAL(cfg)->default_sockname;
+
+  return EXT_GLOBAL(cfg)->sockname;
 }
 
 #ifndef PHP_WRAPPER_H

@@ -147,9 +147,9 @@ cd jakarta-tomcat-connectors-1.2.14.1-src/jk/native/
 
 # now activate mod_jk in the httpd.conf, mount the tomcat webapps
 # directory and ask tomcat to handle all .jsp files
-su -c "echo -e 'LoadModule jk_module modules/mod_jk.so\nJkAutoAlias /opt/tomcat5/webapps\nJkMount /*.jsp ajp13' >>$INST/conf/httpd.conf"
+su -c "echo -e 'LoadModule jk_module modules/mod_jk.so\nJkAutoAlias /opt/tomcat5/webapps\nJkMount /JavaBridge/*.jsp ajp13\nJkMount /JavaBridge/ ajp13' >>$INST/conf/httpd.conf"
 
-Start tomcat, for example with the command /opt/tomcat5/catalina.sh
+Start tomcat, for example with the command /opt/tomcat5/catalina.sh start
 
 Copy the JavaBridge.war file (which you should have created when
 compiling the PHP/Java Bridge, see flag "--enable-servlet" above) from

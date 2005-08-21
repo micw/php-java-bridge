@@ -185,7 +185,9 @@ static void session(INTERNAL_FUNCTION_PARAMETERS)
   jenv=EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   if(!jenv) RETURN_NULL();
  
-  EXT_GLOBAL(check_context) (jenv TSRMLS_CC);				/* re-direct if no context was found */
+  if(!EXT_GLOBAL(cfg)->is_cgi_servlet)
+	EXT_GLOBAL(check_context) (jenv TSRMLS_CC); /* re-direct if no
+												   context was found */
 
  (*jenv)->writeInvokeBegin(jenv, 0, "getSession", 0, 'I', return_value);
   (*jenv)->writeString(jenv, Z_STRVAL_PP(session), Z_STRLEN_PP(session)); 
@@ -537,7 +539,7 @@ static PHP_INI_MH(OnIniServlet)
 
 static PHP_INI_MH(OnIniSockname)
 {
-	if (new_value && strlen(new_value) && strncasecmp(off, new_value, sizeof(off)-1)) {
+	if (new_value) {
 	  if((EXT_GLOBAL (ini_set) &U_SOCKNAME)) free(EXT_GLOBAL(cfg)->sockname);
 	  EXT_GLOBAL(cfg)->sockname=strdup(new_value);
 	  assert(EXT_GLOBAL(cfg)->sockname); if(!EXT_GLOBAL(cfg)->sockname) exit(6);
@@ -1214,19 +1216,41 @@ static void override_ini_from_cgi() {
   static const char key_servlet[] = "java.servlet";
   static const char override[] = "X_JAVABRIDGE_OVERRIDE_HOSTS";
   char *hosts;
+  EXT_GLOBAL(cfg)->is_cgi_servlet=0;
+  
   if (getenv("SERVER_SOFTWARE")
 	  || getenv("SERVER_NAME")
 	  || getenv("GATEWAY_INTERFACE")
 	  || getenv("REQUEST_METHOD")) {
+
 	if (hosts=getenv("X_JAVABRIDGE_OVERRIDE_HOSTS")) {
-	  zend_alter_ini_entry((char*)key_hosts, sizeof key_hosts, 
-						   hosts, strlen(hosts)+1, 
-						   ZEND_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
-	  zend_alter_ini_entry((char*)key_servlet, sizeof key_servlet, 
-						   (char*)on, sizeof on, 
-						   ZEND_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
+	  EXT_GLOBAL(cfg)->is_cgi_servlet=1;
+	  if(*hosts) {
+		zend_alter_ini_entry((char*)key_hosts, sizeof key_hosts, 
+							 hosts, strlen(hosts)+1, 
+							 ZEND_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
+		zend_alter_ini_entry((char*)key_servlet, sizeof key_servlet, 
+							 (char*)on, sizeof on, 
+							 ZEND_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
+	  }
 	}
   }
+}
+
+static void make_local_socket_info() {
+  memset(&EXT_GLOBAL(cfg)->saddr, 0, sizeof EXT_GLOBAL(cfg)->saddr);
+#ifndef CFG_JAVA_SOCKET_INET
+  EXT_GLOBAL(cfg)->saddr.sun_family = AF_LOCAL;
+  memset(EXT_GLOBAL(cfg)->saddr.sun_path, 0, sizeof EXT_GLOBAL(cfg)->saddr.sun_path);
+  strcpy(EXT_GLOBAL(cfg)->saddr.sun_path, EXT_GLOBAL(get_sockname)());
+# ifdef HAVE_ABSTRACT_NAMESPACE
+  *EXT_GLOBAL(cfg)->saddr.sun_path=0;
+# endif
+#else
+  EXT_GLOBAL(cfg)->saddr.sin_family = AF_INET;
+  EXT_GLOBAL(cfg)->saddr.sin_port=htons(atoi(EXT_GLOBAL(get_sockname)()));
+  EXT_GLOBAL(cfg)->saddr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
+#endif
 }
 
 PHP_MINIT_FUNCTION(EXT)
@@ -1315,25 +1339,14 @@ PHP_MINIT_FUNCTION(EXT)
 	extern void EXT_GLOBAL(init_cfg) ();
 	
 	EXT_GLOBAL(init_cfg) ();
-	memset(&EXT_GLOBAL(cfg)->saddr, 0, sizeof EXT_GLOBAL(cfg)->saddr);
-#ifndef CFG_JAVA_SOCKET_INET
-	EXT_GLOBAL(cfg)->saddr.sun_family = AF_LOCAL;
-	memset(EXT_GLOBAL(cfg)->saddr.sun_path, 0, sizeof EXT_GLOBAL(cfg)->saddr.sun_path);
-	if(EXT_GLOBAL(cfg)->sockname) strcpy(EXT_GLOBAL(cfg)->saddr.sun_path, EXT_GLOBAL(cfg)->sockname);
-# ifdef HAVE_ABSTRACT_NAMESPACE
-	*EXT_GLOBAL(cfg)->saddr.sun_path=0;
-# endif
-#else
-	EXT_GLOBAL(cfg)->saddr.sin_family = AF_INET;
-	EXT_GLOBAL(cfg)->saddr.sin_port=htons(atoi(EXT_GLOBAL(cfg)->sockname));
-	EXT_GLOBAL(cfg)->saddr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
-#endif
-  }
-  override_ini_from_cgi();
-  EXT_GLOBAL(ini_user)|=EXT_GLOBAL(ini_updated);
-  EXT_GLOBAL(ini_updated)=0;
+	override_ini_from_cgi();
+	EXT_GLOBAL(ini_user)|=EXT_GLOBAL(ini_updated);
+	EXT_GLOBAL(ini_updated)=0;
 
-  EXT_GLOBAL(start_server) ();
+	make_local_socket_info();
+	EXT_GLOBAL(start_server) ();
+  }
+
   return SUCCESS;
 }
 PHP_MINFO_FUNCTION(EXT)

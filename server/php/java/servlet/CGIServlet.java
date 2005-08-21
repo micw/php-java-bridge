@@ -283,8 +283,8 @@ public class CGIServlet extends HttpServlet {
 
     /** the string manager for this package. */
     /* YAGNI
-    private static StringManager sm =
-        StringManager.getManager(Constants.Package);
+       private static StringManager sm =
+       StringManager.getManager(Constants.Package);
     */
 
     /** the Context container associated with our web application. */
@@ -356,7 +356,7 @@ public class CGIServlet extends HttpServlet {
         //Wrapper wrapper = (Wrapper) getServletConfig();
         //context = (Context) wrapper.getParent();
 
-    context = config.getServletContext();
+	context = config.getServletContext();
         if (debug >= 1) {
             //log("init: Associated with Context '" + context.getPath() + "'");
         }
@@ -381,7 +381,7 @@ public class CGIServlet extends HttpServlet {
      *
      */
     protected void printServletEnvironment(ServletOutputStream out,
-        HttpServletRequest req, HttpServletResponse res) throws IOException {
+					   HttpServletRequest req, HttpServletResponse res) throws IOException {
 
         // Document the properties from ServletRequest
         out.println("<h1>ServletRequest Properties</h1>");
@@ -390,14 +390,14 @@ public class CGIServlet extends HttpServlet {
         while (attrs.hasMoreElements()) {
             String attr = (String) attrs.nextElement();
             out.println("<li><b>attribute</b> " + attr + " = " +
-                           req.getAttribute(attr));
+			req.getAttribute(attr));
         }
         out.println("<li><b>characterEncoding</b> = " +
-                       req.getCharacterEncoding());
+		    req.getCharacterEncoding());
         out.println("<li><b>contentLength</b> = " +
-                       req.getContentLength());
+		    req.getContentLength());
         out.println("<li><b>contentType</b> = " +
-                       req.getContentType());
+		    req.getContentType());
         Enumeration locales = req.getLocales();
         while (locales.hasMoreElements()) {
             Locale locale = (Locale) locales.nextElement();
@@ -409,7 +409,7 @@ public class CGIServlet extends HttpServlet {
             String values[] = req.getParameterValues(param);
             for (int i = 0; i < values.length; i++)
                 out.println("<li><b>parameter</b> " + param + " = " +
-                               values[i]);
+			    values[i]);
         }
         out.println("<li><b>protocol</b> = " + req.getProtocol());
         out.println("<li><b>remoteAddr</b> = " + req.getRemoteAddr());
@@ -426,41 +426,41 @@ public class CGIServlet extends HttpServlet {
         out.println("<ul>");
         out.println("<li><b>authType</b> = " + req.getAuthType());
         out.println("<li><b>contextPath</b> = " +
-                       req.getContextPath());
+		    req.getContextPath());
         Cookie cookies[] = req.getCookies();
-    if (cookies!=null) {
-        for (int i = 0; i < cookies.length; i++)
+	if (cookies!=null) {
+	    for (int i = 0; i < cookies.length; i++)
                 out.println("<li><b>cookie</b> " + cookies[i].getName() +" = " +cookies[i].getValue());
-    }
+	}
         Enumeration headers = req.getHeaderNames();
         while (headers.hasMoreElements()) {
             String header = (String) headers.nextElement();
             out.println("<li><b>header</b> " + header + " = " +
-                           req.getHeader(header));
+			req.getHeader(header));
         }
         out.println("<li><b>method</b> = " + req.getMethod());
         out.println("<li><a name=\"pathInfo\"><b>pathInfo</b></a> = "
                     + req.getPathInfo());
         out.println("<li><b>pathTranslated</b> = " +
-                       req.getPathTranslated());
+		    req.getPathTranslated());
         out.println("<li><b>queryString</b> = " +
-                       req.getQueryString());
+		    req.getQueryString());
         out.println("<li><b>remoteUser</b> = " +
-                       req.getRemoteUser());
+		    req.getRemoteUser());
         out.println("<li><b>requestedSessionId</b> = " +
-                       req.getRequestedSessionId());
+		    req.getRequestedSessionId());
         out.println("<li><b>requestedSessionIdFromCookie</b> = " +
-                       req.isRequestedSessionIdFromCookie());
+		    req.isRequestedSessionIdFromCookie());
         out.println("<li><b>requestedSessionIdFromURL</b> = " +
-                       req.isRequestedSessionIdFromURL());
+		    req.isRequestedSessionIdFromURL());
         out.println("<li><b>requestedSessionIdValid</b> = " +
-                       req.isRequestedSessionIdValid());
+		    req.isRequestedSessionIdValid());
         out.println("<li><b>requestURI</b> = " +
-                       req.getRequestURI());
+		    req.getRequestURI());
         out.println("<li><b>servletPath</b> = " +
-                       req.getServletPath());
+		    req.getServletPath());
         out.println("<li><b>userPrincipal</b> = " +
-                       req.getUserPrincipal());
+		    req.getUserPrincipal());
         out.println("</ul>");
         out.println("<hr>");
 
@@ -471,7 +471,7 @@ public class CGIServlet extends HttpServlet {
         while (attrs.hasMoreElements()) {
             String attr = (String) attrs.nextElement();
             out.println("<li><b>" + attr + "</b> = " +
-                           req.getAttribute(attr));
+			req.getAttribute(attr));
         }
         out.println("</ul>");
         out.println("<hr>");
@@ -484,13 +484,13 @@ public class CGIServlet extends HttpServlet {
             out.println("<h1>HttpSession Properties</h1>");
             out.println("<ul>");
             out.println("<li><b>id</b> = " +
-                           session.getId());
+			session.getId());
             out.println("<li><b>creationTime</b> = " +
-                           new Date(session.getCreationTime()));
+			new Date(session.getCreationTime()));
             out.println("<li><b>lastAccessedTime</b> = " +
-                           new Date(session.getLastAccessedTime()));
+			new Date(session.getLastAccessedTime()));
             out.println("<li><b>maxInactiveInterval</b> = " +
-                           session.getMaxInactiveInterval());
+			session.getMaxInactiveInterval());
             out.println("</ul>");
             out.println("<hr>");
 
@@ -501,7 +501,7 @@ public class CGIServlet extends HttpServlet {
             while (attrs.hasMoreElements()) {
                 String attr = (String) attrs.nextElement();
                 out.println("<li><b>" + attr + "</b> = " +
-                               session.getAttribute(attr));
+			    session.getAttribute(attr));
             }
             out.println("</ul>");
             out.println("<hr>");
@@ -512,7 +512,7 @@ public class CGIServlet extends HttpServlet {
         out.println("<h1>ServletConfig Properties</h1>");
         out.println("<ul>");
         out.println("<li><b>servletName</b> = " +
-                       getServletConfig().getServletName());
+		    getServletConfig().getServletName());
         out.println("</ul>");
         out.println("<hr>");
 
@@ -532,13 +532,13 @@ public class CGIServlet extends HttpServlet {
         out.println("<h1>ServletContext Properties</h1>");
         out.println("<ul>");
         out.println("<li><b>majorVersion</b> = " +
-                       getServletContext().getMajorVersion());
+		    getServletContext().getMajorVersion());
         out.println("<li><b>minorVersion</b> = " +
-                       getServletContext().getMinorVersion());
+		    getServletContext().getMinorVersion());
         out.println("<li><b>realPath('/')</b> = " +
-                       getServletContext().getRealPath("/"));
+		    getServletContext().getRealPath("/"));
         out.println("<li><b>serverInfo</b> = " +
-                       getServletContext().getServerInfo());
+		    getServletContext().getServerInfo());
         out.println("</ul>");
         out.println("<hr>");
 
@@ -561,7 +561,7 @@ public class CGIServlet extends HttpServlet {
         while (attrs.hasMoreElements()) {
             String attr = (String) attrs.nextElement();
             out.println("<li><b>" + attr + "</b> = " +
-                           getServletContext().getAttribute(attr));
+			getServletContext().getAttribute(attr));
         }
         out.println("</ul>");
         out.println("<hr>");
@@ -607,9 +607,9 @@ public class CGIServlet extends HttpServlet {
         throws ServletException, IOException {
 
         // Verify that we were not accessed using the invoker servlet
-//        if (req.getAttribute(Globals.INVOKED_ATTR) != null)
-//            throw new UnavailableException
-//                ("Cannot invoke CGIServlet through the invoker");
+	//        if (req.getAttribute(Globals.INVOKED_ATTR) != null)
+	//            throw new UnavailableException
+	//                ("Cannot invoke CGIServlet through the invoker");
 
         CGIEnvironment cgiEnv = createCGIEnvironment(req, getServletContext());
 
@@ -676,13 +676,13 @@ public class CGIServlet extends HttpServlet {
 
 
     /**
-	 * @param req HttpServletRequest
-	 * @param servletContext ServletContext
-	 * @return cgi environment
-	 */
-	protected CGIEnvironment createCGIEnvironment(HttpServletRequest req, ServletContext servletContext) {
-	    return new CGIEnvironment(req, servletContext);
-	}
+     * @param req HttpServletRequest
+     * @param servletContext ServletContext
+     * @return cgi environment
+     */
+    protected CGIEnvironment createCGIEnvironment(HttpServletRequest req, ServletContext servletContext) {
+	return new CGIEnvironment(req, servletContext);
+    }
 
 
     /**
@@ -751,7 +751,7 @@ public class CGIServlet extends HttpServlet {
                 String param = paramNames.nextElement().toString();
                 if (param != null) {
                     queryParameters.put(
-                        param, URLEncoder.encode(req.getParameter(param)));
+					param, URLEncoder.encode(req.getParameter(param)));
                 }
             }
 
@@ -759,7 +759,7 @@ public class CGIServlet extends HttpServlet {
 
             if (this.valid) {
                 workingDirectory = new File(command.substring(0,
-                      command.lastIndexOf(File.separator)));
+							      command.lastIndexOf(File.separator)));
             }
 
         }
@@ -768,7 +768,7 @@ public class CGIServlet extends HttpServlet {
 
 
 
-		/**
+	/**
          * Uses the ServletContext to set some CGI variables
          *
          * @param  context   ServletContext for information provided by the
@@ -872,8 +872,8 @@ public class CGIServlet extends HttpServlet {
             if ((webAppRootDir != null)
                 && (webAppRootDir.lastIndexOf(File.separator) ==
                     (webAppRootDir.length() - 1))) {
-                    //strip the trailing "/" from the webAppRootDir
-                    webAppRootDir =
+		//strip the trailing "/" from the webAppRootDir
+		webAppRootDir =
                     webAppRootDir.substring(0, (webAppRootDir.length() - 1));
             }
 
@@ -888,7 +888,7 @@ public class CGIServlet extends HttpServlet {
 
             File currentLocation = new File(webAppRootDir);
             StringTokenizer dirWalker =
-            new StringTokenizer(pathInfo, File.separator);
+		new StringTokenizer(pathInfo, File.separator);
             if (debug >= 3) {
                 log("findCGI: currentLoc=" + currentLocation);
             }
@@ -908,9 +908,9 @@ public class CGIServlet extends HttpServlet {
                 path = currentLocation.getAbsolutePath();
                 name = currentLocation.getName();
                 cginame =
-                currentLocation.getParent().substring(webAppRootDir.length())
-                + File.separator
-                + name;
+		    currentLocation.getParent().substring(webAppRootDir.length())
+		    + File.separator
+		    + name;
 
                 if (".".equals(contextPath)) {
                     scriptname = servletPath + cginame;
@@ -1092,8 +1092,8 @@ public class CGIServlet extends HttpServlet {
                     //NOOP per CGI specification section 11.2
                 } else if("HOST".equalsIgnoreCase(header)) {
                     String host = req.getHeader(header);
-        int idx =  host.indexOf(":");
-        if(idx < 0) idx = host.length();
+		    int idx =  host.indexOf(":");
+		    if(idx < 0) idx = host.length();
                     envp.put("HTTP_" + header.replace('-', '_'),
                              host.substring(0, idx));
                 } else {
@@ -1278,7 +1278,7 @@ public class CGIServlet extends HttpServlet {
          *           string if the original was <code>null</code> or empty ("")
          */
         protected String blanksToString(String couldBeBlank,
-                                      String subForBlanks) {
+					String subForBlanks) {
             return (("".equals(couldBeBlank) || couldBeBlank == null)
                     ? subForBlanks
                     : couldBeBlank);
@@ -1455,21 +1455,21 @@ public class CGIServlet extends HttpServlet {
 
 
         private void addHeader(String line) {
-        if (debug >= 2) {
-                    log("runCGI: addHeader(\"" + line + "\")");
-                }
-                if (line.startsWith("HTTP")) {
-                    //TODO: should set status codes (NPH support)
-                    /*
-                     * response.setStatus(getStatusCode(line));
-                     */
-                } else {
-                	try {
+	    if (debug >= 2) {
+		log("runCGI: addHeader(\"" + line + "\")");
+	    }
+	    if (line.startsWith("HTTP")) {
+		//TODO: should set status codes (NPH support)
+		/*
+		 * response.setStatus(getStatusCode(line));
+		 */
+	    } else {
+		try {
                     response.addHeader
                         (line.substring(0, line.indexOf(":")).trim(),
                          line.substring(line.indexOf(":") + 1).trim());
-                	} catch (Exception e) {/*not a valid header*/}
-                }
+		} catch (Exception e) {/*not a valid header*/}
+	    }
         }
 
         /**

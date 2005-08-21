@@ -621,7 +621,7 @@ public class JavaBridge implements Runnable {
 			    } else if (elem instanceof Boolean) {
 				if (c!=Boolean.TYPE) weight+=256;
 			    } else if (elem instanceof Character) {
-				    if (c!=Character.TYPE) weight+=256;
+				if (c!=Character.TYPE) weight+=256;
 			    } else
 				weight += 256;
 			} else
@@ -650,7 +650,7 @@ public class JavaBridge implements Runnable {
 		    } else if (arg instanceof Boolean) {
 			if (c!=Boolean.TYPE) weight+=9999;
 		    } else if (arg instanceof Character) {
-			    if (c!=Character.TYPE) weight+=9999;
+			if (c!=Character.TYPE) weight+=9999;
 		    } else if (arg instanceof String) {
 			if (c== Character.TYPE || ((String)arg).length()>0)
 			    weight+=((String)arg).length();
@@ -1353,7 +1353,14 @@ public class JavaBridge implements Runnable {
      * the servlet or jsp.
      */
     public ISession getSession(String name, boolean clientIsNew, int timeout){
-    	    return sessionFactory.getSession(name, clientIsNew, timeout);
+    	try {
+	    ISession session= sessionFactory.getSession(name, clientIsNew, timeout);
+	    if(session==null) throw new NullPointerException("Isession is null");
+	    return session;
+    	} catch (Throwable t) {
+	    printStackTrace(t);
+	    return null;
+    	}
     }
     
     public Object makeClosure(long object, Map names) {
