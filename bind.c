@@ -283,7 +283,6 @@ static void exec_vm(TSRMLS_D) {
 
 static int test_local_server(void) {
   int sock, n;
-  puts("test local");
 #ifndef CFG_JAVA_SOCKET_INET
   sock = socket (PF_LOCAL, SOCK_STREAM, 0);
 #else
