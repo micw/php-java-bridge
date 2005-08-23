@@ -8,6 +8,7 @@
 
 #include "protocol.h"
 #include "php_java.h"
+#include "java_bridge.h"
 
 #ifndef EXTENSION_DIR
 #error EXTENSION_DIR must point to the PHP extension directory
@@ -42,9 +43,12 @@
 
 const char * const EXT_GLOBAL (bridge_version) = BRIDGE_VERSION;
 
+EXT_EXTERN_MODULE_GLOBALS(EXT)
+
+
 #ifndef CFG_JAVA_SOCKET_INET
 #ifdef HAVE_ABSTRACT_NAMESPACE
-static void init_socket() {
+static void init_socket(void) {
   static const char * const bridge="@java-bridge-";
   size_t len = strlen(bridge)+ sizeof(pid_t)*2; //assuming byte=8bit
 
@@ -55,7 +59,7 @@ static void init_socket() {
   EXT_GLOBAL(cfg)->default_sockname = sockname;
 }
 #else 
-static void init_socket() {
+static void init_socket(void) {
 	int n;
 	char*s=SOCKNAME;
 	char *sockname=malloc(strlen(s)+1);
@@ -67,12 +71,12 @@ static void init_socket() {
 }
 #endif
 #else 
-static void init_socket() {
+static void init_socket(void) {
   EXT_GLOBAL(cfg)->default_sockname = strdup(DEFAULT_PORT);
   assert(EXT_GLOBAL(cfg)->default_sockname); if(!EXT_GLOBAL(cfg)->default_sockname) exit(6);
 }
 #endif
-void EXT_GLOBAL (init_cfg) () {
+void EXT_GLOBAL (init_cfg) (TSRMLS_D) {
   init_socket();
   if(!(EXT_GLOBAL (ini_updated) &U_SOCKNAME)) EXT_GLOBAL(cfg)->sockname=strdup(EXT_GLOBAL(cfg)->default_sockname);
   if(!(EXT_GLOBAL (ini_updated) &U_SERVLET)) EXT_GLOBAL(cfg)->servlet=strdup(DEFAULT_SERVLET);
@@ -88,6 +92,10 @@ void EXT_GLOBAL (init_cfg) () {
   if(!(EXT_GLOBAL (ini_updated) &U_LOGFILE)) EXT_GLOBAL(cfg)->logFile=strdup(LOGFILE);
   
   EXT_GLOBAL(ini_set)=~0;
+  EXT_GLOBAL(cfg)->can_fork = 
+	!(EXT_GLOBAL (option_set_by_user) (U_SOCKNAME, EXT_GLOBAL(ini_user))) &&
+	!(EXT_GLOBAL (option_set_by_user) (U_HOSTS, EXT_GLOBAL(ini_user))) &&
+	!(EXT_GLOBAL (option_set_by_user) (U_SERVLET, EXT_GLOBAL(ini_user)));
 }
 
 void EXT_GLOBAL (destroy_cfg) (int EXT_GLOBAL (ini_updated) ) {
@@ -110,10 +118,11 @@ void EXT_GLOBAL (destroy_cfg) (int EXT_GLOBAL (ini_updated) ) {
  * return true only if the _user_ has set the option to true (not
  * "off").
  */
-short EXT_GLOBAL(option_set_by_user)(short option) {
+short EXT_GLOBAL(option_set_by_user)(short option, int ini_user) {
+  static const char off[]="Off";
   char *entry = 0;
 
-  if((option & EXT_GLOBAL(ini_user))==0) return 0;
+  if((option & ini_user)==0) return 0;
 
   switch(option) {
   case U_LOGFILE: entry = EXT_GLOBAL(cfg)->logFile; break;
@@ -128,22 +137,22 @@ short EXT_GLOBAL(option_set_by_user)(short option) {
   default: assert(0);
   }  
 
-  return entry && strlen(entry) && strncasecmp("off", entry, 3);
+  if (!entry || !*entry) return 0;
+  if(!strncasecmp(off, entry, 3)) {
+	*entry=0;
+	return 0;
+  }
+  return 1;
 }
 
-char *EXT_GLOBAL(get_servlet_context)() {
-  if(!EXT_GLOBAL(option_set_by_user)(U_SERVLET)) return 0;
-
-  if(!strncasecmp("on", EXT_GLOBAL(cfg)->servlet, 2) || !strncasecmp("1", EXT_GLOBAL(cfg)->servlet, 1)) return DEFAULT_SERVLET;
-  return EXT_GLOBAL(cfg)->servlet;
+char *EXT_GLOBAL(get_servlet_context)(TSRMLS_D) {
+  if(!EXT_GLOBAL(option_set_by_user)(U_SERVLET, JG(ini_user))) return 0;
+  return JG(servlet);
 }
 
-char *EXT_GLOBAL(get_sockname)() {
-  if(!EXT_GLOBAL(option_set_by_user)(U_SOCKNAME)) return EXT_GLOBAL(cfg)->default_sockname;
-
-  if(!strncasecmp("on", EXT_GLOBAL(cfg)->servlet, 2) || !strncasecmp("1", EXT_GLOBAL(cfg)->servlet, 1))
+char *EXT_GLOBAL(get_sockname)(TSRMLS_D) {
+  if(!EXT_GLOBAL(option_set_by_user)(U_SOCKNAME, EXT_GLOBAL(ini_user)))
 	return EXT_GLOBAL(cfg)->default_sockname;
-
   return EXT_GLOBAL(cfg)->sockname;
 }
 

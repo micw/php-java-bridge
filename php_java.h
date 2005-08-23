@@ -82,6 +82,9 @@ PHP_MINIT_FUNCTION(EXT);
 PHP_MSHUTDOWN_FUNCTION(EXT);
 PHP_MINFO_FUNCTION(EXT);
 
+/**
+ * The following structure contains shared variables.
+ */
 struct cfg {
 #ifdef CFG_JAVA_SOCKET_INET
   struct sockaddr_in saddr;
@@ -90,6 +93,7 @@ struct cfg {
 #endif
   int cid; // server's process id
   int err; // file descriptor: server's return code
+
   char*sockname, *default_sockname;
   char*hosts;
   char*classpath;	
@@ -105,9 +109,17 @@ struct cfg {
 };
 extern struct cfg *EXT_GLOBAL(cfg);
 
+/**
+ * The following structure contains per-request variables.
+ */
 EXT_BEGIN_MODULE_GLOBALS(EXT)
   proxyenv *jenv;
-  short is_closed; 				/* PR1176522: GC must not re-open the connection */
+  short is_closed; /* PR1176522: GC must not re-open the connection */
+
+  /* local copy of the shared variables above. Needed for channel
+	 re-directs */
+  char *hosts, *servlet;
+  int ini_user;
 
   /* for user CB's */
   zval*exception;
@@ -128,18 +140,18 @@ EXT_END_MODULE_GLOBALS(EXT)
 # define JG(v) EXT_GLOBAL(globals).v
 #endif
 
-extern char* EXT_GLOBAL(get_server_string());
+extern char* EXT_GLOBAL(get_server_string)(TSRMLS_D);
 
 extern proxyenv *EXT_GLOBAL(try_connect_to_server)(TSRMLS_D);
 extern proxyenv *EXT_GLOBAL(connect_to_server)(TSRMLS_D);
-extern void EXT_GLOBAL(start_server)();
+extern void EXT_GLOBAL(start_server)(TSRMLS_D);
 
-extern char* EXT_GLOBAL(test_server)(int *socket, short *is_local, struct sockaddr*saddr);
+extern char* EXT_GLOBAL(test_server)(int *socket, short *is_local, struct sockaddr*saddr TSRMLS_DC);
 
 /* returns the servlet context or null */
-extern char *EXT_GLOBAL(get_servlet_context)();
+extern char *EXT_GLOBAL(get_servlet_context)(TSRMLS_D);
 
 /* returns the local socketname or the default local socketname*/
-extern char *EXT_GLOBAL(get_sockname)();
+extern char *EXT_GLOBAL(get_sockname)(TSRMLS_D);
 
 #endif

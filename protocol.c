@@ -44,22 +44,25 @@ static char *getSessionFactory(proxyenv *env) {
 }
 
 static void end(proxyenv *env) {
-  static send_context(proxyenv *env);
+  static void send_context(proxyenv *env);
   size_t s=0, size = (*env)->send_len;
   ssize_t n=0;
-
+  char *servlet_context;
   /* send the context for the re-redirected connection */
   if((*env)->must_reopen==2) send_context(env);
   (*env)->must_reopen=0;
 
-  if(!(*env)->is_local && EXT_GLOBAL (get_servlet_context) ()) {
+  TSRMLS_FETCH();
+  servlet_context = EXT_GLOBAL (get_servlet_context) (TSRMLS_C);
+
+  if(!(*env)->is_local && servlet_context) {
 	char header[SEND_SIZE];
 	int header_length;
 	unsigned char mode = EXT_GLOBAL (get_mode) ();
 	ssize_t n;
 
 	assert(!(*env)->peer_redirected || ((*env)->peer_redirected && (*env)->peer0));
-	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %ld\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", EXT_GLOBAL (get_servlet_context) (), size+1, getSessionFactory(env), mode);
+	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %ld\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", servlet_context, size+1, getSessionFactory(env), mode);
 
 	n=send((*env)->peer, header, header_length, 0);
 	assert(n==header_length);
@@ -131,8 +134,12 @@ static void flush(proxyenv *env) {
 }
 
 void EXT_GLOBAL (protocol_end) (proxyenv *env) {
+  char *servlet_context;
+  
+  TSRMLS_FETCH();
+  servlet_context = EXT_GLOBAL (get_servlet_context) (TSRMLS_C);
 
-  if(!(*env)->is_local && EXT_GLOBAL (get_servlet_context) ()) {
+  if(!(*env)->is_local && servlet_context) {
 	size_t s=0;
 	ssize_t n;
 	char header[SEND_SIZE];
@@ -140,7 +147,7 @@ void EXT_GLOBAL (protocol_end) (proxyenv *env) {
 
 	assert(!(*env)->peer_redirected);
 
-	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nContent-Type: text/html\r\nContent-Length: 0\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n", EXT_GLOBAL (get_servlet_context) (),getSessionFactory(env));
+	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nContent-Type: text/html\r\nContent-Length: 0\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n", servlet_context, getSessionFactory(env));
 
 	n=send((*env)->peer, header, header_length, 0);
 	assert(n==header_length);
@@ -166,7 +173,7 @@ void EXT_GLOBAL(check_context) (proxyenv *env TSRMLS_DC) {
 	(*env)->finish=end_session;
   }
 }
-static send_context(proxyenv *env) {
+static void send_context(proxyenv *env) {
 	size_t l = strlen((*env)->servlet_ctx);
 	char context[SEND_SIZE] = { 077, l&0xFF};
 	int context_length = 2;

@@ -253,7 +253,6 @@ struct parse_ctx {
 static void begin(parser_tag_t tag[3], parser_cb_t *cb){
   struct parse_ctx *ctx=(struct parse_ctx*)cb->ctx;
   parser_string_t *st=tag[2].strings;
-  
   switch ((*tag[0].strings[0].string)[tag[0].strings[0].off]) {
   case 'A':						/* receive apply args as normal array */
 	GET_RESULT(4);
@@ -357,7 +356,7 @@ static const char key_servlet[] = "java.servlet";
 static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
   proxyenv *ctx=(proxyenv*)cb->ctx;
   char *str=(char*)PARSER_GET_STRING(tag[0].strings, 0);
-
+  TSRMLS_FETCH();
   switch (*str) {
   case 'S'://Set-Cookie:
 	{
@@ -395,7 +394,7 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
 		char *name = (*ctx)->server_name;
 		char *idx = strchr(name, ':');
 		size_t len = idx ? idx-name : strlen(name);
-		char *server_name = malloc(len+1+key_len+1);
+		char *server_name = emalloc(len+1+key_len+1);
 		char *pos = server_name;
 		assert(server_name); if(!server_name) exit(9);
 
@@ -403,11 +402,11 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
 		*pos=':';
 		memcpy(pos+1, key, key_len); pos+=key_len+1;
 		*pos=0;
-		zend_alter_ini_entry((char*)key_hosts, sizeof key_hosts, 
-							 server_name, len+1+key_len,
-							 ZEND_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
+
+		if(JG(hosts)) efree(JG(hosts));
+		JG(hosts)=server_name;
+
 		(*ctx)->must_reopen = 2;
-		free(server_name);
 	  } else if(!strcmp(str, context)) {
 		if(!(*ctx)->servlet_ctx) {
 		  key = (char*)PARSER_GET_STRING(tag[1].strings, 0);
@@ -425,12 +424,12 @@ static void handle_request(proxyenv *env) {
   parser_cb_t cb = {begin, end, &ctx};
   struct stack_elem *stack_elem;
 
+  TSRMLS_FETCH();
  handle_request:
   if(!(*env)->is_local && IS_OVERRIDE_REDIRECT(env)) {
 	parser_cb_t cb_header = {begin_header, 0, env};
 	EXT_GLOBAL (parse_header) (env, &cb_header);
   }
-
   zend_stack_init(&ctx.containers);
   EXT_GLOBAL (parse) (env, &cb);
   /* pull off A, if any */
@@ -450,7 +449,6 @@ static void handle_request(proxyenv *env) {
   }
   assert(zend_stack_is_empty(&ctx.containers));
   zend_stack_destroy(&ctx.containers);
-
   /* revert override redirect */
   if((*env)->peer0) {
 	close((*env)->peer);
@@ -465,25 +463,19 @@ static void handle_request(proxyenv *env) {
 	  static const char key_sockname[] = "java.socketname";
 	  static const char key_off[] = "Off";
 	  (*env)->peer_redirected = 1;
-	  zend_alter_ini_entry((char*)key_servlet, sizeof key_servlet, 
-						   (char*)key_off, sizeof key_off, 
-						   ZEND_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
-	  zend_alter_ini_entry((char*)key_sockname, sizeof key_sockname, 
-						   (char*)key_off, sizeof key_off, 
-						   ZEND_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
+	  JG(ini_user)&=~(U_SERVLET|U_SOCKNAME);
 
 	  assert((*env)->peer); if((*env)->peer) close((*env)->peer);
-	  server = EXT_GLOBAL(test_server)(&(*env)->peer, 0, 0);
+	  server = EXT_GLOBAL(test_server)(&(*env)->peer, 0, 0 TSRMLS_CC);
 	  assert(server); if(!server) exit(9);
 	  free(server);
 	} else {
 	  assert((*env)->peer); if((*env)->peer) close((*env)->peer);
-	  server = EXT_GLOBAL(test_server)(&(*env)->peer, 0, 0);
+	  server = EXT_GLOBAL(test_server)(&(*env)->peer, 0, 0 TSRMLS_CC);
 	  assert(server); if(!server) exit(9);
 	  free(server);
 	}
   }
-
   if(tail_call) {
 	memset(&ctx, 0, sizeof ctx);
 	goto handle_request;
@@ -519,9 +511,9 @@ array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS', $_SERVER)\
 ?$_SERVER['X_JAVABRIDGE_OVERRIDE_HOSTS']\
 :(array_key_exists('HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS', $_SERVER)?$_SERVER['HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS']:null);";
 
-  static const char key_on[] = "On";
+  static const char key_on[] = "1";
   zval val;
-  char *servlet_context_string = EXT_GLOBAL (get_servlet_context) ();
+  char *servlet_context_string = EXT_GLOBAL (get_servlet_context) (TSRMLS_C);
 
   if(servlet_context_string) (*env)->servlet_context_string = strdup(servlet_context_string);
 
@@ -529,13 +521,11 @@ array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS', $_SERVER)\
 	(*env)->servlet_ctx = strdup(Z_STRVAL(val));
   }
   if((SUCCESS==zend_eval_string((char*)override, &val, "override" TSRMLS_CC)) && (Z_TYPE(val)==IS_STRING)) {
-	zend_alter_ini_entry((char*)key_hosts, sizeof key_hosts, 
-						 Z_STRVAL(val), Z_STRLEN(val), 
-						 ZEND_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
-	zend_alter_ini_entry((char*)key_servlet, sizeof key_servlet, 
-						 (char*)key_on, sizeof key_on, 
-						 ZEND_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
-	
+	if(JG(hosts)) efree(JG(hosts));     
+	JG(hosts)=estrdup(Z_STRVAL(val));
+
+	if(JG(servlet)) free(JG(servlet)); 
+	JG(servlet)=strdup(key_on);
   }
   return env;
 }
@@ -546,18 +536,17 @@ static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {
   struct sockaddr saddr;
   proxyenv *jenv =JG(jenv);
   if(jenv) return jenv;
-
   if(JG(is_closed)) {
 	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not connect to server: Session is closed. -- This usually means that you have tried to access the server in your class' __destruct() method.",51);
 	return 0;
   }
-  if(!(server=EXT_GLOBAL(test_server)(&sock, &is_local, &saddr))) {
+  if(!(server=EXT_GLOBAL(test_server)(&sock, &is_local, &saddr TSRMLS_CC))) {
 	if (bail) 
 	  php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not connect to server: %s -- Have you started the "/**/EXT_NAME()/**/" bridge and set the "/**/EXT_NAME()/**/".socketname option?",52, strerror(errno));
 	return 0;
   }
 
-  if(is_local || !EXT_GLOBAL (get_servlet_context) ()) {
+  if(is_local || !EXT_GLOBAL (get_servlet_context) (TSRMLS_C)) {
 	unsigned char mode = EXT_GLOBAL (get_mode) ();
 	send(sock, &mode, sizeof mode, 0); 
   }

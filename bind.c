@@ -35,6 +35,7 @@
 #include "ext/session/php_session.h"
 
 #include "php_java.h"
+#include "java_bridge.h"
 
 #ifndef EXTENSION_DIR
 #error EXTENSION_DIR must point to the PHP extension directory
@@ -44,9 +45,12 @@ const static char inet_socket_prefix[]="INET_LOCAL:";
 const static char local_socket_prefix[]="LOCAL:";
 const static char ext_dir[] = "extension_dir";
 
+EXT_EXTERN_MODULE_GLOBALS(EXT)
+
+
 #if EXTENSION == JAVA
 static const char* const wrapper = EXTENSION_DIR/**/"/RunJavaBridge";
-static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], short for_display) {
+static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], short for_display TSRMLS_DC) {
   static const char separator[2] = {ZEND_PATHS_SEPARATOR, 0};
   char *s, *p;
   char*program=EXT_GLOBAL(cfg)->vm;
@@ -60,10 +64,10 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
 #else
   const char *s_prefix = local_socket_prefix;
 #endif
-  char *sockname, *cfg_sockname=EXT_GLOBAL(get_sockname)(), *cfg_logFile=EXT_GLOBAL(cfg)->logFile;
+  char *sockname, *cfg_sockname=EXT_GLOBAL(get_sockname)(TSRMLS_C), *cfg_logFile=EXT_GLOBAL(cfg)->logFile;
 
   /* if socketname is off, show the user how to start a TCP backend */
-  if(for_display && !(EXT_GLOBAL(option_set_by_user) (U_SOCKNAME))) {
+  if(for_display && !(EXT_GLOBAL(option_set_by_user) (U_SOCKNAME, EXT_GLOBAL(ini_user)))) {
 	cfg_sockname="0";
 	s_prefix=inet_socket_prefix;
 	cfg_logFile="";
@@ -76,7 +80,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
 
 								/* library path usually points to the
 								   extension dir */
-  if(!(EXT_GLOBAL(option_set_by_user) (U_LIBRARY_PATH))) {	/* look into extension_dir then */
+  if(!(EXT_GLOBAL(option_set_by_user) (U_LIBRARY_PATH, EXT_GLOBAL(ini_user)))) {	/* look into extension_dir then */
 	if(ext) lib_path = ext;
   }
   
@@ -89,7 +93,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   s="-Djava.class.path=";
 								/* library path usually points to the
 								   extension dir */
-  if(ext && !(EXT_GLOBAL(option_set_by_user) (U_CLASSPATH))) {	/* look into extension_dir then */
+  if(ext && !(EXT_GLOBAL(option_set_by_user) (U_CLASSPATH, EXT_GLOBAL(ini_user)))) {	/* look into extension_dir then */
 	static char bridge[]="/JavaBridge.jar";
 	char *slash;
 	p=malloc(strlen(s)+strlen(ext)+sizeof(bridge));
@@ -130,7 +134,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
 }
 #elif EXTENSION == MONO
 static const char* const wrapper = EXTENSION_DIR/**/"/RunMonoBridge";
-static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], short for_display) {
+static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], short for_display TSRMLS_DC) {
   static const char executable[] = "/MonoBridge.exe";
   char *p, *slash;
   char*program=EXT_GLOBAL(cfg)->vm;
@@ -139,9 +143,9 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
 #else
   const char *s_prefix = local_socket_prefix;
 #endif
-  char *sockname, *cfg_sockname=EXT_GLOBAL(get_sockname)(), *cfg_logFile=EXT_GLOBAL(cfg)->logFile;
+  char *sockname, *cfg_sockname=EXT_GLOBAL(get_sockname)(TSRMLS_C), *cfg_logFile=EXT_GLOBAL(cfg)->logFile;
   char*home = EXT_GLOBAL(cfg)->vm_home;
-  if(!(EXT_GLOBAL(option_set_by_user) (U_JAVA_HOME))) {	/* look into extension_dir then */
+  if(!(EXT_GLOBAL(option_set_by_user) (U_JAVA_HOME, EXT_GLOBAL(ini_user)))) {	/* look into extension_dir then */
 	char *ext = php_ini_string((char*)ext_dir, sizeof ext_dir, 0);
 	if(ext) home = ext;
   }
@@ -154,7 +158,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
 
   args[1] = p;
   /* if socketname is off, show the user how to start a TCP backend */
-  if(for_display && !(EXT_GLOBAL(option_set_by_user) (U_SOCKNAME))) {
+  if(for_display && !(EXT_GLOBAL(option_set_by_user) (U_SOCKNAME, EXT_GLOBAL(ini_user)))) {
 	static const char zero[] = "0";
 	cfg_sockname="0";
 	s_prefix=inet_socket_prefix;
@@ -172,7 +176,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   env[0] = NULL;
 }
 #endif
-static short use_wrapper() {
+static short use_wrapper(void) {
   struct stat buf;
   short use_wrapper=0;
 
@@ -193,7 +197,7 @@ static short use_wrapper() {
 /*
  * Get a string of the server arguments. Useful for display only.
  */
-char*get_server_string(short for_display) {
+static char*get_server_string(short for_display TSRMLS_DC) {
 #ifndef __MINGW32__
   static const char quote[] = "'";
 #else
@@ -206,7 +210,7 @@ char*get_server_string(short for_display) {
   char*args[N_SARGS];
   unsigned int length = 0;
 
-  EXT_GLOBAL(get_server_args)(env, args, for_display);
+  EXT_GLOBAL(get_server_args)(env, args, for_display TSRMLS_CC);
   if(must_use_wrapper)
 	length+=strlen(wrapper)+1;
 #ifndef __MINGW32__
@@ -247,11 +251,11 @@ char*get_server_string(short for_display) {
   s[length]=0;
   return s;
 }
-char*EXT_GLOBAL(get_server_string)() {
-  get_server_string(1);
+char*EXT_GLOBAL(get_server_string)(TSRMLS_D) {
+  return get_server_string(1 TSRMLS_CC);
 }
 
-static void exec_vm() {
+static void exec_vm(TSRMLS_D) {
 #ifdef CFG_JAVA_INPROCESS
   extern int EXT_GLOBAL(bridge_main)(int argc, char**argv) ;
   static char*env[N_SENV];
@@ -266,7 +270,7 @@ static void exec_vm() {
   static char*env[N_SENV];
   static char*_args[N_SARGS+1];
   char **args=_args+1;
-  EXT_GLOBAL(get_server_args)(env, args, 0);
+  EXT_GLOBAL(get_server_args)(env, args, 0 TSRMLS_CC);
   if(N_SENV>2) {
 	putenv(env[0]);
 	putenv(env[1]);
@@ -277,9 +281,9 @@ static void exec_vm() {
 }
 
 
-static int test_local_server() {
+static int test_local_server(void) {
   int sock, n;
-
+  puts("test local");
 #ifndef CFG_JAVA_SOCKET_INET
   sock = socket (PF_LOCAL, SOCK_STREAM, 0);
 #else
@@ -294,26 +298,23 @@ static int test_local_server() {
 /*
   return 0 if user has hard-coded the socketname
 */
-static short can_fork() {
-  return 
-	!(EXT_GLOBAL (option_set_by_user) (U_SOCKNAME)) &&
-	!(EXT_GLOBAL (option_set_by_user) (U_HOSTS)) &&
-	!(EXT_GLOBAL (option_set_by_user) (U_SERVLET));
+static short can_fork(void) {
+  return EXT_GLOBAL(cfg)->can_fork;
 }
 
 /*
  * Test for a running server.  Return the server name and the socket
  * if _socket!=NULL. If all ckecks fail a local backend is started.
  */
-char* EXT_GLOBAL(test_server)(int *_socket, short *local, struct sockaddr*_saddr) {
+char* EXT_GLOBAL(test_server)(int *_socket, short *local, struct sockaddr*_saddr TSRMLS_DC) {
   int sock;
   short called_from_init = !(local || _socket);
 
 								/* java.servlet=On forces
 								   java.socketname Off */
   short socketname_set = 
-	(EXT_GLOBAL(option_set_by_user) (U_SOCKNAME)) && 
-	!(EXT_GLOBAL(option_set_by_user) (U_SERVLET));
+	(EXT_GLOBAL(option_set_by_user) (U_SOCKNAME, JG(ini_user))) && 
+	!(EXT_GLOBAL(option_set_by_user) (U_SERVLET, JG(ini_user)));
 
   if(local) *local=0;
   /* check for local server if socketname set or (socketname not set
@@ -329,12 +330,12 @@ char* EXT_GLOBAL(test_server)(int *_socket, short *local, struct sockaddr*_saddr
 	  close(sock);
 	}
 	if(local) *local=1;
-	return strdup(EXT_GLOBAL(get_sockname)());
+	return strdup(EXT_GLOBAL(get_sockname)(TSRMLS_C));
   }
 
   /* host list */
-  if(EXT_GLOBAL(cfg)->hosts && strlen(EXT_GLOBAL(cfg)->hosts)) {
-	char *host, *hosts = strdup(EXT_GLOBAL(cfg)->hosts);
+  if(JG(hosts) && strlen(JG(hosts))) {
+	char *host, *hosts = strdup(JG(hosts));
 	
 	assert(hosts); if(!hosts) return 0;
 	for(host=strtok(hosts, ";"); host; host=strtok(0, ";")) {
@@ -384,7 +385,7 @@ char* EXT_GLOBAL(test_server)(int *_socket, short *local, struct sockaddr*_saddr
   return 0;
 }
 
-static int wait_server() {
+static int wait_server(void) {
   int count=15, sock;
 #ifndef __MINGW32__
   struct pollfd pollfd[1] = {{EXT_GLOBAL(cfg)->err, POLLIN, 0}};
@@ -422,18 +423,18 @@ static void s_kill(int sig) {
 }
 #endif
 
-void EXT_GLOBAL(start_server)() {
+void EXT_GLOBAL(start_server)(TSRMLS_D) {
   int pid=0, err=0, p[2];
   char *test_server = 0;
 #ifndef __MINGW32__
-  if(can_fork() && !(test_server=EXT_GLOBAL(test_server)(0, 0, 0)) && pipe(p)!=-1) {
+  if(can_fork() && !(test_server=EXT_GLOBAL(test_server)(0, 0, 0 TSRMLS_CC)) && pipe(p)!=-1) {
 	if(!(pid=fork())) {		/* daemon */
 	  close(p[0]);
 	  if(!fork()) {			/* guard */
 		if(!(pid=fork())) {	/* java */
 		  setsid();
 		  close(p[1]);
-		  exec_vm(); 
+		  exec_vm(TSRMLS_C); 
 		  exit(105);
 		}
 		/* protect guard */
@@ -457,8 +458,8 @@ void EXT_GLOBAL(start_server)() {
 	wait_server();
   } else 
 #else
-	if(can_fork() && !(test_server=EXT_GLOBAL(test_server)(0, 0, 0))) {
-	  char *cmd = get_server_string(0);
+	if(can_fork() && !(test_server=EXT_GLOBAL(test_server)(0, 0, 0 TSRMLS_CC))) {
+	  char *cmd = get_server_string(0 TSRMLS_CC);
 	  DWORD properties = CREATE_NEW_CONSOLE;
 	  STARTUPINFO su_info;
 	  PROCESS_INFORMATION p_info;
@@ -478,7 +479,7 @@ void EXT_GLOBAL(start_server)() {
   if(test_server) free(test_server);
 }
 
-static void wait_for_daemon() {
+static void wait_for_daemon(void) {
 #ifndef __MINGW32__
   struct pollfd pollfd[1] = {{EXT_GLOBAL(cfg)->err, POLLIN, 0}};
   int err, c;

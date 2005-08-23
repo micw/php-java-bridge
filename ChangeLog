@@ -1,5 +1,49 @@
 2005-08-21  Jost Boekemeier  <jostb@intern>
 
+	* bind.c (get_server_args, use_wrapper, get_server_string, test_local_server, can_fork, wait_server, start_server, exec_vm, wait_for_daemon): Pass TSRMLS for windows thread safety.
+
+	* client.c (begin_header, handle_request, adjust_environment, try_connect_to_server): Pass TSRMLS for windows thread safety.
+
+	* init_cfg.c.in (init_socket, init_cfg, destroy_cfg, option_set_by_user, get_servlet_context, get_sockname): Pass TSRMLS for windows thread safety.
+	(get_sockname): bugfix: check the socketname, not the servlet name.
+	
+	* java.c (__errno): Set to 0 on windows and do not change the
+	variable as it is shared.
+	(clone_cfg, destroy_cloned_cfg): New procedures used to unshare
+	the variables we override during channel re-direct.
+	(OnIniServlet): Store the servlet context, not "On".
+	(alloc_globals_ctor): initialize the re-direct vars.
+	(make_local_socket_info, minit, minfo, mshutdown, rshutdown, rinit):  Pass TSRMLS for windows thread safety.
+	
+	* protocol.c (end, protocol_end, send_context, IS_SERVLET_BACKEND, IS_OVERRIDE_REDIRECT): Pass TSRMLS for windows thread safety.
+
+	* server/php/java/bridge/ThreadPool.java
+	(getNextRunnable): Discard failed notify. Even though we do not
+	send a notifyAll, it may happen that we notify a waiting thread
+	even though another thread has entered the critical section
+	and has just taken over the runnable without consuming the notify.
+	Consider that t1 is in wait(), t2 is running and start(r) is
+	called:
+	
+	- t2 stands before the critical section
+	- start sends notify (to t1), leaves critical section
+	- t2 enters critical section, pulls runnable from the list
+	- t2 leaves critical section
+	- t1 leaves wait and throws an exception because runnables is empty
+
+	If this happens, the thread count is reduced without adjusting the
+	threads variable. If it happens more than THREAD_POOL_MAX_SIZE
+	times, the pool stops working.
+	
+	(run): Adjust the threads variable if a throwable occurs. Even
+	though we catch everything on a level below, problems in the pool,
+	out of memory error for example or the problem in getNextRunnable
+	above, may still terminate the thread.
+	
+	* php-java-bridge.spec, VERSION: Version 2.0.8 pre4
+	
+2005-08-21  Jost Boekemeier  <jostb@intern>
+
 	* bind.c
 	(get_server_args): Only append a separator if the path doesn't end
 	with one.

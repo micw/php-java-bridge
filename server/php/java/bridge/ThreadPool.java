@@ -10,7 +10,7 @@ public class ThreadPool {
     private LinkedList runnables = new LinkedList();
 
     /*
-     * Threads continues to pull runnables and run them in the thread
+     * Threads continue to pull runnables and run them in the thread
      * environment.
      */
     private class Delegate extends Thread {
@@ -18,7 +18,7 @@ public class ThreadPool {
 	public void run() {
 	    try {
 		while(true) getNextRunnable().run();
-	    } catch (InterruptedException t) { threads--; }
+	    } catch (Throwable t) { Util.printStackTrace(t); threads--; }
 	}
     }
 
@@ -27,7 +27,7 @@ public class ThreadPool {
      * no work, sleep the thread until we receive a notify.
      */
     private synchronized Runnable getNextRunnable() throws InterruptedException {
-	if(runnables.isEmpty()) {
+	while(runnables.isEmpty()) {
 	    idles++; wait(); idles--;
 	}
 	return (Runnable)runnables.removeFirst();

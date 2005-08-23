@@ -26,14 +26,25 @@ struct cfg *EXT_GLOBAL (cfg)  = 0;
 
 #ifdef __MINGW32__
 static int java_errno=0;
-int *__errno (void) { java_errno = GetLastError(); return &java_errno; }
+int *__errno (void) { java_errno = 0; return &java_errno; }
 #define php_info_print_table_row(a, b, c) \
    php_info_print_table_row_ex(a, "java", b, c)
 #endif
 
+static void clone_cfg(TSRMLS_D) {
+  JG(ini_user)=EXT_GLOBAL(ini_user);
+  JG(hosts)=estrdup(EXT_GLOBAL(cfg)->hosts);
+  JG(servlet)=estrdup(EXT_GLOBAL(cfg)->servlet);
+}
+static void destroy_cloned_cfg(TSRMLS_D) {
+  if(JG(hosts)) efree(JG(hosts));
+  if(JG(servlet)) efree(JG(servlet));
+}
 
 PHP_RINIT_FUNCTION(EXT) 
 {
+  if(EXT_GLOBAL(cfg)) clone_cfg(TSRMLS_C);
+
   if(JG(jenv)) {
 	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Synchronization problem, rinit with active connection called. Cannot continue, aborting now. Please report this to: php-java-bridge-users@lists.sourceforge.net",59);
   }
@@ -43,6 +54,8 @@ PHP_RINIT_FUNCTION(EXT)
 
 PHP_RSHUTDOWN_FUNCTION(EXT)
 {
+  destroy_cloned_cfg(TSRMLS_C);
+
   if(JG(jenv)) {
 	if(*JG(jenv)) {
 	  if((*JG(jenv))->peer) {
@@ -514,8 +527,9 @@ zend_class_entry *EXT_GLOBAL(exception_class_entry);
 zend_object_handlers EXT_GLOBAL(handlers);
 #endif
 
-static char off[]="Off";
-static char on[]="On";
+static const char on[]="On";
+static const char on2[]="1";
+static const char off[]="Off";
 static PHP_INI_MH(OnIniHosts)
 {
 	if (new_value) {
@@ -530,7 +544,10 @@ static PHP_INI_MH(OnIniServlet)
 {
 	if (new_value) {
 	  if((EXT_GLOBAL (ini_set) &U_SERVLET)) free(EXT_GLOBAL(cfg)->servlet);
-	  EXT_GLOBAL(cfg)->servlet=strdup(new_value);
+	  if(!strncasecmp(on, new_value, 2) || !strncasecmp(on2, new_value, 1))
+		EXT_GLOBAL(cfg)->servlet=strdup(DEFAULT_SERVLET);
+	  else
+		EXT_GLOBAL(cfg)->servlet=strdup(new_value);
 	  assert(EXT_GLOBAL(cfg)->servlet); if(!EXT_GLOBAL(cfg)->servlet) exit(6);
 	  EXT_GLOBAL(ini_updated)|=U_SERVLET;
 	}
@@ -626,6 +643,11 @@ static void EXT_GLOBAL(alloc_globals_ctor)(EXT_GLOBAL_EX(zend_,globals,_) *EXT_G
 {
   EXT_GLOBAL(globals)->jenv=0;
   EXT_GLOBAL(globals)->is_closed=-1;
+
+  EXT_GLOBAL(globals)->ini_user=0;
+
+  EXT_GLOBAL(globals)->hosts=0;
+  EXT_GLOBAL(globals)->servlet=0;
 }
 
 #ifdef ZEND_ENGINE_2
@@ -1210,7 +1232,7 @@ set_property_handler(zend_property_reference *property_reference, pval *value)
  * check for CGI environment and set hosts so that we can connect back
  * to the sever from which we were called.
  */
-static void override_ini_from_cgi() {
+static void override_ini_from_cgi(void) {
   static const char server[] = "_SERVER";
   static const char key_hosts[]="java.hosts";
   static const char key_servlet[] = "java.servlet";
@@ -1226,31 +1248,36 @@ static void override_ini_from_cgi() {
 	if (hosts=getenv("X_JAVABRIDGE_OVERRIDE_HOSTS")) {
 	  EXT_GLOBAL(cfg)->is_cgi_servlet=1;
 	  if(*hosts) {
-		zend_alter_ini_entry((char*)key_hosts, sizeof key_hosts, 
-							 hosts, strlen(hosts)+1, 
-							 ZEND_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
-		zend_alter_ini_entry((char*)key_servlet, sizeof key_servlet, 
-							 (char*)on, sizeof on, 
-							 ZEND_INI_SYSTEM, PHP_INI_STAGE_RUNTIME);
+		zend_alter_ini_entry((char*)key_hosts, sizeof key_hosts,
+							 hosts, strlen(hosts)+1,
+							 ZEND_INI_SYSTEM, PHP_INI_STAGE_STARTUP);
+		zend_alter_ini_entry((char*)key_servlet, sizeof key_servlet,
+							 (char*)on, sizeof on,
+							 ZEND_INI_SYSTEM, PHP_INI_STAGE_STARTUP);
 	  }
 	}
   }
 }
 
-static void make_local_socket_info() {
+static void make_local_socket_info(TSRMLS_D) {
   memset(&EXT_GLOBAL(cfg)->saddr, 0, sizeof EXT_GLOBAL(cfg)->saddr);
 #ifndef CFG_JAVA_SOCKET_INET
   EXT_GLOBAL(cfg)->saddr.sun_family = AF_LOCAL;
   memset(EXT_GLOBAL(cfg)->saddr.sun_path, 0, sizeof EXT_GLOBAL(cfg)->saddr.sun_path);
-  strcpy(EXT_GLOBAL(cfg)->saddr.sun_path, EXT_GLOBAL(get_sockname)());
+  strcpy(EXT_GLOBAL(cfg)->saddr.sun_path, EXT_GLOBAL(get_sockname)(TSRMLS_C));
 # ifdef HAVE_ABSTRACT_NAMESPACE
   *EXT_GLOBAL(cfg)->saddr.sun_path=0;
 # endif
 #else
   EXT_GLOBAL(cfg)->saddr.sin_family = AF_INET;
-  EXT_GLOBAL(cfg)->saddr.sin_port=htons(atoi(EXT_GLOBAL(get_sockname)()));
+  EXT_GLOBAL(cfg)->saddr.sin_port=htons(atoi(EXT_GLOBAL(get_sockname)(TSRMLS_C)));
   EXT_GLOBAL(cfg)->saddr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
 #endif
+
+  EXT_GLOBAL(cfg)->can_fork = 
+	!(EXT_GLOBAL (option_set_by_user) (U_SOCKNAME, EXT_GLOBAL(ini_user))) &&
+	!(EXT_GLOBAL (option_set_by_user) (U_HOSTS, EXT_GLOBAL(ini_user))) &&
+	!(EXT_GLOBAL (option_set_by_user) (U_SERVLET, EXT_GLOBAL(ini_user)));
 }
 
 PHP_MINIT_FUNCTION(EXT)
@@ -1336,24 +1363,23 @@ PHP_MINIT_FUNCTION(EXT)
 
   if(REGISTER_INI_ENTRIES()==SUCCESS) {
 	/* set the default values for all undefined */
-	extern void EXT_GLOBAL(init_cfg) ();
 	
-	EXT_GLOBAL(init_cfg) ();
+	EXT_GLOBAL(init_cfg) (TSRMLS_C);
 	override_ini_from_cgi();
 	EXT_GLOBAL(ini_user)|=EXT_GLOBAL(ini_updated);
 	EXT_GLOBAL(ini_updated)=0;
 
-	make_local_socket_info();
-	EXT_GLOBAL(start_server) ();
-  }
-
+	make_local_socket_info(TSRMLS_C);
+	clone_cfg(TSRMLS_C);
+	EXT_GLOBAL(start_server) (TSRMLS_C);
+  } 
   return SUCCESS;
 }
 PHP_MINFO_FUNCTION(EXT)
 {
   short is_local;
-  char*s=EXT_GLOBAL(get_server_string) ();
-  char*server = EXT_GLOBAL(test_server) (0, &is_local, 0);
+  char*s=EXT_GLOBAL(get_server_string) (TSRMLS_C);
+  char*server = EXT_GLOBAL(test_server) (0, &is_local, 0 TSRMLS_CC);
   short is_level = ((EXT_GLOBAL (ini_user)&U_LOGLEVEL)!=0);
 
   php_info_print_table_start();
@@ -1376,7 +1402,7 @@ PHP_MINFO_FUNCTION(EXT)
   php_info_print_table_row(2, EXT_NAME()/**/".log_level", is_level ? EXT_GLOBAL(cfg)->logLevel : "no value (use backend's default level)");
   php_info_print_table_row(2, EXT_NAME()/**/".hosts", EXT_GLOBAL(cfg)->hosts);
 #if EXTENSION == JAVA
-  php_info_print_table_row(2, EXT_NAME()/**/".servlet", EXT_GLOBAL(get_servlet_context) ()?on:off);
+  php_info_print_table_row(2, EXT_NAME()/**/".servlet", EXT_GLOBAL(get_servlet_context) (TSRMLS_C)?on:off);
 #endif
   if(!server || is_local) {
 	php_info_print_table_row(2, EXT_NAME()/**/" command", s);
@@ -1391,9 +1417,6 @@ PHP_MINFO_FUNCTION(EXT)
 
 PHP_MSHUTDOWN_FUNCTION(EXT) 
 {
-  extern void EXT_GLOBAL(shutdown_library) ();
-  extern void EXT_GLOBAL(destroy_cfg) (int);
-  
   EXT_GLOBAL(destroy_cfg) (EXT_GLOBAL(ini_set));
   EXT_GLOBAL(ini_user) = EXT_GLOBAL(ini_set) = 0;
 

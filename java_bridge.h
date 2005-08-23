@@ -27,7 +27,12 @@ extern proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, void (*handle_re
 extern void EXT_GLOBAL (protocol_end) (proxyenv *env);
 extern void EXT_GLOBAL (check_context) (proxyenv *env TSRMLS_DC);
 extern void EXT_GLOBAL (setResultWith_context) (char*key, char*val, char*path);
+extern short EXT_GLOBAL (option_set_by_user) (short option, int where);
+extern void EXT_GLOBAL (init_cfg) (TSRMLS_D);
+extern void EXT_GLOBAL(shutdown_library) (void);
+extern void EXT_GLOBAL(destroy_cfg) (int);
+  
 
-unsigned char EXT_GLOBAL (get_mode) ();
+extern unsigned char EXT_GLOBAL (get_mode) (void);
 
 #endif

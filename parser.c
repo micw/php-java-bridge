@@ -59,7 +59,6 @@ short EXT_GLOBAL (parse) (proxyenv *env, parser_cb_t *cb) {
       errno=0;
       pos=recv((*env)->peer, (*env)->recv_buf, sizeof (*env)->recv_buf, 0);
       if(!pos && errno==EINTR) goto res; // Solaris, see INN FAQ
-
       if(pos<=0) break;
       c=0; 
     }
@@ -147,6 +146,7 @@ short EXT_GLOBAL (parse_header) (proxyenv *env, parser_cb_t *cb) {
       errno=0;
       pos=recv((*env)->peer, (*env)->recv_buf, sizeof (*env)->recv_buf, 0);
       if(!pos && errno==EINTR) goto res; // Solaris, see INN FAQ
+
 
       if(pos<=0) break;
       c=0; 
