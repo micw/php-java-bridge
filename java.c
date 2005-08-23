@@ -85,8 +85,9 @@ static void last_exception_get(proxyenv *jenv, zval**return_value)
 }
 EXT_FUNCTION(EXT_GLOBAL(last_exception_get))
 {
+  proxyenv *jenv;
   if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT;
-  proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
+  jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   if(!jenv) {RETURN_NULL();}
 
   last_exception_get(jenv, &return_value);
@@ -99,8 +100,9 @@ static void last_exception_clear(proxyenv*jenv, zval**return_value) {
 }
 EXT_FUNCTION(EXT_GLOBAL(last_exception_clear))
 {
+  proxyenv *jenv;
   if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT;
-  proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
+  jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   if(!jenv) {RETURN_NULL();}
 
   last_exception_clear(jenv, &return_value);

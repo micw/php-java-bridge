@@ -262,6 +262,7 @@ static void begin(parser_tag_t tag[3], parser_cb_t *cb){
 	  MAKE_STD_ZVAL(tmp_retval);
 	  ZVAL_NULL(tmp_retval);
 
+      {
       struct stack_elem stack_elem = 
 		{ tmp_retval, 'A', 
 		  (unsigned char*)strdup((char*)PARSER_GET_STRING(st, 2)), /* m */
@@ -273,7 +274,7 @@ static void begin(parser_tag_t tag[3], parser_cb_t *cb){
 		  ctx->id
 		}; 
 	  zend_stack_push(&ctx->containers, &stack_elem, sizeof stack_elem);
-
+      }
 	  setResultFromArray(tmp_retval);
 	  break;
 	}
