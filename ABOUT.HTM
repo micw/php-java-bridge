@@ -37,7 +37,7 @@ is the PHP/Java bridge?</B></FONT></FONT></P>
 <li> It is not necessary to write and deploy a public interface. The bridge uses reflection once to determine what can be accessed in the backend.
 <li> PHP scripts can load/unload java libraries at runtime.
 <li> On linux the c/s communication channel is not visible and the backend runs in its own "Security Enhanced Linux" domain.
-<li> Other PHP modules do most of their work in the web-server (in C code), which makes them vulnerable to buffer overflows.  The PHP/Java Bridge module doesn't use any state on the web-server side, it simply forwards the java(...) statements to the backend, which can communicate with the enterprise application server using RMI/IIOP or other java technologies.
+<li> The PHP/Java Bridge module doesn't use any state on the web-server side, it simply forwards the java(...) statements to the backend, which can communicate with the enterprise application server using RMI/IIOP or other java technologies.
 <li> Unlike other attempts the PHP/Java Bridge does <em>not</em> use the java native interface ("JNI"). In case a php instance crashes, it will not take down the java application server or servlet engine.
 </ul>
 <P><FONT > 
@@ -175,10 +175,10 @@ interface IStrategy  {<br>
 &nbsp;&nbsp;public class Strategy  {<br>
 &nbsp;&nbsp;&nbsp;&nbsp;public int call(IStrategy phpClosure)  {<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try  {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m1();<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return m2();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;phpClosure.m1();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return phpClosure.m2();<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;} catch (Exception ex) {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return e(ex);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return phpClosure.e(ex);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
 &nbsp;&nbsp;&nbsp;&nbsp;}<br>
 &nbsp;&nbsp;}<br>
