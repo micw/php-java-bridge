@@ -3,6 +3,7 @@
 package php.java.servlet;
 
 import java.util.Hashtable;
+import java.util.Iterator;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -63,7 +64,10 @@ class Context extends JavaBridge.SessionFactory {
     public static Context addNew(HttpServletRequest req) {
      	Context ctx = new Context(req);
     	Object old = contexts.put(ctx.getId(), ctx);
-    	if(old!=null) if(Util.logLevel>2) Util.logError("Removed stale context: " +old);
+    	if(old!=null) {
+    	    ((Context)old).remove();
+    	    if(Util.logLevel>2) Util.logError("Removed stale context: " +old);
+    	}
     	return ctx;
     }
     public static Context get(String id) {
@@ -77,6 +81,11 @@ class Context extends JavaBridge.SessionFactory {
 	bridge=null;
 	sessionPromise=null;
 	notify();
+    }
+    public static void removeAll() {
+	for(Iterator ii=contexts.entrySet().iterator(); ii.hasNext();) {
+	    ((Context)ii.next()).remove();
+	}
     }
     public synchronized void waitFor() throws InterruptedException {
     	if(!removed) wait();

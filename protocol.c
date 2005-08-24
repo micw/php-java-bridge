@@ -43,8 +43,23 @@ static char *getSessionFactory(proxyenv *env) {
   return context?context:invalid;
 }
 
+static void send_context(proxyenv *env) {
+	size_t l = strlen((*env)->servlet_ctx);
+	char context[256] = { 077, l&0xFF};
+	int context_length = 2;
+	ssize_t n;
+	
+	assert(l<256);
+	context_length += 
+	  EXT_GLOBAL(snprintf) (context+context_length, 
+							sizeof(context)-context_length, 
+							"%s", 
+							(*env)->servlet_ctx);
+	n=send((*env)->peer, context, context_length, 0);
+	assert(n==context_length);
+}
+
 static void end(proxyenv *env) {
-  static void send_context(proxyenv *env);
   size_t s=0, size = (*env)->send_len;
   ssize_t n=0;
   char *servlet_context;
@@ -151,6 +166,9 @@ void EXT_GLOBAL (protocol_end) (proxyenv *env) {
 
 	n=send((*env)->peer, header, header_length, 0);
 	assert(n==header_length);
+  } else {
+	if((*env)->must_reopen==2) send_context(env);
+	(*env)->must_reopen=0;
   }
 }
 
@@ -172,19 +190,6 @@ void EXT_GLOBAL(check_context) (proxyenv *env TSRMLS_DC) {
 	}
 	(*env)->finish=end_session;
   }
-}
-static void send_context(proxyenv *env) {
-	size_t l = strlen((*env)->servlet_ctx);
-	char context[SEND_SIZE] = { 077, l&0xFF};
-	int context_length = 2;
-	ssize_t n;
-	
-	assert(l<256);
-	context_length += EXT_GLOBAL(snprintf) (context+context_length, sizeof(context)-context_length, "%s", 
-										   (*env)->servlet_ctx);
-
-	n=send((*env)->peer, context, context_length, 0);
-	assert(n==context_length);
 }
 
 void EXT_GLOBAL(setResultWith_context) (char*key, char*val, char*path) {

@@ -1109,6 +1109,7 @@ public class JavaBridge implements Runnable {
     }
 
     public static String objectDebugDescription(Object obj) {
+    	if(obj==null) return "[Object null]";
 	return "[Object "+System.identityHashCode(obj)+" - Class: "+ classDebugDescription(obj.getClass())+ "]";
     }
 
@@ -1368,6 +1369,12 @@ public class JavaBridge implements Runnable {
     }
     public Object makeClosure(long object, Map names, Class interfaces[]) {
     	return new PhpProcedureProxy(this, names, interfaces, object);
+    }
+    public Object makeClosure(long object, String name) {
+    	return new PhpProcedureProxy(this, name, null, object);
+    }
+    public Object makeClosure(long object, String name, Class interfaces[]) {
+    	return new PhpProcedureProxy(this, name, interfaces, object);
     }
 
     /*

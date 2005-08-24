@@ -32,13 +32,18 @@ int *__errno (void) { java_errno = 0; return &java_errno; }
 #endif
 
 static void clone_cfg(TSRMLS_D) {
-  JG(ini_user)=EXT_GLOBAL(ini_user);
-  JG(hosts)=estrdup(EXT_GLOBAL(cfg)->hosts);
-  JG(servlet)=estrdup(EXT_GLOBAL(cfg)->servlet);
+  if(!JG(ini_user)) {
+	JG(ini_user)=EXT_GLOBAL(ini_user);
+	JG(hosts)=estrdup(EXT_GLOBAL(cfg)->hosts);
+	JG(servlet)=estrdup(EXT_GLOBAL(cfg)->servlet);
+  }
 }
 static void destroy_cloned_cfg(TSRMLS_D) {
   if(JG(hosts)) efree(JG(hosts));
   if(JG(servlet)) efree(JG(servlet));
+  JG(ini_user)=0;
+  JG(hosts)=0;
+  JG(servlet)=0;
 }
 
 PHP_RINIT_FUNCTION(EXT) 
@@ -314,32 +319,28 @@ EXT_FUNCTION(EXT_GLOBAL(closure))
   (*jenv)->writeLong(jenv, (argc==0||Z_TYPE_PP(pobj)==IS_NULL)?0:(long)*pobj);
 
   /* fname -> cname Map */
-  (*jenv)->writeCompositeBegin_h(jenv);
   if(argc>1) {
 	if (Z_TYPE_PP(pfkt) == IS_ARRAY) {
+	  (*jenv)->writeCompositeBegin_h(jenv);
 	  zend_hash_internal_pointer_reset(Z_ARRVAL_PP(pfkt));
 	  while ((key_type = zend_hash_get_current_key(Z_ARRVAL_PP(pfkt), &string_key, &num_key, 1)) != HASH_KEY_NON_EXISTANT) {
-		if ((zend_hash_get_current_data(Z_ARRVAL_PP(pfkt), (void**)&val) == SUCCESS) && key_type==HASH_KEY_IS_STRING) {
-		  EXT_GLOBAL(get_jobject_from_object)(*val, &class TSRMLS_CC);
-		  if(class) { 
+		if ((zend_hash_get_current_data(Z_ARRVAL_PP(pfkt), (void**)&val) == SUCCESS)) {
+		  if(Z_TYPE_PP(val) == IS_STRING && key_type==HASH_KEY_IS_STRING) { 
 			size_t len = strlen(string_key);
 			(*jenv)->writePairBegin_s(jenv, string_key, len);
-			(*jenv)->writeString(jenv, string_key, len);
+			(*jenv)->writeString(jenv, Z_STRVAL_PP(val), Z_STRLEN_PP(val));
 			(*jenv)->writePairEnd(jenv);
 		  } else {
-			zend_error(E_ERROR, "Argument #2 for %s() must be null, a string, or a map of java->php function names.", get_active_function_name(TSRMLS_C));
+			zend_error(E_ERROR, "Argument #2 for %s() must be null, a string, or a map of java => php function names.", get_active_function_name(TSRMLS_C));
 		  }
 		}
 		zend_hash_move_forward(Z_ARRVAL_PP(pfkt));
 	  }
+	  (*jenv)->writeCompositeEnd(jenv);
 	} else if (Z_TYPE_PP(pfkt) == IS_STRING) {
-	  (*jenv)->writePairBegin_s(jenv, Z_STRVAL_PP(pfkt), Z_STRLEN_PP(pfkt));
 	  (*jenv)->writeString(jenv, Z_STRVAL_PP(pfkt), Z_STRLEN_PP(pfkt));
-	  (*jenv)->writePairEnd(jenv);
 	}
   }
-  (*jenv)->writeCompositeEnd(jenv);
-
 
   /* interfaces */
   if(argc>2) {
@@ -427,9 +428,9 @@ EXT_FUNCTION(EXT_GLOBAL(call_with_exception_handler))
   }
   /* for functions in the global environment */
   if(!*JG(object)) {
-	static const char name[] = "call_with_exception_handler";
-	static const char call_user_funcH[] = "call_user_func_array(";
-	static const char call_user_funcT[] = ","/**/EXT_NAME()/**/"_call_with_exception_handler(true));";
+	static const char name[] = "call_global_func_with_exception_handler";
+	static const char call_user_funcH[] = "call_user_func_array('";
+	static const char call_user_funcT[] = "',"/**/EXT_NAME()/**/"_call_with_exception_handler(true));";
 	char *handler=emalloc(sizeof(call_user_funcH)-1+Z_STRLEN_P(JG(func))+sizeof(call_user_funcT));
 	assert(handler); if(!handler) exit(9);
 	strcpy(handler, call_user_funcH); 

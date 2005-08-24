@@ -521,13 +521,6 @@ array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS', $_SERVER)\
   if((SUCCESS==zend_eval_string((char*)context, &val, "context" TSRMLS_CC)) && (Z_TYPE(val)==IS_STRING)) {
 	(*env)->servlet_ctx = strdup(Z_STRVAL(val));
   }
-  if((SUCCESS==zend_eval_string((char*)override, &val, "override" TSRMLS_CC)) && (Z_TYPE(val)==IS_STRING)) {
-	if(JG(hosts)) efree(JG(hosts));     
-	JG(hosts)=estrdup(Z_STRVAL(val));
-
-	if(JG(servlet)) free(JG(servlet)); 
-	JG(servlet)=strdup(key_on);
-  }
   return env;
 }
 static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {

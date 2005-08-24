@@ -34,7 +34,7 @@
       <param-value>On</param-value>
     </init-param>
 
-    <!-- Your php binary, for example php.exe, php or /usr/bin/php. -->
+    <!-- Your php binary, for example c:/php5/php.exe, php or /usr/bin/php. -->
     <init-param>
       <param-name>php_exec</param-name>
       <param-value>php</param-value>

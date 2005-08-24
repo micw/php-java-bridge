@@ -14,6 +14,7 @@ import java.util.Map;
 public class PhpProcedureProxy {
     JavaBridge bridge;
     Map names;
+    String name = null;
     Class[] suppliedInterfaces;
     long object;
 
@@ -24,11 +25,18 @@ public class PhpProcedureProxy {
 	this.suppliedInterfaces = interfaces;
 	this.object = object;
     }
+    public PhpProcedureProxy(JavaBridge bridge, String string, Class[] interfaces, long object) {
+
+	this.bridge = bridge;
+	this.name = string;
+	this.suppliedInterfaces = interfaces;
+	this.object = object;
+    }
 	
     Object proxy = null;
     Object getProxy(Class[] interfaces) {
 	if(proxy!=null) return proxy;
-	return proxy=PhpProcedure.createProxy(bridge, names, suppliedInterfaces==null?interfaces:suppliedInterfaces, object);
+	return proxy=PhpProcedure.createProxy(bridge, name, names, suppliedInterfaces==null?interfaces:suppliedInterfaces, object);
     }
 }
 

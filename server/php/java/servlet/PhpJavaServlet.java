@@ -315,10 +315,13 @@ public class PhpJavaServlet extends CGIServlet {
 		if(bridge.logLevel>3) bridge.logDebug("re-directing to port# "+ socketRunner.socket.getSocketName());
 	    	sin.close();
 	    	resOut.close();
-	    	//ctx.waitFor();
+	    	if(bridge.logLevel>3) bridge.logDebug("waiting for context: " +ctx.getId());
+	    	ctx.waitFor();
+	    	if(bridge.logLevel>3) bridge.logDebug("context finished: " +ctx.getId());
 	    }
 	    else {
 	        sin.close();
+	        ctx.remove();
 	    }
 	} catch (Exception e) {
 	    Util.printStackTrace(e);

@@ -66,6 +66,7 @@ class SocketRunner implements Runnable {
 	    ContextRunner runner = getNext();
 	    if(runner==null) {
 	    	shutdownSocket(in, out, socket);
+	    	Context.removeAll();
 	    	Util.logFatal("Could not find a runner for the request I've received. This is either a bug in the software or an intruder is accessing the local communication channel. Please check the log file(s).");
 	    	return false; // someone is accessing our local port!?
 	    }

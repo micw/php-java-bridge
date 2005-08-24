@@ -1,4 +1,41 @@
-2005-08-21  Jost Boekemeier  <jostb@intern>
+2005-08-24  Jost Boekemeier  <jostb@intern>
+
+	* client.c (adjust_environment): Removed obsolete code.
+
+	* java.c (clone_cfg): Check if already initialized.
+	(destroy_cloned_cfg): initialize.
+	(closure): correctly send map
+	(call_with_exception_handler): display name is now call_global_func_with_exception_handler.
+
+	* protocol.c (protocol_end): send context on shutdown in order to terminate redirected request.
+
+	* server/php/java/bridge/JavaBridge.java (objectDebugDescription): Check null values.
+	(makeClosure): accept name, useful if there is only one callback, e.g. closure($this, "onClose");
+
+	* server/php/java/bridge/PhpProcedure.java (PhpProcedure): accept name.
+	(createProxy): accept name.
+	(setResultFromProcedure): accept name.
+
+	* server/php/java/bridge/PhpProcedureProxy.java (PhpProcedureProxy): accept name.
+
+	* tests.php4/callback_map.php, tests.php4/callback_name.php: New tests.
+	
+	* server/php/java/servlet/Context.java (removeAll): New procedure
+
+	* server/php/java/servlet/PhpJavaServlet.java
+	(handleSocketConnection): wait for ctx otherwise tomcat5 would modify
+	the aquired session handle.
+
+	* server/php/java/servlet/SocketRunner.java
+	(accept): remove all contexts when we destroy the socketrunner
+
+	* tests.php4/re-direct.php: new test which checks if the context will be destroyed correctly.
+
+	* tests.php5/Callback.java: added missing test class.
+	
+	* tests.php4/reset.php: rewritten
+	
+2005-08-23  Jost Boekemeier  <jostb@intern>
 
 	* bind.c (get_server_args, use_wrapper, get_server_string, test_local_server, can_fork, wait_server, start_server, exec_vm, wait_for_daemon): Pass TSRMLS for windows thread safety.
 
