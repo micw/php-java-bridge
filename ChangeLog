@@ -1,3 +1,17 @@
+2005-08-25  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/servlet/Context.java (removeAll): rewritten
+
+	* server/php/java/servlet/SocketRunner.java (accept): Shutdown when an exception (e.g. security exception) occurs.
+
+	* server/php/java/bridge/JavaBridge.java (makeClosure): Added missing method.
+
+	* examples/gui/README: New file
+
+	* README.MONO+NET: Corrected documentation.
+
+	* README: Updated documentation
+	
 2005-08-24  Jost Boekemeier  <jostb@intern>
 
 	* client.c (adjust_environment): Removed obsolete code.

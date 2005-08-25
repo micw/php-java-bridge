@@ -82,6 +82,11 @@ class SocketRunner implements Runnable {
 	} catch (IOException e) {
             shutdownSocket(in, out, socket);
             Util.printStackTrace(e);
+	} catch (Exception t) {
+	    shutdownSocket(in, out, socket);
+	    Context.removeAll();
+	    Util.printStackTrace(t);
+	    return false;
 	}
 	return true;
     }

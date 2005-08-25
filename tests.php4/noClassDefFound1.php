@@ -19,15 +19,15 @@ if (!extension_loaded('java')) {
 $here=getcwd();
 java_require("$here/noClassDefFound.jar");
 
-$v=new java("NoClassDefFound");
+$v=new JavaClass("NoClassDefFound");
 java_require("$here/doesNotExist.jar");
-$k=new java("DoesNotExist");
+$k=new Java("DoesNotExist");
 // must fail: NoClassDefFound cannot access DoesNotExist because it
 // has been loaded from a different classloader
 echo "must fail\n";
 $v->call(null);
 
-// must succeed
+echo "must succeed\n";
 system("php -q noClassDefFound2.php");
 
 

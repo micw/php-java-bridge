@@ -1376,6 +1376,10 @@ public class JavaBridge implements Runnable {
     public Object makeClosure(long object, String name, Class interfaces[]) {
     	return new PhpProcedureProxy(this, name, interfaces, object);
     }
+    private static final HashMap emptyMap = new HashMap();
+    public Object makeClosure(long object) {
+    	return new PhpProcedureProxy(this, emptyMap, null, object);
+    }
 
     /*
      * Reset the global caches of the bridge.

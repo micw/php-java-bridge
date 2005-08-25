@@ -83,8 +83,15 @@ class Context extends JavaBridge.SessionFactory {
 	notify();
     }
     public static void removeAll() {
-	for(Iterator ii=contexts.entrySet().iterator(); ii.hasNext();) {
-	    ((Context)ii.next()).remove();
+	for(Iterator ii=contexts.values().iterator(); ii.hasNext();) {
+	    Context ctx = ((Context)ii.next());
+	    synchronized(ctx) {
+		ctx.removed=true;
+		ctx.bridge=null;
+		ctx.sessionPromise=null;
+		ctx.notify();
+	    }
+	    ii.remove();
 	}
     }
     public synchronized void waitFor() throws InterruptedException {
