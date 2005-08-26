@@ -189,8 +189,58 @@ Build and execution instructions:
   Libraries (.jar files) must be stored in the "WEB-INF/lib" folder
   within the JavaBridge.war file or in some application server specific
   "lib" directory. Access to libraries deployed in /usr/share/java is
-  denied by the application server.
+  denied by this application server.
 
+------------------------------------
+  Oracle 10g AS
+  -------------
+
+  The following description assumes that you have the Oracle
+  Application Server Containers for J2EE 10g installed, for example in
+  /opt/10gAS and that the J2EE_HOME points to the /opt/10gAS/j2ee/home
+  directory.
+
+  If you want to download the Oracle 10g AS, please only download the
+  pure java implementation called "oc4j_extended.zip". It has a download
+  size of less then 30MB. The complete Oracle 10g AS has a download size
+  of more than 1GB and includes Apache and other software you don't need
+  during development.
+
+  Install the PHP/Java Bridge and copy the JavaBridge.war to the
+  $J2EE_HOME/applications directory.
+
+  Edit $J2EE_HOME/config/application.xml so that it contains the
+  following line:
+
+    <web-module id="JavaBridge" path="../../home/applications/JavaBridge.war"/>
+
+  Edit $J2EE_HOME/config/http-web-site.xml so that it contains the
+  following line:
+
+    <web-app application="default" name="JavaBridge" root="/JavaBridge"/>
+
+
+  Start the Oracle 10g application server, for example with:
+
+    cd $J2EE_HOME
+    java -jar oc4j.jar
+
+  Run the PHP/Java Bridge examples, for example:
+
+    http://localhost:8888/JavaBridge/test.php
+
+  or 
+
+    http://localhost:8888/sessionSharing.php
+
+  If there are problems, please check if oracle has created the
+  $J2EE_HOME/applications/JavaBridge directory and read
+  $J2EE_HOME/applications/JavaBridge/WEB-INF/cgi/README.
+
+
+  For production systems it is recommended to install the complete
+  Oracle Application Server, which includes Apache, and to install
+  PHP as a Apache module.
 ---------------------------------------------
   Tomcat servlet engine
   ---------------------
@@ -477,10 +527,6 @@ bridge: 2m59.343s
   GCJ/GNU Java issues
   -------------------
   
-  gcc3.4 cannot invoke virtual functions from jni code.  Please apply
-  the gcc3.4-broken-jni-method-lookup.patch or use gcc 3.3.3 or gcc 4.x
-  instead.
-
   Running the PHP/Java Bridge under GCJ/GNU Java is supported on Linux
   and Solaris only.  If you run FreeBSD 5.3, please use Sun, Blackdown
   or IBM java instead.

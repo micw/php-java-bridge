@@ -17,6 +17,8 @@ public class HttpSessionFacade implements ISession {
     private HttpSession session;
     private int timeout;
     private HttpSession sessionCache=null;
+    private boolean isNew;
+    
     private HttpSession getSession() {
 	if(sessionCache!=null) return sessionCache;
 	sessionCache = session;
@@ -26,6 +28,7 @@ public class HttpSessionFacade implements ISession {
     public HttpSessionFacade (HttpSession session, int timeout) {
 	this.session = session;
 	this.timeout = timeout;
+	this.isNew = session.isNew();
     }
     /* (non-Javadoc)
      * @see php.java.bridge.ISession#get(java.lang.Object)
@@ -77,7 +80,7 @@ public class HttpSessionFacade implements ISession {
      * @see php.java.bridge.ISession#isNew()
      */
     public boolean isNew() {
-	return getSession().isNew();
+	return isNew;
     }
 
     /* (non-Javadoc)

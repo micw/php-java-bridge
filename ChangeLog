@@ -1,3 +1,15 @@
+2005-08-26  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/servlet/HttpSessionFacade.java (isNew): Use
+	local variable (needed for servlet engines which check the thread context).
+
+	* server/php/java/servlet/PhpJavaServlet.java
+	(handleSocketConnection): some servlet engines override
+	close. Flush the output instead.
+
+	* unsupported/gcc3.4-broken-jni-method-lookup.patch: Obsolete, we
+	don't use JNI anymore.
+	
 2005-08-25  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/servlet/Context.java (removeAll): rewritten

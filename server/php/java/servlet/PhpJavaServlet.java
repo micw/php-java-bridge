@@ -129,6 +129,7 @@ public class PhpJavaServlet extends CGIServlet {
 		    this.env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", "");
 		this.env.put("REDIRECT_STATUS", "1");
 		this.env.put("SCRIPT_FILENAME", this.env.get("PATH_TRANSLATED"));
+	        this.env.put("SERVER_SOFTWARE", Util.EXTENSION_NAME);
 
 		/* send the session context now, otherwise the client has to 
 		 * call handleRedirectConnection */
@@ -314,9 +315,10 @@ public class PhpJavaServlet extends CGIServlet {
 		sout.writeTo(resOut);
 		if(bridge.logLevel>3) bridge.logDebug("re-directing to port# "+ socketRunner.socket.getSocketName());
 	    	sin.close();
-	    	resOut.close();
+	    	resOut.flush();
 	    	if(bridge.logLevel>3) bridge.logDebug("waiting for context: " +ctx.getId());
 	    	ctx.waitFor();
+	    	resOut.close();
 	    	if(bridge.logLevel>3) bridge.logDebug("context finished: " +ctx.getId());
 	    }
 	    else {
