@@ -130,74 +130,13 @@ Build and execution instructions:
   the bridge as a system service.  Please see the RedHat RPM download
   for an example.
 
----------------------------------------------
-  J2EE/EJB Server
-  ---------------
-
-  The following description assumes that you use the Sun J2EE
-  application server and that your server is already installed in some
-  directory, for example in ~/SUNWappserver.  The environment variable
-  $app_server should point to this directory.
-
-  1. Build a JavaBridge.war, for example with the command:
-
-       ./configure --with-java=/opt/IBMJava2-14 \ 
-                   --enable-servlet=$app_server/lib/j2ee.jar &&
-       make
-
-     Open modules/JavaBridge.war and copy the libraries (.jar files)
-     you need into its "WEB-INF/lib" directory.
-
-
-  2. Start your application server, for example with the command:
-
-       $app_server/bin/asadmin start-domain domain1
-
-
-  3. Log into your application server, for example by visiting
-
-       http://localhost:4848/asadmin
-
-     and open
-
-       Application Server -> Applications -> Web Applications
-
-     Click on  "Deploy..."  and deploy modules/JavaBridge.war.
-
-
-  4. The php .ini file [java] section should contain only
-     java.log_level, java.servlet and java.hosts entries.  Example: 
-
-       [java]
-       ;;java.log_level="<level>"
-       java.log_level="2"
-
-       ;;java.servlet=<On|Off>
-       java.servlet=On
-
-       ;; java.hosts="<host1>:<port1>;<host2>:<port2>;..."
-       java.hosts="127.0.0.1:8080" 
-
-     The port# must be the HTTP port, usually 8000 or above.
-     On unix one can also use the host name, such as "localhost",
-     instead of the ip address.
-
-
-  The PHP/Java Bridge log output appears in the server log file, for
-  example in $app_server/domains/domain1/logs/server.log.
-
-  Libraries (.jar files) must be stored in the "WEB-INF/lib" folder
-  within the JavaBridge.war file or in some application server specific
-  "lib" directory. Access to libraries deployed in /usr/share/java is
-  denied by this application server.
-
 ------------------------------------
   Oracle 10g AS
   -------------
 
   The following description assumes that you have the Oracle
   Application Server Containers for J2EE 10g installed, for example in
-  /opt/10gAS and that the J2EE_HOME points to the /opt/10gAS/j2ee/home
+  /opt/10gAS and that the $J2EE_HOME points to the /opt/10gAS/j2ee/home
   directory.
 
   If you want to download the Oracle 10g AS, please only download the
@@ -237,10 +176,67 @@ Build and execution instructions:
   $J2EE_HOME/applications/JavaBridge directory and read
   $J2EE_HOME/applications/JavaBridge/WEB-INF/cgi/README.
 
+  The log output appears in $J2EE_HOME/log/global-application.log.
+
 
   For production systems it is recommended to install the complete
   Oracle Application Server, which includes Apache, and to install
   PHP as a Apache module.
+
+------------------------------------
+  IBM WebSphere AS
+  ----------------
+
+  The following description assumes that you have the IBM WebSphere
+  6.x Application Server installed and that $WAS_HOME points to the
+  /opt/IBM/WebSphere/AppServer directory.
+
+  Install the PHP/Java Bridge. Start the application server, for
+  example with the command:
+
+    $WAS_HOME/bin/startServer.sh  server1
+
+  Log into your application server, for example via: 
+
+    http://localhost:9060/ibm/console/secure/logon.do
+
+  Click on Applications -> Install New Application -> Browse
+  and select JavaBridge.war. 
+
+  Enter /JavaBridge as "Context root" and click Next.
+  Click Next
+  Click Continue
+  Click Next
+  Select JavaBridge.war and click Next
+  Select JavaBridge.war and click Next
+  Click Finish
+  Click on "Save to Master Configuration"
+  Click Save
+
+  Click on Applications -> Enterprise Applications and select JavaBridge.war
+  Click Start
+  
+  Run the PHP/Java Bridge examples, for example:
+
+    http://localhost:9080/JavaBridge/test.php
+
+  or 
+
+    http://localhost:9080/sessionSharing.php
+
+  If there are problems, please check if websphere has created the
+  $WAS_HOME/profiles/default/installedApps/[...]/JavaBridge_war.ear/
+  directory and read
+  $WAS_HOME/[...]/JavaBridge_war.ear/JavaBridge.war/WEB-INF/cgi/README.
+
+  The log output appears in the
+  $WAS_HOME/profiles/default/logs/server1/ directory.
+
+
+  For production systems it is recommended to install the IBM
+  HttpServer (a Apache variant) and to install PHP as a Apache
+  module.
+
 ---------------------------------------------
   Tomcat servlet engine
   ---------------------
@@ -249,7 +245,7 @@ Build and execution instructions:
   for example in /opt/tomcat4.  The environment variable CATALINA_HOME
   should point to this directory.
   
-  1. Build a JavaBridge.war, for example with the command:
+  1. Install or build a JavaBridge.war, for example with the command:
 
        ./configure --with-java=/opt/IBMJava2-14 \ 
              --enable-servlet=$CATALINA_HOME/common/lib/servlet.jar &&
@@ -260,10 +256,6 @@ Build and execution instructions:
   2. Start tomcat with the command 
 
        $CATALINA_HOME/bin/catalina.sh start
-
-     or
-
-       $CATALINA_HOME/bin/catalina.sh run
 
   4. The php .ini file [java] section should contain only
      java.log_level, java.servlet and java.hosts entries.  Example: 
@@ -404,11 +396,11 @@ Build and execution instructions:
   Read the following instructions only if you don't want to use
   Apache.
 
-  It is possible to run PHP inside java. Unlike the JSR223 sample
+  It is possible to run PHP from java. Unlike the JSR223 sample
   implementation, which uses the JNI interface to load/call the native
   php5 shared library, we use the CGI interface to call the PHP
   binary and use a local channel to connect the two components. This is
-  not much slower[1] but more reliable. In case a PHP instance crashes,
+  not much slower but more reliable. In case a PHP instance crashes,
   it will not take down the whole servlet engine or application server.
   
   Please follow the AS or Tomcat installation instructions above, then
@@ -447,15 +439,6 @@ Build and execution instructions:
   files are forwarded via the mod_jk adapter and PHP/Java calls via the
   PHP/Java bridge.
 
-[1] total execution time for 10 queries for examples/bench/bench.php,
- RHEL3 (AMD32, 1500mhz) 
- Tomcat 4.0 
- PHP 5.0.1 (from the jsr sample)
- PHP/Java Bridge 2.0.8
- jsr223 sample implemenentation (from 25.07.2005):
-
-jsr223: 2m58.769s 
-bridge: 2m59.343s
 ------------------------------------
   Loading on-demand with dl()
   ---------------------------

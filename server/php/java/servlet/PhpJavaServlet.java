@@ -141,12 +141,14 @@ public class PhpJavaServlet extends CGIServlet {
 	protected String[] findCGI(String pathInfo, String webAppRootDir,
 				   String contextPath, String servletPath,
 				   String cgiPathPrefix) {
-	    String cgiDir=webAppRootDir+  cgiPathPrefix;
+	    StringBuffer cgiDir = new StringBuffer(webAppRootDir);
+	    if(!webAppRootDir.endsWith(File.separator)) cgiDir.append(File.separatorChar);
+	    cgiDir.append(cgiPathPrefix);
 	    if(!phpFile.isAbsolute()) {
 		File currentLocation=null;
 		try {
 				
-		    if((currentLocation=new File(cgiDir, php)).isFile()||
+		    if((currentLocation=new File(cgiDir.toString(), php)).isFile()||
 		       (currentLocation=new File(Util.EXTENSION_DIR+"/../../../../bin",php)).isFile() ||
 		       ((currentLocation=unixLocation)!=null)||
 		       (currentLocation=windowsLocation)!=null) 
@@ -160,8 +162,11 @@ public class PhpJavaServlet extends CGIServlet {
 	    // incorrect but reasonable values for display only.
 	    String display_cgi="php";
 	    this.pathInfo = "/"+display_cgi+servletPath;
+	    
+	    cgiDir.append(File.separatorChar);
+	    cgiDir.append(display_cgi);
 	    return new String[] {
-		cgiDir+ File.separator+display_cgi,
+		cgiDir.toString(),
 		contextPath+servletPath+File.separator+display_cgi, File.separator+display_cgi, display_cgi};
 	}
     }

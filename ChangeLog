@@ -1,3 +1,14 @@
+2005-08-27  Jost Boekemeier  <jostb@intern>
+
+	* README: Removed Sun j2ee sample server, added Oracle 10g AS and
+	WebSphere 6 AS.
+
+	* server/WEB-INF/web.xml: Use UTF encoding for WebSphere.
+
+	* server/php/java/servlet/PhpJavaServlet.java (findCGI): Add
+	separator (for WebSphere).
+
+	
 2005-08-26  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/servlet/HttpSessionFacade.java (isNew): Use
