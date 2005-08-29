@@ -13,19 +13,19 @@
 
 class JSessionProxy {
   var $java;
-  var $serialID=0;
+  var $serialID;
 
   function __construct($java){ 
     $this->java=$java; 
-    $this->serialID++; 
+    $this->serialID = uniqid(""); 
   }
   function __sleep() {
-    $session=java_get_session("ser".session_id());
+    $session=java_get_session("PHPSESSION".session_id());
     $session->put($this->serialID, $this->java);
     return array("serialID");
   }
   function __wakeup() {
-    $session=java_get_session("ser".session_id());
+    $session=java_get_session("PHPSESSION".session_id());
     $this->java = $session->get($this->serialID);
   }
   function getJava() {

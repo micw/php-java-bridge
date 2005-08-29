@@ -108,10 +108,11 @@ $parser->setFeature("http://xml.org/sax/features/namespace-prefixes", false);
 $parser->setFeature("http://apache.org/xml/features/validation/schema-full-checking", false);
 
 // capture the HTML output of phpinfo ..
-ob_start();
-phpinfo();
-$in = new java("java.io.ByteArrayInputStream", ob_get_contents());
-ob_end_clean();
+// ob_start();
+// phpinfo();
+// $in = new java("java.io.ByteArrayInputStream", ob_get_contents());
+// ob_end_clean();
+$in = new java("java.io.FileInputStream", "$here/phpinfo.xml");
 
 // and filter it through the above callbacks
 $here=getcwd();

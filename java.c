@@ -784,6 +784,12 @@ EXT_METHOD(EXT, __get)
   EXT_GLOBAL(get_property_handler)(Z_STRVAL(*argv[0]), getThis(), return_value);
   efree(argv);
 }
+EXT_METHOD(EXT, __sleep)
+{
+  php_error(E_ERROR, EXT_NAME()/**/" cannot be serialized. Please use the JSessionAdapter located in JSession.php in the php_java_lib folder.");
+  RETURN_NULL();
+}
+
 EXT_METHOD(EXT, offsetExists)
 {
   proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
@@ -911,6 +917,8 @@ function_entry EXT_GLOBAL(class_functions)[] = {
   EXT_ME(EXT, __tostring, arginfo_zero, ZEND_ACC_PUBLIC)
   EXT_ME(EXT, __get, arginfo_get, ZEND_ACC_PUBLIC)
   EXT_ME(EXT, __set, arginfo_set, ZEND_ACC_PUBLIC)
+  EXT_ME(EXT, __sleep, arginfo_set, ZEND_ACC_PUBLIC)
+  EXT_MALIAS(EXT, __wakeup, __sleep, arginfo_zero, ZEND_ACC_PUBLIC)
   EXT_ME(EXT, __destruct, arginfo_zero, ZEND_ACC_PUBLIC)
   EXT_ME(EXT, offsetExists,  arginfo_get, ZEND_ACC_PUBLIC)
   EXT_ME(EXT, offsetGet,     arginfo_get, ZEND_ACC_PUBLIC)

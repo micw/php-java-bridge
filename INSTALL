@@ -1,5 +1,5 @@
-Installation from RPM
----------------------
+Installation from the Linux RPM 
+-------------------------------
 
 * Install a J2RE, for example with the command:
   rpm -i IBMJava2-JRE-1.4.1-8.i386.rpm
@@ -40,8 +40,8 @@ Please see the README and ABOUT.HTM for details.
 
 
 
-Installation from source code
------------------------------
+Installation from source code (Solaris, FreeBSD, WinXP or Linux)
+----------------------------------------------------------------
 
 NOTE: If you run a SELinux kernel, you must install the policy files
 before you can run the PHP/Java Bridge. The php-java-bridge source
@@ -50,42 +50,62 @@ the README file.
 
 The following software components must be installed on your computer:
 
-* an operating system, for example RedHat Enterprise Linux
+* an operating system. For example RedHat Enterprise Linux. If you
+  build on Solaris, FreeBSD/MacOSX or WinXP, you also need the GNU
+  toolchain (gcc, gnu make, autoconf etc.).
 
-* a Java VM, for example IBM JDK 1.4.1
+* a Java VM. For example IBM JDK 1.4.1 or GNU Java version 3 or above.
 
-The following software components are required to run PHP scripts with
-java code embedded via a web-server.  It is assumed that these
-components are not already installed on your computer. If they are
-installed (including development packages), change the install
-directory or skip the compilation/install steps for these components:
-
-* PHP 4.3.x or above, for example 5.0.1
-
-* the PHP/Java Bridge
-
-* a web-server, for example Apache 2.x
+* optional: Oracle 9i/10g AS or IBM WebSphere 5/6.
 
 
-Then choose a proper INST directory and type the following commands:
+The following instructions build the components:
 
-# adjust install directory
-INST=/usr/local
+* the apache web-server
 
-# adjust apache MPM.  Prefork is standard behaviour in apache 1.3, worker
-# creates worker thread pools which deliver content much faster.  But note:
-# some third-party PHP modules may not be thread-safe.
-MPM=prefork #MPM=worker
+* PHP as a apache module
+
+* the PHP/Java Bridge as a PHP module and/or as a J2EE
+  component (plugin) for IBM WebSphere or Oracle AS.
+
+and optionally, if you want to run JSP and PHP from Apache/Tomcat:
+
+* mod_jk with Apache/Tomcat.
+
+
+# Choose a proper INST directory, for example /usr/local/ or
+$HOME/PHP-JAVA-BRIDGE/ and type the following commands:
 
 # stop the system http service 
 su - -c "service httpd stop"
 
-# If you don't have autoconf >= 2.57, automake >= 1.6.3 libtool >=
-# 1.4.3, or versions which do not match, for example autoconf 2.59 and
-# libtool 1.4.3, it is recommended to compile these before proceeding:
- (cd autoconf-2.57;  ./configure --prefix=$INST && make && su -c "make install")
- (cd automake-1.6.3; ./configure --prefix=$INST && make && su -c "make install")
- (cd libtool-1.4.3;  ./configure --prefix=$INST && make && su -c "make install")
+# adjust the install directory
+INST=/usr/local
+
+# adjust the java version
+JAVA_HOME=/opt/IBMJava2-141
+
+# Tell the shell to use our programs
+export PATH=$INST/bin:$PATH 
+export LD_LIBRARY_PATH=$INST/lib:$LD_LIBRARY_PATH
+
+
+# The following software components are required during the build
+# process: autoconf 2.57, automake 1.6.3 and libtool 1.4.3. If you
+# don't have autoconf >= 2.57, automake >= 1.6.3 libtool >= 1.4.3, or
+# versions which do not match, for example autoconf 2.59 and libtool
+# 1.4.3, you must compile and install these before proceeding:
+
+(cd autoconf-2.57;  ./configure --prefix=$INST && make && su -c "make install")
+(cd automake-1.6.3; ./configure --prefix=$INST && make && su -c "make install")
+(cd libtool-1.4.3;  ./configure --prefix=$INST && make && su -c "make install")
+
+
+# BUILD APACHE
+# adjust apache MPM.  Prefork is standard behaviour in apache 1.3, worker
+# creates worker thread pools which deliver content much faster.  But note:
+# some third-party PHP modules may not be thread-safe.
+MPM=prefork #MPM=worker
 
 # compile and install apache 2
 gunzip < httpd-2.x.y.tar.gz | tar xf -
@@ -94,30 +114,35 @@ cd httpd-2.x.y
 make && su -c "make install"
 cd ..
 
-# compile and install php 4.3
-bunzip2 < php-4.3.x.tar.bz2 | tar xf -
-cd php-4.3.x
+
+# BUILD PHP
+bunzip2 < php-x.y.z.tar.bz2 | tar xf -
+cd php-x.y.z
 ./configure --prefix=$INST --without-java --with-apxs2=$INST/bin/apxs
 make && su -c "make install"
 # now activate php in the httpd.conf
 su -c "echo 'AddType application/x-httpd-php .php' >>$INST/conf/httpd.conf"
 cd ..
 
-# compile and install the php/java bridge
+
+# BUILD THE PHP/JAVA BRIDGE
 bunzip2 < php-java-bridge_p.x.y.tar.bz2 | tar xf -
 cd php-java-bridge-p.x.y
-export PATH=$INST/bin:$PATH 
-export LD_LIBRARY_PATH=$INST/lib:$LD_LIBRARY_PATH
 phpize
-# If you don't have a servlet engine use:
-./configure --with-java=/opt/IBMJava2-141 --disable-servlet
-# If you have a servlet engine, locate j2ee.jar and use:
-#./configure --with-java=/opt/IBMJava2-141 --enable-servlet=/path/to/j2ee.jar
+
+# If you don't have a servlet engine or J2EE application server, use:
+./configure --with-java=$JAVA_HOME --disable-servlet
+
+# If you have a servlet engine or J2EE application server, locate
+# j2ee.jar and use:
+#./configure --with-java=$JAVA_HOME --enable-servlet=/path/to/j2ee.jar
+
 make && su -c "make install"
 # now activate the bridge in php.ini
 su -c "touch $INST/lib/php.ini && echo -e 'extension=java.so\n[java]' >>$INST/lib/php.ini"
 cd ..
 
+# TEST
 # create a file phpinfo.php in the document root directory 
 # of apache and start the http service
 su -c "echo '<?php phpinfo() ?>' >$INST/htdocs/phpinfo.php; chmod +xr $INST/htdocs/phpinfo.php; apachectl restart"
@@ -167,5 +192,7 @@ su -c "echo -e 'extension=java.so\n[java]\njava.servlet=On\njava.hosts=127.0.0.1
 Start or re-start apache, for example with:
 apachectl restart
 
-
 Visit http://localhost/JavaBridge and run the supplied examples.
+
+Please see the README for Oracle and WebSphere deployment
+instructions.

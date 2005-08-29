@@ -141,7 +141,7 @@ Build and execution instructions:
 
   If you want to download the Oracle 10g AS, please only download the
   pure java implementation called "oc4j_extended.zip". It has a download
-  size of less then 30MB. The complete Oracle 10g AS has a download size
+  size of less than 30MB. The complete Oracle 10g AS has a download size
   of more than 1GB and includes Apache and other software you don't need
   during development.
 
@@ -281,7 +281,7 @@ Build and execution instructions:
 
 
   The following settings in httpd.conf direct all .jsp requests to the
-  tomcat servlet engine:
+  tomcat servlet engine and all .php requests to the php module:
 
     httpd.conf:
     ----------
@@ -294,8 +294,8 @@ Build and execution instructions:
     JkMount /JavaBridge/ ajp13
 
 
-  The following settings in php.ini direct all Java() ... calls to the
-  tomcat servlet engine:
+  The following settings in php.ini direct all php "Java(...)" calls to
+  the tomcat servlet engine:
 
     php.ini:
     --------

@@ -1,5 +1,20 @@
 2005-08-27  Jost Boekemeier  <jostb@intern>
 
+	* INSTALL: Rewritten
+
+	* VERSION, php-java-bridge.spec: Version 2.0.8RC
+	
+	* java.c (__sleep, __wakeup): New functions to avoid problems
+	described in PR1274526 and PR1202896. In a future version we might
+	make java values serializable. Until then please use the JSession
+	adapter (located in php_java_lib) if you want to store java values
+	into the session variable.
+
+	* server/Makefile.am: Added missing ConstructorCache.
+	
+	
+2005-08-27  Jost Boekemeier  <jostb@intern>
+
 	* README: Removed Sun j2ee sample server, added Oracle 10g AS and
 	WebSphere 6 AS.
 

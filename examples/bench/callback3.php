@@ -114,7 +114,7 @@ $parser->setErrorHandler($handler);
 
 // and filter it through the above callbacks
 $here=getcwd();
-$inputSource=new java("org.xml.sax.InputSource", "$here/phpinfo.xml");
+$inputSource=new java("org.xml.sax.InputSource", "$here/../phpinfo.xml");
 $parser->parse($inputSource);
 $t2=$sys->currentTimeMillis();
 $result[$i]=$t2-$t1;
