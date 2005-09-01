@@ -209,10 +209,11 @@ static void session(INTERNAL_FUNCTION_PARAMETERS)
 	EXT_GLOBAL(check_context) (jenv TSRMLS_CC); /* re-direct if no
 												   context was found */
 
- (*jenv)->writeInvokeBegin(jenv, 0, "getSession", 0, 'I', return_value);
+  (*jenv)->writeInvokeBegin(jenv, 0, "getSession", 0, 'I', return_value);
   (*jenv)->writeString(jenv, Z_STRVAL_PP(session), Z_STRLEN_PP(session)); 
   (*jenv)->writeBoolean(jenv, 0); 
-  (*jenv)->writeLong(jenv, 1400); 
+  (*jenv)->writeLong(jenv, 1440); // FIXME: use session.gc_maxlifetime
+
   (*jenv)->writeInvokeEnd(jenv);
 }
 
@@ -282,6 +283,88 @@ static void values(INTERNAL_FUNCTION_PARAMETERS)
 #endif
 }
 
+static const char identity[] = "serialID";
+static void serialize(INTERNAL_FUNCTION_PARAMETERS)
+{
+  long obj;
+  zval *handle, *id;
+
+  proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
+  if(!jenv) {
+	php_error(E_WARNING, EXT_NAME()/**/" cannot be serialized.");
+	RETURN_NULL();
+  }
+  EXT_GLOBAL(get_jobject_from_object)(getThis(), &obj TSRMLS_CC);
+  assert(obj);
+  if(!obj) {
+	php_error(E_WARNING, EXT_NAME()/**/" cannot be serialized.");
+	RETURN_NULL();
+  }
+
+  MAKE_STD_ZVAL(handle);
+  ZVAL_NULL(handle);
+  (*jenv)->writeInvokeBegin(jenv, 0, "serialize", 0, 'I', handle);
+  (*jenv)->writeObject(jenv, obj);
+  (*jenv)->writeLong(jenv, 1440); // FIXME: use session.gc_maxlifetime
+  (*jenv)->writeInvokeEnd(jenv);
+  zend_hash_update(Z_OBJPROP_P(getThis()), (char*)identity, sizeof identity, &handle, sizeof(pval *), NULL);
+
+  /* Return the field that should be serialized ("serialID") */
+  array_init(return_value);
+  INIT_PZVAL(return_value);
+
+  MAKE_STD_ZVAL(id);
+  Z_TYPE_P(id)=IS_STRING;
+  Z_STRLEN_P(id)=sizeof(identity)-1;
+  Z_STRVAL_P(id)=estrdup(identity);
+  zend_hash_index_update(Z_ARRVAL_P(return_value), 0, &id, sizeof(pval*), NULL);
+}
+static void deserialize(INTERNAL_FUNCTION_PARAMETERS)
+{
+  long obj;
+  zval *handle, **id;
+  int err;
+
+  proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
+  if(!jenv) {
+	php_error(E_ERROR, EXT_NAME()/**/" cannot be de-serialized.");
+  }
+
+  err = zend_hash_find(Z_OBJPROP_P(getThis()), (char*)identity, sizeof identity, (void**)&id);
+  assert(SUCCESS==err);
+  if(FAILURE==err) {
+	php_error(E_WARNING, EXT_NAME()/**/" cannot be deserialized.");
+	RETURN_NULL();
+  }
+  
+  MAKE_STD_ZVAL(handle);
+  ZVAL_NULL(handle);
+  (*jenv)->writeInvokeBegin(jenv, 0, "deserialize", 0, 'I', handle);
+  (*jenv)->writeString(jenv, Z_STRVAL_PP(id), Z_STRLEN_PP(id));
+  (*jenv)->writeLong(jenv, 1440); // FIXME: use session.gc_maxlifetime
+  (*jenv)->writeInvokeEnd(jenv);
+  if(Z_TYPE_P(handle)!=IS_LONG) {
+#ifndef ZEND_ENGINE_2
+	php_error(E_WARNING, EXT_NAME()/**/" cannot be deserialized, session expired.");
+#endif
+	ZVAL_NULL(getThis());
+  }	else {
+	zend_hash_index_update(Z_OBJPROP_P(getThis()), 0, &handle, sizeof(pval *), NULL);
+  }
+  
+  RETURN_NULL();
+}
+#ifndef ZEND_ENGINE_2
+EXT_FUNCTION(EXT_GLOBAL(__sleep))
+{
+  serialize(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+}
+EXT_FUNCTION(EXT_GLOBAL(__wakeup))
+{
+  deserialize(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+}
+#endif
+
 EXT_FUNCTION(EXT_GLOBAL(values))
 {
   values(INTERNAL_FUNCTION_PARAM_PASSTHRU);
@@ -297,12 +380,10 @@ EXT_FUNCTION(EXT_GLOBAL(closure))
   char *string_key;
   ulong num_key;
   zval **pobj, **pfkt, **pclass, **val;
-  long obj, class = 0;
-  short eval_class_array = 0;
+  long class = 0;
   int key_type;
   proxyenv *jenv;
   int argc = ZEND_NUM_ARGS();
-  HashTable *function_mappings = 0;
 
   if (argc>3 || zend_get_parameters_ex(argc, &pobj, &pfkt, &pclass) == FAILURE)
 	WRONG_PARAM_COUNT;
@@ -339,6 +420,9 @@ EXT_FUNCTION(EXT_GLOBAL(closure))
 	  (*jenv)->writeCompositeEnd(jenv);
 	} else if (Z_TYPE_PP(pfkt) == IS_STRING) {
 	  (*jenv)->writeString(jenv, Z_STRVAL_PP(pfkt), Z_STRLEN_PP(pfkt));
+	} else {
+	  (*jenv)->writeCompositeBegin_h(jenv);
+	  (*jenv)->writeCompositeEnd(jenv);
 	}
   }
 
@@ -760,7 +844,6 @@ EXT_METHOD(EXT, __set)
 }
 EXT_METHOD(EXT, __destruct)
 {
-  int argc = ZEND_NUM_ARGS();
   long obj;
 
   EXT_GLOBAL(get_jobject_from_object)(getThis(), &obj TSRMLS_CC);
@@ -786,8 +869,11 @@ EXT_METHOD(EXT, __get)
 }
 EXT_METHOD(EXT, __sleep)
 {
-  php_error(E_ERROR, EXT_NAME()/**/" cannot be serialized. Please use the JSessionAdapter located in JSession.php in the php_java_lib folder.");
-  RETURN_NULL();
+  serialize(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+}
+EXT_METHOD(EXT, __wakeup)
+{
+  deserialize(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
 EXT_METHOD(EXT, offsetExists)
@@ -917,8 +1003,8 @@ function_entry EXT_GLOBAL(class_functions)[] = {
   EXT_ME(EXT, __tostring, arginfo_zero, ZEND_ACC_PUBLIC)
   EXT_ME(EXT, __get, arginfo_get, ZEND_ACC_PUBLIC)
   EXT_ME(EXT, __set, arginfo_set, ZEND_ACC_PUBLIC)
-  EXT_ME(EXT, __sleep, arginfo_set, ZEND_ACC_PUBLIC)
-  EXT_MALIAS(EXT, __wakeup, __sleep, arginfo_zero, ZEND_ACC_PUBLIC)
+  EXT_ME(EXT, __sleep, arginfo_zero, ZEND_ACC_PUBLIC)
+  EXT_ME(EXT, __wakeup, arginfo_zero, ZEND_ACC_PUBLIC)
   EXT_ME(EXT, __destruct, arginfo_zero, ZEND_ACC_PUBLIC)
   EXT_ME(EXT, offsetExists,  arginfo_get, ZEND_ACC_PUBLIC)
   EXT_ME(EXT, offsetGet,     arginfo_get, ZEND_ACC_PUBLIC)
@@ -1152,7 +1238,6 @@ static zend_object_iterator *get_iterator(zend_class_entry *ce, zval *object TSR
   zval_ptr_dtor((zval**)&presult);
   return (zend_object_iterator*)iterator;
 }
-
 static void make_lambda(zend_internal_function *f,
 						void (*handler)(INTERNAL_FUNCTION_PARAMETERS))
 {
@@ -1166,7 +1251,17 @@ static void make_lambda(zend_internal_function *f,
 	f->arg_info = NULL;
 	f->pass_rest_by_reference = 0;
 }
+
 #else
+
+static int make_lambda(zend_internal_function *f,
+					   void (*handler)(INTERNAL_FUNCTION_PARAMETERS))
+{
+	f->type = ZEND_INTERNAL_FUNCTION;
+	f->handler = handler;
+	f->function_name = NULL;
+	f->arg_types = NULL;
+}
 
 void 
 EXT_GLOBAL(call_function_handler4)(INTERNAL_FUNCTION_PARAMETERS, zend_property_reference *property_reference)
@@ -1244,10 +1339,8 @@ set_property_handler(zend_property_reference *property_reference, pval *value)
  * to the sever from which we were called.
  */
 static void override_ini_from_cgi(void) {
-  static const char server[] = "_SERVER";
   static const char key_hosts[]="java.hosts";
   static const char key_servlet[] = "java.servlet";
-  static const char override[] = "X_JAVABRIDGE_OVERRIDE_HOSTS";
   char *hosts;
   EXT_GLOBAL(cfg)->is_cgi_servlet=0;
   
@@ -1256,7 +1349,7 @@ static void override_ini_from_cgi(void) {
 	  || getenv("GATEWAY_INTERFACE")
 	  || getenv("REQUEST_METHOD")) {
 
-	if (hosts=getenv("X_JAVABRIDGE_OVERRIDE_HOSTS")) {
+	if ((hosts=getenv("X_JAVABRIDGE_OVERRIDE_HOSTS"))) {
 	  EXT_GLOBAL(cfg)->is_cgi_servlet=1;
 	  if(*hosts) {
 		zend_alter_ini_entry((char*)key_hosts, sizeof key_hosts,
@@ -1295,6 +1388,8 @@ PHP_MINIT_FUNCTION(EXT)
 {
   zend_class_entry *parent;
 #ifndef ZEND_ENGINE_2
+  static const char nserialize[]="__sleep", ndeserialize[]="__wakeup";
+  zend_internal_function serialize, deserialize;
   zend_class_entry ce;
   INIT_OVERLOADED_CLASS_ENTRY(ce, EXT_NAME(), NULL,
 							  EXT_GLOBAL(call_function_handler4),
@@ -1311,6 +1406,18 @@ PHP_MINIT_FUNCTION(EXT)
   parent = (zend_class_entry *) EXT_GLOBAL(class_entry);
   EXT_GLOBAL(class_class_entry_jsr) = 
 	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
+
+  make_lambda(&serialize, EXT_FN(EXT_GLOBAL(__sleep)));
+  make_lambda(&deserialize, EXT_FN(EXT_GLOBAL(__wakeup)));
+
+  if((FAILURE == (zend_hash_add(&EXT_GLOBAL(class_entry)->function_table, 
+								(char*)nserialize, sizeof(nserialize), &serialize, sizeof(zend_function), NULL))) ||
+	 (FAILURE == (zend_hash_add(&EXT_GLOBAL(class_entry)->function_table, 
+								(char*)ndeserialize, sizeof(ndeserialize), &deserialize, sizeof(zend_function), NULL))))
+  {
+	php_error(E_ERROR, "Could not register __sleep/__wakeup methods.");
+	return FAILURE;
+  }
 
 #else
   zend_class_entry ce;

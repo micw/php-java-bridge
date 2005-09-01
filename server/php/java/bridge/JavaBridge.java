@@ -132,7 +132,8 @@ public class JavaBridge implements Runnable {
 	 * @param clientIsNew
 	 * @param timeout
 	 */
-	public ISession getSession(String name, boolean clientIsNew, int timeout) {
+	public ISession getSession(String name, boolean clientIsNew, int timeout, boolean internal) {
+	    if(!internal) name="@"+name;
 	    synchronized(JavaBridge.sessionHash) {
 		Session ref = null;
 		if(!JavaBridge.sessionHash.containsKey(name)) {
@@ -448,20 +449,23 @@ public class JavaBridge implements Runnable {
 	    if ((t instanceof Error) || logLevel > 1)
 	    	Util.logger.printStackTrace(t);
     }
+    private String getId() {
+    	return "@"+Integer.toHexString(System.identityHashCode(this));
+    }
     public void logDebug(String msg) {
-	if(logLevel>3) Util.println(4, this + " " + msg);
+	if(logLevel>3) Util.println(4, getId() + " " + msg);
     }
     public void logFatal(String msg) {
-	if(logLevel>0) Util.println(1, this + " " + msg);
+	if(logLevel>0) Util.println(1, getId() + " " + msg);
     }
     public void logError(String msg) {
-	if(logLevel>1) Util.println(2, this + " " + msg);
+	if(logLevel>1) Util.println(2, getId() + " " + msg);
     }
     public void logMessage(String msg) {
-	if(logLevel>2) Util.println(3, this + " " + msg);
+	if(logLevel>2) Util.println(3, getId() + " " + msg);
     }
     public void warn(String msg) {
-	if(logLevel>0) Util.warn(this + " " + msg);
+	if(logLevel>0) Util.warn(getId() + " " + msg);
     }
     
     void setException(Response response, Throwable e, String method, Object obj, String name, Object args[], Class params[]) {
@@ -535,6 +539,7 @@ public class JavaBridge implements Runnable {
 	    }
 
 	    Object coercedArgs[] = coerce(params=selected.getParameterTypes(), args, response);
+	    if (this.logLevel>4) logInvoke(clazz, name, coercedArgs); // If we have a logLevel of 5 or above, do very detailed invocation logging
     	    response.writeObject(selected.newInstance(coercedArgs));
 
 	} catch (Throwable e) {
@@ -1355,7 +1360,7 @@ public class JavaBridge implements Runnable {
      */
     public ISession getSession(String name, boolean clientIsNew, int timeout){
     	try {
-	    ISession session= sessionFactory.getSession(name, clientIsNew, timeout);
+	    ISession session= sessionFactory.getSession(name, clientIsNew, timeout, false);
 	    if(session==null) throw new NullPointerException("Isession is null");
 	    return session;
     	} catch (Throwable t) {
@@ -1397,5 +1402,35 @@ public class JavaBridge implements Runnable {
      */
     public void setSessionFactory(SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
+    }
+
+    static final String PHPSESSION = "PHPSESSION";
+    /**
+     * Deserialize serialID
+     * @param serialID
+     * @param timeout
+     * @return the new object identity.
+     */
+    public int deserialize(String serialID, int timeout) {
+	ISession session = defaultSessionFactory.getSession(PHPSESSION, false, timeout, true);
+	Object obj = session.get(serialID);
+	if(obj==null) throw new IllegalArgumentException("Session serialID " +  serialID + " does not exist.");
+	return globalRef.append(obj);
+    }
+    private static int counter=0;
+    private static String getSerialID() {
+    	return Integer.toHexString(counter++);
+    }
+    /**
+     * Serialize the object obj and return the serial id.
+     * @param obj
+     * @param timeout
+     * @return the serialID
+     */
+    public String serialize(Object obj, int timeout) {
+    	ISession session = defaultSessionFactory.getSession(PHPSESSION, false, timeout, true);
+    	String id = getSerialID();
+    	session.put(id, obj);
+    	return id;
     }
 }

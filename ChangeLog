@@ -1,3 +1,35 @@
+2005-09-01  Jost Boekemeier  <jostb@intern>
+
+	* client.c (begin): Use java_strtod instead of
+	zend_string_to_double which cannot convert negative values. (PR1275899)
+	(try_connect_to_server): Correct error message.
+
+	* java.c (serialize, deserialize): New functions (PR1202896 and 1274526)
+	(closure): Added missing branch for null map (PR1276889)
+	(MINIT): __sleep and __wakeup for php4 (PR1202896 and 1274526)
+
+	* protocol.c (PRECISION): Send not more than 17 significant digits.
+
+	* examples/XML/html_to_text.php: Corrected example, PR1276889 
+
+	* server/php/java/bridge/JavaBridge.java (getSession): Prepend "@"
+	in order to distinguish internal from public session names
+	(getId): New function
+	(warn, logMessage, logError, logDebug): Use getId() instead of this.
+	(Create): log constructor call
+	(deserialize, getSerialID, serialize): New methods for PR1202896 and 1274526.
+
+	* server/php/java/bridge/Util.java (initGlobals): Replaces static block which did not work correctly
+	(getShortClassName): New function
+	(appendObject): prepend the short class name to the object description.
+
+	* tests.php4/session_vars.php, tests.php4/numberTest.php, tests.php4/numberTest.jar, tests.php4/NumberTest.java: New tests
+	* php_java_strtod.c, php_java_strtod.h: New files for PR1275899 
+	
+	* config.m4: php_java_strtod.c added
+	
+	* php-java-bridge.spec, VERSION: 2.0.8RC1 fixes PR1276889, 1275899, 1274526, 1202896.
+
 2005-08-27  Jost Boekemeier  <jostb@intern>
 
 	* INSTALL: Rewritten

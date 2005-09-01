@@ -13,10 +13,10 @@
 #define SEND_SIZE 8192 // initial size of the send buffer
 
 #define ILEN 40 // integer, double representation.
-#define PRECISION "20"
+#define PRECISION "15" /* 15 .. 17 */
 #define FLEN 160 // the max len of the following format strings
 
-#ifndef __MINGW32__
+#ifndef ZEND_ENGINE_2
 extern int EXT_GLOBAL(snprintf) (char *buf, size_t len, const char *format,...);
 #else
 # if EXTENSION == JAVA
@@ -155,7 +155,6 @@ void EXT_GLOBAL (protocol_end) (proxyenv *env) {
   servlet_context = EXT_GLOBAL (get_servlet_context) (TSRMLS_C);
 
   if(!(*env)->is_local && servlet_context) {
-	size_t s=0;
 	ssize_t n;
 	char header[SEND_SIZE];
 	int header_length;
@@ -193,7 +192,6 @@ void EXT_GLOBAL(check_context) (proxyenv *env TSRMLS_DC) {
 }
 
 void EXT_GLOBAL(setResultWith_context) (char*key, char*val, char*path) {
-  zval xval;
   static char empty[] = "/";
   static char cmd[] = "\
 $path=trim('%s');\

@@ -22,9 +22,11 @@ import php.java.bridge.ThreadPool;
 import php.java.bridge.Util;
 
 /**
- * Handles requests from PHP clients. This servlet can either run PHP as a CGI 
- * sub-process, when Apache is not available, or it can communicate with 
- * Apache/php, which is recommended.
+ * Handles requests from PHP clients. When apache or IIS are not 
+ * available this servlet can start  php as a CGI sub-process.
+ * However, it is recommended to install php as an Apache module
+ * and to use the mod_jk adapter to connect apache with the
+ * servlet engine or application server.
  */
 public class PhpJavaServlet extends CGIServlet {
 

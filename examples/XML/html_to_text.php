@@ -112,10 +112,10 @@ $parser->setFeature("http://apache.org/xml/features/validation/schema-full-check
 // phpinfo();
 // $in = new java("java.io.ByteArrayInputStream", ob_get_contents());
 // ob_end_clean();
+$here=getcwd();
 $in = new java("java.io.FileInputStream", "$here/phpinfo.xml");
 
 // and filter it through the above callbacks
-$here=getcwd();
 $inputSource=new java("org.xml.sax.InputSource", "$here/DTD");
 $inputSource->setByteStream($in);
 $parser->parse($inputSource);

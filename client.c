@@ -25,6 +25,7 @@
 
 #include "protocol.h"
 #include "parser.h"
+#include "php_java_strtod.h"
 
 #include "java_bridge.h"
 
@@ -167,13 +168,7 @@ static short handle_exception(zval*presult TSRMLS_DC) {
 
 static void setResultFromApply(zval *presult, unsigned char *cname, size_t clen, unsigned char*fname, size_t flen, zval *object, zval *func_params)
 {
-  short has_exception=0;
   zval *func, *retval_ptr=0;
-  char *name;
-  zend_class_entry *ce = 0;
-  int key_type;
-  char *string_key;
-  ulong num_key;
   
   TSRMLS_FETCH();
   
@@ -216,7 +211,7 @@ static pval*hashUpdate  (pval *handle, unsigned char *key, size_t len) {
   MAKE_STD_ZVAL(result);
   ZVAL_NULL(result);
   assert(key);
-  zend_hash_update(Z_ARRVAL_P(handle), key, len+1, &result, sizeof(zval *), NULL);
+  zend_hash_update(Z_ARRVAL_P(handle), (char*)key, len+1, &result, sizeof(zval *), NULL);
   return result;
 }
 
@@ -315,7 +310,7 @@ static void begin(parser_tag_t tag[3], parser_cb_t *cb){
 	break;
   case 'D':
 	GET_RESULT(1);
-	setResultFromDouble(ctx->id, zend_string_to_double((const char*)PARSER_GET_STRING(st, 0), st[0].length));
+	setResultFromDouble(ctx->id, EXT_GLOBAL(strtod)((const char*)PARSER_GET_STRING(st, 0), NULL));
 	break;
   case 'O':
 	GET_RESULT(1);
@@ -369,8 +364,8 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
 	  if((path=strchr(cookie, ';'))) { /* strip off path */
 		char*end;
 		*path++=0;
-		if(path=strchr(path, '=')) path++;
-		if(end=strchr(path, ';')) *end=0;
+		if((path=strchr(path, '='))) path++;
+		if((end=strchr(path, ';'))) *end=0;
 	  }
 	  EXT_GLOBAL(setResultWith_context)(cookie_name, cookie, path);
 	  break;
@@ -461,8 +456,6 @@ static void handle_request(proxyenv *env) {
   if((*env)->must_reopen) {
 	char*server;
 	if((*env)->must_reopen==2) { // redirect
-	  static const char key_sockname[] = "java.socketname";
-	  static const char key_off[] = "Off";
 	  (*env)->peer_redirected = 1;
 	  JG(ini_user)&=~(U_SERVLET|U_SOCKNAME);
 
@@ -507,12 +500,7 @@ array_key_exists('X_JAVABRIDGE_CONTEXT', $_SERVER)\
 ?$_SERVER['X_JAVABRIDGE_CONTEXT']\
 :(array_key_exists('HTTP_X_JAVABRIDGE_CONTEXT', $_SERVER)?$_SERVER['HTTP_X_JAVABRIDGE_CONTEXT']:null);\
 ";
-  static const char override[] = "\
-array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS', $_SERVER)\
-?$_SERVER['X_JAVABRIDGE_OVERRIDE_HOSTS']\
-:(array_key_exists('HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS', $_SERVER)?$_SERVER['HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS']:null);";
 
-  static const char key_on[] = "1";
   zval val;
   char *servlet_context_string = EXT_GLOBAL (get_servlet_context) (TSRMLS_C);
 
@@ -536,7 +524,7 @@ static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {
   }
   if(!(server=EXT_GLOBAL(test_server)(&sock, &is_local, &saddr TSRMLS_CC))) {
 	if (bail) 
-	  php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not connect to server: %s -- Have you started the "/**/EXT_NAME()/**/" bridge and set the "/**/EXT_NAME()/**/".socketname option?",52, strerror(errno));
+	  php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not connect to server: %s -- Have you started the "/**/EXT_NAME()/**/" backend (either a servlet engine, an application server, JavaBridge.jar or MonoBridge.exe) and set the "/**/EXT_NAME()/**/".socketname option?",52, strerror(errno));
 	return 0;
   }
 

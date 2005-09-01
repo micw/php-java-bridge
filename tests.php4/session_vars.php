@@ -16,12 +16,7 @@ if(file_exists($ser)) {
   $file=fopen($ser,"r");
   $id=fgets($file);
   fclose($file);
-  try {
-    $v=unserialize($id);
-  } catch (JavaException $e) {
-    echo "Could not deserialize: ". $e->getCause() . "\n";
-    $v=null;
-  }
+  $v=unserialize($id);
 }
 
 // either a new session or previous session destroyed

@@ -43,7 +43,7 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
           PHP_JAVA=${EXTENSION_DIR}
         else 
 # create java.so, compile with -DEXTENSION_DIR="\"$(EXTENSION_DIR)\""
-	PHP_NEW_EXTENSION(java, php_java_snprintf.c java.c java_bridge.c client.c parser.c protocol.c bind.c init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\"])
+	PHP_NEW_EXTENSION(java, php_java_snprintf.c php_java_strtod.c java.c java_bridge.c client.c parser.c protocol.c bind.c init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\"])
           EXTENSION_NAME=JAVA
 	  PHP_JAVA_BIN="${PHP_JAVA}/bin/java"
         fi

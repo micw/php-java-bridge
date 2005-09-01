@@ -13,7 +13,7 @@ import php.java.bridge.JavaBridge;
 import php.java.bridge.Util;
 
 /*
- * This class manages the ContextRunner's.  It pulls a ContextRunner
+ * This class manages the ContextRunners.  It pulls a ContextRunner
  * from the list of available runners and invokes it.
  * 
  * We currently check only if the number of runners requested is less

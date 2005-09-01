@@ -13,22 +13,22 @@ public class Util {
     public static String EXTENSION_DIR = null;
     public static String EXTENSION_NAME = "JavaBridge";
     public static String THREAD_POOL_MAX_SIZE = "20";
-    static {
+    static void initGlobals() {
         Properties p = new Properties();
 	try {
 	    InputStream in = Util.class.getResourceAsStream("global.properties");
 	    p.load(in);
 	} catch (Throwable t) {
-	    printStackTrace(t);
+	    //t.printStackTrace();
 	};
 	try {
 	    THREAD_POOL_MAX_SIZE = System.getProperty("php.java.bridge.threads", THREAD_POOL_MAX_SIZE);
 	} catch (Throwable t) {
-	    printStackTrace(t);
+	    //t.printStackTrace();
 	};
 	TCP_SOCKETNAME = p.getProperty("TCP_SOCKETNAME", TCP_SOCKETNAME);
 	EXTENSION_DIR = p.getProperty("EXTENSION_DIR", EXTENSION_DIR);
-	EXTENSION_NAME = p.getProperty("EXTENSION_NAME", EXTENSION_NAME);
+	EXTENSION_NAME = p.getProperty("EXTENSION_DISPLAY_NAME", EXTENSION_NAME);
     }
 
     public static final String UTF8 = "UTF-8";
@@ -40,6 +40,9 @@ public class Util {
     public static class Logger { // hook for servlet
         static boolean haveDateFormat=true;
         private static Object _form;
+        public Logger () {
+            initGlobals();
+        }
         public String now() {
 	    if(!haveDateFormat) return String.valueOf(System.currentTimeMillis());
 	    try {
@@ -119,6 +122,13 @@ public class Util {
     	if(c!=null) return c.getName();
     	return "null";
     }
+    public static String getShortClassName(Object obj) {
+	String name = getClassName(obj);
+	int idx = name.lastIndexOf('.');
+	if(idx!=-1) 
+	    name = name.substring(idx+1);
+	return name;
+    }
     //
     public static Class getClass(Object obj) {
 	if(obj==null) return null;
@@ -132,7 +142,9 @@ public class Util {
 		buf.append("c:");
 	    buf.append(getClassName((obj)));
     	} else {
-	    buf.append("o:\"");
+	    buf.append("o(");
+	    buf.append(getShortClassName(obj));
+	    buf.append("):\"");
 	    buf.append(String.valueOf(obj));
 	    buf.append("\"");
 	}
