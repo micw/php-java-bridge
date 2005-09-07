@@ -13,7 +13,7 @@
 #define SEND_SIZE 8192 // initial size of the send buffer
 
 #define ILEN 40 // integer, double representation.
-#define PRECISION "15" /* 15 .. 17 */
+#define PRECISION "14" /* 15 .. 17 digits - 1 */
 #define FLEN 160 // the max len of the following format strings
 
 #ifndef ZEND_ENGINE_2
@@ -182,10 +182,10 @@ void EXT_GLOBAL(check_context) (proxyenv *env TSRMLS_DC) {
 		  (*env)->peer = sock;
 		} else {				/* could not connect */
 		  close(sock);
-		  php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not connect to server: %s.",78, strerror(errno));
+		  EXT_GLOBAL(sys_error)("Could not connect to server",78);
 		}
 	  } else
-		php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not create socket: %s.",79, strerror(errno));
+		EXT_GLOBAL(sys_error)("Could not create socket",79);
 	}
 	(*env)->finish=end_session;
   }

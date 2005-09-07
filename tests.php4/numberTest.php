@@ -12,20 +12,12 @@ $here=getcwd();
 java_set_library_path("$here/numberTest.jar");
 	
 $test = new java('NumberTest');
-print 'getInteger() = ' . $test->getInteger() . '<br>';
-print 'getPrimitiveInt() = ' . $test->getPrimitiveInt() . '<br>';	
-print 'getFloat() = ' . $test->getFloat() . '<br>';
-print 'getPrimitiveFloat() = ' . $test->getPrimitiveFloat() . '<br>';	
-print 'getDouble() = ' . $test->getDouble() . '<br>';
-print 'getPrimitiveDouble() = ' . $test->getPrimitiveDouble() . '<br>';	
-print 'getBigDecimal() = ' . $test->getBigDecimal() . '<br>';
-	
-/* MY OUTPUT:
-	getInteger() = -20
-	getPrimitiveInt() = -20
-	getFloat() = 0
-	getPrimitiveFloat() = 0
-	getDouble() = 0
-	getPrimitiveDouble() = 0
-	getBigDecimal() = 0
-*/
+print "getInteger() = " . $test->getInteger() . "<br>\n";
+print "getPrimitiveInt() = " . $test->getPrimitiveInt() . "<br>\n";
+print "getFloat() = " . $test->getFloat() . "<br>\n";
+print "getPrimitiveFloat() = " . $test->getPrimitiveFloat() . "<br>\n";
+print "getDouble() = " . $test->getDouble() . "<br>\n";
+print "getPrimitiveDouble() = " . $test->getPrimitiveDouble() . "<br>\n"; 
+print "getBigDecimal() = " . $test->getBigDecimal() . "<br>\n";
+
+?>

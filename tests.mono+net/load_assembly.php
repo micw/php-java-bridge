@@ -8,8 +8,7 @@ if (!extension_loaded('mono')) {
     exit(2);
   }
 }
-$Assembly=new MonoClass("System.Reflection.Assembly");
-$Assembly->Load("sample_lib");
+mono_require("sample_lib");
 
 $ArrayToString=new MonoClass("sample.ArrayToString");
 

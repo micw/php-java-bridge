@@ -4,7 +4,7 @@ Build and execution instructions:
   and tag the files with the correct SEL contexts, please see below, or 
   please install the binary RPM instead.
 
-  Install mono 1.0.6 or above. Install the IKVM.GNU.Classpath.dll and
+  Install mono 1.1.8 or above. Install the IKVM.GNU.Classpath.dll and
   IKVM.Runtime.dll. Install ikvmc.exe from the IKVM project:
   http://www.ikvm.net.
 

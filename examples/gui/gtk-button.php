@@ -1,8 +1,7 @@
 #!/usr/bin/php -nq
 
-# To run the following example, one must add the gtk-sharp.dll to the
-# java_require() path. For example by copying gtk-sharp.dll and
-# gtk-sharp.dll.config into extensions.
+# To run the following example gtk-sharp ver. 2.0.0.0, (key# 35e10195dab3c99f)
+# must be installed.
 
 <?php
 if (!extension_loaded('mono')) {
@@ -17,7 +16,22 @@ class GtkDemo {
   var $Application;
 
   function GtkDemo() {
-    mono_require("gtk-sharp");	// link the gtk-sharp library
+    // mono_require("gtk-sharp", "2.0.0.0", "35e10195dab3c99f"); 
+
+    // The following is equivalent to the above mono_require
+    // statement. It shows how to load a library from the GAC.
+    $Assembly=new MonoClass("System.Reflection.Assembly");
+    $assemblyName = new Mono("System.Reflection.AssemblyName");
+
+    // Name is a property of AssemblyName, set_Name(...) calls the
+    // setter, get_Name() calls the getter
+    $assemblyName->set_Name("gtk-sharp");
+    $assemblyName->set_Version(new Mono("System.Version", "2.0.0.0"));
+
+    // pack converts the hex string into a byte array
+    $assemblyName->setPublicKeyToken(pack("H16", "35e10195dab3c99f"));
+    // load gtk-sharp 2.0.0.0 (35e10195dab3c99f)
+    $Assembly->Load($assemblyName);
   }
 
   function delete($sender, $e) {

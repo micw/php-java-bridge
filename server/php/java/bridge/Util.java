@@ -142,11 +142,16 @@ public class Util {
 		buf.append("c:");
 	    buf.append(getClassName((obj)));
     	} else {
-	    buf.append("o(");
-	    buf.append(getShortClassName(obj));
-	    buf.append("):\"");
-	    buf.append(String.valueOf(obj));
-	    buf.append("\"");
+    	    if(obj!=null) {
+	        buf.append("o(");
+	        buf.append(getShortClassName(obj));
+	        buf.append("):");
+	    	buf.append("\"");
+		buf.append(String.valueOf(obj));
+		buf.append("\"");
+    	    } else {
+    	    	buf.append("null");
+    	    }
 	}
     }
     public static void appendParam(Object obj, StringBuffer buf) {

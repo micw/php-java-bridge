@@ -1,3 +1,47 @@
+2005-09-07  Jost Boekemeier  <jostb@intern>
+
+	* server/RunJavaBridge.c.in, server/RunMonoBridge.c.in: Execute
+	with path.
+
+	* server/php/java/bridge/JavaBridge.java (deserialize, serialize): Updated documentation.
+
+	* server/php/java/bridge/Session.java (Session, expire, getAll): A Hashtable cannot
+	store null values, use Collections.synchronizedMap
+	instead; for PR1283148.
+
+	* server/php/java/bridge/CGIServlet.java (setDefaultEnv):
+	rewritten, see PR1281189.
+
+	* tests.php4/session.php: test null values in session, for
+	PR1283148.
+
+	* VERSION, php-java-bridge.spec: Version 2.0.8RC2 fixes PR1283148
+	and 1281189.
+
+
+2005-09-04  Jost Boekemeier  <jostb@intern>
+
+	* bind.c (sys_error): New procedure.
+
+	* java.c (__errno): do not modify __errno on windows. Use
+	GetLastError in sys_error instead.
+	
+	* server/php/java/bridge/JavaBridge.java (getSerialID): synchronize
+
+	* server/php/java/bridge/Util.java (appendObject): display null
+	
+	* server/php/java/servlet/CGIServlet.java (setDefaultEnv): New
+	function to work around a bug in WIN XP which requires the
+	environment variable "SystemRoot". If this variable is missing, XP
+	cannot find winsock.dll anymore...
+	(printServletEnvironment, doGet, toString): Removed dead code.
+	(setCGIEnvironment): Use getDefaultEnv.
+	
+	* server/php/java/servlet/CGIServlet.java
+	(getSession): Added required parameter. Otherwise our method will
+	not be called.
+
+	
 2005-09-01  Jost Boekemeier  <jostb@intern>
 
 	* client.c (begin): Use java_strtod instead of

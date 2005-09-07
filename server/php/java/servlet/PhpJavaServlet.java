@@ -146,6 +146,7 @@ public class PhpJavaServlet extends CGIServlet {
 	    StringBuffer cgiDir = new StringBuffer(webAppRootDir);
 	    if(!webAppRootDir.endsWith(File.separator)) cgiDir.append(File.separatorChar);
 	    cgiDir.append(cgiPathPrefix);
+	    cgi_bin=php;
 	    if(!phpFile.isAbsolute()) {
 		File currentLocation=null;
 		try {

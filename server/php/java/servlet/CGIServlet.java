@@ -309,6 +309,38 @@ public class CGIServlet extends HttpServlet {
      */
     static final String ASCII = "ASCII";
 
+    /**
+     * Create a default environment which inherits all environment
+     * variables from the parent.
+     */
+    // private static final Hashtable defaultEnv = new Hashtable(System.getenv());
+
+    // foobar workaround for Windows problems
+    static final Hashtable defaultEnv = new Hashtable();
+    private static final File winnt = new File("c:/winnt");
+    private static final File windows = new File("c:/windows");
+    private void setDefaultEnv() {
+	String val = null;
+	// Bug in WINNT and WINXP.
+	// If SystemRoot is missing, php cannot access winsock.
+	if(winnt.isDirectory()) val="c:\\winnt";
+	else if(windows.isDirectory()) val = "c:\\windows";
+	try {
+	    String s = getServletConfig().getInitParameter("Windows.SystemRoot");
+	    if(s!=null) val=s;
+	} catch (Throwable t) {/*ignore*/}
+	try {
+	    String s = System.getenv("SystemRoot"); 
+	    if(s!=null) val=s;
+        } catch (Throwable t) {/*ignore*/}
+        try {
+	    String s = System.getProperty("Windows.SystemRoot");
+	    if(s!=null) val=s;
+        } catch (Throwable t) {/*ignore*/}
+	if(val!=null) defaultEnv.put("SystemRoot", val);
+    }
+
+
 
     /**
      * Sets instance variables.
@@ -328,7 +360,9 @@ public class CGIServlet extends HttpServlet {
     public void init(ServletConfig config) throws ServletException {
 
         super.init(config);
-
+        
+        setDefaultEnv();
+        
         // Verify that we were not accessed using the invoker servlet
         String servletName = getServletConfig().getServletName();
         if (servletName == null)
@@ -360,213 +394,6 @@ public class CGIServlet extends HttpServlet {
         if (debug >= 1) {
             //log("init: Associated with Context '" + context.getPath() + "'");
         }
-
-    }
-
-
-
-    /**
-     * Prints out important Servlet API and container information
-     *
-     * <p>
-     * Copied from SnoopAllServlet by Craig R. McClanahan
-     * </p>
-     *
-     * @param  out    ServletOutputStream as target of the information
-     * @param  req    HttpServletRequest object used as source of information
-     * @param  res    HttpServletResponse object currently not used but could
-     *                provide future information
-     *
-     * @exception  IOException  if a write operation exception occurs
-     *
-     */
-    protected void printServletEnvironment(ServletOutputStream out,
-					   HttpServletRequest req, HttpServletResponse res) throws IOException {
-
-        // Document the properties from ServletRequest
-        out.println("<h1>ServletRequest Properties</h1>");
-        out.println("<ul>");
-        Enumeration attrs = req.getAttributeNames();
-        while (attrs.hasMoreElements()) {
-            String attr = (String) attrs.nextElement();
-            out.println("<li><b>attribute</b> " + attr + " = " +
-			req.getAttribute(attr));
-        }
-        out.println("<li><b>characterEncoding</b> = " +
-		    req.getCharacterEncoding());
-        out.println("<li><b>contentLength</b> = " +
-		    req.getContentLength());
-        out.println("<li><b>contentType</b> = " +
-		    req.getContentType());
-        Enumeration locales = req.getLocales();
-        while (locales.hasMoreElements()) {
-            Locale locale = (Locale) locales.nextElement();
-            out.println("<li><b>locale</b> = " + locale);
-        }
-        Enumeration params = req.getParameterNames();
-        while (params.hasMoreElements()) {
-            String param = (String) params.nextElement();
-            String values[] = req.getParameterValues(param);
-            for (int i = 0; i < values.length; i++)
-                out.println("<li><b>parameter</b> " + param + " = " +
-			    values[i]);
-        }
-        out.println("<li><b>protocol</b> = " + req.getProtocol());
-        out.println("<li><b>remoteAddr</b> = " + req.getRemoteAddr());
-        out.println("<li><b>remoteHost</b> = " + req.getRemoteHost());
-        out.println("<li><b>scheme</b> = " + req.getScheme());
-        out.println("<li><b>secure</b> = " + req.isSecure());
-        out.println("<li><b>serverName</b> = " + req.getServerName());
-        out.println("<li><b>serverPort</b> = " + req.getServerPort());
-        out.println("</ul>");
-        out.println("<hr>");
-
-        // Document the properties from HttpServletRequest
-        out.println("<h1>HttpServletRequest Properties</h1>");
-        out.println("<ul>");
-        out.println("<li><b>authType</b> = " + req.getAuthType());
-        out.println("<li><b>contextPath</b> = " +
-		    req.getContextPath());
-        Cookie cookies[] = req.getCookies();
-	if (cookies!=null) {
-	    for (int i = 0; i < cookies.length; i++)
-                out.println("<li><b>cookie</b> " + cookies[i].getName() +" = " +cookies[i].getValue());
-	}
-        Enumeration headers = req.getHeaderNames();
-        while (headers.hasMoreElements()) {
-            String header = (String) headers.nextElement();
-            out.println("<li><b>header</b> " + header + " = " +
-			req.getHeader(header));
-        }
-        out.println("<li><b>method</b> = " + req.getMethod());
-        out.println("<li><a name=\"pathInfo\"><b>pathInfo</b></a> = "
-                    + req.getPathInfo());
-        out.println("<li><b>pathTranslated</b> = " +
-		    req.getPathTranslated());
-        out.println("<li><b>queryString</b> = " +
-		    req.getQueryString());
-        out.println("<li><b>remoteUser</b> = " +
-		    req.getRemoteUser());
-        out.println("<li><b>requestedSessionId</b> = " +
-		    req.getRequestedSessionId());
-        out.println("<li><b>requestedSessionIdFromCookie</b> = " +
-		    req.isRequestedSessionIdFromCookie());
-        out.println("<li><b>requestedSessionIdFromURL</b> = " +
-		    req.isRequestedSessionIdFromURL());
-        out.println("<li><b>requestedSessionIdValid</b> = " +
-		    req.isRequestedSessionIdValid());
-        out.println("<li><b>requestURI</b> = " +
-		    req.getRequestURI());
-        out.println("<li><b>servletPath</b> = " +
-		    req.getServletPath());
-        out.println("<li><b>userPrincipal</b> = " +
-		    req.getUserPrincipal());
-        out.println("</ul>");
-        out.println("<hr>");
-
-        // Document the servlet request attributes
-        out.println("<h1>ServletRequest Attributes</h1>");
-        out.println("<ul>");
-        attrs = req.getAttributeNames();
-        while (attrs.hasMoreElements()) {
-            String attr = (String) attrs.nextElement();
-            out.println("<li><b>" + attr + "</b> = " +
-			req.getAttribute(attr));
-        }
-        out.println("</ul>");
-        out.println("<hr>");
-
-        // Process the current session (if there is one)
-        HttpSession session = req.getSession(false);
-        if (session != null) {
-
-            // Document the session properties
-            out.println("<h1>HttpSession Properties</h1>");
-            out.println("<ul>");
-            out.println("<li><b>id</b> = " +
-			session.getId());
-            out.println("<li><b>creationTime</b> = " +
-			new Date(session.getCreationTime()));
-            out.println("<li><b>lastAccessedTime</b> = " +
-			new Date(session.getLastAccessedTime()));
-            out.println("<li><b>maxInactiveInterval</b> = " +
-			session.getMaxInactiveInterval());
-            out.println("</ul>");
-            out.println("<hr>");
-
-            // Document the session attributes
-            out.println("<h1>HttpSession Attributes</h1>");
-            out.println("<ul>");
-            attrs = session.getAttributeNames();
-            while (attrs.hasMoreElements()) {
-                String attr = (String) attrs.nextElement();
-                out.println("<li><b>" + attr + "</b> = " +
-			    session.getAttribute(attr));
-            }
-            out.println("</ul>");
-            out.println("<hr>");
-
-        }
-
-        // Document the servlet configuration properties
-        out.println("<h1>ServletConfig Properties</h1>");
-        out.println("<ul>");
-        out.println("<li><b>servletName</b> = " +
-		    getServletConfig().getServletName());
-        out.println("</ul>");
-        out.println("<hr>");
-
-        // Document the servlet configuration initialization parameters
-        out.println("<h1>ServletConfig Initialization Parameters</h1>");
-        out.println("<ul>");
-        params = getServletConfig().getInitParameterNames();
-        while (params.hasMoreElements()) {
-            String param = (String) params.nextElement();
-            String value = getServletConfig().getInitParameter(param);
-            out.println("<li><b>" + param + "</b> = " + value);
-        }
-        out.println("</ul>");
-        out.println("<hr>");
-
-        // Document the servlet context properties
-        out.println("<h1>ServletContext Properties</h1>");
-        out.println("<ul>");
-        out.println("<li><b>majorVersion</b> = " +
-		    getServletContext().getMajorVersion());
-        out.println("<li><b>minorVersion</b> = " +
-		    getServletContext().getMinorVersion());
-        out.println("<li><b>realPath('/')</b> = " +
-		    getServletContext().getRealPath("/"));
-        out.println("<li><b>serverInfo</b> = " +
-		    getServletContext().getServerInfo());
-        out.println("</ul>");
-        out.println("<hr>");
-
-        // Document the servlet context initialization parameters
-        out.println("<h1>ServletContext Initialization Parameters</h1>");
-        out.println("<ul>");
-        params = getServletContext().getInitParameterNames();
-        while (params.hasMoreElements()) {
-            String param = (String) params.nextElement();
-            String value = getServletContext().getInitParameter(param);
-            out.println("<li><b>" + param + "</b> = " + value);
-        }
-        out.println("</ul>");
-        out.println("<hr>");
-
-        // Document the servlet context attributes
-        out.println("<h1>ServletContext Attributes</h1>");
-        out.println("<ul>");
-        attrs = getServletContext().getAttributeNames();
-        while (attrs.hasMoreElements()) {
-            String attr = (String) attrs.nextElement();
-            out.println("<li><b>" + attr + "</b> = " +
-			getServletContext().getAttribute(attr));
-        }
-        out.println("</ul>");
-        out.println("<hr>");
-
-
 
     }
 
@@ -606,11 +433,6 @@ public class CGIServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
         throws ServletException, IOException {
 
-        // Verify that we were not accessed using the invoker servlet
-	//        if (req.getAttribute(Globals.INVOKED_ATTR) != null)
-	//            throw new UnavailableException
-	//                ("Cannot invoke CGIServlet through the invoker");
-
         CGIEnvironment cgiEnv = createCGIEnvironment(req, getServletContext());
 
         if (cgiEnv.isValid()) {
@@ -624,52 +446,9 @@ public class CGIServlet extends HttpServlet {
                 cgi.setInput(req.getInputStream());
             }
             cgi.setResponse(res);
+            cgi.updateReadyStatus();
             cgi.run();
         }
-
-
-        //REMIND: change to debug method or something
-        if ((req.getParameter("X_TOMCAT_CGI_DEBUG") != null)
-            || (!cgiEnv.isValid())) {
-            try {
-                ServletOutputStream out = res.getOutputStream();
-                out.println("<HTML><HEAD><TITLE>CGIServlet</TITLE></HEAD>");
-                out.println("<BODY>");
-
-                if (cgiEnv.isValid()) {
-                    out.println(cgiEnv.toString());
-                } else {
-                    res.setStatus(404);
-                    out.println("<H3>");
-                    out.println("CGI script not found or not specified.");
-                    out.println("</H3>");
-                    out.println("<H4>");
-                    out.println("Check the <b>HttpServletRequest ");
-                    out.println("<a href=\"#pathInfo\">pathInfo</a></b> ");
-                    out.println("property to see if it is what you meant ");
-                    out.println("it to be.  You must specify an existant ");
-                    out.println("and executable file as part of the ");
-                    out.println("path-info.");
-                    out.println("</H4>");
-                    out.println("<H4>");
-                    out.println("For a good discussion of how CGI scripts ");
-                    out.println("work and what their environment variables ");
-                    out.println("mean, please visit the <a ");
-                    out.println("href=\"http://cgi-spec.golux.com\">CGI ");
-                    out.println("Specification page</a>.");
-                    out.println("</H4>");
-
-                }
-
-                printServletEnvironment(out, req, res);
-
-                out.println("</BODY></HTML>");
-
-            } catch (IOException ignored) {
-            }
-
-        } //debugging
-
 
     } //doGet
 
@@ -928,7 +707,6 @@ public class CGIServlet extends HttpServlet {
         }
 
 
-
         /**
          * Constructs the CGI environment to be supplied to the invoked CGI
          * script; relies heavliy on Servlet API methods and findCGI
@@ -940,15 +718,8 @@ public class CGIServlet extends HttpServlet {
          *           was a problem and no environment was set
          */
         protected boolean setCGIEnvironment(HttpServletRequest req) {
-
-            /*
-             * This method is slightly ugly; c'est la vie.
-             * "You cannot stop [ugliness], you can only hope to contain [it]"
-             * (apologies to Marv Albert regarding MJ)
-             */
-
-            Hashtable envp = new Hashtable();
-
+	    Hashtable envp = (Hashtable)defaultEnv.clone();
+            
             String sPathInfoOrig = null;
             String sPathTranslatedOrig = null;
             String sPathInfoCGI = null;
@@ -1110,74 +881,6 @@ public class CGIServlet extends HttpServlet {
             return true;
 
         }
-
-
-
-        /**
-         * Print important CGI environment information in a easy-to-read HTML
-         * table
-         *
-         * @return  HTML string containing CGI environment info
-         *
-         */
-        public String toString() {
-
-            StringBuffer sb = new StringBuffer();
-
-            sb.append("<TABLE border=2>");
-
-            sb.append("<tr><th colspan=2 bgcolor=grey>");
-            sb.append("CGIEnvironment Info</th></tr>");
-
-            sb.append("<tr><td>Debug Level</td><td>");
-            sb.append(debug);
-            sb.append("</td></tr>");
-
-            sb.append("<tr><td>Validity:</td><td>");
-            sb.append(isValid());
-            sb.append("</td></tr>");
-
-            if (isValid()) {
-                Enumeration envk = env.keys();
-                while (envk.hasMoreElements()) {
-                    String s = (String) envk.nextElement();
-                    sb.append("<tr><td>");
-                    sb.append(s);
-                    sb.append("</td><td>");
-                    sb.append(blanksToString((String) env.get(s),
-                                             "[will be set to blank]"));
-                    sb.append("</td></tr>");
-                }
-            }
-
-            sb.append("<tr><td colspan=2><HR></td></tr>");
-
-            sb.append("<tr><td>Derived Command</td><td>");
-            sb.append(nullsToBlanks(command));
-            sb.append("</td></tr>");
-
-            sb.append("<tr><td>Working Directory</td><td>");
-            if (workingDirectory != null) {
-                sb.append(workingDirectory.toString());
-            }
-            sb.append("</td></tr>");
-
-            sb.append("<tr><td colspan=2>Query Params</td></tr>");
-            Enumeration paramk = queryParameters.keys();
-            while (paramk.hasMoreElements()) {
-                String s = paramk.nextElement().toString();
-                sb.append("<tr><td>");
-                sb.append(s);
-                sb.append("</td><td>");
-                sb.append(queryParameters.get(s).toString());
-                sb.append("</td></tr>");
-            }
-
-            sb.append("</TABLE><p>end.");
-
-            return sb.toString();
-        }
-
 
 
         /**
@@ -1367,7 +1070,6 @@ public class CGIServlet extends HttpServlet {
             this.env = env;
             this.wd = wd;
             this.params = params;
-            updateReadyStatus();
         }
 
 
@@ -1410,7 +1112,6 @@ public class CGIServlet extends HttpServlet {
          */
         protected void setResponse(HttpServletResponse response) {
             this.response = response;
-            updateReadyStatus();
         }
 
 
@@ -1423,7 +1124,6 @@ public class CGIServlet extends HttpServlet {
          */
         protected void setInput(InputStream stdin) {
             this.stdin = stdin;
-            updateReadyStatus();
         }
 
 

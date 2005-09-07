@@ -128,12 +128,12 @@ public class JavaBridge implements Runnable {
 
     public static class SessionFactory {
 	/**
-	 * @param name
-	 * @param clientIsNew
-	 * @param timeout
+	 * @param name The session name. If name is null, the session is an internal session
+	 * @param clientIsNew true if the client wants a new session
+	 * @param timeout timeout in seconds. If 0 the session does not expire.
 	 */
-	public ISession getSession(String name, boolean clientIsNew, int timeout, boolean internal) {
-	    if(!internal) name="@"+name;
+	public ISession getSession(String name, boolean clientIsNew, int timeout) {
+	    if(name==null) name=PHPSESSION; else name="@"+name;
 	    synchronized(JavaBridge.sessionHash) {
 		Session ref = null;
 		if(!JavaBridge.sessionHash.containsKey(name)) {
@@ -1360,7 +1360,7 @@ public class JavaBridge implements Runnable {
      */
     public ISession getSession(String name, boolean clientIsNew, int timeout){
     	try {
-	    ISession session= sessionFactory.getSession(name, clientIsNew, timeout, false);
+	    ISession session= sessionFactory.getSession(name, clientIsNew, timeout);
 	    if(session==null) throw new NullPointerException("Isession is null");
 	    return session;
     	} catch (Throwable t) {
@@ -1386,7 +1386,7 @@ public class JavaBridge implements Runnable {
     	return new PhpProcedureProxy(this, emptyMap, null, object);
     }
 
-    /*
+    /**
      * Reset the global caches of the bridge.
      * Currently this is the classloader and the session.
      */
@@ -1410,16 +1410,17 @@ public class JavaBridge implements Runnable {
      * @param serialID
      * @param timeout
      * @return the new object identity.
+     * @throws IllegalArgumentException if serialID does not exist anymore.
      */
     public int deserialize(String serialID, int timeout) {
-	ISession session = defaultSessionFactory.getSession(PHPSESSION, false, timeout, true);
+	ISession session = defaultSessionFactory.getSession(null, false, timeout);
 	Object obj = session.get(serialID);
-	if(obj==null) throw new IllegalArgumentException("Session serialID " +  serialID + " does not exist.");
+	if(obj==null) throw new IllegalArgumentException("Session serialID " +  serialID + " expired.");
 	return globalRef.append(obj);
     }
     private static int counter=0;
-    private static String getSerialID() {
-    	return Integer.toHexString(counter++);
+    private static synchronized int getSerialID() {
+    	return counter++;
     }
     /**
      * Serialize the object obj and return the serial id.
@@ -1428,8 +1429,8 @@ public class JavaBridge implements Runnable {
      * @return the serialID
      */
     public String serialize(Object obj, int timeout) {
-    	ISession session = defaultSessionFactory.getSession(PHPSESSION, false, timeout, true);
-    	String id = getSerialID();
+    	ISession session = defaultSessionFactory.getSession(null, false, timeout);
+    	String id = Integer.toHexString(getSerialID());
     	session.put(id, obj);
     	return id;
     }

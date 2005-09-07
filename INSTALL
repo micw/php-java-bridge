@@ -162,6 +162,10 @@ Optionally you can install the tomcat servlet engine to serve .jsp
 files:
 
 Download and extract tomcat into a directory, for example /opt/tomcat5
+and set the environment variable CATALINA_HOME, for example:
+
+export CATALINA_HOME=/opt/tomcat5
+
 
 Download and install mod jk, for example
 jakarta-tomcat-connectors-1.2.14.1-src.tar.gz, extract the file into a
@@ -172,25 +176,28 @@ cd jakarta-tomcat-connectors-1.2.14.1-src/jk/native/
 
 # now activate mod_jk in the httpd.conf, mount the tomcat webapps
 # directory and ask tomcat to handle all .jsp files
-su -c "echo -e 'LoadModule jk_module modules/mod_jk.so\nJkAutoAlias /opt/tomcat5/webapps\nJkMount /JavaBridge/*.jsp ajp13\nJkMount /JavaBridge/ ajp13' >>$INST/conf/httpd.conf"
+su -c "echo -e 'LoadModule jk_module modules/mod_jk.so\nJkAutoAlias $CATALINA_HOME/webapps\nJkMount /JavaBridge/*.jsp ajp13\nJkMount /JavaBridge/ ajp13' >>$INST/conf/httpd.conf"
 
-Start tomcat, for example with the command /opt/tomcat5/catalina.sh start
+Start tomcat, for example with the command:
+
+$CATALINA_HOME/bin/catalina.sh start
+
 
 Copy the JavaBridge.war file (which you should have created when
 compiling the PHP/Java Bridge, see flag "--enable-servlet" above) from
 the modules directory into the tomcat webapps directory, for example
 with the command:
 
-cp modules/JavaBridge.war /opt/tomcat5/webapps
+cp modules/JavaBridge.war $CATALINA_HOME/webapps
 
-Check if tomcat has created the /opt/tomcat5/webapps/JavaBridge
+Check if tomcat has created the $CATALINA_HOME/webapps/JavaBridge
 directory, if not, please check the tomcat logs for errors.
 
 Direct php to tomcat:
 su -c "echo -e 'extension=java.so\n[java]\njava.servlet=On\njava.hosts=127.0.0.1:8080' >$INST/lib/php.ini"
 
 Start or re-start apache, for example with:
-apachectl restart
+su -c "apachectl restart"
 
 Visit http://localhost/JavaBridge and run the supplied examples.
 

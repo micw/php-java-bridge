@@ -31,6 +31,7 @@ extern short EXT_GLOBAL (option_set_by_user) (short option, int where);
 extern void EXT_GLOBAL (init_cfg) (TSRMLS_D);
 extern void EXT_GLOBAL(shutdown_library) (void);
 extern void EXT_GLOBAL(destroy_cfg) (int);
+extern void EXT_GLOBAL(sys_error)(const char *str, int code);
   
 
 extern unsigned char EXT_GLOBAL (get_mode) (void);

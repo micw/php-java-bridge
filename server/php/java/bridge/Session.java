@@ -2,12 +2,13 @@
 
 package php.java.bridge;
 
-import java.util.Hashtable;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
 public class Session implements ISession {
-    protected Hashtable map;
+    protected Map map;
     protected String name;
     private static int sessionCount=0;
     boolean isNew=true;
@@ -28,7 +29,7 @@ public class Session implements ISession {
     Session(String name) {
 	this.name=name;
 	Session.sessionCount++;
-	this.map=new Hashtable();
+	this.map=Collections.synchronizedMap(new HashMap());
 	this.startTime=System.currentTimeMillis();
 	this.timeout=1440000;
     }
@@ -69,7 +70,7 @@ public class Session implements ISession {
      * @see php.java.bridge.ISession#getAll()
      */
     public Map getAll() {
-	return map; // the client will receive a copy.
+	return new HashMap(map); // unshare the map 
     }
 
     static void expire(JavaBridge bridge) {
@@ -79,7 +80,7 @@ public class Session implements ISession {
 		Session ref = (Session)e.next();
 		if((ref.timeout >0) && (ref.startTime+ref.timeout<=System.currentTimeMillis())) {
 		    sessionCount--;
-		    JavaBridge.sessionHash.remove(ref.name);
+		    e.remove();
 		    if(bridge.logLevel>3) bridge.logDebug("Session " + ref.name + " expired.");
 		}
 	    }

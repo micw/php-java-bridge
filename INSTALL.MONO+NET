@@ -1,7 +1,7 @@
 Installing the PHP/Mono Bridge
 ------------------------------
 
-* Install mono 1.0.6 or above.
+* Install mono 1.1.8 or above.
 
 * Download and extract php-mono-bridge_*.zip into a folder.
 

@@ -275,7 +275,7 @@ Build and execution instructions:
   Assuming that tomcat is installed (e.g. in /opt/tomcat5),
   JavaBridge.war is deployed (e.g. in /opt/tomcat5/webapps), java.so
   (or php_java.dll) is installed in the php modules directory (e.g. in
-  /usr/lib/php4/), mod_jk and php5 are installed in the apache modules
+  /usr/lib/php/modules/), mod_jk and php5 are installed in the apache modules
   directory (e.g. in /usr/lib/httpd/modules/), we recommend following
   settings:
 
@@ -490,7 +490,7 @@ Build and execution instructions:
   Log levels
   ----------
 
-  You can set the java.log_level to 5 values:
+  You can set the java.log_level to 6 values:
 
    0: Log nothing, not even fatal errors.
 
@@ -501,6 +501,8 @@ Build and execution instructions:
    3: Log verbose, e.g.: "loading jar xyz.jar from http://xy.com"
 
    4: Log debug messages, including the c/s communication protocol.
+
+   5: Log method invocations. 
 
   The default log level is 2.  If java.log_level is missing, the
   backend uses the "default" log level supplied when the backend was
@@ -615,6 +617,26 @@ Build and execution instructions:
   into a ECMA 335 dll, e.g. with the command: ikvmc batStore-1.0.jar,
   and to use assembly loading instead, please see the
   tests.mono+net/load_assembly.php for details).
+
+------------------------------------
+  Sun java platform issues
+  ------------------------
+
+  The sun java platform does not support java "modules". This causes
+  certain problems when running java programs. When you compile a class
+  foo which references a class bar and ship the class foo without
+  providing bar, the sun java platform will not complain unless the user
+  accidently calls a method which references the non-existing class. If
+  this happens a "NoClassDefFound" error is thrown. This error may
+  not(!) indicate which class is missing and it certainly does not
+  indicate which external library is missing. The tests.php4 folder
+  contains two tests, noClassDefFound.php and noClassDefFound2.php which
+  demonstrate this.
+
+  To avoid this problem please document *exactly* (including the
+  version number) which external libraries (.jar files) your software
+  needs. If you have written software where certain methods require an
+  optional library, please document this in the method header.
 
 ------------------------------------
   PHP 5 issues

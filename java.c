@@ -25,8 +25,8 @@ EXT_DECLARE_MODULE_GLOBALS(EXT)
 struct cfg *EXT_GLOBAL (cfg)  = 0;
 
 #ifdef __MINGW32__
-static int java_errno=0;
-int *__errno (void) { java_errno = 0; return &java_errno; }
+static const int java_errno=0;
+int *__errno (void) { return &java_errno; }
 #define php_info_print_table_row(a, b, c) \
    php_info_print_table_row_ex(a, "java", b, c)
 #endif
@@ -321,7 +321,6 @@ static void serialize(INTERNAL_FUNCTION_PARAMETERS)
 }
 static void deserialize(INTERNAL_FUNCTION_PARAMETERS)
 {
-  long obj;
   zval *handle, **id;
   int err;
 

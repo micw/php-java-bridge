@@ -516,6 +516,13 @@ void EXT_GLOBAL(shutdown_library)()
   if(EXT_GLOBAL(cfg)->cid) wait_for_daemon();
 }
 
+void EXT_GLOBAL(sys_error)(const char *str, int code) {
+#ifndef __MINGW32__
+  php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d) system error: %s. %s.", code, strerror(errno), str);
+#else
+  php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d) system error code: %ld. %s.", code, (long)GetLastError(), str);
+#endif
+}
 
 #ifndef PHP_WRAPPER_H
 #error must include php_wrapper.h

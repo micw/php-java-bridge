@@ -12,7 +12,7 @@ import php.java.bridge.JavaBridge;
 import php.java.bridge.Util;
 
 /*
- * The context may a) keep a promise which one may evaluate to a
+ * The context may a) keep a promise (a "proxy") which one may evaluate to a
  * session reference (for PHP/JSP session sharing), and/or b) it may
  * reference a "half-executed" bridge for local channel re-directs (for
  * "high speed" communication links).
@@ -28,7 +28,7 @@ import php.java.bridge.Util;
  * channel re-direct". If the former happens, we invoke the promise
  * and return the session object to the client. Different promises can
  * evaluate to the same session object.  For local channel re-directs,
- * the Context is given to a ContextRunner, which will handle the
+ * the Context is given to a ContextRunner, which handles the
  * local channel communication.
  * @see ContextRunner
  * @see SocketRunner
