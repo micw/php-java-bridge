@@ -30,7 +30,9 @@ import php.java.bridge.Util;
  */
 public class PhpJavaServlet extends CGIServlet {
 
-    // IO buffer size
+    private static final long serialVersionUID = 3257854259629144372L;
+
+	// IO buffer size
     static final int BUF_SIZE = 8192;
 
     // "internal" pool for SocketRunner's
@@ -58,7 +60,7 @@ public class PhpJavaServlet extends CGIServlet {
     static protected String php = "php"; 
     static protected File phpFile = new File(php);
     static protected boolean override_hosts = true;
-    static File unixLocation=null, windowsLocation=null;
+    static File unixLocation=null, unixLocation2=null, windowsLocation=null;
     static SocketRunner socketRunner = null;
     static int threadPoolSize = 20;
     static ThreadPool threadPool = null;
@@ -93,8 +95,10 @@ public class PhpJavaServlet extends CGIServlet {
 	Util.logger=new Logger(config.getServletContext());
         DynamicJavaBridgeClassLoader.initClassLoader(Util.EXTENSION_DIR);
 
-	unixLocation = new File("/usr/bin/php");
+	unixLocation = new File("/usr/bin/php-cgi");
 	if(!unixLocation.exists()) unixLocation=null;
+	unixLocation2 = new File("/usr/bin/php");
+	if(!unixLocation2.exists()) unixLocation2=null;
 	windowsLocation = new File("c:/php5/php-cgi.exe");
 	if(!windowsLocation.exists()) windowsLocation=null;
 	
@@ -154,6 +158,7 @@ public class PhpJavaServlet extends CGIServlet {
 		    if((currentLocation=new File(cgiDir.toString(), php)).isFile()||
 		       (currentLocation=new File(Util.EXTENSION_DIR+"/../../../../bin",php)).isFile() ||
 		       ((currentLocation=unixLocation)!=null)||
+		       ((currentLocation=unixLocation2)!=null)||
 		       (currentLocation=windowsLocation)!=null) 
 			cgi_bin=currentLocation.getCanonicalPath();
 		} catch (IOException e) {
@@ -235,7 +240,7 @@ public class PhpJavaServlet extends CGIServlet {
 	Request r = bridge.request = new Request(bridge);
 	try {
 	    if(r.initOptions(in, out)) {
-		r.handleRequests();
+		r.handleOneRequest();
 	    }
 	} catch (Throwable e) {
 	    Util.printStackTrace(e);
@@ -314,7 +319,7 @@ public class PhpJavaServlet extends CGIServlet {
 	try {
 	    if(r.initOptions(sin, sout)) {
 		res.setHeader("X_JAVABRIDGE_REDIRECT", socketRunner.socket.getSocketName());
-	    	r.handleRequests();
+	    	r.handleOneRequest();
 
 		// redirect and re-open
 	    	socketRunner.schedule();

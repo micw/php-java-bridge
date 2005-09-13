@@ -192,9 +192,9 @@ public class Request implements IDocHandler {
     	}
     	}
     }
-    public void handleRequests() throws IOException {
-    	response=new Response(bridge);
-	while(Parser.OK==parser.parse(bridge.in)){
+    private int handleRequest() throws IOException {
+	int retval;
+	if(Parser.OK==(retval=parser.parse(bridge.in))) {
 	    response.setResult(args.id, bridge.requestOptions);
 	    switch(args.type){
 	    case 'I':
@@ -213,6 +213,18 @@ public class Request implements IDocHandler {
 		break;
 	    }
 	    args.reset();
+	}
+	return retval;
+    }
+    public void handleRequests() throws IOException {
+    	response=new Response(bridge);
+	while(Parser.OK==handleRequest())
+	    ;
+    }
+    public void handleOneRequest() throws IOException {
+    	response=new Response(bridge);
+	if(Parser.OK==handleRequest()) {
+	    while(Parser.OK==parser.parse(bridge.in));
 	}
     }
     private static final Object[] empty = new Object[] {null};

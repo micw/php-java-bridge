@@ -64,27 +64,20 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.Hashtable;
-import java.util.Locale;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
 import javax.servlet.UnavailableException;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
-// import org.apache.catalina.Globals;
-// import org.apache.catalina.util.StringManager;
 
 
 /**
@@ -287,7 +280,9 @@ public class CGIServlet extends HttpServlet {
        StringManager.getManager(Constants.Package);
     */
 
-    /** the Context container associated with our web application. */
+    private static final long serialVersionUID = 3258132448955937337L;
+
+	/** the Context container associated with our web application. */
     private ServletContext context = null;
 
     /** the debugging detail level for this servlet. */
@@ -339,6 +334,20 @@ public class CGIServlet extends HttpServlet {
         } catch (Throwable t) {/*ignore*/}
 	if(val!=null) defaultEnv.put("SystemRoot", val);
     }
+
+	private static final String UTF="UTF-8";
+	/**
+	 * UTF-8 encode a URL parameter.
+	 * @param parameter
+	 * @return the URLEncoded parameter
+	 */
+	static String encode(String parameter, HttpServlet servlet) {
+		try {
+			return URLEncoder.encode(parameter, UTF);
+		} catch (UnsupportedEncodingException e) {servlet.log("Error: " + e); }
+		return parameter;
+	}
+
 
 
 
@@ -530,7 +539,7 @@ public class CGIServlet extends HttpServlet {
                 String param = paramNames.nextElement().toString();
                 if (param != null) {
                     queryParameters.put(
-					param, URLEncoder.encode(req.getParameter(param)));
+					param, encode(req.getParameter(param), CGIServlet.this));
                 }
             }
 
@@ -542,6 +551,9 @@ public class CGIServlet extends HttpServlet {
             }
 
         }
+
+
+
 
 
 
@@ -1267,7 +1279,7 @@ public class CGIServlet extends HttpServlet {
                     if ((k.indexOf("=") < 0) && (v.indexOf("=") < 0)) {
                         cmdAndArgs.append(k);
                         cmdAndArgs.append("=");
-                        v = java.net.URLEncoder.encode(v);
+                        v = encode(v, CGIServlet.this);
                         cmdAndArgs.append(v);
                         cmdAndArgs.append(" ");
                     }

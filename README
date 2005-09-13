@@ -110,7 +110,7 @@ Build and execution instructions:
           java.java      = <system dependent path to the java binary>
           java.socketname= <local ("unix domain") communication channel>
           java.hosts     = <add. bridge hosts e.g.: server1:9267;server2:9268>
-          java.servlet   = <On/Off>
+          java.servlet   = <On/Off or path, e.g.: "/JavaBridge/PhpJavaServlet"
 
   Please first look at the output of phpinfo() to see the original
   values.  
@@ -648,6 +648,35 @@ Build and execution instructions:
 
   If you use one of these versions, please add an entry to the
   php.ini, see install instructions above.
+
+------------------------------------
+  Security issues
+  ---------------
+
+  It is recommended to use the local backend on a Unix machine which
+  supports abstract local ("unix domain") sockets. On these systems
+  the communication channel is not visible and cannot be attacked. If
+  you are running a Security Enhanced Linux kernel, which is standard
+  since RHEL4 or FC3, the backend is also protected by the SEL policy.
+
+  On other systems, such as Windows and Mac OSX or when the backend is
+  running in a standard J2EE (servlet-, AS-) environment where local
+  channels are not available, the bridge opens a TCP port on 9167
+  (JavaBridge.jar) or 9267 (MonoBridge.exe) or 9567 (JavaBridge.war) or
+  above and binds to all(!) available network cards. When running as a
+  CGI binary the port is 9567 and only the loopback (127.0.0.1) interface
+  is used.
+
+  Please make sure that these ports are protected and cannot be
+  accessed from the internet.
+
+  In J2EE application servers where the security policy denies opening
+  TCP sockets, the bridge uses a HTTP tunnel which is 50 times slower
+  than a standard TCP socket. If you see the log message (at level INFO)
+  that the bridge cannot use local channels, please either change the
+  security policy or disallow all PUT requests from the internet. If you
+  use Apache, mod jk adapter and Tomcat as described above, the adapter
+  already denies routing PUT requests to the servlet engine.
 
 ------------------------------------
   UTF-8

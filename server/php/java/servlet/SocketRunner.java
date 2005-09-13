@@ -66,9 +66,8 @@ class SocketRunner implements Runnable {
 	    ContextRunner runner = getNext();
 	    if(runner==null) {
 	    	shutdownSocket(in, out, socket);
-	    	Context.removeAll();
 	    	Util.logFatal("Could not find a runner for the request I've received. This is either a bug in the software or an intruder is accessing the local communication channel. Please check the log file(s).");
-	    	return false; // someone is accessing our local port!?
+	    	return true; // someone is accessing our local port!?
 	    }
 	    runner.init(in, out, socket);
 	    if(PhpJavaServlet.threadPool!=null) {
@@ -79,14 +78,14 @@ class SocketRunner implements Runnable {
 	    	t.start();
 
 	    }
-	} catch (IOException e) {
-            shutdownSocket(in, out, socket);
-            Util.printStackTrace(e);
-	} catch (Exception t) {
+	} catch (SecurityException t) {
 	    shutdownSocket(in, out, socket);
 	    Context.removeAll();
 	    Util.printStackTrace(t);
 	    return false;
+	} catch (Throwable t) {
+	    shutdownSocket(in, out, socket);
+	    Util.printStackTrace(t);
 	}
 	return true;
     }

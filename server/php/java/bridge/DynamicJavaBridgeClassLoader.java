@@ -43,7 +43,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	    contextDir=rawContextDir+File.separator+"lib"+File.separator;
 	    try {
 		this.addURL(new URL("file:"+contextDir), false);
-	    } catch (MalformedURLException e) {
+	    } catch (Exception e) {
 		Util.printStackTrace(e);
 	    }
 	}
@@ -96,7 +96,11 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 
 	URL urls[] = new URL[toAdd.size()];
         toAdd.toArray(urls);
-        addURLs(rawPath, urls, false); // Uses protected method to explicitly set the classpath entry that is added.
+	try {
+	    addURLs(rawPath, urls, false); // Uses protected method to explicitly set the classpath entry that is added.
+	} catch (Exception e) {
+	    Util.printStackTrace(e);
+	}
     }
     //
     // add all jars found in the phpConfigDir/lib and /usr/share/java

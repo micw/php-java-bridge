@@ -195,12 +195,11 @@ EXT_FUNCTION(EXT_GLOBAL(instanceof))
 static void session(INTERNAL_FUNCTION_PARAMETERS)
 {
   proxyenv *jenv;
-  zval **session;
+  zval **session=0, **is_new=0;
+  int argc=ZEND_NUM_ARGS();
   
-  if (ZEND_NUM_ARGS()!=1 || zend_get_parameters_ex(1, &session) == FAILURE)
+  if (argc>2 || zend_get_parameters_ex(1, &session, &is_new) == FAILURE)
 	WRONG_PARAM_COUNT;
-
-  convert_to_string_ex(session);
 
   jenv=EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   if(!jenv) RETURN_NULL();
@@ -210,8 +209,14 @@ static void session(INTERNAL_FUNCTION_PARAMETERS)
 												   context was found */
 
   (*jenv)->writeInvokeBegin(jenv, 0, "getSession", 0, 'I', return_value);
-  (*jenv)->writeString(jenv, Z_STRVAL_PP(session), Z_STRLEN_PP(session)); 
-  (*jenv)->writeBoolean(jenv, 0); 
+  if(argc>0 && Z_TYPE_PP(session)!=IS_NULL) {
+	convert_to_string_ex(session);
+	(*jenv)->writeString(jenv, Z_STRVAL_PP(session), Z_STRLEN_PP(session)); 
+  } else {
+	(*jenv)->writeObject(jenv, 0);
+  }
+  (*jenv)->writeBoolean(jenv, (argc<2||Z_TYPE_PP(is_new)==IS_NULL)?0:Z_BVAL_PP(is_new)); 
+
   (*jenv)->writeLong(jenv, 1440); // FIXME: use session.gc_maxlifetime
 
   (*jenv)->writeInvokeEnd(jenv);

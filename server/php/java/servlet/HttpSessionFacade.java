@@ -56,7 +56,7 @@ public class HttpSessionFacade implements ISession {
     }
 
     /* (non-Javadoc)
-     * @see php.java.bridge.ISession#setTimeout(long)
+     * @see php.java.bridge.ISession#setTimeout(int)
      */
     public void setTimeout(int timeout) {
 	getSession().setMaxInactiveInterval(timeout);

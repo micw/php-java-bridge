@@ -8,6 +8,7 @@
 #include "protocol.h"
 #include "php_java.h"
 #include "java_bridge.h"
+#include "php_java_snprintf.h"
 
 #define SLEN 256 // initial length of the parser string
 #define SEND_SIZE 8192 // initial size of the send buffer
@@ -15,18 +16,6 @@
 #define ILEN 40 // integer, double representation.
 #define PRECISION "14" /* 15 .. 17 digits - 1 */
 #define FLEN 160 // the max len of the following format strings
-
-#ifndef ZEND_ENGINE_2
-extern int EXT_GLOBAL(snprintf) (char *buf, size_t len, const char *format,...);
-#else
-# if EXTENSION == JAVA
-#  define java_ap_php_snprintf ap_php_snprintf 
-# elif EXTENSION == MONO
-#  define mono_ap_php_snprintf ap_php_snprintf 
-# else
-#  error unknown EXTENSION
-# endif
-#endif
 
 #define GROW(size) { \
   flen = size; \
@@ -77,7 +66,7 @@ static void end(proxyenv *env) {
 	ssize_t n;
 
 	assert(!(*env)->peer_redirected || ((*env)->peer_redirected && (*env)->peer0));
-	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %ld\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", servlet_context, size+1, getSessionFactory(env), mode);
+	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", servlet_context, (unsigned long)(size+1), getSessionFactory(env), mode);
 
 	n=send((*env)->peer, header, header_length, 0);
 	assert(n==header_length);
@@ -128,7 +117,7 @@ static void end_session(proxyenv *env) {
   (*env)->finish=end;
   
   assert(!(*env)->peer_redirected || ((*env)->peer_redirected && (*env)->peer0));
-  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %ld\r\nX_JAVABRIDGE_REDIRECT: %d\r\n%sX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", (*env)->servlet_context_string, size+1, override_redirect, get_cookies(&val, env), getSessionFactory(env), mode);
+  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_REDIRECT: %d\r\n%sX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", (*env)->servlet_context_string, (unsigned long)(size+1), override_redirect, get_cookies(&val, env), getSessionFactory(env), mode);
   n=send(peer, header, header_length, 0);
   assert(n==header_length);
   n=0;
@@ -192,19 +181,21 @@ void EXT_GLOBAL(check_context) (proxyenv *env TSRMLS_DC) {
 }
 
 void EXT_GLOBAL(setResultWith_context) (char*key, char*val, char*path) {
-  static char empty[] = "/";
-  static char cmd[] = "\
-$path=trim('%s');\
-setcookie('%s', '%s', 0, strncmp($_SERVER['PHP_SELF'], $path, strlen($path))?'/':$path);\
+  static const char empty[] = "/";
+  static const char name[] = "setResultWith_cookie";
+  static const char cmd[] = "\n\
+$path=trim('%s');\n\
+if($path[0]!='/') $path='/'.$path;\n\
+setcookie('%s', '%s', 0, $path);\n\
 ";
   char buf[1024];
   int ret;
 
   TSRMLS_FETCH();
 
-  if(!path) path = empty;
-  EXT_GLOBAL(snprintf)(buf, sizeof(buf), cmd, path, key, val);
-  ret = zend_eval_string(buf, 0, "setResultWith_cookie" TSRMLS_CC);
+  if(!path) path = (char*)empty;
+  EXT_GLOBAL(snprintf)(buf, sizeof(buf), (char*)cmd, path, key, val);
+  ret = zend_eval_string((char*)buf, 0, (char*)name TSRMLS_CC);
   assert(SUCCESS==ret);
 }
 

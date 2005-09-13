@@ -1,4 +1,12 @@
 <?php
+
+if (!extension_loaded('java')) {
+  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+    echo "java extension not installed.";
+    exit(2);
+  }
+}
+
 header("Content-type: application/x-excel");
 header("Content-Disposition: attachment; filename=downloaded.xls");
 java_require("http://php-java-bridge.sf.net/poi.jar");

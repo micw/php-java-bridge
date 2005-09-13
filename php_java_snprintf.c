@@ -55,6 +55,8 @@
  * <panos@alumni.cs.colorado.edu> for xinetd.
  */
 
+#ifndef ZEND_ENGINE_2
+
 #include "php_java.h"
 #include <stddef.h>
 #include <stdio.h>
@@ -1186,4 +1188,6 @@ int EXT_GLOBAL (vsnprintf) (char *buf, size_t len, const char *format, va_list a
 
 #ifndef PHP_WRAPPER_H
 #error must include php_wrapper.h
+#endif
+
 #endif

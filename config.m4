@@ -22,7 +22,7 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
        JAVA_CHECK_ABSTRACT_NAMESPACE
        JAVA_CHECK_STRUCT_UCRED
        if test "$have_broken_gcc_installation" = "yes"; then
-         AC_MSG_WARN([YOUR GCC INSTALLATION IS BROKEN. It tries to link with the same library for -m32 and -m64 builds. This may result in a "wrong ELF class" error at runtime. Although you can work around this bug at runtime by changing the LD_LIBRARY_PATH, we recommend to re-install the gcc compiler before you continue to install the PHP/Java Bridge.])
+         AC_MSG_WARN([Your GCC installation may be broken. It uses two different static libraries but only one dynamic library for -m32 and -m64 builds.])
 	  sleep 30
        fi
 

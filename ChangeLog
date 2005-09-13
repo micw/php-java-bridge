@@ -1,3 +1,33 @@
+2005-09-12  Jost Boekemeier  <jostb@intern>
+
+	* php_java_snprintf.h: Added missing header.
+
+	* config.m4: Clarify warning message.
+
+	* java.c (session) accept 0..2 parameters.
+
+	* php-java-bridge.te: Added missing right to create /var/log/php-java-bridge.log
+
+	* protocol.c (setResultWith_context): Do not change the path, otherwise we end up with
+	cookies which have different paths.
+
+	* php/java/bridge/DynamicJavaBridgeClassLoader.java (updateJarLibraryPath): GNU java throws null pointer exception when it cannot connect to a remote URL.
+
+	* php/java/bridge/ISession.java: Added javadoc
+
+	* php/java/bridge/Request.java (handleOneRequest): New method used
+	so that one cannot fake client requests; only one statement is
+	executed via the HTTP tunnel, everything else goes through the
+	local channel.
+
+	* php/java/servlet/CGIServlet.java (encode): New function which
+	uses UTF8 encoding.
+	(unixLocation2): New global which points to php-cgi, used since
+	FC4.
+
+	* php/java/servlet/SocketRunner.java (accept): Do not shut down
+	the local channel if attacked.
+
 2005-09-07  Jost Boekemeier  <jostb@intern>
 
 	* server/RunJavaBridge.c.in, server/RunMonoBridge.c.in: Execute

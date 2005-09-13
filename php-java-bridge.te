@@ -35,8 +35,8 @@ general_domain_access(javabridge_t)
 general_proc_read_access(javabridge_t)
 
 # we currently have no log directory
-allow javabridge_t var_log_t:dir search;
-allow javabridge_t var_log_t:file { append write };
+allow javabridge_t var_log_t:dir { add_name write search };
+allow javabridge_t var_log_t:file { create append write };
 
 # Connect from httpd.
 can_unix_connect(httpd_t, javabridge_t)
