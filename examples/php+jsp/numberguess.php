@@ -9,7 +9,7 @@ if (!extension_loaded('java')) {
   }
 }
 
-$session = java_session("numberguess");
+$session = java_session();
 if(!$numguess=$session->get("bean")) {
   $session->put("bean", $numguess=new java("num.NumberGuessBean"));
 }

@@ -7,7 +7,7 @@ if (!extension_loaded('java')) {
   }
 }
 
-$session = java_session("sessionSharing");
+$session = java_session();
 ?>
 
 <HTML>

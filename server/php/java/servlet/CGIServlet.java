@@ -68,6 +68,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
@@ -271,6 +273,8 @@ import javax.servlet.http.HttpServletResponse;
 
 public class CGIServlet extends HttpServlet {
 
+	// IO buffer size
+    static final int BUF_SIZE = 8192;
 
     /* some vars below copied from Craig R. McClanahan's InvokerServlet */
 
@@ -282,7 +286,7 @@ public class CGIServlet extends HttpServlet {
 
     private static final long serialVersionUID = 3258132448955937337L;
 
-	/** the Context container associated with our web application. */
+    /** the Context container associated with our web application. */
     private ServletContext context = null;
 
     /** the debugging detail level for this servlet. */
@@ -335,18 +339,18 @@ public class CGIServlet extends HttpServlet {
 	if(val!=null) defaultEnv.put("SystemRoot", val);
     }
 
-	private static final String UTF="UTF-8";
-	/**
-	 * UTF-8 encode a URL parameter.
-	 * @param parameter
-	 * @return the URLEncoded parameter
-	 */
-	static String encode(String parameter, HttpServlet servlet) {
-		try {
-			return URLEncoder.encode(parameter, UTF);
-		} catch (UnsupportedEncodingException e) {servlet.log("Error: " + e); }
-		return parameter;
-	}
+    private static final String UTF="UTF-8";
+    /**
+     * UTF-8 encode a URL parameter.
+     * @param parameter
+     * @return the URLEncoded parameter
+     */
+    static String encode(String parameter, HttpServlet servlet) {
+	try {
+	    return URLEncoder.encode(parameter, UTF);
+	} catch (UnsupportedEncodingException e) {servlet.log("Error: " + e); }
+	return parameter;
+    }
 
 
 
@@ -447,15 +451,12 @@ public class CGIServlet extends HttpServlet {
         if (cgiEnv.isValid()) {
             CGIRunner cgi = new CGIRunner(cgiEnv.getCommand(),
                                           cgiEnv.getEnvironment(),
-                                          cgiEnv.getWorkingDirectory(),
-                                          cgiEnv.getParameters());
-            //if POST, we need to cgi.setInput
-            //REMIND: how does this interact with Servlet API 2.3's Filters?!
+                                          cgiEnv.getWorkingDirectory());
             if ("POST".equals(req.getMethod())) {
                 cgi.setInput(req.getInputStream());
-            }
+            } 
+            cgi.setParams(req.getParameterMap());
             cgi.setResponse(res);
-            cgi.updateReadyStatus();
             cgi.run();
         }
 
@@ -511,9 +512,6 @@ public class CGIServlet extends HttpServlet {
         /** cgi command's desired working directory */
         private File workingDirectory = null;
 
-        /** cgi command's query parameters */
-        private Hashtable queryParameters = null;
-
         /** whether or not this object is valid or not */
         private boolean valid = false;
 
@@ -533,16 +531,6 @@ public class CGIServlet extends HttpServlet {
             setupFromContext(context);
             setupFromRequest(req);
 
-            queryParameters = new Hashtable();
-            Enumeration paramNames = req.getParameterNames();
-            while (paramNames != null && paramNames.hasMoreElements()) {
-                String param = paramNames.nextElement().toString();
-                if (param != null) {
-                    queryParameters.put(
-					param, encode(req.getParameter(param), CGIServlet.this));
-                }
-            }
-
             this.valid = setCGIEnvironment(req);
 
             if (this.valid) {
@@ -551,12 +539,6 @@ public class CGIServlet extends HttpServlet {
             }
 
         }
-
-
-
-
-
-
 
 
 	/**
@@ -930,19 +912,6 @@ public class CGIServlet extends HttpServlet {
         }
 
 
-
-        /**
-         * Gets derived CGI query parameters
-         *
-         * @return   CGI query parameters
-         *
-         */
-        protected Hashtable getParameters() {
-            return queryParameters;
-        }
-
-
-
         /**
          * Gets validity status
          *
@@ -1045,17 +1014,13 @@ public class CGIServlet extends HttpServlet {
         private File wd = null;
 
         /** query parameters to be passed to the invoked script */
-        private Hashtable params = null;
+        private Map params = null;
 
         /** stdin to be passed to cgi script */
         private InputStream stdin = null;
 
         /** response object used to set headers & get output stream */
         private HttpServletResponse response = null;
-
-        /** boolean tracking whether this object has enough info to run() */
-        private boolean readyToRun = false;
-
 
 
 
@@ -1076,42 +1041,20 @@ public class CGIServlet extends HttpServlet {
          *                   based on CGI script output
          *
          */
-        protected CGIRunner(String command, Hashtable env, File wd,
-                            Hashtable params) {
+        protected CGIRunner(String command, Hashtable env, File wd) {
             this.command = command;
             this.env = env;
             this.wd = wd;
-            this.params = params;
         }
 
 
 
         /**
-         * Checks & sets ready status
-         */
-        protected void updateReadyStatus() {
-            if (command != null
-                && env != null
-                && wd != null
-                && params != null
-                && response != null) {
-                readyToRun = true;
-            } else {
-                readyToRun = false;
-            }
-        }
-
-
-
-        /**
-         * Gets ready status
-         *
-         * @return   false if not ready (<code>run</code> will throw
-         *           an exception), true if ready
-         */
-        protected boolean isReady() {
-            return readyToRun;
-        }
+	 * @param queryParameters
+	 */
+	public void setParams(Map queryParameters) {
+	    this.params=queryParameters;
+	}
 
 
 
@@ -1235,15 +1178,6 @@ public class CGIServlet extends HttpServlet {
          */
         protected void run() throws IOException {
 
-            /*
-             * REMIND:  this method feels too big; should it be re-written?
-             */
-
-            if (!isReady()) {
-                throw new IOException(this.getClass().getName()
-                                      + ": not ready to run.");
-            }
-
             if (debug >= 1 ) {
                 log("runCGI(envp=[" + env + "], command=" + command + ")");
             }
@@ -1257,11 +1191,6 @@ public class CGIServlet extends HttpServlet {
                                       + "running CGI [" + command + "].");
             }
 
-            /* original content/structure of this section taken from
-             * http://developer.java.sun.com/developer/
-             *                               bugParade/bugs/4216884.html
-             * with major modifications by Martin Dengler
-             */
             Runtime rt = null;
             BufferedOutputStream commandsStdIn = null;
             InputStream in = null; 
@@ -1269,14 +1198,14 @@ public class CGIServlet extends HttpServlet {
             Process proc = null;
 
             //create query arguments
-            Enumeration paramNames = params.keys();
+            Iterator ii = params.keySet().iterator();
             StringBuffer cmdAndArgs = new StringBuffer(command);
-            if (paramNames != null && paramNames.hasMoreElements()) {
+            if (ii.hasNext()) {
                 cmdAndArgs.append(" ");
-                while (paramNames.hasMoreElements()) {
-                    String k = (String) paramNames.nextElement();
+                while (ii.hasNext()) {
+                    String k = (String) ii.next();
                     String v = params.get(k).toString();
-                    if ((k.indexOf("=") < 0) && (v.indexOf("=") < 0)) {
+                    if ((k.indexOf("=") < 0)) {
                         cmdAndArgs.append(k);
                         cmdAndArgs.append("=");
                         v = encode(v, CGIServlet.this);
@@ -1289,27 +1218,26 @@ public class CGIServlet extends HttpServlet {
             rt = Runtime.getRuntime();
             proc = rt.exec(cmdAndArgs.toString(), hashToStringArray(env), wd);
             
-	    String sContentLength = (String) env.get("CONTENT_LENGTH");
-	    if(!"".equals(sContentLength)) {
-		commandsStdIn = new BufferedOutputStream(proc.getOutputStream());
-		byte[] content = new byte[Integer.parseInt(sContentLength)];
-		stdin.read(content);
-		commandsStdIn.write(content);
-		commandsStdIn.flush();
-		commandsStdIn.close();
-	    }
-
-
             proc.getErrorStream().close();
             in=proc.getInputStream();
             out=response.getOutputStream();
 
             String line = null;
-            byte[] buf = new byte[8192];// headers cannot be larger than this value!
+            byte[] buf = new byte[BUF_SIZE];// headers cannot be larger than this value!
             int i=0, n, s=0;
             boolean eoh=false;
 
-	    while((n = in.read(buf, i, buf.length-i)) !=-1 ) {
+            // the post variables
+            if(stdin!=null) {
+            OutputStream pout = proc.getOutputStream();
+            while((n=stdin.read(buf))!=-1) {
+            	pout.write(buf, 0, n);
+	    }
+            try { pout.close(); } catch (IOException ex) {};
+            }
+            
+            // the header and content
+            while((n = in.read(buf, i, buf.length-i)) !=-1 ) {
 		int N = i + n;
 		// header
 		while(!eoh && i<N) {

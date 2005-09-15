@@ -11,16 +11,16 @@ import java.util.Map;
  * are used to maintain state and user identity across multiple page
  * requests.  <br> Example:<br>
  * 
- * $session=java_session("testSession");<br>
+ * $session=java_session();<br>
  * $val=$session->get("i") || 1; <br>
  * echo $val++; <br>
  * $session->put("i", new java("java.lang.Integer", $val));<br>
  * <P>An implementation of ISession represents the server's view
  * of the session. 
  *
- * When the backend is running in a standard j2ee environment, the
- * server considers a session to be new until it has been joined by
- * the client.  Until the client joins the session, the isNew method
+ * When java_session() is called without a session name, the server
+ * considers a session to be new until it has been joined by the
+ * client.  Until the client joins the session, the isNew method
  * returns true. A value of true can indicate one of these three
  * cases: <UL> <LI>the client does not yet know about the session
  * <LI>the session has not yet begun <LI>the client chooses not to
@@ -38,7 +38,7 @@ import java.util.Map;
  * required to enter some information and send it to the server before
  * gaining access to subsequent pages.
  * 
- * <P> When the backend is not running in a j2ee environment, the
+ * <P> When java_session() is called with a session name, the
  * java_session() primitive does not set a cookie and the above
  * restriction does not apply. If it is necessary that the client
  * joins the session, the following code can be used:<br>
@@ -46,8 +46,7 @@ import java.util.Map;
  * session_start(); // set a cookie <br><br>
  * // check if client has joined the session <br>
  * function is_new() { <br>
- * &nbsp;&nbsp;if(array_key_exists('customerID', $_SESSION)) return false;<br>
- * &nbsp;&nbsp;$_SESSION['customerID']=session_id(); return true; <br>
+ * &nbsp;&nbsp;return array_key_exists(session_name(), $_COOKIE);
  * }<br><br>
  * // request the server session, automatically <br>
  * // destroy an old session if is_new() returns true<br>

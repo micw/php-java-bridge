@@ -71,7 +71,7 @@ class Context extends JavaBridge.SessionFactory {
     	return ctx;
     }
     public static Context get(String id) {
-    	return (Context)contexts.get(id);
+   	return (Context)contexts.get(id);
     }
     
     private boolean removed=false;

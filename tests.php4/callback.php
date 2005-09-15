@@ -10,7 +10,7 @@ if (!extension_loaded('java')) {
 function c1($s1, $o1) {
   echo "c1: $s1, $o1\n";
   // must display a warning
-  $var=new java("java.lang.String", null);
+  $var=new java("java.lang.String", null); if(java_last_exception_get()) return;
 
   // not reached 
   echo "ERROR.\n"; 

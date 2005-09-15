@@ -32,9 +32,6 @@ public class PhpJavaServlet extends CGIServlet {
 
     private static final long serialVersionUID = 3257854259629144372L;
 
-	// IO buffer size
-    static final int BUF_SIZE = 8192;
-
     // "internal" pool for SocketRunner's
     // channel redirects
     static final String DEFAULT_CHANNEL = "9567";

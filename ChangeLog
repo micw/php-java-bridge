@@ -1,3 +1,30 @@
+2005-09-15  Jost Boekemeier  <jostb@intern>
+
+	* client.c (begin): Display protocol error if we receive HTML
+
+	* java.c (session): Accept 0 parameters
+
+	* parser.c (parse): push when we receive a begin
+	(e.g. <html></html>) This fixes a crash when parsing HTML error
+	pages.
+
+	* php/java/bridge/DynamicJavaBridgeClassLoader.java
+	(resolveLibraryName): pass an absolute path even if extension_dir
+	is set to "." (PR1286643)
+
+	* php/java/servlet/CGIServlet.java: Rewritten to allow POST
+	data. The problem with the old solution was that the parameters
+	were extracted before opening the InputStream. Since the getter
+	operates on both, the URL parameters and the InputStream, the post
+	parameters were gone after that. (PR1291191)
+
+	* php/java/servlet/ContextRunner.java (init): Throw a NP with a
+	description if we receive an invalid context.
+	(PR 1291175)
+
+	* VERSION, php-java-bridge.spec: Version 2.0.8RC4 fixes PR1291191, PR 1291175 and PR1286643.
+	
+	
 2005-09-12  Jost Boekemeier  <jostb@intern>
 
 	* php_java_snprintf.h: Added missing header.

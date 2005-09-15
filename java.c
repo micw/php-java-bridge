@@ -198,7 +198,7 @@ static void session(INTERNAL_FUNCTION_PARAMETERS)
   zval **session=0, **is_new=0;
   int argc=ZEND_NUM_ARGS();
   
-  if (argc>2 || zend_get_parameters_ex(1, &session, &is_new) == FAILURE)
+  if (argc>2 || zend_get_parameters_ex(argc, &session, &is_new) == FAILURE)
 	WRONG_PARAM_COUNT;
 
   jenv=EXT_GLOBAL(connect_to_server)(TSRMLS_C);

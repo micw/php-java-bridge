@@ -248,6 +248,7 @@ struct parse_ctx {
 static void begin(parser_tag_t tag[3], parser_cb_t *cb){
   struct parse_ctx *ctx=(struct parse_ctx*)cb->ctx;
   parser_string_t *st=tag[2].strings;
+
   switch ((*tag[0].strings[0].string)[tag[0].strings[0].off]) {
   case 'A':						/* receive apply args as normal array */
 	GET_RESULT(4);
@@ -330,7 +331,7 @@ static void begin(parser_tag_t tag[3], parser_cb_t *cb){
 	  break;
 	}
   default:
-	assert(0);
+	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Protocol violation, please check that the backend (JavaBride.war) is deployed or please switch off the java.servlet option", 88);
   }
 }
 static void end(parser_string_t st[1], parser_cb_t *cb){

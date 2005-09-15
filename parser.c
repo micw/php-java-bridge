@@ -87,7 +87,7 @@ short EXT_GLOBAL (parse) (proxyenv *env, parser_cb_t *cb) {
 	  PUSH(BEGIN);
 	  CALL_END();
 	} else {
-	  if(type==VAL) PUSH(type);
+	  if(type==VAL||type==BEGIN) PUSH(type);
 	  CALL_BEGIN();
 	}
 	tag[0].n=tag[1].n=tag[2].n=0; i0=i=0;      		/* RESET */

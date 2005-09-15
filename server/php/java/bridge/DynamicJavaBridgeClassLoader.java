@@ -182,7 +182,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     protected String resolveLibraryName(String name) {
 	URL url =  findResource("lib"+name+".so");
 	if(url==null) url = findResource(name+".dll");
-	if(url!=null) return url.getFile();
+	if(url!=null) return new File(url.getPath()).getAbsolutePath();
 	throw new UnsatisfiedLinkError("Native library " + name + " could not be found in java_require() path.");
     }
     protected URLClassLoaderFactory getUrlClassLoaderFactory() {

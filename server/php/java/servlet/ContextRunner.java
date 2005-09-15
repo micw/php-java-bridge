@@ -44,7 +44,9 @@ class ContextRunner implements Runnable {
 	this.in = in;
 	this.out = out;
 	this.sock = sock;
-    	ctx = (Context) Context.get(readName());
+	String name = readName();
+    	ctx = (Context) Context.get(name);
+    	if(ctx == null) throw new NullPointerException("No context available for: " + name + ".");
     	bridge = ctx.bridge;
     	bridge.in=in;
     	bridge.out=out;

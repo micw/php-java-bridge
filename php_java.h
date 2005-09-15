@@ -123,7 +123,7 @@ EXT_BEGIN_MODULE_GLOBALS(EXT)
 
   /* for user CB's */
   zval*exception;
-  jmp_buf php4_throw_buf;
+  jmp_buf *php4_throw_buf;
 
   zval **object;
   zval *func;
