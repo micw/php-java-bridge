@@ -59,7 +59,7 @@ class SocketRunner implements Runnable {
 	    out = socket.getOutputStream();
 	    int c = in.read();
 	    if(c!=077) {
-	    	try {out.write(0); }catch(IOException e){Util.printStackTrace(e);}
+	    	try {out.write(0); }catch(IOException e){}
 	    	shutdownSocket(in, out, socket);
 	    	return true; // protocol violation or PING or EOF
 	    }

@@ -34,7 +34,6 @@ static short checkError(pval *value TSRMLS_DC)
 
 	efree(Z_STRVAL_P(value));
     ZVAL_FALSE(value);
-	if(JG(exception)) longjmp(JG(php4_throw_buf), 1);
     return 1;
   };
 #endif

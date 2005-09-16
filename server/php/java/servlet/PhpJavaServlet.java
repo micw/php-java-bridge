@@ -377,6 +377,8 @@ public class PhpJavaServlet extends CGIServlet {
     	} catch (IOException e) {
     	    ServletException ex = new ServletException("An IO exception occured. Probably php was not installed as \"/usr/bin/php\" or \"c:/php5/php-cgi.exe\".\nPlease copy your PHP binary (\""+php+"\", see JavaBridge/WEB-INF/web.xml) into the JavaBridge/WEB-INF/cgi directory.\nSee webapps/JavaBridge/WEB-INF/cgi/README for details.", e);
     	    throw ex;
+    	} catch (Throwable t) {
+	    Util.printStackTrace(t);
     	}
     }
 }

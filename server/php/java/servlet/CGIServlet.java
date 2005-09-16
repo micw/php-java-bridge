@@ -59,7 +59,6 @@
 
 package php.java.servlet;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -273,7 +272,7 @@ import javax.servlet.http.HttpServletResponse;
 
 public class CGIServlet extends HttpServlet {
 
-	// IO buffer size
+    // IO buffer size
     static final int BUF_SIZE = 8192;
 
     /* some vars below copied from Craig R. McClanahan's InvokerServlet */
@@ -1172,12 +1171,12 @@ public class CGIServlet extends HttpServlet {
          * </p>
          *
          * @exception IOException if problems during reading/writing occur
+         * @throws ServletException
          *
          * @see    java.lang.Runtime#exec(String command, String[] envp,
          *                                File dir)
          */
-        protected void run() throws IOException {
-
+        protected void run() throws IOException, ServletException {
             if (debug >= 1 ) {
                 log("runCGI(envp=[" + env + "], command=" + command + ")");
             }
@@ -1190,14 +1189,7 @@ public class CGIServlet extends HttpServlet {
                                       + "path ('.' or '..') detected.  Not "
                                       + "running CGI [" + command + "].");
             }
-
-            Runtime rt = null;
-            BufferedOutputStream commandsStdIn = null;
-            InputStream in = null; 
-            OutputStream out = null;
-            Process proc = null;
-
-            //create query arguments
+	    //create query arguments
             Iterator ii = params.keySet().iterator();
             StringBuffer cmdAndArgs = new StringBuffer(command);
             if (ii.hasNext()) {
@@ -1215,56 +1207,66 @@ public class CGIServlet extends HttpServlet {
                 }
             }
 
-            rt = Runtime.getRuntime();
-            proc = rt.exec(cmdAndArgs.toString(), hashToStringArray(env), wd);
-            
-            proc.getErrorStream().close();
-            in=proc.getInputStream();
-            out=response.getOutputStream();
+            Runtime rt = Runtime.getRuntime();
+            Process proc = null;
+            InputStream natIn = null;
+            OutputStream natOut = null;
+            InputStream in = null;
+            OutputStream out = null;
+	    try {
+		proc = rt.exec(cmdAndArgs.toString(), hashToStringArray(env), wd);
+		try { proc.getErrorStream().close(); } catch (IOException e) {}
 
-            String line = null;
-            byte[] buf = new byte[BUF_SIZE];// headers cannot be larger than this value!
-            int i=0, n, s=0;
-            boolean eoh=false;
+		natIn = proc.getInputStream();
+		natOut = proc.getOutputStream();
+		in = stdin;
+		out = response.getOutputStream();
+        
+		String line = null;
+		byte[] buf = new byte[BUF_SIZE];// headers cannot be larger than this value!
+		int i=0, n, s=0;
+		boolean eoh=false;
 
-            // the post variables
-            if(stdin!=null) {
-            OutputStream pout = proc.getOutputStream();
-            while((n=stdin.read(buf))!=-1) {
-            	pout.write(buf, 0, n);
-	    }
-            try { pout.close(); } catch (IOException ex) {};
-            }
-            
-            // the header and content
-            while((n = in.read(buf, i, buf.length-i)) !=-1 ) {
-		int N = i + n;
-		// header
-		while(!eoh && i<N) {
-		    switch(buf[i++]) {
-			
-		    case '\n':
-			if(s+2==i && buf[s]=='\r') {
-			    eoh=true;
-			} else {
-			    line = new String(buf, s, i-s-2, ASCII);
-			    addHeader(line);
-			    s=i;
-			}
+		// the post variables
+		if(in!=null) {
+		    while((n=in.read(buf))!=-1) {
+			natOut.write(buf, 0, n);
 		    }
 		}
-		
-		// body
-		if(eoh) {
-		    if(out!=null) out.write(buf, i, N-i);
-		    i=0;
-		}
-	    }
             
-            if(out!=null) try {out.close();} catch (IOException e) {}
-            if(in!=null) try {in.close();} catch (IOException e) {}
-            if(stdin!=null) try {stdin.close();} catch (IOException e) {}
-        }
+		// the header and content
+		while((n = natIn.read(buf, i, buf.length-i)) !=-1 ) {
+		    int N = i + n;
+		    // header
+		    while(!eoh && i<N) {
+			switch(buf[i++]) {
+			
+			case '\n':
+			    if(s+2==i && buf[s]=='\r') {
+				eoh=true;
+			    } else {
+				line = new String(buf, s, i-s-2, ASCII);
+				addHeader(line);
+				s=i;
+			    }
+			}
+		    }
+		    // body
+		    if(eoh) {
+			if(out!=null) out.write(buf, i, N-i);
+			i=0;
+		    }
+		}
+		proc=null;
+	    } catch(IOException t) {throw t;} catch (Throwable t) { throw new ServletException(t); } finally {
+		if(out!=null) try {out.close();} catch (IOException e) {}
+		if(in!=null) try {in.close();} catch (IOException e) {}
+		if(natIn!=null) try {natIn.close();} catch (IOException e) {}
+		if(natOut!=null) try {natOut.close();} catch (IOException e) {}
+
+		if(proc!=null) try {proc.destroy(); } catch (Exception e) {}
+	    }
+	}
     } //class CGIRunner
 
 } //class CGIServlet

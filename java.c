@@ -488,7 +488,6 @@ static int allocate_php4_exception(TSRMLS_D) {
   MAKE_STD_ZVAL(JG(exception));
   ZVAL_NULL(JG(exception));
   last_exception_clear(JG(jenv), &JG(exception));
-  return !setjmp(JG(php4_throw_buf));
 #endif
   return 1;
 }

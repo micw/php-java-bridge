@@ -27,11 +27,12 @@ foreach ($list as $key=>$value) {
       // second argument may also be an instance of a class
       if(!java_instanceof($value, $list)) exit(1);
 
-      echo "[I have found myself!] ";
+      echo "[I have found myself!] \n";
     } else {
-      echo "[found java object: " .$value->toString() . "] ";
+      echo "[found java object: " .$value->toString() . "] \n";
     }
+  } else {
+      echo "$value\n";
   }
-  echo "$value\n";
 }
 ?>
