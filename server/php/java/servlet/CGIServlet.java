@@ -87,11 +87,6 @@ import javax.servlet.http.HttpServletResponse;
  *  in the path-info used to invoke this servlet.
  *
  * <p>
- * <i>Note: This code compiles and even works for simple CGI cases.
- *          Exhaustive testing has not been done.  Please consider it beta
- *          quality.  Feedback is appreciated to the author (see below).</i>
- * </p>
- * <p>
  *
  * <b>Example</b>:<br>
  * If an instance of this servlet was mapped (using
@@ -250,22 +245,16 @@ import javax.servlet.http.HttpServletResponse;
  * <li> Ensure handling of POST method does not interfere with 2.3 Filters
  * <li> Refactor some debug code out of core
  * <li> Ensure header handling preserves encoding
- * <li> Possibly rewrite CGIRunner.run()?
- * <li> Possibly refactor CGIRunner and CGIEnvironment as non-inner classes?
  * <li> Document handling of cgi stdin when there is no stdin
- * <li> Revisit IOException handling in CGIRunner.run()
  * <li> Better documentation
- * <li> Confirm use of ServletInputStream.available() in CGIRunner.run() is
- *      not needed
- * <li> Make checking for "." and ".." in servlet & cgi PATH_INFO less
- *      draconian
- * <li> [add more to this TODO list]
  * </ul>
  * </p>
  *
- * @author Martin T Dengler [root@martindengler.com]
- * @author Amy Roh
- * @since Tomcat 4.0
+ * @author Martin T Dengler (original author)
+ * @author Amy Roh (for Tomcat)
+ * @author Jost Boekemeier (for the PHP/JavaBridge)
+ * @since Tomcat 4
+ * @since PHP/JavaBridge 2.0.8
  *
  */
 

@@ -11,7 +11,7 @@ import php.java.bridge.JavaBridge;
 import php.java.bridge.Request;
 import php.java.bridge.Util;
 
-/*
+/**
  * The ContextRunner manages the "high speed" communication link.  It
  * pulls a context and executes it.  After execution the context is destroyed.
  */

@@ -11,7 +11,7 @@ import php.java.bridge.ISession;
 import php.java.bridge.JavaBridge;
 import php.java.bridge.Util;
 
-/*
+/**
  * The context may a) keep a promise (a "proxy") which one may evaluate to a
  * session reference (for PHP/JSP session sharing), and/or b) it may
  * reference a "half-executed" bridge for local channel re-directs (for

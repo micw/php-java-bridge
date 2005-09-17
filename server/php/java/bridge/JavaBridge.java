@@ -26,29 +26,70 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
+/**
+ * This is the main class for the PHP/Java Bridge. It starts the standalone backend,
+ * listenes for protocol requests and handles CreateInstance, GetSetProp and Invoke 
+ * requests. Supported protocol modes are INET (listens on all interfaces), INET_LOCAL (loopback only) and 
+ * UNIX (uses a local, invisible communication channel, requires natcJavaBridge.so). Furthermore it
+ * contains utility methods which can be used by clients.
+ * <p>
+ * Example:<br>
+ * <code>
+ * java -Djava.awt.headless=true JavaBridge.jar INET_LOCAL:9676 5 bridge.log &<br>
+ * telnet localhost 9676<br>
+ * &lt;Invoke value="" method=setJarLibraryPath" predicate="Instance" id="0"&gt;<br>
+ * &lt;String value="j2ee.jar"/&gt;<br>
+ * &lt;/Invoke&gt;<br>
+ * &lt;CreateInstance value="java.lang.Long" predicate="Instance" id="0"&gt;<br> 
+ *     &lt;Long value="6"/&gt; <br>
+ *   &lt;/CreateInstance&gt;<br>
+ * &lt;Invoke value="1" method="toString" predicate="Invoke" id="0"&gt;<br>
+ * &lt;/Invoke&gt;<br>
+ * </code>
+ *
+ * @author Sam Ruby (methods coerce and select)
+ * @author Kai Londenberg
+ * @author Jost Boekemeier
+ */
 
 public class JavaBridge implements Runnable {
 
 
     // The client's file encoding, for example UTF-8.
     String fileEncoding="UTF-8";
-    // For PHP4's last_exception_get.
+
+    /**
+      * For PHP4's last_exception_get.
+      */
     public Throwable lastException = null;
 
     // list of objects in use in the current script
     GlobalRef globalRef=new GlobalRef(this);
 
+    /**
+     * For internal use only. The classloader. 
+     */
     public JavaBridgeClassLoader cl = null;
 
     static HashMap sessionHash = new HashMap();
 
-    public InputStream in; public OutputStream out;
+    /**
+     * For internal use only. The input stream for the current channel. 
+     */
+    public InputStream in; 
+    /**
+     * For internal use only. The output stream for the current channel. 
+     */
+    public OutputStream out;
 
+    /**
+     * For internal use only. The request log level.
+     */
     public int logLevel = Util.logLevel;
   
-    /*
-     * The current request (if any)
-     * Only for internal use 
+    /**
+     * For internal use only. The current request (if any)
+     * 
      */
     public Request request;
 
@@ -115,13 +156,15 @@ public class JavaBridge implements Runnable {
     private static boolean haveNatcJavaBridge=true;
 
     static Object loadLock=new Object();
+    /** For internal use only. */
     public static short load = 0;
 
+    /*
     public static short getLoad() {
 	synchronized(loadLock) {
 	    return load;
 	}
-    }
+    }*/
 
     private MethodCache methodCache = new MethodCache();
     private ConstructorCache constructorCache = new ConstructorCache();
@@ -157,11 +200,14 @@ public class JavaBridge implements Runnable {
 	}
     }
     private SessionFactory sessionFactory;
+    /** 
+     * For internal use only.
+     */
     public static final SessionFactory defaultSessionFactory = new SessionFactory();
 
-    //
-    // Communication with client in a new thread
-    //
+    /**
+    * Communication with client in a new thread
+    */
     public void run() {
         try {
 	    logDebug("START: JavaBridge.run()");
@@ -252,6 +298,11 @@ public class JavaBridge implements Runnable {
     }
     }
     */
+    /**
+     * Create a new server socket and return it.
+     * @param sockname the socket name
+     * @return the server socket
+     */
     public static ISocketFactory bind(String sockname) throws Exception {
 	ISocketFactory socket = null;
 	try {
@@ -267,9 +318,10 @@ public class JavaBridge implements Runnable {
 
 	return socket;
     }
-    //
-    // init
-    //
+    /**
+    * Global init
+    * @param s an array of [socketname, level, logFile]
+    */
     public static void init(String s[]) {
 	String logFile=null;
 	String sockname=null;
@@ -356,6 +408,13 @@ public class JavaBridge implements Runnable {
 	}
     }
 
+    /**
+     * Start the PHP/Java Bridge. <br>
+     * Example:<br>
+     * <code>java -Djava.awt.headless=true -jar JavaBridge.jar INET:9656 5 /var/log/php-java-bridge.log</code><br>
+     * 
+     * @param s an array of [socketname, level, logFile]
+     */
     public static void main(String s[]) {
 	try {
 	    System.loadLibrary("natcJavaBridge");
@@ -444,6 +503,10 @@ public class JavaBridge implements Runnable {
 	}
     }
 
+    /**
+     * Print a stack trace to the log file.
+     * @param t the throwable
+     */
     public void printStackTrace(Throwable t) {
 	if(logLevel > 0)
 	    if ((t instanceof Error) || logLevel > 1)
@@ -498,9 +561,9 @@ public class JavaBridge implements Runnable {
 	response.writeException(lastException, lastException.toString());
     }
 
-    //
-    // Create an new instance of a given class
-    //
+    /**
+    * Create an new instance of a given class
+    */
     public void CreateObject(String name, boolean createInstance,
 			     Object args[], Response response) {
 	Class params[] = null;
@@ -1025,9 +1088,9 @@ public class JavaBridge implements Runnable {
 	Util.logDebug(dmsg);
     }
 
-    //
-    // Invoke a method on a given object
-    //
+    /**
+    * Invoke a method on a given object
+    */
     public void Invoke
 	(Object object, String method, Object args[], Response response)
     {
@@ -1122,9 +1185,9 @@ public class JavaBridge implements Runnable {
 	return cls.getName() + ":ID" + System.identityHashCode(cls) + ":LOADER-ID"+System.identityHashCode(cls.getClassLoader());
     }
 
-    //
-    // Get or Set a property
-    //
+    /**
+    * Get or Set a property
+    */
     public void GetSetProp
 	(Object object, String prop, Object args[], Response response)
     {
@@ -1250,7 +1313,7 @@ public class JavaBridge implements Runnable {
         }
     }
 
-    /*
+    /**
      * for PHP5: convert Map or Collection into a PHP array,
      * sends the entire Map or Collection to the client. This
      * is much more efficient than generating round-trips when
@@ -1267,9 +1330,9 @@ public class JavaBridge implements Runnable {
 	this.out = out;
     }
 
-    //
-    // Return map for the value (PHP 5 only)
-    //
+    /**
+    * Return map for the value (PHP 5 only)
+    */
     public PhpMap getPhpMap(Object value) {
 	return PhpMap.getPhpMap(value, this);
     }
@@ -1286,7 +1349,10 @@ public class JavaBridge implements Runnable {
     	cl.updateJarLibraryPath(path, extensionDir);
     }
 
-    // Set the library path for ECMA dll's
+    /**
+     * 
+     * Set the library path for ECMA dll's
+     */
     public void setLibraryPath(String _path, String extensionDir) {
         if(_path==null || _path.length()<2) return;
 
@@ -1307,7 +1373,11 @@ public class JavaBridge implements Runnable {
 	    }
 	}
     }
-    
+    /**
+     * For internal use only.
+     * @param object The java object
+     * @return A list of all visible constructors, methods, fields and inner classes.
+     */
     public String inspect(Object object) {
         Class jclass;
     	ClassIterator iter;
@@ -1353,10 +1423,11 @@ public class JavaBridge implements Runnable {
 	return buf.toString();
     }
 
-    /*
+    /**
      * Return a session handle shared among all JavaBridge
      * instances. If it is a HTTP session, the session is shared with
      * the servlet or jsp.
+     * @see ISession
      */
     public ISession getSession(String name, boolean clientIsNew, int timeout){
     	try {
@@ -1369,19 +1440,67 @@ public class JavaBridge implements Runnable {
     	}
     }
     
+    /**
+     * Create a dynamic proxy proxy for calling PHP code.<br>
+     * Example: <br>
+     * java_closure($this, $map);<br>
+     * 
+     * @param object the PHP environment (the php "class")
+     * @param names maps java to php names
+     * @return the proxy
+     */
     public Object makeClosure(long object, Map names) {
     	return new PhpProcedureProxy(this, names, null, object);
     }
+    /**
+      * Create a dynamic proxy proxy for calling PHP code.<br>
+     * Example: <br>
+     * java_closure($this, $map, $interfaces);<br>
+    * 
+     * @param object the PHP environment (the php "class")
+     * @param names maps java to php names
+     * @param interfaces list of interfaces which the PHP environment must implement
+     * @return the proxy
+     */
     public Object makeClosure(long object, Map names, Class interfaces[]) {
     	return new PhpProcedureProxy(this, names, interfaces, object);
     }
+    /**
+     * Create a dynamic proxy proxy for calling PHP code.<br>
+     * Example: <br>
+     * java_closure($this, "clickMe");<br>
+     * 
+     * @param object  the PHP environment (the php "class")
+     * @param name maps all java names to this php name
+     * @returnthe proxy
+     */
     public Object makeClosure(long object, String name) {
     	return new PhpProcedureProxy(this, name, null, object);
     }
+    /**
+     * Create a dynamic proxy proxy for calling PHP code.<br>
+     * Example: <br>
+     * java_closure($this, "clickMe", $interfaces);<br>
+     * 
+     * @param object the PHP environment (the php "class")
+     * @param name maps all java names to this php name
+     * @param interfaces  list of interfaces which the PHP environment must implement
+     * @return the proxy
+     */
     public Object makeClosure(long object, String name, Class interfaces[]) {
     	return new PhpProcedureProxy(this, name, interfaces, object);
     }
     private static final HashMap emptyMap = new HashMap();
+
+    /**
+    * Create a dynamic proxy proxy for calling PHP code.<br>
+     * Example: <br>
+     * java_closure();<br>
+     * java_closure($this);<br>
+     * 
+     * @param object the PHP environment (the php "class")
+     * @return the proxy
+     */
     public Object makeClosure(long object) {
     	return new PhpProcedureProxy(this, emptyMap, null, object);
     }

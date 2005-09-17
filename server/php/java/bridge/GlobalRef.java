@@ -2,7 +2,7 @@
 
 package php.java.bridge;
 
-/*
+/**
  * A global array of object references that the client keeps during the connection.
  * (int -> Object mappings).
  * After connection shutdown the request-handling bridge instance and its global ref array 

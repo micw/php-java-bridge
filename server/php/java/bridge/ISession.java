@@ -46,9 +46,9 @@ import java.util.Map;
  * session_start(); // set a cookie <br><br>
  * // check if client has joined the session <br>
  * function is_new() { <br>
- * &nbsp;&nbsp;return array_key_exists(session_name(), $_COOKIE);
+ * &nbsp;&nbsp;return array_key_exists(session_name(), $_COOKIE);<br>
  * }<br><br>
- * // request the server session, automatically <br>
+ * // request the server session and automatically <br>
  * // destroy an old session if is_new() returns true<br>
  * $session=java_session(session_id(), is_new());<br>
  * if($session->isNew()) { <br>

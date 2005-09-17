@@ -62,9 +62,21 @@ public class Response {
 
     public static class ValuesHook {
     	private Response res;
+        /**
+         * For PHP5: convert Map or Collection into a PHP array,
+         * sends the entire Map or Collection to the client. This
+         * is much more efficient than generating round-trips when
+         * iterating through a Map or Collection.
+         */
     	public ValuesHook(Response res) {
     	    this.res=res;
     	}
+    	/**
+    	 * Override this method to return true if you want to send back
+    	 * arrays as values. The default method returns true for PHP4 and false
+    	 * for PHP5
+    	 * @return true: copy array values, false: send object references
+    	 */
         public boolean sendArraysAsValues() {
             return (res.options & 2)==2;
         }

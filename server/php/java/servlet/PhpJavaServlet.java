@@ -220,7 +220,7 @@ public class PhpJavaServlet extends CGIServlet {
      * @throws ServletException
      * @throws IOException
      */
-    public void handleRedirectConnection(HttpServletRequest req, HttpServletResponse res) 
+    protected void handleRedirectConnection(HttpServletRequest req, HttpServletResponse res) 
 	throws ServletException, IOException {
 	InputStream in; ByteArrayOutputStream out; OutputStream resOut;
 	Context ctx = getContext(req, res);

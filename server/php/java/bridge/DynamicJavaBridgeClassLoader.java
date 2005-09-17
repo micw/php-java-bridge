@@ -33,10 +33,11 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     	if(contextDir!=null) return contextDir;
     	return phpLibDir;
     }
-    // Set the library path for the java bridge. Examples:
-    // setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");
-    // setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");
-    // The first char must be the token separator.
+    /** Set the library path for the java bridge. Examples:
+     * setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");
+     * setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");
+     * The first char must be the token separator.
+     */
     public void updateJarLibraryPath(String rawPath, String rawContextDir) {
     	if(rawContextDir==null) throw new NullPointerException("contextDir cannot be null.");
 	if(contextDir==null) {
@@ -102,14 +103,14 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	    Util.printStackTrace(e);
 	}
     }
-    //
-    // add all jars found in the phpConfigDir/lib and /usr/share/java
-    // to the list of our URLs.  The user is expected to symbol .jar
-    // libraries explicitly with java_set_library_path, e.g.
-    // java_set_library_path("foo.jar;bar.jar"); For backward
-    // compatibility we add all URLs we encountered during startup
-    // before throwing a "ClassNotFoundException".
-    //
+    /**
+    * add all jars found in the phpConfigDir/lib and /usr/share/java
+    * to the list of our URLs.  The user is expected to symbol .jar
+    * libraries explicitly with java_set_library_path, e.g.
+    * java_set_library_path("foo.jar;bar.jar"); For backward
+    * compatibility we add all URLs we encountered during startup
+    * before throwing a "ClassNotFoundException".
+    */
     public static synchronized void initClassLoader(String phpConfigDir) {
         DynamicJavaBridgeClassLoader.phpLibDir=phpConfigDir + "/lib/";
         DynamicJavaBridgeClassLoader.phpConfigDir=phpConfigDir;
@@ -163,7 +164,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     	super.clear();
     	addSysUrls();
     }
-    /*
+    /**
      * Reset to initial state.
      */
     public void reset() {
@@ -212,6 +213,10 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 		}
 	    };
     }
+    /*
+     *  (non-Javadoc)
+     * @see php.java.bridge.DynamicClassLoader#loadClass(String)
+     */
     public Class loadClass(String name) throws ClassNotFoundException {
 	try {
 	    return super.loadClass(name); 
@@ -219,7 +224,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	    throw new ClassNotFoundException(("Could not find " + name + " in java_require() path"), e);    
 	}
     }
-    /*
+    /**
      * Create an instance of the dynamic java bridge classloader
      * It may return null due to security restrictions on certain systems, so don't
      * use this method directly but call: 
@@ -234,6 +239,12 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	    return null;
 	}
     }
+    /**
+     * Create an instance of the dynamic java bridge classloader
+     * It may return null due to security restrictions on certain systems, so don't
+     * use this method directly but call: 
+     * new JavaBridgeClassLoader(bridge, DynamicJavaBridgeClassLoader.newInstance()) instead.
+     */
     public static synchronized DynamicJavaBridgeClassLoader newInstance(ClassLoader parent) {
 	try {
 	    DynamicJavaBridgeClassLoader cl = new DynamicJavaBridgeClassLoader(parent);

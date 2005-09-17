@@ -148,4 +148,4 @@ chkconfig php-java-bridge off
 
 %files -f filelist
 %defattr(-,root,root)
-%doc README README.GNU_JAVA INSTALL INSTALL.WINDOWS LICENSE ChangeLog test.php php-java-bridge.te php-java-bridge.fc update_policy.sh
+%doc README README.GNU_JAVA README.MONO+NET PROTOCOL.TXT INSTALL.MONO+NET INSTALL LICENSE ChangeLog test.php php-java-bridge.te php-java-bridge.fc update_policy.sh server/doc

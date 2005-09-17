@@ -3,10 +3,12 @@
 package php.java.bridge;
 
 
-/*
+/**
  * A bridge pattern which allows us to vary the class loader as run-time.
  * The decision is based on whether we are allowed to use a dynamic
  * classloader or not (loader==null).
+ * @see DynamicJavaBridgeClassLoader
+ * @see java.lang.ClassLoader
  */
 public class JavaBridgeClassLoader {
 
@@ -38,19 +40,23 @@ public class JavaBridgeClassLoader {
 	cl.updateJarLibraryPath(path, extensionDir);
     }
 
+    /**
+     * Only for internal use
+     * @return the classloader
+     */
     public ClassLoader getClassLoader() {
 	if(cl!=null) return (ClassLoader)cl;
 	return scl;
     }
 
-    /*
+    /**
      * reset loader to the initial state
      */
     public void reset() {
 	if (cl!=null) cl.reset();
     }
 
-    /*
+    /**
      * clear all loader caches but
      * not the input vectors
      */
@@ -58,6 +64,12 @@ public class JavaBridgeClassLoader {
 	if (cl!=null) cl.clearCaches();
     }
 
+    /**
+     * Load a class.
+     * @param name The class, for example java.lang.String
+     * @return the class
+     * @throws ClassNotFoundException
+     */
     public Class forName(String name) throws ClassNotFoundException {
     	if(cl==null) return Class.forName(name, false, scl);
     	return cl.loadClass(name);
