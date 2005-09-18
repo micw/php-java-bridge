@@ -23,7 +23,14 @@ class ContextRunner implements Runnable {
     private OutputStream out;
     private Socket sock;
     private Request r;
+    private SocketRunner runner;
 
+    public ContextRunner(SocketRunner runner, InputStream in, OutputStream out, Socket sock) {
+	this.runner = runner;
+	this.in = in;
+	this.out = out;
+	this.sock = sock;
+    }
     private int readLength() throws IOException{
 	byte buf[] = new byte[1];
 	in.read(buf);
@@ -40,13 +47,19 @@ class ContextRunner implements Runnable {
 	return readString(readLength());
     }
 
-    void init(InputStream in, OutputStream out, Socket sock) throws IOException {
-	this.in = in;
-	this.out = out;
-	this.sock = sock;
+    private void init() throws IOException {
+	int c = in.read();
+	if(c!=077) {
+	    try {out.write(0); }catch(IOException e){}
+	    throw new IOException("Protocol violation");
+	}
+	if(!runner.getNext()) {
+	    Util.logFatal("Could not find a runner for the request I've received. This is either a bug in the software or an intruder is accessing the local communication channel. Please check the log file(s).");
+	    throw new IOException("No runner available");
+	}
 	String name = readName();
     	ctx = (Context) Context.get(name);
-    	if(ctx == null) throw new NullPointerException("No context available for: " + name + ".");
+    	if(ctx == null) throw new IOException("No context available for: " + name + ".");
     	bridge = ctx.bridge;
     	bridge.in=in;
     	bridge.out=out;
@@ -54,11 +67,12 @@ class ContextRunner implements Runnable {
     }
     public void run() {
 	try {
+	    init();
 	    r.handleRequests();
 	} catch (IOException e) {
 	    Util.printStackTrace(e);
 	} finally {
-	    ctx.remove();
+	    if(ctx!=null) ctx.remove();
 	    SocketRunner.shutdownSocket(in, out, sock);
 	    JavaBridge.load--;
 	}

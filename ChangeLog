@@ -1,4 +1,14 @@
-2005-09-15  Jost Boekemeier  <jostb@intern>
+2005-09-17  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/servlet/ContextRunner.java (init): Wait for the
+	reply in a new thread.
+
+	* server/php/java/servlet/SocketRunner.java (accept, getNext):
+	Wait for the reply in a new thread.
+
+	* server/doc: Documentation added.
+	
+2005-09-16  Jost Boekemeier  <jostb@intern>
 
 	* java_bridge.c (checkError): Do not longjmp, this may confuse
 	other modules.

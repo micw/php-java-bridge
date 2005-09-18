@@ -38,10 +38,10 @@ class SocketRunner implements Runnable {
     }
 
     private int runnables = 0;
-    private synchronized ContextRunner getNext() {
-	if(runnables==0) return null;
+    synchronized boolean getNext() {
+	if(runnables==0) return false;
 	runnables--;
-	return new ContextRunner();
+	return true;
     }
     static void shutdownSocket(InputStream in, OutputStream out, Socket sock) {
 	if(in!=null) try {in.close();}catch (IOException e){}
@@ -55,21 +55,9 @@ class SocketRunner implements Runnable {
 	
 	try {
 	    try {socket = this.socket.accept();} catch (IOException ex) {return false;} // socket closed
-	    in = socket.getInputStream();
-	    out = socket.getOutputStream();
-	    int c = in.read();
-	    if(c!=077) {
-	    	try {out.write(0); }catch(IOException e){}
-	    	shutdownSocket(in, out, socket);
-	    	return true; // protocol violation or PING or EOF
-	    }
-	    ContextRunner runner = getNext();
-	    if(runner==null) {
-	    	shutdownSocket(in, out, socket);
-	    	Util.logFatal("Could not find a runner for the request I've received. This is either a bug in the software or an intruder is accessing the local communication channel. Please check the log file(s).");
-	    	return true; // someone is accessing our local port!?
-	    }
-	    runner.init(in, out, socket);
+	    in=socket.getInputStream();
+	    out=socket.getOutputStream();
+	    ContextRunner runner = new ContextRunner(this, in, out, socket);
 	    if(PhpJavaServlet.threadPool!=null) {
 	        PhpJavaServlet.threadPool.start(runner);
 	    } else {
@@ -95,7 +83,7 @@ class SocketRunner implements Runnable {
 	}
 	Util.logMessage("Socket runner stopped, the local channel is not available anymore.");
     }
-    public synchronized void schedule() {
+    synchronized void schedule() {
 	runnables++;
     }
 
