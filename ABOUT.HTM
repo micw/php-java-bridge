@@ -31,15 +31,8 @@ is the PHP/Java bridge?</B></FONT></FONT></P>
 </FONT></P>                                                                                            
 <P><FONT > Clustering and load balancing is available if the backend runs in a servlet environment supporting these features, tomcat 5 for example.
 </FONT></P>                                                                                            
-<P STYLE="margin-top: 0.42cm; page-break-after: avoid"><FONT ><FONT SIZE=4><B>How does it compare to SOAP, XML-RPC, ext/java or the JSR223 sample implementation?</B></FONT></FONT></P>
-<ul>
-<li> The PHP/Java Bridge typically runs on the same computer as the PHP interpreter, so a very efficient protocol can be used. An example is provided which executes a mix of PHP/Java code nearly as fast as the pure java equivalent.
-<li> It is not necessary to write and deploy a public interface. The bridge uses reflection once to determine what can be accessed in the backend.
-<li> PHP scripts can load/unload java libraries at runtime.
-<li> On linux the c/s communication channel is not visible and the backend runs in its own "Security Enhanced Linux" domain.
-<li> The PHP/Java Bridge module doesn't use any state on the web-server side, it simply forwards the java(...) statements to the backend, which can communicate with the enterprise application server using RMI/IIOP or other java technologies.
-<li> Unlike other attempts the PHP/Java Bridge does <em>not</em> use the java native interface ("JNI"). In case a php instance crashes, it will not take down the java application server or servlet engine.
-</ul>
+<P><FONT > Unlike previous attempts (the ext/java or the JSR223 sample implementation) the PHP/Java Bridge does <em>not</em> use the java native interface ("JNI"). In case a php instance crashes, it will not take down the java application server or servlet engine. 
+</FONT></P>                                                                                            
 <P><FONT > 
   The bridge adds the following primitives to PHP.  The type mappings are shown in <a href="#type-mapping">table 1</a>.
 
@@ -186,6 +179,7 @@ interface IStrategy  {<br>
 &lt;?php<br>
 function m1 ()  {<br>
 &nbsp;&nbsp;$str=new java("java.lang.String", null); //raises NP exception<br>
+&nbsp;&nbsp;if(java_last_exception_get()) return; <br>
 &nbsp;&nbsp;echo "in m1"; //never reached <br>
 }<br>
 function m2 ()  {<br>
@@ -205,7 +199,7 @@ echo $result; // should display 2<br>
 
 <br>
 <li>
-  <code>$session=<strong>java_get_session</strong>(SESSIONNAME)</code>: Creates or retrieves the session SESSIONNAME. The primitive returns a session handle which can be used to store and retrieve values which survive the current script.  The session can be invalidated with $session->destroy(). The <code><strong>java_get_session</strong></code> shall be used before creating java instances. If the backend is running in a servlet engine, Tomcat for example, the session handle is shared, i.e. it can be used to retrieve values stored by JSP scripts. Example:
+  <code>$session=<strong>java_get_session</strong>(SESSIONNAME)</code>: Creates or retrieves the session <code>SESSIONNAME</code>. If <code>SESSIONNAME</code> is missing, the session is either taken from the J2EE environment if the backend is running in a J2EE application server or servlet environment, otherwise it is taken from PHP. The primitive returns a session handle which can be used to store and retrieve values which survive the current script.  The session can be invalidated with $session->destroy(). The <code><strong>java_get_session</strong></code> shall be used before creating java instances. Session sharing between PHP and JSP is only possible when <code>java_get_session()</code> is called without a <code>SESSIONNAME</code> and when the JavaBridge.war is running in a J2EE application server or servlet engine. Please see the  <a href="http://cvs.sourceforge.net/viewcvs.py/*checkout*/php-java-bridge/php-java-bridge/server/doc/php/java/bridge/ISession.html">ISession interface documentation</a> for details. <p>For java values the PHP syntax <code>$_SESSION['var']=val</code> is equivalent to <code>java_get_session(session_id())-&gt;put('var', val)</code> and <code>val=$_SESSION['var']</code> is equivalent to <code>java_get_session(session_id())-&gt;get('var')</code>.
 <blockquote>
 <code>
 $session=java_get_session("testSession");<br>
