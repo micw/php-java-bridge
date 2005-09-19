@@ -54,7 +54,7 @@ class SocketRunner implements Runnable {
 	Socket socket=null;
 	
 	try {
-	    try {socket = this.socket.accept();} catch (IOException ex) {return false;} // socket closed
+	    try {socket = this.socket.accept();} catch (IOException ex) {return true;} // socket closed
 	    in=socket.getInputStream();
 	    out=socket.getOutputStream();
 	    ContextRunner runner = new ContextRunner(this, in, out, socket);
