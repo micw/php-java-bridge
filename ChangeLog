@@ -1,3 +1,10 @@
+2005-09-19  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/servlet/CGIServlet.java (run): Close the post
+	input stream, otherwise the CGIServlet hangs.
+
+	* VERSION, php-java-bridge.spec: Version 2.0.8 released.
+	
 2005-09-17  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/servlet/ContextRunner.java (init): Wait for the

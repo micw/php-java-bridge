@@ -155,6 +155,7 @@ wget -olog -O-  http://localhost/phpinfo.php|fgrep java
 
 
 
+------------------------------------
 Installation of Tomcat/mod jk
 -----------------------------
 
@@ -201,5 +202,263 @@ su -c "apachectl restart"
 
 Visit http://localhost/JavaBridge and run the supplied examples.
 
-Please see the README for Oracle and WebSphere deployment
-instructions.
+The php .ini file [java] section should contain only java.log_level,
+java.servlet and java.hosts entries.  Example:
+
+       [java]
+       java.log_level="2"
+       java.servlet=On
+       java.hosts="127.0.0.1:8080"
+
+The PHP/Java Bridge log output appears in the server log file, for
+example in $CATALINA_HOME/logs/localhost_log.*.txt
+
+------------------------------------
+Oracle 10g AS
+-------------
+
+  The following description assumes that you have the Oracle
+  Application Server Containers for J2EE 10g installed, for example in
+  /opt/10gAS and that the $J2EE_HOME points to the /opt/10gAS/j2ee/home
+  directory.
+
+  If you want to download the Oracle 10g AS, please only download the
+  pure java implementation called "oc4j_extended.zip". It has a download
+  size of less than 30MB. The complete Oracle 10g AS has a download size
+  of more than 1GB and includes Apache and other software you don't need
+  during development.
+
+  Install the PHP/Java Bridge and copy the JavaBridge.war to the
+  $J2EE_HOME/applications directory.
+
+  Edit $J2EE_HOME/config/application.xml so that it contains the
+  following line:
+
+    <web-module id="JavaBridge" path="../../home/applications/JavaBridge.war"/>
+
+  Edit $J2EE_HOME/config/http-web-site.xml so that it contains the
+  following line:
+
+    <web-app application="default" name="JavaBridge" root="/JavaBridge"/>
+
+
+  Start the Oracle 10g application server, for example with:
+
+    cd $J2EE_HOME
+    java -jar oc4j.jar
+
+  Run the PHP/Java Bridge examples, for example:
+
+    http://localhost:8888/JavaBridge/test.php
+
+  or 
+
+    http://localhost:8888/sessionSharing.php
+
+  If there are problems, please check if oracle has created the
+  $J2EE_HOME/applications/JavaBridge directory and read
+  $J2EE_HOME/applications/JavaBridge/WEB-INF/cgi/README.
+
+  The log output appears in $J2EE_HOME/log/global-application.log.
+
+
+  For production systems it is recommended to install the complete
+  Oracle Application Server, which includes Apache, and to install
+  PHP as a Apache module.
+
+------------------------------------
+IBM WebSphere AS
+----------------
+
+  The following description assumes that you have the IBM WebSphere
+  6.x Application Server installed and that $WAS_HOME points to the
+  /opt/IBM/WebSphere/AppServer directory.
+
+  Install the PHP/Java Bridge. Start the application server, for
+  example with the command:
+
+    $WAS_HOME/bin/startServer.sh  server1
+
+  Log into your application server, for example via: 
+
+    http://localhost:9060/ibm/console/secure/logon.do
+
+  Click on Applications -> Install New Application -> Browse
+  and select JavaBridge.war. 
+
+  Enter /JavaBridge as "Context root" and click Next.
+  Click Next
+  Click Continue
+  Click Next
+  Select JavaBridge.war and click Next
+  Select JavaBridge.war and click Next
+  Click Finish
+  Click on "Save to Master Configuration"
+  Click Save
+
+  Click on Applications -> Enterprise Applications and select JavaBridge.war
+  Click Start
+  
+  Run the PHP/Java Bridge examples, for example:
+
+    http://localhost:9080/JavaBridge/test.php
+
+  or 
+
+    http://localhost:9080/sessionSharing.php
+
+  If there are problems, please check if websphere has created the
+  $WAS_HOME/profiles/default/installedApps/[...]/JavaBridge_war.ear/
+  directory and read
+  $WAS_HOME/[...]/JavaBridge_war.ear/JavaBridge.war/WEB-INF/cgi/README.
+
+  The log output appears in the
+  $WAS_HOME/profiles/default/logs/server1/ directory.
+
+
+  For production systems it is recommended to install the IBM
+  HttpServer (a Apache variant) and to install PHP as a Apache
+  module.
+
+---------------------------------------------
+Compiling the bridge without autoconf
+-------------------------------------
+
+Follow these instructions to create a java.so or php_java.dll on
+systems which don't have autoconf or if ./configure fails (because the
+installed autoconf scripts are too old).
+
+To create a windows php_java.dll you'll need:
+
+* A Unix machine with a C cross compiler, for example
+  386-pc-mingw32-gcc
+
+* the standard windows includes in the ./include directory
+
+* the MINGW includes in the ./include directory
+
+* the php5ts.dll in the $PHP directory
+
+* the configured php4 or php5 source distribution in the $PHP
+  directory
+
+
+To create a unix java.so you'll need:
+
+* A unix machine with a C compiler
+
+* the standard unix includes in the /usr/include directory
+
+* the configured php4 or php5 source distribution in the $PHP
+  directory
+
+
+cd to the php-java-bridge* directory and type the following commands:
+
+BRIDGE_VERSION="`cat ./VERSION`"
+PHP_JAVA=""
+COND_GCJ=0
+EXTENSION_NAME=JAVA
+
+# The java executable on windows or unix
+#PHP_JAVA_BIN="javaw"
+PHP_JAVA_BIN="java"
+
+# The extension_dir on windows or unix
+#EXTENSION_DIR="c:/php5"
+EXTENSION_DIR="."
+
+# The configured PHP directory, this directory must contain
+# the php4ts or php5ts shared library and the header files
+#PHP="../php-5.0.3"
+PHP="../php-4.4.0"
+
+# The directory which contains the system include files
+# for windows (+MINGW include files) or unix
+#SYS_INCLUDE="../include"
+SYS_INCLUDE="/usr/include"
+
+# The (cross-) compiler for windows or unix
+#GCC=386-pc-mingw32-gcc
+GCC=gcc
+
+# create init_cfg.h and init_cfg.c
+for i in init_cfg.c init_cfg.h; do 
+sed "s*@PHP_JAVA@*${PHP_JAVA}*
+s*@COND_GCJ@*${COND_GCJ}*
+s*@PHP_JAVA_BIN@*${PHP_JAVA_BIN}*
+s*@EXTENSION@*${EXTENSION_NAME}*
+s*@BRIDGE_VERSION@*${BRIDGE_VERSION}*" \
+<./${i}.in >./${i}
+done
+
+#compile command for windows (with ZTS)...
+#$GCC -w -I$SYS_INCLUDE -I. -I$PHP -I$PHP/main -I$PHP/Zend -I$PHP/TSRM -D"TSRM_EXPORTS" -D"LIBZEND_EXPORTS" -D"ZTS" -D"_MBCS" -DCOMPILE_DL_JAVA -DCFG_JAVA_SOCKET_INET -DEXTENSION_DIR=\"$EXTENSION_DIR\" -c *.c
+
+# ... or unix (without ZTS)
+$GCC -w -I$SYS_INCLUDE -I. -I$PHP -I$PHP/main -I$PHP/Zend -I$PHP/TSRM -D"_MBCS" -DCOMPILE_DL_JAVA -DCFG_JAVA_SOCKET_INET -DEXTENSION_DIR=\"$EXTENSION_DIR\" -c *.c
+
+#create the windows .dll or the unix .so file
+#i386-pc-mingw32-dllwrap  --export-all-symbols -k  *.o -L$PHP -lphp5ts -lws2_32 -o php_java.dll
+$GCC -shared  *.o  -Wl,-soname -Wl,java.so -o java.so
+
+------------------------------------
+Compiling a CGI binary on Windows
+---------------------------------
+
+  This operating system has some unusal problems with shared libraries
+  (DLL's). The autoconf/libtool documentation states:
+
+   - Macro: AC_LIBTOOL_WIN32_DLL
+     This macro should be used if the package has been ported to build
+     clean dlls on win32 platforms.  Usually this means that any
+     library data items are exported with `__declspec(dllexport)' and
+     imported with `__declspec(dllimport)'.  If this macro is not used,
+     libtool will assume that the package libraries are not dll clean
+     and will build only static libraries on win32 hosts.
+
+  Until someone ports the sources to use __declspec, we avoid 
+  creating shared libraries on this system.  Instead we will
+  compile the extension into PHP:
+
+  1. Install the source code of PHP 4.3.x or higher.
+
+  2. Install RedHat's Cygwin (PHP needs autoconf).
+
+  3. Delete the java sub-directory from php-4.3.x\ext. Copy the
+     php-java-bridge directory to the php-x.y.z\ext directory and
+     rename it to java.  Update the "m4_include" paths in
+     php-x.y.z\ext\java\config.m4 so that they start with "ext/java/":
+
+      m4_include(ext/java/tests.m4/function_checks.m4)
+      m4_include(ext/java/tests.m4/java_check_broken_stdio_buffering.m4)
+      ...
+      m4_include(ext/java/tests.m4/java_check_broken_gcc_installation.m4)
+
+  4. Invoke autoconf to register our java module within the PHP build
+     tree:
+ 
+      buildconf.bat --force 
+
+     Instead of running "buildconf" you can also use autoconf directly:
+
+      autoconf
+
+     Then configure and compile php as usual:
+
+      .\configure --with-java=%JAVA_HOME%
+      make
+
+  This will create a php binary with the PHP/Java Bridge included.
+  You can then copy the sapi\cgi\php executable into the CGI directory 
+  of your IIS web server. Before you start the web server, you must
+  start the java bridge backend, for example by double-clicking on
+  .\modules\JavaBridge.jar.
+
+
+  Windows uses TCP/IP sockets instead of unix domain sockets. If you
+  want to change the java.socketname from its default (which is 9267),
+  you must use an integer. For example:
+
+    java.socketname=9268
+

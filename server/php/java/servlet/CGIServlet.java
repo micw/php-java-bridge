@@ -1222,7 +1222,9 @@ public class CGIServlet extends HttpServlet {
 			natOut.write(buf, 0, n);
 		    }
 		}
-            
+		try { natOut.close(); } catch (IOException e) {}
+                natOut = null;
+		
 		// the header and content
 		while((n = natIn.read(buf, i, buf.length-i)) !=-1 ) {
 		    int N = i + n;

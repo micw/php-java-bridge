@@ -72,7 +72,7 @@ public class PhpJavaServlet extends CGIServlet {
 		php=value;
 		phpFile=new File(php);
 	    }
-        } catch (Throwable t) {Util.printStackTrace(t);}      
+        } catch (Throwable t) {Util.printStackTrace(t);}
         try {
 	    value = getServletConfig().getInitParameter("servlet_log_level");
 	    if(value!=null && value.trim().length()!=0) Util.logLevel=Integer.parseInt(value);
