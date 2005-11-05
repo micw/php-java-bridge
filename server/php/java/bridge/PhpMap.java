@@ -41,7 +41,7 @@ public abstract class PhpMap {
 		new PhpMap(value, false) {
 		    boolean valid;
 		    int i;
-		    long length;
+		    int length;
 		    
 		    void init() {
 			i=0;
@@ -65,20 +65,20 @@ public abstract class PhpMap {
 		    }
 
 		    public boolean offsetExists(Object pos) {
-			int i = ((Long)pos).intValue();
+			int i = ((Number)pos).intValue();
 			return (i>0 && i<length && (Array.get(this.value, i)!=this));
 		    }
 		    public Object offsetGet(Object pos) {
-			int i = ((Long)pos).intValue();
+			int i = ((Number)pos).intValue();
 			Object o = Array.get(this.value, i);
 			return o==this ? null : o;
 		    }
 		    public void offsetSet(Object pos, Object val) {
-			int i = ((Long)pos).intValue();
+			int i = ((Number)pos).intValue();
 			Array.set(this.value, i, val);
 		    }
 		    public void offsetUnset(Object pos) {
-			int i = ((Long)pos).intValue();
+			int i = ((Number)pos).intValue();
 			Array.set(this.value, i, this);
 		    }
 		};

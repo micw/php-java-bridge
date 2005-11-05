@@ -447,10 +447,10 @@ static void handle_request(proxyenv *env) {
   assert(zend_stack_is_empty(&ctx.containers));
   zend_stack_destroy(&ctx.containers);
   /* revert override redirect */
-  if((*env)->peer0) {
+  if((*env)->peer0!=-1) {
 	close((*env)->peer);
 	(*env)->peer = (*env)->peer0;
-	(*env)->peer0 = 0;
+	(*env)->peer0 = -1;
   }
 
   /* re-open a closed HTTP connection */
@@ -460,12 +460,12 @@ static void handle_request(proxyenv *env) {
 	  (*env)->peer_redirected = 1;
 	  JG(ini_user)&=~(U_SERVLET|U_SOCKNAME);
 
-	  assert((*env)->peer); if((*env)->peer) close((*env)->peer);
+	  assert((*env)->peer!=-1); if((*env)->peer!=-1) close((*env)->peer);
 	  server = EXT_GLOBAL(test_server)(&(*env)->peer, 0, 0 TSRMLS_CC);
 	  assert(server); if(!server) exit(9);
 	  free(server);
 	} else {
-	  assert((*env)->peer); if((*env)->peer) close((*env)->peer);
+	  assert((*env)->peer!=-1); if((*env)->peer!=-1) close((*env)->peer);
 	  server = EXT_GLOBAL(test_server)(&(*env)->peer, 0, 0 TSRMLS_CC);
 	  assert(server); if(!server) exit(9);
 	  free(server);
@@ -496,6 +496,7 @@ unsigned char EXT_GLOBAL (get_mode) () {
  * adjust the standard environment for the current request.
  */
 static proxyenv* adjust_environment(proxyenv *env TSRMLS_DC) {
+  static const char name[] = "adjust_environment";
   static const char context[] = "\
 array_key_exists('X_JAVABRIDGE_CONTEXT', $_SERVER)\
 ?$_SERVER['X_JAVABRIDGE_CONTEXT']\
@@ -507,10 +508,24 @@ array_key_exists('X_JAVABRIDGE_CONTEXT', $_SERVER)\
 
   if(servlet_context_string) (*env)->servlet_context_string = strdup(servlet_context_string);
 
-  if((SUCCESS==zend_eval_string((char*)context, &val, "context" TSRMLS_CC)) && (Z_TYPE(val)==IS_STRING)) {
+  if((SUCCESS==zend_eval_string((char*)context, &val, (char*)name TSRMLS_CC)) && (Z_TYPE(val)==IS_STRING)) {
 	(*env)->servlet_ctx = strdup(Z_STRVAL(val));
   }
   return env;
+}
+
+static void override_ini_for_redirect(TSRMLS_D) {
+  static const char name[] = "override_ini_for_redirect";
+  static const char override[] = "\
+array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS', $_SERVER)	\
+?$_SERVER['X_JAVABRIDGE_OVERRIDE_HOSTS']								\
+:(array_key_exists('HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS', $_SERVER)?$_SERVER['HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS']:null);";
+  zval val;
+  if((SUCCESS==zend_eval_string((char*)override, &val, (char*)name TSRMLS_CC)) && (Z_TYPE(val)==IS_STRING)) {
+	if(JG(hosts)) efree(JG(hosts));
+	JG(hosts)=estrndup(Z_STRVAL(val), Z_STRLEN(val));
+	JG(ini_user)|=U_HOSTS;
+  }
 }
 static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {
   char *server;
@@ -519,6 +534,10 @@ static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {
   struct sockaddr saddr;
   proxyenv *jenv =JG(jenv);
   if(jenv) return jenv;
+
+  if(!EXT_GLOBAL(cfg)->is_cgi_servlet) 
+	override_ini_for_redirect(TSRMLS_C);
+
   if(JG(is_closed)) {
 	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not connect to server: Session is closed. -- This usually means that you have tried to access the server in your class' __destruct() method.",51);
 	return 0;

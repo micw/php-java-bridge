@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import php.java.bridge.ISession;
@@ -16,6 +17,7 @@ public class HttpSessionFacade implements ISession {
 
     private HttpSession session;
     private int timeout;
+    private HttpServletRequest req=null;
     private HttpSession sessionCache=null;
     private boolean isNew;
     
@@ -25,10 +27,14 @@ public class HttpSessionFacade implements ISession {
 	sessionCache.setMaxInactiveInterval(timeout);
 	return sessionCache;
     }
-    public HttpSessionFacade (HttpSession session, int timeout) {
-	this.session = session;
+    public HttpSessionFacade (HttpServletRequest req, int timeout) {
+	this.session = req.getSession();
+	this.req = req;
 	this.timeout = timeout;
 	this.isNew = session.isNew();
+    }
+    public HttpServletRequest getHttpServletRequest() {
+    	return this.req;
     }
     /* (non-Javadoc)
      * @see php.java.bridge.ISession#get(java.lang.Object)

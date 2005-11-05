@@ -20,6 +20,7 @@ import php.java.bridge.JavaBridgeClassLoader;
 import php.java.bridge.Request;
 import php.java.bridge.ThreadPool;
 import php.java.bridge.Util;
+import php.java.bridge.http.ContextServer;
 
 /**
  * Handles requests from PHP clients. When apache or IIS are not 
@@ -28,11 +29,11 @@ import php.java.bridge.Util;
  * and to use the mod_jk adapter to connect apache with the
  * servlet engine or application server.
  */
-public class PhpJavaServlet extends CGIServlet {
+public class PhpJavaServlet extends FastCGIServlet {
 
     private static final long serialVersionUID = 3257854259629144372L;
 
-    // "internal" pool for SocketRunner's
+    // "internal" pool for ContextServer's
     // channel redirects
     static final String DEFAULT_CHANNEL = "9567";
 
@@ -54,27 +55,17 @@ public class PhpJavaServlet extends CGIServlet {
     /*
      * The name of the php executable.
      */
-    static protected String php = "php"; 
-    static protected File phpFile = new File(php);
     static protected boolean override_hosts = true;
-    static File unixLocation=null, unixLocation2=null, windowsLocation=null;
-    static SocketRunner socketRunner = null;
+    static ContextServer socketRunner = null;
     static int threadPoolSize = 20;
     static ThreadPool threadPool = null;
     
     public void init(ServletConfig config) throws ServletException {
 	super.init(config);
-	Util.logLevel=Util.DEFAULT_LOG_LEVEL; /* java.log_level in php.ini overrides */
 	String value;
         try {
-	    value = getServletConfig().getInitParameter("php_exec");
-	    if(value!=null && value.trim().length()!=0) {
-		php=value;
-		phpFile=new File(php);
-	    }
-        } catch (Throwable t) {Util.printStackTrace(t);}
-        try {
 	    value = getServletConfig().getInitParameter("servlet_log_level");
+	    value="6"; //TODO remove this
 	    if(value!=null && value.trim().length()!=0) Util.logLevel=Integer.parseInt(value);
         } catch (Throwable t) {Util.printStackTrace(t);}      
 
@@ -89,18 +80,12 @@ public class PhpJavaServlet extends CGIServlet {
 	    if(value!=null && value.trim().equalsIgnoreCase("off")) override_hosts=false;
     	} catch (Throwable t) {Util.printStackTrace(t);}      
         
-	Util.logger=new Logger(config.getServletContext());
+	Util.setLogger(new Logger(config.getServletContext()));
         DynamicJavaBridgeClassLoader.initClassLoader(Util.EXTENSION_DIR);
 
-	unixLocation = new File("/usr/bin/php-cgi");
-	if(!unixLocation.exists()) unixLocation=null;
-	unixLocation2 = new File("/usr/bin/php");
-	if(!unixLocation2.exists()) unixLocation2=null;
-	windowsLocation = new File("c:/php5/php-cgi.exe");
-	if(!windowsLocation.exists()) windowsLocation=null;
 	
 	Util.TCP_SOCKETNAME = DEFAULT_CHANNEL;
-	socketRunner = new SocketRunner();
+	socketRunner = new ContextServer(threadPool);
     }
 
     public void destroy() {
@@ -111,32 +96,46 @@ public class PhpJavaServlet extends CGIServlet {
     /**
      * Adjust the standard tomcat CGI env. CGI only.
      */
-    protected class CGIEnvironment extends CGIServlet.CGIEnvironment {
-    	protected String cgi_bin;
-    	protected Context sessionFactory;
+    protected class CGIEnvironment extends FastCGIServlet.CGIEnvironment {
+    	protected ContextManager sessionFactory;
     	
-	protected CGIEnvironment(HttpServletRequest req, ServletContext context) {
-	    super(req, context);
+	protected CGIEnvironment(HttpServletRequest req, HttpServletResponse res, ServletContext context) {
+	    super(req, res, context);
 	}
 
 	protected String getCommand() {
-	    return cgi_bin;
+	    return php;
 	}
-	protected boolean setCGIEnvironment(HttpServletRequest req) {
-	    boolean ret = super.setCGIEnvironment(req);
+	protected boolean setCGIEnvironment(HttpServletRequest req, HttpServletResponse res) {
+	    boolean ret = super.setCGIEnvironment(req, res);
 	    if(ret) {
 	    	/* Inform the client that we are a cgi servlet and send the re-direct port */
-		if(override_hosts) 
-		    this.env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", "127.0.0.1:"+this.env.get("SERVER_PORT"));
+		if(override_hosts) { 
+		    String path = req.getContextPath();
+		    StringBuffer buf = new StringBuffer("127.0.0.1:");
+		    buf.append(this.env.get("SERVER_PORT"));
+		    buf.append("/");
+		    buf.append(req.getContextPath());
+		    buf.append("/");
+		    buf.append(PhpJavaServlet.this.getServletConfig().getServletName());
+		    this.env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", buf.toString());
+		}
 		else
 		    this.env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", "");
 		this.env.put("REDIRECT_STATUS", "1");
 		this.env.put("SCRIPT_FILENAME", this.env.get("PATH_TRANSLATED"));
 	        this.env.put("SERVER_SOFTWARE", Util.EXTENSION_NAME);
-
+	        this.env.put("HTTP_HOST", this.env.get("SERVER_NAME")+":"+this.env.get("SERVER_PORT"));
+	        
 		/* send the session context now, otherwise the client has to 
 		 * call handleRedirectConnection */
-		this.env.put("X_JAVABRIDGE_CONTEXT", Context.addNew(req).getId());
+		this.env.put("X_JAVABRIDGE_CONTEXT", ContextManager.addNew(req, res).getId());
+	        
+	        /* For the request: http://localhost:8080/JavaBridge/test.php the
+	         * req.getPathInfo() returns cgi/test.php. But PHP shouldn't know
+	         * about this detail.
+	         */
+	        this.env.remove("PATH_INFO"); 
 	    }
 	    return ret;
 	        	
@@ -144,25 +143,12 @@ public class PhpJavaServlet extends CGIServlet {
 	protected String[] findCGI(String pathInfo, String webAppRootDir,
 				   String contextPath, String servletPath,
 				   String cgiPathPrefix) {
+	    String[] retval;
+	    if((retval=super.findCGI(pathInfo, webAppRootDir, contextPath, servletPath, cgiPathPrefix))!=null) return retval;
+		
 	    StringBuffer cgiDir = new StringBuffer(webAppRootDir);
 	    if(!webAppRootDir.endsWith(File.separator)) cgiDir.append(File.separatorChar);
 	    cgiDir.append(cgiPathPrefix);
-	    cgi_bin=php;
-	    if(!phpFile.isAbsolute()) {
-		File currentLocation=null;
-		try {
-				
-		    if((currentLocation=new File(cgiDir.toString(), php)).isFile()||
-		       (currentLocation=new File(Util.EXTENSION_DIR+"/../../../../bin",php)).isFile() ||
-		       ((currentLocation=unixLocation)!=null)||
-		       ((currentLocation=unixLocation2)!=null)||
-		       (currentLocation=windowsLocation)!=null) 
-			cgi_bin=currentLocation.getCanonicalPath();
-		} catch (IOException e) {
-                    if(currentLocation!=null)
-		        cgi_bin=currentLocation.getAbsolutePath();
-		}
-	    }
 
 	    // incorrect but reasonable values for display only.
 	    String display_cgi="php";
@@ -172,7 +158,9 @@ public class PhpJavaServlet extends CGIServlet {
 	    cgiDir.append(display_cgi);
 	    return new String[] {
 		cgiDir.toString(),
-		contextPath+servletPath+File.separator+display_cgi, File.separator+display_cgi, display_cgi};
+		contextPath+servletPath, 
+		File.separator+display_cgi, 
+		display_cgi};
 	}
     }
     
@@ -182,29 +170,41 @@ public class PhpJavaServlet extends CGIServlet {
      * @param servletContext The servlet context
      * @return The new cgi environment.
      */
-    protected CGIServlet.CGIEnvironment createCGIEnvironment(HttpServletRequest req, ServletContext servletContext) {
-	return new CGIEnvironment(req, servletContext);
+    protected CGIServlet.CGIEnvironment createCGIEnvironment(HttpServletRequest req, HttpServletResponse res, ServletContext servletContext) {
+	CGIEnvironment env = new CGIEnvironment(req, res, servletContext);
+	env.init(req, res);
+	return env;
     }
 
     /**
-     * Get the current context handle.
-     * @param req
-     * @param res
-     * @return The context handle.
+     * Get or allocate a context for session and/or request attribute sharing
+     * @param req - The request. If req.getHeader("X_JAVABRIDGE_CONTEXT") == null a new context will be written to res.
+     * @param res - The response for which res.setHeader("X_JAVABRIDGE_CONTEXT") is called.
+     * @return The context handle.<br><br>
+     * Example: <br>
+     * Context ctx = getContext(request, response);<br>
+     * ctx.setSession(request);<br>
+     * request.setAttribute("test", "sharedValue");<br>
+     * // open a url connection to http://.../foo.php and send header "X_JAVABRIDGE_CONTEXT: "+ctx.getId()+"\r\n";<br>
+     * &lt;?php // in foo.php <br>
+     * java_get_session()->getHttpServletRequest()->getAttribute("test");<br>
+     * ?&gt;<br>
+     * =&gt; "sharedValue"<br>
      */
-    private Context getContext(HttpServletRequest req, HttpServletResponse res) {
-    	Context ctx = null;
+    private static ContextManager getContextManager(HttpServletRequest req, HttpServletResponse res) {
+    	ContextManager ctx = null;
     	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
-    	if(id!=null) ctx = (Context)Context.get(id);
-    	if(ctx==null) ctx = Context.addNew(null); // no session sharing
-    	if(ctx.bridge==null) {
-   	    ctx.bridge = new JavaBridge(null, null);
-    	    ctx.bridge.cl = new JavaBridgeClassLoader(ctx.bridge, DynamicJavaBridgeClassLoader.newInstance(getClass().getClassLoader()));
-    	    ctx.bridge.setSessionFactory(ctx);
+    	if(id!=null) ctx = (ContextManager)ContextManager.get(id);
+    	if(ctx==null) ctx = ContextManager.addNew(null, res); // no session sharing
+    	if(ctx.getBridge()==null) {
+	    JavaBridge bridge;
+   	    ctx.setBridge(bridge = new JavaBridge(null, null));
+    	    bridge.setClassLoader(new JavaBridgeClassLoader(ctx.getBridge(), DynamicJavaBridgeClassLoader.newInstance(PhpJavaServlet.class.getClassLoader())));
+    	    bridge.setSessionFactory(ctx);
     	    JavaBridge.load++;
-	    ctx.bridge.logDebug("first request (session is new).");
+	    ctx.getBridge().logDebug("first request (session is new).");
     	} else {
-    	    ctx.bridge.logDebug("cont. session");
+    	    ctx.getBridge().logDebug("cont. session");
     	}
     	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
     	return ctx;
@@ -223,8 +223,8 @@ public class PhpJavaServlet extends CGIServlet {
     protected void handleRedirectConnection(HttpServletRequest req, HttpServletResponse res) 
 	throws ServletException, IOException {
 	InputStream in; ByteArrayOutputStream out; OutputStream resOut;
-	Context ctx = getContext(req, res);
-	JavaBridge bridge = ctx.bridge;
+	ContextManager ctx = getContextManager(req, res);
+	JavaBridge bridge = ctx.getBridge();
 	ctx.setSession(req);
 	if(bridge.logLevel>3) bridge.logDebug("override redirect starts for " + ctx.getId());		
 	// save old state
@@ -265,8 +265,8 @@ public class PhpJavaServlet extends CGIServlet {
     protected void handleHttpConnection (HttpServletRequest req, HttpServletResponse res, boolean session)
 	throws ServletException, IOException {
 	InputStream in; ByteArrayOutputStream out;
-	Context ctx = getContext(req, res);
-	JavaBridge bridge = ctx.bridge;
+	ContextManager ctx = getContextManager(req, res);
+	JavaBridge bridge = ctx.getBridge();
 	if(session) ctx.setSession(req);
 
 	if(req.getContentLength()==0) {
@@ -305,8 +305,8 @@ public class PhpJavaServlet extends CGIServlet {
     protected void handleSocketConnection (HttpServletRequest req, HttpServletResponse res, boolean session)
 	throws ServletException, IOException {
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
-	Context ctx = getContext(req, res);
-	JavaBridge bridge = ctx.bridge;
+	ContextManager ctx = getContextManager(req, res);
+	JavaBridge bridge = ctx.getBridge();
 	if(session) ctx.setSession(req);
 
 	bridge.in = sin=req.getInputStream();
@@ -315,7 +315,7 @@ public class PhpJavaServlet extends CGIServlet {
 
 	try {
 	    if(r.initOptions(sin, sout)) {
-		res.setHeader("X_JAVABRIDGE_REDIRECT", socketRunner.socket.getSocketName());
+		res.setHeader("X_JAVABRIDGE_REDIRECT", socketRunner.getSocket().getSocketName());
 	    	r.handleOneRequest();
 
 		// redirect and re-open
@@ -323,7 +323,7 @@ public class PhpJavaServlet extends CGIServlet {
 		res.setContentLength(sout.size());
 		resOut = res.getOutputStream();
 		sout.writeTo(resOut);
-		if(bridge.logLevel>3) bridge.logDebug("re-directing to port# "+ socketRunner.socket.getSocketName());
+		if(bridge.logLevel>3) bridge.logDebug("re-directing to port# "+ socketRunner.getSocket().getSocketName());
 	    	sin.close();
 	    	resOut.flush();
 	    	if(bridge.logLevel>3) bridge.logDebug("waiting for context: " +ctx.getId());
@@ -375,7 +375,8 @@ public class PhpJavaServlet extends CGIServlet {
     	try {
 	    super.doGet(req, res);
     	} catch (IOException e) {
-    	    ServletException ex = new ServletException("An IO exception occured. Probably php was not installed as \"/usr/bin/php\" or \"c:/php5/php-cgi.exe\".\nPlease copy your PHP binary (\""+php+"\", see JavaBridge/WEB-INF/web.xml) into the JavaBridge/WEB-INF/cgi directory.\nSee webapps/JavaBridge/WEB-INF/cgi/README for details.", e);
+	    setCGIBinary();
+	    ServletException ex = new ServletException("An IO exception occured. Probably php was not installed as \"/usr/bin/php\" or \"c:/php5/php-cgi.exe\".\nPlease copy your PHP binary (\""+php+"\", see JavaBridge/WEB-INF/web.xml) into the JavaBridge/WEB-INF/cgi directory.\nSee webapps/JavaBridge/WEB-INF/cgi/README for details.", e);
     	    throw ex;
     	} catch (Throwable t) {
 	    Util.printStackTrace(t);

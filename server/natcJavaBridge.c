@@ -404,7 +404,7 @@ void java_bridge_main(int argc, char**argv)
   assert(init); if(!init) exit(9);
   stringClass = (*jenv)->FindClass(jenv, "java/lang/String");
   assert(stringClass); if(!stringClass) exit(9);
-  arr = (*jenv)->NewObjectArray(jenv, argc, stringClass, 0);
+  arr = (*jenv)->NewObjectArray(jenv, argc-6, stringClass, 0);
   assert(arr); if(!arr) exit(9);
 
   off = N_SARGS-4;

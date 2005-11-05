@@ -1,0 +1,31 @@
+Installing the PHP/Java Bridge J2EE Component
+---------------------------------------------
+
+* Download and install a J2EE application server or servlet engine,
+  either Oracle 10g, IBM WebSphere6 or Tomcat 4 or higher. For example
+  with the command: 
+
+    rpm -i tomcat5-5.0.30-5jpp_6fc.i386.rpm
+
+* Download and install the PHP/Java Bridge, for example with the
+  command: 
+
+    rpm -i php-java-bridge-X.Y.Z-1.i386.rpm 
+
+  On windows you can extract the zip download file in c:\.
+
+* Deploy JavaBridge.war into your servlet engine or application
+  server. For example with the command: 
+
+    cp JavaBridge.war /usr/share/tomcat5/webapps
+    service tomcat5 restart
+
+* Browse to http://localhost:<port#>/JavaBridge and run the
+  supplied examples. For example:
+
+    http://localhost:8080/JavaBridge/test.php
+
+* Please report bugs/problems to the mailing list:
+
+    php-java-bridge-users@lists.sourceforge.net
+

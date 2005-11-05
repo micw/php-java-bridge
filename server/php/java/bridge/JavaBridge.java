@@ -35,16 +35,12 @@ import java.util.Vector;
  * <p>
  * Example:<br>
  * <code>
- * java -Djava.awt.headless=true JavaBridge.jar INET_LOCAL:9676 5 bridge.log &<br>
+ * java -Djava.awt.headless=true -jar JavaBridge.jar INET_LOCAL:9676 5 bridge.log &<br>
  * telnet localhost 9676<br>
- * &lt;Invoke value="" method=setJarLibraryPath" predicate="Instance" id="0"&gt;<br>
- * &lt;String value="j2ee.jar"/&gt;<br>
- * &lt;/Invoke&gt;<br>
  * &lt;CreateInstance value="java.lang.Long" predicate="Instance" id="0"&gt;<br> 
  *     &lt;Long value="6"/&gt; <br>
  *   &lt;/CreateInstance&gt;<br>
- * &lt;Invoke value="1" method="toString" predicate="Invoke" id="0"&gt;<br>
- * &lt;/Invoke&gt;<br>
+ * &lt;Invoke value="1" method="toString" predicate="Invoke" id="0"/&gt;<br>
  * </code>
  *
  * @author Sam Ruby (methods coerce and select)
@@ -59,8 +55,8 @@ public class JavaBridge implements Runnable {
     String fileEncoding="UTF-8";
 
     /**
-      * For PHP4's last_exception_get.
-      */
+     * For PHP4's last_exception_get.
+     */
     public Throwable lastException = null;
 
     // list of objects in use in the current script
@@ -69,7 +65,7 @@ public class JavaBridge implements Runnable {
     /**
      * For internal use only. The classloader. 
      */
-    public JavaBridgeClassLoader cl = null;
+    private JavaBridgeClassLoader cl = null;
 
     static HashMap sessionHash = new HashMap();
 
@@ -160,68 +156,37 @@ public class JavaBridge implements Runnable {
     public static short load = 0;
 
     /*
-    public static short getLoad() {
-	synchronized(loadLock) {
-	    return load;
-	}
-    }*/
+      public static short getLoad() {
+      synchronized(loadLock) {
+      return load;
+      }
+      }*/
 
     private MethodCache methodCache = new MethodCache();
     private ConstructorCache constructorCache = new ConstructorCache();
 
-    public static class SessionFactory {
-	/**
-	 * @param name The session name. If name is null, the session is an internal session
-	 * @param clientIsNew true if the client wants a new session
-	 * @param timeout timeout in seconds. If 0 the session does not expire.
-	 */
-	public ISession getSession(String name, boolean clientIsNew, int timeout) {
-	    if(name==null) name=PHPSESSION; else name="@"+name;
-	    synchronized(JavaBridge.sessionHash) {
-		Session ref = null;
-		if(!JavaBridge.sessionHash.containsKey(name)) {
-		    ref = new Session(name);
-		    ref.setTimeout(timeout);
-		} else {
-		    ref = (Session) JavaBridge.sessionHash.get(name);
-		    if(clientIsNew) { // client side gc'ed, destroy server ref now!
-			ref.destroy();
-			ref = new Session(name);
-			ref.setTimeout(timeout);
-		    } else {
-			ref.isNew=false;
-		    }
-		}
-		    	    
-		JavaBridge.sessionHash.put(name, ref);
-		return ref;
-	    }
-			
-	}
-    }
     private SessionFactory sessionFactory;
     /** 
      * For internal use only.
      */
-    public static final SessionFactory defaultSessionFactory = new SessionFactory();
+     static final SessionFactory defaultSessionFactory = new SessionFactory();
 
+    
     /**
-    * Communication with client in a new thread
-    */
+     * Communication with client in a new thread
+     */
     public void run() {
         try {
 	    logDebug("START: JavaBridge.run()");
 	    setSessionFactory(defaultSessionFactory);
 	    try {
-		cl = new JavaBridgeClassLoader(this, (DynamicJavaBridgeClassLoader) Thread.currentThread().getContextClassLoader());
+		setClassLoader(new JavaBridgeClassLoader(this, (DynamicJavaBridgeClassLoader) Thread.currentThread().getContextClassLoader()));
 	    } catch (ClassCastException ex) {
-		cl = new JavaBridgeClassLoader(this, null);
+		setClassLoader(new JavaBridgeClassLoader(this, null));
 	    }
-	    Util.logStream.flush();
 	    request = new Request(this);
           
 	    try {
-		Util.logStream.flush();
 		if(!request.initOptions(in, out)) return;
 	    } catch (Throwable e) {
 		printStackTrace(e);
@@ -249,6 +214,7 @@ public class JavaBridge implements Runnable {
 	    globalRef=null;
 	    Session.expire(this);
 	    Util.logDebug("END: JavaBridge.run()");
+	    Util.logStream.flush();
         } catch (Throwable t) {
 	    printStackTrace(t);
         }
@@ -318,13 +284,20 @@ public class JavaBridge implements Runnable {
 
 	return socket;
     }
+    private static void usage() {
+	System.err.println("Usage: java -jar JavaBridge.jar [SOCKETNAME LOGLEVEL LOGFILE]");
+	System.err.println("Example: java -jar JavaBridge.jar");
+	System.err.println("Example: java -Djava.awt.headless -Dphp.java.bridge.threads=50 -jar JavaBridge.jar INET:0 3 JavaBridge.log");
+	System.exit(1);
+    }
     /**
-    * Global init
-    * @param s an array of [socketname, level, logFile]
-    */
+     * Global init
+     * @param s an array of [socketname, level, logFile]
+     */
     public static void init(String s[]) {
 	String logFile=null;
 	String sockname=null;
+	if(s.length>3) usage();
     	try {
     	    CLRAssembly = Class.forName("cli.System.Reflection.Assembly");
     	    loadMethod = CLRAssembly.getMethod("Load", new Class[] {String.class});
@@ -339,34 +312,35 @@ public class JavaBridge implements Runnable {
 		} else {
 		    Util.logLevel=Util.DEFAULT_LOG_LEVEL;
 		}
+	    } catch (NumberFormatException e) {
+		usage();
 	    } catch (Throwable t) {
 		Util.printStackTrace(t);
 	    }
 
 	    try {
-		logFile=Util.EXTENSION_NAME+".log";
+		logFile=Util.DEFAULT_LOG_FILE;
 		if(s.length>2) {
 		    logFile=s[2];
 		}
-		if(Util.logLevel>3) System.out.println(Util.EXTENSION_NAME+" log: " + logFile);
+		if(Util.logLevel>3) System.err.println(Util.EXTENSION_NAME+" log: " + logFile);
 	    }catch (Throwable t) {
 		Util.printStackTrace(t);
 	    }
 	    boolean redirectOutput = false;
 	    try {
-	    	redirectOutput = openLog(logFile);
-	    } catch (Throwable t) {
-	    }
+	    	redirectOutput = (logFile==null || logFile.length() == 0) || openLog(logFile);
+	    } catch (Throwable t) {/*ignore*/}
 
 	    if(!redirectOutput) {
 		try {
 		    Util.logStream=new java.io.PrintStream(new java.io.FileOutputStream(logFile));
 		} catch (Exception e) {
-		    Util.logStream=System.out;
+		    Util.logStream=System.err;
 		}
 	    } else {
-		Util.logStream=System.out;
-		logFile="<stdout>";
+		Util.logStream=System.err;
+		logFile="<stderr>";
 	    }
 	    
 	    ISocketFactory socket = bind(sockname);
@@ -510,7 +484,7 @@ public class JavaBridge implements Runnable {
     public void printStackTrace(Throwable t) {
 	if(logLevel > 0)
 	    if ((t instanceof Error) || logLevel > 1)
-	    	Util.logger.printStackTrace(t);
+	    	Util.getLogger().printStackTrace(t);
     }
     private String getId() {
     	return "@"+Integer.toHexString(System.identityHashCode(this));
@@ -558,12 +532,14 @@ public class JavaBridge implements Runnable {
 	buf.append(String.valueOf(e));
 
 	lastException = new Exception(buf.toString(), e);
+	StackTraceElement[] trace = e.getStackTrace();
+	if(trace!=null) lastException.setStackTrace(trace);
 	response.writeException(lastException, lastException.toString());
     }
 
     /**
-    * Create an new instance of a given class
-    */
+     * Create an new instance of a given class
+     */
     public void CreateObject(String name, boolean createInstance,
 			     Object args[], Response response) {
 	Class params[] = null;
@@ -572,7 +548,7 @@ public class JavaBridge implements Runnable {
 	    Vector candidates = new Vector();
 	    Constructor selected = null;
 	    
-	    Class clazz = cl.forName(name);
+	    Class clazz = getClassLoader().forName(name);
 	    if(createInstance) {
 		ConstructorCache.Entry entry = constructorCache.getEntry(name, args);
 		selected = constructorCache.get(entry);
@@ -596,6 +572,10 @@ public class JavaBridge implements Runnable {
 		} else {
 		    // for classes which have no visible constructor, return the class
 		    // useful for classes like java.lang.System and java.util.Calendar.
+		    if(createInstance && logLevel>0) {
+		    	logMessage("No visible constructor found in: "+ name +", returning the class instead of an instance; this may not be what you want. Please correct this error or please use new JavaClass("+name+") instead.");
+		    	if(!response.extJavaCompatibility()) new InstantiationException("No matching constructor found. " + "Candidates: " + String.valueOf(candidates));
+		    }
 		    response.writeObject(clazz);
 		    return;
 		}
@@ -616,7 +596,7 @@ public class JavaBridge implements Runnable {
 	       ((e instanceof InvocationTargetException) &&
 		((InvocationTargetException)e).getTargetException() instanceof NoClassDefFoundError)) {
 		if(e instanceof InvocationTargetException) e = ((InvocationTargetException)e).getTargetException();
-		cl.clearCaches();
+		getClassLoader().clearCaches();
 		e = new ClassNotFoundException("Unresolved external reference: "+e+". -- Unable to call the constructor because it or one of its parameters refer to the mentioned external class which is not available in the current \"java_require(<path>)\" url path. Remember that all interconnected classes must be loaded with a single java_require() call and that a class must not appear in more than one java_require() call. Please check the Java Bridge log file for details.", e);
 	    }
 	    printStackTrace(e);
@@ -753,12 +733,12 @@ public class JavaBridge implements Runnable {
 	int size = 0;
 
 	for (int i=0; i<args.length; i++) {
-	    if (Util.getClass(args[i]) == PhpProcedureProxy.class) {
+	    if (Util.getClass(args[i]) == PhpProcedureProxy.class && parms[i] != PhpProcedureProxy.class) {
 		Class param = parms[i];
 		if(!param.isInterface()) {
 		    if(CLRAssembly!=null) // CLR uses an inner method class
 			try {
-			    args[i] = ((PhpProcedureProxy)args[i]).getProxy(new Class[] {cl.forName(param.getName() + "$Method")});
+			    args[i] = ((PhpProcedureProxy)args[i]).getProxy(new Class[] {getClassLoader().forName(param.getName() + "$Method")});
 			} catch (ClassNotFoundException e) { 
 			    logDebug("Could not find CLR interface for: " + param);
 			    args[i] = ((PhpProcedureProxy)args[i]).getProxy(param.getInterfaces());
@@ -785,17 +765,33 @@ public class JavaBridge implements Runnable {
 		    printStackTrace(n);
 		    // oh well, we tried!
 		}
-	    } else if (args[i] instanceof Number && parms[i].isPrimitive()) {
-		if (result==args) result=(Object[])result.clone();
-		Class c = parms[i];
-		Number n = (Number)args[i];
-		if (c == Boolean.TYPE) result[i]=new Boolean(0.0!=n.floatValue());
-		if (c == Byte.TYPE)    result[i]=new Byte(n.byteValue());
-		if (c == Short.TYPE)   result[i]=new Short(n.shortValue());
-		if (c == Integer.TYPE) result[i]=new Integer(n.intValue());
-		if (c == Float.TYPE)   result[i]=new Float(n.floatValue());
-		if (c == Long.TYPE && !(n instanceof Long))
-		    result[i]=new Long(n.longValue());
+	    } else if (args[i] instanceof Number) {
+	    	if (parms[i].isPrimitive()) {
+		    if (result==args) result=(Object[])result.clone();
+		    Class c = parms[i];
+		    Number n = (Number)args[i];
+		    if (c == Boolean.TYPE) result[i]=new Boolean(0.0!=n.floatValue());
+		    if (c == Byte.TYPE)    result[i]=new Byte(n.byteValue());
+		    if (c == Short.TYPE)   result[i]=new Short(n.shortValue());
+		    if (c == Integer.TYPE) result[i]=new Integer(n.intValue());
+		    if (c == Float.TYPE)   result[i]=new Float(n.floatValue());
+		    if (c == Long.TYPE && !(n instanceof Long))
+			result[i]=new Long(n.longValue());
+	    	} else {
+		    if(args[i].getClass()==Request.PhpNumber.class) {
+			if (result==args) result=(Object[])result.clone();
+	    		if(!response.extJavaCompatibility()) {
+			Class c = parms[i];
+			if(c.isAssignableFrom(Integer.class)) {
+		    		result[i] = new Integer(((Number)args[i]).intValue());
+			} else {
+		    		result[i] = new Long(((Number)args[i]).longValue());				
+			}
+		    } else {
+	    		result[i] = new Long(((Number)args[i]).longValue());
+		    }
+	    	}
+	    	}
 	    } else if ((args[i] != null) && args[i].getClass() == Request.PhpArray.class) {
 	    	if(parms[i].isArray()) {
 		    try {
@@ -804,7 +800,7 @@ public class JavaBridge implements Runnable {
 
 			// Verify that the keys are Long, and determine maximum
 			for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
-			    int index = ((Long)e.next()).intValue();
+			    int index = ((Number)e.next()).intValue();
 			    if (index >= size) size = index+1;
 			}
 
@@ -847,7 +843,7 @@ public class JavaBridge implements Runnable {
 			for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
 			    Object key = e.next();
 			    Object val = ht.get(key);
-			    int index = ((Long)key).intValue();		    // Verify that the keys are Long
+			    int index = ((Number)key).intValue();		    // Verify that the keys are Long
 
 			    if(val instanceof byte[]) val = response.newString((byte[])val); // always prefer strings over byte[]
 			    res.add(val);
@@ -1089,8 +1085,8 @@ public class JavaBridge implements Runnable {
     }
 
     /**
-    * Invoke a method on a given object
-    */
+     * Invoke a method on a given object
+     */
     public void Invoke
 	(Object object, String method, Object args[], Response response)
     {
@@ -1146,7 +1142,7 @@ public class JavaBridge implements Runnable {
 	       ((e instanceof InvocationTargetException) &&
 		((InvocationTargetException)e).getTargetException() instanceof NoClassDefFoundError)) {
 		if(e instanceof InvocationTargetException) e = ((InvocationTargetException)e).getTargetException();
-		cl.clearCaches();
+		getClassLoader().clearCaches();
 		e = new ClassNotFoundException("Unresolved external reference: "+ e+ ". -- Unable to call the method because it or one of its parameters refer to the mentioned external class which is not available in the current \"java_require(<path>)\" url path. Remember that all interconnected classes must be loaded with a single java_require() call and that a class must not appear in more than one java_require() call. Please check the Java Bridge log file for details.", e);
 	    }
 	    
@@ -1186,8 +1182,8 @@ public class JavaBridge implements Runnable {
     }
 
     /**
-    * Get or Set a property
-    */
+     * Get or Set a property
+     */
     public void GetSetProp
 	(Object object, String prop, Object args[], Response response)
     {
@@ -1296,7 +1292,7 @@ public class JavaBridge implements Runnable {
 	       ((e instanceof InvocationTargetException) &&
 		((InvocationTargetException)e).getTargetException() instanceof NoClassDefFoundError)) {
 		if(e instanceof InvocationTargetException) e = ((InvocationTargetException)e).getTargetException();
-		cl.clearCaches();
+		getClassLoader().clearCaches();
 		e = new ClassNotFoundException("Unresolved external reference: "+e+ ". -- Unable to invoke a property because it or one of its parameters refer to the mentioned external class which is not available in the current \"java_require(<path>)\" url path. Remember that all interconnected classes must be loaded with a single java_require() call and that a class must not appear in more than one java_require() call. Please check the Java Bridge log file for details.", e);
 	    }
 	    printStackTrace(e);
@@ -1325,14 +1321,31 @@ public class JavaBridge implements Runnable {
 	return ob;
     }
 
+    /**
+     * Only for internal use. 
+     * @param in
+     * @param out
+     * @see php.java.servlet.PhpJavaServlet
+     * @see php.java.bridge.JavaBridgeRunner
+    * @see php.java.bridge.main(String[])
+      */
     public JavaBridge(InputStream in, OutputStream out) {
 	this.in = in;
 	this.out = out;
     }
 
     /**
-    * Return map for the value (PHP 5 only)
-    */
+ * Only for internal use.
+    * @see php.java.servlet.PhpJavaServlet.getContext(HttpServletRequest, HttpServletResponse)
+     * @see php.java.bridge.main(String[])
+    * @see php.java.bridge.JavaBridgeRunner
+ */
+public JavaBridge() {
+	this(null, null);
+}
+/**
+     * Return map for the value (PHP 5 only)
+     */
     public PhpMap getPhpMap(Object value) {
 	return PhpMap.getPhpMap(value, this);
     }
@@ -1346,7 +1359,7 @@ public class JavaBridge implements Runnable {
      * @param extensionDir The php extension directory. 
      */
     public void setJarLibraryPath(String path, String extensionDir) {
-    	cl.updateJarLibraryPath(path, extensionDir);
+    	getClassLoader().updateJarLibraryPath(path, extensionDir);
     }
 
     /**
@@ -1422,7 +1435,9 @@ public class JavaBridge implements Runnable {
 	buf.append("]");
 	return buf.toString();
     }
-
+    public Object getContext() {
+    	return sessionFactory.getContext();
+    }
     /**
      * Return a session handle shared among all JavaBridge
      * instances. If it is a HTTP session, the session is shared with
@@ -1453,10 +1468,10 @@ public class JavaBridge implements Runnable {
     	return new PhpProcedureProxy(this, names, null, object);
     }
     /**
-      * Create a dynamic proxy proxy for calling PHP code.<br>
+     * Create a dynamic proxy proxy for calling PHP code.<br>
      * Example: <br>
      * java_closure($this, $map, $interfaces);<br>
-    * 
+     * 
      * @param object the PHP environment (the php "class")
      * @param names maps java to php names
      * @param interfaces list of interfaces which the PHP environment must implement
@@ -1493,7 +1508,7 @@ public class JavaBridge implements Runnable {
     private static final HashMap emptyMap = new HashMap();
 
     /**
-    * Create a dynamic proxy proxy for calling PHP code.<br>
+     * Create a dynamic proxy proxy for calling PHP code.<br>
      * Example: <br>
      * java_closure();<br>
      * java_closure($this);<br>
@@ -1512,7 +1527,7 @@ public class JavaBridge implements Runnable {
     public void reset() {
 	warn("Your PHP script has called the privileged procedure \"reset()\", which resets the backend to its initial state. Therefore all session variables and all caches are now gone.");
 	Session.reset(this);
-	cl.reset();
+	getClassLoader().reset();
     }
     /**
      * This method sets a new session factory. Used by the servlet to
@@ -1553,4 +1568,16 @@ public class JavaBridge implements Runnable {
     	session.put(id, obj);
     	return id;
     }
+/**
+ * @param cl The cl to set.
+ */
+public void setClassLoader(JavaBridgeClassLoader cl) {
+	this.cl = cl;
+}
+/**
+ * @return Returns the cl.
+ */
+public JavaBridgeClassLoader getClassLoader() {
+	return cl;
+}
 }

@@ -57,17 +57,39 @@ PHP_RINIT_FUNCTION(EXT)
   return SUCCESS;
 }
 
+/**
+ * Call the java continuation with the current continuation as its
+ * argument
+ */
+static call_java_continuation_with_current_continuation(TSRMLS_D) {
+  static const char name[] = "call_java_continuation_with_current_continuation";
+  static const char code[] = "\
+if(($kont=array_key_exists('X_JAVABRIDGE_CONTINUATION', $_SERVER)\n\
+?$_SERVER['X_JAVABRIDGE_CONTINUATION']\n\
+:(array_key_exists('HTTP_X_JAVABRIDGE_CONTINUATION', $_SERVER)\n\
+?$_SERVER['HTTP_X_JAVABRIDGE_CONTINUATION']:false))) {\n\
+\n\
+$ctx = java_context();\n\
+$continuation = $ctx->getAttribute('X_JAVABRIDGE_CONTINUATION', $kont);\n\
+$continuation->call(java_closure());\n\
+}\n";
+  int ret = zend_eval_string((char*)code, 0, (char*)name TSRMLS_CC);
+  assert(SUCCESS==ret);
+}
+
 PHP_RSHUTDOWN_FUNCTION(EXT)
 {
+  call_java_continuation_with_current_continuation(TSRMLS_C);
+
   destroy_cloned_cfg(TSRMLS_C);
 
   if(JG(jenv)) {
 	if(*JG(jenv)) {
-	  if((*JG(jenv))->peer) {
+	  if((*JG(jenv))->peer!=-1) {
 								/* end servlet session */
 		EXT_GLOBAL(protocol_end)(JG(jenv));
 		close((*JG(jenv))->peer);
-		if((*JG(jenv))->peer0) close((*JG(jenv))->peer0);
+		if((*JG(jenv))->peer0!=-1) close((*JG(jenv))->peer0);
 	  }
 	  if((*JG(jenv))->s) free((*JG(jenv))->s);
 	  if((*JG(jenv))->send) free((*JG(jenv))->send);
@@ -204,9 +226,9 @@ static void session(INTERNAL_FUNCTION_PARAMETERS)
   jenv=EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   if(!jenv) RETURN_NULL();
  
-  if(!EXT_GLOBAL(cfg)->is_cgi_servlet)
-	EXT_GLOBAL(check_context) (jenv TSRMLS_CC); /* re-direct if no
-												   context was found */
+  assert(EXT_GLOBAL(cfg)->is_cgi_servlet && (*jenv)->servlet_ctx ||!EXT_GLOBAL(cfg)->is_cgi_servlet);
+  EXT_GLOBAL(check_context) (jenv TSRMLS_CC); /* re-direct if no
+												 context was found */
 
   (*jenv)->writeInvokeBegin(jenv, 0, "getSession", 0, 'I', return_value);
   if(argc>0 && Z_TYPE_PP(session)!=IS_NULL) {
@@ -222,14 +244,33 @@ static void session(INTERNAL_FUNCTION_PARAMETERS)
   (*jenv)->writeInvokeEnd(jenv);
 }
 
-EXT_FUNCTION(EXT_GLOBAL(session))
+EXT_FUNCTION(EXT_GLOBAL(get_session))
 {
   session(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
-EXT_FUNCTION(EXT_GLOBAL(get_session))
+static void context(INTERNAL_FUNCTION_PARAMETERS)
 {
-  session(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+  proxyenv *jenv;
+  int argc=ZEND_NUM_ARGS();
+  
+  if (argc!=0)
+	WRONG_PARAM_COUNT;
+
+  jenv=EXT_GLOBAL(connect_to_server)(TSRMLS_C);
+  if(!jenv) RETURN_NULL();
+ 
+  assert(EXT_GLOBAL(cfg)->is_cgi_servlet && (*jenv)->servlet_ctx ||!EXT_GLOBAL(cfg)->is_cgi_servlet);
+  EXT_GLOBAL(check_context) (jenv TSRMLS_CC); /* re-direct if no
+												 context was found */
+
+  (*jenv)->writeInvokeBegin(jenv, 0, "getContext", 0, 'I', return_value);
+  (*jenv)->writeInvokeEnd(jenv);
+}
+
+EXT_FUNCTION(EXT_GLOBAL(get_context))
+{
+  context(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
 EXT_FUNCTION(EXT_GLOBAL(get_server_name))
@@ -379,7 +420,7 @@ EXT_FUNCTION(EXT_GLOBAL(get_values))
   values(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
-EXT_FUNCTION(EXT_GLOBAL(closure))
+EXT_FUNCTION(EXT_GLOBAL(get_closure))
 {
   char *string_key;
   ulong num_key;
@@ -574,19 +615,31 @@ function_entry EXT_GLOBAL(functions)[] = {
 	EXT_FE(EXT_GLOBAL(last_exception_get), NULL)
 	EXT_FE(EXT_GLOBAL(last_exception_clear), NULL)
 	EXT_FE(EXT_GLOBAL(set_file_encoding), NULL)
-	EXT_FE(EXT_GLOBAL(require), NULL)
-	EXT_FE(EXT_GLOBAL(set_library_path), NULL)
 	EXT_FE(EXT_GLOBAL(instanceof), NULL)
+
+	EXT_FE(EXT_GLOBAL(require),  NULL)
+	EXT_FALIAS(EXT_GLOBAL(set_library_path), EXT_GLOBAL(require),  NULL)
+
 	EXT_FE(EXT_GLOBAL(get_session), NULL)
-	EXT_FE(EXT_GLOBAL(session), NULL)
+	EXT_FALIAS(EXT_GLOBAL(session), EXT_GLOBAL(get_session), NULL)
+
+	EXT_FE(EXT_GLOBAL(get_context), NULL)
+	EXT_FALIAS(EXT_GLOBAL(context), EXT_GLOBAL(get_context), NULL)
+
 	EXT_FE(EXT_GLOBAL(get_server_name), NULL)
-	EXT_FE(EXT_GLOBAL(reset), NULL)
+	EXT_FALIAS(EXT_GLOBAL(server_name), EXT_GLOBAL(get_server_name), NULL)
+
 	EXT_FE(EXT_GLOBAL(get_values), NULL)
-	EXT_FE(EXT_GLOBAL(values), NULL)
-	EXT_FE(EXT_GLOBAL(closure), NULL)
+	EXT_FALIAS(EXT_GLOBAL(values), EXT_GLOBAL(get_values), NULL)
+
+	EXT_FE(EXT_GLOBAL(get_closure), NULL)
+	EXT_FALIAS(EXT_GLOBAL(closure), EXT_GLOBAL(get_closure), NULL)
+
 	EXT_FE(EXT_GLOBAL(call_with_exception_handler), NULL)
 	EXT_FE(EXT_GLOBAL(exception_handler), NULL)
 	EXT_FE(EXT_GLOBAL(inspect), NULL)
+	EXT_FE(EXT_GLOBAL(reset), NULL)
+
 	{NULL, NULL, NULL}
 };
 
@@ -1347,10 +1400,10 @@ static void override_ini_from_cgi(void) {
   char *hosts;
   EXT_GLOBAL(cfg)->is_cgi_servlet=0;
   
-  if (getenv("SERVER_SOFTWARE")
+  /*if (getenv("SERVER_SOFTWARE")
 	  || getenv("SERVER_NAME")
 	  || getenv("GATEWAY_INTERFACE")
-	  || getenv("REQUEST_METHOD")) {
+	  || getenv("REQUEST_METHOD"))*/ {
 
 	if ((hosts=getenv("X_JAVABRIDGE_OVERRIDE_HOSTS"))) {
 	  EXT_GLOBAL(cfg)->is_cgi_servlet=1;

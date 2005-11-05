@@ -15,6 +15,47 @@ public class Request implements IDocHandler {
     public static class PhpArray extends HashMap { // for PHP's array()
 	private static final long serialVersionUID = 3905804162838115892L;
     };
+    public static class PhpNumber extends Number {
+
+		private long l;
+
+		/**
+		 * @param l
+		 */
+		public PhpNumber(long l) {
+			this.l = l;
+		}
+
+		/* (non-Javadoc)
+		 * @see java.lang.Number#intValue()
+		 */
+		public int intValue() {
+			
+			return (int)l;
+		}
+
+		/* (non-Javadoc)
+		 * @see java.lang.Number#longValue()
+		 */
+		public long longValue() {
+			return l;
+		}
+
+		/* (non-Javadoc)
+		 * @see java.lang.Number#floatValue()
+		 */
+		public float floatValue() {
+			return l;
+		}
+
+		/* (non-Javadoc)
+		 * @see java.lang.Number#doubleValue()
+		 */
+		public double doubleValue() {
+			return l;
+		}
+    	
+    };
     private static class Args {
     	PhpArray ht; 
     	ArrayList array;
@@ -151,7 +192,7 @@ public class Request implements IDocHandler {
 	    break;
 	}
 	case 'L': {
-	    args.add(new Long(Long.parseLong(st[0].getStringValue(), 10)));
+	    args.add(new PhpNumber(Long.parseLong(st[0].getStringValue(), 10)));
 	    break;
 	}
 	case 'D': {

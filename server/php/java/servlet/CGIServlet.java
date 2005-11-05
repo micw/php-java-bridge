@@ -67,8 +67,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Enumeration;
 import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
@@ -238,17 +236,6 @@ import javax.servlet.http.HttpServletResponse;
  *
  * </p>
  * <p>
- * <h3>TODO:</h3>
- * <ul>
- * <li> Support for setting headers (for example, Location headers don't work)
- * <li> Support for collapsing multiple header lines (per RFC 2616)
- * <li> Ensure handling of POST method does not interfere with 2.3 Filters
- * <li> Refactor some debug code out of core
- * <li> Ensure header handling preserves encoding
- * <li> Document handling of cgi stdin when there is no stdin
- * <li> Better documentation
- * </ul>
- * </p>
  *
  * @author Martin T Dengler (original author)
  * @author Amy Roh (for Tomcat)
@@ -303,7 +290,7 @@ public class CGIServlet extends HttpServlet {
     // private static final Hashtable defaultEnv = new Hashtable(System.getenv());
 
     // foobar workaround for Windows problems
-    static final Hashtable defaultEnv = new Hashtable();
+    protected static final Hashtable defaultEnv = new Hashtable();
     private static final File winnt = new File("c:/winnt");
     private static final File windows = new File("c:/windows");
     private void setDefaultEnv() {
@@ -434,16 +421,16 @@ public class CGIServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
         throws ServletException, IOException {
 
-        CGIEnvironment cgiEnv = createCGIEnvironment(req, getServletContext());
+        CGIEnvironment cgiEnv = createCGIEnvironment(req, res, getServletContext());
 
         if (cgiEnv.isValid()) {
-            CGIRunner cgi = new CGIRunner(cgiEnv.getCommand(),
-                                          cgiEnv.getEnvironment(),
-                                          cgiEnv.getWorkingDirectory());
+            CGIRunner cgi = cgiRunnerFactory.createCGIRunner(cgiEnv);
             if ("POST".equals(req.getMethod())) {
                 cgi.setInput(req.getInputStream());
             } 
-            cgi.setParams(req.getParameterMap());
+            String query = req.getQueryString();
+            if(query==null) query="";
+            cgi.setParams(query);
             cgi.setResponse(res);
             cgi.run();
         }
@@ -451,14 +438,23 @@ public class CGIServlet extends HttpServlet {
     } //doGet
 
 
+    protected class CGIRunnerFactory {
+        protected CGIRunner createCGIRunner(CGIEnvironment cgiEnv) {
+            return new CGIRunner(cgiEnv);
+            }
+    };
+    protected CGIRunnerFactory cgiRunnerFactory = new CGIRunnerFactory();
 
     /**
      * @param req HttpServletRequest
-     * @param servletContext ServletContext
-     * @return cgi environment
+ * @param res HttpServletResponse
+ * @param servletContext ServletContext
+ * @return cgi environment
      */
-    protected CGIEnvironment createCGIEnvironment(HttpServletRequest req, ServletContext servletContext) {
-	return new CGIEnvironment(req, servletContext);
+    protected CGIEnvironment createCGIEnvironment(HttpServletRequest req, HttpServletResponse res, ServletContext servletContext) {
+   	 CGIEnvironment env = new CGIEnvironment(req, res, servletContext);
+	 env.init(req, res);
+	 return env;
     }
 
 
@@ -507,27 +503,27 @@ public class CGIServlet extends HttpServlet {
         /**
          * Creates a CGIEnvironment and derives the necessary environment,
          * query parameters, working directory, cgi command, etc.
-         *
          * @param  req       HttpServletRequest for information provided by
          *                   the Servlet API
+         * @param res HttpServletResponse
          * @param  context   ServletContext for information provided by the
          *                   Servlet API
          *
          */
         protected CGIEnvironment(HttpServletRequest req,
-                                 ServletContext context) {
+                                 HttpServletResponse res, ServletContext context) {
             setupFromContext(context);
             setupFromRequest(req);
+        }
 
-            this.valid = setCGIEnvironment(req);
+        protected void init(HttpServletRequest req, HttpServletResponse res) {
+            this.valid = setCGIEnvironment(req, res);
 
             if (this.valid) {
                 workingDirectory = new File(command.substring(0,
 							      command.lastIndexOf(File.separator)));
             }
-
         }
-
 
 	/**
          * Uses the ServletContext to set some CGI variables
@@ -692,14 +688,14 @@ public class CGIServlet extends HttpServlet {
         /**
          * Constructs the CGI environment to be supplied to the invoked CGI
          * script; relies heavliy on Servlet API methods and findCGI
-         *
+         * @param res HttpServletResponse
          * @param    HttpServletRequest request associated with the CGI
          *           invokation
          *
          * @return   true if environment was set OK, false if there
          *           was a problem and no environment was set
          */
-        protected boolean setCGIEnvironment(HttpServletRequest req) {
+        protected boolean setCGIEnvironment(HttpServletRequest req, HttpServletResponse res) {
 	    Hashtable envp = (Hashtable)defaultEnv.clone();
             
             String sPathInfoOrig = null;
@@ -962,6 +958,30 @@ public class CGIServlet extends HttpServlet {
 
 
 
+    /**
+     * Converts a Hashtable to a String array by converting each
+     * key/value pair in the Hashtable to a String in the form
+     * "key=value" (hashkey + "=" + hash.get(hashkey).toString())
+     *
+     * @param  h   Hashtable to convert
+     *
+     * @return     converted string array
+     *
+     * @exception  NullPointerException   if a hash key has a null value
+     *
+     */
+    protected static String[] hashToStringArray(Hashtable h)
+        throws NullPointerException {
+        Vector v = new Vector();
+        Enumeration e = h.keys();
+        while (e.hasMoreElements()) {
+            String k = e.nextElement().toString();
+            v.add(k + "=" + h.get(k));
+        }
+        String[] strArr = new String[v.size()];
+        v.copyInto(strArr);
+        return strArr;
+    }
 
 
 
@@ -996,24 +1016,24 @@ public class CGIServlet extends HttpServlet {
         private String command = null;
 
         /** environment used when invoking the cgi script */
-        private Hashtable env = null;
+        protected Hashtable env = null;
 
         /** working directory used when invoking the cgi script */
         private File wd = null;
 
         /** query parameters to be passed to the invoked script */
-        private Map params = null;
+        protected String params = null;
 
         /** stdin to be passed to cgi script */
-        private InputStream stdin = null;
+        protected InputStream stdin = null;
 
         /** response object used to set headers & get output stream */
-        private HttpServletResponse response = null;
+        protected HttpServletResponse response = null;
 
 
 
         /**
-         *  Creates a CGIRunner and initializes its environment, working
+         *  Creates a CGIUtil and initializes its environment, working
          *  directory, and query parameters.
          *  <BR>
          *  Input/output streams (optional) are set using the
@@ -1029,10 +1049,10 @@ public class CGIServlet extends HttpServlet {
          *                   based on CGI script output
          *
          */
-        protected CGIRunner(String command, Hashtable env, File wd) {
-            this.command = command;
-            this.env = env;
-            this.wd = wd;
+        protected CGIRunner(CGIEnvironment env) {
+            this.command = env.getCommand();
+            this.env = env.getEnvironment();
+            this.wd = env.getWorkingDirectory();
         }
 
 
@@ -1040,10 +1060,9 @@ public class CGIServlet extends HttpServlet {
         /**
 	 * @param queryParameters
 	 */
-	public void setParams(Map queryParameters) {
+	public void setParams(String queryParameters) {
 	    this.params=queryParameters;
 	}
-
 
 
         /**
@@ -1070,49 +1089,24 @@ public class CGIServlet extends HttpServlet {
         }
 
 
-
-        /**
-         * Converts a Hashtable to a String array by converting each
-         * key/value pair in the Hashtable to a String in the form
-         * "key=value" (hashkey + "=" + hash.get(hashkey).toString())
-         *
-         * @param  h   Hashtable to convert
-         *
-         * @return     converted string array
-         *
-         * @exception  NullPointerException   if a hash key has a null value
-         *
-         */
-        protected String[] hashToStringArray(Hashtable h)
-            throws NullPointerException {
-            Vector v = new Vector();
-            Enumeration e = h.keys();
-            while (e.hasMoreElements()) {
-                String k = e.nextElement().toString();
-                v.add(k + "=" + h.get(k));
-            }
-            String[] strArr = new String[v.size()];
-            v.copyInto(strArr);
-            return strArr;
-        }
-
-
-        private void addHeader(String line) {
+        protected void addHeader(String line) {
+		try {
 	    if (debug >= 2) {
 		log("runCGI: addHeader(\"" + line + "\")");
 	    }
-	    if (line.startsWith("HTTP")) {
-		//TODO: should set status codes (NPH support)
-		/*
-		 * response.setStatus(getStatusCode(line));
-		 */
+	    if (line.startsWith("Status")) {
+	    	line = line.substring(line.indexOf(":") + 1).trim();
+            int i = line.indexOf(' ');
+            if (i>0)
+                line = line.substring(0,i);
+
+            response.setStatus(Integer.parseInt(line));
 	    } else {
-		try {
                     response.addHeader
                         (line.substring(0, line.indexOf(":")).trim(),
                          line.substring(line.indexOf(":") + 1).trim());
-		} catch (Exception e) {/*not a valid header*/}
 	    }
+		} catch (ArrayIndexOutOfBoundsException e) {/*not a valid header*/}
         }
 
         /**
@@ -1179,21 +1173,10 @@ public class CGIServlet extends HttpServlet {
                                       + "running CGI [" + command + "].");
             }
 	    //create query arguments
-            Iterator ii = params.keySet().iterator();
             StringBuffer cmdAndArgs = new StringBuffer(command);
-            if (ii.hasNext()) {
-                cmdAndArgs.append(" ");
-                while (ii.hasNext()) {
-                    String k = (String) ii.next();
-                    String v = params.get(k).toString();
-                    if ((k.indexOf("=") < 0)) {
-                        cmdAndArgs.append(k);
-                        cmdAndArgs.append("=");
-                        v = encode(v, CGIServlet.this);
-                        cmdAndArgs.append(v);
-                        cmdAndArgs.append(" ");
-                    }
-                }
+            if(params!=null && params.trim().length()>0){
+		cmdAndArgs.append(" ");
+		cmdAndArgs.append(params.replace('&', ' '));
             }
 
             Runtime rt = Runtime.getRuntime();
@@ -1222,8 +1205,8 @@ public class CGIServlet extends HttpServlet {
 			natOut.write(buf, 0, n);
 		    }
 		}
-		try { natOut.close(); } catch (IOException e) {}
-                natOut = null;
+//		try { natOut.close(); } catch (IOException e) {}
+//                natOut = null;
 		
 		// the header and content
 		while((n = natIn.read(buf, i, buf.length-i)) !=-1 ) {
@@ -1258,6 +1241,6 @@ public class CGIServlet extends HttpServlet {
 		if(proc!=null) try {proc.destroy(); } catch (Exception e) {}
 	    }
 	}
-    } //class CGIRunner
+    } //class CGIUtil
 
 } //class CGIServlet

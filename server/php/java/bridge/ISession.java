@@ -12,9 +12,10 @@ import java.util.Map;
  * requests.  <br> Example:<br>
  * 
  * $session=java_session();<br>
- * $val=$session->get("i") || 1; <br>
+ * $val=$session-&lt;get("i");<br>
+ * if(!$val) val = 0;
  * echo $val++; <br>
- * $session->put("i", new java("java.lang.Integer", $val));<br>
+ * $session-&lt;put("i", new java("java.lang.Integer", $val));<br>
  * <P>An implementation of ISession represents the server's view
  * of the session. 
  *
@@ -37,21 +38,9 @@ import java.util.Map;
  * client to a welcome page <tt>welcomeURL</tt> where a user might be
  * required to enter some information and send it to the server before
  * gaining access to subsequent pages.
- * 
- * <P> When java_session() is called with a session name, the
- * java_session() primitive does not set a cookie and the above
- * restriction does not apply. If it is necessary that the client
- * joins the session, the following code can be used:<br>
- *
- * session_start(); // set a cookie <br><br>
- * // check if client has joined the session <br>
- * function is_new() { <br>
- * &nbsp;&nbsp;return array_key_exists(session_name(), $_COOKIE);<br>
- * }<br><br>
- * // request the server session and automatically <br>
- * // destroy an old session if is_new() returns true<br>
- * $session=java_session(session_id(), is_new());<br>
- * if($session->isNew()) { <br>
+ * <P>
+ * $session=java_session;<br>
+ * if($session-&gt;isNew()) { <br>
  * &nbsp;&nbsp; header("Location: http://".$_SERVER['HTTP_HOST'] .dirname($_SERVER['PHP_SELF']) ."/welcomeURL.html");<br>
  * }<br>
  */
@@ -67,7 +56,7 @@ public interface ISession {
      * @exception IllegalStateException if an attempt is made to access 
      * session data after it has been invalidated
      */
-    public Object get(Object ob);
+    public Object get(Object name);
 		
     /**
      * Binds the specified object into the session's application layer
@@ -80,7 +69,7 @@ public interface ISession {
      * @exception IllegalStateException if an attempt is made to access  
      * session data after the session has been invalidated.
      */
-    public void put(Object ob1, Object ob2);
+    public void put(Object name, Object value);
 		
     /**
      * Removes the object bound to the given name in the session's
@@ -91,7 +80,7 @@ public interface ISession {
      * @exception IllegalStateException if an attempt is made to access 
      * session data after the session has been invalidated.
      */
-    public Object remove(Object ob);
+    public Object remove(Object name);
 		
     /**
      *
@@ -103,7 +92,7 @@ public interface ISession {
      * 				of seconds 
      *
      */
-    public void setTimeout(int timeout);
+    public void setTimeout(int interval);
 		
     /**
      * Returns the maximum time interval, in seconds, that the servlet

@@ -10,6 +10,8 @@ PHP_ARG_WITH(java, for java support,
 AC_ARG_WITH(mono,  [  --with-mono[[=ikvmc.exe location]]             Include mono support], PHP_MONO="$withval", PHP_MONO="no")
 PHP_ARG_ENABLE(servlet, for java servlet support,
 [  --enable-servlet[=JAR]         Include java servlet support. JAR must be the location of j2ee.jar or servlet.jar; creates JavaBridge.war])
+PHP_ARG_ENABLE(script, for java script support,
+[  --enable-script[=JAR]         Include java script support. If you use a JDK < 1.6 JAR must be the location of script-api.jar; creates php-script.jar])
 
 
 if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then

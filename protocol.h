@@ -61,7 +61,7 @@
 
 /* checks if the servlet backend uses HTTP, either because we do not
    re-direct or because we override re-direct */
-#define IS_OVERRIDE_REDIRECT(env) (((*env)->peer0 || EXT_GLOBAL (get_servlet_context) (TSRMLS_C)))
+#define IS_OVERRIDE_REDIRECT(env) ((((*env)->peer0!=-1) || EXT_GLOBAL (get_servlet_context) (TSRMLS_C)))
 
 typedef struct proxyenv_ *proxyenv;
 struct proxyenv_ {

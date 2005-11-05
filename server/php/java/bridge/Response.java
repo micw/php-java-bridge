@@ -83,6 +83,10 @@ public class Response {
     }
     public ValuesHook defaultValuesHook, hook; 
     
+    public boolean extJavaCompatibility() {
+    	return (this.options & 1) == 1;
+    }
+    
     public Response(JavaBridge bridge) {
 	buf=new OutBuf();
 	this.bridge=bridge;

@@ -65,7 +65,7 @@ static void end(proxyenv *env) {
 	unsigned char mode = EXT_GLOBAL (get_mode) ();
 	ssize_t n;
 
-	assert(!(*env)->peer_redirected || ((*env)->peer_redirected && (*env)->peer0));
+	assert(!(*env)->peer_redirected || ((*env)->peer_redirected && ((*env)->peer0)!=-1));
 	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", servlet_context, (unsigned long)(size+1), getSessionFactory(env), mode);
 
 	n=send((*env)->peer, header, header_length, 0);
@@ -111,12 +111,12 @@ static void end_session(proxyenv *env) {
   int peer = (*env)->peer;
   char header[SEND_SIZE];
   int header_length;
-  short override_redirect = peer0?1:2;
+  short override_redirect = (peer0!=-1)?1:2;
   unsigned char mode = EXT_GLOBAL (get_mode) ();
 
   (*env)->finish=end;
   
-  assert(!(*env)->peer_redirected || ((*env)->peer_redirected && (*env)->peer0));
+  assert(!(*env)->peer_redirected || ((*env)->peer_redirected && ((*env)->peer0)!=-1));
   header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_REDIRECT: %d\r\n%sX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", (*env)->servlet_context_string, (unsigned long)(size+1), override_redirect, get_cookies(&val, env), getSessionFactory(env), mode);
   n=send(peer, header, header_length, 0);
   assert(n==header_length);
@@ -161,7 +161,7 @@ void EXT_GLOBAL (protocol_end) (proxyenv *env) {
 }
 
 void EXT_GLOBAL(check_context) (proxyenv *env TSRMLS_DC) {
-  if(!(*env)->is_local && IS_SERVLET_BACKEND(env)) {
+  if(!(*env)->is_local && IS_SERVLET_BACKEND(env) && !(*env)->servlet_ctx) {
 	if((*env)->peer_redirected) { /* override redirect */
 	  int sock = socket (PF_INET, SOCK_STREAM, 0);
 	  struct sockaddr *saddr = &(*env)->orig_peer_saddr;
@@ -432,7 +432,7 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    if(!*env) {free(env); return 0;}
 
    (*env)->peer = peer;
-   (*env)->peer0 = 0;
+   (*env)->peer0 = -1;
    (*env)->peer_redirected = 0;
    memcpy(&(*env)->orig_peer_saddr, saddr, sizeof (struct sockaddr));
    

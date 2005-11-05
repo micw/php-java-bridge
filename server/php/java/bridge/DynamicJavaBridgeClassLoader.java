@@ -9,7 +9,10 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.WeakHashMap;
 
 public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 
@@ -21,7 +24,10 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 
     // the current user's php libdir
     private String contextDir = null;
-    
+
+    // maps rawPath -> URL[]
+    private static Map urlCache = Collections.synchronizedMap(new WeakHashMap());
+	    
     protected DynamicJavaBridgeClassLoader(ClassLoader parent) {
     	super(parent);
     }
@@ -39,6 +45,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
      * The first char must be the token separator.
      */
     public void updateJarLibraryPath(String rawPath, String rawContextDir) {
+    	String key = rawPath;
     	if(rawContextDir==null) throw new NullPointerException("contextDir cannot be null.");
 	if(contextDir==null) {
 	    contextDir=rawContextDir+File.separator+"lib"+File.separator;
@@ -48,7 +55,16 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 		Util.printStackTrace(e);
 	    }
 	}
-    	
+    	URL urls[] = (URL[]) urlCache.get(key);
+        if(urls!=null) {
+	    try {
+		addURLs(rawPath, urls, false); // Uses protected method to explicitly set the classpath entry that is added.
+		return;
+	    } catch (Exception e) {
+		Util.printStackTrace(e);
+	    }
+	}
+        
     	ArrayList toAdd = new ArrayList();
         if(rawPath==null || rawPath.length()<2) return;
 	// add a token separator if first char is alnum
@@ -80,10 +96,24 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 		    } else {
 			buf.append(s);
 		    }
+		    /* From URLClassLoader:
+		    ** This class loader is used to load classes and resources from a search
+		    ** path of URLs referring to both JAR files and directories. Any URL that
+		    ** ends with a '/' is assumed to refer to a directory. Otherwise, the URL
+		    *
+		    * So we must replace the last backslash with a slash or append a slash
+		    * if necessary.
+		    */
 		    if(f!=null && f.isDirectory()) {
+                        addJars(toAdd, f);
 		    	int l = buf.length();
-		    	if(l>0 && buf.charAt(l-1) != File.separatorChar)
-		    	    buf.append(File.separatorChar);
+		    	if(l>0) {
+			    if(buf.charAt(l-1) == File.separatorChar) {
+				buf.setCharAt(l-1, '/');
+			    } else if(buf.charAt(l-1)!= '/') {
+				buf.append('/');
+			    }
+			}
 		    }
 		    url = new URL("file", null, buf.toString());
 		    p = url.getProtocol();
@@ -95,22 +125,39 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	    toAdd.add(url);
 	}
 
-	URL urls[] = new URL[toAdd.size()];
+	urls = new URL[toAdd.size()];
         toAdd.toArray(urls);
 	try {
 	    addURLs(rawPath, urls, false); // Uses protected method to explicitly set the classpath entry that is added.
+            urlCache.put(key, urls);
 	} catch (Exception e) {
 	    Util.printStackTrace(e);
 	}
     }
+    /*
+     * Add all .jar files in a directory
+     */
+    private void addJars(ArrayList list, File dir) {
+	File files[] = dir.listFiles();
+	for(int i=0; i<files.length; i++) {
+	    File f = files[i];
+	    if(f.getName().endsWith(".jar")) {
+		try {
+		    list.add(new URL("file", null, f.getAbsolutePath()));
+		} catch (MalformedURLException e) {
+		    Util.printStackTrace(e);
+		}
+	    }
+	}
+    }
     /**
-    * add all jars found in the phpConfigDir/lib and /usr/share/java
-    * to the list of our URLs.  The user is expected to symbol .jar
-    * libraries explicitly with java_set_library_path, e.g.
-    * java_set_library_path("foo.jar;bar.jar"); For backward
-    * compatibility we add all URLs we encountered during startup
-    * before throwing a "ClassNotFoundException".
-    */
+     * add all jars found in the phpConfigDir/lib and /usr/share/java
+     * to the list of our URLs.  The user is expected to symbol .jar
+     * libraries explicitly with java_set_library_path, e.g.
+     * java_set_library_path("foo.jar;bar.jar"); For backward
+     * compatibility we add all URLs we encountered during startup
+     * before throwing a "ClassNotFoundException".
+     */
     public static synchronized void initClassLoader(String phpConfigDir) {
         DynamicJavaBridgeClassLoader.phpLibDir=phpConfigDir + "/lib/";
         DynamicJavaBridgeClassLoader.phpConfigDir=phpConfigDir;
