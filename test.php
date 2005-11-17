@@ -9,17 +9,47 @@ if (!extension_loaded('java')) {
 
   echo "Please permanently activate the extension. Loading java extension now...\n";
   if (!dl('java.so')&&!dl('php_java.dll')) {
-    echo "java extension not installed.";
-    exit(2);
+    echo "Error: The java extension is not installed.\n";
   }
 }
-phpinfo();
-print "\n\n";
+if(java_get_server_name() != null) {
 
-$v = new java("java.lang.System");
-$arr=java_values($v->getProperties());
-foreach ($arr as $key => $value) {
-  print $key . " -> " .  $value . "<br>\n";
-}
+  phpinfo();
+  print "\n\n";
+  
+  $v = new java("java.lang.System");
+  $arr=java_values($v->getProperties());
+  foreach ($arr as $key => $value) {
+    print $key . " -> " .  $value . "<br>\n";
+  }
+
+ } else {
+
+  phpinfo();
+  print "\n\n";
+
+  /* java_get_server_name() == null means that the backend is not
+   running */
+
+  $ext_name="java.so";
+  if(PHP_SHLIB_SUFFIX != "so") $ext_name="php_java.dll";
+
+  echo "Error: The PHP/Java Bridge backend is not running.\n";
+  echo "\n";
+  echo "Please check that the directory\n";
+  echo "\n\t".ini_get("extension_dir")."\n\n";
+  echo "contains \"$ext_name\" and \"JavaBridge.jar\".\n";
+  echo "\n";
+  echo "Please check that $ext_name is indeed the PHP/Java Bridge and not its\n";
+  echo "predecessor, the ext/java extension (check the file size).\n";
+  echo "Also check if the following values are correct:\n\n";
+  echo "\tjava.java_home = ".ini_get("java.java_home")."\n";
+  echo "\tjava.java = ".ini_get("java.java")."\n";
+  echo "\n";
+  echo "If that still doesn't work, please check the \"java command\" above and\n";
+  echo "report this problem to:\n\n";
+  echo "\tphp-java-bridge-users@lists.sourceforge.net.\n";
+
+ }
 ?>
 

@@ -9,12 +9,19 @@ import java.util.Iterator;
 import java.util.Map;
 
 public abstract class PhpMap {
+    JavaBridge bridge;
     Object value;
+    Class componentType;
     boolean keyType; //false: key is integer (array), true: key is string (hash)
-    public PhpMap(Object value, boolean keyType) {
-	this.value=value;
+    public PhpMap(JavaBridge bridge, Object value, boolean keyType) {
+	this.bridge=bridge;
+    	this.value=value;
 	this.keyType=keyType;
+	this.componentType = value.getClass().getComponentType();
 	init();
+    }
+    protected Object coerce(Object val) {
+	return bridge.coerce(new Class[]{componentType}, new Object[]{val}, bridge.request.response)[0];
     }
     abstract void init();
     public abstract Object currentData();
@@ -38,7 +45,7 @@ public abstract class PhpMap {
 
 	if(value.getClass().isArray()) {
 	    return 
-		new PhpMap(value, false) {
+		new PhpMap(bridge, value, false) {
 		    boolean valid;
 		    int i;
 		    int length;
@@ -75,7 +82,7 @@ public abstract class PhpMap {
 		    }
 		    public void offsetSet(Object pos, Object val) {
 			int i = ((Number)pos).intValue();
-			Array.set(this.value, i, val);
+			Array.set(this.value, i, coerce(val));
 		    }
 		    public void offsetUnset(Object pos) {
 			int i = ((Number)pos).intValue();
@@ -85,7 +92,7 @@ public abstract class PhpMap {
 	}
 	if(value instanceof Collection) {
 	    return 
-		new PhpMap(value, false) {
+		new PhpMap(bridge, value, false) {
 		    Object currentKey;
 		    int i;
 		    Iterator iter;
@@ -118,7 +125,7 @@ public abstract class PhpMap {
 		    }
 
 		    void bail() {
-			throw new UnsupportedOperationException("A collection does not have an offset. You can only iterate over its values.");
+			throw new UnsupportedOperationException("A collection does not have an offset. You can only iterate over its hook.");
 		    }
 
 		    // Should we really care?
@@ -140,7 +147,7 @@ public abstract class PhpMap {
 	}
 	if(value instanceof Map) {
 	    return
-		new PhpMap(value, true){
+		new PhpMap(bridge, value, true){
 		    Object currentKey;
 		    Iterator iter;
 		    
@@ -173,7 +180,7 @@ public abstract class PhpMap {
 			return ((Map)(this.value)).get(pos);
 		    }
 		    public void offsetSet(Object pos, Object val) {
-			((Map)(this.value)).put(pos, val);
+			((Map)(this.value)).put(pos, coerce(val));
 		    }
 		    public void offsetUnset(Object pos) {
 			((Map)(this.value)).remove(pos);

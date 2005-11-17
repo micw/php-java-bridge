@@ -67,7 +67,7 @@ public class PhpProcedure implements InvocationHandler {
 	response.writeApplyBegin(object, cname, name, argsLength);
 	for (int i=0; i<argsLength; i++) {
 	    response.writePairBegin();
-	    bridge.setResult(response, args[i]);
+	    bridge.setResult(response, args[i], args[i].getClass());
 	    response.writePairEnd();
 	}
 	response.writeApplyEnd();

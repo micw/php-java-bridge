@@ -2,6 +2,7 @@
 
 package php.java.bridge;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,8 +12,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Date;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Vector;
 
@@ -23,16 +25,106 @@ import java.util.Vector;
  */
 public class Util {
 
-    public static final String ASCII = "ASCII";
-    public static final String UTF8 = "UTF-8";
-    public static final int	BUF_SIZE = 8152;
+    /**
+     * The default CGI locations.
+     */
+    public static final String DEFAULT_CGI_LOCATIONS[] = new String[] {"/usr/bin/php-cgi", "/usr/bin/php", "c:/php5/php-cgi.exe"};
 
+    /**
+     * The default CGI header parser. The default implementation discards everything.
+     */
+    public static final HeaderParser DEFAULT_HEADER_PARSER = new HeaderParser();
+
+    /**
+     * A default CGI environment which contains a "SystemRoot" entry. Some versions of windows require it
+     * in order to function properly.
+     * @author jostb
+     *
+     */
+    public static class CgiEnvironment extends HashMap {
+
+	private static final File winnt = new File("c:/winnt");
+	private static final File windows = new File("c:/windows");
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 4121409609719429173L;
+
+	protected CgiEnvironment() {
+	    String val = null;
+	    //			 Bug in WINNT and WINXP.
+	    //			 If SystemRoot is missing, php cannot access winsock.
+	    if(winnt.isDirectory()) val="c:\\winnt";
+	    else if(windows.isDirectory()) val = "c:\\windows";
+	    try {
+		String s = System.getenv("SystemRoot"); 
+		if(s!=null) val=s;
+	    } catch (Throwable t) {/*ignore*/}
+	    try {
+		String s = System.getProperty("Windows.SystemRoot");
+		if(s!=null) val=s;
+	    } catch (Throwable t) {/*ignore*/}
+	    if(val!=null) put("SystemRoot", val);			
+	}
+    }
+    /**
+     * The default CGI environment
+     */
+    public static final HashMap DEFAULT_CGI_ENVIRONMENT = new CgiEnvironment();
+
+    /**
+     * ASCII encoding
+     */
+    public static final String ASCII = "ASCII";
+
+    /**
+     * UTF8 encoding
+     */
+    public static final String UTF8 = "UTF-8";
+
+    /**
+     * The default buffer size
+     */
+    public static final int BUF_SIZE = 8152;
+
+    
+    /** 
+     * The TCP socket name
+     */
     public static String TCP_SOCKETNAME = "9267";
-    public static String EXTENSION_DIR = null;
+
+    /**
+     * The default extension directory.
+     * Each php instance can pass its extension dir via a call to <code>setJarLibraryPath</code> or <code>setLibraryPath</code>.
+     * @see php.java.bridge.JavaBridge#setJarLibraryPath(String, String)
+     * @see php.java.bridge.JavaBridge#setLibraryPath(String, String)
+     */
+    public static String DEFAULT_EXTENSION_DIR = null;
+
+    /**
+     * The name of the extension, usually "JavaBridge" or "MonoBridge"
+     */
     public static String EXTENSION_NAME = "JavaBridge";
+
+    /**
+     * The number of threads in the thread pool.
+     * @see System property <code>php.java.bridge.threads</code>
+     */
     public static String THREAD_POOL_MAX_SIZE = "20";
+    
+    /**
+     * The default log level, java.log_level from php.ini overrides.
+     */
     public static int DEFAULT_LOG_LEVEL = 2;
+
+    /**
+     * Backlog for TCP and unix domain connections
+     */
     public static int BACKLOG = 20;
+
+    /**
+     * The default log file.
+     */
     public static String DEFAULT_LOG_FILE = "";
 	
     private static String getProperty(Properties p, String key, String defaultValue) {
@@ -57,12 +149,12 @@ public class Util {
 	    //t.printStackTrace();
 	};
 	TCP_SOCKETNAME = getProperty(p, "TCP_SOCKETNAME", TCP_SOCKETNAME);
-	EXTENSION_DIR = getProperty(p, "EXTENSION_DIR", EXTENSION_DIR);
+	DEFAULT_EXTENSION_DIR = getProperty(p, "DEFAULT_EXTENSION_DIR", DEFAULT_EXTENSION_DIR);
 	EXTENSION_NAME = getProperty(p, "EXTENSION_DISPLAY_NAME", EXTENSION_NAME);
 	try {
 	    String s = getProperty(p, "DEFAULT_LOG_LEVEL", String.valueOf(DEFAULT_LOG_LEVEL));
 	    DEFAULT_LOG_LEVEL = Integer.parseInt(s);
-		Util.logLevel=Util.DEFAULT_LOG_LEVEL; /* java.log_level in php.ini overrides */
+	    Util.logLevel=Util.DEFAULT_LOG_LEVEL; /* java.log_level in php.ini overrides */
 	} catch (NumberFormatException e) {/*ignore*/}
 	try {
 	    String s = getProperty(p, "BACKLOG", String.valueOf(BACKLOG));
@@ -70,10 +162,10 @@ public class Util {
 	} catch (NumberFormatException e) {/*ignore*/}
 	DEFAULT_LOG_FILE = getProperty(p, "DEFAULT_LOG_FILE", Util.EXTENSION_NAME+".log");
 	if(DEFAULT_LOG_FILE.length()!=0) {
-		try {
-			Util.logStream=new java.io.PrintStream(new java.io.FileOutputStream(DEFAULT_LOG_FILE));
-		} catch (FileNotFoundException e1) {/*ignore*/}
-    }
+	    try {
+		Util.logStream=new java.io.PrintStream(new java.io.FileOutputStream(DEFAULT_LOG_FILE));
+	    } catch (FileNotFoundException e1) {/*ignore*/}
+	}
     }
  
     /**
@@ -263,24 +355,40 @@ public class Util {
      * @param buf - The StringBuffer
      */
     public static void appendObject(Object obj, StringBuffer buf) {
+	if(obj==null) { buf.append("null"); return; }
+
     	if(obj instanceof Class) {
 	    if(((Class)obj).isInterface()) 
-		buf.append("i:");
+		buf.append("i(");
 	    else
-		buf.append("c:");
-	    buf.append(getClassName((obj)));
+		buf.append("c(");
     	} else {
-    	    if(obj!=null) {
-	        buf.append("o(");
-	        buf.append(getShortClassName(obj));
-	        buf.append("):");
-	    	buf.append("\"");
-		buf.append(String.valueOf(obj));
-		buf.append("\"");
-    	    } else {
-    	    	buf.append("null");
-    	    }
+	    buf.append("o(");
 	}
+        buf.append(getShortClassName(obj));
+	buf.append("):");
+	buf.append("\"");
+	buf.append(String.valueOf(obj));
+	buf.append("\"");
+    }
+    /**
+     * Append a parameter object to a StringBuffer
+     * @param obj - The object
+     * @param buf - The StringBuffer
+     */
+    public static void appendShortObject(Object obj, StringBuffer buf) {
+	if(obj==null) { buf.append("null"); return; }
+
+    	if(obj instanceof Class) {
+	    if(((Class)obj).isInterface()) 
+		buf.append("i(");
+	    else
+		buf.append("c(");
+    	} else {
+	    buf.append("o(");
+	}
+        buf.append(getShortClassName(obj));
+	buf.append(")");
     }
     
     /**
@@ -318,7 +426,7 @@ public class Util {
 		if(params!=null) {
 		    appendParam(params[i], buf); 
 		}
-	    	appendObject(args[i], buf);
+	    	appendShortObject(args[i], buf);
 		
 		if(i+1<args.length) buf.append(", ");
 	    }
@@ -345,12 +453,12 @@ public class Util {
      * @return The String
      * @throws NullPointerException
      */
-    public static String[] hashToStringArray(Hashtable h)
+    public static String[] hashToStringArray(Map h)
 	throws NullPointerException {
 	Vector v = new Vector();
-	Enumeration e = h.keys();
-	while (e.hasMoreElements()) {
-	    String k = e.nextElement().toString();
+	Iterator e = h.keySet().iterator();
+	while (e.hasNext()) {
+	    String k = e.next().toString();
 	    v.add(k + "=" + h.get(k));
 	}
 	String[] strArr = new String[v.size()];
@@ -359,14 +467,24 @@ public class Util {
     }
 
     /**
-     * Discard all header fields from a HTTP connection and write the body to the OutputStream
+     * A procedure class which can be used to capture the HTTP header strings.
+     * Example:<br>
+     * <code>
+     * Util.parseBody(buf, natIn, out, new Util.HeaderParser() {protected void parseHeader(String header) {System.out.println(header);}});<br>
+     * </code>
+     * @author jostb
+     * @see Util#parseBody(byte[], InputStream, OutputStream, HeaderParser)
+     */
+    public static class HeaderParser {protected void parseHeader(String header) {/*template*/}}
+    /**
+     * Discards all header fields from a HTTP connection and write the body to the OutputStream
      * @param buf - A buffer, for example new byte[BUF_SIZE]
      * @param natIn - The InputStream
      * @param out - The OutputStream
      * @throws UnsupportedEncodingException
      * @throws IOException
      */
-    public static void parseBody(byte[] buf, InputStream natIn, OutputStream out) throws UnsupportedEncodingException, IOException {
+    public static void parseBody(byte[] buf, InputStream natIn, OutputStream out, HeaderParser parser) throws UnsupportedEncodingException, IOException {
 	String line = null;
 	int i=0, n, s=0;
 	boolean eoh=false;
@@ -381,8 +499,8 @@ public class Util {
 		    if(s+2==i && buf[s]=='\r') {
 			eoh=true;
 		    } else {
-		    	//System.err.println(new String(buf, s, i-s-2, ASCII));
-			s=i;
+		    	parser.parseHeader(new String(buf, s, i-s-2, ASCII));
+		    	s=i;
 		    }
 		}
 	    }
@@ -394,27 +512,126 @@ public class Util {
 	}
 
     }
-/**
- * @param logger The logger to set.
- */
-public static void setLogger(Logger logger) {
+    /**
+     * @param logger The logger to set.
+     */
+    public static void setLogger(Logger logger) {
 	Util.logger = logger;
-}
-/**
- * @return Returns the logger.
- */
-public static Logger getLogger() {
+    }
+    /**
+     * @return Returns the logger.
+     */
+    public static Logger getLogger() {
 	return logger;
-}
+    }
 
-/**
- * @return
-  */
-public static String getHostAddress() {
+    /**
+     * Returns the string "127.0.0.1". If the system property "php.java.bridge.promiscuous" is "true", 
+     * the real host address is returned.
+     * @return The host address as a string.
+     */
+    public static String getHostAddress() {
+	String addr = "127.0.0.1";
 	try {
-		return InetAddress.getLocalHost().getHostAddress();
-	} catch (UnknownHostException e) {
-		return "127.0.0.1";
+	    if(System.getProperty("php.java.bridge.promiscuous", "false").toLowerCase().equals("true")) 
+		addr = InetAddress.getLocalHost().getHostAddress();
+	} catch (UnknownHostException e) {/*ignore*/}
+	return addr;
+    }
+
+    /**
+     * Checks if the cgi binary buf+&lt;os.arch&gt+&lt;os.name&gt;.sh or buf+&lt;os.arch&gt+&lt;os.name&gt;.exe or buf+&lt;os.arch&gt+&lt;os.name&gt exists.
+     * @param buf - The base name, e.g.: /opt/tomcat/webapps/JavaBridge/WEB-INF/cgi/php-cgi
+     * @return The full name or null.
+     */
+    public static String checkCgiBinary(StringBuffer buf) {
+    	File location;
+ 
+    	buf.append("-");
+	buf.append(System.getProperty("os.arch").toLowerCase());
+	buf.append("-");
+	buf.append(System.getProperty("os.name").toLowerCase());
+
+	location = new File(buf.toString() + ".sh");
+	if(Util.logLevel>3) Util.logDebug("trying: " + location);
+	if(location.exists()) return "/bin/sh " + location.getAbsolutePath();
+		
+	location = new File(buf.toString() + ".exe");
+	if(Util.logLevel>3) Util.logDebug("trying: " + location);
+	if(location.exists()) return location.getAbsolutePath();
+
+	location = new File(buf.toString());
+	if(Util.logLevel>3) Util.logDebug("trying: " + location);
+	if(location.exists()) return location.getAbsolutePath();
+	
+	return null;
+    }
+
+    /**
+     * Starts a CGI process and returns the process handle.
+     * @param args - The args array, e.g.: new String[]{null, "-b", ...};. If args is null or if args[0] is null, the function looks for the system property "php.java.bridge.php_exec".
+     * @param homeDir - The home directory. If null, the system property "user.home" is used.
+     * @param env - The CGI environment. If null, Util.DEFAULT_CGI_ENVIRONMENT is used.
+     * @return The process handle.
+     * @throws IOException
+     * @see Util#checkCgiBinary(StringBuffer)
+     */
+    public static Process startProcess(String[] args, File homeDir, HashMap env) throws IOException {
+    	File location;
+	Process proc = null;
+    	int n;
+	Runtime rt = Runtime.getRuntime();
+	if(args==null) args=new String[]{null};
+	String php = args[0];
+	if(php == null) php = System.getProperty("php.java.bridge.php_exec");
+        if(php==null) {
+	    for(int i=0; i<DEFAULT_CGI_LOCATIONS.length; i++) {
+		location = new File(DEFAULT_CGI_LOCATIONS[i]);
+		if(location.exists()) {php = location.getAbsolutePath(); break;}
+	    }
+	} else {
+	    StringBuffer buf = new StringBuffer(php);
+	    String val = checkCgiBinary(buf);
+	    if(val!=null) php = val;
 	}
-}
+        if(Util.logLevel>3) Util.logDebug("Using php binary: " + php);
+        if(php==null) php="php-cgi";
+
+	String home = System.getProperty("user.home");
+	if(homeDir==null) homeDir = new File(home);
+            
+	proc = rt.exec(argsToString(php, args), hashToStringArray(env), homeDir);
+	return proc;
+    }
+
+    /* used by startProcess only */
+    private static String argsToString(String php, String[] args) {
+	StringBuffer buf = new StringBuffer(php);
+	for(int i=1; i<args.length; i++) {
+	    buf.append(" ");
+	    buf.append(args[i]);
+	}
+	return buf.toString();
+    }
+
+    /**
+     * Starts a thread which listens on CGI proc standard error and dumps it to the error log.
+     * @param proc - The process handle.
+     */
+    public static void startProcessErrorReader(Process proc) {
+	(new Thread("CGIErrorReader") {
+		private Process proc;
+		public Thread init(Process proc) {
+		    this.proc = proc;
+		    return this;
+		}
+		public void run() {
+		    InputStream in = proc.getErrorStream();
+		    byte[] buf = new byte[BUF_SIZE];
+		    int c;
+		    try { while((c=in.read(buf))!=-1) Util.logError(new String(buf, 0, c, ASCII)); } catch (IOException e) {/*ignore*/}
+		    try { in.close();} catch (IOException e1) {/*ignore*/}
+		}
+	    }).init(proc).start();
+    }
 }

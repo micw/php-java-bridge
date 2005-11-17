@@ -13,13 +13,13 @@ import javax.servlet.http.HttpServletResponse;
  *
  */
 public class Context extends php.java.bridge.Context {
-	HttpServletResponse res;
+    HttpServletResponse res;
 	
-	public Context(HttpServletResponse res) {
-		this.res = res;
-	}
+    public Context(HttpServletResponse res) {
+	this.res = res;
+    }
 	
-	public Writer getWriter() throws IOException {
-		return res.getWriter();
-	}
+    public Writer getWriter() throws IOException {
+	return res.getWriter();
+    }
 }

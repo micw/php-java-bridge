@@ -53,7 +53,6 @@ public class ContextManager extends php.java.bridge.ContextManager {
     }	
 
     
-    private boolean removed=false;
     public synchronized void remove() {
     	super.remove();
     	req=null;

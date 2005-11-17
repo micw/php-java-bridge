@@ -7,23 +7,25 @@ import java.io.Writer;
 import java.util.Map;
 
 
-public class Context {
+public class Context implements Invocable {
 
-	/**
-	 * The engine scope
-	 */
-	public static final int ENGINE_SCOPE = 100;
+    /**
+     * The engine scope
+     */
+    public static final int ENGINE_SCOPE = 100;
 
-	/**
-	 * The global scope
-	 */
-	public static final int GLOBAL_SCOPE = 200;
+    /**
+     * The global scope
+     */
+    public static final int GLOBAL_SCOPE = 200;
 	
-	/** Map of the scope of level GLOBAL_SCOPE */
+    /** Map of the scope of level GLOBAL_SCOPE */
     protected Map globalScope;
     
-	/** Map of the scope of level ENGINE_SCOPE */
-	protected Map engineScope;
+    /** Map of the scope of level ENGINE_SCOPE */
+    protected Map engineScope;
+
+    private Object	kont;
 
 
 	
@@ -61,19 +63,19 @@ public class Context {
      *         specified level of scope
      */
     public Object getAttribute(String name, int scope) 
-            throws IllegalArgumentException{
+	throws IllegalArgumentException{
         
         if (name == null) {
             throw new IllegalArgumentException("name cannot be null");
         }
         
         switch (scope) {
-        	case ENGINE_SCOPE:
-        		return engineScope.get(name);
-        	case GLOBAL_SCOPE:
-        		return globalScope.get(name);
-        	default:
-        		throw new IllegalArgumentException("invalid scope");
+	case ENGINE_SCOPE:
+	    return engineScope.get(name);
+	case GLOBAL_SCOPE:
+	    return globalScope.get(name);
+	default:
+	    throw new IllegalArgumentException("invalid scope");
         }
     }
 
@@ -106,12 +108,12 @@ public class Context {
     public Map getMap(int scope) {
         
         switch (scope) {
-        	case ENGINE_SCOPE:
-        		return engineScope;
-        	case GLOBAL_SCOPE:
-        		return globalScope;
-        	default:
-        		return null;
+	case ENGINE_SCOPE:
+	    return engineScope;
+	case GLOBAL_SCOPE:
+	    return globalScope;
+	default:
+	    return null;
         }
     }
     
@@ -137,19 +139,19 @@ public class Context {
      * @throws
      */
     public Object removeAttribute(String name, int scope) 
-            throws IllegalArgumentException{ 
+	throws IllegalArgumentException{ 
         
         if (name == null) {
             throw new IllegalArgumentException("name is null");
         }
         
         switch (scope) {
-        	case ENGINE_SCOPE:
-        		return engineScope.remove(name);
-            case GLOBAL_SCOPE:
-            	return globalScope.remove(name);
-            default:
-            	throw new IllegalArgumentException("invalid scope");
+	case ENGINE_SCOPE:
+	    return engineScope.remove(name);
+	case GLOBAL_SCOPE:
+	    return globalScope.remove(name);
+	default:
+	    throw new IllegalArgumentException("invalid scope");
         }    
     }
     
@@ -166,46 +168,53 @@ public class Context {
      *         invlaid
      */
     public void setAttribute(String name, Object value, int scope) 
-            throws IllegalArgumentException{
+	throws IllegalArgumentException{
         
         if (name == null) {
             throw new IllegalArgumentException("name is null");
         }
         
         switch (scope) {
-        	case ENGINE_SCOPE:
-        		engineScope.put(name, value);
-        		break;
-        	case GLOBAL_SCOPE:
-        		globalScope.put(name, value);
-        		break;
-        	default:
-        		throw new IllegalArgumentException("invalid scope");
+	case ENGINE_SCOPE:
+	    engineScope.put(name, value);
+	    break;
+	case GLOBAL_SCOPE:
+	    globalScope.put(name, value);
+	    break;
+	default:
+	    throw new IllegalArgumentException("invalid scope");
         }
     }
 	
-	/**
-	 * Associates the specified Map with specified level of 
+    /**
+     * Associates the specified Map with specified level of 
      * scope.
-	 * 
-	 * @param map the Map to be associated with specified
+     * 
+     * @param map the Map to be associated with specified
      *                  level of scope
      * @param scope     the level of scope 
-	 */	
-	public void setMap(Map map, int scope) 
-            throws IllegalArgumentException {
+     */	
+    public void setMap(Map map, int scope) 
+	throws IllegalArgumentException {
         
-		switch (scope) {
-			case ENGINE_SCOPE:
-				engineScope = map;
-				break;
-			case GLOBAL_SCOPE:
-				globalScope = map;
-				break;
-			default:
-				throw new IllegalArgumentException("invalid scope");
+	switch (scope) {
+	case ENGINE_SCOPE:
+	    engineScope = map;
+	    break;
+	case GLOBAL_SCOPE:
+	    globalScope = map;
+	    break;
+	default:
+	    throw new IllegalArgumentException("invalid scope");
 			
-		}
+	}
+    }
+
+    /* (non-Javadoc)
+     * @see php.java.bridge.Invocable#call(php.java.bridge.PhpProcedureProxy)
+     */
+    public boolean call(PhpProcedureProxy kont) {
+	return false;
     }
 	
 }

@@ -2,19 +2,22 @@
 
 package php.java.script;
 
+import javax.script.ScriptContext;
+
 import php.java.bridge.ContextManager;
 
 
 class PhpScriptContextManager extends php.java.bridge.ContextManager {
 
-    public static ContextManager addNew(PhpScriptContext context) {
+    /**
+     * Add the PhpScriptContext
+     * @param context
+     * @return
+     */
+    public static ContextManager addNew(ScriptContext context) {
 	PhpScriptContextManager ctx = new PhpScriptContextManager();
 	ctx.add();
 	ctx.setContext(context);
 	return ctx;
-    }
-
-    public Object getContext() {
-	return context;
     }
 }

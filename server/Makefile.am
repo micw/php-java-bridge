@@ -34,7 +34,7 @@ else
 bin_PROGRAMS=RunJavaBridge
 RunJavaBridge_SOURCES=RunJavaBridge.c
 
-dist_data_DATA=JavaBridge.jar $(JAVA_BRIDGE_WAR) $(JAVA_BRIDGE_SCRIPT_JAR)
+dist_data_DATA=JavaBridge.jar $(JAVA_BRIDGE_WAR) $(JAVA_BRIDGE_SCRIPT_JAR) $(JAVA_BRIDGE_FACES_JAR)
 EXTRA_DATA=JavaBridge.war
 
 JavaBridge.jar:
@@ -45,15 +45,15 @@ php-script.jar: JavaBridge.jar $(SCRIPT)
 	$(PHP_JAVA)/bin/javac -classpath .:$(SCRIPT) php/java/bridge/http/*.java php/java/bridge/*.java php/java/script/*.java
 	$(PHP_JAVA)/bin/jar cf php-script.jar php/java/script/*.class
 
-JavaBridge.war: JavaBridge.jar $(SERVLET)  $(SCRIPT) $(JAVA_BRIDGE_SCRIPT_JAR)
+php-faces.jar: JavaBridge.jar $(FACES)
+	$(PHP_JAVA)/bin/javac -classpath .:$(SERVLET):$(SCRIPT):$(FACES) php/java/bridge/http/*.java php/java/bridge/*.java php/java/script/*.java php/java/faces/*.java
+	$(PHP_JAVA)/bin/jar cf php-faces.jar php/java/faces/*.class
 
-	if test -z $(JAVA_SCRIPT_JAR)
-		$(PHP_JAVA)/bin/javac -classpath $(SERVLET):$(SCRIPT) php/java/bridge/http/*.java php/java/bridge/*.java php/java/servlet/*.java
-	else
-		$(PHP_JAVA)/bin/javac -classpath $(SERVLET):$(SCRIPT) php/java/bridge/http/*.java php/java/bridge/*.java php/java/servlet/*.java php/java/script/http/*.java
+JavaBridge.war: JavaBridge.jar $(SERVLET)  $(SCRIPT) $(JAVA_BRIDGE_SCRIPT_JAR) $(FACES) $(JAVA_BRIDGE_FACES_JAR)
+	$(PHP_JAVA)/bin/javac -classpath $(SERVLET):$(SCRIPT) php/java/bridge/http/*.java php/java/bridge/*.java php/java/servlet/*.java
 
 	-mkdir WEB-INF/lib WEB-INF/classes WEB-INF/cgi
-	cp JavaBridge.jar $(SCRIPT) $(JAVA_BRIDGE_SCRIPT_JAR) WEB-INF/lib
+	cp JavaBridge.jar $(SCRIPT) $(JAVA_BRIDGE_SCRIPT_JAR) $(FACES) $(JAVA_BRIDGE_FACES_JAR) WEB-INF/lib
 	echo "Copy your PHP (Fast-)CGI binary into this directory and give it execute permission." >WEB-INF/cgi/README
 	echo "For example:" >>WEB-INF/cgi/README
 	echo "" >>WEB-INF/cgi/README
@@ -63,16 +63,10 @@ JavaBridge.war: JavaBridge.jar $(SERVLET)  $(SCRIPT) $(JAVA_BRIDGE_SCRIPT_JAR)
 	echo "If this directory does not contain a php executable, the system default" >>WEB-INF/cgi/README
 	echo "PHP binary will be called." >>WEB-INF/cgi/README
 
-	echo '#!/bin/sh' >WEB-INF/cgi/php.sh
-	echo '# A simple wrapper which will be called when php_exec' >>WEB-INF/cgi/php
-	echo '# (see WEB-INF/web_xml) could not be found.' >>WEB-INF/cgi/php
-	echo '' >>WEB-INF/cgi/php
-	echo 'exec php-cgi "$@"' >>WEB-INF/cgi/php.sh
-
 	cp ../examples/php+jsp/*.jar WEB-INF/lib
 	cp ../examples/php+jsp/*.php ../examples/php+jsp/*.jsp  .
 	cp -r php WEB-INF/classes
 	cp ../test.php .
-	$(PHP_JAVA)/bin/jar cMf JavaBridge.war *.php *.jsp META-INF/MANIFEST.MF WEB-INF/web.xml WEB-INF/cgi WEB-INF/lib/*.jar WEB-INF/classes/php/java/servlet/*.class WEB-INF/classes/php/java/script/http/*.class
+	$(PHP_JAVA)/bin/jar cMf JavaBridge.war *.php *.jsp META-INF/MANIFEST.MF WEB-INF/web.xml WEB-INF/cgi WEB-INF/lib/*.jar WEB-INF/classes/php/java/servlet/*.class
 
 endif

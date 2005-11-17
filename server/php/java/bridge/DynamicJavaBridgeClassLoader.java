@@ -216,7 +216,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
      */
     public void reset() {
 	synchronized(getClass()) {
-	    initClassLoader(Util.EXTENSION_DIR);
+	    initClassLoader(Util.DEFAULT_EXTENSION_DIR);
 	    clear();
 	    clearCache();
 	}

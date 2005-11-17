@@ -18,6 +18,7 @@ typedef struct parser_cb {
   void (*begin)(parser_tag_t[3], struct parser_cb *);
   void (*end)(parser_string_t[1], struct parser_cb *);
   void *ctx;
+  proxyenv *env;
 } parser_cb_t;
 
 extern short EXT_GLOBAL (parse)(proxyenv *env, parser_cb_t *cb);

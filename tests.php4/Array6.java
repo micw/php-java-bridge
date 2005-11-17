@@ -9,5 +9,9 @@ public class Array6 {
         testobj[1][0][0][0][0][0]="6";
 	return testobj;
     }
+
+    public boolean check(Object[][][][][][] o) {
+	return o.equals(test());
+    }
 }
     

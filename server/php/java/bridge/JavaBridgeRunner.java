@@ -16,7 +16,7 @@ import php.java.bridge.http.HttpServer;
  * This is the main entry point for the PHP/Java Bridge library.
  * Example:<br>
  * public MyClass { <br>
-  * public static void main(String s[]) {<br>
+ * public static void main(String s[]) {<br>
  *  JavaBridgeRunner runner = new JavaBridgeRunner();<br>
  *  // connect to port 9267 and send protocol requests ... <br>
  * runner.destroy();<br>
@@ -26,29 +26,29 @@ import php.java.bridge.http.HttpServer;
  */
 public class JavaBridgeRunner extends HttpServer {
 
-	/**
-	 * @throws Exception
-	 */
-	public JavaBridgeRunner() {
-		super();
-    	DynamicJavaBridgeClassLoader.initClassLoader(Util.EXTENSION_DIR);
-		socketRunner = new ContextServer(null);
-	}
+    /**
+     * @throws Exception
+     */
+    public JavaBridgeRunner() {
+	super();
+	DynamicJavaBridgeClassLoader.initClassLoader(Util.DEFAULT_EXTENSION_DIR);
+	socketRunner = new ContextServer(null);
+    }
 
-	private InputStream in;
-	private OutputStream out;
-	private static ContextServer socketRunner;
+    private InputStream in;
+    private OutputStream out;
+    private static ContextServer socketRunner;
 		
-	public ISocketFactory bind() {
-		try {
-    	return JavaBridge.bind("INET:0");
-		} catch (Exception e) {
-			Util.printStackTrace(e);
-			return null;
-		}
+    public ISocketFactory bind() {
+	try {
+	    return JavaBridge.bind("INET:0");
+	} catch (Exception e) {
+	    Util.printStackTrace(e);
+	    return null;
 	}
+    }
 
-     private static ContextManager getContextManager(HttpRequest req, HttpResponse res) {
+    private static ContextManager getContextManager(HttpRequest req, HttpResponse res) {
     	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
     	ContextManager ctx = ContextManager.get(id);
      	res.setHeader("X_JAVABRIDGE_CONTEXT", id);
@@ -103,8 +103,8 @@ public class JavaBridgeRunner extends HttpServer {
 	    try {if(resOut!=null) resOut.close();} catch (IOException e2) {}
 	}
     }
-	public ISocketFactory getSocket() {
-		return socket;
-	}
+    public ISocketFactory getSocket() {
+	return socket;
+    }
 
 }

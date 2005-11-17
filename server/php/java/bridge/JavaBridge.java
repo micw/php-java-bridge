@@ -169,7 +169,7 @@ public class JavaBridge implements Runnable {
     /** 
      * For internal use only.
      */
-     static final SessionFactory defaultSessionFactory = new SessionFactory();
+    static final SessionFactory defaultSessionFactory = new SessionFactory();
 
     
     /**
@@ -359,7 +359,7 @@ public class JavaBridge implements Runnable {
 	    ThreadPool pool = null;
 	    if(maxSize>0) pool = new ThreadPool(Util.EXTENSION_NAME, maxSize);
             Util.logDebug("Starting to accept Socket connections");
-            DynamicJavaBridgeClassLoader.initClassLoader(Util.EXTENSION_DIR);
+            DynamicJavaBridgeClassLoader.initClassLoader(Util.DEFAULT_EXTENSION_DIR);
             
 	    while(true) {
 		Socket sock = socket.accept();
@@ -408,73 +408,8 @@ public class JavaBridge implements Runnable {
     //
     // Helper routines which encapsulate the native methods
     //
-    void setResult(Response response, Object value) {
-	if (value == null) {
-	    response.writeObject(null);
-	} else if (value instanceof byte[]) {
-	    response.writeString((byte[])value);
-	} else if (value instanceof java.lang.String) {
-	    response.writeString((String)value);
-	} else if (value instanceof java.lang.Number) {
-
-	    if (value instanceof java.lang.Integer ||
-		value instanceof java.lang.Short ||
-		value instanceof java.lang.Byte) {
-		response.writeLong(((Number)value).longValue());
-	    } else {
-		/* Float, Double, BigDecimal, BigInteger, Double, Long, ... */
-		response.writeDouble(((Number)value).doubleValue());
-	    }
-
-	} else if (value instanceof java.lang.Boolean) {
-
-	    response.writeBoolean(((Boolean)value).booleanValue());
-
-	} else if (value.getClass().isArray()) {
-
-	    long length = Array.getLength(value);
-	    if(response.hook.sendArraysAsValues()) {
-		// Since PHP 5 this is dead code, setResultFromArray
-		// behaves like setResultFromObject and returns
-		// false. See PhpMap.
-		response.writeCompositeBegin_a();
-		for (int i=0; i<length; i++) {
-                    response.writePairBegin();
-		    setResult(response, Array.get(value, i));
-		    response.writePairEnd();
-		}
-		response.writeCompositeEnd();
-	    } else { //PHP 5
-	    	response.writeObject(value);
-	    }
-	} else if (value instanceof java.util.Map) {
-	    Map ht = (Map) value;
-	    if (response.hook.sendArraysAsValues()) {
-		// Since PHP 5 this is dead code, setResultFromArray
-		// behaves like setResultFromObject and returns
-		// false. See PhpMap.
-		response.writeCompositeBegin_h();
-		for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
-		    Object key = e.next();
-		    long slot;
-		    if (key instanceof Number &&
-			!(key instanceof Double || key instanceof Float)) {
-			response.writePairBegin_n(((Number)key).intValue());
-			setResult(response, ht.get(key));
-		    }
-		    else {
-			response.writePairBegin_s(String.valueOf(key));
-			setResult(response, ht.get(key));
-		    }
-		    response.writePairEnd();
-		}
-		response.writeCompositeEnd();
-	    } else { //PHP 5
-	    	response.writeObject(value);
-	    }
-	} else {
-	    response.writeObject(value);
-	}
+    void setResult(Response response, Object value, Class type) {
+    	response.setResult(value, type);
     }
 
     /**
@@ -515,7 +450,7 @@ public class JavaBridge implements Runnable {
 	buf.append(" failed: ");
 	if(obj!=null) {
 	    buf.append("[");
-	    Util.appendObject(obj, buf);
+	    Util.appendShortObject(obj, buf);
 	    buf.append("]->");
 	} else {
 	    buf.append("new ");
@@ -748,7 +683,14 @@ public class JavaBridge implements Runnable {
 		} else
 		    args[i] = ((PhpProcedureProxy)args[i]).getProxy(new Class[] {param});
 	    }
-	    if (args[i] instanceof byte[] && !parms[i].isArray()) {
+	    if(parms[i]==String.class) {
+	    	String s;
+	    	if (args[i] instanceof byte[])
+		    s = response.newString((byte[])args[i]);
+	    	else 
+		    s = String.valueOf(args[i]);
+	    	result[i] = String.valueOf(s);
+	    } else if (args[i] instanceof byte[] && !parms[i].isArray()) {
 		Class c = parms[i];
 		String s = response.newString((byte[])args[i]);
 		result[i] = s;
@@ -781,16 +723,16 @@ public class JavaBridge implements Runnable {
 		    if(args[i].getClass()==Request.PhpNumber.class) {
 			if (result==args) result=(Object[])result.clone();
 	    		if(!response.extJavaCompatibility()) {
-			Class c = parms[i];
-			if(c.isAssignableFrom(Integer.class)) {
+			    Class c = parms[i];
+			    if(c.isAssignableFrom(Integer.class)) {
 		    		result[i] = new Integer(((Number)args[i]).intValue());
-			} else {
+			    } else {
 		    		result[i] = new Long(((Number)args[i]).longValue());				
+			    }
+			} else {
+			    result[i] = new Long(((Number)args[i]).longValue());
 			}
-		    } else {
-	    		result[i] = new Long(((Number)args[i]).longValue());
 		    }
-	    	}
 	    	}
 	    } else if ((args[i] != null) && args[i].getClass() == Request.PhpArray.class) {
 	    	if(parms[i].isArray()) {
@@ -1130,7 +1072,7 @@ public class JavaBridge implements Runnable {
 		coercedArgs = coerce(params=selected.getParameterTypes(), args, response);
 	    } while(again);
 	    if (this.logLevel>4) logInvoke(object, method, coercedArgs); // If we have a logLevel of 5 or above, do very detailed invocation logging
-	    setResult(response, selected.invoke(object, coercedArgs));
+	    setResult(response, selected.invoke(object, coercedArgs), selected.getReturnType());
 	} catch (Throwable e) {
 	    if(e instanceof OutOfMemoryError ||
 	       ((e instanceof InvocationTargetException) &&
@@ -1214,7 +1156,7 @@ public class JavaBridge implements Runnable {
 			    } else {
 			    	res=jfields[i].get(object);
 			    }
-			    setResult(response, res);
+			    setResult(response, res, jfields[i].getType());
 			    return;
 			}
 		    }
@@ -1244,7 +1186,7 @@ public class JavaBridge implements Runnable {
 				matches.clear();
 				break again1;
 			    }
-			    setResult(response, method.invoke(object, args));
+			    setResult(response, method.invoke(object, args), method.getReturnType());
 			    return;
 			}
 		    }
@@ -1273,7 +1215,7 @@ public class JavaBridge implements Runnable {
 			    } else {
 				res = jfields[i].get(object);
 			    }
-			    setResult(response, res);
+			    setResult(response, res, jfields[i].getType());
 			    return;
 			}
 		    }
@@ -1300,25 +1242,65 @@ public class JavaBridge implements Runnable {
 	}
     }
 
-    private static class ForceValuesHook extends Response.ValuesHook {
-        public ForceValuesHook(Response res) {
-	    super(res);
-	}
-	public boolean sendArraysAsValues() {
-     	    return true;
-        }
-    }
 
     /**
-     * for PHP5: convert Map or Collection into a PHP array,
+     * For PHP5: convert Map or Collection into a PHP array,
      * sends the entire Map or Collection to the client. This
      * is much more efficient than generating round-trips when
      * iterating through a Map or Collection.
+     * @param ob - The object to expand
+     * @return The passed <code>ob</code>, will be expanded by the appropriate writer.
      */
     public Object getValues(Object ob) {
     	Response res = request.response;
-	res.hook=new ForceValuesHook(res);
+    	res.selectWriter(Response.VALUES_WRITER);
 	return ob;
+    }
+ 
+    /**
+     * Cast a object to a type
+     * @param ob - The object to cast
+     * @param type - The target type
+     * @return The passed <code>ob</code>, will be coerced by the appropriate writer.
+     */
+    public Object cast(Object ob, Class type) {
+	Response res = request.response;
+	res.selectWriter(Response.COERCE_WRITER).setType(type);
+    	return ob;
+    }
+ 
+    /**
+     * Cast an object to a string
+     * @param ob - The object to cast
+     * @return The passed <code>ob</code>, will be coerced by the appropriate writer.
+     */
+    public Object castToString(Object ob) {
+	return cast(ob, String.class);
+    }
+            
+    /**
+     * Cast an object to an exact number
+     * @param ob - The object to cast
+     * @return The passed <code>ob</code>, will be coerced by the appropriate writer.
+     */
+    public Object castToExact(Object ob) {
+	return cast(ob, Long.TYPE);
+    }
+    /**
+     * Cast an object to a boolean value
+     * @param ob - The object to cast
+     * @return The passed <code>ob</code>, will be coerced by the appropriate writer.
+     */
+    public Object castToBoolean(Object ob) {
+	return cast(ob, Boolean.TYPE);
+    }
+    /**
+     * Cast an object to a inexact value
+     * @param ob - The object to cast
+     * @return The passed <code>ob</code>, will be coerced by the appropriate writer.
+     */
+    public Object castToInexact(Object ob) {
+	return cast(ob, Double.TYPE);
     }
 
     /**
@@ -1327,24 +1309,27 @@ public class JavaBridge implements Runnable {
      * @param out
      * @see php.java.servlet.PhpJavaServlet
      * @see php.java.bridge.JavaBridgeRunner
-    * @see php.java.bridge.main(String[])
-      */
+     * @see php.java.bridge.main(String[])
+     */
     public JavaBridge(InputStream in, OutputStream out) {
 	this.in = in;
 	this.out = out;
     }
 
     /**
- * Only for internal use.
-    * @see php.java.servlet.PhpJavaServlet.getContext(HttpServletRequest, HttpServletResponse)
+     * Only for internal use.
+     * @see php.java.servlet.PhpJavaServlet.getContext(HttpServletRequest, HttpServletResponse)
      * @see php.java.bridge.main(String[])
-    * @see php.java.bridge.JavaBridgeRunner
- */
-public JavaBridge() {
+     * @see php.java.bridge.JavaBridgeRunner
+     */
+    public JavaBridge() {
 	this(null, null);
-}
-/**
+    }
+    /**
      * Return map for the value (PHP 5 only)
+     * @param value - The value which must be an array or implement Map or Collection.
+     * @return The PHP map.
+     * @see PhpMap
      */
     public PhpMap getPhpMap(Object value) {
 	return PhpMap.getPhpMap(value, this);
@@ -1365,6 +1350,8 @@ public JavaBridge() {
     /**
      * 
      * Set the library path for ECMA dll's
+     * @param path A file or url list, usually separated by ';'
+     * @param extensionDir The php extension directory. 
      */
     public void setLibraryPath(String _path, String extensionDir) {
         if(_path==null || _path.length()<2) return;
@@ -1429,11 +1416,11 @@ public JavaBridge() {
 	return clazz.isInstance(ob);
     }
 
-    public static String ObjectToString(Object ob) {
+    public String ObjectToString(Object ob) {
 	StringBuffer buf = new StringBuffer("[");
 	Util.appendObject(ob, buf);
 	buf.append("]");
-	return buf.toString();
+	return (String)cast(buf.toString(), String.class);
     }
     public Object getContext() {
     	return sessionFactory.getContext();
@@ -1568,16 +1555,16 @@ public JavaBridge() {
     	session.put(id, obj);
     	return id;
     }
-/**
- * @param cl The cl to set.
- */
-public void setClassLoader(JavaBridgeClassLoader cl) {
+    /**
+     * @param cl The cl to set.
+     */
+    public void setClassLoader(JavaBridgeClassLoader cl) {
 	this.cl = cl;
-}
-/**
- * @return Returns the cl.
- */
-public JavaBridgeClassLoader getClassLoader() {
+    }
+    /**
+     * @return Returns the cl.
+     */
+    public JavaBridgeClassLoader getClassLoader() {
 	return cl;
-}
+    }
 }

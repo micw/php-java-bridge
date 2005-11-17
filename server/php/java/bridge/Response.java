@@ -3,9 +3,15 @@
 package php.java.bridge;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.Iterator;
+import java.util.Map;
 
 public class Response {
-    
+
+    public static final int VALUES_WRITER = 1;
+    public static final int COERCE_WRITER = 2;
+
     // used in getFirstBytes() only
     static final byte append_for_OutBuf_getFirstBytes[] = new byte[] {'.', '.', '.' }; 
     static final byte append_none_for_OutBuf_getFirstBytes[] = new byte[0]; 
@@ -60,46 +66,193 @@ public class Response {
     private String encoding;
     private JavaBridge bridge;
 
-    public static class ValuesHook {
-    	private Response res;
-        /**
-         * For PHP5: convert Map or Collection into a PHP array,
-         * sends the entire Map or Collection to the client. This
-         * is much more efficient than generating round-trips when
-         * iterating through a Map or Collection.
-         */
-    	public ValuesHook(Response res) {
-    	    this.res=res;
-    	}
-    	/**
-    	 * Override this method to return true if you want to send back
-    	 * arrays as values. The default method returns true for PHP4 and false
-    	 * for PHP5
-    	 * @return true: copy array values, false: send object references
-    	 */
-        public boolean sendArraysAsValues() {
-            return (res.options & 2)==2;
+ 
+    protected abstract class DelegateWriter {
+    	protected Class type;
+
+	public abstract boolean setResult(Object value);
+
+	/**
+	 * @param type - The result type
+	 */
+	public void setType(Class type) {
+	    this.type = type;
+	}
+    }
+    
+    protected abstract class Writer extends DelegateWriter {
+	protected DelegateWriter delegate;
+
+	public void setResult(Object value, Class type) {
+	    setType(type);
+	    setResult(value);
+	}
+	public void setType(Class type) {
+	    super.setType(type);
+	    delegate.setType(type);
+	}
+    }
+    protected class ArrayWriter extends DelegateWriter {
+	public boolean setResult(Object value) {
+	    if (value.getClass().isArray()) {
+		writeObject(value);
+	    } else if (value instanceof java.util.Map) {
+		writeObject(value);
+	    } else {
+		return false;
+	    }
+	    return true;
         }
     }
-    public ValuesHook defaultValuesHook, hook; 
-    
-    public boolean extJavaCompatibility() {
+    protected class ArrayValuesWriter extends DelegateWriter {
+	public boolean setResult(Object value) {
+	    if (value.getClass().isArray()) {
+		long length = Array.getLength(value);
+		writeCompositeBegin_a();
+		for (int i=0; i<length; i++) {
+		    writePairBegin();
+		    setResult(Array.get(value, i));
+		    writePairEnd();
+		}
+		writeCompositeEnd();
+	    } else if (value instanceof java.util.Map) {
+		Map ht = (Map) value;
+		writeCompositeBegin_h();
+		for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
+		    Object key = e.next();
+		    long slot;
+		    if (key instanceof Number &&
+			!(key instanceof Double || key instanceof Float)) {
+			writePairBegin_n(((Number)key).intValue());
+			setResult(ht.get(key));
+		    }
+		    else {
+			writePairBegin_s(String.valueOf(key));
+			setResult(ht.get(key));
+		    }
+		    writePairEnd();
+		}
+		writeCompositeEnd();
+	    } else {
+		return false;
+	    }
+	    return true;
+        }
+    }
+    protected class ClassicWriter extends Writer {
+ 
+	public boolean setResult(Object value) {
+	    if (value == null) {
+		writeObject(null);
+	    } else if (value instanceof byte[]) {
+		writeString((byte[])value);
+	    } else if (value instanceof java.lang.String) {
+		writeString((String)value);
+	    } else if (value instanceof java.lang.Number) {
+
+		if (value instanceof java.lang.Integer ||
+		    value instanceof java.lang.Short ||
+		    value instanceof java.lang.Byte) {
+		    writeLong(((Number)value).longValue());
+		} else {
+		    /* Float, Double, BigDecimal, BigInteger, Double, Long, ... */
+		    writeDouble(((Number)value).doubleValue());
+		}
+
+	    } else if (value instanceof java.lang.Boolean) {
+		writeBoolean(((Boolean)value).booleanValue());
+
+	    } else if(!delegate.setResult(value))
+		writeObject(value);
+	    return true;
+	}
+    }
+    protected class DefaultWriter extends Writer {
+
+	public boolean setResult(Object value) {
+	    if(type.isPrimitive()) {
+   		if(type == Boolean.TYPE)
+		    writeBoolean(((Boolean) value).booleanValue());
+   		else if(type == Byte.TYPE || type == Short.TYPE || type == Integer.TYPE || type == Long.TYPE)
+		    writeLong(((Number)value).longValue());
+   		else if(type == Float.TYPE || type == Double.TYPE) 
+		    writeDouble(((Number)value).doubleValue());
+   		else if(type == Character.TYPE) 
+		    writeString(String.valueOf(value));
+   		else { Util.logFatal("Unknown type"); writeObject(value); }
+	    } else if(!delegate.setResult(value))
+		writeObject(value);
+	    return true;
+        }        	     	
+    }
+    protected class CoerceDelegate extends DelegateWriter {
+
+	public boolean setResult(Object value) {
+	    if(type == String.class) {
+		writeString(String.valueOf(value));
+		return true;
+	    }
+	    return false;
+	}        	     	
+    }
+    protected class CoerceWriter extends DefaultWriter {
+	public void setResult(Object value, Class resultType) {
+	    // ignore resultType and use the coerce type
+	    setResult(value);
+	}
+    }
+    DelegateWriter getDefaultDelegate() {
+	if(sendArraysAsValues())
+	    return new ArrayValuesWriter();
+	else
+	    return new ArrayWriter();
+    }
+	
+    Writer newWriter(DelegateWriter delegate) {
+     	Writer writer;
+    	if(extJavaCompatibility())
+	    writer = new ClassicWriter();
+    	else 
+	    writer = new DefaultWriter();
+    	writer.delegate = delegate;
+	return writer;
+    }
+     
+    private Writer writer, defaultWriter;
+
+    boolean sendArraysAsValues() {
+        return (options & 2)==2;
+    }
+
+    boolean extJavaCompatibility() {
     	return (this.options & 1) == 1;
     }
-    
+
     public Response(JavaBridge bridge) {
 	buf=new OutBuf();
 	this.bridge=bridge;
-	hook = defaultValuesHook = new ValuesHook(this);
+	defaultWriter = writer = newWriter(getDefaultDelegate());
     }
-    
-    public void setResult(long id, byte options) {
+     
+    public void setResult(Object value, Class type) {
+     	writer.setResult(value, type);
+    }
+
+    public Writer selectWriter(int writerType) {
+     	switch(writerType) {
+    	case VALUES_WRITER: writer = newWriter(new ArrayValuesWriter()); break;
+    	case COERCE_WRITER: writer = new CoerceWriter(); writer.delegate=new CoerceDelegate(); break;
+    	default: throw new IllegalArgumentException(String.valueOf(writerType));
+    	}
+     	return writer;
+    }
+    void setResult(long id, byte options) {
     	this.result=id;
 	this.encoding=this.bridge.fileEncoding;
     	this.options=options;
     }
     
-    public String getEncoding() {
+    String getEncoding() {
     	return encoding;
     }
 
@@ -208,7 +361,7 @@ public class Response {
     void writePairEnd() {
 	buf.append(Pe);
     }
-    public void writeApplyBegin(long object, String pos, String str, int argCount) {
+    void writeApplyBegin(long object, String pos, String str, int argCount) {
  	buf.append(A); buf.append(String.valueOf(object));
  	buf.append(p); buf.appendQuoted(String.valueOf(pos));
  	buf.append(m); buf.appendQuoted(String.valueOf(str));
@@ -216,7 +369,7 @@ public class Response {
  	buf.append(I); buf.append(String.valueOf(result));
  	buf.append(c);
     }
-    public void writeApplyEnd() {
+    void writeApplyEnd() {
 	buf.append(Ae);
     }
     void flush() throws IOException {
@@ -226,11 +379,18 @@ public class Response {
 	buf.writeTo(bridge.out);
 	reset();
     }
+    
+    /**
+     * Called at the end of each packed.
+     *
+     */
     void reset() {
-    	hook = defaultValuesHook;
+    	writer = defaultWriter;
     	buf.reset();
     }
     public String toString() {
     	return newString(buf.getFirstBytes());
     }
+
+
 }

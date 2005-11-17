@@ -11,21 +11,17 @@ import java.io.PrintWriter;
  */
 public class PhpScriptWriter extends PrintWriter {
 
-	OutputStream out;
+    OutputStream out;
 	
-	/**
-	 * @param out
-	 */
-	public PhpScriptWriter(OutputStream out) {
-		super(out, true);
-		this.out = out;
-	}
+    /**
+     * @param out
+     */
+    public PhpScriptWriter(OutputStream out) {
+	super(out, true);
+	this.out = out;
+    }
 	
-	public OutputStream getOutputStream() {
-		return out;
-	}
-
-	public void println(String s) {
-		super.println(s);
-	}
+    public OutputStream getOutputStream() {
+	return out;
+    }
 }

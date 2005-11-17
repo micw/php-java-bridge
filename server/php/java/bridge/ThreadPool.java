@@ -3,7 +3,15 @@
 package php.java.bridge;
 
 import java.util.LinkedList;
-
+/**
+ * A standard thread pool, accepts runnables and runs them in a thread environment.
+ * Example:<br>
+ * <code>
+ * ThreadPool pool = new ThreadPool("MyThreadPool", 20);<br>
+ * pool.start(new YourRunnable());<br>
+ * </code>
+ *
+ */
 public class ThreadPool {
     private String name;
     private int threads = 0, idles = 0, poolMaxSize;
@@ -33,11 +41,12 @@ public class ThreadPool {
 	return (Runnable)runnables.removeFirst();
     }
 
-    /*
+    /**
      * Push a runnable to the list of runnables. The notify will fail
      * if all threads are busy. Since the pool contains at least one
      * thread, it will pull the runnable off the list when it becomes
      * available.
+     * @param r - The runnable
      */
     public synchronized void start(Runnable r) {
 	runnables.add(r);
@@ -53,6 +62,11 @@ public class ThreadPool {
 	    notify();
     }
 
+    /**
+     * Creates a new thread pool.
+     * @param name - The name of the pool threads.
+     * @param poolMaxSize - The max. number of threads, must be >= 1.
+     */
     public ThreadPool (String name, int poolMaxSize) {
 	this.name = name;
     	this.poolMaxSize = poolMaxSize;

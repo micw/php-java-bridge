@@ -50,10 +50,6 @@ Build and execution instructions:
           java.log_file="/var/log/php-java-bridge.log"
           java.socketname="/var/run/.php-java-bridge_socket"
 
-  Re-start the web server, for example with the command:
-
-          apachectl restart
-
 
   OPTION 1: You can use local sockets to connect to a local backend. 
   Copy the executable php-java-bridge to /usr/sbin, make it executable 
@@ -70,6 +66,7 @@ Build and execution instructions:
   java.log_file option and set the java.hosts and java.servlet option,
   for example:
 
+          extension = java.so
           [java]
           java.log_level="3"
           java.servlet=On
@@ -87,14 +84,46 @@ Build and execution instructions:
           java.log_level="3"
           java.log_file="/var/log/php-java-bridge.log"
 
-  Re-start apache and check if apache has started java as a
-  sub-process.  For example with the commands:
-
-          apachectl restart
-          pstree | fgrep httpd
-
   This option cannot be used if "Security Enhanced Linux" is switched
   on.
+
+
+  Option 4: You can use the java script API to allocate and to invoke php instances
+  from a HTTP pool. Disable java.socketname and set java.servlet. For example:
+
+          extension = java.so
+          [java]
+          java.servlet=On
+
+   After that you can call out to your web server's php scripts, for example:
+
+     PhpScriptEngine engine = new PhpScriptEngine();
+
+     // Use a URLReader "wrapper" to pass the apache URL to the engine.
+     // engine.eval will create a php continuation on the web server ...
+     engine.eval(new URLReader(new URL("http://127.0.0.1/test.php")));
+
+     //...and call can invoke procedures within the allocated continuation...
+     String s=((Invocable)engine).call("java_get_server_name", new Object[]{});
+     System.out.println("connected to java backend: "+s);
+
+     //...engine.release(), the next engine.call(...) or System.exit() release
+     // the allocated continuation
+     engine.release();
+
+  This option can be used if "Security Enhanced Linux" is switched
+  on.
+
+
+  After you have created the correct .ini entries, start the backend:
+
+          Example for option #1: /usr/sbin/php-java-bridge
+
+          Example for option #2: /etc/init.d/tomcat5 restart
+
+          Example for option #3: apachectl restart
+
+          Example for option #4: <not needed, backend is the calling VM itself>
 
 
   Check the status:
@@ -169,6 +198,14 @@ Build and execution instructions:
 
   To check the above settings, please visit http://localhost/JavaBridge/
   and run the sessionSharing.jsp and sessionSharing.php examples.
+
+  Please don't misunderstand the role of the mod_jk adapter. 
+  It is only used to "mount" the tomcat webapps directory into apache and
+  to forward requests for .jsp files.  The mod_jk adapter does this by "copying"
+  the non jsp files from the tomcat webapps directory into the apache document
+  root directory at run-time(!).
+
+  A more reasonable approach would be to remove mod_jk and to create a shared web directory for tomcat and apache.  This is the default since RedHat Fedora 4.
 
 ------------------------------------
   64 Bit issues

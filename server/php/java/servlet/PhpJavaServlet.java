@@ -27,7 +27,7 @@ import php.java.bridge.http.ContextServer;
  * available this servlet can start  php as a CGI sub-process.
  * However, it is recommended to install php as an Apache module
  * and to use the mod_jk adapter to connect apache with the
- * servlet engine or application server.
+ * servlet engine or context server.
  */
 public class PhpJavaServlet extends FastCGIServlet {
 
@@ -52,6 +52,7 @@ public class PhpJavaServlet extends FastCGIServlet {
 	    if(Util.logLevel>5) t.printStackTrace();
 	}
     }
+    
     /*
      * The name of the php executable.
      */
@@ -81,7 +82,7 @@ public class PhpJavaServlet extends FastCGIServlet {
     	} catch (Throwable t) {Util.printStackTrace(t);}      
         
 	Util.setLogger(new Logger(config.getServletContext()));
-        DynamicJavaBridgeClassLoader.initClassLoader(Util.EXTENSION_DIR);
+        DynamicJavaBridgeClassLoader.initClassLoader(Util.DEFAULT_EXTENSION_DIR);
 
 	
 	Util.TCP_SOCKETNAME = DEFAULT_CHANNEL;
@@ -111,13 +112,10 @@ public class PhpJavaServlet extends FastCGIServlet {
 	    if(ret) {
 	    	/* Inform the client that we are a cgi servlet and send the re-direct port */
 		if(override_hosts) { 
-		    String path = req.getContextPath();
 		    StringBuffer buf = new StringBuffer("127.0.0.1:");
 		    buf.append(this.env.get("SERVER_PORT"));
 		    buf.append("/");
-		    buf.append(req.getContextPath());
-		    buf.append("/");
-		    buf.append(PhpJavaServlet.this.getServletConfig().getServletName());
+		    buf.append(req.getRequestURI());
 		    this.env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", buf.toString());
 		}
 		else
@@ -129,7 +127,9 @@ public class PhpJavaServlet extends FastCGIServlet {
 	        
 		/* send the session context now, otherwise the client has to 
 		 * call handleRedirectConnection */
-		this.env.put("X_JAVABRIDGE_CONTEXT", ContextManager.addNew(req, res).getId());
+	    	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
+	    	if(id==null) id = ContextManager.addNew(req, res).getId();
+		this.env.put("X_JAVABRIDGE_CONTEXT", id);
 	        
 	        /* For the request: http://localhost:8080/JavaBridge/test.php the
 	         * req.getPathInfo() returns cgi/test.php. But PHP shouldn't know
@@ -145,6 +145,7 @@ public class PhpJavaServlet extends FastCGIServlet {
 				   String cgiPathPrefix) {
 	    String[] retval;
 	    if((retval=super.findCGI(pathInfo, webAppRootDir, contextPath, servletPath, cgiPathPrefix))!=null) return retval;
+	    cgiRunnerFactory = new CGIRunnerFactory();
 		
 	    StringBuffer cgiDir = new StringBuffer(webAppRootDir);
 	    if(!webAppRootDir.endsWith(File.separator)) cgiDir.append(File.separatorChar);
@@ -176,6 +177,68 @@ public class PhpJavaServlet extends FastCGIServlet {
 	return env;
     }
 
+    protected class CGIRunnerFactory extends CGIServlet.CGIRunnerFactory {
+        protected CGIServlet.CGIRunner createCGIRunner(CGIServlet.CGIEnvironment cgiEnv) {
+            return new CGIRunner(cgiEnv);
+	}
+    }
+
+    protected static class HeaderParser extends Util.HeaderParser {
+    	private CGIRunner runner;
+	protected HeaderParser(CGIRunner runner) {
+	    this.runner = runner;
+    	}
+    	protected void parseHeader(String header) {
+	    runner.addHeader(header);
+    	}
+    }
+    protected class CGIRunner extends CGIServlet.CGIRunner {
+	
+	protected CGIRunner(CGIServlet.CGIEnvironment env) {
+	    super(env);
+	}
+
+
+        protected void run() throws IOException, ServletException {
+	    Process proc = null;
+	    InputStream natIn = null;
+	    OutputStream natOut = null;
+	    InputStream in = null;
+	    OutputStream out = null;
+    	    try {
+        	proc = Util.startProcess(new String[]{command}, wd, env);
+        	Util.startProcessErrorReader(proc);
+
+        	byte[] buf = new byte[BUF_SIZE];// headers cannot be larger than this value!
+
+        	// the post variables
+        	in = stdin;
+    		natOut = proc.getOutputStream();
+        	if(in!=null) {
+		    int n;
+    		    while((n=in.read(buf))!=-1) {
+    			natOut.write(buf, 0, n);
+    		    }
+    		}
+
+        	// header and body
+         	natIn = proc.getInputStream();
+    		out = response.getOutputStream();
+    		Util.parseBody(buf, natIn, out, new Util.HeaderParser() {protected void parseHeader(String header) {addHeader(header);}});
+    		
+    		proc=null;
+    	    } catch(IOException t) {throw t;} catch (Throwable t) { throw new ServletException(t); } finally {
+    		if(out!=null) try {out.close();} catch (IOException e) {}
+    		if(in!=null) try {in.close();} catch (IOException e) {}
+    		if(natIn!=null) try {natIn.close();} catch (IOException e) {}
+    		if(natOut!=null) try {natOut.close();} catch (IOException e) {}
+
+    		if(proc!=null) try {proc.destroy(); } catch (Exception e) {}
+    	    }
+        }
+    } //class CGIRunner
+    
+    
     /**
      * Get or allocate a context for session and/or request attribute sharing
      * @param req - The request. If req.getHeader("X_JAVABRIDGE_CONTEXT") == null a new context will be written to res.
@@ -375,7 +438,7 @@ public class PhpJavaServlet extends FastCGIServlet {
     	try {
 	    super.doGet(req, res);
     	} catch (IOException e) {
-	    setCGIBinary();
+	    php=null;
 	    ServletException ex = new ServletException("An IO exception occured. Probably php was not installed as \"/usr/bin/php\" or \"c:/php5/php-cgi.exe\".\nPlease copy your PHP binary (\""+php+"\", see JavaBridge/WEB-INF/web.xml) into the JavaBridge/WEB-INF/cgi directory.\nSee webapps/JavaBridge/WEB-INF/cgi/README for details.", e);
     	    throw ex;
     	} catch (Throwable t) {

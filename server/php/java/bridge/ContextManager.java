@@ -8,14 +8,15 @@ import java.util.Iterator;
 import php.java.bridge.Context;
 
 public class ContextManager extends SessionFactory {
-	protected Object context;
+    protected boolean removed=false;
+    protected Object context;
 
     static final Hashtable contexts = new Hashtable();
     private JavaBridge bridge;
 	
     private static short count=0; // If a context survives more than 65535
-			  // context creations, that context will be
-			  // destroyed.
+    // context creations, that context will be
+    // destroyed.
     protected String id;
     protected static synchronized int getNext() {
 	if(++count==0) ++count;
@@ -43,7 +44,6 @@ public class ContextManager extends SessionFactory {
    	return (ContextManager)contexts.get(id);
     }
     
-    private boolean removed=false;
     public synchronized void remove() {
 	contexts.remove(getId());
 	bridge=null;
@@ -69,25 +69,25 @@ public class ContextManager extends SessionFactory {
     public String toString() {
 	return "Context# " +id;
     }
-	public Object getContext() {
-		return context;
-	}
+    public Object getContext() {
+	return context;
+    }
 	
-	public void setContext(Object context) {
-		this.context = context;
-	}
-	/**
-	 * @param bridge The bridge to set.
-	 */
-	public void setBridge(JavaBridge bridge) {
-		if(this.bridge!=null) throw new IllegalStateException("Context already has a bridge");
-		this.bridge = bridge;
-	}
-	/**
-	 * @return Returns the bridge.
-	 */
-	public JavaBridge getBridge() {
-		return bridge;
-	}
+    public void setContext(Object context) {
+	this.context = context;
+    }
+    /**
+     * @param bridge The bridge to set.
+     */
+    public void setBridge(JavaBridge bridge) {
+	if(this.bridge!=null) throw new IllegalStateException("Context already has a bridge");
+	this.bridge = bridge;
+    }
+    /**
+     * @return Returns the bridge.
+     */
+    public JavaBridge getBridge() {
+	return bridge;
+    }
 
 }

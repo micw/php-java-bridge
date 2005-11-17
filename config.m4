@@ -12,6 +12,8 @@ PHP_ARG_ENABLE(servlet, for java servlet support,
 [  --enable-servlet[=JAR]         Include java servlet support. JAR must be the location of j2ee.jar or servlet.jar; creates JavaBridge.war])
 PHP_ARG_ENABLE(script, for java script support,
 [  --enable-script[=JAR]         Include java script support. If you use a JDK < 1.6 JAR must be the location of script-api.jar; creates php-script.jar])
+PHP_ARG_ENABLE(faces, for java server faces support,
+[  --enable-faces[=JAR]         Include java server faces support. JAR must be the location of jsf-api.jar or; creates php-script.jar])
 
 
 if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then

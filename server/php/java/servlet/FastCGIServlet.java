@@ -7,8 +7,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -24,6 +25,11 @@ import php.java.bridge.Util;
  * @author jostb
  */
 public class FastCGIServlet extends CGIServlet {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 3545800996174312757L;
+
     // IO buffer size
     static final int BUF_SIZE = 65535;
 
@@ -59,56 +65,72 @@ public class FastCGIServlet extends CGIServlet {
     // fast cgi channel
     static int FCGI_CHANNEL = 9667;
 
-    static File unixLocation=null, unixLocation2=null, windowsLocation=null;
-    static protected String php = "php-cgi"; 
-    static protected File phpFile = new File(php);
+    static protected String php = null; 
     static private Process proc = null;
     
     public void init(ServletConfig config) throws ServletException {
 	super.init(config);
 
-	unixLocation = new File("/usr/bin/php-cgi");
-	if(!unixLocation.exists()) unixLocation=null;
-	unixLocation2 = new File("/usr/bin/php");
-	if(!unixLocation2.exists()) unixLocation2=null;
-	windowsLocation = new File("c:/php5/php-cgi.exe");
-	if(!windowsLocation.exists()) windowsLocation=null;
-
 	String value;
+	try {
+	    value = getServletContext().getRealPath(cgiPathPrefix)+"/php-cgi";
+	    if(value!=null && value.trim().length()!=0) {
+	    	if(Util.checkCgiBinary(new StringBuffer(value)) != null) php = value;
+	    }
+	}  catch (Throwable t) {Util.printStackTrace(t);}      
 	try {
 	    value = getServletConfig().getInitParameter("fastcgi_socket");
 	    if(value!=null && value.trim().length()!=0) FCGI_CHANNEL = Integer.parseInt(value);
 	} catch (Throwable t) {Util.printStackTrace(t);}      
 	try {
 	    value = getServletConfig().getInitParameter("php_exec");
-	    if(value!=null && value.trim().length()!=0) {
+	    if(value!=null && value.trim().length()!=0) 
 		php=value;
-		phpFile=new File(php);
-		setCGIBinary();
-		Runtime rt = Runtime.getRuntime();
-		if(FCGI_CHANNEL>0) {
-		    (new Thread("JavaBridgeFastCGIRunner") {
-			    public void run() {
-				int c;
-				byte buf[] = new byte[CGIServlet.BUF_SIZE];
-				try {
-				    proc = Runtime.getRuntime().exec(php + " -b:" +String.valueOf(FCGI_CHANNEL), hashToStringArray(defaultEnv), new File(getCgiDir().toString()));
-				    proc.getOutputStream().close();
-				    proc.getInputStream().close();
-				    InputStream in = proc.getErrorStream();
-				    while((c=in.read(buf))!=-1) 
-					Util.logError("JavaBridgeFastCGIRunner: " +new String(buf, 0, c));
-	    	    				
-				} catch (IOException e) {
-				    Util.printStackTrace(e);
-				}
-			    }
-			}).start();
-		    try {
-			Thread.sleep(100);
-		    } catch (InterruptedException e) {/*ignore*/}
 
+	    if(FCGI_CHANNEL>0) {
+		(new Thread("JavaBridgeFastCGIRunner") {
+			public void run() {
+			    int c;
+			    byte buf[] = new byte[CGIServlet.BUF_SIZE];
+			    String port;
+			    if(System.getProperty("php.java.bridge.promiscuous", "false").toLowerCase().equals("true")) 
+				port = ":"+String.valueOf(FCGI_CHANNEL);
+			    else
+				port = "127.0.0.1:"+String.valueOf(FCGI_CHANNEL);
+			    try {
+				HashMap envp = (HashMap)defaultEnv.clone();
+				// Set override hosts so that php does not try to start a VM.
+				// The value itself doesn't matter, we'll pass the real value
+				// via the (HTTP_)X_JAVABRIDGE_OVERRIDE_HOSTS header field
+				// later.
+				//envp.put("X_JAVABRIDGE_OVERRIDE_HOSTS", "127.0.0.1:1//foo/bar");
+				String[] args = new String[]{php, "-b", port};
+				proc = Util.startProcess(args, new File(getCgiDir().toString()), defaultEnv);
+				proc.getOutputStream().close();
+				proc.getInputStream().close();
+				InputStream in = proc.getErrorStream();
+				while((c=in.read(buf))!=-1) 
+				    Util.logError("JavaBridgeFastCGIRunner: " +new String(buf, 0, c));
+	    	    				
+			    } catch (IOException e) {
+				Util.printStackTrace(e);
+			    }
+			}
+		    }).start();
+		try {
+		    Runtime.getRuntime().addShutdownHook(
+							 new Thread("JavaBridgeFastCGIShutdown") {
+							     public void run() {
+								 if(proc!=null) proc.destroy();
+							     }
+							 });
+		} catch (Throwable t) {
+		    Util.printStackTrace(t);
 		}
+		try {
+		    Thread.sleep(500);
+		} catch (InterruptedException e) {/*ignore*/}
+
 	    }
 	} catch (Throwable t) {Util.printStackTrace(t);}
 
@@ -125,26 +147,8 @@ public class FastCGIServlet extends CGIServlet {
        	String webAppRootDir = getServletContext().getRealPath("/");
         StringBuffer cgiDir = new StringBuffer(webAppRootDir);
         if(!webAppRootDir.endsWith(File.separator)) cgiDir.append(File.separatorChar);
-        cgiDir.append(getServletConfig().getInitParameter("cgiPathPrefix"));
+        cgiDir.append(cgiPathPrefix);
         return cgiDir;
-    }
-    protected  void setCGIBinary() {
-    	if(phpFile.isAbsolute()) return;
-    	File currentLocation=null;
-    	String cgi_bin = null;
-    	try {
-    				
-    	    if((currentLocation=new File(getCgiDir().toString(), php)).isFile()||
-    	       (currentLocation=new File(Util.EXTENSION_DIR+"/../../../../bin",php)).isFile() ||
-    	       ((currentLocation=unixLocation)!=null)||
-    	       ((currentLocation=unixLocation2)!=null)||
-    	       (currentLocation=windowsLocation)!=null) 
-    		cgi_bin = currentLocation.getCanonicalPath();
-    	} catch (IOException e) {
-    	    if(currentLocation!=null)
-    		cgi_bin=currentLocation.getAbsolutePath();
-    	}
-    	if(cgi_bin!=null) phpFile = new File(php=cgi_bin);
     }
     protected class CGIEnvironment extends CGIServlet.CGIEnvironment {
 	Socket fastCGISocket;
@@ -168,9 +172,9 @@ public class FastCGIServlet extends CGIServlet {
 		fastCGISocket = new Socket(InetAddress.getByName("127.0.0.1"), FCGI_CHANNEL);
 		cgiRunnerFactory = new CGIRunnerFactory();
 	    } catch (Exception e) {
-		Util.printStackTrace(e);
+		Util.logMessage("FastCGI channel not available");
+		return null;
 	    }
-	    if(cgiRunnerFactory==null) return null;
 			
 	    // FIXME: Wieviel von dem Mist wird noch gebraucht?
 	    StringBuffer cgiDir = new StringBuffer(webAppRootDir);
@@ -259,7 +263,7 @@ public class FastCGIServlet extends CGIServlet {
 		out.write(b);
 	    }
 	}
-	public void writeParams(Hashtable props) throws IOException {
+	public void writeParams(Map props) throws IOException {
 	    ByteArrayOutputStream out = new ByteArrayOutputStream();
 	    for(Iterator ii = props.keySet().iterator(); ii.hasNext();) {
 		Object k = ii.next();
@@ -413,5 +417,5 @@ public class FastCGIServlet extends CGIServlet {
 		if(natOut!=null) try {natOut.close();} catch (IOException e) {}
 	    }
 	}
-    } //class CGIUtil
+    } //class CGIRunner
 }

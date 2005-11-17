@@ -26,6 +26,7 @@ AC_ARG_WITH(mono,  [  --with-mono[[=ikvmc.exe location]]             Include mon
 AC_ARG_WITH(extdir,  [  --with-extdir[[=DIR]]	Directory which contains the shared java extension], EXTENSION_DIR="$withval", EXTENSION_DIR="`php-config --extension-dir`")
 AC_ARG_ENABLE(servlet,  [  --enable-servlet[[=JAR]]	JAR must be j2ee.jar or servlet.jar which contains the servlet classes], SERVLET="$enableval", SERVLET="no")
 AC_ARG_ENABLE(script,  [  --enable-script[[=JAR]]	If you use JDK < 1.6 JAR must be script-api.jar which contains the jsr223 script api], SCRIPT="$enableval", SCRIPT="yes")
+AC_ARG_ENABLE(faces,  [  --enable-faces[[=JAR]]	JAR must be jsf-api.jar which contains the java server faces api], FACES="$enableval", FACES="yes")
 
 
 JAVA_FUNCTION_CHECKS
@@ -62,19 +63,38 @@ if test "$PHP_MONO" = "yes"; then
   fi
 fi
 
+# optional faces
+JAVA_BRIDGE_FACES_JAR="php-faces.jar"
+if test "$FACES" = "no"; then
+  JAVA_BRIDGE_FACES_JAR=""
+else
+  if test "$SCRIPT" = "no"; then
+  SCRIPT="yes";
+  fi
+  if test "$SERVLET" = "no"; then
+  SERVLET="yes";
+  fi
+fi
+if test "$FACES" = "yes"; then
+  FACES="../unsupported/myfaces-api.jar"
+fi
+
+
 JAVA_BRIDGE_WAR="JavaBridge.war"
 if test "$SERVLET" = "no"; then
   JAVA_BRIDGE_WAR=
 fi
 if test "$SERVLET" = "yes"; then
-  SERVLET="`locate j2ee.jar | head -1`"
+  SERVLET="`locate servlet-api.jar | head -1`"
   if test X$SERVLET = X; then 
-   echo "j2ee.jar not found, skipping servlet JavaBridge.war creation" >2
+   echo "servlet-api.jar not found, skipping servlet JavaBridge.war creation" >2
    SERVLET=
    JAVA_BRIDGE_WAR=
   fi
 fi
 
+
+# optional script
 JAVA_BRIDGE_SCRIPT_JAR="php-script.jar"
 if test "$SCRIPT" = "no"; then
   JAVA_BRIDGE_SCRIPT_JAR=""
@@ -94,8 +114,13 @@ AC_SUBST(VM_BINARIES)
 AC_SUBST(MONO_BRIDGE_EXE)
 AC_SUBST(SERVLET)
 AC_SUBST(JAVA_BRIDGE_WAR)
+
+# optional script
 AC_SUBST(SCRIPT)
 AC_SUBST(JAVA_BRIDGE_SCRIPT_JAR)
+# optional faces
+AC_SUBST(FACES)
+AC_SUBST(JAVA_BRIDGE_FACES_JAR)
 AM_CONDITIONAL([COND_GCJ], [test "$PHP_MONO" != "no" || test "$PHP_JAVA" = "yes"])
 AC_OUTPUT(Makefile)
 

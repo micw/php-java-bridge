@@ -47,7 +47,7 @@ import java.util.Map;
 public interface ISession {
     /**
      * Returns the object bound to the given name in the session's
-     * application layer data.  Returns null if there is no such
+     * context layer data.  Returns null if there is no such
      * binding.
      *
      * @param name the name of the binding to find
@@ -59,7 +59,7 @@ public interface ISession {
     public Object get(Object name);
 		
     /**
-     * Binds the specified object into the session's application layer
+     * Binds the specified object into the session's context layer
      * data with the given name.  Any existing binding with the same
      * name is replaced.  
      *
@@ -73,7 +73,7 @@ public interface ISession {
 		
     /**
      * Removes the object bound to the given name in the session's
-     * application layer data.  Does nothing if there is no object
+     * context layer data.  Does nothing if there is no object
      * bound to the given name.
      *
      * @param name the name of the object to remove
@@ -145,7 +145,7 @@ public interface ISession {
     public void destroy();
 		
     /**
-     * Copies all bindings to the session's application layer data.
+     * Copies all bindings to the session's context layer data.
      * Any existing binding with the same name is replaced.
      *
      * @param vars the map

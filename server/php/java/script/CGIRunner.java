@@ -3,7 +3,6 @@
 package php.java.script;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -16,8 +15,14 @@ import php.java.bridge.PhpProcedureProxy;
 import php.java.bridge.SessionFactory;
 import php.java.bridge.Util;
 
+/**
+ * This class can be used to run a PHP CGI binary. Useful during development when there's no 
+ * Apache/IIS or Servlet engine available to run PHP scripts. 
+ * @author jostb
+ *
+ */
 
-public class CGIRunner extends Thread {
+abstract class CGIRunner extends Thread {
 	
     protected boolean running = true;
     protected Hashtable env;
@@ -52,73 +57,75 @@ public class CGIRunner extends Thread {
 	    notify();
 	}
     }
-    public CGIRunner(Reader reader, Hashtable env, SessionFactory ctx, OutputStream out) {
-	super("HttpProxy");
-	this.reader = reader;
+    protected CGIRunner(String name, Reader reader, Hashtable env, SessionFactory ctx, OutputStream out) {
+	super(name);
+    	this.reader = reader;
 	this.ctx = ctx;
 	this.env = env;
 	this.out = out;
     }
 
-    private static final String locations[] = new String[] {"/usr/bin/php-cgi", "/usr/bin/php", "c:/php5/php-cgi.exe"};
     public void run() {
-	   	try {
-     		doRun();
-	   		} catch (IOException e) {
-	   			    Util.printStackTrace(e);
-	   			} finally {
-	   			    synchronized(this) {
-	   			    	if(proc!=null) proc.destroy();
+	try {
+	    doRun();
+	} catch (IOException e) {
+	    Util.printStackTrace(e);
+	} finally {
+	    synchronized(this) {
+		if(proc!=null) proc.destroy();
 
-	   				notify();
-	   				running = false;
-	   				phpScript.finish();
-	   			    }
-	   			}
+		notify();
+		running = false;
+		phpScript.finish();
+	    }
+	}
     }
     
     protected void doRun() throws IOException {
-        Process proc = null;
-    	int n;
-            Runtime rt = Runtime.getRuntime();
-            
-            String php = System.getProperty("php.java.bridge.php_exec");
-            if(php==null) {
-            	File location;
-            	for(int i=0; i<locations.length; i++) {
-            		location = new File(locations[i]);
-            		if(location.exists()) {php = location.getAbsolutePath(); break;}
-            	}
-            }
-            if(php==null) php="php-cgi";
-            
-            String home = System.getProperty("user.home");
-            File homeDir = home==null?null:new File(home);
-	    proc = rt.exec(php, Util.hashToStringArray(env), homeDir);
-	    try { proc.getErrorStream().close(); } catch (IOException e) {}
+	int n;    
+        Process proc = Util.startProcess(null, null, Util.DEFAULT_CGI_ENVIRONMENT);
+	try { proc.getErrorStream().close(); } catch (IOException e) {}
 
-	    InputStream natIn = proc.getInputStream();
-	    OutputStream natOut = proc.getOutputStream();
-	    char[] cbuf = new char[Util.BUF_SIZE];
-	    Writer writer = new BufferedWriter(new OutputStreamWriter(natOut));
-	    while((n = reader.read(cbuf))!=-1) {
-		writer.write(cbuf, 0, n);
-	    }
-	    writer.close();
-	    byte[] buf = new byte[Util.BUF_SIZE];
-	    Util.parseBody(buf, natIn, this.out);
-	    natIn.close();
+	InputStream natIn = proc.getInputStream();
+	OutputStream natOut = proc.getOutputStream();
+	char[] cbuf = new char[Util.BUF_SIZE];
+	Writer writer = new BufferedWriter(new OutputStreamWriter(natOut));
+	while((n = reader.read(cbuf))!=-1) {
+	    writer.write(cbuf, 0, n);
+	}
+	writer.close();
+	byte[] buf = new byte[Util.BUF_SIZE];
+	Util.parseBody(buf, natIn, this.out, Util.DEFAULT_HEADER_PARSER);
+	natIn.close();
     }
 
+    /**
+     * The PHP script must call this function with the current continuation as an argument.<p>
+     * Example:<p>
+     * <code>
+     * java_context()-&gt;call(java_closure());<br>
+     * </code>
+     * @param script - The php continuation
+     * @throws InterruptedException
+     */
     public synchronized void call(PhpProcedureProxy script) throws InterruptedException {
 	phpScript.setVal(script);
 	wait();
     }
 	
+    /**
+     * One must call this function if one is interested in the php continuation.
+     * @return The php continuation.
+     * @throws InterruptedException
+     */
     public PhpProcedureProxy getPhpScript() throws InterruptedException {
 	return (PhpProcedureProxy)phpScript.getVal();
     }
 	
+    /**
+     * This function must be called to release the allocated php continuation.
+     *
+     */
     public synchronized void stopContinuation() {
 	notify();
 	if(running)

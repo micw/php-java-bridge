@@ -17,43 +17,51 @@ public class Request implements IDocHandler {
     };
     public static class PhpNumber extends Number {
 
-		private long l;
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 3257566187666749240L;
+	private long l;
 
-		/**
-		 * @param l
-		 */
-		public PhpNumber(long l) {
-			this.l = l;
-		}
+	/**
+	 * @param l
+	 */
+	public PhpNumber(long l) {
+	    this.l = l;
+	}
 
-		/* (non-Javadoc)
-		 * @see java.lang.Number#intValue()
-		 */
-		public int intValue() {
+	/* (non-Javadoc)
+	 * @see java.lang.Number#intValue()
+	 */
+	public int intValue() {
 			
-			return (int)l;
-		}
+	    return (int)l;
+	}
 
-		/* (non-Javadoc)
-		 * @see java.lang.Number#longValue()
-		 */
-		public long longValue() {
-			return l;
-		}
+	/* (non-Javadoc)
+	 * @see java.lang.Number#longValue()
+	 */
+	public long longValue() {
+	    return l;
+	}
 
-		/* (non-Javadoc)
-		 * @see java.lang.Number#floatValue()
-		 */
-		public float floatValue() {
-			return l;
-		}
+	/* (non-Javadoc)
+	 * @see java.lang.Number#floatValue()
+	 */
+	public float floatValue() {
+	    return l;
+	}
 
-		/* (non-Javadoc)
-		 * @see java.lang.Number#doubleValue()
-		 */
-		public double doubleValue() {
-			return l;
-		}
+	/* (non-Javadoc)
+	 * @see java.lang.Number#doubleValue()
+	 */
+	public double doubleValue() {
+	    return l;
+	}
+		
+	public String toString() {
+	    return String.valueOf(l);
+	}
     	
     };
     private static class Args {

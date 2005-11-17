@@ -331,7 +331,8 @@ static void begin(parser_tag_t tag[3], parser_cb_t *cb){
 	  break;
 	}
   default:
-	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Protocol violation, please check that the backend (JavaBride.war) is deployed or please switch off the java.servlet option", 88);
+	assert(((*cb->env)->c) < RECV_SIZE);
+	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Protocol violation, please check that the backend (JavaBride.war) is deployed or please switch off the java.servlet option. Dump of the recv_buf follows:\n%*s", 88, (int)(0xFFFF&(*cb->env)->c), (*cb->env)->recv_buf);
   }
 }
 static void end(parser_string_t st[1], parser_cb_t *cb){
@@ -351,7 +352,7 @@ static void end(parser_string_t st[1], parser_cb_t *cb){
 static const char key_hosts[]="java.hosts";
 static const char key_servlet[] = "java.servlet";
 static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
-  proxyenv *ctx=(proxyenv*)cb->ctx;
+  proxyenv *ctx=(proxyenv*)cb->env;
   char *str=(char*)PARSER_GET_STRING(tag[0].strings, 0);
   TSRMLS_FETCH();
   switch (*str) {
@@ -418,13 +419,13 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
 static void handle_request(proxyenv *env) {
   short tail_call;
   struct parse_ctx ctx = {0};
-  parser_cb_t cb = {begin, end, &ctx};
+  parser_cb_t cb = {begin, end, &ctx, env};
   struct stack_elem *stack_elem;
 
   TSRMLS_FETCH();
  handle_request:
   if(!(*env)->is_local && IS_OVERRIDE_REDIRECT(env)) {
-	parser_cb_t cb_header = {begin_header, 0, env};
+	parser_cb_t cb_header = {begin_header, 0, 0, env};
 	EXT_GLOBAL (parse_header) (env, &cb_header);
   }
   zend_stack_init(&ctx.containers);
@@ -522,8 +523,16 @@ array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS', $_SERVER)	\
 :(array_key_exists('HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS', $_SERVER)?$_SERVER['HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS']:null);";
   zval val;
   if((SUCCESS==zend_eval_string((char*)override, &val, (char*)name TSRMLS_CC)) && (Z_TYPE(val)==IS_STRING)) {
+	char *kontext, *hosts = estrndup(Z_STRVAL(val), Z_STRLEN(val));
 	if(JG(hosts)) efree(JG(hosts));
-	JG(hosts)=estrndup(Z_STRVAL(val), Z_STRLEN(val));
+	JG(hosts)=hosts;
+	kontext = strchr(hosts, '/');
+	if(kontext) {
+	  *kontext++=0;
+	  if(JG(servlet)) efree(JG(servlet));
+	  JG(servlet) = estrdup(kontext);
+	  JG(ini_user)|=U_SERVLET;
+	}
 	JG(ini_user)|=U_HOSTS;
   }
 }

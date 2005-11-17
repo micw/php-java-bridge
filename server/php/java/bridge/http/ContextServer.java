@@ -102,10 +102,10 @@ public class ContextServer implements Runnable {
     public boolean isAvailable() {
     	return socket!=null;
     }
-/**
- * @return Returns the socket.
- */
-public ISocketFactory getSocket() {
+    /**
+     * @return Returns the socket.
+     */
+    public ISocketFactory getSocket() {
 	return socket;
-}
+    }
 }
