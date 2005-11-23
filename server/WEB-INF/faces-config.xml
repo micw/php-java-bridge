@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE faces-config PUBLIC
+  "-//Sun Microsystems, Inc.//DTD JavaServer Faces Config 1.0//EN"
+  "http://java.sun.com/dtd/web-facesconfig_1_0.dtd" >
+
+<faces-config>
+  <factory>
+    <application-factory>php.java.faces.PhpFacesApplicationFactory</application-factory>
+    <faces-context-factory>php.java.faces.PhpFacesContextFactory</faces-context-factory>
+  </factory>
+	
+	<!-- managed beans of the simple hello world app -->
+	<managed-bean>
+		<managed-bean-name>helloWorldBacking</managed-bean-name>
+		<managed-bean-class>php.java.faces.Script</managed-bean-class>
+		<managed-bean-scope>request</managed-bean-scope>
+
+        <managed-property>
+            <property-name>script</property-name>
+            <value>/java-server-faces/helloWorld.php</value>
+        </managed-property>
+
+	</managed-bean>
+	
+	<!-- navigation rules for helloWorld.jsp -->
+	<navigation-rule>
+		<from-view-id>/java-server-faces/helloWorld.jsp</from-view-id>
+		<navigation-case>
+			<from-outcome>success</from-outcome>
+			<to-view-id>/java-server-faces/page2.jsp</to-view-id>
+		</navigation-case>
+	</navigation-rule>
+	
+	<!-- navigation rules for page2.jsp -->
+	<navigation-rule>
+		<from-view-id>/java-server-faces/page2.jsp</from-view-id>
+		<navigation-case>
+			<from-outcome>back</from-outcome>
+			<to-view-id>/java-server-faces/helloWorld.jsp</to-view-id>
+		</navigation-case>
+	</navigation-rule>
+</faces-config>
