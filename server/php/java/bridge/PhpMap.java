@@ -14,20 +14,20 @@ import java.util.Map;
  *
  */
 public abstract class PhpMap {
-    JavaBridge bridge;
+    JavaBridge brick;
     Object value;
     Class componentType;
     boolean keyType; //false: key is integer (array), true: key is string (hash)
 
     protected PhpMap(JavaBridge bridge, Object value, boolean keyType) {
-	this.bridge=bridge;
+	this.brick=bridge;
     	this.value=value;
 	this.keyType=keyType;
 	this.componentType = value.getClass().getComponentType();
 	init();
     }
     protected Object coerce(Object val) {
-	return bridge.coerce(new Class[]{componentType}, new Object[]{val}, bridge.request.response)[0];
+	return brick.coerce(new Class[]{componentType}, new Object[]{val}, brick.request.response)[0];
     }
     protected abstract void init();
     protected abstract Object currentData();
@@ -71,7 +71,7 @@ public abstract class PhpMap {
 		    }
 		    protected Request.PhpString currentKey() {
 			if(!valid) return null;
-			return new Request.SimplePhpString(bridge, (String.valueOf(i)));
+			return new Request.SimplePhpString(brick, (String.valueOf(i)));
 		    }
 		    protected boolean moveForward() {
 			valid=++i<length;
@@ -119,7 +119,7 @@ public abstract class PhpMap {
 			return currentKey;
 		    }
 		    protected Request.PhpString currentKey() {
-			return new Request.SimplePhpString(bridge, String.valueOf(i));
+			return new Request.SimplePhpString(brick, String.valueOf(i));
 		    }
 		    protected boolean moveForward() {
 			if(iter.hasNext()) {
@@ -173,7 +173,7 @@ public abstract class PhpMap {
 			return ((Map)(this.value)).get(currentKey);
 		    }
 		    protected Request.PhpString currentKey() {
-			return new Request.SimplePhpString(bridge, String.valueOf(currentKey));
+			return new Request.SimplePhpString(brick, String.valueOf(currentKey));
 		    }
 		    protected boolean moveForward() {
 			currentKey = iter.hasNext() ? iter.next() : null;
