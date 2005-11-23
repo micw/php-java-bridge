@@ -6,6 +6,7 @@ import javax.faces.application.Application;
 import javax.faces.application.ApplicationFactory;
 
 /**
+ * Create a PhpFacesApplication.
  * @author jostb
  *
  */

@@ -50,7 +50,7 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
     protected HttpProxy continuation = null;
 
     /**
-     * @param request
+     * Create a new ScriptEngine.
      */
     public PhpScriptEngine() {
     }
@@ -67,12 +67,15 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
      * @see javax.script.Invocable#call(java.lang.String, java.lang.Object, java.lang.Object[])
      */
     public Object call(String methodName, Object thiz, Object[] args)
-	throws ScriptException {
+	throws ScriptException, RuntimeException {
 	PhpProcedure proc = (PhpProcedure)(Proxy.getInvocationHandler(thiz));
 	try {
 	    return proc.invoke(script, methodName, args);
 	} catch (Throwable e) {
-	    throw new ScriptException(new Exception(e));
+	    if(e instanceof RuntimeException) throw (RuntimeException)e;
+	    Util.printStackTrace(e);
+	    if(e instanceof Exception) throw new ScriptException(new Exception(e));
+	    throw (RuntimeException)e;
 	}
     }
 
@@ -110,7 +113,7 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
     }
 	
     protected HttpProxy getContinuation(Reader reader, ScriptContext context) {
-    	PhpScriptContext phpScriptContext = (PhpScriptContext)context;
+    	IPhpScriptContext phpScriptContext = (IPhpScriptContext)context;
     	SessionFactory ctx = phpScriptContext.getContextManager();
     	Hashtable env = phpScriptContext.getEnvironment();
     	HttpProxy kont = new HttpProxy(reader, env, ctx, ((PhpScriptWriter)(context.getWriter())).getOutputStream()); 
@@ -164,7 +167,7 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
      */
     public void release() {
 	if(continuation != null) {
-	    continuation.stopContinuation();
+	    continuation.release();
 	    continuation = null;
 	    script = null;
 	    scriptClosure = null;

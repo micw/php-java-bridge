@@ -33,6 +33,6 @@ for($y=0; $y<40; $y++) {
 $memoryStream = new java ("java.io.ByteArrayOutputStream");
 $workbook->write($memoryStream);
 $memoryStream->close();
-echo $memoryStream->toByteArray();
+echo (string)$memoryStream->toByteArray();
 ?>
 

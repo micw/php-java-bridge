@@ -9,6 +9,7 @@ import java.util.HashMap;
 import php.java.bridge.NotImplementedException;
 
 /**
+ * A simple HTTP request implementation.
  * @author jostb
  *
  */
@@ -24,7 +25,8 @@ public class HttpRequest {
     private int count = 0;
 	
     /**
-     * @param inputStream
+     * Create a new HTTP request
+     * @param inputStream The InputStream
      */
     public HttpRequest(InputStream inputStream) {
 	in = new HttpInputStream(inputStream);
@@ -32,24 +34,27 @@ public class HttpRequest {
     }
 
     /**
-     * @param string
-     * @return
+     * Returns the header value
+     * @param string The header
+     * @return The header value
      */
     public String getHeader(String string) {
 	return (String) headers.get(string);
     }
 
     /**
-     * @return
+     * Returns the InputStream
+     * @return The InputStream
      */
     public InputStream getInputStream() {
 	return in; 
     }
 
-    /**
-     * @param buf
-     * @param start
-     * @param length
+    /** 
+     * Push back some bytes so that we can read them again.
+     * @param buf The buffer
+     * @param start The start position
+     * @param length The number of bytes
      */
     public void pushBack(byte[] buf, int start, int length) {
 	this.buf = buf;
@@ -93,7 +98,8 @@ public class HttpRequest {
     }
 
     /**
-     * @param string
+     * Add a header
+     * @param line A valid HTTP header, e.g. "Host: localhost"
      */
     public void addHeader(String line) {
 	try {
@@ -106,7 +112,9 @@ public class HttpRequest {
     }
 
     /**
-     * @param header
+     * Set the content length, it causes the InputStream to stop reading at some point.
+     * @param contentLength The content length.
+     * @see HttpRequest#getInputStream()
      */
     public void setContentLength(int contentLength) {
 	this.count = 0;

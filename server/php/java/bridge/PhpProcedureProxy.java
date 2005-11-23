@@ -34,6 +34,11 @@ public class PhpProcedureProxy {
     }
 	
     Object proxy = null;
+    /**
+     * Generate a proxy.
+     * @param interfaces The list of interfaces that the generated proxy should implement.
+     * @return The PhpProcedure.
+     */
     public Object getProxy(Class[] interfaces) {
 	if(proxy!=null) return proxy;
 	return proxy=PhpProcedure.createProxy(bridge, name, names, suppliedInterfaces==null?interfaces:suppliedInterfaces, object);

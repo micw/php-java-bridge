@@ -12,14 +12,23 @@ import php.java.bridge.Util;
 
 
 /**
+ * This class can be used to create a simple HTTP server. It can be used during development, when no HTTP server or Servlet engine is available.
  * @author jostb
  *
  */
 public abstract class HttpServer implements Runnable {
     protected ISocketFactory socket;
-	
+
+    /**
+     * Create a new server socket
+     * @return The server socket.
+     */
     public abstract ISocketFactory bind();
-	
+
+    /**
+     * Create a new HTTP Server.
+     * @see HttpServer#destroy()
+     */
     public HttpServer() {
 	socket = bind();
 	Thread t = new Thread(this, "JavaBridgeHttpServer");
@@ -27,7 +36,13 @@ public abstract class HttpServer implements Runnable {
         t.start();
     }
 
-    public void parseHeader(HttpRequest req) throws UnsupportedEncodingException, IOException {
+    /**
+     * Parse the header. After that <code>req</code> contains the body.
+     * @param req The HttpRequest
+     * @throws UnsupportedEncodingException
+     * @throws IOException
+     */
+    protected void parseHeader(HttpRequest req) throws UnsupportedEncodingException, IOException {
 	byte buf[] = new byte[Util.BUF_SIZE];
 		
 	InputStream natIn = req.getInputStream();
@@ -59,7 +74,10 @@ public abstract class HttpServer implements Runnable {
 
     }
 		
-
+    /**
+     * accept, create a HTTP request and response, parse the header and body
+     * @throws IOException
+     */
     protected void doRun() throws IOException {
 	while(true) {
 	    Socket sock;
@@ -73,8 +91,7 @@ public abstract class HttpServer implements Runnable {
     }
 
     /**
-     * @param req
-     * @param res
+     * Sets the content length but leaves the rest of the body untouched.
      */
     protected void parseBody(HttpRequest req, HttpResponse res) {
 	req.setContentLength(Integer.parseInt(req.getHeader("Content-Length")));
@@ -90,7 +107,11 @@ public abstract class HttpServer implements Runnable {
 	    Util.printStackTrace(e);
 	}
     }
-	
+
+    /**
+     * Stop the HTTP server.
+     *
+     */
     public void destroy() {
 	try {
 	    socket.close();

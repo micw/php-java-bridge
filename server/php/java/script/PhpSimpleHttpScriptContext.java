@@ -2,7 +2,6 @@
 
 package php.java.script;
 
-import java.io.IOException;
 import java.io.Writer;
 
 import javax.script.SimpleScriptContext;
@@ -12,11 +11,14 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+
 /**
+ * A simple ScriptContext which can be used in servlet environments.
+ * 
  * @author jostb
  *
  */
-public class PhpSimpleHttpScriptContext extends SimpleScriptContext {
+public abstract class PhpSimpleHttpScriptContext extends SimpleScriptContext implements IPhpScriptContext {
 
     /** Integer value for the level of SCRIPT_SCOPE */
     public static final int REQUEST_SCOPE = javax.script.http.HttpScriptContext.REQUEST_SCOPE;
@@ -30,13 +32,23 @@ public class PhpSimpleHttpScriptContext extends SimpleScriptContext {
     protected HttpServletRequest request;
     protected HttpServletResponse response;
     protected ServletContext context;
+    protected PhpScriptWriter writer;
 
+    /**
+     * Initilaize the context.
+     * @param ctx The ServletContext
+     * @param req The HttpServletRequest
+     * @param res The HttpServletResponse
+     * @param writer The PhpScriptWriter
+     * @throws ServletException
+     */
     public void initialize(ServletContext ctx,
 			   HttpServletRequest req,
-			   HttpServletResponse res) throws ServletException {
+			   HttpServletResponse res, PhpScriptWriter writer) throws ServletException {
 	this.context = ctx;
 	this.request = req;
 	this.response = res;
+	this.writer = writer;
     }
 
     public Object getAttribute(String key, int scope){
@@ -83,17 +95,30 @@ public class PhpSimpleHttpScriptContext extends SimpleScriptContext {
 	}
     }
     public Writer getWriter() {
-	try {
-	    return getResponse().getWriter();
-	} catch (IOException e) {
-	    return null;
-	}
+        return (Writer) writer;
     }
 		
+    /**
+     * Get the servlet response
+     * @return The HttpServletResponse
+     */
     public HttpServletResponse getResponse() {
 	return response;
     }
-
-
-
+    
+    /**
+     * Get the HttpServletRequest
+     * @return The HttpServletRequest
+     */
+    public HttpServletRequest getRequest() {
+        return request;
+    }
+    
+    /**
+     * Get the ServletContext
+     * @return The current ServletContext
+     */
+    public ServletContext getContext() {
+        return context;
+    }
 }

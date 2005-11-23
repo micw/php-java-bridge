@@ -1,4 +1,3 @@
-
 /*-*- mode: Java; tab-width:8 -*-*/
 
 package php.java.bridge;
@@ -7,7 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 
-public class Parser {
+class Parser {
     static final int RECV_SIZE = 8192; // initial size of the receive buffer
     static final int MAX_ARGS = 100; // max # of method arguments
     static final int SLEN = 256; // initial length of the parser string
@@ -38,7 +37,7 @@ public class Parser {
 
 		// OPTIONS
 	    default:
-	    	if((ch&64)!=0) bridge.requestOptions=(byte) (ch&3); 
+	    	if((ch&64)!=0) bridge.options.options=(byte) (ch&3); 
 	    	if((ch&128)!=0) {
 	    	    if(bridge.logLevel>3 && (bridge.logLevel!=((ch>>2)&7)))
 		        bridge.logDebug("Client changed its request log level to: " + ((ch>>2)&7));

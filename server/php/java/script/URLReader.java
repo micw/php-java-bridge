@@ -8,7 +8,7 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.net.Socket;
 import java.net.URL;
-import java.util.Hashtable;
+import java.util.Map;
 
 import php.java.bridge.Util;
 
@@ -19,7 +19,7 @@ import php.java.bridge.Util;
  * PhpScriptEngine e = new PhpScriptEngine();<br>
  * e.eval(new URLConnection(new URL("http://localhost:80/foo.php"));<br>
  * System.out.println(((Invocable)e).call("java_get_server_name", new Object[]{}));<br>
- * e.release()
+ * e.release();<br>
  * </code>
  * @author jostb
  *
@@ -43,8 +43,10 @@ public class URLReader extends Reader {
     public URL getURL() {
 	return url;
     }
-    /* (non-Javadoc)
-     * @see java.io.Reader#read(char[], int, int)
+
+    /**
+     * @throws NotImplementedException
+     * @see URLReader#read(Map, OutputStream)
      */
     public int read(char[] cbuf, int off, int len) throws IOException {
 	close();
@@ -53,18 +55,18 @@ public class URLReader extends Reader {
 	
     /**
      * Read from the URL and write the data to out.
-     * @param env - The environment, must contain values for X_JAVABRIDGE_CONTEXT. It may contain X_JAVABRIDGE_OVERRIDE_HOSTS.
-     * @param out - The OutputStream
+     * @param env The environment, must contain values for X_JAVABRIDGE_CONTEXT. It may contain X_JAVABRIDGE_OVERRIDE_HOSTS.
+     * @param out The OutputStream.
      * @throws IOException
      */
-    public void read(Hashtable env, OutputStream out) throws IOException {
-
+    public void read(Map env, OutputStream out) throws IOException {
 	InputStream in;
 	OutputStream natOut;
 	Socket socket;
 	String overrideHosts = (String) env.get("X_JAVABRIDGE_OVERRIDE_HOSTS");
     	int c;
 	byte[] buf = new byte[Util.BUF_SIZE];
+
 	socket = new Socket(url.getHost(), url.getPort());
 	natOut = socket.getOutputStream();
 	natOut.write(Util.toBytes("GET "+url.getFile()+" HTTP/1.1\r\n"));
@@ -75,13 +77,16 @@ public class URLReader extends Reader {
 	natOut.write(Util.toBytes("Connection: close" + "\r\n\r\n"));
 	in = socket.getInputStream();
 	Util.parseBody(buf, in, out, Util.DEFAULT_HEADER_PARSER);
+
 	natOut.close();
 	in.close();
 	socket.close();	    			
     }
-    /* (non-Javadoc)
-     * @see java.io.Closeable#close()
-     */
+    
+    /**
+    * @throws NotImplementedException
+    * @see URLReader#read(Map, OutputStream)
+    */
     public void close() throws IOException {
 	throw new IllegalStateException("Use urlReader.read(Hashtable, OutputStream) or use a FileReader() instead.");
     }

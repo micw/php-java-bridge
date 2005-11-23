@@ -7,7 +7,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import php.java.bridge.ISession;
@@ -20,6 +22,8 @@ public class HttpSessionFacade implements ISession {
     private HttpServletRequest req=null;
     private HttpSession sessionCache=null;
     private boolean isNew;
+    private ServletContext ctx;
+    private HttpServletResponse res;
     
     private HttpSession getSession() {
 	if(sessionCache!=null) return sessionCache;
@@ -27,14 +31,37 @@ public class HttpSessionFacade implements ISession {
 	sessionCache.setMaxInactiveInterval(timeout);
 	return sessionCache;
     }
-    public HttpSessionFacade (HttpServletRequest req, int timeout) {
+    public HttpSessionFacade (ServletContext ctx, HttpServletRequest req, HttpServletResponse res, int timeout) {
 	this.session = req.getSession();
 	this.req = req;
+	this.ctx = ctx;
+	this.res = res;
 	this.timeout = timeout;
 	this.isNew = session.isNew();
     }
+    
+    /**
+     * Returns the HttpServletRequest
+     * @return The HttpServletRequest.
+     */
     public HttpServletRequest getHttpServletRequest() {
     	return this.req;
+    }
+    
+    /**
+     * Returns the ServletContext
+     * @return The ServletContext.
+     */
+    public ServletContext getServletContext() {
+        return this.ctx;
+    }
+    
+    /**
+     * Returns the ServletResponse
+     * @return The ServletResponse.
+     */
+    public HttpServletResponse getHttpServletResponse() {
+        return this.res;
     }
     /* (non-Javadoc)
      * @see php.java.bridge.ISession#get(java.lang.Object)

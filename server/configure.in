@@ -24,7 +24,7 @@ AC_STDC_HEADERS
 AC_ARG_WITH(java,  [  --with-java[[=JAVA_HOME]]	Include java support], PHP_JAVA="$withval", PHP_JAVA="yes")
 AC_ARG_WITH(mono,  [  --with-mono[[=ikvmc.exe location]]             Include mono support], PHP_MONO="$withval", PHP_MONO="no")
 AC_ARG_WITH(extdir,  [  --with-extdir[[=DIR]]	Directory which contains the shared java extension], EXTENSION_DIR="$withval", EXTENSION_DIR="`php-config --extension-dir`")
-AC_ARG_ENABLE(servlet,  [  --enable-servlet[[=JAR]]	JAR must be j2ee.jar or servlet.jar which contains the servlet classes], SERVLET="$enableval", SERVLET="no")
+AC_ARG_ENABLE(servlet,  [  --enable-servlet[[=JAR]]	JAR must be j2ee.jar or servlet.jar which contains the servlet classes], SERVLET="$enableval", SERVLET="yes")
 AC_ARG_ENABLE(script,  [  --enable-script[[=JAR]]	If you use JDK < 1.6 JAR must be script-api.jar which contains the jsr223 script api], SCRIPT="$enableval", SCRIPT="yes")
 AC_ARG_ENABLE(faces,  [  --enable-faces[[=JAR]]	JAR must be jsf-api.jar which contains the java server faces api], FACES="$enableval", FACES="yes")
 
@@ -63,7 +63,7 @@ if test "$PHP_MONO" = "yes"; then
   fi
 fi
 
-# optional faces
+# optional faces, requires script, servlet
 JAVA_BRIDGE_FACES_JAR="php-faces.jar"
 if test "$FACES" = "no"; then
   JAVA_BRIDGE_FACES_JAR=""
@@ -79,28 +79,34 @@ if test "$FACES" = "yes"; then
   FACES="../unsupported/myfaces-api.jar"
 fi
 
+# optional script, requires servlet
+JAVA_BRIDGE_SCRIPT_JAR="php-script.jar"
+if test "$SCRIPT" = "no"; then
+  JAVA_BRIDGE_SCRIPT_JAR=""
+else
+  if test "$SERVLET" = "no"; then
+  SERVLET="yes";
+  fi
+fi
+if test "$SCRIPT" = "yes"; then
+  SCRIPT="../unsupported/script-api.jar"
+fi
 
+
+# optional JavaBridge.war, requires servlet
+JAVA_BRIDGE_SERVLET_JAR="php-servlet.jar"
 JAVA_BRIDGE_WAR="JavaBridge.war"
 if test "$SERVLET" = "no"; then
   JAVA_BRIDGE_WAR=
+  JAVA_BRIDGE_SERVLET_JAR=""
 fi
 if test "$SERVLET" = "yes"; then
-  SERVLET="`locate servlet-api.jar | head -1`"
+  SERVLET="../unsupported/servlet-api.jar"
   if test X$SERVLET = X; then 
    echo "servlet-api.jar not found, skipping servlet JavaBridge.war creation" >2
    SERVLET=
    JAVA_BRIDGE_WAR=
   fi
-fi
-
-
-# optional script
-JAVA_BRIDGE_SCRIPT_JAR="php-script.jar"
-if test "$SCRIPT" = "no"; then
-  JAVA_BRIDGE_SCRIPT_JAR=""
-fi
-if test "$SCRIPT" = "yes"; then
-  SCRIPT="../unsupported/script-api.jar"
 fi
 
 AC_CONFIG_FILES([RunJavaBridge.c RunMonoBridge.c php/java/bridge/global.properties])
@@ -114,6 +120,7 @@ AC_SUBST(VM_BINARIES)
 AC_SUBST(MONO_BRIDGE_EXE)
 AC_SUBST(SERVLET)
 AC_SUBST(JAVA_BRIDGE_WAR)
+AC_SUBST(JAVA_BRIDGE_SERVLET_JAR)
 
 # optional script
 AC_SUBST(SCRIPT)

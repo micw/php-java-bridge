@@ -12,6 +12,7 @@ import php.java.bridge.NotImplementedException;
 import php.java.bridge.Util;
 
 /**
+ * A simple HTTP response implementation.
  * @author jostb
  *
  */
@@ -23,7 +24,8 @@ public class HttpResponse {
     private boolean headersWritten;
 
     /**
-     * @param outputStream
+     * Create a new HTTP response with the given OutputStream
+     * @param outputStream The OutputStream.
      */
     public HttpResponse(OutputStream outputStream) {
 	this.outputStream = outputStream;
@@ -32,15 +34,18 @@ public class HttpResponse {
     }
 
     /**
-     * @param string
-     * @param id
+     * Set the response header
+     * @param string The header key
+     * @param val The header value.
      */
-    public void setHeader(String string, String id) {
-	headers.put(string, id);
+    public void setHeader(String string, String val) {
+	headers.put(string, val);
     }
 
     /**
-     * @return
+     * Returns the OutputStream of the response. setContentLength() must be called before.
+     * @return The OutputStream
+     * @see HttpRequest#setContentLength(int)
      */
     public OutputStream getOutputStream() {
 	if(!this.headersWritten) throw new IllegalStateException("Use setContentLength() before calling getOutputStream.");
@@ -48,15 +53,18 @@ public class HttpResponse {
     }
 
     /**
-     * @param i
+     * Set the response status. Not implemented.
+     * @param code
      */
-    public void setStatus(int i) {
+    public void setStatus(int code) {
 	throw new NotImplementedException();
     }
 
     /**
-     * @param string
-     * @param string2
+     * Add a response header, in this implementation identical to setHeader
+     * @param string The header
+     * @param string2 The header value
+     * @see HttpResponse#setHeader(String, String)
      */
     public void addHeader(String string, String string2) {
 	setHeader(string, string2);
@@ -82,11 +90,13 @@ public class HttpResponse {
     	out.writeTo(outputStream);
     }
     /**
-     * @param i
+     * Set the content length of the response. Sets the "Content-Length" header value.
+     * @param length The content length
      * @throws IOException
+     * @see HttpResponse#getOutputStream()
      */
-    public void setContentLength(int i) throws IOException {
-	setHeader("Content-Length", String.valueOf(i));
+    public void setContentLength(int length) throws IOException {
+	setHeader("Content-Length", String.valueOf(length));
 	writeHeaders();
 	this.headersWritten = true;
     }

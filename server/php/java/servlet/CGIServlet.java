@@ -283,7 +283,8 @@ public class CGIServlet extends HttpServlet {
     /**
      * Header encoding
      */
-    protected static final String ASCII = "ASCII";
+    private static final String ASCII = "ASCII";
+    private static final String UTF = "UTF-8";
 
     /**
      * Create a default environment which inherits all environment
@@ -292,7 +293,7 @@ public class CGIServlet extends HttpServlet {
     // private static final Hashtable defaultEnv = new Hashtable(System.getenv());
 
     // foobar workaround for Windows problems
-    protected static final HashMap defaultEnv = new HashMap();
+    protected final HashMap defaultEnv = new HashMap();
     private static final File winnt = new File("c:/winnt");
     private static final File windows = new File("c:/windows");
     private void setDefaultEnv() {
@@ -316,7 +317,6 @@ public class CGIServlet extends HttpServlet {
 	if(val!=null) defaultEnv.put("SystemRoot", val);
     }
 
-    private static final String UTF="UTF-8";
     /**
      * UTF-8 encode a URL parameter.
      * @param parameter

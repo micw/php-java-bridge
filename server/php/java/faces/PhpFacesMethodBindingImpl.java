@@ -11,7 +11,11 @@ import javax.faces.el.MethodNotFoundException;
 import javax.faces.el.ReferenceSyntaxException;
 import javax.faces.el.ValueBinding;
 
-
+/**
+ * A custom MethodBindingImpl, forwards method calls to Script
+ * @author jostb
+ * @see php.java.faces.Script
+ */
 public class PhpFacesMethodBindingImpl extends MethodBinding implements StateHolder
 {
     private Class args[];
@@ -92,7 +96,11 @@ public class PhpFacesMethodBindingImpl extends MethodBinding implements StateHol
 	if(context == null)
 	    throw new NullPointerException();
 	base = vb.getValue(context);
-	return ((Script)base).call(name, this.args, args);
+	try {
+	    return ((Script)base).call(name, this.args, args);
+	} catch (Exception e) {
+	    throw new MethodNotFoundException(e);
+	}
     }
 
 

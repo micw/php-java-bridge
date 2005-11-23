@@ -12,10 +12,10 @@ import java.util.Map;
  * requests.  <br> Example:<br>
  * 
  * $session=java_session();<br>
- * $val=$session-&lt;get("i");<br>
+ * $val=$session-&gt;get("i");<br>
  * if(!$val) val = 0;
  * echo $val++; <br>
- * $session-&lt;put("i", new java("java.lang.Integer", $val));<br>
+ * $session-&gt;put("i", new java("java.lang.Integer", $val));<br>
  * <P>An implementation of ISession represents the server's view
  * of the session. 
  *
@@ -39,7 +39,7 @@ import java.util.Map;
  * required to enter some information and send it to the server before
  * gaining access to subsequent pages.
  * <P>
- * $session=java_session;<br>
+ * $session=java_session();<br>
  * if($session-&gt;isNew()) { <br>
  * &nbsp;&nbsp; header("Location: http://".$_SERVER['HTTP_HOST'] .dirname($_SERVER['PHP_SELF']) ."/welcomeURL.html");<br>
  * }<br>

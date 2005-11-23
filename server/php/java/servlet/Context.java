@@ -9,12 +9,18 @@ import javax.servlet.http.HttpServletResponse;
 
 
 /**
+ * A custom context which keeps the HttpServletResponse.
+ * 
  * @author jostb
  *
  */
-public class Context extends php.java.bridge.Context {
-    HttpServletResponse res;
+public class Context extends php.java.bridge.http.Context {
+    protected HttpServletResponse res;
 	
+    /**
+     * Create a new context.
+     * @param res The HttpServletResponse
+     */
     public Context(HttpServletResponse res) {
 	this.res = res;
     }

@@ -44,7 +44,7 @@ if($_GET['guess']) {
 
 <?php } else { ?>
 
-  Good guess, but nope.  Try <b><?php echo $numguess->getHint() ?></b>.
+  Good guess, but nope.  Try <b><?php echo (string)$numguess->getHint() ?></b>.
 
   You have made <?php echo $numguess->getNumGuesses() ?> guesses.<p>
 

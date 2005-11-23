@@ -151,7 +151,8 @@ NOTES:
 If the first byte is neither a "<" nor a space, bits [0,1], [2,4] and
 [6,7] have a special meaning:
 
-Bit 0: Reserved.
+Bit 0: Always 0 (reserved to enable backward compatibility with
+"ext/java", the predecessor of the PHP/Java Bridge)
 
 Bit 1: Client wants arrays as values. The server will return X and P
 instead of O.

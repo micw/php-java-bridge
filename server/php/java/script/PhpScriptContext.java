@@ -7,26 +7,25 @@ import java.util.Hashtable;
 
 import javax.script.SimpleScriptContext;
 
-import php.java.bridge.ContextManager;
 import php.java.bridge.DynamicJavaBridgeClassLoader;
-import php.java.bridge.Invocable;
 import php.java.bridge.JavaBridge;
 import php.java.bridge.JavaBridgeClassLoader;
 import php.java.bridge.JavaBridgeRunner;
 import php.java.bridge.PhpProcedureProxy;
 import php.java.bridge.Util;
-import php.java.faces.PhpFacesScriptContext;
+import php.java.bridge.http.ContextFactory;
 
 /**
  * This class implements a simple script context for PHP. It starts a standalone 
- * JavaBridgeRunner which listens for requests from php instances.<p>
+ * <code>JavaBridgeRunner</code> which listens for requests from php instances.<p>
  * 
- * In a servlet environment please use a PhpFacesScriptContext instead.
- * @see PhpFacesScriptContext
+ * In a servlet environment please use a <code>php.java.script.PhpSimpleHttpScriptContext</code> instead.
+ * @see php.java.script.PhpSimpleHttpScriptContext
+ * @see php.java.bridge.JavaBridgeRunner
  * @author jostb
  *
  */
-public class PhpScriptContext extends SimpleScriptContext implements Invocable {
+public class PhpScriptContext extends SimpleScriptContext implements IPhpScriptContext {
     static JavaBridgeRunner bridgeRunner;
 
     static {
@@ -37,7 +36,7 @@ public class PhpScriptContext extends SimpleScriptContext implements Invocable {
 	}
     }
 
-    protected ContextManager ctx;
+    protected ContextFactory ctx;
     private Hashtable env;
     private HttpProxy kont;
 	
@@ -48,10 +47,10 @@ public class PhpScriptContext extends SimpleScriptContext implements Invocable {
     public PhpScriptContext() {
 	env = new Hashtable();
 		
-	ctx = PhpScriptContextManager.addNew(this);
+	ctx = PhpScriptContextFactory.addNew(this);
 	JavaBridge bridge = new JavaBridge();
 	ctx.setBridge(bridge);
-	bridge.setClassLoader(new JavaBridgeClassLoader(ctx.getBridge(), DynamicJavaBridgeClassLoader.newInstance(getClass().getClassLoader())));
+	bridge.setClassLoader(new JavaBridgeClassLoader(ctx.getBridge(), DynamicJavaBridgeClassLoader.newInstance(Util.getContextClassLoader())));
 	bridge.setSessionFactory(ctx);
     	
 	/* send the session context now, otherwise the client has to 
@@ -77,7 +76,7 @@ public class PhpScriptContext extends SimpleScriptContext implements Invocable {
      * 
      * @return the context manager
      */
-    public ContextManager getContextManager() {
+    public ContextFactory getContextManager() {
 	return ctx;
     }
 

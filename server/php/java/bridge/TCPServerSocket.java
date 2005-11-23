@@ -6,7 +6,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class TCPServerSocket implements ISocketFactory {
+class TCPServerSocket implements ISocketFactory {
 
     public static final String DefaultSocketname = Util.TCP_SOCKETNAME;
     private ServerSocket sock;

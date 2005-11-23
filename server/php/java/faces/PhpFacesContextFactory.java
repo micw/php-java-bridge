@@ -8,6 +8,7 @@ import javax.faces.context.FacesContextFactory;
 import javax.faces.lifecycle.Lifecycle;
 
 /**
+ * Creates a PhpFacesContext
  * @author jostb
  *
  */
@@ -15,6 +16,7 @@ public class PhpFacesContextFactory extends FacesContextFactory {
 
     FacesContextFactory factory;
 	
+    public PhpFacesContextFactory() {}
     public PhpFacesContextFactory(FacesContextFactory factory) {
 	this.factory = factory;
     }

@@ -5,7 +5,6 @@ package php.java.faces;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Locale;
-import java.util.ResourceBundle;
 
 import javax.faces.FacesException;
 import javax.faces.application.Application;
@@ -24,8 +23,9 @@ import javax.faces.event.ActionListener;
 import javax.faces.validator.Validator;
 
 /**
+ * A custom Application, overrides getPropertyResolver.
  * @author jostb
- *
+ * @see php.java.faces.PhpFacesPropertyResolver
  */
 public class PhpFacesApplication extends Application {
 
@@ -104,18 +104,23 @@ public class PhpFacesApplication extends Application {
 	app.setNavigationHandler(handler);
     }
 
+    private PropertyResolver resolver = null;
+    PropertyResolver getPropertyResolver(PropertyResolver delegate) {
+        if(resolver!=null) return resolver;
+        return resolver = new PhpFacesPropertyResolver(delegate);
+    }
     /* (non-Javadoc)
      * @see javax.faces.context.Application#getPropertyResolver()
      */
     public PropertyResolver getPropertyResolver() {
-	return app.getPropertyResolver();
+       return getPropertyResolver(app.getPropertyResolver());
     }
 
     /* (non-Javadoc)
      * @see javax.faces.context.Application#setPropertyResolver(javax.faces.el.PropertyResolver)
      */
     public void setPropertyResolver(PropertyResolver resolver) {
-	app.setPropertyResolver(resolver);
+	if(!(resolver instanceof PhpFacesPropertyResolver)) app.setPropertyResolver(getPropertyResolver(resolver));
     }
 
     /* (non-Javadoc)
@@ -175,14 +180,6 @@ public class PhpFacesApplication extends Application {
 	return app.createComponent(componentType);
     }
 
-    /* (non-Javadoc)
-     * @see javax.faces.context.Application#createComponent(javax.faces.el.ValueBinding, javax.faces.context.FacesContext, java.lang.String)
-     */
-    public UIComponent createComponent(ValueBinding componentBinding,
-				       FacesContext context, String componentType)
-	throws FacesException {
-	return app.createComponent(componentBinding, context, componentType);
-    }
 
     /* (non-Javadoc)
      * @see javax.faces.context.Application#getComponentTypes()
@@ -284,11 +281,12 @@ public class PhpFacesApplication extends Application {
 	throws ReferenceSyntaxException {
 	return app.createValueBinding(ref);
     }
+    
     /* (non-Javadoc)
-     * @see javax.faces.application.Application#getResourceBundle(javax.faces.context.FacesContext, java.lang.String)
+     * @see javax.faces.application.Application#createComponent(javax.faces.el.ValueBinding, javax.faces.context.FacesContext, java.lang.String)
      */
-    public ResourceBundle getResourceBundle(FacesContext arg0, String arg1) {
-	return ((PhpFacesApplication) app).getResourceBundle(arg0, arg1);
+    public UIComponent createComponent(ValueBinding componentBinding, FacesContext context, String componentType) throws FacesException {
+        return app.createComponent(componentBinding, context, componentType);
     }
 
 }

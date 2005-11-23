@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-public class Session implements ISession {
+class Session implements ISession {
     protected Map map;
     protected String name;
     private static int sessionCount=0;

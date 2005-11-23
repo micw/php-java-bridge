@@ -7,7 +7,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
-import php.java.bridge.ContextManager;
 import php.java.bridge.JavaBridge;
 import php.java.bridge.Request;
 import php.java.bridge.Util;
@@ -16,9 +15,9 @@ import php.java.bridge.Util;
  * The ContextRunner manages the "high speed" communication link.  It
  * pulls a context and executes it.  After execution the context is destroyed.
  */
-public class ContextRunner implements Runnable {
+class ContextRunner implements Runnable {
     		
-    private ContextManager ctx;
+    private ContextFactory ctx;
     private JavaBridge bridge;
     private InputStream in;
     private OutputStream out;
@@ -26,7 +25,7 @@ public class ContextRunner implements Runnable {
     private Request r;
     private ContextServer runner;
 
-    public ContextRunner(ContextServer runner, InputStream in, OutputStream out, Socket sock) {
+    protected ContextRunner(ContextServer runner, InputStream in, OutputStream out, Socket sock) {
 	this.runner = runner;
 	this.in = in;
 	this.out = out;
@@ -59,7 +58,7 @@ public class ContextRunner implements Runnable {
 	    throw new IOException("No runner available");
 	}
 	String name = readName();
-    	ctx = (ContextManager) ContextManager.get(name);
+    	ctx = (ContextFactory) ContextFactory.get(name);
     	if(ctx == null) throw new IOException("No context available for: " + name + ".");
     	bridge = ctx.getBridge();
     	bridge.in=in;

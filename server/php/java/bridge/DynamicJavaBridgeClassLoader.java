@@ -14,6 +14,11 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.WeakHashMap;
 
+/**
+ * The bridge class loader which uses the DynamicClassLoader when possible.
+ * @author jostb
+ *
+ */
 public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 
     // the local library directory (global one is /usr/share/java)
@@ -39,10 +44,13 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     	if(contextDir!=null) return contextDir;
     	return phpLibDir;
     }
-    /** Set the library path for the java bridge. Examples:
-     * setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");
-     * setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");
+    
+    /** Set the library path for the bridge instance. Examples:
+     * setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");<br>
+     * setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");<br>
      * The first char must be the token separator.
+     * @param rawPath The path
+     * @param rawContextDir The context dir, e.g. /usr/lib/php/extensions
      */
     public void updateJarLibraryPath(String rawPath, String rawContextDir) {
     	String key = rawPath;
@@ -157,6 +165,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
      * java_set_library_path("foo.jar;bar.jar"); For backward
      * compatibility we add all URLs we encountered during startup
      * before throwing a "ClassNotFoundException".
+     * @param phpConfigDir The default php config directory
      */
     public static synchronized void initClassLoader(String phpConfigDir) {
         DynamicJavaBridgeClassLoader.phpLibDir=phpConfigDir + "/lib/";
@@ -194,7 +203,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	}
     }
 
-    public void addSysUrls() {
+    protected void addSysUrls() {
         URL urls[] = new URL[sysUrls.size()];
 	synchronized(getClass()) {
             sysUrls.toArray(urls);
@@ -202,9 +211,8 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	this.addURLs(urls, true);
     }
 
-    /*
-     *  (non-Javadoc)
-     * @see php.java.bridge.DynamicClassLoader#clear()
+    /**
+     * Clears all caches.
      */
     public void clear() {
     	contextDir=null;

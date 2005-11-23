@@ -4,12 +4,21 @@ package php.java.faces;
 
 import javax.faces.el.EvaluationException;
 import javax.faces.el.PropertyNotFoundException;
+import javax.faces.el.PropertyResolver;
 
 
-
+/**
+ * A custom property resolver for php scripts
+ * @author jostb
+ * @see php.java.faces.Script
+ */
 public class PhpFacesPropertyResolver extends javax.faces.el.PropertyResolver {
 
-    public PhpFacesPropertyResolver() {
+    /**
+     * Create a custom resolver from the given resolver.
+     * @param resolver
+     */
+    public PhpFacesPropertyResolver(PropertyResolver resolver) {
     }
     /* (non-Javadoc)
      * @see javax.faces.el.PropertyResolver#getType(java.lang.Object, int)

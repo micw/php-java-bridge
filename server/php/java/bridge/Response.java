@@ -7,9 +7,26 @@ import java.lang.reflect.Array;
 import java.util.Iterator;
 import java.util.Map;
 
+/**
+ * This class is used to write the response to the frontent.
+ * 
+ * @author jostb
+ *
+ */
 public class Response {
 
+    /**
+     * A specialized writer which writes arrays as values.
+     * Used by getValues() and in php 4.
+     * @see JavaBridge#getValues(Object)
+     */
     public static final int VALUES_WRITER = 1;
+    
+    /**
+     * A specialized writer which casts the value.
+     * Used by cast().
+     * @see JavaBridge#cast(Object, Class)
+     */
     public static final int COERCE_WRITER = 2;
 
     // used in getFirstBytes() only
@@ -57,13 +74,11 @@ public class Response {
 	    }
     	}
     	void appendQuoted(String s) {
-	    appendQuoted(getBytes(s));
+	    appendQuoted(bridge.options.getBytes(s));
     	}
     }
     OutBuf buf;
     long result, peer;
-    byte options;
-    private String encoding;
     private JavaBridge bridge;
 
  
@@ -79,14 +94,15 @@ public class Response {
 	    this.type = type;
 	}
     }
-    
-    protected abstract class Writer extends DelegateWriter {
-	protected DelegateWriter delegate;
-
+    protected abstract class GenericWriter extends DelegateWriter {
 	public void setResult(Object value, Class type) {
 	    setType(type);
 	    setResult(value);
-	}
+	}        
+    }
+    protected abstract class Writer extends GenericWriter {
+	protected DelegateWriter delegate;
+
 	public void setType(Class type) {
 	    super.setType(type);
 	    delegate.setType(type);
@@ -94,15 +110,8 @@ public class Response {
     }
     protected class ArrayWriter extends DelegateWriter {
 	public boolean setResult(Object value) {
-	    if (value.getClass().isArray()) {
-		writeObject(value);
-	    } else if (value instanceof java.util.Map) {
-		writeObject(value);
-	    } else {
 		return false;
-	    }
-	    return true;
-        }
+	}
     }
     protected class ArrayValuesWriter extends DelegateWriter {
 	public boolean setResult(Object value) {
@@ -111,7 +120,7 @@ public class Response {
 		writeCompositeBegin_a();
 		for (int i=0; i<length; i++) {
 		    writePairBegin();
-		    setResult(Array.get(value, i));
+		    writer.setResult(Array.get(value, i));
 		    writePairEnd();
 		}
 		writeCompositeEnd();
@@ -124,11 +133,11 @@ public class Response {
 		    if (key instanceof Number &&
 			!(key instanceof Double || key instanceof Float)) {
 			writePairBegin_n(((Number)key).intValue());
-			setResult(ht.get(key));
+			writer.setResult(ht.get(key));
 		    }
 		    else {
 			writePairBegin_s(String.valueOf(key));
-			setResult(ht.get(key));
+			writer.setResult(ht.get(key));
 		    }
 		    writePairEnd();
 		}
@@ -170,6 +179,7 @@ public class Response {
     protected class DefaultWriter extends Writer {
 
 	public boolean setResult(Object value) {
+	    if(value==null) {writeObject(null); return true;}
 	    if(type.isPrimitive()) {
    		if(type == Boolean.TYPE)
 		    writeBoolean(((Boolean) value).booleanValue());
@@ -185,24 +195,51 @@ public class Response {
 	    return true;
         }        	     	
     }
-    protected class CoerceDelegate extends DelegateWriter {
-
-	public boolean setResult(Object value) {
-	    if(type == String.class) {
-		writeString(String.valueOf(value));
-		return true;
-	    }
-	    return false;
-	}        	     	
-    }
-    protected class CoerceWriter extends DefaultWriter {
+  	
+    protected class CoerceWriter extends GenericWriter {
 	public void setResult(Object value, Class resultType) {
 	    // ignore resultType and use the coerce type
 	    setResult(value);
 	}
+
+	public boolean setResult(Object value) {
+		 if(value instanceof Request.PhpString) 
+		     value = ((Request.PhpString)value).getString();
+
+		 if(type.isPrimitive()) {
+		if(type == Boolean.TYPE) {
+		    if(value instanceof Boolean)
+		        writeBoolean(((Boolean) value).booleanValue());
+		    else 
+		        writeBoolean(value!=null && String.valueOf(value).length()!=0);
+		} else if(type == Byte.TYPE || type == Short.TYPE || type == Integer.TYPE || type == Long.TYPE) {
+		    if(value instanceof Number) 
+		        writeLong(((Number)value).longValue());
+		    else {
+		        try { writeLong(new Long(String.valueOf(value)).longValue()); } catch (NumberFormatException n) { writeLong(0); }
+		    }
+		} else if(type == Float.TYPE || type == Double.TYPE) {
+		    if(value instanceof Number) 
+		        writeDouble(((Number)value).doubleValue());
+		    else {
+		        try { writeDouble(new Double(String.valueOf(value)).doubleValue()); } catch (NumberFormatException n) { writeDouble(0.0); }
+		    }
+		} else if(type == Character.TYPE) {
+		    writeString(String.valueOf(value));
+		} else { Util.logFatal("Unknown type"); writeObject(value); }
+	    } else if(type == String.class) {
+		 if (value instanceof byte[])
+		     writeString((byte[])value);
+		 else
+		     writeString(String.valueOf(value));
+	    } else {
+		writeObject(value);
+	    }
+	    return true;
+	}
     }
     DelegateWriter getDefaultDelegate() {
-	if(sendArraysAsValues())
+	if(bridge.options.sendArraysAsValues())
 	    return new ArrayValuesWriter();
 	else
 	    return new ArrayWriter();
@@ -210,7 +247,7 @@ public class Response {
 	
     Writer newWriter(DelegateWriter delegate) {
      	Writer writer;
-    	if(extJavaCompatibility())
+    	if(bridge.options.extJavaCompatibility())
 	    writer = new ClassicWriter();
     	else 
 	    writer = new DefaultWriter();
@@ -218,61 +255,48 @@ public class Response {
 	return writer;
     }
      
-    private Writer writer, defaultWriter;
+    private GenericWriter writer, defaultWriter, arrayValuesWriter, coerceWriter;
 
-    boolean sendArraysAsValues() {
-        return (options & 2)==2;
-    }
-
-    boolean extJavaCompatibility() {
-    	return (this.options & 1) == 1;
-    }
-
+    /**
+     * Creates a new response object. The object is re-used for each packed.
+     * @param bridge The bridge.
+     */
     public Response(JavaBridge bridge) {
 	buf=new OutBuf();
 	this.bridge=bridge;
 	defaultWriter = writer = newWriter(getDefaultDelegate());
+	coerceWriter = new CoerceWriter();
+	arrayValuesWriter = newWriter(new ArrayValuesWriter());
     }
-     
+     /**
+      * Set the result packet.
+      * @param value The result object.
+      * @param type The type of the result object.
+      */
     public void setResult(Object value, Class type) {
      	writer.setResult(value, type);
     }
 
-    public Writer selectWriter(int writerType) {
+    /**
+     * Selects a different writer.
+     * @param writerType Must be Response#VALUES_WRITER or Response#COERCE_WRITER.
+     * @return The seleted writer.
+     * @see Response#VALUES_WRITER
+     * @see Response#COERCE_WRITER
+     */
+    public GenericWriter selectWriter(int writerType) {
      	switch(writerType) {
-    	case VALUES_WRITER: writer = newWriter(new ArrayValuesWriter()); break;
-    	case COERCE_WRITER: writer = new CoerceWriter(); writer.delegate=new CoerceDelegate(); break;
+    	case VALUES_WRITER: writer = arrayValuesWriter; break;
+    	case COERCE_WRITER: writer = coerceWriter; break;
     	default: throw new IllegalArgumentException(String.valueOf(writerType));
     	}
      	return writer;
     }
-    void setResult(long id, byte options) {
+    void setResultID(long id) {
     	this.result=id;
-	this.encoding=this.bridge.fileEncoding;
-    	this.options=options;
     }
     
-    String getEncoding() {
-    	return encoding;
-    }
-
-    byte[] getBytes(String s) { 
-        try { 
-	    return s.getBytes(getEncoding());
-        } catch (java.io.UnsupportedEncodingException e) { 
-	    bridge.printStackTrace(e);
-	    return s.getBytes();
-	}
-    }
-    String newString(byte[] b) {
-        try { 
-	    return new String(b, getEncoding());
-        } catch (java.io.UnsupportedEncodingException e) { 
-	    bridge.printStackTrace(e);
-	    return new String(b);
-	}
-    }
-    
+   
     static final byte[] e="\"/>".getBytes();
     static final byte[] c="\">".getBytes();
     static final byte[] I="\" i=\"".getBytes();
@@ -296,6 +320,7 @@ public class Response {
     static final byte[] Pe="</P>".getBytes();
     static final byte[] quote="&quot;".getBytes();
     static final byte[] amp="&amp;".getBytes();
+
     void writeString(byte s[]) {
 
 	buf.append(S);
@@ -304,7 +329,7 @@ public class Response {
 	buf.append(e);
     }
     void writeString(String s) {
-	writeString(getBytes(s));
+	writeString(bridge.options.getBytes(s));
     }
     void writeBoolean(boolean b) {
 	buf.append(B); buf.write(b==true?'T':'F');
@@ -372,9 +397,14 @@ public class Response {
     void writeApplyEnd() {
 	buf.append(Ae);
     }
-    void flush() throws IOException {
+    
+    /**
+     * Write the response.
+     * @throws IOException
+     */
+    public void flush() throws IOException {
  	if(bridge.logLevel>=4) {
-	    bridge.logDebug(" <-- " +newString(buf.getFirstBytes()));
+	    bridge.logDebug(" <-- " +bridge.options.newString(buf.getFirstBytes()));
 	}
 	buf.writeTo(bridge.out);
 	reset();
@@ -382,14 +412,13 @@ public class Response {
     
     /**
      * Called at the end of each packed.
-     *
      */
-    void reset() {
+    protected void reset() {
     	writer = defaultWriter;
     	buf.reset();
     }
     public String toString() {
-    	return newString(buf.getFirstBytes());
+    	return bridge.options.newString(buf.getFirstBytes());
     }
 
 

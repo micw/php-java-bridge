@@ -22,6 +22,12 @@ import php.java.bridge.Util;
 
 
 /**
+ * A CGI Servlet which connects to a FastCGI server. If there's nothing listening on port FCGI_CHANNEL and fast cgi binary installed in 
+ * Util.DEFAULT_CGI_LOCATIONS, the php binary will be started. 
+ * It will be stopped when the VM shuts down.<br>
+ * NOTE: If the user has copied a cgi binary into his WEB-INF/cgi directory, FastCGI is not available anymore;
+ * FastCGI requires that the cgi binary is installed as a well known system file in one of the DEFAULT_CGI_LOCATIONS.
+ * @see php.java.bridge.Util#DEFAULT_CGI_LOCATIONS
  * @author jostb
  */
 public class FastCGIServlet extends CGIServlet {
@@ -31,63 +37,90 @@ public class FastCGIServlet extends CGIServlet {
     private static final long serialVersionUID = 3545800996174312757L;
 
     // IO buffer size
-    static final int BUF_SIZE = 65535;
+    private static final int FCGI_BUF_SIZE = 65535;
 
-    public static final int FCGI_HEADER_LEN = 8;
+    private static final int FCGI_HEADER_LEN = 8;
     /*
      * Values for type component of FCGI_Header
      */
-    public static final int FCGI_BEGIN_REQUEST =      1;
-    public static final int FCGI_ABORT_REQUEST =      2;
-    public static final int FCGI_END_REQUEST   =      3;
-    public static final int FCGI_PARAMS        =      4;
-    public static final int FCGI_STDIN         =      5;
-    public static final int FCGI_STDOUT        =      6;
-    public static final int FCGI_STDERR        =      7;
-    public static final int FCGI_DATA          =      8;
-    public static final int FCGI_GET_VALUES    =      9;
-    public static final int FCGI_GET_VALUES_RESULT = 10;
-    public static final int FCGI_UNKNOWN_TYPE      = 11;
-    public static final byte[] FCGI_EMPTY_RECORD = new byte[0];
+    private static final int FCGI_BEGIN_REQUEST =      1;
+    private static final int FCGI_ABORT_REQUEST =      2;
+    private static final int FCGI_END_REQUEST   =      3;
+    private static final int FCGI_PARAMS        =      4;
+    private static final int FCGI_STDIN         =      5;
+    private static final int FCGI_STDOUT        =      6;
+    private static final int FCGI_STDERR        =      7;
+    private static final int FCGI_DATA          =      8;
+    private static final int FCGI_GET_VALUES    =      9;
+    private static final int FCGI_GET_VALUES_RESULT = 10;
+    private static final int FCGI_UNKNOWN_TYPE      = 11;
+    private static final byte[] FCGI_EMPTY_RECORD = new byte[0];
 
     /*
      * Mask for flags component of FCGI_BeginRequestBody
      */
-    public static final int FCGI_KEEP_CONN  = 1;
+    private static final int FCGI_KEEP_CONN  = 1;
 
     /*
      * Values for role component of FCGI_BeginRequestBody
      */
-    public static final int FCGI_RESPONDER  = 1;
-    public static final int FCGI_AUTHORIZER = 2;
-    public static final int FCGI_FILTER     = 3;
+    private  static final int FCGI_RESPONDER  = 1;
+    private  static final int FCGI_AUTHORIZER = 2;
+    private  static final int FCGI_FILTER     = 3;
 
-    // fast cgi channel
-    static int FCGI_CHANNEL = 9667;
+    /**
+     * The Fast CGI default port
+     */
+    public static final int FCGI_CHANNEL = 9667;
 
-    static protected String php = null; 
-    static private Process proc = null;
+    protected String php = null; 
+    private boolean fcgiIsAvailable = true;
     
+    /**
+	 * If the user has copied a cgi binary into his WEB-INF/cgi directory, FastCGI is not available anymore;
+	 * FastCGI requires that the cgi binary is installed as a well known system file in one of the DEFAULT_CGI_LOCATIONS.
+	 * @see php.java.bridge.Util#DEFAULT_CGI_LOCATIONS
+	 * @return false if the user has set the parameter <code>php_exec</code> or 
+	 * has copied his own CGI binary into his WEB-INF/cgi directory, true otherwise.
+	 */
+    public boolean fcgiIsAvailable() {
+        return fcgiIsAvailable;
+    }
+    protected void checkCgiBinary(ServletConfig config) {
+	String value;
+	    try {
+		    value = config.getServletContext().getRealPath(cgiPathPrefix)+File.separator+"php-cgi";
+		    if(value!=null && value.trim().length()!=0) {
+		    	if(Util.checkCgiBinary(new StringBuffer(value)) != null) {
+		    	    php = value;
+		    	    fcgiIsAvailable = false;
+		    	}
+		    }
+		}  catch (Throwable t) {Util.printStackTrace(t);}    
+	if (php==null) {
+		try {
+		    value = config.getInitParameter("php_exec");
+		    if(value!=null && value.trim().length()!=0) {
+		        File f = new File(value);
+		        if(!f.isAbsolute()) value = config.getServletContext().getRealPath(cgiPathPrefix)+File.separator+value;
+		        php = value; 
+		    }
+		}  catch (Throwable t) {Util.printStackTrace(t);}      
+	}      
+	try {
+	    value = config.getInitParameter("use_fast_cgi");
+	    if(value!=null && value.trim().length()!=0) {
+	        fcgiIsAvailable = ("true".equalsIgnoreCase(value)) ? true : false;
+	    }
+	}  catch (Throwable t) {Util.printStackTrace(t);}      
+    }
     public void init(ServletConfig config) throws ServletException {
 	super.init(config);
 
-	String value;
-	try {
-	    value = getServletContext().getRealPath(cgiPathPrefix)+"/php-cgi";
-	    if(value!=null && value.trim().length()!=0) {
-	    	if(Util.checkCgiBinary(new StringBuffer(value)) != null) php = value;
-	    }
-	}  catch (Throwable t) {Util.printStackTrace(t);}      
-	try {
-	    value = getServletConfig().getInitParameter("fastcgi_socket");
-	    if(value!=null && value.trim().length()!=0) FCGI_CHANNEL = Integer.parseInt(value);
-	} catch (Throwable t) {Util.printStackTrace(t);}      
-	try {
-	    value = getServletConfig().getInitParameter("php_exec");
-	    if(value!=null && value.trim().length()!=0) 
-		php=value;
+	checkCgiBinary(config);
 
-	    if(FCGI_CHANNEL>0) {
+	try {
+	    if(fcgiIsAvailable){
 		(new Thread("JavaBridgeFastCGIRunner") {
 			public void run() {
 			    int c;
@@ -98,35 +131,47 @@ public class FastCGIServlet extends CGIServlet {
 			    else
 				port = "127.0.0.1:"+String.valueOf(FCGI_CHANNEL);
 			    try {
+				Process proc = null;
 				HashMap envp = (HashMap)defaultEnv.clone();
+
 				// Set override hosts so that php does not try to start a VM.
 				// The value itself doesn't matter, we'll pass the real value
 				// via the (HTTP_)X_JAVABRIDGE_OVERRIDE_HOSTS header field
 				// later.
-				//envp.put("X_JAVABRIDGE_OVERRIDE_HOSTS", "127.0.0.1:1//foo/bar");
-				String[] args = new String[]{php, "-b", port};
-				proc = Util.startProcess(args, new File(getCgiDir().toString()), defaultEnv);
-				proc.getOutputStream().close();
-				proc.getInputStream().close();
-				InputStream in = proc.getErrorStream();
-				while((c=in.read(buf))!=-1) 
-				    Util.logError("JavaBridgeFastCGIRunner: " +new String(buf, 0, c));
-	    	    				
-			    } catch (IOException e) {
-				Util.printStackTrace(e);
-			    }
+				envp.put("X_JAVABRIDGE_OVERRIDE_HOSTS", "/");
+				if(System.getProperty("php.java.bridge.promiscuous", "false").toLowerCase().equals("true")) {
+					String[] args = new String[]{php, "-b", port};
+					File home = null;
+					try { home = ((new File(php)).getParentFile()); } catch (Exception e) {Util.printStackTrace(e);}
+				    proc = Util.startProcess(args, home, envp);
+				} else {
+					String[] args = new String[]{null, "-b", port};
+				    proc = Util.startProcess(args, null, envp);
+				}
+				if(proc!=null) {
+				    proc.getOutputStream().close();
+				    proc.getInputStream().close();
+				    InputStream in = proc.getErrorStream();
+				    try {
+				        Runtime.getRuntime().addShutdownHook(
+									 (new Thread("JavaBridgeFastCGIShutdown") {
+									     Process proc;
+									     public Thread init(Process proc) {
+									         this.proc = proc;
+									         return this;
+									     }
+									     public void run() {
+										 if(proc!=null) try {proc.destroy();proc=null;} catch(Throwable t) {/*ignore*/}
+									     }
+									 }).init(proc));
+				    } catch (Throwable t) {t.printStackTrace();};
+
+				while((c=in.read(buf))!=-1) System.err.write(buf, 0, c);
+	    	    		if(proc!=null) try {proc.destroy(); proc=null;} catch(Throwable t) {/*ignore*/}
+				}
+			    } catch (Throwable t) {Util.printStackTrace(t);}
 			}
 		    }).start();
-		try {
-		    Runtime.getRuntime().addShutdownHook(
-							 new Thread("JavaBridgeFastCGIShutdown") {
-							     public void run() {
-								 if(proc!=null) proc.destroy();
-							     }
-							 });
-		} catch (Throwable t) {
-		    Util.printStackTrace(t);
-		}
 		try {
 		    Thread.sleep(500);
 		} catch (InterruptedException e) {/*ignore*/}
@@ -137,10 +182,6 @@ public class FastCGIServlet extends CGIServlet {
     }
     public void destroy() {
     	super.destroy();
-    	if(proc!=null) { 
-	    proc.destroy();
-	    proc = null;
-    	}
     }
 
     protected StringBuffer getCgiDir() {
@@ -162,17 +203,32 @@ public class FastCGIServlet extends CGIServlet {
 	}
 	protected boolean setCGIEnvironment(HttpServletRequest req, HttpServletResponse res) {
 			
-	    return super.setCGIEnvironment(req, res);
+	    boolean success = super.setCGIEnvironment(req, res);
+	    if(success) {
+	        // Same as X_JAVABRIDGE_OVERRIDE_HOSTS but stupid php cannot read it
+	        // because it is shadowed by the dummy X_JAVABRIDGE_OVERRIDE_HOSTS in
+	        // the global environment.
+		    StringBuffer buf = new StringBuffer("127.0.0.1:");
+		    buf.append(this.env.get("SERVER_PORT"));
+		    buf.append("/");
+		    buf.append(req.getRequestURI());
+		    this.env.put("X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT", buf.toString());
+
+	    }
+	    return success;
 	}
 	protected String[] findCGI(String pathInfo, String webAppRootDir,
 				   String contextPath, String servletPath,
 				   String cgiPathPrefix) {
 
+	    if(!fcgiIsAvailable()) return null;
+	    
 	    try {
 		fastCGISocket = new Socket(InetAddress.getByName("127.0.0.1"), FCGI_CHANNEL);
 		cgiRunnerFactory = new CGIRunnerFactory();
 	    } catch (Exception e) {
-		Util.logMessage("FastCGI channel not available");
+		Util.logMessage("FastCGI channel not available, switching off fast cgi.");
+		fcgiIsAvailable = false;
 		return null;
 	    }
 			
@@ -225,17 +281,17 @@ public class FastCGIServlet extends CGIServlet {
 	    byte[] header = new byte[] {
 		1, (byte)type, 
         	(byte)((requestId >> 8) & 0xff), (byte)((requestId) & 0xff),
-        	(byte)((BUF_SIZE >> 8) & 0xff), (byte)((BUF_SIZE) & 0xff),
+        	(byte)((FCGI_BUF_SIZE >> 8) & 0xff), (byte)((FCGI_BUF_SIZE) & 0xff),
 		0, //padding
 		0};
 	    int contentLength = buf.length;
 	    int pos=0;
-	    while(pos + BUF_SIZE < contentLength) {
+	    while(pos + FCGI_BUF_SIZE < contentLength) {
         	natOut.write(header);
-        	natOut.write(buf, pos, BUF_SIZE);
-        	pos += BUF_SIZE;
+        	natOut.write(buf, pos, FCGI_BUF_SIZE);
+        	pos += FCGI_BUF_SIZE;
 	    }
-	    contentLength = buf.length % BUF_SIZE;
+	    contentLength = buf.length % FCGI_BUF_SIZE;
 	    header[4] = (byte)((contentLength >> 8) & 0xff);
 	    header[5] = (byte)((contentLength) & 0xff);
 	    natOut.write(header);
@@ -276,8 +332,8 @@ public class FastCGIServlet extends CGIServlet {
 			
 		writeLength(out, keyLen);
 		writeLength(out, valLen);
-		out.write(key.getBytes(ASCII)); 	
-		out.write(val.getBytes(ASCII)); 	
+		out.write(key.getBytes(Util.ASCII)); 	
+		out.write(val.getBytes(Util.ASCII)); 	
 	    }
 	    write(FCGI_PARAMS, out.toByteArray());
 	    write(FCGI_PARAMS, FCGI_EMPTY_RECORD);
@@ -305,7 +361,7 @@ public class FastCGIServlet extends CGIServlet {
 	    natIn.close();
 	}
 	public int read(byte buf[]) throws IOException {
-	    if(buf.length!=BUF_SIZE) throw new IOException("Invalid block size");
+	    if(buf.length!=FCGI_BUF_SIZE) throw new IOException("Invalid block size");
 	    byte header[] = new byte[FCGI_HEADER_LEN];
 	    if(FCGI_HEADER_LEN!=natIn.read(header)) throw new IOException ("Protocol error");
 	    int version = header[0] & 0xFF;
@@ -357,6 +413,11 @@ public class FastCGIServlet extends CGIServlet {
 	}
 
 
+	/**
+	 * Optimized run method for FastCGI. Makes use of the large FCGI_BUF_SIZE and the specialized in.read(). 
+	 * It is a modified copy of the parseBody. 
+	 * @see Util#parseBody(byte[], InputStream, OutputStream, HeaderParser)
+	 */
         protected void run() throws IOException, ServletException {
 	    InputStream in = null;
             OutputStream out = null;
@@ -374,7 +435,7 @@ public class FastCGIServlet extends CGIServlet {
 		natOut.writeParams(env);
 		
 		String line = null;
-		byte[] buf = new byte[BUF_SIZE];// headers cannot be larger than this value!
+		byte[] buf = new byte[FCGI_BUF_SIZE];// headers cannot be larger than this value!
 		int i=0, n, s=0;
 		boolean eoh=false;
 
@@ -386,7 +447,7 @@ public class FastCGIServlet extends CGIServlet {
 		} else {
 		    natOut.write(FCGI_EMPTY_RECORD);
 		}
-		
+
 		// the header and content
 		while((n = natIn.read(buf)) !=-1) {
 		    int N = i + n;
@@ -398,7 +459,7 @@ public class FastCGIServlet extends CGIServlet {
 			    if(s+2==i && buf[s]=='\r') {
 				eoh=true;
 			    } else {
-				line = new String(buf, s, i-s-2, ASCII);
+				line = new String(buf, s, i-s-2, Util.ASCII);
 				addHeader(line);
 				s=i;
 			    }

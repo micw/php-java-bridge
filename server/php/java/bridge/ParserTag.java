@@ -2,8 +2,21 @@
 
 package php.java.bridge;
 
-class ParserTag {
-    short n;
-    ParserString strings[];
-    ParserTag (int n) { strings = new ParserString[n]; }
+/**
+ * This structure carries the parsed tag and the arguments.
+ * @author jostb
+ *
+ */
+public class ParserTag {
+    /**
+     * The number of strings.
+     */
+    public short n;
+    
+    /**
+     * The strings.
+     */
+    public ParserString strings[];
+    
+    protected ParserTag (int n) { strings = new ParserString[n]; }
 }

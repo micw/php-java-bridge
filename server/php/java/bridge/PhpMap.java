@@ -8,12 +8,18 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
+/**
+ * Maps php array get/set and foreach to java array, Map and Collections access.
+ * @author jostb
+ *
+ */
 public abstract class PhpMap {
     JavaBridge bridge;
     Object value;
     Class componentType;
     boolean keyType; //false: key is integer (array), true: key is string (hash)
-    public PhpMap(JavaBridge bridge, Object value, boolean keyType) {
+
+    protected PhpMap(JavaBridge bridge, Object value, boolean keyType) {
 	this.bridge=bridge;
     	this.value=value;
 	this.keyType=keyType;
@@ -23,23 +29,27 @@ public abstract class PhpMap {
     protected Object coerce(Object val) {
 	return bridge.coerce(new Class[]{componentType}, new Object[]{val}, bridge.request.response)[0];
     }
-    abstract void init();
-    public abstract Object currentData();
-    public abstract byte[] currentKey();
-    public abstract boolean moveForward();
-    public abstract boolean hasMore();
-    public boolean getType() {
+    protected abstract void init();
+    protected abstract Object currentData();
+    protected abstract Request.PhpString currentKey();
+    protected abstract boolean moveForward();
+    protected abstract boolean hasMore();
+    protected boolean getType() {
 	return keyType;
     }
 
-    public abstract boolean offsetExists(Object pos);
-    public abstract Object offsetGet(Object pos);
-    public abstract void offsetSet(Object pos, Object val);
-    public abstract void offsetUnset(Object pos); //remove
+    protected abstract boolean offsetExists(Object pos);
+    protected abstract Object offsetGet(Object pos);
+    protected abstract void offsetSet(Object pos, Object val);
+    protected abstract void offsetUnset(Object pos); //remove
     
-    //
-    // Return map for the value (PHP 5 only)
-    //
+
+    /**
+     * Returns a PhpMap for a given value.
+     * @param value The value, must be an array or implement Map or Collection
+     * @param bridge The bridge instance
+     * @return The PhpMap
+     */
     public static PhpMap getPhpMap(Object value, JavaBridge bridge) { 
 	if(bridge.logLevel>3) bridge.logDebug("returning map for "+ value.getClass());
 
@@ -50,41 +60,41 @@ public abstract class PhpMap {
 		    int i;
 		    int length;
 		    
-		    void init() {
+		    protected void init() {
 			i=0;
 			length = Array.getLength(this.value);
 			valid=length>0;
 		    }
-		    public Object currentData() {
+		    protected Object currentData() {
 			if(!valid) return null;
 			return Array.get(this.value, i);
 		    }
-		    public byte[] currentKey() {
+		    protected Request.PhpString currentKey() {
 			if(!valid) return null;
-			return String.valueOf(i).getBytes();
+			return new Request.SimplePhpString(bridge, (String.valueOf(i)));
 		    }
-		    public boolean moveForward() {
+		    protected boolean moveForward() {
 			valid=++i<length;
 			return valid?true:false;
 		    }
-		    public boolean hasMore() {
+		    protected boolean hasMore() {
 			return valid?true:false;
 		    }
 
-		    public boolean offsetExists(Object pos) {
+		    protected boolean offsetExists(Object pos) {
 			int i = ((Number)pos).intValue();
 			return (i>0 && i<length && (Array.get(this.value, i)!=this));
 		    }
-		    public Object offsetGet(Object pos) {
+		    protected Object offsetGet(Object pos) {
 			int i = ((Number)pos).intValue();
 			Object o = Array.get(this.value, i);
 			return o==this ? null : o;
 		    }
-		    public void offsetSet(Object pos, Object val) {
+		    protected void offsetSet(Object pos, Object val) {
 			int i = ((Number)pos).intValue();
 			Array.set(this.value, i, coerce(val));
 		    }
-		    public void offsetUnset(Object pos) {
+		    protected void offsetUnset(Object pos) {
 			int i = ((Number)pos).intValue();
 			Array.set(this.value, i, this);
 		    }
@@ -97,7 +107,7 @@ public abstract class PhpMap {
 		    int i;
 		    Iterator iter;
 		    
-		    void init() {
+		    protected void init() {
 			iter = ((Collection)(this.value)).iterator();
 			i = 0;
 			currentKey=null;
@@ -105,13 +115,13 @@ public abstract class PhpMap {
 			    currentKey=iter.next();
 			}
 		    }
-		    public Object currentData() {
+		    protected Object currentData() {
 			return currentKey;
 		    }
-		    public byte[] currentKey() {
-			return String.valueOf(i).getBytes();
+		    protected Request.PhpString currentKey() {
+			return new Request.SimplePhpString(bridge, String.valueOf(i));
 		    }
-		    public boolean moveForward() {
+		    protected boolean moveForward() {
 			if(iter.hasNext()) {
 			    i++;
 			    currentKey = iter.next();
@@ -120,27 +130,27 @@ public abstract class PhpMap {
 			    return false;
 			}
 		    }
-		    public boolean hasMore() {
+		    protected boolean hasMore() {
 			return currentKey==null?false:true;
 		    }
 
-		    void bail() {
+		    private void bail() {
 			throw new UnsupportedOperationException("A collection does not have an offset. You can only iterate over its hook.");
 		    }
 
 		    // Should we really care?
-		    public boolean offsetExists(Object pos) {
+		    protected boolean offsetExists(Object pos) {
 			bail();
 			return false;
 		    }
-		    public Object offsetGet(Object pos) {
+		    protected Object offsetGet(Object pos) {
 			bail();
 			return null;
 		    }
-		    public void offsetSet(Object pos, Object val) {
+		    protected void offsetSet(Object pos, Object val) {
 			bail();
 		    }
-		    public void offsetUnset(Object pos) {
+		    protected void offsetUnset(Object pos) {
 			bail();
 		    }
 		};
@@ -151,38 +161,38 @@ public abstract class PhpMap {
 		    Object currentKey;
 		    Iterator iter;
 		    
-		    void init() {
+		    protected void init() {
 			iter = ((Map)(this.value)).keySet().iterator();
 			currentKey=null;
 			if(iter.hasNext()) {
 			    currentKey=iter.next();
 			}
 		    }
-		    public Object currentData() {
+		    protected Object currentData() {
 			if(currentKey==null) return null;
 			return ((Map)(this.value)).get(currentKey);
 		    }
-		    public byte[] currentKey() {
-			return String.valueOf(currentKey).getBytes();
+		    protected Request.PhpString currentKey() {
+			return new Request.SimplePhpString(bridge, String.valueOf(currentKey));
 		    }
-		    public boolean moveForward() {
+		    protected boolean moveForward() {
 			currentKey = iter.hasNext() ? iter.next() : null;
 			return currentKey==null?false:true;
 		    }
-		    public boolean hasMore() {
+		    protected boolean hasMore() {
 			return currentKey==null?false:true;
 		    }
 
-		    public boolean offsetExists(Object pos) {
+		    protected boolean offsetExists(Object pos) {
 			return ((Map)(this.value)).containsKey(pos);
 		    }
-		    public Object offsetGet(Object pos) {
+		    protected Object offsetGet(Object pos) {
 			return ((Map)(this.value)).get(pos);
 		    }
-		    public void offsetSet(Object pos, Object val) {
+		    protected void offsetSet(Object pos, Object val) {
 			((Map)(this.value)).put(pos, coerce(val));
 		    }
-		    public void offsetUnset(Object pos) {
+		    protected void offsetUnset(Object pos) {
 			((Map)(this.value)).remove(pos);
 		    }
 		};

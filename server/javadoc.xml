@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project default="javadoc">
 <target name="javadoc">
-<javadoc access="public" author="true" classpath="/opt/jakarta-tomcat-4.0.2-b2/common/lib/servlet.jar" destdir="doc" doctitle="PHP/Java Bridge API Documentation" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" packagenames="php.java.servlet,php.java.bridge" source="1.4" sourcepath="." splitindex="true" use="true" version="true"/>
+<javadoc access="public" author="true" classpath="/usr/share/java/servletapi5.jar:/usr/share/java/el-api.jar" destdir="doc" doctitle="PHP/Java Bridge API Documentation" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" packagenames="php.java.servlet,php.java.bridge,php.java.script,javax.script" sourcepath="." splitindex="true" use="true" version="true"/>
 </target>
 </project>

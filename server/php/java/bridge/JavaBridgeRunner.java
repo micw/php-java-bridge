@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import php.java.bridge.http.ContextFactory;
 import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.HttpRequest;
 import php.java.bridge.http.HttpResponse;
@@ -16,18 +17,20 @@ import php.java.bridge.http.HttpServer;
  * This is the main entry point for the PHP/Java Bridge library.
  * Example:<br>
  * public MyClass { <br>
- * public static void main(String s[]) {<br>
- *  JavaBridgeRunner runner = new JavaBridgeRunner();<br>
- *  // connect to port 9267 and send protocol requests ... <br>
- * runner.destroy();<br>
- * }<be>
+ * &nbsp;&nbsp;public static void main(String s[]) {<br>
+ * &nbsp;&nbsp;&nbsp;&nbsp; JavaBridgeRunner runner = new JavaBridgeRunner();<br>
+ * &nbsp;&nbsp;&nbsp;&nbsp; // connect to port 9267 and send protocol requests ... <br>
+ * &nbsp;&nbsp;&nbsp;&nbsp;runner.destroy();<br>
+ * &nbsp;&nbsp;}<br>
+ * }<br>
  * @author jostb
- *
+ * @see php.java.script.PhpScriptContext
  */
 public class JavaBridgeRunner extends HttpServer {
 
     /**
-     * @throws Exception
+     * Create a new JavaBridgeRunner and ContextServer.
+     * @see ContextServer
      */
     public JavaBridgeRunner() {
 	super();
@@ -38,7 +41,10 @@ public class JavaBridgeRunner extends HttpServer {
     private InputStream in;
     private OutputStream out;
     private static ContextServer socketRunner;
-		
+
+    /**
+     * Create a server socket.
+     */
     public ISocketFactory bind() {
 	try {
 	    return JavaBridge.bind("INET:0");
@@ -48,9 +54,9 @@ public class JavaBridgeRunner extends HttpServer {
 	}
     }
 
-    private static ContextManager getContextManager(HttpRequest req, HttpResponse res) {
+    private static ContextFactory getContextManager(HttpRequest req, HttpResponse res) {
     	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
-    	ContextManager ctx = ContextManager.get(id);
+    	ContextFactory ctx = ContextFactory.get(id);
      	res.setHeader("X_JAVABRIDGE_CONTEXT", id);
     	return ctx;
     }
@@ -59,15 +65,13 @@ public class JavaBridgeRunner extends HttpServer {
      * Handle a redirected connection. The local channel is more than 50 
      * times faster than the HTTP tunnel. Used by Apache and cgi.
      * 
-     * @param req
-     * @param res
-     * @throws ServletException
-     * @throws IOException
+     * @param req The HttpRequest
+     * @param res The HttpResponse
      */
     protected void parseBody (HttpRequest req, HttpResponse res) {
     	super.parseBody(req, res);
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
-	ContextManager ctx = getContextManager(req, res);
+	ContextFactory ctx = getContextManager(req, res);
 	JavaBridge bridge = ctx.getBridge();
 	//if(session) ctx.setSession(req);
 
@@ -76,7 +80,7 @@ public class JavaBridgeRunner extends HttpServer {
 	Request r = bridge.request = new Request(bridge);
 
 	try {
-	    if(r.initOptions(sin, sout)) {
+	    if(r.init(sin, sout)) {
 		res.setHeader("X_JAVABRIDGE_REDIRECT", socketRunner.getSocket().getSocketName());
 	    	r.handleOneRequest();
 
@@ -103,6 +107,11 @@ public class JavaBridgeRunner extends HttpServer {
 	    try {if(resOut!=null) resOut.close();} catch (IOException e2) {}
 	}
     }
+    
+    /**
+     * Returns the server socket.
+     * @return The server socket.
+     */
     public ISocketFactory getSocket() {
 	return socket;
     }

@@ -25,8 +25,12 @@ import java.util.Vector;
  */
 public class Util {
 
+    static {
+        initGlobals();
+    }
+
     /**
-     * The default CGI locations.
+     * The default CGI locations: <code>"/usr/bin/php-cgi"</code>, <code>"/usr/bin/php"</code>, <code>"c:/php5/php-cgi.exe</code>
      */
     public static final String DEFAULT_CGI_LOCATIONS[] = new String[] {"/usr/bin/php-cgi", "/usr/bin/php", "c:/php5/php-cgi.exe"};
 
@@ -180,7 +184,6 @@ public class Util {
         static boolean haveDateFormat=true;
         private static Object _form;
         protected Logger () {
-            initGlobals();
         }
         /**
          * Create a String containing the current date/time.
@@ -199,7 +202,7 @@ public class Util {
 	}
         /**
          * Log a message
-         * @param s - The message
+         * @param s  The message
          */
    	public void log(String s) {
 	    byte[] bytes = null;
@@ -216,7 +219,7 @@ public class Util {
    	
    	/**
    	 * Log a stack trace
-   	 * @param t - The Throwable
+   	 * @param t The Throwable
    	 */
    	public void printStackTrace(Throwable t) {
    	    t.printStackTrace(logStream);
@@ -241,8 +244,8 @@ public class Util {
 
     /**
      * print a message on a given log level
-     * @param level - The log level
-     * @param msg - The message
+     * @param level The log level
+     * @param msg The message
      */
     public static void println(int level, String msg) {
 	StringBuffer b = new StringBuffer(logger.now());
@@ -261,7 +264,7 @@ public class Util {
     
     /**
      * Display a warning if logLevel >= 1
-     * @param msg - The warn message
+     * @param msg The warn message
      */
     public static void warn(String msg) {
 	if(logLevel<=0) return;
@@ -275,7 +278,7 @@ public class Util {
     
     /**
      * Display a stack trace if logLevel >= 1
-     * @param t - The Throwable
+     * @param t The Throwable
      */
     public static void printStackTrace(Throwable t) {
 	if(logLevel > 0)
@@ -285,7 +288,7 @@ public class Util {
     
     /**
      * Display a debug message
-     * @param msg - The message
+     * @param msg The message
      */
     public static void logDebug(String msg) {
 	if(logLevel>3) println(4, msg);
@@ -293,7 +296,7 @@ public class Util {
     
     /**
      * Display a fatal error
-     * @param msg - The error
+     * @param msg The error
      */
     public static void logFatal(String msg) {
 	if(logLevel>0) println(1, msg);
@@ -301,7 +304,7 @@ public class Util {
     
     /**
      * Display an error or an exception
-     * @param msg - The error or the exception
+     * @param msg The error or the exception
      */
     public static void logError(String msg) {
 	if(logLevel>1) println(2, msg);
@@ -309,7 +312,7 @@ public class Util {
     
     /**
      * Display a message
-     * @param msg - The message
+     * @param msg The message
      */
     public static void logMessage(String msg) {
 	if(logLevel>2) println(3, msg);
@@ -317,18 +320,20 @@ public class Util {
     
     /**
      * Return the class name
-     * @param obj - The object
+     * @param obj The object
      * @return The class name
      */
     public static String getClassName(Object obj) {
-    	Class c = getClass(obj);
-    	if(c!=null) return c.getName();
-    	return "null";
+        if(obj==null) return "null";
+        Class c = obj.getClass();
+        String name = c.getName();
+        if(name.startsWith("[")) name = "array_of-"+name.substring(1);
+        return name;
     }
     
     /**
      * Return the short class name
-     * @param obj - The object
+     * @param obj The object
      * @return The class name
      */
     public static String getShortClassName(Object obj) {
@@ -341,7 +346,7 @@ public class Util {
     
     /**
      * Return the class.
-     * @param obj - The object
+     * @param obj The object
      * @return The class
      */
     public static Class getClass(Object obj) {
@@ -351,8 +356,8 @@ public class Util {
     
     /**
      * Append an object to a StringBuffer
-     * @param obj - The object
-     * @param buf - The StringBuffer
+     * @param obj The object
+     * @param buf The StringBuffer
      */
     public static void appendObject(Object obj, StringBuffer buf) {
 	if(obj==null) { buf.append("null"); return; }
@@ -373,8 +378,8 @@ public class Util {
     }
     /**
      * Append a parameter object to a StringBuffer
-     * @param obj - The object
-     * @param buf - The StringBuffer
+     * @param obj The object
+     * @param buf The StringBuffer
      */
     public static void appendShortObject(Object obj, StringBuffer buf) {
 	if(obj==null) { buf.append("null"); return; }
@@ -393,8 +398,8 @@ public class Util {
     
     /**
      * Append a function parameter to a StringBuffer
-     * @param obj - The parameter object
-     * @param buf - The StringBuffer
+     * @param obj The parameter object
+     * @param buf The StringBuffer
      */
     public static void appendParam(Object obj, StringBuffer buf) {
     	buf.append("(");
@@ -404,8 +409,8 @@ public class Util {
     
     /**
      * Return function arguments and their types as a String
-     * @param args - The args
-     * @param params - The associated types
+     * @param args The args
+     * @param params The associated types
      * @return A new string
      */
     public static String argsToString(Object args[], Class[] params) {
@@ -416,9 +421,9 @@ public class Util {
     
     /**
      * Append function arguments and their types to a StringBuffer
-     * @param args - The args
-     * @param params - The associated types
-     * @param buf - The StringBuffer
+     * @param args The args
+     * @param params The associated types
+     * @param buf The StringBuffer
      */
     public static void appendArgs(Object args[], Class[] params, StringBuffer buf) {
 	if(args!=null) {
@@ -435,7 +440,7 @@ public class Util {
     
     /**
      * Locale-independent getBytes(), uses ASCII encoding
-     * @param s - The String
+     * @param s The String
      * @return The ASCII encoded bytes
      */
     public static byte[] toBytes(String s) {
@@ -449,7 +454,7 @@ public class Util {
     
     /**
      * Create a string array from a hashtable.
-     * @param h - The hashtable
+     * @param h The hashtable
      * @return The String
      * @throws NullPointerException
      */
@@ -478,9 +483,9 @@ public class Util {
     public static class HeaderParser {protected void parseHeader(String header) {/*template*/}}
     /**
      * Discards all header fields from a HTTP connection and write the body to the OutputStream
-     * @param buf - A buffer, for example new byte[BUF_SIZE]
-     * @param natIn - The InputStream
-     * @param out - The OutputStream
+     * @param buf A buffer, for example new byte[BUF_SIZE]
+     * @param natIn The InputStream
+     * @param out The OutputStream
      * @throws UnsupportedEncodingException
      * @throws IOException
      */
@@ -541,7 +546,7 @@ public class Util {
 
     /**
      * Checks if the cgi binary buf+&lt;os.arch&gt+&lt;os.name&gt;.sh or buf+&lt;os.arch&gt+&lt;os.name&gt;.exe or buf+&lt;os.arch&gt+&lt;os.name&gt exists.
-     * @param buf - The base name, e.g.: /opt/tomcat/webapps/JavaBridge/WEB-INF/cgi/php-cgi
+     * @param buf The base name, e.g.: /opt/tomcat/webapps/JavaBridge/WEB-INF/cgi/php-cgi
      * @return The full name or null.
      */
     public static String checkCgiBinary(StringBuffer buf) {
@@ -569,9 +574,9 @@ public class Util {
 
     /**
      * Starts a CGI process and returns the process handle.
-     * @param args - The args array, e.g.: new String[]{null, "-b", ...};. If args is null or if args[0] is null, the function looks for the system property "php.java.bridge.php_exec".
-     * @param homeDir - The home directory. If null, the system property "user.home" is used.
-     * @param env - The CGI environment. If null, Util.DEFAULT_CGI_ENVIRONMENT is used.
+     * @param args The args array, e.g.: new String[]{null, "-b", ...};. If args is null or if args[0] is null, the function looks for the system property "php.java.bridge.php_exec".
+     * @param homeDir The home directory. If null, the system property "user.home" is used.
+     * @param env The CGI environment. If null, Util.DEFAULT_CGI_ENVIRONMENT is used.
      * @return The process handle.
      * @throws IOException
      * @see Util#checkCgiBinary(StringBuffer)
@@ -599,8 +604,10 @@ public class Util {
 
 	String home = System.getProperty("user.home");
 	if(homeDir==null) homeDir = new File(home);
-            
-	proc = rt.exec(argsToString(php, args), hashToStringArray(env), homeDir);
+         
+	String s = argsToString(php, args);
+	proc = rt.exec(s, hashToStringArray(env), homeDir);
+	if(Util.logLevel>3) Util.logDebug("Started "+ s);
 	return proc;
     }
 
@@ -616,7 +623,7 @@ public class Util {
 
     /**
      * Starts a thread which listens on CGI proc standard error and dumps it to the error log.
-     * @param proc - The process handle.
+     * @param proc The process handle.
      */
     public static void startProcessErrorReader(Process proc) {
 	(new Thread("CGIErrorReader") {
@@ -633,5 +640,13 @@ public class Util {
 		    try { in.close();} catch (IOException e1) {/*ignore*/}
 		}
 	    }).init(proc).start();
+    }
+
+    /**
+     * @return The thread context class loader.
+     */
+    public static ClassLoader getContextClassLoader() {
+        ClassLoader loader = Thread.currentThread().getContextClassLoader();
+        return loader;
     }
 }

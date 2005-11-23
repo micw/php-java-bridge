@@ -15,7 +15,7 @@ package php.java.bridge;
  * (until the request terminates or until an OOM error occurs).  A future implementation
  * may use an int hash table instead (but see note above).
  */
-public class GlobalRef {
+class GlobalRef {
     static final int DEFAULT_SIZE=1024;
 
     Object[] globalRef;

@@ -88,6 +88,9 @@ static void last_exception_get(proxyenv *jenv, zval**return_value)
   (*jenv)->writeInvokeBegin(jenv, 0, "lastException", 0, 'P', *return_value);
   (*jenv)->writeInvokeEnd(jenv);
 }
+
+/* {{{ proto object java_last_exception_get(void)
+	 Get last Java exception */
 EXT_FUNCTION(EXT_GLOBAL(last_exception_get))
 {
   proxyenv *jenv;
@@ -97,12 +100,17 @@ EXT_FUNCTION(EXT_GLOBAL(last_exception_get))
 
   last_exception_get(jenv, &return_value);
 }
+/* }}} */
+
 
 static void last_exception_clear(proxyenv*jenv, zval**return_value) {
   (*jenv)->writeInvokeBegin(jenv, 0, "lastException", 0, 'P', *return_value);
   (*jenv)->writeObject(jenv, 0);
   (*jenv)->writeInvokeEnd(jenv);
 }
+
+/* {{{ proto void java_last_exception_clear(void)
+	 Clear last java extension */
 EXT_FUNCTION(EXT_GLOBAL(last_exception_clear))
 {
   proxyenv *jenv;
@@ -112,7 +120,10 @@ EXT_FUNCTION(EXT_GLOBAL(last_exception_clear))
 
   last_exception_clear(jenv, &return_value);
 }
+/* }}} */
 
+/* {{{ proto void java_set_file_encoding(void)
+	 Set the java file encoding, for example UTF-8 or ASCII. Needed because php does not support unicode. */
 EXT_FUNCTION(EXT_GLOBAL(set_file_encoding))
 {
   zval **enc;
@@ -128,6 +139,8 @@ EXT_FUNCTION(EXT_GLOBAL(set_file_encoding))
   (*jenv)->writeString(jenv, Z_STRVAL_PP(enc), Z_STRLEN_PP(enc));
   (*jenv)->writeInvokeEnd(jenv);
 }
+/* }}} */
+
 
 static void require(INTERNAL_FUNCTION_PARAMETERS) {
   static const char ext_dir[] = "extension_dir";
@@ -150,15 +163,18 @@ static void require(INTERNAL_FUNCTION_PARAMETERS) {
   (*jenv)->writeString(jenv, ext, strlen(ext));
   (*jenv)->writeInvokeEnd(jenv);
 }
-EXT_FUNCTION(EXT_GLOBAL(set_library_path))
-{
-  require(INTERNAL_FUNCTION_PARAM_PASSTHRU);
-}
+
+
+/* {{{ proto void java_require(string path)
+	 Set the library path. Example: java_require("foo.jar;bar.jar"); */
 EXT_FUNCTION(EXT_GLOBAL(require))
 {
   require(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
+/* }}} */
 
+/* {{{ proto bool java_instanceof(object object, object clazz)
+	 Tests if object is an instance of clazz. Example: return($o instanceof Java && $c instanceof Java && java_instanceof($o, $c)); */
 EXT_FUNCTION(EXT_GLOBAL(instanceof))
 {
   zval **pobj, **pclass;
@@ -191,6 +207,7 @@ EXT_FUNCTION(EXT_GLOBAL(instanceof))
   (*jenv)->writeObject(jenv, class);
   (*jenv)->writeInvokeEnd(jenv);
 }
+/* }}} */
 
 static void session(INTERNAL_FUNCTION_PARAMETERS)
 {
@@ -222,10 +239,13 @@ static void session(INTERNAL_FUNCTION_PARAMETERS)
   (*jenv)->writeInvokeEnd(jenv);
 }
 
+/* {{{ proto void java_session([string], [bool])
+	 Return a session handle. Example: java_session(null, true); */
 EXT_FUNCTION(EXT_GLOBAL(get_session))
 {
   session(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
+/* }}} */
 
 static void context(INTERNAL_FUNCTION_PARAMETERS)
 {
@@ -246,11 +266,16 @@ static void context(INTERNAL_FUNCTION_PARAMETERS)
   (*jenv)->writeInvokeEnd(jenv);
 }
 
+/* {{{ proto object java_context(void)
+	 Returns the jsr223 script context handle. Example: java_context()->getHttpServletRequest(); */
 EXT_FUNCTION(EXT_GLOBAL(get_context))
 {
   context(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
+/* }}} */
 
+/* {{{ proto string java_get_server_name(void)
+	 Returns the name of the backend or null if the backend is not running. */
 EXT_FUNCTION(EXT_GLOBAL(get_server_name))
 {
   proxyenv *jenv;
@@ -262,7 +287,10 @@ EXT_FUNCTION(EXT_GLOBAL(get_server_name))
   }
   RETURN_NULL();
 }
+/* }}} */
 
+/* {{{ proto void java_reset(void)
+	 Tries to reset the backent to its initial state. If the call succeeds, all session handles and caches are gone. This procedure does nothing when the backend runs in a servlet environment or an application server. */
 EXT_FUNCTION(EXT_GLOBAL(reset))
 {
   proxyenv *jenv;
@@ -275,6 +303,7 @@ EXT_FUNCTION(EXT_GLOBAL(reset))
   (*jenv)->writeInvokeEnd(jenv);
   php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Your script has called the privileged procedure \""/**/EXT_NAME()/**/"_reset()\" which resets the "/**/EXT_NAME()/**/" backend to its initial state. Therefore all "/**/EXT_NAME()/**/" session variables and all caches are gone.", 18);
 }
+/* }}} */
 
 
 static void values(INTERNAL_FUNCTION_PARAMETERS)
@@ -388,16 +417,16 @@ EXT_FUNCTION(EXT_GLOBAL(__wakeup))
 }
 #endif
 
-EXT_FUNCTION(EXT_GLOBAL(values))
-{
-  values(INTERNAL_FUNCTION_PARAM_PASSTHRU);
-}
-
+/* {{{ proto array java_get_values(object ob)
+	 fetches the object into a php array. ob must be a java array or it must implement java.util.Map or java.util.Collection. Before calling this procedure, please make sure that the java array or Map or Collection does not exceed php's memory limit. Example: print_r(java_values($sys->getProperties()));*/
 EXT_FUNCTION(EXT_GLOBAL(get_values))
 {
   values(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
+/* }}} */
 
+/* {{{ proto object java_get_closure([object],[array|string],[object])
+	 Closes over the php environment and packages it up as a java class. Example: java_context()->call(java_get_closure); */
 EXT_FUNCTION(EXT_GLOBAL(get_closure))
 {
   char *string_key;
@@ -479,6 +508,8 @@ EXT_FUNCTION(EXT_GLOBAL(get_closure))
   }
   (*jenv)->writeInvokeEnd(jenv);
 }
+/* }}} */
+
 
 /**
  * Exception handler for php5
@@ -522,6 +553,9 @@ static void call_with_params(int count, zval ***func_params TSRMLS_DC) {
 	  php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not call user function: %s.", 23, Z_STRVAL_P(JG(func)));
 	}
 }
+
+/* {{{ proto string java_call_with_exception_handler(void)
+ Only for internal use. */
 EXT_FUNCTION(EXT_GLOBAL(call_with_exception_handler))
 {
   zval ***func_params;
@@ -566,7 +600,10 @@ EXT_FUNCTION(EXT_GLOBAL(call_with_exception_handler))
   efree(func_params);
   RETURN_NULL();
 }
+/* }}} */
 
+/* {{{ proto void java_inspect(object)
+   Returns the contents (public fields, public methods, public classes) of object as a string. */
 EXT_FUNCTION(EXT_GLOBAL(inspect)) {
   zval **pobj;
   long obj;
@@ -587,6 +624,7 @@ EXT_FUNCTION(EXT_GLOBAL(inspect)) {
   (*jenv)->writeObject(jenv, obj);
   (*jenv)->writeInvokeEnd(jenv);
 }
+/* }}} */
 
 
 function_entry EXT_GLOBAL(functions)[] = {
@@ -773,6 +811,8 @@ PHP_INI_BEGIN()
 
 #ifdef ZEND_ENGINE_2
 
+/* {{{ proto object Java::Java ( string classname [, string argument1, ...])
+   Java constructor. Example: new Java("java.lang.String", "hello world"); */
 EXT_METHOD(EXT, EXT)
 {
   zval **argv;
@@ -784,13 +824,19 @@ EXT_METHOD(EXT, EXT)
 	RETURN_NULL();
   }
 
+  if(argc<1 || Z_TYPE_P(argv[0])!=IS_STRING) WRONG_PARAM_COUNT;
+
   EXT_GLOBAL(call_function_handler)(INTERNAL_FUNCTION_PARAM_PASSTHRU,
 									EXT_NAME(), CONSTRUCTOR, 1,
 									getThis(),
 									argc, argv);
   efree(argv);
 }
+/* }}} */
 
+
+/* {{{ proto object Java::JavaClass ( string classname)
+   References a java class. Example: $String=new Java("java.lang.String"); $ob = $String->newInstance(); */
 EXT_METHOD(EXT, EXT_GLOBAL(class))
 {
   zval **argv;
@@ -802,13 +848,18 @@ EXT_METHOD(EXT, EXT_GLOBAL(class))
 	RETURN_NULL();
   }
 
+  if(argc<1 || Z_TYPE_P(argv[0])!=IS_STRING) WRONG_PARAM_COUNT;
+
   EXT_GLOBAL(call_function_handler)(INTERNAL_FUNCTION_PARAM_PASSTHRU,
 									EXT_NAME(), CONSTRUCTOR, 0, 
 									getThis(),
 									argc, argv);
   efree(argv);
 }
+/* }}} */
 
+/* {{{ proto mixed Java::__call ( string procedure_name [, array arguments ])
+   Calls a Java procedure */
 EXT_METHOD(EXT, __call)
 {
   zval **xargv, **argv;
@@ -841,6 +892,10 @@ EXT_METHOD(EXT, __call)
   efree(argv);
   efree(xargv);
 }
+/* }}} */
+
+/* {{{ proto object Java::__toString (void)
+   Displays the java object as a string. Note: it doesn't cast the object to a string, thus echo "$ob" displays a string representation of $ob, e.g.: [o(String)"hello"], and echo "".$ob (or: echo (string)$ob) displays $ob as a string, e.g.: hello. */
 EXT_METHOD(EXT, __tostring)
 {
   long result = 0;
@@ -862,6 +917,10 @@ EXT_METHOD(EXT, __tostring)
   }
 
 }
+/* }}} */
+
+/* {{{ proto string Java::__set(object, object)
+ The setter. */
 EXT_METHOD(EXT, __set)
 {
   zval **argv;
@@ -877,6 +936,10 @@ EXT_METHOD(EXT, __set)
   
   efree(argv);
 }
+/* }}} */
+
+/* {{{ proto string Java::__destruct()
+ The destructor. */
 EXT_METHOD(EXT, __destruct)
 {
   long obj;
@@ -889,6 +952,10 @@ EXT_METHOD(EXT, __destruct)
 
   RETURN_TRUE;
 }
+/* }}} */
+
+/* {{{ proto string Java::__get(object)
+ The getter. */
 EXT_METHOD(EXT, __get)
 {
   zval **argv;
@@ -902,15 +969,24 @@ EXT_METHOD(EXT, __get)
   EXT_GLOBAL(get_property_handler)(Z_STRVAL(*argv[0]), getThis(), return_value);
   efree(argv);
 }
+/* }}} */
+
+/* {{{ proto string Java::__sleep()
+ Serializes the object. */
 EXT_METHOD(EXT, __sleep)
 {
   serialize(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
+/* {{{ proto string Java::__wakeup()
+ Deserializes the object. */
 EXT_METHOD(EXT, __wakeup)
 {
   deserialize(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
+/* }}} */
 
+/* {{{ proto string Java::offsetExists()
+ See array::offsetExists(). */
 EXT_METHOD(EXT, offsetExists)
 {
   proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
@@ -936,6 +1012,11 @@ EXT_METHOD(EXT, offsetExists)
   EXT_GLOBAL(invoke)("offsetExists", obj, argc, argv, 0, return_value TSRMLS_CC);
   efree(argv);
 }
+/* }}} */
+
+
+/* {{{ proto string Java::offsetGet()
+ See array::offsetGet(). */
 EXT_METHOD(EXT, offsetGet)
 {
   zval **argv;
@@ -961,7 +1042,10 @@ EXT_METHOD(EXT, offsetGet)
   EXT_GLOBAL(invoke)("offsetGet", obj, argc, argv, 0, return_value TSRMLS_CC);
   efree(argv);
 }
+/* }}} */
 
+/* {{{ proto string Java::offsetSet()
+ See array::offsetSet(). */
 EXT_METHOD(EXT, offsetSet)
 {
   zval **argv;
@@ -986,7 +1070,10 @@ EXT_METHOD(EXT, offsetSet)
   EXT_GLOBAL(invoke)("offsetSet", obj, argc, argv, 0, return_value TSRMLS_CC);
   efree(argv);
 }
+/* }}} */
 
+/* {{{ proto string Java::offsetUnset()
+ See array::offsetUnset(). */
 EXT_METHOD(EXT, offsetUnset)
 {
   zval **argv;
@@ -1011,6 +1098,7 @@ EXT_METHOD(EXT, offsetUnset)
   EXT_GLOBAL(invoke)("offsetUnset", obj, argc, argv, 0, return_value TSRMLS_CC);
   efree(argv);
 }
+/* }}} */
 
 static
 ZEND_BEGIN_ARG_INFO(arginfo_zero, 0)

@@ -5,7 +5,7 @@ package php.java.bridge;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class LocalSocketInputStream extends InputStream {
+class LocalSocketInputStream extends InputStream {
 
     int peer;
     LocalSocket socket;

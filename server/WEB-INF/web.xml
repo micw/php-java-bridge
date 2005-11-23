@@ -2,57 +2,75 @@
 <!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN" "http://java.sun.com/dtd/web-app_2_3.dtd">
 
 <web-app>
-<!-- our servlet -->
+
+    <!-- Faces Servlet -->
     <servlet>
-        <servlet-name>
-		PhpJavaServlet
-        </servlet-name>
-        <servlet-class>
-		php.java.servlet.PhpJavaServlet
-        </servlet-class>
-    <init-param>
-      <param-name>clientInputTimeout</param-name>
-      <param-value>100</param-value>
-    </init-param>
-    <init-param>
-      <param-name>debug</param-name>
-      <param-value>0</param-value>
-    </init-param>
-    <init-param>
-      <param-name>cgiPathPrefix</param-name>
-      <param-value>WEB-INF/cgi</param-value>
-    </init-param>
+        <servlet-name>Faces Servlet</servlet-name>
+        <servlet-class>javax.faces.webapp.FacesServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
 
-    <!-- Allow us to override the java.hosts, java.servlet and -->
-    <!-- java.socketname settings from your php.ini so that we can -->
-    <!-- use the current VM. -->
-    <init-param>
-      <param-name>override_hosts</param-name>
-      <param-value>On</param-value>
-    </init-param>
+    <!-- PHP Servlet -->
+    <servlet>
+        <servlet-name>PhpJavaServlet</servlet-name>
+        <servlet-class>php.java.servlet.PhpJavaServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
 
-    <!-- Your php binary, for example c:/php5/php.exe, php or /usr/bin/php. -->
-    <init-param>
-      <param-name>php_exec</param-name>
-      <param-value>php</param-value>
-    </init-param>
+         <!-- Allow us to override the java.hosts, java.servlet and -->
+         <!-- java.socketname settings from your php.ini so that we can -->
+         <!-- use the current VM. Default is On. -->
+        <!-- 
+         <init-param>
+           <param-name>override_hosts</param-name>
+           <param-value>Off</param-value>
+         </init-param>
+        -->
 
-    <!-- Default log_level is 2, java.log_level from your php.ini overrides. -->
-    <init-param>
-      <param-name>servlet_log_level</param-name>
-      <param-value>2</param-value>
-    </init-param>
+         <!-- Your php binary. Default is /usr/bin/php-cgi, /usr/bin/php or -->
+         <!-- c:/php5/php-cgi. -->
+        <!-- 
+         <init-param>
+           <param-name>php_exec</param-name>
+           <param-value>php</param-value>
+         </init-param>
+        -->
+
+         <!-- Use the fast cgi interface instead of cgi when running -->
+         <!-- php as a CGI sub component (when php is not installed as an -->
+         <!-- Apache or IIS module). Default is true. --> 
+       <!--
+         <init-param>
+           <param-name>use_fast_cgi</param-name>
+           <param-value>false</param-value>
+         </init-param>
+        -->
+
+         <!-- Default log_level is 2, java.log_level from your php.ini overrides. -->
+        <!-- 
+         <init-param>
+           <param-name>servlet_log_level</param-name>
+           <param-value>2</param-value>
+         </init-param>
+        -->
   </servlet>
 
-<!-- URL -->
+
+    <!-- Faces Servlet Mapping -->
     <servlet-mapping>
-        <servlet-name>PhpJavaServlet</servlet-name> 
-        <url-pattern>/PhpJavaServlet</url-pattern>
+        <servlet-name>Faces Servlet</servlet-name>
+        <url-pattern>*.jsf</url-pattern>
     </servlet-mapping>
+
+    <!-- PHP Servlet Mapping -->
     <servlet-mapping>
         <servlet-name>PhpJavaServlet</servlet-name>
-        <url-pattern>
-		*.php
-        </url-pattern>
+        <url-pattern>*.php</url-pattern>
     </servlet-mapping>
+
+    <!-- Welcome files -->
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+        <welcome-file>index.html</welcome-file>
+    </welcome-file-list>
+
 </web-app>

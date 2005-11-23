@@ -16,15 +16,17 @@ Build and execution instructions:
 
   In the directory php-java-bridge-p.x.y type:
 
-          java -version        # 1.4 or above (1.4.2_02 or IBM VM recommended)
-          gcc --version        # 3.2.3 or above.
-          apachectl -version   # Apache 1.3 or above.
-          php-config --version # PHP 4.3.2 or above.
+          java -version        # 1.4 or above (1.5 or 1.6 recommended)
+          gcc --version        # 3.2.3 or above (4.0.x recommended)
+          apachectl -version   # Apache 1.3 or above (2.x recommended)
+          php-config --version # PHP 4.3.2 or above (5.x recommended)
           make null --version  # GNU make 3.79 or above
 
           phpize && 
           ./configure --with-java=/opt/IBMJava2-14 \
                       --disable-servlet &&
+                      --disable-script && 
+                      --disable-faces
           make &&
           su -c "make install"
 
@@ -53,9 +55,7 @@ Build and execution instructions:
 
   OPTION 1: You can use local sockets to connect to a local backend. 
   Copy the executable php-java-bridge to /usr/sbin, make it executable 
-  with the command "chmod +x /usr/sbin/php-java-bridge" and start it:
-
-          /usr/sbin/php-java-bridge
+  with the command "chmod +x /usr/sbin/php-java-bridge".
 
   This option can be used if "Security Enhanced Linux" is switched on.
 
@@ -72,7 +72,7 @@ Build and execution instructions:
           java.servlet=On
           java.hosts="127.0.0.1:8080"
 
-  This option cannot be used if "Security Enhanced Linux" is switched
+  This option can be used if "Security Enhanced Linux" is switched
   on.
 
 
@@ -88,14 +88,16 @@ Build and execution instructions:
   on.
 
 
-  Option 4: You can use the java script API to allocate and to invoke php instances
-  from a HTTP pool. Disable java.socketname and set java.servlet. For example:
+  Option 4: You can use the java script API to allocate and to invoke
+  php instances from a HTTP pool. Disable java.socketname and set
+  java.servlet. For example:
 
           extension = java.so
           [java]
           java.servlet=On
 
-   After that you can call out to your web server's php scripts, for example:
+  After that you can call out to your web server's php scripts, for
+  example:
 
      PhpScriptEngine engine = new PhpScriptEngine();
 
@@ -103,12 +105,11 @@ Build and execution instructions:
      // engine.eval will create a php continuation on the web server ...
      engine.eval(new URLReader(new URL("http://127.0.0.1/test.php")));
 
-     //...and call can invoke procedures within the allocated continuation...
+     //...and call procedures within the allocated continuation...
      String s=((Invocable)engine).call("java_get_server_name", new Object[]{});
      System.out.println("connected to java backend: "+s);
 
-     //...engine.release(), the next engine.call(...) or System.exit() release
-     // the allocated continuation
+     //.. release the allocated continuation:
      engine.release();
 
   This option can be used if "Security Enhanced Linux" is switched
@@ -201,11 +202,13 @@ Build and execution instructions:
 
   Please don't misunderstand the role of the mod_jk adapter. 
   It is only used to "mount" the tomcat webapps directory into apache and
-  to forward requests for .jsp files.  The mod_jk adapter does this by "copying"
-  the non jsp files from the tomcat webapps directory into the apache document
-  root directory at run-time(!).
+  to forward requests for .jsp files.  The mod_jk adapter does this by
+  "copying" the non jsp files from the tomcat webapps directory into
+  the apache document root directory at run-time.
 
-  A more reasonable approach would be to remove mod_jk and to create a shared web directory for tomcat and apache.  This is the default since RedHat Fedora 4.
+  A more reasonable approach would be to remove mod_jk and to create a
+  shared web directory for tomcat and apache.  This is the default since
+  RedHat Fedora 4.
 
 ------------------------------------
   64 Bit issues
@@ -237,10 +240,10 @@ Build and execution instructions:
 
   It is possible to run PHP from java. Unlike the JSR223 sample
   implementation, which uses the JNI interface to load/call the native
-  php5 shared library, we use the CGI interface to call the PHP
+  php5 shared library, we use the Fast CGI interface to call the PHP
   binary and use a local channel to connect the two components. This is
-  not much slower but more reliable. In case a PHP instance crashes,
-  it will not take down the whole servlet engine or application server.
+  more reliable; in case a PHP instance crashes, it will not take down
+  the whole servlet engine or application server.
   
   Please follow the AS or Tomcat installation instructions above, then
   visit http://localhost:8080/JavaBridge and run the supplied JSP and PHP
@@ -250,7 +253,7 @@ Build and execution instructions:
   php_exec (see JavaBridge/WEB-INF/web.xml) setting, for example:
 
       <param-name>php_exec</param-name>
-      <param-value>/usr/local/bin/php</param-value>
+      <param-value>/usr/local/bin/php-cgi</param-value>
 
   or
 
@@ -466,7 +469,7 @@ Build and execution instructions:
   foo which references a class bar and ship the class foo without
   providing bar, the sun java platform will not complain unless the user
   accidently calls a method which references the non-existing class. If
-  this happens a "NoClassDefFound" error is thrown. This error may
+  this happens, a "NoClassDefFound" error is thrown. This error may
   not(!) indicate which class is missing and it certainly does not
   indicate which external library is missing. The tests.php4 folder
   contains two tests, noClassDefFound.php and noClassDefFound2.php which
@@ -503,11 +506,11 @@ Build and execution instructions:
   channels are not available, the bridge opens a TCP port on 9167
   (JavaBridge.jar) or 9267 (MonoBridge.exe) or 9567 (JavaBridge.war) or
   above and binds to all(!) available network cards. When running as a
-  CGI binary the port is 9567 and only the loopback (127.0.0.1) interface
-  is used.
+  CGI binary the port is 9567 (CGI) or 9667 (FastCGI) and only the
+  loopback (127.0.0.1) interface is used.
 
-  Please make sure that these ports are protected and cannot be
-  accessed from the internet.
+  Please make sure that the ports in the range [9167, ..., 9767[ are
+  protected and cannot be accessed from the internet.
 
   In J2EE application servers where the security policy denies opening
   TCP sockets, the bridge uses a HTTP tunnel which is 50 times slower
@@ -553,7 +556,7 @@ Build and execution instructions:
   should have been written as:
 
     $str=new Java ("java.lang.String", "Cześć! -- שלום -- Gr");
-    echo $str;
+    echo (string)$str;
 
 ------------------------------------
   Mailing List

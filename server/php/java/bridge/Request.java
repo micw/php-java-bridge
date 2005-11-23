@@ -5,17 +5,97 @@ package php.java.bridge;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/**
+ * This class is used to handle requests from the frontent.
+ * @author jostb
+ *
+ */
 public class Request implements IDocHandler {
 
     private Parser parser;
     private JavaBridge bridge;
-    public static class PhpArray extends HashMap { // for PHP's array()
+    protected static class PhpArray extends HashMap { // for PHP's array()
 	private static final long serialVersionUID = 3905804162838115892L;
     };
-    public static class PhpNumber extends Number {
+ 
+   protected static abstract class PhpString {
+        /**
+         * Get the encoded string representation
+         * @return The encoded string.
+         */
+        public abstract String getString();
+        
+
+        /**
+         * Get the encoded byte representation
+         * @return The encoded bytes.
+         */
+        public abstract byte[] getBytes();
+
+        public String toString() {
+            throw new NotImplementedException();
+        }
+    }
+   protected static class SimplePhpString extends PhpString {
+       String s; 
+       JavaBridge bridge;
+       
+       SimplePhpString(JavaBridge bridge, String s) {
+           this.bridge = bridge;
+           this.s = s;
+        }
+
+       public String getString() {
+        return s;
+    }
+    public byte[] getBytes() {
+        return bridge.options.getBytes(s);
+    }
+    }
+    static protected class PhpParserString extends PhpString {
+        ParserString st;
+        private JavaBridge bridge;
+        /**
+         * @param st The ParserString
+         */
+        public PhpParserString(JavaBridge bridge, ParserString st) {
+            this.bridge = bridge;
+            getBytes(st);
+        }
+        private byte[] bytes;
+        private void getBytes(ParserString st) {
+             if(bytes==null) {
+                bytes=new byte[st.length];
+                System.arraycopy(st.string,st.off,bytes,0,bytes.length);
+            }
+        }
+        public byte[] getBytes() {
+            return bytes;
+        }
+        /**
+         * Get the encoded string representation
+         * @param res The response.
+         * @return The encoded string.
+         */
+        public String getString() {
+            return bridge.options.newString(getBytes());
+        }
+        /**
+         * Use UTF-8 encoding, for debugging only
+         */
+        public String toString() {
+            try {
+                return new String(getBytes(), Util.UTF8);
+            } catch (UnsupportedEncodingException e) {
+                return new String(getBytes());               
+            }
+         }
+    }
+    protected static class PhpNumber extends Number {
 
 	/**
 	 * 
@@ -118,15 +198,36 @@ public class Request implements IDocHandler {
     	}
     }
     private Args args;
-    Response response;
+    
+    /**
+     * The current response handle or null.
+     * There is only one response handle for each request object.
+     * <code>response.reset()</code> or <code>response.flush()</code> must be called at the end of each packet.
+     */
+    public Response response = null;
 
+    /**
+     * Creates an empty request object.
+     * @param bridge The bridge instance.
+     * @see Request#init(InputStream, OutputStream)
+     */
     public Request(JavaBridge bridge) {
 	this.bridge=bridge;
 	this.parser=new Parser(bridge, this);
 	this.args=new Args();
     }
     static final byte[] ZERO={0};
-    public boolean initOptions(InputStream in, OutputStream out) throws IOException {
+    
+    /**
+     * This method must be called with the current input and output streams. 
+     * It reads the protocol header and initializes the request object.
+     * 
+     * @param in The input stream.
+     * @param out The output stream.
+     * @return true if the protocol header was valid, false otherwise.
+     * @throws IOException
+     */
+    public boolean init(InputStream in, OutputStream out) throws IOException {
     	switch(parser.initOptions(in)) {
 
     	case Parser.PING:
@@ -142,7 +243,10 @@ public class Request implements IDocHandler {
         }
     	return true;
     }
-
+    
+    /* (non-Javadoc)
+     * @see php.java.bridge.IDocHandler#begin(php.java.bridge.ParserTag[])
+     */
     public void begin(ParserTag[] tag) {
 	ParserString[] st=tag[2].strings;
 	byte ch;
@@ -190,9 +294,7 @@ public class Request implements IDocHandler {
 	    break;
 	}
 	case 'S': {
-            byte[] bytes=new byte[st[0].length];
-            System.arraycopy(st[0].string,st[0].off,bytes,0,bytes.length);
-            args.add(bytes);
+	    args.add(new PhpParserString(bridge, st[0]));
 	    break;
 	}
 	case 'B': {
@@ -234,6 +336,10 @@ public class Request implements IDocHandler {
 	}
 	}
     }
+    
+    /* (non-Javadoc)
+     * @see php.java.bridge.IDocHandler#end(php.java.bridge.ParserString[])
+     */
     public void end(ParserString[] string) {
     	switch(string[0].string[0]) {
     	case 'X': {
@@ -244,7 +350,7 @@ public class Request implements IDocHandler {
     private int handleRequest() throws IOException {
 	int retval;
 	if(Parser.OK==(retval=parser.parse(bridge.in))) {
-	    response.setResult(args.id, bridge.requestOptions);
+	    response.setResultID(args.id);
 	    switch(args.type){
 	    case 'I':
 		if(args.predicate)
@@ -265,11 +371,22 @@ public class Request implements IDocHandler {
 	}
 	return retval;
     }
+    
+    /**
+     * Start handling requests until EOF. Creates a response object and handles all packets.
+     * @throws IOException
+     */
     public void handleRequests() throws IOException {
     	response=new Response(bridge);
 	while(Parser.OK==handleRequest())
 	    ;
     }
+    
+    /**
+     * Start handling requests until EOF. Creates a response object and handles only the first packet. 
+     * All following packets are discarded.
+     * @throws IOException
+     */
     public void handleOneRequest() throws IOException {
     	response=new Response(bridge);
 	if(Parser.OK==handleRequest()) {
@@ -277,12 +394,19 @@ public class Request implements IDocHandler {
 	}
     }
     private static final Object[] empty = new Object[] {null};
-    public Object[] handleSubRequests() throws IOException, Throwable {
+    
+    /**
+     * Handle protocol sub-requests, see <code>R</code> and <code>A</code> in the protocol spec.
+     * @return An array of one object. The object is the result of the Apply call.
+     * @throws IOException
+     * @throws Throwable thrown by the PHP code.
+     */
+    protected Object[] handleSubRequests() throws IOException, Throwable {
     	response.flush();
     	Args current = args;
     	args = new Args();
 	while(Parser.OK==parser.parse(bridge.in)){
-	    response.setResult(args.id, bridge.requestOptions); 
+	    response.setResultID(args.id); 
 	    switch(args.type){
 	    case 'I':
 		if(args.predicate)

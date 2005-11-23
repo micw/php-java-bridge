@@ -2,7 +2,17 @@
 
 package php.java.bridge;
 
-
+/**
+ * Create new session or context instances
+ * @see php.java.bridge.Session
+ * @see php.java.bridge.http.Context
+ * @see php.java.servlet.Context
+ * @see php.java.bridge.http.ContextFactory
+ * @see php.java.servlet.ContextFactory
+ * @see php.java.script.PhpScriptContextFactory
+  * @author jostb
+ *
+ */
 public class SessionFactory {
     	
     /**
@@ -35,7 +45,7 @@ public class SessionFactory {
 	
     /**
      * Return the associated context
-     * @return
+     * @return The context
      */
     public Object getContext() {
 	return null;

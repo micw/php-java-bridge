@@ -9,7 +9,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
-import java.util.Hashtable;
+import java.util.Map;
 
 import php.java.bridge.PhpProcedureProxy;
 import php.java.bridge.SessionFactory;
@@ -25,7 +25,7 @@ import php.java.bridge.Util;
 abstract class CGIRunner extends Thread {
 	
     protected boolean running = true;
-    protected Hashtable env;
+    protected Map env;
     protected SessionFactory ctx;
     protected OutputStream out;
     protected Reader reader;
@@ -57,7 +57,7 @@ abstract class CGIRunner extends Thread {
 	    notify();
 	}
     }
-    protected CGIRunner(String name, Reader reader, Hashtable env, SessionFactory ctx, OutputStream out) {
+    protected CGIRunner(String name, Reader reader, Map env, SessionFactory ctx, OutputStream out) {
 	super(name);
     	this.reader = reader;
 	this.ctx = ctx;
@@ -95,7 +95,7 @@ abstract class CGIRunner extends Thread {
 	}
 	writer.close();
 	byte[] buf = new byte[Util.BUF_SIZE];
-	Util.parseBody(buf, natIn, this.out, Util.DEFAULT_HEADER_PARSER);
+	Util.parseBody(buf, natIn, out, Util.DEFAULT_HEADER_PARSER);
 	natIn.close();
     }
 
@@ -126,7 +126,7 @@ abstract class CGIRunner extends Thread {
      * This function must be called to release the allocated php continuation.
      *
      */
-    public synchronized void stopContinuation() {
+    public synchronized void release() {
 	notify();
 	if(running)
 	    try {

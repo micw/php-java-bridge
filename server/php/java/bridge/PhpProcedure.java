@@ -86,9 +86,8 @@ public class PhpProcedure implements InvocationHandler {
      * Invoke a PHP function or a PHP method.
      * @param proxy The php environment or the PHP object
      * @param method The php method name
-     * @param the return type or null. For example Object.class.
      * @param args the arguments
-     * @return the result or null
+     * @return the result or null.
      * @throws a script exception.
      */
     public Object invoke(Object proxy, String method, Object[] args) throws Throwable {

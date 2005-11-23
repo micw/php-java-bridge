@@ -7,7 +7,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
-public class LocalSocket extends Socket {
+class LocalSocket extends Socket {
 
     private OutputStream ostream;
     private InputStream istream;

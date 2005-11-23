@@ -83,7 +83,7 @@ public class DynamicClassLoader extends SecureClassLoader {
     }
     /**
      * Invalidates a given classpath, so that the corresponding classloader gets reloaded.
-     * @param classpath
+     * @param urls The urls.
      */
     public static void invalidate(URL urls[]) {
 	invalidate(getStringFromURLArray(urls));

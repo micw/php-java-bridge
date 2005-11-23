@@ -2,6 +2,8 @@
 
 package php.java.faces;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -21,10 +23,13 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import php.java.bridge.NotImplementedException;
 import php.java.script.PhpScriptEngine;
+import php.java.script.PhpScriptWriter;
 import php.java.script.URLReader;
 
 /**
+ * A custom FacesContext. Stores the baseURL, creates script engines.
  * @author jostb
  *
  */
@@ -176,8 +181,8 @@ public class PhpFacesContext extends FacesContext {
      * @see javax.faces.context.FacesContext#release()
      */
     public void release() {
-	context.release();
 	releaseEngines();
+	context.release();
     }
 
     /* (non-Javadoc)
@@ -194,22 +199,45 @@ public class PhpFacesContext extends FacesContext {
 	context.responseComplete();
     }
 
-    /* (non-Javadoc)
-     * @see javax.faces.context.FacesContext#getELContext()
+    /**
+     * Writes the output from php scripts to the servlet log.
      */
-    //	public ELContext getELContext() {
-    //		return context.getELContext();
-    //	}
-
+    private class LogOutputStream extends OutputStream {
+        public void write(int b) throws IOException {
+            throw new NotImplementedException();
+        }
+        public void write(byte[] b, int start, int length) {
+            ctx.log(new String(b, start, length));
+        }
+        public void write(byte[] b, int start) {
+            write(b, start, b.length);
+        }
+        public void write(byte[] b) {
+            write(b, 0, b.length);
+        }
+    }
+    private LogOutputStream log = new LogOutputStream();
+    /**
+     * Get a script engine
+     * @param key The Script proxy
+     * @param url The URL, for example getBaseURL() + "/foo.php";
+     * @return The script engine.
+     * @throws ScriptException
+     * @see #getBaseURL()
+     */
     public synchronized ScriptEngine getScriptEngine(Object key, URL url) throws ScriptException {
 	ScriptEngine e;
 	if((e=(ScriptEngine)scriptEngines.get(key))!=null) return e;
-	e = new PhpFacesScriptEngine(ctx, req, res);
-	scriptEngines.put(key, e);
+        e = new PhpFacesScriptEngine(ctx, req, res, new PhpScriptWriter(log));
+ 	scriptEngines.put(key, e);
 	e.eval(new URLReader(url));
 	return e;
     }
 	
+    /**
+     * Release all script engines.
+     *
+     */
     private synchronized void releaseEngines() {
 	for(Iterator ii = scriptEngines.keySet().iterator(); ii.hasNext();) {
 	    Object key = ii.next();
@@ -218,10 +246,11 @@ public class PhpFacesContext extends FacesContext {
 	    ii.remove();
 	}
     }
+    
     /**
-     * @return
+     * @return The base URL
      */
-    public String getBase() {
+    public String getBaseURL() {
 	return baseURL;
     }
 

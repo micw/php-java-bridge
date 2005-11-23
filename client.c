@@ -498,11 +498,7 @@ unsigned char EXT_GLOBAL (get_mode) () {
  */
 static proxyenv* adjust_environment(proxyenv *env TSRMLS_DC) {
   static const char name[] = "adjust_environment";
-  static const char context[] = "\
-array_key_exists('X_JAVABRIDGE_CONTEXT', $_SERVER)\
-?$_SERVER['X_JAVABRIDGE_CONTEXT']\
-:(array_key_exists('HTTP_X_JAVABRIDGE_CONTEXT', $_SERVER)?$_SERVER['HTTP_X_JAVABRIDGE_CONTEXT']:null);\
-";
+  static const char context[] = "(array_key_exists('X_JAVABRIDGE_CONTEXT', $_SERVER)?$_SERVER['X_JAVABRIDGE_CONTEXT']:null);";
 
   zval val;
   char *servlet_context_string = EXT_GLOBAL (get_servlet_context) (TSRMLS_C);
@@ -517,10 +513,8 @@ array_key_exists('X_JAVABRIDGE_CONTEXT', $_SERVER)\
 
 static void override_ini_for_redirect(TSRMLS_D) {
   static const char name[] = "override_ini_for_redirect";
-  static const char override[] = "\
-array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS', $_SERVER)	\
-?$_SERVER['X_JAVABRIDGE_OVERRIDE_HOSTS']								\
-:(array_key_exists('HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS', $_SERVER)?$_SERVER['HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS']:null);";
+  static const char override[] = "(array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER)?$_SERVER['X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT']:null);";
+
   zval val;
   if((SUCCESS==zend_eval_string((char*)override, &val, (char*)name TSRMLS_CC)) && (Z_TYPE(val)==IS_STRING)) {
 	char *kontext, *hosts = estrndup(Z_STRVAL(val), Z_STRLEN(val));

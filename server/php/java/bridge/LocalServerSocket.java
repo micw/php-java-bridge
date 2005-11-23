@@ -4,7 +4,7 @@ package php.java.bridge;
 import java.io.IOException;
 import java.net.Socket;
 
-public class LocalServerSocket implements ISocketFactory {
+class LocalServerSocket implements ISocketFactory {
 
     public static final String DefaultSocketname = "/var/run/.php-java-bride_socket";
     private int backlog;
