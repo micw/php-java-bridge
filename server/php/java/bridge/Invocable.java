@@ -10,7 +10,7 @@ package php.java.bridge;
  * </code>
  * <br>
  * @see php.java.bridge.PhpProcedureProxy#getProxy(Class[])
- * @see php.java.bridge.PhpProcedure#invoke(Object, String, Class, Object[])
+ * @see php.java.bridge.PhpProcedure#invoke(Object, String, Object[])
  * @see php.java.bridge.PhpProcedure#invoke(Object, Method, Object[])
  * @author jostb
  *

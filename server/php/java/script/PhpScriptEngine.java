@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Proxy;
 import java.net.UnknownHostException;
-import java.util.Hashtable;
+import java.util.Map;
 
 import javax.script.AbstractScriptEngine;
 import javax.script.Bindings;
@@ -115,7 +115,7 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
     protected HttpProxy getContinuation(Reader reader, ScriptContext context) {
     	IPhpScriptContext phpScriptContext = (IPhpScriptContext)context;
     	SessionFactory ctx = phpScriptContext.getContextManager();
-    	Hashtable env = phpScriptContext.getEnvironment();
+    	Map env = phpScriptContext.getEnvironment();
     	HttpProxy kont = new HttpProxy(reader, env, ctx, ((PhpScriptWriter)(context.getWriter())).getOutputStream()); 
      	phpScriptContext.setContinuation(kont);
 	return kont;

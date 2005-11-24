@@ -43,18 +43,6 @@ public class PhpProcedure implements InvocationHandler {
 	return proxy;
     }
 	
-    /**
-     * Create a new proxy instance which implements interfaces
-     * @param interfaces - The interfaces the proxy must implement
-     * @return A new proxy instance.
-     */
-    public Object getInterfaceFromProxy(Class interfaces[]) {
-    	PhpProcedure handler = new PhpProcedure(bridge, object, name, names);
-    	ClassLoader loader = interfaces.length>0 ? interfaces[0].getClassLoader():bridge.getClassLoader().getClassLoader();   
-    	Object proxy = Proxy.newProxyInstance(loader, interfaces, handler);
-    	return proxy;
-    	
-    }
     private void setResultFromProcedure(Response response, String name, Object[] args) {
 	String cname;
 	if(this.name!=null) {

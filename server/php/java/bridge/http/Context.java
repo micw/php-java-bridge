@@ -16,7 +16,7 @@ import php.java.bridge.PhpProcedureProxy;
  * The method call(kont) returns false, so that it can be used to check if a script was called from java:<br>
  * <code>
  * function toString() {return "hello java, I am a php script, but in your eyes I am an ordinary java object...";}<br>
- * java_context()-&lt;call(java_closure()) || die("This script must be called from java!");
+ * java_context()-&gt;call(java_closure()) || die("This script must be called from java!");
  * </code>
  * @see php.java.script.IPhpScriptContext
  * @see javax.script.ScriptContext

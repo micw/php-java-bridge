@@ -3,6 +3,7 @@
 package php.java.faces;
 
 import java.util.Hashtable;
+import java.util.Map;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -55,7 +56,7 @@ public class PhpFacesScriptContext extends PhpSimpleHttpScriptContext {
     /* (non-Javadoc)
      * @see php.java.script.IPhpScriptContext#getEnvironment()
      */
-    public Hashtable getEnvironment() {
+    public Map getEnvironment() {
         return env;
     }
 

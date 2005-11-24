@@ -23,11 +23,32 @@ import php.java.bridge.Util;
 import php.java.bridge.http.ContextServer;
 
 /**
- * Handles requests from PHP clients. When apache or IIS are not 
- * available this servlet can start  php as a CGI sub-process.
- * However, it is recommended to install php as an Apache module
- * and to use the mod_jk adapter to connect apache with the
- * servlet engine or context server.
+ * Handles requests from PHP clients. When apache or IIS are not
+ * available, this servlet can start php as a CGI sub-process.<br>
+ * However, it is recommended to install php as an Apache module and
+ * to share the servlet engine's <code>webapps</code> directory with
+ * apache's <code>htdocs</code> directory. Since Fedora Linux version 4 the tomcat
+ * <code>webapps</code> directory and the Apache <code>htdocs</code>
+ * directory are shared by default (via a <em>symlink</em>).
+ * <br>
+ * For frameworks such as Java Server Faces it is recommended to forward requests to the backend as follows:<br>
+ * <code>
+ * &lt;?php<br>
+ * function toString() {"return "hello java world!";}<br>
+ * java_context()-&gt;call(java_closure()) ||header("Location: hello.jsp");<br>
+ * ?&gt;<br>
+ * </code><br>
+ * This allows the backend (jsp, jsf, servlets, ...) to call php procedures as follows:<br>
+ * <code>
+ * PhpScriptEngine e = new PhpScriptEngine();<br>
+ * e.eval(new URLReader(new URL("/hello.php")));<br>
+ * out.println(((Invocable)e).call("toString", new Object[]{}));<br>
+ * e.release();<br>
+ * </code>
+ * <br>
+ * An alternative would be to install <code>mod_jk</code> to "JkMount" the java "webapps" document root into the "htdocs" document root of Apache or IIS 
+ * and to configure it so that it automatically forwards all .jsp and servlet requests to the servlet engine.
+ * 
  */
 public class PhpJavaServlet extends FastCGIServlet {
 
@@ -36,7 +57,7 @@ public class PhpJavaServlet extends FastCGIServlet {
     /**
      * The CGI default port
      */
-    public static final String CGI_CHANNEL = "9567";
+    public static final int CGI_CHANNEL = 9567;
     static private final ContextServer socketRunner = new ContextServer(new ThreadPool("JavaBridgeContextRunner", Integer.parseInt(Util.THREAD_POOL_MAX_SIZE)));
 
     protected static class Logger extends Util.Logger {
@@ -74,7 +95,7 @@ public class PhpJavaServlet extends FastCGIServlet {
 	Util.setLogger(new Logger(config.getServletContext()));
         DynamicJavaBridgeClassLoader.initClassLoader(Util.DEFAULT_EXTENSION_DIR);
 
-	Util.TCP_SOCKETNAME = CGI_CHANNEL;
+	Util.TCP_SOCKETNAME = String.valueOf(CGI_CHANNEL);
 	    try {
 	        Runtime.getRuntime().addShutdownHook(
 						 (new Thread("JavaBridgeContextRunnerShutdown") {

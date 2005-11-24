@@ -50,10 +50,6 @@ import java.util.Vector;
 
 public class JavaBridge implements Runnable {
 
-
-    // The client's file encoding, for example UTF-8.
-    String fileEncoding="UTF-8";
-
     /**
      * For PHP4's last_exception_get.
      */
@@ -1584,8 +1580,9 @@ public class JavaBridge implements Runnable {
     }
 
     /**
-     * Reset the global caches of the bridge.
-     * Currently this is the classloader and the session.
+     * Reset the global caches of the bridge.  Currently this is the
+     * classloader and the session. This is a no-op when the backend
+     * is running in a servlet engine or application server.
      */
     public void reset() {
 	warn("Your PHP script has called the privileged procedure \"reset()\", which resets the backend to its initial state. Therefore all session variables and all caches are now gone.");
@@ -1604,8 +1601,8 @@ public class JavaBridge implements Runnable {
     static final String PHPSESSION = "PHPSESSION";
     /**
      * Deserialize serialID
-     * @param serialID
-     * @param timeout
+     * @param serialID The serial ID
+     * @param timeout The timeout, usually 1400 seconds.
      * @return the new object identity.
      * @throws IllegalArgumentException if serialID does not exist anymore.
      */
@@ -1621,8 +1618,8 @@ public class JavaBridge implements Runnable {
     }
     /**
      * Serialize the object obj and return the serial id.
-     * @param obj
-     * @param timeout
+     * @param obj The object
+     * @param timeout The timeout, usually 1400 seconds
      * @return the serialID
      */
     public String serialize(Object obj, int timeout) {

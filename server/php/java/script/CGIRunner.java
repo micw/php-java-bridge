@@ -22,7 +22,7 @@ import php.java.bridge.Util;
  *
  */
 
-abstract class CGIRunner extends Thread {
+public abstract class CGIRunner extends Thread {
 	
     protected boolean running = true;
     protected Map env;

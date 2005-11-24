@@ -3,7 +3,7 @@
 package php.java.script;
 
 import java.io.Writer;
-import java.util.Hashtable;
+import java.util.Map;
 
 import php.java.bridge.Invocable;
 import php.java.bridge.http.ContextFactory;
@@ -26,7 +26,7 @@ public interface IPhpScriptContext extends Invocable {
      * Returns the script environment.
      * @return the environment
      */
-    public Hashtable getEnvironment();
+    public Map getEnvironment();
 
     /**
      * Returns the ContextFactory.

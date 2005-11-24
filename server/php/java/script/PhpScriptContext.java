@@ -4,6 +4,7 @@ package php.java.script;
 
 import java.io.Writer;
 import java.util.Hashtable;
+import java.util.Map;
 
 import javax.script.SimpleScriptContext;
 
@@ -68,7 +69,7 @@ public class PhpScriptContext extends SimpleScriptContext implements IPhpScriptC
     /**
      * @return the environment
      */
-    public Hashtable getEnvironment() {
+    public Map getEnvironment() {
 	return env;
     }
 	

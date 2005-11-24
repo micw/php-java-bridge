@@ -86,6 +86,63 @@ public class FastCGIServlet extends CGIServlet {
     public boolean fcgiIsAvailable() {
         return fcgiIsAvailable;
     }
+    private static boolean fcgiStarted = false;
+    private static final void runFcgi(HashMap defaultEnv, String php) {
+	    int c;
+	    byte buf[] = new byte[CGIServlet.BUF_SIZE];
+	    try {
+	    Process proc = startFcgi(defaultEnv, php);
+        if(proc==null) return;
+	    InputStream in = proc.getErrorStream();
+	    while((c=in.read(buf))!=-1) System.err.write(buf, 0, c);
+		if(proc!=null) try {proc.destroy(); proc=null;} catch(Throwable t) {/*ignore*/}
+	    } catch (Exception e) {Util.printStackTrace(e);}
+    }
+    private static synchronized final Process startFcgi(HashMap defaultEnv, String php) throws IOException {
+	Process proc = null;
+        if(fcgiStarted) return null;
+	    String port;
+	    if(System.getProperty("php.java.bridge.promiscuous", "false").toLowerCase().equals("true")) 
+		port = ":"+String.valueOf(FCGI_CHANNEL);
+	    else
+		port = "127.0.0.1:"+String.valueOf(FCGI_CHANNEL);
+		HashMap envp = (HashMap)defaultEnv.clone();
+
+		// Set override hosts so that php does not try to start a VM.
+		// The value itself doesn't matter, we'll pass the real value
+		// via the (HTTP_)X_JAVABRIDGE_OVERRIDE_HOSTS header field
+		// later.
+		envp.put("X_JAVABRIDGE_OVERRIDE_HOSTS", "/");
+		if(System.getProperty("php.java.bridge.promiscuous", "false").toLowerCase().equals("true")) {
+			String[] args = new String[]{php, "-b", port};
+			File home = null;
+			try { home = ((new File(php)).getParentFile()); } catch (Exception e) {Util.printStackTrace(e);}
+		    proc = Util.startProcess(args, home, envp);
+		} else {
+			String[] args = new String[]{null, "-b", port};
+		    proc = Util.startProcess(args, null, envp);
+		}
+		if(proc!=null) {
+		    proc.getOutputStream().close();
+		    proc.getInputStream().close();
+		    try {
+		        Runtime.getRuntime().addShutdownHook(
+							 (new Thread("JavaBridgeFastCGIShutdown") {
+							     Process proc;
+							     public Thread init(Process proc) {
+							         this.proc = proc;
+							         return this;
+							     }
+							     public void run() {
+								 if(proc!=null) try {proc.destroy();proc=null;} catch(Throwable t) {/*ignore*/}
+							     }
+							 }).init(proc));
+		    } catch (Throwable t) {t.printStackTrace();};
+		}
+		    fcgiStarted = true;
+
+	    return proc;
+    }
     protected void checkCgiBinary(ServletConfig config) {
 	String value;
 	    try {
@@ -123,53 +180,7 @@ public class FastCGIServlet extends CGIServlet {
 	    if(fcgiIsAvailable){
 		(new Thread("JavaBridgeFastCGIRunner") {
 			public void run() {
-			    int c;
-			    byte buf[] = new byte[CGIServlet.BUF_SIZE];
-			    String port;
-			    if(System.getProperty("php.java.bridge.promiscuous", "false").toLowerCase().equals("true")) 
-				port = ":"+String.valueOf(FCGI_CHANNEL);
-			    else
-				port = "127.0.0.1:"+String.valueOf(FCGI_CHANNEL);
-			    try {
-				Process proc = null;
-				HashMap envp = (HashMap)defaultEnv.clone();
-
-				// Set override hosts so that php does not try to start a VM.
-				// The value itself doesn't matter, we'll pass the real value
-				// via the (HTTP_)X_JAVABRIDGE_OVERRIDE_HOSTS header field
-				// later.
-				envp.put("X_JAVABRIDGE_OVERRIDE_HOSTS", "/");
-				if(System.getProperty("php.java.bridge.promiscuous", "false").toLowerCase().equals("true")) {
-					String[] args = new String[]{php, "-b", port};
-					File home = null;
-					try { home = ((new File(php)).getParentFile()); } catch (Exception e) {Util.printStackTrace(e);}
-				    proc = Util.startProcess(args, home, envp);
-				} else {
-					String[] args = new String[]{null, "-b", port};
-				    proc = Util.startProcess(args, null, envp);
-				}
-				if(proc!=null) {
-				    proc.getOutputStream().close();
-				    proc.getInputStream().close();
-				    InputStream in = proc.getErrorStream();
-				    try {
-				        Runtime.getRuntime().addShutdownHook(
-									 (new Thread("JavaBridgeFastCGIShutdown") {
-									     Process proc;
-									     public Thread init(Process proc) {
-									         this.proc = proc;
-									         return this;
-									     }
-									     public void run() {
-										 if(proc!=null) try {proc.destroy();proc=null;} catch(Throwable t) {/*ignore*/}
-									     }
-									 }).init(proc));
-				    } catch (Throwable t) {t.printStackTrace();};
-
-				while((c=in.read(buf))!=-1) System.err.write(buf, 0, c);
-	    	    		if(proc!=null) try {proc.destroy(); proc=null;} catch(Throwable t) {/*ignore*/}
-				}
-			    } catch (Throwable t) {Util.printStackTrace(t);}
+			    runFcgi(defaultEnv, php);
 			}
 		    }).start();
 		try {
