@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="null"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head><title>ConstructorCache.Entry</title><script src="../../../resources/gjdoc.js" type="text/javascript"><!-- this comment required for konqueror 3.2.2 --></script><meta http-equiv="Content-Type" content="text/html; charset=null"/><meta name="generator" content="GNU Gjdoc Standard Doclet"/><meta name="keywords" content="php.java.bridge.ConstructorCache.Entry class"/><meta name="keywords" content="hashCode()"/><meta name="keywords" content="equals()"/><link rel="stylesheet" type="text/css" href="../../../resources/gjdochtml-clean-layout.css" title="GNU Clean"/><link rel="stylesheet" type="text/css" href="../../../resources/gjdochtml-clean-color1.css" title="GNU Clean"/></head><body class="content class" onload="top.contentPageLoaded(document.title)"><table class="navbar div top"><tr><td class="navbar div top" colspan="2"><div class="navbar div top" colspan="2"><span class="navbar item enabled"><a href="../../../index-noframes.html">Overview</a></span> <span class="navbar item enabled"><a href="package-summary.html">Package</a></span> <span class="navbar item active">Class</span> <span class="navbar item enabled"><a href="ConstructorCache.Entry-uses.html">Use</a></span> <span class="navbar item enabled"><a href="tree.html">Tree</a></span> <span class="navbar item enabled"><a href="../../../alphaindex-1.html">Index</a></span> <span class="navbar item enabled"><a href="../../../deprecated.html">Deprecated</a></span> <span class="navbar item enabled"><a href="../../../about.html">About</a></span></div></td></tr><tr><td class="navi"><a href="../../../php/java/bridge/ConstructorCache.html">Prev Class</a> | <a href="../../../php/java/bridge/DynamicClassLoader.html">Next Class</a></td><td class="navi"><a href="../../../index.html" title="Show in a frameset" target="_top">Frames</a> | <a href="ConstructorCache.Entry.html" title="Show without frames" target="_top">No Frames</a> </td></tr><tr><td class="navi">Summary: Nested | Field | <a href="#summary-methods">Method</a> | Constr</td><td class="navi">Detail: Nested | Field | <a href="#detail-methods">Method</a> | Constr</td></tr></table><div class="class title outer"><h3 class="class title-package">php.java.bridge</h3><h1 class="class title-class">Class ConstructorCache.Entry</h1></div><div class="class inheritance-tree"><ul class="inheritance 0"><li class="inheritance 0"><code>java.lang.Object</code></li><ul class="inheritance 1"><li class="inheritance 1"><code>php.java.bridge.ConstructorCache.Entry</code></li></ul></ul></div><dl class="class enclosing"><dt class="class enclosing header"><b>Enclosing Class:</b></dt><dd class="class enclosing item"><a href="../../../php/java/bridge/ConstructorCache.html" title="Class in php.java.bridge">ConstructorCache</a></dd></dl><hr/><div class="class synopsis outer"><div class="class synopsis declaration"><code>public static class <b class="class synopsis name">ConstructorCache.Entry</b></code></div><div class="class synopsis superclass"><code>extends java.lang.Object</code></div></div><hr/><div class="class description"> A cache entry carrying the method name and the parameters
+</div><p class="taglet"><dl class="tag list"><dt class="tag section header"><b>Author:</b></dt><dd class="tag item">jostb</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><a name="summary-methods"/><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table header"><td colspan="2"><h2 class="table header">Method Summary</h2></td></tr><tr><td class="left" valign="top"><code class="synopsis"> boolean</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#equals(java.lang.Object)">equals</a>(java.lang.Object&nbsp;o)</code></dt><dd class="description"> Determine whether this Object is semantically equal
+ to another Object.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> int</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#hashCode()">hashCode</a>()</code></dt><dd class="description"> Get a value that represents this Object, as uniquely as
+ possible within the confines of an int.</dd></dl></td></tr></table></dl><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table sub header"><td colspan="2"><h3 class="table sub header">Methods inherited from class java.lang.Object</h3></td></tr><tr><td class="inherited"><a href="../../../java/lang/Object.html#equals(java.lang.Object)" title="equals(Object)"><code class="member">equals</code></a>, <a href="../../../java/lang/Object.html#getClass()" title="getClass()"><code class="member">getClass</code></a>, <a href="../../../java/lang/Object.html#hashCode()" title="hashCode()"><code class="member">hashCode</code></a>, <a href="../../../java/lang/Object.html#notify()" title="notify()"><code class="member">notify</code></a>, <a href="../../../java/lang/Object.html#notifyAll()" title="notifyAll()"><code class="member">notifyAll</code></a>, <a href="../../../java/lang/Object.html#toString()" title="toString()"><code class="member">toString</code></a>, <a href="../../../java/lang/Object.html#wait()" title="wait()"><code class="member">wait</code></a>, <a href="../../../java/lang/Object.html#wait(long)" title="wait(long)"><code class="member">wait</code></a>, <a href="../../../java/lang/Object.html#wait(long,int)" title="wait(long,int)"><code class="member">wait</code></a></td></tr></table></dl><a name="detail-methods"/><h2 class="section header">Method Details</h2><div class="section"><a name="equals(java.lang.Object)"/><div class="member detail outer"><h3 class="member detail name">equals</h3><pre class="member detail synopsis">public boolean equals(java.lang.Object o)</pre><blockquote class="member detail name"><div class="member detail description"> Determine whether this Object is semantically equal
+ to another Object.
+
+ <p/>There are some fairly strict requirements on this
+ method which subclasses must follow:<br/>
+ <ul>
+ <li>It must be transitive.  If <code>a.equals(b)</code> and
+     <code>b.equals(c)</code>, then <code>a.equals(c)</code>
+     must be true as well.</li>
+ <li>It must be symmetric.  <code>a.equals(b)</code> and
+     <code>b.equals(a)</code> must have the same value.</li>
+ <li>It must be reflexive.  <code>a.equals(a)</code> must
+     always be true.</li>
+ <li>It must be consistent.  Whichever value a.equals(b)
+     returns on the first invocation must be the value
+     returned on all later invocations.</li>
+ <li><code>a.equals(null)</code> must be false.</li>
+ <li>It must be consistent with hashCode().  That is,
+     <code>a.equals(b)</code> must imply
+     <code>a.hashCode() == b.hashCode()</code>.
+     The reverse is not true; two objects that are not
+     equal may have the same hashcode, but that has
+     the potential to harm hashing performance.</li>
+ </ul>
+
+ <p/>This is typically overridden to throw a <code>ClassCastException</code>
+ if the argument is not comparable to the class performing
+ the comparison, but that is not a requirement.  It is legal
+ for <code>a.equals(b)</code> to be true even though
+ <code>a.getClass() != b.getClass()</code>.  Also, it
+ is typical to never cause a <code>NullPointerException</code>.
+
+ <p/>In general, the Collections API (<code>java.util</code>) use the
+ <code>equals</code> method rather than the <code>==</code>
+ operator to compare objects.  However, <code>java.util.IdentityHashMap</code>
+ is an exception to this rule, for its own good reasons.
+
+ <p/>The default implementation returns <code>this == o</code>.
+</div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">equals in interface java.lang.Object</dd></dl><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">whether this Object is semantically equal to another</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"><dl class="tag list"><dt class="tag section header"><b>See Also:</b></dt><dd><code>hashCode()</code><dd></dl></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="hashCode()"/><div class="member detail outer"><h3 class="member detail name">hashCode</h3><pre class="member detail synopsis">public int hashCode()</pre><blockquote class="member detail name"><div class="member detail description"> Get a value that represents this Object, as uniquely as
+ possible within the confines of an int.
+
+ <p/>There are some requirements on this method which
+ subclasses must follow:<br/>
+
+ <ul>
+ <li>Semantic equality implies identical hashcodes.  In other
+     words, if <code>a.equals(b)</code> is true, then
+     <code>a.hashCode() == b.hashCode()</code> must be as well.
+     However, the reverse is not necessarily true, and two
+     objects may have the same hashcode without being equal.</li>
+ <li>It must be consistent.  Whichever value o.hashCode()
+     returns on the first invocation must be the value
+     returned on all later invocations as long as the object
+     exists.  Notice, however, that the result of hashCode may
+     change between separate executions of a Virtual Machine,
+     because it is not invoked on the same object.</li>
+ </ul>
+
+ <p/>Notice that since <code>hashCode</code> is used in
+<code>java.util.Hashtable</code> and other hashing classes,
+  a poor implementation will degrade the performance of hashing
+ (so don't blindly implement it as returning a constant!). Also,
+ if calculating the hash is time-consuming, a class may consider
+ caching the results.
+
+ <p/>The default implementation returns
+ <code>System.identityHashCode(this)</code>
+</div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">hashCode in interface java.lang.Object</dd></dl><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">the hash code for this Object</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"><dl class="tag list"><dt class="tag section header"><b>See Also:</b></dt><dd><code>equals(Object)</code>, <code>System.identityHashCode(Object)</code><dd></dl></p><p class="taglet"></p><p class="taglet"></p></blockquote></div></div><p class="navbar bottom spacer"> </p><table class="navbar div bottom"><tr><td><div class="navbar div top" colspan="2"><span class="navbar item enabled"><a href="../../../index-noframes.html">Overview</a></span> <span class="navbar item enabled"><a href="package-summary.html">Package</a></span> <span class="navbar item active">Class</span> <span class="navbar item enabled"><a href="ConstructorCache.Entry-uses.html">Use</a></span> <span class="navbar item enabled"><a href="tree.html">Tree</a></span> <span class="navbar item enabled"><a href="../../../alphaindex-1.html">Index</a></span> <span class="navbar item enabled"><a href="../../../deprecated.html">Deprecated</a></span> <span class="navbar item enabled"><a href="../../../about.html">About</a></span></div></td></tr></table></body></html>
