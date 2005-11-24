@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="null"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head><title>CGIServlet</title><script src="../../../resources/gjdoc.js" type="text/javascript"><!-- this comment required for konqueror 3.2.2 --></script><meta http-equiv="Content-Type" content="text/html; charset=null"/><meta name="generator" content="GNU Gjdoc Standard Doclet"/><meta name="keywords" content="php.java.servlet.CGIServlet class"/><meta name="keywords" content="init()"/><link rel="stylesheet" type="text/css" href="../../../resources/gjdochtml-clean-layout.css" title="GNU Clean"/><link rel="stylesheet" type="text/css" href="../../../resources/gjdochtml-clean-color1.css" title="GNU Clean"/></head><body class="content class" onload="top.contentPageLoaded(document.title)"><table class="navbar div top"><tr><td class="navbar div top" colspan="2"><div class="navbar div top" colspan="2"><span class="navbar item enabled"><a href="../../../index-noframes.html">Overview</a></span> <span class="navbar item enabled"><a href="package-summary.html">Package</a></span> <span class="navbar item active">Class</span> <span class="navbar item enabled"><a href="CGIServlet-uses.html">Use</a></span> <span class="navbar item enabled"><a href="tree.html">Tree</a></span> <span class="navbar item enabled"><a href="../../../alphaindex-1.html">Index</a></span> <span class="navbar item enabled"><a href="../../../deprecated.html">Deprecated</a></span> <span class="navbar item enabled"><a href="../../../about.html">About</a></span></div></td></tr><tr><td class="navi">Prev Class | <a href="../../../php/java/servlet/Context.html">Next Class</a></td><td class="navi"><a href="../../../index.html" title="Show in a frameset" target="_top">Frames</a> | <a href="CGIServlet.html" title="Show without frames" target="_top">No Frames</a> </td></tr><tr><td class="navi">Summary: Nested | Field | <a href="#summary-methods">Method</a> | Constr</td><td class="navi">Detail: Nested | Field | <a href="#detail-methods">Method</a> | Constr</td></tr></table><div class="class title outer"><h3 class="class title-package">php.java.servlet</h3><h1 class="class title-class">Class CGIServlet</h1></div><div class="class inheritance-tree"><ul class="inheritance 0"><li class="inheritance 0"><code>java.lang.Object</code></li><ul class="inheritance 1"><li class="inheritance 1"><code>javax.servlet.GenericServlet</code></li><ul class="inheritance 2"><li class="inheritance 2"><code>javax.servlet.http.HttpServlet</code></li><ul class="inheritance 3"><li class="inheritance 3"><code>php.java.servlet.CGIServlet</code></li></ul></ul></ul></ul></div><dl class="class knownimplementing"><dt class="header"><b>Implemented Interfaces:</b></dt><dd class="item">java.io.Serializable, javax.servlet.Servlet, javax.servlet.ServletConfig</dd></dl><dl class="class subclasses"><dt class="class subclasses header"><b>Known Direct Subclasses:</b></dt><dd class="class subclasses header"><a href="../../../php/java/servlet/FastCGIServlet.html" title="Class in php.java.servlet">FastCGIServlet</a></dd></b></dt></dl><hr/><div class="class synopsis outer"><div class="class synopsis declaration"><code>public class <b class="class synopsis name">CGIServlet</b></code></div><div class="class synopsis superclass"><code>extends javax.servlet.http.HttpServlet</code></div></div><hr/><div class="class description">  CGI-invoking servlet for web applications, used to execute scripts which
+  comply to the Common Gateway Interface (CGI) specification and are named
+  in the path-info used to invoke this servlet.
+
+ <p/>
+
+ <b>Example</b>:<br/>
+ If an instance of this servlet was mapped (using
+       <code>&lt;web-app&gt;/WEB-INF/web.xml</code>) to:
+ 
+ <p/>
+ <code>
+ &lt;web-app&gt;/cgi-bin/*
+ </code>
+ 
+ <p/>
+ then the following request:
+ 
+ <p/>
+ <code>
+ http://localhost:8080/&lt;web-app&gt;/cgi-bin/dir1/script/pathinfo1
+ </code>
+ 
+ <p/>
+ would result in the execution of the script
+ 
+ <p/>
+ <code>
+ &lt;web-app-root&gt;/WEB-INF/cgi/dir1/script
+ </code>
+ 
+ <p/>
+ with the script's <code>PATH_INFO</code> set to <code>/pathinfo1</code>.
+ 
+ <p/>
+ Recommendation:  House all your CGI scripts under
+ <code>&lt;webapp&gt;/WEB-INF/cgi</code>.  This will ensure that you do not
+ accidentally expose your cgi scripts' code to the outside world and that
+ your cgis will be cleanly ensconced underneath the WEB-INF (i.e.,
+ non-content) area.
+ 
+ <p/>
+ The default CGI location is mentioned above.  You have the flexibility to
+ put CGIs wherever you want, however:
+ 
+ <p/>
+   The CGI search path will start at
+   webAppRootDir + File.separator + cgiPathPrefix
+   (or webAppRootDir alone if cgiPathPrefix is
+   null).
+ 
+ <p/>
+   cgiPathPrefix is defined by setting
+   this servlet's cgiPathPrefix init parameter
+ 
+
+ <p/>
+
+ <b>CGI Specification</b>:<br/> derived from
+ <a href="http://cgi-spec.golux.com">http://cgi-spec.golux.com</a>.
+ A work-in-progress &amp; expired Internet Draft.  Note no actual RFC describing
+ the CGI specification exists.  Where the behavior of this servlet differs
+ from the specification cited above, it is either documented here, a bug,
+ or an instance where the specification cited differs from Best
+ Community Practice (BCP).
+ Such instances should be well-documented here.  Please email the
+ <a href="mailto:tomcat-dev@jakarta.apache.org">Jakarta Tomcat group [tomcat-dev@jakarta.apache.org]</a>
+ with amendments.
+
+ 
+ <p/>
+
+ <b>Canonical metavariables</b>:<br/>
+ The CGI specification defines the following canonical metavariables:
+ <br/>
+ [excerpt from CGI specification]
+ <pre>
+  AUTH_TYPE
+  CONTENT_LENGTH
+  CONTENT_TYPE
+  GATEWAY_INTERFACE
+  PATH_INFO
+  PATH_TRANSLATED
+  QUERY_STRING
+  REMOTE_ADDR
+  REMOTE_HOST
+  REMOTE_IDENT
+  REMOTE_USER
+  REQUEST_METHOD
+  SCRIPT_NAME
+  SERVER_NAME
+  SERVER_PORT
+  SERVER_PROTOCOL
+  SERVER_SOFTWARE
+ </pre>
+ <p/>
+ Metavariables with names beginning with the protocol name (<em>e.g.</em>,
+ "HTTP_ACCEPT") are also canonical in their description of request header
+ fields.  The number and meaning of these fields may change independently
+ of this specification.  (See also section 6.1.5 [of the CGI specification].)
+ 
+ [end excerpt]
+
+ 
+ <h2> Implementation notes</h2>
+ <p/>
+
+ <b>standard input handling</b>: If your script accepts standard input,
+ then the client must start sending input within a certain timeout period,
+ otherwise the servlet will assume no input is coming and carry on running
+ the script.  The script's the standard input will be closed and handling of
+ any further input from the client is undefined.  Most likely it will be
+ ignored.  If this behavior becomes undesirable, then this servlet needs
+ to be enhanced to handle threading of the spawned process' stdin, stdout,
+ and stderr (which should not be too hard).
+ <br/>
+ If you find your cgi scripts are timing out receiving input, you can set
+ the init parameter <code></code> of your webapps' cgi-handling servlet
+ to be
+ 
+ <p/>
+
+ <b>Metavariable Values</b>: According to the CGI specificion,
+ implementations may choose to represent both null or missing values in an
+ implementation-specific manner, but must define that manner.  This
+ implementation chooses to always define all required metavariables, but
+ set the value to "" for all metavariables whose value is either null or
+ undefined.  PATH_TRANSLATED is the sole exception to this rule, as per the
+ CGI Specification.
+
+ 
+ <p/>
+
+ <b>NPH --  Non-parsed-header implementation</b>:  This implementation does
+ not support the CGI NPH concept, whereby server ensures that the data
+ supplied to the script are preceisely as supplied by the client and
+ unaltered by the server.
+ 
+ <p/>
+ The function of a servlet container (including Tomcat) is specifically
+ designed to parse and possible alter CGI-specific variables, and as
+ such makes NPH functionality difficult to support.
+ 
+ <p/>
+ The CGI specification states that compliant servers MAY support NPH output.
+ It does not state servers MUST support NPH output to be unconditionally
+ compliant.  Thus, this implementation maintains unconditional compliance
+ with the specification though NPH support is not present.
+ 
+ <p/>
+
+ The CGI specification is located at
+ <a href="http://cgi-spec.golux.com">http://cgi-spec.golux.com</a>.
+
+ 
+ <p/>
+</div><p class="taglet"><dl class="tag list"><dt class="tag section header"><b>Authors:</b></dt><dd class="tag item">Martin T Dengler (original author)</dd><dd class="tag item">Amy Roh (for Tomcat)</dd><dd class="tag item">Jost Boekemeier (for the PHP/JavaBridge)</dd></dl></p><p class="taglet"><dl class="tag list"><dt class="tag section header"><b>Since:</b></dt><dd>Tomcat 4</dd><dd>PHP/JavaBridge 2.0.8</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"><dl class="tag list"><dt class="tag section header"><b>See Also:</b></dt><dd><a href="../../../serialized-form.html#php.java.servlet.CGIServlet">Serialized Form</a><dd></dl></p><p class="taglet"></p><p class="taglet"></p><a name="summary-methods"/><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table header"><td colspan="2"><h2 class="table header">Method Summary</h2></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#init(javax.servlet.ServletConfig)">init</a>(javax.servlet.ServletConfig&nbsp;config)</code></dt><dd class="description"> Sets instance variables.</dd></dl></td></tr></table></dl><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table sub header"><td colspan="2"><h3 class="table sub header">Methods inherited from class javax.servlet.http.HttpServlet</h3></td></tr><tr><td class="inherited"><a href="../../../javax/servlet/http/HttpServlet.html#service(javax.servlet.ServletRequest,javax.servlet.ServletResponse)" title="service(ServletRequest,ServletResponse)"><code class="member">service</code></a></td></tr></table></dl><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table sub header"><td colspan="2"><h3 class="table sub header">Methods inherited from class javax.servlet.GenericServlet</h3></td></tr><tr><td class="inherited"><a href="../../../javax/servlet/GenericServlet.html#destroy()" title="destroy()"><code class="member">destroy</code></a>, <a href="../../../javax/servlet/GenericServlet.html#getInitParameter(java.lang.String)" title="getInitParameter(String)"><code class="member">getInitParameter</code></a>, <a href="../../../javax/servlet/GenericServlet.html#getInitParameterNames()" title="getInitParameterNames()"><code class="member">getInitParameterNames</code></a>, <a href="../../../javax/servlet/GenericServlet.html#getServletConfig()" title="getServletConfig()"><code class="member">getServletConfig</code></a>, <a href="../../../javax/servlet/GenericServlet.html#getServletContext()" title="getServletContext()"><code class="member">getServletContext</code></a>, <a href="../../../javax/servlet/GenericServlet.html#getServletInfo()" title="getServletInfo()"><code class="member">getServletInfo</code></a>, <a href="../../../javax/servlet/GenericServlet.html#getServletName()" title="getServletName()"><code class="member">getServletName</code></a>, <a href="../../../javax/servlet/GenericServlet.html#init()" title="init()"><code class="member">init</code></a>, <a href="../../../javax/servlet/GenericServlet.html#init(javax.servlet.ServletConfig)" title="init(ServletConfig)"><code class="member">init</code></a>, <a href="../../../javax/servlet/GenericServlet.html#log(java.lang.String)" title="log(String)"><code class="member">log</code></a>, <a href="../../../javax/servlet/GenericServlet.html#log(java.lang.String,java.lang.Throwable)" title="log(String,Throwable)"><code class="member">log</code></a>, <a href="../../../javax/servlet/GenericServlet.html#service(javax.servlet.ServletRequest,javax.servlet.ServletResponse)" title="service(ServletRequest,ServletResponse)"><code class="member">service</code></a></td></tr></table></dl><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table sub header"><td colspan="2"><h3 class="table sub header">Methods inherited from class java.lang.Object</h3></td></tr><tr><td class="inherited"><a href="../../../java/lang/Object.html#equals(java.lang.Object)" title="equals(Object)"><code class="member">equals</code></a>, <a href="../../../java/lang/Object.html#getClass()" title="getClass()"><code class="member">getClass</code></a>, <a href="../../../java/lang/Object.html#hashCode()" title="hashCode()"><code class="member">hashCode</code></a>, <a href="../../../java/lang/Object.html#notify()" title="notify()"><code class="member">notify</code></a>, <a href="../../../java/lang/Object.html#notifyAll()" title="notifyAll()"><code class="member">notifyAll</code></a>, <a href="../../../java/lang/Object.html#toString()" title="toString()"><code class="member">toString</code></a>, <a href="../../../java/lang/Object.html#wait()" title="wait()"><code class="member">wait</code></a>, <a href="../../../java/lang/Object.html#wait(long)" title="wait(long)"><code class="member">wait</code></a>, <a href="../../../java/lang/Object.html#wait(long,int)" title="wait(long,int)"><code class="member">wait</code></a></td></tr></table></dl><a name="detail-methods"/><h2 class="section header">Method Details</h2><div class="section"><a name="init(javax.servlet.ServletConfig)"/><div class="member detail outer"><h3 class="member detail name">init</h3><pre class="member detail synopsis">public void init(javax.servlet.ServletConfig config)
+            throws javax.servlet.ServletException</pre><blockquote class="member detail name"><div class="member detail description"> Sets instance variables.
+ <p/>
+ Modified from Craig R. McClanahan's InvokerServlet
+ 
+</div><dl class="member detail specified by list"><dt class="member detail specified by header"><b>Specified by:</b></dt><dd class="member detail specified by item"><a href="../../../javax/servlet/Servlet.html#init(javax.servlet.ServletConfig)">init</a> in interface javax.servlet.Servlet</dd></dl><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">init in interface javax.servlet.GenericServlet</dd></dl><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">config</code><span class="separator"> - </span><span class="description">a <code>ServletConfig</code> object
+containing the servlet's
+configuration and initialization
+parameters</span></dd></dl></p><p class="member detail thrown list"><dl><dt class="member detail thrown header"><b>Throws:</b></dt><dd class="member detail thrown item"><code class="name">javax.servlet.ServletException</code><span class="separator"> - </span><span class="description">if an exception has occurred that
+interferes with the servlet's normal
+operation</span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div></div><p class="navbar bottom spacer"> </p><table class="navbar div bottom"><tr><td><div class="navbar div top" colspan="2"><span class="navbar item enabled"><a href="../../../index-noframes.html">Overview</a></span> <span class="navbar item enabled"><a href="package-summary.html">Package</a></span> <span class="navbar item active">Class</span> <span class="navbar item enabled"><a href="CGIServlet-uses.html">Use</a></span> <span class="navbar item enabled"><a href="tree.html">Tree</a></span> <span class="navbar item enabled"><a href="../../../alphaindex-1.html">Index</a></span> <span class="navbar item enabled"><a href="../../../deprecated.html">Deprecated</a></span> <span class="navbar item enabled"><a href="../../../about.html">About</a></span></div></td></tr></table></body></html>
