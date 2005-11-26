@@ -1,3 +1,9 @@
+/*-*- mode: C; tab-width:4 -*-*/
+
+/**\file 
+ * Revert PHP's NDEBUG.
+ *
+ */
 #ifndef PHP_WRAPPER_H
 #define PHP_WRAPPER_H
 

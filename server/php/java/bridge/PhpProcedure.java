@@ -67,7 +67,7 @@ public class PhpProcedure implements InvocationHandler {
 	Object[] result = null;
 	result = bridge.request.handleSubRequests();
 	if(bridge.logLevel>3) bridge.logDebug("result from cb: " + Arrays.asList(result));
-	return bridge.coerce(new Class[] {returnType}, result, bridge.request.response)[0];
+	return bridge.coerce(returnType, result[0], bridge.request.response);
     }
 
     /**

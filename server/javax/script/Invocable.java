@@ -51,5 +51,17 @@ public interface Invocable {
      *         interface
      */
 	public Object getInterface(Object thiz, Class clasz);
+
+    /**
+     * Retrieves an instance of java class whose methods are 
+     * impelemented using procedures in script which are in the 
+     * intermediate code repository in the underlying interpreter.
+     * 
+     * @param clasz an interface which the returned class must 
+     *              implement
+     * @return an instance of the class which implement the specified
+     *         interface
+     */
+	public Object getInterface(Class clasz);
     
 }

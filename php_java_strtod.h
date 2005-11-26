@@ -1,3 +1,12 @@
+/*-*- mode: C; tab-width:4 -*-*/
+
+/**\file 
+ * strtod implementation which does not depend on the LANG setting
+ *
+ * It is used to deserialize php values.
+ *
+ */
+
 #ifndef JAVA_STRTOD_H
 #define JAVA_STRTOD_H
 

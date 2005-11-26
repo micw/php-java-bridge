@@ -25,7 +25,6 @@ echo "hello $a . $b";
 function getBar() {
 	return java_closure(new bar());
 }
-
 echo "running...";
-
+java_context()->call(java_closure()) || die("You must call this script from java!");
 ?>

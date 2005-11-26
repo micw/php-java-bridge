@@ -42,7 +42,7 @@ public abstract class HttpServer implements Runnable {
      * @throws UnsupportedEncodingException
      * @throws IOException
      */
-    protected void parseHeader(HttpRequest req) throws UnsupportedEncodingException, IOException {
+    protected boolean parseHeader(HttpRequest req) throws UnsupportedEncodingException, IOException {
 	byte buf[] = new byte[Util.BUF_SIZE];
 		
 	InputStream natIn = req.getInputStream();
@@ -71,7 +71,7 @@ public abstract class HttpServer implements Runnable {
 		break;
 	    }
 	}
-
+	return i!=0;
     }
 		
     /**
@@ -83,18 +83,32 @@ public abstract class HttpServer implements Runnable {
 	    Socket sock;
 	    try {sock = socket.accept();} catch (IOException e) {return;} // socket closed
 	    Util.logDebug("Socket connection accepted");
+	    (new Thread("JavaBridgeHttpRunner") {
+	        Socket sock;
+	        public Thread init(Socket sock) {
+	            this.sock = sock;
+	            return this;
+	        }
+	        public void run() {
+	            try {
 	    HttpRequest req = new HttpRequest(sock.getInputStream());
 	    HttpResponse res = new HttpResponse(sock.getOutputStream());
-	    parseHeader(req);
-	    parseBody(req, res);
+	    if(parseHeader(req)) parseBody(req, res);
+	            } catch (IOException e) {
+	            Util.printStackTrace(e);
+		    }
+	        }
+	        }).init(sock).start();
 	}
     }
 
     /**
      * Sets the content length but leaves the rest of the body untouched.
      */
-    protected void parseBody(HttpRequest req, HttpResponse res) {
-	req.setContentLength(Integer.parseInt(req.getHeader("Content-Length")));
+    protected void parseBody(HttpRequest req, HttpResponse res) throws IOException {
+        String contentLength = req.getHeader("Content-Length");
+        if(contentLength==null) throw new IOException("Content-Length missing");
+	req.setContentLength(Integer.parseInt(contentLength));
     }
 
     /* (non-Javadoc)

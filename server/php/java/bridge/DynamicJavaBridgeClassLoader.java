@@ -63,6 +63,20 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 		Util.printStackTrace(e);
 	    }
 	}
+
+	/*
+	 * rawPath always starts with a token separator, e.g. ";" 
+	 */
+	if(rawPath==null || rawPath.length()<2) return;
+	// add a token separator if first char is alnum
+	char c=rawPath.charAt(0);
+	if((c>='A' && c<='Z') || (c>='a' && c<='z') ||
+	   (c>='0' && c<='9') || (c!='.' || c!='/'))
+	    rawPath = ";" + rawPath;
+
+	/*
+	 * Check the cache
+	 */
     	URL urls[] = (URL[]) urlCache.get(key);
         if(urls!=null) {
 	    try {
@@ -73,14 +87,10 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	    }
 	}
         
+        /*
+         * Parse the path.
+         */
     	ArrayList toAdd = new ArrayList();
-        if(rawPath==null || rawPath.length()<2) return;
-	// add a token separator if first char is alnum
-	char c=rawPath.charAt(0);
-	if((c>='A' && c<='Z') || (c>='a' && c<='z') ||
-	   (c>='0' && c<='9') || (c!='.' || c!='/'))
-	    rawPath = ";" + rawPath;
-
 	String path = rawPath.substring(1);
 	StringTokenizer st = new StringTokenizer(path, rawPath.substring(0, 1));
 	while (st.hasMoreTokens()) {
@@ -309,5 +319,4 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	    return null;
 	}
     }
-    
 }

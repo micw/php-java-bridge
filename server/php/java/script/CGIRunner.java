@@ -83,7 +83,7 @@ public abstract class CGIRunner extends Thread {
     
     protected void doRun() throws IOException {
 	int n;    
-        Process proc = Util.startProcess(null, null, Util.DEFAULT_CGI_ENVIRONMENT);
+        Process proc = Util.startProcess(null, null, env);
 	try { proc.getErrorStream().close(); } catch (IOException e) {}
 
 	InputStream natIn = proc.getInputStream();

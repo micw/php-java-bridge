@@ -77,5 +77,11 @@ public class Options {
     public boolean extJavaCompatibility() {
     	return (this.options & 1) == 1;
     }
-    
+ 
+    Object createExact(ParserString st) {
+        if(!extJavaCompatibility())
+            return (new Integer(Integer.parseInt(st.getStringValue(), 10)));
+        else
+            return (new Long(Long.parseLong(st.getStringValue(), 10)));
+    }
 }

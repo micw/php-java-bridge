@@ -1,3 +1,11 @@
+/*-*- mode: C; tab-width:4 -*-*/
+
+/**\file
+ * snprintf version that does not depend on the LANG setting.
+ *
+ * It is used to serialize php values.
+ */  
+
 #ifndef JAVA_SNPRINTF_H
 #define JAVA_SNPRINTF_H
 

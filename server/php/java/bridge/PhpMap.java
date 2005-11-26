@@ -27,21 +27,67 @@ public abstract class PhpMap {
 	init();
     }
     protected Object coerce(Object val) {
-	return brick.coerce(new Class[]{componentType}, new Object[]{val}, brick.request.response)[0];
+	return brick.coerce(componentType, val, brick.request.response);
     }
     protected abstract void init();
-    protected abstract Object currentData();
-    protected abstract Request.PhpString currentKey();
-    protected abstract boolean moveForward();
-    protected abstract boolean hasMore();
-    protected boolean getType() {
+    /**
+     * Returns the object at the current position.
+     * @return The current object.
+     */
+    public abstract Object currentData();
+    
+    /**
+     * Returns the key at the current position.
+     * @return The current key.
+     */
+    public abstract Request.PhpString currentKey();
+    
+    /**
+     * Forward one element.
+     * @return true if move was possible, false otherwise.
+     */
+    public abstract boolean moveForward();
+    
+    /**
+     * Checks if it is possible to advance one element
+     * @return true if next element exists, false otherwise
+     */
+    public abstract boolean hasMore();
+
+    /**
+     * Returns the key type.
+     * @return false if key is integer (array index), true if key is string (hash key)
+     */
+    public boolean getType() {
 	return keyType;
     }
 
-    protected abstract boolean offsetExists(Object pos);
-    protected abstract Object offsetGet(Object pos);
-    protected abstract void offsetSet(Object pos, Object val);
-    protected abstract void offsetUnset(Object pos); //remove
+    /**
+     * Checks if a given position exists.
+     * @param pos The position
+     * @return true if an element exists at this position, false otherwise.
+     */
+    public abstract boolean offsetExists(Object pos);
+    
+    /**
+     * Returns the object at the posisition.
+     * @param pos The position.
+     * @return The object at the given position.
+     */
+    public abstract Object offsetGet(Object pos);
+    
+    /**
+     * Set an object at position.
+     * @param pos The position.
+     * @param val The object.
+     */
+    public abstract void offsetSet(Object pos, Object val);
+    
+    /**
+     * Remove an object from the position, the position is marked as "empty".
+     * @param pos The position.
+     */
+    public abstract void offsetUnset(Object pos); 
     
 
     /**
@@ -65,36 +111,36 @@ public abstract class PhpMap {
 			length = Array.getLength(this.value);
 			valid=length>0;
 		    }
-		    protected Object currentData() {
+		    public Object currentData() {
 			if(!valid) return null;
 			return Array.get(this.value, i);
 		    }
-		    protected Request.PhpString currentKey() {
+		    public Request.PhpString currentKey() {
 			if(!valid) return null;
 			return new Request.SimplePhpString(brick, (String.valueOf(i)));
 		    }
-		    protected boolean moveForward() {
+		    public boolean moveForward() {
 			valid=++i<length;
 			return valid?true:false;
 		    }
-		    protected boolean hasMore() {
+		    public boolean hasMore() {
 			return valid?true:false;
 		    }
 
-		    protected boolean offsetExists(Object pos) {
+		    public boolean offsetExists(Object pos) {
 			int i = ((Number)pos).intValue();
 			return (i>0 && i<length && (Array.get(this.value, i)!=this));
 		    }
-		    protected Object offsetGet(Object pos) {
+		    public Object offsetGet(Object pos) {
 			int i = ((Number)pos).intValue();
 			Object o = Array.get(this.value, i);
 			return o==this ? null : o;
 		    }
-		    protected void offsetSet(Object pos, Object val) {
+		    public void offsetSet(Object pos, Object val) {
 			int i = ((Number)pos).intValue();
 			Array.set(this.value, i, coerce(val));
 		    }
-		    protected void offsetUnset(Object pos) {
+		    public void offsetUnset(Object pos) {
 			int i = ((Number)pos).intValue();
 			Array.set(this.value, i, this);
 		    }
@@ -115,13 +161,13 @@ public abstract class PhpMap {
 			    currentKey=iter.next();
 			}
 		    }
-		    protected Object currentData() {
+		    public Object currentData() {
 			return currentKey;
 		    }
-		    protected Request.PhpString currentKey() {
+		    public Request.PhpString currentKey() {
 			return new Request.SimplePhpString(brick, String.valueOf(i));
 		    }
-		    protected boolean moveForward() {
+		    public boolean moveForward() {
 			if(iter.hasNext()) {
 			    i++;
 			    currentKey = iter.next();
@@ -130,7 +176,7 @@ public abstract class PhpMap {
 			    return false;
 			}
 		    }
-		    protected boolean hasMore() {
+		    public boolean hasMore() {
 			return currentKey==null?false:true;
 		    }
 
@@ -139,18 +185,18 @@ public abstract class PhpMap {
 		    }
 
 		    // Should we really care?
-		    protected boolean offsetExists(Object pos) {
+		    public boolean offsetExists(Object pos) {
 			bail();
 			return false;
 		    }
-		    protected Object offsetGet(Object pos) {
+		    public Object offsetGet(Object pos) {
 			bail();
 			return null;
 		    }
-		    protected void offsetSet(Object pos, Object val) {
+		    public void offsetSet(Object pos, Object val) {
 			bail();
 		    }
-		    protected void offsetUnset(Object pos) {
+		    public void offsetUnset(Object pos) {
 			bail();
 		    }
 		};
@@ -168,31 +214,31 @@ public abstract class PhpMap {
 			    currentKey=iter.next();
 			}
 		    }
-		    protected Object currentData() {
+		    public Object currentData() {
 			if(currentKey==null) return null;
 			return ((Map)(this.value)).get(currentKey);
 		    }
-		    protected Request.PhpString currentKey() {
+		    public Request.PhpString currentKey() {
 			return new Request.SimplePhpString(brick, String.valueOf(currentKey));
 		    }
-		    protected boolean moveForward() {
+		    public boolean moveForward() {
 			currentKey = iter.hasNext() ? iter.next() : null;
 			return currentKey==null?false:true;
 		    }
-		    protected boolean hasMore() {
+		    public boolean hasMore() {
 			return currentKey==null?false:true;
 		    }
 
-		    protected boolean offsetExists(Object pos) {
+		    public boolean offsetExists(Object pos) {
 			return ((Map)(this.value)).containsKey(pos);
 		    }
-		    protected Object offsetGet(Object pos) {
+		    public Object offsetGet(Object pos) {
 			return ((Map)(this.value)).get(pos);
 		    }
-		    protected void offsetSet(Object pos, Object val) {
+		    public void offsetSet(Object pos, Object val) {
 			((Map)(this.value)).put(pos, coerce(val));
 		    }
-		    protected void offsetUnset(Object pos) {
+		    public void offsetUnset(Object pos) {
 			((Map)(this.value)).remove(pos);
 		    }
 		};

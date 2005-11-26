@@ -43,6 +43,16 @@ public class PhpProcedureProxy {
 	if(proxy!=null) return proxy;
 	return proxy=PhpProcedure.createProxy(bridge, name, names, suppliedInterfaces==null?interfaces:suppliedInterfaces, object);
     }
+    
+    /**
+     * Generate a new proxy for the given interface
+     * @param iface The interface that the generated proxy should implement.
+     * @return The PhpProcedure.
+     */
+    public Object getNewFromInterface(Class iface) {
+        if(iface==null) throw new NullPointerException("iface");
+        return PhpProcedure.createProxy(bridge, name, names, new Class[]{iface}, object);
+    }
 }
 
 	

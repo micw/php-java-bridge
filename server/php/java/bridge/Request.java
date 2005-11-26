@@ -22,6 +22,10 @@ public class Request implements IDocHandler {
 	private static final long serialVersionUID = 3905804162838115892L;
     };
  
+    /**
+     * A php string is a UTF-8 coded byte array.
+     *
+     */
    protected static abstract class PhpString {
         /**
          * Get the encoded string representation
@@ -37,7 +41,7 @@ public class Request implements IDocHandler {
         public abstract byte[] getBytes();
 
         public String toString() {
-            throw new NotImplementedException();
+            return getString();
         }
     }
    protected static class SimplePhpString extends PhpString {
@@ -281,8 +285,9 @@ public class Request implements IDocHandler {
 	    if(args.composite=='H') {// hash
 		if(st[0].string[st[0].off]=='S')
 		    args.key = st[1].getStringValue();
-		else
-		    args.key = new Long(Long.parseLong(st[1].getStringValue(), 10));
+		else {
+		   args.key = bridge.options.createExact(st[1]);
+		}
 	    } else // array
 		args.key=null;
 	    break;
@@ -294,7 +299,10 @@ public class Request implements IDocHandler {
 	    break;
 	}
 	case 'S': {
-	    args.add(new PhpParserString(bridge, st[0]));
+	    if(args.composite!='H') 
+	        args.add(new PhpParserString(bridge, st[0]));
+	    else // hash has no type information
+	        args.add(st[0].getStringValue());
 	    break;
 	}
 	case 'B': {
@@ -302,7 +310,10 @@ public class Request implements IDocHandler {
 	    break;
 	}
 	case 'L': {
-	    args.add(new PhpNumber(Long.parseLong(st[0].getStringValue(), 10)));
+	    if(args.composite!='H')
+	        args.add(new PhpNumber(Long.parseLong(st[0].getStringValue(), 10)));
+	    else // hash has no type information
+	        args.add(bridge.options.createExact(st[0]));
 	    break;
 	}
 	case 'D': {

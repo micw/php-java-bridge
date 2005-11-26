@@ -44,6 +44,9 @@ s.send('<I value="3" method="currentKey" p="Invoke" id="0"></I>');
 key = s.recv(1024);  # string: key
 # ... show only the first entry.
 s.send('<I value="3" method="currentData" p="Invoke" id="0"></I>');
+data = s.recv(1024); # the string object, #4
+# received the string object, call bridge.castToString(ob#4) to see the string:
+s.send('<I value="0" method="castToString" p="Invoke" id="0"><O value="4"/></I>');
 data = s.recv(1024); # value
 s.close()
 # should have received the first entry from java.lang.System.getProperties()

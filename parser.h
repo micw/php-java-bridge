@@ -1,3 +1,14 @@
+/*-*- mode: C; tab-width:4 -*-*/
+
+/**\file
+ * Parse the XML protocol.
+ *
+ * Creates a parser structure and calls the registered begin and end
+ * callbacks.  Note: The parser implementation is dublicated from
+ * Parser.java.  If you change this code, you must change Parser.java,
+ * too!
+ */
+
 #ifndef JAVA_PARSER_H
 #define JAVA_PARSER_H
 

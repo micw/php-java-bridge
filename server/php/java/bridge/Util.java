@@ -325,7 +325,7 @@ public class Util {
      */
     public static String getClassName(Object obj) {
         if(obj==null) return "null";
-        Class c = obj.getClass();
+        Class c = getClass(obj);
         String name = c.getName();
         if(name.startsWith("[")) name = "array_of-"+name.substring(1);
         return name;
@@ -581,7 +581,7 @@ public class Util {
      * @throws IOException
      * @see Util#checkCgiBinary(StringBuffer)
      */
-    public static Process startProcess(String[] args, File homeDir, HashMap env) throws IOException {
+    public static Process startProcess(String[] args, File homeDir, Map env) throws IOException {
     	File location;
 	Process proc = null;
     	int n;

@@ -342,7 +342,7 @@ public class DynamicClassLoader extends SecureClassLoader {
 	URLClassLoaderEntry e = null;
 	while (iter.hasNext()) {
 	    e = (URLClassLoaderEntry) classLoaders.get(iter.next());
-	    //Util.logDebug("Trying "+(System.identityHashCode(e.cl)+"\n"));
+	    Util.logDebug("Trying "+(System.identityHashCode(e.cl)+"\n"));
 	    synchronized(e.cache) {
 		c = e.cache.get(name);
 		if (c!=nf) {

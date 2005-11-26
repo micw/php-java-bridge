@@ -4,14 +4,13 @@ These examples show how to create GUI applications with PHP.
   unix. SWT is part of eclipse and can be downloaded from
   www.eclipse.org.
 
-* swing-button.php: This example uses java swing. In order to use
-  swing you must switch it on, for example by setting the
-  java.lang.System property "java.awt.headless" to false. Otherwise you
-  will get an "awt headless" exception. Please note that swing has
-  several design problems which translate into an extensive number of
-  swing related bugs and system crashes. One such problem is that swing
-  creates UI threads which may cause the application to hang. Please
-  do not use swing to create a java GUI, please use SWT or GTK instead.
+* swing-button.php: This example has been moved to
+  tests.php5/swing-button.php. A better example can be found in
+  server/test/SwingButton.java and server/test/SwingButton.php: Unlike
+  other toolkits the swing toolkit creates artifical background
+  threads which cause trouble, see the java bug parade for details,
+  therefore the best way to use swing is to write a swing application in
+  pure java and use php as an extension/plugin only.
 
 * gtk-button.php: This example uses mono gtk. You need the
   PHP/Mono+Net Bridge and gtk-sharp installed on the system.

@@ -10,22 +10,14 @@ $testobj[0][0][1][0][0][0] = 4;
 $testobj[0][1][0][0][0][0] = 5;
 $testobj[1][0][0][0][0][0] = 6;
 
-echo $testobj[0][0][0][0][0][1];
-echo $testobj[0][0][0][0][1][0];
-echo $testobj[0][0][0][1][0][0];
-echo $testobj[0][0][1][0][0][0];
-echo $testobj[0][1][0][0][0][0];
-echo $testobj[1][0][0][0][0][0];
-
 $here=getcwd();
-java_require("$here/array6.jar")
+java_require("$here/array6.jar");
 $array6 = new java("Array6");
 $success = $array6->check($testobj);
 if(!$success) {
   echo "ERROR\n";
   exit(1);
 }
+echo "test okay\n";
 exit(0);
 ?>
-
-

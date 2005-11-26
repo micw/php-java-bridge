@@ -157,6 +157,8 @@ public class Response {
 		writeString((byte[])value);
 	    } else if (value instanceof java.lang.String) {
 		writeString((String)value);
+	    } else if (value instanceof Request.PhpString) {
+	        writeString(((Request.PhpString)value).getBytes());
 	    } else if (value instanceof java.lang.Number) {
 
 		if (value instanceof java.lang.Integer ||
@@ -183,14 +185,18 @@ public class Response {
 	    if(type.isPrimitive()) {
    		if(type == Boolean.TYPE)
 		    writeBoolean(((Boolean) value).booleanValue());
-   		else if(type == Byte.TYPE || type == Short.TYPE || type == Integer.TYPE || type == Long.TYPE)
+   		else if(type == Byte.TYPE || type == Short.TYPE || type == Integer.TYPE)
 		    writeLong(((Number)value).longValue());
+   		else if(type == Long.TYPE)
+   		    writeDouble(((Number)value).doubleValue());
    		else if(type == Float.TYPE || type == Double.TYPE) 
 		    writeDouble(((Number)value).doubleValue());
    		else if(type == Character.TYPE) 
 		    writeString(String.valueOf(value));
    		else { Util.logFatal("Unknown type"); writeObject(value); }
-	    } else if(!delegate.setResult(value))
+	    } else if(value instanceof Request.PhpString) // from by PhpMap. No need to check for Request.PhpNumber, this cannot happen.
+	        writeString(((Request.PhpString)value).getBytes());
+	    else if(!delegate.setResult(value))
 		writeObject(value);
 	    return true;
         }        	     	

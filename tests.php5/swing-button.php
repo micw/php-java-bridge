@@ -7,6 +7,11 @@
 // the gtk-button.php, gtk-fileselector.php and swt-button.php
 // examples.
 
+// Please see the server/tests/SwingTest.java and
+// server/tests/SwingTest.php for a better swing example. It uses java
+// as an "execution environment" for php scripts and uses System.exit()
+// to avoid issues with swing's background threads.
+
 if (!extension_loaded('java')) {
   if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
     echo "java extension not installed.";
@@ -14,6 +19,14 @@ if (!extension_loaded('java')) {
   }
 }
 ini_set("max_execution_time", 0);
+
+/**
+ * Swing's native peers are switched off by default (we don't want to
+ * run in one of the many swing related bugs or crashes).
+ * Switch it on for this test.
+ */
+$System=new java("java.lang.System");
+$System->setProperty("java.awt.headless", "false");
 
 class SwingApplication {
   var $labelPrefix = "Button clicks: "; 
@@ -63,7 +76,7 @@ $swing->init();
 $SwingUtilities = new JavaClass("javax.swing.SwingUtilities");
 $SwingUtilities->invokeAndWait(java_closure($swing));
 
-// Due to swings insane design, we don't know when the UI thread
+// Due to swings insane design we don't know when the UI thread
 // terminates. It may even be that the thread and therefore the VM
 // never terminates, for example if a PrinterJob has been created on
 // solaris, see the extensive number of related swing bugs.  The only

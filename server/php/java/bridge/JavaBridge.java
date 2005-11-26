@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.Vector;
+import java.util.Map.Entry;
 
 /**
  * This is the main class for the PHP/Java Bridge. It starts the standalone backend,
@@ -501,7 +502,7 @@ public class JavaBridge implements Runnable {
     }
 
     private Exception getUnresolvedExternalReferenceException(Throwable e, String what) {
-        return 	new ClassNotFoundException("Unresolved external reference: "+ e+ ". -- Unable to call "+what+" because it or one of its parameters refer to the mentioned external class which is not available in the current \"java_require(<path>)\" url path. Remember that all interconnected classes must be loaded with a single java_require() call, i.e. use java_require(\"foo.jar;bar.jar\") instead of java_require(\"foo.jar\"); java_require(\"bar.jar\"). Please check the Java Bridge log file for details.", e);
+        return 	new ClassNotFoundException("Unresolved external reference: "+ e+ ". -- Unable to "+what+" because it or one of its parameters refer to the mentioned external class which is not available in the current \"java_require(<path>)\" url path. Remember that all interconnected classes must be loaded with a single java_require() call, i.e. use java_require(\"foo.jar;bar.jar\") instead of java_require(\"foo.jar\"); java_require(\"bar.jar\"). Please check the Java Bridge log file for details.", e);
     }
     /**
      * Create an new instance of a given class
@@ -540,7 +541,6 @@ public class JavaBridge implements Runnable {
 		    // useful for classes like java.lang.System and java.util.Calendar.
 		    if(createInstance && logLevel>0) {
 		    	logMessage("No visible constructor found in: "+ name +", returning the class instead of an instance; this may not be what you want. Please correct this error or please use new JavaClass("+name+") instead.");
-		    	if(!options.extJavaCompatibility()) new InstantiationException("No matching constructor found. " + "Candidates: " + String.valueOf(candidates));
 		    }
 		    response.writeObject(clazz);
 		    return;
@@ -594,7 +594,7 @@ public class JavaBridge implements Runnable {
 		    	if(arg instanceof Request.PhpString) {
 		    	    args=(Object[])args.clone();
 		    	    args[i] = arg = Request.ZERO;
-		    	} else if(Util.getClass(arg) == PhpProcedureProxy.class) {
+		    	} else if(arg instanceof PhpProcedureProxy) {
 			    PhpProcedureProxy proxy = ((PhpProcedureProxy)arg);
 			    if(proxy.suppliedInterfaces==null) {
 				if(!parms[i].isInterface()) weight+=9999;	    			
@@ -613,7 +613,7 @@ public class JavaBridge implements Runnable {
 			    }
 			    break;
 			}
-			weight+=256; // prefer more specific arg, for
+			weight+=16; // prefer more specific arg, for
 				     // example AbstractMap hashMap
 				     // over Object hashMap.
 		    }
@@ -674,7 +674,7 @@ public class JavaBridge implements Runnable {
 		    } else if (arg instanceof Character) {
 			if (c!=Character.TYPE) weight+=9999;
 		    } else if (arg instanceof String) {
-			if (c== Character.TYPE || ((String)arg).length()>0)
+			if (c== Character.TYPE) 
 			    weight+=((String)arg).length();
 			else
 			    weight+=64;
@@ -695,6 +695,12 @@ public class JavaBridge implements Runnable {
 	return selected;
     }
 
+    private Object o[] = new Object[1];
+    private Class c[] = new Class[1];
+    Object coerce(Class param, Object arg, Response response) {
+        o[0]=arg; c[0]=param;
+        return coerce(c, o, response)[0];
+    }
     //
     // Coerce arguments when possible to conform to the argument list.
     // Java's reflection will automatically do widening conversions,
@@ -702,12 +708,13 @@ public class JavaBridge implements Runnable {
     // some (possibly lossy) conversions are required.
     //
     Object[] coerce(Class parms[], Object args[], Response response) {
+        Object arg;
 	Object result[] = args;
 	Class targetType = null;
 	int size = 0;
 
 	for (int i=0; i<args.length; i++) {
-	    if (Util.getClass(args[i]) == PhpProcedureProxy.class && parms[i] != PhpProcedureProxy.class) {
+	    if (args[i] instanceof PhpProcedureProxy && parms[i] != PhpProcedureProxy.class) {
 		Class param = parms[i];
 		if(!param.isInterface()) {
 		    if(CLRAssembly!=null) // CLR uses an inner method class
@@ -722,17 +729,17 @@ public class JavaBridge implements Runnable {
 		} else
 		    args[i] = ((PhpProcedureProxy)args[i]).getProxy(new Class[] {param});
 	    }
+	    if((arg=args[i]) == null) continue;
+	    
 	    if(parms[i]==String.class) {
-	    	String s;
-	    	if (args[i] instanceof Request.PhpString)
-		    s = ((Request.PhpString)args[i]).getString();
+	    	if (arg instanceof Request.PhpString)
+		    result[i] = ((Request.PhpString)arg).getString();
 	    	else 
-		    s = String.valueOf(args[i]);
-	    	result[i] = String.valueOf(s);
-	    } else if (args[i] instanceof Request.PhpString) {
+		    result[i] = arg.toString();
+	    } else if (arg instanceof Request.PhpString || arg instanceof String) {
 	        if(!parms[i].isArray()) {
 		Class c = parms[i];
-		String s = ((Request.PhpString)args[i]).getString();
+		String s = (arg instanceof String) ? (String) arg : ((Request.PhpString)arg).getString();
 		result[i] = s;
 		try {
 		    if (c == Boolean.TYPE) result[i]=new Boolean(s);
@@ -748,39 +755,37 @@ public class JavaBridge implements Runnable {
 		    // oh well, we tried!
 		}
 	        } else {
-	            result[i]=((Request.PhpString)args[i]).getBytes();
+	            result[i]=((Request.PhpString)arg).getBytes();
 	        }
-	    } else if (args[i] instanceof Number) {
+	    } else if (arg instanceof Number) {
 	    	if (parms[i].isPrimitive()) {
-		    if (result==args) result=(Object[])result.clone();
 		    Class c = parms[i];
-		    Number n = (Number)args[i];
+		    Number n = (Number)arg;
 		    if (c == Boolean.TYPE) result[i]=new Boolean(0.0!=n.floatValue());
-		    if (c == Byte.TYPE)    result[i]=new Byte(n.byteValue());
-		    if (c == Short.TYPE)   result[i]=new Short(n.shortValue());
-		    if (c == Integer.TYPE) result[i]=new Integer(n.intValue());
-		    if (c == Float.TYPE)   result[i]=new Float(n.floatValue());
-		    if (c == Long.TYPE && !(n instanceof Long))
+		    else if (c == Byte.TYPE)    result[i]=new Byte(n.byteValue());
+		    else if (c == Short.TYPE)   result[i]=new Short(n.shortValue());
+		    else if (c == Integer.TYPE) result[i]=new Integer(n.intValue());
+		    else if (c == Float.TYPE)   result[i]=new Float(n.floatValue());
+		    else if (c == Long.TYPE && !(n instanceof Long))
 			result[i]=new Long(n.longValue());
 	    	} else {
-		    if(args[i].getClass()==Request.PhpNumber.class) {
-			if (result==args) result=(Object[])result.clone();
+		    if(arg.getClass()==Request.PhpNumber.class) {
 	    		if(!options.extJavaCompatibility()) {
 			    Class c = parms[i];
 			    if(c.isAssignableFrom(Integer.class)) {
-		    		result[i] = new Integer(((Number)args[i]).intValue());
+		    		result[i] = new Integer(((Number)arg).intValue());
 			    } else {
-		    		result[i] = new Long(((Number)args[i]).longValue());				
+		    		result[i] = new Long(((Number)arg).longValue());				
 			    }
 			} else {
-			    result[i] = new Long(((Number)args[i]).longValue());
+			    result[i] = new Long(((Number)arg).longValue());
 			}
 		    }
 	    	}
-	    } else if ((args[i] != null) && args[i].getClass() == Request.PhpArray.class) {
+	    } else if (arg instanceof Request.PhpArray) {
 	    	if(parms[i].isArray()) {
 		    try {
-			Map ht = (Map)args[i];
+			Map ht = (Map)arg;
 			size = ht.size();
 
 			// Verify that the keys are Long, and determine maximum
@@ -788,29 +793,16 @@ public class JavaBridge implements Runnable {
 			    int index = ((Number)e.next()).intValue();
 			    if (index >= size) size = index+1;
 			}
-
-			Object tempArray[] = new Object[size];
-			Class tempTarget[] = new Class[size];
+			
+			// flatten hash into an array
 			targetType = parms[i].getComponentType();
-
-			// flatten the hash table into an array
-			for (int j=0; j<size; j++) {
-			    tempArray[j] = ht.get(new Long(j));
-			    if (tempArray[j] == null && targetType.isPrimitive())
-				throw new Exception("bail");
-			    tempTarget[j] = targetType;
+			Object tempArray = Array.newInstance(targetType, size);
+			
+			for (Iterator ii = ht.entrySet().iterator(); ii.hasNext(); ) {
+			    Map.Entry e = (Entry) ii.next();
+			    Array.set(tempArray, ((Number)(e.getKey())).intValue(), coerce(targetType, e.getValue(), response));
 			}
-
-			// coerce individual elements into the target type
-			Object coercedArray[] = coerce(tempTarget, tempArray, response);
-
-			// copy the results into the desired array type
-			Object array = Array.newInstance(targetType,size);
-			for (int j=0; j<size; j++) {
-			    Array.set(array, j, coercedArray[j]);
-			}
-
-			result[i]=array;
+			result[i]=tempArray;
 		    } catch (Exception e) {
 			logError("Error: " + String.valueOf(e) + ". Could not create array of type: " + targetType + ", size: " + size);
 			printStackTrace(e);
@@ -818,21 +810,14 @@ public class JavaBridge implements Runnable {
 		    }
 		} else if ((java.util.Collection.class).isAssignableFrom(parms[i])) {
 		    try {
-			Map ht = (Map)args[i];
+			Map ht = (Map)arg;
 			Collection res;
 			try {
 			    res = (Collection) parms[i].newInstance();
 			} catch (java.lang.InstantiationException ex) {
 			    res = (Collection) new HashSet();
 			}
-			for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
-			    Object key = e.next();
-			    Object val = ht.get(key);
-			    int index = ((Number)key).intValue();		    // Verify that the keys are Long
-
-			    if(val instanceof Request.PhpString) val = options.newString((byte[])val); // always prefer strings over byte[]
-			    res.add(val);
-			}
+			res.addAll(ht.values());
 
 			result[i]=res;
 		    } catch (Exception e) {
@@ -842,17 +827,10 @@ public class JavaBridge implements Runnable {
 		    }
 		} else if ((java.util.Hashtable.class).isAssignableFrom(parms[i])) {
 		    try {
-			Map ht = (Map)args[i];
+			Map ht = (Map)arg;
 			Hashtable res;
 			res = (Hashtable)parms[i].newInstance();
-			for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
-			    Object key = e.next();
-			    Object val = ht.get(key);
-
-			    if(key instanceof Request.PhpString) key = ((Request.PhpString)key).getString(); // always prefer strings over byte[]
-			    if(val instanceof Request.PhpString) val = ((Request.PhpString)val).getString(); // always prefer strings over byte[]
-			    res.put(key, val);
-			}
+			res.putAll(ht);
 
 			result[i]=res;
 		    } catch (Exception e) {
@@ -862,21 +840,14 @@ public class JavaBridge implements Runnable {
 		    }
 		} else if ((java.util.Map.class).isAssignableFrom(parms[i])) {
 		    try {
-			Map ht = (Map)args[i];
+			Map ht = (Map)arg;
 			Map res;
 			try {
 			    res = (Map)parms[i].newInstance();
 			} catch (java.lang.InstantiationException ex) {
 			    res = (Map) new HashMap();
 			}
-			for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
-			    Object key = e.next();
-			    Object val = ht.get(key);
-
-			    if(key instanceof Request.PhpString) key = ((Request.PhpString)key).getString(); // always prefer strings over byte[]
-			    if(val instanceof Request.PhpString) val = ((Request.PhpString)val).getString(); // always prefer strings over byte[]
-			    res.put(key, val);
-			}
+			res.putAll(ht);
 
 			result[i]=res;
 		    } catch (Exception e) {
@@ -884,8 +855,10 @@ public class JavaBridge implements Runnable {
 			printStackTrace(e);
 			// leave result[i] alone...
 		    }
+		} else if(arg instanceof Request.PhpString) {
+		    result[i] = ((Request.PhpString)arg).getString(); // always prefer strings over byte[]
+		} 
 		}
-	    }
 	}
 	return result;
     }
@@ -1456,7 +1429,7 @@ public class JavaBridge implements Runnable {
 	    for(int i=0; i<jclasses.length; i++) { buf.append(String.valueOf(jclasses[i].getName())); buf.append("\n"); }
         }
 	buf.append("]");
-	return buf.toString();
+	return (String)castToString(buf.toString());
     }
     /**
      * Set a new file encoding, used to code and decode strings.
@@ -1487,7 +1460,7 @@ public class JavaBridge implements Runnable {
 	StringBuffer buf = new StringBuffer("[");
 	Util.appendObject(ob, buf);
 	buf.append("]");
-	return (String)cast(buf.toString(), String.class);
+	return (String)castToString(buf.toString());
     }
     
     /**
@@ -1600,8 +1573,10 @@ public class JavaBridge implements Runnable {
 
     static final String PHPSESSION = "PHPSESSION";
     /**
-     * Deserialize serialID
-     * @param serialID The serial ID
+     * Load the object from the session store.
+     * The C code requires that this method is called "deserialize" even though it doesn't deserialize anything.
+     * @see The JSessionAdapter in the php_java_lib folder. For real serialization/deserialization see the JPersistenceAdapter in the php_java_lib folder.
+     * @param serialID The key
      * @param timeout The timeout, usually 1400 seconds.
      * @return the new object identity.
      * @throws IllegalArgumentException if serialID does not exist anymore.
@@ -1617,7 +1592,9 @@ public class JavaBridge implements Runnable {
     	return counter++;
     }
     /**
-     * Serialize the object obj and return the serial id.
+     * Store the object in the session store and return the serial id.
+     * The C code requires that this method is called "serialize" even though it doesn't serialize anything.
+     * @see The JSessionAdapter in the php_java_lib folder. For real serialization/deserialization see the JPersistenceAdapter in the php_java_lib folder.
      * @param obj The object
      * @param timeout The timeout, usually 1400 seconds
      * @return the serialID
@@ -1626,7 +1603,7 @@ public class JavaBridge implements Runnable {
     	ISession session = defaultSessionFactory.getSession(null, false, timeout);
     	String id = Integer.toHexString(getSerialID());
     	session.put(id, obj);
-    	return id;
+    	return (String)castToString(id);
     }
     /**
      * Set a new ClassLoader

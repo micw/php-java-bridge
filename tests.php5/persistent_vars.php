@@ -20,8 +20,8 @@ if(file_exists($ser)) {
   try {
     $v=unserialize($id);
   } catch (JavaException $e) {
-    echo "ERROR: Could not deserialize: ". $e->getCause() . "\n";
-    exit(1);
+    echo "Warning: Could not deserialize: ". $e->getCause() . "\n";
+    $v=0;
   }
 }
 

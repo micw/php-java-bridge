@@ -1,5 +1,13 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
+/**\file
+ * This is the main entry point for the java extension. 
+
+ * It contains the global structures and the callbacks required for
+ * zend engine 1 and 2.
+ *
+ */
+
 #ifndef PHP_JAVA_H
 #define PHP_JAVA_H
 

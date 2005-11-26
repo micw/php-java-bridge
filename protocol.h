@@ -1,5 +1,12 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
+/**\file 
+ * Definitions for the protocol implementation.
+ *
+ * It defines the proxyenv structure and the communication channels.
+ * @see PROTOCOL.TXT
+ */
+
 #ifndef JAVA_PROTOCOL_H
 #define JAVA_PROTOCOL_H
 

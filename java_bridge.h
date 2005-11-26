@@ -1,5 +1,13 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
+/**\file
+ * Mediates between php and the server.
+ *
+ * Creates the proxyenv structure and handles invoke, get/set
+ * property.
+ */
+
+
 #ifndef JAVA_BRIDGE_H
 #define JAVA_BRIDGE_H
 

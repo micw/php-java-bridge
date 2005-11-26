@@ -1,5 +1,13 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
+/**\file 
+ * This is the main entry point for the java extension. 
+
+ * It contains the global structures and the callbacks required for
+ * zend engine 1 and 2.
+ *
+ */
+
 /* wait */
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -22,7 +30,12 @@
 #endif
 
 EXT_DECLARE_MODULE_GLOBALS(EXT)
-	 struct cfg *EXT_GLOBAL (cfg)  = 0;
+
+/**
+ * Holds the global configuration.
+ * This structure is shared by all php instances
+ */
+struct cfg *EXT_GLOBAL (cfg)  = 0;
 
 #ifdef __MINGW32__
 static const int java_errno=0;
@@ -46,6 +59,11 @@ static void destroy_cloned_cfg(TSRMLS_D) {
   JG(servlet)=0;
 }
 
+/**
+ * Called when a new request starts.  Opens a connection to the
+ * backend, creates an instance of the proxyenv structure and clones
+ * the servlet, hosts and ini_user flags.
+ */
 PHP_RINIT_FUNCTION(EXT) 
 {
   if(EXT_GLOBAL(cfg)) clone_cfg(TSRMLS_C);
@@ -57,6 +75,10 @@ PHP_RINIT_FUNCTION(EXT)
   return SUCCESS;
 }
 
+/**
+ * Called when the request terminates. Closes the connection to the
+ * backend, destroys the proxyenv instance.
+ */
 PHP_RSHUTDOWN_FUNCTION(EXT)
 {
   destroy_cloned_cfg(TSRMLS_C);
@@ -89,8 +111,12 @@ static void last_exception_get(proxyenv *jenv, zval**return_value)
   (*jenv)->writeInvokeEnd(jenv);
 }
 
-/* {{{ proto object java_last_exception_get(void)
-	 Get last Java exception */
+/**
+ * Proto: object java_last_exception_get(void);
+ *
+ * Get last Java exception
+ * \deprecated Use PHP5 try/catch instead.
+ */
 EXT_FUNCTION(EXT_GLOBAL(last_exception_get))
 {
   proxyenv *jenv;
@@ -100,7 +126,6 @@ EXT_FUNCTION(EXT_GLOBAL(last_exception_get))
 
   last_exception_get(jenv, &return_value);
 }
-/* }}} */
 
 
 static void last_exception_clear(proxyenv*jenv, zval**return_value) {
@@ -109,8 +134,12 @@ static void last_exception_clear(proxyenv*jenv, zval**return_value) {
   (*jenv)->writeInvokeEnd(jenv);
 }
 
-/* {{{ proto void java_last_exception_clear(void)
-	 Clear last java extension */
+/**
+ * Proto: void java_last_exception_clear(void);
+ *
+ * Clear last java extension.
+ * \deprecated Use PHP5 try/catch instead.
+*/
 EXT_FUNCTION(EXT_GLOBAL(last_exception_clear))
 {
   proxyenv *jenv;
@@ -120,10 +149,15 @@ EXT_FUNCTION(EXT_GLOBAL(last_exception_clear))
 
   last_exception_clear(jenv, &return_value);
 }
-/* }}} */
 
-/* {{{ proto void java_set_file_encoding(void)
-	 Set the java file encoding, for example UTF-8 or ASCII. Needed because php does not support unicode. */
+/**
+ * Proto: void java_set_file_encoding(string);
+ *
+ * Set the java file encoding, for example UTF-8 or ASCII. Needed
+ * because php does not support unicode. All string to byte array
+ * conversions use this encoding. Example: \code
+ * java_set_file_encoding("ISO-8859-1"); \endcode
+ */
 EXT_FUNCTION(EXT_GLOBAL(set_file_encoding))
 {
   zval **enc;
@@ -139,7 +173,6 @@ EXT_FUNCTION(EXT_GLOBAL(set_file_encoding))
   (*jenv)->writeString(jenv, Z_STRVAL_PP(enc), Z_STRLEN_PP(enc));
   (*jenv)->writeInvokeEnd(jenv);
 }
-/* }}} */
 
 
 static void require(INTERNAL_FUNCTION_PARAMETERS) {
@@ -165,16 +198,43 @@ static void require(INTERNAL_FUNCTION_PARAMETERS) {
 }
 
 
-/* {{{ proto void java_require(string path)
-	 Set the library path. Example: java_require("foo.jar;bar.jar"); */
+/**
+ * Proto: void java_require(string path);
+ *
+ * Set the library path. Example: 
+ * \code
+ * java_require("foo.jar;bar.jar"); 
+ * \endcode
+ *
+ * The .jar files should be stored in /usr/share/java or
+ * extension_dir/lib one of its sub-directories. However, it is also
+ * possible to fetch .jar files from a remote server, for example:
+ * \code
+ * java_require("http://php-java-bridge.sf.net/kawa.jar;...");
+ * \endcode
+ *
+ * Note that the classloader isolates the loaded libraries: When you
+ * call java_require("foo.jar"); java_require("bar.jar"), the classes
+ * from foo cannot see the classes loaded from bar. If you get a
+ * NoClassDefFound error saying that one of your classes cannot
+ * access the library you have loaded, you must reset the backend to
+ * clear the loader cache and load your classes and the library in one
+ * java_require() call.
+ */
 EXT_FUNCTION(EXT_GLOBAL(require))
 {
   require(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
-/* }}} */
 
-/* {{{ proto bool java_instanceof(object object, object clazz)
-	 Tests if object is an instance of clazz. Example: return($o instanceof Java && $c instanceof Java && java_instanceof($o, $c)); */
+/**
+ * Proto:  bool java_instanceof(object object, object clazz);
+ *
+ * Tests if object is an instance of clazz. 
+ * Example: 
+ * \code
+ * return($o instanceof Java && $c instanceof Java && java_instanceof($o, $c)); 
+ * \endcode
+ */
 EXT_FUNCTION(EXT_GLOBAL(instanceof))
 {
   zval **pobj, **pclass;
@@ -207,7 +267,6 @@ EXT_FUNCTION(EXT_GLOBAL(instanceof))
   (*jenv)->writeObject(jenv, class);
   (*jenv)->writeInvokeEnd(jenv);
 }
-/* }}} */
 
 static void session(INTERNAL_FUNCTION_PARAMETERS)
 {
@@ -239,13 +298,38 @@ static void session(INTERNAL_FUNCTION_PARAMETERS)
   (*jenv)->writeInvokeEnd(jenv);
 }
 
-/* {{{ proto void java_session([string], [bool])
-	 Return a session handle. Example: java_session(null, true); */
+/**
+ * Proto: void java_session([string], [bool]);
+ *
+ * Return a session handle.  When java_session() is called without 
+ * arguments, the session is shared with java.
+ * Example: 
+ * \code
+ * java_session()->put("key", new java("java.lang.Object"));
+ * [...]
+ * \endcode
+ * The java components (jsp, servlets) can retrieve the value, for
+ * example with:
+ * \code getSession().getAttribute("key"); \endcode
+ *
+ * When java_session() is called with a session handle, the session
+ * is not shared with java and no cookies are set. Example:
+ * \code
+ * java_session("myPrivateApplicationStore")->put("key", "value");
+ * \endcode
+ *
+ * When java_session() is called with a second argument set to true,
+ * a new session is allocated, the old session is destroyed if necessary.
+ * Example:
+ * \code
+ * java_session(null, true)->put("key", "val");
+ * \endcode.
+ * @see get_context()
+ */
 EXT_FUNCTION(EXT_GLOBAL(get_session))
 {
   session(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
-/* }}} */
 
 static void context(INTERNAL_FUNCTION_PARAMETERS)
 {
@@ -266,16 +350,36 @@ static void context(INTERNAL_FUNCTION_PARAMETERS)
   (*jenv)->writeInvokeEnd(jenv);
 }
 
-/* {{{ proto object java_context(void)
-	 Returns the jsr223 script context handle. Example: java_context()->getHttpServletRequest(); */
+/**
+ * Proto: object java_context(void);
+ *
+ * Returns the jsr223 script context handle.
+ *
+ * Example:
+ * \code
+ * # close over the current environment and pass it back to java.
+ * java_context()->call(java_closure()) || die "Script should be called from java";
+ * \endcode
+ *
+ * It is possible to access implicit web objects (the session, the
+ * application store etc.) from the context. Please see the JSR223
+ * documentation or for details. Example:
+ * \code
+ * java_context()->getHttpServletRequest();
+ * \endcode
+ * @see java_get_session()
+ * @see java_inspect()
+ */
 EXT_FUNCTION(EXT_GLOBAL(get_context))
 {
   context(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
-/* }}} */
 
-/* {{{ proto string java_get_server_name(void)
-	 Returns the name of the backend or null if the backend is not running. */
+/**
+ * Proto: string java_get_server_name(void);
+ *
+ * Returns the name of the backend or null if the backend is not running. 
+ */
 EXT_FUNCTION(EXT_GLOBAL(get_server_name))
 {
   proxyenv *jenv;
@@ -287,10 +391,22 @@ EXT_FUNCTION(EXT_GLOBAL(get_server_name))
   }
   RETURN_NULL();
 }
-/* }}} */
 
-/* {{{ proto void java_reset(void)
-	 Tries to reset the backent to its initial state. If the call succeeds, all session handles and caches are gone. This procedure does nothing when the backend runs in a servlet environment or an application server. */
+/**
+ * Proto: void java_reset(void);
+ *
+ * Tries to reset the backent to
+ * its initial state. If the call succeeds, all session handles and
+ * caches are gone. 
+ *
+ * Example:
+ * \code echo "Resetting backend to initial state\n";
+ * java_reset();
+ * \endcode
+ *
+ * This procedure does nothing when the backend runs
+ * in a servlet environment or an application server. 
+ */
 EXT_FUNCTION(EXT_GLOBAL(reset))
 {
   proxyenv *jenv;
@@ -303,8 +419,6 @@ EXT_FUNCTION(EXT_GLOBAL(reset))
   (*jenv)->writeInvokeEnd(jenv);
   php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Your script has called the privileged procedure \""/**/EXT_NAME()/**/"_reset()\" which resets the "/**/EXT_NAME()/**/" backend to its initial state. Therefore all "/**/EXT_NAME()/**/" session variables and all caches are gone.", 18);
 }
-/* }}} */
-
 
 static void values(INTERNAL_FUNCTION_PARAMETERS)
 {
@@ -417,16 +531,54 @@ EXT_FUNCTION(EXT_GLOBAL(__wakeup))
 }
 #endif
 
-/* {{{ proto array java_get_values(object ob)
-	 fetches the object into a php array. ob must be a java array or it must implement java.util.Map or java.util.Collection. Before calling this procedure, please make sure that the java array or Map or Collection does not exceed php's memory limit. Example: print_r(java_values($sys->getProperties()));*/
+/** Proto: array java_values(object ob);
+ *
+ * Fetches the object into a php array. ob must be a java array or it
+ * must implement java.util.Map or java.util.Collection. Before
+ * calling this procedure, please make sure that the java array or Map
+ * or Collection does not exceed php's memory limit. Example:
+ * \code
+ * print_r(java_values($sys->getProperties()));
+ * \endcode
+ */
 EXT_FUNCTION(EXT_GLOBAL(get_values))
 {
   values(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
-/* }}} */
 
-/* {{{ proto object java_get_closure([object],[array|string],[object])
-	 Closes over the php environment and packages it up as a java class. Example: java_context()->call(java_get_closure); */
+/**
+ * Proto: object java_closure([object],[array|string],[object]);
+ *
+ * Closes over the php environment and packages it up as a java
+ * class. Example: 
+ * \code
+ * function toString() {return "helloWorld";};
+ * $object = java_closure();
+ * echo (string)$object;
+ * \endcode
+ *
+ * When a php instance is supplied as a argument, that environment will be used
+ * instead. When a string or key/value map is supplied as a second argument,
+ * the java procedure names are mapped to the php procedure names. Example:
+ * \code
+ * function hello() {return "hello";};
+ * echo (string)java_closure(null, "hello");
+ * \endcode
+ * 
+ * When an array of java interfaces is supplied as a third argument,
+ * the environment must implement these interfaces.
+ * Example:
+ * \code
+ * class Listener {
+ *   function actionPerformed($actionEvent) {
+ *   ...
+ *   }
+ * }
+ * function getListener() {
+ *   return java_closure(new Listener(), null, array(new java("java.awt.event.ActionListener")));
+ * }
+ * \endcode
+ */
 EXT_FUNCTION(EXT_GLOBAL(get_closure))
 {
   char *string_key;
@@ -508,10 +660,11 @@ EXT_FUNCTION(EXT_GLOBAL(get_closure))
   }
   (*jenv)->writeInvokeEnd(jenv);
 }
-/* }}} */
 
 
 /**
+ * Only for internal use.
+ *
  * Exception handler for php5
  */
 EXT_FUNCTION(EXT_GLOBAL(exception_handler))
@@ -526,6 +679,8 @@ EXT_FUNCTION(EXT_GLOBAL(exception_handler))
 }
 
 /**
+ * Only for internal use
+ *
  * Exception handler for php4
  */
 static void check_php4_exception(TSRMLS_D) {
@@ -554,8 +709,11 @@ static void call_with_params(int count, zval ***func_params TSRMLS_DC) {
 	}
 }
 
-/* {{{ proto string java_call_with_exception_handler(void)
- Only for internal use. */
+/**
+ * Only for internal use.
+ *
+ * Proto: string java_call_with_exception_handler(void);
+ */
 EXT_FUNCTION(EXT_GLOBAL(call_with_exception_handler))
 {
   zval ***func_params;
@@ -600,10 +758,17 @@ EXT_FUNCTION(EXT_GLOBAL(call_with_exception_handler))
   efree(func_params);
   RETURN_NULL();
 }
-/* }}} */
 
-/* {{{ proto void java_inspect(object)
-   Returns the contents (public fields, public methods, public classes) of object as a string. */
+/**
+ * Proto: void java_inspect(object);
+ *
+ * Returns the contents (public fields, public methods, public
+ * classes) of object as a string.
+ * Example:
+ * \code
+ * echo java_inspect(java_context());
+ * \endcode
+ */
 EXT_FUNCTION(EXT_GLOBAL(inspect)) {
   zval **pobj;
   long obj;
@@ -624,7 +789,6 @@ EXT_FUNCTION(EXT_GLOBAL(inspect)) {
   (*jenv)->writeObject(jenv, obj);
   (*jenv)->writeInvokeEnd(jenv);
 }
-/* }}} */
 
 
 function_entry EXT_GLOBAL(functions)[] = {
@@ -676,13 +840,45 @@ zend_module_entry EXT_GLOBAL(module_entry) = {
 EXT_GET_MODULE(EXT)
 #endif
 
-	 int EXT_GLOBAL(ini_updated), EXT_GLOBAL(ini_user), EXT_GLOBAL(ini_set);
+/**
+ * Holds the flags set/unset for all java ini entries
+ */
+int EXT_GLOBAL(ini_updated);
+
+/**
+ * The options set by the user.
+ */
+int EXT_GLOBAL(ini_user);
+
+/**
+ * The options which carry a value.
+ */
+int EXT_GLOBAL(ini_set);
+
+/**
+ * Represents the java class struct
+ */
 zend_class_entry *EXT_GLOBAL(class_entry);
+
+/**
+ * Represents the java_class class struct
+ */
 zend_class_entry *EXT_GLOBAL(class_class_entry);
+
+/**
+ * Represents the javaclass class struct
+ */
 zend_class_entry *EXT_GLOBAL(class_class_entry_jsr);
+
+/**
+ * Represents the javaexception class struct
+ */
 zend_class_entry *EXT_GLOBAL(exception_class_entry);
 
 #ifdef ZEND_ENGINE_2
+/**
+ * The object handlers, see create_object.
+ */
 zend_object_handlers EXT_GLOBAL(handlers);
 #endif
 
@@ -811,8 +1007,19 @@ PHP_INI_BEGIN()
 
 #ifdef ZEND_ENGINE_2
 
-/* {{{ proto object Java::Java ( string classname [, string argument1, ...])
-   Java constructor. Example: new Java("java.lang.String", "hello world"); */
+/**
+ * Proto: object Java::Java (string classname [, string argument1, .\ .\ .\ ]);
+ *
+ * Java constructor. Example:
+ * \code
+ * $object = new Java("java.lang.String", "hello world"); 
+ * echo (string)$object;
+ *
+ * $ex = new JavaException("java.lang.Exception");
+ * throw $ex;
+ *
+ * \endcode
+ */
 EXT_METHOD(EXT, EXT)
 {
   zval **argv;
@@ -832,12 +1039,26 @@ EXT_METHOD(EXT, EXT)
 									argc, argv);
   efree(argv);
 }
-/* }}} */
 
 
-/* {{{ proto object Java::JavaClass ( string classname)
-   References a java class. Example: $String=new Java("java.lang.String"); $ob = $String->newInstance(); */
-EXT_METHOD(EXT, EXT_GLOBAL(class))
+/** 
+ * Proto: object Java::JavaClass ( string classname);
+ *
+ * References a java class. Example: 
+ * \code
+ * $Object = new JavaClass("java.lang.Object");
+ * $object = $Object->newInstance();
+ *
+ * $Thread = new JavaClass("java.lang.Thread");
+ * $Thread->sleep(1000);
+
+ * \endcode
+ */
+#if EXTENSION == JAVA
+EXT_METHOD(EXT, javaclass)
+#elif EXTENSION == MONO
+EXT_METHOD(EXT, monoclass)
+#endif
 {
   zval **argv;
   int argc = ZEND_NUM_ARGS();
@@ -856,10 +1077,61 @@ EXT_METHOD(EXT, EXT_GLOBAL(class))
 									argc, argv);
   efree(argv);
 }
-/* }}} */
 
-/* {{{ proto mixed Java::__call ( string procedure_name [, array arguments ])
-   Calls a Java procedure */
+/** 
+ * Proto: mixed Java::__call ( string procedure_name [, array arguments ]);
+ *
+ * Calls a Java procedure
+ * Example:
+ * \code
+ * # The JPersistenceAdapter makes it possible to serialize java values.
+ * #
+ * # Example:
+ * # $v=new JPersistenceAdapter(new java("java.lang.StringBuffer", "hello"));
+ * # $id=serialize($v);
+ * # $file=fopen("file.out","w");
+ * # fwrite($file, $id);
+ * # fclose($file);
+ * #
+ *
+ * class JPersistenceProxy {
+ *  var $java;
+ *  var $serialID;
+ *
+ *  function __construct($java){ 
+ *    $this->java=$java; 
+ *    $this->serialID; 
+ *  }
+ *  function __sleep() {
+ *    $buf = new java("java.io.ByteArrayOutputStream");
+ *    $out = new java("java.io.ObjectOutputStream", $buf);
+ *    $out->writeObject($this->java);
+ *    $out->close();
+ *    $this->serialID = $buf->toByteArray();
+ *    return array("serialID");
+ *  }
+ *  function __wakeup() {
+ *    $buf = new java("java.io.ByteArrayInputStream", $this->serialID);
+ *    $in = new java("java.io.ObjectInputStream", $buf);
+ *    $this->java = $in->readObject();
+ *    $in->close();
+ *  }
+ *  function getJava() {
+ *    return $this->java;
+ *  }
+ *  function __destruct() { 
+ *    if($this->java) return $this->java->__destruct(); 
+ *  }
+ * }
+ *
+ * class JPersistenceAdapter extends JPersistenceProxy {
+ *  function __get($arg)       { if($this->java) return $this->java->__get($arg); }
+ *  function __put($key, $val) { if($this->java) return $this->java->__put($key, $val); }
+ *  function __call($m, $a)    { if($this->java) return $this->java->__call($m,$a); }
+ *  function __toString()      { if($this->java) return $this->java->__toString(); }
+ * }
+ * \endcode
+ */
 EXT_METHOD(EXT, __call)
 {
   zval **xargv, **argv;
@@ -892,10 +1164,26 @@ EXT_METHOD(EXT, __call)
   efree(argv);
   efree(xargv);
 }
-/* }}} */
 
-/* {{{ proto object Java::__toString (void)
-   Displays the java object as a string. Note: it doesn't cast the object to a string, thus echo "$ob" displays a string representation of $ob, e.g.: [o(String)"hello"], and echo "".$ob (or: echo (string)$ob) displays $ob as a string, e.g.: hello. */
+/** Proto: object Java::__toString (void);
+ *
+ * Displays the java object as a string. Note: it doesn't cast the
+ * object to a string, thus echo "$ob" displays a string
+ * representation of $ob, e.g.: \code [o(String)"hello"]\endcode. Use
+ * a string cast if you want to display the java string as a php
+ * string, e.g.:
+ * \code 
+ * echo (string)$string; 
+ * // implicit cast to string:
+ * echo "".$string;
+ * \endcode.
+ * 
+ * Example:
+ * \code
+ * $System = new JavaClass("java.lang.System");
+ * echo (string)$System->currentTimeMillies();
+ * \endcode
+ */
 EXT_METHOD(EXT, __tostring)
 {
   long result = 0;
@@ -917,10 +1205,16 @@ EXT_METHOD(EXT, __tostring)
   }
 
 }
-/* }}} */
 
-/* {{{ proto string Java::__set(object, object)
- The setter. */
+/**
+ * Proto: string Java::__set(object, object);
+ *
+ * The setter
+ * 
+ * Example: \code $obj->property = "value"; \endcode If no property
+ * exists, the bean properties are examined and a setter is called:
+ * \code $object->setProperty(value)\endcode
+ */
 EXT_METHOD(EXT, __set)
 {
   zval **argv;
@@ -936,10 +1230,55 @@ EXT_METHOD(EXT, __set)
   
   efree(argv);
 }
-/* }}} */
 
-/* {{{ proto string Java::__destruct()
- The destructor. */
+/** 
+ * Proto: void Java::__destruct();
+ *
+ * Example:
+ * \code
+ * 
+ * # The JSessionAdapter makes it possible to store java values into the
+ * # $_SESSION variable. 
+ * 
+ * # Example:
+ * # $vector = new JSessionAdapter(new Java("java.util.Vector"));
+ * # $vector->addElement(...);
+ * # $_SESSION["v"]=$vector;
+ *
+ *
+ * class JSessionProxy {
+ *  var $java;
+ *  var $serialID;
+ *
+ *  function __construct($java){ 
+ *    $this->java=$java; 
+ *    $this->serialID = uniqid(""); 
+ *  }
+ *  function __sleep() {
+ *    $session=java_get_session("PHPSESSION".session_id());
+ *    $session->put($this->serialID, $this->java);
+ *    return array("serialID");
+ *  }
+ *  function __wakeup() {
+ *    $session=java_get_session("PHPSESSION".session_id());
+ *    $this->java = $session->get($this->serialID);
+ *  }
+ *  function getJava() {
+ *    return $this->java;
+ *  }
+ *  function __destruct() { 
+ *    if($this->java) return $this->java->__destruct(); 
+ *  }
+ * }
+ *
+ * class JSessionAdapter extends JSessionProxy {
+ *  function __get($arg)       { if($this->java) return $this->java->__get($arg); }
+ *  function __put($key, $val) { if($this->java) return $this->java->__put($key, $val); }
+ *  function __call($m, $a)    { if($this->java) return $this->java->__call($m,$a); }
+ *  function __toString()      { if($this->java) return $this->java->__toString(); }
+ * }
+ * \endcode
+ */
 EXT_METHOD(EXT, __destruct)
 {
   long obj;
@@ -952,10 +1291,15 @@ EXT_METHOD(EXT, __destruct)
 
   RETURN_TRUE;
 }
-/* }}} */
 
-/* {{{ proto string Java::__get(object)
- The getter. */
+/** 
+ * Proto: string Java::__get(object);
+ *
+ * The getter. Example: \code echo (string) $object->property;
+ * \endcode If no property exists, the bean properties are examined
+ * and the getter is called, example: \code $object->getProperty()
+ * \endcode.
+ */
 EXT_METHOD(EXT, __get)
 {
   zval **argv;
@@ -969,24 +1313,56 @@ EXT_METHOD(EXT, __get)
   EXT_GLOBAL(get_property_handler)(Z_STRVAL(*argv[0]), getThis(), return_value);
   efree(argv);
 }
-/* }}} */
 
-/* {{{ proto string Java::__sleep()
- Serializes the object. */
+/**
+ * Proto: string Java::__sleep();
+ *
+ * Serializes the object. 
+ * Example:
+ * \code
+ *   $vector=new JPersistenceAdapter(new java("java.lang.StringBuffer", "hello"));
+ *  $v=array (
+ *	"test",
+ *	$vector,
+ *	3.14);
+ *  $id=serialize($v);
+ *  $file=fopen("test.ser","w");
+ *  fwrite($file, $id);
+ *  fclose($file);
+ * \endcode
+ */
 EXT_METHOD(EXT, __sleep)
 {
   serialize(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
-/* {{{ proto string Java::__wakeup()
- Deserializes the object. */
+
+/** Proto: string Java::__wakeup();
+ * 
+ * Deserializes the object. 
+ * Example: 
+ * \code
+ *  try {
+ *    $v=unserialize($id);
+ *  } catch (JavaException $e) {
+ *    echo "Warning: Could not deserialize: ". $e->getCause() . "\n";
+ *  }
+ * \endcode
+ */
 EXT_METHOD(EXT, __wakeup)
 {
   deserialize(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
-/* }}} */
 
-/* {{{ proto string Java::offsetExists()
- See array::offsetExists(). */
+/** Proto: string Java::offsetExists();
+ * 
+ * See array::offsetExists(). 
+ * Example:
+ * \code
+ * $System = new java("java.lang.System");
+ * $props = $System.getProperties();
+ * if(!$props["user.home"]) die("No home dir!?!");
+ * \endcode
+ */
 EXT_METHOD(EXT, offsetExists)
 {
   proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
@@ -1012,11 +1388,21 @@ EXT_METHOD(EXT, offsetExists)
   EXT_GLOBAL(invoke)("offsetExists", obj, argc, argv, 0, return_value TSRMLS_CC);
   efree(argv);
 }
-/* }}} */
 
 
-/* {{{ proto string Java::offsetGet()
- See array::offsetGet(). */
+/** 
+ * Proto: string Java::offsetGet();
+ *
+ * Get the object at a given position.
+ *
+ * Example:
+ * \code
+ * $System = new java("java.lang.System");
+ * $props = $System.getProperties();
+ * echo $props["user.home"]);
+ * \endcode
+ *
+ */
 EXT_METHOD(EXT, offsetGet)
 {
   zval **argv;
@@ -1042,10 +1428,22 @@ EXT_METHOD(EXT, offsetGet)
   EXT_GLOBAL(invoke)("offsetGet", obj, argc, argv, 0, return_value TSRMLS_CC);
   efree(argv);
 }
-/* }}} */
 
-/* {{{ proto string Java::offsetSet()
- See array::offsetSet(). */
+/** Proto: string Java::offsetSet();
+ *
+ * Set the object at a given position. Example:
+ * \code
+ * $Array = new JavaClass("java.lang.reflect.Array");
+ * $testobj=$Array->newInstance(new JavaClass("java.lang.String"), array(2, 2, 2, 2, 2, 2));
+ *
+ * $testobj[0][0][0][0][0][1] = 1;
+ * $testobj[0][0][0][0][1][0] = 2;
+ * $testobj[0][0][0][1][0][0] = 3;
+ * $testobj[0][0][1][0][0][0] = 4;
+ * $testobj[0][1][0][0][0][0] = 5;
+ * $testobj[1][0][0][0][0][0] = 6;
+ * \endcode
+ */
 EXT_METHOD(EXT, offsetSet)
 {
   zval **argv;
@@ -1070,10 +1468,11 @@ EXT_METHOD(EXT, offsetSet)
   EXT_GLOBAL(invoke)("offsetSet", obj, argc, argv, 0, return_value TSRMLS_CC);
   efree(argv);
 }
-/* }}} */
 
-/* {{{ proto string Java::offsetUnset()
- See array::offsetUnset(). */
+/** Proto: string Java::offsetUnset();
+ * 
+ * Remove the entry at a given position. Used internally.
+ */
 EXT_METHOD(EXT, offsetUnset)
 {
   zval **argv;
@@ -1098,7 +1497,6 @@ EXT_METHOD(EXT, offsetUnset)
   EXT_GLOBAL(invoke)("offsetUnset", obj, argc, argv, 0, return_value TSRMLS_CC);
   efree(argv);
 }
-/* }}} */
 
 static
 ZEND_BEGIN_ARG_INFO(arginfo_zero, 0)
@@ -1431,6 +1829,9 @@ static int make_lambda(zend_internal_function *f,
   f->arg_types = NULL;
 }
 
+/**
+ * Call function handler for php4
+ */
 void 
 EXT_GLOBAL(call_function_handler4)(INTERNAL_FUNCTION_PARAMETERS, zend_property_reference *property_reference)
 {
@@ -1571,6 +1972,16 @@ static void make_local_socket_info(TSRMLS_D) {
 	!(EXT_GLOBAL (option_set_by_user) (U_SERVLET, EXT_GLOBAL(ini_user)));
 }
 
+/**
+ * Called when the module is initialized. Creates the Java and
+ * JavaClass structures and tries to start the backend if
+ * java.socketname, java.servlet or java.hosts are not set.  The
+ * backend is NOT started if the environment variable
+ * X_JAVABRIDGE_OVERRIDE_HOSTS exists and contains either "/" or
+ * "host:port//context/servlet".  When running as a Apache/IIS module
+ * or Fast CGI, this procedure is called only once, when running as a
+ * CGI binary it is called whenever the CGI binary is called.
+ */
 PHP_MINIT_FUNCTION(EXT)
 {
   zend_class_entry *parent;
@@ -1680,6 +2091,9 @@ PHP_MINIT_FUNCTION(EXT)
   } 
   return SUCCESS;
 }
+/**
+ * Displays the module info.
+ */
 PHP_MINFO_FUNCTION(EXT)
 {
   short is_local;
@@ -1720,6 +2134,12 @@ PHP_MINFO_FUNCTION(EXT)
   free(s);
 }
 
+/**
+ * Called when the module terminates. Stops the backend, if it is running.
+ * When running in Apache/IIS, or as a FastCGI binary, this procedure is 
+ * called only once. When running as a CGI binary this is called whenever
+ * the CGI binary terminates.
+ */
 PHP_MSHUTDOWN_FUNCTION(EXT) 
 {
   EXT_GLOBAL(destroy_cfg) (EXT_GLOBAL(ini_set));

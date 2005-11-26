@@ -7,6 +7,12 @@ if (!extension_loaded('java')) {
     exit(2);
   }
 }
+
+if (version_compare("5.0.0", phpversion(), "<=")) {
+    echo "Run the php5 callback test in tests.php5 instead.\n";
+    exit(0);
+ }
+
 class c {
   function c1($s1, $o1) {
     echo "c1: $s1, $o1\n";

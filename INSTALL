@@ -76,18 +76,27 @@ and optionally, if you want to run JSP and PHP from Apache/Tomcat:
 # Choose a proper INST directory, for example /usr/local/ or
 $HOME/PHP-JAVA-BRIDGE/ and type the following commands:
 
+#
+# adjust the install directory
+#
+INST=/usr/local
+
+#
+# First of all make shure that the build scripts don't find
+# zombies or OLD VERSIONS OF THE PROGRAMS WE'RE BUILDING:
+#
+export PATH=$INST/bin:$PATH 
+export LD_LIBRARY_PATH=$INST/lib:$LD_LIBRARY_PATH
+
+
+#
 # stop the system http service 
+#
 su - -c "service httpd stop"
 
-# adjust the install directory
-INST=/usr/local
 
 # adjust the java version
 JAVA_HOME=/opt/IBMJava2-141
-
-# Tell the shell to use our programs
-export PATH=$INST/bin:$PATH 
-export LD_LIBRARY_PATH=$INST/lib:$LD_LIBRARY_PATH
 
 
 # The following software components are required during the build
@@ -101,10 +110,12 @@ export LD_LIBRARY_PATH=$INST/lib:$LD_LIBRARY_PATH
 (cd libtool-1.4.3;  ./configure --prefix=$INST && make && su -c "make install")
 
 
+#
 # BUILD APACHE
 # adjust apache MPM.  Prefork is standard behaviour in apache 1.3, worker
 # creates worker thread pools which deliver content much faster.  But note:
 # some third-party PHP modules may not be thread-safe.
+#
 MPM=prefork #MPM=worker
 
 # compile and install apache 2
@@ -115,7 +126,9 @@ make && su -c "make install"
 cd ..
 
 
+#
 # BUILD PHP
+#
 bunzip2 < php-x.y.z.tar.bz2 | tar xf -
 cd php-x.y.z
 ./configure --prefix=$INST --without-java --with-apxs2=$INST/bin/apxs
@@ -125,18 +138,13 @@ su -c "echo 'AddType application/x-httpd-php .php' >>$INST/conf/httpd.conf"
 cd ..
 
 
+#
 # BUILD THE PHP/JAVA BRIDGE
+#
 bunzip2 < php-java-bridge_p.x.y.tar.bz2 | tar xf -
 cd php-java-bridge-p.x.y
 phpize
-
-# If you don't have a servlet engine or J2EE application server, use:
-./configure --with-java=$JAVA_HOME --disable-servlet
-
-# If you have a servlet engine or J2EE application server, locate
-# j2ee.jar and use:
-#./configure --with-java=$JAVA_HOME --enable-servlet=/path/to/j2ee.jar
-
+./configure --with-java=$JAVA_HOME
 make && su -c "make install"
 # now activate the bridge in php.ini
 su -c "touch $INST/lib/php.ini && echo -e 'extension=java.so\n[java]' >>$INST/lib/php.ini"
@@ -160,7 +168,7 @@ Installation of Tomcat/mod jk
 -----------------------------
 
 Optionally you can install the tomcat servlet engine to serve .jsp
-files:
+files
 
 Download and extract tomcat into a directory, for example /opt/tomcat5
 and set the environment variable CATALINA_HOME, for example:

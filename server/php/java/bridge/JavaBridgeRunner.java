@@ -68,7 +68,7 @@ public class JavaBridgeRunner extends HttpServer {
      * @param req The HttpRequest
      * @param res The HttpResponse
      */
-    protected void parseBody (HttpRequest req, HttpResponse res) {
+    protected void parseBody (HttpRequest req, HttpResponse res) throws IOException {
     	super.parseBody(req, res);
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
 	ContextFactory ctx = getContextManager(req, res);

@@ -14,14 +14,10 @@ import php.java.script.PhpScriptEngine;
  */
 public class HelloWorld {
 
-    public interface i {
-	void hello(Object a, Object b);
-    }
-
     public static void main(String[] args) {
 	System.setProperty("php.java.bridge.default_log_level", "2");
 	System.setProperty("php.java.bridge.default_log_file", "");
-	System.setProperty("php.java.bridge.php_exec", "/opt/jakarta-tomcat-4.0.2-b2/webapps/JavaBridge/WEB-INF/cgi/php");
+	System.setProperty("php.java.bridge.php_exec", "/home/src/PHP-JAVA-BRIDGE/PHP5/dist/bin/php.sh");
 
 	try {
 	    PhpScriptEngine engine = new PhpScriptEngine();
@@ -31,6 +27,7 @@ public class HelloWorld {
 	    Invocable eng = (Invocable)engine;
 	    Object o = (eng.call("getBar", new Object[] {}));
 	    eng.call("hello", o, new Object[]{"one", "two"});
+	    System.out.println(eng.call("java_get_server_name", new Object[]{}));
 		
 	    engine.release();
 	} catch (Exception e) {

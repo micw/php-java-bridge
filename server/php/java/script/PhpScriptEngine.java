@@ -89,7 +89,7 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
      * @see javax.script.Invocable#getInterface(java.lang.Object, java.lang.Class)
      */
     public Object getInterface(Object thiz, Class clasz) {
-	return ((PhpProcedureProxy)thiz).getProxy(new Class[]{clasz});
+	return ((PhpProcedureProxy)thiz).getNewFromInterface(clasz);
     }
 
     /* (non-Javadoc)
