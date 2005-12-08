@@ -1,0 +1,16 @@
+If this directory does NOT contain a php CGI executable called
+php-cgi-<architecture>-<os>[.exe|.sh], the following system default
+FastCGI or CGI binary will used: /usr/bin/php-cgi, /usr/bin/php or
+c:/php5/php-cgi.exe.
+
+If this directory DOES contain a php CGI executable, the bridge will
+call it using the CGI interface.
+
+
+Copy an executable PHP CGI binary into this directory. Or copy a PHP
+CGI binary into this directory and create a wrapper
+(recommended). Please see the php-cgi-x86-linux.sh and
+php-cgi-i386-linux.sh for a template.
+
+
+

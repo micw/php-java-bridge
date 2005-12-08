@@ -1,0 +1,134 @@
+php-java-bridge NEWS -- history of user-visible changes.
+
+Please send bug reports, questions and suggestions to
+<php-java-bridge-users@lists.sourceforge.net>.
+
+
+Version 3.0.0
+
+* JSR223 API: It is now possible to run php scripts from java. Scripts
+  are invoked using a CPS style, a CGI binary is started if necessary
+  (if Apache/IIS are not running).
+
+   Example:
+
+   PhpScriptEngine engine = new PhpScriptEngine();
+   engine.put("key", "testVal");
+   // Hold the script from 127.0.0.1:80 (Apache pool) hostage ...
+   engine.eval(new URLReader(new URL("http://127.0.0.1:80/HelloWorld.php")));
+   // ... call the php procedure HelloWorld.php::java_get_server_name() ...
+   System.out.println(((Invocable)engine).call("java_get_server_name", new Object[]{}));
+   // ... and release the script.
+   engine.release();
+
+  See the configure option --enable-script.
+
+* Java Server Faces: It is possible to embed php scripts into
+  frameworks. Requires php-faces.jar (see configure option
+  --enable-faces=<myFaces.jar>). The implementation works with the RI
+  and Apache myfaces implementation (included in the unsupported
+  folder). See examples/java-server-faces for details.
+
+* PHP 4 is no longer supported (the bridge still works with php4).
+
+* The bridge no longer coerces return values. If you want to 
+  cast a java string into a php string, use the cast operator, e.g:
+
+    $string = new java("java.lang.String", "{HelloWorld}");
+    $substring = $string->substring(1);
+    $substring = $substring(0, $substring->length()-1);
+
+    echo "Result: $substring"; // implicit cast
+    echo (string)$substring;   // explicit cast
+  
+* When running in a servlet engine or application server, the bridge now
+  supports a multi-user environment. Example tomcat setup which contains:
+
+    webapps/userA/...
+                  WEB-INF/lib/{JavaBridge.jar,php-servlet.jar}
+                  WEB-INF/cgi/{php.ini,php-cgi-i386-linux.sh,java.so}
+                  {sessionSharing.php,sessionSharing.jsp}
+    
+    webapps/userB/...
+                  WEB-INF/lib/{JavaBridge.jar,php-servlet.jar}
+                  WEB-INF/cgi/{php.ini,php-cgi-i386-linux.sh,java.so}
+                  {sessionSharing.php,sessionSharing.jsp}
+
+
+  Browser request for:
+
+    http://myhost.com/userA/sessionSharing.php
+    http://myhost.com/userA/sessionSharing.jsp
+
+  Creates cookie with a PATH value: path=/userA
+
+
+  Same browser request for:
+
+    http://myhost.com/userB/sessionSharing.php
+    http://myhost.com/userB/sessionSharing.jsp
+
+  Creates cookie with a PATH value: path=/userB
+
+  
+* An administrator may setup a FastCGI PHP server or Apache/IIS as a
+  frontend so that users don't have to copy their own php binaries into
+  their WEB-INF/cgi/ folder. 
+ 
+  1) Example: Apache/IIS/mod_jk connector:
+
+
+  internet
+  clients  <->  :80--->  Apache/IIS                          --->  J2EE AS
+                            |    |                          /  /    |   |
+                            |   mod_jk <-- jsp/servlet req./  /     |   |
+                            |                                /     jsp  |
+                            ---- php                        /           |
+                            ---- php  <-- P-J-B PROTOCOL --/           servlet
+                                 ...                                     ...
+
+  J2EE port not visible to internet clients. Apache/IIS document root
+  not used.
+
+    
+  2) Example: a shared document directory:
+
+
+                :80--->  Apache/IIS
+            /                |
+           / php req.        ---- php
+          /                  ---- php  <--| 
+                                  ...     |
+  internet                                |
+  clients                                 |
+          \                               |P-J-B
+           \jsp/servlet req.              |PROTOCOL
+            \                             |
+                                          |
+           |--> :8080--> J2EE AS          |
+           |                 |            |
+           |                 ---- jsp     |
+           |                 ---- servlet |
+           |                      ...     |
+           -------------------------------|
+
+  Apache/IIS and J2EE ports are accessible from the
+  internet. Apache/IIS and the J2EE AS share the same document root.
+
+  #2 is the recommended setup. Framework requests (e.g.: hello.jsf)
+  go to port 8080, initial requests to :80 can be forwarded to the
+  framework using the following php code:
+
+  <?php
+  // hello backing implementation
+  function jsfValidateEntry(...) {...}
+  ...
+  // check if we're called from the JSF framework, redirect to
+  // self.jsf otherwise.
+  function redirect() {
+    $target=dirname($_SERVER['PHP_SELF']);
+    $name=basename($_SERVER['PHP_SELF'], ".php");
+    header ("Location: http://$_SERVER[HTTP_HOST]:8080$target/$name.jsf");
+  }
+  java_context()->call(java_closure()) || redirect();
+  ?>
