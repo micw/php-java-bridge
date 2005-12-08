@@ -139,13 +139,13 @@ public abstract class PhpMap {
 		        return _bridge.offsetExists(length, pos);
 		    }
 		    public Object offsetGet(Object pos) {
-		        return _bridge.offsetGet((Object[])value, pos);
+		        return _bridge.offsetGet((Object[])this.value, pos);
 		    }
 		    public void offsetSet(Object pos, Object val) {
-		        _bridge.offsetSet((Object[])value, pos, val);
+		        _bridge.offsetSet((Object[])this.value, pos, val);
 		    }
 		    public void offsetUnset(Object pos) {
-		        _bridge.offsetUnset((Object[])value, pos);
+		        _bridge.offsetUnset((Object[])this.value, pos);
 		    }
 		};
 	}
@@ -233,16 +233,16 @@ public abstract class PhpMap {
 		    }
 
 		    public boolean offsetExists(Object pos) {
-		        return _bridge.offsetExists((Map) value, pos);
+		        return _bridge.offsetExists((Map) this.value, pos);
 		    }
 		    public Object offsetGet(Object pos) {
-		        return _bridge.offsetGet((Map) value, pos);
+		        return _bridge.offsetGet((Map) this.value, pos);
 		    }
 		    public void offsetSet(Object pos, Object val) {
-			_bridge.offsetSet((Map) value, pos, val);
+			_bridge.offsetSet((Map) this.value, pos, val);
 		    }
 		    public void offsetUnset(Object pos) {
-			_bridge.offsetUnset((Map) value, pos);
+			_bridge.offsetUnset((Map) this.value, pos);
 		    }
 		};
 	}
