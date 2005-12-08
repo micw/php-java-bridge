@@ -83,13 +83,14 @@ fi
 JAVA_BRIDGE_SCRIPT_JAR="php-script.jar"
 if test "$SCRIPT" = "no"; then
   JAVA_BRIDGE_SCRIPT_JAR=""
+  SCRIPT=""
 else
   if test "$SERVLET" = "no"; then
   SERVLET="yes";
   fi
 fi
 if test "$SCRIPT" = "yes"; then
-  SCRIPT="../unsupported/script-api.jar"
+  SCRIPT="script-api.jar"
 fi
 
 

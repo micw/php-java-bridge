@@ -7,7 +7,7 @@
 ;; double-click on JavaBridge.jar or deploy JavaBridge.war into your
 ;; servlet engine/application server and re-start it.
 
-extension_dir = "c:\php5"
+extension_dir = "ext"
 extension = php_java.dll
 [java]
 

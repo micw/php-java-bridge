@@ -45,6 +45,13 @@ public class PhpFacesScriptContext extends PhpSimpleHttpScriptContext {
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */
 	this.env.put("X_JAVABRIDGE_CONTEXT", ctx.getId());
+	/* redirect to ourself */
+	StringBuffer buf = new StringBuffer("127.0.0.1:");
+	buf.append(req.getServerPort());
+	buf.append("/");
+	buf.append(req.getRequestURI());
+	buf.append(".php"); // it doesn't matter what we send here, as long as it ends with .php
+	this.env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", buf.toString());
     	
     	JavaBridge bridge = new JavaBridge();
 	ctx.setBridge(bridge);

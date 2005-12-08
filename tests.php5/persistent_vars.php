@@ -28,8 +28,10 @@ if(file_exists($ser)) {
 // a new session
 if(!$v) {
   echo "creating new session\n";
-  $vector=new JPersistenceAdapter(new java("java.lang.StringBuffer", "hello"));
-  
+  $vector=new JPersistenceAdapter(new java("java.util.Vector"));
+  $vector->add("hello");
+  $vector->add(new java("java.lang.Double", "3.14"));
+  $vector->add(new java("java.lang.StringBuffer","stringbuffer"));
   $v=array (
 	"test",
 	$vector,

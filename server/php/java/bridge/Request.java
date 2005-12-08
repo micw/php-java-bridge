@@ -257,23 +257,23 @@ public class Request implements IDocHandler {
 	switch (ch=tag[0].strings[0].string[0]) {
 	case 'I': {
 	    args.type=ch;
-	    int i=Integer.parseInt(st[0].getStringValue(), 10);
+	    int i= st[0].getIntValue();
 	    args.callObject=i==0?bridge:bridge.globalRef.get(i);
 	    args.method=st[1].getStringValue();
 	    args.predicate=st[2].string[st[2].off]=='P';
-	    args.id=Long.parseLong(st[3].getStringValue(), 10);
+	    args.id=st[3].getLongValue();
 	    break;
 	}
 	case 'C': {
 	    args.type=ch;
 	    args.callObject=st[0].getStringValue();
 	    args.predicate=st[1].string[st[1].off]=='C';
-	    args.id=Long.parseLong(st[2].getStringValue(), 10);
+	    args.id=st[2].getLongValue();
 	    break;
 	}
 	case 'R': {
 	    args.type=ch;
-	    args.id=Long.parseLong(st[0].getStringValue(), 10);
+	    args.id=st[0].getLongValue();
 	    break;
 	}
 	
@@ -294,7 +294,7 @@ public class Request implements IDocHandler {
 	}
 
 	case 'U': {
-	    int i=Integer.parseInt(st[0].getStringValue(), 10);
+	    int i=st[0].getIntValue();
 	    bridge.globalRef.remove(i);
 	    break;
 	}
@@ -311,20 +311,20 @@ public class Request implements IDocHandler {
 	}
 	case 'L': {
 	    if(args.composite!='H')
-	        args.add(new PhpNumber(Long.parseLong(st[0].getStringValue(), 10)));
+	        args.add(new PhpNumber(st[0].getLongValue()));
 	    else // hash has no type information
 	        args.add(bridge.options.createExact(st[0]));
 	    break;
 	}
 	case 'D': {
-	    args.add(new Double(Double.parseDouble(st[0].getStringValue())));
+	    args.add(new Double(st[0].getDoubleValue())); 
 	    break;
 	}
 	case 'E': {
 	    if(0==st[0].length)
 		args.callObject=new Exception(st[1].getStringValue());
 	    else {
-		int i=Integer.parseInt(st[0].getStringValue(), 10);
+		int i=st[0].getIntValue();
 		if(0==i) {
 		    args.callObject=new Exception(st[1].getStringValue());
 		}
@@ -337,7 +337,7 @@ public class Request implements IDocHandler {
 	    if(0==st[0].length)
 		args.add(null);
 	    else {
-		int i=Integer.parseInt(st[0].getStringValue(), 10);
+		int i=st[0].getIntValue();
 		if(0==i)
 		    args.add(null);
 		else

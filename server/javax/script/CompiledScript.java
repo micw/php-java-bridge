@@ -15,28 +15,6 @@ public abstract class CompiledScript {
     }
     
     /**
-     * Re-evaluates the pre-compiled script stored using the 
-     * ENGINE_SCOPE and the GLOBAL_SCOPE of the associated 
-     * ScriptEngine and returns the resultant object.
-     * 
-     * @return the resultant object after the re-evaluation of the 
-     *         script
-     * @throws ScriptException if re-evaluation fails due to any 
-     *         reason
-     */ 
-    public Object eval() throws ScriptException {
-        
-        SimpleScriptContext context = new SimpleScriptContext();
-        
-        context.setNamespace(getEngine().getNamespace(ScriptContext.ENGINE_SCOPE),
-                        ScriptContext.ENGINE_SCOPE);
-        context.setNamespace(getEngine().getNamespace(ScriptContext.GLOBAL_SCOPE),
-                        ScriptContext.GLOBAL_SCOPE);
-        
-        return eval(context);
-    }    
-    
-    /**
      * Re-evaluates the pre-compiled script using the specified 
      * namespace as the SCRIPT_SCOPE and using ENGINE_SCOPE, 
      * GLOBAL_SCOPE of the associated ScriptEngine.
@@ -47,15 +25,7 @@ public abstract class CompiledScript {
      *         reason
      */
     public Object eval(Bindings namespace) throws ScriptException{
-        
-        SimpleScriptContext context = new SimpleScriptContext();
-        
-        if(namespace==null) namespace = getEngine().getNamespace(ScriptContext.ENGINE_SCOPE); 
-        context.setNamespace(namespace, ScriptContext.ENGINE_SCOPE);
-        context.setNamespace(getEngine().getNamespace(ScriptContext.GLOBAL_SCOPE),
-                        ScriptContext.GLOBAL_SCOPE);
-        
-        return eval(context);
+        return eval(getEngine().getContext());
     }
     
     /**

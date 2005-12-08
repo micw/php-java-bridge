@@ -393,14 +393,14 @@ static int wait_server(void) {
   while(EXT_GLOBAL(cfg)->cid && -1==(sock=test_local_server()) && --count) {
 	if(EXT_GLOBAL(cfg)->err && poll(pollfd, 1, 0)) 
 	  return FAILURE; /* server terminated with error code */
-	php_error(E_NOTICE, "php_mod_"/**/EXT_NAME()/**/"(%d): waiting for server another %d seconds",57, count);
+	if(count<=10) php_error(E_NOTICE, "php_mod_"/**/EXT_NAME()/**/"(%d): waiting for server another %d seconds",57, count);
 	
 	sleep(1);
   }
 #else
 
   while(EXT_GLOBAL(cfg)->cid && -1==(sock=test_local_server()) && --count) {
-	php_error(E_NOTICE, "php_mod_"/**/EXT_NAME()/**/"(%d): waiting for server another %d seconds",57, count);
+	if(count<=10) php_error(E_NOTICE, "php_mod_"/**/EXT_NAME()/**/"(%d): waiting for server another %d seconds",57, count);
 	Sleep(1000);
   }
 #endif
@@ -430,8 +430,8 @@ void EXT_GLOBAL(start_server)(TSRMLS_D) {
 	if(!(pid=fork())) {		/* daemon */
 	  close(p[0]);
 	  if(!fork()) {			/* guard */
+		setsid();
 		if(!(pid=fork())) {	/* java */
-		  setsid();
 		  close(p[1]);
 		  exec_vm(TSRMLS_C); 
 		  exit(105);

@@ -5,6 +5,7 @@ package php.java.faces;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -42,11 +43,21 @@ public class PhpFacesContext extends FacesContext {
     protected ServletContext ctx;
     protected HttpServletRequest req;
     protected HttpServletResponse res;
-    protected String baseURL;
-	
-    private String getOverrideString() {
+
+    /**
+     * 
+     * @return The base URL, e.g. http://127.0.0.1:8080/JavaBridge
+     */
+    public String getBaseURL() {
+	return getBaseURL(String.valueOf(req.getServerPort()));
+    }
+    /**
+     * 
+     * @return The base URL, e.g. http://127.0.0.1:8080/JavaBridge
+     */
+    public String getBaseURL(String port) {
 	StringBuffer buf = new StringBuffer(req.isSecure()?"https://127.0.0.1:":"http://127.0.0.1:");
-	buf.append(req.getServerPort());
+	buf.append(port);
 	buf.append(req.getContextPath());
 	//req.getPathInfo()
 	return buf.toString();
@@ -62,7 +73,6 @@ public class PhpFacesContext extends FacesContext {
 	ctx = (ServletContext)kontext;
 	req = (HttpServletRequest)request;
 	res = (HttpServletResponse)response;
-	baseURL = getOverrideString();
     }
 
     /* (non-Javadoc)
@@ -223,14 +233,27 @@ public class PhpFacesContext extends FacesContext {
      * @param url The URL, for example getBaseURL() + "/foo.php";
      * @return The script engine.
      * @throws ScriptException
+     * @throws IOException
+     * @throws UnknownHostException
      * @see #getBaseURL()
      */
-    public synchronized ScriptEngine getScriptEngine(Object key, URL url) throws ScriptException {
-	ScriptEngine e;
+    public synchronized ScriptEngine getScriptEngine(Object key, URL url)  throws UnknownHostException, ScriptException, IOException  {
+	ScriptEngine e = null;
 	if((e=(ScriptEngine)scriptEngines.get(key))!=null) return e;
-        e = new PhpFacesScriptEngine(ctx, req, res, new PhpScriptWriter(log));
- 	scriptEngines.put(key, e);
-	e.eval(new URLReader(url));
+	e = new PhpFacesScriptEngine(ctx, req, res, new PhpScriptWriter(log));
+	scriptEngines.put(key, e);
+	try {
+	    e.eval(new URLReader(url));
+	} catch (UnknownHostException ex) {
+        scriptEngines.remove(key);
+        throw ex;
+    } catch (ScriptException ex) {
+        scriptEngines.remove(key);
+        throw ex;
+    } catch (IOException ex) {
+        scriptEngines.remove(key);
+        throw ex;
+    }
 	return e;
     }
 	
@@ -247,11 +270,5 @@ public class PhpFacesContext extends FacesContext {
 	}
     }
     
-    /**
-     * @return The base URL
-     */
-    public String getBaseURL() {
-	return baseURL;
-    }
 
 }

@@ -36,7 +36,7 @@ $sys->gc();
 $t_php = $sys->currentTimeMillis() - $start;
 
 echo "Created excel file $java_output via compiled java in $t_java ms.\n";
-echo "Created excel file $php_output via interpreted PHP and java reflection calls in $t_php ms. (" . $t_php/$t_java .")\n";
+echo "Created excel file $php_output via interpreted PHP in $t_php ms. (" . $t_php/$t_java .")\n";
 
 /*
 Sample results on a 1.4GHZ i686, kernel 2.6.8

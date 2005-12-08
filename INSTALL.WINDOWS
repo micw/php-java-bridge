@@ -7,26 +7,26 @@ Installing the PHP/Java Bridge on Windows
 * Download and extract php-java-bridge_*-win32-php5.zip into the
   folder: c:\php5.
 
-* Double-click on c:\php5\JavaBridge.jar. Or deploy
-  c:\php5\JavaBridge.war into your servlet engine or java application
-  server and re-start it.
+* Double-click on c:\php5\JavaBridge.jar. Or deploy JavaBridge.war
+  (from the J2EE download) into your servlet engine or java
+  application server and re-start it.
 
 * Double-click on c:\php5\test.bat.
   Open the file result.html with a browser.  Search for the "java
   status" entry, it should be "java status: running", and examine the
   java properties at the bottom of the page. Search for the 
-  "extension_dir", it should be "c:\php5" for this test.
+  "extension_dir", it should be ".\ext" for this test.
 
 
 If the above test succeeded, install the php.ini, the php_java.dll and
 your java libraries (.jar files):
 
-* Copy or add the contents of the c:\php5\php.ini file to the
-  php.ini in the windows system directory (usually c:\winnt or
-  c:\windows) and edit it so that the "extension_dir" points to your
-  PHP 5 extension directory. Copy the php_java.dll into the
-  extension_dir and copy your java libraries (.jar files) into
-  extension_dir\lib.
+* Copy or add the contents of the c:\php5\php.ini file to the php.ini
+  in the windows system directory (usually c:\winnt or c:\windows) and
+  edit it so that the "extension_dir" points to your PHP 5 extension
+  directory. Copy the files php_java.dll and JavaBridge.jar from the ext
+  folder into the extension_dir and copy your java libraries (.jar
+  files) into extension_dir\lib.
 
 * If you don't have a servlet engine, enable the java.socketname
   option in your php.ini file and double-click on JavaBridge.jar to
@@ -53,6 +53,9 @@ your java libraries (.jar files):
 
 Known Windows Issues 
 --------------------
+
+* The php_java.dll is a php 5.0.x binary. If you want to use the
+  bridge with PHP 5.1.x or PHP 6.x you must compile it yourself.
 
 * All .ini entries except java.log_level, java.socketname, java.hosts
   and java.servlet are meaningless.

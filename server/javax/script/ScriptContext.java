@@ -63,7 +63,7 @@ public interface ScriptContext {
      * @return the Namespace associated with the specified levle of
      *         scope
      */
-    public Bindings getNamespace(int scope);
+    public Bindings getBindings(int scope);
     
     /**
      * Retrieves an instance of java.io.Writer which can be used by 
@@ -108,7 +108,7 @@ public interface ScriptContext {
 	 * @param scope     the specified level of scope 
      * @throws IllegalArgumentException if the scope is invalid 
 	 */
-	public void setNamespace(Bindings namespace,int scope) throws 
+	public void setBindings(Bindings namespace,int scope) throws 
             IllegalArgumentException;
     
 }

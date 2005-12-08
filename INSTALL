@@ -1,45 +1,3 @@
-Installation from the Linux RPM 
--------------------------------
-
-* Install a J2RE, for example with the command:
-  rpm -i IBMJava2-JRE-1.4.1-8.i386.rpm
-
-* Install PHP, for example with the command: 
-  rpm -i php-4.3.2-8.ent.i386.rpm
-
-* Install the web-server, for example with the command:
-  rpm -i httpd-2.0.46-25.ent.i386.rpm
-
-* Install the php-java-bridge, for example with the command:
-  rpm -i php-java-bridge-X.Y.Z-1.i386.rpm
-
-* If you have SECURITY ENHANCED LINUX, the above command should have
-  provided instructions how to install the php-java-bridge.te and
-  php-java-bridge.fc policy files. If you encounter problems, for
-  example if the default policy is too restrictive, please report them
-  to php-java-bridge-users@lists.sourceforge.net and include the
-  relevant audit log: "dmesg | fgrep avc:".
-
-Start the web-server with the command: service httpd restart.
-Start the bridge with the command: service php-java-bridge restart
-
-Create a simple php file in /var/www/html, for example with
-the command: echo "<?php phpinfo(); ?>" >/var/www/html/phpinfo.php.
-
-Browse to http://localhost/phpinfo.php and search for the 
-output of the php java bridge module (the entry should be: 
-"java.support: Enabled").
-
-Then install your your java libraries (.jar files) in /usr/share/java
-or in java.libpath/lib (see output of phpinfo) and your php and
-web-pages in /var/www/html or one of their sub-directories.
-
-Please see the README and ABOUT.HTM for details.
---------------------------------------------------
---------------------------------------------------
-
-
-
 Installation from source code (Solaris, FreeBSD, WinXP or Linux)
 ----------------------------------------------------------------
 
@@ -82,7 +40,7 @@ $HOME/PHP-JAVA-BRIDGE/ and type the following commands:
 INST=/usr/local
 
 #
-# First of all make shure that the build scripts don't find
+# First of all make sure that the build scripts don't find
 # zombies or OLD VERSIONS OF THE PROGRAMS WE'RE BUILDING:
 #
 export PATH=$INST/bin:$PATH 
@@ -261,7 +219,7 @@ Oracle 10g AS
 
   or 
 
-    http://localhost:8888/sessionSharing.php
+    http://localhost:8888/JavaBridge/sessionSharing.php
 
   If there are problems, please check if oracle has created the
   $J2EE_HOME/applications/JavaBridge directory and read
@@ -313,7 +271,7 @@ IBM WebSphere AS
 
   or 
 
-    http://localhost:9080/sessionSharing.php
+    http://localhost:9080/JavaBridge/sessionSharing.php
 
   If there are problems, please check if websphere has created the
   $WAS_HOME/profiles/default/installedApps/[...]/JavaBridge_war.ear/

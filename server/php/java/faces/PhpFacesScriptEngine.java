@@ -46,9 +46,9 @@ public class PhpFacesScriptEngine extends PhpScriptEngine implements Invocable {
     protected ScriptContext getScriptContext(Bindings namespace) {
     	PhpFacesScriptContext scriptContext = new PhpFacesScriptContext();
         
-        if(namespace==null) namespace = this.namespace;
-        scriptContext.setNamespace(namespace,ScriptContext.ENGINE_SCOPE);
-        scriptContext.setNamespace(this.globalspace, ScriptContext.GLOBAL_SCOPE);
+        if(namespace==null) namespace = createBindings();
+        scriptContext.setBindings(namespace,ScriptContext.ENGINE_SCOPE);
+        scriptContext.setBindings(getBindings(ScriptContext.GLOBAL_SCOPE), ScriptContext.GLOBAL_SCOPE);
         
         
 	try {

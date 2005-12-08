@@ -16,6 +16,7 @@ import javax.script.Invocable;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
+import javax.script.SimpleBindings;
 
 import php.java.bridge.NotImplementedException;
 import php.java.bridge.PhpProcedure;
@@ -58,15 +59,15 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
     /* (non-Javadoc)
      * @see javax.script.Invocable#call(java.lang.String, java.lang.Object[])
      */
-    public Object call(String methodName, Object[] args)
+    public Object invoke(String methodName, Object[] args)
 	throws ScriptException {
-	return call(methodName, scriptClosure, args);
+	return invoke(scriptClosure, methodName, args);
     }
 
     /* (non-Javadoc)
      * @see javax.script.Invocable#call(java.lang.String, java.lang.Object, java.lang.Object[])
      */
-    public Object call(String methodName, Object thiz, Object[] args)
+    public Object invoke(Object thiz, String methodName, Object[] args)
 	throws ScriptException, RuntimeException {
 	PhpProcedure proc = (PhpProcedure)(Proxy.getInvocationHandler(thiz));
 	try {
@@ -102,7 +103,7 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
 	    throw new ScriptException(e);
 	}
 		
-	if(this.script==null) throw new ScriptException("This script is not invocable. To change this please add a line \"java_context()->call(java_closure());\" at the bottom of the script.");
+	if(this.script==null) throw new ScriptException("The script from "+reader+" is not invocable. To change this please add a line \"java_context()->call(java_closure());\" at the bottom of the script.");
 		
 	try {
 	    this.scriptClosure = this.script.getProxy(new Class[]{});
@@ -154,9 +155,9 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
     protected ScriptContext getScriptContext(Bindings namespace) {
         ScriptContext scriptContext = new PhpScriptContext();
         
-        if(namespace==null) namespace = this.namespace;
-        scriptContext.setNamespace(namespace,ScriptContext.ENGINE_SCOPE);
-        scriptContext.setNamespace(this.globalspace,
+        if(namespace==null) namespace = createBindings();
+        scriptContext.setBindings(namespace,ScriptContext.ENGINE_SCOPE);
+        scriptContext.setBindings(getBindings(ScriptContext.GLOBAL_SCOPE),
 				   ScriptContext.GLOBAL_SCOPE);
         
         return scriptContext;
@@ -174,4 +175,30 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
 	}
     }
 
-}
+    /* (non-Javadoc)
+     * @see javax.script.ScriptEngine#createBindings()
+     */
+    /** {@inheritDoc} */
+    public Bindings createBindings() {
+        return new SimpleBindings();
+    }
+
+    /** {@inheritDoc} */
+   public Object eval(Reader reader, Bindings bindings ) throws ScriptException {
+        return eval(reader, getScriptContext(bindings));
+    }
+    
+    /** {@inheritDoc} */
+    public Object eval(String script, Bindings bindings) throws ScriptException {
+        return eval(script , getScriptContext(bindings));
+    }
+    /** {@inheritDoc} */
+    public Object eval(Reader reader) throws ScriptException {
+        return eval(reader, getScriptContext(null));
+    }
+    /** {@inheritDoc} */
+     public Object eval(String script) throws ScriptException {
+        return eval(script, getScriptContext(null));
+    }
+ 
+ }

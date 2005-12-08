@@ -13,8 +13,8 @@ $session = java_session();
 if(!$numguess=$session->get("bean")) {
   $session->put("bean", $numguess=new java("num.NumberGuessBean"));
 }
-if($_GET['guess']) {
-  $numguess->setGuess($_GET['guess']);
+if($_POST['guess']) {
+  $numguess->setGuess($_POST['guess']);
 }
 ?>
 
@@ -37,7 +37,7 @@ if($_GET['guess']) {
 
   I'm thinking of a number between 1 and 100.<p>
 
-  <form method=get>
+  <form method=post>
   What's your guess? <input type=text name=guess>
   <input type=submit value="Submit">
   </form>
@@ -50,7 +50,7 @@ if($_GET['guess']) {
 
   I'm thinking of a number between 1 and 100.<p>
 
-  <form method=get>
+  <form method=post>
   What's your guess? <input type=text name=guess>
   <input type=submit value="Submit">
   </form>

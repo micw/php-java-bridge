@@ -18,6 +18,7 @@ public class SimpleScriptContext implements ScriptContext {
 	protected Bindings engineScope;
 	
 	public SimpleScriptContext() {
+	        engineScope = new SimpleBindings();
 	}
     
     /**
@@ -95,7 +96,7 @@ public class SimpleScriptContext implements ScriptContext {
      * @return the namespace associated with the specified level of 
      *         scope
      */
-    public Bindings getNamespace(int scope) {
+    public Bindings getBindings(int scope) {
         
         switch (scope) {
         	case ENGINE_SCOPE:
@@ -182,7 +183,7 @@ public class SimpleScriptContext implements ScriptContext {
      *                  level of scope
      * @param scope     the level of scope 
 	 */	
-	public void setNamespace(Bindings namespace, int scope) 
+	public void setBindings(Bindings namespace, int scope) 
             throws IllegalArgumentException {
         
 		switch (scope) {

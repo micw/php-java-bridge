@@ -1,14 +1,16 @@
-2005-11-13  Jost Boekemeier  <jostb@intern>
+2005-12-08  Jost Boekemeier  <jostb@intern>
 
-	FIXME: Entry missing
+	* bind.c (start_server): Detache the guard from the apache process group, otherwise it may get killed.
+
+	* java.c (offsetExists, offsetGet, offsetSet, offsetUnset): Rewritten to use the new interface (the old implementation was horribly inefficient).
 	
-2005-11-06  Jost Boekemeier  <jostb@intern>
+	* java.c (MINIT): Use the global create_object, create_exception_object.
+
+	* java_bridge.c (create_object, create_exception_object): New functions to prevent memory leaks, works around a bug in php 5.1.1 (signature changed from 5.1.0 to 5.1.1).
 	
-	FIXME: Entry missing
-	
-2005-11-05  Jost Boekemeier  <jostb@intern>
-	
-	FIXME: Entry missing
+2005-11-27  Jost Boekemeier  <jostb@intern>
+
+	FIXME Entries since 2005-09-19 missing, regenerate them
 
 2005-09-19  Jost Boekemeier  <jostb@intern>
 

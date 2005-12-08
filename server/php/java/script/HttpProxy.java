@@ -37,7 +37,10 @@ public class HttpProxy extends CGIRunner {
      * @param ctx - The context
      */
     public HttpProxy(Reader reader, ContextFactory ctx, OutputStream out) {
-	this(reader, (new HashMap() {public HashMap init(ContextFactory ctx) {put("X_JAVABRIDGE_CONTEXT", ctx.getId()); return this;}}).init(ctx), ctx, out);
+	this(reader, (new HashMap() {
+		private static final long serialVersionUID = 3257005462371971380L;
+		public HashMap init(ContextFactory ctx) {put("X_JAVABRIDGE_CONTEXT", ctx.getId()); return this;}}
+	).init(ctx), ctx, out);
     }
 
     protected void doRun() throws IOException {

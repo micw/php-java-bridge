@@ -30,9 +30,6 @@ public abstract class CGIRunner extends Thread {
     protected OutputStream out;
     protected Reader reader;
     
-    private Process proc = null;
-
-
     protected Lock phpScript = new Lock();
 
     protected class Lock {
@@ -68,12 +65,10 @@ public abstract class CGIRunner extends Thread {
     public void run() {
 	try {
 	    doRun();
-	} catch (IOException e) {
+	} catch (Exception e) {
 	    Util.printStackTrace(e);
 	} finally {
 	    synchronized(this) {
-		if(proc!=null) proc.destroy();
-
 		notify();
 		running = false;
 		phpScript.finish();
@@ -83,20 +78,35 @@ public abstract class CGIRunner extends Thread {
     
     protected void doRun() throws IOException {
 	int n;    
-        Process proc = Util.startProcess(null, null, env);
-	try { proc.getErrorStream().close(); } catch (IOException e) {}
+        Process proc = Util.ProcessWithErrorHandler.start(null, null, env);
 
-	InputStream natIn = proc.getInputStream();
+	InputStream natIn = null;
+	Writer writer = null;
+	try {
+	natIn = proc.getInputStream();
 	OutputStream natOut = proc.getOutputStream();
 	char[] cbuf = new char[Util.BUF_SIZE];
-	Writer writer = new BufferedWriter(new OutputStreamWriter(natOut));
+	writer = new BufferedWriter(new OutputStreamWriter(natOut));
 	while((n = reader.read(cbuf))!=-1) {
 	    writer.write(cbuf, 0, n);
 	}
 	writer.close();
 	byte[] buf = new byte[Util.BUF_SIZE];
 	Util.parseBody(buf, natIn, out, Util.DEFAULT_HEADER_PARSER);
-	natIn.close();
+	try {
+        proc.waitFor();
+    } catch (InterruptedException e1) {
+        // TODO Auto-generated catch block
+        e1.printStackTrace();
+    }
+	} catch (IOException e) {
+	    Util.printStackTrace(e);
+	    throw e;
+	} finally {
+	    if(natIn!=null) try {natIn.close();} catch (IOException ex) {/*ignore*/}
+	    if(writer!=null) try {writer.close();} catch (IOException ex) {/*ignore*/}
+	    proc.destroy();
+	}
     }
 
     /**

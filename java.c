@@ -26,7 +26,6 @@
 #ifdef ZEND_ENGINE_2
 #include "zend_interfaces.h"
 #include "zend_exceptions.h"
-#include "zend_builtin_functions.h"
 #endif
 
 EXT_DECLARE_MODULE_GLOBALS(EXT)
@@ -47,13 +46,13 @@ int *__errno (void) { return &java_errno; }
 static void clone_cfg(TSRMLS_D) {
   if(!JG(ini_user)) {
 	JG(ini_user)=EXT_GLOBAL(ini_user);
-	JG(hosts)=estrdup(EXT_GLOBAL(cfg)->hosts);
-	JG(servlet)=estrdup(EXT_GLOBAL(cfg)->servlet);
+	JG(hosts)=strdup(EXT_GLOBAL(cfg)->hosts);
+	JG(servlet)=strdup(EXT_GLOBAL(cfg)->servlet);
   }
 }
 static void destroy_cloned_cfg(TSRMLS_D) {
-  if(JG(hosts)) efree(JG(hosts));
-  if(JG(servlet)) efree(JG(servlet));
+  if(JG(hosts)) free(JG(hosts));
+  if(JG(servlet)) free(JG(servlet));
   JG(ini_user)=0;
   JG(hosts)=0;
   JG(servlet)=0;
@@ -355,9 +354,8 @@ static void context(INTERNAL_FUNCTION_PARAMETERS)
  *
  * Returns the jsr223 script context handle.
  *
- * Example:
+ * Example which closes over the current environment and pass it back to java:
  * \code
- * # close over the current environment and pass it back to java.
  * java_context()->call(java_closure()) || die "Script should be called from java";
  * \endcode
  *
@@ -368,7 +366,6 @@ static void context(INTERNAL_FUNCTION_PARAMETERS)
  * java_context()->getHttpServletRequest();
  * \endcode
  * @see java_get_session()
- * @see java_inspect()
  */
 EXT_FUNCTION(EXT_GLOBAL(get_context))
 {
@@ -378,7 +375,12 @@ EXT_FUNCTION(EXT_GLOBAL(get_context))
 /**
  * Proto: string java_get_server_name(void);
  *
- * Returns the name of the backend or null if the backend is not running. 
+ * Returns the name of the backend or null if the backend is not running. Example:
+ * \code
+ * $backend = java_server_name();
+ * if(!$backend) wakeup_administrator("backend not running");
+ * echo "Connected to the backend: $backend\n";
+ * \endcode
  */
 EXT_FUNCTION(EXT_GLOBAL(get_server_name))
 {
@@ -515,7 +517,11 @@ static void deserialize(INTERNAL_FUNCTION_PARAMETERS)
 #endif
 	ZVAL_NULL(getThis());
   }	else {
+#ifndef ZEND_ENGINE_2
 	zend_hash_index_update(Z_OBJPROP_P(getThis()), 0, &handle, sizeof(pval *), NULL);
+#else
+	EXT_GLOBAL(store_jobject)(getThis(), Z_LVAL_P(handle) TSRMLS_CC);
+#endif
   }
   
   RETURN_NULL();
@@ -534,9 +540,7 @@ EXT_FUNCTION(EXT_GLOBAL(__wakeup))
 /** Proto: array java_values(object ob);
  *
  * Fetches the object into a php array. ob must be a java array or it
- * must implement java.util.Map or java.util.Collection. Before
- * calling this procedure, please make sure that the java array or Map
- * or Collection does not exceed php's memory limit. Example:
+ * must implement java.util.Map or java.util.Collection. Please make sure that the java array, Map or Collection does not exceed php's memory limit. Example:
  * \code
  * print_r(java_values($sys->getProperties()));
  * \endcode
@@ -1055,9 +1059,9 @@ EXT_METHOD(EXT, EXT)
  * \endcode
  */
 #if EXTENSION == JAVA
-EXT_METHOD(EXT, javaclass)
+EXT_METHOD(EXT, java_class)
 #elif EXTENSION == MONO
-EXT_METHOD(EXT, monoclass)
+EXT_METHOD(EXT, mono_class)
 #endif
 {
   zval **argv;
@@ -1107,11 +1111,11 @@ EXT_METHOD(EXT, monoclass)
  *    $out = new java("java.io.ObjectOutputStream", $buf);
  *    $out->writeObject($this->java);
  *    $out->close();
- *    $this->serialID = $buf->toByteArray();
+ *    $this->serialID = base64_encode((string)$buf->toByteArray());
  *    return array("serialID");
  *  }
  *  function __wakeup() {
- *    $buf = new java("java.io.ByteArrayInputStream", $this->serialID);
+ *    $buf = new java("java.io.ByteArrayInputStream",base64_decode($this->serialID));
  *    $in = new java("java.io.ObjectInputStream", $buf);
  *    $this->java = $in->readObject();
  *    $in->close();
@@ -1169,19 +1173,14 @@ EXT_METHOD(EXT, __call)
  *
  * Displays the java object as a string. Note: it doesn't cast the
  * object to a string, thus echo "$ob" displays a string
- * representation of $ob, e.g.: \code [o(String)"hello"]\endcode. Use
- * a string cast if you want to display the java string as a php
+ * representation of $ob, e.g.: \code [o(String)"hello"]\endcode
+ *
+ * Use a string cast if you want to display the java string as a php
  * string, e.g.:
  * \code 
  * echo (string)$string; 
  * // implicit cast to string:
  * echo "".$string;
- * \endcode.
- * 
- * Example:
- * \code
- * $System = new JavaClass("java.lang.System");
- * echo (string)$System->currentTimeMillies();
  * \endcode
  */
 EXT_METHOD(EXT, __tostring)
@@ -1281,15 +1280,7 @@ EXT_METHOD(EXT, __set)
  */
 EXT_METHOD(EXT, __destruct)
 {
-  long obj;
-
-  EXT_GLOBAL(get_jobject_from_object)(getThis(), &obj TSRMLS_CC);
-  if(!obj) RETURN_TRUE;			/* may happen when vm is not initalized */
-
-  if(JG(jenv))
-	(*JG(jenv))->writeUnref(JG(jenv), obj);
-
-  RETURN_TRUE;
+  /* dummy, see destroy_object in java_bridge.c */
 }
 
 /** 
@@ -1355,11 +1346,11 @@ EXT_METHOD(EXT, __wakeup)
 
 /** Proto: string Java::offsetExists();
  * 
- * See array::offsetExists(). 
+ * Checks if an object exists at the given position.
  * Example:
  * \code
  * $System = new java("java.lang.System");
- * $props = $System.getProperties();
+ * $props = $System->getProperties();
  * if(!$props["user.home"]) die("No home dir!?!");
  * \endcode
  */
@@ -1368,24 +1359,17 @@ EXT_METHOD(EXT, offsetExists)
   proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   zval **argv;
   int argc;
-  long obj;
 
   if(!jenv) {RETURN_NULL();}
 
   argc = ZEND_NUM_ARGS();
-  argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
-  if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
+  argv = (zval **) safe_emalloc(sizeof(zval *), argc+1, 0);
+  if (zend_get_parameters_array(ht, argc, argv+1) == FAILURE) {
 	php_error(E_ERROR, "Couldn't fetch arguments into array.");
 	RETURN_NULL();
   }
-  EXT_GLOBAL(get_jobject_from_object)(getThis(), &obj TSRMLS_CC);
-  assert(obj);
-  (*jenv)->writeInvokeBegin(jenv, 0, "getPhpMap", 0, 'I', return_value);
-  (*jenv)->writeObject(jenv, obj);
-  (*jenv)->writeInvokeEnd(jenv);
-  EXT_GLOBAL(get_jobject_from_object)(return_value, &obj TSRMLS_CC);
-  assert(obj);
-  EXT_GLOBAL(invoke)("offsetExists", obj, argc, argv, 0, return_value TSRMLS_CC);
+  argv[0]=getThis();
+  EXT_GLOBAL(invoke)("offsetExists", 0, argc+1, argv, 0, return_value TSRMLS_CC);
   efree(argv);
 }
 
@@ -1398,7 +1382,7 @@ EXT_METHOD(EXT, offsetExists)
  * Example:
  * \code
  * $System = new java("java.lang.System");
- * $props = $System.getProperties();
+ * $props = $System->getProperties();
  * echo $props["user.home"]);
  * \endcode
  *
@@ -1407,25 +1391,18 @@ EXT_METHOD(EXT, offsetGet)
 {
   zval **argv;
   int argc;
-  long obj;
   proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   if(!jenv) {RETURN_NULL();}
 
   argc = ZEND_NUM_ARGS();
-  argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
-  if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
+  argv = (zval **) safe_emalloc(sizeof(zval *), argc+1, 0);
+  if (zend_get_parameters_array(ht, argc, argv+1) == FAILURE) {
 	php_error(E_ERROR, "Couldn't fetch arguments into array.");
 	RETURN_NULL();
   }
 
-  EXT_GLOBAL(get_jobject_from_object)(getThis(), &obj TSRMLS_CC);
-  assert(obj);
-  (*jenv)->writeInvokeBegin(jenv, 0, "getPhpMap", 0, 'I', return_value);
-  (*jenv)->writeObject(jenv, obj);
-  (*jenv)->writeInvokeEnd(jenv);
-  EXT_GLOBAL(get_jobject_from_object)(return_value, &obj TSRMLS_CC);
-  assert(obj);
-  EXT_GLOBAL(invoke)("offsetGet", obj, argc, argv, 0, return_value TSRMLS_CC);
+  argv[0]=getThis();
+  EXT_GLOBAL(invoke)("offsetGet", 0, argc+1, argv, 0, return_value TSRMLS_CC);
   efree(argv);
 }
 
@@ -1448,24 +1425,18 @@ EXT_METHOD(EXT, offsetSet)
 {
   zval **argv;
   int argc;
-  long obj;
   proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   if(!jenv) {RETURN_NULL();}
 
   argc = ZEND_NUM_ARGS();
-  argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
-  if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
+  argv = (zval **) safe_emalloc(sizeof(zval *), argc+1, 0);
+  if (zend_get_parameters_array(ht, argc, argv+1) == FAILURE) {
 	php_error(E_ERROR, "Couldn't fetch arguments into array.");
 	RETURN_NULL();
   }
-  EXT_GLOBAL(get_jobject_from_object)(getThis(), &obj TSRMLS_CC);
-  assert(obj);
-  (*jenv)->writeInvokeBegin(jenv, 0, "getPhpMap", 0, 'I', return_value);
-  (*jenv)->writeObject(jenv, obj);
-  (*jenv)->writeInvokeEnd(jenv);
-  EXT_GLOBAL(get_jobject_from_object)(return_value, &obj TSRMLS_CC);
-  assert(obj);
-  EXT_GLOBAL(invoke)("offsetSet", obj, argc, argv, 0, return_value TSRMLS_CC);
+
+  argv[0]=getThis();
+  EXT_GLOBAL(invoke)("offsetSet", 0, argc+1, argv, 0, return_value TSRMLS_CC);
   efree(argv);
 }
 
@@ -1482,19 +1453,14 @@ EXT_METHOD(EXT, offsetUnset)
   if(!jenv) {RETURN_NULL();}
 
   argc = ZEND_NUM_ARGS();
-  argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
-  if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
+  argv = (zval **) safe_emalloc(sizeof(zval *), argc+1, 0);
+  if (zend_get_parameters_array(ht, argc, argv+1) == FAILURE) {
 	php_error(E_ERROR, "Couldn't fetch arguments into array.");
 	RETURN_NULL();
   }
-  EXT_GLOBAL(get_jobject_from_object)(getThis(), &obj TSRMLS_CC);
-  assert(obj);
-  (*jenv)->writeInvokeBegin(jenv, 0, "getPhpMap", 0, 'I', return_value);
-  (*jenv)->writeObject(jenv, obj);
-  (*jenv)->writeInvokeEnd(jenv);
-  EXT_GLOBAL(get_jobject_from_object)(return_value, &obj TSRMLS_CC);
-  assert(obj);
-  EXT_GLOBAL(invoke)("offsetUnset", obj, argc, argv, 0, return_value TSRMLS_CC);
+
+  argv[0]=getThis();
+  EXT_GLOBAL(invoke)("offsetUnset", 0, argc+1, argv, 0, return_value TSRMLS_CC);
   efree(argv);
 }
 
@@ -1535,49 +1501,6 @@ function_entry EXT_GLOBAL(class_functions)[] = {
 };
 
 
-
-static zend_object_value create_object(zend_class_entry *class_type TSRMLS_DC)
-{
-  /* standard initialization, copied from parent zend_API.c */
-  zval *tmp;
-  zend_object *object;
-  zend_object_value obj = zend_objects_new(&object, class_type TSRMLS_CC);
-  ALLOC_HASHTABLE(object->properties);
-  zend_hash_init(object->properties, 0, NULL, ZVAL_PTR_DTOR, 0);
-  zend_hash_copy(object->properties, &class_type->default_properties, (copy_ctor_func_t) zval_add_ref, (void *) &tmp, sizeof(zval *));
-
-  /* real work */
-  obj.handlers = (zend_object_handlers*)&EXT_GLOBAL(handlers);
-  return obj;
-}
-
-static zend_object_value create_exception_object(zend_class_entry *class_type TSRMLS_DC)
-{
-  /* standard initialization, copied from parent zend_exceptions.c */
-  zval tmp, obj;
-  zend_object *object;
-  zval *trace;
-  obj.value.obj = zend_objects_new(&object, class_type TSRMLS_CC);
-
-  ALLOC_HASHTABLE(object->properties);
-  zend_hash_init(object->properties, 0, NULL, ZVAL_PTR_DTOR, 0);
-  zend_hash_copy(object->properties, &class_type->default_properties, (copy_ctor_func_t) zval_add_ref, (void *) &tmp, sizeof(zval *));
-  
-  ALLOC_ZVAL(trace);
-  ZVAL_NULL(trace);
-  trace->is_ref = 0;
-  trace->refcount = 0;
-  zend_fetch_debug_backtrace(trace, 0 TSRMLS_CC);
-  
-  zend_update_property_string(zend_exception_get_default(), &obj, "file", sizeof("file")-1, zend_get_executed_filename(TSRMLS_C) TSRMLS_CC);
-  zend_update_property_long(zend_exception_get_default(), &obj, "line", sizeof("line")-1, zend_get_executed_lineno(TSRMLS_C) TSRMLS_CC);
-  zend_update_property(zend_exception_get_default(), &obj, "trace", sizeof("trace")-1, trace TSRMLS_CC);
-  
-  /* real work */
-  obj.value.obj.handlers = (zend_object_handlers*)&EXT_GLOBAL(handlers);
-  
-  return obj.value.obj;
-}
 
 static int cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_DC)
 {
@@ -1800,6 +1723,8 @@ static zend_object_iterator *get_iterator(zend_class_entry *ce, zval *object TSR
   (*jenv)->writeInvokeEnd(jenv);
   if(Z_BVAL_P(presult)) 
 	init_current_data(iterator TSRMLS_CC);
+  else
+	iterator->current_object = NULL;
 
   zval_ptr_dtor((zval**)&presult);
   return (zend_object_iterator*)iterator;
@@ -1927,7 +1852,7 @@ static void override_ini_from_cgi(void) {
 	default:					/* cgi binary with redirect
 								   information */
 	  {
-		char *kontext, *host = estrdup(hosts);
+		char *kontext, *host = strdup(hosts);
 		kontext = strchr(host, '/');
 		if(kontext) *kontext++=0;
 		zend_alter_ini_entry((char*)key_hosts, sizeof key_hosts,
@@ -1942,7 +1867,7 @@ static void override_ini_from_cgi(void) {
 							   (char*)kontext, strlen(kontext)+1,
 							   ZEND_INI_SYSTEM, PHP_INI_STAGE_STARTUP);
 		}
-		efree(host);
+		free(host);
 	  }
 	  /* fall through */
 	case 0:					/* cgi binary, but redirect is off */
@@ -1976,11 +1901,11 @@ static void make_local_socket_info(TSRMLS_D) {
  * Called when the module is initialized. Creates the Java and
  * JavaClass structures and tries to start the backend if
  * java.socketname, java.servlet or java.hosts are not set.  The
- * backend is NOT started if the environment variable
+ * backend is not started if the environment variable
  * X_JAVABRIDGE_OVERRIDE_HOSTS exists and contains either "/" or
  * "host:port//context/servlet".  When running as a Apache/IIS module
- * or Fast CGI, this procedure is called only once, when running as a
- * CGI binary it is called whenever the CGI binary is called.
+ * or Fast CGI, this procedure is called only once. When running as a
+ * CGI binary, it is called whenever the CGI binary is called.
  */
 PHP_MINIT_FUNCTION(EXT)
 {
@@ -2038,7 +1963,7 @@ PHP_MINIT_FUNCTION(EXT)
   EXT_GLOBAL(class_entry) =
 	zend_register_internal_class(&ce TSRMLS_CC);
   EXT_GLOBAL(class_entry)->get_iterator = get_iterator;
-  EXT_GLOBAL(class_entry)->create_object = create_object;
+  EXT_GLOBAL(class_entry)->create_object = EXT_GLOBAL(create_object);
   zend_class_implements(EXT_GLOBAL(class_entry) TSRMLS_CC, 1, zend_ce_arrayaccess);
 
   INIT_OVERLOADED_CLASS_ENTRY(ce, EXT_NAME()/**/"_exception", 
@@ -2051,7 +1976,7 @@ PHP_MINIT_FUNCTION(EXT)
   EXT_GLOBAL(exception_class_entry) =
 	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
   // only cast and clone; no iterator, no array access
-  EXT_GLOBAL(exception_class_entry)->create_object = create_exception_object;
+  EXT_GLOBAL(exception_class_entry)->create_object = EXT_GLOBAL(create_exception_object);
   
   INIT_CLASS_ENTRY(ce, EXT_NAME()/**/"_class", EXT_GLOBAL(class_functions));
   parent = (zend_class_entry *) EXT_GLOBAL(class_entry);

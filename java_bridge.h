@@ -23,6 +23,11 @@
 
 extern void EXT_GLOBAL(result)(pval* arg, short ignoreNonJava, pval*presult TSRMLS_DC);
 extern int EXT_GLOBAL(get_jobject_from_object)(zval *object, long *obj TSRMLS_DC);
+#ifdef ZEND_ENGINE_2
+extern void EXT_GLOBAL(store_jobject)(zval *presult, long id TSRMLS_DC);
+extern zend_object_value EXT_GLOBAL(create_object)(zend_class_entry *class_type TSRMLS_DC);
+extern zend_object_value EXT_GLOBAL(create_exception_object)(zend_class_entry *class_type TSRMLS_DC);
+#endif
 extern void EXT_GLOBAL(invoke)(char*name, long object, int arg_count, zval**arguments, short ignoreNonJava, pval*presult TSRMLS_DC) ;
 enum constructor {CONSTRUCTOR_NONE, CONSTRUCTOR};
 extern void EXT_GLOBAL(call_function_handler)(INTERNAL_FUNCTION_PARAMETERS, char*name, enum constructor constructor, short createInstance, pval *object, int argc, zval**argv);

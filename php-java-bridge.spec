@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 3.0.0pre1
+%define version 3.0.1
 %define release 1
 %define PHP_MAJOR_VERSION %(LANG=C rpm -q --queryformat "%{VERSION}" php | sed 's/\\\..*$//')
 %define have_sysconfig_java %(test -s /etc/sysconfig/java && echo 1 || echo 0)
@@ -72,7 +72,7 @@ echo "using java_dir: $java_dir"
 if test X$java_dir = X; then echo "ERROR: java not installed" >2; exit 1; fi
 
 phpize
-./configure --prefix=/usr --with-java=$java_dir --disable-servlet
+./configure --prefix=/usr --with-java=$java_dir --disable-servlet --disable-script --disable-faces
 make
 
 %install
@@ -148,4 +148,4 @@ chkconfig php-java-bridge off
 
 %files -f filelist
 %defattr(-,root,root)
-%doc README README.GNU_JAVA README.MONO+NET PROTOCOL.TXT INSTALL.MONO+NET INSTALL LICENSE ChangeLog test.php php-java-bridge.te php-java-bridge.fc update_policy.sh server/doc
+%doc README README.GNU_JAVA README.MONO+NET PROTOCOL.TXT INSTALL.MONO+NET INSTALL INSTALL.SERVLET LICENSE CREDITS NEWS ChangeLog test.php php-java-bridge.te php-java-bridge.fc update_policy.sh server/documentation documentation

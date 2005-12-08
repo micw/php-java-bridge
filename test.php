@@ -23,6 +23,7 @@ if(java_get_server_name() != null) {
     print $key . " -> " .  $value . "<br>\n";
   }
 
+echo "<br>\n";
  } else {
 
   phpinfo();
@@ -36,7 +37,7 @@ if(java_get_server_name() != null) {
 
   echo "Error: The PHP/Java Bridge backend is not running.\n";
   echo "\n";
-  echo "Please check that the directory\n";
+  echo "Please start it and/or check if the directory\n";
   echo "\n\t".ini_get("extension_dir")."\n\n";
   echo "contains \"$ext_name\" and \"JavaBridge.jar\".\n";
   echo "\n";
@@ -45,6 +46,10 @@ if(java_get_server_name() != null) {
   echo "Also check if the following values are correct:\n\n";
   echo "\tjava.java_home = ".ini_get("java.java_home")."\n";
   echo "\tjava.java = ".ini_get("java.java")."\n";
+  echo "If you want to start the backend automatically, disable:\n";
+  echo "\tjava.java.socketname = ".ini_get("java.socketname")."\n";
+  echo "\tjava.java.hosts = ".ini_get("java.hosts")."\n";
+  echo "\tjava.java.servlet = ".ini_get("java.servlet")."\n";
   echo "\n";
   echo "If that still doesn't work, please check the \"java command\" above and\n";
   echo "report this problem to:\n\n";

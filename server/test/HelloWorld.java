@@ -17,7 +17,7 @@ public class HelloWorld {
     public static void main(String[] args) {
 	System.setProperty("php.java.bridge.default_log_level", "2");
 	System.setProperty("php.java.bridge.default_log_file", "");
-	System.setProperty("php.java.bridge.php_exec", "/home/src/PHP-JAVA-BRIDGE/PHP5/dist/bin/php.sh");
+	System.setProperty("php.java.bridge.php_exec", "/home/src/PHP-JAVA-BRIDGE/PHP5/dist/bin/php");
 
 	try {
 	    PhpScriptEngine engine = new PhpScriptEngine();
@@ -25,9 +25,9 @@ public class HelloWorld {
 	    engine.eval(new FileReader("test/HelloWorld.php"));
 
 	    Invocable eng = (Invocable)engine;
-	    Object o = (eng.call("getBar", new Object[] {}));
-	    eng.call("hello", o, new Object[]{"one", "two"});
-	    System.out.println(eng.call("java_get_server_name", new Object[]{}));
+	    Object o = (eng.invoke("getBar", new Object[] {}));
+	    eng.invoke(o, "hello", new Object[]{"one", "two"});
+	    System.out.println(eng.invoke("java_get_server_name", new Object[]{}));
 		
 	    engine.release();
 	} catch (Exception e) {

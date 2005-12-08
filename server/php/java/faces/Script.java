@@ -1,7 +1,9 @@
 package php.java.faces;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.UnknownHostException;
 
 import javax.faces.context.FacesContext;
 import javax.script.Invocable;
@@ -18,8 +20,8 @@ import php.java.script.PhpScriptEngine;
  */
 public class Script
 {
-    public String script = null;
-    private String base = null;
+    private String script = null;
+    private String port = null;
 	
     private PhpScriptEngine engine;
     
@@ -45,20 +47,61 @@ public class Script
      * @see php.java.script.URLReader
      */
     public Script() {
-	this.base = ((PhpFacesContext)FacesContext.getCurrentInstance()).getBaseURL();
     }
 
-    private Object call(String name, Object[] args) {
-	if(script.startsWith("/")) script = base+script;
+    /**
+     * Call "@port:/script.php". For example "@80:/java-server-faces/helloWorld.php"
+     * @param name The php procedure name
+     * @param args The arguments
+     * @param script The script, e.g. http://127.0.0.1:80/JavaBridge/java-server-faces/helloWorld.php
+     * @return The result.
+     * @throws UnknownHostException If the local host doesn't exist. (?)
+     * @throws MalformedURLException May indicate a problem, too.
+     * @throws IOException If the port cannot be reached, for example when apache is down.
+     */
+    private Object call(String name, Object[] args, String script) throws UnknownHostException, MalformedURLException, IOException {
 	try {
-	    return ((Invocable)((PhpFacesContext)FacesContext.getCurrentInstance()).getScriptEngine(this, new URL(script))).call(name, args); 
+	    return ((Invocable)((PhpFacesContext)FacesContext.getCurrentInstance()).getScriptEngine(this, new URL(script))).invoke(name, args); 
 	} catch (ScriptException e1) {
 	    Util.printStackTrace(e1);
 	    return null;		
-	} catch (MalformedURLException e) {
+	} catch (NoSuchMethodException e) {
 	    Util.printStackTrace(e);
 	    throw new RuntimeException(e);
-	}
+     } 
+    }
+    /**
+     * If the connection to @port:/script.php failed, try a second time with the port of the 
+     * servlet engine. This may invoke the CGI machinery, though...
+     * @param name The script name
+     * @param args The arguments
+     * @param script The local script, will be invoked through CGI/FastCGI
+     * @return The result
+     */
+    private Object callWithExceptionHandler(String name, Object[] args, String script) {
+            try {
+                return call(name, args, script);
+            } catch (UnknownHostException e1) {
+    	    Util.printStackTrace(e1);
+	    return null;		
+            } catch (MalformedURLException e1) {
+    	    Util.printStackTrace(e1);
+	    return null;		
+           } catch (IOException e1) {
+   	    Util.printStackTrace(e1);
+	    return null;		
+            } 
+    }
+    private Object call(String name, Object[] args) {
+        try {
+            return call(name, args, getScript(port));
+        } catch (UnknownHostException e) {
+            return callWithExceptionHandler(name, args, getScript(null));
+        } catch (MalformedURLException e) {
+            return callWithExceptionHandler(name, args, getScript(null));
+        } catch (IOException e) {
+            return callWithExceptionHandler(name, args, getScript(null));
+        }
     }
 
     /**
@@ -98,12 +141,33 @@ public class Script
 	else call("setValue", new Object[]{property, value});
     }
     
+    private String getBase(String port) {
+        return port!=null ? 
+                ((PhpFacesContext)FacesContext.getCurrentInstance()).getBaseURL(port):
+                    ((PhpFacesContext)FacesContext.getCurrentInstance()).getBaseURL();
+       
+    }
+
+    private String getScript(String port) {
+        return script.startsWith("/") ?
+                getBase(port)+script:
+                    script;
+    }
     /**
      * Called for the managed Property "script".
-     * @param value The script, for example "/helloWorld.php" or "http://.../helloWorld.php".
+     * @param value The script, for example "/helloWorld.php" or "http://.../helloWorld.php" or "@80:/.../helloWorld.php" as a short form for "http://127.0.0.1:80/.../helloWorld.php".
      */
     public void setScript(Object value) {
-        this.script=String.valueOf(value);
+        String script = String.valueOf(value);
+        String base = null;
+        if(script.startsWith("@")) {
+            int idx = script.indexOf(':');
+            if(idx!=-1) {
+                port = script.substring(1, idx);
+                script = script.substring(idx+1);
+            } 
+        } 
+        this.script = script;
     }
     
  

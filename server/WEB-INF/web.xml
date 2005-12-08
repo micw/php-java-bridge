@@ -46,7 +46,7 @@
         -->
 
          <!-- Default log_level is 2, java.log_level from your php.ini overrides. -->
-        <!-- 
+        <!--
          <init-param>
            <param-name>servlet_log_level</param-name>
            <param-value>2</param-value>
@@ -66,11 +66,5 @@
         <servlet-name>PhpJavaServlet</servlet-name>
         <url-pattern>*.php</url-pattern>
     </servlet-mapping>
-
-    <!-- Welcome files -->
-    <welcome-file-list>
-        <welcome-file>index.jsp</welcome-file>
-        <welcome-file>index.html</welcome-file>
-    </welcome-file-list>
 
 </web-app>

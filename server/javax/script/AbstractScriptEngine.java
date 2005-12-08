@@ -10,19 +10,15 @@ import java.io.Reader;
  * @author Sanka Samaranayake  <sanka@opensource.lk>
  */
 public abstract class AbstractScriptEngine implements ScriptEngine {
-		
-    /** Namespace associated with associated with the ENGINE_SCOPE */
-	protected Bindings namespace;
+
+    private ScriptContext ctx;
     
-    /** Namespace associated with the GLOBAL_SCOPE */		
-	protected Bindings globalspace;
-	
     /**
      * Constructs a ScriptEngine using an uninitialized 
      * SimpleNamespace.
      */
     public AbstractScriptEngine() {
-		namespace = new SimpleBindings();
+	ctx = new SimpleScriptContext();
 	}
 	
     /**
@@ -32,16 +28,33 @@ public abstract class AbstractScriptEngine implements ScriptEngine {
      * @param namespace the namespace to be used as the ENGINE_SCOPE
      */
 	public AbstractScriptEngine(Bindings namespace){
-		this.namespace = namespace;
+	    this();
+	    ctx.setBindings(namespace, ScriptContext.ENGINE_SCOPE);
 	}
     
+    /**
+     * Set a new context.
+     * @param ctx The context
+     */
+    public void setContext(ScriptContext ctx) {
+	this.ctx = ctx;
+    }
+
+    /**
+     * Return the script context.
+     * @return The script context.
+     */
+    public ScriptContext getContext() {
+	return ctx;
+    }
+
     /**
      * Retrieves an uninitailized namespace which is associated with
      * the ScriptEngine namespace.
      * 
      * @return an unitialized namespace
      */
-    public Bindings createNamespace() {
+    private Bindings createNamespace() {
         return   new SimpleBindings();
     }
 	
@@ -70,7 +83,7 @@ public abstract class AbstractScriptEngine implements ScriptEngine {
      */    
     public Object eval(Reader reader, Bindings nameSpace) 
             throws ScriptException{
-        return eval(reader,getScriptContext(nameSpace));
+        return eval(reader,ctx);
     }
     
     /**
@@ -107,7 +120,7 @@ public abstract class AbstractScriptEngine implements ScriptEngine {
      *         ScriptEngine namespace
      */
 	public Object get(String key) {
-		return getNamespace(ScriptContext.ENGINE_SCOPE).get(key);
+		return getBindings(ScriptContext.ENGINE_SCOPE).get(key);
 	}
     
     /**
@@ -118,15 +131,8 @@ public abstract class AbstractScriptEngine implements ScriptEngine {
      * @return associated namespace for the specified level of scope
      * @throws IllegalArgumentException if the scope is invalid
      */    
-    public Bindings getNamespace(int scope) {
-    	switch (scope) {
-    		case ScriptContext.ENGINE_SCOPE:
-    			return namespace;
-    		case ScriptContext.GLOBAL_SCOPE:
-    			return globalspace;
-    		default:
-    			throw new IllegalArgumentException("invalid scope");
-    	}
+    public Bindings getBindings(int scope) {
+        return ctx.getBindings(scope);
     }
     
     
@@ -144,9 +150,9 @@ public abstract class AbstractScriptEngine implements ScriptEngine {
         
         ScriptContext scriptContext = new SimpleScriptContext();
         
-        if(namespace==null) namespace = this.namespace;
-        scriptContext.setNamespace(namespace, ScriptContext.ENGINE_SCOPE);
-        scriptContext.setNamespace(this.globalspace,
+        if(namespace==null) namespace = createBindings();
+        scriptContext.setBindings(namespace, ScriptContext.ENGINE_SCOPE);
+        scriptContext.setBindings(ctx.getBindings(ScriptContext.GLOBAL_SCOPE),
                               ScriptContext.GLOBAL_SCOPE);
         
         return scriptContext;
@@ -164,7 +170,7 @@ public abstract class AbstractScriptEngine implements ScriptEngine {
         if (key == null) { 
             throw new IllegalArgumentException("invalid scope");
         }
-		getNamespace(ScriptContext.ENGINE_SCOPE).put(key,value);
+		getBindings(ScriptContext.ENGINE_SCOPE).put(key,value);
 	}
 
     /**
@@ -174,14 +180,14 @@ public abstract class AbstractScriptEngine implements ScriptEngine {
      * @param scope     the level of scope of the specified namespace
      * @throws IllegalArgumentException if scope is invalid
      */
-	public void setNamespace(Bindings namespace, int scope)
+	public void setBindings(Bindings namespace, int scope)
 			throws UnsupportedOperationException {
 		switch (scope) {
 			case ScriptContext.ENGINE_SCOPE:
-				this.namespace = namespace;
+			    ctx.setBindings(namespace, ScriptContext.ENGINE_SCOPE);
 			    break;
 			case ScriptContext.GLOBAL_SCOPE:
-				globalspace = namespace;
+			    ctx.setBindings(namespace, ScriptContext.GLOBAL_SCOPE);
 			    break;
 			default:
 				throw new IllegalArgumentException("invalid scope");

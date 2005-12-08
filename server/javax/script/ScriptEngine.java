@@ -61,7 +61,7 @@ public interface ScriptEngine {
      * @return an initialzed namespace which can be used to repalce the state 
      *         of the ScriptEngine
      */
-    public Bindings createNamespace();
+    public Bindings createBindings();
     
     /**
      * Evaluates a piece of script obtained using the specified 
@@ -173,7 +173,7 @@ public interface ScriptEngine {
      * @return associated namespace for the specified level of scope
      * @throws IllegalArgumentException if the scope is invalid
      */
-    public Bindings getNamespace(int scope) throws IllegalArgumentException;
+    public Bindings getBindings(int scope) throws IllegalArgumentException;
 		
     /**
      * Associates a key and a value in the ScriptEngine namespace.
@@ -195,7 +195,17 @@ public interface ScriptEngine {
      *                  be associated with
      * @throws if the scope is invalid
      */
-	public void setNamespace(Bindings namespace,int scope) throws 
+	public void setBindings(Bindings namespace,int scope) throws 
             IllegalArgumentException;
 	
+    
+    /**
+     * @ return the default ScriptContext.
+     */
+    public ScriptContext getContext();
+
+    /**
+     * Set the default ScriptContext
+     */
+    public void setContext(ScriptContext ctx);
 }

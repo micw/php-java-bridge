@@ -66,13 +66,7 @@ static  void  setResultFromException  (pval *presult, long value) {
 	presult->is_ref=1;
     presult->refcount=1;
   }
-
-  ALLOC_ZVAL(handle);
-  Z_TYPE_P(handle) = IS_LONG;
-  Z_LVAL_P(handle) = value;
-  pval_copy_constructor(handle);
-  INIT_PZVAL(handle);
-  zend_hash_index_update(Z_OBJPROP_P(presult), 0, &handle, sizeof(pval *), NULL);
+  EXT_GLOBAL(store_jobject)(presult, value TSRMLS_CC);
 }
 #endif
 
@@ -87,13 +81,16 @@ static  void  setResultFromObject  (pval *presult, long value) {
     presult->refcount=1;
   }
 
+#ifndef ZEND_ENGINE_2
   ALLOC_ZVAL(handle);
   Z_TYPE_P(handle) = IS_LONG;
   Z_LVAL_P(handle) = value;
   pval_copy_constructor(handle);
   INIT_PZVAL(handle);
   zend_hash_index_update(Z_OBJPROP_P(presult), 0, &handle, sizeof(pval *), NULL);
-
+#else
+  EXT_GLOBAL(store_jobject)(presult, value TSRMLS_CC);
+#endif
 }
 
 /*
@@ -140,7 +137,7 @@ static int call_user_cb(zval**object, zval*func, zval**retval_ptr, zval*func_par
 }
 
 /*
- * Check for exception and communication the exception back to the
+ * Check for exception and communicate the exception back to the
  * server.  Return true if an exception was handled.
  */
 static short handle_exception(zval*presult TSRMLS_DC) {
@@ -392,7 +389,7 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
 		char *name = (*ctx)->server_name;
 		char *idx = strchr(name, ':');
 		size_t len = idx ? idx-name : strlen(name);
-		char *server_name = emalloc(len+1+key_len+1);
+		char *server_name = malloc(len+1+key_len+1);
 		char *pos = server_name;
 		assert(server_name); if(!server_name) exit(9);
 
@@ -401,7 +398,7 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
 		memcpy(pos+1, key, key_len); pos+=key_len+1;
 		*pos=0;
 
-		if(JG(hosts)) efree(JG(hosts));
+		if(JG(hosts)) free(JG(hosts));
 		JG(hosts)=server_name;
 
 		(*ctx)->must_reopen = 2;
@@ -481,53 +478,90 @@ static void handle_request(proxyenv *env) {
 unsigned char EXT_GLOBAL (get_mode) () {
 #ifndef ZEND_ENGINE_2
   // we want arrays as values
-  static const unsigned char arraysAsValues = 2;
+  static const unsigned char compat = 3;
 #else
-  static const unsigned char arraysAsValues = 0;
+  static const unsigned char compat = 0;
 #endif
   unsigned short is_level = ((EXT_GLOBAL (ini_user)&U_LOGLEVEL)!=0);
   unsigned short level = 0;
   if (is_level)
 	level = EXT_GLOBAL(cfg)->logLevel_val>7?7:EXT_GLOBAL(cfg)->logLevel_val;
   
-  return (is_level<<7)|64|(level<<2)|arraysAsValues;
+  return (is_level<<7)|64|(level<<2)|compat;
 }
 
-/*
- * adjust the standard environment for the current request.
+/**
+ * Adjust the standard environment for the current request.  Sets the
+ * servlet_ctx value, which corresponds to the Session/ContextFactory
+ * on the server side.
+ * @param proxyenv The java context.
+ * @return The adjusted java context.
+ * @see php.java.servlet.PhpJavaServlet#getContextFactory(HttpServletRequest, HttpServletResponse)
  */
 static proxyenv* adjust_environment(proxyenv *env TSRMLS_DC) {
   static const char name[] = "adjust_environment";
-  static const char context[] = "(array_key_exists('X_JAVABRIDGE_CONTEXT', $_SERVER)?$_SERVER['X_JAVABRIDGE_CONTEXT']:null);";
+  static const char context[] = "(array_key_exists('HTTP_X_JAVABRIDGE_CONTEXT', $_SERVER)?$_SERVER['HTTP_X_JAVABRIDGE_CONTEXT']:(array_key_exists('X_JAVABRIDGE_CONTEXT', $_SERVER)?$_SERVER['X_JAVABRIDGE_CONTEXT']:null));";
 
   zval val;
   char *servlet_context_string = EXT_GLOBAL (get_servlet_context) (TSRMLS_C);
 
   if(servlet_context_string) (*env)->servlet_context_string = strdup(servlet_context_string);
-
   if((SUCCESS==zend_eval_string((char*)context, &val, (char*)name TSRMLS_CC)) && (Z_TYPE(val)==IS_STRING)) {
 	(*env)->servlet_ctx = strdup(Z_STRVAL(val));
   }
   return env;
 }
 
+/**
+ * Adjust the standard environment for the current request before we
+ * connect to the backend. Used by Fast CGI.
+ */
 static void override_ini_for_redirect(TSRMLS_D) {
   static const char name[] = "override_ini_for_redirect";
-  static const char override[] = "(array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER)?$_SERVER['X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT']:null);";
+  static const char override[] = "(array_key_exists('HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER)?$_SERVER['HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT']:(array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER)?$_SERVER['X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT']:null));";
 
   zval val;
   if((SUCCESS==zend_eval_string((char*)override, &val, (char*)name TSRMLS_CC)) && (Z_TYPE(val)==IS_STRING)) {
-	char *kontext, *hosts = estrndup(Z_STRVAL(val), Z_STRLEN(val));
-	if(JG(hosts)) efree(JG(hosts));
+	char *kontext, *hosts;
+	hosts = malloc(Z_STRLEN(val)+1);
+	strncpy(hosts, Z_STRVAL(val), Z_STRLEN(val));
+	hosts[Z_STRLEN(val)]=0;
+	if(JG(hosts)) free(JG(hosts));
 	JG(hosts)=hosts;
 	kontext = strchr(hosts, '/');
 	if(kontext) {
 	  *kontext++=0;
-	  if(JG(servlet)) efree(JG(servlet));
-	  JG(servlet) = estrdup(kontext);
+	  if(JG(servlet)) free(JG(servlet));
+	  JG(servlet) = strdup(kontext);
 	  JG(ini_user)|=U_SERVLET;
 	}
 	JG(ini_user)|=U_HOSTS;
+  } else {
+	/* Coerce a http://xyz.com/kontext/foo.php request to the backend:
+	   http://xyz.com:{java_hosts[0]}/kontext/foo.php.  For example if
+	   we receive a request: http://localhost/sessionSharing.php and
+	   java.servlet is On and java.hosts is "127.0.0.1:8080" the code
+	   would connect to the backend:
+	   http://127.0.0.1:8080/sessionSharing.php. This creates a cookie
+	   with PATH value "/".  For a request:
+	   http://localhost/myContext/sessionSharing.php the code would
+	   connect to http://127.0.0.1/myContext/sessionSharing.php and a
+	   cookie with a PATH value "/myContext" would be created.
+	*/
+	char *kontext = EXT_GLOBAL (get_servlet_context) (TSRMLS_C);
+	if(kontext) {
+	  static const char name[] = "get_self";
+	  static const char override[] = "array_key_exists('PHP_SELF', $_SERVER)?$_SERVER['PHP_SELF']:null;";
+	  if((SUCCESS==zend_eval_string((char*)override, &val, (char*)name TSRMLS_CC)) && (Z_TYPE(val)==IS_STRING) && Z_STRLEN(val)) {
+		if(JG(servlet)) free(JG(servlet));
+
+		JG(servlet) = malloc(Z_STRLEN(val)+1);
+		strncpy(JG(servlet), Z_STRVAL(val), Z_STRLEN(val)); 
+		JG(servlet)[Z_STRLEN(val)]=0;
+
+		JG(ini_user)|=U_SERVLET;
+	  }
+	}
   }
 }
 static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {

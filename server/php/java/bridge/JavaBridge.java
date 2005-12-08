@@ -296,7 +296,7 @@ public class JavaBridge implements Runnable {
     private static void usage() {
 	System.err.println("Usage: java -jar JavaBridge.jar [SOCKETNAME LOGLEVEL LOGFILE]");
 	System.err.println("Example: java -jar JavaBridge.jar");
-	System.err.println("Example: java -Djava.awt.headless -Dphp.java.bridge.threads=50 -jar JavaBridge.jar INET:0 3 JavaBridge.log");
+	System.err.println("Example: java -Djava.awt.headless=\"true\" -Dphp.java.bridge.threads=50 -jar JavaBridge.jar INET:0 3 JavaBridge.log");
 	System.exit(1);
     }
     /**
@@ -1620,4 +1620,84 @@ public class JavaBridge implements Runnable {
     public JavaBridgeClassLoader getClassLoader() {
 	return cl;
     }
+    /**
+     * Checks if a given position exists.
+     * @param value The map.
+     * @param pos The position
+     * @return true if an element exists at this position, false otherwise.
+     */
+    public boolean offsetExists(Map value, Object pos) {
+	return value.containsKey(pos);
+    }
+    /**
+     * Returns the object at the posisition.
+     * @param value The map.
+     * @param pos The position.
+     * @return The object at the given position.
+     */    
+    public Object offsetGet(Map value, Object pos) {
+	return value.get(pos);
+    }
+    /**
+     * Set an object at position. 
+     * @param value The map.
+     * @param pos The position.
+     * @param val The object.
+     */
+    public void offsetSet(Map value, Object pos, Object val) {
+	value.put(pos, coerce(value.getClass().getComponentType(), val, request.response));
+    }
+    /**
+     * Remove an object from the position.
+     * @param value The map.
+     * @param pos The position.
+      */
+    public void offsetUnset(Map value, Object pos) {
+	value.remove(pos);
+    }
+    boolean offsetExists(int length, Object pos) {
+	int i = ((Number)pos).intValue();
+	return (i>0 && i<length);
+    }
+    /**
+     * Checks if a given position exists.
+     * @param value The array.
+     * @param pos The position
+     * @return true if an element exists at this position, false otherwise.
+     */
+    public boolean offsetExists(Object[] value, Object pos) {
+        return offsetExists(Array.getLength(value), pos);
+    }
+    
+    /**
+     * Returns the object at the posisition.
+     * @param value The array.
+     * @param pos The position.
+     * @return The object at the given position.
+     */    
+    public Object offsetGet(Object[] value, Object pos) {
+	int i = ((Number)pos).intValue();
+	Object o = Array.get(value, i);
+	return o==this ? null : o;
+   }
+    /**
+     * Set an object at position. 
+     * @param value The array.
+     * @param pos The position.
+     * @param val The object.
+     */
+    public void offsetSet(Object[] value, Object pos, Object val) {
+	int i = ((Number)pos).intValue();
+	Array.set(value, i, coerce(value.getClass().getComponentType(), val, request.response));
+    }
+    /**
+     * Remove an object from the position.
+     * @param value The array.
+     * @param pos The position.
+      */
+    public void offsetUnset(Object[] value, Object pos) {
+	int i = ((Number)pos).intValue();
+	Array.set(value, i, null);
+    }
+
 }

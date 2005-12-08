@@ -42,7 +42,7 @@ Build and execution instructions:
    -------------------------------
 
   The bridge consists of two parts, the "frontent", usually Apache/PHP
-  and our "java.so" and the "backend". The following describes how to
+  and our "java.so", and the "backend". The following describes how to
   start the backend (if necessary) and how to configure the frontend to
   use it.
 
@@ -171,7 +171,7 @@ Build and execution instructions:
           java.java      = <system dependent path to the java binary>
           java.socketname= <local ("unix domain") communication channel>
           java.hosts     = <add. backends e.g.: server1:9267;server2:9268>
-          java.servlet   = <On/Off or path, e.g.: "/JavaBridge/PhpJavaServlet">
+          java.servlet   = <On/Off>
 
   Please first look at the output of phpinfo() to see the original
   values.  
@@ -294,14 +294,17 @@ Build and execution instructions:
   visit http://localhost:8080/JavaBridge and run the supplied JSP and PHP
   examples.
 
-  If the param-name use_fast_cgi is enabled in the web.xml, a fcgi
+  If the parameter name "use_fast_cgi" is enabled in the web.xml and a fcgi
   server does not listen on port 9667 and a fcgi binary can be found
   as either /usr/bin/php-cgi or /usr/bin/php or c:/php5/php-cgi.exe,
   then the backend automatically starts the fast cgi server on this
   computer, with the command:
 
     cd $HOME
-    /usr/bin/php-cgi -b 127.0.0.1:9667 &
+    export X_JAVABRIDGE_OVERRIDE_HOSTS="/"
+    export PHP_FCGI_CHILDREN="20"
+    export PHP_FCGI_MAX_REQUESTS="500"
+    /usr/bin/php-cgi -b 127.0.0.1:9667
 
   It starts when the VM starts and stops when the VM terminates.
 
@@ -356,13 +359,6 @@ Build and execution instructions:
     grant {
 	permission java.security.AllPermission;
     };
-
-
-  Running PHP as an apache plugin is more efficient than calling a CGI
-  binary from tomcat. Please use the tomcat mod_jk adapter to connect
-  tomcat with apache. That way PHP is managed by the apache pool, JSP
-  files are forwarded via the mod_jk adapter and PHP/Java calls via the
-  PHP/Java Bridge.
 
 ------------------------------------
   Loading on-demand with dl()

@@ -95,7 +95,7 @@ public class Util {
     /** 
      * The TCP socket name
      */
-    public static String TCP_SOCKETNAME = "9267";
+    public static String TCP_SOCKETNAME;
 
     /**
      * The default extension directory.
@@ -103,28 +103,28 @@ public class Util {
      * @see php.java.bridge.JavaBridge#setJarLibraryPath(String, String)
      * @see php.java.bridge.JavaBridge#setLibraryPath(String, String)
      */
-    public static String DEFAULT_EXTENSION_DIR = null;
+    public static String DEFAULT_EXTENSION_DIR;
 
     /**
      * The name of the extension, usually "JavaBridge" or "MonoBridge"
      */
-    public static String EXTENSION_NAME = "JavaBridge";
+    public static String EXTENSION_NAME;
 
     /**
      * The number of threads in the thread pool.
      * @see System property <code>php.java.bridge.threads</code>
      */
-    public static String THREAD_POOL_MAX_SIZE = "20";
+    public static String THREAD_POOL_MAX_SIZE;
     
     /**
      * The default log level, java.log_level from php.ini overrides.
      */
-    public static int DEFAULT_LOG_LEVEL = 2;
+    public static int DEFAULT_LOG_LEVEL;
 
     /**
      * Backlog for TCP and unix domain connections
      */
-    public static int BACKLOG = 20;
+    public static int BACKLOG;
 
     /**
      * The default log file.
@@ -148,28 +148,23 @@ public class Util {
 	    //t.printStackTrace();
 	};
 	try {
-	    THREAD_POOL_MAX_SIZE = getProperty(p, "THREADS", THREAD_POOL_MAX_SIZE);
+	    THREAD_POOL_MAX_SIZE = getProperty(p, "THREADS", "20");
 	} catch (Throwable t) {
 	    //t.printStackTrace();
 	};
-	TCP_SOCKETNAME = getProperty(p, "TCP_SOCKETNAME", TCP_SOCKETNAME);
-	DEFAULT_EXTENSION_DIR = getProperty(p, "DEFAULT_EXTENSION_DIR", DEFAULT_EXTENSION_DIR);
-	EXTENSION_NAME = getProperty(p, "EXTENSION_DISPLAY_NAME", EXTENSION_NAME);
+	TCP_SOCKETNAME = getProperty(p, "TCP_SOCKETNAME", "9267");
+	DEFAULT_EXTENSION_DIR = getProperty(p, "DEFAULT_EXTENSION_DIR", null);
+	EXTENSION_NAME = getProperty(p, "EXTENSION_DISPLAY_NAME", "JavaBridge");
 	try {
-	    String s = getProperty(p, "DEFAULT_LOG_LEVEL", String.valueOf(DEFAULT_LOG_LEVEL));
+	    String s = getProperty(p, "DEFAULT_LOG_LEVEL", "2");
 	    DEFAULT_LOG_LEVEL = Integer.parseInt(s);
 	    Util.logLevel=Util.DEFAULT_LOG_LEVEL; /* java.log_level in php.ini overrides */
 	} catch (NumberFormatException e) {/*ignore*/}
 	try {
-	    String s = getProperty(p, "BACKLOG", String.valueOf(BACKLOG));
+	    String s = getProperty(p, "BACKLOG", "20");
 	    BACKLOG = Integer.parseInt(s);
 	} catch (NumberFormatException e) {/*ignore*/}
 	DEFAULT_LOG_FILE = getProperty(p, "DEFAULT_LOG_FILE", Util.EXTENSION_NAME+".log");
-	if(DEFAULT_LOG_FILE.length()!=0) {
-	    try {
-		Util.logStream=new java.io.PrintStream(new java.io.FileOutputStream(DEFAULT_LOG_FILE));
-	    } catch (FileNotFoundException e1) {/*ignore*/}
-	}
     }
  
     /**
@@ -184,6 +179,11 @@ public class Util {
         static boolean haveDateFormat=true;
         private static Object _form;
         protected Logger () {
+	    if(DEFAULT_LOG_FILE.length()!=0 && Util.logStream==null) {
+		try {
+		    Util.logStream=new java.io.PrintStream(new java.io.FileOutputStream(DEFAULT_LOG_FILE));
+		} catch (FileNotFoundException e1) {Util.logStream=System.err;}
+	    }
         }
         /**
          * Create a String containing the current date/time.
@@ -572,45 +572,7 @@ public class Util {
 	return null;
     }
 
-    /**
-     * Starts a CGI process and returns the process handle.
-     * @param args The args array, e.g.: new String[]{null, "-b", ...};. If args is null or if args[0] is null, the function looks for the system property "php.java.bridge.php_exec".
-     * @param homeDir The home directory. If null, the system property "user.home" is used.
-     * @param env The CGI environment. If null, Util.DEFAULT_CGI_ENVIRONMENT is used.
-     * @return The process handle.
-     * @throws IOException
-     * @see Util#checkCgiBinary(StringBuffer)
-     */
-    public static Process startProcess(String[] args, File homeDir, Map env) throws IOException {
-    	File location;
-	Process proc = null;
-    	int n;
-	Runtime rt = Runtime.getRuntime();
-	if(args==null) args=new String[]{null};
-	String php = args[0];
-	if(php == null) php = System.getProperty("php.java.bridge.php_exec");
-        if(php==null) {
-	    for(int i=0; i<DEFAULT_CGI_LOCATIONS.length; i++) {
-		location = new File(DEFAULT_CGI_LOCATIONS[i]);
-		if(location.exists()) {php = location.getAbsolutePath(); break;}
-	    }
-	} else {
-	    StringBuffer buf = new StringBuffer(php);
-	    String val = checkCgiBinary(buf);
-	    if(val!=null) php = val;
-	}
-        if(Util.logLevel>3) Util.logDebug("Using php binary: " + php);
-        if(php==null) php="php-cgi";
-
-	String home = System.getProperty("user.home");
-	if(homeDir==null) homeDir = new File(home);
-         
-	String s = argsToString(php, args);
-	proc = rt.exec(s, hashToStringArray(env), homeDir);
-	if(Util.logLevel>3) Util.logDebug("Started "+ s);
-	return proc;
-    }
-
+ 
     /* used by startProcess only */
     private static String argsToString(String php, String[] args) {
 	StringBuffer buf = new StringBuffer(php);
@@ -622,24 +584,159 @@ public class Util {
     }
 
     /**
-     * Starts a thread which listens on CGI proc standard error and dumps it to the error log.
-     * @param proc The process handle.
+     * Returns s if s starts with "PHP Fatal error:";
+     * @param s The error string
+     * @return The fatal error or null
      */
-    public static void startProcessErrorReader(Process proc) {
-	(new Thread("CGIErrorReader") {
-		private Process proc;
-		public Thread init(Process proc) {
-		    this.proc = proc;
-		    return this;
+    public static String checkError(String s) {
+        return s.startsWith("PHP Fatal error:") ? s : null;
+    }
+
+    /**
+	 * Starts a CGI process and returns the process handle.
+	 */
+    public static class Process extends java.lang.Process {
+
+        java.lang.Process proc;
+
+        protected Process(String[] args, File homeDir, Map env) throws IOException {
+	    File location;
+	    int n;
+	    Runtime rt = Runtime.getRuntime();
+	    if(args==null) args=new String[]{null};
+	    String php = args[0];
+	    if(php == null) php = System.getProperty("php.java.bridge.php_exec");
+            if(php==null) {
+		for(int i=0; i<DEFAULT_CGI_LOCATIONS.length; i++) {
+		    location = new File(DEFAULT_CGI_LOCATIONS[i]);
+		    if(location.exists()) {php = location.getAbsolutePath(); break;}
 		}
-		public void run() {
-		    InputStream in = proc.getErrorStream();
-		    byte[] buf = new byte[BUF_SIZE];
-		    int c;
-		    try { while((c=in.read(buf))!=-1) Util.logError(new String(buf, 0, c, ASCII)); } catch (IOException e) {/*ignore*/}
-		    try { in.close();} catch (IOException e1) {/*ignore*/}
+	    } else {
+		StringBuffer buf = new StringBuffer(php);
+		String val = checkCgiBinary(buf);
+		if(val!=null) php = val;
+	    }
+            if(Util.logLevel>3) Util.logDebug("Using php binary: " + php);
+            if(php==null) php="php-cgi";
+
+	    String home = System.getProperty("user.home");
+	    if(homeDir==null) homeDir = new File(home);
+             
+	    String s = argsToString(php, args);
+	    proc = rt.exec(s, hashToStringArray(env), homeDir);
+	    if(Util.logLevel>3) Util.logDebug("Started "+ s);
+        }
+
+        /**
+	 * Starts a CGI process and returns the process handle.
+	 * @param args The args array, e.g.: new String[]{null, "-b", ...};. If args is null or if args[0] is null, the function looks for the system property "php.java.bridge.php_exec".
+	 * @param homeDir The home directory. If null, the system property "user.home" is used.
+	 * @param env The CGI environment. If null, Util.DEFAULT_CGI_ENVIRONMENT is used.
+	 * @return The process handle.
+	 * @throws IOException
+	 * @see Util#checkCgiBinary(StringBuffer)
+	 */
+        public static Process start(String[] args, File homeDir, Map env) throws IOException {
+            return new Process(args, homeDir, env);
+        }
+
+
+        /* (non-Javadoc)
+         * @see java.lang.Process#getOutputStream()
+         */
+        public OutputStream getOutputStream() {
+            return proc.getOutputStream();
+        }
+
+        /* (non-Javadoc)
+         * @see java.lang.Process#getInputStream()
+         */
+        public InputStream getInputStream() {
+            return proc.getInputStream();
+        }
+
+        /* (non-Javadoc)
+         * @see java.lang.Process#getErrorStream()
+         */
+        public InputStream getErrorStream() {
+            return proc.getErrorStream();
+        }
+
+        /* (non-Javadoc)
+         * @see java.lang.Process#waitFor()
+         */
+        public int waitFor() throws InterruptedException {
+            return proc.waitFor();
+        }
+
+        /* (non-Javadoc)
+         * @see java.lang.Process#exitValue()
+         */
+        public int exitValue() {
+            return proc.exitValue();
+        }
+
+        /* (non-Javadoc)
+         * @see java.lang.Process#destroy()
+         */
+        public void destroy() {
+            proc.destroy();
+        }
+        
+    }
+
+    /**
+	 * Starts a CGI process with an error handler attached and returns the process handle.
+	 */
+    public static class ProcessWithErrorHandler extends Process {
+	String error = null;
+	InputStream in = null;
+        protected ProcessWithErrorHandler(String[] args, File homeDir, Map env) throws IOException {
+	    super(args, homeDir, env);
+	    (new Thread("CGIErrorReader") {public void run() {readErrorStream();}}).start();
+	}
+	public void destroy() {
+	    try {proc.destroy();} catch (Exception e) {}
+	    if(error!=null) throw new RuntimeException(error);
+	}
+	private synchronized void readErrorStream() {
+	    byte[] buf = new byte[BUF_SIZE];
+	    int c;
+	    try { 
+		in =  proc.getErrorStream();
+		while((c=in.read(buf))!=-1) {
+		    String s = new String(buf, 0, c, ASCII); 
+		    Util.logError(s);
+		    error = Util.checkError(s);
 		}
-	    }).init(proc).start();
+	    } catch (IOException e) {
+		e.printStackTrace();
+	    }
+	    finally {
+		if(in!=null) 
+		    try { in.close();} catch (IOException e1) {
+			e1.printStackTrace();
+		    }
+		notify();
+	    }
+	}
+	public synchronized int waitFor() throws InterruptedException {
+	    if(in==null) wait();
+	    return 0;
+	}
+
+        /**
+         * Starts a CGI process and returns the process handle.
+         * @param args The args array, e.g.: new String[]{null, "-b", ...};. If args is null or if args[0] is null, the function looks for the system property "php.java.bridge.php_exec".
+         * @param homeDir The home directory. If null, the system property "user.home" is used.
+         * @param env The CGI environment. If null, Util.DEFAULT_CGI_ENVIRONMENT is used.
+         * @return The process handle.
+         * @throws IOException
+         * @see Util#checkCgiBinary(StringBuffer)
+         */
+        public static Process start(String[] args, File homeDir, Map env) throws IOException {
+            return new ProcessWithErrorHandler(args, homeDir, env);
+	}
     }
 
     /**

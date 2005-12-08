@@ -58,7 +58,7 @@
 # define DEFAULT_PORT DEFAULT_JAVA_PORT /* init_cfg.h overrides */
 #endif
 #define DEFAULT_HOST "127.0.0.1"
-#define DEFAULT_SERVLET "/JavaBridge/PhpJavaServlet"
+#define DEFAULT_SERVLET "/JavaBridge/dummy.php"
 
 #define RECV_SIZE 8192 // initial size of the receive buffer
 #define MAX_ARGS 100   // max # of method arguments

@@ -25,11 +25,11 @@ class JPersistenceProxy {
     $out = new java("java.io.ObjectOutputStream", $buf);
     $out->writeObject($this->java);
     $out->close();
-    $this->serialID = $buf->toByteArray();
+    $this->serialID = base64_encode((string)$buf->toByteArray());
     return array("serialID");
   }
   function __wakeup() {
-    $buf = new java("java.io.ByteArrayInputStream", $this->serialID);
+    $buf = new java("java.io.ByteArrayInputStream", base64_decode($this->serialID));
     $in = new java("java.io.ObjectInputStream", $buf);
     $this->java = $in->readObject();
     $in->close();

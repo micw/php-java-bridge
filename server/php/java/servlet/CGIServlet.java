@@ -278,7 +278,7 @@ public class CGIServlet extends HttpServlet {
      *    (or webAppRootDir alone if cgiPathPrefix is
      *    null)
      */
-    protected String cgiPathPrefix = "WEB-INF/cgi";
+    protected String cgiPathPrefix = "/WEB-INF/cgi";
 
     /**
      * Header encoding
@@ -1110,6 +1110,7 @@ public class CGIServlet extends HttpServlet {
                          line.substring(line.indexOf(":") + 1).trim());
 		}
 	    } catch (ArrayIndexOutOfBoundsException e) {/*not a valid header*/}
+	    catch (StringIndexOutOfBoundsException e){/*not a valid header*/}
         }
 
         /**
@@ -1220,6 +1221,7 @@ public class CGIServlet extends HttpServlet {
 			natOut.write(buf, 0, n);
 		    }
 		}
+		natOut.flush();
 		
 		// the header and content
 		while((n = natIn.read(buf, i, buf.length-i)) !=-1 ) {
@@ -1245,8 +1247,7 @@ public class CGIServlet extends HttpServlet {
 		    }
 		}
 		proc=null;
-	    } catch(IOException t) {throw t;} catch (Throwable t) { throw new ServletException(t); } finally {
-		if(out!=null) try {out.close();} catch (IOException e) {}
+	    }  finally {
 		if(in!=null) try {in.close();} catch (IOException e) {}
 		if(natIn!=null) try {natIn.close();} catch (IOException e) {}
 		if(natOut!=null) try {natOut.close();} catch (IOException e) {}

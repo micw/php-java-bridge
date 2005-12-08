@@ -7,6 +7,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
+import java.util.Map;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -31,22 +33,22 @@ import php.java.bridge.http.ContextServer;
  * <code>webapps</code> directory and the Apache <code>htdocs</code>
  * directory are shared by default (via a <em>symlink</em>).
  * <br>
- * For frameworks such as Java Server Faces it is recommended to forward requests to the backend as follows:<br>
+ * For frameworks, such as Java Server Faces, it is recommended to forward requests to the backend as follows:<br>
  * <code>
  * &lt;?php<br>
  * function toString() {"return "hello java world!";}<br>
  * java_context()-&gt;call(java_closure()) ||header("Location: hello.jsp");<br>
  * ?&gt;<br>
  * </code><br>
- * This allows the backend (jsp, jsf, servlets, ...) to call php procedures as follows:<br>
+ * This allows the framework (jsf, struts, ...) to call php procedures as follows:<br>
  * <code>
  * PhpScriptEngine e = new PhpScriptEngine();<br>
  * e.eval(new URLReader(new URL("/hello.php")));<br>
- * out.println(((Invocable)e).call("toString", new Object[]{}));<br>
+ * out.println(((Invocable)e).call("java_get_server_name", new Object[]{}));<br>
  * e.release();<br>
  * </code>
  * <br>
- * An alternative would be to install <code>mod_jk</code> to "JkMount" the java "webapps" document root into the "htdocs" document root of Apache or IIS 
+ * An alternative would be to install <code>mod_jk</code> to "JkMount" the java "webapps" document root into the "htdocs" document root of the HTTP server 
  * and to configure it so that it automatically forwards all .jsp and servlet requests to the servlet engine.
  * 
  */
@@ -58,7 +60,7 @@ public class PhpJavaServlet extends FastCGIServlet {
      * The CGI default port
      */
     public static final int CGI_CHANNEL = 9567;
-    static private final ContextServer socketRunner = new ContextServer(new ThreadPool("JavaBridgeContextRunner", Integer.parseInt(Util.THREAD_POOL_MAX_SIZE)));
+    private static final Object contextServer = new ContextServer(new ThreadPool("JavaBridgeContextRunner", Integer.parseInt(Util.THREAD_POOL_MAX_SIZE)));
 
     protected static class Logger extends Util.Logger {
 	private ServletContext ctx;
@@ -75,9 +77,62 @@ public class PhpJavaServlet extends FastCGIServlet {
 	    if(Util.logLevel>5) t.printStackTrace();
 	}
     }
+    private static Object proc = null;
+    protected static synchronized final Process startFcgi(Map env, String php) throws IOException {
+        if(proc!=null) return null;
+	    String port;
+	    if(System.getProperty("php.java.bridge.promiscuous", "false").toLowerCase().equals("true")) 
+		port = ":"+String.valueOf(FCGI_CHANNEL);
+	    else
+		port = "127.0.0.1:"+String.valueOf(FCGI_CHANNEL);
+
+		// Set override hosts so that php does not try to start a VM.
+		// The value itself doesn't matter, we'll pass the real value
+		// via the (HTTP_)X_JAVABRIDGE_OVERRIDE_HOSTS header field
+		// later.
+		env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", "/");
+		if(System.getProperty("php.java.bridge.promiscuous", "false").toLowerCase().equals("true")) {
+			String[] args = new String[]{php, "-b", port};
+			File home = null;
+			try { home = ((new File(php)).getParentFile()); } catch (Exception e) {Util.printStackTrace(e);}
+		    proc = Util.Process.start(args, home, env);
+		} else {
+			String[] args = new String[]{null, "-b", port};
+		    proc = Util.Process.start(args, null, env);
+		}
+            return (Process)proc;
+    }
+    static {
+    Runtime.getRuntime().addShutdownHook(
+		 new Thread("JavaBridgeServletShutdown") {
+		     public void run() {
+		         Class noparm[] = new Class[]{};
+		         Object noarg[] = new Object[]{};
+		         
+		         Method m;
+			 if(contextServer!=null) 
+			     try {
+			         m = contextServer.getClass().getMethod("destroy", noparm);
+			         m.setAccessible(true);
+			         m.invoke(contextServer, noarg);
+			    } catch(Throwable t) {
+			        t.printStackTrace();
+			        }
+			 if(proc!=null) 
+			     try {
+			     m = proc.getClass().getMethod("destroy", noparm);
+			     m.setAccessible(true);
+			     m.invoke(proc, noarg);
+			     proc = null;
+			   } catch(Throwable t) {
+			     t.printStackTrace();
+			  }
+		     }
+		 });
+    }
+
     
     private boolean override_hosts = true;
-    
     public void init(ServletConfig config) throws ServletException {
 	String value;
         try {
@@ -96,15 +151,6 @@ public class PhpJavaServlet extends FastCGIServlet {
         DynamicJavaBridgeClassLoader.initClassLoader(Util.DEFAULT_EXTENSION_DIR);
 
 	Util.TCP_SOCKETNAME = String.valueOf(CGI_CHANNEL);
-	    try {
-	        Runtime.getRuntime().addShutdownHook(
-						 (new Thread("JavaBridgeContextRunnerShutdown") {
-						     public void run() {
-							 if(socketRunner!=null) try {socketRunner.destroy();} catch(Throwable t) {/*ignore*/}
-						     }
-						 }));
-	    } catch (Throwable t) {t.printStackTrace();};
-
     }
 
     public void destroy() {
@@ -223,8 +269,7 @@ public class PhpJavaServlet extends FastCGIServlet {
 	    InputStream in = null;
 	    OutputStream out = null;
     	    try {
-        	proc = Util.startProcess(new String[]{command}, wd, env);
-        	Util.startProcessErrorReader(proc);
+        	proc = Util.ProcessWithErrorHandler.start(new String[]{command}, wd, env);
 
         	byte[] buf = new byte[BUF_SIZE];// headers cannot be larger than this value!
 
@@ -237,20 +282,24 @@ public class PhpJavaServlet extends FastCGIServlet {
     			natOut.write(buf, 0, n);
     		    }
     		}
-
+        	natOut.flush();
+        	
         	// header and body
          	natIn = proc.getInputStream();
     		out = response.getOutputStream();
     		Util.parseBody(buf, natIn, out, new Util.HeaderParser() {protected void parseHeader(String header) {addHeader(header);}});
-    		
-    		proc=null;
-    	    } catch(IOException t) {throw t;} catch (Throwable t) { throw new ServletException(t); } finally {
-    		if(out!=null) try {out.close();} catch (IOException e) {}
+
+    		try {
+                proc.waitFor();
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+    	    } finally {
     		if(in!=null) try {in.close();} catch (IOException e) {}
     		if(natIn!=null) try {natIn.close();} catch (IOException e) {}
     		if(natOut!=null) try {natOut.close();} catch (IOException e) {}
-
-    		if(proc!=null) try {proc.destroy(); } catch (Exception e) {}
+    		if(proc!=null) proc.destroy();
     	    }
         }
     } //class CGIRunner
@@ -314,7 +363,6 @@ public class PhpJavaServlet extends FastCGIServlet {
 	resOut = res.getOutputStream();
 	out.writeTo(resOut);
 	in.close();
-	resOut.close();
 	if(bridge.logLevel>3) bridge.logDebug("override redirect finished for " + ctx.getId());
     }
     
@@ -355,7 +403,6 @@ public class PhpJavaServlet extends FastCGIServlet {
 	res.setContentLength(out.size());
 	out.writeTo(res.getOutputStream());
 	in.close();
-	out.close();
     }
     
     /**
@@ -377,7 +424,8 @@ public class PhpJavaServlet extends FastCGIServlet {
 	bridge.in = sin=req.getInputStream();
 	bridge.out = sout = new ByteArrayOutputStream();
 	Request r = bridge.request = new Request(bridge);
-
+	ContextServer socketRunner = (ContextServer)contextServer;
+	
 	try {
 	    if(r.init(sin, sout)) {
 		res.setHeader("X_JAVABRIDGE_REDIRECT", socketRunner.getSocket().getSocketName());
@@ -393,7 +441,6 @@ public class PhpJavaServlet extends FastCGIServlet {
 	    	resOut.flush();
 	    	if(bridge.logLevel>3) bridge.logDebug("waiting for context: " +ctx.getId());
 	    	ctx.waitFor();
-	    	resOut.close();
 	    	if(bridge.logLevel>3) bridge.logDebug("context finished: " +ctx.getId());
 	    }
 	    else {
@@ -403,7 +450,6 @@ public class PhpJavaServlet extends FastCGIServlet {
 	} catch (Exception e) {
 	    Util.printStackTrace(e);
 	    try {if(sin!=null) sin.close();} catch (IOException e1) {}
-	    try {if(resOut!=null) resOut.close();} catch (IOException e2) {}
 	}
     }
 
@@ -413,6 +459,8 @@ public class PhpJavaServlet extends FastCGIServlet {
     protected void doPut (HttpServletRequest req, HttpServletResponse res)
 	throws ServletException, IOException {
     	short redirect = (short) req.getIntHeader("X_JAVABRIDGE_REDIRECT");
+    	ContextServer socketRunner = (ContextServer)contextServer;
+    	
 	try {
 	    if(redirect==1) 
 		handleRedirectConnection(req, res); /* override re-direct */
@@ -423,7 +471,6 @@ public class PhpJavaServlet extends FastCGIServlet {
 
 	} catch (Throwable t) {
 	    Util.printStackTrace(t);
-	    try {res.getOutputStream().close();} catch (IOException x1) {}
 	    try {req.getInputStream().close();} catch (IOException x2) {}
 	}
     }
@@ -436,16 +483,22 @@ public class PhpJavaServlet extends FastCGIServlet {
      */
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
 	throws ServletException, IOException {
-
     	try {
 	    super.doGet(req, res);
     	} catch (IOException e) {
-	    ServletException ex = new ServletException("An IO exception occured. Probably php was not installed as \"/usr/bin/php\" or \"c:/php5/php-cgi.exe\".\nPlease copy your PHP binary (\""+php+"\", see JavaBridge/WEB-INF/web.xml) into the JavaBridge/WEB-INF/cgi directory.\nSee webapps/JavaBridge/WEB-INF/cgi/README for details.", e);
+    	    res.reset();
+	    ServletException ex = new ServletException("An IO exception occured. Probably php was not installed as \"/usr/bin/php-cgi\" or \"c:/php5/php-cgi.exe\".\nPlease copy your PHP binary (\""+php+"\", see JavaBridge/WEB-INF/web.xml) into the JavaBridge/WEB-INF/cgi directory.\nSee webapps/JavaBridge/WEB-INF/cgi/README for details.", e);
 	    php=null;
 	    checkCgiBinary(getServletConfig());
 	    throw ex;
-    	} catch (Throwable t) {
+    	} catch (ServletException e) {
+    	    res.reset();
+    	    throw e;
+    	}
+    	catch (Throwable t) {
+    	    res.reset();
 	    Util.printStackTrace(t);
+    	    throw new ServletException(t);
     	}
     }
 }

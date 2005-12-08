@@ -10,6 +10,9 @@
 /* strings */
 #include <string.h>
 
+#ifdef ZEND_ENGINE_2
+#include "zend_exceptions.h"
+#endif
 
 static void writeArgument(pval* arg, short ignoreNonJava TSRMLS_DC);
 static void writeArguments(int argc, pval** argv, short ignoreNonJava TSRMLS_DC);
@@ -21,14 +24,14 @@ static short checkError(pval *value TSRMLS_DC)
 #ifndef ZEND_ENGINE_2
   if (Z_TYPE_P(value) == IS_EXCEPTION) {
 
-								/* display the exception only if we do
-								   not abort a callback or if we abort
-								   a callback and this callback is not
-								   a method.  This is consistent with
-								   PHP5 behaviour, where we use
-								   call_user_func_array (which also
-								   reports the exception) when the
-								   callback is not a method. */
+	/* display the exception only if we do
+	   not abort a callback or if we abort
+	   a callback and this callback is not
+	   a method.  This is consistent with
+	   PHP5 behaviour, where we use
+	   call_user_func_array (which also
+	   reports the exception) when the
+	   callback is not a method. */
     if(!JG(exception)||(JG(exception)&&!(JG(object)&&*JG(object))))
 	   php_error(E_WARNING, "%s", Z_STRVAL_P(value));
 
@@ -53,6 +56,86 @@ static short is_type (zval *pobj TSRMLS_DC) {
 #endif
 }
 
+#ifdef ZEND_ENGINE_2
+struct java_object {
+  zend_object parent;
+  long id;
+};
+void EXT_GLOBAL(store_jobject)(zval*object, long id TSRMLS_DC)
+{
+  struct java_object*jobject = (struct java_object*)zend_objects_get_address(object TSRMLS_CC);
+  assert(id!=0);
+  jobject->id = id;
+}
+
+int EXT_GLOBAL(get_jobject_from_object)(zval*object, long *id TSRMLS_DC)
+{
+  struct java_object*jobject = (struct java_object*)zend_objects_get_address(object TSRMLS_CC);
+  *id = jobject->id;
+  return *id!=0;
+}
+static destroy_object(void *object, zend_object_handle handle TSRMLS_DC)
+{
+  struct java_object*jobject = ((struct java_object*)object);
+  if(JG(jenv)&&jobject->id) (*JG(jenv))->writeUnref(JG(jenv), jobject->id);
+  jobject->id=0;
+}
+static void free_object(zend_object *object TSRMLS_DC) 
+{
+  ((struct java_object*)object)->id=0;
+  zend_hash_destroy(object->properties);
+  FREE_HASHTABLE(object->properties);
+  efree(object);
+}
+static zend_object_value objects_new(struct java_object **object, zend_class_entry *class_type TSRMLS_DC)
+{	
+	zend_object_value retval;
+
+	*object = emalloc(sizeof(struct java_object));
+	memset(*object, 0, sizeof(struct java_object));
+	(*object)->parent.ce = class_type;
+	retval.handle = zend_objects_store_put(*object, (zend_objects_store_dtor_t) destroy_object, (zend_objects_free_object_storage_t) free_object, NULL TSRMLS_CC);
+	retval.handlers = (zend_object_handlers*)&EXT_GLOBAL(handlers);
+	return retval;
+}
+zend_object_value EXT_GLOBAL(create_object)(zend_class_entry *class_type TSRMLS_DC)
+{
+  zval tmp;
+  zend_object_value obj;
+  struct java_object *object;
+  
+  obj = objects_new(&object, class_type TSRMLS_CC);
+  
+  ALLOC_HASHTABLE(object->parent.properties);
+  zend_hash_init(object->parent.properties, 0, NULL, ZVAL_PTR_DTOR, 0);
+  zend_hash_copy(object->parent.properties, &class_type->default_properties, (copy_ctor_func_t) zval_add_ref, (void *) &tmp, sizeof(zval *));
+
+  return obj;
+}
+zend_object_value EXT_GLOBAL(create_exception_object)(zend_class_entry *class_type TSRMLS_DC)
+{
+  zval tmp;
+  zend_object_value obj;
+  struct java_object *object;
+
+  zend_object *temp_exception_object;
+
+  obj = objects_new(&object, class_type TSRMLS_CC);
+
+  ALLOC_HASHTABLE(object->parent.properties);
+  zend_hash_init(object->parent.properties, 0, NULL, ZVAL_PTR_DTOR, 0);
+  
+  /* since the signature of zend_exception_get_default changes from day to day: */
+  /* create a standard exception object */
+  tmp.value.obj= zend_exception_get_default()->create_object(class_type TSRMLS_CC);
+  temp_exception_object=zend_objects_get_address(&tmp TSRMLS_CC);
+
+  /* and copy the trace from there */
+  zend_hash_copy(object->parent.properties, 
+				 temp_exception_object->properties, (copy_ctor_func_t) zval_add_ref, (void *) &tmp, sizeof(zval *));
+  return obj;
+}  
+#else
 int EXT_GLOBAL(get_jobject_from_object)(pval*object, long *obj TSRMLS_DC)
 {
   pval **handle;
@@ -65,6 +148,7 @@ int EXT_GLOBAL(get_jobject_from_object)(pval*object, long *obj TSRMLS_DC)
   *obj=**(long**)handle;
   return 1;
 }
+#endif
 
 void EXT_GLOBAL(result) (pval* arg, short ignoreNonJava, pval*presult TSRMLS_DC) {
   proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);

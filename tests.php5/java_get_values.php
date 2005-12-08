@@ -8,7 +8,8 @@ if (!extension_loaded('java')) {
   }
 }
 
-$n=500;
+$System=new JavaClass("java.lang.System");
+$n=5000;
 for ($i = 0; $i < $n; $i++) { 
   $temp_array[$i]="$i";
 }
@@ -24,15 +25,19 @@ $php_hash=java_get_values($hash);
 $php_hashMap=java_get_values($hashMap);
 
 
+$now = $System->currentTimeMillis();
 echo "array from java_get_values:\n";
 for ($i = 0; $i < $n; $i++) { 
-  echo "($php_hash[$i],$php_hashMap[$i]) ";
+  $val = "($php_hash[$i],$php_hashMap[$i]) ";
 }
-echo "\n\n";
+$now=$System->currentTimeMillis()-$now;
+echo "$now (ms)\n\n";
 
+$now = $System->currentTimeMillis();
 echo "the same, but slower (uses $n*4 round trips):\n";
 for ($i = 0; $i < $n; $i++) { 
-  echo "($hash[$i],$hashMap[$i])";
+  $val = "($hash[$i],$hashMap[$i])";
 }
-echo "\n";
+$now=$System->currentTimeMillis()-$now;
+echo "$now (ms)\n";
 ?>

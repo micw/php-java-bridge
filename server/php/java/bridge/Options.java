@@ -80,8 +80,8 @@ public class Options {
  
     Object createExact(ParserString st) {
         if(!extJavaCompatibility())
-            return (new Integer(Integer.parseInt(st.getStringValue(), 10)));
+            return (new Integer(st.getIntValue()));
         else
-            return (new Long(Long.parseLong(st.getStringValue(), 10)));
+            return (new Long(st.getLongValue()));
     }
 }

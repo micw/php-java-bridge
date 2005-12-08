@@ -94,13 +94,13 @@ public class Response {
 	    this.type = type;
 	}
     }
-    protected abstract class GenericWriter extends DelegateWriter {
+    protected abstract class Writer extends DelegateWriter {
 	public void setResult(Object value, Class type) {
 	    setType(type);
 	    setResult(value);
 	}        
     }
-    protected abstract class Writer extends GenericWriter {
+    protected abstract class WriterWithDelegate extends Writer {
 	protected DelegateWriter delegate;
 
 	public void setType(Class type) {
@@ -148,7 +148,7 @@ public class Response {
 	    return true;
         }
     }
-    protected class ClassicWriter extends Writer {
+    protected class ClassicWriter extends WriterWithDelegate {
  
 	public boolean setResult(Object value) {
 	    if (value == null) {
@@ -178,7 +178,7 @@ public class Response {
 	    return true;
 	}
     }
-    protected class DefaultWriter extends Writer {
+    protected class DefaultWriter extends WriterWithDelegate {
 
 	public boolean setResult(Object value) {
 	    if(value==null) {writeObject(null); return true;}
@@ -202,7 +202,7 @@ public class Response {
         }        	     	
     }
   	
-    protected class CoerceWriter extends GenericWriter {
+    protected class CoerceWriter extends Writer {
 	public void setResult(Object value, Class resultType) {
 	    // ignore resultType and use the coerce type
 	    setResult(value);
@@ -251,8 +251,8 @@ public class Response {
 	    return new ArrayWriter();
     }
 	
-    Writer newWriter(DelegateWriter delegate) {
-     	Writer writer;
+    WriterWithDelegate newWriter(DelegateWriter delegate) {
+     	WriterWithDelegate writer;
     	if(bridge.options.extJavaCompatibility())
 	    writer = new ClassicWriter();
     	else 
@@ -261,8 +261,9 @@ public class Response {
 	return writer;
     }
      
-    private GenericWriter writer, defaultWriter, arrayValuesWriter, coerceWriter;
+    private Writer writer, defaultWriter, arrayValuesWriter=null, coerceWriter=null;
 
+    
     /**
      * Creates a new response object. The object is re-used for each packed.
      * @param bridge The bridge.
@@ -271,10 +272,9 @@ public class Response {
 	buf=new OutBuf();
 	this.bridge=bridge;
 	defaultWriter = writer = newWriter(getDefaultDelegate());
-	coerceWriter = new CoerceWriter();
-	arrayValuesWriter = newWriter(new ArrayValuesWriter());
     }
-     /**
+
+    /**
       * Set the result packet.
       * @param value The result object.
       * @param type The type of the result object.
@@ -290,10 +290,10 @@ public class Response {
      * @see Response#VALUES_WRITER
      * @see Response#COERCE_WRITER
      */
-    public GenericWriter selectWriter(int writerType) {
+    public Writer selectWriter(int writerType) {
      	switch(writerType) {
-    	case VALUES_WRITER: writer = arrayValuesWriter; break;
-    	case COERCE_WRITER: writer = coerceWriter; break;
+    	case VALUES_WRITER: writer = getArrayValuesWriter(); break;
+    	case COERCE_WRITER: writer = getCoerceWriter(); break;
     	default: throw new IllegalArgumentException(String.valueOf(writerType));
     	}
      	return writer;
@@ -425,6 +425,16 @@ public class Response {
     }
     public String toString() {
     	return bridge.options.newString(buf.getFirstBytes());
+    }
+
+    private Writer getArrayValuesWriter() {
+        if(arrayValuesWriter==null) return arrayValuesWriter = newWriter(new ArrayValuesWriter());
+        return arrayValuesWriter;
+    }
+
+    private Writer getCoerceWriter() {
+        if(coerceWriter==null) return coerceWriter = new CoerceWriter();
+        return coerceWriter;
     }
 
 
