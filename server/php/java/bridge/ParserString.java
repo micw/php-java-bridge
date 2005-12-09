@@ -84,7 +84,7 @@ public class ParserString {
         } 
         else sign=1;
         
-        int pos=1;
+        long pos=1;
         while(length-->0) {
             val+=((long)(string[off+length]-(byte)'0')) * pos;
             pos*=10;

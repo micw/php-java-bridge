@@ -1518,7 +1518,7 @@ static int cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_
   }
 
   if(obj) {
-
+    ZVAL_NULL(writeobj);
 	switch(type) {
 
 	case IS_STRING:
@@ -1545,7 +1545,7 @@ static int cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_
 	  {
 		long obj2;
 		if(jenv && (Z_TYPE_P(readobj) == IS_OBJECT)) {
-		  EXT_GLOBAL(get_jobject_from_object)(writeobj, &obj2 TSRMLS_CC);
+		  EXT_GLOBAL(get_jobject_from_object)(readobj, &obj2 TSRMLS_CC);
 		}
 		if(obj2) {
 		  (*jenv)->writeInvokeBegin(jenv, 0, "cast", 0, 'I', writeobj);
