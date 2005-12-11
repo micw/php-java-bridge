@@ -2,10 +2,7 @@ Installing the PHP/Java Bridge J2EE Component
 ---------------------------------------------
 
 * Download and install a J2EE application server or servlet engine,
-  either Oracle 10g, IBM WebSphere6 or Tomcat 4 or higher. For example
-  with the command: 
-
-    rpm -i tomcat5-5.0.30-5jpp_6fc.i386.rpm
+  either Oracle 10g, IBM WebSphere6 or Tomcat 4 or higher.
 
 * Download and install the PHP/Java Bridge, for example with the
   command: 
@@ -14,29 +11,57 @@ Installing the PHP/Java Bridge J2EE Component
 
   On windows you can extract the zip download file in c:\.
 
+* Change the java .ini entry (usually /etc/php.d/java.ini or
+  /etc/php.ini) so that php connects to the servlet backend, e.g.:
+  
+    [java]
+    java.hosts   = "127.0.0.1:8080"
+    java.servlet = User
+  
+  and disable the local backend (if it is installed and running), for
+  example with:
+  
+    service php-java-bridge stop
+    chkconfig php-java-bridge off
+  
 * Deploy JavaBridge.war into your servlet engine or application
   server. For example with the command: 
 
-    cp JavaBridge.war /usr/share/tomcat5/webapps
-    service tomcat5 restart
+    cp JavaBridge.war /opt/jakarta-tomcat-5.5.9/webapps/
+    export JAVA_HOME=/usr/java/jdk1.6.0/
+    /opt/jakarta-tomcat-5.5.9/bin/catalina.sh stop
+    /opt/jakarta-tomcat-5.5.9/bin/catalina.sh start
 
 * Browse to http://localhost:<port#>/JavaBridge and run the
   supplied examples. For example:
 
     http://localhost:8080/JavaBridge/test.php
 
-* Individual users can create .war files which use their own php
-  version. Please see the WEB-INF/cgi/README for details.
+* Re-start Apache or IIS and check:
 
-* Optionally the administrator may start a PHP standalone server for
-  all users, for example:
+   http://yourHost.com/JavaBridge/sessionSharing.php
 
-   export X_JAVABRIDGE_OVERRIDE_HOSTS="/"
-   export PHP_FCGI_CHILDREN="20"
-   export PHP_FCGI_MAX_REQUESTS="500"
-   /usr/bin/php-cgi -dlog_errors=On -ddisplay_errors=Off -b 127.0.0.1:9667
 
-  or he/she may set up the mod_jk adapter, for example:
+* Please report bugs/problems to the mailing list:
+
+    php-java-bridge-users@lists.sourceforge.net
+
+
+Individual users can create .war files which use their own php
+version. Please see the WEB-INF/cgi/README for details.
+
+When Apache or IIS is not available, the administrator may start a PHP
+standalone server for all users, for example:
+
+  export X_JAVABRIDGE_OVERRIDE_HOSTS="/"
+  export PHP_FCGI_CHILDREN="20"
+  export PHP_FCGI_MAX_REQUESTS="500"
+  /usr/bin/php-cgi -dlog_errors=On -ddisplay_errors=Off -b 127.0.0.1:9667
+
+
+When Apache or IIS is available, the administrator may set up the
+mod_jk adapter to forward JSP/Servlet requests to the J2EE AS, for
+example:
 
   internet
   clients  <->  :80---> Apache or IIS                        --->  J2EE AS
@@ -51,8 +76,8 @@ Installing the PHP/Java Bridge J2EE Component
     not used.
 
 
-  or he/she may connect both, apache and the j2ee server to the
-  internet, example:
+or he/she may connect both, apache and the j2ee server to the
+internet, example:
 
                 :80---> Apache or IIS
             /                |
@@ -75,34 +100,17 @@ Installing the PHP/Java Bridge J2EE Component
     Apache/IIS and J2EE ports are accessible from the
     internet. Apache/IIS and the J2EE AS share the same document root.
 
-* Please report bugs/problems to the mailing list:
-
-    php-java-bridge-users@lists.sourceforge.net
-
-
 Known AS Issues 
 ---------------
 
-* The examples have been testet against Tomcat 5.5.9/JDK1.6, Oracle
-  10g AS/Sun JDK1.4, IBM WebSphere AS6/IBM JDK1.4. Please try to use
-  these versions if possible.
-
-* If Oracle displays an empty page: Check the log. If it says that the
-  class "ELException" is missing, copy the jsp-api.jar into the lib
-  directory. Oracle 10g requires jdk1.4.
+* If tomcat 5.5.9 cannot render .jsp pages: Remove the jsp-api.jar from
+  the WEB-INF/lib/ folder.
 
 * If you see a script exception when running java-server-faces/index.php
   and the name is displayed as "null", check if apache is able to
   execute the script. If not, stop apache or change the script
   location from "@80:/java-server-faces/helloWorld.php" to
   "/java-server-faces/helloWorld.php".
-
-* IBM WebSphere does not set the cookie path. If you visit
-  http://localhost/JavaBridge/sessionSharing.jsp, WebSphere creates a
-  cookie with the PATH value / instead of /JavaBridge. This is
-  consistent with all WebSphere applications but wrong nevertheless. It
-  may destroy sessions from other applications, your admin console
-  session for example.
 
 * Remember to stop the local backend (/etc/init.d/php-java-bridge stop) 
   and to set java.hosts=... and java.servlet=On.  Otherwise session

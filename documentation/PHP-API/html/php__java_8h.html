@@ -55,120 +55,123 @@ It contains the global structures and the callbacks required for zend engine 1 a
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a8" doxytag="php_java.h::U_SERVLET"></a>
 #define&nbsp;</td><td class="memItemRight" valign="bottom"><b>U_SERVLET</b>&nbsp;&nbsp;&nbsp;(1&lt;&lt;9)</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a9" doxytag="php_java.h::phpext_java_ptr"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a9" doxytag="php_java.h::U_WRAPPER"></a>
+#define&nbsp;</td><td class="memItemRight" valign="bottom"><b>U_WRAPPER</b>&nbsp;&nbsp;&nbsp;(1&lt;&lt;10)</td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a10" doxytag="php_java.h::phpext_java_ptr"></a>
 #define&nbsp;</td><td class="memItemRight" valign="bottom"><b>phpext_java_ptr</b>&nbsp;&nbsp;&nbsp;&amp;EXT_GLOBAL(module_entry)</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a10" doxytag="php_java.h::JG"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a11" doxytag="php_java.h::JG"></a>
 #define&nbsp;</td><td class="memItemRight" valign="bottom"><b>JG</b>(v)&nbsp;&nbsp;&nbsp;EXT_GLOBAL(globals).v</td></tr>
 
 <tr><td colspan="2"><br><h2>Functions</h2></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a32">PHP_MINIT_FUNCTION</a> (EXT)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a33">PHP_MINIT_FUNCTION</a> (EXT)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Called when the module is initialized.  <a href="#a32"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a33">PHP_MSHUTDOWN_FUNCTION</a> (EXT)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Called when the module is initialized.  <a href="#a33"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a34">PHP_MSHUTDOWN_FUNCTION</a> (EXT)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Called when the module terminates.  <a href="#a33"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a34" doxytag="php_java.h::PHP_MINFO_FUNCTION"></a>
-&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a34">PHP_MINFO_FUNCTION</a> (EXT)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Called when the module terminates.  <a href="#a34"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a35" doxytag="php_java.h::PHP_MINFO_FUNCTION"></a>
+&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a35">PHP_MINFO_FUNCTION</a> (EXT)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Displays the module info. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a35" doxytag="php_java.h::get_server_string"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a36" doxytag="php_java.h::get_server_string"></a>
 char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>get_server_string</b> (TSRMLS_D)</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a36" doxytag="php_java.h::try_connect_to_server"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a37" doxytag="php_java.h::try_connect_to_server"></a>
 proxyenv *&nbsp;</td><td class="memItemRight" valign="bottom"><b>try_connect_to_server</b> (TSRMLS_D)</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a37" doxytag="php_java.h::connect_to_server"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a38" doxytag="php_java.h::connect_to_server"></a>
 proxyenv *&nbsp;</td><td class="memItemRight" valign="bottom"><b>connect_to_server</b> (TSRMLS_D)</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a38" doxytag="php_java.h::start_server"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a39" doxytag="php_java.h::start_server"></a>
 void&nbsp;</td><td class="memItemRight" valign="bottom"><b>start_server</b> (TSRMLS_D)</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a39" doxytag="php_java.h::test_server"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a40" doxytag="php_java.h::test_server"></a>
 char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>test_server</b> (int *socket, short *is_local, struct sockaddr *saddr TSRMLS_DC)</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a40" doxytag="php_java.h::get_servlet_context"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a41" doxytag="php_java.h::get_servlet_context"></a>
 char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>get_servlet_context</b> (TSRMLS_D)</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a41" doxytag="php_java.h::get_sockname"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a42" doxytag="php_java.h::get_sockname"></a>
 char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>get_sockname</b> (TSRMLS_D)</td></tr>
 
 <tr><td colspan="2"><br><h2>Variables</h2></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a11" doxytag="php_java.h::module_entry"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a12" doxytag="php_java.h::module_entry"></a>
 zend_module_entry&nbsp;</td><td class="memItemRight" valign="bottom"><b>module_entry</b></td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a12" doxytag="php_java.h::class_entry"></a>
-zend_class_entry *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a12">class_entry</a></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a13" doxytag="php_java.h::class_entry"></a>
+zend_class_entry *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a13">class_entry</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Represents the java class struct. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a13" doxytag="php_java.h::class_class_entry"></a>
-zend_class_entry *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a13">class_class_entry</a></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a14" doxytag="php_java.h::class_class_entry"></a>
+zend_class_entry *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a14">class_class_entry</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Represents the java_class class struct. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a14" doxytag="php_java.h::class_class_entry_jsr"></a>
-zend_class_entry *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a14">class_class_entry_jsr</a></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a15" doxytag="php_java.h::class_class_entry_jsr"></a>
+zend_class_entry *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a15">class_class_entry_jsr</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Represents the javaclass class struct. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a15" doxytag="php_java.h::exception_class_entry"></a>
-zend_class_entry *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a15">exception_class_entry</a></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a16" doxytag="php_java.h::exception_class_entry"></a>
+zend_class_entry *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a16">exception_class_entry</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Represents the javaexception class struct. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a16" doxytag="php_java.h::class_functions"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a17" doxytag="php_java.h::class_functions"></a>
 function_entry&nbsp;</td><td class="memItemRight" valign="bottom"><b>class_functions</b> []</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a17" doxytag="php_java.h::handlers"></a>
-zend_object_handlers&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a17">handlers</a></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a18" doxytag="php_java.h::handlers"></a>
+zend_object_handlers&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a18">handlers</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The object handlers, see create_object. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a18" doxytag="php_java.h::bridge_version"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a19" doxytag="php_java.h::bridge_version"></a>
 const char *const&nbsp;</td><td class="memItemRight" valign="bottom"><b>bridge_version</b></td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a19" doxytag="php_java.h::ini_updated"></a>
-int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a19">ini_updated</a></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a20" doxytag="php_java.h::ini_updated"></a>
+int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a20">ini_updated</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Holds the flags set/unset for all java ini entries. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a20" doxytag="php_java.h::ini_user"></a>
-int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a20">ini_user</a></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a21" doxytag="php_java.h::ini_user"></a>
+int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a21">ini_user</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The options set by the user. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a21" doxytag="php_java.h::ini_set"></a>
-int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a21">ini_set</a></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a22" doxytag="php_java.h::ini_set"></a>
+int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a22">ini_set</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The options which carry a value. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="el" href="structcfg.html">cfg</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a22">cfg</a></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="el" href="structcfg.html">cfg</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a23">cfg</a></td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Holds the global configuration.  <a href="#a22"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a23" doxytag="php_java.h::jenv"></a>
-proxyenv *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a23">jenv</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Holds the global configuration.  <a href="#a23"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a24" doxytag="php_java.h::jenv"></a>
+proxyenv *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="php__java_8h.html#a24">jenv</a></td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The following structure contains per-request variables. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a24" doxytag="php_java.h::is_closed"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a25" doxytag="php_java.h::is_closed"></a>
 short&nbsp;</td><td class="memItemRight" valign="bottom"><b>is_closed</b></td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a25" doxytag="php_java.h::hosts"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a26" doxytag="php_java.h::hosts"></a>
 char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>hosts</b></td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a26" doxytag="php_java.h::servlet"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a27" doxytag="php_java.h::servlet"></a>
 char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>servlet</b></td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a27" doxytag="php_java.h::exception"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a28" doxytag="php_java.h::exception"></a>
 zval *&nbsp;</td><td class="memItemRight" valign="bottom"><b>exception</b></td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a28" doxytag="php_java.h::object"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a29" doxytag="php_java.h::object"></a>
 zval **&nbsp;</td><td class="memItemRight" valign="bottom"><b>object</b></td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a29" doxytag="php_java.h::func"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a30" doxytag="php_java.h::func"></a>
 zval *&nbsp;</td><td class="memItemRight" valign="bottom"><b>func</b></td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a30" doxytag="php_java.h::retval_ptr"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a31" doxytag="php_java.h::retval_ptr"></a>
 zval **&nbsp;</td><td class="memItemRight" valign="bottom"><b>retval_ptr</b></td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a31" doxytag="php_java.h::func_params"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a32" doxytag="php_java.h::func_params"></a>
 zval *&nbsp;</td><td class="memItemRight" valign="bottom"><b>func_params</b></td></tr>
 
 </table>
 <hr><h2>Function Documentation</h2>
-<a class="anchor" name="a32" doxytag="php_java.h::PHP_MINIT_FUNCTION"></a><p>
+<a class="anchor" name="a33" doxytag="php_java.h::PHP_MINIT_FUNCTION"></a><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -195,10 +198,10 @@ zval *&nbsp;</td><td class="memItemRight" valign="bottom"><b>func_params</b></td
 <p>
 Called when the module is initialized. 
 <p>
-Creates the Java and JavaClass structures and tries to start the backend if java.socketname, java.servlet or java.hosts are not set. The backend is NOT started if the environment variable X_JAVABRIDGE_OVERRIDE_HOSTS exists and contains either "/" or "host:port//context/servlet". When running as a Apache/IIS module or Fast CGI, this procedure is called only once, when running as a CGI binary it is called whenever the CGI binary is called.     </td>
+Creates the Java and JavaClass structures and tries to start the backend if java.socketname, java.servlet or java.hosts are not set. The backend is not started if the environment variable X_JAVABRIDGE_OVERRIDE_HOSTS exists and contains either "/" or "host:port//context/servlet". When running as a Apache/IIS module or Fast CGI, this procedure is called only once. When running as a CGI binary, it is called whenever the CGI binary is called.     </td>
   </tr>
 </table>
-<a class="anchor" name="a33" doxytag="php_java.h::PHP_MSHUTDOWN_FUNCTION"></a><p>
+<a class="anchor" name="a34" doxytag="php_java.h::PHP_MSHUTDOWN_FUNCTION"></a><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -229,7 +232,7 @@ Stops the backend, if it is running. When running in Apache/IIS, or as a FastCGI
   </tr>
 </table>
 <hr><h2>Variable Documentation</h2>
-<a class="anchor" name="a22" doxytag="php_java.h::cfg"></a><p>
+<a class="anchor" name="a23" doxytag="php_java.h::cfg"></a><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -254,7 +257,7 @@ Holds the global configuration.
 This structure is shared by all php instances     </td>
   </tr>
 </table>
-<hr size="1"><address style="align: right;"><small>Generated on Sat Dec 3 13:17:27 2005 for php-java-bridge by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Sun Dec 11 18:45:26 2005 for php-java-bridge by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.2 </small></address>
 </body>

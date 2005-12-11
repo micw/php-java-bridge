@@ -531,7 +531,8 @@ static void override_ini_for_redirect(TSRMLS_D) {
 	kontext = strchr(hosts, '/');
 	if(kontext) {
 	  *kontext++=0;
-	  if(JG(servlet)) free(JG(servlet));
+	  assert(JG(servlet));
+	  free(JG(servlet));
 	  JG(servlet) = strdup(kontext);
 	  JG(ini_user)|=U_SERVLET;
 	}
@@ -549,18 +550,27 @@ static void override_ini_for_redirect(TSRMLS_D) {
 	   cookie with a PATH value "/myContext" would be created.
 	*/
 	char *kontext = EXT_GLOBAL (get_servlet_context) (TSRMLS_C);
-	if(kontext) {
+	if(kontext && *kontext!='/') {
+	  static const char default_servlet[] = DEFAULT_SERVLET;
 	  static const char name[] = "get_self";
 	  static const char override[] = "array_key_exists('PHP_SELF', $_SERVER)?$_SERVER['PHP_SELF']:null;";
+	  char *tmp, *strval;
+	  size_t len = 0;
 	  if((SUCCESS==zend_eval_string((char*)override, &val, (char*)name TSRMLS_CC)) && (Z_TYPE(val)==IS_STRING) && Z_STRLEN(val)) {
-		if(JG(servlet)) free(JG(servlet));
-
-		JG(servlet) = malloc(Z_STRLEN(val)+1);
-		strncpy(JG(servlet), Z_STRVAL(val), Z_STRLEN(val)); 
-		JG(servlet)[Z_STRLEN(val)]=0;
-
-		JG(ini_user)|=U_SERVLET;
+		strval = Z_STRVAL(val);
+		len = Z_STRLEN(val);
+		if(len && *strval!='/') len=0;
 	  }
+	  if(!len) {
+		strval = (char*)default_servlet;
+		len = sizeof(default_servlet)-1;
+	  }
+	  assert(JG(servlet));
+	  free(JG(servlet));
+	  JG(servlet) = tmp = malloc(len+1);
+	  assert(tmp); if(!tmp) exit(6);
+	  strcpy(tmp, strval);
+	  JG(ini_user)|=U_SERVLET;
 	}
   }
 }

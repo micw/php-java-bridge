@@ -65,6 +65,7 @@ JavaBridge.war: JavaBridge.jar $(SERVLET) $(JAVA_BRIDGE_SERVLET_JAR) $(SCRIPT) $
 
 	-mkdir WEB-INF/lib WEB-INF/classes WEB-INF/cgi
 	cp JavaBridge.jar $(SCRIPT) $(JAVA_BRIDGE_SERVLET_JAR) $(JAVA_BRIDGE_SCRIPT_JAR) $(JAVA_BRIDGE_FACES_JAR) ../unsupported/*.jar WEB-INF/lib
+	rm WEB-INF/lib/servlet-api.jar
 	cp ../examples/php+jsp/*.jar WEB-INF/lib
 	cp -r ../examples/java-server-faces .
 	cp ../examples/php+jsp/*.php ../examples/php+jsp/*.jsp  .

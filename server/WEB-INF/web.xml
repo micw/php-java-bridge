@@ -7,14 +7,14 @@
     <servlet>
         <servlet-name>Faces Servlet</servlet-name>
         <servlet-class>javax.faces.webapp.FacesServlet</servlet-class>
-        <load-on-startup>1</load-on-startup>
+        <load-on-startup>0</load-on-startup>
     </servlet>
 
     <!-- PHP Servlet -->
     <servlet>
         <servlet-name>PhpJavaServlet</servlet-name>
         <servlet-class>php.java.servlet.PhpJavaServlet</servlet-class>
-        <load-on-startup>1</load-on-startup>
+        <load-on-startup>0</load-on-startup>
 
          <!-- Allow us to override the java.hosts, java.servlet and -->
          <!-- java.socketname settings from your php.ini so that we can -->
@@ -31,7 +31,7 @@
         <!-- 
          <init-param>
            <param-name>php_exec</param-name>
-           <param-value>php</param-value>
+           <param-value>php-cgi</param-value>
          </init-param>
         -->
 

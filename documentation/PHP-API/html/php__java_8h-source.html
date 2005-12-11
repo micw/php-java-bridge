@@ -74,88 +74,90 @@
 00075 <span class="preprocessor"></span><span class="preprocessor">#define U_SOCKNAME (1&lt;&lt;7)</span>
 00076 <span class="preprocessor"></span><span class="preprocessor">#define U_HOSTS (1&lt;&lt;8)</span>
 00077 <span class="preprocessor"></span><span class="preprocessor">#define U_SERVLET (1&lt;&lt;9)</span>
-00078 <span class="preprocessor"></span>
-00079 
-00080 <span class="preprocessor">#if EXTENSION == JAVA</span>
-00081 <span class="preprocessor"></span><span class="preprocessor">#define phpext_java_ptr &amp;EXT_GLOBAL(module_entry)</span>
-00082 <span class="preprocessor"></span><span class="preprocessor">#elif EXTENSION == MONO</span>
-00083 <span class="preprocessor"></span><span class="preprocessor">#define phpext_mono_ptr &amp;EXT_GLOBAL(module_entry)</span>
-00084 <span class="preprocessor"></span><span class="preprocessor">#else</span>
-00085 <span class="preprocessor"></span><span class="preprocessor"># error EXT must be mono or java.</span>
-00086 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
-00087 <span class="preprocessor"></span>
-00088 
-00089 <a class="code" href="java_8c.html#a84">PHP_MINIT_FUNCTION</a>(EXT);
-00090 <a class="code" href="java_8c.html#a86">PHP_MSHUTDOWN_FUNCTION</a>(EXT);
-00091 <a class="code" href="java_8c.html#a85">PHP_MINFO_FUNCTION</a>(EXT);
-00092 
-<a name="l00096"></a><a class="code" href="structcfg.html">00096</a> <span class="keyword">struct </span><a class="code" href="structcfg.html">cfg</a> {
-00097 <span class="preprocessor">#ifdef CFG_JAVA_SOCKET_INET</span>
-00098 <span class="preprocessor"></span>  <span class="keyword">struct </span>sockaddr_in saddr;
-00099 <span class="preprocessor">#else</span>
-00100 <span class="preprocessor"></span>  <span class="keyword">struct </span>sockaddr_un saddr;
-00101 <span class="preprocessor">#endif</span>
-00102 <span class="preprocessor"></span>  <span class="keywordtype">int</span> cid; <span class="comment">// server's process id</span>
-00103   <span class="keywordtype">int</span> err; <span class="comment">// file descriptor: server's return code</span>
-00104 
-00105   <span class="keywordtype">char</span>*sockname, *default_sockname;
-00106   <span class="keywordtype">char</span>*hosts;
-00107   <span class="keywordtype">char</span>*classpath;   
-00108   <span class="keywordtype">char</span>*ld_library_path;
-00109   <span class="keywordtype">char</span>*vm;
-00110   <span class="keywordtype">char</span>*vm_home;
-00111   <span class="keywordtype">char</span>*logLevel;
-00112   <span class="keywordtype">unsigned</span> <span class="keywordtype">short</span> logLevel_val;
-00113   <span class="keywordtype">char</span>*logFile;
-00114   <span class="keywordtype">short</span> can_fork;               <span class="comment">/* 0 if user has hard-coded the socketname */</span>
-00115   <span class="keywordtype">char</span>* servlet;                <span class="comment">/* On or servlet context */</span>
-00116   <span class="keywordtype">short</span> is_cgi_servlet;         <span class="comment">/* 1: cgi env available */</span>
-00117 };
-00118 <span class="keyword">extern</span> <span class="keyword">struct </span><a class="code" href="structcfg.html">cfg</a> *EXT_GLOBAL(<a class="code" href="structcfg.html">cfg</a>);
-00119 
-00123 EXT_BEGIN_MODULE_GLOBALS(EXT)
-<a name="l00124"></a><a class="code" href="php__java_8h.html#a23">00124</a>   proxyenv *<a class="code" href="php__java_8h.html#a23">jenv</a>;
-00125   <span class="keywordtype">short</span> is_closed; <span class="comment">/* PR1176522: GC must not re-open the connection */</span>
-00126 
-00127   <span class="comment">/* local copy of the shared variables above. Needed for channel</span>
-00128 <span class="comment">     re-directs */</span>
-00129   <span class="keywordtype">char</span> *hosts, *servlet;
-<a name="l00130"></a><a class="code" href="php__java_8h.html#a20">00130</a>   <span class="keywordtype">int</span> <a class="code" href="java_8c.html#a5">ini_user</a>;
-00131 
-00132   <span class="comment">/* for user CB's */</span>
-00133   zval*exception;
-00134 
-00135   zval **object;
-00136   zval *func;
-00137   zval **retval_ptr;
-00138   zval *func_params;
-00139 EXT_END_MODULE_GLOBALS(EXT)
-00140 
-00141 
+00078 <span class="preprocessor"></span><span class="preprocessor">#define U_WRAPPER (1&lt;&lt;10)</span>
+00079 <span class="preprocessor"></span>
+00080 
+00081 <span class="preprocessor">#if EXTENSION == JAVA</span>
+00082 <span class="preprocessor"></span><span class="preprocessor">#define phpext_java_ptr &amp;EXT_GLOBAL(module_entry)</span>
+00083 <span class="preprocessor"></span><span class="preprocessor">#elif EXTENSION == MONO</span>
+00084 <span class="preprocessor"></span><span class="preprocessor">#define phpext_mono_ptr &amp;EXT_GLOBAL(module_entry)</span>
+00085 <span class="preprocessor"></span><span class="preprocessor">#else</span>
+00086 <span class="preprocessor"></span><span class="preprocessor"># error EXT must be mono or java.</span>
+00087 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
+00088 <span class="preprocessor"></span>
+00089 
+00090 <a class="code" href="java_8c.html#a83">PHP_MINIT_FUNCTION</a>(EXT);
+00091 <a class="code" href="java_8c.html#a85">PHP_MSHUTDOWN_FUNCTION</a>(EXT);
+00092 <a class="code" href="java_8c.html#a84">PHP_MINFO_FUNCTION</a>(EXT);
+00093 
+<a name="l00097"></a><a class="code" href="structcfg.html">00097</a> <span class="keyword">struct </span><a class="code" href="structcfg.html">cfg</a> {
+00098 <span class="preprocessor">#ifdef CFG_JAVA_SOCKET_INET</span>
+00099 <span class="preprocessor"></span>  <span class="keyword">struct </span>sockaddr_in saddr;
+00100 <span class="preprocessor">#else</span>
+00101 <span class="preprocessor"></span>  <span class="keyword">struct </span>sockaddr_un saddr;
+00102 <span class="preprocessor">#endif</span>
+00103 <span class="preprocessor"></span>  <span class="keywordtype">int</span> cid; <span class="comment">// server's process id</span>
+00104   <span class="keywordtype">int</span> err; <span class="comment">// file descriptor: server's return code</span>
+00105 
+00106   <span class="keywordtype">char</span>*sockname, *default_sockname;
+00107   <span class="keywordtype">char</span>*hosts;
+00108   <span class="keywordtype">char</span>*classpath;   
+00109   <span class="keywordtype">char</span>*ld_library_path;
+00110   <span class="keywordtype">char</span>*wrapper;
+00111   <span class="keywordtype">char</span>*vm;
+00112   <span class="keywordtype">char</span>*vm_home;
+00113   <span class="keywordtype">char</span>*logLevel;
+00114   <span class="keywordtype">unsigned</span> <span class="keywordtype">short</span> logLevel_val;
+00115   <span class="keywordtype">char</span>*logFile;
+00116   <span class="keywordtype">short</span> can_fork;               <span class="comment">/* 0 if user has hard-coded the socketname */</span>
+00117   <span class="keywordtype">char</span>* servlet;                <span class="comment">/* On or servlet context */</span>
+00118   <span class="keywordtype">short</span> is_cgi_servlet;         <span class="comment">/* 1: cgi env available */</span>
+00119 };
+00120 <span class="keyword">extern</span> <span class="keyword">struct </span><a class="code" href="structcfg.html">cfg</a> *EXT_GLOBAL(<a class="code" href="structcfg.html">cfg</a>);
+00121 
+00125 EXT_BEGIN_MODULE_GLOBALS(EXT)
+<a name="l00126"></a><a class="code" href="php__java_8h.html#a24">00126</a>   proxyenv *<a class="code" href="php__java_8h.html#a24">jenv</a>;
+00127   <span class="keywordtype">short</span> is_closed; <span class="comment">/* PR1176522: GC must not re-open the connection */</span>
+00128 
+00129   <span class="comment">/* local copy of the shared variables above. Needed for channel</span>
+00130 <span class="comment">     re-directs */</span>
+00131   <span class="keywordtype">char</span> *hosts, *servlet;
+<a name="l00132"></a><a class="code" href="php__java_8h.html#a21">00132</a>   <span class="keywordtype">int</span> <a class="code" href="java_8c.html#a5">ini_user</a>;
+00133 
+00134   <span class="comment">/* for user CB's */</span>
+00135   zval*exception;
+00136 
+00137   zval **object;
+00138   zval *func;
+00139   zval **retval_ptr;
+00140   zval *func_params;
+00141 EXT_END_MODULE_GLOBALS(EXT)
 00142 
 00143 
-00144 #ifdef ZTS
-00145 # define JG(v) EXT_TSRMG(EXT_GLOBAL(globals_id), EXT_GLOBAL_EX(zend_,, _globals) *, v)
-00146 #else
-00147 # define JG(v) EXT_GLOBAL(globals).v
-00148 #endif
-00149 
-00150 extern <span class="keywordtype">char</span>* EXT_GLOBAL(get_server_string)(TSRMLS_D);
+00144 
+00145 
+00146 #ifdef ZTS
+00147 # define JG(v) EXT_TSRMG(EXT_GLOBAL(globals_id), EXT_GLOBAL_EX(zend_,, _globals) *, v)
+00148 #else
+00149 # define JG(v) EXT_GLOBAL(globals).v
+00150 #endif
 00151 
-00152 extern proxyenv *EXT_GLOBAL(try_connect_to_server)(TSRMLS_D);
-00153 extern proxyenv *EXT_GLOBAL(connect_to_server)(TSRMLS_D);
-00154 extern <span class="keywordtype">void</span> EXT_GLOBAL(start_server)(TSRMLS_D);
-00155 
-00156 extern <span class="keywordtype">char</span>* EXT_GLOBAL(test_server)(<span class="keywordtype">int</span> *socket, <span class="keywordtype">short</span> *is_local, struct sockaddr*saddr TSRMLS_DC);
+00152 extern <span class="keywordtype">char</span>* EXT_GLOBAL(get_server_string)(TSRMLS_D);
+00153 
+00154 extern proxyenv *EXT_GLOBAL(try_connect_to_server)(TSRMLS_D);
+00155 extern proxyenv *EXT_GLOBAL(connect_to_server)(TSRMLS_D);
+00156 extern <span class="keywordtype">void</span> EXT_GLOBAL(start_server)(TSRMLS_D);
 00157 
-00158 <span class="comment">/* returns the servlet context or null */</span>
-00159 extern <span class="keywordtype">char</span> *EXT_GLOBAL(get_servlet_context)(TSRMLS_D);
-00160 
-00161 <span class="comment">/* returns the local socketname or the default local socketname*/</span>
-00162 extern <span class="keywordtype">char</span> *EXT_GLOBAL(get_sockname)(TSRMLS_D);
-00163 
-00164 #endif
-</pre></div><hr size="1"><address style="align: right;"><small>Generated on Sat Dec 3 13:17:27 2005 for php-java-bridge by&nbsp;
+00158 extern <span class="keywordtype">char</span>* EXT_GLOBAL(test_server)(<span class="keywordtype">int</span> *socket, <span class="keywordtype">short</span> *is_local, struct sockaddr*saddr TSRMLS_DC);
+00159 
+00160 <span class="comment">/* returns the servlet context or null */</span>
+00161 extern <span class="keywordtype">char</span> *EXT_GLOBAL(get_servlet_context)(TSRMLS_D);
+00162 
+00163 <span class="comment">/* returns the local socketname or the default local socketname*/</span>
+00164 extern <span class="keywordtype">char</span> *EXT_GLOBAL(get_sockname)(TSRMLS_D);
+00165 
+00166 #endif
+</pre></div><hr size="1"><address style="align: right;"><small>Generated on Sun Dec 11 18:45:26 2005 for php-java-bridge by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.2 </small></address>
 </body>

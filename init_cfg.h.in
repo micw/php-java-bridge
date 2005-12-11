@@ -10,20 +10,21 @@
 
 #define EXTENSION @EXTENSION@
 #if EXTENSION == JAVA
+#define DEFAULT_WRAPPER DEFAULT_JAVA_WRAPPER
+#define DEFAULT_PORT DEFAULT_JAVA_PORT /* init_cfg.h overrides */
+#define N_SARGS N_JAVA_SARGS	/* # of server args for exec */
+#define N_SENV N_JAVA_SENV		/* # of server env entries */
 #define EXT java
 #else
-
-#undef DEFAULT_PORT
 #define DEFAULT_PORT DEFAULT_MONO_PORT
-
-#undef N_SARGS
+#define DEFAULT_WRAPPER DEFAULT_MONO_WRAPPER
 #define N_SARGS N_MONO_SARGS
-#undef N_SENV
 #define N_SENV N_MONO_SENV
+#define EXT mono
+
 #ifndef CFG_JAVA_SOCKET_INET
 # define CFG_JAVA_SOCKET_INET
 #endif
-#define EXT mono
 #endif
 
 #define EXT_CONCAT(prefix, ext, sep, fkt) prefix##ext##sep##fkt

@@ -3,8 +3,47 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 3.0.2:
 
-Version 3.0.0
+* Backward compatibility with 2.0.8: The java.servlet can now have
+  three values:
+
+    On  : Selects the default servlet context, which is
+          /JavaBridge/JavaBridge.php
+
+    Off : Switches off the HTTP tunnel
+
+    User: Selects the "current" servlet context. A request:
+          http://foo.com/context1/test.php connects test.php to the
+          backend: http://<java.hosts[0]>/context1/test.php. 
+
+          Example:
+          [java]
+          java.hosts=127.0.0.1:8080
+          java.servlet=User
+
+          Request:
+          http://foo.com/contextA/order.php
+
+          Then order.php sends a PUT request to the backend:
+          http://127.0.0.1:8080/contextA/order.php        
+      
+* The servlet mapping for PhpJavaServlet has been
+  removed. java.servlet=User or
+  java.servlet=/JavaBridge/PhpJavaServlet.php can be used instead.
+
+* When the java VM was started as a child of apache (OPTION#3) and
+  apache sent out a kill signal to all childs in its process group, the
+  guard process (which observes the VM) could be killed. After that one
+  had to kill the java child manually. Since version 3.0.2 the guard
+  detaches from the apache process group, too
+
+* The PHP5/PHP6 array access and iterator interface should be much
+  faster now. Especially the array access was incredibly inefficient
+  as it allocated a new instance of PhpMap for each access.
+
+
+Version 3.0.1:
 
 * JSR223 API: It is now possible to run php scripts from java. Scripts
   are invoked using a CPS style, a CGI binary is started if necessary

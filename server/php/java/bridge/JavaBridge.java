@@ -1270,10 +1270,10 @@ public class JavaBridge implements Runnable {
 
 
     /**
-     * For PHP5: convert Map or Collection into a PHP array,
-     * sends the entire Map or Collection to the client. This
-     * is much more efficient than generating round-trips when
-     * iterating through a Map or Collection.
+     * Convert Map or Collection into a PHP array,
+     * sends the entire array, Map or Collection to the client. This
+     * is much more efficient than generating round-trips while
+     * iterating over the values of an array, Map or Collection.
      * @param ob - The object to expand
      * @return The passed <code>ob</code>, will be expanded by the appropriate writer.
      */

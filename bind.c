@@ -49,7 +49,6 @@ EXT_EXTERN_MODULE_GLOBALS(EXT)
 
 
 #if EXTENSION == JAVA
-static const char* const wrapper = EXTENSION_DIR/**/"/RunJavaBridge";
 static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], short for_display TSRMLS_DC) {
   static const char separator[2] = {ZEND_PATHS_SEPARATOR, 0};
   char *s, *p;
@@ -133,7 +132,6 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   env[2] = NULL;
 }
 #elif EXTENSION == MONO
-static const char* const wrapper = EXTENSION_DIR/**/"/RunMonoBridge";
 static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], short for_display TSRMLS_DC) {
   static const char executable[] = "/MonoBridge.exe";
   char *p, *slash;
@@ -176,7 +174,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   env[0] = NULL;
 }
 #endif
-static short use_wrapper(void) {
+static short use_wrapper(char*wrapper) {
   struct stat buf;
   short use_wrapper=0;
 
@@ -203,7 +201,7 @@ static char*get_server_string(short for_display TSRMLS_DC) {
 #else
   static const char quote[] = "\"";
 #endif
-  short must_use_wrapper = use_wrapper();
+  short must_use_wrapper = use_wrapper(EXT_GLOBAL(cfg)->wrapper);
   int i;
   char*s;
   char*env[N_SENV];
@@ -212,7 +210,7 @@ static char*get_server_string(short for_display TSRMLS_DC) {
 
   EXT_GLOBAL(get_server_args)(env, args, for_display TSRMLS_CC);
   if(must_use_wrapper)
-	length+=strlen(wrapper)+1;
+	length+=strlen(EXT_GLOBAL(cfg)->wrapper)+1;
 #ifndef __MINGW32__
   for(i=0; i< (sizeof env)/(sizeof*env); i++) {
 	if(!env[i]) break;
@@ -237,7 +235,7 @@ static char*get_server_string(short for_display TSRMLS_DC) {
   }
 #endif
   if(must_use_wrapper) {
-	strcat(s, wrapper);
+	strcat(s, EXT_GLOBAL(cfg)->wrapper);
 	strcat(s, " ");
   }
   for(i=0; i< (sizeof args)/(sizeof*args); i++) {
@@ -275,7 +273,7 @@ static void exec_vm(TSRMLS_D) {
 	putenv(env[0]);
 	putenv(env[1]);
   }
-  if(use_wrapper()) *--args = strdup(wrapper);
+  if(use_wrapper(EXT_GLOBAL(cfg)->wrapper)) *--args = strdup(EXT_GLOBAL(cfg)->wrapper);
   execv(args[0], args);
 #endif
 }

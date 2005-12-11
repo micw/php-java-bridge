@@ -22,29 +22,34 @@
 00023 <span class="preprocessor"></span>
 00024 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL(result)(pval* arg, <span class="keywordtype">short</span> ignoreNonJava, pval*presult TSRMLS_DC);
 00025 <span class="keyword">extern</span> <span class="keywordtype">int</span> EXT_GLOBAL(get_jobject_from_object)(zval *object, <span class="keywordtype">long</span> *obj TSRMLS_DC);
-00026 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL(invoke)(<span class="keywordtype">char</span>*name, <span class="keywordtype">long</span> object, <span class="keywordtype">int</span> arg_count, zval**arguments, <span class="keywordtype">short</span> ignoreNonJava, pval*presult TSRMLS_DC) ;
-00027 <span class="keyword">enum</span> constructor {CONSTRUCTOR_NONE, CONSTRUCTOR};
-00028 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL(call_function_handler)(INTERNAL_FUNCTION_PARAMETERS, <span class="keywordtype">char</span>*name, <span class="keyword">enum</span> constructor constructor, <span class="keywordtype">short</span> createInstance, pval *object, <span class="keywordtype">int</span> argc, zval**argv);
-00029 <span class="keyword">extern</span> <span class="keywordtype">short</span> EXT_GLOBAL(set_property_handler)(<span class="keywordtype">char</span>*name, zval *object, zval *value, zval *return_value);
-00030 <span class="keyword">extern</span> <span class="keywordtype">short</span> EXT_GLOBAL(get_property_handler)(<span class="keywordtype">char</span>*name, zval *object, zval *return_value);
-00031 
-00032 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL(destructor)(zend_rsrc_list_entry *rsrc TSRMLS_DC);
-00033 
-00034 <span class="keyword">extern</span> proxyenv *EXT_GLOBAL(createSecureEnvironment) (<span class="keywordtype">int</span> peer, void (*handle_request)(proxyenv *env), <span class="keywordtype">char</span>*server, <span class="keywordtype">short</span> is_local, <span class="keyword">struct </span>sockaddr*saddr);
-00035 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL (protocol_end) (proxyenv *env);
-00036 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL (check_context) (proxyenv *env TSRMLS_DC);
-00037 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL (setResultWith_context) (<span class="keywordtype">char</span>*key, <span class="keywordtype">char</span>*val, <span class="keywordtype">char</span>*path);
-00038 <span class="keyword">extern</span> <span class="keywordtype">short</span> EXT_GLOBAL (option_set_by_user) (<span class="keywordtype">short</span> option, <span class="keywordtype">int</span> where);
-00039 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL (init_cfg) (TSRMLS_D);
-00040 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL(shutdown_library) (void);
-00041 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL(destroy_cfg) (int);
-00042 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL(sys_error)(<span class="keyword">const</span> <span class="keywordtype">char</span> *str, <span class="keywordtype">int</span> code);
-00043   
-00044 
-00045 <span class="keyword">extern</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> EXT_GLOBAL (get_mode) (void);
-00046 
-00047 <span class="preprocessor">#endif</span>
-</pre></div><hr size="1"><address style="align: right;"><small>Generated on Sat Dec 3 13:17:27 2005 for php-java-bridge by&nbsp;
+00026 <span class="preprocessor">#ifdef ZEND_ENGINE_2</span>
+00027 <span class="preprocessor"></span><span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL(store_jobject)(zval *presult, <span class="keywordtype">long</span> <span class="keywordtype">id</span> TSRMLS_DC);
+00028 <span class="keyword">extern</span> zend_object_value EXT_GLOBAL(create_object)(zend_class_entry *class_type TSRMLS_DC);
+00029 <span class="keyword">extern</span> zend_object_value EXT_GLOBAL(create_exception_object)(zend_class_entry *class_type TSRMLS_DC);
+00030 <span class="preprocessor">#endif</span>
+00031 <span class="preprocessor"></span><span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL(invoke)(<span class="keywordtype">char</span>*name, <span class="keywordtype">long</span> object, <span class="keywordtype">int</span> arg_count, zval**arguments, <span class="keywordtype">short</span> ignoreNonJava, pval*presult TSRMLS_DC) ;
+00032 <span class="keyword">enum</span> constructor {CONSTRUCTOR_NONE, CONSTRUCTOR};
+00033 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL(call_function_handler)(INTERNAL_FUNCTION_PARAMETERS, <span class="keywordtype">char</span>*name, <span class="keyword">enum</span> constructor constructor, <span class="keywordtype">short</span> createInstance, pval *object, <span class="keywordtype">int</span> argc, zval**argv);
+00034 <span class="keyword">extern</span> <span class="keywordtype">short</span> EXT_GLOBAL(set_property_handler)(<span class="keywordtype">char</span>*name, zval *object, zval *value, zval *return_value);
+00035 <span class="keyword">extern</span> <span class="keywordtype">short</span> EXT_GLOBAL(get_property_handler)(<span class="keywordtype">char</span>*name, zval *object, zval *return_value);
+00036 
+00037 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL(destructor)(zend_rsrc_list_entry *rsrc TSRMLS_DC);
+00038 
+00039 <span class="keyword">extern</span> proxyenv *EXT_GLOBAL(createSecureEnvironment) (<span class="keywordtype">int</span> peer, void (*handle_request)(proxyenv *env), <span class="keywordtype">char</span>*server, <span class="keywordtype">short</span> is_local, <span class="keyword">struct </span>sockaddr*saddr);
+00040 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL (protocol_end) (proxyenv *env);
+00041 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL (check_context) (proxyenv *env TSRMLS_DC);
+00042 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL (setResultWith_context) (<span class="keywordtype">char</span>*key, <span class="keywordtype">char</span>*val, <span class="keywordtype">char</span>*path);
+00043 <span class="keyword">extern</span> <span class="keywordtype">short</span> EXT_GLOBAL (option_set_by_user) (<span class="keywordtype">short</span> option, <span class="keywordtype">int</span> where);
+00044 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL (init_cfg) (TSRMLS_D);
+00045 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL(shutdown_library) (void);
+00046 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL(destroy_cfg) (int);
+00047 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL(sys_error)(<span class="keyword">const</span> <span class="keywordtype">char</span> *str, <span class="keywordtype">int</span> code);
+00048   
+00049 
+00050 <span class="keyword">extern</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> EXT_GLOBAL (get_mode) (void);
+00051 
+00052 <span class="preprocessor">#endif</span>
+</pre></div><hr size="1"><address style="align: right;"><small>Generated on Sun Dec 11 18:45:26 2005 for php-java-bridge by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.2 </small></address>
 </body>

@@ -111,7 +111,7 @@ static void last_exception_get(proxyenv *jenv, zval**return_value)
 }
 
 /**
- * Proto: object java_last_exception_get(void);
+ * Proto: object java_last_exception_get(void)
  *
  * Get last Java exception
  * \deprecated Use PHP5 try/catch instead.
@@ -134,7 +134,7 @@ static void last_exception_clear(proxyenv*jenv, zval**return_value) {
 }
 
 /**
- * Proto: void java_last_exception_clear(void);
+ * Proto: void java_last_exception_clear(void)
  *
  * Clear last java extension.
  * \deprecated Use PHP5 try/catch instead.
@@ -150,7 +150,7 @@ EXT_FUNCTION(EXT_GLOBAL(last_exception_clear))
 }
 
 /**
- * Proto: void java_set_file_encoding(string);
+ * Proto: void java_set_file_encoding(string)
  *
  * Set the java file encoding, for example UTF-8 or ASCII. Needed
  * because php does not support unicode. All string to byte array
@@ -198,7 +198,7 @@ static void require(INTERNAL_FUNCTION_PARAMETERS) {
 
 
 /**
- * Proto: void java_require(string path);
+ * Proto: void java_require(string path) or java_set_library_path(string path)
  *
  * Set the library path. Example: 
  * \code
@@ -226,7 +226,7 @@ EXT_FUNCTION(EXT_GLOBAL(require))
 }
 
 /**
- * Proto:  bool java_instanceof(object object, object clazz);
+ * Proto:  bool java_instanceof(object object, object clazz)
  *
  * Tests if object is an instance of clazz. 
  * Example: 
@@ -298,30 +298,30 @@ static void session(INTERNAL_FUNCTION_PARAMETERS)
 }
 
 /**
- * Proto: void java_session([string], [bool]);
+ * Proto: object java_session([string], [bool]) or object java_get_session([string], [bool])
  *
  * Return a session handle.  When java_session() is called without 
  * arguments, the session is shared with java.
  * Example: 
  * \code
- * java_session()->put("key", new java("java.lang.Object"));
+ * java_get_session()->put("key", new Java("java.lang.Object"));
  * [...]
  * \endcode
  * The java components (jsp, servlets) can retrieve the value, for
  * example with:
  * \code getSession().getAttribute("key"); \endcode
  *
- * When java_session() is called with a session handle, the session
+ * When java_get_session() is called with a session handle, the session
  * is not shared with java and no cookies are set. Example:
  * \code
- * java_session("myPrivateApplicationStore")->put("key", "value");
+ * java_get_session("myPrivateApplicationStore")->put("key", "value");
  * \endcode
  *
- * When java_session() is called with a second argument set to true,
+ * When java_get_session() is called with a second argument set to true,
  * a new session is allocated, the old session is destroyed if necessary.
  * Example:
  * \code
- * java_session(null, true)->put("key", "val");
+ * java_get_session(null, true)->put("key", "val");
  * \endcode.
  * @see get_context()
  */
@@ -350,20 +350,20 @@ static void context(INTERNAL_FUNCTION_PARAMETERS)
 }
 
 /**
- * Proto: object java_context(void);
+ * Proto: object java_context(void) or object java_get_context(void)
  *
  * Returns the jsr223 script context handle.
  *
  * Example which closes over the current environment and pass it back to java:
  * \code
- * java_context()->call(java_closure()) || die "Script should be called from java";
+ * java_get_context()->call(java_closure()) || die "Script should be called from java";
  * \endcode
  *
  * It is possible to access implicit web objects (the session, the
  * application store etc.) from the context. Please see the JSR223
  * documentation or for details. Example:
  * \code
- * java_context()->getHttpServletRequest();
+ * java_get_context()->getHttpServletRequest();
  * \endcode
  * @see java_get_session()
  */
@@ -373,11 +373,11 @@ EXT_FUNCTION(EXT_GLOBAL(get_context))
 }
 
 /**
- * Proto: string java_get_server_name(void);
+ * Proto: string java_server_name(void) or string java_get_server_name(void)
  *
  * Returns the name of the backend or null if the backend is not running. Example:
  * \code
- * $backend = java_server_name();
+ * $backend = java_get_server_name();
  * if(!$backend) wakeup_administrator("backend not running");
  * echo "Connected to the backend: $backend\n";
  * \endcode
@@ -537,12 +537,12 @@ EXT_FUNCTION(EXT_GLOBAL(__wakeup))
 }
 #endif
 
-/** Proto: array java_values(object ob);
+/** Proto: array java_values(object ob) or array java_get_values(object ob)
  *
  * Fetches the object into a php array. ob must be a java array or it
  * must implement java.util.Map or java.util.Collection. Please make sure that the java array, Map or Collection does not exceed php's memory limit. Example:
  * \code
- * print_r(java_values($sys->getProperties()));
+ * print_r(java_get_values($sys->getProperties()));
  * \endcode
  */
 EXT_FUNCTION(EXT_GLOBAL(get_values))
@@ -551,13 +551,13 @@ EXT_FUNCTION(EXT_GLOBAL(get_values))
 }
 
 /**
- * Proto: object java_closure([object],[array|string],[object]);
+ * Proto: object java_closure([object],[array|string],[object]) or object java_get_closure([object],[array|string],[object])
  *
  * Closes over the php environment and packages it up as a java
  * class. Example: 
  * \code
  * function toString() {return "helloWorld";};
- * $object = java_closure();
+ * $object = java_get_closure();
  * echo (string)$object;
  * \endcode
  *
@@ -566,7 +566,7 @@ EXT_FUNCTION(EXT_GLOBAL(get_values))
  * the java procedure names are mapped to the php procedure names. Example:
  * \code
  * function hello() {return "hello";};
- * echo (string)java_closure(null, "hello");
+ * echo (string)java_get_closure(null, "hello");
  * \endcode
  * 
  * When an array of java interfaces is supplied as a third argument,
@@ -579,7 +579,7 @@ EXT_FUNCTION(EXT_GLOBAL(get_values))
  *   }
  * }
  * function getListener() {
- *   return java_closure(new Listener(), null, array(new java("java.awt.event.ActionListener")));
+ *   return java_get_closure(new Listener(), null, array(new Java("java.awt.event.ActionListener")));
  * }
  * \endcode
  */
@@ -668,8 +668,6 @@ EXT_FUNCTION(EXT_GLOBAL(get_closure))
 
 /**
  * Only for internal use.
- *
- * Exception handler for php5
  */
 EXT_FUNCTION(EXT_GLOBAL(exception_handler))
 {
@@ -684,8 +682,6 @@ EXT_FUNCTION(EXT_GLOBAL(exception_handler))
 
 /**
  * Only for internal use
- *
- * Exception handler for php4
  */
 static void check_php4_exception(TSRMLS_D) {
 #ifndef ZEND_ENGINE_2
@@ -715,8 +711,6 @@ static void call_with_params(int count, zval ***func_params TSRMLS_DC) {
 
 /**
  * Only for internal use.
- *
- * Proto: string java_call_with_exception_handler(void);
  */
 EXT_FUNCTION(EXT_GLOBAL(call_with_exception_handler))
 {
@@ -770,7 +764,7 @@ EXT_FUNCTION(EXT_GLOBAL(call_with_exception_handler))
  * classes) of object as a string.
  * Example:
  * \code
- * echo java_inspect(java_context());
+ * echo java_inspect(java_get_context());
  * \endcode
  */
 EXT_FUNCTION(EXT_GLOBAL(inspect)) {
@@ -889,6 +883,16 @@ zend_object_handlers EXT_GLOBAL(handlers);
 static const char on[]="On";
 static const char on2[]="1";
 static const char off[]="Off";
+static PHP_INI_MH(OnIniWrapper)
+{
+  if (new_value) {
+	if((EXT_GLOBAL (ini_set) &U_WRAPPER)) free(EXT_GLOBAL(cfg)->wrapper);
+	EXT_GLOBAL(cfg)->wrapper=strdup(new_value);
+	assert(EXT_GLOBAL(cfg)->wrapper); if(!EXT_GLOBAL(cfg)->wrapper) exit(6);
+	EXT_GLOBAL(ini_updated)|=U_WRAPPER;
+  }
+  return SUCCESS;
+}
 static PHP_INI_MH(OnIniHosts)
 {
   if (new_value) {
@@ -988,6 +992,7 @@ PHP_INI_BEGIN()
   PHP_INI_ENTRY(EXT_NAME()/**/".servlet", NULL, PHP_INI_SYSTEM, OnIniServlet)
   PHP_INI_ENTRY(EXT_NAME()/**/".socketname", NULL, PHP_INI_SYSTEM, OnIniSockname)
   PHP_INI_ENTRY(EXT_NAME()/**/".hosts",   NULL, PHP_INI_SYSTEM, OnIniHosts)
+  PHP_INI_ENTRY(EXT_NAME()/**/".wrapper",   NULL, PHP_INI_SYSTEM, OnIniWrapper)
   PHP_INI_ENTRY(EXT_NAME()/**/".classpath", NULL, PHP_INI_SYSTEM, OnIniClassPath)
   PHP_INI_ENTRY(EXT_NAME()/**/".libpath",   NULL, PHP_INI_SYSTEM, OnIniLibPath)
   PHP_INI_ENTRY(EXT_NAME()/**/"."/**/EXT_NAME()/**/"",   NULL, PHP_INI_SYSTEM, OnIniJava)
@@ -1012,14 +1017,15 @@ PHP_INI_BEGIN()
 #ifdef ZEND_ENGINE_2
 
 /**
- * Proto: object Java::Java (string classname [, string argument1, .\ .\ .\ ]);
+ * Proto: object Java::Java (string classname [, string argument1, .\ .\ .\ ]) or object Java::java_exception (string classname [, string argument1, .\ .\ .\ ]) or object Java::JavaException (string classname [, string argument1, .\ .\ .\ ]);
  *
  * Java constructor. Example:
  * \code
  * $object = new Java("java.lang.String", "hello world"); 
  * echo (string)$object;
- *
- * $ex = new JavaException("java.lang.Exception");
+ * \endcode
+ * \code
+ * $ex = new JavaException("java.lang.NullPointerException");
  * throw $ex;
  *
  * \endcode
@@ -1046,13 +1052,14 @@ EXT_METHOD(EXT, EXT)
 
 
 /** 
- * Proto: object Java::JavaClass ( string classname);
+ * Proto: object Java::JavaClass ( string classname) or object java::java_class ( string classname);
  *
  * References a java class. Example: 
  * \code
  * $Object = new JavaClass("java.lang.Object");
  * $object = $Object->newInstance();
- *
+ * \endcode
+ * \code
  * $Thread = new JavaClass("java.lang.Thread");
  * $Thread->sleep(1000);
 
@@ -1083,7 +1090,7 @@ EXT_METHOD(EXT, mono_class)
 }
 
 /** 
- * Proto: mixed Java::__call ( string procedure_name [, array arguments ]);
+ * Proto: mixed Java::__call ( string procedure_name [, array arguments ])
  *
  * Calls a Java procedure
  * Example:
@@ -1091,7 +1098,7 @@ EXT_METHOD(EXT, mono_class)
  * # The JPersistenceAdapter makes it possible to serialize java values.
  * #
  * # Example:
- * # $v=new JPersistenceAdapter(new java("java.lang.StringBuffer", "hello"));
+ * # $v=new JPersistenceAdapter(new Java("java.lang.StringBuffer", "hello"));
  * # $id=serialize($v);
  * # $file=fopen("file.out","w");
  * # fwrite($file, $id);
@@ -1107,16 +1114,16 @@ EXT_METHOD(EXT, mono_class)
  *    $this->serialID; 
  *  }
  *  function __sleep() {
- *    $buf = new java("java.io.ByteArrayOutputStream");
- *    $out = new java("java.io.ObjectOutputStream", $buf);
+ *    $buf = new Java("java.io.ByteArrayOutputStream");
+ *    $out = new Java("java.io.ObjectOutputStream", $buf);
  *    $out->writeObject($this->java);
  *    $out->close();
  *    $this->serialID = base64_encode((string)$buf->toByteArray());
  *    return array("serialID");
  *  }
  *  function __wakeup() {
- *    $buf = new java("java.io.ByteArrayInputStream",base64_decode($this->serialID));
- *    $in = new java("java.io.ObjectInputStream", $buf);
+ *    $buf = new Java("java.io.ByteArrayInputStream",base64_decode($this->serialID));
+ *    $in = new Java("java.io.ObjectInputStream", $buf);
  *    $this->java = $in->readObject();
  *    $in->close();
  *  }
@@ -1169,7 +1176,7 @@ EXT_METHOD(EXT, __call)
   efree(xargv);
 }
 
-/** Proto: object Java::__toString (void);
+/** Proto: object Java::__toString (void)
  *
  * Displays the java object as a string. Note: it doesn't cast the
  * object to a string, thus echo "$ob" displays a string
@@ -1206,7 +1213,7 @@ EXT_METHOD(EXT, __tostring)
 }
 
 /**
- * Proto: string Java::__set(object, object);
+ * Proto: void Java::__set(object, object)
  *
  * The setter
  * 
@@ -1231,7 +1238,7 @@ EXT_METHOD(EXT, __set)
 }
 
 /** 
- * Proto: void Java::__destruct();
+ * Proto: void Java::__destruct()
  *
  * Example:
  * \code
@@ -1284,7 +1291,7 @@ EXT_METHOD(EXT, __destruct)
 }
 
 /** 
- * Proto: string Java::__get(object);
+ * Proto: object Java::__get(object)
  *
  * The getter. Example: \code echo (string) $object->property;
  * \endcode If no property exists, the bean properties are examined
@@ -1306,12 +1313,12 @@ EXT_METHOD(EXT, __get)
 }
 
 /**
- * Proto: string Java::__sleep();
+ * Proto: string Java::__sleep()
  *
  * Serializes the object. 
  * Example:
  * \code
- *   $vector=new JPersistenceAdapter(new java("java.lang.StringBuffer", "hello"));
+ *   $vector=new JPersistenceAdapter(new Java("java.lang.StringBuffer", "hello"));
  *  $v=array (
  *	"test",
  *	$vector,
@@ -1327,7 +1334,7 @@ EXT_METHOD(EXT, __sleep)
   serialize(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
-/** Proto: string Java::__wakeup();
+/** Proto: string Java::__wakeup()
  * 
  * Deserializes the object. 
  * Example: 
@@ -1344,12 +1351,12 @@ EXT_METHOD(EXT, __wakeup)
   deserialize(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
-/** Proto: string Java::offsetExists();
+/** Proto: bool Java::offsetExists()
  * 
  * Checks if an object exists at the given position.
  * Example:
  * \code
- * $System = new java("java.lang.System");
+ * $System = new Java("java.lang.System");
  * $props = $System->getProperties();
  * if(!$props["user.home"]) die("No home dir!?!");
  * \endcode
@@ -1375,13 +1382,13 @@ EXT_METHOD(EXT, offsetExists)
 
 
 /** 
- * Proto: string Java::offsetGet();
+ * Proto: object Java::offsetGet()
  *
  * Get the object at a given position.
  *
  * Example:
  * \code
- * $System = new java("java.lang.System");
+ * $System = new Java("java.lang.System");
  * $props = $System->getProperties();
  * echo $props["user.home"]);
  * \endcode
@@ -1406,7 +1413,7 @@ EXT_METHOD(EXT, offsetGet)
   efree(argv);
 }
 
-/** Proto: string Java::offsetSet();
+/** Proto: void Java::offsetSet(object, object);
  *
  * Set the object at a given position. Example:
  * \code
@@ -1440,7 +1447,7 @@ EXT_METHOD(EXT, offsetSet)
   efree(argv);
 }
 
-/** Proto: string Java::offsetUnset();
+/** Proto: string Java::offsetUnset()
  * 
  * Remove the entry at a given position. Used internally.
  */
@@ -2035,9 +2042,10 @@ PHP_MINFO_FUNCTION(EXT)
 	php_info_print_table_row(2, EXT_NAME()/**/".classpath", EXT_GLOBAL(cfg)->classpath);
   }
 #endif
-  if(is_local) {
+  if(!server || is_local) {
 	php_info_print_table_row(2, EXT_NAME()/**/"."/**/EXT_NAME()/**/"_home", EXT_GLOBAL(cfg)->vm_home);
 	php_info_print_table_row(2, EXT_NAME()/**/"."/**/EXT_NAME(), EXT_GLOBAL(cfg)->vm);
+	php_info_print_table_row(2, EXT_NAME()/**/".wrapper", EXT_GLOBAL(cfg)->wrapper);
 	if(strlen(EXT_GLOBAL(cfg)->logFile)==0) 
 	  php_info_print_table_row(2, EXT_NAME()/**/".log_file", "<stdout>");
 	else

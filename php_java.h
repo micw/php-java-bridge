@@ -75,6 +75,7 @@ extern int EXT_GLOBAL(ini_updated), EXT_GLOBAL (ini_user), EXT_GLOBAL (ini_set);
 #define U_SOCKNAME (1<<7)
 #define U_HOSTS (1<<8)
 #define U_SERVLET (1<<9)
+#define U_WRAPPER (1<<10)
 
 
 #if EXTENSION == JAVA
@@ -106,6 +107,7 @@ struct cfg {
   char*hosts;
   char*classpath;	
   char*ld_library_path;
+  char*wrapper;
   char*vm;
   char*vm_home;
   char*logLevel;

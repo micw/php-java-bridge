@@ -1,12 +1,27 @@
+2005-12-11  Jost Boekemeier  <jostb@intern>
+
+	* client.c (override_ini_for_redirect): The previous change was
+	incompatible to the 2.0.8 behaviour. The new behaviour can now be
+	selected using: java.servlet=User or java.servlet=MultiUser.
+
+	VERSION, php-java-bridge.spec: Version 3.0.2 released
+	
 2005-12-08  Jost Boekemeier  <jostb@intern>
 
-	* bind.c (start_server): Detache the guard from the apache process group, otherwise it may get killed.
+	* bind.c (start_server): Detach the guard from the apache process
+	group, otherwise it may get killed (one had to kill the java
+	child).
 
-	* java.c (offsetExists, offsetGet, offsetSet, offsetUnset): Rewritten to use the new interface (the old implementation was horribly inefficient).
+	* java.c (offsetExists, offsetGet, offsetSet, offsetUnset):
+	Rewritten to use the new interface (the old implementation was
+	horribly inefficient).
 	
-	* java.c (MINIT): Use the global create_object, create_exception_object.
+	* java.c (MINIT): Use the global create_object,
+	create_exception_object.
 
-	* java_bridge.c (create_object, create_exception_object): New functions to prevent memory leaks, works around a bug in php 5.1.1 (signature changed from 5.1.0 to 5.1.1).
+	* java_bridge.c (create_object, create_exception_object): New
+	functions to prevent memory leaks, works around a bug in php 5.1.1
+	(signature changed from 5.1.0 to 5.1.1).
 	
 2005-11-27  Jost Boekemeier  <jostb@intern>
 

@@ -33,6 +33,9 @@
 # endif
 #endif
 
+#define N_SARGS N_JAVA_SARGS
+#define N_SENV N_JAVA_SENV
+
 /* strings */
 #include <string.h>
 /* setenv */

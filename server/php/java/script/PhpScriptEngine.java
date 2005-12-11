@@ -49,6 +49,7 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
      * The continuation of the script
      */
     protected HttpProxy continuation = null;
+    private FileReader localReader = null;
 
     /**
      * Create a new ScriptEngine.
@@ -138,7 +139,7 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
     public Object eval(String script, ScriptContext context)
 	throws ScriptException {
 	try {
-	    return eval(new FileReader(new File(script)), context);
+	    return eval(this.localReader=new FileReader(new File(script)), context);
 	} catch (Exception e) {
 	    Util.printStackTrace(e);
 	    throw new ScriptException(e);
@@ -168,6 +169,7 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
      */
     public void release() {
 	if(continuation != null) {
+	    if(localReader!=null) { try {localReader.close();} catch (Exception e) {Util.printStackTrace(e);} localReader=null; }
 	    continuation.release();
 	    continuation = null;
 	    script = null;

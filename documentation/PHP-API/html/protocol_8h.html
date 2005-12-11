@@ -58,45 +58,42 @@ It defines the proxyenv structure and the communication channels. <dl compact><d
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a12" doxytag="protocol.h::N_MONO_SENV"></a>
 #define&nbsp;</td><td class="memItemRight" valign="bottom"><b>N_MONO_SENV</b>&nbsp;&nbsp;&nbsp;1</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a13" doxytag="protocol.h::N_SARGS"></a>
-#define&nbsp;</td><td class="memItemRight" valign="bottom"><b>N_SARGS</b>&nbsp;&nbsp;&nbsp;N_JAVA_SARGS</td></tr>
-
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a14" doxytag="protocol.h::N_SENV"></a>
-#define&nbsp;</td><td class="memItemRight" valign="bottom"><b>N_SENV</b>&nbsp;&nbsp;&nbsp;N_JAVA_SENV</td></tr>
-
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a15" doxytag="protocol.h::DEFAULT_MONO_PORT"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a13" doxytag="protocol.h::DEFAULT_MONO_PORT"></a>
 #define&nbsp;</td><td class="memItemRight" valign="bottom"><b>DEFAULT_MONO_PORT</b>&nbsp;&nbsp;&nbsp;"9167"</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a16" doxytag="protocol.h::DEFAULT_JAVA_PORT"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a14" doxytag="protocol.h::DEFAULT_JAVA_PORT"></a>
 #define&nbsp;</td><td class="memItemRight" valign="bottom"><b>DEFAULT_JAVA_PORT</b>&nbsp;&nbsp;&nbsp;"9267"</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a17" doxytag="protocol.h::DEFAULT_PORT"></a>
-#define&nbsp;</td><td class="memItemRight" valign="bottom"><b>DEFAULT_PORT</b>&nbsp;&nbsp;&nbsp;DEFAULT_JAVA_PORT</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a15" doxytag="protocol.h::DEFAULT_JAVA_WRAPPER"></a>
+#define&nbsp;</td><td class="memItemRight" valign="bottom"><b>DEFAULT_JAVA_WRAPPER</b>&nbsp;&nbsp;&nbsp;EXTENSION_DIR/**/"/RunJavaBridge"</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a18" doxytag="protocol.h::DEFAULT_HOST"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a16" doxytag="protocol.h::DEFAULT_MONO_WRAPPER"></a>
+#define&nbsp;</td><td class="memItemRight" valign="bottom"><b>DEFAULT_MONO_WRAPPER</b>&nbsp;&nbsp;&nbsp;EXTENSION_DIR/**/"/RunMonoBridge"</td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a17" doxytag="protocol.h::DEFAULT_HOST"></a>
 #define&nbsp;</td><td class="memItemRight" valign="bottom"><b>DEFAULT_HOST</b>&nbsp;&nbsp;&nbsp;"127.0.0.1"</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a19" doxytag="protocol.h::DEFAULT_SERVLET"></a>
-#define&nbsp;</td><td class="memItemRight" valign="bottom"><b>DEFAULT_SERVLET</b>&nbsp;&nbsp;&nbsp;"/JavaBridge/dummy.php"</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a18" doxytag="protocol.h::DEFAULT_SERVLET"></a>
+#define&nbsp;</td><td class="memItemRight" valign="bottom"><b>DEFAULT_SERVLET</b>&nbsp;&nbsp;&nbsp;"/JavaBridge/JavaBridge.php"</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a20" doxytag="protocol.h::RECV_SIZE"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a19" doxytag="protocol.h::RECV_SIZE"></a>
 #define&nbsp;</td><td class="memItemRight" valign="bottom"><b>RECV_SIZE</b>&nbsp;&nbsp;&nbsp;8192</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a21" doxytag="protocol.h::MAX_ARGS"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a20" doxytag="protocol.h::MAX_ARGS"></a>
 #define&nbsp;</td><td class="memItemRight" valign="bottom"><b>MAX_ARGS</b>&nbsp;&nbsp;&nbsp;100</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a22" doxytag="protocol.h::IS_SERVLET_BACKEND"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a21" doxytag="protocol.h::IS_SERVLET_BACKEND"></a>
 #define&nbsp;</td><td class="memItemRight" valign="bottom"><b>IS_SERVLET_BACKEND</b>(env)&nbsp;&nbsp;&nbsp;(((*env)-&gt;servlet_ctx || EXT_GLOBAL (get_servlet_context) (TSRMLS_C)))</td></tr>
 
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a23" doxytag="protocol.h::IS_OVERRIDE_REDIRECT"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a22" doxytag="protocol.h::IS_OVERRIDE_REDIRECT"></a>
 #define&nbsp;</td><td class="memItemRight" valign="bottom"><b>IS_OVERRIDE_REDIRECT</b>(env)&nbsp;&nbsp;&nbsp;((((*env)-&gt;peer0!=-1) || EXT_GLOBAL (get_servlet_context) (TSRMLS_C)))</td></tr>
 
 <tr><td colspan="2"><br><h2>Typedefs</h2></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a24" doxytag="protocol.h::proxyenv"></a>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a23" doxytag="protocol.h::proxyenv"></a>
 typedef proxyenv_ *&nbsp;</td><td class="memItemRight" valign="bottom"><b>proxyenv</b></td></tr>
 
 </table>
-<hr size="1"><address style="align: right;"><small>Generated on Sat Dec 3 13:17:27 2005 for php-java-bridge by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Sun Dec 11 18:45:26 2005 for php-java-bridge by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.2 </small></address>
 </body>

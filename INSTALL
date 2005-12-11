@@ -1,10 +1,46 @@
+Installation on RedHat Linux (RHEL, Fedora, ...)
+-------------------------------------------------
+
+* Install a J2RE, for example with the command:
+  rpm -i IBMJava2-JRE-1.4.1-8.i386.rpm
+
+* Install PHP, for example with the command: 
+  rpm -i php-4.3.2-8.ent.i386.rpm
+
+* Install the web-server, for example with the command:
+  rpm -i httpd-2.0.46-25.ent.i386.rpm
+
+* Install the php-java-bridge, for example with the command:
+  rpm -i php-java-bridge-X.Y.Z-1.i386.rpm
+
+* If you have SECURITY ENHANCED LINUX, the above command should have
+  provided instructions how to install the php-java-bridge.te and
+  php-java-bridge.fc policy files.
+
+Start the web-server with the command: service httpd restart.
+Start the bridge with the command: service php-java-bridge restart
+
+Create a simple php file in /var/www/html, for example with
+the command: echo "<?php phpinfo(); ?>" >/var/www/html/phpinfo.php.
+
+Browse to http://localhost/phpinfo.php and search for the 
+output of the php java bridge module (the entry should be: 
+"java.support: Enabled").
+
+Then install your your java libraries (.jar files) in /usr/share/java
+or in java.libpath/lib (see output of phpinfo) and your php and
+web-pages in /var/www/html or one of their sub-directories.
+
+
 Installation from source code (Solaris, FreeBSD, WinXP or Linux)
 ----------------------------------------------------------------
 
-NOTE: If you run a SELinux kernel, you must install the policy files
-before you can run the PHP/Java Bridge. The php-java-bridge source
-tarball contains the policy files in the root directory. Please see
-the README file.
+NOTE: RPMs contain Security Enhanced Linux contexts. If you want to
+install software on a SEL system (RHEL, Fedora, ...), please use the
+RPM build system instead (rpmbuild --rebuild php-java-bridge*src.rpm).
+However, for a development system you can switch off SEL and follow
+the instructions below.
+
 
 The following software components must be installed on your computer:
 
@@ -31,37 +67,28 @@ and optionally, if you want to run JSP and PHP from Apache/Tomcat:
 * mod_jk with Apache/Tomcat.
 
 
-# Choose a proper INST directory, for example /usr/local/ or
-$HOME/PHP-JAVA-BRIDGE/ and type the following commands:
-
-#
 # adjust the install directory
-#
-INST=/usr/local
+INST=/usr/local #INST=$HOME/bridge
 
-#
-# First of all make sure that the build scripts don't find
-# zombies or OLD VERSIONS OF THE PROGRAMS WE'RE BUILDING:
-#
+# remove all old files under $INST
+#rm -rf $INST
+
+# set build path
 export PATH=$INST/bin:$PATH 
 export LD_LIBRARY_PATH=$INST/lib:$LD_LIBRARY_PATH
 
-
-#
 # stop the system http service 
-#
 su - -c "service httpd stop"
-
 
 # adjust the java version
 JAVA_HOME=/opt/IBMJava2-141
-
 
 # The following software components are required during the build
 # process: autoconf 2.57, automake 1.6.3 and libtool 1.4.3. If you
 # don't have autoconf >= 2.57, automake >= 1.6.3 libtool >= 1.4.3, or
 # versions which do not match, for example autoconf 2.59 and libtool
-# 1.4.3, you must compile and install these before proceeding:
+# 1.4.3, you must REMOVE THE OLD VERSIONS and compile and install
+# these before proceeding:
 
 (cd autoconf-2.57;  ./configure --prefix=$INST && make && su -c "make install")
 (cd automake-1.6.3; ./configure --prefix=$INST && make && su -c "make install")
@@ -118,6 +145,17 @@ echo '<?php phpinfo() ?>' | php | fgrep java
 
 # checking web, should return "java running"
 wget -olog -O-  http://localhost/phpinfo.php|fgrep java
+
+If the above test succeeded, copy the files "java.so",
+"libnatcJavaBridge.so" and "JavaBridge.jar" (on Windows: php_java.dll
+and JavaBridge.jar) to the extension_dir of your system php
+installation and start the system http service again.
+
+If something went wrong, for example if you have forgotten to set
+JAVA_HOME or if configure failed because the installed autoconf
+version is too old, you can only remove the build directory and start
+from the beginning; removing the autom4te cache directories from the
+build directory may be enough sometimes, but not always.
 
 
 

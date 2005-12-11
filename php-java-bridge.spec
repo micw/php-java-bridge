@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 3.0.1
+%define version 3.0.2
 %define release 1
 %define PHP_MAJOR_VERSION %(LANG=C rpm -q --queryformat "%{VERSION}" php | sed 's/\\\..*$//')
 %define have_sysconfig_java %(test -s /etc/sysconfig/java && echo 1 || echo 0)

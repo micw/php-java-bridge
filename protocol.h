@@ -46,19 +46,12 @@
 #define N_JAVA_SENV 3 
 #define N_MONO_SARGS 6
 #define N_MONO_SENV 1
-#ifndef N_SARGS 
-# define N_SARGS N_JAVA_SARGS	/* # of server args for exec */
-#endif
-#ifndef N_SENV
-# define N_SENV N_JAVA_SENV		/* # of server env entries */
-#endif
 #define DEFAULT_MONO_PORT "9167" /* default port for tcp/ip */
 #define DEFAULT_JAVA_PORT "9267" /* default port for tcp/ip */
-#ifndef DEFAULT_PORT
-# define DEFAULT_PORT DEFAULT_JAVA_PORT /* init_cfg.h overrides */
-#endif
+#define DEFAULT_JAVA_WRAPPER EXTENSION_DIR/**/"/RunJavaBridge"
+#define DEFAULT_MONO_WRAPPER EXTENSION_DIR/**/"/RunMonoBridge"
 #define DEFAULT_HOST "127.0.0.1"
-#define DEFAULT_SERVLET "/JavaBridge/dummy.php"
+#define DEFAULT_SERVLET "/JavaBridge/JavaBridge.php"
 
 #define RECV_SIZE 8192 // initial size of the receive buffer
 #define MAX_ARGS 100   // max # of method arguments

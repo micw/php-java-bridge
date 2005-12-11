@@ -1,8 +1,8 @@
 What is the PHP/Java Bridge?
 ----------------------------
 
-  The PHP/Java Bridge is PHP module which connects the PHP object system
-  with the java or ECMA 335 object system.
+  The PHP/Java Bridge is a network protocol which can be used to
+  connect PHP with a java or ECMA 335 VM.
 
   Please read the ABOUT.HTM contained in the download archive or
   http://php-java-bridge.sf.net for more information.
@@ -128,7 +128,7 @@ Build and execution instructions:
      engine.eval(new URLReader(new URL("http://127.0.0.1/test.php")));
 
      //...and call procedures within the allocated continuation...
-     String s=((Invocable)engine).call("hello", new Object[]{});
+     String s=((Invocable)engine).invoke("hello", new Object[]{});
      System.out.println("test.php::hello() returned: "+s);
 
      //.. release the allocated continuation:
@@ -377,7 +377,7 @@ Build and execution instructions:
     ?>
 
   However, this feature is meant for testing, only.  For a production
-  system it is recommended to compile PHP in save mode (which switches
+  system it is recommended to compile PHP in safe mode (which switches
   off the dl() function) and to activate all modules in the global
   php ini file.
 

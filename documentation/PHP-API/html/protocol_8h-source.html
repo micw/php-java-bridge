@@ -46,93 +46,86 @@
 00046 <span class="preprocessor"></span><span class="preprocessor">#define N_JAVA_SENV 3 </span>
 00047 <span class="preprocessor"></span><span class="preprocessor">#define N_MONO_SARGS 6</span>
 00048 <span class="preprocessor"></span><span class="preprocessor">#define N_MONO_SENV 1</span>
-00049 <span class="preprocessor"></span><span class="preprocessor">#ifndef N_SARGS </span>
-00050 <span class="preprocessor"></span><span class="preprocessor"># define N_SARGS N_JAVA_SARGS   </span><span class="comment">/* # of server args for exec */</span>
-00051 <span class="preprocessor">#endif</span>
-00052 <span class="preprocessor"></span><span class="preprocessor">#ifndef N_SENV</span>
-00053 <span class="preprocessor"></span><span class="preprocessor"># define N_SENV N_JAVA_SENV     </span><span class="comment">/* # of server env entries */</span>
-00054 <span class="preprocessor">#endif</span>
-00055 <span class="preprocessor"></span><span class="preprocessor">#define DEFAULT_MONO_PORT "9167" </span><span class="comment">/* default port for tcp/ip */</span>
-00056 <span class="preprocessor">#define DEFAULT_JAVA_PORT "9267" </span><span class="comment">/* default port for tcp/ip */</span>
-00057 <span class="preprocessor">#ifndef DEFAULT_PORT</span>
-00058 <span class="preprocessor"></span><span class="preprocessor"># define DEFAULT_PORT DEFAULT_JAVA_PORT </span><span class="comment">/* init_cfg.h overrides */</span>
-00059 <span class="preprocessor">#endif</span>
-00060 <span class="preprocessor"></span><span class="preprocessor">#define DEFAULT_HOST "127.0.0.1"</span>
-00061 <span class="preprocessor"></span><span class="preprocessor">#define DEFAULT_SERVLET "/JavaBridge/dummy.php"</span>
-00062 <span class="preprocessor"></span>
-00063 <span class="preprocessor">#define RECV_SIZE 8192 // initial size of the receive buffer</span>
-00064 <span class="preprocessor"></span><span class="preprocessor">#define MAX_ARGS 100   // max # of method arguments</span>
+00049 <span class="preprocessor"></span><span class="preprocessor">#define DEFAULT_MONO_PORT "9167" </span><span class="comment">/* default port for tcp/ip */</span>
+00050 <span class="preprocessor">#define DEFAULT_JAVA_PORT "9267" </span><span class="comment">/* default port for tcp/ip */</span>
+00051 <span class="preprocessor">#define DEFAULT_JAVA_WRAPPER EXTENSION_DIR"/RunJavaBridge"</span>
+00052 <span class="preprocessor"></span><span class="preprocessor">#define DEFAULT_MONO_WRAPPER EXTENSION_DIR"/RunMonoBridge"</span>
+00053 <span class="preprocessor"></span><span class="preprocessor">#define DEFAULT_HOST "127.0.0.1"</span>
+00054 <span class="preprocessor"></span><span class="preprocessor">#define DEFAULT_SERVLET "/JavaBridge/JavaBridge.php"</span>
+00055 <span class="preprocessor"></span>
+00056 <span class="preprocessor">#define RECV_SIZE 8192 // initial size of the receive buffer</span>
+00057 <span class="preprocessor"></span><span class="preprocessor">#define MAX_ARGS 100   // max # of method arguments</span>
+00058 <span class="preprocessor"></span>
+00059 <span class="comment">/* checks if we use a servlet backend (re-directed or not) */</span>
+00060 <span class="preprocessor">#define IS_SERVLET_BACKEND(env) (((*env)-&gt;servlet_ctx || EXT_GLOBAL (get_servlet_context) (TSRMLS_C)))</span>
+00061 <span class="preprocessor"></span>
+00062 <span class="comment">/* checks if the servlet backend uses HTTP, either because we do not</span>
+00063 <span class="comment">   re-direct or because we override re-direct */</span>
+00064 <span class="preprocessor">#define IS_OVERRIDE_REDIRECT(env) ((((*env)-&gt;peer0!=-1) || EXT_GLOBAL (get_servlet_context) (TSRMLS_C)))</span>
 00065 <span class="preprocessor"></span>
-00066 <span class="comment">/* checks if we use a servlet backend (re-directed or not) */</span>
-00067 <span class="preprocessor">#define IS_SERVLET_BACKEND(env) (((*env)-&gt;servlet_ctx || EXT_GLOBAL (get_servlet_context) (TSRMLS_C)))</span>
-00068 <span class="preprocessor"></span>
-00069 <span class="comment">/* checks if the servlet backend uses HTTP, either because we do not</span>
-00070 <span class="comment">   re-direct or because we override re-direct */</span>
-00071 <span class="preprocessor">#define IS_OVERRIDE_REDIRECT(env) ((((*env)-&gt;peer0!=-1) || EXT_GLOBAL (get_servlet_context) (TSRMLS_C)))</span>
-00072 <span class="preprocessor"></span>
-00073 <span class="keyword">typedef</span> <span class="keyword">struct </span>proxyenv_ *proxyenv;
-00074 <span class="keyword">struct </span>proxyenv_ {
-00075 
-00076   <span class="comment">/* peer */</span>
-00077   <span class="keywordtype">int</span> peer, peer0;              <span class="comment">/* peer0 contains peer during override</span>
-00078 <span class="comment">                                   redirect */</span>
-00079   <span class="keywordtype">short</span> peer_redirected;        <span class="comment">/* remains true during override</span>
-00080 <span class="comment">                                   redirect */</span>
-00081   <span class="keyword">struct </span>sockaddr orig_peer_saddr; <span class="comment">/* only valid if peer is a servlet, it</span>
-00082 <span class="comment">                                   points to the original peer */</span>
-00083 
-00084 
-00085   <span class="comment">/* used by the parser implementation */</span>
-00086   <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>*s; size_t len; 
-00087   ssize_t pos, c; 
-00088   <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> recv_buf[RECV_SIZE];
-00089 
-00090   <span class="comment">/* the send buffer */</span>
-00091   <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>*send;
-00092   size_t send_len, send_size;
-00093 
-00094   <span class="keywordtype">char</span> *server_name;
-00095 
-00096   <span class="comment">/* local server (not a servlet engine) */</span>
-00097   <span class="keywordtype">short</span> is_local;
-00098 
-00099   <span class="comment">/* for servlets: re-open connection */</span>
-00100   <span class="keywordtype">short</span> must_reopen; 
-00101 
-00102   <span class="comment">/* for servlet engines only */</span>
-00103   <span class="keywordtype">char</span> *servlet_ctx, *servlet_context_string;
-00104   
-00105   void (*handle_request)(proxyenv *env);
-00106 
-00107   void (*writeCreateObjectBegin)(proxyenv *env, <span class="keywordtype">char</span>*name, size_t strlen, <span class="keywordtype">char</span> createInstance, <span class="keywordtype">void</span> *result);
-00108   void (*writeCreateObjectEnd)(proxyenv *env);
-00109   void (*writeInvokeBegin)(proxyenv *env, <span class="keywordtype">long</span> object, <span class="keywordtype">char</span>*method, size_t strlen, <span class="keywordtype">char</span> property, <span class="keywordtype">void</span>* result);
-00110   void (*writeInvokeEnd)(proxyenv *env);
-00111   void (*writeResultBegin)(proxyenv *env, <span class="keywordtype">void</span>* result);
-00112   void (*writeResultEnd)(proxyenv *env);
-00113   void (*writeGetMethodBegin)(proxyenv *env, <span class="keywordtype">long</span> object, <span class="keywordtype">char</span>*method, size_t strlen, <span class="keywordtype">void</span>* result);
-00114   void (*writeGetMethodEnd)(proxyenv *env);
-00115   void (*writeCallMethodBegin)(proxyenv *env, <span class="keywordtype">long</span> object, <span class="keywordtype">long</span> method, <span class="keywordtype">void</span>* result);
-00116   void (*writeCallMethodEnd)(proxyenv *env);
-00117   void (*writeString)(proxyenv *env, <span class="keywordtype">char</span>*name, size_t strlen);
-00118   void (*writeBoolean)(proxyenv *env, <span class="keywordtype">short</span> boolean);
-00119   void (*writeLong)(proxyenv *env, <span class="keywordtype">long</span> l);
-00120   void (*writeDouble)(proxyenv *env, <span class="keywordtype">double</span> d);
-00121   void (*writeObject)(proxyenv *env, <span class="keywordtype">long</span> object);
-00122   void (*writeException)(proxyenv *env, <span class="keywordtype">long</span> object, <span class="keywordtype">char</span>*str, size_t len);
-00123   void (*writeCompositeBegin_a)(proxyenv *env);
-00124   void (*writeCompositeBegin_h)(proxyenv *env);
-00125   void (*writeCompositeEnd)(proxyenv *env);
-00126   void (*writePairBegin_s)(proxyenv *env, <span class="keywordtype">char</span>*key, size_t strlen);
-00127   void (*writePairBegin_n)(proxyenv *env, <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> key);
-00128   void (*writePairBegin)(proxyenv *env);
-00129   void (*writePairEnd)(proxyenv *env);
-00130   void (*writeUnref)(proxyenv *env, <span class="keywordtype">long</span> object);
-00131   void (*finish)(proxyenv *env);
-00132 };
-00133 
-00134 <span class="preprocessor">#endif</span>
-</pre></div><hr size="1"><address style="align: right;"><small>Generated on Sat Dec 3 13:17:27 2005 for php-java-bridge by&nbsp;
+00066 <span class="keyword">typedef</span> <span class="keyword">struct </span>proxyenv_ *proxyenv;
+00067 <span class="keyword">struct </span>proxyenv_ {
+00068 
+00069   <span class="comment">/* peer */</span>
+00070   <span class="keywordtype">int</span> peer, peer0;              <span class="comment">/* peer0 contains peer during override</span>
+00071 <span class="comment">                                   redirect */</span>
+00072   <span class="keywordtype">short</span> peer_redirected;        <span class="comment">/* remains true during override</span>
+00073 <span class="comment">                                   redirect */</span>
+00074   <span class="keyword">struct </span>sockaddr orig_peer_saddr; <span class="comment">/* only valid if peer is a servlet, it</span>
+00075 <span class="comment">                                   points to the original peer */</span>
+00076 
+00077 
+00078   <span class="comment">/* used by the parser implementation */</span>
+00079   <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>*s; size_t len; 
+00080   ssize_t pos, c; 
+00081   <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> recv_buf[RECV_SIZE];
+00082 
+00083   <span class="comment">/* the send buffer */</span>
+00084   <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>*send;
+00085   size_t send_len, send_size;
+00086 
+00087   <span class="keywordtype">char</span> *server_name;
+00088 
+00089   <span class="comment">/* local server (not a servlet engine) */</span>
+00090   <span class="keywordtype">short</span> is_local;
+00091 
+00092   <span class="comment">/* for servlets: re-open connection */</span>
+00093   <span class="keywordtype">short</span> must_reopen; 
+00094 
+00095   <span class="comment">/* for servlet engines only */</span>
+00096   <span class="keywordtype">char</span> *servlet_ctx, *servlet_context_string;
+00097   
+00098   void (*handle_request)(proxyenv *env);
+00099 
+00100   void (*writeCreateObjectBegin)(proxyenv *env, <span class="keywordtype">char</span>*name, size_t strlen, <span class="keywordtype">char</span> createInstance, <span class="keywordtype">void</span> *result);
+00101   void (*writeCreateObjectEnd)(proxyenv *env);
+00102   void (*writeInvokeBegin)(proxyenv *env, <span class="keywordtype">long</span> object, <span class="keywordtype">char</span>*method, size_t strlen, <span class="keywordtype">char</span> property, <span class="keywordtype">void</span>* result);
+00103   void (*writeInvokeEnd)(proxyenv *env);
+00104   void (*writeResultBegin)(proxyenv *env, <span class="keywordtype">void</span>* result);
+00105   void (*writeResultEnd)(proxyenv *env);
+00106   void (*writeGetMethodBegin)(proxyenv *env, <span class="keywordtype">long</span> object, <span class="keywordtype">char</span>*method, size_t strlen, <span class="keywordtype">void</span>* result);
+00107   void (*writeGetMethodEnd)(proxyenv *env);
+00108   void (*writeCallMethodBegin)(proxyenv *env, <span class="keywordtype">long</span> object, <span class="keywordtype">long</span> method, <span class="keywordtype">void</span>* result);
+00109   void (*writeCallMethodEnd)(proxyenv *env);
+00110   void (*writeString)(proxyenv *env, <span class="keywordtype">char</span>*name, size_t strlen);
+00111   void (*writeBoolean)(proxyenv *env, <span class="keywordtype">short</span> boolean);
+00112   void (*writeLong)(proxyenv *env, <span class="keywordtype">long</span> l);
+00113   void (*writeDouble)(proxyenv *env, <span class="keywordtype">double</span> d);
+00114   void (*writeObject)(proxyenv *env, <span class="keywordtype">long</span> object);
+00115   void (*writeException)(proxyenv *env, <span class="keywordtype">long</span> object, <span class="keywordtype">char</span>*str, size_t len);
+00116   void (*writeCompositeBegin_a)(proxyenv *env);
+00117   void (*writeCompositeBegin_h)(proxyenv *env);
+00118   void (*writeCompositeEnd)(proxyenv *env);
+00119   void (*writePairBegin_s)(proxyenv *env, <span class="keywordtype">char</span>*key, size_t strlen);
+00120   void (*writePairBegin_n)(proxyenv *env, <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> key);
+00121   void (*writePairBegin)(proxyenv *env);
+00122   void (*writePairEnd)(proxyenv *env);
+00123   void (*writeUnref)(proxyenv *env, <span class="keywordtype">long</span> object);
+00124   void (*finish)(proxyenv *env);
+00125 };
+00126 
+00127 <span class="preprocessor">#endif</span>
+</pre></div><hr size="1"><address style="align: right;"><small>Generated on Sun Dec 11 18:45:26 2005 for php-java-bridge by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.2 </small></address>
 </body>
