@@ -47,7 +47,9 @@ public class JavaBridgeRunner extends HttpServer {
      */
     public ISocketFactory bind() {
 	try {
-	    return JavaBridge.bind("INET:0");
+            boolean promisc = (System.getProperty("php.java.bridge.promiscuous", "false").toLowerCase().equals("true"));
+	    socket =  promisc ? JavaBridge.bind("INET:0") : JavaBridge.bind("INET_LOCAL:0");
+	    return socket;
 	} catch (Exception e) {
 	    Util.printStackTrace(e);
 	    return null;
@@ -81,7 +83,7 @@ public class JavaBridgeRunner extends HttpServer {
 
 	try {
 	    if(r.init(sin, sout)) {
-		res.setHeader("X_JAVABRIDGE_REDIRECT", socketRunner.getSocket().getSocketName());
+		res.setHeader("X_JAVABRIDGE_REDIRECT", socketRunner.getChannelName());
 	    	r.handleOneRequest();
 
 		// redirect and re-open
@@ -89,7 +91,7 @@ public class JavaBridgeRunner extends HttpServer {
 		res.setContentLength(sout.size());
 		resOut = res.getOutputStream();
 		sout.writeTo(resOut);
-		if(bridge.logLevel>3) bridge.logDebug("re-directing to port# "+ socketRunner.getSocket().getSocketName());
+		if(bridge.logLevel>3) bridge.logDebug("re-directing to port# "+ socketRunner.getChannelName());
 	    	sin.close();
 	    	resOut.flush();
 	    	if(bridge.logLevel>3) bridge.logDebug("waiting for context: " +ctx.getId());

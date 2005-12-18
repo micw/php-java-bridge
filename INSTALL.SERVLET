@@ -2,7 +2,10 @@ Installing the PHP/Java Bridge J2EE Component
 ---------------------------------------------
 
 * Download and install a J2EE application server or servlet engine,
-  either Oracle 10g, IBM WebSphere6 or Tomcat 4 or higher.
+  either Oracle 10g, IBM WebSphere6 or Tomcat 4 or higher. For example
+  with the command: 
+
+    rpm -i tomcat5-5.0.30-5jpp_6fc.i386.rpm
 
 * Download and install the PHP/Java Bridge, for example with the
   command: 
@@ -27,10 +30,8 @@ Installing the PHP/Java Bridge J2EE Component
 * Deploy JavaBridge.war into your servlet engine or application
   server. For example with the command: 
 
-    cp JavaBridge.war /opt/jakarta-tomcat-5.5.9/webapps/
-    export JAVA_HOME=/usr/java/jdk1.6.0/
-    /opt/jakarta-tomcat-5.5.9/bin/catalina.sh stop
-    /opt/jakarta-tomcat-5.5.9/bin/catalina.sh start
+    cp JavaBridge.war /usr/share/tomcat5/webapps
+    service tomcat5 restart
 
 * Browse to http://localhost:<port#>/JavaBridge and run the
   supplied examples. For example:
@@ -103,9 +104,6 @@ internet, example:
 Known AS Issues 
 ---------------
 
-* If tomcat 5.5.9 cannot render .jsp pages: Remove the jsp-api.jar from
-  the WEB-INF/lib/ folder.
-
 * If you see a script exception when running java-server-faces/index.php
   and the name is displayed as "null", check if apache is able to
   execute the script. If not, stop apache or change the script
@@ -113,7 +111,26 @@ Known AS Issues
   "/java-server-faces/helloWorld.php".
 
 * Remember to stop the local backend (/etc/init.d/php-java-bridge stop) 
-  and to set java.hosts=... and java.servlet=On.  Otherwise session
+  and to set java.hosts=... and java.servlet=User.  Otherwise session
   sharing with .jsp will not work and java-server-faces/index.php will
   redirect you to the local backend which doesn't understand anything
   about jsf.
+
+* The Sun J2EE application server does not allow one to start CGI
+  binaries. Start a PHP server outside of the AS domain instead, for
+  example with the command:
+
+    X_JAVABRIDGE_OVERRIDE_HOSTS="/" \
+    PHP_FCGI_CHILDREN="20" \
+    PHP_FCGI_MAX_REQUESTS="500" \
+    php-cgi -dlog_errors=On -ddisplay_errors=Off -b127.0.0.1:9667
+
+  During development one can observe the c/s communication with:
+    # linux
+    X_JAVABRIDGE_OVERRIDE_HOSTS="/" strace -s 320 php-cgi -n -b:9667
+    # solaris
+    X_JAVABRIDGE_OVERRIDE_HOSTS="/" truss php-cgi -n -b:9667
+
+  The Sun AS cannot run test.php correctly because permissions to read
+  System->getProperties() are missing. This is harmless, see the AS log
+  for the PHP error messages.

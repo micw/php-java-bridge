@@ -29,6 +29,9 @@
 #define P_tmpdir "/tmp"
 #endif 
 #define SOCKNAME P_tmpdir/**/"/.php_java_bridge"/**/"XXXXXX"
+/* Linux: pipes created in the shared memory */
+#define SOCKNAME_SHM "/dev/shm/.php_java_bridge"/**/"XXXXXX"
+
 
 /*
  * default log file is System.out
@@ -67,7 +70,7 @@ typedef struct proxyenv_ *proxyenv;
 struct proxyenv_ {
 
   /* peer */
-  int peer, peer0;				/* peer0 contains peer during override
+  int peer, peerr, peer0;		/* peer0 contains peer during override
 								   redirect */
   short peer_redirected;		/* remains true during override
 								   redirect */
@@ -122,6 +125,11 @@ struct proxyenv_ {
   void (*writePairEnd)(proxyenv *env);
   void (*writeUnref)(proxyenv *env, long object);
   void (*finish)(proxyenv *env);
+
+  ssize_t (*f_recv)(proxyenv*env, void *buf, size_t len);
+  ssize_t (*f_recv0)(proxyenv*env, void *buf, size_t len);
+  ssize_t (*f_send)(proxyenv*env, int peer, const void *buf, size_t len);
+  ssize_t (*f_send0)(proxyenv*env, int peer, const void *buf, size_t len);
 };
 
 #endif

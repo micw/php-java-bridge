@@ -1,10 +1,45 @@
+2005-12-18  Jost Boekemeier  <jostb@intern>
+
+	* client.c (begin_header): store redirect_port and redirect to named
+	pipe if necessary.
+	
+	* init_cfg.c.in (override_ini_from_cgi, create_pipe, create_pipes,
+	init_channel, destroy_channel, destroy_sockname): New functions.
+
+	* protocol.h (SOCKNAME_SHM): Default location of the named pipe.
+	(peerr, f_recv, f_recv0, f_send, f_send0): New protocol variables
+	for named pipes.
+
+	* test.php: Correct output.
+
+	* server/configure.in: Use RI instead of myfaces.
+
+	* unsupported/commons-el.jar, unsupported/myfaces-api.jar,
+	unsupported/myfaces-impl.jar, unsupported/tomahawk.jar: Removed
+	apache myfaces
+
+	* unsupported/jsf-api.jar, unsupported/jsf-impl.jar,
+	unsupported/jstl.jar/unsupported/standard.jar: Added jsf RI
+
+	* server/php/java/bridge/http/IContextServer.java,
+	server/php/java/bridge/http/PipeContextServer.java,
+	server/php/java/bridge/http/SocketContextServer.java: New files.
+
+	* server/php/java/bridge/http/ContextServer.java: Rewritten to use
+	pipes or sockets.
+
+	* examples/java-server-faces/index.php: Use to the server
+	name w/o port.
+	
+	* VERSION, php-java-bridge.spec: Version 3.0.3 released
+	
 2005-12-11  Jost Boekemeier  <jostb@intern>
 
 	* client.c (override_ini_for_redirect): The previous change was
 	incompatible to the 2.0.8 behaviour. The new behaviour can now be
 	selected using: java.servlet=User or java.servlet=MultiUser.
 
-	VERSION, php-java-bridge.spec: Version 3.0.2 released
+	* VERSION, php-java-bridge.spec: Version 3.0.2 released
 	
 2005-12-08  Jost Boekemeier  <jostb@intern>
 

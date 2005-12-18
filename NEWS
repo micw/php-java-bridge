@@ -3,6 +3,25 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 3.0.3:
+
+* Communication via named pipes: When the backend is running inside a
+  Unix servlet engine or application server, the bridge uses named pipes
+  instead of TCP sockets. This communication channel is 1.5 times faster
+  than unix domain sockets and 2 times faster than TCP sockets. TCP
+  sockets are still used on systems which do not support standard Unix
+  named pipes (Windows).
+
+* Because of the above change the bridge now works with the "Sun Java
+  System Application Server Platform Edition 8" on Unix.
+
+* TCP sockets only listen on the local (127.0.0.1) interface unless
+  the system property "php.java.bridge.promiscuous" is set to true.
+
+* The apache jsf "myfaces" implementation, which caused problems with
+  various application servers or servlet engines, has been replaced by
+  JSF 1.1.01.
+
 Version 3.0.2:
 
 * Backward compatibility with 2.0.8: The java.servlet can now have

@@ -597,7 +597,11 @@ public class JavaBridge implements Runnable {
 		    	} else if(arg instanceof PhpProcedureProxy) {
 			    PhpProcedureProxy proxy = ((PhpProcedureProxy)arg);
 			    if(proxy.suppliedInterfaces==null) {
-				if(!parms[i].isInterface()) weight+=9999;	    			
+				if(!parms[i].isInterface()) { 
+				    // generic: Object
+				    args=(Object[])args.clone(); 
+				    args[i] = arg = Request.ZERO_OBJECT;
+				}
 			    } else {
 		    	    	args=(Object[])args.clone();
 		    	    	args[i] = arg = proxy.getProxy(null);        

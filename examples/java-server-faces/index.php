@@ -15,7 +15,7 @@ function redirect() {
 
   $array=split(":", $backend);
   $port=$array[1];
-  header ("Location: http://$_SERVER[HTTP_HOST]:$port$target/helloWorld.jsf");
+  header ("Location: http://$_SERVER[SERVER_NAME]:$port$target/helloWorld.jsf");
 }
 
 redirect();

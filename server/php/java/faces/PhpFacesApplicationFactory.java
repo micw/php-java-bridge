@@ -18,6 +18,9 @@ public class PhpFacesApplicationFactory extends javax.faces.application.Applicat
     public PhpFacesApplicationFactory(ApplicationFactory factory) {
 	this.factory = factory;
     }
+    public PhpFacesApplicationFactory() {
+        throw new IllegalStateException("DefaultApplicationFactory missing. Please update your jsf-impl.jar and jsf-api.jar.");
+    }
 	
     /* (non-Javadoc)
      * @see javax.faces.context.PhpFacesApplicationFactory#getApplication()

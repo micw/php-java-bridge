@@ -42,7 +42,7 @@ Build and execution instructions:
    -------------------------------
 
   The bridge consists of two parts, the "frontent", usually Apache/PHP
-  and our "java.so", and the "backend". The following describes how to
+  and our "java.so", and a "backend". The following describes how to
   start the backend (if necessary) and how to configure the frontend to
   use it.
 
@@ -574,30 +574,23 @@ Build and execution instructions:
   Security issues
   ---------------
 
+  The bridge uses abstract local sockets, named pipes (located in
+  /dev/shm/ or /tmp/) or local TCP sockets as communication channels.
+
   It is recommended to use the local backend on a Unix machine which
-  supports abstract local ("unix domain") sockets. On these systems
-  the communication channel is not visible and cannot be attacked. If
-  you are running a Security Enhanced Linux kernel, which is standard
-  since RHEL4 or FC3, the backend is also protected by the SEL policy.
+  supports abstract local ("unix domain") sockets or named pipes. On
+  these systems the communication channel is not visible and cannot be
+  attacked. If you are running a Security Enhanced Linux kernel, which
+  is standard since RHEL4 or FC3, the backend is also protected by the
+  SEL policy. The servlet backend uses a HTTP tunnel to execute one
+  statement and then switches to named pipes for the rest of the
+  communication.
 
-  On other systems, such as Windows and Mac OSX or when the backend is
-  running in a standard J2EE (servlet-, AS-) environment where local
-  channels are not available, the bridge opens a TCP port on 9167
-  (JavaBridge.jar) or 9267 (MonoBridge.exe) or 9567 (JavaBridge.war) 
-  and binds to all(!) available network cards. When running as a
-  CGI binary the port is 9567 (CGI) or 9667 (FastCGI) and only the
-  loopback (127.0.0.1) interface is used.
-
-  Please make sure that the ports in the range [9167, ..., 9667] are
-  protected and cannot be accessed from the internet.
-
-  In J2EE application servers where the security policy denies opening
-  TCP sockets, the bridge uses a HTTP tunnel which is 50 times slower
-  than a standard TCP socket. If you see the log message (at level INFO)
-  that the bridge cannot use local channels, please either change the
-  security policy or disallow all PUT requests from the internet. If you
-  use Apache, mod jk adapter and Tomcat as described above, the adapter
-  already denies routing PUT requests to the servlet engine.
+  On other systems, such as Windows and Mac OSX, the bridge opens a
+  local TCP port on 9167 (JavaBridge.jar) or 9267 (MonoBridge.exe), 9567
+  (JavaBridge.war) or 9667 (FastCGI). Please make sure that the ports in
+  the range [9167, ..., 9667] are protected and cannot be accessed from
+  the internet.
 
 ------------------------------------
   UTF-8

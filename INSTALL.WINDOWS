@@ -15,7 +15,7 @@ Installing the PHP/Java Bridge on Windows
   Open the file result.html with a browser.  Search for the "java
   status" entry, it should be "java status: running", and examine the
   java properties at the bottom of the page. Search for the 
-  "extension_dir", it should be ".\ext" for this test.
+  "extension_dir", it should be "c:\php5\ext" for this test.
 
 
 If the above test succeeded, install the php.ini, the php_java.dll and

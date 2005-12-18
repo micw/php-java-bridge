@@ -44,7 +44,7 @@ public class Request implements IDocHandler {
             return getString();
         }
     }
-   protected static class SimplePhpString extends PhpString {
+   protected static final class SimplePhpString extends PhpString {
        String s; 
        JavaBridge bridge;
        
@@ -60,7 +60,7 @@ public class Request implements IDocHandler {
         return bridge.options.getBytes(s);
     }
     }
-    static protected class PhpParserString extends PhpString {
+    static final class PhpParserString extends PhpString {
         ParserString st;
         private JavaBridge bridge;
         /**
@@ -99,7 +99,7 @@ public class Request implements IDocHandler {
             }
          }
     }
-    protected static class PhpNumber extends Number {
+    protected static final class PhpNumber extends Number {
 
 	/**
 	 * 
@@ -148,7 +148,7 @@ public class Request implements IDocHandler {
 	}
     	
     };
-    private static class Args {
+    private static final class Args {
     	PhpArray ht; 
     	ArrayList array;
     	int count;
@@ -221,6 +221,7 @@ public class Request implements IDocHandler {
 	this.args=new Args();
     }
     static final byte[] ZERO={0};
+    static final Object ZERO_OBJECT=new Object();
     
     /**
      * This method must be called with the current input and output streams. 
@@ -358,6 +359,12 @@ public class Request implements IDocHandler {
     	}
     	}
     }
+    private static final String SUB_FAILED = "Invocation of sub request failed. Probably php method invocation is not available in your environment (due to security restrictions).";
+    private void setIllegalStateException(String s) {
+        IllegalStateException ex = new IllegalStateException(s);
+        response.writeException(ex, s);
+	bridge.lastException = ex;
+    }
     private int handleRequest() throws IOException {
 	int retval;
 	if(Parser.OK==(retval=parser.parse(bridge.in))) {
@@ -377,6 +384,10 @@ public class Request implements IDocHandler {
 		    bridge.CreateObject((String)args.callObject, true, args.getArgs(), response);
 		response.flush();
 		break;
+	   case 'R':
+	       setIllegalStateException(SUB_FAILED);
+	       response.flush();
+	       break;
 	    }
 	    args.reset();
 	}
@@ -445,6 +456,6 @@ public class Request implements IDocHandler {
 	    args.reset();
 	}
 	args = current;
-	return empty;
+	throw new IllegalStateException(SUB_FAILED);
     }
 }

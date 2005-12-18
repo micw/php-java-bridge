@@ -176,7 +176,8 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
 #endif
 static short use_wrapper(char*wrapper) {
   struct stat buf;
-  short use_wrapper=0;
+  short use_wrapper=(EXT_GLOBAL(option_set_by_user) (U_WRAPPER, EXT_GLOBAL(ini_user)));
+  if(use_wrapper) return use_wrapper;
 
 #ifndef __MINGW32__
   if(!stat(wrapper, &buf) && (S_IFREG&buf.st_mode)) {

@@ -76,7 +76,7 @@ else
   fi
 fi
 if test "$FACES" = "yes"; then
-  FACES="../unsupported/myfaces-api.jar"
+  FACES="../unsupported/jsf-api.jar"
 fi
 
 # optional script, requires servlet

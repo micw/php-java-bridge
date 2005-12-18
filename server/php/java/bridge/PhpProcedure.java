@@ -64,8 +64,7 @@ public class PhpProcedure implements InvocationHandler {
     private Object invoke(Object proxy, String method, Class returnType, Object[] args) throws Throwable {
     	if(bridge.logLevel>3) bridge.logDebug("invoking callback: " + method);
 	setResultFromProcedure(bridge.request.response, method, args);
-	Object[] result = null;
-	result = bridge.request.handleSubRequests();
+	Object[] result = bridge.request.handleSubRequests();
 	if(bridge.logLevel>3) bridge.logDebug("result from cb: " + Arrays.asList(result));
 	return bridge.coerce(returnType, result[0], bridge.request.response);
     }

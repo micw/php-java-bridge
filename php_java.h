@@ -31,6 +31,8 @@
 # define close closesocket
 #else
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -104,6 +106,7 @@ struct cfg {
   int err; // file descriptor: server's return code
 
   char*sockname, *default_sockname;
+  char*channel, *channel_in, *channel_out; /* the name of the comm. pipe */
   char*hosts;
   char*classpath;	
   char*ld_library_path;
@@ -128,7 +131,7 @@ EXT_BEGIN_MODULE_GLOBALS(EXT)
 
   /* local copy of the shared variables above. Needed for channel
 	 re-directs */
-  char *hosts, *servlet;
+  char *hosts, *servlet, *redirect_port;
   int ini_user;
 
   /* for user CB's */

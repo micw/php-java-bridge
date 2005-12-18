@@ -88,6 +88,7 @@ PHP_RSHUTDOWN_FUNCTION(EXT)
 		/* end servlet session */
 		EXT_GLOBAL(protocol_end)(JG(jenv));
 		close((*JG(jenv))->peer);
+		if((*JG(jenv))->peerr!=-1) close((*JG(jenv))->peerr);
 		if((*JG(jenv))->peer0!=-1) close((*JG(jenv))->peer0);
 	  }
 	  if((*JG(jenv))->s) free((*JG(jenv))->s);

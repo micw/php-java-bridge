@@ -103,7 +103,8 @@ public class PhpJavaServlet extends FastCGIServlet {
             return (Process)proc;
     }
     static {
-    Runtime.getRuntime().addShutdownHook(
+        try {
+        Runtime.getRuntime().addShutdownHook(
 		 new Thread("JavaBridgeServletShutdown") {
 		     public void run() {
 		         Class noparm[] = new Class[]{};
@@ -129,12 +130,13 @@ public class PhpJavaServlet extends FastCGIServlet {
 			  }
 		     }
 		 });
+        } catch (SecurityException t) {/*ignore*/}
     }
 
     
     private boolean override_hosts = true;
     public void init(ServletConfig config) throws ServletException {
-	String value;
+ 	String value;
         try {
 	    value = config.getInitParameter("servlet_log_level");
 	    if(value!=null && value.trim().length()!=0) Util.logLevel=Integer.parseInt(value);
@@ -292,8 +294,7 @@ public class PhpJavaServlet extends FastCGIServlet {
     		try {
                 proc.waitFor();
             } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                Util.printStackTrace(e);
             }
     	    } finally {
     		if(in!=null) try {in.close();} catch (IOException e) {}
@@ -428,7 +429,8 @@ public class PhpJavaServlet extends FastCGIServlet {
 	
 	try {
 	    if(r.init(sin, sout)) {
-		res.setHeader("X_JAVABRIDGE_REDIRECT", socketRunner.getSocket().getSocketName());
+	        socketRunner.setChannel(req.getHeader("X_JAVABRIDGE_CHANNEL"));
+	        res.setHeader("X_JAVABRIDGE_REDIRECT", socketRunner.getChannelName());
 	    	r.handleOneRequest();
 
 		// redirect and re-open
@@ -436,10 +438,11 @@ public class PhpJavaServlet extends FastCGIServlet {
 		res.setContentLength(sout.size());
 		resOut = res.getOutputStream();
 		sout.writeTo(resOut);
-		if(bridge.logLevel>3) bridge.logDebug("re-directing to port# "+ socketRunner.getSocket().getSocketName());
+		if(bridge.logLevel>3) bridge.logDebug("re-directing to port# "+ socketRunner.getChannelName());
 	    	sin.close();
 	    	resOut.flush();
-	    	if(bridge.logLevel>3) bridge.logDebug("waiting for context: " +ctx.getId());
+	    	socketRunner.start();
+		if(bridge.logLevel>3) bridge.logDebug("waiting for context: " +ctx.getId());
 	    	ctx.waitFor();
 	    	if(bridge.logLevel>3) bridge.logDebug("context finished: " +ctx.getId());
 	    }
@@ -486,17 +489,23 @@ public class PhpJavaServlet extends FastCGIServlet {
     	try {
 	    super.doGet(req, res);
     	} catch (IOException e) {
-    	    res.reset();
+    	    try {res.reset();} catch (Exception ex) {/*ignore*/}
 	    ServletException ex = new ServletException("An IO exception occured. Probably php was not installed as \"/usr/bin/php-cgi\" or \"c:/php5/php-cgi.exe\".\nPlease copy your PHP binary (\""+php+"\", see JavaBridge/WEB-INF/web.xml) into the JavaBridge/WEB-INF/cgi directory.\nSee webapps/JavaBridge/WEB-INF/cgi/README for details.", e);
 	    php=null;
 	    checkCgiBinary(getServletConfig());
 	    throw ex;
+    	} catch (SecurityException sec) {
+    	    try {res.reset();} catch (Exception ex) {/*ignore*/}
+	    ServletException ex = new ServletException("A security exception occured, could not run PHP. Please start php with the command: X_JAVABRIDGE_OVERRIDE_HOSTS=\"/\" PHP_FCGI_CHILDREN=\"20\" PHP_FCGI_MAX_REQUESTS=\"500\" /usr/bin/php-cgi -dlog_errors=On -ddisplay_errors=Off -b 127.0.0.1:9667", sec);
+	    php=null;
+	    checkCgiBinary(getServletConfig());
+	    throw ex;    	    
     	} catch (ServletException e) {
-    	    res.reset();
+    	    try {res.reset();} catch (Exception ex) {/*ignore*/}
     	    throw e;
     	}
     	catch (Throwable t) {
-    	    res.reset();
+    	    try {res.reset();} catch (Exception ex) {/*ignore*/}
 	    Util.printStackTrace(t);
     	    throw new ServletException(t);
     	}

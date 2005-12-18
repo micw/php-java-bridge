@@ -45,8 +45,117 @@ const char * const EXT_GLOBAL (bridge_version) = BRIDGE_VERSION;
 
 EXT_EXTERN_MODULE_GLOBALS(EXT)
 
+/*
+ * check for CGI environment and set hosts so that we can connect back
+ * to the sever from which we were called.
+ */
+static void override_ini_from_cgi(void) {
+  static const char on[]="User";
+  static const char key_hosts[]="java.hosts";
+  static const char key_servlet[] = "java.servlet";
+  char *hosts;
+  EXT_GLOBAL(cfg)->is_cgi_servlet=0;
+  
+  if ((hosts=getenv("X_JAVABRIDGE_OVERRIDE_HOSTS"))) {
+	switch(*hosts) {
+	case '/': 				/* this is fast cgi, override
+							   information will be passed via
+							   X_JAVABRIDGE_REDIRECT header (see
+							   override_ini_for_redirect()). */
+	  zend_alter_ini_entry((char*)key_servlet, sizeof key_servlet,
+						   (char*)on, sizeof on,
+						   ZEND_INI_SYSTEM, PHP_INI_STAGE_STARTUP);
+	  break;
+
+	default:					/* cgi binary with redirect
+								   information */
+	  {
+		char *kontext, *host = strdup(hosts);
+		kontext = strchr(host, '/');
+		if(kontext) *kontext++=0;
+		zend_alter_ini_entry((char*)key_hosts, sizeof key_hosts,
+							 host, strlen(host)+1,
+							 ZEND_INI_SYSTEM, PHP_INI_STAGE_STARTUP);
+		if(!kontext) {
+		  zend_alter_ini_entry((char*)key_servlet, sizeof key_servlet,
+							   (char*)on, sizeof on,
+							   ZEND_INI_SYSTEM, PHP_INI_STAGE_STARTUP);
+		} else {
+		  zend_alter_ini_entry((char*)key_servlet, sizeof key_servlet,
+							   (char*)kontext, strlen(kontext)+1,
+							   ZEND_INI_SYSTEM, PHP_INI_STAGE_STARTUP);
+		}
+		free(host);
+	  }
+	  /* fall through */
+	case 0:					/* cgi binary, but redirect is off */
+	  EXT_GLOBAL(cfg)->is_cgi_servlet=1;
+	}
+  }
+}
 
 #ifndef CFG_JAVA_SOCKET_INET
+static const char in[] = ".i";
+static const char out[] = ".o";
+static short create_pipe(char*sockname) {
+  if(mknod(sockname, S_IFIFO|0666, 0) == -1) return 0;
+  return 1;
+}
+static short create_pipes(char*basename, size_t basename_len) {
+  char *e = basename+basename_len;
+  short success;
+  if(mkstemp(basename) == -1) return 0;
+  if(!create_pipe(strcat(basename, in))) {
+	*e=0;
+	return 0;
+  }
+  *e=0;
+  success = create_pipe(strcat(basename, out));
+  assert(success); if(!success) exit(6);
+  EXT_GLOBAL(cfg)->channel_out = strdup(basename);
+  *e=0;
+  EXT_GLOBAL(cfg)->channel_in = strdup(strcat(basename, in));
+  *e=0;
+  EXT_GLOBAL(cfg)->channel = basename;
+}
+
+static void init_channel(void) {
+  static const char sockname[] = SOCKNAME;
+  static const char sockname_shm[] = SOCKNAME_SHM;
+  static const char length = sizeof(sockname)>sizeof(sockname_shm)?sizeof(sockname):sizeof(sockname_shm);
+  char *pipe;
+
+  /* pipe communication channel only available in servlets */
+  if(!EXT_GLOBAL(option_set_by_user) (U_SERVLET, EXT_GLOBAL(ini_updated))) return;
+
+  pipe=malloc(length+2); /* "name.i" */
+  assert(pipe); if(!pipe) exit(6);
+  
+  EXT_GLOBAL(cfg)->channel=0;
+  create_pipes(strcpy(pipe,sockname_shm), sizeof(sockname_shm)-1)||
+	create_pipes(strcpy(pipe,sockname), sizeof(sockname)-1);
+  assert(EXT_GLOBAL(cfg)->channel);
+  if(!(EXT_GLOBAL(cfg)->channel)) exit(6);
+}
+
+static void destroy_channel(void) {
+  char *channel = (EXT_GLOBAL(cfg)->channel);
+  if(!channel) return;
+
+  unlink(channel);
+  unlink(EXT_GLOBAL(cfg)->channel_in);
+  unlink(EXT_GLOBAL(cfg)->channel_out);
+  
+  free(channel);
+  free(EXT_GLOBAL(cfg)->channel_in);
+  free(EXT_GLOBAL(cfg)->channel_out);
+  EXT_GLOBAL(cfg)->channel_in = EXT_GLOBAL(cfg)->channel_out = (EXT_GLOBAL(cfg)->channel) = 0;
+}
+static void destroy_sockname(void) {
+  free(EXT_GLOBAL(cfg)->default_sockname);
+  destroy_channel();
+}
+
 #ifdef HAVE_ABSTRACT_NAMESPACE
 static void init_socket(void) {
   static const char * const bridge="@java-bridge-";
@@ -75,6 +184,13 @@ static void init_socket(void) {
   EXT_GLOBAL(cfg)->default_sockname = strdup(DEFAULT_PORT);
   assert(EXT_GLOBAL(cfg)->default_sockname); if(!EXT_GLOBAL(cfg)->default_sockname) exit(6);
 }
+static void destroy_sockname(void) {
+  free(EXT_GLOBAL(cfg)->default_sockname);
+}
+/* named pipes are not available on windows */
+static void init_channel(void) {
+  EXT_GLOBAL(cfg)->channel_in = EXT_GLOBAL(cfg)->channel_out = (EXT_GLOBAL(cfg)->channel) = 0;
+}
 #endif
 void EXT_GLOBAL (init_cfg) (TSRMLS_D) {
   init_socket();
@@ -97,15 +213,19 @@ void EXT_GLOBAL (init_cfg) (TSRMLS_D) {
 	!(EXT_GLOBAL (option_set_by_user) (U_SOCKNAME, EXT_GLOBAL(ini_user))) &&
 	!(EXT_GLOBAL (option_set_by_user) (U_HOSTS, EXT_GLOBAL(ini_user))) &&
 	!(EXT_GLOBAL (option_set_by_user) (U_SERVLET, EXT_GLOBAL(ini_user)));
+
+  override_ini_from_cgi();
+  init_channel();
 }
 
 void EXT_GLOBAL (destroy_cfg) (int EXT_GLOBAL (ini_updated) ) {
   assert(EXT_GLOBAL(ini_updated) == ~0);
   if(!(EXT_GLOBAL (ini_updated) &U_SERVLET)) free(EXT_GLOBAL(cfg)->servlet);
+  if(!(EXT_GLOBAL (ini_updated) &U_WRAPPER)) free(EXT_GLOBAL(cfg)->wrapper);
   if(!(EXT_GLOBAL (ini_updated) &U_HOSTS)) free(EXT_GLOBAL(cfg)->hosts);
 
-  free(EXT_GLOBAL(cfg)->default_sockname);
   if(!(EXT_GLOBAL (ini_updated) &U_SOCKNAME)) free(EXT_GLOBAL(cfg)->sockname); 
+  destroy_sockname();
 
   if(!(EXT_GLOBAL (ini_updated) &U_CLASSPATH)) free(EXT_GLOBAL(cfg)->classpath);
   if(!(EXT_GLOBAL (ini_updated) &U_LIBRARY_PATH)) free(EXT_GLOBAL(cfg)->ld_library_path);
@@ -135,6 +255,7 @@ short EXT_GLOBAL(option_set_by_user)(short option, int ini_user) {
   case U_SOCKNAME: entry = EXT_GLOBAL(cfg)->sockname; break;
   case U_HOSTS: entry = EXT_GLOBAL(cfg)->hosts; break;
   case U_SERVLET: entry = EXT_GLOBAL(cfg)->servlet; break;
+  case U_WRAPPER: entry = EXT_GLOBAL(cfg)->wrapper; break;
   default: assert(0);
   }  
 

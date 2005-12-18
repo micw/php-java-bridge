@@ -395,6 +395,7 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
 
 		memcpy(server_name, name, len); pos+=len;
 		*pos=':';
+		JG(redirect_port)=pos+1;
 		memcpy(pos+1, key, key_len); pos+=key_len+1;
 		*pos=0;
 
@@ -448,6 +449,7 @@ static void handle_request(proxyenv *env) {
   if((*env)->peer0!=-1) {
 	close((*env)->peer);
 	(*env)->peer = (*env)->peer0;
+	(*env)->f_recv = (*env)->f_recv0;
 	(*env)->peer0 = -1;
   }
 
@@ -459,9 +461,7 @@ static void handle_request(proxyenv *env) {
 	  JG(ini_user)&=~(U_SERVLET|U_SOCKNAME);
 
 	  assert((*env)->peer!=-1); if((*env)->peer!=-1) close((*env)->peer);
-	  server = EXT_GLOBAL(test_server)(&(*env)->peer, 0, 0 TSRMLS_CC);
-	  assert(server); if(!server) exit(9);
-	  free(server);
+	  EXT_GLOBAL(redirect)(env, JG(redirect_port) TSRMLS_CC);
 	} else {
 	  assert((*env)->peer!=-1); if((*env)->peer!=-1) close((*env)->peer);
 	  server = EXT_GLOBAL(test_server)(&(*env)->peer, 0, 0 TSRMLS_CC);
@@ -522,6 +522,8 @@ static void override_ini_for_redirect(TSRMLS_D) {
 
   zval val;
   if((SUCCESS==zend_eval_string((char*)override, &val, (char*)name TSRMLS_CC)) && (Z_TYPE(val)==IS_STRING)) {
+	/* request servlet -> fast cgi server: connect back to servlet */
+
 	char *kontext, *hosts;
 	hosts = malloc(Z_STRLEN(val)+1);
 	strncpy(hosts, Z_STRVAL(val), Z_STRLEN(val));
@@ -538,6 +540,8 @@ static void override_ini_for_redirect(TSRMLS_D) {
 	}
 	JG(ini_user)|=U_HOSTS;
   } else {
+	/* request HTTP -> fast cgi or apache module: connect to java_hosts  */
+
 	/* Coerce a http://xyz.com/kontext/foo.php request to the backend:
 	   http://xyz.com:{java_hosts[0]}/kontext/foo.php.  For example if
 	   we receive a request: http://localhost/sessionSharing.php and

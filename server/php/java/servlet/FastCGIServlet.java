@@ -83,18 +83,12 @@ exitting. When one process exits, another will be created.
     public static final int FCGI_CHANNEL = 9667;
 
     protected String php = null; 
-    private boolean fcgiIsAvailable = true;
+    private boolean fcgiIsAvailable;
+    private boolean canStartFCGI;
     private String php_fcgi_children = PHP_FCGI_CHILDREN;
     private String php_fcgi_max_requests = PHP_FCGI_MAX_REQUESTS;
     
-    /**
-	 * If the user has copied a cgi binary into his WEB-INF/cgi directory, FastCGI is not available anymore;
-	 * FastCGI requires that the cgi binary is installed as a well known system file in one of the DEFAULT_CGI_LOCATIONS.
-	 * @see php.java.bridge.Util#DEFAULT_CGI_LOCATIONS
-	 * @return false if the user has set the parameter <code>php_exec</code> or 
-	 * has copied his own CGI binary into his WEB-INF/cgi directory, true otherwise.
-	 */
-    public boolean fcgiIsAvailable() {
+    private boolean fcgiIsAvailable() {
         return fcgiIsAvailable;
     }
     private static final void runFcgi(Map env, String php) {
@@ -117,7 +111,7 @@ exitting. When one process exits, another will be created.
 		    if(value!=null && value.trim().length()!=0) {
 		    	if(Util.checkCgiBinary(new StringBuffer(value)) != null) {
 		    	    php = value;
-		    	    fcgiIsAvailable = false;
+		    	    canStartFCGI = false;
 		    	}
 		    }
 		}  catch (Throwable t) {Util.printStackTrace(t);}    
@@ -132,7 +126,8 @@ exitting. When one process exits, another will be created.
 		}  catch (Throwable t) {Util.printStackTrace(t);}      
 	}      
 	try {
-	    value = getServletContext().getInitParameter("use_fast_cgi");
+	    fcgiIsAvailable = true;
+	    value = config.getServletContext().getInitParameter("use_fast_cgi");
 	    if(value==null) try { value = System.getProperty("php.java.bridge.use_fast_cgi"); } catch (Exception e) {/*ignore*/}
 	    if("false".equals(value)) fcgiIsAvailable = false;
 	    else {
@@ -162,7 +157,7 @@ exitting. When one process exits, another will be created.
 	if(val!=null) php_fcgi_max_requests = val;
 	
 	try {
-	    if(fcgiIsAvailable){
+	    if(canStartFCGI){
 		Thread t = (new Thread("JavaBridgeFastCGIRunner") {
 			public void run() {
 			    Map env = (Map) defaultEnv.clone();
