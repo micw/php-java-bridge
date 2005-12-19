@@ -37,7 +37,12 @@ extern short EXT_GLOBAL(get_property_handler)(char*name, zval *object, zval *ret
 extern void EXT_GLOBAL(destructor)(zend_rsrc_list_entry *rsrc TSRMLS_DC);
 
 extern proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, void (*handle_request)(proxyenv *env), char*server, short is_local, struct sockaddr*saddr);
-extern void EXT_GLOBAL(redirect)(proxyenv*env, char*redirect_port TSRMLS_DC);
+extern void EXT_GLOBAL(redirect)(proxyenv*env, char*redirect_port, char*channel_in, char*channel_out TSRMLS_DC);
+
+extern void EXT_GLOBAL(init_channel)(TSRMLS_D);
+extern void EXT_GLOBAL(destroy_channel)(TSRMLS_D);
+extern const char*EXT_GLOBAL(get_channel)(TSRMLS_D);
+
 extern void EXT_GLOBAL (protocol_end) (proxyenv *env);
 extern void EXT_GLOBAL (check_context) (proxyenv *env TSRMLS_DC);
 extern void EXT_GLOBAL (setResultWith_context) (char*key, char*val, char*path);

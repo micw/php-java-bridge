@@ -95,65 +95,8 @@ static void override_ini_from_cgi(void) {
 }
 
 #ifndef CFG_JAVA_SOCKET_INET
-static const char in[] = ".i";
-static const char out[] = ".o";
-static short create_pipe(char*sockname) {
-  if(mknod(sockname, S_IFIFO|0666, 0) == -1) return 0;
-  return 1;
-}
-static short create_pipes(char*basename, size_t basename_len) {
-  char *e = basename+basename_len;
-  short success;
-  if(mkstemp(basename) == -1) return 0;
-  if(!create_pipe(strcat(basename, in))) {
-	*e=0;
-	return 0;
-  }
-  *e=0;
-  success = create_pipe(strcat(basename, out));
-  assert(success); if(!success) exit(6);
-  EXT_GLOBAL(cfg)->channel_out = strdup(basename);
-  *e=0;
-  EXT_GLOBAL(cfg)->channel_in = strdup(strcat(basename, in));
-  *e=0;
-  EXT_GLOBAL(cfg)->channel = basename;
-}
-
-static void init_channel(void) {
-  static const char sockname[] = SOCKNAME;
-  static const char sockname_shm[] = SOCKNAME_SHM;
-  static const char length = sizeof(sockname)>sizeof(sockname_shm)?sizeof(sockname):sizeof(sockname_shm);
-  char *pipe;
-
-  /* pipe communication channel only available in servlets */
-  if(!EXT_GLOBAL(option_set_by_user) (U_SERVLET, EXT_GLOBAL(ini_updated))) return;
-
-  pipe=malloc(length+2); /* "name.i" */
-  assert(pipe); if(!pipe) exit(6);
-  
-  EXT_GLOBAL(cfg)->channel=0;
-  create_pipes(strcpy(pipe,sockname_shm), sizeof(sockname_shm)-1)||
-	create_pipes(strcpy(pipe,sockname), sizeof(sockname)-1);
-  assert(EXT_GLOBAL(cfg)->channel);
-  if(!(EXT_GLOBAL(cfg)->channel)) exit(6);
-}
-
-static void destroy_channel(void) {
-  char *channel = (EXT_GLOBAL(cfg)->channel);
-  if(!channel) return;
-
-  unlink(channel);
-  unlink(EXT_GLOBAL(cfg)->channel_in);
-  unlink(EXT_GLOBAL(cfg)->channel_out);
-  
-  free(channel);
-  free(EXT_GLOBAL(cfg)->channel_in);
-  free(EXT_GLOBAL(cfg)->channel_out);
-  EXT_GLOBAL(cfg)->channel_in = EXT_GLOBAL(cfg)->channel_out = (EXT_GLOBAL(cfg)->channel) = 0;
-}
 static void destroy_sockname(void) {
   free(EXT_GLOBAL(cfg)->default_sockname);
-  destroy_channel();
 }
 
 #ifdef HAVE_ABSTRACT_NAMESPACE
@@ -187,11 +130,8 @@ static void init_socket(void) {
 static void destroy_sockname(void) {
   free(EXT_GLOBAL(cfg)->default_sockname);
 }
-/* named pipes are not available on windows */
-static void init_channel(void) {
-  EXT_GLOBAL(cfg)->channel_in = EXT_GLOBAL(cfg)->channel_out = (EXT_GLOBAL(cfg)->channel) = 0;
-}
 #endif
+
 void EXT_GLOBAL (init_cfg) (TSRMLS_D) {
   init_socket();
   if(!(EXT_GLOBAL (ini_updated) &U_SOCKNAME)) EXT_GLOBAL(cfg)->sockname=strdup(EXT_GLOBAL(cfg)->default_sockname);
@@ -215,7 +155,6 @@ void EXT_GLOBAL (init_cfg) (TSRMLS_D) {
 	!(EXT_GLOBAL (option_set_by_user) (U_SERVLET, EXT_GLOBAL(ini_user)));
 
   override_ini_from_cgi();
-  init_channel();
 }
 
 void EXT_GLOBAL (destroy_cfg) (int EXT_GLOBAL (ini_updated) ) {

@@ -106,7 +106,6 @@ struct cfg {
   int err; // file descriptor: server's return code
 
   char*sockname, *default_sockname;
-  char*channel, *channel_in, *channel_out; /* the name of the comm. pipe */
   char*hosts;
   char*classpath;	
   char*ld_library_path;
@@ -133,6 +132,9 @@ EXT_BEGIN_MODULE_GLOBALS(EXT)
 	 re-directs */
   char *hosts, *servlet, *redirect_port;
   int ini_user;
+
+  /* the name of the comm. pipe */
+  char*channel, *channel_in, *channel_out;
 
   /* for user CB's */
   zval*exception;

@@ -47,12 +47,7 @@ static void send_context(proxyenv *env) {
 	n=(*env)->f_send(env, (*env)->peer, context, context_length);
 	assert(n==context_length);
 }
-static const char *get_channel() {
-  static const char empty[] = "";
-  char *channel = EXT_GLOBAL(cfg)->channel;
-  if(channel) return channel;
-  return empty;
-}
+
 static void end(proxyenv *env) {
   size_t s=0, size = (*env)->send_len;
   ssize_t n=0;
@@ -62,6 +57,7 @@ static void end(proxyenv *env) {
   (*env)->must_reopen=0;
 
   TSRMLS_FETCH();
+
   servlet_context = EXT_GLOBAL (get_servlet_context) (TSRMLS_C);
 
   if(!(*env)->is_local && servlet_context) {
@@ -71,7 +67,7 @@ static void end(proxyenv *env) {
 	ssize_t n;
 
 	assert(!(*env)->peer_redirected || ((*env)->peer_redirected && ((*env)->peer0)!=-1));
-	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", servlet_context, (unsigned long)(size+1), get_channel(), getSessionFactory(env), mode);
+	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", servlet_context, (unsigned long)(size+1), EXT_GLOBAL(get_channel)(TSRMLS_C), getSessionFactory(env), mode);
 
 	n=(*env)->f_send(env, (*env)->peer, header, header_length);
 	assert(n==header_length);
@@ -119,10 +115,12 @@ static void end_session(proxyenv *env) {
   short override_redirect = (peer0!=-1)?1:2;
   unsigned char mode = EXT_GLOBAL (get_mode) ();
 
+  TSRMLS_FETCH();
+
   (*env)->finish=end;
   
   assert(!(*env)->peer_redirected || ((*env)->peer_redirected && ((*env)->peer0)!=-1));
-  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_REDIRECT: %d\r\n%sX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", (*env)->servlet_context_string, (unsigned long)(size+1), override_redirect, get_cookies(&val, env), get_channel(), getSessionFactory(env), mode);
+  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_REDIRECT: %d\r\n%sX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", (*env)->servlet_context_string, (unsigned long)(size+1), override_redirect, get_cookies(&val, env), EXT_GLOBAL(get_channel)(TSRMLS_C), getSessionFactory(env), mode);
   n=(*env)->f_send(env, peer, header, header_length);
   assert(n==header_length);
   n=0;
@@ -180,21 +178,21 @@ static ssize_t recv_socket(proxyenv*env, void*buf, size_t length) {
 }
 
 #ifndef __MINGW32__
-void EXT_GLOBAL(redirect)(proxyenv*env, char*redirect_port TSRMLS_DC) {
+void EXT_GLOBAL(redirect)(proxyenv*env, char*redirect_port, char*channel_in, char*channel_out TSRMLS_DC) {
   assert(redirect_port);
   if(*redirect_port!='/') { /* socket */
 	char *server = EXT_GLOBAL(test_server)(&(*env)->peer, 0, 0 TSRMLS_CC);
 	assert(server); if(!server) exit(9);
 	free(server);
   } else {						/* pipe */
-	(*env)->peerr = open(EXT_GLOBAL(cfg)->channel_in, O_RDONLY);
-	(*env)->peer = open(EXT_GLOBAL(cfg)->channel_out, O_WRONLY);
+	(*env)->peerr = open(channel_in, O_RDONLY);
+	(*env)->peer = open(channel_out, O_WRONLY);
 	(*env)->f_recv0 = (*env)->f_recv = recv_pipe;
 	(*env)->f_send0 = (*env)->f_send = send_pipe;
   }
 }
 #else
-void EXT_GLOBAL(redirect)(proxyenv*env, char*redirect_port TSRMLS_DC) {
+void EXT_GLOBAL(redirect)(proxyenv*env, char*redirect_port, char*channel_in, char*channel_out TSRMLS_DC) {
   char *server = EXT_GLOBAL(test_server)(&(*env)->peer, 0, 0 TSRMLS_CC);
   assert(server); if(!server) exit(9);
   free(server);

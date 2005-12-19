@@ -461,7 +461,7 @@ static void handle_request(proxyenv *env) {
 	  JG(ini_user)&=~(U_SERVLET|U_SOCKNAME);
 
 	  assert((*env)->peer!=-1); if((*env)->peer!=-1) close((*env)->peer);
-	  EXT_GLOBAL(redirect)(env, JG(redirect_port) TSRMLS_CC);
+	  EXT_GLOBAL(redirect)(env, JG(redirect_port), JG(channel_in), JG(channel_out) TSRMLS_CC);
 	} else {
 	  assert((*env)->peer!=-1); if((*env)->peer!=-1) close((*env)->peer);
 	  server = EXT_GLOBAL(test_server)(&(*env)->peer, 0, 0 TSRMLS_CC);
@@ -554,10 +554,11 @@ static void override_ini_for_redirect(TSRMLS_D) {
 	   cookie with a PATH value "/myContext" would be created.
 	*/
 	char *kontext = EXT_GLOBAL (get_servlet_context) (TSRMLS_C);
-	if(kontext && *kontext!='/') {
+	if(kontext && *kontext!='/') { /* only if context not hardcoded via "On" or "/kontext/foo.php" */
 	  static const char default_servlet[] = DEFAULT_SERVLET;
 	  static const char name[] = "get_self";
-	  static const char override[] = "array_key_exists('PHP_SELF', $_SERVER)?$_SERVER['PHP_SELF']:null;";
+	  static const char override[] = "(array_key_exists('PHP_SELF', $_SERVER) \n\
+array_key_exists('HTTP_HOST', $_SERVER)) ?$_SERVER['PHP_SELF']:null;";
 	  char *tmp, *strval;
 	  size_t len = 0;
 	  if((SUCCESS==zend_eval_string((char*)override, &val, (char*)name TSRMLS_CC)) && (Z_TYPE(val)==IS_STRING) && Z_STRLEN(val)) {
@@ -612,6 +613,79 @@ proxyenv *EXT_GLOBAL(connect_to_server)(TSRMLS_D) {
 proxyenv *EXT_GLOBAL(try_connect_to_server)(TSRMLS_D) {
   
   return try_connect_to_server(0 TSRMLS_CC);
+}
+
+#ifdef __MINGW32__
+/* named pipes are not available on windows */
+void EXT_GLOBAL(init_channel)(TSRMLS_D) {
+  JG(channel_in) = JG(channel_out) = JG(channel) = 0;
+}
+void EXT_GLOBAL(destroy_channel)(TSRMLS_D) {
+}
+
+#else
+
+static const char in[] = ".i";
+static const char out[] = ".o";
+static short create_pipe(char*sockname TSRMLS_DC) {
+  if((mknod(sockname, S_IFIFO, 0) == -1) || chmod(sockname, 0666) == -1) return 0;
+  return 1;
+}
+static short create_pipes(char*basename, size_t basename_len TSRMLS_DC) {
+  char *e = basename+basename_len;
+  short success;
+  if(mkstemp(basename) == -1) return 0;
+  if(!create_pipe(strcat(basename, in TSRMLS_CC))) {
+	*e=0;
+	return 0;
+  }
+  *e=0;
+  success = create_pipe(strcat(basename, out));
+  assert(success); if(!success) exit(6);
+  JG(channel_out) = strdup(basename);
+  *e=0;
+  JG(channel_in) = strdup(strcat(basename, in));
+  *e=0;
+  JG(channel) = basename;
+}
+void EXT_GLOBAL(init_channel)(TSRMLS_D) {
+  static const char sockname[] = SOCKNAME;
+  static const char sockname_shm[] = SOCKNAME_SHM;
+  static const char length = sizeof(sockname)>sizeof(sockname_shm)?sizeof(sockname):sizeof(sockname_shm);
+  char *pipe;
+
+  /* pipe communication channel only available in servlets */
+  if(!EXT_GLOBAL(option_set_by_user) (U_SERVLET, EXT_GLOBAL(ini_user))) return;
+
+  pipe=malloc(length+2); /* "name.i" */
+  assert(pipe); if(!pipe) exit(6);
+  
+  JG(channel)=0;
+  create_pipes(strcpy(pipe,sockname_shm), sizeof(sockname_shm)-1 TSRMLS_CC)||
+	create_pipes(strcpy(pipe,sockname), sizeof(sockname)-1 TSRMLS_CC);
+  assert(JG(channel));
+  if(!(JG(channel))) exit(6);
+}
+
+void EXT_GLOBAL(destroy_channel)(TSRMLS_D) {
+  char *channel = (JG(channel));
+  if(!channel) return;
+
+  unlink(channel);
+  unlink(JG(channel_in));
+  unlink(JG(channel_out));
+  
+  free(channel);
+  free(JG(channel_in));
+  free(JG(channel_out));
+  JG(channel_in) = JG(channel_out) = (JG(channel)) = 0;
+}
+#endif
+const char *EXT_GLOBAL(get_channel) (TSRMLS_D) {
+  static const char empty[] = "";
+  char *channel = JG(channel);
+  if(channel) return channel;
+  return empty;
 }
 
 #ifndef PHP_WRAPPER_H

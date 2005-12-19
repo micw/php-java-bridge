@@ -44,11 +44,9 @@ int *__errno (void) { return &java_errno; }
 #endif
 
 static void clone_cfg(TSRMLS_D) {
-  if(!JG(ini_user)) {
-	JG(ini_user)=EXT_GLOBAL(ini_user);
-	JG(hosts)=strdup(EXT_GLOBAL(cfg)->hosts);
-	JG(servlet)=strdup(EXT_GLOBAL(cfg)->servlet);
-  }
+  JG(ini_user)=EXT_GLOBAL(ini_user);
+  JG(hosts)=strdup(EXT_GLOBAL(cfg)->hosts);
+  JG(servlet)=strdup(EXT_GLOBAL(cfg)->servlet);
 }
 static void destroy_cloned_cfg(TSRMLS_D) {
   if(JG(hosts)) free(JG(hosts));
@@ -65,7 +63,11 @@ static void destroy_cloned_cfg(TSRMLS_D) {
  */
 PHP_RINIT_FUNCTION(EXT) 
 {
-  if(EXT_GLOBAL(cfg)) clone_cfg(TSRMLS_C);
+  if(EXT_GLOBAL(cfg)) {
+	clone_cfg(TSRMLS_C);
+  }
+
+  EXT_GLOBAL(init_channel)(TSRMLS_C);
 
   if(JG(jenv)) {
 	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Synchronization problem, rinit with active connection called. Cannot continue, aborting now. Please report this to: php-java-bridge-users@lists.sourceforge.net",59);
@@ -81,6 +83,7 @@ PHP_RINIT_FUNCTION(EXT)
 PHP_RSHUTDOWN_FUNCTION(EXT)
 {
   destroy_cloned_cfg(TSRMLS_C);
+  EXT_GLOBAL(destroy_channel)(TSRMLS_C);
 
   if(JG(jenv)) {
 	if(*JG(jenv)) {
@@ -2021,6 +2024,7 @@ PHP_MINIT_FUNCTION(EXT)
 	make_local_socket_info(TSRMLS_C);
 	clone_cfg(TSRMLS_C);
 	EXT_GLOBAL(start_server) (TSRMLS_C);
+	destroy_cloned_cfg(TSRMLS_C);
   } 
   return SUCCESS;
 }
