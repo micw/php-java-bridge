@@ -1,3 +1,23 @@
+2005-12-20  Jost Boekemeier  <jostb@intern>
+
+	* init_cfg.c.in (override_ini_from_cgi, create_pipe, create_pipes,
+	init_channel, destroy_channel, destroy_sockname): Moved to client.c
+
+	* java.c (rinit, rshutdown): initialize/shut down the pipes here,
+	not in minit/mshutdown.
+
+	* client.c (create_pipe): chmod to 666 so that the pipe can be
+	accessed. Otherwise the pipe communication may fail, depending on
+	the process umask.
+
+	* php-java-bridge.spec: Rewritten so that it is possible to create
+	RHEL3 binaries from the source RPM.
+	
+	* VERSION, php-java-bridge.spec: Version 3.0.3a replaces
+	3.0.3. This version is for Unix/Linux only, necessary because of
+	the Unix specific umask problem.
+
+	
 2005-12-18  Jost Boekemeier  <jostb@intern>
 
 	* client.c (begin_header): store redirect_port and redirect to named

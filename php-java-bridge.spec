@@ -1,7 +1,13 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 3.0.3
+%define version 3.0.3a
 %define release 1
-%define PHP_MAJOR_VERSION %(LANG=C rpm -q --queryformat "%{VERSION}" php | sed 's/\\\..*$//')
+%define PHP_MAJOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | sed 's/\\\..*$//')
+# NOTE: If /etc/sysconfig/java contains a line which points to JAVA_HOME, e.g. 
+# /usr/java/jdk1.5.0
+# the RPM assumes that IBM or SUN java is installed and checks j2re and j2sdk.
+# If /etc/sysconfig/java is empty or does not exist, it is assumed that
+# GNU java or Sun java is installed and the code searches for RPMs providing
+# jre and java-devel instead.
 %define have_sysconfig_java %(test -s /etc/sysconfig/java && echo 1 || echo 0)
 
 Name: php-java-bridge
@@ -14,8 +20,10 @@ URL: http://www.sourceforge.net/projects/php-java-bridge
 Source0: http://osdn.dl.sourceforge.net/sourceforge/php-java-bridge/php-java-bridge_%{version}.tar.bz2
 
 
-BuildRequires: php-devel >= 4.3.2
+BuildRequires: php-devel >= 4.3.4
 BuildRequires: gcc >= 3.2.3
+BuildRequires: gcc-c++
+BuildRequires: libstdc++-devel
 BuildRequires: httpd make 
 BuildRequires: libtool >= 1.4.3
 BuildRequires: automake >= 1.6.3
@@ -35,7 +43,12 @@ Requires: php < 5.0.0
 Requires: php >= 5.0.4
 %endif
 Requires: httpd 
+
+%if %{have_sysconfig_java} == 1
+Requires: j2re >= 1.4.1
+%else
 Requires: jre >= 1.4.0
+%endif
 Provides: php-java-bridge
 
 
@@ -111,7 +124,11 @@ echo $mod_dir/lib >>filelist
 rm -rf $RPM_BUILD_ROOT
 %post
 # calculate java_dir again
-pkgid=`rpm -q --whatprovides jre --queryformat "%{PKGID} %{VERSION}\n" | sed 's/\./0/g;s/_/./' |sort -r -k 2,2 -n | head -1 | awk '{print $1}'`
+for i in jre j2re jdk j2sdk java; do 
+package=`rpm -q --whatprovides $i --queryformat "%{PKGID} %{VERSION}\n"` && break
+done
+pkgid=`echo $package| sed 's/\./0/g;s/_/./' | sort -r -k 2,2 -n | head -1 | awk '{print $1}'`
+
 jre=`rpm  -q --pkgid $pkgid`
 java=`rpm -ql $jre | grep 'bin/java$' | head -1`
 java_dir=`dirname $java`

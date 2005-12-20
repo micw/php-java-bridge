@@ -557,7 +557,7 @@ static void override_ini_for_redirect(TSRMLS_D) {
 	if(kontext && *kontext!='/') { /* only if context not hardcoded via "On" or "/kontext/foo.php" */
 	  static const char default_servlet[] = DEFAULT_SERVLET;
 	  static const char name[] = "get_self";
-	  static const char override[] = "(array_key_exists('PHP_SELF', $_SERVER) \n\
+	  static const char override[] = "(array_key_exists('PHP_SELF', $_SERVER) && \n\
 array_key_exists('HTTP_HOST', $_SERVER)) ?$_SERVER['PHP_SELF']:null;";
 	  char *tmp, *strval;
 	  size_t len = 0;
