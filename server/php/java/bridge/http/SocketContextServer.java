@@ -131,15 +131,16 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
     	return socket!=null;
     }
 
+    /**
+     * Returns the server port.
+     * @return The server port.
+     */
     public String getChannelName() {
         return socket.getSocketName();
     }
     
-    public boolean start() {
+    public boolean start(String channelName) {
         return isAvailable();
-    }
-    
-    public void setChannelName() {
     }
     
     /**

@@ -42,6 +42,7 @@ public class ContextFactory extends SessionFactory {
 
     static final Hashtable contexts = new Hashtable();
     private JavaBridge bridge;
+    private String channelName;
 	
     private static short count=0; // If a context survives more than 65535
     // context creations, that context will be
@@ -156,5 +157,4 @@ public class ContextFactory extends SessionFactory {
     public JavaBridge getBridge() {
 	return bridge;
     }
-
 }

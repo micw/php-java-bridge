@@ -47,14 +47,6 @@ public class ContextServer {
         sock.destroy();
     }
 
-    /* (non-Javadoc)
-     * @see php.java.bridge.http.IContextServer#getChannelName()
-     */
-    public String getChannelName() {
-        String name = ctx.getChannelName();
-        if(name==null) name = sock.getChannelName();
-        return name;
-    }
 
     /* (non-Javadoc)
      * @see php.java.bridge.http.IContextServer#isAvailable()
@@ -66,14 +58,14 @@ public class ContextServer {
     /* (non-Javadoc)
      * @see php.java.bridge.http.IContextServer#start(java.lang.String)
      */
-    public void start() {
-        boolean started = ctx.start() ||  sock.start();
+    public void start(String channelName) {
+        if(channelName == null) throw new NullPointerException("channelName");
+        boolean started = ctx.start(channelName) ||  sock.start(channelName);
         if(!started) throw new IllegalStateException("Pipe- and SocketRunner not available");
     }
     
-    public void setChannel(String channel) {
-        if("".equals(channel)) channel = null;
-        ctx.setChannelName(channel);
-        sock.setChannelName(channel);
+    public String getFallbackChannelName(String channelName) {
+        if(channelName!=null && ctx.isAvailable()) return channelName;
+        return sock.getChannelName();
     }
 }

@@ -29,27 +29,22 @@ import php.java.bridge.http.ContextServer;
  * available, this servlet can start php as a CGI sub-process.<br>
  * However, it is recommended to install php as an Apache module and
  * to share the servlet engine's <code>webapps</code> directory with
- * apache's <code>htdocs</code> directory. Since Fedora Linux version 4 the tomcat
- * <code>webapps</code> directory and the Apache <code>htdocs</code>
- * directory are shared by default (via a <em>symlink</em>).
- * <br>
- * For frameworks, such as Java Server Faces, it is recommended to forward requests to the backend as follows:<br>
- * <code>
- * &lt;?php<br>
- * function toString() {"return "hello java world!";}<br>
- * java_context()-&gt;call(java_closure()) ||header("Location: hello.jsp");<br>
- * ?&gt;<br>
- * </code><br>
- * This allows the framework (jsf, struts, ...) to call php procedures as follows:<br>
- * <code>
- * PhpScriptEngine e = new PhpScriptEngine();<br>
- * e.eval(new URLReader(new URL("/hello.php")));<br>
- * out.println(((Invocable)e).call("java_get_server_name", new Object[]{}));<br>
- * e.release();<br>
- * </code>
- * <br>
- * An alternative would be to install <code>mod_jk</code> to "JkMount" the java "webapps" document root into the "htdocs" document root of the HTTP server 
- * and to configure it so that it automatically forwards all .jsp and servlet requests to the servlet engine.
+ * apache's <code>htdocs</code> directory. This is default since RH
+ * Fedora 4.  <br> For frameworks, such as Java Server Faces, it is
+ * recommended to forward requests to the backend as follows:<br>
+ * <code> &lt;?php<br> function toString() {"return "hello java
+ * world!";}<br> java_context()-&gt;call(java_closure())
+ * ||header("Location: hello.jsp");<br> ?&gt;<br> </code><br> This
+ * allows the framework (jsf, struts, ...) to call php procedures as
+ * follows:<br> <code> PhpScriptEngine e = new PhpScriptEngine();<br>
+ * e.eval(new URLReader(new URL("http://.../hello.php")));<br>
+ * out.println(((Invocable)e).invoke("toString", new Object[]{}));<br>
+ * e.release();<br> </code> <br>
+ *
+ * An alternative would be to install <code>mod_jk</code> to "JkMount"
+ * the java "webapps" document root into the "htdocs" document root of
+ * the HTTP server and to configure it so that it automatically
+ * forwards all .jsp and servlet requests to the servlet engine.
  * 
  */
 public class PhpJavaServlet extends FastCGIServlet {
@@ -425,23 +420,23 @@ public class PhpJavaServlet extends FastCGIServlet {
 	bridge.in = sin=req.getInputStream();
 	bridge.out = sout = new ByteArrayOutputStream();
 	Request r = bridge.request = new Request(bridge);
-	ContextServer socketRunner = (ContextServer)contextServer;
+	ContextServer ctxServer = (ContextServer)contextServer;
 	
 	try {
 	    if(r.init(sin, sout)) {
-	        socketRunner.setChannel(req.getHeader("X_JAVABRIDGE_CHANNEL"));
-	        res.setHeader("X_JAVABRIDGE_REDIRECT", socketRunner.getChannelName());
+	        String channelName = ctxServer.getFallbackChannelName(req.getHeader("X_JAVABRIDGE_CHANNEL"));
+	        res.setHeader("X_JAVABRIDGE_REDIRECT", channelName);
 	    	r.handleOneRequest();
 
 		// redirect and re-open
-	    	socketRunner.schedule();
+	    	ctxServer.schedule();
 		res.setContentLength(sout.size());
 		resOut = res.getOutputStream();
 		sout.writeTo(resOut);
-		if(bridge.logLevel>3) bridge.logDebug("re-directing to port# "+ socketRunner.getChannelName());
+		if(bridge.logLevel>3) bridge.logDebug("re-directing to port# "+ channelName);
 	    	sin.close();
 	    	resOut.flush();
-	    	socketRunner.start();
+	    	ctxServer.start(channelName);
 		if(bridge.logLevel>3) bridge.logDebug("waiting for context: " +ctx.getId());
 	    	ctx.waitFor();
 	    	if(bridge.logLevel>3) bridge.logDebug("context finished: " +ctx.getId());

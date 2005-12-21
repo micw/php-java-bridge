@@ -1,3 +1,28 @@
+2005-12-21  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/http/IContextServer.java
+	(setChannelName, getChannelName): removed. The context server is
+	shared and therefore stateless.
+	(start): Pass the channel name
+	
+	* server/php/java/bridge/http/ContextServer.java
+	(getFallbackChannelName): New method.
+	(start): Pass the channel name.
+
+	* server/php/java/bridge/http/PipeContextServer.java
+	(start): Pass the channel name.
+
+	* server/php/java/bridge/http/SocketContextServer.java
+	(start): Pass the channel name.
+
+	* server/php/java/bridge/http/JavaBridgeRunner.java
+	(parseBody): Do not store anything into the context server, it is
+	shared.
+
+	* server/php/java/servlet/PhpJavaServlet.java
+	(handleSocketConnection): Do not store anything into the context
+	server, it is shared.
+		
 2005-12-20  Jost Boekemeier  <jostb@intern>
 
 	* init_cfg.c.in (override_ini_from_cgi, create_pipe, create_pipes,

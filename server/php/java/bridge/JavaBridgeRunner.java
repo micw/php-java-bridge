@@ -35,12 +35,12 @@ public class JavaBridgeRunner extends HttpServer {
     public JavaBridgeRunner() {
 	super();
 	DynamicJavaBridgeClassLoader.initClassLoader(Util.DEFAULT_EXTENSION_DIR);
-	socketRunner = new ContextServer(null);
+	ctxServer = new ContextServer(null);
     }
 
     private InputStream in;
     private OutputStream out;
-    private static ContextServer socketRunner;
+    private static ContextServer ctxServer;
 
     /**
      * Create a server socket.
@@ -83,17 +83,19 @@ public class JavaBridgeRunner extends HttpServer {
 
 	try {
 	    if(r.init(sin, sout)) {
-		res.setHeader("X_JAVABRIDGE_REDIRECT", socketRunner.getChannelName());
+	        String channelName = ctxServer.getFallbackChannelName(req.getHeader("X_JAVABRIDGE_CHANNEL"));
+		res.setHeader("X_JAVABRIDGE_REDIRECT", channelName);
 	    	r.handleOneRequest();
 
 		// redirect and re-open
-	    	socketRunner.schedule();
+	    	ctxServer.schedule();
 		res.setContentLength(sout.size());
 		resOut = res.getOutputStream();
 		sout.writeTo(resOut);
-		if(bridge.logLevel>3) bridge.logDebug("re-directing to port# "+ socketRunner.getChannelName());
+		if(bridge.logLevel>3) bridge.logDebug("re-directing to port# "+ channelName);
 	    	sin.close();
 	    	resOut.flush();
+	    	ctxServer.start(channelName);
 	    	if(bridge.logLevel>3) bridge.logDebug("waiting for context: " +ctx.getId());
 	    	ctx.waitFor();
 	    	resOut.close();

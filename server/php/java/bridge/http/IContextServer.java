@@ -18,18 +18,6 @@ public interface IContextServer {
     public void destroy();
 
     /**
-     * Returns the channel name
-     * @return The channel name.
-     */
-    public String getChannelName();
-
-    /**
-     * Sets the communication channel.
-     * @param channelName The channel name, e.g.: /tmp/pipe or /dev/shm/channel
-     */
-    public void setChannelName(String channelName);
-
-    /**
      * Check if the ContextServer is ready, i.e. it has created a server socket.
      * @return true if there's a server socket listening, false otherwise.
      * @see ContextServer#getSocket()
@@ -64,5 +52,5 @@ public interface IContextServer {
     /**
      * Start the runner.
      */
-    public boolean start();    
+    public boolean start(String channelName);    
 }

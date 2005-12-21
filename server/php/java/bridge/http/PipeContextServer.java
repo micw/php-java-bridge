@@ -26,7 +26,6 @@ import php.java.bridge.Util;
 public class PipeContextServer implements IContextServer {
     protected ThreadPool threadPool;
     protected ContextServer contextServer;
-    private String channelName = null;
     private boolean isAvailable = true;
     
     protected static class Channel extends IContextServer.Channel {
@@ -67,12 +66,10 @@ public class PipeContextServer implements IContextServer {
     	this.threadPool = threadPool;
     }
 
-     private Channel createChannel() {
-        return new Channel(channelName);
-    }
-    public boolean start() {
+    public boolean start(String channelName) {
+        if(!isAvailable()) return false;
         try {
-	    ContextRunner runner = new ContextRunner(contextServer, createChannel());
+	    ContextRunner runner = new ContextRunner(contextServer, new Channel(channelName));
 	    if(threadPool!=null) {
 	        threadPool.start(runner);
 	    } else {
@@ -96,21 +93,12 @@ public class PipeContextServer implements IContextServer {
      */
     public void destroy() {
     }
-    
-    public String getChannelName() {
-        return isAvailable?channelName:null;
-    }
-    
     /**
      * Check if the ContextServer is ready, i.e. it has created a server socket.
      * @return true if there's a server socket listening, false otherwise.
      * @see ContextServer#getSocket()
      */
     public boolean isAvailable() {
-    	return isAvailable && channelName !=null;
-    }
- 
-    public void setChannelName(String channelName) {
-        this.channelName = channelName;
+    	return isAvailable;
     }
 }

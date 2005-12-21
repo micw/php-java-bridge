@@ -61,6 +61,4 @@ public class ContextFactory extends php.java.bridge.http.ContextFactory {
     public String toString() {
 	return super.toString() + ", has proxy: " +(req==null?"false":"true");
     }
-    
-	
 }

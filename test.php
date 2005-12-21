@@ -11,19 +11,26 @@ if (!extension_loaded('java')) {
   if (!dl('java.so')&&!dl('php_java.dll')) {
     echo "Error: The java extension is not installed.\n";
   }
-}
+ }
 if(java_get_server_name() != null) {
 
-  phpinfo();
-  print "\n\n";
-  
-  $v = new java("java.lang.System");
-  $arr=java_values($v->getProperties());
-  foreach ($arr as $key => $value) {
-    print $key . " -> " .  $value . "<br>\n";
+  try {
+    phpinfo();
+    print "\n\n";
+    
+    $v = new java("java.lang.System");
+    $arr=java_values($v->getProperties());
+    foreach ($arr as $key => $value) {
+      print $key . " -> " .  $value . "<br>\n";
+    }
+  } catch (Exception $ex) {
+    $trace = new java("java.io.ByteArrayOutputStream");
+    $ex->printStackTrace(new java("java.io.PrintStream", $trace));
+    echo "Exception $ex occured:<br>\n" . $trace . "\n";
+    
   }
+  echo "<br>\n";
 
-echo "<br>\n";
  } else {
 
   phpinfo();
