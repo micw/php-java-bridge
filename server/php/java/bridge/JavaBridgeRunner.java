@@ -83,8 +83,8 @@ public class JavaBridgeRunner extends HttpServer {
 
 	try {
 	    if(r.init(sin, sout)) {
-	        String channelName = ctxServer.getFallbackChannelName(req.getHeader("X_JAVABRIDGE_CHANNEL"));
-		res.setHeader("X_JAVABRIDGE_REDIRECT", channelName);
+	        ContextServer.ChannelName channelName = ctxServer.getFallbackChannelName(req.getHeader("X_JAVABRIDGE_CHANNEL"));
+		res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getName());
 	    	r.handleOneRequest();
 
 		// redirect and re-open

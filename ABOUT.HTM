@@ -620,7 +620,7 @@ the instructions below (on Security Enhanced Linux please use the RPM or please 
 	<LI><P><FONT ><A name="mode4">In a production environment which requires <strong>load balancing and failover</strong> or <strong>session sharing between PHP, JSP and Servlets</strong> it is recommended deploy the backend into a servlet engine or an application server; tomcat 5 for example. Disable the <code>java.socketname</code>, either a) enable the <code>java.hosts</code> and <code>java.servlet</code> options or b), if you don't have Apache or IIS, install PHP as a CGI/FastCGI binary so that your application server can find it and start the application server. The <code>.ini</code> file should contain:
 <BR><BR><code>extension = java.so<BR>[java]<br>
 java.hosts=&quot;127.0.0.1:8080&quot<br>
-java.servlet="/JavaBridge/PhpJavaServlet"
+java.servlet="/JavaBridge/PhpJavaServlet.php"
 </code>
 <br><br>
 
@@ -720,7 +720,7 @@ BORDER="1"
 ><TD
 ><code>;; Make sure that this option is only set <br>;; if your backend 
 is deployed in a<br>;; servlet engine or application server.</code><br>
-java.servlet="/JavaBridge/PhpJavaServlet"
+java.servlet="/JavaBridge/PhpJavaServlet.php"
 </TD
 ><TR
 ><TD

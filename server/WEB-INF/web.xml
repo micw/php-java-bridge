@@ -18,7 +18,8 @@
 
          <!-- Allow us to override the java.hosts, java.servlet and -->
          <!-- java.socketname settings from your php.ini so that we can -->
-         <!-- use the current VM. Default is On. -->
+         <!-- use the current VM (see X_JAVABRIDGE_OVERRIDE_HOSTS). -->
+         <!-- Default is On. -->
         <!-- 
          <init-param>
            <param-name>override_hosts</param-name>
@@ -37,15 +38,26 @@
 
          <!-- Use the fast cgi interface instead of cgi when running -->
          <!-- php as a CGI sub component (when php is not installed as an -->
-         <!-- Apache or IIS module). Default is true. --> 
+         <!-- Apache or IIS module). Values: Off, On, Autostart. -->
+         <!-- Default is true. -->
        <!--
          <init-param>
            <param-name>use_fast_cgi</param-name>
-           <param-value>false</param-value>
+           <param-value>Autostart</param-value>
          </init-param>
         -->
 
-         <!-- Default log_level is 2, java.log_level from your php.ini overrides. -->
+         <!-- Allow non-local clients. These clients connect to the -->
+         <!-- backend using a HTTP tunnel. Default is Off. -->
+         <!-- Leave this off if your server is connected to the internet. --> 
+       <!--
+         <init-param>
+           <param-name>allow_http_tunnel</param-name>
+           <param-value>On</param-value>
+         </init-param>
+        -->
+
+         <!-- Default log_level is 2, java.log_level from php.ini overrides.-->
         <!--
          <init-param>
            <param-name>servlet_log_level</param-name>

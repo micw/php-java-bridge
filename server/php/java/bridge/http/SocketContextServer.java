@@ -59,9 +59,14 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
     public SocketContextServer (ContextServer contextServer, ThreadPool threadPool) {
     	super(contextServer, threadPool);
         try {
-            boolean promisc = (System.getProperty("php.java.bridge.promiscuous", "false").toLowerCase().equals("true"));
-	    socket =  promisc ? JavaBridge.bind("INET:0") : JavaBridge.bind("INET_LOCAL:0");
-	    Thread t = new Thread(this, "JavaBridgeContextServer");
+	    socket = JavaBridge.bind("INET_LOCAL:0");
+	    try {
+	        SecurityManager sec = System.getSecurityManager();
+	        if(sec!=null) sec.checkAccept("127.0.0.1", Integer.parseInt(socket.getSocketName()));
+	    } catch (SecurityException sec) {
+	        throw new Exception("Add the line: grant {permission java.net.SocketPermission \"*\", \"accept,resolve\";}; to your server.policy file or run this AS on an operating system which supports named pipes (e.g.: Unix, Linux, BSD, Mac OSX, ...).", sec);
+	    } catch (Throwable t) {/*ignore*/};
+            Thread t = new Thread(this, "JavaBridgeContextServer");
 	    t.setDaemon(true);
 	    t.start();
         } catch (Throwable t) {

@@ -10,10 +10,10 @@ package php.java.bridge;
  * @author jostb
  *
  */
-public class Options {
+public final class Options {
 
-    byte options;
-    String encoding = Util.UTF8;
+    protected byte options;
+    protected String encoding = Util.UTF8;
 
     /**
      * Return a new string using the current file encoding (see java_set_file_encoding()).
@@ -78,7 +78,7 @@ public class Options {
     	return (this.options & 1) == 1;
     }
  
-    Object createExact(ParserString st) {
+    protected Object createExact(ParserString st) {
         if(!extJavaCompatibility())
             return (new Integer(st.getIntValue()));
         else

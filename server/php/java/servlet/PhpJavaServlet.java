@@ -130,16 +130,28 @@ public class PhpJavaServlet extends FastCGIServlet {
 
     
     private boolean override_hosts = true;
+    private boolean allowHttpTunnel = false;
     public void init(ServletConfig config) throws ServletException {
  	String value;
         try {
 	    value = config.getInitParameter("servlet_log_level");
-	    if(value!=null && value.trim().length()!=0) Util.logLevel=Integer.parseInt(value);
+	    if(value!=null && value.trim().length()!=0) Util.logLevel=Integer.parseInt(value.trim());
         } catch (Throwable t) {Util.printStackTrace(t);}      
 
     	try {
 	    value = config.getInitParameter("override_hosts");
-	    if(value!=null && value.trim().equalsIgnoreCase("off")) override_hosts=false;
+	    if(value==null) value="";
+	    value = value.trim();
+	    value = value.toLowerCase();
+	    if(value.equals("off") || value.equals("false")) override_hosts=false;
+    	} catch (Throwable t) {Util.printStackTrace(t);}      
+
+    	try {
+	    value = config.getInitParameter("allow_http_tunnel");
+	    if(value==null) value="";
+	    value = value.trim();
+	    value = value.toLowerCase();
+	    if(value.equals("on") || value.equals("true")) allowHttpTunnel=true;
     	} catch (Throwable t) {Util.printStackTrace(t);}      
 
     	super.init(config);
@@ -424,8 +436,8 @@ public class PhpJavaServlet extends FastCGIServlet {
 	
 	try {
 	    if(r.init(sin, sout)) {
-	        String channelName = ctxServer.getFallbackChannelName(req.getHeader("X_JAVABRIDGE_CHANNEL"));
-	        res.setHeader("X_JAVABRIDGE_REDIRECT", channelName);
+	        ContextServer.ChannelName channelName = ctxServer.getFallbackChannelName(req.getHeader("X_JAVABRIDGE_CHANNEL"));
+	        res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getName());
 	    	r.handleOneRequest();
 
 		// redirect and re-open
@@ -451,18 +463,23 @@ public class PhpJavaServlet extends FastCGIServlet {
 	}
     }
 
+    private boolean isLocal(HttpServletRequest req) {
+        return req.getRemoteAddr().startsWith("127.0.0.1");
+    }
     /**
      * Dispatcher for the "http tunnel", "local channel" or "override redirect".
      */
     protected void doPut (HttpServletRequest req, HttpServletResponse res)
 	throws ServletException, IOException {
-    	short redirect = (short) req.getIntHeader("X_JAVABRIDGE_REDIRECT");
+    	short redirect =(short) req.getIntHeader("X_JAVABRIDGE_REDIRECT");
     	ContextServer socketRunner = (ContextServer)contextServer;
+    	boolean local = isLocal(req);
+    	if(!local && !allowHttpTunnel) throw new SecurityException("Non-local clients not allowed per default. Set allow_http_tunnel in your web.xml.");
     	
 	try {
 	    if(redirect==1) 
 		handleRedirectConnection(req, res); /* override re-direct */
-	    else if(socketRunner.isAvailable()) 
+	    else if(local && socketRunner.isAvailable()) 
 		handleSocketConnection(req, res, redirect==2); /* re-direct */
 	    else
 		handleHttpConnection(req, res, redirect==2); /* standard http tunnel */
@@ -491,7 +508,7 @@ public class PhpJavaServlet extends FastCGIServlet {
 	    throw ex;
     	} catch (SecurityException sec) {
     	    try {res.reset();} catch (Exception ex) {/*ignore*/}
-	    ServletException ex = new ServletException("A security exception occured, could not run PHP. Please start php with the command: X_JAVABRIDGE_OVERRIDE_HOSTS=\"/\" PHP_FCGI_CHILDREN=\"20\" PHP_FCGI_MAX_REQUESTS=\"500\" /usr/bin/php-cgi -dlog_errors=On -ddisplay_errors=Off -b 127.0.0.1:9667", sec);
+	    ServletException ex = new ServletException("A security exception occured, could not run PHP. Please start Apache or IIS or start a standalone PHP server with the command: X_JAVABRIDGE_OVERRIDE_HOSTS=\"/\" PHP_FCGI_CHILDREN=\"20\" PHP_FCGI_MAX_REQUESTS=\"500\" /usr/bin/php-cgi -dlog_errors=On -ddisplay_errors=Off -b 127.0.0.1:9667", sec);
 	    php=null;
 	    checkCgiBinary(getServletConfig());
 	    throw ex;    	    

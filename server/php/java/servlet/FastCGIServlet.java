@@ -84,7 +84,7 @@ exitting. When one process exits, another will be created.
 
     protected String php = null; 
     private boolean fcgiIsAvailable;
-    private boolean canStartFCGI;
+    private boolean canStartFCGI = false;
     private String php_fcgi_children = PHP_FCGI_CHILDREN;
     private String php_fcgi_max_requests = PHP_FCGI_MAX_REQUESTS;
     
@@ -109,7 +109,7 @@ exitting. When one process exits, another will be created.
 	    try {
 		    value = config.getServletContext().getRealPath(cgiPathPrefix)+File.separator+"php-cgi";
 		    if(value!=null && value.trim().length()!=0) {
-		    	if(Util.checkCgiBinary(new StringBuffer(value)) != null) {
+		    	if(Util.checkCgiBinary(new StringBuffer(value.trim())) != null) {
 		    	    php = value;
 		    	    canStartFCGI = false;
 		    	}
@@ -119,7 +119,7 @@ exitting. When one process exits, another will be created.
 		try {
 		    value = config.getInitParameter("php_exec");
 		    if(value!=null && value.trim().length()!=0) {
-		        File f = new File(value);
+		        File f = new File(value.trim());
 		        if(!f.isAbsolute()) value = config.getServletContext().getRealPath(cgiPathPrefix)+File.separator+value;
 		        php = value; 
 		    }
@@ -129,12 +129,16 @@ exitting. When one process exits, another will be created.
 	    fcgiIsAvailable = true;
 	    value = config.getServletContext().getInitParameter("use_fast_cgi");
 	    if(value==null) try { value = System.getProperty("php.java.bridge.use_fast_cgi"); } catch (Exception e) {/*ignore*/}
-	    if("false".equals(value)) fcgiIsAvailable = false;
+	    if("false".equalsIgnoreCase(value) || "off".equalsIgnoreCase(value)) fcgiIsAvailable = false;
 	    else {
-	    value = config.getInitParameter("use_fast_cgi");
-	    if(value!=null && value.trim().length()!=0) {
-	        fcgiIsAvailable = ("true".equalsIgnoreCase(value)) ? true : false;
-	    }
+		value = config.getInitParameter("use_fast_cgi");
+		if(value==null) value="";
+		value=value.trim();
+		value = value.toLowerCase();
+		boolean autostart = value.startsWith("auto");
+		boolean notAvailable = value.equals("false") || value.equals("off");
+		if(notAvailable) fcgiIsAvailable = false;
+		if(autostart) canStartFCGI = true;
 	    }
 	}  catch (Throwable t) {Util.printStackTrace(t);}      
     }

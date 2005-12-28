@@ -19,7 +19,7 @@ Build and execution instructions:
           java -version        # 1.4 or above (1.5 or 1.6 recommended)
           gcc --version        # 3.2.3 or above (4.0.x recommended)
           apachectl -version   # Apache 1.3 or above (2.x recommended)
-          php-config --version # PHP 4.3.0 or above (5.x or 6.x recommended)
+          php-config --version # PHP 4.3.4 or above (5.x or 6.x recommended)
           make null --version  # GNU make 3.79 or above
 
           phpize && 
@@ -77,7 +77,7 @@ Build and execution instructions:
           extension = java.so
           [java]
           java.log_level="3"
-          java.servlet=On
+          java.servlet=User
           java.hosts="127.0.0.1:8080"
 
   This option can be used if "Security Enhanced Linux" is switched
@@ -108,7 +108,7 @@ Build and execution instructions:
 
           extension = java.so
           [java]
-          java.servlet=On
+          java.servlet=User
 
   After that you can call out to your web server's php scripts, for
   example:
@@ -171,7 +171,7 @@ Build and execution instructions:
           java.java      = <system dependent path to the java binary>
           java.socketname= <local ("unix domain") communication channel>
           java.hosts     = <add. backends e.g.: server1:9267;server2:9268>
-          java.servlet   = <On/Off>
+          java.servlet   = <On/Off/User>, see NEWS for version 3.0.2
 
   Please first look at the output of phpinfo() to see the original
   values.  
@@ -226,7 +226,7 @@ Build and execution instructions:
     ;; on windows: extension = php_java.dll
     [java]
     java.hosts     = "127.0.0.1:8080"
-    java.servlet   = On
+    java.servlet   = User
 
   To check the above settings, please visit http://localhost/JavaBridge/
   and run the sessionSharing.jsp and sessionSharing.php examples.
@@ -294,11 +294,11 @@ Build and execution instructions:
   visit http://localhost:8080/JavaBridge and run the supplied JSP and PHP
   examples.
 
-  If the parameter name "use_fast_cgi" is enabled in the web.xml and a fcgi
-  server does not listen on port 9667 and a fcgi binary can be found
-  as either /usr/bin/php-cgi or /usr/bin/php or c:/php5/php-cgi.exe,
-  then the backend automatically starts the fast cgi server on this
-  computer, with the command:
+  If the parameter name "use_fast_cgi" is set to "Autostart" in the
+  web.xml and a fcgi server does not listen on port 9667 and a fcgi
+  binary can be found as either /usr/bin/php-cgi or /usr/bin/php or
+  c:/php5/php-cgi.exe, then the backend automatically starts the fast
+  cgi server on this computer, with the command:
 
     cd $HOME
     export X_JAVABRIDGE_OVERRIDE_HOSTS="/"
@@ -349,16 +349,19 @@ Build and execution instructions:
       <param-value>c:/PHP/php-cgi.exe</param-value>
 
   In case your application server denies calling the cgi binary,
-  either start a fast cgi server on port 9667 as a separate process, for
-  example from a service script, or add a policy to the JavaBridge.war
-  which allows execution of the cgi binary. This is AS
-  specific. However, for a first test, switch off security checking in
-  general by adding the following to the application server's JRE
-  "java.policy" file:
+  either start apache or IIS or start a fast cgi server on port 9667
+  as a separate process, for example from a service script. 
+
+  On Unix the bridge uses named pipes. On Windows, where standard
+  named pipes are not available, the bridge uses TCP sockets. If your
+  application server denies socket accept/resolve, please either run the
+  AS on a Unix operating system or add the following lines to your AS
+  policy file (for example ...\domains\domain1\config\server.policy):
 
     grant {
-	permission java.security.AllPermission;
+      permission java.net.SocketPermission  "*", "accept,resolve";
     };
+
 
 ------------------------------------
   Loading on-demand with dl()
@@ -589,8 +592,7 @@ Build and execution instructions:
   On other systems, such as Windows and Mac OSX, the bridge opens a
   local TCP port on 9167 (JavaBridge.jar) or 9267 (MonoBridge.exe), 9567
   (JavaBridge.war) or 9667 (FastCGI). Please make sure that the ports in
-  the range [9167, ..., 9667] are protected and cannot be accessed from
-  the internet.
+  the range [9167, ..., 9667] cannot be accessed from the internet.
 
 ------------------------------------
   UTF-8
@@ -628,7 +630,8 @@ Build and execution instructions:
   should have been written as:
 
     $str=new Java ("java.lang.String", "Cześć! -- שלום -- Gr");
-    echo (string)$str;
+    echo (string)$str;  // in PHP5 or higher
+    echo $str->toString(); // in PHP4
 
 ------------------------------------
   Mailing List

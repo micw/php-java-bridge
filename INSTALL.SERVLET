@@ -33,14 +33,21 @@ Installing the PHP/Java Bridge J2EE Component
     cp JavaBridge.war /usr/share/tomcat5/webapps
     service tomcat5 restart
 
-* Browse to http://localhost:<port#>/JavaBridge and run the
-  supplied examples. For example:
+* Test the AS backend: Browse to http://localhost:<port#>/JavaBridge
+  and run the supplied examples. For example:
 
     http://localhost:8080/JavaBridge/test.php
 
-* Re-start Apache or IIS and check:
+* Test the Apache or IIS frontent: Check that the apache "htdocs"
+  directory is shared with the AS "webapps" directory. If not, symlink
+  webapps/JavaBridge to htdocs, for example with the commands:
 
-   http://yourHost.com/JavaBridge/sessionSharing.php
+   cd /var/www/html
+   ln -s  /usr/share/tomcat5/webapps/JavaBridge .
+
+  Then re-start apache and check "java status" and "java server":
+
+   http://yourHost.com/JavaBridge/test.php
 
 
 * Please report bugs/problems to the mailing list:
@@ -117,20 +124,19 @@ Known AS Issues
   about jsf.
 
 * The Sun J2EE application server does not allow one to start CGI
-  binaries. Start a PHP server outside of the AS domain instead, for
-  example with the command:
+  binaries. Start Apache or start a standalone PHP server outside of
+  the AS domain instead, for example with the commands:
 
-    X_JAVABRIDGE_OVERRIDE_HOSTS="/" \
-    PHP_FCGI_CHILDREN="20" \
-    PHP_FCGI_MAX_REQUESTS="500" \
-    php-cgi -dlog_errors=On -ddisplay_errors=Off -b127.0.0.1:9667
+    cp -r SUNWappserver/domains/domain1/applications/j2ee-modules/JavaBridge/WEB-INF/cgi PHPSERVER
+    cd PHPSERVER
+    chmod +x ./php-cgi-i386-linux
+    export X_JAVABRIDGE_OVERRIDE_HOSTS="/" 
+    export PHP_FCGI_CHILDREN="20" 
+    export PHP_FCGI_MAX_REQUESTS="500" 
+    ./php-cgi-i386-linux -c ./php-cgi-i386-linux.ini -b 127.0.0.1:9667
 
-  During development one can observe the c/s communication with:
-    # linux
-    X_JAVABRIDGE_OVERRIDE_HOSTS="/" strace -s 320 php-cgi -n -b:9667
-    # solaris
-    X_JAVABRIDGE_OVERRIDE_HOSTS="/" truss php-cgi -n -b:9667
+  On Windows, where the bridge cannot use unix' named pipes, this AS
+  needs the following permission (see server.policy usually located in
+  domains\domain1\config\):
 
-  The Sun AS cannot run test.php correctly because permissions to read
-  System->getProperties() are missing. This is harmless, see the AS log
-  for the PHP error messages.
+   grant {permission java.net.SocketPermission "*", "accept,resolve";};

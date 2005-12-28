@@ -9,7 +9,7 @@ if (!extension_loaded('java')) {
 }
 
 $System=new JavaClass("java.lang.System");
-$n=5000;
+$n=10000;
 for ($i = 0; $i < $n; $i++) { 
   $temp_array[$i]="$i";
 }
@@ -20,12 +20,12 @@ $hash = new java("java.util.Hashtable", $temp_array);
 // post temp array to java (as arrayList)
 $hashMap = new java("java.util.HashMap", $temp_array);
 
+$now = $System->currentTimeMillis();
 // receive Hashtable and Hashmap in one request
 $php_hash=java_get_values($hash);
 $php_hashMap=java_get_values($hashMap);
 
 
-$now = $System->currentTimeMillis();
 echo "array from java_get_values:\n";
 for ($i = 0; $i < $n; $i++) { 
   $val = "($php_hash[$i],$php_hashMap[$i]) ";

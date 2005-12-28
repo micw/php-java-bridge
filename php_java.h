@@ -100,23 +100,44 @@ struct cfg {
 #ifdef CFG_JAVA_SOCKET_INET
   struct sockaddr_in saddr;
 #else
+  /** The socket address of the backend, used when java.socketname is set.*/
   struct sockaddr_un saddr;
 #endif
+  /** The process id of the backend, used when java.socketname, java.hosts and java.servlet are off */
   int cid; // server's process id
+  /** The file descriptor of the backend, used when java.socketname, java.hosts and java.servlet are off */
   int err; // file descriptor: server's return code
 
-  char*sockname, *default_sockname;
+  /** The java.socketname */
+  char*sockname;
+  /** The default socketname */
+  char *default_sockname;
+  /** The java.hosts list */
   char*hosts;
+  /** The java.classpath */
   char*classpath;	
+  /** The java.libpath*/
   char*ld_library_path;
+  /** The java.wrapper */
   char*wrapper;
+  /** The java.java */
   char*vm;
+  /** The java.java_home */
   char*vm_home;
+  /** The java.log_level */
   char*logLevel;
+  /** The java.log_level as a number */
   unsigned short logLevel_val;
+  /** The java.log_file */
   char*logFile;
+  /** 1: if java.socketname, java.hosts and java.servlet are not set */
   short can_fork;				/* 0 if user has hard-coded the socketname */
+  /** The java.servlet, defaults to /JavaBridge/JavaBridge.php */
   char* servlet;				/* On or servlet context */
+  /** When the environment variable X_JAVABRIDGE_OVERRIDE_HOSTS is set
+	  to "/" or "host:port//Context/Servlet, the values java.servlet
+	  and java.hosts are taken from this environment variable. Used by
+	  FastCGI and CGI only. */
   short is_cgi_servlet;			/* 1: cgi env available */
 };
 extern struct cfg *EXT_GLOBAL(cfg);

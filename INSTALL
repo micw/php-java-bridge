@@ -199,7 +199,7 @@ Check if tomcat has created the $CATALINA_HOME/webapps/JavaBridge
 directory, if not, please check the tomcat logs for errors.
 
 Direct php to tomcat:
-su -c "echo -e 'extension=java.so\n[java]\njava.servlet=On\njava.hosts=127.0.0.1:8080' >$INST/lib/php.ini"
+su -c "echo -e 'extension=java.so\n[java]\njava.servlet=User\njava.hosts=127.0.0.1:8080' >$INST/lib/php.ini"
 
 Start or re-start apache, for example with:
 su -c "apachectl restart"
@@ -211,7 +211,7 @@ java.servlet and java.hosts entries.  Example:
 
        [java]
        java.log_level="2"
-       java.servlet=On
+       java.servlet=User
        java.hosts="127.0.0.1:8080"
 
 The PHP/Java Bridge log output appears in the server log file, for

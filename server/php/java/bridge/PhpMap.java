@@ -152,20 +152,21 @@ public abstract class PhpMap {
 	if(value instanceof Collection) {
 	    return 
 		new PhpMap(bridge, value, false) {
-		    Object currentKey;
 		    int i;
+		    boolean valid;
 		    Iterator iter;
 		    
 		    protected void init() {
 			iter = ((Collection)(this.value)).iterator();
 			i = 0;
-			currentKey=null;
+			valid=false;
 			if(iter.hasNext()) {
-			    currentKey=iter.next();
+			    valid=true;
+			    value=iter.next();
 			}
 		    }
 		    public Object currentData() {
-			return currentKey;
+			return value;
 		    }
 		    public Request.PhpString currentKey() {
 			return new Request.SimplePhpString(_bridge, String.valueOf(i));
@@ -173,14 +174,14 @@ public abstract class PhpMap {
 		    public boolean moveForward() {
 			if(iter.hasNext()) {
 			    i++;
-			    currentKey = iter.next();
-			    return true;
+			    value = iter.next();
+			    return valid=true;
 			} else {
-			    return false;
+			    return valid=false;
 			}
 		    }
 		    public boolean hasMore() {
-			return currentKey==null?false:true;
+			return valid;
 		    }
 
 		    private void bail() {

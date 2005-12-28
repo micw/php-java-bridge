@@ -635,12 +635,13 @@ static short create_pipes(char*basename, size_t basename_len TSRMLS_DC) {
   char *e = basename+basename_len;
   short success;
   if(mkstemp(basename) == -1) return 0;
-  if(!create_pipe(strcat(basename, in TSRMLS_CC))) {
+  if(!create_pipe(strcat(basename, in) TSRMLS_CC)) {
 	*e=0;
+	unlink(basename);
 	return 0;
   }
   *e=0;
-  success = create_pipe(strcat(basename, out));
+  success = create_pipe(strcat(basename, out) TSRMLS_CC);
   assert(success); if(!success) exit(6);
   JG(channel_out) = strdup(basename);
   *e=0;
@@ -655,16 +656,17 @@ void EXT_GLOBAL(init_channel)(TSRMLS_D) {
   char *pipe;
 
   /* pipe communication channel only available in servlets */
+  JG(channel)=0;
   if(!EXT_GLOBAL(option_set_by_user) (U_SERVLET, EXT_GLOBAL(ini_user))) return;
 
   pipe=malloc(length+2); /* "name.i" */
   assert(pipe); if(!pipe) exit(6);
   
-  JG(channel)=0;
   create_pipes(strcpy(pipe,sockname_shm), sizeof(sockname_shm)-1 TSRMLS_CC)||
 	create_pipes(strcpy(pipe,sockname), sizeof(sockname)-1 TSRMLS_CC);
-  assert(JG(channel));
-  if(!(JG(channel))) exit(6);
+
+  if(!JG(channel)) free(pipe);
+  //assert(JG(channel));
 }
 
 void EXT_GLOBAL(destroy_channel)(TSRMLS_D) {

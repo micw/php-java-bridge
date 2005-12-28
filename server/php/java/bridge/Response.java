@@ -5,6 +5,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 
 /**
@@ -127,18 +129,30 @@ public class Response {
 	    } else if (value instanceof java.util.Map) {
 		Map ht = (Map) value;
 		writeCompositeBegin_h();
-		for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
-		    Object key = e.next();
-		    long slot;
+		for (Iterator e = ht.entrySet().iterator(); e.hasNext(); ) {
+		    Map.Entry entry = (Map.Entry)e.next();
+		    Object key = entry.getKey();
+		    Object val = entry.getValue();
 		    if (key instanceof Number &&
 			!(key instanceof Double || key instanceof Float)) {
 			writePairBegin_n(((Number)key).intValue());
-			writer.setResult(ht.get(key));
+			writer.setResult(val);
 		    }
 		    else {
 			writePairBegin_s(String.valueOf(key));
 			writer.setResult(ht.get(key));
 		    }
+		    writePairEnd();
+		}
+		writeCompositeEnd();
+	    } else if (value instanceof java.util.List) {
+		List ht = (List) value;
+		writeCompositeBegin_h();
+		for (ListIterator e = ht.listIterator(); e.hasNext(); ) {
+		    int key = e.nextIndex();
+		    Object val = e.next();
+		    writePairBegin_n(key);
+		    writer.setResult(ht.get(key));
 		    writePairEnd();
 		}
 		writeCompositeEnd();
@@ -194,7 +208,7 @@ public class Response {
    		else if(type == Character.TYPE) 
 		    writeString(String.valueOf(value));
    		else { Util.logFatal("Unknown type"); writeObject(value); }
-	    } else if(value instanceof Request.PhpString) // from by PhpMap. No need to check for Request.PhpNumber, this cannot happen.
+	    } else if(value instanceof Request.PhpString) //  No need to check for Request.PhpNumber, this cannot happen.
 	        writeString(((Request.PhpString)value).getBytes());
 	    else if(!delegate.setResult(value))
 		writeObject(value);
@@ -428,7 +442,11 @@ public class Response {
     }
 
     private Writer getArrayValuesWriter() {
-        if(arrayValuesWriter==null) return arrayValuesWriter = newWriter(new ArrayValuesWriter());
+        if(arrayValuesWriter==null) {
+            WriterWithDelegate writer = new ClassicWriter();
+            writer.delegate = new ArrayValuesWriter();
+            arrayValuesWriter = writer;
+        }
         return arrayValuesWriter;
     }
 

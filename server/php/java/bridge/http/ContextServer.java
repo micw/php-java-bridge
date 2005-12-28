@@ -12,6 +12,43 @@ public class ContextServer {
 
     PipeContextServer ctx;
     SocketContextServer sock;
+    
+    public abstract class ChannelName {
+        protected String name;
+        public ChannelName(String name) {
+            this.name = name;
+        }
+        public String getName() {
+            return name;
+        }
+        public abstract boolean startChannel();
+    }
+    private class PipeChannelName extends ChannelName {
+        public PipeChannelName(String name) {super(name);}
+
+        /* (non-Javadoc)
+         * @see php.java.bridge.http.ContextServer.ChannelName#start()
+         */
+        public boolean startChannel() {
+            return ctx.start(name);
+        }
+         public String toString() {
+            return "Pipe:"+name;
+        }
+    }
+    private class SocketChannelName extends ChannelName {
+        public SocketChannelName(String name) {super(name);}
+        
+        /* (non-Javadoc)
+         * @see php.java.bridge.http.ContextServer.ChannelName#start()
+         */
+        public boolean startChannel() {
+            return sock.start(name);
+        }
+        public String toString() {
+            return "Socket:"+name;
+        }
+    }
     public ContextServer(ThreadPool pool) {
         /*
          * We need both because the client may not support named pipes.
@@ -58,14 +95,14 @@ public class ContextServer {
     /* (non-Javadoc)
      * @see php.java.bridge.http.IContextServer#start(java.lang.String)
      */
-    public void start(String channelName) {
+    public void start(ChannelName channelName) {
         if(channelName == null) throw new NullPointerException("channelName");
-        boolean started = ctx.start(channelName) ||  sock.start(channelName);
+        boolean started = channelName.startChannel();
         if(!started) throw new IllegalStateException("Pipe- and SocketRunner not available");
     }
     
-    public String getFallbackChannelName(String channelName) {
-        if(channelName!=null && ctx.isAvailable()) return channelName;
-        return sock.getChannelName();
+    public ChannelName getFallbackChannelName(String channelName) {
+        if(channelName!=null && channelName.length()!=0 && ctx.isAvailable()) return new PipeChannelName(channelName);
+        return new SocketChannelName(sock.getChannelName());
     }
 }

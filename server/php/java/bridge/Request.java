@@ -14,11 +14,11 @@ import java.util.HashMap;
  * @author jostb
  *
  */
-public class Request implements IDocHandler {
+public final class Request implements IDocHandler {
 
     private Parser parser;
     private JavaBridge bridge;
-    protected static class PhpArray extends HashMap { // for PHP's array()
+    protected static final class PhpArray extends HashMap { // for PHP's array()
 	private static final long serialVersionUID = 3905804162838115892L;
     };
  
@@ -148,38 +148,32 @@ public class Request implements IDocHandler {
 	}
     	
     };
-    private static final class Args {
-    	PhpArray ht; 
-    	ArrayList array;
-    	int count;
-
-    	byte composite;
-    	byte type;
-    	Object callObject;
-    	Throwable exception;
-    	String method;
-    	boolean predicate;
-        long id;
-        Object key;
-
-   	void add(Object val) {
-	    if(composite!=0) {
-		if(ht==null) ht=new PhpArray();
-		if(key!=null) {
-		    ht.put(key, val);
-		}
-		else {
-		    ht.put(new Long(count++), val);
-		}
-	    } else {
-		if(array==null) array=new ArrayList();
-		array.add(val);
-	    }
+    static final Object[] ZERO_ARGS = new Object[0];
+    private abstract class Arg {
+    	protected byte type;
+    	protected Object callObject;
+    	protected Throwable exception;
+    	protected String method;
+    	protected boolean predicate;
+    	protected long id;
+    	protected Object key;
+    	protected byte composite;
+    	 
+    	public abstract void add(Object val);
+    	public abstract Object[] getArgs();
+    	public abstract void reset();
+    }
+    private final class SimpleArg extends Arg {
+    	private ArrayList array;
+   	public void add(Object val) {
+   	    if(array==null) array=new ArrayList();
+   	    array.add(val);
     	}
-    	void reset() {
-	    ht=null;
+    	public Object[] getArgs() {
+	    return (array==null) ? Request.ZERO_ARGS : array.toArray();
+    	}
+    	public void reset() {
 	    array=null;
-	    count=0;
 	    composite=0;
 	    type=0;
 	    callObject=null;
@@ -187,21 +181,48 @@ public class Request implements IDocHandler {
 	    id=0;
 	    key=null;
      	}
-    	private static final PhpArray empty0=new PhpArray();
-    	void push() {
-	    if(composite!=0) {
-		if(array==null) array=new ArrayList();
-		array.add(ht==null?empty0:ht);
-		ht=null;
-	    }
-	    composite=0;
-    	}
-        private static final Object[] empty = new Object[0];
-    	Object[] getArgs() {
-	    return (array==null) ? empty : array.toArray();
-    	}
     }
-    private Args args;
+    private final class CompositeArg extends Arg {
+    	private PhpArray ht = null; 
+    	private int count = 0;
+    	private Arg parent;
+    	
+    	public CompositeArg(Arg parent) {
+    	    this.parent = parent;
+    	}
+    	
+        public void add(Object val) {
+		if(ht==null) ht=new PhpArray();
+		if(key!=null) {
+		    ht.put(key, val);
+		}
+		else {
+		    ht.put(new Long(count++), val);
+		}
+
+        }
+        protected Arg pop() {
+            if(ht==null) ht=new PhpArray();
+            parent.add(ht);
+            return parent;
+        }
+
+        /* (non-Javadoc)
+         * @see php.java.bridge.Request.Arg#getArgs()
+         */
+        public Object[] getArgs() {
+            bridge.logError("Protocol error: getArgs");
+            return ZERO_ARGS;
+        }
+
+        /* (non-Javadoc)
+         * @see php.java.bridge.Request.Arg#reset()
+         */
+        public void reset() {
+            bridge.logError("Protocol error: reset");
+        }
+    }
+    private Arg arg;
     
     /**
      * The current response handle or null.
@@ -218,7 +239,7 @@ public class Request implements IDocHandler {
     public Request(JavaBridge bridge) {
 	this.bridge=bridge;
 	this.parser=new Parser(bridge, this);
-	this.args=new Args();
+	this.arg=new SimpleArg();
     }
     static final byte[] ZERO={0};
     static final Object ZERO_OBJECT=new Object();
@@ -257,40 +278,41 @@ public class Request implements IDocHandler {
 	byte ch;
 	switch (ch=tag[0].strings[0].string[0]) {
 	case 'I': {
-	    args.type=ch;
+	    arg.type=ch;
 	    int i= st[0].getIntValue();
-	    args.callObject=i==0?bridge:bridge.globalRef.get(i);
-	    args.method=st[1].getStringValue();
-	    args.predicate=st[2].string[st[2].off]=='P';
-	    args.id=st[3].getLongValue();
+	    arg.callObject=i==0?bridge:bridge.globalRef.get(i);
+	    arg.method=st[1].getStringValue(bridge.options);
+	    arg.predicate=st[2].string[st[2].off]=='P';
+	    arg.id=st[3].getLongValue();
 	    break;
 	}
 	case 'C': {
-	    args.type=ch;
-	    args.callObject=st[0].getStringValue();
-	    args.predicate=st[1].string[st[1].off]=='C';
-	    args.id=st[2].getLongValue();
+	    arg.type=ch;
+	    arg.callObject=st[0].getStringValue(bridge.options);
+	    arg.predicate=st[1].string[st[1].off]=='C';
+	    arg.id=st[2].getLongValue();
 	    break;
 	}
 	case 'R': {
-	    args.type=ch;
-	    args.id=st[0].getLongValue();
+	    arg.type=ch;
+	    arg.id=st[0].getLongValue();
 	    break;
 	}
 	
 	case 'X': {
-	    args.composite=st[0].string[st[0].off];
+	    arg = new CompositeArg(arg);
+	    arg.composite=st[0].string[st[0].off];
 	    break;
 	}
 	case 'P': {
-	    if(args.composite=='H') {// hash
+	    if(arg.composite=='H') {// hash
 		if(st[0].string[st[0].off]=='S')
-		    args.key = st[1].getStringValue();
+		    arg.key = st[1].getStringValue(bridge.options);
 		else {
-		   args.key = bridge.options.createExact(st[1]);
+		   arg.key = bridge.options.createExact(st[1]);
 		}
 	    } else // array
-		args.key=null;
+		arg.key=null;
 	    break;
 	}
 
@@ -300,49 +322,49 @@ public class Request implements IDocHandler {
 	    break;
 	}
 	case 'S': {
-	    if(args.composite!='H') 
-	        args.add(new PhpParserString(bridge, st[0]));
+	    if(arg.composite!='H') 
+	        arg.add(new PhpParserString(bridge, st[0]));
 	    else // hash has no type information
-	        args.add(st[0].getStringValue());
+	        arg.add(st[0].getStringValue(bridge.options));
 	    break;
 	}
 	case 'B': {
-	    args.add(new Boolean(st[0].string[st[0].off]=='T'));
+	    arg.add(new Boolean(st[0].string[st[0].off]=='T'));
 	    break;
 	}
 	case 'L': {
-	    if(args.composite!='H')
-	        args.add(new PhpNumber(st[0].getLongValue()));
+	    if(arg.composite!='H')
+	        arg.add(new PhpNumber(st[0].getLongValue()));
 	    else // hash has no type information
-	        args.add(bridge.options.createExact(st[0]));
+	        arg.add(bridge.options.createExact(st[0]));
 	    break;
 	}
 	case 'D': {
-	    args.add(new Double(st[0].getDoubleValue())); 
+	    arg.add(new Double(st[0].getDoubleValue())); 
 	    break;
 	}
 	case 'E': {
 	    if(0==st[0].length)
-		args.callObject=new Exception(st[1].getStringValue());
+		arg.callObject=new Exception(st[1].getStringValue(bridge.options));
 	    else {
 		int i=st[0].getIntValue();
 		if(0==i) {
-		    args.callObject=new Exception(st[1].getStringValue());
+		    arg.callObject=new Exception(st[1].getStringValue(bridge.options));
 		}
 		else
-		    args.callObject=bridge.globalRef.get(i);
+		    arg.callObject=bridge.globalRef.get(i);
 	    }
 	    break;
 	}
 	case 'O': {
 	    if(0==st[0].length)
-		args.add(null);
+		arg.add(null);
 	    else {
 		int i=st[0].getIntValue();
 		if(0==i)
-		    args.add(null);
+		    arg.add(null);
 		else
-		    args.add(bridge.globalRef.get(i));
+		    arg.add(bridge.globalRef.get(i));
 	    }
 	    break;
 	}
@@ -355,7 +377,7 @@ public class Request implements IDocHandler {
     public void end(ParserString[] string) {
     	switch(string[0].string[0]) {
     	case 'X': {
-	    args.push();
+	    arg = ((CompositeArg)arg).pop();
     	}
     	}
     }
@@ -368,20 +390,20 @@ public class Request implements IDocHandler {
     private int handleRequest() throws IOException {
 	int retval;
 	if(Parser.OK==(retval=parser.parse(bridge.in))) {
-	    response.setResultID(args.id);
-	    switch(args.type){
+	    response.setResultID(arg.id);
+	    switch(arg.type){
 	    case 'I':
-		if(args.predicate)
-		    bridge.GetSetProp(args.callObject, args.method, args.getArgs(), response);
+		if(arg.predicate)
+		    bridge.GetSetProp(arg.callObject, arg.method, arg.getArgs(), response);
 		else
-		    bridge.Invoke(args.callObject, args.method, args.getArgs(), response);
+		    bridge.Invoke(arg.callObject, arg.method, arg.getArgs(), response);
 		response.flush();
 		break;
 	    case 'C':
-		if(args.predicate)
-		    bridge.CreateObject((String)args.callObject, false, args.getArgs(), response);
+		if(arg.predicate)
+		    bridge.CreateObject((String)arg.callObject, false, arg.getArgs(), response);
 		else
-		    bridge.CreateObject((String)args.callObject, true, args.getArgs(), response);
+		    bridge.CreateObject((String)arg.callObject, true, arg.getArgs(), response);
 		response.flush();
 		break;
 	   case 'R':
@@ -389,7 +411,7 @@ public class Request implements IDocHandler {
 	       response.flush();
 	       break;
 	    }
-	    args.reset();
+	    arg.reset();
 	}
 	return retval;
     }
@@ -425,37 +447,37 @@ public class Request implements IDocHandler {
      */
     protected Object[] handleSubRequests() throws IOException, Throwable {
     	response.flush();
-    	Args current = args;
-    	args = new Args();
+    	Arg current = arg;
+    	arg = new SimpleArg();
 	while(Parser.OK==parser.parse(bridge.in)){
-	    response.setResultID(args.id); 
-	    switch(args.type){
+	    response.setResultID(arg.id); 
+	    switch(arg.type){
 	    case 'I':
-		if(args.predicate)
-		    bridge.GetSetProp(args.callObject, args.method, args.getArgs(), response);
+		if(arg.predicate)
+		    bridge.GetSetProp(arg.callObject, arg.method, arg.getArgs(), response);
 		else
-		    bridge.Invoke(args.callObject, args.method, args.getArgs(), response);
+		    bridge.Invoke(arg.callObject, arg.method, arg.getArgs(), response);
 		response.flush();   
 		break;
 	    case 'C':
-		if(args.predicate)
-		    bridge.CreateObject((String)args.callObject, false, args.getArgs(), response);
+		if(arg.predicate)
+		    bridge.CreateObject((String)arg.callObject, false, arg.getArgs(), response);
 		else
-		    bridge.CreateObject((String)args.callObject, true, args.getArgs(), response);
+		    bridge.CreateObject((String)arg.callObject, true, arg.getArgs(), response);
 		response.flush();   
 		break;
 	    case 'R':
-	    	Args ret = args;
-	    	args = current;
+	    	Arg ret = arg;
+	    	arg = current;
 	    	response.reset();
 	    	
 	    	if(ret.callObject!=null) 
 	    	    throw (Throwable)ret.callObject;
 	    	return ret.getArgs();
 	    }
-	    args.reset();
+	    arg.reset();
 	}
-	args = current;
+	arg = current;
 	throw new IllegalStateException(SUB_FAILED);
     }
 }

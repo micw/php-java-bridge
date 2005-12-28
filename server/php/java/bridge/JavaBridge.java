@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -573,129 +574,126 @@ public class JavaBridge implements Runnable {
     //
     // Select the best match from a list of methods
     //
-    private static Object select(Vector methods, Object args[]) {
-	if (methods.size() == 1) return methods.firstElement();
+    private int weight(Class param, Object arg) {
+	int w = 0;
+	if (param.isInstance(arg)) {
+	    for (Class c=arg.getClass(); (c=c.getSuperclass()) != null; ) {
+		if (!param.isAssignableFrom(c)) {
+		    break;
+		}
+		w+=16;		// prefer more specific arg, for
+				// example AbstractMap hashMap
+				// over Object hashMap.
+	    }
+	} else if (param.isAssignableFrom(java.lang.String.class)) {
+	    if ((arg != null) && !(arg instanceof String) && !(arg instanceof Request.PhpString))
+	        if(arg instanceof byte[])
+	            w+=32;
+	        else
+	            w+=9999;
+	} else if (param.isArray()) {
+	    if (arg != null) {
+	        if(arg instanceof Request.PhpString) {
+	            Class c=param.getComponentType();
+	            if(c == byte.class) 
+	                w+=32;
+	            else
+	                w+=9999;
+	        } else if(arg.getClass() == Request.PhpArray.class) {
+		    Iterator iterator = ((Map)arg).values().iterator();
+		    if(iterator.hasNext()) {
+			Object elem = iterator.next();
+			Class c=param.getComponentType();
+			w+=weight(c, elem);
+		    }
+		} else if(arg.getClass().isArray()) {
+		    int length = Array.getLength(arg);
+		    if(length>0) {
+			w+=weight(param.getComponentType(), Array.get(arg,0));
+		    }
+		}
+		else w+=9999;
+	    }
+	} else if ((java.util.Collection.class).isAssignableFrom(param)) {
+	    if ((arg != null) && !(arg instanceof Request.PhpArray))
+		w+=9999;
+	} else if (param.isPrimitive()) {
+	    Class c=param;
+	    if (arg instanceof Number) {
+		if(arg instanceof Double) {
+		    if (c==Float.TYPE) w+=1;
+		    else if (c==Double.TYPE) w+=0;
+		    else w+=256;
+		} else {
+		    if (c==Boolean.TYPE) w+=5;
+		    else if (c==Character.TYPE) w+=4;
+		    else if (c==Byte.TYPE) w+=3;
+		    else if (c==Short.TYPE) w+=2;
+		    else if (c==Integer.TYPE) w+=1;
+		    else if (c==Long.TYPE) w+=0;
+		    else w+=256;
+		}
+	    } else if (arg instanceof Boolean) {
+		if (c!=Boolean.TYPE) w+=9999;
+	    } else if (arg instanceof Character) {
+		if (c!=Character.TYPE) w+=9999;
+	    } else if (arg instanceof String) {
+		if (c== Character.TYPE) 
+		    w+=((String)arg).length();
+		else
+		    w+=64;
+	    } else {
+		w+=9999;
+	    }
+	} else {
+	    w+=9999;
+	}
+	
+	if(logLevel>4) logDebug("weight " + param + " " + Util.getClass(arg) + ": " +w);
+	return w;
+    }
 
+    private Object select(Vector methods, Object args[]) {
+	if (methods.size() == 1) return methods.firstElement();
 	Object selected = null;
 	int best = Integer.MAX_VALUE;
 	int n = 0;
 	
 	for (Enumeration e = methods.elements(); e.hasMoreElements(); n++) {
 	    Object element = e.nextElement();
-	    int weight=0;
+	    int w=0;
 
 	    Class parms[] = (element instanceof Method) ?
 		((Method)element).getParameterTypes() :
 		((Constructor)element).getParameterTypes();
 
 	    for (int i=0; i<parms.length; i++) {
-	    	Object arg = args[i];
-	    	if(n==0) {
-		    	if(arg instanceof Request.PhpString) {
-		    	    args=(Object[])args.clone();
-		    	    args[i] = arg = Request.ZERO;
-		    	} else if(arg instanceof PhpProcedureProxy) {
-			    PhpProcedureProxy proxy = ((PhpProcedureProxy)arg);
-			    if(proxy.suppliedInterfaces==null) {
-				if(!parms[i].isInterface()) { 
-				    // generic: Object
-				    args=(Object[])args.clone(); 
-				    args[i] = arg = Request.ZERO_OBJECT;
-				}
-			    } else {
-		    	    	args=(Object[])args.clone();
-		    	    	args[i] = arg = proxy.getProxy(null);        
-			    }
-		    	}
-	    	}
-
-	    	if (parms[i].isInstance(arg)) {
-		    for (Class c=arg.getClass(); (c=c.getSuperclass()) != null; ) {
-			if (!parms[i].isAssignableFrom(c)) {
-			    if (arg instanceof Request.PhpString) { //special case: when arg is a byte array we always prefer a String parameter (if it exists).
-				weight+=1;
-			    }
-			    break;
-			}
-			weight+=16; // prefer more specific arg, for
-				     // example AbstractMap hashMap
-				     // over Object hashMap.
-		    }
-		} else if (parms[i].isAssignableFrom(java.lang.String.class)) {
-		    if (!(arg instanceof byte[]) && !(arg instanceof String))
-			weight+=9999;
-		} else if (parms[i].isArray()) {
-		    if ((arg != null) && arg.getClass() == Request.PhpArray.class) { 
-			Iterator iterator = ((Map)arg).values().iterator();
-			if(iterator.hasNext()) {
-			    Object elem = iterator.next();
-			    Class c=parms[i].getComponentType();
-			    if (elem instanceof Number) {
-				if(elem instanceof Double) {
-				    if (c==Float.TYPE) weight+=11;
-				    else if (c==Double.TYPE) weight+=10;
-				    else weight += 256;
-				} else {
-				    if (c==Boolean.TYPE) weight+=15;
-				    else if (c==Character.TYPE) weight+=14;
-				    else if (c==Byte.TYPE) weight+=13;
-				    else if (c==Short.TYPE) weight+=12;
-				    else if (c==Integer.TYPE) weight+=11;
-				    else if (c==Long.TYPE) weight+=10;
-				    else weight += 256;
-				}
-			    } else if (elem instanceof Boolean) {
-				if (c!=Boolean.TYPE) weight+=256;
-			    } else if (elem instanceof Character) {
-				if (c!=Character.TYPE) weight+=256;
-			    } else
-				weight += 256;
-			} else
-			    weight+=256;
-		    } else
-			weight+=9999;
-		} else if ((java.util.Collection.class).isAssignableFrom(parms[i])) {
-		    if (!(arg instanceof Map))
-			weight+=9999;
-		} else if (parms[i].isPrimitive()) {
-		    Class c=parms[i];
-		    if (arg instanceof Number) {
-			if(arg instanceof Double) {
-			    if (c==Float.TYPE) weight++;
-			    else if (c==Double.TYPE) weight+=0;
-			    else weight += 256;
-			} else {
-			    if (c==Boolean.TYPE) weight+=5;
-			    else if (c==Character.TYPE) weight+=4;
-			    else if (c==Byte.TYPE) weight+=3;
-			    else if (c==Short.TYPE) weight+=2;
-			    else if (c==Integer.TYPE) weight++;
-			    else if (c==Long.TYPE) weight+=0;
-			    else weight += 256;
-			}
-		    } else if (arg instanceof Boolean) {
-			if (c!=Boolean.TYPE) weight+=9999;
-		    } else if (arg instanceof Character) {
-			if (c!=Character.TYPE) weight+=9999;
-		    } else if (arg instanceof String) {
-			if (c== Character.TYPE) 
-			    weight+=((String)arg).length();
-			else
-			    weight+=64;
+		Object arg = args[i];
+		if(arg instanceof PhpProcedureProxy) {
+		    PhpProcedureProxy proxy = ((PhpProcedureProxy)arg);
+		    if(proxy.suppliedInterfaces==null) {
+		        continue; // exact match
 		    } else {
-			weight+=9999;
+			arg = args[i] = proxy.getProxy(null);        
 		    }
-		} else {
-		    weight+=9999;
 		}
+		
+		w+=weight(parms[i], arg);
 	    }
-	    if (weight < best) {
-		if (weight == 0) return element;
-		best = weight;
+	    if (w < best) {
+		if (w == 0) {
+		    if(logLevel>4) logDebug("Selected: " + element + " " + w);
+		    return element;
+		}
+		best = w;
 		selected = element;
+		if(logLevel>4) logDebug("best: " + selected + " " + w);
+	    } else {
+	        if(logLevel>4) logDebug("skip: " + element + " " + w);
 	    }
 	}
-
+	
+	if(logLevel>4) logDebug("Selected: " + selected + " " + best);
 	return selected;
     }
 
@@ -1649,7 +1647,9 @@ public class JavaBridge implements Runnable {
      * @param val The object.
      */
     public void offsetSet(Map value, Object pos, Object val) {
-	value.put(pos, coerce(value.getClass().getComponentType(), val, request.response));
+        Class type = value.getClass().getComponentType();
+        if(type!=null) val = coerce(type, val, request.response);
+	value.put(pos, val);
     }
     /**
      * Remove an object from the position.
@@ -1658,6 +1658,46 @@ public class JavaBridge implements Runnable {
       */
     public void offsetUnset(Map value, Object pos) {
 	value.remove(pos);
+    }
+    /**
+     * Checks if a given position exists.
+     * @param value The list.
+     * @param pos The position
+     * @return true if an element exists at this position, false otherwise.
+     */
+    public boolean offsetExists(List value, Number pos) {
+	try {
+	    offsetGet(value, pos);
+	    return true;
+	} catch (IndexOutOfBoundsException ex) {
+	    return false;
+	}
+    }
+    /**
+     * Returns the object at the posisition.
+     * @param value The list.
+     * @param pos The position.
+     * @return The object at the given position.
+     */    
+    public Object offsetGet(List value, Number pos) {
+	return value.get(pos.intValue());
+    }
+    /**
+     * Set an object at position. 
+     * @param value The list.
+     * @param pos The position.
+     * @param val The object.
+     */
+    public void offsetSet(List value, Number pos, Object val) {
+	value.set(pos.intValue(), val);
+    }
+    /**
+     * Remove an object from the position.
+     * @param value The list.
+     * @param pos The position.
+      */
+    public void offsetUnset(List value, Number pos) {
+	offsetSet(value, pos, null);
     }
     boolean offsetExists(int length, Object pos) {
 	int i = ((Number)pos).intValue();
@@ -1669,7 +1709,7 @@ public class JavaBridge implements Runnable {
      * @param pos The position
      * @return true if an element exists at this position, false otherwise.
      */
-    public boolean offsetExists(Object[] value, Object pos) {
+    public boolean offsetExists(Object value, Object pos) {
         return offsetExists(Array.getLength(value), pos);
     }
     
@@ -1679,7 +1719,7 @@ public class JavaBridge implements Runnable {
      * @param pos The position.
      * @return The object at the given position.
      */    
-    public Object offsetGet(Object[] value, Object pos) {
+    public Object offsetGet(Object value, Object pos) {
 	int i = ((Number)pos).intValue();
 	Object o = Array.get(value, i);
 	return o==this ? null : o;
@@ -1690,7 +1730,7 @@ public class JavaBridge implements Runnable {
      * @param pos The position.
      * @param val The object.
      */
-    public void offsetSet(Object[] value, Object pos, Object val) {
+    public void offsetSet(Object value, Object pos, Object val) {
 	int i = ((Number)pos).intValue();
 	Array.set(value, i, coerce(value.getClass().getComponentType(), val, request.response));
     }
@@ -1699,7 +1739,7 @@ public class JavaBridge implements Runnable {
      * @param value The array.
      * @param pos The position.
       */
-    public void offsetUnset(Object[] value, Object pos) {
+    public void offsetUnset(Object value, Object pos) {
 	int i = ((Number)pos).intValue();
 	Array.set(value, i, null);
     }

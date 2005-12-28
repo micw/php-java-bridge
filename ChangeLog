@@ -1,3 +1,43 @@
+2005-12-28  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/PhpProcedureProxy.java 
+	(getNewFromInterface): Allow null interface.
+
+	* server/php/java/bridge/ParserString.java
+	(getStringValue): Encode string according to options.
+	(getASCIIStringValue): New procedure.
+
+	* server/test/Utf8.java: New test
+
+	* server/php/java/bridge/http/SocketContextServer.java
+	(SocketContextServer): Throw an exception if we don't have socket
+	permissions and a named pipe channel is not available. For the SUN
+	j2ee sample server this now means that Windows users must add:
+	grant {permission java.net.SocketPermission "*", "accept,resolve";}; 
+	or they must run their AS on unix.
+
+	* server/php/java/script/PhpScriptEngine.java
+	(eval, invoke): Throw a "not invocable" exception from invoke
+	only.
+	
+	* VERSION, php-java-bridge.spec: Version 3.0.4 released
+	
+2005-12-22  Jost Boekemeier  <jostb@intern>
+
+	* client.c (init_channel): Initialize channel.
+	
+	* server/php/java/bridge/JavaBridge.java
+	(weight): New procedure.
+	(select): Rewritten to use weight.
+	(offsetExists, offsetGet, offsetSet, offsetUnset): Accept arrays
+	of primitive type and List.
+
+	* server/php/java/bridge/PhpMap.java
+	(getPhpMap): Check if the element is valid.
+	
+	* tests.php5/vector.php, tests.php5/map.php,
+	tests.php5/byteArray.php, tests.phpt/charArray.php: New tests.
+	
 2005-12-21  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/http/IContextServer.java

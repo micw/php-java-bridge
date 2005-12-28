@@ -44,7 +44,8 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
      */
     protected PhpProcedureProxy script = null;
     protected Object scriptClosure = null;
-	
+    protected String name = null;
+    
     /**
      * The continuation of the script
      */
@@ -62,6 +63,8 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
      */
     public Object invoke(String methodName, Object[] args)
 	throws ScriptException {
+        if(scriptClosure==null) throw new ScriptException("The script from "+name+" is not invocable. To change this please add a line \"java_context()->call(java_closure());\" at the bottom of the script.");
+	
 	return invoke(scriptClosure, methodName, args);
     }
 
@@ -93,19 +96,24 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
     public Object getInterface(Object thiz, Class clasz) {
 	return ((PhpProcedureProxy)thiz).getNewFromInterface(clasz);
     }
-
+    private void setName(String name) {
+        int length = name.length();
+        if(length>40) length=40;
+        name = name.substring(length);
+        this.name = name;
+    }
     /* (non-Javadoc)
      * @see javax.script.ScriptEngine#eval(java.io.Reader, javax.script.ScriptContext)
      */
     public Object eval(Reader reader, ScriptContext context) throws ScriptException {
+        setName(String.valueOf(reader));
 	try {
 	    this.script = doEval(reader, context);
 	} catch (Exception e) {
 	    throw new ScriptException(e);
 	}
 		
-	if(this.script==null) throw new ScriptException("The script from "+reader+" is not invocable. To change this please add a line \"java_context()->call(java_closure());\" at the bottom of the script.");
-		
+	if(this.script!=null) 
 	try {
 	    this.scriptClosure = this.script.getProxy(new Class[]{});
 	} catch (Exception e) {
@@ -138,6 +146,7 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
      */
     public Object eval(String script, ScriptContext context)
 	throws ScriptException {
+        setName(String.valueOf(script));
 	try {
 	    return eval(this.localReader=new FileReader(new File(script)), context);
 	} catch (Exception e) {

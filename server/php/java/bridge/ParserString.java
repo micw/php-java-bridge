@@ -27,12 +27,20 @@ public class ParserString {
 	    return new String(string, off, length);
 	}
     }
-    
     /**
-     * Returns the ASCII string representation. Useful serialized objects, float, long.
+     * Returns the string encoded via java_set_file_encoding().
+     * @param options The current request options.
+     * @return The encoded string value.
+     * @see php.java.bridge.Options#getEncoding()
+     */
+    public String getStringValue(Options options) {
+        return options.newString(string, off, length);
+    }
+    /**
+     * Returns the ASCII string representation. Useful for serialized objects, float, long.
      * @return The ASCII encoded string.
      */
-    public String getStringValue() {
+    public String getASCIIStringValue() {
         try {
             return new String(string, off, length, Util.ASCII);
         } catch (UnsupportedEncodingException e) {
@@ -40,8 +48,8 @@ public class ParserString {
         }
     }
     /**
-     * Returns the ASCII string representation. Useful serialized objects, float, long.
-     * @return The ASCII encoded string.
+     * Returns the int value.
+     * @return The int value.
      */
     public int getIntValue() {
         int sign;
@@ -66,8 +74,8 @@ public class ParserString {
         return val*sign;
     }
     /**
-     * Returns the ASCII string representation. Useful serialized objects, float, long.
-     * @return The ASCII encoded string.
+     * Returns the long value.
+     * @return The long value.
      */
     public long getLongValue() {
         long sign;
@@ -92,8 +100,12 @@ public class ParserString {
         return val*sign;
     }
     
+    /**
+     * Returns the double value.
+     * @return The double value.
+     */
     public double getDoubleValue() {
-        return(Double.parseDouble(getStringValue()));
+        return(Double.parseDouble(getASCIIStringValue()));
     }
     /**
      * Returns the UTF8 string representation. Useful for debugging only
