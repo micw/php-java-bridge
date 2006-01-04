@@ -58,8 +58,8 @@ class Parser {
     private byte s[]= new byte[len];
     private byte ch, mask=(byte)~0;
     // VOJD is VOID for f... windows (VOID is in winsock2.h)
-    private static final short BEGIN=0, KEY=1, VAL=2, ENTITY=3, BLOB=4, VOJD=5, END=6; short type=VOJD;
-    private short level=0, eof=0, eor=0, blen=0; boolean in_dquote, eot=false;
+    private static final short BEGIN=0, KEY=1, VAL=2, ENTITY=3, VOJD=5, END=6; short type=VOJD;
+    private short level=0, eof=0, eor=0; boolean in_dquote, eot=false;
     private int pos=0, c=0, i=0, i0=0, e;
 
     void RESET() {
@@ -67,7 +67,6 @@ class Parser {
      	mask=~(byte)0;
     	level=0;
     	eor=0;
-    	blen=0;
     	in_dquote=false;
     	i=0;
     	i0=0;

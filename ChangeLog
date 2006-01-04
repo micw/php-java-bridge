@@ -1,3 +1,30 @@
+2006-01-04  Jost Boekemeier  <jostb@intern>
+
+	* CREDITS: correct speling
+
+	* INSTALL: Require j2re on RHEL3, jre on others
+
+	* PROTOCOL.TXT: Version 2.0 supports asynchronuous replies.
+
+	* client.c (setResultFromObject): pass type information used for
+	the async. protocol cache.
+
+	* java.c (session_get_default_lifetime): New procedure
+	(warn_session): Warn if a bug in a php5.1.1 session module detected
+	(session, serialize, deserialize): Use session_get_default_lifetime.
+
+	* server/php/java/bridge/ISession.java (getLastAccessedTime, getCreationTime): New functions.
+
+	* server/php/java/bridge/Session.java (get, put, getAll, putAll,
+	remove, setTimeout): update lastAccessedTime.
+
+	* server/php/java/bridge/JavaBridge (init): Create JavaBridge.log
+	if called with zero arguments (used on windows)
+	(reset): Do not reset the session. The session can be reset by
+	using the static method Session.reset(): (new JavaClass("php.java.bridge.Session"))->reset();
+
+	* tests.php5/session_write_close_bug.php: Test for php5.1.1 write_close bug.
+	
 2005-12-28  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/PhpProcedureProxy.java 

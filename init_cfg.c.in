@@ -95,10 +95,6 @@ static void override_ini_from_cgi(void) {
 }
 
 #ifndef CFG_JAVA_SOCKET_INET
-static void destroy_sockname(void) {
-  free(EXT_GLOBAL(cfg)->default_sockname);
-}
-
 #ifdef HAVE_ABSTRACT_NAMESPACE
 static void init_socket(void) {
   static const char * const bridge="@java-bridge-";
@@ -127,9 +123,6 @@ static void init_socket(void) {
   EXT_GLOBAL(cfg)->default_sockname = strdup(DEFAULT_PORT);
   assert(EXT_GLOBAL(cfg)->default_sockname); if(!EXT_GLOBAL(cfg)->default_sockname) exit(6);
 }
-static void destroy_sockname(void) {
-  free(EXT_GLOBAL(cfg)->default_sockname);
-}
 #endif
 
 void EXT_GLOBAL (init_cfg) (TSRMLS_D) {
@@ -149,6 +142,9 @@ void EXT_GLOBAL (init_cfg) (TSRMLS_D) {
   if(!(EXT_GLOBAL (ini_updated) &U_LOGFILE)) EXT_GLOBAL(cfg)->logFile=strdup(LOGFILE);
   
   EXT_GLOBAL(ini_set)=~0;
+  EXT_GLOBAL(ini_user)|=EXT_GLOBAL(ini_updated);
+  EXT_GLOBAL(ini_updated)=0;
+
   EXT_GLOBAL(cfg)->can_fork = 
 	!(EXT_GLOBAL (option_set_by_user) (U_SOCKNAME, EXT_GLOBAL(ini_user))) &&
 	!(EXT_GLOBAL (option_set_by_user) (U_HOSTS, EXT_GLOBAL(ini_user))) &&
@@ -164,7 +160,7 @@ void EXT_GLOBAL (destroy_cfg) (int EXT_GLOBAL (ini_updated) ) {
   if(!(EXT_GLOBAL (ini_updated) &U_HOSTS)) free(EXT_GLOBAL(cfg)->hosts);
 
   if(!(EXT_GLOBAL (ini_updated) &U_SOCKNAME)) free(EXT_GLOBAL(cfg)->sockname); 
-  destroy_sockname();
+  free(EXT_GLOBAL(cfg)->default_sockname);
 
   if(!(EXT_GLOBAL (ini_updated) &U_CLASSPATH)) free(EXT_GLOBAL(cfg)->classpath);
   if(!(EXT_GLOBAL (ini_updated) &U_LIBRARY_PATH)) free(EXT_GLOBAL(cfg)->ld_library_path);

@@ -1,8 +1,8 @@
 Installation on RedHat Linux (RHEL, Fedora, ...)
 -------------------------------------------------
 
-* Install a J2RE, for example with the command:
-  rpm -i IBMJava2-JRE-1.4.1-8.i386.rpm
+* Install a J2RE, for example with the command[1]:
+  rpm -i jdk-1_5_0-linux-i586.rpm 
 
 * Install PHP, for example with the command: 
   rpm -i php-4.3.2-8.ent.i386.rpm
@@ -31,6 +31,11 @@ Then install your your java libraries (.jar files) in /usr/share/java
 or in java.libpath/lib (see output of phpinfo) and your php and
 web-pages in /var/www/html or one of their sub-directories.
 
+[1] 
+On RHEL3 use the RPM from CD#9: IBMJava2-JRE-1.4.1-8.i386.rpm 
+it provides "j2re" instead of "jre".
+
+
 
 Installation from source code (Solaris, FreeBSD, WinXP or Linux)
 ----------------------------------------------------------------

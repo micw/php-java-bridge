@@ -271,6 +271,10 @@ EXT_FUNCTION(EXT_GLOBAL(instanceof))
   (*jenv)->writeInvokeEnd(jenv);
 }
 
+static long session_get_default_lifetime() {
+  static const char session_max_lifetime[]="session.gc_maxlifetime";
+  return zend_ini_long((char*)session_max_lifetime, sizeof(session_max_lifetime), 0);
+}
 static void session(INTERNAL_FUNCTION_PARAMETERS)
 {
   proxyenv *jenv;
@@ -296,7 +300,7 @@ static void session(INTERNAL_FUNCTION_PARAMETERS)
   }
   (*jenv)->writeBoolean(jenv, (argc<2||Z_TYPE_PP(is_new)==IS_NULL)?0:Z_BVAL_PP(is_new)); 
 
-  (*jenv)->writeLong(jenv, 1440); // FIXME: use session.gc_maxlifetime
+  (*jenv)->writeLong(jenv, session_get_default_lifetime()); // session.gc_maxlifetime
 
   (*jenv)->writeInvokeEnd(jenv);
 }
@@ -455,7 +459,16 @@ static void values(INTERNAL_FUNCTION_PARAMETERS)
   zval_copy_ctor(return_value);
 #endif
 }
-
+static const char warn_session[] = 
+"Probably the object has been destroyed already by the java_rshutdown() method -- have you loaded the \
+session module before the java module? Use \
+java_session(session_id())->set(key,val) instead of the \
+\"$_SESSION[key]=val\" syntax, if you don't want to depend on the \
+session module or if you cannot guarantee that the session module's \
+rshutdown function is called before the zend objects store is \
+destroyed and before the PHP/Java Bridge rshutdown function is called. \n\
+If \"session_write_close();\" at the end of your script fixes this problem, \
+please report this PHP bug to the PHP release team.";
 static const char identity[] = "serialID";
 static void serialize(INTERNAL_FUNCTION_PARAMETERS)
 {
@@ -464,13 +477,14 @@ static void serialize(INTERNAL_FUNCTION_PARAMETERS)
 
   proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   if(!jenv) {
-	php_error(E_WARNING, EXT_NAME()/**/" cannot be serialized.");
+	php_error(E_WARNING, EXT_NAME()/**/" cannot be serialized. %s", warn_session);
 	RETURN_NULL();
   }
   EXT_GLOBAL(get_jobject_from_object)(getThis(), &obj TSRMLS_CC);
-  assert(obj);
   if(!obj) {
-	php_error(E_WARNING, EXT_NAME()/**/" cannot be serialized.");
+	/* set a breakpoint in java_bridge.c destroy_object, in rshutdown
+	   and get_jobject_from_object */
+	php_error(E_WARNING, EXT_NAME()/**/" cannot be serialized. %s", warn_session);
 	RETURN_NULL();
   }
 
@@ -478,7 +492,7 @@ static void serialize(INTERNAL_FUNCTION_PARAMETERS)
   ZVAL_NULL(handle);
   (*jenv)->writeInvokeBegin(jenv, 0, "serialize", 0, 'I', handle);
   (*jenv)->writeObject(jenv, obj);
-  (*jenv)->writeLong(jenv, 1440); // FIXME: use session.gc_maxlifetime
+  (*jenv)->writeLong(jenv, session_get_default_lifetime()); // session.gc_maxlifetime
   (*jenv)->writeInvokeEnd(jenv);
   zend_hash_update(Z_OBJPROP_P(getThis()), (char*)identity, sizeof identity, &handle, sizeof(pval *), NULL);
 
@@ -499,21 +513,21 @@ static void deserialize(INTERNAL_FUNCTION_PARAMETERS)
 
   proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   if(!jenv) {
-	php_error(E_ERROR, EXT_NAME()/**/" cannot be de-serialized.");
+	php_error(E_ERROR, EXT_NAME()/**/" cannot be de-serialized. %s", warn_session);
   }
 
   err = zend_hash_find(Z_OBJPROP_P(getThis()), (char*)identity, sizeof identity, (void**)&id);
-  assert(SUCCESS==err);
   if(FAILURE==err) {
-	php_error(E_WARNING, EXT_NAME()/**/" cannot be deserialized.");
-	RETURN_NULL();
+	/* set a breakpoint in java_bridge.c destroy_object, in rshutdown
+	   and get_jobject_from_object */
+	php_error(E_WARNING, EXT_NAME()/**/" cannot be deserialized. %s", warn_session);
   }
   
   MAKE_STD_ZVAL(handle);
   ZVAL_NULL(handle);
   (*jenv)->writeInvokeBegin(jenv, 0, "deserialize", 0, 'I', handle);
   (*jenv)->writeString(jenv, Z_STRVAL_PP(id), Z_STRLEN_PP(id));
-  (*jenv)->writeLong(jenv, 1440); // FIXME: use session.gc_maxlifetime
+  (*jenv)->writeLong(jenv, session_get_default_lifetime()); // use session.gc_maxlifetime
   (*jenv)->writeInvokeEnd(jenv);
   if(Z_TYPE_P(handle)!=IS_LONG) {
 #ifndef ZEND_ENGINE_2
@@ -863,6 +877,11 @@ int EXT_GLOBAL(ini_set);
 zend_class_entry *EXT_GLOBAL(class_entry);
 
 /**
+ * Represents the java class array struct
+ */
+zend_class_entry *EXT_GLOBAL(array_entry);
+
+/**
  * Represents the java_class class struct
  */
 zend_class_entry *EXT_GLOBAL(class_class_entry);
@@ -1034,7 +1053,7 @@ PHP_INI_BEGIN()
  *
  * \endcode
  */
-EXT_METHOD(EXT, EXT)
+EXT_FUNCTION(EXT_GLOBAL(construct))
 {
   zval **argv;
   int argc = ZEND_NUM_ARGS();
@@ -1490,10 +1509,9 @@ ZEND_BEGIN_ARG_INFO(arginfo_set, 0)
 	 ZEND_ARG_INFO(0, newval)
 	 ZEND_END_ARG_INFO();
 
+#ifndef ZEND_ENGINE_2
 function_entry EXT_GLOBAL(class_functions)[] = {
   EXT_ME(EXT, EXT, NULL, 0)
-  EXT_MALIAS(EXT, EXT_GLOBAL_N(exception), EXT, NULL, 0)
-  EXT_MALIAS(EXT, EXT_GLOBAL(exception), EXT, NULL, 0)
   EXT_ME(EXT, EXT_GLOBAL(class), NULL, 0)
   EXT_MALIAS(EXT, EXT_GLOBAL_N(class), EXT_GLOBAL(class), NULL, 0)
   //EXT_MALIAS(EXT, __construct, EXT, arginfo_set, ZEND_ACC_PUBLIC)
@@ -1504,12 +1522,31 @@ function_entry EXT_GLOBAL(class_functions)[] = {
   EXT_ME(EXT, __sleep, arginfo_zero, ZEND_ACC_PUBLIC)
   EXT_ME(EXT, __wakeup, arginfo_zero, ZEND_ACC_PUBLIC)
   EXT_ME(EXT, __destruct, arginfo_zero, ZEND_ACC_PUBLIC)
+  {NULL, NULL, NULL}
+};
+#else
+function_entry EXT_GLOBAL(class_functions)[] = {
+  ZEND_FENTRY(__construct, EXT_FN(EXT_GLOBAL(construct)), NULL, 0)
+  EXT_ME(EXT, __call, arginfo_set, ZEND_ACC_PUBLIC)
+  EXT_ME(EXT, __tostring, arginfo_zero, ZEND_ACC_PUBLIC)
+  EXT_ME(EXT, __get, arginfo_get, ZEND_ACC_PUBLIC)
+  EXT_ME(EXT, __set, arginfo_set, ZEND_ACC_PUBLIC)
+  EXT_ME(EXT, __sleep, arginfo_zero, ZEND_ACC_PUBLIC)
+  EXT_ME(EXT, __wakeup, arginfo_zero, ZEND_ACC_PUBLIC)
+  EXT_ME(EXT, __destruct, arginfo_zero, ZEND_ACC_PUBLIC)
+  //PHP_ME(EXT, __getFunctions, NULL, 0)
+  //PHP_ME(EXT, __getTypes, NULL, 0)
+  {NULL, NULL, NULL}
+};
+function_entry EXT_GLOBAL(array_class_functions)[] = {
+  ZEND_FENTRY(__construct, EXT_FN(EXT_GLOBAL(construct)), NULL, 0)
   EXT_ME(EXT, offsetExists,  arginfo_get, ZEND_ACC_PUBLIC)
   EXT_ME(EXT, offsetGet,     arginfo_get, ZEND_ACC_PUBLIC)
   EXT_ME(EXT, offsetSet,     arginfo_set, ZEND_ACC_PUBLIC)
   EXT_ME(EXT, offsetUnset,   arginfo_get, ZEND_ACC_PUBLIC)
   {NULL, NULL, NULL}
 };
+#endif
 
 
 
@@ -1777,15 +1814,11 @@ EXT_GLOBAL(call_function_handler4)(INTERNAL_FUNCTION_PARAMETERS, zend_property_r
   char *name = Z_STRVAL(function_name->element);
   int arg_count = ZEND_NUM_ARGS();
   pval **arguments = (pval **) emalloc(sizeof(pval *)*arg_count);
-  short createInstance = 1;
   enum constructor constructor = CONSTRUCTOR_NONE;
-  zend_class_entry *ce = Z_OBJCE_P(getThis()), *parent;
-
-  for(parent=ce; parent->parent; parent=parent->parent)
-	if ((parent==EXT_GLOBAL(class_class_entry)) || ((parent==EXT_GLOBAL(class_class_entry_jsr)))) {
-	  createInstance = 0;		/* do not create an instance for new java_class or new JavaClass */
-	  break;
-	}
+  zend_class_entry *ce = Z_OBJCE_P(getThis());
+								/* Do not create an instance for new
+								   java_class or new JavaClass */
+  short createInstance=!instanceof_function(ce, EXT_GLOBAL(class_class_entry) TSRMLS_CC);
 
   getParametersArray(ht, arg_count, arguments);
 
@@ -1839,54 +1872,6 @@ set_property_handler(zend_property_reference *property_reference, pval *value)
 }
 #endif
 
-/*
- * check for CGI environment and set hosts so that we can connect back
- * to the sever from which we were called.
- */
-static void override_ini_from_cgi(void) {
-  static const char key_hosts[]="java.hosts";
-  static const char key_servlet[] = "java.servlet";
-  char *hosts;
-  EXT_GLOBAL(cfg)->is_cgi_servlet=0;
-  
-  if ((hosts=getenv("X_JAVABRIDGE_OVERRIDE_HOSTS"))) {
-	switch(*hosts) {
-	case '/': 				/* this is fast cgi, override
-							   information will be passed via
-							   X_JAVABRIDGE_REDIRECT header (see
-							   override_ini_for_redirect()). */
-	  zend_alter_ini_entry((char*)key_servlet, sizeof key_servlet,
-						   (char*)on, sizeof on,
-						   ZEND_INI_SYSTEM, PHP_INI_STAGE_STARTUP);
-	  break;
-
-	default:					/* cgi binary with redirect
-								   information */
-	  {
-		char *kontext, *host = strdup(hosts);
-		kontext = strchr(host, '/');
-		if(kontext) *kontext++=0;
-		zend_alter_ini_entry((char*)key_hosts, sizeof key_hosts,
-							 host, strlen(host)+1,
-							 ZEND_INI_SYSTEM, PHP_INI_STAGE_STARTUP);
-		if(!kontext) {
-		  zend_alter_ini_entry((char*)key_servlet, sizeof key_servlet,
-							   (char*)on, sizeof on,
-							   ZEND_INI_SYSTEM, PHP_INI_STAGE_STARTUP);
-		} else {
-		  zend_alter_ini_entry((char*)key_servlet, sizeof key_servlet,
-							   (char*)kontext, strlen(kontext)+1,
-							   ZEND_INI_SYSTEM, PHP_INI_STAGE_STARTUP);
-		}
-		free(host);
-	  }
-	  /* fall through */
-	case 0:					/* cgi binary, but redirect is off */
-	  EXT_GLOBAL(cfg)->is_cgi_servlet=1;
-	}
-  }
-}
-
 static void make_local_socket_info(TSRMLS_D) {
   memset(&EXT_GLOBAL(cfg)->saddr, 0, sizeof EXT_GLOBAL(cfg)->saddr);
 #ifndef CFG_JAVA_SOCKET_INET
@@ -1901,11 +1886,6 @@ static void make_local_socket_info(TSRMLS_D) {
   EXT_GLOBAL(cfg)->saddr.sin_port=htons(atoi(EXT_GLOBAL(get_sockname)(TSRMLS_C)));
   EXT_GLOBAL(cfg)->saddr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
 #endif
-
-  EXT_GLOBAL(cfg)->can_fork = 
-	!(EXT_GLOBAL (option_set_by_user) (U_SOCKNAME, EXT_GLOBAL(ini_user))) &&
-	!(EXT_GLOBAL (option_set_by_user) (U_HOSTS, EXT_GLOBAL(ini_user))) &&
-	!(EXT_GLOBAL (option_set_by_user) (U_SERVLET, EXT_GLOBAL(ini_user)));
 }
 
 /**
@@ -1937,7 +1917,7 @@ PHP_MINIT_FUNCTION(EXT)
   EXT_GLOBAL(class_class_entry) = 
 	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
   INIT_CLASS_ENTRY(ce, EXT_NAME()/**/"class", NULL);
-  parent = (zend_class_entry *) EXT_GLOBAL(class_entry);
+  parent = (zend_class_entry *) EXT_GLOBAL(class_class_entry);
   EXT_GLOBAL(class_class_entry_jsr) = 
 	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
 
@@ -1975,7 +1955,15 @@ PHP_MINIT_FUNCTION(EXT)
 	zend_register_internal_class(&ce TSRMLS_CC);
   EXT_GLOBAL(class_entry)->get_iterator = get_iterator;
   EXT_GLOBAL(class_entry)->create_object = EXT_GLOBAL(create_object);
-  zend_class_implements(EXT_GLOBAL(class_entry) TSRMLS_CC, 1, zend_ce_arrayaccess);
+
+  INIT_CLASS_ENTRY(ce, EXT_NAME()/**/"Array", 
+				   EXT_GLOBAL(array_class_functions));
+  parent = (zend_class_entry *) EXT_GLOBAL(class_entry);
+  EXT_GLOBAL(array_entry) =
+	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
+
+  zend_class_implements(EXT_GLOBAL(array_entry) TSRMLS_CC, 1, 
+						zend_ce_arrayaccess);
 
   INIT_OVERLOADED_CLASS_ENTRY(ce, EXT_NAME()/**/"_exception", 
 							  EXT_GLOBAL(class_functions), 
@@ -2017,9 +2005,6 @@ PHP_MINIT_FUNCTION(EXT)
 	/* set the default values for all undefined */
 	
 	EXT_GLOBAL(init_cfg) (TSRMLS_C);
-	override_ini_from_cgi();
-	EXT_GLOBAL(ini_user)|=EXT_GLOBAL(ini_updated);
-	EXT_GLOBAL(ini_updated)=0;
 
 	make_local_socket_info(TSRMLS_C);
 	clone_cfg(TSRMLS_C);
@@ -2043,14 +2028,22 @@ PHP_MINFO_FUNCTION(EXT)
   php_info_print_table_row(2, EXT_NAME()/**/" bridge", EXT_GLOBAL(bridge_version));
 #if EXTENSION == JAVA
   if(is_local) {
-	php_info_print_table_row(2, EXT_NAME()/**/".libpath", EXT_GLOBAL(cfg)->ld_library_path);
-	php_info_print_table_row(2, EXT_NAME()/**/".classpath", EXT_GLOBAL(cfg)->classpath);
+								/* don't show default value, they may
+								   not be used anyway */
+	if((EXT_GLOBAL(option_set_by_user) (U_LIBRARY_PATH, EXT_GLOBAL(ini_user))))
+	  php_info_print_table_row(2, EXT_NAME()/**/".libpath", EXT_GLOBAL(cfg)->ld_library_path);
+
+								/* don't show default value, they may
+								   not be used anyway */
+	if((EXT_GLOBAL(option_set_by_user) (U_CLASSPATH, EXT_GLOBAL(ini_user))))
+	  php_info_print_table_row(2, EXT_NAME()/**/".classpath", EXT_GLOBAL(cfg)->classpath);
   }
 #endif
   if(!server || is_local) {
+	static const char default_wrapper[] = "no value (use default wrapper)";
 	php_info_print_table_row(2, EXT_NAME()/**/"."/**/EXT_NAME()/**/"_home", EXT_GLOBAL(cfg)->vm_home);
 	php_info_print_table_row(2, EXT_NAME()/**/"."/**/EXT_NAME(), EXT_GLOBAL(cfg)->vm);
-	php_info_print_table_row(2, EXT_NAME()/**/".wrapper", EXT_GLOBAL(cfg)->wrapper);
+	php_info_print_table_row(2, EXT_NAME()/**/".wrapper", (EXT_GLOBAL(option_set_by_user) (U_WRAPPER, EXT_GLOBAL(ini_user))) ? EXT_GLOBAL(cfg)->wrapper : (char*)default_wrapper);
 	if(strlen(EXT_GLOBAL(cfg)->logFile)==0) 
 	  php_info_print_table_row(2, EXT_NAME()/**/".log_file", "<stdout>");
 	else

@@ -70,7 +70,6 @@ public class URLReader extends Reader {
 	
 	try {
 	    String overrideHosts = (String) env.get("X_JAVABRIDGE_OVERRIDE_HOSTS");
-	    int c;
 	    byte[] buf = new byte[Util.BUF_SIZE];
 	    
 	    natOut = socket.getOutputStream();

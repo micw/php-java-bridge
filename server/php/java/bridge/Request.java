@@ -437,7 +437,6 @@ public final class Request implements IDocHandler {
 	    while(Parser.OK==parser.parse(bridge.in));
 	}
     }
-    private static final Object[] empty = new Object[] {null};
     
     /**
      * Handle protocol sub-requests, see <code>R</code> and <code>A</code> in the protocol spec.

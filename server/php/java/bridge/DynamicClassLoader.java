@@ -115,7 +115,7 @@ public class DynamicClassLoader extends SecureClassLoader {
 	while (st.hasMoreTokens()) {
 	    String urlStr = st.nextToken();
 	    URL u = new URL(urlStr);
-	    urls.add(urls);
+	    urls.add(u);
 	}
 	URL u[] = new URL[urls.size()];
 	urls.toArray(u);

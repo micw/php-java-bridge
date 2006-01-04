@@ -1,7 +1,5 @@
 package php.java.faces;
 
-import java.lang.reflect.Method;
-
 import javax.faces.application.Application;
 import javax.faces.component.StateHolder;
 import javax.faces.component.UIComponentBase;
@@ -92,7 +90,6 @@ public class PhpFacesMethodBindingImpl extends MethodBinding implements StateHol
 	throws MethodNotFoundException
     {
 	Object base;
-	Method method = null;
 	if(context == null)
 	    throw new NullPointerException();
 	base = vb.getValue(context);

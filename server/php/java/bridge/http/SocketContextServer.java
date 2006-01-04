@@ -77,8 +77,6 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
         }
     }
 
-    private int runnables = 0;
-    
     private boolean accept() {
 	InputStream in=null;
 	OutputStream out=null;
@@ -146,12 +144,5 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
     
     public boolean start(String channelName) {
         return isAvailable();
-    }
-    
-    /**
-     * @return Returns the server socket.
-     */
-    private ISocketFactory getSocket() {
-	return socket;
     }
 }

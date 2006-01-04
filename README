@@ -23,7 +23,7 @@ Build and execution instructions:
           make null --version  # GNU make 3.79 or above
 
           phpize && 
-          ./configure --with-java=/opt/IBMJava2-14 \
+          ./configure --with-java=/opt/IBMJava2-141 \
                       --disable-servlet \
                       --disable-script \ 
                       --disable-faces &&

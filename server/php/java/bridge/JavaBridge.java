@@ -149,8 +149,6 @@ public class JavaBridge implements Runnable {
     // native accept fills these
     int uid =-1, gid =-1;
 
-    private static boolean haveNatcJavaBridge=true;
-
     static Object loadLock=new Object();
     /** For internal use only. */
     public static short load = 0;
@@ -329,7 +327,7 @@ public class JavaBridge implements Runnable {
 	    }
 
 	    try {
-		logFile=Util.DEFAULT_LOG_FILE;
+		logFile=s.length>0?"":Util.DEFAULT_LOG_FILE;
 		if(s.length>2) {
 		    logFile=s[2];
 		}
@@ -402,11 +400,7 @@ public class JavaBridge implements Runnable {
     public static void main(String s[]) {
 	try {
 	    System.loadLibrary("natcJavaBridge");
-	} catch (Throwable t) {
-	    haveNatcJavaBridge=false;
-	    //Util.printStackTrace(t);
-	    //System.exit(9);
-	}
+	} catch (Throwable t) {/*ignore*/}
 	try {
 	    init(s);
 	} catch (Throwable t) {
@@ -543,14 +537,14 @@ public class JavaBridge implements Runnable {
 		    if(createInstance && logLevel>0) {
 		    	logMessage("No visible constructor found in: "+ name +", returning the class instead of an instance; this may not be what you want. Please correct this error or please use new JavaClass("+name+") instead.");
 		    }
-		    response.writeObject(clazz);
+		    response.writeClass(clazz);
 		    return;
 		}
 	    }
 
 	    Object coercedArgs[] = coerce(params=selected.getParameterTypes(), args, response);
 	    if (this.logLevel>4) logInvoke(clazz, name, coercedArgs); // If we have a logLevel of 5 or above, do very detailed invocation logging
-    	    response.writeObject(selected.newInstance(coercedArgs));
+    	    response.writeObject(selected.newInstance(coercedArgs), clazz);
 
 	} catch (Throwable e) {
 	    if(e instanceof OutOfMemoryError ||
@@ -590,7 +584,7 @@ public class JavaBridge implements Runnable {
 	        if(arg instanceof byte[])
 	            w+=32;
 	        else
-	            w+=9999;
+	            w+=8000; // conversion to string is always possible
 	} else if (param.isArray()) {
 	    if (arg != null) {
 	        if(arg instanceof Request.PhpString) {
@@ -1407,7 +1401,6 @@ public class JavaBridge implements Runnable {
     public String inspect(Object object) {
         Class jclass;
     	ClassIterator iter;
-        Vector fields = new Vector(), methods = new Vector();
 	StringBuffer buf = new StringBuffer("[");
 	buf.append(String.valueOf(Util.getClass(object)));
 	buf.append(":\nConstructors:\n");
@@ -1556,12 +1549,12 @@ public class JavaBridge implements Runnable {
 
     /**
      * Reset the global caches of the bridge.  Currently this is the
-     * classloader and the session. This is a no-op when the backend
+     * classloader. This is a no-op when the backend
      * is running in a servlet engine or application server.
+     * @see php.java.bridge.Session#reset()
      */
     public void reset() {
 	warn("Your PHP script has called the privileged procedure \"reset()\", which resets the backend to its initial state. Therefore all session variables and all caches are now gone.");
-	Session.reset(this);
 	getClassLoader().reset();
     }
     /**

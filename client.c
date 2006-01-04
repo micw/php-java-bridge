@@ -61,6 +61,7 @@ static  void  setResultFromException  (pval *presult, long value) {
   pval *handle;
   TSRMLS_FETCH();
   
+  assert(Z_TYPE_P(presult) == IS_NULL);
   if (Z_TYPE_P(presult) != IS_OBJECT) {
 	object_init_ex(presult, EXT_GLOBAL(exception_class_entry));
 	presult->is_ref=1;
@@ -70,15 +71,30 @@ static  void  setResultFromException  (pval *presult, long value) {
 }
 #endif
 
-static  void  setResultFromObject  (pval *presult, long value) {
+static  void  setResultFromObject  (pval *presult, long value, char type, long class_id) {
   /* wrap the vm object in a pval object */
   pval *handle;
   TSRMLS_FETCH();
   
   if (Z_TYPE_P(presult) != IS_OBJECT) {
-	object_init_ex(presult, EXT_GLOBAL(class_entry));
+	switch(type) {
+	case 'A': 
+	  object_init_ex(presult, EXT_GLOBAL(array_entry));
+	  break;
+	default: 
+	  assert(0);
+	case 'O':
+	  object_init_ex(presult, EXT_GLOBAL(class_entry));
+	  break;
+	}
 	presult->is_ref=1;
-    presult->refcount=1;
+	presult->refcount=1;
+
+  } else {
+	if(type=='A' && 
+	   !instanceof_function(Z_OBJCE_P(presult), EXT_GLOBAL(array_entry) TSRMLS_CC)) {
+	  object_init_ex(presult, EXT_GLOBAL(array_entry));
+	}
   }
 
 #ifndef ZEND_ENGINE_2
@@ -310,13 +326,13 @@ static void begin(parser_tag_t tag[3], parser_cb_t *cb){
 	GET_RESULT(1);
 	setResultFromDouble(ctx->id, EXT_GLOBAL(strtod)((const char*)PARSER_GET_STRING(st, 0), NULL));
 	break;
+  case 'N':
+	GET_RESULT(0);
+	ZVAL_NULL(ctx->id);
+	break;
   case 'O':
-	GET_RESULT(1);
-	if(!st[0].length) {
-	  ZVAL_NULL(ctx->id);
-	} else {
-	  setResultFromObject(ctx->id, strtol((const char*)PARSER_GET_STRING(st, 0), 0, 10));
-	}
+	GET_RESULT(3);
+	setResultFromObject(ctx->id, strtol((const char*)PARSER_GET_STRING(st, 0), 0, 10), *PARSER_GET_STRING(st, 1), 0l);
 	break;
   case 'E':
 	{

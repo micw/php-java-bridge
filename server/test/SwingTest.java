@@ -24,7 +24,7 @@ public class SwingTest {
     public static void main(String s[]) throws FileNotFoundException, ScriptException, InterruptedException, InvocationTargetException {
 	System.setProperty("php.java.bridge.default_log_level", "5");
 	System.setProperty("php.java.bridge.default_log_file", "");
-	System.setProperty("php.java.bridge.php_exec", "/home/src/PHP-JAVA-BRIDGE/PHP5/dist/bin/php");
+	System.setProperty("php.java.bridge.php_exec", "/usr/bin/php-cgi");
 
 	    PhpScriptEngine engine = new PhpScriptEngine();
 	    engine.eval(new FileReader("test/SwingTest.php"));

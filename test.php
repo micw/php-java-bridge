@@ -14,25 +14,25 @@ if (!extension_loaded('java')) {
  }
 if(java_get_server_name() != null) {
 
-  try {
-    phpinfo();
-    print "\n\n";
-    
-    $v = new java("java.lang.System");
-    $arr=java_values($v->getProperties());
-    foreach ($arr as $key => $value) {
-      print $key . " -> " .  $value . "<br>\n";
-    }
-  } catch (Exception $ex) {
+  phpinfo();
+  print "\n\n";
+  
+  $v = new java("java.lang.System");
+  $p = @$v->getProperties();
+  if($ex=java_last_exception_get()) {
     $trace = new java("java.io.ByteArrayOutputStream");
     $ex->printStackTrace(new java("java.io.PrintStream", $trace));
     echo "Exception $ex occured:<br>\n" . $trace . "\n";
-    
+    exit(1);
+  }
+  $arr=java_values($p);
+  foreach ($arr as $key => $value) {
+    print $key . " -> " .  $value . "<br>\n";
   }
   echo "<br>\n";
 
  } else {
-
+  
   phpinfo();
   print "\n\n";
 

@@ -38,8 +38,6 @@ public class JavaBridgeRunner extends HttpServer {
 	ctxServer = new ContextServer(null);
     }
 
-    private InputStream in;
-    private OutputStream out;
     private static ContextServer ctxServer;
 
     /**

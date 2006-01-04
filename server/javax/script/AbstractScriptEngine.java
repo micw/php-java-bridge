@@ -49,16 +49,6 @@ public abstract class AbstractScriptEngine implements ScriptEngine {
     }
 
     /**
-     * Retrieves an uninitailized namespace which is associated with
-     * the ScriptEngine namespace.
-     * 
-     * @return an unitialized namespace
-     */
-    private Bindings createNamespace() {
-        return   new SimpleBindings();
-    }
-	
-    /**
      * Evaluates a piece of script obtained using the specified 
      * reader as the script source. Returns null for non-returning
      * scripts.

@@ -129,7 +129,7 @@ public class Util {
     /**
      * The default log file.
      */
-    public static String DEFAULT_LOG_FILE = "";
+    public static String DEFAULT_LOG_FILE;
 	
     private static String getProperty(Properties p, String key, String defaultValue) {
 	String s = null;
@@ -490,7 +490,6 @@ public class Util {
      * @throws IOException
      */
     public static void parseBody(byte[] buf, InputStream natIn, OutputStream out, HeaderParser parser) throws UnsupportedEncodingException, IOException {
-	String line = null;
 	int i=0, n, s=0;
 	boolean eoh=false;
 	// the header and content
@@ -601,7 +600,6 @@ public class Util {
 
         protected Process(String[] args, File homeDir, Map env) throws IOException {
 	    File location;
-	    int n;
 	    Runtime rt = Runtime.getRuntime();
 	    if(args==null) args=new String[]{null};
 	    String php = args[0];

@@ -57,6 +57,7 @@
 
 extern zend_module_entry EXT_GLOBAL(module_entry);
 extern zend_class_entry *EXT_GLOBAL(class_entry);
+extern zend_class_entry *EXT_GLOBAL(array_entry);
 extern zend_class_entry *EXT_GLOBAL(class_class_entry);
 extern zend_class_entry *EXT_GLOBAL(class_class_entry_jsr);
 extern zend_class_entry *EXT_GLOBAL(exception_class_entry);

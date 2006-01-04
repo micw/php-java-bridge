@@ -12,17 +12,20 @@ class Session implements ISession {
     protected String name;
     private static int sessionCount=0;
     boolean isNew=true;
-    protected long startTime, timeout;
+    protected long creationTime, lastAccessedTime, timeout;
 	
     public Object get(Object ob) {
+	this.lastAccessedTime=System.currentTimeMillis();
 	return map.get(ob);
     }
 	
     public void put(Object ob1, Object ob2) {
+	this.lastAccessedTime=System.currentTimeMillis();
 	map.put(ob1, ob2);
     }
 	
     public Object remove(Object ob) {
+	this.lastAccessedTime=System.currentTimeMillis();
 	return map.remove(ob);
     }
 	
@@ -30,12 +33,13 @@ class Session implements ISession {
 	this.name=name;
 	Session.sessionCount++;
 	this.map=Collections.synchronizedMap(new HashMap());
-	this.startTime=System.currentTimeMillis();
+	this.creationTime = this.lastAccessedTime=System.currentTimeMillis();
 	this.timeout=1440000;
     }
 
     public void setTimeout(int timeout) {
 	this.timeout=timeout*1000;
+	this.lastAccessedTime=System.currentTimeMillis();
     }
 	
     public int getTimeout() {
@@ -63,6 +67,7 @@ class Session implements ISession {
     }
 
     public void putAll(Map vars) {
+	this.lastAccessedTime=System.currentTimeMillis();
 	map.putAll(vars);
     }
 
@@ -70,6 +75,7 @@ class Session implements ISession {
      * @see php.java.bridge.ISession#getAll()
      */
     public Map getAll() {
+	this.lastAccessedTime=System.currentTimeMillis();
 	return new HashMap(map); // unshare the map 
     }
 
@@ -78,7 +84,7 @@ class Session implements ISession {
     	synchronized(JavaBridge.sessionHash) {
 	    for(Iterator e = JavaBridge.sessionHash.values().iterator(); e.hasNext(); ) {
 		Session ref = (Session)e.next();
-		if((ref.timeout >0) && (ref.startTime+ref.timeout<=System.currentTimeMillis())) {
+		if((ref.timeout >0) && (ref.lastAccessedTime+ref.timeout<=System.currentTimeMillis())) {
 		    sessionCount--;
 		    e.remove();
 		    if(bridge.logLevel>3) bridge.logDebug("Session " + ref.name + " expired.");
@@ -87,16 +93,28 @@ class Session implements ISession {
 	}
     }
     
-    static void reset(JavaBridge bridge) {
+    /**
+     * Expires all sessions immediately.
+     *
+     */
+    public static void reset() {
 	if(JavaBridge.sessionHash==null) return;
     	synchronized(JavaBridge.sessionHash) {
 	    for(Iterator e = JavaBridge.sessionHash.values().iterator(); e.hasNext(); ) {
 		Session ref = (Session)e.next();
 		sessionCount--;
 		e.remove();
-		if(bridge.logLevel>3) bridge.logDebug("Session " + ref.name + " destroyed.");
+		if(Util.logLevel>3) Util.logDebug("Session " + ref.name + " destroyed.");
 	    }
 	}
   	
+    }
+
+    public long getCreationTime() {
+      return creationTime;
+    }
+
+    public long getLastAccessedTime() {
+      return lastAccessedTime;
     }
 }

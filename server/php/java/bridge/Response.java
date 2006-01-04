@@ -152,7 +152,7 @@ public class Response {
 		    int key = e.nextIndex();
 		    Object val = e.next();
 		    writePairBegin_n(key);
-		    writer.setResult(ht.get(key));
+		    writer.setResult(val);
 		    writePairEnd();
 		}
 		writeCompositeEnd();
@@ -166,7 +166,7 @@ public class Response {
  
 	public boolean setResult(Object value) {
 	    if (value == null) {
-		writeObject(null);
+		writeNull();
 	    } else if (value instanceof byte[]) {
 		writeString((byte[])value);
 	    } else if (value instanceof java.lang.String) {
@@ -188,14 +188,14 @@ public class Response {
 		writeBoolean(((Boolean)value).booleanValue());
 
 	    } else if(!delegate.setResult(value))
-		writeObject(value);
+		writeObject(value, type);
 	    return true;
 	}
     }
     protected class DefaultWriter extends WriterWithDelegate {
 
 	public boolean setResult(Object value) {
-	    if(value==null) {writeObject(null); return true;}
+	    if(value==null) {writeNull(); return true;}
 	    if(type.isPrimitive()) {
    		if(type == Boolean.TYPE)
 		    writeBoolean(((Boolean) value).booleanValue());
@@ -207,11 +207,11 @@ public class Response {
 		    writeDouble(((Number)value).doubleValue());
    		else if(type == Character.TYPE) 
 		    writeString(String.valueOf(value));
-   		else { Util.logFatal("Unknown type"); writeObject(value); }
+   		else { Util.logFatal("Unknown type"); writeObject(value, this.type); }
 	    } else if(value instanceof Request.PhpString) //  No need to check for Request.PhpNumber, this cannot happen.
 	        writeString(((Request.PhpString)value).getBytes());
 	    else if(!delegate.setResult(value))
-		writeObject(value);
+		writeObject(value, this.type);
 	    return true;
         }        	     	
     }
@@ -246,14 +246,14 @@ public class Response {
 		    }
 		} else if(type == Character.TYPE) {
 		    writeString(String.valueOf(value));
-		} else { Util.logFatal("Unknown type"); writeObject(value); }
+		} else { Util.logFatal("Unknown type"); writeObject(value, this.type); }
 	    } else if(type == String.class) {
 		 if (value instanceof byte[])
 		     writeString((byte[])value);
 		 else
 		     writeString(String.valueOf(value));
 	    } else {
-		writeObject(value);
+		writeObject(value, this.type);
 	    }
 	    return true;
 	}
@@ -326,9 +326,12 @@ public class Response {
     static final byte[] D="<D v=\"".getBytes();
     static final byte[] E="<E v=\"".getBytes();
     static final byte[] O="<O v=\"".getBytes();
+    static final byte[] N="<N i=\"".getBytes();
     static final byte[] m="\" m=\"".getBytes();
     static final byte[] n="\" n=\"".getBytes();
     static final byte[] p="\" p=\"".getBytes();
+    static final byte[] pa="\" p=\"A".getBytes();
+    static final byte[] po="\" p=\"O".getBytes();
     static final byte[] Xa="<X t=\"A".getBytes();
     static final byte[] Xh="<X t=\"H".getBytes();
     static final byte[] Xe="</X>".getBytes();
@@ -367,11 +370,32 @@ public class Response {
 	buf.append(I); buf.append(String.valueOf(result));
 	buf.append(e);
     }
-    void writeObject(Object o) {
-	buf.append(O); buf.append(o==null?"":
-				  String.valueOf(this.bridge.globalRef.append(o)));
+    static final String emptyString="";
+    void writeNull() {
+	buf.append(N);
+	buf.append(String.valueOf(result));
+	buf.append(e);
+    }
+    private boolean isArray(Class type) {
+        return type.isArray() ||  
+        List.class.isAssignableFrom(type) || 
+        Map.class.isAssignableFrom(type);
+    }
+    void writeObject(Object o, Class type) {
+        if(o==null) { writeNull(); return; }
+	buf.append(O); buf.append(String.valueOf(this.bridge.globalRef.append(o)));
+	buf.append(isArray(type)?pa:po);
+	buf.append(n); buf.append("0");
 	buf.append(I); buf.append(String.valueOf(result));
 	buf.append(e);
+    }
+    public void writeClass(Class o) {
+        if(o==null) { writeNull(); return; }
+    	buf.append(O); buf.append(String.valueOf(this.bridge.globalRef.append(o)));
+    	buf.append(po);
+    	buf.append(n); buf.append("0");
+    	buf.append(I); buf.append(String.valueOf(result));
+    	buf.append(e);
     }
     void writeException(Object o, String str) {
 	buf.append(E); buf.append(String.valueOf(this.bridge.globalRef.append(o)));
@@ -454,6 +478,5 @@ public class Response {
         if(coerceWriter==null) return coerceWriter = new CoerceWriter();
         return coerceWriter;
     }
-
 
 }

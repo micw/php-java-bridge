@@ -1,4 +1,4 @@
-PHP/Java Bridge protocol version 1.3
+PHP/Java Bridge protocol version 2.0
 
 Requests are marked with "->", responses with "<-".  The server
 continues to process requests until EOF. Only the first character is
@@ -49,9 +49,24 @@ v: string
 p: char (Reference[C]lass, Create[I]nstance)
 i: long
 
+CreateInstanceAsync:
+<F v=name p=C|I i=ID> ...ARGS...
+</F>
+v: string
+p: char (Reference[C]lass, Create[I]nstance)
+i: long
+
 ->
 Invoke:
 <I v=object m=method p=P|I i=ID> ...ARGS...
+</I>
+v: long
+m: string
+p: char (examine[P]roperty, [I]nvoke method)
+i: long
+
+InvokeAsync:
+<G v=object m=method p=P|I i=ID> ...ARGS...
 </I>
 v: long
 m: string
@@ -88,12 +103,24 @@ Double:
 v: double
 i: long (reply only)
 
-<->
+->
 Object:
-<O v=object [i=ID] />
+<O v=object />
 v: long
-i: long (reply only)
-NULL values can be send as either v="" or v="0"
+NULL values can be sent as either v="" or v="0"
+
+<-
+Object:
+<O v=object p=TYPE n=CLASS_ID i=ID />
+v: long
+p: char ([A]rray, [O]bject)
+n: long
+i: long 
+
+<-
+Null:
+<N i=ID />
+i: long 
 
 <-
 Apply:

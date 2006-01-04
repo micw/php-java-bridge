@@ -99,7 +99,7 @@ public interface ISession {
      * container will keep this session open between client
      * accesses. After this interval, the servlet container will
      * invalidate the session.  The maximum time interval can be set
-     * with the <code>setTimeout</code> method.  A negative time
+     * with the <code>setTimeout</code> method.  A negative time 
      * indicates the session should never timeout.
      *  
      *
@@ -112,7 +112,47 @@ public interface ISession {
      *
      */
     public int getTimeout();
-		
+
+    /**
+    *
+    * Returns the time when this session was created, measured
+    * in milliseconds since midnight January 1, 1970 GMT.
+    *
+    * @return				a <code>long</code> specifying
+    * 					when this session was created,
+    *					expressed in 
+    *					milliseconds since 1/1/1970 GMT
+    *
+    * @exception IllegalStateException	if this method is called on an
+    *					invalidated session
+    *
+    */
+
+   public long getCreationTime();
+
+   /**
+   *
+   * Returns the last time the client sent a request associated with
+   * this session, as the number of milliseconds since midnight
+   * January 1, 1970 GMT. 
+   *
+   * <p>Actions that your application takes, such as getting or setting
+   * a value associated with the session, do not affect the access
+   * time.
+   *
+   * @return				a <code>long</code>
+   *					representing the last time 
+   *					the client sent a request associated
+   *					with this session, expressed in 
+   *					milliseconds since 1/1/1970 GMT
+   *
+   * @exeption IllegalStateException	if this method is called on an
+   *					invalidated session
+   *
+   */
+
+  public long getLastAccessedTime();
+    
     /**
      * Returns the number of active sessions.
      * @return # of active sessions.

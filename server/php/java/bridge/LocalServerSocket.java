@@ -7,7 +7,6 @@ import java.net.Socket;
 class LocalServerSocket implements ISocketFactory {
 
     public static final String DefaultSocketname = "/var/run/.php-java-bride_socket";
-    private int backlog;
     private String name;
     private int peer;
 	
@@ -20,7 +19,6 @@ class LocalServerSocket implements ISocketFactory {
     private LocalServerSocket(String name, int backlog)
 	throws IOException {
 	if(name.startsWith("LOCAL:")) name=name.substring(6);
-	this.backlog=backlog;
 	this.name=name;
 	if(0==(this.peer=JavaBridge.startNative(Util.logLevel, backlog, name))) throw new IOException("Unix domain sockets not available.");
 		

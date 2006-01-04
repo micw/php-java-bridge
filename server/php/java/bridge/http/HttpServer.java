@@ -46,7 +46,6 @@ public abstract class HttpServer implements Runnable {
 	byte buf[] = new byte[Util.BUF_SIZE];
 		
 	InputStream natIn = req.getInputStream();
-	String line = null;
 	int i=0, n, s=0;
 	boolean eoh=false;
 	// the header and content

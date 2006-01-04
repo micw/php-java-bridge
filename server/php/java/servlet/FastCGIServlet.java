@@ -41,18 +41,18 @@ public class FastCGIServlet extends CGIServlet {
     /*
      * Values for type component of FCGI_Header
      */
-    private static final int FCGI_BEGIN_REQUEST =      1;
-    private static final int FCGI_ABORT_REQUEST =      2;
-    private static final int FCGI_END_REQUEST   =      3;
-    private static final int FCGI_PARAMS        =      4;
-    private static final int FCGI_STDIN         =      5;
-    private static final int FCGI_STDOUT        =      6;
-    private static final int FCGI_STDERR        =      7;
-    private static final int FCGI_DATA          =      8;
-    private static final int FCGI_GET_VALUES    =      9;
-    private static final int FCGI_GET_VALUES_RESULT = 10;
-    private static final int FCGI_UNKNOWN_TYPE      = 11;
-    private static final byte[] FCGI_EMPTY_RECORD = new byte[0];
+    protected static final int FCGI_BEGIN_REQUEST =      1;
+    protected static final int FCGI_ABORT_REQUEST =      2;
+    protected static final int FCGI_END_REQUEST   =      3;
+    protected static final int FCGI_PARAMS        =      4;
+    protected static final int FCGI_STDIN         =      5;
+    protected static final int FCGI_STDOUT        =      6;
+    protected static final int FCGI_STDERR        =      7;
+    protected static final int FCGI_DATA          =      8;
+    protected static final int FCGI_GET_VALUES    =      9;
+    protected static final int FCGI_GET_VALUES_RESULT = 10;
+    protected static final int FCGI_UNKNOWN_TYPE      = 11;
+    protected static final byte[] FCGI_EMPTY_RECORD = new byte[0];
 
     /**
      * This controls how many child processes the PHP process spawns.
@@ -68,14 +68,14 @@ exitting. When one process exits, another will be created.
     /*
      * Mask for flags component of FCGI_BeginRequestBody
      */
-    private static final int FCGI_KEEP_CONN  = 1;
+    protected static final int FCGI_KEEP_CONN  = 1;
 
     /*
      * Values for role component of FCGI_BeginRequestBody
      */
-    private  static final int FCGI_RESPONDER  = 1;
-    private  static final int FCGI_AUTHORIZER = 2;
-    private  static final int FCGI_FILTER     = 3;
+    protected static final int FCGI_RESPONDER  = 1;
+    protected static final int FCGI_AUTHORIZER = 2;
+    protected static final int FCGI_FILTER     = 3;
 
     /**
      * The Fast CGI default port
@@ -369,9 +369,7 @@ exitting. When one process exits, another will be created.
 	    if(buf.length!=FCGI_BUF_SIZE) throw new IOException("Invalid block size");
 	    byte header[] = new byte[FCGI_HEADER_LEN];
 	    if(FCGI_HEADER_LEN!=natIn.read(header)) throw new IOException ("Protocol error");
-	    int version = header[0] & 0xFF;
 	    int type = header[1] & 0xFF;
-	    int id = ((header[2] & 0xFF) << 8) | (header[3] & 0xFF);
 	    int contentLength = ((header[4] & 0xFF) << 8) | (header[5] & 0xFF);
 	    int paddingLength = header[6] & 0xFF;
 	    switch(type) {

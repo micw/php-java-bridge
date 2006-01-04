@@ -22,7 +22,7 @@ import java.util.WeakHashMap;
 public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 
     // the local library directory (global one is /usr/share/java)
-    static private String phpLibDir, phpConfigDir;
+    static private String phpLibDir;
 
     // the list of jar files in which we search for user classes.
     static private Collection sysUrls = null;
@@ -95,12 +95,12 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	StringTokenizer st = new StringTokenizer(path, rawPath.substring(0, 1));
 	while (st.hasMoreTokens()) {
 	    URL url;
-	    String p, s;
+	    String s;
 	    s = st.nextToken();
 
 	    try {
 		url = new URL(s);
-		p = url.getProtocol();
+		url.getProtocol();
 	    } catch (MalformedURLException e) {
 		try {
 		    File f=null;
@@ -134,7 +134,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 			}
 		    }
 		    url = new URL("file", null, buf.toString());
-		    p = url.getProtocol();
+		    url.getProtocol();
 		}  catch (MalformedURLException e1) {
 		    Util.printStackTrace(e1);
 		    continue;
@@ -179,7 +179,6 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
      */
     public static synchronized void initClassLoader(String phpConfigDir) {
         DynamicJavaBridgeClassLoader.phpLibDir=phpConfigDir + "/lib/";
-        DynamicJavaBridgeClassLoader.phpConfigDir=phpConfigDir;
 	sysUrls=new ArrayList();
 	try {
 	    String[] paths;
@@ -201,7 +200,8 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 			URL url;
 			file = "file:" + d.getAbsolutePath() + File.separator + file;
 			url = new URL(file);
-			Util.logMessage("Found system library: "+ files[j] +" (url: " + url +").");
+			if(Util.logLevel>5) 
+			  Util.logDebug("Found system library: "+ files[j] +" (url: " + url +").");
 			sysUrls.add(url);
 		    }  catch (MalformedURLException e1) {
 			Util.printStackTrace(e1);

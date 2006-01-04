@@ -127,7 +127,6 @@ public class HttpSessionFacade implements ISession {
      * @see php.java.bridge.ISession#putAll(java.util.Map)
      */
     public void putAll(Map vars) {
-	HttpSession session = getSession();
 	for(Iterator ii = vars.keySet().iterator(); ii.hasNext();) {
 	    Object key = ii.next();
 	    Object val = vars.get(key);
@@ -147,5 +146,11 @@ public class HttpSessionFacade implements ISession {
 	    map.put(key, val);
 	}
 	return map;
+    }
+    public long getCreationTime() {
+      return getSession().getCreationTime();
+    }
+    public long getLastAccessedTime() {
+      return getSession().getLastAccessedTime();
     }
 }

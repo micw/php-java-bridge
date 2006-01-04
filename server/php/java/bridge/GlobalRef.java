@@ -21,9 +21,7 @@ class GlobalRef {
     Object[] globalRef;
     int id;
 
-    private JavaBridge bridge;
     public GlobalRef(JavaBridge bridge) {
-	this.bridge=bridge;
 	globalRef=new Object[DEFAULT_SIZE];
     }
 

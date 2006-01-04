@@ -10,7 +10,6 @@ import javax.script.Invocable;
 import javax.script.ScriptException;
 
 import php.java.bridge.Util;
-import php.java.script.PhpScriptEngine;
 
 /**
  * Proxy for calling php scripts.
@@ -23,8 +22,6 @@ public class Script
     private String script = null;
     private String port = null;
 	
-    private PhpScriptEngine engine;
-    
     /**
      * Creates a new script proxy. Scripts may be defined in <code>faces-config.xml</code> as "/scriptname.php" for local scripts or "http://.../scriptname.php" for remote scripts.
      * Remote scripts are executed and invoked on the remote server.
@@ -159,7 +156,6 @@ public class Script
      */
     public void setScript(Object value) {
         String script = String.valueOf(value);
-        String base = null;
         if(script.startsWith("@")) {
             int idx = script.indexOf(':');
             if(idx!=-1) {

@@ -192,7 +192,7 @@ public class PhpJavaServlet extends FastCGIServlet {
 		}
 		else
 		    this.env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", "");
-		this.env.put("REDIRECT_STATUS", "1");
+		this.env.put("REDIRECT_STATUS", "200");
 		this.env.put("SCRIPT_FILENAME", this.env.get("PATH_TRANSLATED"));
 	        this.env.put("SERVER_SOFTWARE", Util.EXTENSION_NAME);
 	        this.env.put("HTTP_HOST", this.env.get("SERVER_NAME")+":"+this.env.get("SERVER_PORT"));

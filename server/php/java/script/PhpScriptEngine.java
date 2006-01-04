@@ -30,7 +30,7 @@ import php.java.bridge.Util;
  * <code>
  * ScriptEngine e = new PhpScriptEngine();<br>
  * e.eval(new URLReader(new URL("http://localhost/foo.php"));<br>
- * System.out.println(((Invocable)e).call("java_get_server_name", new Object[]{}));<br>
+ * System.out.println(((Invocable)e).invoke("java_get_server_name", new Object[]{}));<br>
  * e.release();<br>
  * </code>
  * @author jostb
@@ -94,7 +94,8 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
      * @see javax.script.Invocable#getInterface(java.lang.Object, java.lang.Class)
      */
     public Object getInterface(Object thiz, Class clasz) {
-	return ((PhpProcedureProxy)thiz).getNewFromInterface(clasz);
+      if(thiz==null) throw new NullPointerException("Object thiz cannot be null.");
+      return ((PhpProcedureProxy)thiz).getNewFromInterface(clasz);
     }
     private void setName(String name) {
         int length = name.length();
@@ -106,6 +107,7 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
      * @see javax.script.ScriptEngine#eval(java.io.Reader, javax.script.ScriptContext)
      */
     public Object eval(Reader reader, ScriptContext context) throws ScriptException {
+    	if(reader==null) { release(); return null; }      
         setName(String.valueOf(reader));
 	try {
 	    this.script = doEval(reader, context);
@@ -146,6 +148,9 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
      */
     public Object eval(String script, ScriptContext context)
 	throws ScriptException {
+      	if(script==null) { release(); return null; }
+      	script = script.trim();
+      	if(script.length()==0) { release(); return null; }
         setName(String.valueOf(script));
 	try {
 	    return eval(this.localReader=new FileReader(new File(script)), context);
