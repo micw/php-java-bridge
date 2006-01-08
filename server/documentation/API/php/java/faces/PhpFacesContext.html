@@ -1,13 +1,747 @@
-<?xml version="1.0" encoding="null"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head><title>PhpFacesContext</title><script src="../../../resources/gjdoc.js" type="text/javascript"><!-- this comment required for konqueror 3.2.2 --></script><meta http-equiv="Content-Type" content="text/html; charset=null"/><meta name="generator" content="GNU Gjdoc Standard Doclet"/><meta name="keywords" content="php.java.faces.PhpFacesContext class"/><meta name="keywords" content="getBaseURL()"/><meta name="keywords" content="getApplication()"/><meta name="keywords" content="getClientIdsWithMessages()"/><meta name="keywords" content="getExternalContext()"/><meta name="keywords" content="getMaximumSeverity()"/><meta name="keywords" content="getMessages()"/><meta name="keywords" content="getRenderKit()"/><meta name="keywords" content="getRenderResponse()"/><meta name="keywords" content="getResponseComplete()"/><meta name="keywords" content="getResponseStream()"/><meta name="keywords" content="setResponseStream()"/><meta name="keywords" content="getResponseWriter()"/><meta name="keywords" content="setResponseWriter()"/><meta name="keywords" content="getViewRoot()"/><meta name="keywords" content="setViewRoot()"/><meta name="keywords" content="addMessage()"/><meta name="keywords" content="release()"/><meta name="keywords" content="renderResponse()"/><meta name="keywords" content="responseComplete()"/><meta name="keywords" content="getScriptEngine()"/><link rel="stylesheet" type="text/css" href="../../../resources/gjdochtml-clean-layout.css" title="GNU Clean"/><link rel="stylesheet" type="text/css" href="../../../resources/gjdochtml-clean-color1.css" title="GNU Clean"/></head><body class="content class" onload="top.contentPageLoaded(document.title)"><table class="navbar div top"><tr><td class="navbar div top" colspan="2"><div class="navbar div top" colspan="2"><span class="navbar item enabled"><a href="../../../index-noframes.html">Overview</a></span> <span class="navbar item enabled"><a href="package-summary.html">Package</a></span> <span class="navbar item active">Class</span> <span class="navbar item enabled"><a href="PhpFacesContext-uses.html">Use</a></span> <span class="navbar item enabled"><a href="tree.html">Tree</a></span> <span class="navbar item enabled"><a href="../../../alphaindex-1.html">Index</a></span> <span class="navbar item enabled"><a href="../../../deprecated.html">Deprecated</a></span> <span class="navbar item enabled"><a href="../../../about.html">About</a></span></div></td></tr><tr><td class="navi"><a href="../../../php/java/faces/PhpFacesApplicationFactory.html">Prev Class</a> | <a href="../../../php/java/faces/PhpFacesContextFactory.html">Next Class</a></td><td class="navi"><a href="../../../index.html" title="Show in a frameset" target="_top">Frames</a> | <a href="PhpFacesContext.html" title="Show without frames" target="_top">No Frames</a> </td></tr><tr><td class="navi">Summary: Nested | Field | <a href="#summary-methods">Method</a> | <a href="#summary-constructors">Constr</a></td><td class="navi">Detail: Nested | Field | <a href="#detail-methods">Method</a> | <a href="#detail-constructors">Constr</a></td></tr></table><div class="class title outer"><h3 class="class title-package">php.java.faces</h3><h1 class="class title-class">Class PhpFacesContext</h1></div><div class="class inheritance-tree"><ul class="inheritance 0"><li class="inheritance 0"><code>java.lang.Object</code></li><ul class="inheritance 1"><li class="inheritance 1"><code>javax.faces.context.FacesContext</code></li><ul class="inheritance 2"><li class="inheritance 2"><code>php.java.faces.PhpFacesContext</code></li></ul></ul></ul></div><hr/><div class="class synopsis outer"><div class="class synopsis declaration"><code>public class <b class="class synopsis name">PhpFacesContext</b></code></div><div class="class synopsis superclass"><code>extends javax.faces.context.FacesContext</code></div></div><hr/><div class="class description"> A custom FacesContext. Stores the baseURL, creates script engines.
-</div><p class="taglet"><dl class="tag list"><dt class="tag section header"><b>Author:</b></dt><dd class="tag item">jostb</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><a name="summary-constructors"/><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table header"><td colspan="2"><h2 class="table header">Constructor Summary</h2></td></tr><tr><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#PhpFacesContext(javax.faces.context.FacesContext,java.lang.Object,java.lang.Object,java.lang.Object)">PhpFacesContext</a>(javax.faces.context.FacesContext&nbsp;facesContext, java.lang.Object&nbsp;kontext, java.lang.Object&nbsp;request, java.lang.Object&nbsp;response)</code></dt></dl></td></tr></table></dl><a name="summary-methods"/><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table header"><td colspan="2"><h2 class="table header">Method Summary</h2></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#addMessage(java.lang.String,javax.faces.application.FacesMessage)">addMessage</a>(java.lang.String&nbsp;clientId, javax.faces.application.FacesMessage&nbsp;message)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> javax.faces.application.Application</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getApplication()">getApplication</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.String</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getBaseURL()">getBaseURL</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.String</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getBaseURL(java.lang.String)">getBaseURL</a>(java.lang.String&nbsp;port)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.util.Iterator</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getClientIdsWithMessages()">getClientIdsWithMessages</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> javax.faces.context.ExternalContext</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getExternalContext()">getExternalContext</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> <a href="../../../javax/faces/application/FacesMessage.Severity.html" title="Class in javax.faces.application">FacesMessage.Severity</a></code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getMaximumSeverity()">getMaximumSeverity</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.util.Iterator</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getMessages()">getMessages</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.util.Iterator</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getMessages(java.lang.String)">getMessages</a>(java.lang.String&nbsp;clientId)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> javax.faces.render.RenderKit</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getRenderKit()">getRenderKit</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> boolean</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getRenderResponse()">getRenderResponse</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> boolean</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getResponseComplete()">getResponseComplete</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> javax.faces.context.ResponseStream</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getResponseStream()">getResponseStream</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> javax.faces.context.ResponseWriter</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getResponseWriter()">getResponseWriter</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> <a href="../../../javax/script/ScriptEngine.html" title="Interface in javax.script">ScriptEngine</a></code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getScriptEngine(java.lang.Object,java.net.URL)">getScriptEngine</a>(java.lang.Object&nbsp;key, java.net.URL&nbsp;url)</code></dt><dd class="description"> Get a script engine
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> javax.faces.component.UIViewRoot</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getViewRoot()">getViewRoot</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#release()">release</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#renderResponse()">renderResponse</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#responseComplete()">responseComplete</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#setResponseStream(javax.faces.context.ResponseStream)">setResponseStream</a>(javax.faces.context.ResponseStream&nbsp;responseStream)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#setResponseWriter(javax.faces.context.ResponseWriter)">setResponseWriter</a>(javax.faces.context.ResponseWriter&nbsp;responseWriter)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#setViewRoot(javax.faces.component.UIViewRoot)">setViewRoot</a>(javax.faces.component.UIViewRoot&nbsp;root)</code></dt></dl></td></tr></table></dl><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table sub header"><td colspan="2"><h3 class="table sub header">Methods inherited from class javax.faces.context.FacesContext</h3></td></tr><tr><td class="inherited"><a href="../../../javax/faces/context/FacesContext.html#addMessage(java.lang.String,javax.faces.application.FacesMessage)" title="addMessage(String,FacesMessage)"><code class="member">addMessage</code></a>, <a href="../../../javax/faces/context/FacesContext.html#getApplication()" title="getApplication()"><code class="member">getApplication</code></a>, <a href="../../../javax/faces/context/FacesContext.html#getClientIdsWithMessages()" title="getClientIdsWithMessages()"><code class="member">getClientIdsWithMessages</code></a>, <a href="../../../javax/faces/context/FacesContext.html#getCurrentInstance()" title="getCurrentInstance()"><code class="member">getCurrentInstance</code></a>, <a href="../../../javax/faces/context/FacesContext.html#getELContext()" title="getELContext()"><code class="member">getELContext</code></a>, <a href="../../../javax/faces/context/FacesContext.html#getExternalContext()" title="getExternalContext()"><code class="member">getExternalContext</code></a>, <a href="../../../javax/faces/context/FacesContext.html#getMaximumSeverity()" title="getMaximumSeverity()"><code class="member">getMaximumSeverity</code></a>, <a href="../../../javax/faces/context/FacesContext.html#getMessages()" title="getMessages()"><code class="member">getMessages</code></a>, <a href="../../../javax/faces/context/FacesContext.html#getMessages(java.lang.String)" title="getMessages(String)"><code class="member">getMessages</code></a>, <a href="../../../javax/faces/context/FacesContext.html#getRenderKit()" title="getRenderKit()"><code class="member">getRenderKit</code></a>, <a href="../../../javax/faces/context/FacesContext.html#getRenderResponse()" title="getRenderResponse()"><code class="member">getRenderResponse</code></a>, <a href="../../../javax/faces/context/FacesContext.html#getResponseComplete()" title="getResponseComplete()"><code class="member">getResponseComplete</code></a>, <a href="../../../javax/faces/context/FacesContext.html#getResponseStream()" title="getResponseStream()"><code class="member">getResponseStream</code></a>, <a href="../../../javax/faces/context/FacesContext.html#getResponseWriter()" title="getResponseWriter()"><code class="member">getResponseWriter</code></a>, <a href="../../../javax/faces/context/FacesContext.html#getViewRoot()" title="getViewRoot()"><code class="member">getViewRoot</code></a>, <a href="../../../javax/faces/context/FacesContext.html#release()" title="release()"><code class="member">release</code></a>, <a href="../../../javax/faces/context/FacesContext.html#renderResponse()" title="renderResponse()"><code class="member">renderResponse</code></a>, <a href="../../../javax/faces/context/FacesContext.html#responseComplete()" title="responseComplete()"><code class="member">responseComplete</code></a>, <a href="../../../javax/faces/context/FacesContext.html#setResponseStream(javax.faces.context.ResponseStream)" title="setResponseStream(ResponseStream)"><code class="member">setResponseStream</code></a>, <a href="../../../javax/faces/context/FacesContext.html#setResponseWriter(javax.faces.context.ResponseWriter)" title="setResponseWriter(ResponseWriter)"><code class="member">setResponseWriter</code></a>, <a href="../../../javax/faces/context/FacesContext.html#setViewRoot(javax.faces.component.UIViewRoot)" title="setViewRoot(UIViewRoot)"><code class="member">setViewRoot</code></a></td></tr></table></dl><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table sub header"><td colspan="2"><h3 class="table sub header">Methods inherited from class java.lang.Object</h3></td></tr><tr><td class="inherited"><a href="../../../java/lang/Object.html#equals(java.lang.Object)" title="equals(Object)"><code class="member">equals</code></a>, <a href="../../../java/lang/Object.html#getClass()" title="getClass()"><code class="member">getClass</code></a>, <a href="../../../java/lang/Object.html#hashCode()" title="hashCode()"><code class="member">hashCode</code></a>, <a href="../../../java/lang/Object.html#notify()" title="notify()"><code class="member">notify</code></a>, <a href="../../../java/lang/Object.html#notifyAll()" title="notifyAll()"><code class="member">notifyAll</code></a>, <a href="../../../java/lang/Object.html#toString()" title="toString()"><code class="member">toString</code></a>, <a href="../../../java/lang/Object.html#wait()" title="wait()"><code class="member">wait</code></a>, <a href="../../../java/lang/Object.html#wait(long)" title="wait(long)"><code class="member">wait</code></a>, <a href="../../../java/lang/Object.html#wait(long,int)" title="wait(long,int)"><code class="member">wait</code></a></td></tr></table></dl><a name="detail-constructors"/><h2 class="section header">Constructor Details</h2><div class="section"><a name="PhpFacesContext(javax.faces.context.FacesContext,java.lang.Object,java.lang.Object,java.lang.Object)"/><div class="member detail outer"><h3 class="member detail name">PhpFacesContext</h3><pre class="member detail synopsis">public PhpFacesContext(javax.faces.context.FacesContext facesContext,
-                       java.lang.Object kontext,
-                       java.lang.Object request,
-                       java.lang.Object response)</pre><blockquote class="member detail name"><div class="member detail description"></div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">facesContext</code><span class="separator"> - </span><span class="description"></span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div></div><a name="detail-methods"/><h2 class="section header">Method Details</h2><div class="section"><a name="addMessage(java.lang.String,javax.faces.application.FacesMessage)"/><div class="member detail outer"><h3 class="member detail name">addMessage</h3><pre class="member detail synopsis">public void addMessage(java.lang.String clientId,
-                       javax.faces.application.FacesMessage message)</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">addMessage in interface javax.faces.context.FacesContext</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getApplication()"/><div class="member detail outer"><h3 class="member detail name">getApplication</h3><pre class="member detail synopsis">public javax.faces.application.Application getApplication()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getApplication in interface javax.faces.context.FacesContext</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getBaseURL()"/><div class="member detail outer"><h3 class="member detail name">getBaseURL</h3><pre class="member detail synopsis">public java.lang.String getBaseURL()</pre><blockquote class="member detail name"><div class="member detail description"></div><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">The base URL, e.g. http://127.0.0.1:8080/JavaBridge</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getBaseURL(java.lang.String)"/><div class="member detail outer"><h3 class="member detail name">getBaseURL</h3><pre class="member detail synopsis">public java.lang.String getBaseURL(java.lang.String port)</pre><blockquote class="member detail name"><div class="member detail description"></div><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">The base URL, e.g. http://127.0.0.1:8080/JavaBridge</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getClientIdsWithMessages()"/><div class="member detail outer"><h3 class="member detail name">getClientIdsWithMessages</h3><pre class="member detail synopsis">public java.util.Iterator getClientIdsWithMessages()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getClientIdsWithMessages in interface javax.faces.context.FacesContext</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getExternalContext()"/><div class="member detail outer"><h3 class="member detail name">getExternalContext</h3><pre class="member detail synopsis">public javax.faces.context.ExternalContext getExternalContext()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getExternalContext in interface javax.faces.context.FacesContext</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getMaximumSeverity()"/><div class="member detail outer"><h3 class="member detail name">getMaximumSeverity</h3><pre class="member detail synopsis">public <a href="../../../javax/faces/application/FacesMessage.Severity.html" title="Class in javax.faces.application">FacesMessage.Severity</a> getMaximumSeverity()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getMaximumSeverity in interface javax.faces.context.FacesContext</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getMessages()"/><div class="member detail outer"><h3 class="member detail name">getMessages</h3><pre class="member detail synopsis">public java.util.Iterator getMessages()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getMessages in interface javax.faces.context.FacesContext</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getMessages(java.lang.String)"/><div class="member detail outer"><h3 class="member detail name">getMessages</h3><pre class="member detail synopsis">public java.util.Iterator getMessages(java.lang.String clientId)</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getMessages in interface javax.faces.context.FacesContext</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getRenderKit()"/><div class="member detail outer"><h3 class="member detail name">getRenderKit</h3><pre class="member detail synopsis">public javax.faces.render.RenderKit getRenderKit()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getRenderKit in interface javax.faces.context.FacesContext</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getRenderResponse()"/><div class="member detail outer"><h3 class="member detail name">getRenderResponse</h3><pre class="member detail synopsis">public boolean getRenderResponse()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getRenderResponse in interface javax.faces.context.FacesContext</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getResponseComplete()"/><div class="member detail outer"><h3 class="member detail name">getResponseComplete</h3><pre class="member detail synopsis">public boolean getResponseComplete()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getResponseComplete in interface javax.faces.context.FacesContext</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getResponseStream()"/><div class="member detail outer"><h3 class="member detail name">getResponseStream</h3><pre class="member detail synopsis">public javax.faces.context.ResponseStream getResponseStream()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getResponseStream in interface javax.faces.context.FacesContext</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getResponseWriter()"/><div class="member detail outer"><h3 class="member detail name">getResponseWriter</h3><pre class="member detail synopsis">public javax.faces.context.ResponseWriter getResponseWriter()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getResponseWriter in interface javax.faces.context.FacesContext</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getScriptEngine(java.lang.Object,java.net.URL)"/><div class="member detail outer"><h3 class="member detail name">getScriptEngine</h3><pre class="member detail synopsis">public <a href="../../../javax/script/ScriptEngine.html" title="Interface in javax.script">ScriptEngine</a> getScriptEngine(java.lang.Object key,
-                                    java.net.URL url)
-            throws java.net.UnknownHostException,
-                   <a href="../../../javax/script/ScriptException.html" title="Class in javax.script">ScriptException</a>,
-                   java.io.IOException</pre><blockquote class="member detail name"><div class="member detail description"> Get a script engine
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">key</code><span class="separator"> - </span><span class="description">The Script proxy</span></dd><dd class="item"><code class="name">url</code><span class="separator"> - </span><span class="description">The URL, for example getBaseURL() + "/foo.php";</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">The script engine.</dd></dl></p><p class="member detail thrown list"><dl><dt class="member detail thrown header"><b>Throws:</b></dt><dd class="member detail thrown item"><code class="name"><a href="../../../javax/script/ScriptException.html" title="Class in javax.script">ScriptException</a></code><span class="separator"> - </span><span class="description"></span></dd><dd class="member detail thrown item"><code class="name">java.io.IOException</code><span class="separator"> - </span><span class="description"></span></dd><dd class="member detail thrown item"><code class="name">java.net.UnknownHostException</code><span class="separator"> - </span><span class="description"></span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"><dl class="tag list"><dt class="tag section header"><b>See Also:</b></dt><dd><a href="../../../php/java/faces/PhpFacesContext.html#getBaseURL()"><code>getBaseURL()</code></a><dd></dl></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getViewRoot()"/><div class="member detail outer"><h3 class="member detail name">getViewRoot</h3><pre class="member detail synopsis">public javax.faces.component.UIViewRoot getViewRoot()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getViewRoot in interface javax.faces.context.FacesContext</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="release()"/><div class="member detail outer"><h3 class="member detail name">release</h3><pre class="member detail synopsis">public void release()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">release in interface javax.faces.context.FacesContext</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="renderResponse()"/><div class="member detail outer"><h3 class="member detail name">renderResponse</h3><pre class="member detail synopsis">public void renderResponse()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">renderResponse in interface javax.faces.context.FacesContext</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="responseComplete()"/><div class="member detail outer"><h3 class="member detail name">responseComplete</h3><pre class="member detail synopsis">public void responseComplete()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">responseComplete in interface javax.faces.context.FacesContext</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="setResponseStream(javax.faces.context.ResponseStream)"/><div class="member detail outer"><h3 class="member detail name">setResponseStream</h3><pre class="member detail synopsis">public void setResponseStream(javax.faces.context.ResponseStream responseStream)</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">setResponseStream in interface javax.faces.context.FacesContext</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="setResponseWriter(javax.faces.context.ResponseWriter)"/><div class="member detail outer"><h3 class="member detail name">setResponseWriter</h3><pre class="member detail synopsis">public void setResponseWriter(javax.faces.context.ResponseWriter responseWriter)</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">setResponseWriter in interface javax.faces.context.FacesContext</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="setViewRoot(javax.faces.component.UIViewRoot)"/><div class="member detail outer"><h3 class="member detail name">setViewRoot</h3><pre class="member detail synopsis">public void setViewRoot(javax.faces.component.UIViewRoot root)</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">setViewRoot in interface javax.faces.context.FacesContext</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div></div><p class="navbar bottom spacer"> </p><table class="navbar div bottom"><tr><td><div class="navbar div top" colspan="2"><span class="navbar item enabled"><a href="../../../index-noframes.html">Overview</a></span> <span class="navbar item enabled"><a href="package-summary.html">Package</a></span> <span class="navbar item active">Class</span> <span class="navbar item enabled"><a href="PhpFacesContext-uses.html">Use</a></span> <span class="navbar item enabled"><a href="tree.html">Tree</a></span> <span class="navbar item enabled"><a href="../../../alphaindex-1.html">Index</a></span> <span class="navbar item enabled"><a href="../../../deprecated.html">Deprecated</a></span> <span class="navbar item enabled"><a href="../../../about.html">About</a></span></div></td></tr></table></body></html>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--NewPage-->
+<HTML>
+<HEAD>
+<!-- Generated by javadoc (build 1.5.0) on Sun Jan 08 19:28:40 CET 2006 -->
+<TITLE>
+PhpFacesContext
+</TITLE>
+
+<META NAME="keywords" CONTENT="php.java.faces.PhpFacesContext class">
+
+<LINK REL ="stylesheet" TYPE="text/css" HREF="../../../stylesheet.css" TITLE="Style">
+
+<SCRIPT type="text/javascript">
+function windowTitle()
+{
+    parent.document.title="PhpFacesContext";
+}
+</SCRIPT>
+<NOSCRIPT>
+</NOSCRIPT>
+
+</HEAD>
+
+<BODY BGCOLOR="white" onload="windowTitle();">
+
+
+<!-- ========= START OF TOP NAVBAR ======= -->
+<A NAME="navbar_top"><!-- --></A>
+<A HREF="#skip-navbar_top" title="Skip navigation links"></A>
+<TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
+<TR>
+<TD COLSPAN=2 BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
+<A NAME="navbar_top_firstrow"><!-- --></A>
+<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
+  <TR ALIGN="center" VALIGN="top">
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="class-use/PhpFacesContext.html"><FONT CLASS="NavBarFont1"><B>Use</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../index-files/index-1.html"><FONT CLASS="NavBarFont1"><B>Index</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT></A>&nbsp;</TD>
+  </TR>
+</TABLE>
+</TD>
+<TD ALIGN="right" VALIGN="top" ROWSPAN=3><EM>
+</EM>
+</TD>
+</TR>
+
+<TR>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+&nbsp;<A HREF="../../../php/java/faces/PhpFacesApplicationFactory.html" title="class in php.java.faces"><B>PREV CLASS</B></A>&nbsp;
+&nbsp;<A HREF="../../../php/java/faces/PhpFacesContextFactory.html" title="class in php.java.faces"><B>NEXT CLASS</B></A></FONT></TD>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+  <A HREF="../../../index.html?php/java/faces/PhpFacesContext.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+&nbsp;<A HREF="PhpFacesContext.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+&nbsp;<SCRIPT type="text/javascript">
+  <!--
+  if(window==top) {
+    document.writeln('<A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>');
+  }
+  //-->
+</SCRIPT>
+<NOSCRIPT>
+  <A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>
+</NOSCRIPT>
+
+
+</FONT></TD>
+</TR>
+<TR>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+  SUMMARY:&nbsp;NESTED&nbsp;|&nbsp;FIELD&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+DETAIL:&nbsp;FIELD&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+</TR>
+</TABLE>
+<A NAME="skip-navbar_top"></A>
+<!-- ========= END OF TOP NAVBAR ========= -->
+
+<HR>
+<!-- ======== START OF CLASS DATA ======== -->
+<H2>
+<FONT SIZE="-1">
+php.java.faces</FONT>
+<BR>
+Class PhpFacesContext</H2>
+<PRE>
+java.lang.Object
+  <IMG SRC="../../../resources/inherit.gif" ALT="extended by ">javax.faces.context.FacesContext
+      <IMG SRC="../../../resources/inherit.gif" ALT="extended by "><B>php.java.faces.PhpFacesContext</B>
+</PRE>
+<HR>
+<DL>
+<DT><PRE>public class <B>PhpFacesContext</B><DT>extends javax.faces.context.FacesContext</DL>
+</PRE>
+
+<P>
+A custom FacesContext. Stores the baseURL, creates script engines.
+<P>
+
+<P>
+<DL>
+<DT><B>Author:</B></DT>
+  <DD>jostb</DD>
+</DL>
+<HR>
+
+<P>
+
+<!-- ======== CONSTRUCTOR SUMMARY ======== -->
+
+<A NAME="constructor_summary"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+<B>Constructor Summary</B></FONT></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesContext.html#PhpFacesContext(javax.faces.context.FacesContext, java.lang.Object, java.lang.Object, java.lang.Object)">PhpFacesContext</A></B>(javax.faces.context.FacesContext&nbsp;facesContext,
+                java.lang.Object&nbsp;kontext,
+                java.lang.Object&nbsp;request,
+                java.lang.Object&nbsp;response)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+</TABLE>
+&nbsp;
+<!-- ========== METHOD SUMMARY =========== -->
+
+<A NAME="method_summary"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+<B>Method Summary</B></FONT></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesContext.html#addMessage(java.lang.String, javax.faces.application.FacesMessage)">addMessage</A></B>(java.lang.String&nbsp;clientId,
+           javax.faces.application.FacesMessage&nbsp;message)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;javax.faces.application.Application</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesContext.html#getApplication()">getApplication</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.String</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesContext.html#getBaseURL()">getBaseURL</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.String</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesContext.html#getBaseURL(java.lang.String)">getBaseURL</A></B>(java.lang.String&nbsp;port)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.util.Iterator</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesContext.html#getClientIdsWithMessages()">getClientIdsWithMessages</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;javax.faces.context.ExternalContext</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesContext.html#getExternalContext()">getExternalContext</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;javax.faces.application.FacesMessage.Severity</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesContext.html#getMaximumSeverity()">getMaximumSeverity</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.util.Iterator</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesContext.html#getMessages()">getMessages</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.util.Iterator</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesContext.html#getMessages(java.lang.String)">getMessages</A></B>(java.lang.String&nbsp;clientId)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;javax.faces.render.RenderKit</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesContext.html#getRenderKit()">getRenderKit</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;boolean</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesContext.html#getRenderResponse()">getRenderResponse</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;boolean</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesContext.html#getResponseComplete()">getResponseComplete</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;javax.faces.context.ResponseStream</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesContext.html#getResponseStream()">getResponseStream</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;javax.faces.context.ResponseWriter</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesContext.html#getResponseWriter()">getResponseWriter</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;<A HREF="../../../javax/script/ScriptEngine.html" title="interface in javax.script">ScriptEngine</A></CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesContext.html#getScriptEngine(java.lang.Object, java.net.URL)">getScriptEngine</A></B>(java.lang.Object&nbsp;key,
+                java.net.URL&nbsp;url)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Get a script engine</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;javax.faces.component.UIViewRoot</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesContext.html#getViewRoot()">getViewRoot</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesContext.html#release()">release</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesContext.html#renderResponse()">renderResponse</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesContext.html#responseComplete()">responseComplete</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesContext.html#setResponseStream(javax.faces.context.ResponseStream)">setResponseStream</A></B>(javax.faces.context.ResponseStream&nbsp;responseStream)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesContext.html#setResponseWriter(javax.faces.context.ResponseWriter)">setResponseWriter</A></B>(javax.faces.context.ResponseWriter&nbsp;responseWriter)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesContext.html#setViewRoot(javax.faces.component.UIViewRoot)">setViewRoot</A></B>(javax.faces.component.UIViewRoot&nbsp;root)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+</TABLE>
+&nbsp;<A NAME="methods_inherited_from_class_javax.faces.context.FacesContext"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#EEEEFF" CLASS="TableSubHeadingColor">
+<TH ALIGN="left"><B>Methods inherited from class javax.faces.context.FacesContext</B></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD><CODE>getCurrentInstance</CODE></TD>
+</TR>
+</TABLE>
+&nbsp;<A NAME="methods_inherited_from_class_java.lang.Object"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#EEEEFF" CLASS="TableSubHeadingColor">
+<TH ALIGN="left"><B>Methods inherited from class java.lang.Object</B></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD><CODE>equals, getClass, hashCode, notify, notifyAll, toString, wait, wait, wait</CODE></TD>
+</TR>
+</TABLE>
+&nbsp;
+<P>
+
+<!-- ========= CONSTRUCTOR DETAIL ======== -->
+
+<A NAME="constructor_detail"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2">
+<B>Constructor Detail</B></FONT></TH>
+</TR>
+</TABLE>
+
+<A NAME="PhpFacesContext(javax.faces.context.FacesContext, java.lang.Object, java.lang.Object, java.lang.Object)"><!-- --></A><H3>
+PhpFacesContext</H3>
+<PRE>
+public <B>PhpFacesContext</B>(javax.faces.context.FacesContext&nbsp;facesContext,
+                       java.lang.Object&nbsp;kontext,
+                       java.lang.Object&nbsp;request,
+                       java.lang.Object&nbsp;response)</PRE>
+<DL>
+<DL>
+<DT><B>Parameters:</B><DD><CODE>facesContext</CODE> - </DL>
+</DL>
+
+<!-- ============ METHOD DETAIL ========== -->
+
+<A NAME="method_detail"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2">
+<B>Method Detail</B></FONT></TH>
+</TR>
+</TABLE>
+
+<A NAME="getBaseURL()"><!-- --></A><H3>
+getBaseURL</H3>
+<PRE>
+public java.lang.String <B>getBaseURL</B>()</PRE>
+<DL>
+<DD><DL>
+
+<DT><B>Returns:</B><DD>The base URL, e.g. http://127.0.0.1:8080/JavaBridge</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getBaseURL(java.lang.String)"><!-- --></A><H3>
+getBaseURL</H3>
+<PRE>
+public java.lang.String <B>getBaseURL</B>(java.lang.String&nbsp;port)</PRE>
+<DL>
+<DD><DL>
+
+<DT><B>Returns:</B><DD>The base URL, e.g. http://127.0.0.1:8080/JavaBridge</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getApplication()"><!-- --></A><H3>
+getApplication</H3>
+<PRE>
+public javax.faces.application.Application <B>getApplication</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getApplication</CODE> in class <CODE>javax.faces.context.FacesContext</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getClientIdsWithMessages()"><!-- --></A><H3>
+getClientIdsWithMessages</H3>
+<PRE>
+public java.util.Iterator <B>getClientIdsWithMessages</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getClientIdsWithMessages</CODE> in class <CODE>javax.faces.context.FacesContext</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getExternalContext()"><!-- --></A><H3>
+getExternalContext</H3>
+<PRE>
+public javax.faces.context.ExternalContext <B>getExternalContext</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getExternalContext</CODE> in class <CODE>javax.faces.context.FacesContext</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getMaximumSeverity()"><!-- --></A><H3>
+getMaximumSeverity</H3>
+<PRE>
+public javax.faces.application.FacesMessage.Severity <B>getMaximumSeverity</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getMaximumSeverity</CODE> in class <CODE>javax.faces.context.FacesContext</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getMessages()"><!-- --></A><H3>
+getMessages</H3>
+<PRE>
+public java.util.Iterator <B>getMessages</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getMessages</CODE> in class <CODE>javax.faces.context.FacesContext</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getMessages(java.lang.String)"><!-- --></A><H3>
+getMessages</H3>
+<PRE>
+public java.util.Iterator <B>getMessages</B>(java.lang.String&nbsp;clientId)</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getMessages</CODE> in class <CODE>javax.faces.context.FacesContext</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getRenderKit()"><!-- --></A><H3>
+getRenderKit</H3>
+<PRE>
+public javax.faces.render.RenderKit <B>getRenderKit</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getRenderKit</CODE> in class <CODE>javax.faces.context.FacesContext</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getRenderResponse()"><!-- --></A><H3>
+getRenderResponse</H3>
+<PRE>
+public boolean <B>getRenderResponse</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getRenderResponse</CODE> in class <CODE>javax.faces.context.FacesContext</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getResponseComplete()"><!-- --></A><H3>
+getResponseComplete</H3>
+<PRE>
+public boolean <B>getResponseComplete</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getResponseComplete</CODE> in class <CODE>javax.faces.context.FacesContext</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getResponseStream()"><!-- --></A><H3>
+getResponseStream</H3>
+<PRE>
+public javax.faces.context.ResponseStream <B>getResponseStream</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getResponseStream</CODE> in class <CODE>javax.faces.context.FacesContext</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setResponseStream(javax.faces.context.ResponseStream)"><!-- --></A><H3>
+setResponseStream</H3>
+<PRE>
+public void <B>setResponseStream</B>(javax.faces.context.ResponseStream&nbsp;responseStream)</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>setResponseStream</CODE> in class <CODE>javax.faces.context.FacesContext</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getResponseWriter()"><!-- --></A><H3>
+getResponseWriter</H3>
+<PRE>
+public javax.faces.context.ResponseWriter <B>getResponseWriter</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getResponseWriter</CODE> in class <CODE>javax.faces.context.FacesContext</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setResponseWriter(javax.faces.context.ResponseWriter)"><!-- --></A><H3>
+setResponseWriter</H3>
+<PRE>
+public void <B>setResponseWriter</B>(javax.faces.context.ResponseWriter&nbsp;responseWriter)</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>setResponseWriter</CODE> in class <CODE>javax.faces.context.FacesContext</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getViewRoot()"><!-- --></A><H3>
+getViewRoot</H3>
+<PRE>
+public javax.faces.component.UIViewRoot <B>getViewRoot</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getViewRoot</CODE> in class <CODE>javax.faces.context.FacesContext</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setViewRoot(javax.faces.component.UIViewRoot)"><!-- --></A><H3>
+setViewRoot</H3>
+<PRE>
+public void <B>setViewRoot</B>(javax.faces.component.UIViewRoot&nbsp;root)</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>setViewRoot</CODE> in class <CODE>javax.faces.context.FacesContext</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="addMessage(java.lang.String, javax.faces.application.FacesMessage)"><!-- --></A><H3>
+addMessage</H3>
+<PRE>
+public void <B>addMessage</B>(java.lang.String&nbsp;clientId,
+                       javax.faces.application.FacesMessage&nbsp;message)</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>addMessage</CODE> in class <CODE>javax.faces.context.FacesContext</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="release()"><!-- --></A><H3>
+release</H3>
+<PRE>
+public void <B>release</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>release</CODE> in class <CODE>javax.faces.context.FacesContext</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="renderResponse()"><!-- --></A><H3>
+renderResponse</H3>
+<PRE>
+public void <B>renderResponse</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>renderResponse</CODE> in class <CODE>javax.faces.context.FacesContext</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="responseComplete()"><!-- --></A><H3>
+responseComplete</H3>
+<PRE>
+public void <B>responseComplete</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>responseComplete</CODE> in class <CODE>javax.faces.context.FacesContext</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getScriptEngine(java.lang.Object, java.net.URL)"><!-- --></A><H3>
+getScriptEngine</H3>
+<PRE>
+public <A HREF="../../../javax/script/ScriptEngine.html" title="interface in javax.script">ScriptEngine</A> <B>getScriptEngine</B>(java.lang.Object&nbsp;key,
+                                    java.net.URL&nbsp;url)
+                             throws java.net.UnknownHostException,
+                                    <A HREF="../../../javax/script/ScriptException.html" title="class in javax.script">ScriptException</A>,
+                                    java.io.IOException</PRE>
+<DL>
+<DD>Get a script engine
+<P>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>key</CODE> - The Script proxy<DD><CODE>url</CODE> - The URL, for example getBaseURL() + "/foo.php";
+<DT><B>Returns:</B><DD>The script engine.
+<DT><B>Throws:</B>
+<DD><CODE><A HREF="../../../javax/script/ScriptException.html" title="class in javax.script">ScriptException</A></CODE>
+<DD><CODE>java.io.IOException</CODE>
+<DD><CODE>java.net.UnknownHostException</CODE><DT><B>See Also:</B><DD><A HREF="../../../php/java/faces/PhpFacesContext.html#getBaseURL()"><CODE>getBaseURL()</CODE></A></DL>
+</DD>
+</DL>
+<!-- ========= END OF CLASS DATA ========= -->
+<HR>
+
+
+<!-- ======= START OF BOTTOM NAVBAR ====== -->
+<A NAME="navbar_bottom"><!-- --></A>
+<A HREF="#skip-navbar_bottom" title="Skip navigation links"></A>
+<TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
+<TR>
+<TD COLSPAN=2 BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
+<A NAME="navbar_bottom_firstrow"><!-- --></A>
+<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
+  <TR ALIGN="center" VALIGN="top">
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="class-use/PhpFacesContext.html"><FONT CLASS="NavBarFont1"><B>Use</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../index-files/index-1.html"><FONT CLASS="NavBarFont1"><B>Index</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT></A>&nbsp;</TD>
+  </TR>
+</TABLE>
+</TD>
+<TD ALIGN="right" VALIGN="top" ROWSPAN=3><EM>
+</EM>
+</TD>
+</TR>
+
+<TR>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+&nbsp;<A HREF="../../../php/java/faces/PhpFacesApplicationFactory.html" title="class in php.java.faces"><B>PREV CLASS</B></A>&nbsp;
+&nbsp;<A HREF="../../../php/java/faces/PhpFacesContextFactory.html" title="class in php.java.faces"><B>NEXT CLASS</B></A></FONT></TD>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+  <A HREF="../../../index.html?php/java/faces/PhpFacesContext.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+&nbsp;<A HREF="PhpFacesContext.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+&nbsp;<SCRIPT type="text/javascript">
+  <!--
+  if(window==top) {
+    document.writeln('<A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>');
+  }
+  //-->
+</SCRIPT>
+<NOSCRIPT>
+  <A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>
+</NOSCRIPT>
+
+
+</FONT></TD>
+</TR>
+<TR>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+  SUMMARY:&nbsp;NESTED&nbsp;|&nbsp;FIELD&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+DETAIL:&nbsp;FIELD&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+</TR>
+</TABLE>
+<A NAME="skip-navbar_bottom"></A>
+<!-- ======== END OF BOTTOM NAVBAR ======= -->
+
+<HR>
+
+</BODY>
+</HTML>

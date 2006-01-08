@@ -82,9 +82,23 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   if(!(EXT_GLOBAL(option_set_by_user) (U_LIBRARY_PATH, EXT_GLOBAL(ini_user)))) {	/* look into extension_dir then */
 	if(ext) lib_path = ext;
   }
+  if(!*program) {				/* look into extension_dir then */
+	static const char java[] = "/java";
+	if(ext) {
+	  program = malloc(strlen(ext)+sizeof(java)); assert(program); if(!program) exit(6);
+	  strcpy(program, ext); strcat(program, java);
+	} else {
+	  program = strdup(program);
+	}
+  } else {
+	program = strdup(program);
+  }
+  if(!*home) {					/* look into extension_dir then */
+	if(ext) home = ext;
+  }
   
   if(!sys_libpath) sys_libpath="";
-  args[0]=strdup(program);
+  args[0]=program;
   s="-Djava.library.path=";
   p=malloc(strlen(s)+strlen(lib_path)+1);
   strcpy(p, s); strcat(p, lib_path);
@@ -310,8 +324,8 @@ char* EXT_GLOBAL(test_server)(int *_socket, short *local, struct sockaddr*_saddr
 
 								/* java.servlet=On forces
 								   java.socketname Off */
-  short socketname_set = 
-	(EXT_GLOBAL(option_set_by_user) (U_SOCKNAME, JG(ini_user))) && 
+  short socketname_set = EXT_GLOBAL(cfg)->socketname_set &&
+	EXT_GLOBAL(option_set_by_user) (U_SOCKNAME, JG(ini_user)) &&
 	!(EXT_GLOBAL(option_set_by_user) (U_SERVLET, JG(ini_user)));
 
   if(local) *local=0;
@@ -332,11 +346,11 @@ char* EXT_GLOBAL(test_server)(int *_socket, short *local, struct sockaddr*_saddr
   }
 
   /* host list */
-  if(JG(hosts) && strlen(JG(hosts))) {
+  if(JG(hosts) && *(JG(hosts))) {
 	char *host, *hosts = strdup(JG(hosts));
 	
 	assert(hosts); if(!hosts) return 0;
-	for(host=strtok(hosts, ";"); host; host=strtok(0, ";")) {
+	for(host=strtok(hosts, "; "); host; host=strtok(0, "; ")) {
 	  struct sockaddr_in saddr;
 	  char *_port = strrchr(host, ':'), *ret;
 	  int port = 0;
@@ -376,10 +390,27 @@ char* EXT_GLOBAL(test_server)(int *_socket, short *local, struct sockaddr*_saddr
 	  ret = strdup(host);
 	  free(hosts);
 	  if(_saddr) memcpy(_saddr, &saddr, sizeof (struct sockaddr));
+	  if(EXT_GLOBAL(cfg)->socketname_set)
+		EXT_GLOBAL(cfg)->socketname_set = 0;
 	  return ret;
 	}
 	free(hosts);
   }
+
+  socketname_set = EXT_GLOBAL(option_set_by_user) (U_SOCKNAME, JG(ini_user)) ;
+  if (((socketname_set || can_fork()) && (socketname_set || !called_from_init))
+	  && -1!=(sock=test_local_server()) ) {
+	if(_socket) {
+	  *_socket=sock;
+	} else {
+	  close(sock);
+	}
+	if(local) *local=1;
+	if(!EXT_GLOBAL(cfg)->socketname_set)
+	  EXT_GLOBAL(cfg)->socketname_set = 1;
+	return strdup(EXT_GLOBAL(get_sockname)(TSRMLS_C));
+  }
+
   return 0;
 }
 

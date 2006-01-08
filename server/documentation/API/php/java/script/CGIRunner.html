@@ -1,16 +1,355 @@
-<?xml version="1.0" encoding="null"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head><title>CGIRunner</title><script src="../../../resources/gjdoc.js" type="text/javascript"><!-- this comment required for konqueror 3.2.2 --></script><meta http-equiv="Content-Type" content="text/html; charset=null"/><meta name="generator" content="GNU Gjdoc Standard Doclet"/><meta name="keywords" content="php.java.script.CGIRunner class"/><meta name="keywords" content="run()"/><meta name="keywords" content="call()"/><meta name="keywords" content="getPhpScript()"/><meta name="keywords" content="release()"/><link rel="stylesheet" type="text/css" href="../../../resources/gjdochtml-clean-layout.css" title="GNU Clean"/><link rel="stylesheet" type="text/css" href="../../../resources/gjdochtml-clean-color1.css" title="GNU Clean"/></head><body class="content class" onload="top.contentPageLoaded(document.title)"><table class="navbar div top"><tr><td class="navbar div top" colspan="2"><div class="navbar div top" colspan="2"><span class="navbar item enabled"><a href="../../../index-noframes.html">Overview</a></span> <span class="navbar item enabled"><a href="package-summary.html">Package</a></span> <span class="navbar item active">Class</span> <span class="navbar item enabled"><a href="CGIRunner-uses.html">Use</a></span> <span class="navbar item enabled"><a href="tree.html">Tree</a></span> <span class="navbar item enabled"><a href="../../../alphaindex-1.html">Index</a></span> <span class="navbar item enabled"><a href="../../../deprecated.html">Deprecated</a></span> <span class="navbar item enabled"><a href="../../../about.html">About</a></span></div></td></tr><tr><td class="navi">Prev Class | <a href="../../../php/java/script/HttpProxy.html">Next Class</a></td><td class="navi"><a href="../../../index.html" title="Show in a frameset" target="_top">Frames</a> | <a href="CGIRunner.html" title="Show without frames" target="_top">No Frames</a> </td></tr><tr><td class="navi">Summary: Nested | Field | <a href="#summary-methods">Method</a> | Constr</td><td class="navi">Detail: Nested | Field | <a href="#detail-methods">Method</a> | Constr</td></tr></table><div class="class title outer"><h3 class="class title-package">php.java.script</h3><h1 class="class title-class">Class CGIRunner</h1></div><div class="class inheritance-tree"><ul class="inheritance 0"><li class="inheritance 0"><code>java.lang.Object</code></li><ul class="inheritance 1"><li class="inheritance 1"><code>java.lang.Thread</code></li><ul class="inheritance 2"><li class="inheritance 2"><code>php.java.script.CGIRunner</code></li></ul></ul></ul></div><dl class="class knownimplementing"><dt class="header"><b>Implemented Interfaces:</b></dt><dd class="item">java.lang.Runnable</dd></dl><dl class="class subclasses"><dt class="class subclasses header"><b>Known Direct Subclasses:</b></dt><dd class="class subclasses header"><a href="../../../php/java/script/HttpProxy.html" title="Class in php.java.script">HttpProxy</a></dd></b></dt></dl><hr/><div class="class synopsis outer"><div class="class synopsis declaration"><code>public abstract class <b class="class synopsis name">CGIRunner</b></code></div><div class="class synopsis superclass"><code>extends java.lang.Thread</code></div></div><hr/><div class="class description"> This class can be used to run a PHP CGI binary. Useful during development when there's no 
- Apache/IIS or Servlet engine available to run PHP scripts. 
-</div><p class="taglet"><dl class="tag list"><dt class="tag section header"><b>Author:</b></dt><dd class="tag item">jostb</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><a name="summary-fields"/><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table header"><td colspan="2"><h2 class="table header">Field Summary</h2></td></tr></table></dl><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table sub header"><td colspan="2"><h3 class="table sub header">Fields inherited from class java.lang.Thread</h3></td></tr><tr><td class="inherited"><a href="../../../java/lang/Thread.html#MAX_PRIORITY"><code class="member">MAX_PRIORITY</code></a>, <a href="../../../java/lang/Thread.html#MIN_PRIORITY"><code class="member">MIN_PRIORITY</code></a>, <a href="../../../java/lang/Thread.html#NORM_PRIORITY"><code class="member">NORM_PRIORITY</code></a></td></tr></table></dl><a name="summary-methods"/><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table header"><td colspan="2"><h2 class="table header">Method Summary</h2></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#call(php.java.bridge.PhpProcedureProxy)">call</a>(<a href="../../../php/java/bridge/PhpProcedureProxy.html" title="Class in php.java.bridge">PhpProcedureProxy</a>&nbsp;script)</code></dt><dd class="description"> The PHP script must call this function with the current continuation as an argument.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> <a href="../../../php/java/bridge/PhpProcedureProxy.html" title="Class in php.java.bridge">PhpProcedureProxy</a></code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getPhpScript()">getPhpScript</a>()</code></dt><dd class="description"> One must call this function if one is interested in the php continuation.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#release()">release</a>()</code></dt><dd class="description"> This function must be called to release the allocated php continuation.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#run()">run</a>()</code></dt><dd class="description"> The method of Thread that will be run if there is no Runnable object
- associated with the Thread.</dd></dl></td></tr></table></dl><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table sub header"><td colspan="2"><h3 class="table sub header">Methods inherited from class java.lang.Thread</h3></td></tr><tr><td class="inherited"><a href="../../../java/lang/Thread.html#activeCount()" title="activeCount()"><code class="member">activeCount</code></a>, <a href="../../../java/lang/Thread.html#checkAccess()" title="checkAccess()"><code class="member">checkAccess</code></a>, <a href="../../../java/lang/Thread.html#countStackFrames()" title="countStackFrames()"><code class="member">countStackFrames</code></a>, <a href="../../../java/lang/Thread.html#currentThread()" title="currentThread()"><code class="member">currentThread</code></a>, <a href="../../../java/lang/Thread.html#destroy()" title="destroy()"><code class="member">destroy</code></a>, <a href="../../../java/lang/Thread.html#dumpStack()" title="dumpStack()"><code class="member">dumpStack</code></a>, <a href="../../../java/lang/Thread.html#enumerate(java.lang.Thread)" title="enumerate(Thread)"><code class="member">enumerate</code></a>, <a href="../../../java/lang/Thread.html#getContextClassLoader()" title="getContextClassLoader()"><code class="member">getContextClassLoader</code></a>, <a href="../../../java/lang/Thread.html#getName()" title="getName()"><code class="member">getName</code></a>, <a href="../../../java/lang/Thread.html#getPriority()" title="getPriority()"><code class="member">getPriority</code></a>, <a href="../../../java/lang/Thread.html#getThreadGroup()" title="getThreadGroup()"><code class="member">getThreadGroup</code></a>, <a href="../../../java/lang/Thread.html#holdsLock(java.lang.Object)" title="holdsLock(Object)"><code class="member">holdsLock</code></a>, <a href="../../../java/lang/Thread.html#interrupt()" title="interrupt()"><code class="member">interrupt</code></a>, <a href="../../../java/lang/Thread.html#interrupted()" title="interrupted()"><code class="member">interrupted</code></a>, <a href="../../../java/lang/Thread.html#isAlive()" title="isAlive()"><code class="member">isAlive</code></a>, <a href="../../../java/lang/Thread.html#isDaemon()" title="isDaemon()"><code class="member">isDaemon</code></a>, <a href="../../../java/lang/Thread.html#isInterrupted()" title="isInterrupted()"><code class="member">isInterrupted</code></a>, <a href="../../../java/lang/Thread.html#join()" title="join()"><code class="member">join</code></a>, <a href="../../../java/lang/Thread.html#join(long)" title="join(long)"><code class="member">join</code></a>, <a href="../../../java/lang/Thread.html#join(long,int)" title="join(long,int)"><code class="member">join</code></a>, <a href="../../../java/lang/Thread.html#resume()" title="resume()"><code class="member">resume</code></a>, <a href="../../../java/lang/Thread.html#run()" title="run()"><code class="member">run</code></a>, <a href="../../../java/lang/Thread.html#setContextClassLoader(java.lang.ClassLoader)" title="setContextClassLoader(ClassLoader)"><code class="member">setContextClassLoader</code></a>, <a href="../../../java/lang/Thread.html#setDaemon(boolean)" title="setDaemon(boolean)"><code class="member">setDaemon</code></a>, <a href="../../../java/lang/Thread.html#setName(java.lang.String)" title="setName(String)"><code class="member">setName</code></a>, <a href="../../../java/lang/Thread.html#setPriority(int)" title="setPriority(int)"><code class="member">setPriority</code></a>, <a href="../../../java/lang/Thread.html#sleep(long)" title="sleep(long)"><code class="member">sleep</code></a>, <a href="../../../java/lang/Thread.html#sleep(long,int)" title="sleep(long,int)"><code class="member">sleep</code></a>, <a href="../../../java/lang/Thread.html#start()" title="start()"><code class="member">start</code></a>, <a href="../../../java/lang/Thread.html#stop()" title="stop()"><code class="member">stop</code></a>, <a href="../../../java/lang/Thread.html#stop(java.lang.Throwable)" title="stop(Throwable)"><code class="member">stop</code></a>, <a href="../../../java/lang/Thread.html#suspend()" title="suspend()"><code class="member">suspend</code></a>, <a href="../../../java/lang/Thread.html#toString()" title="toString()"><code class="member">toString</code></a>, <a href="../../../java/lang/Thread.html#yield()" title="yield()"><code class="member">yield</code></a></td></tr></table></dl><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table sub header"><td colspan="2"><h3 class="table sub header">Methods inherited from class java.lang.Object</h3></td></tr><tr><td class="inherited"><a href="../../../java/lang/Object.html#equals(java.lang.Object)" title="equals(Object)"><code class="member">equals</code></a>, <a href="../../../java/lang/Object.html#getClass()" title="getClass()"><code class="member">getClass</code></a>, <a href="../../../java/lang/Object.html#hashCode()" title="hashCode()"><code class="member">hashCode</code></a>, <a href="../../../java/lang/Object.html#notify()" title="notify()"><code class="member">notify</code></a>, <a href="../../../java/lang/Object.html#notifyAll()" title="notifyAll()"><code class="member">notifyAll</code></a>, <a href="../../../java/lang/Object.html#toString()" title="toString()"><code class="member">toString</code></a>, <a href="../../../java/lang/Object.html#wait()" title="wait()"><code class="member">wait</code></a>, <a href="../../../java/lang/Object.html#wait(long)" title="wait(long)"><code class="member">wait</code></a>, <a href="../../../java/lang/Object.html#wait(long,int)" title="wait(long,int)"><code class="member">wait</code></a></td></tr></table></dl><a name="detail-methods"/><h2 class="section header">Method Details</h2><div class="section"><a name="call(php.java.bridge.PhpProcedureProxy)"/><div class="member detail outer"><h3 class="member detail name">call</h3><pre class="member detail synopsis">public void call(<a href="../../../php/java/bridge/PhpProcedureProxy.html" title="Class in php.java.bridge">PhpProcedureProxy</a> script)
-            throws java.lang.InterruptedException</pre><blockquote class="member detail name"><div class="member detail description"> The PHP script must call this function with the current continuation as an argument.<p/>
- Example:<p/>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--NewPage-->
+<HTML>
+<HEAD>
+<!-- Generated by javadoc (build 1.5.0) on Sun Jan 08 19:28:40 CET 2006 -->
+<TITLE>
+CGIRunner
+</TITLE>
+
+<META NAME="keywords" CONTENT="php.java.script.CGIRunner class">
+
+<LINK REL ="stylesheet" TYPE="text/css" HREF="../../../stylesheet.css" TITLE="Style">
+
+<SCRIPT type="text/javascript">
+function windowTitle()
+{
+    parent.document.title="CGIRunner";
+}
+</SCRIPT>
+<NOSCRIPT>
+</NOSCRIPT>
+
+</HEAD>
+
+<BODY BGCOLOR="white" onload="windowTitle();">
+
+
+<!-- ========= START OF TOP NAVBAR ======= -->
+<A NAME="navbar_top"><!-- --></A>
+<A HREF="#skip-navbar_top" title="Skip navigation links"></A>
+<TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
+<TR>
+<TD COLSPAN=2 BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
+<A NAME="navbar_top_firstrow"><!-- --></A>
+<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
+  <TR ALIGN="center" VALIGN="top">
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="class-use/CGIRunner.html"><FONT CLASS="NavBarFont1"><B>Use</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../index-files/index-1.html"><FONT CLASS="NavBarFont1"><B>Index</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT></A>&nbsp;</TD>
+  </TR>
+</TABLE>
+</TD>
+<TD ALIGN="right" VALIGN="top" ROWSPAN=3><EM>
+</EM>
+</TD>
+</TR>
+
+<TR>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+&nbsp;PREV CLASS&nbsp;
+&nbsp;<A HREF="../../../php/java/script/HttpProxy.html" title="class in php.java.script"><B>NEXT CLASS</B></A></FONT></TD>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+  <A HREF="../../../index.html?php/java/script/CGIRunner.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+&nbsp;<A HREF="CGIRunner.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+&nbsp;<SCRIPT type="text/javascript">
+  <!--
+  if(window==top) {
+    document.writeln('<A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>');
+  }
+  //-->
+</SCRIPT>
+<NOSCRIPT>
+  <A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>
+</NOSCRIPT>
+
+
+</FONT></TD>
+</TR>
+<TR>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+  SUMMARY:&nbsp;<A HREF="#nested_classes_inherited_from_class_java.lang.Thread">NESTED</A>&nbsp;|&nbsp;<A HREF="#fields_inherited_from_class_java.lang.Thread">FIELD</A>&nbsp;|&nbsp;CONSTR&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+DETAIL:&nbsp;FIELD&nbsp;|&nbsp;CONSTR&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+</TR>
+</TABLE>
+<A NAME="skip-navbar_top"></A>
+<!-- ========= END OF TOP NAVBAR ========= -->
+
+<HR>
+<!-- ======== START OF CLASS DATA ======== -->
+<H2>
+<FONT SIZE="-1">
+php.java.script</FONT>
+<BR>
+Class CGIRunner</H2>
+<PRE>
+java.lang.Object
+  <IMG SRC="../../../resources/inherit.gif" ALT="extended by ">java.lang.Thread
+      <IMG SRC="../../../resources/inherit.gif" ALT="extended by "><B>php.java.script.CGIRunner</B>
+</PRE>
+<DL>
+<DT><B>All Implemented Interfaces:</B> <DD>java.lang.Runnable</DD>
+</DL>
+<DL>
+<DT><B>Direct Known Subclasses:</B> <DD><A HREF="../../../php/java/script/HttpProxy.html" title="class in php.java.script">HttpProxy</A></DD>
+</DL>
+<HR>
+<DL>
+<DT><PRE>public abstract class <B>CGIRunner</B><DT>extends java.lang.Thread</DL>
+</PRE>
+
+<P>
+This class can be used to run a PHP CGI binary. Useful during development when there's no 
+ Apache/IIS or Servlet engine available to run PHP scripts.
+<P>
+
+<P>
+<DL>
+<DT><B>Author:</B></DT>
+  <DD>jostb</DD>
+</DL>
+<HR>
+
+<P>
+<!-- ======== NESTED CLASS SUMMARY ======== -->
+
+<A NAME="nested_class_summary"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+<B>Nested Class Summary</B></FONT></TH>
+</TR>
+</TABLE>
+&nbsp;<A NAME="nested_classes_inherited_from_class_java.lang.Thread"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#EEEEFF" CLASS="TableSubHeadingColor">
+<TH ALIGN="left"><B>Nested classes/interfaces inherited from class java.lang.Thread</B></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD><CODE>java.lang.Thread.State, java.lang.Thread.UncaughtExceptionHandler</CODE></TD>
+</TR>
+</TABLE>
+&nbsp;
+<!-- =========== FIELD SUMMARY =========== -->
+
+<A NAME="field_summary"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+<B>Field Summary</B></FONT></TH>
+</TR>
+</TABLE>
+&nbsp;<A NAME="fields_inherited_from_class_java.lang.Thread"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#EEEEFF" CLASS="TableSubHeadingColor">
+<TH ALIGN="left"><B>Fields inherited from class java.lang.Thread</B></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD><CODE>MAX_PRIORITY, MIN_PRIORITY, NORM_PRIORITY</CODE></TD>
+</TR>
+</TABLE>
+&nbsp;
+<!-- ========== METHOD SUMMARY =========== -->
+
+<A NAME="method_summary"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+<B>Method Summary</B></FONT></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/script/CGIRunner.html#call(php.java.bridge.PhpProcedureProxy)">call</A></B>(<A HREF="../../../php/java/bridge/PhpProcedureProxy.html" title="class in php.java.bridge">PhpProcedureProxy</A>&nbsp;script)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The PHP script must call this function with the current continuation as an argument.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;<A HREF="../../../php/java/bridge/PhpProcedureProxy.html" title="class in php.java.bridge">PhpProcedureProxy</A></CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/script/CGIRunner.html#getPhpScript()">getPhpScript</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;One must call this function if one is interested in the php continuation.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/script/CGIRunner.html#release()">release</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This function must be called to release the allocated php continuation.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/script/CGIRunner.html#run()">run</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+</TABLE>
+&nbsp;<A NAME="methods_inherited_from_class_java.lang.Thread"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#EEEEFF" CLASS="TableSubHeadingColor">
+<TH ALIGN="left"><B>Methods inherited from class java.lang.Thread</B></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD><CODE>activeCount, checkAccess, countStackFrames, currentThread, destroy, dumpStack, enumerate, getAllStackTraces, getContextClassLoader, getDefaultUncaughtExceptionHandler, getId, getName, getPriority, getStackTrace, getState, getThreadGroup, getUncaughtExceptionHandler, holdsLock, interrupt, interrupted, isAlive, isDaemon, isInterrupted, join, join, join, resume, setContextClassLoader, setDaemon, setDefaultUncaughtExceptionHandler, setName, setPriority, setUncaughtExceptionHandler, sleep, sleep, start, stop, stop, suspend, toString, yield</CODE></TD>
+</TR>
+</TABLE>
+&nbsp;<A NAME="methods_inherited_from_class_java.lang.Object"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#EEEEFF" CLASS="TableSubHeadingColor">
+<TH ALIGN="left"><B>Methods inherited from class java.lang.Object</B></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD><CODE>equals, getClass, hashCode, notify, notifyAll, wait, wait, wait</CODE></TD>
+</TR>
+</TABLE>
+&nbsp;
+<P>
+
+<!-- ============ METHOD DETAIL ========== -->
+
+<A NAME="method_detail"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2">
+<B>Method Detail</B></FONT></TH>
+</TR>
+</TABLE>
+
+<A NAME="run()"><!-- --></A><H3>
+run</H3>
+<PRE>
+public void <B>run</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>run</CODE> in interface <CODE>java.lang.Runnable</CODE><DT><B>Overrides:</B><DD><CODE>run</CODE> in class <CODE>java.lang.Thread</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="call(php.java.bridge.PhpProcedureProxy)"><!-- --></A><H3>
+call</H3>
+<PRE>
+public void <B>call</B>(<A HREF="../../../php/java/bridge/PhpProcedureProxy.html" title="class in php.java.bridge">PhpProcedureProxy</A>&nbsp;script)
+          throws java.lang.InterruptedException</PRE>
+<DL>
+<DD>The PHP script must call this function with the current continuation as an argument.<p>
+ Example:<p>
  <code>
- java_context()-&gt;call(java_closure());<br/>
+ java_context()-&gt;call(java_closure());<br>
  </code>
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">script</code><span class="separator"> - </span><span class="description">- The php continuation</span></dd></dl></p><p class="member detail thrown list"><dl><dt class="member detail thrown header"><b>Throws:</b></dt><dd class="member detail thrown item"><code class="name">java.lang.InterruptedException</code><span class="separator"> - </span><span class="description"></span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getPhpScript()"/><div class="member detail outer"><h3 class="member detail name">getPhpScript</h3><pre class="member detail synopsis">public <a href="../../../php/java/bridge/PhpProcedureProxy.html" title="Class in php.java.bridge">PhpProcedureProxy</a> getPhpScript()
-            throws java.lang.InterruptedException</pre><blockquote class="member detail name"><div class="member detail description"> One must call this function if one is interested in the php continuation.
-</div><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">The php continuation.</dd></dl></p><p class="member detail thrown list"><dl><dt class="member detail thrown header"><b>Throws:</b></dt><dd class="member detail thrown item"><code class="name">java.lang.InterruptedException</code><span class="separator"> - </span><span class="description"></span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="release()"/><div class="member detail outer"><h3 class="member detail name">release</h3><pre class="member detail synopsis">public void release()</pre><blockquote class="member detail name"><div class="member detail description"> This function must be called to release the allocated php continuation.
-</div><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="run()"/><div class="member detail outer"><h3 class="member detail name">run</h3><pre class="member detail synopsis">public void run()</pre><blockquote class="member detail name"><div class="member detail description"> The method of Thread that will be run if there is no Runnable object
- associated with the Thread. Thread's implementation does nothing at all.
-</div><dl class="member detail specified by list"><dt class="member detail specified by header"><b>Specified by:</b></dt><dd class="member detail specified by item"><a href="../../../java/lang/Runnable.html#run()">run</a> in interface java.lang.Runnable</dd></dl><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">run in interface java.lang.Thread</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"><dl class="tag list"><dt class="tag section header"><b>See Also:</b></dt><dd><code>start()</code>, <code>Thread(ThreadGroup, Runnable, String)</code><dd></dl></p><p class="taglet"></p><p class="taglet"></p></blockquote></div></div><p class="navbar bottom spacer"> </p><table class="navbar div bottom"><tr><td><div class="navbar div top" colspan="2"><span class="navbar item enabled"><a href="../../../index-noframes.html">Overview</a></span> <span class="navbar item enabled"><a href="package-summary.html">Package</a></span> <span class="navbar item active">Class</span> <span class="navbar item enabled"><a href="CGIRunner-uses.html">Use</a></span> <span class="navbar item enabled"><a href="tree.html">Tree</a></span> <span class="navbar item enabled"><a href="../../../alphaindex-1.html">Index</a></span> <span class="navbar item enabled"><a href="../../../deprecated.html">Deprecated</a></span> <span class="navbar item enabled"><a href="../../../about.html">About</a></span></div></td></tr></table></body></html>
+<P>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>script</CODE> - - The php continuation
+<DT><B>Throws:</B>
+<DD><CODE>java.lang.InterruptedException</CODE></DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getPhpScript()"><!-- --></A><H3>
+getPhpScript</H3>
+<PRE>
+public <A HREF="../../../php/java/bridge/PhpProcedureProxy.html" title="class in php.java.bridge">PhpProcedureProxy</A> <B>getPhpScript</B>()
+                               throws java.lang.InterruptedException</PRE>
+<DL>
+<DD>One must call this function if one is interested in the php continuation.
+<P>
+<DD><DL>
+
+<DT><B>Returns:</B><DD>The php continuation.
+<DT><B>Throws:</B>
+<DD><CODE>java.lang.InterruptedException</CODE></DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="release()"><!-- --></A><H3>
+release</H3>
+<PRE>
+public void <B>release</B>()</PRE>
+<DL>
+<DD>This function must be called to release the allocated php continuation.
+<P>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<!-- ========= END OF CLASS DATA ========= -->
+<HR>
+
+
+<!-- ======= START OF BOTTOM NAVBAR ====== -->
+<A NAME="navbar_bottom"><!-- --></A>
+<A HREF="#skip-navbar_bottom" title="Skip navigation links"></A>
+<TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
+<TR>
+<TD COLSPAN=2 BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
+<A NAME="navbar_bottom_firstrow"><!-- --></A>
+<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
+  <TR ALIGN="center" VALIGN="top">
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="class-use/CGIRunner.html"><FONT CLASS="NavBarFont1"><B>Use</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../index-files/index-1.html"><FONT CLASS="NavBarFont1"><B>Index</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT></A>&nbsp;</TD>
+  </TR>
+</TABLE>
+</TD>
+<TD ALIGN="right" VALIGN="top" ROWSPAN=3><EM>
+</EM>
+</TD>
+</TR>
+
+<TR>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+&nbsp;PREV CLASS&nbsp;
+&nbsp;<A HREF="../../../php/java/script/HttpProxy.html" title="class in php.java.script"><B>NEXT CLASS</B></A></FONT></TD>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+  <A HREF="../../../index.html?php/java/script/CGIRunner.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+&nbsp;<A HREF="CGIRunner.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+&nbsp;<SCRIPT type="text/javascript">
+  <!--
+  if(window==top) {
+    document.writeln('<A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>');
+  }
+  //-->
+</SCRIPT>
+<NOSCRIPT>
+  <A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>
+</NOSCRIPT>
+
+
+</FONT></TD>
+</TR>
+<TR>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+  SUMMARY:&nbsp;<A HREF="#nested_classes_inherited_from_class_java.lang.Thread">NESTED</A>&nbsp;|&nbsp;<A HREF="#fields_inherited_from_class_java.lang.Thread">FIELD</A>&nbsp;|&nbsp;CONSTR&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+DETAIL:&nbsp;FIELD&nbsp;|&nbsp;CONSTR&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+</TR>
+</TABLE>
+<A NAME="skip-navbar_bottom"></A>
+<!-- ======== END OF BOTTOM NAVBAR ======= -->
+
+<HR>
+
+</BODY>
+</HTML>

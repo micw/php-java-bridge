@@ -1,10 +1,421 @@
-<?xml version="1.0" encoding="null"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head><title>PhpFacesMethodBindingImpl</title><script src="../../../resources/gjdoc.js" type="text/javascript"><!-- this comment required for konqueror 3.2.2 --></script><meta http-equiv="Content-Type" content="text/html; charset=null"/><meta name="generator" content="GNU Gjdoc Standard Doclet"/><meta name="keywords" content="php.java.faces.PhpFacesMethodBindingImpl class"/><meta name="keywords" content="getExpressionString()"/><meta name="keywords" content="getType()"/><meta name="keywords" content="saveState()"/><meta name="keywords" content="restoreState()"/><meta name="keywords" content="invoke()"/><meta name="keywords" content="isTransient()"/><meta name="keywords" content="setTransient()"/><link rel="stylesheet" type="text/css" href="../../../resources/gjdochtml-clean-layout.css" title="GNU Clean"/><link rel="stylesheet" type="text/css" href="../../../resources/gjdochtml-clean-color1.css" title="GNU Clean"/></head><body class="content class" onload="top.contentPageLoaded(document.title)"><table class="navbar div top"><tr><td class="navbar div top" colspan="2"><div class="navbar div top" colspan="2"><span class="navbar item enabled"><a href="../../../index-noframes.html">Overview</a></span> <span class="navbar item enabled"><a href="package-summary.html">Package</a></span> <span class="navbar item active">Class</span> <span class="navbar item enabled"><a href="PhpFacesMethodBindingImpl-uses.html">Use</a></span> <span class="navbar item enabled"><a href="tree.html">Tree</a></span> <span class="navbar item enabled"><a href="../../../alphaindex-1.html">Index</a></span> <span class="navbar item enabled"><a href="../../../deprecated.html">Deprecated</a></span> <span class="navbar item enabled"><a href="../../../about.html">About</a></span></div></td></tr><tr><td class="navi"><a href="../../../php/java/faces/PhpFacesContextFactory.html">Prev Class</a> | <a href="../../../php/java/faces/PhpFacesPropertyResolver.html">Next Class</a></td><td class="navi"><a href="../../../index.html" title="Show in a frameset" target="_top">Frames</a> | <a href="PhpFacesMethodBindingImpl.html" title="Show without frames" target="_top">No Frames</a> </td></tr><tr><td class="navi">Summary: Nested | Field | <a href="#summary-methods">Method</a> | <a href="#summary-constructors">Constr</a></td><td class="navi">Detail: Nested | Field | <a href="#detail-methods">Method</a> | <a href="#detail-constructors">Constr</a></td></tr></table><div class="class title outer"><h3 class="class title-package">php.java.faces</h3><h1 class="class title-class">Class PhpFacesMethodBindingImpl</h1></div><div class="class inheritance-tree"><ul class="inheritance 0"><li class="inheritance 0"><code>java.lang.Object</code></li><ul class="inheritance 1"><li class="inheritance 1"><code>javax.faces.el.MethodBinding</code></li><ul class="inheritance 2"><li class="inheritance 2"><code>php.java.faces.PhpFacesMethodBindingImpl</code></li></ul></ul></ul></div><dl class="class knownimplementing"><dt class="header"><b>Implemented Interfaces:</b></dt><dd class="item">javax.faces.component.StateHolder</dd></dl><hr/><div class="class synopsis outer"><div class="class synopsis declaration"><code>public class <b class="class synopsis name">PhpFacesMethodBindingImpl</b></code></div><div class="class synopsis superclass"><code>extends javax.faces.el.MethodBinding</code></div><div class="class synopsis implements"><code>implements javax.faces.component.StateHolder</code></div></div><hr/><div class="class description"> A custom MethodBindingImpl, forwards method calls to Script
-</div><p class="taglet"><dl class="tag list"><dt class="tag section header"><b>Author:</b></dt><dd class="tag item">jostb</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"><dl class="tag list"><dt class="tag section header"><b>See Also:</b></dt><dd><a href="../../../php/java/faces/Script.html"><code>Script</code></a><dd></dl></p><p class="taglet"></p><p class="taglet"></p><a name="summary-constructors"/><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table header"><td colspan="2"><h2 class="table header">Constructor Summary</h2></td></tr><tr><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#PhpFacesMethodBindingImpl()">PhpFacesMethodBindingImpl</a>()</code></dt><dd class="description"> The basic constructor.</dd></dl></td></tr><tr><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#PhpFacesMethodBindingImpl(javax.faces.application.Application,java.lang.String,args[])">PhpFacesMethodBindingImpl</a>(javax.faces.application.Application&nbsp;application, java.lang.String&nbsp;ref, args[]&nbsp;)</code></dt></dl></td></tr></table></dl><a name="summary-methods"/><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table header"><td colspan="2"><h2 class="table header">Method Summary</h2></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.String</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getExpressionString()">getExpressionString</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.Class</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getType(javax.faces.context.FacesContext)">getType</a>(javax.faces.context.FacesContext&nbsp;context)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.Object</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#invoke(javax.faces.context.FacesContext,args[])">invoke</a>(javax.faces.context.FacesContext&nbsp;context, args[]&nbsp;)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> boolean</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#isTransient()">isTransient</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#restoreState(javax.faces.context.FacesContext,java.lang.Object)">restoreState</a>(javax.faces.context.FacesContext&nbsp;context, java.lang.Object&nbsp;state)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.Object</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#saveState(javax.faces.context.FacesContext)">saveState</a>(javax.faces.context.FacesContext&nbsp;context)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#setTransient(boolean)">setTransient</a>(boolean&nbsp;newTransientValue)</code></dt></dl></td></tr></table></dl><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table sub header"><td colspan="2"><h3 class="table sub header">Methods inherited from class javax.faces.el.MethodBinding</h3></td></tr><tr><td class="inherited"><a href="../../../javax/faces/el/MethodBinding.html#getExpressionString()" title="getExpressionString()"><code class="member">getExpressionString</code></a>, <a href="../../../javax/faces/el/MethodBinding.html#getType(javax.faces.context.FacesContext)" title="getType(FacesContext)"><code class="member">getType</code></a>, <a href="../../../javax/faces/el/MethodBinding.html#invoke(javax.faces.context.FacesContext,aobj[])" title="invoke(FacesContext,aobj[])"><code class="member">invoke</code></a></td></tr></table></dl><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table sub header"><td colspan="2"><h3 class="table sub header">Methods inherited from class java.lang.Object</h3></td></tr><tr><td class="inherited"><a href="../../../java/lang/Object.html#equals(java.lang.Object)" title="equals(Object)"><code class="member">equals</code></a>, <a href="../../../java/lang/Object.html#getClass()" title="getClass()"><code class="member">getClass</code></a>, <a href="../../../java/lang/Object.html#hashCode()" title="hashCode()"><code class="member">hashCode</code></a>, <a href="../../../java/lang/Object.html#notify()" title="notify()"><code class="member">notify</code></a>, <a href="../../../java/lang/Object.html#notifyAll()" title="notifyAll()"><code class="member">notifyAll</code></a>, <a href="../../../java/lang/Object.html#toString()" title="toString()"><code class="member">toString</code></a>, <a href="../../../java/lang/Object.html#wait()" title="wait()"><code class="member">wait</code></a>, <a href="../../../java/lang/Object.html#wait(long)" title="wait(long)"><code class="member">wait</code></a>, <a href="../../../java/lang/Object.html#wait(long,int)" title="wait(long,int)"><code class="member">wait</code></a></td></tr></table></dl><a name="detail-constructors"/><h2 class="section header">Constructor Details</h2><div class="section"><a name="PhpFacesMethodBindingImpl()"/><div class="member detail outer"><h3 class="member detail name">PhpFacesMethodBindingImpl</h3><pre class="member detail synopsis">public PhpFacesMethodBindingImpl()</pre><blockquote class="member detail name"><div class="member detail description"> The basic constructor.  Object is special, because it has no
- superclass, so there is no call to super().
-</div><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="PhpFacesMethodBindingImpl(javax.faces.application.Application,java.lang.String,args[])"/><div class="member detail outer"><h3 class="member detail name">PhpFacesMethodBindingImpl</h3><pre class="member detail synopsis">public PhpFacesMethodBindingImpl(javax.faces.application.Application application,
-                                 java.lang.String ref,
-                                 args[] )</pre><blockquote class="member detail name"><div class="member detail description"></div><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div></div><a name="detail-methods"/><h2 class="section header">Method Details</h2><div class="section"><a name="getExpressionString()"/><div class="member detail outer"><h3 class="member detail name">getExpressionString</h3><pre class="member detail synopsis">public java.lang.String getExpressionString()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getExpressionString in interface javax.faces.el.MethodBinding</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getType(javax.faces.context.FacesContext)"/><div class="member detail outer"><h3 class="member detail name">getType</h3><pre class="member detail synopsis">public java.lang.Class getType(javax.faces.context.FacesContext context)</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getType in interface javax.faces.el.MethodBinding</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="invoke(javax.faces.context.FacesContext,args[])"/><div class="member detail outer"><h3 class="member detail name">invoke</h3><pre class="member detail synopsis">public java.lang.Object invoke(javax.faces.context.FacesContext context,
-                               args[] )
-            throws javax.faces.el.MethodNotFoundException</pre><blockquote class="member detail name"><div class="member detail description"></div><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="isTransient()"/><div class="member detail outer"><h3 class="member detail name">isTransient</h3><pre class="member detail synopsis">public boolean isTransient()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail specified by list"><dt class="member detail specified by header"><b>Specified by:</b></dt><dd class="member detail specified by item"><a href="../../../javax/faces/component/StateHolder.html#isTransient()">isTransient</a> in interface javax.faces.component.StateHolder</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="restoreState(javax.faces.context.FacesContext,java.lang.Object)"/><div class="member detail outer"><h3 class="member detail name">restoreState</h3><pre class="member detail synopsis">public void restoreState(javax.faces.context.FacesContext context,
-                         java.lang.Object state)</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail specified by list"><dt class="member detail specified by header"><b>Specified by:</b></dt><dd class="member detail specified by item"><a href="../../../javax/faces/component/StateHolder.html#restoreState(javax.faces.context.FacesContext,java.lang.Object)">restoreState</a> in interface javax.faces.component.StateHolder</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="saveState(javax.faces.context.FacesContext)"/><div class="member detail outer"><h3 class="member detail name">saveState</h3><pre class="member detail synopsis">public java.lang.Object saveState(javax.faces.context.FacesContext context)</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail specified by list"><dt class="member detail specified by header"><b>Specified by:</b></dt><dd class="member detail specified by item"><a href="../../../javax/faces/component/StateHolder.html#saveState(javax.faces.context.FacesContext)">saveState</a> in interface javax.faces.component.StateHolder</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="setTransient(boolean)"/><div class="member detail outer"><h3 class="member detail name">setTransient</h3><pre class="member detail synopsis">public void setTransient(boolean newTransientValue)</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail specified by list"><dt class="member detail specified by header"><b>Specified by:</b></dt><dd class="member detail specified by item"><a href="../../../javax/faces/component/StateHolder.html#setTransient(boolean)">setTransient</a> in interface javax.faces.component.StateHolder</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div></div><p class="navbar bottom spacer"> </p><table class="navbar div bottom"><tr><td><div class="navbar div top" colspan="2"><span class="navbar item enabled"><a href="../../../index-noframes.html">Overview</a></span> <span class="navbar item enabled"><a href="package-summary.html">Package</a></span> <span class="navbar item active">Class</span> <span class="navbar item enabled"><a href="PhpFacesMethodBindingImpl-uses.html">Use</a></span> <span class="navbar item enabled"><a href="tree.html">Tree</a></span> <span class="navbar item enabled"><a href="../../../alphaindex-1.html">Index</a></span> <span class="navbar item enabled"><a href="../../../deprecated.html">Deprecated</a></span> <span class="navbar item enabled"><a href="../../../about.html">About</a></span></div></td></tr></table></body></html>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--NewPage-->
+<HTML>
+<HEAD>
+<!-- Generated by javadoc (build 1.5.0) on Sun Jan 08 19:28:40 CET 2006 -->
+<TITLE>
+PhpFacesMethodBindingImpl
+</TITLE>
+
+<META NAME="keywords" CONTENT="php.java.faces.PhpFacesMethodBindingImpl class">
+
+<LINK REL ="stylesheet" TYPE="text/css" HREF="../../../stylesheet.css" TITLE="Style">
+
+<SCRIPT type="text/javascript">
+function windowTitle()
+{
+    parent.document.title="PhpFacesMethodBindingImpl";
+}
+</SCRIPT>
+<NOSCRIPT>
+</NOSCRIPT>
+
+</HEAD>
+
+<BODY BGCOLOR="white" onload="windowTitle();">
+
+
+<!-- ========= START OF TOP NAVBAR ======= -->
+<A NAME="navbar_top"><!-- --></A>
+<A HREF="#skip-navbar_top" title="Skip navigation links"></A>
+<TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
+<TR>
+<TD COLSPAN=2 BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
+<A NAME="navbar_top_firstrow"><!-- --></A>
+<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
+  <TR ALIGN="center" VALIGN="top">
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="class-use/PhpFacesMethodBindingImpl.html"><FONT CLASS="NavBarFont1"><B>Use</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../index-files/index-1.html"><FONT CLASS="NavBarFont1"><B>Index</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT></A>&nbsp;</TD>
+  </TR>
+</TABLE>
+</TD>
+<TD ALIGN="right" VALIGN="top" ROWSPAN=3><EM>
+</EM>
+</TD>
+</TR>
+
+<TR>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+&nbsp;<A HREF="../../../php/java/faces/PhpFacesContextFactory.html" title="class in php.java.faces"><B>PREV CLASS</B></A>&nbsp;
+&nbsp;<A HREF="../../../php/java/faces/PhpFacesPropertyResolver.html" title="class in php.java.faces"><B>NEXT CLASS</B></A></FONT></TD>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+  <A HREF="../../../index.html?php/java/faces/PhpFacesMethodBindingImpl.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+&nbsp;<A HREF="PhpFacesMethodBindingImpl.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+&nbsp;<SCRIPT type="text/javascript">
+  <!--
+  if(window==top) {
+    document.writeln('<A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>');
+  }
+  //-->
+</SCRIPT>
+<NOSCRIPT>
+  <A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>
+</NOSCRIPT>
+
+
+</FONT></TD>
+</TR>
+<TR>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+  SUMMARY:&nbsp;NESTED&nbsp;|&nbsp;FIELD&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+DETAIL:&nbsp;FIELD&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+</TR>
+</TABLE>
+<A NAME="skip-navbar_top"></A>
+<!-- ========= END OF TOP NAVBAR ========= -->
+
+<HR>
+<!-- ======== START OF CLASS DATA ======== -->
+<H2>
+<FONT SIZE="-1">
+php.java.faces</FONT>
+<BR>
+Class PhpFacesMethodBindingImpl</H2>
+<PRE>
+java.lang.Object
+  <IMG SRC="../../../resources/inherit.gif" ALT="extended by ">javax.faces.el.MethodBinding
+      <IMG SRC="../../../resources/inherit.gif" ALT="extended by "><B>php.java.faces.PhpFacesMethodBindingImpl</B>
+</PRE>
+<DL>
+<DT><B>All Implemented Interfaces:</B> <DD>javax.faces.component.StateHolder</DD>
+</DL>
+<HR>
+<DL>
+<DT><PRE>public class <B>PhpFacesMethodBindingImpl</B><DT>extends javax.faces.el.MethodBinding<DT>implements javax.faces.component.StateHolder</DL>
+</PRE>
+
+<P>
+A custom MethodBindingImpl, forwards method calls to Script
+<P>
+
+<P>
+<DL>
+<DT><B>Author:</B></DT>
+  <DD>jostb</DD>
+<DT><B>See Also:</B><DD><A HREF="../../../php/java/faces/Script.html" title="class in php.java.faces"><CODE>Script</CODE></A></DL>
+<HR>
+
+<P>
+
+<!-- ======== CONSTRUCTOR SUMMARY ======== -->
+
+<A NAME="constructor_summary"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+<B>Constructor Summary</B></FONT></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesMethodBindingImpl.html#PhpFacesMethodBindingImpl()">PhpFacesMethodBindingImpl</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesMethodBindingImpl.html#PhpFacesMethodBindingImpl(javax.faces.application.Application, java.lang.String, java.lang.Class[])">PhpFacesMethodBindingImpl</A></B>(javax.faces.application.Application&nbsp;application,
+                          java.lang.String&nbsp;ref,
+                          java.lang.Class[]&nbsp;args)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+</TABLE>
+&nbsp;
+<!-- ========== METHOD SUMMARY =========== -->
+
+<A NAME="method_summary"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+<B>Method Summary</B></FONT></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.String</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesMethodBindingImpl.html#getExpressionString()">getExpressionString</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.Class</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesMethodBindingImpl.html#getType(javax.faces.context.FacesContext)">getType</A></B>(javax.faces.context.FacesContext&nbsp;context)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.Object</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesMethodBindingImpl.html#invoke(javax.faces.context.FacesContext, java.lang.Object[])">invoke</A></B>(javax.faces.context.FacesContext&nbsp;context,
+       java.lang.Object[]&nbsp;args)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;boolean</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesMethodBindingImpl.html#isTransient()">isTransient</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesMethodBindingImpl.html#restoreState(javax.faces.context.FacesContext, java.lang.Object)">restoreState</A></B>(javax.faces.context.FacesContext&nbsp;context,
+             java.lang.Object&nbsp;state)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.Object</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesMethodBindingImpl.html#saveState(javax.faces.context.FacesContext)">saveState</A></B>(javax.faces.context.FacesContext&nbsp;context)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesMethodBindingImpl.html#setTransient(boolean)">setTransient</A></B>(boolean&nbsp;newTransientValue)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+</TABLE>
+&nbsp;<A NAME="methods_inherited_from_class_java.lang.Object"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#EEEEFF" CLASS="TableSubHeadingColor">
+<TH ALIGN="left"><B>Methods inherited from class java.lang.Object</B></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD><CODE>equals, getClass, hashCode, notify, notifyAll, toString, wait, wait, wait</CODE></TD>
+</TR>
+</TABLE>
+&nbsp;
+<P>
+
+<!-- ========= CONSTRUCTOR DETAIL ======== -->
+
+<A NAME="constructor_detail"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2">
+<B>Constructor Detail</B></FONT></TH>
+</TR>
+</TABLE>
+
+<A NAME="PhpFacesMethodBindingImpl()"><!-- --></A><H3>
+PhpFacesMethodBindingImpl</H3>
+<PRE>
+public <B>PhpFacesMethodBindingImpl</B>()</PRE>
+<DL>
+</DL>
+<HR>
+
+<A NAME="PhpFacesMethodBindingImpl(javax.faces.application.Application, java.lang.String, java.lang.Class[])"><!-- --></A><H3>
+PhpFacesMethodBindingImpl</H3>
+<PRE>
+public <B>PhpFacesMethodBindingImpl</B>(javax.faces.application.Application&nbsp;application,
+                                 java.lang.String&nbsp;ref,
+                                 java.lang.Class[]&nbsp;args)</PRE>
+<DL>
+</DL>
+
+<!-- ============ METHOD DETAIL ========== -->
+
+<A NAME="method_detail"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2">
+<B>Method Detail</B></FONT></TH>
+</TR>
+</TABLE>
+
+<A NAME="getExpressionString()"><!-- --></A><H3>
+getExpressionString</H3>
+<PRE>
+public java.lang.String <B>getExpressionString</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Overrides:</B><DD><CODE>getExpressionString</CODE> in class <CODE>javax.faces.el.MethodBinding</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getType(javax.faces.context.FacesContext)"><!-- --></A><H3>
+getType</H3>
+<PRE>
+public java.lang.Class <B>getType</B>(javax.faces.context.FacesContext&nbsp;context)</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getType</CODE> in class <CODE>javax.faces.el.MethodBinding</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="saveState(javax.faces.context.FacesContext)"><!-- --></A><H3>
+saveState</H3>
+<PRE>
+public java.lang.Object <B>saveState</B>(javax.faces.context.FacesContext&nbsp;context)</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>saveState</CODE> in interface <CODE>javax.faces.component.StateHolder</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="restoreState(javax.faces.context.FacesContext, java.lang.Object)"><!-- --></A><H3>
+restoreState</H3>
+<PRE>
+public void <B>restoreState</B>(javax.faces.context.FacesContext&nbsp;context,
+                         java.lang.Object&nbsp;state)</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>restoreState</CODE> in interface <CODE>javax.faces.component.StateHolder</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="invoke(javax.faces.context.FacesContext, java.lang.Object[])"><!-- --></A><H3>
+invoke</H3>
+<PRE>
+public java.lang.Object <B>invoke</B>(javax.faces.context.FacesContext&nbsp;context,
+                               java.lang.Object[]&nbsp;args)
+                        throws javax.faces.el.MethodNotFoundException</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>invoke</CODE> in class <CODE>javax.faces.el.MethodBinding</CODE></DL>
+</DD>
+<DD><DL>
+
+<DT><B>Throws:</B>
+<DD><CODE>javax.faces.el.MethodNotFoundException</CODE></DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="isTransient()"><!-- --></A><H3>
+isTransient</H3>
+<PRE>
+public boolean <B>isTransient</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>isTransient</CODE> in interface <CODE>javax.faces.component.StateHolder</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setTransient(boolean)"><!-- --></A><H3>
+setTransient</H3>
+<PRE>
+public void <B>setTransient</B>(boolean&nbsp;newTransientValue)</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>setTransient</CODE> in interface <CODE>javax.faces.component.StateHolder</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<!-- ========= END OF CLASS DATA ========= -->
+<HR>
+
+
+<!-- ======= START OF BOTTOM NAVBAR ====== -->
+<A NAME="navbar_bottom"><!-- --></A>
+<A HREF="#skip-navbar_bottom" title="Skip navigation links"></A>
+<TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
+<TR>
+<TD COLSPAN=2 BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
+<A NAME="navbar_bottom_firstrow"><!-- --></A>
+<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
+  <TR ALIGN="center" VALIGN="top">
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="class-use/PhpFacesMethodBindingImpl.html"><FONT CLASS="NavBarFont1"><B>Use</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../index-files/index-1.html"><FONT CLASS="NavBarFont1"><B>Index</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT></A>&nbsp;</TD>
+  </TR>
+</TABLE>
+</TD>
+<TD ALIGN="right" VALIGN="top" ROWSPAN=3><EM>
+</EM>
+</TD>
+</TR>
+
+<TR>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+&nbsp;<A HREF="../../../php/java/faces/PhpFacesContextFactory.html" title="class in php.java.faces"><B>PREV CLASS</B></A>&nbsp;
+&nbsp;<A HREF="../../../php/java/faces/PhpFacesPropertyResolver.html" title="class in php.java.faces"><B>NEXT CLASS</B></A></FONT></TD>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+  <A HREF="../../../index.html?php/java/faces/PhpFacesMethodBindingImpl.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+&nbsp;<A HREF="PhpFacesMethodBindingImpl.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+&nbsp;<SCRIPT type="text/javascript">
+  <!--
+  if(window==top) {
+    document.writeln('<A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>');
+  }
+  //-->
+</SCRIPT>
+<NOSCRIPT>
+  <A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>
+</NOSCRIPT>
+
+
+</FONT></TD>
+</TR>
+<TR>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+  SUMMARY:&nbsp;NESTED&nbsp;|&nbsp;FIELD&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+DETAIL:&nbsp;FIELD&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+</TR>
+</TABLE>
+<A NAME="skip-navbar_bottom"></A>
+<!-- ======== END OF BOTTOM NAVBAR ======= -->
+
+<HR>
+
+</BODY>
+</HTML>

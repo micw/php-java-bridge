@@ -5,7 +5,9 @@ package php.java.bridge.http;
 import java.util.Hashtable;
 import java.util.Iterator;
 
+import php.java.bridge.DynamicJavaBridgeClassLoader;
 import php.java.bridge.JavaBridge;
+import php.java.bridge.JavaBridgeClassLoader;
 import php.java.bridge.SessionFactory;
 import php.java.bridge.Util;
 
@@ -52,7 +54,14 @@ public class ContextFactory extends SessionFactory {
 	return count;
     }
     protected ContextFactory() {
-	id=String.valueOf(0xFFFF&getNext());
+      super();
+      id=String.valueOf(0xFFFF&getNext());
+      
+      JavaBridge bridge;
+      setBridge(bridge = new JavaBridge());
+      bridge.setClassLoader(new JavaBridgeClassLoader(getBridge(), DynamicJavaBridgeClassLoader.newInstance(Util.getContextClassLoader())));
+      bridge.setSessionFactory(this);
+      //JavaBridge.load++;
     }
 
     protected void add() {

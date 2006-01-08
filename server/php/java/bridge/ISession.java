@@ -146,7 +146,7 @@ public interface ISession {
    *					with this session, expressed in 
    *					milliseconds since 1/1/1970 GMT
    *
-   * @exeption IllegalStateException	if this method is called on an
+   * @throws IllegalStateException	if this method is called on an
    *					invalidated session
    *
    */

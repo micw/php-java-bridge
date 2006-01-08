@@ -1,15 +1,1038 @@
-<?xml version="1.0" encoding="null"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head><title>PhpFacesApplication</title><script src="../../../resources/gjdoc.js" type="text/javascript"><!-- this comment required for konqueror 3.2.2 --></script><meta http-equiv="Content-Type" content="text/html; charset=null"/><meta name="generator" content="GNU Gjdoc Standard Doclet"/><meta name="keywords" content="php.java.faces.PhpFacesApplication class"/><meta name="keywords" content="getActionListener()"/><meta name="keywords" content="setActionListener()"/><meta name="keywords" content="getDefaultLocale()"/><meta name="keywords" content="setDefaultLocale()"/><meta name="keywords" content="getDefaultRenderKitId()"/><meta name="keywords" content="setDefaultRenderKitId()"/><meta name="keywords" content="getMessageBundle()"/><meta name="keywords" content="setMessageBundle()"/><meta name="keywords" content="getNavigationHandler()"/><meta name="keywords" content="setNavigationHandler()"/><meta name="keywords" content="getPropertyResolver()"/><meta name="keywords" content="setPropertyResolver()"/><meta name="keywords" content="getVariableResolver()"/><meta name="keywords" content="setVariableResolver()"/><meta name="keywords" content="getViewHandler()"/><meta name="keywords" content="setViewHandler()"/><meta name="keywords" content="getStateManager()"/><meta name="keywords" content="setStateManager()"/><meta name="keywords" content="addComponent()"/><meta name="keywords" content="createComponent()"/><meta name="keywords" content="getComponentTypes()"/><meta name="keywords" content="addConverter()"/><meta name="keywords" content="createConverter()"/><meta name="keywords" content="getConverterIds()"/><meta name="keywords" content="getConverterTypes()"/><meta name="keywords" content="createMethodBinding()"/><meta name="keywords" content="getSupportedLocales()"/><meta name="keywords" content="setSupportedLocales()"/><meta name="keywords" content="addValidator()"/><meta name="keywords" content="createValidator()"/><meta name="keywords" content="getValidatorIds()"/><meta name="keywords" content="createValueBinding()"/><link rel="stylesheet" type="text/css" href="../../../resources/gjdochtml-clean-layout.css" title="GNU Clean"/><link rel="stylesheet" type="text/css" href="../../../resources/gjdochtml-clean-color1.css" title="GNU Clean"/></head><body class="content class" onload="top.contentPageLoaded(document.title)"><table class="navbar div top"><tr><td class="navbar div top" colspan="2"><div class="navbar div top" colspan="2"><span class="navbar item enabled"><a href="../../../index-noframes.html">Overview</a></span> <span class="navbar item enabled"><a href="package-summary.html">Package</a></span> <span class="navbar item active">Class</span> <span class="navbar item enabled"><a href="PhpFacesApplication-uses.html">Use</a></span> <span class="navbar item enabled"><a href="tree.html">Tree</a></span> <span class="navbar item enabled"><a href="../../../alphaindex-1.html">Index</a></span> <span class="navbar item enabled"><a href="../../../deprecated.html">Deprecated</a></span> <span class="navbar item enabled"><a href="../../../about.html">About</a></span></div></td></tr><tr><td class="navi">Prev Class | <a href="../../../php/java/faces/PhpFacesApplicationFactory.html">Next Class</a></td><td class="navi"><a href="../../../index.html" title="Show in a frameset" target="_top">Frames</a> | <a href="PhpFacesApplication.html" title="Show without frames" target="_top">No Frames</a> </td></tr><tr><td class="navi">Summary: Nested | Field | <a href="#summary-methods">Method</a> | <a href="#summary-constructors">Constr</a></td><td class="navi">Detail: Nested | Field | <a href="#detail-methods">Method</a> | <a href="#detail-constructors">Constr</a></td></tr></table><div class="class title outer"><h3 class="class title-package">php.java.faces</h3><h1 class="class title-class">Class PhpFacesApplication</h1></div><div class="class inheritance-tree"><ul class="inheritance 0"><li class="inheritance 0"><code>java.lang.Object</code></li><ul class="inheritance 1"><li class="inheritance 1"><code>javax.faces.application.Application</code></li><ul class="inheritance 2"><li class="inheritance 2"><code>php.java.faces.PhpFacesApplication</code></li></ul></ul></ul></div><hr/><div class="class synopsis outer"><div class="class synopsis declaration"><code>public class <b class="class synopsis name">PhpFacesApplication</b></code></div><div class="class synopsis superclass"><code>extends javax.faces.application.Application</code></div></div><hr/><div class="class description"> A custom Application, overrides getPropertyResolver.
-</div><p class="taglet"><dl class="tag list"><dt class="tag section header"><b>Author:</b></dt><dd class="tag item">jostb</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"><dl class="tag list"><dt class="tag section header"><b>See Also:</b></dt><dd><a href="../../../php/java/faces/PhpFacesPropertyResolver.html"><code>PhpFacesPropertyResolver</code></a><dd></dl></p><p class="taglet"></p><p class="taglet"></p><a name="summary-constructors"/><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table header"><td colspan="2"><h2 class="table header">Constructor Summary</h2></td></tr><tr><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#PhpFacesApplication(javax.faces.application.Application)">PhpFacesApplication</a>(javax.faces.application.Application&nbsp;app)</code></dt></dl></td></tr></table></dl><a name="summary-methods"/><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table header"><td colspan="2"><h2 class="table header">Method Summary</h2></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#addComponent(java.lang.String,java.lang.String)">addComponent</a>(java.lang.String&nbsp;componentType, java.lang.String&nbsp;componentClass)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#addConverter(java.lang.Class,java.lang.String)">addConverter</a>(java.lang.Class&nbsp;targetClass, java.lang.String&nbsp;converterClass)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#addConverter(java.lang.String,java.lang.String)">addConverter</a>(java.lang.String&nbsp;converterId, java.lang.String&nbsp;converterClass)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#addValidator(java.lang.String,java.lang.String)">addValidator</a>(java.lang.String&nbsp;validatorId, java.lang.String&nbsp;validatorClass)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> javax.faces.component.UIComponent</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#createComponent(java.lang.String)">createComponent</a>(java.lang.String&nbsp;componentType)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> javax.faces.component.UIComponent</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#createComponent(javax.faces.el.ValueBinding,javax.faces.context.FacesContext,java.lang.String)">createComponent</a>(javax.faces.el.ValueBinding&nbsp;componentBinding, javax.faces.context.FacesContext&nbsp;context, java.lang.String&nbsp;componentType)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> javax.faces.convert.Converter</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#createConverter(java.lang.Class)">createConverter</a>(java.lang.Class&nbsp;targetClass)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> javax.faces.convert.Converter</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#createConverter(java.lang.String)">createConverter</a>(java.lang.String&nbsp;converterId)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> javax.faces.el.MethodBinding</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#createMethodBinding(java.lang.String,java.lang.Class[])">createMethodBinding</a>(java.lang.String&nbsp;ref, java.lang.Class[]&nbsp;params)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> javax.faces.validator.Validator</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#createValidator(java.lang.String)">createValidator</a>(java.lang.String&nbsp;validatorId)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> javax.faces.el.ValueBinding</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#createValueBinding(java.lang.String)">createValueBinding</a>(java.lang.String&nbsp;ref)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> javax.faces.event.ActionListener</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getActionListener()">getActionListener</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.util.Iterator</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getComponentTypes()">getComponentTypes</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.util.Iterator</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getConverterIds()">getConverterIds</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.util.Iterator</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getConverterTypes()">getConverterTypes</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.util.Locale</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getDefaultLocale()">getDefaultLocale</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.String</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getDefaultRenderKitId()">getDefaultRenderKitId</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.String</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getMessageBundle()">getMessageBundle</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> javax.faces.application.NavigationHandler</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getNavigationHandler()">getNavigationHandler</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> javax.faces.el.PropertyResolver</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getPropertyResolver()">getPropertyResolver</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> javax.faces.application.StateManager</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getStateManager()">getStateManager</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.util.Iterator</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getSupportedLocales()">getSupportedLocales</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.util.Iterator</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getValidatorIds()">getValidatorIds</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> javax.faces.el.VariableResolver</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getVariableResolver()">getVariableResolver</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> javax.faces.application.ViewHandler</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getViewHandler()">getViewHandler</a>()</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#setActionListener(javax.faces.event.ActionListener)">setActionListener</a>(javax.faces.event.ActionListener&nbsp;listener)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#setDefaultLocale(java.util.Locale)">setDefaultLocale</a>(java.util.Locale&nbsp;locale)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#setDefaultRenderKitId(java.lang.String)">setDefaultRenderKitId</a>(java.lang.String&nbsp;renderKitId)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#setMessageBundle(java.lang.String)">setMessageBundle</a>(java.lang.String&nbsp;bundle)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#setNavigationHandler(javax.faces.application.NavigationHandler)">setNavigationHandler</a>(javax.faces.application.NavigationHandler&nbsp;handler)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#setPropertyResolver(javax.faces.el.PropertyResolver)">setPropertyResolver</a>(javax.faces.el.PropertyResolver&nbsp;resolver)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#setStateManager(javax.faces.application.StateManager)">setStateManager</a>(javax.faces.application.StateManager&nbsp;manager)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#setSupportedLocales(java.util.Collection)">setSupportedLocales</a>(java.util.Collection&nbsp;locales)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#setVariableResolver(javax.faces.el.VariableResolver)">setVariableResolver</a>(javax.faces.el.VariableResolver&nbsp;resolver)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#setViewHandler(javax.faces.application.ViewHandler)">setViewHandler</a>(javax.faces.application.ViewHandler&nbsp;handler)</code></dt></dl></td></tr></table></dl><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table sub header"><td colspan="2"><h3 class="table sub header">Methods inherited from class javax.faces.application.Application</h3></td></tr><tr><td class="inherited"><a href="../../../javax/faces/application/Application.html#addComponent(java.lang.String,java.lang.String)" title="addComponent(String,String)"><code class="member">addComponent</code></a>, <a href="../../../javax/faces/application/Application.html#addConverter(java.lang.Class,java.lang.String)" title="addConverter(Class,String)"><code class="member">addConverter</code></a>, <a href="../../../javax/faces/application/Application.html#addConverter(java.lang.String,java.lang.String)" title="addConverter(String,String)"><code class="member">addConverter</code></a>, <a href="../../../javax/faces/application/Application.html#addValidator(java.lang.String,java.lang.String)" title="addValidator(String,String)"><code class="member">addValidator</code></a>, <a href="../../../javax/faces/application/Application.html#createComponent(ValueExpression,javax.faces.context.FacesContext,java.lang.String)" title="createComponent(ValueExpression,FacesContext,String)"><code class="member">createComponent</code></a>, <a href="../../../javax/faces/application/Application.html#createComponent(java.lang.String)" title="createComponent(String)"><code class="member">createComponent</code></a>, <a href="../../../javax/faces/application/Application.html#createComponent(javax.faces.el.ValueBinding,javax.faces.context.FacesContext,java.lang.String)" title="createComponent(ValueBinding,FacesContext,String)"><code class="member">createComponent</code></a>, <a href="../../../javax/faces/application/Application.html#createConverter(java.lang.Class)" title="createConverter(Class)"><code class="member">createConverter</code></a>, <a href="../../../javax/faces/application/Application.html#createConverter(java.lang.String)" title="createConverter(String)"><code class="member">createConverter</code></a>, <a href="../../../javax/faces/application/Application.html#createMethodBinding(java.lang.String,java.lang.Class[])" title="createMethodBinding(String,Class[])"><code class="member">createMethodBinding</code></a>, <a href="../../../javax/faces/application/Application.html#createValidator(java.lang.String)" title="createValidator(String)"><code class="member">createValidator</code></a>, <a href="../../../javax/faces/application/Application.html#createValueBinding(java.lang.String)" title="createValueBinding(String)"><code class="member">createValueBinding</code></a>, <a href="../../../javax/faces/application/Application.html#getActionListener()" title="getActionListener()"><code class="member">getActionListener</code></a>, <a href="../../../javax/faces/application/Application.html#getComponentTypes()" title="getComponentTypes()"><code class="member">getComponentTypes</code></a>, <a href="../../../javax/faces/application/Application.html#getConverterIds()" title="getConverterIds()"><code class="member">getConverterIds</code></a>, <a href="../../../javax/faces/application/Application.html#getConverterTypes()" title="getConverterTypes()"><code class="member">getConverterTypes</code></a>, <a href="../../../javax/faces/application/Application.html#getDefaultLocale()" title="getDefaultLocale()"><code class="member">getDefaultLocale</code></a>, <a href="../../../javax/faces/application/Application.html#getDefaultRenderKitId()" title="getDefaultRenderKitId()"><code class="member">getDefaultRenderKitId</code></a>, <a href="../../../javax/faces/application/Application.html#getExpressionFactory()" title="getExpressionFactory()"><code class="member">getExpressionFactory</code></a>, <a href="../../../javax/faces/application/Application.html#getMessageBundle()" title="getMessageBundle()"><code class="member">getMessageBundle</code></a>, <a href="../../../javax/faces/application/Application.html#getNavigationHandler()" title="getNavigationHandler()"><code class="member">getNavigationHandler</code></a>, <a href="../../../javax/faces/application/Application.html#getPropertyResolver()" title="getPropertyResolver()"><code class="member">getPropertyResolver</code></a>, <a href="../../../javax/faces/application/Application.html#getStateManager()" title="getStateManager()"><code class="member">getStateManager</code></a>, <a href="../../../javax/faces/application/Application.html#getSupportedLocales()" title="getSupportedLocales()"><code class="member">getSupportedLocales</code></a>, <a href="../../../javax/faces/application/Application.html#getValidatorIds()" title="getValidatorIds()"><code class="member">getValidatorIds</code></a>, <a href="../../../javax/faces/application/Application.html#getVariableResolver()" title="getVariableResolver()"><code class="member">getVariableResolver</code></a>, <a href="../../../javax/faces/application/Application.html#getViewHandler()" title="getViewHandler()"><code class="member">getViewHandler</code></a>, <a href="../../../javax/faces/application/Application.html#setActionListener(javax.faces.event.ActionListener)" title="setActionListener(ActionListener)"><code class="member">setActionListener</code></a>, <a href="../../../javax/faces/application/Application.html#setDefaultLocale(java.util.Locale)" title="setDefaultLocale(Locale)"><code class="member">setDefaultLocale</code></a>, <a href="../../../javax/faces/application/Application.html#setDefaultRenderKitId(java.lang.String)" title="setDefaultRenderKitId(String)"><code class="member">setDefaultRenderKitId</code></a>, <a href="../../../javax/faces/application/Application.html#setMessageBundle(java.lang.String)" title="setMessageBundle(String)"><code class="member">setMessageBundle</code></a>, <a href="../../../javax/faces/application/Application.html#setNavigationHandler(javax.faces.application.NavigationHandler)" title="setNavigationHandler(NavigationHandler)"><code class="member">setNavigationHandler</code></a>, <a href="../../../javax/faces/application/Application.html#setPropertyResolver(javax.faces.el.PropertyResolver)" title="setPropertyResolver(PropertyResolver)"><code class="member">setPropertyResolver</code></a>, <a href="../../../javax/faces/application/Application.html#setStateManager(javax.faces.application.StateManager)" title="setStateManager(StateManager)"><code class="member">setStateManager</code></a>, <a href="../../../javax/faces/application/Application.html#setSupportedLocales(java.util.Collection)" title="setSupportedLocales(Collection)"><code class="member">setSupportedLocales</code></a>, <a href="../../../javax/faces/application/Application.html#setVariableResolver(javax.faces.el.VariableResolver)" title="setVariableResolver(VariableResolver)"><code class="member">setVariableResolver</code></a>, <a href="../../../javax/faces/application/Application.html#setViewHandler(javax.faces.application.ViewHandler)" title="setViewHandler(ViewHandler)"><code class="member">setViewHandler</code></a></td></tr></table></dl><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table sub header"><td colspan="2"><h3 class="table sub header">Methods inherited from class java.lang.Object</h3></td></tr><tr><td class="inherited"><a href="../../../java/lang/Object.html#equals(java.lang.Object)" title="equals(Object)"><code class="member">equals</code></a>, <a href="../../../java/lang/Object.html#getClass()" title="getClass()"><code class="member">getClass</code></a>, <a href="../../../java/lang/Object.html#hashCode()" title="hashCode()"><code class="member">hashCode</code></a>, <a href="../../../java/lang/Object.html#notify()" title="notify()"><code class="member">notify</code></a>, <a href="../../../java/lang/Object.html#notifyAll()" title="notifyAll()"><code class="member">notifyAll</code></a>, <a href="../../../java/lang/Object.html#toString()" title="toString()"><code class="member">toString</code></a>, <a href="../../../java/lang/Object.html#wait()" title="wait()"><code class="member">wait</code></a>, <a href="../../../java/lang/Object.html#wait(long)" title="wait(long)"><code class="member">wait</code></a>, <a href="../../../java/lang/Object.html#wait(long,int)" title="wait(long,int)"><code class="member">wait</code></a></td></tr></table></dl><a name="detail-constructors"/><h2 class="section header">Constructor Details</h2><div class="section"><a name="PhpFacesApplication(javax.faces.application.Application)"/><div class="member detail outer"><h3 class="member detail name">PhpFacesApplication</h3><pre class="member detail synopsis">public PhpFacesApplication(javax.faces.application.Application app)</pre><blockquote class="member detail name"><div class="member detail description"></div><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div></div><a name="detail-methods"/><h2 class="section header">Method Details</h2><div class="section"><a name="addComponent(java.lang.String,java.lang.String)"/><div class="member detail outer"><h3 class="member detail name">addComponent</h3><pre class="member detail synopsis">public void addComponent(java.lang.String componentType,
-                         java.lang.String componentClass)</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">addComponent in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="addConverter(java.lang.Class,java.lang.String)"/><div class="member detail outer"><h3 class="member detail name">addConverter</h3><pre class="member detail synopsis">public void addConverter(java.lang.Class targetClass,
-                         java.lang.String converterClass)</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">addConverter in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="addConverter(java.lang.String,java.lang.String)"/><div class="member detail outer"><h3 class="member detail name">addConverter</h3><pre class="member detail synopsis">public void addConverter(java.lang.String converterId,
-                         java.lang.String converterClass)</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">addConverter in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="addValidator(java.lang.String,java.lang.String)"/><div class="member detail outer"><h3 class="member detail name">addValidator</h3><pre class="member detail synopsis">public void addValidator(java.lang.String validatorId,
-                         java.lang.String validatorClass)</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">addValidator in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="createComponent(java.lang.String)"/><div class="member detail outer"><h3 class="member detail name">createComponent</h3><pre class="member detail synopsis">public javax.faces.component.UIComponent createComponent(java.lang.String componentType)
-            throws javax.faces.FacesException</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">createComponent in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="createComponent(javax.faces.el.ValueBinding,javax.faces.context.FacesContext,java.lang.String)"/><div class="member detail outer"><h3 class="member detail name">createComponent</h3><pre class="member detail synopsis">public javax.faces.component.UIComponent createComponent(javax.faces.el.ValueBinding componentBinding,
-                                                         javax.faces.context.FacesContext context,
-                                                         java.lang.String componentType)
-            throws javax.faces.FacesException</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">createComponent in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="createConverter(java.lang.Class)"/><div class="member detail outer"><h3 class="member detail name">createConverter</h3><pre class="member detail synopsis">public javax.faces.convert.Converter createConverter(java.lang.Class targetClass)</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">createConverter in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="createConverter(java.lang.String)"/><div class="member detail outer"><h3 class="member detail name">createConverter</h3><pre class="member detail synopsis">public javax.faces.convert.Converter createConverter(java.lang.String converterId)</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">createConverter in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="createMethodBinding(java.lang.String,java.lang.Class[])"/><div class="member detail outer"><h3 class="member detail name">createMethodBinding</h3><pre class="member detail synopsis">public javax.faces.el.MethodBinding createMethodBinding(java.lang.String ref,
-                                                        java.lang.Class[] params)
-            throws javax.faces.el.ReferenceSyntaxException</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">createMethodBinding in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="createValidator(java.lang.String)"/><div class="member detail outer"><h3 class="member detail name">createValidator</h3><pre class="member detail synopsis">public javax.faces.validator.Validator createValidator(java.lang.String validatorId)
-            throws javax.faces.FacesException</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">createValidator in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="createValueBinding(java.lang.String)"/><div class="member detail outer"><h3 class="member detail name">createValueBinding</h3><pre class="member detail synopsis">public javax.faces.el.ValueBinding createValueBinding(java.lang.String ref)
-            throws javax.faces.el.ReferenceSyntaxException</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">createValueBinding in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getActionListener()"/><div class="member detail outer"><h3 class="member detail name">getActionListener</h3><pre class="member detail synopsis">public javax.faces.event.ActionListener getActionListener()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getActionListener in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getComponentTypes()"/><div class="member detail outer"><h3 class="member detail name">getComponentTypes</h3><pre class="member detail synopsis">public java.util.Iterator getComponentTypes()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getComponentTypes in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getConverterIds()"/><div class="member detail outer"><h3 class="member detail name">getConverterIds</h3><pre class="member detail synopsis">public java.util.Iterator getConverterIds()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getConverterIds in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getConverterTypes()"/><div class="member detail outer"><h3 class="member detail name">getConverterTypes</h3><pre class="member detail synopsis">public java.util.Iterator getConverterTypes()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getConverterTypes in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getDefaultLocale()"/><div class="member detail outer"><h3 class="member detail name">getDefaultLocale</h3><pre class="member detail synopsis">public java.util.Locale getDefaultLocale()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getDefaultLocale in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getDefaultRenderKitId()"/><div class="member detail outer"><h3 class="member detail name">getDefaultRenderKitId</h3><pre class="member detail synopsis">public java.lang.String getDefaultRenderKitId()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getDefaultRenderKitId in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getMessageBundle()"/><div class="member detail outer"><h3 class="member detail name">getMessageBundle</h3><pre class="member detail synopsis">public java.lang.String getMessageBundle()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getMessageBundle in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getNavigationHandler()"/><div class="member detail outer"><h3 class="member detail name">getNavigationHandler</h3><pre class="member detail synopsis">public javax.faces.application.NavigationHandler getNavigationHandler()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getNavigationHandler in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getPropertyResolver()"/><div class="member detail outer"><h3 class="member detail name">getPropertyResolver</h3><pre class="member detail synopsis">public javax.faces.el.PropertyResolver getPropertyResolver()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getPropertyResolver in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getStateManager()"/><div class="member detail outer"><h3 class="member detail name">getStateManager</h3><pre class="member detail synopsis">public javax.faces.application.StateManager getStateManager()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getStateManager in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getSupportedLocales()"/><div class="member detail outer"><h3 class="member detail name">getSupportedLocales</h3><pre class="member detail synopsis">public java.util.Iterator getSupportedLocales()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getSupportedLocales in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getValidatorIds()"/><div class="member detail outer"><h3 class="member detail name">getValidatorIds</h3><pre class="member detail synopsis">public java.util.Iterator getValidatorIds()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getValidatorIds in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getVariableResolver()"/><div class="member detail outer"><h3 class="member detail name">getVariableResolver</h3><pre class="member detail synopsis">public javax.faces.el.VariableResolver getVariableResolver()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getVariableResolver in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getViewHandler()"/><div class="member detail outer"><h3 class="member detail name">getViewHandler</h3><pre class="member detail synopsis">public javax.faces.application.ViewHandler getViewHandler()</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getViewHandler in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="setActionListener(javax.faces.event.ActionListener)"/><div class="member detail outer"><h3 class="member detail name">setActionListener</h3><pre class="member detail synopsis">public void setActionListener(javax.faces.event.ActionListener listener)</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">setActionListener in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="setDefaultLocale(java.util.Locale)"/><div class="member detail outer"><h3 class="member detail name">setDefaultLocale</h3><pre class="member detail synopsis">public void setDefaultLocale(java.util.Locale locale)</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">setDefaultLocale in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="setDefaultRenderKitId(java.lang.String)"/><div class="member detail outer"><h3 class="member detail name">setDefaultRenderKitId</h3><pre class="member detail synopsis">public void setDefaultRenderKitId(java.lang.String renderKitId)</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">setDefaultRenderKitId in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="setMessageBundle(java.lang.String)"/><div class="member detail outer"><h3 class="member detail name">setMessageBundle</h3><pre class="member detail synopsis">public void setMessageBundle(java.lang.String bundle)</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">setMessageBundle in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="setNavigationHandler(javax.faces.application.NavigationHandler)"/><div class="member detail outer"><h3 class="member detail name">setNavigationHandler</h3><pre class="member detail synopsis">public void setNavigationHandler(javax.faces.application.NavigationHandler handler)</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">setNavigationHandler in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="setPropertyResolver(javax.faces.el.PropertyResolver)"/><div class="member detail outer"><h3 class="member detail name">setPropertyResolver</h3><pre class="member detail synopsis">public void setPropertyResolver(javax.faces.el.PropertyResolver resolver)</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">setPropertyResolver in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="setStateManager(javax.faces.application.StateManager)"/><div class="member detail outer"><h3 class="member detail name">setStateManager</h3><pre class="member detail synopsis">public void setStateManager(javax.faces.application.StateManager manager)</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">setStateManager in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="setSupportedLocales(java.util.Collection)"/><div class="member detail outer"><h3 class="member detail name">setSupportedLocales</h3><pre class="member detail synopsis">public void setSupportedLocales(java.util.Collection locales)</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">setSupportedLocales in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="setVariableResolver(javax.faces.el.VariableResolver)"/><div class="member detail outer"><h3 class="member detail name">setVariableResolver</h3><pre class="member detail synopsis">public void setVariableResolver(javax.faces.el.VariableResolver resolver)</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">setVariableResolver in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="setViewHandler(javax.faces.application.ViewHandler)"/><div class="member detail outer"><h3 class="member detail name">setViewHandler</h3><pre class="member detail synopsis">public void setViewHandler(javax.faces.application.ViewHandler handler)</pre><blockquote class="member detail name"><div class="member detail description"></div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">setViewHandler in interface javax.faces.application.Application</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div></div><p class="navbar bottom spacer"> </p><table class="navbar div bottom"><tr><td><div class="navbar div top" colspan="2"><span class="navbar item enabled"><a href="../../../index-noframes.html">Overview</a></span> <span class="navbar item enabled"><a href="package-summary.html">Package</a></span> <span class="navbar item active">Class</span> <span class="navbar item enabled"><a href="PhpFacesApplication-uses.html">Use</a></span> <span class="navbar item enabled"><a href="tree.html">Tree</a></span> <span class="navbar item enabled"><a href="../../../alphaindex-1.html">Index</a></span> <span class="navbar item enabled"><a href="../../../deprecated.html">Deprecated</a></span> <span class="navbar item enabled"><a href="../../../about.html">About</a></span></div></td></tr></table></body></html>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--NewPage-->
+<HTML>
+<HEAD>
+<!-- Generated by javadoc (build 1.5.0) on Sun Jan 08 19:28:40 CET 2006 -->
+<TITLE>
+PhpFacesApplication
+</TITLE>
+
+<META NAME="keywords" CONTENT="php.java.faces.PhpFacesApplication class">
+
+<LINK REL ="stylesheet" TYPE="text/css" HREF="../../../stylesheet.css" TITLE="Style">
+
+<SCRIPT type="text/javascript">
+function windowTitle()
+{
+    parent.document.title="PhpFacesApplication";
+}
+</SCRIPT>
+<NOSCRIPT>
+</NOSCRIPT>
+
+</HEAD>
+
+<BODY BGCOLOR="white" onload="windowTitle();">
+
+
+<!-- ========= START OF TOP NAVBAR ======= -->
+<A NAME="navbar_top"><!-- --></A>
+<A HREF="#skip-navbar_top" title="Skip navigation links"></A>
+<TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
+<TR>
+<TD COLSPAN=2 BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
+<A NAME="navbar_top_firstrow"><!-- --></A>
+<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
+  <TR ALIGN="center" VALIGN="top">
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="class-use/PhpFacesApplication.html"><FONT CLASS="NavBarFont1"><B>Use</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../index-files/index-1.html"><FONT CLASS="NavBarFont1"><B>Index</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT></A>&nbsp;</TD>
+  </TR>
+</TABLE>
+</TD>
+<TD ALIGN="right" VALIGN="top" ROWSPAN=3><EM>
+</EM>
+</TD>
+</TR>
+
+<TR>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+&nbsp;PREV CLASS&nbsp;
+&nbsp;<A HREF="../../../php/java/faces/PhpFacesApplicationFactory.html" title="class in php.java.faces"><B>NEXT CLASS</B></A></FONT></TD>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+  <A HREF="../../../index.html?php/java/faces/PhpFacesApplication.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+&nbsp;<A HREF="PhpFacesApplication.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+&nbsp;<SCRIPT type="text/javascript">
+  <!--
+  if(window==top) {
+    document.writeln('<A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>');
+  }
+  //-->
+</SCRIPT>
+<NOSCRIPT>
+  <A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>
+</NOSCRIPT>
+
+
+</FONT></TD>
+</TR>
+<TR>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+  SUMMARY:&nbsp;NESTED&nbsp;|&nbsp;FIELD&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+DETAIL:&nbsp;FIELD&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+</TR>
+</TABLE>
+<A NAME="skip-navbar_top"></A>
+<!-- ========= END OF TOP NAVBAR ========= -->
+
+<HR>
+<!-- ======== START OF CLASS DATA ======== -->
+<H2>
+<FONT SIZE="-1">
+php.java.faces</FONT>
+<BR>
+Class PhpFacesApplication</H2>
+<PRE>
+java.lang.Object
+  <IMG SRC="../../../resources/inherit.gif" ALT="extended by ">javax.faces.application.Application
+      <IMG SRC="../../../resources/inherit.gif" ALT="extended by "><B>php.java.faces.PhpFacesApplication</B>
+</PRE>
+<HR>
+<DL>
+<DT><PRE>public class <B>PhpFacesApplication</B><DT>extends javax.faces.application.Application</DL>
+</PRE>
+
+<P>
+A custom Application, overrides getPropertyResolver.
+<P>
+
+<P>
+<DL>
+<DT><B>Author:</B></DT>
+  <DD>jostb</DD>
+<DT><B>See Also:</B><DD><A HREF="../../../php/java/faces/PhpFacesPropertyResolver.html" title="class in php.java.faces"><CODE>PhpFacesPropertyResolver</CODE></A></DL>
+<HR>
+
+<P>
+
+<!-- ======== CONSTRUCTOR SUMMARY ======== -->
+
+<A NAME="constructor_summary"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+<B>Constructor Summary</B></FONT></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#PhpFacesApplication(javax.faces.application.Application)">PhpFacesApplication</A></B>(javax.faces.application.Application&nbsp;app)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+</TABLE>
+&nbsp;
+<!-- ========== METHOD SUMMARY =========== -->
+
+<A NAME="method_summary"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+<B>Method Summary</B></FONT></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#addComponent(java.lang.String, java.lang.String)">addComponent</A></B>(java.lang.String&nbsp;componentType,
+             java.lang.String&nbsp;componentClass)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#addConverter(java.lang.Class, java.lang.String)">addConverter</A></B>(java.lang.Class&nbsp;targetClass,
+             java.lang.String&nbsp;converterClass)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#addConverter(java.lang.String, java.lang.String)">addConverter</A></B>(java.lang.String&nbsp;converterId,
+             java.lang.String&nbsp;converterClass)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#addValidator(java.lang.String, java.lang.String)">addValidator</A></B>(java.lang.String&nbsp;validatorId,
+             java.lang.String&nbsp;validatorClass)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;javax.faces.component.UIComponent</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#createComponent(java.lang.String)">createComponent</A></B>(java.lang.String&nbsp;componentType)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;javax.faces.component.UIComponent</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#createComponent(javax.faces.el.ValueBinding, javax.faces.context.FacesContext, java.lang.String)">createComponent</A></B>(javax.faces.el.ValueBinding&nbsp;componentBinding,
+                javax.faces.context.FacesContext&nbsp;context,
+                java.lang.String&nbsp;componentType)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;javax.faces.convert.Converter</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#createConverter(java.lang.Class)">createConverter</A></B>(java.lang.Class&nbsp;targetClass)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;javax.faces.convert.Converter</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#createConverter(java.lang.String)">createConverter</A></B>(java.lang.String&nbsp;converterId)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;javax.faces.el.MethodBinding</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#createMethodBinding(java.lang.String, java.lang.Class[])">createMethodBinding</A></B>(java.lang.String&nbsp;ref,
+                    java.lang.Class[]&nbsp;params)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;javax.faces.validator.Validator</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#createValidator(java.lang.String)">createValidator</A></B>(java.lang.String&nbsp;validatorId)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;javax.faces.el.ValueBinding</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#createValueBinding(java.lang.String)">createValueBinding</A></B>(java.lang.String&nbsp;ref)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;javax.faces.event.ActionListener</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#getActionListener()">getActionListener</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.util.Iterator</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#getComponentTypes()">getComponentTypes</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.util.Iterator</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#getConverterIds()">getConverterIds</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.util.Iterator</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#getConverterTypes()">getConverterTypes</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.util.Locale</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#getDefaultLocale()">getDefaultLocale</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.String</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#getDefaultRenderKitId()">getDefaultRenderKitId</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.String</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#getMessageBundle()">getMessageBundle</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;javax.faces.application.NavigationHandler</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#getNavigationHandler()">getNavigationHandler</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;javax.faces.el.PropertyResolver</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#getPropertyResolver()">getPropertyResolver</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;javax.faces.application.StateManager</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#getStateManager()">getStateManager</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.util.Iterator</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#getSupportedLocales()">getSupportedLocales</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.util.Iterator</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#getValidatorIds()">getValidatorIds</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;javax.faces.el.VariableResolver</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#getVariableResolver()">getVariableResolver</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;javax.faces.application.ViewHandler</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#getViewHandler()">getViewHandler</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#setActionListener(javax.faces.event.ActionListener)">setActionListener</A></B>(javax.faces.event.ActionListener&nbsp;listener)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#setDefaultLocale(java.util.Locale)">setDefaultLocale</A></B>(java.util.Locale&nbsp;locale)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#setDefaultRenderKitId(java.lang.String)">setDefaultRenderKitId</A></B>(java.lang.String&nbsp;renderKitId)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#setMessageBundle(java.lang.String)">setMessageBundle</A></B>(java.lang.String&nbsp;bundle)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#setNavigationHandler(javax.faces.application.NavigationHandler)">setNavigationHandler</A></B>(javax.faces.application.NavigationHandler&nbsp;handler)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#setPropertyResolver(javax.faces.el.PropertyResolver)">setPropertyResolver</A></B>(javax.faces.el.PropertyResolver&nbsp;resolver)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#setStateManager(javax.faces.application.StateManager)">setStateManager</A></B>(javax.faces.application.StateManager&nbsp;manager)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#setSupportedLocales(java.util.Collection)">setSupportedLocales</A></B>(java.util.Collection&nbsp;locales)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#setVariableResolver(javax.faces.el.VariableResolver)">setVariableResolver</A></B>(javax.faces.el.VariableResolver&nbsp;resolver)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/PhpFacesApplication.html#setViewHandler(javax.faces.application.ViewHandler)">setViewHandler</A></B>(javax.faces.application.ViewHandler&nbsp;handler)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+</TABLE>
+&nbsp;<A NAME="methods_inherited_from_class_java.lang.Object"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#EEEEFF" CLASS="TableSubHeadingColor">
+<TH ALIGN="left"><B>Methods inherited from class java.lang.Object</B></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD><CODE>equals, getClass, hashCode, notify, notifyAll, toString, wait, wait, wait</CODE></TD>
+</TR>
+</TABLE>
+&nbsp;
+<P>
+
+<!-- ========= CONSTRUCTOR DETAIL ======== -->
+
+<A NAME="constructor_detail"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2">
+<B>Constructor Detail</B></FONT></TH>
+</TR>
+</TABLE>
+
+<A NAME="PhpFacesApplication(javax.faces.application.Application)"><!-- --></A><H3>
+PhpFacesApplication</H3>
+<PRE>
+public <B>PhpFacesApplication</B>(javax.faces.application.Application&nbsp;app)</PRE>
+<DL>
+</DL>
+
+<!-- ============ METHOD DETAIL ========== -->
+
+<A NAME="method_detail"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2">
+<B>Method Detail</B></FONT></TH>
+</TR>
+</TABLE>
+
+<A NAME="getActionListener()"><!-- --></A><H3>
+getActionListener</H3>
+<PRE>
+public javax.faces.event.ActionListener <B>getActionListener</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getActionListener</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setActionListener(javax.faces.event.ActionListener)"><!-- --></A><H3>
+setActionListener</H3>
+<PRE>
+public void <B>setActionListener</B>(javax.faces.event.ActionListener&nbsp;listener)</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>setActionListener</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getDefaultLocale()"><!-- --></A><H3>
+getDefaultLocale</H3>
+<PRE>
+public java.util.Locale <B>getDefaultLocale</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getDefaultLocale</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setDefaultLocale(java.util.Locale)"><!-- --></A><H3>
+setDefaultLocale</H3>
+<PRE>
+public void <B>setDefaultLocale</B>(java.util.Locale&nbsp;locale)</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>setDefaultLocale</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getDefaultRenderKitId()"><!-- --></A><H3>
+getDefaultRenderKitId</H3>
+<PRE>
+public java.lang.String <B>getDefaultRenderKitId</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getDefaultRenderKitId</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setDefaultRenderKitId(java.lang.String)"><!-- --></A><H3>
+setDefaultRenderKitId</H3>
+<PRE>
+public void <B>setDefaultRenderKitId</B>(java.lang.String&nbsp;renderKitId)</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>setDefaultRenderKitId</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getMessageBundle()"><!-- --></A><H3>
+getMessageBundle</H3>
+<PRE>
+public java.lang.String <B>getMessageBundle</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getMessageBundle</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setMessageBundle(java.lang.String)"><!-- --></A><H3>
+setMessageBundle</H3>
+<PRE>
+public void <B>setMessageBundle</B>(java.lang.String&nbsp;bundle)</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>setMessageBundle</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getNavigationHandler()"><!-- --></A><H3>
+getNavigationHandler</H3>
+<PRE>
+public javax.faces.application.NavigationHandler <B>getNavigationHandler</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getNavigationHandler</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setNavigationHandler(javax.faces.application.NavigationHandler)"><!-- --></A><H3>
+setNavigationHandler</H3>
+<PRE>
+public void <B>setNavigationHandler</B>(javax.faces.application.NavigationHandler&nbsp;handler)</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>setNavigationHandler</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getPropertyResolver()"><!-- --></A><H3>
+getPropertyResolver</H3>
+<PRE>
+public javax.faces.el.PropertyResolver <B>getPropertyResolver</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getPropertyResolver</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setPropertyResolver(javax.faces.el.PropertyResolver)"><!-- --></A><H3>
+setPropertyResolver</H3>
+<PRE>
+public void <B>setPropertyResolver</B>(javax.faces.el.PropertyResolver&nbsp;resolver)</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>setPropertyResolver</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getVariableResolver()"><!-- --></A><H3>
+getVariableResolver</H3>
+<PRE>
+public javax.faces.el.VariableResolver <B>getVariableResolver</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getVariableResolver</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setVariableResolver(javax.faces.el.VariableResolver)"><!-- --></A><H3>
+setVariableResolver</H3>
+<PRE>
+public void <B>setVariableResolver</B>(javax.faces.el.VariableResolver&nbsp;resolver)</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>setVariableResolver</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getViewHandler()"><!-- --></A><H3>
+getViewHandler</H3>
+<PRE>
+public javax.faces.application.ViewHandler <B>getViewHandler</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getViewHandler</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setViewHandler(javax.faces.application.ViewHandler)"><!-- --></A><H3>
+setViewHandler</H3>
+<PRE>
+public void <B>setViewHandler</B>(javax.faces.application.ViewHandler&nbsp;handler)</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>setViewHandler</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getStateManager()"><!-- --></A><H3>
+getStateManager</H3>
+<PRE>
+public javax.faces.application.StateManager <B>getStateManager</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getStateManager</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setStateManager(javax.faces.application.StateManager)"><!-- --></A><H3>
+setStateManager</H3>
+<PRE>
+public void <B>setStateManager</B>(javax.faces.application.StateManager&nbsp;manager)</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>setStateManager</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="addComponent(java.lang.String, java.lang.String)"><!-- --></A><H3>
+addComponent</H3>
+<PRE>
+public void <B>addComponent</B>(java.lang.String&nbsp;componentType,
+                         java.lang.String&nbsp;componentClass)</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>addComponent</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="createComponent(java.lang.String)"><!-- --></A><H3>
+createComponent</H3>
+<PRE>
+public javax.faces.component.UIComponent <B>createComponent</B>(java.lang.String&nbsp;componentType)
+                                                  throws javax.faces.FacesException</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>createComponent</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+
+<DT><B>Throws:</B>
+<DD><CODE>javax.faces.FacesException</CODE></DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getComponentTypes()"><!-- --></A><H3>
+getComponentTypes</H3>
+<PRE>
+public java.util.Iterator <B>getComponentTypes</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getComponentTypes</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="addConverter(java.lang.String, java.lang.String)"><!-- --></A><H3>
+addConverter</H3>
+<PRE>
+public void <B>addConverter</B>(java.lang.String&nbsp;converterId,
+                         java.lang.String&nbsp;converterClass)</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>addConverter</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="addConverter(java.lang.Class, java.lang.String)"><!-- --></A><H3>
+addConverter</H3>
+<PRE>
+public void <B>addConverter</B>(java.lang.Class&nbsp;targetClass,
+                         java.lang.String&nbsp;converterClass)</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>addConverter</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="createConverter(java.lang.String)"><!-- --></A><H3>
+createConverter</H3>
+<PRE>
+public javax.faces.convert.Converter <B>createConverter</B>(java.lang.String&nbsp;converterId)</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>createConverter</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="createConverter(java.lang.Class)"><!-- --></A><H3>
+createConverter</H3>
+<PRE>
+public javax.faces.convert.Converter <B>createConverter</B>(java.lang.Class&nbsp;targetClass)</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>createConverter</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getConverterIds()"><!-- --></A><H3>
+getConverterIds</H3>
+<PRE>
+public java.util.Iterator <B>getConverterIds</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getConverterIds</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getConverterTypes()"><!-- --></A><H3>
+getConverterTypes</H3>
+<PRE>
+public java.util.Iterator <B>getConverterTypes</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getConverterTypes</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="createMethodBinding(java.lang.String, java.lang.Class[])"><!-- --></A><H3>
+createMethodBinding</H3>
+<PRE>
+public javax.faces.el.MethodBinding <B>createMethodBinding</B>(java.lang.String&nbsp;ref,
+                                                        java.lang.Class[]&nbsp;params)
+                                                 throws javax.faces.el.ReferenceSyntaxException</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>createMethodBinding</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+
+<DT><B>Throws:</B>
+<DD><CODE>javax.faces.el.ReferenceSyntaxException</CODE></DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getSupportedLocales()"><!-- --></A><H3>
+getSupportedLocales</H3>
+<PRE>
+public java.util.Iterator <B>getSupportedLocales</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getSupportedLocales</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setSupportedLocales(java.util.Collection)"><!-- --></A><H3>
+setSupportedLocales</H3>
+<PRE>
+public void <B>setSupportedLocales</B>(java.util.Collection&nbsp;locales)</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>setSupportedLocales</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="addValidator(java.lang.String, java.lang.String)"><!-- --></A><H3>
+addValidator</H3>
+<PRE>
+public void <B>addValidator</B>(java.lang.String&nbsp;validatorId,
+                         java.lang.String&nbsp;validatorClass)</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>addValidator</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="createValidator(java.lang.String)"><!-- --></A><H3>
+createValidator</H3>
+<PRE>
+public javax.faces.validator.Validator <B>createValidator</B>(java.lang.String&nbsp;validatorId)
+                                                throws javax.faces.FacesException</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>createValidator</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+
+<DT><B>Throws:</B>
+<DD><CODE>javax.faces.FacesException</CODE></DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getValidatorIds()"><!-- --></A><H3>
+getValidatorIds</H3>
+<PRE>
+public java.util.Iterator <B>getValidatorIds</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getValidatorIds</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="createValueBinding(java.lang.String)"><!-- --></A><H3>
+createValueBinding</H3>
+<PRE>
+public javax.faces.el.ValueBinding <B>createValueBinding</B>(java.lang.String&nbsp;ref)
+                                               throws javax.faces.el.ReferenceSyntaxException</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>createValueBinding</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+
+<DT><B>Throws:</B>
+<DD><CODE>javax.faces.el.ReferenceSyntaxException</CODE></DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="createComponent(javax.faces.el.ValueBinding, javax.faces.context.FacesContext, java.lang.String)"><!-- --></A><H3>
+createComponent</H3>
+<PRE>
+public javax.faces.component.UIComponent <B>createComponent</B>(javax.faces.el.ValueBinding&nbsp;componentBinding,
+                                                         javax.faces.context.FacesContext&nbsp;context,
+                                                         java.lang.String&nbsp;componentType)
+                                                  throws javax.faces.FacesException</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>createComponent</CODE> in class <CODE>javax.faces.application.Application</CODE></DL>
+</DD>
+<DD><DL>
+
+<DT><B>Throws:</B>
+<DD><CODE>javax.faces.FacesException</CODE></DL>
+</DD>
+</DL>
+<!-- ========= END OF CLASS DATA ========= -->
+<HR>
+
+
+<!-- ======= START OF BOTTOM NAVBAR ====== -->
+<A NAME="navbar_bottom"><!-- --></A>
+<A HREF="#skip-navbar_bottom" title="Skip navigation links"></A>
+<TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
+<TR>
+<TD COLSPAN=2 BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
+<A NAME="navbar_bottom_firstrow"><!-- --></A>
+<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
+  <TR ALIGN="center" VALIGN="top">
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="class-use/PhpFacesApplication.html"><FONT CLASS="NavBarFont1"><B>Use</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../index-files/index-1.html"><FONT CLASS="NavBarFont1"><B>Index</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT></A>&nbsp;</TD>
+  </TR>
+</TABLE>
+</TD>
+<TD ALIGN="right" VALIGN="top" ROWSPAN=3><EM>
+</EM>
+</TD>
+</TR>
+
+<TR>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+&nbsp;PREV CLASS&nbsp;
+&nbsp;<A HREF="../../../php/java/faces/PhpFacesApplicationFactory.html" title="class in php.java.faces"><B>NEXT CLASS</B></A></FONT></TD>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+  <A HREF="../../../index.html?php/java/faces/PhpFacesApplication.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+&nbsp;<A HREF="PhpFacesApplication.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+&nbsp;<SCRIPT type="text/javascript">
+  <!--
+  if(window==top) {
+    document.writeln('<A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>');
+  }
+  //-->
+</SCRIPT>
+<NOSCRIPT>
+  <A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>
+</NOSCRIPT>
+
+
+</FONT></TD>
+</TR>
+<TR>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+  SUMMARY:&nbsp;NESTED&nbsp;|&nbsp;FIELD&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+DETAIL:&nbsp;FIELD&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+</TR>
+</TABLE>
+<A NAME="skip-navbar_bottom"></A>
+<!-- ======== END OF BOTTOM NAVBAR ======= -->
+
+<HR>
+
+</BODY>
+</HTML>

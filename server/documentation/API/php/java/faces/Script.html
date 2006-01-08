@@ -1,27 +1,394 @@
-<?xml version="1.0" encoding="null"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head><title>Script</title><script src="../../../resources/gjdoc.js" type="text/javascript"><!-- this comment required for konqueror 3.2.2 --></script><meta http-equiv="Content-Type" content="text/html; charset=null"/><meta name="generator" content="GNU Gjdoc Standard Doclet"/><meta name="keywords" content="php.java.faces.Script class"/><meta name="keywords" content="getValue()"/><meta name="keywords" content="setValue()"/><meta name="keywords" content="setScript()"/><meta name="keywords" content="call()"/><link rel="stylesheet" type="text/css" href="../../../resources/gjdochtml-clean-layout.css" title="GNU Clean"/><link rel="stylesheet" type="text/css" href="../../../resources/gjdochtml-clean-color1.css" title="GNU Clean"/></head><body class="content class" onload="top.contentPageLoaded(document.title)"><table class="navbar div top"><tr><td class="navbar div top" colspan="2"><div class="navbar div top" colspan="2"><span class="navbar item enabled"><a href="../../../index-noframes.html">Overview</a></span> <span class="navbar item enabled"><a href="package-summary.html">Package</a></span> <span class="navbar item active">Class</span> <span class="navbar item enabled"><a href="Script-uses.html">Use</a></span> <span class="navbar item enabled"><a href="tree.html">Tree</a></span> <span class="navbar item enabled"><a href="../../../alphaindex-1.html">Index</a></span> <span class="navbar item enabled"><a href="../../../deprecated.html">Deprecated</a></span> <span class="navbar item enabled"><a href="../../../about.html">About</a></span></div></td></tr><tr><td class="navi"><a href="../../../php/java/faces/PhpFacesScriptEngine.html">Prev Class</a> | Next Class</td><td class="navi"><a href="../../../index.html" title="Show in a frameset" target="_top">Frames</a> | <a href="Script.html" title="Show without frames" target="_top">No Frames</a> </td></tr><tr><td class="navi">Summary: Nested | Field | <a href="#summary-methods">Method</a> | <a href="#summary-constructors">Constr</a></td><td class="navi">Detail: Nested | Field | <a href="#detail-methods">Method</a> | <a href="#detail-constructors">Constr</a></td></tr></table><div class="class title outer"><h3 class="class title-package">php.java.faces</h3><h1 class="class title-class">Class Script</h1></div><div class="class inheritance-tree"><ul class="inheritance 0"><li class="inheritance 0"><code>java.lang.Object</code></li><ul class="inheritance 1"><li class="inheritance 1"><code>php.java.faces.Script</code></li></ul></ul></div><hr/><div class="class synopsis outer"><div class="class synopsis declaration"><code>public class <b class="class synopsis name">Script</b></code></div><div class="class synopsis superclass"><code>extends java.lang.Object</code></div></div><hr/><div class="class description"> Proxy for calling php scripts.
-</div><p class="taglet"><dl class="tag list"><dt class="tag section header"><b>Author:</b></dt><dd class="tag item">jostb</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><a name="summary-constructors"/><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table header"><td colspan="2"><h2 class="table header">Constructor Summary</h2></td></tr><tr><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#Script()">Script</a>()</code></dt><dd class="description"> Creates a new script proxy.</dd></dl></td></tr></table></dl><a name="summary-methods"/><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table header"><td colspan="2"><h2 class="table header">Method Summary</h2></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.Object</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#call(java.lang.String,java.lang.Class[],java.lang.Object[])">call</a>(java.lang.String&nbsp;name, java.lang.Class[]&nbsp;classes, java.lang.Object[]&nbsp;args)</code></dt><dd class="description"> Call a php method.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.Object</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getValue(int)">getValue</a>(int&nbsp;index)</code></dt><dd class="description"> Cal the php method "getValueIndex".</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.Object</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getValue(java.lang.Object)">getValue</a>(java.lang.Object&nbsp;property)</code></dt><dd class="description"> Call the php method "getValue".</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#setScript(java.lang.Object)">setScript</a>(java.lang.Object&nbsp;value)</code></dt><dd class="description"> Called for the managed Property "script".</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#setValue(int,java.lang.Object)">setValue</a>(int&nbsp;index, java.lang.Object&nbsp;value)</code></dt><dd class="description"> Call the php method "setValueIndex".</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#setValue(java.lang.Object,java.lang.Object)">setValue</a>(java.lang.Object&nbsp;property, java.lang.Object&nbsp;value)</code></dt><dd class="description"> Call the php method "setValue".</dd></dl></td></tr></table></dl><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table sub header"><td colspan="2"><h3 class="table sub header">Methods inherited from class java.lang.Object</h3></td></tr><tr><td class="inherited"><a href="../../../java/lang/Object.html#equals(java.lang.Object)" title="equals(Object)"><code class="member">equals</code></a>, <a href="../../../java/lang/Object.html#getClass()" title="getClass()"><code class="member">getClass</code></a>, <a href="../../../java/lang/Object.html#hashCode()" title="hashCode()"><code class="member">hashCode</code></a>, <a href="../../../java/lang/Object.html#notify()" title="notify()"><code class="member">notify</code></a>, <a href="../../../java/lang/Object.html#notifyAll()" title="notifyAll()"><code class="member">notifyAll</code></a>, <a href="../../../java/lang/Object.html#toString()" title="toString()"><code class="member">toString</code></a>, <a href="../../../java/lang/Object.html#wait()" title="wait()"><code class="member">wait</code></a>, <a href="../../../java/lang/Object.html#wait(long)" title="wait(long)"><code class="member">wait</code></a>, <a href="../../../java/lang/Object.html#wait(long,int)" title="wait(long,int)"><code class="member">wait</code></a></td></tr></table></dl><a name="detail-constructors"/><h2 class="section header">Constructor Details</h2><div class="section"><a name="Script()"/><div class="member detail outer"><h3 class="member detail name">Script</h3><pre class="member detail synopsis">public Script()</pre><blockquote class="member detail name"><div class="member detail description"> Creates a new script proxy. Scripts may be defined in <code>faces-config.xml</code> as "/scriptname.php" for local scripts or "http://.../scriptname.php" for remote scripts.
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--NewPage-->
+<HTML>
+<HEAD>
+<!-- Generated by javadoc (build 1.5.0) on Sun Jan 08 19:28:40 CET 2006 -->
+<TITLE>
+Script
+</TITLE>
+
+<META NAME="keywords" CONTENT="php.java.faces.Script class">
+
+<LINK REL ="stylesheet" TYPE="text/css" HREF="../../../stylesheet.css" TITLE="Style">
+
+<SCRIPT type="text/javascript">
+function windowTitle()
+{
+    parent.document.title="Script";
+}
+</SCRIPT>
+<NOSCRIPT>
+</NOSCRIPT>
+
+</HEAD>
+
+<BODY BGCOLOR="white" onload="windowTitle();">
+
+
+<!-- ========= START OF TOP NAVBAR ======= -->
+<A NAME="navbar_top"><!-- --></A>
+<A HREF="#skip-navbar_top" title="Skip navigation links"></A>
+<TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
+<TR>
+<TD COLSPAN=2 BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
+<A NAME="navbar_top_firstrow"><!-- --></A>
+<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
+  <TR ALIGN="center" VALIGN="top">
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="class-use/Script.html"><FONT CLASS="NavBarFont1"><B>Use</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../index-files/index-1.html"><FONT CLASS="NavBarFont1"><B>Index</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT></A>&nbsp;</TD>
+  </TR>
+</TABLE>
+</TD>
+<TD ALIGN="right" VALIGN="top" ROWSPAN=3><EM>
+</EM>
+</TD>
+</TR>
+
+<TR>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+&nbsp;<A HREF="../../../php/java/faces/PhpFacesScriptEngine.html" title="class in php.java.faces"><B>PREV CLASS</B></A>&nbsp;
+&nbsp;NEXT CLASS</FONT></TD>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+  <A HREF="../../../index.html?php/java/faces/Script.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+&nbsp;<A HREF="Script.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+&nbsp;<SCRIPT type="text/javascript">
+  <!--
+  if(window==top) {
+    document.writeln('<A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>');
+  }
+  //-->
+</SCRIPT>
+<NOSCRIPT>
+  <A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>
+</NOSCRIPT>
+
+
+</FONT></TD>
+</TR>
+<TR>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+  SUMMARY:&nbsp;NESTED&nbsp;|&nbsp;FIELD&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+DETAIL:&nbsp;FIELD&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+</TR>
+</TABLE>
+<A NAME="skip-navbar_top"></A>
+<!-- ========= END OF TOP NAVBAR ========= -->
+
+<HR>
+<!-- ======== START OF CLASS DATA ======== -->
+<H2>
+<FONT SIZE="-1">
+php.java.faces</FONT>
+<BR>
+Class Script</H2>
+<PRE>
+java.lang.Object
+  <IMG SRC="../../../resources/inherit.gif" ALT="extended by "><B>php.java.faces.Script</B>
+</PRE>
+<HR>
+<DL>
+<DT><PRE>public class <B>Script</B><DT>extends java.lang.Object</DL>
+</PRE>
+
+<P>
+Proxy for calling php scripts.
+<P>
+
+<P>
+<DL>
+<DT><B>Author:</B></DT>
+  <DD>jostb</DD>
+</DL>
+<HR>
+
+<P>
+
+<!-- ======== CONSTRUCTOR SUMMARY ======== -->
+
+<A NAME="constructor_summary"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+<B>Constructor Summary</B></FONT></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD><CODE><B><A HREF="../../../php/java/faces/Script.html#Script()">Script</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Creates a new script proxy.</TD>
+</TR>
+</TABLE>
+&nbsp;
+<!-- ========== METHOD SUMMARY =========== -->
+
+<A NAME="method_summary"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+<B>Method Summary</B></FONT></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.Object</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/Script.html#call(java.lang.String, java.lang.Class[], java.lang.Object[])">call</A></B>(java.lang.String&nbsp;name,
+     java.lang.Class[]&nbsp;classes,
+     java.lang.Object[]&nbsp;args)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Call a php method.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.Object</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/Script.html#getValue(int)">getValue</A></B>(int&nbsp;index)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cal the php method "getValueIndex".</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.Object</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/Script.html#getValue(java.lang.Object)">getValue</A></B>(java.lang.Object&nbsp;property)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Call the php method "getValue".</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/Script.html#setScript(java.lang.Object)">setScript</A></B>(java.lang.Object&nbsp;value)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Called for the managed Property "script".</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/Script.html#setValue(int, java.lang.Object)">setValue</A></B>(int&nbsp;index,
+         java.lang.Object&nbsp;value)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Call the php method "setValueIndex".</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/faces/Script.html#setValue(java.lang.Object, java.lang.Object)">setValue</A></B>(java.lang.Object&nbsp;property,
+         java.lang.Object&nbsp;value)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Call the php method "setValue".</TD>
+</TR>
+</TABLE>
+&nbsp;<A NAME="methods_inherited_from_class_java.lang.Object"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#EEEEFF" CLASS="TableSubHeadingColor">
+<TH ALIGN="left"><B>Methods inherited from class java.lang.Object</B></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD><CODE>equals, getClass, hashCode, notify, notifyAll, toString, wait, wait, wait</CODE></TD>
+</TR>
+</TABLE>
+&nbsp;
+<P>
+
+<!-- ========= CONSTRUCTOR DETAIL ======== -->
+
+<A NAME="constructor_detail"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2">
+<B>Constructor Detail</B></FONT></TH>
+</TR>
+</TABLE>
+
+<A NAME="Script()"><!-- --></A><H3>
+Script</H3>
+<PRE>
+public <B>Script</B>()</PRE>
+<DL>
+<DD>Creates a new script proxy. Scripts may be defined in <code>faces-config.xml</code> as "/scriptname.php" for local scripts or "http://.../scriptname.php" for remote scripts.
  Remote scripts are executed and invoked on the remote server.
- Example from <code>faces-config.xml</code>:<br/>
+ Example from <code>faces-config.xml</code>:<br>
  <code>
- 	&lt;managed-bean&gt;<br/>
-&lt;managed-bean-name&gt;helloWorldBacking&lt;/managed-bean-name&gt;<br/>
-&lt;managed-bean-class&gt;php.java.faces.Script&lt;/managed-bean-class&gt;<br/>
-&lt;managed-bean-scope&gt;request&lt;/managed-bean-scope&gt;<br/>
-&lt;managed-property&gt;<br/>
-&lt;property-name&gt;script&lt;/property-name&gt;<br/>
-&lt;value&gt;/scriptname.php&lt;/value&gt;<br/>
-&lt;/managed-property&gt;<br/>
-&lt;/managed-bean&gt;<br/>
+        &lt;managed-bean&gt;<br>
+                &lt;managed-bean-name&gt;helloWorldBacking&lt;/managed-bean-name&gt;<br>
+                &lt;managed-bean-class&gt;php.java.faces.Script&lt;/managed-bean-class&gt;<br>
+                &lt;managed-bean-scope&gt;request&lt;/managed-bean-scope&gt;<br>
+
+        &lt;managed-property&gt;<br>
+            &lt;property-name&gt;script&lt;/property-name&gt;<br>
+            &lt;value&gt;/scriptname.php&lt;/value&gt;<br>
+        &lt;/managed-property&gt;<br>
+
+        &lt;/managed-bean&gt;<br>
  </code>
-</div><p class="taglet"></p><p class="taglet"></p><p class="taglet"><dl class="tag list"><dt class="tag section header"><b>See Also:</b></dt><dd><a href="../../../php/java/bridge/Invocable.html"><code>Invocable</code></a>, <a href="../../../php/java/script/URLReader.html"><code>URLReader</code></a><dd></dl></p><p class="taglet"></p><p class="taglet"></p></blockquote></div></div><a name="detail-methods"/><h2 class="section header">Method Details</h2><div class="section"><a name="call(java.lang.String,java.lang.Class[],java.lang.Object[])"/><div class="member detail outer"><h3 class="member detail name">call</h3><pre class="member detail synopsis">public java.lang.Object call(java.lang.String name,
-                             java.lang.Class[] classes,
-                             java.lang.Object[] args)</pre><blockquote class="member detail name"><div class="member detail description"> Call a php method.
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">name</code><span class="separator"> - </span><span class="description">The name of the method</span></dd><dd class="item"><code class="name">classes</code><span class="separator"> - </span><span class="description">The parameters</span></dd><dd class="item"><code class="name">args</code><span class="separator"> - </span><span class="description">The arguments</span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getValue(int)"/><div class="member detail outer"><h3 class="member detail name">getValue</h3><pre class="member detail synopsis">public java.lang.Object getValue(int index)</pre><blockquote class="member detail name"><div class="member detail description"> Cal the php method "getValueIndex".
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">index</code><span class="separator"> - </span><span class="description">The index</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">The value at that position.</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getValue(java.lang.Object)"/><div class="member detail outer"><h3 class="member detail name">getValue</h3><pre class="member detail synopsis">public java.lang.Object getValue(java.lang.Object property)</pre><blockquote class="member detail name"><div class="member detail description"> Call the php method "getValue".
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">property</code><span class="separator"> - </span><span class="description">The property</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">The value of the property.</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="setScript(java.lang.Object)"/><div class="member detail outer"><h3 class="member detail name">setScript</h3><pre class="member detail synopsis">public void setScript(java.lang.Object value)</pre><blockquote class="member detail name"><div class="member detail description"> Called for the managed Property "script".
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">value</code><span class="separator"> - </span><span class="description">The script, for example "/helloWorld.php" or "http://.../helloWorld.php" or "@80:/.../helloWorld.php" as a short form for "http://127.0.0.1:80/.../helloWorld.php".</span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="setValue(int,java.lang.Object)"/><div class="member detail outer"><h3 class="member detail name">setValue</h3><pre class="member detail synopsis">public void setValue(int index,
-                     java.lang.Object value)</pre><blockquote class="member detail name"><div class="member detail description"> Call the php method "setValueIndex".
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">index</code><span class="separator"> - </span><span class="description">The array index</span></dd><dd class="item"><code class="name">value</code><span class="separator"> - </span><span class="description">The new value</span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="setValue(java.lang.Object,java.lang.Object)"/><div class="member detail outer"><h3 class="member detail name">setValue</h3><pre class="member detail synopsis">public void setValue(java.lang.Object property,
-                     java.lang.Object value)</pre><blockquote class="member detail name"><div class="member detail description"> Call the php method "setValue".
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">property</code><span class="separator"> - </span><span class="description">The property to set</span></dd><dd class="item"><code class="name">value</code><span class="separator"> - </span><span class="description">The new value</span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div></div><p class="navbar bottom spacer"> </p><table class="navbar div bottom"><tr><td><div class="navbar div top" colspan="2"><span class="navbar item enabled"><a href="../../../index-noframes.html">Overview</a></span> <span class="navbar item enabled"><a href="package-summary.html">Package</a></span> <span class="navbar item active">Class</span> <span class="navbar item enabled"><a href="Script-uses.html">Use</a></span> <span class="navbar item enabled"><a href="tree.html">Tree</a></span> <span class="navbar item enabled"><a href="../../../alphaindex-1.html">Index</a></span> <span class="navbar item enabled"><a href="../../../deprecated.html">Deprecated</a></span> <span class="navbar item enabled"><a href="../../../about.html">About</a></span></div></td></tr></table></body></html>
+<P>
+<DL>
+<DT><B>See Also:</B><DD><A HREF="../../../php/java/bridge/Invocable.html" title="interface in php.java.bridge"><CODE>Invocable</CODE></A>, 
+<A HREF="../../../php/java/script/URLReader.html" title="class in php.java.script"><CODE>URLReader</CODE></A></DL>
+</DL>
+
+<!-- ============ METHOD DETAIL ========== -->
+
+<A NAME="method_detail"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2">
+<B>Method Detail</B></FONT></TH>
+</TR>
+</TABLE>
+
+<A NAME="getValue(int)"><!-- --></A><H3>
+getValue</H3>
+<PRE>
+public java.lang.Object <B>getValue</B>(int&nbsp;index)</PRE>
+<DL>
+<DD>Cal the php method "getValueIndex".
+<P>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>index</CODE> - The index
+<DT><B>Returns:</B><DD>The value at that position.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getValue(java.lang.Object)"><!-- --></A><H3>
+getValue</H3>
+<PRE>
+public java.lang.Object <B>getValue</B>(java.lang.Object&nbsp;property)</PRE>
+<DL>
+<DD>Call the php method "getValue".
+<P>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>property</CODE> - The property
+<DT><B>Returns:</B><DD>The value of the property.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setValue(int, java.lang.Object)"><!-- --></A><H3>
+setValue</H3>
+<PRE>
+public void <B>setValue</B>(int&nbsp;index,
+                     java.lang.Object&nbsp;value)</PRE>
+<DL>
+<DD>Call the php method "setValueIndex".
+<P>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>index</CODE> - The array index<DD><CODE>value</CODE> - The new value</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setValue(java.lang.Object, java.lang.Object)"><!-- --></A><H3>
+setValue</H3>
+<PRE>
+public void <B>setValue</B>(java.lang.Object&nbsp;property,
+                     java.lang.Object&nbsp;value)</PRE>
+<DL>
+<DD>Call the php method "setValue".
+<P>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>property</CODE> - The property to set<DD><CODE>value</CODE> - The new value</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setScript(java.lang.Object)"><!-- --></A><H3>
+setScript</H3>
+<PRE>
+public void <B>setScript</B>(java.lang.Object&nbsp;value)</PRE>
+<DL>
+<DD>Called for the managed Property "script".
+<P>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>value</CODE> - The script, for example "/helloWorld.php" or "http://.../helloWorld.php" or "@80:/.../helloWorld.php" as a short form for "http://127.0.0.1:80/.../helloWorld.php".</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="call(java.lang.String, java.lang.Class[], java.lang.Object[])"><!-- --></A><H3>
+call</H3>
+<PRE>
+public java.lang.Object <B>call</B>(java.lang.String&nbsp;name,
+                             java.lang.Class[]&nbsp;classes,
+                             java.lang.Object[]&nbsp;args)</PRE>
+<DL>
+<DD>Call a php method.
+<P>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>name</CODE> - The name of the method<DD><CODE>classes</CODE> - The parameters<DD><CODE>args</CODE> - The arguments</DL>
+</DD>
+</DL>
+<!-- ========= END OF CLASS DATA ========= -->
+<HR>
+
+
+<!-- ======= START OF BOTTOM NAVBAR ====== -->
+<A NAME="navbar_bottom"><!-- --></A>
+<A HREF="#skip-navbar_bottom" title="Skip navigation links"></A>
+<TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
+<TR>
+<TD COLSPAN=2 BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
+<A NAME="navbar_bottom_firstrow"><!-- --></A>
+<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
+  <TR ALIGN="center" VALIGN="top">
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="class-use/Script.html"><FONT CLASS="NavBarFont1"><B>Use</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../index-files/index-1.html"><FONT CLASS="NavBarFont1"><B>Index</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT></A>&nbsp;</TD>
+  </TR>
+</TABLE>
+</TD>
+<TD ALIGN="right" VALIGN="top" ROWSPAN=3><EM>
+</EM>
+</TD>
+</TR>
+
+<TR>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+&nbsp;<A HREF="../../../php/java/faces/PhpFacesScriptEngine.html" title="class in php.java.faces"><B>PREV CLASS</B></A>&nbsp;
+&nbsp;NEXT CLASS</FONT></TD>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+  <A HREF="../../../index.html?php/java/faces/Script.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+&nbsp;<A HREF="Script.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+&nbsp;<SCRIPT type="text/javascript">
+  <!--
+  if(window==top) {
+    document.writeln('<A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>');
+  }
+  //-->
+</SCRIPT>
+<NOSCRIPT>
+  <A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>
+</NOSCRIPT>
+
+
+</FONT></TD>
+</TR>
+<TR>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+  SUMMARY:&nbsp;NESTED&nbsp;|&nbsp;FIELD&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+DETAIL:&nbsp;FIELD&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+</TR>
+</TABLE>
+<A NAME="skip-navbar_bottom"></A>
+<!-- ======== END OF BOTTOM NAVBAR ======= -->
+
+<HR>
+
+</BODY>
+</HTML>

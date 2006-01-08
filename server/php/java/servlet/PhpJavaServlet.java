@@ -313,18 +313,13 @@ public class PhpJavaServlet extends FastCGIServlet {
     } //class CGIRunner
     
     
-    private ContextFactory getContextManager(HttpServletRequest req, HttpServletResponse res) {
+    private ContextFactory getContextFactory(HttpServletRequest req, HttpServletResponse res) {
     	ContextFactory ctx = null;
     	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
     	if(id!=null) ctx = (ContextFactory)ContextFactory.get(id);
-    	if(ctx==null) ctx = ContextFactory.addNew(getServletContext(), null, res); // no session sharing
-    	if(ctx.getBridge()==null) {
-	    JavaBridge bridge;
-   	    ctx.setBridge(bridge = new JavaBridge(null, null));
-    	    bridge.setClassLoader(new JavaBridgeClassLoader(ctx.getBridge(), DynamicJavaBridgeClassLoader.newInstance(Util.getContextClassLoader())));
-    	    bridge.setSessionFactory(ctx);
-    	    JavaBridge.load++;
-	    ctx.getBridge().logDebug("first request (session is new).");
+    	if(ctx==null) {
+    	  ctx = ContextFactory.addNew(getServletContext(), null, res); // no session sharing
+    	  ctx.getBridge().logDebug("first request (session is new).");
     	} else {
     	    ctx.getBridge().logDebug("cont. session");
     	}
@@ -345,7 +340,7 @@ public class PhpJavaServlet extends FastCGIServlet {
     protected void handleRedirectConnection(HttpServletRequest req, HttpServletResponse res) 
 	throws ServletException, IOException {
 	InputStream in; ByteArrayOutputStream out; OutputStream resOut;
-	ContextFactory ctx = getContextManager(req, res);
+	ContextFactory ctx = getContextFactory(req, res);
 	JavaBridge bridge = ctx.getBridge();
 	ctx.setSession(req);
 	if(bridge.logLevel>3) bridge.logDebug("override redirect starts for " + ctx.getId());		
@@ -386,13 +381,13 @@ public class PhpJavaServlet extends FastCGIServlet {
     protected void handleHttpConnection (HttpServletRequest req, HttpServletResponse res, boolean session)
 	throws ServletException, IOException {
 	InputStream in; ByteArrayOutputStream out;
-	ContextFactory ctx = getContextManager(req, res);
+	ContextFactory ctx = getContextFactory(req, res);
 	JavaBridge bridge = ctx.getBridge();
 	if(session) ctx.setSession(req);
 
 	if(req.getContentLength()==0) {
 	    if(req.getHeader("Connection").equals("Close")) {
-		JavaBridge.load--;
+		//JavaBridge.load--;
 		bridge.logDebug("session closed.");
 		ctx.remove();
 	    }
@@ -425,7 +420,7 @@ public class PhpJavaServlet extends FastCGIServlet {
     protected void handleSocketConnection (HttpServletRequest req, HttpServletResponse res, boolean session)
 	throws ServletException, IOException {
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
-	ContextFactory ctx = getContextManager(req, res);
+	ContextFactory ctx = getContextFactory(req, res);
 	JavaBridge bridge = ctx.getBridge();
 	if(session) ctx.setSession(req);
 

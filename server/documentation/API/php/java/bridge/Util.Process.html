@@ -1,26 +1,372 @@
-<?xml version="1.0" encoding="null"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head><title>Util.Process</title><script src="../../../resources/gjdoc.js" type="text/javascript"><!-- this comment required for konqueror 3.2.2 --></script><meta http-equiv="Content-Type" content="text/html; charset=null"/><meta name="generator" content="GNU Gjdoc Standard Doclet"/><meta name="keywords" content="php.java.bridge.Util.Process class"/><meta name="keywords" content="start()"/><meta name="keywords" content="getOutputStream()"/><meta name="keywords" content="getInputStream()"/><meta name="keywords" content="getErrorStream()"/><meta name="keywords" content="waitFor()"/><meta name="keywords" content="exitValue()"/><meta name="keywords" content="destroy()"/><link rel="stylesheet" type="text/css" href="../../../resources/gjdochtml-clean-layout.css" title="GNU Clean"/><link rel="stylesheet" type="text/css" href="../../../resources/gjdochtml-clean-color1.css" title="GNU Clean"/></head><body class="content class" onload="top.contentPageLoaded(document.title)"><table class="navbar div top"><tr><td class="navbar div top" colspan="2"><div class="navbar div top" colspan="2"><span class="navbar item enabled"><a href="../../../index-noframes.html">Overview</a></span> <span class="navbar item enabled"><a href="package-summary.html">Package</a></span> <span class="navbar item active">Class</span> <span class="navbar item enabled"><a href="Util.Process-uses.html">Use</a></span> <span class="navbar item enabled"><a href="tree.html">Tree</a></span> <span class="navbar item enabled"><a href="../../../alphaindex-1.html">Index</a></span> <span class="navbar item enabled"><a href="../../../deprecated.html">Deprecated</a></span> <span class="navbar item enabled"><a href="../../../about.html">About</a></span></div></td></tr><tr><td class="navi"><a href="../../../php/java/bridge/Util.Logger.html">Prev Class</a> | <a href="../../../php/java/bridge/Util.ProcessWithErrorHandler.html">Next Class</a></td><td class="navi"><a href="../../../index.html" title="Show in a frameset" target="_top">Frames</a> | <a href="Util.Process.html" title="Show without frames" target="_top">No Frames</a> </td></tr><tr><td class="navi">Summary: Nested | Field | <a href="#summary-methods">Method</a> | Constr</td><td class="navi">Detail: Nested | Field | <a href="#detail-methods">Method</a> | Constr</td></tr></table><div class="class title outer"><h3 class="class title-package">php.java.bridge</h3><h1 class="class title-class">Class Util.Process</h1></div><div class="class inheritance-tree"><ul class="inheritance 0"><li class="inheritance 0"><code>java.lang.Object</code></li><ul class="inheritance 1"><li class="inheritance 1"><code>java.lang.Process</code></li><ul class="inheritance 2"><li class="inheritance 2"><code>php.java.bridge.Util.Process</code></li></ul></ul></ul></div><dl class="class enclosing"><dt class="class enclosing header"><b>Enclosing Class:</b></dt><dd class="class enclosing item"><a href="../../../php/java/bridge/Util.html" title="Class in php.java.bridge">Util</a></dd></dl><hr/><div class="class synopsis outer"><div class="class synopsis declaration"><code>public static class <b class="class synopsis name">Util.Process</b></code></div><div class="class synopsis superclass"><code>extends java.lang.Process</code></div></div><hr/><div class="class description"> Starts a CGI process and returns the process handle.
-</div><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><a name="summary-methods"/><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table header"><td colspan="2"><h2 class="table header">Method Summary</h2></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#destroy()">destroy</a>()</code></dt><dd class="description"> Kills the subprocess and all of its children forcibly.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> int</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#exitValue()">exitValue</a>()</code></dt><dd class="description"> When a process terminates there is associated with that termination
- an exit value for the process to indicate why it terminated.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.io.InputStream</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getErrorStream()">getErrorStream</a>()</code></dt><dd class="description"> Obtain the input stream that receives data from the subprocess.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.io.InputStream</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getInputStream()">getInputStream</a>()</code></dt><dd class="description"> Obtain the input stream that receives data from the subprocess.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.io.OutputStream</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getOutputStream()">getOutputStream</a>()</code></dt><dd class="description"> Obtain the output stream that sends data to the subprocess.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis">static java.lang.Process</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#start(java.lang.String[],java.io.File,java.util.Map)">start</a>(java.lang.String[]&nbsp;args, java.io.File&nbsp;homeDir, java.util.Map&nbsp;env)</code></dt><dd class="description"> Starts a CGI process and returns the process handle.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> int</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#waitFor()">waitFor</a>()</code></dt><dd class="description"> The thread calling <code>waitFor</code> will block until the subprocess
- has terminated.</dd></dl></td></tr></table></dl><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table sub header"><td colspan="2"><h3 class="table sub header">Methods inherited from class java.lang.Process</h3></td></tr><tr><td class="inherited"><a href="../../../java/lang/Process.html#destroy()" title="destroy()"><code class="member">destroy</code></a>, <a href="../../../java/lang/Process.html#exitValue()" title="exitValue()"><code class="member">exitValue</code></a>, <a href="../../../java/lang/Process.html#getErrorStream()" title="getErrorStream()"><code class="member">getErrorStream</code></a>, <a href="../../../java/lang/Process.html#getInputStream()" title="getInputStream()"><code class="member">getInputStream</code></a>, <a href="../../../java/lang/Process.html#getOutputStream()" title="getOutputStream()"><code class="member">getOutputStream</code></a>, <a href="../../../java/lang/Process.html#waitFor()" title="waitFor()"><code class="member">waitFor</code></a></td></tr></table></dl><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table sub header"><td colspan="2"><h3 class="table sub header">Methods inherited from class java.lang.Object</h3></td></tr><tr><td class="inherited"><a href="../../../java/lang/Object.html#equals(java.lang.Object)" title="equals(Object)"><code class="member">equals</code></a>, <a href="../../../java/lang/Object.html#getClass()" title="getClass()"><code class="member">getClass</code></a>, <a href="../../../java/lang/Object.html#hashCode()" title="hashCode()"><code class="member">hashCode</code></a>, <a href="../../../java/lang/Object.html#notify()" title="notify()"><code class="member">notify</code></a>, <a href="../../../java/lang/Object.html#notifyAll()" title="notifyAll()"><code class="member">notifyAll</code></a>, <a href="../../../java/lang/Object.html#toString()" title="toString()"><code class="member">toString</code></a>, <a href="../../../java/lang/Object.html#wait()" title="wait()"><code class="member">wait</code></a>, <a href="../../../java/lang/Object.html#wait(long)" title="wait(long)"><code class="member">wait</code></a>, <a href="../../../java/lang/Object.html#wait(long,int)" title="wait(long,int)"><code class="member">wait</code></a></td></tr></table></dl><a name="detail-methods"/><h2 class="section header">Method Details</h2><div class="section"><a name="destroy()"/><div class="member detail outer"><h3 class="member detail name">destroy</h3><pre class="member detail synopsis">public void destroy()</pre><blockquote class="member detail name"><div class="member detail description"> Kills the subprocess and all of its children forcibly.
-</div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">destroy in interface java.lang.Process</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="exitValue()"/><div class="member detail outer"><h3 class="member detail name">exitValue</h3><pre class="member detail synopsis">public int exitValue()</pre><blockquote class="member detail name"><div class="member detail description"> When a process terminates there is associated with that termination
- an exit value for the process to indicate why it terminated. A return
- of <code>0</code> denotes normal process termination by convention.
-</div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">exitValue in interface java.lang.Process</dd></dl><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">the exit value of the subprocess</dd></dl></p><p class="member detail thrown list"><dl><dt class="member detail thrown header"><b>Throws:</b></dt><dd class="member detail thrown item"><code class="name">java.lang.IllegalThreadStateException</code><span class="separator"> - </span><span class="description">if the subprocess has not terminated</span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getErrorStream()"/><div class="member detail outer"><h3 class="member detail name">getErrorStream</h3><pre class="member detail synopsis">public java.io.InputStream getErrorStream()</pre><blockquote class="member detail name"><div class="member detail description"> Obtain the input stream that receives data from the subprocess. This is
- the STDERR of the subprocess. When implementing, you should probably
- use a buffered stream.
-</div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getErrorStream in interface java.lang.Process</dd></dl><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">the input stream that pipes data from the process error output</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getInputStream()"/><div class="member detail outer"><h3 class="member detail name">getInputStream</h3><pre class="member detail synopsis">public java.io.InputStream getInputStream()</pre><blockquote class="member detail name"><div class="member detail description"> Obtain the input stream that receives data from the subprocess. This is
- the STDOUT of the subprocess. When implementing, you should probably
- use a buffered stream.
-</div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getInputStream in interface java.lang.Process</dd></dl><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">the input stream that pipes data from the process output</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getOutputStream()"/><div class="member detail outer"><h3 class="member detail name">getOutputStream</h3><pre class="member detail synopsis">public java.io.OutputStream getOutputStream()</pre><blockquote class="member detail name"><div class="member detail description"> Obtain the output stream that sends data to the subprocess. This is
- the STDIN of the subprocess. When implementing, you should probably
- use a buffered stream.
-</div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">getOutputStream in interface java.lang.Process</dd></dl><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">the output stream that pipes to the process input</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="start(java.lang.String[],java.io.File,java.util.Map)"/><div class="member detail outer"><h3 class="member detail name">start</h3><pre class="member detail synopsis">public static java.lang.Process start(java.lang.String[] args,
-                                      java.io.File homeDir,
-                                      java.util.Map env)
-            throws java.io.IOException</pre><blockquote class="member detail name"><div class="member detail description"> Starts a CGI process and returns the process handle.
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">args</code><span class="separator"> - </span><span class="description">The args array, e.g.: new String[]{null, "-b", ...};. If args is null or if args[0] is null, the function looks for the system property "php.java.bridge.php_exec".</span></dd><dd class="item"><code class="name">homeDir</code><span class="separator"> - </span><span class="description">The home directory. If null, the system property "user.home" is used.</span></dd><dd class="item"><code class="name">env</code><span class="separator"> - </span><span class="description">The CGI environment. If null, Util.DEFAULT_CGI_ENVIRONMENT is used.</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">The process handle.</dd></dl></p><p class="member detail thrown list"><dl><dt class="member detail thrown header"><b>Throws:</b></dt><dd class="member detail thrown item"><code class="name">java.io.IOException</code><span class="separator"> - </span><span class="description"></span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"><dl class="tag list"><dt class="tag section header"><b>See Also:</b></dt><dd><a href="../../../php/java/bridge/Util.html#checkCgiBinary(java.lang.StringBuffer)"><code>Util.checkCgiBinary(StringBuffer)</code></a><dd></dl></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="waitFor()"/><div class="member detail outer"><h3 class="member detail name">waitFor</h3><pre class="member detail synopsis">public int waitFor()
-            throws java.lang.InterruptedException</pre><blockquote class="member detail name"><div class="member detail description"> The thread calling <code>waitFor</code> will block until the subprocess
- has terminated. If the process has already terminated then the method
- immediately returns with the exit value of the subprocess.
-</div><dl class="member detail overridden list"><dt class="member detail overridden header"><b>Overrides:</b></dt><dd class="member detail overridden item">waitFor in interface java.lang.Process</dd></dl><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">the subprocess exit value; 0 conventionally denotes success</dd></dl></p><p class="member detail thrown list"><dl><dt class="member detail thrown header"><b>Throws:</b></dt><dd class="member detail thrown item"><code class="name">java.lang.InterruptedException</code><span class="separator"> - </span><span class="description">if another thread interrupts the blocked one</span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div></div><p class="navbar bottom spacer"> </p><table class="navbar div bottom"><tr><td><div class="navbar div top" colspan="2"><span class="navbar item enabled"><a href="../../../index-noframes.html">Overview</a></span> <span class="navbar item enabled"><a href="package-summary.html">Package</a></span> <span class="navbar item active">Class</span> <span class="navbar item enabled"><a href="Util.Process-uses.html">Use</a></span> <span class="navbar item enabled"><a href="tree.html">Tree</a></span> <span class="navbar item enabled"><a href="../../../alphaindex-1.html">Index</a></span> <span class="navbar item enabled"><a href="../../../deprecated.html">Deprecated</a></span> <span class="navbar item enabled"><a href="../../../about.html">About</a></span></div></td></tr></table></body></html>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--NewPage-->
+<HTML>
+<HEAD>
+<!-- Generated by javadoc (build 1.5.0) on Sun Jan 08 19:28:39 CET 2006 -->
+<TITLE>
+Util.Process
+</TITLE>
+
+<META NAME="keywords" CONTENT="php.java.bridge.Util.Process class">
+
+<LINK REL ="stylesheet" TYPE="text/css" HREF="../../../stylesheet.css" TITLE="Style">
+
+<SCRIPT type="text/javascript">
+function windowTitle()
+{
+    parent.document.title="Util.Process";
+}
+</SCRIPT>
+<NOSCRIPT>
+</NOSCRIPT>
+
+</HEAD>
+
+<BODY BGCOLOR="white" onload="windowTitle();">
+
+
+<!-- ========= START OF TOP NAVBAR ======= -->
+<A NAME="navbar_top"><!-- --></A>
+<A HREF="#skip-navbar_top" title="Skip navigation links"></A>
+<TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
+<TR>
+<TD COLSPAN=2 BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
+<A NAME="navbar_top_firstrow"><!-- --></A>
+<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
+  <TR ALIGN="center" VALIGN="top">
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="class-use/Util.Process.html"><FONT CLASS="NavBarFont1"><B>Use</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../index-files/index-1.html"><FONT CLASS="NavBarFont1"><B>Index</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT></A>&nbsp;</TD>
+  </TR>
+</TABLE>
+</TD>
+<TD ALIGN="right" VALIGN="top" ROWSPAN=3><EM>
+</EM>
+</TD>
+</TR>
+
+<TR>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+&nbsp;<A HREF="../../../php/java/bridge/Util.Logger.html" title="class in php.java.bridge"><B>PREV CLASS</B></A>&nbsp;
+&nbsp;<A HREF="../../../php/java/bridge/Util.ProcessWithErrorHandler.html" title="class in php.java.bridge"><B>NEXT CLASS</B></A></FONT></TD>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+  <A HREF="../../../index.html?php/java/bridge/Util.Process.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+&nbsp;<A HREF="Util.Process.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+&nbsp;<SCRIPT type="text/javascript">
+  <!--
+  if(window==top) {
+    document.writeln('<A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>');
+  }
+  //-->
+</SCRIPT>
+<NOSCRIPT>
+  <A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>
+</NOSCRIPT>
+
+
+</FONT></TD>
+</TR>
+<TR>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+  SUMMARY:&nbsp;NESTED&nbsp;|&nbsp;FIELD&nbsp;|&nbsp;CONSTR&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+DETAIL:&nbsp;FIELD&nbsp;|&nbsp;CONSTR&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+</TR>
+</TABLE>
+<A NAME="skip-navbar_top"></A>
+<!-- ========= END OF TOP NAVBAR ========= -->
+
+<HR>
+<!-- ======== START OF CLASS DATA ======== -->
+<H2>
+<FONT SIZE="-1">
+php.java.bridge</FONT>
+<BR>
+Class Util.Process</H2>
+<PRE>
+java.lang.Object
+  <IMG SRC="../../../resources/inherit.gif" ALT="extended by ">java.lang.Process
+      <IMG SRC="../../../resources/inherit.gif" ALT="extended by "><B>php.java.bridge.Util.Process</B>
+</PRE>
+<DL>
+<DT><B>Direct Known Subclasses:</B> <DD><A HREF="../../../php/java/bridge/Util.ProcessWithErrorHandler.html" title="class in php.java.bridge">Util.ProcessWithErrorHandler</A></DD>
+</DL>
+<DL>
+<DT><B>Enclosing class:</B><DD><A HREF="../../../php/java/bridge/Util.html" title="class in php.java.bridge">Util</A></DD>
+</DL>
+<HR>
+<DL>
+<DT><PRE>public static class <B>Util.Process</B><DT>extends java.lang.Process</DL>
+</PRE>
+
+<P>
+Starts a CGI process and returns the process handle.
+<P>
+
+<P>
+<HR>
+
+<P>
+
+<!-- ========== METHOD SUMMARY =========== -->
+
+<A NAME="method_summary"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+<B>Method Summary</B></FONT></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/Util.Process.html#destroy()">destroy</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;int</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/Util.Process.html#exitValue()">exitValue</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.io.InputStream</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/Util.Process.html#getErrorStream()">getErrorStream</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.io.InputStream</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/Util.Process.html#getInputStream()">getInputStream</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.io.OutputStream</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/Util.Process.html#getOutputStream()">getOutputStream</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>static&nbsp;<A HREF="../../../php/java/bridge/Util.Process.html" title="class in php.java.bridge">Util.Process</A></CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/Util.Process.html#start(java.lang.String[], java.io.File, java.util.Map)">start</A></B>(java.lang.String[]&nbsp;args,
+      java.io.File&nbsp;homeDir,
+      java.util.Map&nbsp;env)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Starts a CGI process and returns the process handle.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;int</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/Util.Process.html#waitFor()">waitFor</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+</TABLE>
+&nbsp;<A NAME="methods_inherited_from_class_java.lang.Object"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#EEEEFF" CLASS="TableSubHeadingColor">
+<TH ALIGN="left"><B>Methods inherited from class java.lang.Object</B></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD><CODE>equals, getClass, hashCode, notify, notifyAll, toString, wait, wait, wait</CODE></TD>
+</TR>
+</TABLE>
+&nbsp;
+<P>
+
+<!-- ============ METHOD DETAIL ========== -->
+
+<A NAME="method_detail"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2">
+<B>Method Detail</B></FONT></TH>
+</TR>
+</TABLE>
+
+<A NAME="start(java.lang.String[], java.io.File, java.util.Map)"><!-- --></A><H3>
+start</H3>
+<PRE>
+public static <A HREF="../../../php/java/bridge/Util.Process.html" title="class in php.java.bridge">Util.Process</A> <B>start</B>(java.lang.String[]&nbsp;args,
+                                 java.io.File&nbsp;homeDir,
+                                 java.util.Map&nbsp;env)
+                          throws java.io.IOException</PRE>
+<DL>
+<DD>Starts a CGI process and returns the process handle.
+<P>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>args</CODE> - The args array, e.g.: new String[]{null, "-b", ...};. If args is null or if args[0] is null, the function looks for the system property "php.java.bridge.php_exec".<DD><CODE>homeDir</CODE> - The home directory. If null, the system property "user.home" is used.<DD><CODE>env</CODE> - The CGI environment. If null, Util.DEFAULT_CGI_ENVIRONMENT is used.
+<DT><B>Returns:</B><DD>The process handle.
+<DT><B>Throws:</B>
+<DD><CODE>java.io.IOException</CODE><DT><B>See Also:</B><DD><A HREF="../../../php/java/bridge/Util.html#checkCgiBinary(java.lang.StringBuffer)"><CODE>Util.checkCgiBinary(StringBuffer)</CODE></A></DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getOutputStream()"><!-- --></A><H3>
+getOutputStream</H3>
+<PRE>
+public java.io.OutputStream <B>getOutputStream</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getOutputStream</CODE> in class <CODE>java.lang.Process</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getInputStream()"><!-- --></A><H3>
+getInputStream</H3>
+<PRE>
+public java.io.InputStream <B>getInputStream</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getInputStream</CODE> in class <CODE>java.lang.Process</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getErrorStream()"><!-- --></A><H3>
+getErrorStream</H3>
+<PRE>
+public java.io.InputStream <B>getErrorStream</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>getErrorStream</CODE> in class <CODE>java.lang.Process</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="waitFor()"><!-- --></A><H3>
+waitFor</H3>
+<PRE>
+public int <B>waitFor</B>()
+            throws java.lang.InterruptedException</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>waitFor</CODE> in class <CODE>java.lang.Process</CODE></DL>
+</DD>
+<DD><DL>
+
+<DT><B>Throws:</B>
+<DD><CODE>java.lang.InterruptedException</CODE></DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="exitValue()"><!-- --></A><H3>
+exitValue</H3>
+<PRE>
+public int <B>exitValue</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>exitValue</CODE> in class <CODE>java.lang.Process</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="destroy()"><!-- --></A><H3>
+destroy</H3>
+<PRE>
+public void <B>destroy</B>()</PRE>
+<DL>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>destroy</CODE> in class <CODE>java.lang.Process</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<!-- ========= END OF CLASS DATA ========= -->
+<HR>
+
+
+<!-- ======= START OF BOTTOM NAVBAR ====== -->
+<A NAME="navbar_bottom"><!-- --></A>
+<A HREF="#skip-navbar_bottom" title="Skip navigation links"></A>
+<TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
+<TR>
+<TD COLSPAN=2 BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
+<A NAME="navbar_bottom_firstrow"><!-- --></A>
+<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
+  <TR ALIGN="center" VALIGN="top">
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="class-use/Util.Process.html"><FONT CLASS="NavBarFont1"><B>Use</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../index-files/index-1.html"><FONT CLASS="NavBarFont1"><B>Index</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT></A>&nbsp;</TD>
+  </TR>
+</TABLE>
+</TD>
+<TD ALIGN="right" VALIGN="top" ROWSPAN=3><EM>
+</EM>
+</TD>
+</TR>
+
+<TR>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+&nbsp;<A HREF="../../../php/java/bridge/Util.Logger.html" title="class in php.java.bridge"><B>PREV CLASS</B></A>&nbsp;
+&nbsp;<A HREF="../../../php/java/bridge/Util.ProcessWithErrorHandler.html" title="class in php.java.bridge"><B>NEXT CLASS</B></A></FONT></TD>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+  <A HREF="../../../index.html?php/java/bridge/Util.Process.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+&nbsp;<A HREF="Util.Process.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+&nbsp;<SCRIPT type="text/javascript">
+  <!--
+  if(window==top) {
+    document.writeln('<A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>');
+  }
+  //-->
+</SCRIPT>
+<NOSCRIPT>
+  <A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>
+</NOSCRIPT>
+
+
+</FONT></TD>
+</TR>
+<TR>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+  SUMMARY:&nbsp;NESTED&nbsp;|&nbsp;FIELD&nbsp;|&nbsp;CONSTR&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+DETAIL:&nbsp;FIELD&nbsp;|&nbsp;CONSTR&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+</TR>
+</TABLE>
+<A NAME="skip-navbar_bottom"></A>
+<!-- ======== END OF BOTTOM NAVBAR ======= -->
+
+<HR>
+
+</BODY>
+</HTML>

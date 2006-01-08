@@ -15,12 +15,14 @@
 #define N_SARGS N_JAVA_SARGS	/* # of server args for exec */
 #define N_SENV N_JAVA_SENV		/* # of server env entries */
 #define EXT java
+#define EXTC Java
 #else
 #define DEFAULT_PORT DEFAULT_MONO_PORT
 #define DEFAULT_WRAPPER DEFAULT_MONO_WRAPPER
 #define N_SARGS N_MONO_SARGS
 #define N_SENV N_MONO_SENV
 #define EXT mono
+#define EXTC Mono
 
 #ifndef CFG_JAVA_SOCKET_INET
 # define CFG_JAVA_SOCKET_INET
@@ -41,6 +43,7 @@
 #define EXT_STR(ext) #ext
 #define EXT_STR_EXPAND(ext) EXT_STR(ext)
 #define EXT_NAME() EXT_STR_EXPAND(EXT)
+#define EXT_NAMEC() EXT_STR_EXPAND(EXTC)
 #define EXT_MINIT(ext) PHP_MINIT(ext)
 #define EXT_MSHUTDOWN(ext) PHP_MSHUTDOWN(ext)
 #define EXT_RINIT(ext) PHP_RINIT(ext)

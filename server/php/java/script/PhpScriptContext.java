@@ -49,10 +49,6 @@ public class PhpScriptContext extends SimpleScriptContext implements IPhpScriptC
 	env = new Hashtable();
 		
 	ctx = PhpScriptContextFactory.addNew(this);
-	JavaBridge bridge = new JavaBridge();
-	ctx.setBridge(bridge);
-	bridge.setClassLoader(new JavaBridgeClassLoader(ctx.getBridge(), DynamicJavaBridgeClassLoader.newInstance(Util.getContextClassLoader())));
-	bridge.setSessionFactory(ctx);
     	
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */

@@ -69,9 +69,8 @@ static  void  setResultFromException  (pval *presult, long value) {
   }
   EXT_GLOBAL(store_jobject)(presult, value TSRMLS_CC);
 }
-#endif
 
-static  void  setResultFromObject  (pval *presult, long value, char type, long class_id) {
+static void setResultFromObject (pval *presult, long value, char type, long class_id) {
   /* wrap the vm object in a pval object */
   pval *handle;
   TSRMLS_FETCH();
@@ -97,17 +96,29 @@ static  void  setResultFromObject  (pval *presult, long value, char type, long c
 	}
   }
 
-#ifndef ZEND_ENGINE_2
+  EXT_GLOBAL(store_jobject)(presult, value TSRMLS_CC);
+}
+#else
+static void setResultFromObject (pval *presult, long value, char type, long class_id) {
+  /* wrap the vm object in a pval object */
+  pval *handle;
+  TSRMLS_FETCH();
+  
+  if (Z_TYPE_P(presult) != IS_OBJECT) {
+	object_init_ex(presult, EXT_GLOBAL(class_entry));
+	presult->is_ref=1;
+    presult->refcount=1;
+  }
+
   ALLOC_ZVAL(handle);
   Z_TYPE_P(handle) = IS_LONG;
   Z_LVAL_P(handle) = value;
   pval_copy_constructor(handle);
   INIT_PZVAL(handle);
   zend_hash_index_update(Z_OBJPROP_P(presult), 0, &handle, sizeof(pval *), NULL);
-#else
-  EXT_GLOBAL(store_jobject)(presult, value TSRMLS_CC);
-#endif
 }
+#endif
+
 
 /*
  * Call a user function. Since our cross-compiler (which creates
@@ -503,7 +514,7 @@ unsigned char EXT_GLOBAL (get_mode) () {
   if (is_level)
 	level = EXT_GLOBAL(cfg)->logLevel_val>7?7:EXT_GLOBAL(cfg)->logLevel_val;
   
-  return (is_level<<7)|64|(level<<2)|compat;
+  return (is_level<<7)|64|(level<<2)|compat|EXT_GLOBAL(cfg)->extJavaCompatibility;
 }
 
 /**

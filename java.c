@@ -373,7 +373,7 @@ static void context(INTERNAL_FUNCTION_PARAMETERS)
  * \code
  * java_get_context()->getHttpServletRequest();
  * \endcode
- * @see java_get_session()
+ * @see get_session()
  */
 EXT_FUNCTION(EXT_GLOBAL(get_context))
 {
@@ -460,15 +460,13 @@ static void values(INTERNAL_FUNCTION_PARAMETERS)
 #endif
 }
 static const char warn_session[] = 
-"Probably the object has been destroyed already by the java_rshutdown() method -- have you loaded the \
-session module before the java module? Use \
+"the session module's session_write_close() tried to write garbage, aborted. \
+-- Have you loaded the session module before the java module? \n Use \
 java_session(session_id())->set(key,val) instead of the \
 \"$_SESSION[key]=val\" syntax, if you don't want to depend on the \
-session module or if you cannot guarantee that the session module's \
-rshutdown function is called before the zend objects store is \
-destroyed and before the PHP/Java Bridge rshutdown function is called. \n\
-If \"session_write_close();\" at the end of your script fixes this problem, \
-please report this PHP bug to the PHP release team.";
+session module. Else if \"session_write_close();\" at the end of \
+your script fixes this problem, please report this session module bug \
+to the PHP release team.";
 static const char identity[] = "serialID";
 static void serialize(INTERNAL_FUNCTION_PARAMETERS)
 {
@@ -576,7 +574,7 @@ EXT_FUNCTION(EXT_GLOBAL(get_values))
  * \code
  * function toString() {return "helloWorld";};
  * $object = java_get_closure();
- * echo (string)$object;
+ * echo "Java says that PHP says: $object\n";
  * \endcode
  *
  * When a php instance is supplied as a argument, that environment will be used
@@ -926,6 +924,17 @@ static PHP_INI_MH(OnIniHosts)
   }
   return SUCCESS;
 }
+static PHP_INI_MH(OnIniExtJavaCompatibility)
+{
+	if (new_value) {
+	  if(!strncasecmp(on, new_value, 2) || !strncasecmp(on2, new_value, 1))
+		EXT_GLOBAL(cfg)->extJavaCompatibility=1;
+	  else
+		EXT_GLOBAL(cfg)->extJavaCompatibility=0;
+	  EXT_GLOBAL(ini_updated)|=U_EXT_JAVA_COMPATIBILITY;
+	}
+	return SUCCESS;
+}
 static PHP_INI_MH(OnIniServlet)
 {
   if (new_value) {
@@ -945,6 +954,7 @@ static PHP_INI_MH(OnIniSockname)
   if (new_value) {
 	if((EXT_GLOBAL (ini_set) &U_SOCKNAME)) free(EXT_GLOBAL(cfg)->sockname);
 	EXT_GLOBAL(cfg)->sockname=strdup(new_value);
+	EXT_GLOBAL(cfg)->socketname_set=1;
 	assert(EXT_GLOBAL(cfg)->sockname); if(!EXT_GLOBAL(cfg)->sockname) exit(6);
 	EXT_GLOBAL(ini_updated)|=U_SOCKNAME;
   }
@@ -1023,6 +1033,7 @@ PHP_INI_BEGIN()
 
   PHP_INI_ENTRY(EXT_NAME()/**/".log_level",   NULL, PHP_INI_ALL, OnIniLogLevel)
   PHP_INI_ENTRY(EXT_NAME()/**/".log_file",   NULL, PHP_INI_SYSTEM, OnIniLogFile)
+  PHP_INI_ENTRY(EXT_NAME()/**/".ext_java_compatibility",   NULL, PHP_INI_SYSTEM, OnIniExtJavaCompatibility)
   PHP_INI_END()
 
 /* vm_alloc_globals_ctor(zend_vm_globals *vm_globals) */
@@ -1088,11 +1099,7 @@ EXT_FUNCTION(EXT_GLOBAL(construct))
 
  * \endcode
  */
-#if EXTENSION == JAVA
-EXT_METHOD(EXT, java_class)
-#elif EXTENSION == MONO
-EXT_METHOD(EXT, mono_class)
-#endif
+EXT_FUNCTION(EXT_GLOBAL(construct_class))
 {
   zval **argv;
   int argc = ZEND_NUM_ARGS();
@@ -1202,15 +1209,14 @@ EXT_METHOD(EXT, __call)
 /** Proto: object Java::__toString (void)
  *
  * Displays the java object as a string. Note: it doesn't cast the
- * object to a string, thus echo "$ob" displays a string
+ * object to a string, thus echo $ob displays a string
  * representation of $ob, e.g.: \code [o(String)"hello"]\endcode
  *
  * Use a string cast if you want to display the java string as a php
  * string, e.g.:
  * \code 
- * echo (string)$string; 
- * // implicit cast to string:
- * echo "".$string;
+ * echo (string)$string; // explicit cast
+ * echo "$string"; // implicit cast
  * \endcode
  */
 EXT_METHOD(EXT, __tostring)
@@ -1374,6 +1380,9 @@ EXT_METHOD(EXT, __wakeup)
   deserialize(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 }
 
+
+#define EXT_ARRAY EXTC##Array
+
 /** Proto: bool Java::offsetExists()
  * 
  * Checks if an object exists at the given position.
@@ -1384,7 +1393,7 @@ EXT_METHOD(EXT, __wakeup)
  * if(!$props["user.home"]) die("No home dir!?!");
  * \endcode
  */
-EXT_METHOD(EXT, offsetExists)
+EXT_METHOD(EXT_ARRAY, offsetExists)
 {
   proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   zval **argv;
@@ -1417,7 +1426,7 @@ EXT_METHOD(EXT, offsetExists)
  * \endcode
  *
  */
-EXT_METHOD(EXT, offsetGet)
+EXT_METHOD(EXT_ARRAY, offsetGet)
 {
   zval **argv;
   int argc;
@@ -1451,7 +1460,7 @@ EXT_METHOD(EXT, offsetGet)
  * $testobj[1][0][0][0][0][0] = 6;
  * \endcode
  */
-EXT_METHOD(EXT, offsetSet)
+EXT_METHOD(EXT_ARRAY, offsetSet)
 {
   zval **argv;
   int argc;
@@ -1474,7 +1483,7 @@ EXT_METHOD(EXT, offsetSet)
  * 
  * Remove the entry at a given position. Used internally.
  */
-EXT_METHOD(EXT, offsetUnset)
+EXT_METHOD(EXT_ARRAY, offsetUnset)
 {
   zval **argv;
   int argc;
@@ -1514,7 +1523,6 @@ function_entry EXT_GLOBAL(class_functions)[] = {
   EXT_ME(EXT, EXT, NULL, 0)
   EXT_ME(EXT, EXT_GLOBAL(class), NULL, 0)
   EXT_MALIAS(EXT, EXT_GLOBAL_N(class), EXT_GLOBAL(class), NULL, 0)
-  //EXT_MALIAS(EXT, __construct, EXT, arginfo_set, ZEND_ACC_PUBLIC)
   EXT_ME(EXT, __call, arginfo_set, ZEND_ACC_PUBLIC)
   EXT_ME(EXT, __tostring, arginfo_zero, ZEND_ACC_PUBLIC)
   EXT_ME(EXT, __get, arginfo_get, ZEND_ACC_PUBLIC)
@@ -1534,16 +1542,19 @@ function_entry EXT_GLOBAL(class_functions)[] = {
   EXT_ME(EXT, __sleep, arginfo_zero, ZEND_ACC_PUBLIC)
   EXT_ME(EXT, __wakeup, arginfo_zero, ZEND_ACC_PUBLIC)
   EXT_ME(EXT, __destruct, arginfo_zero, ZEND_ACC_PUBLIC)
-  //PHP_ME(EXT, __getFunctions, NULL, 0)
-  //PHP_ME(EXT, __getTypes, NULL, 0)
+  //PHP_ME(EXT, __createReflectionInstance, NULL, 0)
   {NULL, NULL, NULL}
 };
-function_entry EXT_GLOBAL(array_class_functions)[] = {
+static function_entry (array_class_functions)[] = {
   ZEND_FENTRY(__construct, EXT_FN(EXT_GLOBAL(construct)), NULL, 0)
-  EXT_ME(EXT, offsetExists,  arginfo_get, ZEND_ACC_PUBLIC)
-  EXT_ME(EXT, offsetGet,     arginfo_get, ZEND_ACC_PUBLIC)
-  EXT_ME(EXT, offsetSet,     arginfo_set, ZEND_ACC_PUBLIC)
-  EXT_ME(EXT, offsetUnset,   arginfo_get, ZEND_ACC_PUBLIC)
+  EXT_ME(EXT_ARRAY, offsetExists,  arginfo_get, ZEND_ACC_PUBLIC)
+  EXT_ME(EXT_ARRAY, offsetGet,     arginfo_get, ZEND_ACC_PUBLIC)
+  EXT_ME(EXT_ARRAY, offsetSet,     arginfo_set, ZEND_ACC_PUBLIC)
+  EXT_ME(EXT_ARRAY, offsetUnset,   arginfo_get, ZEND_ACC_PUBLIC)
+  {NULL, NULL, NULL}
+};
+static function_entry (class_class_functions)[] = {
+  ZEND_FENTRY(__construct, EXT_FN(EXT_GLOBAL(construct_class)), NULL, 0)
   {NULL, NULL, NULL}
 };
 #endif
@@ -1818,7 +1829,14 @@ EXT_GLOBAL(call_function_handler4)(INTERNAL_FUNCTION_PARAMETERS, zend_property_r
   zend_class_entry *ce = Z_OBJCE_P(getThis());
 								/* Do not create an instance for new
 								   java_class or new JavaClass */
-  short createInstance=!instanceof_function(ce, EXT_GLOBAL(class_class_entry) TSRMLS_CC);
+  short createInstance = 1;
+  zend_class_entry *parent;
+
+  for(parent=ce; parent->parent; parent=parent->parent)
+	if ((parent==EXT_GLOBAL(class_class_entry)) || ((parent==EXT_GLOBAL(class_class_entry_jsr)))) {
+	  createInstance = 0;		/* do not create an instance for new java_class or new JavaClass */
+	  break;
+	}
 
   getParametersArray(ht, arg_count, arguments);
 
@@ -1941,7 +1959,7 @@ PHP_MINIT_FUNCTION(EXT)
   make_lambda(&get, EXT_FN(EXT_GLOBAL(__get)));
   make_lambda(&set, EXT_FN(EXT_GLOBAL(__set)));
   
-  INIT_OVERLOADED_CLASS_ENTRY(ce, EXT_NAME(), 
+  INIT_OVERLOADED_CLASS_ENTRY(ce, EXT_NAMEC(), 
 							  EXT_GLOBAL(class_functions), 
 							  (zend_function*)&call, 
 							  (zend_function*)&get, 
@@ -1956,8 +1974,8 @@ PHP_MINIT_FUNCTION(EXT)
   EXT_GLOBAL(class_entry)->get_iterator = get_iterator;
   EXT_GLOBAL(class_entry)->create_object = EXT_GLOBAL(create_object);
 
-  INIT_CLASS_ENTRY(ce, EXT_NAME()/**/"Array", 
-				   EXT_GLOBAL(array_class_functions));
+  INIT_CLASS_ENTRY(ce, EXT_NAMEC()/**/"Array", 
+				   (array_class_functions));
   parent = (zend_class_entry *) EXT_GLOBAL(class_entry);
   EXT_GLOBAL(array_entry) =
 	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
@@ -1977,19 +1995,19 @@ PHP_MINIT_FUNCTION(EXT)
   // only cast and clone; no iterator, no array access
   EXT_GLOBAL(exception_class_entry)->create_object = EXT_GLOBAL(create_exception_object);
   
-  INIT_CLASS_ENTRY(ce, EXT_NAME()/**/"_class", EXT_GLOBAL(class_functions));
+  INIT_CLASS_ENTRY(ce, EXT_NAME()/**/"_class", (class_class_functions));
   parent = (zend_class_entry *) EXT_GLOBAL(class_entry);
 
   EXT_GLOBAL(class_class_entry) = 
 	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
 
   /* compatibility with the jsr implementation */
-  INIT_CLASS_ENTRY(ce, EXT_NAME()/**/"class", EXT_GLOBAL(class_functions));
+  INIT_CLASS_ENTRY(ce, EXT_NAMEC()/**/"Class", (class_class_functions));
   parent = (zend_class_entry *) EXT_GLOBAL(class_entry);
   EXT_GLOBAL(class_class_entry_jsr) = 
 	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
 
-  INIT_CLASS_ENTRY(ce, EXT_NAME()/**/"exception", EXT_GLOBAL(class_functions));
+  INIT_CLASS_ENTRY(ce, EXT_NAMEC()/**/"Exception", EXT_GLOBAL(class_functions));
   parent = (zend_class_entry *) EXT_GLOBAL(exception_class_entry);
   EXT_GLOBAL(exception_class_entry) = 
 	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
@@ -2050,13 +2068,14 @@ PHP_MINFO_FUNCTION(EXT)
 	  php_info_print_table_row(2, EXT_NAME()/**/".log_file", EXT_GLOBAL(cfg)->logFile);
   }
   php_info_print_table_row(2, EXT_NAME()/**/".log_level", is_level ? EXT_GLOBAL(cfg)->logLevel : "no value (use backend's default level)");
-  php_info_print_table_row(2, EXT_NAME()/**/".hosts", JG(hosts));
+  if(EXT_GLOBAL(option_set_by_user) (U_HOSTS, EXT_GLOBAL(ini_user)))  
+	php_info_print_table_row(2, EXT_NAME()/**/".hosts", JG(hosts));
 #if EXTENSION == JAVA
-  php_info_print_table_row(2, EXT_NAME()/**/".servlet", JG(servlet)?JG(servlet):off);
+  if(EXT_GLOBAL(option_set_by_user) (U_SERVLET, EXT_GLOBAL(ini_user)))  
+	php_info_print_table_row(2, EXT_NAME()/**/".servlet", JG(servlet)?JG(servlet):off);
 #endif
-  if(!server || is_local) {
-	php_info_print_table_row(2, EXT_NAME()/**/" command", s);
-  }
+  php_info_print_table_row(2, EXT_NAME()/**/".ext_java_compatibility", EXT_GLOBAL(cfg)->extJavaCompatibility?on:off);
+  php_info_print_table_row(2, EXT_NAME()/**/" command", s);
   php_info_print_table_row(2, EXT_NAME()/**/" status", server?"running":"not running");
   php_info_print_table_row(2, EXT_NAME()/**/" server", server?server:"localhost");
   php_info_print_table_end();

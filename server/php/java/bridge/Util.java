@@ -170,7 +170,7 @@ public class Util {
     /**
      * The logStream, defaults to System.err
      */
-    public static PrintStream logStream = System.err;
+    public static PrintStream logStream;
     
     /**
      * A logger class.
@@ -179,7 +179,9 @@ public class Util {
         static boolean haveDateFormat=true;
         private static Object _form;
         protected Logger () {
-	    if(DEFAULT_LOG_FILE.length()!=0 && Util.logStream==null) {
+	    if(Util.logStream==null) {
+	      if(DEFAULT_LOG_FILE.trim().length()==0)  Util.logStream = System.err;
+	      else 
 		try {
 		    Util.logStream=new java.io.PrintStream(new java.io.FileOutputStream(DEFAULT_LOG_FILE));
 		} catch (FileNotFoundException e1) {Util.logStream=System.err;}

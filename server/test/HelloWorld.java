@@ -18,7 +18,7 @@ public class HelloWorld {
       	String l = "4";
 	System.setProperty("php.java.bridge.default_log_level", l);
 	System.setProperty("php.java.bridge.default_log_file", "");
-	System.setProperty("php.java.bridge.php_exec", "/home/jostb/PHP-JAVA-BRIDGE/PHP5/dist/bin/php-cgi");
+	System.setProperty("php.java.bridge.php_exec", "php-cgi");
 
 	try {
 	    PhpScriptEngine engine = new PhpScriptEngine();

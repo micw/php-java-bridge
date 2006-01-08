@@ -149,9 +149,9 @@ public class JavaBridge implements Runnable {
     // native accept fills these
     int uid =-1, gid =-1;
 
-    static Object loadLock=new Object();
+    //static Object loadLock=new Object();
     /** For internal use only. */
-    public static short load = 0;
+    //public static short load = 0;
 
     /*
       public static short getLoad() {
@@ -201,7 +201,7 @@ public class JavaBridge implements Runnable {
 		return;
 	    }
 	    if(logLevel>3) logDebug("Request from client with uid/gid "+uid+"/"+gid);
-	    load++;
+	    //load++;
 	    try {
 		request.handleRequests();
 	    } catch (Throwable e) {
@@ -218,7 +218,7 @@ public class JavaBridge implements Runnable {
 	    } catch (IOException e2) {
 		printStackTrace(e2);
 	    }
-	    load--;
+	    //load--;
 	    globalRef=null;
 	    Session.expire(this);
 	    Util.logDebug("END: JavaBridge.run()");
@@ -544,7 +544,7 @@ public class JavaBridge implements Runnable {
 
 	    Object coercedArgs[] = coerce(params=selected.getParameterTypes(), args, response);
 	    if (this.logLevel>4) logInvoke(clazz, name, coercedArgs); // If we have a logLevel of 5 or above, do very detailed invocation logging
-    	    response.writeObject(selected.newInstance(coercedArgs), clazz);
+    	    response.writeObject(selected.newInstance(coercedArgs));
 
 	} catch (Throwable e) {
 	    if(e instanceof OutOfMemoryError ||
@@ -579,7 +579,7 @@ public class JavaBridge implements Runnable {
 				// example AbstractMap hashMap
 				// over Object hashMap.
 	    }
-	} else if (param.isAssignableFrom(java.lang.String.class)) {
+	} else if (param == java.lang.String.class) {
 	    if ((arg != null) && !(arg instanceof String) && !(arg instanceof Request.PhpString))
 	        if(arg instanceof byte[])
 	            w+=32;
@@ -631,10 +631,7 @@ public class JavaBridge implements Runnable {
 		if (c!=Boolean.TYPE) w+=9999;
 	    } else if (arg instanceof Character) {
 		if (c!=Character.TYPE) w+=9999;
-	    } else if (arg instanceof String) {
-		if (c== Character.TYPE) 
-		    w+=((String)arg).length();
-		else
+	    } else if ((arg instanceof String)||(arg instanceof Request.PhpString)) {
 		    w+=64;
 	    } else {
 		w+=9999;
@@ -1570,7 +1567,7 @@ public class JavaBridge implements Runnable {
     /**
      * Load the object from the session store.
      * The C code requires that this method is called "deserialize" even though it doesn't deserialize anything.
-     * @see The JSessionAdapter in the php_java_lib folder. For real serialization/deserialization see the JPersistenceAdapter in the php_java_lib folder.
+     * See the JSessionAdapter in the php_java_lib folder. For real serialization/deserialization see the JPersistenceAdapter in the php_java_lib folder.
      * @param serialID The key
      * @param timeout The timeout, usually 1400 seconds.
      * @return the new object identity.
@@ -1589,7 +1586,7 @@ public class JavaBridge implements Runnable {
     /**
      * Store the object in the session store and return the serial id.
      * The C code requires that this method is called "serialize" even though it doesn't serialize anything.
-     * @see The JSessionAdapter in the php_java_lib folder. For real serialization/deserialization see the JPersistenceAdapter in the php_java_lib folder.
+     * See the JSessionAdapter in the php_java_lib folder. For real serialization/deserialization see the JPersistenceAdapter in the php_java_lib folder.
      * @param obj The object
      * @param timeout The timeout, usually 1400 seconds
      * @return the serialID

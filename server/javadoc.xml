@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project default="javadoc">
 <target name="javadoc">
-<javadoc access="public" author="true" destdir="documentation/API" doctitle="PHP/Java Bridge API Documentation" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" packagenames="php.java.servlet,php.java.bridge,php.java.bridge.http,php.java.script,php.java.faces,javax.script" sourcepath=".:/home/src/GCC/gcc-4.0.1/libjava/:/opt/jetty-5.1.5rc0/src/:/home/jostb/workspace/myfaces" splitindex="true" use="true" version="true"/>
+<javadoc access="public" author="true" destdir="documentation/API" doctitle="PHP/Java Bridge API Documentation" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" packagenames="php.java.servlet,php.java.bridge,php.java.bridge.http,php.java.script,php.java.faces,javax.script" sourcepath=".:/home/src/GCC/gcc-4.0.build/i686-pc-linux-gnu/libjava/:/opt/jetty-5.1.5rc0/src/:/home/src/JAVA/myfaces/myfaces-1.1.1-src/src/" splitindex="true" use="true" version="true"/>
 </target>
 </project>

@@ -85,7 +85,7 @@ public class Response {
 
  
     protected abstract class DelegateWriter {
-    	protected Class type;
+    	protected Class staticType;
 
 	public abstract boolean setResult(Object value);
 
@@ -93,7 +93,7 @@ public class Response {
 	 * @param type - The result type
 	 */
 	public void setType(Class type) {
-	    this.type = type;
+	    this.staticType = type;
 	}
     }
     protected abstract class Writer extends DelegateWriter {
@@ -162,6 +162,42 @@ public class Response {
 	    return true;
         }
     }
+    protected class ClassicArrayValuesWriter extends DelegateWriter {
+	public boolean setResult(Object value) {
+	    if (value.getClass().isArray()) {
+		long length = Array.getLength(value);
+		writeCompositeBegin_a();
+		for (int i=0; i<length; i++) {
+		    writePairBegin();
+		    writer.setResult(Array.get(value, i));
+		    writePairEnd();
+		}
+		writeCompositeEnd();
+	    } else if (value instanceof java.util.Map) {
+		Map ht = (Map) value;
+		writeCompositeBegin_h();
+		for (Iterator e = ht.entrySet().iterator(); e.hasNext(); ) {
+		    Map.Entry entry = (Map.Entry)e.next();
+		    Object key = entry.getKey();
+		    Object val = entry.getValue();
+		    if (key instanceof Number &&
+			!(key instanceof Double || key instanceof Float)) {
+			writePairBegin_n(((Number)key).intValue());
+			writer.setResult(val);
+		    }
+		    else {
+			writePairBegin_s(String.valueOf(key));
+			writer.setResult(ht.get(key));
+		    }
+		    writePairEnd();
+		}
+		writeCompositeEnd();
+	    } else {
+		return false;
+	    }
+	    return true;
+        }
+    }
     protected class ClassicWriter extends WriterWithDelegate {
  
 	public boolean setResult(Object value) {
@@ -188,7 +224,7 @@ public class Response {
 		writeBoolean(((Boolean)value).booleanValue());
 
 	    } else if(!delegate.setResult(value))
-		writeObject(value, type);
+		writeObject(value);
 	    return true;
 	}
     }
@@ -196,22 +232,22 @@ public class Response {
 
 	public boolean setResult(Object value) {
 	    if(value==null) {writeNull(); return true;}
-	    if(type.isPrimitive()) {
-   		if(type == Boolean.TYPE)
+	    if(staticType.isPrimitive()) {
+   		if(staticType == Boolean.TYPE)
 		    writeBoolean(((Boolean) value).booleanValue());
-   		else if(type == Byte.TYPE || type == Short.TYPE || type == Integer.TYPE)
+   		else if(staticType == Byte.TYPE || staticType == Short.TYPE || staticType == Integer.TYPE)
 		    writeLong(((Number)value).longValue());
-   		else if(type == Long.TYPE)
+   		else if(staticType == Long.TYPE)
    		    writeDouble(((Number)value).doubleValue());
-   		else if(type == Float.TYPE || type == Double.TYPE) 
+   		else if(staticType == Float.TYPE || staticType == Double.TYPE) 
 		    writeDouble(((Number)value).doubleValue());
-   		else if(type == Character.TYPE) 
+   		else if(staticType == Character.TYPE) 
 		    writeString(String.valueOf(value));
-   		else { Util.logFatal("Unknown type"); writeObject(value, this.type); }
+   		else { Util.logFatal("Unknown type"); writeObject(value); }
 	    } else if(value instanceof Request.PhpString) //  No need to check for Request.PhpNumber, this cannot happen.
 	        writeString(((Request.PhpString)value).getBytes());
 	    else if(!delegate.setResult(value))
-		writeObject(value, this.type);
+		writeObject(value);
 	    return true;
         }        	     	
     }
@@ -226,41 +262,41 @@ public class Response {
 		 if(value instanceof Request.PhpString) 
 		     value = ((Request.PhpString)value).getString();
 
-		 if(type.isPrimitive()) {
-		if(type == Boolean.TYPE) {
+		 if(staticType.isPrimitive()) {
+		if(staticType == Boolean.TYPE) {
 		    if(value instanceof Boolean)
 		        writeBoolean(((Boolean) value).booleanValue());
 		    else 
 		        writeBoolean(value!=null && String.valueOf(value).length()!=0);
-		} else if(type == Byte.TYPE || type == Short.TYPE || type == Integer.TYPE || type == Long.TYPE) {
+		} else if(staticType == Byte.TYPE || staticType == Short.TYPE || staticType == Integer.TYPE || staticType == Long.TYPE) {
 		    if(value instanceof Number) 
 		        writeLong(((Number)value).longValue());
 		    else {
 		        try { writeLong(new Long(String.valueOf(value)).longValue()); } catch (NumberFormatException n) { writeLong(0); }
 		    }
-		} else if(type == Float.TYPE || type == Double.TYPE) {
+		} else if(staticType == Float.TYPE || staticType == Double.TYPE) {
 		    if(value instanceof Number) 
 		        writeDouble(((Number)value).doubleValue());
 		    else {
 		        try { writeDouble(new Double(String.valueOf(value)).doubleValue()); } catch (NumberFormatException n) { writeDouble(0.0); }
 		    }
-		} else if(type == Character.TYPE) {
+		} else if(staticType == Character.TYPE) {
 		    writeString(String.valueOf(value));
-		} else { Util.logFatal("Unknown type"); writeObject(value, this.type); }
-	    } else if(type == String.class) {
+		} else { Util.logFatal("Unknown type"); writeObject(value); }
+	    } else if(staticType == String.class) {
 		 if (value instanceof byte[])
 		     writeString((byte[])value);
 		 else
 		     writeString(String.valueOf(value));
 	    } else {
-		writeObject(value, this.type);
+		writeObject(value);
 	    }
 	    return true;
 	}
     }
     DelegateWriter getDefaultDelegate() {
 	if(bridge.options.sendArraysAsValues())
-	    return new ArrayValuesWriter();
+	    return new ClassicArrayValuesWriter();
 	else
 	    return new ArrayWriter();
     }
@@ -381,10 +417,11 @@ public class Response {
         List.class.isAssignableFrom(type) || 
         Map.class.isAssignableFrom(type);
     }
-    void writeObject(Object o, Class type) {
+    void writeObject(Object o) {
         if(o==null) { writeNull(); return; }
+        Class dynamicType = o.getClass();
 	buf.append(O); buf.append(String.valueOf(this.bridge.globalRef.append(o)));
-	buf.append(isArray(type)?pa:po);
+	buf.append(isArray(dynamicType)?pa:po);
 	buf.append(n); buf.append("0");
 	buf.append(I); buf.append(String.valueOf(result));
 	buf.append(e);

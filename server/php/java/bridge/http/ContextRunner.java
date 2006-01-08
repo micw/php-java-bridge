@@ -74,7 +74,7 @@ class ContextRunner implements Runnable {
 	} finally {
 	    if(ctx!=null) ctx.remove();
 	    channel.shutdown();
-	    JavaBridge.load--;
+	    //JavaBridge.load--;
 	}
     }
 }

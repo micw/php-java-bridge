@@ -47,6 +47,7 @@ public class JavaBridgeRunner extends HttpServer {
 	try {
             boolean promisc = (System.getProperty("php.java.bridge.promiscuous", "false").toLowerCase().equals("true"));
 	    socket =  promisc ? JavaBridge.bind("INET:0") : JavaBridge.bind("INET_LOCAL:0");
+	    if(Util.logLevel>3) Util.logDebug("JavaBridgeRunner started on port " + socket);
 	    return socket;
 	} catch (Exception e) {
 	    Util.printStackTrace(e);
@@ -57,6 +58,7 @@ public class JavaBridgeRunner extends HttpServer {
     private static ContextFactory getContextManager(HttpRequest req, HttpResponse res) {
     	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
     	ContextFactory ctx = ContextFactory.get(id);
+	if(ctx==null) ctx = ContextFactory.addNew();
      	res.setHeader("X_JAVABRIDGE_CONTEXT", id);
     	return ctx;
     }
@@ -72,9 +74,9 @@ public class JavaBridgeRunner extends HttpServer {
     	super.parseBody(req, res);
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
 	ContextFactory ctx = getContextManager(req, res);
-	JavaBridge bridge = ctx.getBridge();
-	//if(session) ctx.setSession(req);
+    	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
 
+    	JavaBridge bridge = ctx.getBridge();
 	bridge.in = sin=req.getInputStream();
 	bridge.out = sout = new ByteArrayOutputStream();
 	Request r = bridge.request = new Request(bridge);
@@ -118,4 +120,15 @@ public class JavaBridgeRunner extends HttpServer {
 	return socket;
     }
 
+    /**
+     * For internal tests only.
+     * @throws InterruptedException 
+     */
+    public static void main(String s[]) throws InterruptedException {
+	System.setProperty("php.java.bridge.default_log_level", "4");
+	System.setProperty("php.java.bridge.default_log_file", "");
+	JavaBridgeRunner r = new JavaBridgeRunner();
+	r.httpServer.join();
+	r.destroy();
+    }
 }

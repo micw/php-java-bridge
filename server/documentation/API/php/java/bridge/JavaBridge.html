@@ -1,183 +1,1900 @@
-<?xml version="1.0" encoding="null"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head><title>JavaBridge</title><script src="../../../resources/gjdoc.js" type="text/javascript"><!-- this comment required for konqueror 3.2.2 --></script><meta http-equiv="Content-Type" content="text/html; charset=null"/><meta name="generator" content="GNU Gjdoc Standard Doclet"/><meta name="keywords" content="php.java.bridge.JavaBridge class"/><meta name="keywords" content="lastException"/><meta name="keywords" content="in"/><meta name="keywords" content="out"/><meta name="keywords" content="logLevel"/><meta name="keywords" content="request"/><meta name="keywords" content="load"/><meta name="keywords" content="sclose()"/><meta name="keywords" content="getOptions()"/><meta name="keywords" content="run()"/><meta name="keywords" content="bind()"/><meta name="keywords" content="init()"/><meta name="keywords" content="main()"/><meta name="keywords" content="printStackTrace()"/><meta name="keywords" content="logDebug()"/><meta name="keywords" content="logFatal()"/><meta name="keywords" content="logError()"/><meta name="keywords" content="logMessage()"/><meta name="keywords" content="warn()"/><meta name="keywords" content="CreateObject()"/><meta name="keywords" content="logInvoke()"/><meta name="keywords" content="Invoke()"/><meta name="keywords" content="objectDebugDescription()"/><meta name="keywords" content="classDebugDescription()"/><meta name="keywords" content="GetSetProp()"/><meta name="keywords" content="getValues()"/><meta name="keywords" content="cast()"/><meta name="keywords" content="castToString()"/><meta name="keywords" content="castToExact()"/><meta name="keywords" content="castToBoolean()"/><meta name="keywords" content="castToInexact()"/><meta name="keywords" content="getPhpMap()"/><meta name="keywords" content="setJarLibraryPath()"/><meta name="keywords" content="setLibraryPath()"/><meta name="keywords" content="inspect()"/><meta name="keywords" content="setFileEncoding()"/><meta name="keywords" content="InstanceOf()"/><meta name="keywords" content="ObjectToString()"/><meta name="keywords" content="getContext()"/><meta name="keywords" content="getSession()"/><meta name="keywords" content="makeClosure()"/><meta name="keywords" content="reset()"/><meta name="keywords" content="setSessionFactory()"/><meta name="keywords" content="deserialize()"/><meta name="keywords" content="serialize()"/><meta name="keywords" content="setClassLoader()"/><meta name="keywords" content="getClassLoader()"/><meta name="keywords" content="offsetExists()"/><meta name="keywords" content="offsetGet()"/><meta name="keywords" content="offsetSet()"/><meta name="keywords" content="offsetUnset()"/><link rel="stylesheet" type="text/css" href="../../../resources/gjdochtml-clean-layout.css" title="GNU Clean"/><link rel="stylesheet" type="text/css" href="../../../resources/gjdochtml-clean-color1.css" title="GNU Clean"/></head><body class="content class" onload="top.contentPageLoaded(document.title)"><table class="navbar div top"><tr><td class="navbar div top" colspan="2"><div class="navbar div top" colspan="2"><span class="navbar item enabled"><a href="../../../index-noframes.html">Overview</a></span> <span class="navbar item enabled"><a href="package-summary.html">Package</a></span> <span class="navbar item active">Class</span> <span class="navbar item enabled"><a href="JavaBridge-uses.html">Use</a></span> <span class="navbar item enabled"><a href="tree.html">Tree</a></span> <span class="navbar item enabled"><a href="../../../alphaindex-1.html">Index</a></span> <span class="navbar item enabled"><a href="../../../deprecated.html">Deprecated</a></span> <span class="navbar item enabled"><a href="../../../about.html">About</a></span></div></td></tr><tr><td class="navi"><a href="../../../php/java/bridge/ISocketFactory.html">Prev Class</a> | <a href="../../../php/java/bridge/JavaBridgeClassLoader.html">Next Class</a></td><td class="navi"><a href="../../../index.html" title="Show in a frameset" target="_top">Frames</a> | <a href="JavaBridge.html" title="Show without frames" target="_top">No Frames</a> </td></tr><tr><td class="navi">Summary: Nested | <a href="#summary-fields">Field</a> | <a href="#summary-methods">Method</a> | <a href="#summary-constructors">Constr</a></td><td class="navi">Detail: Nested | <a href="#detail-fields">Field</a> | <a href="#detail-methods">Method</a> | <a href="#detail-constructors">Constr</a></td></tr></table><div class="class title outer"><h3 class="class title-package">php.java.bridge</h3><h1 class="class title-class">Class JavaBridge</h1></div><div class="class inheritance-tree"><ul class="inheritance 0"><li class="inheritance 0"><code>java.lang.Object</code></li><ul class="inheritance 1"><li class="inheritance 1"><code>php.java.bridge.JavaBridge</code></li></ul></ul></div><dl class="class knownimplementing"><dt class="header"><b>Implemented Interfaces:</b></dt><dd class="item">java.lang.Runnable</dd></dl><hr/><div class="class synopsis outer"><div class="class synopsis declaration"><code>public class <b class="class synopsis name">JavaBridge</b></code></div><div class="class synopsis superclass"><code>extends java.lang.Object</code></div><div class="class synopsis implements"><code>implements java.lang.Runnable</code></div></div><hr/><div class="class description"> This is the main class for the PHP/Java Bridge. It starts the standalone backend,
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--NewPage-->
+<HTML>
+<HEAD>
+<!-- Generated by javadoc (build 1.5.0) on Sun Jan 08 19:28:39 CET 2006 -->
+<TITLE>
+JavaBridge
+</TITLE>
+
+<META NAME="keywords" CONTENT="php.java.bridge.JavaBridge class">
+
+<LINK REL ="stylesheet" TYPE="text/css" HREF="../../../stylesheet.css" TITLE="Style">
+
+<SCRIPT type="text/javascript">
+function windowTitle()
+{
+    parent.document.title="JavaBridge";
+}
+</SCRIPT>
+<NOSCRIPT>
+</NOSCRIPT>
+
+</HEAD>
+
+<BODY BGCOLOR="white" onload="windowTitle();">
+
+
+<!-- ========= START OF TOP NAVBAR ======= -->
+<A NAME="navbar_top"><!-- --></A>
+<A HREF="#skip-navbar_top" title="Skip navigation links"></A>
+<TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
+<TR>
+<TD COLSPAN=2 BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
+<A NAME="navbar_top_firstrow"><!-- --></A>
+<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
+  <TR ALIGN="center" VALIGN="top">
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="class-use/JavaBridge.html"><FONT CLASS="NavBarFont1"><B>Use</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../index-files/index-1.html"><FONT CLASS="NavBarFont1"><B>Index</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT></A>&nbsp;</TD>
+  </TR>
+</TABLE>
+</TD>
+<TD ALIGN="right" VALIGN="top" ROWSPAN=3><EM>
+</EM>
+</TD>
+</TR>
+
+<TR>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+&nbsp;<A HREF="../../../php/java/bridge/ISocketFactory.html" title="interface in php.java.bridge"><B>PREV CLASS</B></A>&nbsp;
+&nbsp;<A HREF="../../../php/java/bridge/JavaBridgeClassLoader.html" title="class in php.java.bridge"><B>NEXT CLASS</B></A></FONT></TD>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+  <A HREF="../../../index.html?php/java/bridge/JavaBridge.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+&nbsp;<A HREF="JavaBridge.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+&nbsp;<SCRIPT type="text/javascript">
+  <!--
+  if(window==top) {
+    document.writeln('<A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>');
+  }
+  //-->
+</SCRIPT>
+<NOSCRIPT>
+  <A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>
+</NOSCRIPT>
+
+
+</FONT></TD>
+</TR>
+<TR>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+  SUMMARY:&nbsp;NESTED&nbsp;|&nbsp;<A HREF="#field_summary">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+DETAIL:&nbsp;<A HREF="#field_detail">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+</TR>
+</TABLE>
+<A NAME="skip-navbar_top"></A>
+<!-- ========= END OF TOP NAVBAR ========= -->
+
+<HR>
+<!-- ======== START OF CLASS DATA ======== -->
+<H2>
+<FONT SIZE="-1">
+php.java.bridge</FONT>
+<BR>
+Class JavaBridge</H2>
+<PRE>
+java.lang.Object
+  <IMG SRC="../../../resources/inherit.gif" ALT="extended by "><B>php.java.bridge.JavaBridge</B>
+</PRE>
+<DL>
+<DT><B>All Implemented Interfaces:</B> <DD>java.lang.Runnable</DD>
+</DL>
+<HR>
+<DL>
+<DT><PRE>public class <B>JavaBridge</B><DT>extends java.lang.Object<DT>implements java.lang.Runnable</DL>
+</PRE>
+
+<P>
+This is the main class for the PHP/Java Bridge. It starts the standalone backend,
  listenes for protocol requests and handles CreateInstance, GetSetProp and Invoke 
  requests. Supported protocol modes are INET (listens on all interfaces), INET_LOCAL (loopback only) and 
  UNIX (uses a local, invisible communication channel, requires natcJavaBridge.so). Furthermore it
  contains utility methods which can be used by clients.
- <p/>
- Example:<br/>
+ <p>
+ Example:<br>
  <code>
- java -Djava.awt.headless=true -jar JavaBridge.jar INET_LOCAL:9676 5 bridge.log &amp;<br/>
- telnet localhost 9676<br/>
- &lt;CreateInstance value="java.lang.Long" predicate="Instance" id="0"&gt;<br/> 
-     &lt;Long value="6"/&gt; <br/>
-   &lt;/CreateInstance&gt;<br/>
- &lt;Invoke value="1" method="toString" predicate="Invoke" id="0"/&gt;<br/>
+ java -Djava.awt.headless=true -jar JavaBridge.jar INET_LOCAL:9676 5 bridge.log &<br>
+ telnet localhost 9676<br>
+ &lt;CreateInstance value="java.lang.Long" predicate="Instance" id="0"&gt;<br> 
+     &lt;Long value="6"/&gt; <br>
+   &lt;/CreateInstance&gt;<br>
+ &lt;Invoke value="1" method="toString" predicate="Invoke" id="0"/&gt;<br>
  </code>
-</div><p class="taglet"><dl class="tag list"><dt class="tag section header"><b>Authors:</b></dt><dd class="tag item">Sam Ruby (methods coerce and select)</dd><dd class="tag item">Kai Londenberg</dd><dd class="tag item">Jost Boekemeier</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><a name="summary-fields"/><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table header"><td colspan="2"><h2 class="table header">Field Summary</h2></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.io.InputStream</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#in">in</a></code></dt><dd class="description"> For internal use only.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.Throwable</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#lastException">lastException</a></code></dt><dd class="description"> For PHP4's last_exception_get.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis">static short</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#load">load</a></code></dt><dd class="description">For internal use only.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> int</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#logLevel">logLevel</a></code></dt><dd class="description"> For internal use only.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.io.OutputStream</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#out">out</a></code></dt><dd class="description"> For internal use only.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> <a href="../../../php/java/bridge/Request.html" title="Class in php.java.bridge">Request</a></code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#request">request</a></code></dt><dd class="description"> For internal use only.</dd></dl></td></tr></table></dl><a name="summary-constructors"/><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table header"><td colspan="2"><h2 class="table header">Constructor Summary</h2></td></tr><tr><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#JavaBridge()">JavaBridge</a>()</code></dt><dd class="description"> Only for internal use.</dd></dl></td></tr><tr><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#JavaBridge(java.io.InputStream,java.io.OutputStream)">JavaBridge</a>(java.io.InputStream&nbsp;in, java.io.OutputStream&nbsp;out)</code></dt><dd class="description"> Only for internal use.</dd></dl></td></tr></table></dl><a name="summary-methods"/><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table header"><td colspan="2"><h2 class="table header">Method Summary</h2></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#CreateObject(java.lang.String,boolean,args[],php.java.bridge.Response)">CreateObject</a>(java.lang.String&nbsp;name, boolean&nbsp;createInstance, args[]&nbsp;, <a href="../../../php/java/bridge/Response.html" title="Class in php.java.bridge">Response</a>&nbsp;response)</code></dt><dd class="description"> Create an new instance of a given class
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#GetSetProp(java.lang.Object,java.lang.String,args[],php.java.bridge.Response)">GetSetProp</a>(java.lang.Object&nbsp;object, java.lang.String&nbsp;prop, args[]&nbsp;, <a href="../../../php/java/bridge/Response.html" title="Class in php.java.bridge">Response</a>&nbsp;response)</code></dt><dd class="description"> Get or Set a property
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis">static boolean</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#InstanceOf(java.lang.Object,java.lang.Object)">InstanceOf</a>(java.lang.Object&nbsp;ob, java.lang.Object&nbsp;claz)</code></dt><dd class="description"> Check if object is an instance of class.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#Invoke(java.lang.Object,java.lang.String,args[],php.java.bridge.Response)">Invoke</a>(java.lang.Object&nbsp;object, java.lang.String&nbsp;method, args[]&nbsp;, <a href="../../../php/java/bridge/Response.html" title="Class in php.java.bridge">Response</a>&nbsp;response)</code></dt><dd class="description"> Invoke a method on a given object
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.String</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#ObjectToString(java.lang.Object)">ObjectToString</a>(java.lang.Object&nbsp;ob)</code></dt><dd class="description"> Returns a string representation of the object
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis">static <a href="../../../php/java/bridge/ISocketFactory.html" title="Interface in php.java.bridge">ISocketFactory</a></code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#bind(java.lang.String)">bind</a>(java.lang.String&nbsp;sockname)</code></dt><dd class="description"> Create a new server socket and return it.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.Object</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#cast(java.lang.Object,java.lang.Class)">cast</a>(java.lang.Object&nbsp;ob, java.lang.Class&nbsp;type)</code></dt><dd class="description"> Cast a object to a type
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.Object</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#castToBoolean(java.lang.Object)">castToBoolean</a>(java.lang.Object&nbsp;ob)</code></dt><dd class="description"> Cast an object to a boolean value
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.Object</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#castToExact(java.lang.Object)">castToExact</a>(java.lang.Object&nbsp;ob)</code></dt><dd class="description"> Cast an object to an exact number
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.Object</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#castToInexact(java.lang.Object)">castToInexact</a>(java.lang.Object&nbsp;ob)</code></dt><dd class="description"> Cast an object to a inexact value
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.Object</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#castToString(java.lang.Object)">castToString</a>(java.lang.Object&nbsp;ob)</code></dt><dd class="description"> Cast an object to a string
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis">static java.lang.String</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#classDebugDescription(java.lang.Class)">classDebugDescription</a>(java.lang.Class&nbsp;cls)</code></dt><dd class="description"> Only for internal use
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> int</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#deserialize(java.lang.String,int)">deserialize</a>(java.lang.String&nbsp;serialID, int&nbsp;timeout)</code></dt><dd class="description"> Load the object from the session store.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> <a href="../../../php/java/bridge/JavaBridgeClassLoader.html" title="Class in php.java.bridge">JavaBridgeClassLoader</a></code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getClassLoader()">getClassLoader</a>()</code></dt><dd class="description"> Return the current ClassLoader
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.Object</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getContext()">getContext</a>()</code></dt><dd class="description"> Returns the JSR223 context.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> <a href="../../../php/java/bridge/Options.html" title="Class in php.java.bridge">Options</a></code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getOptions()">getOptions</a>()</code></dt><dd class="description"> Returns the connection options
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> <a href="../../../php/java/bridge/PhpMap.html" title="Class in php.java.bridge">PhpMap</a></code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getPhpMap(java.lang.Object)">getPhpMap</a>(java.lang.Object&nbsp;value)</code></dt><dd class="description"> Return map for the value (PHP 5 only)
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> <a href="../../../php/java/bridge/ISession.html" title="Interface in php.java.bridge">ISession</a></code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getSession(java.lang.String,boolean,int)">getSession</a>(java.lang.String&nbsp;name, boolean&nbsp;clientIsNew, int&nbsp;timeout)</code></dt><dd class="description"> Return a session handle shared among all JavaBridge
- instances.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.Object</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getValues(java.lang.Object)">getValues</a>(java.lang.Object&nbsp;ob)</code></dt><dd class="description"> Convert Map or Collection into a PHP array,
- sends the entire array, Map or Collection to the client.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis">static void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#init(s[])">init</a>(s[]&nbsp;)</code></dt><dd class="description"> Global init
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.String</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#inspect(java.lang.Object)">inspect</a>(java.lang.Object&nbsp;object)</code></dt><dd class="description"> For internal use only.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#logDebug(java.lang.String)">logDebug</a>(java.lang.String&nbsp;msg)</code></dt><dd class="description"> Write a debug message
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#logError(java.lang.String)">logError</a>(java.lang.String&nbsp;msg)</code></dt><dd class="description"> Write an error message.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#logFatal(java.lang.String)">logFatal</a>(java.lang.String&nbsp;msg)</code></dt><dd class="description"> Write a fatal message
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis">static void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#logInvoke(java.lang.Object,java.lang.String,args[])">logInvoke</a>(java.lang.Object&nbsp;obj, java.lang.String&nbsp;method, args[]&nbsp;)</code></dt></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#logMessage(java.lang.String)">logMessage</a>(java.lang.String&nbsp;msg)</code></dt><dd class="description"> Write a notice.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis">static void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#main(s[])">main</a>(s[]&nbsp;)</code></dt><dd class="description"> Start the PHP/Java Bridge.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.Object</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#makeClosure(long)">makeClosure</a>(long&nbsp;object)</code></dt><dd class="description"> Create a dynamic proxy proxy for calling PHP code.<br/>
- Example: <br/>
- java_closure();<br/>
- java_closure($this);<br/>
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.Object</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#makeClosure(long,java.lang.String)">makeClosure</a>(long&nbsp;object, java.lang.String&nbsp;name)</code></dt><dd class="description"> Create a dynamic proxy proxy for calling PHP code.<br/>
- Example: <br/>
- java_closure($this, "clickMe");<br/>
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.Object</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#makeClosure(long,java.lang.String,interfaces[])">makeClosure</a>(long&nbsp;object, java.lang.String&nbsp;name, interfaces[]&nbsp;)</code></dt><dd class="description"> Create a dynamic proxy proxy for calling PHP code.<br/>
- Example: <br/>
- java_closure($this, "clickMe", $interfaces);<br/>
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.Object</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#makeClosure(long,java.util.Map)">makeClosure</a>(long&nbsp;object, java.util.Map&nbsp;names)</code></dt><dd class="description"> Create a dynamic proxy proxy for calling PHP code.<br/>
- Example: <br/>
- java_closure($this, $map);<br/>
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.Object</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#makeClosure(long,java.util.Map,interfaces[])">makeClosure</a>(long&nbsp;object, java.util.Map&nbsp;names, interfaces[]&nbsp;)</code></dt><dd class="description"> Create a dynamic proxy proxy for calling PHP code.<br/>
- Example: <br/>
- java_closure($this, $map, $interfaces);<br/>
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis">static java.lang.String</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#objectDebugDescription(java.lang.Object)">objectDebugDescription</a>(java.lang.Object&nbsp;obj)</code></dt><dd class="description"> Only for internal use
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> boolean</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#offsetExists(java.lang.Object[],java.lang.Object)">offsetExists</a>(java.lang.Object[]&nbsp;value, java.lang.Object&nbsp;pos)</code></dt><dd class="description"> Checks if a given position exists.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> boolean</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#offsetExists(java.util.Map,java.lang.Object)">offsetExists</a>(java.util.Map&nbsp;value, java.lang.Object&nbsp;pos)</code></dt><dd class="description"> Checks if a given position exists.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.Object</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#offsetGet(java.lang.Object[],java.lang.Object)">offsetGet</a>(java.lang.Object[]&nbsp;value, java.lang.Object&nbsp;pos)</code></dt><dd class="description"> Returns the object at the posisition.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.Object</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#offsetGet(java.util.Map,java.lang.Object)">offsetGet</a>(java.util.Map&nbsp;value, java.lang.Object&nbsp;pos)</code></dt><dd class="description"> Returns the object at the posisition.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#offsetSet(java.lang.Object[],java.lang.Object,java.lang.Object)">offsetSet</a>(java.lang.Object[]&nbsp;value, java.lang.Object&nbsp;pos, java.lang.Object&nbsp;val)</code></dt><dd class="description"> Set an object at position.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#offsetSet(java.util.Map,java.lang.Object,java.lang.Object)">offsetSet</a>(java.util.Map&nbsp;value, java.lang.Object&nbsp;pos, java.lang.Object&nbsp;val)</code></dt><dd class="description"> Set an object at position.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#offsetUnset(java.lang.Object[],java.lang.Object)">offsetUnset</a>(java.lang.Object[]&nbsp;value, java.lang.Object&nbsp;pos)</code></dt><dd class="description"> Remove an object from the position.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#offsetUnset(java.util.Map,java.lang.Object)">offsetUnset</a>(java.util.Map&nbsp;value, java.lang.Object&nbsp;pos)</code></dt><dd class="description"> Remove an object from the position.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#printStackTrace(java.lang.Throwable)">printStackTrace</a>(java.lang.Throwable&nbsp;t)</code></dt><dd class="description"> Print a stack trace to the log file.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#reset()">reset</a>()</code></dt><dd class="description"> Reset the global caches of the bridge.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#run()">run</a>()</code></dt><dd class="description"> Communication with client in a new thread
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis">static void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#sclose(int)">sclose</a>(int&nbsp;peer)</code></dt><dd class="description"> Close a local socket.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.lang.String</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#serialize(java.lang.Object,int)">serialize</a>(java.lang.Object&nbsp;obj, int&nbsp;timeout)</code></dt><dd class="description"> Store the object in the session store and return the serial id.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#setClassLoader(php.java.bridge.JavaBridgeClassLoader)">setClassLoader</a>(<a href="../../../php/java/bridge/JavaBridgeClassLoader.html" title="Class in php.java.bridge">JavaBridgeClassLoader</a>&nbsp;cl)</code></dt><dd class="description"> Set a new ClassLoader
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#setFileEncoding(java.lang.String)">setFileEncoding</a>(java.lang.String&nbsp;fileEncoding)</code></dt><dd class="description"> Set a new file encoding, used to code and decode strings.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#setJarLibraryPath(java.lang.String,java.lang.String)">setJarLibraryPath</a>(java.lang.String&nbsp;path, java.lang.String&nbsp;extensionDir)</code></dt><dd class="description"> Append the path to the current library path<br/>
- Examples:<br/>
- setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");<br/>
- setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");<br/>
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#setLibraryPath(java.lang.String,java.lang.String)">setLibraryPath</a>(java.lang.String&nbsp;rawPath, java.lang.String&nbsp;extensionDir)</code></dt><dd class="description"> 
- Set the library path for ECMA dll's
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#setSessionFactory(php.java.bridge.SessionFactory)">setSessionFactory</a>(<a href="../../../php/java/bridge/SessionFactory.html" title="Class in php.java.bridge">SessionFactory</a>&nbsp;sessionFactory)</code></dt><dd class="description"> This method sets a new session factory.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#warn(java.lang.String)">warn</a>(java.lang.String&nbsp;msg)</code></dt><dd class="description"> Write a warning.</dd></dl></td></tr></table></dl><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table sub header"><td colspan="2"><h3 class="table sub header">Methods inherited from class java.lang.Object</h3></td></tr><tr><td class="inherited"><a href="../../../java/lang/Object.html#equals(java.lang.Object)" title="equals(Object)"><code class="member">equals</code></a>, <a href="../../../java/lang/Object.html#getClass()" title="getClass()"><code class="member">getClass</code></a>, <a href="../../../java/lang/Object.html#hashCode()" title="hashCode()"><code class="member">hashCode</code></a>, <a href="../../../java/lang/Object.html#notify()" title="notify()"><code class="member">notify</code></a>, <a href="../../../java/lang/Object.html#notifyAll()" title="notifyAll()"><code class="member">notifyAll</code></a>, <a href="../../../java/lang/Object.html#toString()" title="toString()"><code class="member">toString</code></a>, <a href="../../../java/lang/Object.html#wait()" title="wait()"><code class="member">wait</code></a>, <a href="../../../java/lang/Object.html#wait(long)" title="wait(long)"><code class="member">wait</code></a>, <a href="../../../java/lang/Object.html#wait(long,int)" title="wait(long,int)"><code class="member">wait</code></a></td></tr></table></dl><a name="detail-fields"/><h2 class="section header">Field Details</h2><div class="section"><a name="in"/><div class="member detail outer"><h3 class="member detail name">in</h3><pre class="member detail synopsis">public java.io.InputStream in</pre><blockquote class="member detail name"><div class="member detail description"> For internal use only. The input stream for the current channel. 
-</div><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="lastException"/><div class="member detail outer"><h3 class="member detail name">lastException</h3><pre class="member detail synopsis">public java.lang.Throwable lastException</pre><blockquote class="member detail name"><div class="member detail description"> For PHP4's last_exception_get.
-</div><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="load"/><div class="member detail outer"><h3 class="member detail name">load</h3><pre class="member detail synopsis">public static short load</pre><blockquote class="member detail name"><div class="member detail description">For internal use only. </div><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="logLevel"/><div class="member detail outer"><h3 class="member detail name">logLevel</h3><pre class="member detail synopsis">public int logLevel</pre><blockquote class="member detail name"><div class="member detail description"> For internal use only. The request log level.
-</div><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="out"/><div class="member detail outer"><h3 class="member detail name">out</h3><pre class="member detail synopsis">public java.io.OutputStream out</pre><blockquote class="member detail name"><div class="member detail description"> For internal use only. The output stream for the current channel. 
-</div><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="request"/><div class="member detail outer"><h3 class="member detail name">request</h3><pre class="member detail synopsis">public <a href="../../../php/java/bridge/Request.html" title="Class in php.java.bridge">Request</a> request</pre><blockquote class="member detail name"><div class="member detail description"> For internal use only. The current request (if any)
-</div><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div></div><a name="detail-constructors"/><h2 class="section header">Constructor Details</h2><div class="section"><a name="JavaBridge()"/><div class="member detail outer"><h3 class="member detail name">JavaBridge</h3><pre class="member detail synopsis">public JavaBridge()</pre><blockquote class="member detail name"><div class="member detail description"> Only for internal use.
-</div><p class="taglet"></p><p class="taglet"></p><p class="taglet"><dl class="tag list"><dt class="tag section header"><b>See Also:</b></dt><dd><code>php.java.bridge.JavaBridge.main(String[])</code>, <a href="../../../php/java/bridge/JavaBridgeRunner.html"><code>JavaBridgeRunner</code></a><dd></dl></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="JavaBridge(java.io.InputStream,java.io.OutputStream)"/><div class="member detail outer"><h3 class="member detail name">JavaBridge</h3><pre class="member detail synopsis">public JavaBridge(java.io.InputStream in,
-                  java.io.OutputStream out)</pre><blockquote class="member detail name"><div class="member detail description"> Only for internal use. 
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">in</code><span class="separator"> - </span><span class="description"></span></dd><dd class="item"><code class="name">out</code><span class="separator"> - </span><span class="description"></span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"><dl class="tag list"><dt class="tag section header"><b>See Also:</b></dt><dd><a href="../../../php/java/bridge/JavaBridgeRunner.html"><code>JavaBridgeRunner</code></a>, <code>php.java.bridge.JavaBridge.main(String[])</code><dd></dl></p><p class="taglet"></p><p class="taglet"></p></blockquote></div></div><a name="detail-methods"/><h2 class="section header">Method Details</h2><div class="section"><a name="CreateObject(java.lang.String,boolean,args[],php.java.bridge.Response)"/><div class="member detail outer"><h3 class="member detail name">CreateObject</h3><pre class="member detail synopsis">public void CreateObject(java.lang.String name,
-                         boolean createInstance,
-                         args[] ,
-                         <a href="../../../php/java/bridge/Response.html" title="Class in php.java.bridge">Response</a> response)</pre><blockquote class="member detail name"><div class="member detail description"> Create an new instance of a given class
-</div><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="GetSetProp(java.lang.Object,java.lang.String,args[],php.java.bridge.Response)"/><div class="member detail outer"><h3 class="member detail name">GetSetProp</h3><pre class="member detail synopsis">public void GetSetProp(java.lang.Object object,
-                       java.lang.String prop,
-                       args[] ,
-                       <a href="../../../php/java/bridge/Response.html" title="Class in php.java.bridge">Response</a> response)</pre><blockquote class="member detail name"><div class="member detail description"> Get or Set a property
-</div><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="InstanceOf(java.lang.Object,java.lang.Object)"/><div class="member detail outer"><h3 class="member detail name">InstanceOf</h3><pre class="member detail synopsis">public static boolean InstanceOf(java.lang.Object ob,
-                                 java.lang.Object claz)</pre><blockquote class="member detail name"><div class="member detail description"> Check if object is an instance of class.
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">ob</code><span class="separator"> - </span><span class="description">The object</span></dd><dd class="item"><code class="name">claz</code><span class="separator"> - </span><span class="description">The class or an instance of a class</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">true if ob is an instance of class, false otherwise.</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="Invoke(java.lang.Object,java.lang.String,args[],php.java.bridge.Response)"/><div class="member detail outer"><h3 class="member detail name">Invoke</h3><pre class="member detail synopsis">public void Invoke(java.lang.Object object,
-                   java.lang.String method,
-                   args[] ,
-                   <a href="../../../php/java/bridge/Response.html" title="Class in php.java.bridge">Response</a> response)</pre><blockquote class="member detail name"><div class="member detail description"> Invoke a method on a given object
-</div><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="ObjectToString(java.lang.Object)"/><div class="member detail outer"><h3 class="member detail name">ObjectToString</h3><pre class="member detail synopsis">public java.lang.String ObjectToString(java.lang.Object ob)</pre><blockquote class="member detail name"><div class="member detail description"> Returns a string representation of the object
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">ob</code><span class="separator"> - </span><span class="description">The object</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">A string representation.</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="bind(java.lang.String)"/><div class="member detail outer"><h3 class="member detail name">bind</h3><pre class="member detail synopsis">public static <a href="../../../php/java/bridge/ISocketFactory.html" title="Interface in php.java.bridge">ISocketFactory</a> bind(java.lang.String sockname)
-            throws java.lang.Exception</pre><blockquote class="member detail name"><div class="member detail description"> Create a new server socket and return it.
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">sockname</code><span class="separator"> - </span><span class="description">the socket name</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">the server socket</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="cast(java.lang.Object,java.lang.Class)"/><div class="member detail outer"><h3 class="member detail name">cast</h3><pre class="member detail synopsis">public java.lang.Object cast(java.lang.Object ob,
-                             java.lang.Class type)</pre><blockquote class="member detail name"><div class="member detail description"> Cast a object to a type
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">ob</code><span class="separator"> - </span><span class="description">- The object to cast</span></dd><dd class="item"><code class="name">type</code><span class="separator"> - </span><span class="description">- The target type</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">The passed <code>ob</code>, will be coerced by the appropriate writer.</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="castToBoolean(java.lang.Object)"/><div class="member detail outer"><h3 class="member detail name">castToBoolean</h3><pre class="member detail synopsis">public java.lang.Object castToBoolean(java.lang.Object ob)</pre><blockquote class="member detail name"><div class="member detail description"> Cast an object to a boolean value
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">ob</code><span class="separator"> - </span><span class="description">- The object to cast</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">The passed <code>ob</code>, will be coerced by the appropriate writer.</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="castToExact(java.lang.Object)"/><div class="member detail outer"><h3 class="member detail name">castToExact</h3><pre class="member detail synopsis">public java.lang.Object castToExact(java.lang.Object ob)</pre><blockquote class="member detail name"><div class="member detail description"> Cast an object to an exact number
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">ob</code><span class="separator"> - </span><span class="description">- The object to cast</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">The passed <code>ob</code>, will be coerced by the appropriate writer.</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="castToInexact(java.lang.Object)"/><div class="member detail outer"><h3 class="member detail name">castToInexact</h3><pre class="member detail synopsis">public java.lang.Object castToInexact(java.lang.Object ob)</pre><blockquote class="member detail name"><div class="member detail description"> Cast an object to a inexact value
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">ob</code><span class="separator"> - </span><span class="description">- The object to cast</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">The passed <code>ob</code>, will be coerced by the appropriate writer.</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="castToString(java.lang.Object)"/><div class="member detail outer"><h3 class="member detail name">castToString</h3><pre class="member detail synopsis">public java.lang.Object castToString(java.lang.Object ob)</pre><blockquote class="member detail name"><div class="member detail description"> Cast an object to a string
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">ob</code><span class="separator"> - </span><span class="description">- The object to cast</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">The passed <code>ob</code>, will be coerced by the appropriate writer.</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="classDebugDescription(java.lang.Class)"/><div class="member detail outer"><h3 class="member detail name">classDebugDescription</h3><pre class="member detail synopsis">public static java.lang.String classDebugDescription(java.lang.Class cls)</pre><blockquote class="member detail name"><div class="member detail description"> Only for internal use
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">cls</code><span class="separator"> - </span><span class="description">The class</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">A debug description.</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="deserialize(java.lang.String,int)"/><div class="member detail outer"><h3 class="member detail name">deserialize</h3><pre class="member detail synopsis">public int deserialize(java.lang.String serialID,
-                       int timeout)</pre><blockquote class="member detail name"><div class="member detail description"> Load the object from the session store.
- The C code requires that this method is called "deserialize" even though it doesn't deserialize anything.
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">serialID</code><span class="separator"> - </span><span class="description">The key</span></dd><dd class="item"><code class="name">timeout</code><span class="separator"> - </span><span class="description">The timeout, usually 1400 seconds.</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">the new object identity.</dd></dl></p><p class="member detail thrown list"><dl><dt class="member detail thrown header"><b>Throws:</b></dt><dd class="member detail thrown item"><code class="name">java.lang.IllegalArgumentException</code><span class="separator"> - </span><span class="description">if serialID does not exist anymore.</span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"><dl class="tag list"><dt class="tag section header"><b>See Also:</b></dt><dd><code>JSessionAdapter in the php_java_lib folder. For real serialization/deserialization see the JPersistenceAdapter in the php_java_lib folder.</code><dd></dl></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getClassLoader()"/><div class="member detail outer"><h3 class="member detail name">getClassLoader</h3><pre class="member detail synopsis">public <a href="../../../php/java/bridge/JavaBridgeClassLoader.html" title="Class in php.java.bridge">JavaBridgeClassLoader</a> getClassLoader()</pre><blockquote class="member detail name"><div class="member detail description"> Return the current ClassLoader
-</div><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">The ClassLoader.</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getContext()"/><div class="member detail outer"><h3 class="member detail name">getContext</h3><pre class="member detail synopsis">public java.lang.Object getContext()</pre><blockquote class="member detail name"><div class="member detail description"> Returns the JSR223 context. 
-</div><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">The JSR223 context.</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getOptions()"/><div class="member detail outer"><h3 class="member detail name">getOptions</h3><pre class="member detail synopsis">public <a href="../../../php/java/bridge/Options.html" title="Class in php.java.bridge">Options</a> getOptions()</pre><blockquote class="member detail name"><div class="member detail description"> Returns the connection options
-</div><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">The Options.</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getPhpMap(java.lang.Object)"/><div class="member detail outer"><h3 class="member detail name">getPhpMap</h3><pre class="member detail synopsis">public <a href="../../../php/java/bridge/PhpMap.html" title="Class in php.java.bridge">PhpMap</a> getPhpMap(java.lang.Object value)</pre><blockquote class="member detail name"><div class="member detail description"> Return map for the value (PHP 5 only)
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">value</code><span class="separator"> - </span><span class="description">- The value which must be an array or implement Map or Collection.</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">The PHP map.</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"><dl class="tag list"><dt class="tag section header"><b>See Also:</b></dt><dd><a href="../../../php/java/bridge/PhpMap.html"><code>PhpMap</code></a><dd></dl></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getSession(java.lang.String,boolean,int)"/><div class="member detail outer"><h3 class="member detail name">getSession</h3><pre class="member detail synopsis">public <a href="../../../php/java/bridge/ISession.html" title="Interface in php.java.bridge">ISession</a> getSession(java.lang.String name,
-                           boolean clientIsNew,
-                           int timeout)</pre><blockquote class="member detail name"><div class="member detail description"> Return a session handle shared among all JavaBridge
- instances. If it is a HTTP session, the session is shared with
- the servlet or jsp.
-</div><p class="taglet"></p><p class="taglet"></p><p class="taglet"><dl class="tag list"><dt class="tag section header"><b>See Also:</b></dt><dd><a href="../../../php/java/bridge/ISession.html"><code>ISession</code></a><dd></dl></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getValues(java.lang.Object)"/><div class="member detail outer"><h3 class="member detail name">getValues</h3><pre class="member detail synopsis">public java.lang.Object getValues(java.lang.Object ob)</pre><blockquote class="member detail name"><div class="member detail description"> Convert Map or Collection into a PHP array,
+<P>
+
+<P>
+<DL>
+<DT><B>Author:</B></DT>
+  <DD>Sam Ruby (methods coerce and select), Kai Londenberg, Jost Boekemeier</DD>
+</DL>
+<HR>
+
+<P>
+<!-- =========== FIELD SUMMARY =========== -->
+
+<A NAME="field_summary"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+<B>Field Summary</B></FONT></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.io.InputStream</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#in">in</A></B></CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For internal use only.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.Throwable</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#lastException">lastException</A></B></CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For PHP4's last_exception_get.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;int</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#logLevel">logLevel</A></B></CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For internal use only.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.io.OutputStream</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#out">out</A></B></CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For internal use only.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;<A HREF="../../../php/java/bridge/Request.html" title="class in php.java.bridge">Request</A></CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#request">request</A></B></CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For internal use only.</TD>
+</TR>
+</TABLE>
+&nbsp;
+<!-- ======== CONSTRUCTOR SUMMARY ======== -->
+
+<A NAME="constructor_summary"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+<B>Constructor Summary</B></FONT></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#JavaBridge()">JavaBridge</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Only for internal use.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#JavaBridge(java.io.InputStream, java.io.OutputStream)">JavaBridge</A></B>(java.io.InputStream&nbsp;in,
+           java.io.OutputStream&nbsp;out)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Only for internal use.</TD>
+</TR>
+</TABLE>
+&nbsp;
+<!-- ========== METHOD SUMMARY =========== -->
+
+<A NAME="method_summary"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+<B>Method Summary</B></FONT></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>static&nbsp;<A HREF="../../../php/java/bridge/ISocketFactory.html" title="interface in php.java.bridge">ISocketFactory</A></CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#bind(java.lang.String)">bind</A></B>(java.lang.String&nbsp;sockname)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Create a new server socket and return it.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.Object</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#cast(java.lang.Object, java.lang.Class)">cast</A></B>(java.lang.Object&nbsp;ob,
+     java.lang.Class&nbsp;type)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cast a object to a type</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.Object</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#castToBoolean(java.lang.Object)">castToBoolean</A></B>(java.lang.Object&nbsp;ob)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cast an object to a boolean value</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.Object</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#castToExact(java.lang.Object)">castToExact</A></B>(java.lang.Object&nbsp;ob)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cast an object to an exact number</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.Object</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#castToInexact(java.lang.Object)">castToInexact</A></B>(java.lang.Object&nbsp;ob)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cast an object to a inexact value</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.Object</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#castToString(java.lang.Object)">castToString</A></B>(java.lang.Object&nbsp;ob)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cast an object to a string</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>static&nbsp;java.lang.String</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#classDebugDescription(java.lang.Class)">classDebugDescription</A></B>(java.lang.Class&nbsp;cls)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Only for internal use</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#CreateObject(java.lang.String, boolean, java.lang.Object[], php.java.bridge.Response)">CreateObject</A></B>(java.lang.String&nbsp;name,
+             boolean&nbsp;createInstance,
+             java.lang.Object[]&nbsp;args,
+             <A HREF="../../../php/java/bridge/Response.html" title="class in php.java.bridge">Response</A>&nbsp;response)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Create an new instance of a given class</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;int</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#deserialize(java.lang.String, int)">deserialize</A></B>(java.lang.String&nbsp;serialID,
+            int&nbsp;timeout)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Load the object from the session store.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;<A HREF="../../../php/java/bridge/JavaBridgeClassLoader.html" title="class in php.java.bridge">JavaBridgeClassLoader</A></CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#getClassLoader()">getClassLoader</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Return the current ClassLoader</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.Object</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#getContext()">getContext</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the JSR223 context.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;<A HREF="../../../php/java/bridge/Options.html" title="class in php.java.bridge">Options</A></CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#getOptions()">getOptions</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the connection options</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;<A HREF="../../../php/java/bridge/PhpMap.html" title="class in php.java.bridge">PhpMap</A></CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#getPhpMap(java.lang.Object)">getPhpMap</A></B>(java.lang.Object&nbsp;value)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Return map for the value (PHP 5 only)</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;<A HREF="../../../php/java/bridge/ISession.html" title="interface in php.java.bridge">ISession</A></CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#getSession(java.lang.String, boolean, int)">getSession</A></B>(java.lang.String&nbsp;name,
+           boolean&nbsp;clientIsNew,
+           int&nbsp;timeout)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Return a session handle shared among all JavaBridge
+ instances.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#GetSetProp(java.lang.Object, java.lang.String, java.lang.Object[], php.java.bridge.Response)">GetSetProp</A></B>(java.lang.Object&nbsp;object,
+           java.lang.String&nbsp;prop,
+           java.lang.Object[]&nbsp;args,
+           <A HREF="../../../php/java/bridge/Response.html" title="class in php.java.bridge">Response</A>&nbsp;response)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Get or Set a property</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.Object</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#getValues(java.lang.Object)">getValues</A></B>(java.lang.Object&nbsp;ob)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Convert Map or Collection into a PHP array,
+ sends the entire array, Map or Collection to the client.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>static&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#init(java.lang.String[])">init</A></B>(java.lang.String[]&nbsp;s)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Global init</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.String</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#inspect(java.lang.Object)">inspect</A></B>(java.lang.Object&nbsp;object)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For internal use only.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>static&nbsp;boolean</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#InstanceOf(java.lang.Object, java.lang.Object)">InstanceOf</A></B>(java.lang.Object&nbsp;ob,
+           java.lang.Object&nbsp;claz)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Check if object is an instance of class.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#Invoke(java.lang.Object, java.lang.String, java.lang.Object[], php.java.bridge.Response)">Invoke</A></B>(java.lang.Object&nbsp;object,
+       java.lang.String&nbsp;method,
+       java.lang.Object[]&nbsp;args,
+       <A HREF="../../../php/java/bridge/Response.html" title="class in php.java.bridge">Response</A>&nbsp;response)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Invoke a method on a given object</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#logDebug(java.lang.String)">logDebug</A></B>(java.lang.String&nbsp;msg)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Write a debug message</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#logError(java.lang.String)">logError</A></B>(java.lang.String&nbsp;msg)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Write an error message.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#logFatal(java.lang.String)">logFatal</A></B>(java.lang.String&nbsp;msg)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Write a fatal message</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>static&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#logInvoke(java.lang.Object, java.lang.String, java.lang.Object[])">logInvoke</A></B>(java.lang.Object&nbsp;obj,
+          java.lang.String&nbsp;method,
+          java.lang.Object[]&nbsp;args)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#logMessage(java.lang.String)">logMessage</A></B>(java.lang.String&nbsp;msg)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Write a notice.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>static&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#main(java.lang.String[])">main</A></B>(java.lang.String[]&nbsp;s)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Start the PHP/Java Bridge.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.Object</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#makeClosure(long)">makeClosure</A></B>(long&nbsp;object)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Create a dynamic proxy proxy for calling PHP code.<br>
+ Example: <br>
+ java_closure();<br>
+ java_closure($this);<br></TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.Object</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#makeClosure(long, java.util.Map)">makeClosure</A></B>(long&nbsp;object,
+            java.util.Map&nbsp;names)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Create a dynamic proxy proxy for calling PHP code.<br>
+ Example: <br>
+ java_closure($this, $map);<br></TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.Object</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#makeClosure(long, java.util.Map, java.lang.Class[])">makeClosure</A></B>(long&nbsp;object,
+            java.util.Map&nbsp;names,
+            java.lang.Class[]&nbsp;interfaces)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Create a dynamic proxy proxy for calling PHP code.<br>
+ Example: <br>
+ java_closure($this, $map, $interfaces);<br></TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.Object</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#makeClosure(long, java.lang.String)">makeClosure</A></B>(long&nbsp;object,
+            java.lang.String&nbsp;name)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Create a dynamic proxy proxy for calling PHP code.<br>
+ Example: <br>
+ java_closure($this, "clickMe");<br></TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.Object</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#makeClosure(long, java.lang.String, java.lang.Class[])">makeClosure</A></B>(long&nbsp;object,
+            java.lang.String&nbsp;name,
+            java.lang.Class[]&nbsp;interfaces)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Create a dynamic proxy proxy for calling PHP code.<br>
+ Example: <br>
+ java_closure($this, "clickMe", $interfaces);<br></TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>static&nbsp;java.lang.String</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#objectDebugDescription(java.lang.Object)">objectDebugDescription</A></B>(java.lang.Object&nbsp;obj)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Only for internal use</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.String</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#ObjectToString(java.lang.Object)">ObjectToString</A></B>(java.lang.Object&nbsp;ob)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns a string representation of the object</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;boolean</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#offsetExists(java.util.List, java.lang.Number)">offsetExists</A></B>(java.util.List&nbsp;value,
+             java.lang.Number&nbsp;pos)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Checks if a given position exists.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;boolean</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#offsetExists(java.util.Map, java.lang.Object)">offsetExists</A></B>(java.util.Map&nbsp;value,
+             java.lang.Object&nbsp;pos)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Checks if a given position exists.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;boolean</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#offsetExists(java.lang.Object, java.lang.Object)">offsetExists</A></B>(java.lang.Object&nbsp;value,
+             java.lang.Object&nbsp;pos)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Checks if a given position exists.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.Object</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#offsetGet(java.util.List, java.lang.Number)">offsetGet</A></B>(java.util.List&nbsp;value,
+          java.lang.Number&nbsp;pos)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the object at the posisition.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.Object</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#offsetGet(java.util.Map, java.lang.Object)">offsetGet</A></B>(java.util.Map&nbsp;value,
+          java.lang.Object&nbsp;pos)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the object at the posisition.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.Object</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#offsetGet(java.lang.Object, java.lang.Object)">offsetGet</A></B>(java.lang.Object&nbsp;value,
+          java.lang.Object&nbsp;pos)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the object at the posisition.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#offsetSet(java.util.List, java.lang.Number, java.lang.Object)">offsetSet</A></B>(java.util.List&nbsp;value,
+          java.lang.Number&nbsp;pos,
+          java.lang.Object&nbsp;val)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Set an object at position.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#offsetSet(java.util.Map, java.lang.Object, java.lang.Object)">offsetSet</A></B>(java.util.Map&nbsp;value,
+          java.lang.Object&nbsp;pos,
+          java.lang.Object&nbsp;val)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Set an object at position.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#offsetSet(java.lang.Object, java.lang.Object, java.lang.Object)">offsetSet</A></B>(java.lang.Object&nbsp;value,
+          java.lang.Object&nbsp;pos,
+          java.lang.Object&nbsp;val)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Set an object at position.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#offsetUnset(java.util.List, java.lang.Number)">offsetUnset</A></B>(java.util.List&nbsp;value,
+            java.lang.Number&nbsp;pos)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remove an object from the position.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#offsetUnset(java.util.Map, java.lang.Object)">offsetUnset</A></B>(java.util.Map&nbsp;value,
+            java.lang.Object&nbsp;pos)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remove an object from the position.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#offsetUnset(java.lang.Object, java.lang.Object)">offsetUnset</A></B>(java.lang.Object&nbsp;value,
+            java.lang.Object&nbsp;pos)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Remove an object from the position.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#printStackTrace(java.lang.Throwable)">printStackTrace</A></B>(java.lang.Throwable&nbsp;t)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Print a stack trace to the log file.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#reset()">reset</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Reset the global caches of the bridge.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#run()">run</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Communication with client in a new thread</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>static&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#sclose(int)">sclose</A></B>(int&nbsp;peer)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Close a local socket.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.lang.String</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#serialize(java.lang.Object, int)">serialize</A></B>(java.lang.Object&nbsp;obj,
+          int&nbsp;timeout)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Store the object in the session store and return the serial id.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#setClassLoader(php.java.bridge.JavaBridgeClassLoader)">setClassLoader</A></B>(<A HREF="../../../php/java/bridge/JavaBridgeClassLoader.html" title="class in php.java.bridge">JavaBridgeClassLoader</A>&nbsp;cl)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Set a new ClassLoader</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#setFileEncoding(java.lang.String)">setFileEncoding</A></B>(java.lang.String&nbsp;fileEncoding)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Set a new file encoding, used to code and decode strings.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#setJarLibraryPath(java.lang.String, java.lang.String)">setJarLibraryPath</A></B>(java.lang.String&nbsp;path,
+                  java.lang.String&nbsp;extensionDir)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Append the path to the current library path<br>
+ Examples:<br>
+ setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");<br>
+ setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");<br></TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#setLibraryPath(java.lang.String, java.lang.String)">setLibraryPath</A></B>(java.lang.String&nbsp;rawPath,
+               java.lang.String&nbsp;extensionDir)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Set the library path for ECMA dll's</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#setSessionFactory(php.java.bridge.SessionFactory)">setSessionFactory</A></B>(<A HREF="../../../php/java/bridge/SessionFactory.html" title="class in php.java.bridge">SessionFactory</A>&nbsp;sessionFactory)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This method sets a new session factory.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/bridge/JavaBridge.html#warn(java.lang.String)">warn</A></B>(java.lang.String&nbsp;msg)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Write a warning.</TD>
+</TR>
+</TABLE>
+&nbsp;<A NAME="methods_inherited_from_class_java.lang.Object"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#EEEEFF" CLASS="TableSubHeadingColor">
+<TH ALIGN="left"><B>Methods inherited from class java.lang.Object</B></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD><CODE>equals, getClass, hashCode, notify, notifyAll, toString, wait, wait, wait</CODE></TD>
+</TR>
+</TABLE>
+&nbsp;
+<P>
+
+<!-- ============ FIELD DETAIL =========== -->
+
+<A NAME="field_detail"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2">
+<B>Field Detail</B></FONT></TH>
+</TR>
+</TABLE>
+
+<A NAME="lastException"><!-- --></A><H3>
+lastException</H3>
+<PRE>
+public java.lang.Throwable <B>lastException</B></PRE>
+<DL>
+<DD>For PHP4's last_exception_get.
+<P>
+<DL>
+</DL>
+</DL>
+<HR>
+
+<A NAME="in"><!-- --></A><H3>
+in</H3>
+<PRE>
+public java.io.InputStream <B>in</B></PRE>
+<DL>
+<DD>For internal use only. The input stream for the current channel.
+<P>
+<DL>
+</DL>
+</DL>
+<HR>
+
+<A NAME="out"><!-- --></A><H3>
+out</H3>
+<PRE>
+public java.io.OutputStream <B>out</B></PRE>
+<DL>
+<DD>For internal use only. The output stream for the current channel.
+<P>
+<DL>
+</DL>
+</DL>
+<HR>
+
+<A NAME="logLevel"><!-- --></A><H3>
+logLevel</H3>
+<PRE>
+public int <B>logLevel</B></PRE>
+<DL>
+<DD>For internal use only. The request log level.
+<P>
+<DL>
+</DL>
+</DL>
+<HR>
+
+<A NAME="request"><!-- --></A><H3>
+request</H3>
+<PRE>
+public <A HREF="../../../php/java/bridge/Request.html" title="class in php.java.bridge">Request</A> <B>request</B></PRE>
+<DL>
+<DD>For internal use only. The current request (if any)
+<P>
+<DL>
+</DL>
+</DL>
+
+<!-- ========= CONSTRUCTOR DETAIL ======== -->
+
+<A NAME="constructor_detail"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2">
+<B>Constructor Detail</B></FONT></TH>
+</TR>
+</TABLE>
+
+<A NAME="JavaBridge(java.io.InputStream, java.io.OutputStream)"><!-- --></A><H3>
+JavaBridge</H3>
+<PRE>
+public <B>JavaBridge</B>(java.io.InputStream&nbsp;in,
+                  java.io.OutputStream&nbsp;out)</PRE>
+<DL>
+<DD>Only for internal use.
+<P>
+<DL>
+<DT><B>Parameters:</B><DD><CODE>in</CODE> - <DD><CODE>out</CODE> - <DT><B>See Also:</B><DD><A HREF="../../../php/java/bridge/JavaBridgeRunner.html" title="class in php.java.bridge"><CODE>JavaBridgeRunner</CODE></A>, 
+<A HREF="../../../php/java/bridge/JavaBridge.html#main(java.lang.String[])"><CODE>main(String[])</CODE></A></DL>
+</DL>
+<HR>
+
+<A NAME="JavaBridge()"><!-- --></A><H3>
+JavaBridge</H3>
+<PRE>
+public <B>JavaBridge</B>()</PRE>
+<DL>
+<DD>Only for internal use.
+<P>
+<DL>
+<DT><B>See Also:</B><DD><A HREF="../../../php/java/bridge/JavaBridge.html#main(java.lang.String[])"><CODE>main(String[])</CODE></A>, 
+<A HREF="../../../php/java/bridge/JavaBridgeRunner.html" title="class in php.java.bridge"><CODE>JavaBridgeRunner</CODE></A></DL>
+</DL>
+
+<!-- ============ METHOD DETAIL ========== -->
+
+<A NAME="method_detail"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2">
+<B>Method Detail</B></FONT></TH>
+</TR>
+</TABLE>
+
+<A NAME="sclose(int)"><!-- --></A><H3>
+sclose</H3>
+<PRE>
+public static void <B>sclose</B>(int&nbsp;peer)</PRE>
+<DL>
+<DD>Close a local socket.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>peer</CODE> - The socket handle</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getOptions()"><!-- --></A><H3>
+getOptions</H3>
+<PRE>
+public <A HREF="../../../php/java/bridge/Options.html" title="class in php.java.bridge">Options</A> <B>getOptions</B>()</PRE>
+<DL>
+<DD>Returns the connection options
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+
+<DT><B>Returns:</B><DD>The Options.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="run()"><!-- --></A><H3>
+run</H3>
+<PRE>
+public void <B>run</B>()</PRE>
+<DL>
+<DD>Communication with client in a new thread
+<P>
+<DD><DL>
+<DT><B>Specified by:</B><DD><CODE>run</CODE> in interface <CODE>java.lang.Runnable</CODE></DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="bind(java.lang.String)"><!-- --></A><H3>
+bind</H3>
+<PRE>
+public static <A HREF="../../../php/java/bridge/ISocketFactory.html" title="interface in php.java.bridge">ISocketFactory</A> <B>bind</B>(java.lang.String&nbsp;sockname)
+                           throws java.lang.Exception</PRE>
+<DL>
+<DD>Create a new server socket and return it.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>sockname</CODE> - the socket name
+<DT><B>Returns:</B><DD>the server socket
+<DT><B>Throws:</B>
+<DD><CODE>java.lang.Exception</CODE></DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="init(java.lang.String[])"><!-- --></A><H3>
+init</H3>
+<PRE>
+public static void <B>init</B>(java.lang.String[]&nbsp;s)</PRE>
+<DL>
+<DD>Global init
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>s</CODE> - an array of [socketname, level, logFile]</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="main(java.lang.String[])"><!-- --></A><H3>
+main</H3>
+<PRE>
+public static void <B>main</B>(java.lang.String[]&nbsp;s)</PRE>
+<DL>
+<DD>Start the PHP/Java Bridge. <br>
+ Example:<br>
+ <code>java -Djava.awt.headless=true -jar JavaBridge.jar INET:9656 5 /var/log/php-java-bridge.log</code><br>
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>s</CODE> - an array of [socketname, level, logFile]</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="printStackTrace(java.lang.Throwable)"><!-- --></A><H3>
+printStackTrace</H3>
+<PRE>
+public void <B>printStackTrace</B>(java.lang.Throwable&nbsp;t)</PRE>
+<DL>
+<DD>Print a stack trace to the log file.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>t</CODE> - the throwable</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="logDebug(java.lang.String)"><!-- --></A><H3>
+logDebug</H3>
+<PRE>
+public void <B>logDebug</B>(java.lang.String&nbsp;msg)</PRE>
+<DL>
+<DD>Write a debug message
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>msg</CODE> - The message</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="logFatal(java.lang.String)"><!-- --></A><H3>
+logFatal</H3>
+<PRE>
+public void <B>logFatal</B>(java.lang.String&nbsp;msg)</PRE>
+<DL>
+<DD>Write a fatal message
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>msg</CODE> - The message</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="logError(java.lang.String)"><!-- --></A><H3>
+logError</H3>
+<PRE>
+public void <B>logError</B>(java.lang.String&nbsp;msg)</PRE>
+<DL>
+<DD>Write an error message.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>msg</CODE> - The message</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="logMessage(java.lang.String)"><!-- --></A><H3>
+logMessage</H3>
+<PRE>
+public void <B>logMessage</B>(java.lang.String&nbsp;msg)</PRE>
+<DL>
+<DD>Write a notice.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>msg</CODE> - The message</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="warn(java.lang.String)"><!-- --></A><H3>
+warn</H3>
+<PRE>
+public void <B>warn</B>(java.lang.String&nbsp;msg)</PRE>
+<DL>
+<DD>Write a warning.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>msg</CODE> - The warning.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="CreateObject(java.lang.String, boolean, java.lang.Object[], php.java.bridge.Response)"><!-- --></A><H3>
+CreateObject</H3>
+<PRE>
+public void <B>CreateObject</B>(java.lang.String&nbsp;name,
+                         boolean&nbsp;createInstance,
+                         java.lang.Object[]&nbsp;args,
+                         <A HREF="../../../php/java/bridge/Response.html" title="class in php.java.bridge">Response</A>&nbsp;response)</PRE>
+<DL>
+<DD>Create an new instance of a given class
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="logInvoke(java.lang.Object, java.lang.String, java.lang.Object[])"><!-- --></A><H3>
+logInvoke</H3>
+<PRE>
+public static void <B>logInvoke</B>(java.lang.Object&nbsp;obj,
+                             java.lang.String&nbsp;method,
+                             java.lang.Object[]&nbsp;args)</PRE>
+<DL>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="Invoke(java.lang.Object, java.lang.String, java.lang.Object[], php.java.bridge.Response)"><!-- --></A><H3>
+Invoke</H3>
+<PRE>
+public void <B>Invoke</B>(java.lang.Object&nbsp;object,
+                   java.lang.String&nbsp;method,
+                   java.lang.Object[]&nbsp;args,
+                   <A HREF="../../../php/java/bridge/Response.html" title="class in php.java.bridge">Response</A>&nbsp;response)</PRE>
+<DL>
+<DD>Invoke a method on a given object
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="objectDebugDescription(java.lang.Object)"><!-- --></A><H3>
+objectDebugDescription</H3>
+<PRE>
+public static java.lang.String <B>objectDebugDescription</B>(java.lang.Object&nbsp;obj)</PRE>
+<DL>
+<DD>Only for internal use
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>obj</CODE> - The object
+<DT><B>Returns:</B><DD>A debug description.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="classDebugDescription(java.lang.Class)"><!-- --></A><H3>
+classDebugDescription</H3>
+<PRE>
+public static java.lang.String <B>classDebugDescription</B>(java.lang.Class&nbsp;cls)</PRE>
+<DL>
+<DD>Only for internal use
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>cls</CODE> - The class
+<DT><B>Returns:</B><DD>A debug description.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="GetSetProp(java.lang.Object, java.lang.String, java.lang.Object[], php.java.bridge.Response)"><!-- --></A><H3>
+GetSetProp</H3>
+<PRE>
+public void <B>GetSetProp</B>(java.lang.Object&nbsp;object,
+                       java.lang.String&nbsp;prop,
+                       java.lang.Object[]&nbsp;args,
+                       <A HREF="../../../php/java/bridge/Response.html" title="class in php.java.bridge">Response</A>&nbsp;response)</PRE>
+<DL>
+<DD>Get or Set a property
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getValues(java.lang.Object)"><!-- --></A><H3>
+getValues</H3>
+<PRE>
+public java.lang.Object <B>getValues</B>(java.lang.Object&nbsp;ob)</PRE>
+<DL>
+<DD>Convert Map or Collection into a PHP array,
  sends the entire array, Map or Collection to the client. This
  is much more efficient than generating round-trips while
  iterating over the values of an array, Map or Collection.
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">ob</code><span class="separator"> - </span><span class="description">- The object to expand</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">The passed <code>ob</code>, will be expanded by the appropriate writer.</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="init(s[])"/><div class="member detail outer"><h3 class="member detail name">init</h3><pre class="member detail synopsis">public static void init(s[] )</pre><blockquote class="member detail name"><div class="member detail description"> Global init
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="inspect(java.lang.Object)"/><div class="member detail outer"><h3 class="member detail name">inspect</h3><pre class="member detail synopsis">public java.lang.String inspect(java.lang.Object object)</pre><blockquote class="member detail name"><div class="member detail description"> For internal use only.
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">object</code><span class="separator"> - </span><span class="description">The java object</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">A list of all visible constructors, methods, fields and inner classes.</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="logDebug(java.lang.String)"/><div class="member detail outer"><h3 class="member detail name">logDebug</h3><pre class="member detail synopsis">public void logDebug(java.lang.String msg)</pre><blockquote class="member detail name"><div class="member detail description"> Write a debug message
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">msg</code><span class="separator"> - </span><span class="description">The message</span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="logError(java.lang.String)"/><div class="member detail outer"><h3 class="member detail name">logError</h3><pre class="member detail synopsis">public void logError(java.lang.String msg)</pre><blockquote class="member detail name"><div class="member detail description"> Write an error message.
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">msg</code><span class="separator"> - </span><span class="description">The message</span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="logFatal(java.lang.String)"/><div class="member detail outer"><h3 class="member detail name">logFatal</h3><pre class="member detail synopsis">public void logFatal(java.lang.String msg)</pre><blockquote class="member detail name"><div class="member detail description"> Write a fatal message
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">msg</code><span class="separator"> - </span><span class="description">The message</span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="logInvoke(java.lang.Object,java.lang.String,args[])"/><div class="member detail outer"><h3 class="member detail name">logInvoke</h3><pre class="member detail synopsis">public static void logInvoke(java.lang.Object obj,
-                             java.lang.String method,
-                             args[] )</pre><blockquote class="member detail name"><div class="member detail description"></div><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="logMessage(java.lang.String)"/><div class="member detail outer"><h3 class="member detail name">logMessage</h3><pre class="member detail synopsis">public void logMessage(java.lang.String msg)</pre><blockquote class="member detail name"><div class="member detail description"> Write a notice.
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">msg</code><span class="separator"> - </span><span class="description">The message</span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="main(s[])"/><div class="member detail outer"><h3 class="member detail name">main</h3><pre class="member detail synopsis">public static void main(s[] )</pre><blockquote class="member detail name"><div class="member detail description"> Start the PHP/Java Bridge. <br/>
- Example:<br/>
- <code>java -Djava.awt.headless=true -jar JavaBridge.jar INET:9656 5 /var/log/php-java-bridge.log</code><br/>
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="makeClosure(long)"/><div class="member detail outer"><h3 class="member detail name">makeClosure</h3><pre class="member detail synopsis">public java.lang.Object makeClosure(long object)</pre><blockquote class="member detail name"><div class="member detail description"> Create a dynamic proxy proxy for calling PHP code.<br/>
- Example: <br/>
- java_closure();<br/>
- java_closure($this);<br/>
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">object</code><span class="separator"> - </span><span class="description">the PHP environment (the php "class")</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">the proxy</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="makeClosure(long,java.lang.String)"/><div class="member detail outer"><h3 class="member detail name">makeClosure</h3><pre class="member detail synopsis">public java.lang.Object makeClosure(long object,
-                                    java.lang.String name)</pre><blockquote class="member detail name"><div class="member detail description"> Create a dynamic proxy proxy for calling PHP code.<br/>
- Example: <br/>
- java_closure($this, "clickMe");<br/>
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">object</code><span class="separator"> - </span><span class="description">the PHP environment (the php "class")</span></dd><dd class="item"><code class="name">name</code><span class="separator"> - </span><span class="description">maps all java names to this php name</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">the proxy</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="makeClosure(long,java.lang.String,interfaces[])"/><div class="member detail outer"><h3 class="member detail name">makeClosure</h3><pre class="member detail synopsis">public java.lang.Object makeClosure(long object,
-                                    java.lang.String name,
-                                    interfaces[] )</pre><blockquote class="member detail name"><div class="member detail description"> Create a dynamic proxy proxy for calling PHP code.<br/>
- Example: <br/>
- java_closure($this, "clickMe", $interfaces);<br/>
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">object</code><span class="separator"> - </span><span class="description">the PHP environment (the php "class")</span></dd><dd class="item"><code class="name">name</code><span class="separator"> - </span><span class="description">maps all java names to this php name</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">the proxy</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="makeClosure(long,java.util.Map)"/><div class="member detail outer"><h3 class="member detail name">makeClosure</h3><pre class="member detail synopsis">public java.lang.Object makeClosure(long object,
-                                    java.util.Map names)</pre><blockquote class="member detail name"><div class="member detail description"> Create a dynamic proxy proxy for calling PHP code.<br/>
- Example: <br/>
- java_closure($this, $map);<br/>
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">object</code><span class="separator"> - </span><span class="description">the PHP environment (the php "class")</span></dd><dd class="item"><code class="name">names</code><span class="separator"> - </span><span class="description">maps java to php names</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">the proxy</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="makeClosure(long,java.util.Map,interfaces[])"/><div class="member detail outer"><h3 class="member detail name">makeClosure</h3><pre class="member detail synopsis">public java.lang.Object makeClosure(long object,
-                                    java.util.Map names,
-                                    interfaces[] )</pre><blockquote class="member detail name"><div class="member detail description"> Create a dynamic proxy proxy for calling PHP code.<br/>
- Example: <br/>
- java_closure($this, $map, $interfaces);<br/>
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">object</code><span class="separator"> - </span><span class="description">the PHP environment (the php "class")</span></dd><dd class="item"><code class="name">names</code><span class="separator"> - </span><span class="description">maps java to php names</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">the proxy</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="objectDebugDescription(java.lang.Object)"/><div class="member detail outer"><h3 class="member detail name">objectDebugDescription</h3><pre class="member detail synopsis">public static java.lang.String objectDebugDescription(java.lang.Object obj)</pre><blockquote class="member detail name"><div class="member detail description"> Only for internal use
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">obj</code><span class="separator"> - </span><span class="description">The object</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">A debug description.</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="offsetExists(java.lang.Object[],java.lang.Object)"/><div class="member detail outer"><h3 class="member detail name">offsetExists</h3><pre class="member detail synopsis">public boolean offsetExists(java.lang.Object[] value,
-                            java.lang.Object pos)</pre><blockquote class="member detail name"><div class="member detail description"> Checks if a given position exists.
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">value</code><span class="separator"> - </span><span class="description">The array.</span></dd><dd class="item"><code class="name">pos</code><span class="separator"> - </span><span class="description">The position</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">true if an element exists at this position, false otherwise.</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="offsetExists(java.util.Map,java.lang.Object)"/><div class="member detail outer"><h3 class="member detail name">offsetExists</h3><pre class="member detail synopsis">public boolean offsetExists(java.util.Map value,
-                            java.lang.Object pos)</pre><blockquote class="member detail name"><div class="member detail description"> Checks if a given position exists.
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">value</code><span class="separator"> - </span><span class="description">The map.</span></dd><dd class="item"><code class="name">pos</code><span class="separator"> - </span><span class="description">The position</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">true if an element exists at this position, false otherwise.</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="offsetGet(java.lang.Object[],java.lang.Object)"/><div class="member detail outer"><h3 class="member detail name">offsetGet</h3><pre class="member detail synopsis">public java.lang.Object offsetGet(java.lang.Object[] value,
-                                  java.lang.Object pos)</pre><blockquote class="member detail name"><div class="member detail description"> Returns the object at the posisition.
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">value</code><span class="separator"> - </span><span class="description">The array.</span></dd><dd class="item"><code class="name">pos</code><span class="separator"> - </span><span class="description">The position.</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">The object at the given position.</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="offsetGet(java.util.Map,java.lang.Object)"/><div class="member detail outer"><h3 class="member detail name">offsetGet</h3><pre class="member detail synopsis">public java.lang.Object offsetGet(java.util.Map value,
-                                  java.lang.Object pos)</pre><blockquote class="member detail name"><div class="member detail description"> Returns the object at the posisition.
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">value</code><span class="separator"> - </span><span class="description">The map.</span></dd><dd class="item"><code class="name">pos</code><span class="separator"> - </span><span class="description">The position.</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">The object at the given position.</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="offsetSet(java.lang.Object[],java.lang.Object,java.lang.Object)"/><div class="member detail outer"><h3 class="member detail name">offsetSet</h3><pre class="member detail synopsis">public void offsetSet(java.lang.Object[] value,
-                      java.lang.Object pos,
-                      java.lang.Object val)</pre><blockquote class="member detail name"><div class="member detail description"> Set an object at position. 
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">value</code><span class="separator"> - </span><span class="description">The array.</span></dd><dd class="item"><code class="name">pos</code><span class="separator"> - </span><span class="description">The position.</span></dd><dd class="item"><code class="name">val</code><span class="separator"> - </span><span class="description">The object.</span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="offsetSet(java.util.Map,java.lang.Object,java.lang.Object)"/><div class="member detail outer"><h3 class="member detail name">offsetSet</h3><pre class="member detail synopsis">public void offsetSet(java.util.Map value,
-                      java.lang.Object pos,
-                      java.lang.Object val)</pre><blockquote class="member detail name"><div class="member detail description"> Set an object at position. 
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">value</code><span class="separator"> - </span><span class="description">The map.</span></dd><dd class="item"><code class="name">pos</code><span class="separator"> - </span><span class="description">The position.</span></dd><dd class="item"><code class="name">val</code><span class="separator"> - </span><span class="description">The object.</span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="offsetUnset(java.lang.Object[],java.lang.Object)"/><div class="member detail outer"><h3 class="member detail name">offsetUnset</h3><pre class="member detail synopsis">public void offsetUnset(java.lang.Object[] value,
-                        java.lang.Object pos)</pre><blockquote class="member detail name"><div class="member detail description"> Remove an object from the position.
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">value</code><span class="separator"> - </span><span class="description">The array.</span></dd><dd class="item"><code class="name">pos</code><span class="separator"> - </span><span class="description">The position.</span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="offsetUnset(java.util.Map,java.lang.Object)"/><div class="member detail outer"><h3 class="member detail name">offsetUnset</h3><pre class="member detail synopsis">public void offsetUnset(java.util.Map value,
-                        java.lang.Object pos)</pre><blockquote class="member detail name"><div class="member detail description"> Remove an object from the position.
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">value</code><span class="separator"> - </span><span class="description">The map.</span></dd><dd class="item"><code class="name">pos</code><span class="separator"> - </span><span class="description">The position.</span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="printStackTrace(java.lang.Throwable)"/><div class="member detail outer"><h3 class="member detail name">printStackTrace</h3><pre class="member detail synopsis">public void printStackTrace(java.lang.Throwable t)</pre><blockquote class="member detail name"><div class="member detail description"> Print a stack trace to the log file.
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">t</code><span class="separator"> - </span><span class="description">the throwable</span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="reset()"/><div class="member detail outer"><h3 class="member detail name">reset</h3><pre class="member detail synopsis">public void reset()</pre><blockquote class="member detail name"><div class="member detail description"> Reset the global caches of the bridge.  Currently this is the
- classloader and the session. This is a no-op when the backend
- is running in a servlet engine or application server.
-</div><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="run()"/><div class="member detail outer"><h3 class="member detail name">run</h3><pre class="member detail synopsis">public void run()</pre><blockquote class="member detail name"><div class="member detail description"> Communication with client in a new thread
-</div><dl class="member detail specified by list"><dt class="member detail specified by header"><b>Specified by:</b></dt><dd class="member detail specified by item"><a href="../../../java/lang/Runnable.html#run()">run</a> in interface java.lang.Runnable</dd></dl><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="sclose(int)"/><div class="member detail outer"><h3 class="member detail name">sclose</h3><pre class="member detail synopsis">public static void sclose(int peer)</pre><blockquote class="member detail name"><div class="member detail description"> Close a local socket.
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">peer</code><span class="separator"> - </span><span class="description">The socket handle</span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="serialize(java.lang.Object,int)"/><div class="member detail outer"><h3 class="member detail name">serialize</h3><pre class="member detail synopsis">public java.lang.String serialize(java.lang.Object obj,
-                                  int timeout)</pre><blockquote class="member detail name"><div class="member detail description"> Store the object in the session store and return the serial id.
- The C code requires that this method is called "serialize" even though it doesn't serialize anything.
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">obj</code><span class="separator"> - </span><span class="description">The object</span></dd><dd class="item"><code class="name">timeout</code><span class="separator"> - </span><span class="description">The timeout, usually 1400 seconds</span></dd></dl></p><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">the serialID</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"><dl class="tag list"><dt class="tag section header"><b>See Also:</b></dt><dd><code>JSessionAdapter in the php_java_lib folder. For real serialization/deserialization see the JPersistenceAdapter in the php_java_lib folder.</code><dd></dl></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="setClassLoader(php.java.bridge.JavaBridgeClassLoader)"/><div class="member detail outer"><h3 class="member detail name">setClassLoader</h3><pre class="member detail synopsis">public void setClassLoader(<a href="../../../php/java/bridge/JavaBridgeClassLoader.html" title="Class in php.java.bridge">JavaBridgeClassLoader</a> cl)</pre><blockquote class="member detail name"><div class="member detail description"> Set a new ClassLoader
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">cl</code><span class="separator"> - </span><span class="description">The ClassLoader</span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="setFileEncoding(java.lang.String)"/><div class="member detail outer"><h3 class="member detail name">setFileEncoding</h3><pre class="member detail synopsis">public void setFileEncoding(java.lang.String fileEncoding)</pre><blockquote class="member detail name"><div class="member detail description"> Set a new file encoding, used to code and decode strings.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>ob</CODE> - - The object to expand
+<DT><B>Returns:</B><DD>The passed <code>ob</code>, will be expanded by the appropriate writer.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="cast(java.lang.Object, java.lang.Class)"><!-- --></A><H3>
+cast</H3>
+<PRE>
+public java.lang.Object <B>cast</B>(java.lang.Object&nbsp;ob,
+                             java.lang.Class&nbsp;type)</PRE>
+<DL>
+<DD>Cast a object to a type
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>ob</CODE> - - The object to cast<DD><CODE>type</CODE> - - The target type
+<DT><B>Returns:</B><DD>The passed <code>ob</code>, will be coerced by the appropriate writer.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="castToString(java.lang.Object)"><!-- --></A><H3>
+castToString</H3>
+<PRE>
+public java.lang.Object <B>castToString</B>(java.lang.Object&nbsp;ob)</PRE>
+<DL>
+<DD>Cast an object to a string
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>ob</CODE> - - The object to cast
+<DT><B>Returns:</B><DD>The passed <code>ob</code>, will be coerced by the appropriate writer.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="castToExact(java.lang.Object)"><!-- --></A><H3>
+castToExact</H3>
+<PRE>
+public java.lang.Object <B>castToExact</B>(java.lang.Object&nbsp;ob)</PRE>
+<DL>
+<DD>Cast an object to an exact number
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>ob</CODE> - - The object to cast
+<DT><B>Returns:</B><DD>The passed <code>ob</code>, will be coerced by the appropriate writer.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="castToBoolean(java.lang.Object)"><!-- --></A><H3>
+castToBoolean</H3>
+<PRE>
+public java.lang.Object <B>castToBoolean</B>(java.lang.Object&nbsp;ob)</PRE>
+<DL>
+<DD>Cast an object to a boolean value
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>ob</CODE> - - The object to cast
+<DT><B>Returns:</B><DD>The passed <code>ob</code>, will be coerced by the appropriate writer.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="castToInexact(java.lang.Object)"><!-- --></A><H3>
+castToInexact</H3>
+<PRE>
+public java.lang.Object <B>castToInexact</B>(java.lang.Object&nbsp;ob)</PRE>
+<DL>
+<DD>Cast an object to a inexact value
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>ob</CODE> - - The object to cast
+<DT><B>Returns:</B><DD>The passed <code>ob</code>, will be coerced by the appropriate writer.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getPhpMap(java.lang.Object)"><!-- --></A><H3>
+getPhpMap</H3>
+<PRE>
+public <A HREF="../../../php/java/bridge/PhpMap.html" title="class in php.java.bridge">PhpMap</A> <B>getPhpMap</B>(java.lang.Object&nbsp;value)</PRE>
+<DL>
+<DD>Return map for the value (PHP 5 only)
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>value</CODE> - - The value which must be an array or implement Map or Collection.
+<DT><B>Returns:</B><DD>The PHP map.<DT><B>See Also:</B><DD><A HREF="../../../php/java/bridge/PhpMap.html" title="class in php.java.bridge"><CODE>PhpMap</CODE></A></DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setJarLibraryPath(java.lang.String, java.lang.String)"><!-- --></A><H3>
+setJarLibraryPath</H3>
+<PRE>
+public void <B>setJarLibraryPath</B>(java.lang.String&nbsp;path,
+                              java.lang.String&nbsp;extensionDir)</PRE>
+<DL>
+<DD>Append the path to the current library path<br>
+ Examples:<br>
+ setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");<br>
+ setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");<br>
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>path</CODE> - A file or url list, usually separated by ';'<DD><CODE>extensionDir</CODE> - The php extension directory.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setLibraryPath(java.lang.String, java.lang.String)"><!-- --></A><H3>
+setLibraryPath</H3>
+<PRE>
+public void <B>setLibraryPath</B>(java.lang.String&nbsp;rawPath,
+                           java.lang.String&nbsp;extensionDir)</PRE>
+<DL>
+<DD>Set the library path for ECMA dll's
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>rawPath</CODE> - A file or url list, usually separated by ';'<DD><CODE>extensionDir</CODE> - The php extension directory.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="inspect(java.lang.Object)"><!-- --></A><H3>
+inspect</H3>
+<PRE>
+public java.lang.String <B>inspect</B>(java.lang.Object&nbsp;object)</PRE>
+<DL>
+<DD>For internal use only.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>object</CODE> - The java object
+<DT><B>Returns:</B><DD>A list of all visible constructors, methods, fields and inner classes.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setFileEncoding(java.lang.String)"><!-- --></A><H3>
+setFileEncoding</H3>
+<PRE>
+public void <B>setFileEncoding</B>(java.lang.String&nbsp;fileEncoding)</PRE>
+<DL>
+<DD>Set a new file encoding, used to code and decode strings.
  Example: setFileEncoding("UTF-8")
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">fileEncoding</code><span class="separator"> - </span><span class="description">The file encoding.</span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="setJarLibraryPath(java.lang.String,java.lang.String)"/><div class="member detail outer"><h3 class="member detail name">setJarLibraryPath</h3><pre class="member detail synopsis">public void setJarLibraryPath(java.lang.String path,
-                              java.lang.String extensionDir)</pre><blockquote class="member detail name"><div class="member detail description"> Append the path to the current library path<br/>
- Examples:<br/>
- setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");<br/>
- setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");<br/>
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">path</code><span class="separator"> - </span><span class="description">A file or url list, usually separated by ';'</span></dd><dd class="item"><code class="name">extensionDir</code><span class="separator"> - </span><span class="description">The php extension directory.</span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="setLibraryPath(java.lang.String,java.lang.String)"/><div class="member detail outer"><h3 class="member detail name">setLibraryPath</h3><pre class="member detail synopsis">public void setLibraryPath(java.lang.String rawPath,
-                           java.lang.String extensionDir)</pre><blockquote class="member detail name"><div class="member detail description"> 
- Set the library path for ECMA dll's
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">rawPath</code><span class="separator"> - </span><span class="description">A file or url list, usually separated by ';'</span></dd><dd class="item"><code class="name">extensionDir</code><span class="separator"> - </span><span class="description">The php extension directory.</span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="setSessionFactory(php.java.bridge.SessionFactory)"/><div class="member detail outer"><h3 class="member detail name">setSessionFactory</h3><pre class="member detail synopsis">public void setSessionFactory(<a href="../../../php/java/bridge/SessionFactory.html" title="Class in php.java.bridge">SessionFactory</a> sessionFactory)</pre><blockquote class="member detail name"><div class="member detail description"> This method sets a new session factory. Used by the servlet to
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>fileEncoding</CODE> - The file encoding.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="InstanceOf(java.lang.Object, java.lang.Object)"><!-- --></A><H3>
+InstanceOf</H3>
+<PRE>
+public static boolean <B>InstanceOf</B>(java.lang.Object&nbsp;ob,
+                                 java.lang.Object&nbsp;claz)</PRE>
+<DL>
+<DD>Check if object is an instance of class.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>ob</CODE> - The object<DD><CODE>claz</CODE> - The class or an instance of a class
+<DT><B>Returns:</B><DD>true if ob is an instance of class, false otherwise.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="ObjectToString(java.lang.Object)"><!-- --></A><H3>
+ObjectToString</H3>
+<PRE>
+public java.lang.String <B>ObjectToString</B>(java.lang.Object&nbsp;ob)</PRE>
+<DL>
+<DD>Returns a string representation of the object
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>ob</CODE> - The object
+<DT><B>Returns:</B><DD>A string representation.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getContext()"><!-- --></A><H3>
+getContext</H3>
+<PRE>
+public java.lang.Object <B>getContext</B>()</PRE>
+<DL>
+<DD>Returns the JSR223 context.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+
+<DT><B>Returns:</B><DD>The JSR223 context.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getSession(java.lang.String, boolean, int)"><!-- --></A><H3>
+getSession</H3>
+<PRE>
+public <A HREF="../../../php/java/bridge/ISession.html" title="interface in php.java.bridge">ISession</A> <B>getSession</B>(java.lang.String&nbsp;name,
+                           boolean&nbsp;clientIsNew,
+                           int&nbsp;timeout)</PRE>
+<DL>
+<DD>Return a session handle shared among all JavaBridge
+ instances. If it is a HTTP session, the session is shared with
+ the servlet or jsp.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>See Also:</B><DD><A HREF="../../../php/java/bridge/ISession.html" title="interface in php.java.bridge"><CODE>ISession</CODE></A></DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="makeClosure(long, java.util.Map)"><!-- --></A><H3>
+makeClosure</H3>
+<PRE>
+public java.lang.Object <B>makeClosure</B>(long&nbsp;object,
+                                    java.util.Map&nbsp;names)</PRE>
+<DL>
+<DD>Create a dynamic proxy proxy for calling PHP code.<br>
+ Example: <br>
+ java_closure($this, $map);<br>
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>object</CODE> - the PHP environment (the php "class")<DD><CODE>names</CODE> - maps java to php names
+<DT><B>Returns:</B><DD>the proxy</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="makeClosure(long, java.util.Map, java.lang.Class[])"><!-- --></A><H3>
+makeClosure</H3>
+<PRE>
+public java.lang.Object <B>makeClosure</B>(long&nbsp;object,
+                                    java.util.Map&nbsp;names,
+                                    java.lang.Class[]&nbsp;interfaces)</PRE>
+<DL>
+<DD>Create a dynamic proxy proxy for calling PHP code.<br>
+ Example: <br>
+ java_closure($this, $map, $interfaces);<br>
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>object</CODE> - the PHP environment (the php "class")<DD><CODE>names</CODE> - maps java to php names<DD><CODE>interfaces</CODE> - list of interfaces which the PHP environment must implement
+<DT><B>Returns:</B><DD>the proxy</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="makeClosure(long, java.lang.String)"><!-- --></A><H3>
+makeClosure</H3>
+<PRE>
+public java.lang.Object <B>makeClosure</B>(long&nbsp;object,
+                                    java.lang.String&nbsp;name)</PRE>
+<DL>
+<DD>Create a dynamic proxy proxy for calling PHP code.<br>
+ Example: <br>
+ java_closure($this, "clickMe");<br>
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>object</CODE> - the PHP environment (the php "class")<DD><CODE>name</CODE> - maps all java names to this php name
+<DT><B>Returns:</B><DD>the proxy</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="makeClosure(long, java.lang.String, java.lang.Class[])"><!-- --></A><H3>
+makeClosure</H3>
+<PRE>
+public java.lang.Object <B>makeClosure</B>(long&nbsp;object,
+                                    java.lang.String&nbsp;name,
+                                    java.lang.Class[]&nbsp;interfaces)</PRE>
+<DL>
+<DD>Create a dynamic proxy proxy for calling PHP code.<br>
+ Example: <br>
+ java_closure($this, "clickMe", $interfaces);<br>
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>object</CODE> - the PHP environment (the php "class")<DD><CODE>name</CODE> - maps all java names to this php name<DD><CODE>interfaces</CODE> - list of interfaces which the PHP environment must implement
+<DT><B>Returns:</B><DD>the proxy</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="makeClosure(long)"><!-- --></A><H3>
+makeClosure</H3>
+<PRE>
+public java.lang.Object <B>makeClosure</B>(long&nbsp;object)</PRE>
+<DL>
+<DD>Create a dynamic proxy proxy for calling PHP code.<br>
+ Example: <br>
+ java_closure();<br>
+ java_closure($this);<br>
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>object</CODE> - the PHP environment (the php "class")
+<DT><B>Returns:</B><DD>the proxy</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="reset()"><!-- --></A><H3>
+reset</H3>
+<PRE>
+public void <B>reset</B>()</PRE>
+<DL>
+<DD>Reset the global caches of the bridge.  Currently this is the
+ classloader. This is a no-op when the backend
+ is running in a servlet engine or application server.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>See Also:</B><DD><CODE>Session.reset()</CODE></DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setSessionFactory(php.java.bridge.SessionFactory)"><!-- --></A><H3>
+setSessionFactory</H3>
+<PRE>
+public void <B>setSessionFactory</B>(<A HREF="../../../php/java/bridge/SessionFactory.html" title="class in php.java.bridge">SessionFactory</A>&nbsp;sessionFactory)</PRE>
+<DL>
+<DD>This method sets a new session factory. Used by the servlet to
  implement session sharing.
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">sessionFactory</code><span class="separator"> - </span><span class="description">The sessionFactory to set.</span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="warn(java.lang.String)"/><div class="member detail outer"><h3 class="member detail name">warn</h3><pre class="member detail synopsis">public void warn(java.lang.String msg)</pre><blockquote class="member detail name"><div class="member detail description"> Write a warning.
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">msg</code><span class="separator"> - </span><span class="description">The warning.</span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div></div><p class="navbar bottom spacer"> </p><table class="navbar div bottom"><tr><td><div class="navbar div top" colspan="2"><span class="navbar item enabled"><a href="../../../index-noframes.html">Overview</a></span> <span class="navbar item enabled"><a href="package-summary.html">Package</a></span> <span class="navbar item active">Class</span> <span class="navbar item enabled"><a href="JavaBridge-uses.html">Use</a></span> <span class="navbar item enabled"><a href="tree.html">Tree</a></span> <span class="navbar item enabled"><a href="../../../alphaindex-1.html">Index</a></span> <span class="navbar item enabled"><a href="../../../deprecated.html">Deprecated</a></span> <span class="navbar item enabled"><a href="../../../about.html">About</a></span></div></td></tr></table></body></html>
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>sessionFactory</CODE> - The sessionFactory to set.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="deserialize(java.lang.String, int)"><!-- --></A><H3>
+deserialize</H3>
+<PRE>
+public int <B>deserialize</B>(java.lang.String&nbsp;serialID,
+                       int&nbsp;timeout)</PRE>
+<DL>
+<DD>Load the object from the session store.
+ The C code requires that this method is called "deserialize" even though it doesn't deserialize anything.
+ See the JSessionAdapter in the php_java_lib folder. For real serialization/deserialization see the JPersistenceAdapter in the php_java_lib folder.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>serialID</CODE> - The key<DD><CODE>timeout</CODE> - The timeout, usually 1400 seconds.
+<DT><B>Returns:</B><DD>the new object identity.
+<DT><B>Throws:</B>
+<DD><CODE>java.lang.IllegalArgumentException</CODE> - if serialID does not exist anymore.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="serialize(java.lang.Object, int)"><!-- --></A><H3>
+serialize</H3>
+<PRE>
+public java.lang.String <B>serialize</B>(java.lang.Object&nbsp;obj,
+                                  int&nbsp;timeout)</PRE>
+<DL>
+<DD>Store the object in the session store and return the serial id.
+ The C code requires that this method is called "serialize" even though it doesn't serialize anything.
+ See the JSessionAdapter in the php_java_lib folder. For real serialization/deserialization see the JPersistenceAdapter in the php_java_lib folder.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>obj</CODE> - The object<DD><CODE>timeout</CODE> - The timeout, usually 1400 seconds
+<DT><B>Returns:</B><DD>the serialID</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setClassLoader(php.java.bridge.JavaBridgeClassLoader)"><!-- --></A><H3>
+setClassLoader</H3>
+<PRE>
+public void <B>setClassLoader</B>(<A HREF="../../../php/java/bridge/JavaBridgeClassLoader.html" title="class in php.java.bridge">JavaBridgeClassLoader</A>&nbsp;cl)</PRE>
+<DL>
+<DD>Set a new ClassLoader
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>cl</CODE> - The ClassLoader</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getClassLoader()"><!-- --></A><H3>
+getClassLoader</H3>
+<PRE>
+public <A HREF="../../../php/java/bridge/JavaBridgeClassLoader.html" title="class in php.java.bridge">JavaBridgeClassLoader</A> <B>getClassLoader</B>()</PRE>
+<DL>
+<DD>Return the current ClassLoader
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+
+<DT><B>Returns:</B><DD>The ClassLoader.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="offsetExists(java.util.Map, java.lang.Object)"><!-- --></A><H3>
+offsetExists</H3>
+<PRE>
+public boolean <B>offsetExists</B>(java.util.Map&nbsp;value,
+                            java.lang.Object&nbsp;pos)</PRE>
+<DL>
+<DD>Checks if a given position exists.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>value</CODE> - The map.<DD><CODE>pos</CODE> - The position
+<DT><B>Returns:</B><DD>true if an element exists at this position, false otherwise.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="offsetGet(java.util.Map, java.lang.Object)"><!-- --></A><H3>
+offsetGet</H3>
+<PRE>
+public java.lang.Object <B>offsetGet</B>(java.util.Map&nbsp;value,
+                                  java.lang.Object&nbsp;pos)</PRE>
+<DL>
+<DD>Returns the object at the posisition.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>value</CODE> - The map.<DD><CODE>pos</CODE> - The position.
+<DT><B>Returns:</B><DD>The object at the given position.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="offsetSet(java.util.Map, java.lang.Object, java.lang.Object)"><!-- --></A><H3>
+offsetSet</H3>
+<PRE>
+public void <B>offsetSet</B>(java.util.Map&nbsp;value,
+                      java.lang.Object&nbsp;pos,
+                      java.lang.Object&nbsp;val)</PRE>
+<DL>
+<DD>Set an object at position.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>value</CODE> - The map.<DD><CODE>pos</CODE> - The position.<DD><CODE>val</CODE> - The object.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="offsetUnset(java.util.Map, java.lang.Object)"><!-- --></A><H3>
+offsetUnset</H3>
+<PRE>
+public void <B>offsetUnset</B>(java.util.Map&nbsp;value,
+                        java.lang.Object&nbsp;pos)</PRE>
+<DL>
+<DD>Remove an object from the position.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>value</CODE> - The map.<DD><CODE>pos</CODE> - The position.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="offsetExists(java.util.List, java.lang.Number)"><!-- --></A><H3>
+offsetExists</H3>
+<PRE>
+public boolean <B>offsetExists</B>(java.util.List&nbsp;value,
+                            java.lang.Number&nbsp;pos)</PRE>
+<DL>
+<DD>Checks if a given position exists.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>value</CODE> - The list.<DD><CODE>pos</CODE> - The position
+<DT><B>Returns:</B><DD>true if an element exists at this position, false otherwise.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="offsetGet(java.util.List, java.lang.Number)"><!-- --></A><H3>
+offsetGet</H3>
+<PRE>
+public java.lang.Object <B>offsetGet</B>(java.util.List&nbsp;value,
+                                  java.lang.Number&nbsp;pos)</PRE>
+<DL>
+<DD>Returns the object at the posisition.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>value</CODE> - The list.<DD><CODE>pos</CODE> - The position.
+<DT><B>Returns:</B><DD>The object at the given position.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="offsetSet(java.util.List, java.lang.Number, java.lang.Object)"><!-- --></A><H3>
+offsetSet</H3>
+<PRE>
+public void <B>offsetSet</B>(java.util.List&nbsp;value,
+                      java.lang.Number&nbsp;pos,
+                      java.lang.Object&nbsp;val)</PRE>
+<DL>
+<DD>Set an object at position.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>value</CODE> - The list.<DD><CODE>pos</CODE> - The position.<DD><CODE>val</CODE> - The object.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="offsetUnset(java.util.List, java.lang.Number)"><!-- --></A><H3>
+offsetUnset</H3>
+<PRE>
+public void <B>offsetUnset</B>(java.util.List&nbsp;value,
+                        java.lang.Number&nbsp;pos)</PRE>
+<DL>
+<DD>Remove an object from the position.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>value</CODE> - The list.<DD><CODE>pos</CODE> - The position.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="offsetExists(java.lang.Object, java.lang.Object)"><!-- --></A><H3>
+offsetExists</H3>
+<PRE>
+public boolean <B>offsetExists</B>(java.lang.Object&nbsp;value,
+                            java.lang.Object&nbsp;pos)</PRE>
+<DL>
+<DD>Checks if a given position exists.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>value</CODE> - The array.<DD><CODE>pos</CODE> - The position
+<DT><B>Returns:</B><DD>true if an element exists at this position, false otherwise.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="offsetGet(java.lang.Object, java.lang.Object)"><!-- --></A><H3>
+offsetGet</H3>
+<PRE>
+public java.lang.Object <B>offsetGet</B>(java.lang.Object&nbsp;value,
+                                  java.lang.Object&nbsp;pos)</PRE>
+<DL>
+<DD>Returns the object at the posisition.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>value</CODE> - The array.<DD><CODE>pos</CODE> - The position.
+<DT><B>Returns:</B><DD>The object at the given position.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="offsetSet(java.lang.Object, java.lang.Object, java.lang.Object)"><!-- --></A><H3>
+offsetSet</H3>
+<PRE>
+public void <B>offsetSet</B>(java.lang.Object&nbsp;value,
+                      java.lang.Object&nbsp;pos,
+                      java.lang.Object&nbsp;val)</PRE>
+<DL>
+<DD>Set an object at position.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>value</CODE> - The array.<DD><CODE>pos</CODE> - The position.<DD><CODE>val</CODE> - The object.</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="offsetUnset(java.lang.Object, java.lang.Object)"><!-- --></A><H3>
+offsetUnset</H3>
+<PRE>
+public void <B>offsetUnset</B>(java.lang.Object&nbsp;value,
+                        java.lang.Object&nbsp;pos)</PRE>
+<DL>
+<DD>Remove an object from the position.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>value</CODE> - The array.<DD><CODE>pos</CODE> - The position.</DL>
+</DD>
+</DL>
+<!-- ========= END OF CLASS DATA ========= -->
+<HR>
+
+
+<!-- ======= START OF BOTTOM NAVBAR ====== -->
+<A NAME="navbar_bottom"><!-- --></A>
+<A HREF="#skip-navbar_bottom" title="Skip navigation links"></A>
+<TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
+<TR>
+<TD COLSPAN=2 BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
+<A NAME="navbar_bottom_firstrow"><!-- --></A>
+<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
+  <TR ALIGN="center" VALIGN="top">
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="class-use/JavaBridge.html"><FONT CLASS="NavBarFont1"><B>Use</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../index-files/index-1.html"><FONT CLASS="NavBarFont1"><B>Index</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT></A>&nbsp;</TD>
+  </TR>
+</TABLE>
+</TD>
+<TD ALIGN="right" VALIGN="top" ROWSPAN=3><EM>
+</EM>
+</TD>
+</TR>
+
+<TR>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+&nbsp;<A HREF="../../../php/java/bridge/ISocketFactory.html" title="interface in php.java.bridge"><B>PREV CLASS</B></A>&nbsp;
+&nbsp;<A HREF="../../../php/java/bridge/JavaBridgeClassLoader.html" title="class in php.java.bridge"><B>NEXT CLASS</B></A></FONT></TD>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+  <A HREF="../../../index.html?php/java/bridge/JavaBridge.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+&nbsp;<A HREF="JavaBridge.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+&nbsp;<SCRIPT type="text/javascript">
+  <!--
+  if(window==top) {
+    document.writeln('<A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>');
+  }
+  //-->
+</SCRIPT>
+<NOSCRIPT>
+  <A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>
+</NOSCRIPT>
+
+
+</FONT></TD>
+</TR>
+<TR>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+  SUMMARY:&nbsp;NESTED&nbsp;|&nbsp;<A HREF="#field_summary">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_summary">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+DETAIL:&nbsp;<A HREF="#field_detail">FIELD</A>&nbsp;|&nbsp;<A HREF="#constructor_detail">CONSTR</A>&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+</TR>
+</TABLE>
+<A NAME="skip-navbar_bottom"></A>
+<!-- ======== END OF BOTTOM NAVBAR ======= -->
+
+<HR>
+
+</BODY>
+</HTML>

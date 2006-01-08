@@ -53,10 +53,6 @@ public class PhpFacesScriptContext extends PhpSimpleHttpScriptContext {
 	buf.append(".php"); // it doesn't matter what we send here, as long as it ends with .php
 	this.env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", buf.toString());
     	
-    	JavaBridge bridge = new JavaBridge();
-	ctx.setBridge(bridge);
-    	bridge.setClassLoader(new JavaBridgeClassLoader(ctx.getBridge(), DynamicJavaBridgeClassLoader.newInstance(Util.getContextClassLoader())));
-    	bridge.setSessionFactory(ctx);
     	super.initialize(kontext, req, res, writer);
     }
 

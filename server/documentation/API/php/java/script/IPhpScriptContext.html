@@ -1,9 +1,306 @@
-<?xml version="1.0" encoding="null"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head><title>IPhpScriptContext</title><script src="../../../resources/gjdoc.js" type="text/javascript"><!-- this comment required for konqueror 3.2.2 --></script><meta http-equiv="Content-Type" content="text/html; charset=null"/><meta name="generator" content="GNU Gjdoc Standard Doclet"/><meta name="keywords" content="php.java.script.IPhpScriptContext class"/><meta name="keywords" content="getWriter()"/><meta name="keywords" content="getEnvironment()"/><meta name="keywords" content="getContextManager()"/><meta name="keywords" content="setContinuation()"/><link rel="stylesheet" type="text/css" href="../../../resources/gjdochtml-clean-layout.css" title="GNU Clean"/><link rel="stylesheet" type="text/css" href="../../../resources/gjdochtml-clean-color1.css" title="GNU Clean"/></head><body class="content class" onload="top.contentPageLoaded(document.title)"><table class="navbar div top"><tr><td class="navbar div top" colspan="2"><div class="navbar div top" colspan="2"><span class="navbar item enabled"><a href="../../../index-noframes.html">Overview</a></span> <span class="navbar item enabled"><a href="package-summary.html">Package</a></span> <span class="navbar item active">Class</span> <span class="navbar item enabled"><a href="IPhpScriptContext-uses.html">Use</a></span> <span class="navbar item enabled"><a href="tree.html">Tree</a></span> <span class="navbar item enabled"><a href="../../../alphaindex-1.html">Index</a></span> <span class="navbar item enabled"><a href="../../../deprecated.html">Deprecated</a></span> <span class="navbar item enabled"><a href="../../../about.html">About</a></span></div></td></tr><tr><td class="navi"><a href="../../../php/java/script/HttpProxy.html">Prev Class</a> | <a href="../../../php/java/script/PhpScriptContext.html">Next Class</a></td><td class="navi"><a href="../../../index.html" title="Show in a frameset" target="_top">Frames</a> | <a href="IPhpScriptContext.html" title="Show without frames" target="_top">No Frames</a> </td></tr><tr><td class="navi">Summary: Nested | Field | <a href="#summary-methods">Method</a> | Constr</td><td class="navi">Detail: Nested | Field | <a href="#detail-methods">Method</a> | Constr</td></tr></table><div class="class title outer"><h3 class="class title-package">php.java.script</h3><h1 class="class title-class">Interface IPhpScriptContext</h1></div><dl class="class knownimplementing"><dt class="header"><b>All Superinterfaces:</b></dt><dd class="item"><a href="../../../php/java/bridge/Invocable.html" title="Interface in php.java.bridge">Invocable</a></dd></dl><dl class="class knownimplementing"><dt class="header"><b>Known Implementing Classes:</b></dt><dd class="item"><a href="../../../php/java/faces/PhpFacesScriptContext.html" title="Class in php.java.faces">PhpFacesScriptContext</a>, <a href="../../../php/java/script/PhpScriptContext.html" title="Class in php.java.script">PhpScriptContext</a>, <a href="../../../php/java/script/PhpSimpleHttpScriptContext.html" title="Class in php.java.script">PhpSimpleHttpScriptContext</a></dd></dl><hr/><div class="class synopsis outer"><div class="class synopsis declaration"><code>public interface <b class="class synopsis name">IPhpScriptContext</b></code></div><div class="class synopsis implements"><code>extends <a href="../../../php/java/bridge/Invocable.html" title="Interface in php.java.bridge">Invocable</a></code></div></div><hr/><div class="class description"> Common methods for all PHP ScriptContexts
-</div><p class="taglet"><dl class="tag list"><dt class="tag section header"><b>Author:</b></dt><dd class="tag item">jostb</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><a name="summary-methods"/><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table header"><td colspan="2"><h2 class="table header">Method Summary</h2></td></tr><tr><td class="left" valign="top"><code class="synopsis"> <a href="../../../php/java/bridge/http/ContextFactory.html" title="Class in php.java.bridge.http">ContextFactory</a></code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getContextManager()">getContextManager</a>()</code></dt><dd class="description"> Returns the ContextFactory.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.util.Map</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getEnvironment()">getEnvironment</a>()</code></dt><dd class="description"> Returns the script environment.</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> java.io.Writer</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#getWriter()">getWriter</a>()</code></dt><dd class="description"> Returns the Writer
-</dd></dl></td></tr><tr><td class="left" valign="top"><code class="synopsis"> void</code></td><td class="right"><dl class="list"><dt class="synopsis"><code><a href="#setContinuation(php.java.script.HttpProxy)">setContinuation</a>(<a href="../../../php/java/script/HttpProxy.html" title="Class in php.java.script">HttpProxy</a>&nbsp;kont)</code></dt><dd class="description"> Set the php continuation
-</dd></dl></td></tr></table></dl><dl class="table container"><table class="class summary" border="1" width="100%"><tr class="table sub header"><td colspan="2"><h3 class="table sub header">Methods inherited from interface php.java.bridge.<a href="../../../php/java/bridge/Invocable.html" title="Interface in php.java.bridge">Invocable</a></h3></td></tr><tr><td class="inherited"><a href="../../../php/java/bridge/Invocable.html#call(php.java.bridge.PhpProcedureProxy)" title="call(PhpProcedureProxy)"><code class="member">call</code></a></td></tr></table></dl><a name="detail-methods"/><h2 class="section header">Method Details</h2><div class="section"><a name="getContextManager()"/><div class="member detail outer"><h3 class="member detail name">getContextManager</h3><pre class="member detail synopsis">public <a href="../../../php/java/bridge/http/ContextFactory.html" title="Class in php.java.bridge.http">ContextFactory</a> getContextManager()</pre><blockquote class="member detail name"><div class="member detail description"> Returns the ContextFactory.
-</div><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">the context manager</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getEnvironment()"/><div class="member detail outer"><h3 class="member detail name">getEnvironment</h3><pre class="member detail synopsis">public java.util.Map getEnvironment()</pre><blockquote class="member detail name"><div class="member detail description"> Returns the script environment.
-</div><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">the environment</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="getWriter()"/><div class="member detail outer"><h3 class="member detail name">getWriter</h3><pre class="member detail synopsis">public java.io.Writer getWriter()</pre><blockquote class="member detail name"><div class="member detail description"> Returns the Writer
-</div><p class="member detail return list"><dl><dt class="member detail return header"><b>Returns:</b></dt><dd class="member detail return item">The writer</dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div><hr/><a name="setContinuation(php.java.script.HttpProxy)"/><div class="member detail outer"><h3 class="member detail name">setContinuation</h3><pre class="member detail synopsis">public void setContinuation(<a href="../../../php/java/script/HttpProxy.html" title="Class in php.java.script">HttpProxy</a> kont)</pre><blockquote class="member detail name"><div class="member detail description"> Set the php continuation
-</div><p class="parameter"><dl><dt class="header"><b>Parameters:</b></dt><dd class="item"><code class="name">kont</code><span class="separator"> - </span><span class="description">The continuation.</span></dd></dl></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p><p class="taglet"></p></blockquote></div></div><p class="navbar bottom spacer"> </p><table class="navbar div bottom"><tr><td><div class="navbar div top" colspan="2"><span class="navbar item enabled"><a href="../../../index-noframes.html">Overview</a></span> <span class="navbar item enabled"><a href="package-summary.html">Package</a></span> <span class="navbar item active">Class</span> <span class="navbar item enabled"><a href="IPhpScriptContext-uses.html">Use</a></span> <span class="navbar item enabled"><a href="tree.html">Tree</a></span> <span class="navbar item enabled"><a href="../../../alphaindex-1.html">Index</a></span> <span class="navbar item enabled"><a href="../../../deprecated.html">Deprecated</a></span> <span class="navbar item enabled"><a href="../../../about.html">About</a></span></div></td></tr></table></body></html>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--NewPage-->
+<HTML>
+<HEAD>
+<!-- Generated by javadoc (build 1.5.0) on Sun Jan 08 19:28:40 CET 2006 -->
+<TITLE>
+IPhpScriptContext
+</TITLE>
+
+<META NAME="keywords" CONTENT="php.java.script.IPhpScriptContext interface">
+
+<LINK REL ="stylesheet" TYPE="text/css" HREF="../../../stylesheet.css" TITLE="Style">
+
+<SCRIPT type="text/javascript">
+function windowTitle()
+{
+    parent.document.title="IPhpScriptContext";
+}
+</SCRIPT>
+<NOSCRIPT>
+</NOSCRIPT>
+
+</HEAD>
+
+<BODY BGCOLOR="white" onload="windowTitle();">
+
+
+<!-- ========= START OF TOP NAVBAR ======= -->
+<A NAME="navbar_top"><!-- --></A>
+<A HREF="#skip-navbar_top" title="Skip navigation links"></A>
+<TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
+<TR>
+<TD COLSPAN=2 BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
+<A NAME="navbar_top_firstrow"><!-- --></A>
+<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
+  <TR ALIGN="center" VALIGN="top">
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="class-use/IPhpScriptContext.html"><FONT CLASS="NavBarFont1"><B>Use</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../index-files/index-1.html"><FONT CLASS="NavBarFont1"><B>Index</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT></A>&nbsp;</TD>
+  </TR>
+</TABLE>
+</TD>
+<TD ALIGN="right" VALIGN="top" ROWSPAN=3><EM>
+</EM>
+</TD>
+</TR>
+
+<TR>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+&nbsp;<A HREF="../../../php/java/script/HttpProxy.html" title="class in php.java.script"><B>PREV CLASS</B></A>&nbsp;
+&nbsp;<A HREF="../../../php/java/script/PhpScriptContext.html" title="class in php.java.script"><B>NEXT CLASS</B></A></FONT></TD>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+  <A HREF="../../../index.html?php/java/script/IPhpScriptContext.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+&nbsp;<A HREF="IPhpScriptContext.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+&nbsp;<SCRIPT type="text/javascript">
+  <!--
+  if(window==top) {
+    document.writeln('<A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>');
+  }
+  //-->
+</SCRIPT>
+<NOSCRIPT>
+  <A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>
+</NOSCRIPT>
+
+
+</FONT></TD>
+</TR>
+<TR>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+  SUMMARY:&nbsp;NESTED&nbsp;|&nbsp;FIELD&nbsp;|&nbsp;CONSTR&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+DETAIL:&nbsp;FIELD&nbsp;|&nbsp;CONSTR&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+</TR>
+</TABLE>
+<A NAME="skip-navbar_top"></A>
+<!-- ========= END OF TOP NAVBAR ========= -->
+
+<HR>
+<!-- ======== START OF CLASS DATA ======== -->
+<H2>
+<FONT SIZE="-1">
+php.java.script</FONT>
+<BR>
+Interface IPhpScriptContext</H2>
+<DL>
+<DT><B>All Superinterfaces:</B> <DD><A HREF="../../../php/java/bridge/Invocable.html" title="interface in php.java.bridge">Invocable</A></DD>
+</DL>
+<DL>
+<DT><B>All Known Implementing Classes:</B> <DD><A HREF="../../../php/java/faces/PhpFacesScriptContext.html" title="class in php.java.faces">PhpFacesScriptContext</A>, <A HREF="../../../php/java/script/PhpScriptContext.html" title="class in php.java.script">PhpScriptContext</A>, <A HREF="../../../php/java/script/PhpSimpleHttpScriptContext.html" title="class in php.java.script">PhpSimpleHttpScriptContext</A></DD>
+</DL>
+<HR>
+<DL>
+<DT><PRE>public interface <B>IPhpScriptContext</B><DT>extends <A HREF="../../../php/java/bridge/Invocable.html" title="interface in php.java.bridge">Invocable</A></DL>
+</PRE>
+
+<P>
+Common methods for all PHP ScriptContexts
+<P>
+
+<P>
+<DL>
+<DT><B>Author:</B></DT>
+  <DD>jostb</DD>
+</DL>
+<HR>
+
+<P>
+
+<!-- ========== METHOD SUMMARY =========== -->
+
+<A NAME="method_summary"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="2"><FONT SIZE="+2">
+<B>Method Summary</B></FONT></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;<A HREF="../../../php/java/bridge/http/ContextFactory.html" title="class in php.java.bridge.http">ContextFactory</A></CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/script/IPhpScriptContext.html#getContextManager()">getContextManager</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the ContextFactory.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.util.Map</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/script/IPhpScriptContext.html#getEnvironment()">getEnvironment</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the script environment.</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;java.io.Writer</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/script/IPhpScriptContext.html#getWriter()">getWriter</A></B>()</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Returns the Writer</TD>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD ALIGN="right" VALIGN="top" WIDTH="1%"><FONT SIZE="-1">
+<CODE>&nbsp;void</CODE></FONT></TD>
+<TD><CODE><B><A HREF="../../../php/java/script/IPhpScriptContext.html#setContinuation(php.java.script.HttpProxy)">setContinuation</A></B>(<A HREF="../../../php/java/script/HttpProxy.html" title="class in php.java.script">HttpProxy</A>&nbsp;kont)</CODE>
+
+<BR>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Set the php continuation</TD>
+</TR>
+</TABLE>
+&nbsp;<A NAME="methods_inherited_from_class_php.java.bridge.Invocable"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#EEEEFF" CLASS="TableSubHeadingColor">
+<TH ALIGN="left"><B>Methods inherited from interface php.java.bridge.<A HREF="../../../php/java/bridge/Invocable.html" title="interface in php.java.bridge">Invocable</A></B></TH>
+</TR>
+<TR BGCOLOR="white" CLASS="TableRowColor">
+<TD><CODE><A HREF="../../../php/java/bridge/Invocable.html#call(php.java.bridge.PhpProcedureProxy)">call</A></CODE></TD>
+</TR>
+</TABLE>
+&nbsp;
+<P>
+
+<!-- ============ METHOD DETAIL ========== -->
+
+<A NAME="method_detail"><!-- --></A>
+<TABLE BORDER="1" WIDTH="100%" CELLPADDING="3" CELLSPACING="0" SUMMARY="">
+<TR BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<TH ALIGN="left" COLSPAN="1"><FONT SIZE="+2">
+<B>Method Detail</B></FONT></TH>
+</TR>
+</TABLE>
+
+<A NAME="getWriter()"><!-- --></A><H3>
+getWriter</H3>
+<PRE>
+java.io.Writer <B>getWriter</B>()</PRE>
+<DL>
+<DD>Returns the Writer
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+
+<DT><B>Returns:</B><DD>The writer</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getEnvironment()"><!-- --></A><H3>
+getEnvironment</H3>
+<PRE>
+java.util.Map <B>getEnvironment</B>()</PRE>
+<DL>
+<DD>Returns the script environment.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+
+<DT><B>Returns:</B><DD>the environment</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="getContextManager()"><!-- --></A><H3>
+getContextManager</H3>
+<PRE>
+<A HREF="../../../php/java/bridge/http/ContextFactory.html" title="class in php.java.bridge.http">ContextFactory</A> <B>getContextManager</B>()</PRE>
+<DL>
+<DD>Returns the ContextFactory.
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+
+<DT><B>Returns:</B><DD>the context manager</DL>
+</DD>
+</DL>
+<HR>
+
+<A NAME="setContinuation(php.java.script.HttpProxy)"><!-- --></A><H3>
+setContinuation</H3>
+<PRE>
+void <B>setContinuation</B>(<A HREF="../../../php/java/script/HttpProxy.html" title="class in php.java.script">HttpProxy</A>&nbsp;kont)</PRE>
+<DL>
+<DD>Set the php continuation
+<P>
+<DD><DL>
+</DL>
+</DD>
+<DD><DL>
+<DT><B>Parameters:</B><DD><CODE>kont</CODE> - The continuation.</DL>
+</DD>
+</DL>
+<!-- ========= END OF CLASS DATA ========= -->
+<HR>
+
+
+<!-- ======= START OF BOTTOM NAVBAR ====== -->
+<A NAME="navbar_bottom"><!-- --></A>
+<A HREF="#skip-navbar_bottom" title="Skip navigation links"></A>
+<TABLE BORDER="0" WIDTH="100%" CELLPADDING="1" CELLSPACING="0" SUMMARY="">
+<TR>
+<TD COLSPAN=2 BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
+<A NAME="navbar_bottom_firstrow"><!-- --></A>
+<TABLE BORDER="0" CELLPADDING="0" CELLSPACING="3" SUMMARY="">
+  <TR ALIGN="center" VALIGN="top">
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../overview-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-summary.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="class-use/IPhpScriptContext.html"><FONT CLASS="NavBarFont1"><B>Use</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="package-tree.html"><FONT CLASS="NavBarFont1"><B>Tree</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../deprecated-list.html"><FONT CLASS="NavBarFont1"><B>Deprecated</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../index-files/index-1.html"><FONT CLASS="NavBarFont1"><B>Index</B></FONT></A>&nbsp;</TD>
+  <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1">    <A HREF="../../../help-doc.html"><FONT CLASS="NavBarFont1"><B>Help</B></FONT></A>&nbsp;</TD>
+  </TR>
+</TABLE>
+</TD>
+<TD ALIGN="right" VALIGN="top" ROWSPAN=3><EM>
+</EM>
+</TD>
+</TR>
+
+<TR>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+&nbsp;<A HREF="../../../php/java/script/HttpProxy.html" title="class in php.java.script"><B>PREV CLASS</B></A>&nbsp;
+&nbsp;<A HREF="../../../php/java/script/PhpScriptContext.html" title="class in php.java.script"><B>NEXT CLASS</B></A></FONT></TD>
+<TD BGCOLOR="white" CLASS="NavBarCell2"><FONT SIZE="-2">
+  <A HREF="../../../index.html?php/java/script/IPhpScriptContext.html" target="_top"><B>FRAMES</B></A>  &nbsp;
+&nbsp;<A HREF="IPhpScriptContext.html" target="_top"><B>NO FRAMES</B></A>  &nbsp;
+&nbsp;<SCRIPT type="text/javascript">
+  <!--
+  if(window==top) {
+    document.writeln('<A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>');
+  }
+  //-->
+</SCRIPT>
+<NOSCRIPT>
+  <A HREF="../../../allclasses-noframe.html"><B>All Classes</B></A>
+</NOSCRIPT>
+
+
+</FONT></TD>
+</TR>
+<TR>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+  SUMMARY:&nbsp;NESTED&nbsp;|&nbsp;FIELD&nbsp;|&nbsp;CONSTR&nbsp;|&nbsp;<A HREF="#method_summary">METHOD</A></FONT></TD>
+<TD VALIGN="top" CLASS="NavBarCell3"><FONT SIZE="-2">
+DETAIL:&nbsp;FIELD&nbsp;|&nbsp;CONSTR&nbsp;|&nbsp;<A HREF="#method_detail">METHOD</A></FONT></TD>
+</TR>
+</TABLE>
+<A NAME="skip-navbar_bottom"></A>
+<!-- ======== END OF BOTTOM NAVBAR ======= -->
+
+<HR>
+
+</BODY>
+</HTML>

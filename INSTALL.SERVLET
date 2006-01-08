@@ -21,12 +21,6 @@ Installing the PHP/Java Bridge J2EE Component
     java.hosts   = "127.0.0.1:8080"
     java.servlet = User
   
-  and disable the local backend (if it is installed and running), for
-  example with:
-  
-    service php-java-bridge stop
-    chkconfig php-java-bridge off
-  
 * Deploy JavaBridge.war into your servlet engine or application
   server. For example with the command: 
 
@@ -117,11 +111,13 @@ Known AS Issues
   location from "@80:/java-server-faces/helloWorld.php" to
   "/java-server-faces/helloWorld.php".
 
-* Remember to stop the local backend (/etc/init.d/php-java-bridge stop) 
-  and to set java.hosts=... and java.servlet=User.  Otherwise session
-  sharing with .jsp will not work and java-server-faces/index.php will
-  redirect you to the local backend which doesn't understand anything
-  about jsf.
+* Remember to set java.servlet=User or java.servlet=<Context>.
+  Otherwise session sharing with .jsp will not work and
+  java-server-faces/index.php will redirect you to the local backend
+  which doesn't understand anything about jsf.
+  If you want to allow clients to access your service from a remote
+  host, set java.servlet=On and set allow_http_tunnel to On in the
+  web.xml.
 
 * The Sun J2EE application server does not allow one to start CGI
   binaries. Start Apache or start a standalone PHP server outside of

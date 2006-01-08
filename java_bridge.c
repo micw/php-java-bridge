@@ -44,7 +44,12 @@ static short checkError(pval *value TSRMLS_DC)
 }
 
 static short is_type (zval *pobj TSRMLS_DC) {
+#ifdef ZEND_ENGINE_2
   return instanceof_function(Z_OBJCE_P(pobj), EXT_GLOBAL(class_entry) TSRMLS_CC)!=0;
+#else
+  extern void EXT_GLOBAL(call_function_handler4)(INTERNAL_FUNCTION_PARAMETERS, zend_property_reference *property_reference);
+  return pobj->type == IS_OBJECT && pobj->value.obj.ce->handle_function_call==EXT_GLOBAL(call_function_handler4);
+#endif
 }
 
 #ifdef ZEND_ENGINE_2

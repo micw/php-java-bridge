@@ -1,3 +1,39 @@
+2006-01-08  Jost Boekemeier  <jostb@intern>
+
+	* php-java-bridge: Start the local backend even if a non-local
+	backend is already running.
+
+	* java.c (MINFO): Always display the start command, even if a
+	backend is already running.
+	
+	* bind.c (test_server): Use the local backend as a fallback when
+	the servlet backend is not available and vice versa.
+
+	* bind.c (test_server): Search for the wrapper in ext_dir (used
+	when installing the RPM on debian).
+
+	* php.ini, php.ini.windows: Enable both, the hosts and the local
+	backend. If java.servlet is set, the bridge will use a HTTP tunnel
+	from the hosts list. If that fails, it will use the local
+	backend. If java.servlet is not set, the bridge will use the local
+	backend first, then a backend from the hosts list.
+
+	* java.c: Preliminary IDE support. The bridge should work with
+	PHP4 again.
+	
+	* server/php/java/bridge/JavaBridgeRunner.java (main): New
+	procedure to start a simple HTTP server.
+
+	* server/php/java/bridge/ISession.java (getLastAccessedTime,
+	getCreationTime): New methods.
+
+	* server/php/java/bridge/Session.java (get, put, remove,
+	setTimeout, putAll, getAll): Update et the lastAccessedTime so
+	that expire works correctly.
+	
+	* VERSION, php-java-bridge.spec: Version 3.0.5 released
+
+	
 2006-01-04  Jost Boekemeier  <jostb@intern>
 
 	* CREDITS: correct speling

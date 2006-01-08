@@ -18,6 +18,7 @@ import php.java.bridge.Util;
  */
 public abstract class HttpServer implements Runnable {
     protected ISocketFactory socket;
+    protected Thread httpServer;
 
     /**
      * Create a new server socket
@@ -31,9 +32,9 @@ public abstract class HttpServer implements Runnable {
      */
     public HttpServer() {
 	socket = bind();
-	Thread t = new Thread(this, "JavaBridgeHttpServer");
-	t.setDaemon(true);
-        t.start();
+	httpServer = new Thread(this, "JavaBridgeHttpServer");
+	httpServer.setDaemon(true);
+        httpServer.start();
     }
 
     /**

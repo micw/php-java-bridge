@@ -200,7 +200,7 @@ public interface ScriptEngine {
 	
     
     /**
-     * @ return the default ScriptContext.
+     * @return the default ScriptContext.
      */
     public ScriptContext getContext();
 

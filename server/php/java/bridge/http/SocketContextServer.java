@@ -128,7 +128,6 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
     /**
      * Check if the ContextServer is ready, i.e. it has created a server socket.
      * @return true if there's a server socket listening, false otherwise.
-     * @see ContextServer#getSocket()
      */
     public boolean isAvailable() {
     	return socket!=null;

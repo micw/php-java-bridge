@@ -23,7 +23,7 @@
 
 #ifndef CFG_JAVA
 #if @COND_GCJ@ == 1
-#define CFG_JAVA EXTENSION_DIR/**/"/"/**/EXT_NAME()
+#define CFG_JAVA ""
 #else
 #define CFG_JAVA "@PHP_JAVA_BIN@"
 #endif
@@ -31,7 +31,7 @@
 
 #ifndef CFG_JAVA_HOME
 #if @COND_GCJ@ == 1
-#define CFG_JAVA_HOME EXTENSION_DIR
+#define CFG_JAVA_HOME ""
 #else
 #define CFG_JAVA_HOME "@PHP_JAVA@"
 #endif
@@ -51,6 +51,8 @@ EXT_EXTERN_MODULE_GLOBALS(EXT)
  */
 static void override_ini_from_cgi(void) {
   static const char on[]="User";
+  static const char off[]="Off";
+  static const char key_socketname[]="java.socketname";
   static const char key_hosts[]="java.hosts";
   static const char key_servlet[] = "java.servlet";
   char *hosts;
@@ -65,6 +67,7 @@ static void override_ini_from_cgi(void) {
 	  zend_alter_ini_entry((char*)key_servlet, sizeof key_servlet,
 						   (char*)on, sizeof on,
 						   ZEND_INI_SYSTEM, PHP_INI_STAGE_STARTUP);
+	  EXT_GLOBAL(cfg)->socketname_set = 0;
 	  break;
 
 	default:					/* cgi binary with redirect
@@ -76,6 +79,10 @@ static void override_ini_from_cgi(void) {
 		zend_alter_ini_entry((char*)key_hosts, sizeof key_hosts,
 							 host, strlen(host)+1,
 							 ZEND_INI_SYSTEM, PHP_INI_STAGE_STARTUP);
+		zend_alter_ini_entry((char*)key_socketname, sizeof key_socketname,
+							 (char*)off, sizeof off,
+							 ZEND_INI_SYSTEM, PHP_INI_STAGE_STARTUP);
+		EXT_GLOBAL(cfg)->socketname_set = 0;
 		if(!kontext) {
 		  zend_alter_ini_entry((char*)key_servlet, sizeof key_servlet,
 							   (char*)on, sizeof on,
@@ -126,8 +133,13 @@ static void init_socket(void) {
 #endif
 
 void EXT_GLOBAL (init_cfg) (TSRMLS_D) {
+  override_ini_from_cgi();
+
   init_socket();
-  if(!(EXT_GLOBAL (ini_updated) &U_SOCKNAME)) EXT_GLOBAL(cfg)->sockname=strdup(EXT_GLOBAL(cfg)->default_sockname);
+  if(!(EXT_GLOBAL (ini_updated) &U_SOCKNAME)) {
+	EXT_GLOBAL(cfg)->sockname=strdup(EXT_GLOBAL(cfg)->default_sockname);
+	EXT_GLOBAL(cfg)->socketname_set=0;
+  }
   if(!(EXT_GLOBAL (ini_updated) &U_SERVLET)) EXT_GLOBAL(cfg)->servlet=strdup(DEFAULT_SERVLET);
   if(!(EXT_GLOBAL (ini_updated) &U_HOSTS)) EXT_GLOBAL(cfg)->hosts=strdup("");
   if(!(EXT_GLOBAL (ini_updated) &U_WRAPPER)) EXT_GLOBAL(cfg)->wrapper=strdup(DEFAULT_WRAPPER);
@@ -135,6 +147,7 @@ void EXT_GLOBAL (init_cfg) (TSRMLS_D) {
   if(!(EXT_GLOBAL (ini_updated) &U_LIBRARY_PATH)) EXT_GLOBAL(cfg)->ld_library_path=strdup(CFG_LD_LIBRARY_PATH);
   if(!(EXT_GLOBAL (ini_updated) &U_JAVA)) EXT_GLOBAL(cfg)->vm=strdup(CFG_JAVA);
   if(!(EXT_GLOBAL (ini_updated) &U_JAVA_HOME)) EXT_GLOBAL(cfg)->vm_home=strdup(CFG_JAVA_HOME);
+  if(!(EXT_GLOBAL (ini_updated) &U_EXT_JAVA_COMPATIBILITY)) EXT_GLOBAL(cfg)->extJavaCompatibility=0;
   if(!(EXT_GLOBAL (ini_updated) &U_LOGLEVEL)) {
 	EXT_GLOBAL(cfg)->logLevel=strdup(DEFAULT_LEVEL);
 	EXT_GLOBAL(cfg)->logLevel_val=atoi(DEFAULT_LEVEL);
@@ -149,8 +162,6 @@ void EXT_GLOBAL (init_cfg) (TSRMLS_D) {
 	!(EXT_GLOBAL (option_set_by_user) (U_SOCKNAME, EXT_GLOBAL(ini_user))) &&
 	!(EXT_GLOBAL (option_set_by_user) (U_HOSTS, EXT_GLOBAL(ini_user))) &&
 	!(EXT_GLOBAL (option_set_by_user) (U_SERVLET, EXT_GLOBAL(ini_user)));
-
-  override_ini_from_cgi();
 }
 
 void EXT_GLOBAL (destroy_cfg) (int EXT_GLOBAL (ini_updated) ) {
@@ -191,6 +202,7 @@ short EXT_GLOBAL(option_set_by_user)(short option, int ini_user) {
   case U_HOSTS: entry = EXT_GLOBAL(cfg)->hosts; break;
   case U_SERVLET: entry = EXT_GLOBAL(cfg)->servlet; break;
   case U_WRAPPER: entry = EXT_GLOBAL(cfg)->wrapper; break;
+  case U_EXT_JAVA_COMPATIBILITY: return EXT_GLOBAL(cfg)->extJavaCompatibility;
   default: assert(0);
   }  
 

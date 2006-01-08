@@ -66,7 +66,7 @@ public abstract class PhpMap {
      * Checks if a given position exists. Use one of the methods from JavaBridge instead.
      * @param pos The position
      * @return true if an element exists at this position, false otherwise.
-     * @see php.java.bridge.JavaBridge#offsetExists(Object[], Object)
+     * @see php.java.bridge.JavaBridge#offsetExists(Object, Object)
      * @see php.java.bridge.JavaBridge#offsetExists(Map, Object)
      */
     public abstract boolean offsetExists(Object pos);
@@ -75,7 +75,7 @@ public abstract class PhpMap {
      * Returns the object at the posisition. Use one of the methods from JavaBridge instead.
      * @param pos The position.
      * @return The object at the given position.
-     * @see php.java.bridge.JavaBridge#offsetGet(Object[], Object)
+     * @see php.java.bridge.JavaBridge#offsetGet(Object, Object)
      * @see php.java.bridge.JavaBridge#offsetGet(Map, Object)
      */
     public abstract Object offsetGet(Object pos);
@@ -84,7 +84,7 @@ public abstract class PhpMap {
      * Set an object at position. Use one of the methods from JavaBridge instead.
      * @param pos The position.
      * @param val The object.
-     * @see php.java.bridge.JavaBridge#offsetSet(Object[], Object, Object)
+     * @see php.java.bridge.JavaBridge#offsetSet(Object, Object, Object)
      * @see php.java.bridge.JavaBridge#offsetSet(Map, Object, Object)
      */
     public abstract void offsetSet(Object pos, Object val);
@@ -92,7 +92,7 @@ public abstract class PhpMap {
     /**
      * Remove an object from the position. Use one of the methods from JavaBridge instead.
      * @param pos The position.
-      * @see php.java.bridge.JavaBridge#offsetUnset(Object[], Object)
+      * @see php.java.bridge.JavaBridge#offsetUnset(Object, Object)
      * @see php.java.bridge.JavaBridge#offsetUnset(Map, Object)
      */
     public abstract void offsetUnset(Object pos); 
@@ -139,13 +139,13 @@ public abstract class PhpMap {
 		        return _bridge.offsetExists(length, pos);
 		    }
 		    public Object offsetGet(Object pos) {
-		        return _bridge.offsetGet((Object[])this.value, pos);
+		        return _bridge.offsetGet((Object)this.value, pos);
 		    }
 		    public void offsetSet(Object pos, Object val) {
-		        _bridge.offsetSet((Object[])this.value, pos, val);
+		        _bridge.offsetSet((Object)this.value, pos, val);
 		    }
 		    public void offsetUnset(Object pos) {
-		        _bridge.offsetUnset((Object[])this.value, pos);
+		        _bridge.offsetUnset((Object)this.value, pos);
 		    }
 		};
 	}

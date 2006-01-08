@@ -79,7 +79,7 @@ extern int EXT_GLOBAL(ini_updated), EXT_GLOBAL (ini_user), EXT_GLOBAL (ini_set);
 #define U_HOSTS (1<<8)
 #define U_SERVLET (1<<9)
 #define U_WRAPPER (1<<10)
-
+#define U_EXT_JAVA_COMPATIBILITY  (1<<11)
 
 #if EXTENSION == JAVA
 #define phpext_java_ptr &EXT_GLOBAL(module_entry)
@@ -140,6 +140,10 @@ struct cfg {
 	  and java.hosts are taken from this environment variable. Used by
 	  FastCGI and CGI only. */
   short is_cgi_servlet;			/* 1: cgi env available */
+  /** 1: local backend; 0: backend from the host list */
+  short socketname_set;
+  /** 0: Compatibility with ext/java is off (default), 1: on  */
+  short extJavaCompatibility;
 };
 extern struct cfg *EXT_GLOBAL(cfg);
 
