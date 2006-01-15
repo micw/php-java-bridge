@@ -18,7 +18,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.DynamicJavaBridgeClassLoader;
 import php.java.bridge.JavaBridge;
-import php.java.bridge.JavaBridgeClassLoader;
 import php.java.bridge.Request;
 import php.java.bridge.ThreadPool;
 import php.java.bridge.Util;
@@ -59,7 +58,7 @@ public class PhpJavaServlet extends FastCGIServlet {
 
     protected static class Logger extends Util.Logger {
 	private ServletContext ctx;
-	public Logger(ServletContext ctx) {
+	protected Logger(ServletContext ctx) {
 	    this.ctx = ctx;
 	}
 	public void log(String s) {
@@ -109,7 +108,7 @@ public class PhpJavaServlet extends FastCGIServlet {
 			 if(contextServer!=null) 
 			     try {
 			         m = contextServer.getClass().getMethod("destroy", noparm);
-			         m.setAccessible(true);
+				 try {m.setAccessible(true);} catch (Throwable tt) {/*ignore*/}
 			         m.invoke(contextServer, noarg);
 			    } catch(Throwable t) {
 			        t.printStackTrace();
@@ -117,7 +116,7 @@ public class PhpJavaServlet extends FastCGIServlet {
 			 if(proc!=null) 
 			     try {
 			     m = proc.getClass().getMethod("destroy", noparm);
-			     m.setAccessible(true);
+			     try {m.setAccessible(true);} catch (Throwable tt) {/*ignore*/}
 			     m.invoke(proc, noarg);
 			     proc = null;
 			   } catch(Throwable t) {
@@ -135,6 +134,7 @@ public class PhpJavaServlet extends FastCGIServlet {
  	String value;
         try {
 	    value = config.getInitParameter("servlet_log_level");
+	    //value = "6"; //XFIXME
 	    if(value!=null && value.trim().length()!=0) Util.logLevel=Integer.parseInt(value.trim());
         } catch (Throwable t) {Util.printStackTrace(t);}      
 
@@ -160,6 +160,10 @@ public class PhpJavaServlet extends FastCGIServlet {
         DynamicJavaBridgeClassLoader.initClassLoader(Util.DEFAULT_EXTENSION_DIR);
 
 	Util.TCP_SOCKETNAME = String.valueOf(CGI_CHANNEL);
+	if(Util.VERSION!=null)
+	    Util.logMessage("PHP/Java Bridge servlet version "+Util.VERSION+" ready.");
+	else
+	    Util.logMessage("PHP/Java Bridge servlet ready.");
     }
 
     public void destroy() {
@@ -200,7 +204,7 @@ public class PhpJavaServlet extends FastCGIServlet {
 		/* send the session context now, otherwise the client has to 
 		 * call handleRedirectConnection */
 	    	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
-	    	if(id==null) id = ContextFactory.addNew(PhpJavaServlet.this.getServletContext(), req, res).getId();
+	    	if(id==null) id = ContextFactory.addNew(PhpJavaServlet.this.getServletContext(), req, req, res).getId();
 		this.env.put("X_JAVABRIDGE_CONTEXT", id);
 	        
 	        /* For the request: http://localhost:8080/JavaBridge/test.php the
@@ -318,7 +322,7 @@ public class PhpJavaServlet extends FastCGIServlet {
     	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
     	if(id!=null) ctx = (ContextFactory)ContextFactory.get(id);
     	if(ctx==null) {
-    	  ctx = ContextFactory.addNew(getServletContext(), null, res); // no session sharing
+    	  ctx = ContextFactory.addNew(getServletContext(), null, req, res); // no session sharing
     	  ctx.getBridge().logDebug("first request (session is new).");
     	} else {
     	    ctx.getBridge().logDebug("cont. session");
@@ -342,6 +346,7 @@ public class PhpJavaServlet extends FastCGIServlet {
 	InputStream in; ByteArrayOutputStream out; OutputStream resOut;
 	ContextFactory ctx = getContextFactory(req, res);
 	JavaBridge bridge = ctx.getBridge();
+	if(bridge.logLevel>2) bridge.logMessage("headers already sent. -- java_session() was not the first statement in your PHP script. Opening a second connection to the backend. To avoid this message add java_session(); to the beginning of your script.");
 	ctx.setSession(req);
 	if(bridge.logLevel>3) bridge.logDebug("override redirect starts for " + ctx.getId());		
 	// save old state
@@ -354,7 +359,7 @@ public class PhpJavaServlet extends FastCGIServlet {
 	Request r = bridge.request = new Request(bridge);
 	try {
 	    if(r.init(in, out)) {
-		r.handleOneRequest();
+		r.handleRequests();
 	    }
 	} catch (Throwable e) {
 	    Util.printStackTrace(e);
@@ -433,7 +438,7 @@ public class PhpJavaServlet extends FastCGIServlet {
 	    if(r.init(sin, sout)) {
 	        ContextServer.ChannelName channelName = ctxServer.getFallbackChannelName(req.getHeader("X_JAVABRIDGE_CHANNEL"));
 	        res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getName());
-	    	r.handleOneRequest();
+	    	r.handleRequests();
 
 		// redirect and re-open
 	    	ctxServer.schedule();

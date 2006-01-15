@@ -72,6 +72,7 @@ static void end(proxyenv *env) {
 	n=(*env)->f_send(env, (*env)->peer, header, header_length);
 	assert(n==header_length);
   }
+  n=0;
 
  res: 
   errno=0;
@@ -104,6 +105,11 @@ function get_cookies() {\
   return (char*)zero;
 }  
 
+/**
+ * Used by getSession() to aquire the session context.
+ * Sends override_redirect and cookies
+ * @see check_context
+ */
 static void end_session(proxyenv *env) {
   size_t s=0, size = (*env)->send_len;
   ssize_t n;
@@ -198,8 +204,8 @@ void EXT_GLOBAL(redirect)(proxyenv*env, char*redirect_port, char*channel_in, cha
   free(server);
 }
 #endif
-void EXT_GLOBAL(check_context) (proxyenv *env TSRMLS_DC) {
-  if(!(*env)->is_local && IS_SERVLET_BACKEND(env) && !(*env)->servlet_ctx) {
+void EXT_GLOBAL(check_session) (proxyenv *env TSRMLS_DC) {
+  if(!(*env)->is_local && IS_SERVLET_BACKEND(env) && !(*env)->backend_has_session_proxy) {
 	if((*env)->peer_redirected) { /* override redirect */
 	  int sock = socket (PF_INET, SOCK_STREAM, 0);
 	  struct sockaddr *saddr = &(*env)->orig_peer_saddr;
@@ -497,6 +503,7 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    (*env)->server_name = server_name;
    (*env)->must_reopen = 0;
    (*env)->servlet_ctx = (*env)->servlet_context_string = 0;
+   (*env)->backend_has_session_proxy = 0;
 
    (*env)->writeInvokeBegin=InvokeBegin;
    (*env)->writeInvokeEnd=InvokeEnd;

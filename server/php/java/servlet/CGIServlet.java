@@ -1048,7 +1048,7 @@ public class CGIServlet extends HttpServlet {
          * @param  wd       File with the script's desired working directory
          * @param  params   Hashtable with the script's query parameters
          *
-         * @param  res       HttpServletResponse object for setting headers
+         * @param  response       HttpServletResponse object for setting headers
          *                   based on CGI script output
          *
          */

@@ -110,8 +110,10 @@ if test "$SERVLET" = "yes"; then
   fi
 fi
 
+BACKEND_VERSION=`cat ../VERSION`
 AC_CONFIG_FILES([RunJavaBridge.c RunMonoBridge.c php/java/bridge/global.properties])
 AC_SUBST(AM_CPPFLAGS)
+AC_SUBST(BACKEND_VERSION)
 AC_SUBST(EXTENSION_DIR)
 AC_SUBST(PHP_JAVA)
 AC_SUBST(PHP_MONO)

@@ -14,7 +14,9 @@ import javax.servlet.http.HttpSession;
 
 import php.java.bridge.ISession;
 
-
+/**
+ * Wraps the J2EE session interface
+ */
 public class HttpSessionFacade implements ISession {
 
     private HttpSession session;
@@ -31,7 +33,7 @@ public class HttpSessionFacade implements ISession {
 	sessionCache.setMaxInactiveInterval(timeout);
 	return sessionCache;
     }
-    public HttpSessionFacade (ServletContext ctx, HttpServletRequest req, HttpServletResponse res, int timeout) {
+    protected HttpSessionFacade (ServletContext ctx, HttpServletRequest req, HttpServletResponse res, int timeout) {
 	this.session = req.getSession();
 	this.req = req;
 	this.ctx = ctx;
@@ -63,24 +65,18 @@ public class HttpSessionFacade implements ISession {
     public HttpServletResponse getHttpServletResponse() {
         return this.res;
     }
-    /* (non-Javadoc)
-     * @see php.java.bridge.ISession#get(java.lang.Object)
-     */
+    /**@inheritDoc*/
     public Object get(Object ob) {
 	return getSession().getAttribute(String.valueOf(ob));
     }
 
-    /* (non-Javadoc)
-     * @see php.java.bridge.ISession#put(java.lang.Object, java.lang.Object)
-     */
+    /**@inheritDoc*/
     public void put(Object ob1, Object ob2) {
 	getSession().setAttribute(String.valueOf(ob1), ob2);
     }
 
-    /* (non-Javadoc)
-     * @see php.java.bridge.ISession#remove(java.lang.Object)
-     */
-    public Object remove(Object ob) {
+    /**@inheritDoc*/
+   public Object remove(Object ob) {
 	String key = String.valueOf(ob);
 	Object o = getSession().getAttribute(key);
 	if(o!=null)
@@ -88,44 +84,32 @@ public class HttpSessionFacade implements ISession {
 	return o;
     }
 
-    /* (non-Javadoc)
-     * @see php.java.bridge.ISession#setTimeout(int)
-     */
+   /**@inheritDoc*/
     public void setTimeout(int timeout) {
 	getSession().setMaxInactiveInterval(timeout);
     }
 
-    /* (non-Javadoc)
-     * @see php.java.bridge.ISession#getTimeout()
-     */
+    /**@inheritDoc*/
     public int getTimeout() {
 	return getSession().getMaxInactiveInterval();
     }
 
-    /* (non-Javadoc)
-     * @see php.java.bridge.ISession#getSessionCount()
-     */
+    /**@inheritDoc*/
     public int getSessionCount() {
 	return -1;
     }
 
-    /* (non-Javadoc)
-     * @see php.java.bridge.ISession#isNew()
-     */
+    /**@inheritDoc*/
     public boolean isNew() {
 	return isNew;
     }
 
-    /* (non-Javadoc)
-     * @see php.java.bridge.ISession#destroy()
-     */
+    /**@inheritDoc*/
     public void destroy() {
 	getSession().invalidate();
     }
 
-    /* (non-Javadoc)
-     * @see php.java.bridge.ISession#putAll(java.util.Map)
-     */
+    /**@inheritDoc*/
     public void putAll(Map vars) {
 	for(Iterator ii = vars.keySet().iterator(); ii.hasNext();) {
 	    Object key = ii.next();
@@ -134,9 +118,7 @@ public class HttpSessionFacade implements ISession {
 	}
     }
 
-    /* (non-Javadoc)
-     * @see php.java.bridge.ISession#getAll()
-     */
+    /**@inheritDoc*/
     public Map getAll() {
 	HttpSession session = getSession();
 	HashMap map = new HashMap();
@@ -147,9 +129,11 @@ public class HttpSessionFacade implements ISession {
 	}
 	return map;
     }
+    /**@inheritDoc*/
     public long getCreationTime() {
       return getSession().getCreationTime();
     }
+    /**@inheritDoc*/
     public long getLastAccessedTime() {
       return getSession().getLastAccessedTime();
     }

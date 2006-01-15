@@ -427,18 +427,6 @@ public final class Request implements IDocHandler {
     }
     
     /**
-     * Start handling requests until EOF. Creates a response object and handles only the first packet. 
-     * All following packets are discarded.
-     * @throws IOException
-     */
-    public void handleOneRequest() throws IOException {
-    	response=new Response(bridge);
-	if(Parser.OK==handleRequest()) {
-	    while(Parser.OK==parser.parse(bridge.in));
-	}
-    }
-    
-    /**
      * Handle protocol sub-requests, see <code>R</code> and <code>A</code> in the protocol spec.
      * @return An array of one object. The object is the result of the Apply call.
      * @throws IOException

@@ -83,7 +83,6 @@ PHP_RINIT_FUNCTION(EXT)
 PHP_RSHUTDOWN_FUNCTION(EXT)
 {
   destroy_cloned_cfg(TSRMLS_C);
-  EXT_GLOBAL(destroy_channel)(TSRMLS_C);
 
   if(JG(jenv)) {
 	if(*JG(jenv)) {
@@ -103,7 +102,10 @@ PHP_RSHUTDOWN_FUNCTION(EXT)
 	}
 	free(JG(jenv));
   }
+
   JG(jenv) = NULL;
+  EXT_GLOBAL(destroy_channel)(TSRMLS_C);
+
   JG(is_closed)=1;
   return SUCCESS;
 }
@@ -273,7 +275,8 @@ EXT_FUNCTION(EXT_GLOBAL(instanceof))
 
 static long session_get_default_lifetime() {
   static const char session_max_lifetime[]="session.gc_maxlifetime";
-  return zend_ini_long((char*)session_max_lifetime, sizeof(session_max_lifetime), 0);
+  long l = zend_ini_long((char*)session_max_lifetime, sizeof(session_max_lifetime), 0);
+  return l==0?1440:l;
 }
 static void session(INTERNAL_FUNCTION_PARAMETERS)
 {
@@ -288,8 +291,10 @@ static void session(INTERNAL_FUNCTION_PARAMETERS)
   if(!jenv) RETURN_NULL();
  
   assert(EXT_GLOBAL(cfg)->is_cgi_servlet && (*jenv)->servlet_ctx ||!EXT_GLOBAL(cfg)->is_cgi_servlet);
-  EXT_GLOBAL(check_context) (jenv TSRMLS_CC); /* re-direct if no
-												 context was found */
+								/* create a new connection to the
+								   backend if java_session() is not
+								   the first statement in a script */
+  EXT_GLOBAL(check_session) (jenv TSRMLS_CC);
 
   (*jenv)->writeInvokeBegin(jenv, 0, "getSession", 0, 'I', return_value);
   if(argc>0 && Z_TYPE_PP(session)!=IS_NULL) {
@@ -303,6 +308,7 @@ static void session(INTERNAL_FUNCTION_PARAMETERS)
   (*jenv)->writeLong(jenv, session_get_default_lifetime()); // session.gc_maxlifetime
 
   (*jenv)->writeInvokeEnd(jenv);
+  (*jenv)->backend_has_session_proxy=1;
 }
 
 /**
@@ -350,9 +356,6 @@ static void context(INTERNAL_FUNCTION_PARAMETERS)
   if(!jenv) RETURN_NULL();
  
   assert(EXT_GLOBAL(cfg)->is_cgi_servlet && (*jenv)->servlet_ctx ||!EXT_GLOBAL(cfg)->is_cgi_servlet);
-  EXT_GLOBAL(check_context) (jenv TSRMLS_CC); /* re-direct if no
-												 context was found */
-
   (*jenv)->writeInvokeBegin(jenv, 0, "getContext", 0, 'I', return_value);
   (*jenv)->writeInvokeEnd(jenv);
 }

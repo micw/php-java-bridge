@@ -15,15 +15,15 @@ import php.java.bridge.ISession;
  * @see php.java.bridge.http.ContextServer
  */
 public class ContextFactory extends php.java.bridge.http.ContextFactory {
-    private HttpServletRequest req;
+    private HttpServletRequest proxy;
     private HttpServletResponse res;
     private ServletContext ctx;
 	
-    protected ContextFactory(ServletContext ctx, HttpServletRequest req, HttpServletResponse res) {
+    protected ContextFactory(ServletContext ctx, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res) {
     	super();
     	this.ctx = ctx;
+    	this.proxy = proxy;
     	this.res = res;
-	this.req = req;
     }
     
     /**
@@ -32,12 +32,12 @@ public class ContextFactory extends php.java.bridge.http.ContextFactory {
      * @throws IllegalStateException When the ContextFactory was created with a HttpServletRequest or when this method was called twice.
      */
     public void setSession(HttpServletRequest req) {
-    	if(this.req!=null) throw new IllegalStateException("This context already has a session proxy.");
-    	this.req = req;
+    	if(this.proxy!=null) throw new IllegalStateException("This context already has a session proxy.");
+    	this.proxy = req;
     }
     public ISession getSession(String name, boolean clientIsNew, int timeout) {
-    	if(req==null) throw new NullPointerException("This context "+getId()+" doesn't have a session proxy.");
-	return new HttpSessionFacade(ctx, req, res, timeout);
+    	if(proxy==null) throw new NullPointerException("This context "+getId()+" doesn't have a session proxy.");
+	return new HttpSessionFacade(ctx, proxy, res, timeout);
     }
     
     /**
@@ -46,19 +46,19 @@ public class ContextFactory extends php.java.bridge.http.ContextFactory {
      * @param res The HttpServletResponse
      * @return The created ContextFactory
      */
-    public static ContextFactory addNew(ServletContext kontext, HttpServletRequest req, HttpServletResponse res) {
-    	ContextFactory ctx = new ContextFactory(kontext, req, res);
+    public static ContextFactory addNew(ServletContext kontext, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res) {
+    	ContextFactory ctx = new ContextFactory(kontext, proxy, req, res);
     	ctx.add();
-    	ctx.setContext(new Context(res));
+    	ctx.setContext(new Context(kontext,req,res));
     	return ctx;
     }	
 
     
     public synchronized void remove() {
     	super.remove();
-    	req=null;
+    	proxy=null;
     }
     public String toString() {
-	return super.toString() + ", has proxy: " +(req==null?"false":"true");
+	return super.toString() + ", has proxy: " +(proxy==null?"false":"true");
     }
 }

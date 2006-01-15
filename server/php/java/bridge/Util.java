@@ -138,12 +138,14 @@ public class Util {
 	if(s==null) s = defaultValue;
 	return s;
     }
-    
+    /** Only for internal use */
+    public static String VERSION = null;
     private static void initGlobals() {
         Properties p = new Properties();
 	try {
 	    InputStream in = Util.class.getResourceAsStream("global.properties");
 	    p.load(in);
+	    VERSION = p.getProperty("BACKEND_VERSION");
 	} catch (Throwable t) {
 	    //t.printStackTrace();
 	};
@@ -178,7 +180,8 @@ public class Util {
     public static class Logger { // hook for servlet
         static boolean haveDateFormat=true;
         private static Object _form;
-        protected Logger () {
+        private boolean isInit = false;
+        private void init() {
 	    if(Util.logStream==null) {
 	      if(DEFAULT_LOG_FILE.trim().length()==0)  Util.logStream = System.err;
 	      else 
@@ -186,6 +189,7 @@ public class Util {
 		    Util.logStream=new java.io.PrintStream(new java.io.FileOutputStream(DEFAULT_LOG_FILE));
 		} catch (FileNotFoundException e1) {Util.logStream=System.err;}
 	    }
+	    isInit = true;
         }
         /**
          * Create a String containing the current date/time.
@@ -207,6 +211,7 @@ public class Util {
          * @param s  The message
          */
    	public void log(String s) {
+   	    if(!isInit) init();
 	    byte[] bytes = null;
 	    try {
 		bytes = s.getBytes(UTF8);
@@ -224,6 +229,7 @@ public class Util {
    	 * @param t The Throwable
    	 */
    	public void printStackTrace(Throwable t) {
+   	    if(!isInit) init();
    	    t.printStackTrace(logStream);
    	}
     }

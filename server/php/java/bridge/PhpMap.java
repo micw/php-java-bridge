@@ -162,11 +162,11 @@ public abstract class PhpMap {
 			valid=false;
 			if(iter.hasNext()) {
 			    valid=true;
-			    value=iter.next();
+			    this.value=iter.next();
 			}
 		    }
 		    public Object currentData() {
-			return value;
+			return this.value;
 		    }
 		    public Request.PhpString currentKey() {
 			return new Request.SimplePhpString(_bridge, String.valueOf(i));
@@ -174,7 +174,7 @@ public abstract class PhpMap {
 		    public boolean moveForward() {
 			if(iter.hasNext()) {
 			    i++;
-			    value = iter.next();
+			    this.value = iter.next();
 			    return valid=true;
 			} else {
 			    return valid=false;

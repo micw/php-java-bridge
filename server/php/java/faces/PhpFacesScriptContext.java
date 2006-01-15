@@ -11,8 +11,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.DynamicJavaBridgeClassLoader;
-import php.java.bridge.JavaBridge;
-import php.java.bridge.JavaBridgeClassLoader;
 import php.java.bridge.PhpProcedureProxy;
 import php.java.bridge.Util;
 import php.java.script.HttpProxy;
@@ -64,9 +62,9 @@ public class PhpFacesScriptContext extends PhpSimpleHttpScriptContext {
     }
 
     /* (non-Javadoc)
-     * @see php.java.script.IPhpScriptContext#getContextManager()
+     * @see php.java.script.IPhpScriptContext#getContextFactory()
      */
-    public php.java.bridge.http.ContextFactory getContextManager() {
+    public php.java.bridge.http.ContextFactory getContextFactory() {
         return ctx;
     }
 

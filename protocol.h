@@ -97,6 +97,7 @@ struct proxyenv_ {
 
   /* for servlet engines only */
   char *servlet_ctx, *servlet_context_string;
+  short backend_has_session_proxy;
   
   void (*handle_request)(proxyenv *env);
 

@@ -37,6 +37,26 @@ it provides "j2re" instead of "jre".
 
 
 
+Quick Installation from source code
+-----------------------------------
+#enable the following line on BSD and MacOS X only, see README
+#export CFLAGS="-DCFG_JAVA_SOCKET_INET"
+mkdir dist
+export INST=`pwd`/dist
+export LD_LIBRARY_PATH=$INST/lib:$LD_LIBRARY_PATH  PATH=$INST/bin:$PATH
+
+# compile
+(cd autoconf-2.59; ./configure --prefix=$INST && make && make install)
+(cd automake-1.9; ./configure --prefix=$INST && make && make install)
+(cd libtool-1.5.20; ./configure --prefix=$INST && make && make install)
+(cd php-5.*; ./configure --prefix=$INST --disable-all --enable-fastcgi && make && make install)
+(cd php-java-bridge-3.*; ./configure --with-java=/usr/java/jdk1.5.0 && make && make install)
+
+# test
+php php-java-bridge-3.*/test.php >result.html
+
+
+
 Installation from source code (Solaris, FreeBSD, WinXP or Linux)
 ----------------------------------------------------------------
 
@@ -81,6 +101,8 @@ INST=/usr/local #INST=$HOME/bridge
 # set build path
 export PATH=$INST/bin:$PATH 
 export LD_LIBRARY_PATH=$INST/lib:$LD_LIBRARY_PATH
+#enable the following line on BSD and MacOS X only, see README
+#export CFLAGS="-DCFG_JAVA_SOCKET_INET"
 
 # stop the system http service 
 su - -c "service httpd stop"

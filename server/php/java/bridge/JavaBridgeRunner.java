@@ -55,7 +55,7 @@ public class JavaBridgeRunner extends HttpServer {
 	}
     }
 
-    private static ContextFactory getContextManager(HttpRequest req, HttpResponse res) {
+    private static ContextFactory getContextFactory(HttpRequest req, HttpResponse res) {
     	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
     	ContextFactory ctx = ContextFactory.get(id);
 	if(ctx==null) ctx = ContextFactory.addNew();
@@ -73,7 +73,7 @@ public class JavaBridgeRunner extends HttpServer {
     protected void parseBody (HttpRequest req, HttpResponse res) throws IOException {
     	super.parseBody(req, res);
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
-	ContextFactory ctx = getContextManager(req, res);
+	ContextFactory ctx = getContextFactory(req, res);
     	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
 
     	JavaBridge bridge = ctx.getBridge();
@@ -85,7 +85,7 @@ public class JavaBridgeRunner extends HttpServer {
 	    if(r.init(sin, sout)) {
 	        ContextServer.ChannelName channelName = ctxServer.getFallbackChannelName(req.getHeader("X_JAVABRIDGE_CHANNEL"));
 		res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getName());
-	    	r.handleOneRequest();
+	    	r.handleRequests();
 
 		// redirect and re-open
 	    	ctxServer.schedule();

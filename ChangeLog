@@ -1,3 +1,52 @@
+2006-01-15  Jost Boekemeier  <jostb@intern>
+
+	* php.ini, php.ini.windows: Revert last change: on some operating
+	systems (Windows) "connect" does not fail immediately when the
+	backend is not listening on the given port.
+
+	* client.c (destroy_channel): Close the lockfile before removing
+	it. This fixes a serious resource leak when the backend is a J2EE
+	server and the frontend is Apache (Unix).
+
+	* php_java.h (lockfile): New global.
+
+	* protocol.h (backend_has_session_proxy): New flag which indicates
+	that the backend has aquired a session proxy.
+
+	* java.c (session): Backward compatibility with 2.0.8:
+	java_session() can be called even if the backend's headers were
+	aleady sent.
+
+	* server/php/java/servlet/PhpJavaServlet.java
+	(handleRedirectConnection): Write a "headers already sent" message
+	if java_session() is not the first java statement in a php script.
+	
+	* tests.php5/override_redirect.php: New test for the above code.
+
+	* server/javax/script/ScriptEngineManager.java
+	(getServiceProviders): New procedure.
+	(ScriptEngineManager): Code works with GNU java and Sun java.
+	
+	* server/javax/script/ScriptEngineFactory.java: Compatibility with
+	JDK1.6
+
+	* server/php/java/bridge/PhpScriptEngineFactory.java: New class.
+
+	* server/php/java/bridge/PhpScriptEngine.java (getFactory): Return
+	the factory.
+	(eval): Use a StringReader, not a FileReader
+	(eval): Release the previous continuation if it exists
+	(eval): engine.eval((Reader)null) can be used to release the last
+	continuation
+	
+	* server/META-INF/services/javax.script.ScriptEngineFactory: New
+	file
+
+	* server/test/Discovery.java: New test for the above code.
+
+	* VERSION, php-java-bridge.spec: Version 3.0.6 released
+	
+	
 2006-01-08  Jost Boekemeier  <jostb@intern>
 
 	* php-java-bridge: Start the local backend even if a non-local

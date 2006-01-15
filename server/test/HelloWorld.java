@@ -2,6 +2,7 @@
 
 package test;
 
+import java.io.Reader;
 import java.io.StringReader;
 
 import javax.script.Invocable;
@@ -15,7 +16,7 @@ import php.java.script.PhpScriptEngine;
 public class HelloWorld {
 
     public static void main(String[] args) {
-      	String l = "4";
+      	String l = "3";
 	System.setProperty("php.java.bridge.default_log_level", l);
 	System.setProperty("php.java.bridge.default_log_file", "");
 	System.setProperty("php.java.bridge.php_exec", "php-cgi");
@@ -27,8 +28,17 @@ public class HelloWorld {
 	    engine.eval(new StringReader(s));
 	    String name = (String) ((Invocable)engine).invoke("java_get_server_name", new Object[]{});
 	    System.out.println("PHP/Java communication port: " + name);
-		
-	    engine.release();
+	    
+	    for(int i=0; i<2000; i++) {
+		    engine.eval(new StringReader(s));
+		    name = (String) ((Invocable)engine).invoke("java_get_server_name", new Object[]{});
+		    if(name==null) { System.err.println("ERROR"); System.exit(1); }
+
+	    }
+	    
+	    //engine.release();
+	    engine.eval((Reader)null);
+	    
 	} catch (Exception e) {
 	    e.printStackTrace();
 	}

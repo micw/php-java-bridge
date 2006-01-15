@@ -343,6 +343,11 @@ static void begin(parser_tag_t tag[3], parser_cb_t *cb){
 	break;
   case 'O':
 	GET_RESULT(3);
+	assert((((*tag[1].strings[0].string)[tag[1].strings[0].off])=='v')&&
+		   (((*tag[1].strings[1].string)[tag[1].strings[1].off])=='p')&&
+		   (((*tag[1].strings[2].string)[tag[1].strings[2].off])=='n')&&
+		   (((*tag[1].strings[3].string)[tag[1].strings[3].off])=='i'));
+
 	setResultFromObject(ctx->id, strtol((const char*)PARSER_GET_STRING(st, 0), 0, 10), *PARSER_GET_STRING(st, 1), 0l);
 	break;
   case 'E':
@@ -354,9 +359,13 @@ static void begin(parser_tag_t tag[3], parser_cb_t *cb){
 	  setException(ctx->id, obj, stringRepresentation, len);
 	  break;
 	}
-  default:
-	assert(((*cb->env)->c) < RECV_SIZE);
-	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Protocol violation, please check that the backend (JavaBride.war) is deployed or please switch off the java.servlet option. Dump of the recv_buf follows:\n%*s", 88, (int)(0xFFFF&(*cb->env)->c), (*cb->env)->recv_buf);
+	default:
+	  {
+		TSRMLS_FETCH();
+		assert(((*cb->env)->pos) < RECV_SIZE);
+		php_write((*cb->env)->recv_buf, (*cb->env)->pos TSRMLS_CC);
+		php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Protocol violation at pos %d, please check that the backend (JavaBride.war) is deployed or please switch off the java.servlet option.\n", 88, (*cb->env)->c);
+	  }
   }
 }
 static void end(parser_string_t st[1], parser_cb_t *cb){
@@ -518,28 +527,6 @@ unsigned char EXT_GLOBAL (get_mode) () {
 }
 
 /**
- * Adjust the standard environment for the current request.  Sets the
- * servlet_ctx value, which corresponds to the Session/ContextFactory
- * on the server side.
- * @param proxyenv The java context.
- * @return The adjusted java context.
- * @see php.java.servlet.PhpJavaServlet#getContextFactory(HttpServletRequest, HttpServletResponse)
- */
-static proxyenv* adjust_environment(proxyenv *env TSRMLS_DC) {
-  static const char name[] = "adjust_environment";
-  static const char context[] = "(array_key_exists('HTTP_X_JAVABRIDGE_CONTEXT', $_SERVER)?$_SERVER['HTTP_X_JAVABRIDGE_CONTEXT']:(array_key_exists('X_JAVABRIDGE_CONTEXT', $_SERVER)?$_SERVER['X_JAVABRIDGE_CONTEXT']:null));";
-
-  zval val;
-  char *servlet_context_string = EXT_GLOBAL (get_servlet_context) (TSRMLS_C);
-
-  if(servlet_context_string) (*env)->servlet_context_string = strdup(servlet_context_string);
-  if((SUCCESS==zend_eval_string((char*)context, &val, (char*)name TSRMLS_CC)) && (Z_TYPE(val)==IS_STRING)) {
-	(*env)->servlet_ctx = strdup(Z_STRVAL(val));
-  }
-  return env;
-}
-
-/**
  * Adjust the standard environment for the current request before we
  * connect to the backend. Used by Fast CGI.
  */
@@ -606,6 +593,37 @@ array_key_exists('HTTP_HOST', $_SERVER)) ?$_SERVER['PHP_SELF']:null;";
 	}
   }
 }
+/**
+ * Adjust the standard environment for the current request (used for a
+ * servlet backend only).  Sets the servlet_ctx value, which
+ * corresponds to the Session/ContextFactory on the server side.
+ * 
+ * @param proxyenv The java context.  
+ *
+ * @return The adjusted java
+ * context.  
+ * 
+ * @see php.java.servlet.PhpJavaServlet#getContextFactory(HttpServletRequest,
+ * HttpServletResponse)
+ */
+static proxyenv*adjust_servlet_environment(proxyenv *env TSRMLS_DC) {
+  static const char name[] = "adjust_environment";
+  static const char context[] = "(array_key_exists('HTTP_X_JAVABRIDGE_CONTEXT', $_SERVER)?$_SERVER['HTTP_X_JAVABRIDGE_CONTEXT']:(array_key_exists('X_JAVABRIDGE_CONTEXT', $_SERVER)?$_SERVER['X_JAVABRIDGE_CONTEXT']:null));";
+
+  zval val;
+  char *servlet_context_string = EXT_GLOBAL (get_servlet_context) (TSRMLS_C);
+
+  if(servlet_context_string)
+	(*env)->servlet_context_string = strdup(servlet_context_string);
+  if((SUCCESS==zend_eval_string((char*)context, &val, (char*)name TSRMLS_CC)) && (Z_TYPE(val)==IS_STRING)) {
+	(*env)->servlet_ctx = strdup(Z_STRVAL(val));
+								/* backend must have created a session
+								   proxy, otherwise we wouldn't see a
+								   context. */
+	(*env)->backend_has_session_proxy = 1;	
+  }
+  return env;
+}
 static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {
   char *server;
   int sock;
@@ -623,16 +641,23 @@ static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {
   }
   if(!(server=EXT_GLOBAL(test_server)(&sock, &is_local, &saddr TSRMLS_CC))) {
 	if (bail) 
-	  EXT_GLOBAL(sys_error)("Could not connect to server. Have you started the "/**/EXT_NAME()/**/" backend (either a servlet engine, an application server, JavaBridge.jar or MonoBridge.exe) and set the "/**/EXT_NAME()/**/".socketname or "/**/EXT_NAME()/**/".hosts option?",52);
+	  EXT_GLOBAL(sys_error)("Could not connect to server. Have you started the "/**/EXT_NAME()/**/" backend (either a servlet engine, an application server, JavaBridge.jar or MonoBridge.exe) and set the "/**/EXT_NAME()/**/".socketname or "/**/EXT_NAME()/**/".hosts option? If you want use the HTTP tunnel, set java.servlet=On (in php.ini) and set allow_http_tunnel to On (in the web.xml).",52);
 	return 0;
   }
 
+  jenv = EXT_GLOBAL(createSecureEnvironment)
+	(sock, handle_request, server, is_local, &saddr);
+  
   if(is_local || !EXT_GLOBAL (get_servlet_context) (TSRMLS_C)) {
+	/* "standard" local backend, send the protocol header */
 	unsigned char mode = EXT_GLOBAL (get_mode) ();
 	send(sock, &mode, sizeof mode, 0); 
+  } else {
+	/* create a jenv for a servlet backend, aquire a context then
+	   redirect */
+	jenv = adjust_servlet_environment(jenv TSRMLS_CC);
   }
-
-  return JG(jenv) = adjust_environment(EXT_GLOBAL(createSecureEnvironment)(sock, handle_request, server, is_local, &saddr) TSRMLS_CC);
+  return JG(jenv) = jenv;
 }
 proxyenv *EXT_GLOBAL(connect_to_server)(TSRMLS_D) {
   return try_connect_to_server(1 TSRMLS_CC);
@@ -661,7 +686,7 @@ static short create_pipe(char*sockname TSRMLS_DC) {
 static short create_pipes(char*basename, size_t basename_len TSRMLS_DC) {
   char *e = basename+basename_len;
   short success;
-  if(mkstemp(basename) == -1) return 0;
+  if((JG(lockfile) = mkstemp(basename)) == -1) return 0;
   if(!create_pipe(strcat(basename, in) TSRMLS_CC)) {
 	*e=0;
 	unlink(basename);
@@ -700,7 +725,7 @@ void EXT_GLOBAL(destroy_channel)(TSRMLS_D) {
   char *channel = (JG(channel));
   if(!channel) return;
 
-  unlink(channel);
+  close(JG(lockfile)); unlink(channel);
   unlink(JG(channel_in));
   unlink(JG(channel_out));
   

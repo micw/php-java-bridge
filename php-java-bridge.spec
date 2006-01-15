@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 3.0.5
+%define version 3.0.6
 %define release 1
 %define PHP_MAJOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | sed 's/\\\..*$//')
 # NOTE: If /etc/sysconfig/java contains a line which points to JAVA_HOME, e.g. 
@@ -165,4 +165,4 @@ chkconfig php-java-bridge off
 
 %files -f filelist
 %defattr(-,root,root)
-%doc README README.GNU_JAVA README.MONO+NET PROTOCOL.TXT INSTALL.MONO+NET INSTALL INSTALL.SERVLET LICENSE CREDITS NEWS ChangeLog test.php test.php4 php-java-bridge.te php-java-bridge.fc update_policy.sh server/documentation documentation examples tests.php5
+%doc README README.GNU_JAVA README.MONO+NET PROTOCOL.TXT INSTALL.MONO+NET INSTALL INSTALL.SERVLET LICENSE CREDITS NEWS ChangeLog test.php test.php4 php-java-bridge.te php-java-bridge.fc update_policy.sh server/documentation documentation examples tests.php5 php_java_lib

@@ -32,7 +32,7 @@ public interface IPhpScriptContext extends Invocable {
      * Returns the ContextFactory.
      * @return the context manager
      */
-    public ContextFactory getContextManager();
+    public ContextFactory getContextFactory();
 
     /**
      * Set the php continuation

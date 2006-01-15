@@ -64,7 +64,7 @@ public class Context implements Invocable {
             return null;            
         }
     }
-    
+
     /**
      * Retrieves the value associated with specified name in the 
      * specified level of scope. Returns null if no value is 
@@ -227,5 +227,4 @@ public class Context implements Invocable {
     public boolean call(PhpProcedureProxy kont) {
 	return false;
     }
-	
 }

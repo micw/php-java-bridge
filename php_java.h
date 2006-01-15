@@ -161,6 +161,7 @@ EXT_BEGIN_MODULE_GLOBALS(EXT)
 
   /* the name of the comm. pipe */
   char*channel, *channel_in, *channel_out;
+  int lockfile;
 
   /* for user CB's */
   zval*exception;

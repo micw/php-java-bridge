@@ -19,7 +19,7 @@ import php.java.bridge.Util;
  * <code>
  * PhpScriptEngine e = new PhpScriptEngine();<br>
  * e.eval(new URLConnection(new URL("http://localhost:80/foo.php"));<br>
- * System.out.println(((Invocable)e).call("java_get_server_name", new Object[]{}));<br>
+ * System.out.println(((Invocable)e).invoke("java_get_server_name", new Object[]{}));<br>
  * e.release();<br>
  * </code>
  * @author jostb

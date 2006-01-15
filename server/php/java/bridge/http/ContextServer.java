@@ -5,8 +5,11 @@ package php.java.bridge.http;
 import php.java.bridge.ThreadPool;
 
 /**
+ * A bridge pattern which either uses the PipeContextServer or the SocketContextServer, 
+ * depending on the OS and/or the security restrictions.
  * @author jostb
- *
+ * @see php.java.bridge.http.PipeContextServer
+ * @see php.java.bridge.http.SocketContextServer
  */
 public class ContextServer {
 

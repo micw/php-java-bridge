@@ -352,6 +352,8 @@ public class JavaBridge implements Runnable {
 	    }
 	    
 	    ISocketFactory socket = bind(sockname);
+	    if(Util.VERSION != null)
+		Util.logMessage(Util.EXTENSION_NAME+ " version          : " + Util.VERSION);
 	    Util.logMessage(Util.EXTENSION_NAME + " logFile         : " + logFile);
 	    Util.logMessage(Util.EXTENSION_NAME + " default logLevel: " + Util.logLevel);
 	    Util.logMessage(Util.EXTENSION_NAME + " socket          : " + socket);
@@ -1455,28 +1457,33 @@ public class JavaBridge implements Runnable {
 	return (String)castToString(buf.toString());
     }
     
+    private Object contextCache = null;
     /**
      * Returns the JSR223 context. 
      * @return The JSR223 context.
      */
     public Object getContext() {
-    	return sessionFactory.getContext();
+	if(contextCache!=null) return contextCache;
+    	return contextCache = sessionFactory.getContext();
     }
+    private ISession sessionCache = null;
     /**
      * Return a session handle shared among all JavaBridge
      * instances. If it is a HTTP session, the session is shared with
      * the servlet or jsp.
+     * @throws Exception 
      * @see php.java.bridge.ISession
      */
-    public ISession getSession(String name, boolean clientIsNew, int timeout){
-    	try {
-	    ISession session= sessionFactory.getSession(name, clientIsNew, timeout);
-	    if(session==null) throw new NullPointerException("Isession is null");
-	    return session;
-    	} catch (Throwable t) {
-	    printStackTrace(t);
-	    return null;
-    	}
+    public ISession getSession(String name, boolean clientIsNew, int timeout) throws Exception {
+	if(sessionCache!=null) return sessionCache;
+	try {
+	ISession session= sessionFactory.getSession(name, clientIsNew, timeout);
+	if(session==null) throw new NullPointerException("session is null");
+	return sessionCache = session;
+	} catch (Exception t) {
+	  printStackTrace(t);
+	  throw t;
+	}
     }
     
     /**
@@ -1647,7 +1654,7 @@ public class JavaBridge implements Runnable {
      * @param pos The position.
       */
     public void offsetUnset(Map value, Object pos) {
-	value.remove(pos);
+	offsetSet(value, pos, null);
     }
     /**
      * Checks if a given position exists.

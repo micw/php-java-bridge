@@ -8,9 +8,6 @@ import java.util.Map;
 
 import javax.script.SimpleScriptContext;
 
-import php.java.bridge.DynamicJavaBridgeClassLoader;
-import php.java.bridge.JavaBridge;
-import php.java.bridge.JavaBridgeClassLoader;
 import php.java.bridge.JavaBridgeRunner;
 import php.java.bridge.PhpProcedureProxy;
 import php.java.bridge.Util;
@@ -73,7 +70,7 @@ public class PhpScriptContext extends SimpleScriptContext implements IPhpScriptC
      * 
      * @return the context manager
      */
-    public ContextFactory getContextManager() {
+    public ContextFactory getContextFactory() {
 	return ctx;
     }
 

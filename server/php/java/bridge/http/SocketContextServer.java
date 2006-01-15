@@ -24,7 +24,7 @@ import php.java.bridge.Util;
  */
 public class SocketContextServer extends PipeContextServer implements Runnable {
     private ISocketFactory socket = null;
-    public static class Channel extends PipeContextServer.Channel {
+    protected static class Channel extends PipeContextServer.Channel {
         protected Socket sock;
         
         public Channel(InputStream in, OutputStream out, Socket sock) {

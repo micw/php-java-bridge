@@ -59,7 +59,8 @@ Notes:
 For IBM WebSphere deploy under the JNDI name "RMIdocument", copy
 $WAS_HOME/.../documentBean_jar.ear/documenBean.jar to ./documentBeanClient.jar,
 require "$WAS_HOME/lib/;$here/documentBeanClient.jar" and change $app_url port#
-from 3700 to 2809.
+from 3700 to 2809 and use "com.ibm.websphere.naming.WsnInitialContextFactory"
+instead of "com.sun.jndi.cosnaming.CNCtxFactory".
 
 For Oracle you need to create a .ear file, for example with the command:
 "deploytool". Make sure to require the correct documentBeanClient.jar

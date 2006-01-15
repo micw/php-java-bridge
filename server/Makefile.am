@@ -46,7 +46,7 @@ JavaBridge.jar:
 	$(PHP_JAVA)/bin/jar cMf JavaBridge.jar META-INF/MANIFEST.MF php/java/bridge/http/*.class php/java/bridge/*.class  php/java/bridge/*.properties
 
 php-servlet.jar: JavaBridge.jar $(SERVLET)
-	$(PHP_JAVA)/bin/javac -classpath .:$(SERVLET) php/java/bridge/http/*.java php/java/bridge/*.java php/java/servlet/*.java
+	$(PHP_JAVA)/bin/javac -classpath .:$(SERVLET) javax/script/http/*.java php/java/bridge/http/*.java php/java/bridge/*.java php/java/servlet/*.java
 	$(PHP_JAVA)/bin/jar cf php-servlet.jar php/java/servlet/*.class
 
 script-api.jar: JavaBridge.jar $(SERVLET)
@@ -54,15 +54,15 @@ script-api.jar: JavaBridge.jar $(SERVLET)
 	$(PHP_JAVA)/bin/jar cf script-api.jar javax/script/*.class
 
 php-script.jar: JavaBridge.jar $(SCRIPT) $(SERVLET)
-	$(PHP_JAVA)/bin/javac -classpath .:$(SERVLET):$(SCRIPT) php/java/bridge/http/*.java php/java/bridge/*.java php/java/script/*.java
-	$(PHP_JAVA)/bin/jar cf php-script.jar php/java/script/*.class
+	$(PHP_JAVA)/bin/javac -classpath .:$(SERVLET):$(SCRIPT) javax/script/http/*.java php/java/bridge/http/*.java php/java/bridge/*.java php/java/script/*.java
+	$(PHP_JAVA)/bin/jar cf php-script.jar META-INF/services/javax.script.ScriptEngineFactory php/java/script/*.class
 
 php-faces.jar: JavaBridge.jar $(FACES) $(SERVLET)
-	$(PHP_JAVA)/bin/javac -classpath .:$(SERVLET):$(SCRIPT):$(FACES) php/java/bridge/http/*.java php/java/bridge/*.java php/java/script/*.java php/java/faces/*.java
+	$(PHP_JAVA)/bin/javac -classpath .:$(SERVLET):$(SCRIPT):$(FACES) javax/script/http/*.java php/java/bridge/http/*.java php/java/bridge/*.java php/java/script/*.java php/java/faces/*.java
 	$(PHP_JAVA)/bin/jar cf php-faces.jar php/java/faces/*.class
 
 JavaBridge.war: JavaBridge.jar $(SERVLET) $(JAVA_BRIDGE_SERVLET_JAR) $(SCRIPT) $(JAVA_BRIDGE_SCRIPT_JAR) $(FACES) $(JAVA_BRIDGE_FACES_JAR)
-	$(PHP_JAVA)/bin/javac -classpath $(SERVLET):$(SCRIPT) php/java/bridge/http/*.java php/java/bridge/*.java php/java/servlet/*.java
+	$(PHP_JAVA)/bin/javac -classpath $(SERVLET):$(SCRIPT) javax/script/http/*.java php/java/bridge/http/*.java php/java/bridge/*.java php/java/servlet/*.java
 
 	-mkdir WEB-INF/lib WEB-INF/classes WEB-INF/cgi
 	cp JavaBridge.jar $(SCRIPT) $(JAVA_BRIDGE_SERVLET_JAR) $(JAVA_BRIDGE_SCRIPT_JAR) $(JAVA_BRIDGE_FACES_JAR) ../unsupported/*.jar WEB-INF/lib

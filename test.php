@@ -23,7 +23,7 @@ if(java_get_server_name() != null) {
     foreach ($arr as $key => $value) {
       print $key . " -> " .  $value . "<br>\n";
     }
-  } catch (Exception $ex) {
+  } catch (JavaException $ex) {
     $trace = new java("java.io.ByteArrayOutputStream");
     $ex->printStackTrace(new java("java.io.PrintStream", $trace));
     echo "Exception $ex occured:<br>\n" . $trace . "\n";

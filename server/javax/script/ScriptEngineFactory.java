@@ -1,6 +1,8 @@
 
 package javax.script;
 
+import java.util.List;
+
 /**
  * ScriptEngineFactory is used to describe a ScriptEngine instance. 
  * Each ScriptEngine class implementing ScriptEngine has a 
@@ -49,7 +51,7 @@ public interface ScriptEngineFactory {
      *  
 	 * @return string array of supported file extensions
 	 */	
-	public String[] getExtensions();
+	public List getExtensions();
 	
     /**
      * Retrieves an array of Strings containing MIME types describing
@@ -57,7 +59,7 @@ public interface ScriptEngineFactory {
      * 
 	 * @return string array of MIME types
 	 */
-	public String[] getMimeTypes();
+	public List getMimeTypes();
 	
 	/**
      * Retrieves an array of short descriptive names such as 
@@ -67,7 +69,7 @@ public interface ScriptEngineFactory {
 	 * @return an array of short descriptive names describing the 
      *         language supported by the ScriptEngine
 	 */
-	public String[] getNames();
+	public List getNames();
 	
 	/**
      * Retrieves an associated value for the specified key. Returns 
@@ -76,7 +78,7 @@ public interface ScriptEngineFactory {
      *  
      * @return associated value for the specified key
 	 */
-	public Object getParameter(Object key);	
+	public Object getParameter(String key);	
    /**
      * Retrieves an instance of the associated ScriptEngine.
      *  

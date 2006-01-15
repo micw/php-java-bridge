@@ -2,10 +2,9 @@
 
 package php.java.script;
 
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.StringReader;
 import java.lang.reflect.Proxy;
 import java.net.UnknownHostException;
 import java.util.Map;
@@ -18,7 +17,6 @@ import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 
-import php.java.bridge.NotImplementedException;
 import php.java.bridge.PhpProcedure;
 import php.java.bridge.PhpProcedureProxy;
 import php.java.bridge.SessionFactory;
@@ -50,12 +48,18 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
      * The continuation of the script
      */
     protected HttpProxy continuation = null;
-    private FileReader localReader = null;
+    private StringReader localReader = null;
+
+    private ScriptEngineFactory factory = null;
 
     /**
      * Create a new ScriptEngine.
      */
     public PhpScriptEngine() {
+    }
+
+    public PhpScriptEngine(PhpScriptEngineFactory factory) {
+      this.factory = factory;
     }
 
     /* (non-Javadoc)
@@ -103,12 +107,11 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
         name = name.substring(length);
         this.name = name;
     }
-    /* (non-Javadoc)
-     * @see javax.script.ScriptEngine#eval(java.io.Reader, javax.script.ScriptContext)
-     */
-    public Object eval(Reader reader, ScriptContext context) throws ScriptException {
-    	if(reader==null) { release(); return null; }      
-        setName(String.valueOf(reader));
+
+    private Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
+        if(continuation != null) release();
+  	if(reader==null) return null;      
+        setName(name);
 	try {
 	    this.script = doEval(reader, context);
 	} catch (Exception e) {
@@ -123,10 +126,16 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
 	}
 	return null;
     }
+    /* (non-Javadoc)
+     * @see javax.script.ScriptEngine#eval(java.io.Reader, javax.script.ScriptContext)
+     */
+    public Object eval(Reader reader, ScriptContext context) throws ScriptException {
+        return eval(reader, context, String.valueOf(reader));
+   }
 	
     protected HttpProxy getContinuation(Reader reader, ScriptContext context) {
     	IPhpScriptContext phpScriptContext = (IPhpScriptContext)context;
-    	SessionFactory ctx = phpScriptContext.getContextManager();
+    	SessionFactory ctx = phpScriptContext.getContextFactory();
     	Map env = phpScriptContext.getEnvironment();
     	HttpProxy kont = new HttpProxy(reader, env, ctx, ((PhpScriptWriter)(context.getWriter())).getOutputStream()); 
      	phpScriptContext.setContinuation(kont);
@@ -148,23 +157,13 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
      */
     public Object eval(String script, ScriptContext context)
 	throws ScriptException {
-      	if(script==null) { release(); return null; }
       	script = script.trim();
-      	if(script.length()==0) { release(); return null; }
-        setName(String.valueOf(script));
-	try {
-	    return eval(this.localReader=new FileReader(new File(script)), context);
-	} catch (Exception e) {
-	    Util.printStackTrace(e);
-	    throw new ScriptException(e);
-	}
+	return eval(this.localReader=new StringReader(script), context, String.valueOf(script));
     }
 
-    /* (non-Javadoc)
-     * @see javax.script.ScriptEngine#getFactory()
-     */
+    /**@inheritDoc*/
     public ScriptEngineFactory getFactory() {
-	throw new NotImplementedException();
+	return this.factory;
     }
 
     protected ScriptContext getScriptContext(Bindings namespace) {

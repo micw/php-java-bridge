@@ -134,41 +134,42 @@
 00161 
 00162   <span class="comment">/* the name of the comm. pipe */</span>
 00163   <span class="keywordtype">char</span>*channel, *channel_in, *channel_out;
-00164 
-00165   <span class="comment">/* for user CB's */</span>
-00166   zval*exception;
-00167 
-00168   zval **object;
-00169   zval *func;
-00170   zval **retval_ptr;
-00171   zval *func_params;
-00172 EXT_END_MODULE_GLOBALS(EXT)
-00173 
+00164   <span class="keywordtype">int</span> lockfile;
+00165 
+00166   <span class="comment">/* for user CB's */</span>
+00167   zval*exception;
+00168 
+00169   zval **object;
+00170   zval *func;
+00171   zval **retval_ptr;
+00172   zval *func_params;
+00173 EXT_END_MODULE_GLOBALS(EXT)
 00174 
 00175 
 00176 
-00177 #ifdef ZTS
-00178 # define JG(v) EXT_TSRMG(EXT_GLOBAL(globals_id), EXT_GLOBAL_EX(zend_,, _globals) *, v)
-00179 #else
-00180 # define JG(v) EXT_GLOBAL(globals).v
-00181 #endif
-00182 
-00183 extern <span class="keywordtype">char</span>* EXT_GLOBAL(get_server_string)(TSRMLS_D);
-00184 
-00185 extern proxyenv *EXT_GLOBAL(try_connect_to_server)(TSRMLS_D);
-00186 extern proxyenv *EXT_GLOBAL(connect_to_server)(TSRMLS_D);
-00187 extern <span class="keywordtype">void</span> EXT_GLOBAL(start_server)(TSRMLS_D);
-00188 
-00189 extern <span class="keywordtype">char</span>* EXT_GLOBAL(test_server)(<span class="keywordtype">int</span> *socket, <span class="keywordtype">short</span> *is_local, struct sockaddr*<a class="code" href="structcfg.html#o0">saddr</a> TSRMLS_DC);
-00190 
-00191 <span class="comment">/* returns the servlet context or null */</span>
-00192 extern <span class="keywordtype">char</span> *EXT_GLOBAL(get_servlet_context)(TSRMLS_D);
-00193 
-00194 <span class="comment">/* returns the local socketname or the default local socketname*/</span>
-00195 extern <span class="keywordtype">char</span> *EXT_GLOBAL(get_sockname)(TSRMLS_D);
-00196 
-00197 #endif
-</pre></div><hr size="1"><address style="align: right;"><small>Generated on Sun Jan 8 19:28:25 2006 for php-java-bridge by&nbsp;
+00177 
+00178 #ifdef ZTS
+00179 # define JG(v) EXT_TSRMG(EXT_GLOBAL(globals_id), EXT_GLOBAL_EX(zend_,, _globals) *, v)
+00180 #else
+00181 # define JG(v) EXT_GLOBAL(globals).v
+00182 #endif
+00183 
+00184 extern <span class="keywordtype">char</span>* EXT_GLOBAL(get_server_string)(TSRMLS_D);
+00185 
+00186 extern proxyenv *EXT_GLOBAL(try_connect_to_server)(TSRMLS_D);
+00187 extern proxyenv *EXT_GLOBAL(connect_to_server)(TSRMLS_D);
+00188 extern <span class="keywordtype">void</span> EXT_GLOBAL(start_server)(TSRMLS_D);
+00189 
+00190 extern <span class="keywordtype">char</span>* EXT_GLOBAL(test_server)(<span class="keywordtype">int</span> *socket, <span class="keywordtype">short</span> *is_local, struct sockaddr*<a class="code" href="structcfg.html#o0">saddr</a> TSRMLS_DC);
+00191 
+00192 <span class="comment">/* returns the servlet context or null */</span>
+00193 extern <span class="keywordtype">char</span> *EXT_GLOBAL(get_servlet_context)(TSRMLS_D);
+00194 
+00195 <span class="comment">/* returns the local socketname or the default local socketname*/</span>
+00196 extern <span class="keywordtype">char</span> *EXT_GLOBAL(get_sockname)(TSRMLS_D);
+00197 
+00198 #endif
+</pre></div><hr size="1"><address style="align: right;"><small>Generated on Sun Jan 15 20:26:37 2006 for php-java-bridge by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.2 </small></address>
 </body>

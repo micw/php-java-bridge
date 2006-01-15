@@ -30,7 +30,7 @@ public class PhpFacesScriptContextFactory extends php.java.servlet.ContextFactor
 	return ctx;
     }
     protected PhpFacesScriptContextFactory(PhpFacesScriptContext context, ServletContext ctx, HttpServletRequest req, HttpServletResponse res) { 
-	super(ctx, req, res);
+	super(ctx, req, req, res);
 	this.context = context; 
     }
 
