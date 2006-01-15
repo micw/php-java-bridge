@@ -11,8 +11,9 @@
 <H1>What
 is the PHP/Java Bridge?</H1>
 <P><FONT > The PHP/Java Bridge 
-  is  a PHP <a href="http://cvs.sourceforge.net/viewcvs.py/*checkout*/php-java-bridge/php-java-bridge/documentation/API/html/java_8c.html">module</a>, <code>java.so</code>, <code>php_java.dll</code>, with an associated <a href="http://cvs.sourceforge.net/viewcvs.py/*checkout*/php-java-bridge/php-java-bridge/server/documentation/API/index.html">backend</a>, <code>JavaBridge.jar</code>, <code>JavaBridge.war</code> or <code>MonoBridge.exe</code>, which connects the PHP object system with Java or a <a href="http://www.ecma-international.org/publications/standards/Ecma-335.htm">ECMA 335</a> virtual machine. It fully implements <A HREF="http://www.jcp.org/aboutJava/communityprocess/edr/jsr223/">JSR 223</A> and
-  can be used to access CLR (e.g. VB.NET, C#) or Java (e.g. Java, KAWA, JRuby) based applications from PHP scripts. The PHP/Java Bridge communicates with the
+  is a protocol which connects a PHP <a href="http://cvs.sourceforge.net/viewcvs.py/*checkout*/php-java-bridge/php-java-bridge/documentation/API/html/java_8c.html">module</a>, <code>java.so</code>, <code>php_java.dll</code>, with an associated <a href="http://cvs.sourceforge.net/viewcvs.py/*checkout*/php-java-bridge/php-java-bridge/server/documentation/API/index.html">backend</a>, <code>JavaBridge.jar</code>, <code>JavaBridge.war</code> or <code>MonoBridge.exe</code>,
+ running in a Java or <a href="http://www.ecma-international.org/publications/standards/Ecma-335.htm">ECMA 335</a> virtual machine. It fully implements <A HREF="http://www.jcp.org/aboutJava/communityprocess/edr/jsr223/">JSR 223</A> and
+  can be used to access CLR (e.g. VB.NET, C#) or Java (e.g. Java, KAWA, JRuby) based applications from PHP scripts or to call PHP scripts from a servlet engine or application server. The PHP/Java Bridge communicates with the
   VM through local sockets using an efficient communication protocol.
   Each request-handling PHP process of a multi-process HTTP server
   communicates with a corresponding thread spawned by the VM.
@@ -39,6 +40,7 @@ use PHP/Java Bridge?</H1>
 <P><FONT > PHP and the PHP/Java Bridge might also be interesting for java developers. There are a number of technologies based on the JSP template system such as jakarta <a href="http://struts.apache.org/">Struts</a> and its successor <a href="http://www.jcp.org/en/jsr/detail?id=127">Java Server Faces</a>. JSP and custom taglibs have problems on their own, combining them to create an object-based web framework exposes these problems; the JSP page is parsed from the top to the bottom and the defined "components" render and contribute to the object graph in one pass. Even the JSF originators acknowledge that this system is <a href="http://www.onjava.com/pub/a/onjava/2004/06/09/jsf.html?page=1">seriously flawed</a> and recommend a system like <a href="http://jakarta.apache.org/tapestry/">tapestry</a> or <a href="http://www.jsfcentral.com/articles/facelets_1.html">facelets</a> which define the components in java classes and bind them via ID's in the XML or HTML template. Since PHP/Java Bridge version 3.0 it is possible to embed php scripts or php methods into the JSF framework, so that UI developers can concentrate on developing HTML templates while web developers can create a prototype using php code and use the existing framework from their code. 
 </FONT></P>                                                                                            
 
+<H1>Description</H1>
 <P><FONT > 
   The bridge adds the following primitives to PHP.  The type mappings are shown in <a href="#type-mapping">table 1</a>.
 
@@ -125,31 +127,37 @@ function toString() {<br>
 &nbsp;&nbsp;$testVal = java_context()->getAttribute("testKey");<br>
 &nbsp;&nbsp;return "Hello Java from Simple.php script: $testVal.";<br>
 }<br>
+java_context()->call(java_closure()) || die("This script must be called from java.");<br>
 ?&gt;<br>
 <br>
-public class MyServlet extends php.java.script.PhpScriptServlet {<br>
-&nbsp;&nbsp;public void service (ServletRequest req, ServletResponse res) throws ServletException  {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;ScriptEngine engine = getEngine(req);<br>
-&nbsp;&nbsp;&nbsp;&nbsp;ScriptContext ctx = getContext(req, res);<br>
-&nbsp;&nbsp;&nbsp;&nbsp;ctx.setAttribute("testKey", "testVal", ScriptContext.ENGINE_SCOPE);<br>
+public class MyApp {<br>
+&nbsp;&nbsp;public static void main(String s[]) throws Throwable {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;PhpScriptEngine engine = new PhpScriptEngine();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;engine.put("testKey", "testVal");<br>
 &nbsp;&nbsp;&nbsp;&nbsp;// allocate a php instance from the HTTP (Apache/IIS) pool ...<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Reader reader = new URLReader(new URL("http://localhost:80/Simple.php"));<br>
-&nbsp;&nbsp;&nbsp;&nbsp;engine.eval(reader, ctx);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;engine.eval(reader);<br>
 &nbsp;&nbsp;&nbsp;&nbsp;// and invoke the above toString() function.<br>
-&nbsp;&nbsp;&nbsp;&nbsp;Object phpTopLevelEnvironment = ((Invocable)engine).getInterface(null, null);<br>
-&nbsp;&nbsp;&nbsp;&nbsp;String s = phpTopLevelEnvironment.toString();<br>
-&nbsp;&nbsp;&nbsp;&nbsp;res.getWriter().write(s);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Object script = ((Invocable)engine).getInterface(null);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;System.out.println("Result from script.toString():" + script.toString());<br>
 &nbsp;&nbsp;&nbsp;&nbsp;// release the allocated php continuation (i.e. <br>
 &nbsp;&nbsp;&nbsp;&nbsp;// release the request-handling HTTP process/thread)<br>
-&nbsp;&nbsp;&nbsp;&nbsp;releaseEngine();<br>
-&nbsp;&nbsp;&nbsp;&nbsp;ctx.remove();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;engine.release();<br>
 &nbsp;&nbsp;} <br>
 }<br>
 </code>
 </blockquote>
 <br>
 <li>
-  <code><strong>java_closure</strong>(ENVIRONMENT, MAP, TYPE)</code>: Makes it possible to call PHP code from java.  It closes over the PHP environment and packages it up as a java class.  If the ENVIRONMENT is missing, the current environment is used. If MAP is missing, the PHP procedures must have the same name as the required procedures. If TYPE is missing, the generated class is "generic", i.e. the interface it implements is determined when the closure is applied. Example which uses PHP and Mono:<br>
+  <code><strong>java_closure</strong>(ENVIRONMENT, MAP, TYPE)</code>: Makes it possible to call PHP code from java.  It closes over the PHP environment and packages it up as a java class.  If the ENVIRONMENT is missing, the current environment is used. If MAP is missing, the PHP procedures must have the same name as the required procedures. If TYPE is missing, the generated class is "generic", i.e. the interface it implements is determined when the closure is applied. Example:<br><br><blockquote>
+&lt;?php<br>
+function toString() { return "hello" ; }<br>
+echo (string)java_closure();<br>
+?&gt;<br>
+=&gt; hello
+</blockquote>
+<br><br>
+Example which uses PHP and Mono:<br>
  <br><br>
 <blockquote>
 <code>
@@ -399,9 +407,9 @@ $outbuf=new java("java.io.PrintStream", $buf);<br>
 ><TD
 >exact number</TD
 ><TD
->long</TD
+>integer (default) or long, depending on the flag <a href="#ext_java_compatibility">java.ext_java_compatibility</a>.</TD
 ><TD
->64 bit integer</TD
+>64 bit data on protocol level, coerced to 32bit int/Integer or 64bit long/Long</TD
 ><TD
 >$outbuf->println(100);<br>
 </TD
@@ -620,7 +628,7 @@ the instructions below (on Security Enhanced Linux please use the RPM or please 
 	<LI><P><FONT ><A name="mode4">In a production environment which requires <strong>load balancing and failover</strong> or <strong>session sharing between PHP, JSP and Servlets</strong> it is recommended deploy the backend into a servlet engine or an application server; tomcat 5 for example. Disable the <code>java.socketname</code>, either a) enable the <code>java.hosts</code> and <code>java.servlet</code> options or b), if you don't have Apache or IIS, install PHP as a CGI/FastCGI binary so that your application server can find it and start the application server. The <code>.ini</code> file should contain:
 <BR><BR><code>extension = java.so<BR>[java]<br>
 java.hosts=&quot;127.0.0.1:8080&quot<br>
-java.servlet="/JavaBridge/PhpJavaServlet.php"
+java.servlet=User
 </code>
 <br><br>
 
@@ -716,11 +724,11 @@ BORDER="1"
 ><TD
 >Off</TD
 ><TD
->The communication protocol. If set to "On" or to "/yourContext/YourServlet", the bridge uses HTTP to communicate with the <code>java.hosts</code> backends.</TD
+>The communication protocol. If set to <code>On</code> or to <code>User</code>, the bridge uses HTTP to communicate with the <code>java.hosts</code> backends. The option <code>User</code> preserves the context, <code>On</code> is for backward compatibility and rewrites the context to: <code>/JavaBridge/JavaBridge.php</code>.</TD
 ><TD
 ><code>;; Make sure that this option is only set <br>;; if your backend 
 is deployed in a<br>;; servlet engine or application server.</code><br>
-java.servlet="/JavaBridge/PhpJavaServlet.php"
+java.servlet=User<br>
 </TD
 ><TR
 ><TD
@@ -733,7 +741,6 @@ java.servlet="/JavaBridge/PhpJavaServlet.php"
 >java.classpath="/tmp/myJavaBridge.jar:/tmp/myCasses/"<br>
 </TD
 ></TR
-></TR
 ><TR
 ><TD
 >java.libpath</TD
@@ -744,6 +751,18 @@ java.servlet="/JavaBridge/PhpJavaServlet.php"
 ><TD
 >
 java.libpath="/tmp/"
+</TD
+></TR
+><TR
+><TD
+><A name="#ext_java_compatibility">java.ext_java_compatibility</A></TD
+><TD
+>Off</TD
+><TD
+>Since version 3 the bridge is no longer backward compatible to its predecessor "ext/java": Exact php numbers are now represented as java integers, java return values are no longer auto-converted into php values. <em>Leave it off, if possible</em>.</TD
+><TD
+>
+java.ext_java_compatibility=On
 </TD
 ></TR
 ></TBODY
@@ -759,13 +778,53 @@ the download files.<p>
 </P>
 
 </P>
+<H1>FAQ</H1>
+<P><FONT >
+<ul>
+<li><H4>The bridge doesn't compile on my system!?!</H4>
+<p>Please follow the instructions in the INSTALL document as close as possible. Some distributions such as BSD or Debian use broken or outdated autoconf, automake or libtool versions. If you get errors "configure.h.in missing", "run configure.guess" or other configure related error messages, please use the following commands to compile the bridge:<br>
+<p>
+<code>
+<font size="-1">
+#uncomment the following line on MacOSX and BSD only, see README<br>
+#export CFLAGS="-DCFG_JAVA_SOCKET_INET"<br>
+export INST=`pwd`/dist<br>
+export LD_LIBRARY_PATH=$INST/lib:$LD_LIBRARY_PATH<br>
+export PATH=$INST/bin/:$PATH<br>
+(cd autoconf-2.59; ./configure --prefix=$INST && make && make install)<br>
+(cd automake-1.6.3; ./configure --prefix=$INST && make && make install)<br>
+(cd libtool-1.5.6; ./configure --prefix=$INST make && make install)<br>
+(cd php-5.1.2; ./configure --prefix=$INST --disable-all --enable-fastcgi && make && make install)<br>
+(cd php-java-bridge-2.0.8; phpize && ./configure --with-java=/usr/java/jdk1.5.0 && make && make install)<br>
+# test, should display "java running"<br>
+php php-java-bridge-2.0.8/test.php >result.html<br>
+</font>
+</code>
+</p>
+If you have a problem compiling the bridge code against any PHP version >= 4.3.4 on Windows, Linux/Unix or MacOS, please do <em>not</em> report this problem to the mailing list. Please <a href="http://sourceforge.net/tracker/?func=add&group_id=117793&atid=679233">open a problem report instead</a> (you don't need an account to submit a problem report).</p>
+<p>On RPM based Security Enhanced Linux installations (RHEL, Fedora) please install one of the binary RPM's or compile a binary RPM from the source RPM using the command: <code>rpmbuild --rebuild php-java-bridge*src.rpm</code></p>
+<p>On recent Debian X86 installations, Ubuntu for example, it is also possible to install the RPM binaries: Open the appropriate binary RPM with a file manager and drag and drop the contents of the lib/php directory to /usr/lib/lib php and restart apache.</p>
+<li> <H4>Which version should I use, which is stable?</H4>
+<p>If you have a PHP4 installation, use the latest 2.0.x version. On PHP5 or PHP6 use the latest 3.x version. </p>
+<p>If you want to upgrade from PHP/Java Bridge version 2.0.x to version 3.x, set the java.ext_java_compatibility option to "On".
+At the moment there is little reason to upgrade from 2.0.x to 3.x. The 3.x versions currently don't work with PHP4 and have been tested in the tomcat servlet engine and in a Eclipse environment only. They are here to help developers to create a PHP Eclipse IDE plugin.</p>
+<li> <H4>Where's the PHP5.1.x Windows binary?</H4>
+<p>
+PHP5.1.x already uses the PHP6 ABI. Please use the latest stable PHP5 version, which is PHP5.0.5.
+The PHP6 ABI will be supported on windows when PHP6 or a stable PHP 5.1.x version is released (the current PHP5.1.x versions have problems when compiled with ZTS, that's a php bug, not a problem with the bridge).</p>
+<li> <H4>Can I use java libraries without installing java?</H4>
+<p>Yes. Simply ommit the <code>--with-java=</code> configure option. The bridge will use the <code>libgcj</code>, which is part of the GNU gcc compiler, to interpret java libraries. This library also uses much less system resources (memory, files) than a "real" java VM.</p>
+</ul>
+</FONT></P>
 <H1>Related</H1>
 <P><FONT >
 <ul>
 <li> <a href="http://zez.org/article/articleview/26/">A tutorial how to use the predecessor &quot;ext/java&quot;</a>.
-<li> <a href="http://www.zend.com/store/products/zend-platform/java.php">A commercial bridge which uses the same technology as the PHP/Java Bridge</a>.
+<li> <a href="http://www.caucho.com/resin-3.0/php/index.xtp">A commercial free (GPL) PHP engine written in pure java</a>.
+<li> <a href="http://www.zend.com/store/products/zend-platform/java.php">A commercial non-free bridge which uses the same technology as the PHP/Java Bridge</a>.
 <li> <a href="http://www.devx.com/Java/Article/21707">Calling Enterprise Java Beans from PHP/SOAP</a>.
 <li> <a href="http://cvs.sourceforge.net/viewcvs.py/php-java-bridge/php-java-bridge/examples/j2ee/README?rev=1.4&view=markup">Calling Enterprise Java Beans from the PHP/Java Bridge</a>.
+</ul>
 </FONT></P>
 
 </BODY>
