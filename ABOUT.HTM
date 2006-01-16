@@ -782,25 +782,7 @@ the download files.<p>
 <P><FONT >
 <ul>
 <li><H4>The bridge doesn't compile on my system!?!</H4>
-<p>Please follow the instructions in the INSTALL document as close as possible. Some distributions (BSD, Debian) use broken, patched or outdated autoconf, automake or libtool versions. If you get errors such as "configure.h.in missing", "run configure.guess" or other configure related error messages, please use the following commands to compile the bridge:<br>
-<p>
-<code>
-<font size="-1">
-#uncomment the following line on MacOSX and BSD only, see README<br>
-#export CFLAGS="-DCFG_JAVA_SOCKET_INET"<br>
-export INST=`pwd`/dist<br>
-export LD_LIBRARY_PATH=$INST/lib:$LD_LIBRARY_PATH<br>
-export PATH=$INST/bin/:$PATH<br>
-(cd autoconf-2.59; ./configure --prefix=$INST && make && make install)<br>
-(cd automake-1.6.3; ./configure --prefix=$INST && make && make install)<br>
-(cd libtool-1.5.6; ./configure --prefix=$INST make && make install)<br>
-(cd php-5.1.2; ./configure --prefix=$INST --disable-all --enable-fastcgi && make && make install)<br>
-(cd php-java-bridge-2.0.8; phpize && ./configure --with-java=/usr/java/jdk1.5.0 && make && make install)<br>
-# test, should display "java running"<br>
-php php-java-bridge-2.0.8/test.php >result.html<br>
-</font>
-</code>
-</p>
+<p>Please follow the instructions in the INSTALL document as close as possible. 
 If you have a problem compiling the bridge code against any PHP version >= 4.3.4 on Windows, Linux/Unix or MacOS, please do <em>not</em> report this problem to the mailing list. Please <a href="http://sourceforge.net/tracker/?func=add&group_id=117793&atid=679233">open a problem report instead</a> (you don't need an account to submit a problem report).</p>
 <p>On RPM based Security Enhanced Linux installations (RHEL, Fedora) please install one of the binary RPM's or compile a binary RPM from the source RPM using the command: <code>rpmbuild --rebuild php-java-bridge*src.rpm</code></p>
 <p>On recent Debian X86 installations, Ubuntu for example, it is also possible to install the RPM binaries: Open the appropriate binary RPM with a file manager and drag and drop the contents of the lib/php directory to /usr/lib/lib php and restart apache.</p>
@@ -815,7 +797,7 @@ At the moment there is little reason to upgrade from 2.0.x to 3.x. The 3.x versi
 <H1>Related</H1>
 <P><FONT >
 <ul>
-<li> <a href="http://www.eclipse.org/proposals/php-ide/">A proposal for a PHP IDE</a>.
+<li> <a href="http://www.eclipse.org/proposals/php-ide/">A PHP IDE</a>.
 <li> <a href="http://zez.org/article/articleview/26/">A tutorial how to use the predecessor &quot;ext/java&quot;</a>.
 <li> <a href="http://www.caucho.com/resin-3.0/php/index.xtp">A commercial free (GPL) PHP engine written in pure java</a>.
 <li> <a href="http://www.zend.com/store/products/zend-platform/java.php">A commercial non-free bridge which uses the same technology as the PHP/Java Bridge</a>.
