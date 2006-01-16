@@ -608,7 +608,7 @@ the instructions below (on Security Enhanced Linux please use the RPM or please 
 	<LI><P STYLE="font-style: normal"><FONT >In
 	the directory php-java-bridge-v.x.y build the module
 	for a 32 bit JVM (if you run a 64 Bit JVM, use the <code>-m64</code> flag instead): <BR><BR><code>phpize &amp;&amp; ./configure --disable-servlet 
-	--with-java=/opt/IBMJava2-14 &amp;&amp; make CFLAGS=&quot;-m32&quot;</code></FONT></P>
+	--with-java=/opt/IBMJava2-141 &amp;&amp; make CFLAGS=&quot;-m32&quot;</code></FONT></P>
 	<LI><P STYLE="font-style: normal"><FONT >Then
 	install the module as root. Type:<BR><BR><code>su -c 'make
 	install'<BR>&lt;enter password&gt;</code></FONT></P>
@@ -782,7 +782,7 @@ the download files.<p>
 <P><FONT >
 <ul>
 <li><H4>The bridge doesn't compile on my system!?!</H4>
-<p>Please follow the instructions in the INSTALL document as close as possible. Some distributions such as BSD or Debian use broken or outdated autoconf, automake or libtool versions. If you get errors "configure.h.in missing", "run configure.guess" or other configure related error messages, please use the following commands to compile the bridge:<br>
+<p>Please follow the instructions in the INSTALL document as close as possible. Some distributions (BSD, Debian) use broken, patched or outdated autoconf, automake or libtool versions. If you get errors such as "configure.h.in missing", "run configure.guess" or other configure related error messages, please use the following commands to compile the bridge:<br>
 <p>
 <code>
 <font size="-1">
@@ -808,10 +808,6 @@ If you have a problem compiling the bridge code against any PHP version >= 4.3.4
 <p>If you have a PHP4 installation, use the latest 2.0.x version. On PHP5 or PHP6 use the latest 3.x version. </p>
 <p>If you want to upgrade from PHP/Java Bridge version 2.0.x to version 3.x, set the java.ext_java_compatibility option to "On".
 At the moment there is little reason to upgrade from 2.0.x to 3.x. The 3.x versions currently don't work with PHP4 and have been tested in the tomcat servlet engine and in a Eclipse environment only. They are here to help developers to create a PHP Eclipse IDE plugin.</p>
-<li> <H4>Where's the PHP5.1.x Windows binary?</H4>
-<p>
-PHP5.1.x already uses the PHP6 ABI. Please use the latest stable PHP5 version, which is PHP5.0.5.
-The PHP6 ABI will be supported on windows when PHP6 or a stable PHP 5.1.x version is released (the current PHP5.1.x versions have problems when compiled with ZTS, that's a php bug, not a problem with the bridge).</p>
 <li> <H4>Can I use java libraries without installing java?</H4>
 <p>Yes. Simply ommit the <code>--with-java=</code> configure option. The bridge will use the <code>libgcj</code>, which is part of the GNU gcc compiler, to interpret java libraries. This library also uses much less system resources (memory, files) than a "real" java VM.</p>
 </ul>
@@ -819,6 +815,7 @@ The PHP6 ABI will be supported on windows when PHP6 or a stable PHP 5.1.x versio
 <H1>Related</H1>
 <P><FONT >
 <ul>
+<li> <a href="http://www.eclipse.org/proposals/php-ide/">A proposal for a PHP IDE</a>.
 <li> <a href="http://zez.org/article/articleview/26/">A tutorial how to use the predecessor &quot;ext/java&quot;</a>.
 <li> <a href="http://www.caucho.com/resin-3.0/php/index.xtp">A commercial free (GPL) PHP engine written in pure java</a>.
 <li> <a href="http://www.zend.com/store/products/zend-platform/java.php">A commercial non-free bridge which uses the same technology as the PHP/Java Bridge</a>.

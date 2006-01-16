@@ -49,14 +49,14 @@ public class ScriptEngineManager {
 		Class c = Class.forName("gnu.classpath.ServiceFactory");
 		Method m = c.getMethod("lookupProviders", new Class[]{java.lang.Class.class});
 		try {m.setAccessible(true);} catch (Throwable tt) {/*ignore*/}
-		i = (Iterator) m.invoke(c, new Class[]{ScriptEngineFactory.class});
+		i = (Iterator) m.invoke(c, new Object[]{ScriptEngineFactory.class});
 	    } catch (Throwable ex) {/*ignore*/}
 	    if(i!=null) return i;
 	    try {
 		Class c = Class.forName("sun.misc.Service");
 		Method m = c.getMethod("providers",  new Class[]{java.lang.Class.class});
 		try {m.setAccessible(true);} catch (Throwable tt) {/*ignore*/}
-		i = (Iterator) m.invoke(c, new Class[]{ScriptEngineFactory.class});
+		i = (Iterator) m.invoke(c, new Object[]{ScriptEngineFactory.class});
 	    } catch (Throwable ex) {/*ignore*/}
 	    return i;
 	}

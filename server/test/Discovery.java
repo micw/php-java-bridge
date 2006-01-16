@@ -8,6 +8,8 @@ public class Discovery  {
  	public static void main(String[] args) throws Exception {
 		ScriptEngineManager manager = new ScriptEngineManager();
 		ScriptEngine e = manager.getEngineByName("php");
-		e.eval("<?php echo 'HelloWorld'; ?>");
+		e.put("hello", new StringBuffer("hello world"));
+		e.eval("<?php echo (string)java_context()->getAttribute('hello'); java_context()->setAttribute('hello', '!', 100);?>");
+		System.out.println(e.get("hello"));
 	}
 }

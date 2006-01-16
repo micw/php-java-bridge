@@ -86,8 +86,9 @@ public class PhpScriptContext extends SimpleScriptContext implements IPhpScriptC
     /* (non-Javadoc)
      * @see php.java.bridge.Invocable#call(php.java.bridge.PhpProcedureProxy)
      */
+    /**@inheritDoc*/
     public boolean call(PhpProcedureProxy kont) throws InterruptedException {
-	this.kont.call((PhpProcedureProxy)kont);
+	this.kont.call(kont);
 	return true;
     }
 }

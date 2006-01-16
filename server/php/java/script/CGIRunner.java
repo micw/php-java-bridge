@@ -96,8 +96,7 @@ public abstract class CGIRunner extends Thread {
 	try {
         proc.waitFor();
     } catch (InterruptedException e1) {
-        // TODO Auto-generated catch block
-        e1.printStackTrace();
+        Util.printStackTrace(e1);
     }
 	} catch (IOException e) {
 	    Util.printStackTrace(e);

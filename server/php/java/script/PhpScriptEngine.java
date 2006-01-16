@@ -56,9 +56,11 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
      * Create a new ScriptEngine.
      */
     public PhpScriptEngine() {
+      setContext(getScriptContext(null));
     }
 
     public PhpScriptEngine(PhpScriptEngineFactory factory) {
+      this();
       this.factory = factory;
     }
 
@@ -155,6 +157,7 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
     /* (non-Javadoc)
      * @see javax.script.ScriptEngine#eval(java.lang.String, javax.script.ScriptContext)
      */
+    /**@inheritDoc*/
     public Object eval(String script, ScriptContext context)
 	throws ScriptException {
       	script = script.trim();
@@ -196,24 +199,5 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
     /** {@inheritDoc} */
     public Bindings createBindings() {
         return new SimpleBindings();
-    }
-
-    /** {@inheritDoc} */
-   public Object eval(Reader reader, Bindings bindings ) throws ScriptException {
-        return eval(reader, getScriptContext(bindings));
-    }
-    
-    /** {@inheritDoc} */
-    public Object eval(String script, Bindings bindings) throws ScriptException {
-        return eval(script , getScriptContext(bindings));
-    }
-    /** {@inheritDoc} */
-    public Object eval(Reader reader) throws ScriptException {
-        return eval(reader, getScriptContext(null));
-    }
-    /** {@inheritDoc} */
-     public Object eval(String script) throws ScriptException {
-        return eval(script, getScriptContext(null));
-    }
- 
+    } 
  }

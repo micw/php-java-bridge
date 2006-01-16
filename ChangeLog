@@ -1,5 +1,19 @@
 2006-01-15  Jost Boekemeier  <jostb@intern>
 
+	* server/javax/script/ScriptEngineManager.java 
+	(getServiceProviders): avoid warning.
+
+	* server/php/java/script/PhpScriptContext.java
+	(call): removed obsolete cast.
+
+	* server/php/java/script/PhpScriptEngine.java
+	(PhpScriptEngine): Set our context instead of overriding every public function.
+	(eval): Obsolete.
+
+	* server/test/Discovery.java: Test the above change.
+	
+2006-01-15  Jost Boekemeier  <jostb@intern>
+
 	* php.ini, php.ini.windows: Revert last change: on some operating
 	systems (Windows) "connect" does not fail immediately when the
 	backend is not listening on the given port.
