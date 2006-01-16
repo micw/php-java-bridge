@@ -32,7 +32,6 @@
 /* path and dir separators */
 #include "php_wrapper.h"
 #include "zend.h"
-#include "ext/session/php_session.h"
 
 #include "php_java.h"
 #include "java_bridge.h"
