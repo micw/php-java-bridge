@@ -17,6 +17,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Vector;
+import java.util.StringTokenizer;
 
 /**
  * Miscellaneous functions.
@@ -139,7 +140,12 @@ public class Util {
 	return s;
     }
     /** Only for internal use */
-    public static String VERSION = null;
+    public static String VERSION;
+    /** Only for internal use */
+    public static String osArch;
+    /** Only for internal use */
+    public static String osName;
+
     private static void initGlobals() {
         Properties p = new Properties();
 	try {
@@ -167,6 +173,19 @@ public class Util {
 	    BACKLOG = Integer.parseInt(s);
 	} catch (NumberFormatException e) {/*ignore*/}
 	DEFAULT_LOG_FILE = getProperty(p, "DEFAULT_LOG_FILE", Util.EXTENSION_NAME+".log");
+	String separator = "/-+.,;: ";
+	try {
+	    String val = System.getProperty("os.arch").toLowerCase();
+	    StringTokenizer t = new StringTokenizer(val, separator);
+	    osArch = t.nextToken();
+	} catch (Throwable t) {/*ignore*/}
+	if(osArch==null) osArch="unknown";
+	try {
+	    String val = System.getProperty("os.name").toLowerCase();
+	    StringTokenizer t = new StringTokenizer(val, separator);
+	    osName = t.nextToken();
+	} catch (Throwable t) {/*ignore*/}
+	if(osName==null) osName="unknown";
     }
  
     /**
@@ -550,7 +569,7 @@ public class Util {
 	} catch (UnknownHostException e) {/*ignore*/}
 	return addr;
     }
-
+	
     /**
      * Checks if the cgi binary buf-&lt;os.arch&gt;-&lt;os.name&gt;.sh or buf-&lt;os.arch&gt;-&lt;os.name&gt;.exe or buf-&lt;os.arch&gt;-&lt;os.name&gt; exists.
      * @param buf The base name, e.g.: /opt/tomcat/webapps/JavaBridge/WEB-INF/cgi/php-cgi
@@ -560,9 +579,9 @@ public class Util {
     	File location;
  
     	buf.append("-");
-	buf.append(System.getProperty("os.arch").toLowerCase());
+	buf.append(osArch);
 	buf.append("-");
-	buf.append(System.getProperty("os.name").toLowerCase());
+	buf.append(osName);
 
 	location = new File(buf.toString() + ".sh");
 	if(Util.logLevel>3) Util.logDebug("trying: " + location);

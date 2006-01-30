@@ -8,23 +8,23 @@ if (!extension_loaded('java')) {
   }
 
   echo "Please permanently activate the extension. Loading java extension now...\n";
-  if (!dl('java.so')&&!dl('php_java.dll')) {
+  if (!@dl('java.so')&&!@dl('php_java.dll')) {
     echo "Error: The java extension is not installed.\n";
   }
  }
-if(java_get_server_name() != null) {
+if(@java_get_server_name() != null) {
 
   try {
     phpinfo();
     print "\n\n";
     
-    $v = new java("java.lang.System");
+    $v = new JavaClass("java.lang.System");
     $arr=java_values($v->getProperties());
     foreach ($arr as $key => $value) {
       print $key . " -> " .  $value . "<br>\n";
     }
   } catch (JavaException $ex) {
-    $trace = new java("java.io.ByteArrayOutputStream");
+    $trace = new Java("java.io.ByteArrayOutputStream");
     $ex->printStackTrace(new java("java.io.PrintStream", $trace));
     echo "Exception $ex occured:<br>\n" . $trace . "\n";
     
@@ -48,12 +48,10 @@ if(java_get_server_name() != null) {
   echo "\n\t".ini_get("extension_dir")."\n\n";
   echo "contains \"$ext_name\" and \"JavaBridge.jar\".\n";
   echo "\n";
-  echo "Please check that $ext_name is indeed the PHP/Java Bridge and not its\n";
-  echo "predecessor, the ext/java extension (check the file size).\n";
-  echo "Also check if the following values are correct:\n\n";
+  echo "Check if the following values are correct:\n\n";
   echo "\tjava.java_home = ".ini_get("java.java_home")."\n";
-  echo "\tjava.java = ".ini_get("java.java")."\n";
-  echo "If you want to start the backend automatically, disable:\n";
+  echo "\tjava.java = ".ini_get("java.java")."\n\n";
+  echo "If you want to start the backend automatically, disable:\n\n";
   echo "\tjava.socketname = ".ini_get("java.socketname")."\n";
   echo "\tjava.hosts = ".ini_get("java.hosts")."\n";
   echo "\tjava.servlet = ".ini_get("java.servlet")."\n";

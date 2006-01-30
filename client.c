@@ -70,7 +70,7 @@ static  void  setResultFromException  (pval *presult, long value) {
   EXT_GLOBAL(store_jobject)(presult, value TSRMLS_CC);
 }
 
-static void setResultFromObject (pval *presult, long value, char type, long class_id) {
+static void setResultFromObject (pval *presult, long value, char type) {
   /* wrap the vm object in a pval object */
   pval *handle;
   TSRMLS_FETCH();
@@ -99,7 +99,7 @@ static void setResultFromObject (pval *presult, long value, char type, long clas
   EXT_GLOBAL(store_jobject)(presult, value TSRMLS_CC);
 }
 #else
-static void setResultFromObject (pval *presult, long value, char type, long class_id) {
+static void setResultFromObject (pval *presult, long value, char type) {
   /* wrap the vm object in a pval object */
   pval *handle;
   TSRMLS_FETCH();
@@ -342,13 +342,12 @@ static void begin(parser_tag_t tag[3], parser_cb_t *cb){
 	ZVAL_NULL(ctx->id);
 	break;
   case 'O':
-	GET_RESULT(3);
+	GET_RESULT(2);
 	assert((((*tag[1].strings[0].string)[tag[1].strings[0].off])=='v')&&
 		   (((*tag[1].strings[1].string)[tag[1].strings[1].off])=='p')&&
-		   (((*tag[1].strings[2].string)[tag[1].strings[2].off])=='n')&&
-		   (((*tag[1].strings[3].string)[tag[1].strings[3].off])=='i'));
+		   (((*tag[1].strings[2].string)[tag[1].strings[2].off])=='i'));
 
-	setResultFromObject(ctx->id, strtol((const char*)PARSER_GET_STRING(st, 0), 0, 10), *PARSER_GET_STRING(st, 1), 0l);
+	setResultFromObject(ctx->id, strtol((const char*)PARSER_GET_STRING(st, 0), 0, 10), *PARSER_GET_STRING(st, 1));
 	break;
   case 'E':
 	{
@@ -632,7 +631,7 @@ static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {
   proxyenv *jenv =JG(jenv);
   if(jenv) return jenv;
 
-  if(!EXT_GLOBAL(cfg)->is_cgi_servlet) 
+  if(!EXT_GLOBAL(cfg)->is_cgi_servlet || EXT_GLOBAL(cfg)->is_fcgi_servlet) 
 	override_ini_for_redirect(TSRMLS_C);
 
   if(JG(is_closed)) {

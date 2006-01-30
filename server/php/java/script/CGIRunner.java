@@ -16,10 +16,15 @@ import php.java.bridge.SessionFactory;
 import php.java.bridge.Util;
 
 /**
- * This class can be used to run a PHP CGI binary. Useful during development when there's no 
- * Apache/IIS or Servlet engine available to run PHP scripts. 
+ * This class can be used to run a PHP CGI binary. Used only when
+ * running local php scripts.  To allocate and invoke remote scripts
+ * please use a HttpProxy and a URLReader instead.
+ *  
  * @author jostb
  *
+ * @see php.java.bridge.http.HttpServer
+ * @see php.java.script.URLReader
+ * @see php.java.script.HttpProxy
  */
 
 public abstract class CGIRunner extends Thread {
@@ -109,7 +114,9 @@ public abstract class CGIRunner extends Thread {
     }
 
     /**
-     * The PHP script must call this function with the current continuation as an argument.<p>
+     * The PHP script must call this function with the current
+     * continuation as an argument.<p>
+     * 
      * Example:<p>
      * <code>
      * java_context()-&gt;call(java_closure());<br>

@@ -2061,10 +2061,10 @@ PHP_MINFO_FUNCTION(EXT)
   }
 #endif
   if(!server || is_local) {
-	static const char default_wrapper[] = "no value (use default wrapper)";
 	php_info_print_table_row(2, EXT_NAME()/**/"."/**/EXT_NAME()/**/"_home", EXT_GLOBAL(cfg)->vm_home);
 	php_info_print_table_row(2, EXT_NAME()/**/"."/**/EXT_NAME(), EXT_GLOBAL(cfg)->vm);
-	php_info_print_table_row(2, EXT_NAME()/**/".wrapper", (EXT_GLOBAL(option_set_by_user) (U_WRAPPER, EXT_GLOBAL(ini_user))) ? EXT_GLOBAL(cfg)->wrapper : (char*)default_wrapper);
+	if((EXT_GLOBAL(option_set_by_user) (U_WRAPPER, EXT_GLOBAL(ini_user))))
+	  php_info_print_table_row(2, EXT_NAME()/**/".wrapper", EXT_GLOBAL(cfg)->wrapper);
 	if(strlen(EXT_GLOBAL(cfg)->logFile)==0) 
 	  php_info_print_table_row(2, EXT_NAME()/**/".log_file", "<stdout>");
 	else
@@ -2077,7 +2077,11 @@ PHP_MINFO_FUNCTION(EXT)
   if(EXT_GLOBAL(option_set_by_user) (U_SERVLET, EXT_GLOBAL(ini_user)))  
 	php_info_print_table_row(2, EXT_NAME()/**/".servlet", JG(servlet)?JG(servlet):off);
 #endif
+#ifndef ZEND_ENGINE_2
+  php_info_print_table_row(2, EXT_NAME()/**/".ext_java_compatibility", on);
+#else
   php_info_print_table_row(2, EXT_NAME()/**/".ext_java_compatibility", EXT_GLOBAL(cfg)->extJavaCompatibility?on:off);
+#endif
   php_info_print_table_row(2, EXT_NAME()/**/" command", s);
   php_info_print_table_row(2, EXT_NAME()/**/" status", server?"running":"not running");
   php_info_print_table_row(2, EXT_NAME()/**/" server", server?server:"localhost");
@@ -2089,7 +2093,7 @@ PHP_MINFO_FUNCTION(EXT)
 
 /**
  * Called when the module terminates. Stops the backend, if it is running.
- * When running in Apache/IIS, or as a FastCGI binary, this procedure is 
+ * When running in Apache/IIS or as a FastCGI binary, this procedure is 
  * called only once. When running as a CGI binary this is called whenever
  * the CGI binary terminates.
  */

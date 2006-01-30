@@ -193,6 +193,10 @@ void EXT_GLOBAL(redirect)(proxyenv*env, char*redirect_port, char*channel_in, cha
   } else {						/* pipe */
 	(*env)->peerr = open(channel_in, O_RDONLY);
 	(*env)->peer = open(channel_out, O_WRONLY);
+	if((-1==(*env)->peerr) || (-1==(*env)->peer)) {
+	  php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Fatal: could not open comm. pipe.",92);
+	  exit(9);
+	}
 	(*env)->f_recv0 = (*env)->f_recv = recv_pipe;
 	(*env)->f_send0 = (*env)->f_send = send_pipe;
   }
@@ -511,10 +515,7 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    (*env)->writeResultEnd=ResultEnd;
    (*env)->writeCreateObjectBegin=CreateObjectBegin;
    (*env)->writeCreateObjectEnd=CreateObjectEnd;
-   (*env)->writeGetMethodBegin=GetMethodBegin;
-   (*env)->writeGetMethodEnd=GetMethodEnd;
-   (*env)->writeCallMethodBegin=CallMethodBegin;
-   (*env)->writeCallMethodEnd=CallMethodEnd;
+
    (*env)->writeString=String;
    (*env)->writeBoolean=Boolean;
    (*env)->writeLong=Long;

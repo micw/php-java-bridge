@@ -12,8 +12,19 @@ import php.java.bridge.Util;
 
 
 /**
- * This class can be used to create a simple HTTP server. It can be used during development, when no HTTP server or Servlet engine is available.
+ * This class can be used to create a simple HTTP server. It is used
+ * when running local scripts like <code>e.eval(new
+ * StringReader('&lt;?php phpinfo(); ?&gt;'));</code>. For remote
+ * scripts use a HttpProxy and URLReader instead.
+ * 
  * @author jostb
+ * 
+ * @see php.java.bridge.http.HttpRequest
+ * @see php.java.bridge.http.HttpResponse
+ * 
+ * @see php.java.script.CGIRunner
+ * @see php.java.script.URLReader
+ * @see php.java.script.HttpProxy
  *
  */
 public abstract class HttpServer implements Runnable {

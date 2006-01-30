@@ -4,6 +4,13 @@
 #include "config.h"
 #endif
 
+/* disable unix domain sockets if jni is not available */
+#ifndef HAVE_JNI
+# ifndef CFG_JAVA_SOCKET_INET
+#  define CFG_JAVA_SOCKET_INET
+# endif
+#endif
+
 /* longjump */
 #include <setjmp.h>
 

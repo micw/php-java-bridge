@@ -54,7 +54,7 @@ public class PhpJavaServlet extends FastCGIServlet {
      * The CGI default port
      */
     public static final int CGI_CHANNEL = 9567;
-    private static final Object contextServer = new ContextServer(new ThreadPool("JavaBridgeContextRunner", Integer.parseInt(Util.THREAD_POOL_MAX_SIZE)));
+    private ContextServer contextServer;
 
     protected static class Logger extends Util.Logger {
 	private ServletContext ctx;
@@ -71,7 +71,16 @@ public class PhpJavaServlet extends FastCGIServlet {
 	    if(Util.logLevel>5) t.printStackTrace();
 	}
     }
+    
+    /*
+     * A FCGI server is only started if the admin allows starting FCGI, 
+     * the security permission allows execute and bind and if the user has set use_fast_cgi to autostart 
+     */
+    
+    /* The fast CGI Server process on this computer. Switched off per default. */
     private static Object proc = null;
+    
+    /* Start a fast CGI Server process on this computer. Switched off per default. */
     protected static synchronized final Process startFcgi(Map env, String php) throws IOException {
         if(proc!=null) return null;
 	    String port;
@@ -96,6 +105,10 @@ public class PhpJavaServlet extends FastCGIServlet {
 		}
             return (Process)proc;
     }
+    
+    /* 
+     * Shut down the FastCGI server listening on 9667. 
+     */
     static {
         try {
         Runtime.getRuntime().addShutdownHook(
@@ -105,14 +118,6 @@ public class PhpJavaServlet extends FastCGIServlet {
 		         Object noarg[] = new Object[]{};
 		         
 		         Method m;
-			 if(contextServer!=null) 
-			     try {
-			         m = contextServer.getClass().getMethod("destroy", noparm);
-				 try {m.setAccessible(true);} catch (Throwable tt) {/*ignore*/}
-			         m.invoke(contextServer, noarg);
-			    } catch(Throwable t) {
-			        t.printStackTrace();
-			        }
 			 if(proc!=null) 
 			     try {
 			     m = proc.getClass().getMethod("destroy", noparm);
@@ -154,6 +159,8 @@ public class PhpJavaServlet extends FastCGIServlet {
 	    if(value.equals("on") || value.equals("true")) allowHttpTunnel=true;
     	} catch (Throwable t) {Util.printStackTrace(t);}      
 
+    	contextServer = new ContextServer(new ThreadPool("JavaBridgeContextRunner", Integer.parseInt(Util.THREAD_POOL_MAX_SIZE)));
+    	 
     	super.init(config);
        
 	Util.setLogger(new Logger(config.getServletContext()));
@@ -167,6 +174,7 @@ public class PhpJavaServlet extends FastCGIServlet {
     }
 
     public void destroy() {
+      	contextServer.destroy();
     	super.destroy();
     }
     
@@ -490,6 +498,12 @@ public class PhpJavaServlet extends FastCGIServlet {
 	}
     }
 
+    private String getWrapper() {
+	    String wrapper = getServletConfig().getServletContext().getRealPath(cgiPathPrefix) + File.separator+"php-cgi-"+
+	    	Util.osArch+"-"+
+	    	Util.osName;
+	    return wrapper;
+    }
     /**
      * Used when running as a cgi binary only.
      * 
@@ -499,16 +513,23 @@ public class PhpJavaServlet extends FastCGIServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
 	throws ServletException, IOException {
     	try {
-	    super.doGet(req, res);
+ 	    super.doGet(req, res);
     	} catch (IOException e) {
     	    try {res.reset();} catch (Exception ex) {/*ignore*/}
-	    ServletException ex = new ServletException("An IO exception occured. Probably php was not installed as \"/usr/bin/php-cgi\" or \"c:/php5/php-cgi.exe\".\nPlease copy your PHP binary (\""+php+"\", see JavaBridge/WEB-INF/web.xml) into the JavaBridge/WEB-INF/cgi directory.\nSee webapps/JavaBridge/WEB-INF/cgi/README for details.", e);
+    	    String wrapper = getWrapper() + "[.sh]|[.exe]";
+ 	    ServletException ex = new ServletException("An IO exception occured. " +
+	    		"Probably php was not installed as \"/usr/bin/php-cgi\" or \"c:/php5/php-cgi.exe\"\n or \""+wrapper+"\".\n" +
+	    		"Please see \"php_exec\" in your WEB-INF/web.xml and WEB-INF/cgi/README for details.", e);
 	    php=null;
 	    checkCgiBinary(getServletConfig());
 	    throw ex;
     	} catch (SecurityException sec) {
     	    try {res.reset();} catch (Exception ex) {/*ignore*/}
-	    ServletException ex = new ServletException("A security exception occured, could not run PHP. Please start Apache or IIS or start a standalone PHP server with the command: X_JAVABRIDGE_OVERRIDE_HOSTS=\"/\" PHP_FCGI_CHILDREN=\"20\" PHP_FCGI_MAX_REQUESTS=\"500\" /usr/bin/php-cgi -dlog_errors=On -ddisplay_errors=Off -b 127.0.0.1:9667", sec);
+	    ServletException ex = new ServletException("A security exception occured, could not run PHP.\n" +
+	    		"Please start Apache or IIS or start a standalone PHP server with the commands:\n\n" +
+	    		"php="+getWrapper()+"; chmod +x ${php};\n" + 
+	    		"X_JAVABRIDGE_OVERRIDE_HOSTS=\"/\" PHP_FCGI_CHILDREN=\"20\" PHP_FCGI_MAX_REQUESTS=\"500\" ${php} -c ${php}.ini -b 127.0.0.1:9667\n\n"
+	    		, sec);
 	    php=null;
 	    checkCgiBinary(getServletConfig());
 	    throw ex;    	    

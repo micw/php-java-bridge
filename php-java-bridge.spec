@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 3.0.6
+%define version 3.0.7pre
 %define release 1
 %define PHP_MAJOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | sed 's/\\\..*$//')
 # NOTE: If /etc/sysconfig/java contains a line which points to JAVA_HOME, e.g. 
@@ -9,6 +9,9 @@
 # GNU java or Sun java is installed and the code searches for RPMs providing
 # jre and java-devel instead.
 %define have_sysconfig_java %(test -s /etc/sysconfig/java && echo 1 || echo 0)
+%define tomcat_name        tomcat5
+%define tomcat_webapps		%{_localstatedir}/lib/%{tomcat_name}/webapps
+%define shared_java        /usr/share/java
 
 Name: php-java-bridge
 Summary: PHP Hypertext Preprocessor to Java Bridge
@@ -51,12 +54,34 @@ Requires: jre >= 1.4.0
 %endif
 Provides: php-java-bridge
 
-
-
-BuildRoot: /var/tmp/php-java-bridge-%{version}
+BuildRoot: %{_tmppath}/%{name}-root
 
 %description 
 Java module/extension for the PHP script language.
+
+%package standalone
+Group: System Environment/Daemons
+Summary: Standalone backend for the PHP/Java Bridge
+Requires: php-java-bridge = %{version}
+%description standalone
+Standalone backend for the PHP/Java Bridge
+
+%package tomcat
+Group: System Environment/Daemons
+Summary: Tomcat/J2EE backend for the PHP/Java Bridge
+Requires: php-java-bridge = %{version}
+Requires: tomcat5
+Conflicts: php-java-bridge-standalone
+%description tomcat
+Tomcat/J2EE backend for the PHP/Java Bridge
+
+%package devel
+Group: Development/Documentation
+Summary: PHP/Java Bridge development files and documentation
+Requires: php-java-bridge = %{version}
+%description devel
+PHP/Java Bridge development files and documentation
+
 
 %prep
 echo Building for PHP %{PHP_MAJOR_VERSION}. have_sysconfig_java: %{have_sysconfig_java}.
@@ -85,7 +110,7 @@ echo "using java_dir: $java_dir"
 if test X$java_dir = X; then echo "ERROR: java not installed" >2; exit 1; fi
 
 phpize
-./configure --prefix=/usr --with-java=$java_dir --disable-servlet --disable-script --disable-faces
+./configure --prefix=/usr --with-java=$java_dir
 make
 
 %install
@@ -93,8 +118,22 @@ rm -rf $RPM_BUILD_ROOT
 
 %makeinstall | tee install.log
 echo >filelist
+echo >filelist-standalone
+echo >filelist-tomcat
+echo >filelist-devel
 
 mod_dir=`cat install.log | sed -n '/Installing shared extensions:/s///p' | awk '{print $1}'`
+
+files="php-script.jar script-api.jar"
+mkdir -p $RPM_BUILD_ROOT/%{shared_java}
+for i in $files; 
+  do cp $mod_dir/$i $RPM_BUILD_ROOT/%{shared_java}/$i; 
+  rm -f $mod_dir/$i; 
+  echo %{shared_java}/$i >>filelist-devel
+done
+cp $mod_dir/JavaBridge.jar $RPM_BUILD_ROOT/%{shared_java}/JavaBridge.jar; 
+echo %{shared_java}/JavaBridge.jar >>filelist-devel
+
 files='JavaBridge.jar java.so libnatcJavaBridge.so RunJavaBridge'
 mkdir -p $RPM_BUILD_ROOT/$mod_dir
 for i in $files; 
@@ -103,26 +142,53 @@ for i in $files;
   echo $mod_dir/$i >>filelist
 done
 
+files=JavaBridge.war
+mkdir -p $RPM_BUILD_ROOT/%{tomcat_webapps}
+for i in $files; 
+  do cp $mod_dir/$i $RPM_BUILD_ROOT/%{tomcat_webapps}
+  rm -f $mod_dir/$i; 
+  echo %{tomcat_webapps}/$i >>filelist-tomcat
+done
+
 mkdir -p $RPM_BUILD_ROOT/etc/php.d
-cat java.ini | sed 's|^;java\.java_home[\t =].*$|java.java_home = @JAVA_HOME@|; s|^;java\.java[\t =].*$|java.java = @JAVA_JAVA@|' >$RPM_BUILD_ROOT/etc/php.d/java.ini
+cat java-servlet.ini  >$RPM_BUILD_ROOT/etc/php.d/java-servlet.ini
+cat java.ini  >$RPM_BUILD_ROOT/etc/php.d/java.ini
 echo /etc/php.d/java.ini >>filelist
+
+cat java-standalone.ini | sed 's|^;java\.java_home[\t =].*$|java.java_home = @JAVA_HOME@|; s|^;java\.java[\t =].*$|java.java = @JAVA_JAVA@|' >$RPM_BUILD_ROOT/etc/php.d/java-standalone.ini
+echo /etc/php.d/java-standalone.ini >>filelist-standalone
 
 mkdir -p $RPM_BUILD_ROOT/usr/sbin
 cp php-java-bridge $RPM_BUILD_ROOT/usr/sbin
 chmod +x $RPM_BUILD_ROOT/usr/sbin/php-java-bridge
-echo /usr/sbin/php-java-bridge >>filelist
+echo /usr/sbin/php-java-bridge >>filelist-standalone
 
 mkdir -p $RPM_BUILD_ROOT/etc/init.d
 cp php-java-bridge.service $RPM_BUILD_ROOT/etc/init.d/php-java-bridge
 chmod +x $RPM_BUILD_ROOT/etc/init.d/php-java-bridge
-echo /etc/init.d/php-java-bridge >>filelist
+echo /etc/init.d/php-java-bridge >>filelist-standalone
 
 mkdir $RPM_BUILD_ROOT/$mod_dir/lib
 echo $mod_dir/lib >>filelist
 
 %clean
 rm -rf $RPM_BUILD_ROOT
+
 %post
+if test -f /etc/selinux/config; then
+	echo "You are running SELinx. Please install the standalone or servlet backend."
+    echo
+else
+    echo "PHP/Java Bridge installed. Start with:"
+    echo "service httpd restart"
+    echo
+fi
+
+%post tomcat
+echo "PHP/Java Bridge tomcat backend installed. Start with:"
+echo "service tomcat5 restart"
+
+%post standalone
 # calculate java_dir again
 for i in jre j2re jdk j2sdk java; do 
 package=`rpm -q --whatprovides $i --queryformat "%{PKGID} %{VERSION}\n"` && break
@@ -137,7 +203,7 @@ if test X`basename $java_dir` = Xjre; then
   java_dir=`dirname $java_dir`;
 fi
 export java_dir java
-ed -s /etc/php.d/java.ini <<EOF2
+ed -s /etc/php.d/java-standalone.ini <<EOF2
 /@JAVA_HOME@/s||${java_dir-UNKNOWN}|
 /@JAVA_JAVA@/s||${java-UNKNOWN}|
 w
@@ -145,7 +211,7 @@ q
 EOF2
 
 chkconfig php-java-bridge on
-echo "PHP/Java Bridge installed. Start with:"
+echo "PHP/Java Bridge standalone backend installed. Start with:"
 echo "service php-java-bridge restart"
 echo
 if test -f /etc/selinux/config; then
@@ -160,9 +226,29 @@ if test -f /etc/selinux/config; then
 	echo "Please see INSTALL and README documents for more information."
 fi
 
-%preun
-chkconfig php-java-bridge off
+%preun standalone
+if [ $1 = 0 ]; then
+	/sbin/service php-java-bridge stop > /dev/null 2>&1
+	/sbin/chkconfig --del php-java-bridge
+fi
+
+%preun tomcat
+rm -rf %{tomcat_webapps}/JavaBridge
 
 %files -f filelist
 %defattr(-,root,root)
-%doc README README.GNU_JAVA README.MONO+NET PROTOCOL.TXT INSTALL.MONO+NET INSTALL INSTALL.SERVLET LICENSE CREDITS NEWS ChangeLog test.php test.php4 php-java-bridge.te php-java-bridge.fc update_policy.sh server/documentation documentation examples tests.php5 php_java_lib
+%doc README README.GNU_JAVA README.MONO+NET LICENSE CREDITS NEWS ChangeLog test.php test.php4 php-java-bridge.te php-java-bridge.fc update_policy.sh examples tests.php5 php_java_lib
+
+%files standalone -f filelist-standalone
+%defattr(-,root,root)
+%doc INSTALL LICENSE
+
+%files tomcat -f filelist-tomcat
+%defattr(-,tomcat,tomcat)
+%attr(-,root,root) /etc/php.d/java-servlet.ini
+%doc %attr(-,root,root) INSTALL.SERVLET LICENSE
+
+%files devel -f filelist-devel
+%defattr(-,root,root)
+%doc PROTOCOL.TXT LICENSE server/documentation documentation server/test
+

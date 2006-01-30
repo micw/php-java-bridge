@@ -210,11 +210,6 @@ static short use_wrapper(char*wrapper) {
  * Get a string of the server arguments. Useful for display only.
  */
 static char*get_server_string(short for_display TSRMLS_DC) {
-#ifndef __MINGW32__
-  static const char quote[] = "'";
-#else
-  static const char quote[] = "\"";
-#endif
   short must_use_wrapper = use_wrapper(EXT_GLOBAL(cfg)->wrapper);
   int i;
   char*s;
@@ -254,9 +249,7 @@ static char*get_server_string(short for_display TSRMLS_DC) {
   }
   for(i=0; i< (sizeof args)/(sizeof*args); i++) {
 	if(!args[i]) break;
-	if(!strlen(args[i])) strcat(s,quote);
 	strcat(s, args[i]);
-	if(!strlen(args[i])) strcat(s,quote);
 	strcat(s, " ");
 	free(args[i]);
   }

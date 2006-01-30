@@ -58,7 +58,7 @@ public abstract class AbstractScriptEngine implements ScriptEngine {
      * @throws ScriptException if an error occurs 
      */
     public Object eval(Reader reader) throws ScriptException{
-        return eval(reader,getScriptContext(null));
+        return eval(reader,ctx);
     }
     
     /**
@@ -85,7 +85,7 @@ public abstract class AbstractScriptEngine implements ScriptEngine {
      * @throws ScriptException if an error occurs 
      */
     public Object eval(String script) throws ScriptException{
-        return eval(script,getScriptContext(null));
+        return eval(script, ctx);
     }
        
     /**

@@ -1,8 +1,9 @@
 # -*- mode: Makefile; -*-
 
-lib_LTLIBRARIES = libnatcJavaBridge.la
+lib_LTLIBRARIES = $(JNI_LIBS)
+EXTRA_LTLIBRARIES = libnatcJavaBridge.la
 libnatcJavaBridge_la_SOURCES = natcJavaBridge.c
-libnatcJavaBridge_la_LDFLAGS = -shared -avoid-version -prefer-pic
+libnatcJavaBridge_la_LDFLAGS = -rpath $(libdir) -shared -avoid-version -prefer-pic
 libnatcJavaBridge_la_LIBADD =
 
 if COND_GCJ
@@ -64,7 +65,7 @@ php-faces.jar: JavaBridge.jar $(FACES) $(SERVLET)
 JavaBridge.war: JavaBridge.jar $(SERVLET) $(JAVA_BRIDGE_SERVLET_JAR) $(SCRIPT) $(JAVA_BRIDGE_SCRIPT_JAR) $(FACES) $(JAVA_BRIDGE_FACES_JAR)
 	$(PHP_JAVA)/bin/javac -classpath $(SERVLET):$(SCRIPT) javax/script/http/*.java php/java/bridge/http/*.java php/java/bridge/*.java php/java/servlet/*.java
 
-	-mkdir WEB-INF/lib WEB-INF/classes WEB-INF/cgi
+	-mkdir WEB-INF/lib WEB-INF/classes
 	cp JavaBridge.jar $(SCRIPT) $(JAVA_BRIDGE_SERVLET_JAR) $(JAVA_BRIDGE_SCRIPT_JAR) $(JAVA_BRIDGE_FACES_JAR) ../unsupported/*.jar WEB-INF/lib
 	rm WEB-INF/lib/servlet-api.jar
 	cp ../examples/php+jsp/*.jar WEB-INF/lib

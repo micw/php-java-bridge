@@ -406,7 +406,6 @@ public class Response {
 	buf.append(I); buf.append(String.valueOf(result));
 	buf.append(e);
     }
-    static final String emptyString="";
     void writeNull() {
 	buf.append(N);
 	buf.append(String.valueOf(result));
@@ -422,7 +421,6 @@ public class Response {
         Class dynamicType = o.getClass();
 	buf.append(O); buf.append(String.valueOf(this.bridge.globalRef.append(o)));
 	buf.append(isArray(dynamicType)?pa:po);
-	buf.append(n); buf.append("0");
 	buf.append(I); buf.append(String.valueOf(result));
 	buf.append(e);
     }
@@ -430,7 +428,6 @@ public class Response {
         if(o==null) { writeNull(); return; }
     	buf.append(O); buf.append(String.valueOf(this.bridge.globalRef.append(o)));
     	buf.append(po);
-    	buf.append(n); buf.append("0");
     	buf.append(I); buf.append(String.valueOf(result));
     	buf.append(e);
     }

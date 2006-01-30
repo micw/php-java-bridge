@@ -9,8 +9,10 @@ import javax.servlet.http.HttpServletResponse;
 import php.java.bridge.ISession;
 
 /**
- * Manage session contexts for servlets.<p>
- * In addition to the standard ContextFactory this manager keeps a reference to the HttpServletRequest.
+ * Create session contexts for servlets.<p> In addition to the
+ * standard ContextFactory this manager keeps a reference to the
+ * HttpServletRequest.
+ *
  * @see php.java.bridge.http.ContextFactory
  * @see php.java.bridge.http.ContextServer
  */
@@ -28,8 +30,12 @@ public class ContextFactory extends php.java.bridge.http.ContextFactory {
     
     /**
      * Set the HttpServletRequest for session sharing. 
+     *
      * @param req The HttpServletRequest
-     * @throws IllegalStateException When the ContextFactory was created with a HttpServletRequest or when this method was called twice.
+     *
+     * @throws IllegalStateException When the ContextFactory was
+     * created with a HttpServletRequest or when this method was
+     * called twice.
      */
     public void setSession(HttpServletRequest req) {
     	if(this.proxy!=null) throw new IllegalStateException("This context already has a session proxy.");

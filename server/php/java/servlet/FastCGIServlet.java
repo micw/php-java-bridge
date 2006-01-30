@@ -20,11 +20,15 @@ import php.java.bridge.NotImplementedException;
 import php.java.bridge.Util;
 
 /**
- * A CGI Servlet which connects to a FastCGI server. If there's nothing listening on port FCGI_CHANNEL and fast cgi binary installed in 
- * Util.DEFAULT_CGI_LOCATIONS, the php binary will be started. 
- * It will be stopped when the VM shuts down.<br>
- * NOTE: If the user has copied a cgi binary into his WEB-INF/cgi directory, FastCGI is not available anymore;
- * FastCGI requires that the cgi binary is installed as a well known system file in one of the DEFAULT_CGI_LOCATIONS.
+ * A CGI Servlet which connects to a FastCGI server. If allowed by the
+ * administrator and if a fast cgi binary is installed in
+ * DEFAULT_CGI_LOCATIONS the bridge can automatically start one FCGI
+ * server on the computer. Default is off.  The admin may start a FCGI
+ * server for all users with the command:<br><code> cd /tmp<br>
+ * X_JAVABRIDGE_OVERRIDE_HOSTS="/" PHP_FCGI_CHILDREN="20"
+ * PHP_FCGI_MAX_REQUESTS="500" /usr/bin/php-cgi -b 127.0.0.1:9667<br>
+ * </code>
+ * 
  * @see php.java.bridge.Util#DEFAULT_CGI_LOCATIONS
  * @author jostb
  */

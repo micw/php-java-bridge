@@ -3,6 +3,40 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+
+Version 3.0.7:
+
+* The windows standalone download is not available anymore. The
+php_java.dll is now called "java-x86-windows.dll" and can be found in
+the JavaBridge.war download.
+
+* The Linux standalone backend has been removed from the
+php-java-bridge RPM download. The linux java.so is now called
+"java-x86-linux.dll" and can be found in the JavaBridge.war download.
+
+* The Linux RPM has been split into 4 separate RPM files:
+  php-java-bridge*.rpm: contains the basic files; java extension for
+  PHP/Apache HTTP server and a backend which automatically starts and
+  stops when the HTTP server starts/stops.
+
+  php-java-bridge-standalone*.rpm: contains the standalone service
+  script. Conflicts with the tomcat backend. The tomcat backend is more
+  than 3 times faster but less secure; it uses named pipes instead of
+  sockets.
+
+  php-java-bridge-tomcat*.rpm: contains the tomcat backend. Conflicts
+  with the standalone backend.
+
+  php-java-bridge-devel*.rpm: contains the development documentation
+  and the development files needed to create java applications with
+  embedded PHP scripts: JavaBridge.jar, script-api.jar and php-script.jar.
+
+* The JavaBridge.war now contains 5.1.2 binaries for Solaris (x86),
+Linux (x86), Windows (x86).
+
+* php4 is supported again (switch php5 or php6, if you can).
+
+
 Version 3.0.3:
 
 * Communication via named pipes: When the backend is running inside a

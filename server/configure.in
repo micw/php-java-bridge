@@ -37,9 +37,15 @@ JAVA_CHECK_BROKEN_STDIO_BUFFERING
 JAVA_CHECK_ABSTRACT_NAMESPACE
 JAVA_CHECK_STRUCT_UCRED
 
+JNI_LIBS="libnatcJavaBridge.la"
 AM_CPPFLAGS="${AM_CPPFLAGS} -DEXTENSION_DIR=\"\\\"\$(EXTENSION_DIR)\\\"\""
 if test "$PHP_JAVA" != "yes"; then
-AM_CPPFLAGS="${AM_CPPFLAGS} `for i in \`find $PHP_JAVA/include -follow -type d -print\`; do echo -n "-I$i "; done`"
+JAVA_INCLUDES=`for i in \`find $PHP_JAVA/include -follow -type d -print\`; do echo -n "-I$i "; done`
+AM_CPPFLAGS="${AM_CPPFLAGS} $JAVA_INCLUDES"
+JAVA_CHECK_JNI
+if test "$have_jni" = "no"; then 
+   JNI_LIBS=""
+fi
 fi
 
 TCP_SOCKETNAME="9167"
@@ -124,6 +130,9 @@ AC_SUBST(MONO_BRIDGE_EXE)
 AC_SUBST(SERVLET)
 AC_SUBST(JAVA_BRIDGE_WAR)
 AC_SUBST(JAVA_BRIDGE_SERVLET_JAR)
+
+# jni
+AC_SUBST(JNI_LIBS)
 
 # optional script
 AC_SUBST(SCRIPT)

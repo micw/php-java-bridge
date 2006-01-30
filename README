@@ -23,10 +23,7 @@ Build and execution instructions:
           make null --version  # GNU make 3.79 or above
 
           phpize && 
-          ./configure --with-java=/opt/IBMJava2-141 \
-                      --disable-servlet \
-                      --disable-script \ 
-                      --disable-faces &&
+          ./configure --with-java=/opt/IBMJava2-141 &&
           make &&
           su -c "make install"
 
@@ -41,140 +38,137 @@ Build and execution instructions:
    Permanently activate the module
    -------------------------------
 
-  The bridge consists of two parts, the "frontent", usually Apache/PHP
-  and our "java.so", and a "backend". The following describes how to
-  start the backend (if necessary) and how to configure the frontend to
-  use it.
+  The bridge consists of two parts, the "frontent", usually Apache,
+  PHP and our php java extension, and a "backend". The following
+  describes how to start the backend (if necessary) and how to configure
+  the frontend so that it connects to the backend.
 
-  To permanently activate the frontend for all users please add the
-  following lines to the php.ini or add a file java.ini to the
-  directory that contains the php module descriptions (usually
-  /etc/php.d/) with the following content:
+  To permanently activate the frontend for all users, please add the
+  following lines to the php.ini. Or add a file java.ini to the
+  directory that contains the php module descriptions, usually
+  /etc/php.d/, with the following content:
 
-          extension = java.so
-          [java]
-          java.log_level="3"
-          java.log_file="/var/log/php-java-bridge.log"
-          java.socketname="/var/run/.php-java-bridge_socket"
+  extension = java.so ;; php_java.dll on windows
 
 
-  OPTION 1: "Local backend using a service script."
-  You can use local sockets to connect to a local backend. Copy the
-  executable php-java-bridge to /usr/sbin, make it executable with the
-  command "chmod +x /usr/sbin/php-java-bridge".
+  To direct the extension to a specific backend, please add the
+  following lines to the php.ini. Or add a file java-<backend>.ini,
+  e.g. "java-tomcat.ini" or "java-standalone.ini" to the directory that
+  contains the php module descriptions, usually /etc/php.d/, with the
+  following content. Options:
 
-  This option can be used if "Security Enhanced Linux" is switched on.
-  It cannot be used in a multi-user environment where each user wants
-  to run his/her own instance of the backend.
+  1) java.socketname, java.hosts and java.servlet not set: local
+  backend which starts automatically (default). Example #1:
 
-
-  OPTION 2: "The J2EE backend."
-  You can deploy the PHP/Java Bridge into a standard servlet engine or
-  an application server. Deploy JavaBridge.war using the application
-  server's tools. Disable the java.socketname and java.log_file option
-  and set the java.hosts and java.servlet option, for example:
-
-          extension = java.so
-          [java]
-          java.log_level="3"
-          java.servlet=User
-          java.hosts="127.0.0.1:8080"
-
-  This option can be used if "Security Enhanced Linux" is switched
-  on. It can be used in a multi-user environment, users can install
-  their own .war files and customize them as necessary. It can also
-  be used if Apache or IIS are not available, the .war files can be
-  configured to connect to a system FCGI php server or to run a php
-  CGI binary for each php request.
+  ;; empty
 
 
-  OPTION 3: "Local backend as an apache sub-process".
-  You can start the bridge as a sub-process of apache. Disable
-  java.socketname, java.servlet and java.hosts. For example:
+  Example #2 uses java.java_home, java.java to set the java
+  executable. Vendors may also set java.wrapper to set the default
+  java VM options:
+ 
+  [java]
+  java.java_home = /opt/jdk1.5
+  java.java      = /opt/jdk1.5/bin/java
+  java.log_file  = /var/log/php-java-bridge.log
+  java.log_level = 3
+ 
+ 
+  2) java.socketname set: local system backend started by the
+  system "php-java-bridge" service script. Example:
+ 
+  [java]
+  java.java_home  = /opt/jdk1.5
+  java.java       = /opt/jdk1.5/bin/java
+  java.log_file   = /var/log/php-java-bridge.log
+  java.log_level  = 3
+  java.socketname = /var/run/.php-java-bridge_socket
+ 
+ 
+  3) java.hosts set: external backend(s) on different server(s). The
+  backends can be started on these servers with e.g.: java -jar
+  JavaBridge.jar. Example:
+ 
+  [java]
+  java.hosts     = 192.168.5.203:9267 192.168.5.204:9267
+  java.log_level = 3
+ 
+ 
+  4) java.hosts=127.0.0.1:<port> and java.servlet=MultiUser: user
+  backend(s) deployed into a local j2ee application server with a shared
+  document root directory (see DocumentRoot setting in the
+  httpd.conf). Several JavaBridge backends, e.g. "MyBridge.war" or
+  "Bridge31.war", can coexist in the same j2ee server. If the Apache or
+  IIS server uses the same document root as the j2ee server, the
+  frontent automatically connects to the associated "MyBridge" or
+  "Bridge31" backend. Example:
+ 
+  [java]
+  java.hosts     = 127.0.0.1:8080
+  java.servlet   = MultiUser
+  java.log_level = 3
+ 
+ 
+  5) java.hosts set and java.servlet=On: "JavaBridge.war" backend
+  deployed into a j2ee application server or servlet engine. Example:
+ 
+  [java]
+  java.hosts     = 127.0.0.1:8080
+  java.servlet   = On
+  java.log_level = 3
 
-          extension = java.so
-          [java]
-          java.log_level="3"
-          java.log_file="/var/log/php-java-bridge.log"
+ 
+  6) Standalone java application (see JSR223) or AS or servlet engine
+  without Apache or IIS frontend. A PHP server can be started with the
+  command (e.g.): X_JAVABRIDGE_OVERRIDE_HOSTS="/" PHP_FCGI_CHILDREN="20"
+  PHP_FCGI_MAX_REQUESTS="500" php-cgi -c java.ini -b 127.0.0.1:9667. 
+  php-cgi starts automatically if no PHP server is listening on port 9667.
+ 
+  log_errors     = On
+  display_errors = Off
+  [java]
+  java.log_level = 3
 
-  This option cannot be used if "Security Enhanced Linux" is switched
-  on.
 
+  After you have created the correct .ini entries, start the
+  backend. Example for option:
 
-  Option 4: "JSR 223 Scripting API."
-  You can use the java script API to allocate and to invoke php
-  instances from a HTTP pool. Disable java.socketname and set
-  java.servlet. For example:
+  #1: Not needed, backend starts automatically
+  #2: /usr/sbin/php-java-bridge
+  #3: java -jar JavaBridge.jar INET:9267 3 php-java-bridge.log
+  #4: service tomcat5 restart
+  #5: service tomcat5 restart
+  #6: Not needed, backend is the calling VM 
 
-          extension = java.so
-          [java]
-          java.servlet=User
+  The Linux RPM binaries use the following options:
 
-  After that you can call out to your web server's php scripts, for
-  example:
-
-     <?php
-
-       function hello() {return "Hello java world!";}
-
-       // call() checks for HTTP request header X_JAVABRIDGE_CONTEXT
-       java_context()->call(java_closure()) ||die("Call test.php from java!");
-     ?>
-
-     PhpScriptEngine engine = new PhpScriptEngine();
-
-     // Use a URLReader "adapter" to pass the apache URL to the engine.
-     // engine.eval will create a php continuation on the web server ...
-     engine.eval(new URLReader(new URL("http://127.0.0.1/test.php")));
-
-     //...and call procedures within the allocated continuation...
-     String s=((Invocable)engine).invoke("hello", new Object[]{});
-     System.out.println("test.php::hello() returned: "+s);
-
-     //.. release the allocated continuation:
-     engine.release();
-
-  This option can be used if "Security Enhanced Linux" is switched
-  on. It requires php-script.jar, please see the --enable-script
-  configure option above. Furthermore this option is required if you
-  want to run php from a framework such as "Java Server Faces". You can
-  build the required php-faces.jar using the --enable-faces configure
-  option. For other frameworks (e.g. "Struts") you must write your own
-  PhpStrutsScriptContextFactory.java, PhpStrutsScriptContext.java and
-  PhpStrutsScriptEngine.java. You can use the php faces implementation
-  as a template.
-
-  After you have created the correct .ini entries, start the backend:
-
-          Example for option #1: /usr/sbin/php-java-bridge
-
-          Example for option #2: /etc/init.d/tomcat5 restart
-
-          Example for option #3: apachectl restart
-
-          Example for option #4: <not needed, backend is the calling VM itself>
-
-  Note that the above options are exclusive; if you switch off the 
-  java.socketname and try to start the local backend using the service
-  script, the script will complain that the socketname is not set.
+  php-java-bridge*.rpm            : Option #1
+  php-java-bridge-standalone*.rpm : Option #2
+  php-java-bridge-tomcat*.rpm     : Option #5
+  php-java-bridge-devel*.rpm      : Option #6
+   
 
   Check the status:
 
-          echo "<?php phpinfo()?>" | php | fgrep "java status"
+  echo "<?php phpinfo()?>" | php | fgrep "java status"
 
   Other configuration options which should have been set up by the
   configure script but which can be changed later are:
 
-          java.libpath   = <system dependent path to natcJavaBridge.so>
-          java.classpath = <system dependent path to JavaBridge.jar>
-          java.java_home = <system dependent path to the java install dir>
-          java.java      = <system dependent path to the java binary>
-          java.socketname= <local ("unix domain") communication channel>
-          java.hosts     = <add. backends e.g.: server1:9267;server2:9268>
-          java.servlet   = <On/Off/User>, see NEWS for version 3.0.2
+  java.libpath   = <system dependent path to natcJavaBridge.so>
+  java.classpath = <system dependent path to JavaBridge.jar>
+  java.java_home = <system dependent path to the java install dir>
+  java.java      = <system dependent path to the java binary>
+  java.socketname= <local ("unix domain") communication channel>
+  java.hosts     = <add. backends e.g.: server1:9267 server2:9268>
+  java.servlet   = <On/Off/MultiUser>, see NEWS for version 3.0.2
+  java.wrapper   = Reserved for OS vendor
 
   Please first look at the output of phpinfo() to see the original
   values.  
+
+  See the files java.ini and java.ini.windows for a complete list
+  of options and .ini examples.
 
 ---------------------------------------------
   Starting the PHP/Java Bridge automatically
@@ -185,18 +179,14 @@ Build and execution instructions:
   component when the http service is started or re-started.
 
   However, when running the bridge in a production environment, it is
-  recommended to start the PHP/Java Bridge as a system service,
-  independent of the web server. On SysV based init systems the
-  "php-java-bridge.service" can be used to automatically start and stop
-  the bridge as a system service.  Please see the RedHat RPM download
-  for an example.
+  recommended to use a J2EE backend, Tomcat5 for example.
 
 ------------------------------------
   Sample settings for Apache/Tomcat
   ---------------------------------
 
   Assuming that tomcat is installed (e.g. in /opt/tomcat5),
-  JavaBridge.war is deployed (e.g. in /opt/tomcat5/webapps), java.so
+  MyJavaBridge.war is deployed (e.g. in /opt/tomcat5/webapps), java.so
   (or php_java.dll) is installed in the php modules directory (e.g. in
   /usr/lib/php/modules/), mod_jk and php5 are installed in the apache modules
   directory (e.g. in /usr/lib/httpd/modules/), we recommend following
@@ -226,9 +216,9 @@ Build and execution instructions:
     ;; on windows: extension = php_java.dll
     [java]
     java.hosts     = "127.0.0.1:8080"
-    java.servlet   = User
+    java.servlet   = MultiUser ;; or: /MyJavaBridge/JavaBridge.php
 
-  To check the above settings, please visit http://localhost/JavaBridge/
+  To check the above settings, please visit http://localhost/MyJavaBridge/
   and run the sessionSharing.jsp and sessionSharing.php examples.
 
   Please don't misunderstand the role of the mod_jk adapter. 
@@ -408,7 +398,7 @@ Build and execution instructions:
       and undocumented changes to the JNI header structure so that we cannot
       use the standard Sun or GNU Java JNI to create the natcJavaBridge.so).
 
-  Example: make CFLAGS="-m64"
+  Example: make CFLAGS="-O0 -g3"
 
 ------------------------------------
   Log levels
@@ -590,7 +580,7 @@ Build and execution instructions:
   communication.
 
   On other systems, such as Windows and Mac OSX, the bridge opens a
-  local TCP port on 9167 (JavaBridge.jar) or 9267 (MonoBridge.exe), 9567
+  local TCP port on 9167 (MonoBridge.exe) or 9267 (JavaBridge.jar), 9567
   (JavaBridge.war) or 9667 (FastCGI). Please make sure that the ports in
   the range [9167, ..., 9667] cannot be accessed from the internet.
 

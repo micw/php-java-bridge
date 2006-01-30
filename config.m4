@@ -4,6 +4,7 @@ m4_include(tests.m4/java_check_broken_stdio_buffering.m4)
 m4_include(tests.m4/java_check_struct_ucred.m4)
 m4_include(tests.m4/java_check_abstract_namespace.m4)
 m4_include(tests.m4/java_check_broken_gcc_installation.m4)
+m4_include(tests.m4/java_check_jni.m4)
 
 PHP_ARG_WITH(java, for java support,
 [  --with-java[=JAVA_HOME]        Include java support])
@@ -13,7 +14,7 @@ PHP_ARG_ENABLE(servlet, for java servlet support,
 PHP_ARG_ENABLE(script, for java script support,
 [  --enable-script[=JAR]         Include java script support. If you use a JDK < 1.6 JAR must be the location of script-api.jar; creates php-script.jar])
 PHP_ARG_ENABLE(faces, for java server faces support,
-[  --enable-faces[=JAR]         Include java server faces support. JAR must be the location of jsf-api.jar; creates php-script.jar])
+[  --enable-faces[=JAR]         Include java server faces support. JAR must be the location of jsf-api.jar; creates php-faces.jar])
 
 
 if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
@@ -22,17 +23,14 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
        PTHREADS_ASSIGN_VARS
        PTHREADS_FLAGS
        JAVA_CHECK_BROKEN_STDIO_BUFFERING
-       JAVA_CHECK_BROKEN_GCC_INSTALLATION
        JAVA_CHECK_ABSTRACT_NAMESPACE
        JAVA_CHECK_STRUCT_UCRED
-       if test "$have_broken_gcc_installation" = "yes"; then
-         AC_MSG_WARN([Your GCC installation may be broken. It uses two different static libraries but only one dynamic library for -m32 and -m64 builds.])
-	  sleep 30
-       fi
 
 # find includes eg. -I/opt/jdk1.4/include -I/opt/jdk1.4/include/linux
         if test "$PHP_JAVA" != "yes"; then
-	 PHP_EVAL_INCLINE(`for i in \`find $PHP_JAVA/include -follow -type d -print\`; do echo -n "-I$i "; done`)
+	 JAVA_INCLUDES=`for i in \`find $PHP_JAVA/include -follow -type d -print\`; do echo -n "-I$i "; done`
+	 PHP_EVAL_INCLINE($JAVA_INCLUDES)
+	 JAVA_CHECK_JNI
 	 COND_GCJ=0
 	else
 	 COND_GCJ=1
@@ -51,6 +49,12 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
           EXTENSION_NAME=JAVA
 	  PHP_JAVA_BIN="${PHP_JAVA}/bin/java"
         fi
+
+       JAVA_CHECK_BROKEN_GCC_INSTALLATION
+       if test "$have_broken_gcc_installation" = "yes"; then
+         AC_MSG_WARN([Your GCC installation may be broken. It uses two different static libraries but only one dynamic library for -m32 and -m64 builds.])
+	  sleep 10
+       fi
 
 # create init_cfg.c from the template (same as AC_CONFIG_FILES)
 	BRIDGE_VERSION="`cat $ext_builddir/VERSION`"

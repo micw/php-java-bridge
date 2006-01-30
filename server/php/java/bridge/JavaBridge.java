@@ -228,50 +228,6 @@ public class JavaBridge implements Runnable {
         }
     }
 
-    /* Disabled for the release 2.0.7.  We'll probably want something more general in the future.
-    //
-    // add all jars found in the phpConfigDir/lib and /usr/share/java
-    // to our classpath
-    //
-    static void initGlobals(String phpConfigDir) {
-    try {
-
-    // FIXME: This doesn't work on FC3 or when running the bridge in a J2EE AS (no file access permissions)
-    try {
-    Util.logMessage("Trying to open '"+phpConfigDir+File.separator+"PHPJavaBridge.ini'");
-    File iniFile = new File(phpConfigDir+File.separator+"PHPJavaBridge.ini");
-    Properties props = null;
-    if (iniFile.exists()) {
-    props = new Properties();
-    props.load(new FileInputStream(iniFile));
-    } else {
-    props = new Properties();
-    props.put("classloader","Classic");
-    props.put("thread_pool_size","20");
-    Util.logMessage("Ini File not found, creating '"+phpConfigDir+File.separator+"PHPJavaBridge.ini'");
-    try {
-    FileOutputStream fout = new FileOutputStream(phpConfigDir+File.separator+"PHPJavaBridge.ini");
-    props.store(fout, "PHPJavaBridge Properties");
-    fout.close();
-    } catch (IOException ioe) {
-    Util.printStackTrace(ioe);
-    }
-    }
-    BridgeThread.poolSize = Integer.parseInt(props.getProperty("thread_pool_size", Util.THREAD_POOL_MAX_SIZE));
-    } catch (Exception ex) {
-    Util.printStackTrace(ex);
-    }
-    try {
-    if(BridgeThread.poolSize==0) BridgeThread.poolSize= Integer.parseInt(Util.THREAD_POOL_MAX_SIZE);
-    } catch (Throwable t) {
-    BridgeThread.poolSize = 20;
-    }
-    DynamicJavaBridgeClassLoader.initClassLoader(phpConfigDir);
-    } catch (Exception t) {
-    Util.printStackTrace(t);
-    }
-    }
-    */
     /**
      * Create a new server socket and return it.
      * @param sockname the socket name
@@ -313,6 +269,7 @@ public class JavaBridge implements Runnable {
 	try {
 	    if(s.length>0) {
 		sockname=s[0];
+		if(sockname.startsWith("-")) usage();
 	    }
 	    try {
 		if(s.length>1) {

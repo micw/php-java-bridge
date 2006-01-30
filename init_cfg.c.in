@@ -57,6 +57,7 @@ static void override_ini_from_cgi(void) {
   static const char key_servlet[] = "java.servlet";
   char *hosts;
   EXT_GLOBAL(cfg)->is_cgi_servlet=0;
+  EXT_GLOBAL(cfg)->is_fcgi_servlet=0;
   
   if ((hosts=getenv("X_JAVABRIDGE_OVERRIDE_HOSTS"))) {
 	switch(*hosts) {
@@ -68,6 +69,8 @@ static void override_ini_from_cgi(void) {
 						   (char*)on, sizeof on,
 						   ZEND_INI_SYSTEM, PHP_INI_STAGE_STARTUP);
 	  EXT_GLOBAL(cfg)->socketname_set = 0;
+	  EXT_GLOBAL(cfg)->is_cgi_servlet=1;
+	  EXT_GLOBAL(cfg)->is_fcgi_servlet=1;
 	  break;
 
 	default:					/* cgi binary with redirect

@@ -24,10 +24,7 @@ import php.java.bridge.Util;
  * this did not happen explicitly.  A unique [1..65535] context
  * instance should be created for each request and destroyed when the request
  * is done.  
- * <p> 
- * All public methods must be called from the classloader which has created the context instance 
- * or from the PHP/Java Bridge library, otherwise a security exception is throws. 
- * </p> 
+ * 
  * The string ID of the instance should be passed to the client, which may
  * pass it back together with the getSession request or the "local
  * channel re-direct". If the former happens, we invoke the promise
@@ -36,7 +33,7 @@ import php.java.bridge.Util;
  * the ContextFactory is given to a ContextRunner, which handles the
  * local channel communication.
  * <p>
- * There can be only one instance of a ContextFactory per VM.
+ * There can be only one instance of a ContextFactory per VM classloader.
  * </p>
  * @see php.java.servlet.ContextFactory
  * @see php.java.bridge.http.ContextServer
@@ -91,10 +88,9 @@ public class ContextFactory extends SessionFactory {
      * Returns the context factory associated with the given <code>id</code>
      * @param id The ID
      * @return The ContextFactory or null.
-     * @throws SecurityException when a factory exists but has been created from a different classloader.
      * @see #addNew()
      */
-    public static ContextFactory get(String id) throws SecurityException {
+    public static ContextFactory get(String id) {
    	return (ContextFactory)contexts.get(id);
     }
     

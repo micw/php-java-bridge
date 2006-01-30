@@ -14,7 +14,8 @@ import php.java.bridge.ThreadPool;
 public class ContextServer {
 
     PipeContextServer ctx;
-    SocketContextServer sock;
+    SocketContextServer sock = null;
+    ThreadPool pool;
     
     public abstract class ChannelName {
         protected String name;
@@ -57,7 +58,8 @@ public class ContextServer {
          * We need both because the client may not support named pipes.
          */
         ctx = new PipeContextServer(this, pool);
-        sock = new SocketContextServer(this, pool);
+        //sock = new SocketContextServer(this, pool);
+        this.pool = pool;
     }
     
     private int runnables = 0;    
@@ -84,7 +86,7 @@ public class ContextServer {
      */
     public void destroy() {
         ctx.destroy();
-        sock.destroy();
+        if(sock!=null) sock.destroy();
     }
 
 
@@ -92,7 +94,7 @@ public class ContextServer {
      * @see php.java.bridge.http.IContextServer#isAvailable()
      */
     public boolean isAvailable() {
-        return ctx.isAvailable() || sock.isAvailable();
+        return ctx.isAvailable() || (sock!=null && sock.isAvailable());
     }
 
     /* (non-Javadoc)
@@ -106,6 +108,7 @@ public class ContextServer {
     
     public ChannelName getFallbackChannelName(String channelName) {
         if(channelName!=null && channelName.length()!=0 && ctx.isAvailable()) return new PipeChannelName(channelName);
+        if(sock==null) sock = new SocketContextServer(this, pool);
         return new SocketChannelName(sock.getChannelName());
     }
 }

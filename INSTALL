@@ -11,21 +11,26 @@ Installation on RedHat Linux (RHEL, Fedora, ...)
   rpm -i httpd-2.0.46-25.ent.i386.rpm
 
 * Install the php-java-bridge, for example with the command:
-  rpm -i php-java-bridge-X.Y.Z-1.i386.rpm
+  rpm -i php-java-bridge-x.y.z-1.i386.rpm
 
-* If you have SECURITY ENHANCED LINUX, the above command should have
-  provided instructions how to install the php-java-bridge.te and
-  php-java-bridge.fc policy files.
+* If you have SECURITY ENHANCED LINUX, install the standalone backend,
+  for example with the command: 
 
-Start the web-server with the command: service httpd restart.
-Start the bridge with the command: service php-java-bridge restart
+  rpm -i php-java-bridge-standalone-x.y.z-1.noarch.rpm
+
+  This command should have provided instructions how to install the 
+  php-java-bridge.te and php-java-bridge.fc policy files.
+
+Start the web-server with the command: service httpd restart. If you
+have installed the standalone backend start it, for example with the
+command: service php-java-bridge restart
 
 Create a simple php file in /var/www/html, for example with
 the command: echo "<?php phpinfo(); ?>" >/var/www/html/phpinfo.php.
 
 Browse to http://localhost/phpinfo.php and search for the 
 output of the php java bridge module (the entry should be: 
-"java.support: Enabled").
+"java support"  "Enabled").
 
 Then install your your java libraries (.jar files) in /usr/share/java
 or in java.libpath/lib (see output of phpinfo) and your php and
@@ -33,24 +38,24 @@ web-pages in /var/www/html or one of their sub-directories.
 
 [1] 
 On RHEL3 use the RPM from CD#9: IBMJava2-JRE-1.4.1-8.i386.rpm 
-it provides "j2re" instead of "jre".
+provides "j2re" instead of "jre".
 
 
 
 Quick Installation from source code
 -----------------------------------
-#enable the following line on BSD and MacOS X only, see README
-#export CFLAGS="-DCFG_JAVA_SOCKET_INET"
 mkdir dist
-export INST=`pwd`/dist
-export LD_LIBRARY_PATH=$INST/lib:$LD_LIBRARY_PATH  PATH=$INST/bin:$PATH
+INST=`pwd`/dist
+LD_LIBRARY_PATH=$INST/lib:$LD_LIBRARY_PATH  
+PATH=$INST/bin:$PATH
+export INST LD_LIBRARY_PATH PATH
 
 # compile
 (cd autoconf-2.59; ./configure --prefix=$INST && make && make install)
 (cd automake-1.9; ./configure --prefix=$INST && make && make install)
 (cd libtool-1.5.20; ./configure --prefix=$INST && make && make install)
 (cd php-5.*; ./configure --prefix=$INST --disable-all --enable-fastcgi && make && make install)
-(cd php-java-bridge-3.*; ./configure --with-java=/usr/java/jdk1.5.0 && make && make install)
+(cd php-java-bridge-3.*; phpize && ./configure --with-java=/usr/java/jdk1.5.0 && make && make install)
 
 # test
 php php-java-bridge-3.*/test.php >result.html
@@ -101,8 +106,6 @@ INST=/usr/local #INST=$HOME/bridge
 # set build path
 export PATH=$INST/bin:$PATH 
 export LD_LIBRARY_PATH=$INST/lib:$LD_LIBRARY_PATH
-#enable the following line on BSD and MacOS X only, see README
-#export CFLAGS="-DCFG_JAVA_SOCKET_INET"
 
 # stop the system http service 
 su - -c "service httpd stop"
@@ -238,7 +241,7 @@ java.servlet and java.hosts entries.  Example:
 
        [java]
        java.log_level="2"
-       java.servlet=User
+       java.servlet=MultiUser
        java.hosts="127.0.0.1:8080"
 
 The PHP/Java Bridge log output appears in the server log file, for
@@ -432,64 +435,3 @@ $GCC -w -I$SYS_INCLUDE -I. -I$PHP -I$PHP/main -I$PHP/Zend -I$PHP/TSRM -D"_MBCS" 
 #create the windows .dll or the unix .so file
 #i386-pc-mingw32-dllwrap  --export-all-symbols -k  *.o -L$PHP -lphp5ts -lws2_32 -o php_java.dll
 $GCC -shared  *.o  -Wl,-soname -Wl,java.so -o java.so
-
-------------------------------------
-Compiling a CGI binary on Windows
----------------------------------
-
-  This operating system has some unusal problems with shared libraries
-  (DLL's). The autoconf/libtool documentation states:
-
-   - Macro: AC_LIBTOOL_WIN32_DLL
-     This macro should be used if the package has been ported to build
-     clean dlls on win32 platforms.  Usually this means that any
-     library data items are exported with `__declspec(dllexport)' and
-     imported with `__declspec(dllimport)'.  If this macro is not used,
-     libtool will assume that the package libraries are not dll clean
-     and will build only static libraries on win32 hosts.
-
-  Until someone ports the sources to use __declspec, we avoid 
-  creating shared libraries on this system.  Instead we will
-  compile the extension into PHP:
-
-  1. Install the source code of PHP 4.3.x or higher.
-
-  2. Install RedHat's Cygwin (PHP needs autoconf).
-
-  3. Delete the java sub-directory from php-4.3.x\ext. Copy the
-     php-java-bridge directory to the php-x.y.z\ext directory and
-     rename it to java.  Update the "m4_include" paths in
-     php-x.y.z\ext\java\config.m4 so that they start with "ext/java/":
-
-      m4_include(ext/java/tests.m4/function_checks.m4)
-      m4_include(ext/java/tests.m4/java_check_broken_stdio_buffering.m4)
-      ...
-      m4_include(ext/java/tests.m4/java_check_broken_gcc_installation.m4)
-
-  4. Invoke autoconf to register our java module within the PHP build
-     tree:
- 
-      buildconf.bat --force 
-
-     Instead of running "buildconf" you can also use autoconf directly:
-
-      autoconf
-
-     Then configure and compile php as usual:
-
-      .\configure --with-java=%JAVA_HOME%
-      make
-
-  This will create a php binary with the PHP/Java Bridge included.
-  You can then copy the sapi\cgi\php executable into the CGI directory 
-  of your IIS web server. Before you start the web server, you must
-  start the java bridge backend, for example by double-clicking on
-  .\modules\JavaBridge.jar.
-
-
-  Windows uses TCP/IP sockets instead of unix domain sockets. If you
-  want to change the java.socketname from its default (which is 9267),
-  you must use an integer. For example:
-
-    java.socketname=9268
-

@@ -1,3 +1,64 @@
+2006-01-30  Jost Boekemeier  <jostb@intern>
+
+	* test.php, test.php4: Suppress errors from dl(), use new
+	JavaClass to avoid "no constructor" warning.
+
+	* VERSION, php-java-bridge.spec: Version 3.0.7pre released
+
+2006-01-29  Jost Boekemeier  <jostb@intern>
+
+	* PROTOCOL.TXT: Moved async protocol implementation to Version-3-1
+	branch. The 3.0.8 version must be compatible with 2.0.8.
+
+	* README, INSTALL.SERVLET, INSTALL.WINDOWS: Rewritten
+
+	* java.ini.windows: Removed
+
+	* java-servlet.ini, java-standalone.ini: New files
+
+	* php-java-bridge.spec: Create php-java-bridge,
+	php-java-bridge-servlet, php-java-bridge-standalone and
+	php-java-bridge-devel RPM files.
+
+	* bind.c: Do not depend on ext/session.
+
+	* bind.c (quote): Obsolete: java -jar JavaBridge.jar INET:0 4 now
+	behaves as java -jar JavaBridge.jar INET:0 4 ""
+
+	* client.c (setResultFromObject, begin): Backward compatibility
+	with 2.0.8
+
+	* tests.m4/java_check_jni.m4: New test for Mac and BSD
+
+	* config.m4: Check if JNI is available and suppress
+	natcJavaBridge.so if not.
+
+	* init_cfg.c.in (is_fcgi_servlet): New global.
+
+	* java.ini: Rewritten
+
+	* php-java-bridge: There can only be one pid.
+
+	* protocol.c (redirect): Check result from open().
+
+	* server/php/java/bridge/JavaBridge.java (init): usage() if
+	socketname is --help.
+	
+	* server/php/java/bridge/JavaBridge.java (osName, osArch): The
+	os.name and os.arch up to the first non alnum char -- "windows"
+	instead of "windows 2000" or "windows xp".
+	
+	* server/php/java/bridge/http/ContextServer.java (ContextServer):
+	Allocate a SocketContextServer only when the client was not able to
+	create a pair of named pipes.
+	
+	* server/php/java/servlet/PhpJavaServlet.java (contextServer):
+	Initialize when servlet context starts, destroy when servlet
+	context terminates. Otherwise the JavaBridgeContextRunner keeps
+	running until the VM terminates.
+
+	* server/test/Discovery.java: Rewritten
+	
 2006-01-15  Jost Boekemeier  <jostb@intern>
 
 	* server/javax/script/ScriptEngineManager.java 

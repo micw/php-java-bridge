@@ -25,18 +25,27 @@
 #include "TSRM.h"
 #endif
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 /* socket */
 #ifdef __MINGW32__
 # include <winsock2.h>
 # define close closesocket
 #else
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+
+/* disable unix domain sockets if jni is not available */
+#ifndef HAVE_JNI
+# ifndef CFG_JAVA_SOCKET_INET
+#  define CFG_JAVA_SOCKET_INET
+# endif
+#endif
+
 #ifndef CFG_JAVA_SOCKET_INET
 # include <sys/un.h>
 # ifdef HAVE_CONFIG_H
@@ -139,7 +148,7 @@ struct cfg {
 	  to "/" or "host:port//Context/Servlet, the values java.servlet
 	  and java.hosts are taken from this environment variable. Used by
 	  FastCGI and CGI only. */
-  short is_cgi_servlet;			/* 1: cgi env available */
+  short is_cgi_servlet, is_fcgi_servlet; /* 1: cgi env available */
   /** 1: local backend; 0: backend from the host list */
   short socketname_set;
   /** 0: Compatibility with ext/java is off (default), 1: on  */
