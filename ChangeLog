@@ -1,3 +1,47 @@
+2006-01-02  Jost Boekemeier  <jostb@intern>
+
+	* examples/php+jsp/source.php, examples/php+jsp/index.html: New
+	files.
+
+	
+2006-01-01  Jost Boekemeier  <jostb@intern>
+	
+	* examples/bench/bench.php: load a local poi.jar first.
+
+	* examples/languages/scheme-demo.php: load a local kawa.jar first.
+
+	* server/configure.in: Check for jni in the gcj path, too.
+	
+	* php/java/servlet/CGIServlet.java (setCGIEnvironment),
+	php/java/faces/PhpFacesContext.java (getBaseURL),
+	php/java/faces/PhpFacesScriptContext.java (initialize): Do not
+	rely on the values that some clients send. Use the real server
+	name and the real server port, not the header values from the
+	request. IE for example sends wrong values when the request was
+	redirected. Example: request for
+	http://localhost:80/java-server-faces/index.php => backend
+	receives redirected request on 8080 but with server port set to
+	80!).
+
+	* php_java.h: servlet_is_default: New variable set to 1 if
+	java.servlet was set to "On".
+
+	* protocol.c (setResultWith_context): Do not set the cookie path
+	if java.servlet was set to "On".
+
+	* VERSION, php-java-bridge.spec: Version 3.0.7pre1 released
+
+2006-01-30  Jost Boekemeier  <jostb@intern>
+
+	* INSTALL.SERVLET: Removed
+
+	* INSTALL.J2EE: New from INSTALL.SERVLET
+
+	* INSTALL: Removed Linux section
+	
+	* INSTALL.LINUX: New from INSTALL
+	
+	
 2006-01-30  Jost Boekemeier  <jostb@intern>
 
 	* test.php, test.php4: Suppress errors from dl(), use new

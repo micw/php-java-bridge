@@ -1,46 +1,23 @@
 Installing the PHP/Java Bridge J2EE Component
 ---------------------------------------------
 
+* Install a J2EE application server or servlet engine, for example
+  Tomcat 5.5.9, Oracle 10g or WebSphere 6.
 
-Installing and testing the frontend and backend on Linux
---------------------------------------------------------
-
-On RedHat Enterprise Linux >= 4 or Fedora Linux >= 4 download the RPM
-files and type:
-
-    rpm -i tomcat5-5.0.30-5jpp_6fc.i386.rpm
-    rpm -i php-java-bridge-x.y.z-1.i386.rpm
-    rpm -i php-java-bridge-tomcat-x.y.z-1.i386.rpm
-
-then re-start apache and tomcat, e.g. with the commands:
-
-    service tomcat5 restart
-    service httpd restart
-
-and check:
-
-    http://localhost:8080/JavaBridge/test.php 
-    http://yourHost/JavaBridge/test.php
+* Extract the files from the php-java-bridge J2EE download and deploy
+  JavaBridge.war into your J2EE server, visit
+  http://localhost:<port>/JavaBridge and click on test.php.
+  The <port> is 8888 (Oracle), 9080 (WebSphere) or 8080 (Tomcat).
 
 
+Installing and testing the frontend on Linux, Unix, Windows
+-----------------------------------------------------------
 
-Installing and testing the backend on Unix, Windows
----------------------------------------------------
+NOTE: Linux RPMs contain Security Enhanced Linux contexts. If you want
+to install software on a SEL system (RHEL, Fedora, ...), please use
+the RPM build system instead, see INSTALL.LINUX.
 
-* Download and install a J2EE application server or servlet engine,
-  for example Oracle 10g, IBM WebSphere6 or Tomcat 4 or higher.
-
-* Download JavaBridge.war and deploy it into the running servlet
-  engine or j2ee server using the application server tools.
-
-* Test the AS backend: Browse to http://localhost:<port#>/JavaBridge
-  and run the supplied examples. For example:
-
-    http://localhost:8080/JavaBridge/test.php
-
-
-Installing and testing the frontend on Unix, Windows
-----------------------------------------------------
+* Install Apache or IIS. Install PHP, for example PHP 5.1.x.
 
 * Check if your php extension_dir contains the java extension. If not,
   copy the appropriate java-<architecture>-<os>.so or
@@ -53,23 +30,28 @@ Installing and testing the frontend on Unix, Windows
     extension = java.so
     ; extension = php_java.dll
     [java]
-    java.hosts   = 127.0.0.1:8080
-    java.servlet = User
-  
-* Test the Apache or IIS frontent: Check if the HTTP document root
-  directory is shared with the AS "webapps" directory. If not, change
-  the java.servlet option to "On" or to "/JavaBridge/JavaBridge.php":
+    java.hosts   = 127.0.0.1:8080 ;or 8888 for Oracle, 9080 for WebSphere
+    java.servlet = MultiUser
+
+* Check if the HTTP document root directory is shared with the AS
+  "webapps" directory. If not, change the java.servlet option to "On":
 
     extension = java.so
     ; extension = php_java.dll
     [java]
-    java.hosts   = 127.0.0.1:8080
+    java.hosts   = 127.0.0.1:8080 ;or 8888 for Oracle, 9080 for WebSphere
     java.servlet = On
 
-  Then re-start apache and check "java status" and "java server":
+  Then re-start Apache or IIS and check "java status" and "java server":
 
-   http://yourHost.com/JavaBridge/test.php
+    http://yourHost.com/JavaBridge/test.php
 
+* On production systems set the following flags in your php ini file
+  so that the backend can generate standard error pages.
+
+    log_errors     = On
+    display_errors = Off
+    html_errors    = Off
 
 * Please report bugs/problems to the mailing list:
 
@@ -85,7 +67,7 @@ standalone server for all users, for example:
   export X_JAVABRIDGE_OVERRIDE_HOSTS="/"
   export PHP_FCGI_CHILDREN="20"
   export PHP_FCGI_MAX_REQUESTS="500"
-  /usr/bin/php-cgi -dlog_errors=On -ddisplay_errors=Off -b 127.0.0.1:9667
+  /usr/bin/php-cgi -b 127.0.0.1:9667
 
 
 When Apache or IIS is available, the administrator may set up the

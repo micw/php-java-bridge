@@ -1,46 +1,10 @@
-Installation on RedHat Linux (RHEL, Fedora, ...)
--------------------------------------------------
 
-* Install a J2RE, for example with the command[1]:
-  rpm -i jdk-1_5_0-linux-i586.rpm 
+NOTE: Linux RPMs contain Security Enhanced Linux contexts. If you want
+to install software on a SEL system (RHEL, Fedora, ...), please use
+the RPM build system instead (rpmbuild --rebuild
+php-java-bridge*src.rpm).  However, for a development system you can
+switch off SEL and follow the instructions below.
 
-* Install PHP, for example with the command: 
-  rpm -i php-4.3.2-8.ent.i386.rpm
-
-* Install the web-server, for example with the command:
-  rpm -i httpd-2.0.46-25.ent.i386.rpm
-
-* Install the php-java-bridge, for example with the command:
-  rpm -i php-java-bridge-x.y.z-1.i386.rpm
-
-* If you have SECURITY ENHANCED LINUX, install the standalone backend,
-  for example with the command: 
-
-  rpm -i php-java-bridge-standalone-x.y.z-1.noarch.rpm
-
-  This command should have provided instructions how to install the 
-  php-java-bridge.te and php-java-bridge.fc policy files.
-
-Start the web-server with the command: service httpd restart. If you
-have installed the standalone backend start it, for example with the
-command: service php-java-bridge restart
-
-Create a simple php file in /var/www/html, for example with
-the command: echo "<?php phpinfo(); ?>" >/var/www/html/phpinfo.php.
-
-Browse to http://localhost/phpinfo.php and search for the 
-output of the php java bridge module (the entry should be: 
-"java support"  "Enabled").
-
-Then install your your java libraries (.jar files) in /usr/share/java
-or in java.libpath/lib (see output of phpinfo) and your php and
-web-pages in /var/www/html or one of their sub-directories.
-
-[1] 
-On RHEL3 use the RPM from CD#9: IBMJava2-JRE-1.4.1-8.i386.rpm 
-provides "j2re" instead of "jre".
-
-
 
 Quick Installation from source code
 -----------------------------------
@@ -64,13 +28,6 @@ php php-java-bridge-3.*/test.php >result.html
 
 Installation from source code (Solaris, FreeBSD, WinXP or Linux)
 ----------------------------------------------------------------
-
-NOTE: RPMs contain Security Enhanced Linux contexts. If you want to
-install software on a SEL system (RHEL, Fedora, ...), please use the
-RPM build system instead (rpmbuild --rebuild php-java-bridge*src.rpm).
-However, for a development system you can switch off SEL and follow
-the instructions below.
-
 
 The following software components must be installed on your computer:
 
