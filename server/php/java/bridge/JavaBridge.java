@@ -310,7 +310,7 @@ public class JavaBridge implements Runnable {
 	    
 	    ISocketFactory socket = bind(sockname);
 	    if(Util.VERSION != null)
-		Util.logMessage(Util.EXTENSION_NAME+ " version          : " + Util.VERSION);
+		Util.logMessage(Util.EXTENSION_NAME+  " version         : " + Util.VERSION);
 	    Util.logMessage(Util.EXTENSION_NAME + " logFile         : " + logFile);
 	    Util.logMessage(Util.EXTENSION_NAME + " default logLevel: " + Util.logLevel);
 	    Util.logMessage(Util.EXTENSION_NAME + " socket          : " + socket);
@@ -456,7 +456,7 @@ public class JavaBridge implements Runnable {
     }
 
     private Exception getUnresolvedExternalReferenceException(Throwable e, String what) {
-        return 	new ClassNotFoundException("Unresolved external reference: "+ e+ ". -- Unable to "+what+" because it or one of its parameters refer to the mentioned external class which is not available in the current \"java_require(<path>)\" url path. Remember that all interconnected classes must be loaded with a single java_require() call, i.e. use java_require(\"foo.jar;bar.jar\") instead of java_require(\"foo.jar\"); java_require(\"bar.jar\"). Please check the Java Bridge log file for details.", e);
+        return 	new ClassNotFoundException("Unresolved external reference: "+ e+ ". -- Unable to "+what+" because it or one of its parameters refer to the mentioned external class which is not available in the current \"java_require()\" url path. Remember that all interconnected classes must be loaded with a single java_require() call, i.e. use java_require(\"foo.jar;bar.jar\") instead of java_require(\"foo.jar\"); java_require(\"bar.jar\"). Please check the Java Bridge log file for details.", e);
     }
     /**
      * Create an new instance of a given class

@@ -17,8 +17,8 @@ enforce=`getenforce`
 setenforce 0
 domains=${1}/domains
 contexts=${1}/file_contexts
-cp -v `dirname $0`/php-java-bridge.te $domains/program &&
-cp -v `dirname $0`/php-java-bridge.fc $contexts/program &&
+cat `dirname $0`/php-java-bridge*.te >$domains/program/php-java-bridge.te &&
+cat `dirname $0`/php-java-bridge*.fc >$contexts/program/php-java-bridge.fc &&
 make -C $1 install && 
 make -C $1 reload &&
 EXT=@EXTENSION_DIR@

@@ -6,6 +6,12 @@ Please send bug reports, questions and suggestions to
 
 Version 3.0.7:
 
+* It is now possible to compile the php java extension without java
+  ./configure --without-java --without-mono creates only the java.so or
+  php_java.dll.
+
+* java => 1.4.2 is required.
+
 * The windows standalone download is not available anymore. The
 php_java.dll is now called "java-x86-windows.dll" and can be found in
 the JavaBridge.war download.
@@ -21,8 +27,8 @@ php-java-bridge RPM download. The linux java.so is now called
 
   php-java-bridge-standalone*.rpm: contains the standalone service
   script. Conflicts with the tomcat backend. The tomcat backend is more
-  than 3 times faster but less secure; it uses named pipes instead of
-  sockets.
+  than 2 times faster but less secure; it uses named pipes instead of
+  abstract local "unix domain" sockets.
 
   php-java-bridge-tomcat*.rpm: contains the tomcat backend. Conflicts
   with the standalone backend.
@@ -31,10 +37,10 @@ php-java-bridge RPM download. The linux java.so is now called
   and the development files needed to create java applications with
   embedded PHP scripts: JavaBridge.jar, script-api.jar and php-script.jar.
 
-* The JavaBridge.war now contains 5.1.2 binaries for Solaris (x86),
-Linux (x86), Windows (x86).
+* The JavaBridge.war now contains php 5.1.2 binaries for Solaris
+(x86), Linux (x86), Windows (x86).
 
-* php4 is supported again (switch php5 or php6, if you can).
+* php4 is supported again (switch to php5 or php6, if you can).
 
 
 Version 3.0.3:

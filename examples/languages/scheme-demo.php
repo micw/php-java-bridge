@@ -9,7 +9,12 @@ if (!extension_loaded('java')) {
 
 $system = new java("java.lang.System");
 $t1=$system->currentTimeMillis();
-java_set_library_path("http://php-java-bridge.sourceforge.net/kawa.jar"); //load scheme interpreter
+
+// load scheme interpreter
+// try to load local kawa.jar, otherwise load it from sf.net
+java_require("kawa.jar");
+java_require("http://php-java-bridge.sourceforge.net/kawa.jar");
+
 $s = new java("kawa.standard.Scheme");
 for($i=0; $i<100; $i++) {
   $res=(float)$s->eval("

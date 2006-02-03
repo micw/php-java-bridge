@@ -498,12 +498,6 @@ public class PhpJavaServlet extends FastCGIServlet {
 	}
     }
 
-    private String getWrapper() {
-	    String wrapper = getServletConfig().getServletContext().getRealPath(cgiPathPrefix) + File.separator+"php-cgi-"+
-	    	Util.osArch+"-"+
-	    	Util.osName;
-	    return wrapper;
-    }
     /**
      * Used when running as a cgi binary only.
      * 
@@ -516,7 +510,14 @@ public class PhpJavaServlet extends FastCGIServlet {
  	    super.doGet(req, res);
     	} catch (IOException e) {
     	    try {res.reset();} catch (Exception ex) {/*ignore*/}
-    	    String wrapper = getWrapper() + "[.sh]|[.exe]";
+	    StringBuffer buf = new StringBuffer(getServletConfig().getServletContext().getRealPath(cgiPathPrefix));
+	    buf.append(File.separator);
+	    buf.append("php-cgi-");
+	    buf.append(Util.osArch);
+	    buf.append("-");
+	    buf.append(Util.osName);
+	    buf.append("[.sh]|[.exe]");
+    	    String wrapper = buf.toString();
  	    ServletException ex = new ServletException("An IO exception occured. " +
 	    		"Probably php was not installed as \"/usr/bin/php-cgi\" or \"c:/php5/php-cgi.exe\"\n or \""+wrapper+"\".\n" +
 	    		"Please see \"php_exec\" in your WEB-INF/web.xml and WEB-INF/cgi/README for details.", e);
@@ -525,10 +526,20 @@ public class PhpJavaServlet extends FastCGIServlet {
 	    throw ex;
     	} catch (SecurityException sec) {
     	    try {res.reset();} catch (Exception ex) {/*ignore*/}
-	    ServletException ex = new ServletException("A security exception occured, could not run PHP.\n" +
-	    		"Please start Apache or IIS or start a standalone PHP server with the commands:\n\n" +
-	    		"php="+getWrapper()+"; chmod +x ${php};\n" + 
-	    		"X_JAVABRIDGE_OVERRIDE_HOSTS=\"/\" PHP_FCGI_CHILDREN=\"20\" PHP_FCGI_MAX_REQUESTS=\"500\" ${php} -c ${php}.ini -b 127.0.0.1:9667\n\n"
+	    String base = getServletConfig().getServletContext().getRealPath(cgiPathPrefix);
+	    StringBuffer buf = new StringBuffer("./");
+	    buf.append("php-cgi-");
+	    buf.append(Util.osArch);
+	    buf.append("-");
+	    buf.append(Util.osName);
+    	    String wrapper = buf.toString();
+	    ServletException ex = new ServletException(
+"A security exception occured, could not run PHP.\n" +
+"Please start Apache or IIS or start a standalone PHP server.\n"+
+"For example with the commands: \n\n" +
+"cd " + base + "\n" + 
+"chmod +x " + wrapper + "\n" + 
+"X_JAVABRIDGE_OVERRIDE_HOSTS=\"/\" PHP_FCGI_CHILDREN=\"20\" PHP_FCGI_MAX_REQUESTS=\"500\" "+wrapper+" -c "+wrapper+".ini -b 127.0.0.1:9667\n\n"
 	    		, sec);
 	    php=null;
 	    checkCgiBinary(getServletConfig());

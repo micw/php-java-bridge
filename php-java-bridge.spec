@@ -1,17 +1,11 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 3.0.7pre
+%define version 3.0.7rc
 %define release 1
 %define PHP_MAJOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | sed 's/\\\..*$//')
-# NOTE: If /etc/sysconfig/java contains a line which points to JAVA_HOME, e.g. 
-# /usr/java/jdk1.5.0
-# the RPM assumes that IBM or SUN java is installed and checks j2re and j2sdk.
-# If /etc/sysconfig/java is empty or does not exist, it is assumed that
-# GNU java or Sun java is installed and the code searches for RPMs providing
-# jre and java-devel instead.
-%define have_sysconfig_java %(test -s /etc/sysconfig/java && echo 1 || echo 0)
+%define have_j2 %((rpm -q --whatprovides j2re || rpm -q --whatprovides j2sdk) >/dev/null && echo 1 || echo 0)
 %define tomcat_name        tomcat5
 %define tomcat_webapps		%{_localstatedir}/lib/%{tomcat_name}/webapps
-%define shared_java        /usr/share/java
+%define shared_java        %{_datadir}/java
 
 Name: php-java-bridge
 Summary: PHP Hypertext Preprocessor to Java Bridge
@@ -31,8 +25,8 @@ BuildRequires: httpd make
 BuildRequires: libtool >= 1.4.3
 BuildRequires: automake >= 1.6.3
 BuildRequires: autoconf >= 2.57
-%if %{have_sysconfig_java} == 1
-BuildRequires: j2sdk >= 1.4.1
+%if %{have_j2} == 1
+BuildRequires: j2sdk >= 1.4.2
 %else
 BuildRequires: java-devel >= 1.4.2
 %endif
@@ -47,12 +41,11 @@ Requires: php >= 5.0.4
 %endif
 Requires: httpd 
 
-%if %{have_sysconfig_java} == 1
-Requires: j2re >= 1.4.1
+%if %{have_j2} == 1
+Requires: j2re >= 1.4.2
 %else
 Requires: jre >= 1.4.0
 %endif
-Provides: php-java-bridge
 
 BuildRoot: %{_tmppath}/%{name}-root
 
@@ -76,7 +69,7 @@ Conflicts: php-java-bridge-standalone
 Tomcat/J2EE backend for the PHP/Java Bridge
 
 %package devel
-Group: Development/Documentation
+Group: Development/Libraries
 Summary: PHP/Java Bridge development files and documentation
 Requires: php-java-bridge = %{version}
 %description devel
@@ -84,7 +77,7 @@ PHP/Java Bridge development files and documentation
 
 
 %prep
-echo Building for PHP %{PHP_MAJOR_VERSION}. have_sysconfig_java: %{have_sysconfig_java}.
+echo Building for PHP %{PHP_MAJOR_VERSION}.
 
 %setup
 
@@ -94,17 +87,17 @@ PATH=/bin:/usr/bin
 LD_LIBRARY_PATH=/lib:/usr/lib
 
 # calculate java dir
-if test -s /etc/sysconfig/java; then
-java_dir=`head -1 /etc/sysconfig/java`
-else
+%if %{have_j2} == 1
+pkgid=`rpm -q --whatprovides j2sdk --queryformat "%{PKGID} %{VERSION}\n" | sed 's/\./0/g;s/_/./' |sort -r -k 2,2 -n | head -1 | awk '{print $1}'`
+%else
 pkgid=`rpm -q --whatprovides java-devel --queryformat "%{PKGID} %{VERSION}\n" | sed 's/\./0/g;s/_/./' |sort -r -k 2,2 -n | head -1 | awk '{print $1}'`
+%endif
 jdk=`rpm  -q --pkgid $pkgid`
 java=`rpm -ql $jdk | grep 'bin/java$' | head -1`
 java_dir=`dirname $java`
 java_dir=`dirname $java_dir`
 if test X`basename $java_dir` = Xjre; then
   java_dir=`dirname $java_dir`;
-fi
 fi
 echo "using java_dir: $java_dir"
 if test X$java_dir = X; then echo "ERROR: java not installed" >2; exit 1; fi
@@ -187,6 +180,20 @@ fi
 %post tomcat
 echo "PHP/Java Bridge tomcat backend installed. Start with:"
 echo "service tomcat5 restart"
+echo "service httpd restart"
+echo
+if test -f /etc/selinux/config; then
+	te=/etc/selinux/%{__policy_tree}/src/policy/domains/program/php-java-bridge.te
+	fc=/etc/selinux/%{__policy_tree}/src/policy/file_contexts/program/php-java-bridge.fc
+    echo "SECURITY ENHANCED LINUX"
+    echo "-----------------------"
+	echo "You are running a SELinx system. Please install the policy sources:"
+	echo "rpm -i selinux-policy-%{__policy_tree}-sources-*.rpm"
+	echo "sh %{_docdir}/%{name}-tomcat-%{version}/update_policy.sh \\"
+    echo "                          /etc/selinux/%{__policy_tree}/src/policy"
+	echo "Please see INSTALL and README documents for more information."
+    echo
+fi
 
 %post standalone
 # calculate java_dir again
@@ -213,6 +220,7 @@ EOF2
 chkconfig php-java-bridge on
 echo "PHP/Java Bridge standalone backend installed. Start with:"
 echo "service php-java-bridge restart"
+echo "service httpd restart"
 echo
 if test -f /etc/selinux/config; then
 	te=/etc/selinux/%{__policy_tree}/src/policy/domains/program/php-java-bridge.te
@@ -221,9 +229,10 @@ if test -f /etc/selinux/config; then
     echo "-----------------------"
 	echo "You are running a SELinx system. Please install the policy sources:"
 	echo "rpm -i selinux-policy-%{__policy_tree}-sources-*.rpm"
-	echo "sh %{_docdir}/php-java-bridge-%{version}/update_policy.sh \\"
+	echo "sh %{_docdir}/%{name}-standalone-%{version}/update_policy.sh \\"
     echo "                          /etc/selinux/%{__policy_tree}/src/policy"
 	echo "Please see INSTALL and README documents for more information."
+    echo
 fi
 
 %preun standalone
@@ -237,16 +246,16 @@ rm -rf %{tomcat_webapps}/JavaBridge
 
 %files -f filelist
 %defattr(-,root,root)
-%doc README README.GNU_JAVA README.MONO+NET LICENSE CREDITS NEWS ChangeLog test.php test.php4 php-java-bridge.te php-java-bridge.fc update_policy.sh examples tests.php5 php_java_lib
+%doc README README.GNU_JAVA README.MONO+NET LICENSE CREDITS NEWS ChangeLog test.php test.php4 examples tests.php5 php_java_lib INSTALL.LINUX 
 
 %files standalone -f filelist-standalone
 %defattr(-,root,root)
-%doc INSTALL LICENSE
+%doc INSTALL LICENSE php-java-bridge.te php-java-bridge.fc update_policy.sh 
 
 %files tomcat -f filelist-tomcat
 %defattr(-,tomcat,tomcat)
 %attr(-,root,root) /etc/php.d/java-servlet.ini
-%doc %attr(-,root,root) INSTALL.SERVLET LICENSE
+%doc %attr(-,root,root) INSTALL.J2EE LICENSE php-java-bridge.te php-java-bridge-tomcat.te php-java-bridge.fc update_policy.sh 
 
 %files devel -f filelist-devel
 %defattr(-,root,root)

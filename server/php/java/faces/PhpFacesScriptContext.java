@@ -45,7 +45,7 @@ public class PhpFacesScriptContext extends PhpSimpleHttpScriptContext {
 	this.env.put("X_JAVABRIDGE_CONTEXT", ctx.getId());
 	/* redirect to ourself */
 	StringBuffer buf = new StringBuffer("127.0.0.1:");
-	buf.append(req.getServerPort());
+	buf.append(req.getLocalPort());
 	buf.append("/");
 	buf.append(req.getRequestURI());
 	buf.append(".php"); // it doesn't matter what we send here, as long as it ends with .php

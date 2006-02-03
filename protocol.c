@@ -242,7 +242,14 @@ setcookie('%s', '%s', 0, $path);\n\
 
   TSRMLS_FETCH();
 
-  if(!path) path = (char*)empty;
+  /* if path is empty or if java.servlet=On, discard path value. Use
+	 java.servlet=MultiUser to retain the path */
+  if(!path || 
+	 (EXT_GLOBAL(cfg)->servlet_is_default
+	  && !(EXT_GLOBAL(cfg)->is_cgi_servlet))) {
+	path = (char*)empty;
+  }
+
   EXT_GLOBAL(snprintf)(buf, sizeof(buf), (char*)cmd, path, key, val);
   ret = zend_eval_string((char*)buf, 0, (char*)name TSRMLS_CC);
   assert(SUCCESS==ret);

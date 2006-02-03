@@ -144,6 +144,7 @@ struct cfg {
   short can_fork;				/* 0 if user has hard-coded the socketname */
   /** The java.servlet, defaults to /JavaBridge/JavaBridge.php */
   char* servlet;				/* On or servlet context */
+  short servlet_is_default;		/* If java.servlet=On */
   /** When the environment variable X_JAVABRIDGE_OVERRIDE_HOSTS is set
 	  to "/" or "host:port//Context/Servlet, the values java.servlet
 	  and java.hosts are taken from this environment variable. Used by

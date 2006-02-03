@@ -96,7 +96,9 @@ struct proxyenv_ {
   short must_reopen; 
 
   /* for servlet engines only */
-  char *servlet_ctx, *servlet_context_string;
+  char *servlet_ctx;
+  char *servlet_context_string;	/* original rinit value from
+								   get_servlet_context() */
   short backend_has_session_proxy;
   
   void (*handle_request)(proxyenv *env);

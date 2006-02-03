@@ -46,10 +46,11 @@ const static char ext_dir[] = "extension_dir";
 
 EXT_EXTERN_MODULE_GLOBALS(EXT)
 
-
+/* Windows can handle slashes as well as backslashes so use / everywhere */
+/* instead of static const char separator[2] = {ZEND_PATHS_SEPARATOR, 0}; */
+static const char separator[2] = "/";
 #if EXTENSION == JAVA
 static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], short for_display TSRMLS_DC) {
-  static const char separator[2] = {ZEND_PATHS_SEPARATOR, 0};
   char *s, *p;
   char*program=EXT_GLOBAL(cfg)->vm;
   char*cp=EXT_GLOBAL(cfg)->classpath;
@@ -111,7 +112,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
 	p=malloc(strlen(s)+strlen(ext)+sizeof(bridge));
 	strcpy(p, s); strcat(p, ext); 
 	slash=p+strlen(p)-1;
-	if(*p&&*slash==ZEND_PATHS_SEPARATOR) *slash=0;
+	if(*p&&*slash==*separator) *slash=0;
 	strcat(p, bridge);
   } else {
 	p=malloc(strlen(s)+strlen(cp)+1);
@@ -164,13 +165,12 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   p=malloc(strlen(home)+sizeof executable);
   strcpy(p, home); 
   slash=p+strlen(p)-1;
-  if(*p&&*slash==ZEND_PATHS_SEPARATOR) *slash=0;
+  if(*p&&*slash==*separator) *slash=0;
   strcat(p, executable);
 
   args[1] = p;
   /* if socketname is off, show the user how to start a TCP backend */
   if(for_display && !(EXT_GLOBAL(option_set_by_user) (U_SOCKNAME, EXT_GLOBAL(ini_user)))) {
-	static const char zero[] = "0";
 	cfg_sockname="0";
 	s_prefix=inet_socket_prefix;
 	cfg_logFile="";

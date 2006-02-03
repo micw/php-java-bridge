@@ -167,9 +167,6 @@ Build and execution instructions:
   Please first look at the output of phpinfo() to see the original
   values.  
 
-  See the files java.ini and java.ini.windows for a complete list
-  of options and .ini examples.
-
 ---------------------------------------------
   Starting the PHP/Java Bridge automatically
   ------------------------------------------
@@ -469,14 +466,15 @@ Build and execution instructions:
 
         su -c "sh update_policy.sh /etc/selinux/targeted/src/policy"
       
-  If the default policy is too restrictive and e.g. you want to use the
-  PHP/Java Bridge to connect to your J2EE server(s), you can temporarily 
-  set the policy to "permissive", for example with the command "setenforce
-  Permissive". Connect to the server, then extract the permissions
-  from the audit log, for example with the command "audit2allow -d", then
-  append them at the end of the "php-java-bridge.te" file and load the
-  updated policy into the kernel. Don't forget to switch back, for
-  example with "setenforce Enforcing".
+  If the default policy is too restrictive and e.g. you want to use
+  the PHP/Java Bridge to connect to your J2EE server(s), you can
+  temporarily set the policy to "permissive", for example with the
+  command "setenforce Permissive". Connect to the server, then extract
+  the permissions from the audit log, for example with the command
+  "audit2allow -l -i /var/log/audit/audit.log", then append them at the
+  end of the "php-java-bridge.te" file and load the updated policy into
+  the kernel. Don't forget to switch back, for example with "setenforce
+  Enforcing".
 
 ------------------------------------
   Loading user classes and libraries

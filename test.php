@@ -9,7 +9,11 @@ if (!extension_loaded('java')) {
 
   echo "Please permanently activate the extension. Loading java extension now...\n";
   if (!@dl('java.so')&&!@dl('php_java.dll')) {
-    echo "Error: The java extension is not installed.\n";
+    echo "Error: Either the java extension is not installed \n";
+    echo "or it was compiled against an older or newer php version.\n";
+    echo "See the HTTP (IIS or Apache) server log for details.\n";
+    !dl('java.so')&&!dl('php_java.dll');
+    exit(2);
   }
  }
 if(@java_get_server_name() != null) {
@@ -62,4 +66,3 @@ if(@java_get_server_name() != null) {
 
  }
 ?>
-

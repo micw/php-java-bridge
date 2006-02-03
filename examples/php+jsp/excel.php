@@ -9,6 +9,7 @@ if (!extension_loaded('java')) {
 
 header("Content-type: application/x-excel");
 header("Content-Disposition: attachment; filename=downloaded.xls");
+java_require("poi.jar");	// try to load a local poi.jar first
 java_require("http://php-java-bridge.sf.net/poi.jar");
 
 // create a 50x40 excel sheet and return it to the client

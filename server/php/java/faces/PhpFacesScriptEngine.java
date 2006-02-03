@@ -26,8 +26,7 @@ public class PhpFacesScriptEngine extends PhpScriptEngine implements Invocable {
     private HttpServletRequest request;
     private HttpServletResponse response;
     private PhpScriptWriter writer;
-	
-	
+
     /**
      * Creates a new ScriptEngine.
      * @param kontext The ServletContext
@@ -36,11 +35,12 @@ public class PhpFacesScriptEngine extends PhpScriptEngine implements Invocable {
      * @param writer The PhpScriptWriter
      */
     public PhpFacesScriptEngine(ServletContext kontext, HttpServletRequest request, HttpServletResponse response, PhpScriptWriter writer) {
-	super();
+        super(false);
 	this.ctx = kontext;
 	this.request = request;
 	this.response = response;
 	this.writer = writer;
+	initialize();
     }
 
     protected ScriptContext getScriptContext(Bindings namespace) {

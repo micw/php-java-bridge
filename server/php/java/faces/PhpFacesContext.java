@@ -49,7 +49,7 @@ public class PhpFacesContext extends FacesContext {
      * @return The base URL, e.g. http://127.0.0.1:8080/JavaBridge
      */
     public String getBaseURL() {
-	return getBaseURL(String.valueOf(req.getServerPort()));
+	return getBaseURL(String.valueOf(req.getLocalPort()));
     }
     /**
      * 

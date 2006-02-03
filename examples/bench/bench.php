@@ -16,7 +16,9 @@ $php_output = "workbook_php.xls";
 $sys = new java("java.lang.System");
 
 // fetch classes and compile them to native code.
-java_set_library_path("$here/exceltest.jar;poi.jar;http://php-java-bridge.sf.net/poi.jar");
+// use local poi.jar, if installed
+java_require("$here/exceltest.jar;poi.jar");
+java_require("$here/exceltest.jar;http://php-java-bridge.sf.net/poi.jar");
 $excel = new java("ExcelTest");
 $excel->createWorkbook("/dev/null", 1, 1);
 

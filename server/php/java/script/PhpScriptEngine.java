@@ -52,16 +52,32 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
 
     private ScriptEngineFactory factory = null;
 
-    /**
-     * Create a new ScriptEngine.
-     */
-    public PhpScriptEngine() {
+    protected void initialize() {
       setContext(getScriptContext(null));
     }
+    /**
+     * Create a new ScriptEngine with a default context.
+     */
+    public PhpScriptEngine() {
+        initialize(); 	// initialize it here, otherwise we have to override all inherited methods.
+        		// needed because parent (JDK1.6) initializes and uses a protected context field 
+        		// instead of calling getContext() when appropriate.
+    }
 
+    /**
+     * Create a new ScriptEngine from a factory.
+     * @param factory The factory
+     * @see #getFactory()
+     */
     public PhpScriptEngine(PhpScriptEngineFactory factory) {
-      this();
-      this.factory = factory;
+        this();
+        this.factory = factory;
+    }
+
+    /* Revert constructor chain. Call super(false); privateInit(); super.initialize(), 
+     * see PhpFacesScriptEngine constructor and PhpScriptEngine() constructor. -- The jsr223 API is really odd ... */
+    protected PhpScriptEngine(boolean initialize) {
+        if(initialize) initialize();
     }
 
     /* (non-Javadoc)

@@ -164,7 +164,7 @@ public class Util {
 	DEFAULT_EXTENSION_DIR = getProperty(p, "DEFAULT_EXTENSION_DIR", null);
 	EXTENSION_NAME = getProperty(p, "EXTENSION_DISPLAY_NAME", "JavaBridge");
 	try {
-	    String s = getProperty(p, "DEFAULT_LOG_LEVEL", "2");
+	    String s = getProperty(p, "DEFAULT_LOG_LEVEL", "3");
 	    DEFAULT_LOG_LEVEL = Integer.parseInt(s);
 	    Util.logLevel=Util.DEFAULT_LOG_LEVEL; /* java.log_level in php.ini overrides */
 	} catch (NumberFormatException e) {/*ignore*/}

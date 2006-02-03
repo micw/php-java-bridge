@@ -40,7 +40,7 @@ struct cfg *EXT_GLOBAL (cfg)  = 0;
 static const int java_errno=0;
 int *__errno (void) { return &java_errno; }
 #define php_info_print_table_row(a, b, c)		\
-  php_info_print_table_row_ex(a, "java", b, c)
+  php_info_print_table_row_ex(a, "v", b, c)
 #endif
 
 static void clone_cfg(TSRMLS_D) {
@@ -465,10 +465,10 @@ static void values(INTERNAL_FUNCTION_PARAMETERS)
 static const char warn_session[] = 
 "the session module's session_write_close() tried to write garbage, aborted. \
 -- Have you loaded the session module before the java module? \n Use \
-java_session(session_id())->set(key,val) instead of the \
+java_session(session_id())->put(key,val) instead of the \
 \"$_SESSION[key]=val\" syntax, if you don't want to depend on the \
 session module. Else if \"session_write_close();\" at the end of \
-your script fixes this problem, please report this session module bug \
+your script fixes this problem, please report this bug \
 to the PHP release team.";
 static const char identity[] = "serialID";
 static void serialize(INTERNAL_FUNCTION_PARAMETERS)
@@ -942,10 +942,14 @@ static PHP_INI_MH(OnIniServlet)
 {
   if (new_value) {
 	if((EXT_GLOBAL (ini_set) &U_SERVLET)) free(EXT_GLOBAL(cfg)->servlet);
-	if(!strncasecmp(on, new_value, 2) || !strncasecmp(on2, new_value, 1))
+	if(!strncasecmp(on, new_value, 2) || !strncasecmp(on2, new_value, 1)) {
 	  EXT_GLOBAL(cfg)->servlet=strdup(DEFAULT_SERVLET);
-	else
+	  EXT_GLOBAL(cfg)->servlet_is_default=1;
+	}
+	else {
 	  EXT_GLOBAL(cfg)->servlet=strdup(new_value);
+	  EXT_GLOBAL(cfg)->servlet_is_default=0;
+	}
 	assert(EXT_GLOBAL(cfg)->servlet); if(!EXT_GLOBAL(cfg)->servlet) exit(6);
 	EXT_GLOBAL(ini_updated)|=U_SERVLET;
   }
