@@ -31,9 +31,9 @@ fi
 # if called with non-zero args, invoke
 if test $# != 0; then
   pid=${PID}
-  log=/var/log/php-java-bridge
+  log=/var/log/php-java-bridge.log
   if test "$inst" = "user"; then
-      log=/tmp/php-java-bridge
+      log=/tmp/php-java-bridge.log
   fi
 
   trap 'kill `cat ${pid}`; rm -f $pid' 2 15
@@ -44,7 +44,7 @@ if test $# != 0; then
   java="${ext}/RunJavaBridge"
   LANG="$LANG_SYSTEM" 
   unset LC_ALL
-  $java "$@" &
+  $java "$@" >$log 2>&1 &
   echo $! >$pid
   wait
   rm -f $pid;

@@ -1,6 +1,7 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
 #include <stdlib.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
@@ -37,6 +38,7 @@ char *java="@PHP_JAVA@";
 int main(int argc, char**_argv){
   char **argv;
   char *vm;
+
   if(argc<4 && argc!=2) usage(_argv[0]);
 
   if(strlen(java)==3&&!strcmp("yes",java))
@@ -62,6 +64,8 @@ int main(int argc, char**_argv){
       argv[i]=stringdup(_argv[i+1]);
     argv[i]=0;
   }
+  setreuid(geteuid(), -1);
+  setregid(getegid(), -1);
   if(*argv[0]=='/') execv(argv[0], argv); else execvp(argv[0], argv);
   fprintf(stderr, "Could not execute %s: %s\n", argv[0], strerror(errno));
   return 2;

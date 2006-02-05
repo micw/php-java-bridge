@@ -6,9 +6,26 @@ Please send bug reports, questions and suggestions to
 
 Version 3.0.7:
 
-* It is now possible to compile the php java extension without java
-  ./configure --without-java --without-mono creates only the java.so or
-  php_java.dll.
+* When RunJavaBridge is used, it is possible to start the backend with
+a non root uid. For example:
+
+  chown apache:apache /usr/lib/php/modules/RunJavaBridge
+  chmod 6111 /usr/lib/php/modules/RunJavaBridge
+
+and java.wrapper = /usr/lib/php/modules/RunJavaBridge in the php.ini
+(default is: <extension_dir>/RunJavaBridge) will automatically start
+the backend as the apache user.
+  
+You must switch off the java.log_file and java.socket option,
+otherwise it may be that the backend will not be able to create the
+log or socket files. The default log file is stderr, i.e. all log
+entries appear in the HTTP server error log. The default socket file
+is @php-java-bridge<pid>, i.e. a socket created in the linux abstract
+namespace.
+    
+* It is now possible to compile the php java extension without java:
+/configure --without-java --without-mono creates only the java.so or
+php_java.dll.
 
 * java => 1.4.2 is required.
 
@@ -21,14 +38,17 @@ php-java-bridge RPM download. The linux java.so is now called
 "java-x86-linux.dll" and can be found in the JavaBridge.war download.
 
 * The Linux RPM has been split into 4 separate RPM files:
+
   php-java-bridge*.rpm: contains the basic files; java extension for
-  PHP/Apache HTTP server and a backend which automatically starts and
-  stops when the HTTP server starts/stops.
+  PHP/Apache HTTP server and a simple backend which automatically
+  starts and stops when the HTTP server starts/stops. The bridge log
+  appears in the http server error log.
 
   php-java-bridge-standalone*.rpm: contains the standalone service
   script. Conflicts with the tomcat backend. The tomcat backend is more
   than 2 times faster but less secure; it uses named pipes instead of
-  abstract local "unix domain" sockets.
+  abstract local "unix domain" sockets. The standalone backend is now
+  started as the apache user.
 
   php-java-bridge-tomcat*.rpm: contains the tomcat backend. Conflicts
   with the standalone backend.

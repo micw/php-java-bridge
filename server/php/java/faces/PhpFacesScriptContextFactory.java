@@ -6,6 +6,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import php.java.script.IPhpScriptContext;
 import php.java.servlet.ContextFactory;
 
 /**
@@ -14,8 +15,6 @@ import php.java.servlet.ContextFactory;
  *
  */
 public class PhpFacesScriptContextFactory extends php.java.servlet.ContextFactory {
-    private final PhpFacesScriptContext	context;
-
     /**
      * Create a new ContextFactory
      * @param context The ScriptContext
@@ -24,12 +23,12 @@ public class PhpFacesScriptContextFactory extends php.java.servlet.ContextFactor
      * @param res The ServletResponse
      * @return The ContextFactory
      */
-    public static ContextFactory addNew(PhpFacesScriptContext context, ServletContext kontext, HttpServletRequest req, HttpServletResponse res) {
+    public static ContextFactory addNew(IPhpScriptContext context, ServletContext kontext, HttpServletRequest req, HttpServletResponse res) {
 	PhpFacesScriptContextFactory ctx = new PhpFacesScriptContextFactory(context, kontext, req, res);
 	ctx.add();
 	return ctx;
     }
-    protected PhpFacesScriptContextFactory(PhpFacesScriptContext context, ServletContext ctx, HttpServletRequest req, HttpServletResponse res) { 
+    protected PhpFacesScriptContextFactory(IPhpScriptContext context, ServletContext ctx, HttpServletRequest req, HttpServletResponse res) { 
 	super(ctx, req, req, res);
 	this.context = context; 
     }

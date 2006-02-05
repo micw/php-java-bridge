@@ -70,8 +70,8 @@ JavaBridge.war: JavaBridge.jar $(SERVLET) $(JAVA_BRIDGE_SERVLET_JAR) $(SCRIPT) $
 	rm WEB-INF/lib/servlet-api.jar
 	cp ../examples/php+jsp/*.jar WEB-INF/lib
 	cp -r ../examples/java-server-faces .
-	cp ../examples/php+jsp/*.php ../examples/php+jsp/index.html ../examples/php+jsp/*.jsp  .
+	cp ../examples/php+jsp/*.php ../examples/php+jsp/*.jsp  .
 	cp ../test.php .
-	$(PHP_JAVA)/bin/jar cMf JavaBridge.war index.html *.php java-server-faces *.jsp META-INF/MANIFEST.MF WEB-INF/web.xml WEB-INF/faces-config.xml WEB-INF/cgi WEB-INF/lib/*.jar
+	$(PHP_JAVA)/bin/jar cMf JavaBridge.war *.php java-server-faces *.jsp META-INF/MANIFEST.MF WEB-INF/web.xml WEB-INF/faces-config.xml WEB-INF/cgi WEB-INF/lib/*.jar
 
 endif

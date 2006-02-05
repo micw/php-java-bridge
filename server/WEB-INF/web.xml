@@ -79,4 +79,9 @@
         <url-pattern>*.php</url-pattern>
     </servlet-mapping>
 
+    <!-- Welcome files -->
+    <welcome-file-list>
+        <welcome-file>index.php</welcome-file>
+    </welcome-file-list>
+
 </web-app>

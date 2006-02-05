@@ -164,7 +164,7 @@ public class PhpJavaServlet extends FastCGIServlet {
     	super.init(config);
        
 	Util.setLogger(new Logger(config.getServletContext()));
-        DynamicJavaBridgeClassLoader.initClassLoader(Util.DEFAULT_EXTENSION_DIR);
+        DynamicJavaBridgeClassLoader.initClassLoader();
 
 	Util.TCP_SOCKETNAME = String.valueOf(CGI_CHANNEL);
 	if(Util.VERSION!=null)

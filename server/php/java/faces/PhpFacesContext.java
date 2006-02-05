@@ -28,6 +28,7 @@ import php.java.bridge.NotImplementedException;
 import php.java.script.PhpScriptEngine;
 import php.java.script.PhpScriptWriter;
 import php.java.script.URLReader;
+import php.java.servlet.CGIServlet;
 
 /**
  * A custom FacesContext. Stores the baseURL, creates script engines.
@@ -49,7 +50,7 @@ public class PhpFacesContext extends FacesContext {
      * @return The base URL, e.g. http://127.0.0.1:8080/JavaBridge
      */
     public String getBaseURL() {
-	return getBaseURL(String.valueOf(req.getLocalPort()));
+	return getBaseURL(String.valueOf(CGIServlet.getLocalPort(req)));
     }
     /**
      * 

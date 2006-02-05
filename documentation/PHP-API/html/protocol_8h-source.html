@@ -96,45 +96,43 @@
 00096   <span class="keywordtype">short</span> must_reopen; 
 00097 
 00098   <span class="comment">/* for servlet engines only */</span>
-00099   <span class="keywordtype">char</span> *servlet_ctx, *servlet_context_string;
-00100   <span class="keywordtype">short</span> backend_has_session_proxy;
-00101   
-00102   void (*handle_request)(proxyenv *env);
-00103 
-00104   void (*writeCreateObjectBegin)(proxyenv *env, <span class="keywordtype">char</span>*name, size_t strlen, <span class="keywordtype">char</span> createInstance, <span class="keywordtype">void</span> *result);
-00105   void (*writeCreateObjectEnd)(proxyenv *env);
-00106   void (*writeInvokeBegin)(proxyenv *env, <span class="keywordtype">long</span> object, <span class="keywordtype">char</span>*method, size_t strlen, <span class="keywordtype">char</span> property, <span class="keywordtype">void</span>* result);
-00107   void (*writeInvokeEnd)(proxyenv *env);
-00108   void (*writeResultBegin)(proxyenv *env, <span class="keywordtype">void</span>* result);
-00109   void (*writeResultEnd)(proxyenv *env);
-00110   void (*writeGetMethodBegin)(proxyenv *env, <span class="keywordtype">long</span> object, <span class="keywordtype">char</span>*method, size_t strlen, <span class="keywordtype">void</span>* result);
-00111   void (*writeGetMethodEnd)(proxyenv *env);
-00112   void (*writeCallMethodBegin)(proxyenv *env, <span class="keywordtype">long</span> object, <span class="keywordtype">long</span> method, <span class="keywordtype">void</span>* result);
-00113   void (*writeCallMethodEnd)(proxyenv *env);
-00114   void (*writeString)(proxyenv *env, <span class="keywordtype">char</span>*name, size_t strlen);
-00115   void (*writeBoolean)(proxyenv *env, <span class="keywordtype">short</span> boolean);
-00116   void (*writeLong)(proxyenv *env, <span class="keywordtype">long</span> l);
-00117   void (*writeDouble)(proxyenv *env, <span class="keywordtype">double</span> d);
-00118   void (*writeObject)(proxyenv *env, <span class="keywordtype">long</span> object);
-00119   void (*writeException)(proxyenv *env, <span class="keywordtype">long</span> object, <span class="keywordtype">char</span>*str, size_t len);
-00120   void (*writeCompositeBegin_a)(proxyenv *env);
-00121   void (*writeCompositeBegin_h)(proxyenv *env);
-00122   void (*writeCompositeEnd)(proxyenv *env);
-00123   void (*writePairBegin_s)(proxyenv *env, <span class="keywordtype">char</span>*key, size_t strlen);
-00124   void (*writePairBegin_n)(proxyenv *env, <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> key);
-00125   void (*writePairBegin)(proxyenv *env);
-00126   void (*writePairEnd)(proxyenv *env);
-00127   void (*writeUnref)(proxyenv *env, <span class="keywordtype">long</span> object);
-00128   void (*finish)(proxyenv *env);
-00129 
-00130   ssize_t (*f_recv)(proxyenv*env, <span class="keywordtype">void</span> *buf, size_t len);
-00131   ssize_t (*f_recv0)(proxyenv*env, <span class="keywordtype">void</span> *buf, size_t len);
-00132   ssize_t (*f_send)(proxyenv*env, <span class="keywordtype">int</span> peer, <span class="keyword">const</span> <span class="keywordtype">void</span> *buf, size_t len);
-00133   ssize_t (*f_send0)(proxyenv*env, <span class="keywordtype">int</span> peer, <span class="keyword">const</span> <span class="keywordtype">void</span> *buf, size_t len);
-00134 };
-00135 
-00136 <span class="preprocessor">#endif</span>
-</pre></div><hr size="1"><address style="align: right;"><small>Generated on Sun Jan 15 20:26:37 2006 for php-java-bridge by&nbsp;
+00099   <span class="keywordtype">char</span> *servlet_ctx;
+00100   <span class="keywordtype">char</span> *servlet_context_string; <span class="comment">/* original rinit value from</span>
+00101 <span class="comment">                                   get_servlet_context() */</span>
+00102   <span class="keywordtype">short</span> backend_has_session_proxy;
+00103   
+00104   void (*handle_request)(proxyenv *env);
+00105 
+00106   void (*writeCreateObjectBegin)(proxyenv *env, <span class="keywordtype">char</span>*name, size_t strlen, <span class="keywordtype">char</span> createInstance, <span class="keywordtype">void</span> *result);
+00107   void (*writeCreateObjectEnd)(proxyenv *env);
+00108   void (*writeInvokeBegin)(proxyenv *env, <span class="keywordtype">long</span> object, <span class="keywordtype">char</span>*method, size_t strlen, <span class="keywordtype">char</span> property, <span class="keywordtype">void</span>* result);
+00109   void (*writeInvokeEnd)(proxyenv *env);
+00110   void (*writeResultBegin)(proxyenv *env, <span class="keywordtype">void</span>* result);
+00111   void (*writeResultEnd)(proxyenv *env);
+00112   void (*writeString)(proxyenv *env, <span class="keywordtype">char</span>*name, size_t strlen);
+00113   void (*writeBoolean)(proxyenv *env, <span class="keywordtype">short</span> boolean);
+00114   void (*writeLong)(proxyenv *env, <span class="keywordtype">long</span> l);
+00115   void (*writeDouble)(proxyenv *env, <span class="keywordtype">double</span> d);
+00116   void (*writeObject)(proxyenv *env, <span class="keywordtype">long</span> object);
+00117   void (*writeException)(proxyenv *env, <span class="keywordtype">long</span> object, <span class="keywordtype">char</span>*str, size_t len);
+00118   void (*writeCompositeBegin_a)(proxyenv *env);
+00119   void (*writeCompositeBegin_h)(proxyenv *env);
+00120   void (*writeCompositeEnd)(proxyenv *env);
+00121   void (*writePairBegin_s)(proxyenv *env, <span class="keywordtype">char</span>*key, size_t strlen);
+00122   void (*writePairBegin_n)(proxyenv *env, <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> key);
+00123   void (*writePairBegin)(proxyenv *env);
+00124   void (*writePairEnd)(proxyenv *env);
+00125   void (*writeUnref)(proxyenv *env, <span class="keywordtype">long</span> object);
+00126   void (*finish)(proxyenv *env);
+00127 
+00128   ssize_t (*f_recv)(proxyenv*env, <span class="keywordtype">void</span> *buf, size_t len);
+00129   ssize_t (*f_recv0)(proxyenv*env, <span class="keywordtype">void</span> *buf, size_t len);
+00130   ssize_t (*f_send)(proxyenv*env, <span class="keywordtype">int</span> peer, <span class="keyword">const</span> <span class="keywordtype">void</span> *buf, size_t len);
+00131   ssize_t (*f_send0)(proxyenv*env, <span class="keywordtype">int</span> peer, <span class="keyword">const</span> <span class="keywordtype">void</span> *buf, size_t len);
+00132 };
+00133 
+00134 <span class="preprocessor">#endif</span>
+</pre></div><hr size="1"><address style="align: right;"><small>Generated on Sun Feb 5 13:18:20 2006 for php-java-bridge by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.2 </small></address>
 </body>

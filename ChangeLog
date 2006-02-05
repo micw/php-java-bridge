@@ -1,10 +1,51 @@
-2006-01-02  Jost Boekemeier  <jostb@intern>
+2006-02-05  Jost Boekemeier  <jostb@intern>
+	
+	* VERSION, php-java-bridge.spec: Version 3.0.7rc released
+	
+2006-02-04  Jost Boekemeier  <jostb@intern>
 
-	* examples/php+jsp/source.php, examples/php+jsp/index.html: New
+	* server/php/java/bridge/DynamicJavaBridgeClassLoader.java
+	(phpLibDir): Removed, not used.
+	(contextDir, getContextDir): Removed insane implementation, this
+	cannot be used because instances of this class are shared.
+	(updateJarLibraryPath): Check for rawContextDir/lib/file.jar
+	rewritten. The previous implementation did work with a static
+	context dir. But since 2.0.7 users can pass their own contextDir
+	to updateJarLibraryPath.
+	(initClassLoader): New procedure
+	(initClassLoader): Deprecated, users can set extension_dir and the
+	bridge will use that. It doesn't make sense to keep the old static
+	implementation.
+	(clear): contextDir variable doesn't exist anymore.
+	(reset): use new initClassLoader.
+
+	* server/php/java/bridge/JavaBridge.java (init),
+	server/php/java/bridge/JavaBridgeRunner.java (JavaBridgeRunner),
+	server/php/java/faces/PhpFacesScriptContext.java,
+	server/php/java/servet/PhpJavaServlet.java (init): use new
+	initClassLoader instead of the deprecated one.
+
+	* server/php/java/faces/Script.java (call): Display a message if
+	we could not connect to the specified (apache-, iis-) port. Try
+	again with the local (cgi-) port.
+	
+	* php-java-bridge.spec, php-java-bridge, php-java-bridge.service:
+	Start as user tomcat.
+
+	* server/natcJavaBridge.c
+	(Java_php_java_bridge_JavaBridge_openLog): Redirect to stderr (default).
+
+	* server/php/java/bridge/JavaBridge.java 
+	(init): Redirect to stderr (default).
+	
+	
+2006-02-02  Jost Boekemeier  <jostb@intern>
+
+	* examples/php+jsp/source.php, examples/php+jsp/index.php: New
 	files.
 
 	
-2006-01-01  Jost Boekemeier  <jostb@intern>
+2006-02-01  Jost Boekemeier  <jostb@intern>
 	
 	* examples/bench/bench.php: load a local poi.jar first.
 
@@ -204,7 +245,7 @@
 	
 2006-01-04  Jost Boekemeier  <jostb@intern>
 
-	* CREDITS: correct speling
+	* CREDITS: correct spelling
 
 	* INSTALL: Require j2re on RHEL3, jre on others
 

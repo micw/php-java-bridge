@@ -34,7 +34,7 @@ public class JavaBridgeRunner extends HttpServer {
      */
     public JavaBridgeRunner() {
 	super();
-	DynamicJavaBridgeClassLoader.initClassLoader(Util.DEFAULT_EXTENSION_DIR);
+	DynamicJavaBridgeClassLoader.initClassLoader();
 	ctxServer = new ContextServer(null);
     }
 

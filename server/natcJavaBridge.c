@@ -220,19 +220,24 @@ JNIEXPORT jboolean JNICALL Java_php_java_bridge_JavaBridge_openLog
   if(_logfile!=NULL) {
 	jboolean isCopy;
 	const char*sname = (*env)->GetStringUTFChars(env, _logfile, &isCopy);
-	if(sname && strlen(sname)) logfile=strdup(sname);
+	if(sname) logfile=strdup(sname);
 	(*env)->ReleaseStringUTFChars(env, _logfile, sname);
   } else {
-	char *s = LOGFILE;
-	if(s && strlen(s)>0) logfile = strdup(s);
+	logfile = strdup(LOGFILE);
   }
-  
   if(logfile) {
 	int fd, null;
-	fd = open(logfile, O_WRONLY | O_CREAT | O_APPEND | O_TRUNC, 0644);
-	if(fd==-1) return JNI_FALSE;
 	null = open("/dev/null", O_RDONLY);
 	if(null!=-1) dup2 (null,0); 
+	if(!*logfile) {	/* java.log_file="": direct everything to stderr */
+	  jboolean ret = JNI_TRUE;
+	  if(dup2(2,1)==-1) ret = JNI_FALSE;
+	  free(logfile);
+	  return ret;
+	}
+	fd = open(logfile, O_WRONLY | O_CREAT | O_APPEND | O_TRUNC, 0644);
+	free(logfile);
+	if(fd==-1) return JNI_FALSE;
 	if(fd!=-1) { 
 	  if(dup2(fd,1)==-1) return JNI_FALSE;
 	  if(dup2(fd,2)==-1) return JNI_FALSE;

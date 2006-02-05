@@ -11,6 +11,11 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import php.java.bridge.DynamicJavaBridgeClassLoader;
+import php.java.bridge.JavaBridgeRunner;
+import php.java.bridge.PhpProcedureProxy;
+import php.java.bridge.http.ContextFactory;
+
 
 /**
  * A simple ScriptContext which can be used in servlet environments.
@@ -18,7 +23,10 @@ import javax.servlet.http.HttpServletResponse;
  * @author jostb
  *
  */
-public abstract class PhpSimpleHttpScriptContext extends SimpleScriptContext implements IPhpScriptContext {
+public class PhpSimpleHttpScriptContext extends SimpleScriptContext implements IPhpScriptContext {
+    static {
+	DynamicJavaBridgeClassLoader.initClassLoader();
+    }
 
     /** Integer value for the level of SCRIPT_SCOPE */
     public static final int REQUEST_SCOPE = javax.script.http.HttpScriptContext.REQUEST_SCOPE;
@@ -120,5 +128,29 @@ public abstract class PhpSimpleHttpScriptContext extends SimpleScriptContext imp
      */
     public ServletContext getContext() {
         return context;
+    }
+
+    private php.java.bridge.http.ContextFactory ctx;
+    private HttpProxy kont;
+
+    public void setContextFactory(ContextFactory factory) {
+      this.ctx = factory;
+    }
+
+    public ContextFactory getContextFactory() {
+        return ctx;
+    }
+
+    public void setContinuation(HttpProxy kont) {
+        this.kont = kont;
+    }
+
+    public JavaBridgeRunner getHttpServer() {
+        throw new NullPointerException("PhpSimpleHttpScriptContext must be used in a HTTP server/Servlet Engine. Use PhpScriptContext instead.");
+    }
+
+    public boolean call(PhpProcedureProxy kont) throws Exception {
+	this.kont.call(kont);
+	return true;
     }
 }

@@ -19,16 +19,14 @@ import java.util.WeakHashMap;
  * @author jostb
  *
  */
+/*  
+ * Instances of this class are shared. 
+ * Use the JavaBridgeClassLoader if you need to access the current request-handling bridge instance. 
+ * */
 public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
-
-    // the local library directory (global one is /usr/share/java)
-    static private String phpLibDir;
 
     // the list of jar files in which we search for user classes.
     static private Collection sysUrls = null;
-
-    // the current user's php libdir
-    private String contextDir = null;
 
     // maps rawPath -> URL[]
     private static Map urlCache = Collections.synchronizedMap(new WeakHashMap());
@@ -40,11 +38,6 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     	super();
     }
     
-    private String getContextDir () {
-    	if(contextDir!=null) return contextDir;
-    	return phpLibDir;
-    }
-    
     /** Set the library path for the bridge instance. Examples:
      * setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");<br>
      * setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");<br>
@@ -54,16 +47,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
      */
     public void updateJarLibraryPath(String rawPath, String rawContextDir) {
     	String key = rawPath;
-    	if(rawContextDir==null) throw new NullPointerException("contextDir cannot be null.");
-	if(contextDir==null) {
-	    contextDir=rawContextDir+File.separator+"lib"+File.separator;
-	    try {
-		this.addURL(new URL("file:"+contextDir), false);
-	    } catch (Exception e) {
-		Util.printStackTrace(e);
-	    }
-	}
-
+    	rawContextDir += rawContextDir.endsWith("/") ? "lib/" : "/lib/";
 	/*
 	 * rawPath always starts with a token separator, e.g. ";" 
 	 */
@@ -107,7 +91,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 		    StringBuffer buf= new StringBuffer();
 		    if((f=new File(s)).isFile() || f.isAbsolute()) {
 		    	buf.append(s);
-		    } else if ((f=new File(getContextDir() + s)).isFile()) {
+		    } else if ((f=new File(rawContextDir + s)).isFile()) {
 		    	buf.append(f.getAbsolutePath());
 		    } else if ((f=new File("/usr/share/java/" + s)).isFile()) {
 			buf.append(f.getAbsolutePath());
@@ -168,24 +152,24 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	    }
 	}
     }
+    /**@deprecated Use #initClassLoader() instead*/
+    public static synchronized void initClassLoader(String phpConfigDir) {
+      initClassLoader(); 
+    }
+
     /**
      * add all jars found in the phpConfigDir/lib and /usr/share/java
-     * to the list of our URLs.  The user is expected to symbol .jar
+     * to the list of our URLs.  The user is expected to reference .jar
      * libraries explicitly with java_set_library_path, e.g.
      * java_set_library_path("foo.jar;bar.jar"); For backward
      * compatibility we add all URLs we encountered during startup
      * before throwing a "ClassNotFoundException".
      * @param phpConfigDir The default php config directory
      */
-    public static synchronized void initClassLoader(String phpConfigDir) {
-        DynamicJavaBridgeClassLoader.phpLibDir=phpConfigDir + "/lib/";
-	sysUrls=new ArrayList();
+    public static synchronized void initClassLoader() {
+ 	sysUrls=new ArrayList();
 	try {
-	    String[] paths;
-	    if(null!=phpConfigDir)
-		paths = new String[] {phpConfigDir+File.separator+"lib", "/usr/share/java", "/usr/share/java/ext"};
-	    else
-		paths = new String[] {"/usr/share/java", "/usr/share/java/ext"};
+	    String[] paths = new String[] {"/usr/share/java", "/usr/share/java/ext"};
 
 	    for(int i=0; i<paths.length; i++) {
 		File d = new File(paths[i]);
@@ -225,7 +209,6 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
      * Clears all caches.
      */
     public void clear() {
-    	contextDir=null;
     	super.clear();
     	addSysUrls();
     }
@@ -234,7 +217,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
      */
     public void reset() {
 	synchronized(getClass()) {
-	    initClassLoader(Util.DEFAULT_EXTENSION_DIR);
+	    initClassLoader();
 	    clear();
 	    clearCache();
 	}

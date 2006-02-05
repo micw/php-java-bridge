@@ -23,7 +23,6 @@ It contains the global structures and the callbacks required for zend engine 1 a
 <code>#include &lt;netinet/in.h&gt;</code><br>
 <code>#include &lt;arpa/inet.h&gt;</code><br>
 <code>#include &lt;netdb.h&gt;</code><br>
-<code>#include &lt;sys/un.h&gt;</code><br>
 <code>#include &lt;setjmp.h&gt;</code><br>
 
 <p>
@@ -252,7 +251,7 @@ Creates the Java and JavaClass structures and tries to start the backend if java
 <p>
 Called when the module terminates. 
 <p>
-Stops the backend, if it is running. When running in Apache/IIS, or as a FastCGI binary, this procedure is called only once. When running as a CGI binary this is called whenever the CGI binary terminates.     </td>
+Stops the backend, if it is running. When running in Apache/IIS or as a FastCGI binary, this procedure is called only once. When running as a CGI binary this is called whenever the CGI binary terminates.     </td>
   </tr>
 </table>
 <hr><h2>Variable Documentation</h2>
@@ -281,7 +280,7 @@ Holds the global configuration.
 This structure is shared by all php instances     </td>
   </tr>
 </table>
-<hr size="1"><address style="align: right;"><small>Generated on Sun Jan 15 20:26:37 2006 for php-java-bridge by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Sun Feb 5 13:18:20 2006 for php-java-bridge by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.2 </small></address>
 </body>

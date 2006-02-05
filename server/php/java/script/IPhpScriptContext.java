@@ -3,9 +3,9 @@
 package php.java.script;
 
 import java.io.Writer;
-import java.util.Map;
 
 import php.java.bridge.Invocable;
+import php.java.bridge.JavaBridgeRunner;
 import php.java.bridge.http.ContextFactory;
 
 /**
@@ -23,10 +23,11 @@ public interface IPhpScriptContext extends Invocable {
     public Writer getWriter();
 
     /**
-     * Returns the script environment.
-     * @return the environment
+     * Set the context factory
+     * @param factory the factory
      */
-    public Map getEnvironment();
+    public void setContextFactory(ContextFactory factory);
+
 
     /**
      * Returns the ContextFactory.
@@ -40,5 +41,10 @@ public interface IPhpScriptContext extends Invocable {
      */
     public void setContinuation(HttpProxy kont);
 
+    /**
+     * Return the http server associated with this context.
+     * @return The http server.
+     */
+    public JavaBridgeRunner getHttpServer();
 
 }

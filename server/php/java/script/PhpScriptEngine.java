@@ -7,7 +7,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.lang.reflect.Proxy;
 import java.net.UnknownHostException;
-import java.util.Map;
+import java.util.HashMap;
 
 import javax.script.AbstractScriptEngine;
 import javax.script.Bindings;
@@ -21,6 +21,7 @@ import php.java.bridge.PhpProcedure;
 import php.java.bridge.PhpProcedureProxy;
 import php.java.bridge.SessionFactory;
 import php.java.bridge.Util;
+import php.java.bridge.http.ContextFactory;
 
 /**
  * This class implements the ScriptEngine.<p>
@@ -49,11 +50,12 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
      */
     protected HttpProxy continuation = null;
     private StringReader localReader = null;
-
+    protected HashMap env = new HashMap();
+    
     private ScriptEngineFactory factory = null;
 
     protected void initialize() {
-      setContext(getScriptContext(null));
+      setContext(getPhpScriptContext());
     }
     /**
      * Create a new ScriptEngine with a default context.
@@ -126,9 +128,29 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
         this.name = name;
     }
 
+    /**
+     * Create a new context ID and a environment map which we send to the client.
+     *
+     */
+    protected void setNewContextFactory() {
+        ContextFactory ctx;
+        IPhpScriptContext context = (IPhpScriptContext)getContext(); 
+	env.clear();
+	
+	context.setContextFactory(ctx=PhpScriptContextFactory.addNew((ScriptContext)context));
+    	
+	/* send the session context now, otherwise the client has to 
+	 * call handleRedirectConnection */
+	env.put("X_JAVABRIDGE_CONTEXT", ctx.getId());
+	/* the client should connect back to us */
+	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS",Util.getHostAddress()+":"+context.getHttpServer().getSocket().getSocketName());
+
+    }
     private Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
         if(continuation != null) release();
-  	if(reader==null) return null;      
+  	if(reader==null) return null;
+  	
+  	setNewContextFactory();
         setName(name);
 	try {
 	    this.script = doEval(reader, context);
@@ -154,7 +176,6 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
     protected HttpProxy getContinuation(Reader reader, ScriptContext context) {
     	IPhpScriptContext phpScriptContext = (IPhpScriptContext)context;
     	SessionFactory ctx = phpScriptContext.getContextFactory();
-    	Map env = phpScriptContext.getEnvironment();
     	HttpProxy kont = new HttpProxy(reader, env, ctx, ((PhpScriptWriter)(context.getWriter())).getOutputStream()); 
      	phpScriptContext.setContinuation(kont);
 	return kont;
@@ -185,10 +206,11 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
 	return this.factory;
     }
 
-    protected ScriptContext getScriptContext(Bindings namespace) {
+    protected ScriptContext getPhpScriptContext() {
+        Bindings namespace;
         ScriptContext scriptContext = new PhpScriptContext();
         
-        if(namespace==null) namespace = createBindings();
+        namespace = createBindings();
         scriptContext.setBindings(namespace,ScriptContext.ENGINE_SCOPE);
         scriptContext.setBindings(getBindings(ScriptContext.GLOBAL_SCOPE),
 				   ScriptContext.GLOBAL_SCOPE);

@@ -76,7 +76,7 @@ public class Script
      * @return The result
      */
     private Object callWithExceptionHandler(String name, Object[] args, String script) {
-            try {
+      	    try {
                 return call(name, args, script);
             } catch (UnknownHostException e1) {
     	    Util.printStackTrace(e1);
@@ -93,10 +93,13 @@ public class Script
         try {
             return call(name, args, getScript(port));
         } catch (UnknownHostException e) {
+            Util.logMessage("getScript("+port+") failed with " + e + ", trying again using local port.");
             return callWithExceptionHandler(name, args, getScript(null));
         } catch (MalformedURLException e) {
+            Util.logMessage("getScript("+port+") failed with " + e + ", trying again using local port.");
             return callWithExceptionHandler(name, args, getScript(null));
         } catch (IOException e) {
+            Util.logMessage("getScript("+port+") failed with " + e + ", trying again using local port.");
             return callWithExceptionHandler(name, args, getScript(null));
         }
     }

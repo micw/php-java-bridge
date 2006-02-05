@@ -238,7 +238,7 @@ public class JavaBridge implements Runnable {
 	try {
 	    socket = LocalServerSocket.create(sockname, Util.BACKLOG);
 	} catch (Throwable e) {
-	    Util.logMessage("Local sockets not available:" + e + ". Try TCP sockets instead");
+	    Util.logMessage("Local sockets not available:" + e + ". Try(ing) TCP sockets instead");
 	}
 	if(null==socket)
 	    socket = TCPServerSocket.create(sockname, Util.BACKLOG);
@@ -253,6 +253,13 @@ public class JavaBridge implements Runnable {
 	System.err.println("Example: java -jar JavaBridge.jar");
 	System.err.println("Example: java -Djava.awt.headless=\"true\" -Dphp.java.bridge.threads=50 -jar JavaBridge.jar INET:0 3 JavaBridge.log");
 	System.exit(1);
+    }
+
+    private static void redirectJavaOutput() {
+	try {
+	    System.setOut(Util.logStream);
+	    System.setErr(Util.logStream);
+	} catch (Throwable t) {/*ignore*/}
     }
     /**
      * Global init
@@ -294,20 +301,20 @@ public class JavaBridge implements Runnable {
 	    }
 	    boolean redirectOutput = false;
 	    try {
-	    	redirectOutput = (logFile==null || logFile.length() == 0) || openLog(logFile);
+	    	redirectOutput = logFile==null || openLog(logFile);
 	    } catch (Throwable t) {/*ignore*/}
 
 	    if(!redirectOutput) {
-		try {
-		    Util.logStream=new java.io.PrintStream(new java.io.FileOutputStream(logFile));
-		} catch (Exception e) {
-		    Util.logStream=System.err;
-		}
+		Util.logStream = System.err;
+		if(logFile.length()>0) 
+		    try {
+			Util.logStream=new java.io.PrintStream(new java.io.FileOutputStream(logFile));
+		    } catch (Exception e) {/*ignore*/}
+		redirectJavaOutput();
 	    } else {
-		Util.logStream=System.err;
-		logFile="<stderr>";
+		Util.logStream = System.err;
+		logFile = "<stderr>";
 	    }
-	    
 	    ISocketFactory socket = bind(sockname);
 	    if(Util.VERSION != null)
 		Util.logMessage(Util.EXTENSION_NAME+  " version         : " + Util.VERSION);
@@ -326,7 +333,7 @@ public class JavaBridge implements Runnable {
 	    ThreadPool pool = null;
 	    if(maxSize>0) pool = new ThreadPool(Util.EXTENSION_NAME, maxSize);
             Util.logDebug("Starting to accept Socket connections");
-            DynamicJavaBridgeClassLoader.initClassLoader(Util.DEFAULT_EXTENSION_DIR);
+            DynamicJavaBridgeClassLoader.initClassLoader();
             
 	    while(true) {
 		Socket sock = socket.accept();

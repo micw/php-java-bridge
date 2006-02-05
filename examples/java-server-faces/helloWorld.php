@@ -7,9 +7,17 @@ if (!extension_loaded('java')) {
   }
 }
 
-
+/**
+ * This class keeps the state of our simple application.  The
+ * framework will save/restore the state if necessary.
+ */
 class helloWorld {
+  /* the state variable(s) */
+
   var $name="myName";
+
+
+  /* standard getter and setter for all state variables */
 
   function getValue($prop) {
     return $this->$prop;
@@ -19,14 +27,23 @@ class helloWorld {
     $this->$prop = $val;
   }
 
+
+  /* User functions */
+
+  /* see h:commandButton #1 in the UI */
   function send() {
     return "success";
   }
 
+  /* see validator of h:inputTest #1 in the UI */
   function xvalidate($ctx, $arg, $value) {
-    echo "validate: $value";
+    // this message goes to the server log
+    echo "helloWorld.php:: validate: $value";
+
     if($value->equals("myName")) {
-      echo "throw exception.";
+      // this message goes to the server log
+      echo "helloWorld.php:: throws validate exception.";
+
       $message = new Java("javax.faces.application.FacesMessage", "$value invalid, enter yourname");
       throw 
 	new JavaException("javax.faces.validator.ValidatorException", $message);
@@ -34,6 +51,13 @@ class helloWorld {
   }
 }
 
-// call() returns true if the php file was called from java.
+/* 
+ * check if we're called from the framework, redirect to index.php if
+ * not
+ */
 java_context()->call(java_closure(new helloWorld())) ||include("index.php");
+
+// this message goes to the server log
+echo "helloWorld.php:: script terminated";
+
 ?>

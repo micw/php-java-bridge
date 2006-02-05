@@ -75,6 +75,7 @@ import java.util.Vector;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
 import javax.servlet.UnavailableException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -440,6 +441,15 @@ public class CGIServlet extends HttpServlet {
 
     } //doGet
 
+    /**
+     * Returns the port# of the local port
+     * @param req The servlet request
+     * @return The local port or the value from the server port variable.
+     */
+    public static int getLocalPort(ServletRequest req) {
+      int port = req.getLocalPort(); if(port<=0) port = req.getServerPort();
+      return port;
+    }
 
     protected class CGIRunnerFactory {
         protected CGIRunner createCGIRunner(CGIEnvironment cgiEnv) {
@@ -687,7 +697,6 @@ public class CGIServlet extends HttpServlet {
 
         }
 
-
         /**
          * Constructs the CGI environment to be supplied to the invoked CGI
          * script; relies heavliy on Servlet API methods and findCGI
@@ -739,13 +748,13 @@ public class CGIServlet extends HttpServlet {
 
             envp.put("SERVER_SOFTWARE", "TOMCAT");
 
-            envp.put("SERVER_NAME", nullsToBlanks(req.getServerName()));
+            envp.put("SERVER_NAME", nullsToBlanks(req.getLocalName()));
 
             envp.put("GATEWAY_INTERFACE", "CGI/1.1");
 
             envp.put("SERVER_PROTOCOL", nullsToBlanks(req.getProtocol()));
 
-            int port = req.getServerPort();
+            int port = getLocalPort(req);
             Integer iPort = (port == 0 ? new Integer(-1) : new Integer(port));
             envp.put("SERVER_PORT", iPort.toString());
 

@@ -24,152 +24,162 @@
 00025 <span class="preprocessor"></span><span class="preprocessor">#include "TSRM.h"</span>
 00026 <span class="preprocessor">#endif</span>
 00027 <span class="preprocessor"></span>
-00028 <span class="comment">/* socket */</span>
-00029 <span class="preprocessor">#ifdef __MINGW32__</span>
-00030 <span class="preprocessor"></span><span class="preprocessor"># include &lt;winsock2.h&gt;</span>
-00031 <span class="preprocessor"># define close closesocket</span>
-00032 <span class="preprocessor"></span><span class="preprocessor">#else</span>
-00033 <span class="preprocessor"></span><span class="preprocessor">#include &lt;sys/types.h&gt;</span>
-00034 <span class="preprocessor">#include &lt;sys/stat.h&gt;</span>
-00035 <span class="preprocessor">#include &lt;fcntl.h&gt;</span>
-00036 <span class="preprocessor">#include &lt;sys/socket.h&gt;</span>
-00037 <span class="preprocessor">#include &lt;netinet/in.h&gt;</span>
-00038 <span class="preprocessor">#include &lt;arpa/inet.h&gt;</span>
-00039 <span class="preprocessor">#include &lt;netdb.h&gt;</span>
-00040 <span class="preprocessor">#ifndef CFG_JAVA_SOCKET_INET</span>
-00041 <span class="preprocessor"></span><span class="preprocessor"># include &lt;sys/un.h&gt;</span>
-00042 <span class="preprocessor"># ifdef HAVE_CONFIG_H</span>
-00043 <span class="preprocessor"></span><span class="preprocessor"># if !HAVE_DECL_AF_LOCAL</span>
-00044 <span class="preprocessor"></span><span class="preprocessor">#  define AF_LOCAL AF_UNIX</span>
-00045 <span class="preprocessor"></span><span class="preprocessor"># endif</span>
-00046 <span class="preprocessor"></span><span class="preprocessor"># if !HAVE_DECL_PF_LOCAL</span>
-00047 <span class="preprocessor"></span><span class="preprocessor">#  define PF_LOCAL PF_UNIX</span>
-00048 <span class="preprocessor"></span><span class="preprocessor"># endif</span>
-00049 <span class="preprocessor"></span><span class="preprocessor"># endif</span>
-00050 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
-00051 <span class="preprocessor"></span><span class="preprocessor">#endif </span>
-00052 <span class="preprocessor"></span>
-00053 <span class="preprocessor">#ifdef ZEND_ENGINE_2</span>
-00054 <span class="preprocessor"></span><span class="comment">/* for try/catch emulation */</span>
-00055 <span class="preprocessor">#include &lt;setjmp.h&gt;</span>
-00056 <span class="preprocessor">#endif</span>
-00057 <span class="preprocessor"></span>
-00058 <span class="keyword">extern</span> zend_module_entry EXT_GLOBAL(module_entry);
-00059 <span class="keyword">extern</span> zend_class_entry *EXT_GLOBAL(<a class="code" href="java_8c.html#a9">class_entry</a>);
-00060 <span class="keyword">extern</span> zend_class_entry *EXT_GLOBAL(<a class="code" href="java_8c.html#a10">array_entry</a>);
-00061 <span class="keyword">extern</span> zend_class_entry *EXT_GLOBAL(<a class="code" href="java_8c.html#a11">class_class_entry</a>);
-00062 <span class="keyword">extern</span> zend_class_entry *EXT_GLOBAL(<a class="code" href="java_8c.html#a12">class_class_entry_jsr</a>);
-00063 <span class="keyword">extern</span> zend_class_entry *EXT_GLOBAL(<a class="code" href="java_8c.html#a13">exception_class_entry</a>);
-00064 <span class="keyword">extern</span> function_entry EXT_GLOBAL(class_functions[]);
-00065 
-00066 <span class="preprocessor">#ifdef ZEND_ENGINE_2</span>
-00067 <span class="preprocessor"></span><span class="keyword">extern</span> zend_object_handlers EXT_GLOBAL(<a class="code" href="java_8c.html#a14">handlers</a>);
-00068 <span class="preprocessor">#endif</span>
-00069 <span class="preprocessor"></span><span class="keyword">extern</span> <span class="keyword">const</span> <span class="keywordtype">char</span> * <span class="keyword">const</span> EXT_GLOBAL(bridge_version);
-00070 
-00071 <span class="keyword">extern</span> <span class="keywordtype">int</span> EXT_GLOBAL(<a class="code" href="java_8c.html#a6">ini_updated</a>), EXT_GLOBAL (<a class="code" href="java_8c.html#a7">ini_user</a>), EXT_GLOBAL (<a class="code" href="java_8c.html#a8">ini_set</a>);
-00072 <span class="preprocessor">#define U_LOGFILE (1&lt;&lt;1)</span>
-00073 <span class="preprocessor"></span><span class="preprocessor">#define U_LOGLEVEL (1&lt;&lt;2)</span>
-00074 <span class="preprocessor"></span><span class="preprocessor">#define U_JAVA_HOME (1&lt;&lt;3)</span>
-00075 <span class="preprocessor"></span><span class="preprocessor">#define U_JAVA (1&lt;&lt;4)</span>
-00076 <span class="preprocessor"></span><span class="preprocessor">#define U_LIBRARY_PATH (1&lt;&lt;5)</span>
-00077 <span class="preprocessor"></span><span class="preprocessor">#define U_CLASSPATH (1&lt;&lt;6)</span>
-00078 <span class="preprocessor"></span><span class="preprocessor">#define U_SOCKNAME (1&lt;&lt;7)</span>
-00079 <span class="preprocessor"></span><span class="preprocessor">#define U_HOSTS (1&lt;&lt;8)</span>
-00080 <span class="preprocessor"></span><span class="preprocessor">#define U_SERVLET (1&lt;&lt;9)</span>
-00081 <span class="preprocessor"></span><span class="preprocessor">#define U_WRAPPER (1&lt;&lt;10)</span>
-00082 <span class="preprocessor"></span><span class="preprocessor">#define U_EXT_JAVA_COMPATIBILITY  (1&lt;&lt;11)</span>
-00083 <span class="preprocessor"></span>
-00084 <span class="preprocessor">#if EXTENSION == JAVA</span>
-00085 <span class="preprocessor"></span><span class="preprocessor">#define phpext_java_ptr &amp;EXT_GLOBAL(module_entry)</span>
-00086 <span class="preprocessor"></span><span class="preprocessor">#elif EXTENSION == MONO</span>
-00087 <span class="preprocessor"></span><span class="preprocessor">#define phpext_mono_ptr &amp;EXT_GLOBAL(module_entry)</span>
-00088 <span class="preprocessor"></span><span class="preprocessor">#else</span>
-00089 <span class="preprocessor"></span><span class="preprocessor"># error EXT must be mono or java.</span>
-00090 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
-00091 <span class="preprocessor"></span>
-00092 
-00093 <a class="code" href="java_8c.html#a89">PHP_MINIT_FUNCTION</a>(EXT);
-00094 <a class="code" href="java_8c.html#a91">PHP_MSHUTDOWN_FUNCTION</a>(EXT);
-00095 <a class="code" href="java_8c.html#a90">PHP_MINFO_FUNCTION</a>(EXT);
-00096 
-<a name="l00100"></a><a class="code" href="structcfg.html">00100</a> <span class="keyword">struct </span><a class="code" href="structcfg.html">cfg</a> {
-00101 <span class="preprocessor">#ifdef CFG_JAVA_SOCKET_INET</span>
-00102 <span class="preprocessor"></span>  <span class="keyword">struct </span>sockaddr_in saddr;
-00103 <span class="preprocessor">#else</span>
-00104 <span class="preprocessor"></span>
-<a name="l00105"></a><a class="code" href="structcfg.html#o0">00105</a>   <span class="keyword">struct </span>sockaddr_un saddr;
-00106 <span class="preprocessor">#endif</span>
-00107 <span class="preprocessor"></span>
-<a name="l00108"></a><a class="code" href="structcfg.html#o1">00108</a>   <span class="keywordtype">int</span> <a class="code" href="structcfg.html#o1">cid</a>; <span class="comment">// server's process id</span>
-<a name="l00110"></a><a class="code" href="structcfg.html#o2">00110</a> <span class="comment"></span>  <span class="keywordtype">int</span> <a class="code" href="structcfg.html#o2">err</a>; <span class="comment">// file descriptor: server's return code</span>
-00111 
-<a name="l00113"></a><a class="code" href="structcfg.html#o3">00113</a>   <span class="keywordtype">char</span>*<a class="code" href="structcfg.html#o3">sockname</a>;
-<a name="l00115"></a><a class="code" href="structcfg.html#o4">00115</a>   <span class="keywordtype">char</span> *<a class="code" href="structcfg.html#o4">default_sockname</a>;
-<a name="l00117"></a><a class="code" href="structcfg.html#o5">00117</a>   <span class="keywordtype">char</span>*<a class="code" href="structcfg.html#o5">hosts</a>;
-<a name="l00119"></a><a class="code" href="structcfg.html#o6">00119</a>   <span class="keywordtype">char</span>*<a class="code" href="structcfg.html#o6">classpath</a>;   
-<a name="l00121"></a><a class="code" href="structcfg.html#o7">00121</a>   <span class="keywordtype">char</span>*<a class="code" href="structcfg.html#o7">ld_library_path</a>;
-<a name="l00123"></a><a class="code" href="structcfg.html#o8">00123</a>   <span class="keywordtype">char</span>*<a class="code" href="structcfg.html#o8">wrapper</a>;
-<a name="l00125"></a><a class="code" href="structcfg.html#o9">00125</a>   <span class="keywordtype">char</span>*<a class="code" href="structcfg.html#o9">vm</a>;
-<a name="l00127"></a><a class="code" href="structcfg.html#o10">00127</a>   <span class="keywordtype">char</span>*<a class="code" href="structcfg.html#o10">vm_home</a>;
-<a name="l00129"></a><a class="code" href="structcfg.html#o11">00129</a>   <span class="keywordtype">char</span>*<a class="code" href="structcfg.html#o11">logLevel</a>;
-<a name="l00131"></a><a class="code" href="structcfg.html#o12">00131</a>   <span class="keywordtype">unsigned</span> <span class="keywordtype">short</span> <a class="code" href="structcfg.html#o12">logLevel_val</a>;
-<a name="l00133"></a><a class="code" href="structcfg.html#o13">00133</a>   <span class="keywordtype">char</span>*<a class="code" href="structcfg.html#o13">logFile</a>;
-<a name="l00135"></a><a class="code" href="structcfg.html#o14">00135</a>   <span class="keywordtype">short</span> <a class="code" href="structcfg.html#o14">can_fork</a>;               <span class="comment">/* 0 if user has hard-coded the socketname */</span>
-<a name="l00137"></a><a class="code" href="structcfg.html#o15">00137</a>   <span class="keywordtype">char</span>* <a class="code" href="structcfg.html#o15">servlet</a>;                <span class="comment">/* On or servlet context */</span>
-<a name="l00142"></a><a class="code" href="structcfg.html#o16">00142</a>   <span class="keywordtype">short</span> <a class="code" href="structcfg.html#o16">is_cgi_servlet</a>;         <span class="comment">/* 1: cgi env available */</span>
-<a name="l00144"></a><a class="code" href="structcfg.html#o17">00144</a>   <span class="keywordtype">short</span> <a class="code" href="structcfg.html#o17">socketname_set</a>;
-<a name="l00146"></a><a class="code" href="structcfg.html#o18">00146</a>   <span class="keywordtype">short</span> <a class="code" href="structcfg.html#o18">extJavaCompatibility</a>;
-00147 };
-00148 <span class="keyword">extern</span> <span class="keyword">struct </span><a class="code" href="structcfg.html">cfg</a> *EXT_GLOBAL(<a class="code" href="structcfg.html">cfg</a>);
-00149 
-00153 EXT_BEGIN_MODULE_GLOBALS(EXT)
-<a name="l00154"></a><a class="code" href="php__java_8h.html#a26">00154</a>   proxyenv *<a class="code" href="php__java_8h.html#a26">jenv</a>;
-00155   <span class="keywordtype">short</span> is_closed; <span class="comment">/* PR1176522: GC must not re-open the connection */</span>
-00156 
-00157   <span class="comment">/* local copy of the shared variables above. Needed for channel</span>
-00158 <span class="comment">     re-directs */</span>
-00159   <span class="keywordtype">char</span> *<a class="code" href="structcfg.html#o5">hosts</a>, *<a class="code" href="structcfg.html#o15">servlet</a>, *redirect_port;
-<a name="l00160"></a><a class="code" href="php__java_8h.html#a23">00160</a>   <span class="keywordtype">int</span> <a class="code" href="java_8c.html#a7">ini_user</a>;
-00161 
-00162   <span class="comment">/* the name of the comm. pipe */</span>
-00163   <span class="keywordtype">char</span>*channel, *channel_in, *channel_out;
-00164   <span class="keywordtype">int</span> lockfile;
-00165 
-00166   <span class="comment">/* for user CB's */</span>
-00167   zval*exception;
-00168 
-00169   zval **object;
-00170   zval *func;
-00171   zval **retval_ptr;
-00172   zval *func_params;
-00173 EXT_END_MODULE_GLOBALS(EXT)
-00174 
+00028 <span class="preprocessor">#include &lt;sys/types.h&gt;</span>
+00029 <span class="preprocessor">#include &lt;sys/stat.h&gt;</span>
+00030 <span class="preprocessor">#include &lt;fcntl.h&gt;</span>
+00031 
+00032 <span class="comment">/* socket */</span>
+00033 <span class="preprocessor">#ifdef __MINGW32__</span>
+00034 <span class="preprocessor"></span><span class="preprocessor"># include &lt;winsock2.h&gt;</span>
+00035 <span class="preprocessor"># define close closesocket</span>
+00036 <span class="preprocessor"></span><span class="preprocessor">#else</span>
+00037 <span class="preprocessor"></span><span class="preprocessor">#include &lt;sys/socket.h&gt;</span>
+00038 <span class="preprocessor">#include &lt;netinet/in.h&gt;</span>
+00039 <span class="preprocessor">#include &lt;arpa/inet.h&gt;</span>
+00040 <span class="preprocessor">#include &lt;netdb.h&gt;</span>
+00041 
+00042 <span class="comment">/* disable unix domain sockets if jni is not available */</span>
+00043 <span class="preprocessor">#ifndef HAVE_JNI</span>
+00044 <span class="preprocessor"></span><span class="preprocessor"># ifndef CFG_JAVA_SOCKET_INET</span>
+00045 <span class="preprocessor"></span><span class="preprocessor">#  define CFG_JAVA_SOCKET_INET</span>
+00046 <span class="preprocessor"></span><span class="preprocessor"># endif</span>
+00047 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
+00048 <span class="preprocessor"></span>
+00049 <span class="preprocessor">#ifndef CFG_JAVA_SOCKET_INET</span>
+00050 <span class="preprocessor"></span><span class="preprocessor"># include &lt;sys/un.h&gt;</span>
+00051 <span class="preprocessor"># ifdef HAVE_CONFIG_H</span>
+00052 <span class="preprocessor"></span><span class="preprocessor"># if !HAVE_DECL_AF_LOCAL</span>
+00053 <span class="preprocessor"></span><span class="preprocessor">#  define AF_LOCAL AF_UNIX</span>
+00054 <span class="preprocessor"></span><span class="preprocessor"># endif</span>
+00055 <span class="preprocessor"></span><span class="preprocessor"># if !HAVE_DECL_PF_LOCAL</span>
+00056 <span class="preprocessor"></span><span class="preprocessor">#  define PF_LOCAL PF_UNIX</span>
+00057 <span class="preprocessor"></span><span class="preprocessor"># endif</span>
+00058 <span class="preprocessor"></span><span class="preprocessor"># endif</span>
+00059 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
+00060 <span class="preprocessor"></span><span class="preprocessor">#endif </span>
+00061 <span class="preprocessor"></span>
+00062 <span class="preprocessor">#ifdef ZEND_ENGINE_2</span>
+00063 <span class="preprocessor"></span><span class="comment">/* for try/catch emulation */</span>
+00064 <span class="preprocessor">#include &lt;setjmp.h&gt;</span>
+00065 <span class="preprocessor">#endif</span>
+00066 <span class="preprocessor"></span>
+00067 <span class="keyword">extern</span> zend_module_entry EXT_GLOBAL(module_entry);
+00068 <span class="keyword">extern</span> zend_class_entry *EXT_GLOBAL(<a class="code" href="java_8c.html#a9">class_entry</a>);
+00069 <span class="keyword">extern</span> zend_class_entry *EXT_GLOBAL(<a class="code" href="java_8c.html#a10">array_entry</a>);
+00070 <span class="keyword">extern</span> zend_class_entry *EXT_GLOBAL(<a class="code" href="java_8c.html#a11">class_class_entry</a>);
+00071 <span class="keyword">extern</span> zend_class_entry *EXT_GLOBAL(<a class="code" href="java_8c.html#a12">class_class_entry_jsr</a>);
+00072 <span class="keyword">extern</span> zend_class_entry *EXT_GLOBAL(<a class="code" href="java_8c.html#a13">exception_class_entry</a>);
+00073 <span class="keyword">extern</span> function_entry EXT_GLOBAL(class_functions[]);
+00074 
+00075 <span class="preprocessor">#ifdef ZEND_ENGINE_2</span>
+00076 <span class="preprocessor"></span><span class="keyword">extern</span> zend_object_handlers EXT_GLOBAL(<a class="code" href="java_8c.html#a14">handlers</a>);
+00077 <span class="preprocessor">#endif</span>
+00078 <span class="preprocessor"></span><span class="keyword">extern</span> <span class="keyword">const</span> <span class="keywordtype">char</span> * <span class="keyword">const</span> EXT_GLOBAL(bridge_version);
+00079 
+00080 <span class="keyword">extern</span> <span class="keywordtype">int</span> EXT_GLOBAL(<a class="code" href="java_8c.html#a6">ini_updated</a>), EXT_GLOBAL (<a class="code" href="java_8c.html#a7">ini_user</a>), EXT_GLOBAL (<a class="code" href="java_8c.html#a8">ini_set</a>);
+00081 <span class="preprocessor">#define U_LOGFILE (1&lt;&lt;1)</span>
+00082 <span class="preprocessor"></span><span class="preprocessor">#define U_LOGLEVEL (1&lt;&lt;2)</span>
+00083 <span class="preprocessor"></span><span class="preprocessor">#define U_JAVA_HOME (1&lt;&lt;3)</span>
+00084 <span class="preprocessor"></span><span class="preprocessor">#define U_JAVA (1&lt;&lt;4)</span>
+00085 <span class="preprocessor"></span><span class="preprocessor">#define U_LIBRARY_PATH (1&lt;&lt;5)</span>
+00086 <span class="preprocessor"></span><span class="preprocessor">#define U_CLASSPATH (1&lt;&lt;6)</span>
+00087 <span class="preprocessor"></span><span class="preprocessor">#define U_SOCKNAME (1&lt;&lt;7)</span>
+00088 <span class="preprocessor"></span><span class="preprocessor">#define U_HOSTS (1&lt;&lt;8)</span>
+00089 <span class="preprocessor"></span><span class="preprocessor">#define U_SERVLET (1&lt;&lt;9)</span>
+00090 <span class="preprocessor"></span><span class="preprocessor">#define U_WRAPPER (1&lt;&lt;10)</span>
+00091 <span class="preprocessor"></span><span class="preprocessor">#define U_EXT_JAVA_COMPATIBILITY  (1&lt;&lt;11)</span>
+00092 <span class="preprocessor"></span>
+00093 <span class="preprocessor">#if EXTENSION == JAVA</span>
+00094 <span class="preprocessor"></span><span class="preprocessor">#define phpext_java_ptr &amp;EXT_GLOBAL(module_entry)</span>
+00095 <span class="preprocessor"></span><span class="preprocessor">#elif EXTENSION == MONO</span>
+00096 <span class="preprocessor"></span><span class="preprocessor">#define phpext_mono_ptr &amp;EXT_GLOBAL(module_entry)</span>
+00097 <span class="preprocessor"></span><span class="preprocessor">#else</span>
+00098 <span class="preprocessor"></span><span class="preprocessor"># error EXT must be mono or java.</span>
+00099 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
+00100 <span class="preprocessor"></span>
+00101 
+00102 <a class="code" href="java_8c.html#a89">PHP_MINIT_FUNCTION</a>(EXT);
+00103 <a class="code" href="java_8c.html#a91">PHP_MSHUTDOWN_FUNCTION</a>(EXT);
+00104 <a class="code" href="java_8c.html#a90">PHP_MINFO_FUNCTION</a>(EXT);
+00105 
+<a name="l00109"></a><a class="code" href="structcfg.html">00109</a> <span class="keyword">struct </span><a class="code" href="structcfg.html">cfg</a> {
+00110 <span class="preprocessor">#ifdef CFG_JAVA_SOCKET_INET</span>
+00111 <span class="preprocessor"></span>  <span class="keyword">struct </span>sockaddr_in saddr;
+00112 <span class="preprocessor">#else</span>
+00113 <span class="preprocessor"></span>
+00114   <span class="keyword">struct </span>sockaddr_un saddr;
+00115 <span class="preprocessor">#endif</span>
+00116 <span class="preprocessor"></span>
+<a name="l00117"></a><a class="code" href="structcfg.html#o1">00117</a>   <span class="keywordtype">int</span> <a class="code" href="structcfg.html#o1">cid</a>; <span class="comment">// server's process id</span>
+<a name="l00119"></a><a class="code" href="structcfg.html#o2">00119</a> <span class="comment"></span>  <span class="keywordtype">int</span> <a class="code" href="structcfg.html#o2">err</a>; <span class="comment">// file descriptor: server's return code</span>
+00120 
+<a name="l00122"></a><a class="code" href="structcfg.html#o3">00122</a>   <span class="keywordtype">char</span>*<a class="code" href="structcfg.html#o3">sockname</a>;
+<a name="l00124"></a><a class="code" href="structcfg.html#o4">00124</a>   <span class="keywordtype">char</span> *<a class="code" href="structcfg.html#o4">default_sockname</a>;
+<a name="l00126"></a><a class="code" href="structcfg.html#o5">00126</a>   <span class="keywordtype">char</span>*<a class="code" href="structcfg.html#o5">hosts</a>;
+<a name="l00128"></a><a class="code" href="structcfg.html#o6">00128</a>   <span class="keywordtype">char</span>*<a class="code" href="structcfg.html#o6">classpath</a>;   
+<a name="l00130"></a><a class="code" href="structcfg.html#o7">00130</a>   <span class="keywordtype">char</span>*<a class="code" href="structcfg.html#o7">ld_library_path</a>;
+<a name="l00132"></a><a class="code" href="structcfg.html#o8">00132</a>   <span class="keywordtype">char</span>*<a class="code" href="structcfg.html#o8">wrapper</a>;
+<a name="l00134"></a><a class="code" href="structcfg.html#o9">00134</a>   <span class="keywordtype">char</span>*<a class="code" href="structcfg.html#o9">vm</a>;
+<a name="l00136"></a><a class="code" href="structcfg.html#o10">00136</a>   <span class="keywordtype">char</span>*<a class="code" href="structcfg.html#o10">vm_home</a>;
+<a name="l00138"></a><a class="code" href="structcfg.html#o11">00138</a>   <span class="keywordtype">char</span>*<a class="code" href="structcfg.html#o11">logLevel</a>;
+<a name="l00140"></a><a class="code" href="structcfg.html#o12">00140</a>   <span class="keywordtype">unsigned</span> <span class="keywordtype">short</span> <a class="code" href="structcfg.html#o12">logLevel_val</a>;
+<a name="l00142"></a><a class="code" href="structcfg.html#o13">00142</a>   <span class="keywordtype">char</span>*<a class="code" href="structcfg.html#o13">logFile</a>;
+<a name="l00144"></a><a class="code" href="structcfg.html#o14">00144</a>   <span class="keywordtype">short</span> <a class="code" href="structcfg.html#o14">can_fork</a>;               <span class="comment">/* 0 if user has hard-coded the socketname */</span>
+<a name="l00146"></a><a class="code" href="structcfg.html#o15">00146</a>   <span class="keywordtype">char</span>* <a class="code" href="structcfg.html#o15">servlet</a>;                <span class="comment">/* On or servlet context */</span>
+00147   <span class="keywordtype">short</span> servlet_is_default;     <span class="comment">/* If java.servlet=On */</span>
+<a name="l00152"></a><a class="code" href="structcfg.html#o18">00152</a>   <span class="keywordtype">short</span> <a class="code" href="structcfg.html#o17">is_cgi_servlet</a>, <a class="code" href="structcfg.html#o18">is_fcgi_servlet</a>; <span class="comment">/* 1: cgi env available */</span>
+<a name="l00154"></a><a class="code" href="structcfg.html#o19">00154</a>   <span class="keywordtype">short</span> <a class="code" href="structcfg.html#o19">socketname_set</a>;
+<a name="l00156"></a><a class="code" href="structcfg.html#o20">00156</a>   <span class="keywordtype">short</span> <a class="code" href="structcfg.html#o20">extJavaCompatibility</a>;
+00157 };
+00158 <span class="keyword">extern</span> <span class="keyword">struct </span><a class="code" href="structcfg.html">cfg</a> *EXT_GLOBAL(<a class="code" href="structcfg.html">cfg</a>);
+00159 
+00163 EXT_BEGIN_MODULE_GLOBALS(EXT)
+<a name="l00164"></a><a class="code" href="php__java_8h.html#a26">00164</a>   proxyenv *<a class="code" href="php__java_8h.html#a26">jenv</a>;
+00165   <span class="keywordtype">short</span> is_closed; <span class="comment">/* PR1176522: GC must not re-open the connection */</span>
+00166 
+00167   <span class="comment">/* local copy of the shared variables above. Needed for channel</span>
+00168 <span class="comment">     re-directs */</span>
+00169   <span class="keywordtype">char</span> *<a class="code" href="structcfg.html#o5">hosts</a>, *<a class="code" href="structcfg.html#o15">servlet</a>, *redirect_port;
+<a name="l00170"></a><a class="code" href="php__java_8h.html#a23">00170</a>   <span class="keywordtype">int</span> <a class="code" href="java_8c.html#a7">ini_user</a>;
+00171 
+00172   <span class="comment">/* the name of the comm. pipe */</span>
+00173   <span class="keywordtype">char</span>*channel, *channel_in, *channel_out;
+00174   <span class="keywordtype">int</span> lockfile;
 00175 
-00176 
-00177 
-00178 #ifdef ZTS
-00179 # define JG(v) EXT_TSRMG(EXT_GLOBAL(globals_id), EXT_GLOBAL_EX(zend_,, _globals) *, v)
-00180 #else
-00181 # define JG(v) EXT_GLOBAL(globals).v
-00182 #endif
-00183 
-00184 extern <span class="keywordtype">char</span>* EXT_GLOBAL(get_server_string)(TSRMLS_D);
+00176   <span class="comment">/* for user CB's */</span>
+00177   zval*exception;
+00178 
+00179   zval **object;
+00180   zval *func;
+00181   zval **retval_ptr;
+00182   zval *func_params;
+00183 EXT_END_MODULE_GLOBALS(EXT)
+00184 
 00185 
-00186 extern proxyenv *EXT_GLOBAL(try_connect_to_server)(TSRMLS_D);
-00187 extern proxyenv *EXT_GLOBAL(connect_to_server)(TSRMLS_D);
-00188 extern <span class="keywordtype">void</span> EXT_GLOBAL(start_server)(TSRMLS_D);
-00189 
-00190 extern <span class="keywordtype">char</span>* EXT_GLOBAL(test_server)(<span class="keywordtype">int</span> *socket, <span class="keywordtype">short</span> *is_local, struct sockaddr*<a class="code" href="structcfg.html#o0">saddr</a> TSRMLS_DC);
-00191 
-00192 <span class="comment">/* returns the servlet context or null */</span>
-00193 extern <span class="keywordtype">char</span> *EXT_GLOBAL(get_servlet_context)(TSRMLS_D);
-00194 
-00195 <span class="comment">/* returns the local socketname or the default local socketname*/</span>
-00196 extern <span class="keywordtype">char</span> *EXT_GLOBAL(get_sockname)(TSRMLS_D);
-00197 
-00198 #endif
-</pre></div><hr size="1"><address style="align: right;"><small>Generated on Sun Jan 15 20:26:37 2006 for php-java-bridge by&nbsp;
+00186 
+00187 
+00188 #ifdef ZTS
+00189 # define JG(v) EXT_TSRMG(EXT_GLOBAL(globals_id), EXT_GLOBAL_EX(zend_,, _globals) *, v)
+00190 #else
+00191 # define JG(v) EXT_GLOBAL(globals).v
+00192 #endif
+00193 
+00194 extern <span class="keywordtype">char</span>* EXT_GLOBAL(get_server_string)(TSRMLS_D);
+00195 
+00196 extern proxyenv *EXT_GLOBAL(try_connect_to_server)(TSRMLS_D);
+00197 extern proxyenv *EXT_GLOBAL(connect_to_server)(TSRMLS_D);
+00198 extern <span class="keywordtype">void</span> EXT_GLOBAL(start_server)(TSRMLS_D);
+00199 
+00200 extern <span class="keywordtype">char</span>* EXT_GLOBAL(test_server)(<span class="keywordtype">int</span> *socket, <span class="keywordtype">short</span> *is_local, struct sockaddr*saddr TSRMLS_DC);
+00201 
+00202 <span class="comment">/* returns the servlet context or null */</span>
+00203 extern <span class="keywordtype">char</span> *EXT_GLOBAL(get_servlet_context)(TSRMLS_D);
+00204 
+00205 <span class="comment">/* returns the local socketname or the default local socketname*/</span>
+00206 extern <span class="keywordtype">char</span> *EXT_GLOBAL(get_sockname)(TSRMLS_D);
+00207 
+00208 #endif
+</pre></div><hr size="1"><address style="align: right;"><small>Generated on Sun Feb 5 13:18:20 2006 for php-java-bridge by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.2 </small></address>
 </body>

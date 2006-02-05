@@ -11,6 +11,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
+import php.java.bridge.http.ContextFactory;
+import php.java.script.IPhpScriptContext;
 import php.java.script.PhpScriptEngine;
 import php.java.script.PhpScriptWriter;
 
@@ -29,34 +31,57 @@ public class PhpFacesScriptEngine extends PhpScriptEngine implements Invocable {
 
     /**
      * Creates a new ScriptEngine.
-     * @param kontext The ServletContext
+     * @param ctx The ServletContext
      * @param request The HttpServletRequest
      * @param response The HttpServletResponse
      * @param writer The PhpScriptWriter
      */
-    public PhpFacesScriptEngine(ServletContext kontext, HttpServletRequest request, HttpServletResponse response, PhpScriptWriter writer) {
+    public PhpFacesScriptEngine(ServletContext ctx, HttpServletRequest request, HttpServletResponse response, PhpScriptWriter writer) {
         super(false);
-	this.ctx = kontext;
+	this.ctx = ctx;
 	this.request = request;
 	this.response = response;
 	this.writer = writer;
 	initialize();
     }
 
-    protected ScriptContext getScriptContext(Bindings namespace) {
+    /**
+     * Create a new context ID and a environment map which we send to the client.
+     *
+     */
+    protected void setNewContextFactory() {
+        ContextFactory kontext;
+        IPhpScriptContext context = (IPhpScriptContext)getContext(); 
+	env.clear();
+	
+	context.setContextFactory(kontext=PhpFacesScriptContextFactory.addNew(context, ctx, request, response));
+
+	/* send the session context now, otherwise the client has to 
+	 * call handleRedirectConnection */
+	this.env.put("X_JAVABRIDGE_CONTEXT", kontext.getId());
+	/* redirect to ourself */
+	StringBuffer buf = new StringBuffer("127.0.0.1:");
+	buf.append(php.java.servlet.CGIServlet.getLocalPort(request));
+	buf.append("/");
+	buf.append(request.getRequestURI());
+	buf.append(".php"); // it doesn't matter what we send here, as long as it ends with .php
+	this.env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", buf.toString()); 
+    }
+    protected ScriptContext getPhpScriptContext() {
+        Bindings namespace;
     	PhpFacesScriptContext scriptContext = new PhpFacesScriptContext();
         
-        if(namespace==null) namespace = createBindings();
+        namespace = createBindings();
         scriptContext.setBindings(namespace,ScriptContext.ENGINE_SCOPE);
         scriptContext.setBindings(getBindings(ScriptContext.GLOBAL_SCOPE), ScriptContext.GLOBAL_SCOPE);
-        
         
 	try {
 	    scriptContext.initialize(ctx, request, response, writer);
 	} catch (ServletException e) {
 	    Util.printStackTrace(e);
 	}
-        return scriptContext;
+
+	return scriptContext;
     }
     
 }

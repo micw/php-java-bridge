@@ -50,14 +50,19 @@ Requires: jre >= 1.4.0
 BuildRoot: %{_tmppath}/%{name}-root
 
 %description 
-Java module/extension for the PHP script language.
+Java module/extension for the PHP script language.  Contains the basic
+files: java extension for PHP/Apache HTTP server and a simple backend
+which automatically starts and stops when the HTTP server
+starts/stops. The bridge log appears in the http server error log.
 
 %package standalone
 Group: System Environment/Daemons
 Summary: Standalone backend for the PHP/Java Bridge
 Requires: php-java-bridge = %{version}
 %description standalone
-Standalone backend for the PHP/Java Bridge
+Starts a standalone java daemon for apache and the PHP/Java Bridge.
+Contains the standalone service script. The standalone backend is
+started with the apache uid.
 
 %package tomcat
 Group: System Environment/Daemons
@@ -66,14 +71,20 @@ Requires: php-java-bridge = %{version}
 Requires: tomcat5
 Conflicts: php-java-bridge-standalone
 %description tomcat
-Tomcat/J2EE backend for the PHP/Java Bridge
+Deploys the j2ee backend into the tomcat servlet engine.  The tomcat
+backend is more than 2 times faster than the standalone backend but
+less secure; it uses named pipes instead of abstract local "unix
+domain" sockets.
 
 %package devel
 Group: Development/Libraries
 Summary: PHP/Java Bridge development files and documentation
 Requires: php-java-bridge = %{version}
 %description devel
-PHP/Java Bridge development files and documentation
+Contains the development documentation
+and the development files needed to create java applications with
+embedded PHP scripts.
+
 
 
 %prep
@@ -148,18 +159,19 @@ cat java-servlet.ini  >$RPM_BUILD_ROOT/etc/php.d/java-servlet.ini
 cat java.ini  >$RPM_BUILD_ROOT/etc/php.d/java.ini
 echo /etc/php.d/java.ini >>filelist
 
+echo $mod_dir/RunJavaBridge >filelist-standalone
 cat java-standalone.ini | sed 's|^;java\.java_home[\t =].*$|java.java_home = @JAVA_HOME@|; s|^;java\.java[\t =].*$|java.java = @JAVA_JAVA@|' >$RPM_BUILD_ROOT/etc/php.d/java-standalone.ini
-echo /etc/php.d/java-standalone.ini >>filelist-standalone
+#echo /etc/php.d/java-standalone.ini >>filelist-standalone
 
 mkdir -p $RPM_BUILD_ROOT/usr/sbin
 cp php-java-bridge $RPM_BUILD_ROOT/usr/sbin
 chmod +x $RPM_BUILD_ROOT/usr/sbin/php-java-bridge
-echo /usr/sbin/php-java-bridge >>filelist-standalone
+#echo /usr/sbin/php-java-bridge >>filelist-standalone
 
 mkdir -p $RPM_BUILD_ROOT/etc/init.d
 cp php-java-bridge.service $RPM_BUILD_ROOT/etc/init.d/php-java-bridge
 chmod +x $RPM_BUILD_ROOT/etc/init.d/php-java-bridge
-echo /etc/init.d/php-java-bridge >>filelist-standalone
+#echo /etc/init.d/php-java-bridge >>filelist-standalone
 
 mkdir $RPM_BUILD_ROOT/$mod_dir/lib
 echo $mod_dir/lib >>filelist
@@ -249,15 +261,18 @@ rm -rf %{tomcat_webapps}/JavaBridge
 %doc README README.GNU_JAVA README.MONO+NET LICENSE CREDITS NEWS ChangeLog test.php test.php4 examples tests.php5 php_java_lib INSTALL.LINUX 
 
 %files standalone -f filelist-standalone
-%defattr(-,root,root)
-%doc INSTALL LICENSE php-java-bridge.te php-java-bridge.fc update_policy.sh 
+%defattr(6111,apache,apache)
+%attr(-,root,root) /etc/php.d/java-standalone.ini
+%attr(-,root,root) /usr/sbin/php-java-bridge 
+%attr(-,root,root) /etc/init.d/php-java-bridge
+%doc %attr(-,root,root) README INSTALL LICENSE php-java-bridge.te php-java-bridge.fc update_policy.sh 
 
 %files tomcat -f filelist-tomcat
 %defattr(-,tomcat,tomcat)
 %attr(-,root,root) /etc/php.d/java-servlet.ini
-%doc %attr(-,root,root) INSTALL.J2EE LICENSE php-java-bridge.te php-java-bridge-tomcat.te php-java-bridge.fc update_policy.sh 
+%doc %attr(-,root,root) README INSTALL.J2EE LICENSE php-java-bridge.te php-java-bridge-tomcat.te php-java-bridge.fc update_policy.sh 
 
 %files devel -f filelist-devel
 %defattr(-,root,root)
-%doc PROTOCOL.TXT LICENSE server/documentation documentation server/test
+%doc README PROTOCOL.TXT LICENSE server/documentation documentation server/test
 

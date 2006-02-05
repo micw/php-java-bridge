@@ -3,8 +3,6 @@
 package php.java.script;
 
 import java.io.Writer;
-import java.util.Hashtable;
-import java.util.Map;
 
 import javax.script.SimpleScriptContext;
 
@@ -24,7 +22,7 @@ import php.java.bridge.http.ContextFactory;
  *
  */
 public class PhpScriptContext extends SimpleScriptContext implements IPhpScriptContext {
-    static JavaBridgeRunner bridgeRunner;
+    static JavaBridgeRunner bridgeRunner = null;
 
     static {
 	try {
@@ -35,7 +33,6 @@ public class PhpScriptContext extends SimpleScriptContext implements IPhpScriptC
     }
 
     protected ContextFactory ctx;
-    private Hashtable env;
     private HttpProxy kont;
 	
     /**
@@ -43,15 +40,7 @@ public class PhpScriptContext extends SimpleScriptContext implements IPhpScriptC
      *
      */
     public PhpScriptContext() {
-	env = new Hashtable();
-		
-	ctx = PhpScriptContextFactory.addNew(this);
-    	
-	/* send the session context now, otherwise the client has to 
-	 * call handleRedirectConnection */
-	this.env.put("X_JAVABRIDGE_CONTEXT", ctx.getId());
-	/* the client should connect back to us */
-	this.env.put("X_JAVABRIDGE_OVERRIDE_HOSTS",Util.getHostAddress()+":"+bridgeRunner.getSocket().getSocketName());
+        super();
     }
 
 
@@ -60,20 +49,21 @@ public class PhpScriptContext extends SimpleScriptContext implements IPhpScriptC
     }
 	
     /**
-     * @return the environment
-     */
-    public Map getEnvironment() {
-	return env;
-    }
-	
-    /**
      * 
-     * @return the context manager
+     * @return the context factory
      */
     public ContextFactory getContextFactory() {
 	return ctx;
     }
 
+    /**
+     * Set the context factory.
+     * @param ctx
+     */
+    public void setContextFactory(ContextFactory ctx) {
+        this.ctx = ctx;
+    }
+    
     /**
      * Set the php continuation
      * @param kont - The continuation.
@@ -90,5 +80,10 @@ public class PhpScriptContext extends SimpleScriptContext implements IPhpScriptC
     public boolean call(PhpProcedureProxy kont) throws InterruptedException {
 	this.kont.call(kont);
 	return true;
+    }
+
+
+    public JavaBridgeRunner getHttpServer() {
+        return bridgeRunner;
     }
 }
