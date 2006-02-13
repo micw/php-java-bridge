@@ -6,6 +6,11 @@ Please send bug reports, questions and suggestions to
 
 Version 3.0.7:
 
+* ./configure --with-java=/opt/compile-time/java,/opt/run-time/java:
+it is possible to compile a jre runtime path into the bridge. The
+default is empty, i.e. the PATH environment variable will be searched
+if the bridge has been set up to automatically start the backend.
+
 * When RunJavaBridge is used, it is possible to start the backend with
 a non root uid. For example:
 
@@ -15,17 +20,9 @@ a non root uid. For example:
 and java.wrapper = /usr/lib/php/modules/RunJavaBridge in the php.ini
 (default is: <extension_dir>/RunJavaBridge) will automatically start
 the backend as the apache user.
-  
-You must switch off the java.log_file and java.socket option,
-otherwise it may be that the backend will not be able to create the
-log or socket files. The default log file is stderr, i.e. all log
-entries appear in the HTTP server error log. The default socket file
-is @php-java-bridge<pid>, i.e. a socket created in the linux abstract
-namespace.
     
 * It is now possible to compile the php java extension without java:
-/configure --without-java --without-mono creates only the java.so or
-php_java.dll.
+./configure --disable-backend creates only the java.so or php_java.dll.
 
 * java => 1.4.2 is required.
 
@@ -58,7 +55,7 @@ php-java-bridge RPM download. The linux java.so is now called
   embedded PHP scripts: JavaBridge.jar, script-api.jar and php-script.jar.
 
 * The JavaBridge.war now contains php 5.1.2 binaries for Solaris
-(x86), Linux (x86), Windows (x86).
+(x86), Linux (x86 and ppc64), Windows (x86).
 
 * php4 is supported again (switch to php5 or php6, if you can).
 

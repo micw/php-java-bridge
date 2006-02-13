@@ -67,7 +67,7 @@ public class PhpJavaServlet extends FastCGIServlet {
 	}
 	public String now() { return ""; }
 	public void printStackTrace(Throwable t) {
-	    ctx.log(Util.EXTENSION_NAME + " Exception: ", t);
+	    ctx.log("", t);
 	    if(Util.logLevel>5) t.printStackTrace();
 	}
     }
@@ -308,6 +308,7 @@ public class PhpJavaServlet extends FastCGIServlet {
         	// header and body
          	natIn = proc.getInputStream();
     		out = response.getOutputStream();
+
     		Util.parseBody(buf, natIn, out, new Util.HeaderParser() {protected void parseHeader(String header) {addHeader(header);}});
 
     		try {

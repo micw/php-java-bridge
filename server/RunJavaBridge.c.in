@@ -37,7 +37,7 @@ char *java="@PHP_JAVA@";
 
 int main(int argc, char**_argv){
   char **argv;
-  char *vm;
+  char *vm, *error;
 
   if(argc<4 && argc!=2) usage(_argv[0]);
 
@@ -67,6 +67,8 @@ int main(int argc, char**_argv){
   setreuid(geteuid(), -1);
   setregid(getegid(), -1);
   if(*argv[0]=='/') execv(argv[0], argv); else execvp(argv[0], argv);
-  fprintf(stderr, "Could not execute %s: %s\n", argv[0], strerror(errno));
+  error = strerror(errno);
+  execvp("java", argv);
+  fprintf(stderr, "Could not execute %s: %s\n", argv[0], error);
   return 2;
 }

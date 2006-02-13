@@ -29,7 +29,7 @@ import java.util.Vector;
 import java.util.Map.Entry;
 
 /**
- * This is the main class for the PHP/Java Bridge. It starts the standalone backend,
+ * This is the main class of the PHP/Java Bridge. It starts the standalone backend,
  * listenes for protocol requests and handles CreateInstance, GetSetProp and Invoke 
  * requests. Supported protocol modes are INET (listens on all interfaces), INET_LOCAL (loopback only) and 
  * UNIX (uses a local, invisible communication channel, requires natcJavaBridge.so). Furthermore it
@@ -57,7 +57,7 @@ public class JavaBridge implements Runnable {
      */
     public Throwable lastException = null;
 
-    // list of objects in use in the current script
+    // array of objects in use in the current script
     GlobalRef globalRef=new GlobalRef(this);
 
     /**
@@ -287,7 +287,7 @@ public class JavaBridge implements Runnable {
 	    } catch (NumberFormatException e) {
 		usage();
 	    } catch (Throwable t) {
-		Util.printStackTrace(t);
+		t.printStackTrace();
 	    }
 
 	    try {
@@ -297,7 +297,7 @@ public class JavaBridge implements Runnable {
 		}
 		if(Util.logLevel>3) System.err.println(Util.EXTENSION_NAME+" log: " + logFile);
 	    }catch (Throwable t) {
-		Util.printStackTrace(t);
+		t.printStackTrace();
 	    }
 	    boolean redirectOutput = false;
 	    try {
@@ -388,8 +388,10 @@ public class JavaBridge implements Runnable {
      */
     public void printStackTrace(Throwable t) {
 	if(logLevel > 0)
-	    if ((t instanceof Error) || logLevel > 1)
+	    if ((t instanceof Error) || logLevel > 1) {
+		Util.println(2, "Exception occured");
 	    	Util.getLogger().printStackTrace(t);
+	    }
     }
     private String getId() {
     	return "@"+Integer.toHexString(System.identityHashCode(this));

@@ -447,8 +447,26 @@ public class CGIServlet extends HttpServlet {
      * @return The local port or the value from the server port variable.
      */
     public static int getLocalPort(ServletRequest req) {
-      int port = req.getLocalPort(); if(port<=0) port = req.getServerPort();
-      return port;
+	int port = -1;
+	try {
+	    req.getLocalPort(); 
+	} catch (Throwable t) {/*ignore*/}
+	if(port<=0) port = req.getServerPort();
+	return port;
+    }
+
+    /**
+     * Returns the local name
+     * @param req The servlet request
+     * @return The local name or the value from the server name variable.
+     */
+    public static String getLocalName(ServletRequest req) {
+	String name = null;
+	try {
+	    req.getLocalName();
+	} catch (Throwable t) {/*ignore*/}
+	if(name==null) name = req.getServerName();
+	return name;
     }
 
     protected class CGIRunnerFactory {
@@ -748,7 +766,7 @@ public class CGIServlet extends HttpServlet {
 
             envp.put("SERVER_SOFTWARE", "TOMCAT");
 
-            envp.put("SERVER_NAME", nullsToBlanks(req.getLocalName()));
+            envp.put("SERVER_NAME", nullsToBlanks(getLocalName(req)));
 
             envp.put("GATEWAY_INTERFACE", "CGI/1.1");
 

@@ -78,7 +78,7 @@ concentrate on developing HTML templates while web developers can
 create a prototype using php code and use the existing framework from
 their code.</img>
 
-</FONT></P>                                                                                            
+</FONT></P> 
 <p></p>
 <H1>Description</H1>
 <P><FONT > The bridge adds the following primitives to PHP.  The type
@@ -93,39 +93,16 @@ their code.</img>
 <blockquote>
 <code>
       &lt;?php<br>
-      header("Content-type: application/x-excel");<br>
-      header("Content-Disposition: attachment; filename=downloaded.xls");<br>
-      java_require("http://php-java-bridge.sf.net/poi.jar"); <br><br>
-      
-      // create a 200x200 excel sheet and return it to the client<br>
-      $workbook = new java("org.apache.poi.hssf.usermodel.HSSFWorkbook");<br>
-      $sheet = $workbook->createSheet("new sheet");<br>
-      $style = $workbook->createCellStyle();<br>
-      // access the inner class AQUA within HSSFColor, note the $ syntax.<br>
-      $Aqua = new JavaClass('org.apache.poi.hssf.util.HSSFColor$AQUA');<br>
-      $style->setFillBackgroundColor($Aqua->index);<br>
-      $style->setFillPattern($style->BIG_SPOTS);<br><br>
-      for($y=0; $y<200; $y++) {<br>
-      &nbsp;$row = $sheet->createRow($y);<br>
-      &nbsp;for($x=0; $x<200; $x++) {<br>
-      &nbsp;&nbsp;$cell = $row->createCell($x);<br>
-      &nbsp;&nbsp;$cell->setCellValue("This is cell $x . $y");<br>
-      &nbsp;&nbsp;$cell->setCellStyle($style);<br>
-      &nbsp;}<br>
-      }<br><br>
-      // create and return the excel sheet to the client<br>
-      $memoryStream = new java ("java.io.ByteArrayOutputStream");<br>
-      $workbook->write($memoryStream);<br>
-      $memoryStream->close(); <br>
-      echo $memoryStream->toByteArray();<br>
+$v = new Java("java.util.Vector");<br>
+$v->add($buf=new Java("java.lang.StringBuffer"));<br>
+$buf->append("100");<br>
+echo (int)($v->elementAt(0)->toString()) + 2;<br>
       ?&gt;<br>
-
-
 </code>
 </blockquote>
 <br>
 <li>
-  <code>new <strong>JavaClass</strong>("CLASSNAME")</code>: References the class CLASSNAME without creating an instance. The object returned is the class object itself, not an object of the class.
+  <code>new <strong>JavaClass</strong>("CLASSNAME")</code>: References the class CLASSNAME without creating an instance. The returned object is the class object itself, not an object of the class.
  After script
      execution the referenced classes may be garbage collected. Example: <br><br>
      
@@ -145,26 +122,30 @@ their code.</img>
      a "http:", "ftp:", "file:" or a "jar:" or a default <a href="#jar-location">location</a>. On &quot;Security Enhanced Linux&quot; (<a href="README">please see the README</a>) the <a href="#sel">location must be tagged</a> with a <em>lib_t</em> security context. Example: <br><br>
 <blockquote>
 <code>
-      $file=new java("java.io.File", "WEB_INF/web.xml");<br>
-<br>
-      java_require("xerces.jar;jdom.jar");<br>
-      $builder = new java("org.jdom.input.SAXBuilder");<br>
-      $doc = $builder-&gt;build($file);<br>
-      $root = $doc-&gt;getRootElement();<br>
-      $servlets = $root-&gt;getChildren("servlet");<br>
-<br>
-      echo "this file has " . $servlets-&gt;size() . " servlets\n";<br>
+// load scheme interpreter<br>
+// try to load it from /usr/share/java/ or from sourceforge.net<br>
+java_require("kawa.jar");<br>
+java_require("http://php-java-bridge.sourceforge.net/kawa.jar");<br>
+$n=100;<br>
+$System = new JavaClass("java.lang.System");<br>
+$t1 = $System->currentTimeMillis();<br>
+$code="(letrec ((f (lambda(v) (if (= v 0) 1 (* (f (- v 1)) v))))) (f $n))";<br>
+$scheme = new java("kawa.standard.Scheme");<br>
+$res=(float)$scheme->eval($code);<br>
+echo "${n}! => $res\n";<br>
+$delta = $System->currentTimeMillis() - $t1;<br>
+echo "Evaluated in $delta ms.\n";<br>
 </code>
 </blockquote>
 <br>
 <br>
 <li>
   <code><strong>java_context()</strong></code>: Makes the <code>javax.script.ScriptContext</code>
-     available to the current script.  Available since <a href="http://sourceforge.net/mailarchive/forum.php?thread_id=8895955&forum_id=42415">PHP/Java Bridge version 3.0</a>. All implicit web objects (session, servlet context, etc.) are <a href="server/documentation/API/php/java/servlet/Context.html#getHttpServletRequest()">available from the context</a> when the backend is running in a servlet engine or application server. Example: <br><br>
+     available to the current script. All implicit web objects (session, servlet context, etc.) are <a href="server/documentation/API/php/java/servlet/Context.html#getHttpServletRequest()">available from the context</a>, when the backend is running in a servlet engine or application server. Example: <br><br>
 <blockquote>
 <code>
 public class MyApp {<br>
-&nbsp;&nbsp;public static void main(String s[]) throws Throwable {<br>
+&nbsp;&nbsp;public static void main(String s[]) throws Exception {<br>
 &nbsp;&nbsp;&nbsp;&nbsp;ScriptEngineManager m = new ScriptEngineManager();<br>
 &nbsp;&nbsp;&nbsp;&nbsp;ScriptEngine e = m.getEngineByName("php");<br>
 &nbsp;&nbsp;&nbsp;&nbsp;e.put("key", "java");<br>
@@ -385,7 +366,7 @@ BORDER="1"
 ><TD
 >java.lang.Object</TD
 ><TD
->An opaque object handle.  However, we guarantee that the first handle always starts with 1 and that the next handle is n+1 for all n < 1024 (useful if you work with the raw <a href="PROTOCOL.TXT">XML protocol</a>, see the <a href="examples/clients/README">python and scheme</a> examples).</TD
+>An opaque object handle.  However, we guarantee that the first handle always starts with 1 and that the next handle is n+1 (useful if you work with the raw <a href="PROTOCOL.TXT">XML protocol</a>, see the <a href="examples/clients/README">python and scheme</a> examples).</TD
 ><TD
 >$buf=new java("java.io.ByteArrayOutputStream");<br>
 $outbuf=new java("java.io.PrintStream", $buf);<br>
@@ -506,17 +487,6 @@ echo $ex->getCause();<br>
   root of you web-server and evaluate the file using the browser.
 
 </FONT></P>
-<P><FONT >The PHP/Java bridge
-is a replacement  for the <a href="http://www.php.net/manual/en/ref.java.php">experimental ext/java bridge</a>
-shipped with PHP 4. It is not possible to run the build-in bridge and
-the PHP/Java bridge at the same time.</FONT></P>
-</P>
-<P><FONT >
-  The module has been tested on a Mandrake Linux System (Version 9.2),
-  on RedHat Enterprise 3, RedHat Fedora Core 1..4, FreeBSD 5.3, Solaris 9 (Sparc, 64 bit JVM)
-  and Windows with RedHat Cygwin, but it should run on all Unix-like
-  operating systems.  
-</FONT></P>
 <P><FONT >
 <a name="jar-location">
   Custom java libraries (.jar files) can be stored in the following
@@ -565,8 +535,7 @@ On Security Enhanced Linux <code>.jar</code> files can only be loaded from locat
 <P><FONT > Furthermore the PHP/Java Bridge can be: <ul> <li> Compiled
 into PHP.  This is not recommended because it requires a compilation
 of the entire PHP library. If you want to do this, please read the
-README file.  This should only be necessary if the OS does not support
-shared libraries.
+README file. 
 
    <li> Compiled with the GNU Java library.  You can either start GNU
       Java as a separate process (just like a "real" Java VM) or
@@ -585,11 +554,11 @@ instructions</H1>
 <P STYLE="margin-top: 0.42cm; page-break-after: avoid"><FONT ><FONT SIZE=3>If
 you have a RedHat Linux system (RedHat Enterprise or
 Fedora), you can download the 32bit RPM and type <code>rpm -i
-php-java-bridge-v.x.y-z-i386.rpm</code> to install it (if you run a 64bit system <strong>and</strong> a 64bit JVM you need to install the 64bit RPM instead). For other operating systems please follow 
+php-java-bridge-v.x.y-1-i386.rpm php-java-bridge-standalone-v.x.y-1-i386.rpm</code> to install it (if you run a 64bit system <strong>and</strong> a 64bit JVM you need to install the 64bit RPM instead). For other operating systems please follow 
 the instructions below (on Security Enhanced Linux please use the RPM or please read the README before installation).</FONT></FONT></P>
 <UL>
 	<LI><P><FONT >Make sure you
-	have java version 1.4 or higher, gcc 3.2 or higher, apache 1.3 or
+	have java version 1.4.2 or higher, gcc 3.2 or higher, apache 1.3 or
 	higher, <em>autoconf </em> 2.57 or higher, <em>libtool</em> 1.4.3 or higher, <em>automake</em> 1.6.3 or higher, GNU make and php 4.3.2 or higher
 	installed. You can check the version numbers with the commands <code>java
 	-version</code>, <code>gcc --version</code>, <code>apachectl -version</code>, <code>libtool --version</code>, <code>automake --version</code>, <code>make null --version</code>, <code>autoconf --version</code> and
@@ -626,7 +595,7 @@ the instructions below (on Security Enhanced Linux please use the RPM or please 
 	<LI><P><FONT ><A name="mode4">In a production environment which requires <strong>load balancing and failover</strong> or <strong>session sharing between PHP, JSP and Servlets</strong> it is recommended deploy the backend into a servlet engine or an application server; tomcat 5 for example. Disable the <code>java.socketname</code>, either a) enable the <code>java.hosts</code> and <code>java.servlet</code> options or b), if you don't have Apache or IIS, install PHP as a CGI/FastCGI binary so that your application server can find it and start the application server. The <code>.ini</code> file should contain:
 <BR><BR><code>extension = java.so<BR>[java]<br>
 java.hosts=&quot;127.0.0.1:8080&quot<br>
-java.servlet=User
+java.servlet=On
 </code>
 <br><br>
 
@@ -682,7 +651,7 @@ BORDER="1"
 ><TD
 >/var/run/.php-java-bridge_socket</TD
 ><TD
->The name of the communication channel for the local backend. Must be an integer on windows.</TD
+>The name of the communication channel for the local backend. Must be an integer, if a secure "unix domain" channel is not available (Windows, Mac OSX).</TD
 ><TD
 >java.socketname="9167"
 </TD
@@ -791,14 +760,11 @@ compile a binary RPM from the source RPM using the command:
 <code>rpmbuild --rebuild php-java-bridge*src.rpm</code></p> <p>On
 recent Debian X86 installations, Ubuntu for example, it is also
 possible to install the RPM binaries: Open the appropriate binary RPM
-with a file manager and drag and drop the contents of the lib/php
-directory to /usr/lib/lib php and restart apache.</p> <li> <H4>Which
-version should I use, which is stable?</H4> <p>In production
-environments you can use PHP/Java Bridge 2.0.8 until PHP/Java Bridge
-3.0.8 is available.  </p> <li> <H4>Can I use java libraries without
+with a file manager and drag and drop the contents of the <code>lib/php</code>
+directory to <code>/usr/lib/php</code> and restart apache.</p> <li> <H4>Can I use java libraries without
 installing java?</H4> <p>Yes. Simply ommit the
 <code>--with-java=</code> configure option. The bridge will use the
-<code>libgcj</code>, which is part of the GNU gcc compiler, to
+<code>libgcj</code> library, which is part of the GNU gcc compiler, to
 interpret java libraries. This library also uses much less system
 resources (memory, files) than a "real" java VM.</p> <li> <H4>Does the
 bridge run native code within my servlet engine or application
@@ -885,6 +851,155 @@ $str = new Java("java.lang.String, $byteArray, 0, $length);<br>
 echo "You have typed: $str\n";<br>
 </code>
 </p>
+
+<li> <H4>How fast is it?</H4> <p> The following scripts were
+executed on a one 2.8 GHZ x86 cpu running Win XP, Linux and Sun jdk1.4.2:
+</p>
+<p>
+<code>
+$Sys = new Java("java.lang.System");<br>
+$String = new Java("java.lang.String");<br>
+<br>
+$s = new Java("java.lang.StringBuffer", "hello");<br>
+$T1=(float)$Sys->currentTimeMillis();<br>
+<br>
+for($i=0; $i<800000; $i++) {<br>
+&nbsp;&nbsp;$s->append($String->valueOf($i));<br>
+}<br>
+$T2=(float)$Sys->currentTimeMillis();<br>
+$T=$T2-$T1;<br>
+echo "$T\n";<br>
+</code>
+</p>
+The jython code:
+<p>
+<code>
+from java import lang<br>
+<br>
+i = 0<br>
+s = lang.StringBuffer("hello")<br>
+T1 = lang.System.currentTimeMillis();<br>
+<br>
+while i < 800000:<br>
+&nbsp;&nbsp;i = i + 1<br>
+&nbsp;&nbsp;s.append(lang.String.valueOf(i))<br>
+<br>
+T2 = lang.System.currentTimeMillis();<br>
+<br>
+print T2-T1<br>
+</code>
+</p>
+<p>
+<center>
+<TABLE
+BORDER="1"
+><COL><COL><COL><COL><THEAD
+><TR
+><TH
+>Operating System</TH
+><TH
+>Script Engine</TH
+><TH
+>Communication Channel</TH
+><TH
+>Execution time (ms)</TH
+></TR
+></THEAD
+
+<TBODY
+><TR
+><TD
+>Win XP</TD
+><TD
+>PHP4 + <a href="http://www.php.net/manual/en/ref.java.php">ext/java</a>, the predecessor of the bridge</TD
+><TD
+>JNI interface</TD
+><TD
+>42541</TD
+></TR
+>
+
+<TBODY
+><TR
+><TD
+>Win XP</TD
+><TD
+>PHP5 + PHP/Java Bridge 3.0.7</TD
+><TD
+>TCP socket</TD
+><TD
+>41670</TD
+></TR
+>
+
+<TBODY
+><TR
+><TD
+>RedHat Enterprise Linux 3</TD
+><TD
+>PHP4 + PHP/Java Bridge 3.0.7</TD
+><TD
+>TCP socket</TD
+><TD
+>34044</TD
+></TR
+>
+
+<TBODY
+><TR
+><TD
+>RedHat Enterprise Linux 3</TD
+><TD
+>PHP4 + PHP/Java Bridge 3.0.7</TD
+><TD
+>unix domain socket</TD
+><TD
+>17310</TD
+></TR
+>
+<TBODY
+><TR
+><TD
+>RedHat Enterprise Linux 3</TD
+><TD
+>PHP4 + PHP/Java Bridge 3.0.7</TD
+><TD
+>named pipes</TD
+><TD
+>12762</TD
+></TR
+>
+
+<TBODY
+><TR
+><TD
+>RedHat Enterprise Linux 3</TD
+><TD
+>PHP5 + PHP/Java Bridge with experimental async. protocol</TD
+><TD
+>named pipes</TD
+><TD
+>6565</TD
+></TR
+>
+
+<TBODY
+><TR
+><TD
+>RedHat Enterprise Linux 3</TD
+><TD
+><a href="http://www.jython.org/">jython 2.1</code></TD
+><TD
+>none/native code</TD
+><TD
+>1739</TD
+></TR
+>
+</TABLE
+>
+</center>
+
+</p>
 </ul>
 
 
@@ -899,7 +1014,7 @@ commercial non-free bridge which uses the same technology as the
 PHP/Java Bridge</a>.  <li> <a
 href="http://www.devx.com/Java/Article/21707">Calling Enterprise Java
 Beans from PHP/SOAP</a>.  <li> <a
-href="examples/j2ee/README?rev=1.4&view=markup">Calling
+href="examples/j2ee/README">Calling
 Enterprise Java Beans from the PHP/Java Bridge</a>.  </ul> </FONT></P>
 
 </BODY>

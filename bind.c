@@ -47,8 +47,8 @@ const static char ext_dir[] = "extension_dir";
 EXT_EXTERN_MODULE_GLOBALS(EXT)
 
 /* Windows can handle slashes as well as backslashes so use / everywhere */
-/* instead of static const char separator[2] = {ZEND_PATHS_SEPARATOR, 0}; */
-static const char separator[2] = "/";
+static const char separator = '/';
+static const char path_separator[2] = {ZEND_PATHS_SEPARATOR, 0};
 #if EXTENSION == JAVA
 static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], short for_display TSRMLS_DC) {
   char *s, *p;
@@ -93,9 +93,6 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   } else {
 	program = strdup(program);
   }
-  if(!*home) {					/* look into extension_dir then */
-	if(ext) home = ext;
-  }
   
   if(!sys_libpath) sys_libpath="";
   args[0]=program;
@@ -112,7 +109,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
 	p=malloc(strlen(s)+strlen(ext)+sizeof(bridge));
 	strcpy(p, s); strcat(p, ext); 
 	slash=p+strlen(p)-1;
-	if(*p&&*slash==*separator) *slash=0;
+	if(*p&&*slash==separator) *slash=0;
 	strcat(p, bridge);
   } else {
 	p=malloc(strlen(s)+strlen(cp)+1);
@@ -133,15 +130,19 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   args[7] = strdup(cfg_logFile);
   args[8] = NULL;
 
-  s="JAVA_HOME=";
-  p=malloc(strlen(s)+strlen(home)+1);
-  strcpy(p, s); strcat(p, home);
-  env[0] = p;					/* java home */
+  if(*home) {					/* set VM home */
+	s="JAVA_HOME=";
+	p=malloc(strlen(s)+strlen(home)+1);
+	strcpy(p, s); strcat(p, home);
+	env[0] = p;
+  } else {						/* VM in PATH; don't set java home */
+	env[0] = strdup("");
+  }
 
   s="LD_LIBRARY_PATH=";
   p=malloc(strlen(s)+strlen(lib_path)+1+strlen(sys_libpath)+1);
   strcpy(p, s); strcat(p, lib_path); 
-  strcat(p, separator); strcat(p, sys_libpath);
+  strcat(p, path_separator); strcat(p, sys_libpath);
   env[1] = p;					/* library path */
   env[2] = NULL;
 }
@@ -165,7 +166,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   p=malloc(strlen(home)+sizeof executable);
   strcpy(p, home); 
   slash=p+strlen(p)-1;
-  if(*p&&*slash==*separator) *slash=0;
+  if(*p&&*slash==separator) *slash=0;
   strcat(p, executable);
 
   args[1] = p;
@@ -176,7 +177,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
 	cfg_logFile="";
   }
   /* send a prefix so that the server does not select a different */
-  /* protocol */
+  /* channel */
   sockname = malloc(strlen(s_prefix)+strlen(cfg_sockname)+1);
   strcpy(sockname, s_prefix);
   strcat(sockname, cfg_sockname);
@@ -267,21 +268,29 @@ static void exec_vm(TSRMLS_D) {
   static char*args[N_SARGS];
   EXT_GLOBAL(get_server_args)(env, args, 0);
   if(N_SENV>2) {
-	putenv(env[0]);
-	putenv(env[1]);
+	if(*env[0]) putenv(env[0]);
+	if(*env[1]) putenv(env[1]);
   }
   EXT_GLOBAL(bridge_main)(N_SARGS, args);
 #else
   static char*env[N_SENV];
   static char*_args[N_SARGS+1];
-  char **args=_args+1;
+  char **args=_args+1, *cmd;
   EXT_GLOBAL(get_server_args)(env, args, 0 TSRMLS_CC);
   if(N_SENV>2) {
-	putenv(env[0]);
-	putenv(env[1]);
+	if(*env[0]) putenv(env[0]);
+	if(*env[1]) putenv(env[1]);
   }
-  if(use_wrapper(EXT_GLOBAL(cfg)->wrapper)) *--args = strdup(EXT_GLOBAL(cfg)->wrapper);
-  execv(args[0], args);
+  if(use_wrapper(EXT_GLOBAL(cfg)->wrapper)) {
+	*--args = strdup(EXT_GLOBAL(cfg)->wrapper);
+	execv(args[0], args);
+  }
+  if(*args[0]=='/') execv(args[0], args); else execvp(args[0], args);
+
+  /* exec failed */
+  cmd = get_server_string(0 TSRMLS_CC);
+  php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d) system error: Could not execute backend: %s: %s", 105, cmd, strerror(errno));
+  free(cmd);
 #endif
 }
 
@@ -490,8 +499,11 @@ void EXT_GLOBAL(start_server)(TSRMLS_D) {
 	  EXT_GLOBAL(cfg)->cid=0;
 	  if(CreateProcess( NULL, cmd, NULL, NULL, 1, properties, NULL, NULL, &su_info, &s_pid)) {
 		EXT_GLOBAL(cfg)->cid=s_pid.dwProcessId;
+		wait_server();
+	  } else {
+		php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d) system error: Could not start backend: %s; Code: %ld.", 105, cmd, (long)GetLastError());
+		free(cmd);
 	  }
-	  wait_server();
 	} else
 #endif /* MINGW32 */
 	  {

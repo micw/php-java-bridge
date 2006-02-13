@@ -1,3 +1,31 @@
+2006-02-12  Jost Boekemeier  <jostb@intern>
+
+	* bind.c (get_server_args): Use path_separator, ":", not separator "/" to separate path entries.
+	(exec_vm): Display a php warning if we could not execute the backend.
+
+	* server/php/java/bridge/DynamicJavaBridgeClassLoader.java: Do not
+	abort the cp search if we get an exception while resolving one entry.
+
+	* server/php/java/servlet/PhpJavaServlet.java (getLocalName): Wrap
+	req.getLocalName, which may not be available in all serlet
+	engines.
+
+	* VERSION, php-java-bridge.spec: Version 3.0.7 released
+
+2006-02-08  Jost Boekemeier  <jostb@intern>
+
+	* bind.c (get_server_args, exec_vm), config.m4,
+	server/configure.in: Do not hardcode the JDK runtime path into
+	the binary, if no JRE runtime path was given. This fixes a problem
+	in the FC4 and RHEL RPM, they were built with the jdk path but
+	require a jre.
+
+	* php-java-bridge.spec: Do not install the RunJavaBridge from the
+	core RPM.
+
+	* config.m4, server/configure.in: Check for GNU libtool. Needed
+	for Macintosh.
+
 2006-02-05  Jost Boekemeier  <jostb@intern>
 	
 	* VERSION, php-java-bridge.spec: Version 3.0.7rc released

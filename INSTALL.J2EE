@@ -44,6 +44,10 @@ the RPM build system instead, see INSTALL.LINUX.
 
   Then re-start Apache or IIS and check "java status" and "java server":
 
+    http://yourHost.com/<userContext>/test.php
+
+  e.g.:
+
     http://yourHost.com/JavaBridge/test.php
 
 * On production systems set the following flags in your php ini file
@@ -230,4 +234,3 @@ IBM WebSphere AS
   For production systems it is recommended to install the IBM
   HttpServer (a Apache variant) and to install PHP as a Apache
   module.
-

@@ -242,7 +242,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     	                    	if(Util.logLevel>2) Util.logMessage("trying to load class: " +name + " from: "+ Arrays.asList(this.getURLs()));
     	                    	try {
 				    return super.findClass(name);
-				} catch (ClassNotFoundException e) {
+				} catch (Exception e) {
 				    throw new ClassNotFoundException("Class " + name + " not found in: " + (Arrays.asList(this.getURLs()))+". Please load all interconnected classes in a single java_require() call, e.g. use java_require(foo;bar) instead of java_require(foo); java_require(bar).", e);
 				}
 			    }

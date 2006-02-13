@@ -16,14 +16,14 @@ Build and execution instructions:
 
   In the directory php-java-bridge-p.x.y type:
 
-          java -version        # 1.4 or above (1.5 or 1.6 recommended)
+          java -version        # 1.4.2 or above (1.5 or 1.6 recommended)
           gcc --version        # 3.2.3 or above (4.0.x recommended)
           apachectl -version   # Apache 1.3 or above (2.x recommended)
           php-config --version # PHP 4.3.4 or above (5.x or 6.x recommended)
           make null --version  # GNU make 3.79 or above
 
           phpize && 
-          ./configure --with-java=/opt/IBMJava2-141 &&
+          ./configure --with-java=/usr/java/default &&
           make &&
           su -c "make install"
 
@@ -43,7 +43,7 @@ Build and execution instructions:
   describes how to start the backend (if necessary) and how to configure
   the frontend so that it connects to the backend.
 
-  To permanently activate the frontend for all users, please add the
+  To permanently activate the extension for all users, please add the
   following lines to the php.ini. Or add a file java.ini to the
   directory that contains the php module descriptions, usually
   /etc/php.d/, with the following content:
@@ -64,8 +64,7 @@ Build and execution instructions:
 
 
   Example #2 uses java.java_home, java.java to set the java
-  executable. Vendors may also set java.wrapper to set the default
-  java VM options:
+  executable.
  
   [java]
   java.java_home = /opt/jdk1.5
@@ -124,8 +123,6 @@ Build and execution instructions:
   PHP_FCGI_MAX_REQUESTS="500" php-cgi -c java.ini -b 127.0.0.1:9667. 
   php-cgi starts automatically if no PHP server is listening on port 9667.
  
-  log_errors     = On
-  display_errors = Off
   [java]
   java.log_level = 3
 
@@ -389,11 +386,7 @@ Build and execution instructions:
      bit system.
 
    * -DCFG_JAVA_SOCKET_INET: Disables local ("unix domain") sockets on
-      systems which support them. This is needed on FreeBSD if the java VM
-      is a linux executable. It is also needed on those Mac OSX platforms
-      which use special JNI libraries (Apple has made some incompatible
-      and undocumented changes to the JNI header structure so that we cannot
-      use the standard Sun or GNU Java JNI to create the natcJavaBridge.so).
+      systems which support them. 
 
   Example: make CFLAGS="-O0 -g3"
 
@@ -615,7 +608,7 @@ Build and execution instructions:
 
   To be portable please do not use conversions which depend on the
   JVM's file.encoding. They are easy to avoid, the above example
-  should have been written as:
+  should be written as:
 
     $str=new Java ("java.lang.String", "Cześć! -- שלום -- Gr");
     echo (string)$str;  // in PHP5 or higher

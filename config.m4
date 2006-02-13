@@ -15,6 +15,7 @@ PHP_ARG_ENABLE(script, for java script support,
 [  --enable-script[=JAR]         Include java script support. If you use a JDK < 1.6 JAR must be the location of script-api.jar; creates php-script.jar])
 PHP_ARG_ENABLE(faces, for java server faces support,
 [  --enable-faces[=JAR]         Include java server faces support. JAR must be the location of jsf-api.jar; creates php-faces.jar])
+AC_ARG_ENABLE(backend, [  --enable-backend         Creates the JavaBridge.jar or MonoBridge.exe backend, may require JDK, gcj and other tools], PHP_BACKEND="$enableval", PHP_BACKEND="yes")
 
 
 if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
@@ -28,6 +29,10 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
 
 # find includes eg. -I/opt/jdk1.4/include -I/opt/jdk1.4/include/linux
         if test "$PHP_JAVA" != "yes"; then
+         # --with-java=/opt/compiletime/jdk,/usr/runtime/jre
+         PHP_JAVA="`echo $PHP_JAVA | LANG=C awk -F, '{print $1}'`"
+         PHP_JRE="`echo $PHP_JAVA | LANG=C awk -F, '{print $2}'`"
+
 	 JAVA_INCLUDES=`for i in \`find $PHP_JAVA/include -follow -type d -print\`; do echo -n "-I$i "; done`
 	 PHP_EVAL_INCLINE($JAVA_INCLUDES)
 	 JAVA_CHECK_JNI
@@ -43,11 +48,16 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
 	  PHP_JAVA_BIN="/usr/bin/mono"
 	  COND_GCJ=0
           PHP_JAVA=${EXTENSION_DIR}
+          PHP_JRE=${EXTENSION_DIR}
         else 
 # create java.so, compile with -DEXTENSION_DIR="\"$(EXTENSION_DIR)\""
 	PHP_NEW_EXTENSION(java, php_java_snprintf.c php_java_strtod.c java.c java_bridge.c client.c parser.c protocol.c bind.c init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\"])
           EXTENSION_NAME=JAVA
-	  PHP_JAVA_BIN="${PHP_JAVA}/bin/java"
+	  if test X$PHP_JRE = X; then
+		  PHP_JAVA_BIN="java"
+	  else
+		  PHP_JAVA_BIN="${PHP_JRE}/bin/java"
+          fi
         fi
 
        JAVA_CHECK_BROKEN_GCC_INSTALLATION
@@ -59,7 +69,7 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
 # create init_cfg.c from the template (same as AC_CONFIG_FILES)
 	BRIDGE_VERSION="`cat $ext_builddir/VERSION`"
         for i in init_cfg.c init_cfg.h; do 
-	  sed "s*@PHP_JAVA@*${PHP_JAVA}*
+	  sed "s*@PHP_JAVA@*${PHP_JRE}*
 	     s*@COND_GCJ@*${COND_GCJ}*
              s*@PHP_JAVA_BIN@*${PHP_JAVA_BIN}*
              s*@EXTENSION@*${EXTENSION_NAME}*
@@ -67,6 +77,7 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
             <$ext_builddir/${i}.in >$ext_builddir/${i}
         done
 
+if test "$PHP_BACKEND" = "yes" ; then
 # bootstrap the server's configure script
 	if test -d ext/java/server; then
 	    AC_CONFIG_SUBDIRS(ext/java/server)
@@ -83,5 +94,6 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
 	PHP_ADD_MAKEFILE_FRAGMENT
 	PHP_SUBST(JAVA_SHARED_LIBADD)
 	PHP_MODULES="$PHP_MODULES \$(phplibdir)/libnatcJavaBridge.la"
+fi
 
 fi

@@ -309,8 +309,10 @@ public class Util {
      */
     public static void printStackTrace(Throwable t) {
 	if(logLevel > 0)
-	    if ((t instanceof Error) || logLevel > 1) 
+	    if ((t instanceof Error) || logLevel > 1) {
+		println(2, "Exception occured");
 	    	logger.printStackTrace(t);
+	    }
     }
     
     /**

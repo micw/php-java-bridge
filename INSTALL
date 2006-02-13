@@ -35,7 +35,7 @@ The following software components must be installed on your computer:
   build on Solaris, FreeBSD/MacOSX or WinXP, you also need the GNU
   toolchain (gcc, gnu make, autoconf etc.).
 
-* a Java VM. For example IBM JDK 1.4.1 or GNU Java version 3 or above.
+* a Java VM. For example IBM JDK 1.4.2 or GNU Java version 3 or above.
 
 * optional: Oracle 9i/10g AS or IBM WebSphere 5/6.
 

@@ -5,7 +5,8 @@ Installing the PHP/Java Bridge on Windows
 
 * Extract the files from the php-java-bridge J2EE download and deploy
   JavaBridge.war into your J2EE server, visit
-  http://localhost:8080/JavaBridge and click on test.php.
+  http://localhost:<port>/JavaBridge and click on test.php.
+  The <port> is 8888 (Oracle), 9080 (WebSphere) or 8080 (Tomcat).
 
 
 If the above test succeeded (or if you have skipped the test because
@@ -40,16 +41,6 @@ php.ini, the php java extension "php_java.dll" and your java libraries
   into the extension_dir, rename it to php_java.dll and copy your java
   libraries (.jar files) into extension_dir\lib.
 
-* If you have a servlet engine or j2ee server and you want to share
-  the web server document root with the servlet engine or j2ee
-  server, change the HTTP server document root and edit the [java]
-  section of your php.ini file so that it contains:
-
-    [java]
-    java.hosts      = 127.0.0.1:8080 ;or 8888 for Oracle, 9080 for WebSphere
-    java.servlet    = MultiUser
-    java.log_level  = 3
-
 * If you have a servlet engine or j2ee server, edit the [java] section
   of your php.ini file so that it contains:
 
@@ -66,12 +57,43 @@ php.ini, the php java extension "php_java.dll" and your java libraries
     ;java.socketname = 9267
     ;java.java        = c:/jdk1.5/jre/bin/javaw
     ;java.java_home   = c:/jdk1.5
-    java.log_level   = 3
+    java.log_level   = 2
 
   If you set the java.socketname, you must double-click on
   JavaBridge.jar to start the standalone backend once. If you leave it
   off, the backend automatically starts the default javaw or the
   specified "java.java" program when your HTTP server starts.
+
+* Copy the test.php (from the JavaBridge.war) to your web server
+  document root, re-start the web server and check "java status" and
+  "java server":
+
+    http://yourHost/test.php
+
+* If you have a servlet engine or j2ee server and you want to share
+  the web server document root with the servlet engine or j2ee server,
+  change the HTTP server document root. The following example sets the
+  document root in the apache2 httpd.conf to the tomcat 5 webapps
+  directory:
+
+    DocumentRoot "c:\Programme\Apache Software Foundation\Tomcat 5.5\webapps"
+    <Directory "c:\Programme\Apache Software Foundation\Tomcat 5.5\webapps">
+
+  Edit the [java] section of your php.ini file so that it contains:
+
+    [java]
+    java.hosts      = 127.0.0.1:8080 ;or 8888 for Oracle, 9080 for WebSphere
+    java.servlet    = MultiUser
+    java.log_level  = 3
+
+  Restart the web server and check "java status" and "java server":
+
+    http://yourHost/<userContext>/test.php
+
+  e.g:
+
+    http://yourHost/JavaBridge/test.php
+
 
 * On production systems set the following flags in your php ini file
   so that the backend can generate standard error pages.
@@ -79,12 +101,6 @@ php.ini, the php java extension "php_java.dll" and your java libraries
     log_errors     = On
     display_errors = Off
     html_errors    = Off
-
-* Copy the test.php (from the JavaBridge.war) to your web server
-  document root, re-start the web server and and check "java status"
-  and "java server":
-
-   http://yourHost/test.php
 
 * If there are problems, edit your php.ini and set the java.log_level
   to 4 or a higher log level and examine the log file of the servlet
