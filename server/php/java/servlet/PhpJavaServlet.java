@@ -16,7 +16,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import php.java.bridge.DynamicJavaBridgeClassLoader;
 import php.java.bridge.JavaBridge;
 import php.java.bridge.Request;
 import php.java.bridge.ThreadPool;
@@ -164,7 +163,6 @@ public class PhpJavaServlet extends FastCGIServlet {
     	super.init(config);
        
 	Util.setLogger(new Logger(config.getServletContext()));
-        DynamicJavaBridgeClassLoader.initClassLoader();
 
 	Util.TCP_SOCKETNAME = String.valueOf(CGI_CHANNEL);
 	if(Util.VERSION!=null)
@@ -456,11 +454,7 @@ public class PhpJavaServlet extends FastCGIServlet {
 		sout.writeTo(resOut);
 		if(bridge.logLevel>3) bridge.logDebug("re-directing to port# "+ channelName);
 	    	sin.close();
-	    	resOut.flush();
 	    	ctxServer.start(channelName);
-		if(bridge.logLevel>3) bridge.logDebug("waiting for context: " +ctx.getId());
-	    	ctx.waitFor();
-	    	if(bridge.logLevel>3) bridge.logDebug("context finished: " +ctx.getId());
 	    }
 	    else {
 	        sin.close();

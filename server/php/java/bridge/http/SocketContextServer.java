@@ -7,7 +7,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
-import php.java.bridge.DynamicJavaBridgeClassLoader;
 import php.java.bridge.ISocketFactory;
 import php.java.bridge.JavaBridge;
 import php.java.bridge.ThreadPool;
@@ -91,7 +90,6 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
 	        threadPool.start(runner);
 	    } else {
 	    	Thread t = new Thread(runner, "JavaBridgeContextRunner");
-		t.setContextClassLoader(DynamicJavaBridgeClassLoader.newInstance());
 	    	t.start();
 
 	    }

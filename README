@@ -70,7 +70,7 @@ Build and execution instructions:
   java.java_home = /opt/jdk1.5
   java.java      = /opt/jdk1.5/bin/java
   java.log_file  = /var/log/php-java-bridge.log
-  java.log_level = 3
+  java.log_level = 2
  
  
   2) java.socketname set: local system backend started by the
@@ -478,8 +478,9 @@ Build and execution instructions:
 
   Custom libraries should be stored in one of the system directories,
   either /usr/share/java (or one of its sub-directories) or
-  java.libpath/lib (or one of its sub-directories) and they shall have
-  the following format: <name>-<version>.jar.  For example:
+  java.libpath/lib (or one of its sub-directories) or WEB-INF/lib (when
+  the backend is deployed as a web application) and they shall have the
+  following format: <name>-<version>.jar.  For example:
 
     /usr/share/java/batStore/batStore-1.0.jar.
 

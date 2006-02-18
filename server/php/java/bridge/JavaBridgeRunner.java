@@ -34,7 +34,6 @@ public class JavaBridgeRunner extends HttpServer {
      */
     public JavaBridgeRunner() {
 	super();
-	DynamicJavaBridgeClassLoader.initClassLoader();
 	ctxServer = new ContextServer(null);
     }
 

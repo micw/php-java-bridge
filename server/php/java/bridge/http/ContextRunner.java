@@ -10,6 +10,8 @@ import java.io.OutputStream;
 import php.java.bridge.JavaBridge;
 import php.java.bridge.Request;
 import php.java.bridge.Util;
+import php.java.bridge.JavaBridgeClassLoader;
+import php.java.bridge.DynamicJavaBridgeClassLoader;
 
 /**
  * The ContextRunner manages the "high speed" communication link.  It
@@ -28,8 +30,6 @@ class ContextRunner implements Runnable {
     protected ContextRunner(ContextServer contextServer, IContextServer.Channel channel) throws FileNotFoundException {
 	this.contextServer = contextServer;
 	this.channel = channel;
-	this.out = channel.getOuptutStream();
-	this.in = channel.getInputStream();
     }
     private int readLength() throws IOException{
 	byte buf[] = new byte[1];
@@ -48,6 +48,9 @@ class ContextRunner implements Runnable {
     }
 
     private void init() throws IOException {
+	out = channel.getOuptutStream();
+	in = channel.getInputStream();
+
 	int c = in.read();
 	if(c!=077) {
 	    try {out.write(0); }catch(IOException e){}
@@ -61,6 +64,18 @@ class ContextRunner implements Runnable {
     	ctx = (ContextFactory) ContextFactory.get(name);
     	if(ctx == null) throw new IOException("No context available for: " + name + ".");
     	bridge = ctx.getBridge();
+	// The first statement was executed with the default
+	// classloader, now set the dynamic class loader into the
+	// bridge:
+	JavaBridgeClassLoader loader = bridge.getClassLoader();
+	try {
+	    DynamicJavaBridgeClassLoader xloader = 
+		(DynamicJavaBridgeClassLoader) Thread.currentThread().getContextClassLoader();
+	    loader.setClassLoader(xloader);
+	} catch (Exception ex) {
+	    // should never happen
+	    Util.printStackTrace(ex); 
+	}
     	bridge.in=in;
     	bridge.out=out;
 	r = bridge.request = new Request(bridge);

@@ -25,6 +25,8 @@ import java.util.WeakHashMap;
  * */
 public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 
+    private boolean urlsAdded = false; // thread local variable
+
     // the list of jar files in which we search for user classes.
     static private Collection sysUrls = null;
 
@@ -46,6 +48,8 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
      * @param rawContextDir The context dir, e.g. /usr/lib/php/extensions
      */
     public void updateJarLibraryPath(String rawPath, String rawContextDir) {
+	addSysUrls();
+
     	String key = rawPath;
     	rawContextDir += rawContextDir.endsWith("/") ? "lib/" : "/lib/";
 	/*
@@ -152,7 +156,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	    }
 	}
     }
-    /**@deprecated Use #initClassLoader() instead*/
+    /**@deprecated*/
     public static synchronized void initClassLoader(String phpConfigDir) {
       initClassLoader(); 
     }
@@ -166,7 +170,8 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
      * before throwing a "ClassNotFoundException".
      * @param phpConfigDir The default php config directory
      */
-    public static synchronized void initClassLoader() {
+    private static synchronized void initClassLoader() {
+	if(sysUrls!=null) return;
  	sysUrls=new ArrayList();
 	try {
 	    String[] paths = new String[] {"/usr/share/java", "/usr/share/java/ext"};
@@ -198,11 +203,12 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     }
 
     protected void addSysUrls() {
+	if(urlsAdded) return;
+	initClassLoader();
         URL urls[] = new URL[sysUrls.size()];
-	synchronized(getClass()) {
-            sysUrls.toArray(urls);
-	}
+	sysUrls.toArray(urls);
 	this.addURLs(urls, true);
+	urlsAdded=true;
     }
 
     /**
@@ -210,7 +216,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
      */
     public void clear() {
     	super.clear();
-    	addSysUrls();
+	urlsAdded=false;
     }
     /**
      * Reset to initial state.
@@ -242,8 +248,10 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     	                    	if(Util.logLevel>2) Util.logMessage("trying to load class: " +name + " from: "+ Arrays.asList(this.getURLs()));
     	                    	try {
 				    return super.findClass(name);
-				} catch (Exception e) {
+				} catch (ClassNotFoundException e) {
 				    throw new ClassNotFoundException("Class " + name + " not found in: " + (Arrays.asList(this.getURLs()))+". Please load all interconnected classes in a single java_require() call, e.g. use java_require(foo;bar) instead of java_require(foo); java_require(bar).", e);
+				} catch (Exception ex) {
+				    throw new ClassNotFoundException("Class " + name + " not found in: " + (Arrays.asList(this.getURLs()))+" due to exception: " + ex + ".", ex);
 				}
 			    }
 			    public URL findResource(String name)  {

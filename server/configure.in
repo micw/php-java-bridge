@@ -46,9 +46,8 @@ JNI_LIBS="libnatcJavaBridge.la"
 AM_CPPFLAGS="${AM_CPPFLAGS} -DEXTENSION_DIR=\"\\\"\$(EXTENSION_DIR)\\\"\""
 if test "$PHP_JAVA" != "yes"; then
 # --with-java=/opt/compiletime/jdk,/usr/runtime/jre
-PHP_JAVA="`echo $PHP_JAVA | LANG=C awk -F, '{print $1}'`"
 PHP_JRE="`echo $PHP_JAVA | LANG=C awk -F, '{print $2}'`"
-if test X$PHP_JRE = X; then PHP_JRE="$PHP_JAVA"; fi
+PHP_JAVA="`echo $PHP_JAVA | LANG=C awk -F, '{print $1}'`"
 
 JAVA_INCLUDES=`for i in \`find $PHP_JAVA/include -follow -type d -print\`; do echo -n "-I$i "; done`
 AM_CPPFLAGS="${AM_CPPFLAGS} $JAVA_INCLUDES"

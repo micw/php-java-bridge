@@ -771,6 +771,7 @@ public class Util {
      */
     public static ClassLoader getContextClassLoader() {
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
+	if(loader==null) loader = Util.class.getClassLoader();
         return loader;
     }
 }

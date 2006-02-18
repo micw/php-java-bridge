@@ -16,14 +16,36 @@ public class JavaBridgeClassLoader {
     ClassLoader scl = null;
     private JavaBridge bridge;
 
-    public JavaBridgeClassLoader(JavaBridge bridge, DynamicJavaBridgeClassLoader loader) {
-    	this.bridge = bridge;
+    public JavaBridgeClassLoader(JavaBridge bridge1, DynamicJavaBridgeClassLoader loader) {
+    	this.bridge = bridge1;
     	this.cl = loader;
 
     	if(this.cl==null) 
-	    this.scl = bridge.getClass().getClassLoader(); 
+	    this.scl = bridge.getClass().getClassLoader();
 	else 
 	    cl.clear();
+    }
+
+
+    private String cachedPath, cachedExtensionDir;
+    private boolean checkCl() {
+	if(cl==null) {
+	    if(cachedPath!=null) throw new IllegalStateException("cachedPath");
+	    return false;
+	}
+	return true;
+    }
+
+    /**
+     * Set a DynamicJavaBridgeClassLoader.
+     * @param loader The dynamic class loader
+     */
+    public void setClassLoader(DynamicJavaBridgeClassLoader loader) {
+        if(loader==null) { cachedPath = cl = null; return; }
+	if(cl != null) throw new IllegalStateException("cl");
+	cl = loader;
+	if(cachedPath != null) 
+	    cl.updateJarLibraryPath(cachedPath, cachedExtensionDir);
     }
 
     /**
@@ -32,8 +54,9 @@ public class JavaBridgeClassLoader {
      * @param extensionDir Usually ini_get("extension_dir"); 
      */
     public void updateJarLibraryPath(String path, String extensionDir)  {
-	if(cl==null) {
-	    bridge.logMessage("You don't have permission to call java_set_library_path() or java_require(). Please store your libraries in the lib folder within JavaBridge.war");
+	if(!checkCl()) {
+	    cachedPath = path;
+	    cachedExtensionDir = extensionDir;
 	    return;
 	}
 
@@ -45,7 +68,7 @@ public class JavaBridgeClassLoader {
      * @return the classloader
      */
     public ClassLoader getClassLoader() {
-	if(cl!=null) return (ClassLoader)cl;
+	if(checkCl()) return (ClassLoader)cl;
 	return scl;
     }
 
@@ -53,7 +76,7 @@ public class JavaBridgeClassLoader {
      * reset loader to the initial state
      */
     public void reset() {
-	if (cl!=null) cl.reset();
+	if (checkCl()) cl.reset();
     }
 
     /**
@@ -61,7 +84,7 @@ public class JavaBridgeClassLoader {
      * not the input vectors
      */
     public void clearCaches() {
-	if (cl!=null) cl.clearCaches();
+	if (checkCl()) cl.clearCaches();
     }
 
     /**
@@ -71,8 +94,13 @@ public class JavaBridgeClassLoader {
      * @throws ClassNotFoundException
      */
     public Class forName(String name) throws ClassNotFoundException {
-    	if(cl==null) return Class.forName(name, false, scl);
+    	if(!checkCl()) return Class.forName(name, false, scl);
     	return cl.loadClass(name);
     }
-
+    /**
+     * clear the input vectors
+     */
+    public void clear() {
+	if(!checkCl()) cl.clear();
+    }
 }

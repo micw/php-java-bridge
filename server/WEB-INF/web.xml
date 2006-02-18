@@ -14,7 +14,6 @@
     <servlet>
         <servlet-name>PhpJavaServlet</servlet-name>
         <servlet-class>php.java.servlet.PhpJavaServlet</servlet-class>
-        <load-on-startup>0</load-on-startup>
 
          <!-- Allow us to override the java.hosts, java.servlet and -->
          <!-- java.socketname settings from your php.ini so that we can -->
@@ -64,6 +63,8 @@
            <param-value>2</param-value>
          </init-param>
         -->
+
+        <load-on-startup>0</load-on-startup>
   </servlet>
 
 

@@ -26,6 +26,7 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
        JAVA_CHECK_BROKEN_STDIO_BUFFERING
        JAVA_CHECK_ABSTRACT_NAMESPACE
        JAVA_CHECK_STRUCT_UCRED
+       JAVA_CHECK_JNI
 
 # find includes eg. -I/opt/jdk1.4/include -I/opt/jdk1.4/include/linux
         if test "$PHP_JAVA" != "yes"; then
@@ -35,7 +36,6 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
 
 	 JAVA_INCLUDES=`for i in \`find $PHP_JAVA/include -follow -type d -print\`; do echo -n "-I$i "; done`
 	 PHP_EVAL_INCLINE($JAVA_INCLUDES)
-	 JAVA_CHECK_JNI
 	 COND_GCJ=0
 	else
 	 COND_GCJ=1

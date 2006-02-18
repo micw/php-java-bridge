@@ -13,6 +13,7 @@ import java.util.LinkedList;
  *
  */
 public class ThreadPool {
+    private ClassLoader loader = null;
     private String name;
     private int threads = 0, idles = 0, poolMaxSize;
     private LinkedList runnables = new LinkedList();
@@ -52,10 +53,9 @@ public class ThreadPool {
 	runnables.add(r);
 	if(idles==0 && threads < poolMaxSize) {
 	    Delegate d = new Delegate(name);
-            ClassLoader c = DynamicJavaBridgeClassLoader.newInstance();
-            if (c!=null) {
-		d.setContextClassLoader(c);
-            }
+	    ClassLoader loader =
+		DynamicJavaBridgeClassLoader.newInstance(this.loader);
+	    d.setContextClassLoader(loader);
 	    d.start();
 	}
 	else
@@ -70,5 +70,19 @@ public class ThreadPool {
     public ThreadPool (String name, int poolMaxSize) {
 	this.name = name;
     	this.poolMaxSize = poolMaxSize;
+	this.loader = Util.getContextClassLoader();
+
+    }
+
+    /**
+     * Creates a new thread pool.
+     * @param name  The name of the pool threads.
+     * @param poolMaxSize The max. number of threads, must be >= 1.
+     * @param loader The class loader, may be null.
+     */
+    public ThreadPool (String name, int poolMaxSize, ClassLoader loader) {
+	this.name = name;
+    	this.poolMaxSize = poolMaxSize;
+	this.loader = loader;
     }
 }

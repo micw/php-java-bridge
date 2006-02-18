@@ -1,3 +1,48 @@
+2006-02-19  Jost Boekemeier  <jostb@intern>
+	
+	* VERSION, php-java-bridge.spec: Version 3.0.7 released
+	
+2006-02-18  Jost Boekemeier  <jostb@intern>
+
+	* config.m4: check jni in the gcj path, too.
+
+	* examples/j2ee/globals.php: obsolete
+	
+	* examples/j2ee/documentClient.php: rewritten
+
+	* server/configure.in (PHP_JRE): calculate the correct jre
+
+	* server/WEB-INF/web.xml (load-on-startup): Must be placed after the param-value.
+
+	* server/php/java/bridge/PhpProcedure.java (createProxy): corrected typo.
+	
+	* server/php/java/bridge/DynamicJavaBridgeClassLoader.java:
+	Rewritten so that the dynamic classloader can be used in the
+	servlet, j2ee environment: It is switched off for all statements
+	executed by the http tunnel. All following redirected requests are
+	handled by our thread pool which now carries a dynamic loader with
+	the previous context classloader as the parent. Fixes PR1432361.
+
+	* server/php/java/bridge/ThreadPool.java (ThreadPool): Use the
+	context loader or the supplied loader, otherwise classes from the
+	parent container can not be found.
+
+	* server/php/java/bridge/Util.java (getContextClassLoader): Use
+	the current loader if the context loader isn't set.
+
+	* server/php/java/bridge/http/ContextFactory.java
+	(ContextFactory): Switch off the dynamic loader when the backend
+	is running in a servlet engine or j2ee application server. These
+	environments have their own class loading mechanism.
+
+	* server/php/java/bridge/http/ContextRunner.java (ContextRunner,
+	init), server/php/java/bridge/servlet/PhpJavaServlet.java
+	(handleSocketConnection): Avoid deadlock when running in j2ee
+	servers with a broken response.flush implementation. Fixes
+	PR1431359.
+
+	* examples/documentClient.php: New file, tests PR1432361.
+	
 2006-02-12  Jost Boekemeier  <jostb@intern>
 
 	* bind.c (get_server_args): Use path_separator, ":", not separator "/" to separate path entries.

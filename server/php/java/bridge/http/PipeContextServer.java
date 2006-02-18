@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import php.java.bridge.DynamicJavaBridgeClassLoader;
 import php.java.bridge.ThreadPool;
 import php.java.bridge.Util;
 
@@ -42,11 +41,13 @@ public class PipeContextServer implements IContextServer {
          }
                 
         public InputStream getInputStream() throws FileNotFoundException {
-            return this.in = new FileInputStream(new File(channelName+".o"));
+	    if(in!=null) return in;
+            return in = new FileInputStream(new File(channelName+".o"));
         }
         
         public OutputStream getOuptutStream() throws FileNotFoundException {
-            return this.out = new FileOutputStream(new File(channelName+".i"));
+	    if(out!=null) return out;
+            return out = new FileOutputStream(new File(channelName+".i"));
         }
         
          protected static void shutdown(InputStream in, OutputStream out) {
@@ -74,7 +75,6 @@ public class PipeContextServer implements IContextServer {
 	        threadPool.start(runner);
 	    } else {
 	    	Thread t = new Thread(runner, "JavaBridgeContextRunner");
-		t.setContextClassLoader(DynamicJavaBridgeClassLoader.newInstance());
 	    	t.start();
 	    }
 	} catch (SecurityException t) {

@@ -5,7 +5,6 @@ package php.java.bridge.http;
 import java.util.Hashtable;
 import java.util.Iterator;
 
-import php.java.bridge.DynamicJavaBridgeClassLoader;
 import php.java.bridge.JavaBridge;
 import php.java.bridge.JavaBridgeClassLoader;
 import php.java.bridge.SessionFactory;
@@ -29,8 +28,8 @@ import php.java.bridge.Util;
  * pass it back together with the getSession request or the "local
  * channel re-direct". If the former happens, we invoke the promise
  * and return the session object to the client. Different promises can
- * evaluate to the same session object.  For local channel re-directs,
- * the ContextFactory is given to a ContextRunner, which handles the
+ * evaluate to the same session object.  For local channel re-directs
+ * the ContextFactory is given to a ContextRunner which handles the
  * local channel communication.
  * <p>
  * There can be only one instance of a ContextFactory per VM classloader.
@@ -56,10 +55,8 @@ public class ContextFactory extends SessionFactory {
     protected ContextFactory() {
       super();
       id=String.valueOf(0xFFFF&getNext());
-      
-      JavaBridge bridge;
-      setBridge(bridge = new JavaBridge());
-      bridge.setClassLoader(new JavaBridgeClassLoader(getBridge(), DynamicJavaBridgeClassLoader.newInstance(Util.getContextClassLoader())));
+      setBridge(new JavaBridge());
+      bridge.setClassLoader(new JavaBridgeClassLoader(bridge, null));
       bridge.setSessionFactory(this);
       //JavaBridge.load++;
     }
@@ -99,6 +96,7 @@ public class ContextFactory extends SessionFactory {
      *
      */
     public synchronized void remove() {
+	if(bridge.logLevel>3) bridge.logDebug("context finished: " +getId());
 	contexts.remove(getId());
 	bridge=null;
 	removed=true;

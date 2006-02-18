@@ -190,6 +190,7 @@ public class JavaBridge implements Runnable {
 	    try {
 		setClassLoader(new JavaBridgeClassLoader(this, (DynamicJavaBridgeClassLoader) Thread.currentThread().getContextClassLoader()));
 	    } catch (ClassCastException ex) {
+	         // should never happen
 		setClassLoader(new JavaBridgeClassLoader(this, null));
 	    }
 	    request = new Request(this);
@@ -220,6 +221,7 @@ public class JavaBridge implements Runnable {
 	    }
 	    //load--;
 	    globalRef=null;
+	    getClassLoader().clear();
 	    Session.expire(this);
 	    Util.logDebug("END: JavaBridge.run()");
 	    Util.logStream.flush();
@@ -333,7 +335,6 @@ public class JavaBridge implements Runnable {
 	    ThreadPool pool = null;
 	    if(maxSize>0) pool = new ThreadPool(Util.EXTENSION_NAME, maxSize);
             Util.logDebug("Starting to accept Socket connections");
-            DynamicJavaBridgeClassLoader.initClassLoader();
             
 	    while(true) {
 		Socket sock = socket.accept();
@@ -345,14 +346,13 @@ public class JavaBridge implements Runnable {
 		} else {
                     Util.logDebug("Starting bridge from new Thread");
 		    Thread t = new Thread(bridge);
-		    t.setContextClassLoader(DynamicJavaBridgeClassLoader.newInstance());
+		    t.setContextClassLoader(DynamicJavaBridgeClassLoader.newInstance(Util.getContextClassLoader()));
 		    t.start();
 		}
 	    }
 
 	} catch (Throwable t) {
-	    Util.printStackTrace(t);
-	    System.exit(1);
+	    throw new RuntimeException(t);
 	}
     }
 
@@ -370,7 +370,7 @@ public class JavaBridge implements Runnable {
 	try {
 	    init(s);
 	} catch (Throwable t) {
-	    Util.printStackTrace(t);
+	    t.printStackTrace();
 	    System.exit(9);
 	}
     }
