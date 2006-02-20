@@ -454,6 +454,7 @@ public class PhpJavaServlet extends FastCGIServlet {
 		sout.writeTo(resOut);
 		if(bridge.logLevel>3) bridge.logDebug("re-directing to port# "+ channelName);
 	    	sin.close();
+		try {res.flushBuffer(); } catch (Throwable t) {Util.printStackTrace(t);}
 	    	ctxServer.start(channelName);
 	    }
 	    else {
@@ -521,21 +522,8 @@ public class PhpJavaServlet extends FastCGIServlet {
 	    throw ex;
     	} catch (SecurityException sec) {
     	    try {res.reset();} catch (Exception ex) {/*ignore*/}
-	    String base = getServletConfig().getServletContext().getRealPath(cgiPathPrefix);
-	    StringBuffer buf = new StringBuffer("./");
-	    buf.append("php-cgi-");
-	    buf.append(Util.osArch);
-	    buf.append("-");
-	    buf.append(Util.osName);
-    	    String wrapper = buf.toString();
 	    ServletException ex = new ServletException(
-"A security exception occured, could not run PHP.\n" +
-"Please start Apache or IIS or start a standalone PHP server.\n"+
-"For example with the commands: \n\n" +
-"cd " + base + "\n" + 
-"chmod +x " + wrapper + "\n" + 
-"X_JAVABRIDGE_OVERRIDE_HOSTS=\"/\" PHP_FCGI_CHILDREN=\"20\" PHP_FCGI_MAX_REQUESTS=\"500\" "+wrapper+" -c "+wrapper+".ini -b 127.0.0.1:9667\n\n"
-	    		, sec);
+"A security exception occured, could not run PHP.\n" + startFcgiMessage());
 	    php=null;
 	    checkCgiBinary(getServletConfig());
 	    throw ex;    	    

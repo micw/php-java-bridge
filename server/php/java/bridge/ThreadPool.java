@@ -53,9 +53,9 @@ public class ThreadPool {
 	runnables.add(r);
 	if(idles==0 && threads < poolMaxSize) {
 	    Delegate d = new Delegate(name);
-	    ClassLoader loader =
-		DynamicJavaBridgeClassLoader.newInstance(this.loader);
-	    d.setContextClassLoader(loader);
+	    ClassLoader loader = null;
+	    if(this.loader!=null) loader=DynamicJavaBridgeClassLoader.newInstance(this.loader);
+	    if(loader!=null) d.setContextClassLoader(loader);
 	    d.start();
 	}
 	else
@@ -70,7 +70,7 @@ public class ThreadPool {
     public ThreadPool (String name, int poolMaxSize) {
 	this.name = name;
     	this.poolMaxSize = poolMaxSize;
-	this.loader = Util.getContextClassLoader();
+	try {this.loader = Util.getContextClassLoader();} catch (SecurityException e) {/*ignore*/}
 
     }
 

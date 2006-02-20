@@ -92,6 +92,22 @@ exitting. When one process exits, another will be created.
     private String php_fcgi_children = PHP_FCGI_CHILDREN;
     private String php_fcgi_max_requests = PHP_FCGI_MAX_REQUESTS;
     
+    protected String startFcgiMessage() {
+	String base = getServletConfig().getServletContext().getRealPath(cgiPathPrefix);
+	StringBuffer buf = new StringBuffer("./");
+	buf.append("php-cgi-");
+	buf.append(Util.osArch);
+	buf.append("-");
+	buf.append(Util.osName);
+	String wrapper = buf.toString();
+	String msg =
+"Please start Apache or IIS or start a standalone PHP server.\n"+
+"For example with the commands: \n\n" +
+"cd " + base + "\n" + 
+"chmod +x " + wrapper + "\n" + 
+"X_JAVABRIDGE_OVERRIDE_HOSTS=\"/\" PHP_FCGI_CHILDREN=\"20\" PHP_FCGI_MAX_REQUESTS=\"500\" "+wrapper+" -c "+wrapper+".ini -b 127.0.0.1:9667\n\n";
+        return msg;
+    }
     private boolean fcgiIsAvailable() {
         return fcgiIsAvailable;
     }
@@ -227,7 +243,8 @@ exitting. When one process exits, another will be created.
 		fastCGISocket = new Socket(InetAddress.getByName("127.0.0.1"), FCGI_CHANNEL);
 		cgiRunnerFactory = new CGIRunnerFactory();
 	    } catch (Exception e) {
-		Util.logMessage("FastCGI channel not available, switching off fast cgi.");
+		Util.logMessage(e+": FastCGI channel not available, switching off fast cgi. " + startFcgiMessage());
+		
 		fcgiIsAvailable = false;
 		return null;
 	    }

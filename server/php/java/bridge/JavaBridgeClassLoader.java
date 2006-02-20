@@ -41,7 +41,7 @@ public class JavaBridgeClassLoader {
      * @param loader The dynamic class loader
      */
     public void setClassLoader(DynamicJavaBridgeClassLoader loader) {
-        if(loader==null) { cachedPath = cl = null; return; }
+        if(loader==null) { cachedPath = null; cl = null; return; }
 	if(cl != null) throw new IllegalStateException("cl");
 	cl = loader;
 	if(cachedPath != null) 

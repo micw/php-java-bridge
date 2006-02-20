@@ -68,14 +68,16 @@ class ContextRunner implements Runnable {
 	// classloader, now set the dynamic class loader into the
 	// bridge:
 	JavaBridgeClassLoader loader = bridge.getClassLoader();
+	DynamicJavaBridgeClassLoader xloader = null;
 	try {
-	    DynamicJavaBridgeClassLoader xloader = 
-		(DynamicJavaBridgeClassLoader) Thread.currentThread().getContextClassLoader();
-	    loader.setClassLoader(xloader);
-	} catch (Exception ex) {
-	    // should never happen
-	    Util.printStackTrace(ex); 
-	}
+	    xloader = 
+		(DynamicJavaBridgeClassLoader) 
+		Thread.currentThread().getContextClassLoader();
+	} 
+	catch (SecurityException e) {/*ignore*/}
+	catch (ClassCastException e1) {/*ignore*/}
+	loader.setClassLoader(xloader);
+	
     	bridge.in=in;
     	bridge.out=out;
 	r = bridge.request = new Request(bridge);

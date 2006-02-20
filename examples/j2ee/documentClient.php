@@ -1,37 +1,58 @@
 <?php
 
 class SERVER {const JBOSS=1, WEBSPHERE=2, SUN=3, ORACLE=4;}
-$server=SERVER::JBOSS;
 
+// -------------- adjust these variables, if necessary
+$server=array_key_exists(1, $argv)? $argv[1] : SERVER::JBOSS;
+$WAS_HOME=array_key_exists(2, $argv)? $argv[2]: "/opt/IBM/WebSphere/AppServer";
+$JBOSS_HOME=array_key_exists(2, $argv)? $argv[2] : "/opt/jboss-4.0.2/";
+$app_server=array_key_exists(2, $argv)? $argv[2] : "~/SUNWappserver";
+// ---------------
+
+$System = new JavaClass("java.lang.System");
+$props = $System->getProperties();
+echo "Using java VM from: ${props['java.vm.vendor']}\n";
 echo "connecting to server: ";
 
-$here = getcwd();
+$clientJar = getcwd() . "/documentBeanClient.jar";
 switch($server) {
  case SERVER::JBOSS: 
-   echo "jboss\n";
+   echo "jboss. Loading $JBOSS_HOME/lib \n";
+
+   if(!$props['java.vm.vendor']->toLowerCase()->startsWith("sun"))
+      echo "WARNING: You need to run this example with the SUN VM\n";
+   if(!is_dir($JBOSS_HOME)) die("ERROR: Incorrect $JBOSS_HOME.");
+
    $name = "DocumentEJB";
-   $JBOSS_HOME=isset($JBOSS_HOME) ? $JBOSS_HOME : "/opt/jboss-4.0.2/";
-   java_require("$JBOSS_HOME/client/;$here/documentBean.jar");
+   java_require("$JBOSS_HOME/client/;$clientJar");
    $server=array("java.naming.factory.initial"=>
 		 "org.jnp.interfaces.NamingContextFactory",
 		 "java.naming.provider.url"=>
 		 "jnp://127.0.0.1:1099");
    break;
  case SERVER::WEBSPHERE: 
-   echo "websphere\n";
+   echo "websphere. Loading $WAS_HOME/lib/\n";
+
+   if(!$props['java.vm.vendor']->toLowerCase()->startsWith("ibm"))
+      echo "WARNING: You need to run this example with the IBM VM\n";
+   if(!is_dir($WAS_HOME)) die("ERROR: Incorrect $WAS_HOME.");
+
    $name = "RMIdocument";
-   $WAS_HOME=isset($WAS_HOME) ? $WAS_HOME : "/opt/IBM/WebSphere/AppServer";
-   java_require("$WAS_HOME/lib/;$here/documentBean.jar");
+   java_require("$WAS_HOME/lib/;$clientJar");
    $server=array("java.naming.factory.initial"=>
 		 "com.ibm.websphere.naming.WsnInitialContextFactory",
 		 "java.naming.provider.url"=>
 		 "iiop://localhost:2809");
    break;
  case SERVER::SUN:
-   echo "sun\n";
+   echo "sun. Loading: $app_server/lib\n";
+
+   if(!$props['java.vm.vendor']->toLowerCase()->startsWith("sun"))
+      echo "WARNING: You need to run this example with the SUN VM\n";
+   if(!is_dir($app_server)) die("ERROR: Incorrect $app_server.");
+
    $name = "RMIdocument";
-   $app_server=isset($app_server) ? $app_server : "~/SUNWappserver";
-   java_require("$app_server/lib/;$here/documentBean.jar");
+   java_require("$app_server/lib/;$clientJar");
    $server=array("java.naming.factory.initial"=>
 		 "com.sun.jndi.cosnaming.CNCtxFactory",
 		 "java.naming.provider.url"=>
@@ -40,7 +61,7 @@ switch($server) {
  }
 
 try {
-  $doc=createDocument("$name", $server);
+  $doc=createDocument($name, $server);
 } catch (JavaException $e) {
   echo "Could not create remote document. Have you deployed documentBean.jar?\n";
   echo $e->getCause() ."\n";
@@ -75,8 +96,8 @@ function createDocument($jndiname, $serverArgs) {
   // access the home interface
   $DocumentHome = new JavaClass("DocumentHome");
   $PortableRemoteObject = new JavaClass("javax.rmi.PortableRemoteObject");
-  $home = $PortableRemoteObject->narrow($objref, $DocumentHome);
-  
+  $home=$PortableRemoteObject->narrow($objref, $DocumentHome);
+
   // create a new remote document and return it
   $doc = $home->create();
   return $doc;
