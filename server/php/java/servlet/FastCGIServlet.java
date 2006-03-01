@@ -122,7 +122,7 @@ exitting. When one process exits, another will be created.
 	    InputStream in = proc.getErrorStream();
 	    while((c=in.read(buf))!=-1) System.err.write(buf, 0, c);
 		if(proc!=null) try {proc.destroy(); proc=null;} catch(Throwable t) {/*ignore*/}
-	    } catch (Exception e) {Util.logMessage("Could not start FCGI server.");};
+	    } catch (Exception e) {Util.logDebug("Could not start FCGI server: " + e);};
     }
     protected void checkCgiBinary(ServletConfig config) {
 	String value;
@@ -229,6 +229,7 @@ exitting. When one process exits, another will be created.
 		    buf.append(this.env.get("SERVER_PORT"));
 		    buf.append("/");
 		    buf.append(req.getRequestURI());
+		    buf.append("javabridge");
 		    this.env.put("X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT", buf.toString());
 	    }
 	    return success;
@@ -243,7 +244,7 @@ exitting. When one process exits, another will be created.
 		fastCGISocket = new Socket(InetAddress.getByName("127.0.0.1"), FCGI_CHANNEL);
 		cgiRunnerFactory = new CGIRunnerFactory();
 	    } catch (Exception e) {
-		Util.logMessage(e+": FastCGI channel not available, switching off fast cgi. " + startFcgiMessage());
+		Util.logDebug(e+": FastCGI channel not available, switching off fast cgi. " + startFcgiMessage());
 		
 		fcgiIsAvailable = false;
 		return null;

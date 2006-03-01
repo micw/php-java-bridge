@@ -64,7 +64,9 @@ public class PhpFacesScriptEngine extends PhpScriptEngine implements Invocable {
 	buf.append(php.java.servlet.CGIServlet.getLocalPort(request));
 	buf.append("/");
 	buf.append(request.getRequestURI());
-	buf.append(".php"); // it doesn't matter what we send here, as long as it ends with .php
+	buf.append(".phpjavabridge"); // it doesn't matter what we
+				      // send here, as long as it ends
+				      // with .phpjavabridge
 	this.env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", buf.toString()); 
     }
     protected ScriptContext getPhpScriptContext() {

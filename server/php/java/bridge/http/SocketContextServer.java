@@ -108,7 +108,7 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
 	while(socket!=null) {
 	    if(!accept()) destroy();
 	}
-	Util.logMessage("Socket runner stopped, the local channel is not available anymore.");
+	Util.logDebug("SocketContextServer stopped, the local channel is not available anymore.");
     }
 
      /**

@@ -1,3 +1,19 @@
+2006-02-26  Jost Boekemeier  <jostb@intern>
+	
+	* bind.c (sleep_ms): New procedure
+	(wait_server, wait_for_daemon): Use select() instead of busy wait,
+	if possible.
+
+	* server/php/java/bridge/DynamicJavaBridgeClassLoader: Report
+	"trying to load..." as debug, not as log message.
+
+	* server/php/java/bridge/JavaBridge.java (isVisible): New method.
+	(Invoke, GetSetProp): Check if a static field/procedure shadows a
+	field/procedure from the class class. Invoke the method or
+	procedure or field from the class class, if not.
+
+	* tests.php5/getName.php: New test.
+	
 2006-02-19  Jost Boekemeier  <jostb@intern>
 	
 	* VERSION, php-java-bridge.spec: Version 3.0.7a released

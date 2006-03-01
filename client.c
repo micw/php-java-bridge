@@ -560,14 +560,16 @@ static void override_ini_for_redirect(TSRMLS_D) {
 	   we receive a request: http://localhost/sessionSharing.php and
 	   java.servlet is On and java.hosts is "127.0.0.1:8080" the code
 	   would connect to the backend:
-	   http://127.0.0.1:8080/sessionSharing.php. This creates a cookie
-	   with PATH value "/".  For a request:
+	   http://127.0.0.1:8080/sessionSharing.phpjavabridge. This
+	   creates a cookie with PATH value "/".  For a request:
 	   http://localhost/myContext/sessionSharing.php the code would
-	   connect to http://127.0.0.1/myContext/sessionSharing.php and a
+	   connect to
+	   http://127.0.0.1/myContext/sessionSharing.phpjavabridge and a
 	   cookie with a PATH value "/myContext" would be created.
 	*/
 	char *kontext = EXT_GLOBAL (get_servlet_context) (TSRMLS_C);
 	if(kontext && *kontext!='/') { /* only if context not hardcoded via "On" or "/kontext/foo.php" */
+	  static const char bridge_ext[] = "javabridge";
 	  static const char default_servlet[] = DEFAULT_SERVLET;
 	  static const char name[] = "get_self";
 	  static const char override[] = "(array_key_exists('PHP_SELF', $_SERVER) && \n\
@@ -585,9 +587,10 @@ array_key_exists('HTTP_HOST', $_SERVER)) ?$_SERVER['PHP_SELF']:null;";
 	  }
 	  assert(JG(servlet));
 	  free(JG(servlet));
-	  JG(servlet) = tmp = malloc(len+1);
+	  JG(servlet) = tmp = malloc(len+sizeof(bridge_ext));
 	  assert(tmp); if(!tmp) exit(6);
 	  strcpy(tmp, strval);
+	  strcat(tmp, bridge_ext);
 	  JG(ini_user)|=U_SERVLET;
 	}
   }

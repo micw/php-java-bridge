@@ -10,9 +10,35 @@
         <load-on-startup>0</load-on-startup>
     </servlet>
 
-    <!-- PHP Servlet -->
+    <!-- PHP Servlet: backend for Apache or IIS -->
     <servlet>
         <servlet-name>PhpJavaServlet</servlet-name>
+        <servlet-class>php.java.servlet.PhpJavaServlet</servlet-class>
+
+         <!-- Allow non-local clients. These clients connect to the -->
+         <!-- backend using a HTTP tunnel. Default is Off. -->
+         <!-- Leave this off if your server is connected to the internet. --> 
+       <!--
+         <init-param>
+           <param-name>allow_http_tunnel</param-name>
+           <param-value>On</param-value>
+         </init-param>
+        -->
+
+         <!-- Default log_level is 2, java.log_level from php.ini overrides.-->
+        <!--
+         <init-param>
+           <param-name>servlet_log_level</param-name>
+           <param-value>2</param-value>
+         </init-param>
+        -->
+
+        <load-on-startup>0</load-on-startup>
+  </servlet>
+
+    <!-- PHP CGI servlet: when IIS or Apache are not available -->
+    <servlet>
+        <servlet-name>PhpCGIServlet</servlet-name>
         <servlet-class>php.java.servlet.PhpJavaServlet</servlet-class>
 
          <!-- Allow us to override the java.hosts, java.servlet and -->
@@ -46,16 +72,6 @@
          </init-param>
         -->
 
-         <!-- Allow non-local clients. These clients connect to the -->
-         <!-- backend using a HTTP tunnel. Default is Off. -->
-         <!-- Leave this off if your server is connected to the internet. --> 
-       <!--
-         <init-param>
-           <param-name>allow_http_tunnel</param-name>
-           <param-value>On</param-value>
-         </init-param>
-        -->
-
          <!-- Default log_level is 2, java.log_level from php.ini overrides.-->
         <!--
          <init-param>
@@ -77,6 +93,12 @@
     <!-- PHP Servlet Mapping -->
     <servlet-mapping>
         <servlet-name>PhpJavaServlet</servlet-name>
+        <url-pattern>*.phpjavabridge</url-pattern>
+    </servlet-mapping>
+
+    <!-- PHP CGI Servlet Mapping -->
+    <servlet-mapping>
+        <servlet-name>PhpCGIServlet</servlet-name>
         <url-pattern>*.php</url-pattern>
     </servlet-mapping>
 

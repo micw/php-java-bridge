@@ -54,7 +54,7 @@
 #define DEFAULT_JAVA_WRAPPER EXTENSION_DIR/**/"/RunJavaBridge"
 #define DEFAULT_MONO_WRAPPER EXTENSION_DIR/**/"/RunMonoBridge"
 #define DEFAULT_HOST "127.0.0.1"
-#define DEFAULT_SERVLET "/JavaBridge/JavaBridge.php"
+#define DEFAULT_SERVLET "/JavaBridge/JavaBridge.phpjavabridge"
 
 #define RECV_SIZE 8192 // initial size of the receive buffer
 #define MAX_ARGS 100   // max # of method arguments

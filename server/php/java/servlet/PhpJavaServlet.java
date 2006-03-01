@@ -23,28 +23,26 @@ import php.java.bridge.Util;
 import php.java.bridge.http.ContextServer;
 
 /**
- * Handles requests from PHP clients. When apache or IIS are not
- * available, this servlet can start php as a CGI sub-process.<br>
- * However, it is recommended to install php as an Apache module and
- * to share the servlet engine's <code>webapps</code> directory with
- * apache's <code>htdocs</code> directory. This is default since RH
- * Fedora 4.  <br> For frameworks, such as Java Server Faces, it is
- * recommended to forward requests to the backend as follows:<br>
- * <code> &lt;?php<br> function toString() {"return "hello java
- * world!";}<br> java_context()-&gt;call(java_closure())
- * ||header("Location: hello.jsp");<br> ?&gt;<br> </code><br> This
- * allows the framework (jsf, struts, ...) to call php procedures as
- * follows:<br> <code> PhpScriptEngine e = new PhpScriptEngine();<br>
- * e.eval(new URLReader(new URL("http://.../hello.php")));<br>
- * out.println(((Invocable)e).invoke("toString", new Object[]{}));<br>
- * e.release();<br> </code> <br>
- *
- * An alternative would be to install <code>mod_jk</code> to "JkMount"
- * the java "webapps" document root into the "htdocs" document root of
- * the HTTP server and to configure it so that it automatically
- * forwards all .jsp and servlet requests to the servlet engine.
- * 
- */
+ * Handles requests from PHP clients.
+ * <p>
+ * When Apache, IIS or php (cli) or php-cgi is used as a frontend, this servlet handles PUT 
+ * requests and then re-directs to a private (socket- or pipe-) communication channel.
+ * This is the fastest mechanism to connect php and java. It is even 1.5 times faster than
+ * local ("unix domain") sockets used by the php.java.bridge.JavaBridge standalone listener.
+ * </p>
+ * <p>
+ * Furthermore this servlet can handle GET/POST requests directly. These 
+ * requests invoke the php-cgi machinery from the CGI or FastCGI servlet.
+ * Although the servlet to php-cgi back to servlet 
+ * path is 
+ * quite slow and consumes two servlet instances instead of only 
+ * one for the http frontend/j2ee backend, it could also be useful as 
+ * a replacement for a  
+ * system php installation, see the README in the <code>WEB-INF/cgi</code> folder.
+ * It is currently used for our J2EE test/demo. 
+ * </p>
+ * @see php.java.bridge.JavaBridge
+ *  */
 public class PhpJavaServlet extends FastCGIServlet {
 
     private static final long serialVersionUID = 3257854259629144372L;
@@ -198,6 +196,7 @@ public class PhpJavaServlet extends FastCGIServlet {
 		    buf.append(this.env.get("SERVER_PORT"));
 		    buf.append("/");
 		    buf.append(req.getRequestURI());
+		    buf.append("javabridge");
 		    this.env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", buf.toString());
 		}
 		else
@@ -213,9 +212,10 @@ public class PhpJavaServlet extends FastCGIServlet {
 	    	if(id==null) id = ContextFactory.addNew(PhpJavaServlet.this.getServletContext(), req, req, res).getId();
 		this.env.put("X_JAVABRIDGE_CONTEXT", id);
 	        
-	        /* For the request: http://localhost:8080/JavaBridge/test.php the
-	         * req.getPathInfo() returns cgi/test.php. But PHP shouldn't know
-	         * about this detail.
+	        /* For the request:
+	         * http://localhost:8080/JavaBridge/test.php the
+	         * req.getPathInfo() returns cgi/test.php. But PHP
+	         * shouldn't know about this detail.
 	         */
 	        this.env.remove("PATH_INFO"); 
 	    }
@@ -339,9 +339,10 @@ public class PhpJavaServlet extends FastCGIServlet {
     }
     
     /**
-     * Handle the override re-direct for "java_get_session()" when php runs within apache. 
-     * Instead of connecting back to apache, we execute one statement and return the
-     * result and the allocated session.  Used by Apache only.
+     * Handle the override re-direct for "java_get_session()" when php
+     * runs within apache.  Instead of connecting back to apache, we
+     * execute one statement and return the result and the allocated
+     * session.  Used by Apache only.
      * 
      * @param req
      * @param res
@@ -382,8 +383,9 @@ public class PhpJavaServlet extends FastCGIServlet {
     }
     
     /**
-     * Handle a standard HTTP tunnel connection. Used when the local channel is not available
-     * (security restrictions). Used by Apache and cgi.
+     * Handle a standard HTTP tunnel connection. Used when the local
+     * channel is not available (security restrictions). Used by
+     * Apache and cgi.
      * 
      * @param req
      * @param res
@@ -536,5 +538,5 @@ public class PhpJavaServlet extends FastCGIServlet {
 	    Util.printStackTrace(t);
     	    throw new ServletException(t);
     	}
-    }
+   }
 }

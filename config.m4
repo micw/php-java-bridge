@@ -30,8 +30,8 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
 # find includes eg. -I/opt/jdk1.4/include -I/opt/jdk1.4/include/linux
         if test "$PHP_JAVA" != "yes"; then
          # --with-java=/opt/compiletime/jdk,/usr/runtime/jre
-         PHP_JAVA="`echo $PHP_JAVA | LANG=C awk -F, '{print $1}'`"
          PHP_JRE="`echo $PHP_JAVA | LANG=C awk -F, '{print $2}'`"
+         PHP_JAVA="`echo $PHP_JAVA | LANG=C awk -F, '{print $1}'`"
 
 	 JAVA_INCLUDES=`for i in \`find $PHP_JAVA/include -follow -type d -print\`; do echo -n "-I$i "; done`
 	 PHP_EVAL_INCLINE($JAVA_INCLUDES)

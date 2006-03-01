@@ -1,8 +1,16 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
-/* execve */
-#include <unistd.h>
+/* execve,select */
+#ifndef __MINGW32__
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
+#endif
 #include <sys/types.h>
+#include <unistd.h>
 
 /* stat */
 #include <sys/stat.h>
@@ -414,9 +422,14 @@ char* EXT_GLOBAL(test_server)(int *_socket, short *local, struct sockaddr*_saddr
 
   return 0;
 }
-
+static const long timeout = 50000l; /* ys */
+static void sleep_ms() {
+  struct timeval timeval = {0l, timeout};
+  select(0, 0, 0, 0, &timeval);
+}
 static int wait_server(void) {
-  int count=15, sock;
+  static const int wait_count = 30;
+  int count=wait_count, sock;
 #ifndef __MINGW32__
   struct pollfd pollfd[1] = {{EXT_GLOBAL(cfg)->err, POLLIN, 0}};
   
@@ -424,14 +437,22 @@ static int wait_server(void) {
   while(EXT_GLOBAL(cfg)->cid && -1==(sock=test_local_server()) && --count) {
 	if(EXT_GLOBAL(cfg)->err && poll(pollfd, 1, 0)) 
 	  return FAILURE; /* server terminated with error code */
-	if(count<=10) php_error(E_NOTICE, "php_mod_"/**/EXT_NAME()/**/"(%d): waiting for server another %d seconds",57, count);
-	
+	sleep_ms();
+  }
+  count=10;
+  while(EXT_GLOBAL(cfg)->cid && -1==(sock=test_local_server()) && --count) {
+	if(EXT_GLOBAL(cfg)->err && poll(pollfd, 1, 0)) 
+	  return FAILURE; /* server terminated with error code */
+	php_error(E_NOTICE, "php_mod_"/**/EXT_NAME()/**/"(%d): waiting for server another %d seconds",57, count);
 	sleep(1);
   }
 #else
-
   while(EXT_GLOBAL(cfg)->cid && -1==(sock=test_local_server()) && --count) {
-	if(count<=10) php_error(E_NOTICE, "php_mod_"/**/EXT_NAME()/**/"(%d): waiting for server another %d seconds",57, count);
+	Sleep(timeout/1000);
+  }
+  count=10;
+  while(EXT_GLOBAL(cfg)->cid && -1==(sock=test_local_server()) && --count) {
+	php_error(E_NOTICE, "php_mod_"/**/EXT_NAME()/**/"(%d): waiting for server another %d interval",57, count);
 	Sleep(1000);
   }
 #endif
@@ -493,17 +514,21 @@ void EXT_GLOBAL(start_server)(TSRMLS_D) {
 	  DWORD properties = CREATE_NEW_CONSOLE;
 	  STARTUPINFO su_info;
 	  PROCESS_INFORMATION p_info;
+	  short must_use_wrapper = use_wrapper(EXT_GLOBAL(cfg)->wrapper);
+	  char *command = must_use_wrapper ? EXT_GLOBAL(cfg)->wrapper : cmd;
 
 	  ZeroMemory(&su_info, sizeof(STARTUPINFO));
 	  su_info.cb = sizeof(STARTUPINFO);
 	  EXT_GLOBAL(cfg)->cid=0;
-	  if(CreateProcess( NULL, cmd, NULL, NULL, 1, properties, NULL, NULL, &su_info, &s_pid)) {
+	  if(CreateProcess(NULL, command, 
+					   NULL, NULL, 1, properties, NULL, NULL, 
+					   &su_info, &s_pid)) {
 		EXT_GLOBAL(cfg)->cid=s_pid.dwProcessId;
 		wait_server();
 	  } else {
-		php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d) system error: Could not start backend: %s; Code: %ld.", 105, cmd, (long)GetLastError());
-		free(cmd);
+		php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d) system error: Could not start backend: %s; Code: %ld.", 105, command, (long)GetLastError());
 	  }
+	  free(cmd);
 	} else
 #endif /* MINGW32 */
 	  {
@@ -514,34 +539,30 @@ void EXT_GLOBAL(start_server)(TSRMLS_D) {
 
 static void wait_for_daemon(void) {
 #ifndef __MINGW32__
-  struct pollfd pollfd[1] = {{EXT_GLOBAL(cfg)->err, POLLIN, 0}};
-  int err, c;
+  const static sig[] = {SIGTERM, SIGKILL};
+  fd_set rfds;
+  int err, c, i;
 
-  assert(EXT_GLOBAL(cfg)->err);
+  assert(EXT_GLOBAL(cfg)->err); if(!(EXT_GLOBAL(cfg)->err)) return;
   assert(EXT_GLOBAL(cfg)->cid);
 
   /* first kill is trapped, second kill is received with default
 	 handler. If the server still exists, we send it a -9 */
-  for(c=3; c>0 && EXT_GLOBAL(cfg)->cid; c--) {
-	if (!(!EXT_GLOBAL(cfg)->err || (EXT_GLOBAL(cfg)->err && !(err=poll(pollfd, 1, 0))))) break;
-	if(c>1) {
-	  kill(EXT_GLOBAL(cfg)->cid, SIGTERM);
-	  sleep(1);
-	  if (!(!EXT_GLOBAL(cfg)->err || (EXT_GLOBAL(cfg)->err && !(err=poll(pollfd, 1, 0))))) break;
-	  sleep(4);
-	} else {
-	  kill(EXT_GLOBAL(cfg)->cid, SIGKILL);
-	}
-  }
-  if(EXT_GLOBAL(cfg)->err) {
-	if((read(EXT_GLOBAL(cfg)->err, &err, sizeof err))!=sizeof err) err=0;
-	//printf("VM terminated with code: %ld\n", err);
-	close(EXT_GLOBAL(cfg)->err);
-	EXT_GLOBAL(cfg)->err=0;
-  }
+  kill(EXT_GLOBAL(cfg)->cid, SIGTERM);
+  FD_ZERO(&rfds);
+  FD_SET(EXT_GLOBAL(cfg)->err, &rfds);
+  for(i=0; i<2; i++) {
+	struct timeval timeval = {2l, 0};
+	if(select(1+EXT_GLOBAL(cfg)->err, &rfds, 0, 0, &timeval) > 0) break;
+	kill(EXT_GLOBAL(cfg)->cid, sig[i]);
+  }	
+
+  if((read(EXT_GLOBAL(cfg)->err, &err, sizeof err))!=sizeof err) err=0;
+  //printf("VM terminated with code: %ld\n", err);
+  close(EXT_GLOBAL(cfg)->err);
+  EXT_GLOBAL(cfg)->err=0;
 #else
-  s_kill(0);
-  Sleep(1000);
+  s_kill(0);					/* always -9 on windows */
 #endif
 }
 

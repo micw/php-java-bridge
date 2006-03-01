@@ -960,6 +960,7 @@ public class JavaBridge implements Runnable {
 
 	public abstract Class getNext();
 	public abstract boolean checkAccessible(AccessibleObject o);
+	public abstract boolean isVisible(int modifier);
     }
 
     static class ObjectClassIterator extends ClassIterator {
@@ -973,7 +974,7 @@ public class JavaBridge implements Runnable {
 	public boolean checkAccessible(AccessibleObject o) {
 	    return match.checkAccessible(o);
 	}
-
+	public boolean isVisible(int modifier) { return true; }
     }
 
     static class ClassClassIterator extends ClassIterator {
@@ -989,6 +990,10 @@ public class JavaBridge implements Runnable {
 	}
 	public boolean checkAccessible(AccessibleObject o) {
 	    return true;
+	}
+	public boolean isVisible(int modifier) {
+	    // all members of the class class or only static members of the class
+	    return !hasNext || ((modifier&Modifier.STATIC)!=0);  
 	}
     }
 
@@ -1027,10 +1032,12 @@ public class JavaBridge implements Runnable {
 		    for (iter = ClassIterator.getInstance(object, FindMatchingInterfaceForInvoke.getInstance(this, method, args, true, canModifySecurityPermission)); (jclass=iter.getNext())!=null;) {
 			Method methods[] = jclass.getMethods();
 			for (int i=0; i<methods.length; i++) {
-			    if (methods[i].getName().equalsIgnoreCase(method)) {
-				candidates.addElement(methods[i]);
-				if(methods[i].getParameterTypes().length == args.length) {
-				    matches.addElement(methods[i]);
+			    Method meth = methods[i];
+			    if (iter.isVisible(meth.getModifiers())&&
+				meth.getName().equalsIgnoreCase(method)) {
+				candidates.addElement(meth);
+				if(meth.getParameterTypes().length == args.length) {
+				    matches.addElement(meth);
 				}
 			    }
 			}
@@ -1040,7 +1047,7 @@ public class JavaBridge implements Runnable {
                   	throw new NoSuchMethodException(String.valueOf(method) + "(" + Util.argsToString(args, params) + "). " + "Candidates: " + String.valueOf(candidates));
 		    methodCache.put(entry, selected);
 		    if(!iter.checkAccessible(selected)) {
-			logMessage("Security restriction: Cannot use setAccessible(), reverting to interface searching.");
+			logDebug("Security restriction: Cannot use setAccessible(), reverting to interface searching.");
 			canModifySecurityPermission=false;
 			candidates.clear(); matches.clear();
 			again=true;
@@ -1128,22 +1135,25 @@ public class JavaBridge implements Runnable {
 		try {
 		    Field jfields[] = jclass.getFields();
 		    for (int i=0; i<jfields.length; i++) {
-			if (jfields[i].getName().equals(prop)) {
-			    matches.add(jfields[i].getName());
+			Field fld = jfields[i];
+			if (iter.isVisible(fld.getModifiers()) &&
+			    fld.getName().equals(prop)) {
+			    matches.add(fld.getName());
 			    Object res=null;
-			    if(!(iter.checkAccessible(jfields[i]))) {
-				logMessage("Security restriction: Cannot use setAccessible(), reverting to interface searching.");
+			    if(!(iter.checkAccessible(fld))) {
+				logDebug("Security restriction: Cannot use setAccessible(), reverting to interface searching.");
 				canModifySecurityPermission=false;
 			        matches.clear();
 				break again2;
 			    }
+			    Class ctype = fld.getType();
 			    if (set) {
-				args = coerce(params=new Class[] {jfields[i].getType()}, args, response);
-				jfields[i].set(object, args[0]);
+				args = coerce(params=new Class[] {ctype}, args, response);
+				fld.set(object, args[0]);
 			    } else {
-			    	res=jfields[i].get(object);
+			    	res=fld.get(object);
 			    }
-			    setResult(response, res, jfields[i].getType());
+			    setResult(response, res, ctype);
 			    return;
 			}
 		    }
@@ -1168,7 +1178,7 @@ public class JavaBridge implements Runnable {
 			    }
 			    matches.add(method);
 			    if(!iter.checkAccessible(method)) {
-				logMessage("Security restriction: Cannot use setAccessible(), reverting to interface searching.");
+				logDebug("Security restriction: Cannot use setAccessible(), reverting to interface searching.");
 				canModifySecurityPermission=false;
 				matches.clear();
 				break again1;
@@ -1185,24 +1195,27 @@ public class JavaBridge implements Runnable {
 	    again0:		// because of security exception
 	    for (ClassIterator iter = ClassIterator.getInstance(object, FindMatchingInterfaceForGetSetProp.getInstance(this, prop, args, true, canModifySecurityPermission)); (jclass=iter.getNext())!=null;) {
 		try {
-		    java.lang.reflect.Field jfields[] = jclass.getFields();
+		    Field jfields[] = jclass.getFields();
 		    for (int i=0; i<jfields.length; i++) {
-			if (jfields[i].getName().equalsIgnoreCase(prop)) {
+			Field fld = jfields[i];
+			if (iter.isVisible(fld.getModifiers()) &&
+			    fld.getName().equalsIgnoreCase(prop)) {
 			    matches.add(prop);
 			    Object res=null;
-			    if(!(iter.checkAccessible(jfields[i]))) {
-				logMessage("Security restriction: Cannot use setAccessible(), reverting to interface searching.");
+			    if(!(iter.checkAccessible(fld))) {
+				logDebug("Security restriction: Cannot use setAccessible(), reverting to interface searching.");
 				canModifySecurityPermission=false;
 				matches.clear();
 				break again0;
 			    }
+			    Class ctype = fld.getType();
 			    if (set) {
-				args = coerce(params=new Class[] {jfields[i].getType()}, args, response);
-				jfields[i].set(object, args[0]);
+				args = coerce(params=new Class[] {ctype}, args, response);
+				fld.set(object, args[0]);
 			    } else {
-				res = jfields[i].get(object);
+				res = fld.get(object);
 			    }
-			    setResult(response, res, jfields[i].getType());
+			    setResult(response, res, ctype);
 			    return;
 			}
 		    }

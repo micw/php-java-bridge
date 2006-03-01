@@ -245,7 +245,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     	        public URLClassLoader createUrlClassLoader(String classPath, URL urls[], ClassLoader parent) {
 		    return new URLClassLoader(urls, parent) {
     	                    protected Class findClass(String name) throws ClassNotFoundException {
-    	                    	if(Util.logLevel>2) Util.logMessage("trying to load class: " +name + " from: "+ Arrays.asList(this.getURLs()));
+    	                    	if(Util.logLevel>2) Util.logDebug("trying to load class: " +name + " from: "+ Arrays.asList(this.getURLs()));
     	                    	try {
 				    return super.findClass(name);
 				} catch (ClassNotFoundException e) {
@@ -255,12 +255,12 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 				}
 			    }
 			    public URL findResource(String name)  {
-				//if(Util.logLevel>2) Util.logMessage("trying to load resource: " +name + " from: "+ Arrays.asList(this.getURLs()));
+				//if(Util.logLevel>2) Util.logDebug("trying to load resource: " +name + " from: "+ Arrays.asList(this.getURLs()));
 				return super.findResource(name);
     	                	
 			    }
 			    protected String findLibrary(String name) {
-				if(Util.logLevel>2) Util.logMessage("trying to load library: " +name + " from: "+ Arrays.asList(this.getURLs()));
+				if(Util.logLevel>2) Util.logDebug("trying to load library: " +name + " from: "+ Arrays.asList(this.getURLs()));
 				String s = super.findLibrary(name);
 				if(s!=null) return s;
 				return resolveLibraryName(name);
