@@ -1033,8 +1033,7 @@ public class JavaBridge implements Runnable {
 			Method methods[] = jclass.getMethods();
 			for (int i=0; i<methods.length; i++) {
 			    Method meth = methods[i];
-			    if (iter.isVisible(meth.getModifiers())&&
-				meth.getName().equalsIgnoreCase(method)) {
+			    if (meth.getName().equalsIgnoreCase(method)&&iter.isVisible(meth.getModifiers())) {
 				candidates.addElement(meth);
 				if(meth.getParameterTypes().length == args.length) {
 				    matches.addElement(meth);
@@ -1136,8 +1135,7 @@ public class JavaBridge implements Runnable {
 		    Field jfields[] = jclass.getFields();
 		    for (int i=0; i<jfields.length; i++) {
 			Field fld = jfields[i];
-			if (iter.isVisible(fld.getModifiers()) &&
-			    fld.getName().equals(prop)) {
+			if (fld.getName().equals(prop)&&iter.isVisible(fld.getModifiers())) {
 			    matches.add(fld.getName());
 			    Object res=null;
 			    if(!(iter.checkAccessible(fld))) {
@@ -1198,8 +1196,7 @@ public class JavaBridge implements Runnable {
 		    Field jfields[] = jclass.getFields();
 		    for (int i=0; i<jfields.length; i++) {
 			Field fld = jfields[i];
-			if (iter.isVisible(fld.getModifiers()) &&
-			    fld.getName().equalsIgnoreCase(prop)) {
+			if (fld.getName().equalsIgnoreCase(prop)&&iter.isVisible(fld.getModifiers())) {
 			    matches.add(prop);
 			    Object res=null;
 			    if(!(iter.checkAccessible(fld))) {
