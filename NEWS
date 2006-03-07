@@ -10,8 +10,8 @@ wrapper binary, for example: java.wrapper="c:/startJava.cmd",
 additional options can be set with, e.g.: java.java="javaw
 -Dadd.option". On unix the bridge does no longer "busy wait" for the
 backend. It uses select so that the startup time for the php-cli
-(including the backend) is now less than 100ms, if a native (compiled)
-backend is used.
+(including the startup time for the backend) is now less than 100ms,
+if a native (compiled) backend is used.
 
 * It is now possible to run php interactively. Example session which
 uses jdk1.6 "jrunscript":
