@@ -28,13 +28,13 @@ sharing between PHP and JSP is always possible. Clustering and load
 balancing is available if the J2EE environment supports these
 features.  </FONT></P>
 
-<P><FONT > Unlike previous attempts (the ext/java or the JSR223 sample
+<P><FONT > Unlike previous attempts (the <a href="http://www.php.net/manual/en/ref.java.php">ext/java</a> or the <A HREF="http://www.jcp.org/aboutJava/communityprocess/edr/jsr223/">JSR 223</A> sample
 implementation) the PHP/Java Bridge does <em>not</em> use the java
 native interface ("JNI"). Php instances are allocated from the HTTP
 (Apache/IIS) pool, instances of java/j2ee components are allocated
 from the backend. The allocated instances communicate using a
 "continuation passing style", see <a
-href="documentation/PHP-API/html/java_8c.html#a43"><code>java_closure()</code></a>. In
+href="documentation/PHP-API/html/java_8c.html#a43"><code>java_closure()</code></a> and the <a href="server/documentation/API/php/java/bridge/Invocable.html">invocable interface</a>. In
 case a php instance crashes, it will not take down the java
 application server or servlet engine.  </FONT></P>
 
@@ -141,19 +141,13 @@ echo "Evaluated in $delta ms.\n";<br>
 <br>
 <li>
   <code><strong>java_context()</strong></code>: Makes the <code>javax.script.ScriptContext</code>
-     available to the current script. All implicit web objects (session, servlet context, etc.) are <a href="server/documentation/API/php/java/servlet/Context.html#getHttpServletRequest()">available from the context</a>, when the backend is running in a servlet engine or application server. Example: <br><br>
+     available to the current script. All implicit web objects (session, servlet context, etc.) are <a href="server/documentation/API/php/java/servlet/Context.html#getHttpServletRequest()">available from the context</a>, when the backend is running in a servlet engine or application server. The following example uses the jdk1.6 <code>jrunscript</code> to eval php statements interactively:  <br><br>
 <blockquote>
 <code>
-public class MyApp {<br>
-&nbsp;&nbsp;public static void main(String s[]) throws Exception {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;ScriptEngineManager m = new ScriptEngineManager();<br>
-&nbsp;&nbsp;&nbsp;&nbsp;ScriptEngine e = m.getEngineByName("php");<br>
-&nbsp;&nbsp;&nbsp;&nbsp;e.put("key", "java");<br>
-&nbsp;&nbsp;&nbsp;&nbsp;e.eval("&lt;?php ctx = java_context(); " +<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"echo 'Hello '.$ctx-&gt;getAttribute('key').' world!'; " + <br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"?&gt;");<br>
-&nbsp;&nbsp;} <br>
-}<br>
+/opt/jdk1.6/bin/jrunscript -l php-intractive<br>
+php&gt; echo java_context()->getAttribute("javax.script.name"); <br>
+=&gt; STDIN <br>
+<br>
 </code>
 </blockquote>
 <br>
@@ -511,12 +505,12 @@ On Security Enhanced Linux <code>.jar</code> files can only be loaded from locat
 <P><FONT > The PHP/Java Bridge can operate in 4 different modes: <ol>
   <li> Invoked from the dl() function.  In this mode the bridge starts
   when the HTTP server receives a client request and terminates after the response
-  is written.  This is very slow because it starts a new Java VM for
+  is written.  This is very slow because it starts a new backend (Java or .NET VM) for
   each request. But it does not require any administrative privileges.
 
    <li> Permanently activated in the global php.ini file with an
  internal java process running in the HTTP server domain.  In this
- mode the bridge starts when the HTTP server starts and terminates
+ mode the bridge backend starts when the HTTP server starts and terminates
  when the HTTP server terminates. Recommended during
  development. Please see <a href="#mode2">web server installation
  below</a>.
@@ -562,9 +556,7 @@ the instructions below (on Security Enhanced Linux please use the RPM or please 
 	higher, <em>autoconf </em> 2.57 or higher, <em>libtool</em> 1.4.3 or higher, <em>automake</em> 1.6.3 or higher, GNU make and php 4.3.2 or higher
 	installed. You can check the version numbers with the commands <code>java
 	-version</code>, <code>gcc --version</code>, <code>apachectl -version</code>, <code>libtool --version</code>, <code>automake --version</code>, <code>make null --version</code>, <code>autoconf --version</code> and
-	<code>php-config --version</code>. Make sure that the java version you use
-	matches the kernel version. RedHat NPTL kernels or kernel &gt;= 2.6
-	require either an IBMJava2, Sun Java &gt;= 1.4.2_02. </FONT> GNU Java is currently only supported on Linux and Solaris if you use the GCC 3.3.x or the upcoming GCC 4.x releases.
+	<code>php-config --version</code>.
 	</P>
 	<LI><P><FONT ><FONT >Download
 	the source code of the bridge from
@@ -573,9 +565,9 @@ the instructions below (on Security Enhanced Linux please use the RPM or please 
 	with the command: <code>cat php-java-bridge_v.x.y.tar.bz2 | bunzip2 |
 	tar xf -</code></FONT></P>
 	<LI><P STYLE="font-style: normal"><FONT >In
-	the directory php-java-bridge-v.x.y build the module
-	for a 32 bit JVM (if you run a 64 Bit JVM, use the <code>-m64</code> flag instead): <BR><BR><code>phpize &amp;&amp; ./configure --disable-servlet 
-	--with-java=/opt/IBMJava2-141 &amp;&amp; make CFLAGS=&quot;-m32&quot;</code></FONT></P>
+	the directory php-java-bridge-v.x.y build the module: 
+<BR><BR><code>phpize &amp;&amp; ./configure
+	--with-java=/opt/jdk1.4 &amp;&amp; make </code></FONT></P>
 	<LI><P STYLE="font-style: normal"><FONT >Then
 	install the module as root. Type:<BR><BR><code>su -c 'make
 	install'<BR>&lt;enter password&gt;</code></FONT></P>
@@ -586,10 +578,10 @@ the instructions below (on Security Enhanced Linux please use the RPM or please 
 	<LI><P STYLE="font-style: normal"><FONT >Restart
 	the apache service with the command: <code>apachectl restart</code></FONT></P>
 	<LI><P><FONT >You can now test
-	the web installation. Copy the test.php file to the document root (usually /var/www/html) and invoke the file with your browser. You should see that the bridge module is activated and running.  The bridge starts or re-starts automatically whenever you start or re-start the web-server.
+	the web installation. Copy the test.php file to the document root (usually /var/www/html) and invoke the file with your browser. You should see that the bridge module is activated and running.  The bridge backend automatically starts or re-starts whenever you start or re-start the web-server.
 	</P>
-	<LI><P><FONT ><A name="mode3">In a <strong>production environment</strong> it is recommended to separate the java VM and the HTTP process by setting the communication channel. The <code>java.socketname</code> should be set to the name of the socket, it will be created if it doesn't exist.  The <code>.ini</code> file should contain:
-<BR><BR><code>extension = java.so<BR>[java]<BR>java.socketname="/var/run/.php-java-bridge_socket"</code><br><br>The advantage of this mode is that the java VM no longer depends on the web server and can be examined and re-started independently. The download file contains a script, <code>php-java-bridge.service</code>, which can be used to start/stop the PHP/Java Bridge as system service. All available <code>.ini</code> options are listed in <a href="#ini-options">table 2</a>.</A> </FONT>
+	<LI><P><FONT ><A name="mode3">In a <strong>production environment</strong> it is recommended to separate the java VM and the HTTP process by setting the communication channel. The <code>java.socketname</code> should be set to the name of the socket, it will be created if it doesn't exist.  The java section of the php <code>.ini</code> file should contain a <code>java.socketname</code> option. The following is an example from RedHat Enterprise Linux and Fedora:
+<BR><BR><code>extension = java.so<BR>[java]<BR>java.socketname="/var/run/.php-java-bridge_socket"</code><br><br>The advantage of this mode is that the java VM no longer depends on the web server and can be examined and re-started independently. The download file contains a script, <code>php-java-bridge.service</code>, which can be used to start/stop the PHP/Java Bridge backend as system service. All available <code>.ini</code> options are listed in <a href="#ini-options">table 2</a>.</A> </FONT>
 
 	</P>
 	<LI><P><FONT ><A name="mode4">In a production environment which requires <strong>load balancing and failover</strong> or <strong>session sharing between PHP, JSP and Servlets</strong> it is recommended deploy the backend into a servlet engine or an application server; tomcat 5 for example. Disable the <code>java.socketname</code>, either a) enable the <code>java.hosts</code> and <code>java.servlet</code> options or b), if you don't have Apache or IIS, install PHP as a CGI/FastCGI binary so that your application server can find it and start the application server. The <code>.ini</code> file should contain:
@@ -748,8 +740,8 @@ the download files.</p>
 
 </P> <H1>FAQ</H1> <P><FONT > <ul> <li><H4>The bridge doesn't compile
 on my system!?!</H4> <p>Please follow the instructions from the
-INSTALL document as close as possible.  If you have a problem
-compiling the bridge code against any PHP version >= 4.3.4 on Windows,
+<a href="INSTALL">INSTALL document</a> as close as possible. In particular the backend needs the specified versions of <em>autoconf</em>, <em>libtool</em> and <em>automake</em> in the path. Backend compilation can be switched off with the <code>--disable-backend</code> configure option. A compiled, platform-independent backend ("JavaBridge.war") can be found in the download folder.
+If there are problems compiling the bridge code against any PHP version >= 4.3.4 on Windows,
 Linux/Unix or MacOS, please do <em>not</em> report this problem to the
 mailing list. Please <a
 href="http://sourceforge.net/tracker/?func=add&group_id=117793&atid=679233">open
@@ -761,7 +753,9 @@ compile a binary RPM from the source RPM using the command:
 recent Debian X86 installations, Ubuntu for example, it is also
 possible to install the RPM binaries: Open the appropriate binary RPM
 with a file manager and drag and drop the contents of the <code>lib/php</code>
-directory to <code>/usr/lib/php</code> and restart apache.</p> <li> <H4>Can I use java libraries without
+directory to <code>/usr/lib/php</code> and restart apache.</p> 
+
+<li> <H4>Can I use java libraries without
 installing java?</H4> <p>Yes. Simply ommit the
 <code>--with-java=</code> configure option. The bridge will use the
 <code>libgcj</code> library, which is part of the GNU gcc compiler, to
@@ -792,7 +786,7 @@ to <code>session</code>, the framework automatically saves the state
 of the php script instance and restores it when the next request
 belonging to the same session comes in.</p> <li> <H4>How many threads
 does the bridge start?</H4> <p>Request-handling threads are started
-from a thread pool which limits the number of user requests to 20
+from a thread pool, which limits the number of user requests to 20
 (default), see system property
 <code>php.java.bridge.threads</code>. All further requests have to
 wait until one of the worker threads returns to the pool. <p> <p>When
@@ -975,7 +969,7 @@ BORDER="1"
 ><TD
 >RedHat Enterprise Linux 3</TD
 ><TD
->PHP5 + PHP/Java Bridge with experimental async. protocol</TD
+>PHP5 + PHP/Java Bridge 3.0.8 with async. protocol</TD
 ><TD
 >named pipes</TD
 ><TD
@@ -998,10 +992,52 @@ BORDER="1"
 </TABLE
 >
 </center>
-
 </p>
-</ul>
+<p>
+The above benchmarks were executed on the same computer. It is unclear why the TCP communication on a WinXP kernel is 20% slower compared to a 2.4 Linux kernel. 
+</p>
+<li> <H4>How do I start a persistent VM?</H4> 
+<p>
+If you want to start <em>one persistent VM per HTTP server</em> running on a computer, see 
+the <a href="#mode2">web server installation</a> description. 
+If you want to start <em>one persistent VM per computer</em>, please see <a href="#mode3">Linux RPM package</a> or the <a href="#mode4">application server or servlet engine</a> description.
+</p>
+<p>Furthermore it is possible to start standalone backend, for example with the command:<br><br>
+<code>
+&nbsp;&nbsp;java -jar JavaBridge.jar INET_LOCAL:9676 3<br>
+</code>
+<br>
+The <code>php.ini</code> entry might look like:<br><br>
+<code>
+&nbsp;&nbsp;[java]<br>
+&nbsp;&nbsp;java.hosts = 127.0.0.1:9676<br>
+&nbsp;&nbsp;java.servlet = Off<br>
+</code>
+<br>
+Please see the <a href="server/documentation/API/php/java/bridge/JavaBridge.html">JavaBridge</a> documentation for details.
+</p>
 
+<li> <H4>I want to start the backend automatically as a sub-component of my HTTP Server. How do I pass my own java options and how do I change the security context and the UID of the java process?</H4> 
+<p>
+The bridge uses a wrapper binary which can carry the SUID bit and can be tagged with the SEL security context. This wrapper also allows you to change the standard options, which are: <code>java -Djava.library.path=...  -Djava.class.path=... -Djava.awt.headless=true php.java.bridge.JavaBridge SOCKET_NAME LOG_LEVEL LOG_FILE</code>.
+A custom wrapper can be set with:<br><br>
+<code>
+java.wrapper=/path/to/wrapper/binary<br>
+</code>
+</p>
+<p>
+On Unix the bridge terminates the sub-process hierarchy with <code>SIGTERM</code>, sleep 5 seconds and <code>SIGTERM</code>, if necessary, sleep 5 seconds and <code>SIGKILL</code>, if necessary. On Windows the bridge emulates the Unix kill behaviour, the bridge kills the entire sub-process hierarchy so that you can use a <code>cmd /c</code> wrapper.
+</p>
+<p>
+Please see the <code>JavaWrapper</code> from the  RedHat <code>php-java-bridge-standalone</code> RPM for an example.
+</p>
+<li> <H4>I want to use the bridge as a replacement for the <a href="http://www.php.net/manual/sl/ref.java.php#java.servlet">PHP 4 servlet API</a>, how do I install it into tomcat?</H4> 
+<p>
+Download the J2EE binary and copy the <code>JavaBridge.war</code> into the tomcat <code>webapps</code> folder. After that visit <code>http://localhost:8080/JavaBridge</code> and run the supplied php examples.
+Please see <code>webapps/JavaBridge/WEB-INF/cgi/README</code> for details.
+</p>
+
+</ul>
 
 </FONT></P> <H1>Related</H1> <P><FONT > <ul> <li> <a
 href="http://www.eclipse.org/proposals/php-ide/">A PHP IDE</a>.  <li>

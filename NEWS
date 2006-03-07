@@ -3,6 +3,37 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 3.0.8:
+
+* Improved automatic start: On windows it is now possible to use a
+wrapper binary, for example: java.wrapper="c:/startJava.cmd",
+additional options can be set with, e.g.: java.java="javaw
+-Dadd.option". On unix the bridge does no longer "busy wait" for the
+backend. It uses select so that the startup time for the php-cli
+(including the backend) is now less than 100ms, if a native (compiled)
+backend is used.
+
+* It is now possible to run php interactively. Example session which
+uses jdk1.6 "jrunscript":
+# install php-java-bridge*.rpm and php-java-bridge-devel*.rpm
+/opt/jdk1.6/bin/jrunscript -l php-interactive
+php-interactive> $buf = new java("java.lang.StringBuffer", "Hello");
+php-interactive> echo $buf;
+[o(StringBuffer):"Hello"]
+php-interactive> echo "$buf";
+Hello
+php-interactive> for($i=0; $i<10; $i++) $buf->append($i);
+php-interactive> echo $buf->toString()->length();
+15
+
+* New protocol mode which eliminates unnecessary round-trips: All
+statements between java_begin_document(XML_OPTS) and
+java_end_document() are executed asynchronously: The XML statements
+are sent in one stream without waiting for the server reply. Even for
+local (unix-domain or pipe) channels this improves performance
+dramatically. Compared with SOAP, which usually sends the XML document
+in one packet, this mode uses less resources on the web-server side.
+  
 
 Version 3.0.7:
 

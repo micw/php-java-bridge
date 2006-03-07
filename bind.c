@@ -440,7 +440,7 @@ static int wait_server(void) {
 	sleep_ms();
   }
   count=10;
-  while(EXT_GLOBAL(cfg)->cid && -1==(sock=test_local_server()) && --count) {
+  while(EXT_GLOBAL(cfg)->cid && -1==sock && -1==(sock=test_local_server()) && --count) {
 	if(EXT_GLOBAL(cfg)->err && poll(pollfd, 1, 0)) 
 	  return FAILURE; /* server terminated with error code */
 	php_error(E_NOTICE, "php_mod_"/**/EXT_NAME()/**/"(%d): waiting for server another %d seconds",57, count);
@@ -451,13 +451,17 @@ static int wait_server(void) {
 	Sleep(timeout/1000);
   }
   count=10;
-  while(EXT_GLOBAL(cfg)->cid && -1==(sock=test_local_server()) && --count) {
+  while(EXT_GLOBAL(cfg)->cid && -1==sock && -1==(sock=test_local_server()) && --count) {
 	php_error(E_NOTICE, "php_mod_"/**/EXT_NAME()/**/"(%d): waiting for server another %d interval",57, count);
 	Sleep(1000);
   }
 #endif
-  close(sock);
-  return (EXT_GLOBAL(cfg)->cid && count)?SUCCESS:FAILURE;
+  if(EXT_GLOBAL(cfg)->cid && count) {
+	close(sock);
+	return SUCCESS;
+  } else {
+	return FAILURE;
+  }
 }
 
 
@@ -468,10 +472,367 @@ static void s_kill(int sig) {
   if(s_pid) kill(s_pid, SIGTERM);
 }
 #else
-static PROCESS_INFORMATION s_pid;
-static void s_kill(int sig) {
-  if(s_pid.hProcess) TerminateProcess(s_pid.hProcess, 1);
+#ifndef _WIN32_WINNT
+# define _WIN32_WINNT 0x500
+#endif
+
+#include <windows.h>
+#include <tchar.h>
+#include <stdarg.h>
+#include <tlhelp32.h>
+
+static struct s_pid {
+  short use_wrapper;
+  PROCESS_INFORMATION p;
+} s_pid;
+
+
+
+/**
+ * Unix kill emulation for windows.
+ * From http://www.rsdn.ru/?qna/?baseserv/killproc.xml
+ */
+static BOOL WINAPI KillProcess(IN DWORD dwProcessId)
+{
+  HANDLE hProcess;
+  DWORD dwError;
+
+  // first try to obtain handle to the process without the use of any
+  // additional privileges
+  hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, dwProcessId);
+  if (hProcess == NULL)
+    {
+      if (GetLastError() != ERROR_ACCESS_DENIED)
+		return FALSE;
+
+      OSVERSIONINFO osvi;
+
+      // determine operating system version
+      osvi.dwOSVersionInfoSize = sizeof(osvi);
+      GetVersionEx(&osvi);
+
+      // we cannot do anything else if this is not Windows NT
+      if (osvi.dwPlatformId != VER_PLATFORM_WIN32_NT)
+		return FALSE;
+
+      // enable SE_DEBUG_NAME privilege and try again
+
+      TOKEN_PRIVILEGES Priv, PrivOld;
+      DWORD cbPriv = sizeof(PrivOld);
+      HANDLE hToken;
+
+      // obtain the token of the current thread 
+      if (!OpenThreadToken(GetCurrentThread(), 
+						   TOKEN_QUERY|TOKEN_ADJUST_PRIVILEGES,
+						   FALSE, &hToken))
+		{
+		  if (GetLastError() != ERROR_NO_TOKEN)
+			return FALSE;
+
+		  // revert to the process token
+		  if (!OpenProcessToken(GetCurrentProcess(),
+								TOKEN_QUERY|TOKEN_ADJUST_PRIVILEGES,
+								&hToken))
+			return FALSE;
+		}
+
+      assert(ANYSIZE_ARRAY > 0);
+
+      Priv.PrivilegeCount = 1;
+      Priv.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+      LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Priv.Privileges[0].Luid);
+
+      // try to enable the privilege
+      if (!AdjustTokenPrivileges(hToken, FALSE, &Priv, sizeof(Priv),
+								 &PrivOld, &cbPriv))
+		{
+		  dwError = GetLastError();
+		  CloseHandle(hToken);
+		  return FALSE;
+		}
+
+      if (GetLastError() == ERROR_NOT_ALL_ASSIGNED)
+		{
+		  // the SE_DEBUG_NAME privilege is not present in the caller's
+		  // token
+		  CloseHandle(hToken);
+		  return FALSE;
+		}
+
+      // try to open process handle again
+      hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, dwProcessId);
+      dwError = GetLastError();
+		
+      // restore the original state of the privilege
+      AdjustTokenPrivileges(hToken, FALSE, &PrivOld, sizeof(PrivOld),
+							NULL, NULL);
+      CloseHandle(hToken);
+
+      if (hProcess == NULL)
+		return FALSE;
+    }
+
+  // terminate the process
+  if (!TerminateProcess(hProcess, (UINT)-1))
+    {
+      dwError = GetLastError();
+      CloseHandle(hProcess);
+      return FALSE;
+    }
+
+  CloseHandle(hProcess);
+
+  // completed successfully
+  return TRUE;
 }
+
+typedef LONG	NTSTATUS;
+typedef LONG	KPRIORITY;
+
+#define NT_SUCCESS(Status) ((NTSTATUS)(Status) >= 0)
+
+#define STATUS_INFO_LENGTH_MISMATCH      ((NTSTATUS)0xC0000004L)
+
+#define SystemProcessesAndThreadsInformation	5
+
+typedef struct _CLIENT_ID {
+  DWORD	    UniqueProcess;
+  DWORD	    UniqueThread;
+} CLIENT_ID;
+
+typedef struct _UNICODE_STRING {
+  USHORT	    Length;
+  USHORT	    MaximumLength;
+  PWSTR	    Buffer;
+} UNICODE_STRING;
+
+typedef struct _VM_COUNTERS {
+  SIZE_T	    PeakVirtualSize;
+  SIZE_T	    VirtualSize;
+  ULONG	    PageFaultCount;
+  SIZE_T	    PeakWorkingSetSize;
+  SIZE_T	    WorkingSetSize;
+  SIZE_T	    QuotaPeakPagedPoolUsage;
+  SIZE_T	    QuotaPagedPoolUsage;
+  SIZE_T	    QuotaPeakNonPagedPoolUsage;
+  SIZE_T	    QuotaNonPagedPoolUsage;
+  SIZE_T	    PagefileUsage;
+  SIZE_T	    PeakPagefileUsage;
+} VM_COUNTERS;
+
+typedef struct _SYSTEM_THREADS {
+  LARGE_INTEGER   KernelTime;
+  LARGE_INTEGER   UserTime;
+  LARGE_INTEGER   CreateTime;
+  ULONG			WaitTime;
+  PVOID			StartAddress;
+  CLIENT_ID	    ClientId;
+  KPRIORITY	    Priority;
+  KPRIORITY	    BasePriority;
+  ULONG			ContextSwitchCount;
+  LONG			State;
+  LONG			WaitReason;
+} SYSTEM_THREADS, * PSYSTEM_THREADS;
+
+// Note that the size of the SYSTEM_PROCESSES structure is different on
+// NT 4 and Win2K, but we don't care about it, since we don't access neither
+// IoCounters member nor Threads array
+
+typedef struct _SYSTEM_PROCESSES {
+  ULONG			NextEntryDelta;
+  ULONG			ThreadCount;
+  ULONG			Reserved1[6];
+  LARGE_INTEGER   CreateTime;
+  LARGE_INTEGER   UserTime;
+  LARGE_INTEGER   KernelTime;
+  UNICODE_STRING  ProcessName;
+  KPRIORITY	    BasePriority;
+  ULONG			ProcessId;
+  ULONG			InheritedFromProcessId;
+  ULONG			HandleCount;
+  ULONG			Reserved2[2];
+  VM_COUNTERS	    VmCounters;
+#if _WIN32_WINNT >= 0x500
+  IO_COUNTERS	    IoCounters;
+#endif
+  SYSTEM_THREADS  Threads[1];
+} SYSTEM_PROCESSES, * PSYSTEM_PROCESSES;
+
+static BOOL WINAPI KillProcessTreeNtHelper(IN PSYSTEM_PROCESSES pInfo, IN DWORD dwProcessId)
+{
+  assert(pInfo != NULL);
+
+  PSYSTEM_PROCESSES p = pInfo;
+
+  // kill all children first
+  for (;;)
+    {
+      if (p->InheritedFromProcessId == dwProcessId)
+		KillProcessTreeNtHelper(pInfo, p->ProcessId);
+
+      if (p->NextEntryDelta == 0)
+		break;
+
+      // find the address of the next process structure
+      p = (PSYSTEM_PROCESSES)(((LPBYTE)p) + p->NextEntryDelta);
+    }
+
+  // kill the process itself
+  if (!KillProcess(dwProcessId))
+    return GetLastError();
+
+  return ERROR_SUCCESS;
+}
+
+static BOOL WINAPI KillProcessTreeWinHelper(IN DWORD dwProcessId)
+{
+  HINSTANCE hKernel;
+  HANDLE (WINAPI * _CreateToolhelp32Snapshot)(DWORD, DWORD);
+  BOOL (WINAPI * _Process32First)(HANDLE, PROCESSENTRY32 *);
+  BOOL (WINAPI * _Process32Next)(HANDLE, PROCESSENTRY32 *);
+
+  // get handle to KERNEL32.DLL
+  hKernel = GetModuleHandle(_T("kernel32.dll"));
+  assert(hKernel != NULL);
+
+  // locate necessary functions in KERNEL32.DLL
+  *(FARPROC *)&_CreateToolhelp32Snapshot =
+    GetProcAddress(hKernel, "CreateToolhelp32Snapshot");
+  *(FARPROC *)&_Process32First =
+    GetProcAddress(hKernel, "Process32First");
+  *(FARPROC *)&_Process32Next =
+    GetProcAddress(hKernel, "Process32Next");
+
+  if (_CreateToolhelp32Snapshot == NULL ||
+      _Process32First == NULL ||
+      _Process32Next == NULL)
+    return ERROR_PROC_NOT_FOUND;
+
+  HANDLE hSnapshot;
+  PROCESSENTRY32 Entry;
+
+  // create a snapshot
+  hSnapshot = _CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  if (hSnapshot == INVALID_HANDLE_VALUE)
+    return GetLastError();
+
+  Entry.dwSize = sizeof(Entry);
+  if (!_Process32First(hSnapshot, &Entry))
+    {
+      DWORD dwError = GetLastError();
+      CloseHandle(hSnapshot);
+      return dwError;
+    }
+
+  // kill all children first
+  do
+    {
+      if (Entry.th32ParentProcessID == dwProcessId)
+		KillProcessTreeWinHelper(Entry.th32ProcessID);
+
+      Entry.dwSize = sizeof(Entry);
+    }
+  while (_Process32Next(hSnapshot, &Entry));
+
+  CloseHandle(hSnapshot);
+
+  // kill the process itself
+  if (!KillProcess(dwProcessId))
+    return GetLastError();
+
+  return ERROR_SUCCESS;
+}
+
+static BOOL WINAPI KillProcessEx(IN DWORD dwProcessId, IN BOOL bTree)
+{
+  if (!bTree)
+    return KillProcess(dwProcessId);
+
+  OSVERSIONINFO osvi;
+  DWORD dwError;
+
+  // determine operating system version
+  osvi.dwOSVersionInfoSize = sizeof(osvi);
+  GetVersionEx(&osvi);
+
+  if (osvi.dwPlatformId == VER_PLATFORM_WIN32_NT &&
+      osvi.dwMajorVersion < 5)
+    {
+      HINSTANCE hNtDll;
+      NTSTATUS (WINAPI * _ZwQuerySystemInformation)(UINT, PVOID, ULONG, PULONG);
+
+      // get handle to NTDLL.DLL
+      hNtDll = GetModuleHandle(_T("ntdll.dll"));
+      assert(hNtDll != NULL);
+
+      // find the address of ZwQuerySystemInformation
+      *(FARPROC *)&_ZwQuerySystemInformation =
+		GetProcAddress(hNtDll, "ZwQuerySystemInformation");
+      if (_ZwQuerySystemInformation == NULL)
+		return FALSE;
+
+      // obtain a handle to the default process heap
+      HANDLE hHeap = GetProcessHeap();
+    
+      NTSTATUS Status;
+      ULONG cbBuffer = 0x8000;
+      PVOID pBuffer = NULL;
+
+      // it is difficult to say a priory which size of the buffer 
+      // will be enough to retrieve all information, so we start
+      // with 32K buffer and increase its size until we get the
+      // information successfully
+      do
+		{
+		  pBuffer = HeapAlloc(hHeap, 0, cbBuffer);
+		  if (pBuffer == NULL)
+			return FALSE;
+
+		  Status = _ZwQuerySystemInformation(
+											 SystemProcessesAndThreadsInformation,
+											 pBuffer, cbBuffer, NULL);
+
+		  if (Status == STATUS_INFO_LENGTH_MISMATCH)
+			{
+			  HeapFree(hHeap, 0, pBuffer);
+			  cbBuffer *= 2;
+			}
+		  else if (!NT_SUCCESS(Status))
+			{
+			  HeapFree(hHeap, 0, pBuffer);
+			  return FALSE;
+			}
+		}
+      while (Status == STATUS_INFO_LENGTH_MISMATCH);
+
+      // call the helper function
+      dwError = KillProcessTreeNtHelper((PSYSTEM_PROCESSES)pBuffer, 
+										dwProcessId);
+		
+      HeapFree(hHeap, 0, pBuffer);
+    }
+  else
+    {
+      // call the helper function
+      dwError = KillProcessTreeWinHelper(dwProcessId);
+    }
+
+  return dwError == ERROR_SUCCESS;
+}
+
+static void s_kill(int sig) {
+  if(!s_pid.use_wrapper) {
+								/* we can kill our child directly */
+	if(s_pid.p.hProcess) TerminateProcess(s_pid.p.hProcess, 1);
+  }
+  else {
+								/* emulate unix kill behaviour */
+	if(s_pid.p.dwProcessId) KillProcessEx(s_pid.p.dwProcessId, 1);
+  }
+}
+
+
+
 #endif
 
 void EXT_GLOBAL(start_server)(TSRMLS_D) {
@@ -513,20 +874,18 @@ void EXT_GLOBAL(start_server)(TSRMLS_D) {
 	  char *cmd = get_server_string(0 TSRMLS_CC);
 	  DWORD properties = CREATE_NEW_CONSOLE;
 	  STARTUPINFO su_info;
-	  PROCESS_INFORMATION p_info;
-	  short must_use_wrapper = use_wrapper(EXT_GLOBAL(cfg)->wrapper);
-	  char *command = must_use_wrapper ? EXT_GLOBAL(cfg)->wrapper : cmd;
+	  s_pid.use_wrapper = use_wrapper(EXT_GLOBAL(cfg)->wrapper);
 
 	  ZeroMemory(&su_info, sizeof(STARTUPINFO));
 	  su_info.cb = sizeof(STARTUPINFO);
 	  EXT_GLOBAL(cfg)->cid=0;
-	  if(CreateProcess(NULL, command, 
+	  if(CreateProcess(NULL, cmd, 
 					   NULL, NULL, 1, properties, NULL, NULL, 
-					   &su_info, &s_pid)) {
-		EXT_GLOBAL(cfg)->cid=s_pid.dwProcessId;
+					   &su_info, &s_pid.p)) {
+		EXT_GLOBAL(cfg)->cid=s_pid.p.dwProcessId;
 		wait_server();
 	  } else {
-		php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d) system error: Could not start backend: %s; Code: %ld.", 105, command, (long)GetLastError());
+		php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d) system error: Could not start backend: %s; Code: %ld.", 105, cmd, (long)GetLastError());
 	  }
 	  free(cmd);
 	} else

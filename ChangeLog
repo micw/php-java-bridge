@@ -1,3 +1,35 @@
+2006-03-07  Jost Boekemeier  <jostb@intern>
+	
+	* bind.c (KillProcess, KillProcessTreeNtHelper,
+	KillProcessTreeWinHelper, KillProcessEx): Emulate Unix kill
+	behaviour for windows. New procedures for PR1431314.
+
+	* java.c (__errno): Avoid warning.
+
+	* php-java-bridge: Make the standalone script more user-friendly.
+
+	* php-java-bridge.spec: Symlink JavaBridge.jar and php-script.jar
+	to /usr/java/packages/lib/ext/ so that JDK1.6 can find them.
+
+	* server/configure.gnu.in: Check if backend configuration failed and suggest --disable-backend.
+
+	* server/META-INF/services/javax.script.ScriptEngineFactory: Added
+	php-interactive so that /opt/jdk1.6/jrunscript -l php-interactive
+	works.
+
+	* server/php/java/bridge/JavaBridgeRunner.java (JavaBridgeRunner): Use thread pool.
+
+	* server/php/java/bridge/Util.java (Process): Do not cd to the
+	user home directory, use the current dir instead.
+
+	* server/php/java/script/PhpScriptEngine.java (eval): Rewritten: Do not keep the local reader open.
+
+	* server/php/java/script/InteractivePhpScriptEngine.java,
+	server/php/java/script/InteractivePhpScriptEngineFactory.java: New
+	files.
+
+	* server/test/cli.java: Test for php-interactive.
+	
 2006-02-26  Jost Boekemeier  <jostb@intern>
 	
 	* bind.c (sleep_ms): New procedure

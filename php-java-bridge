@@ -36,7 +36,7 @@ if test $# != 0; then
       log=/tmp/php-java-bridge.log
   fi
 
-  trap 'kill `cat ${pid}`; rm -f $pid' 2 15
+  trap 'kill `cat ${pid}`; rm -f ${pid}.old' 2 15
   ext=$1; shift
   eval $1; shift
   eval $1; shift
@@ -44,10 +44,12 @@ if test $# != 0; then
   java="${ext}/RunJavaBridge"
   LANG="$LANG_SYSTEM" 
   unset LC_ALL
-  $java "$@" >$log 2>&1 &
+  $java "$@" >>$log 2>&1 &
+  rm -f ${pid}.old; if test -s $pid; then mv $pid ${pid}.old; fi
   echo $! >$pid
   wait
-  rm -f $pid;
+  rm -f $pid; if test -s ${pid}.old; then mv ${pid}.old $pid; fi
+
   exit 0
 fi
 

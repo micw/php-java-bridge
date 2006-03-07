@@ -27,10 +27,10 @@ import php.java.bridge.http.ContextFactory;
  * This class implements the ScriptEngine.<p>
  * Example:<p>
  * <code>
- * ScriptEngine e = new PhpScriptEngine();<br>
+ * ScriptEngine e = (new ScriptEngineManager()).getEngineByName("php);<br>
  * e.eval(new URLReader(new URL("http://localhost/foo.php"));<br>
  * System.out.println(((Invocable)e).invoke("java_get_server_name", new Object[]{}));<br>
- * e.release();<br>
+ * e.eval((String)null);<br>
  * </code>
  * @author jostb
  *
@@ -49,7 +49,6 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
      * The continuation of the script
      */
     protected HttpProxy continuation = null;
-    private StringReader localReader = null;
     protected HashMap env = new HashMap();
     
     private ScriptEngineFactory factory = null;
@@ -146,7 +145,7 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
 	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS",Util.getHostAddress()+":"+context.getHttpServer().getSocket().getSocketName());
 
     }
-    private Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
+    protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
         if(continuation != null) release();
   	if(reader==null) return null;
   	
@@ -186,7 +185,6 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
      */
     protected PhpProcedureProxy doEval(Reader reader, ScriptContext context) throws UnknownHostException, IOException, InterruptedException {
     	continuation = getContinuation(reader, context);
-
      	continuation.start();
     	return continuation.getPhpScript();
     }
@@ -198,7 +196,10 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
     public Object eval(String script, ScriptContext context)
 	throws ScriptException {
       	script = script.trim();
-	return eval(this.localReader=new StringReader(script), context, String.valueOf(script));
+	Reader localReader = new StringReader(script);
+	Object obj = eval(localReader, context, String.valueOf(script));
+	try { localReader.close(); } catch (IOException e) {/*ignore*/}
+	return obj;
     }
 
     /**@inheritDoc*/
@@ -223,7 +224,6 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
      */
     public void release() {
 	if(continuation != null) {
-	    if(localReader!=null) { try {localReader.close();} catch (Exception e) {Util.printStackTrace(e);} localReader=null; }
 	    continuation.release();
 	    continuation = null;
 	    script = null;

@@ -646,8 +646,8 @@ public class Util {
             if(Util.logLevel>3) Util.logDebug("Using php binary: " + php);
             if(php==null) php="php-cgi";
 
-	    String home = System.getProperty("user.home");
-	    if(homeDir==null) homeDir = new File(home);
+	    //String home = System.getProperty("user.home");
+	    //if(homeDir==null) homeDir = new File(home);
              
 	    String s = argsToString(php, args);
 	    proc = rt.exec(s, hashToStringArray(env), homeDir);
@@ -657,7 +657,7 @@ public class Util {
         /**
 	 * Starts a CGI process and returns the process handle.
 	 * @param args The args array, e.g.: new String[]{null, "-b", ...};. If args is null or if args[0] is null, the function looks for the system property "php.java.bridge.php_exec".
-	 * @param homeDir The home directory. If null, the system property "user.home" is used.
+	 * @param homeDir The home directory. If null, the current working directory is used.
 	 * @param env The CGI environment. If null, Util.DEFAULT_CGI_ENVIRONMENT is used.
 	 * @return The process handle.
 	 * @throws IOException
@@ -755,7 +755,7 @@ public class Util {
         /**
          * Starts a CGI process and returns the process handle.
          * @param args The args array, e.g.: new String[]{null, "-b", ...};. If args is null or if args[0] is null, the function looks for the system property "php.java.bridge.php_exec".
-         * @param homeDir The home directory. If null, the system property "user.home" is used.
+         * @param homeDir The home directory. If null, the current working directory is used.
          * @param env The CGI environment. If null, Util.DEFAULT_CGI_ENVIRONMENT is used.
          * @return The process handle.
          * @throws IOException

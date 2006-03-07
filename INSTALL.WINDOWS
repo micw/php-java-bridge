@@ -72,7 +72,7 @@ php.ini, the php java extension "php_java.dll" and your java libraries
 
 * If you have a servlet engine or j2ee server and you want to share
   the web server document root with the servlet engine or j2ee server,
-  change the HTTP server document root. The following example sets the
+  change the web server document root. The following example sets the
   document root in the apache2 httpd.conf to the tomcat 5 webapps
   directory:
 

@@ -5,8 +5,11 @@ Installing the PHP/Java Bridge J2EE Component
   Tomcat 5.5.9, Oracle 10g or WebSphere 6.
 
 * Extract the files from the php-java-bridge J2EE download and deploy
-  JavaBridge.war into your J2EE server, visit
-  http://localhost:<port>/JavaBridge and click on test.php.
+  JavaBridge.war into your J2EE server, example for tomcat:
+  
+    cp JavaBridge.war $CATALINA_HOME/webapps/
+
+* Visit http://localhost:<port>/JavaBridge and click on test.php.
   The <port> is 8888 (Oracle), 9080 (WebSphere) or 8080 (Tomcat).
 
 
@@ -24,8 +27,9 @@ the RPM build system instead, see INSTALL.LINUX.
   java-<architecture>-<os>.dll from the JavaBridge.war file to your php
   extension directory and rename it to java.so (Unix) or
   php_java.dll (Windows). Check if the java .ini entry (usually
-  /usr/local/lib/php.ini or c:\windows\php.ini) loads the java extension
-  and connects php to the servlet backend, e.g.:
+  /usr/local/lib/php.ini or /etc/php.d/java.ini or c:\windows\php.ini
+  or c:\winnt\php.ini) loads the java extension and connects php to
+  the servlet backend, e.g.:
   
     extension = java.so
     ; extension = php_java.dll

@@ -11,4 +11,13 @@ automake -a --foreign
 
 ext="@EXTENSION_DIR@"
 pld="@phplibdir@"
-sh ./configure "$@" --with-extdir="$ext" --libdir="$pld" --datadir="$pld" --bindir="$pld"
+sh ./configure "$@" --with-extdir="$ext" --libdir="$pld" --datadir="$pld" --bindir="$pld" || (
+echo "Backend configuration failed."
+echo "Please install the recommended autoconf, libtool and automake versions"
+echo "or disable backend configuration and use the pre-compiled J2EE backend:"
+echo 
+echo "    ./configure --disable-backend --with-java=java"
+echo
+exit 1
+)
+

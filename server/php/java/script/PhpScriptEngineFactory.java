@@ -11,7 +11,7 @@ import php.java.bridge.Util;
 public class PhpScriptEngineFactory implements ScriptEngineFactory {
 
   public String getEngineName() {
-    return "PHP";
+    return Util.EXTENSION_NAME;
   }
 
   public String getEngineVersion() {
@@ -35,7 +35,7 @@ public class PhpScriptEngineFactory implements ScriptEngineFactory {
   }
 
   public List getNames() {
-    return Arrays.asList(new String[]{"php"});
+    return Arrays.asList(new String[]{getLanguageName()});
   }
 
   public ScriptEngine getScriptEngine() {
@@ -91,5 +91,4 @@ public class PhpScriptEngineFactory implements ScriptEngineFactory {
       b.append("?>");
       return b.toString();
   }
-
 }

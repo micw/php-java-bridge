@@ -245,6 +245,11 @@ if test -f /etc/selinux/config; then
     echo
 fi
 
+%post devel
+mkdir -p /usr/java/packages/lib/ext/ 2>/dev/null
+ln -fs /usr/share/java/JavaBridge.jar /usr/java/packages/lib/ext/
+ln -fs /usr/share/java/php-script.jar /usr/java/packages/lib/ext/
+
 %preun standalone
 if [ $1 = 0 ]; then
 	/sbin/service php-java-bridge stop > /dev/null 2>&1
@@ -253,6 +258,10 @@ fi
 
 %preun tomcat
 rm -rf %{tomcat_webapps}/JavaBridge
+
+%preun devel
+rm -f /usr/java/packages/lib/ext/JavaBridge.jar /usr/java/packages/lib/ext/php-java.jar
+
 
 %files -f filelist
 %defattr(-,root,root)

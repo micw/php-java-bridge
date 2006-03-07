@@ -4,14 +4,14 @@ Requests are marked with "->", responses with "<-".  The server
 continues to process requests until EOF. Only the first character is
 significant.
 
-The communication must begin with [C]reateInstance. After that
-[I]nvoke may be used. The server responds with a single ARG which also
-carries the last request context ID. The request context ID is your
-request context, for example the location of a cell where the response
-should be stored; a structure or something like that. In PHP for
-example we allocate a pval and pass it as the ID to the Invoke or
-Create request. When the response arrives, we receive our ID along
-with the result so we know exactly where to store the result.
+The communication must begin with [C]reateInstance or [I]nvoke. The
+server responds with a single ARG which also carries the last request
+context ID. The request context ID is your request context, for
+example the location of a cell where the response should be stored; a
+structure or something like that. In PHP for example we allocate a
+pval and pass it as the ID to the Invoke or Create request. When the
+response arrives, we receive our ID along with the result so we know
+exactly where to store the result.
 
 Example:
 

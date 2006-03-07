@@ -38,7 +38,7 @@ struct cfg *EXT_GLOBAL (cfg)  = 0;
 
 #ifdef __MINGW32__
 static const int java_errno=0;
-int *__errno (void) { return &java_errno; }
+int *__errno (void) { return (int*)&java_errno; }
 #define php_info_print_table_row(a, b, c)		\
   php_info_print_table_row_ex(a, "v", b, c)
 #endif

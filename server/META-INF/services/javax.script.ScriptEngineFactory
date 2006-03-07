@@ -1,3 +1,4 @@
 # list of script engine factories 
 
 php.java.script.PhpScriptEngineFactory # PHP
+php.java.script.InteractivePhpScriptEngineFactory # PHP-INTERACTIVE

@@ -34,7 +34,7 @@ public class JavaBridgeRunner extends HttpServer {
      */
     public JavaBridgeRunner() {
 	super();
-	ctxServer = new ContextServer(null);
+	ctxServer = new ContextServer(new ThreadPool("JavaBridgeContextRunner", Integer.parseInt(Util.THREAD_POOL_MAX_SIZE)));
     }
 
     private static ContextServer ctxServer;
@@ -98,7 +98,6 @@ public class JavaBridgeRunner extends HttpServer {
 	    	if(bridge.logLevel>3) bridge.logDebug("waiting for context: " +ctx.getId());
 	    	ctx.waitFor();
 	    	resOut.close();
-	    	if(bridge.logLevel>3) bridge.logDebug("context finished: " +ctx.getId());
 	    }
 	    else {
 	        sin.close();
