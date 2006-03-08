@@ -2,7 +2,6 @@
 
 package php.java.script;
 
-import javax.script.Bindings;
 import javax.script.Invocable;
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
@@ -13,7 +12,7 @@ import javax.script.ScriptException;
  * <code>
  * ScriptEngine e = (new ScriptEngineManager()).getEngineByName("php-interactive);<br>
  * e.eval("$v = 1+2"); <br>
- * e.eval("echo $v"); <br>
+ * System.out.println(e.eval("echo $v")); <br>
  * e.eval((String)null);<br>
  * </code>
  * @author jostb
@@ -21,46 +20,13 @@ import javax.script.ScriptException;
  */
 public class InteractivePhpScriptEngine extends PhpScriptEngine {
 
-    private static final int INTERACTIVE_PHP_ENGINE_SCOPE = 101;
-    private static final String restoreState = "foreach (java_values(java_context()->getBindings("+INTERACTIVE_PHP_ENGINE_SCOPE+")) as $javabridge_key=>$javabridge_val) {eval(\"\\$$javabridge_key=java_context()->getAttribute(\\\"$javabridge_key\\\", "+INTERACTIVE_PHP_ENGINE_SCOPE+");\");}";
-    private static final String saveState = "foreach (get_defined_vars() as $javabridge_key=>$javabridge_val) {if($javabridge_key==\"javabridge_key\" || $javabridge_key==\"javabridge_val\" || $javabridge_key==\"javabridge_param\") continue; java_context()->setAttribute($javabridge_key, $javabridge_val, "+INTERACTIVE_PHP_ENGINE_SCOPE+");};";
+    private static final String restoreState = "foreach ($javabridge_values as $javabridge_key=>$javabridge_val) {eval(\"\\$$javabridge_key=\\$javabridge_values[\\$javabridge_key];\");}";
+    private static final String saveState = "foreach (get_defined_vars() as $javabridge_key=>$javabridge_val) {if(in_array($javabridge_key, $javabridge_ignored_keys)) continue;eval(\"\\$javabridge_values[\\$javabridge_key]=\\$$javabridge_key;\");};";
 
     /**@inheritDoc*/
     public InteractivePhpScriptEngine(InteractivePhpScriptEngineFactory factory) {
         super(factory);
     }
-
-    protected ScriptContext getPhpScriptContext() {
-      ScriptContext scriptContext = new PhpScriptContext() {
-	    protected Bindings interactive_engine_scope;
-	    public Bindings getBindings(int scope) {
-	        if(scope==INTERACTIVE_PHP_ENGINE_SCOPE) return interactive_engine_scope;
-	        else return super.getBindings(scope);
-	    }
-	    public void setBindings(Bindings namespace, int scope) throws IllegalArgumentException {
-	        if(scope==INTERACTIVE_PHP_ENGINE_SCOPE) 
-	            interactive_engine_scope = namespace;
-	        else 
-	            super.setBindings(namespace, scope);
-	    }
-	    public Object getAttribute(String name, int scope) throws IllegalArgumentException {
-	        return getBindings(scope).get(name);
-	    }
-	    public void setAttribute(String name, Object value, int scope) throws IllegalArgumentException {
-	        getBindings(scope).put(name, value);
-	    }
-	    public Object removeAttribute(String name, int scope) throws IllegalArgumentException {
-	        return getBindings(scope).remove(name);
-	    }
-      };
-      
-      scriptContext.setBindings(createBindings(),INTERACTIVE_PHP_ENGINE_SCOPE);
-      scriptContext.setBindings(createBindings(),ScriptContext.ENGINE_SCOPE);
-      scriptContext.setBindings(getBindings(ScriptContext.GLOBAL_SCOPE),
-				   ScriptContext.GLOBAL_SCOPE);
-      
-      return scriptContext;
-  }    
 
     boolean hasScript = false;
     /* (non-Javadoc)
@@ -77,14 +43,18 @@ public class InteractivePhpScriptEngine extends PhpScriptEngine {
 	
 	if(!hasScript) {
 	    super.eval("<?php " +
+		       "$javabridge_values = array(); "+
+		       "$javabridge_ignored_keys = array(\"javabridge_key\", \"javabridge_val\", \"javabridge_values\", \"javabridge_ignored_keys\", \"javabridge_param\"); "+
 		       "function javabridge_eval($javabridge_param) { " +
+		       "global $javabridge_values; " +
+		       "global $javabridge_ignored_keys; " +
 		       "ob_start(); " +
 		       restoreState +
 		       "eval(\"$javabridge_param\"); " +
-		       "$ret = ob_get_contents(); " +
-		       "ob_end_clean(); " +
 		       saveState +
-		       "return $ret; " +
+		       "$javabridge_retval = ob_get_contents(); " +
+		       "ob_end_clean(); " +
+		       "return $javabridge_retval; " +
 		       "}; " +
 		       "java_context()->call(java_closure()); " +
 		       "?>", context);

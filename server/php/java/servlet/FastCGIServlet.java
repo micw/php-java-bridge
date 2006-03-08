@@ -250,7 +250,7 @@ exitting. When one process exits, another will be created.
 		return null;
 	    }
 			
-	    // FIXME: Wieviel von dem Mist wird noch gebraucht?
+	    // Bogus, needed by CGIServlet, maybe?
 	    StringBuffer cgiDir = new StringBuffer(webAppRootDir);
 	    if(!webAppRootDir.endsWith(File.separator)) cgiDir.append(File.separatorChar);
 	    cgiDir.append(cgiPathPrefix);
