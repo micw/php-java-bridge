@@ -95,12 +95,19 @@ struct proxyenv_ {
   /* for servlets: re-open connection */
   short must_reopen; 
 
+  struct async_ctx {
+	void (*handle_request)(proxyenv *env);
+	long nextValue;
+	void *result;
+  } async_ctx;
+
   /* for servlet engines only */
   char *servlet_ctx;
   char *servlet_context_string;	/* original rinit value from
 								   get_servlet_context() */
   short backend_has_session_proxy;
   
+  void (*handle)(proxyenv *env);
   void (*handle_request)(proxyenv *env);
 
   void (*writeCreateObjectBegin)(proxyenv *env, char*name, size_t strlen, char createInstance, void *result);

@@ -23,24 +23,20 @@ import php.java.bridge.Util;
 import php.java.bridge.http.ContextServer;
 
 /**
- * Handles requests from PHP clients.
- * <p>
- * When Apache, IIS or php (cli) or php-cgi is used as a frontend, this servlet handles PUT 
- * requests and then re-directs to a private (socket- or pipe-) communication channel.
- * This is the fastest mechanism to connect php and java. It is even 1.5 times faster than
- * local ("unix domain") sockets used by the php.java.bridge.JavaBridge standalone listener.
- * </p>
- * <p>
- * Furthermore this servlet can handle GET/POST requests directly. These 
- * requests invoke the php-cgi machinery from the CGI or FastCGI servlet.
- * Although the servlet to php-cgi back to servlet 
- * path is 
- * quite slow and consumes two servlet instances instead of only 
- * one for the http frontend/j2ee backend, it could also be useful as 
- * a replacement for a  
- * system php installation, see the README in the <code>WEB-INF/cgi</code> folder.
- * It is currently used for our J2EE test/demo. 
- * </p>
+ * Handles requests from PHP clients.  <p> When Apache, IIS or php
+ * (cli) or php-cgi is used as a frontend, this servlet handles PUT
+ * requests and then re-directs to a private (socket- or pipe-)
+ * communication channel.  This is the fastest mechanism to connect
+ * php and java. It is even 1.5 times faster than local ("unix
+ * domain") sockets used by the php.java.bridge.JavaBridge standalone
+ * listener.  </p> <p> Furthermore this servlet can handle GET/POST
+ * requests directly. These requests invoke the php-cgi machinery from
+ * the CGI or FastCGI servlet.  Although the servlet to php-cgi back
+ * to servlet path is quite slow and consumes two servlet instances
+ * instead of only one (compared to the http frontend/j2ee backend
+ * setup), it could also be useful as a replacement for a system php
+ * installation, see the README in the <code>WEB-INF/cgi</code>
+ * folder.  It is currently used for our J2EE test/demo.  </p>
  * @see php.java.bridge.JavaBridge
  *  */
 public class PhpJavaServlet extends FastCGIServlet {

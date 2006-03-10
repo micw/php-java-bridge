@@ -94,17 +94,10 @@ public class Util {
 
     
     /** 
-     * The TCP socket name
+     * The TCP socket name. Default is 9267.
+     * @see System property <code>php.java.bridge.tcp_socketname</code>
      */
     public static String TCP_SOCKETNAME;
-
-    /**
-     * The default extension directory.
-     * Each php instance can pass its extension dir via a call to <code>setJarLibraryPath</code> or <code>setLibraryPath</code>.
-     * @see php.java.bridge.JavaBridge#setJarLibraryPath(String, String)
-     * @see php.java.bridge.JavaBridge#setLibraryPath(String, String)
-     */
-    public static String DEFAULT_EXTENSION_DIR;
 
     /**
      * The name of the extension, usually "JavaBridge" or "MonoBridge"
@@ -112,23 +105,30 @@ public class Util {
     public static String EXTENSION_NAME;
 
     /**
-     * The number of threads in the thread pool.
+     * The max. number of threads in the thread pool. Default is 20.
      * @see System property <code>php.java.bridge.threads</code>
      */
     public static String THREAD_POOL_MAX_SIZE;
     
     /**
-     * The default log level, java.log_level from php.ini overrides.
+     * The default log level, java.log_level from php.ini
+     * overrides. Default is 3, if started via java -jar
+     * JavaBridge.jar or 2, if started as a sub-process of Apache/IIS.
+     * @see System property <code>php.java.bridge.default_log_level</code>
      */
     public static int DEFAULT_LOG_LEVEL;
 
     /**
-     * Backlog for TCP and unix domain connections
+     * Backlog for TCP and unix domain connections. Default is 20.
+     * @see System property <code>php.java.bridge.backlog</code>
      */
     public static int BACKLOG;
 
     /**
-     * The default log file.
+     * The default log file. Default is stderr, if started as a
+     * sub-process of Apache/IIS or <code>EXTENSION_NAME</code>.log,
+     * if started via java -jar JavaBridge.jar.
+     * @see System property <code>php.java.bridge.default_log_file</code>
      */
     public static String DEFAULT_LOG_FILE;
 	
@@ -161,7 +161,6 @@ public class Util {
 	    //t.printStackTrace();
 	};
 	TCP_SOCKETNAME = getProperty(p, "TCP_SOCKETNAME", "9267");
-	DEFAULT_EXTENSION_DIR = getProperty(p, "DEFAULT_EXTENSION_DIR", null);
 	EXTENSION_NAME = getProperty(p, "EXTENSION_DISPLAY_NAME", "JavaBridge");
 	try {
 	    String s = getProperty(p, "DEFAULT_LOG_LEVEL", "3");

@@ -143,7 +143,7 @@ static void end_session(proxyenv *env) {
 
 static void flush(proxyenv *env) {
   (*env)->finish(env);
-  (*env)->handle_request(env);
+  (*env)->handle(env);
 }
 
 void EXT_GLOBAL (protocol_end) (proxyenv *env) {
@@ -305,7 +305,7 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    assert(createInstance=='C' || createInstance=='I');
    if(!len) len=strlen(name);
    GROW(FLEN+ILEN+len);
-   (*env)->send_len+=EXT_GLOBAL(snprintf) ((char*)((*env)->send+(*env)->send_len), flen, "<C v=\"%s\" p=\"%c\" i=\"%ld\">", name, createInstance, (long)result);
+   (*env)->send_len+=EXT_GLOBAL(snprintf) ((char*)((*env)->send+(*env)->send_len), flen, "<C v=\"%s\" p=\"%c\" i=\"%ld\">", name, createInstance, (long)((*env)->async_ctx.result=result));
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void CreateObjectEnd(proxyenv *env) {
@@ -320,7 +320,7 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    assert(property=='I' || property=='P');
    if(!len) len=strlen(method);
    GROW(FLEN+ILEN+len+ILEN);
-   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<I v=\"%ld\" m=\"%s\" p=\"%c\" i=\"%ld\">", object, method, property, (long)result);
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<I v=\"%ld\" m=\"%s\" p=\"%c\" i=\"%ld\">", object, method, property, (long)((*env)->async_ctx.result=result));
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void InvokeEnd(proxyenv *env) {
@@ -330,10 +330,11 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    assert((*env)->send_len<=(*env)->send_size);
    flush(env);
  }
+
  static void ResultBegin(proxyenv *env, void*result) {
    size_t flen;
    GROW(FLEN+ILEN);
-   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<R i=\"%ld\">", (long)result);
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<R i=\"%ld\">", (long)((*env)->async_ctx.result=result));
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void ResultEnd(proxyenv *env) {
@@ -342,33 +343,6 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "</R>");
    assert((*env)->send_len<=(*env)->send_size);
    end(env);
- }
- static void GetMethodBegin(proxyenv *env, long object, char*method, size_t len, void* result) {
-   size_t flen;
-   if(!len) len=strlen(method);
-   GROW(FLEN+ILEN+len+ILEN);
-   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<M v=\"%ld\" m=\"%s\" i=\"%ld\">", object, method, (long) result);
-   assert((*env)->send_len<=(*env)->send_size);
- }
- static void GetMethodEnd(proxyenv *env) {
-   size_t flen;
-   GROW(FLEN);
-   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "</M>");
-   assert((*env)->send_len<=(*env)->send_size);
-   flush(env);
- }
- static void CallMethodBegin(proxyenv *env, long object, long method, void* result) {
-   size_t flen;
-   GROW(FLEN+ILEN+ILEN+ILEN);
-   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<F v=\"%ld\" m=\"%ld\" i=\"%ld\">", object, method, (long)result);
-   assert((*env)->send_len<=(*env)->send_size);
- }
- static void CallMethodEnd(proxyenv *env) {
-   size_t flen;
-   GROW(FLEN);
-   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "</F>");
-   assert((*env)->send_len<=(*env)->send_size);
-   flush(env);
  }
 
  static void String(proxyenv *env, char*name, size_t _len) {
@@ -480,7 +454,7 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
 
  
 
- proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, void (*handle_request)(proxyenv *env), char *server_name, short is_local, struct sockaddr *saddr) {
+ proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, void (*handle_request)(proxyenv *env), void (*handle_cached)(proxyenv *env), char *server_name, short is_local, struct sockaddr *saddr) {
    proxyenv *env;  
    env=(proxyenv*)malloc(sizeof *env);     
    if(!env) return 0;
@@ -495,7 +469,9 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    (*env)->peer_redirected = 0;
    memcpy(&(*env)->orig_peer_saddr, saddr, sizeof (struct sockaddr));
    
-   (*env)->handle_request = handle_request;
+   (*env)->handle = (*env)->handle_request = handle_request;
+   (*env)->async_ctx.handle_request = handle_cached;
+   (*env)->async_ctx.nextValue = 0;
 
    /* parser variables */
    (*env)->pos=(*env)->c = 0;

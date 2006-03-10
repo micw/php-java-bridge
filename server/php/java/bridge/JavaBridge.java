@@ -1320,6 +1320,7 @@ public class JavaBridge implements Runnable {
     public JavaBridge() {
 	this(null, null);
     }
+    
     /**
      * Return map for the value (PHP 5 only)
      * @param value - The value which must be an array or implement Map or Collection.
@@ -1697,6 +1698,21 @@ public class JavaBridge implements Runnable {
 	Object o = Array.get(value, i);
 	return o==this ? null : o;
    }
+    /**
+     * Selects the asynchronuous protocol mode.
+     */
+    public void beginDocument() {
+	Response res = request.response;
+	res.setAsyncWriter();
+    }
+    /**
+     * Back to synchronuous protocol mode
+     */
+    public void endDocument() {
+	Response res = request.response;
+	res.setDefaultWriter();
+    }
+
     /**
      * Set an object at position. 
      * @param value The array.

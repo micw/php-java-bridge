@@ -567,10 +567,10 @@ the instructions below (on Security Enhanced Linux please use the RPM or please 
 	<LI><P STYLE="font-style: normal"><FONT >In
 	the directory php-java-bridge-v.x.y build the module: 
 <BR><BR><code>phpize &amp;&amp; ./configure
-	--with-java=/opt/jdk1.4 &amp;&amp; make </code></FONT></P>
+	--with-java=/usr/java/default &amp;&amp; make </code></FONT></P>
 	<LI><P STYLE="font-style: normal"><FONT >Then
-	install the module as root. Type:<BR><BR><code>su -c 'make
-	install'<BR>&lt;enter password&gt;</code></FONT></P>
+	install the module as root. Type:<BR><BR><code>su -c 'sh
+	install.sh'<BR>&lt;enter password&gt;</code></FONT></P>
 	<LI><P STYLE="font-style: normal"><FONT ><A name="mode2">The PHP/Java Bridge can be run as a <strong>sub-component of the web server</strong>; add the following lines
 	to the <code>php.ini</code>. Or add a file <code>java.ini</code> to the directory that contains
 	the php module descriptions (usually <code>/etc/php.d/</code>) with the following

@@ -1,3 +1,42 @@
+2006-03-10  Jost Boekemeier  <jostb@intern>
+
+	* install.sh: New file.
+
+	* client.c (begin): Store async_ctx for stream mode
+	(handle_cached): New procedure for stream mode
+
+	* java.c (java_begin_document, java_end_document): New public API
+	for XML stream mode.
+
+	* protocol.c (flush, protocol_end, CreateObjectEnd, ResultBegin,
+	createSecureEnvironment): XML stream mode.
+
+	* examples/bench/excel_antitest2.php: New file
+
+	* examples/bench/bench.php: Test XML stream mode.
+
+	* server/php/java/bridge/JavaBridge.java(beginDocument,
+	endDocument): New method for XML stream mode.
+
+	* server/php/java/bridge/Parser.java (reset): New procedure
+
+	* server/php/java/bridge/Request.java (PHPNULL, PhpNull,
+	getGlobalRef): In XML stream mode the server must always return
+	object references, even for null values.
+
+	* server/php/java/bridge/Request.java (reset): New procedure
+
+	* server/php/java/bridge/Response.java (AsyncWriter): New writer
+	for XML stream mode.
+
+	* server/php/java/bridge/Util.java (EXTENSION_DIR): Obsolete, it
+	is now passed by the client.
+
+	* server/php/java/bridge/global.properties.in (EXTENSION_DIR): Obsolete.
+
+	* server/php/java/bridge/http/ContextRunner.java (init): Use
+	recycle the existing response object.
+
 2006-03-07  Jost Boekemeier  <jostb@intern>
 	
 	* bind.c (KillProcess, KillProcessTreeNtHelper,

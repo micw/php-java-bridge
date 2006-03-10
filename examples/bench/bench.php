@@ -12,6 +12,7 @@ if (!extension_loaded('java')) {
 $here = getcwd();
 $java_output = "workbook_java.xls";
 $php_output = "workbook_php.xls";
+$php_output2 = "workbook_php2.xls";
 
 $sys = new java("java.lang.System");
 
@@ -37,9 +38,20 @@ createWorkbook("$here/$php_output", 200, 200);
 $sys->gc();
 $t_php = $sys->currentTimeMillis() - $start;
 
-echo "Created excel file $java_output via compiled java in $t_java ms.\n";
-echo "Created excel file $php_output via interpreted PHP in $t_php ms. (" . $t_php/$t_java .")\n";
+if(function_exists("java_begin_document")) {
+  include("$here/excel_antitest2.php");
+  $sys->gc();
+  $start = $sys->currentTimeMillis();
+  createWorkbook2("$here/$php_output2", 200, 200);
+  $sys->gc();
+  $t_php2 = $sys->currentTimeMillis() - $start;
+ }
 
+echo "$java_output (native)\t: $t_java ms.\n";
+echo "$php_output (synchronuous)\t: $t_php ms.\t(" . $t_php/$t_java .")\n";
+if(function_exists("java_begin_document")) {
+  echo "$php_output2 (streamed)\t: $t_php2 ms.\t(" . $t_php2/$t_java .")\n";
+ }
 /*
 Sample results on a 1.4GHZ i686, kernel 2.6.8
 

@@ -20,8 +20,8 @@ import javax.script.ScriptException;
  */
 public class InteractivePhpScriptEngine extends PhpScriptEngine {
 
-    private static final String restoreState = "foreach ($javabridge_values as $javabridge_key=>$javabridge_val) {eval(\"\\$$javabridge_key=\\$javabridge_values[\\$javabridge_key];\");}";
-    private static final String saveState = "foreach (get_defined_vars() as $javabridge_key=>$javabridge_val) {if(in_array($javabridge_key, $javabridge_ignored_keys)) continue;eval(\"\\$javabridge_values[\\$javabridge_key]=\\$$javabridge_key;\");};";
+    private static final String restoreState = "foreach ($javabridge_values as $javabridge_key=>$javabridge_val) {eval(\"\\$$javabridge_key=\\$javabridge_values[\\$javabridge_key];\");}\n";
+    private static final String saveState = "foreach (get_defined_vars() as $javabridge_key=>$javabridge_val) {if(in_array($javabridge_key, $javabridge_ignored_keys)) continue;eval(\"\\$javabridge_values[\\$javabridge_key]=\\$$javabridge_key;\");};\n";
 
     /**@inheritDoc*/
     public InteractivePhpScriptEngine(InteractivePhpScriptEngineFactory factory) {
@@ -43,26 +43,28 @@ public class InteractivePhpScriptEngine extends PhpScriptEngine {
 	
 	if(!hasScript) {
 	    super.eval("<?php " +
-		       "$javabridge_values = array(); "+
-		       "$javabridge_ignored_keys = array(\"javabridge_key\", \"javabridge_val\", \"javabridge_values\", \"javabridge_ignored_keys\", \"javabridge_param\"); "+
-		       "function javabridge_eval($javabridge_param) { " +
-		       "global $javabridge_values; " +
-		       "global $javabridge_ignored_keys; " +
-		       "ob_start(); " +
+		       "if(!extension_loaded('java'))@dl('java.so')||@dl('php_java.dll');\n" +
+		       "ini_set('max_execution_time', 0);\n" +
+		       "$javabridge_values = array();\n"+
+		       "$javabridge_ignored_keys = array(\"javabridge_key\", \"javabridge_val\", \"javabridge_values\", \"javabridge_ignored_keys\", \"javabridge_param\");\n"+
+		       "function javabridge_eval($javabridge_param) {\n" +
+		       "global $javabridge_values;\n" +
+		       "global $javabridge_ignored_keys;\n" +
+		       "ob_start();\n" +
 		       restoreState +
-		       "eval(\"$javabridge_param\"); " +
+		       "eval(\"$javabridge_param\");\n" +
 		       saveState +
-		       "$javabridge_retval = ob_get_contents(); " +
-		       "ob_end_clean(); " +
-		       "return $javabridge_retval; " +
-		       "}; " +
-		       "java_context()->call(java_closure()); " +
+		       "$javabridge_retval = ob_get_contents();\n" +
+		       "ob_end_clean();\n" +
+		       "return $javabridge_retval;\n" +
+		       "};\n" +
+		       "$javabridge_ctx=java_context();$javabridge_ctx->call(java_closure());unset($javabridge_ctx);\n" +
 		       "?>", context);
 	    hasScript = true;
 	}
 	script=script.trim() + ";";
 	Object o = null;
-	try {o=((Invocable)this).invoke("javabridge_eval", new Object[]{script});}catch(Throwable ex){ex.printStackTrace();/*ignore*/};
+	try {o=((Invocable)this).invoke("javabridge_eval", new Object[]{script});}catch(NoSuchMethodException ex){/*ignore*/};
 	return o;
     }
 }

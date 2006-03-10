@@ -433,6 +433,41 @@ EXT_FUNCTION(EXT_GLOBAL(reset))
   php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Your script has called the privileged procedure \""/**/EXT_NAME()/**/"_reset()\" which resets the "/**/EXT_NAME()/**/" backend to its initial state. Therefore all "/**/EXT_NAME()/**/" session variables and all caches are gone.", 18);
 }
 
+/**
+ * Proto: void java_begin_document(void)
+ *
+ * Select asynchronuous protocol mode (streaming mode).
+*/
+EXT_FUNCTION(EXT_GLOBAL(begin_document))
+{
+  static const char begin[] = "beginDocument";
+  proxyenv *jenv;
+  if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT;
+  jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
+  if(!jenv) {RETURN_NULL();}
+
+  (*jenv)->writeInvokeBegin(jenv, 0, (char*)begin, sizeof(begin)-1, 'I', return_value);
+  (*jenv)->writeInvokeEnd(jenv);
+  (*jenv)->handle=(*jenv)->async_ctx.handle_request;
+}
+/**
+ * Proto: void java_end_document(void)
+ *
+ * End asynchronuous protocol mode (streaming mode).
+*/
+EXT_FUNCTION(EXT_GLOBAL(end_document))
+{
+  static const char end[] = "endDocument";
+  proxyenv *jenv;
+  if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT;
+  jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
+  if(!jenv) {RETURN_NULL();}
+
+  (*jenv)->writeInvokeBegin(jenv, 0, (char*)end, sizeof(end)-1, 'I', return_value);
+  (*jenv)->handle=(*jenv)->handle_request;
+  (*jenv)->writeInvokeEnd(jenv);
+}
+
 static void values(INTERNAL_FUNCTION_PARAMETERS)
 {
   proxyenv *jenv;
@@ -837,6 +872,8 @@ function_entry EXT_GLOBAL(functions)[] = {
   EXT_FE(EXT_GLOBAL(inspect), NULL)
   EXT_FE(EXT_GLOBAL(reset), NULL)
 
+  EXT_FE(EXT_GLOBAL(begin_document), NULL)
+  EXT_FE(EXT_GLOBAL(end_document), NULL)
   {NULL, NULL, NULL}
 };
 

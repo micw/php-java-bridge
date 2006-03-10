@@ -56,7 +56,7 @@ class Parser {
     private byte buf[] = new byte[RECV_SIZE];
     private int len=SLEN;
     private byte s[]= new byte[len];
-    private byte ch, mask=(byte)~0;
+    private byte ch;
     // VOJD is VOID for f... windows (VOID is in winsock2.h)
     private static final short BEGIN=0, KEY=1, VAL=2, ENTITY=3, VOJD=5, END=6; short type=VOJD;
     private short level=0, eof=0, eor=0; boolean in_dquote, eot=false;
@@ -64,7 +64,6 @@ class Parser {
 
     void RESET() {
     	type=VOJD;
-     	mask=~(byte)0;
     	level=0;
     	eor=0;
     	in_dquote=false;
@@ -127,7 +126,7 @@ class Parser {
 		c=0; 
 
 	    }
-	    switch((ch=buf[c])&mask) 
+	    switch((ch=buf[c])) 
 		{/* --- This block must be compilable with an ansi C compiler or javac --- */
 		case '<': if(in_dquote) {APPEND(ch); break;}
 		    level++;
@@ -194,5 +193,17 @@ class Parser {
    	RESET();
   
    	return OK;
+    }
+
+    /**
+     * Reset the internal state. Useful if you want to switch the
+     * input stream for the next packet.
+     */
+    public void reset() {
+	eof=0;
+	pos=0;
+	c=0;
+	len=SLEN;
+	s=new byte[len];
     }
 }

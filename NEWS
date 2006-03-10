@@ -26,14 +26,16 @@ php-interactive> for($i=0; $i<10; $i++) $buf->append($i);
 php-interactive> echo $buf->toString()->length();
 15
 
-* New protocol mode which eliminates unnecessary round-trips: All
-statements between java_begin_document(XML_OPTS) and
-java_end_document() are executed asynchronously: The XML statements
-are sent in one stream without waiting for the server reply. Even for
-local (unix-domain or pipe) channels this improves performance
-dramatically. Compared with SOAP, which usually sends the XML document
-in one packet, this mode uses less resources on the web-server side.
-  
+* A "stream" protocol mode has been added. All java bridge XML
+requests between java_begin_document() and java_end_document() are
+executed asynchronously. Even for local (unix-domain or pipe) channels
+this improves performance dramatically. Compared with SOAP, which
+usually sends the XML document in one packet, this mode uses less
+resources on the web-server side.
+
+* An install script can be used to install the bridge and the backend:
+su -c "sh install.sh --verbose"
+
 
 Version 3.0.7:
 
@@ -63,7 +65,7 @@ the JavaBridge.war download.
 
 * The Linux standalone backend has been removed from the
 php-java-bridge RPM download. The linux java.so is now called
-"java-x86-linux.dll" and can be found in the JavaBridge.war download.
+"java-x86-linux.so" and can be found in the JavaBridge.war download.
 
 * The Linux RPM has been split into 4 separate RPM files:
 

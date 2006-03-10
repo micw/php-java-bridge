@@ -25,7 +25,7 @@ Build and execution instructions:
           phpize && 
           ./configure --with-java=/usr/java/default &&
           make &&
-          su -c "make install"
+          su -c "sh install.sh"
 
   If your administrator allows you to dynamically load extensions, you
   can now test the extension by invoking the test.php with the 

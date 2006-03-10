@@ -78,9 +78,10 @@ class ContextRunner implements Runnable {
 	catch (ClassCastException e1) {/*ignore*/}
 	loader.setClassLoader(xloader);
 	
+	r = bridge.request;
+	r.reset();
     	bridge.in=in;
     	bridge.out=out;
-	r = bridge.request = new Request(bridge);
     }
     public void run() {
 	try {

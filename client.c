@@ -289,6 +289,7 @@ static void begin(parser_tag_t tag[3], parser_cb_t *cb){
 		  (unsigned char*)strdup((char*)PARSER_GET_STRING(st, 1)), /* p */
 		  st[2].length,			/* m_length */
 		  st[1].length,			/* p_length */
+		  (*cb->env)->async_ctx.nextValue =
 		  strtol((const char*)PARSER_GET_STRING(st, 0), 0, 10), /* v */
 		  strtol((const char*)PARSER_GET_STRING(st, 3), 0, 10), /* n */
 		  ctx->id
@@ -347,7 +348,7 @@ static void begin(parser_tag_t tag[3], parser_cb_t *cb){
 		   (((*tag[1].strings[1].string)[tag[1].strings[1].off])=='p')&&
 		   (((*tag[1].strings[2].string)[tag[1].strings[2].off])=='i'));
 
-	setResultFromObject(ctx->id, strtol((const char*)PARSER_GET_STRING(st, 0), 0, 10), *PARSER_GET_STRING(st, 1));
+	setResultFromObject(ctx->id, (*cb->env)->async_ctx.nextValue=strtol((const char*)PARSER_GET_STRING(st, 0), 0, 10), *PARSER_GET_STRING(st, 1));
 	break;
   case 'E':
 	{
@@ -355,7 +356,7 @@ static void begin(parser_tag_t tag[3], parser_cb_t *cb){
 	  size_t len=st[1].length;
 	  long obj = strtol((const char*)PARSER_GET_STRING(st, 0), 0, 10);
 	  GET_RESULT(2);
-	  setException(ctx->id, obj, stringRepresentation, len);
+	  setException(ctx->id, (*cb->env)->async_ctx.nextValue=obj, stringRepresentation, len);
 	  break;
 	}
 	default:
@@ -449,6 +450,13 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
   }
 }
 
+/* asyncronuous cb */
+static void handle_cached(proxyenv *env) {
+  struct async_ctx *ctx = &(*env)->async_ctx;
+  setResultFromObject(ctx->result, ++ctx->nextValue, 'O');
+}  
+
+/* synchronuous cb */
 static void handle_request(proxyenv *env) {
   short tail_call;
   struct parse_ctx ctx = {0};
@@ -648,7 +656,7 @@ static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {
   }
 
   jenv = EXT_GLOBAL(createSecureEnvironment)
-	(sock, handle_request, server, is_local, &saddr);
+	(sock, handle_request, handle_cached, server, is_local, &saddr);
   
   if(is_local || !EXT_GLOBAL (get_servlet_context) (TSRMLS_C)) {
 	/* "standard" local backend, send the protocol header */

@@ -22,6 +22,15 @@ public final class Request implements IDocHandler {
 	private static final long serialVersionUID = 3905804162838115892L;
     };
  
+    // Only used when the async. protocol is enabled.
+    protected static final class PhpNull {}
+    protected static final PhpNull PHPNULL = new PhpNull();
+    protected Object getGlobalRef(int i) {
+	Object ref = bridge.globalRef.get(i);
+	if(ref == PHPNULL) return null;
+	return ref;
+    }
+
     /**
      * A php string is a UTF-8 coded byte array.
      *
@@ -148,6 +157,7 @@ public final class Request implements IDocHandler {
 	}
     	
     };
+
     static final Object[] ZERO_ARGS = new Object[0];
     private abstract class Arg {
     	protected byte type;
@@ -280,7 +290,7 @@ public final class Request implements IDocHandler {
 	case 'I': {
 	    arg.type=ch;
 	    int i= st[0].getIntValue();
-	    arg.callObject=i==0?bridge:bridge.globalRef.get(i);
+	    arg.callObject=i==0?bridge:getGlobalRef(i);
 	    arg.method=st[1].getStringValue(bridge.options);
 	    arg.predicate=st[2].string[st[2].off]=='P';
 	    arg.id=st[3].getLongValue();
@@ -352,7 +362,7 @@ public final class Request implements IDocHandler {
 		    arg.callObject=new Exception(st[1].getStringValue(bridge.options));
 		}
 		else
-		    arg.callObject=bridge.globalRef.get(i);
+		    arg.callObject=getGlobalRef(i);
 	    }
 	    break;
 	}
@@ -364,7 +374,7 @@ public final class Request implements IDocHandler {
 		if(0==i)
 		    arg.add(null);
 		else
-		    arg.add(bridge.globalRef.get(i));
+		    arg.add(getGlobalRef(i));
 	    }
 	    break;
 	}
@@ -421,7 +431,7 @@ public final class Request implements IDocHandler {
      * @throws IOException
      */
     public void handleRequests() throws IOException {
-    	response=new Response(bridge);
+    	if(response==null) response=new Response(bridge);
 	while(Parser.OK==handleRequest())
 	    ;
     }
@@ -466,5 +476,15 @@ public final class Request implements IDocHandler {
 	}
 	arg = current;
 	throw new IllegalStateException(SUB_FAILED);
+    }
+
+    /**
+     * Reset the internal state so that a new input and output stream
+     * can be used for the next packed. Note that request options
+     * (from init()) remain valid.
+     * @see #init(InputStream, OutputStream)
+     */
+    public void reset() {
+	parser.reset();
     }
 }

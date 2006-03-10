@@ -100,7 +100,21 @@ public class Response {
 	public void setResult(Object value, Class type) {
 	    setType(type);
 	    setResult(value);
-	}        
+	}
+	public void reset() {
+	    writer = currentWriter;
+	    buf.reset();	    
+	}
+	/**
+	 * Called at the end of each packed.
+	 */
+	public void flush() throws IOException {
+       	    if(bridge.logLevel>=4) {
+      	     bridge.logDebug(" <-- " +bridge.options.newString(buf.getFirstBytes()));
+       	    }
+       	    buf.writeTo(bridge.out);
+       	    reset();
+	}
     }
     protected abstract class WriterWithDelegate extends Writer {
 	protected DelegateWriter delegate;
@@ -252,6 +266,30 @@ public class Response {
         }        	     	
     }
   	
+    protected class AsyncWriter extends Writer {
+	public boolean setResult(Object value) { 
+	    if(value==null) value=Request.PHPNULL;
+	    if(bridge.logLevel>=4) {
+	      writeObject(value);
+	    } else {  
+	      bridge.globalRef.append(value);
+	    }
+	    return true;
+	}
+	public void reset() {
+	    buf.reset();
+	}
+	/**
+	 * Called at the end of each packed.
+	 */
+	public void flush() throws IOException {
+     	    if(bridge.logLevel>=4) {
+       	     bridge.logDebug(" |<- " +bridge.options.newString(buf.getFirstBytes()));
+            }
+     	    reset();
+	}
+    }
+  	
     protected class CoerceWriter extends Writer {
 	public void setResult(Object value, Class resultType) {
 	    // ignore resultType and use the coerce type
@@ -311,7 +349,7 @@ public class Response {
 	return writer;
     }
      
-    private Writer writer, defaultWriter, arrayValuesWriter=null, coerceWriter=null;
+    private Writer writer, defaultWriter, currentWriter, arrayValuesWriter=null, coerceWriter=null, asyncWriter=null;
 
     
     /**
@@ -321,7 +359,7 @@ public class Response {
     public Response(JavaBridge bridge) {
 	buf=new OutBuf();
 	this.bridge=bridge;
-	defaultWriter = writer = newWriter(getDefaultDelegate());
+	currentWriter = defaultWriter = writer = newWriter(getDefaultDelegate());
     }
 
     /**
@@ -342,11 +380,41 @@ public class Response {
      */
     public Writer selectWriter(int writerType) {
      	switch(writerType) {
-    	case VALUES_WRITER: writer = getArrayValuesWriter(); break;
-    	case COERCE_WRITER: writer = getCoerceWriter(); break;
+    	case VALUES_WRITER: return setArrayValuesWriter();
+    	case COERCE_WRITER: return setCoerceWriter();
     	default: throw new IllegalArgumentException(String.valueOf(writerType));
     	}
-     	return writer;
+    }
+    /**
+     * Selects a specialized writer which writes arrays as values.
+     * Used by getValues() and in php 4.
+     * @see JavaBridge#getValues(Object)
+     */
+    protected Writer setArrayValuesWriter() {
+	return writer = getArrayValuesWriter();
+    }
+    /**
+     * Selects a specialized writer which casts the value.
+     * Used by cast().
+     * @see JavaBridge#cast(Object, Class)
+     */
+    protected Writer setCoerceWriter() {
+	return writer = getCoerceWriter();
+    }
+    /**
+     * Selects a specialized writer which does not write anything.
+     * Used by async. protocol.
+     * @return The async. writer
+     */
+    protected Writer setAsyncWriter() {
+	return currentWriter = getAsyncWriter();
+    }
+    /**
+     * Selects the default writer
+     * @return The default writer
+     */
+    protected Writer setDefaultWriter() {
+	return writer = currentWriter = defaultWriter;
     }
     void setResultID(long id) {
     	this.result=id;
@@ -481,19 +549,14 @@ public class Response {
      * @throws IOException
      */
     public void flush() throws IOException {
- 	if(bridge.logLevel>=4) {
-	    bridge.logDebug(" <-- " +bridge.options.newString(buf.getFirstBytes()));
-	}
-	buf.writeTo(bridge.out);
-	reset();
+      	writer.flush();
     }
     
     /**
      * Called at the end of each packed.
      */
     protected void reset() {
-    	writer = defaultWriter;
-    	buf.reset();
+	writer.reset();
     }
     public String toString() {
     	return bridge.options.newString(buf.getFirstBytes());
@@ -512,5 +575,8 @@ public class Response {
         if(coerceWriter==null) return coerceWriter = new CoerceWriter();
         return coerceWriter;
     }
-
+    private Writer getAsyncWriter() {
+      if(asyncWriter==null) return asyncWriter = new AsyncWriter();
+      return asyncWriter;
+    }
 }
