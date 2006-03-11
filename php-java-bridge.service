@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 # php-java-bridge      Startup script for the PHP/Java Bridge
 #
@@ -9,19 +9,24 @@
 # pidfile: /var/run/php-java-bridge.pid
 # config: /etc/php.d/java.ini
 
-# Source function library.
-. /etc/rc.d/init.d/functions
-
 prog=php-java-bridge
 RETVAL=0
 
+# Source function library.
+if test -f /etc/rc.d/init.d/functions; then
+. /etc/rc.d/init.d/functions
+else
+killproc() {
+ kill `cat /var/run/php-java-bridge.pid`
+}
+fi
 
 start() {
         echo -n $"Starting $prog: "
         daemon $prog
         RETVAL=$?
         echo
-        [ $RETVAL = 0 ] && touch /var/lock/subsys/$prog
+        [ $RETVAL = 0 ] && test -d /var/lock/subsys && touch /var/lock/subsys/$prog
         return $RETVAL
 }
 stop() {
@@ -48,8 +53,11 @@ case "$1" in
 	stop
 	start
 	;;
+  faststart)
+        start
+	;;
   *)
-	echo $"Usage: $prog {start|stop|restart|status}"
+	echo $"Usage: $prog {faststart|start|stop|restart|status}"
 	exit 1
 esac
 

@@ -224,7 +224,6 @@ public class JavaBridge implements Runnable {
 	    getClassLoader().clear();
 	    Session.expire(this);
 	    Util.logDebug("END: JavaBridge.run()");
-	    Util.logStream.flush();
         } catch (Throwable t) {
 	    printStackTrace(t);
         }
@@ -257,12 +256,6 @@ public class JavaBridge implements Runnable {
 	System.exit(1);
     }
 
-    private static void redirectJavaOutput() {
-	try {
-	    System.setOut(Util.logStream);
-	    System.setErr(Util.logStream);
-	} catch (Throwable t) {/*ignore*/}
-    }
     /**
      * Global init
      * @param s an array of [socketname, level, logFile]
@@ -306,17 +299,7 @@ public class JavaBridge implements Runnable {
 	    	redirectOutput = logFile==null || openLog(logFile);
 	    } catch (Throwable t) {/*ignore*/}
 
-	    if(!redirectOutput) {
-		Util.logStream = System.err;
-		if(logFile.length()>0) 
-		    try {
-			Util.logStream=new java.io.PrintStream(new java.io.FileOutputStream(logFile));
-		    } catch (Exception e) {/*ignore*/}
-		redirectJavaOutput();
-	    } else {
-		Util.logStream = System.err;
-		logFile = "<stderr>";
-	    }
+	    Util.redirectOutput(redirectOutput, logFile);
 	    ISocketFactory socket = bind(sockname);
 	    if(Util.VERSION != null)
 		Util.logMessage(Util.EXTENSION_NAME+  " version         : " + Util.VERSION);
@@ -518,7 +501,7 @@ public class JavaBridge implements Runnable {
 	    if(e instanceof OutOfMemoryError ||
 	       ((e instanceof InvocationTargetException) &&
 		((InvocationTargetException)e).getTargetException() instanceof OutOfMemoryError)) {
-		Util.logStream.println("FATAL: OutOfMemoryError");
+		Util.logFatal("OutOfMemoryError");
 		throw new OutOfMemoryError(); // abort
 	    }
 	    if(e instanceof NoClassDefFoundError ||
@@ -1060,7 +1043,7 @@ public class JavaBridge implements Runnable {
 	    if(e instanceof OutOfMemoryError ||
 	       ((e instanceof InvocationTargetException) &&
 		((InvocationTargetException)e).getTargetException() instanceof OutOfMemoryError)) {
-		Util.logStream.println("FATAL: OutOfMemoryError");
+		Util.logFatal("OutOfMemoryError");
 		throw new OutOfMemoryError(); // abort
 	    }
 	    if(e instanceof NoClassDefFoundError ||
@@ -1224,7 +1207,7 @@ public class JavaBridge implements Runnable {
 	    if(e instanceof OutOfMemoryError ||
 	       ((e instanceof InvocationTargetException) &&
 		((InvocationTargetException)e).getTargetException() instanceof OutOfMemoryError)) {
-		Util.logStream.println("FATAL: OutOfMemoryError");
+		Util.logFatal("OutOfMemoryError");
 		throw new OutOfMemoryError(); // abort
 	    }
 	    if(e instanceof NoClassDefFoundError ||

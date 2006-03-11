@@ -1036,7 +1036,37 @@ Please see the <code>JavaWrapper</code> from the  RedHat <code>php-java-bridge-s
 Download the J2EE binary and copy the <code>JavaBridge.war</code> into the tomcat <code>webapps</code> folder. After that visit <code>http://localhost:8080/JavaBridge</code> and run the supplied php examples.
 Please see <code>webapps/JavaBridge/WEB-INF/cgi/README</code> for details.
 </p>
-
+<li> <H4>How does the bridge handle OutOfMemoryErrors?</H4> 
+<p>
+OutOfMemoryErrors may happen because a cached variable cannot be released, either because <p>
+<ol>
+<li> the variable is bound to a class which is permanently referenced by a request-handling thread or
+<li> the variable has been entered into the session or application store or 
+<li> the variable is referenced by a thread outside of the scope of the PHP/Java Bridge.
+</ol>
+</p>
+</p>
+<p>When a <code>java.lang.OutOfMemoryError</code> reaches the request-handling thread, the PHP/Java Bridge thread pool removes the thread from its pool and writes a message <code>FATAL: OutOfMemoryError</code> to the PHP/Java Bridge log file. The session store is cleaned and all client connections are terminated without confirmation.
+</p>
+<p>
+If the OutOfMemoryError persists, this means that a thread outside of the PHP/Java Bridge has caused this error condition.
+</p>
+<p>
+The following code example could cause an OutOfMemoryError:<br><br>
+<code>
+&lt;?php<br>
+session_start();<br>
+if(!$_SESSION["buffer"]) $_SESSION["buffer"]=new java("java.lang.StringBuffer");<br>
+$_SESSION["buffer"]->append(...);<br>
+?&gt;
+</code>
+</p>
+<p>
+OutOfMemory conditions can be debugged by running the backend with e.g.:<br><br>
+<code>
+java -agentlib:hprof=heap=sites -jar JavaBridge.jar<br>
+</code>
+</p>
 </ul>
 
 </FONT></P> <H1>Related</H1> <P><FONT > <ul> <li> <a

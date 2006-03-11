@@ -61,8 +61,7 @@ public class DynamicClassLoader extends SecureClassLoader {
     }
 
     public static void debugMsg(String str) {
-	Util.logStream.println((System.currentTimeMillis()-debugStart)+"::"+str);
-	Util.logStream.flush();
+	Util.logDebug((System.currentTimeMillis()-debugStart)+"::"+str);
     }
 
     public static void clearCache() {

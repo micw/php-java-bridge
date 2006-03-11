@@ -190,7 +190,7 @@ public class Util {
     /**
      * The logStream, defaults to System.err
      */
-    public static PrintStream logStream;
+    private static PrintStream logStream;
     
     /**
      * A logger class.
@@ -307,11 +307,14 @@ public class Util {
      * @param t The Throwable
      */
     public static void printStackTrace(Throwable t) {
-	if(logLevel > 0)
-	    if ((t instanceof Error) || logLevel > 1) {
-		println(2, "Exception occured");
-	    	logger.printStackTrace(t);
+	if(logLevel > 0) {
+	    if (t instanceof Error) {
+	        println(1, "An error occured");
+	    } else if (logLevel > 1) {
+	        println(2, "An exception occured");
 	    }
+	    logger.printStackTrace(t);
+	}
     }
     
     /**
@@ -772,5 +775,26 @@ public class Util {
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
 	if(loader==null) loader = Util.class.getClassLoader();
         return loader;
+    }
+    
+    private static void redirectJavaOutput() {
+	try {
+	    System.setOut(Util.logStream);
+	    System.setErr(Util.logStream);
+	} catch (Throwable t) {/*ignore*/}
+    }
+    static void redirectOutput(boolean redirectOutput, String logFile) {
+	    if(!redirectOutput) {
+		Util.logStream = System.err;
+		if(logFile.length()>0) 
+		    try {
+			Util.logStream=new java.io.PrintStream(new java.io.FileOutputStream(logFile));
+		    } catch (Exception e) {/*ignore*/}
+		redirectJavaOutput();
+	    } else {
+		Util.logStream = System.err;
+		logFile = "<stderr>";
+	    }
+
     }
 }

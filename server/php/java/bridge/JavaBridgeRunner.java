@@ -123,8 +123,8 @@ public class JavaBridgeRunner extends HttpServer {
      * @throws InterruptedException 
      */
     public static void main(String s[]) throws InterruptedException {
-	System.setProperty("php.java.bridge.default_log_level", "4");
-	System.setProperty("php.java.bridge.default_log_file", "");
+	//System.setProperty("php.java.bridge.default_log_level", "4");
+	//System.setProperty("php.java.bridge.default_log_file", "");
 	JavaBridgeRunner r = new JavaBridgeRunner();
 	r.httpServer.join();
 	r.destroy();
