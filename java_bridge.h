@@ -43,6 +43,8 @@ extern void EXT_GLOBAL(init_channel)(TSRMLS_D);
 extern void EXT_GLOBAL(destroy_channel)(TSRMLS_D);
 extern const char*EXT_GLOBAL(get_channel)(TSRMLS_D);
 
+extern void EXT_GLOBAL (begin_async) (proxyenv*env);
+extern void EXT_GLOBAL (end_async) (proxyenv*env);
 extern void EXT_GLOBAL (protocol_end) (proxyenv *env);
 extern void EXT_GLOBAL (check_session) (proxyenv *env TSRMLS_DC);
 extern void EXT_GLOBAL (setResultWith_context) (char*key, char*val, char*path);

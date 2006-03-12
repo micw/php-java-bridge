@@ -99,6 +99,8 @@ struct proxyenv_ {
 	void (*handle_request)(proxyenv *env);
 	long nextValue;
 	void *result;
+	FILE *peer;
+	ssize_t (*f_send)(proxyenv*env, const void *buf, size_t len);
   } async_ctx;
 
   /* for servlet engines only */
@@ -134,8 +136,8 @@ struct proxyenv_ {
 
   ssize_t (*f_recv)(proxyenv*env, void *buf, size_t len);
   ssize_t (*f_recv0)(proxyenv*env, void *buf, size_t len);
-  ssize_t (*f_send)(proxyenv*env, int peer, const void *buf, size_t len);
-  ssize_t (*f_send0)(proxyenv*env, int peer, const void *buf, size_t len);
+  ssize_t (*f_send)(proxyenv*env, const void *buf, size_t len);
+  ssize_t (*f_send0)(proxyenv*env, const void *buf, size_t len);
 };
 
 #endif

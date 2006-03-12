@@ -145,7 +145,7 @@ echo "Evaluated in $delta ms.\n";<br>
 <blockquote>
 <code>
 /opt/jdk1.6/bin/jrunscript -l php-intractive<br>
-php&gt; echo java_context()->getAttribute("javax.script.name"); <br>
+php-interactive&gt; echo java_context()->getAttribute("javax.script.name"); <br>
 =&gt; STDIN <br>
 <br>
 </code>
@@ -846,41 +846,49 @@ echo "You have typed: $str\n";<br>
 </code>
 </p>
 
-<li> <H4>How fast is it?</H4> <p> The following scripts were
-executed on a one 2.8 GHZ x86 cpu running Win XP, Linux and Sun jdk1.4.2:
+<li> <H4>How fast is it?</H4> <p> 
+The following scripts were
+executed on a one 1.688 GHZ x86 cpu running RedHat Fedora Core 4 Linux and Sun jdk1.6.0:
 </p>
+The PHP 5.1.2 code<br>
 <p>
 <code>
-$Sys = new Java("java.lang.System");<br>
-$String = new Java("java.lang.String");<br>
+&lt;?php<br>
+$String = new JavaClass("java.lang.String");<br>
+$buf=new java("java.lang.StringBuffer");<br>
 <br>
-$s = new Java("java.lang.StringBuffer", "hello");<br>
-$T1=(float)$Sys->currentTimeMillis();<br>
-<br>
-for($i=0; $i<800000; $i++) {<br>
-&nbsp;&nbsp;$s->append($String->valueOf($i));<br>
+$i=0;<br>
+java_begin_document();<br>
+while($i&lt;400000) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$i=$i+1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$buf-&gt;append(new java("java.lang.String", $String-&gt;valueOf($i)));<br>
 }<br>
-$T2=(float)$Sys->currentTimeMillis();<br>
-$T=$T2-$T1;<br>
-echo "$T\n";<br>
+java_end_document();<br>
+<br>
+print $buf-&gt;length() . "\n";<br>
+?&gt;<br>
 </code>
 </p>
-The jython code:
+The jython 2.1 code<br>
 <p>
 <code>
 from java import lang<br>
 <br>
-i = 0<br>
-s = lang.StringBuffer("hello")<br>
-T1 = lang.System.currentTimeMillis();<br>
+buf = lang.StringBuffer();<br>
+i=0<br>
+while i<400000:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;i=i+1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;buf.append(lang.String(lang.String.valueOf(i)));<br>
 <br>
-while i < 800000:<br>
-&nbsp;&nbsp;i = i + 1<br>
-&nbsp;&nbsp;s.append(lang.String.valueOf(i))<br>
-<br>
-T2 = lang.System.currentTimeMillis();<br>
-<br>
-print T2-T1<br>
+print buf.length();<br>
+</code>
+</p>
+The ECMAScript ("Mozilla Rhino") code<br>
+<p>
+<code>
+buf = new java.lang.StringBuffer();<br>
+for(i=0; i<400000; i++) buf.append(new String(i));<br>
+print (buf.toString().length());<br>
 </code>
 </p>
 <p>
@@ -890,111 +898,83 @@ BORDER="1"
 ><COL><COL><COL><COL><THEAD
 ><TR
 ><TH
->Operating System</TH
+>Command</TH
 ><TH
 >Script Engine</TH
 ><TH
 >Communication Channel</TH
 ><TH
->Execution time (ms)</TH
+>Execution time (real, user, sys)</TH
 ></TR
 ></THEAD
 
 <TBODY
 ><TR
 ><TD
->Win XP</TD
+>time jrunscript -l php t11.php</TD
 ><TD
->PHP4 + <a href="http://www.php.net/manual/en/ref.java.php">ext/java</a>, the predecessor of the bridge</TD
-><TD
->JNI interface</TD
-><TD
->42541</TD
-></TR
->
-
-<TBODY
-><TR
-><TD
->Win XP</TD
-><TD
->PHP5 + PHP/Java Bridge 3.0.7</TD
-><TD
->TCP socket</TD
-><TD
->41670</TD
-></TR
->
-
-<TBODY
-><TR
-><TD
->RedHat Enterprise Linux 3</TD
-><TD
->PHP4 + PHP/Java Bridge 3.0.7</TD
-><TD
->TCP socket</TD
-><TD
->34044</TD
-></TR
->
-
-<TBODY
-><TR
-><TD
->RedHat Enterprise Linux 3</TD
-><TD
->PHP4 + PHP/Java Bridge 3.0.7</TD
-><TD
->unix domain socket</TD
-><TD
->17310</TD
-></TR
->
-<TBODY
-><TR
-><TD
->RedHat Enterprise Linux 3</TD
-><TD
->PHP4 + PHP/Java Bridge 3.0.7</TD
+>PHP5 + PHP/Java Bridge 3.0.8</TD
 ><TD
 >named pipes</TD
 ><TD
->12762</TD
+>0m38.906s,<br>
+0m21.545s,<br>
+0m0.771s
+</TD
+></TR
+>
+<TBODY
+><TR
+><TD
+>java -jar JavaBridge.jar INET:9967</TD
+><TD
+>PHP5 + PHP/Java Bridge 3.0.8</TD
+><TD
+>TCP Sockets, client and server running on different machines</TD
+><TD
+>0m33.914s,<br>
+0m26.407s,<br>
+0m2.782s
+</TD
 ></TR
 >
 
 <TBODY
 ><TR
 ><TD
->RedHat Enterprise Linux 3</TD
+>time jrunscript -J-Xmx512M -J-Xms512M -l js t11.js</TD
 ><TD
->PHP5 + PHP/Java Bridge 3.0.8 with async. protocol</TD
+>ECMA script</TD
 ><TD
->named pipes</TD
+>none (native code)</TD
 ><TD
->6565</TD
+>1m36.877s,<br>
+0m55.398s,<br>
+0m0.323s
+</TD
 ></TR
 >
-
 <TBODY
 ><TR
 ><TD
->RedHat Enterprise Linux 3</TD
+>time java -classpath jython.jar org.python.util.jython t11.py</TD
 ><TD
-><a href="http://www.jython.org/">jython 2.1</code></TD
+>Jython 2.1</TD
 ><TD
->none/native code</TD
+>none (native code)</TD
 ><TD
->1739</TD
+>0m14.696s,<br>
+0m8.365s,<br>
+0m0.165s
+</TD
 ></TR
 >
+
 </TABLE
 >
 </center>
 </p>
 <p>
-The above benchmarks were executed on the same computer. It is unclear why the TCP communication on a WinXP kernel is 20% slower compared to a 2.4 Linux kernel. 
 </p>
 <li> <H4>How do I start a persistent VM?</H4> 
 <p>
@@ -1040,7 +1020,7 @@ Please see <code>webapps/JavaBridge/WEB-INF/cgi/README</code> for details.
 <p>
 OutOfMemoryErrors may happen because a cached variable cannot be released, either because <p>
 <ol>
-<li> the variable is bound to a class which is permanently referenced by a request-handling thread or
+<li> the variable is permanently referenced by a request-handling thread or
 <li> the variable has been entered into the session or application store or 
 <li> the variable is referenced by a thread outside of the scope of the PHP/Java Bridge.
 </ol>

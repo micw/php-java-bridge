@@ -128,6 +128,10 @@ EXT_FUNCTION(EXT_GLOBAL(last_exception_get))
   if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT;
   jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   if(!jenv) {RETURN_NULL();}
+  if((*jenv)->handle==(*jenv)->async_ctx.handle_request) { /* async protocol */
+	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): last_exception_get() invalid while in stream mode", 21);
+	RETURN_NULL();
+  }
 
   last_exception_get(jenv, &return_value);
 }
@@ -289,7 +293,11 @@ static void session(INTERNAL_FUNCTION_PARAMETERS)
 
   jenv=EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   if(!jenv) RETURN_NULL();
- 
+  if((*jenv)->handle==(*jenv)->async_ctx.handle_request) { /* async protocol */
+	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): get_session() invalid while in stream mode", 21);
+	RETURN_NULL();
+  }
+
   assert(EXT_GLOBAL(cfg)->is_cgi_servlet && (*jenv)->servlet_ctx ||!EXT_GLOBAL(cfg)->is_cgi_servlet);
 								/* create a new connection to the
 								   backend if java_session() is not
@@ -436,7 +444,8 @@ EXT_FUNCTION(EXT_GLOBAL(reset))
 /**
  * Proto: void java_begin_document(void)
  *
- * Select asynchronuous protocol mode (streaming mode).
+ * Enters stream mode (asynchronuous protocol). The statements are
+ * sent to the backend in one XML stream.
 */
 EXT_FUNCTION(EXT_GLOBAL(begin_document))
 {
@@ -445,15 +454,19 @@ EXT_FUNCTION(EXT_GLOBAL(begin_document))
   if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT;
   jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   if(!jenv) {RETURN_NULL();}
+  if((*jenv)->handle==(*jenv)->async_ctx.handle_request) { /* async protocol */
+	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): begin_document() invalid while in stream mode", 21);
+	RETURN_NULL();
+  }
 
   (*jenv)->writeInvokeBegin(jenv, 0, (char*)begin, sizeof(begin)-1, 'I', return_value);
   (*jenv)->writeInvokeEnd(jenv);
-  (*jenv)->handle=(*jenv)->async_ctx.handle_request;
+  EXT_GLOBAL(begin_async)(jenv);
 }
 /**
  * Proto: void java_end_document(void)
  *
- * End asynchronuous protocol mode (streaming mode).
+ * Ends stream mode.
 */
 EXT_FUNCTION(EXT_GLOBAL(end_document))
 {
@@ -462,9 +475,13 @@ EXT_FUNCTION(EXT_GLOBAL(end_document))
   if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT;
   jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   if(!jenv) {RETURN_NULL();}
+  if((*jenv)->handle!=(*jenv)->async_ctx.handle_request) { /* async protocol */
+	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): end_document() invalid when not in stream mode", 21);
+	RETURN_NULL();
+  }
 
   (*jenv)->writeInvokeBegin(jenv, 0, (char*)end, sizeof(end)-1, 'I', return_value);
-  (*jenv)->handle=(*jenv)->handle_request;
+  EXT_GLOBAL(end_async)(jenv);
   (*jenv)->writeInvokeEnd(jenv);
 }
 
@@ -476,6 +493,10 @@ static void values(INTERNAL_FUNCTION_PARAMETERS)
 
   jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   if(!jenv) RETURN_NULL();
+  if((*jenv)->handle==(*jenv)->async_ctx.handle_request) { /* async protocol */
+	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): values() invalid while in stream mode", 21);
+	RETURN_NULL();
+  }
 
   if (ZEND_NUM_ARGS()!=1 || zend_get_parameters_ex(1, &pobj) == FAILURE)
 	WRONG_PARAM_COUNT;
@@ -516,6 +537,11 @@ static void serialize(INTERNAL_FUNCTION_PARAMETERS)
 	php_error(E_WARNING, EXT_NAME()/**/" cannot be serialized. %s", warn_session);
 	RETURN_NULL();
   }
+  if((*jenv)->handle==(*jenv)->async_ctx.handle_request) { /* async protocol */
+	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): serialize() invalid while in stream mode", 21);
+	RETURN_NULL();
+  }
+
   EXT_GLOBAL(get_jobject_from_object)(getThis(), &obj TSRMLS_CC);
   if(!obj) {
 	/* set a breakpoint in java_bridge.c destroy_object, in rshutdown
@@ -550,6 +576,10 @@ static void deserialize(INTERNAL_FUNCTION_PARAMETERS)
   proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   if(!jenv) {
 	php_error(E_ERROR, EXT_NAME()/**/" cannot be de-serialized. %s", warn_session);
+  }
+  if((*jenv)->handle==(*jenv)->async_ctx.handle_request) { /* async protocol */
+	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): deserialize() invalid while in stream mode", 21);
+	RETURN_NULL();
   }
 
   err = zend_hash_find(Z_OBJPROP_P(getThis()), (char*)identity, sizeof identity, (void**)&id);
@@ -1273,6 +1303,10 @@ EXT_METHOD(EXT, __tostring)
   if(result) {
 	proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
 	if(!jenv) {RETURN_NULL();}
+	if((*jenv)->handle==(*jenv)->async_ctx.handle_request){/* async protocol */
+	  php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): __tostring() invalid while in stream mode", 21);
+	  RETURN_NULL();
+	}
 
 	(*jenv)->writeInvokeBegin(jenv, 0, "ObjectToString", 0, 'I', return_value);
 	(*jenv)->writeObject(jenv, result);
@@ -1612,6 +1646,10 @@ static int cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_
   zval free_obj;
 
   if(!jenv) return FAILURE;
+  if((*jenv)->handle==(*jenv)->async_ctx.handle_request) { /* async protocol */
+	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): cast() invalid while in stream mode", 21);
+	return FAILURE;
+  }
 
   if (should_free)
 	free_obj = *writeobj;
@@ -1800,6 +1838,11 @@ static zend_object_iterator *get_iterator(zend_class_entry *ce, zval *object TSR
   proxyenv *jenv = JG(jenv);
   vm_iterator *iterator = emalloc(sizeof *iterator);
   long vm_iterator, obj;
+  if((*jenv)->handle==(*jenv)->async_ctx.handle_request) { /* async protocol */
+	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): object iterator invalid while in stream mode, use $arr=java_values($java_obj); java_begin_document(); foreach($arr as ...) ...; java_end_document(); instead.", 21);
+	return 0;
+  }
+
   MAKE_STD_ZVAL(presult);
   ZVAL_NULL(presult);
 

@@ -419,7 +419,7 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
 	  char *key;
 	  static const char context[] = "X_JAVABRIDGE_CONTEXT";
 	  static const char redirect[]= "X_JAVABRIDGE_REDIRECT";
-	  if(!strcmp(str, redirect)) {
+	  if(!(*ctx)->peer_redirected && !strcmp(str, redirect)) {
 		char *key = (char*)PARSER_GET_STRING(tag[1].strings, 0);
 		size_t key_len = tag[1].strings[0].length;
 		char *name = (*ctx)->server_name;
@@ -488,13 +488,23 @@ static void handle_request(proxyenv *env) {
   }
   assert(zend_stack_is_empty(&ctx.containers));
   zend_stack_destroy(&ctx.containers);
+
   /* revert override redirect */
   if((*env)->peer0!=-1) {
 	close((*env)->peer);
 	(*env)->peer = (*env)->peer0;
 	(*env)->f_recv = (*env)->f_recv0;
+	(*env)->f_send = (*env)->f_send0;
 	(*env)->peer0 = -1;
-  }
+  } else	 /* Override redirect opens a secondary channel to the
+			  backend. Skip the following if an override redirect
+			  happened in the middle of redirect/reopen handling, i.e.
+			  between "begin redirect" above (must_reopen=2) or "begin
+			  reopen" (must_reopen=1) and "redirect finish" or "end
+			  reopen" (see must_reopen=0 in function end() and
+			  protocol_end() in protocol.c).  In other words: handle
+			  override redirect _or_ redirect for one packet, but not
+			  both. */
 
   /* re-open a closed HTTP connection */
   if((*env)->must_reopen) {

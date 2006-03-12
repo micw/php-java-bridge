@@ -17,16 +17,13 @@ sed 's/^.*=> //'`
 make install || exit 1
 if test X$ini = X; then
 echo ""
-echo "This php installation does not support a config file directory,"
-echo "this script cannot install java.ini, java-standalone.ini and"
-echo "java-servlet.ini. You must edit your php.ini yourself."
-echo "To fix this, configure php with: --with-config-file-scan-dir=<dir>"
-echo "Please see the RedHat Linux php RPM or the FreeBSD 6 php PORT for"
-echo "an example, bye."
+echo "This php installation does not have a config-file-scan-dir,"
+echo "java.ini, java-standalone.ini and java-servlet.ini not installed."
+echo "You must edit the php.ini yourself, bye."
 exit 0
 fi
 
-/bin/rm -f $ini
+/bin/rm -f $ini 2>/dev/null
 /bin/mkdir -p $ini
 /bin/cp $v java.ini $ini
 

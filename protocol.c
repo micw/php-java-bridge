@@ -44,7 +44,7 @@ static void send_context(proxyenv *env) {
 							sizeof(context)-context_length, 
 							"%s", 
 							(*env)->servlet_ctx);
-	n=(*env)->f_send(env, (*env)->peer, context, context_length);
+	n=(*env)->f_send(env, context, context_length);
 	assert(n==context_length);
 }
 
@@ -69,18 +69,21 @@ static void end(proxyenv *env) {
 	assert(!(*env)->peer_redirected || ((*env)->peer_redirected && ((*env)->peer0)!=-1));
 	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", servlet_context, (unsigned long)(size+1), EXT_GLOBAL(get_channel)(TSRMLS_C), getSessionFactory(env), mode);
 
-	n=(*env)->f_send(env, (*env)->peer, header, header_length);
+	n=(*env)->f_send(env, header, header_length);
 	assert(n==header_length);
   }
   n=0;
 
  res: 
   errno=0;
-  while((size>s)&&((n=(*env)->f_send(env, (*env)->peer, (*env)->send+s, size-s)) > 0)) 
+  while((size>s)&&((n=(*env)->f_send(env, (*env)->send+s, size-s)) > 0)) 
 	s+=n;
   if(size>s && !n && errno==EINTR) goto res; // Solaris, see INN FAQ
 
   (*env)->send_len=0;
+  
+  /* store (sync. or async.) result */
+  (*env)->handle(env);
 }
 
 static char *get_cookies(zval *val, proxyenv *env) {
@@ -127,23 +130,24 @@ static void end_session(proxyenv *env) {
   
   assert(!(*env)->peer_redirected || ((*env)->peer_redirected && ((*env)->peer0)!=-1));
   header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_REDIRECT: %d\r\n%sX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", (*env)->servlet_context_string, (unsigned long)(size+1), override_redirect, get_cookies(&val, env), EXT_GLOBAL(get_channel)(TSRMLS_C), getSessionFactory(env), mode);
-  n=(*env)->f_send(env, peer, header, header_length);
+  n=(*env)->f_send(env, header, header_length);
   assert(n==header_length);
   n=0;
 
  res: 
   errno=0;
-  while((size>s)&&((n=(*env)->f_send(env, (*env)->peer, (*env)->send+s, size-s)) > 0)) 
+  while((size>s)&&((n=(*env)->f_send(env, (*env)->send+s, size-s)) > 0)) 
 	s+=n;
   if(size>s && !n && errno==EINTR) goto res; // Solaris, see INN FAQ
 
   (*env)->send_len=0;
 
+  /* store result, get_session() always requires a round-trip */
+  (*env)->handle_request(env);
 }
 
 static void flush(proxyenv *env) {
-  (*env)->finish(env);
-  (*env)->handle(env);
+  (*env)->finish(env);			/* end() or end_session() */
 }
 
 void EXT_GLOBAL (protocol_end) (proxyenv *env) {
@@ -161,18 +165,21 @@ void EXT_GLOBAL (protocol_end) (proxyenv *env) {
 
 	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nContent-Type: text/html\r\nContent-Length: 0\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n", servlet_context, getSessionFactory(env));
 
-	n=(*env)->f_send(env, (*env)->peer, header, header_length);
+	n=(*env)->f_send(env, header, header_length);
 	assert(n==header_length);
   } else {
 	if((*env)->must_reopen==2) send_context(env);
 	(*env)->must_reopen=0;
   }
 }
-static ssize_t send_pipe(proxyenv*env, int peer, const void*buf, size_t length) {
-  return write(peer, buf, length);
+static ssize_t send_async(proxyenv*env, const void*buf, size_t length) {
+  return (ssize_t)fwrite(buf, 1ul, length, (*env)->async_ctx.peer);
 }
-static ssize_t send_socket(proxyenv*env, int peer, const void*buf, size_t length) {
-  return send(peer, buf, length, 0);
+static ssize_t send_pipe(proxyenv*env, const void*buf, size_t length) {
+  return write((*env)->peer, buf, length);
+}
+static ssize_t send_socket(proxyenv*env, const void*buf, size_t length) {
+  return send((*env)->peer, buf, length, 0);
 }
 
 static ssize_t recv_pipe(proxyenv*env, void*buf, size_t length) {
@@ -181,6 +188,36 @@ static ssize_t recv_pipe(proxyenv*env, void*buf, size_t length) {
 
 static ssize_t recv_socket(proxyenv*env, void*buf, size_t length) {
   return recv((*env)->peer, buf, length, 0);
+}
+
+void EXT_GLOBAL(begin_async) (proxyenv*env) {
+  assert(((*env)->peer0==-1));	/* secondary "override redirect"
+								   channel cannot be used during
+								   stream mode */
+  (*env)->handle=(*env)->async_ctx.handle_request;
+  (*env)->async_ctx.peer = fdopen((*env)->peer, "w");
+
+  //assert((*env)->async_ctx.peer);
+  if((*env)->async_ctx.peer) {
+								/* save default f_send, use send_async */
+	(*env)->async_ctx.f_send = (*env)->f_send;
+	(*env)->f_send = (*env)->f_send0 = send_async;
+  }
+}
+void EXT_GLOBAL(end_async) (proxyenv*env) {
+  assert(((*env)->peer0==-1));	/* secondary "override redirect"
+								   channel cannot be used during
+								   stream mode */
+  (*env)->handle=(*env)->handle_request;
+  if((*env)->async_ctx.peer) {
+	int err = fflush((*env)->async_ctx.peer);
+	if(err) {
+	  php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Fatal: could not open fflush async buffer.",93);
+	  exit(9);
+	}
+								/* restore default f_send */
+	(*env)->f_send = (*env)->f_send0 = (*env)->async_ctx.f_send;
+  }
 }
 
 #ifndef __MINGW32__
@@ -218,6 +255,7 @@ void EXT_GLOBAL(check_session) (proxyenv *env TSRMLS_DC) {
 		  (*env)->peer0 = (*env)->peer;
 		  (*env)->peer = sock;
 		  (*env)->f_recv = recv_socket;
+		  (*env)->f_send = send_socket;
 		} else {				/* could not connect */
 		  close(sock);
 		  EXT_GLOBAL(sys_error)("Could not connect to server",78);
@@ -471,6 +509,7 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    
    (*env)->handle = (*env)->handle_request = handle_request;
    (*env)->async_ctx.handle_request = handle_cached;
+   (*env)->async_ctx.peer = 0;
    (*env)->async_ctx.nextValue = 0;
 
    /* parser variables */
