@@ -1,3 +1,45 @@
+2006-03-16  Jost Boekemeier  <jostb@intern>
+
+	* bind.c (get_server_args): Use LD_LIBRARY_PATH instead of
+	-Djava.library.path=. All modern VMs set java.library.path to a
+	resonable value.
+	
+	* java.c (call_with_params, call_with_handler): throw an exception instead of
+	terminating the php binary with a FATAL error. Needed for
+	php-interactive mode.
+
+	* java_bridge.c (get_jobject_from_object, is_type): Reject non-java or non-JavaException objects.
+
+	* protocol.c (end, end_session, flush): Removed test code.
+
+	* server/php/java/bridge/DynamicJavaBridgeClassLoader.java: Removed
+	obsolete code, check /usr/share/java/ext/, used by GNU java (gcj).
+	Reject attempts to load native libraries via our dynamic loader
+	(see PR1447360).
+
+	* server/php/java/bridge/JavaBridge.java (init): Add
+	/usr/share/java/ext and /usr/java/packages/lib/ext for GNU java,
+	SUN jdk1.6.
+
+	* server/php/java/bridge/JavaBridge.java (ObjectToString): handle
+	echo (string)java_closure(null, "doesNotExist") gracefully.
+
+	* server/php/java/bridge/PhpProcedure.java (invoke): Set the
+	context class loader.
+
+	* server/php/java/bridge/Response.java (setResultProcedure,
+	setResultException, setResultObject, setResultClass): New methods
+	needed for the async mode.
+
+	* server/php/java/bridge/http/ContextServer.java,
+	server/php/java/bridge/http/PipeContextServer.java,
+	server/php/java/bridge/http/SocketContextServer.java: It is now
+	possible to switch the Socket- and PipeContextServer on and
+	off. For testing only.
+	(checkTestTunnel): New procedure.
+
+	* ABOUT.HTM: Updated benchmark results.
+	
 2006-03-10  Jost Boekemeier  <jostb@intern>
 
 	* install.sh: New file.

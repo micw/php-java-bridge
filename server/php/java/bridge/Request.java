@@ -391,11 +391,10 @@ public final class Request implements IDocHandler {
     	}
     	}
     }
-    private static final String SUB_FAILED = "Invocation of sub request failed. Probably php method invocation is not available in your environment (due to security restrictions).";
+    private static final String SUB_FAILED = "Invocation of sub request failed. PHP method invocation is not available in your environment (due to security restrictions). Set the system property php.java.bridge.promiscuous=true";
     private void setIllegalStateException(String s) {
         IllegalStateException ex = new IllegalStateException(s);
-        response.writeException(ex, s);
-	bridge.lastException = ex;
+        response.setResultException(bridge.lastException = ex, s);
     }
     private int handleRequest() throws IOException {
 	int retval;

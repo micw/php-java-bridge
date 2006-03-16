@@ -8,7 +8,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -24,12 +23,6 @@ import java.util.WeakHashMap;
  * Use the JavaBridgeClassLoader if you need to access the current request-handling bridge instance. 
  * */
 public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
-
-    private boolean urlsAdded = false; // thread local variable
-
-    // the list of jar files in which we search for user classes.
-    static private Collection sysUrls = null;
-
     // maps rawPath -> URL[]
     private static Map urlCache = Collections.synchronizedMap(new WeakHashMap());
 	    
@@ -98,6 +91,8 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 		    } else if ((f=new File(rawContextDir + s)).isFile()) {
 		    	buf.append(f.getAbsolutePath());
 		    } else if ((f=new File("/usr/share/java/" + s)).isFile()) {
+			buf.append(f.getAbsolutePath());
+		    } else if ((f=new File("/usr/share/java/ext/" + s)).isFile()) {
 			buf.append(f.getAbsolutePath());
 		    } else {
 			buf.append(s);
@@ -171,44 +166,9 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
      * @param phpConfigDir The default php config directory
      */
     private static synchronized void initClassLoader() {
-	if(sysUrls!=null) return;
- 	sysUrls=new ArrayList();
-	try {
-	    String[] paths = new String[] {"/usr/share/java", "/usr/share/java/ext"};
-
-	    for(int i=0; i<paths.length; i++) {
-		File d = new File(paths[i]);
-		String[] files=d.list();
-		if(files==null) continue;
-		for(int j=0; j<files.length; j++) {
-		    String file = files[j];
-		    int len = file.length();
-		    if(len<4) continue;
-		    if(!file.endsWith(".jar")) continue;
-		    try {
-			URL url;
-			file = "file:" + d.getAbsolutePath() + File.separator + file;
-			url = new URL(file);
-			if(Util.logLevel>5) 
-			  Util.logDebug("Found system library: "+ files[j] +" (url: " + url +").");
-			sysUrls.add(url);
-		    }  catch (MalformedURLException e1) {
-			Util.printStackTrace(e1);
-		    }
-		}
-	    }
-	} catch (Exception t) {
-	    Util.printStackTrace(t);
-	}
     }
 
     protected void addSysUrls() {
-	if(urlsAdded) return;
-	initClassLoader();
-        URL urls[] = new URL[sysUrls.size()];
-	sysUrls.toArray(urls);
-	this.addURLs(urls, true);
-	urlsAdded=true;
     }
 
     /**
@@ -216,7 +176,6 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
      */
     public void clear() {
     	super.clear();
-	urlsAdded=false;
     }
     /**
      * Reset to initial state.
@@ -228,6 +187,31 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	    clearCache();
 	}
     }
+    private static final boolean checkVM() {
+	try {
+	    return "libgcj".equals(System.getProperty("gnu.classpath.vm.shortname"));
+	} catch (Throwable t) {
+	    return false;
+	}
+    }
+    private static final String getLibDir() {
+	try {
+	    return System.getProperty("java.library.path");
+	} catch (Throwable t) {
+	    return "[error: no java.library.path set]";
+	}
+    }
+    private static final String getSharedLibDir() {
+	try {
+	    return System.getProperty("java.ext.dirs");
+	} catch (Throwable t) {
+	    return "[error: no java.ext.dirs set]";
+	}
+    }
+    static final boolean IS_GNU_JAVA = checkVM();
+    static final String LIB_DIR = getLibDir();
+    static final String SHARED_LIB_DIR = getSharedLibDir();
+
     /**
      * Searches for a library name in our classpath
      * @param name the library name, e.g. natcJavaBridge.so
@@ -261,6 +245,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 			    }
 			    protected String findLibrary(String name) {
 				if(Util.logLevel>2) Util.logDebug("trying to load library: " +name + " from: "+ Arrays.asList(this.getURLs()));
+				if(!IS_GNU_JAVA) throw new UnsatisfiedLinkError("This java VM can only load pure java libraries. Either use GNU java instead or move the java library to " + LIB_DIR + "and the shared library "+ name +" to "+ SHARED_LIB_DIR);
 				String s = super.findLibrary(name);
 				if(s!=null) return s;
 				return resolveLibraryName(name);

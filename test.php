@@ -30,9 +30,11 @@ if(@java_get_server_name() != null) {
   } catch (JavaException $ex) {
     $trace = new Java("java.io.ByteArrayOutputStream");
     $ex->printStackTrace(new java("java.io.PrintStream", $trace));
-    echo "Exception $ex occured:<br>\n" . $trace . "\n";
-    
+    echo "Exception $ex occured:<br>\n" . $trace . "<br>\n";
   }
+  echo "<br>\n";
+  $Util = new JavaClass("php.java.bridge.Util");
+  echo "JavaBridge backend version: {$Util->VERSION}<br>\n";
   echo "<br>\n";
 
  } else {

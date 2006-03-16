@@ -45,7 +45,9 @@ static short checkError(pval *value TSRMLS_DC)
 
 static short is_type (zval *pobj TSRMLS_DC) {
 #ifdef ZEND_ENGINE_2
-  return instanceof_function(Z_OBJCE_P(pobj), EXT_GLOBAL(class_entry) TSRMLS_CC)!=0;
+  zend_class_entry *ce = Z_OBJCE_P(pobj);
+  return instanceof_function(ce, EXT_GLOBAL(class_entry) TSRMLS_CC) ||
+	instanceof_function(ce, EXT_GLOBAL(exception_class_entry) TSRMLS_CC);
 #else
   extern void EXT_GLOBAL(call_function_handler4)(INTERNAL_FUNCTION_PARAMETERS, zend_property_reference *property_reference);
   return pobj->type == IS_OBJECT && pobj->value.obj.ce->handle_function_call==EXT_GLOBAL(call_function_handler4);
@@ -66,9 +68,13 @@ void EXT_GLOBAL(store_jobject)(zval*object, long id TSRMLS_DC)
 
 int EXT_GLOBAL(get_jobject_from_object)(zval*object, long *id TSRMLS_DC)
 {
-  struct java_object*jobject = (struct java_object*)zend_objects_get_address(object TSRMLS_CC);
-  *id = jobject->id;
-  return *id!=0;
+  if(is_type(object TSRMLS_CC)) {
+	struct java_object*jobject = (struct java_object*)zend_objects_get_address(object TSRMLS_CC);
+	*id = jobject->id;
+	return *id!=0;
+  }
+  *id=0;
+  return 0;
 }
 static destroy_object(void *object, zend_object_handle handle TSRMLS_DC)
 {

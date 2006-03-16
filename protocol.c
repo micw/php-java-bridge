@@ -81,9 +81,6 @@ static void end(proxyenv *env) {
   if(size>s && !n && errno==EINTR) goto res; // Solaris, see INN FAQ
 
   (*env)->send_len=0;
-  
-  /* store (sync. or async.) result */
-  (*env)->handle(env);
 }
 
 static char *get_cookies(zval *val, proxyenv *env) {
@@ -141,13 +138,11 @@ static void end_session(proxyenv *env) {
   if(size>s && !n && errno==EINTR) goto res; // Solaris, see INN FAQ
 
   (*env)->send_len=0;
-
-  /* store result, get_session() always requires a round-trip */
-  (*env)->handle_request(env);
 }
 
 static void flush(proxyenv *env) {
-  (*env)->finish(env);			/* end() or end_session() */
+  (*env)->finish(env);
+  (*env)->handle(env);
 }
 
 void EXT_GLOBAL (protocol_end) (proxyenv *env) {

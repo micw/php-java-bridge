@@ -34,6 +34,9 @@ if(@java_get_server_name() != null) {
     print $key . " -> " .  $value . "<br>\n";
   }
   echo "<br>\n";
+  $Util = new JavaClass("php.java.bridge.Util");
+  echo "JavaBridge backend version: {$Util->VERSION}<br>\n";
+  echo "<br>\n";
 
  } else {
   

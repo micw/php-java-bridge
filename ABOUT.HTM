@@ -848,7 +848,7 @@ echo "You have typed: $str\n";<br>
 
 <li> <H4>How fast is it?</H4> <p> 
 The following scripts were
-executed on a one 1.688 GHZ x86 cpu running RedHat Fedora Core 4 Linux and Sun jdk1.6.0:
+executed on one 1.688 GHZ x86 cpu running RedHat Fedora Core 4 Linux and Sun jdk1.6.0:
 </p>
 The PHP 5.1.2 code<br>
 <p>
@@ -917,24 +917,39 @@ BORDER="1"
 ><TD
 >named pipes</TD
 ><TD
->0m38.906s,<br>
-0m21.545s,<br>
-0m0.771s
+>0m20.112s,<br>
+0m18.999s,<br>
+0m0.651s
 </TD
 ></TR
 >
 <TBODY
 ><TR
 ><TD
->java -jar JavaBridge.jar INET:9967</TD
+>java -jar JavaBridge.jar INET:9967 & time php t11.php</TD
+><TD
+>PHP5 + PHP/Java Bridge 3.0.8</TD
+><TD
+>TCP Sockets, client and server running on the same CPU</TD
+><TD
+>0m22.407s,<br>
+0m9.848s,<br>
+0m0.145s
+</TD
+></TR
+>
+<TBODY
+><TR
+><TD
+>java -jar JavaBridge.jar INET:9967 & time php t11.php</TD
 ><TD
 >PHP5 + PHP/Java Bridge 3.0.8</TD
 ><TD
 >TCP Sockets, client and server running on different machines</TD
 ><TD
->0m33.914s,<br>
-0m26.407s,<br>
-0m2.782s
+>0m31.507s,<br>
+0m26.460s,<br>
+0m3.567s
 </TD
 ></TR
 >
@@ -963,9 +978,9 @@ BORDER="1"
 ><TD
 >none (native code)</TD
 ><TD
->0m14.696s,<br>
-0m8.365s,<br>
-0m0.165s
+>0m6.725s,<br>
+0m6.551s,<br>
+0m0.107s
 </TD
 ></TR
 >

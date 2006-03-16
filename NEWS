@@ -5,6 +5,19 @@ Please send bug reports, questions and suggestions to
 
 Version 3.0.8:
 
+* It is now possible to selectively switch off the servlet pipe
+context server (-Dphp.java.bridge.no_pipe_context_server=true) and the
+socket context server
+(-Dphp.java.bridge.no_socket_context_server=true). Useful for testing
+only.
+
+* Some JVM implementations cannot load shared libraries more than
+once. When the backend is not running within the GNU java VM ("gcj"),
+the dynamic loader does no longer try to load shared libraries via the
+dynamic loader. If you use Sun jdk >= 1.6, you can install x86 shared
+libraries in /usr/java/packages/lib/i386. Or you can set the
+java.libpath, e.g.: java.libpath=/usr/lib/php/modules:/usr/local/lib
+
 * Improved automatic start: On windows it is now possible to use a
 wrapper binary, for example: java.wrapper="c:/startJava.cmd",
 additional options can be set with, e.g.: java.java="javaw

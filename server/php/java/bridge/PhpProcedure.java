@@ -18,7 +18,7 @@ public class PhpProcedure implements InvocationHandler {
     private JavaBridge bridge;
     private long object;
     private Map names;
-    private String name;
+    protected String name;
 	
     protected PhpProcedure(JavaBridge bridge, long object, String name, Map names) {
 	this.bridge = bridge;
@@ -38,32 +38,21 @@ public class PhpProcedure implements InvocationHandler {
      */
     protected static Object createProxy(JavaBridge bridge, String name, Map names, Class interfaces[], long object) {
 	PhpProcedure handler = new PhpProcedure(bridge, object, name, names);
-	ClassLoader loader = interfaces.length>0 ? interfaces[0].getClassLoader():bridge.getClass().getClassLoader();
+	ClassLoader loader = bridge.getClassLoader().getClassLoader();
 	Object proxy = Proxy.newProxyInstance(loader, interfaces, handler);
 	return proxy;
     }
 	
-    private void setResultFromProcedure(Response response, String name, Object[] args) {
-	String cname;
-	if(this.name!=null) {
-	    cname=this.name;
-	} else {
-	    cname = (String)names.get(name);
-	    if(cname==null) cname=name;
-	}
-	int argsLength = args==null?0:args.length;
-	response.writeApplyBegin(object, cname, name, argsLength);
-	for (int i=0; i<argsLength; i++) {
-	    response.writePairBegin();
-	    bridge.setResult(response, args[i], args[i].getClass());
-	    response.writePairEnd();
-	}
-	response.writeApplyEnd();
-    }
-	
     private Object invoke(Object proxy, String method, Class returnType, Object[] args) throws Throwable {
     	if(bridge.logLevel>3) bridge.logDebug("invoking callback: " + method);
-	setResultFromProcedure(bridge.request.response, method, args);
+	String cname;
+	if(name!=null) {
+	    cname=name;
+	} else {
+	    cname = (String)names.get(name);
+	    if(cname==null) cname=method;
+	}
+	bridge.request.response.setResultProcedure(object, cname, method, args);
 	Object[] result = bridge.request.handleSubRequests();
 	if(bridge.logLevel>3) bridge.logDebug("result from cb: " + Arrays.asList(result));
 	return bridge.coerce(returnType, result[0], bridge.request.response);
@@ -78,7 +67,14 @@ public class PhpProcedure implements InvocationHandler {
      * @throws a script exception.
      */
     public Object invoke(Object proxy, String method, Object[] args) throws Throwable {
-    	return invoke(proxy, method, Object.class, args);
+	Thread thread = Thread.currentThread();
+	ClassLoader loader = thread.getContextClassLoader();
+	try {
+	    thread.setContextClassLoader(bridge.getClassLoader().getClassLoader());
+	    return invoke(proxy, method, Object.class, args);
+	} finally {
+	    thread.setContextClassLoader(loader);
+	}
     }
 
     /* (non-Javadoc)

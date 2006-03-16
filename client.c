@@ -174,14 +174,10 @@ static short handle_exception(zval*presult TSRMLS_DC) {
 	long result;
 	//php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Unhandled exception during callback in user function: %s.", 25, fname);
 	EXT_GLOBAL(get_jobject_from_object)(JG(exception), &result TSRMLS_CC);
-	if(!result)
-	  php_error(E_WARNING, "Exception is not a JavaException object.");
-	else {
-	  has_exception=1;
-	  (*jenv)->writeResultBegin(jenv, presult);
-	  (*jenv)->writeException(jenv, result, "php exception.", 0);
-	  (*jenv)->writeResultEnd(jenv);
-	}
+	has_exception=1;
+	(*jenv)->writeResultBegin(jenv, presult);
+	(*jenv)->writeException(jenv, result, "php exception", 0);
+	(*jenv)->writeResultEnd(jenv);
 	zval_ptr_dtor(&JG(exception));
 #if defined(ZEND_ENGINE_2)
 	zend_clear_exception(TSRMLS_C);
@@ -195,13 +191,14 @@ static void setResultFromApply(zval *presult, unsigned char *cname, size_t clen,
   zval *func, *retval_ptr=0;
   
   TSRMLS_FETCH();
-  
+
   MAKE_STD_ZVAL(func);
   setResultFromString(func, cname, clen);
 
   if (call_user_cb(&object, func, &retval_ptr, func_params TSRMLS_CC) != SUCCESS) {
 	php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not call user function: %s.", 23, cname);
   }
+
   if(!handle_exception(presult TSRMLS_CC)) 
 	EXT_GLOBAL(result)(retval_ptr, 0, presult TSRMLS_CC);
   if(retval_ptr) 

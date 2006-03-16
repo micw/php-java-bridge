@@ -97,6 +97,25 @@ public class Response {
 	}
     }
     protected abstract class Writer extends DelegateWriter {
+	public void setResultProcedure(long object, String cname, String name, Object[] args) {
+	    int argsLength = args==null?0:args.length;
+	    writeApplyBegin(object, cname, name, argsLength);
+	    for (int i=0; i<argsLength; i++) {
+		writePairBegin();
+		setResult(args[i], args[i].getClass());
+		writePairEnd();
+	    }
+	    writeApplyEnd();
+	}
+	void setResultException(Throwable o, String str) {
+	    writeException(o, str);
+	}
+	public void setResultObject(Object value) {
+	    writeObject(value);
+	}
+	public void setResultClass(Class value) {
+	    writeClass(value);
+	}
 	public void setResult(Object value, Class type) {
 	    setType(type);
 	    setResult(value);
@@ -266,14 +285,31 @@ public class Response {
         }        	     	
     }
   	
-    protected class AsyncWriter extends Writer {
-	public boolean setResult(Object value) { 
-	    if(value==null) value=Request.PHPNULL;
-	    if(bridge.logLevel>=4) {
-	      writeObject(value);
+    protected final class AsyncWriter extends Writer {
+	public void setResultProcedure(long object, String cname, String name, Object[] args) {
+	    throw new IllegalStateException("Cannot call "+name+": callbacks not allowed in stream mode");
+	}
+	public void setResultException(Throwable o, String str) {
+	    setResultObject(bridge.lastAsyncException = o);
+	}
+	public void setResultObject(Object value) {
+ 	    if(value==null) value=Request.PHPNULL;
+ 	    if(bridge.logLevel>=4) {
+		writeObject(value);
 	    } else {  
-	      bridge.globalRef.append(value);
+		bridge.globalRef.append(value);
 	    }
+	}
+	public void setResultClass(Class value) {
+	    if(value==null) value=Request.PhpNull.class;
+	    if(bridge.logLevel>=4) {
+		writeClass(value);
+	    } else {
+		bridge.globalRef.append(value);
+	    }
+	}
+	public boolean setResult(Object value) { 
+	    setResultObject(value);
 	    return true;
 	}
 	public void reset() {
@@ -360,6 +396,39 @@ public class Response {
 	buf=new OutBuf();
 	this.bridge=bridge;
 	currentWriter = defaultWriter = writer = newWriter(getDefaultDelegate());
+    }
+
+    /**
+      * Set the result packet.
+      * @param value The result object.
+      * @param type The type of the result object.
+      */
+    public void setResultProcedure(long object, String cname, String name, Object[] args) {
+	writer.setResultProcedure(object, cname, name, args);
+    }
+    /**
+      * Set the result packet.
+      * @param value The result object.
+      * @param type The type of the result object.
+      */
+    public void setResultException(Throwable value, String asString) {
+     	writer.setResultException(value, asString);
+    }
+    /**
+      * Set the result packet.
+      * @param value The result object.
+      * @param type The type of the result object.
+      */
+    public void setResultObject(Object value) {
+     	writer.setResultObject(value);
+    }
+    /**
+      * Set the result packet.
+      * @param value The result object.
+      * @param type The type of the result object.
+      */
+    public void setResultClass(Class value) {
+     	writer.setResultClass(value);
     }
 
     /**
@@ -492,7 +561,7 @@ public class Response {
 	buf.append(I); buf.append(String.valueOf(result));
 	buf.append(e);
     }
-    public void writeClass(Class o) {
+    void writeClass(Class o) {
         if(o==null) { writeNull(); return; }
     	buf.append(O); buf.append(String.valueOf(this.bridge.globalRef.append(o)));
     	buf.append(po);

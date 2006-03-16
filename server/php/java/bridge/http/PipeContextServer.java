@@ -93,11 +93,17 @@ public class PipeContextServer implements IContextServer {
      */
     public void destroy() {
     }
+    protected static boolean checkTestTunnel(String property) {
+        try {
+          return !"true".equals(System.getProperty(property));
+        } catch (Throwable t) {return false;}
+    }
+    private static final boolean pipeServer = checkTestTunnel("php.java.bridge.no_pipe_server");
     /**
      * Check if the ContextServer is ready, i.e. it has created a server socket.
      * @return true if there's a server socket listening, false otherwise.
      */
     public boolean isAvailable() {
-    	return isAvailable;
+    	return pipeServer && isAvailable;
     }
 }

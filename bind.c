@@ -104,10 +104,8 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   
   if(!sys_libpath) sys_libpath="";
   args[0]=program;
-  s="-Djava.library.path=";
-  p=malloc(strlen(s)+strlen(lib_path)+1);
-  strcpy(p, s); strcat(p, lib_path);
-  args[1] = p;					/* library path */
+  p=strdup("-Dphp.java.bridge.default_log_level=2");
+  args[1] = p;					/* default log level */
   s="-Djava.class.path=";
 								/* library path usually points to the
 								   extension dir */
@@ -125,12 +123,6 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   }
   args[2] = p;					/* user classes */
   args[3] = strdup("-Djava.awt.headless=true");
-  /* disabled due to problems with IBM java, it could not find
-	 default mime table anymore */
-  //s="-Djava.home=";
-  //p=malloc(strlen(s)+strlen(home)+1);
-  //strcpy(p, s); strcat(p, home);
-  //args[4] = p;					/* java home */
   args[4] = strdup("php.java.bridge.JavaBridge");
 
   args[5] = sockname;

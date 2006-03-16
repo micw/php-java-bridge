@@ -781,16 +781,39 @@ static int allocate_php4_exception(TSRMLS_D) {
   return 1;
 }
 static void call_with_handler(char*handler, const char*name TSRMLS_DC) {
-  if(allocate_php4_exception(TSRMLS_C))
-	if(zend_eval_string((char*)handler, *JG(retval_ptr), (char*)name TSRMLS_CC)!=SUCCESS) { 
+  if(allocate_php4_exception(TSRMLS_C)) {
+	int err;
+
+#ifdef ZEND_ENGINE_2
+	php_set_error_handling(EH_THROW, zend_exception_get_default() TSRMLS_CC);
+#endif
+	err = 
+	  zend_eval_string((char*)handler, *JG(retval_ptr), (char*)name TSRMLS_CC);
+
+#ifdef ZEND_ENGINE_2
+	php_std_error_handling();
+#endif
+	
+	if (err != SUCCESS) { 
 	  php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not call user function: %s.", 22, Z_STRVAL_P(JG(func)));
 	}
+  }
 }
 static void call_with_params(int count, zval ***func_params TSRMLS_DC) {
-  if(allocate_php4_exception(TSRMLS_C))	/* checked and destroyed in client. handle_exception() */
-	if (call_user_function_ex(0, JG(object), JG(func), JG(retval_ptr), count, func_params, 0, NULL TSRMLS_CC) != SUCCESS) {
+  if(allocate_php4_exception(TSRMLS_C)) {/* checked and destroyed in client. handle_exception() */
+	int err;
+#ifdef ZEND_ENGINE_2
+	php_set_error_handling(EH_THROW, zend_exception_get_default() TSRMLS_CC);
+#endif
+	err = call_user_function_ex(0, JG(object), JG(func), JG(retval_ptr), count, func_params, 0, NULL TSRMLS_CC);
+#ifdef ZEND_ENGINE_2
+	php_std_error_handling();
+#endif
+	
+	if (err != SUCCESS) {
 	  php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not call user function: %s.", 23, Z_STRVAL_P(JG(func)));
 	}
+  }
 }
 
 /**

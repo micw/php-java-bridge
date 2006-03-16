@@ -7,6 +7,7 @@ import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.File;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
@@ -32,7 +33,7 @@ import java.util.Map.Entry;
  * This is the main class of the PHP/Java Bridge. It starts the standalone backend,
  * listenes for protocol requests and handles CreateInstance, GetSetProp and Invoke 
  * requests. Supported protocol modes are INET (listens on all interfaces), INET_LOCAL (loopback only) and 
- * UNIX (uses a local, invisible communication channel, requires natcJavaBridge.so). Furthermore it
+ * LOCAL (uses a local, invisible communication channel, requires natcJavaBridge.so). Furthermore it
  * contains utility methods which can be used by clients.
  * <p>
  * Example:<br>
@@ -56,6 +57,7 @@ public class JavaBridge implements Runnable {
      * For PHP4's last_exception_get.
      */
     public Throwable lastException = null;
+    protected Throwable lastAsyncException; // reported by end_document()
 
     // array of objects in use in the current script
     GlobalRef globalRef=new GlobalRef(this);
@@ -264,6 +266,16 @@ public class JavaBridge implements Runnable {
 	String logFile=null;
 	String sockname=null;
 	if(s.length>3) usage();
+	try {
+	    StringBuffer buf = new StringBuffer();
+	    String ext = System.getProperty("java.ext.dirs");
+	    if(ext!=null) buf.append(ext);
+	    buf.append(File.pathSeparator);
+	    buf.append("/usr/share/java/ext");
+	    buf.append(File.pathSeparator);
+	    buf.append("/usr/java/packages/lib/ext");
+	    System.setProperty("java.ext.dirs", buf.toString());
+	} catch (Throwable t) {/*ignore*/}
     	try {
     	    CLRAssembly = Class.forName("cli.System.Reflection.Assembly");
     	    loadMethod = CLRAssembly.getMethod("Load", new Class[] {String.class});
@@ -444,7 +456,7 @@ public class JavaBridge implements Runnable {
 	lastException = new Exception(buf.toString(), e);
 	StackTraceElement[] trace = e.getStackTrace();
 	if(trace!=null) lastException.setStackTrace(trace);
-	response.writeException(lastException, lastException.toString());
+	response.setResultException(lastException, lastException.toString());
     }
 
     private Exception getUnresolvedExternalReferenceException(Throwable e, String what) {
@@ -488,14 +500,14 @@ public class JavaBridge implements Runnable {
 		    if(createInstance && logLevel>0) {
 		    	logMessage("No visible constructor found in: "+ name +", returning the class instead of an instance; this may not be what you want. Please correct this error or please use new JavaClass("+name+") instead.");
 		    }
-		    response.writeClass(clazz);
+		    response.setResultClass(clazz);
 		    return;
 		}
 	    }
 
 	    Object coercedArgs[] = coerce(params=selected.getParameterTypes(), args, response);
 	    if (this.logLevel>4) logInvoke(clazz, name, coercedArgs); // If we have a logLevel of 5 or above, do very detailed invocation logging
-    	    response.writeObject(selected.newInstance(coercedArgs));
+    	    response.setResultObject(selected.newInstance(coercedArgs));
 
 	} catch (Throwable e) {
 	    if(e instanceof OutOfMemoryError ||
@@ -1411,10 +1423,21 @@ public class JavaBridge implements Runnable {
      * @return A string representation.
      */
     public String ObjectToString(Object ob) {
-	StringBuffer buf = new StringBuffer("[");
-	Util.appendObject(ob, buf);
-	buf.append("]");
-	return (String)castToString(buf.toString());
+	    StringBuffer buf = new StringBuffer("[");
+		try {
+	    Util.appendObject(ob, buf);
+		} catch (Exception t) {
+		    Util.printStackTrace(t);
+		    buf.append("[Exception in toString(): ");
+		    buf.append(t);
+		    if(t.getCause()!=null) {
+		      buf.append(", Cause: ");
+		      buf.append(t.getCause());
+		    }
+		    buf.append("]");
+		}
+	    buf.append("]");
+	    return (String)castToString(buf.toString());
     }
     
     private Object contextCache = null;
@@ -1687,13 +1710,15 @@ public class JavaBridge implements Runnable {
     public void beginDocument() {
 	Response res = request.response;
 	res.setAsyncWriter();
+	lastAsyncException = null;
     }
     /**
      * Back to synchronuous protocol mode
      */
-    public void endDocument() {
+    public void endDocument() throws Throwable {
 	Response res = request.response;
 	res.setDefaultWriter();
+	if(lastAsyncException!=null) throw lastAsyncException;
     }
 
     /**
