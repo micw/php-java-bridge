@@ -806,7 +806,7 @@ request-handling java continuation associated with the JSR223 script.
 
 <li> <H4>How do I lock down the VM so that users cannot start
 threads or call System.exit?</H4> <p>Usually with a java policy
-file. An example file will ship with version 3.0.8. </p> 
+file. An example file will ship with version 3.0.9. </p> 
 
 <li> <H4>Where is my output?</H4> <p><code>System.out</code> and <code>System.err</code> are redirected to the server log file(s). When php scripts are invoked from a java framework (Java Server Faces for example), even the php output is redirected. For the standalone backend the output appears in the <code>/var/log/php-java-bridge.log</code> or in JavaBridge.log, see .ini option <code>java.log_file</code>. For the j2ee backend the location of the log file(s) depends on the j2ee server configuration.</p> 
 
@@ -1061,6 +1061,36 @@ OutOfMemory conditions can be debugged by running the backend with e.g.:<br><br>
 <code>
 java -agentlib:hprof=heap=sites -jar JavaBridge.jar<br>
 </code>
+</p>
+
+<li> <H4>How do I retrieve the values from a java object?</H4>
+<p>
+With <code>java_values()</code> or with <code>settype</code>. Examples:
+</p>
+<p>
+<code>
+$str = new java("java.lang.String", "hello");
+echo $str;<br>
+=&gt; [o(String):"hello"]<br>
+<br>
+echo (java_values($str));<br>
+=&gt; hello<br><br>
+<br>
+print_r (java_values($str->toCharArray()));<br>
+=&gt; array('h', 'e', 'l', 'l', 'o')<br>
+<br>
+settype($str, "string");
+echo $str;<br>
+=&gt; hello<br>
+<br>
+$vector = new java("java.util.Vector", array("foo"=>1,"bar"=>2));<br>
+settype($vector, "array");
+print_r ($vector);<br>
+=&gt; array(foo=>1, bar=>2)<br>
+<br>
+settype($vector, "object");
+echo $vector->bar;<br>
+=&gt; 2<br>
 </p>
 </ul>
 

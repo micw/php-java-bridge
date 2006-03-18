@@ -7,7 +7,9 @@ v="-v"
 fi
 
 php=`php-config --php-binary`
-if test $?; then 
+if test $? != 0; then php="`which php`"; fi
+if test $? != 0; then php="`which php-cgi`"; fi
+if test $? != 0; then 
  for i in /usr/bin/php /usr/bin/php-cgi /usr/local/bin/php /usr/local/bin/php-cgi; do
   if test -f $i; then php=$i; break; fi
  done

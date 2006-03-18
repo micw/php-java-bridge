@@ -4,10 +4,10 @@ package php.java.bridge;
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.File;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
@@ -20,10 +20,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.List;
-import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.Vector;
@@ -252,7 +251,8 @@ public class JavaBridge implements Runnable {
 	return socket;
     }
     private static void usage() {
-	System.err.println("Usage: java -jar JavaBridge.jar [SOCKETNAME LOGLEVEL LOGFILE]");
+	System.err.println("PHP/Java Bridge version "+Util.VERSION);
+        System.err.println("Usage: java -jar JavaBridge.jar [SOCKETNAME LOGLEVEL LOGFILE]");
 	System.err.println("Example: java -jar JavaBridge.jar");
 	System.err.println("Example: java -Djava.awt.headless=\"true\" -Dphp.java.bridge.threads=50 -jar JavaBridge.jar INET:0 3 JavaBridge.log");
 	System.exit(1);
@@ -666,7 +666,6 @@ public class JavaBridge implements Runnable {
     Object[] coerce(Class parms[], Object args[], Response response) {
         Object arg;
 	Object result[] = args;
-	Class targetType = null;
 	int size = 0;
 
 	for (int i=0; i<args.length; i++) {
@@ -740,6 +739,7 @@ public class JavaBridge implements Runnable {
 	    	}
 	    } else if (arg instanceof Request.PhpArray) {
 	    	if(parms[i].isArray()) {
+	    	    Class targetType = parms[i].getComponentType();
 		    try {
 			Map ht = (Map)arg;
 			size = ht.size();
@@ -766,18 +766,11 @@ public class JavaBridge implements Runnable {
 		    }
 		} else if ((java.util.Collection.class).isAssignableFrom(parms[i])) {
 		    try {
-			Map ht = (Map)arg;
-			Collection res;
-			try {
-			    res = (Collection) parms[i].newInstance();
-			} catch (java.lang.InstantiationException ex) {
-			    res = (Collection) new HashSet();
-			}
-			res.addAll(ht.values());
-
-			result[i]=res;
+			Map m = (Map)arg;
+			Collection c = m.values();
+			result[i]=c;
 		    } catch (Exception e) {
-			logError("Error: " +  String.valueOf(e) + ". Could not create Collection from Map.  You have probably passed a hashtable instead of an array. Please check that the keys are long.");
+			logError("Error: " +  String.valueOf(e) + ". Could not create Collection from Map.");
 			printStackTrace(e);
 			// leave result[i] alone...
 		    }
@@ -795,22 +788,7 @@ public class JavaBridge implements Runnable {
 			// leave result[i] alone...
 		    }
 		} else if ((java.util.Map.class).isAssignableFrom(parms[i])) {
-		    try {
-			Map ht = (Map)arg;
-			Map res;
-			try {
-			    res = (Map)parms[i].newInstance();
-			} catch (java.lang.InstantiationException ex) {
-			    res = (Map) new HashMap();
-			}
-			res.putAll(ht);
-
-			result[i]=res;
-		    } catch (Exception e) {
-			logError("Error: " +  String.valueOf(e) + ". Could not create Map from Map.");
-			printStackTrace(e);
-			// leave result[i] alone...
-		    }
+		    result[i]=arg;
 		} else if(arg instanceof Request.PhpString) {
 		    result[i] = ((Request.PhpString)arg).getString(); // always prefer strings over byte[]
 		} 
@@ -1245,7 +1223,7 @@ public class JavaBridge implements Runnable {
      */
     public Object getValues(Object ob) {
     	Response res = request.response;
-    	res.selectWriter(Response.VALUES_WRITER);
+    	res.setArrayValuesWriter();
 	return ob;
     }
  
@@ -1257,7 +1235,7 @@ public class JavaBridge implements Runnable {
      */
     public Object cast(Object ob, Class type) {
 	Response res = request.response;
-	res.selectWriter(Response.COERCE_WRITER).setType(type);
+	res.setCoerceWriter().setType(type);
     	return ob;
     }
  
@@ -1293,6 +1271,16 @@ public class JavaBridge implements Runnable {
      */
     public Object castToInexact(Object ob) {
 	return cast(ob, Double.TYPE);
+    }
+    /**
+     * Cast an object to an array
+     * @param ob - The object to cast
+     * @return The passed <code>ob</code>, will be coerced by the appropriate writer.
+     */
+    public Object castToArray(Object ob) {
+	Response res = request.response;
+	res.setArrayValueWriter();
+    	return ob;
     }
 
     /**

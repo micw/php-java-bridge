@@ -107,7 +107,7 @@ public class Response {
 	    }
 	    writeApplyEnd();
 	}
-	void setResultException(Throwable o, String str) {
+	public void setResultException(Throwable o, String str) {
 	    writeException(o, str);
 	}
 	public void setResultObject(Object value) {
@@ -284,6 +284,27 @@ public class Response {
 	    return true;
         }        	     	
     }
+    protected class ArrayValueWriter extends WriterWithDelegate {
+      	private WriterWithDelegate defaultWriter;
+        public ArrayValueWriter(WriterWithDelegate defaultWriter) {
+      	    this.defaultWriter = defaultWriter;
+      	}
+      	
+	//private ArrayWriter nullWriter = new ArrayWriter();
+	public boolean setResult(Object value) {
+	    if(!defaultWriter.delegate.setResult(value)) {
+		writeCompositeBegin_a();
+		writePairBegin();
+
+		defaultWriter.setResult(value);
+		    
+		writePairEnd();
+		writeCompositeEnd();
+		return true;
+	    }
+	    return true;
+        }        	     	
+    }
   	
     protected final class AsyncWriter extends Writer {
 	public void setResultProcedure(long object, String cname, String name, Object[] args) {
@@ -385,7 +406,8 @@ public class Response {
 	return writer;
     }
      
-    private Writer writer, defaultWriter, currentWriter, arrayValuesWriter=null, coerceWriter=null, asyncWriter=null;
+    private WriterWithDelegate defaultWriter;
+    private Writer writer, currentWriter, arrayValuesWriter=null, arrayValueWriter=null, coerceWriter=null, asyncWriter=null;
 
     
     /**
@@ -395,7 +417,7 @@ public class Response {
     public Response(JavaBridge bridge) {
 	buf=new OutBuf();
 	this.bridge=bridge;
-	currentWriter = defaultWriter = writer = newWriter(getDefaultDelegate());
+	currentWriter = writer = defaultWriter = newWriter(getDefaultDelegate());
     }
 
     /**
@@ -446,6 +468,7 @@ public class Response {
      * @return The seleted writer.
      * @see Response#VALUES_WRITER
      * @see Response#COERCE_WRITER
+     * @deprecated Use setArrayValuesWriter or setCoerceWriter instead.
      */
     public Writer selectWriter(int writerType) {
      	switch(writerType) {
@@ -453,6 +476,14 @@ public class Response {
     	case COERCE_WRITER: return setCoerceWriter();
     	default: throw new IllegalArgumentException(String.valueOf(writerType));
     	}
+    }
+    /**
+     * Selects a specialized writer which writes objects as an array.
+     * Used by castToArray().
+     * @see JavaBridge#castToArray(Object)
+     */
+    protected Writer setArrayValueWriter() {
+	return writer = getArrayValueWriter();
     }
     /**
      * Selects a specialized writer which writes arrays as values.
@@ -638,6 +669,15 @@ public class Response {
             arrayValuesWriter = writer;
         }
         return arrayValuesWriter;
+    }
+
+    private Writer getArrayValueWriter() {
+        if(arrayValueWriter==null) {
+            WriterWithDelegate writer = new ArrayValueWriter(defaultWriter);
+            writer.delegate = new ArrayValuesWriter();
+            arrayValueWriter = writer;
+        }
+        return arrayValueWriter;
     }
 
     private Writer getCoerceWriter() {

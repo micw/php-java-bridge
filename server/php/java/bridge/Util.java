@@ -217,7 +217,7 @@ public class Util {
 	    if(!haveDateFormat) return String.valueOf(System.currentTimeMillis());
 	    try {
 		if(_form==null)
-		    _form = new java.text.SimpleDateFormat("MMM dd HH:mm:ss");
+		    _form = new java.text.SimpleDateFormat("MMM dd HH:mm:ss", java.util.Locale.ENGLISH);
 		return ((java.text.SimpleDateFormat)_form).format(new Date());
 	    } catch (Throwable t) {
 		haveDateFormat=false;

@@ -436,11 +436,9 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
 		JG(hosts)=server_name;
 
 		(*ctx)->must_reopen = 2;
-	  } else if(!strcmp(str, context)) {
-		if(!(*ctx)->servlet_ctx) {
-		  key = (char*)PARSER_GET_STRING(tag[1].strings, 0);
-		  (*ctx)->servlet_ctx = strdup(key);
-		}
+	  } else if((!(*ctx)->servlet_ctx)&&(!strcmp(str, context))) {
+		key = (char*)PARSER_GET_STRING(tag[1].strings, 0);
+		(*ctx)->servlet_ctx = strdup(key);
 	  }
 	  break;
 	}

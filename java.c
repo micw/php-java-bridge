@@ -621,12 +621,33 @@ EXT_FUNCTION(EXT_GLOBAL(__wakeup))
 }
 #endif
 
-/** Proto: array java_values(object ob) or array java_get_values(object ob)
+/** Proto: mixed java_values(object ob) or mixed java_get_values(object ob)
  *
- * Fetches the object into a php array. ob must be a java array or it
- * must implement java.util.Map or java.util.Collection. Please make sure that the java array, Map or Collection does not exceed php's memory limit. Example:
+ * Fetches the value(s) of the java object into a php variable. ob
+ * must be a java object. A java array, Map or Collection is returned
+ * as a php array. Please make sure that the values do not not exceed
+ * php's memory limit. Example:
+ *
  * \code
- * print_r(java_get_values($sys->getProperties()));
+ * function fetchValues($obj) { 
+ *  if($obj instanceof Java) return java_values($obj);
+ *  return $obj;
+ * }
+ * $str = new java("java.lang.String", "hello");
+ * echo $str;
+ * => [o(String):"hello"]
+ * echo java_values($str);
+ * => hello
+ * $chr = $str->toCharArray();
+ * echo $chr;
+ * => [o(array_of-C):"[C@1b10d42"]
+ * $ar = java_values($chr);
+ * print $ar;
+ * => Array
+ * print $ar[0];
+ * => [o(Character):"h"]
+ * print java_values($ar[0]);
+ * => h
  * \endcode
  */
 EXT_FUNCTION(EXT_GLOBAL(get_values))
@@ -1723,7 +1744,7 @@ static int cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_
 	  break;
 	case IS_ARRAY: 
 #ifdef ZEND_ENGINE_2
-	  (*jenv)->writeInvokeBegin(jenv, 0, "getValues", 0, 'I', writeobj);
+	  (*jenv)->writeInvokeBegin(jenv, 0, "castToArray", 0, 'I', writeobj);
 	  (*jenv)->writeObject(jenv, obj);
 	  (*jenv)->writeInvokeEnd(jenv);
 #else
