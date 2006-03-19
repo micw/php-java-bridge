@@ -28,6 +28,8 @@ import java.util.StringTokenizer;
 import java.util.Vector;
 import java.util.Map.Entry;
 
+import php.java.bridge.Request.PhpArray;
+
 /**
  * This is the main class of the PHP/Java Bridge. It starts the standalone backend,
  * listenes for protocol requests and handles CreateInstance, GetSetProp and Invoke 
@@ -741,14 +743,8 @@ public class JavaBridge implements Runnable {
 	    	if(parms[i].isArray()) {
 	    	    Class targetType = parms[i].getComponentType();
 		    try {
-			Map ht = (Map)arg;
-			size = ht.size();
-
-			// Verify that the keys are Long, and determine maximum
-			for (Iterator e = ht.keySet().iterator(); e.hasNext(); ) {
-			    int index = ((Number)e.next()).intValue();
-			    if (index >= size) size = index+1;
-			}
+			PhpArray ht = (PhpArray)arg;
+			size = ht.arraySize();
 			
 			// flatten hash into an array
 			targetType = parms[i].getComponentType();

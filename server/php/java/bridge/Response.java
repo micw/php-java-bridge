@@ -231,8 +231,8 @@ public class Response {
 	    return true;
         }
     }
-    protected class ClassicWriter extends WriterWithDelegate {
- 
+    protected abstract class IncompleteClassicWriter extends WriterWithDelegate {
+      
 	public boolean setResult(Object value) {
 	    if (value == null) {
 		writeNull();
@@ -256,7 +256,18 @@ public class Response {
 	    } else if (value instanceof java.lang.Boolean) {
 		writeBoolean(((Boolean)value).booleanValue());
 
-	    } else if(!delegate.setResult(value))
+	    } else {
+	        return false;
+	    }
+	    return true;
+	}
+  }
+
+    protected class ClassicWriter extends IncompleteClassicWriter {
+ 
+	public boolean setResult(Object value) {
+	    if(super.setResult(value)) return true;
+	    if(!delegate.setResult(value))
 		writeObject(value);
 	    return true;
 	}
@@ -284,26 +295,23 @@ public class Response {
 	    return true;
         }        	     	
     }
-    protected class ArrayValueWriter extends WriterWithDelegate {
-      	private WriterWithDelegate defaultWriter;
-        public ArrayValueWriter(WriterWithDelegate defaultWriter) {
-      	    this.defaultWriter = defaultWriter;
-      	}
-      	
-	//private ArrayWriter nullWriter = new ArrayWriter();
-	public boolean setResult(Object value) {
-	    if(!defaultWriter.delegate.setResult(value)) {
-		writeCompositeBegin_a();
-		writePairBegin();
 
-		defaultWriter.setResult(value);
-		    
-		writePairEnd();
-		writeCompositeEnd();
-		return true;
-	    }
+    protected class ArrayValueWriter extends IncompleteClassicWriter {
+	public void setResult(Object value, Class type) {
+	    if(!delegate.setResult(value)) setResultArray(value);
+	}
+	public boolean setResult(Object value) {
+	    if(!super.setResult(value)) writeString(String.valueOf(value));
 	    return true;
-        }        	     	
+	}
+	private boolean setResultArray(Object value) {
+	    writeCompositeBegin_a();
+	    writePairBegin();
+	    setResult(value);
+	    writePairEnd();
+	    writeCompositeEnd();
+	    return true;
+	}
     }
   	
     protected final class AsyncWriter extends Writer {
@@ -673,7 +681,7 @@ public class Response {
 
     private Writer getArrayValueWriter() {
         if(arrayValueWriter==null) {
-            WriterWithDelegate writer = new ArrayValueWriter(defaultWriter);
+            WriterWithDelegate writer = new ArrayValueWriter();
             writer.delegate = new ArrayValuesWriter();
             arrayValueWriter = writer;
         }

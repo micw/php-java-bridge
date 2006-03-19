@@ -104,8 +104,10 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   
   if(!sys_libpath) sys_libpath="";
   args[0]=program;
-  p=strdup("-Dphp.java.bridge.default_log_level=2");
-  args[1] = p;					/* default log level */
+  s="-Djava.library.path=";
+  p=malloc(strlen(s)+strlen(lib_path)+1);
+  strcpy(p, s); strcat(p, lib_path);
+  args[1] = p;					/* library path */
   s="-Djava.class.path=";
 								/* library path usually points to the
 								   extension dir */

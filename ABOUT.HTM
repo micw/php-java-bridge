@@ -153,62 +153,14 @@ php-interactive&gt; echo java_context()->getAttribute("javax.script.name"); <br>
 <br>
 <li>
   <code><strong>java_closure</strong>(ENVIRONMENT, MAP, TYPE)</code>: Makes it possible to call PHP code from java.  It closes over the PHP environment and packages it up as a java class.  If the ENVIRONMENT is missing, the current environment is used. If MAP is missing, the PHP procedures must have the same name as the required procedures. If TYPE is missing, the generated class is "generic", i.e. the interface it implements is determined when the closure is applied. Example:<br><br><blockquote>
+<code>
 &lt;?php<br>
 function toString() { return "hello" ; }<br>
 echo (string)java_closure();<br>
 ?&gt;<br>
 =&gt; hello
-</blockquote>
-<br><br>
-Example which uses PHP and Mono:<br>
- <br><br>
-<blockquote>
-<code>
-class GtkDemo {<br>
-&nbsp;&nbsp;var $Application;<br>
-<br>
-&nbsp;&nbsp;function GtkDemo() {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;mono_require("gtk-sharp");	// link the gtk-sharp library<br>
-&nbsp;&nbsp;}<br>
-<br>
-&nbsp;&nbsp;function delete($sender, $e) {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;echo "delete called\n";<br>
-&nbsp;&nbsp;&nbsp;&nbsp;$this-&gt;Application-&gt;Quit();<br>
-&nbsp;&nbsp;}<br>
-&nbsp;&nbsp;function clicked($sender, $e) {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;echo "clicked\n";<br>
-&nbsp;&nbsp;}<br>
-&nbsp;&nbsp;function init() {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;$this-&gt;Application = $Application = new Mono("Gtk.Application");<br>
-&nbsp;&nbsp;&nbsp;&nbsp;$Application-&gt;Init();<br>
-<br>
-&nbsp;&nbsp;&nbsp;&nbsp;$win = new Mono("Gtk.Window", "Hello");<br>
-&nbsp;&nbsp;&nbsp;&nbsp;$win-&gt;add_DeleteEvent (<br>
-			&nbsp;&nbsp; new Mono(<br>
-				&nbsp;&nbsp;&nbsp;&nbsp;"GtkSharp.DeleteEventHandler", <br>
-				&nbsp;&nbsp;&nbsp;&nbsp;mono_closure($this, "delete")));<br>
-<br>
-&nbsp;&nbsp;&nbsp;&nbsp;$btn = new Mono("Gtk.Button", "Click Me");<br>
-<br>
-&nbsp;&nbsp;&nbsp;&nbsp;$btn-&gt;add_Clicked(<br>
-		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;new Mono(<br>
-			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "System.EventHandler",<br>
-			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mono_closure($this, "clicked")));<br>
-&nbsp;&nbsp;&nbsp;&nbsp;$win-&gt;Add($btn);<br>
-&nbsp;&nbsp;&nbsp;&nbsp;$win-&gt;ShowAll();<br>
-&nbsp;&nbsp;}<br>
-<br>
-&nbsp;&nbsp;function run() {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;$this-&gt;init();<br>
-&nbsp;&nbsp;&nbsp;&nbsp;$this-&gt;Application-&gt;Run();<br>
-&nbsp;&nbsp;}<br>
-}<br>
-<br&gt;<br>
-$demo = new GtkDemo();<br>
-$demo-&gt;run();<br>
 </code>
 </blockquote>
-
 <br>
 <li>
   <code>$session=<strong>java_session</strong>()</code>: Creates or retrieves a session context. When the backend is running in a J2EE environment, the session is taken from the request object, otherwise it is taken from PHP. Please see the  <a href="server/documentation/API/php/java/bridge/ISession.html">ISession interface documentation</a> for details. The <code>java_session()</code> must be called <a href="http://www.php.net/manual/en/function.headers-sent.php">before the response headers have been sent</a> and it should be called as the first statement within a php script.
@@ -547,8 +499,53 @@ README file.
 instructions</H1>
 <P STYLE="margin-top: 0.42cm; page-break-after: avoid"><FONT ><FONT SIZE=3>If
 you have a RedHat Linux system (RedHat Enterprise or
-Fedora), you can download the 32bit RPM and type <code>rpm -i
-php-java-bridge-v.x.y-1-i386.rpm php-java-bridge-standalone-v.x.y-1-i386.rpm</code> to install it (if you run a 64bit system <strong>and</strong> a 64bit JVM you need to install the 64bit RPM instead). For other operating systems please follow 
+Fedora), you can download the 32bit RPM from 
+<a href="http://www.sourceforge.net/projects/php-java-bridge">http://www.sourceforge.net/projects/php-java-bridge</a>
+and either install the bridge and standalone backend
+<p>
+<blockquote>
+<code>
+rpm -i jdk-1_5_0-linux-i586.rpm<br>
+rpm -i php-java-bridge-x.y.z-1-i386.rpm <br>
+rpm -i php-java-bridge-standalone-x.y.z-1-i386.rpm<br>
+</code> 
+</blockquote>
+</p>
+or the tomcat backend
+<p>
+<blockquote>
+<code>
+rpm -i tomcat5-5.0.30-5jpp_6fc.i386.rpm<br>
+rpm -i php-java-bridge-tomcat-x.y.z-1.i386.rpm
+</code>
+</blockquote>
+</p>
+or the development files for JDK 1.6
+<p>
+<blockquote>
+<code>
+rpm -i jdk-6-linux-i586.rpm<br>
+rpm -i rpm -i php-java-bridge-devel-x.y.z-1.i386.rpm<br>
+</code>
+</blockquote>
+</p>
+If you run a 64bit system <em>and</em> a 64bit JVM, you need to build a  64bit RPM using the command:
+<p>
+<blockquote>
+<code>
+rpmbuild rpmbuild --rebuild php-java-bridge-x.y.z-1.src.rpm<br>
+</code>
+</blockquote>
+</p>
+If you have installed the development RPM, you can run PHP scripts interactively, either from your Eclipse IDE or with the command:
+<p>
+<blockquote>
+<code>
+/usr/java/default/bin/jrunscript -l php-interactive
+</code>
+</blockquote>
+</p>
+ For other operating systems please follow 
 the instructions below (on Security Enhanced Linux please use the RPM or please read the README before installation).</FONT></FONT></P>
 <UL>
 	<LI><P><FONT >Make sure you
@@ -751,9 +748,52 @@ installations (RHEL, Fedora) please install one of the binary RPM's or
 compile a binary RPM from the source RPM using the command:
 <code>rpmbuild --rebuild php-java-bridge*src.rpm</code></p> <p>On
 recent Debian X86 installations, Ubuntu for example, it is also
-possible to install the RPM binaries: Open the appropriate binary RPM
+possible to install the RPM binaries: Open the <a href="#binary-versions">appropriate binary RPM</a>
 with a file manager and drag and drop the contents of the <code>lib/php</code>
-directory to <code>/usr/lib/php</code> and restart apache.</p> 
+directory to <code>/usr/lib/php</code> and restart apache.</p>
+<p>
+<A NAME="binary-versions"></A>
+<center>
+<B
+>Table 3. Binary Versions</B
+></P
+>
+<TABLE
+BORDER="1"
+><COL><COL><COL><COL><THEAD
+><TR
+><TH
+>Name</TH
+><TH
+>ABI</TH
+></TR
+></THEAD><TBODY
+><TR
+><TD
+>php-java-bridge-x.y.z-1.RHEL.i386.rpm</TD
+><TD
+>PHP 4 (&gt;= 4.3.2)</TD
+></TR
+>
+<TR
+><TD
+>php-java-bridge-x.y.z-1.FC4.i386.rpm</TD
+><TD
+>PHP 5.0.x</TD
+></TR
+>
+<TR
+><TD
+>php-java-bridge-x.y.z-1.FC5.i386.rpm</TD
+><TD
+>PHP 5.1 or PHP 6.x</TD
+></TR
+>
+</TBODY>
+</TABLE
+>
+</center>
+ 
 
 <li> <H4>Can I use java libraries without
 installing java?</H4> <p>Yes. Simply ommit the
@@ -984,7 +1024,7 @@ BORDER="1"
 </TD
 ></TR
 >
-
+</TBODY>
 </TABLE
 >
 </center>

@@ -1683,6 +1683,36 @@ static function_entry (class_class_functions)[] = {
 
 
 
+static HashTable *get_properties(zval *object TSRMLS_DC)
+{
+  long obj;
+  zval *presult;
+  proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
+  zend_object *zobj, *zobj2, *ztmp;
+  zobj = zend_objects_get_address(object TSRMLS_CC);
+  if(!jenv) {
+	return zobj->properties;
+  }
+  
+  MAKE_STD_ZVAL(presult);
+  ZVAL_NULL(presult);
+  EXT_GLOBAL(get_jobject_from_object)(object, &obj TSRMLS_CC);
+  (*jenv)->writeInvokeBegin(jenv, 0, "castToArray", 0, 'I', presult);
+  (*jenv)->writeObject(jenv, obj);
+  (*jenv)->writeInvokeEnd(jenv);
+  
+  zend_hash_destroy(zobj->properties);
+  FREE_HASHTABLE(zobj->properties);
+
+  ALLOC_HASHTABLE(zobj->properties);
+  zend_hash_init(zobj->properties, 0, NULL, ZVAL_PTR_DTOR, 0);
+
+  zend_hash_copy(zobj->properties, Z_ARRVAL_P(presult), (copy_ctor_func_t) zval_add_ref, (void *) &ztmp, sizeof(zval *));
+
+  zval_ptr_dtor((zval**)&presult);	
+
+  return zobj->properties;
+}
 static int cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_DC)
 {
   proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
@@ -2099,6 +2129,7 @@ PHP_MINIT_FUNCTION(EXT)
   memcpy(&EXT_GLOBAL(handlers), zend_get_std_object_handlers(), sizeof EXT_GLOBAL(handlers));
   //EXT_GLOBAL(handlers).clone_obj = clone;
   EXT_GLOBAL(handlers).cast_object = cast;
+  EXT_GLOBAL(handlers).get_properties = get_properties;
 
   EXT_GLOBAL(class_entry) =
 	zend_register_internal_class(&ce TSRMLS_CC);

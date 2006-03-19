@@ -207,7 +207,7 @@ void EXT_GLOBAL(end_async) (proxyenv*env) {
   if((*env)->async_ctx.peer) {
 	int err = fflush((*env)->async_ctx.peer);
 	if(err) {
-	  php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Fatal: could not open fflush async buffer.",93);
+	  php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Fatal: could not fflush async buffer.",93);
 	  exit(9);
 	}
 								/* restore default f_send */

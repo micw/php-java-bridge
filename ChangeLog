@@ -1,3 +1,19 @@
+2006-03-19  Jost Boekemeier  <jostb@intern>
+	
+	* server/php/java/bridge/Request.java (IntegerComparator,
+	PHP_ARRAY_KEY_COMPARATOR, PhpArrayKey): New classes.
+	
+	* server/php/java/bridge/JavaBridge.java (coerce),
+	server/php/java/bridge/Request.java (PhpArray): Rewritten. The
+	earlier version did not handle new java("java.util.Vector",
+	array(1,2,3)) correctly.
+
+	* bind.c (get_server_args): Reverted last change. Cannot use
+	LD_LIBRARY_PATH instead of -Djava.library.path= because GNU java
+	on FC4 ignores the LD_LIBRARY_PATH setting.
+
+	* VERSION, php-java-bridge.spec: Version 3.0.8rc released
+
 2006-03-16  Jost Boekemeier  <jostb@intern>
 
 	* bind.c (get_server_args): Use LD_LIBRARY_PATH instead of

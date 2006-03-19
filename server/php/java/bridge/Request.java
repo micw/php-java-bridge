@@ -6,8 +6,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * This class is used to handle requests from the frontent.
@@ -18,9 +22,64 @@ public final class Request implements IDocHandler {
 
     private Parser parser;
     private JavaBridge bridge;
-    protected static final class PhpArray extends HashMap { // for PHP's array()
+    protected static final class IntegerComparator implements Comparator {
+      public int compare(Object arg0, Object arg1) {
+	  int k0 = ((PhpArrayKey)arg0).key;
+	  int k1 = ((PhpArrayKey)arg1).key;
+	  if(k0 < k1) return -1; else if(k0 > k1) return 1;
+	  return 0;
+      }
+    }
+    protected static final IntegerComparator PHP_ARRAY_KEY_COMPARATOR = new IntegerComparator();
+    protected static final class PhpArrayKey extends Number {
+        private static final long serialVersionUID = 2816799824753952383L;
+	protected int key;
+        public PhpArrayKey(int key) {
+            this.key = key;
+        }
+	public int intValue() {
+	  return key;
+	}
+	public long longValue() {
+	  return key;
+	}
+	public float floatValue() {
+	  return key;
+	}
+	public double doubleValue() {
+	  return key;
+	}
+	public String toString() {
+	    return String.valueOf(key);
+	}
+    }
+    protected static final class PhpArray extends AbstractMap { // for PHP's array()
 	private static final long serialVersionUID = 3905804162838115892L;
-    };
+	private TreeMap t = new TreeMap(PHP_ARRAY_KEY_COMPARATOR);
+	private HashMap m = null;
+	public Object put(Object key, Object value) {
+	    if(m!=null) return m.put(key, value);
+	    try {
+	        return t.put((PhpArrayKey)key, value);
+	    } catch (ClassCastException e) {
+	        m = new HashMap(t);
+	        t = null;
+	        return m.put(key, value);
+	    }
+	}
+	public Set entrySet() {
+	    if(t!=null) return t.entrySet();
+	    return m.entrySet();
+	}
+
+	public int arraySize() {
+	    if(t!=null) {
+		if(t.size()==0) return 0;
+		return 1+((PhpArrayKey)t.lastKey()).intValue();
+	    }
+	    throw new IllegalArgumentException("The passed PHP \"array\" is not a sequence but a dictionary");
+	}
+    }
  
     // Only used when the async. protocol is enabled.
     protected static final class PhpNull {}
@@ -207,7 +266,7 @@ public final class Request implements IDocHandler {
 		    ht.put(key, val);
 		}
 		else {
-		    ht.put(new Long(count++), val);
+		    ht.put(new PhpArrayKey(count++), val);
 		}
 
         }
@@ -319,7 +378,7 @@ public final class Request implements IDocHandler {
 		if(st[0].string[st[0].off]=='S')
 		    arg.key = st[1].getStringValue(bridge.options);
 		else {
-		   arg.key = bridge.options.createExact(st[1]);
+		   arg.key = new PhpArrayKey(st[1].getIntValue());
 		}
 	    } else // array
 		arg.key=null;
