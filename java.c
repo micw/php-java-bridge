@@ -501,22 +501,18 @@ static void values(INTERNAL_FUNCTION_PARAMETERS)
   if (ZEND_NUM_ARGS()!=1 || zend_get_parameters_ex(1, &pobj) == FAILURE)
 	WRONG_PARAM_COUNT;
 
-#ifdef ZEND_ENGINE_2
   convert_to_object_ex(pobj);
   obj = 0;
   EXT_GLOBAL(get_jobject_from_object)(*pobj, &obj TSRMLS_CC);
   if(!obj) {
-	zend_error(E_ERROR, "Argument for %s() must be a "/**/EXT_NAME()/**/" object", get_active_function_name(TSRMLS_C));
-	RETURN_NULL();
+	*return_value = **pobj;
+	zval_copy_ctor(return_value);
+	return;
   }
 
   (*jenv)->writeInvokeBegin(jenv, 0, "getValues", 0, 'I', return_value);
   (*jenv)->writeObject(jenv, obj);
   (*jenv)->writeInvokeEnd(jenv);
-#else
-  *return_value = **pobj;
-  zval_copy_ctor(return_value);
-#endif
 }
 static const char warn_session[] = 
 "the session module's session_write_close() tried to write garbage, aborted. \
@@ -1683,36 +1679,6 @@ static function_entry (class_class_functions)[] = {
 
 
 
-static HashTable *get_properties(zval *object TSRMLS_DC)
-{
-  long obj;
-  zval *presult;
-  proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
-  zend_object *zobj, *zobj2, *ztmp;
-  zobj = zend_objects_get_address(object TSRMLS_CC);
-  if(!jenv) {
-	return zobj->properties;
-  }
-  
-  MAKE_STD_ZVAL(presult);
-  ZVAL_NULL(presult);
-  EXT_GLOBAL(get_jobject_from_object)(object, &obj TSRMLS_CC);
-  (*jenv)->writeInvokeBegin(jenv, 0, "castToArray", 0, 'I', presult);
-  (*jenv)->writeObject(jenv, obj);
-  (*jenv)->writeInvokeEnd(jenv);
-  
-  zend_hash_destroy(zobj->properties);
-  FREE_HASHTABLE(zobj->properties);
-
-  ALLOC_HASHTABLE(zobj->properties);
-  zend_hash_init(zobj->properties, 0, NULL, ZVAL_PTR_DTOR, 0);
-
-  zend_hash_copy(zobj->properties, Z_ARRVAL_P(presult), (copy_ctor_func_t) zval_add_ref, (void *) &ztmp, sizeof(zval *));
-
-  zval_ptr_dtor((zval**)&presult);	
-
-  return zobj->properties;
-}
 static int cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_DC)
 {
   proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
@@ -2129,7 +2095,6 @@ PHP_MINIT_FUNCTION(EXT)
   memcpy(&EXT_GLOBAL(handlers), zend_get_std_object_handlers(), sizeof EXT_GLOBAL(handlers));
   //EXT_GLOBAL(handlers).clone_obj = clone;
   EXT_GLOBAL(handlers).cast_object = cast;
-  EXT_GLOBAL(handlers).get_properties = get_properties;
 
   EXT_GLOBAL(class_entry) =
 	zend_register_internal_class(&ce TSRMLS_CC);

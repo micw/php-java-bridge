@@ -6,7 +6,7 @@
     <!-- Faces Servlet -->
     <servlet>
         <servlet-name>Faces Servlet</servlet-name>
-        <servlet-class>javax.faces.webapp.FacesServlet</servlet-class>
+        <servlet-class>php.java.faces.FacesServlet</servlet-class>
         <load-on-startup>0</load-on-startup>
     </servlet>
 
@@ -39,7 +39,7 @@
     <!-- PHP CGI servlet: when IIS or Apache are not available -->
     <servlet>
         <servlet-name>PhpCGIServlet</servlet-name>
-        <servlet-class>php.java.servlet.PhpJavaServlet</servlet-class>
+        <servlet-class>php.java.servlet.PhpCGIServlet</servlet-class>
 
          <!-- Allow us to override the java.hosts, java.servlet and -->
          <!-- java.socketname settings from your php.ini so that we can -->
@@ -58,6 +58,17 @@
          <init-param>
            <param-name>php_exec</param-name>
            <param-value>php-cgi</param-value>
+         </init-param>
+        -->
+
+         <!-- The number of concurrent cgi requests -->
+         <!-- Note that this value should be 1/2 of the servlet engine's -->
+         <!-- thread pool size because each PhpCGIServlet instance also -->
+         <!-- consumes one PhpJavaServlet instance -->
+        <!-- 
+         <init-param>
+           <param-name>max_requests</param-name>
+           <param-value>50</param-value>
          </init-param>
         -->
 

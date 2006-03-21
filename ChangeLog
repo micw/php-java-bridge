@@ -1,3 +1,32 @@
+2006-03-21  Jost Boekemeier  <jostb@intern>
+
+	* java.c (values): java_values works with php4, too.
+
+	* server/php/java/bridge/JavaBridge.java (getId): Display thread id.
+
+	* server/php/java/bridge/JavaBridgeRunner.java: The test runner can now
+	handle override redirect. Without it most of the servlet tests
+	failed.
+
+	* server/php/java/bridge/PhpProcedure.java (createProxy): Create
+	proxies with the classloader of the interfaces, as before. If we
+	create the proxies using our dynamic loader, the loader tests fail
+	because the proxies cannot be accessed after java_reset()
+
+	* server/php/java/bridge/http/ContextServer.java (isAvailable):
+	pass the channel name. Without it channel negotiation fails if the
+	client disagrees with the server's choice.
+
+	* server/php/java/servlet/PhpCGIServlet.java: New file, refactored
+	from PhpJavaServlet. Necessary for jetty.
+
+	* server/php/java/faces/FacesServlet.java: New file to workaround
+	a bug in jetty's classloader.
+
+	* server/WEB-INF/web.xml: Use our FacesServlet instead of the
+	default FacesServlet so that bugs in the Faces implementation do
+	not prevent the bridge from starting.
+	
 2006-03-19  Jost Boekemeier  <jostb@intern>
 	
 	* server/php/java/bridge/Request.java (IntegerComparator,

@@ -115,7 +115,7 @@ exitting. When one process exits, another will be created.
 	    int c;
 	    byte buf[] = new byte[CGIServlet.BUF_SIZE];
 	    try {
-	    Process proc = PhpJavaServlet.startFcgi(env, php);
+	    Process proc = PhpCGIServlet.startFcgi(env, php);
         if(proc==null) return;
 	    proc.getOutputStream().close();
 	    proc.getInputStream().close();

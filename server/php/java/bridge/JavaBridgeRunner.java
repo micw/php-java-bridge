@@ -58,24 +58,30 @@ public class JavaBridgeRunner extends HttpServer {
     	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
     	ContextFactory ctx = ContextFactory.get(id);
 	if(ctx==null) ctx = ContextFactory.addNew();
-     	res.setHeader("X_JAVABRIDGE_CONTEXT", id);
+     	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
     	return ctx;
     }
 
     /**
-     * Handle a redirected connection. The local channel is more than 50 
-     * times faster than the HTTP tunnel. Used by Apache and cgi.
+     * Handles both, override-redirect and redirect, see
+     * @see php.java.servlet.PhpJavaServlet#handleSocketConnection(HttpServletRequest, HttpServletResponse, String, boolean)
+     * @see php.java.servlet.PhpJavaServlet#handleRedirectConnection(HttpServletRequest, HttpServletResponse)
      * 
      * @param req The HttpRequest
      * @param res The HttpResponse
      */
     protected void parseBody (HttpRequest req, HttpResponse res) throws IOException {
     	super.parseBody(req, res);
+	boolean override_redirect="1".equals(req.getHeader("X_JAVABRIDGE_REDIRECT"));
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
 	ContextFactory ctx = getContextFactory(req, res);
-    	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
 
     	JavaBridge bridge = ctx.getBridge();
+	// save old state for override_redirect
+	InputStream bin = bridge.in;
+	OutputStream bout = bridge.out;
+	Request br  = bridge.request;
+
 	bridge.in = sin=req.getInputStream();
 	bridge.out = sout = new ByteArrayOutputStream();
 	Request r = bridge.request = new Request(bridge);
@@ -87,17 +93,25 @@ public class JavaBridgeRunner extends HttpServer {
 	    	r.handleRequests();
 
 		// redirect and re-open
-	    	ctxServer.schedule();
+		if(override_redirect) {
+		    bridge.logDebug("restore state");
+		    bridge.in = bin; bridge.out = bout; bridge.request = br; 
+		} else {
+		    ctxServer.schedule();
+		    if(bridge.logLevel>3) 
+			bridge.logDebug("re-directing to port# "+ channelName);
+		}
 		res.setContentLength(sout.size());
 		resOut = res.getOutputStream();
 		sout.writeTo(resOut);
-		if(bridge.logLevel>3) bridge.logDebug("re-directing to port# "+ channelName);
-	    	sin.close();
-	    	resOut.flush();
-	    	ctxServer.start(channelName);
-	    	if(bridge.logLevel>3) bridge.logDebug("waiting for context: " +ctx.getId());
-	    	ctx.waitFor();
-	    	resOut.close();
+	    	sin.close(); sin=null;
+	    	resOut.close(); resOut=null;
+	    	if(!override_redirect) {
+		    ctxServer.start(channelName);
+		    if(bridge.logLevel>3) 
+			bridge.logDebug("waiting for context: " +ctx.getId());
+		    ctx.waitFor();
+		}
 	    }
 	    else {
 	        sin.close();

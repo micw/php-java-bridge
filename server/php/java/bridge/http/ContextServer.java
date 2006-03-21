@@ -93,8 +93,8 @@ public class ContextServer {
     /* (non-Javadoc)
      * @see php.java.bridge.http.IContextServer#isAvailable()
      */
-    public boolean isAvailable() {
-        if(ctx.isAvailable()) return true;
+    public boolean isAvailable(String channelName) {
+        if(channelName!=null && ctx.isAvailable()) return true;
         if(sock==null) sock=new SocketContextServer(this, pool);
         return sock!=null && sock.isAvailable();
     }
@@ -109,7 +109,7 @@ public class ContextServer {
     }
     
     public ChannelName getFallbackChannelName(String channelName) {
-        if(channelName!=null && channelName.length()!=0 && ctx.isAvailable()) return new PipeChannelName(channelName);
+        if(channelName!=null && ctx.isAvailable()) return new PipeChannelName(channelName);
         return new SocketChannelName(sock.getChannelName());
     }
 }

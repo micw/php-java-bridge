@@ -1,9 +1,12 @@
 <?php
 
-class SERVER {const JBOSS=1, WEBSPHERE=2, SUN=3, ORACLE=4;}
+define("JBOSS",1);
+define("WEBSPHERE",2);
+define("SUN",3);
+define("ORACLE",4);
 
 // -------------- adjust these variables, if necessary
-$server=array_key_exists(1, $argv)? $argv[1] : SERVER::JBOSS;
+$server=array_key_exists(1, $argv)? $argv[1] : JBOSS;
 $WAS_HOME=array_key_exists(2, $argv)? $argv[2]: "/opt/IBM/WebSphere/AppServer";
 $JBOSS_HOME=array_key_exists(2, $argv)? $argv[2] : "/opt/jboss-4.0.2/";
 $app_server=array_key_exists(2, $argv)? $argv[2] : getenv("HOME")."/SUNWappserver";
@@ -16,10 +19,11 @@ echo "connecting to server: ";
 
 $clientJar = getcwd() . "/documentBeanClient.jar";
 switch($server) {
- case SERVER::JBOSS: 
+ case JBOSS: 
    echo "jboss. Loading $JBOSS_HOME/lib \n";
 
-   if(!$props['java.vm.vendor']->toLowerCase()->startsWith("sun"))
+   $vendor=new java("java.lang.String", strtolower($props['java.vm.vendor']));
+   if(!$vendor->startsWith("sun"))
       echo "WARNING: You need to run this example with the SUN VM\n";
    if(!is_dir($JBOSS_HOME)) die("ERROR: Incorrect $JBOSS_HOME.");
 
@@ -30,10 +34,11 @@ switch($server) {
 		 "java.naming.provider.url"=>
 		 "jnp://127.0.0.1:1099");
    break;
- case SERVER::WEBSPHERE: 
+ case WEBSPHERE: 
    echo "websphere. Loading $WAS_HOME/lib/\n";
 
-   if(!$props['java.vm.vendor']->toLowerCase()->startsWith("ibm"))
+   $vendor=new java("java.lang.String", strtolower($props['java.vm.vendor']));
+   if(!$vendor->startsWith("ibm"))
       echo "WARNING: You need to run this example with the IBM VM\n";
    if(!is_dir($WAS_HOME)) die("ERROR: Incorrect $WAS_HOME.");
 
@@ -44,10 +49,11 @@ switch($server) {
 		 "java.naming.provider.url"=>
 		 "iiop://localhost:2809");
    break;
- case SERVER::SUN:
+ case SUN:
    echo "sun. Loading: $app_server/lib\n";
 
-   if(!$props['java.vm.vendor']->toLowerCase()->startsWith("sun"))
+   $vendor=new java("java.lang.String", strtolower($props['java.vm.vendor']));
+   if(!$vendor->startsWith("sun"))
       echo "WARNING: You need to run this example with the SUN VM\n";
    if(!is_dir($app_server)) die("ERROR: Incorrect $app_server.");
 
@@ -60,9 +66,10 @@ switch($server) {
    break;
  }
 
-try {
-  $doc=createDocument($name, $server);
-} catch (JavaException $e) {
+java_last_exception_clear();
+$doc=@createDocument($name, $server);
+$e=java_last_exception_get();
+if($e) {  
   echo "Could not create remote document. Have you deployed documentBean.jar?\n";
   echo $e->getCause() ."\n";
   exit (1);

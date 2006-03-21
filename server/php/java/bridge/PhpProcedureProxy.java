@@ -13,7 +13,7 @@ import java.util.Map;
  */
 public class PhpProcedureProxy {
     JavaBridge bridge;
-    Map names;
+    Map names = null;
     String name = null;
     Class[] suppliedInterfaces;
     long object;

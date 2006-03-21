@@ -391,7 +391,7 @@ public class JavaBridge implements Runnable {
 	    }
     }
     private String getId() {
-    	return "@"+Integer.toHexString(System.identityHashCode(this));
+    	return "@"+Integer.toHexString(System.identityHashCode(Thread.currentThread()));
     }
     /**
      * Write a debug message

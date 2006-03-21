@@ -22,19 +22,10 @@ echo new java("java.util.Vector", array(1,2,"foo"=>3));
 echo new java("java.util.HashMap", array(1,2,"foo"=>3));
 => [o(HashMap):{"foo"=3,0=1,1=2}]
 
-* It is now possible to use settype to convert a java value:
-$map = new java("java.util.HashMap", array("one"=>"eins","two"=>"zwei"));
-settype($map, "array"); var_dump($map); 
-=> array("one"=>"eins","two"=>"zwei")
-
-$javaString = new java("java.lang.String", "hello");
-settype($javaString, "string"); echo $javaString;
-=> "hello"
-
 * It is now possible to selectively switch off the servlet pipe
-context server (-Dphp.java.bridge.no_pipe_context_server=true) and the
+context server (-Dphp.java.bridge.no_pipe_server=true) and the
 socket context server
-(-Dphp.java.bridge.no_socket_context_server=true). Useful for testing
+(-Dphp.java.bridge.no_socket_server=true). Useful for testing
 only.
 
 * Some JVM implementations cannot load shared libraries more than

@@ -45,7 +45,8 @@ this directory.
 Notes: 
 
 For IBM WebSphere set WAS_HOME, deploy under the JNDI name
-"RMIdocument" and run the example with: php documentClient.php 2
+"RMIdocument" and run the example with:
+php documentClient.php 2 $WAS_HOME
 
 For Oracle you need to deploy a .ear file, which can be created with
 the command: "deploytool". Make sure to require the correct

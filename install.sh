@@ -6,6 +6,11 @@ if test "X$1" = "X--verbose" || test "X$1" = "X-v" ; then
 v="-v"
 fi
 
+if ! test -d modules; then
+  echo "Nothing to install."
+  exit 10
+fi
+
 php=`php-config --php-binary`
 if test $? != 0; then php="`which php`"; fi
 if test $? != 0; then php="`which php-cgi`"; fi
@@ -78,6 +83,13 @@ fi
 
 # standalone
 /bin/rm $v -f ${ini}/java-standalone.ini 2>/dev/null
+for i in /etc/init.d /etc/rc.d/init.d /etc/rc.d; do
+    if test -f ${i}/php-java-bridge; then
+	/bin/rm $v -f ${i}/php-java-bridge
+	break;
+    fi
+done
+/bin/rm $v -f /usr/sbin/php-java-bridge
 if test -f modules/JavaBridge.jar && test "X$j2ee" = "Xno"; then
     echo ""
     echo "Do you want to install the standalone backend (deprecated)?";
@@ -109,6 +121,7 @@ if test -f modules/JavaBridge.jar && test "X$j2ee" = "Xno"; then
 fi
 
 # devel
+/bin/rm $v -f /usr/share/java/JavaBridge.jar /usr/share/java/script-api.jar /usr/share/java/php-script.jar /usr/java/packages/lib/ext/JavaBridge.jar /usr/java/packages/lib/ext/php-script.jar
 if test -f modules/php-script.jar; then
     echo ""
     echo "Do you want to install the development files (recommended)?";

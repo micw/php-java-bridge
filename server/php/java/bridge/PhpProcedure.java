@@ -38,7 +38,7 @@ public class PhpProcedure implements InvocationHandler {
      */
     protected static Object createProxy(JavaBridge bridge, String name, Map names, Class interfaces[], long object) {
 	PhpProcedure handler = new PhpProcedure(bridge, object, name, names);
-	ClassLoader loader = bridge.getClassLoader().getClassLoader();
+	ClassLoader loader = interfaces.length>0 ? interfaces[0].getClassLoader():Util.class.getClassLoader();
 	Object proxy = Proxy.newProxyInstance(loader, interfaces, handler);
 	return proxy;
     }
@@ -49,7 +49,7 @@ public class PhpProcedure implements InvocationHandler {
 	if(name!=null) {
 	    cname=name;
 	} else {
-	    cname = (String)names.get(name);
+	    cname = (String)names.get(method);
 	    if(cname==null) cname=method;
 	}
 	bridge.request.response.setResultProcedure(object, cname, method, args);

@@ -360,7 +360,9 @@ static void begin(parser_tag_t tag[3], parser_cb_t *cb){
 	  {
 		TSRMLS_FETCH();
 		assert(((*cb->env)->pos) < RECV_SIZE);
+#ifndef __MINGW32__
 		php_write((*cb->env)->recv_buf, (*cb->env)->pos TSRMLS_CC);
+#endif
 		php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Protocol violation at pos %d, please check that the backend (JavaBride.war) is deployed or please switch off the java.servlet option.\n", 88, (*cb->env)->c);
 	  }
   }
