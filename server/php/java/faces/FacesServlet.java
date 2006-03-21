@@ -1,3 +1,5 @@
+/*-*- mode: Java; tab-width:8 -*-*/
+
 /**
  * Based on JSF FacesServlet
  */
