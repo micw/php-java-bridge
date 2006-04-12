@@ -9,7 +9,6 @@ import javax.script.SimpleScriptContext;
 import php.java.bridge.JavaBridgeRunner;
 import php.java.bridge.PhpProcedureProxy;
 import php.java.bridge.Util;
-import php.java.bridge.http.ContextFactory;
 
 /**
  * This class implements a simple script context for PHP. It starts a standalone 
@@ -32,7 +31,6 @@ public class PhpScriptContext extends SimpleScriptContext implements IPhpScriptC
 	}
     }
 
-    protected ContextFactory ctx;
     private HttpProxy kont;
 	
     /**
@@ -48,22 +46,6 @@ public class PhpScriptContext extends SimpleScriptContext implements IPhpScriptC
 	return new PhpScriptWriter(System.out);
     }
 	
-    /**
-     * 
-     * @return the context factory
-     */
-    public ContextFactory getContextFactory() {
-	return ctx;
-    }
-
-    /**
-     * Set the context factory.
-     * @param ctx
-     */
-    public void setContextFactory(ContextFactory ctx) {
-        this.ctx = ctx;
-    }
-    
     /**
      * Set the php continuation
      * @param kont - The continuation.

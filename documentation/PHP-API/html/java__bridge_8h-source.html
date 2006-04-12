@@ -35,27 +35,29 @@
 00036 
 00037 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL(destructor)(zend_rsrc_list_entry *rsrc TSRMLS_DC);
 00038 
-00039 <span class="keyword">extern</span> proxyenv *EXT_GLOBAL(createSecureEnvironment) (<span class="keywordtype">int</span> peer, void (*handle_request)(proxyenv *env), <span class="keywordtype">char</span>*server, <span class="keywordtype">short</span> is_local, <span class="keyword">struct </span>sockaddr*saddr);
+00039 <span class="keyword">extern</span> proxyenv *EXT_GLOBAL(createSecureEnvironment) (<span class="keywordtype">int</span> peer, void (*handle_request)(proxyenv *env), void (*handle_cached)(proxyenv *env), <span class="keywordtype">char</span>*server, <span class="keywordtype">short</span> is_local, <span class="keyword">struct </span>sockaddr*saddr);
 00040 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL(redirect)(proxyenv*env, <span class="keywordtype">char</span>*redirect_port, <span class="keywordtype">char</span>*channel_in, <span class="keywordtype">char</span>*channel_out TSRMLS_DC);
 00041 
 00042 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL(init_channel)(TSRMLS_D);
 00043 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL(destroy_channel)(TSRMLS_D);
 00044 <span class="keyword">extern</span> <span class="keyword">const</span> <span class="keywordtype">char</span>*EXT_GLOBAL(get_channel)(TSRMLS_D);
 00045 
-00046 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL (protocol_end) (proxyenv *env);
-00047 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL (check_session) (proxyenv *env TSRMLS_DC);
-00048 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL (setResultWith_context) (<span class="keywordtype">char</span>*key, <span class="keywordtype">char</span>*val, <span class="keywordtype">char</span>*path);
-00049 <span class="keyword">extern</span> <span class="keywordtype">short</span> EXT_GLOBAL (option_set_by_user) (<span class="keywordtype">short</span> option, <span class="keywordtype">int</span> where);
-00050 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL (init_cfg) (TSRMLS_D);
-00051 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL(shutdown_library) (void);
-00052 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL(destroy_cfg) (int);
-00053 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL(sys_error)(<span class="keyword">const</span> <span class="keywordtype">char</span> *str, <span class="keywordtype">int</span> code);
-00054   
-00055 
-00056 <span class="keyword">extern</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> EXT_GLOBAL (get_mode) (void);
+00046 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL (begin_async) (proxyenv*env);
+00047 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL (end_async) (proxyenv*env);
+00048 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL (protocol_end) (proxyenv *env);
+00049 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL (check_session) (proxyenv *env TSRMLS_DC);
+00050 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL (setResultWith_context) (<span class="keywordtype">char</span>*key, <span class="keywordtype">char</span>*val, <span class="keywordtype">char</span>*path);
+00051 <span class="keyword">extern</span> <span class="keywordtype">short</span> EXT_GLOBAL (option_set_by_user) (<span class="keywordtype">short</span> option, <span class="keywordtype">int</span> where);
+00052 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL (init_cfg) (TSRMLS_D);
+00053 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL(shutdown_library) (void);
+00054 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL(destroy_cfg) (int);
+00055 <span class="keyword">extern</span> <span class="keywordtype">void</span> EXT_GLOBAL(sys_error)(<span class="keyword">const</span> <span class="keywordtype">char</span> *str, <span class="keywordtype">int</span> code);
+00056   
 00057 
-00058 <span class="preprocessor">#endif</span>
-</pre></div><hr size="1"><address style="align: right;"><small>Generated on Sun Feb 5 13:18:20 2006 for php-java-bridge by&nbsp;
+00058 <span class="keyword">extern</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> EXT_GLOBAL (get_mode) (void);
+00059 
+00060 <span class="preprocessor">#endif</span>
+</pre></div><hr size="1"><address style="align: right;"><small>Generated on Sun Apr 9 16:51:55 2006 for php-java-bridge by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.2 </small></address>
 </body>

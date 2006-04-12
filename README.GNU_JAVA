@@ -10,7 +10,7 @@
 
    phpize && ./configure && make && su -c "make install"
 
-  This creates a native, dynamic linked backend in the PHP
+  This creates a native, dynamic linked back-end in the PHP
   extension directory.  
 
   You can distribute the contents of the php-java-bridge-x.y.z/modules
@@ -29,10 +29,10 @@
           java.log_level="3"
           java.log_file="/var/log/php-java-bridge.log"
                 
-  Additional shared libraries can be copied into the php extension
+  Additional shared libraries can be copied into the PHP extension
   directory (see command "php-config --extension-dir"), additional
   java libraries (.jar files) can be installed in the sub-directory
-  lib/ of the php extension directory.
+  lib/ of the PHP extension directory.
 
 ------------------------------------
   Mailing List

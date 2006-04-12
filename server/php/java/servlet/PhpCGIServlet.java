@@ -6,7 +6,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.Socket;
 import java.util.Map;
 
 import javax.servlet.ServletConfig;
@@ -16,6 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
+import php.java.bridge.Util.Process;
 
 /**
  * Handles requests from internet clients.  <p> This servlet can handle GET/POST
@@ -23,20 +25,31 @@ import php.java.bridge.Util;
  * the CGI or FastCGI servlet.  Although the servlet to php-cgi back
  * to servlet path is quite slow and consumes two servlet instances
  * instead of only one (compared to the http frontend/j2ee backend
- * setup), it could also be useful as a replacement for a system php
+ * setup), it can be useful as a replacement for a system php
  * installation, see the README in the <code>WEB-INF/cgi</code>
  * folder.  It is currently used for our J2EE test/demo.  </p>
  * @see php.java.bridge.JavaBridge
  *  */
-public class PhpCGIServlet extends PhpJavaServlet {
-    /**
-   * 
-   */
-  private static final long serialVersionUID = 38983388211187962L;
+public class PhpCGIServlet extends FastCGIServlet {
+
+    private static final boolean USE_SH_WRAPPER = new File("/bin/sh").exists();
+    private boolean fcgiStarted = false;
+    private static final long serialVersionUID = 38983388211187962L;
     /**
      * The CGI default port
      */
     public static final int CGI_CHANNEL = 9567;
+    
+    /**
+     * This controls how many child processes the PHP process spawns.
+     */
+    private static final String PHP_FCGI_CHILDREN = "20";
+    
+    /**
+     * This controls how many requests each child process will handle before
+exitting. When one process exits, another will be created. 
+     */
+    private static final String PHP_FCGI_MAX_REQUESTS = "500";
     
     /**
      * The max. number of concurrent CGI requests. 
@@ -46,25 +59,44 @@ public class PhpCGIServlet extends PhpJavaServlet {
     public static final int CGI_MAX_REQUESTS = 50;
     private boolean override_hosts = true;
     private int cgi_max_requests = CGI_MAX_REQUESTS;
-    
-    /**@inheritDoc*/
-    public void init(ServletConfig config) throws ServletException {
-	String value;
-    	super.init(config);
-    	try {
-	    value = config.getInitParameter("override_hosts");
-	    if(value==null) value="";
-	    value = value.trim();
-	    value = value.toLowerCase();
-	    if(value.equals("off") || value.equals("false")) override_hosts=false;
-	} catch (Throwable t) {Util.printStackTrace(t);}      
-    	try {
-	    value = config.getInitParameter("max_requests");
-	    value = value.trim();
-	    cgi_max_requests=Integer.parseInt(value);
-	} catch (Throwable t) {Util.printStackTrace(t);}      
+    private String php_fcgi_children = PHP_FCGI_CHILDREN;
+    private String php_fcgi_max_requests = PHP_FCGI_MAX_REQUESTS;
 
-	Util.TCP_SOCKETNAME = String.valueOf(CGI_CHANNEL);
+    private final void runFcgi(Map env, String php) {
+	    int c;
+	    byte buf[] = new byte[CGIServlet.BUF_SIZE];
+	    try {
+	    Process proc = startFcgi(env, php);
+	    if(proc==null) return;
+	    /// make sure that the wrapper script php-fcgi.sh does not output to stdout
+	    proc.getInputStream().close();
+	    // proc.OutputStream should be closed in shutdown, see PhpCGIServlet.destroy()
+	    InputStream in = proc.getErrorStream();
+	    while((c=in.read(buf))!=-1) System.err.write(buf, 0, c);
+		if(proc!=null) try {proc.destroy(); proc=null;} catch(Throwable t) {/*ignore*/}
+	    } catch (Exception e) {Util.logDebug("Could not start FCGI server: " + e);};
+    }
+
+    /* Use the fcgi wrapper on Unix or cygwin */
+    private class FCGIProcess extends Util.Process {
+        String realPath;
+        protected FCGIProcess(String[] args, File homeDir, Map env, String realPath) throws IOException {
+             super(args, homeDir, env);
+             this.realPath = realPath;
+        }
+	protected String argsToString(String php, String[] args) {
+	    if(USE_SH_WRAPPER) {
+		StringBuffer buf = new StringBuffer("/bin/sh ");
+		buf.append(realPath);
+		buf.append("/php-fcgi.sh ");
+		buf.append(super.argsToString(php, args));
+		return buf.toString();
+	    } 
+	    return super.argsToString(php, args);
+	}
+	public void start() throws NullPointerException, IOException {
+	    super.start();
+	}
     }
     /*
      * A FCGI server is only started if the admin allows starting FCGI, 
@@ -72,10 +104,10 @@ public class PhpCGIServlet extends PhpJavaServlet {
      */
     
     /* The fast CGI Server process on this computer. Switched off per default. */
-    private static Object proc = null;
+    private FCGIProcess proc = null;
     
     /* Start a fast CGI Server process on this computer. Switched off per default. */
-    protected static synchronized final Process startFcgi(Map env, String php) throws IOException {
+    private final Process startFcgi(Map env, String php) throws IOException {
         if(proc!=null) return null;
 	    String port;
 	    if(System.getProperty("php.java.bridge.promiscuous", "false").toLowerCase().equals("true")) 
@@ -88,47 +120,70 @@ public class PhpCGIServlet extends PhpJavaServlet {
 		// via the (HTTP_)X_JAVABRIDGE_OVERRIDE_HOSTS header field
 		// later.
 		env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", "/");
-		if(System.getProperty("php.java.bridge.promiscuous", "false").toLowerCase().equals("true")) {
-			String[] args = new String[]{php, "-b", port};
-			File home = null;
-			try { home = ((new File(php)).getParentFile()); } catch (Exception e) {Util.printStackTrace(e);}
-		    proc = Util.Process.start(args, home, env);
-		} else {
-			String[] args = new String[]{null, "-b", port};
-		    proc = Util.Process.start(args, null, env);
-		}
+		String[] args = new String[]{php, "-b", port};
+		File home = null;
+		try { home = ((new File(php)).getParentFile()); } catch (Exception e) {Util.printStackTrace(e);}
+		proc = new FCGIProcess(args, home, env, context.getRealPath(cgiPathPrefix));
+		proc.start();
             return (Process)proc;
     }
     
-    /* 
-     * Shut down the FastCGI server listening on 9667. 
-     */
-    static {
-        try {
-        Runtime.getRuntime().addShutdownHook(
-		 new Thread("JavaBridgeServletShutdown") {
-		     public void run() {
-		         Class noparm[] = new Class[]{};
-		         Object noarg[] = new Object[]{};
-		         
-		         Method m;
-			 if(proc!=null) 
-			     try {
-			     m = proc.getClass().getMethod("destroy", noparm);
-			     try {m.setAccessible(true);} catch (Throwable tt) {/*ignore*/}
-			     m.invoke(proc, noarg);
-			     proc = null;
-			   } catch(Throwable t) {
-			     t.printStackTrace();
-			  }
-		     }
-		 });
-        } catch (SecurityException t) {/*ignore*/}
+    /**@inheritDoc*/
+    public void init(ServletConfig config) throws ServletException {
+	String value;
+	fcgiStarted = false;
+    	super.init(config);
+    	try {
+	    value = config.getInitParameter("override_hosts");
+	    if(value==null) value="";
+	    value = value.trim();
+	    value = value.toLowerCase();
+	    if(value.equals("off") || value.equals("false")) override_hosts=false;
+	} catch (Throwable t) {Util.printStackTrace(t);}      
+    	try {
+	    value = config.getInitParameter("max_requests");
+	    if(value!=null) {
+	        value = value.trim();
+	        cgi_max_requests=Integer.parseInt(value);
+	    }
+	} catch (Throwable t) {Util.printStackTrace(t);}      
+
+	Util.TCP_SOCKETNAME = String.valueOf(CGI_CHANNEL);
+
+	String val = null;
+	try {
+	    val = getServletConfig().getInitParameter("PHP_FCGI_CHILDREN");
+	    if(val==null) val = System.getProperty("php.java.bridge.php_fcgi_children");
+	} catch (Throwable t) {/*ignore*/}
+	if(val!=null) php_fcgi_children = val;
+	
+	val = null;
+	try {
+	    val = getServletConfig().getInitParameter("PHP_FCGI_MAX_REQUESTS");
+	    if(val==null) val = System.getProperty("php.java.bridge.php_fcgi_max_requests");	    
+	} catch (Throwable t) {/*ignore*/}
+	if(val!=null) php_fcgi_max_requests = val;
     }
 
-
     public void destroy() {
-    	super.destroy();
+      super.destroy();
+
+    	if(proc!=null) 
+    	  try {
+    	    if(USE_SH_WRAPPER) {
+    	        // if called via /bin/sh wrapper
+    	      	proc.getOutputStream().close();
+    	      	proc.waitFor();
+    	    } else {
+    	        try { proc.getOutputStream().close(); } catch (Exception ex) {/*ignore*/}
+    	        proc.destroy();
+    	    }
+    	  } catch (Throwable e) {
+    	      /*ignore*/
+    	  }
+    
+        proc = null;
+	fcgiStarted = false;
     }
     
     /**
@@ -179,10 +234,42 @@ public class PhpCGIServlet extends PhpJavaServlet {
 	    return ret;
 	        	
 	}
+	
+	private boolean canStartFCGI(String contextPath) {
+	    return canStartFCGI || (fcgiIsAvailable && (contextPath!=null && contextPath.endsWith("JavaBridge")));
+	}
 	protected String[] findCGI(String pathInfo, String webAppRootDir,
 				   String contextPath, String servletPath,
 				   String cgiPathPrefix) {
 	    String[] retval;
+	    if(!fcgiStarted && canStartFCGI(contextPath)) {
+		fcgiStarted = true;
+		try {
+		    Thread t = (new Thread("JavaBridgeFastCGIRunner") {
+			    public void run() {
+				Map env = (Map) defaultEnv.clone();
+				env.put("PHP_FCGI_CHILDREN", php_fcgi_children);
+				env.put("PHP_FCGI_MAX_REQUESTS", php_fcgi_max_requests);
+				runFcgi(env, php);
+			    }
+			});
+		    t.setDaemon(true);
+		    t.start();
+		    long T0 = System.currentTimeMillis();
+		    int count = 15;
+		    InetAddress addr = InetAddress.getByName("127.0.0.1");
+		    while(count-->0) {
+			try {
+			    Socket s = new Socket(addr, FCGI_CHANNEL);
+			    s.close();
+			    break;
+			} catch (IOException e) {/*ignore*/}
+			if(System.currentTimeMillis()-1600>T0) break;
+			Thread.sleep(100);
+		    }
+		} catch (Throwable t) {Util.printStackTrace(t);}
+	    } 
+	    
 	    if((retval=super.findCGI(pathInfo, webAppRootDir, contextPath, servletPath, cgiPathPrefix))!=null) return retval;
 	    cgiRunnerFactory = new CGIRunnerFactory();
 		
@@ -279,9 +366,13 @@ public class PhpCGIServlet extends PhpJavaServlet {
     } //class CGIRunner
     
     static short count = 0;
-    private void checkPool() throws ServletException {
-        if(count>=cgi_max_requests) throw new ServletException("out of system resources"); 
-        count++;
+    private boolean checkPool(HttpServletResponse res) throws ServletException, IOException {
+        if(count++>=cgi_max_requests) {
+            res.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Out of system resources. Try again shortly or use the Apache or IIS frontend instead.");
+            Util.logFatal("Out of system resources. Adjust max_requests or set up the Apache or IIS frontend.");
+            return false;
+        }
+        return true;
     }
     /**
      * Used when running as a cgi binary only.
@@ -292,7 +383,7 @@ public class PhpCGIServlet extends PhpJavaServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
 	throws ServletException, IOException {
     	try {
-    	    checkPool();
+    	    if(!checkPool(res)) return;
  	    super.doGet(req, res);
     	} catch (IOException e) {
     	    try {res.reset();} catch (Exception ex) {/*ignore*/}

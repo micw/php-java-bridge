@@ -6,7 +6,6 @@ import java.io.Writer;
 
 import php.java.bridge.Invocable;
 import php.java.bridge.JavaBridgeRunner;
-import php.java.bridge.http.ContextFactory;
 
 /**
  * Common methods for all PHP ScriptContexts
@@ -21,19 +20,6 @@ public interface IPhpScriptContext extends Invocable {
      * @return The writer
      */
     public Writer getWriter();
-
-    /**
-     * Set the context factory
-     * @param factory the factory
-     */
-    public void setContextFactory(ContextFactory factory);
-
-
-    /**
-     * Returns the ContextFactory.
-     * @return the context manager
-     */
-    public ContextFactory getContextFactory();
 
     /**
      * Set the php continuation

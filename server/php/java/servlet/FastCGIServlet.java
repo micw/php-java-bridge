@@ -21,9 +21,10 @@ import php.java.bridge.Util;
 
 /**
  * A CGI Servlet which connects to a FastCGI server. If allowed by the
- * administrator and if a fast cgi binary is installed in
- * DEFAULT_CGI_LOCATIONS the bridge can automatically start one FCGI
- * server on the computer. Default is off.  The admin may start a FCGI
+ * administrator and if a fast cgi binary is installed in the JavaBridge web application or
+ * DEFAULT_CGI_LOCATIONS, the bridge can automatically start one FCGI
+ * server on the computer. Default is Autostart, if the web application is JavaBridge and Off otherwise.  
+ * The admin may start a FCGI
  * server for all users with the command:<br><code> cd /tmp<br>
  * X_JAVABRIDGE_OVERRIDE_HOSTS="/" PHP_FCGI_CHILDREN="20"
  * PHP_FCGI_MAX_REQUESTS="500" /usr/bin/php-cgi -b 127.0.0.1:9667<br>
@@ -57,17 +58,6 @@ public class FastCGIServlet extends CGIServlet {
     protected static final int FCGI_GET_VALUES_RESULT = 10;
     protected static final int FCGI_UNKNOWN_TYPE      = 11;
     protected static final byte[] FCGI_EMPTY_RECORD = new byte[0];
-
-    /**
-     * This controls how many child processes the PHP process spawns.
-     */
-    private static final String PHP_FCGI_CHILDREN = "20";
-    
-    /**
-     * This controls how many requests each child process will handle before
-exitting. When one process exits, another will be created. 
-     */
-    private static final String PHP_FCGI_MAX_REQUESTS = "500";
     
     /*
      * Mask for flags component of FCGI_BeginRequestBody
@@ -87,14 +77,13 @@ exitting. When one process exits, another will be created.
     public static final int FCGI_CHANNEL = 9667;
 
     protected String php = null; 
-    private boolean fcgiIsAvailable;
-    private boolean canStartFCGI = false;
-    private String php_fcgi_children = PHP_FCGI_CHILDREN;
-    private String php_fcgi_max_requests = PHP_FCGI_MAX_REQUESTS;
+    protected boolean fcgiIsAvailable;
+    protected boolean canStartFCGI = false;
     
     protected String startFcgiMessage() {
-	String base = getServletConfig().getServletContext().getRealPath(cgiPathPrefix);
-	StringBuffer buf = new StringBuffer("./");
+	String base = context.getRealPath(cgiPathPrefix);
+	StringBuffer buf = new StringBuffer(".");
+	buf.append(File.separator);
 	buf.append("php-cgi-");
 	buf.append(Util.osArch);
 	buf.append("-");
@@ -108,41 +97,18 @@ exitting. When one process exits, another will be created.
 "X_JAVABRIDGE_OVERRIDE_HOSTS=\"/\" PHP_FCGI_CHILDREN=\"20\" PHP_FCGI_MAX_REQUESTS=\"500\" "+wrapper+" -c "+wrapper+".ini -b 127.0.0.1:9667\n\n";
         return msg;
     }
-    private boolean fcgiIsAvailable() {
-        return fcgiIsAvailable;
-    }
-    private static final void runFcgi(Map env, String php) {
-	    int c;
-	    byte buf[] = new byte[CGIServlet.BUF_SIZE];
-	    try {
-	    Process proc = PhpCGIServlet.startFcgi(env, php);
-        if(proc==null) return;
-	    proc.getOutputStream().close();
-	    proc.getInputStream().close();
-	    InputStream in = proc.getErrorStream();
-	    while((c=in.read(buf))!=-1) System.err.write(buf, 0, c);
-		if(proc!=null) try {proc.destroy(); proc=null;} catch(Throwable t) {/*ignore*/}
-	    } catch (Exception e) {Util.logDebug("Could not start FCGI server: " + e);};
-    }
+    
     protected void checkCgiBinary(ServletConfig config) {
 	String value;
-	    try {
-		    value = config.getServletContext().getRealPath(cgiPathPrefix)+File.separator+"php-cgi";
-		    if(value!=null && value.trim().length()!=0) {
-		    	if(Util.checkCgiBinary(new StringBuffer(value.trim())) != null) {
-		    	    php = value;
-		    	    canStartFCGI = false;
-		    	}
-		    }
-		}  catch (Throwable t) {Util.printStackTrace(t);}    
 	if (php==null) {
 		try {
 		    value = config.getInitParameter("php_exec");
-		    if(value!=null && value.trim().length()!=0) {
-		        File f = new File(value.trim());
-		        if(!f.isAbsolute()) value = config.getServletContext().getRealPath(cgiPathPrefix)+File.separator+value;
-		        php = value; 
+		    if(value==null || value.trim().length()!=0) value = "php-cgi";
+		    File f = new File(value);
+		    if(!f.isAbsolute()) {
+		      value = config.getServletContext().getRealPath(cgiPathPrefix)+File.separator+value;
 		    }
+		    php = value;
 		}  catch (Throwable t) {Util.printStackTrace(t);}      
 	}      
 	try {
@@ -166,36 +132,6 @@ exitting. When one process exits, another will be created.
 	super.init(config);
 
 	checkCgiBinary(config);
-	String val = null;
-	try {
-	    val = getServletConfig().getInitParameter("PHP_FCGI_CHILDREN");
-	    if(val==null) val = System.getProperty("php.java.bridge.php_fcgi_children");
-	} catch (Throwable t) {/*ignore*/}
-	if(val!=null) php_fcgi_children = val;
-	
-	val = null;
-	try {
-	    val = getServletConfig().getInitParameter("PHP_FCGI_MAX_REQUESTS");
-	    if(val==null) val = System.getProperty("php.java.bridge.php_fcgi_max_requests");	    
-	} catch (Throwable t) {/*ignore*/}
-	if(val!=null) php_fcgi_max_requests = val;
-	
-	try {
-	    if(canStartFCGI){
-		Thread t = (new Thread("JavaBridgeFastCGIRunner") {
-			public void run() {
-			    Map env = (Map) defaultEnv.clone();
-			    env.put("PHP_FCGI_CHILDREN", php_fcgi_children);
-			    env.put("PHP_FCGI_MAX_REQUESTS", php_fcgi_max_requests);
-			    runFcgi(env, php);
-			}
-		    });
-		t.setDaemon(true);
-		t.start();
-		    Thread.sleep(500);
-	    }
-	} catch (Throwable t) {Util.printStackTrace(t);}
-
     }
     public void destroy() {
     	super.destroy();
@@ -238,7 +174,7 @@ exitting. When one process exits, another will be created.
 				   String contextPath, String servletPath,
 				   String cgiPathPrefix) {
 
-	    if(!fcgiIsAvailable()) return null;
+	    if(!fcgiIsAvailable) return null;
 	    
 	    try {
 		fastCGISocket = new Socket(InetAddress.getByName("127.0.0.1"), FCGI_CHANNEL);

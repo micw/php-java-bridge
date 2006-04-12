@@ -19,7 +19,6 @@ import javax.script.SimpleBindings;
 
 import php.java.bridge.PhpProcedure;
 import php.java.bridge.PhpProcedureProxy;
-import php.java.bridge.SessionFactory;
 import php.java.bridge.Util;
 import php.java.bridge.http.ContextFactory;
 
@@ -135,8 +134,8 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
         ContextFactory ctx;
         IPhpScriptContext context = (IPhpScriptContext)getContext(); 
 	env.clear();
-	
-	context.setContextFactory(ctx=PhpScriptContextFactory.addNew((ScriptContext)context));
+
+	ctx = PhpScriptContextFactory.addNew((ScriptContext)context);
     	
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */
@@ -174,8 +173,7 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
 	
     protected HttpProxy getContinuation(Reader reader, ScriptContext context) {
     	IPhpScriptContext phpScriptContext = (IPhpScriptContext)context;
-    	SessionFactory ctx = phpScriptContext.getContextFactory();
-    	HttpProxy kont = new HttpProxy(reader, env, ctx, ((PhpScriptWriter)(context.getWriter())).getOutputStream()); 
+    	HttpProxy kont = new HttpProxy(reader, env, ((PhpScriptWriter)(context.getWriter())).getOutputStream()); 
      	phpScriptContext.setContinuation(kont);
 	return kont;
     }

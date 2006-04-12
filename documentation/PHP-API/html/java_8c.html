@@ -62,72 +62,78 @@ It contains the global structures and the callbacks required for zend engine 1 a
 <tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_FUNCTION&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a38">reset</a> ()</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: void java_reset(void);.  <a href="#a38"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_FUNCTION&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a42">get_values</a> ()</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_FUNCTION&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a39">begin_document</a> ()</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: array java_values(object ob) or array java_get_values(object ob).  <a href="#a42"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_FUNCTION&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a43">get_closure</a> ()</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: void java_begin_document(void).  <a href="#a39"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_FUNCTION&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a40">end_document</a> ()</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: object java_closure([object],[array|string],[object]) or object java_get_closure([object],[array|string],[object]).  <a href="#a43"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a44" doxytag="java.c::exception_handler"></a>
-PHP_FUNCTION&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a44">exception_handler</a> ()</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: void java_end_document(void).  <a href="#a40"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_FUNCTION&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a44">get_values</a> ()</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: mixed java_values(val) or mixed java_get_values(object ob) Evaluates the object and fetches its content, if possible.  <a href="#a44"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_FUNCTION&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a45">get_closure</a> ()</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: object java_closure([object],[array|string],[object]) or object java_get_closure([object],[array|string],[object]).  <a href="#a45"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a46" doxytag="java.c::exception_handler"></a>
+PHP_FUNCTION&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a46">exception_handler</a> ()</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Only for internal use. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a49" doxytag="java.c::call_with_exception_handler"></a>
-PHP_FUNCTION&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a49">call_with_exception_handler</a> ()</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a51" doxytag="java.c::call_with_exception_handler"></a>
+PHP_FUNCTION&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a51">call_with_exception_handler</a> ()</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Only for internal use. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_FUNCTION&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a50">inspect</a> ()</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_FUNCTION&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a52">inspect</a> ()</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: void java_inspect(object);.  <a href="#a50"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_FUNCTION&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a63">construct</a> ()</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: void java_inspect(object);.  <a href="#a52"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_FUNCTION&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a65">construct</a> ()</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: object Java::Java (string classname [, string argument1, . . . ]) or object Java::java_exception (string classname [, string argument1, . . . ]) or object Java::JavaException (string classname [, string argument1, . . . ]);.  <a href="#a63"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_FUNCTION&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a64">construct_class</a> ()</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: object Java::Java (string classname [, string argument1, . . . ]) or object Java::java_exception (string classname [, string argument1, . . . ]) or object Java::JavaException (string classname [, string argument1, . . . ]);.  <a href="#a65"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_FUNCTION&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a66">construct_class</a> ()</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: object Java::JavaClass ( string classname) or object java::java_class ( string classname);.  <a href="#a64"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_METHOD&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a65">__call</a> ()</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: object Java::JavaClass ( string classname) or object java::java_class ( string classname);.  <a href="#a66"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_METHOD&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a67">__call</a> ()</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: mixed <a class="el" href="java_8c.html#a65">Java::__call</a> ( string procedure_name [, array arguments ]).  <a href="#a65"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_METHOD&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a66">__tostring</a> ()</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: mixed <a class="el" href="java_8c.html#a67">Java::__call</a> ( string procedure_name [, array arguments ]).  <a href="#a67"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_METHOD&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a68">__tostring</a> ()</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: object Java::__toString (void).  <a href="#a66"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_METHOD&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a67">__set</a> ()</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: object Java::__toString (void).  <a href="#a68"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_METHOD&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a69">__set</a> ()</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: void Java::__set(object, object).  <a href="#a67"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_METHOD&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a68">__destruct</a> ()</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: void Java::__set(object, object).  <a href="#a69"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_METHOD&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a70">__destruct</a> ()</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: void <a class="el" href="java_8c.html#a68">Java::__destruct()</a>.  <a href="#a68"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_METHOD&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a69">__get</a> ()</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: void <a class="el" href="java_8c.html#a70">Java::__destruct()</a>.  <a href="#a70"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_METHOD&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a71">__get</a> ()</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: object Java::__get(object).  <a href="#a69"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_METHOD&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a70">__sleep</a> ()</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: object Java::__get(object).  <a href="#a71"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_METHOD&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a72">__sleep</a> ()</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: string <a class="el" href="java_8c.html#a70">Java::__sleep()</a>.  <a href="#a70"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_METHOD&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a71">__wakeup</a> ()</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: string <a class="el" href="java_8c.html#a72">Java::__sleep()</a>.  <a href="#a72"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_METHOD&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a73">__wakeup</a> ()</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: string <a class="el" href="java_8c.html#a71">Java::__wakeup()</a>.  <a href="#a71"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_METHOD&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a72">offsetExists</a> ()</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: string <a class="el" href="java_8c.html#a73">Java::__wakeup()</a>.  <a href="#a73"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_METHOD&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a74">offsetExists</a> ()</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: bool <a class="el" href="java_8c.html#a72">Java::offsetExists()</a>.  <a href="#a72"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_METHOD&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a73">offsetGet</a> ()</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: bool <a class="el" href="java_8c.html#a74">Java::offsetExists()</a>.  <a href="#a74"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_METHOD&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a75">offsetGet</a> ()</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: object <a class="el" href="java_8c.html#a73">Java::offsetGet()</a>.  <a href="#a73"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_METHOD&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a74">offsetSet</a> ()</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: object <a class="el" href="java_8c.html#a75">Java::offsetGet()</a>.  <a href="#a75"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_METHOD&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a76">offsetSet</a> ()</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: void Java::offsetSet(object, object);.  <a href="#a74"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_METHOD&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a75">offsetUnset</a> ()</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: void Java::offsetSet(object, object);.  <a href="#a76"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">PHP_METHOD&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a77">offsetUnset</a> ()</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: string <a class="el" href="java_8c.html#a75">Java::offsetUnset()</a>.  <a href="#a75"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a89">PHP_MINIT_FUNCTION</a> (EXT)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Proto: string <a class="el" href="java_8c.html#a77">Java::offsetUnset()</a>.  <a href="#a77"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a91">PHP_MINIT_FUNCTION</a> (EXT)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Called when the module is initialized.  <a href="#a89"></a><br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a90" doxytag="java.c::PHP_MINFO_FUNCTION"></a>
-&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a90">PHP_MINFO_FUNCTION</a> (EXT)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Called when the module is initialized.  <a href="#a91"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="anchor" name="a92" doxytag="java.c::PHP_MINFO_FUNCTION"></a>
+&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a92">PHP_MINFO_FUNCTION</a> (EXT)</td></tr>
 
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Displays the module info. <br></td></tr>
-<tr><td class="memItemLeft" nowrap align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a91">PHP_MSHUTDOWN_FUNCTION</a> (EXT)</td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a93">PHP_MSHUTDOWN_FUNCTION</a> (EXT)</td></tr>
 
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Called when the module terminates.  <a href="#a91"></a><br></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Called when the module terminates.  <a href="#a93"></a><br></td></tr>
 <tr><td colspan="2"><br><h2>Variables</h2></td></tr>
 <tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="el" href="structcfg.html">cfg</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="java_8c.html#a1">cfg</a> = 0</td></tr>
 
@@ -177,7 +183,7 @@ zend_object_handlers&nbsp;</td><td class="memItemRight" valign="bottom"><a class
 
 </table>
 <hr><h2>Function Documentation</h2>
-<a class="anchor" name="a65" doxytag="java.c::__call"></a><p>
+<a class="anchor" name="a67" doxytag="java.c::__call"></a><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -201,7 +207,7 @@ zend_object_handlers&nbsp;</td><td class="memItemRight" valign="bottom"><a class
     <td>
 
 <p>
-Proto: mixed <a class="el" href="java_8c.html#a65">Java::__call</a> ( string procedure_name [, array arguments ]). 
+Proto: mixed <a class="el" href="java_8c.html#a67">Java::__call</a> ( string procedure_name [, array arguments ]). 
 <p>
 Calls a Java procedure Example: <div class="fragment"><pre class="fragment"><span class="preprocessor"> # The JPersistenceAdapter makes it possible to serialize java values.</span>
 <span class="preprocessor"></span><span class="preprocessor"> #</span>
@@ -221,7 +227,7 @@ Calls a Java procedure Example: <div class="fragment"><pre class="fragment"><spa
     $this-&gt;java=$java; 
     $this-&gt;serialID; 
   }
-  function <a class="code" href="java_8c.html#a70">__sleep</a>() {
+  function <a class="code" href="java_8c.html#a72">__sleep</a>() {
     $buf = <span class="keyword">new</span> Java(<span class="stringliteral">"java.io.ByteArrayOutputStream"</span>);
     $out = <span class="keyword">new</span> Java(<span class="stringliteral">"java.io.ObjectOutputStream"</span>, $buf);
     $out-&gt;writeObject($this-&gt;java);
@@ -229,7 +235,7 @@ Calls a Java procedure Example: <div class="fragment"><pre class="fragment"><spa
     $this-&gt;serialID = base64_encode((string)$buf-&gt;toByteArray());
     <span class="keywordflow">return</span> array(<span class="stringliteral">"serialID"</span>);
   }
-  function <a class="code" href="java_8c.html#a71">__wakeup</a>() {
+  function <a class="code" href="java_8c.html#a73">__wakeup</a>() {
     $buf = <span class="keyword">new</span> Java(<span class="stringliteral">"java.io.ByteArrayInputStream"</span>,base64_decode($this-&gt;serialID));
     $in = <span class="keyword">new</span> Java(<span class="stringliteral">"java.io.ObjectInputStream"</span>, $buf);
     $this-&gt;java = $in-&gt;readObject();
@@ -238,21 +244,21 @@ Calls a Java procedure Example: <div class="fragment"><pre class="fragment"><spa
   function getJava() {
     <span class="keywordflow">return</span> $this-&gt;java;
   }
-  function <a class="code" href="java_8c.html#a68">__destruct</a>() { 
+  function <a class="code" href="java_8c.html#a70">__destruct</a>() { 
     <span class="keywordflow">if</span>($this-&gt;java) <span class="keywordflow">return</span> $this-&gt;java-&gt;__destruct(); 
   }
  }
 
  <span class="keyword">class </span>JPersistenceAdapter <span class="keyword">extends</span> JPersistenceProxy {
-  function <a class="code" href="java_8c.html#a69">__get</a>($arg)       { <span class="keywordflow">if</span>($this-&gt;java) <span class="keywordflow">return</span> $this-&gt;java-&gt;__get($arg); }
+  function <a class="code" href="java_8c.html#a71">__get</a>($arg)       { <span class="keywordflow">if</span>($this-&gt;java) <span class="keywordflow">return</span> $this-&gt;java-&gt;__get($arg); }
   function __put($key, $val) { <span class="keywordflow">if</span>($this-&gt;java) <span class="keywordflow">return</span> $this-&gt;java-&gt;__put($key, $val); }
-  function <a class="code" href="java_8c.html#a65">__call</a>($m, $a)    { <span class="keywordflow">if</span>($this-&gt;java) <span class="keywordflow">return</span> $this-&gt;java-&gt;__call($m,$a); }
+  function <a class="code" href="java_8c.html#a67">__call</a>($m, $a)    { <span class="keywordflow">if</span>($this-&gt;java) <span class="keywordflow">return</span> $this-&gt;java-&gt;__call($m,$a); }
   function __toString()      { <span class="keywordflow">if</span>($this-&gt;java) <span class="keywordflow">return</span> $this-&gt;java-&gt;__toString(); }
  }
 </pre></div>     </td>
   </tr>
 </table>
-<a class="anchor" name="a68" doxytag="java.c::__destruct"></a><p>
+<a class="anchor" name="a70" doxytag="java.c::__destruct"></a><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -276,7 +282,7 @@ Calls a Java procedure Example: <div class="fragment"><pre class="fragment"><spa
     <td>
 
 <p>
-Proto: void <a class="el" href="java_8c.html#a68">Java::__destruct()</a>. 
+Proto: void <a class="el" href="java_8c.html#a70">Java::__destruct()</a>. 
 <p>
 Example: <div class="fragment"><pre class="fragment"><span class="preprocessor"> # The JSessionAdapter makes it possible to store java values into the</span>
 <span class="preprocessor"></span><span class="preprocessor"> # $_SESSION variable. </span>
@@ -295,33 +301,33 @@ Example: <div class="fragment"><pre class="fragment"><span class="preprocessor">
     $this-&gt;java=$java; 
     $this-&gt;serialID = uniqid(<span class="stringliteral">""</span>); 
   }
-  function <a class="code" href="java_8c.html#a70">__sleep</a>() {
+  function <a class="code" href="java_8c.html#a72">__sleep</a>() {
     $session=java_get_session(<span class="stringliteral">"PHPSESSION"</span>.session_id());
     $session-&gt;put($this-&gt;serialID, $this-&gt;java);
     <span class="keywordflow">return</span> array(<span class="stringliteral">"serialID"</span>);
   }
-  function <a class="code" href="java_8c.html#a71">__wakeup</a>() {
+  function <a class="code" href="java_8c.html#a73">__wakeup</a>() {
     $session=java_get_session(<span class="stringliteral">"PHPSESSION"</span>.session_id());
     $this-&gt;java = $session-&gt;get($this-&gt;serialID);
   }
   function getJava() {
     <span class="keywordflow">return</span> $this-&gt;java;
   }
-  function <a class="code" href="java_8c.html#a68">__destruct</a>() { 
+  function <a class="code" href="java_8c.html#a70">__destruct</a>() { 
     <span class="keywordflow">if</span>($this-&gt;java) <span class="keywordflow">return</span> $this-&gt;java-&gt;__destruct(); 
   }
  }
 
  <span class="keyword">class </span>JSessionAdapter <span class="keyword">extends</span> JSessionProxy {
-  function <a class="code" href="java_8c.html#a69">__get</a>($arg)       { <span class="keywordflow">if</span>($this-&gt;java) <span class="keywordflow">return</span> $this-&gt;java-&gt;__get($arg); }
+  function <a class="code" href="java_8c.html#a71">__get</a>($arg)       { <span class="keywordflow">if</span>($this-&gt;java) <span class="keywordflow">return</span> $this-&gt;java-&gt;__get($arg); }
   function __put($key, $val) { <span class="keywordflow">if</span>($this-&gt;java) <span class="keywordflow">return</span> $this-&gt;java-&gt;__put($key, $val); }
-  function <a class="code" href="java_8c.html#a65">__call</a>($m, $a)    { <span class="keywordflow">if</span>($this-&gt;java) <span class="keywordflow">return</span> $this-&gt;java-&gt;__call($m,$a); }
+  function <a class="code" href="java_8c.html#a67">__call</a>($m, $a)    { <span class="keywordflow">if</span>($this-&gt;java) <span class="keywordflow">return</span> $this-&gt;java-&gt;__call($m,$a); }
   function __toString()      { <span class="keywordflow">if</span>($this-&gt;java) <span class="keywordflow">return</span> $this-&gt;java-&gt;__toString(); }
  }
 </pre></div>     </td>
   </tr>
 </table>
-<a class="anchor" name="a69" doxytag="java.c::__get"></a><p>
+<a class="anchor" name="a71" doxytag="java.c::__get"></a><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -352,7 +358,7 @@ The getter. Example: <div class="fragment"><pre class="fragment"> echo (string) 
 </pre></div>.     </td>
   </tr>
 </table>
-<a class="anchor" name="a67" doxytag="java.c::__set"></a><p>
+<a class="anchor" name="a69" doxytag="java.c::__set"></a><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -384,7 +390,7 @@ Example: <div class="fragment"><pre class="fragment"> $obj-&gt;property = <span 
 </pre></div>     </td>
   </tr>
 </table>
-<a class="anchor" name="a70" doxytag="java.c::__sleep"></a><p>
+<a class="anchor" name="a72" doxytag="java.c::__sleep"></a><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -408,7 +414,7 @@ Example: <div class="fragment"><pre class="fragment"> $obj-&gt;property = <span 
     <td>
 
 <p>
-Proto: string <a class="el" href="java_8c.html#a70">Java::__sleep()</a>. 
+Proto: string <a class="el" href="java_8c.html#a72">Java::__sleep()</a>. 
 <p>
 Serializes the object. Example: <div class="fragment"><pre class="fragment">   $vector=<span class="keyword">new</span> JPersistenceAdapter(<span class="keyword">new</span> Java(<span class="stringliteral">"java.lang.StringBuffer"</span>, <span class="stringliteral">"hello"</span>));
   $v=array (
@@ -422,7 +428,7 @@ Serializes the object. Example: <div class="fragment"><pre class="fragment">   $
 </pre></div>     </td>
   </tr>
 </table>
-<a class="anchor" name="a66" doxytag="java.c::__tostring"></a><p>
+<a class="anchor" name="a68" doxytag="java.c::__tostring"></a><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -450,12 +456,12 @@ Proto: object Java::__toString (void).
 <p>
 Displays the java object as a string. Note: it doesn't cast the object to a string, thus echo $ob displays a string representation of $ob, e.g.: <div class="fragment"><pre class="fragment"> [o(String)<span class="stringliteral">"hello"</span>]
 </pre></div><p>
-Use a string cast if you want to display the java string as a php string, e.g.: <div class="fragment"><pre class="fragment"> echo (string)$string; <span class="comment">// explicit cast</span>
+Use a string cast or java_values(), if you want to display the java string as a php string, e.g.: <div class="fragment"><pre class="fragment"> echo (string)$string; <span class="comment">// explicit cast</span>
  echo "$string"; <span class="comment">// implicit cast</span>
 </pre></div>     </td>
   </tr>
 </table>
-<a class="anchor" name="a71" doxytag="java.c::__wakeup"></a><p>
+<a class="anchor" name="a73" doxytag="java.c::__wakeup"></a><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -479,7 +485,7 @@ Use a string cast if you want to display the java string as a php string, e.g.: 
     <td>
 
 <p>
-Proto: string <a class="el" href="java_8c.html#a71">Java::__wakeup()</a>. 
+Proto: string <a class="el" href="java_8c.html#a73">Java::__wakeup()</a>. 
 <p>
 Deserializes the object. Example: <div class="fragment"><pre class="fragment">  <span class="keywordflow">try</span> {
     $v=unserialize($<span class="keywordtype">id</span>);
@@ -489,7 +495,36 @@ Deserializes the object. Example: <div class="fragment"><pre class="fragment">  
 </pre></div>     </td>
   </tr>
 </table>
-<a class="anchor" name="a63" doxytag="java.c::construct"></a><p>
+<a class="anchor" name="a39" doxytag="java.c::begin_document"></a><p>
+<table class="mdTable" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top">PHP_FUNCTION begin_document           </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing="5" cellpadding="0" border="0">
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Proto: void java_begin_document(void). 
+<p>
+Enters stream mode (asynchronuous protocol). The statements are sent to the backend in one XML stream.     </td>
+  </tr>
+</table>
+<a class="anchor" name="a65" doxytag="java.c::construct"></a><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -522,7 +557,7 @@ Java constructor. Example: <div class="fragment"><pre class="fragment"> $object 
 </pre></div>     </td>
   </tr>
 </table>
-<a class="anchor" name="a64" doxytag="java.c::construct_class"></a><p>
+<a class="anchor" name="a66" doxytag="java.c::construct_class"></a><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -555,7 +590,36 @@ References a java class. Example: <div class="fragment"><pre class="fragment"> $
 </pre></div>     </td>
   </tr>
 </table>
-<a class="anchor" name="a43" doxytag="java.c::get_closure"></a><p>
+<a class="anchor" name="a40" doxytag="java.c::end_document"></a><p>
+<table class="mdTable" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top">PHP_FUNCTION end_document           </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing="5" cellpadding="0" border="0">
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Proto: void java_end_document(void). 
+<p>
+Ends stream mode.     </td>
+  </tr>
+</table>
+<a class="anchor" name="a45" doxytag="java.c::get_closure"></a><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -626,9 +690,9 @@ When an array of java interfaces is supplied as a third argument, the environmen
 Proto: object java_context(void) or object java_get_context(void). 
 <p>
 Returns the jsr223 script context handle.<p>
-Example which closes over the current environment and pass it back to java: <div class="fragment"><pre class="fragment"> java_get_context()-&gt;call(java_closure()) || die <span class="stringliteral">"Script should be called from java"</span>;
+Example which closes over the current environment and passes it back to java: <div class="fragment"><pre class="fragment"> java_get_context()-&gt;call(java_closure()) || die <span class="stringliteral">"Script should be called from java"</span>;
 </pre></div><p>
-It is possible to access implicit web objects (the session, the application store etc.) from the context. Please see the JSR223 documentation or for details. Example: <div class="fragment"><pre class="fragment"> java_get_context()-&gt;getHttpServletRequest();
+It is possible to access implicit web objects (the session, the application store etc.) from the context. Please see the JSR223 documentation for details. Example: <div class="fragment"><pre class="fragment"> java_get_context()-&gt;getHttpServletRequest();
 </pre></div> <dl compact><dt><b>See also:</b></dt><dd><a class="el" href="java_8c.html#a34">get_session()</a> </dd></dl>
     </td>
   </tr>
@@ -659,7 +723,7 @@ It is possible to access implicit web objects (the session, the application stor
 <p>
 Proto: string java_server_name(void) or string java_get_server_name(void). 
 <p>
-Returns the name of the backend or null if the backend is not running. Example: <div class="fragment"><pre class="fragment"> $backend = java_get_server_name();
+Returns the name of the backend or null, if the backend is not running. Example: <div class="fragment"><pre class="fragment"> $backend = java_get_server_name();
  <span class="keywordflow">if</span>(!$backend) wakeup_administrator(<span class="stringliteral">"backend not running"</span>);
  echo <span class="stringliteral">"Connected to the backend: $backend\n"</span>;
 </pre></div>     </td>
@@ -695,14 +759,14 @@ Return a session handle. When java_session() is called without arguments, the se
  [...]
 </pre></div> The java components (jsp, servlets) can retrieve the value, for example with: <div class="fragment"><pre class="fragment"> getSession().getAttribute(<span class="stringliteral">"key"</span>); 
 </pre></div><p>
-When java_get_session() is called with a session handle, the session is not shared with java and no cookies are set. Example: <div class="fragment"><pre class="fragment"> java_get_session(<span class="stringliteral">"myPrivateApplicationStore"</span>)-&gt;put(<span class="stringliteral">"key"</span>, <span class="stringliteral">"value"</span>);
+When java_get_session() is called with a session handle, the session is not shared with java and no cookies are set. Example: <div class="fragment"><pre class="fragment"> java_get_session(<span class="stringliteral">"myPublicApplicationStore"</span>)-&gt;put(<span class="stringliteral">"key"</span>, <span class="stringliteral">"value"</span>);
 </pre></div><p>
 When java_get_session() is called with a second argument set to true, a new session is allocated, the old session is destroyed if necessary. Example: <div class="fragment"><pre class="fragment"> java_get_session(null, <span class="keyword">true</span>)-&gt;put(<span class="stringliteral">"key"</span>, <span class="stringliteral">"val"</span>);
 </pre></div>. <dl compact><dt><b>See also:</b></dt><dd><a class="el" href="java_8c.html#a36">get_context()</a> </dd></dl>
     </td>
   </tr>
 </table>
-<a class="anchor" name="a42" doxytag="java.c::get_values"></a><p>
+<a class="anchor" name="a44" doxytag="java.c::get_values"></a><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -726,13 +790,28 @@ When java_get_session() is called with a second argument set to true, a new sess
     <td>
 
 <p>
-Proto: array java_values(object ob) or array java_get_values(object ob). 
+Proto: mixed java_values(val) or mixed java_get_values(object ob) Evaluates the object and fetches its content, if possible. 
 <p>
-Fetches the object into a php array. ob must be a java array or it must implement java.util.Map or java.util.Collection. Please make sure that the java array, Map or Collection does not exceed php's memory limit. Example: <div class="fragment"><pre class="fragment"> print_r(java_get_values($sys-&gt;getProperties()));
+A java array, Map or Collection object is returned as a php array. An array, Map or Collection proxy is returned as a java array, Map or Collection object, and a null proxy is returned as null. All values of java types for which a primitive php type exists are returned as php values. Everything else is returned unevaluated. Please make sure that the values do not not exceed php's memory limit. Example:<p>
+<div class="fragment"><pre class="fragment"> $str = <span class="keyword">new</span> java(<span class="stringliteral">"java.lang.String"</span>, <span class="stringliteral">"hello"</span>);
+ echo $str;
+ =&gt; [o(String):<span class="stringliteral">"hello"</span>]
+ echo java_values($str);
+ =&gt; hello
+ $chr = $str-&gt;toCharArray();
+ echo $chr;
+ =&gt; [o(array_of-C):<span class="stringliteral">"[C@1b10d42"</span>]
+ $ar = java_values($chr);
+ print $ar;
+ =&gt; Array
+ print $ar[0];
+ =&gt; [o(Character):<span class="stringliteral">"h"</span>]
+ print java_values($ar[0]);
+ =&gt; h
 </pre></div>     </td>
   </tr>
 </table>
-<a class="anchor" name="a50" doxytag="java.c::inspect"></a><p>
+<a class="anchor" name="a52" doxytag="java.c::inspect"></a><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -852,7 +931,7 @@ Get last Java exception <dl compact><dt><b><a class="el" href="deprecated.html#_
     </td>
   </tr>
 </table>
-<a class="anchor" name="a72" doxytag="java.c::offsetExists"></a><p>
+<a class="anchor" name="a74" doxytag="java.c::offsetExists"></a><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -876,7 +955,7 @@ Get last Java exception <dl compact><dt><b><a class="el" href="deprecated.html#_
     <td>
 
 <p>
-Proto: bool <a class="el" href="java_8c.html#a72">Java::offsetExists()</a>. 
+Proto: bool <a class="el" href="java_8c.html#a74">Java::offsetExists()</a>. 
 <p>
 Checks if an object exists at the given position. Example: <div class="fragment"><pre class="fragment"> $System = <span class="keyword">new</span> Java(<span class="stringliteral">"java.lang.System"</span>);
  $props = $System-&gt;getProperties();
@@ -884,7 +963,7 @@ Checks if an object exists at the given position. Example: <div class="fragment"
 </pre></div>     </td>
   </tr>
 </table>
-<a class="anchor" name="a73" doxytag="java.c::offsetGet"></a><p>
+<a class="anchor" name="a75" doxytag="java.c::offsetGet"></a><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -908,7 +987,7 @@ Checks if an object exists at the given position. Example: <div class="fragment"
     <td>
 
 <p>
-Proto: object <a class="el" href="java_8c.html#a73">Java::offsetGet()</a>. 
+Proto: object <a class="el" href="java_8c.html#a75">Java::offsetGet()</a>. 
 <p>
 Get the object at a given position.<p>
 Example: <div class="fragment"><pre class="fragment"> $System = <span class="keyword">new</span> Java(<span class="stringliteral">"java.lang.System"</span>);
@@ -917,7 +996,7 @@ Example: <div class="fragment"><pre class="fragment"> $System = <span class="key
 </pre></div>     </td>
   </tr>
 </table>
-<a class="anchor" name="a74" doxytag="java.c::offsetSet"></a><p>
+<a class="anchor" name="a76" doxytag="java.c::offsetSet"></a><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -955,7 +1034,7 @@ Set the object at a given position. Example: <div class="fragment"><pre class="f
 </pre></div>     </td>
   </tr>
 </table>
-<a class="anchor" name="a75" doxytag="java.c::offsetUnset"></a><p>
+<a class="anchor" name="a77" doxytag="java.c::offsetUnset"></a><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -979,12 +1058,12 @@ Set the object at a given position. Example: <div class="fragment"><pre class="f
     <td>
 
 <p>
-Proto: string <a class="el" href="java_8c.html#a75">Java::offsetUnset()</a>. 
+Proto: string <a class="el" href="java_8c.html#a77">Java::offsetUnset()</a>. 
 <p>
 Remove the entry at a given position. Used internally.     </td>
   </tr>
 </table>
-<a class="anchor" name="a89" doxytag="java.c::PHP_MINIT_FUNCTION"></a><p>
+<a class="anchor" name="a91" doxytag="java.c::PHP_MINIT_FUNCTION"></a><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -1014,7 +1093,7 @@ Called when the module is initialized.
 Creates the Java and JavaClass structures and tries to start the backend if java.socketname, java.servlet or java.hosts are not set. The backend is not started if the environment variable X_JAVABRIDGE_OVERRIDE_HOSTS exists and contains either "/" or "host:port//context/servlet". When running as a Apache/IIS module or Fast CGI, this procedure is called only once. When running as a CGI binary, it is called whenever the CGI binary is called.     </td>
   </tr>
 </table>
-<a class="anchor" name="a91" doxytag="java.c::PHP_MSHUTDOWN_FUNCTION"></a><p>
+<a class="anchor" name="a93" doxytag="java.c::PHP_MSHUTDOWN_FUNCTION"></a><p>
 <table class="mdTable" cellpadding="2" cellspacing="0">
   <tr>
     <td class="mdRow">
@@ -1163,7 +1242,7 @@ Note that the classloader isolates the loaded libraries: When you call java_requ
 <p>
 Proto: void java_reset(void);. 
 <p>
-Tries to reset the backent to its initial state. If the call succeeds, all session handles and caches are gone.<p>
+Tries to reset the backent to its initial state. If the call succeeds, all caches are gone.<p>
 Example: <div class="fragment"><pre class="fragment"> echo <span class="stringliteral">"Resetting backend to initial state\n"</span>;
  java_reset();
 </pre></div><p>
@@ -1247,7 +1326,7 @@ This structure is shared by all php instances     </td>
 
 <p>
 <b>Initial value:</b><div class="fragment"><pre class="fragment"> {
-  ZEND_FENTRY(__construct, EXT_FN( <a class="code" href="java_8c.html#a63">construct</a> ), NULL, 0)
+  ZEND_FENTRY(__construct, EXT_FN( <a class="code" href="java_8c.html#a65">construct</a> ), NULL, 0)
 
 
 
@@ -1296,7 +1375,7 @@ This structure is shared by all php instances     </td>
 </pre></div>    </td>
   </tr>
 </table>
-<hr size="1"><address style="align: right;"><small>Generated on Sun Feb 5 13:18:20 2006 for php-java-bridge by&nbsp;
+<hr size="1"><address style="align: right;"><small>Generated on Sun Apr 9 16:51:55 2006 for php-java-bridge by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.4.2 </small></address>
 </body>

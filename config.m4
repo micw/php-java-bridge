@@ -85,7 +85,7 @@ if test "$PHP_BACKEND" = "yes" ; then
         else
 	    AC_CONFIG_SUBDIRS(server)
         fi
-        for i in ${ext_builddir}/server/configure.gnu php-java-bridge.fc update_policy.sh; do
+        for i in ${ext_builddir}/server/configure.gnu security/php-java-bridge.fc security/update_policy.sh; do
           sed "s*@EXTENSION_DIR@*${EXTENSION_DIR}*
                s*@phplibdir@*`pwd`/modules*" \
             <${i}.in >${i}

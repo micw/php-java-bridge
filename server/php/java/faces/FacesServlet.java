@@ -8,6 +8,7 @@ package php.java.faces;
 import java.io.IOException;
 
 import javax.faces.FactoryFinder;
+import javax.faces.application.ApplicationFactory;
 import javax.faces.context.FacesContext;
 import javax.faces.context.FacesContextFactory;
 import javax.faces.lifecycle.Lifecycle;
@@ -60,6 +61,11 @@ public final class FacesServlet
             String lifecycleId = servletConfig.getServletContext().getInitParameter("javax.faces.LIFECYCLE_ID");
             if(lifecycleId == null) lifecycleId = "DEFAULT";
             lifecycle = lifecycleFactory.getLifecycle(lifecycleId);
+            ApplicationFactory f = new PhpFacesApplicationFactory((ApplicationFactory)FactoryFinder.getFactory("javax.faces.application.ApplicationFactory"));
+            f.getApplication();
+        }
+        catch(NullPointerException kaputt) {
+            servletConfig.getServletContext().log("ERROR: Your servlet engine does not read META-INF/*.tld from the jsf-impl.jar. Please upgrade your servlet engine or use tomcat or an application server instead. ", kaputt);            
         }
         catch(Throwable e)
         {

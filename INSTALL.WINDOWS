@@ -10,7 +10,7 @@ Installing the PHP/Java Bridge on Windows
 
 
 If the above test succeeded (or if you have skipped the test because
-you don't want to use a J2EE server), install a HTTP server, php, the
+you don't want to use a J2EE server), install a HTTP server, PHP, the
 php.ini, the php java extension "php_java.dll" and your java libraries
 (.jar files):
 
@@ -24,7 +24,7 @@ php.ini, the php java extension "php_java.dll" and your java libraries
     cd php5
     jar xvf c:\php-5.1.x-Win32.zip
 
-* Install php as an IIS or Apache module. For example add these lines
+* Install PHP as an IIS or Apache module. For example add these lines
   to the end of your Apache2 httpd.conf file:
 
     LoadModule php5_module "c:/php5/php5apache2.dll"
@@ -60,8 +60,8 @@ php.ini, the php java extension "php_java.dll" and your java libraries
     java.log_level   = 2
 
   If you set the java.socketname, you must double-click on
-  JavaBridge.jar to start the standalone backend once. If you leave it
-  off, the backend automatically starts the default javaw or the
+  JavaBridge.jar to start the standalone back-end once. If you leave it
+  off, the back-end automatically starts the default javaw or the
   specified "java.java" program when your HTTP server starts.
 
 * Copy the test.php (from the JavaBridge.war) to your web server
@@ -83,7 +83,7 @@ php.ini, the php java extension "php_java.dll" and your java libraries
 
     [java]
     java.hosts      = 127.0.0.1:8080 ;or 8888 for Oracle, 9080 for WebSphere
-    java.servlet    = MultiUser
+    java.servlet    = User
     java.log_level  = 3
 
   Restart the web server and check "java status" and "java server":
@@ -96,7 +96,7 @@ php.ini, the php java extension "php_java.dll" and your java libraries
 
 
 * On production systems set the following flags in your php ini file
-  so that the backend can generate standard error pages.
+  so that the back-end can generate standard error pages.
 
     log_errors     = On
     display_errors = Off
@@ -109,7 +109,7 @@ php.ini, the php java extension "php_java.dll" and your java libraries
 
   If your php.ini does not have a java.log_level entry, the bridge
   uses the log level supplied when it was started. For example the
-  following command starts the backend with debug output enabled:
+  following command starts the back-end with debug output enabled:
 
     java -Djava.awt.headless=true -jar JavaBridge.jar INET:9267 4
 
@@ -126,7 +126,7 @@ Known Windows Issues
   It is possible to implement a named pipe communication channel on some
   windows variants, too. On Win>=2000, jdk1.5 it should be possible to
   create a windows named pipe with PIPE_ACCESS_DUPLEX, call Accept in
-  the java extension's C code and modify the java backend to not use a
+  the java extension's C code and modify the java back-end to not use a
   Input or OutputStream but a RandomAccessFile. Please write to the
   mailing list if you want to implement it.
 

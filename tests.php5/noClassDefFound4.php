@@ -16,7 +16,7 @@ if (!extension_loaded('java')) {
 // make sure to start the backend at log_level 3, to see the "loading..."
 // messages.
 
-$here=getcwd();
+$here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
 java_reset();
 echo "must succeed\n";
 // must succeed

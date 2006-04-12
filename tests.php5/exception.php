@@ -10,7 +10,7 @@ if (!extension_loaded('java')) {
 }
 
 try {
-  $here=getcwd();
+  $here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
   java_set_library_path("$here/exception.jar");
   $e = new java("Exception");
 

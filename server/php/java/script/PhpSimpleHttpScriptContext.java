@@ -13,7 +13,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.JavaBridgeRunner;
 import php.java.bridge.PhpProcedureProxy;
-import php.java.bridge.http.ContextFactory;
 
 
 /**
@@ -126,16 +125,7 @@ public class PhpSimpleHttpScriptContext extends SimpleScriptContext implements I
         return context;
     }
 
-    private php.java.bridge.http.ContextFactory ctx;
     private HttpProxy kont;
-
-    public void setContextFactory(ContextFactory factory) {
-      this.ctx = factory;
-    }
-
-    public ContextFactory getContextFactory() {
-        return ctx;
-    }
 
     public void setContinuation(HttpProxy kont) {
         this.kont = kont;

@@ -433,7 +433,7 @@ static int wait_server(void) {
 	  return FAILURE; /* server terminated with error code */
 	sleep_ms();
   }
-  count=10;
+  count=30;
   while(EXT_GLOBAL(cfg)->cid && -1==sock && -1==(sock=test_local_server()) && --count) {
 	if(EXT_GLOBAL(cfg)->err && poll(pollfd, 1, 0)) 
 	  return FAILURE; /* server terminated with error code */
@@ -444,7 +444,7 @@ static int wait_server(void) {
   while(EXT_GLOBAL(cfg)->cid && -1==(sock=test_local_server()) && --count) {
 	Sleep(timeout/1000);
   }
-  count=10;
+  count=15;
   while(EXT_GLOBAL(cfg)->cid && -1==sock && -1==(sock=test_local_server()) && --count) {
 	php_error(E_NOTICE, "php_mod_"/**/EXT_NAME()/**/"(%d): waiting for server another %d interval",57, count);
 	Sleep(1000);

@@ -13,7 +13,7 @@ if (!extension_loaded('java')) {
 
 // test the default UTF-8 encoding for arrays
 
-$here=getcwd();
+$here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
 java_set_library_path("$here/arrayToString.jar");
 $ArrayToString = new JavaClass("ArrayToString");
 $ar=array("Cześć!", " שלום", " Grüß Gott", " Dobrý deň", " Dobrý den", " こんにちは, ｺﾝﾆﾁﾊ");

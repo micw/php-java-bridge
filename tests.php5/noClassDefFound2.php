@@ -8,7 +8,7 @@ if (!extension_loaded('java')) {
   }
 }
 
-$here=getcwd();
+$here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
 
 // must succeed
 echo "must succeed\n";

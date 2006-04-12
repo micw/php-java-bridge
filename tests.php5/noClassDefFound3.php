@@ -17,7 +17,7 @@ if (!extension_loaded('java')) {
 // messages.
 
 java_reset();
-$here=getcwd();
+$here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
 java_require("$here/doesNotExist.jar");
 java_require("$here/noClassDefFound.jar");
 java_require("$here/doesNotExist.jar;$here/noClassDefFound.jar");

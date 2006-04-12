@@ -602,17 +602,6 @@ public class Util {
 	return null;
     }
 
- 
-    /* used by startProcess only */
-    private static String argsToString(String php, String[] args) {
-	StringBuffer buf = new StringBuffer(php);
-	for(int i=1; i<args.length; i++) {
-	    buf.append(" ");
-	    buf.append(args[i]);
-	}
-	return buf.toString();
-    }
-
     /**
      * Returns s if s starts with "PHP Fatal error:";
      * @param s The error string
@@ -628,45 +617,65 @@ public class Util {
     public static class Process extends java.lang.Process {
 
         java.lang.Process proc;
+	private String[] args;
+	private File homeDir;
+	private Map env;
 
-        protected Process(String[] args, File homeDir, Map env) throws IOException {
+	protected String argsToString(String php, String[] args) {
+	    StringBuffer buf = new StringBuffer(php);
+	    for(int i=1; i<args.length; i++) {
+		buf.append(" ");
+		buf.append(args[i]);
+	    }
+	    return buf.toString();
+	}
+
+	protected void start() throws NullPointerException, IOException {
 	    File location;
+	    String php = null, php_exec = null;
 	    Runtime rt = Runtime.getRuntime();
 	    if(args==null) args=new String[]{null};
-	    String php = args[0];
-	    if(php == null) php = System.getProperty("php.java.bridge.php_exec");
-            if(php==null) {
+	    php = args[0];
+	    if(php == null) php_exec = php = System.getProperty("php.java.bridge.php_exec");
+            if(php != null) {
+		StringBuffer buf = new StringBuffer(php);
+		php = checkCgiBinary(buf);
+	    }
+            if(php_exec==null && php==null) {
 		for(int i=0; i<DEFAULT_CGI_LOCATIONS.length; i++) {
 		    location = new File(DEFAULT_CGI_LOCATIONS[i]);
 		    if(location.exists()) {php = location.getAbsolutePath(); break;}
 		}
-	    } else {
-		StringBuffer buf = new StringBuffer(php);
-		String val = checkCgiBinary(buf);
-		if(val!=null) php = val;
-	    }
+            }
+            if(php==null) php=args[0];
+            if(php==null) php=php_exec;
             if(Util.logLevel>3) Util.logDebug("Using php binary: " + php);
-            if(php==null) php="php-cgi";
 
-	    //String home = System.getProperty("user.home");
-	    //if(homeDir==null) homeDir = new File(home);
-             
+            if(homeDir!=null &&!homeDir.exists()) homeDir = null;
 	    String s = argsToString(php, args);
 	    proc = rt.exec(s, hashToStringArray(env), homeDir);
 	    if(Util.logLevel>3) Util.logDebug("Started "+ s);
         }
-
+	protected Process(String[] args, File homeDir, Map env) {
+	    this.args = args;
+	    this.homeDir = homeDir;
+	    this.env = env;
+	}
         /**
 	 * Starts a CGI process and returns the process handle.
 	 * @param args The args array, e.g.: new String[]{null, "-b", ...};. If args is null or if args[0] is null, the function looks for the system property "php.java.bridge.php_exec".
 	 * @param homeDir The home directory. If null, the current working directory is used.
 	 * @param env The CGI environment. If null, Util.DEFAULT_CGI_ENVIRONMENT is used.
 	 * @return The process handle.
+         * @throws IOException 
+         * @throws NullPointerException 
 	 * @throws IOException
 	 * @see Util#checkCgiBinary(StringBuffer)
-	 */
+	 */	  
         public static Process start(String[] args, File homeDir, Map env) throws IOException {
-            return new Process(args, homeDir, env);
+            Process proc = new Process(args, homeDir, env);
+            proc.start();
+            return proc;
         }
 
 
@@ -720,8 +729,12 @@ public class Util {
     public static class ProcessWithErrorHandler extends Process {
 	String error = null;
 	InputStream in = null;
-        protected ProcessWithErrorHandler(String[] args, File homeDir, Map env) throws IOException {
+
+	protected ProcessWithErrorHandler(String[] args, File homeDir, Map env) throws IOException {
 	    super(args, homeDir, env);
+	}
+	protected void start() throws IOException {
+	    super.start();
 	    (new Thread("CGIErrorReader") {public void run() {readErrorStream();}}).start();
 	}
 	public void destroy() {
@@ -754,7 +767,7 @@ public class Util {
 	    return 0;
 	}
 
-        /**
+	/**
          * Starts a CGI process and returns the process handle.
          * @param args The args array, e.g.: new String[]{null, "-b", ...};. If args is null or if args[0] is null, the function looks for the system property "php.java.bridge.php_exec".
          * @param homeDir The home directory. If null, the current working directory is used.
@@ -764,8 +777,10 @@ public class Util {
          * @see Util#checkCgiBinary(StringBuffer)
          */
         public static Process start(String[] args, File homeDir, Map env) throws IOException {
-            return new ProcessWithErrorHandler(args, homeDir, env);
-	}
+            Process proc = new ProcessWithErrorHandler(args, homeDir, env);
+            proc.start();
+            return proc;
+        }
     }
 
     /**

@@ -8,7 +8,7 @@ if (!extension_loaded('java')) {
   }
 }
 
-$here=getcwd();
+$here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
 java_set_library_path("$here/cache.jar");
 $Cache = new JavaClass("Cache");
 $instance= $Cache->getInstance();

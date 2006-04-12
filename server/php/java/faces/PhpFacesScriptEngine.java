@@ -53,8 +53,7 @@ public class PhpFacesScriptEngine extends PhpScriptEngine implements Invocable {
         ContextFactory kontext;
         IPhpScriptContext context = (IPhpScriptContext)getContext(); 
 	env.clear();
-	
-	context.setContextFactory(kontext=PhpFacesScriptContextFactory.addNew(context, ctx, request, response));
+	kontext = PhpFacesScriptContextFactory.addNew(context, ctx, request, response);
 
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */

@@ -23,7 +23,7 @@ java_SOURCES= java.c php/java/bridge/ConstructorCache.java php/java/bridge/Dynam
 
 
 MonoBridge.exe: $(PHP_MONO)
-	$(GCJ) -C php/java/bridge/*.java php/java/bridge/http/*.java
+	$(GCJ) -classpath .:$(SCRIPT) -C php/java/bridge/*.java php/java/bridge/http/*.java
 	fastjar cMf JavaBridge.jar META-INF/MANIFEST.MF php/java/bridge/*.class php/java/bridge/http/*.class php/java/bridge/*.properties || jar cMf JavaBridge.jar META-INF/MANIFEST.MF php/java/bridge/*.class php/java/bridge/http/*.class php/java/bridge/*.properties
 	mono $(PHP_MONO) JavaBridge.jar
 	mv JavaBridge.exe MonoBridge.exe
@@ -43,7 +43,7 @@ dist_data_DATA=JavaBridge.jar $(JAVA_BRIDGE_WAR) $(SCRIPT) $(JAVA_BRIDGE_SCRIPT_
 EXTRA_DATA=JavaBridge.war
 
 JavaBridge.jar:
-	$(PHP_JAVA)/bin/javac php/java/bridge/http/*.java php/java/bridge/*.java
+	$(PHP_JAVA)/bin/javac -classpath .:$(SCRIPT) php/java/bridge/http/*.java php/java/bridge/*.java
 	$(PHP_JAVA)/bin/jar cMf JavaBridge.jar META-INF/MANIFEST.MF php/java/bridge/http/*.class php/java/bridge/*.class  php/java/bridge/*.properties
 
 php-servlet.jar: JavaBridge.jar $(SERVLET)
@@ -72,6 +72,6 @@ JavaBridge.war: JavaBridge.jar $(SERVLET) $(JAVA_BRIDGE_SERVLET_JAR) $(SCRIPT) $
 	cp -r ../examples/java-server-faces .
 	cp ../examples/php+jsp/*.php ../examples/php+jsp/*.jsp  .
 	cp ../test.php .
-	$(PHP_JAVA)/bin/jar cMf JavaBridge.war *.php java-server-faces *.jsp META-INF/MANIFEST.MF WEB-INF/web.xml WEB-INF/faces-config.xml WEB-INF/cgi WEB-INF/lib/*.jar
+	$(PHP_JAVA)/bin/jar cMf JavaBridge.war *.php java-server-faces *.jsp META-INF/MANIFEST.MF WEB-INF/web.xml WEB-INF/faces-config.xml WEB-INF/cgi/*.sh WEB-INF/cgi/*.ini WEB-INF/cgi/README WEB-INF/lib/*.jar
 
 endif

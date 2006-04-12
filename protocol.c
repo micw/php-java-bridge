@@ -276,7 +276,7 @@ setcookie('%s', '%s', 0, $path);\n\
   TSRMLS_FETCH();
 
   /* if path is empty or if java.servlet=On, discard path value. Use
-	 java.servlet=MultiUser to retain the path */
+	 java.servlet=User to retain the path */
   if(!path || 
 	 (EXT_GLOBAL(cfg)->servlet_is_default
 	  && !(EXT_GLOBAL(cfg)->is_cgi_servlet))) {

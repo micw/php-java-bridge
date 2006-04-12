@@ -205,31 +205,23 @@ public class JavaBridge implements Runnable {
 		return;
 	    }
 	    if(logLevel>3) logDebug("Request from client with uid/gid "+uid+"/"+gid);
-	    //load++;
 	    try {
 		request.handleRequests();
 	    } catch (Throwable e) {
 		printStackTrace(e);
 	    }
 
-	    try {
-		in.close();
-	    } catch (IOException e1) {
-		printStackTrace(e1);
-	    }
-	    try {
-		out.close();
-	    } catch (IOException e2) {
-		printStackTrace(e2);
-	    }
-	    //load--;
 	    globalRef=null;
 	    getClassLoader().clear();
 	    Session.expire(this);
 	    Util.logDebug("END: JavaBridge.run()");
+
         } catch (Throwable t) {
 	    printStackTrace(t);
-        }
+        } finally {
+	    try {in.close();} catch (IOException e1) {printStackTrace(e1);}
+	    try {out.close();} catch (IOException e2) {printStackTrace(e2);}
+	}
     }
 
     /**
@@ -462,7 +454,7 @@ public class JavaBridge implements Runnable {
     }
 
     private Exception getUnresolvedExternalReferenceException(Throwable e, String what) {
-        return 	new ClassNotFoundException("Unresolved external reference: "+ e+ ". -- Unable to "+what+" because it or one of its parameters refer to the mentioned external class which is not available in the current \"java_require()\" url path. Remember that all interconnected classes must be loaded with a single java_require() call, i.e. use java_require(\"foo.jar;bar.jar\") instead of java_require(\"foo.jar\"); java_require(\"bar.jar\"). Please check the Java Bridge log file for details.", e);
+        return 	new ClassNotFoundException("Unresolved external reference: "+ e+ ". -- Unable to "+what+" because it or one of its parameters refer to the mentioned external class which is not available in the current \"java_require()\" path. Please check the path and the SEL and File permissions and remember that all interconnected classes must be loaded with a single java_require() call, i.e. use java_require(\"foo.jar;bar.jar\") instead of java_require(\"foo.jar\"); java_require(\"bar.jar\"). Please check the Java Bridge log file for details.", e);
     }
     /**
      * Create an new instance of a given class

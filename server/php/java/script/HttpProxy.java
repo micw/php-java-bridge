@@ -8,13 +8,10 @@ import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
 
-import php.java.bridge.SessionFactory;
-import php.java.bridge.http.ContextFactory;
-
 /**
  * Represents the script continuation.
  * This class can be used to allocate php scripts on a HTTP server.
- * Although this class accidently inherits from <code>CGIRunner</code> it doesn't necessarily run CGI binaries.
+ * Although this class accidentally inherits from <code>CGIRunner</code> it doesn't necessarily run CGI binaries.
  * If you pass a URLReader, it calls its read method which opens a URLConnection to the remote server
  * and holds the allocated remote script instance hostage until release is called.
  * @author jostb
@@ -27,8 +24,8 @@ public class HttpProxy extends CGIRunner {
      * @param env - The environment, must contain values for X_JAVABRIDGE_CONTEXT. It may contain X_JAVABRIDGE_OVERRIDE_HOSTS.
      * @param ctx - The context
      */
-    public HttpProxy(Reader reader, Map env, SessionFactory ctx, OutputStream out) {
-	super("HttpProxy", reader, env, ctx, out);
+    public HttpProxy(Reader reader, Map env, OutputStream out) {
+	super("HttpProxy", reader, env, out);
     }
     
     /**
@@ -36,11 +33,11 @@ public class HttpProxy extends CGIRunner {
      * @param reader - The reader, for example a URLReader
      * @param ctx - The context
      */
-    public HttpProxy(Reader reader, ContextFactory ctx, OutputStream out) {
+    public HttpProxy(Reader reader, String ctx, OutputStream out) {
 	this(reader, (new HashMap() {
 		private static final long serialVersionUID = 3257005462371971380L;
-		public HashMap init(ContextFactory ctx) {put("X_JAVABRIDGE_CONTEXT", ctx.getId()); return this;}}
-	).init(ctx), ctx, out);
+		public HashMap init(String ctx) {put("X_JAVABRIDGE_CONTEXT", ctx); return this;}}
+	).init(ctx), out);
     }
 
     protected void doRun() throws IOException {

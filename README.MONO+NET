@@ -35,7 +35,7 @@ Build and execution instructions:
 
   To permanently activate the extension for all users please add the
   following lines to the php.ini or add a file java.ini to the
-  directory that contains the php module descriptions (usually
+  directory that contains the PHP module descriptions (usually
   /etc/php.d/) with the following content:
 
           extension = mono.so
@@ -49,7 +49,7 @@ Build and execution instructions:
           apachectl restart
 
 
-  OPTION 1: You can use local sockets to connect to a local backend. 
+  OPTION 1: You can use local sockets to connect to a local back-end. 
   Copy the executable php-mono-bridge to /usr/sbin, make it executable 
   with the command "chmod +x /usr/sbin/php-mono-bridge" and start it:
 
@@ -95,7 +95,7 @@ Build and execution instructions:
 
   When the mono.socketname and mono.hosts options are not set, the web
   server will start or re-start the bridge automatically as a sub
-  component when the http service is started or re-started.
+  component when the HTTP service is started or re-started.
 
   However, when running the bridge in a production environment, it is
   recommended to start the PHP/Mono Bridge as a system service,

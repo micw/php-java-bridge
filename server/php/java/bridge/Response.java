@@ -430,16 +430,18 @@ public class Response {
 
     /**
       * Set the result packet.
-      * @param value The result object.
-      * @param type The type of the result object.
+      * @param object The result object.
+      * @param cname The php name of the procedure
+      * @param name The java name of the procedure
+      * @param args The arguments
       */
     public void setResultProcedure(long object, String cname, String name, Object[] args) {
 	writer.setResultProcedure(object, cname, name, args);
     }
     /**
       * Set the result packet.
-      * @param value The result object.
-      * @param type The type of the result object.
+      * @param value The throwable
+      * @param asString The string representation of the throwable
       */
     public void setResultException(Throwable value, String asString) {
      	writer.setResultException(value, asString);
@@ -447,7 +449,6 @@ public class Response {
     /**
       * Set the result packet.
       * @param value The result object.
-      * @param type The type of the result object.
       */
     public void setResultObject(Object value) {
      	writer.setResultObject(value);
@@ -455,7 +456,6 @@ public class Response {
     /**
       * Set the result packet.
       * @param value The result object.
-      * @param type The type of the result object.
       */
     public void setResultClass(Class value) {
      	writer.setResultClass(value);

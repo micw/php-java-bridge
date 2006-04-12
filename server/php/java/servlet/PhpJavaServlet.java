@@ -10,6 +10,7 @@ import java.io.OutputStream;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -29,7 +30,7 @@ import php.java.bridge.http.ContextServer;
  * listener.  </p>
  * @see php.java.bridge.JavaBridge
  *  */
-public class PhpJavaServlet extends FastCGIServlet {
+public final class PhpJavaServlet extends HttpServlet {
 
     private static final long serialVersionUID = 3257854259629144372L;
 
@@ -75,12 +76,10 @@ public class PhpJavaServlet extends FastCGIServlet {
        
 	Util.setLogger(new Logger(config.getServletContext()));
 
-	if("PhpJavaServlet".equals(config.getServletName())) {
-	    if(Util.VERSION!=null)
-	    	  Util.logMessage("PHP/Java Bridge servlet version "+Util.VERSION+" ready.");
-		else
-		  Util.logMessage("PHP/Java Bridge servlet ready.");
-	}
+	if(Util.VERSION!=null)
+    	    Util.logMessage("PHP/Java Bridge servlet version "+Util.VERSION+" ready.");
+	else
+	    Util.logMessage("PHP/Java Bridge servlet ready.");
     }
 
     public void destroy() {
@@ -91,7 +90,7 @@ public class PhpJavaServlet extends FastCGIServlet {
     private ContextFactory getContextFactory(HttpServletRequest req, HttpServletResponse res) {
     	ContextFactory ctx = null;
     	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
-    	if(id!=null) ctx = (ContextFactory)ContextFactory.get(id);
+    	if(id!=null) ctx = (ContextFactory)ContextFactory.get(id, contextServer);
     	if(ctx==null) {
     	  ctx = ContextFactory.addNew(getServletContext(), null, req, res); // no session sharing
     	  ctx.getBridge().logDebug("first request (session is new).");
@@ -219,12 +218,12 @@ public class PhpJavaServlet extends FastCGIServlet {
 		resOut = res.getOutputStream();
 		sout.writeTo(resOut);
 		if(bridge.logLevel>3) bridge.logDebug("re-directing to port# "+ channelName);
-	    	sin.close();
+	    	sin.close(); sin=null;
 		try {res.flushBuffer(); } catch (Throwable t) {Util.printStackTrace(t);}
 	    	ctxServer.start(channelName);
 	    }
 	    else {
-	        sin.close();
+	        sin.close(); sin=null;
 	        ctx.remove();
 	    }
 	} catch (Exception e) {
@@ -266,5 +265,11 @@ public class PhpJavaServlet extends FastCGIServlet {
 	    Util.printStackTrace(t);
 	    try {req.getInputStream().close();} catch (IOException x2) {}
 	}
+    }
+    /** For backward compatibility */
+    protected void doGet(HttpServletRequest req, HttpServletResponse res)
+	throws ServletException, IOException {
+      		String uri = req.getRequestURI();
+     		req.getRequestDispatcher(uri.substring(0, uri.length()-10)).forward(req, res);
     }
 }

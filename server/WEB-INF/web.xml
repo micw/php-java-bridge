@@ -75,11 +75,12 @@
          <!-- Use the fast cgi interface instead of cgi when running -->
          <!-- php as a CGI sub component (when php is not installed as an -->
          <!-- Apache or IIS module). Values: Off, On, Autostart. -->
-         <!-- Default is true. -->
-       <!--
+         <!-- Default is Autostart, if the web application is "JavaBridge" -->
+         <!-- and Off othewise -->
+        <!-- 
          <init-param>
            <param-name>use_fast_cgi</param-name>
-           <param-value>Autostart</param-value>
+           <param-value>On</param-value>
          </init-param>
         -->
 

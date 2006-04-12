@@ -70,10 +70,10 @@ public class PhpProcedure implements InvocationHandler {
 	Thread thread = Thread.currentThread();
 	ClassLoader loader = thread.getContextClassLoader();
 	try {
-	    thread.setContextClassLoader(bridge.getClassLoader().getClassLoader());
+	    try { thread.setContextClassLoader(bridge.getClassLoader().getClassLoader()); } catch (SecurityException e) {/*ignore*/}
 	    return invoke(proxy, method, Object.class, args);
 	} finally {
-	    thread.setContextClassLoader(loader);
+	  try { thread.setContextClassLoader(loader); } catch (SecurityException e) {/*ignore*/}
 	}
     }
 

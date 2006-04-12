@@ -56,7 +56,7 @@ public class JavaBridgeRunner extends HttpServer {
 
     private static ContextFactory getContextFactory(HttpRequest req, HttpResponse res) {
     	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
-    	ContextFactory ctx = ContextFactory.get(id);
+    	ContextFactory ctx = ContextFactory.get(id, ctxServer);
 	if(ctx==null) ctx = ContextFactory.addNew();
      	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
     	return ctx;
@@ -114,7 +114,7 @@ public class JavaBridgeRunner extends HttpServer {
 		}
 	    }
 	    else {
-	        sin.close();
+	        sin.close(); sin=null;
 	        ctx.remove();
 	    }
 	} catch (Exception e) {

@@ -24,7 +24,7 @@ function c3 ($e) {
   echo "c3: $e\n";
   return 2;
 }
-$here=getcwd();
+$here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
 java_require("$here/callback.jar");
 
 $closure=java_closure();

@@ -8,7 +8,7 @@ if (!extension_loaded('java')) {
   }
 }
 
-$here=getcwd();
+$here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
 $ext=trim(`php-config --extension-dir`);
 if(!file_exists("$ext/lib")) {
   mkdir("$ext/lib");

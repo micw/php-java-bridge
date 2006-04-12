@@ -336,7 +336,7 @@ static void session(INTERNAL_FUNCTION_PARAMETERS)
  * When java_get_session() is called with a session handle, the session
  * is not shared with java and no cookies are set. Example:
  * \code
- * java_get_session("myPrivateApplicationStore")->put("key", "value");
+ * java_get_session("myPublicApplicationStore")->put("key", "value");
  * \endcode
  *
  * When java_get_session() is called with a second argument set to true,
@@ -373,14 +373,14 @@ static void context(INTERNAL_FUNCTION_PARAMETERS)
  *
  * Returns the jsr223 script context handle.
  *
- * Example which closes over the current environment and pass it back to java:
+ * Example which closes over the current environment and passes it back to java:
  * \code
  * java_get_context()->call(java_closure()) || die "Script should be called from java";
  * \endcode
  *
  * It is possible to access implicit web objects (the session, the
  * application store etc.) from the context. Please see the JSR223
- * documentation or for details. Example:
+ * documentation for details. Example:
  * \code
  * java_get_context()->getHttpServletRequest();
  * \endcode
@@ -394,7 +394,7 @@ EXT_FUNCTION(EXT_GLOBAL(get_context))
 /**
  * Proto: string java_server_name(void) or string java_get_server_name(void)
  *
- * Returns the name of the backend or null if the backend is not running. Example:
+ * Returns the name of the backend or null, if the backend is not running. Example:
  * \code
  * $backend = java_get_server_name();
  * if(!$backend) wakeup_administrator("backend not running");
@@ -417,7 +417,7 @@ EXT_FUNCTION(EXT_GLOBAL(get_server_name))
  * Proto: void java_reset(void);
  *
  * Tries to reset the backent to
- * its initial state. If the call succeeds, all session handles and
+ * its initial state. If the call succeeds, all 
  * caches are gone. 
  *
  * Example:
@@ -438,7 +438,7 @@ EXT_FUNCTION(EXT_GLOBAL(reset))
 
   (*jenv)->writeInvokeBegin(jenv, 0, "reset", 0, 'I', return_value);
   (*jenv)->writeInvokeEnd(jenv);
-  php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Your script has called the privileged procedure \""/**/EXT_NAME()/**/"_reset()\" which resets the "/**/EXT_NAME()/**/" backend to its initial state. Therefore all "/**/EXT_NAME()/**/" session variables and all caches are gone.", 18);
+  php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Your script has called the privileged procedure \""/**/EXT_NAME()/**/"_reset()\" which resets the "/**/EXT_NAME()/**/" backend to its initial state. Therefore all "/**/EXT_NAME()/**/" caches are gone.", 18);
 }
 
 /**
@@ -617,18 +617,13 @@ EXT_FUNCTION(EXT_GLOBAL(__wakeup))
 }
 #endif
 
-/** Proto: mixed java_values(object ob) or mixed java_get_values(object ob)
- *
- * Fetches the value(s) of the java object into a php variable. ob
- * must be a java object. A java array, Map or Collection is returned
- * as a php array. Please make sure that the values do not not exceed
+/** Proto: mixed java_values(val) or mixed java_get_values(object ob)
+ * Evaluates the object and fetches its content, if possible.
+ * A java array, Map or Collection object is returned
+ * as a php array. An array, Map or Collection proxy is returned as a java array, Map or Collection object, and a null proxy is returned as null. All values of java types for which a primitive php type exists are returned as php values. Everything else is returned unevaluated. Please make sure that the values do not not exceed
  * php's memory limit. Example:
  *
  * \code
- * function fetchValues($obj) { 
- *  if($obj instanceof Java) return java_values($obj);
- *  return $obj;
- * }
  * $str = new java("java.lang.String", "hello");
  * echo $str;
  * => [o(String):"hello"]
@@ -1326,7 +1321,7 @@ EXT_METHOD(EXT, __call)
  * object to a string, thus echo $ob displays a string
  * representation of $ob, e.g.: \code [o(String)"hello"]\endcode
  *
- * Use a string cast if you want to display the java string as a php
+ * Use a string cast or java_values(), if you want to display the java string as a php
  * string, e.g.:
  * \code 
  * echo (string)$string; // explicit cast
@@ -2190,7 +2185,7 @@ PHP_MINFO_FUNCTION(EXT)
 	if((EXT_GLOBAL(option_set_by_user) (U_WRAPPER, EXT_GLOBAL(ini_user))))
 	  php_info_print_table_row(2, EXT_NAME()/**/".wrapper", EXT_GLOBAL(cfg)->wrapper);
 	if(strlen(EXT_GLOBAL(cfg)->logFile)==0) 
-	  php_info_print_table_row(2, EXT_NAME()/**/".log_file", "<stdout>");
+	  php_info_print_table_row(2, EXT_NAME()/**/".log_file", "<stderr>");
 	else
 	  php_info_print_table_row(2, EXT_NAME()/**/".log_file", EXT_GLOBAL(cfg)->logFile);
   }

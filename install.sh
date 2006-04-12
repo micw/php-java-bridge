@@ -1,4 +1,5 @@
 #!/bin/sh
+# Installation script for the PHP/Java Bridge module and its backends.
 
 #set -x
 v=""
@@ -7,7 +8,7 @@ v="-v"
 fi
 
 if ! test -d modules; then
-  echo "Nothing to install."
+  echo "Nothing to install. Do a phpize && configure && make first, bye."
   exit 10
 fi
 
@@ -36,7 +37,7 @@ sed 's/^.*=> //'`
 # install generic ini
 make install >install.log || exit 1
 mod_dir=`cat install.log | sed -n '/Installing shared extensions:/s///p' | awk '{print $1}'`
-echo "installed in $mod_dir";
+if test X$v != X; then echo "installed in $mod_dir"; fi
 
 if test X$ini = X; then
 echo ""
@@ -46,7 +47,7 @@ echo "You must edit the php.ini yourself."
 fi
 
 if test -d "$ext"; then 
-echo "Using extension_dir: $ext"
+if test X$v != X; then echo "Using extension_dir: $ext"; fi
 else
 echo ""
 echo "Warning: Your php installation is broken, the \"extension_dir\" does "
@@ -76,8 +77,22 @@ if test -f modules/JavaBridge.war; then
       echo -n "autodeploy ($webapps): "; read webapps2;
       if test X$webapps2 != X; then webapps=$webapps2; fi
       /bin/cp $v modules/JavaBridge.war $webapps;
-      echo "installed in $webapps"
+      echo "Installed in $webapps."
+      echo ""
+      echo "Restart your J2EE server (e.g. with: service tomcat5 restart) and visit e.g.:"
+      echo "http://localhost:8080/JavaBridge"
+      if test -d /var/www/html && ! test -e /var/www/html/JavaBridge; then
+        ln -s $webapps/JavaBridge /var/www/html/;
+        echo "Installed in /var/www/html. "
+      fi
+      echo "Restart your HTTP server (e.g. with: service httpd restart) and visit e.g.:"
+      echo "http://localhost/JavaBridge";
       if test X$ini != X; then  /bin/cp $v java-servlet.ini $ini; fi
+          if test X$v = X; then
+	    (cd security/module; /usr/bin/make; /usr/sbin/semodule -i php-java-bridge-tomcat.pp) >/dev/null
+	  else
+	    (cd security/module; /usr/bin/make; /usr/sbin/semodule -i php-java-bridge-tomcat.pp) 
+	  fi
     fi
 fi
 
@@ -89,6 +104,16 @@ for i in /etc/init.d /etc/rc.d/init.d /etc/rc.d; do
 	break;
     fi
 done
+install_sel_module() {
+(
+	cd security/module; 
+	/usr/bin/make; 
+	/usr/sbin/semodule -i php-java-bridge.pp
+	/usr/bin/chcon -t javabridge_exec_t $ext/RunJavaBridge
+	/usr/bin/chcon -t sbin_t /usr/sbin/php-java-bridge
+	if test X$javabridgeservice != X; then /usr/bin/chcon -t initrc_exec_t $javabridgeservice; fi
+)
+}
 /bin/rm $v -f /usr/sbin/php-java-bridge
 if test -f modules/JavaBridge.jar && test "X$j2ee" = "Xno"; then
     echo ""
@@ -96,27 +121,47 @@ if test -f modules/JavaBridge.jar && test "X$j2ee" = "Xno"; then
     echo -n "install standalone backend (yes/no): "; read standalone;
     if test "X$standalone" = "Xyes"; then
 	/bin/cp $v php-java-bridge /usr/sbin
-	chmod +x /usr/sbin/php-java-bridge
+	/bin/chmod +x /usr/sbin/php-java-bridge
+	if test X$v != X; then echo "Installed /usr/sbin/php-java-bridge"; fi
 	for i in /etc/init.d /etc/rc.d/init.d /etc/rc.d; do
 	if test -d $i; then
 	    /bin/cp $v php-java-bridge.service ${i}/php-java-bridge
-	    chmod +x ${i}/php-java-bridge
+	    /bin/chmod +x ${i}/php-java-bridge
+	    javabridgeservice=${i}/php-java-bridge # used in install_sel_module
+	    if test X$v != X; then echo "Installed service ${i}/php-java-bridge"; fi
 	    break;
 	fi
 	done
 	/sbin/chkconfig --add php-java-bridge
 	/sbin/chkconfig php-java-bridge on
-	echo "installed in /usr/sbin"
+	/bin/chown apache:apache $ext/RunJavaBridge
+	/bin/chmod 6111 $ext/RunJavaBridge
 	if test X$ini != X; then 
 	    jre="`locate /bin/java | grep 'java$' | head -1`"
 	    echo ""
 	    echo "Enter the location of the "java" jre binary.";
 	    echo -n "java executable ($jre): "; read jre2;
 	    if test X$jre2 != X; then jre=$jre2; fi
-	    cat java-standalone.ini | sed 's|^;java\.java_home[\t =].*$|;java.java_home = |; s|^;java\.java[\t =].*$|java.java = '$jre'|' >${ini}/java-standalone.ini
-	    echo "installed in $ini"
+	    /bin/cat java-standalone.ini | sed 's|^;java\.java_home[\t =].*$|;java.java_home = |; s|^;java\.java[\t =].*$|java.java = '$jre'|' >${ini}/java-standalone.ini
+	    if test X$v != X; then echo "Installed ${ini}/java-standalone.ini"; fi
 	    
 	fi
+	if test -d /var/www/html && ! test -e /var/www/html/test.php; then
+          /bin/cp $v test.php /var/www/html/test.php
+	  if test X$v != X; then echo "Installed /var/www/html/test.php."; fi
+	fi
+	echo ""
+	echo "Restart the php-java-bridge service "
+	echo "(e.g. with: service php-java-bridge restart) and and your HTTP server"
+	echo "(e.g. with: service httpd restart) and visit e.g.:"
+	echo "http://localhost/test.php"
+	if test -f /etc/selinux/config && test -f /usr/sbin/semodule; then 
+          if test X$v = X; then
+	    install_sel_module >/dev/null
+	  else
+	    install_sel_module
+	  fi
+        fi
     fi
 fi
 
@@ -141,17 +186,22 @@ if test -f modules/php-script.jar; then
 	/bin/ln $v -s /usr/share/java/JavaBridge.jar \
 	         /usr/share/java/php-script.jar /usr/java/packages/lib/ext
 
-	echo "installed in /usr/share/java"
+	echo "Installed in /usr/share/java"
+	echo ""
 	echo "Type (e.g.) /usr/java/jdk1.6.0/bin/jrunscript -l php-interactive"
 	echo "to run php from java."
       fi
 fi
 
 echo ""
-echo "PHP/Java Bridge installed"
+echo "PHP/Java Bridge installed."
 if test -d /etc/selinux && /usr/sbin/selinuxenabled; then
-echo "You are running a SELinx system. Please install the policy sources"
-echo "or install the files from the RPM distribution download."
-echo "Please see the README document for details".
+  if test -f /etc/selinux/config && test -f /usr/sbin/semodule; then
+    echo "SEL Security: \"javabridge\" policy module installed."
+  fi
+else
+  echo "You are running a SELinx system. Please install the policy sources"
+  echo "or install the files from the RPM distribution download."
+  echo "Please see the README document for details".
 fi
 exit 0

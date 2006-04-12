@@ -35,7 +35,7 @@ the RPM build system instead, see INSTALL.LINUX.
     ; extension = php_java.dll
     [java]
     java.hosts   = 127.0.0.1:8080 ;or 8888 for Oracle, 9080 for WebSphere
-    java.servlet = MultiUser
+    java.servlet = User
 
 * Check if the HTTP document root directory is shared with the AS
   "webapps" directory. If not, change the java.servlet option to "On":

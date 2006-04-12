@@ -7,11 +7,14 @@ import php.java.bridge.ThreadPool;
 /**
  * A bridge pattern which either uses the PipeContextServer or the SocketContextServer, 
  * depending on the OS and/or the security restrictions.
+ * 
+ * There can be only one ContextServer instance per classloader.
+ *  
  * @author jostb
  * @see php.java.bridge.http.PipeContextServer
  * @see php.java.bridge.http.SocketContextServer
  */
-public class ContextServer {
+public final class ContextServer {
 
     PipeContextServer ctx;
     SocketContextServer sock = null;
@@ -58,7 +61,8 @@ public class ContextServer {
          * We need both because the client may not support named pipes.
          */
         ctx = new PipeContextServer(this, pool);
-        //sock = new SocketContextServer(this, pool);
+        /* socket context server will be created on demand */
+        
         this.pool = pool;
     }
     

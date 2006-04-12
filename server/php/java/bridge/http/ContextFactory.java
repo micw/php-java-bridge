@@ -32,7 +32,7 @@ import php.java.bridge.Util;
  * the ContextFactory is given to a ContextRunner which handles the
  * local channel communication.
  * <p>
- * There can be only one instance of a ContextFactory per VM classloader.
+ * There can be only one instance of a ContextFactory per classloader.
  * </p>
  * @see php.java.servlet.ContextFactory
  * @see php.java.bridge.http.ContextServer
@@ -41,7 +41,7 @@ public class ContextFactory extends SessionFactory {
     protected boolean removed=false;
     protected Object context;
 
-    static final Hashtable contexts = new Hashtable();
+    private static final Hashtable contexts = new Hashtable();
     private JavaBridge bridge;
 	
     private static short count=0; // If a context survives more than 65535
@@ -70,7 +70,7 @@ public class ContextFactory extends SessionFactory {
     }
     
     /**
-     * Create a new ContextFactory and add it to the list of context factories kept by this VM.
+     * Create a new ContextFactory and add it to the list of context factories kept by this classloader.
      * @return The created ContextFactory.
      * @see #get(String)
      */
@@ -79,20 +79,34 @@ public class ContextFactory extends SessionFactory {
     	ctx.add();
     	ctx.setContext(new Context());
     	return ctx;
-    }	
-
-    /**
+    }
+    
+    private ContextServer contextServer = null; 
+   /**
+     * Only for internal use.
+     *  
      * Returns the context factory associated with the given <code>id</code>
      * @param id The ID
+     * @param server Your context server.
      * @return The ContextFactory or null.
      * @see #addNew()
+     * @throws SecurityException if id belongs to a different ContextServer.
      */
-    public static ContextFactory get(String id) {
-   	return (ContextFactory)contexts.get(id);
+    /* See PhpJavaServlet#contextServer, http.ContextRunner#contextServer and 
+     * JavaBridgeRunner#ctxServer. */
+    public static ContextFactory get(String id, ContextServer server) {
+        if(server == null) throw new NullPointerException("server");
+
+        ContextFactory factory = (ContextFactory)contexts.get(id);
+        if(factory==null) return null;
+        
+        if(factory.contextServer==null) factory.contextServer = server;
+        if(factory.contextServer != server) throw new SecurityException("Illegal access");
+        return factory;
     }
     
     /**
-     * Removes the context factory from the VM list of context factories.
+     * Removes the context factory from the classloader's list of context factories.
      *
      */
     public synchronized void remove() {
@@ -104,7 +118,7 @@ public class ContextFactory extends SessionFactory {
     }
     
     /**
-     * Remove all context factories from the VM.
+     * Remove all context factories from the classloader.
      * May only be called by the ContextServer.
      * @see php.java.bridge.http.ContextServer
      */

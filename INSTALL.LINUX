@@ -1,8 +1,8 @@
 Installing the PHP/Java Bridge on Linux
 ---------------------------------------
 
-On RedHat Enterprise Linux[1] ("RHEL") or Fedora Linux ("FC4")
-download and install the java, php, httpd and php-java-bridge RPM
+On RedHat Enterprise Linux[1] ("RHEL") or Fedora Linux ("FC")
+download and install the java, PHP, httpd and php-java-bridge RPM
 files. On other Linux variants please either create a binary RPM
 distribution from the source RPM (with: rpmbuild --rebuild
 php-java-bridge*src.rpm) or follow the instructions in the generic
@@ -15,16 +15,16 @@ Install the RPM files, for example with:
     rpm -i php-5.0.4-10.i386.rpm
     rpm -i php-java-bridge-x.y.z-1.i386.rpm
 
-Either install the tomcat backend:
+Either install the tomcat back-end:
 
     rpm -i tomcat5-5.0.30-5jpp_6fc.i386.rpm
     rpm -i php-java-bridge-tomcat-x.y.z-1.i386.rpm
 
-Or install the standalone backend:
+Or install the standalone back-end:
 
     rpm -i php-java-bridge-standalone-x.y.z-1.i386.rpm
 
-Or deploy the J2EE backend:
+Or deploy the J2EE back-end:
 
     Copy the JavaBridge.war to the autodeploy folder of your J2EE
     server and edit the java.hosts and java.servlet options in
@@ -34,13 +34,15 @@ If Security Enhanced Linux is enabled, the above commands should have
 provided instructions how to install the php-java-bridge.te and
 php-java-bridge.fc policy files.
 
-If you have installed the tomcat or J2EE backend, re-start the backend
-and apache and check:
+If you have installed the tomcat or J2EE back-end, re-start the back-end
+and apache and check if the apache htdocs directory is shared with the
+tomcat webapps directory. If not, symlink or copy
+/usr/share/tomcat5/webapps/JavaBridge to /var/www/html/JavaBridge. Visit:
 
     http://localhost:8080/JavaBridge/test.php 
     http://yourHost/JavaBridge/test.php
 
-If you have installed the standalone backend, re-start the backend and
+If you have installed the standalone back-end, re-start the back-end and
 apache, copy the test.php from the documentation folder
 (/usr/share/doc/php-java-bridge-[version]) to the web server document
 root (/var/www/html) and check:
@@ -48,7 +50,7 @@ root (/var/www/html) and check:
     http://yourHost/test.php
 
 Then install your java libraries (.jar files) in /usr/share/java or in
-java.libpath/lib (see output of phpinfo) and your php and web-pages in
+java.libpath/lib (see output of phpinfo) and your PHP and web-pages in
 the web server document root (/var/www/html or
 /usr/share/tomcat5/webapps/JavaBridge) or one of their
 sub-directories.

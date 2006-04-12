@@ -198,7 +198,7 @@ java.servlet and java.hosts entries.  Example:
 
        [java]
        java.log_level="2"
-       java.servlet=MultiUser
+       java.servlet=User
        java.hosts="127.0.0.1:8080"
 
 The PHP/Java Bridge log output appears in the server log file, for

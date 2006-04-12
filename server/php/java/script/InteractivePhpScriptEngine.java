@@ -23,7 +23,10 @@ public class InteractivePhpScriptEngine extends PhpScriptEngine {
     private static final String restoreState = "foreach ($javabridge_values as $javabridge_key=>$javabridge_val) {eval(\"\\$$javabridge_key=\\$javabridge_values[\\$javabridge_key];\");}\n";
     private static final String saveState = "foreach (get_defined_vars() as $javabridge_key=>$javabridge_val) {if(in_array($javabridge_key, $javabridge_ignored_keys)) continue;eval(\"\\$javabridge_values[\\$javabridge_key]=\\$$javabridge_key;\");};\n";
 
-    /**@inheritDoc*/
+
+    /**
+     * Create the interactive php script engine.
+     */
     public InteractivePhpScriptEngine(InteractivePhpScriptEngineFactory factory) {
         super(factory);
     }
@@ -32,7 +35,9 @@ public class InteractivePhpScriptEngine extends PhpScriptEngine {
     /* (non-Javadoc)
      * @see javax.script.ScriptEngine#eval(java.lang.String, javax.script.ScriptContext)
      */
-    /**@inheritDoc*/
+    /**
+     * Create the interactive php script engine.
+     */
     public Object eval(String script, ScriptContext context)
 	throws ScriptException {
 	if(script==null) {

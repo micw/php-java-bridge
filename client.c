@@ -1,8 +1,9 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
-/* execve */
+/* execve, mkfifo */
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 
 /* strings */
 #include <string.h>
@@ -585,10 +586,12 @@ static void override_ini_for_redirect(TSRMLS_D) {
 	char *kontext = EXT_GLOBAL (get_servlet_context) (TSRMLS_C);
 	if(kontext && *kontext!='/') { /* only if context not hardcoded via "On" or "/kontext/foo.php" */
 	  static const char bridge_ext[] = "javabridge";
+	  static const char default_ext[] = "";
 	  static const char default_servlet[] = DEFAULT_SERVLET;
 	  static const char name[] = "get_self";
 	  static const char override[] = "(array_key_exists('PHP_SELF', $_SERVER) && \n\
 array_key_exists('HTTP_HOST', $_SERVER)) ?$_SERVER['PHP_SELF']:null;";
+	  const char *bridge_extension = bridge_ext;
 	  char *tmp, *strval;
 	  size_t len = 0;
 	  if((SUCCESS==zend_eval_string((char*)override, &val, (char*)name TSRMLS_CC)) && (Z_TYPE(val)==IS_STRING) && Z_STRLEN(val)) {
@@ -598,14 +601,15 @@ array_key_exists('HTTP_HOST', $_SERVER)) ?$_SERVER['PHP_SELF']:null;";
 	  }
 	  if(!len) {
 		strval = (char*)default_servlet;
+		bridge_extension = default_ext;
 		len = sizeof(default_servlet)-1;
 	  }
 	  assert(JG(servlet));
 	  free(JG(servlet));
-	  JG(servlet) = tmp = malloc(len+sizeof(bridge_ext));
+	  JG(servlet) = tmp = malloc(len+sizeof(bridge_extension));
 	  assert(tmp); if(!tmp) exit(6);
 	  strcpy(tmp, strval);
-	  strcat(tmp, bridge_ext);
+	  strcat(tmp, bridge_extension);
 	  JG(ini_user)|=U_SERVLET;
 	}
   }
@@ -697,7 +701,7 @@ void EXT_GLOBAL(destroy_channel)(TSRMLS_D) {
 static const char in[] = ".i";
 static const char out[] = ".o";
 static short create_pipe(char*sockname TSRMLS_DC) {
-  if((mknod(sockname, S_IFIFO, 0) == -1) || chmod(sockname, 0666) == -1) return 0;
+  if((mkfifo(sockname, 0) == -1) || chmod(sockname, 0666) == -1) return 0;
   return 1;
 }
 static short create_pipes(char*basename, size_t basename_len TSRMLS_DC) {

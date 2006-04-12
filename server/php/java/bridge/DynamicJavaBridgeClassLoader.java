@@ -233,7 +233,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     	                    	try {
 				    return super.findClass(name);
 				} catch (ClassNotFoundException e) {
-				    throw new ClassNotFoundException("Class " + name + " not found in: " + (Arrays.asList(this.getURLs()))+". Please load all interconnected classes in a single java_require() call, e.g. use java_require(foo;bar) instead of java_require(foo); java_require(bar).", e);
+				    throw new ClassNotFoundException("Class " + name + " not found in: " + (Arrays.asList(this.getURLs()))+". Please load all interconnected classes in a single java_require() call, e.g. use java_require(foo;bar) instead of java_require(foo); java_require(bar). Please check the path and the SEL and File permissions.", e);
 				} catch (Exception ex) {
 				    throw new ClassNotFoundException("Class " + name + " not found in: " + (Arrays.asList(this.getURLs()))+" due to exception: " + ex + ".", ex);
 				}
@@ -262,7 +262,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	try {
 	    return super.loadClass(name); 
 	} catch (ClassNotFoundException e) {
-	    throw new ClassNotFoundException(("Could not find " + name + " in java_require() path"), e);    
+	    throw new ClassNotFoundException(("Could not find " + name + " in java_require() path. Please check the path and the SEL and File permissions "), e);    
 	}
     }
     /**

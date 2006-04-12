@@ -8,39 +8,40 @@
 
 </p> <BODY LANG="en-US" DIR="LTR"> <H1>What is the PHP/Java
 Bridge?</H1> <P><FONT > The PHP/Java Bridge
-  is an optimized XML protocol which can be used to connect a native script engine with a Java or <a href="http://www.ecma-international.org/publications/standards/Ecma-335.htm">ECMA 335</a> virtual machine. The <a href="documentation/PHP-API/html/java_8c.html">php java extension</a> uses this protocol to connect running PHP instances with already running Java or .NET <a href="server/documentation/API/overview-summary.html">backends</a>. The communication works in both directions, the <A HREF="http://www.jcp.org/aboutJava/communityprocess/edr/jsr223/">JSR 223</A> interface can be used to connect to a running PHP server (Apache/IIS, FastCGI, ...) so that Java components can call PHP instances and PHP scripts can invoke CLR (e.g. VB.NET, C#, COM) or Java (e.g. Java, KAWA, JRuby) based applications or transfer control back to the environment where the request came from. The bridge can be set up to automatically start the PHP frontend or the Java/.NET backend, if needed.
+  is an optimized XML protocol which can be used to connect a native script engine with a Java or <a href="http://www.ecma-international.org/publications/standards/Ecma-335.htm">ECMA 335</a> virtual machine. The <a href="documentation/PHP-API/html/java_8c.html">php java extension</a> uses this protocol to connect running PHP instances with already running Java or .NET <a href="server/documentation/API/overview-summary.html">back-ends</a>. The communication works in both directions, the <A HREF="http://www.jcp.org/aboutJava/communityprocess/edr/jsr223/">JSR 223</A> interface can be used to connect to a running PHP server (Apache/IIS, FastCGI, ...) so that Java components can call PHP instances and PHP scripts can invoke CLR (e.g. VB.NET, C#, COM) or Java (e.g. Java, KAWA, JRuby) based applications or transfer control back to the environment where the request came from. The bridge can be set up to automatically start the PHP front end or the Java/.NET back-end, if needed.
 
 <p><FONT > Each request-handling PHP process of a multi-process HTTP
 server communicates with a corresponding thread spawned by the VM.
 Requests from more than one HTTP server may either be routed to an
 application server running the PHP/Java Bridge or each HTTP server may
-own a PHP/Java Bridge and communicate with a J2EE java application
-server by exchanging java value objects; the necessary client-stub
+own a PHP/Java Bridge and communicate with a J2EE Java application
+server by exchanging Java value objects; the necessary client-stub
 classes (ejb client .jar) can be loaded at run-time.  </FONT></P>
 
 <P><FONT > ECMA 335 based classes can be accessed if at least one
-backend is running inside a ECMA complient VM, for example Novell's
+back-end is running inside a ECMA compliant VM, for example Novell's
 MONO or Microsoft's .NET.  Special features such as varargs,
 reflection or assembly loading are also supported.  </FONT></P>
 
-<P><FONT > When the backend is running in a J2EE environment, session
+<P><FONT > When the back-end is running in a J2EE environment, session
 sharing between PHP and JSP is always possible. Clustering and load
 balancing is available if the J2EE environment supports these
 features.  </FONT></P>
 
-<P><FONT > Unlike previous attempts (the <a href="http://www.php.net/manual/en/ref.java.php">ext/java</a> or the <A HREF="http://www.jcp.org/aboutJava/communityprocess/edr/jsr223/">JSR 223</A> sample
-implementation) the PHP/Java Bridge does <em>not</em> use the java
-native interface ("JNI"). Php instances are allocated from the HTTP
+<P><FONT >The PHP/Java Bridge does <em>not</em> use the Java
+native interface ("JNI"). PHP instances are allocated from the HTTP
 (Apache/IIS) pool, instances of java/j2ee components are allocated
-from the backend. The allocated instances communicate using a
+from the back-end. The allocated instances communicate using a
 "continuation passing style", see <a
-href="documentation/PHP-API/html/java_8c.html#a43"><code>java_closure()</code></a> and the <a href="server/documentation/API/php/java/bridge/Invocable.html">invocable interface</a>. In
-case a php instance crashes, it will not take down the java
+href="documentation/PHP-API/html/java_8c.html#a45"><code>java_closure()</code></a> and the <a href="server/documentation/API/php/java/bridge/Invocable.html">invocable interface</a>. In
+case a PHP instance crashes, it will not take down the java
 application server or servlet engine.  </FONT></P>
 
 <H1>Motivation</H1>
-
-<P><FONT > PHP components are essentially transient. For complex
+<H2>J2EE as a standard framework for PHP scripts</H2>
+<P><FONT ><img src="tomcat-jsf.jpg"
+align="right" vspace="0" hspace="0" name="php-jsf" alt="Apache/Tomcat
+with PHP scripts and the Java Server Faces framework">All PHP components are essentially transient. For complex
 applications is usually necessary to introduce "middleware" components
 such as (enterprise-) "java beans" or enterprise applications which
 provide caching, connection pooling or the "business logic" for the
@@ -51,14 +52,12 @@ so that it might be necessary to re-use used connections. The standard
 PHP XML or DB abstractions are useless in this area because they
 cannot rely on a middle tier to do caching or db connection pooling.
 </FONT></P>
-
+<H2>Platform independence</H2>
 <P><FONT > Even for trivial tasks it might be necessary to use a java
 class or java library. For example it might be necessary to generate
 Word, Excel or PDF documents without tying the application to a
-specific system platform.  </FONT></P> <img src="tomcat-jsf.jpg"
-align="right" vspace="0" hspace="0" name="php-jsf" alt="Apache/Tomcat
-with PHP scripts and the Java Server Faces framework">
-
+specific system platform.  </FONT></P>
+<H2>A standard distribution format</H2>
 <P><FONT > PHP, the PHP/Java Bridge and the php files can be packaged
 within a standard J2EE archive, customers can easily deploy it into a
 J2EE application server or servlet engine. They don't have to install
@@ -66,16 +65,15 @@ PHP and they usually cannot tell the difference whether the pages are
 generated by PHP, JSP or servlets.  Since the bridge allows session
 sharing between PHP and the J2EE components, developers can migrate
 their JSP based solutions to PHP step by step.  </FONT></P>
-
+<H2>Migration from JSP to PHP</H2>
 <P><FONT >PHP and the PHP/Java Bridge might also be interesting for
-java developers. There are a number of technologies based on the JSP
-template system such as jakarta <a
+java developers. Although JSP is still used by frameworks such as jakarta <a
 href="http://struts.apache.org/">Struts</a> and its successor <a
 href="http://www.jcp.org/en/jsr/detail?id=127">Java Server
-Faces</a>. Since PHP/Java Bridge version 3.0 it is possible to embed
+Faces</a>, JSP is not <a href="http://www.onjava.com/pub/a/onjava/2004/06/09/jsf.html?page=1"> and probably never will be</a>  a <a href="http://www.php.net">sucessful technology</a>. The main problem with JSP is that it requires a development tool at run-time, a "compiler", which makes deployment difficult and may generate error messages which are very difficult to understand, because they refer to an intermediate representation which has nothing to do with the original JSP file. For example if the configuration changes, it may happen that users are confronted with compiler error codes or run-time messages like "NullPointerException in __jsp" instead of proper error messages from the program. Since PHP/Java Bridge version 3.0 it is possible to embed
 php scripts into the JSF framework, so that UI developers can
-concentrate on developing HTML templates while web developers can
-create a prototype using php code and use the existing framework from
+concentrate on developing HTML or XML templates while web developers can
+create prototypes using PHP code and use the existing framework from
 their code.</img>
 
 </FONT></P> 
@@ -86,7 +84,7 @@ their code.</img>
 
 <ul>
 <li>
-  <code>new <strong>Java</strong>("CLASSNAME")</code>: References and instanciates the class CLASSNAME.
+  <code>new <strong>Java</strong>("CLASSNAME")</code>: References and instantiates the class CLASSNAME.
  After script
      execution the referenced classes may be garbage collected. Example: <br><br>
      
@@ -141,7 +139,7 @@ echo "Evaluated in $delta ms.\n";<br>
 <br>
 <li>
   <code><strong>java_context()</strong></code>: Makes the <code>javax.script.ScriptContext</code>
-     available to the current script. All implicit web objects (session, servlet context, etc.) are <a href="server/documentation/API/php/java/servlet/Context.html#getHttpServletRequest()">available from the context</a>, when the backend is running in a servlet engine or application server. The following example uses the jdk1.6 <a href="http://java.sun.com/javase/6/docs/tooldocs/share/jrunscript.html"><code>jrunscript</code></a> to eval php statements interactively:  <br><br>
+     available to the current script. All implicit web objects (session, servlet context, etc.) are <a href="server/documentation/API/php/java/servlet/Context.html#getHttpServletRequest()">available from the context</a>, when the back-end is running in a servlet engine or application server. The following example uses the jdk1.6 <a href="http://java.sun.com/javase/6/docs/tooldocs/share/jrunscript.html"><code>jrunscript</code></a> to eval PHP statements interactively:  <br><br>
 <blockquote>
 <code>
 /opt/jdk1.6/bin/jrunscript -l php-intractive<br>
@@ -201,10 +199,10 @@ echo (string)java_closure();<br>
 </blockquote>
 <br>
 <li>
-  <code>$session=<strong>java_session</strong>()</code>: Creates or retrieves a session context. When the backend is running in a J2EE environment, the session is taken from the request object, otherwise it is taken from PHP. Please see the  <a href="server/documentation/API/php/java/bridge/ISession.html">ISession interface documentation</a> for details. The <code>java_session()</code> must be called <a href="http://www.php.net/manual/en/function.headers-sent.php">before the response headers have been sent</a> and it should be called as the first statement within a php script.
+  <code>$session=<strong>java_session</strong>()</code>: Creates or retrieves a session context. When the back-end is running in a J2EE environment, the session is taken from the request object, otherwise it is taken from PHP. Please see the  <a href="server/documentation/API/php/java/bridge/ISession.html">ISession interface documentation</a> for details. The <code>java_session()</code> must be called <a href="http://www.php.net/manual/en/function.headers-sent.php">before the response headers have been sent</a> and it should be called as the first statement within a PHP script.
 <blockquote>
 <code>
-$session = java_session();<br>
+$session = java_session();<Mr>
 $servletRequest = $session->getHttpServletRequest();<br>
 $servletRequest->setAttribute(...);<br>
 ...<br>
@@ -219,7 +217,7 @@ primitive uses a "private" session store with the name
 SESSIONNAME. Please see the <a
 href="server/documentation/API/php/java/bridge/ISession.html">ISession
 interface documentation</a> for details. For java values
-<code>$_SESSION['var']=val</code> is syntactic shugar for
+<code>$_SESSION['var']=val</code> is syntactic sugar for
 <code>java_session(session_id())-&gt;put('var', val)</code>.
 <blockquote>
 
@@ -417,7 +415,7 @@ $outbuf->println(true);
 ><TD
 >java.lang.String</TD
 ><TD
->An UTF-8 encoded string. Since PHP does not support unicode, all java.lang.String values are auto-converted into a byte[] (see above) using UTF-8 encoding. The encoding can be changed with the <strong><code>java_set_file_encoding()</code></strong> primitive.</TD
+>An UTF-8 encoded string. Since PHP does not support Unicode, all java.lang.String values are auto-converted into a byte[] (see above) using UTF-8 encoding. The encoding can be changed with the <strong><code>java_set_file_encoding()</code></strong> primitive.</TD
 ><TD
 >$string=$buf->toString();</TD
 ><TR
@@ -443,7 +441,7 @@ echo $lst->size();
 ><TD
 >java.util.Map</TD
 ><TD
->PHP4 sends and receives hashtables as values.  PHP5 sends hashtables as values and receives object handles which implement the new iterator interface.</TD
+>PHP4 sends and receives hash-tables as values.  PHP5 sends hash-tables as values and receives object handles which implement the new iterator interface.</TD
 ><TD
 >$h=array("k"=>"v", "k2"=>"v2");<br>
 $m=new java("java.util.HashMap",$h);<br>
@@ -495,12 +493,12 @@ On Security Enhanced Linux <code>.jar</code> files can only be loaded from locat
 <P><FONT > The PHP/Java Bridge can operate in 4 different modes: <ol>
   <li> Invoked from the dl() function.  In this mode the bridge starts
   when the HTTP server receives a client request and terminates after the response
-  is written.  This is very slow because it starts a new backend (Java or .NET VM) for
+  is written.  This is very slow because it starts a new back-end (Java or .NET VM) for
   each request. But it does not require any administrative privileges.
 
    <li> Permanently activated in the global php.ini file with an
  internal java process running in the HTTP server domain.  In this
- mode the bridge backend starts when the HTTP server starts and terminates
+ mode the bridge back-end starts when the HTTP server starts and terminates
  when the HTTP server terminates. Recommended during
  development. Please see <a href="#mode2">web server installation
  below</a>.
@@ -508,12 +506,12 @@ On Security Enhanced Linux <code>.jar</code> files can only be loaded from locat
    <li> Permanently activated in the global php.ini file with an
       external java process.  Recommended for <a
       href="#mode3">production systems</a>.  This mode is used by the
-      RPM package available for RedHat Enterprise Linux.  In this mode
+      RPM package available for Red Hat Enterprise Linux.  In this mode
       the bridge starts and stops as a system service.
 
    <li> Permanently activated in the global php.ini file with an
       external <a href="#mode4">application server or servlet engine</a>.
-      PHP be can run as a CGI sub-component within a pure java application server or be installed as a Apache/IIS module. 
+      PHP be can run as a CGI or FastCGI sub-component within a pure java application server or be installed as a Apache/IIS module. 
 
 </ol>
 <P><FONT > Furthermore the PHP/Java Bridge can be: <ul> <li> Compiled
@@ -536,10 +534,16 @@ README file.
 <H1>Installation
 instructions</H1>
 <P STYLE="margin-top: 0.42cm; page-break-after: avoid"><FONT ><FONT SIZE=3>If
-you have a RedHat Linux system (RedHat Enterprise or
-Fedora), you can download the 32bit RPM from 
-<a href="http://www.sourceforge.net/projects/php-java-bridge">http://www.sourceforge.net/projects/php-java-bridge</a>
-and either install the bridge and standalone backend
+you have a Unix, Windows or Linux system, <a href="http://www.sourceforge.net/projects/php-java-bridge">download</a> either the binary or the source and install it.
+<H2>Installation on Linux</H2>
+Open a command shell and type the following commands:
+<H3>Public key</H3>
+All binary files are digitally signed. Before you install the RPM binaries you should install the <a href="RPM-GPG-KEY">public key</a>, so that the integrity can be checked. If you haven't installed the key, type: 
+<blockquote>
+<code>rpm --import RPM-GPG-KEY</code>
+</blockquote>
+<H3>RPM binaries</H3>
+Either install the bridge and standalone back-end
 <p>
 <blockquote>
 <code>
@@ -549,7 +553,7 @@ rpm -i php-java-bridge-standalone-x.y.z-1-i386.rpm<br>
 </code> 
 </blockquote>
 </p>
-or the tomcat backend
+or the tomcat back-end
 <p>
 <blockquote>
 <code>
@@ -583,12 +587,13 @@ If you have installed the development RPM, you can run PHP scripts interactively
 </code>
 </blockquote>
 </p>
- For other operating systems please follow 
+<H2>Installation from source</H2>
+ For other operating systems, e.g. Solaris, Windows, BSD or Mac-OSX, please follow 
 the instructions below (on Security Enhanced Linux please use the RPM or please read the README before installation).</FONT></FONT></P>
 <UL>
 	<LI><P><FONT >Make sure you
 	have java version 1.4.2 or higher, gcc 3.2 or higher, apache 1.3 or
-	higher, <em>autoconf </em> 2.57 or higher, <em>libtool</em> 1.4.3 or higher, <em>automake</em> 1.6.3 or higher, GNU make and php 4.3.2 or higher
+	higher, <em>autoconf </em> 2.57 or higher, <em>libtool</em> 1.4.3 or higher, <em>automake</em> 1.6.3 or higher, GNU make and php 4.3.4 or higher
 	installed. You can check the version numbers with the commands <code>java
 	-version</code>, <code>gcc --version</code>, <code>apachectl -version</code>, <code>libtool --version</code>, <code>automake --version</code>, <code>make null --version</code>, <code>autoconf --version</code> and
 	<code>php-config --version</code>.
@@ -613,13 +618,13 @@ the instructions below (on Security Enhanced Linux please use the RPM or please 
 	<LI><P STYLE="font-style: normal"><FONT >Restart
 	the apache service with the command: <code>apachectl restart</code></FONT></P>
 	<LI><P><FONT >You can now test
-	the web installation. Copy the test.php file to the document root (usually /var/www/html) and invoke the file with your browser. You should see that the bridge module is activated and running.  The bridge backend automatically starts or re-starts whenever you start or re-start the web-server.
+	the web installation. Copy the test.php file to the document root (usually /var/www/html) and invoke the file with your browser. You should see that the bridge module is activated and running.  The bridge back-end automatically starts or re-starts whenever you start or re-start the web-server.
 	</P>
-	<LI><P><FONT ><A name="mode3">In a <strong>production environment</strong> it is recommended to separate the java VM and the HTTP process by setting the communication channel. The <code>java.socketname</code> should be set to the name of the socket, it will be created if it doesn't exist.  The java section of the php <code>.ini</code> file should contain a <code>java.socketname</code> option. The following is an example from RedHat Enterprise Linux and Fedora:
-<BR><BR><code>extension = java.so<BR>[java]<BR>java.socketname="/var/run/.php-java-bridge_socket"</code><br><br>The advantage of this mode is that the java VM no longer depends on the web server and can be examined and re-started independently. The download file contains a script, <code>php-java-bridge.service</code>, which can be used to start/stop the PHP/Java Bridge backend as system service. All available <code>.ini</code> options are listed in <a href="#ini-options">table 2</a>.</A> </FONT>
+	<LI><P><FONT ><A name="mode3">In a <strong>production environment</strong> it is recommended to separate the java VM and the HTTP process by setting the communication channel. The <code>java.socketname</code> should be set to the name of the socket, it will be created if it doesn't exist.  The java section of the PHP <code>.ini</code> file should contain a <code>java.socketname</code> option. The following is an example from Red Hat Enterprise Linux and Fedora:
+<BR><BR><code>extension = java.so<BR>[java]<BR>java.socketname="/var/run/.php-java-bridge_socket"</code><br><br>The advantage of this mode is that the java VM no longer depends on the web server and can be examined and re-started independently. The download file contains a script, <code>php-java-bridge.service</code>, which can be used to start/stop the PHP/Java Bridge back-end as system service. All available <code>.ini</code> options are listed in <a href="#ini-options">table 2</a>.</A> </FONT>
 
 	</P>
-	<LI><P><FONT ><A name="mode4">In a production environment which requires <strong>load balancing and failover</strong> or <strong>session sharing between PHP, JSP and Servlets</strong> it is recommended deploy the backend into a servlet engine or an application server; tomcat 5 for example. Disable the <code>java.socketname</code>, either a) enable the <code>java.hosts</code> and <code>java.servlet</code> options or b), if you don't have Apache or IIS, install PHP as a CGI/FastCGI binary so that your application server can find it and start the application server. The <code>.ini</code> file should contain:
+	<LI><P><FONT ><A name="mode4">In a production environment which requires <strong>load balancing and fail over</strong> or <strong>session sharing between PHP, JSP and Servlets</strong> it is recommended deploy the back-end into a servlet engine or an application server; tomcat 5 for example. Disable the <code>java.socketname</code>, either a) enable the <code>java.hosts</code> and <code>java.servlet</code> options or b), if you don't have Apache or IIS, install PHP as a CGI/FastCGI binary so that your application server can find it and start the application server. The <code>.ini</code> file should contain:
 <BR><BR><code>extension = java.so<BR>[java]<br>
 java.hosts=&quot;127.0.0.1:8080&quot<br>
 java.servlet=On
@@ -678,7 +683,7 @@ BORDER="1"
 ><TD
 >/var/run/.php-java-bridge_socket</TD
 ><TD
->The name of the communication channel for the local backend. Must be an integer, if a secure "unix domain" channel is not available (Windows, Mac OSX).</TD
+>The name of the communication channel for the local back-end. Must be an integer, if a secure "Unix domain" channel is not available (Windows, Mac OSX).</TD
 ><TD
 >java.socketname="9167"
 </TD
@@ -699,7 +704,7 @@ BORDER="1"
 ><TD
 >/var/log/php-java-bridge.log</TD
 ><TD
->The log file for the local PHP/Java Bridge backend.</TD
+>The log file for the local PHP/Java Bridge back-end.</TD
 ><TD
 >java.log_file="/tmp/php-java-bridge.log"</TD
 ><TR
@@ -708,7 +713,7 @@ BORDER="1"
 ><TD
 >&lt;none&gt;</TD
 ><TD
->Additional bridge hosts which are used when the local backend is not available.</TD
+>Additional bridge hosts which are used when the local back-end is not available.</TD
 ><TD
 >java.hosts="127.0.0.1:9168;127.0.0.1:9169"
 </TD
@@ -718,9 +723,9 @@ BORDER="1"
 ><TD
 >Off</TD
 ><TD
->The communication protocol. If set to <code>On</code> or to <code>User</code>, the bridge uses HTTP to communicate with the <code>java.hosts</code> backends. The option <code>User</code> preserves the context, <code>On</code> is for backward compatibility and rewrites the context to: <code>/JavaBridge/JavaBridge.php</code>.</TD
+>The communication protocol. If set to <code>On</code> or to <code>User</code>, the bridge uses HTTP to communicate with the <code>java.hosts</code> back-ends. The option <code>User</code> preserves the context, <code>On</code> is for backward compatibility and rewrites the context to: <code>/JavaBridge/JavaBridge.php</code>.</TD
 ><TD
-><code>;; Make sure that this option is only set <br>;; if your backend 
+><code>;; Make sure that this option is only set <br>;; if your back-end 
 is deployed in a<br>;; servlet engine or application server.</code><br>
 java.servlet=User<br>
 </TD
@@ -744,7 +749,7 @@ java.servlet=User<br>
 >The directory which contains the <code>natcJavaBridge.so</code> used for local ("unix domain") sockets. <em>Please do not change the default value.</em></TD
 ><TD
 >
-java.libpath="/tmp/"
+java.lib="/tmp/"
 </TD
 ></TR
 ><TR
@@ -753,7 +758,7 @@ java.libpath="/tmp/"
 ><TD
 >Off</TD
 ><TD
->Since version 3 the bridge is no longer backward compatible to its predecessor "ext/java": Exact php numbers are now represented as java integers, java return values are no longer auto-converted into php values. <em>Leave it off, if possible</em>.</TD
+>Since version 3 the bridge is no longer backward compatible to its predecessor "ext/java": Exact PHP numbers are now represented as java integers, java return values are no longer auto-converted into PHP values. <em>Leave it off, if possible</em>.</TD
 ><TD
 >
 java.ext_java_compatibility=On
@@ -764,8 +769,9 @@ java.ext_java_compatibility=On
 >
 </center>
 <br><br>
+<H2>Further information</H2>
 <P><FONT >For further
-information please read the <a href="README">README</a>, <a href="INSTALL">INSTALL</a>, <a href="INSTALL.LINUX">INSTALL.LINUX</a>, <a href="INSTALL.J2EE">INSTALL.J2EE</a> and <a href="INSTALL.WINDOWS">INSTALL.WINDOWS</a> documents contained in
+information please read the <a href="README">README</a>, <a href="INSTALL">INSTALL</a>, <a href="INSTALL.LINUX">INSTALL.LINUX</a>, <a href="INSTALL.J2EL">INSTALL.J2EE</a> and <a href="INSTALL.WINDOWS">INSTALL.WINDOWS</a> documents contained in
 the download files.</p>
 <p>The <a href="NEWS">NEWS</a> file lists the latest user visible changes, development documentation can be found in the <a href="documentation/PHP-API/html/java_8c.html"><code>documentation</code></a> and <a href="server/documentation/API/overview-summary.html"><code>server/documentation</code></a> folder.
 
@@ -775,14 +781,14 @@ the download files.</p>
 
 </P> <H1>FAQ</H1> <P><FONT > <ul> <li><H4>The bridge doesn't compile
 on my system!?!</H4> <p>Please follow the instructions from the
-<a href="INSTALL">INSTALL document</a> as close as possible. In particular the backend needs the specified versions of <em>autoconf</em>, <em>libtool</em> and <em>automake</em> in the path. Backend compilation can be switched off with the <code>--disable-backend</code> configure option. A compiled, platform-independent backend ("JavaBridge.war") can be found in the download folder.
+<a href="INSTALL">INSTALL document</a> as close as possible. In particular the back-end needs the specified versions of <em>autoconf</em>, <em>libtool</em> and <em>automake</em> in the path. Back-End compilation can be switched off with the <code>--disable-back-end</code> configure option. A compiled, platform-independent back-end ("JavaBridge.war") can be found in the download folder.
 If there are problems compiling the bridge code against any PHP version >= 4.3.4 on Windows,
 Linux/Unix or MacOS, please do <em>not</em> report this problem to the
 mailing list. Please <a
-href="http://sourceforge.net/tracker/?func=add&group_id=117793&atid=679233">open
+href="http://sourceforge.net/tracker/?func=add&group_id=117793&id=679233">open
 a problem report instead</a> (you don't need an account to submit a
 problem report).</p> <p>On RPM based Security Enhanced Linux
-installations (RHEL, Fedora) please install one of the binary RPM's or
+installations (RHEL, Fedora) please install one of the binary REMs or
 compile a binary RPM from the source RPM using the command:
 <code>rpmbuild --rebuild php-java-bridge*src.rpm</code></p> <p>On
 recent Debian X86 installations, Ubuntu for example, it is also
@@ -840,7 +846,7 @@ installing java?</H4> <p>Yes. Simply ommit the
 interpret java libraries. This library also uses much less system
 resources (memory, files) than a "real" java VM.</p> <li> <H4>Does the
 bridge run native code within my servlet engine or application
-server?</H4> <p>No. The bridge backend is written in pure java, it
+server?</H4> <p>No. The bridge back-end is written in pure java, it
 doesn't use any native code. Native PHP runs within Apache, IIS, a
 FCGI server or via CGI. If the PHP instance crashes, an error page is
 returned to the client and a new PHP instance is started for the next
@@ -852,16 +858,16 @@ e.g. <code>java_session()->put("buf", $stringBuffer)</code> or via
 href="http://www.php.net/manual/en/ref.session.php">php session
 module</a>, it uses <code><a
 href="documentation/PHP-API/html/java_8c.html#a34">java_session()<a></code>
-internaly. If you don't want depend on the php session module, for
-example if you have compiled php without the <code>session.so</code>,
+internaly. If you don't want depend on the PHP session module, for
+example if you have compiled PHP without the <code>session.so</code>,
 use java_session() instead.</p> <p> If you use the <a
 href="http://www.jcp.org/en/jsr/detail?id=127">Java Server Faces</a>
 framework, you declare the scope of the script in the <a
-href="server/WEB-INF/faces-config.xml">php
+href="server/WEB-INF/faces-config.xml">PHP
 managed bean descriptor<a>. For example if the
 <code>managed-bean-scope</code> is changed from <code>request</code>
 to <code>session</code>, the framework automatically saves the state
-of the php script instance and restores it when the next request
+of the PHP script instance and restores it when the next request
 belonging to the same session comes in.</p> <li> <H4>How many threads
 does the bridge start?</H4> <p>Request-handling threads are started
 from a thread pool, which limits the number of user requests to 20
@@ -878,29 +884,29 @@ a <a
 href="server/documentation/API/php/java/bridge/http/ContextServer.html">ContextServer</a>
 and a <a
 href="server/documentation/API/php/java/script/HttpProxy.html">HttpProxy</a>. The
-HttpProxy represents the php continuation and the HttpServer the
+HttpProxy represents the PHP continuation and the HttpServer the
 request-handling java continuation associated with the JSR223 script.
 </p> 
 
 <li> <H4>How do I lock down the VM so that users cannot start
 threads or call System.exit?</H4> <p>Usually with a java policy
-file. An example file will ship with version 3.0.9. </p> 
+file. An example file will ship with version 3.1. </p> 
 
-<li> <H4>Where is my output?</H4> <p><code>System.out</code> and <code>System.err</code> are redirected to the server log file(s). When php scripts are invoked from a java framework (Java Server Faces for example), even the php output is redirected. For the standalone backend the output appears in the <code>/var/log/php-java-bridge.log</code> or in JavaBridge.log, see .ini option <code>java.log_file</code>. For the j2ee backend the location of the log file(s) depends on the j2ee server configuration.</p> 
+<li> <H4>Where is my output?</H4> <p><code>System.out</code> and <code>System.err</code> are redirected to the server log file(s). When PHP scripts are invoked from a java framework (Java Server Faces for example), even the PHP output is redirected. For the standalone back-end the output appears in the <code>/var/log/php-java-bridge.log</code> or in JavaBridge.log, see .ini option <code>java.log_file</code>. For the j2pee back-end the location of the log file(s) depends on the j2ee server configuration.</p> 
 
 <li> <H4>How do I access enums or inner classes?</H4> 
 With the <code>classname$inner</code> syntax. For example <br><br>
 <code>
 public interface php {<br>
-&nbsp;&nbsp;public class java {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;public enum bridge {JavaBridge, JavaBridgeRunner};<br>
+&abs;&nbsp;public class java {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;public Emmy bridge {JavaBridge, JavaBridgeRunner};<br>
 &nbsp;&nbsp;}<br>
 }<br>
 </code><br>
 can be accessed with:<br><br>
 <code>
 &lt;?php<br>
-java_require(getcwd()); // load php.class<br>
+java_require(greed()); // load php.class<br>
 $bridge = new java('php$java$bridge');<br>
 echo $bridge->JavaBridgeRunner;<br>
 ?&gt;<br>
@@ -947,7 +953,7 @@ print $buf-&gt;length() . "\n";<br>
 ?&gt;<br>
 </code>
 </p>
-The jython 2.1 code<br>
+The Jun 2.1 code<br>
 <p>
 <code>
 from java import lang<br>
@@ -1035,7 +1041,7 @@ BORDER="1"
 <TBODY
 ><TR
 ><TD
->time jrunscript -J-Xmx512M -J-Xms512M -l js t11.js</TD
+>time jrunscript -J-Xmx512M -J-Xms512M -l is t11.js</TD
 ><TD
 >ECMA script</TD
 ><TD
@@ -1072,10 +1078,10 @@ BORDER="1"
 <li> <H4>How do I start a persistent VM?</H4> 
 <p>
 If you want to start <em>one persistent VM per HTTP server</em> running on a computer, see 
-the <a href="#mode2">web server installation</a> description. 
+the <a href="#mode2"evolve-m>web server installation</a> description. 
 If you want to start <em>one persistent VM per computer</em>, please see <a href="#mode3">Linux RPM package</a> or the <a href="#mode4">application server or servlet engine</a> description.
 </p>
-<p>Furthermore it is possible to start standalone backend, for example with the command:<br><br>
+<p>Furthermore it is possible to start standalone back-end, for example with the command:<br><br>
 <code>
 &nbsp;&nbsp;java -jar JavaBridge.jar INET_LOCAL:9676 3<br>
 </code>
@@ -1090,7 +1096,7 @@ The <code>php.ini</code> entry might look like:<br><br>
 Please see the <a href="server/documentation/API/php/java/bridge/JavaBridge.html">JavaBridge</a> documentation for details.
 </p>
 
-<li> <H4>I want to start the backend automatically as a sub-component of my HTTP Server. How do I pass my own java options and how do I change the security context and the UID of the java process?</H4> 
+<li> <H4>I want to start the back-end automatically as a sub-component of my HTTP Server. How do I pass my own java options and how do I change the security context and the UID of the java process?</H4> 
 <p>
 The bridge uses a wrapper binary which can carry the SUID bit and can be tagged with the SEL security context. This wrapper also allows you to change the standard options, which are: <code>java -Djava.library.path=...  -Djava.class.path=... -Djava.awt.headless=true php.java.bridge.JavaBridge SOCKET_NAME LOG_LEVEL LOG_FILE</code>.
 A custom wrapper can be set with:<br><br>
@@ -1099,15 +1105,232 @@ java.wrapper=/path/to/wrapper/binary<br>
 </code>
 </p>
 <p>
-On Unix the bridge terminates the sub-process hierarchy with <code>SIGTERM</code>, sleep 5 seconds and <code>SIGTERM</code>, if necessary, sleep 5 seconds and <code>SIGKILL</code>, if necessary. On Windows the bridge emulates the Unix kill behaviour, the bridge kills the entire sub-process hierarchy so that you can use a <code>cmd /c</code> wrapper.
+On Unix the bridge terminates the sub-process hierarchy with <code>LONGTERM</code>, sleep 5 seconds and <code>SIGTERM</code>, if necessary, sleep 5 seconds and <code>SIGKILL</code>, if necessary. On Windows the bridge emulates the Unix kill behaviour, the bridge kills the entire sub-process hierarchy so that you can use a <code>cmd /c</code> wrapper.
 </p>
 <p>
-Please see the <code>JavaWrapper</code> from the  RedHat <code>php-java-bridge-standalone</code> RPM for an example.
+Please see the wrapper <code>RunJavaBridge</code> from the  RedHat <code>php-java-bridge-standalone</code> RPM for an example.
 </p>
 <li> <H4>I want to use the bridge as a replacement for the <a href="http://www.php.net/manual/sl/ref.java.php#java.servlet">PHP 4 servlet API</a>, how do I install it into tomcat?</H4> 
 <p>
-Download the J2EE binary and copy the <code>JavaBridge.war</code> into the tomcat <code>webapps</code> folder. After that visit <code>http://localhost:8080/JavaBridge</code> and run the supplied php examples.
+Download the J2EE binary and copy the <code>JavaBridge.war</code> into the tomcat <code>vapors</code> folder. After that visit <code>http://localhost:8080/JavaBridge</code> and run the supplied PHP examples.
 Please see <code>webapps/JavaBridge/WEB-INF/cgi/README</code> for details.
+</p>
+<li> <H4>I want to use PHP for all tomcat applications. Apache and IIS are not available, but performance is important. How do I install it?</H4> 
+<p>
+Download and install the J2EE binary: copy <code>JavaBridge.war</code> into the tomcat <code>webapps</code> folder.
+</p>
+<p>
+Copy the <code>JavaBridge.jar</code> and the <code>php-servlet.jar</code> from the JavaBridge.war into the tomcat <code>shared/lib</code> folder. Add the lines marked with a <code>+</code> to the tomcat <code>conf/web.xml</code>:
+<blockquote>
+<code>
+<br>
+   &lt;!-- ================== Built In Servlet Definitions ==================== --&gt;<br>
+<br>
++    &lt;!-- PHP Servlet --&gt;<br>
++    &lt;servlet&gt;<br>
++        &lt;servlet-name&gt;GlobalPhpJavaServlet&lt;/servlet-name&gt;<br>
++        &lt;servlet-class&gt;php.java.servlet.PhpJavaServlet&lt;/servlet-class&gt;<br>
++    &lt;/servlet&gt;<br>
++    &lt;!-- PHP CGI Servlet --&gt;<br>
++    &lt;servlet&gt;<br>
++        &lt;servlet-name&gt;GlobalPhpCGIServlet&lt;/servlet-name&gt;<br>
++        &lt;servlet-class&gt;php.java.servlet.PhpCGIServlet&lt;/servlet-class&gt;<br>
++    &lt;/servlet&gt;<br>
+<br>
+   &lt;!-- The default servlet for all web applications, that serves static     --&gt;<br>
+   &lt;!-- resources.  It processes all requests that are not mapped to other   --&gt;<br>
+[,,,]<br>
+   &lt;!-- ================ Built In Servlet Mappings ========================= --&gt;<br>
+<br>
++    &lt;!-- PHP Servlet Mapping --&gt;<br>
++    &lt;servlet-mapping&gt;<br>
++        &lt;servlet-name&gt;GlobalPhpJavaServlet&lt;/servlet-name&gt;<br>
++        &lt;url-pattern&gt;*.phpjavabridge&lt;/url-pattern&gt;<br>
++    &lt;/servlet-mapping&gt;<br>
++    &lt;!-- CGI Servlet Mapping --&gt;<br>
++    &lt;servlet-mapping&gt;<br>
++        &lt;servlet-name&gt;GlobalPhpCGIServlet&lt;/servlet-name&gt;<br>
++        &lt;url-pattern&gt;*.php&lt;/url-pattern&gt;<br>
++    &lt;/servlet-mapping&gt;<br>
+<br>
+   &lt;!-- The servlet mappings for the built in servlets defined above.  Note  --&gt;<br>
+   &lt;!-- that, by default, the CGI and SSI servlets are *not* mapped.  You    --&gt;<br>
+<br>
+ &lt;/web-app&gt;<br>
+</code>
+</blockquote>
+</p>
+To test the above settings create a directory <code>testapp</code> and copy the <code>test.php</code> file from the <code>JavaBridge.war</code> into this folder. Type <code>DD testapp; jar cf ../testapp.war *</code> and copy the testapp.war into the tomcat <code>webapps</code> folder.
+Restart tomcat, browse to 
+<code>http://yourHost.com:8080/testapp/test.php</code>.
+</p>
+<p>
+Check if the PHP fast CGI server is running. The process list should display 20 (default) PHP instances waiting in the PHP fast CGI pool. If not, check if your PHP binary has been compiled with fast CGI enabled. Copy a fast CGI enabled binary into the <code>webapps/JavaBridge/WEB-INF/cgi/</code> folder, if necessary.
+</p>
+
+<li> <H4>How do I create a standalone PHP web application for distribution and how can users deploy it into tomcat?</H4>
+<p>
+Create a directory <code>myApplication</code>, create the directories <code>myApplication/WEB-INF/lib/</code> and <code>myApplication/WEB-INF/cgi/</code>.
+Download the J2EE binary and copy the <code>JavaBridge.jar</code> and the <code>php-servlet.jar</code> from the JavaBridge.war to the <code>myApplication/WEB-INF/lib/</code> folder. Copy the contents of the CGI folder to <code>myApplication/WEB-INF/cgi/</code>. Create the file <code>myApplication/WEB-INF/web.xml</code> with the following content:
+<blockquote>
+<code>
+<br>
+&lt;web-app&gt;<br>
+    &lt;!-- PHP Servlet --&gt;<br>
+    &lt;servlet&gt;<br>
+        &lt;servlet-name&gt;PhpJavaServlet&lt;/servlet-name&gt;<br>
+        &lt;servlet-class&gt;php.java.servlet.PhpJavaServlet&lt;/servlet-class&gt;<br>
+    &lt;/servlet&gt;<br>
+    &lt;!-- PHP CGI processing servlet, used when Apache/IIS are not available --&gt;<br>
+    &lt;servlet&gt;<br>
+        &lt;servlet-name&gt;PhpCGIServlet&lt;/servlet-name&gt;<br>
+        &lt;servlet-class&gt;php.java.servlet.PhpCGIServlet&lt;/servlet-class&gt;<br>
+    &lt;/servlet&gt;<br>
+<br>
+    &lt;!-- PHP Servlet Mapping --&gt;<br>
+    &lt;servlet-mapping&gt;<br>
+        &lt;servlet-name&gt;PhpJavaServlet&lt;/servlet-name&gt;<br>
+        &lt;url-pattern&gt;*.phpjavabridge&lt;/url-pattern&gt;<br>
+    &lt;/servlet-mapping&gt;<br>
+    &lt;!--PHP CGI Servlet Mapping --&gt;<br>
+    &lt;servlet-mapping&gt;<br>
+        &lt;servlet-name&gt;PhpCGIServlet&lt;/servlet-name&gt;<br>
+        &lt;url-pattern&gt;*.php&lt;/url-pattern&gt;<br>
+    &lt;/servlet-mapping&gt;<br>
+<br>
+    &lt;!-- Welcome files --&gt;<br>
+    &lt;welcome-file-list&gt;<br>
+        &lt;welcome-file&gt;index.php&lt;/welcome-file&gt;<br>
+    &lt;/welcome-file-list&gt;<br>
+ &lt;/web-app&gt;<br>
+</code>
+</blockquote>
+</p>
+<p>
+Copy the files <code>sessionSharing.jsp</code> and <code>sessionSharing.php</code> from the <code>JavaBridge.war</code> to <code>myApplication</code> and create <code>myApplication.war</code>, for example with the commands: <code>cd myApplication; jar cf ../myApplication.war *</code>. The web archive can now be distributed, copy it to the tomcat <code>webapps</code> directory and re-start tomcat. Visit <code>http://localhost/myApplication/sessionSharing.php</code> and <code>http://localhost/myApplication/sessionSharing.jsp</code>.
+</p>
+<li> <H4>I want to use Apache/IIS as a front-end and tomcat as a back-end. How do I enable PHP for all my applications?</H4> 
+<p>
+Download and install the J2EE binary: copy <code>JavaBridge.war</code> into the tomcat <code>webapps</code> folder.
+Check if the tomcat <code>webapps</code> directory is shared with the Apache/IIS <code>htdocs</code> directory. If not, change the Apache/IIS setting, the following example is for Apache 2. Edit e.g. <code>/etc/httpd/conf/httpd.conf</code> as follows: 
+<blockquote>
+<code>
+ # documents. By default, all requests are taken from this directory, but<br>
+ # symbolic links and aliases may be used to point to other locations.<br>
+ #<br>
+-DocumentRoot "/var/www/html"<br>
++DocumentRoot "/var/lib/tomcat5/webapps"<br>
+<br>
+ #<br>
+ # Each directory to which Apache has access can be configured with respect<br>
+ #<br>
+ # This should be changed to whatever you set DocumentRoot to.<br>
+ #<br>
+-&lt;Directory "/var/www/html"&gt;<br>
++&lt;Directory "/var/lib/tomcat5/webapps"&gt;<br>
+</code>
+</blockquote>
+</p>
+<p>
+Edit the <code>php.ini</code> or add a file <code>php-tomcat.ini</code> to the directory which contains the PHP module descriptions (usually <code>/etc/php.d/</code>), so that it contains:
+<blockquote>
+<code>
+[java]<br>
+java.hosts = 127.0.0.1:8080<br>
+java.servlet = On<br>
+</code>
+</blockquote>
+</p>
+To test the above settings create a directory <code>testapp</code> and copy the <code>sessionSharing.php</code> file from the <code>JavaBridge.war</code> into this folder. Type <code>cd testapp; jar cf ../testapp.war *</code> and copy the testapp.war into the tomcat <code>webapps</code> folder.
+Restart Apache or IIS and tomcat, browse to 
+<code>http://localhost/testapp</code>, click on sessionSharing.php and check the generated cookie value. The <code>path</code> value must be <code>/</code>.
+</p>
+<li> <H4>I want to use Apache/IIS as a front-end and tomcat as a back-end. How do I enable PHP and JSP for all my applications?</H4> 
+<p>
+Download the J2EE binary and copy the <code>JavaBridge.jar</code> and the <code>php-servlet.jar</code> from the JavaBridge.war into the tomcat <code>shared/lib</code> folder. Add the lines marked with a <code>+</code> to the tomcat <code>conf/web.xml</code>:
+<blockquote>
+<code>
+<br>
+   &lt;!-- ================== Built In Servlet Definitions ==================== --&gt;<br>
+<br>
++    &lt;!-- PHP Servlet --&gt;<br>
++    &lt;servlet&gt;<br>
++        &lt;servlet-name&gt;GlobalPhpJavaServlet&lt;/servlet-name&gt;<br>
++        &lt;servlet-class&gt;php.java.servlet.PhpJavaServlet&lt;/servlet-class&gt;<br>
++    &lt;/servlet&gt;<br>
+<br>
+   &lt;!-- The default servlet for all web applications, that serves static     --&gt;<br>
+   &lt;!-- resources.  It processes all requests that are not mapped to other   --&gt;<br>
+[...]<br>
+   &lt;!-- ================ Built In Servlet Mappings ========================= --&gt;<br>
+<br>
++    &lt;!-- PHP Servlet Mapping --&gt;<br>
++    &lt;servlet-mapping&gt;<br>
++        &lt;servlet-name&gt;GlobalPhpJavaServlet&lt;/servlet-name&gt;<br>
++        &lt;url-pattern&gt;*.phpjavabridge&lt;/url-pattern&gt;<br>
++    &lt;/servlet-mapping&gt;<br>
+<br>
+   &lt;!-- The servlet mappings for the built in servlets defined above.  Note  --&gt;<br>
+   &lt;!-- that, by default, the CGI and SSI servlets are *not* mapped.  You    --&gt;<br>
+<br>
+ &lt;/web-app&gt;<br>
+</code>
+</blockquote>
+</p>
+<p>
+Check if the tomcat <code>webapps</code> directory is shared with the Apache/IIS <code>htdocs</code> directory. If not, change the Apache/IIS setting, the following example is for Apache 2. Edit e.g. <code>/etc/httpd/conf/httpd.conf</code> as follows: 
+<blockquote>
+<code>
+ # documents. By default, all requests are taken from this directory, but<br>
+ # symbolic links and aliases may be used to point to other locations.<br>
+ #<br>
+-DocumentRoot "/var/www/html"<br>
++DocumentRoot "/var/lib/tomcat5/webapps"<br>
+<br>
+ #<br>
+ # Each directory to which Apache has access can be configured with respect<br>
+ #<br>
+ # This should be changed to whatever you set DocumentRoot to.<br>
+ #<br>
+-&lt;Directory "/var/www/html"&gt;<br>
++&lt;Directory "/var/lib/tomcat5/webapps"&gt;<br>
+</code>
+</blockquote>
+</p>
+<p>
+Now that tomcat knows how to handle PHP <code>.phpjavabridge</code> requests and Apache or IIS can access the tomcat webapps, connect the two components: Edit the <code>php.ini</code> or add a file <code>php-tomcat.ini</code> to the directory which contains the PHP module descriptions (usually <code>/etc/php.d/</code>), so that it contains:
+<blockquote>
+<code>
+[java]<br>
+java.hosts = 127.0.0.1:8080<br>
+java.servlet = User<br>
+</code>
+</blockquote>
+The above <code>User</code> setting enables session sharing between PHP and JSP, it forwards from <code>http://host<em>/myApp/foo.php</em></code> to the tomcat back-end at <code>127.0.0.1:8080</code> using the request <code>PUT <em>/myApp/foo.php</em>javabridge</code>. This triggers the <code>GlobalPhpJavaServlet</code> configured in the tomcat <code>web.xml</code>.
+</p>
+<p>
+Now you need to do the same for JSP. Unlike the PHP/Java Bridge, which only forwards embedded java statements, the tomcat <code>mod_jk</code> adapter must forward all JSP requests.
+Download and install <code>mod jk</code>, for example
+<code>jakarta-tomcat-connectors-1.2.14.1-src.tar.gz</code>, extract the file into a
+folder and type the following commands:
+<blockquote>
+<code>
+cd jakarta-tomcat-connectors-1.2.14.1-src/jk/native/<br>
+./configure --with-apxs && make && su -c "make install"<br>
+</code>
+</blockquote>
+Add the following lines to the end of the <code>httpd.conf</code>, the following example is for Apache 2:
+<blockquote>
+<code>
+LoadModule jk_module modules/mod_jk.so<br>
+JkAutoAlias /var/lib/tomcat5/webapps<br>
+JkMount *.jsp ajp13<br>
+</code>
+</blockquote>
+</p>
+To test the above settings create a directory <code>testapp</code> and copy the <code>sessionSharing.php</code> and <code>sessionSharing.php</code> from the <code>JavaBridge.war</code> into this folder. Type <code>cd testapp; jar cf ../testapp.war *</code> and copy the testapp.war into the tomcat <code>webapps</code> folder.
+Restart Apache or IIS and tomcat, browse to 
+<code>http://localhost/testapp</code>, click on sessionSharing.php and check the generated cookie value. The <code>path</code> value must be <code>/testapp</code>. Click on sessionSharing.jsp, 
 </p>
 <li> <H4>How does the bridge handle OutOfMemoryErrors?</H4> 
 <p>
@@ -1135,7 +1358,7 @@ $_SESSION["buffer"]->append(...);<br>
 </code>
 </p>
 <p>
-OutOfMemory conditions can be debugged by running the backend with e.g.:<br><br>
+OutOfMemory conditions can be debugged by running the back-end with e.g.:<br><br>
 <code>
 java -agentlib:hprof=heap=sites -jar JavaBridge.jar<br>
 </code>

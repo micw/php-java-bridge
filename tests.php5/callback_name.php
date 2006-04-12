@@ -11,7 +11,7 @@ function x1() {
   echo("x1 called\n");
   return true;
 }
-$here=getcwd();
+$here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
 java_require("$here/../tests.php5/callback.jar");
 
 $closure=java_closure(null, "x1");

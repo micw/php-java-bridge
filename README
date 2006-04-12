@@ -38,27 +38,27 @@ Build and execution instructions:
    Permanently activate the module
    -------------------------------
 
-  The bridge consists of two parts, the "frontent", usually Apache,
-  PHP and our php java extension, and a "backend". The following
-  describes how to start the backend (if necessary) and how to configure
-  the frontend so that it connects to the backend.
+  The bridge consists of two parts, the "front-end", usually Apache,
+  PHP and our PHP java extension, and a "back-end". The following
+  describes how to start the back-end (if necessary) and how to configure
+  the front-end so that it connects to the back-end.
 
   To permanently activate the extension for all users, please add the
   following lines to the php.ini. Or add a file java.ini to the
-  directory that contains the php module descriptions, usually
+  directory that contains the PHP module descriptions, usually
   /etc/php.d/, with the following content:
 
   extension = java.so ;; php_java.dll on windows
 
 
-  To direct the extension to a specific backend, please add the
+  To direct the extension to a specific back-end, please add the
   following lines to the php.ini. Or add a file java-<backend>.ini,
   e.g. "java-tomcat.ini" or "java-standalone.ini" to the directory that
-  contains the php module descriptions, usually /etc/php.d/, with the
+  contains the PHP module descriptions, usually /etc/php.d/, with the
   following content. Options:
 
   1) java.socketname, java.hosts and java.servlet not set: local
-  backend which starts automatically (default). Example #1:
+  back-end which starts automatically (default). Example #1:
 
   ;; empty
 
@@ -73,7 +73,7 @@ Build and execution instructions:
   java.log_level = 2
  
  
-  2) java.socketname set: local system backend started by the
+  2) java.socketname set: local system back-end started by the
   system "php-java-bridge" service script. Example:
  
   [java]
@@ -84,31 +84,31 @@ Build and execution instructions:
   java.socketname = /var/run/.php-java-bridge_socket
  
  
-  3) java.hosts set: external backend(s) on different server(s). The
-  backends can be started on these servers with e.g.: java -jar
-  JavaBridge.jar. Example:
+  3) java.hosts set: external back-end(s) on different server
+     machines. The back-ends can be started on these servers with e.g.:
+     java -jar JavaBridge.jar. Example:
  
   [java]
   java.hosts     = 192.168.5.203:9267 192.168.5.204:9267
   java.log_level = 3
  
  
-  4) java.hosts=127.0.0.1:<port> and java.servlet=MultiUser: user
-  backend(s) deployed into a local j2ee application server with a shared
+  4) java.hosts=127.0.0.1:<port> and java.servlet=User: user
+  back-end(s) deployed into a local j2ee application server with a shared
   document root directory (see DocumentRoot setting in the
-  httpd.conf). Several JavaBridge backends, e.g. "MyBridge.war" or
+  httpd.conf). Several JavaBridge back-ends, e.g. "MyBridge.war" or
   "Bridge31.war", can coexist in the same j2ee server. If the Apache or
   IIS server uses the same document root as the j2ee server, the
-  frontent automatically connects to the associated "MyBridge" or
-  "Bridge31" backend. Example:
+  front-end automatically connects to the associated "MyBridge" or
+  "Bridge31" back-end. Example:
  
   [java]
   java.hosts     = 127.0.0.1:8080
-  java.servlet   = MultiUser
+  java.servlet   = User
   java.log_level = 3
  
  
-  5) java.hosts set and java.servlet=On: "JavaBridge.war" backend
+  5) java.hosts set and java.servlet=On: "JavaBridge.war" back-end
   deployed into a j2ee application server or servlet engine. Example:
  
   [java]
@@ -118,7 +118,7 @@ Build and execution instructions:
 
  
   6) Standalone java application (see JSR223) or AS or servlet engine
-  without Apache or IIS frontend. A PHP server can be started with the
+  without Apache or IIS front-end. A PHP server can be started with the
   command (e.g.): X_JAVABRIDGE_OVERRIDE_HOSTS="/" PHP_FCGI_CHILDREN="20"
   PHP_FCGI_MAX_REQUESTS="500" php-cgi -c java.ini -b 127.0.0.1:9667. 
   php-cgi starts automatically if no PHP server is listening on port 9667.
@@ -128,14 +128,14 @@ Build and execution instructions:
 
 
   After you have created the correct .ini entries, start the
-  backend. Example for option:
+  back-end. Example for option:
 
-  #1: Not needed, backend starts automatically
-  #2: /usr/sbin/php-java-bridge
+  #1: Not needed, back-end starts automatically
+  #2: /usr/sbin/php-java-bridge (see [note: SERVICE] below)
   #3: java -jar JavaBridge.jar INET:9267 3 php-java-bridge.log
   #4: service tomcat5 restart
   #5: service tomcat5 restart
-  #6: Not needed, backend is the calling VM 
+  #6: Not needed, back-end is the calling VM 
 
   The Linux RPM binaries use the following options:
 
@@ -157,8 +157,8 @@ Build and execution instructions:
   java.java_home = <system dependent path to the java install dir>
   java.java      = <system dependent path to the java binary>
   java.socketname= <local ("unix domain") communication channel>
-  java.hosts     = <add. backends e.g.: server1:9267 server2:9268>
-  java.servlet   = <On/Off/MultiUser>, see NEWS for version 3.0.2
+  java.hosts     = <add. back-ends e.g.: server1:9267 server2:9268>
+  java.servlet   = <On/Off/User>, see NEWS for version 3.0.2
   java.wrapper   = Reserved for OS vendor
 
   Please first look at the output of phpinfo() to see the original
@@ -170,10 +170,10 @@ Build and execution instructions:
 
   When the java.socketname and java.hosts options are not set, the web
   server will start or re-start the bridge automatically as a sub
-  component when the http service is started or re-started.
+  component when the HTTP service is started or re-started.
 
   However, when running the bridge in a production environment, it is
-  recommended to use a J2EE backend, Tomcat5 for example.
+  recommended to use a J2EE back-end, Tomcat5 for example.
 
 ------------------------------------
   Sample settings for Apache/Tomcat
@@ -210,7 +210,7 @@ Build and execution instructions:
     ;; on windows: extension = php_java.dll
     [java]
     java.hosts     = "127.0.0.1:8080"
-    java.servlet   = MultiUser ;; or: /MyJavaBridge/JavaBridge.php
+    java.servlet   = User ;; or: /MyJavaBridge/JavaBridge.php
 
   To check the above settings, please visit http://localhost/MyJavaBridge/
   and run the sessionSharing.jsp and sessionSharing.php examples.
@@ -223,10 +223,10 @@ Build and execution instructions:
 
   A more reasonable approach would be to remove mod_jk and to create a
   shared web directory for tomcat and apache. This is the default since
-  RedHat Fedora 4.
+  Red Hat Fedora 4.
 
   Most modern frameworks, Java Server Faces for example, require that
-  you manually forward to the "backend", anyway. The code would look
+  you manually forward to the "back-end", anyway. The code would look
   like:
 
   <?php
@@ -269,7 +269,7 @@ Build and execution instructions:
 
   It is possible to run PHP from java. Unlike the JSR223 sample
   implementation, which uses the JNI interface to load/call the native
-  php5 shared library, we use the Fast CGI interface to call the PHP
+  PHP5 shared library, we use the Fast CGI interface to call the PHP
   binary and use a local channel to connect the two components. This is
   more reliable; in case a PHP instance crashes, it will not take down
   the whole servlet engine or application server.
@@ -281,8 +281,8 @@ Build and execution instructions:
   If the parameter name "use_fast_cgi" is set to "Autostart" in the
   web.xml and a fcgi server does not listen on port 9667 and a fcgi
   binary can be found as either /usr/bin/php-cgi or /usr/bin/php or
-  c:/php5/php-cgi.exe, then the backend automatically starts the fast
-  cgi server on this computer, with the command:
+  c:/php5/php-cgi.exe, then the back-end automatically starts the fast
+  CGI server on this computer, with the command:
 
     cd $HOME
     export X_JAVABRIDGE_OVERRIDE_HOSTS="/"
@@ -293,7 +293,7 @@ Build and execution instructions:
   It starts when the VM starts and stops when the VM terminates.
 
 
-  If that failed, the bridge searches for a cgi binary called:
+  If that failed, the bridge searches for a CGI binary called:
   
     php-cgi-<architecture>-<os>.exe or
 
@@ -301,7 +301,7 @@ Build and execution instructions:
 
     php-cgi-<architecture>-<os>
 
-  in the directory WEB-INF/cgi/. On unix the binary must be executable, it
+  in the directory WEB-INF/cgi/. On Unix the binary must be executable, it
   is therefore recommended to always use a wrapper .sh script, for example:
 
   #!/bin/sh
@@ -332,8 +332,8 @@ Build and execution instructions:
       <param-name>php_exec</param-name>
       <param-value>c:/PHP/php-cgi.exe</param-value>
 
-  In case your application server denies calling the cgi binary,
-  either start apache or IIS or start a fast cgi server on port 9667
+  In case your application server denies calling the CGI binary,
+  either start apache or IIS or start a fast CGI server on port 9667
   as a separate process, for example from a service script. 
 
   On Unix the bridge uses named pipes. On Windows, where standard
@@ -366,7 +366,7 @@ Build and execution instructions:
   However, this feature is meant for testing, only.  For a production
   system it is recommended to compile PHP in safe mode (which switches
   off the dl() function) and to activate all modules in the global
-  php ini file.
+  PHP ini file.
 
 ------------------------------------
   Recognized CFLAGS
@@ -409,14 +409,14 @@ Build and execution instructions:
    5: Log method invocations. 
 
   The default log level is 2.  If java.log_level is missing, the
-  backend uses the "default" log level supplied when the backend was
+  back-end uses the "default" log level supplied when the back-end was
   started (the second argument after java -jar JavaBridge.jar ...).
 
 ---------------------------------------------
   GCJ/GNU Java issues
   -------------------
   
-  Running the PHP/Java Bridge under GCJ/GNU Java is supported on Linux
+  Running the PHP/Java Bridge under GCJ ("GNU Java") is supported on Linux
   and Solaris only.  If you run FreeBSD 5.3, please use Sun, Blackdown
   or IBM java instead.
 
@@ -426,8 +426,6 @@ Build and execution instructions:
 
   SELinux is an implementation of a flexible and fine-grained
   mandatory access control architecture implemented in the Linux kernel.
-  It is used in recent Linux distributions such as Debian or RedHat
-  Fedora Core 3.
 
   A system component running on a SELinux kernel must declare
   exactly a) which resources of the operating system it needs in order
@@ -438,17 +436,15 @@ Build and execution instructions:
   "php-java-bridge.te" declares the javabridge_t domain and the
   resources it requires.  httpd and user domains are granted connect, 
   read and write to the PHP/Java Bridge server socket, which is
-  "@var/run/.php-java-bridge_socket" in the Linux abstract namespace,
+  "@var/run/.php-java-bridge_socket" in the Linux abstract name-space,
   and file create/read/write in the tmp_t.  Everything else (connections
   to other servers, file access, ...) is currently denied.
 
   The "php-java-bridge.fc" contains the file contexts for the PHP/Java
   Bridge and the log.
 
-  Installation:
-  -------------
-  The following discussion assumes that you have a RedHat Linux system
-  and you are running SELinux with the targeted policy.
+  Installation instructions for RHEL 4 and Fedora Core 4:
+  -------------------------------------------------------
 
    1. Install selinux-policy-targeted-sources-*.rpm, for example with
       the command:
@@ -457,10 +453,36 @@ Build and execution instructions:
 
    2. Update the policy files with the PHP/Java Bridge policy:
 
-        su -c "sh update_policy.sh /etc/selinux/targeted/src/policy"
-      
+        su -c "sh security/update_policy.sh /etc/selinux/targeted/src/policy"
+
+  Installation instructions for RHEL 5, Fedora Core 5 or above:
+  -------------------------------------------------------------
+
+  1. Create the binary policy with the command:
+
+        cd security/module; make
+
+  2. Inject the rules into the kernel, either the php-java-bridge-tomcat.pp 
+     or the php-java-bridge.pp. For example:
+
+        semodule -i php-java-bridge.pp 
+
+  3. The rules apply to the javabridge_t domain. Another rule
+     specifies that when an executable is called from the initrc_t domain
+     and the executable is tagged as javabridge_exec_t, a domain transition
+     to javabridge_t occurs. It is therefore important that RunJavaBridge
+     is tagged with javabridge_exec_t and that it is called from the
+     initrc_t domain:
+
+        chcon -t javabridge_exec_t /usr/lib/php/modules/RunJavaBridge
+        chcon -t initrc_exec_t /etc/init.d/php-java-bridge
+
+  4. The policy module can be removed with the command:
+  
+        semodule -r javabridge
+  
   If the default policy is too restrictive and e.g. you want to use
-  the PHP/Java Bridge to connect to your J2EE server(s), you can
+  the PHP/Java Bridge to connect to your J2EE server, you can
   temporarily set the policy to "permissive", for example with the
   command "setenforce Permissive". Connect to the server, then extract
   the permissions from the audit log, for example with the command
@@ -469,6 +491,47 @@ Build and execution instructions:
   the kernel. Don't forget to switch back, for example with "setenforce
   Enforcing".
 
+  [note: SERVICE] A domain transition occurs only if the RunJavaBridge 
+  executable is called from the initrc_t domain. If you want to start
+  the /usr/sbin/php-java-bridge script manually, use runcon or newrole:
+
+        su -                                      # become super user
+        newrole -t initrc_t                       # change domain
+        kill `cat /var/run/php-java-bridge.pid`   # kill old executable
+        /usr/sbin/php-java-bridge                 # start new back-end
+
+  Please note that SEL security is orthogonal to the standard Unix 
+  security. For example you could also put the java process into 
+  a "jail"; set up a user account with restricted rights, change the 
+  owner of RunJavaBridge and set the SUID bit:
+
+        chown apache:apache /usr/lib/php/modules/RunJavaBridge
+        chmod 6111 /usr/lib/php/modules/RunJavaBridge
+
+  The java process would run with the limited rights of apache *and* be 
+  protected by the SEL policy.
+
+------------------------------------
+  Security issues
+  ---------------
+
+  The bridge uses abstract local sockets, named pipes (located in
+  /dev/shm/ or /tmp/) or local TCP sockets as communication channels.
+
+  It is recommended to use the local back-end on a Unix machine which
+  supports abstract local ("unix domain") sockets or named pipes. On
+  these systems the communication channel is not visible and cannot be
+  attacked. If you are running a Security Enhanced Linux kernel, which
+  is standard since RHEL4 or FC3, the back-end is also protected by the
+  SEL policy. The servlet back-end uses a HTTP tunnel to execute one
+  statement and then switches to named pipes for the rest of the
+  communication.
+
+  On other systems, such as Windows and Mac OSX, the bridge opens a
+  local TCP port on 9167 (MonoBridge.exe) or 9267 (JavaBridge.jar), 9567
+  (JavaBridge.war) or 9667 (FastCGI). Please make sure that the ports in
+  the range [9167, ..., 9667] cannot be accessed from the interned.
+
 ------------------------------------
   Loading user classes and libraries
   ----------------------------------
@@ -476,22 +539,22 @@ Build and execution instructions:
   Although it is possible to manipulate the java.classpath to direct
   java to individual classes, this "feature" should not be used.
 
-  Custom libraries should be stored in one of the system directories,
-  either /usr/share/java (or one of its sub-directories) or
-  java.libpath/lib (or one of its sub-directories) or WEB-INF/lib (when
-  the backend is deployed as a web application) and they shall have the
-  following format: <name>-<version>.jar.  For example:
+  Pure java libraries (or shared libraries under GNU Java "gcj") should be 
+  stored in one of the system directories, either /usr/share/java (or one of 
+  its sub-directories) or java.libpath/lib (or one of its sub-directories) 
+  or WEB-INF/lib (when the back-end is deployed as a web application) and 
+  they shall have the following name: <name>-<version>.jar.  For example:
 
     /usr/share/java/batStore/batStore-1.0.jar.
 
-  The global repository /usr/share/java shall be used if the library
+  The global repository /usr/share/java should be used if the library
   is for general interest, otherwise the java.libpath/lib repository may
   be used.  Please look up the java.libpath from the output
   of the test.php or from phpinfo().
   
   When Security Enhanced Linux is configured to allow the PHP/Java
   Bridge to make HTTP URL connections to different servers or if
-  Security Enhanced Linux is switched off in the linux kernel, java
+  Security Enhanced Linux is switched off in the Linux kernel, java
   libraries may also be loaded from HTTP URLs.
 
   Java libraries can be created from .class files with the following
@@ -500,10 +563,13 @@ Build and execution instructions:
     jar cvf myLibrary-0.1.jar *.class 
   
 
-  The libraries can be linked into the php files at run-time with the
+  The libraries can be linked into the PHP files at run-time with the
   command:
 
     java_require("<library1>;<libraryN>");
+
+  Note that <library> can also be a directory containing either .class
+  or .jar files.
 
   For example:
 
@@ -514,15 +580,15 @@ Build and execution instructions:
       order(...);
     ?>
 
-  Since java does not yet support library versions, the PHP/Java
-  Bridge must be reset after a new library version has been deployed.
-  This can be done at runtime by calling the php function
-  "java_reset()".
-  (The ECMA 335 CLR supports multiple class versions very well so in
-  theory the problem could also be solved by compiling the .jar file
-  into a ECMA 335 dll, e.g. with the command: ikvmc batStore-1.0.jar,
-  and to use assembly loading instead, please see the
-  tests.mono+net/load_assembly.php for details).
+  Minor upgrades can be installed at run-time. When the dynamic loader
+  detects that the time stamp of the .jar file has changed, it
+  automatically loads the new version.
+
+  Note that the dynamic loader can only load pure java libraries,
+  unless GNU Java is used. Java libraries which use the java native
+  interface ("JNI") must be placed in /usr/java/packages/lib/ext/ (if JDK
+  1.6 or higher is used) or hard-coded via java.classpath. The JNI
+  libraries themselves can be installed in java.libpath.
 
 ------------------------------------
   Sun java platform issues
@@ -532,7 +598,7 @@ Build and execution instructions:
   certain problems when running java programs. When you compile a class
   foo which references a class bar and ship the class foo without
   providing bar, the sun java platform will not complain unless the user
-  accidently calls a method which references the non-existing class. If
+  accidentally calls a method which references the non-existing class. If
   this happens, a "NoClassDefFound" error is thrown. This error may
   not(!) indicate which class is missing and it certainly does not
   indicate which external library is missing. The tests.php4 folder
@@ -556,31 +622,10 @@ Build and execution instructions:
   php.ini, see install instructions above.
 
 ------------------------------------
-  Security issues
-  ---------------
-
-  The bridge uses abstract local sockets, named pipes (located in
-  /dev/shm/ or /tmp/) or local TCP sockets as communication channels.
-
-  It is recommended to use the local backend on a Unix machine which
-  supports abstract local ("unix domain") sockets or named pipes. On
-  these systems the communication channel is not visible and cannot be
-  attacked. If you are running a Security Enhanced Linux kernel, which
-  is standard since RHEL4 or FC3, the backend is also protected by the
-  SEL policy. The servlet backend uses a HTTP tunnel to execute one
-  statement and then switches to named pipes for the rest of the
-  communication.
-
-  On other systems, such as Windows and Mac OSX, the bridge opens a
-  local TCP port on 9167 (MonoBridge.exe) or 9267 (JavaBridge.jar), 9567
-  (JavaBridge.war) or 9667 (FastCGI). Please make sure that the ports in
-  the range [9167, ..., 9667] cannot be accessed from the internet.
-
-------------------------------------
   UTF-8
   -----
   
-  Since PHP does not support unicode, the PHP/Java Bridge uses UTF-8 to
+  Since PHP does not support Unicode, the PHP/Java Bridge uses UTF-8 to
   convert characters into the host representation. All strings are
   created with new String(..., "UTF-8") and all internal String->byte[]
   conversions use getBytes("UTF-8").

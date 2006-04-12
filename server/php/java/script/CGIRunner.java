@@ -12,7 +12,6 @@ import java.io.Writer;
 import java.util.Map;
 
 import php.java.bridge.PhpProcedureProxy;
-import php.java.bridge.SessionFactory;
 import php.java.bridge.Util;
 
 /**
@@ -31,7 +30,6 @@ public abstract class CGIRunner extends Thread {
 	
     protected boolean running = true;
     protected Map env;
-    protected SessionFactory ctx;
     protected OutputStream out;
     protected Reader reader;
     
@@ -59,10 +57,9 @@ public abstract class CGIRunner extends Thread {
 	    notify();
 	}
     }
-    protected CGIRunner(String name, Reader reader, Map env, SessionFactory ctx, OutputStream out) {
+    protected CGIRunner(String name, Reader reader, Map env, OutputStream out) {
 	super(name);
     	this.reader = reader;
-	this.ctx = ctx;
 	this.env = env;
 	this.out = out;
     }

@@ -7,7 +7,7 @@ if (!extension_loaded('java')) {
   }
 }
 
-$here=getcwd();
+$here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
 java_set_library_path("$here/binaryData.jar");
 
 $binaryData = new java("BinaryData");

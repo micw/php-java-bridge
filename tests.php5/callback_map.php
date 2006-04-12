@@ -14,7 +14,7 @@ function x1($s1, $o1) {
 function c2($b) {
   return !$b;
 }
-$here=getcwd();
+$here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
 java_require("$here/../tests.php5/callback.jar");
 
 $closure=java_closure(null, array("c1" => "x1"));

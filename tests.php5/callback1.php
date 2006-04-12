@@ -26,7 +26,7 @@ class c {
     return 2;
   }
 }
-$here=getcwd();
+$here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
 java_require("$here/callback.jar");
 $c=new c();
 $closure=java_closure($c);

@@ -5,7 +5,24 @@ Please send bug reports, questions and suggestions to
 
 Version 3.0.8:
 
-* When arrays are passed to methods or constructors which accept a
+* When the tomcat or J2EE JavaBridge.war "back-end" is used without an
+Apache or IIS front-end, the JavaBridge context now starts a FastCGI
+server automatically. This improves performance by more than 300% and
+makes the Apache or IIS front-end obsolete. But it requires that 
+php-cgi supports FastCGI. If a FastCGI PHP binary is not available,
+the first request hangs 1.5 seconds until the FastCGIServlet times
+out, the FastCGIServlet is switched off and the normal PhpCGIServlet
+takes over. The JavaBridge.war contains FastCGI PHP binaries for
+Solaris and Linux. Windows users must compile a FastCGI PHP executable
+themselves.
+
+* Security Enhanced Linux modules are supported. FC5 and RHEL5
+introduce a SELinux reference policy with support for binary modules.
+The old monolithic policy files have been moved to the security
+folder, the new policy files are in security/module and are installed
+automatically, if install.sh or RPM binaries are used.
+
+* When arrays are passed to procedures or constructors which accept a
 collection, the bridge now preserves the element order (a TreeMap is
 used as the backing data structure). However, when one of the array
 keys is not an exact number (which means that the php array is not an
@@ -28,16 +45,17 @@ socket context server
 (-Dphp.java.bridge.no_socket_server=true). Useful for testing
 only.
 
-* Some JVM implementations cannot load shared libraries more than
+* Some JVM implementations cannot load native libraries more than
 once. When the backend is not running within the GNU java VM ("gcj"),
-the dynamic loader does no longer try to load shared libraries via the
-dynamic loader. If you use Sun jdk >= 1.6, you can install x86 shared
-libraries in /usr/java/packages/lib/i386. Or you can set the
-java.libpath, e.g.: java.libpath=/usr/lib/php/modules:/usr/local/lib
+the dynamic loader does no longer try to load native libraries. 
+Modify the java.libpath and the java.classpath settings instead,
+e.g.: java.libpath=/usr/lib/php/modules:/usr/local/lib
+java.classpath=/usr/lib/php/modules/JavaBridge.jar:/usr/local/lib/jni.jar
+or read the documentation of your application server for more information.
 
 * Improved automatic start: On windows it is now possible to use a
 wrapper binary, for example: java.wrapper="c:/startJava.cmd",
-additional options can be set with, e.g.: java.java="javaw
+additional options can be set with (example): java.java="javaw
 -Dadd.option". On unix the bridge does no longer "busy wait" for the
 backend. It uses select so that the startup time for the php-cli
 (including the startup time for the backend) is now less than 100ms,
