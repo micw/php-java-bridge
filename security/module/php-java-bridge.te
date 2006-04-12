@@ -1,0 +1,84 @@
+policy_module(javabridge,2.0.0)
+
+########################################
+#
+# Declarations
+#
+
+type javabridge_t;
+type javabridge_exec_t;
+init_daemon_domain(javabridge_t,javabridge_exec_t)
+
+domain_type(javabridge_t)
+domain_entry_file(javabridge_t, javabridge_exec_t)
+
+#type javabridge_log_t;
+#logging_log_file(javabridge_log_t)
+
+type javabridge_tmp_t;
+files_tmp_file(javabridge_tmp_t)
+
+type javabridge_var_run_t;
+files_pid_file(javabridge_var_run_t)
+
+########################################
+#
+# javabridge local policy
+#
+gen_require(`
+	type var_log_t,devpts_t,httpd_t,java_exec_t;
+')
+allow javabridge_t var_log_t:file ra_file_perms;
+allow javabridge_t javabridge_tmp_t:file manage_file_perms;
+
+###########
+allow javabridge_t devpts_t:chr_file { read write };
+allow javabridge_t javabridge_exec_t:file execute_no_trans;
+allow javabridge_t self:process { execmem signal };
+allow javabridge_t self:unix_stream_socket { accept listen };
+
+allow httpd_t javabridge_exec_t:file getattr;
+allow httpd_t javabridge_t:unix_stream_socket connectto;
+#########
+# /usr/bin/java
+corecmd_exec_bin(javabridge_t);
+# /usr/bin/gij
+allow javabridge_t java_exec_t:file { execute execute_no_trans read };
+
+kernel_read_network_state(javabridge_t)
+kernel_read_system_state(javabridge_t)
+kernel_read_all_sysctls(javabridge_t)
+kernel_search_vm_sysctl(javabridge_t)
+userdom_write_user_tmp_sockets(javabridge,javabridge_t)
+
+dev_read_sound(javabridge_t)
+dev_write_sound(javabridge_t)
+dev_read_urand(javabridge_t)
+dev_read_rand(javabridge_t)
+
+files_read_etc_files(javabridge_t)
+files_read_usr_files(javabridge_t)
+files_search_var_lib(javabridge_t)
+files_read_etc_runtime_files(javabridge_t)
+# Read global fonts and font config
+files_read_etc_files(javabridge_t)
+
+fs_getattr_xattr_fs(javabridge_t)
+fs_dontaudit_rw_tmpfs_files(javabridge_t)
+
+libs_use_ld_so(javabridge_t)
+libs_use_shared_libs(javabridge_t)
+
+miscfiles_read_localization(javabridge_t)
+# Read global fonts and font config
+miscfiles_read_fonts(javabridge_t)
+
+sysnet_read_config(javabridge_t)
+#########
+
+# Insane settings needed for sun java 1.5.  Comment this out, if you
+# can.
+allow javabridge_t javabridge_tmp_t:file { execute };
+allow javabridge_t usr_t:file { execute };
+allow javabridge_t locale_t:file { execute };
+allow javabridge_t random_device_t:chr_file { append };
