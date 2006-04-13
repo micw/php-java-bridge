@@ -34,10 +34,11 @@ public class JavaBridgeRunner extends HttpServer {
      */
     public JavaBridgeRunner() {
 	super();
+	if(ctxServer!=null) throw new IllegalStateException("There can be only one JavaBridgeRunner per class loader");
 	ctxServer = new ContextServer(new ThreadPool("JavaBridgeContextRunner", Integer.parseInt(Util.THREAD_POOL_MAX_SIZE)));
     }
 
-    private static ContextServer ctxServer;
+    private static ContextServer ctxServer = null;
 
     /**
      * Create a server socket.
@@ -124,14 +125,6 @@ public class JavaBridgeRunner extends HttpServer {
 	}
     }
     
-    /**
-     * Returns the server socket.
-     * @return The server socket.
-     */
-    public ISocketFactory getSocket() {
-	return socket;
-    }
-
     /**
      * For internal tests only.
      * @throws InterruptedException 

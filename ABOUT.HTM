@@ -8,7 +8,7 @@
 
 </p> <BODY LANG="en-US" DIR="LTR"> <H1>What is the PHP/Java
 Bridge?</H1> <P><FONT > The PHP/Java Bridge
-  is an optimized XML protocol which can be used to connect a native script engine with a Java or <a href="http://www.ecma-international.org/publications/standards/Ecma-335.htm">ECMA 335</a> virtual machine. The <a href="documentation/PHP-API/html/java_8c.html">php java extension</a> uses this protocol to connect running PHP instances with already running Java or .NET <a href="server/documentation/API/overview-summary.html">back-ends</a>. The communication works in both directions, the <A HREF="http://www.jcp.org/aboutJava/communityprocess/edr/jsr223/">JSR 223</A> interface can be used to connect to a running PHP server (Apache/IIS, FastCGI, ...) so that Java components can call PHP instances and PHP scripts can invoke CLR (e.g. VB.NET, C#, COM) or Java (e.g. Java, KAWA, JRuby) based applications or transfer control back to the environment where the request came from. The bridge can be set up to automatically start the PHP front end or the Java/.NET back-end, if needed.
+  is an optimized, XML-based network protocol which can be used to connect a native script engine with a Java or <a href="http://www.ecma-international.org/publications/standards/Ecma-335.htm">ECMA 335</a> virtual machine. The <a href="documentation/PHP-API/html/java_8c.html">php java extension</a> uses this protocol to connect running PHP instances with already running Java or .NET <a href="server/documentation/API/overview-summary.html">back-ends</a>. The communication works in both directions, the <A HREF="http://www.jcp.org/aboutJava/communityprocess/edr/jsr223/">JSR 223</A> interface can be used to connect to a running PHP server (Apache/IIS, FastCGI, ...) so that Java components can call PHP instances and PHP scripts can invoke CLR (e.g. VB.NET, C#, COM) or Java (e.g. Java, KAWA, JRuby) based applications or transfer control back to the environment where the request came from. The bridge can be set up to automatically start the PHP front-end or the Java/.NET back-end, if needed.
 
 <p><FONT > Each request-handling PHP process of a multi-process HTTP
 server communicates with a corresponding thread spawned by the VM.
@@ -953,7 +953,7 @@ print $buf-&gt;length() . "\n";<br>
 ?&gt;<br>
 </code>
 </p>
-The Jun 2.1 code<br>
+The Jython 2.1 code<br>
 <p>
 <code>
 from java import lang<br>
@@ -1078,7 +1078,7 @@ BORDER="1"
 <li> <H4>How do I start a persistent VM?</H4> 
 <p>
 If you want to start <em>one persistent VM per HTTP server</em> running on a computer, see 
-the <a href="#mode2"evolve-m>web server installation</a> description. 
+the <a href="#mode2">web server installation</a> description. 
 If you want to start <em>one persistent VM per computer</em>, please see <a href="#mode3">Linux RPM package</a> or the <a href="#mode4">application server or servlet engine</a> description.
 </p>
 <p>Furthermore it is possible to start standalone back-end, for example with the command:<br><br>
@@ -1105,14 +1105,14 @@ java.wrapper=/path/to/wrapper/binary<br>
 </code>
 </p>
 <p>
-On Unix the bridge terminates the sub-process hierarchy with <code>LONGTERM</code>, sleep 5 seconds and <code>SIGTERM</code>, if necessary, sleep 5 seconds and <code>SIGKILL</code>, if necessary. On Windows the bridge emulates the Unix kill behaviour, the bridge kills the entire sub-process hierarchy so that you can use a <code>cmd /c</code> wrapper.
+On Unix the bridge terminates the sub-process hierarchy with <code>SIGTERM</code>, sleep 5 seconds and <code>SIGTERM</code>, if necessary, sleep 5 seconds and <code>SIGKILL</code>, if necessary. On Windows the bridge emulates the Unix kill behaviour, the bridge kills the entire sub-process hierarchy so that you can use a <code>cmd /c</code> wrapper.
 </p>
 <p>
 Please see the wrapper <code>RunJavaBridge</code> from the  RedHat <code>php-java-bridge-standalone</code> RPM for an example.
 </p>
 <li> <H4>I want to use the bridge as a replacement for the <a href="http://www.php.net/manual/sl/ref.java.php#java.servlet">PHP 4 servlet API</a>, how do I install it into tomcat?</H4> 
 <p>
-Download the J2EE binary and copy the <code>JavaBridge.war</code> into the tomcat <code>vapors</code> folder. After that visit <code>http://localhost:8080/JavaBridge</code> and run the supplied PHP examples.
+Download the J2EE binary and copy the <code>JavaBridge.war</code> into the tomcat <code>webapps</code> folder. After that visit <code>http://localhost:8080/JavaBridge</code> and run the supplied PHP examples.
 Please see <code>webapps/JavaBridge/WEB-INF/cgi/README</code> for details.
 </p>
 <li> <H4>I want to use PHP for all tomcat applications. Apache and IIS are not available, but performance is important. How do I install it?</H4> 
@@ -1334,11 +1334,11 @@ Restart Apache or IIS and tomcat, browse to
 </p>
 <li> <H4>How does the bridge handle OutOfMemoryErrors?</H4> 
 <p>
-OutOfMemoryErrors may happen because a cached variable cannot be released, either because <p>
+OutOfMemoryErrors may happen because a cached object cannot be released, either because <p>
 <ol>
-<li> the variable is permanently referenced by a request-handling thread or
-<li> the variable has been entered into the session or application store or 
-<li> the variable is referenced by a thread outside of the scope of the PHP/Java Bridge.
+<li> the object is permanently referenced by a request-handling thread or
+<li> the object has been entered into the session or application store or 
+<li> the object is referenced by a thread outside of the scope of the PHP/Java Bridge.
 </ol>
 </p>
 </p>

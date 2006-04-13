@@ -103,7 +103,7 @@ public final class PhpJavaServlet extends HttpServlet {
     
     /**
      * Handle the override re-direct for "java_get_session()" when php
-     * runs within apache.  Instead of connecting back to apache, we
+     * runs within apache.  We
      * execute one statement and return the result and the allocated
      * session.  Used by Apache only.
      * 

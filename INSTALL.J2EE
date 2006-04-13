@@ -13,7 +13,7 @@ Installing the PHP/Java Bridge J2EE Component
   The <port> is 8888 (Oracle), 9080 (WebSphere) or 8080 (Tomcat).
 
 
-Installing and testing the frontend on Linux, Unix, Windows
+Installing and testing the front-end on Linux, Unix, Windows
 -----------------------------------------------------------
 
 NOTE: Linux RPMs contain Security Enhanced Linux contexts. If you want
@@ -29,7 +29,7 @@ the RPM build system instead, see INSTALL.LINUX.
   php_java.dll (Windows). Check if the java .ini entry (usually
   /usr/local/lib/php.ini or /etc/php.d/java.ini or c:\windows\php.ini
   or c:\winnt\php.ini) loads the java extension and connects php to
-  the servlet backend, e.g.:
+  the servlet back-end, e.g.:
   
     extension = java.so
     ; extension = php_java.dll
@@ -55,7 +55,7 @@ the RPM build system instead, see INSTALL.LINUX.
     http://yourHost.com/JavaBridge/test.php
 
 * On production systems set the following flags in your php ini file
-  so that the backend can generate standard error pages.
+  so that the back-end can generate standard error pages.
 
     log_errors     = On
     display_errors = Off
@@ -66,19 +66,18 @@ the RPM build system instead, see INSTALL.LINUX.
     php-java-bridge-users@lists.sourceforge.net
 
 
-Individual users can create .war files which use their own php
-version. Please see the WEB-INF/cgi/README for details.
+* It is possible to create distributable web applications, please see
+the WEB-INF/cgi/README and the FAQ for details.
 
-When Apache or IIS is not available, the administrator may start a PHP
-standalone server for all users, for example:
+* When Apache or IIS is not available, the administrator may start a
+PHP standalone FastCGI server for all users, for example:
 
   export X_JAVABRIDGE_OVERRIDE_HOSTS="/"
   export PHP_FCGI_CHILDREN="20"
   export PHP_FCGI_MAX_REQUESTS="500"
   /usr/bin/php-cgi -b 127.0.0.1:9667
 
-
-When Apache or IIS is available, the administrator may set up the
+* When Apache or IIS is available, the administrator may set up the
 mod_jk adapter to forward JSP/Servlet requests to the J2EE AS, for
 example:
 
@@ -128,9 +127,13 @@ Known AS Issues
   location from "@80:/java-server-faces/helloWorld.php" to
   "/java-server-faces/helloWorld.php".
 
-* If you want to allow clients to access your backend from a remote
+* If you want to allow clients to access your back-end from a remote
   host, set java.servlet=On and set allow_http_tunnel to On in the
   web.xml.
+
+* A standalone FastCGI server is currently only available on
+  Unix/Linux. When Apache or IIS is not available, the bridge uses the
+  CGI interface. This is more than 5 times slower than FastCGI.
 
 ------------------------------------
 Oracle 10g AS

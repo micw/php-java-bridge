@@ -114,6 +114,7 @@ public final class ContextServer {
     
     public ChannelName getFallbackChannelName(String channelName) {
         if(channelName!=null && ctx.isAvailable()) return new PipeChannelName(channelName);
+        if(sock==null) sock=new SocketContextServer(this, pool);
         return new SocketChannelName(sock.getChannelName());
     }
 }

@@ -9,6 +9,7 @@ import javax.script.SimpleScriptContext;
 import php.java.bridge.JavaBridgeRunner;
 import php.java.bridge.PhpProcedureProxy;
 import php.java.bridge.Util;
+import php.java.bridge.http.HttpServer;
 
 /**
  * This class implements a simple script context for PHP. It starts a standalone 
@@ -65,7 +66,7 @@ public class PhpScriptContext extends SimpleScriptContext implements IPhpScriptC
     }
 
 
-    public JavaBridgeRunner getHttpServer() {
+    public HttpServer getHttpServer() {
         return bridgeRunner;
     }
 }

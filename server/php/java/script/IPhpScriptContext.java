@@ -5,7 +5,7 @@ package php.java.script;
 import java.io.Writer;
 
 import php.java.bridge.Invocable;
-import php.java.bridge.JavaBridgeRunner;
+import php.java.bridge.http.HttpServer;
 
 /**
  * Common methods for all PHP ScriptContexts
@@ -31,6 +31,6 @@ public interface IPhpScriptContext extends Invocable {
      * Return the http server associated with this context.
      * @return The http server.
      */
-    public JavaBridgeRunner getHttpServer();
+    public HttpServer getHttpServer();
 
 }

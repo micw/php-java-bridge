@@ -58,7 +58,6 @@ public class ContextFactory extends SessionFactory {
       setBridge(new JavaBridge());
       bridge.setClassLoader(new JavaBridgeClassLoader(bridge, null));
       bridge.setSessionFactory(this);
-      //JavaBridge.load++;
     }
 
     protected void add() {

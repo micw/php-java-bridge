@@ -144,4 +144,12 @@ public abstract class HttpServer implements Runnable {
 	    Util.printStackTrace(e);
 	}
     }
+
+    /**
+     * Returns the server socket.
+     * @return The server socket.
+     */
+    public ISocketFactory getSocket() {
+        return socket;
+    }
 }

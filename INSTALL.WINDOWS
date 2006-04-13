@@ -130,6 +130,10 @@ Known Windows Issues
   Input or OutputStream but a RandomAccessFile. Please write to the
   mailing list if you want to implement it.
 
+* A standalone FastCGI server is not available on windows. When Apache
+  or IIS is not available, the bridge uses the CGI interface. This is more
+  than 5 times slower than FastCGI.
+
 * Some public domain programs such as "WinZip" or "WinRar" destroy 
   java file associations, a double-click on JavaBridge.jar opens that
   file in the archive manager. Please either remove these programs
