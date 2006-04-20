@@ -7,15 +7,29 @@ m4_include(tests.m4/java_check_broken_gcc_installation.m4)
 m4_include(tests.m4/java_check_jni.m4)
 
 PHP_ARG_WITH(java, for java support,
-[  --with-java[=JAVA_HOME]        Include java support])
-AC_ARG_WITH(mono,  [  --with-mono[[=ikvmc.exe location]]             Include mono support], PHP_MONO="$withval", PHP_MONO="no")
-PHP_ARG_ENABLE(servlet, for java servlet support,
-[  --enable-servlet[=JAR]         Include java servlet support. JAR must be the location of j2ee.jar or servlet.jar; creates JavaBridge.war])
-PHP_ARG_ENABLE(script, for java script support,
-[  --enable-script[=JAR]         Include java script support. If you use a JDK < 1.6 JAR must be the location of script-api.jar; creates php-script.jar])
-PHP_ARG_ENABLE(faces, for java server faces support,
-[  --enable-faces[=JAR]         Include java server faces support. JAR must be the location of jsf-api.jar; creates php-faces.jar])
-AC_ARG_ENABLE(backend, [  --enable-backend         Creates the JavaBridge.jar or MonoBridge.exe backend, may require JDK, gcj and other tools], PHP_BACKEND="$enableval", PHP_BACKEND="yes")
+[  --with-java[[=JAVA_HOME[[,JRE_HOME]]]] 
+                          include java support. If JRE_HOME is specified, 
+                          the run-time java location will be compiled into 
+                          the binary. Otherwise the java executable will 
+                          be searched using the PATH environment variable
+                          Example: --with-java=/opt/jdk1.4,/usr/java/jre1.6])
+AC_ARG_WITH(mono,  [  --with-mono[[=/path/to/ikvmc.exe]] 
+                          include mono support
+                          Example: --with-mono=$HOME/bin/ikvmc.exe], PHP_MONO="$withval", PHP_MONO="no")
+PHP_ARG_ENABLE(servlet, for java servlet support, [  --enable-servlet[[=JAR]]
+                          include java servlet support. JAR must be the 
+                          location of j2ee.jar or servlet.jar; creates 
+                          JavaBridge.war])
+PHP_ARG_ENABLE(script, for java script support, [  --enable-script[[=JAR]] 
+                          include java script support. If you use a 
+                          JDK < 1.6 JAR must be the location of 
+                          script-api.jar; creates php-script.jar])
+PHP_ARG_ENABLE(faces, for java server faces support, [  --enable-faces[[=JAR]]
+                          include java server faces support. JAR must be 
+                          the location of jsf-api.jar; creates 
+                          php-faces.jar])
+AC_ARG_ENABLE(backend, [  --disable-backend] 
+                          do not create the JavaBridge.jar back-end, PHP_BACKEND="$enableval", PHP_BACKEND="yes")
 
 
 if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then

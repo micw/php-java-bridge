@@ -1,0 +1,11 @@
+This example uses SOAP to connect to a web service. You need a 
+JDK >= 1.5 to run this example.
+
+
+Running the test
+----------------
+
+Deploy jaxws-fromwsdl.war, adjust the http server and port in wsimport.php and
+run the example, for example with the command:
+
+php addNumbers.php

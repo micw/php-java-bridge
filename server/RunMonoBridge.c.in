@@ -41,8 +41,8 @@ int main(int argc, char**_argv){
 	argv[i]=stringdup(_argv[i+1]);
   argv[i]=0;
 
-  setreuid(geteuid(), -1);
-  setregid(getegid(), -1);
+  if(!getuid()) setreuid(geteuid(), -1);
+  if(!getgid()) setregid(getegid(), -1);
   if(*argv[0]=='/') execv(argv[0], argv); else execvp(argv[0], argv);
   error = strerror(errno);
   execvp("mono", argv);

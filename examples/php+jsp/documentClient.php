@@ -5,9 +5,6 @@ $System = new JavaClass("java.lang.System");
 
 /* The name of the remote document */
 $name = "RMIdocument";
-try { 				// jboss uses DocumentEJB ...
-  if($System->getProperty("jboss.server.name")) $name="DocumentEJB";
-} catch (JavaException $e) {/*ignore*/}
 
 /* continue session? */
 if(!$doc=$session->get("$name"))

@@ -21,12 +21,27 @@ AM_PROG_GCJ
 AC_PROG_LIBTOOL
 AC_STDC_HEADERS
 
-AC_ARG_WITH(java,  [  --with-java[[=JAVA_HOME,JRE_HOME]]	Include java support], PHP_JAVA="$withval", PHP_JAVA="yes")
-AC_ARG_WITH(mono,  [  --with-mono[[=ikvmc.exe location]]             Include mono support], PHP_MONO="$withval", PHP_MONO="no")
-AC_ARG_WITH(extdir,  [  --with-extdir[[=DIR]]	Directory which contains the shared java extension], EXTENSION_DIR="$withval", EXTENSION_DIR="`php-config --extension-dir`")
-AC_ARG_ENABLE(servlet,  [  --enable-servlet[[=JAR]]	JAR must be j2ee.jar or servlet.jar which contains the servlet classes], SERVLET="$enableval", SERVLET="yes")
-AC_ARG_ENABLE(script,  [  --enable-script[[=JAR]]	If you use JDK < 1.6 JAR must be script-api.jar which contains the jsr223 script api], SCRIPT="$enableval", SCRIPT="yes")
-AC_ARG_ENABLE(faces,  [  --enable-faces[[=JAR]]	JAR must be jsf-api.jar which contains the java server faces api], FACES="$enableval", FACES="yes")
+AC_ARG_WITH(java,  [  --with-java[[=JAVA_HOME[[,JRE_HOME]]]]	
+                          include java support. If JRE_HOME is specified, 
+                          the run-time java location will be compiled into 
+                          the binary. Otherwise the java executable will 
+                          be searched using the PATH environment variable
+			  Example: --with-java=/opt/jdk1.4,/usr/java/jre1.6], PHP_JAVA="$withval", PHP_JAVA="yes")
+AC_ARG_WITH(mono,  [  --with-mono[[=/path/to/ikvmc.exe]]
+                          include mono support
+                          Example: --with-mono=$HOME/bin/ikvmc.exe], PHP_MONO="$withval", PHP_MONO="no")
+AC_ARG_WITH(extdir,  [  --with-extdir[[=DIR]]	
+                          directory which contains the shared java 
+                          extension], EXTENSION_DIR="$withval", EXTENSION_DIR="`php-config --extension-dir`")
+AC_ARG_ENABLE(servlet,  [  --enable-servlet[[=JAR]]	
+                          JAR must be j2ee.jar or servlet.jar which 
+                          contains the servlet classes], SERVLET="$enableval", SERVLET="yes")
+AC_ARG_ENABLE(script,  [  --enable-script[[=JAR]]	
+                          if you use JDK < 1.6 JAR must be script-api.jar 
+                          which contains the jsr223 script api], SCRIPT="$enableval", SCRIPT="yes")
+AC_ARG_ENABLE(faces,  [  --enable-faces[[=JAR]]	
+                          JAR must be jsf-api.jar which contains the java 
+                          server faces api], FACES="$enableval", FACES="yes")
 
 if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
 

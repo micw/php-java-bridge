@@ -8,7 +8,9 @@
 
 </p> <BODY LANG="en-US" DIR="LTR"> <H1>What is the PHP/Java
 Bridge?</H1> <P><FONT > The PHP/Java Bridge
-  is an optimized, XML-based network protocol which can be used to connect a native script engine with a Java or <a href="http://www.ecma-international.org/publications/standards/Ecma-335.htm">ECMA 335</a> virtual machine. The <a href="documentation/PHP-API/html/java_8c.html">php java extension</a> uses this protocol to connect running PHP instances with already running Java or .NET <a href="server/documentation/API/overview-summary.html">back-ends</a>. The communication works in both directions, the <A HREF="http://www.jcp.org/aboutJava/communityprocess/edr/jsr223/">JSR 223</A> interface can be used to connect to a running PHP server (Apache/IIS, FastCGI, ...) so that Java components can call PHP instances and PHP scripts can invoke CLR (e.g. VB.NET, C#, COM) or Java (e.g. Java, KAWA, JRuby) based applications or transfer control back to the environment where the request came from. The bridge can be set up to automatically start the PHP front-end or the Java/.NET back-end, if needed.
+  is an optimized, XML-based network protocol which can be used to connect a native script engine with a Java or <a href="http://www.ecma-international.org/publications/standards/Ecma-335.htm">ECMA 335</a> virtual machine. It is more than 50 times faster than local RPC via SOAP, uses less resources on the web-server side and it is faster and more reliable than a communication via the Java Native Interface.</p>
+<p>
+The <a href="documentation/PHP-API/html/java_8c.html">php java extension</a> uses this protocol to connect running PHP instances with already running Java or .NET <a href="server/documentation/API/overview-summary.html">back-ends</a>. The communication works in both directions, the <A HREF="http://www.jcp.org/aboutJava/communityprocess/edr/jsr223/">JSR 223</A> interface can be used to connect to a running PHP server (Apache/IIS, FastCGI, ...) so that Java components can call PHP instances and PHP scripts can invoke CLR (e.g. VB.NET, C#, COM) or Java (e.g. Java, KAWA, JRuby) based applications or transfer control back to the environment where the request came from. The bridge can be set up to automatically start the PHP front-end or the Java/.NET back-end, if needed.
 
 <p><FONT > Each request-handling PHP process of a multi-process HTTP
 server communicates with a corresponding thread spawned by the VM.
@@ -606,8 +608,9 @@ the instructions below (on Security Enhanced Linux please use the RPM or please 
 	tar xf -</code></FONT></P>
 	<LI><P STYLE="font-style: normal"><FONT >In
 	the directory php-java-bridge-v.x.y build the module: 
-<BR><BR><code>phpize &amp;&amp; ./configure
-	--with-java=/usr/java/default &amp;&amp; make </code></FONT></P>
+<BR><BR><code># compile with jdk1.4, use jdk1.6 at run-time<br>
+phpize &amp;&amp; ./configure
+	--with-java=/usr/java/jdk1.4,/usr/java/jdk1.6 &amp;&amp; make </code></FONT></P>
 	<LI><P STYLE="font-style: normal"><FONT >Then
 	install the module as root. Type:<BR><BR><code>su -c 'sh
 	install.sh'<BR>&lt;enter password&gt;</code></FONT></P>
@@ -892,7 +895,7 @@ request-handling java continuation associated with the JSR223 script.
 threads or call System.exit?</H4> <p>Usually with a java policy
 file. An example file will ship with version 3.1. </p> 
 
-<li> <H4>Where is my output?</H4> <p><code>System.out</code> and <code>System.err</code> are redirected to the server log file(s). When PHP scripts are invoked from a java framework (Java Server Faces for example), even the PHP output is redirected. For the standalone back-end the output appears in the <code>/var/log/php-java-bridge.log</code> or in JavaBridge.log, see .ini option <code>java.log_file</code>. For the j2pee back-end the location of the log file(s) depends on the j2ee server configuration.</p> 
+<li> <H4>Where is my output?</H4> <p><code>System.out</code> and <code>System.err</code> are redirected to the server log file(s). When PHP scripts are invoked from a java framework (Java Server Faces for example), even the PHP output is redirected. For the standalone back-end the output appears in the <code>/var/log/php-java-bridge.log</code> or in JavaBridge.log, see .ini option <code>java.log_file</code>. For the j2ee back-end the location of the log file(s) depends on the j2ee server configuration.</p> 
 
 <li> <H4>How do I access enums or inner classes?</H4> 
 With the <code>classname$inner</code> syntax. For example <br><br>
@@ -906,7 +909,7 @@ public interface php {<br>
 can be accessed with:<br><br>
 <code>
 &lt;?php<br>
-java_require(greed()); // load php.class<br>
+java_require(getcwd()); // load php.class<br>
 $bridge = new java('php$java$bridge');<br>
 echo $bridge->JavaBridgeRunner;<br>
 ?&gt;<br>
@@ -1139,7 +1142,7 @@ Copy the <code>JavaBridge.jar</code> and the <code>php-servlet.jar</code> from t
 <br>
    &lt;!-- The default servlet for all web applications, that serves static     --&gt;<br>
    &lt;!-- resources.  It processes all requests that are not mapped to other   --&gt;<br>
-[,,,]<br>
+[...]<br>
    &lt;!-- ================ Built In Servlet Mappings ========================= --&gt;<br>
 <br>
 +    &lt;!-- PHP Servlet Mapping --&gt;<br>
@@ -1160,12 +1163,12 @@ Copy the <code>JavaBridge.jar</code> and the <code>php-servlet.jar</code> from t
 </code>
 </blockquote>
 </p>
-To test the above settings create a directory <code>testapp</code> and copy the <code>test.php</code> file from the <code>JavaBridge.war</code> into this folder. Type <code>DD testapp; jar cf ../testapp.war *</code> and copy the testapp.war into the tomcat <code>webapps</code> folder.
+To test the above settings create a directory <code>testapp</code> and copy the <code>test.php</code> file from the <code>JavaBridge.war</code> into this folder. Type <code>cd testapp; jar cf ../testapp.war *</code> and copy the testapp.war into the tomcat <code>webapps</code> folder.
 Restart tomcat, browse to 
 <code>http://yourHost.com:8080/testapp/test.php</code>.
 </p>
 <p>
-Check if the PHP fast CGI server is running. The process list should display 20 (default) PHP instances waiting in the PHP fast CGI pool. If not, check if your PHP binary has been compiled with fast CGI enabled. Copy a fast CGI enabled binary into the <code>webapps/JavaBridge/WEB-INF/cgi/</code> folder, if necessary.
+Check if the PHP Fast-CGI server is running. The process list should display 20 (default) PHP instances waiting in the PHP Fast-CGI pool. If not, check if your PHP binary has been compiled with Fast-CGI enabled. Copy a Fast CGI enabled binary into the <code>webapps/JavaBridge/WEB-INF/cgi/</code> folder, if necessary.
 </p>
 
 <li> <H4>How do I create a standalone PHP web application for distribution and how can users deploy it into tomcat?</H4>
@@ -1363,6 +1366,22 @@ OutOfMemory conditions can be debugged by running the back-end with e.g.:<br><br
 java -agentlib:hprof=heap=sites -jar JavaBridge.jar<br>
 </code>
 </p>
+<li> <H4>The EJB example works with the Sun J2EE server, but in JBoss I get a ClassCastException, what's wrong?</H4> 
+<p>It's a JBoss problem, although this problem may also appear in other application servers which do not strictly separate the application/bean domains. The JavaBridge.war already contains the <code>documentClient.jar</code> as a library, so JBoss references the library classes instead of the bean classes. Just remove the <code>documentClient.jar</code> from the <code>JavaBridge.war</code>, re-deploy <code>JavaBridge.war</code> and run the test again.
+</p><p>
+In JBoss' default setup the code:
+<blockquote>
+<code>
+  // access the home interface<br>
+  $DocumentHome = new JavaClass("DocumentHome");<br>
+  $PortableRemoteObject = new JavaClass("javax.rmi.PortableRemoteObject");<br>
+  $home=$PortableRemoteObject-&gt;narrow($objref, $DocumentHome);<br>
+</code>
+</blockquote>
+refences the <code>DocumentHome</code> from the library, which is assignment-incompatible to <code>DocumentHome</code> from the enterprise bean (<code>DocumentHome@WebAppClassLoader</code> !=  <code>DocumentHome@BeanClassLoader</code>), so you get a ClassCastException in <code>narrow</code>.
+</p>
+<p>
+In contrast the Sun J2EE server correctly separates the beans/applications; the <code>$objref</code> is unique proxy generated by a parent of the <code>WebAppClassLoader</code>, so that <code>narrow</code> can always cast the proxy to <code>DocumentHome@WebAppClassLoader</code>, even if a class with the same name is already available from the <code>WebAppClassLoader</code>.</p>
 </ul>
 
 </FONT></P> <H1>Related</H1> <P><FONT > <ul> <li> <a
