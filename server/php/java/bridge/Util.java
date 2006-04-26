@@ -31,9 +31,9 @@ public class Util {
     }
 
     /**
-     * The default CGI locations: <code>"/usr/bin/php-cgi"</code>, <code>"/usr/bin/php"</code>, <code>"c:/php5/php-cgi.exe</code>
+     * The default CGI locations: <code>"/usr/bin/php-cgi"</code>, <code>"c:/php5/php-cgi.exe</code>
      */
-    public static final String DEFAULT_CGI_LOCATIONS[] = new String[] {"/usr/bin/php-cgi", "/usr/bin/php", "c:/php5/php-cgi.exe"};
+    public static final String DEFAULT_CGI_LOCATIONS[] = new String[] {"/usr/bin/php-cgi", "c:/php5/php-cgi.exe"};
 
     /**
      * The default CGI header parser. The default implementation discards everything.

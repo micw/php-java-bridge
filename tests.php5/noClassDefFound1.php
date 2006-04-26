@@ -17,6 +17,7 @@ if (!extension_loaded('java')) {
 // messages.
 
 $here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
+if(!$here) $here=getcwd();
 java_require("$here/noClassDefFound.jar");
 
 $v=new JavaClass("NoClassDefFound");

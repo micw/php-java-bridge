@@ -12,7 +12,7 @@ $t1=$system->currentTimeMillis();
 
 // load scheme interpreter
 // try to load local kawa.jar, otherwise load it from sf.net
-java_require("kawa.jar");
+java_require("../../unsupported/kawa.jar");
 java_require("http://php-java-bridge.sourceforge.net/kawa.jar");
 
 $s = new java("kawa.standard.Scheme");

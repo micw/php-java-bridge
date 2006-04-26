@@ -18,6 +18,7 @@ if (!extension_loaded('java')) {
 
 java_reset();
 $here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
+if(!$here) $here=getcwd();
 java_require("$here/doesNotExist.jar");
 java_require("$here/noClassDefFound.jar");
 java_require("$here/doesNotExist.jar;$here/noClassDefFound.jar");

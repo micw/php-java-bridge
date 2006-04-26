@@ -52,6 +52,7 @@ PTHREADS_FLAGS
 JAVA_CHECK_BROKEN_STDIO_BUFFERING
 JAVA_CHECK_ABSTRACT_NAMESPACE
 JAVA_CHECK_STRUCT_UCRED
+CHECK_FAST_TCP_SOCKETS
 
 AC_MSG_CHECKING(libtool)
 libtool --version | fgrep "(GNU libtool)" ||
@@ -100,6 +101,11 @@ if test "$PHP_MONO" = "yes"; then
   fi
 fi
 
+if test "$SERVLET" = "yes" && test "$have_fast_tcp_sockets" = "no"; then
+  echo "Fast TCP sockets not available on this OS, switching off J2EE back-end."
+  SERVLET="no";
+fi
+
 # optional faces, requires script, servlet
 JAVA_BRIDGE_FACES_JAR="php-faces.jar"
 if test "$FACES" = "no"; then
@@ -130,7 +136,6 @@ if test "$SCRIPT" = "yes"; then
   SCRIPT="script-api.jar"
 fi
 
-
 # optional JavaBridge.war, requires servlet
 JAVA_BRIDGE_SERVLET_JAR="php-servlet.jar"
 JAVA_BRIDGE_WAR="JavaBridge.war"
@@ -138,6 +143,7 @@ if test "$SERVLET" = "no"; then
   JAVA_BRIDGE_WAR=
   JAVA_BRIDGE_SERVLET_JAR=""
 fi
+
 if test "$SERVLET" = "yes"; then
   SERVLET="../unsupported/servlet-api.jar"
   if test X$SERVLET = X; then 

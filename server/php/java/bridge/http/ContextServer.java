@@ -8,7 +8,9 @@ import php.java.bridge.ThreadPool;
  * A bridge pattern which either uses the PipeContextServer or the SocketContextServer, 
  * depending on the OS and/or the security restrictions.
  * 
- * There can be only one ContextServer instance per classloader.
+ * There can be more than one ContextServer instance per classloader, but the ContextFactory.get() checks
+ * if it is called with the same ContextServer and throws a SecurityException otherwise. 
+ * So one cannot access contexts from other servers.
  *  
  * @author jostb
  * @see php.java.bridge.http.PipeContextServer

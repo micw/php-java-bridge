@@ -19,6 +19,7 @@ $testobj[0][1][0][0][0][0] = 5;
 $testobj[1][0][0][0][0][0] = 6;
 
 $here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
+if(!$here) $here=getcwd();
 java_require("$here/array6.jar");
 $array6 = new java("Array6");
 $success = $array6->check($testobj);

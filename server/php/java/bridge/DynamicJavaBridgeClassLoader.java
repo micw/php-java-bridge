@@ -153,19 +153,6 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     }
     /**@deprecated*/
     public static synchronized void initClassLoader(String phpConfigDir) {
-      initClassLoader(); 
-    }
-
-    /**
-     * add all jars found in the phpConfigDir/lib and /usr/share/java
-     * to the list of our URLs.  The user is expected to reference .jar
-     * libraries explicitly with java_set_library_path, e.g.
-     * java_set_library_path("foo.jar;bar.jar"); For backward
-     * compatibility we add all URLs we encountered during startup
-     * before throwing a "ClassNotFoundException".
-     * @param phpConfigDir The default php config directory
-     */
-    private static synchronized void initClassLoader() {
     }
 
     protected void addSysUrls() {
@@ -182,7 +169,6 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
      */
     public void reset() {
 	synchronized(getClass()) {
-	    initClassLoader();
 	    clear();
 	    clearCache();
 	}

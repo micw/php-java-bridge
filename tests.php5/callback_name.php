@@ -12,6 +12,7 @@ function x1() {
   return true;
 }
 $here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
+if(!$here) $here=getcwd();
 java_require("$here/../tests.php5/callback.jar");
 
 $closure=java_closure(null, "x1");

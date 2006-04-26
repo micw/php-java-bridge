@@ -1021,6 +1021,7 @@ static PHP_INI_MH(OnIniWrapper)
 }
 static PHP_INI_MH(OnIniHosts)
 {
+#ifdef HAVE_FAST_TCP_SOCKETS
   if (new_value) {
 	if((EXT_GLOBAL (ini_set) &U_HOSTS)) free(EXT_GLOBAL(cfg)->hosts);
 	EXT_GLOBAL(cfg)->hosts=strdup(new_value);
@@ -1028,6 +1029,9 @@ static PHP_INI_MH(OnIniHosts)
 	EXT_GLOBAL(ini_updated)|=U_HOSTS;
   }
   return SUCCESS;
+#else
+  return FAILURE;
+#endif
 }
 static PHP_INI_MH(OnIniExtJavaCompatibility)
 {
@@ -1042,6 +1046,7 @@ static PHP_INI_MH(OnIniExtJavaCompatibility)
 }
 static PHP_INI_MH(OnIniServlet)
 {
+#ifdef HAVE_FAST_TCP_SOCKETS
   if (new_value) {
 	if((EXT_GLOBAL (ini_set) &U_SERVLET)) free(EXT_GLOBAL(cfg)->servlet);
 	if(!strncasecmp(on, new_value, 2) || !strncasecmp(on2, new_value, 1)) {
@@ -1056,6 +1061,9 @@ static PHP_INI_MH(OnIniServlet)
 	EXT_GLOBAL(ini_updated)|=U_SERVLET;
   }
   return SUCCESS;
+#else
+  return FAILURE;
+#endif
 }
 
 static PHP_INI_MH(OnIniSockname)
@@ -2190,11 +2198,15 @@ PHP_MINFO_FUNCTION(EXT)
 	  php_info_print_table_row(2, EXT_NAME()/**/".log_file", EXT_GLOBAL(cfg)->logFile);
   }
   php_info_print_table_row(2, EXT_NAME()/**/".log_level", is_level ? EXT_GLOBAL(cfg)->logLevel : "no value (use backend's default level)");
+#ifdef HAVE_FAST_TCP_SOCKETS
   if(EXT_GLOBAL(option_set_by_user) (U_HOSTS, EXT_GLOBAL(ini_user)))  
 	php_info_print_table_row(2, EXT_NAME()/**/".hosts", JG(hosts));
 #if EXTENSION == JAVA
   if(EXT_GLOBAL(option_set_by_user) (U_SERVLET, EXT_GLOBAL(ini_user)))  
 	php_info_print_table_row(2, EXT_NAME()/**/".servlet", JG(servlet)?JG(servlet):off);
+#else
+	php_info_print_table_row(2, EXT_NAME()/**/".hosts", "<not available on this OS>");
+#endif
 #endif
 #ifndef ZEND_ENGINE_2
   php_info_print_table_row(2, EXT_NAME()/**/".ext_java_compatibility", on);

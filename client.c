@@ -672,7 +672,7 @@ static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {
   if(is_local || !EXT_GLOBAL (get_servlet_context) (TSRMLS_C)) {
 	/* "standard" local backend, send the protocol header */
 	unsigned char mode = EXT_GLOBAL (get_mode) ();
-	send(sock, &mode, sizeof mode, 0); 
+	(*jenv)->send_len=1; *(*jenv)->send=mode;
   } else {
 	/* create a jenv for a servlet backend, aquire a context then
 	   redirect */

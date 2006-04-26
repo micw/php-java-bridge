@@ -132,10 +132,10 @@ if test -f modules/JavaBridge.jar && test "X$j2ee" = "Xno"; then
 	    break;
 	fi
 	done
-	/sbin/chkconfig --add php-java-bridge
+	/sbin/chkconfig --add php-java-bridge &&
 	/sbin/chkconfig php-java-bridge on
-	/bin/chown apache:apache $ext/RunJavaBridge
-	/bin/chmod 6111 $ext/RunJavaBridge
+	(/bin/chown apache:apache $ext/RunJavaBridge &&
+	/bin/chmod 6111 $ext/RunJavaBridge) || /bin/rm -f $ext/RunJavaBridge
 	if test X$ini != X; then 
 	    jre="`locate /bin/java | grep 'java$' | head -1`"
 	    echo ""
@@ -195,7 +195,8 @@ fi
 
 echo ""
 echo "PHP/Java Bridge installed."
-if test -d /etc/selinux && /usr/sbin/selinuxenabled; then
+if test -d /etc/selinux; then
+if /usr/sbin/selinuxenabled; then
   if test -f /etc/selinux/config && test -f /usr/sbin/semodule; then
     echo "SEL Security: \"javabridge\" policy module installed."
   fi
@@ -203,5 +204,6 @@ else
   echo "You are running a SELinx system. Please install the policy sources"
   echo "or install the files from the RPM distribution download."
   echo "Please see the README document for details".
+fi
 fi
 exit 0

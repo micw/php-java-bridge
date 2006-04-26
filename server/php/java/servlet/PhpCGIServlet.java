@@ -1,3 +1,4 @@
+cvs update: warning: cannot open /home/cvs/CVSROOT/val-tags read/write: Permission denied
 /*-*- mode: Java; tab-width:8 -*-*/
 
 package php.java.servlet;

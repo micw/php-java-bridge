@@ -1,3 +1,24 @@
+2006-04-23  Jost Boekemeier  <jostb@intern>
+
+	* bind.c (wait_server): Timeout raised to 30 seconds.
+
+	* RunJavaBridge.c.in, RunMonoBridge.c.in: Transit only when
+	invoked with root privileges.
+
+	* server/php/java/bridge/Util.java (DEFAULT_CGI_LOCATIONS):
+	Removed /usr/bin/php, which is not a CGI binary.
+
+	* server/php/java/bridge/http/ContextServer.java (Check for the
+	fall-back channel on Windows).
+
+	* VERSION, php-java-bridge.spec: Version 3.0.8.1 released
+	
+	
+2006-04-09  Jost Boekemeier  <jostb@intern>
+
+	* VERSION, php-java-bridge.spec: Version 3.0.8 released
+
+	
 2006-03-21  Jost Boekemeier  <jostb@intern>
 
 	* java.c (values): java_values works with php4, too.

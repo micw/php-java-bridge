@@ -5,7 +5,6 @@ package php.java.script;
 import java.io.Writer;
 
 import php.java.bridge.Invocable;
-import php.java.bridge.http.HttpServer;
 
 /**
  * Common methods for all PHP ScriptContexts
@@ -26,11 +25,4 @@ public interface IPhpScriptContext extends Invocable {
      * @param kont The continuation.
      */
     public void setContinuation(HttpProxy kont);
-
-    /**
-     * Return the http server associated with this context.
-     * @return The http server.
-     */
-    public HttpServer getHttpServer();
-
 }

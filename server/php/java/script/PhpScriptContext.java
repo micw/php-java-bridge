@@ -32,6 +32,14 @@ public class PhpScriptContext extends SimpleScriptContext implements IPhpScriptC
 	}
     }
 
+    /**
+     * Return the http server associated with this VM.
+     * @return The http server.
+     */
+    public static HttpServer getHttpServer() {
+      return bridgeRunner;
+    }
+
     private HttpProxy kont;
 	
     /**
@@ -63,10 +71,5 @@ public class PhpScriptContext extends SimpleScriptContext implements IPhpScriptC
     public boolean call(PhpProcedureProxy kont) throws InterruptedException {
 	this.kont.call(kont);
 	return true;
-    }
-
-
-    public HttpServer getHttpServer() {
-        return bridgeRunner;
     }
 }

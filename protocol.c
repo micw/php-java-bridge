@@ -32,28 +32,51 @@ static char *getSessionFactory(proxyenv *env) {
   return context?context:invalid;
 }
 
-static void send_context(proxyenv *env) {
+static char*get_context(proxyenv *env, char context[256], short*context_length) {
 	size_t l = strlen((*env)->servlet_ctx);
-	char context[256] = { 077, l&0xFF};
-	int context_length = 2;
-	ssize_t n;
 	
-	assert(l<256);
-	context_length += 
-	  EXT_GLOBAL(snprintf) (context+context_length, 
-							sizeof(context)-context_length, 
-							"%s", 
+	assert(l<sizeof context);
+	*context_length = 
+	  EXT_GLOBAL(snprintf) (context, 
+							sizeof(context), 
+							"%c%c%s", 
+							077, l&0xFF,
 							(*env)->servlet_ctx);
-	n=(*env)->f_send(env, context, context_length);
-	assert(n==context_length);
+	return context;
+}
+
+/**
+ * Send the packet to the server
+ */
+static void send_data(proxyenv *env, char *data, size_t size) {
+  size_t s=0; ssize_t n=0;
+ res: 
+  errno=0;
+  while((size>s)&&((n=(*env)->f_send(env, data+s, size-s)) > 0)) 
+	s+=n;
+  if(size>s && !n && errno==EINTR) goto res; // Solaris, see INN FAQ
+}
+
+static size_t add_header(proxyenv *env, size_t *size, char*header, size_t header_length) {
+  if(!header_length) return 0;
+
+  if(*size+header_length<(*env)->send_size) {
+	memmove((*env)->send+header_length, (*env)->send, *size);
+	memcpy(((*env)->send), header, header_length);
+	*size+=header_length;
+  } else {
+	send_data(env, header, header_length);
+  }
 }
 
 static void end(proxyenv *env) {
-  size_t s=0, size = (*env)->send_len;
-  ssize_t n=0;
+  size_t size = (*env)->send_len;
   char *servlet_context;
-  /* send the context for the re-redirected connection */
-  if((*env)->must_reopen==2) send_context(env);
+  char *context;
+  short context_length = 0;
+  char kontext[256];
+  /* get the context for the re-redirected connection */
+  if((*env)->must_reopen==2) context = get_context(env, kontext, &context_length);
   (*env)->must_reopen=0;
 
   TSRMLS_FETCH();
@@ -64,21 +87,15 @@ static void end(proxyenv *env) {
 	char header[SEND_SIZE];
 	int header_length;
 	unsigned char mode = EXT_GLOBAL (get_mode) ();
-	ssize_t n;
 
 	assert(!(*env)->peer_redirected || ((*env)->peer_redirected && ((*env)->peer0)!=-1));
 	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", servlet_context, (unsigned long)(size+1), EXT_GLOBAL(get_channel)(TSRMLS_C), getSessionFactory(env), mode);
 
-	n=(*env)->f_send(env, header, header_length);
-	assert(n==header_length);
+	add_header(env, &size, header, header_length);
+  } else {						/* re-directed */
+	add_header(env, &size, context, context_length);
   }
-  n=0;
-
- res: 
-  errno=0;
-  while((size>s)&&((n=(*env)->f_send(env, (*env)->send+s, size-s)) > 0)) 
-	s+=n;
-  if(size>s && !n && errno==EINTR) goto res; // Solaris, see INN FAQ
+  send_data(env, (char*)(*env)->send, size);
 
   (*env)->send_len=0;
 }
@@ -127,15 +144,9 @@ static void end_session(proxyenv *env) {
   
   assert(!(*env)->peer_redirected || ((*env)->peer_redirected && ((*env)->peer0)!=-1));
   header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_REDIRECT: %d\r\n%sX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", (*env)->servlet_context_string, (unsigned long)(size+1), override_redirect, get_cookies(&val, env), EXT_GLOBAL(get_channel)(TSRMLS_C), getSessionFactory(env), mode);
-  n=(*env)->f_send(env, header, header_length);
-  assert(n==header_length);
-  n=0;
 
- res: 
-  errno=0;
-  while((size>s)&&((n=(*env)->f_send(env, (*env)->send+s, size-s)) > 0)) 
-	s+=n;
-  if(size>s && !n && errno==EINTR) goto res; // Solaris, see INN FAQ
+  add_header(env, &size, header, header_length);
+  send_data(env, (char*)(*env)->send, size);
 
   (*env)->send_len=0;
 }
@@ -147,7 +158,14 @@ static void flush(proxyenv *env) {
 
 void EXT_GLOBAL (protocol_end) (proxyenv *env) {
   char *servlet_context;
-  
+  short context_length = 0;
+  char *context;
+  size_t size = (*env)->send_len;
+  char kontext[256];
+
+  if((*env)->must_reopen==2) context = get_context(env, kontext, &context_length);
+  (*env)->must_reopen=0;
+
   TSRMLS_FETCH();
   servlet_context = EXT_GLOBAL (get_servlet_context) (TSRMLS_C);
 
@@ -160,11 +178,11 @@ void EXT_GLOBAL (protocol_end) (proxyenv *env) {
 
 	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nContent-Type: text/html\r\nContent-Length: 0\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n", servlet_context, getSessionFactory(env));
 
-	n=(*env)->f_send(env, header, header_length);
-	assert(n==header_length);
-  } else {
-	if((*env)->must_reopen==2) send_context(env);
-	(*env)->must_reopen=0;
+	add_header(env, &size, header, header_length);
+	send_data(env, (char*)(*env)->send, size);
+  } else {						/* re-directed */
+	add_header(env, &size, context, context_length);
+	send_data(env, (char*)(*env)->send, size);
   }
 }
 static ssize_t send_async(proxyenv*env, const void*buf, size_t length) {

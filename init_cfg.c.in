@@ -68,9 +68,13 @@ static void override_ini_from_cgi(void) {
 	  zend_alter_ini_entry((char*)key_servlet, sizeof key_servlet,
 						   (char*)on, sizeof on,
 						   ZEND_INI_SYSTEM, PHP_INI_STAGE_STARTUP);
+#ifdef HAVE_FAST_TCP_SOCKETS
 	  EXT_GLOBAL(cfg)->socketname_set = 0;
 	  EXT_GLOBAL(cfg)->is_cgi_servlet=1;
 	  EXT_GLOBAL(cfg)->is_fcgi_servlet=1;
+#else
+	  EXT_GLOBAL(cfg)->can_fork = 0;
+#endif
 	  break;
 
 	default:					/* cgi binary with redirect
@@ -85,7 +89,11 @@ static void override_ini_from_cgi(void) {
 		zend_alter_ini_entry((char*)key_socketname, sizeof key_socketname,
 							 (char*)off, sizeof off,
 							 ZEND_INI_SYSTEM, PHP_INI_STAGE_STARTUP);
+#ifdef HAVE_FAST_TCP_SOCKETS
 		EXT_GLOBAL(cfg)->socketname_set = 0;
+#else
+		EXT_GLOBAL(cfg)->can_fork = 0;
+#endif
 		if(!kontext) {
 		  zend_alter_ini_entry((char*)key_servlet, sizeof key_servlet,
 							   (char*)on, sizeof on,
@@ -99,7 +107,11 @@ static void override_ini_from_cgi(void) {
 	  }
 	  /* fall through */
 	case 0:					/* cgi binary, but redirect is off */
+#ifdef HAVE_FAST_TCP_SOCKETS
 	  EXT_GLOBAL(cfg)->is_cgi_servlet=1;
+#else
+		EXT_GLOBAL(cfg)->can_fork = 0;
+#endif
 	}
   }
 }

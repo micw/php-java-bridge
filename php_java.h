@@ -45,6 +45,9 @@
 #  define CFG_JAVA_SOCKET_INET
 # endif
 #endif
+# if defined(CFG_JAVA_SOCKET_INET) && !defined(HAVE_FAST_TCP_SOCKETS)
+#  error Fast local tcp sockets are not available on this operating system. Use unix domain sockets instead (requires JNI).
+# endif
 
 #ifndef CFG_JAVA_SOCKET_INET
 # include <sys/un.h>

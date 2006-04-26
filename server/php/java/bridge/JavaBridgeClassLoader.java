@@ -6,7 +6,7 @@ package php.java.bridge;
 /**
  * A bridge pattern which allows us to vary the class loader as run-time.
  * The decision is based on whether we are allowed to use a dynamic
- * classloader or not (loader==null) or security exception at run-time.
+ * classloader or not (cl==null) or security exception at run-time.
  * @see DynamicJavaBridgeClassLoader
  * @see java.lang.ClassLoader
  */

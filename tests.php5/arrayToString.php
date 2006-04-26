@@ -9,6 +9,7 @@ if (!extension_loaded('java')) {
 }
 
 $here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
+if(!$here) $here=getcwd();
 java_set_library_path("$here/arrayToString.jar");
 $ArrayToString = new java_class("ArrayToString");
 

@@ -6,4 +6,5 @@ sinclude(../tests.m4/java_check_broken_gcc_installation.m4)
 sinclude(../tests.m4/java_check_abstract_namespace.m4)
 sinclude(../tests.m4/java_check_struct_ucred.m4)
 sinclude(../tests.m4/java_check_jni.m4)
+sinclude(../tests.m4/fast_tcp_sockets.m4)
 

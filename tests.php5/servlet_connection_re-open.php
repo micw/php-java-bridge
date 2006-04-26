@@ -9,6 +9,7 @@ if (!extension_loaded('java')) {
 }
 
 $here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
+if(!$here) $here=getcwd();
 java_set_library_path("$here/arrayArray.jar");
 $Array = new java_class("ArrayArray");
 $n=60;

@@ -15,17 +15,21 @@ import php.java.script.URLReader;
  */
 public class HelloWorld2 {
 
-    public static void main(String[] args) {
+  /** To run this test the php.ini must contain java.servlet=On and 
+   * the web server document root must contain HelloWorld.php
+   */
+  public static void main(String[] args) {
 	try {
 	    PhpScriptEngine engine = new PhpScriptEngine();
 
 	    engine.put("key", "testVal");
-	    engine.eval(new URLReader(new URL("http://192.168.5.99:8000/HelloWorld.php")));
+	    engine.eval(new URLReader(new URL("http://192.168.5.203:80/HelloWorld.php")));
 	    System.out.println(((Invocable)engine).invoke("sayHello", new Object[]{}));
 
 	    engine.release();
 	} catch (Exception e) {
 	    e.printStackTrace();
+	    System.err.println("Please make sure that php.ini contains java.servlet=On and that HelloWorld.php exists in the web server document root.");
 	}
     }
 }

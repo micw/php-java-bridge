@@ -26,10 +26,21 @@ import php.java.bridge.http.ContextFactory;
  * This class implements the ScriptEngine.<p>
  * Example:<p>
  * <code>
- * ScriptEngine e = (new ScriptEngineManager()).getEngineByName("php);<br>
+ * ScriptEngine e = (new ScriptEngineManager()).getEngineByName("php");<br>
  * e.eval(new URLReader(new URL("http://localhost/foo.php"));<br>
  * System.out.println(((Invocable)e).invoke("java_get_server_name", new Object[]{}));<br>
  * e.eval((String)null);<br>
+ * </code><br>
+ * When using an URLReader the external foo.php must contain a call() back into our java continuation at the end of the script:<br>
+ * <code>
+ * &lt;?php java_context->call(java_closure()) ?&gt;<br>
+ * </code><br>
+ * And the php.ini must contain a java.servlet setting, so that the bridge selects the servlet- instead of the standalone back-end. Example:<br>
+ * <code>
+ * extension=java.so<br>
+ * ;;on windows use: extension=php_java.dll<br>
+ * [java]<br>
+ * java.servlet=On<br>
  * </code>
  * @author jostb
  *
@@ -141,7 +152,7 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
 	 * call handleRedirectConnection */
 	env.put("X_JAVABRIDGE_CONTEXT", ctx.getId());
 	/* the client should connect back to us */
-	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS",Util.getHostAddress()+":"+context.getHttpServer().getSocket().getSocketName());
+	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS",Util.getHostAddress()+":"+PhpScriptContext.getHttpServer().getSocket().getSocketName());
 
     }
     protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {

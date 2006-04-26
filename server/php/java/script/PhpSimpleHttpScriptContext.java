@@ -12,7 +12,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.PhpProcedureProxy;
-import php.java.bridge.http.HttpServer;
 
 
 /**
@@ -129,10 +128,6 @@ public class PhpSimpleHttpScriptContext extends SimpleScriptContext implements I
 
     public void setContinuation(HttpProxy kont) {
         this.kont = kont;
-    }
-
-    public HttpServer getHttpServer() {
-        throw new NullPointerException("PhpSimpleHttpScriptContext must be used in a HTTP server/Servlet Engine. Use PhpScriptContext instead.");
     }
 
     public boolean call(PhpProcedureProxy kont) throws Exception {
