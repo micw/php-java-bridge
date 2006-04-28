@@ -22,11 +22,17 @@ public class ThreadPool {
      * Threads continue to pull runnables and run them in the thread
      * environment.
      */
-    private class Delegate extends Thread {
+    public final class Delegate extends Thread {
+	private boolean isDaemon = false, terminate = false;
 	public Delegate(String n) { super(n); threads++; }
+	public void setIsDaemon(boolean val) {
+	    if(isDaemon != val) threads -= (isDaemon = val) ? 1 : -1;
+	}
+	public boolean getIsDaemon() { return isDaemon; }
+	public void terminate() { terminate = true; }
 	public void run() {
 	    try {
-		while(true) getNextRunnable().run();
+		while(!terminate) getNextRunnable().run();
 	    } catch (Throwable t) { Util.printStackTrace(t); threads--; }
 	}
     }

@@ -1,4 +1,4 @@
-PHP/Java Bridge protocol version 2.1
+PHP/Java Bridge protocol version 2.2
 
 Requests are marked with "->", responses with "<-".  The server
 continues to process requests until EOF. Only the first character is
@@ -60,6 +60,7 @@ i: long
 
 When v=0, the call is directed to the current request-handling
 instance of the java bridge.
+
 
 
 
@@ -154,6 +155,11 @@ OPTIONAL requests:
 Destroy:
 <U v=object />
 v: long
+
+->
+EOF:
+<F p=A|E />
+p: char (Keep [Alive, [E]nd connection)
 
 
 

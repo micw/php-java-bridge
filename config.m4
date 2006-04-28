@@ -43,6 +43,13 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
        JAVA_CHECK_STRUCT_UCRED
        CHECK_FAST_TCP_SOCKETS
 
+       if test "$have_fast_tcp_sockets" = "no"; then
+           echo "This operating kernel has *very* slow TCP sockets, see unsupported/TestServ.c."
+           echo "Build the back-end with Unix domain sockets instead (requires that your OS supports JNI)."
+           echo "Will continue, but the J2EE back-end will be too slow to be usable."
+	   sleep 15
+        fi
+
 # find includes eg. -I/opt/jdk1.4/include -I/opt/jdk1.4/include/linux
         if test "$PHP_JAVA" != "yes"; then
          # --with-java=/opt/compiletime/jdk,/usr/runtime/jre
@@ -111,11 +118,6 @@ if test "$PHP_BACKEND" = "yes" ; then
 	PHP_ADD_MAKEFILE_FRAGMENT
 	PHP_SUBST(JAVA_SHARED_LIBADD)
 	PHP_MODULES="$PHP_MODULES \$(phplibdir)/libnatcJavaBridge.la"
-else 
-        if test "$have_fast_tcp_socket" = "no"; then
-           echo "Fast TCP sockets not available on this OS, J2EE back-end not available."
-           echo "Build the back-end with unix domain sockets instead (requires that your OS supports JNI)."
-        fi
 fi
 
 fi

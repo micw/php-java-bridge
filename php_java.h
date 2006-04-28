@@ -46,7 +46,7 @@
 # endif
 #endif
 # if defined(CFG_JAVA_SOCKET_INET) && !defined(HAVE_FAST_TCP_SOCKETS)
-#  error Fast local tcp sockets are not available on this operating system. Use unix domain sockets instead (requires JNI).
+#  warning Local TCP sockets are very slow on this system, the J2EE component will be slower than necessary (see unsupported/TestServ.c). Use unix domain sockets instead (requires JNI).
 # endif
 
 #ifndef CFG_JAVA_SOCKET_INET

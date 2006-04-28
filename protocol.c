@@ -35,10 +35,10 @@ static char *getSessionFactory(proxyenv *env) {
 static char*get_context(proxyenv *env, char context[256], short*context_length) {
 	size_t l = strlen((*env)->servlet_ctx);
 	
-	assert(l<sizeof context);
+	assert(l<256);
 	*context_length = 
 	  EXT_GLOBAL(snprintf) (context, 
-							sizeof(context), 
+							256, 
 							"%c%c%s", 
 							077, l&0xFF,
 							(*env)->servlet_ctx);

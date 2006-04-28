@@ -88,11 +88,13 @@ if test -f modules/JavaBridge.war; then
       echo "Restart your HTTP server (e.g. with: service httpd restart) and visit e.g.:"
       echo "http://localhost/JavaBridge";
       if test X$ini != X; then  /bin/cp $v java-servlet.ini $ini; fi
+	if test -f /etc/selinux/config && test -f /usr/sbin/semodule; then 
           if test X$v = X; then
 	    (cd security/module; /usr/bin/make; /usr/sbin/semodule -i php-java-bridge-tomcat.pp) >/dev/null
 	  else
 	    (cd security/module; /usr/bin/make; /usr/sbin/semodule -i php-java-bridge-tomcat.pp) 
 	  fi
+	fi
     fi
 fi
 

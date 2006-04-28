@@ -1,7 +1,22 @@
-AC_DEFUN([CHECK_FAST_TCP_SOCKETS],[
-  AC_MSG_CHECKING([for fast tcp sockets])
-  AC_CACHE_VAL(have_fast_tcp_sockets,[
-  AC_TRY_RUN([
+/**
+ * This test checks for a bug in *BSD and Mac OSX kernels.
+ * To run it type:
+ * cc -o TestServ TestServ.c
+ * ./TestServ
+ * 
+ * The result should be (e.g.):
+ * Test2/Test1: 1 (1.090763)
+ * i.e. the second test should not be more than 10% slower than the first one.
+ * 
+ * If this test fails -- on FreeBSD 6 and NetBSD for example the
+ * second test runs more than 1000 (!) times slower than the first
+ * test -- your OS kernel cannot run the PHP/Java Bridge J2EE
+ * component. Use the standalone component ("JavaBridge.jar") with
+ * Unix domain sockets instead. Note that Unix domain sockets require
+ * the natcJavaBridge.so JNI library in the jni dir, example:
+ * java -Djava.library.path=/path/to/jni/dir/ \
+ *                         -jar JavaBridge.jar LOCAL:/tmp/pjb-unix.socket
+ */
 #include <signal.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -87,8 +102,8 @@ main() {
     t1 = T2-T1; 
     t2 = T3-T2;
     r = t2/t1;
-    //printf("Test1: %lu\nTest2: %lu\nTest2/Test1: %lu (%f)\n", t1, t2, r, ((float)t2)/((float)t1));
-    //if(r>1) puts("Test failed");
+    printf("Test2/Test1: %lu (%f)\n", r, ((float)t2)/((float)t1));
+    if(r>5) puts("Test failed, use a Windows, Linux or Solaris kernel instead.");
     close(ss);
     kill(pid, SIGTERM);
     exit(r>5?1:0);
@@ -105,15 +120,3 @@ main() {
     }
   }
 }
-],
-[have_fast_tcp_sockets=yes],
-[have_fast_tcp_sockets=no])
-])
-
-  if test "$have_fast_tcp_sockets" = "yes"; then
-	AC_MSG_RESULT(yes)
-	AC_DEFINE(HAVE_FAST_TCP_SOCKETS,1, [Define if your system has a fast TCP socket implementation])
-  else
-	AC_MSG_RESULT(no)
-  fi
-])

@@ -1,5 +1,7 @@
 package php.java.servlet;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -215,13 +217,14 @@ public class FastCGIServlet extends CGIServlet {
 	env.init(req, res);
 	return env;
     }
-    private class FastCGIOutputStream extends OutputStream {
+    private class FastCGIOutputStream extends BufferedOutputStream {
 
 	OutputStream natOut;
 	/**
 	 * @param outputStream
 	 */
 	public FastCGIOutputStream(OutputStream outputStream) {
+	    super(outputStream);
 	    natOut = outputStream;
 	}
 	public void close() throws IOException {
@@ -310,13 +313,14 @@ public class FastCGIServlet extends CGIServlet {
 	}
 
     }
-    private class FastCGIInputStream extends InputStream {
+    private class FastCGIInputStream extends BufferedInputStream {
 
 	InputStream natIn;
 	/**
 	 * @param inputStream
 	 */
 	public FastCGIInputStream(InputStream inputStream) {
+	    super(inputStream);
 	    natIn = inputStream;
 	}
 	
