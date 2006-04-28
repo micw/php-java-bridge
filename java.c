@@ -2202,6 +2202,7 @@ PHP_MINFO_FUNCTION(EXT)
 #endif
   php_info_print_table_row(2, EXT_NAME()/**/" command", s);
   php_info_print_table_row(2, EXT_NAME()/**/" status", server?"running":"not running");
+  php_info_print_table_row(2, EXT_NAME()/**/" server", server?server:"localhost");
   php_info_print_table_end();
   
   free(server);
