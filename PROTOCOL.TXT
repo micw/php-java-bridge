@@ -157,7 +157,7 @@ Destroy:
 v: long
 
 ->
-EOF:
+EndConnection:
 <F p=A|E />
 p: char (Keep [Alive, [E]nd connection)
 

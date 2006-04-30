@@ -132,6 +132,7 @@ struct proxyenv_ {
   void (*writePairBegin)(proxyenv *env);
   void (*writePairEnd)(proxyenv *env);
   void (*writeUnref)(proxyenv *env, long object);
+  void (*writeEndConnection)(proxyenv *env, char property);
   void (*finish)(proxyenv *env);
 
   ssize_t (*f_recv)(proxyenv*env, void *buf, size_t len);

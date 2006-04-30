@@ -212,7 +212,7 @@ public class JavaBridge implements Runnable {
 	    }
 
 	    globalRef=null;
-	    getClassLoader().clear();
+	    cl.clear();
 	    Session.expire(this);
 	    Util.logDebug("END: JavaBridge.run()");
 
@@ -1529,7 +1529,9 @@ public class JavaBridge implements Runnable {
         this.sessionFactory = sessionFactory;
     }
 
-    static final String PHPSESSION = "PHPSESSION";
+    protected static final String PHPSESSION = "PHPSESSION";
+    protected static final String INTERNAL_PHPSESSION = "INTERNAL_PHPSESSION";
+
     /**
      * Load the object from the session store.
      * The C code requires that this method is called "deserialize" even though it doesn't deserialize anything.
@@ -1716,5 +1718,14 @@ public class JavaBridge implements Runnable {
 	int i = ((Number)pos).intValue();
 	Array.set(value, i, null);
     }
-
+    /** re-initialize for keep-alive */
+    protected void recycle() {
+	Session.expire(this);
+	sessionCache = null;
+        globalRef = new GlobalRef(this);
+        lastException = lastAsyncException = null;
+	cl.recycle();
+        options.recycle();
+        request.recycle();
+    }
 }

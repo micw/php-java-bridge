@@ -88,7 +88,7 @@ static void end(proxyenv *env) {
 	int header_length;
 	unsigned char mode = EXT_GLOBAL (get_mode) ();
 
-	assert(!(*env)->peer_redirected || ((*env)->peer_redirected && ((*env)->peer0)!=-1));
+	assert(!(*env)->peer_redirected || ((*env)->peer_redirected && ((*env)->peer0)==-1));
 	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", servlet_context, (unsigned long)(size+1), EXT_GLOBAL(get_channel)(TSRMLS_C), getSessionFactory(env), mode);
 
 	add_header(env, &size, header, header_length);
@@ -142,7 +142,6 @@ static void end_session(proxyenv *env) {
 
   (*env)->finish=end;
   
-  assert(!(*env)->peer_redirected || ((*env)->peer_redirected && ((*env)->peer0)!=-1));
   header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_REDIRECT: %d\r\n%sX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", (*env)->servlet_context_string, (unsigned long)(size+1), override_redirect, get_cookies(&val, env), EXT_GLOBAL(get_channel)(TSRMLS_C), getSessionFactory(env), mode);
 
   add_header(env, &size, header, header_length);
@@ -156,7 +155,7 @@ static void flush(proxyenv *env) {
   (*env)->handle(env);
 }
 
-void EXT_GLOBAL (protocol_end) (proxyenv *env) {
+void protocol_end (proxyenv *env) {
   char *servlet_context;
   short context_length = 0;
   char *context;
@@ -184,6 +183,7 @@ void EXT_GLOBAL (protocol_end) (proxyenv *env) {
 	add_header(env, &size, context, context_length);
 	send_data(env, (char*)(*env)->send, size);
   }
+  (*env)->send_len=0;
 }
 static ssize_t send_async(proxyenv*env, const void*buf, size_t length) {
   return (ssize_t)fwrite(buf, 1ul, length, (*env)->async_ctx.peer);
@@ -396,6 +396,14 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    end(env);
  }
 
+ static void EndConnection(proxyenv *env, char property) {
+   size_t flen;
+   assert(property=='A' || property=='E');
+   GROW(FLEN);
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<F p=\"%c\"/>", property);
+   assert((*env)->send_len<=(*env)->send_size);
+ }
+
  static void String(proxyenv *env, char*name, size_t _len) {
    size_t flen;
    static const char Sb[]="<S v=\"";
@@ -505,7 +513,55 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
 
  
 
- proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, void (*handle_request)(proxyenv *env), void (*handle_cached)(proxyenv *env), char *server_name, short is_local, struct sockaddr *saddr) {
+static void close_connection(proxyenv**penv TSRMLS_DC) {
+  if(*penv) {
+	proxyenv *env = *penv;
+	if(*env) {
+	  if((*env)->peer!=-1) {
+		/* end servlet session */
+		(*env)->writeEndConnection(env, 'E');
+		protocol_end(env);
+		close((*env)->peer);
+		if((*env)->peerr!=-1) close((*env)->peerr);
+		if((*env)->peer0!=-1) close((*env)->peer0);
+	  }
+	  if((*env)->s) free((*env)->s);
+	  if((*env)->send) free((*env)->send);
+	  if((*env)->server_name) free((*env)->server_name);
+	  if((*env)->servlet_ctx) free((*env)->servlet_ctx);
+	  if((*env)->servlet_context_string) free((*env)->servlet_context_string);
+	  free(*env);
+	}
+	free(env);
+  }
+
+  *penv = 0;
+  EXT_GLOBAL(destroy_channel)(TSRMLS_C);
+  EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);
+}
+static void recycle_connection(proxyenv *env TSRMLS_DC) {
+  if(env && *env) {
+	if((*env)->peer!=-1) {
+	  /* end servlet session */
+	  (*env)->writeEndConnection(env, 'A');
+	  protocol_end(env);
+
+	  if((*env)->servlet_ctx) {
+		free((*env)->servlet_ctx);
+		(*env)->servlet_ctx = 0;
+	  }
+	  
+	  (*env)->backend_has_session_proxy = 0;
+	}
+  }
+}
+void EXT_GLOBAL(close_connection)(proxyenv**penv, short persistent_connection TSRMLS_DC) {
+  if(persistent_connection) 
+	recycle_connection(*penv TSRMLS_CC);
+  else
+	close_connection(penv TSRMLS_CC);
+}
+proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, void (*handle_request)(proxyenv *env), void (*handle_cached)(proxyenv *env), char *server_name, short is_local, struct sockaddr *saddr) {
    proxyenv *env;  
    env=(proxyenv*)malloc(sizeof *env);     
    if(!env) return 0;
@@ -565,6 +621,7 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    (*env)->writePairBegin_n=PairBegin_n;
    (*env)->writePairEnd=PairEnd;
    (*env)->writeUnref=Unref;
+   (*env)->writeEndConnection=EndConnection;
    (*env)->finish=end;
 
    return env;

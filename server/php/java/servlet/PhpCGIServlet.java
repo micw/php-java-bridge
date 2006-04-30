@@ -57,7 +57,6 @@ exitting. When one process exits, another will be created.
      * servlet also consumes an instance of PhpJavaServlet.</p>
      */
     public static final int CGI_MAX_REQUESTS = 50;
-    private boolean override_hosts = true;
     private int cgi_max_requests = CGI_MAX_REQUESTS;
     private String php_fcgi_children = PHP_FCGI_CHILDREN;
     private String php_fcgi_max_requests = PHP_FCGI_MAX_REQUESTS;
@@ -119,7 +118,7 @@ exitting. When one process exits, another will be created.
 		// The value itself doesn't matter, we'll pass the real value
 		// via the (HTTP_)X_JAVABRIDGE_OVERRIDE_HOSTS header field
 		// later.
-		env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", "/");
+		env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", override_hosts?"/":"");
 		String[] args = new String[]{php, "-b", port};
 		File home = null;
 		try { home = ((new File(php)).getParentFile()); } catch (Exception e) {Util.printStackTrace(e);}
@@ -133,13 +132,6 @@ exitting. When one process exits, another will be created.
 	String value;
 	fcgiStarted = false;
     	super.init(config);
-    	try {
-	    value = config.getInitParameter("override_hosts");
-	    if(value==null) value="";
-	    value = value.trim();
-	    value = value.toLowerCase();
-	    if(value.equals("off") || value.equals("false")) override_hosts=false;
-	} catch (Throwable t) {Util.printStackTrace(t);}      
     	try {
 	    value = config.getInitParameter("max_requests");
 	    if(value!=null) {

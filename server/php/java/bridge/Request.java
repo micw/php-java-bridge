@@ -362,6 +362,11 @@ public final class Request implements IDocHandler {
 	    arg.id=st[2].getLongValue();
 	    break;
 	}
+	case 'F': {
+	    arg.type=ch;
+	    arg.predicate = st[0].string[st[0].off]=='A';
+	    break;
+	}
 	case 'R': {
 	    arg.type=ch;
 	    arg.id=st[0].getLongValue();
@@ -474,6 +479,19 @@ public final class Request implements IDocHandler {
 		    bridge.CreateObject((String)arg.callObject, true, arg.getArgs(), response);
 		response.flush();
 		break;
+	   case 'F': 
+	         if(arg.predicate) { // keep alive
+	           bridge.recycle();
+	           try {
+	     	       ((ThreadPool.Delegate)Thread.currentThread()).setIsDaemon(true);
+	           } catch (ClassCastException ex) {/*no thread pool*/}
+	         } else { // terminate or terminate keep alive
+	           try {
+	               ThreadPool.Delegate delegate = ((ThreadPool.Delegate)Thread.currentThread()); 
+	               if(delegate.isDaemon()) delegate.terminateDaemon(); // remove keep alive daemon from pool
+	           } catch (ClassCastException ex) {/*no thread pool*/}
+	         }
+	         break;
 	   case 'R':
 	       setIllegalStateException(SUB_FAILED);
 	       response.flush();
@@ -544,5 +562,12 @@ public final class Request implements IDocHandler {
      */
     public void reset() {
 	parser.reset();
+    }
+    
+    /** re-initialize for new requests */
+    public void recycle() {
+        reset();
+        arg.reset();
+        response.recycle();
     }
 }

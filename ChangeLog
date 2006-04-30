@@ -1,3 +1,56 @@
+2006-04-30  Jost Boekemeier  <jostb@intern>
+
+	* PROTOCOL.TXT: Keep-alive added.
+
+	* client.c (handle_request, try_connect_to_server): Persistent
+	connections.
+	(clone_cfg, destroy_cloned_cfg): New from java.c
+
+	* java.c (clone_cfg, destroy_cloned_cfg): Moved to client.c
+	(OnIniPersistentConnections): New procedure
+	(RSHUTDOWN_FUNCTION): moved connection handling to client/protocol.
+	(MINFO): Display java.persistent_connections option.
+	(MSHUTDOWN_FUNCTION): close persistent, if necessary
+	
+	* init_cfg.c.in (option_set_by_user, init_cfg): Persistent connections.
+
+	* protocol.c (end): Changed incorrect assert()
+	(end_session): Removed incorrect assert.
+	(protocol_end): reset state for close persistent
+	(EndConnection): New method
+	(close_connection, recycle_connection): New procedures
+
+	* java.c (PHP_INI_BEGIN): java.log_level changed to PHP_INI_SYSTEM
+
+	* server/php/java/bridge/JavaBridge.java (recycle): New method.
+
+	* server/php/java/bridge/JavaBridgeClassLoader.java (recycle): New method.
+	* server/php/java/bridge/Options.java (recycle): New method.
+
+	* server/php/java/bridge/Request.java (begin, handleRequest):
+	Handle keep-alive.
+	(recycle): New method.
+
+	* server/php/java/bridge/Response.java (recycle): New method.
+
+	* server/php/java/bridge/SessionFactory.java (session): New from
+	getSession.
+	(getSession, getSessionInternal): Keep user sessions and internal
+	sessions for the serialize/desiralize implementation separate.
+
+	* server/php/java/bridge/ThreadPool.java (setIsDaemon,
+	getIsDaemon, terminateDaemon): Daemon are managed by the pool
+	but are not visible in any way. They are terminated when the
+	associated keep-alive client terminates.
+
+	* server/php/java/servlet/FastCGIServlet.java (override_hosts,
+	init): Use the override_hosts for the FastCGIServlet, too.
+
+	* server/test/HelloWorld.java: Removed ini_set("java.log_level",
+	...), the log_level setting is INI_SYSTEM now. -- None of the
+	examples and none of the documentation mentioned that feature, so
+	we can silently drop it.
+
 2006-04-23  Jost Boekemeier  <jostb@intern>
 
 	* bind.c (wait_server): Timeout raised to 30 seconds.
@@ -11,9 +64,6 @@
 	* server/php/java/bridge/http/ContextServer.java (Check for the
 	fall-back channel on Windows).
 
-	* VERSION, php-java-bridge.spec: Version 3.0.8.1 released
-	
-	
 2006-04-09  Jost Boekemeier  <jostb@intern>
 
 	* VERSION, php-java-bridge.spec: Version 3.0.8 released

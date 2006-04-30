@@ -1,8 +1,7 @@
 Build and execution instructions:
 ---------------------------------
   NOTE: If you have Security Enhanced Linux, you must update the policy
-  and tag the files with the correct SEL contexts, please see below, or 
-  please install the binary RPM instead.
+  and tag the files with the correct SEL contexts, please see the README.
 
   Install mono 1.1.8 or above. Install the IKVM.GNU.Classpath.dll and
   IKVM.Runtime.dll. Install ikvmc.exe from the IKVM project:
@@ -13,8 +12,8 @@ Build and execution instructions:
           mono --version       # 1.0.6 or above.
           gcj --version        # 3.2.3 or above.
           apachectl -version   # Apache 1.3 or above.
-          php-config --version # PHP 4.3.2 or above.
-          make null --version  # GNU make 3.79 or above
+          php-config --version # PHP 4.3.4 or above.
+          make null --version  # GNU make
 
           phpize && 
           ./configure --with-mono=/usr/bin/ikvmc.exe \
@@ -49,16 +48,7 @@ Build and execution instructions:
           apachectl restart
 
 
-  OPTION 1: You can use local sockets to connect to a local back-end. 
-  Copy the executable php-mono-bridge to /usr/sbin, make it executable 
-  with the command "chmod +x /usr/sbin/php-mono-bridge" and start it:
-
-          /usr/sbin/php-mono-bridge
-
-  This option can be used if "Security Enhanced Linux" is switched on.
-
-
-  OPTION 2: You can start the bridge as a sub-process of apache. Disable
+  OPTION 1: You can start the bridge as a sub-process of apache. Disable
   mono.socketname, and mono.hosts. For example:
 
           extension = java.so
@@ -71,9 +61,6 @@ Build and execution instructions:
 
           apachectl restart
           pstree | fgrep httpd
-
-  This option cannot be used if "Security Enhanced Linux" is switched
-  on.
 
 
   Check the status:
@@ -94,15 +81,8 @@ Build and execution instructions:
   ------------------------------------------
 
   When the mono.socketname and mono.hosts options are not set, the web
-  server will start or re-start the bridge automatically as a sub
+  server will start or re-start the mono back-end automatically as a sub
   component when the HTTP service is started or re-started.
-
-  However, when running the bridge in a production environment, it is
-  recommended to start the PHP/Mono Bridge as a system service,
-  independent of the web server. The script "php-mono-bridge.service"
-  can be used on SysV based init systems to automatically start and stop
-  the bridge as a system service.  Please see the RedHat RPM download
-  for an example.
 
 ------------------------------------
   Mailing List

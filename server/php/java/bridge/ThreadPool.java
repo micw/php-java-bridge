@@ -18,18 +18,37 @@ public class ThreadPool {
     private int threads = 0, idles = 0, poolMaxSize;
     private LinkedList runnables = new LinkedList();
 
-    /*
+    /**
      * Threads continue to pull runnables and run them in the thread
      * environment.
      */
     public final class Delegate extends Thread {
 	private boolean isDaemon = false, terminate = false;
-	public Delegate(String n) { super(n); threads++; }
+	/** 
+	 * Create a new delegate. The thread runs until terminateDaemon() is called. 
+	 * @param name The name of the delegate. 
+	 */
+	protected Delegate(String name) { super(name); threads++; }
+	/**
+	 * Make this thread a daemon thread. A daemon is not visible but still managed by the thread pool.
+	 * @param val true or false
+	 */
 	public void setIsDaemon(boolean val) {
 	    if(isDaemon != val) threads -= (isDaemon = val) ? 1 : -1;
 	}
+	/**
+	 * Check if this thread is a daemon thread.
+	 * @return true, if the thread is a daemon, false otherwise
+	 */
 	public boolean getIsDaemon() { return isDaemon; }
-	public void terminate() { terminate = true; }
+	/**
+	 * Terminate a daemon thread.
+	 * @throws IllegalStateException, if the thread is not a daemon
+	 */
+	public void terminateDaemon() { 
+	  if(!isDaemon) throw new IllegalStateException("not a daemon");
+	  terminate = true; 
+	}
 	public void run() {
 	    try {
 		while(!terminate) getNextRunnable().run();

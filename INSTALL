@@ -68,7 +68,8 @@ export LD_LIBRARY_PATH=$INST/lib:$LD_LIBRARY_PATH
 su - -c "service httpd stop"
 
 # adjust the java version
-JAVA_HOME=/opt/IBMJava2-141
+JAVA_HOME=/opt/jdk1.4.2
+#JRE_HOME=/opt/jre1.6.0 # enable this, if you want to hard-code the JRE path
 
 # The following software components are required during the build
 # process: autoconf 2.57, automake 1.6.3 and libtool 1.4.3. If you
@@ -103,7 +104,7 @@ cd ..
 #
 bunzip2 < php-x.y.z.tar.bz2 | tar xf -
 cd php-x.y.z
-./configure --prefix=$INST --without-java --with-apxs2=$INST/bin/apxs
+./configure --prefix=$INST --disable-all --with-apxs2=$INST/bin/apxs
 make && su -c "make install"
 # now activate php in the httpd.conf
 su -c "echo 'AddType application/x-httpd-php .php' >>$INST/conf/httpd.conf"
@@ -116,7 +117,7 @@ cd ..
 bunzip2 < php-java-bridge_p.x.y.tar.bz2 | tar xf -
 cd php-java-bridge-p.x.y
 phpize
-./configure --with-java=$JAVA_HOME
+./configure --with-java=$JAVA_HOME,$JRE_HOME
 make && su -c "make install"
 # now activate the bridge in php.ini
 su -c "touch $INST/lib/php.ini && echo -e 'extension=java.so\n[java]' >>$INST/lib/php.ini"

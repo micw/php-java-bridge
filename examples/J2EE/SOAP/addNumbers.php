@@ -5,7 +5,6 @@
   * This example uses the PHP/Java Bridge to connect to a SOAP service.
   */
 
-ini_set("java.log_level", "1"); // do not print java exceptions for this test
 include("wsimport.php");
 
 try {

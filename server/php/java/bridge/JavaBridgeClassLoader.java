@@ -103,4 +103,11 @@ public class JavaBridgeClassLoader {
     public void clear() {
 	if(!checkCl()) cl.clear();
     }
+    
+    /** re-initialize for keep alive */
+    protected void recycle() {
+      	clear();
+      	cachedPath = null;
+	cachedExtensionDir = null;
+    }
 }

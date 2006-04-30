@@ -511,10 +511,12 @@ static void handle_request(proxyenv *env) {
 	  (*env)->peer_redirected = 1;
 	  JG(ini_user)&=~(U_SERVLET|U_SOCKNAME);
 
-	  assert((*env)->peer!=-1); if((*env)->peer!=-1) close((*env)->peer);
+	  assert((*env)->peer!=-1); 
+	  if((*env)->peer!=-1) { close((*env)->peer); (*env)->peer=-1; }
 	  EXT_GLOBAL(redirect)(env, JG(redirect_port), JG(channel_in), JG(channel_out) TSRMLS_CC);
 	} else {
-	  assert((*env)->peer!=-1); if((*env)->peer!=-1) close((*env)->peer);
+	  assert((*env)->peer!=-1); 
+	  if((*env)->peer!=-1) close((*env)->peer);
 	  server = EXT_GLOBAL(test_server)(&(*env)->peer, 0, 0 TSRMLS_CC);
 	  assert(server); if(!server) exit(9);
 	  free(server);
@@ -525,6 +527,8 @@ static void handle_request(proxyenv *env) {
 	goto handle_request;
   }
 }
+
+
 
 unsigned char EXT_GLOBAL (get_mode) () {
 #ifndef ZEND_ENGINE_2
@@ -638,13 +642,15 @@ static proxyenv*adjust_servlet_environment(proxyenv *env TSRMLS_DC) {
 	(*env)->servlet_context_string = strdup(servlet_context_string);
   if((SUCCESS==zend_eval_string((char*)context, &val, (char*)name TSRMLS_CC)) && (Z_TYPE(val)==IS_STRING)) {
 	(*env)->servlet_ctx = strdup(Z_STRVAL(val));
-								/* backend must have created a session
+								/* back-end must have created a session
 								   proxy, otherwise we wouldn't see a
 								   context. */
 	(*env)->backend_has_session_proxy = 1;	
   }
   return env;
 }
+
+static void init_channel(TSRMLS_D);
 static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {
   char *server;
   int sock;
@@ -653,18 +659,24 @@ static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {
   proxyenv *jenv =JG(jenv);
   if(jenv) return jenv;
 
+  EXT_GLOBAL(clone_cfg)(TSRMLS_C);
+
   if(!EXT_GLOBAL(cfg)->is_cgi_servlet || EXT_GLOBAL(cfg)->is_fcgi_servlet) 
 	override_ini_for_redirect(TSRMLS_C);
 
   if(JG(is_closed)) {
 	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not connect to server: Session is closed. -- This usually means that you have tried to access the server in your class' __destruct() method.",51);
+	EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);
 	return 0;
   }
   if(!(server=EXT_GLOBAL(test_server)(&sock, &is_local, &saddr TSRMLS_CC))) {
 	if (bail) 
 	  EXT_GLOBAL(sys_error)("Could not connect to server. Have you started the "/**/EXT_NAME()/**/" backend (either a servlet engine, an application server, JavaBridge.jar or MonoBridge.exe) and set the "/**/EXT_NAME()/**/".socketname or "/**/EXT_NAME()/**/".hosts option?",52);
+	EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);
 	return 0;
   }
+
+  init_channel(TSRMLS_C);
 
   jenv = EXT_GLOBAL(createSecureEnvironment)
 	(sock, handle_request, handle_cached, server, is_local, &saddr);
@@ -690,7 +702,7 @@ proxyenv *EXT_GLOBAL(try_connect_to_server)(TSRMLS_D) {
 
 #ifdef __MINGW32__
 /* named pipes are not available on windows */
-void EXT_GLOBAL(init_channel)(TSRMLS_D) {
+static void init_channel(TSRMLS_D) {
   JG(channel_in) = JG(channel_out) = JG(channel) = 0;
 }
 void EXT_GLOBAL(destroy_channel)(TSRMLS_D) {
@@ -722,7 +734,7 @@ static short create_pipes(char*basename, size_t basename_len TSRMLS_DC) {
   *e=0;
   JG(channel) = basename;
 }
-void EXT_GLOBAL(init_channel)(TSRMLS_D) {
+static void init_channel(TSRMLS_D) {
   static const char sockname[] = SOCKNAME;
   static const char sockname_shm[] = SOCKNAME_SHM;
   static const char length = sizeof(sockname)>sizeof(sockname_shm)?sizeof(sockname):sizeof(sockname_shm);
@@ -761,6 +773,18 @@ const char *EXT_GLOBAL(get_channel) (TSRMLS_D) {
   char *channel = JG(channel);
   if(channel) return channel;
   return empty;
+}
+void EXT_GLOBAL(clone_cfg)(TSRMLS_D) {
+  JG(ini_user)=EXT_GLOBAL(ini_user);
+  JG(hosts)=strdup(EXT_GLOBAL(cfg)->hosts);
+  JG(servlet)=strdup(EXT_GLOBAL(cfg)->servlet);
+}
+void EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_D) {
+  if(JG(hosts)) free(JG(hosts));
+  if(JG(servlet)) free(JG(servlet));
+  JG(ini_user)=0;
+  JG(hosts)=0;
+  JG(servlet)=0;
 }
 
 #ifndef PHP_WRAPPER_H

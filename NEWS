@@ -3,6 +3,15 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 3.1.0:
+
+* Persistent connections: If "java.persistent_connections" is set to
+"On", the Apache/Tomcat combination delivers Java based content faster
+than Tomcat standalone(!) and more than two times faster than
+Apache/Tomcat connected via Tomcat's mod_jk. Tested with Apache
+2.0.49 running PHP 5.1.2 in the slowest configuration (mpm=prefork).
+
+
 Version 3.0.8:
 
 * When the tomcat or J2EE JavaBridge.war "back-end" is used without an

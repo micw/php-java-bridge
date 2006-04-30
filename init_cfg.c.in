@@ -151,6 +151,7 @@ void EXT_GLOBAL (init_cfg) (TSRMLS_D) {
   if(!(EXT_GLOBAL (ini_updated) &U_JAVA)) EXT_GLOBAL(cfg)->vm=strdup(CFG_JAVA);
   if(!(EXT_GLOBAL (ini_updated) &U_JAVA_HOME)) EXT_GLOBAL(cfg)->vm_home=strdup(CFG_JAVA_HOME);
   if(!(EXT_GLOBAL (ini_updated) &U_EXT_JAVA_COMPATIBILITY)) EXT_GLOBAL(cfg)->extJavaCompatibility=0;
+  if(!(EXT_GLOBAL (ini_updated) &U_PERSISTENT_CONNECTIONS)) EXT_GLOBAL(cfg)->persistent_connections=0;
   if(!(EXT_GLOBAL (ini_updated) &U_LOGLEVEL)) {
 	EXT_GLOBAL(cfg)->logLevel=strdup(DEFAULT_LEVEL);
 	EXT_GLOBAL(cfg)->logLevel_val=atoi(DEFAULT_LEVEL);
@@ -206,6 +207,7 @@ short EXT_GLOBAL(option_set_by_user)(short option, int ini_user) {
   case U_SERVLET: entry = EXT_GLOBAL(cfg)->servlet; break;
   case U_WRAPPER: entry = EXT_GLOBAL(cfg)->wrapper; break;
   case U_EXT_JAVA_COMPATIBILITY: return EXT_GLOBAL(cfg)->extJavaCompatibility;
+  case U_PERSISTENT_CONNECTIONS: return EXT_GLOBAL(cfg)->persistent_connections;
   default: assert(0);
   }  
 

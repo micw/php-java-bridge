@@ -43,33 +43,14 @@ int *__errno (void) { return (int*)&java_errno; }
   php_info_print_table_row_ex(a, "v", b, c)
 #endif
 
-static void clone_cfg(TSRMLS_D) {
-  JG(ini_user)=EXT_GLOBAL(ini_user);
-  JG(hosts)=strdup(EXT_GLOBAL(cfg)->hosts);
-  JG(servlet)=strdup(EXT_GLOBAL(cfg)->servlet);
-}
-static void destroy_cloned_cfg(TSRMLS_D) {
-  if(JG(hosts)) free(JG(hosts));
-  if(JG(servlet)) free(JG(servlet));
-  JG(ini_user)=0;
-  JG(hosts)=0;
-  JG(servlet)=0;
-}
-
 /**
  * Called when a new request starts.  Opens a connection to the
- * backend, creates an instance of the proxyenv structure and clones
+ * back-end, creates an instance of the proxyenv structure and clones
  * the servlet, hosts and ini_user flags.
  */
 PHP_RINIT_FUNCTION(EXT) 
 {
-  if(EXT_GLOBAL(cfg)) {
-	clone_cfg(TSRMLS_C);
-  }
-
-  EXT_GLOBAL(init_channel)(TSRMLS_C);
-
-  if(JG(jenv)) {
+  if(!EXT_GLOBAL(cfg)->persistent_connections && JG(jenv)) {
 	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Synchronization problem, rinit with active connection called. Cannot continue, aborting now. Please report this to: php-java-bridge-users@lists.sourceforge.net",59);
   }
   JG(is_closed)=0;
@@ -78,34 +59,11 @@ PHP_RINIT_FUNCTION(EXT)
 
 /**
  * Called when the request terminates. Closes the connection to the
- * backend, destroys the proxyenv instance.
+ * back-end, destroys the proxyenv instance.
  */
 PHP_RSHUTDOWN_FUNCTION(EXT)
 {
-  destroy_cloned_cfg(TSRMLS_C);
-
-  if(JG(jenv)) {
-	if(*JG(jenv)) {
-	  if((*JG(jenv))->peer!=-1) {
-		/* end servlet session */
-		EXT_GLOBAL(protocol_end)(JG(jenv));
-		close((*JG(jenv))->peer);
-		if((*JG(jenv))->peerr!=-1) close((*JG(jenv))->peerr);
-		if((*JG(jenv))->peer0!=-1) close((*JG(jenv))->peer0);
-	  }
-	  if((*JG(jenv))->s) free((*JG(jenv))->s);
-	  if((*JG(jenv))->send) free((*JG(jenv))->send);
-	  if((*JG(jenv))->server_name) free((*JG(jenv))->server_name);
-	  if((*JG(jenv))->servlet_ctx) free((*JG(jenv))->servlet_ctx);
-	  if((*JG(jenv))->servlet_context_string) free((*JG(jenv))->servlet_context_string);
-	  free(*JG(jenv));
-	}
-	free(JG(jenv));
-  }
-
-  JG(jenv) = NULL;
-  EXT_GLOBAL(destroy_channel)(TSRMLS_C);
-
+  EXT_GLOBAL(close_connection) (&JG(jenv), EXT_GLOBAL(cfg)->persistent_connections TSRMLS_CC);
   JG(is_closed)=1;
   return SUCCESS;
 }
@@ -226,7 +184,7 @@ static void require(INTERNAL_FUNCTION_PARAMETERS) {
  * call java_require("foo.jar"); java_require("bar.jar"), the classes
  * from foo cannot see the classes loaded from bar. If you get a
  * NoClassDefFound error saying that one of your classes cannot
- * access the library you have loaded, you must reset the backend to
+ * access the library you have loaded, you must reset the back-end to
  * clear the loader cache and load your classes and the library in one
  * java_require() call.
  */
@@ -300,7 +258,7 @@ static void session(INTERNAL_FUNCTION_PARAMETERS)
 
   assert(EXT_GLOBAL(cfg)->is_cgi_servlet && (*jenv)->servlet_ctx ||!EXT_GLOBAL(cfg)->is_cgi_servlet);
 								/* create a new connection to the
-								   backend if java_session() is not
+								   back-end if java_session() is not
 								   the first statement in a script */
   EXT_GLOBAL(check_session) (jenv TSRMLS_CC);
 
@@ -394,11 +352,11 @@ EXT_FUNCTION(EXT_GLOBAL(get_context))
 /**
  * Proto: string java_server_name(void) or string java_get_server_name(void)
  *
- * Returns the name of the backend or null, if the backend is not running. Example:
+ * Returns the name of the back-end or null, if the back-end is not running. Example:
  * \code
  * $backend = java_get_server_name();
- * if(!$backend) wakeup_administrator("backend not running");
- * echo "Connected to the backend: $backend\n";
+ * if(!$backend) wakeup_administrator("back-end not running");
+ * echo "Connected to the back-end: $backend\n";
  * \endcode
  */
 EXT_FUNCTION(EXT_GLOBAL(get_server_name))
@@ -421,11 +379,11 @@ EXT_FUNCTION(EXT_GLOBAL(get_server_name))
  * caches are gone. 
  *
  * Example:
- * \code echo "Resetting backend to initial state\n";
+ * \code echo "Resetting back-end to initial state\n";
  * java_reset();
  * \endcode
  *
- * This procedure does nothing when the backend runs
+ * This procedure does nothing when the back-end runs
  * in a servlet environment or an application server. 
  */
 EXT_FUNCTION(EXT_GLOBAL(reset))
@@ -438,14 +396,14 @@ EXT_FUNCTION(EXT_GLOBAL(reset))
 
   (*jenv)->writeInvokeBegin(jenv, 0, "reset", 0, 'I', return_value);
   (*jenv)->writeInvokeEnd(jenv);
-  php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Your script has called the privileged procedure \""/**/EXT_NAME()/**/"_reset()\" which resets the "/**/EXT_NAME()/**/" backend to its initial state. Therefore all "/**/EXT_NAME()/**/" caches are gone.", 18);
+  php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Your script has called the privileged procedure \""/**/EXT_NAME()/**/"_reset()\" which resets the "/**/EXT_NAME()/**/" back-end to its initial state. Therefore all "/**/EXT_NAME()/**/" caches are gone.", 18);
 }
 
 /**
  * Proto: void java_begin_document(void)
  *
  * Enters stream mode (asynchronuous protocol). The statements are
- * sent to the backend in one XML stream.
+ * sent to the back-end in one XML stream.
 */
 EXT_FUNCTION(EXT_GLOBAL(begin_document))
 {
@@ -1040,6 +998,17 @@ static PHP_INI_MH(OnIniExtJavaCompatibility)
 	}
 	return SUCCESS;
 }
+static PHP_INI_MH(OnIniPersistentConnections)
+{
+	if (new_value) {
+	  if(!strncasecmp(on, new_value, 2) || !strncasecmp(on2, new_value, 1))
+		EXT_GLOBAL(cfg)->persistent_connections=1;
+	  else
+		EXT_GLOBAL(cfg)->persistent_connections=0;
+	  EXT_GLOBAL(ini_updated)|=U_PERSISTENT_CONNECTIONS;
+	}
+	return SUCCESS;
+}
 static PHP_INI_MH(OnIniServlet)
 {
   if (new_value) {
@@ -1139,9 +1108,10 @@ PHP_INI_BEGIN()
   PHP_INI_ENTRY(EXT_NAME()/**/"."/**/EXT_NAME()/**/"",   NULL, PHP_INI_SYSTEM, OnIniJava)
   PHP_INI_ENTRY(EXT_NAME()/**/"."/**/EXT_NAME()/**/"_home",   NULL, PHP_INI_SYSTEM, OnIniJavaHome)
 
-  PHP_INI_ENTRY(EXT_NAME()/**/".log_level",   NULL, PHP_INI_ALL, OnIniLogLevel)
+  PHP_INI_ENTRY(EXT_NAME()/**/".log_level",   NULL, PHP_INI_SYSTEM, OnIniLogLevel)
   PHP_INI_ENTRY(EXT_NAME()/**/".log_file",   NULL, PHP_INI_SYSTEM, OnIniLogFile)
   PHP_INI_ENTRY(EXT_NAME()/**/".ext_java_compatibility",   NULL, PHP_INI_SYSTEM, OnIniExtJavaCompatibility)
+  PHP_INI_ENTRY(EXT_NAME()/**/".persistent_connections",   NULL, PHP_INI_SYSTEM, OnIniPersistentConnections)
   PHP_INI_END()
 
 /* vm_alloc_globals_ctor(zend_vm_globals *vm_globals) */
@@ -2029,9 +1999,9 @@ static void make_local_socket_info(TSRMLS_D) {
 
 /**
  * Called when the module is initialized. Creates the Java and
- * JavaClass structures and tries to start the backend if
+ * JavaClass structures and tries to start the back-end if
  * java.socketname, java.servlet or java.hosts are not set.  The
- * backend is not started if the environment variable
+ * back-end is not started if the environment variable
  * X_JAVABRIDGE_OVERRIDE_HOSTS exists and contains either "/" or
  * "host:port//context/servlet".  When running as a Apache/IIS module
  * or Fast CGI, this procedure is called only once. When running as a
@@ -2146,9 +2116,9 @@ PHP_MINIT_FUNCTION(EXT)
 	EXT_GLOBAL(init_cfg) (TSRMLS_C);
 
 	make_local_socket_info(TSRMLS_C);
-	clone_cfg(TSRMLS_C);
+	EXT_GLOBAL(clone_cfg)(TSRMLS_C);
 	EXT_GLOBAL(start_server) (TSRMLS_C);
-	destroy_cloned_cfg(TSRMLS_C);
+	EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);
   } 
   return SUCCESS;
 }
@@ -2188,7 +2158,7 @@ PHP_MINFO_FUNCTION(EXT)
 	else
 	  php_info_print_table_row(2, EXT_NAME()/**/".log_file", EXT_GLOBAL(cfg)->logFile);
   }
-  php_info_print_table_row(2, EXT_NAME()/**/".log_level", is_level ? EXT_GLOBAL(cfg)->logLevel : "no value (use backend's default level)");
+  php_info_print_table_row(2, EXT_NAME()/**/".log_level", is_level ? EXT_GLOBAL(cfg)->logLevel : "no value (use back-end's default level)");
   if(EXT_GLOBAL(option_set_by_user) (U_HOSTS, EXT_GLOBAL(ini_user)))  
 	php_info_print_table_row(2, EXT_NAME()/**/".hosts", JG(hosts));
 #if EXTENSION == JAVA
@@ -2200,6 +2170,7 @@ PHP_MINFO_FUNCTION(EXT)
 #else
   php_info_print_table_row(2, EXT_NAME()/**/".ext_java_compatibility", EXT_GLOBAL(cfg)->extJavaCompatibility?on:off);
 #endif
+  php_info_print_table_row(2, EXT_NAME()/**/".persistent_connections", EXT_GLOBAL(cfg)->persistent_connections?on:off);
   php_info_print_table_row(2, EXT_NAME()/**/" command", s);
   php_info_print_table_row(2, EXT_NAME()/**/" status", server?"running":"not running");
   php_info_print_table_row(2, EXT_NAME()/**/" server", server?server:"localhost");
@@ -2210,13 +2181,14 @@ PHP_MINFO_FUNCTION(EXT)
 }
 
 /**
- * Called when the module terminates. Stops the backend, if it is running.
+ * Called when the module terminates. Stops the back-end, if it is running.
  * When running in Apache/IIS or as a FastCGI binary, this procedure is 
  * called only once. When running as a CGI binary this is called whenever
  * the CGI binary terminates.
  */
 PHP_MSHUTDOWN_FUNCTION(EXT) 
 {
+  EXT_GLOBAL(close_connection) (&JG(jenv), 0 TSRMLS_CC);
   EXT_GLOBAL(destroy_cfg) (EXT_GLOBAL(ini_set));
   EXT_GLOBAL(ini_user) = EXT_GLOBAL(ini_set) = 0;
 

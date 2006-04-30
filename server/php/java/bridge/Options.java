@@ -84,4 +84,9 @@ public final class Options {
         else
             return (new Long(st.getLongValue()));
     }
+    
+    /** re-initialize for keep alive */
+    protected void recycle() {
+        encoding = Util.UTF8;
+    }
 }

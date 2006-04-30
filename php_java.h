@@ -92,6 +92,7 @@ extern int EXT_GLOBAL(ini_updated), EXT_GLOBAL (ini_user), EXT_GLOBAL (ini_set);
 #define U_SERVLET (1<<9)
 #define U_WRAPPER (1<<10)
 #define U_EXT_JAVA_COMPATIBILITY  (1<<11)
+#define U_PERSISTENT_CONNECTIONS  (1<<12)
 
 #if EXTENSION == JAVA
 #define phpext_java_ptr &EXT_GLOBAL(module_entry)
@@ -157,6 +158,7 @@ struct cfg {
   short socketname_set;
   /** 0: Compatibility with ext/java is off (default), 1: on  */
   short extJavaCompatibility;
+  short persistent_connections;
 };
 extern struct cfg *EXT_GLOBAL(cfg);
 
@@ -195,10 +197,12 @@ EXT_END_MODULE_GLOBALS(EXT)
 #endif
 
 extern char* EXT_GLOBAL(get_server_string)(TSRMLS_D);
-
 extern proxyenv *EXT_GLOBAL(try_connect_to_server)(TSRMLS_D);
 extern proxyenv *EXT_GLOBAL(connect_to_server)(TSRMLS_D);
+extern void EXT_GLOBAL(close_connection)(proxyenv**env, short persistent_connection TSRMLS_DC);
 extern void EXT_GLOBAL(start_server)(TSRMLS_D);
+extern void EXT_GLOBAL(clone_cfg)(TSRMLS_D);
+extern void EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_D);
 
 extern char* EXT_GLOBAL(test_server)(int *socket, short *is_local, struct sockaddr*saddr TSRMLS_DC);
 

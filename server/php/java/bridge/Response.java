@@ -666,6 +666,10 @@ public class Response {
     protected void reset() {
 	writer.reset();
     }
+    /** re-initialize for keep alive */
+    protected void recycle() {
+        reset();
+    }
     public String toString() {
     	return bridge.options.newString(buf.getFirstBytes());
     }

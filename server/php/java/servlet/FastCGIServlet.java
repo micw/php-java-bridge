@@ -81,6 +81,7 @@ public class FastCGIServlet extends CGIServlet {
     protected String php = null; 
     protected boolean fcgiIsAvailable;
     protected boolean canStartFCGI = false;
+    protected boolean override_hosts = true;
     
     protected String startFcgiMessage() {
 	String base = context.getRealPath(cgiPathPrefix);
@@ -131,7 +132,15 @@ public class FastCGIServlet extends CGIServlet {
 	}  catch (Throwable t) {Util.printStackTrace(t);}      
     }
     public void init(ServletConfig config) throws ServletException {
+	String value;
 	super.init(config);
+    	try {
+	    value = config.getInitParameter("override_hosts");
+	    if(value==null) value="";
+	    value = value.trim();
+	    value = value.toLowerCase();
+	    if(value.equals("off") || value.equals("false")) override_hosts=false;
+	} catch (Throwable t) {Util.printStackTrace(t);}      
 
 	checkCgiBinary(config);
     }
@@ -168,7 +177,7 @@ public class FastCGIServlet extends CGIServlet {
 		    buf.append("/");
 		    buf.append(req.getRequestURI());
 		    buf.append("javabridge");
-		    this.env.put("X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT", buf.toString());
+		    this.env.put("X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT", override_hosts?buf.toString():"");
 	    }
 	    return success;
 	}
