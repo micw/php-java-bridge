@@ -2,12 +2,15 @@
 
 package php.java.script;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.UnknownHostException;
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.script.AbstractScriptEngine;
 import javax.script.Bindings;
@@ -59,13 +62,61 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
      * The continuation of the script
      */
     protected HttpProxy continuation = null;
-    protected HashMap env = new HashMap();
+    protected final HashMap processEnvironment = getProcessEnvironment();
+    protected Map env = null;
     
     private ScriptEngineFactory factory = null;
 
     protected void initialize() {
       setContext(getPhpScriptContext());
     }
+
+    private static final Class[] EMPTY_PARAM = new Class[0];
+    private static final Object[] EMPTY_ARG = new Object[0];
+    private static final File winnt = new File("c:/winnt");
+    private static final File windows = new File("c:/windows");
+
+    /**
+     * Get the current process environment which will be passed to the sub-process.
+     * Requires jdk1.5 or higher. In jdk1.4, where System.getenv() is not available,
+     * we allocate an empty map.<p>
+     * To add custom environment variables (such as PATH=... or LD_ASSUME_KERNEL=2.4.21, ...),
+     * use a custom PhpScriptEngine, for example:<br>
+     * <code>
+     * public class MyPhpScriptEngine extends PhpScriptEngine {<br>
+     * &nbsp;&nbsp;protected HashMap getProcessEnvironment() {<br>
+     * &nbsp;&nbsp;&nbsp;&nbsp;HashMap map = new HashMap();<br>
+     * &nbsp;&nbsp;&nbsp;&nbsp;map.put("PATH", "/usr/local/bin");<br>
+     * &nbsp;&nbsp;&nbsp;&nbsp;return map; <br>
+     * &nbsp;&nbsp;}<br>
+     * }<br>
+     * </code>
+     * @return The current process environment.
+     */
+    protected HashMap getProcessEnvironment() {
+	HashMap defaultEnv = new HashMap();
+      String val = null;
+	// Bug in WINNT and WINXP.
+	// If SystemRoot is missing, php cannot access winsock.
+	if(winnt.isDirectory()) val="c:\\winnt";
+	else if(windows.isDirectory()) val = "c:\\windows";
+	try {
+	    String s = System.getenv("SystemRoot"); 
+	    if(s!=null) val=s;
+      } catch (Throwable t) {/*ignore*/}
+      try {
+	    String s = System.getProperty("Windows.SystemRoot");
+	    if(s!=null) val=s;
+      } catch (Throwable t) {/*ignore*/}
+	if(val!=null) defaultEnv.put("SystemRoot", val);
+      try {
+        Method m = System.class.getMethod("getenv", EMPTY_PARAM);
+        Map map = (Map) m.invoke(System.class, EMPTY_ARG);
+        defaultEnv.putAll(map);
+    } catch (Exception e) {/*ignore*/}
+    return defaultEnv;
+  }
+
     /**
      * Create a new ScriptEngine with a default context.
      */
@@ -144,7 +195,7 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
     protected void setNewContextFactory() {
         ContextFactory ctx;
         IPhpScriptContext context = (IPhpScriptContext)getContext(); 
-	env.clear();
+	env = (Map) this.processEnvironment.clone();
 
 	ctx = PhpScriptContextFactory.addNew((ScriptContext)context);
     	

@@ -12,7 +12,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
@@ -39,43 +38,6 @@ public class Util {
      * The default CGI header parser. The default implementation discards everything.
      */
     public static final HeaderParser DEFAULT_HEADER_PARSER = new HeaderParser();
-
-    /**
-     * A default CGI environment which contains a "SystemRoot" entry. Some versions of windows require it
-     * in order to function properly.
-     * @author jostb
-     *
-     */
-    public static class CgiEnvironment extends HashMap {
-
-	private static final File winnt = new File("c:/winnt");
-	private static final File windows = new File("c:/windows");
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 4121409609719429173L;
-
-	protected CgiEnvironment() {
-	    String val = null;
-	    //			 Bug in WINNT and WINXP.
-	    //			 If SystemRoot is missing, php cannot access winsock.
-	    if(winnt.isDirectory()) val="c:\\winnt";
-	    else if(windows.isDirectory()) val = "c:\\windows";
-	    try {
-		String s = System.getenv("SystemRoot"); 
-		if(s!=null) val=s;
-	    } catch (Throwable t) {/*ignore*/}
-	    try {
-		String s = System.getProperty("Windows.SystemRoot");
-		if(s!=null) val=s;
-	    } catch (Throwable t) {/*ignore*/}
-	    if(val!=null) put("SystemRoot", val);			
-	}
-    }
-    /**
-     * The default CGI environment
-     */
-    public static final HashMap DEFAULT_CGI_ENVIRONMENT = new CgiEnvironment();
 
     /**
      * ASCII encoding

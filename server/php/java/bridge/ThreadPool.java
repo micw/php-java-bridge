@@ -28,34 +28,43 @@ public class ThreadPool {
 	 * Create a new delegate. The thread runs until terminateDaemon() is called. 
 	 * @param name The name of the delegate. 
 	 */
-	protected Delegate(String name) { super(name); threads++; }
+	protected Delegate(String name) { super(name); }
 	/**
 	 * Make this thread a daemon thread. A daemon is not visible but still managed by the thread pool.
-	 * @param val true or false
 	 */
-	public void setIsDaemon(boolean val) {
-	    if(isDaemon != val) threads -= (isDaemon = val) ? 1 : -1;
+	public void setPersistent() {
+	    if(!isDaemon) {
+	        isDaemon = true;
+	        startNewThread();
+	    }
 	}
 	/**
 	 * Check if this thread is a daemon thread.
 	 * @return true, if the thread is a daemon, false otherwise
 	 */
-	public boolean getIsDaemon() { return isDaemon; }
+	public boolean isPersistent() { return isDaemon; }
 	/**
 	 * Terminate a daemon thread.
 	 * @throws IllegalStateException, if the thread is not a daemon
 	 */
-	public void terminateDaemon() { 
+	public void terminatePersistent() { 
 	  if(!isDaemon) throw new IllegalStateException("not a daemon");
 	  terminate = true; 
 	}
 	public void run() {
 	    try {
 		while(!terminate) getNextRunnable().run();
-	    } catch (Throwable t) { Util.printStackTrace(t); threads--; }
+	    } catch (Throwable t) { Util.printStackTrace(t); startNewThread(); } 
 	}
     }
 
+    private void startNewThread() {
+        Delegate d = new Delegate(name);
+	ClassLoader loader = null;
+	if(this.loader!=null) loader=DynamicJavaBridgeClassLoader.newInstance(this.loader);
+	if(loader!=null) d.setContextClassLoader(loader);
+	d.start();
+    }
     /*
      * Helper: Pull a runnable off the list of runnables. If there's
      * no work, sleep the thread until we receive a notify.
@@ -77,11 +86,8 @@ public class ThreadPool {
     public synchronized void start(Runnable r) {
 	runnables.add(r);
 	if(idles==0 && threads < poolMaxSize) {
-	    Delegate d = new Delegate(name);
-	    ClassLoader loader = null;
-	    if(this.loader!=null) loader=DynamicJavaBridgeClassLoader.newInstance(this.loader);
-	    if(loader!=null) d.setContextClassLoader(loader);
-	    d.start();
+	    threads++;
+	    startNewThread();
 	}
 	else
 	    notify();

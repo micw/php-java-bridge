@@ -767,6 +767,19 @@ java.lib="/tmp/"
 java.ext_java_compatibility=On
 </TD
 ></TR
+><TR
+><TD
+><A name="persistent_connections">.persistent_connections</A></TD
+><TD
+>On</TD
+><TD
+>Use persistent connections to the back-end. If this flag is set to <code>On</code>, the Apache/Tomcat combination delivers Java based content faster
+than Tomcat standalone.</TD
+><TD
+>
+java.persistent_connections=Off
+</TD
+></TR
 ></TBODY
 ></TABLE
 >
@@ -1044,7 +1057,7 @@ BORDER="1"
 <TBODY
 ><TR
 ><TD
->time jrunscript -J-Xmx512M -J-Xms512M -l is t11.js</TD
+>time jrunscript -J-Xmx512M -J-Xms512M -l js t11.js</TD
 ><TD
 >ECMA script</TD
 ><TD
@@ -1395,7 +1408,7 @@ commercial non-free bridge which uses the same technology as the
 PHP/Java Bridge</a>.  <li> <a
 href="http://www.devx.com/Java/Article/21707">Calling Enterprise Java
 Beans from PHP/SOAP</a>.  <li> <a
-href="examples/j2ee/README">Calling
+href="examples/J2EE/RMI-IIOP/README">Calling
 Enterprise Java Beans from the PHP/Java Bridge</a>.  </ul> </FONT></P>
 
 </BODY>

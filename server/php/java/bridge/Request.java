@@ -483,12 +483,12 @@ public final class Request implements IDocHandler {
 	         if(arg.predicate) { // keep alive
 	           bridge.recycle();
 	           try {
-	     	       ((ThreadPool.Delegate)Thread.currentThread()).setIsDaemon(true);
+	     	       ((ThreadPool.Delegate)Thread.currentThread()).setPersistent();
 	           } catch (ClassCastException ex) {/*no thread pool*/}
 	         } else { // terminate or terminate keep alive
 	           try {
 	               ThreadPool.Delegate delegate = ((ThreadPool.Delegate)Thread.currentThread()); 
-	               if(delegate.isDaemon()) delegate.terminateDaemon(); // remove keep alive daemon from pool
+	               if(delegate.isPersistent()) delegate.terminatePersistent(); // remove keep alive daemon from pool
 	           } catch (ClassCastException ex) {/*no thread pool*/}
 	         }
 	         break;

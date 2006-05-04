@@ -2,6 +2,8 @@
 
 package php.java.faces;
 
+import java.util.Map;
+
 import javax.script.Bindings;
 import javax.script.Invocable;
 import javax.script.ScriptContext;
@@ -52,12 +54,12 @@ public class PhpFacesScriptEngine extends PhpScriptEngine implements Invocable {
     protected void setNewContextFactory() {
         ContextFactory kontext;
         IPhpScriptContext context = (IPhpScriptContext)getContext(); 
-	env.clear();
+	env = (Map) this.processEnvironment.clone();
 	kontext = PhpFacesScriptContextFactory.addNew(context, ctx, request, response);
 
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */
-	this.env.put("X_JAVABRIDGE_CONTEXT", kontext.getId());
+	env.put("X_JAVABRIDGE_CONTEXT", kontext.getId());
 	/* redirect to ourself */
 	StringBuffer buf = new StringBuffer("127.0.0.1:");
 	buf.append(php.java.servlet.CGIServlet.getLocalPort(request));
@@ -66,7 +68,7 @@ public class PhpFacesScriptEngine extends PhpScriptEngine implements Invocable {
 	buf.append(".phpjavabridge"); // it doesn't matter what we
 				      // send here, as long as it ends
 				      // with .phpjavabridge
-	this.env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", buf.toString()); 
+	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", buf.toString()); 
     }
     protected ScriptContext getPhpScriptContext() {
         Bindings namespace;

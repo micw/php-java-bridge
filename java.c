@@ -1024,6 +1024,7 @@ static PHP_INI_MH(OnIniServlet)
 	assert(EXT_GLOBAL(cfg)->servlet); if(!EXT_GLOBAL(cfg)->servlet) exit(6);
 	EXT_GLOBAL(ini_updated)|=U_SERVLET;
   }
+  return SUCCESS;
 }
 
 static PHP_INI_MH(OnIniSockname)
@@ -1124,6 +1125,8 @@ PHP_INI_BEGIN()
 
   EXT_GLOBAL(globals)->hosts=0;
   EXT_GLOBAL(globals)->servlet=0;
+
+  zend_hash_init(&EXT_GLOBAL(globals)->connections, 0, 0, 0, 1);
 }
 
 #ifdef ZEND_ENGINE_2
@@ -1569,7 +1572,6 @@ EXT_METHOD(EXT_ARRAY, offsetUnset)
 {
   zval **argv;
   int argc;
-  long obj;
   proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   if(!jenv) {RETURN_NULL();}
 
@@ -2119,6 +2121,8 @@ PHP_MINIT_FUNCTION(EXT)
 	EXT_GLOBAL(clone_cfg)(TSRMLS_C);
 	EXT_GLOBAL(start_server) (TSRMLS_C);
 	EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);
+
+	
   } 
   return SUCCESS;
 }
@@ -2188,7 +2192,16 @@ PHP_MINFO_FUNCTION(EXT)
  */
 PHP_MSHUTDOWN_FUNCTION(EXT) 
 {
-  EXT_GLOBAL(close_connection) (&JG(jenv), 0 TSRMLS_CC);
+  proxyenv *env;
+  HashTable *connections = &JG(connections);
+  zend_hash_internal_pointer_reset(connections);
+  while(SUCCESS==zend_hash_get_current_data(connections, (void**)&env)) {
+	EXT_GLOBAL(close_connection) (&env, 0 TSRMLS_CC);
+	zend_hash_move_forward(connections);
+  }
+  assert(*JG(jenv)==0);
+  JG(jenv)=0;
+  
   EXT_GLOBAL(destroy_cfg) (EXT_GLOBAL(ini_set));
   EXT_GLOBAL(ini_user) = EXT_GLOBAL(ini_set) = 0;
 

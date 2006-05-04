@@ -892,9 +892,9 @@ void EXT_GLOBAL(start_server)(TSRMLS_D) {
 
 static void wait_for_daemon(void) {
 #ifndef __MINGW32__
-  const static sig[] = {SIGTERM, SIGKILL};
+  static const int sig[] = {SIGTERM, SIGKILL};
   fd_set rfds;
-  int err, c, i;
+  int err, i;
 
   assert(EXT_GLOBAL(cfg)->err); if(!(EXT_GLOBAL(cfg)->err)) return;
   assert(EXT_GLOBAL(cfg)->cid);

@@ -57,8 +57,8 @@ static void send_data(proxyenv *env, char *data, size_t size) {
   if(size>s && !n && errno==EINTR) goto res; // Solaris, see INN FAQ
 }
 
-static size_t add_header(proxyenv *env, size_t *size, char*header, size_t header_length) {
-  if(!header_length) return 0;
+static void add_header(proxyenv *env, size_t *size, char*header, size_t header_length) {
+  if(!header_length) return;
 
   if(*size+header_length<(*env)->send_size) {
 	memmove((*env)->send+header_length, (*env)->send, *size);
@@ -128,11 +128,9 @@ function get_cookies() {\
  * @see check_context
  */
 static void end_session(proxyenv *env) {
-  size_t s=0, size = (*env)->send_len;
-  ssize_t n;
+  size_t size = (*env)->send_len;
   zval val;
   int peer0 = (*env)->peer0;
-  int peer = (*env)->peer;
   char header[SEND_SIZE];
   int header_length;
   short override_redirect = (peer0!=-1)?1:2;
@@ -169,7 +167,6 @@ void protocol_end (proxyenv *env) {
   servlet_context = EXT_GLOBAL (get_servlet_context) (TSRMLS_C);
 
   if(!(*env)->is_local && servlet_context) {
-	ssize_t n;
 	char header[SEND_SIZE];
 	int header_length;
 
@@ -513,31 +510,28 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
 
  
 
-static void close_connection(proxyenv**penv TSRMLS_DC) {
-  if(*penv) {
-	proxyenv *env = *penv;
-	if(*env) {
-	  if((*env)->peer!=-1) {
-		/* end servlet session */
-		(*env)->writeEndConnection(env, 'E');
-		protocol_end(env);
-		close((*env)->peer);
-		if((*env)->peerr!=-1) close((*env)->peerr);
-		if((*env)->peer0!=-1) close((*env)->peer0);
-	  }
-	  if((*env)->s) free((*env)->s);
-	  if((*env)->send) free((*env)->send);
-	  if((*env)->server_name) free((*env)->server_name);
-	  if((*env)->servlet_ctx) free((*env)->servlet_ctx);
-	  if((*env)->servlet_context_string) free((*env)->servlet_context_string);
-	  free(*env);
+static void close_connection(proxyenv *env TSRMLS_DC) {
+  if(env && *env) {
+	if((*env)->peer!=-1) {
+	  /* end servlet session */
+	  (*env)->writeEndConnection(env, 'E');
+	  protocol_end(env);
+	  close((*env)->peer);
+	  if((*env)->peerr!=-1) close((*env)->peerr);
+	  if((*env)->peer0!=-1) close((*env)->peer0);
 	}
+	if((*env)->s) free((*env)->s);
+	if((*env)->send) free((*env)->send);
+	if((*env)->server_name) free((*env)->server_name);
+	if((*env)->servlet_ctx) free((*env)->servlet_ctx);
+	if((*env)->servlet_context_string) free((*env)->servlet_context_string);
+	if((*env)->cfg.hosts) free((*env)->cfg.hosts);
+	if((*env)->cfg.servlet) free((*env)->cfg.servlet);
+	free(*env);
 	free(env);
+	EXT_GLOBAL(destroy_channel)(TSRMLS_C);
+	EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);
   }
-
-  *penv = 0;
-  EXT_GLOBAL(destroy_channel)(TSRMLS_C);
-  EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);
 }
 static void recycle_connection(proxyenv *env TSRMLS_DC) {
   if(env && *env) {
@@ -545,21 +539,17 @@ static void recycle_connection(proxyenv *env TSRMLS_DC) {
 	  /* end servlet session */
 	  (*env)->writeEndConnection(env, 'A');
 	  protocol_end(env);
-
-	  if((*env)->servlet_ctx) {
-		free((*env)->servlet_ctx);
-		(*env)->servlet_ctx = 0;
-	  }
-	  
-	  (*env)->backend_has_session_proxy = 0;
 	}
+	EXT_GLOBAL(save_cfg)(env TSRMLS_CC);
+	EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);
   }
 }
 void EXT_GLOBAL(close_connection)(proxyenv**penv, short persistent_connection TSRMLS_DC) {
   if(persistent_connection) 
 	recycle_connection(*penv TSRMLS_CC);
   else
-	close_connection(penv TSRMLS_CC);
+	close_connection(*penv TSRMLS_CC);
+  *penv=0;						/* a copy should already be in connections */
 }
 proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, void (*handle_request)(proxyenv *env), void (*handle_cached)(proxyenv *env), char *server_name, short is_local, struct sockaddr *saddr) {
    proxyenv *env;  
@@ -599,6 +589,8 @@ proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, void (*handle_request)(
    (*env)->must_reopen = 0;
    (*env)->servlet_ctx = (*env)->servlet_context_string = 0;
    (*env)->backend_has_session_proxy = 0;
+   (*env)->cfg.ini_user = 0;
+   (*env)->cfg.hosts = (*env)->cfg.servlet = 0;
 
    (*env)->writeInvokeBegin=InvokeBegin;
    (*env)->writeInvokeEnd=InvokeEnd;

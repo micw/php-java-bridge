@@ -185,6 +185,9 @@ EXT_BEGIN_MODULE_GLOBALS(EXT)
   zval *func;
   zval **retval_ptr;
   zval *func_params;
+
+  /* mapping of servlet context strings to persistent connections */
+  HashTable connections;
 EXT_END_MODULE_GLOBALS(EXT)
 
 
@@ -201,6 +204,7 @@ extern proxyenv *EXT_GLOBAL(try_connect_to_server)(TSRMLS_D);
 extern proxyenv *EXT_GLOBAL(connect_to_server)(TSRMLS_D);
 extern void EXT_GLOBAL(close_connection)(proxyenv**env, short persistent_connection TSRMLS_DC);
 extern void EXT_GLOBAL(start_server)(TSRMLS_D);
+extern void EXT_GLOBAL(save_cfg)(proxyenv *env TSRMLS_DC);
 extern void EXT_GLOBAL(clone_cfg)(TSRMLS_D);
 extern void EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_D);
 

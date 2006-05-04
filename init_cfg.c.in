@@ -9,6 +9,7 @@
 #include "protocol.h"
 #include "php_java.h"
 #include "java_bridge.h"
+#include "php_java_snprintf.h"
 
 #ifndef EXTENSION_DIR
 #error EXTENSION_DIR must point to the PHP extension directory

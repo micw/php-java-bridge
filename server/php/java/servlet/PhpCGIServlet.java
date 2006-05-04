@@ -239,7 +239,7 @@ exitting. When one process exits, another will be created.
 		try {
 		    Thread t = (new Thread("JavaBridgeFastCGIRunner") {
 			    public void run() {
-				Map env = (Map) defaultEnv.clone();
+				Map env = (Map) processEnvironment.clone();
 				env.put("PHP_FCGI_CHILDREN", php_fcgi_children);
 				env.put("PHP_FCGI_MAX_REQUESTS", php_fcgi_max_requests);
 				runFcgi(env, php);

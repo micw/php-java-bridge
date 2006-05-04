@@ -64,6 +64,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
 import java.net.URLEncoder;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -287,18 +288,31 @@ public class CGIServlet extends HttpServlet {
     private static final String ASCII = "ASCII";
     private static final String UTF = "UTF-8";
 
-    /**
-     * Create a default environment which inherits all environment
-     * variables from the parent.
-     */
-    // private static final Hashtable defaultEnv = new Hashtable(System.getenv());
-
-    // foobar workaround for Windows problems
-    protected final HashMap defaultEnv = new HashMap();
+    protected HashMap processEnvironment = null;
     private static final File winnt = new File("c:/winnt");
     private static final File windows = new File("c:/windows");
-    private void setDefaultEnv() {
-	String val = null;
+    private static final Class[] EMPTY_PARAM = new Class[0];
+    private static final Object[] EMPTY_ARG = new Object[0];
+    /**
+     * Get the current process environment which will be passed to the sub-process.
+     * Requires jdk1.5 or higher. In jdk1.4, where System.getenv() is not available,
+     * we allocate an empty map.<p>
+     * To add custom environment variables (such as PATH=... or LD_ASSUME_KERNEL=2.4.21, ...),
+     * use a custom PhpCgiServlet, for example:<br>
+     * <code>
+     * public class MyPhpCgiServlet extends PhpCgiServlet {<br>
+     * &nbsp;&nbsp;protected HashMap getProcessEnvironment() {<br>
+     * &nbsp;&nbsp;&nbsp;&nbsp;HashMap map = new HashMap();<br>
+     * &nbsp;&nbsp;&nbsp;&nbsp;map.put("PATH", "/usr/local/bin");<br>
+     * &nbsp;&nbsp;&nbsp;&nbsp;return map; <br>
+     * &nbsp;&nbsp;}<br>
+     * }<br>
+     * </code>
+     * @return The current process environment.
+     */    
+    protected HashMap getProcessEnvironment() {
+	HashMap defaultEnv = new HashMap();
+        String val = null;
 	// Bug in WINNT and WINXP.
 	// If SystemRoot is missing, php cannot access winsock.
 	if(winnt.isDirectory()) val="c:\\winnt";
@@ -316,6 +330,12 @@ public class CGIServlet extends HttpServlet {
 	    if(s!=null) val=s;
         } catch (Throwable t) {/*ignore*/}
 	if(val!=null) defaultEnv.put("SystemRoot", val);
+        try {
+          Method m = System.class.getMethod("getenv", EMPTY_PARAM);
+          Map map = (Map) m.invoke(System.class, EMPTY_ARG);
+          defaultEnv.putAll(map);
+      } catch (Exception e) {/*ignore*/}
+      return defaultEnv;
     }
 
     /**
@@ -352,7 +372,7 @@ public class CGIServlet extends HttpServlet {
 
         super.init(config);
         
-        setDefaultEnv();
+        processEnvironment = getProcessEnvironment();
         
         // Verify that we were not accessed using the invoker servlet
         String servletName = getServletConfig().getServletName();
@@ -442,6 +462,8 @@ public class CGIServlet extends HttpServlet {
     } //doGet
 
     /**
+     * Only for internal use.
+     * 
      * Returns the port# of the local port
      * @param req The servlet request
      * @return The local port or the value from the server port variable.
@@ -449,7 +471,7 @@ public class CGIServlet extends HttpServlet {
     public static int getLocalPort(ServletRequest req) {
 	int port = -1;
 	try {
-	    req.getLocalPort(); 
+	    port = req.getLocalPort(); 
 	} catch (Throwable t) {/*ignore*/}
 	if(port<=0) port = req.getServerPort();
 	return port;
@@ -460,10 +482,10 @@ public class CGIServlet extends HttpServlet {
      * @param req The servlet request
      * @return The local name or the value from the server name variable.
      */
-    public static String getLocalName(ServletRequest req) {
+    protected static String getLocalName(ServletRequest req) {
 	String name = null;
 	try {
-	    req.getLocalName();
+	    name = req.getLocalName();
 	} catch (Throwable t) {/*ignore*/}
 	if(name==null) name = req.getServerName();
 	return name;
@@ -726,7 +748,7 @@ public class CGIServlet extends HttpServlet {
          *           was a problem and no environment was set
          */
         protected boolean setCGIEnvironment(HttpServletRequest req, HttpServletResponse res) {
-	    HashMap envp = (HashMap)defaultEnv.clone();
+	    HashMap envp = (HashMap)processEnvironment.clone();
             
             String sPathInfoOrig = null;
             String sPathTranslatedOrig = null;

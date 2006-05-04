@@ -104,10 +104,14 @@ struct proxyenv_ {
   } async_ctx;
 
   /* for servlet engines only */
-  char *servlet_ctx;
+  char *servlet_ctx;			/* the # of the server context runner */
   char *servlet_context_string;	/* original rinit value from
 								   get_servlet_context() */
   short backend_has_session_proxy;
+  struct saved_cfg {
+	int ini_user;
+	char *hosts, *servlet;
+  } cfg;
   
   void (*handle)(proxyenv *env);
   void (*handle_request)(proxyenv *env);

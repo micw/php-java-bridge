@@ -76,7 +76,7 @@ int EXT_GLOBAL(get_jobject_from_object)(zval*object, long *id TSRMLS_DC)
   *id=0;
   return 0;
 }
-static destroy_object(void *object, zend_object_handle handle TSRMLS_DC)
+static void destroy_object(void *object, zend_object_handle handle TSRMLS_DC)
 {
   struct java_object*jobject = ((struct java_object*)object);
   if(JG(jenv)&&jobject->id) (*JG(jenv))->writeUnref(JG(jenv), jobject->id);

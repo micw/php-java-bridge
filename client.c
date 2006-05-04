@@ -59,7 +59,6 @@ static  void  setResultFromBoolean  (pval *presult, short value) {
 #ifdef ZEND_ENGINE_2
 static  void  setResultFromException  (pval *presult, long value) {
   /* wrap the vm object in a pval object */
-  pval *handle;
   TSRMLS_FETCH();
   
   assert(Z_TYPE_P(presult) == IS_NULL);
@@ -73,7 +72,6 @@ static  void  setResultFromException  (pval *presult, long value) {
 
 static void setResultFromObject (pval *presult, long value, char type) {
   /* wrap the vm object in a pval object */
-  pval *handle;
   TSRMLS_FETCH();
   
   if (Z_TYPE_P(presult) != IS_OBJECT) {
@@ -611,7 +609,7 @@ array_key_exists('HTTP_HOST', $_SERVER)) ?$_SERVER['PHP_SELF']:null;";
 	  assert(JG(servlet));
 	  free(JG(servlet));
 	  JG(servlet) = tmp = malloc(len+sizeof(bridge_extension));
-	  assert(tmp); if(!tmp) exit(6);
+	  assert(tmp); if(!tmp) exit(9);
 	  strcpy(tmp, strval);
 	  strcat(tmp, bridge_extension);
 	  JG(ini_user)|=U_SERVLET;
@@ -631,15 +629,15 @@ array_key_exists('HTTP_HOST', $_SERVER)) ?$_SERVER['PHP_SELF']:null;";
  * @see php.java.servlet.PhpJavaServlet#getContextFactory(HttpServletRequest,
  * HttpServletResponse)
  */
-static proxyenv*adjust_servlet_environment(proxyenv *env TSRMLS_DC) {
+static proxyenv*adjust_servlet_environment(proxyenv *env, char*servlet_context_string TSRMLS_DC) {
   static const char name[] = "adjust_environment";
   static const char context[] = "(array_key_exists('HTTP_X_JAVABRIDGE_CONTEXT', $_SERVER)?$_SERVER['HTTP_X_JAVABRIDGE_CONTEXT']:(array_key_exists('X_JAVABRIDGE_CONTEXT', $_SERVER)?$_SERVER['X_JAVABRIDGE_CONTEXT']:null));";
 
   zval val;
-  char *servlet_context_string = EXT_GLOBAL (get_servlet_context) (TSRMLS_C);
 
-  if(servlet_context_string)
-	(*env)->servlet_context_string = strdup(servlet_context_string);
+  if(!((*env)->servlet_context_string=strdup(servlet_context_string))) 
+	exit(9);
+
   if((SUCCESS==zend_eval_string((char*)context, &val, (char*)name TSRMLS_CC)) && (Z_TYPE(val)==IS_STRING)) {
 	(*env)->servlet_ctx = strdup(Z_STRVAL(val));
 								/* back-end must have created a session
@@ -650,45 +648,89 @@ static proxyenv*adjust_servlet_environment(proxyenv *env TSRMLS_DC) {
   return env;
 }
 
+static char empty[] = "";
+static size_t get_context_len(char *context) {
+  register char *s = context;
+  register size_t len=0;
+  if(*s == '/') { s++; len++; }
+  for(;*s && *s!='/'; s++) len++;
+  return len;
+}
+static void override_ini_from_stored_cfg(proxyenv *env TSRMLS_DC);
+static proxyenv*recycle_connection(char *context TSRMLS_DC) {
+  proxyenv **penv;
+  size_t len;
+  if(!EXT_GLOBAL(cfg)->persistent_connections) return 0;
+
+  if(!context) context = empty;
+  len = get_context_len(context);
+  
+  if(SUCCESS==zend_hash_find(&JG(connections), context, len, (void**)&penv)){
+	proxyenv*env = *penv;
+	override_ini_from_stored_cfg(env TSRMLS_CC);
+	(*env)->backend_has_session_proxy = 0;
+	return env;
+  }
+  return 0;
+}
 static void init_channel(TSRMLS_D);
-static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {
+static proxyenv*create_connection(char *context TSRMLS_DC) {
   char *server;
   int sock;
-  short is_local;
+  proxyenv *jenv;
   struct sockaddr saddr;
+  short is_local;
+  size_t len;
+  if(!context) context = empty;
+  len = get_context_len(context);
+
+  if(!(server=EXT_GLOBAL(test_server)(&sock, &is_local, &saddr TSRMLS_CC))) {
+	return 0;
+  }
+  jenv = EXT_GLOBAL(createSecureEnvironment)
+	(sock, handle_request, handle_cached, server, is_local, &saddr);
+  if(jenv) {
+	init_channel(TSRMLS_C);
+	if(EXT_GLOBAL(cfg)->persistent_connections)
+	  zend_hash_update(&JG(connections), context, len, &jenv, sizeof(proxyenv *), 0);
+	if(is_local || !context) {
+	  /* "standard" local backend, send the protocol header */
+	  unsigned char mode = EXT_GLOBAL (get_mode) ();
+	  (*jenv)->send_len=1; *(*jenv)->send=mode;
+	} else {
+	  /* create a jenv for a servlet backend, aquire a context then
+		 redirect */
+	  jenv = adjust_servlet_environment(jenv, context TSRMLS_CC);
+	}
+  }
+  return jenv;
+}
+static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {
+  char *servlet_context_string = 0;
   proxyenv *jenv =JG(jenv);
   if(jenv) return jenv;
 
   EXT_GLOBAL(clone_cfg)(TSRMLS_C);
 
-  if(!EXT_GLOBAL(cfg)->is_cgi_servlet || EXT_GLOBAL(cfg)->is_fcgi_servlet) 
+  if(!EXT_GLOBAL(cfg)->is_cgi_servlet || EXT_GLOBAL(cfg)->is_fcgi_servlet) {
 	override_ini_for_redirect(TSRMLS_C);
-
+  }
+  servlet_context_string = EXT_GLOBAL (get_servlet_context) (TSRMLS_C);
+  jenv = recycle_connection(servlet_context_string TSRMLS_CC);
+  if(jenv) return JG(jenv) = jenv;
+  
   if(JG(is_closed)) {
 	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not connect to server: Session is closed. -- This usually means that you have tried to access the server in your class' __destruct() method.",51);
 	EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);
 	return 0;
   }
-  if(!(server=EXT_GLOBAL(test_server)(&sock, &is_local, &saddr TSRMLS_CC))) {
+  
+  jenv = create_connection(servlet_context_string TSRMLS_CC);
+  if(!jenv) {
 	if (bail) 
 	  EXT_GLOBAL(sys_error)("Could not connect to server. Have you started the "/**/EXT_NAME()/**/" backend (either a servlet engine, an application server, JavaBridge.jar or MonoBridge.exe) and set the "/**/EXT_NAME()/**/".socketname or "/**/EXT_NAME()/**/".hosts option?",52);
 	EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);
 	return 0;
-  }
-
-  init_channel(TSRMLS_C);
-
-  jenv = EXT_GLOBAL(createSecureEnvironment)
-	(sock, handle_request, handle_cached, server, is_local, &saddr);
-  
-  if(is_local || !EXT_GLOBAL (get_servlet_context) (TSRMLS_C)) {
-	/* "standard" local backend, send the protocol header */
-	unsigned char mode = EXT_GLOBAL (get_mode) ();
-	(*jenv)->send_len=1; *(*jenv)->send=mode;
-  } else {
-	/* create a jenv for a servlet backend, aquire a context then
-	   redirect */
-	jenv = adjust_servlet_environment(jenv TSRMLS_CC);
   }
   return JG(jenv) = jenv;
 }
@@ -696,7 +738,6 @@ proxyenv *EXT_GLOBAL(connect_to_server)(TSRMLS_D) {
   return try_connect_to_server(1 TSRMLS_CC);
 }
 proxyenv *EXT_GLOBAL(try_connect_to_server)(TSRMLS_D) {
-  
   return try_connect_to_server(0 TSRMLS_CC);
 }
 
@@ -733,6 +774,8 @@ static short create_pipes(char*basename, size_t basename_len TSRMLS_DC) {
   JG(channel_in) = strdup(strcat(basename, in));
   *e=0;
   JG(channel) = basename;
+
+  return 1;
 }
 static void init_channel(TSRMLS_D) {
   static const char sockname[] = SOCKNAME;
@@ -776,8 +819,25 @@ const char *EXT_GLOBAL(get_channel) (TSRMLS_D) {
 }
 void EXT_GLOBAL(clone_cfg)(TSRMLS_D) {
   JG(ini_user)=EXT_GLOBAL(ini_user);
-  JG(hosts)=strdup(EXT_GLOBAL(cfg)->hosts);
-  JG(servlet)=strdup(EXT_GLOBAL(cfg)->servlet);
+  if(!(JG(hosts)=strdup(EXT_GLOBAL(cfg)->hosts))) exit(9);
+  if(!(JG(servlet)=strdup(EXT_GLOBAL(cfg)->servlet))) exit(9);
+}
+void EXT_GLOBAL(save_cfg)(proxyenv *env TSRMLS_DC) {
+  (*env)->cfg.ini_user=JG(ini_user);
+  if(!((*env)->cfg.hosts=strdup(JG(hosts)))) exit(9);
+  if(!((*env)->cfg.servlet=strdup(JG(servlet)))) exit(9);
+}
+/* see override_ini_for_redirect */
+static void override_ini_from_stored_cfg(proxyenv *env TSRMLS_DC) {
+  JG(ini_user)=(*env)->cfg.ini_user;
+
+  if(JG(hosts)) 
+	free(JG(hosts)); 
+  if(!(JG(hosts)=strdup((*env)->cfg.hosts))) exit(9);
+
+  if(JG(servlet)) 
+	free(JG(servlet)); 
+  if(!(JG(servlet)=strdup(EXT_GLOBAL(cfg)->servlet))) exit(9);
 }
 void EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_D) {
   if(JG(hosts)) free(JG(hosts));
