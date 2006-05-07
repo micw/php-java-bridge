@@ -1,14 +1,10 @@
 package php.java.servlet;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetAddress;
-import java.net.Socket;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -77,12 +73,26 @@ public class FastCGIServlet extends CGIServlet {
      * The Fast CGI default port
      */
     public static final int FCGI_CHANNEL = 9667;
-
+    /**
+     * This controls how many child processes the PHP process spawns.
+     */
+    private static final String PHP_FCGI_CHILDREN = "20";
+    
+    /**
+     * This controls how many requests each child process will handle before
+exitting. When one process exits, another will be created. 
+     */
+    private static final String PHP_FCGI_MAX_REQUESTS = "500";
+    
     protected String php = null; 
     protected boolean fcgiIsAvailable;
     protected boolean canStartFCGI = false;
     protected boolean override_hosts = true;
-    
+
+    protected String php_fcgi_children = PHP_FCGI_CHILDREN;
+    protected int php_fcgi_children_number = Integer.parseInt(PHP_FCGI_CHILDREN);
+    protected String php_fcgi_max_requests = PHP_FCGI_MAX_REQUESTS;
+
     protected String startFcgiMessage() {
 	String base = context.getRealPath(cgiPathPrefix);
 	StringBuffer buf = new StringBuffer(".");
@@ -141,11 +151,26 @@ public class FastCGIServlet extends CGIServlet {
 	    value = value.toLowerCase();
 	    if(value.equals("off") || value.equals("false")) override_hosts=false;
 	} catch (Throwable t) {Util.printStackTrace(t);}      
+	String val = null;
+	try {
+	    val = getServletConfig().getInitParameter("PHP_FCGI_CHILDREN");
+	    if(val==null) val = System.getProperty("php.java.bridge.php_fcgi_children");
+	    if(val!=null) php_fcgi_children_number = Integer.parseInt(val);
+	} catch (Throwable t) {/*ignore*/}
+	if(val!=null) php_fcgi_children = val;
+	
+	val = null;
+	try {
+	    val = getServletConfig().getInitParameter("PHP_FCGI_MAX_REQUESTS");
+	    if(val==null) val = System.getProperty("php.java.bridge.php_fcgi_max_requests");	    
+	} catch (Throwable t) {/*ignore*/}
+	if(val!=null) php_fcgi_max_requests = val;
 
 	checkCgiBinary(config);
     }
     public void destroy() {
-    	super.destroy();
+    	if(cachedConnectionPool!=null) cachedConnectionPool.destroy();
+        super.destroy();
     }
 
     protected StringBuffer getCgiDir() {
@@ -155,8 +180,11 @@ public class FastCGIServlet extends CGIServlet {
         cgiDir.append(cgiPathPrefix);
         return cgiDir;
     }
+    private ConnectionPool cachedConnectionPool = null;
+    private ConnectionPool.Factory cachedFactory = null;
+    private CGIRunnerFactory defaultCGIRunnerFactory = new CGIRunnerFactory();
     protected class CGIEnvironment extends CGIServlet.CGIEnvironment {
-	Socket fastCGISocket;
+	ConnectionPool connectionPool;
 
 	protected CGIEnvironment(HttpServletRequest req, HttpServletResponse res, ServletContext context) {
 	    super(req, res, context);
@@ -186,16 +214,24 @@ public class FastCGIServlet extends CGIServlet {
 				   String cgiPathPrefix) {
 
 	    if(!fcgiIsAvailable) return null;
-	    
-	    try {
-		fastCGISocket = new Socket(InetAddress.getByName("127.0.0.1"), FCGI_CHANNEL);
-		cgiRunnerFactory = new CGIRunnerFactory();
-	    } catch (Exception e) {
+	    if(cachedFactory == null) cachedFactory = new ConnectionPool.Factory() {
+	        public InputStream getInputStream() {
+	            return new FastCGIInputStream();
+	        }
+	        public OutputStream getOutputStream() {
+	            return new FastCGIOutputStream();
+	        }
+	    };
+	    if(null == (connectionPool=cachedConnectionPool))
+	      try {
+		cachedConnectionPool=connectionPool = new ConnectionPool("127.0.0.1", FCGI_CHANNEL, php_fcgi_children_number, cachedFactory);
+	      } catch (Exception e) {
 		Util.logDebug(e+": FastCGI channel not available, switching off fast cgi. " + startFcgiMessage());
 		
 		fcgiIsAvailable = false;
 		return null;
-	    }
+	      }
+	    cgiRunnerFactory = defaultCGIRunnerFactory;
 			
 	    // Bogus, needed by CGIServlet, maybe?
 	    StringBuffer cgiDir = new StringBuffer(webAppRootDir);
@@ -226,25 +262,7 @@ public class FastCGIServlet extends CGIServlet {
 	env.init(req, res);
 	return env;
     }
-    private class FastCGIOutputStream extends BufferedOutputStream {
-
-	OutputStream natOut;
-	/**
-	 * @param outputStream
-	 */
-	public FastCGIOutputStream(OutputStream outputStream) {
-	    super(outputStream);
-	    natOut = outputStream;
-	}
-	public void close() throws IOException {
-	    natOut.close();
-	}
-	public void flush() throws IOException {
-	    natOut.flush();
-	}
-	public void write(byte buf[]) throws IOException {
-	    write(buf, buf.length);
-	}
+    private final class FastCGIOutputStream extends ConnectionPool.DefaultOutputStream {
 	private void write(int type, byte buf[]) throws IOException {
 	    write(type, buf, buf.length);
 	}
@@ -262,22 +280,22 @@ public class FastCGIServlet extends CGIServlet {
 	    int contentLength = buflength;
 	    int pos=0;
 	    while(pos + FCGI_BUF_SIZE <= contentLength) {
-        	natOut.write(header);
-        	natOut.write(buf, pos, FCGI_BUF_SIZE);
+        	write(header);
+        	write(buf, pos, FCGI_BUF_SIZE);
         	pos += FCGI_BUF_SIZE;
 	    }
 	    contentLength = buflength % FCGI_BUF_SIZE;
 	    header[4] = (byte)((contentLength >> 8) & 0xff);
 	    header[5] = (byte)((contentLength) & 0xff);
-	    natOut.write(header);
-	    natOut.write(buf, pos, contentLength);
+	    write(header);
+	    write(buf, pos, contentLength);
 	}
 
 	public void writeBegin() throws IOException {
 	    int role = FCGI_RESPONDER;
 	    byte[] body = new byte[] {
 		(byte)((role >> 8) & 0xff), (byte)((role) & 0xff),
-		0,//FCGI_KEEP_CONN,
+		FCGI_KEEP_CONN,
 		0,0,0,0,0};
 	        
 	    write(FCGI_BEGIN_REQUEST, body);
@@ -322,31 +340,18 @@ public class FastCGIServlet extends CGIServlet {
 	}
 
     }
-    private class FastCGIInputStream extends BufferedInputStream {
-
-	InputStream natIn;
-	/**
-	 * @param inputStream
-	 */
-	public FastCGIInputStream(InputStream inputStream) {
-	    super(inputStream);
-	    natIn = inputStream;
-	}
-	
-	public void close() throws IOException {
-	    natIn.close();
-	}
+    private final class FastCGIInputStream extends ConnectionPool.DefaultInputStream {
 	public int read(byte buf[]) throws IOException {
 	    if(buf.length!=FCGI_BUF_SIZE) throw new IOException("Invalid block size");
 	    byte header[] = new byte[FCGI_HEADER_LEN];
-	    if(FCGI_HEADER_LEN!=natIn.read(header)) throw new IOException ("Protocol error");
+	    if(FCGI_HEADER_LEN!=read(header, 0, header.length)) throw new IOException ("Protocol error");
 	    int type = header[1] & 0xFF;
 	    int contentLength = ((header[4] & 0xFF) << 8) | (header[5] & 0xFF);
 	    int paddingLength = header[6] & 0xFF;
 	    switch(type) {
 	    case FCGI_STDERR: 
 	    case FCGI_STDOUT: {
-		int n = natIn.read(buf, 0, contentLength);
+		int n = read(buf, 0, contentLength);
 		if(n!=contentLength) throw new IOException("Protocol error while reading FCGI data");
 		if(type==FCGI_STDERR) { 
 		    String s = new String(buf, 0, n, Util.ASCII);
@@ -354,24 +359,25 @@ public class FastCGIServlet extends CGIServlet {
 		    contentLength = 0;
 		    String error = Util.checkError(s);
 		    if(error!=null) throw new RuntimeException(error);
-		} 
-		byte b[] = new byte[paddingLength];
-		n = natIn.read(b);
-		if(n!=paddingLength) throw new IOException("Protocol error while reading FCGI padding");
+		}
+		if(paddingLength>0) {
+		    byte b[] = new byte[paddingLength];
+		    n = read(b, 0, b.length);
+		    if(n!=paddingLength) throw new IOException("Protocol error while reading FCGI padding");
+		}
 		return contentLength;
 	    }
-	    case FCGI_END_REQUEST:
+	    case FCGI_END_REQUEST: {
+		int n = read(buf, 0, contentLength);
+		if(n!=contentLength) throw new IOException("Protocol error while reading EOF data");
+		if(paddingLength>0) {
+		    n = super.read(buf, 0, paddingLength);		
+		    if(n!=paddingLength) throw new IOException("Protocol error while reading EOF padding");
+		}
 		return -1;
 	    }
+	    }
 	    throw new IOException("Received unknown type");
-	}
-	
-
-    /* (non-Javadoc)
-	 * @see java.io.InputStream#read()
-	 */
-	public int read() throws IOException {
-	    throw new NotImplementedException();
 	}
     }	
     protected class CGIRunnerFactory extends CGIServlet.CGIRunnerFactory {
@@ -382,7 +388,7 @@ public class FastCGIServlet extends CGIServlet {
 
     protected class CGIRunner extends CGIServlet.CGIRunner {
 
-	Socket fastCGISocket;
+	ConnectionPool connectionPool;
 	
 	/**
 	 * @param command
@@ -391,7 +397,7 @@ public class FastCGIServlet extends CGIServlet {
 	 */
 	protected CGIRunner(CGIServlet.CGIEnvironment env) {
 	    super(env);
-	    fastCGISocket = ((CGIEnvironment)env).fastCGISocket;
+	    connectionPool = ((CGIEnvironment)env).connectionPool;
 	}
 
 
@@ -405,9 +411,11 @@ public class FastCGIServlet extends CGIServlet {
             OutputStream out = null;
 	    FastCGIInputStream natIn = null;
 	    FastCGIOutputStream natOut = null;
+	    ConnectionPool.Connection connection = null;
 	    try {
-		natOut = new FastCGIOutputStream(fastCGISocket.getOutputStream());
-		natIn = new FastCGIInputStream(fastCGISocket.getInputStream());
+	        connection = connectionPool.openConnection();
+		natOut = (FastCGIOutputStream) connection.getOutputStream();
+		natIn = (FastCGIInputStream) connection.getInputStream();
 
 		in = stdin;
 		out = response.getOutputStream();

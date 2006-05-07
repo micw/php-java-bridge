@@ -88,7 +88,7 @@ static void end(proxyenv *env) {
 	int header_length;
 	unsigned char mode = EXT_GLOBAL (get_mode) ();
 
-	assert(!(*env)->peer_redirected || ((*env)->peer_redirected && ((*env)->peer0)==-1));
+	assert(!(*env)->peer_redirected || ((*env)->peer_redirected && (((*env)->peer0)==-1)));
 	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", servlet_context, (unsigned long)(size+1), EXT_GLOBAL(get_channel)(TSRMLS_C), getSessionFactory(env), mode);
 
 	add_header(env, &size, header, header_length);
@@ -399,6 +399,7 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    GROW(FLEN);
    (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<F p=\"%c\"/>", property);
    assert((*env)->send_len<=(*env)->send_size);
+   flush(env);
  }
 
  static void String(proxyenv *env, char*name, size_t _len) {

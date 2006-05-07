@@ -346,6 +346,7 @@ static void begin(parser_tag_t tag[3], parser_cb_t *cb){
 
 	setResultFromObject(ctx->id, (*cb->env)->async_ctx.nextValue=strtol((const char*)PARSER_GET_STRING(st, 0), 0, 10), *PARSER_GET_STRING(st, 1));
 	break;
+  case 'F': break;
   case 'E':
 	{
 	  unsigned char *stringRepresentation=PARSER_GET_STRING(st, 1);
@@ -654,7 +655,8 @@ static size_t get_context_len(char *context) {
   register size_t len=0;
   if(*s == '/') { s++; len++; }
   for(;*s && *s!='/'; s++) len++;
-  return len;
+  return len+1;					/* include terminating \0 or / so that
+								   len is always >0 */
 }
 static void override_ini_from_stored_cfg(proxyenv *env TSRMLS_DC);
 static proxyenv*recycle_connection(char *context TSRMLS_DC) {

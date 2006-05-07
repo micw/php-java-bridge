@@ -460,6 +460,8 @@ public final class Request implements IDocHandler {
         IllegalStateException ex = new IllegalStateException(s);
         response.setResultException(bridge.lastException = ex, s);
     }
+    private static final byte[] Fa = "<F p=\"A\"/>".getBytes();
+    private static final byte[] Fe = "<F p=\"E\"/>".getBytes();
     private int handleRequest() throws IOException {
 	int retval;
 	if(Parser.OK==(retval=parser.parse(bridge.in))) {
@@ -485,11 +487,13 @@ public final class Request implements IDocHandler {
 	           try {
 	     	       ((ThreadPool.Delegate)Thread.currentThread()).setPersistent();
 	           } catch (ClassCastException ex) {/*no thread pool*/}
+	           bridge.out.write(Fa);
 	         } else { // terminate or terminate keep alive
 	           try {
 	               ThreadPool.Delegate delegate = ((ThreadPool.Delegate)Thread.currentThread()); 
 	               if(delegate.isPersistent()) delegate.terminatePersistent(); // remove keep alive daemon from pool
 	           } catch (ClassCastException ex) {/*no thread pool*/}
+	           bridge.out.write(Fe);
 	         }
 	         break;
 	   case 'R':

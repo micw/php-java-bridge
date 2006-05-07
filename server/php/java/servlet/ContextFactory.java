@@ -38,7 +38,8 @@ public class ContextFactory extends php.java.bridge.http.ContextFactory {
      * called twice.
      */
     public void setSession(HttpServletRequest req) {
-    	if(this.proxy!=null) throw new IllegalStateException("This context already has a session proxy.");
+      //FIXME
+    	//if(this.proxy!=null) throw new IllegalStateException("This context already has a session proxy.");
     	this.proxy = req;
     }
     public ISession getSession(String name, boolean clientIsNew, int timeout) {

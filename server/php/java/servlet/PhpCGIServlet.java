@@ -24,7 +24,7 @@ import php.java.bridge.Util.Process;
  * requests directly. These requests invoke the php-cgi machinery from
  * the CGI or FastCGI servlet.  Although the servlet to php-cgi back
  * to servlet path is quite slow and consumes two servlet instances
- * instead of only one (compared to the http frontend/j2ee backend
+ * instead of only one (compared to the http front end/j2ee back end
  * setup), it can be useful as a replacement for a system php
  * installation, see the README in the <code>WEB-INF/cgi</code>
  * folder.  It is currently used for our J2EE test/demo.  </p>
@@ -41,25 +41,12 @@ public class PhpCGIServlet extends FastCGIServlet {
     public static final int CGI_CHANNEL = 9567;
     
     /**
-     * This controls how many child processes the PHP process spawns.
-     */
-    private static final String PHP_FCGI_CHILDREN = "20";
-    
-    /**
-     * This controls how many requests each child process will handle before
-exitting. When one process exits, another will be created. 
-     */
-    private static final String PHP_FCGI_MAX_REQUESTS = "500";
-    
-    /**
      * The max. number of concurrent CGI requests. 
      * <p>The value should be less than 1/2 of the servlet engine's thread pool size as this 
      * servlet also consumes an instance of PhpJavaServlet.</p>
      */
     public static final int CGI_MAX_REQUESTS = 50;
     private int cgi_max_requests = CGI_MAX_REQUESTS;
-    private String php_fcgi_children = PHP_FCGI_CHILDREN;
-    private String php_fcgi_max_requests = PHP_FCGI_MAX_REQUESTS;
 
     private final void runFcgi(Map env, String php) {
 	    int c;
@@ -141,20 +128,6 @@ exitting. When one process exits, another will be created.
 	} catch (Throwable t) {Util.printStackTrace(t);}      
 
 	Util.TCP_SOCKETNAME = String.valueOf(CGI_CHANNEL);
-
-	String val = null;
-	try {
-	    val = getServletConfig().getInitParameter("PHP_FCGI_CHILDREN");
-	    if(val==null) val = System.getProperty("php.java.bridge.php_fcgi_children");
-	} catch (Throwable t) {/*ignore*/}
-	if(val!=null) php_fcgi_children = val;
-	
-	val = null;
-	try {
-	    val = getServletConfig().getInitParameter("PHP_FCGI_MAX_REQUESTS");
-	    if(val==null) val = System.getProperty("php.java.bridge.php_fcgi_max_requests");	    
-	} catch (Throwable t) {/*ignore*/}
-	if(val!=null) php_fcgi_max_requests = val;
     }
 
     public void destroy() {

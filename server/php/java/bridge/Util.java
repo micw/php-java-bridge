@@ -15,8 +15,8 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Vector;
 import java.util.StringTokenizer;
+import java.util.Vector;
 
 /**
  * Miscellaneous functions.

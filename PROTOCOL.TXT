@@ -1,4 +1,4 @@
-PHP/Java Bridge protocol version 2.2
+PHP/Java Bridge protocol version 2.3
 
 Requests are marked with "->", responses with "<-".  The server
 continues to process requests until EOF. Only the first character is
@@ -36,6 +36,11 @@ Optional requests:
 All aquired [O]bject handles may be destroyed by invoking U (destroy).
 However, the server tracks all handles and automatically destroys them
 after EOF. It is an error to further reference destroyed handles.
+
+If [F]inish is called, the server closes or recycles the connection
+and responds with F p=A, if the connection has been recycled, p=E
+otherwise. Instead of sending <F p=E/> and waiting for the response,
+it is also possible to simply close the connection.
 
 
 
@@ -156,10 +161,12 @@ Destroy:
 <U v=object />
 v: long
 
-->
+<->
 EndConnection:
 <F p=A|E />
 p: char (Keep [Alive, [E]nd connection)
+After the F=... reply appeared, it is save to switch to a secondary
+("override-redirect") channel.
 
 
 

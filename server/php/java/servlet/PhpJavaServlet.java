@@ -117,7 +117,6 @@ public final class PhpJavaServlet extends HttpServlet {
 	InputStream in; ByteArrayOutputStream out; OutputStream resOut;
 	ContextFactory ctx = getContextFactory(req, res);
 	JavaBridge bridge = ctx.getBridge();
-	if(bridge.logLevel>2) bridge.logMessage("headers already sent. -- java_session() was not the first statement in your PHP script. Opening a second connection to the backend. To avoid this message add java_session(); to the beginning of your script.");
 	ctx.setSession(req);
 	if(bridge.logLevel>3) bridge.logDebug("override redirect starts for " + ctx.getId());		
 	// save old state
