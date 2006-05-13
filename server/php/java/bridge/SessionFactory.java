@@ -15,6 +15,8 @@ package php.java.bridge;
  */
 public class SessionFactory {
   
+  protected SessionFactory() {}
+  
   private ISession session(String name, boolean clientIsNew, int timeout) {
 	synchronized(JavaBridge.sessionHash) {
 	    Session ref = null;
@@ -37,9 +39,11 @@ public class SessionFactory {
 	}
   }
   /**
-   * @param name The session name. If name is null, the session is an internal session
+   * @param name The session name. If name is null, the name PHPSESSION will be used.
    * @param clientIsNew true if the client wants a new session
    * @param timeout timeout in seconds. If 0 the session does not expire.
+   * @return The session
+   * @see php.java.bridge.ISession
    */
   public ISession getSession(String name, boolean clientIsNew, int timeout) {
 	if(name==null) name=JavaBridge.PHPSESSION; else name="@"+name;
@@ -47,11 +51,11 @@ public class SessionFactory {
   }
 
   /**
-   * @param name The session name. If name is null, the session is an internal session
-   * @param clientIsNew true if the client wants a new session
+    * @param clientIsNew true if the client wants a new session
    * @param timeout timeout in seconds. If 0 the session does not expire.
+   * @return The session
    */
-  public ISession getSessionInternal(boolean clientIsNew, int timeout) {
+  protected ISession getSessionInternal(boolean clientIsNew, int timeout) {
 	String name=JavaBridge.INTERNAL_PHPSESSION;
 	return session(name, clientIsNew, timeout);
   }
@@ -59,7 +63,8 @@ public class SessionFactory {
 	
     /**
      * Return the associated context
-     * @return The context
+     * @return Always null
+     * @see php.java.bridge.http.ContextFactory#getContext()
      */
     public Object getContext() {
 	return null;

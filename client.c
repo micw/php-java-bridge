@@ -636,11 +636,9 @@ static proxyenv*adjust_servlet_environment(proxyenv *env, char*servlet_context_s
 
   zval val;
 
-  if(!((*env)->servlet_context_string=strdup(servlet_context_string))) 
-	exit(9);
-
   if((SUCCESS==zend_eval_string((char*)context, &val, (char*)name TSRMLS_CC)) && (Z_TYPE(val)==IS_STRING)) {
-	(*env)->servlet_ctx = strdup(Z_STRVAL(val));
+	(*env)->current_servlet_ctx = strdup(Z_STRVAL(val));
+    if(!(*env)->servlet_ctx) (*env)->servlet_ctx = (*env)->current_servlet_ctx;
 								/* back-end must have created a session
 								   proxy, otherwise we wouldn't see a
 								   context. */
@@ -671,6 +669,10 @@ static proxyenv*recycle_connection(char *context TSRMLS_DC) {
 	proxyenv*env = *penv;
 	override_ini_from_stored_cfg(env TSRMLS_CC);
 	(*env)->backend_has_session_proxy = 0;
+	if(!(*env)->is_local && context) {
+	  env = adjust_servlet_environment(env, context TSRMLS_CC);
+	}
+
 	return env;
   }
   return 0;
@@ -702,6 +704,7 @@ static proxyenv*create_connection(char *context TSRMLS_DC) {
 	} else {
 	  /* create a jenv for a servlet backend, aquire a context then
 		 redirect */
+	  if(!((*jenv)->servlet_context_string=strdup(context))) exit(9);
 	  jenv = adjust_servlet_environment(jenv, context TSRMLS_CC);
 	}
   }

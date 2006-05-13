@@ -25,7 +25,7 @@ import php.java.bridge.Util;
  * The admin may start a FCGI
  * server for all users with the command:<br><code> cd /tmp<br>
  * X_JAVABRIDGE_OVERRIDE_HOSTS="/" PHP_FCGI_CHILDREN="20"
- * PHP_FCGI_MAX_REQUESTS="500" /usr/bin/php-cgi -b 127.0.0.1:9667<br>
+ * PHP_FCGI_MAX_REQUESTS="50000" /usr/bin/php-cgi -b 127.0.0.1:9667<br>
  * </code>
  * 
  * @see php.java.bridge.Util#DEFAULT_CGI_LOCATIONS
@@ -82,7 +82,7 @@ public class FastCGIServlet extends CGIServlet {
      * This controls how many requests each child process will handle before
 exitting. When one process exits, another will be created. 
      */
-    private static final String PHP_FCGI_MAX_REQUESTS = "500";
+    private static final String PHP_FCGI_MAX_REQUESTS = "50000";
     
     protected String php = null; 
     protected boolean fcgiIsAvailable;
@@ -107,7 +107,7 @@ exitting. When one process exits, another will be created.
 "For example with the commands: \n\n" +
 "cd " + base + "\n" + 
 "chmod +x " + wrapper + "\n" + 
-"X_JAVABRIDGE_OVERRIDE_HOSTS=\"/\" PHP_FCGI_CHILDREN=\"20\" PHP_FCGI_MAX_REQUESTS=\"500\" "+wrapper+" -c "+wrapper+".ini -b 127.0.0.1:9667\n\n";
+"X_JAVABRIDGE_OVERRIDE_HOSTS=\"/\" PHP_FCGI_CHILDREN=\"20\" PHP_FCGI_MAX_REQUESTS=\"50000\" "+wrapper+" -c "+wrapper+".ini -b 127.0.0.1:9667\n\n";
         return msg;
     }
     
@@ -400,13 +400,21 @@ exitting. When one process exits, another will be created.
 	    connectionPool = ((CGIEnvironment)env).connectionPool;
 	}
 
-
+	protected void run() throws IOException, ServletException {
+	    try {
+	        parseBody();
+	    } catch (IOException ex) {
+	        Util.logDebug("PHP application terminated (see PHP_FCGI_MAX_REQUESTS), trying again using a new application: " + ex);
+	        parseBody();
+	    }
+	}
 	/**
 	 * Optimized run method for FastCGI. Makes use of the large FCGI_BUF_SIZE and the specialized in.read(). 
 	 * It is a modified copy of the parseBody. 
+	 * @throws InterruptedException 
 	 * @see Util#parseBody(byte[], InputStream, OutputStream, HeaderParser)
 	 */
-        protected void run() throws IOException, ServletException {
+        protected void parseBody() throws IOException, ServletException {
 	    InputStream in = null;
             OutputStream out = null;
 	    FastCGIInputStream natIn = null;
@@ -434,10 +442,11 @@ exitting. When one process exits, another will be created.
 		    while((n=in.read(buf))!=-1) {
 			natOut.write(buf, n);
 		    }
+		    in.close(); in = null;
 		} else {
 		    natOut.write(FCGI_EMPTY_RECORD);
 		}
-		natOut.flush();
+		natOut.close(); natOut = null;
 		
 		// the header and content
 		// NOTE: unlike cgi, fcgi headers must be semt in _one_ packet
@@ -464,11 +473,10 @@ exitting. When one process exits, another will be created.
 			i=0;
 		    }
 		}
-	    }  
-	    catch (Exception e) {
+		natIn.close(); natIn = null;
+	    } catch (InterruptedException e) {
 	        throw new ServletException(e);
-	    }
-	    finally {
+	    } finally {
 		if(in!=null) try {in.close();} catch (IOException e) {}
 		if(natIn!=null) try {natIn.close();} catch (IOException e) {}
 		if(natOut!=null) try {natOut.close();} catch (IOException e) {}

@@ -183,8 +183,8 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
     }
     private void setName(String name) {
         int length = name.length();
-        if(length>40) length=40;
-        name = name.substring(length);
+        if(length>160) length=160;
+        name = name.substring(0, length);
         this.name = name;
     }
 

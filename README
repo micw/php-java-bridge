@@ -122,7 +122,7 @@ Build and execution instructions:
   6) Standalone java application (see JSR223) or AS or servlet engine
   without Apache or IIS front-end. A PHP server can be started with the
   command (e.g.): X_JAVABRIDGE_OVERRIDE_HOSTS="/" PHP_FCGI_CHILDREN="20"
-  PHP_FCGI_MAX_REQUESTS="500" php-cgi -c java.ini -b 127.0.0.1:9667. 
+  PHP_FCGI_MAX_REQUESTS="50000" php-cgi -c java.ini -b 127.0.0.1:9667. 
   php-cgi starts automatically if no PHP server is listening on port 9667.
  
   [java]
@@ -182,7 +182,7 @@ Build and execution instructions:
   ---------------------------------
 
   Assuming that tomcat is installed (e.g. in /opt/tomcat5),
-  MyJavaBridge.war is deployed (e.g. in /opt/tomcat5/webapps), java.so
+  JavaBridge.war is deployed (e.g. in /opt/tomcat5/webapps), java.so
   (or php_java.dll) is installed in the php modules directory (e.g. in
   /usr/lib/php/modules/), mod_jk and php5 are installed in the apache modules
   directory (e.g. in /usr/lib/httpd/modules/), we recommend following
@@ -212,7 +212,7 @@ Build and execution instructions:
     ;; on windows: extension = php_java.dll
     [java]
     java.hosts     = "127.0.0.1:8080"
-    java.servlet   = User ;; or: /MyJavaBridge/JavaBridge.php
+    java.servlet   = User ;; or: /JavaBridge/JavaBridge.phpjavabridge
 
   To check the above settings, please visit http://localhost/MyJavaBridge/
   and run the sessionSharing.jsp and sessionSharing.php examples.
@@ -289,7 +289,7 @@ Build and execution instructions:
     cd $HOME
     export X_JAVABRIDGE_OVERRIDE_HOSTS="/"
     export PHP_FCGI_CHILDREN="20"
-    export PHP_FCGI_MAX_REQUESTS="500"
+    export PHP_FCGI_MAX_REQUESTS="50000"
     /usr/bin/php-cgi -b 127.0.0.1:9667
 
   It starts when the VM starts and stops when the VM terminates.
@@ -651,7 +651,7 @@ Build and execution instructions:
   methods which use the file.encoding property, getBytes() for
   example.  If you use:
   
-    $str=new Java ("java.lang.String", "Cześć! -- שלום -- Gr");
+    $str=new Java ("java.lang.String", "Cze????! -- ???????? -- Gr");
     echo $str->getBytes();
 
   the output conversion depends on the file.encoding system property
@@ -662,7 +662,7 @@ Build and execution instructions:
   JVM's file.encoding. They are easy to avoid, the above example
   should be written as:
 
-    $str=new Java ("java.lang.String", "Cześć! -- שלום -- Gr");
+    $str=new Java ("java.lang.String", "Cze????! -- ???????? -- Gr");
     echo (string)$str;  // in PHP5 or higher
     echo $str->toString(); // in PHP4
 

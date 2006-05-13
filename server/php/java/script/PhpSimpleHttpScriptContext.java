@@ -126,12 +126,24 @@ public class PhpSimpleHttpScriptContext extends SimpleScriptContext implements I
 
     private HttpProxy kont;
 
+    /**@inheritDoc*/
     public void setContinuation(HttpProxy kont) {
         this.kont = kont;
     }
 
+    /**@inheritDoc*/
     public boolean call(PhpProcedureProxy kont) throws Exception {
 	this.kont.call(kont);
 	return true;
+    }
+
+    /**@inheritDoc*/
+    public void setWriter(Writer writer) {
+        this.writer = (PhpScriptWriter) writer;
+    }
+
+    /**@inheritDoc*/
+    public HttpProxy getContinuation() {
+        return this.kont;
     }
 }

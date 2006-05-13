@@ -29,9 +29,10 @@ import java.util.Vector;
 import java.util.Map.Entry;
 
 import php.java.bridge.Request.PhpArray;
+import php.java.bridge.http.ContextFactory;
 
 /**
- * This is the main class of the PHP/Java Bridge. It starts the standalone backend,
+ * This is the main class of the PHP/Java Bridge. It starts the standalone back-end,
  * listenes for protocol requests and handles CreateInstance, GetSetProp and Invoke 
  * requests. Supported protocol modes are INET (listens on all interfaces), INET_LOCAL (loopback only) and 
  * LOCAL (uses a local, invisible communication channel, requires natcJavaBridge.so). Furthermore it
@@ -1425,6 +1426,16 @@ public class JavaBridge implements Runnable {
 	if(contextCache!=null) return contextCache;
     	return contextCache = sessionFactory.getContext();
     }
+    /**
+     * Returns the JSR223 context when using persistent connections.
+     * @return The JSR223 context.
+     * @see #recycle()
+     * @see #getContext()
+     */
+    public Object getContext(String id) {
+	recycleContext(id);
+    	return getContext();
+    }
     private ISession sessionCache = null;
     /**
      * Return a session handle shared among all JavaBridge
@@ -1443,6 +1454,16 @@ public class JavaBridge implements Runnable {
 	  printStackTrace(t);
 	  throw t;
 	}
+    }
+    /**
+     * Return a session handle when using persistent connections.
+     * @throws Exception 
+     * @see #recycle()
+     * @see #getSession(String, boolean, int)
+     */
+    public ISession getSession(String id, String name, boolean clientIsNew, int timeout) throws Exception {
+	recycleContext(id);
+	return getSession(name, clientIsNew, timeout);
     }
     
     /**
@@ -1542,7 +1563,7 @@ public class JavaBridge implements Runnable {
      * @throws IllegalArgumentException if serialID does not exist anymore.
      */
     public int deserialize(String serialID, int timeout) {
-	ISession session = defaultSessionFactory.getSession(null, false, timeout);
+	ISession session = defaultSessionFactory.getSessionInternal(false, timeout);
 	Object obj = session.get(serialID);
 	if(obj==null) throw new IllegalArgumentException("Session serialID " +  serialID + " expired.");
 	return globalRef.append(obj);
@@ -1560,7 +1581,7 @@ public class JavaBridge implements Runnable {
      * @return the serialID
      */
     public String serialize(Object obj, int timeout) {
-    	ISession session = defaultSessionFactory.getSession(null, false, timeout);
+    	ISession session = defaultSessionFactory.getSessionInternal(false, timeout);
     	String id = Integer.toHexString(getSerialID());
     	session.put(id, obj);
     	return (String)castToString(id);
@@ -1718,14 +1739,22 @@ public class JavaBridge implements Runnable {
 	int i = ((Number)pos).intValue();
 	Array.set(value, i, null);
     }
-    /** re-initialize for keep-alive */
-    protected void recycle() {
+    /** 
+     * Re-initialize the current bridge for keep-alive
+     * @see php.ini option <code>java.persistent_connections</code>
+     */
+    public void recycle() {
 	Session.expire(this);
-	sessionCache = null;
         globalRef = new GlobalRef(this);
         lastException = lastAsyncException = null;
 	cl.recycle();
         options.recycle();
         request.recycle();
     }
+    private void recycleContext(String id) {
+      if(sessionFactory==defaultSessionFactory) return;
+      // must be a ContextFactory
+      ContextFactory current = ((ContextFactory)sessionFactory);
+      current.recycle(id);
+  }
 }

@@ -245,6 +245,7 @@ static void session(INTERNAL_FUNCTION_PARAMETERS)
   proxyenv *jenv;
   zval **session=0, **is_new=0;
   int argc=ZEND_NUM_ARGS();
+  char *current_ctx;
   
   if (argc>2 || zend_get_parameters_ex(argc, &session, &is_new) == FAILURE)
 	WRONG_PARAM_COUNT;
@@ -256,13 +257,18 @@ static void session(INTERNAL_FUNCTION_PARAMETERS)
 	RETURN_NULL();
   }
 
-  assert(EXT_GLOBAL(cfg)->is_cgi_servlet && (*jenv)->servlet_ctx ||!EXT_GLOBAL(cfg)->is_cgi_servlet);
+  current_ctx = (*jenv)->current_servlet_ctx;
+  assert(EXT_GLOBAL(cfg)->is_cgi_servlet && current_ctx ||!EXT_GLOBAL(cfg)->is_cgi_servlet);
 								/* create a new connection to the
 								   back-end if java_session() is not
 								   the first statement in a script */
   EXT_GLOBAL(check_session) (jenv TSRMLS_CC);
 
   (*jenv)->writeInvokeBegin(jenv, 0, "getSession", 0, 'I', return_value);
+  /* cal getSession(String id, ...), if necessary */
+  if(current_ctx && current_ctx != (*jenv)->servlet_ctx)
+	(*jenv)->writeString(jenv, current_ctx, strlen(current_ctx));
+
   if(argc>0 && Z_TYPE_PP(session)!=IS_NULL) {
 	convert_to_string_ex(session);
 	(*jenv)->writeString(jenv, Z_STRVAL_PP(session), Z_STRLEN_PP(session)); 
@@ -314,15 +320,19 @@ static void context(INTERNAL_FUNCTION_PARAMETERS)
 {
   proxyenv *jenv;
   int argc=ZEND_NUM_ARGS();
+  char *current_ctx = 0;
   
   if (argc!=0)
 	WRONG_PARAM_COUNT;
 
   jenv=EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   if(!jenv) RETURN_NULL();
- 
-  assert(EXT_GLOBAL(cfg)->is_cgi_servlet && (*jenv)->servlet_ctx ||!EXT_GLOBAL(cfg)->is_cgi_servlet);
+  current_ctx = (*jenv)->current_servlet_ctx;
+  assert(EXT_GLOBAL(cfg)->is_cgi_servlet && current_ctx ||!EXT_GLOBAL(cfg)->is_cgi_servlet);
   (*jenv)->writeInvokeBegin(jenv, 0, "getContext", 0, 'I', return_value);
+  /* call getContext(String id, ...), if necessary */
+  if(current_ctx && current_ctx != (*jenv)->servlet_ctx)
+	(*jenv)->writeString(jenv, current_ctx, strlen(current_ctx));
   (*jenv)->writeInvokeEnd(jenv);
 }
 

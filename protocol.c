@@ -524,6 +524,7 @@ static void close_connection(proxyenv *env TSRMLS_DC) {
 	if((*env)->s) free((*env)->s);
 	if((*env)->send) free((*env)->send);
 	if((*env)->server_name) free((*env)->server_name);
+	if((*env)->current_servlet_ctx && (*env)->servlet_ctx != (*env)->current_servlet_ctx) free((*env)->current_servlet_ctx);
 	if((*env)->servlet_ctx) free((*env)->servlet_ctx);
 	if((*env)->servlet_context_string) free((*env)->servlet_context_string);
 	if((*env)->cfg.hosts) free((*env)->cfg.hosts);
@@ -543,6 +544,11 @@ static void recycle_connection(proxyenv *env TSRMLS_DC) {
 	}
 	EXT_GLOBAL(save_cfg)(env TSRMLS_CC);
 	EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);
+	if((*env)->current_servlet_ctx && 
+	   (*env)->servlet_ctx != (*env)->current_servlet_ctx) {
+	  free((*env)->current_servlet_ctx); 
+	  (*env)->current_servlet_ctx = 0; 
+	}
   }
 }
 void EXT_GLOBAL(close_connection)(proxyenv**penv, short persistent_connection TSRMLS_DC) {
@@ -588,7 +594,8 @@ proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, void (*handle_request)(
 
    (*env)->server_name = server_name;
    (*env)->must_reopen = 0;
-   (*env)->servlet_ctx = (*env)->servlet_context_string = 0;
+   (*env)->current_servlet_ctx = 
+	 (*env)->servlet_ctx = (*env)->servlet_context_string = 0;
    (*env)->backend_has_session_proxy = 0;
    (*env)->cfg.ini_user = 0;
    (*env)->cfg.hosts = (*env)->cfg.servlet = 0;

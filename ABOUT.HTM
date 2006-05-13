@@ -969,18 +969,18 @@ print $buf-&gt;length() . "\n";<br>
 ?&gt;<br>
 </code>
 </p>
-The Jython 2.1 code<br>
+The BSH 2.0 code<br>
 <p>
 <code>
-from java import lang<br>
+buf=new java.lang.StringBuffer();<br>
 <br>
-buf = lang.StringBuffer();<br>
-i=0<br>
-while i<400000:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;i=i+1<br>
-&nbsp;&nbsp;&nbsp;&nbsp;buf.append(lang.String(lang.String.valueOf(i)));<br>
+int i=0;<br>
+while(i<400000) {<br>
+&nbsp;&nbsp;i=i+1;<br>
+&nbsp;&nbsp;buf.append(new String(String.valueOf(i)));<br>
+}<br>
 <br>
-print buf.length();<br>
+print (buf.length()); print("\n");<br>
 </code>
 </p>
 The ECMAScript ("Mozilla Rhino") code<br>
@@ -1023,36 +1023,23 @@ BORDER="1"
 </TD
 ></TR
 >
+
 <TBODY
 ><TR
 ><TD
->java -jar JavaBridge.jar INET:9967 & time php t11.php</TD
+>time jrunscript -l bsh t11.bsh</TD
 ><TD
->PHP5 + PHP/Java Bridge 3.0.8</TD
+>BSH 2.0</TD
 ><TD
->TCP Sockets, client and server running on the same CPU</TD
+>none (native code)</TD
 ><TD
->0m22.407s,<br>
-0m9.848s,<br>
-0m0.145s
+>0m21.342s,<br>
+0m20.779s,<br>
+0m0.291s
 </TD
 ></TR
 >
-<TBODY
-><TR
-><TD
->java -jar JavaBridge.jar INET:9967 & time php t11.php</TD
-><TD
->PHP5 + PHP/Java Bridge 3.0.8</TD
-><TD
->TCP Sockets, client and server running on different machines</TD
-><TD
->0m31.507s,<br>
-0m26.460s,<br>
-0m3.567s
-</TD
-></TR
->
+</TBODY>
 
 <TBODY
 ><TR
@@ -1069,22 +1056,7 @@ BORDER="1"
 </TD
 ></TR
 >
-<TBODY
-><TR
-><TD
->time java -classpath jython.jar org.python.util.jython t11.py</TD
-><TD
->Jython 2.1</TD
-><TD
->none (native code)</TD
-><TD
->0m6.725s,<br>
-0m6.551s,<br>
-0m0.107s
-</TD
-></TR
->
-</TBODY>
+
 </TABLE
 >
 </center>

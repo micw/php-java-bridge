@@ -15,6 +15,7 @@ import php.java.servlet.ContextFactory;
  *
  */
 public class PhpFacesScriptContextFactory extends php.java.servlet.ContextFactory {
+     protected IPhpScriptContext jsrContext = null;
     /**
      * Create a new ContextFactory
      * @param context The ScriptContext
@@ -30,13 +31,22 @@ public class PhpFacesScriptContextFactory extends php.java.servlet.ContextFactor
     }
     protected PhpFacesScriptContextFactory(IPhpScriptContext context, ServletContext ctx, HttpServletRequest req, HttpServletResponse res) { 
 	super(ctx, req, req, res);
-	this.context = context; 
+	this.jsrContext = context; 
     }
-
     /**
-     * Returns the ScriptContext.
+     * Returns the JSR223 ScriptContext.
+     * @return The context
      */
     public Object getContext() {
+	if(context==null) setContext(jsrContext);
 	return context;
+    }
+    
+    public void recycle(php.java.bridge.http.ContextFactory target) {
+      super.recycle(target);
+      // the persistent connection needs the fresh values
+      PhpFacesScriptContextFactory fresh = (PhpFacesScriptContextFactory)target;
+      jsrContext.setContinuation(fresh.jsrContext.getContinuation());
+      jsrContext.setWriter(fresh.jsrContext.getWriter());
     }
 }

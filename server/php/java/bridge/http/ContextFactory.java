@@ -39,10 +39,10 @@ import php.java.bridge.Util;
  */
 public class ContextFactory extends SessionFactory {
     protected boolean removed=false;
-    protected Object context;
+    protected Object context = null;
 
     private static final Hashtable contexts = new Hashtable();
-    private JavaBridge bridge;
+    private JavaBridge bridge = null;
 	
     private static short count=0; // If a context survives more than 65535
     // context creations, that context will be
@@ -55,9 +55,6 @@ public class ContextFactory extends SessionFactory {
     protected ContextFactory() {
       super();
       id=String.valueOf(0xFFFF&getNext());
-      setBridge(new JavaBridge());
-      bridge.setClassLoader(new JavaBridgeClassLoader(bridge, null));
-      bridge.setSessionFactory(this);
     }
 
     protected void add() {
@@ -76,7 +73,6 @@ public class ContextFactory extends SessionFactory {
     public static ContextFactory addNew() {
     	ContextFactory ctx = new ContextFactory();
     	ctx.add();
-    	ctx.setContext(new Context());
     	return ctx;
     }
     
@@ -103,7 +99,27 @@ public class ContextFactory extends SessionFactory {
         if(factory.contextServer != server) throw new SecurityException("Illegal access");
         return factory;
     }
-    
+    /**
+     * Override this method if you want synchronize the current id with the persistent id..
+     * @param target The empty current ContextFactory (which was passed via the current X_JAVABRIDGE_CONTEXT header).
+     */
+    protected void recycle(ContextFactory target) {}
+    /**
+     * Synchronize the current state with id. Only possible if the current id is initialized and the target id is not initialized.
+     * <p>
+     * When persistent connections are used, the bridge instances recycle their context factories. 
+     * However, a jsr223 client may have passed a fresh context id. If this happened, the bridge calls this method, 
+     * which gives the two contexts the chance to update/synchronize their state.</p>   
+     * @param id The target id
+     * @throws SecurityException if the target id already has a bridge and/or a context.
+     * @throws NullPointerException if the current id is not initialized
+     * @see php.java.bridge.JavaBridge#recycle()
+     */
+    public void recycle(String id) throws SecurityException {
+        ContextFactory target = get(id, contextServer);
+        if(target.bridge!=null || target.context!=null) throw new SecurityException("Illegal access");
+        recycle(target);
+    }
     /**
      * Removes the context factory from the classloader's list of context factories.
      *
@@ -151,7 +167,14 @@ public class ContextFactory extends SessionFactory {
     public String toString() {
 	return "Context# " +id;
     }
+    /**
+     * Return an emulated JSR223 context
+     * @return The context
+     * @see php.java.servlet.ContextFactory#getContext()
+     * @see php.java.bridge.http.Context
+     */
     public Object getContext() {
+  	if(context==null) setContext(new Context());
 	return context;
     }
 	
@@ -162,20 +185,25 @@ public class ContextFactory extends SessionFactory {
      * @see #addNew()
      */
     protected void setContext(Object context) {
-	this.context = context;
+        if(this.context!=null) throw new IllegalStateException("ContextFactory already has a context");
+        this.context = context;
     }
     /**
      * Set the JavaBridge into this context.
      * @param bridge The bridge to set.
      */
     public void setBridge(JavaBridge bridge) {
-	if(this.bridge!=null) throw new IllegalStateException("Context already has a bridge");
+	if(this.bridge!=null) throw new IllegalStateException("ContextFactory already has a bridge");
 	this.bridge = bridge;
     }
     /**
      * @return Returns the bridge.
      */
     public JavaBridge getBridge() {
+        if(bridge != null) return bridge;
+        setBridge(new JavaBridge());
+        bridge.setClassLoader(new JavaBridgeClassLoader(bridge, null));
+        bridge.setSessionFactory(this);
 	return bridge;
     }
 }

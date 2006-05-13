@@ -105,6 +105,7 @@ struct proxyenv_ {
 
   /* for servlet engines only */
   char *servlet_ctx;			/* the # of the server context runner */
+  char *current_servlet_ctx;	/* the ctx # for this request only, used when persistent connections are enabled */
   char *servlet_context_string;	/* original rinit value from
 								   get_servlet_context() */
   short backend_has_session_proxy;

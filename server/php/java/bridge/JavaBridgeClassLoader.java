@@ -101,7 +101,7 @@ public class JavaBridgeClassLoader {
      * clear the input vectors
      */
     public void clear() {
-	if(!checkCl()) cl.clear();
+	if(checkCl()) cl.clear();
     }
     
     /** re-initialize for keep alive */

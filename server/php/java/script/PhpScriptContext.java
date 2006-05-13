@@ -41,6 +41,7 @@ public class PhpScriptContext extends SimpleScriptContext implements IPhpScriptC
     }
 
     private HttpProxy kont;
+    private Writer writer;
 	
     /**
      * Create a standalone PHP script context.
@@ -52,7 +53,8 @@ public class PhpScriptContext extends SimpleScriptContext implements IPhpScriptC
 
 
     public Writer getWriter() {
-	return new PhpScriptWriter(System.out);
+	if(writer == null) return writer = new PhpScriptWriter(System.out);
+	return writer;
     }
 	
     /**
@@ -71,5 +73,17 @@ public class PhpScriptContext extends SimpleScriptContext implements IPhpScriptC
     public boolean call(PhpProcedureProxy kont) throws InterruptedException {
 	this.kont.call(kont);
 	return true;
+    }
+
+
+    /**@inheritDoc*/
+    public void setWriter(Writer writer) {
+        this.writer = writer;
+    }
+
+
+    /**@inheritDoc*/
+    public HttpProxy getContinuation() {
+        return kont;
     }
 }
