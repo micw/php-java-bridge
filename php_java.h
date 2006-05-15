@@ -36,6 +36,7 @@
 #else
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 
@@ -202,7 +203,7 @@ EXT_END_MODULE_GLOBALS(EXT)
 extern char* EXT_GLOBAL(get_server_string)(TSRMLS_D);
 extern proxyenv *EXT_GLOBAL(try_connect_to_server)(TSRMLS_D);
 extern proxyenv *EXT_GLOBAL(connect_to_server)(TSRMLS_D);
-extern void EXT_GLOBAL(close_connection)(proxyenv**env, short persistent_connection TSRMLS_DC);
+extern short EXT_GLOBAL(close_connection)(proxyenv**env, short persistent_connection TSRMLS_DC);
 extern void EXT_GLOBAL(start_server)(TSRMLS_D);
 extern void EXT_GLOBAL(save_cfg)(proxyenv *env TSRMLS_DC);
 extern void EXT_GLOBAL(clone_cfg)(TSRMLS_D);

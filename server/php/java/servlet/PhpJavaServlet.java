@@ -58,7 +58,7 @@ public final class PhpJavaServlet extends HttpServlet {
  	String value;
         try {
 	    value = config.getInitParameter("servlet_log_level");
-	    value = "6"; //XFIXME
+	    //value = "6"; //XFIXME
 	    if(value!=null && value.trim().length()!=0) Util.logLevel=Integer.parseInt(value.trim());
         } catch (Throwable t) {Util.printStackTrace(t);}      
   	try {
@@ -165,7 +165,7 @@ public final class PhpJavaServlet extends HttpServlet {
 	    if(req.getHeader("Connection").equals("Close")) {
 		//JavaBridge.load--;
 		bridge.logDebug("session closed.");
-		ctx.remove();
+		ctx.destroy();
 	    }
 	    return;
 	}
@@ -223,7 +223,7 @@ public final class PhpJavaServlet extends HttpServlet {
 	    }
 	    else {
 	        sin.close(); sin=null;
-	        ctx.remove();
+	        ctx.destroy();
 	    }
 	} catch (Exception e) {
 	    Util.printStackTrace(e);

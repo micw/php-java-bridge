@@ -63,7 +63,18 @@ PHP_RINIT_FUNCTION(EXT)
  */
 PHP_RSHUTDOWN_FUNCTION(EXT)
 {
-  EXT_GLOBAL(close_connection) (&JG(jenv), EXT_GLOBAL(cfg)->persistent_connections TSRMLS_CC);
+  proxyenv *current = JG(jenv);
+  HashTable *connections = &JG(connections);
+  short success = EXT_GLOBAL(close_connection) (&JG(jenv), EXT_GLOBAL(cfg)->persistent_connections TSRMLS_CC);
+  if(!success) {
+	proxyenv **env;
+	zend_hash_internal_pointer_reset(connections);
+	while(SUCCESS==zend_hash_get_current_data(connections, (void**)&env)) {
+	  if(*env!=current) EXT_GLOBAL(close_connection) (env, 0 TSRMLS_CC);
+	  zend_hash_move_forward(connections);
+	}
+	zend_hash_clean(connections);
+  }
   JG(is_closed)=1;
   return SUCCESS;
 }
@@ -2210,6 +2221,7 @@ PHP_MSHUTDOWN_FUNCTION(EXT)
 	zend_hash_move_forward(connections);
   }
   assert(JG(jenv)==0);			/* see close_connection */
+  zend_hash_destroy(connections);
   
   EXT_GLOBAL(destroy_cfg) (EXT_GLOBAL(ini_set));
   EXT_GLOBAL(ini_user) = EXT_GLOBAL(ini_set) = 0;

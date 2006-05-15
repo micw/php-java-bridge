@@ -1,6 +1,6 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
-/* mkstemp */
+/* mktemp */
 #include <stdlib.h>
 
 /* time */
@@ -124,7 +124,7 @@ static void init_socket(void) {
 	char *sockname=malloc(strlen(s)+1);
 	assert(sockname); if(!sockname) exit(6);
 	strcpy(sockname, s);
-	n = mkstemp(sockname);
+	n = mktemp(sockname);
 	assert(n); if(!n) exit(6);
 	EXT_GLOBAL(cfg)->default_sockname = sockname;
 }

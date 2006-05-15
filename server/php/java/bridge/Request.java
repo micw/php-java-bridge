@@ -14,7 +14,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 /**
- * This class is used to handle requests from the frontent.
+ * This class is used to handle requests from the front-end.
  * @author jostb
  *
  */

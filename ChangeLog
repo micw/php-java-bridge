@@ -1,3 +1,75 @@
+2006-05-14  Jost Boekemeier  <jostb@intern>
+
+	* Merged from 3.0.8 branch:
+
+	2006-05-13  Jost Boekemeier  <jostb@intern>
+
+	* client.c (try_connect_to_server), protocol.c (check_session),
+	server/php/java/bridgeTCPServerSocket.java (accept),
+	server/php/java/servlet/FastCGIServlet.java (findCGI): : Switched
+	off the Nagle algorithm for operating systems with an insane
+	implementation: On FreeBSD and Mac OSX the bridge is now 300 times (!)
+	faster than before and runs nearly as fast as on Linux, Windows,
+	Solaris...
+	
+	* client.c (create_pipes): Added missing return statement.
+	
+	* install.sh: Added test if selinux is really available. Otherwise
+	BSD will complain about missing Security Enhanced Linux.
+
+	* java_bridge.c (call_function_handler): Dump the error message
+	from the servlet back-end to the console before aborting.
+	(procotol_error): New procedure.
+	(destroy_object): Avoid warning.
+
+	* protocol.c (end,end_session): changed incorrect assert.
+
+	* server/php/java/bridge/JavaBridgeClassLoader (clear): Fixed typo.
+	
+	* server/php/java/bridge/Response.java (setResult): Corrected boolean cast.
+
+	* tests.php5/is_null.php: Test for the above fix.
+
+	* server/php/java/bridge/ThreadPool.java: Start a new thread
+	immediately. If more than 19 clients crash at the same time, it
+	could be that the pool cannot start a new thread later on.
+
+	* server/php/java/faces/PhpFacesScriptEngine.java
+	(setNewContextFactory),
+	server/php/java/script/PhpScriptEngine.java
+	(getProcessEnvironment, setNewContextFactory),
+	server/php/java/servlet/CGIServlet.java
+	(getProcessEnvironment): Pass current process environment. Needed
+	for some PECL modules.
+
+	* server/php/java/script/PhpScriptEngine.java (setName): Display
+	the beginning, not the end of the script.
+
+	* server/php/java/script/URLReader.java (read): Use a buffered
+	stream.
+
+	* server/php/java/servlet/CGIServlet.java (getLocalPort,
+	getLocalName): Use the computed value.
+	
+	* server/php/java/servlet/FastCGIServlet.java (run): Use a
+	buffered output stream.
+	
+	* VERSION, php-java-bridge.spec: Version 3.0.8.1 released
+
+        2006-04-23  Jost Boekemeier  <jostb@intern>
+
+	* bind.c (wait_server): Timeout raised to 30 seconds.
+
+	* RunJavaBridge.c.in, RunMonoBridge.c.in: Transit only when
+	invoked with root privileges.
+
+	* server/php/java/bridge/Util.java (DEFAULT_CGI_LOCATIONS):
+	Removed /usr/bin/php, which is not a CGI binary.
+
+	* server/php/java/bridge/http/ContextServer.java (Check for the
+	fall-back channel on Windows).
+
+
 2006-04-30  Jost Boekemeier  <jostb@intern>
 
 	* PROTOCOL.TXT: Keep-alive added.

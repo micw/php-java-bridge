@@ -90,7 +90,7 @@ class ContextRunner implements Runnable {
 	} catch (IOException e) {
 	    Util.printStackTrace(e);
 	} finally {
-	    if(ctx!=null) ctx.remove();
+	    if(ctx!=null) ctx.destroy();
 	    channel.shutdown();
 	    //JavaBridge.load--;
 	}

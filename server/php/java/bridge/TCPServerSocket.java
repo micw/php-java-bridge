@@ -67,6 +67,7 @@ class TCPServerSocket implements ISocketFactory {
 
     public Socket accept() throws IOException {
 	Socket s = sock.accept();
+	s.setTcpNoDelay(true);
  	return s;
     }
     public String getSocketName() {

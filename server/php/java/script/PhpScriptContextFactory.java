@@ -20,7 +20,6 @@ public class PhpScriptContextFactory extends php.java.bridge.http.ContextFactory
      */
     public static ContextFactory addNew(ScriptContext context) {
 	PhpScriptContextFactory ctx = new PhpScriptContextFactory();
-	ctx.add();
 	ctx.setContext(context);
 	return ctx;
     }

@@ -18,6 +18,7 @@
 #else
 # include <sys/types.h>
 # include <sys/socket.h>
+# include <netinet/tcp.h>
 #endif
 
 /* 
@@ -94,6 +95,7 @@ struct proxyenv_ {
 
   /* for servlets: re-open connection */
   short must_reopen; 
+  short connection_is_closed;
 
   struct async_ctx {
 	void (*handle_request)(proxyenv *env);
@@ -118,9 +120,9 @@ struct proxyenv_ {
   void (*handle_request)(proxyenv *env);
 
   void (*writeCreateObjectBegin)(proxyenv *env, char*name, size_t strlen, char createInstance, void *result);
-  void (*writeCreateObjectEnd)(proxyenv *env);
+  short (*writeCreateObjectEnd)(proxyenv *env);
   void (*writeInvokeBegin)(proxyenv *env, long object, char*method, size_t strlen, char property, void* result);
-  void (*writeInvokeEnd)(proxyenv *env);
+  short (*writeInvokeEnd)(proxyenv *env);
   void (*writeResultBegin)(proxyenv *env, void* result);
   void (*writeResultEnd)(proxyenv *env);
   void (*writeString)(proxyenv *env, char*name, size_t strlen);
@@ -137,8 +139,8 @@ struct proxyenv_ {
   void (*writePairBegin)(proxyenv *env);
   void (*writePairEnd)(proxyenv *env);
   void (*writeUnref)(proxyenv *env, long object);
-  void (*writeEndConnection)(proxyenv *env, char property);
-  void (*finish)(proxyenv *env);
+  short (*writeEndConnection)(proxyenv *env, char property);
+  short (*finish)(proxyenv *env);
 
   ssize_t (*f_recv)(proxyenv*env, void *buf, size_t len);
   ssize_t (*f_recv0)(proxyenv*env, void *buf, size_t len);

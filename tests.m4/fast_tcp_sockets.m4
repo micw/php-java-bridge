@@ -5,6 +5,7 @@ AC_DEFUN([CHECK_FAST_TCP_SOCKETS],[
 #include <signal.h>
 #include <sys/time.h>
 #include <sys/socket.h>
+#include <netinet/tcp.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -18,7 +19,8 @@ AC_DEFUN([CHECK_FAST_TCP_SOCKETS],[
 #define PORT 9789
 #define COUNT 200
 
-struct sockaddr_in saddr, saddr2;
+static const count = 10, true=1;
+static struct sockaddr_in saddr, saddr2;
 static char RES[]="<N i=\"0\"/>;";
 static char REQ[]="@<I v=\"0\" m=\"lastException\" p=\"P\" i=\"136070284\"></I>";
 static char REQ1[]="@";
@@ -34,6 +36,7 @@ void runTest1() {
   for(i=0; i<COUNT; i++) {
     struct sockaddr_in saddr = saddr2;
     sock = socket(PF_INET, SOCK_STREAM, 0); if(sock==-1) sys_error("socket");
+    setsockopt(sock, 0x6, TCP_NODELAY, (void*)&true, sizeof true);
     err = connect(sock, (struct sockaddr*)&saddr, sizeof(saddr)); if(err == -1) sys_error("connect");
     n = send(sock, REQ, sizeof(REQ)-1, 0); if(n!=sizeof(REQ)-1) exit(2);
     for(n=0; n<sizeof(RES)-1; n+=count) if((count=recv(sock,b,sizeof(RES)-n-1,0))<0) exit(3);
@@ -48,6 +51,7 @@ void runTest2() {
   for(i=0; i<COUNT; i++) {
     struct sockaddr_in saddr = saddr2;
     sock = socket(PF_INET, SOCK_STREAM, 0); if(sock==-1) sys_error("socket2");
+    setsockopt(sock, 0x6, TCP_NODELAY, (void*)&true, sizeof true);
     err = connect(sock, (struct sockaddr*)&saddr, sizeof(saddr)); if(err == -1) sys_error("connect2");
     n = send(sock, REQ1, sizeof(REQ1)-1, 0); if(n!=sizeof(REQ1)-1) exit(5);
     n = send(sock, REQ2, sizeof(REQ2)-1, 0); if(n!=sizeof(REQ2)-1) exit(6);
@@ -63,7 +67,6 @@ unsigned long ctm () {
 }
 
 main() {
-  const count = 10, true=1;
   int ss, i, pid, status;
   
   saddr2.sin_family=saddr.sin_family=AF_INET;
@@ -91,13 +94,14 @@ main() {
     //if(r>1) puts("Test failed");
     close(ss);
     kill(pid, SIGTERM);
-    exit(r>5?1:0);
+    exit(r>2?1:0);
   } else {
     while(1) {
       socklen_t len = sizeof(saddr);
       int s = accept(ss, (struct sockaddr*)&saddr, &len); if(s==-1) exit(0);
       static char b[SIZE];
       int n, count;
+      setsockopt(s, 0x6, TCP_NODELAY, (void*)&true, sizeof true);
       for(n=0; n<sizeof(REQ1)-1; n+=count) if((count=recv(s,b,sizeof(REQ1)-n-1,0))<0) abort();
       for(n=0; n<sizeof(REQ2)-1; n+=count) if((count=recv(s,b,sizeof(REQ2)-n-1,0))<0) abort();
       n = send(s, RES, sizeof(RES)-1,0); if(n!=sizeof(RES)-1) abort();

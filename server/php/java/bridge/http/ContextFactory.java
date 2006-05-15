@@ -2,7 +2,7 @@
 
 package php.java.bridge.http;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Iterator;
 
 import php.java.bridge.JavaBridge;
@@ -18,9 +18,7 @@ import php.java.bridge.Util;
  * reference a "half-executed" bridge for local channel re-directs (for
  * "high speed" communication links). 
  *
- * ContextFactory instances are kept in an array with no more than 65535
- * entries, after 65535 context creations the context factory is destroyed if
- * this did not happen explicitly.  A unique [1..65535] context
+ * A unique context
  * instance should be created for each request and destroyed when the request
  * is done.  
  * 
@@ -41,39 +39,31 @@ public class ContextFactory extends SessionFactory {
     protected boolean removed=false;
     protected Object context = null;
 
-    private static final Hashtable contexts = new Hashtable();
+    private static final HashMap contexts = new HashMap();
     private JavaBridge bridge = null;
 	
-    private static short count=0; // If a context survives more than 65535
-    // context creations, that context will be
-    // destroyed.
     protected String id;
-    protected static synchronized int getNext() {
-	if(++count==0) ++count;
-	return count;
+    private static synchronized String addNext(ContextFactory thiz) {
+        int next = contexts.size()+1;
+        String id = String.valueOf(next);
+        contexts.put(id, thiz);
+        return id;
+    }
+    private static synchronized void remove(String id) {
+        contexts.remove(id);
     }
     protected ContextFactory() {
       super();
-      id=String.valueOf(0xFFFF&getNext());
+      id=addNext(this);
     }
 
-    protected void add() {
-    	Object old = contexts.put(this.getId(), this);
-    	if(old!=null) {
-    	    ((ContextFactory)old).remove();
-    	    if(Util.logLevel>2) Util.logError("Removed stale context: " +old);
-    	}
-    }
-    
     /**
      * Create a new ContextFactory and add it to the list of context factories kept by this classloader.
      * @return The created ContextFactory.
      * @see #get(String)
      */
     public static ContextFactory addNew() {
-    	ContextFactory ctx = new ContextFactory();
-    	ctx.add();
-    	return ctx;
+    	return new ContextFactory();
     }
     
     private ContextServer contextServer = null; 
@@ -100,44 +90,59 @@ public class ContextFactory extends SessionFactory {
         return factory;
     }
     /**
-     * Override this method if you want synchronize the current id with the persistent id..
-     * @param target The empty current ContextFactory (which was passed via the current X_JAVABRIDGE_CONTEXT header).
+     * Override this method, if you want synchronize the current id with the persistent id.
+     * @param target The fresh ContextFactory (which was passed via the current X_JAVABRIDGE_CONTEXT header).
      */
     protected void recycle(ContextFactory target) {}
     /**
-     * Synchronize the current state with id. Only possible if the current id is initialized and the target id is not initialized.
+     * Synchronize the current state with id.
      * <p>
      * When persistent connections are used, the bridge instances recycle their context factories. 
-     * However, a jsr223 client may have passed a fresh context id. If this happened, the bridge calls this method, 
-     * which gives the two contexts the chance to update/synchronize their state.</p>   
-     * @param id The target id
-     * @throws SecurityException if the target id already has a bridge and/or a context.
+     * However, a jsr223 client may have passed a fresh context id. If this happened, the bridge calls this method 
+     * which may update the current context with the fresh values from id.</p>
+     * <p>This method automatically destroys the fresh context id</p>   
+     * @param id The fresh id
      * @throws NullPointerException if the current id is not initialized
      * @see php.java.bridge.JavaBridge#recycle()
      */
     public void recycle(String id) throws SecurityException {
         ContextFactory target = get(id, contextServer);
-        if(target.bridge!=null || target.context!=null) throw new SecurityException("Illegal access");
         recycle(target);
+        target.destroy();
     }
     /**
-     * Removes the context factory from the classloader's list of context factories.
-     *
+     * @deprecated
+     * @see #destroy()
      */
-    public synchronized void remove() {
-	if(bridge.logLevel>3) bridge.logDebug("context finished: " +getId());
-	contexts.remove(getId());
+    public void remove() {
+        destroy();
+    }
+    /**
+     * Removes the context factory from the classloader's list of context factories
+     * and destroys its content.
+     */
+    public synchronized void destroy() {
+	if(Util.logLevel>3) Util.logDebug("context finished: " +getId());
+	remove(getId());
 	bridge=null;
 	removed=true;
 	notify();
     }
     
     /**
+     * @deprecated
+     * @see #destroyAll()
+     */
+    public static void removeAll() {
+        destroyAll();
+    }
+
+    /**
      * Remove all context factories from the classloader.
      * May only be called by the ContextServer.
      * @see php.java.bridge.http.ContextServer
      */
-    public static void removeAll() {
+    public static synchronized void destroyAll() {
 	for(Iterator ii=contexts.values().iterator(); ii.hasNext();) {
 	    ContextFactory ctx = ((ContextFactory)ii.next());
 	    synchronized(ctx) {

@@ -296,13 +296,14 @@ static void exec_vm(TSRMLS_D) {
 #endif
 }
 
-
+static const int true = 1;
 static int test_local_server(void) {
   int sock, n;
 #ifndef CFG_JAVA_SOCKET_INET
   sock = socket (PF_LOCAL, SOCK_STREAM, 0);
 #else
   sock = socket (PF_INET, SOCK_STREAM, 0);
+  if(sock!=-1) setsockopt(sock, 0x6, TCP_NODELAY, (void*)&true, sizeof true);
 #endif
   if(sock==-1) return -1;
   n = connect(sock,(struct sockaddr*)&EXT_GLOBAL(cfg)->saddr, sizeof EXT_GLOBAL(cfg)->saddr);
@@ -387,7 +388,10 @@ char* EXT_GLOBAL(test_server)(int *_socket, short *local, struct sockaddr*_saddr
 		close(sock);
 		continue;
 	  }
-	  if(_socket) *_socket=sock;
+	  if(_socket) {
+		*_socket=sock;
+		setsockopt(sock, 0x6, TCP_NODELAY, (void*)&true, sizeof true);
+	  }
 	  else close(sock);
 	  if(_port) _port[-1]=':';
 	  ret = strdup(host);

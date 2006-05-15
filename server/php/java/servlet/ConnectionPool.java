@@ -69,6 +69,17 @@ public class ConnectionPool {
      *
      */
     public static class Factory {
+        /**
+         * Create a new socket and bind it to the given host/port
+         * @param host The host, for example 127.0.0.1
+         * @param port The port, for example 9667
+         * @return The socket
+         * @throws UnknownHostException
+         * @throws IOException
+         */
+        public Socket bind(String host, int port) throws UnknownHostException, IOException {
+            return new Socket(InetAddress.getByName(host), port);
+        }
         /** 
          * Create a new InputStream.
          * @return The input stream. 
@@ -190,7 +201,7 @@ public class ConnectionPool {
             this.state = this.ostate = 0;	    
 	}
 	protected void init() throws UnknownHostException, IOException {
-            this.socket = new Socket(InetAddress.getByName(host), port);
+            this.socket = factory.bind(host, port);
             this.isClosed = false;
             inputStream = null;
             outputStream = null;

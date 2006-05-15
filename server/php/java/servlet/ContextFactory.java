@@ -55,13 +55,11 @@ public class ContextFactory extends php.java.bridge.http.ContextFactory {
      */
     public static ContextFactory addNew(ServletContext kontext, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res) {
     	ContextFactory ctx = new ContextFactory(kontext, proxy, req, res);
-    	ctx.add();
     	return ctx;
     }	
 
-    
-    public synchronized void remove() {
-    	super.remove();
+    public synchronized void destroy() {
+    	super.destroy();
     	req=null;
     }
     public String toString() {

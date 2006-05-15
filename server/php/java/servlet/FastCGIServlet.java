@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -71,7 +73,7 @@ public class FastCGIServlet extends CGIServlet {
 
     /**
      * The Fast CGI default port
-     */
+     */ 
     public static final int FCGI_CHANNEL = 9667;
     /**
      * This controls how many child processes the PHP process spawns.
@@ -92,6 +94,19 @@ exitting. When one process exits, another will be created.
     protected String php_fcgi_children = PHP_FCGI_CHILDREN;
     protected int php_fcgi_children_number = Integer.parseInt(PHP_FCGI_CHILDREN);
     protected String php_fcgi_max_requests = PHP_FCGI_MAX_REQUESTS;
+
+    private static final Object lockObject = new Object();
+    private static ConnectionPool cachedConnectionPool = null;
+    private final ConnectionPool.Factory defaultPoolFactory = new ConnectionPool.Factory() {
+      public Socket bind(String host, int port) throws UnknownHostException, IOException { 
+	  Socket s = super.bind(host, port);
+	  s.setTcpNoDelay(true);
+	  return s; 
+      }
+      public InputStream getInputStream() { return new FastCGIInputStream(); }
+      public OutputStream getOutputStream() { return new FastCGIOutputStream(); }
+    };
+    private final CGIRunnerFactory defaultCGIRunnerFactory = new CGIRunnerFactory();
 
     protected String startFcgiMessage() {
 	String base = context.getRealPath(cgiPathPrefix);
@@ -180,9 +195,7 @@ exitting. When one process exits, another will be created.
         cgiDir.append(cgiPathPrefix);
         return cgiDir;
     }
-    private ConnectionPool cachedConnectionPool = null;
-    private ConnectionPool.Factory cachedFactory = null;
-    private CGIRunnerFactory defaultCGIRunnerFactory = new CGIRunnerFactory();
+
     protected class CGIEnvironment extends CGIServlet.CGIEnvironment {
 	ConnectionPool connectionPool;
 
@@ -214,23 +227,17 @@ exitting. When one process exits, another will be created.
 				   String cgiPathPrefix) {
 
 	    if(!fcgiIsAvailable) return null;
-	    if(cachedFactory == null) cachedFactory = new ConnectionPool.Factory() {
-	        public InputStream getInputStream() {
-	            return new FastCGIInputStream();
-	        }
-	        public OutputStream getOutputStream() {
-	            return new FastCGIOutputStream();
-	        }
-	    };
-	    if(null == (connectionPool=cachedConnectionPool))
-	      try {
-		cachedConnectionPool=connectionPool = new ConnectionPool("127.0.0.1", FCGI_CHANNEL, php_fcgi_children_number, cachedFactory);
-	      } catch (Exception e) {
-		Util.logDebug(e+": FastCGI channel not available, switching off fast cgi. " + startFcgiMessage());
-		
-		fcgiIsAvailable = false;
-		return null;
-	      }
+	    synchronized(lockObject) {
+		if(null == (connectionPool=cachedConnectionPool))
+		    try {
+			cachedConnectionPool=connectionPool = new ConnectionPool("127.0.0.1", FCGI_CHANNEL, php_fcgi_children_number, defaultPoolFactory);
+		    } catch (Exception e) {
+			Util.logDebug(e+": FastCGI channel not available, switching off fast cgi. " + startFcgiMessage());
+			
+			fcgiIsAvailable = false;
+			return null;
+		    }
+	    }
 	    cgiRunnerFactory = defaultCGIRunnerFactory;
 			
 	    // Bogus, needed by CGIServlet, maybe?

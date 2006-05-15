@@ -1429,6 +1429,8 @@ public class JavaBridge implements Runnable {
     /**
      * Returns the JSR223 context when using persistent connections.
      * @return The JSR223 context.
+     * @param id The fresh context id, as specified by the jsr223 client, will be aliased to the current id
+     * @return The JSR223 context.
      * @see #recycle()
      * @see #getContext()
      */
@@ -1441,6 +1443,10 @@ public class JavaBridge implements Runnable {
      * Return a session handle shared among all JavaBridge
      * instances. If it is a HTTP session, the session is shared with
      * the servlet or jsp.
+     * @param name The session name, if any
+     * @param clientIsNew true, if the client wants a new session
+     * @param timeout session timeout in seconds
+     * @return The session context.
      * @throws Exception 
      * @see php.java.bridge.ISession
      */
@@ -1458,6 +1464,11 @@ public class JavaBridge implements Runnable {
     /**
      * Return a session handle when using persistent connections.
      * @throws Exception 
+     * @param id The fresh context id, as specified by the jsr223 client, will be aliased to the current id
+     * @param name The session name, if any
+     * @param clientIsNew true, if the client wants a new session
+     * @param timeout session timeout in seconds
+     * @return The session context.
      * @see #recycle()
      * @see #getSession(String, boolean, int)
      */
@@ -1746,14 +1757,42 @@ public class JavaBridge implements Runnable {
     public void recycle() {
 	Session.expire(this);
         globalRef = new GlobalRef(this);
+        // contextCache and sessionCache cleared on demand (in recycleContext)
         lastException = lastAsyncException = null;
 	cl.recycle();
         options.recycle();
         request.recycle();
     }
+    /**
+     * The php client calls this (through getContext or getSession),
+     * if it is running with a different context id than the one
+     * suggested from its (e.g.: PhpCgiServlet- or FacesServlet-)
+     * client.  Example: The PhpCgiServlet creates a context id and
+     * passes it to the php client. Usually the client passes this id
+     * back to the PhpJavaServlet which re-directs to a private
+     * communication channel. However, when
+     * java.persistent_connections is switched on and the client is
+     * already connected to one of PhpJavaServlet's communication
+     * channels (and it is therefore running on a different context id
+     * than the one suggested by the PhpCgiServlet), the PhpCgiServlet
+     * needs some way to pass the fresh information from the suggested
+     * id to the recycled id. Therefore all php clients can implement
+     * a <code>recycle(ContextFactory target)</code> callback which
+     * allows them to copy the necessary information into the recycled
+     * context.
+     * 
+     * @param id The suggested context id (from the client of the php client).
+     * @see php.java.bridge.http.ContextFactory#recycle(ContextFactory)     
+     */    
     private void recycleContext(String id) {
+      // defaultSessionFactory is shared among *all* clients
       if(sessionFactory==defaultSessionFactory) return;
-      // must be a ContextFactory
+
+      // depends on the client state ("cookie"): must re-build session context
+      this.contextCache = null;
+      this.sessionCache = null;
+
+      // sessionFactory != default: must be a ContextFactory
       ContextFactory current = ((ContextFactory)sessionFactory);
       current.recycle(id);
   }

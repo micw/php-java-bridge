@@ -370,7 +370,7 @@ public class Response {
 		    if(value instanceof Boolean)
 		        writeBoolean(((Boolean) value).booleanValue());
 		    else 
-		        writeBoolean(value!=null && String.valueOf(value).length()!=0);
+		        writeBoolean(value!=null);
 		} else if(staticType == Byte.TYPE || staticType == Short.TYPE || staticType == Integer.TYPE || staticType == Long.TYPE) {
 		    if(value instanceof Number) 
 		        writeLong(((Number)value).longValue());

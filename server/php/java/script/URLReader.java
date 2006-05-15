@@ -72,7 +72,7 @@ public class URLReader extends Reader {
 	    String overrideHosts = (String) env.get("X_JAVABRIDGE_OVERRIDE_HOSTS");
 	    byte[] buf = new byte[Util.BUF_SIZE];
 	    
-	    natOut = socket.getOutputStream();
+	    natOut = new java.io.BufferedOutputStream(socket.getOutputStream());
 	    natOut.write(Util.toBytes("GET "+url.getFile()+" HTTP/1.1\r\n"));
 	    natOut.write(Util.toBytes("Host: " + url.getHost()+":"+url.getPort()+ "\r\n"));
 	    natOut.write(Util.toBytes("X_JAVABRIDGE_CONTEXT: " +env.get("X_JAVABRIDGE_CONTEXT")+"\r\n"));

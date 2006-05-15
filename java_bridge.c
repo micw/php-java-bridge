@@ -54,6 +54,18 @@ static short is_type (zval *pobj TSRMLS_DC) {
 #endif
 }
 
+static void protocol_error(TSRMLS_D) {
+  proxyenv *env = JG(jenv);
+  if(!env) return;
+#ifndef __MINGW32__
+  (*env)->recv_buf[sizeof((*env)->recv_buf)-1]=0;
+  php_write((*env)->recv_buf, strlen((char*)(*env)->recv_buf) TSRMLS_CC);
+  php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Protocol violation at pos %d, please check that the backend (JavaBride.war) is deployed or please switch off the java.servlet option.\n", 98, (*env)->c);
+#else
+  php_error(E_ERROR, "%*s\nphp_mod_"/**/EXT_NAME()/**/"(%d): Protocol violation at pos %d, please check that the backend (JavaBride.war) is deployed or please switch off the java.servlet option.\n", strlen((*env)->recv_buf), (*env)->recv_buf, 98, (*env)->c);
+#endif
+}
+
 #ifdef ZEND_ENGINE_2
 struct java_object {
   zend_object parent;
@@ -223,7 +235,7 @@ void EXT_GLOBAL(call_function_handler)(INTERNAL_FUNCTION_PARAMETERS, char*name, 
 	if(!jenv) {ZVAL_NULL(object); return;}
 
 	EXT_GLOBAL(get_jobject_from_object)(object, &obj TSRMLS_CC);
-	assert(obj);
+	if(!obj) protocol_error(TSRMLS_C);
 
     result = (long)return_value;
     /* invoke a method on the given object */

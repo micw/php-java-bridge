@@ -33,7 +33,8 @@ import php.java.bridge.Util.Process;
 public class PhpCGIServlet extends FastCGIServlet {
 
     private static final boolean USE_SH_WRAPPER = new File("/bin/sh").exists();
-    private boolean fcgiStarted = false;
+    private static final Object fcgiStartLock = new Object();
+    private static boolean fcgiStarted = false;
     private static final long serialVersionUID = 38983388211187962L;
     /**
      * The CGI default port
@@ -47,7 +48,8 @@ public class PhpCGIServlet extends FastCGIServlet {
      */
     public static final int CGI_MAX_REQUESTS = 50;
     private int cgi_max_requests = CGI_MAX_REQUESTS;
-
+    private final CGIRunnerFactory defaultCgiRunnerFactory = new CGIRunnerFactory();
+    
     private final void runFcgi(Map env, String php) {
 	    int c;
 	    byte buf[] = new byte[CGIServlet.BUF_SIZE];
@@ -207,7 +209,8 @@ public class PhpCGIServlet extends FastCGIServlet {
 				   String contextPath, String servletPath,
 				   String cgiPathPrefix) {
 	    String[] retval;
-	    if(!fcgiStarted && canStartFCGI(contextPath)) {
+	    synchronized(fcgiStartLock) {
+	      if(!fcgiStarted && canStartFCGI(contextPath)) {
 		fcgiStarted = true;
 		try {
 		    Thread t = (new Thread("JavaBridgeFastCGIRunner") {
@@ -233,10 +236,10 @@ public class PhpCGIServlet extends FastCGIServlet {
 			Thread.sleep(100);
 		    }
 		} catch (Throwable t) {Util.printStackTrace(t);}
-	    } 
-	    
+	      } 
+	    }
 	    if((retval=super.findCGI(pathInfo, webAppRootDir, contextPath, servletPath, cgiPathPrefix))!=null) return retval;
-	    cgiRunnerFactory = new CGIRunnerFactory();
+	    cgiRunnerFactory = defaultCgiRunnerFactory;
 		
 	    StringBuffer cgiDir = new StringBuffer(webAppRootDir);
 	    if(!webAppRootDir.endsWith(File.separator)) cgiDir.append(File.separatorChar);
@@ -330,14 +333,34 @@ public class PhpCGIServlet extends FastCGIServlet {
         }
     } //class CGIRunner
     
-    static short count = 0;
+    private static short count = 0;
+    private static final Object lockObject = new Object();
+
+    /**
+     * This is necessary because some servlet engines only have one global servlet pool. 
+     * Since the PhpCGIServlet depends on the outcome of the PhpJavaServlet, we can have only
+     * <code>pool-size/2</code> PhpCGIServlet instances without running into a dead lock: PhpCGIServlet instance
+     * waiting for result from PhpJavaServlet instance, Servlet engine trying to allocate a PhpJavaServlet instance,
+     * waiting for the pool to release an old servlet instance. This may never happen when the pool is 
+     * filled up with PhpCGIServlet instances all waiting for PhpJavaServlet instances, which the pool cannot deliver.
+     * <p>
+     * It is recommended to use a servlet engine which uses a thread pool per servlet or to use the Apache/IIS
+     * front-end instead.
+     * </p>
+     * @param res The servlet response
+     * @return true if the number of active PhpCGIServlet instances is less than cgi_max_requests.
+     * @throws ServletException
+     * @throws IOException
+     */
     private boolean checkPool(HttpServletResponse res) throws ServletException, IOException {
-        if(count++>=cgi_max_requests) {
+      synchronized (lockObject) {
+	if(count++>=cgi_max_requests) {
             res.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Out of system resources. Try again shortly or use the Apache or IIS frontend instead.");
             Util.logFatal("Out of system resources. Adjust max_requests or set up the Apache or IIS frontend.");
             return false;
         }
         return true;
+      }
     }
     /**
      * Used when running as a cgi binary only.

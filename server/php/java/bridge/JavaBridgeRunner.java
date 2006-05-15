@@ -116,7 +116,7 @@ public class JavaBridgeRunner extends HttpServer {
 	    }
 	    else {
 	        sin.close(); sin=null;
-	        ctx.remove();
+	        ctx.destroy();
 	    }
 	} catch (Exception e) {
 	    Util.printStackTrace(e);

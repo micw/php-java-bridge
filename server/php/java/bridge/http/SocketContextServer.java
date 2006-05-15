@@ -95,7 +95,7 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
 	    }
 	} catch (SecurityException t) {
 	    (new Channel(in, out, socket)).shutdown();
-	    ContextFactory.removeAll();
+	    ContextFactory.destroyAll();
 	    Util.printStackTrace(t);
 	    return false;
 	} catch (Throwable t) {

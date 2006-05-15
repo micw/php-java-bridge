@@ -48,28 +48,31 @@ static char*get_context(proxyenv *env, char context[256], short*context_length) 
 /**
  * Send the packet to the server
  */
-static void send_data(proxyenv *env, char *data, size_t size) {
+static short send_data(proxyenv *env, char *data, size_t size) {
   size_t s=0; ssize_t n=0;
  res: 
   errno=0;
   while((size>s)&&((n=(*env)->f_send(env, data+s, size-s)) > 0)) 
 	s+=n;
   if(size>s && !n && errno==EINTR) goto res; // Solaris, see INN FAQ
+  return n!=-1;
 }
 
-static void add_header(proxyenv *env, size_t *size, char*header, size_t header_length) {
-  if(!header_length) return;
+static short add_header(proxyenv *env, size_t *size, char*header, size_t header_length) {
+  if(!header_length) return 1;
 
   if(*size+header_length<(*env)->send_size) {
 	memmove((*env)->send+header_length, (*env)->send, *size);
 	memcpy(((*env)->send), header, header_length);
 	*size+=header_length;
+	return 1;
   } else {
-	send_data(env, header, header_length);
+	return send_data(env, header, header_length);
   }
 }
 
-static void end(proxyenv *env) {
+static short end(proxyenv *env) {
+  short success;
   size_t size = (*env)->send_len;
   char *servlet_context;
   char *context;
@@ -91,13 +94,12 @@ static void end(proxyenv *env) {
 	assert(!(*env)->peer_redirected || ((*env)->peer_redirected && (((*env)->peer0)==-1)));
 	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", servlet_context, (unsigned long)(size+1), EXT_GLOBAL(get_channel)(TSRMLS_C), getSessionFactory(env), mode);
 
-	add_header(env, &size, header, header_length);
+	success = add_header(env, &size, header, header_length);
   } else {						/* re-directed */
-	add_header(env, &size, context, context_length);
+	success = add_header(env, &size, context, context_length);
   }
-  send_data(env, (char*)(*env)->send, size);
-
-  (*env)->send_len=0;
+  if(success) success = send_data(env, (char*)(*env)->send, size);
+  return success;
 }
 
 static char *get_cookies(zval *val, proxyenv *env) {
@@ -127,7 +129,8 @@ function get_cookies() {\
  * Sends override_redirect and cookies
  * @see check_context
  */
-static void end_session(proxyenv *env) {
+static short end_session(proxyenv *env) {
+  short success;
   size_t size = (*env)->send_len;
   zval val;
   int peer0 = (*env)->peer0;
@@ -142,18 +145,38 @@ static void end_session(proxyenv *env) {
   
   header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_REDIRECT: %d\r\n%sX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", (*env)->servlet_context_string, (unsigned long)(size+1), override_redirect, get_cookies(&val, env), EXT_GLOBAL(get_channel)(TSRMLS_C), getSessionFactory(env), mode);
 
-  add_header(env, &size, header, header_length);
-  send_data(env, (char*)(*env)->send, size);
+  success = add_header(env, &size, header, header_length);
+  if(success) success = send_data(env, (char*)(*env)->send, size);
+  return success;
+}
 
+/**
+ * Send out the data to the back-end.
+ * @param env The proxyenv
+ * @return 1 on success, 0 if the connection the back-end is lost
+ */
+static short finish(proxyenv *env) {
+  short success = (*env)->finish(env);
+  if(!success) { (*env)->connection_is_closed = 1; return 0; }
   (*env)->send_len=0;
+  return 1;
 }
 
-static void flush(proxyenv *env) {
-  (*env)->finish(env);
-  (*env)->handle(env);
+/**
+ * Send out the data to the back-end and read the response.
+ * @param env The proxyenv
+ * @return 1 on success, 0 if the connection the back-end is lost
+ */
+static short flush(proxyenv *env) {
+  short success;
+  if((*env)->connection_is_closed) return 0;
+  success = finish(env);
+  if(success) (*env)->handle(env);
+  return success;
 }
 
-void protocol_end (proxyenv *env) {
+static short end_connection (proxyenv *env) {
+  short success;
   char *servlet_context;
   short context_length = 0;
   char *context;
@@ -162,8 +185,10 @@ void protocol_end (proxyenv *env) {
 
   if((*env)->must_reopen==2) context = get_context(env, kontext, &context_length);
   (*env)->must_reopen=0;
+  (*env)->finish=end;
 
   TSRMLS_FETCH();
+
   servlet_context = EXT_GLOBAL (get_servlet_context) (TSRMLS_C);
 
   if(!(*env)->is_local && servlet_context) {
@@ -174,13 +199,13 @@ void protocol_end (proxyenv *env) {
 
 	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nContent-Type: text/html\r\nContent-Length: 0\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n", servlet_context, getSessionFactory(env));
 
-	add_header(env, &size, header, header_length);
-	send_data(env, (char*)(*env)->send, size);
+	success = add_header(env, &size, header, header_length);
+	if(success) success = send_data(env, (char*)(*env)->send, size);
   } else {						/* re-directed */
-	add_header(env, &size, context, context_length);
-	send_data(env, (char*)(*env)->send, size);
+	success = add_header(env, &size, context, context_length);
+	if(success) success = send_data(env, (char*)(*env)->send, size);
   }
-  (*env)->send_len=0;
+  return success;
 }
 static ssize_t send_async(proxyenv*env, const void*buf, size_t length) {
   return (ssize_t)fwrite(buf, 1ul, length, (*env)->async_ctx.peer);
@@ -261,6 +286,8 @@ void EXT_GLOBAL(check_session) (proxyenv *env TSRMLS_DC) {
 	  int sock = socket (PF_INET, SOCK_STREAM, 0);
 	  struct sockaddr *saddr = &(*env)->orig_peer_saddr;
 	  if (-1!=sock) {
+		static const int true = 1;
+		setsockopt(sock, 0x6, TCP_NODELAY, (void*)&true, sizeof true);
 		if (-1!=connect(sock, saddr, sizeof (struct sockaddr))) {
 		  (*env)->peer0 = (*env)->peer;
 		  (*env)->peer = sock;
@@ -356,12 +383,12 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    (*env)->send_len+=EXT_GLOBAL(snprintf) ((char*)((*env)->send+(*env)->send_len), flen, "<C v=\"%s\" p=\"%c\" i=\"%ld\">", name, createInstance, (long)((*env)->async_ctx.result=result));
    assert((*env)->send_len<=(*env)->send_size);
  }
- static void CreateObjectEnd(proxyenv *env) {
+ static short CreateObjectEnd(proxyenv *env) {
    size_t flen;
    GROW(FLEN);
    (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "</C>");
    assert((*env)->send_len<=(*env)->send_size);
-   flush(env);
+   return flush(env);
  }
  static void InvokeBegin(proxyenv *env, long object, char*method, size_t len, char property, void* result) {
    size_t flen;
@@ -371,12 +398,12 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<I v=\"%ld\" m=\"%s\" p=\"%c\" i=\"%ld\">", object, method, property, (long)((*env)->async_ctx.result=result));
    assert((*env)->send_len<=(*env)->send_size);
  }
- static void InvokeEnd(proxyenv *env) {
+ static short InvokeEnd(proxyenv *env) {
    size_t flen;
    GROW(FLEN);
    (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "</I>");
    assert((*env)->send_len<=(*env)->send_size);
-   flush(env);
+   return flush(env);
  }
 
  static void ResultBegin(proxyenv *env, void*result) {
@@ -390,17 +417,19 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    GROW(FLEN);
    (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "</R>");
    assert((*env)->send_len<=(*env)->send_size);
-   end(env);
+   finish(env);
  }
 
- static void EndConnection(proxyenv *env, char property) {
-   size_t flen;
-   assert(property=='A' || property=='E');
-   GROW(FLEN);
-   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<F p=\"%c\"/>", property);
-   assert((*env)->send_len<=(*env)->send_size);
-   flush(env);
- }
+static short EndConnection(proxyenv *env, char property) {
+  size_t flen;
+  assert(property=='A' || property=='E');
+  GROW(FLEN);
+  (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<F p=\"%c\"/>", property);
+  assert((*env)->send_len<=(*env)->send_size);
+
+  (*env)->finish=end_connection;
+  return flush(env);
+}
 
  static void String(proxyenv *env, char*name, size_t _len) {
    size_t flen;
@@ -512,15 +541,15 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
  
 
 static void close_connection(proxyenv *env TSRMLS_DC) {
+  short is_closed = 0;
   if(env && *env) {
 	if((*env)->peer!=-1) {
 	  /* end servlet session */
-	  (*env)->writeEndConnection(env, 'E');
-	  protocol_end(env);
+	  if(!(*env)->connection_is_closed) (*env)->writeEndConnection(env, 'E');
 	  close((*env)->peer);
-	  if((*env)->peerr!=-1) close((*env)->peerr);
-	  if((*env)->peer0!=-1) close((*env)->peer0);
 	}
+	if((*env)->peerr!=-1) close((*env)->peerr);
+	if((*env)->peer0!=-1) close((*env)->peer0);
 	if((*env)->s) free((*env)->s);
 	if((*env)->send) free((*env)->send);
 	if((*env)->server_name) free((*env)->server_name);
@@ -535,12 +564,15 @@ static void close_connection(proxyenv *env TSRMLS_DC) {
 	EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);
   }
 }
-static void recycle_connection(proxyenv *env TSRMLS_DC) {
+static short recycle_connection(proxyenv *env TSRMLS_DC) {
   if(env && *env) {
+	if((*env)->connection_is_closed) return 0;
 	if((*env)->peer!=-1) {
-	  /* end servlet session */
-	  (*env)->writeEndConnection(env, 'A');
-	  protocol_end(env);
+
+	  if(!(*env)->writeEndConnection(env, 'A')) { 
+		(*env)->connection_is_closed=1;
+		return 0;
+	  }
 	}
 	EXT_GLOBAL(save_cfg)(env TSRMLS_CC);
 	EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);
@@ -550,13 +582,14 @@ static void recycle_connection(proxyenv *env TSRMLS_DC) {
 	  (*env)->current_servlet_ctx = 0; 
 	}
   }
+  return 1;
 }
-void EXT_GLOBAL(close_connection)(proxyenv**penv, short persistent_connection TSRMLS_DC) {
-  if(persistent_connection) 
-	recycle_connection(*penv TSRMLS_CC);
-  else
-	close_connection(*penv TSRMLS_CC);
+short EXT_GLOBAL(close_connection)(proxyenv**penv, short persistent_connection TSRMLS_DC) {
+  int success = 1;
+  if(persistent_connection) success = recycle_connection(*penv TSRMLS_CC);
+  if(!persistent_connection || !success) close_connection(*penv TSRMLS_CC);
   *penv=0;						/* a copy should already be in connections */
+  return success;
 }
 proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, void (*handle_request)(proxyenv *env), void (*handle_cached)(proxyenv *env), char *server_name, short is_local, struct sockaddr *saddr) {
    proxyenv *env;  
@@ -594,6 +627,7 @@ proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, void (*handle_request)(
 
    (*env)->server_name = server_name;
    (*env)->must_reopen = 0;
+   (*env)->connection_is_closed = 0;
    (*env)->current_servlet_ctx = 
 	 (*env)->servlet_ctx = (*env)->servlet_context_string = 0;
    (*env)->backend_has_session_proxy = 0;
@@ -621,6 +655,7 @@ proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, void (*handle_request)(
    (*env)->writePairBegin_n=PairBegin_n;
    (*env)->writePairEnd=PairEnd;
    (*env)->writeUnref=Unref;
+
    (*env)->writeEndConnection=EndConnection;
    (*env)->finish=end;
 

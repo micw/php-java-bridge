@@ -26,7 +26,6 @@ public class PhpFacesScriptContextFactory extends php.java.servlet.ContextFactor
      */
     public static ContextFactory addNew(IPhpScriptContext context, ServletContext kontext, HttpServletRequest req, HttpServletResponse res) {
 	PhpFacesScriptContextFactory ctx = new PhpFacesScriptContextFactory(context, kontext, req, res);
-	ctx.add();
 	return ctx;
     }
     protected PhpFacesScriptContextFactory(IPhpScriptContext context, ServletContext ctx, HttpServletRequest req, HttpServletResponse res) { 
