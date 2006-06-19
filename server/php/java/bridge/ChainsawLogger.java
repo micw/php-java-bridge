@@ -1,0 +1,60 @@
+/*-*- mode: Java; tab-width:8 -*-*/
+
+package php.java.bridge;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.net.Socket;
+
+
+/**
+ * A logger class which connects to chainsaw -- chainsaw is a log4j viewer.
+ * 
+ * Start chainsaw, for example by clicking on Applications ->
+ * Programming -> Chainsaw or via:<br> <code>java -classpath
+ * /usr/share/java/log4j.jar org.apache.log4j.chainsaw.Main</code><br>
+ * and then start the PHP/Java Bridge:<br> 
+ * <code>java -classpath /usr/share/java/log4j.jar:/usr/share/java/JavaBridge.jar php.java.bridge.JavaBridge</code>
+ */
+public class ChainsawLogger extends Log4jLogger implements ILogger {
+    /** The default chainsaw port */    
+    public static final String DEFAULT_PORT="4445";
+    /** The default cainsaw host */    
+    public static final String DEFAULT_HOST="127.0.0.1";
+
+    /** override this method, if you want to connect to a different
+     * host or port
+     * 
+     * @param defaultHost The default host
+     * @param defaultPort The default port
+     * @throws UnknownHostException Cannot happen.
+     * @throws IOException If chainsaw isn't running.
+     */
+    public void configure (String defaultHost, int defaultPort) throws Exception {
+        Socket s = new Socket(defaultHost, defaultPort);
+        s.close();
+        Class clazz = loader.forName("org.apache.log4j.net.SocketAppender");
+        Constructor constructor = clazz.getConstructor(new Class[]{String.class, int.class});
+        Object socketAppender = constructor.newInstance(new Object[]{defaultHost, new Integer(defaultPort)});
+        clazz = loader.forName("org.apache.log4j.BasicConfigurator");
+        Class appender = loader.forName("org.apache.log4j.Appender");
+        Method method = clazz.getMethod("configure", new Class[]{appender});
+        method.invoke(clazz, new Object[]{socketAppender});
+    }
+    protected void init() throws Exception {
+	configure(DEFAULT_HOST, Integer.parseInt(System.getProperty("chainsaw.port", DEFAULT_PORT)));
+	logger = new LoggerProxy();      
+    }
+    /**
+     * Create a new chainsaw logger.
+     * @see php.java.bridge.Util#setLogger(ILogger)
+     * @throws UnknownHostException If the host does not exist.
+     * @throws IOException If chainsaw isn't running.
+     */
+    public ChainsawLogger() throws Exception {
+        super();
+    }
+    public String toString() {
+	return "Chainsaw logger, host: " + DEFAULT_HOST + ", port: " + DEFAULT_PORT; 
+    }
+}
