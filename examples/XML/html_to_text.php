@@ -49,12 +49,12 @@ class HandlerBase {
   function characters ($chars, $start, $length)
   {
     $s = new java("java.lang.String", $chars, $start, $length);
-    echo $s->toString();
+    echo "$s";
   }
   function ignorableWhitespace ($chars, $start, $length)
   {
     $s = new java("java.lang.String", $chars, $start, $length);
-    echo $s->toString();
+    echo "$s";
   }
 
   function processingInstruction ($target, $data)

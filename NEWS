@@ -5,11 +5,150 @@ Please send bug reports, questions and suggestions to
 
 Version 3.1.0:
 
+* The windows default location has been changed from c:\php5 to
+c:\php.
+
+* The servlet SAPI now supports HTTPS. The default communication port
+is 127.0.0.1:9157 (see java.hosts in the WEB-INF/.../php*.ini). For
+tomcat for example add the following entry marked with a + to the
+conf/server.xml:
+
+  <Service name="Catalina">
+  [...]
++  <Connector port="9157" address="127.0.0.1"/>
+  [...]
+  </Service>
+
+* The extension_dir/lib directory is no longer scanned by the
+DynamicJavaBridgeClassLoader. All Java .jar and .class files located
+in this directory are added to the system class path when the virtual
+machine starts. This means that this directory can now contain impure
+java libraries (=libraries which use the java native interface). But
+this also means that the dynamic loader doesn't know whether a lib in
+this directory has been changed or added unless this lib has been
+required using `java_require("lib.jar")' or with
+`require_once("lib/class_Name.php")', which uses java_require()
+internally.
+
+* The ikvmc.exe and ICSharpCode.SharpZipLib.dll IKVM.AWT.WinForms.dll
+IKVM.GNU.Classpath.dll IKVM.Runtime.dll are now included. This means
+that it is now possible to access .NET dll's without installing
+additional software; ./configure --with-mono && make && make install is
+enough to load/call .NET or Mono .dlls from PHP -- .NET or Mono must
+be installed, of course.
+
+* It is now possible to convert Java libraries into PHP code. 
+For example the command java -jar JavaBridge.jar --convert
+/usr/share/pear lucene.jar creates PHP lucene classes from
+the Java lucene.jar. When the PHP/Java Bridge has been configured to
+run without Java (./configure w/o the "--with-java" argument), the
+created PHP lucene classes can be used directly from PHP code, Java is
+not needed anymore. Only the java.so or php_java.dll file and the
+generated Lucene PHP classes are required, for example:
+
+<?php
+require_once("lucene/org_apache_lucene_search_IndexSearcher.php")
+require_once("lucene/org_apache_lucene_search_PhraseQuery.php")
+require_once("lucene/org_apache_lucene_index_Term.php")
+
+$searcher = new org_apache_lucene_search_IndexSearcher(getcwd());
+$term = new org_apache_lucene_index_Term("name", "test.php");
+$phrase = new org_apache_lucene_search_PhraseQuery();
+$phrase->add($term);
+
+$hits = $searcher->search($phrase);
+$iter = $hits->iterator();
+
+while($iter->hasNext()) {
+  $next = $iter->next();
+  $name = $next->get("name");
+  echo "found: $name\n";
+}
+?>
+
+* A binary RPM for RHEL3 is not available anymore. If you want to
+install the bridge on RHEL3 please create a binary RPM from the source
+RPM.
+
 * Persistent connections: If "java.persistent_connections" is set to
-"On", the Apache/Tomcat combination delivers Java based content faster
-than Tomcat standalone(!) and more than two times faster than
-Apache/Tomcat connected via Tomcat's mod_jk. Tested with Apache
-2.0.49 running PHP 5.1.2 in the slowest configuration (mpm=prefork).
+"On", the Apache/Tomcat5 combination delivers a PHP/Java based mix more
+or less as fast as Tomcat would deliver an equivalent JSP file.
+
+* Log4j added: If java.log_file is not set, the bridge uses log4j, if
+available. The default appender is log4j "chainsaw" (a stupid name for
+a log viewer) listening on localhost:4445. Other appenders, for
+example jdbc, can be configured by overriding ChainsawLogger.configure
+or by calling Util.setLogger(ILogger).
+
+* Improved dynamic loading: java_require(file) is now fail fast. It
+checks if local jar files do exist and are accessible. However, urls
+are loaded lazily. If the urls could not be loaded, the java_require()
+call succeeds but one will receive a ClassNotFoundException later on.
+
+For example:
+
+// java_require(file) is fail fast
+try {
+  java_require("/usr/share/java/doesNotExist.jar"); // fails
+} catch (JavaException $ex) {
+  echo "doesNotExist library not installed\n";
+  echo $ex->getCause();
+}
+
+// java_require(url) is lazy
+java_require("http://doesNotExist.com/foo.jar"); // succeeds
+...
+try {
+  $foo = new Java("foo");                        // fails
+} catch (JavaException $ex) {
+  echo "http://doesNotExist.com/foo.jar:foo.class could not be loaded\n";
+  echo $ex->getCause();
+}
+
+* A standard global repository for java libraries has been added. The
+standalone back-end adds the following standard extension directories
+to java.ext.dirs: "/usr/java/packages/lib/ext" and
+"/usr/share/java/ext" and, for backward compatibility,
+extension_dir/lib (or extension_dir\lib, on windows). All java
+libraries located in these directories are loaded
+automatically. Example:
+
+# copy log4j.jar to the java.ext.dirs:
+cp log4j.jar /usr/share/java/ext
+
+# start the log4j viewer
+java -classpath log4j.jar org.apache.log4j.chainsaw.Main &
+
+# start the JavaBridge, the bridge automatically loads log4j and
+# writes its log to the running log4j viewer.
+java -jar JavaBridge.jar &
+
+* It is now possible to lock the standalone VM so that certain users
+cannot (accidently) create arbitrary files, open connections to other
+hosts etc. The file "javabridge.policy" has been added to the
+standalone container, a default file is located in the extension
+directory and denies almost everything. The policy file can be edited
+by using the java jdk "policytool". The new option
+java.security_policy can be used to set a custom policy file. Example:
+java.security.policy="c:/php5/javabridge.policy".  The following
+javabridge.policy file example shows how to allow all users to start
+threads and call System.exit():
+
+grant {
+  permission java.util.PropertyPermission "*", "read";
+  permission java.net.SocketPermission "*", "accept, resolve";
+  permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
+
+  permission java.lang.RuntimePermission "exitVM";
+  permission java.lang.RuntimePermission "modifyThreadGroup";
+  permission java.lang.RuntimePermission "modifyThread";
+};
+
+* Long-running background threads which were started from the
+request-handling JavaBridge thread now receive an InterruptedException,
+when the JavaBridge request-handling thread terminates. Long-running
+threads such as printer jobs should catch this signal and terminate
+as soon as their job is done.
 
 
 Version 3.0.8:
@@ -181,7 +320,7 @@ Version 3.0.2:
 
     User: Selects the "current" servlet context. A request:
           http://foo.com/context1/test.php connects test.php to the
-          backend: http://<java.hosts[0]>/context1/test.php. 
+          backend: http://<java.hosts[0]>/context1/test.phpjavabridge. 
 
           Example:
           [java]
@@ -192,11 +331,11 @@ Version 3.0.2:
           http://foo.com/contextA/order.php
 
           Then order.php sends a PUT request to the backend:
-          http://127.0.0.1:8080/contextA/order.php        
+          http://127.0.0.1:8080/contextA/order.phpjavabridge
       
 * The servlet mapping for PhpJavaServlet has been
   removed. java.servlet=User or
-  java.servlet=/JavaBridge/PhpJavaServlet.php can be used instead.
+  java.servlet=/JavaBridge/PhpJavaServlet.phpjavabridge can be used instead.
 
 * When the java VM was started as a child of apache (OPTION#3) and
   apache sent out a kill signal to all childs in its process group, the

@@ -2,20 +2,25 @@
 
 package php.java.bridge;
 
+import java.util.Iterator;
+import java.util.LinkedList;
+
 /**
  * Create new session or context instances
  * @see php.java.bridge.Session
  * @see php.java.bridge.http.Context
  * @see php.java.servlet.Context
  * @see php.java.bridge.http.ContextFactory
- * @see php.java.servlet.ContextFactory
+ * @see php.java.servlet.ServletContextFactory
  * @see php.java.script.PhpScriptContextFactory
   * @author jostb
  *
  */
 public class SessionFactory {
-  
-  protected SessionFactory() {}
+
+  /** Check for expired sessions or contexts every 10 minutes */
+  public static final long TIMER_FREQ = 600000;
+  private static final SessionTimer timer = new SessionTimer();
   
   private ISession session(String name, boolean clientIsNew, int timeout) {
 	synchronized(JavaBridge.sessionHash) {
@@ -68,5 +73,32 @@ public class SessionFactory {
      */
     public Object getContext() {
 	return null;
+    }
+    protected static final SessionTimer getTimer() {
+        return timer;
+    }
+    protected static class SessionTimer implements Runnable {
+        LinkedList jobs = new LinkedList();
+        public SessionTimer() {
+          Thread t = (new Thread(this, "JavaBridgeSessionTimer"));
+          t.setDaemon(true);
+          t.start();
+        }
+        public void addJob(Runnable r) {
+            jobs.add(r);
+        }
+        public void run() {
+            try {
+                while(true) {
+                    Thread.sleep(TIMER_FREQ);
+                    Session.expire();
+                    
+                    for(Iterator ii = jobs.iterator(); ii.hasNext();) {
+                        Runnable job = (Runnable) ii.next();
+                        job.run();
+                    }
+                }
+            } catch (InterruptedException e) {/*ignore*/}
+        }
     }
 }

@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 class Session implements ISession {
+  
     protected Map map;
     protected String name;
     private static int sessionCount=0;
@@ -79,7 +80,11 @@ class Session implements ISession {
 	return new HashMap(map); // unshare the map 
     }
 
-    static void expire(JavaBridge bridge) {
+    /** Check for expired sessions every 10 minutes 
+     * @see #CHECK_SESSION_TIMEOUT
+     * @param bridge the bridge
+     */
+    static synchronized void expire() {
 	if(JavaBridge.sessionHash==null) return;
     	synchronized(JavaBridge.sessionHash) {
 	    for(Iterator e = JavaBridge.sessionHash.values().iterator(); e.hasNext(); ) {
@@ -87,7 +92,7 @@ class Session implements ISession {
 		if((ref.timeout >0) && (ref.lastAccessedTime+ref.timeout<=System.currentTimeMillis())) {
 		    sessionCount--;
 		    e.remove();
-		    if(bridge.logLevel>3) bridge.logDebug("Session " + ref.name + " expired.");
+		    if(Util.logLevel>3) Util.logDebug("Session " + ref.name + " expired.");
 		}
 	    }
 	}

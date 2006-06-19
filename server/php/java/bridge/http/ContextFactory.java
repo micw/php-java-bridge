@@ -5,6 +5,7 @@ package php.java.bridge.http;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import php.java.bridge.ISession;
 import php.java.bridge.JavaBridge;
 import php.java.bridge.JavaBridgeClassLoader;
 import php.java.bridge.SessionFactory;
@@ -18,10 +19,16 @@ import php.java.bridge.Util;
  * reference a "half-executed" bridge for local channel re-directs (for
  * "high speed" communication links). 
  *
+ *<p>
  * A unique context
  * instance should be created for each request and destroyed when the request
- * is done.  
- * 
+ * is done.
+ * </p>
+ * <p>
+ * Clients of the PHP clients may attach additional data and run with
+ * a customized ContextFactory by using the visitor pattern, @see #accept(IContextFactory).
+ * </p>
+ * <p>
  * The string ID of the instance should be passed to the client, which may
  * pass it back together with the getSession request or the "local
  * channel re-direct". If the former happens, we invoke the promise
@@ -29,44 +36,78 @@ import php.java.bridge.Util;
  * evaluate to the same session object.  For local channel re-directs
  * the ContextFactory is given to a ContextRunner which handles the
  * local channel communication.
+ * </p>
+ * <p>
+ * When a php client is not interested in a context for 5 seconds (checked every 10 minutes), the
+ * context is destroyed: a) switching from the HTTP tunnel to the local channel of the
+ * ContextRunner or b) switching from the fresh context created by the client of the PHP client to the
+ * recycled, persistent context, costs only one round-trip. The time for such a context switch 
+ * is usually much less than 10ms unless either the php client or the client that waits for the php client 
+ * is traced. If 5 seconds is not enough during debugging, change the ORPHANED_TIMEOUT.
+ * </p>
  * <p>
  * There can be only one instance of a ContextFactory per classloader.
  * </p>
- * @see php.java.servlet.ContextFactory
+ * @see php.java.servlet.ServletContextFactory
  * @see php.java.bridge.http.ContextServer
+ * @see php.java.bridge.SessionFactory#TIMER_FREQ
  */
-public class ContextFactory extends SessionFactory {
-    protected boolean removed=false;
-    protected Object context = null;
+public final class ContextFactory extends SessionFactory implements IContextFactory {
+
+    static {
+       getTimer().addJob(new Runnable() {public void run() {destroyOrphaned();}});
+    }
 
     private static final HashMap contexts = new HashMap();
+    private static final HashMap liveContexts = new HashMap();
+    
+    private static final long ORPHANED_TIMEOUT = 5000; // every 5 seconds
+
+    private boolean removed=false;
+
     private JavaBridge bridge = null;
-	
-    protected String id;
+
+    private String id;
+    private long timestamp;
+
+    private ContextServer contextServer = null;
+    private IContextFactory visitor; 
+
+    private static long counter = 0;
     private static synchronized String addNext(ContextFactory thiz) {
-        int next = contexts.size()+1;
-        String id = String.valueOf(next);
-        contexts.put(id, thiz);
+        String id;
+        if(++counter==0) counter++;
+        contexts.put(id=Long.toHexString(counter), thiz);
         return id;
     }
     private static synchronized void remove(String id) {
-        contexts.remove(id);
+        liveContexts.remove(id);
+        if(Util.logLevel>5) Util.logDebug("removed context: " + id + ", # of contexts: " + contexts.size());
     }
-    protected ContextFactory() {
+    private static synchronized ContextFactory moveContext(String id) {
+        Object o;
+        if((o = liveContexts.get(id))!=null) return (ContextFactory)o;
+        if((o = contexts.remove(id))!=null) { liveContexts.put(id, o); return (ContextFactory)o; }
+        return null;
+    }
+    public ContextFactory() {
       super();
+      timestamp = System.currentTimeMillis();
       id=addNext(this);
+      if(Util.logLevel>5) Util.logDebug("new context: " + id + ", # of contexts: " + contexts.size());
     }
 
     /**
      * Create a new ContextFactory and add it to the list of context factories kept by this classloader.
      * @return The created ContextFactory.
-     * @see #get(String)
+     * @see php.java.bridge.http.ContextFactory#get(String, ContextServer)
      */
-    public static ContextFactory addNew() {
-    	return new ContextFactory();
+    public static IContextFactory addNew() {
+    	ContextFactory factory = new ContextFactory();
+    	factory.visitor = factory;
+    	return factory;
     }
     
-    private ContextServer contextServer = null; 
    /**
      * Only for internal use.
      *  
@@ -79,54 +120,43 @@ public class ContextFactory extends SessionFactory {
      */
     /* See PhpJavaServlet#contextServer, http.ContextRunner#contextServer and 
      * JavaBridgeRunner#ctxServer. */
-    public static ContextFactory get(String id, ContextServer server) {
+    public static IContextFactory get(String id, ContextServer server) {
         if(server == null) throw new NullPointerException("server");
 
-        ContextFactory factory = (ContextFactory)contexts.get(id);
+        ContextFactory factory = moveContext(id); 
         if(factory==null) return null;
         
         if(factory.contextServer==null) factory.contextServer = server;
         if(factory.contextServer != server) throw new SecurityException("Illegal access");
-        return factory;
+        return factory.visitor;
     }
-    /**
-     * Override this method, if you want synchronize the current id with the persistent id.
-     * @param target The fresh ContextFactory (which was passed via the current X_JAVABRIDGE_CONTEXT header).
+    /* (non-Javadoc)
+     * @see php.java.bridge.http.IContextFactory#recycle(php.java.bridge.http.ContextFactory)
      */
-    protected void recycle(ContextFactory target) {}
-    /**
-     * Synchronize the current state with id.
-     * <p>
-     * When persistent connections are used, the bridge instances recycle their context factories. 
-     * However, a jsr223 client may have passed a fresh context id. If this happened, the bridge calls this method 
-     * which may update the current context with the fresh values from id.</p>
-     * <p>This method automatically destroys the fresh context id</p>   
-     * @param id The fresh id
-     * @throws NullPointerException if the current id is not initialized
-     * @see php.java.bridge.JavaBridge#recycle()
+    public void recycle(ContextFactory target) {}
+    /* (non-Javadoc)
+     * @see php.java.bridge.http.IContextFactory#recycle(java.lang.String)
      */
     public void recycle(String id) throws SecurityException {
-        ContextFactory target = get(id, contextServer);
-        recycle(target);
-        target.destroy();
+        IContextFactory target = ((ContextFactory)contexts.get(id)).visitor;
+        target.remove();
+        target.recycle(this);
     }
-    /**
-     * @deprecated
-     * @see #destroy()
+    /* (non-Javadoc)
+     * @see php.java.bridge.http.IContextFactory#remove()
      */
-    public void remove() {
-        destroy();
-    }
-    /**
-     * Removes the context factory from the classloader's list of context factories
-     * and destroys its content.
-     */
-    public synchronized void destroy() {
-	if(Util.logLevel>3) Util.logDebug("context finished: " +getId());
+    public synchronized void remove() {
+	if(Util.logLevel>5) Util.logDebug("context finished: " +getId());
 	remove(getId());
 	bridge=null;
 	removed=true;
 	notify();
+    }
+    /* (non-Javadoc)
+     * @see php.java.bridge.http.IContextFactory#destroy()
+     */
+    public void destroy() {
+        remove();
     }
     
     /**
@@ -136,7 +166,36 @@ public class ContextFactory extends SessionFactory {
     public static void removeAll() {
         destroyAll();
     }
-
+    private boolean isInitialized() {
+        return (contextServer!=null);
+    }
+    /**
+     * Orphaned contexts may appear when the PHP client has no interest in the new context
+     * that the client of the PHP client has allocated, for example when
+     * the php instance already has a connection and there is no need access the new context
+     * (php script contains no "java_session" and no "java_context"). 
+     * 
+     * Orphaned contexts will be automatically destroyed after 5 seconds. -- Even 10ms would 
+     * be sufficient because contexts only bridge the gap between a) the first statement executed
+     * via the HTTP tunnel and the second statement executed via the ContextRunner or 
+     * b) they pass initial information from a client of a PHP client to the PHP script. If one round-trip
+     * costs more than 10ms, then there's something wrong with the connection. 
+     */
+    private static synchronized void destroyOrphaned() {
+	long timestamp = System.currentTimeMillis();
+	
+        for(Iterator ii=contexts.values().iterator(); ii.hasNext();) {
+	    ContextFactory ctx = ((ContextFactory)ii.next());
+	    if(ctx.timestamp+ORPHANED_TIMEOUT<timestamp) {
+	        synchronized(ctx) {
+	            ctx.removed=true;
+	            ctx.notify();
+	        }
+	        Util.logDebug("Orphaned context: " + ctx.getId() + " removed.");
+	        ii.remove();
+	    }
+	}        
+    }
     /**
      * Remove all context factories from the classloader.
      * May only be called by the ContextServer.
@@ -153,34 +212,30 @@ public class ContextFactory extends SessionFactory {
 	}
     }
     
-    /**
-     * Wait until this context is finished.
-     * @throws InterruptedException
-     * @see php.java.bridge.http.ContextRunner
+    /* (non-Javadoc)
+     * @see php.java.bridge.http.IContextFactory#waitFor()
      */
     public synchronized void waitFor() throws InterruptedException {
     	if(!removed) wait();
     }
     
-    /**
-     * Return the serializable ID of the context manager
-     * @return The ID
+    /* (non-Javadoc)
+     * @see php.java.bridge.http.IContextFactory#getId()
      */
     public String getId() { 
 	return id; 
     }
+    /* (non-Javadoc)
+     * @see php.java.bridge.http.IContextFactory#toString()
+     */
     public String toString() {
-	return "Context# " +id;
+	return "Context# " +id + ", isInitialized: " + isInitialized();
     }
-    /**
-     * Return an emulated JSR223 context
-     * @return The context
-     * @see php.java.servlet.ContextFactory#getContext()
-     * @see php.java.bridge.http.Context
+    /* (non-Javadoc)
+     * @see php.java.bridge.http.IContextFactory#getContext()
      */
     public Object getContext() {
-  	if(context==null) setContext(new Context());
-	return context;
+	return visitor.getContext();
     }
 	
     /**
@@ -189,26 +244,53 @@ public class ContextFactory extends SessionFactory {
      * @param context
      * @see #addNew()
      */
-    protected void setContext(Object context) {
-        if(this.context!=null) throw new IllegalStateException("ContextFactory already has a context");
-        this.context = context;
+    public void setContext(Object context) {
+        visitor.setContext(context);
     }
-    /**
-     * Set the JavaBridge into this context.
-     * @param bridge The bridge to set.
+    /* (non-Javadoc)
+     * @see php.java.bridge.http.IContextFactory#setBridge(php.java.bridge.JavaBridge)
      */
     public void setBridge(JavaBridge bridge) {
-	if(this.bridge!=null) throw new IllegalStateException("ContextFactory already has a bridge");
 	this.bridge = bridge;
     }
-    /**
-     * @return Returns the bridge.
+    /* (non-Javadoc)
+     * @see php.java.bridge.http.IContextFactory#getBridge()
      */
     public JavaBridge getBridge() {
         if(bridge != null) return bridge;
         setBridge(new JavaBridge());
-        bridge.setClassLoader(new JavaBridgeClassLoader(bridge, null));
+        bridge.setClassLoader(new JavaBridgeClassLoader());
         bridge.setSessionFactory(this);
 	return bridge;
+    }
+    private void setVisitor(IContextFactory newVisitor) {
+        visitor = newVisitor;
+    }
+    /**
+     * Use this method to attach a visitor to the ContextFactory.
+     * @param visitor The custom ContextFactory
+     */
+    public void accept(IContextFactoryVisitor visitor) {
+        visitor.visit(this);
+        setVisitor(visitor);
+    }
+    
+    /**
+     * Return a simple session which cannot be shared with JSP
+     * @param name The session name
+     * @param clientIsNew true, if the client wants a new session
+     * @param timeout expires in n seconds
+     */
+    public ISession getSimpleSession(String name, boolean clientIsNew, int timeout) {
+        return super.getSession(name, clientIsNew, timeout);
+    }
+    /**
+     * Return a standard session, shared with JSP
+     * @param name The session name
+     * @param clientIsNew true, if the client wants a new session
+     * @param timeout expires in n seconds
+     */
+    public ISession getSession(String name, boolean clientIsNew, int timeout) {
+        return visitor.getSession(name, clientIsNew, timeout);
     }
 }

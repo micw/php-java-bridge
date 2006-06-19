@@ -10,7 +10,7 @@ import java.util.ListIterator;
 import java.util.Map;
 
 /**
- * This class is used to write the response to the frontent.
+ * This class is used to write the response to the front-end.
  * 
  * @author jostb
  *
@@ -33,14 +33,15 @@ public class Response {
 
     // used in getFirstBytes() only
     static final byte append_for_OutBuf_getFirstBytes[] = new byte[] {'.', '.', '.' }; 
-    static final byte append_none_for_OutBuf_getFirstBytes[] = new byte[0]; 
+    static final byte append_none_for_OutBuf_getFirstBytes[] = new byte[0];
+    static final byte digits[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'}; 
 
-    private class OutBuf extends ByteArrayOutputStream {
-	
+    /** numbers are base 16 */
+    private class HexOutputBuffer extends ByteArrayOutputStream {
     	/*
 	 * Return up to 256 bytes. Useful for logging.
 	 */
-	byte[] getFirstBytes() {
+	protected byte[] getFirstBytes() {
 	    int c = super.count;
 	    byte[] append = (c>256) ? append_for_OutBuf_getFirstBytes : append_none_for_OutBuf_getFirstBytes;
 	    if(c>256) c=256;
@@ -50,17 +51,13 @@ public class Response {
 	    return ret;
 	}
 
-    	void append(byte[] s) {
+    	protected void append(byte[] s) {
 	    try {
 		write(s);
 	    } catch (IOException e) {/*not possible*/}
 	}
-    	void append(String s) {
-	    try {
-		this.write(s.getBytes()); //used for objects only, not for UTF8 strings
-	    } catch (IOException e) {/*not possible*/}
-	}
-    	void appendQuoted(byte[] s) {
+
+    	protected void appendQuoted(byte[] s) {
 	    for(int i=0; i<s.length; i++) {
 		byte ch;
 		switch(ch=s[i]) {
@@ -75,11 +72,53 @@ public class Response {
 		}
 	    }
     	}
-    	void appendQuoted(String s) {
+    	protected void appendQuoted(String s) {
 	    appendQuoted(bridge.options.getBytes(s));
     	}
+
+    	private byte[] buf = new byte[16];
+    	/** append an unsigned long number */
+    	protected void append(long i) {
+	    int pos = 16;
+    	    do {
+    	        buf[--pos] = digits[(int)(i & 0xF)];
+    	        i >>>= 4;
+    	    } while (i != 0);
+    	    write(buf, pos, 16-pos);
+	}
+
+    	/** append a double value, base 10 for now (not every C compiler supports the C99 "a" conversion) */ 
+	protected void append(double d) {
+	  append(Double.toString(d).getBytes());
+	}
+
+	/** append a long number */
+	protected void appendLong(long l, long result) {
+	    append(L);
+	    if(l<0) {
+	        append(-l);
+	        append(pa);
+	    } else {
+	        append(l);
+	        append(po);
+	    }
+	    append(I); append(result);
+	    append(e);
+	}
     }
-    OutBuf buf;
+    /** numbers are base 10 */
+    private class ClassicOutputBuffer extends HexOutputBuffer {
+	protected void append(long i) {
+	    append(String.valueOf(i).getBytes());
+	}
+	protected void appendLong(long l, long result) {
+	    append(L);
+	    append(l);
+	    append(I); append(result);
+	    append(e);
+	}
+    }
+    HexOutputBuffer buf;
     long result, peer;
     private JavaBridge bridge;
 
@@ -120,6 +159,9 @@ public class Response {
 	    setType(type);
 	    setResult(value);
 	}
+	public void setFinish(boolean keepAlive) {
+	    writeFinish(keepAlive);
+	}
 	public void reset() {
 	    writer = currentWriter;
 	    buf.reset();	    
@@ -129,7 +171,7 @@ public class Response {
 	 */
 	public void flush() throws IOException {
        	    if(bridge.logLevel>=4) {
-      	     bridge.logDebug(" <-- " +bridge.options.newString(buf.getFirstBytes()));
+      	     bridge.logDebug(" <-- " +newString(buf.getFirstBytes()));
        	    }
        	    buf.writeTo(bridge.out);
        	    reset();
@@ -349,7 +391,7 @@ public class Response {
 	 */
 	public void flush() throws IOException {
      	    if(bridge.logLevel>=4) {
-       	     bridge.logDebug(" |<- " +bridge.options.newString(buf.getFirstBytes()));
+       	     bridge.logDebug(" |<- " +newString(buf.getFirstBytes()));
             }
      	    reset();
 	}
@@ -417,14 +459,19 @@ public class Response {
     private WriterWithDelegate defaultWriter;
     private Writer writer, currentWriter, arrayValuesWriter=null, arrayValueWriter=null, coerceWriter=null, asyncWriter=null;
 
-    
+    private HexOutputBuffer createOutputBuffer() {
+        if(bridge.options.hexNumbers())
+            return new HexOutputBuffer();
+        else
+            return new ClassicOutputBuffer();
+    }
     /**
      * Creates a new response object. The object is re-used for each packed.
      * @param bridge The bridge.
      */
     public Response(JavaBridge bridge) {
-	buf=new OutBuf();
 	this.bridge=bridge;
+	buf=createOutputBuffer();
 	currentWriter = writer = defaultWriter = newWriter(getDefaultDelegate());
     }
 
@@ -470,6 +517,9 @@ public class Response {
      	writer.setResult(value, type);
     }
 
+    public void setFinish(boolean keepAlive) {
+        writer.setFinish(keepAlive);
+    }
     /**
      * Selects a different writer.
      * @param writerType Must be Response#VALUES_WRITER or Response#COERCE_WRITER.
@@ -498,7 +548,7 @@ public class Response {
      * Used by getValues() and in php 4.
      * @see JavaBridge#getValues(Object)
      */
-    protected Writer setArrayValuesWriter() {
+    public Writer setArrayValuesWriter() {
 	return writer = getArrayValuesWriter();
     }
     /**
@@ -506,7 +556,7 @@ public class Response {
      * Used by cast().
      * @see JavaBridge#cast(Object, Class)
      */
-    protected Writer setCoerceWriter() {
+    public Writer setCoerceWriter() {
 	return writer = getCoerceWriter();
     }
     /**
@@ -514,21 +564,20 @@ public class Response {
      * Used by async. protocol.
      * @return The async. writer
      */
-    protected Writer setAsyncWriter() {
+    public Writer setAsyncWriter() {
 	return currentWriter = getAsyncWriter();
     }
     /**
      * Selects the default writer
      * @return The default writer
      */
-    protected Writer setDefaultWriter() {
+    public Writer setDefaultWriter() {
 	return writer = currentWriter = defaultWriter;
     }
     void setResultID(long id) {
     	this.result=id;
     }
     
-   
     static final byte[] e="\"/>".getBytes();
     static final byte[] c="\">".getBytes();
     static final byte[] I="\" i=\"".getBytes();
@@ -553,6 +602,8 @@ public class Response {
     static final byte[] Pn="<P t=\"N\" v=\"".getBytes();
     static final byte[] Ps="<P t=\"S\" v=\"".getBytes();
     static final byte[] Pe="</P>".getBytes();
+    static final byte[] Fa = "<F p=\"A\"/>".getBytes();
+    static final byte[] Fe = "<F p=\"E\"/>".getBytes();   
     static final byte[] quote="&quot;".getBytes();
     static final byte[] amp="&amp;".getBytes();
 
@@ -560,7 +611,7 @@ public class Response {
 
 	buf.append(S);
 	buf.appendQuoted(s);
-	buf.append(I); buf.append(String.valueOf(result));
+	buf.append(I); buf.append(result);
 	buf.append(e);
     }
     void writeString(String s) {
@@ -568,23 +619,20 @@ public class Response {
     }
     void writeBoolean(boolean b) {
 	buf.append(B); buf.write(b==true?'T':'F');
-	buf.append(I); buf.append(String.valueOf(result));
+	buf.append(I); buf.append(result);
 	buf.append(e);
     }
     void writeLong(long l) {
-	buf.append(L);
-	buf.append(String.valueOf(l));
-	buf.append(I); buf.append(String.valueOf(result));
-	buf.append(e);
+	buf.appendLong(l, result);
     }
     void writeDouble(double d) {
-	buf.append(D); buf.append(String.valueOf(d));
-	buf.append(I); buf.append(String.valueOf(result));
+	buf.append(D); buf.append(d);
+	buf.append(I); buf.append(result);
 	buf.append(e);
     }
     void writeNull() {
 	buf.append(N);
-	buf.append(String.valueOf(result));
+	buf.append(result);
 	buf.append(e);
     }
     private boolean isArray(Class type) {
@@ -595,32 +643,35 @@ public class Response {
     void writeObject(Object o) {
         if(o==null) { writeNull(); return; }
         Class dynamicType = o.getClass();
-	buf.append(O); buf.append(String.valueOf(this.bridge.globalRef.append(o)));
+	buf.append(O); buf.append(this.bridge.globalRef.append(o));
 	buf.append(isArray(dynamicType)?pa:po);
-	buf.append(I); buf.append(String.valueOf(result));
+	buf.append(I); buf.append(result);
 	buf.append(e);
     }
     void writeClass(Class o) {
         if(o==null) { writeNull(); return; }
-    	buf.append(O); buf.append(String.valueOf(this.bridge.globalRef.append(o)));
+    	buf.append(O); buf.append(this.bridge.globalRef.append(o));
     	buf.append(po);
-    	buf.append(I); buf.append(String.valueOf(result));
+    	buf.append(I); buf.append(result);
     	buf.append(e);
     }
     void writeException(Object o, String str) {
-	buf.append(E); buf.append(String.valueOf(this.bridge.globalRef.append(o)));
-	buf.append(m); buf.appendQuoted(String.valueOf(str));
-	buf.append(I); buf.append(String.valueOf(result));
+	buf.append(E); buf.append(this.bridge.globalRef.append(o));
+	buf.append(m); buf.appendQuoted(str);
+	buf.append(I); buf.append(result);
 	buf.append(e);
+    }
+    void writeFinish(boolean keepAlive) {
+        if(keepAlive) buf.append(Fa); else buf.append(Fe);
     }
     void writeCompositeBegin_a() {
 	buf.append(Xa);
-	buf.append(I); buf.append(String.valueOf(result));
+	buf.append(I); buf.append(result);
 	buf.append(c);
     }
     void writeCompositeBegin_h() {
 	buf.append(Xh);
-	buf.append(I); buf.append(String.valueOf(result));
+	buf.append(I); buf.append(result);
 	buf.append(c);
     }
     void writeCompositeEnd() {
@@ -631,7 +682,7 @@ public class Response {
 	buf.append(c);
     }
     void writePairBegin_n(int key) {
-	buf.append(Pn); buf.append(String.valueOf(key));
+	buf.append(Pn); buf.append(key);
 	buf.append(c);
     }
     void writePairBegin() {
@@ -641,11 +692,11 @@ public class Response {
 	buf.append(Pe);
     }
     void writeApplyBegin(long object, String pos, String str, int argCount) {
- 	buf.append(A); buf.append(String.valueOf(object));
- 	buf.append(p); buf.appendQuoted(String.valueOf(pos));
- 	buf.append(m); buf.appendQuoted(String.valueOf(str));
- 	buf.append(n); buf.append(String.valueOf(argCount));
- 	buf.append(I); buf.append(String.valueOf(result));
+ 	buf.append(A); buf.append(object);
+ 	buf.append(p); buf.appendQuoted(pos);
+ 	buf.append(m); buf.appendQuoted(str);
+ 	buf.append(n); buf.append(argCount);
+ 	buf.append(I); buf.append(result);
  	buf.append(c);
     }
     void writeApplyEnd() {
@@ -671,7 +722,11 @@ public class Response {
         reset();
     }
     public String toString() {
-    	return bridge.options.newString(buf.getFirstBytes());
+    	return newString(buf.getFirstBytes());
+    }
+
+    private String newString(byte[] b) {
+        return bridge.getString(b, 0, b.length);
     }
 
     private Writer getArrayValuesWriter() {

@@ -4,30 +4,53 @@ package php.java.bridge;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
- * Cache [(object, method, parameters) -> Method] mappings.  No
+ * Cache [Entry(object, method, parameters) -> Method].  No
  * synchronization, so use this class per thread or per request
  * only.
  */
-public class MethodCache {
-    HashMap map = new HashMap();
-    static final Entry noCache = new Entry();
-	
+public final class MethodCache {
+    Map map;
+    static final Entry noCache = new NoCache();
+    
+    private void init() {
+        map = new HashMap();
+    }
     /**
-     * A cache entry carrying the method name, class and the parameters
-     * 
-     * @author jostb
+     * Create a new method cache.
      *
      */
+    public MethodCache() {
+        init();
+    }
+    private static class CachedMethod {
+        private Method method;
+        private Class[] typeCache;
+        public CachedMethod(Method method) {
+            this.method = method;
+        }
+        public Method get() {
+            return method;
+        }
+        public Class[] getParameterTypes() {
+            if(typeCache!=null) return typeCache;
+            return typeCache = method.getParameterTypes();
+        }
+    }
+    
+    /**
+     * A cache entry.
+     */
     public static class Entry {
-	String symbol;
+	String name;
 	Class clazz;
 	Class params[];
 		
 	protected Entry () {}
 	protected Entry (String name, Class clazz, Class params[]) {
-	    this.symbol = name.intern();
+	    this.name = name; // intern() is ~10% slower than lazy string comparison
 	    this.clazz = clazz;
 	    this.params = params;
 	}
@@ -39,22 +62,34 @@ public class MethodCache {
 		result = result * 31 + (params[i] == null ? 0 : params[i].hashCode());
 	    }
 	    result = result * 31 + clazz.hashCode();
-	    result = result * 31 + symbol.hashCode();
+	    result = result * 31 + name.hashCode();
 	    hasResult = true;
 	    return result;
 	}
 	public boolean equals(Object o) {
 	    Entry that = (Entry) o;
 	    if(clazz != that.clazz) return false;
-	    if(symbol != that.symbol) return false;
 	    if(params.length != that.params.length) return false;
+	    if(!name.equals(that.name)) return false;
 	    for(int i=0; i<params.length; i++) {
 		if(params[i] != that.params[i]) return false;
 	    }
 	    return true;
 	}
+	private CachedMethod cache;
+	public void setMethod(CachedMethod cache) {
+	    this.cache = cache;
+	}
+	public Class[] getParameterTypes(Method method) {
+	    return cache.getParameterTypes();
+	}
     }
-	
+    private static final class NoCache extends Entry {
+	public Class[] getParameterTypes(Method method) {
+	    return method.getParameterTypes();
+	}        
+    }
+    
     /**
      * Get the method for the entry
      * @param entry The entry
@@ -62,7 +97,10 @@ public class MethodCache {
      */
     public Method get(Entry entry) {
     	if(entry==noCache) return null;
-	return (Method)map.get(entry);
+	CachedMethod cache = (CachedMethod)map.get(entry);
+	if(cache==null) return null;
+	entry.setMethod(cache);
+	return cache.get();
     }
 
     /**
@@ -71,7 +109,11 @@ public class MethodCache {
      * @param method The method
      */
     public void put(Entry entry, Method method) {
-    	if(entry!=noCache) map.put(entry, method);
+    	if(entry!=noCache) {
+    	    CachedMethod cache = new CachedMethod(method);
+    	    entry.setMethod(cache);
+    	    map.put(entry, cache);
+    	}
     }
 
     /**
@@ -91,4 +133,10 @@ public class MethodCache {
 	return new Entry(name, clazz, params);
     }
     
+    /**
+     * Removes all mappings from this cache.
+     */
+    public void clear() {
+       init();
+    }
 }

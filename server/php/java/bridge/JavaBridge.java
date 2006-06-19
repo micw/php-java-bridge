@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
@@ -16,20 +17,18 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
-import java.util.Vector;
 import java.util.Map.Entry;
 
 import php.java.bridge.Request.PhpArray;
-import php.java.bridge.http.ContextFactory;
+import php.java.bridge.http.IContextFactory;
 
 /**
  * This is the main class of the PHP/Java Bridge. It starts the standalone back-end,
@@ -62,7 +61,7 @@ public class JavaBridge implements Runnable {
     protected Throwable lastAsyncException; // reported by end_document()
 
     // array of objects in use in the current script
-    GlobalRef globalRef=new GlobalRef(this);
+    GlobalRef globalRef=new GlobalRef();
 
     /**
      * For internal use only. The classloader. 
@@ -153,19 +152,9 @@ public class JavaBridge implements Runnable {
     // native accept fills these
     int uid =-1, gid =-1;
 
-    //static Object loadLock=new Object();
-    /** For internal use only. */
-    //public static short load = 0;
-
-    /*
-      public static short getLoad() {
-      synchronized(loadLock) {
-      return load;
-      }
-      }*/
-
     private MethodCache methodCache = new MethodCache();
     private ConstructorCache constructorCache = new ConstructorCache();
+    StringCache stringCache = new StringCache(this);
 
     private SessionFactory sessionFactory;
     /** 
@@ -192,10 +181,10 @@ public class JavaBridge implements Runnable {
 	    logDebug("START: JavaBridge.run()");
 	    setSessionFactory(defaultSessionFactory);
 	    try {
-		setClassLoader(new JavaBridgeClassLoader(this, (DynamicJavaBridgeClassLoader) Thread.currentThread().getContextClassLoader()));
+		setClassLoader(new JavaBridgeClassLoader((DynamicJavaBridgeClassLoader) Thread.currentThread().getContextClassLoader()));
 	    } catch (ClassCastException ex) {
 	         // should never happen
-		setClassLoader(new JavaBridgeClassLoader(this, null));
+		setClassLoader(new JavaBridgeClassLoader(null));
 	    }
 	    request = new Request(this);
           
@@ -214,8 +203,7 @@ public class JavaBridge implements Runnable {
 
 	    globalRef=null;
 	    cl.clear();
-	    Session.expire(this);
-	    Util.logDebug("END: JavaBridge.run()");
+	    logDebug("END: JavaBridge.run()");
 
         } catch (Throwable t) {
 	    printStackTrace(t);
@@ -248,11 +236,38 @@ public class JavaBridge implements Runnable {
     private static void usage() {
 	System.err.println("PHP/Java Bridge version "+Util.VERSION);
         System.err.println("Usage: java -jar JavaBridge.jar [SOCKETNAME LOGLEVEL LOGFILE]");
+        System.err.println("Usage: java -jar JavaBridge.jar --convert PHP_INCLUDE_DIR [JARFILES]");
 	System.err.println("Example: java -jar JavaBridge.jar");
 	System.err.println("Example: java -Djava.awt.headless=\"true\" -Dphp.java.bridge.threads=50 -jar JavaBridge.jar INET:0 3 JavaBridge.log");
+	System.err.println("Example: java -jar JavaBridge.jar --convert /usr/share/pear lucene.jar ...");
 	System.exit(1);
     }
 
+    private static void checkOption(String s[]) {
+        if("--convert".equals(s[0])) {
+            try {
+              StringBuffer buf=new StringBuffer();
+              for(int i=2; i<s.length; i++) {
+        	  buf.append(s[i]);
+        	  if(i+1<s.length) buf.append(File.separatorChar);
+              }
+              
+              int length = s.length >= 3 ? 2 :s.length-1;
+              String str[] = new String[length];
+              if(length==2) str[1] = buf.toString();
+              if(length>=1) str[0] = s[1];
+              Snarf.main(str);
+              System.exit(0);
+	    } catch (Exception e) {
+	      e.printStackTrace();
+	      System.exit(1);
+	    }
+        } else if ("--version".equals(s[0])) {
+	    System.out.println(Util.VERSION);
+	    System.exit(0);
+	}
+        usage();
+    }
     /**
      * Global init
      * @param s an array of [socketname, level, logFile]
@@ -260,17 +275,30 @@ public class JavaBridge implements Runnable {
     public static void init(String s[]) {
 	String logFile=null;
 	String sockname=null;
-	if(s.length>3) usage();
-	try {
+	if(s.length>3) checkOption(s);
+	// show our additional ext dirs
+	if(Util.DEFAULT_EXT_DIRS.length>0) { 
+	  try {
 	    StringBuffer buf = new StringBuffer();
 	    String ext = System.getProperty("java.ext.dirs");
-	    if(ext!=null) buf.append(ext);
-	    buf.append(File.pathSeparator);
-	    buf.append("/usr/share/java/ext");
-	    buf.append(File.pathSeparator);
-	    buf.append("/usr/java/packages/lib/ext");
+	    if(ext!=null) { buf.append(ext);  buf.append(File.pathSeparator); }
+	    for(int i=0; i<Util.DEFAULT_EXT_DIRS.length; i++) {
+	        buf.append(Util.DEFAULT_EXT_DIRS[i]);
+	        if(i+1!=Util.DEFAULT_EXT_DIRS.length)  buf.append(File.pathSeparator);
+	    }
+	    // PR1502480
+	    ext = System.getProperty("php.java.bridge.base");
+	    if(ext!=null && ext.length()>0) {
+	        buf.append(File.pathSeparator);
+	        buf.append(ext);
+	        buf.append(File.pathSeparator);
+	        buf.append(ext);
+	        if(!ext.endsWith(File.separator)) buf.append(File.separator);
+	        buf.append("lib");
+	    }
 	    System.setProperty("java.ext.dirs", buf.toString());
-	} catch (Throwable t) {/*ignore*/}
+	  } catch (Throwable t) {/*ignore*/}
+        }
     	try {
     	    CLRAssembly = Class.forName("cli.System.Reflection.Assembly");
     	    loadMethod = CLRAssembly.getMethod("Load", new Class[] {String.class});
@@ -278,7 +306,7 @@ public class JavaBridge implements Runnable {
 	try {
 	    if(s.length>0) {
 		sockname=s[0];
-		if(sockname.startsWith("-")) usage();
+		if(sockname.startsWith("-")) checkOption(s);
 	    }
 	    try {
 		if(s.length>1) {
@@ -296,6 +324,7 @@ public class JavaBridge implements Runnable {
 		logFile=s.length>0?"":Util.DEFAULT_LOG_FILE;
 		if(s.length>2) {
 		    logFile=s[2];
+		    Util.setLogger(new FileLogger()); // use specified log file
 		}
 		if(Util.logLevel>3) System.err.println(Util.EXTENSION_NAME+" log: " + logFile);
 	    }catch (Throwable t) {
@@ -323,8 +352,25 @@ public class JavaBridge implements Runnable {
 	    }
 	    
 	    ThreadPool pool = null;
-	    if(maxSize>0) pool = new ThreadPool(Util.EXTENSION_NAME, maxSize);
-            Util.logDebug("Starting to accept Socket connections");
+	    if(maxSize>0) {
+	        pool = new ThreadPool(Util.EXTENSION_NAME, maxSize);
+		    Util.logMessage(Util.EXTENSION_NAME + " thread pool size: " + maxSize);
+	    }
+
+	    try {
+	        String policy = System.getProperty("java.security.policy");
+	        String base = System.getProperty("php.java.bridge.base");
+	        if(policy!=null && base!=null) {
+	            SecurityManager manager = new php.java.bridge.JavaBridgeSecurityManager();
+	            System.setSecurityManager(manager);
+		    Util.logMessage(Util.EXTENSION_NAME + " policy base     : " + base);
+		    Util.logMessage(Util.EXTENSION_NAME + " security policy : " + policy);
+	        }
+	    } catch(Exception e) {
+	        Util.logMessage("Cannot install security manager: " + e);
+	    }
+
+	    Util.logDebug("Starting to accept Socket connections");
             
 	    while(true) {
 		Socket sock = socket.accept();
@@ -379,12 +425,11 @@ public class JavaBridge implements Runnable {
     public void printStackTrace(Throwable t) {
 	if(logLevel > 0)
 	    if ((t instanceof Error) || logLevel > 1) {
-		Util.println(2, "Exception occured");
 	    	Util.getLogger().printStackTrace(t);
 	    }
     }
     private String getId() {
-    	return "@"+Integer.toHexString(System.identityHashCode(Thread.currentThread()));
+    	return Integer.toHexString(System.identityHashCode(this))+"@"+Integer.toHexString(System.identityHashCode(Thread.currentThread()));
     }
     /**
      * Write a debug message
@@ -457,27 +502,30 @@ public class JavaBridge implements Runnable {
     private Exception getUnresolvedExternalReferenceException(Throwable e, String what) {
         return 	new ClassNotFoundException("Unresolved external reference: "+ e+ ". -- Unable to "+what+" because it or one of its parameters refer to the mentioned external class which is not available in the current \"java_require()\" path. Please check the path and the SEL and File permissions and remember that all interconnected classes must be loaded with a single java_require() call, i.e. use java_require(\"foo.jar;bar.jar\") instead of java_require(\"foo.jar\"); java_require(\"bar.jar\"). Please check the Java Bridge log file for details.", e);
     }
+    
     /**
      * Create an new instance of a given class
      */
     public void CreateObject(String name, boolean createInstance,
 			     Object args[], Response response) {
 	Class params[] = null;
+	LinkedList candidates = new LinkedList();
+	LinkedList matches = new LinkedList();
+
 	try {
-	    Vector matches = new Vector();
-	    Vector candidates = new Vector();
 	    Constructor selected = null;
+	    ConstructorCache.Entry entry = null;
 	    
 	    Class clazz = getClassLoader().forName(name);
 	    if(createInstance) {
-		ConstructorCache.Entry entry = constructorCache.getEntry(name, args);
+		entry = constructorCache.getEntry(name, args);
 		selected = constructorCache.get(entry);
 		if(selected==null) {
 		    Constructor cons[] = clazz.getConstructors();
 		    for (int i=0; i<cons.length; i++) {
-			candidates.addElement(cons[i]);
+			candidates.add(cons[i]);
 			if (cons[i].getParameterTypes().length == args.length) {
-			    matches.addElement(cons[i]);
+			    matches.add(cons[i]);
 			}
 		    }
 		    
@@ -500,7 +548,7 @@ public class JavaBridge implements Runnable {
 		}
 	    }
 
-	    Object coercedArgs[] = coerce(params=selected.getParameterTypes(), args, response);
+	    Object coercedArgs[] = coerce(params=entry.getParameterTypes(selected), args, response);
 	    if (this.logLevel>4) logInvoke(clazz, name, coercedArgs); // If we have a logLevel of 5 or above, do very detailed invocation logging
     	    response.setResultObject(selected.newInstance(coercedArgs));
 
@@ -602,14 +650,14 @@ public class JavaBridge implements Runnable {
 	return w;
     }
 
-    private Object select(Vector methods, Object args[]) {
-	if (methods.size() == 1) return methods.firstElement();
+    private Object select(LinkedList methods, Object args[]) {
+	if (methods.size() == 1) return methods.getFirst();
 	Object selected = null;
 	int best = Integer.MAX_VALUE;
 	int n = 0;
 	
-	for (Enumeration e = methods.elements(); e.hasMoreElements(); n++) {
-	    Object element = e.nextElement();
+	for (Iterator e = methods.iterator(); e.hasNext(); n++) {
+	    Object element = e.next();
 	    int w=0;
 
 	    Class parms[] = (element instanceof Method) ?
@@ -976,12 +1024,12 @@ public class JavaBridge implements Runnable {
     public void Invoke
 	(Object object, String method, Object args[], Response response)
     {
-	Vector matches = new Vector();
-	Vector candidates = new Vector();
 	Class jclass;
 	boolean again;
 	Object coercedArgs[] = null;
 	Class params[] = null;
+	LinkedList candidates = new LinkedList();
+	LinkedList matches = new LinkedList();
 	
 	MethodCache.Entry entry = methodCache.getEntry(method, Util.getClass(object), args);
 	Method selected = (Method) methodCache.get(entry);
@@ -996,9 +1044,9 @@ public class JavaBridge implements Runnable {
 			for (int i=0; i<methods.length; i++) {
 			    Method meth = methods[i];
 			    if (meth.getName().equalsIgnoreCase(method)&&iter.isVisible(meth.getModifiers())) {
-				candidates.addElement(meth);
+				candidates.add(meth);
 				if(meth.getParameterTypes().length == args.length) {
-				    matches.addElement(meth);
+				    matches.add(meth);
 				}
 			    }
 			}
@@ -1014,7 +1062,7 @@ public class JavaBridge implements Runnable {
 			again=true;
 		    }
 		}
-		coercedArgs = coerce(params=selected.getParameterTypes(), args, response);
+		coercedArgs = coerce(params=entry.getParameterTypes(selected), args, response);
 	    } while(again);
 	    if (this.logLevel>4) logInvoke(object, method, coercedArgs); // If we have a logLevel of 5 or above, do very detailed invocation logging
 	    setResult(response, selected.invoke(object, coercedArgs), selected.getReturnType());
@@ -1084,10 +1132,11 @@ public class JavaBridge implements Runnable {
     public void GetSetProp
 	(Object object, String prop, Object args[], Response response)
     {
+        LinkedList matches = new LinkedList();
 	boolean set = (args!=null && args.length>0);
 	Class params[] = null;
+
 	try {
-	    ArrayList matches = new ArrayList();
 	    Class jclass;
 	    
 	    // first search for the field *exactly*
@@ -1304,24 +1353,38 @@ public class JavaBridge implements Runnable {
     }
 
     /**
+     * @deprecated
+     * @see #updateJarLibraryPath(String, String)
+     */
+    public void setJarLibraryPath(String path, String extensionDir) throws IOException {
+        updateJarLibraryPath(path, extensionDir);
+    }
+    /**
      * Append the path to the current library path<br>
      * Examples:<br>
      * setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");<br>
      * setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");<br>
      * @param path A file or url list, usually separated by ';'
      * @param extensionDir The php extension directory. 
+     * @throws IOException 
      */
-    public void setJarLibraryPath(String path, String extensionDir) {
-    	getClassLoader().updateJarLibraryPath(path, extensionDir);
+    public void updateJarLibraryPath(String path, String extensionDir) throws IOException {
+    	getClassLoader().updateJarLibraryPath(path, extensionDir.intern());
     }
 
     /**
-     * 
-     * Set the library path for ECMA dll's
+     * @deprecated
+     * @see #updateLibraryPath(String, String)
+     */
+    public void setLibraryPath(String rawPath, String extensionDir) {
+        updateLibraryPath(rawPath, extensionDir);
+    }
+    /**
+     * Update the library path for ECMA dll's
      * @param rawPath A file or url list, usually separated by ';'
      * @param extensionDir The php extension directory. 
      */
-    public void setLibraryPath(String rawPath, String extensionDir) {
+    public void updateLibraryPath(String rawPath, String extensionDir) {
         if(rawPath==null || rawPath.length()<2) return;
 
         // add a token separator if first char is alnum
@@ -1380,7 +1443,7 @@ public class JavaBridge implements Runnable {
      * @param fileEncoding The file encoding.
      */
     public void setFileEncoding(String fileEncoding) {
-	this.options.encoding=fileEncoding;
+	this.options.encoding=fileEncoding.intern();
     }
 
     /**
@@ -1752,16 +1815,21 @@ public class JavaBridge implements Runnable {
     }
     /** 
      * Re-initialize the current bridge for keep-alive
-     * @see php.ini option <code>java.persistent_connections</code>
+     * See php.ini option <code>java.persistent_connections</code>
      */
     public void recycle() {
-	Session.expire(this);
-        globalRef = new GlobalRef(this);
-        // contextCache and sessionCache cleared on demand (in recycleContext)
+	this.contextCache = null;
+	this.sessionCache = null;
+        globalRef = new GlobalRef();
         lastException = lastAsyncException = null;
 	cl.recycle();
         options.recycle();
         request.recycle();
+        
+        // TODO: recycle common entries such as bridge.require(), etc.
+        methodCache.clear();
+        constructorCache.clear();
+        stringCache.clear();
     }
     /**
      * The php client calls this (through getContext or getSession),
@@ -1776,7 +1844,7 @@ public class JavaBridge implements Runnable {
      * channels (and it is therefore running on a different context id
      * than the one suggested by the PhpCgiServlet), the PhpCgiServlet
      * needs some way to pass the fresh information from the suggested
-     * id to the recycled id. Therefore all php clients can implement
+     * id to the recycled id. Therefore all clients of php clients can implement
      * a <code>recycle(ContextFactory target)</code> callback which
      * allows them to copy the necessary information into the recycled
      * context.
@@ -1787,13 +1855,35 @@ public class JavaBridge implements Runnable {
     private void recycleContext(String id) {
       // defaultSessionFactory is shared among *all* clients
       if(sessionFactory==defaultSessionFactory) return;
-
-      // depends on the client state ("cookie"): must re-build session context
-      this.contextCache = null;
-      this.sessionCache = null;
-
       // sessionFactory != default: must be a ContextFactory
-      ContextFactory current = ((ContextFactory)sessionFactory);
+      IContextFactory current = ((IContextFactory)sessionFactory);
       current.recycle(id);
   }
+    
+    /**
+     * Return a new string using the current file encoding (see java_set_file_encoding()).
+     * @param b The byte array
+     * @param start The start index
+     * @param length The number of bytes to encode.
+     * @return The encoded string.
+     */    
+    public String getString(byte[] b, int start, int length) {
+//      return stringCache.getString(b, start, length, options.getEncoding());
+      try {
+	    return new String(b, start, length, options.getEncoding());
+	} catch (UnsupportedEncodingException e) {
+	    printStackTrace(e);
+	    return new String(b, start, length);
+	}
+    }
+    /**
+     * Return a cached string using the current file encoding (see java_set_file_encoding()).
+     * @param b The byte array
+     * @param start The start index
+     * @param length The number of bytes to encode.
+     * @return The encoded string.
+     */    
+    public String getCachedString(byte[] b, int start, int length) {
+        return stringCache.getString(b, start, length, options.getEncoding());
+    }
 }

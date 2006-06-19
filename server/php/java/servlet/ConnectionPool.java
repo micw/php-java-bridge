@@ -7,7 +7,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.net.UnknownHostException;
+import java.net.SocketException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -60,6 +60,14 @@ public class ConnectionPool {
             return buf;
         }
     }
+    /** Thrown when an IO exception occurs */
+    public static class ConnectionException extends IOException {
+       private static final long serialVersionUID = -5174286702617481362L;
+	protected ConnectionException(IOException ex) {
+            super();
+            initCause(ex);
+        }
+    }
     /**
      * In-/OutputStream factory.
      * 
@@ -70,30 +78,35 @@ public class ConnectionPool {
      */
     public static class Factory {
         /**
-         * Create a new socket and bind it to the given host/port
+         * Create a new socket and connect
+         * it to the given host/port
          * @param host The host, for example 127.0.0.1
          * @param port The port, for example 9667
          * @return The socket
          * @throws UnknownHostException
-         * @throws IOException
+         * @throws ConnectionException
          */
-        public Socket bind(String host, int port) throws UnknownHostException, IOException {
-            return new Socket(InetAddress.getByName(host), port);
+        public Socket connect(String host, int port) throws ConnectionException, SocketException {
+            try {
+	      return new Socket(InetAddress.getByName(host), port);
+	    } catch (IOException e) {
+	        throw new ConnectionException(e);
+	    }
         }
         /** 
          * Create a new InputStream.
          * @return The input stream. 
          */
-        public InputStream getInputStream() throws IOException {
+        public InputStream getInputStream() throws ConnectionException {
            DefaultInputStream in = new DefaultInputStream();
            return in;
         }
         /**
          * Create a new OutputStream.
          * @return The output stream.
-         * @throws IOException
+         * @throws ConnectionException
          */
-        public OutputStream getOutputStream() throws IOException {
+        public OutputStream getOutputStream() throws ConnectionException {
             DefaultOutputStream out = new DefaultOutputStream();
             return out;
             
@@ -109,14 +122,18 @@ public class ConnectionPool {
       private Connection connection;
       private InputStream in;
 
-      protected void setConnection(Connection connection) throws IOException {
+      protected void setConnection(Connection connection) throws ConnectionException {
 	  this.connection = connection;	  
-	  this.in = connection.socket.getInputStream();	  
+	  try {
+	    this.in = connection.socket.getInputStream();
+	  } catch (IOException e) {
+	      throw new ConnectionException(e);
+	  }	  
       }
-      public int read(byte buf[]) throws IOException {
+      public int read(byte buf[]) throws ConnectionException {
 	  return read(buf, 0, buf.length);
       }
-      public int read(byte buf[], int off, int buflength) throws IOException {
+      public int read(byte buf[], int off, int buflength) throws ConnectionException {
 	  try {
 	      int count = in.read(buf, off, buflength);
 	      if(count==-1) {
@@ -125,15 +142,20 @@ public class ConnectionPool {
 	      return count;
 	  } catch (IOException ex) {
 	      connection.setIsClosed();
-	      throw ex;
+	      throw new ConnectionException(ex);
 	  }
       }
-      public int read() throws IOException {
+      public int read() throws ConnectionException {
 	throw new NotImplementedException();
       }      
-      public void close() throws IOException {
+      public void close() throws ConnectionException {
 	  connection.state|=1;
-	  if(connection.state==connection.ostate) connection.close();
+	  if(connection.state==connection.ostate)
+	    try {
+	      connection.close();
+	    } catch (IOException e) {
+	      throw new ConnectionException(e);
+	    }
       }
     }
     /**
@@ -146,38 +168,47 @@ public class ConnectionPool {
         private Connection connection;
         private BufferedOutputStream out;
         
-	protected void setConnection(Connection connection) throws IOException {
+	protected void setConnection(Connection connection) throws ConnectionException {
 	    this.connection = connection;
-            this.out = new BufferedOutputStream(connection.socket.getOutputStream());
+            try {
+	      this.out = new BufferedOutputStream(connection.socket.getOutputStream());
+	    } catch (IOException e) {
+	      throw new ConnectionException(e);
+	    }
 	}
-	public void write(byte buf[]) throws IOException {
+	public void write(byte buf[]) throws ConnectionException {
 	    write(buf, 0, buf.length);
 	}
-	public void write(byte buf[], int off, int buflength) throws IOException {
+	public void write(byte buf[], int off, int buflength) throws ConnectionException {
 	  try {
 	      out.write(buf, off, buflength);
 	  } catch (IOException ex) {
 	      connection.setIsClosed();
-	      throw ex;
+	      throw new ConnectionException(ex);
 	  }
 	}
-	public void write(int b) throws IOException {
+	public void write(int b) throws ConnectionException {
 	    throw new NotImplementedException();
 	}
-	public void close() throws IOException {
+	public void close() throws ConnectionException {
 	    try { 
 	        flush();
 	    } finally {
 	        connection.state|=2;
-	        if(connection.state==connection.ostate) connection.close();
+	        if(connection.state==connection.ostate)
+		  try {
+		    connection.close();
+		  } catch (IOException e) {
+		     throw new ConnectionException(e);
+		  }
 	    }
 	}
-	public void flush() throws IOException {
+	public void flush() throws ConnectionException {
 	    try {
 	        out.flush();
 	    } catch (IOException ex) {
 	        connection.setIsClosed();
-	        throw ex;
+	        throw new ConnectionException(ex);
 	    }
 	}
     }
@@ -200,14 +231,14 @@ public class ConnectionPool {
 	protected void reset() {
             this.state = this.ostate = 0;	    
 	}
-	protected void init() throws UnknownHostException, IOException {
-            this.socket = factory.bind(host, port);
+	protected void init() throws ConnectionException, SocketException {
+            this.socket = factory.connect(host, port);
             this.isClosed = false;
             inputStream = null;
             outputStream = null;
             reset();
 	}
-	protected Connection(String host, int port, Factory factory) throws UnknownHostException, IOException {
+	protected Connection(String host, int port, Factory factory) throws ConnectionException, SocketException {
             this.host = host;
             this.port = port;
             this.factory = factory;
@@ -216,7 +247,7 @@ public class ConnectionPool {
 	protected void setIsClosed() {
 	    isClosed=true;
 	}
-	protected void close() throws UnknownHostException, IOException {
+	protected void close() throws ConnectionException, SocketException {
 	    if(isClosed) {
 	        destroy();
 	        init();
@@ -234,7 +265,7 @@ public class ConnectionPool {
 	 * @return The output stream.
 	 * @throws IOException
 	 */
-	public OutputStream getOutputStream() throws IOException {
+	public OutputStream getOutputStream() throws ConnectionException {
 	    if(outputStream != null) return outputStream;
 	    DefaultOutputStream outputStream = (DefaultOutputStream) factory.getOutputStream();
 	    outputStream.setConnection(this);
@@ -246,7 +277,7 @@ public class ConnectionPool {
 	 * @return The input stream.
 	 * @throws IOException
 	 */
-	public InputStream getInputStream() throws IOException {
+	public InputStream getInputStream() throws ConnectionException {
 	    if(inputStream != null) return inputStream;
 	    DefaultInputStream inputStream = (DefaultInputStream) factory.getInputStream();
 	    inputStream.setConnection(this);
@@ -261,20 +292,25 @@ public class ConnectionPool {
      * @param port The port number
      * @param limit The max. number of physical connections
      * @param factory A factory for creating In- and OutputStreams.
-     * @throws IOException 
+     * @throws ConnectionException 
      * @throws UnknownHostException 
      * @see ConnectionPool.Factory
      */
-    public ConnectionPool(String host, int port, int limit, Factory factory) throws UnknownHostException, IOException {
+    public ConnectionPool(String host, int port, int limit, Factory factory) throws ConnectionException {
         this.host = host;
         this.port = port;
         this.limit = limit;
         this.factory = factory;
  
-        Socket testSocket = new Socket(InetAddress.getByName(host), port);
-        testSocket.close();
+        Socket testSocket;
+	try {
+	  testSocket = new Socket(InetAddress.getByName(host), port);
+	  testSocket.close();
+	} catch (IOException e) {
+	  throw new ConnectionException(e);
+	}
     }
-    private Connection createNewConnection() throws UnknownHostException, IOException {
+    private Connection createNewConnection() throws ConnectionException, SocketException {
         Connection connection = new Connection(host, port, factory);
         connectionList.add(connection);
         connections++;
@@ -284,10 +320,11 @@ public class ConnectionPool {
      * Opens a connection to the back end.
      * @return The connection
      * @throws UnknownHostException
-     * @throws IOException
      * @throws InterruptedException
+     * @throws SocketException 
+     * @throws IOException 
      */
-    public synchronized Connection openConnection() throws UnknownHostException, IOException, InterruptedException {
+    public synchronized Connection openConnection() throws InterruptedException, ConnectionException, SocketException {
         Connection connection;
         int size = freeList.size();
       	if(size==0 && connections<limit) {

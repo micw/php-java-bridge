@@ -7,9 +7,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.AbstractMap;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -148,13 +148,16 @@ public final class Request implements IDocHandler {
         public byte[] getBytes() {
             return bytes;
         }
+        private String newString(byte[] b) {
+            return bridge.getString(b, 0, b.length);
+        }
         /**
          * Get the encoded string representation
          * @param res The response.
          * @return The encoded string.
          */
         public String getString() {
-            return bridge.options.newString(getBytes());
+            return newString(getBytes());
         }
         /**
          * Use UTF-8 encoding, for debugging only
@@ -233,16 +236,16 @@ public final class Request implements IDocHandler {
     	public abstract void reset();
     }
     private final class SimpleArg extends Arg {
-    	private ArrayList array;
+    	private LinkedList list;
    	public void add(Object val) {
-   	    if(array==null) array=new ArrayList();
-   	    array.add(val);
+   	    if(list==null) list=new LinkedList();
+   	    list.add(val);
     	}
     	public Object[] getArgs() {
-	    return (array==null) ? Request.ZERO_ARGS : array.toArray();
+	    return (list==null) ? Request.ZERO_ARGS : list.toArray();
     	}
     	public void reset() {
-	    array=null;
+	    list=null;
 	    composite=0;
 	    type=0;
 	    callObject=null;
@@ -319,7 +322,7 @@ public final class Request implements IDocHandler {
      * 
      * @param in The input stream.
      * @param out The output stream.
-     * @return true if the protocol header was valid, false otherwise.
+     * @return true, if the protocol header was valid, false otherwise.
      * @throws IOException
      */
     public boolean init(InputStream in, OutputStream out) throws IOException {
@@ -339,6 +342,26 @@ public final class Request implements IDocHandler {
     	return true;
     }
     
+    private long getPhpLong(ParserString st[]) {
+	    long val = st[0].getLongValue();
+	    if(bridge.options.hexNumbers() && st[1].string[st[1].off]!='O')
+		val *= -1;
+	    return val;
+    }
+    private Object createExact(ParserString st[]) {
+        if(!bridge.options.extJavaCompatibility()) {
+	    int val = st[0].getIntValue();
+	    if(bridge.options.hexNumbers() && st[1].string[st[1].off]!='O')
+		val *= -1;
+            return (new Integer(val));
+	} else {
+	    long val = st[0].getLongValue();
+	    if(bridge.options.hexNumbers() && st[1].string[st[1].off]!='O')
+		val *= -1;
+            return (new Long(val));
+	}
+    }
+    
     /* (non-Javadoc)
      * @see php.java.bridge.IDocHandler#begin(php.java.bridge.ParserTag[])
      */
@@ -350,14 +373,14 @@ public final class Request implements IDocHandler {
 	    arg.type=ch;
 	    int i= st[0].getIntValue();
 	    arg.callObject=i==0?bridge:getGlobalRef(i);
-	    arg.method=st[1].getStringValue(bridge.options);
+	    arg.method=st[1].getCachedStringValue();
 	    arg.predicate=st[2].string[st[2].off]=='P';
 	    arg.id=st[3].getLongValue();
 	    break;
 	}
 	case 'C': {
 	    arg.type=ch;
-	    arg.callObject=st[0].getStringValue(bridge.options);
+	    arg.callObject=st[0].getCachedStringValue();
 	    arg.predicate=st[1].string[st[1].off]=='C';
 	    arg.id=st[2].getLongValue();
 	    break;
@@ -381,7 +404,7 @@ public final class Request implements IDocHandler {
 	case 'P': {
 	    if(arg.composite=='H') {// hash
 		if(st[0].string[st[0].off]=='S')
-		    arg.key = st[1].getStringValue(bridge.options);
+		    arg.key = st[1].getCachedStringValue();
 		else {
 		   arg.key = new PhpArrayKey(st[1].getIntValue());
 		}
@@ -399,7 +422,7 @@ public final class Request implements IDocHandler {
 	    if(arg.composite!='H') 
 	        arg.add(new PhpParserString(bridge, st[0]));
 	    else // hash has no type information
-	        arg.add(st[0].getStringValue(bridge.options));
+	        arg.add(st[0].getStringValue());
 	    break;
 	}
 	case 'B': {
@@ -408,9 +431,9 @@ public final class Request implements IDocHandler {
 	}
 	case 'L': {
 	    if(arg.composite!='H')
-	        arg.add(new PhpNumber(st[0].getLongValue()));
+	        arg.add(new PhpNumber(getPhpLong(st)));
 	    else // hash has no type information
-	        arg.add(bridge.options.createExact(st[0]));
+	        arg.add(createExact(st));
 	    break;
 	}
 	case 'D': {
@@ -419,11 +442,11 @@ public final class Request implements IDocHandler {
 	}
 	case 'E': {
 	    if(0==st[0].length)
-		arg.callObject=new Exception(st[1].getStringValue(bridge.options));
+		arg.callObject=new Exception(st[1].getStringValue());
 	    else {
 		int i=st[0].getIntValue();
 		if(0==i) {
-		    arg.callObject=new Exception(st[1].getStringValue(bridge.options));
+		    arg.callObject=new Exception(st[1].getStringValue());
 		}
 		else
 		    arg.callObject=getGlobalRef(i);
@@ -460,8 +483,6 @@ public final class Request implements IDocHandler {
         IllegalStateException ex = new IllegalStateException(s);
         response.setResultException(bridge.lastException = ex, s);
     }
-    private static final byte[] Fa = "<F p=\"A\"/>".getBytes();
-    private static final byte[] Fe = "<F p=\"E\"/>".getBytes();
     private int handleRequest() throws IOException {
 	int retval;
 	if(Parser.OK==(retval=parser.parse(bridge.in))) {
@@ -487,14 +508,11 @@ public final class Request implements IDocHandler {
 	           try {
 	     	       ((ThreadPool.Delegate)Thread.currentThread()).setPersistent();
 	           } catch (ClassCastException ex) {/*no thread pool*/}
-	           bridge.out.write(Fa);
+	           response.setFinish(true);
 	         } else { // terminate or terminate keep alive
-	           try {
-	               ThreadPool.Delegate delegate = ((ThreadPool.Delegate)Thread.currentThread()); 
-	               if(delegate.isPersistent()) delegate.terminatePersistent(); // remove keep alive daemon from pool
-	           } catch (ClassCastException ex) {/*no thread pool*/}
-	           bridge.out.write(Fe);
+	           response.setFinish(false);
 	         }
+	         response.flush();
 	         break;
 	   case 'R':
 	       setIllegalStateException(SUB_FAILED);
@@ -573,5 +591,16 @@ public final class Request implements IDocHandler {
         reset();
         arg.reset();
         response.recycle();
+    }
+
+    /**
+     * Create a parser string, according to options
+     * @return The parser string
+     */
+    public ParserString createParserString() {
+        if(bridge.options.hexNumbers())
+            return new ParserString(bridge);
+        else
+            return new ClassicParserString(bridge);
     }
 }

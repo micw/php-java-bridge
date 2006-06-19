@@ -49,11 +49,22 @@ public class DynamicClassLoader extends SecureClassLoader {
     private static int instanceCount = 0;
     private static long debugStart = System.currentTimeMillis();
 
+    protected String arrayToString(URL[] array) {
+	StringBuffer buf = new StringBuffer();
+	for(int i=0; i<array.length; i++) {
+	    buf.append(String.valueOf(array[i]));
+	    if(i+1!=array.length) buf.append(File.pathSeparatorChar);
+	}
+	return buf.toString();
+    }
+
     protected class URLClassLoaderEntry {
 	URLClassLoader cl;
 	long lastModified;
 	HashMap cache = new HashMap(); // Cache for this URLClassLoader
-
+	public String toString() {
+    	    return String.valueOf(arrayToString(cl.getURLs()));
+    	}
 	protected URLClassLoaderEntry (URLClassLoader cl, long lastModified) {
 	    this.cl = cl;
 	    this.lastModified = lastModified;

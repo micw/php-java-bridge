@@ -38,13 +38,26 @@ if test $# != 0; then
 
   trap 'kill `cat ${pid}`; rm -f ${pid}.old' 2 15
   ext=$1; shift
-  eval $1; shift
-  eval $1; shift
+  while true; do
+      case $1 in
+	  [A-Z]*) eval $1; shift;;
+	  *) break;;
+      esac
+  done
   export JAVA_HOME LD_LIBRARY_PATH
+# Even if the user has set his own java.wrapper, we want to
+# use our RunJavaBridge, because it carries the SEL
+# javabridge_exec_t context (necessary for a domain transition).
+# If the default wrapper is also RunJavaBridge, this means that 
+# RunJavaBridge calls itself before it calls java. This is harmless.
   java="${ext}/RunJavaBridge"
   LANG="$LANG_SYSTEM" 
   unset LC_ALL
-  $java "$@" >>$log 2>&1 &
+  if test -x ${java}; then
+    $java "$@" >>$log 2>&1 &
+  else
+    "$@" >>$log 2>&1 &
+  fi
   rm -f ${pid}.old; if test -s $pid; then mv $pid ${pid}.old; fi
   echo $! >$pid
   wait

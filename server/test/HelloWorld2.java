@@ -30,6 +30,7 @@ public class HelloWorld2 {
 	} catch (Exception e) {
 	    e.printStackTrace();
 	    System.err.println("Please make sure that php.ini contains java.servlet=On and that HelloWorld.php exists in the web server document root.");
+	    System.err.println("On Security Enhanced Linux also check the audit log, switch off SEL protection with \"setenforce 0\", restart apache with \"service httpd restart\" and run the test again. Switch back with \"setenforce 1\" and extract the required permissions with audit2allow");
 	}
     }
 }

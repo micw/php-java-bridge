@@ -14,9 +14,9 @@ PHP_ARG_WITH(java, for java support,
                           the binary. Otherwise the java executable will 
                           be searched using the PATH environment variable
                           Example: --with-java=/opt/jdk1.4,/usr/java/jre1.6])
-AC_ARG_WITH(mono,  [  --with-mono[[=/path/to/ikvmc.exe]] 
+AC_ARG_WITH(mono,  [  --with-mono[[=/path/to/mono/exe,[/path/to/dir-containing-ikvmc.exe+dlls]]] 
                           include mono support
-                          Example: --with-mono=$HOME/bin/ikvmc.exe], PHP_MONO="$withval", PHP_MONO="no")
+                          Example: --with-mono=/opt/mono/bin/mono], PHP_MONO="$withval", PHP_MONO="no")
 PHP_ARG_ENABLE(servlet, for java servlet support, [  --enable-servlet[[=JAR]]
                           include java servlet support. JAR must be the 
                           location of j2ee.jar or servlet.jar; creates 
@@ -58,30 +58,64 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
 
 	 JAVA_INCLUDES=`for i in \`find $PHP_JAVA/include -follow -type d -print\`; do echo -n "-I$i "; done`
 	 PHP_EVAL_INCLINE($JAVA_INCLUDES)
+	AC_CHECK_PROG(have_ar, ar, "yes", "no")
  	 JAVA_CHECK_JNI
 	 COND_GCJ=0
 	else
+	 AC_CHECK_PROG(have_ar, ar, "yes", "no")
 	 JAVA_CHECK_JNI
 	 COND_GCJ=1
 	fi
 
         if test "$PHP_MONO" != "no";then 
 # create mono.so, compile with -DEXTENSION_DIR="\"$(EXTENSION_DIR)\""
-	PHP_NEW_EXTENSION(mono, php_java_snprintf.c java.c java_bridge.c client.c parser.c protocol.c bind.c init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\"])
+         # --with-mono=/path/to/mono.exe,/path/to/ikvmc/dir
+         PHP_JRE="`echo $PHP_MONO | LANG=C awk -F, '{print $1}'`"
+
+	PHP_NEW_EXTENSION(mono, php_java_snprintf.c java.c api.c java_bridge.c client.c parser.c protocol.c bind.c init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\"])
           EXTENSION_NAME=MONO
-	  PHP_JAVA_BIN="/usr/bin/mono"
+	  if test X$PHP_JRE = X; then
+		  PHP_JAVA_BIN="mono"
+	  else
+		  PHP_JAVA_BIN="${PHP_JRE}"
+          fi
 	  COND_GCJ=0
-          PHP_JAVA=${EXTENSION_DIR}
-          PHP_JRE=${EXTENSION_DIR}
+          PHP_JRE=${EXTENSION_DIR} # home dir
+# create init_cfg.c from the template (same as AC_CONFIG_FILES)
+# note: PHP_JAVA is JRE_HOME, PHP_JAVA_SDK is JAVA_HOME and 
+# PHP_JAVA_BIN is ${JRE_HOME}/bin/java
+	BRIDGE_VERSION="`cat $ext_builddir/VERSION`"
+        for i in init_cfg.c init_cfg.h; do 
+	  sed "s*@PHP_JAVA@*${PHP_JRE}*
+	     s*@PHP_JAVA_SDK@*${PHP_JAVA}*
+	     s*@COND_GCJ@*${COND_GCJ}*
+             s*@PHP_JAVA_BIN@*${PHP_JAVA_BIN}*
+             s*@EXTENSION@*${EXTENSION_NAME}*
+             s*@BRIDGE_VERSION@*${BRIDGE_VERSION}*" \
+            <$ext_builddir/${i}.in >$ext_builddir/${i}
+        done
         else 
 # create java.so, compile with -DEXTENSION_DIR="\"$(EXTENSION_DIR)\""
-	PHP_NEW_EXTENSION(java, php_java_snprintf.c php_java_strtod.c java.c java_bridge.c client.c parser.c protocol.c bind.c init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\"])
+	PHP_NEW_EXTENSION(java, php_java_snprintf.c php_java_strtod.c java.c api.c java_bridge.c client.c parser.c protocol.c bind.c init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\"])
           EXTENSION_NAME=JAVA
 	  if test X$PHP_JRE = X; then
 		  PHP_JAVA_BIN="java"
 	  else
 		  PHP_JAVA_BIN="${PHP_JRE}/bin/java"
           fi
+# create init_cfg.c from the template (same as AC_CONFIG_FILES)
+# note: PHP_JAVA is JRE_HOME, PHP_JAVA_SDK is JAVA_HOME and 
+# PHP_JAVA_BIN is ${JRE_HOME}/bin/java
+	BRIDGE_VERSION="`cat $ext_builddir/VERSION`"
+        for i in init_cfg.c init_cfg.h install.sh; do 
+	  sed "s*@PHP_JAVA@*${PHP_JRE}*
+	     s*@PHP_JAVA_SDK@*${PHP_JAVA}*
+	     s*@COND_GCJ@*${COND_GCJ}*
+             s*@PHP_JAVA_BIN@*${PHP_JAVA_BIN}*
+             s*@EXTENSION@*${EXTENSION_NAME}*
+             s*@BRIDGE_VERSION@*${BRIDGE_VERSION}*" \
+            <$ext_builddir/${i}.in >$ext_builddir/${i}
+        done
         fi
 
        JAVA_CHECK_BROKEN_GCC_INSTALLATION
@@ -89,17 +123,6 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
          AC_MSG_WARN([Your GCC installation may be broken. It uses two different static libraries but only one dynamic library for -m32 and -m64 builds.])
 	  sleep 10
        fi
-
-# create init_cfg.c from the template (same as AC_CONFIG_FILES)
-	BRIDGE_VERSION="`cat $ext_builddir/VERSION`"
-        for i in init_cfg.c init_cfg.h; do 
-	  sed "s*@PHP_JAVA@*${PHP_JRE}*
-	     s*@COND_GCJ@*${COND_GCJ}*
-             s*@PHP_JAVA_BIN@*${PHP_JAVA_BIN}*
-             s*@EXTENSION@*${EXTENSION_NAME}*
-             s*@BRIDGE_VERSION@*${BRIDGE_VERSION}*" \
-            <$ext_builddir/${i}.in >$ext_builddir/${i}
-        done
 
 if test "$PHP_BACKEND" = "yes" ; then
 # bootstrap the server's configure script
@@ -117,7 +140,7 @@ if test "$PHP_BACKEND" = "yes" ; then
 # an artificial target so that the server/ part gets compiled
 	PHP_ADD_MAKEFILE_FRAGMENT
 	PHP_SUBST(JAVA_SHARED_LIBADD)
-	PHP_MODULES="$PHP_MODULES \$(phplibdir)/libnatcJavaBridge.la"
+	PHP_MODULES="$PHP_MODULES \$(phplibdir)/stamp"
 fi
 
 fi

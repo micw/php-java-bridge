@@ -10,13 +10,13 @@
         <load-on-startup>0</load-on-startup>
     </servlet>
 
-    <!-- PHP Servlet: backend for Apache or IIS -->
+    <!-- PHP Servlet: back-end for Apache or IIS -->
     <servlet>
         <servlet-name>PhpJavaServlet</servlet-name>
         <servlet-class>php.java.servlet.PhpJavaServlet</servlet-class>
 
          <!-- Allow non-local clients. These clients connect to the -->
-         <!-- backend using a HTTP tunnel. Default is Off. -->
+         <!-- back-end using a HTTP tunnel. Default is Off. -->
          <!-- Leave this off if your server is connected to the internet. --> 
        <!--
          <init-param>
@@ -52,8 +52,8 @@
          </init-param>
         -->
 
-         <!-- Your php binary. Default is /usr/bin/php-cgi, /usr/bin/php or -->
-         <!-- c:/php5/php-cgi. -->
+         <!-- Your php binary. Default is /usr/bin/php-cgi or -->
+         <!-- c:/php/php-cgi. -->
         <!-- 
          <init-param>
            <param-name>php_exec</param-name>
@@ -76,11 +76,11 @@
          <!-- php as a CGI sub component (when php is not installed as an -->
          <!-- Apache or IIS module). Values: Off, On, Autostart. -->
          <!-- Default is Autostart, if the web application is "JavaBridge" -->
-         <!-- and Off othewise -->
+         <!-- and On otherwise -->
         <!-- 
          <init-param>
            <param-name>use_fast_cgi</param-name>
-           <param-value>On</param-value>
+           <param-value>Off</param-value>
          </init-param>
         -->
 

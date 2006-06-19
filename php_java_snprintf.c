@@ -58,6 +58,8 @@
 #ifndef ZEND_ENGINE_2
 
 #include "php_java.h"
+#include "php_java_snprintf.h"
+
 #include <stddef.h>
 #include <stdio.h>
 #include <ctype.h>

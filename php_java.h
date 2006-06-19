@@ -63,9 +63,12 @@
 #endif
 #endif 
 
-#ifdef ZEND_ENGINE_2
-/* for try/catch emulation */
-#include <setjmp.h>
+/** PROTOCOL.TXT doesn't have a way to send hex numbers,
+ * if backward compatibility is enabled */
+#ifndef ZEND_ENGINE_2
+#ifndef DISABLE_HEX
+#define DISABLE_HEX
+#endif
 #endif
 
 extern zend_module_entry EXT_GLOBAL(module_entry);
@@ -81,7 +84,9 @@ extern zend_object_handlers EXT_GLOBAL(handlers);
 #endif
 extern const char * const EXT_GLOBAL(bridge_version);
 
-extern int EXT_GLOBAL(ini_updated), EXT_GLOBAL (ini_user), EXT_GLOBAL (ini_set);
+extern int EXT_GLOBAL(ini_updated), EXT_GLOBAL (ini_user), 
+  EXT_GLOBAL (ini_set), EXT_GLOBAL(ini_override);
+
 #define U_LOGFILE (1<<1)
 #define U_LOGLEVEL (1<<2)
 #define U_JAVA_HOME (1<<3)
@@ -94,6 +99,7 @@ extern int EXT_GLOBAL(ini_updated), EXT_GLOBAL (ini_user), EXT_GLOBAL (ini_set);
 #define U_WRAPPER (1<<10)
 #define U_EXT_JAVA_COMPATIBILITY  (1<<11)
 #define U_PERSISTENT_CONNECTIONS  (1<<12)
+#define U_POLICY (1<<13)
 
 #if EXTENSION == JAVA
 #define phpext_java_ptr &EXT_GLOBAL(module_entry)
@@ -135,6 +141,8 @@ struct cfg {
   char*ld_library_path;
   /** The java.wrapper */
   char*wrapper;
+  /** The java.policy */
+  char*policy;
   /** The java.java */
   char*vm;
   /** The java.java_home */
@@ -201,11 +209,13 @@ EXT_END_MODULE_GLOBALS(EXT)
 #endif
 
 extern char* EXT_GLOBAL(get_server_string)(TSRMLS_D);
+extern void EXT_GLOBAL(override_ini_for_redirect)(TSRMLS_D);
 extern proxyenv *EXT_GLOBAL(try_connect_to_server)(TSRMLS_D);
 extern proxyenv *EXT_GLOBAL(connect_to_server)(TSRMLS_D);
-extern short EXT_GLOBAL(close_connection)(proxyenv**env, short persistent_connection TSRMLS_DC);
+extern short EXT_GLOBAL(close_connection)(proxyenv*env, short persistent_connection TSRMLS_DC);
 extern void EXT_GLOBAL(start_server)(TSRMLS_D);
-extern void EXT_GLOBAL(save_cfg)(proxyenv *env TSRMLS_DC);
+extern void EXT_GLOBAL(activate_connection)(proxyenv *env TSRMLS_DC);
+extern void EXT_GLOBAL(passivate_connection)(proxyenv *env TSRMLS_DC);
 extern void EXT_GLOBAL(clone_cfg)(TSRMLS_D);
 extern void EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_D);
 

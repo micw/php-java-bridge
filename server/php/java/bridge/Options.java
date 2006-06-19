@@ -16,15 +16,6 @@ public final class Options {
     protected String encoding = Util.UTF8;
 
     /**
-     * Return a new string using the current file encoding (see java_set_file_encoding()).
-     * @param b The byte array
-     * @return The encoded string.
-     */
-    public String newString(byte[] b) {
-        return newString(b, 0, b.length);
-    }
-    
-    /**
      * Returns the file encoding, see java_set_file_encoding(). This option may change for each packet.
      * @return The file encoding
      */
@@ -46,24 +37,9 @@ public final class Options {
 	}
     }
    
-    /**
-     * Return a new string using the current file encoding (see java_set_file_encoding()).
-     * @param b The byte array
-     * @param start The start index
-     * @param length The number of bytes to encode.
-     * @return The encoded string.
-     */    
-    public String newString(byte[] b, int start, int length) {
-        try { 
-	    return new String(b, start, length, getEncoding());
-        } catch (java.io.UnsupportedEncodingException e) { 
-	    Util.printStackTrace(e);
-	    return new String(b, start, length);
-	}
-    }
     
     /**
-     * Returns true if bit 1 of the request header is set (see PROTOCOL.TXT). This option stays the same for all packets.
+     * Returns true, if bit 1 of the request header is set (see PROTOCOL.TXT). This option stays the same for all packets.
      * @return the value of the request header bit 1.
      */
     public boolean sendArraysAsValues() {
@@ -71,20 +47,21 @@ public final class Options {
     }
 
     /**
-     * Returns true if bit 0 of the request header is set (see PROTOCOL.TXT). This options stays the same for all packets.
-     * @return the value of the request header bit 0
+     * Returns true, if bit 0 of the request header is set (see PROTOCOL.TXT). This options stays the same for all packets.
+     * @return the value of the request header
      */
     public boolean extJavaCompatibility() {
-    	return (this.options & 1) == 1;
+    	return this.options == 3;
     }
  
-    protected Object createExact(ParserString st) {
-        if(!extJavaCompatibility())
-            return (new Integer(st.getIntValue()));
-        else
-            return (new Long(st.getLongValue()));
+    /**
+     * Returns true, if exact numbers are base 16 (see PROTOCOL.TXT). This options stays the same for all packets.
+     * @return the value of the request header
+     */
+    public boolean hexNumbers() {
+    	return this.options == 1;
     }
-    
+ 
     /** re-initialize for keep alive */
     protected void recycle() {
         encoding = Util.UTF8;

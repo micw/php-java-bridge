@@ -107,7 +107,7 @@ class Parser {
 	ParserString str[] = tag[t].strings;
 	short n = tag[t].n;
 	s[i]=0;
-	if(str[n]==null) str[n]=new ParserString();
+	if(str[n]==null) str[n]=handler.createParserString();
 	str[n].string=s;
 	str[n].off=i0;
 	str[n].length=i-i0;

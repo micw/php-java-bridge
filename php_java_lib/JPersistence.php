@@ -43,10 +43,10 @@ class JPersistenceProxy {
 }
 
 class JPersistenceAdapter extends JPersistenceProxy {
-  function __get($arg)       { if($this->java) return $this->java->__get($arg); }
-  function __put($key, $val) { if($this->java) return $this->java->__put($key, $val); }
-  function __call($m, $a)    { if($this->java) return $this->java->__call($m,$a); }
-  function __toString()      { if($this->java) return $this->java->__toString(); }
+  function __get($arg)       { if(!is_null($this->java)) return $this->java->__get($arg); }
+  function __put($key, $val) { if(!is_null($this->java)) return $this->java->__put($key, $val); }
+  function __call($m, $a)    { if(!is_null($this->java)) return $this->java->__call($m,$a); }
+  function __toString()      { if(!is_null($this->java)) return $this->java->__toString(); }
 }
 
 ?>

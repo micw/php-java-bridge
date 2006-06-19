@@ -29,7 +29,7 @@ AC_ARG_WITH(java,  [  --with-java[[=JAVA_HOME[[,JRE_HOME]]]]
 			  Example: --with-java=/opt/jdk1.4,/usr/java/jre1.6], PHP_JAVA="$withval", PHP_JAVA="yes")
 AC_ARG_WITH(mono,  [  --with-mono[[=/path/to/ikvmc.exe]]
                           include mono support
-                          Example: --with-mono=$HOME/bin/ikvmc.exe], PHP_MONO="$withval", PHP_MONO="no")
+                          Example: --with-mono=$HOME/ikvmdlls/], PHP_MONO="$withval", PHP_MONO="no")
 AC_ARG_WITH(extdir,  [  --with-extdir[[=DIR]]	
                           directory which contains the shared java 
                           extension], EXTENSION_DIR="$withval", EXTENSION_DIR="`php-config --extension-dir`")
@@ -66,11 +66,13 @@ PHP_JAVA="`echo $PHP_JAVA | LANG=C awk -F, '{print $1}'`"
 
 JAVA_INCLUDES=`for i in \`find $PHP_JAVA/include -follow -type d -print\`; do echo -n "-I$i "; done`
 AM_CPPFLAGS="${AM_CPPFLAGS} $JAVA_INCLUDES"
+AC_CHECK_PROG(have_ar, ar, "yes", "no")
 JAVA_CHECK_JNI
 if test "$have_jni" = "no"; then 
    JNI_LIBS=""
 fi
 else
+AC_CHECK_PROG(have_ar, ar, "yes", "no")
 JAVA_CHECK_JNI
 if test "$have_jni" = "no"; then 
    echo "FATAL: Native compilation not supported on this system."
@@ -81,7 +83,7 @@ fi
 
 TCP_SOCKETNAME="9167"
 EXTENSION_DISPLAY_NAME="MonoBridge"
-MONO_BRIDGE_EXE=MonoBridge.exe
+MONO_BRIDGE_EXE="MonoBridge.exe ICSharpCode.SharpZipLib.dll IKVM.AWT.WinForms.dll IKVM.GNU.Classpath.dll IKVM.Runtime.dll"
 VM_BINARIES="${MONO_BRIDGE_EXE} RunMonoBridge"
 
 if test "$PHP_MONO" = "no"; then
@@ -91,13 +93,15 @@ if test "$PHP_MONO" = "no"; then
   VM_BINARIES="java RunJavaBridge"
   MONO_BRIDGE_EXE=
 fi
-if test "$PHP_MONO" = "yes"; then
-  PHP_MONO="`locate ikvmc.exe | head -1`"
-  if test X$PHP_MONO = X; then 
-   echo "ikvmc.exe not found, skipping mono JavaBridge.exe creation" >2
-   PHP_MONO=
-   MONO_BRIDGE_EXE=
-  fi
+if test "$PHP_MONO" != "no"; then
+   # --with-mono=/path/to/mono.exe,/path/to/ikvmc/dir
+   PHP_JAVA="`echo $PHP_MONO | LANG=C awk -F, '{print $1}'`"
+   PHP_MONO="`echo $PHP_MONO | LANG=C awk -F, '{print $2}'`"
+   if test "$PHP_JAVA" = "yes"; then PHP_JAVA="mono"; fi
+   if test "X${PHP_MONO}" = "X"; then PHP_MONO="../unsupported"; fi
+   if ! test -f ${PHP_MONO}/ikvmc.exe; then 
+     AC_MSG_ERROR([ikvmc.exe not found])
+   fi
 fi
 
 # optional faces, requires script, servlet
@@ -175,17 +179,21 @@ AM_CONDITIONAL([COND_GCJ], [test "$PHP_MONO" != "no" || test "$PHP_JAVA" = "yes"
 AC_OUTPUT(Makefile)
 
 echo "-----------------------------------------------------------------"
-echo "The PHP/Java Bridge backend will be compiled with:"
-if test "$PHP_JAVA" = "yes"; then
+echo "The PHP/Java Bridge back-end will be compiled with:"
+if test "$PHP_MONO" != "no"; then
+echo "  MONO DIR: $PHP_MONO"
+echo "  Will use GNU gcc, gcj and ikvmc to compile back-end to CLR bytecode."
+else if test "$PHP_JAVA" = "yes"; then
 echo "  JAVA: --with-java not specified."
-echo "  Will use GNU gcc, gcj to compile backend to native code."
-else if test "$PHP_MONO" != "no"; then
-echo "  MONO: $PHP_MONO"
-echo "  Will use GNU gcc, gcj and ikvmc to compile backend to CLR bytecode."
+echo "  Will use GNU gcc, gcj to compile back-end to native code."
 else
 echo "  JAVA (compile time)    : $PHP_JAVA"
 echo "  JAVA (run time)        : $PHP_JRE"
-echo "  LOCAL (secure) channel : $have_jni"
+jni_available="available"
+if test "$have_jni" = "no"; then 
+  jni_available="not available"
+fi
+echo "  LOCAL (secure) channel : $jni_available"
 echo ""
 echo "  The following additional jars will be created:"
 echo "  SERVLET                : $JAVA_BRIDGE_SERVLET_JAR"

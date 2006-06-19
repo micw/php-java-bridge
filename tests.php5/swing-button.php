@@ -19,6 +19,10 @@ if (!extension_loaded('java')) {
   }
 }
 ini_set("max_execution_time", 0);
+if($argc<2) {
+  echo "No automatic test. Use php swing-button.php --force tu run this test.\n";
+  exit(0);
+ }
 
 /**
  * Swing's native peers are switched off by default (we don't want to

@@ -389,23 +389,30 @@ static void jniRegisterNatives (JNIEnv *env)
 
 void java_bridge_main(int argc, char**argv) 
 {
-  JavaVMOption options[3];
+  JavaVMOption options[5];
+  const int off = N_SARGS-3-1; /* PORT, LEVEL, LOG_FILE */
   JavaVM *jvm;
   JNIEnv *jenv;
   JavaVMInitArgs vm_args; /* JDK 1.2 VM initialization arguments */
   jclass reflectClass, stringClass;
   jobjectArray arr;
   jmethodID init;
-  int i, err, off;
+  int i, err;
+
   vm_args.version = JNI_VERSION_1_2; /* New in 1.1.2: VM version */
   /* Get the default initialization arguments and set the class 
    * path */
   JNI_GetDefaultJavaVMInitArgs(&vm_args);
   vm_args.nOptions=0;
   vm_args.options=options;
+  /* library path */
   if(argv[1]) vm_args.options[vm_args.nOptions++].optionString=argv[1];
+  /* class path */
   if(argv[2]) vm_args.options[vm_args.nOptions++].optionString=argv[2];
+  /* policy or java.awt.headless */
   if(argv[3]) vm_args.options[vm_args.nOptions++].optionString=argv[3];
+  /* base  */
+  if(argv[4]) vm_args.options[vm_args.nOptions++].optionString=argv[4];
   vm_args.ignoreUnrecognized=JNI_TRUE;
 
   /* load and initialize a Java VM, return a JNI interface 
@@ -419,11 +426,10 @@ void java_bridge_main(int argc, char**argv)
   assert(init); if(!init) exit(9);
   stringClass = (*jenv)->FindClass(jenv, "java/lang/String");
   assert(stringClass); if(!stringClass) exit(9);
-  arr = (*jenv)->NewObjectArray(jenv, argc-6, stringClass, 0);
+  arr = (*jenv)->NewObjectArray(jenv, 3, stringClass, 0);
   assert(arr); if(!arr) exit(9);
 
-  off = N_SARGS-4;
-  for (i=0; (i+6)<argc; i++) {
+  for (i=0; i<3; i++) {
 	jstring arg;
 	if(!argv[i+off]) break;
     arg = (*jenv)->NewStringUTF(jenv, argv[i+off]);

@@ -1,9 +1,13 @@
+This file contains very detailed installation instructions. For most
+users the build section in the ABOUT.HTM or README and the install.sh
+script should be sufficient. 
 
-NOTE: Linux RPMs contain Security Enhanced Linux contexts. If you want
-to install software on a SEL system (RHEL, Fedora, ...), please use
-the RPM build system instead (rpmbuild --rebuild
-php-java-bridge*src.rpm).  However, for a development system you can
-switch off SEL and follow the instructions below.
+NOTE for Fedora and RedHat Enterprise Linux: Linux RPMs contain
+Security Enhanced Linux contexts. If you want to install software on a
+SEL system (RHEL, Fedora, ...), please use the RPM build system
+instead (rpmbuild --rebuild php-java-bridge*src.rpm).  However, for a
+development system you can switch off SEL and follow the instructions
+below.
 
 
 Quick Installation from source code
@@ -53,6 +57,12 @@ and optionally, if you want to run JSP and PHP from Apache/Tomcat:
 
 * mod_jk with Apache/Tomcat.
 
+The following build process first creates an artificial environment
+(PATH, LD_LIBRARY_PATH) and installs all components into INST
+(default: /usr/local). In a second step the installed components must
+be deployed, which usually means that the files must be copied or
+moved from the INST (default: /usr/local/) hierarchy into the system
+(usually: /usr) hierarchy.
 
 # adjust the install directory
 INST=/usr/local #INST=$HOME/bridge
@@ -138,6 +148,11 @@ If the above test succeeded, copy the files "java.so",
 "libnatcJavaBridge.so" and "JavaBridge.jar" (on Windows: php_java.dll
 and JavaBridge.jar) to the extension_dir of your system php
 installation and start the system http service again.
+
+The modules/ directory also contains a file "JavaBridge.war" which can
+be used to run php within a pure java application server. Please see
+the bottom of the INSTALL.J2EE document how to install it into IBM
+WebSphere, Oracle 10g, Tomcat5 or others.
 
 If something went wrong, for example if you have forgotten to set
 JAVA_HOME or if configure failed because the installed autoconf
@@ -250,7 +265,7 @@ EXTENSION_NAME=JAVA
 PHP_JAVA_BIN="java"
 
 # The extension_dir on windows or unix
-#EXTENSION_DIR="c:/php5"
+#EXTENSION_DIR="c:/php"
 EXTENSION_DIR="."
 
 # The configured PHP directory, this directory must contain

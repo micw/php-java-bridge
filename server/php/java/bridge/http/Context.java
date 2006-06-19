@@ -43,6 +43,7 @@ public class Context implements Invocable {
     /** Map of the scope of level ENGINE_SCOPE */
     protected Map engineScope;
 
+    protected Context() {}
     /**
      * Retrieves the value for getAttribute(String, int) for the 
      * lowest scope in which it returns a non-null value.

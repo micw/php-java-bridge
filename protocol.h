@@ -46,7 +46,7 @@
 #define LOG_DEBUG 4
 #define DEFAULT_LEVEL "2"
 
-#define N_JAVA_SARGS 9
+#define N_JAVA_SARGS 10
 #define N_JAVA_SENV 3 
 #define N_MONO_SARGS 6
 #define N_MONO_SENV 1
@@ -99,7 +99,7 @@ struct proxyenv_ {
 
   struct async_ctx {
 	void (*handle_request)(proxyenv *env);
-	long nextValue;
+	unsigned long nextValue;
 	void *result;
 	FILE *peer;
 	ssize_t (*f_send)(proxyenv*env, const void *buf, size_t len);
@@ -121,7 +121,7 @@ struct proxyenv_ {
 
   void (*writeCreateObjectBegin)(proxyenv *env, char*name, size_t strlen, char createInstance, void *result);
   short (*writeCreateObjectEnd)(proxyenv *env);
-  void (*writeInvokeBegin)(proxyenv *env, long object, char*method, size_t strlen, char property, void* result);
+  void (*writeInvokeBegin)(proxyenv *env, unsigned long object, char*method, size_t strlen, char property, void* result);
   short (*writeInvokeEnd)(proxyenv *env);
   void (*writeResultBegin)(proxyenv *env, void* result);
   void (*writeResultEnd)(proxyenv *env);
@@ -129,8 +129,8 @@ struct proxyenv_ {
   void (*writeBoolean)(proxyenv *env, short boolean);
   void (*writeLong)(proxyenv *env, long l);
   void (*writeDouble)(proxyenv *env, double d);
-  void (*writeObject)(proxyenv *env, long object);
-  void (*writeException)(proxyenv *env, long object, char*str, size_t len);
+  void (*writeObject)(proxyenv *env, unsigned long object);
+  void (*writeException)(proxyenv *env, unsigned long object, char*str, size_t len);
   void (*writeCompositeBegin_a)(proxyenv *env);
   void (*writeCompositeBegin_h)(proxyenv *env);
   void (*writeCompositeEnd)(proxyenv *env);
@@ -138,7 +138,7 @@ struct proxyenv_ {
   void (*writePairBegin_n)(proxyenv *env, unsigned long key);
   void (*writePairBegin)(proxyenv *env);
   void (*writePairEnd)(proxyenv *env);
-  void (*writeUnref)(proxyenv *env, long object);
+  void (*writeUnref)(proxyenv *env, unsigned long object);
   short (*writeEndConnection)(proxyenv *env, char property);
   short (*finish)(proxyenv *env);
 

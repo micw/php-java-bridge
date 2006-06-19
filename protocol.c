@@ -25,6 +25,11 @@
 	assert((*env)->send); if(!(*env)->send) exit(9); \
   } \
 }
+#ifdef DISABLE_HEX
+#define HEX_ARG "%ld"
+#else
+#define HEX_ARG "%lx"
+#endif
 
 static char *getSessionFactory(proxyenv *env) {
   static char invalid[] = "0";
@@ -92,7 +97,7 @@ static short end(proxyenv *env) {
 	unsigned char mode = EXT_GLOBAL (get_mode) ();
 
 	assert(!(*env)->peer_redirected || ((*env)->peer_redirected && (((*env)->peer0)==-1)));
-	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", servlet_context, (unsigned long)(size+1), EXT_GLOBAL(get_channel)(TSRMLS_C), getSessionFactory(env), mode);
+	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", servlet_context, (unsigned long)(size+1), EXT_GLOBAL(get_channel)(TSRMLS_C), getSessionFactory(env), mode);
 
 	success = add_header(env, &size, header, header_length);
   } else {						/* re-directed */
@@ -143,7 +148,7 @@ static short end_session(proxyenv *env) {
 
   (*env)->finish=end;
   
-  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Keep-Alive\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_REDIRECT: %d\r\n%sX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", (*env)->servlet_context_string, (unsigned long)(size+1), override_redirect, get_cookies(&val, env), EXT_GLOBAL(get_channel)(TSRMLS_C), getSessionFactory(env), mode);
+  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_REDIRECT: %d\r\n%sX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", (*env)->servlet_context_string, (unsigned long)(size+1), override_redirect, get_cookies(&val, env), EXT_GLOBAL(get_channel)(TSRMLS_C), getSessionFactory(env), mode);
 
   success = add_header(env, &size, header, header_length);
   if(success) success = send_data(env, (char*)(*env)->send, size);
@@ -182,6 +187,7 @@ static short end_connection (proxyenv *env) {
   char *context;
   size_t size = (*env)->send_len;
   char kontext[256];
+  unsigned char mode = EXT_GLOBAL (get_mode) ();
 
   if((*env)->must_reopen==2) context = get_context(env, kontext, &context_length);
   (*env)->must_reopen=0;
@@ -197,7 +203,7 @@ static short end_connection (proxyenv *env) {
 
 	assert(!(*env)->peer_redirected);
 
-	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nContent-Type: text/html\r\nContent-Length: 0\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n", servlet_context, getSessionFactory(env));
+	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", servlet_context, (unsigned long)(size+1), EXT_GLOBAL(get_channel)(TSRMLS_C),  getSessionFactory(env), mode);
 
 	success = add_header(env, &size, header, header_length);
 	if(success) success = send_data(env, (char*)(*env)->send, size);
@@ -286,8 +292,8 @@ void EXT_GLOBAL(check_session) (proxyenv *env TSRMLS_DC) {
 	  int sock = socket (PF_INET, SOCK_STREAM, 0);
 	  struct sockaddr *saddr = &(*env)->orig_peer_saddr;
 	  if (-1!=sock) {
-		static const int true = 1;
-		setsockopt(sock, 0x6, TCP_NODELAY, (void*)&true, sizeof true);
+		static const int is_true = 1;
+		setsockopt(sock, 0x6, TCP_NODELAY, (void*)&is_true, sizeof is_true);
 		if (-1!=connect(sock, saddr, sizeof (struct sockaddr))) {
 		  (*env)->peer0 = (*env)->peer;
 		  (*env)->peer = sock;
@@ -380,7 +386,7 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    assert(createInstance=='C' || createInstance=='I');
    if(!len) len=strlen(name);
    GROW(FLEN+ILEN+len);
-   (*env)->send_len+=EXT_GLOBAL(snprintf) ((char*)((*env)->send+(*env)->send_len), flen, "<C v=\"%s\" p=\"%c\" i=\"%ld\">", name, createInstance, (long)((*env)->async_ctx.result=result));
+   (*env)->send_len+=EXT_GLOBAL(snprintf) ((char*)((*env)->send+(*env)->send_len), flen, "<C v=\"%s\" p=\"%c\" i=\""/**/HEX_ARG/**/"\">", name, createInstance, (unsigned long)((*env)->async_ctx.result=result));
    assert((*env)->send_len<=(*env)->send_size);
  }
  static short CreateObjectEnd(proxyenv *env) {
@@ -390,12 +396,12 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
    assert((*env)->send_len<=(*env)->send_size);
    return flush(env);
  }
- static void InvokeBegin(proxyenv *env, long object, char*method, size_t len, char property, void* result) {
+ static void InvokeBegin(proxyenv *env, unsigned long object, char*method, size_t len, char property, void* result) {
    size_t flen;
    assert(property=='I' || property=='P');
    if(!len) len=strlen(method);
    GROW(FLEN+ILEN+len+ILEN);
-   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<I v=\"%ld\" m=\"%s\" p=\"%c\" i=\"%ld\">", object, method, property, (long)((*env)->async_ctx.result=result));
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<I v=\""/**/HEX_ARG/**/"\" m=\"%s\" p=\"%c\" i=\""/**/HEX_ARG/**/"\">", object, method, property, (unsigned long)((*env)->async_ctx.result=result));
    assert((*env)->send_len<=(*env)->send_size);
  }
  static short InvokeEnd(proxyenv *env) {
@@ -409,7 +415,7 @@ static char* replaceQuote(char *name, size_t len, size_t *ret_len) {
  static void ResultBegin(proxyenv *env, void*result) {
    size_t flen;
    GROW(FLEN+ILEN);
-   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<R i=\"%ld\">", (long)((*env)->async_ctx.result=result));
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<R i=\""/**/HEX_ARG/**/"\">", (unsigned long)((*env)->async_ctx.result=result));
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void ResultEnd(proxyenv *env) {
@@ -456,35 +462,47 @@ static short EndConnection(proxyenv *env, char property) {
    (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<B v=\"%c\"/>", boolean?'T':'F');
    assert((*env)->send_len<=(*env)->send_size);
  }
+#ifdef DISABLE_HEX
  static void Long(proxyenv *env, long l) {
    size_t flen;
    GROW(FLEN+ILEN);
    (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<L v=\"%ld\"/>", l);
    assert((*env)->send_len<=(*env)->send_size);
  }
+#else
+ static void Long(proxyenv *env, long l) {
+   size_t flen;
+   GROW(FLEN+ILEN);
+   if(l<0)
+	 (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<L v=\""/**/HEX_ARG/**/"\" p=\"A\"/>", (unsigned long)(-l));
+   else
+	 (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<L v=\""/**/HEX_ARG/**/"\" p=\"O\"/>", (unsigned long)l);
+   assert((*env)->send_len<=(*env)->send_size);
+ }
+#endif
  static void Double(proxyenv *env, double d) {
    size_t flen;
    GROW(FLEN+ILEN);
    (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<D v=\"%."/**/PRECISION/**/"e\"/>", d);
    assert((*env)->send_len<=(*env)->send_size);
  }
- static void Object(proxyenv *env, long object) {
+ static void Object(proxyenv *env, unsigned long object) {
    size_t flen;
    GROW(FLEN+ILEN);
    if(!object) 
 	 (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<O v=\"\"/>");
    else
-	 (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len),flen, "<O v=\"%ld\"/>", object);
+	 (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len),flen, "<O v=\""/**/HEX_ARG/**/"\"/>", object);
    assert((*env)->send_len<=(*env)->send_size);
  }
- static void Exception(proxyenv *env, long object, char *str, size_t len) {
+ static void Exception(proxyenv *env, unsigned long object, char *str, size_t len) {
    size_t flen;
    if(!len) len=strlen(str);
    GROW(FLEN+ILEN+len);
    if(!object) 
 	 (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<E v=\"\" m=\"%s\"/>", str);
    else
-	 (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len),flen, "<E v=\"%ld\" m=\"%s\"/>", object, str);
+	 (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len),flen, "<E v=\""/**/HEX_ARG/**/"\" m=\"%s\"/>", object, str);
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void CompositeBegin_a(proxyenv *env) {
@@ -516,7 +534,7 @@ static short EndConnection(proxyenv *env, char property) {
  static void PairBegin_n(proxyenv *env, unsigned long key) {
    size_t flen;
    GROW(FLEN+ILEN);
-   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<P t=\"N\" v=\"%ld\">", key);
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<P t=\"N\" v=\""/**/HEX_ARG/**/"\">", key);
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void PairBegin(proxyenv *env) {
@@ -531,17 +549,16 @@ static short EndConnection(proxyenv *env, char property) {
    (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "</P>");
    assert((*env)->send_len<=(*env)->send_size);
  }
- static void Unref(proxyenv *env, long object) {
+ static void Unref(proxyenv *env, unsigned long object) {
    size_t flen;
    GROW(FLEN+ILEN);
-   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<U v=\"%ld\"/>", object);
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<U v=\""/**/HEX_ARG/**/"\"/>", object);
    assert((*env)->send_len<=(*env)->send_size);
  }
 
  
 
 static void close_connection(proxyenv *env TSRMLS_DC) {
-  short is_closed = 0;
   if(env && *env) {
 	if((*env)->peer!=-1) {
 	  /* end servlet session */
@@ -574,21 +591,28 @@ static short recycle_connection(proxyenv *env TSRMLS_DC) {
 		return 0;
 	  }
 	}
-	EXT_GLOBAL(save_cfg)(env TSRMLS_CC);
+	EXT_GLOBAL(passivate_connection)(env TSRMLS_CC);
 	EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);
 	if((*env)->current_servlet_ctx && 
 	   (*env)->servlet_ctx != (*env)->current_servlet_ctx) {
 	  free((*env)->current_servlet_ctx); 
-	  (*env)->current_servlet_ctx = 0; 
 	}
+	(*env)->current_servlet_ctx = 0; 
   }
   return 1;
 }
-short EXT_GLOBAL(close_connection)(proxyenv**penv, short persistent_connection TSRMLS_DC) {
+/**
+ * Close an active connection. The connection must be active, i.e. JG(cfg).hosts,
+ * JG(cfg).servlet and JG(cfg).ini_user must contain the appropriate values.
+ *
+ * @param env The proxy env
+ * @param persistent_connection true for keep alive, false closes physical connection
+ * @see activate_connection
+ */
+short EXT_GLOBAL(close_connection)(proxyenv*env, short persistent_connection TSRMLS_DC) {
   int success = 1;
-  if(persistent_connection) success = recycle_connection(*penv TSRMLS_CC);
-  if(!persistent_connection || !success) close_connection(*penv TSRMLS_CC);
-  *penv=0;						/* a copy should already be in connections */
+  if(persistent_connection) success = recycle_connection(env TSRMLS_CC);
+  if(!persistent_connection || !success) close_connection(env TSRMLS_CC);
   return success;
 }
 proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, void (*handle_request)(proxyenv *env), void (*handle_cached)(proxyenv *env), char *server_name, short is_local, struct sockaddr *saddr) {

@@ -130,7 +130,7 @@ Build and execution instructions:
   6) Standalone java application (see JSR223) or AS or servlet engine
   without Apache or IIS front-end. A PHP server can be started with the
   command (e.g.): X_JAVABRIDGE_OVERRIDE_HOSTS="/" PHP_FCGI_CHILDREN="20"
-  PHP_FCGI_MAX_REQUESTS="50000" php-cgi -c java.ini -b 127.0.0.1:9667. 
+  PHP_FCGI_MAX_REQUESTS="5000" php-cgi -c java.ini -b 127.0.0.1:9667. 
   php-cgi starts automatically if no PHP server is listening on port 9667.
  
   [java]
@@ -171,6 +171,10 @@ Build and execution instructions:
   java.servlet   = <On/Off/User>, see NEWS for version 3.0.2
   java.wrapper   = Reserved for OS vendor
 
+  java.ext_java_compatibility = <On/Off>, backward compatibility with ext/java
+  java.persistent_connections = <On/Off>, see NEWS for version 3.1.0
+  java.security_policy        = <On/Off/Path>, see NEWS for version 3.1.0
+
   Please first look at the output of phpinfo() to see the original
   values.  
 
@@ -185,12 +189,46 @@ Build and execution instructions:
   However, when running the bridge in a production environment, it is
   recommended to use a J2EE back-end, Tomcat5 for example.
 
+---------------------------------------------
+  Translating Java into PHP PEAR classes
+  --------------------------------------
+
+  Java libraries can be translated into PEAR classes using the command:
+
+    java -jar JavaBridge.jar --convert /path/to/PEAR/repository ARCHIVE.JAR
+
+  or, if you have configured the PHP/Java extension to run without Java:
+
+    modules/java --convert /path/to/PEAR/repository ARCHIVE.JAR
+
+
+  Example for Apache/Lucene:
+
+     modules/java --convert /usr/share/pear /usr/share/java/lucene.jar
+
+  <?php
+     require_once("lucene/All.php")
+     $searcher = new org_apache_lucene_search_IndexSearcher(getcwd());
+     $term = new org_apache_lucene_index_Term("name", "test.php");
+     $phrase = new org_apache_lucene_search_PhraseQuery();
+     $phrase->add($term);
+
+     $hits = $searcher->search($phrase);
+     $iter = $hits->iterator();
+
+     while($iter->hasNext()) {
+       $next = $iter->next();
+       $name = $next->get("name");
+       echo "found: $name\n";
+     }
+  ?>
+
 ------------------------------------
   Sample settings for Apache/Tomcat
   ---------------------------------
 
   Assuming that tomcat is installed (e.g. in /opt/tomcat5),
-  JavaBridge.war is deployed (e.g. in /opt/tomcat5/webapps), java.so
+  MyJavaBridge.war is deployed (e.g. in /opt/tomcat5/webapps), java.so
   (or php_java.dll) is installed in the php modules directory (e.g. in
   /usr/lib/php/modules/), mod_jk and php5 are installed in the apache modules
   directory (e.g. in /usr/lib/httpd/modules/), we recommend following
@@ -207,8 +245,8 @@ Build and execution instructions:
 
     AddType application/x-httpd-php .php
     JkAutoAlias /opt/tomcat5/webapps
-    JkMount /JavaBridge/*.jsp ajp13
-    JkMount /JavaBridge/ ajp13
+    JkMount /MyJavaBridge/*.jsp ajp13
+    JkMount /MyJavaBridge/ ajp13
 
 
   The following settings in php.ini direct all php "Java(...)" calls to
@@ -220,7 +258,7 @@ Build and execution instructions:
     ;; on windows: extension = php_java.dll
     [java]
     java.hosts     = "127.0.0.1:8080"
-    java.servlet   = User ;; or: /JavaBridge/JavaBridge.phpjavabridge
+    java.servlet   = User ;; or: /MyJavaBridge/JavaBridge.phpjavabridge
 
   To check the above settings, please visit http://localhost/MyJavaBridge/
   and run the sessionSharing.jsp and sessionSharing.php examples.
@@ -289,13 +327,13 @@ Build and execution instructions:
   If the parameter name "use_fast_cgi" is set to "Autostart" in the
   web.xml and a fcgi server does not listen on port 9667 and a fcgi
   binary can be found as either /usr/bin/php-cgi or /usr/bin/php or
-  c:/php5/php-cgi.exe, then the back-end automatically starts the fast
+  c:/php/php-cgi.exe, then the back-end automatically starts the fast
   CGI server on this computer, with the command:
 
     cd $HOME
     export X_JAVABRIDGE_OVERRIDE_HOSTS="/"
     export PHP_FCGI_CHILDREN="20"
-    export PHP_FCGI_MAX_REQUESTS="50000"
+    export PHP_FCGI_MAX_REQUESTS="5000"
     /usr/bin/php-cgi -b 127.0.0.1:9667
 
   It starts when the VM starts and stops when the VM terminates.
@@ -402,7 +440,7 @@ Build and execution instructions:
   Log levels
   ----------
 
-  You can set the java.log_level to 6 values:
+  You can set the java.log_level to 7 values:
 
    0: Log nothing, not even fatal errors.
 
@@ -410,11 +448,14 @@ Build and execution instructions:
 
    2: Log java exceptions.
 
-   3: Log verbose, e.g.: "loading jar xyz.jar from http://xy.com"
+   3: Log verbose, e.g.: "JavaBridge version x.y.z started"
 
    4: Log debug messages, including the c/s communication protocol.
 
-   5: Log method invocations. 
+   5: Log method invocations, including method selection.
+
+   6: Reserved for internal use. Log messages which may be useful
+      to debug certain parts of the bridge.
 
   The default log level is 2.  If java.log_level is missing, the
   back-end uses the "default" log level supplied when the back-end was
@@ -560,9 +601,8 @@ Build and execution instructions:
     /usr/share/java/batStore/batStore-1.0.jar.
 
   The global repository /usr/share/java should be used if the library
-  is for general interest, otherwise the java.libpath/lib repository may
-  be used.  Please look up the java.libpath from the output
-  of the test.php or from phpinfo().
+  is for general interest, otherwise the PHP extension_dir/lib
+  repository may be used (see phpinfo() command).
   
   When Security Enhanced Linux is configured to allow the PHP/Java
   Bridge to make HTTP URL connections to different servers or if
@@ -572,8 +612,7 @@ Build and execution instructions:
   Java libraries can be created from .class files with the following
   command:
 
-    jar cvf myLibrary-0.1.jar *.class 
-  
+    jar cvf myLibrary-0.1.jar my/package/*.class 
 
   The libraries can be linked into the PHP files at run-time with the
   command:
@@ -587,9 +626,11 @@ Build and execution instructions:
 
     <?php
       // process order
-      java_require("j2ee.jar;batStore/batStore-1.0.jar");
+      java_require("j2ee.jar;myProject/myLibrary-0.1.jar");
 
-      order(...);
+      $proc = new Java("my.package.InputProcessor", ...);
+      $proc->doSomething($_POST);
+      ...
     ?>
 
   Minor upgrades can be installed at run-time. When the dynamic loader
@@ -598,9 +639,10 @@ Build and execution instructions:
 
   Note that the dynamic loader can only load pure java libraries,
   unless GNU Java is used. Java libraries which use the java native
-  interface ("JNI") must be placed in /usr/java/packages/lib/ext/ (if JDK
-  1.6 or higher is used) or hard-coded via java.classpath. The JNI
-  libraries themselves can be installed in java.libpath.
+  interface ("JNI") must be copied to the extension_dir/lib directory,
+  DLL's or shared libraries to extension_dir or java.libpath.
+  Please look up the values for extension_dir and java.libpath in
+  the output from the test.php script or from phpinfo().
 
 ------------------------------------
   Sun java platform issues

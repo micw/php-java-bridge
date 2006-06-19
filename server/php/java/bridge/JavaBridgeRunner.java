@@ -12,6 +12,7 @@ import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.HttpRequest;
 import php.java.bridge.http.HttpResponse;
 import php.java.bridge.http.HttpServer;
+import php.java.bridge.http.IContextFactory;
 
 /**
  * This is the main entry point for the PHP/Java Bridge library.
@@ -55,9 +56,9 @@ public class JavaBridgeRunner extends HttpServer {
 	}
     }
 
-    private static ContextFactory getContextFactory(HttpRequest req, HttpResponse res) {
+    private static IContextFactory getContextFactory(HttpRequest req, HttpResponse res) {
     	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
-    	ContextFactory ctx = ContextFactory.get(id, ctxServer);
+    	IContextFactory ctx = ContextFactory.get(id, ctxServer);
 	if(ctx==null) ctx = ContextFactory.addNew();
      	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
     	return ctx;
@@ -75,7 +76,7 @@ public class JavaBridgeRunner extends HttpServer {
     	super.parseBody(req, res);
 	boolean override_redirect="1".equals(req.getHeader("X_JAVABRIDGE_REDIRECT"));
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
-	ContextFactory ctx = getContextFactory(req, res);
+	IContextFactory ctx = getContextFactory(req, res);
 
     	JavaBridge bridge = ctx.getBridge();
 	// save old state for override_redirect

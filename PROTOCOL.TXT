@@ -1,4 +1,4 @@
-PHP/Java Bridge protocol version 2.3
+PHP/Java Bridge protocol version 3.0
 
 Requests are marked with "->", responses with "<-".  The server
 continues to process requests until EOF. Only the first character is
@@ -22,13 +22,44 @@ Example:
       <Long value="6"/> 
     </CreateInstance>
 
-<-  <Object value="1" id="78532"/>
+<-  <Object value="1" predicate="O" id="78532"/>
 
 ->  <Invoke value="1" method="toString" predicate="Invoke" id="0">
     </Invoke>
 
-<-  <String value="6" id="0"/>
+<-  <Object value="2" predicate="O" id="0"/>
 
+->  <Unref value="2" />
+
+->  <Unref value="1" />
+
+A second example which shows how to avoid round-trips. 
+
+     java_begin_document()
+     $o = new java("java.lang.Long", 6);
+     $o->toString(); // discard result
+     java_end_document();
+
+->  <Invoke value="0" method="beginDocument" predicate="Invoke" id="0">
+    </Invoke>
+
+<-  <Null id="0"/>
+
+->  <CreateInstance value="java.lang.Long" predicate="Instance" id="78532"> 
+      <Long value="6" /> 
+    </CreateInstance>
+
+->  <Invoke value="1" method="toString" predicate="Invoke" id="0">
+    </Invoke>
+
+->  <Unref value="2" />
+
+->  <Unref value="1" />
+
+->  <Invoke value="0" method="endDocument" predicate="Invoke" id="0">
+    </Invoke>
+
+<-  <Null id="0"/>
 
 
 Optional requests:
@@ -52,16 +83,16 @@ CreateInstance:
 </C>
 v: string
 p: char (Reference[C]lass, Create[I]nstance)
-i: long
+i: unsigned long
 
 ->
 Invoke:
 <I v=object m=method p=P|I i=ID> ...ARGS...
 </I>
-v: long
+v: unsigned long
 m: string
 p: char (examine[P]roperty, [I]nvoke method)
-i: long
+i: unsigned long
 
 When v=0, the call is directed to the current request-handling
 instance of the java bridge.
@@ -74,53 +105,60 @@ ARGS or response:
 String:
 <S v=str [i=ID] />
 v: string
-i: long (reply only)
+i: unsigned long (reply only)
 
 <->
 Boolean:
 <B v=T|F [i=ID] />
 v: char ([T]rue, [F]alse)
-i: long (reply only)
+i: unsigned long (reply only)
 
 <->
 Long:
 <L v=l [i=ID] />
 v: long
-i: long (reply only)
+i: unsigned long (reply only)
+
+<->
+unsigned Long: (if header bit [0,1] == 1)
+<L v=l p=[O|A] [i=ID] />
+v: unsigned long
+p: char (p[O]sitive, neg[A]tive)
+i: unsigned long (reply only)
 
 <->
 Double:
 <D v=d [i=ID] />
 v: double
-i: long (reply only)
+i: unsigned long (reply only)
 
 ->
 Object:
 <O v=object />
-v: long
+v: unsigned long
 NULL values can be sent as either v="" or v="0"
 
 <-
 Object:
 <O v=object p=TYPE i=ID />
-v: long
+v: unsigned long
 p: char ([A]rray, [O]bject)
-i: long 
+i: unsigned long 
 
 <-
 Null:
 <N i=ID />
-i: long 
+i: unsigned long 
 
 <-
 Apply:
 <A v=object p=cname m=fname n=param# i=ID> ...ARGS...
 </A>
-v: long
+v: unsigned long
 p: string
 m: string
-n: long
-i: long
+n: unsigned long
+i: unsigned long
 Result can be used to send back the result of the current apply
 call. If v is null, the function name p must be searched in the
 "current" environment.
@@ -129,28 +167,28 @@ call. If v is null, the function name p must be searched in the
 Result:
 <R i=ID> ...ARG...
 </R>
-i: long
+i: unsigned long
 
 <->
 Exception:
 <E v=object m=stringRepresentation [i=ID] />
-v: long
+v: unsigned long
 m: string
-i: long
+i: unsigned long
 
 ->  (or <->, see below)
 Composite:
 <X t=A|H [i=ID] /> ...PAIR...
 </X>
 t: char ([A]rray, [H]ashtable)
-i: long (reply only)
+i: unsigned long (reply only)
 
 ->  (or <->, see below)
 Pair:
 <P [t=N|S v=key]> ...ARG...
 </P>
 t: char (key is [N]umeric, [S]tring or doesn't exist (if X=A))
-v: long (if X=H and t=N)
+v: unsigned long (if X=H and t=N)
 v: string (if X=H and t=S)
 
 
@@ -159,12 +197,12 @@ OPTIONAL requests:
 ->
 Destroy:
 <U v=object />
-v: long
+v: unsigned long
 
 <->
 EndConnection:
 <F p=A|E />
-p: char (Keep [Alive, [E]nd connection)
+p: char (Keep [A]live, [E]nd connection)
 After the F=... reply appeared, it is save to switch to a secondary
 ("override-redirect") channel.
 
@@ -175,11 +213,16 @@ NOTES:
 If the first byte is neither a "<" nor a space, bits [0,1], [2,4] and
 [6,7] have a special meaning:
 
-Bit 0: 1 for PHP4, 0 for >= PHP5(enable backward compatibility
-with "ext/java", the predecessor of the PHP/Java Bridge).
-
-Bit 1: Client wants arrays as values. The server will return X and P
-instead of O.
+Bit 1 0
+-------
+    0 0: Backward compatibility disabled, client sends and receives O,
+         O id's are base 10
+    0 1: Backward compatibility disabled, client sends and receives O,
+         O id's are base 16
+    1 0: Backward compatibility disabled, clients sends and receives X/P
+         O id's are base 10
+    1 1: Backward compatibility enabled, client sends and receives X/P
+         O id's are base 10
 
 Bit 2,3,4: log level (from java.log_level)
 
@@ -188,7 +231,8 @@ Bit 5: always 0
 Bit 6: set to 1 if bit[0,1] are used
 Bit 7: set to 1 if bit[2,4] are used
 
-The default is 0304 for PHP5 and 0307 for PHP4.
+The default is 0304 for PHP5, protocol version < 3.0,  0307 for PHP4,
+0306 for PHP5, protocol version >= 3.0.
 
 
 It is possible to "ping" the server by sending it the byte 0x0. If

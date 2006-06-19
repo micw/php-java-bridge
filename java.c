@@ -22,11 +22,13 @@
 #include "ext/standard/info.h"
 
 #include "java_bridge.h"
+#include "api.h"
 
 #ifdef ZEND_ENGINE_2
 #include "zend_interfaces.h"
 #include "zend_exceptions.h"
 #endif
+#include "zend_extensions.h"
 
 EXT_DECLARE_MODULE_GLOBALS(EXT)
 
@@ -39,10 +41,12 @@ struct cfg *EXT_GLOBAL (cfg)  = 0;
 #ifdef __MINGW32__
 static const int java_errno=0;
 int *__errno (void) { return (int*)&java_errno; }
-#define php_info_print_table_row(a, b, c)		\
-  php_info_print_table_row_ex(a, "v", b, c)
+#ifdef ZEND_ENGINE_2
+#define php_info_print_table_row(a, b, c) php_info_print_table_row_ex(a, "v", b, c)
+#else
+#define php_info_print_table_end() php_printf("</table><br />\n")
 #endif
-
+#endif
 /**
  * Called when a new request starts.  Opens a connection to the
  * back-end, creates an instance of the proxyenv structure and clones
@@ -58,32 +62,53 @@ PHP_RINIT_FUNCTION(EXT)
 }
 
 /**
+ * Close or recycle the current connection.
+ * If that failed, shut down all other connections as well.
+ * @return always true
+ */
+static short shutdown_connections(TSRMLS_D) {
+  proxyenv *current = JG(jenv);
+  HashTable *connections = &JG(connections);
+  short success = EXT_GLOBAL(close_connection) (JG(jenv), EXT_GLOBAL(cfg)->persistent_connections TSRMLS_CC);
+  if(!success) {				/* error: close all connections */
+	proxyenv **env;
+	zend_hash_internal_pointer_reset(connections);
+	while(SUCCESS==zend_hash_get_current_data(connections, (void**)&env)) {
+	  if(*env!=current) {
+		EXT_GLOBAL(activate_connection)(*env TSRMLS_CC);
+		EXT_GLOBAL(close_connection) (*env, 0 TSRMLS_CC);
+	  }
+	  zend_hash_move_forward(connections);
+	}
+	zend_hash_clean(connections);
+  }
+  JG(jenv)=0;
+  return 1;
+}
+
+/**
  * Called when the request terminates. Closes the connection to the
  * back-end, destroys the proxyenv instance.
  */
 PHP_RSHUTDOWN_FUNCTION(EXT)
 {
-  proxyenv *current = JG(jenv);
-  HashTable *connections = &JG(connections);
-  short success = EXT_GLOBAL(close_connection) (&JG(jenv), EXT_GLOBAL(cfg)->persistent_connections TSRMLS_CC);
-  if(!success) {
-	proxyenv **env;
-	zend_hash_internal_pointer_reset(connections);
-	while(SUCCESS==zend_hash_get_current_data(connections, (void**)&env)) {
-	  if(*env!=current) EXT_GLOBAL(close_connection) (env, 0 TSRMLS_CC);
-	  zend_hash_move_forward(connections);
-	}
-	zend_hash_clean(connections);
-  }
+  shutdown_connections(TSRMLS_C);
   JG(is_closed)=1;
   return SUCCESS;
 }
 
-static void last_exception_get(proxyenv *jenv, zval**return_value)
-{
-  (*jenv)->writeInvokeBegin(jenv, 0, "lastException", 0, 'P', *return_value);
-  (*jenv)->writeInvokeEnd(jenv);
+static short can_reconnect(TSRMLS_D) {
+  return EXT_GLOBAL(cfg)->persistent_connections &&
+	!(*JG(jenv))->peer_redirected;
 }
+	
+/** try calling the procedure again with a new connection, if
+	persistent connections are enabled */
+#define API_CALL(proc) \
+  EXT_GLOBAL(proc)(INTERNAL_FUNCTION_PARAM_PASSTHRU) ||	\
+  (can_reconnect(TSRMLS_C) &&							\
+   shutdown_connections(TSRMLS_C) &&					\
+   EXT_GLOBAL(proc)(INTERNAL_FUNCTION_PARAM_PASSTHRU))
 
 /**
  * Proto: object java_last_exception_get(void)
@@ -93,24 +118,9 @@ static void last_exception_get(proxyenv *jenv, zval**return_value)
  */
 EXT_FUNCTION(EXT_GLOBAL(last_exception_get))
 {
-  proxyenv *jenv;
-  if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT;
-  jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
-  if(!jenv) {RETURN_NULL();}
-  if((*jenv)->handle==(*jenv)->async_ctx.handle_request) { /* async protocol */
-	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): last_exception_get() invalid while in stream mode", 21);
-	RETURN_NULL();
-  }
-
-  last_exception_get(jenv, &return_value);
+  API_CALL(last_exception_get);
 }
 
-
-static void last_exception_clear(proxyenv*jenv, zval**return_value) {
-  (*jenv)->writeInvokeBegin(jenv, 0, "lastException", 0, 'P', *return_value);
-  (*jenv)->writeObject(jenv, 0);
-  (*jenv)->writeInvokeEnd(jenv);
-}
 
 /**
  * Proto: void java_last_exception_clear(void)
@@ -120,12 +130,7 @@ static void last_exception_clear(proxyenv*jenv, zval**return_value) {
 */
 EXT_FUNCTION(EXT_GLOBAL(last_exception_clear))
 {
-  proxyenv *jenv;
-  if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT;
-  jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
-  if(!jenv) {RETURN_NULL();}
-
-  last_exception_clear(jenv, &return_value);
+  API_CALL(last_exception_clear);
 }
 
 /**
@@ -138,41 +143,7 @@ EXT_FUNCTION(EXT_GLOBAL(last_exception_clear))
  */
 EXT_FUNCTION(EXT_GLOBAL(set_file_encoding))
 {
-  zval **enc;
-  proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
-  if(!jenv) {RETURN_NULL();}
-
-  if (ZEND_NUM_ARGS()!=1 || zend_get_parameters_ex(1, &enc) == FAILURE)
-	WRONG_PARAM_COUNT;
-
-  convert_to_string_ex(enc);
-
-  (*jenv)->writeInvokeBegin(jenv, 0, "setFileEncoding", 0, 'I', return_value);
-  (*jenv)->writeString(jenv, Z_STRVAL_PP(enc), Z_STRLEN_PP(enc));
-  (*jenv)->writeInvokeEnd(jenv);
-}
-
-
-static void require(INTERNAL_FUNCTION_PARAMETERS) {
-  static const char ext_dir[] = "extension_dir";
-  char *ext = php_ini_string((char*)ext_dir, sizeof ext_dir, 0);
-  zval **path;
-  proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
-  if(!jenv) {RETURN_NULL();}
-
-  if (ZEND_NUM_ARGS()!=1 || zend_get_parameters_ex(1, &path) == FAILURE)
-	WRONG_PARAM_COUNT;
-
-  convert_to_string_ex(path);
-
-#if EXTENSION == JAVA
-  (*jenv)->writeInvokeBegin(jenv, 0, "setJarLibraryPath", 0, 'I', return_value);
-#else
-  (*jenv)->writeInvokeBegin(jenv, 0, "setLibraryPath", 0, 'I', return_value);
-#endif
-  (*jenv)->writeString(jenv, Z_STRVAL_PP(path), Z_STRLEN_PP(path));
-  (*jenv)->writeString(jenv, ext, strlen(ext));
-  (*jenv)->writeInvokeEnd(jenv);
+  API_CALL(set_file_encoding);
 }
 
 
@@ -201,7 +172,7 @@ static void require(INTERNAL_FUNCTION_PARAMETERS) {
  */
 EXT_FUNCTION(EXT_GLOBAL(require))
 {
-  require(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+  API_CALL(require);
 }
 
 /**
@@ -215,83 +186,7 @@ EXT_FUNCTION(EXT_GLOBAL(require))
  */
 EXT_FUNCTION(EXT_GLOBAL(instanceof))
 {
-  zval **pobj, **pclass;
-  long obj, class;
-  proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
-  if(!jenv) {RETURN_NULL();}
-
-  if (ZEND_NUM_ARGS()!=2 || zend_get_parameters_ex(2, &pobj, &pclass) == FAILURE)
-	WRONG_PARAM_COUNT;
-
-  convert_to_object_ex(pobj);
-  convert_to_object_ex(pclass);
-
-  obj = 0;
-  EXT_GLOBAL(get_jobject_from_object)(*pobj, &obj TSRMLS_CC);
-  if(!obj) {
-	zend_error(E_ERROR, "Argument #1 for %s() must be a "/**/EXT_NAME()/**/" object", get_active_function_name(TSRMLS_C));
-	return;
-  }
-
-  class = 0;
-  EXT_GLOBAL(get_jobject_from_object)(*pclass, &class TSRMLS_CC);
-  if(!class) {
-	zend_error(E_ERROR, "Argument #2 for %s() must be a "/**/EXT_NAME()/**/" object", get_active_function_name(TSRMLS_C));
-	return;
-  }
-
-  (*jenv)->writeInvokeBegin(jenv, 0, "InstanceOf", 0, 'I', return_value);
-  (*jenv)->writeObject(jenv, obj);
-  (*jenv)->writeObject(jenv, class);
-  (*jenv)->writeInvokeEnd(jenv);
-}
-
-static long session_get_default_lifetime() {
-  static const char session_max_lifetime[]="session.gc_maxlifetime";
-  long l = zend_ini_long((char*)session_max_lifetime, sizeof(session_max_lifetime), 0);
-  return l==0?1440:l;
-}
-static void session(INTERNAL_FUNCTION_PARAMETERS)
-{
-  proxyenv *jenv;
-  zval **session=0, **is_new=0;
-  int argc=ZEND_NUM_ARGS();
-  char *current_ctx;
-  
-  if (argc>2 || zend_get_parameters_ex(argc, &session, &is_new) == FAILURE)
-	WRONG_PARAM_COUNT;
-
-  jenv=EXT_GLOBAL(connect_to_server)(TSRMLS_C);
-  if(!jenv) RETURN_NULL();
-  if((*jenv)->handle==(*jenv)->async_ctx.handle_request) { /* async protocol */
-	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): get_session() invalid while in stream mode", 21);
-	RETURN_NULL();
-  }
-
-  current_ctx = (*jenv)->current_servlet_ctx;
-  assert(EXT_GLOBAL(cfg)->is_cgi_servlet && current_ctx ||!EXT_GLOBAL(cfg)->is_cgi_servlet);
-								/* create a new connection to the
-								   back-end if java_session() is not
-								   the first statement in a script */
-  EXT_GLOBAL(check_session) (jenv TSRMLS_CC);
-
-  (*jenv)->writeInvokeBegin(jenv, 0, "getSession", 0, 'I', return_value);
-  /* cal getSession(String id, ...), if necessary */
-  if(current_ctx && current_ctx != (*jenv)->servlet_ctx)
-	(*jenv)->writeString(jenv, current_ctx, strlen(current_ctx));
-
-  if(argc>0 && Z_TYPE_PP(session)!=IS_NULL) {
-	convert_to_string_ex(session);
-	(*jenv)->writeString(jenv, Z_STRVAL_PP(session), Z_STRLEN_PP(session)); 
-  } else {
-	(*jenv)->writeObject(jenv, 0);
-  }
-  (*jenv)->writeBoolean(jenv, (argc<2||Z_TYPE_PP(is_new)==IS_NULL)?0:Z_BVAL_PP(is_new)); 
-
-  (*jenv)->writeLong(jenv, session_get_default_lifetime()); // session.gc_maxlifetime
-
-  (*jenv)->writeInvokeEnd(jenv);
-  (*jenv)->backend_has_session_proxy=1;
+  API_CALL(instanceof);
 }
 
 /**
@@ -324,27 +219,7 @@ static void session(INTERNAL_FUNCTION_PARAMETERS)
  */
 EXT_FUNCTION(EXT_GLOBAL(get_session))
 {
-  session(INTERNAL_FUNCTION_PARAM_PASSTHRU);
-}
-
-static void context(INTERNAL_FUNCTION_PARAMETERS)
-{
-  proxyenv *jenv;
-  int argc=ZEND_NUM_ARGS();
-  char *current_ctx = 0;
-  
-  if (argc!=0)
-	WRONG_PARAM_COUNT;
-
-  jenv=EXT_GLOBAL(connect_to_server)(TSRMLS_C);
-  if(!jenv) RETURN_NULL();
-  current_ctx = (*jenv)->current_servlet_ctx;
-  assert(EXT_GLOBAL(cfg)->is_cgi_servlet && current_ctx ||!EXT_GLOBAL(cfg)->is_cgi_servlet);
-  (*jenv)->writeInvokeBegin(jenv, 0, "getContext", 0, 'I', return_value);
-  /* call getContext(String id, ...), if necessary */
-  if(current_ctx && current_ctx != (*jenv)->servlet_ctx)
-	(*jenv)->writeString(jenv, current_ctx, strlen(current_ctx));
-  (*jenv)->writeInvokeEnd(jenv);
+  API_CALL(session);
 }
 
 /**
@@ -367,7 +242,7 @@ static void context(INTERNAL_FUNCTION_PARAMETERS)
  */
 EXT_FUNCTION(EXT_GLOBAL(get_context))
 {
-  context(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+  API_CALL(context);
 }
 
 /**
@@ -395,7 +270,7 @@ EXT_FUNCTION(EXT_GLOBAL(get_server_name))
 /**
  * Proto: void java_reset(void);
  *
- * Tries to reset the backent to
+ * Tries to reset the back-end to
  * its initial state. If the call succeeds, all 
  * caches are gone. 
  *
@@ -409,15 +284,7 @@ EXT_FUNCTION(EXT_GLOBAL(get_server_name))
  */
 EXT_FUNCTION(EXT_GLOBAL(reset))
 {
-  proxyenv *jenv;
-  if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT;
-
-  jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
-  if(!jenv) RETURN_NULL();
-
-  (*jenv)->writeInvokeBegin(jenv, 0, "reset", 0, 'I', return_value);
-  (*jenv)->writeInvokeEnd(jenv);
-  php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Your script has called the privileged procedure \""/**/EXT_NAME()/**/"_reset()\" which resets the "/**/EXT_NAME()/**/" back-end to its initial state. Therefore all "/**/EXT_NAME()/**/" caches are gone.", 18);
+  API_CALL(reset);
 }
 
 /**
@@ -428,20 +295,9 @@ EXT_FUNCTION(EXT_GLOBAL(reset))
 */
 EXT_FUNCTION(EXT_GLOBAL(begin_document))
 {
-  static const char begin[] = "beginDocument";
-  proxyenv *jenv;
-  if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT;
-  jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
-  if(!jenv) {RETURN_NULL();}
-  if((*jenv)->handle==(*jenv)->async_ctx.handle_request) { /* async protocol */
-	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): begin_document() invalid while in stream mode", 21);
-	RETURN_NULL();
-  }
-
-  (*jenv)->writeInvokeBegin(jenv, 0, (char*)begin, sizeof(begin)-1, 'I', return_value);
-  (*jenv)->writeInvokeEnd(jenv);
-  EXT_GLOBAL(begin_async)(jenv);
+  API_CALL(begin_document);
 }
+
 /**
  * Proto: void java_end_document(void)
  *
@@ -449,150 +305,17 @@ EXT_FUNCTION(EXT_GLOBAL(begin_document))
 */
 EXT_FUNCTION(EXT_GLOBAL(end_document))
 {
-  static const char end[] = "endDocument";
-  proxyenv *jenv;
-  if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT;
-  jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
-  if(!jenv) {RETURN_NULL();}
-  if((*jenv)->handle!=(*jenv)->async_ctx.handle_request) { /* async protocol */
-	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): end_document() invalid when not in stream mode", 21);
-	RETURN_NULL();
-  }
-
-  (*jenv)->writeInvokeBegin(jenv, 0, (char*)end, sizeof(end)-1, 'I', return_value);
-  EXT_GLOBAL(end_async)(jenv);
-  (*jenv)->writeInvokeEnd(jenv);
+  API_CALL(end_document);
 }
 
-static void values(INTERNAL_FUNCTION_PARAMETERS)
-{
-  proxyenv *jenv;
-  zval **pobj;
-  long obj;
-
-  jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
-  if(!jenv) RETURN_NULL();
-  if((*jenv)->handle==(*jenv)->async_ctx.handle_request) { /* async protocol */
-	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): values() invalid while in stream mode", 21);
-	RETURN_NULL();
-  }
-
-  if (ZEND_NUM_ARGS()!=1 || zend_get_parameters_ex(1, &pobj) == FAILURE)
-	WRONG_PARAM_COUNT;
-
-  convert_to_object_ex(pobj);
-  obj = 0;
-  EXT_GLOBAL(get_jobject_from_object)(*pobj, &obj TSRMLS_CC);
-  if(!obj) {
-	*return_value = **pobj;
-	zval_copy_ctor(return_value);
-	return;
-  }
-
-  (*jenv)->writeInvokeBegin(jenv, 0, "getValues", 0, 'I', return_value);
-  (*jenv)->writeObject(jenv, obj);
-  (*jenv)->writeInvokeEnd(jenv);
-}
-static const char warn_session[] = 
-"the session module's session_write_close() tried to write garbage, aborted. \
--- Have you loaded the session module before the java module? \n Use \
-java_session(session_id())->put(key,val) instead of the \
-\"$_SESSION[key]=val\" syntax, if you don't want to depend on the \
-session module. Else if \"session_write_close();\" at the end of \
-your script fixes this problem, please report this bug \
-to the PHP release team.";
-static const char identity[] = "serialID";
-static void serialize(INTERNAL_FUNCTION_PARAMETERS)
-{
-  long obj;
-  zval *handle, *id;
-
-  proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
-  if(!jenv) {
-	php_error(E_WARNING, EXT_NAME()/**/" cannot be serialized. %s", warn_session);
-	RETURN_NULL();
-  }
-  if((*jenv)->handle==(*jenv)->async_ctx.handle_request) { /* async protocol */
-	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): serialize() invalid while in stream mode", 21);
-	RETURN_NULL();
-  }
-
-  EXT_GLOBAL(get_jobject_from_object)(getThis(), &obj TSRMLS_CC);
-  if(!obj) {
-	/* set a breakpoint in java_bridge.c destroy_object, in rshutdown
-	   and get_jobject_from_object */
-	php_error(E_WARNING, EXT_NAME()/**/" cannot be serialized. %s", warn_session);
-	RETURN_NULL();
-  }
-
-  MAKE_STD_ZVAL(handle);
-  ZVAL_NULL(handle);
-  (*jenv)->writeInvokeBegin(jenv, 0, "serialize", 0, 'I', handle);
-  (*jenv)->writeObject(jenv, obj);
-  (*jenv)->writeLong(jenv, session_get_default_lifetime()); // session.gc_maxlifetime
-  (*jenv)->writeInvokeEnd(jenv);
-  zend_hash_update(Z_OBJPROP_P(getThis()), (char*)identity, sizeof identity, &handle, sizeof(pval *), NULL);
-
-  /* Return the field that should be serialized ("serialID") */
-  array_init(return_value);
-  INIT_PZVAL(return_value);
-
-  MAKE_STD_ZVAL(id);
-  Z_TYPE_P(id)=IS_STRING;
-  Z_STRLEN_P(id)=sizeof(identity)-1;
-  Z_STRVAL_P(id)=estrdup(identity);
-  zend_hash_index_update(Z_ARRVAL_P(return_value), 0, &id, sizeof(pval*), NULL);
-}
-static void deserialize(INTERNAL_FUNCTION_PARAMETERS)
-{
-  zval *handle, **id;
-  int err;
-
-  proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
-  if(!jenv) {
-	php_error(E_ERROR, EXT_NAME()/**/" cannot be de-serialized. %s", warn_session);
-  }
-  if((*jenv)->handle==(*jenv)->async_ctx.handle_request) { /* async protocol */
-	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): deserialize() invalid while in stream mode", 21);
-	RETURN_NULL();
-  }
-
-  err = zend_hash_find(Z_OBJPROP_P(getThis()), (char*)identity, sizeof identity, (void**)&id);
-  if(FAILURE==err) {
-	/* set a breakpoint in java_bridge.c destroy_object, in rshutdown
-	   and get_jobject_from_object */
-	php_error(E_WARNING, EXT_NAME()/**/" cannot be deserialized. %s", warn_session);
-  }
-  
-  MAKE_STD_ZVAL(handle);
-  ZVAL_NULL(handle);
-  (*jenv)->writeInvokeBegin(jenv, 0, "deserialize", 0, 'I', handle);
-  (*jenv)->writeString(jenv, Z_STRVAL_PP(id), Z_STRLEN_PP(id));
-  (*jenv)->writeLong(jenv, session_get_default_lifetime()); // use session.gc_maxlifetime
-  (*jenv)->writeInvokeEnd(jenv);
-  if(Z_TYPE_P(handle)!=IS_LONG) {
-#ifndef ZEND_ENGINE_2
-	php_error(E_WARNING, EXT_NAME()/**/" cannot be deserialized, session expired.");
-#endif
-	ZVAL_NULL(getThis());
-  }	else {
-#ifndef ZEND_ENGINE_2
-	zend_hash_index_update(Z_OBJPROP_P(getThis()), 0, &handle, sizeof(pval *), NULL);
-#else
-	EXT_GLOBAL(store_jobject)(getThis(), Z_LVAL_P(handle) TSRMLS_CC);
-#endif
-  }
-  
-  RETURN_NULL();
-}
 #ifndef ZEND_ENGINE_2
 EXT_FUNCTION(EXT_GLOBAL(__sleep))
 {
-  serialize(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+  API_CALL(serialize);
 }
 EXT_FUNCTION(EXT_GLOBAL(__wakeup))
 {
-  deserialize(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+  API_CALL(deserialize);
 }
 #endif
 
@@ -622,7 +345,7 @@ EXT_FUNCTION(EXT_GLOBAL(__wakeup))
  */
 EXT_FUNCTION(EXT_GLOBAL(get_values))
 {
-  values(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+  API_CALL(values);
 }
 
 /**
@@ -660,86 +383,8 @@ EXT_FUNCTION(EXT_GLOBAL(get_values))
  */
 EXT_FUNCTION(EXT_GLOBAL(get_closure))
 {
-  char *string_key;
-  ulong num_key;
-  zval **pobj, **pfkt, **pclass, **val;
-  long class = 0;
-  int key_type;
-  proxyenv *jenv;
-  int argc = ZEND_NUM_ARGS();
-
-  if (argc>3 || zend_get_parameters_ex(argc, &pobj, &pfkt, &pclass) == FAILURE)
-	WRONG_PARAM_COUNT;
-
-  jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
-  if(!jenv) RETURN_NULL();
-
-
-  if (argc>0 && *pobj && Z_TYPE_PP(pobj) == IS_OBJECT) {
-	zval_add_ref(pobj);
-  }
-
-  (*jenv)->writeInvokeBegin(jenv, 0, "makeClosure", 0, 'I', return_value);
-  (*jenv)->writeLong(jenv, (argc==0||Z_TYPE_PP(pobj)==IS_NULL)?0:(long)*pobj);
-
-  /* fname -> cname Map */
-  if(argc>1) {
-	if (Z_TYPE_PP(pfkt) == IS_ARRAY) {
-	  (*jenv)->writeCompositeBegin_h(jenv);
-	  zend_hash_internal_pointer_reset(Z_ARRVAL_PP(pfkt));
-	  while ((key_type = zend_hash_get_current_key(Z_ARRVAL_PP(pfkt), &string_key, &num_key, 1)) != HASH_KEY_NON_EXISTANT) {
-		if ((zend_hash_get_current_data(Z_ARRVAL_PP(pfkt), (void**)&val) == SUCCESS)) {
-		  if(Z_TYPE_PP(val) == IS_STRING && key_type==HASH_KEY_IS_STRING) { 
-			size_t len = strlen(string_key);
-			(*jenv)->writePairBegin_s(jenv, string_key, len);
-			(*jenv)->writeString(jenv, Z_STRVAL_PP(val), Z_STRLEN_PP(val));
-			(*jenv)->writePairEnd(jenv);
-		  } else {
-			zend_error(E_ERROR, "Argument #2 for %s() must be null, a string, or a map of java => php function names.", get_active_function_name(TSRMLS_C));
-		  }
-		}
-		zend_hash_move_forward(Z_ARRVAL_PP(pfkt));
-	  }
-	  (*jenv)->writeCompositeEnd(jenv);
-	} else if (Z_TYPE_PP(pfkt) == IS_STRING) {
-	  (*jenv)->writeString(jenv, Z_STRVAL_PP(pfkt), Z_STRLEN_PP(pfkt));
-	} else {
-	  (*jenv)->writeCompositeBegin_h(jenv);
-	  (*jenv)->writeCompositeEnd(jenv);
-	}
-  }
-
-  /* interfaces */
-  if(argc>2) {
-	(*jenv)->writeCompositeBegin_a(jenv);
-	if(Z_TYPE_PP(pclass) == IS_ARRAY) {
-	  zend_hash_internal_pointer_reset(Z_ARRVAL_PP(pclass));
-	  while ((key_type = zend_hash_get_current_data(Z_ARRVAL_PP(pclass), (void**)&val)) == SUCCESS) {
-		EXT_GLOBAL(get_jobject_from_object)(*val, &class TSRMLS_CC);
-		if(class) { 
-		  (*jenv)->writePairBegin(jenv);
-		  (*jenv)->writeObject(jenv, class);
-		  (*jenv)->writePairEnd(jenv);
-		} else {
-		  zend_error(E_ERROR, "Argument #3 for %s() must be a "/**/EXT_NAME()/**/" interface or an array of interfaces.", get_active_function_name(TSRMLS_C));
-		}
-		zend_hash_move_forward(Z_ARRVAL_PP(pclass));
-	  }
-	} else {
-	  EXT_GLOBAL(get_jobject_from_object)(*pclass, &class TSRMLS_CC);
-	  if(class) { 
-		(*jenv)->writePairBegin(jenv);
-		(*jenv)->writeObject(jenv, class);
-		(*jenv)->writePairEnd(jenv);
-	  } else {
-		zend_error(E_ERROR, "Argument #3 for %s() must be a "/**/EXT_NAME()/**/" interface or an array of interfaces.", get_active_function_name(TSRMLS_C));
-	  }
-	}
-	(*jenv)->writeCompositeEnd(jenv);
-  }
-  (*jenv)->writeInvokeEnd(jenv);
+  API_CALL(get_closure);
 }
-
 
 /**
  * Only for internal use.
@@ -760,14 +405,19 @@ EXT_FUNCTION(EXT_GLOBAL(exception_handler))
  */
 static void check_php4_exception(TSRMLS_D) {
 #ifndef ZEND_ENGINE_2
-  last_exception_get(JG(jenv), &JG(exception));
+  proxyenv*jenv = JG(jenv);
+  (*jenv)->writeInvokeBegin(jenv, 0, "lastException", 0, 'P', JG(exception));
+  (*jenv)->writeInvokeEnd(jenv);
 #endif
 }
 static int allocate_php4_exception(TSRMLS_D) {
 #ifndef ZEND_ENGINE_2
+  proxyenv*jenv = JG(jenv);
   MAKE_STD_ZVAL(JG(exception));
   ZVAL_NULL(JG(exception));
-  last_exception_clear(JG(jenv), &JG(exception));
+  (*jenv)->writeInvokeBegin(jenv, 0, "lastException", 0, 'P', JG(exception));
+  (*jenv)->writeObject(jenv, 0);
+  (*jenv)->writeInvokeEnd(jenv);
 #endif
   return 1;
 }
@@ -790,17 +440,42 @@ static void call_with_handler(char*handler, const char*name TSRMLS_DC) {
 	}
   }
 }
+
+static int java_call_user_function_ex(HashTable *function_table, zval **object_pp, zval *function_name, zval **retval_ptr_ptr, int param_count, zval **params[], int no_separation, HashTable *symbol_table TSRMLS_DC) {
+#if !defined(ZEND_ENGINE_2) && defined(__MINGW32__)
+  int i, err;
+  zval *local_retval;
+  zval **params_array = (zval **) emalloc(sizeof(zval *)*param_count);
+  for (i=0; i<param_count; i++) {
+	params_array[i] = *params[i];
+	zval_copy_ctor(params_array[i]);
+  }
+  MAKE_STD_ZVAL(local_retval);
+  err = call_user_function(function_table, object_pp, function_name, local_retval, param_count, params_array TSRMLS_CC);
+  *retval_ptr_ptr=local_retval;
+  zval_copy_ctor(*retval_ptr_ptr);
+  efree(params_array);
+
+  /* this is a dummy which is never called. It is here so that gcc
+	 enables auto-import. If it is missing, the dll will crash (!??) */
+  assert(!function_table);
+  if(function_table) call_user_function_ex(function_table, object_pp, function_name, retval_ptr_ptr, param_count, params, no_separation, symbol_table TSRMLS_CC);
+
+  return err;
+#else
+  return call_user_function_ex(function_table, object_pp, function_name, retval_ptr_ptr, param_count, params, no_separation, symbol_table TSRMLS_CC);
+#endif
+}
 static void call_with_params(int count, zval ***func_params TSRMLS_DC) {
   if(allocate_php4_exception(TSRMLS_C)) {/* checked and destroyed in client. handle_exception() */
 	int err;
 #ifdef ZEND_ENGINE_2
 	php_set_error_handling(EH_THROW, zend_exception_get_default() TSRMLS_CC);
 #endif
-	err = call_user_function_ex(0, JG(object), JG(func), JG(retval_ptr), count, func_params, 0, NULL TSRMLS_CC);
+	err = java_call_user_function_ex(0, JG(object), JG(func), JG(retval_ptr), count, func_params, 1, 0 TSRMLS_CC);
 #ifdef ZEND_ENGINE_2
 	php_std_error_handling();
 #endif
-	
 	if (err != SUCCESS) {
 	  php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not call user function: %s.", 23, Z_STRVAL_P(JG(func)));
 	}
@@ -866,26 +541,8 @@ EXT_FUNCTION(EXT_GLOBAL(call_with_exception_handler))
  * \endcode
  */
 EXT_FUNCTION(EXT_GLOBAL(inspect)) {
-  zval **pobj;
-  long obj;
-  proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
-  if(!jenv) {RETURN_NULL();}
-
-  if (ZEND_NUM_ARGS()!=1 || zend_get_parameters_ex(1, &pobj) == FAILURE)
-	WRONG_PARAM_COUNT;
-
-  convert_to_object_ex(pobj);
-  obj = 0;
-  EXT_GLOBAL(get_jobject_from_object)(*pobj, &obj TSRMLS_CC);
-  if(!obj) {
-	zend_error(E_ERROR, "Argument for %s() must be a "/**/EXT_NAME()/**/" object", get_active_function_name(TSRMLS_C));
-	return;
-  }
-  (*jenv)->writeInvokeBegin(jenv, 0, "inspect", 0, 'I', return_value);
-  (*jenv)->writeObject(jenv, obj);
-  (*jenv)->writeInvokeEnd(jenv);
+  API_CALL(inspect);
 }
-
 
 function_entry EXT_GLOBAL(functions)[] = {
   EXT_FE(EXT_GLOBAL(last_exception_get), NULL)
@@ -939,6 +596,13 @@ EXT_GET_MODULE(EXT)
 #endif
 
 /**
+ * Holds the flags set/unset for all overridden java ini entries
+ * these are U_HOST, U_SERVLET and U_SOCKNAME
+ * @see X_JAVABRIDGE_OVERRIDE_HOSTS
+ */
+int EXT_GLOBAL(ini_override);
+
+/**
  * Holds the flags set/unset for all java ini entries
  */
 int EXT_GLOBAL(ini_updated);
@@ -985,9 +649,16 @@ zend_class_entry *EXT_GLOBAL(exception_class_entry);
 zend_object_handlers EXT_GLOBAL(handlers);
 #endif
 
-static const char on[]="On";
-static const char on2[]="1";
-static const char off[]="Off";
+static PHP_INI_MH(OnIniPolicy)
+{
+  if (new_value) {
+	if((EXT_GLOBAL (ini_set) &U_POLICY)) free(EXT_GLOBAL(cfg)->policy);
+	EXT_GLOBAL(cfg)->policy=strdup(new_value);
+	assert(EXT_GLOBAL(cfg)->policy); if(!EXT_GLOBAL(cfg)->policy) exit(6);
+	EXT_GLOBAL(ini_updated)|=U_POLICY;
+  }
+  return SUCCESS;
+}
 static PHP_INI_MH(OnIniWrapper)
 {
   if (new_value) {
@@ -1000,62 +671,37 @@ static PHP_INI_MH(OnIniWrapper)
 }
 static PHP_INI_MH(OnIniHosts)
 {
-  if (new_value) {
-	if((EXT_GLOBAL (ini_set) &U_HOSTS)) free(EXT_GLOBAL(cfg)->hosts);
-	EXT_GLOBAL(cfg)->hosts=strdup(new_value);
-	assert(EXT_GLOBAL(cfg)->hosts); if(!EXT_GLOBAL(cfg)->hosts) exit(6);
-	EXT_GLOBAL(ini_updated)|=U_HOSTS;
+  if (new_value && !(EXT_GLOBAL(ini_override)&U_HOSTS)) {
+	EXT_GLOBAL(update_hosts)(new_value);
   }
   return SUCCESS;
 }
 static PHP_INI_MH(OnIniExtJavaCompatibility)
 {
-	if (new_value) {
-	  if(!strncasecmp(on, new_value, 2) || !strncasecmp(on2, new_value, 1))
-		EXT_GLOBAL(cfg)->extJavaCompatibility=1;
-	  else
-		EXT_GLOBAL(cfg)->extJavaCompatibility=0;
-	  EXT_GLOBAL(ini_updated)|=U_EXT_JAVA_COMPATIBILITY;
-	}
-	return SUCCESS;
+  if (new_value) {
+	EXT_GLOBAL(update_compatibility)(new_value);
+  }
+  return SUCCESS;
 }
 static PHP_INI_MH(OnIniPersistentConnections)
 {
-	if (new_value) {
-	  if(!strncasecmp(on, new_value, 2) || !strncasecmp(on2, new_value, 1))
-		EXT_GLOBAL(cfg)->persistent_connections=1;
-	  else
-		EXT_GLOBAL(cfg)->persistent_connections=0;
-	  EXT_GLOBAL(ini_updated)|=U_PERSISTENT_CONNECTIONS;
-	}
-	return SUCCESS;
+  if(new_value) {
+	EXT_GLOBAL(update_persistent_connections)(new_value);
+  }
+  return SUCCESS;
 }
 static PHP_INI_MH(OnIniServlet)
 {
-  if (new_value) {
-	if((EXT_GLOBAL (ini_set) &U_SERVLET)) free(EXT_GLOBAL(cfg)->servlet);
-	if(!strncasecmp(on, new_value, 2) || !strncasecmp(on2, new_value, 1)) {
-	  EXT_GLOBAL(cfg)->servlet=strdup(DEFAULT_SERVLET);
-	  EXT_GLOBAL(cfg)->servlet_is_default=1;
-	}
-	else {
-	  EXT_GLOBAL(cfg)->servlet=strdup(new_value);
-	  EXT_GLOBAL(cfg)->servlet_is_default=0;
-	}
-	assert(EXT_GLOBAL(cfg)->servlet); if(!EXT_GLOBAL(cfg)->servlet) exit(6);
-	EXT_GLOBAL(ini_updated)|=U_SERVLET;
+  if (new_value && !(EXT_GLOBAL(ini_override)&U_SERVLET)) {
+	EXT_GLOBAL(update_servlet)(new_value);
   }
   return SUCCESS;
 }
 
 static PHP_INI_MH(OnIniSockname)
 {
-  if (new_value) {
-	if((EXT_GLOBAL (ini_set) &U_SOCKNAME)) free(EXT_GLOBAL(cfg)->sockname);
-	EXT_GLOBAL(cfg)->sockname=strdup(new_value);
-	EXT_GLOBAL(cfg)->socketname_set=1;
-	assert(EXT_GLOBAL(cfg)->sockname); if(!EXT_GLOBAL(cfg)->sockname) exit(6);
-	EXT_GLOBAL(ini_updated)|=U_SOCKNAME;
+  if (new_value && !(EXT_GLOBAL(ini_override)&U_SOCKNAME)) {
+	EXT_GLOBAL(update_socketname)(new_value);
   }
   return SUCCESS;
 }
@@ -1125,6 +771,7 @@ PHP_INI_BEGIN()
   PHP_INI_ENTRY(EXT_NAME()/**/".socketname", NULL, PHP_INI_SYSTEM, OnIniSockname)
   PHP_INI_ENTRY(EXT_NAME()/**/".hosts",   NULL, PHP_INI_SYSTEM, OnIniHosts)
   PHP_INI_ENTRY(EXT_NAME()/**/".wrapper",   NULL, PHP_INI_SYSTEM, OnIniWrapper)
+  PHP_INI_ENTRY(EXT_NAME()/**/".security_policy",   NULL, PHP_INI_SYSTEM, OnIniPolicy)
   PHP_INI_ENTRY(EXT_NAME()/**/".classpath", NULL, PHP_INI_SYSTEM, OnIniClassPath)
   PHP_INI_ENTRY(EXT_NAME()/**/".libpath",   NULL, PHP_INI_SYSTEM, OnIniLibPath)
   PHP_INI_ENTRY(EXT_NAME()/**/"."/**/EXT_NAME()/**/"",   NULL, PHP_INI_SYSTEM, OnIniJava)
@@ -1153,7 +800,7 @@ PHP_INI_BEGIN()
 #ifdef ZEND_ENGINE_2
 
 /**
- * Proto: object Java::Java (string classname [, string argument1, .\ .\ .\ ]) or object Java::java_exception (string classname [, string argument1, .\ .\ .\ ]) or object Java::JavaException (string classname [, string argument1, .\ .\ .\ ]);
+ * Proto: object Java::Java (string classname [, string argument1, .\ .\ .\ ]) or object Java::Java (array arguments)  or object Java::java_exception (string classname [, string argument1, .\ .\ .\ ]) or object Java::JavaException (string classname [, string argument1, .\ .\ .\ ]);
  *
  * Java constructor. Example:
  * \code
@@ -1163,29 +810,50 @@ PHP_INI_BEGIN()
  * \code
  * $ex = new JavaException("java.lang.NullPointerException");
  * throw $ex;
- *
  * \endcode
+ * \code
+ * require_once("rt/java_util_LinkedList.php");
+ * class org_apache_lucene_search_IndexSearcher extends php_Java {
+ *   __construct() { 
+ *     $args = func_get_args();
+ *     array_unshift($args, "org.apache.lucene.search.IndexSearcher");
+ *     $java = new Java($args); 
+ *   }
+ * }
+ * class org_apache_lucene_search_PhraseQuery extends php_Java {
+ *   __construct() { 
+ *     $args = func_get_args();
+ *     array_unshift($args, "org.apache.lucene.search.PhraseQuery");
+ *     $java = new Java($args); 
+ *   }
+ * }
+ * class org_apache_lucene_index_Term extends php_Java {
+ *   __construct() { 
+ *     $args = func_get_args();
+ *     array_unshift($args, "org.apache.lucene.index.Term");
+ *     $java = new Java($args); 
+ *   }
+ * }
+ * $searcher = new org_apache_lucene_search_IndexSearcher(getcwd());
+ * $term = new org_apache_lucene_index_Term("name", "test.php");
+ * $phrase = new org_apache_lucene_search_PhraseQuery();
+ * phrase->add($term);
+ * $hits = $searcher->search($phrase);
+ * $iter = $hits->iterator();
+ * $list = new java_util_LinkedList();
+ * while($iter->hasNext()) {
+ * $next = $iter->next();
+ * $name = $next->get("name");
+ * $list->append($name);
+ * }
+ * echo $list;
+ *
+ * \endcode 
  */
 EXT_FUNCTION(EXT_GLOBAL(construct))
 {
-  zval **argv;
-  int argc = ZEND_NUM_ARGS();
-
-  argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
-  if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
-	php_error(E_ERROR, "Couldn't fetch arguments into array.");
-	RETURN_NULL();
-  }
-
-  if(argc<1 || Z_TYPE_P(argv[0])!=IS_STRING) WRONG_PARAM_COUNT;
-
-  EXT_GLOBAL(call_function_handler)(INTERNAL_FUNCTION_PARAM_PASSTHRU,
-									EXT_NAME(), CONSTRUCTOR, 1,
-									getThis(),
-									argc, argv);
-  efree(argv);
+  API_CALL(construct);
 }
-
 
 /** 
  * Proto: object Java::JavaClass ( string classname) or object java::java_class ( string classname);
@@ -1203,22 +871,7 @@ EXT_FUNCTION(EXT_GLOBAL(construct))
  */
 EXT_FUNCTION(EXT_GLOBAL(construct_class))
 {
-  zval **argv;
-  int argc = ZEND_NUM_ARGS();
-
-  argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
-  if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
-	php_error(E_ERROR, "Couldn't fetch arguments into array.");
-	RETURN_NULL();
-  }
-
-  if(argc<1 || Z_TYPE_P(argv[0])!=IS_STRING) WRONG_PARAM_COUNT;
-
-  EXT_GLOBAL(call_function_handler)(INTERNAL_FUNCTION_PARAM_PASSTHRU,
-									EXT_NAME(), CONSTRUCTOR, 0, 
-									getThis(),
-									argc, argv);
-  efree(argv);
+  API_CALL(construct_class);
 }
 
 /** 
@@ -1277,36 +930,9 @@ EXT_FUNCTION(EXT_GLOBAL(construct_class))
  */
 EXT_METHOD(EXT, __call)
 {
-  zval **xargv, **argv;
-  int i = 0, xargc, argc = ZEND_NUM_ARGS();
-  HashPosition pos;
-  zval **param;
-
-
-  argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
-  if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
-	php_error(E_ERROR, "Couldn't fetch arguments into array.");
-	RETURN_NULL();
-  }
-
-  /* function arguments in arg#2 */
-  xargc = zend_hash_num_elements(Z_ARRVAL_P(argv[1]));
-  xargv = safe_emalloc(sizeof(zval *), xargc, 0);
-  for (zend_hash_internal_pointer_reset_ex(Z_ARRVAL_P(argv[1]), &pos);
-	   zend_hash_get_current_data_ex(Z_ARRVAL_P(argv[1]), (void **) &param, &pos) == SUCCESS;
-	   zend_hash_move_forward_ex(Z_ARRVAL_P(argv[1]), &pos)) {
-	/*zval_add_ref(param);*/
-	xargv[i++] = *param;
-  }
-
-  EXT_GLOBAL(call_function_handler)(INTERNAL_FUNCTION_PARAM_PASSTHRU,
-									Z_STRVAL(*argv[0]), CONSTRUCTOR_NONE, 0,
-									getThis(),
-									xargc, xargv);
-								   
-  efree(argv);
-  efree(xargv);
+  API_CALL(call);
 }
+
 
 /** Proto: object Java::__toString (void)
  *
@@ -1323,29 +949,9 @@ EXT_METHOD(EXT, __call)
  */
 EXT_METHOD(EXT, __tostring)
 {
-  long result = 0;
-  
-  if(Z_TYPE_P(getThis()) == IS_OBJECT) {
-	EXT_GLOBAL(get_jobject_from_object)(getThis(), &result TSRMLS_CC);
-  }
-  if(result) {
-	proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
-	if(!jenv) {RETURN_NULL();}
-	if((*jenv)->handle==(*jenv)->async_ctx.handle_request){/* async protocol */
-	  php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): __tostring() invalid while in stream mode", 21);
-	  RETURN_NULL();
-	}
-
-	(*jenv)->writeInvokeBegin(jenv, 0, "ObjectToString", 0, 'I', return_value);
-	(*jenv)->writeObject(jenv, result);
-	(*jenv)->writeInvokeEnd(jenv);
-
-  } else {
-	EXT_GLOBAL(call_function_handler)(INTERNAL_FUNCTION_PARAM_PASSTHRU,
-									  "tostring", CONSTRUCTOR_NONE, 0, getThis(), 0, NULL);
-  }
-
+  API_CALL(toString);
 }
+
 
 /**
  * Proto: void Java::__set(object, object)
@@ -1358,18 +964,7 @@ EXT_METHOD(EXT, __tostring)
  */
 EXT_METHOD(EXT, __set)
 {
-  zval **argv;
-  int argc = ZEND_NUM_ARGS();
-  
-  argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
-  if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
-	php_error(E_ERROR, "Couldn't fetch arguments into array.");
-	RETURN_NULL();
-  }
-  
-  EXT_GLOBAL(set_property_handler)(Z_STRVAL(*argv[0]), getThis(), argv[1], return_value);
-  
-  efree(argv);
+  API_CALL(set);
 }
 
 /** 
@@ -1435,16 +1030,7 @@ EXT_METHOD(EXT, __destruct)
  */
 EXT_METHOD(EXT, __get)
 {
-  zval **argv;
-  int argc = ZEND_NUM_ARGS();
-  argv = (zval **) safe_emalloc(sizeof(zval *), argc, 0);
-  if (zend_get_parameters_array(ht, argc, argv) == FAILURE) {
-	php_error(E_ERROR, "Couldn't fetch arguments into array.");
-	RETURN_NULL();
-  }
-  
-  EXT_GLOBAL(get_property_handler)(Z_STRVAL(*argv[0]), getThis(), return_value);
-  efree(argv);
+  API_CALL(get);
 }
 
 /**
@@ -1466,7 +1052,7 @@ EXT_METHOD(EXT, __get)
  */
 EXT_METHOD(EXT, __sleep)
 {
-  serialize(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+  API_CALL(serialize);
 }
 
 /** Proto: string Java::__wakeup()
@@ -1483,7 +1069,7 @@ EXT_METHOD(EXT, __sleep)
  */
 EXT_METHOD(EXT, __wakeup)
 {
-  deserialize(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+  API_CALL(deserialize);
 }
 
 
@@ -1501,23 +1087,8 @@ EXT_METHOD(EXT, __wakeup)
  */
 EXT_METHOD(EXT_ARRAY, offsetExists)
 {
-  proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
-  zval **argv;
-  int argc;
-
-  if(!jenv) {RETURN_NULL();}
-
-  argc = ZEND_NUM_ARGS();
-  argv = (zval **) safe_emalloc(sizeof(zval *), argc+1, 0);
-  if (zend_get_parameters_array(ht, argc, argv+1) == FAILURE) {
-	php_error(E_ERROR, "Couldn't fetch arguments into array.");
-	RETURN_NULL();
-  }
-  argv[0]=getThis();
-  EXT_GLOBAL(invoke)("offsetExists", 0, argc+1, argv, 0, return_value TSRMLS_CC);
-  efree(argv);
+  API_CALL(offsetExists);
 }
-
 
 /** 
  * Proto: object Java::offsetGet()
@@ -1534,21 +1105,7 @@ EXT_METHOD(EXT_ARRAY, offsetExists)
  */
 EXT_METHOD(EXT_ARRAY, offsetGet)
 {
-  zval **argv;
-  int argc;
-  proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
-  if(!jenv) {RETURN_NULL();}
-
-  argc = ZEND_NUM_ARGS();
-  argv = (zval **) safe_emalloc(sizeof(zval *), argc+1, 0);
-  if (zend_get_parameters_array(ht, argc, argv+1) == FAILURE) {
-	php_error(E_ERROR, "Couldn't fetch arguments into array.");
-	RETURN_NULL();
-  }
-
-  argv[0]=getThis();
-  EXT_GLOBAL(invoke)("offsetGet", 0, argc+1, argv, 0, return_value TSRMLS_CC);
-  efree(argv);
+  API_CALL(offsetGet);
 }
 
 /** Proto: void Java::offsetSet(object, object);
@@ -1568,21 +1125,7 @@ EXT_METHOD(EXT_ARRAY, offsetGet)
  */
 EXT_METHOD(EXT_ARRAY, offsetSet)
 {
-  zval **argv;
-  int argc;
-  proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
-  if(!jenv) {RETURN_NULL();}
-
-  argc = ZEND_NUM_ARGS();
-  argv = (zval **) safe_emalloc(sizeof(zval *), argc+1, 0);
-  if (zend_get_parameters_array(ht, argc, argv+1) == FAILURE) {
-	php_error(E_ERROR, "Couldn't fetch arguments into array.");
-	RETURN_NULL();
-  }
-
-  argv[0]=getThis();
-  EXT_GLOBAL(invoke)("offsetSet", 0, argc+1, argv, 0, return_value TSRMLS_CC);
-  efree(argv);
+  API_CALL(offsetSet);
 }
 
 /** Proto: string Java::offsetUnset()
@@ -1591,21 +1134,7 @@ EXT_METHOD(EXT_ARRAY, offsetSet)
  */
 EXT_METHOD(EXT_ARRAY, offsetUnset)
 {
-  zval **argv;
-  int argc;
-  proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
-  if(!jenv) {RETURN_NULL();}
-
-  argc = ZEND_NUM_ARGS();
-  argv = (zval **) safe_emalloc(sizeof(zval *), argc+1, 0);
-  if (zend_get_parameters_array(ht, argc, argv+1) == FAILURE) {
-	php_error(E_ERROR, "Couldn't fetch arguments into array.");
-	RETURN_NULL();
-  }
-
-  argv[0]=getThis();
-  EXT_GLOBAL(invoke)("offsetUnset", 0, argc+1, argv, 0, return_value TSRMLS_CC);
-  efree(argv);
+  API_CALL(offsetUnset);
 }
 
 static
@@ -1666,8 +1195,14 @@ static function_entry (class_class_functions)[] = {
 
 
 
+#if ZEND_EXTENSION_API_NO >= 220060519 
+static int cast(zval *readobj, zval *writeobj, int type TSRMLS_DC)
+{
+  int should_free = 0;
+#else
 static int cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_DC)
 {
+#endif
   proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   long obj = 0;
   zval free_obj;
@@ -1692,22 +1227,22 @@ static int cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_
 	case IS_STRING:
 	  (*jenv)->writeInvokeBegin(jenv, 0, "castToString", 0, 'I', writeobj);
 	  (*jenv)->writeObject(jenv, obj);
-	  (*jenv)->writeInvokeEnd(jenv);
+	  obj = (*jenv)->writeInvokeEnd(jenv);
 	  break;
 	case IS_BOOL:
 	  (*jenv)->writeInvokeBegin(jenv, 0, "castToBoolean", 0, 'I', writeobj);
 	  (*jenv)->writeObject(jenv, obj);
-	  (*jenv)->writeInvokeEnd(jenv);
+	  obj = (*jenv)->writeInvokeEnd(jenv);
 	  break;
 	case IS_LONG:
 	  (*jenv)->writeInvokeBegin(jenv, 0, "castToExact", 0, 'I', writeobj);
 	  (*jenv)->writeObject(jenv, obj);
-	  (*jenv)->writeInvokeEnd(jenv);
+	  obj = (*jenv)->writeInvokeEnd(jenv);
 	  break;
 	case IS_DOUBLE:
 	  (*jenv)->writeInvokeBegin(jenv, 0, "castToInexact", 0, 'I', writeobj);
 	  (*jenv)->writeObject(jenv, obj);
-	  (*jenv)->writeInvokeEnd(jenv);
+	  obj = (*jenv)->writeInvokeEnd(jenv);
 	  break;
 	case IS_OBJECT: 
 	  {
@@ -1719,7 +1254,7 @@ static int cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_
 		  (*jenv)->writeInvokeBegin(jenv, 0, "cast", 0, 'I', writeobj);
 		  (*jenv)->writeObject(jenv, obj);
 		  (*jenv)->writeObject(jenv, obj2);
-		  (*jenv)->writeInvokeEnd(jenv);
+		  obj = (*jenv)->writeInvokeEnd(jenv);
 		} else {
 		  obj = 0; //failed
 		}
@@ -1729,10 +1264,13 @@ static int cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_
 #ifdef ZEND_ENGINE_2
 	  (*jenv)->writeInvokeBegin(jenv, 0, "castToArray", 0, 'I', writeobj);
 	  (*jenv)->writeObject(jenv, obj);
-	  (*jenv)->writeInvokeEnd(jenv);
+	  obj = (*jenv)->writeInvokeEnd(jenv);
 #else
 	  obj = 0; // failed
 #endif
+	  break;
+	default:
+	  obj = 0; // failed
 	  break;
 	}
   }
@@ -1789,7 +1327,7 @@ static int iterator_current_key(zend_object_iterator *iter, char **str_key, uint
   MAKE_STD_ZVAL(presult);
   ZVAL_NULL(presult);
   
-  EXT_GLOBAL(invoke)("currentKey", iterator->vm_iterator, 0, 0, 0, presult TSRMLS_CC);
+  if(!EXT_GLOBAL(invoke)("currentKey", iterator->vm_iterator, 0, 0, 0, presult TSRMLS_CC)) ZVAL_NULL(presult);
 
   if(ZVAL_IS_NULL(presult)) {
 	zval_ptr_dtor((zval**)&presult);
@@ -1826,7 +1364,7 @@ static void init_current_data(vm_iterator *iterator TSRMLS_DC)
   MAKE_STD_ZVAL(iterator->current_object);
   ZVAL_NULL(iterator->current_object);
 
-  EXT_GLOBAL(invoke)("currentData", iterator->vm_iterator, 0, 0, 0, iterator->current_object TSRMLS_CC);
+  if(!EXT_GLOBAL(invoke)("currentData", iterator->vm_iterator, 0, 0, 0, iterator->current_object TSRMLS_CC)) ZVAL_NULL(iterator->current_object);
 }
 
 static void iterator_move_forward(zend_object_iterator *iter TSRMLS_DC)
@@ -1843,7 +1381,7 @@ static void iterator_move_forward(zend_object_iterator *iter TSRMLS_DC)
   }
 
   (*jenv)->writeInvokeBegin(jenv, iterator->vm_iterator, "moveForward", 0, 'I', presult);
-  (*jenv)->writeInvokeEnd(jenv);
+  if(!(*jenv)->writeInvokeEnd(jenv)) ZVAL_NULL(presult);
   if(Z_BVAL_P(presult))
 	init_current_data(iterator TSRMLS_CC);
 
@@ -1859,12 +1397,25 @@ static zend_object_iterator_funcs EXT_GLOBAL(iterator_funcs) = {
   NULL
 };
 
+#if ZEND_EXTENSION_API_NO >= 220060519 
+static zend_object_iterator *get_iterator(zend_class_entry *ce, zval *object, int by_ref TSRMLS_DC)
+{
+#else
 static zend_object_iterator *get_iterator(zend_class_entry *ce, zval *object TSRMLS_DC)
 {
+  int by_ref = 0;
+#endif
   zval *presult;
-  proxyenv *jenv = JG(jenv);
-  vm_iterator *iterator = emalloc(sizeof *iterator);
+  proxyenv *jenv;
+  vm_iterator *iterator;
   long vm_iterator, obj;
+
+  if (by_ref) {					/* WTF?! */
+	zend_error(E_ERROR, "An iterator cannot be used with foreach by reference");
+  }
+
+  iterator = emalloc(sizeof *iterator);
+  jenv = JG(jenv);
   if((*jenv)->handle==(*jenv)->async_ctx.handle_request) { /* async protocol */
 	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): object iterator invalid while in stream mode, use $arr=java_values($java_obj); java_begin_document(); foreach($arr as ...) ...; java_end_document(); instead.", 21);
 	return 0;
@@ -1888,12 +1439,12 @@ static zend_object_iterator *get_iterator(zend_class_entry *ce, zval *object TSR
   iterator->vm_iterator = vm_iterator;
 
   (*jenv)->writeInvokeBegin(jenv, vm_iterator, "getType", 0, 'I', presult);
-  (*jenv)->writeInvokeEnd(jenv);
+  if(!(*jenv)->writeInvokeEnd(jenv)) return NULL;
 
   iterator->type = Z_BVAL_P(presult) ? HASH_KEY_IS_STRING : HASH_KEY_IS_LONG;
 
   (*jenv)->writeInvokeBegin(jenv, vm_iterator, "hasMore", 0, 'I', presult);
-  (*jenv)->writeInvokeEnd(jenv);
+  if(!(*jenv)->writeInvokeEnd(jenv)) return NULL;
   if(Z_BVAL_P(presult)) 
 	init_current_data(iterator TSRMLS_CC);
   else
@@ -1938,13 +1489,14 @@ EXT_GLOBAL(call_function_handler4)(INTERNAL_FUNCTION_PARAMETERS, zend_property_r
     property_reference->elements_list->tail->data;
   char *name = Z_STRVAL(function_name->element);
   int arg_count = ZEND_NUM_ARGS();
-  pval **arguments = (pval **) emalloc(sizeof(pval *)*arg_count);
+  pval ***arguments = (pval ***) safe_emalloc(sizeof(zval **), arg_count, 0);
   enum constructor constructor = CONSTRUCTOR_NONE;
   zend_class_entry *ce = Z_OBJCE_P(getThis());
 								/* Do not create an instance for new
 								   java_class or new JavaClass */
   short createInstance = 1;
   zend_class_entry *parent;
+  short rc;
 
   for(parent=ce; parent->parent; parent=parent->parent)
 	if ((parent==EXT_GLOBAL(class_class_entry)) || ((parent==EXT_GLOBAL(class_class_entry_jsr)))) {
@@ -1952,7 +1504,7 @@ EXT_GLOBAL(call_function_handler4)(INTERNAL_FUNCTION_PARAMETERS, zend_property_r
 	  break;
 	}
 
-  getParametersArray(ht, arg_count, arguments);
+  zend_get_parameters_array_ex(arg_count, arguments);
 
   if(!strcmp(name, ce->name)) constructor = CONSTRUCTOR;
   EXT_GLOBAL(call_function_handler)(INTERNAL_FUNCTION_PARAM_PASSTHRU, 
@@ -2020,6 +1572,13 @@ static void make_local_socket_info(TSRMLS_D) {
 #endif
 }
 
+#if !defined(ZEND_ENGINE_2) && defined(__MINGW32__)
+static void*return_msc_structure(void*mem, zend_property_reference *property_reference) {
+   register zval res = get_property_handler(property_reference);
+   return memcpy(mem, &res, sizeof res);
+}
+#endif
+
 /**
  * Called when the module is initialized. Creates the Java and
  * JavaClass structures and tries to start the back-end if
@@ -2039,7 +1598,11 @@ PHP_MINIT_FUNCTION(EXT)
   zend_class_entry ce;
   INIT_OVERLOADED_CLASS_ENTRY(ce, EXT_NAME(), NULL,
 							  EXT_GLOBAL(call_function_handler4),
+#if !defined(ZEND_ENGINE_2) && defined(__MINGW32__)
+							  return_msc_structure,
+#else
 							  get_property_handler,
+#endif
 							  set_property_handler);
 
   EXT_GLOBAL(class_entry) = zend_register_internal_class(&ce TSRMLS_CC);
@@ -2069,9 +1632,9 @@ PHP_MINIT_FUNCTION(EXT)
   zend_class_entry ce;
   zend_internal_function call, get, set;
   
-  make_lambda(&call, EXT_FN(EXT_GLOBAL(__call)));
-  make_lambda(&get, EXT_FN(EXT_GLOBAL(__get)));
-  make_lambda(&set, EXT_FN(EXT_GLOBAL(__set)));
+  make_lambda(&call, EXT_MN(EXT_GLOBAL(__call)));
+  make_lambda(&get, EXT_MN(EXT_GLOBAL(__get)));
+  make_lambda(&set, EXT_MN(EXT_GLOBAL(__set)));
   
   INIT_OVERLOADED_CLASS_ENTRY(ce, EXT_NAMEC(), 
 							  EXT_GLOBAL(class_functions), 
@@ -2147,15 +1710,41 @@ PHP_MINIT_FUNCTION(EXT)
   } 
   return SUCCESS;
 }
+struct save_cfg {
+  int ini_user;
+  char *servlet, *hosts;
+};
+static void push_cfg(struct save_cfg*cfg TSRMLS_DC) {
+  cfg->ini_user = JG(ini_user);
+  cfg->servlet = JG(servlet);
+  cfg->hosts = JG(hosts);
+  JG(ini_user) = EXT_GLOBAL(ini_user);
+  if(!(JG(hosts)=strdup(EXT_GLOBAL(cfg)->hosts))) exit(9);
+  if(!(JG(servlet)=strdup(EXT_GLOBAL(cfg)->servlet))) exit(9);
+}
+static void pop_cfg(struct save_cfg*cfg TSRMLS_DC) {
+  JG(ini_user) = cfg->ini_user;
+  if(JG(servlet)) free(JG(servlet)); 
+  JG(servlet) = cfg->servlet;
+  if(JG(hosts)) free(JG(hosts)); 
+  JG(hosts) = cfg->hosts;
+}
 /**
  * Displays the module info.
  */
 PHP_MINFO_FUNCTION(EXT)
 {
-  short is_local;
-  char*s=EXT_GLOBAL(get_server_string) (TSRMLS_C);
-  char*server = EXT_GLOBAL(test_server) (0, &is_local, 0 TSRMLS_CC);
-  short is_level = ((EXT_GLOBAL (ini_user)&U_LOGLEVEL)!=0);
+  static const char on[]="On";
+  static const char off[]="Off";
+  short is_local, is_level;
+  char*s, *server;
+  struct save_cfg saved_cfg;
+
+  push_cfg(&saved_cfg TSRMLS_CC);
+  EXT_GLOBAL(override_ini_for_redirect)(TSRMLS_C);
+  s = EXT_GLOBAL(get_server_string) (TSRMLS_C);
+  server = EXT_GLOBAL(test_server) (0, &is_local, 0 TSRMLS_CC);
+  is_level = ((EXT_GLOBAL (ini_user)&U_LOGLEVEL)!=0);
 
   php_info_print_table_start();
   php_info_print_table_row(2, EXT_NAME()/**/" support", "Enabled");
@@ -2196,6 +1785,17 @@ PHP_MINFO_FUNCTION(EXT)
   php_info_print_table_row(2, EXT_NAME()/**/".ext_java_compatibility", EXT_GLOBAL(cfg)->extJavaCompatibility?on:off);
 #endif
   php_info_print_table_row(2, EXT_NAME()/**/".persistent_connections", EXT_GLOBAL(cfg)->persistent_connections?on:off);
+  if(!server || is_local) {
+	if(!EXT_GLOBAL(cfg)->policy) {
+	  php_info_print_table_row(2, EXT_NAME()/**/".security_policy", "Off");
+	} else {
+	  /* set by user */
+	  if(EXT_GLOBAL(option_set_by_user) (U_POLICY, EXT_GLOBAL(ini_user)))
+		php_info_print_table_row(2, EXT_NAME()/**/".security_policy", EXT_GLOBAL(cfg)->policy);
+	  else
+		php_info_print_table_row(2, EXT_NAME()/**/".security_policy", "Off");
+	}
+  }
   php_info_print_table_row(2, EXT_NAME()/**/" command", s);
   php_info_print_table_row(2, EXT_NAME()/**/" status", server?"running":"not running");
   php_info_print_table_row(2, EXT_NAME()/**/" server", server?server:"localhost");
@@ -2203,6 +1803,7 @@ PHP_MINFO_FUNCTION(EXT)
   
   free(server);
   free(s);
+  pop_cfg(&saved_cfg TSRMLS_CC);
 }
 
 /**
@@ -2217,10 +1818,10 @@ PHP_MSHUTDOWN_FUNCTION(EXT)
   HashTable *connections = &JG(connections);
   zend_hash_internal_pointer_reset(connections);
   while(SUCCESS==zend_hash_get_current_data(connections, (void**)&env)) {
-	EXT_GLOBAL(close_connection) (env, 0 TSRMLS_CC);
+	EXT_GLOBAL(activate_connection)(*env TSRMLS_CC);
+	EXT_GLOBAL(close_connection) (*env, 0 TSRMLS_CC);
 	zend_hash_move_forward(connections);
   }
-  assert(JG(jenv)==0);			/* see close_connection */
   zend_hash_destroy(connections);
   
   EXT_GLOBAL(destroy_cfg) (EXT_GLOBAL(ini_set));

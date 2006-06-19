@@ -11,8 +11,8 @@ AC_DEFUN([JAVA_CHECK_STRUCT_UCRED],[
 #include <unistd.h>
 
 short prep_cred(int sock) {
-  static const int true = 1;
-  return (short)setsockopt(sock, SOL_SOCKET, SO_PASSCRED, (void*)&true, sizeof true);
+  static const int is_true = 1;
+  return (short)setsockopt(sock, SOL_SOCKET, SO_PASSCRED, (void*)&is_true, sizeof is_true);
 }
 
 short recv_cred(int sock, struct ucred *peercred) {

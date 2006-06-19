@@ -67,8 +67,11 @@ public abstract class CGIRunner extends Thread {
     public void run() {
 	try {
 	    doRun();
-	} catch (Exception e) {
+	} catch (IOException e) {
 	    Util.printStackTrace(e);
+	    phpScript.val = e;
+	} catch (Exception ex) {
+	    Util.printStackTrace(ex);
 	} finally {
 	    synchronized(this) {
 		notify();
@@ -80,7 +83,7 @@ public abstract class CGIRunner extends Thread {
     
     protected void doRun() throws IOException {
 	int n;    
-        Process proc = Util.ProcessWithErrorHandler.start(null, null, env);
+        Process proc = Util.ProcessWithErrorHandler.start(null, null, env, true);
 
 	InputStream natIn = null;
 	Writer writer = null;
@@ -131,8 +134,13 @@ public abstract class CGIRunner extends Thread {
      * @return The php continuation.
      * @throws InterruptedException
      */
-    public PhpProcedureProxy getPhpScript() throws InterruptedException {
-	return (PhpProcedureProxy)phpScript.getVal();
+    public PhpProcedureProxy getPhpScript() throws InterruptedException, IOException {
+        Object val = phpScript.getVal(); 
+        try {
+            return (PhpProcedureProxy)val;
+        } catch (ClassCastException e) {
+            throw (IOException)val; 
+        }
     }
 	
     /**

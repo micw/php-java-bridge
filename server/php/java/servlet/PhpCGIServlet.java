@@ -3,11 +3,16 @@
 package php.java.servlet;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.ServletConfig;
@@ -23,9 +28,9 @@ import php.java.bridge.Util.Process;
  * Handles requests from internet clients.  <p> This servlet can handle GET/POST
  * requests directly. These requests invoke the php-cgi machinery from
  * the CGI or FastCGI servlet.  Although the servlet to php-cgi back
- * to servlet path is quite slow and consumes two servlet instances
- * instead of only one (compared to the http front end/j2ee back end
- * setup), it can be useful as a replacement for a system php
+ * to servlet path is quite slow (compared with the http front end/j2ee back end
+ * setup) and consumes two servlet instances
+ * instead of only one, it can be useful as a replacement for a system php
  * installation, see the README in the <code>WEB-INF/cgi</code>
  * folder.  It is currently used for our J2EE test/demo.  </p>
  * @see php.java.bridge.JavaBridge
@@ -33,8 +38,8 @@ import php.java.bridge.Util.Process;
 public class PhpCGIServlet extends FastCGIServlet {
 
     private static final boolean USE_SH_WRAPPER = new File("/bin/sh").exists();
-    private static final Object fcgiStartLock = new Object();
-    private static boolean fcgiStarted = false;
+    private final Object fcgiStartLock = new Object();
+    private boolean fcgiStarted = false;
     private static final long serialVersionUID = 38983388211187962L;
     /**
      * The CGI default port
@@ -50,6 +55,8 @@ public class PhpCGIServlet extends FastCGIServlet {
     private int cgi_max_requests = CGI_MAX_REQUESTS;
     private final CGIRunnerFactory defaultCgiRunnerFactory = new CGIRunnerFactory();
     
+    private String DOCUMENT_ROOT;
+    private String SERVER_SIGNATURE;
     private final void runFcgi(Map env, String php) {
 	    int c;
 	    byte buf[] = new byte[CGIServlet.BUF_SIZE];
@@ -68,8 +75,8 @@ public class PhpCGIServlet extends FastCGIServlet {
     /* Use the fcgi wrapper on Unix or cygwin */
     private class FCGIProcess extends Util.Process {
         String realPath;
-        protected FCGIProcess(String[] args, File homeDir, Map env, String realPath) throws IOException {
-             super(args, homeDir, env);
+        protected FCGIProcess(String[] args, File homeDir, Map env, String realPath, boolean tryOtherLocations) throws IOException {
+             super(args, homeDir, env, tryOtherLocations);
              this.realPath = realPath;
         }
 	protected String argsToString(String php, String[] args) {
@@ -111,7 +118,7 @@ public class PhpCGIServlet extends FastCGIServlet {
 		String[] args = new String[]{php, "-b", port};
 		File home = null;
 		try { home = ((new File(php)).getParentFile()); } catch (Exception e) {Util.printStackTrace(e);}
-		proc = new FCGIProcess(args, home, env, context.getRealPath(cgiPathPrefix));
+		proc = new FCGIProcess(args, home, env, context.getRealPath(cgiPathPrefix), phpTryOtherLocations);
 		proc.start();
             return (Process)proc;
     }
@@ -130,6 +137,8 @@ public class PhpCGIServlet extends FastCGIServlet {
 	} catch (Throwable t) {Util.printStackTrace(t);}      
 
 	Util.TCP_SOCKETNAME = String.valueOf(CGI_CHANNEL);
+	DOCUMENT_ROOT = context.getRealPath("");
+	SERVER_SIGNATURE = context.getServerInfo();
     }
 
     public void destroy() {
@@ -157,105 +166,186 @@ public class PhpCGIServlet extends FastCGIServlet {
      * Adjust the standard tomcat CGI env. CGI only.
      */
     protected class CGIEnvironment extends FastCGIServlet.CGIEnvironment {
-    	protected ContextFactory sessionFactory;
+    	protected ServletContextFactory sessionFactory;
+	private HttpServletRequest req;
     	
 	protected CGIEnvironment(HttpServletRequest req, HttpServletResponse res, ServletContext context) {
 	    super(req, res, context);
+	    this.req = req;
 	}
 
-	protected String getCommand() {
-	    return php;
-	}
+	/** PATH_INFO and PATH_TRANSLATED not needed for PHP, SCRIPT_FILENAME is enough */
+        protected void setPathInfo(HttpServletRequest req, HashMap envp, String sCGIFullName) {
+            envp.put("SCRIPT_FILENAME", nullsToBlanks(context.getRealPath(servletPath)));          
+        }
 	protected boolean setCGIEnvironment(HttpServletRequest req, HttpServletResponse res) {
 	    boolean ret = super.setCGIEnvironment(req, res);
 	    if(ret) {
 	    	/* Inform the client that we are a cgi servlet and send the re-direct port */
-		if(override_hosts) { 
+	      String override;
+	      if(override_hosts && !req.isSecure()) { 
 		    StringBuffer buf = new StringBuffer("127.0.0.1:");
 		    buf.append(this.env.get("SERVER_PORT"));
 		    buf.append("/");
 		    buf.append(req.getRequestURI());
 		    buf.append("javabridge");
-		    this.env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", buf.toString());
-		}
-		else
-		    this.env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", "");
-		this.env.put("REDIRECT_STATUS", "200");
-		this.env.put("SCRIPT_FILENAME", this.env.get("PATH_TRANSLATED"));
+		    override = buf.toString();
+	        }
+		else 
+		    override = "";
+
+	        this.env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", override);
+	        // same for fastcgi, which already contains X_JAVABRIDGE_OVERRIDE_HOSTS=/ in its environment
+	        this.env.put("X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT", override); 
+	        this.env.put("REDIRECT_STATUS", "200");
 	        this.env.put("SERVER_SOFTWARE", Util.EXTENSION_NAME);
 	        this.env.put("HTTP_HOST", this.env.get("SERVER_NAME")+":"+this.env.get("SERVER_PORT"));
+	        String remotePort = null;
+	        try {
+	            remotePort = String.valueOf(req.getRemotePort());
+	        } catch (Throwable t) {
+	            remotePort = String.valueOf(t);
+	        }
+	        this.env.put("REMOTE_PORT", remotePort);
+	        String query = req.getQueryString();
+	        if(query!=null)
+	            this.env.put("REQUEST_URI", nullsToBlanks(req.getRequestURI() + "?" + query));
+	        else
+	            this.env.put("REQUEST_URI", nullsToBlanks(req.getRequestURI()));	          
+	        
+	        this.env.put("SERVER_ADDR", req.getServerName());
+	        this.env.put("SERVER_SIGNATURE", SERVER_SIGNATURE);
+	        this.env.put("DOCUMENT_ROOT", DOCUMENT_ROOT);
+	        if(req.isSecure()) this.env.put("HTTPS", "On");
+	        
 	        
 		/* send the session context now, otherwise the client has to 
 		 * call handleRedirectConnection */
 	    	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
-	    	if(id==null) id = ContextFactory.addNew(PhpCGIServlet.this.getServletContext(), req, req, res).getId();
+	    	if(id==null) id = ServletContextFactory.addNew(PhpCGIServlet.this.getServletContext(), req, req, res).getId();
 		this.env.put("X_JAVABRIDGE_CONTEXT", id);
-	        
-	        /* For the request:
-	         * http://localhost:8080/JavaBridge/test.php the
-	         * req.getPathInfo() returns cgi/test.php. But PHP
-	         * shouldn't know about this detail.
-	         */
-	        this.env.remove("PATH_INFO"); 
 	    }
 	    return ret;
 	        	
 	}
-	
-	private boolean canStartFCGI(String contextPath) {
-	    return canStartFCGI || (fcgiIsAvailable && (contextPath!=null && contextPath.endsWith("JavaBridge")));
+	private void waitForDaemon() throws UnknownHostException, InterruptedException {
+      	    long T0 = System.currentTimeMillis();
+      	    int count = 15;
+      	    InetAddress addr = InetAddress.getByName("127.0.0.1");
+      	    while(count-->0) {
+      		try {
+      		    Socket s = new Socket(addr, FCGI_CHANNEL);
+      		    s.close();
+      		    break;
+      		} catch (IOException e) {/*ignore*/}
+      		if(System.currentTimeMillis()-1600>T0) break;
+      		Thread.sleep(100);
+      	    }
+	}
+	private void startFCGI() throws UnknownHostException, InterruptedException {
+      	    Thread t = (new Thread("JavaBridgeFastCGIRunner") {
+      		    public void run() {
+      			Map env = (Map) processEnvironment.clone();
+      			env.put("PHP_FCGI_CHILDREN", php_fcgi_children);
+      			env.put("PHP_FCGI_MAX_REQUESTS", php_fcgi_max_requests);
+      			runFcgi(env, php);
+      		    }
+      		});
+      	    t.setDaemon(true);
+    	    t.start();
+      	    waitForDaemon();
+	}
+	/*
+	 * Delegate to the JavaBridge context, if necessary.
+	 */
+	private void delegateOrStartFCGI(boolean isJavaBridgeContext) {
+          try {
+              if(isJavaBridgeContext) {
+                  if(canStartFCGI(isJavaBridgeContext)) startFCGI();
+              } else {
+                  if(canStartFCGI) {
+                      delegateFCGI();
+                      try { fcgiStartLock.wait(); } catch (InterruptedException e) {/*ignore*/}
+                  }
+              }
+          } catch (Exception e) {
+              Util.printStackTrace(e);
+          }
+	}
+	private boolean isJavaBridgeWc(String contextPath) {
+	    return (contextPath!=null && contextPath.endsWith("JavaBridge"));
+	}
+	private boolean canStartFCGI(boolean isJavaBridgeContext) {
+	    return canStartFCGI || (fcgiIsConfigured && isJavaBridgeContext);
+	}
+	/**
+	 * If this context is not JavaBridge but is set up to connect to a FastCGI server,
+	 * try to start the JavaBridge FCGI server.
+	 * @throws IOException
+	 * @throws InterruptedException 
+	 */
+	private void delegateFCGI() throws IOException, InterruptedException {
+	    URL url = new URL("http", "127.0.0.1", getLocalPort(req), "/JavaBridge/.php");
+	    URLConnection conn = url.openConnection();
+	    // use a new thread to avoid a dead lock if the servlet's thread pool is full.
+	    (new Thread("JavaBridgeFCGIActivator") {
+	      URLConnection conn;
+	      public Thread init(URLConnection conn) {
+		  this.conn=conn;
+		  return this;
+	      }
+	      public void run() {
+		  InputStream in = null;
+		  try {
+		    try {
+		      conn.connect();
+		      in = conn.getInputStream();
+		      byte b[] = new byte[BUF_SIZE];
+		      while(-1!=in.read(b));
+		    } catch (FileNotFoundException e1) {/* file ".php" should not exist*/}
+		  } catch (Exception e) {
+		      Util.printStackTrace(e);
+		  } finally {
+		     if(in!=null) try { in.close(); } catch (Exception e){/*ignore*/}
+		     synchronized (fcgiStartLock) { fcgiStartLock.notify(); }
+		  }
+	      }
+	    }).init(conn).start();
 	}
 	protected String[] findCGI(String pathInfo, String webAppRootDir,
 				   String contextPath, String servletPath,
 				   String cgiPathPrefix) {
 	    String[] retval;
+	    /*
+	     * Try to start the FastCGI server, delegate to the JavaBridge web context, if necessary.
+	     * 
+	     * All JavaBridge wc instances wait until one JavaBridge wc instance sets fcgiStarted to true.
+	     * Each non-JavaBridge wc instance opens a URLConnection to a JavaBridge instance and waits 
+	     * for a notify from the URLConnection.
+	     * This even works if fcgiStarted is shared by non-JavaBridge and JavaBridge web contexts. Although
+	     * this isn't the usual case because different web contexts are usually loaded via different 
+	     * ClassLoaders.
+	     */
 	    synchronized(fcgiStartLock) {
-	      if(!fcgiStarted && canStartFCGI(contextPath)) {
+	      if(!fcgiStarted) {
+		boolean isJavaBridgeWc = isJavaBridgeWc(contextPath); // check if this is the JavaBridge wc
+		delegateOrStartFCGI(isJavaBridgeWc);
 		fcgiStarted = true;
-		try {
-		    Thread t = (new Thread("JavaBridgeFastCGIRunner") {
-			    public void run() {
-				Map env = (Map) processEnvironment.clone();
-				env.put("PHP_FCGI_CHILDREN", php_fcgi_children);
-				env.put("PHP_FCGI_MAX_REQUESTS", php_fcgi_max_requests);
-				runFcgi(env, php);
-			    }
-			});
-		    t.setDaemon(true);
-		    t.start();
-		    long T0 = System.currentTimeMillis();
-		    int count = 15;
-		    InetAddress addr = InetAddress.getByName("127.0.0.1");
-		    while(count-->0) {
-			try {
-			    Socket s = new Socket(addr, FCGI_CHANNEL);
-			    s.close();
-			    break;
-			} catch (IOException e) {/*ignore*/}
-			if(System.currentTimeMillis()-1600>T0) break;
-			Thread.sleep(100);
-		    }
-		} catch (Throwable t) {Util.printStackTrace(t);}
 	      } 
 	    }
+	    /*
+	     * Now that FCGI is started (or failed to start), connect to the FCGI server or delegate to the 
+	     * parent, the tomcat cgi servlet.
+	     */
 	    if((retval=super.findCGI(pathInfo, webAppRootDir, contextPath, servletPath, cgiPathPrefix))!=null) return retval;
 	    cgiRunnerFactory = defaultCgiRunnerFactory;
-		
-	    StringBuffer cgiDir = new StringBuffer(webAppRootDir);
-	    if(!webAppRootDir.endsWith(File.separator)) cgiDir.append(File.separatorChar);
-	    cgiDir.append(cgiPathPrefix);
-
-	    // incorrect but reasonable values for display only.
-	    String display_cgi="php";
-	    this.pathInfo = "/"+display_cgi+servletPath;
-	    
-	    cgiDir.append(File.separatorChar);
-	    cgiDir.append(display_cgi);
+	
+	    // Needed by CGIServlet
 	    return new String[] {
-		cgiDir.toString(),
-		contextPath+servletPath, 
-		File.separator+display_cgi, 
-		display_cgi};
+		php, // sCGIFullPath, the full path of the PHP executable: used by getCommand(), X_TOMCAT_SCRIPT_PATH and getWorkingDirectory()
+		contextPath+servletPath,  		// sCGIScriptName: the php file relative to webappRootDir, e.g.: /index.php 
+		empty_string,       	// sCGIFullName: not used (used in setPathInfo, which we don't use)
+		empty_string};      	// sCGIName: not used anywhere
 	}
     }
     
@@ -298,7 +388,7 @@ public class PhpCGIServlet extends FastCGIServlet {
 	    InputStream in = null;
 	    OutputStream out = null;
     	    try {
-        	proc = Util.ProcessWithErrorHandler.start(new String[]{command}, wd, env);
+        	proc = Util.ProcessWithErrorHandler.start(new String[]{php}, wd, env, phpTryOtherLocations);
 
         	byte[] buf = new byte[BUF_SIZE];// headers cannot be larger than this value!
 
@@ -356,7 +446,7 @@ public class PhpCGIServlet extends FastCGIServlet {
       synchronized (lockObject) {
 	if(count++>=cgi_max_requests) {
             res.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Out of system resources. Try again shortly or use the Apache or IIS frontend instead.");
-            Util.logFatal("Out of system resources. Adjust max_requests or set up the Apache or IIS frontend.");
+            Util.logFatal("Out of system resources. Adjust max_requests or set up the Apache or IIS front end.");
             return false;
         }
         return true;
@@ -384,7 +474,7 @@ public class PhpCGIServlet extends FastCGIServlet {
 	    buf.append("[.sh]|[.exe]");
     	    String wrapper = buf.toString();
  	    ServletException ex = new ServletException("An IO exception occured. " +
-	    		"Probably php was not installed as \"/usr/bin/php-cgi\" or \"c:/php5/php-cgi.exe\"\n or \""+wrapper+"\".\n" +
+	    		"Probably php was not installed as \"/usr/bin/php-cgi\" or \"c:/php/php-cgi.exe\"\n or \""+wrapper+"\".\n" +
 	    		"Please see \"php_exec\" in your WEB-INF/web.xml and WEB-INF/cgi/README for details.", e);
 	    php=null;
 	    checkCgiBinary(getServletConfig());

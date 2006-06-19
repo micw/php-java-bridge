@@ -16,10 +16,7 @@
   You can distribute the contents of the php-java-bridge-x.y.z/modules
   directory. It should contain the files "java", "libnatcJavaBridge.so",
   "java.so" (autoconf/libtool creates other files, you can delete
-  them). The java.so is the PHP module, the other files are required to
-  start the server part.  The "java" executable may need other system
-  libraries, for example "gcj.so" and "gcc_s.so". They should be
-  installed on the target system.
+  them). 
 
   The php.ini should contain the java.log_level and java.log_file
   entries.  Example:

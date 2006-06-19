@@ -5,7 +5,6 @@ package php.java.script;
 import java.io.Writer;
 
 import javax.script.SimpleScriptContext;
-import javax.script.http.HttpScriptContext;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -23,13 +22,13 @@ import php.java.bridge.PhpProcedureProxy;
 public class PhpSimpleHttpScriptContext extends SimpleScriptContext implements IPhpScriptContext {
 
     /** Integer value for the level of SCRIPT_SCOPE */
-    public static final int REQUEST_SCOPE = javax.script.http.HttpScriptContext.REQUEST_SCOPE;
+    public static final int REQUEST_SCOPE = 0;
     
     /** Integer value for the level of SESSION_SCOPE */   
-    public static final int SESSION_SCOPE = javax.script.http.HttpScriptContext.SESSION_SCOPE;
+    public static final int SESSION_SCOPE = 100;
     
     /** Integer value for the level of APPLICATION_SCOPE */
-    public static final int APPLICATION_SCOPE = javax.script.http.HttpScriptContext.APPLICATION_SCOPE;
+    public static final int APPLICATION_SCOPE = 200;
 
     protected HttpServletRequest request;
     protected HttpServletResponse response;
@@ -54,7 +53,7 @@ public class PhpSimpleHttpScriptContext extends SimpleScriptContext implements I
     }
 
     public Object getAttribute(String key, int scope){
-	if(scope == HttpScriptContext.REQUEST_SCOPE){
+	if(scope == REQUEST_SCOPE){
 	    return request.getAttribute(key);
 	}else if(scope == SESSION_SCOPE){
 	    return request.getSession().getAttribute(key);

@@ -37,7 +37,7 @@
 #include <errno.h>
 #include <time.h>
 
-/* path and dir separators */
+/* path separator */
 #include "php_wrapper.h"
 #include "zend.h"
 
@@ -54,9 +54,57 @@ const static char ext_dir[] = "extension_dir";
 
 EXT_EXTERN_MODULE_GLOBALS(EXT)
 
+static short use_wrapper(char*wrapper) {
+  struct stat buf;
+  short use_wrapper=(EXT_GLOBAL(option_set_by_user) (U_WRAPPER, EXT_GLOBAL(ini_user)));
+  if(use_wrapper) return use_wrapper;
+#ifndef __MINGW32__
+  if(!stat(wrapper, &buf) && (S_IFREG&buf.st_mode)) {
+	if(getuid()==buf.st_uid)
+	  use_wrapper=(S_IXUSR&buf.st_mode);
+	else if(getgid()==buf.st_gid)
+	  use_wrapper=(S_IXGRP&buf.st_mode);
+	else 
+	  use_wrapper=(S_IXOTH&buf.st_mode);
+  }
+#endif
+  return use_wrapper;
+}
+/**
+ * Check if the file ext_dir/javabridge.policy exists
+ * and return an allocated string containing s+ext_dir/javabridge.policy
+ * or NULL.
+ * @param s The prefix, for example "java.security.policy="
+ */
+static char *check_policy(char *s) {
+  struct stat buf;
+  short use_policy = 0;
+  char *p = 0;
+#ifndef __MINGW32__
+  const static char bridge[]="/javabridge.policy";
+  char *slash, *ext= php_ini_string((char*)ext_dir, sizeof ext_dir, 0);
+  size_t slen = strlen(s);
+  p=malloc(slen+strlen(ext)+sizeof(bridge)); if(!p) return 0;
+  strcpy(p, s); strcat(p, ext);
+  slash=p+strlen(p)-1; 	if(*p&&(*slash=='/'||*slash=='\\')) *slash=0;
+  strcat(p, bridge);
+  /* check if it exists */
+  if(!stat(p+slen, &buf) && (S_IFREG&buf.st_mode)) {
+	if(getuid()==buf.st_uid)
+	  use_policy=(S_IRUSR&buf.st_mode);
+	else if(getgid()==buf.st_gid)
+	  use_policy=(S_IRGRP&buf.st_mode);
+	else 
+	  use_policy=(S_IROTH&buf.st_mode);
+  }
+  if(!use_policy) { free(p); p=0; }
+#endif
+  return p;
+}
+
 /* Windows can handle slashes as well as backslashes so use / everywhere */
-static const char separator = '/';
 static const char path_separator[2] = {ZEND_PATHS_SEPARATOR, 0};
+static const char bridge_base[] = "-Dphp.java.bridge.base=";
 #if EXTENSION == JAVA
 static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], short for_display TSRMLS_DC) {
   char *s, *p;
@@ -117,20 +165,40 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
 	p=malloc(strlen(s)+strlen(ext)+sizeof(bridge));
 	strcpy(p, s); strcat(p, ext); 
 	slash=p+strlen(p)-1;
-	if(*p&&*slash==separator) *slash=0;
+	if(*p&&(*slash=='/'||*slash=='\\')) *slash=0;
 	strcat(p, bridge);
   } else {
 	p=malloc(strlen(s)+strlen(cp)+1);
 	strcpy(p, s); strcat(p, cp);
   }
   args[2] = p;					/* user classes */
-  args[3] = strdup("-Djava.awt.headless=true");
-  args[4] = strdup("php.java.bridge.JavaBridge");
 
-  args[5] = sockname;
-  args[6] = strdup(EXT_GLOBAL(cfg)->logLevel);
-  args[7] = strdup(cfg_logFile);
-  args[8] = NULL;
+  /* policy */
+  s="-Djava.security.policy="; p=0;
+  if(!p && EXT_GLOBAL(option_set_by_user) (U_POLICY, EXT_GLOBAL(ini_user))) {
+	char *cp = EXT_GLOBAL(cfg)->policy;
+	if(*cp==0||cp[1]==0) {		/* policy=On (stored as '\0' or '1\0') */
+	  p = check_policy(s);
+	} else {
+	  p=malloc(strlen(s)+strlen(cp)+1);
+	  strcpy(p, s); strcat(p, cp);
+	}
+  }
+  if(!p) {					/* no policy at all */
+	p = strdup("-Djava.awt.headless=true");
+  }
+  args[3] = p;
+
+								/* base */
+  p = malloc(strlen(ext)+sizeof(bridge_base));
+  strcpy(p, bridge_base); strcat(p, ext);
+  args[4] = p;
+
+  args[5] = strdup("php.java.bridge.JavaBridge");
+  args[6] = sockname;
+  args[7] = strdup(EXT_GLOBAL(cfg)->logLevel);
+  args[8] = strdup(cfg_logFile);
+  args[9] = NULL;
 
   if(*home) {					/* set VM home */
 	s="JAVA_HOME=";
@@ -168,7 +236,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   p=malloc(strlen(home)+sizeof executable);
   strcpy(p, home); 
   slash=p+strlen(p)-1;
-  if(*p&&*slash==separator) *slash=0;
+  if(*p&&(*slash=='/'||*slash=='\\')) *slash=0;
   strcat(p, executable);
 
   args[1] = p;
@@ -190,24 +258,6 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   env[0] = NULL;
 }
 #endif
-static short use_wrapper(char*wrapper) {
-  struct stat buf;
-  short use_wrapper=(EXT_GLOBAL(option_set_by_user) (U_WRAPPER, EXT_GLOBAL(ini_user)));
-  if(use_wrapper) return use_wrapper;
-
-#ifndef __MINGW32__
-  if(!stat(wrapper, &buf) && (S_IFREG&buf.st_mode)) {
-	if(getuid()==buf.st_uid)
-	  use_wrapper=(S_IXUSR&buf.st_mode);
-	else if(getgid()==buf.st_gid)
-	  use_wrapper=(S_IXGRP&buf.st_mode);
-	else 
-	  use_wrapper=(S_IXOTH&buf.st_mode);
-  }
-#endif
-
-  return use_wrapper;
-}
   
 /*
  * Get a string of the server arguments. Useful for display only.
@@ -264,17 +314,6 @@ char*EXT_GLOBAL(get_server_string)(TSRMLS_D) {
 }
 
 static void exec_vm(TSRMLS_D) {
-#ifdef CFG_JAVA_INPROCESS
-  extern int EXT_GLOBAL(bridge_main)(int argc, char**argv) ;
-  static char*env[N_SENV];
-  static char*args[N_SARGS];
-  EXT_GLOBAL(get_server_args)(env, args, 0);
-  if(N_SENV>2) {
-	if(*env[0]) putenv(env[0]);
-	if(*env[1]) putenv(env[1]);
-  }
-  EXT_GLOBAL(bridge_main)(N_SARGS, args);
-#else
   static char*env[N_SENV];
   static char*_args[N_SARGS+1];
   char **args=_args+1, *cmd;
@@ -293,17 +332,16 @@ static void exec_vm(TSRMLS_D) {
   cmd = get_server_string(0 TSRMLS_CC);
   php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d) system error: Could not execute backend: %s: %s", 105, cmd, strerror(errno));
   free(cmd);
-#endif
 }
 
-static const int true = 1;
+static const int is_true = 1;
 static int test_local_server(void) {
   int sock, n;
 #ifndef CFG_JAVA_SOCKET_INET
   sock = socket (PF_LOCAL, SOCK_STREAM, 0);
 #else
   sock = socket (PF_INET, SOCK_STREAM, 0);
-  if(sock!=-1) setsockopt(sock, 0x6, TCP_NODELAY, (void*)&true, sizeof true);
+  if(sock!=-1) setsockopt(sock, 0x6, TCP_NODELAY, (void*)&is_true, sizeof is_true);
 #endif
   if(sock==-1) return -1;
   n = connect(sock,(struct sockaddr*)&EXT_GLOBAL(cfg)->saddr, sizeof EXT_GLOBAL(cfg)->saddr);
@@ -390,7 +428,7 @@ char* EXT_GLOBAL(test_server)(int *_socket, short *local, struct sockaddr*_saddr
 	  }
 	  if(_socket) {
 		*_socket=sock;
-		setsockopt(sock, 0x6, TCP_NODELAY, (void*)&true, sizeof true);
+		setsockopt(sock, 0x6, TCP_NODELAY, (void*)&is_true, sizeof is_true);
 	  }
 	  else close(sock);
 	  if(_port) _port[-1]=':';
@@ -426,9 +464,9 @@ static void sleep_ms() {
   select(0, 0, 0, 0, &timeval);
 }
 static int wait_server(void) {
+#ifndef __MINGW32__
   static const int wait_count = 30;
   int count=wait_count, sock;
-#ifndef __MINGW32__
   struct pollfd pollfd[1] = {{EXT_GLOBAL(cfg)->err, POLLIN, 0}};
   
   /* wait for the server that has just started */
@@ -445,13 +483,15 @@ static int wait_server(void) {
 	sleep(1);
   }
 #else
+  static const int wait_count = 5;
+  int count=wait_count, sock;
   while(EXT_GLOBAL(cfg)->cid && -1==(sock=test_local_server()) && --count) {
-	Sleep(timeout/1000);
+	Sleep(500);
   }
   count=15;
   while(EXT_GLOBAL(cfg)->cid && -1==sock && -1==(sock=test_local_server()) && --count) {
 	php_error(E_NOTICE, "php_mod_"/**/EXT_NAME()/**/"(%d): waiting for server another %d interval",57, count);
-	Sleep(1000);
+	Sleep(500);
   }
 #endif
   if(EXT_GLOBAL(cfg)->cid && count) {
@@ -870,17 +910,22 @@ void EXT_GLOBAL(start_server)(TSRMLS_D) {
 #else
 	if(can_fork() && !(test_server=EXT_GLOBAL(test_server)(0, 0, 0 TSRMLS_CC))) {
 	  char *cmd = get_server_string(0 TSRMLS_CC);
-	  DWORD properties = CREATE_NEW_CONSOLE;
+	  DWORD properties = CREATE_NEW_CONSOLE | CREATE_NEW_PROCESS_GROUP;
 	  STARTUPINFO su_info;
 	  s_pid.use_wrapper = use_wrapper(EXT_GLOBAL(cfg)->wrapper);
 
 	  ZeroMemory(&su_info, sizeof(STARTUPINFO));
 	  su_info.cb = sizeof(STARTUPINFO);
+	  //su_info.dwFlags = STARTF_USESTDHANDLES;
+	  //su_info.hStdError	= GetStdHandle(STD_ERROR_HANDLE);
+	  //su_info.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+	  //su_info.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
 	  EXT_GLOBAL(cfg)->cid=0;
 	  if(CreateProcess(NULL, cmd, 
 					   NULL, NULL, 1, properties, NULL, NULL, 
 					   &su_info, &s_pid.p)) {
 		EXT_GLOBAL(cfg)->cid=s_pid.p.dwProcessId;
+		//CloseHandle(processInformation.hThread);//FIXME?
 		wait_server();
 	  } else {
 		php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d) system error: Could not start backend: %s; Code: %ld.", 105, cmd, (long)GetLastError());

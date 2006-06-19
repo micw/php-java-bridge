@@ -2,6 +2,7 @@
 
 #ifndef INIT_CFG_H
 #define INIT_CFG_H
+#include "zend_extensions.h"
 
 #define JAVA 1
 #define MONO 2
@@ -54,6 +55,11 @@
 #define EXT_FUNCTION(name) PHP_FUNCTION(name)
 #define EXT_ME(classname, name, arg_info, flags) ZEND_ME(classname, name, arg_info, flags)
 #define EXT_FN(name) ZEND_FN(name)
+#if ZEND_EXTENSION_API_NO >= 220060519 
+#define EXT_MN(name) ZEND_MN(name)
+#else
+#define EXT_MN(name) ZEND_FN(name)
+#endif
 #define EXT_TSRMG(id, type, element) TSRMG(id, type, element)
 #define EXT_FE(name, arg_info) ZEND_FE(name, arg_info)
 #define EXT_MALIAS(classname, name, alias, arg_info, flags) ZEND_MALIAS(classname, name, alias, arg_info, flags)

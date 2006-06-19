@@ -5,10 +5,11 @@ package php.java.servlet;
 import java.io.IOException;
 import java.io.Writer;
 
-import javax.script.http.HttpScriptContext;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import php.java.script.PhpSimpleHttpScriptContext;
 
 
 /**
@@ -23,16 +24,16 @@ public class Context extends php.java.bridge.http.Context {
     protected HttpServletRequest request;
 
     /** Integer value for the level of SCRIPT_SCOPE */
-    public static final int REQUEST_SCOPE = javax.script.http.HttpScriptContext.REQUEST_SCOPE;
+    public static final int REQUEST_SCOPE = PhpSimpleHttpScriptContext.REQUEST_SCOPE;
     
     /** Integer value for the level of SESSION_SCOPE */   
-    public static final int SESSION_SCOPE = javax.script.http.HttpScriptContext.SESSION_SCOPE;
+    public static final int SESSION_SCOPE = PhpSimpleHttpScriptContext.SESSION_SCOPE;
     
     /** Integer value for the level of APPLICATION_SCOPE */
-    public static final int APPLICATION_SCOPE = javax.script.http.HttpScriptContext.APPLICATION_SCOPE;
+    public static final int APPLICATION_SCOPE = PhpSimpleHttpScriptContext.APPLICATION_SCOPE;
 
     public Object getAttribute(String key, int scope){
-	if(scope == HttpScriptContext.REQUEST_SCOPE){
+	if(scope == PhpSimpleHttpScriptContext.REQUEST_SCOPE){
 	    return request.getAttribute(key);
 	}else if(scope == SESSION_SCOPE){
 	    return request.getSession().getAttribute(key);

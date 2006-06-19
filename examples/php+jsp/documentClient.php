@@ -10,13 +10,20 @@ $name = "RMIdocument";
 if(!$doc=$session->get("$name"))
   $session->put("$name", $doc=createDocument("$name", array()));
 
-/* add pages to the remote document */
-$doc->addPage(new java ("Page", 0, "this is page 1"));
-$doc->addPage(new java ("Page", 0, "this is page 2"));
+try {
+  /* add pages to the remote document */
+  $doc->addPage(new java ("Page", 0, "this is page 1"));
+  $doc->addPage(new java ("Page", 0, "this is page 2"));
 
-/* and print a summary */
-print $doc->analyze() . "\n";
-
+  /* and print a summary */
+  print $doc->analyze() . "\n";
+} catch (JavaException $ex) {
+  $cause = $ex->getCause(); if(is_null($ex->getCause())) $cause = $ex;
+  echo "Could not access remote document. <br>\n";
+  echo "$cause <br>\nin file: {$ex->getFile()}<br>\nline:{$ex->getLine()}\n";
+  $session->destroy();
+  exit (2);
+}
 /* destroy the remote document and remove the session */
 if($_GET['logout']) {
   echo "bye...\n";
@@ -45,12 +52,14 @@ function createDocument($jndiname, $serverArgs) {
     $DocumentHome = new JavaClass("DocumentHome");
     $PortableRemoteObject = new JavaClass("javax.rmi.PortableRemoteObject");
     $home = $PortableRemoteObject->narrow($objref, $DocumentHome);
-    
+    if(is_null($home)) throw new JavaException("java.lang.NullPointerException", "home");
+
     // create a new remote document and return it
     $doc = $home->create();
   } catch (JavaException $ex) {
+    $cause = $ex->getCause(); if(is_null($ex->getCause())) $cause = $ex;
     echo "Could not create remote document. Have you deployed documentBean.jar?<br>\n";
-    echo "{$ex->getCause()} <br>\nin file: {$ex->getFile()}<br>\nline:{$ex->getLine()}\n";
+    echo "$cause <br>\nin file: {$ex->getFile()}<br>\nline:{$ex->getLine()}\n";
     exit (1);
   }
   

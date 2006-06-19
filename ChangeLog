@@ -1,3 +1,477 @@
+2006-06-17  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/servlet/FastCGIServlet.java
+	(parseBody): Destroy the physical connection, if an exception
+	occured, the FCGI ABORT command doesn't seem to work. For example
+	on FC5 the tomcat implementation is based on GNU "Java". GCC
+	version 4 uses a "JIT" compiler which seems to compile the entire
+	JavaBridge.war archive to native code while the request is
+	running. This takes several seconds and causes the Firefox browser
+	to time out after 15 seconds. After "JIT" compilation the servlet
+	engine detects that the browser is gone and throws a
+	ConnectionAbort Exception. This clears the Java side of the FCGI
+	pool, but not the associated PHP FastCGI instance; PHP keeps the
+	generated data. When the next request reaches this instance, PHP
+	would deliver this data.
+	
+	* server/php/java/servlet/CGIServlet.java
+	(getLocalName): Obsolete
+
+	* server/php/java/servlet/PhpCGIServlet.java
+	(setCGIEnvironment): Use getServerName instead of getLocalName, we
+	need the official server name, on FC5 tomcat returns 127.0.0.1 for
+	the local name.
+	
+	* php_java_snprintf.h: We must destroy the snprintf definition
+	from PHP so that we can use php_ap_snprintf, if available.
+
+	* java.c
+	(return_msc_structure): New function.
+	(MINIT): Use return_msc_structure for compatibility with MSVC
+	compiled PHP binaries.
+	
+	* java.c (java_call_user_function_ex): New function, needed for
+	MSVC compiled binaries.
+
+	* server/php/java/servlet/ConnectionPool.java (connect): New from
+	bind, correct name.
+	(bind): Removed
+
+	* VERSION, php-java-bridge.spec: Version 3.1.0 released
+
+2006-06-16  Jost Boekemeier  <jostb@intern>
+	
+	* README, NEWS, server/php/java/bridge/Util.java 
+	(DEFAULT_CGI_LOCATIONS): Changed c:/php5 to c:/php.
+	
+	* api.c
+	(values): Fixed a bug that caused a conversion from array to
+	object: In PHP 4 java_values(array()) returned an object instead
+	of the passed array.
+	
+	* java.c 
+	(can_reconnect): New function.
+	(API_CALL): Only reconnect when the first statement failed.
+	
+	* server/php/java/bridge/FastCgiServlet.java
+	(getError): New procedure.
+	(doRead): Save error so that the communication completes. Avoids a
+	problem that caused the abortion of the FastCGI channel because
+	bytes from the previous communication were left in the buffer.
+	(parseBody): throw saved error.
+
+	* server/php/java/servlet/PhpCGIServlet.java
+	(setCGIEnvironment): Not all ServletEngines support
+	getRemotePort().
+
+	* server/php/java/servlet/ServletContextFactory.java
+	(ServletContextFactory): Store the request.
+
+	* tests.php5/is_null.php: Do not test features that are not
+	available.
+
+	* server/configure.in, config.m4: Check for "ar" before invoking
+	"check_jni"
+
+	* Makefile.frag, server/Makefile.am: Create stamp, needed for check_ar
+	
+	* tests.m4/java_check_jni.m4: Don't test jni, if we know that "ar"
+	is not available.
+
+	* examples/php+jsp/documentClient.php: Check result.
+
+	
+2006-06-14  Jost Boekemeier  <jostb@intern>
+
+	* install.sh: Removed
+
+	* install.sh.in: New file from install.sh
+	
+	* server/php/java/bridge/SimpleJavaBridgeClassLoader.java
+	(buildUrlArray): The loader fix for mono broke the fix for
+	PR1502480.
+
+	* server/php/java/bridge/SessionTimer.java (SessionTimer): Do not
+	block the termination thread.
+	
+	* VERSION, php-java-bridge.spec: Version 3.1.0rc8 released
+	
+2006-06-12  Jost Boekemeier  <jostb@intern>
+
+	* server/configure.in: Switch off unix domain sockets, if ar is
+	not available.
+
+	* examples/php+jsp/documentClient.php: Catch
+	SessionBeanTimeoutException and display an error.
+
+	* NEWS, README, INSTALL.LINUX, INSTALL.WINDOWS, install.sh,
+	server/php/java/bridge/JavaBridge.java (checkOption): Renamed --snarf
+	to --convert.
+
+	* server/php/java/bridge/Snarf.java (getFile): Use base, if it
+	exists. The previous code created the PHP classes in the current
+	directory, if "java -jar JavaBridge --convert /usr/share/pear" was
+	called without additional jar files
+
+	* client.c (begin_header): Use strcasecmp instead of strcmp, some
+	application servers change the keys we send.
+	
+	* VERSION, php-java-bridge.spec: Version 3.1.0rc7 released
+	
+2006-06-11  Jost Boekemeier  <jostb@intern>
+
+	* server/configure.in, server/Makefile.am, config.m4: --with-mono
+	has been changed to require a directory which contains ikvmc.exe
+	and support dlls. The ikvmc.exe and ICSharpCode.SharpZipLib.dll
+	IKVM.AWT.WinForms.dll IKVM.GNU.Classpath.dll IKVM.Runtime.dll are
+	now included.
+	
+2006-06-10  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/Snarf.java
+	(writeHeader, writePhpJava): prefix all magic functions with
+	__java.
+	
+	* tests.php4/servlet_connection_re-open.php: Removed, servlet can
+	be tested with php5 as well.
+	
+	* php_java.h: Must disable sending hex numbers in PHP4, because
+	PROTOCOL.TXT doesn't have a way to send hex numbers, if backward
+	compatibility is enabled.
+	
+	* INSTALL.MONO+NET: Removed, users must compile the Mono/.NET
+	back-end, see README.MONO+NET.
+	
+	* test.php4: Removed.
+
+	* test.php: Rewritten to work with php4
+
+	* server/php/java/bridge/DynamicJavaBridgeClassLoader.java
+	(hashCode, equals, toString): New methods.
+	(loadClass): Display the current java_require() path
+	
+	* server/php/java/bridge/SimpleJavaBridgeClassLoader.java 
+	(buildUrlArray): PR1502480
+	
+	* server/php/java/bridge/JavaBridge.java 
+	(init): PR1502480
+	(setJarLibraryPath): convert extensionDir into atom.
+	
+	* VERSION, php-java-bridge.spec: Version 3.1.0rc6 released
+
+2006-06-08  Jost Boekemeier  <jostb@intern>
+
+	* api.c (serialize, deserialize): Fixed typo.
+
+	* init_cfg.c.in (init_socket): Avoid warning.
+
+	* install.sh: rewritten.
+
+	* java_bridge.c
+	(protocol_error): removed, this message was misleading.
+	(call_function_handler): When the server thread throws an
+	exception outside of Invoke, GetSetProp and CreateInstance, this
+	means that the back-end has a bug. If this happens, PHP receives
+	an empty response from the server: Terminate the script
+	immediately and display error code 98.
+
+	* server/php/java/bridge/DynamicJavaBridgeClassLoader.java
+	(EMPTY_PATH, JarLibraryPath): New const/class.
+	(checkJarLibraryPath): New procedure.
+	(updateJarLibraryPath): Split into checkJarLibraryPath and
+	updateJarLibraryPath. In previous versions the library path was
+	checked outside of one of the Invoke, GetSetProp, CreateInstance
+	methods, so that the exception could not be reported to the client,
+	see error code 98 above.
+
+	* server/php/java/bridge/SimpleJavaBridgeClassLoader.java: New
+	class from JavaBridgeClassLoader.
+	(updateJarLibraryPath): check the library path immediately,
+	otherwise we don't have a chance to report the failure to the
+	client.
+	
+	* server/php/java/bridge/JavaBridgeClassLoader.java: Refactored to
+	use SimpleJavaBridgeClassLoader.
+	(checkCl): Throw an illegal state exception, if java_require() is
+	used while using the HTTP tunnel.
+
+	* server/php/java/bridge/Log4jLogger (Log4jLogger): Use
+	SimpleJavaBridgeClassLoader; the logger doesn't care about the
+	HTTP tunnel.
+
+	* server/php/java/bridge/Snarf.java (run): Create php_Java.php in
+	/usr/share/pear, not in the current working directory.
+	(copyFile): Do not create corrupt jar files.
+
+	* java.c (ini_override): New global
+	(OnIniHosts, OnIniServlet, OnIniSockname): Do not update, if the
+	CGI binary has received X_JAVABRIDGE_OVERRIDE_HOSTS. The previous
+	fix for HTTPS support broke the windows version. On windows PHP
+	calls the OnIni callbacks three times; in register_ini_entries,
+	which is correct, and two times after minit, which is at least
+	inefficient and obsolete, -- effectively reverting our changes.
+	
+	* VERSION, php-java-bridge.spec: Version 3.1.0rc5 released
+
+2006-06-07  Jost Boekemeier  <jostb@intern>
+
+	* client.c (override_ini_for_redirect): Fixed memory corruption.
+	
+	* binc.c (check_policy, get_server_args): Correct the path
+	"ext\dir\/JavaBridge.jar" problem on windows.
+	
+	* ini_cfg.c.in (update_hosts, update_servlet, update_socketname,
+	update_compatibility, update_persistent_connections): New from
+	java.c
+	
+	* java.c (OnIniPersistentConnections, OnIniServlet, OnIniSockname,
+	OnIniExtJavaCompatibility): Use new procedures. 
+
+	* ini_cfg.c.in (override_ini_from_cgi): Use update_* directly
+	instead of zend_alter_ini_entry to make the changes permanent. --
+	The zend_alter_ini_entry procedure saves the old value and
+	restores it after request shutdown, this makes it impossible to
+	keep the changes for all further requests. Corrects the incorrect
+	status report, "not running".
+
+	* VERSION, php-java-bridge.spec: Version 3.1.0rc4 released
+	
+2006-06-06  Jost Boekemeier  <jostb@intern>
+	
+	* server/php/java/servlet/FastCGIServlet.java (checkCgiBinary,
+	findCGI), server/php/java/servlet/FastCGIServlet.java (findCGI):
+	Set correct sCGIFullPath, otherwise getWorkingDirectory() will
+	fail and the php-cgi wrapper will return a blank page because it
+   	cannot not find the cgi executable in its working directory.
+	(getCommand, init): Removed
+	(fcgiIsConfigured): New variable
+	(findCGI): Switch off the FCGI servlet, if we receive a
+	ConnectionException from the FCGI server pool.
+
+	* server/php/java/servlet/ConnectionPool.java
+	(bind, getInputStream, getOutputStream, setConnection, read,
+	close, write, flush, init, Connection, ConnectionPool,
+	createNewConnection, openConnection): Throw a ConnectionException
+	instead of an IOException: A ConnectionException should be fatal,
+	but an IOException is harmless, it may appear when the client (the
+	internet browser) closes the connection.
+	
+	* server/php/java/servlet/PhpCGIServlet.java (setCGIEnvironment):
+	Do not set X_JAVABRIDGE_OVERRIDE_HOSTS, if this is a HTTPS
+	request.
+
+	* server/WEB-INF/cgi/php-cgi-i386-linux.ini: Added java.servlet
+	and java.hosts, for HTTPS requests.
+	
+2006-06-05  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/BaseThreadPool.java (init): Fixed typo.
+	
+	* examples/search/lucene_search.php, examples/search/README: New
+	files
+	
+	* api.c
+	(construct_class, call, set, offsetExists, offsetGet, offsetSet):
+	Avoid memory leak.
+	(construct_no_arg, construct_array, construct): refactored from
+	construct.
+
+	* install.sh: Install PHP classes.
+
+	* php_java_lib/JPersistence.php, php_java_lib/JSession.php: use
+	is_null() to test if the value is null.
+
+	* server/php/java/bridge/Snarf.java: New class
+
+	* server/php/java/bridge/JavaBridge.java (checkOption, init, usage):
+	call Snarf, if called with java -jar JavaBridge.jar
+	--convert.
+
+	* unsupported/lucene.jar: New file.
+
+	* VERSION, php-java-bridge.spec: Version 3.1.0rc3 released
+	
+	
+2006-06-03  Jost Boekemeier  <jostb@intern>
+	
+	* PROTOCOL.TXT
+	All unsigned long values (e.g. object handles) are now
+	transferred in hex: <L v="hexVal" p=O i="hexVal"/>
+	(Finish): New protocol request for persistent connections.
+	(Long): Added predicate for signum
+	(Options): Header 01 means: encode unsigned values in hex
+	
+	* api.c, api.h: New files.
+
+	* bind.c (check_policy): New procedure
+	(get_server_args): Use -Dphp.java.bridge.base and
+	-Djava.security.policy instead of -Djava.awt.headless, if
+	java.security_policy is set in the php.ini file.
+	(CFG_JAVA_INPROCESS): Removed, configure doesn't use it anymore.
+
+	* client.c (setResultFromLong): Pass signum, according to protocol.
+	(GET_LONG): use strtoul or strtol accordingly
+	(GET_RESULT): use strtoul
+	(get_mode): Send header 01, if php version => 5.
+	(try_connect_to_server): Rewritten
+	(clone_cfg, destroy_cloned_cfg): Rewritten
+	(passivate_connection, activate_connection): New procedures
+
+	* config.m4: Added test for fast tcp sockets, added api.c.
+
+	* init_cfg.c.in: Initialize persistent connections and policy.
+
+	* install.sh: Rewritten
+
+	* java.c: Refactored, moved API to api.c
+
+	* java_bridge.c (invoke, call_function_hander,
+	get_property_handler, set_property_handler): Return protocol
+	status.
+
+	* protocol.c: Rewritten.
+
+	* server/natcJavaBridge.c: Accept -Dphp.java.bridge.base= option.
+
+	* server/javax/script/http/HttpScriptRequest.java,
+	server/javax/script/http/HttpScriptResponse.java,
+	server/javax/script/http/HttpScriptServlet.java,
+	server/javax/script/http/SimpleHttpScriptContext.java: Removed,
+	not in spec.
+
+	* server/php/java/bridge/BaseThreadPool.java: New file
+	
+	* server/php/java/bridge/ThreadPool.java: Rewritten
+
+	* server/php/java/bridge/ILogger.java,
+	server/php/java/bridge/ChainsawLogger.java,
+	server/php/java/bridge/FileLogger.java,
+	server/php/java/bridge/Log4jLogger.java: New files
+	
+	* server/php/java/bridge/ClassicParserString.java: New file
+
+	* server/php/java/bridge/ConstructorCache.java
+	(Entry), server/php/java/bridge/MethodCache.java
+	(Entry): Do not use intern, that's far more expensive than lazy
+	String.equals.
+
+	* server/php/java/bridge/ConstructorCache.java
+	(getParameterTypes), server/php/java/bridge/MethodCache.java
+	(getParameterTypes): Cache type information.
+
+	* server/php/java/bridge/DynamicJavaBridgeClassLoader.java
+	(updateJarLibraryPath): make it fail fast, if the jar file is not
+	accessible.
+	(checkJarFile): New procedure.
+
+	* server/php/java/bridge/GlobalRef.java: Rewritten to use an
+	integer hash.
+
+	* server/php/java/bridge/IDocHandler.java (createParserString): Create
+	a cached string, if possible.
+
+	* server/php/java/bridge/JavaBridge.java
+	(stringCache): New cache.
+	(run): Do not call expire from the request handling thread, use
+	SessionFactory's SessionTimer instead.
+	(init): Display default java.ext.dirs, pool size and security
+	policy.
+	(getContext): Call recycleContext, new for persistent connections.
+	(getSession): Call recycleContext, new for persistent connections.
+	(INTERNAL_PHPSESSION): Use a separate store for __sleep and
+	__wakeup
+	(recycle): New procedure.
+	(recycleContext): New procedure
+	(getString): New function
+	(getCachedString): New function
+
+	* server/php/java/bridge/JavaBridgeClassLoader.java: Rewritten.
+
+	* server/php/java/bridge/JavaBridgeSecurityManager.java: New file
+
+	* server/php/java/bridge/Options.java (newString): Moved to
+	JavaBridge,see getString and getCachedString.
+	(createExact): Moved to Request.java
+	(hexNumbers): New function
+	(recycle): New procedure
+
+	* server/php/java/bridge/Parser.java (PUSH): Use factory.
+	
+	* server/php/java/bridge/ParserString,
+	server/php/java/bridge/Request.java,
+	server/php/java/bridge/Response.java: Use hex encoding.
+
+	* server/php/java/bridge/Session.java (expire): Removed obsolete bridge
+	parameter.
+
+	* server/php/java/bridge/SessionFactory.java (TIMER_FREQ, timer,
+	SessionTimer): New constants/class.
+
+	* server/php/java/bridge/StringCache.java: New class.
+
+	* server/php/java/bridge/Util.java: Marked as final, disabled
+	default constructor.
+	(Logger): Rewritten to use ILogger
+	(BUF_SIZE): Corrected typo.
+	(DEFAULT_EXT_DIRS): New constant
+	(setLogger): Rewritten
+	(setDefaultFileLogger): New procedure
+
+	* server/php/java/bridge/ContextFactory.java 
+	(moveContext): New procedure
+	(getNext): Rewritten
+	(get): Rewritten
+	(recycle): New procedure
+	(destroy): New procedure
+	(isInitialized): New function
+	(destroyOrphaned): New procedure
+
+	* server/php/java/bridge/http/IcontextFactory.java,
+	server/php/java/bridge/http/IcontextFactoryVisitor.java,
+	server/php/java/bridge/http/SimpleContextFactory.java: New classes
+
+	* server/php/java/servlet/CGIServlet.java (setPathInfo): New
+	procedure
+
+	* server/php/java/servlet/ConnextionPool.java: New class
+
+	* server/php/java/servlet/FastCGIServlet.java (findCGI): Rewritten
+	(FastCGIOuputStream, FastCGIInputStream): Use connection pool.
+	(writeBegin, run): Use connection pool
+
+	* server/php/java/servlet/PhpCGIServlet.java (findCGI): Rewritten
+	(setPathInfo): New method
+	(waitForDaemon): New procedure
+	(startFCGI, canStartFCGI): Rewritten
+	(delegateOrStartFCGI, isJavaBridgeWc, delegateFCGI): New
+	procedures
+
+	* server/php/java/servlet/ContextFactory.java: Renamed to
+	ServletContextFactory.
+	
+	* server/php/java/servlet/ServletContextFactory.java: New from
+	ContextFactory
+	
+	* VERSION, php-java-bridge.spec: Version 3.1.0rc2 released
+	
+2006-06-03  Jost Boekemeier  <jostb@intern>
+	
+	* Merged from 3.0.8 branch:
+	
+        2006-06-03  Jost Boekemeier  <jostb@intern>
+	
+	* bind.c (test_local_server), tests.m4/java_check_struct_ucred.m4,
+	protocol.c (check_session): changed true to is_true for PR1499203.
+
+	* php/java/bridge/Util.java (COMMON_ENVIRONMENT, entries,
+	getCommonEnvironment), php/java/servlet/CGIServlet.java
+	(getProcessEnvironment), php/java/script/PhpScriptEngine.java
+	(getProcessEnvironment): Use COMMON_ENVIRONMENT for JDK<=1.4, for
+	PRPR1499378.
+
+	* VERSION, php-java-bridge.spec: Version 3.0.8.4 released
+	
+	
 2006-05-14  Jost Boekemeier  <jostb@intern>
 
 	* Merged from 3.0.8 branch:

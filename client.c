@@ -7,6 +7,7 @@
 
 /* strings */
 #include <string.h>
+#include <strings.h>
 #include <ctype.h>
 
 /* setenv */
@@ -32,6 +33,12 @@
 
 EXT_EXTERN_MODULE_GLOBALS(EXT)
 
+#ifdef DISABLE_HEX
+#define GET_LONG(val) strtol(val, 0, 10)
+#else
+#define GET_LONG(val) strtoul(val, 0, 16)
+#endif
+
 
 static void setResultFromString (pval *presult, unsigned char*s, size_t len){
   Z_TYPE_P(presult)=IS_STRING;
@@ -40,11 +47,20 @@ static void setResultFromString (pval *presult, unsigned char*s, size_t len){
   memcpy(Z_STRVAL_P(presult), s, Z_STRLEN_P(presult));
   Z_STRVAL_P(presult)[Z_STRLEN_P(presult)]=0;
 }
+#ifdef DISABLE_HEX
 static  void  setResultFromLong  (pval *presult, long value) {
   Z_TYPE_P(presult)=IS_LONG;
   Z_LVAL_P(presult)=value;
 }
-
+#else
+static void setResultFromLong (pval *presult, unsigned long value, short flag){
+  Z_TYPE_P(presult)=IS_LONG;
+  if(flag)
+	Z_LVAL_P(presult)=value*-1;
+  else
+	Z_LVAL_P(presult)=value;
+}
+#endif
 
 static void  setResultFromDouble  (pval *presult, double value) {
   Z_TYPE_P(presult)=IS_DOUBLE;
@@ -251,7 +267,7 @@ static  void  setException  (pval *presult, long value, unsigned char *strValue,
 #endif
 }
 
-#define GET_RESULT(pos) if(!ctx->id) {ctx->id=(zval*)strtol((const char*)PARSER_GET_STRING(st, pos), 0, 10);}
+#define GET_RESULT(pos) if(!ctx->id) {ctx->id=(zval*)GET_LONG((const char*)PARSER_GET_STRING(st, pos));}
 struct stack_elem { 
   zval *container;				/* ctx->id */
   char composite_type;          /* A|H */
@@ -286,8 +302,8 @@ static void begin(parser_tag_t tag[3], parser_cb_t *cb){
 		  st[2].length,			/* m_length */
 		  st[1].length,			/* p_length */
 		  (*cb->env)->async_ctx.nextValue =
-		  strtol((const char*)PARSER_GET_STRING(st, 0), 0, 10), /* v */
-		  strtol((const char*)PARSER_GET_STRING(st, 3), 0, 10), /* n */
+		  GET_LONG((const char*)PARSER_GET_STRING(st, 0)), /* v */
+		  GET_LONG((const char*)PARSER_GET_STRING(st, 3)), /* n */
 		  ctx->id
 		}; 
 	  zend_stack_push(&ctx->containers, &stack_elem, sizeof stack_elem);
@@ -309,7 +325,7 @@ static void begin(parser_tag_t tag[3], parser_cb_t *cb){
 	  zend_stack_top(&ctx->containers, (void**)&stack_elem);
 	  if(stack_elem->composite_type=='H') { /* hash table */
 		if(*PARSER_GET_STRING(st, 0)=='N')	/* number */
-		  ctx->id=hashIndexUpdate(stack_elem->container, strtol((const char*)PARSER_GET_STRING(st, 1), 0, 10));
+		  ctx->id=hashIndexUpdate(stack_elem->container, GET_LONG((const char*)PARSER_GET_STRING(st, 1)));
 		else
 		  ctx->id=hashUpdate(stack_elem->container, PARSER_GET_STRING(st, 1), st[1].length);
 	  }
@@ -326,10 +342,18 @@ static void begin(parser_tag_t tag[3], parser_cb_t *cb){
 	GET_RESULT(1);
 	setResultFromBoolean(ctx->id, *PARSER_GET_STRING(st, 0)=='T');
 	break;
+#ifndef DISABLE_HEX
+  case 'L':
+	GET_RESULT(2);
+	assert(*PARSER_GET_STRING(st, 1)=='O' || *PARSER_GET_STRING(st, 1)=='A');
+	setResultFromLong(ctx->id, GET_LONG((const char*)PARSER_GET_STRING(st, 0)), *PARSER_GET_STRING(st, 1)!='O');
+	break;
+#else
   case 'L':
 	GET_RESULT(1);
-	setResultFromLong(ctx->id, strtol((const char*)PARSER_GET_STRING(st, 0), 0, 10));
+	setResultFromLong(ctx->id, GET_LONG((const char*)PARSER_GET_STRING(st, 0)));
 	break;
+#endif
   case 'D':
 	GET_RESULT(1);
 	setResultFromDouble(ctx->id, EXT_GLOBAL(strtod)((const char*)PARSER_GET_STRING(st, 0), NULL));
@@ -344,28 +368,35 @@ static void begin(parser_tag_t tag[3], parser_cb_t *cb){
 		   (((*tag[1].strings[1].string)[tag[1].strings[1].off])=='p')&&
 		   (((*tag[1].strings[2].string)[tag[1].strings[2].off])=='i'));
 
-	setResultFromObject(ctx->id, (*cb->env)->async_ctx.nextValue=strtol((const char*)PARSER_GET_STRING(st, 0), 0, 10), *PARSER_GET_STRING(st, 1));
+	setResultFromObject(ctx->id, (*cb->env)->async_ctx.nextValue=GET_LONG((const char*)PARSER_GET_STRING(st, 0)), *PARSER_GET_STRING(st, 1));
 	break;
   case 'F': break;
   case 'E':
 	{
 	  unsigned char *stringRepresentation=PARSER_GET_STRING(st, 1);
 	  size_t len=st[1].length;
-	  long obj = strtol((const char*)PARSER_GET_STRING(st, 0), 0, 10);
+	  long obj = GET_LONG((const char*)PARSER_GET_STRING(st, 0));
 	  GET_RESULT(2);
 	  setException(ctx->id, (*cb->env)->async_ctx.nextValue=obj, stringRepresentation, len);
 	  break;
 	}
 	default:
 	  {
+		short i;
+		char *hosts;
+		char *servlet;
 		TSRMLS_FETCH();
+		hosts = JG(hosts); 
+		servlet = JG(servlet); 
 		assert(((*cb->env)->pos) < RECV_SIZE);
 #ifndef __MINGW32__
 		php_write((*cb->env)->recv_buf, (*cb->env)->pos TSRMLS_CC);
-		php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Protocol violation at pos %d, please check that the backend (JavaBride.war) is deployed or please switch off the java.servlet option.\n", 88, (*cb->env)->c);
-#else
-		php_error(E_ERROR, "%*s\nphp_mod_"/**/EXT_NAME()/**/"(%d): Protocol violation at pos %d, please check that the backend (JavaBride.war) is deployed or please switch off the java.servlet option.\n", (*cb->env)->pos, (*cb->env)->recv_buf, 88, (*cb->env)->c);
 #endif
+		for(i=0; i<(*cb->env)->pos; i++) {
+		  char c = (*cb->env)->recv_buf[i];
+		  if(c<32) (*cb->env)->recv_buf[i] = '?';
+		}
+		php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Protocol violation at pos %d while trying to connect to %s(%s). Please check that the back-end (JavaBride.war) is deployed or please switch off the java.servlet option. Received bytes: %*s\n", 88, (*cb->env)->c, hosts?hosts:"null", servlet?servlet:"null", (*cb->env)->pos, (*cb->env)->recv_buf);
 	  }
   }
 }
@@ -394,7 +425,7 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
 	{
 	  char *cookie, *cookie_name, *path;
 	  static const char setcookie[]="Set-Cookie";
-	  if(strcmp(str, setcookie)) return;
+	  if(strcasecmp(str, setcookie)) return;
 	  cookie_name = (char*)PARSER_GET_STRING(tag[1].strings, 0);
 	  cookie = (char*)PARSER_GET_STRING(tag[2].strings, 0);
 	  if((path=strchr(cookie, ';'))) { /* strip off path */
@@ -410,7 +441,7 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
   case 'C'://Content-Length or Connection
 	{
 	  static const char con_connection[]="Connection", con_close[]="close";
-	  if(!strcmp(str, con_connection)&&!strcmp((char*)PARSER_GET_STRING(tag[1].strings, 0), con_close)) {
+	  if(!strcasecmp(str, con_connection)&&!strcasecmp((char*)PARSER_GET_STRING(tag[1].strings, 0), con_close)) {
 		if(!(*ctx)->must_reopen) (*ctx)->must_reopen = 1;
 	  }
 	  break;
@@ -420,7 +451,7 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
 	  char *key;
 	  static const char context[] = "X_JAVABRIDGE_CONTEXT";
 	  static const char redirect[]= "X_JAVABRIDGE_REDIRECT";
-	  if(!(*ctx)->peer_redirected && !strcmp(str, redirect)) {
+	  if(!(*ctx)->peer_redirected && !strcasecmp(str, redirect)) {
 		char *key = (char*)PARSER_GET_STRING(tag[1].strings, 0);
 		size_t key_len = tag[1].strings[0].length;
 		char *name = (*ctx)->server_name;
@@ -440,7 +471,7 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
 		JG(hosts)=server_name;
 
 		(*ctx)->must_reopen = 2;
-	  } else if((!(*ctx)->servlet_ctx)&&(!strcmp(str, context))) {
+	  } else if((!(*ctx)->servlet_ctx)&&(!strcasecmp(str, context))) {
 		key = (char*)PARSER_GET_STRING(tag[1].strings, 0);
 		(*ctx)->servlet_ctx = strdup(key);
 	  }
@@ -536,7 +567,11 @@ unsigned char EXT_GLOBAL (get_mode) () {
   // we want arrays as values
   static const unsigned char compat = 3;
 #else
+#ifdef DISABLE_HEX
   static const unsigned char compat = 0;
+#else
+  static const unsigned char compat = 1;
+#endif
 #endif
   unsigned short is_level = ((EXT_GLOBAL (ini_user)&U_LOGLEVEL)!=0);
   unsigned short level = 0;
@@ -548,9 +583,13 @@ unsigned char EXT_GLOBAL (get_mode) () {
 
 /**
  * Adjust the standard environment for the current request before we
- * connect to the backend. Used by Fast CGI.
+ * connect to the back-end. Used by Fast CGI and Apache so that we can
+ * connect back to the current VM.
+ * 
+ * Checks [HTTP_]XJAVABRIDGE_OVERRIDE_HOSTS_REDIRECT and adjusts JG(hosts).
+ * Must be called after clone(cfg).
  */
-static void override_ini_for_redirect(TSRMLS_D) {
+void EXT_GLOBAL(override_ini_for_redirect)(TSRMLS_D) {
   static const char name[] = "override_ini_for_redirect";
   static const char override[] = "(array_key_exists('HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER)?$_SERVER['HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT']:(array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER)?$_SERVER['X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT']:null));";
 
@@ -559,7 +598,7 @@ static void override_ini_for_redirect(TSRMLS_D) {
 	/* request servlet -> fast cgi server: connect back to servlet */
 
 	char *kontext, *hosts;
-	hosts = malloc(Z_STRLEN(val)+1);
+	hosts = malloc(Z_STRLEN(val)+1+100);
 	strncpy(hosts, Z_STRVAL(val), Z_STRLEN(val));
 	hosts[Z_STRLEN(val)]=0;
 	if(JG(hosts)) free(JG(hosts));
@@ -597,6 +636,7 @@ static void override_ini_for_redirect(TSRMLS_D) {
 	  static const char override[] = "(array_key_exists('PHP_SELF', $_SERVER) && \n\
 array_key_exists('HTTP_HOST', $_SERVER)) ?$_SERVER['PHP_SELF']:null;";
 	  const char *bridge_extension = bridge_ext;
+	  size_t bridge_extension_size = sizeof(bridge_ext);
 	  char *tmp, *strval;
 	  size_t len = 0;
 	  if((SUCCESS==zend_eval_string((char*)override, &val, (char*)name TSRMLS_CC)) && (Z_TYPE(val)==IS_STRING) && Z_STRLEN(val)) {
@@ -607,11 +647,12 @@ array_key_exists('HTTP_HOST', $_SERVER)) ?$_SERVER['PHP_SELF']:null;";
 	  if(!len) {
 		strval = (char*)default_servlet;
 		bridge_extension = default_ext;
+		bridge_extension_size = sizeof(default_ext);
 		len = sizeof(default_servlet)-1;
 	  }
 	  assert(JG(servlet));
 	  free(JG(servlet));
-	  JG(servlet) = tmp = malloc(len+sizeof(bridge_extension));
+	  JG(servlet) = tmp = malloc(len+bridge_extension_size+100);
 	  assert(tmp); if(!tmp) exit(9);
 	  strcpy(tmp, strval);
 	  strcat(tmp, bridge_extension);
@@ -658,7 +699,6 @@ static size_t get_context_len(char *context) {
   return len+1;					/* include terminating \0 or / so that
 								   len is always >0 */
 }
-static void override_ini_from_stored_cfg(proxyenv *env TSRMLS_DC);
 static proxyenv*recycle_connection(char *context TSRMLS_DC) {
   proxyenv **penv;
   size_t len;
@@ -669,7 +709,7 @@ static proxyenv*recycle_connection(char *context TSRMLS_DC) {
   
   if(SUCCESS==zend_hash_find(&JG(connections), context, len, (void**)&penv)){
 	proxyenv*env = *penv;
-	override_ini_from_stored_cfg(env TSRMLS_CC);
+	EXT_GLOBAL(activate_connection)(env TSRMLS_CC);
 	(*env)->backend_has_session_proxy = 0;
 	if(!(*env)->is_local && context) {
 	  env = adjust_servlet_environment(env, context TSRMLS_CC);
@@ -680,14 +720,14 @@ static proxyenv*recycle_connection(char *context TSRMLS_DC) {
   return 0;
 }
 static void init_channel(TSRMLS_D);
-static proxyenv*create_connection(char *context TSRMLS_DC) {
-  char *server;
+static proxyenv*create_connection(char *context_string TSRMLS_DC) {
+  char *server, *context;
   int sock;
   proxyenv *jenv;
   struct sockaddr saddr;
   short is_local;
   size_t len;
-  if(!context) context = empty;
+  if(!(context = context_string)) context = empty;
   len = get_context_len(context);
 
   if(!(server=EXT_GLOBAL(test_server)(&sock, &is_local, &saddr TSRMLS_CC))) {
@@ -699,7 +739,7 @@ static proxyenv*create_connection(char *context TSRMLS_DC) {
 	init_channel(TSRMLS_C);
 	if(EXT_GLOBAL(cfg)->persistent_connections)
 	  zend_hash_update(&JG(connections), context, len, &jenv, sizeof(proxyenv *), 0);
-	if(is_local || !context) {
+	if(is_local || !context_string) {
 	  /* "standard" local backend, send the protocol header */
 	  unsigned char mode = EXT_GLOBAL (get_mode) ();
 	  (*jenv)->send_len=1; *(*jenv)->send=mode;
@@ -720,7 +760,7 @@ static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {
   EXT_GLOBAL(clone_cfg)(TSRMLS_C);
 
   if(!EXT_GLOBAL(cfg)->is_cgi_servlet || EXT_GLOBAL(cfg)->is_fcgi_servlet) {
-	override_ini_for_redirect(TSRMLS_C);
+	EXT_GLOBAL(override_ini_for_redirect)(TSRMLS_C);
   }
   servlet_context_string = EXT_GLOBAL (get_servlet_context) (TSRMLS_C);
   jenv = recycle_connection(servlet_context_string TSRMLS_CC);
@@ -735,7 +775,7 @@ static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {
   jenv = create_connection(servlet_context_string TSRMLS_CC);
   if(!jenv) {
 	if (bail) 
-	  EXT_GLOBAL(sys_error)("Could not connect to server. Have you started the "/**/EXT_NAME()/**/" backend (either a servlet engine, an application server, JavaBridge.jar or MonoBridge.exe) and set the "/**/EXT_NAME()/**/".socketname or "/**/EXT_NAME()/**/".hosts option?",52);
+	  EXT_GLOBAL(sys_error)("Could not connect to server. Have you started the "/**/EXT_NAME()/**/" back-end (either a servlet engine, an application server, JavaBridge.jar or MonoBridge.exe) and set the "/**/EXT_NAME()/**/".socketname or "/**/EXT_NAME()/**/".hosts option?",52);
 	EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);
 	return 0;
   }
@@ -826,25 +866,29 @@ const char *EXT_GLOBAL(get_channel) (TSRMLS_D) {
 }
 void EXT_GLOBAL(clone_cfg)(TSRMLS_D) {
   JG(ini_user)=EXT_GLOBAL(ini_user);
+  if(JG(hosts)) free(JG(hosts));
   if(!(JG(hosts)=strdup(EXT_GLOBAL(cfg)->hosts))) exit(9);
+  if(JG(servlet)) free(JG(servlet));
   if(!(JG(servlet)=strdup(EXT_GLOBAL(cfg)->servlet))) exit(9);
 }
-void EXT_GLOBAL(save_cfg)(proxyenv *env TSRMLS_DC) {
+void EXT_GLOBAL(passivate_connection)(proxyenv *env TSRMLS_DC) {
   (*env)->cfg.ini_user=JG(ini_user);
+  if((*env)->cfg.hosts) free(((*env)->cfg.hosts));
   if(!((*env)->cfg.hosts=strdup(JG(hosts)))) exit(9);
+  if((*env)->cfg.servlet) free(((*env)->cfg.servlet));
   if(!((*env)->cfg.servlet=strdup(JG(servlet)))) exit(9);
 }
 /* see override_ini_for_redirect */
-static void override_ini_from_stored_cfg(proxyenv *env TSRMLS_DC) {
+void EXT_GLOBAL(activate_connection)(proxyenv *env TSRMLS_DC) {
   JG(ini_user)=(*env)->cfg.ini_user;
 
-  if(JG(hosts)) 
-	free(JG(hosts)); 
+  //assert(!JG(hosts));
+  if(JG(hosts)) free(JG(hosts)); 
   if(!(JG(hosts)=strdup((*env)->cfg.hosts))) exit(9);
 
-  if(JG(servlet)) 
-	free(JG(servlet)); 
-  if(!(JG(servlet)=strdup(EXT_GLOBAL(cfg)->servlet))) exit(9);
+  //assert(!JG(servlet));
+  if(JG(servlet)) free(JG(servlet)); 
+  if(!(JG(servlet)=strdup((*env)->cfg.servlet))) exit(9);
 }
 void EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_D) {
   if(JG(hosts)) free(JG(hosts));

@@ -334,7 +334,9 @@ public class CGIServlet extends HttpServlet {
           Method m = System.class.getMethod("getenv", EMPTY_PARAM);
           Map map = (Map) m.invoke(System.class, EMPTY_ARG);
           defaultEnv.putAll(map);
-      } catch (Exception e) {/*ignore*/}
+      } catch (Exception e) {
+	  defaultEnv.putAll(php.java.bridge.Util.COMMON_ENVIRONMENT);
+      }
       return defaultEnv;
     }
 
@@ -477,20 +479,6 @@ public class CGIServlet extends HttpServlet {
 	return port;
     }
 
-    /**
-     * Returns the local name
-     * @param req The servlet request
-     * @return The local name or the value from the server name variable.
-     */
-    protected static String getLocalName(ServletRequest req) {
-	String name = null;
-	try {
-	    name = req.getLocalName();
-	} catch (Throwable t) {/*ignore*/}
-	if(name==null) name = req.getServerName();
-	return name;
-    }
-
     protected class CGIRunnerFactory {
         protected CGIRunner createCGIRunner(CGIEnvironment cgiEnv) {
             return new CGIRunner(cgiEnv);
@@ -526,13 +514,13 @@ public class CGIServlet extends HttpServlet {
 
 
         /** context of the enclosing servlet */
-        private ServletContext context = null;
+        protected ServletContext context = null;
 
         /** context path of enclosing servlet */
-        private String contextPath = null;
+        protected String contextPath = null;
 
         /** servlet URI of the enclosing servlet */
-        private String servletPath = null;
+        protected String servletPath = null;
 
         /** pathInfo for the current request */
         protected String pathInfo = null;
@@ -550,7 +538,7 @@ public class CGIServlet extends HttpServlet {
         private File workingDirectory = null;
 
         /** whether or not this object is valid or not */
-        private boolean valid = false;
+        protected boolean valid = false;
 
 
         /**
@@ -752,8 +740,6 @@ public class CGIServlet extends HttpServlet {
             
             String sPathInfoOrig = null;
             String sPathTranslatedOrig = null;
-            String sPathInfoCGI = null;
-            String sPathTranslatedCGI = null;
             String sCGIFullPath = null;
             String sCGIScriptName = null;
             String sCGIFullName = null;
@@ -787,88 +773,22 @@ public class CGIServlet extends HttpServlet {
             }
 
             envp.put("SERVER_SOFTWARE", "TOMCAT");
-
-            envp.put("SERVER_NAME", nullsToBlanks(getLocalName(req)));
-
+            envp.put("SERVER_NAME", nullsToBlanks(req.getServerName()));
             envp.put("GATEWAY_INTERFACE", "CGI/1.1");
-
             envp.put("SERVER_PROTOCOL", nullsToBlanks(req.getProtocol()));
-
             int port = getLocalPort(req);
             Integer iPort = (port == 0 ? new Integer(-1) : new Integer(port));
             envp.put("SERVER_PORT", iPort.toString());
-
             envp.put("REQUEST_METHOD", nullsToBlanks(req.getMethod()));
-
-
-
-            /*-
-             * PATH_INFO should be determined by using sCGIFullName:
-             * 1) Let sCGIFullName not end in a "/" (see method findCGI)
-             * 2) Let sCGIFullName equal the pathInfo fragment which
-             *    corresponds to the actual cgi script.
-             * 3) Thus, PATH_INFO = request.getPathInfo().substring(
-             *                      sCGIFullName.length())
-             *
-             * (see method findCGI, where the real work is done)
-             *
-             */
-            if (pathInfo == null
-                || (pathInfo.substring(sCGIFullName.length()).length() <= 0)) {
-                sPathInfoCGI = "";
-            } else {
-                sPathInfoCGI = pathInfo.substring(sCGIFullName.length());
-            }
-            envp.put("PATH_INFO", sPathInfoCGI);
-
-
-            /*-
-             * PATH_TRANSLATED must be determined after PATH_INFO (and the
-             * implied real cgi-script) has been taken into account.
-             *
-             * The following example demonstrates:
-             *
-             * servlet info   = /servlet/cgigw/dir1/dir2/cgi1/trans1/trans2
-             * cgifullpath    = /servlet/cgigw/dir1/dir2/cgi1
-             * path_info      = /trans1/trans2
-             * webAppRootDir  = servletContext.getRealPath("/")
-             *
-             * path_translated = servletContext.getRealPath("/trans1/trans2")
-             *
-             * That is, PATH_TRANSLATED = webAppRootDir + sPathInfoCGI
-             * (unless sPathInfoCGI is null or blank, then the CGI
-             * specification dictates that the PATH_TRANSLATED metavariable
-             * SHOULD NOT be defined.
-             *
-             */
-            if (sPathInfoCGI != null && !("".equals(sPathInfoCGI))) {
-                sPathTranslatedCGI = context.getRealPath(sPathInfoCGI);
-            } else {
-                sPathTranslatedCGI = null;
-            }
-            if (sPathTranslatedCGI == null || "".equals(sPathTranslatedCGI)) {
-                //NOOP
-            } else {
-                envp.put("PATH_TRANSLATED", nullsToBlanks(sPathTranslatedCGI));
-            }
-
-
             envp.put("SCRIPT_NAME", nullsToBlanks(sCGIScriptName));
-
             envp.put("QUERY_STRING", nullsToBlanks(req.getQueryString()));
-
             envp.put("REMOTE_HOST", nullsToBlanks(req.getRemoteHost()));
-
             envp.put("REMOTE_ADDR", nullsToBlanks(req.getRemoteAddr()));
-
             envp.put("AUTH_TYPE", nullsToBlanks(req.getAuthType()));
-
             envp.put("REMOTE_USER", nullsToBlanks(req.getRemoteUser()));
-
             envp.put("REMOTE_IDENT", ""); //not necessary for full compliance
-
             envp.put("CONTENT_TYPE", nullsToBlanks(req.getContentType()));
-
+            setPathInfo(req, envp, sCGIFullName);
 
             /* Note CGI spec says CONTENT_LENGTH must be NULL ("") or undefined
              * if there is no content, so we cannot put 0 or -1 in as per the
@@ -913,7 +833,61 @@ public class CGIServlet extends HttpServlet {
         }
 
 
-        /**
+        protected void setPathInfo(HttpServletRequest req, HashMap envp, String sCGIFullName) {
+          String sPathInfoCGI = null;
+          String sPathTranslatedCGI = null;
+          /*-
+           * PATH_INFO should be determined by using sCGIFullName:
+           * 1) Let sCGIFullName not end in a "/" (see method findCGI)
+           * 2) Let sCGIFullName equal the pathInfo fragment which
+           *    corresponds to the actual cgi script.
+           * 3) Thus, PATH_INFO = request.getPathInfo().substring(
+           *                      sCGIFullName.length())
+           *
+           * (see method findCGI, where the real work is done)
+           *
+           */
+          if (pathInfo == null
+              || (pathInfo.substring(sCGIFullName.length()).length() <= 0)) {
+              sPathInfoCGI = "";
+          } else {
+              sPathInfoCGI = pathInfo.substring(sCGIFullName.length());
+          }
+          envp.put("PATH_INFO", sPathInfoCGI);
+
+
+          /*-
+           * PATH_TRANSLATED must be determined after PATH_INFO (and the
+           * implied real cgi-script) has been taken into account.
+           *
+           * The following example demonstrates:
+           *
+           * servlet info   = /servlet/cgigw/dir1/dir2/cgi1/trans1/trans2
+           * cgifullpath    = /servlet/cgigw/dir1/dir2/cgi1
+           * path_info      = /trans1/trans2
+           * webAppRootDir  = servletContext.getRealPath("/")
+           *
+           * path_translated = servletContext.getRealPath("/trans1/trans2")
+           *
+           * That is, PATH_TRANSLATED = webAppRootDir + sPathInfoCGI
+           * (unless sPathInfoCGI is null or blank, then the CGI
+           * specification dictates that the PATH_TRANSLATED metavariable
+           * SHOULD NOT be defined.
+           *
+           */
+          if (sPathInfoCGI != null && !("".equals(sPathInfoCGI))) {
+              sPathTranslatedCGI = context.getRealPath(sPathInfoCGI);
+          } else {
+              sPathTranslatedCGI = null;
+          }
+          if (sPathTranslatedCGI == null || "".equals(sPathTranslatedCGI)) {
+              //NOOP
+          } else {
+              envp.put("PATH_TRANSLATED", nullsToBlanks(sPathTranslatedCGI));
+          }
+	}
+
+	/**
          * Gets derived command string
          *
          * @return  command string

@@ -19,7 +19,7 @@ import php.java.bridge.DynamicJavaBridgeClassLoader;
  */
 class ContextRunner implements Runnable {
     		
-    private ContextFactory ctx;
+    private IContextFactory ctx;
     private JavaBridge bridge;
     private InputStream in;
     private OutputStream out;
@@ -61,7 +61,7 @@ class ContextRunner implements Runnable {
 	    throw new IOException("No runner available");
 	}
 	String name = readName();
-    	ctx = (ContextFactory) ContextFactory.get(name, contextServer);
+    	ctx = (IContextFactory) ContextFactory.get(name, contextServer);
     	if(ctx == null) throw new IOException("No context available for: " + name + ".");
     	bridge = ctx.getBridge();
 	// The first statement was executed with the default

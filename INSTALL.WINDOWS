@@ -22,30 +22,40 @@ php.ini, the php java extension "php_java.dll" and your java libraries
 
 * Install IIS or Apache, if not already installed.
 
-* Download and extract the php-5.1.x-Win32.zip into c:\php5\. For
+* Download and extract the php-5.1.x-Win32.zip into c:\php\. For
   example with the commands:
 
     c:
-    mkdir php5
-    cd php5
+    mkdir php
+    cd php
     jar xvf c:\php-5.1.x-Win32.zip
 
 * Install PHP as an IIS or Apache module. For example add these lines
   to the end of your Apache2 httpd.conf file:
 
-    LoadModule php5_module "c:/php5/php5apache2.dll"
+    LoadModule php5_module "c:/php/php5apache2.dll"
     AddType application/x-httpd-php .php
 
 * Add the following to the php.ini in the windows system directory
   (usually c:\winnt or c:\windows) and edit it so that the
   "extension_dir" points to your PHP 5 extension directory. 
   
-    extension_dir = "c:\php5"
+    extension_dir = "c:\php"
     extension = php_java.dll
 
 * Copy the appropriate java-x86-windows.dll (from the JavaBridge.war)
-  into the extension_dir, rename it to php_java.dll and copy your java
-  libraries (.jar files) into extension_dir\lib.
+  into the extension_dir:
+
+  for PHP >= 4.3.4: php-4-java-x86-windows.dll
+  for PHP >= 5.0.0: php-5.0-java-x86-windows.dll
+  for PHP >= 5.1.0: java-x86-windows.dll
+  for PHP >= 6.0.0: php-6-java-x86-windows.dll
+
+  Rename it to php_java.dll. Or compile a php_java.dll from the
+  source, as described in the INSTALL document located in the source
+  download archive.
+
+* Copy your java libraries (.jar files) into extension_dir\lib.
 
 * If you have a servlet engine or j2ee server, edit the [java] section
   of your php.ini file so that it contains:
@@ -61,7 +71,7 @@ php.ini, the php java extension "php_java.dll" and your java libraries
 
     [java]
     ;java.socketname = 9267
-    ;java.java        = c:/jdk1.5/jre/bin/javaw
+    ;java.java        = c:/jdk1.5/jre/bin/javaw.exe
     ;java.java_home   = c:/jdk1.5
     java.log_level   = 2
 
@@ -126,6 +136,14 @@ php.ini, the php java extension "php_java.dll" and your java libraries
 
 Known Windows Issues 
 --------------------
+
+* It is recommended to start Java outside of the HTTP server domain,
+  for example from a separate service script. The Apache/Tomcat servlet
+  engine for example installs such a service. It can be used by setting
+  the php.ini [java] options: java.servlet=On java.hosts=127.0.0.1:8080.
+
+* On windows the standalone Java program is called javaw.exe, not
+  java.exe. The java.exe can only be used from a console/terminal.
 
 * Local ("unix domain") sockets or named pipes, which are more than 3
   times faster and more secure than TCP sockets, are not available. --

@@ -3,36 +3,99 @@
 package php.java.bridge;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.Vector;
+import java.util.HashMap;
 
 /**
  * Miscellaneous functions.
  * @author jostb
  *
  */
-public class Util {
+public final class Util {
 
     static {
         initGlobals();
     }
+    
+    private Util() {}
+    
+    /**
+     * A bridge which uses log4j or the default logger.
+     *
+     */
+    public static class Logger implements ILogger {
+        protected ChainsawLogger clogger = null;
+        protected ILogger logger;
+        /**
+         * Use chainsaw, if available or a default logger.
+         *
+         */
+        public Logger() {
+            logger = new FileLogger(); // log to logStream        
+        }
+        /**
+         * Use chainsaw, if available of the specified logger.
+         * @param logger The specified logger.
+         */
+        public Logger(ILogger logger) {
+            try {this.clogger = new ChainsawLogger();} catch (Throwable t) {
+                this.logger = logger;
+            }
+        }
+        private ILogger getLogger() {
+            if(logger==null) return logger=new FileLogger();
+            return logger;
+        }
+	public void printStackTrace(Throwable t) {
+	    if (clogger==null) logger.printStackTrace(t);
+	    else
+		try {
+		    clogger.printStackTrace(t);
+		} catch (Exception e) {
+		    clogger=null;
+		    getLogger().printStackTrace(t);
+		}
+	}
+
+	public void log(int level, String msg) {
+	    if(clogger==null) logger.log(level, msg);
+	    else
+		try {
+		    clogger.log(level, msg);
+		} catch (Exception e) {
+		    clogger=null;
+		    getLogger().log(level, msg);
+		}
+	}
+
+	public void warn(String msg) {
+	    if(clogger==null) logger.warn(msg);
+	    else
+		try {
+		    clogger.warn(msg);
+		} catch (Exception e) {
+		    clogger=null;
+		    getLogger().warn(msg);
+		}
+	}
+    }
 
     /**
-     * The default CGI locations: <code>"/usr/bin/php-cgi"</code>, <code>"c:/php5/php-cgi.exe</code>
+     * The default CGI locations: <code>"/usr/bin/php-cgi"</code>, <code>"c:/php/php-cgi.exe</code>
      */
-    public static final String DEFAULT_CGI_LOCATIONS[] = new String[] {"/usr/bin/php-cgi", "c:/php5/php-cgi.exe"};
+    public static final String DEFAULT_CGI_LOCATIONS[] = new String[] {"/usr/bin/php-cgi", "c:/php/php-cgi.exe"};
 
     /**
      * The default CGI header parser. The default implementation discards everything.
@@ -52,8 +115,15 @@ public class Util {
     /**
      * The default buffer size
      */
-    public static final int BUF_SIZE = 8152;
+    public static final int BUF_SIZE = 8192;
 
+    /**
+     * The default extension directories. If one of the directories 
+     * "/usr/share/java/ext", "/usr/java/packages/lib/ext" contains java libraries,
+     * the bridge loads these libraries automatically.
+     * Useful, if you have non-pure java libraries (=libraries which use the Java Native Interface to load native dll's or shared libraries).
+     */
+    public static final String DEFAULT_EXT_DIRS[] = { "/usr/share/java/ext", "/usr/java/packages/lib/ext" };
     
     /** 
      * The TCP socket name. Default is 9267.
@@ -148,72 +218,15 @@ public class Util {
 	} catch (Throwable t) {/*ignore*/}
 	if(osName==null) osName="unknown";
     }
- 
     /**
      * The logStream, defaults to System.err
      */
-    private static PrintStream logStream;
+    static PrintStream logStream;
     
     /**
-     * A logger class.
+     * The logger
      */
-    public static class Logger { // hook for servlet
-        static boolean haveDateFormat=true;
-        private static Object _form;
-        private boolean isInit = false;
-        private void init() {
-	    if(Util.logStream==null) {
-	      if(DEFAULT_LOG_FILE.trim().length()==0)  Util.logStream = System.err;
-	      else 
-		try {
-		    Util.logStream=new java.io.PrintStream(new java.io.FileOutputStream(DEFAULT_LOG_FILE));
-		} catch (FileNotFoundException e1) {Util.logStream=System.err;}
-	    }
-	    isInit = true;
-        }
-        /**
-         * Create a String containing the current date/time.
-         * @return The date/time as a String
-         */
-        public String now() {
-	    if(!haveDateFormat) return String.valueOf(System.currentTimeMillis());
-	    try {
-		if(_form==null)
-		    _form = new java.text.SimpleDateFormat("MMM dd HH:mm:ss", java.util.Locale.ENGLISH);
-		return ((java.text.SimpleDateFormat)_form).format(new Date());
-	    } catch (Throwable t) {
-		haveDateFormat=false;
-		return now();
-	    }
-	}
-        /**
-         * Log a message
-         * @param s  The message
-         */
-   	public void log(String s) {
-   	    if(!isInit) init();
-	    byte[] bytes = null;
-	    try {
-		bytes = s.getBytes(UTF8);
-	    } catch (java.io.UnsupportedEncodingException e) {
-		Util.printStackTrace(e);
-		bytes = s.getBytes();
-	    }
-	    logStream.write(bytes, 0, bytes.length);
-	    logStream.println("");
-	    logStream.flush();
-    	}
-   	
-   	/**
-   	 * Log a stack trace
-   	 * @param t The Throwable
-   	 */
-   	public void printStackTrace(Throwable t) {
-   	    if(!isInit) init();
-   	    t.printStackTrace(logStream);
-   	}
-    }
-    private static Logger logger = new Logger();
+    private static ILogger logger;
     
     /**
      * The loglevel:<br>
@@ -226,28 +239,13 @@ public class Util {
      */
     public static int logLevel;
 
-    //
-    // Logging
-    //
-
     /**
      * print a message on a given log level
      * @param level The log level
      * @param msg The message
      */
     public static void println(int level, String msg) {
-	StringBuffer b = new StringBuffer(logger.now());
-	b.append(" "); b.append(Util.EXTENSION_NAME); b.append(" ");
-	switch(level) {
-	case 1: b.append("FATAL"); break;
-	case 2: b.append("ERROR"); break;
-	case 3: b.append("INFO "); break;
-	case 4: b.append("DEBUG"); break;
-	default: b.append(level); break;
-	}
-	b.append(": ");
-	b.append(msg);
-	logger.log(b.toString());
+	getLogger().log(level, msg);
     }
     
     /**
@@ -256,12 +254,7 @@ public class Util {
      */
     public static void warn(String msg) {
 	if(logLevel<=0) return;
-    	StringBuffer b = new StringBuffer(logger.now());
-	b.append(" "); b.append(Util.EXTENSION_NAME); b.append(" ");
-	b.append("WARNING");
-	b.append(": ");
-	b.append(msg);
-	logger.log(b.toString());
+	getLogger().warn(msg);
     }
     
     /**
@@ -269,22 +262,14 @@ public class Util {
      * @param t The Throwable
      */
     public static void printStackTrace(Throwable t) {
-	if(logLevel > 0) {
-	    if (t instanceof Error) {
-	        println(1, "An error occured");
-	    } else if (logLevel > 1) {
-	        println(2, "An exception occured");
-	    }
-	    logger.printStackTrace(t);
-	}
+        getLogger().printStackTrace(t);
     }
-    
     /**
      * Display a debug message
      * @param msg The message
      */
     public static void logDebug(String msg) {
-	if(logLevel>3) println(4, msg);
+        if(logLevel>3) println(4, msg);
     }
     
     /**
@@ -503,23 +488,41 @@ public class Util {
 	    }
 	    // body
 	    if(eoh) {
-		if(out!=null) out.write(buf, i, N-i);
+		if(out!=null) out.write(buf, i, N-i); 
 		i=0;
 	    }
 	}
 
     }
+    
     /**
+     * Set the default logger.
+     *
+     */
+    public static synchronized void setDefaultFileLogger() {
+        setLogger(new Logger(new FileLogger()));
+    }
+    /**
+     * Set a new logger. Example:<br><br>
+     * <code>
+     * public class MyServlet extends PhpJavaServlet { <br>
+     * &nbsp;&nbsp;public static final String LOG_HOST="192.168.5.99";<br>
+     * &nbsp;&nbsp;public void init(ServletConfig config) throws ServletException {<br>
+     * &nbsp;&nbsp;&nbsp;&nbsp;super.init(config);<br>
+     * &nbsp;&nbsp;&nbsp;&nbsp;Util.setLogger(new php.java.bridge.ChainsawLogger() {public void configure(String host, int port) throws Exception {super.configure(LOG_HOST, port);}}); <br>
+     * &nbsp;&nbsp;}<br>
+     * }<br>
      * @param logger The logger to set.
      */
-    public static void setLogger(Logger logger) {
+    public static synchronized void setLogger(ILogger logger) {
 	Util.logger = logger;
     }
     /**
      * @return Returns the logger.
      */
-    public static Logger getLogger() {
-	return logger;
+    public static synchronized ILogger getLogger() {
+        if(logger == null) setDefaultFileLogger();
+        return logger;
     }
 
     /**
@@ -570,18 +573,20 @@ public class Util {
      * @return The fatal error or null
      */
     public static String checkError(String s) {
+        //TODO: Parse the error code from response header instead of looking for "PHP Fatal error"
         return s.startsWith("PHP Fatal error:") ? s : null;
     }
 
     /**
-	 * Starts a CGI process and returns the process handle.
-	 */
+     * Starts a CGI process and returns the process handle.
+     */
     public static class Process extends java.lang.Process {
 
         java.lang.Process proc;
 	private String[] args;
 	private File homeDir;
 	private Map env;
+	private boolean tryOtherLocations;
 
 	protected String argsToString(String php, String[] args) {
 	    StringBuffer buf = new StringBuffer(php);
@@ -591,26 +596,26 @@ public class Util {
 	    }
 	    return buf.toString();
 	}
-
+	private static final String PHP_EXEC = System.getProperty("php.java.bridge.php_exec");
 	protected void start() throws NullPointerException, IOException {
 	    File location;
-	    String php = null, php_exec = null;
+	    String php = null;
 	    Runtime rt = Runtime.getRuntime();
 	    if(args==null) args=new String[]{null};
 	    php = args[0];
-	    if(php == null) php_exec = php = System.getProperty("php.java.bridge.php_exec");
             if(php != null) {
 		StringBuffer buf = new StringBuffer(php);
 		php = checkCgiBinary(buf);
 	    }
-            if(php_exec==null && php==null) {
+            if(PHP_EXEC==null && tryOtherLocations && php==null) {
 		for(int i=0; i<DEFAULT_CGI_LOCATIONS.length; i++) {
 		    location = new File(DEFAULT_CGI_LOCATIONS[i]);
 		    if(location.exists()) {php = location.getAbsolutePath(); break;}
 		}
             }
+            if(php==null && tryOtherLocations) php=PHP_EXEC;
             if(php==null) php=args[0];
-            if(php==null) php=php_exec;
+            if(php==null) php="php-cgi";
             if(Util.logLevel>3) Util.logDebug("Using php binary: " + php);
 
             if(homeDir!=null &&!homeDir.exists()) homeDir = null;
@@ -618,10 +623,11 @@ public class Util {
 	    proc = rt.exec(s, hashToStringArray(env), homeDir);
 	    if(Util.logLevel>3) Util.logDebug("Started "+ s);
         }
-	protected Process(String[] args, File homeDir, Map env) {
+	protected Process(String[] args, File homeDir, Map env, boolean tryOtherLocations) {
 	    this.args = args;
 	    this.homeDir = homeDir;
 	    this.env = env;
+	    this.tryOtherLocations = tryOtherLocations;
 	}
         /**
 	 * Starts a CGI process and returns the process handle.
@@ -634,8 +640,8 @@ public class Util {
 	 * @throws IOException
 	 * @see Util#checkCgiBinary(StringBuffer)
 	 */	  
-        public static Process start(String[] args, File homeDir, Map env) throws IOException {
-            Process proc = new Process(args, homeDir, env);
+        public static Process start(String[] args, File homeDir, Map env, boolean tryOtherLocations) throws IOException {
+            Process proc = new Process(args, homeDir, env, tryOtherLocations);
             proc.start();
             return proc;
         }
@@ -686,14 +692,14 @@ public class Util {
     }
 
     /**
-	 * Starts a CGI process with an error handler attached and returns the process handle.
-	 */
+     * Starts a CGI process with an error handler attached and returns the process handle.
+     */
     public static class ProcessWithErrorHandler extends Process {
 	String error = null;
 	InputStream in = null;
 
-	protected ProcessWithErrorHandler(String[] args, File homeDir, Map env) throws IOException {
-	    super(args, homeDir, env);
+	protected ProcessWithErrorHandler(String[] args, File homeDir, Map env, boolean tryOtherLocations) throws IOException {
+	    super(args, homeDir, env, tryOtherLocations);
 	}
 	protected void start() throws IOException {
 	    super.start();
@@ -738,8 +744,8 @@ public class Util {
          * @throws IOException
          * @see Util#checkCgiBinary(StringBuffer)
          */
-        public static Process start(String[] args, File homeDir, Map env) throws IOException {
-            Process proc = new ProcessWithErrorHandler(args, homeDir, env);
+        public static Process start(String[] args, File homeDir, Map env, boolean tryOtherLocations) throws IOException {
+            Process proc = new ProcessWithErrorHandler(args, homeDir, env, tryOtherLocations);
             proc.start();
             return proc;
         }
@@ -749,9 +755,7 @@ public class Util {
      * @return The thread context class loader.
      */
     public static ClassLoader getContextClassLoader() {
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
-	if(loader==null) loader = Util.class.getClassLoader();
-        return loader;
+        return JavaBridgeClassLoader.DEFAULT_CLASS_LOADER;
     }
     
     private static void redirectJavaOutput() {
@@ -761,17 +765,49 @@ public class Util {
 	} catch (Throwable t) {/*ignore*/}
     }
     static void redirectOutput(boolean redirectOutput, String logFile) {
-	    if(!redirectOutput) {
-		Util.logStream = System.err;
-		if(logFile.length()>0) 
-		    try {
-			Util.logStream=new java.io.PrintStream(new java.io.FileOutputStream(logFile));
-		    } catch (Exception e) {/*ignore*/}
-		redirectJavaOutput();
-	    } else {
-		Util.logStream = System.err;
-		logFile = "<stderr>";
-	    }
+	if(!redirectOutput) {
+	    Util.logStream = System.err;
+	    if(logFile.length()>0) 
+		try {
+		    Util.logStream=new java.io.PrintStream(new java.io.FileOutputStream(logFile));
+		} catch (Exception e) {/*ignore*/}
+	    redirectJavaOutput();
+	} else {
+	    Util.logStream = System.err;
+	    logFile = "<stderr>";
+	}
+    }
 
+    private static final Class[] STRING_PARAM = new Class[]{String.class};
+    /**
+     * A map containing common environment values for JDK <= 1.4:
+     * "PATH", "LD_LIBRARY_PATH", "LD_ASSUME_KERNEL", "USER", "TMP", "TEMP", "HOME", "HOMEPATH", "LANG", "TZ", "OS"
+     * They can be set with e.g.: <code>java -DPATH="$PATH" -DHOME="$HOME" -jar JavaBridge.jar</code> or
+     * <code>java -DPATH="%PATH%" -jar JavaBridge.jar</code>. 
+     */
+    public static final Map COMMON_ENVIRONMENT = getCommonEnvironment();
+    private static HashMap getCommonEnvironment() {
+	String entries[] = {
+	    "PATH", "LD_LIBRARY_PATH", "LD_ASSUME_KERNEL", "USER", "TMP", "TEMP", "HOME", "HOMEPATH", "LANG", "TZ", "OS"
+	};
+	HashMap map = new HashMap(entries.length+10);
+	String val;
+        Method m = null;
+        try {m = System.class.getMethod("getenv", STRING_PARAM);} catch (Exception e) {/*ignore*/}
+	for(int i=0; i<entries.length; i++) {
+	    val = null;
+	    if (m!=null) { 
+	      try {
+	        val = (String) m.invoke(System.class, (Object[])new String[]{entries[i]});
+	      } catch (Exception e) {
+		 m = null;
+	      }
+	    }
+	    if(val==null) {
+	        try { val = System.getProperty(entries[i]); } catch (Exception e) {/*ignore*/}
+	    }
+	    if(val!=null) map.put(entries[i], val);
+	}
+	return map;
     }
 }

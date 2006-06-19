@@ -15,11 +15,11 @@
 #endif
 
 static void writeArgument(pval* arg, short ignoreNonJava TSRMLS_DC);
-static void writeArguments(int argc, pval** argv, short ignoreNonJava TSRMLS_DC);
+static void writeArguments(int argc, pval***argv, short ignoreNonJava TSRMLS_DC);
 
 EXT_EXTERN_MODULE_GLOBALS(EXT)
 
-static short checkError(pval *value TSRMLS_DC)
+static void checkError(pval *value TSRMLS_DC)
 {
 #ifndef ZEND_ENGINE_2
   if (Z_TYPE_P(value) == IS_EXCEPTION) {
@@ -37,10 +37,8 @@ static short checkError(pval *value TSRMLS_DC)
 
 	efree(Z_STRVAL_P(value));
     ZVAL_FALSE(value);
-    return 1;
   };
 #endif
-  return 0;
 }
 
 static short is_type (zval *pobj TSRMLS_DC) {
@@ -51,18 +49,6 @@ static short is_type (zval *pobj TSRMLS_DC) {
 #else
   extern void EXT_GLOBAL(call_function_handler4)(INTERNAL_FUNCTION_PARAMETERS, zend_property_reference *property_reference);
   return pobj->type == IS_OBJECT && pobj->value.obj.ce->handle_function_call==EXT_GLOBAL(call_function_handler4);
-#endif
-}
-
-static void protocol_error(TSRMLS_D) {
-  proxyenv *env = JG(jenv);
-  if(!env) return;
-#ifndef __MINGW32__
-  (*env)->recv_buf[sizeof((*env)->recv_buf)-1]=0;
-  php_write((*env)->recv_buf, strlen((char*)(*env)->recv_buf) TSRMLS_CC);
-  php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Protocol violation at pos %d, please check that the backend (JavaBride.war) is deployed or please switch off the java.servlet option.\n", 98, (*env)->c);
-#else
-  php_error(E_ERROR, "%*s\nphp_mod_"/**/EXT_NAME()/**/"(%d): Protocol violation at pos %d, please check that the backend (JavaBride.war) is deployed or please switch off the java.servlet option.\n", strlen((*env)->recv_buf), (*env)->recv_buf, 98, (*env)->c);
 #endif
 }
 
@@ -174,16 +160,16 @@ void EXT_GLOBAL(result) (pval* arg, short ignoreNonJava, pval*presult TSRMLS_DC)
   (*jenv)->writeResultEnd(jenv);
 }
 
-void EXT_GLOBAL(invoke)(char*name, long object, int arg_count, zval**arguments, short ignoreNonJava, pval*presult TSRMLS_DC) 
+short EXT_GLOBAL(invoke)(char*name, long object, int arg_count, zval***arguments, short ignoreNonJava, pval*presult TSRMLS_DC) 
 {
   proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
 
   (*jenv)->writeInvokeBegin(jenv, object, name, 0, 'I', (void*)presult);
   writeArguments(arg_count, arguments, ignoreNonJava TSRMLS_CC);
-  (*jenv)->writeInvokeEnd(jenv);
+  return (*jenv)->writeInvokeEnd(jenv);
 }
 
-void EXT_GLOBAL(call_function_handler)(INTERNAL_FUNCTION_PARAMETERS, char*name, enum constructor constructor, short createInstance, pval *object, int arg_count, zval**arguments)
+short EXT_GLOBAL(call_function_handler)(INTERNAL_FUNCTION_PARAMETERS, char*name, enum constructor constructor, short createInstance, pval *object, int arg_count, zval***arguments)
 {
   long result = 0;
   proxyenv *jenv;
@@ -197,15 +183,15 @@ void EXT_GLOBAL(call_function_handler)(INTERNAL_FUNCTION_PARAMETERS, char*name, 
 
     if (ZEND_NUM_ARGS() < 1) {
       php_error(E_ERROR, "Missing classname in new "/**/EXT_NAME()/**/" call");
-      return;
+      return 0;
     }
 	
 #if EXTENSION == JAVA
 	/* create a new vm object */
 	jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
-	if(!jenv) {ZVAL_NULL(object); return;}
+	if(!jenv) {ZVAL_NULL(object); return 0;}
 	
-	(*jenv)->writeCreateObjectBegin(jenv, Z_STRVAL_P(arguments[0]), Z_STRLEN_P(arguments[0]), createInstance?'I':'C', (void*)result);
+	(*jenv)->writeCreateObjectBegin(jenv, Z_STRVAL_PP(arguments[0]), Z_STRLEN_PP(arguments[0]), createInstance?'I':'C', (void*)result);
 	writeArguments(--arg_count, ++arguments, 0 TSRMLS_CC);
 	(*jenv)->writeCreateObjectEnd(jenv);
 #elif EXTENSION == MONO
@@ -215,8 +201,8 @@ void EXT_GLOBAL(call_function_handler)(INTERNAL_FUNCTION_PARAMETERS, char*name, 
 	jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
 	if(!jenv) {ZVAL_NULL(object); return;}
 	
-	cname = Z_STRVAL_P(arguments[0]);
-	clen = Z_STRLEN_P(arguments[0]);
+	cname = Z_STRVAL_PP(arguments[0]);
+	clen = Z_STRLEN_PP(arguments[0]);
 	mname = emalloc(clen+5);
 	assert(mname); if(!mname) {ZVAL_NULL(object); return;}
 	strcpy(mname, "cli.");
@@ -232,18 +218,22 @@ void EXT_GLOBAL(call_function_handler)(INTERNAL_FUNCTION_PARAMETERS, char*name, 
     long obj;
 
 	jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
-	if(!jenv) {ZVAL_NULL(object); return;}
+	if(!jenv) {ZVAL_NULL(object); return 0;}
 
 	EXT_GLOBAL(get_jobject_from_object)(object, &obj TSRMLS_CC);
-	if(!obj) protocol_error(TSRMLS_C);
+	if(!obj) {
+	  php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Call object is null, check back-end log file(s).", 98);
+	  ZVAL_NULL(object); return 0;
+	}
 
     result = (long)return_value;
     /* invoke a method on the given object */
 	(*jenv)->writeInvokeBegin(jenv, obj, name, 0, 'I', (void*)result);
 	writeArguments(arg_count, arguments, 0 TSRMLS_CC);
-	(*jenv)->writeInvokeEnd(jenv);
+	if(!(*jenv)->writeInvokeEnd(jenv)) return 0;
   }
   checkError((pval*)result TSRMLS_CC);
+  return 1;
 }
 
 static void writeArgument(pval* arg, short ignoreNonJava TSRMLS_DC)
@@ -324,12 +314,12 @@ static void writeArgument(pval* arg, short ignoreNonJava TSRMLS_DC)
   }
 }
 
-static void writeArguments(int argc, pval** argv, short ignoreNonJava TSRMLS_DC)
+static void writeArguments(int argc, pval***argv, short ignoreNonJava TSRMLS_DC)
 {
   int i;
 
   for (i=0; i<argc; i++) {
-    writeArgument(argv[i], ignoreNonJava TSRMLS_CC);
+    writeArgument(*argv[i], ignoreNonJava TSRMLS_CC);
   }
 }
 
@@ -357,9 +347,10 @@ short EXT_GLOBAL(get_property_handler)(char*name, zval *object, zval *presult)
   } else {
     /* invoke the method */
 	(*jenv)->writeInvokeBegin(jenv, obj, name, 0, 'P', (void*)presult);
-	(*jenv)->writeInvokeEnd(jenv);
+	if(!(*jenv)->writeInvokeEnd(jenv)) return 0;
   }
-  return checkError(presult TSRMLS_CC) ? FAILURE : SUCCESS;
+  checkError(presult TSRMLS_CC);
+  return 1;
 }
 
 
@@ -388,9 +379,10 @@ short EXT_GLOBAL(set_property_handler)(char*name, zval *object, zval *value, zva
     /* invoke the method */
 	(*jenv)->writeInvokeBegin(jenv, obj, name, 0, 'P', (void*)presult);
 	writeArgument(value, 0 TSRMLS_CC);
-	(*jenv)->writeInvokeEnd(jenv);
+	if(!(*jenv)->writeInvokeEnd(jenv)) return 0;
   }
-  return checkError(presult TSRMLS_CC) ? FAILURE : SUCCESS;
+  checkError(presult TSRMLS_CC);
+  return 1;
 }
 
 #ifndef PHP_WRAPPER_H

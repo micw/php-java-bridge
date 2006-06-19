@@ -2,118 +2,117 @@
 
 package php.java.bridge;
 
-import java.util.LinkedList;
+
 /**
- * A standard thread pool, accepts runnables and runs them in a thread environment.
- * Example:<br>
- * <code>
- * ThreadPool pool = new ThreadPool("MyThreadPool", 20);<br>
- * pool.start(new YourRunnable());<br>
- * </code>
+ * A thread pool, accepts runnables and runs them in a thread
+ * environment.  Example:<br> <code> ThreadPool pool = new
+ * ThreadPool("MyThreadPool", 20);<br> pool.start(new
+ * YourRunnable());<br> </code>
  *
  */
-public class ThreadPool {
-    private ClassLoader loader = null;
-    private String name;
-    private int threads = 0, idles = 0, poolMaxSize;
-    private LinkedList runnables = new LinkedList();
+public class ThreadPool extends BaseThreadPool {
+
+    /** Every Delegate has its own locked ThreadGroup. */
+    static final class Group extends ThreadGroup {
+	boolean isLocked = false;
+	void lock() { isLocked = true; }
+	void unlock() { isLocked = false; }
+	private void init() { setDaemon(true); }
+	public Group(String name) { super(name); init(); }
+	public Group(ThreadGroup group, String name) { super(group, name); init(); }
+    }
+
+    /** Application threads belong to this group */
+    static final class AppGroup extends ThreadGroup {
+	private void init() { setDaemon(true); }
+	public AppGroup(String name) { super(name); init(); }
+	public AppGroup(ThreadGroup group, String name) { super(group, name); init(); }
+    }
 
     /**
-     * Threads continue to pull runnables and run them in the thread
-     * environment.
+     * A specialized delegate which can handle persistent connections
+     * and interrupts application threads when end() or terminate()
+     * is called.
      */
-    public final class Delegate extends Thread {
-	private boolean isDaemon = false, terminate = false;
+    final class Delegate extends BaseThreadPool.Delegate {
+	protected ThreadGroup appGroup = null;
 	/** 
-	 * Create a new delegate. The thread runs until terminateDaemon() is called. 
+	 * Create a new delegate. The thread runs until
+	 * terminatePersistent() is called.
 	 * @param name The name of the delegate. 
 	 */
-	protected Delegate(String name) { super(name); }
+	protected Delegate(String name) { super(new Group(name), name); ((Group) getThreadGroup()).lock(); }
 	/**
-	 * Make this thread a daemon thread. A daemon is not visible but still managed by the thread pool.
+	 * Return the app group for this delegate. All user-created
+	 * threads live in this group and receive an interrupt (which
+	 * should terminate them), when the request is done.
+	 * @return The application group
+	 */
+	public ThreadGroup getAppGroup() {
+	    if(appGroup!=null) return appGroup;
+	    Group group = (Group) getThreadGroup();
+	    group.unlock(); appGroup = new AppGroup("JavaBridgeThreadPoolAppGroup"); group.lock();
+	    return appGroup;
+	}
+	/**
+	 * Make this thread a daemon thread. A daemon is not visible
+	 * but still managed by the thread pool.
 	 */
 	public void setPersistent() {
-	    if(!isDaemon) {
-	        isDaemon = true;
-	        startNewThread();
+	    if(!checkReserve() && !terminate) {
+	        // pool is nearly full, store new long-running clients outside
+	        terminate = true;
+	        String name = getName();
+	        setName(name+",isDaemon=true");
+	        createThread(name);
+	    }
+	    end();
+	}
+	protected void createThread(String name) {
+	    Group group = (Group) getThreadGroup();
+	    group.unlock(); super.createThread(name); group.lock();
+	}
+	protected void terminate() {
+	    if(Util.logLevel>4) Util.logDebug("term: " + this);
+	    ThreadGroup group = appGroup;
+	    if(group!=null) {  
+	        try {
+		    group.interrupt();
+	        } catch (SecurityException e) {return;}
+	        try {
+		    group.destroy();
+	        } catch (SecurityException e) {/*ignore*/
+	        } catch (IllegalThreadStateException e1) { Util.printStackTrace(e1); 
+	        } catch (Exception e2) { Util.printStackTrace(e2); 
+	        } finally { appGroup = null; }
 	    }
 	}
-	/**
-	 * Check if this thread is a daemon thread.
-	 * @return true, if the thread is a daemon, false otherwise
-	 */
-	public boolean isPersistent() { return isDaemon; }
-	/**
-	 * Terminate a daemon thread.
-	 * @throws IllegalStateException, if the thread is not a daemon
-	 */
-	public void terminatePersistent() { 
-	  if(!isDaemon) throw new IllegalStateException("not a daemon");
-	  terminate = true; 
+	protected void end() {
+	    if(Util.logLevel>4) Util.logDebug("end: " + this);
+	    ThreadGroup group = appGroup;
+	    if(group!=null)  
+	        try {
+		    group.interrupt();
+	        } catch (SecurityException e) {/*ignore*/
+	        } catch (Exception e2) { Util.printStackTrace(e2); 
+	        } finally { appGroup = null; }
 	}
-	public void run() {
-	    try {
-		while(!terminate) getNextRunnable().run();
-	    } catch (Throwable t) { Util.printStackTrace(t); startNewThread(); } 
-	}
+	
     }
-
-    private void startNewThread() {
-        Delegate d = new Delegate(name);
-	ClassLoader loader = null;
-	if(this.loader!=null) loader=DynamicJavaBridgeClassLoader.newInstance(this.loader);
-	if(loader!=null) d.setContextClassLoader(loader);
-	d.start();
+    protected BaseThreadPool.Delegate createDelegate(String name) {
+	return new Delegate(name);
     }
-    /*
-     * Helper: Pull a runnable off the list of runnables. If there's
-     * no work, sleep the thread until we receive a notify.
-     */
-    private synchronized Runnable getNextRunnable() throws InterruptedException {
-	while(runnables.isEmpty()) {
-	    idles++; wait(); idles--;
-	}
-	return (Runnable)runnables.removeFirst();
-    }
-
-    /**
-     * Push a runnable to the list of runnables. The notify will fail
-     * if all threads are busy. Since the pool contains at least one
-     * thread, it will pull the runnable off the list when it becomes
-     * available.
-     * @param r - The runnable
-     */
-    public synchronized void start(Runnable r) {
-	runnables.add(r);
-	if(idles==0 && threads < poolMaxSize) {
-	    threads++;
-	    startNewThread();
-	}
-	else
-	    notify();
-    }
-
     /**
      * Creates a new thread pool.
      * @param name - The name of the pool threads.
      * @param poolMaxSize - The max. number of threads, must be >= 1.
      */
-    public ThreadPool (String name, int poolMaxSize) {
-	this.name = name;
-    	this.poolMaxSize = poolMaxSize;
-	try {this.loader = Util.getContextClassLoader();} catch (SecurityException e) {/*ignore*/}
-
-    }
-
+    public ThreadPool(String name, int poolMaxSize) { super(name, poolMaxSize); }
     /**
      * Creates a new thread pool.
      * @param name  The name of the pool threads.
      * @param poolMaxSize The max. number of threads, must be >= 1.
      * @param loader The class loader, may be null.
      */
-    public ThreadPool (String name, int poolMaxSize, ClassLoader loader) {
-	this.name = name;
-    	this.poolMaxSize = poolMaxSize;
-	this.loader = loader;
-    }
+    public ThreadPool (String name, int poolMaxSize, ClassLoader loader) { super(name, poolMaxSize, loader); }
 }

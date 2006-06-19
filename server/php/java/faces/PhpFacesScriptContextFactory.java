@@ -7,14 +7,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.script.IPhpScriptContext;
-import php.java.servlet.ContextFactory;
+import php.java.servlet.ServletContextFactory;
 
 /**
  * A custom ContextFactory, manages a custom ScriptContext.
  * @author jostb
  *
  */
-public class PhpFacesScriptContextFactory extends php.java.servlet.ContextFactory {
+public class PhpFacesScriptContextFactory extends php.java.servlet.ServletContextFactory {
      protected IPhpScriptContext jsrContext = null;
     /**
      * Create a new ContextFactory
@@ -24,7 +24,7 @@ public class PhpFacesScriptContextFactory extends php.java.servlet.ContextFactor
      * @param res The ServletResponse
      * @return The ContextFactory
      */
-    public static ContextFactory addNew(IPhpScriptContext context, ServletContext kontext, HttpServletRequest req, HttpServletResponse res) {
+    public static ServletContextFactory addNew(IPhpScriptContext context, ServletContext kontext, HttpServletRequest req, HttpServletResponse res) {
 	PhpFacesScriptContextFactory ctx = new PhpFacesScriptContextFactory(context, kontext, req, res);
 	return ctx;
     }
@@ -36,16 +36,7 @@ public class PhpFacesScriptContextFactory extends php.java.servlet.ContextFactor
      * Returns the JSR223 ScriptContext.
      * @return The context
      */
-    public Object getContext() {
-	if(context==null) setContext(jsrContext);
-	return context;
-    }
-    
-    public void recycle(php.java.bridge.http.ContextFactory target) {
-      super.recycle(target);
-      // the persistent connection needs the fresh values
-      PhpFacesScriptContextFactory fresh = (PhpFacesScriptContextFactory)target;
-      jsrContext.setContinuation(fresh.jsrContext.getContinuation());
-      jsrContext.setWriter(fresh.jsrContext.getWriter());
+    public Object createContext() {
+        return jsrContext;
     }
 }

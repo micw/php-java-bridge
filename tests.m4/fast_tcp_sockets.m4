@@ -19,7 +19,7 @@ AC_DEFUN([CHECK_FAST_TCP_SOCKETS],[
 #define PORT 9789
 #define COUNT 200
 
-static const count = 10, true=1;
+static const count = 10, is_true=1;
 static struct sockaddr_in saddr, saddr2;
 static char RES[]="<N i=\"0\"/>;";
 static char REQ[]="@<I v=\"0\" m=\"lastException\" p=\"P\" i=\"136070284\"></I>";
@@ -36,7 +36,7 @@ void runTest1() {
   for(i=0; i<COUNT; i++) {
     struct sockaddr_in saddr = saddr2;
     sock = socket(PF_INET, SOCK_STREAM, 0); if(sock==-1) sys_error("socket");
-    setsockopt(sock, 0x6, TCP_NODELAY, (void*)&true, sizeof true);
+    setsockopt(sock, 0x6, TCP_NODELAY, (void*)&is_true, sizeof is_true);
     err = connect(sock, (struct sockaddr*)&saddr, sizeof(saddr)); if(err == -1) sys_error("connect");
     n = send(sock, REQ, sizeof(REQ)-1, 0); if(n!=sizeof(REQ)-1) exit(2);
     for(n=0; n<sizeof(RES)-1; n+=count) if((count=recv(sock,b,sizeof(RES)-n-1,0))<0) exit(3);
@@ -51,7 +51,7 @@ void runTest2() {
   for(i=0; i<COUNT; i++) {
     struct sockaddr_in saddr = saddr2;
     sock = socket(PF_INET, SOCK_STREAM, 0); if(sock==-1) sys_error("socket2");
-    setsockopt(sock, 0x6, TCP_NODELAY, (void*)&true, sizeof true);
+    setsockopt(sock, 0x6, TCP_NODELAY, (void*)&is_true, sizeof is_true);
     err = connect(sock, (struct sockaddr*)&saddr, sizeof(saddr)); if(err == -1) sys_error("connect2");
     n = send(sock, REQ1, sizeof(REQ1)-1, 0); if(n!=sizeof(REQ1)-1) exit(5);
     n = send(sock, REQ2, sizeof(REQ2)-1, 0); if(n!=sizeof(REQ2)-1) exit(6);
@@ -74,7 +74,7 @@ main() {
   saddr2.sin_port=saddr.sin_port=htons(PORT);
 
   ss = socket(PF_INET, SOCK_STREAM, 0);
-  setsockopt(ss, SOL_SOCKET, SO_REUSEADDR, (void*)&true, sizeof true);
+  setsockopt(ss, SOL_SOCKET, SO_REUSEADDR, (void*)&is_true, sizeof is_true);
   if(-1==bind(ss, (struct sockaddr*)&saddr, sizeof(saddr))) sys_error("bind");
   if(-1==listen(ss, 10)) sys_error("listen");
   
@@ -101,7 +101,7 @@ main() {
       int s = accept(ss, (struct sockaddr*)&saddr, &len); if(s==-1) exit(0);
       static char b[SIZE];
       int n, count;
-      setsockopt(s, 0x6, TCP_NODELAY, (void*)&true, sizeof true);
+      setsockopt(s, 0x6, TCP_NODELAY, (void*)&is_true, sizeof is_true);
       for(n=0; n<sizeof(REQ1)-1; n+=count) if((count=recv(s,b,sizeof(REQ1)-n-1,0))<0) abort();
       for(n=0; n<sizeof(REQ2)-1; n+=count) if((count=recv(s,b,sizeof(REQ2)-n-1,0))<0) abort();
       n = send(s, RES, sizeof(RES)-1,0); if(n!=sizeof(RES)-1) abort();

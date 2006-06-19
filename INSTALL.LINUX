@@ -1,16 +1,34 @@
 Installing the PHP/Java Bridge on Linux
 ---------------------------------------
 
-On RedHat Enterprise Linux ("RHEL") or Fedora Linux ("FC")
-download and install the java, PHP, httpd and php-java-bridge RPM
-files. On other Linux variants please either create a binary RPM
-distribution from the source RPM (with: rpmbuild --rebuild
-php-java-bridge*src.rpm) or follow the instructions in the generic
-INSTALL.J2EE document instead.
+On RedHat Enterprise Linux ("RHEL") or Fedora Linux ("FC") download
+and install the java, PHP, httpd and php-java-bridge RPM files. You
+need to download the following PHP/Java Bridge RPM files:
+
+  For PHP 4 (>= 4.3.2): php-java-bridge-x.y.z-1.RHEL.i386.rpm
+  For PHP 5.0.x       : php-java-bridge-x.y.z-1.FC4.i386.rpm
+  For PHP >= 5.1.1    : php-java-bridge-x.y.z-1.FC5.i386.rpm
+
+------------------------------------------------------------------------
+On other Linux variants please either create a binary RPM distribution
+from the source RPM, for example with the command:
+
+   rpmbuild --rebuild php-java-bridge*src.rpm
+
+or, if you have downloaded the source tarball, use the commands:
+
+   tar xjf php-java-bridge_*.tar.bz2
+   cp php-java-bridge-*/php-java-bridge.spec /usr/src/redhat/SPECS
+   cp php-java-bridge_*.tar.bz2 /usr/src/redhat/SOURCES
+   rpmbuild -bb /usr/src/redhat/SPECS/php-java-bridge.spec
+
+or follow the instructions in the generic INSTALL.J2EE document
+instead.
+------------------------------------------------------------------------
 
 Install the RPM files, for example with:
 
-    rpm -i jre-x.y.z-p.i386.rpm
+    rpm -i j2re-1_4_2_09-linux-i586.rpm
     rpm -i httpd-2.y.z-p.i386.rpm
     rpm -i php-x.y.z-p.i386.rpm
     rpm -i php-java-bridge-x.y.z-p.i386.rpm
@@ -49,11 +67,18 @@ root (/var/www/html) and check:
 
     http://yourHost/test.php
 
-Then install your java libraries (.jar files) in /usr/share/java or in
-java.libpath/lib (see output of phpinfo) or in the J2EE back-end's
-WEB-INF/lib and your PHP and web-pages in the web server document root
-(/var/www/html or /usr/share/tomcat5/webapps/JavaBridge) or one of
-their sub-directories.
+Then install your java libraries (.jar files) in /usr/share/java or
+/usr/share/java/ext or in extension_dir/lib (see output of phpinfo) or
+in the J2EE back-end's WEB-INF/lib and your PHP and web-pages in the
+web server document root (/var/www/html or
+/usr/share/tomcat5/webapps/JavaBridge) or one of their
+sub-directories. 
+
+PHP classes can be created from Java libraries with the command:
+
+   java -jar JavaBridge.jar --convert /usr/share/pear JAVALIBRARY.jar
+
+The PHP classes are installed in /usr/share/pear/JAVALIBRARY
 
 Please see the README and http://php-java-bridge.sourceforge.net
 for further information.

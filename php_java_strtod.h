@@ -10,10 +10,15 @@
 #ifndef JAVA_STRTOD_H
 #define JAVA_STRTOD_H
 
-#ifndef ZEND_ENGINE_2
+#if !defined(ZEND_ENGINE_2) && !defined(__MINGW32__)
 extern double EXT_GLOBAL(strtod)(const char*, char**);
 #else
-#include "zend_strtod.h"
+#ifndef ZEND_ENGINE_2
+extern double strtod(const char*, char**);
+# define zend_strtod strtod
+#else
+# include "zend_strtod.h"
+#endif
 
 # if EXTENSION == JAVA
 #  define java_strtod zend_strtod 

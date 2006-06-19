@@ -16,8 +16,7 @@ Build and execution instructions:
           make null --version  # GNU make
 
           phpize && 
-          ./configure --with-mono=/usr/bin/ikvmc.exe \
-                      --disable-servlet &&
+          ./configure --with-mono=/usr/bin/mono &&
           make &&
           su -c "make install"
 

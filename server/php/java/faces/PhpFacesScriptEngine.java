@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
-import php.java.bridge.http.ContextFactory;
+import php.java.bridge.http.IContextFactory;
 import php.java.script.IPhpScriptContext;
 import php.java.script.PhpScriptEngine;
 import php.java.script.PhpScriptWriter;
@@ -52,23 +52,27 @@ public class PhpFacesScriptEngine extends PhpScriptEngine implements Invocable {
      *
      */
     protected void setNewContextFactory() {
-        ContextFactory kontext;
+        IContextFactory kontext;
         IPhpScriptContext context = (IPhpScriptContext)getContext(); 
 	env = (Map) this.processEnvironment.clone();
-	kontext = PhpFacesScriptContextFactory.addNew(context, ctx, request, response);
+	if(!request.isSecure()) {
+	    kontext = PhpFacesScriptContextFactory.addNew(context, ctx, request, response);
 
-	/* send the session context now, otherwise the client has to 
-	 * call handleRedirectConnection */
-	env.put("X_JAVABRIDGE_CONTEXT", kontext.getId());
-	/* redirect to ourself */
-	StringBuffer buf = new StringBuffer("127.0.0.1:");
-	buf.append(php.java.servlet.CGIServlet.getLocalPort(request));
-	buf.append("/");
-	buf.append(request.getRequestURI());
-	buf.append(".phpjavabridge"); // it doesn't matter what we
-				      // send here, as long as it ends
-				      // with .phpjavabridge
-	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", buf.toString()); 
+	    /* send the session context now, otherwise the client has to 
+	     * call handleRedirectConnection */
+	    env.put("X_JAVABRIDGE_CONTEXT", kontext.getId());
+	    /* redirect to ourself */
+	    StringBuffer buf = new StringBuffer("127.0.0.1:");
+	    buf.append(php.java.servlet.CGIServlet.getLocalPort(request));
+	    buf.append("/");
+	    buf.append(request.getRequestURI());
+	    buf.append(".phpjavabridge"); // it doesn't matter what we
+				          // send here, as long as it ends
+				          // with .phpjavabridge
+	    env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", buf.toString());
+	} else {
+	    env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", "");
+	}
     }
     protected ScriptContext getPhpScriptContext() {
         Bindings namespace;

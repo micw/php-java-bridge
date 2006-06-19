@@ -4,30 +4,51 @@ package php.java.bridge;
 
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
- * Cache [(method, parameters) -> Method] mappings.  No
+ * Cache [Entry(method, parameters) -> Method].  No
  * synchronization, so use this class per thread or per request
  * only.
  */
-public class ConstructorCache {
-    HashMap map = new HashMap();
-    static final Entry noCache = new Entry();
-
+public final class ConstructorCache {
+    Map map;
+    static final Entry noCache = new NoCache();
+    
+    private void init() {
+        map = new HashMap();
+    }
+    /**
+     * Create a new ConstructorCache
+     */
+    public ConstructorCache() {
+        init();
+    }
+    private static class CachedConstructor {
+      private Constructor method;
+      private Class[] typeCache;
+      public CachedConstructor(Constructor method) {
+          this.method = method;
+      }
+      public Constructor get() {
+          return method;
+      }
+      public Class[] getParameterTypes() {
+          if(typeCache!=null) return typeCache;
+          return typeCache = method.getParameterTypes();
+      }
+    }
      /**
-     * A cache entry carrying the method name and the parameters
-     * 
-     * @author jostb
-     *
+     * A cache entry
      */
     public static class Entry {
-	String symbol;
+	String name;
 	Class params[];
 		
 	protected Entry () {}
 
 	protected Entry (String name, Class params[]) {
-	    this.symbol = name.intern();
+	    this.name = name; // intern() is ~10% slower than lazy string comparison
 	    this.params = params;
 	}
 	private boolean hasResult = false;
@@ -37,19 +58,31 @@ public class ConstructorCache {
 	    for(int i=0; i<params.length; i++) {
 		result = result * 31 + (params[i] == null ? 0 : params[i].hashCode());
 	    }
-	    result = result * 31 + symbol.hashCode();
+	    result = result * 31 + name.hashCode();
 	    hasResult = true;
 	    return result;
 	}
 	public boolean equals(Object o) {
 	    Entry that = (Entry) o;
-	    if(symbol != that.symbol) return false;
 	    if(params.length != that.params.length) return false;
+	    if(!name.equals(that.name)) return false;
 	    for(int i=0; i<params.length; i++) {
 		if(params[i] != that.params[i]) return false;
 	    }
 	    return true;
 	}
+	private CachedConstructor cache;
+	public void setMethod(CachedConstructor cache) {
+	    this.cache = cache;
+	}
+	public Class[] getParameterTypes(Constructor method) {
+	    return cache.getParameterTypes();
+	}
+    }
+    private static final class NoCache extends Entry {
+	public Class[] getParameterTypes(Constructor method) {
+	    return method.getParameterTypes();
+	}        
     }
 
     /**
@@ -58,8 +91,11 @@ public class ConstructorCache {
      * @return The constructor
      */
     public Constructor get(Entry entry) {
-    	if(entry==noCache) return null;
-	return (Constructor)map.get(entry);
+  	if(entry==noCache) return null;
+	CachedConstructor cache = (CachedConstructor)map.get(entry);
+	if(cache==null) return null;
+	entry.setMethod(cache);
+	return cache.get();
     }
     
     /**
@@ -68,7 +104,11 @@ public class ConstructorCache {
      * @param method The constructor
      */
     public void put(Entry entry, Constructor method) {
-    	if(entry!=noCache) map.put(entry, method);
+  	if(entry!=noCache) {
+  	    CachedConstructor cache = new CachedConstructor(method);
+  	    entry.setMethod(cache);
+  	    map.put(entry, cache);
+  	}
     }
     
     /**
@@ -86,5 +126,11 @@ public class ConstructorCache {
     	}
 	return new Entry(name, params);
     }
-    
+
+    /**
+     * Removes all mappings from this cache.
+     */
+    public void clear() {
+       init();
+    }
 }

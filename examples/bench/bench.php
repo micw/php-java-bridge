@@ -18,8 +18,11 @@ $sys = new java("java.lang.System");
 
 // fetch classes and compile them to native code.
 // use local poi.jar, if installed
-java_require("$here/exceltest.jar;poi.jar");
-java_require("$here/exceltest.jar;http://php-java-bridge.sf.net/poi.jar");
+try {
+  java_require("$here/exceltest.jar;$here/../../unsupported/poi.jar");
+} catch (JavaException $e) {
+  java_require("$here/exceltest.jar;http://php-java-bridge.sf.net/poi.jar");
+}
 $excel = new java("ExcelTest");
 $excel->createWorkbook("/dev/null", 1, 1);
 

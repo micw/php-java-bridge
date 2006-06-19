@@ -15,7 +15,11 @@ java_begin_document();
 $k = $s->gc();
 java_end_document();
 echo $k; echo "\n";
-if($k) die("test failed2\n");
+// null tests work since PHP 5.1.4 and above
+if (version_compare("5.1.4", phpversion(), "<=")) {
+  if($k) die("test failed2\n");
+  if($k==null) die("test failed2\n");
+ }
 if(is_null($k)) die("test failed3\n");
 
 echo "test okay\n";

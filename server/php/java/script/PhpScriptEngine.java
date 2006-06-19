@@ -23,7 +23,7 @@ import javax.script.SimpleBindings;
 import php.java.bridge.PhpProcedure;
 import php.java.bridge.PhpProcedureProxy;
 import php.java.bridge.Util;
-import php.java.bridge.http.ContextFactory;
+import php.java.bridge.http.IContextFactory;
 
 /**
  * This class implements the ScriptEngine.<p>
@@ -56,6 +56,7 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
      */
     protected PhpProcedureProxy script = null;
     protected Object scriptClosure = null;
+    protected ScriptException scriptException = null;
     protected String name = null;
     
     /**
@@ -66,6 +67,23 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
     protected Map env = null;
     
     private ScriptEngineFactory factory = null;
+
+    /* 
+     * Needed because jsr223 script exception doesn't have a (String, Throwable) constructor. 
+     *  -- The jsr223 API is really odd ...  
+     */
+    private static class PhpScriptException extends javax.script.ScriptException {
+      private static final long serialVersionUID = 7664096304464958875L;
+
+      public PhpScriptException(String string) {
+	  super(string);
+      }
+
+      public PhpScriptException(String string, Throwable cause) {
+	  this(string);
+	  initCause(cause);
+      }
+    }
 
     protected void initialize() {
       setContext(getPhpScriptContext());
@@ -113,7 +131,9 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
         Method m = System.class.getMethod("getenv", EMPTY_PARAM);
         Map map = (Map) m.invoke(System.class, EMPTY_ARG);
         defaultEnv.putAll(map);
-    } catch (Exception e) {/*ignore*/}
+    } catch (Exception e) {
+	defaultEnv.putAll(Util.COMMON_ENVIRONMENT);
+    }
     return defaultEnv;
   }
 
@@ -147,7 +167,7 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
      */
     public Object invoke(String methodName, Object[] args)
 	throws ScriptException {
-        if(scriptClosure==null) throw new ScriptException("The script from "+name+" is not invocable. To change this please add a line \"java_context()->call(java_closure());\" at the bottom of the script.");
+        if(scriptClosure==null) throw new PhpScriptException("The script from "+name+" is not invocable. Check the script and the server log file(s) and add a line \"java_context()->call(java_closure());\" at the bottom of the script.", scriptException);
 	
 	return invoke(scriptClosure, methodName, args);
     }
@@ -160,11 +180,13 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
 	PhpProcedure proc = (PhpProcedure)(Proxy.getInvocationHandler(thiz));
 	try {
 	    return proc.invoke(script, methodName, args);
+	} catch (RuntimeException e0) {
+	    throw e0;
+	} catch (Error er) {
+	    throw er;
 	} catch (Throwable e) {
-	    if(e instanceof RuntimeException) throw (RuntimeException)e;
 	    Util.printStackTrace(e);
-	    if(e instanceof Exception) throw new ScriptException(new Exception(e));
-	    throw (RuntimeException)e;
+	    throw new PhpScriptException("invoke failed", new Exception(e));
 	}
     }
 
@@ -193,7 +215,7 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
      *
      */
     protected void setNewContextFactory() {
-        ContextFactory ctx;
+        IContextFactory ctx;
         IPhpScriptContext context = (IPhpScriptContext)getContext(); 
 	env = (Map) this.processEnvironment.clone();
 
@@ -206,6 +228,7 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
 	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS",Util.getHostAddress()+":"+PhpScriptContext.getHttpServer().getSocket().getSocketName());
 
     }
+
     protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
         if(continuation != null) release();
   	if(reader==null) return null;
@@ -215,14 +238,14 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
 	try {
 	    this.script = doEval(reader, context);
 	} catch (Exception e) {
-	    throw new ScriptException(e);
+	    throw this.scriptException = new PhpScriptException("Could not evaluate script", e);
 	}
 		
 	if(this.script!=null) 
 	try {
 	    this.scriptClosure = this.script.getProxy(new Class[]{});
 	} catch (Exception e) {
-	    throw new ScriptException(e);
+	    throw this.scriptException =  new PhpScriptException("Could not get script proxy", e);
 	}
 	return null;
     }
@@ -288,6 +311,7 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
 	    continuation = null;
 	    script = null;
 	    scriptClosure = null;
+	    scriptException = null;
 	}
     }
 

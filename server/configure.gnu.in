@@ -16,7 +16,7 @@ echo "Back-end configuration failed."
 echo "Please install the recommended autoconf, libtool and automake versions"
 echo "or disable back-end configuration and use the pre-compiled J2EE back-end:"
 echo 
-echo "    ./configure --disable-backend --with-java=java"
+echo "    ./configure --disable-backend --with-java=<JAVA_HOME>"
 echo
 exit 1
 )

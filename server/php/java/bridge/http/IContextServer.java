@@ -7,8 +7,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
+ * The interface that all ContextServer must implement.
+ * 
  * @author jostb
- *
  */
 public interface IContextServer {
      /**

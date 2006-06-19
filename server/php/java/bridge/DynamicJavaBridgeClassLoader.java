@@ -3,15 +3,20 @@
 package php.java.bridge;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.WeakHashMap;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 
 /**
  * The bridge class loader which uses the DynamicClassLoader when possible.
@@ -32,114 +37,227 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     protected DynamicJavaBridgeClassLoader() {
     	super();
     }
-    
+    private static final URL[] EMPTY_URL = new URL[0];
+    private static final JarLibraryPath EMPTY_PATH = new JarLibraryPath() {public URL[] getURLs() { return EMPTY_URL; } };
+    /** Holds a checked JarLibraryPath entry */
+    public static class JarLibraryPath {
+      	private String contextDir;
+	private String path;
+
+	private boolean isCached;
+	private String rawPath, rawContextDir;
+	private URL[] urls;
+	/** create an invalid entry */
+	public JarLibraryPath() {}
+	/** Crate a checked JarLibraryPath entry
+	 * @param rawPath The path or file in the local file system or url
+	 * @param rawContextDir The context directory, for example c:\php
+	 * @throws IOException, if the local path or file does not exist or cannot be accessed
+	 */
+        public JarLibraryPath(String rawPath, String rawContextDir) throws IOException {
+            if(rawContextDir == null) throw new NullPointerException("rawContextDir");
+            this.rawPath = rawPath;
+            // How to check that rawContextDir is really a symbol?
+            this.rawContextDir = rawContextDir;
+            this.contextDir = makeContextDir(rawContextDir);
+    	    this.path = makePath(rawPath);
+    	    
+    	    this.urls = checkURLs();
+        }
+        private boolean hasResult;
+        private int result = 1;
+        public int hashCode() {
+	    if(hasResult) return result;
+	    result = result * 31 + rawPath.hashCode(); 
+	    result = result * 31 + rawContextDir.hashCode();
+	    hasResult = true;
+	    return result;
+	}
+	public boolean equals(Object o) {
+	    JarLibraryPath that = (JarLibraryPath) o;
+	    if(rawContextDir != that.rawContextDir) return false;
+	    if(rawPath.equals(that.rawPath)) return false;
+	    return true;
+	}
+        
+        private String makePath(String rawPath) {
+          /*
+           * rawPath always starts with a token separator, e.g. ";" 
+  	     */
+  	    // add a token separator if first char is alnum
+  	    char c=rawPath.charAt(0);
+  	    if((c>='A' && c<='Z') || (c>='a' && c<='z') ||
+  		(c>='0' && c<='9') || (c!='.' || c!='/'))
+  	      rawPath = ";" + rawPath;
+
+  	    return rawPath;
+        }
+        private String makeContextDir(String rawContextDir) {
+            rawContextDir += rawContextDir.endsWith("/") ? "lib/" : "/lib/";
+            return rawContextDir;
+        }
+	/**
+	 * Return the urls associated with this entry
+	 * @return The url value
+	 * @throws IOException 
+	 */
+        public URL[] getURLs() {
+            return urls;
+        }
+        private URL[] checkURLs() throws IOException {
+            /*
+             * Check the cache
+             */
+  	    URL[] urls = (URL[]) urlCache.get(this);
+  	    if(urls != null) { this.urls = urls; isCached = true; return urls; } 
+
+  	    isCached = false;
+  	    return createUrls();
+        }
+        private URL[] createUrls() throws IOException {
+          /*
+           * Parse the path.
+           */
+      	List toAdd = new LinkedList();
+  	String currentPath = path.substring(1);
+  	StringTokenizer st = new StringTokenizer(currentPath, path.substring(0, 1));
+  	while (st.hasMoreTokens()) {
+  	    URL url;
+  	    String s;
+  	    s = st.nextToken();
+
+  	    try {
+  		url = new URL(s);
+  		checkUrl(url);
+  	    } catch (MalformedURLException e) {
+  		try {
+  		    File f=null;
+  		    File file=null;
+  		    StringBuffer buf= new StringBuffer();
+  		    if((f=new File(s)).isFile() || f.isAbsolute()) {
+  		    	buf.append(s); file = f;
+  		    } else if ((f=new File(contextDir + s)).isFile()) {
+  		    	buf.append(f.getAbsolutePath()); file = f;
+  		    } else if ((f=new File("/usr/share/java/" + s)).isFile()) {
+  			buf.append(f.getAbsolutePath()); file = f;
+  		    } else if ((f=new File("/usr/share/java/ext/" + s)).isFile()) {
+  			buf.append(f.getAbsolutePath()); file = f;
+  		    } else {
+  			buf.append(s); file = new File(s);
+  		    }
+  		    /* From URLClassLoader:
+  		    ** This class loader is used to load classes and resources from a search
+  		    ** path of URLs referring to both JAR files and directories. Any URL that
+  		    ** ends with a '/' is assumed to refer to a directory. Otherwise, the URL
+  		    *
+  		    * So we must replace the last backslash with a slash or append a slash
+  		    * if necessary.
+  		    */
+  		    if(file!=null && file.isDirectory()) {
+                          addJars(toAdd, f);
+  		    	int l = buf.length();
+  		    	if(l>0) {
+  			    if(buf.charAt(l-1) == File.separatorChar) {
+  				buf.setCharAt(l-1, '/');
+  			    } else if(buf.charAt(l-1)!= '/') {
+  				buf.append('/');
+  			    }
+  			}
+  		    } 
+  		    if(!file.isDirectory()) checkJarFile(file);
+  		    url = new URL("file", null, buf.toString());
+  		}  catch (MalformedURLException e1) {
+  		    Util.printStackTrace(e1);
+  		    continue;
+  		}
+  	    }
+  	    toAdd.add(url);
+  	}
+	URL[] urls = new URL[toAdd.size()];
+        toAdd.toArray(urls);
+        return urls;
+	}
+        /** Return the path
+         * @return the key
+         */
+	public String getPath() {
+            return path;
+        }
+	/**
+	 * Adds this entry to the cache
+	 */
+	public void addToCache() {
+	    if(!isCached) { urls=null; urlCache.put(this, urls); }
+	}
+    }
     /** Set the library path for the bridge instance. Examples:
      * setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");<br>
      * setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");<br>
      * The first char must be the token separator.
      * @param rawPath The path
      * @param rawContextDir The context dir, e.g. /usr/lib/php/extensions
+     * @throws IOException 
      */
-    public void updateJarLibraryPath(String rawPath, String rawContextDir) {
-	addSysUrls();
-
-    	String key = rawPath;
-    	rawContextDir += rawContextDir.endsWith("/") ? "lib/" : "/lib/";
-	/*
-	 * rawPath always starts with a token separator, e.g. ";" 
-	 */
-	if(rawPath==null || rawPath.length()<2) return;
-	// add a token separator if first char is alnum
-	char c=rawPath.charAt(0);
-	if((c>='A' && c<='Z') || (c>='a' && c<='z') ||
-	   (c>='0' && c<='9') || (c!='.' || c!='/'))
-	    rawPath = ";" + rawPath;
-
-	/*
-	 * Check the cache
-	 */
-    	URL urls[] = (URL[]) urlCache.get(key);
-        if(urls!=null) {
-	    try {
-		addURLs(rawPath, urls, false); // Uses protected method to explicitly set the classpath entry that is added.
-		return;
-	    } catch (Exception e) {
-		Util.printStackTrace(e);
-	    }
-	}
+    public static JarLibraryPath checkJarLibraryPath(String rawPath, String rawContextDir) throws IOException {
+        if(rawPath==null || rawPath.length()<2) return EMPTY_PATH;
+    	return new JarLibraryPath(rawPath, rawContextDir);
+    }
+    /** Set the library path for the bridge instance. Examples:
+     * setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");<br>
+     * setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");<br>
+     * The first char must be the token separator.
+     * @param rawPath The path
+     * @param rawContextDir The context dir, e.g. /usr/lib/php/extensions
+     * @throws IOException 
+     */
+    public void updateJarLibraryPath(String rawPath, String rawContextDir) throws IOException {
+        updateJarLibraryPath(checkJarLibraryPath(rawPath, rawContextDir));
+    }
+    /** Set the library path for the bridge instance. Examples:
+     * setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");<br>
+     * setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");<br>
+     * The first char must be the token separator.
+     * @param The checked JarLibraryPath
+     * @throws IOException 
+     * @see #checkJarLibraryPath(String, String)
+     */
+    public void updateJarLibraryPath(JarLibraryPath path) {
+        String key = path.getPath();
+        URL[] urls = path.getURLs();
+        if(urls.length>0)
+            addURLs(key, urls, false); // Uses protected method to explicitly set the classpath entry that is added.
+        path.addToCache();
+    }
+    private static void checkUrl(URL url) {
+        url.getProtocol();
+    }
+    private static void checkJarFile(File f) throws IOException {
+        try {
+            doCheckJarFile(f);
+        } catch (IOException e) {
+            IOException ex = new IOException("Could not open jar file " + f + ", reason: " +(String.valueOf(e.getMessage())));
+            ex.initCause(e);
+            throw ex;
+        }
+    }
+    private static void doCheckJarFile(File f) throws IOException {
+        JarFile jar = new JarFile(f);
+        Manifest mf = jar.getManifest();
+        if(Util.logLevel>4) {
+            if(mf!=null) {
+                Set main = mf.getMainAttributes().entrySet();
+                Util.logDebug("ClassLoader: loaded file: " + f + ", main attributes: " + main);
+            }
+        }
+        jar.close();
         
-        /*
-         * Parse the path.
-         */
-    	ArrayList toAdd = new ArrayList();
-	String path = rawPath.substring(1);
-	StringTokenizer st = new StringTokenizer(path, rawPath.substring(0, 1));
-	while (st.hasMoreTokens()) {
-	    URL url;
-	    String s;
-	    s = st.nextToken();
-
-	    try {
-		url = new URL(s);
-		url.getProtocol();
-	    } catch (MalformedURLException e) {
-		try {
-		    File f=null;
-		    StringBuffer buf= new StringBuffer();
-		    if((f=new File(s)).isFile() || f.isAbsolute()) {
-		    	buf.append(s);
-		    } else if ((f=new File(rawContextDir + s)).isFile()) {
-		    	buf.append(f.getAbsolutePath());
-		    } else if ((f=new File("/usr/share/java/" + s)).isFile()) {
-			buf.append(f.getAbsolutePath());
-		    } else if ((f=new File("/usr/share/java/ext/" + s)).isFile()) {
-			buf.append(f.getAbsolutePath());
-		    } else {
-			buf.append(s);
-		    }
-		    /* From URLClassLoader:
-		    ** This class loader is used to load classes and resources from a search
-		    ** path of URLs referring to both JAR files and directories. Any URL that
-		    ** ends with a '/' is assumed to refer to a directory. Otherwise, the URL
-		    *
-		    * So we must replace the last backslash with a slash or append a slash
-		    * if necessary.
-		    */
-		    if(f!=null && f.isDirectory()) {
-                        addJars(toAdd, f);
-		    	int l = buf.length();
-		    	if(l>0) {
-			    if(buf.charAt(l-1) == File.separatorChar) {
-				buf.setCharAt(l-1, '/');
-			    } else if(buf.charAt(l-1)!= '/') {
-				buf.append('/');
-			    }
-			}
-		    }
-		    url = new URL("file", null, buf.toString());
-		    url.getProtocol();
-		}  catch (MalformedURLException e1) {
-		    Util.printStackTrace(e1);
-		    continue;
-		}
-	    }
-	    toAdd.add(url);
-	}
-
-	urls = new URL[toAdd.size()];
-        toAdd.toArray(urls);
-	try {
-	    addURLs(rawPath, urls, false); // Uses protected method to explicitly set the classpath entry that is added.
-            urlCache.put(key, urls);
-	} catch (Exception e) {
-	    Util.printStackTrace(e);
-	}
     }
     /*
      * Add all .jar files in a directory
      */
-    private void addJars(ArrayList list, File dir) {
+    static void addJars(List list, File dir) {
 	File files[] = dir.listFiles();
+	if(files==null) return;
 	for(int i=0; i<files.length; i++) {
 	    File f = files[i];
 	    if(f.getName().endsWith(".jar")) {
@@ -153,9 +271,6 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     }
     /**@deprecated*/
     public static synchronized void initClassLoader(String phpConfigDir) {
-    }
-
-    protected void addSysUrls() {
     }
 
     /**
@@ -214,23 +329,24 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     	return new URLClassLoaderFactory() {
     	        public URLClassLoader createUrlClassLoader(String classPath, URL urls[], ClassLoader parent) {
 		    return new URLClassLoader(urls, parent) {
+		      	    public String toString() {
+		      	        return String.valueOf(arrayToString(this.getURLs()));
+		      	    }
     	                    protected Class findClass(String name) throws ClassNotFoundException {
-    	                    	if(Util.logLevel>2) Util.logDebug("trying to load class: " +name + " from: "+ Arrays.asList(this.getURLs()));
+    	                    	if(Util.logLevel>4) Util.logDebug("trying to load class: " +name + " from: "+ toString());
     	                    	try {
 				    return super.findClass(name);
-				} catch (ClassNotFoundException e) {
-				    throw new ClassNotFoundException("Class " + name + " not found in: " + (Arrays.asList(this.getURLs()))+". Please load all interconnected classes in a single java_require() call, e.g. use java_require(foo;bar) instead of java_require(foo); java_require(bar). Please check the path and the SEL and File permissions.", e);
 				} catch (Exception ex) {
-				    throw new ClassNotFoundException("Class " + name + " not found in: " + (Arrays.asList(this.getURLs()))+" due to exception: " + ex + ".", ex);
+				    throw new ClassNotFoundException("Class " + name + " not found due to exception: " + ex + ".", ex);
 				}
 			    }
 			    public URL findResource(String name)  {
-				//if(Util.logLevel>2) Util.logDebug("trying to load resource: " +name + " from: "+ Arrays.asList(this.getURLs()));
+				//if(Util.logLevel>2) Util.logDebug("trying to load resource: " +name + " from: "+ arrayToString(this.getURLs()));
 				return super.findResource(name);
     	                	
 			    }
 			    protected String findLibrary(String name) {
-				if(Util.logLevel>2) Util.logDebug("trying to load library: " +name + " from: "+ Arrays.asList(this.getURLs()));
+				if(Util.logLevel>4) Util.logDebug("trying to load library: " +name + " from: "+ toString());
 				if(!IS_GNU_JAVA) throw new UnsatisfiedLinkError("This java VM can only load pure java libraries. Either use GNU java instead or move the java library to " + LIB_DIR + "and the shared library "+ name +" to "+ SHARED_LIB_DIR);
 				String s = super.findLibrary(name);
 				if(s!=null) return s;
@@ -240,6 +356,23 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 		}
 	    };
     }
+    public String toString() {
+        StringBuffer buf = new StringBuffer();
+
+        Iterator iter = classPaths.iterator();
+	URLClassLoaderEntry e = null;
+	while (iter.hasNext()) {
+	    e = (URLClassLoaderEntry) classLoaders.get(iter.next());
+	    buf.append(e.toString());
+	    buf.append(";");
+	}
+        ClassLoader parent = getParent();
+        if(parent!=null && parent instanceof URLClassLoader) {
+            buf.append(String.valueOf(arrayToString(((URLClassLoader)parent).getURLs())));
+            buf.append(";");
+        }
+	return buf.toString();
+    }
     /*
      *  (non-Javadoc)
      * @see php.java.bridge.DynamicClassLoader#loadClass(String)
@@ -248,7 +381,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	try {
 	    return super.loadClass(name); 
 	} catch (ClassNotFoundException e) {
-	    throw new ClassNotFoundException(("Could not find " + name + " in java_require() path. Please check the path and the SEL and File permissions "), e);    
+	    throw new ClassNotFoundException(("Could not find " + name + " in java_require(\""+toString()+"\") path. Please check the path and the SEL and File permissions "), e);    
 	}
     }
     /**
