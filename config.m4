@@ -5,7 +5,6 @@ m4_include(tests.m4/java_check_struct_ucred.m4)
 m4_include(tests.m4/java_check_abstract_namespace.m4)
 m4_include(tests.m4/java_check_broken_gcc_installation.m4)
 m4_include(tests.m4/java_check_jni.m4)
-m4_include(tests.m4/fast_tcp_sockets.m4)
 
 PHP_ARG_WITH(java, for java support,
 [  --with-java[[=JAVA_HOME[[,JRE_HOME]]]] 
@@ -41,14 +40,6 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
        JAVA_CHECK_BROKEN_STDIO_BUFFERING
        JAVA_CHECK_ABSTRACT_NAMESPACE
        JAVA_CHECK_STRUCT_UCRED
-       CHECK_FAST_TCP_SOCKETS
-
-       if test "$have_fast_tcp_sockets" = "no"; then
-           echo "This operating kernel has *very* slow TCP sockets, see unsupported/TestServ.c."
-           echo "Build the back-end with Unix domain sockets instead (requires that your OS supports JNI)."
-           echo "Will continue, but the J2EE back-end will be too slow to be usable."
-	   sleep 15
-        fi
 
 # find includes eg. -I/opt/jdk1.4/include -I/opt/jdk1.4/include/linux
         if test "$PHP_JAVA" != "yes"; then

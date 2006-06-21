@@ -269,11 +269,68 @@ public class JavaBridge implements Runnable {
         usage();
     }
     /**
+     * parse java.log_file=@HOST:PORT
+     * @param logFile The log file from the PHP .ini file
+     * @return true, if we can use the log4j logger, false otherwise.
+     */
+    private static boolean setChainsawLogger(String logFile) {
+        try {
+	  return doSetChainsawLogger(logFile);
+	} catch (Exception e) {
+	  e.printStackTrace();
+	  Util.setLogger(new FileLogger());
+	}
+	return true;
+    }
+    private static final class Logger extends ChainsawLogger {
+        private String host;
+	private int port;
+	private Logger(String host, int port) {
+	    super();
+	    this.host=host;
+	    this.port=port;
+        }
+        public static Logger createLogger(String host, int port) throws Exception {
+            Logger logger = new Logger(host, port);
+            logger.init();
+	    return logger;
+        }
+        public void configure(String host, int port) throws Exception {
+            host = this.host!=null ? this.host : host;
+            port = this.port > 0 ? this.port : port;
+            super.configure(host, port);
+        }
+    }
+    /**
+     * parse java.log_file=@HOST:PORT
+     * @param logFile The log file from the PHP .ini file
+     * @return true, if we can use the log4j logger, false otherwise.
+     * @throws Exception
+     */
+    private static boolean doSetChainsawLogger(String logFile) throws Exception {
+      if(logFile.charAt(0)=='@') {
+        logFile=logFile.substring(1, logFile.length());
+        int idx = logFile.indexOf(':');
+        int port = -1;
+        String host = null;
+        if(idx!=-1) {
+            String p = logFile.substring(idx+1, logFile.length());
+            if(p.length()>0) port = Integer.parseInt(p);
+            host = logFile.substring(0, idx);
+        } else {
+            if(logFile.length()>0) host = logFile;
+        }
+        Util.setLogger(Logger.createLogger(host, port));
+        return true;
+      }
+      return false;
+    }
+    /**
      * Global init
      * @param s an array of [socketname, level, logFile]
      */
     public static void init(String s[]) {
-	String logFile=null;
+	String logFile=null, rawLogFile=null;
 	String sockname=null;
 	if(s.length>3) checkOption(s);
 	// show our additional ext dirs
@@ -321,12 +378,15 @@ public class JavaBridge implements Runnable {
 	    }
 
 	    try {
-		logFile=s.length>0?"":Util.DEFAULT_LOG_FILE;
+		rawLogFile=logFile=s.length>0?"":Util.DEFAULT_LOG_FILE;
 		if(s.length>2) {
-		    logFile=s[2];
-		    Util.setLogger(new FileLogger()); // use specified log file
+		    rawLogFile=logFile=s[2];
+		    if(setChainsawLogger(logFile))
+		        logFile=null; // when log4j is used, System.out and System.err are not redirected
+		    else
+		        Util.setLogger(new FileLogger()); // use specified log file
+		    if(Util.logLevel>3) System.err.println(Util.EXTENSION_NAME+" log: " + rawLogFile);
 		}
-		if(Util.logLevel>3) System.err.println(Util.EXTENSION_NAME+" log: " + logFile);
 	    }catch (Throwable t) {
 		t.printStackTrace();
 	    }
@@ -339,7 +399,7 @@ public class JavaBridge implements Runnable {
 	    ISocketFactory socket = bind(sockname);
 	    if(Util.VERSION != null)
 		Util.logMessage(Util.EXTENSION_NAME+  " version         : " + Util.VERSION);
-	    Util.logMessage(Util.EXTENSION_NAME + " logFile         : " + logFile);
+	    Util.logMessage(Util.EXTENSION_NAME + " logFile         : " + rawLogFile);
 	    Util.logMessage(Util.EXTENSION_NAME + " default logLevel: " + Util.logLevel);
 	    Util.logMessage(Util.EXTENSION_NAME + " socket          : " + socket);
 	    

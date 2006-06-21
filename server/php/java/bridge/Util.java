@@ -50,7 +50,7 @@ public final class Util {
          * @param logger The specified logger.
          */
         public Logger(ILogger logger) {
-            try {this.clogger = new ChainsawLogger();} catch (Throwable t) {
+            try {this.clogger = ChainsawLogger.createChainsawLogger();} catch (Throwable t) {
                 this.logger = logger;
             }
         }
@@ -765,16 +765,13 @@ public final class Util {
 	} catch (Throwable t) {/*ignore*/}
     }
     static void redirectOutput(boolean redirectOutput, String logFile) {
+        Util.logStream = System.err;
 	if(!redirectOutput) {
-	    Util.logStream = System.err;
 	    if(logFile.length()>0) 
 		try {
 		    Util.logStream=new java.io.PrintStream(new java.io.FileOutputStream(logFile));
-		} catch (Exception e) {/*ignore*/}
+		} catch (Exception e) {printStackTrace(e);}
 	    redirectJavaOutput();
-	} else {
-	    Util.logStream = System.err;
-	    logFile = "<stderr>";
 	}
     }
 

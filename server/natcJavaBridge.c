@@ -235,7 +235,7 @@ JNIEXPORT jboolean JNICALL Java_php_java_bridge_JavaBridge_openLog
 	  free(logfile);
 	  return ret;
 	}
-	fd = open(logfile, O_WRONLY | O_CREAT | O_APPEND | O_TRUNC, 0644);
+	fd = open(logfile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	free(logfile);
 	if(fd==-1) return JNI_FALSE;
 	if(fd!=-1) { 

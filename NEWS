@@ -3,7 +3,24 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
-Version 3.1.0:
+Version 3.1.2:
+
+* On MacOSX the bridge now uses the programs glibtool and glibtoolize
+instead of libtool and libtoolize (if available), so that it is no
+longer necessary to remove the non-GNU libtool program that came with
+MacOSX.
+
+* In the PHP .ini file the log4j logger can now be selected by
+prefixing the java.log_file value with an "@" sign::
+
+  java.log_file=@[HOST][:PORT]
+
+Example:
+
+  java.log_file=@127.0.0.1:4445
+
+
+Version 3.1.1:
 
 * The windows default location has been changed from c:\php5 to
 c:\php.
@@ -25,10 +42,12 @@ in this directory are added to the system class path when the virtual
 machine starts. This means that this directory can now contain impure
 java libraries (=libraries which use the java native interface). But
 this also means that the dynamic loader doesn't know whether a lib in
-this directory has been changed or added unless this lib has been
-required using `java_require("lib.jar")' or with
-`require_once("lib/class_Name.php")', which uses java_require()
-internally.
+this directory has been changed or added. It is therefore recommended
+to store required libraries into the sub-directory <PACKAGE-NAME>. For
+example:
+
+  java_require("myPackage/myLib.jar;j2eePackage/j2ee.jar");
+
 
 * The ikvmc.exe and ICSharpCode.SharpZipLib.dll IKVM.AWT.WinForms.dll
 IKVM.GNU.Classpath.dll IKVM.Runtime.dll are now included. This means

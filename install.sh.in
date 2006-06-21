@@ -89,11 +89,19 @@ else
 jre=@PHP_JAVA_BIN@
 sdk_home=@PHP_JAVA_SDK@
  if ! $jre -classpath modules/JavaBridge.jar php.java.bridge.JavaBridge --version >/dev/null; then
-    echo "Default JRE: $jre is not usuable, please configure as follows:"
+    echo "Default JRE: $jre is not usuable."
+    echo "You have configured against ${sdk_home} but the installed JRE is:"
+    echo ""
+    echo "  `$jre -version|head -5`"
+    echo ""
+    echo "Please configure as follows:"
     echo "  ./configure --with-java=$sdk_home,$sdk_home"
     echo "to avoid this warning -- the jre version must be >= the jdk version.";
     echo "Ignoring $jre and using ${sdk_home}/bin/java instead."
     jre=${sdk_home}/bin/java
+    echo "Please either use the above ./configure command or add" 
+    echo "  java.java=$jre"
+    echo "to your php .ini file."
  fi
 fi
 

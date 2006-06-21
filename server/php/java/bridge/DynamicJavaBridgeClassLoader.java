@@ -41,15 +41,14 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     private static final JarLibraryPath EMPTY_PATH = new JarLibraryPath() {public URL[] getURLs() { return EMPTY_URL; } };
     /** Holds a checked JarLibraryPath entry */
     public static class JarLibraryPath {
-      	private String contextDir;
 	private String path;
 
 	private boolean isCached;
 	private String rawPath, rawContextDir;
 	private URL[] urls;
 	/** create an invalid entry */
-	public JarLibraryPath() {}
-	/** Crate a checked JarLibraryPath entry
+	protected JarLibraryPath() { isCached = true; }
+	/** Create a checked JarLibraryPath entry
 	 * @param rawPath The path or file in the local file system or url
 	 * @param rawContextDir The context directory, for example c:\php
 	 * @throws IOException, if the local path or file does not exist or cannot be accessed
@@ -59,7 +58,6 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
             this.rawPath = rawPath;
             // How to check that rawContextDir is really a symbol?
             this.rawContextDir = rawContextDir;
-            this.contextDir = makeContextDir(rawContextDir);
     	    this.path = makePath(rawPath);
     	    
     	    this.urls = checkURLs();
@@ -74,9 +72,10 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	    return result;
 	}
 	public boolean equals(Object o) {
+	    if(o==null) return false;
 	    JarLibraryPath that = (JarLibraryPath) o;
 	    if(rawContextDir != that.rawContextDir) return false;
-	    if(rawPath.equals(that.rawPath)) return false;
+	    if(!rawPath.equals(that.rawPath)) return false;
 	    return true;
 	}
         
@@ -121,6 +120,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
       	List toAdd = new LinkedList();
   	String currentPath = path.substring(1);
   	StringTokenizer st = new StringTokenizer(currentPath, path.substring(0, 1));
+        String contextDir = makeContextDir(rawContextDir);
   	while (st.hasMoreTokens()) {
   	    URL url;
   	    String s;
@@ -187,7 +187,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	 * Adds this entry to the cache
 	 */
 	public void addToCache() {
-	    if(!isCached) { urls=null; urlCache.put(this, urls); }
+	    if(!isCached) { urlCache.put(this, urls); urls=null; }
 	}
     }
     /** Set the library path for the bridge instance. Examples:
@@ -199,10 +199,10 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
      * @throws IOException 
      */
     public static JarLibraryPath checkJarLibraryPath(String rawPath, String rawContextDir) throws IOException {
-        if(rawPath==null || rawPath.length()<2) return EMPTY_PATH;
+        if(rawPath==null || rawPath.length()<1) return EMPTY_PATH;
     	return new JarLibraryPath(rawPath, rawContextDir);
     }
-    /** Set the library path for the bridge instance. Examples:
+    /** Update the library path for the bridge instance. Examples:
      * setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");<br>
      * setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");<br>
      * The first char must be the token separator.
@@ -213,10 +213,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     public void updateJarLibraryPath(String rawPath, String rawContextDir) throws IOException {
         updateJarLibraryPath(checkJarLibraryPath(rawPath, rawContextDir));
     }
-    /** Set the library path for the bridge instance. Examples:
-     * setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");<br>
-     * setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");<br>
-     * The first char must be the token separator.
+    /** Update the library path for the bridge instance. 
      * @param The checked JarLibraryPath
      * @throws IOException 
      * @see #checkJarLibraryPath(String, String)

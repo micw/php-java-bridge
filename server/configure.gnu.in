@@ -5,8 +5,12 @@ rm -rf autom4te.cache
 aclocal
 autoheader
 autoconf
-libtoolize -f
-ln -s `which libtool` 2>/dev/null
+
+# On the Mac libtool is called "glibtool"
+{ { libtool=glibtool;$libtool --version 2>/dev/null| fgrep -q "(GNU libtool)"; }||
+{ libtool=libtool;$libtool --version| fgrep -q "(GNU libtool)"; } } &&
+{ "${libtool}ize" -f 2>/dev/null || libtoolize -f; ln -sf `which "${libtool}"` libtool; }
+
 automake -a --foreign 
 
 ext="@EXTENSION_DIR@"

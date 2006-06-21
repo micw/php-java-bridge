@@ -55,9 +55,17 @@ public class Log4jLogger implements ILogger {
      * Create a new log4j logger using the default appender.
      * @see php.java.bridge.Util#setLogger(ILogger)
      */
-    public Log4jLogger() throws Exception {
+    protected Log4jLogger() {
         loader = new SimpleJavaBridgeClassLoader();
-        init();
+    }
+    /**
+     * Create a new log4j logger using the default appender.
+     * @see php.java.bridge.Util#setLogger(ILogger)
+     */
+    public static Log4jLogger createLog4jLogger() throws Exception {
+       Log4jLogger logger = new Log4jLogger();
+       logger.init();
+       return logger;
     }
     public void printStackTrace(Throwable t) {
 	try {

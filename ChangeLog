@@ -1,3 +1,16 @@
+2006-06-20  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/DynamicJavaBridgeClassLoader.java
+	(equals): Check for null values. Fixes PR1509111.
+	(JarLibraryPath): Do not store an invalid entry.
+
+	* config.m4 (check_fast_tcp_sockets), php_java.h: Removed
+	incorrect and obsolete autoconf test.
+
+	* VERSION, php-java-bridge.spec: PHP/Java Bridge version 3.1.1
+	replaces version 3.1.0.
+
+	
 2006-06-17  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/servlet/FastCGIServlet.java

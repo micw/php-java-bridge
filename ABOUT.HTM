@@ -236,7 +236,7 @@ java_end_document(); // back to synchronous mode<br>
 </blockquote>
 <br>
 <li>
-  <code><strong>java_closure</strong>(ENVIRONMENT, MAP, TYPE)</code>: Makes it possible to call PHP code from Java.  It closes over the PHP environment and packages it up as a java class.  If the ENVIRONMENT is missing, the current environment is used. If MAP is missing, the PHP procedures must have the same name as the required procedures. If TYPE is missing, the generated class is "generic", i.e. the interface it implements is determined when the closure is applied. Example:<br><br><blockquote>
+  <code><strong>java_closure</strong>(ENVIRONMENT, MAP, TYPE)</code>: Makes it possible to call PHP code from Java.  It closes over the PHP environment, packages it up as a java class and returns an instance of the class.  If the ENVIRONMENT is missing, the current environment is used. If MAP is missing, the PHP procedures must have the same name as the required procedures. If TYPE is missing, the generated class is "generic", i.e. the interface it implements is determined when the closure is applied. Example:<br><br><blockquote>
 <code>
 &lt;?php<br>
 function toString() { return "hello" ; }<br>
@@ -643,7 +643,7 @@ the instructions below (on Security Enhanced Linux please use the RPM or please 
 <UL>
 	<LI><P><FONT >Make sure you
 	have java version 1.4.2 or higher, gcc 3.2 or higher, apache 1.3 or
-	higher, <em>autoconf </em> 2.57 or higher, <em>libtool</em> 1.4.3 or higher, <em>automake</em> 1.6.3 or higher, GNU make and php 4.3.4 or higher
+	higher, <em>GNU autoconf </em> 2.57 or higher, <em>GNU libtool</em> 1.4.3 or higher, <em>GNU automake</em> 1.6.3 or higher, GNU make and php 4.3.4 or higher
 	installed. You can check the version numbers with the commands <code>java
 	-version</code>, <code>gcc --version</code>, <code>apachectl -version</code>, <code>libtool --version</code>, <code>automake --version</code>, <code>make null --version</code>, <code>autoconf --version</code> and
 	<code>php-config --version</code>.
@@ -769,7 +769,7 @@ BORDER="1"
 ><TD
 >The name of the communication channel for the local back-end. Must be an integer, if a secure "Unix domain" channel is not available (Windows, Mac OSX).</TD
 ><TD
->java.socketname="9167"
+>java.socketname="9267"
 </TD
 ></TR
 ><TR
@@ -799,7 +799,7 @@ BORDER="1"
 ><TD
 >Additional bridge hosts which are used when the local back-end is not available.</TD
 ><TD
->java.hosts="127.0.0.1:9168;127.0.0.1:9169"
+>java.hosts="127.0.0.1:9268;127.0.0.1:9269"
 </TD
 ><TR
 ><TD
@@ -833,7 +833,7 @@ java.servlet=User<br>
 >The directory which contains the <code>natcJavaBridge.so</code> used for local ("unix domain") sockets. <em>Please do not change the default value.</em></TD
 ><TD
 >
-java.lib="/tmp/"
+java.libpath="/usr/local/lib"
 </TD
 ></TR
 ><TR
