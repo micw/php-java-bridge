@@ -116,13 +116,15 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   char *ext = php_ini_string((char*)ext_dir, sizeof ext_dir, 0);
 #ifdef CFG_JAVA_SOCKET_INET
   const char* s_prefix = inet_socket_prefix;
+  short any_port = 1;			/* let back-end select the port# */
 #else
   const char *s_prefix = local_socket_prefix;
+  short any_port = for_display;
 #endif
   char *sockname, *cfg_sockname=EXT_GLOBAL(get_sockname)(TSRMLS_C), *cfg_logFile=EXT_GLOBAL(cfg)->logFile;
 
   /* if socketname is off, show the user how to start a TCP backend */
-  if(for_display && !(EXT_GLOBAL(option_set_by_user) (U_SOCKNAME, EXT_GLOBAL(ini_user)))) {
+  if(any_port && !(EXT_GLOBAL(option_set_by_user) (U_SOCKNAME, EXT_GLOBAL(ini_user)))) {
 	cfg_sockname="0";
 	s_prefix=inet_socket_prefix;
 	cfg_logFile="";
@@ -223,8 +225,10 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   char*program=EXT_GLOBAL(cfg)->vm;
 #ifdef CFG_JAVA_SOCKET_INET
   const char* s_prefix = inet_socket_prefix;
+  short any_port = 1;			/* let back-end select the port# */
 #else
   const char *s_prefix = local_socket_prefix;
+  short any_port = for_display;
 #endif
   char *sockname, *cfg_sockname=EXT_GLOBAL(get_sockname)(TSRMLS_C), *cfg_logFile=EXT_GLOBAL(cfg)->logFile;
   char*home = EXT_GLOBAL(cfg)->vm_home;
@@ -241,7 +245,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
 
   args[1] = p;
   /* if socketname is off, show the user how to start a TCP backend */
-  if(for_display && !(EXT_GLOBAL(option_set_by_user) (U_SOCKNAME, EXT_GLOBAL(ini_user)))) {
+  if(any_port && !(EXT_GLOBAL(option_set_by_user) (U_SOCKNAME, EXT_GLOBAL(ini_user)))) {
 	cfg_sockname="0";
 	s_prefix=inet_socket_prefix;
 	cfg_logFile="";
@@ -872,19 +876,35 @@ static void s_kill(int sig) {
 
 
 #endif
+static void make_local_socket_info(TSRMLS_D) {
+  memset(&EXT_GLOBAL(cfg)->saddr, 0, sizeof EXT_GLOBAL(cfg)->saddr);
+#ifndef CFG_JAVA_SOCKET_INET
+  EXT_GLOBAL(cfg)->saddr.sun_family = AF_LOCAL;
+  memset(EXT_GLOBAL(cfg)->saddr.sun_path, 0, sizeof EXT_GLOBAL(cfg)->saddr.sun_path);
+  strcpy(EXT_GLOBAL(cfg)->saddr.sun_path, EXT_GLOBAL(get_sockname)(TSRMLS_C));
+# ifdef HAVE_ABSTRACT_NAMESPACE
+  *EXT_GLOBAL(cfg)->saddr.sun_path=0;
+# endif
+#else
+  EXT_GLOBAL(cfg)->saddr.sin_family = AF_INET;
+  EXT_GLOBAL(cfg)->saddr.sin_port=htons(atoi(EXT_GLOBAL(get_sockname)(TSRMLS_C)));
+  EXT_GLOBAL(cfg)->saddr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
+#endif
+}
 
 void EXT_GLOBAL(start_server)(TSRMLS_D) {
-  int pid=0, err=0, p[2];
-  char *test_server = 0;
+  int pid=0, err=-1, p[2], st[2], stx;
+  char buf[127], count, *test_server = 0, *name;
 #ifndef __MINGW32__
   if(can_fork() && !(test_server=EXT_GLOBAL(test_server)(0, 0, 0 TSRMLS_CC)) && pipe(p)!=-1) {
 	if(!(pid=fork())) {		/* daemon */
 	  close(p[0]);
+	  stx = pipe(st);
 	  if(!fork()) {			/* guard */
 		setsid();
 		if(!(pid=fork())) {	/* java */
-		  close(p[1]);
-		  exec_vm(TSRMLS_C); 
+		  if(close(p[1])!=-1&& stx!=-1&& close(st[0])!=-1&& dup2(st[1], 1)!=-1)
+			exec_vm(TSRMLS_C);
 		  exit(105);
 		}
 		/* protect guard */
@@ -893,6 +913,10 @@ void EXT_GLOBAL(start_server)(TSRMLS_D) {
 		signal(SIGTERM, SIG_IGN);
 		
 		write(p[1], &pid, sizeof pid);
+		if(stx!=-1 && close(st[1])!=-1) err = read(st[0], buf, sizeof buf);
+		count = (err==-1) ? 0 : (0xff & err);
+		write(p[1], &count, 1); if(count) write(p[1], buf, count);
+
 		waitpid(pid, &err, 0);
 		write(p[1], &err, sizeof err);
 		exit(0);
@@ -902,38 +926,78 @@ void EXT_GLOBAL(start_server)(TSRMLS_D) {
 	close(p[1]);
 	wait(&err);
 	if((read(p[0], &pid, sizeof pid))!=(sizeof pid)) pid=0;
-	
+	if((read(p[0], &count, 1))!=1) count=0;
+
 	EXT_GLOBAL(cfg)->cid=pid;
 	EXT_GLOBAL(cfg)->err=p[0];
-	wait_server();
+	if(count&&((read(p[0], buf, sizeof buf))==count)) {
+	  /* received channel # */
+	  size_t n = count;
+	  name = malloc(n+1); if(!name) exit(9);
+	  memcpy(name, buf, n); name[n]=0;
+	  //php_printf("got server channel: %ld, %s", n, name);
+	  free(EXT_GLOBAL(cfg)->default_sockname);
+	  EXT_GLOBAL(cfg)->default_sockname=name;
+	  make_local_socket_info(TSRMLS_C);
+	} else {
+	  make_local_socket_info(TSRMLS_C);
+	  wait_server();
+	}
   } else 
 #else
 	if(can_fork() && !(test_server=EXT_GLOBAL(test_server)(0, 0, 0 TSRMLS_CC))) {
 	  char *cmd = get_server_string(0 TSRMLS_CC);
 	  DWORD properties = CREATE_NEW_CONSOLE | CREATE_NEW_PROCESS_GROUP;
 	  STARTUPINFO su_info;
+	  HANDLE read_pipe, write_pipe, read_pipe_dup;
+	  SECURITY_ATTRIBUTES pipe_sattr = {sizeof(SECURITY_ATTRIBUTES),NULL,TRUE};
+	  HANDLE pid = GetCurrentProcess();
+	  DWORD bread;
+	  if(!CreatePipe(&read_pipe, &write_pipe, &pipe_sattr, 0)) {
+		goto cannot_fork;
+	  }
+	  if(!DuplicateHandle(pid,read_pipe,pid,&read_pipe_dup,0,FALSE,DUPLICATE_SAME_ACCESS)) {
+		CloseHandle(read_pipe);
+		goto cannot_fork;
+	  }
+	  CloseHandle(read_pipe);
+
 	  s_pid.use_wrapper = use_wrapper(EXT_GLOBAL(cfg)->wrapper);
 
 	  ZeroMemory(&su_info, sizeof(STARTUPINFO));
 	  su_info.cb = sizeof(STARTUPINFO);
-	  //su_info.dwFlags = STARTF_USESTDHANDLES;
-	  //su_info.hStdError	= GetStdHandle(STD_ERROR_HANDLE);
-	  //su_info.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
-	  //su_info.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+	  su_info.dwFlags = STARTF_USESTDHANDLES;
+	  su_info.hStdError	= GetStdHandle(STD_ERROR_HANDLE);
+	  su_info.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+	  su_info.hStdOutput = write_pipe;
 	  EXT_GLOBAL(cfg)->cid=0;
 	  if(CreateProcess(NULL, cmd, 
 					   NULL, NULL, 1, properties, NULL, NULL, 
 					   &su_info, &s_pid.p)) {
 		EXT_GLOBAL(cfg)->cid=s_pid.p.dwProcessId;
-		//CloseHandle(processInformation.hThread);//FIXME?
-		wait_server();
+		if(ReadFile(read_pipe_dup, buf, sizeof(buf), &bread, NULL) && bread) {
+		  name = malloc(bread+1); if(!name) exit(9);
+		  memcpy(name, buf, bread); name[bread]=0;
+		  //php_printf("got server channel: %ld, %s", bread, name);
+		  free(EXT_GLOBAL(cfg)->default_sockname);
+		  EXT_GLOBAL(cfg)->default_sockname=name;
+		  make_local_socket_info(TSRMLS_C);
+		} else {
+		  make_local_socket_info(TSRMLS_C);
+		  wait_server();
+		}
+		CloseHandle(s_pid.p.hThread);
+		CloseHandle(read_pipe_dup);
 	  } else {
-		php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d) system error: Could not start backend: %s; Code: %ld.", 105, cmd, (long)GetLastError());
+	  cannot_fork:
+		php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d) system error: Could not start back-end: %s; Code: %ld.", 105, cmd, (long)GetLastError());
+		make_local_socket_info(TSRMLS_C);
 	  }
 	  free(cmd);
 	} else
 #endif /* MINGW32 */
 	  {
+		make_local_socket_info(TSRMLS_C);
 		EXT_GLOBAL(cfg)->cid=EXT_GLOBAL(cfg)->err=0;
 	  }
   if(test_server) free(test_server);

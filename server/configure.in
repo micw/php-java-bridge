@@ -153,8 +153,12 @@ if test "$SERVLET" = "yes"; then
   fi
 fi
 
+SOURCE_VERSION="-source 1.4 -target 1.4"
+if test "X${PHP_JRE}" = X; then SOURCE_VERSION=; fi
+
 BACKEND_VERSION=`cat ../VERSION`
 AC_CONFIG_FILES([RunJavaBridge.c RunMonoBridge.c php/java/bridge/global.properties])
+AC_SUBST(SOURCE_VERSION)
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(BACKEND_VERSION)
 AC_SUBST(EXTENSION_DIR)

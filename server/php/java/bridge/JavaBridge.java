@@ -222,9 +222,7 @@ public class JavaBridge implements Runnable {
 	ISocketFactory socket = null;
 	try {
 	    socket = LocalServerSocket.create(sockname, Util.BACKLOG);
-	} catch (Throwable e) {
-	    Util.logMessage("Local sockets not available:" + e + ". Try(ing) TCP sockets instead");
-	}
+	} catch (Throwable e) {/*ignore*/}
 	if(null==socket)
 	    socket = TCPServerSocket.create(sockname, Util.BACKLOG);
 
@@ -308,25 +306,29 @@ public class JavaBridge implements Runnable {
      * @throws Exception
      */
     private static boolean doSetChainsawLogger(String logFile) throws Exception {
-      if(logFile.charAt(0)=='@') {
-        logFile=logFile.substring(1, logFile.length());
-        int idx = logFile.indexOf(':');
-        int port = -1;
-        String host = null;
-        if(idx!=-1) {
-            String p = logFile.substring(idx+1, logFile.length());
-            if(p.length()>0) port = Integer.parseInt(p);
-            host = logFile.substring(0, idx);
-        } else {
-            if(logFile.length()>0) host = logFile;
-        }
-        Util.setLogger(Logger.createLogger(host, port));
-        return true;
-      }
-      return false;
+	if(logFile!=null && logFile.length()>0 && logFile.charAt(0)=='@') {
+	    logFile=logFile.substring(1, logFile.length());
+	    int idx = logFile.indexOf(':');
+	    int port = -1;
+	    String host = null;
+	    if(idx!=-1) {
+		String p = logFile.substring(idx+1, logFile.length());
+		if(p.length()>0) port = Integer.parseInt(p);
+		host = logFile.substring(0, idx);
+	    } else {
+		if(logFile.length()>0) host = logFile;
+	    }
+	    Util.setLogger(Logger.createLogger(host, port));
+	    return true;
+	}
+	return false;
     }
     /**
-     * Global init
+     * Global init. Redirects System.out and System.err to the server
+     * log file(s) or to System.err and creates and opens the
+     * communcation channel. Note: Do not write anything to
+     * System.out, this stream is connected with a pipe which waits
+     * for the channel name.
      * @param s an array of [socketname, level, logFile]
      */
     public static void init(String s[]) {
@@ -335,26 +337,26 @@ public class JavaBridge implements Runnable {
 	if(s.length>3) checkOption(s);
 	// show our additional ext dirs
 	if(Util.DEFAULT_EXT_DIRS.length>0) { 
-	  try {
-	    StringBuffer buf = new StringBuffer();
-	    String ext = System.getProperty("java.ext.dirs");
-	    if(ext!=null) { buf.append(ext);  buf.append(File.pathSeparator); }
-	    for(int i=0; i<Util.DEFAULT_EXT_DIRS.length; i++) {
-	        buf.append(Util.DEFAULT_EXT_DIRS[i]);
-	        if(i+1!=Util.DEFAULT_EXT_DIRS.length)  buf.append(File.pathSeparator);
-	    }
-	    // PR1502480
-	    ext = System.getProperty("php.java.bridge.base");
-	    if(ext!=null && ext.length()>0) {
-	        buf.append(File.pathSeparator);
-	        buf.append(ext);
-	        buf.append(File.pathSeparator);
-	        buf.append(ext);
-	        if(!ext.endsWith(File.separator)) buf.append(File.separator);
-	        buf.append("lib");
-	    }
-	    System.setProperty("java.ext.dirs", buf.toString());
-	  } catch (Throwable t) {/*ignore*/}
+	    try {
+		StringBuffer buf = new StringBuffer();
+		String ext = System.getProperty("java.ext.dirs");
+		if(ext!=null) { buf.append(ext);  buf.append(File.pathSeparator); }
+		for(int i=0; i<Util.DEFAULT_EXT_DIRS.length; i++) {
+		    buf.append(Util.DEFAULT_EXT_DIRS[i]);
+		    if(i+1!=Util.DEFAULT_EXT_DIRS.length)  buf.append(File.pathSeparator);
+		}
+		// PR1502480
+		ext = System.getProperty("php.java.bridge.base");
+		if(ext!=null && ext.length()>0) {
+		    buf.append(File.pathSeparator);
+		    buf.append(ext);
+		    buf.append(File.pathSeparator);
+		    buf.append(ext);
+		    if(!ext.endsWith(File.separator)) buf.append(File.separator);
+		    buf.append("lib");
+		}
+		System.setProperty("java.ext.dirs", buf.toString());
+	    } catch (Throwable t) {/*ignore*/}
         }
     	try {
     	    CLRAssembly = Class.forName("cli.System.Reflection.Assembly");
@@ -390,20 +392,20 @@ public class JavaBridge implements Runnable {
 	    }catch (Throwable t) {
 		t.printStackTrace();
 	    }
+	    ISocketFactory socket = bind(sockname);
+	    if(s.length>1) System.out.write(socket.getSocketName().getBytes());
+	    System.out.close();
 	    boolean redirectOutput = false;
 	    try {
 	    	redirectOutput = logFile==null || openLog(logFile);
 	    } catch (Throwable t) {/*ignore*/}
 
 	    Util.redirectOutput(redirectOutput, logFile);
-	    ISocketFactory socket = bind(sockname);
 	    if(Util.VERSION != null)
 		Util.logMessage(Util.EXTENSION_NAME+  " version         : " + Util.VERSION);
 	    Util.logMessage(Util.EXTENSION_NAME + " logFile         : " + rawLogFile);
 	    Util.logMessage(Util.EXTENSION_NAME + " default logLevel: " + Util.logLevel);
 	    Util.logMessage(Util.EXTENSION_NAME + " socket          : " + socket);
-	    
-
 	    int maxSize = 20;
 	    try {
 	    	maxSize = Integer.parseInt(Util.THREAD_POOL_MAX_SIZE);
@@ -456,7 +458,8 @@ public class JavaBridge implements Runnable {
      * Start the PHP/Java Bridge. <br>
      * Example:<br>
      * <code>java -Djava.awt.headless=true -jar JavaBridge.jar INET:9656 5 /var/log/php-java-bridge.log</code><br>
-     * 
+     * Note: Do not write anything to System.out, this
+     * stream is connected with a pipe which waits for the channel name.
      * @param s an array of [socketname, level, logFile]
      */
     public static void main(String s[]) {
@@ -600,7 +603,7 @@ public class JavaBridge implements Runnable {
 		} else {
 		    // for classes which have no visible constructor, return the class
 		    // useful for classes like java.lang.System and java.util.Calendar.
-		    if(createInstance && logLevel>0) {
+		    if(createInstance && logLevel>2) {
 		    	logMessage("No visible constructor found in: "+ name +", returning the class instead of an instance; this may not be what you want. Please correct this error or please use new JavaClass("+name+") instead.");
 		    }
 		    response.setResultClass(clazz);
@@ -840,6 +843,8 @@ public class JavaBridge implements Runnable {
 			}
 		    }
 	    	}
+	    } else if (arg instanceof Class) {
+	        if((parms[i] != Class.class)) throw new IllegalArgumentException("Received a Class type. But an Instance (of the Class) is required");
 	    } else if (arg instanceof Request.PhpArray) {
 	    	if(parms[i].isArray()) {
 	    	    Class targetType = parms[i].getComponentType();
@@ -857,7 +862,7 @@ public class JavaBridge implements Runnable {
 			}
 			result[i]=tempArray;
 		    } catch (Exception e) {
-			logError("Error: " + String.valueOf(e) + ". Could not create array of type: " + targetType + ", size: " + size);
+			logError("Could not create array of type: " + targetType + ", size: " + size + ": "+String.valueOf(e));
 			printStackTrace(e);
 			// leave result[i] alone...
 		    }
@@ -867,7 +872,7 @@ public class JavaBridge implements Runnable {
 			Collection c = m.values();
 			result[i]=c;
 		    } catch (Exception e) {
-			logError("Error: " +  String.valueOf(e) + ". Could not create Collection from Map.");
+			logError("Could not create Collection from Map: "+String.valueOf(e));
 			printStackTrace(e);
 			// leave result[i] alone...
 		    }
@@ -880,7 +885,7 @@ public class JavaBridge implements Runnable {
 
 			result[i]=res;
 		    } catch (Exception e) {
-			logError("Error: " +  String.valueOf(e) + ". Could not create Hashtable from Map.");
+			logError("Could not create Hashtable from Map: "+String.valueOf(e));
 			printStackTrace(e);
 			// leave result[i] alone...
 		    }
@@ -1090,10 +1095,12 @@ public class JavaBridge implements Runnable {
 	Class params[] = null;
 	LinkedList candidates = new LinkedList();
 	LinkedList matches = new LinkedList();
-	
-	MethodCache.Entry entry = methodCache.getEntry(method, Util.getClass(object), args);
-	Method selected = (Method) methodCache.get(entry);
+	Method selected = null;
 	try {
+	    if(object==null) {object = Request.PHPNULL;throw new NullPointerException("call object is null, check the server log file(s).");}
+	    MethodCache.Entry entry = methodCache.getEntry(method, Util.getClass(object), args);
+	    selected = (Method) methodCache.get(entry);
+	    
 	    // gather
 	    do {
 		again = false;
@@ -1142,7 +1149,7 @@ public class JavaBridge implements Runnable {
 	    }
 	    
 	    printStackTrace(e);
-            if (e instanceof IllegalArgumentException) {
+            if (selected != null && e instanceof IllegalArgumentException) {
                 if (this.logLevel>1) {
                     String errMsg = "\nInvoked "+method + " on "+objectDebugDescription(object)+"\n";
                     errMsg += " Expected Arguments for this Method:\n";
@@ -1192,12 +1199,13 @@ public class JavaBridge implements Runnable {
     public void GetSetProp
 	(Object object, String prop, Object args[], Response response)
     {
-        LinkedList matches = new LinkedList();
+    	LinkedList matches = new LinkedList();
 	boolean set = (args!=null && args.length>0);
 	Class params[] = null;
 
 	try {
 	    Class jclass;
+	    if(object==null) {object=Request.PHPNULL; throw new NullPointerException("call object is null, check the server log file(s).");}
 	    
 	    // first search for the field *exactly*
 	    again2:		// because of security exception

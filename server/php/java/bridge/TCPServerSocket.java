@@ -25,7 +25,6 @@ class TCPServerSocket implements ISocketFactory {
 	try {
 	    p=Integer.parseInt(name);
 	} catch (NumberFormatException e) {
-	    Util.logError("Could not parse TCP socket number: " + e + ". Using default: " + DefaultSocketname);
 	    p=Integer.parseInt(DefaultSocketname);
 	}
 	TCPServerSocket s = new TCPServerSocket(p, backlog, local);

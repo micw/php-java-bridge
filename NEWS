@@ -5,13 +5,23 @@ Please send bug reports, questions and suggestions to
 
 Version 3.1.2:
 
+* The default TCP port doesn't exist anymore. On Windows, or if the
+bridge has been compiled with -DCFG_JAVA_SOCKET_INET, and if
+java.socketname is not set, the bridge back-end automatically selects
+a free port number from the range [9267,...,9367[ (for JavaBridge.jar)
+or [9167,...,9267[ (for MonoBridge.exe). Thus it is now possible to
+autostart the bridge as a sub-component of IIS. If you don't want this
+behaviour, set java.socketname=9267 (or mono.socketname=9167) and copy
+the JavaBridge.jar or MonoBridge.exe executables into the autostart
+folder of your computer.
+
 * On MacOSX the bridge now uses the programs glibtool and glibtoolize
 instead of libtool and libtoolize (if available), so that it is no
 longer necessary to remove the non-GNU libtool program that came with
 MacOSX.
 
 * In the PHP .ini file the log4j logger can now be selected by
-prefixing the java.log_file value with an "@" sign::
+prefixing the java.log_file value with an "@" sign:
 
   java.log_file=@[HOST][:PORT]
 
