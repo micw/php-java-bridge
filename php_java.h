@@ -168,6 +168,16 @@ struct cfg {
 };
 extern struct cfg *EXT_GLOBAL(cfg);
 
+
+/* for user CB's */
+struct cb_stack_elem {
+  zval*exception;
+  zval **object;
+  zval *func;
+  zval **retval_ptr;
+  zval *func_params;
+} cb_stack_elem;
+
 /**
  * The following structure contains per-request variables.
  */
@@ -185,18 +195,11 @@ EXT_BEGIN_MODULE_GLOBALS(EXT)
   int lockfile;
 
   /* for user CB's */
-  zval*exception;
-
-  zval **object;
-  zval *func;
-  zval **retval_ptr;
-  zval *func_params;
+  zend_stack *cb_stack;
 
   /* mapping of servlet context strings to persistent connections */
   HashTable connections;
 EXT_END_MODULE_GLOBALS(EXT)
-
-
 
 
 #ifdef ZTS

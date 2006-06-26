@@ -98,7 +98,7 @@ struct proxyenv_ {
   short connection_is_closed;
 
   struct async_ctx {
-	void (*handle_request)(proxyenv *env);
+	short (*handle_request)(proxyenv *env);
 	unsigned long nextValue;
 	void *result;
 	FILE *peer;
@@ -116,8 +116,8 @@ struct proxyenv_ {
 	char *hosts, *servlet;
   } cfg;
   
-  void (*handle)(proxyenv *env);
-  void (*handle_request)(proxyenv *env);
+  short (*handle)(proxyenv *env);
+  short (*handle_request)(proxyenv *env);
 
   void (*writeCreateObjectBegin)(proxyenv *env, char*name, size_t strlen, char createInstance, void *result);
   short (*writeCreateObjectEnd)(proxyenv *env);

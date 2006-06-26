@@ -43,6 +43,7 @@
 }
 
 short EXT_GLOBAL (parse) (proxyenv *env, parser_cb_t *cb) {
+  short rc;
   parser_string_t v1[1], v2[MAX_ARGS], v3[MAX_ARGS];
   parser_tag_t tag[] = {{0, v1}, {0, v2}, {0, v3}};
   unsigned char ch;
@@ -51,7 +52,7 @@ short EXT_GLOBAL (parse) (proxyenv *env, parser_cb_t *cb) {
   short level=0, in_dquote=0, eor=0, blen=0;
   register ssize_t pos=(*env)->pos, c=(*env)->c; size_t i=0, i0=0, e;
   register unsigned char *s=(*env)->s;
-  assert(s); if(!s) return 1;
+  assert(s); if(!s) exit(9);
 
   while(!eor) {
     if(c>=pos) { 
@@ -60,7 +61,7 @@ short EXT_GLOBAL (parse) (proxyenv *env, parser_cb_t *cb) {
       pos=(*env)->f_recv(env, (*env)->recv_buf, sizeof (*env)->recv_buf);
       if(!pos && errno==EINTR) goto res; // Solaris, see INN FAQ
       if(pos<=0) break;
-      c=0; 
+      c=0;
     }
     switch(ch=(*env)->recv_buf[c]) 
       {/* --- This block must be compilable with an ansi C compiler or javac  --- */
@@ -125,11 +126,13 @@ short EXT_GLOBAL (parse) (proxyenv *env, parser_cb_t *cb) {
       }
     c++;
   }
+  rc = eor;
   RESET();
-  return 0;
+  return rc;
 }
 
 short EXT_GLOBAL (parse_header) (proxyenv *env, parser_cb_t *cb) {
+  short rc;
   parser_string_t v1[1], v2[1], v3[1];
   parser_tag_t tag[] = {{0, v1}, {0, v2}, {0, v3}};
   unsigned char ch;
@@ -138,7 +141,7 @@ short EXT_GLOBAL (parse_header) (proxyenv *env, parser_cb_t *cb) {
   short level=0, in_dquote=0, eor=0, blen=0;
   register ssize_t pos=0, c=0; size_t i=0, i0=0;
   register unsigned char *s=(*env)->s;
-  assert(s); if(!s) return 1;
+  assert(s); if(!s) exit(9);
 
   while(!eor) {
     if(c>=pos) { 
@@ -181,9 +184,10 @@ short EXT_GLOBAL (parse_header) (proxyenv *env, parser_cb_t *cb) {
       }
     c++;
   }
+  rc = eor;
   RESET();
   (*env)->c=c; (*env)->pos=pos;
-  return 0;
+  return rc;
 }
 
 #if 0

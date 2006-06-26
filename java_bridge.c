@@ -23,7 +23,7 @@ static void checkError(pval *value TSRMLS_DC)
 {
 #ifndef ZEND_ENGINE_2
   if (Z_TYPE_P(value) == IS_EXCEPTION) {
-
+	struct cb_stack_elem *stack_elem = 0;
 	/* display the exception only if we do
 	   not abort a callback or if we abort
 	   a callback and this callback is not
@@ -32,8 +32,11 @@ static void checkError(pval *value TSRMLS_DC)
 	   call_user_func_array (which also
 	   reports the exception) when the
 	   callback is not a method. */
-    if(!JG(exception)||(JG(exception)&&!(JG(object)&&*JG(object))))
-	   php_error(E_WARNING, "%s", Z_STRVAL_P(value));
+	if(JG(cb_stack) && 
+	   (SUCCESS == zend_stack_top(JG(cb_stack), (void**)&stack_elem)) &&
+	   (!stack_elem->exception||(stack_elem->exception&&
+								 !(stack_elem->object&&*stack_elem->object))))
+	  php_error(E_WARNING, "%s", Z_STRVAL_P(value));
 
 	efree(Z_STRVAL_P(value));
     ZVAL_FALSE(value);

@@ -159,7 +159,9 @@ static void setResultFromObject (pval *presult, long value, char type) {
  * client catches the exception or there are no more frames available.
  */ 
 static int call_user_cb(zval**object, zval*func, zval**retval_ptr, zval*func_params TSRMLS_DC) {
-  int retval;
+  int retval, err;
+  struct cb_stack_elem stack_elem = {0, object, func, retval_ptr, func_params};
+  
   static const char name[] = "call_with_exception_handler";
 #if defined(ZEND_ENGINE_2)
   static const char call_with_exception_handler[] =
@@ -168,12 +170,13 @@ static int call_user_cb(zval**object, zval*func, zval**retval_ptr, zval*func_par
   static const char call_with_exception_handler[] =
 	EXT_NAME()/**/"_call_with_exception_handler();";
 #endif	
-  JG(object)=object;
-  JG(func)=func;
-  JG(retval_ptr)=retval_ptr;
-  JG(func_params)=func_params;
-
-  JG(exception)=0;
+  if(!JG(cb_stack)){
+	JG(cb_stack)=emalloc(sizeof*JG(cb_stack));
+	if(!JG(cb_stack))exit(9);
+	zend_stack_init(JG(cb_stack));
+  }
+  zend_stack_push(JG(cb_stack), &stack_elem, sizeof stack_elem);
+  
   retval = zend_eval_string((char*)call_with_exception_handler, 0, (char*)name TSRMLS_CC);
   return retval;
 }
@@ -184,16 +187,18 @@ static int call_user_cb(zval**object, zval*func, zval**retval_ptr, zval*func_par
  */
 static short handle_exception(zval*presult TSRMLS_DC) {
   short has_exception=0;
-  if(JG(exception)&&Z_TYPE_P(JG(exception))!=IS_NULL) {
+  struct cb_stack_elem *stack_elem;
+  int err = zend_stack_top(JG(cb_stack), (void**)&stack_elem); assert(SUCCESS==err);
+  if(stack_elem->exception&&Z_TYPE_P(stack_elem->exception)!=IS_NULL) {
 	proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
 	long result;
 	//php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Unhandled exception during callback in user function: %s.", 25, fname);
-	EXT_GLOBAL(get_jobject_from_object)(JG(exception), &result TSRMLS_CC);
+	EXT_GLOBAL(get_jobject_from_object)(stack_elem->exception, &result TSRMLS_CC);
 	has_exception=1;
 	(*jenv)->writeResultBegin(jenv, presult);
 	(*jenv)->writeException(jenv, result, "php exception", 0);
 	(*jenv)->writeResultEnd(jenv);
-	zval_ptr_dtor(&JG(exception));
+	zval_ptr_dtor(&stack_elem->exception);
 #if defined(ZEND_ENGINE_2)
 	zend_clear_exception(TSRMLS_C);
 #endif
@@ -212,10 +217,13 @@ static void setResultFromApply(zval *presult, unsigned char *cname, size_t clen,
 
   if (call_user_cb(&object, func, &retval_ptr, func_params TSRMLS_CC) != SUCCESS) {
 	php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not call user function: %s.", 23, cname);
+  } else {
+	int err;
+	if(!handle_exception(presult TSRMLS_CC)) EXT_GLOBAL(result)(retval_ptr, 0, presult TSRMLS_CC);
+	err = zend_stack_del_top(JG(cb_stack));
+	assert(SUCCESS==err);
   }
 
-  if(!handle_exception(presult TSRMLS_CC)) 
-	EXT_GLOBAL(result)(retval_ptr, 0, presult TSRMLS_CC);
   if(retval_ptr) 
 	zval_ptr_dtor(&retval_ptr);
   zval_ptr_dtor(&func);
@@ -481,13 +489,15 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
 }
 
 /* asyncronuous cb */
-static void handle_cached(proxyenv *env) {
+static short handle_cached(proxyenv *env) {
   struct async_ctx *ctx = &(*env)->async_ctx;
   setResultFromObject(ctx->result, ++ctx->nextValue, 'O');
+  return 1;
 }  
 
 /* synchronuous cb */
-static void handle_request(proxyenv *env) {
+static short handle_request(proxyenv *env) {
+  short rc;
   short tail_call;
   struct parse_ctx ctx = {0};
   parser_cb_t cb = {begin, end, &ctx, env};
@@ -497,12 +507,14 @@ static void handle_request(proxyenv *env) {
  handle_request:
   if(!(*env)->is_local && IS_OVERRIDE_REDIRECT(env)) {
 	parser_cb_t cb_header = {begin_header, 0, 0, env};
-	EXT_GLOBAL (parse_header) (env, &cb_header);
+	rc = EXT_GLOBAL (parse_header) (env, &cb_header);
+	if(!rc) return 0;
   }
   zend_stack_init(&ctx.containers);
-  EXT_GLOBAL (parse) (env, &cb);
+  rc = EXT_GLOBAL (parse) (env, &cb);
+  if(!rc) { zend_stack_destroy(&ctx.containers); return 0; }
   /* pull off A, if any */
-  if(SUCCESS==zend_stack_top(&ctx.containers, (void**)&stack_elem))	{ 
+  if(SUCCESS==zend_stack_top(&ctx.containers, (void**)&stack_elem))	{
 	int err;
 	assert(stack_elem->m); if(!stack_elem->m) exit(9);
 	assert(stack_elem->p); if(!stack_elem->p) exit(9);
@@ -558,6 +570,7 @@ static void handle_request(proxyenv *env) {
 	memset(&ctx, 0, sizeof ctx);
 	goto handle_request;
   }
+  return 1;
 }
 
 

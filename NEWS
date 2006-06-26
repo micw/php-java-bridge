@@ -5,6 +5,18 @@ Please send bug reports, questions and suggestions to
 
 Version 3.1.2:
 
+* Since java.lang.String.valueOf(object) does not necessarily return
+the string representation of object (for example when object is a
+dynamic proxy and programmed so that toString() returns null), the
+PHP/Java Bridge now uses its own object->String conversion.
+
+* It is now possible to create closures within other closures. This
+means that java_closure() now works when running php in interactive
+mode (with jrunscript -l php-interactive for example).
+
+* The DynamicJavaBridgeLoader can now be used in environments which
+make use of dynamic proxies, for example EJB or hibernate.
+
 * The default TCP port doesn't exist anymore. On Windows, or if the
 bridge has been compiled with -DCFG_JAVA_SOCKET_INET, and if
 java.socketname is not set, the bridge back-end automatically selects

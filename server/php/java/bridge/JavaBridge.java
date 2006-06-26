@@ -17,6 +17,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -29,6 +31,7 @@ import java.util.Map.Entry;
 
 import php.java.bridge.Request.PhpArray;
 import php.java.bridge.http.IContextFactory;
+import php.java.bridge.IllegalArgumentException;
 
 /**
  * This is the main class of the PHP/Java Bridge. It starts the standalone back-end,
@@ -612,9 +615,14 @@ public class JavaBridge implements Runnable {
 	    }
 
 	    Object coercedArgs[] = coerce(params=entry.getParameterTypes(selected), args, response);
-	    if (this.logLevel>4) logInvoke(clazz, name, coercedArgs); // If we have a logLevel of 5 or above, do very detailed invocation logging
-    	    response.setResultObject(selected.newInstance(coercedArgs));
-
+	    // If we have a logLevel of 5 or above, do very detailed invocation logging
+	    if (this.logLevel>4) {
+	        Object result = selected.newInstance(coercedArgs);
+	        logInvoke(result, name, coercedArgs);
+    	    	response.setResultObject(result);
+	    } else {
+  	    	response.setResultObject(selected.newInstance(coercedArgs));
+  	    }
 	} catch (Throwable e) {
 	    if(e instanceof OutOfMemoryError ||
 	       ((e instanceof InvocationTargetException) &&
@@ -843,38 +851,49 @@ public class JavaBridge implements Runnable {
 			}
 		    }
 	    	}
-	    } else if (arg instanceof Class) {
-	        if((parms[i] != Class.class)) throw new IllegalArgumentException("Received a Class type. But an Instance (of the Class) is required");
 	    } else if (arg instanceof Request.PhpArray) {
 	    	if(parms[i].isArray()) {
+	    	    Map.Entry e = null;
+	    	    Object tempArray = null;
+	    	    PhpArray ht = null;
 	    	    Class targetType = parms[i].getComponentType();
 		    try {
-			PhpArray ht = (PhpArray)arg;
+			ht = (PhpArray)arg;
 			size = ht.arraySize();
 			
 			// flatten hash into an array
 			targetType = parms[i].getComponentType();
-			Object tempArray = Array.newInstance(targetType, size);
-			
-			for (Iterator ii = ht.entrySet().iterator(); ii.hasNext(); ) {
-			    Map.Entry e = (Entry) ii.next();
+			tempArray = Array.newInstance(targetType, size);
+		    } catch (Exception ex) {
+			//logError("Could not create array from Map: " + objectDebugDescription(arg) + ". Cause: " + ex);
+			throw new IllegalArgumentException("Could not create array from Map: " + firstChars(arg), ex);
+		    }
+		    try {
+		        for (Iterator ii = ht.entrySet().iterator(); ii.hasNext(); ) {
+			    e = (Entry) ii.next();
 			    Array.set(tempArray, ((Number)(e.getKey())).intValue(), coerce(targetType, e.getValue(), response));
 			}
 			result[i]=tempArray;
-		    } catch (Exception e) {
-			logError("Could not create array of type: " + targetType + ", size: " + size + ": "+String.valueOf(e));
-			printStackTrace(e);
-			// leave result[i] alone...
+		    } catch (Exception ex) {
+			//logError("Could not create array of type: " + targetType + ", size: " + size + ", " + " failed entry at: " + e + ", from Map: " + objectDebugDescription(arg) + ". Cause: " + ex);
+			throw new IllegalArgumentException("Could not create array of type: " + targetType + ", size: " + size + ", " + " failed entry at: " + e, ex);
 		    }
 		} else if ((java.util.Collection.class).isAssignableFrom(parms[i])) {
 		    try {
 			Map m = (Map)arg;
 			Collection c = m.values();
+			if(!parms[i].isInstance(c))
+			  try { // could be a concrete class, for example LinkedList.
+			    Collection collection = (Collection) parms[i].newInstance();
+			    collection.addAll(c);
+			    c=collection;
+			  } catch (Exception e) { // it was an interface, try some concrete class
+			      try { c = new ArrayList(c); } catch (Exception ex) {/*we've tried*/}
+			  }
 			result[i]=c;
-		    } catch (Exception e) {
-			logError("Could not create Collection from Map: "+String.valueOf(e));
-			printStackTrace(e);
-			// leave result[i] alone...
+		    } catch (Exception ex) {
+			//logError("Could not create Collection from Map: " +objectDebugDescription(arg) + ". Cause: " + ex);
+			throw new IllegalArgumentException("Could not create Collection from Map: " + firstChars(arg), ex);
 		    }
 		} else if ((java.util.Hashtable.class).isAssignableFrom(parms[i])) {
 		    try {
@@ -884,10 +903,9 @@ public class JavaBridge implements Runnable {
 			res.putAll(ht);
 
 			result[i]=res;
-		    } catch (Exception e) {
-			logError("Could not create Hashtable from Map: "+String.valueOf(e));
-			printStackTrace(e);
-			// leave result[i] alone...
+		    } catch (Exception ex) {
+			logError("Could not create Hashtable from Map: " +objectDebugDescription(arg) + ". Cause: " + ex);
+			throw new IllegalArgumentException("Could not create Hashtable from Map: " + firstChars(arg), ex);
 		    }
 		} else if ((java.util.Map.class).isAssignableFrom(parms[i])) {
 		    result[i]=arg;
@@ -1081,7 +1099,11 @@ public class JavaBridge implements Runnable {
 	}
 	dmsg += ");\n";
 	Util.logDebug(dmsg);
-    }
+  }
+    public static void logResult(Object obj) {
+	String dmsg = "\nResult "+objectDebugDescription(obj) + "\n";
+	Util.logDebug(dmsg);
+  }
 
     /**
      * Invoke a method on a given object
@@ -1131,8 +1153,15 @@ public class JavaBridge implements Runnable {
 		}
 		coercedArgs = coerce(params=entry.getParameterTypes(selected), args, response);
 	    } while(again);
-	    if (this.logLevel>4) logInvoke(object, method, coercedArgs); // If we have a logLevel of 5 or above, do very detailed invocation logging
-	    setResult(response, selected.invoke(object, coercedArgs), selected.getReturnType());
+	    // If we have a logLevel of 5 or above, do very detailed invocation logging
+	    if (this.logLevel>4) {
+	        logInvoke(object, method, coercedArgs); 
+	        Object result = selected.invoke(object, coercedArgs);
+	        logResult(result);
+	        setResult(response, result, selected.getReturnType());
+	    } else {
+	        setResult(response, selected.invoke(object, coercedArgs), selected.getReturnType());	      
+	    }
 	} catch (Throwable e) {
 	    if(e instanceof OutOfMemoryError ||
 	       ((e instanceof InvocationTargetException) &&
@@ -1174,14 +1203,50 @@ public class JavaBridge implements Runnable {
 	}
     }
 
+    static private final int DISPLAY_MAX_ELEMENTS = 10;
+    static private final int DISPLAY_MAX_CHARS = 80;
+    private static String firstChars(Object o) {
+        String append="";
+        String s = o instanceof java.lang.reflect.Proxy? o.getClass().getName(): String.valueOf(o);
+        int len = s.length();
+        if(len>DISPLAY_MAX_CHARS) {append="..."; len=DISPLAY_MAX_CHARS;}
+        s = s.substring(0,len)+append;
+        return s;
+    }
     /**
      * Only for internal use
      * @param obj The object
      * @return A debug description.
      */
-    public static String objectDebugDescription(Object obj) {
-    	if(obj==null) return "[Object null]";
-	return "[Object "+System.identityHashCode(obj)+" - Class: "+ classDebugDescription(obj.getClass())+ "]";
+    public static String objectDebugDescription(Object ob) {
+        return objectDebugDescription(ob, 0);
+    }
+    /**
+     * Only for internal use
+     * @param obj The object
+     * @return A debug description.
+     */
+    private static String objectDebugDescription(Object ob, int level) {
+    	if(ob==null) return "[Object null]";
+    	Object obj = ob;
+    	if (obj instanceof Collection) obj = ((Collection)obj).toArray();
+    	else if(obj instanceof List) obj = ((List)obj).toArray();
+    	else if(obj instanceof Map) obj = ((Map)obj).values().toArray();
+    	if (level<DISPLAY_MAX_ELEMENTS && obj.getClass().isArray()) {
+    	    StringBuffer buf = new StringBuffer("[Object "+System.identityHashCode(ob)+" - Class: "+ classDebugDescription(ob.getClass())+ "]: ");
+    	    List l = Arrays.asList((Object[])obj);
+    	    buf.append("{\n");
+    	    int count = 0;
+    	    for(Iterator ii = l.iterator(); ii.hasNext(); ) {
+    	        buf.append(objectDebugDescription(ii.next(), level+1));
+    	        if(count>=DISPLAY_MAX_ELEMENTS) { buf.append("...\n"); break; }
+    	        buf.append("\n");
+    	    }
+    	    buf.append("}");
+    	    return buf.toString();
+    	} else {
+    	    return "[Object "+System.identityHashCode(obj)+" - Class: "+ classDebugDescription(obj.getClass())+"]";
+    	}
     }
 
     /**

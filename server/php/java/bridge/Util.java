@@ -351,7 +351,7 @@ public final class Util {
         buf.append(getShortClassName(obj));
 	buf.append("):");
 	buf.append("\"");
-	buf.append(String.valueOf(obj));
+	buf.append(Util.stringValueOf(obj));
 	buf.append("\"");
     }
     /**
@@ -806,5 +806,16 @@ public final class Util {
 	    if(val!=null) map.put(entries[i], val);
 	}
 	return map;
+    }
+    /** 
+     * This procedure should be used whenever <code>object</code> may be a dynamic proxy: 
+     * <code>String.valueOf(object) returns null, if object is a proxy and returns null.</code>
+     * 
+     * @param object The object or dynamic proxy
+     */
+    public static String stringValueOf(Object object) {
+        String s = String.valueOf(object);
+        if(s==null) s = String.valueOf(s);
+        return s;
     }
 }

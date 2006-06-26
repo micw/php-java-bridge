@@ -328,7 +328,7 @@ public class Response {
    		else if(staticType == Float.TYPE || staticType == Double.TYPE) 
 		    writeDouble(((Number)value).doubleValue());
    		else if(staticType == Character.TYPE) 
-		    writeString(String.valueOf(value));
+		    writeString(Util.stringValueOf(value));
    		else { Util.logFatal("Unknown type"); writeObject(value); }
 	    } else if(value instanceof Request.PhpString) //  No need to check for Request.PhpNumber, this cannot happen.
 	        writeString(((Request.PhpString)value).getBytes());
@@ -343,7 +343,7 @@ public class Response {
 	    if(!delegate.setResult(value)) setResultArray(value);
 	}
 	public boolean setResult(Object value) {
-	    if(!super.setResult(value)) writeString(String.valueOf(value));
+	    if(!super.setResult(value)) writeString(Util.stringValueOf(value));
 	    return true;
 	}
 	private boolean setResultArray(Object value) {
@@ -417,22 +417,22 @@ public class Response {
 		    if(value instanceof Number) 
 		        writeLong(((Number)value).longValue());
 		    else {
-		        try { writeLong(new Long(String.valueOf(value)).longValue()); } catch (NumberFormatException n) { writeLong(0); }
+		        try { writeLong(new Long(Util.stringValueOf(value)).longValue()); } catch (NumberFormatException n) { writeLong(0); }
 		    }
 		} else if(staticType == Float.TYPE || staticType == Double.TYPE) {
 		    if(value instanceof Number) 
 		        writeDouble(((Number)value).doubleValue());
 		    else {
-		        try { writeDouble(new Double(String.valueOf(value)).doubleValue()); } catch (NumberFormatException n) { writeDouble(0.0); }
+		        try { writeDouble(new Double(Util.stringValueOf(value)).doubleValue()); } catch (NumberFormatException n) { writeDouble(0.0); }
 		    }
 		} else if(staticType == Character.TYPE) {
-		    writeString(String.valueOf(value));
+		    writeString(Util.stringValueOf(value));
 		} else { Util.logFatal("Unknown type"); writeObject(value); }
 	    } else if(staticType == String.class) {
 		 if (value instanceof byte[])
 		     writeString((byte[])value);
 		 else
-		     writeString(String.valueOf(value));
+		     writeString(Util.stringValueOf(value));
 	    } else {
 		writeObject(value);
 	    }
@@ -475,6 +475,17 @@ public class Response {
 	currentWriter = writer = defaultWriter = newWriter(getDefaultDelegate());
     }
 
+    private Response(JavaBridge bridge, HexOutputBuffer buf) {
+        this.bridge = bridge;
+        this.buf=buf;
+        this.currentWriter = this.writer = this.defaultWriter = newWriter(getDefaultDelegate());      
+    }
+    /** Flush the current output buffer and create a new Response object 
+     * where are writers have their default value */
+    public Response copyResponse() throws IOException {
+        flush();
+        return new Response(bridge, buf);
+    }
     /**
       * Set the result packet.
       * @param object The result object.

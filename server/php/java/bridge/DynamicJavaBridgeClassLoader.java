@@ -8,13 +8,13 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.WeakHashMap;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
@@ -29,7 +29,7 @@ import java.util.jar.Manifest;
  * */
 public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     // maps rawPath -> URL[]
-    private static Map urlCache = Collections.synchronizedMap(new WeakHashMap());
+    private static Map urlCache = Collections.synchronizedMap(new HashMap()); //TODO: keep only recent entries
 	    
     protected DynamicJavaBridgeClassLoader(ClassLoader parent) {
     	super(parent);
@@ -325,17 +325,27 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     protected URLClassLoaderFactory getUrlClassLoaderFactory() {
     	return new URLClassLoaderFactory() {
     	        public URLClassLoader createUrlClassLoader(String classPath, URL urls[], ClassLoader parent) {
-		    return new URLClassLoader(urls, parent) {
+		    URLClassLoader loader = new URLClassLoader(urls, parent) {
 		      	    public String toString() {
 		      	        return String.valueOf(arrayToString(this.getURLs()));
 		      	    }
-    	                    protected Class findClass(String name) throws ClassNotFoundException {
-    	                    	if(Util.logLevel>4) Util.logDebug("trying to load class: " +name + " from: "+ toString());
+    	                    public Class loadClass(String name) throws ClassNotFoundException {
+    	                    	if(Util.logLevel>4) Util.logDebug("trying to load class: " +name + " from: "+ "LOADER-ID"+System.identityHashCode(this));
+    	                    	Class c = null;
+    	                    	ClassLoader parent;
     	                    	try {
-				    return super.findClass(name);
+    	                    	    if((parent=getParent())!=null) 
+    	                    	    	try {
+    	                    	    	    c = parent.loadClass(name);
+    	                    	    	} catch (ClassNotFoundException ex) {/*ignore*/}
+
+    	                    	    if(c==null) c = super.findClass(name);
+    	                    	} catch (ClassNotFoundException e) {
+    	                    	    throw e;
 				} catch (Exception ex) {
 				    throw new ClassNotFoundException("Class " + name + " not found due to exception: " + ex + ".", ex);
 				}
+				return c;
 			    }
 			    public URL findResource(String name)  {
 				//if(Util.logLevel>2) Util.logDebug("trying to load resource: " +name + " from: "+ arrayToString(this.getURLs()));
@@ -350,7 +360,9 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 				return resolveLibraryName(name);
 			    }
 			};
-		}
+			if(Util.logLevel>4) Util.logDebug("Added LOADER-ID"+System.identityHashCode(loader)+"\nOrigPath: " + classPath + "\nTranslated: "+ arrayToString(urls));
+			return loader;
+    	        }
 	    };
     }
     public String toString() {

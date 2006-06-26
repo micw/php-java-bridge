@@ -192,8 +192,8 @@ echo "Evaluated in $delta ms.\n";<br>
      available to the current script. All implicit web objects (session, servlet context, etc.) are <a href="server/documentation/API/php/java/servlet/Context.html#getHttpServletRequest()">available from the context</a>, if the back-end is running in a servlet engine or application server. The following example uses the jdk1.6 <a href="http://java.sun.com/javase/6/docs/tooldocs/share/jrunscript.html"><code>jrunscript</code></a> to eval PHP statements interactively:  <br><br>
 <code>
 /opt/jdk1.6/bin/jrunscript -l php-intractive<br>
-php-interactive&gt; echo java_context()->getAttribute("javax.script.name"); <br>
-=&gt; STDIN <br>
+php-interactive&gt; echo (string)(java_context()->getAttribute("javax.script.filename")); <br>
+=&gt; &lt;STDIN&gt; <br>
 <br>
 </code>
 <br>

@@ -48,12 +48,13 @@ public class DynamicClassLoader extends SecureClassLoader {
     private static final String nf = "not found"; // Dummy entry for cache maps if a class or resource can't be found.
     private static int instanceCount = 0;
     private static long debugStart = System.currentTimeMillis();
-
+    private static String ENTRY_SEPARATOR=";";
+    
     protected String arrayToString(URL[] array) {
 	StringBuffer buf = new StringBuffer();
 	for(int i=0; i<array.length; i++) {
 	    buf.append(String.valueOf(array[i]));
-	    if(i+1!=array.length) buf.append(File.pathSeparatorChar);
+	    if(i+1!=array.length) buf.append(ENTRY_SEPARATOR);
 	}
 	return buf.toString();
     }
@@ -171,7 +172,7 @@ public class DynamicClassLoader extends SecureClassLoader {
     }
 
     public void clear() {
-	//Util.logDebug("DynamicClassLoader("+System.identityHashCode(this)+").clear()\n");
+      if(Util.logLevel>5) Util.logDebug("DynamicClassLoader("+System.identityHashCode(this)+").clear()\n");
 	classLoaders.clear();
 	classPaths.clear();
 	urlsToAdd.clear();
@@ -220,7 +221,7 @@ public class DynamicClassLoader extends SecureClassLoader {
     }
 
     protected URLClassLoaderEntry realAddURLs(String classPath, URL urls[]) {
-	//Util.logDebug("DynamicClassLoader("+System.identityHashCode(this)+").realAddURLs(\""+classPath+"\","+getStringFromURLArray(urls)+")\n");
+        if(Util.logLevel>5) Util.logDebug("DynamicClassLoader("+System.identityHashCode(this)+").realAddURLs(\""+classPath+"\","+getStringFromURLArray(urls)+")\n");
 	URLClassLoaderEntry entry = getClassPathFromCache(classPath);
 	if (entry==null) {
 	    entry = createURLClassLoader(classPath, urls);
@@ -243,7 +244,7 @@ public class DynamicClassLoader extends SecureClassLoader {
     }
 
     protected void lazyAddURLs(String classPath, URL urls[]) {
-	//Util.logDebug("DynamicClassLoader("+System.identityHashCode(this)+").lazyAddURLs(\""+classPath+"\","+getStringFromURLArray(urls)+")\n");
+        if(Util.logLevel>5) Util.logDebug("DynamicClassLoader("+System.identityHashCode(this)+").lazyAddURLs(\""+classPath+"\","+getStringFromURLArray(urls)+")\n");
 	Object params[] = new Object[] {classPath, urls};
 	urlsToAdd.add(params);
     }
@@ -289,7 +290,7 @@ public class DynamicClassLoader extends SecureClassLoader {
 	this.factory = factory;
     }
     protected URLClassLoaderEntry createURLClassLoader(String classPath, URL urls[]) {
-	//Util.logDebug("DynamicClassLoader("+System.identityHashCode(this)+").createURLClassLoader(\""+classPath+"\","+getStringFromURLArray(urls)+")\n");
+        if(Util.logLevel>5) Util.logDebug("DynamicClassLoader("+System.identityHashCode(this)+").createURLClassLoader(\""+classPath+"\","+getStringFromURLArray(urls)+")\n");
 	URLClassLoader cl = factory.createUrlClassLoader(classPath, urls, this.getParent());
 	URLClassLoaderEntry entry = new URLClassLoaderEntry(cl, System.currentTimeMillis());
 	SoftReference cacheEntry = new SoftReference(entry);
@@ -332,8 +333,8 @@ public class DynamicClassLoader extends SecureClassLoader {
      */
     public Class loadClass(String name) throws ClassNotFoundException {
 	Class result = null;
-	//Util.logDebug("DynamicClassLoader("+System.identityHashCode(this)+").loadClass("+name+")\n");
-	//Util.logDebug("Trying parent\n");
+	if(Util.logLevel>5) Util.logDebug("DynamicClassLoader("+System.identityHashCode(this)+").loadClass("+name+")\n");
+	if(Util.logLevel>5) Util.logDebug("Trying parent\n");
 	Object c = null;
 	synchronized(parentCache) {
 	    c = parentCache.get(name);
@@ -352,7 +353,7 @@ public class DynamicClassLoader extends SecureClassLoader {
 	URLClassLoaderEntry e = null;
 	while (iter.hasNext()) {
 	    e = (URLClassLoaderEntry) classLoaders.get(iter.next());
-	    //Util.logDebug("Trying "+(System.identityHashCode(e.cl)+"\n"));
+	    if(Util.logLevel>5) Util.logDebug("Trying "+(System.identityHashCode(e.cl)+"\n"));
 	    synchronized(e.cache) {
 		c = e.cache.get(name);
 		if (c!=nf) {
@@ -369,7 +370,7 @@ public class DynamicClassLoader extends SecureClassLoader {
 	}
 	e = addDelayedURLs();
 	while (e!=null) {
-	    //Util.logDebug("Trying "+(System.identityHashCode(e.cl)+"\n"));
+	    if(Util.logLevel>5) Util.logDebug("Trying "+(System.identityHashCode(e.cl)+"\n"));
 	    synchronized(e.cache) {
 		c = e.cache.get(name);
 		if (c!=nf) {

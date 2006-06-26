@@ -541,8 +541,8 @@ public final class Request implements IDocHandler {
      * @throws Throwable thrown by the PHP code.
      */
     protected Object[] handleSubRequests() throws IOException, Throwable {
-    	response.flush();
-    	Arg current = arg;
+      	Response currentResponse = response; Arg current = arg;
+    	response = response.copyResponse(); // must keep the current response state, for example coerceWriter for castToString() 
     	arg = new SimpleArg();
 	while(Parser.OK==parser.parse(bridge.in)){
 	    response.setResultID(arg.id); 
@@ -552,20 +552,22 @@ public final class Request implements IDocHandler {
 		    bridge.GetSetProp(arg.callObject, arg.method, arg.getArgs(), response);
 		else
 		    bridge.Invoke(arg.callObject, arg.method, arg.getArgs(), response);
-		response.flush();   
+		response.flush();
 		break;
 	    case 'C':
 		if(arg.predicate)
 		    bridge.CreateObject((String)arg.callObject, false, arg.getArgs(), response);
 		else
 		    bridge.CreateObject((String)arg.callObject, true, arg.getArgs(), response);
-		response.flush();   
+		response.flush();
 		break;
 	    case 'R':
 	    	Arg ret = arg;
 	    	arg = current;
-	    	response.reset();
 	    	
+	    	// remove retval from the output buffer and return it to the parent.
+	    	response.reset();
+	    	response = currentResponse;
 	    	if(ret.callObject!=null) 
 	    	    throw (Throwable)ret.callObject;
 	    	return ret.getArgs();
@@ -573,6 +575,7 @@ public final class Request implements IDocHandler {
 	    arg.reset();
 	}
 	arg = current;
+	response = currentResponse;
 	throw new IllegalStateException(SUB_FAILED);
     }
 

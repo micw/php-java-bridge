@@ -248,9 +248,8 @@ short EXT_GLOBAL(values)(INTERNAL_FUNCTION_PARAMETERS)
   obj = 0;
   if(Z_TYPE_PP(pobj) == IS_OBJECT) {
 	EXT_GLOBAL(get_jobject_from_object)(*pobj, &obj TSRMLS_CC);
-  } else {
-	convert_to_array_ex(pobj);
   }
+
   if(!obj) {
 	*return_value = **pobj;
 	zval_copy_ctor(return_value);

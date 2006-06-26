@@ -152,7 +152,7 @@ i: unsigned long
 
 <-
 Apply:
-<A v=object p=cname m=fname n=param# i=ID> ...ARGS...
+<A v=object p=cname m=fname n=param# i=ID> ...PAIRS...
 </A>
 v: unsigned long
 p: string
@@ -178,7 +178,7 @@ i: unsigned long
 
 ->  (or <->, see below)
 Composite:
-<X t=A|H [i=ID] /> ...PAIR...
+<X t=A|H [i=ID] /> ...PAIRS...
 </X>
 t: char ([A]rray, [H]ashtable)
 i: unsigned long (reply only)

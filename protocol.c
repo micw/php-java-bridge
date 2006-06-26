@@ -176,7 +176,7 @@ static short flush(proxyenv *env) {
   short success;
   if((*env)->connection_is_closed) return 0;
   success = finish(env);
-  if(success) (*env)->handle(env);
+  if(success) success=(*env)->handle(env);
   return success;
 }
 
@@ -615,7 +615,7 @@ short EXT_GLOBAL(close_connection)(proxyenv*env, short persistent_connection TSR
   if(!persistent_connection || !success) close_connection(env TSRMLS_CC);
   return success;
 }
-proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, void (*handle_request)(proxyenv *env), void (*handle_cached)(proxyenv *env), char *server_name, short is_local, struct sockaddr *saddr) {
+proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, short (*handle_request)(proxyenv *env), short (*handle_cached)(proxyenv *env), char *server_name, short is_local, struct sockaddr *saddr) {
    proxyenv *env;  
    env=(proxyenv*)malloc(sizeof *env);     
    if(!env) return 0;

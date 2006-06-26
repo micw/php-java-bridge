@@ -93,6 +93,10 @@ static short shutdown_connections(TSRMLS_D) {
 PHP_RSHUTDOWN_FUNCTION(EXT)
 {
   shutdown_connections(TSRMLS_C);
+  if(JG(cb_stack)) { 
+	assert(zend_stack_is_empty(JG(cb_stack)));
+	efree(JG(cb_stack)); JG(cb_stack) = 0; 
+  }
   JG(is_closed)=1;
   return SUCCESS;
 }
@@ -392,10 +396,13 @@ EXT_FUNCTION(EXT_GLOBAL(get_closure))
 EXT_FUNCTION(EXT_GLOBAL(exception_handler))
 {
   zval **pobj;
+  struct cb_stack_elem *stack_elem;
+  int err = zend_stack_top(JG(cb_stack), (void**)&stack_elem); assert(SUCCESS==err);
+
   if (ZEND_NUM_ARGS()!=1 || zend_get_parameters_ex(1, &pobj) == FAILURE) WRONG_PARAM_COUNT;
-  MAKE_STD_ZVAL(JG(exception)); 
-  *JG(exception)=**pobj;
-  zval_copy_ctor(JG(exception));
+  MAKE_STD_ZVAL(stack_elem->exception);
+  *stack_elem->exception=**pobj;
+  zval_copy_ctor(stack_elem->exception);
 
   RETURN_NULL();
 }
@@ -406,16 +413,20 @@ EXT_FUNCTION(EXT_GLOBAL(exception_handler))
 static void check_php4_exception(TSRMLS_D) {
 #ifndef ZEND_ENGINE_2
   proxyenv*jenv = JG(jenv);
-  (*jenv)->writeInvokeBegin(jenv, 0, "lastException", 0, 'P', JG(exception));
+  struct cb_stack_elem *stack_elem;
+  int err = zend_stack_top(JG(cb_stack), (void**)&stack_elem); assert(SUCCESS==err);
+  (*jenv)->writeInvokeBegin(jenv, 0, "lastException", 0, 'P', stack_elem->exception);
   (*jenv)->writeInvokeEnd(jenv);
 #endif
 }
 static int allocate_php4_exception(TSRMLS_D) {
 #ifndef ZEND_ENGINE_2
   proxyenv*jenv = JG(jenv);
-  MAKE_STD_ZVAL(JG(exception));
-  ZVAL_NULL(JG(exception));
-  (*jenv)->writeInvokeBegin(jenv, 0, "lastException", 0, 'P', JG(exception));
+  struct cb_stack_elem *stack_elem;
+  int err = zend_stack_top(JG(cb_stack), (void**)&stack_elem); assert(SUCCESS==err);
+  MAKE_STD_ZVAL(stack_elem->exception);
+  ZVAL_NULL(stack_elem->exception);
+  (*jenv)->writeInvokeBegin(jenv, 0, "lastException", 0, 'P', stack_elem->exception);
   (*jenv)->writeObject(jenv, 0);
   (*jenv)->writeInvokeEnd(jenv);
 #endif
@@ -423,20 +434,21 @@ static int allocate_php4_exception(TSRMLS_D) {
 }
 static void call_with_handler(char*handler, const char*name TSRMLS_DC) {
   if(allocate_php4_exception(TSRMLS_C)) {
-	int err;
-
+	int err, e;
+	struct cb_stack_elem *stack_elem;
 #ifdef ZEND_ENGINE_2
 	php_set_error_handling(EH_THROW, zend_exception_get_default() TSRMLS_CC);
 #endif
+	e = zend_stack_top(JG(cb_stack), (void**)&stack_elem); assert(SUCCESS==e);
 	err = 
-	  zend_eval_string((char*)handler, *JG(retval_ptr), (char*)name TSRMLS_CC);
+	  zend_eval_string((char*)handler, *stack_elem->retval_ptr, (char*)name TSRMLS_CC);
 
 #ifdef ZEND_ENGINE_2
 	php_std_error_handling();
 #endif
 	
 	if (err != SUCCESS) { 
-	  php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not call user function: %s.", 22, Z_STRVAL_P(JG(func)));
+	  php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not call user function: %s.", 22, Z_STRVAL_P(stack_elem->func));
 	}
   }
 }
@@ -468,16 +480,19 @@ static int java_call_user_function_ex(HashTable *function_table, zval **object_p
 }
 static void call_with_params(int count, zval ***func_params TSRMLS_DC) {
   if(allocate_php4_exception(TSRMLS_C)) {/* checked and destroyed in client. handle_exception() */
-	int err;
+	struct cb_stack_elem *stack_elem;
+	int err, e;
 #ifdef ZEND_ENGINE_2
 	php_set_error_handling(EH_THROW, zend_exception_get_default() TSRMLS_CC);
 #endif
-	err = java_call_user_function_ex(0, JG(object), JG(func), JG(retval_ptr), count, func_params, 1, 0 TSRMLS_CC);
+	e = zend_stack_top(JG(cb_stack), (void**)&stack_elem);
+	assert(SUCCESS==e);
+	err = java_call_user_function_ex(0, stack_elem->object, stack_elem->func, stack_elem->retval_ptr, count, func_params, 1, 0 TSRMLS_CC);
 #ifdef ZEND_ENGINE_2
 	php_std_error_handling();
 #endif
 	if (err != SUCCESS) {
-	  php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not call user function: %s.", 23, Z_STRVAL_P(JG(func)));
+	  php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not call user function: %s.", 23, Z_STRVAL_P(stack_elem->func));
 	}
   }
 }
@@ -487,46 +502,49 @@ static void call_with_params(int count, zval ***func_params TSRMLS_DC) {
  */
 EXT_FUNCTION(EXT_GLOBAL(call_with_exception_handler))
 {
-  zval ***func_params;
-  HashTable *func_params_ht;
-  int count, current;
+  int count, current, err;
+  struct cb_stack_elem *stack_elem;
+  err = zend_stack_top(JG(cb_stack), (void**)&stack_elem); assert(SUCCESS==err);
   if (ZEND_NUM_ARGS()==1) {
-	*return_value=*JG(func_params);
+	*return_value=*stack_elem->func_params;
 	zval_copy_ctor(return_value);
 	return;
   }
   /* for functions in the global environment */
-  if(!*JG(object)) {
+  if(!*stack_elem->object) {
 	static const char name[] = "call_global_func_with_exception_handler";
 	static const char call_user_funcH[] = "call_user_func_array('";
 	static const char call_user_funcT[] = "',"/**/EXT_NAME()/**/"_call_with_exception_handler(true));";
-	char *handler=emalloc(sizeof(call_user_funcH)-1+Z_STRLEN_P(JG(func))+sizeof(call_user_funcT));
+	char *handler=emalloc(sizeof(call_user_funcH)-1+Z_STRLEN_P(stack_elem->func)+sizeof(call_user_funcT));
 	assert(handler); if(!handler) exit(9);
 	strcpy(handler, call_user_funcH); 
-	strcat(handler, Z_STRVAL_P(JG(func))); 
+	strcat(handler, Z_STRVAL_P(stack_elem->func));
 	strcat(handler, call_user_funcT);
 
-	MAKE_STD_ZVAL(*JG(retval_ptr)); ZVAL_NULL(*JG(retval_ptr)); 
+	MAKE_STD_ZVAL(*stack_elem->retval_ptr); ZVAL_NULL(*stack_elem->retval_ptr);
 	call_with_handler(handler, name TSRMLS_CC);
 	check_php4_exception(TSRMLS_C);
 	efree(handler);
-	RETURN_NULL();
+  } else {
+	zval ***func_params;
+	HashTable *func_params_ht;
+	/* for methods */
+	current=0;
+	func_params_ht = Z_ARRVAL_P(stack_elem->func_params);
+	count = zend_hash_num_elements(func_params_ht);
+	func_params = safe_emalloc(sizeof(zval **), count, 0);
+	for (zend_hash_internal_pointer_reset(func_params_ht);
+		 zend_hash_get_current_data(func_params_ht, (void **) &func_params[current]) == SUCCESS;
+		 zend_hash_move_forward(func_params_ht)
+		 ) {
+	  current++;
+	}
+	
+	call_with_params(count, func_params TSRMLS_CC);
+	check_php4_exception(TSRMLS_C);
+	efree(func_params);
   }
-  /* for methods */
-  current=0;
-  func_params_ht = Z_ARRVAL_P(JG(func_params));
-  count = zend_hash_num_elements(func_params_ht);
-  func_params = safe_emalloc(sizeof(zval **), count, 0);
-  for (zend_hash_internal_pointer_reset(func_params_ht);
-	   zend_hash_get_current_data(func_params_ht, (void **) &func_params[current]) == SUCCESS;
-	   zend_hash_move_forward(func_params_ht)
-	   ) {
-	current++;
-  }
-
-  call_with_params(count, func_params TSRMLS_CC);
-  check_php4_exception(TSRMLS_C);
-  efree(func_params);
+	
   RETURN_NULL();
 }
 
@@ -1221,6 +1239,7 @@ static int cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_
   }
 
   if(obj) {
+	INIT_PZVAL(writeobj);
     ZVAL_NULL(writeobj);
 	switch(type) {
 
