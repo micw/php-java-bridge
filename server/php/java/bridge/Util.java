@@ -757,22 +757,23 @@ public final class Util {
     public static ClassLoader getContextClassLoader() {
         return JavaBridgeClassLoader.DEFAULT_CLASS_LOADER;
     }
-    
-    private static void redirectJavaOutput() {
-	try {
-	    System.setOut(Util.logStream);
-	    System.setErr(Util.logStream);
-	} catch (Throwable t) {/*ignore*/}
-    }
+    /** Redirect System.out and System.err to the configured logFile or System.err.
+     * System.out is always redirected, either to the logFile or to System.err.
+     * This is because System.out is reserved to report the status back to the 
+     * container (IIS, Apache, ...) running the JavaBridge back-end.
+     * @param redirectOutput this flag is set, if natcJavaBridge has already redirected stdin, stdout, stderr
+     * @param logFile the log file
+     */
     static void redirectOutput(boolean redirectOutput, String logFile) {
         Util.logStream = System.err;
 	if(!redirectOutput) {
-	    if(logFile.length()>0) 
+	    if(logFile != null && logFile.length()>0) 
 		try {
 		    Util.logStream=new java.io.PrintStream(new java.io.FileOutputStream(logFile));
-		} catch (Exception e) {printStackTrace(e);}
-	    redirectJavaOutput();
+		} catch (Exception e) {e.printStackTrace();}
+	    try { System.setErr(logStream); } catch (Exception e) {e.printStackTrace(); }
 	}
+	try { System.setOut(logStream); } catch (Exception e) {e.printStackTrace(); System.exit(9); }
     }
 
     private static final Class[] STRING_PARAM = new Class[]{String.class};

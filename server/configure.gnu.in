@@ -7,8 +7,8 @@ autoheader
 autoconf
 
 # On the Mac libtool is called "glibtool"
-{ { libtool=glibtool;$libtool --version 2>/dev/null| fgrep -q "(GNU libtool)"; }||
-{ libtool=libtool;$libtool --version| fgrep -q "(GNU libtool)"; } } &&
+{ { libtool=glibtool;$libtool --version 2>/dev/null| fgrep "(GNU libtool)"; }||
+{ libtool=libtool;$libtool --version| fgrep "(GNU libtool)"; } } &&
 { "${libtool}ize" -f 2>/dev/null || libtoolize -f; ln -sf `which "${libtool}"` libtool; }
 
 automake -a --foreign 

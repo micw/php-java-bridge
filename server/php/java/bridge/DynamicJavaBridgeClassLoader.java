@@ -214,7 +214,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
         updateJarLibraryPath(checkJarLibraryPath(rawPath, rawContextDir));
     }
     /** Update the library path for the bridge instance. 
-     * @param The checked JarLibraryPath
+     * @param path the checked JarLibraryPath
      * @throws IOException 
      * @see #checkJarLibraryPath(String, String)
      */
@@ -292,14 +292,14 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	    return false;
 	}
     }
-    private static final String getLibDir() {
+    private static final String getLD_LIBRARY_PATH() {
 	try {
 	    return System.getProperty("java.library.path");
 	} catch (Throwable t) {
 	    return "[error: no java.library.path set]";
 	}
     }
-    private static final String getSharedLibDir() {
+    private static final String getCLASSPATH() {
 	try {
 	    return System.getProperty("java.ext.dirs");
 	} catch (Throwable t) {
@@ -307,8 +307,8 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	}
     }
     static final boolean IS_GNU_JAVA = checkVM();
-    static final String LIB_DIR = getLibDir();
-    static final String SHARED_LIB_DIR = getSharedLibDir();
+    static final String LD_LIBRARY_PATH = getLD_LIBRARY_PATH();
+    static final String CLASSPATH = getCLASSPATH();
 
     /**
      * Searches for a library name in our classpath
@@ -329,32 +329,49 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 		      	    public String toString() {
 		      	        return String.valueOf(arrayToString(this.getURLs()));
 		      	    }
-    	                    public Class loadClass(String name) throws ClassNotFoundException {
+		      	    private Map cache = new HashMap();
+    	                    public Class loadClass(String name) throws ClassNotFoundException {                      
+    	                        Class result = null;
+    	                  	Object c = null;
     	                    	if(Util.logLevel>4) Util.logDebug("trying to load class: " +name + " from: "+ "LOADER-ID"+System.identityHashCode(this));
-    	                    	Class c = null;
-    	                    	ClassLoader parent;
-    	                    	try {
-    	                    	    if((parent=getParent())!=null) 
-    	                    	    	try {
-    	                    	    	    c = parent.loadClass(name);
-    	                    	    	} catch (ClassNotFoundException ex) {/*ignore*/}
-
-    	                    	    if(c==null) c = super.findClass(name);
-    	                    	} catch (ClassNotFoundException e) {
-    	                    	    throw e;
+				c = cache.get(name);
+				if (c != nf) {
+				    if (c != null)
+					return (Class) c;
+				    try {
+					result = doLoadClass(name);
+					cache.put(name, result);
+					return result;
+				    } catch (ClassNotFoundException cnfe) {
+					cache.put(name, nf);
+				    }
+    	                    	}
+				throw new ClassNotFoundException(name);
+			    }
+			    private Class doLoadClass(String name) throws ClassNotFoundException {
+  	                    	ClassLoader parent;
+  	                    	Class c = null;
+  	                    	try {
+  	                    	    if((parent=getParent())!=null) 
+  	                    	    	try {
+  	                    	    	    c = parent.loadClass(name);
+  	                    	    	} catch (ClassNotFoundException ex) {/*ignore*/}
+  	                    	    if(c==null) c = super.findClass(name);
+  	                    	    if(c!=null) return c;
+  	                    	} catch (ClassNotFoundException e) {
+  	                    	    throw e;
 				} catch (Exception ex) {
 				    throw new ClassNotFoundException("Class " + name + " not found due to exception: " + ex + ".", ex);
 				}
-				return c;
+				throw new ClassNotFoundException(name);
 			    }
 			    public URL findResource(String name)  {
-				//if(Util.logLevel>2) Util.logDebug("trying to load resource: " +name + " from: "+ arrayToString(this.getURLs()));
 				return super.findResource(name);
     	                	
 			    }
 			    protected String findLibrary(String name) {
-				if(Util.logLevel>4) Util.logDebug("trying to load library: " +name + " from: "+ toString());
-				if(!IS_GNU_JAVA) throw new UnsatisfiedLinkError("This java VM can only load pure java libraries. Either use GNU java instead or move the java library to " + LIB_DIR + "and the shared library "+ name +" to "+ SHARED_LIB_DIR);
+				if(Util.logLevel>4) Util.logDebug("trying to load library: " +name + " from: "+"LOADER-ID"+System.identityHashCode(this));
+				if(!IS_GNU_JAVA) throw new UnsatisfiedLinkError("This java VM can only load pure java libraries. Either use GNU java instead or move the java library to " + CLASSPATH + " and the shared library "+ name +" to "+ LD_LIBRARY_PATH);
 				String s = super.findLibrary(name);
 				if(s!=null) return s;
 				return resolveLibraryName(name);

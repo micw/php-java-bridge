@@ -176,7 +176,7 @@ struct cb_stack_elem {
   zval *func;
   zval **retval_ptr;
   zval *func_params;
-} cb_stack_elem;
+};
 
 /**
  * The following structure contains per-request variables.

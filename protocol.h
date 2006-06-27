@@ -40,11 +40,11 @@
 #define LOGFILE ""
 
 #define LOG_OFF 0
-#define LOG_FATAL 1
-#define LOG_ERROR 2 /* default level */
+#define LOG_FATAL 1  /* default level */
+#define LOG_ERROR 2
 #define LOG_INFO 3 
 #define LOG_DEBUG 4
-#define DEFAULT_LEVEL "2"
+#define DEFAULT_LEVEL "1"
 
 #define N_JAVA_SARGS 10
 #define N_JAVA_SENV 3 

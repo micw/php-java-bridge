@@ -1215,7 +1215,7 @@ public class JavaBridge implements Runnable {
     }
     /**
      * Only for internal use
-     * @param obj The object
+     * @param ob The object
      * @return A debug description.
      */
     public static String objectDebugDescription(Object ob) {

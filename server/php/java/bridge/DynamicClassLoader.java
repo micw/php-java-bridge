@@ -45,7 +45,7 @@ public class DynamicClassLoader extends SecureClassLoader {
     protected static Map parentCacheMap = new WeakHashMap(); // Holds global caches for parent Classloaders
     public static long defaultCacheTimeout = 2000;  // By default minumum file modification check interval is 2 seconds, that should be fast enough :)
     public static boolean defaultLazy = true;  // By default lazy classpath addition
-    private static final String nf = "not found"; // Dummy entry for cache maps if a class or resource can't be found.
+    protected static final String nf = "not found"; // Dummy entry for cache maps if a class or resource can't be found.
     private static int instanceCount = 0;
     private static long debugStart = System.currentTimeMillis();
     private static String ENTRY_SEPARATOR=";";

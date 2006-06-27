@@ -54,7 +54,6 @@ public class ParserString {
     }
     /**
      * Returns the string encoded via java_set_file_encoding().
-     * @param options The current request options.
      * @return The encoded string value.
      * @see php.java.bridge.Options#getEncoding()
      */
@@ -63,7 +62,6 @@ public class ParserString {
     }
     /**
      * Returns the cached string encoded via java_set_file_encoding().
-     * @param options The current request options.
      * @return The encoded string value.
      * @see php.java.bridge.Options#getEncoding()
      */

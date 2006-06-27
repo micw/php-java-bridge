@@ -665,7 +665,7 @@ array_key_exists('HTTP_HOST', $_SERVER)) ?$_SERVER['PHP_SELF']:null;";
 	  }
 	  assert(JG(servlet));
 	  free(JG(servlet));
-	  JG(servlet) = tmp = malloc(len+bridge_extension_size+100);
+	  JG(servlet) = tmp = malloc(len+bridge_extension_size);
 	  assert(tmp); if(!tmp) exit(9);
 	  strcpy(tmp, strval);
 	  strcat(tmp, bridge_extension);

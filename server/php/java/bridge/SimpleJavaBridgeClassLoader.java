@@ -83,14 +83,6 @@ public class SimpleJavaBridgeClassLoader {
         this((DynamicJavaBridgeClassLoader)null);
     }
 
-    /**
-     * @deprecated Use JavaBridgeClassLoader(loader) instead
-     * @see #JavaBridgeClassLoader(DynamicJavaBridgeClassLoader)
-     */
-    public SimpleJavaBridgeClassLoader(JavaBridge bridge, DynamicJavaBridgeClassLoader loader) {
-	this();
-    }
-
     /** pass path from the first HTTP statement to the ContextRunner */
     protected JarLibraryPath cachedPath;
     protected boolean checkCl() {

@@ -1,3 +1,88 @@
+2006-06-27  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/servlet/PhpCGIServlet.java (CGI_SSL_CHANNEL): New constant.
+	
+	* server/php/java/faces/PhpFacesScriptEngine.java
+	(setNewContextFactory), server/php/java/servlet/PhpCGIServlet.java
+	(setCGIEnvironment): Use constant.
+	
+	* server/php/java/bridge/DynamicJavaBridgeClassLoader.java
+	(getUrlClassLoaderFactory): Added our own cache algorithm. In the
+	SUN implementations the URLClassLoader findClass method simply
+	calls defineClass without any further checks.  This will fail with
+	a DuplicateClassDefinition, if this URLClassLoader has already
+	loaded the class. This fix corrects the bug introduced in the
+	previous change (for 3.1.2).
+	
+	* VERSION, php-java-bridge.spec: PHP/Java Bridge version 3.1.3
+	replaces version 3.1.2
+	
+2006-06-25  Jost Boekemeier  <jostb@intern>
+
+	* api.c (values): Leave the value alone, if it is not an object.
+
+	* java.c 
+	(make_local_socket_info): Moved to bind.c 
+	
+	* bind.c
+	(make_local_socket_info): New from java.c
+	(get_server_args, start_server): The JavaBridge back-end now
+	selects the appropriate channel and writes it to stdout. Read the
+	selected channel so that the bridge can run as a sub-component of
+	IIS, which usually starts two instances of the bridge.
+
+	* client.c
+	(call_user_cb, handle_exception, setResultFromApply), java.c
+	(RSHUTDOWN, exception_handler, check_php4_exception,
+	allocate_php4_exception, call_with_handler, call_with_params,
+	call_with_exception_handler): java_closures can now be nested.
+
+	* client.c (handle_cached, handle_request): Return status.
+
+	* parser.c (parse, parse_header): Return status
+
+	* protocol.c (flush): Check status so that the bridge can
+	re-connect, if the back-end has been restarted.
+
+	* server/configure.gnu.in, server/configure.in: Added test for Mac
+
+	* server/Makefile.am, server/configure.in: Use -source 1.4 and -target 1.4, 
+	if jre wasn't specified during ./configure --with-java=<jdk>[,<jre>].
+	
+	* server/php/java/bridge/DynamicJavaBridgeClassLoader.java
+	(getUrlClassLoaderFactory): Do not use the parent cache, which
+	uses the global getLoadedClass(name), to avoid problems with
+	cached classes from other loaders. The loader entry now uses a private,
+	per-loader-entry cache.
+
+	* server/php/java/bridge/IllegalArgumentException.java: New class.
+
+	* server/php/java/bridge/JavaBridge.java (coerce): Throw an
+	IllegalArgumentException, if an array could not be coerced.
+	(init): If log file starts with @, check for chainsaw logger
+
+	* server/php/java/bridge/JavaBridge.java
+	(init): Write the selected channel to stdout.
+
+	* server/php/java/bridge/Log4jLogger.java (createLog4jLogger): New procedure
+	(Log4jLogger): Removed public constructor
+	
+	* server/php/java/bridge/ChainsawLogger.java (createChainsawLogger): New procedure
+	(ChainsawLogger): Removed public constructor
+
+	* server/php/java/bridge/Request.java (handleSubRequests): Handle nested closures.
+
+	* server/php/java/bridge/Response.java (copyResponse): New method.
+
+	* server/php/java/bridge/Util.java (stringValueOf): New
+	procedure. Use this procedure instead of String.valueOf(ob),
+	because String.valueOf(ob) does not necessarily return the string
+	representation of ob, e.g. ob is a dynamic proxy with a toString()
+	method that returns null.
+
+	* VERSION, php-java-bridge.spec: Version 3.1.2 released
+	
+	
 2006-06-20  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/DynamicJavaBridgeClassLoader.java

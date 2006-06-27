@@ -124,7 +124,7 @@ public final class StringCache {
      * @param start The start position within the byte array
      * @param length The length of the array
      * @param encoding The file.encoding.
-     * @return
+     * @return the cached string.
      */
     public String getString(byte[] name, int start, int length, String encoding) {
         Entry e = getEntry(name, start, length, encoding);
