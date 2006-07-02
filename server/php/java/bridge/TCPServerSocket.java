@@ -6,9 +6,11 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+// Note: Make sure that classes like Util or JavaBridge are only accessed if something fails
+// The default path should only load the Standalone and the Socket classes
 class TCPServerSocket implements ISocketFactory {
 
-    public static final String DefaultSocketname = Util.TCP_SOCKETNAME;
+    private static final int TCP_PORT_BASE=9267; //try to find a free port in the range 9267, ..., 9366
     private ServerSocket sock;
     private int port;
     boolean local;
@@ -17,7 +19,7 @@ class TCPServerSocket implements ISocketFactory {
 	int p;
 	boolean local = false;
 
-	if(name==null) name=DefaultSocketname;
+	if(name==null) name=Util.TCP_SOCKETNAME;
 	if(name.startsWith("INET:")) name=name.substring(5);
 	if(name.startsWith("INET_LOCAL:")) { local = true; name=name.substring(11); }
 	else if(name.startsWith("LOCAL:")) return null;
@@ -25,7 +27,7 @@ class TCPServerSocket implements ISocketFactory {
 	try {
 	    p=Integer.parseInt(name);
 	} catch (NumberFormatException e) {
-	    p=Integer.parseInt(DefaultSocketname);
+	    p=Integer.parseInt(Util.TCP_SOCKETNAME);
 	}
 	TCPServerSocket s = new TCPServerSocket(p, backlog, local);
 	return s;
@@ -53,7 +55,7 @@ class TCPServerSocket implements ISocketFactory {
     private TCPServerSocket(int port, int backlog, boolean local) throws IOException {
 	this.local = local;
 	if(port==0) {
-	    findFreePort(Integer.parseInt(DefaultSocketname), backlog);
+	    findFreePort(TCP_PORT_BASE, backlog);
 	} else {
 	    this.sock = newServerSocket(port, backlog);    
 	    this.port = port;

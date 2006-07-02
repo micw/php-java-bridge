@@ -140,8 +140,6 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
   		    	buf.append(f.getAbsolutePath()); file = f;
   		    } else if ((f=new File("/usr/share/java/" + s)).isFile()) {
   			buf.append(f.getAbsolutePath()); file = f;
-  		    } else if ((f=new File("/usr/share/java/ext/" + s)).isFile()) {
-  			buf.append(f.getAbsolutePath()); file = f;
   		    } else {
   			buf.append(s); file = new File(s);
   		    }

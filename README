@@ -187,7 +187,8 @@ Build and execution instructions:
   component when the HTTP service is started or re-started.
 
   However, when running the bridge in a production environment, it is
-  recommended to use a J2EE back-end, Tomcat5 for example.
+  recommended to start Java from a separate service script. Tomcat5 for
+  example contains such a service script for Windows and Linux/Unix.
 
 ---------------------------------------------
   Translating Java into PHP PEAR classes
@@ -589,38 +590,37 @@ Build and execution instructions:
   Loading user classes and libraries
   ----------------------------------
 
-  Although it is possible to manipulate the java.classpath to direct
-  java to individual classes, this "feature" should not be used.
+  Java libraries should either be translated into PEAR classes (see
+  above) or be installed into one of the following directories: :
+  /usr/share/java/ext or extension_dir/lib or, for the J2EE/servlet
+  back-end, WEB-INF/lib. Libraries in these directories are
+  automatically loaded by a static loader whenever the JVM starts.
 
-  Pure java libraries (or shared libraries under GNU Java "gcj") should be 
-  stored in one of the system directories, either /usr/share/java (or one of 
-  its sub-directories) or java.libpath/lib (or one of its sub-directories) 
-  or WEB-INF/lib (when the back-end is deployed as a web application) and 
-  they shall have the following name: <name>-<version>.jar.  For example:
+  Impure java libraries (=libraries which use the java native interface)
+  must be stored in /usr/share/java/ext or in the PHP extension_dir/lib
+  directory. Shared libraries (on windows: "DLL's") required by the
+  impure java libraries must be stored in the java.library.path, which
+  is usually the PHP extension_dir directory.
+
+  Java libraries can also be loaded or re-loaded on demand by a
+  dynamic loader.. They should have the following file name:
+  <name>-<version>.jar and be stored in a sub directory of the PHP
+  extension_dir/lib/ directory or in a sub directory of
+  /usr/share/java directory. For example:
 
     /usr/share/java/batStore/batStore-1.0.jar.
-
-  The global repository /usr/share/java should be used if the library
-  is for general interest, otherwise the PHP extension_dir/lib
-  repository may be used (see phpinfo() command).
-  
-  When Security Enhanced Linux is configured to allow the PHP/Java
-  Bridge to make HTTP URL connections to different servers or if
-  Security Enhanced Linux is switched off in the Linux kernel, java
-  libraries may also be loaded from HTTP URLs.
 
   Java libraries can be created from .class files with the following
   command:
 
     jar cvf myLibrary-0.1.jar my/package/*.class 
 
-  The libraries can be linked into the PHP files at run-time with the
-  command:
+  The dynamic loader can link java libraries into PHP files at
+  run-time, if the PHP files contain the command:
 
     java_require("<library1>;<libraryN>");
 
-  Note that <library> can also be a directory containing either .class
-  or .jar files.
+  Note that <library> can also be a directory containing .jar files.
 
   For example:
 
@@ -633,16 +633,34 @@ Build and execution instructions:
       ...
     ?>
 
-  Minor upgrades can be installed at run-time. When the dynamic loader
-  detects that the time stamp of the .jar file has changed, it
-  automatically loads the new version.
+  Minor upgrades of dynamic-loaded libraries can be installed at
+  run-time. When the dynamic loader detects that the time stamp or the
+  version number of the .jar file has changed, it automatically loads
+  the new version.
 
-  Note that the dynamic loader can only load pure java libraries,
-  unless GNU Java is used. Java libraries which use the java native
-  interface ("JNI") must be copied to the extension_dir/lib directory,
-  DLL's or shared libraries to extension_dir or java.libpath.
-  Please look up the values for extension_dir and java.libpath in
-  the output from the test.php script or from phpinfo().
+  Disadvantages of the dynamic loader:
+
+  * An attempt to load an impure java library immediately throws an
+    UnsatisfiedLinkError.
+
+  * Class loading via the dynamic loader is slower, because it
+    cannot use the global VM class cache.
+
+  * Libraries must be explicitly required by using the php
+    java_require() syntax.
+
+  Disadvantages of the static loader:
+
+  * The static loader can only load libraries which are stored in the
+    /usr/share/java/ext or in the PHP extension_dir/lib directory. Hot
+    deployment is not possible because all classes are loaded when the
+    JVM starts.
+
+  It is recommended to store Java libraries which are API stable or
+  use the java native interface into the PHP extension_dir/lib directory
+  or into /usr/share/java/ext. All other libraries can go into a project
+  specific directory within extension_dir/lib/ or /usr/share/java/ and
+  be loaded on-demand.
 
 ------------------------------------
   Sun java platform issues

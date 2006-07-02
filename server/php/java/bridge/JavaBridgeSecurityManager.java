@@ -64,7 +64,7 @@ public class JavaBridgeSecurityManager extends SecurityManager {
     }
     /**
      * @inheritDoc
-     * yCode>System.exit(...)</code> can by switched off by removing 
+     * <code>System.exit(...)</code> can by switched off by removing 
      * <code>permission java.lang.RuntimePermission "exitVM";</code> 
      * from the policy file.
      */

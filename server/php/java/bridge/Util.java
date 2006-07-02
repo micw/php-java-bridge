@@ -151,10 +151,9 @@ public final class Util {
     public static int DEFAULT_LOG_LEVEL;
 
     /**
-     * Backlog for TCP and unix domain connections. Default is 20.
-     * @see System property <code>php.java.bridge.backlog</code>
-     */
-    public static int BACKLOG;
+     * Backlog for TCP and unix domain connections.
+      */
+    public static final int BACKLOG = 20;
 
     /**
      * The default log file. Default is stderr, if started as a
@@ -199,10 +198,10 @@ public final class Util {
 	    DEFAULT_LOG_LEVEL = Integer.parseInt(s);
 	    Util.logLevel=Util.DEFAULT_LOG_LEVEL; /* java.log_level in php.ini overrides */
 	} catch (NumberFormatException e) {/*ignore*/}
-	try {
-	    String s = getProperty(p, "BACKLOG", "20");
-	    BACKLOG = Integer.parseInt(s);
-	} catch (NumberFormatException e) {/*ignore*/}
+//	try {
+//	    String s = getProperty(p, "BACKLOG", "20");
+//	    BACKLOG = Integer.parseInt(s);
+//	} catch (NumberFormatException e) {/*ignore*/}
 	DEFAULT_LOG_FILE = getProperty(p, "DEFAULT_LOG_FILE", Util.EXTENSION_NAME+".log");
 	String separator = "/-+.,;: ";
 	try {

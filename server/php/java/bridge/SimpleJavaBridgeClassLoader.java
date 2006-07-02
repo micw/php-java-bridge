@@ -47,6 +47,7 @@ public class SimpleJavaBridgeClassLoader {
             String arg = Util.DEFAULT_EXT_DIRS[i];
             File f = new File(arg);
             DynamicJavaBridgeClassLoader.addJars(list, f);
+            list.add(new URL("file", null, f.getAbsolutePath()+"/"));
         }
         // PR1502480
         String ext = System.getProperty("php.java.bridge.base");

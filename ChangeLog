@@ -1,3 +1,31 @@
+2006-07-02  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/Standalone.java: New file, refactored
+	from JavaBridge.java
+
+	* server/META-INF/MANIFEST.MF: Use Standalone as
+	the main class to speed up cli startup.
+
+	* server/php/java/bridge/JavaBridge.java (objectDebugDescription):
+	Rewritten.
+
+	* server/php/java/bridge/Util.java (BACKLOG): Changed to static
+	final to speed up cli startup.
+
+	* server/php/java/bridge/TCPServerSocket.java,
+	server/php/java/bridge/LocalServerSocket.java: Don't reference
+	Util, return the socket # as early as possible.
+
+	* server/php/java/bridge/SimpleJavaBridgeClassLoader.java
+	(buildUrlArray): Add Util.DEFAULT_EXTENSION_DIR and
+	extension_dir/lib directories to the path.
+	
+	* java.c (alloc_globals_ctor): Initialize the cb_stack, otherwise
+	MSHUTDOWN may crash on OS where the ctor does not return
+	initialized memory, Solaris for example.
+	
+	* VERSION, php-java-bridge.spec: Version 3.1.4 released
+	
 2006-06-27  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/servlet/PhpCGIServlet.java (CGI_SSL_CHANNEL): New constant.

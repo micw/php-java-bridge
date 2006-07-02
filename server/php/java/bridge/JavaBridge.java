@@ -18,7 +18,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -34,25 +33,13 @@ import php.java.bridge.http.IContextFactory;
 import php.java.bridge.IllegalArgumentException;
 
 /**
- * This is the main class of the PHP/Java Bridge. It starts the standalone back-end,
- * listenes for protocol requests and handles CreateInstance, GetSetProp and Invoke 
- * requests. Supported protocol modes are INET (listens on all interfaces), INET_LOCAL (loopback only) and 
- * LOCAL (uses a local, invisible communication channel, requires natcJavaBridge.so). Furthermore it
+ * This is the main interface of the PHP/Java Bridge. It
  * contains utility methods which can be used by clients.
- * <p>
- * Example:<br>
- * <code>
- * java -Djava.awt.headless=true -jar JavaBridge.jar INET_LOCAL:9676 5 bridge.log &<br>
- * telnet localhost 9676<br>
- * &lt;CreateInstance value="java.lang.Long" predicate="Instance" id="0"&gt;<br> 
- *     &lt;Long value="6"/&gt; <br>
- *   &lt;/CreateInstance&gt;<br>
- * &lt;Invoke value="1" method="toString" predicate="Invoke" id="0"/&gt;<br>
- * </code>
- *
  * @author Sam Ruby (methods coerce and select)
  * @author Kai Londenberg
  * @author Jost Boekemeier
+ * @see php.java.bridge.Standalone
+ * @see php.java.servlet.PhpJavaServlet
  */
 
 public class JavaBridge implements Runnable {
@@ -95,6 +82,9 @@ public class JavaBridge implements Runnable {
 
     // false if we detect that setAccessible is not possible
     boolean canModifySecurityPermission = true;
+
+    // native accept fills these (if available)
+    int uid =-1, gid =-1;
 
     // method to load a CLR assembly
     private static Method loadMethod = null;
@@ -151,9 +141,6 @@ public class JavaBridge implements Runnable {
      * @param peer The socket handle
      */
     public static native void sclose(int peer);
-
-    // native accept fills these
-    int uid =-1, gid =-1;
 
     private MethodCache methodCache = new MethodCache();
     private ConstructorCache constructorCache = new ConstructorCache();
@@ -222,52 +209,7 @@ public class JavaBridge implements Runnable {
      * @return the server socket
      */
     public static ISocketFactory bind(String sockname) throws Exception {
-	ISocketFactory socket = null;
-	try {
-	    socket = LocalServerSocket.create(sockname, Util.BACKLOG);
-	} catch (Throwable e) {/*ignore*/}
-	if(null==socket)
-	    socket = TCPServerSocket.create(sockname, Util.BACKLOG);
-
-	if(null==socket)
-	    throw new Exception("Could not create socket: " + sockname);
-
-	return socket;
-    }
-    private static void usage() {
-	System.err.println("PHP/Java Bridge version "+Util.VERSION);
-        System.err.println("Usage: java -jar JavaBridge.jar [SOCKETNAME LOGLEVEL LOGFILE]");
-        System.err.println("Usage: java -jar JavaBridge.jar --convert PHP_INCLUDE_DIR [JARFILES]");
-	System.err.println("Example: java -jar JavaBridge.jar");
-	System.err.println("Example: java -Djava.awt.headless=\"true\" -Dphp.java.bridge.threads=50 -jar JavaBridge.jar INET:0 3 JavaBridge.log");
-	System.err.println("Example: java -jar JavaBridge.jar --convert /usr/share/pear lucene.jar ...");
-	System.exit(1);
-    }
-
-    private static void checkOption(String s[]) {
-        if("--convert".equals(s[0])) {
-            try {
-              StringBuffer buf=new StringBuffer();
-              for(int i=2; i<s.length; i++) {
-        	  buf.append(s[i]);
-        	  if(i+1<s.length) buf.append(File.separatorChar);
-              }
-              
-              int length = s.length >= 3 ? 2 :s.length-1;
-              String str[] = new String[length];
-              if(length==2) str[1] = buf.toString();
-              if(length>=1) str[0] = s[1];
-              Snarf.main(str);
-              System.exit(0);
-	    } catch (Exception e) {
-	      e.printStackTrace();
-	      System.exit(1);
-	    }
-        } else if ("--version".equals(s[0])) {
-	    System.out.println(Util.VERSION);
-	    System.exit(0);
-	}
-        usage();
+        return Standalone.bind(Util.logLevel, sockname);
     }
     /**
      * parse java.log_file=@HOST:PORT
@@ -335,9 +277,15 @@ public class JavaBridge implements Runnable {
      * @param s an array of [socketname, level, logFile]
      */
     public static void init(String s[]) {
+        Standalone.init(s);
+    }
+    // called by Standalone.init()
+    static void init(ISocketFactory socket, int logLevel, String s[]) {
 	String logFile=null, rawLogFile=null;
-	String sockname=null;
-	if(s.length>3) checkOption(s);
+	
+	if(logLevel==-1) logLevel = Util.DEFAULT_LOG_LEVEL;
+	Util.logLevel = logLevel;
+
 	// show our additional ext dirs
 	if(Util.DEFAULT_EXT_DIRS.length>0) { 
 	    try {
@@ -366,22 +314,6 @@ public class JavaBridge implements Runnable {
     	    loadMethod = CLRAssembly.getMethod("Load", new Class[] {String.class});
     	} catch (Exception e) {}
 	try {
-	    if(s.length>0) {
-		sockname=s[0];
-		if(sockname.startsWith("-")) checkOption(s);
-	    }
-	    try {
-		if(s.length>1) {
-		    Util.logLevel=Integer.parseInt(s[1]);
-		} else {
-		    Util.logLevel=Util.DEFAULT_LOG_LEVEL;
-		}
-	    } catch (NumberFormatException e) {
-		usage();
-	    } catch (Throwable t) {
-		t.printStackTrace();
-	    }
-
 	    try {
 		rawLogFile=logFile=s.length>0?"":Util.DEFAULT_LOG_FILE;
 		if(s.length>2) {
@@ -395,9 +327,6 @@ public class JavaBridge implements Runnable {
 	    }catch (Throwable t) {
 		t.printStackTrace();
 	    }
-	    ISocketFactory socket = bind(sockname);
-	    if(s.length>1) System.out.write(socket.getSocketName().getBytes());
-	    System.out.close();
 	    boolean redirectOutput = false;
 	    try {
 	    	redirectOutput = logFile==null || openLog(logFile);
@@ -464,17 +393,11 @@ public class JavaBridge implements Runnable {
      * Note: Do not write anything to System.out, this
      * stream is connected with a pipe which waits for the channel name.
      * @param s an array of [socketname, level, logFile]
+     * @deprecated Use Standalone.init()
+     * @see php.java.bridge.Standalone#init(String[])
      */
     public static void main(String s[]) {
-	try {
-	    System.loadLibrary("natcJavaBridge");
-	} catch (Throwable t) {/*ignore*/}
-	try {
-	    init(s);
-	} catch (Throwable t) {
-	    t.printStackTrace();
-	    System.exit(9);
-	}
+        Standalone.main(s);
     }
 
     //
@@ -1234,12 +1157,11 @@ public class JavaBridge implements Runnable {
     	else if(obj instanceof Map) obj = ((Map)obj).values().toArray();
     	if (level<DISPLAY_MAX_ELEMENTS && obj.getClass().isArray()) {
     	    StringBuffer buf = new StringBuffer("[Object "+System.identityHashCode(ob)+" - Class: "+ classDebugDescription(ob.getClass())+ "]: ");
-    	    List l = Arrays.asList((Object[])obj);
     	    buf.append("{\n");
-    	    int count = 0;
-    	    for(Iterator ii = l.iterator(); ii.hasNext(); ) {
-    	        buf.append(objectDebugDescription(ii.next(), level+1));
-    	        if(count>=DISPLAY_MAX_ELEMENTS) { buf.append("...\n"); break; }
+    	    int length = Array.getLength(obj);
+    	    for(int i=0; i<length; i++) {
+    	        buf.append(objectDebugDescription(Array.get(obj, i), level+1));
+    	        if(i>=DISPLAY_MAX_ELEMENTS) { buf.append("...\n"); break; }
     	        buf.append("\n");
     	    }
     	    buf.append("}");
@@ -1979,8 +1901,9 @@ public class JavaBridge implements Runnable {
      * needs some way to pass the fresh information from the suggested
      * id to the recycled id. Therefore all clients of php clients can implement
      * a <code>recycle(ContextFactory target)</code> callback which
-     * allows them to copy the necessary information into the recycled
-     * context.
+     * allows them to attach the information to the recycled
+     * context. The suggested way to do this is to extend SimpleContextFactory
+     * which already implements a suitable recycle and visit method.
      * 
      * @param id The suggested context id (from the client of the php client).
      * @see php.java.bridge.http.ContextFactory#recycle(ContextFactory)     

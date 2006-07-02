@@ -813,6 +813,7 @@ PHP_INI_BEGIN()
   EXT_GLOBAL(globals)->servlet=0;
 
   zend_hash_init(&EXT_GLOBAL(globals)->connections, 0, 0, 0, 1);
+  EXT_GLOBAL(globals)->cb_stack=0;
 }
 
 #ifdef ZEND_ENGINE_2
@@ -1575,22 +1576,6 @@ set_property_handler(zend_property_reference *property_reference, pval *value)
 }
 #endif
 
-static void make_local_socket_info(TSRMLS_D) {
-  memset(&EXT_GLOBAL(cfg)->saddr, 0, sizeof EXT_GLOBAL(cfg)->saddr);
-#ifndef CFG_JAVA_SOCKET_INET
-  EXT_GLOBAL(cfg)->saddr.sun_family = AF_LOCAL;
-  memset(EXT_GLOBAL(cfg)->saddr.sun_path, 0, sizeof EXT_GLOBAL(cfg)->saddr.sun_path);
-  strcpy(EXT_GLOBAL(cfg)->saddr.sun_path, EXT_GLOBAL(get_sockname)(TSRMLS_C));
-# ifdef HAVE_ABSTRACT_NAMESPACE
-  *EXT_GLOBAL(cfg)->saddr.sun_path=0;
-# endif
-#else
-  EXT_GLOBAL(cfg)->saddr.sin_family = AF_INET;
-  EXT_GLOBAL(cfg)->saddr.sin_port=htons(atoi(EXT_GLOBAL(get_sockname)(TSRMLS_C)));
-  EXT_GLOBAL(cfg)->saddr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
-#endif
-}
-
 #if !defined(ZEND_ENGINE_2) && defined(__MINGW32__)
 static void*return_msc_structure(void*mem, zend_property_reference *property_reference) {
    register zval res = get_property_handler(property_reference);
@@ -1720,7 +1705,6 @@ PHP_MINIT_FUNCTION(EXT)
 	
 	EXT_GLOBAL(init_cfg) (TSRMLS_C);
 
-	make_local_socket_info(TSRMLS_C);
 	EXT_GLOBAL(clone_cfg)(TSRMLS_C);
 	EXT_GLOBAL(start_server) (TSRMLS_C);
 	EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);

@@ -17,19 +17,22 @@ public interface IContextFactory {
    * Synchronize the current state with id.
    * <p>
    * When persistent connections are used, the bridge instances recycle their context factories. 
-   * However, a jsr223 client may have passed a fresh context id. If this happened, the bridge calls this method 
+   * However, a jsr223 client may have passed a fresh context id. If this happened, the bridge calls this method, 
    * which may update the current context with the fresh values from id.</p>
    * <p>This method automatically destroys the fresh context id</p>   
    * @param id The fresh id
    * @throws NullPointerException if the current id is not initialized
+   * @see #recycle(ContextFactory)
    * @see php.java.bridge.JavaBridge#recycle()
    */
   public void recycle(String id) throws SecurityException;
   
   /**
-   * Typically this method should attach the fresh ContextFactory to the target.
+   * Typically this method should attach the fresh ContextFactory to the target by calling
+   * <code>target.accept(this)</code>.
    * @see php.java.bridge.http.ContextFactory#accept(IContextFactoryVisitor)
    * @see php.java.bridge.http.IContextFactoryVisitor#visit(ContextFactory)
+   * @see php.java.bridge.http.SimpleContextFactory
    * @param target The persistent ContextFactory.
    */
   public void recycle(ContextFactory target);

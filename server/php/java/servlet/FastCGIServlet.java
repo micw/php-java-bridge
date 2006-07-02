@@ -93,7 +93,7 @@ public class FastCGIServlet extends CGIServlet {
     /** default: true, switched off, if fcgi is not configured */
     protected boolean fcgiIsConfigured;
     /** default: true, switched off, if fcgi is not configured or if fcgi server failed */
-    private boolean fcgiIsAvailable;
+    protected boolean fcgiIsAvailable;
 
     protected boolean canStartFCGI = false;
     protected boolean override_hosts = true;

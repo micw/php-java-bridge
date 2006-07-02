@@ -512,6 +512,7 @@ public class PhpCGIServlet extends FastCGIServlet {
     	    try {res.reset();} catch (Exception ex) {/*ignore*/}
 	    ServletException ex = new ServletException(
 "A security exception occured, could not run PHP.\n" + startFcgiMessage());
+	    fcgiIsAvailable=fcgiIsConfigured;
 	    php=null;
 	    checkCgiBinary(getServletConfig());
 	    throw ex;    	    
