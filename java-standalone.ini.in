@@ -23,6 +23,7 @@ java.log_level  = 3
 ;; If you don't have a servlet engine, use the php-java-bridge service
 ;; script to start and stop the back-end as a system service.  Please
 ;; see the RedHat RPM download for an example how to start java as a
-;; system service.
+;; system service. java.socketname should be /var/run/.php-java-bridge_socket,
+;; if a secure channel ("unix domain socket") is available or 9267.
 
-java.socketname = /var/run/.php-java-bridge_socket
+java.socketname = @JAVA_SOCKETNAME@
