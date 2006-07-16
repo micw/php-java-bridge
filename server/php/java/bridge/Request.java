@@ -365,7 +365,8 @@ public final class Request implements IDocHandler {
     /* (non-Javadoc)
      * @see php.java.bridge.IDocHandler#begin(php.java.bridge.ParserTag[])
      */
-    public void begin(ParserTag[] tag) {
+    public boolean begin(ParserTag[] tag) {
+	boolean reply = true;
 	ParserString[] st=tag[2].strings;
 	byte ch;
 	switch (ch=tag[0].strings[0].string[0]) {
@@ -416,6 +417,7 @@ public final class Request implements IDocHandler {
 	case 'U': {
 	    int i=st[0].getIntValue();
 	    bridge.globalRef.remove(i);
+	    reply=false; // U is the only top-level request which doesn't need a reply
 	    break;
 	}
 	case 'S': {
@@ -466,6 +468,7 @@ public final class Request implements IDocHandler {
 	    break;
 	}
 	}
+	return reply;
     }
     
     /* (non-Javadoc)
@@ -478,7 +481,7 @@ public final class Request implements IDocHandler {
     	}
     	}
     }
-    private static final String SUB_FAILED = "Invocation of sub request failed. PHP method invocation is not available in your environment (due to security restrictions). Set the system property php.java.bridge.promiscuous=true";
+    private static final String SUB_FAILED = "PHP callback execution failed.";
     private void setIllegalStateException(String s) {
         IllegalStateException ex = new IllegalStateException(s);
         response.setResultException(bridge.lastException = ex, s);
@@ -489,18 +492,26 @@ public final class Request implements IDocHandler {
 	    response.setResultID(arg.id);
 	    switch(arg.type){
 	    case 'I':
-		if(arg.predicate)
-		    bridge.GetSetProp(arg.callObject, arg.method, arg.getArgs(), response);
-		else
-		    bridge.Invoke(arg.callObject, arg.method, arg.getArgs(), response);
-		response.flush();
+		try {
+		    if(arg.predicate)
+			bridge.GetSetProp(arg.callObject, arg.method, arg.getArgs(), response);
+		    else
+			bridge.Invoke(arg.callObject, arg.method, arg.getArgs(), response);
+		    response.flush();
+		} catch (AbortException sub) {
+		    bridge.printStackTrace(sub);
+		}
 		break;
 	    case 'C':
-		if(arg.predicate)
-		    bridge.CreateObject((String)arg.callObject, false, arg.getArgs(), response);
-		else
-		    bridge.CreateObject((String)arg.callObject, true, arg.getArgs(), response);
-		response.flush();
+		try {
+		    if(arg.predicate)
+			bridge.CreateObject((String)arg.callObject, false, arg.getArgs(), response);
+		    else
+			bridge.CreateObject((String)arg.callObject, true, arg.getArgs(), response);
+		    response.flush();
+		} catch (AbortException sub) {
+		    bridge.printStackTrace(sub);
+		}
 		break;
 	   case 'F': 
 	         if(arg.predicate) { // keep alive
@@ -533,14 +544,27 @@ public final class Request implements IDocHandler {
 	while(Parser.OK==handleRequest())
 	    ;
     }
-    
+    /** This exception isn't an exception but a construct to emulate a one-shot continuation in Java. 
+     * It is used to quickly clear the stack and to jumb back to some top-level loop.
+     * <p>
+     * The exception is thrown when the client exits while running a callback, 
+     * it aborts everything and jumps back to the top-level request-handling loop, see handleRequests() above.
+     * </p>
+     * <p>Do not catch this exception! If you must catch Exception(), check for AbortException. If
+     * you invoke using the reflection interface, check for the wrapped exception, unwrap it, if necessary 
+     * and re-throw the exception</p>
+     * @see Request#handleRequest()
+     */
+    public static class AbortException extends RuntimeException {
+	private static final long serialVersionUID = 7778150395848350732L;
+    }
     /**
      * Handle protocol sub-requests, see <code>R</code> and <code>A</code> in the protocol spec.
      * @return An array of one object. The object is the result of the Apply call.
      * @throws IOException
      * @throws Throwable thrown by the PHP code.
      */
-    protected Object[] handleSubRequests() throws IOException, Throwable {
+    protected Object[] handleSubRequests() throws AbortException, IOException, Throwable {
       	Response currentResponse = response; Arg current = arg;
     	response = response.copyResponse(); // must keep the current response state, for example coerceWriter for castToString() 
     	arg = new SimpleArg();
@@ -561,6 +585,20 @@ public final class Request implements IDocHandler {
 		    bridge.CreateObject((String)arg.callObject, true, arg.getArgs(), response);
 		response.flush();
 		break;
+	    case 'F':	
+	        if(arg.predicate) { // keep alive
+	            bridge.recycle();
+	            try {
+			((ThreadPool.Delegate)Thread.currentThread()).setPersistent();
+		    } catch (ClassCastException ex) {/*no thread pool*/}
+		    	response.setFinish(true);
+	        } else { // terminate or terminate keep alive
+	            response.setFinish(false);
+	        }
+	        response.flush();
+	 	response = currentResponse;
+	 	arg = current;
+		throw new AbortException();	         
 	    case 'R':
 	    	Arg ret = arg;
 	    	arg = current;
@@ -576,7 +614,7 @@ public final class Request implements IDocHandler {
 	}
 	arg = current;
 	response = currentResponse;
-	throw new IllegalStateException(SUB_FAILED);
+	throw new AbortException();
     }
 
     /**
@@ -588,7 +626,18 @@ public final class Request implements IDocHandler {
     public void reset() {
 	parser.reset();
     }
-    
+    /**
+     * Set the current bridge object
+     * @param bridge The bridge
+     */
+    public void setBridge(JavaBridge bridge) {
+	bridge.in = this.bridge.in;
+	bridge.out = this.bridge.out;
+	this.bridge = bridge;
+	this.bridge.request = this;
+	response.setBridge(bridge);
+	parser.setBridge(bridge);
+    }
     /** re-initialize for new requests */
     public void recycle() {
         reset();

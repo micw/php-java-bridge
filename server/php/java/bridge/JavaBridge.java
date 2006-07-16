@@ -30,7 +30,6 @@ import java.util.Map.Entry;
 
 import php.java.bridge.Request.PhpArray;
 import php.java.bridge.http.IContextFactory;
-import php.java.bridge.IllegalArgumentException;
 
 /**
  * This is the main interface of the PHP/Java Bridge. It
@@ -41,7 +40,6 @@ import php.java.bridge.IllegalArgumentException;
  * @see php.java.bridge.Standalone
  * @see php.java.servlet.PhpJavaServlet
  */
-
 public class JavaBridge implements Runnable {
 
     /**
@@ -85,15 +83,6 @@ public class JavaBridge implements Runnable {
 
     // native accept fills these (if available)
     int uid =-1, gid =-1;
-
-    // method to load a CLR assembly
-    private static Method loadMethod = null;
-    private static Class CLRAssembly = null;
-
-    //
-    // Native methods, only called  when loadLibrary succeeds.
-    // These are necessary to deal with local sockets ("Unix domain sockets")
-    // which are much faster and more secure than standard TCP sockets.
 
     /**
      * Open a system log file with the correct (Unix) permissions.
@@ -309,10 +298,6 @@ public class JavaBridge implements Runnable {
 		System.setProperty("java.ext.dirs", buf.toString());
 	    } catch (Throwable t) {/*ignore*/}
         }
-    	try {
-    	    CLRAssembly = Class.forName("cli.System.Reflection.Assembly");
-    	    loadMethod = CLRAssembly.getMethod("Load", new Class[] {String.class});
-    	} catch (Exception e) {}
 	try {
 	    try {
 		rawLogFile=logFile=s.length>0?"":Util.DEFAULT_LOG_FILE;
@@ -393,8 +378,8 @@ public class JavaBridge implements Runnable {
      * Note: Do not write anything to System.out, this
      * stream is connected with a pipe which waits for the channel name.
      * @param s an array of [socketname, level, logFile]
-     * @deprecated Use Standalone.init()
-     * @see php.java.bridge.Standalone#init(String[])
+     * @deprecated Use Standalone.main()
+     * @see php.java.bridge.Standalone#main(String[])
      */
     public static void main(String s[]) {
         Standalone.main(s);
@@ -547,16 +532,13 @@ public class JavaBridge implements Runnable {
   	    	response.setResultObject(selected.newInstance(coercedArgs));
   	    }
 	} catch (Throwable e) {
-	    if(e instanceof OutOfMemoryError ||
-	       ((e instanceof InvocationTargetException) &&
-		((InvocationTargetException)e).getTargetException() instanceof OutOfMemoryError)) {
+	    if(e instanceof InvocationTargetException) e = ((InvocationTargetException)e).getTargetException();
+	    if(e instanceof Request.AbortException) {throw (Request.AbortException)e;}
+	    if(e instanceof OutOfMemoryError) {
 		Util.logFatal("OutOfMemoryError");
-		throw new OutOfMemoryError(); // abort
+		throw (OutOfMemoryError)e; // abort
 	    }
-	    if(e instanceof NoClassDefFoundError ||
-	       ((e instanceof InvocationTargetException) &&
-		((InvocationTargetException)e).getTargetException() instanceof NoClassDefFoundError)) {
-		if(e instanceof InvocationTargetException) e = ((InvocationTargetException)e).getTargetException();
+	    if(e instanceof NoClassDefFoundError) {
 		getClassLoader().clearCaches();
 		e = getUnresolvedExternalReferenceException(e, "call constructor");
 	    }
@@ -709,7 +691,7 @@ public class JavaBridge implements Runnable {
 	    if (args[i] instanceof PhpProcedureProxy && parms[i] != PhpProcedureProxy.class) {
 		Class param = parms[i];
 		if(!param.isInterface()) {
-		    if(CLRAssembly!=null) // CLR uses an inner method class
+		    if(Util.CLRAssembly!=null) // CLR uses an inner method class
 			try {
 			    args[i] = ((PhpProcedureProxy)args[i]).getProxy(new Class[] {getClassLoader().forName(param.getName() + "$Method")});
 			} catch (ClassNotFoundException e) { 
@@ -1086,16 +1068,13 @@ public class JavaBridge implements Runnable {
 	        setResult(response, selected.invoke(object, coercedArgs), selected.getReturnType());	      
 	    }
 	} catch (Throwable e) {
-	    if(e instanceof OutOfMemoryError ||
-	       ((e instanceof InvocationTargetException) &&
-		((InvocationTargetException)e).getTargetException() instanceof OutOfMemoryError)) {
+	    if(e instanceof InvocationTargetException) e = ((InvocationTargetException)e).getTargetException();
+	    if(e instanceof Request.AbortException) {throw (Request.AbortException)e;}
+	    if(e instanceof OutOfMemoryError) {
 		Util.logFatal("OutOfMemoryError");
-		throw new OutOfMemoryError(); // abort
+		throw (OutOfMemoryError)e; // abort
 	    }
-	    if(e instanceof NoClassDefFoundError ||
-	       ((e instanceof InvocationTargetException) &&
-		((InvocationTargetException)e).getTargetException() instanceof NoClassDefFoundError)) {
-		if(e instanceof InvocationTargetException) e = ((InvocationTargetException)e).getTargetException();
+	    if(e instanceof NoClassDefFoundError) {
 		getClassLoader().clearCaches();
 		e = getUnresolvedExternalReferenceException(e, "call the method");
 	    }
@@ -1287,16 +1266,13 @@ public class JavaBridge implements Runnable {
 	    throw new NoSuchFieldException(String.valueOf(prop) + " (with args:" + Util.argsToString(args, params) + "). " + "Candidates: " + String.valueOf(matches));
 
 	} catch (Throwable e) {
-	    if(e instanceof OutOfMemoryError ||
-	       ((e instanceof InvocationTargetException) &&
-		((InvocationTargetException)e).getTargetException() instanceof OutOfMemoryError)) {
+	    if(e instanceof InvocationTargetException) e = ((InvocationTargetException)e).getTargetException();
+	    if(e instanceof Request.AbortException) {throw (Request.AbortException)e;}
+	    if(e instanceof OutOfMemoryError) {
 		Util.logFatal("OutOfMemoryError");
-		throw new OutOfMemoryError(); // abort
+		throw (OutOfMemoryError)e; // abort
 	    }
-	    if(e instanceof NoClassDefFoundError ||
-	       ((e instanceof InvocationTargetException) &&
-		((InvocationTargetException)e).getTargetException() instanceof NoClassDefFoundError)) {
-		if(e instanceof InvocationTargetException) e = ((InvocationTargetException)e).getTargetException();
+	    if(e instanceof NoClassDefFoundError) {
 		getClassLoader().clearCaches();
 		e = getUnresolvedExternalReferenceException(e, "invoke a property");
 	    }
@@ -1378,8 +1354,8 @@ public class JavaBridge implements Runnable {
 
     /**
      * Only for internal use. 
-     * @param in
-     * @param out
+     * @param in the InputStream
+     * @param out the OutputStream
      * @see php.java.bridge.JavaBridgeRunner
      * @see php.java.bridge.JavaBridge#main(String[])
      */
@@ -1395,6 +1371,17 @@ public class JavaBridge implements Runnable {
      */
     public JavaBridge() {
 	this(null, null);
+    }
+    
+    /**
+     * Only for internal use. Sets a new Input/OutputStream into the bridge
+     * @param in the new InputStream
+     * @param out the new OutputStream
+     */
+    public void setIO(InputStream in, OutputStream out) {
+	request.reset();
+    	this.in=in;
+    	this.out=out;	
     }
     
     /**
@@ -1441,7 +1428,7 @@ public class JavaBridge implements Runnable {
      */
     public void updateLibraryPath(String rawPath, String extensionDir) {
         if(rawPath==null || rawPath.length()<2) return;
-
+        String contextDir = new File(extensionDir, "lib").getAbsolutePath();
         // add a token separator if first char is alnum
 	char c=rawPath.charAt(0);
 	if((c>='A' && c<='Z') || (c>='a' && c<='z') ||
@@ -1453,9 +1440,20 @@ public class JavaBridge implements Runnable {
 	while (st.hasMoreTokens()) {
 	    String s = st.nextToken();
 	    try {
-		loadMethod.invoke(CLRAssembly, new Object[] {s} );
-	    } catch (Exception e) {
-                logError("Could not load cli."+ s +".");
+		File f=null;
+		StringBuffer buf= new StringBuffer();
+		if((f=new File(s)).isFile() || f.isAbsolute()) {
+		    buf.append(s);
+		    Util.loadFileMethod.invoke(Util.CLRAssembly, new Object[] {buf.toString()} );
+		} else if ((f=new File(contextDir, s)).isFile()) {
+		    buf.append(f.getAbsolutePath());
+		    Util.loadFileMethod.invoke(Util.CLRAssembly, new Object[] {buf.toString()} );
+		} else {
+		    buf.append(s);
+		    Util.loadMethod.invoke(Util.CLRAssembly, new Object[] {buf.toString()} );
+		}
+	    }  catch (Exception e1) {
+		logError("Could not load cli."+ s +".");
 	    }
 	}
     }
@@ -1519,9 +1517,50 @@ public class JavaBridge implements Runnable {
      */
     public String ObjectToString(Object ob) {
 	    StringBuffer buf = new StringBuffer("[");
-		try {
+	try {
 	    Util.appendObject(ob, buf);
-		} catch (Exception t) {
+	} catch (Request.AbortException sub) {
+	    throw sub;
+	} catch (Exception t) {
+		    Util.printStackTrace(t);
+		    buf.append("[Exception in toString(): ");
+		    buf.append(t);
+		    if(t.getCause()!=null) {
+		      buf.append(", Cause: ");
+		      buf.append(t.getCause());
+		    }
+		    buf.append("]");
+		}
+	    buf.append("]");
+	    return (String)castToString(buf.toString());
+    }
+
+    /**
+     * Returns a string representation of the object
+     * @param ob The Thrwable
+     * @param trace The stack trace
+     * @return A string representation.
+     */
+    public String ObjectToString(Throwable ob, String trace) {
+	    StringBuffer buf = new StringBuffer("[");
+	try {
+	    Util.appendObject(ob, buf);
+	    buf.append(" at:\n");
+	    StackTraceElement stack[] = ob.getStackTrace();
+	    int top=stack.length;
+	    int count = 0;
+	    for(int i=0; i<top; i++) {
+		buf.append("#-");
+		buf.append(top-i);
+		buf.append(" ");
+		buf.append(stack[i].toString());
+		buf.append("\n");
+		if (++count==5) break;
+	    }
+	    buf.append(trace);
+	} catch (Request.AbortException sub) {
+	    throw sub;
+	} catch (Exception t) {
 		    Util.printStackTrace(t);
 		    buf.append("[Exception in toString(): ");
 		    buf.append(t);

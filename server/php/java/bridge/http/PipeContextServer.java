@@ -31,8 +31,10 @@ public class PipeContextServer implements IContextServer {
         protected InputStream in = null;
         protected OutputStream out = null;
         private String channelName;
+        protected ContextRunner runner;
         
-        protected Channel(InputStream in, OutputStream out) {
+        protected Channel(String channelName, InputStream in, OutputStream out) {
+            this(channelName);
             this.in = in;
             this.out = out;
         }
@@ -56,7 +58,10 @@ public class PipeContextServer implements IContextServer {
         }
         public void shutdown() {
             shutdown(in, out);
-         }    
+         }
+	public String getName() {
+	    return channelName;
+	}    
      }
     /**
      * Create a new ContextServer using the ThreadPool. 
@@ -66,12 +71,16 @@ public class PipeContextServer implements IContextServer {
         this.contextServer = contextServer;
     	this.threadPool = threadPool;
     }
-
-    public boolean start(String channelName) {
+    public String schedule(IContextServer.ChannelName channelName) {
+	return ContextRunner.checkRunner(channelName, contextServer);
+    }
+    public boolean start(IContextServer.ChannelName channelName) {
         if(!isAvailable()) return false;
         try {
-	    ContextRunner runner = new ContextRunner(contextServer, new Channel(channelName));
-	    if(threadPool!=null) {
+            ContextRunner runner = channelName.getRunner();
+            if(runner==null)
+        	runner = new ContextRunner(contextServer, new Channel(channelName.getName()));
+            if(threadPool!=null) {
 	        threadPool.start(runner);
 	    } else {
 	    	Thread t = new Thread(runner, "JavaBridgeContextRunner");
@@ -100,8 +109,8 @@ public class PipeContextServer implements IContextServer {
     }
     private static final boolean pipeServer = checkTestTunnel("php.java.bridge.no_pipe_server");
     /**
-     * Check if the ContextServer is ready, i.e. it has created a server socket.
-     * @return true if there's a server socket listening, false otherwise.
+     * Check if the ContextServer is ready
+     * @return true, if the server is available
      */
     public boolean isAvailable() {
     	return pipeServer && isAvailable;

@@ -528,6 +528,7 @@ short EXT_GLOBAL(call)(INTERNAL_FUNCTION_PARAMETERS) {
 }
 
 short EXT_GLOBAL(toString)(INTERNAL_FUNCTION_PARAMETERS) {
+  zval *trace = 0;
   long result = 0;
   short rc = 0;
   
@@ -544,6 +545,15 @@ short EXT_GLOBAL(toString)(INTERNAL_FUNCTION_PARAMETERS) {
 
     (*jenv)->writeInvokeBegin(jenv, 0, "ObjectToString", 0, 'I', return_value);
     (*jenv)->writeObject(jenv, result);
+#ifdef ZEND_ENGINE_2
+	if (instanceof_function(Z_OBJCE_P(getThis()), EXT_GLOBAL(exception_class_entry) TSRMLS_CC)) {
+	  zval fname;
+	  ZVAL_STRINGL(&fname, "gettraceasstring", sizeof("gettraceasstring")-1, 0);
+	  call_user_function_ex(0, &getThis(), &fname, &trace, 0, 0, 1, 0 TSRMLS_CC);
+	  if(trace) 
+		(*jenv)->writeString(jenv, Z_STRVAL_P(trace), Z_STRLEN_P(trace));
+	}
+#endif
     rc = (*jenv)->writeInvokeEnd(jenv);
 
   } else {
@@ -551,6 +561,7 @@ short EXT_GLOBAL(toString)(INTERNAL_FUNCTION_PARAMETERS) {
 					   "tostring", CONSTRUCTOR_NONE, 
 					   0, getThis(), 0, NULL);
   }
+  if(trace) zval_ptr_dtor(&trace);
   return rc;
 }
 short EXT_GLOBAL(set)(INTERNAL_FUNCTION_PARAMETERS)

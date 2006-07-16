@@ -3,6 +3,79 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 3.1.6:
+
+* When the PhpJavaServlet or PhpCGIServlet is used globally (see
+description in ABOUT.htm#global-servlet), the number of persistent
+physical connections does no longer depend on the number of web
+contexts. In a setup with k web contexts and n php clients previous
+versions used up to k*n physical connections. Since version 3.1.6 each
+php client uses exactly one persistent physical connection for all web
+contexts unless a requested web context belongs to a different
+JavaBridge implementation or server.
+
+
+Version 3.1.5:
+
+* PHP/Java exception chaining:
+
+  <?
+  require_once("rt/java_lang_String.php");
+  function call() { new java_lang_String(null); }
+  call();
+  ?>
+
+now prints a NullPointerException at:
+
+  #-10 java.lang.String.<init>(String.java:144)
+  [...]
+  #0 /usr/share/pear/rt/java_lang_String.php(15): Java::__construct(Array)
+  #1 printException.php(3): java_lang_String->__construct(NULL)
+  #2 printException.php(4): call()
+  #3 {main}
+
+* The FastCGI and Apache SAPI now create the communication pipes in a
+sub directory of /dev/shm/ or /tmp/ and clean it, whenever the server
+stops or restarts.
+
+* Each context now uses its own PHP FastCGI pool, if the context
+init-param shared_fast_cgi_pool is Off and use_fast_cgi is set to
+Autostart (default). In previous versions it was not possible to
+deploy different versions into the same application server, because
+each version used the JavaBridge FastCGI pool at 9667. Now each
+context creates its own FastCGI pool above 9667, for backward
+compatibility the pool of the "JavaBridge" context still uses the
+fixed port #9667.
+
+* Because of the above change the GlobalPhpCGIServlet now requires the
+option shared_fast_cgi_pool=On, see ABOUT.HTM#global-servlet or
+http://php-java-bridge.sf.net#global-servlet for details.
+
+* The Mono back-end now redirects its stdout and stderr to the
+specified log file.
+
+* When unix domain sockets are not available, for example if the JNI
+library libnatcJavaBridge.so cannot be loaded because a 32 bit JVM is
+running on a 64 bit machine, autoconf switches off unix domain sockets
+and uses TCP sockets instead. Security Enhanced Linux rules for TCP
+socket communication have been added to the SEL TE files.
+
+* A Security Enhanced Linux rule has been added to the TE files which
+allows searching in http_sys_content_t. This means that it is now
+possible to index files from these directories, for Lucene queries for
+example. If additional rules are necessary (searching in other
+directory types, etc.), use the commands:
+
+setenforce 0;
+# ... run the Lucene indexer ...
+audit2allow -ld; (or audit2allow -l -i /var/log/audit/audit.log); 
+setenforce 1;
+
+and add the rules at the end of the SEL TE files. The files are:
+security/module/*.te for Linux versions >= Fedora Core 5/RHEL5 or
+security/*.te for Linux versions <= Fedora Core 4/RHEL4).
+
+
 Version 3.1.4:
 
 * The static loader can now load resources which are stored outside of

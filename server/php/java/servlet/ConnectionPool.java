@@ -326,11 +326,10 @@ public class ConnectionPool {
      */
     public synchronized Connection openConnection() throws InterruptedException, ConnectionException, SocketException {
         Connection connection;
-        int size = freeList.size();
-      	if(size==0 && connections<limit) {
+      	if(freeList.isEmpty() && connections<limit) {
       	    connection = createNewConnection();
       	} else {
-      	    if(size==0) wait();
+      	    while(freeList.isEmpty()) wait();
       	    connection = (Connection) freeList.remove(0);
       	    connection.reset();
       	}

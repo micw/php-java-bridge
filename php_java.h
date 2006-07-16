@@ -26,6 +26,7 @@
 #endif
 
 #include <sys/types.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
@@ -165,6 +166,13 @@ struct cfg {
   /** 0: Compatibility with ext/java is off (default), 1: on  */
   short extJavaCompatibility;
   short persistent_connections;
+
+  /* the temporary directory for the named pipes */
+  char *tmpdir;
+
+#ifndef __MINGW32__
+  pid_t pid; 						/* the pid of the group leader or 0 */
+#endif
 };
 extern struct cfg *EXT_GLOBAL(cfg);
 
@@ -186,19 +194,21 @@ EXT_BEGIN_MODULE_GLOBALS(EXT)
   short is_closed; /* PR1176522: GC must not re-open the connection */
 
   /* local copy of the shared variables above. Needed for channel
-	 re-directs */
-  char *hosts, *servlet, *redirect_port;
+	 re-directs */
+  char *hosts, *servlet;
+  char *redirect_port; 			/* the port sub-string from hosts */
   int ini_user;
-
-  /* the name of the comm. pipe */
-  char*channel, *channel_in, *channel_out;
-  int lockfile;
 
   /* for user CB's */
   zend_stack *cb_stack;
 
   /* mapping of servlet context strings to persistent connections */
   HashTable connections;
+
+  /* copy of the connection variables. Other connections
+   may share these and set (*env)->is_shared=1 */
+  int peer, peerr;
+  char *servlet_ctx;
 EXT_END_MODULE_GLOBALS(EXT)
 
 

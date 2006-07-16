@@ -58,7 +58,7 @@ J2EE/Servlet back-end
 
 If you have installed the tomcat or J2EE back-end, check the PHP .ini
 settings. If the Apache document root should not be shared with the
-J2EE or servlet webapps directory set java.servlet to On, example:
+J2EE or servlet webapps directory, set java.servlet to On, example:
 
   java.hosts=127.0.0.1:8080; or 8888 for Oracle, 9080 for WebSphere
   java.servlet=On

@@ -128,7 +128,6 @@ zend_object_value EXT_GLOBAL(create_exception_object)(zend_class_entry *class_ty
   ALLOC_HASHTABLE(object->parent.properties);
   zend_hash_init(object->parent.properties, 0, NULL, ZVAL_PTR_DTOR, 0);
   
-  /* since the signature of zend_exception_get_default changes from day to day: */
   /* create a standard exception object */
   tmp.value.obj= zend_exception_get_default()->create_object(class_type TSRMLS_CC);
   temp_exception_object=zend_objects_get_address(&tmp TSRMLS_CC);

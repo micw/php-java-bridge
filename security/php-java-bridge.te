@@ -38,8 +38,20 @@ general_proc_read_access(javabridge_t)
 allow javabridge_t var_log_t:dir { add_name write search };
 allow javabridge_t var_log_t:file { create append write };
 
+################################
 # Connect from httpd.
 can_unix_connect(httpd_t, javabridge_t)
+
+# Connect from httpd using tcp sockets
+allow javabridge_t self:tcp_socket { accept bind connect create getattr listen read setopt write shutdown };
+allow javabridge_t port_t:tcp_socket { name_bind name_connect recv_msg send_msg };
+allow javabridge_t netif_lo_t:netif { tcp_recv tcp_send };
+allow javabridge_t node_lo_t:node { tcp_recv tcp_send };
+allow javabridge_t node_lo_t:tcp_socket node_bind;
+
+dontaudit javabridge_t node_inaddr_any_t:tcp_socket node_bind;
+dontaudit javabridge_t sbin_t:dir search;
+################################
 
 # Read locale data
 read_locale(javabridge_t)
@@ -50,6 +62,8 @@ allow javabridge_t { urandom_device_t random_device_t }:chr_file r_file_perms;
 # Read /etc
 allow javabridge_t etc_runtime_t:{ file lnk_file } r_file_perms;
 
+# Read /var/www
+r_dir_file(javabridge_t, httpd_sys_content_t)
 
 # Insane settings needed for sun java 1.5.  Comment this out, if you
 # can.

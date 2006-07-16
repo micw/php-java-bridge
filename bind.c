@@ -12,6 +12,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+/* opendir */
+#ifndef __MINGW32__
+#include <dirent.h>
+#endif
+
 /* stat */
 #include <sys/stat.h>
 
@@ -127,7 +132,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   if(any_port && !(EXT_GLOBAL(option_set_by_user) (U_SOCKNAME, EXT_GLOBAL(ini_user)))) {
 	cfg_sockname="0";
 	s_prefix=inet_socket_prefix;
-	cfg_logFile="";
+    //cfg_logFile="";
   }
   /* send a prefix so that the server does not select a different
    protocol */
@@ -196,7 +201,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   strcpy(p, bridge_base); strcat(p, ext);
   args[4] = p;
 
-  args[5] = strdup("php.java.bridge.JavaBridge");
+  args[5] = strdup("php.java.bridge.Standalone");
   args[6] = sockname;
   args[7] = strdup(EXT_GLOBAL(cfg)->logLevel);
   args[8] = strdup(cfg_logFile);
@@ -248,7 +253,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   if(any_port && !(EXT_GLOBAL(option_set_by_user) (U_SOCKNAME, EXT_GLOBAL(ini_user)))) {
 	cfg_sockname="0";
 	s_prefix=inet_socket_prefix;
-	cfg_logFile="";
+	//cfg_logFile="";
   }
   /* send a prefix so that the server does not select a different */
   /* channel */
@@ -1044,7 +1049,65 @@ void EXT_GLOBAL(sys_error)(const char *str, int code) {
   php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d) system error code: %ld. %s.", code, (long)GetLastError(), str);
 #endif
 }
+/* Delete the temp directory which contains the comm. pipes */
+static void rmtmpdir () {
+#ifndef __MINGW32__
+  extern EXT_GLOBAL(is_parent);
+  DIR * dir;
+  struct dirent * file;
+  size_t len;
+  char *name;
+  int err;
 
+  /* If this is a child, do nothing. */
+  if(!EXT_GLOBAL(cfg) || !EXT_GLOBAL(cfg)->tmpdir || EXT_GLOBAL(cfg)->pid!=getpid()) return;
+
+  len = strlen(EXT_GLOBAL(cfg)->tmpdir);
+  dir = opendir(EXT_GLOBAL(cfg)->tmpdir);
+  if(!dir) { EXT_GLOBAL(sys_error)("Could not open tmpdir", 65); return; }
+  while(file = readdir(dir)) {
+	if(file->d_name[0]!='p') continue;
+	name = malloc(len + strlen(file->d_name)+2);
+	if(!name) exit(6);
+	strcpy(name, (EXT_GLOBAL(cfg)->tmpdir));
+	strcat(name, "/");
+	strcat(name, file->d_name);
+	unlink(name);
+	free(name);
+  }
+  err = closedir(dir);
+  if(err==-1) { EXT_GLOBAL(sys_error)("Could not close tmpdir", 67); return; }
+
+  err = rmdir(EXT_GLOBAL(cfg)->tmpdir);
+  if(err==-1) { EXT_GLOBAL(sys_error)("Could not unlink tmpdir", 68); return; }
+
+  free(EXT_GLOBAL(cfg)->tmpdir);
+  EXT_GLOBAL(cfg)->tmpdir=0;
+#endif
+}
+void EXT_GLOBAL(rmtmpdir) () {
+								/* see FastCGI comment below */
+  if(!EXT_GLOBAL(cfg)->is_fcgi_servlet) rmtmpdir();	
+}
+void EXT_GLOBAL(mktmpdir) () {
+#ifndef __MINGW32__
+  char sockname[] = SOCKNAME;
+  char sockname_shm[] = SOCKNAME_SHM;
+  char *tmpdir;
+
+  atexit(rmtmpdir); /* The FastCGI SAPI is completely odd, it calls
+					   the parent(!) mshutdown for each killed
+					   child. Ignore this nonsense and call rmtmpdir
+					   ourselfs, when the parent exits. */
+  tmpdir = mkdtemp(sockname_shm);
+  if(!tmpdir) tmpdir = mkdtemp(sockname);
+  if(!tmpdir) {EXT_GLOBAL(cfg)->tmpdir=0; return;}
+  EXT_GLOBAL(cfg)->tmpdir=strdup(tmpdir); if(!EXT_GLOBAL(cfg)->tmpdir) { rmdir(tmpdir); exit(6); }
+  chmod(tmpdir, 01777);
+#else  /* There's no standard tmpdir on windows */
+  EXT_GLOBAL(cfg)->tmpdir=0;
+#endif
+}
 #ifndef PHP_WRAPPER_H
 #error must include php_wrapper.h
 #endif

@@ -11,6 +11,7 @@ if (!extension_loaded('java')) {
 $here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
 if(!$here) $here=getcwd();
 
+//$s = new java("java.lang.String", "hello");
 try {
   java_require("$here/cachex.jar");
   echo "test failed\n";

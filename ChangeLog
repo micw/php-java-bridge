@@ -1,3 +1,156 @@
+2006-07-16  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/http/ContextRunner.java
+	(checkRunner,put,remove,recycle): New procedures.
+
+	* server/php/java/bridge/http/ContextServer.java
+	(ChannelName,Channel): rewritten.
+
+	* server/php/java/bridge/http/IContextFactory.java
+	(ChannelName,Channel): rewritten.
+
+	* server/php/java/bridge/http/PipeContextServer.java
+	(Channel,start,schedule): rewritten
+	
+	* server/php/java/bridge/http/SocketContextServer.java
+	(Channel,start,schedule): rewritten
+
+	* server/php/java/bridge/JavaBridge.java (setIO): New method.
+
+	* server/php/java/bridge/JavaBridgeRunner.java
+	(getHeader): New method.
+	(parseBody): Rewritten
+
+	* server/php/java/bridge/Parser.java (setBridge): New method.
+
+	* server/php/java/bridge/Request.java (setBridge): New method.	
+	
+	* server/php/java/bridge/Response.java (setBridge): New method.	
+
+	* server/php/java/servlet/FastCGIServlet.java
+	(init, findCGI,isJavaBridgeWc): check for shared_fast_cgi_pool
+	option.
+
+	* server/php/java/servlet/PhpCGIServlet.java
+	(startFCGI,delegateOrStartFCGI,delegateFCGI,findCGI): check for
+	shared_fast_cgi_pool option.
+	(handleSocketConnection): Rewritten.
+	(getChannel): Removed
+	(getHeader): New function.
+	
+	* client.c (remove_pipe,share_connection,redirect): New
+	procedures.
+	(begin_header): Check for X_JAVABRIDGE_CONTEXT_DEFAULT.
+	(handle_request): handle shared connections for different web
+	contexts.
+	(adjust_servlet_environment): share servlet_ctx
+	(add_header): New procedure.
+	(init_channel,destroy_channel,create_pipe,create_pipes,unlink_channel,init_channel_raw,get_channel):
+	handle non-shared
+	(getDefaultSessionFactory): New function.
+	
+	* java.c (alloc_globals_ctor): Initialize shared.
+
+	* protocol.c
+	(end,end_session,end_connection): Send
+	X_JAVABRIDGE_CONTEXT_DEFAULT.
+	(redirect): Rewritten
+	(close_connection): Close only non-shared.
+	(createSecureEnvironment): Init flags.
+
+	* server/WEB-INF/web.xml: added shared_fast_cgi_pool option.
+
+	* VERSION, php-java-bridge.spec: Version 3.1.6devel released
+	
+2006-07-09  Jost Boekemeier  <jostb@intern>
+
+	* bind.c (get_server_args): Do not discard cfg_logFile, it is
+	needed by the back-end. The java.log_file option should now work
+	again.
+
+	* bind.c (rmtmpdir, mktmpdir): New functions. Create comm. pipes
+	in a sub directory and clean the sub-directory, if the parent is
+	restarted. -- Both the FastCGI and Apache SAPI simply kill all
+	childs w/o calling their mshutdown procedures, so the parent must
+	handle the cleanup on behalf of its childs.
+
+	* java.c (alloc_globals_ctor): Childs must not clean tmpdir.
+	(MINIT, MSHUTDOWN): Create/destroy the tmpdir for the comm. pipes.
+	
+	* config.m4: Set the JAVA_SOCKETNAME to 9267, if JNI is not
+	available, for example if the user runs a 32 bit JVM on a 64 bit
+	machine.
+
+	* security/module/php-java-bridge.te, security/php-java-bridge.te:
+	Added SEL rules for JAVA_SOCKETNAME=9267
+	
+	* examples/search/lucene_search.php: Create the index files in tmp
+	and check if we have permission to read the current working
+	directory.
+
+	* install.sh.in: Don't remove RunJavaBridge, it is needed by
+	Security Enhanced Linux.
+
+	* server/php/java/bridge/DynamicJavaBridgeClassLoader.java
+	(makeContextDir): Rewritten for windows.
+	(loadClass): Do not print the java_require path, the user should
+	already know what has been required.
+
+	* server/php/java/bridge/http/ContextFactory.java
+	(remove): Remove only live contexts
+	(recycle): Remove dead context
+	(destroyAll): Remove dead context
+	(removeOrphaned): New procedure removes dead contexts
+
+	* server/php/java/bridge/JavaBridge.java
+	(updateLibraryPath): Rewritten to make
+	mono_require("$here/some.dll") possible.
+
+	* tests.mono+net/load_assembly.php: require dll from the current
+	working directory.
+	
+	* server/php/java/bridge/Standalone.java
+	(monoUsage, javaUsage): New procedures.
+	(usage): Rewritten.
+
+	* server/php/java/bridge/Util.java 
+	(IS_MONO): New global
+	(MonoOutputStream): New class
+	(redirectMonoOutput, redirectJavaOutput): New procedures
+	(redirectOutput): Rewritten to use mono or java log.
+
+	* server/php/java/servlet/ConnectionPool.java
+	(openConnection): Same mistake as we've had with the ThreadPool,
+	see entry from 2005-08-23. The pattern: if(freeList.isEmpty())
+	wait() is always wrong, this does not prevent another thread
+	from entering the critical section and to take the element from
+	the freeList before the notified thread can leave wait().
+
+	* server/php/java/servlet/FastCGIServlet.java
+	(fcgi_channel, fcgi_socket): New globals
+	(selectFCGIChannel): New procedure
+	(init,destroy): Each context has its own FastCGI server above
+	port# 9667.
+		
+	* server/php/java/servlet/FastCGIServlet.java
+	(delegateOrStartFCGI, delegateFCGI): Removed.
+	(startFcgi, waitForDaemon, findCGI): Use the allocated FCGI
+	server, do not delegate to the server allocated by the JavaBridge
+	context.
+
+	* server/php/java/bridge/Request.java
+	(AbortException): New class
+	(handleSubRequests): Throw AbortException to quickly reach the
+	top-level handleRequests loop, if we've received a client abort.
+	(handleRequests): Handle AbortException.
+
+	* server/php/java/bridge/JavaBridge.java
+	(Invoke, GetSetProp, CreateObject, ObjectToString): pass AbortException
+	
+	* tests.php5/nested_callbacks.php, tests.php5/nested_callbacks_abort.php, tests.php5/nested_callbacks2.php: New tests.
+	
+	* VERSION, php-java-bridge.spec: Version 3.1.5 released
+	
 2006-07-02  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/Standalone.java: New file, refactored

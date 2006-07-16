@@ -94,12 +94,18 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
 	  else
 		  PHP_JAVA_BIN="${PHP_JRE}/bin/java"
           fi
+	  if test "$have_jni" = "yes"; then
+            JAVA_SOCKETNAME="/var/run/.php-java-bridge_socket"
+          else
+            JAVA_SOCKETNAME="9267"
+          fi
 # create init_cfg.c from the template (same as AC_CONFIG_FILES)
 # note: PHP_JAVA is JRE_HOME, PHP_JAVA_SDK is JAVA_HOME and 
 # PHP_JAVA_BIN is ${JRE_HOME}/bin/java
 	BRIDGE_VERSION="`cat $ext_builddir/VERSION`"
-        for i in init_cfg.c init_cfg.h install.sh; do 
+        for i in java-standalone.ini init_cfg.c init_cfg.h install.sh; do 
 	  sed "s*@PHP_JAVA@*${PHP_JRE}*
+	     s*@JAVA_SOCKETNAME@*${JAVA_SOCKETNAME}*
 	     s*@PHP_JAVA_SDK@*${PHP_JAVA}*
 	     s*@COND_GCJ@*${COND_GCJ}*
              s*@PHP_JAVA_BIN@*${PHP_JAVA_BIN}*

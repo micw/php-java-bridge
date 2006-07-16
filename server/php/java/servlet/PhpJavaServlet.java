@@ -21,6 +21,7 @@ import php.java.bridge.ThreadPool;
 import php.java.bridge.Util;
 import php.java.bridge.http.ContextFactory;
 import php.java.bridge.http.ContextServer;
+import php.java.bridge.http.IContextServer;
 
 /**
  * Handles requests from PHP clients.  <p> When Apache, IIS or php
@@ -80,7 +81,7 @@ public class PhpJavaServlet extends HttpServlet {
        
 	Util.setLogger(new Util.Logger(new Logger(config.getServletContext())));
 
-	String servletContextName = servletContextName=config.getServletContext().getRealPath("");
+	String servletContextName=config.getServletContext().getRealPath("");
 	if(servletContextName==null) servletContextName="";
 	if(Util.VERSION!=null)
     	    Util.logMessage("PHP/Java Bridge servlet "+servletContextName+" version "+Util.VERSION+" ready.");
@@ -99,7 +100,6 @@ public class PhpJavaServlet extends HttpServlet {
     	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
     	if(id!=null) ctx = (ServletContextFactory) ContextFactory.get(id, contextServer);
     	if(ctx==null) {
-    	  if(Util.logLevel>5) if(!id.equals("0")) throw new IllegalStateException("FATAL: Context #"+ id + " not found");
     	  ctx = ServletContextFactory.addNew(getServletContext(), null, req, res); // no session sharing
     	  ctx.getBridge().logDebug("first request (session is new).");
     	} else {
@@ -213,12 +213,14 @@ public class PhpJavaServlet extends HttpServlet {
 	
 	try {
 	    if(r.init(sin, sout)) {
-	        ContextServer.ChannelName channelName = contextServer.getFallbackChannelName(channel);
-	        res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getName());
+		String kontext = getHeader("X_JAVABRIDGE_CONTEXT_DEFAULT", req);
+		IContextServer.ChannelName channelName = contextServer.getFallbackChannelName(channel, kontext, ctx);
+		boolean hasDefault = contextServer.schedule(channelName) != null;
+		res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getDefaultName());
+		if(hasDefault) res.setHeader("X_JAVABRIDGE_CONTEXT_DEFAULT", kontext);
 	    	r.handleRequests();
 
 		// redirect and re-open
-	    	contextServer.schedule();
 		res.setContentLength(sout.size());
 		resOut = res.getOutputStream();
 		sout.writeTo(resOut);
@@ -241,11 +243,11 @@ public class PhpJavaServlet extends HttpServlet {
         return req.getRemoteAddr().startsWith("127.0.0.1");
     }
     
-    private String getChannel(HttpServletRequest req) {
-  	String channel = req.getHeader("X_JAVABRIDGE_CHANNEL");
-  	if(channel==null) return null;
-  	if(channel.length()==0) channel=null;
-  	return channel;
+    private String getHeader(String key, HttpServletRequest req) {
+  	String val = req.getHeader(key);
+  	if(val==null) return null;
+  	if(val.length()==0) val=null;
+  	return val;
     }
     /**
      * Dispatcher for the "http tunnel", "local channel" or "override redirect".
@@ -255,7 +257,7 @@ public class PhpJavaServlet extends HttpServlet {
     	short redirect =(short) req.getIntHeader("X_JAVABRIDGE_REDIRECT");
     	boolean local = isLocal(req);
     	if(!local && !allowHttpTunnel) throw new SecurityException("Non-local clients not allowed per default. Set allow_http_tunnel in your web.xml.");
-    	String channel = getChannel(req);
+    	String channel = getHeader("X_JAVABRIDGE_CHANNEL", req);
     	
     	try {
 	    if(redirect==1) 

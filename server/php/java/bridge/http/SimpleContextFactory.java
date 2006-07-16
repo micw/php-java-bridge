@@ -21,7 +21,7 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
     private ContextFactory visited;
 
     /**
-     * The data attached to the visited ContextFatory
+     * The jsr223 context or the emulated jsr223 context.
      */
     protected Object context;
     
@@ -74,8 +74,13 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
     public void recycle(ContextFactory visited) {
         visited.accept(this);
     }
-
+    public void removeOrphaned() {
+        visited.removeOrphaned();
+    }
+    /**
+     * @deprecated Use {@link #destroy()} instead
+     */
     public void remove() {
-        visited.remove();
+        visited.destroy();
     }
 }

@@ -248,8 +248,6 @@ import javax.servlet.http.HttpServletResponse;
  * @since PHP/JavaBridge 2.0.8
  *
  */
-
-
 public class CGIServlet extends HttpServlet {
 
     // IO buffer size

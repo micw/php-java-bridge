@@ -81,8 +81,8 @@ public final class ContextFactory extends SessionFactory implements IContextFact
         return id;
     }
     private static synchronized void remove(String id) {
-        liveContexts.remove(id);
-        if(Util.logLevel>5) Util.logDebug("removed context: " + id + ", # of contexts: " + contexts.size());
+	Object ob = liveContexts.remove(id);
+        if(Util.logLevel>4) Util.logDebug("removed context: " + ob + ", # of contexts: " + contexts.size());
     }
     private static synchronized ContextFactory moveContext(String id) {
         Object o;
@@ -94,7 +94,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
       super();
       timestamp = System.currentTimeMillis();
       id=addNext(this);
-      if(Util.logLevel>5) Util.logDebug("new context: " + id + ", # of contexts: " + contexts.size());
+      if(Util.logLevel>4) Util.logDebug("new context: " + id + ", # of contexts: " + contexts.size());
     }
 
     /**
@@ -139,25 +139,19 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      */
     public void recycle(String id) throws SecurityException {
         IContextFactory target = ((ContextFactory)contexts.get(id)).visitor;
-        target.remove();
+        target.removeOrphaned();
         target.recycle(this);
-    }
-    /* (non-Javadoc)
-     * @see php.java.bridge.http.IContextFactory#remove()
-     */
-    public synchronized void remove() {
-	if(Util.logLevel>5) Util.logDebug("context finished: " +getId());
-	remove(getId());
-	bridge=null;
-	removed=true;
-	notify();
     }
     /* (non-Javadoc)
      * @see php.java.bridge.http.IContextFactory#destroy()
      */
-    public void destroy() {
-        remove();
-    }
+    public synchronized void destroy() {
+	if(Util.logLevel>4) Util.logDebug("context finished: " +getId());
+	remove(getId());
+	bridge=null;
+	removed=true;
+	notify();
+   }
     
     /**
      * @deprecated
@@ -175,7 +169,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * the php instance already has a connection and there is no need access the new context
      * (php script contains no "java_session" and no "java_context"). 
      * 
-     * Orphaned contexts will be automatically destroyed after 5 seconds. -- Even 10ms would 
+     * Orphaned contexts will be automatically removed after 5 seconds. -- Even 10ms would 
      * be sufficient because contexts only bridge the gap between a) the first statement executed
      * via the HTTP tunnel and the second statement executed via the ContextRunner or 
      * b) they pass initial information from a client of a PHP client to the PHP script. If one round-trip
@@ -191,7 +185,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	            ctx.removed=true;
 	            ctx.notify();
 	        }
-	        Util.logDebug("Orphaned context: " + ctx.getId() + " removed.");
+	        if(Util.logLevel>4) Util.logDebug("Orphaned context: " + ctx.getId() + " removed.");
 	        ii.remove();
 	    }
 	}        
@@ -202,6 +196,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * @see php.java.bridge.http.ContextServer
      */
     public static synchronized void destroyAll() {
+	destroyOrphaned();
 	for(Iterator ii=contexts.values().iterator(); ii.hasNext();) {
 	    ContextFactory ctx = ((ContextFactory)ii.next());
 	    synchronized(ctx) {
@@ -292,5 +287,11 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      */
     public ISession getSession(String name, boolean clientIsNew, int timeout) {
         return visitor.getSession(name, clientIsNew, timeout);
+    }
+    public synchronized void removeOrphaned() {
+	Object ob = contexts.remove(id);
+        if(Util.logLevel>4) Util.logDebug("removed empty context: " + ob + ", # of contexts: " + contexts.size());
+	removed=true;
+	notify();
     }
 }

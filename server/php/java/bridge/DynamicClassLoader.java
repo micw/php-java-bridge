@@ -38,7 +38,6 @@ import java.util.WeakHashMap;
  * @author Kai Londenberg
  * @version 2.06
  */
-
 public class DynamicClassLoader extends SecureClassLoader {
 
     protected static Hashtable classLoaderCache = new Hashtable(); // Global Cache Map of Classpath=>Soft Reference=>URLClassLoaderEntry
@@ -73,7 +72,7 @@ public class DynamicClassLoader extends SecureClassLoader {
     }
 
     public static void debugMsg(String str) {
-	Util.logDebug((System.currentTimeMillis()-debugStart)+"::"+str);
+	if(Util.logLevel>5) Util.logDebug((System.currentTimeMillis()-debugStart)+"::"+str);
     }
 
     public static void clearCache() {
@@ -106,7 +105,7 @@ public class DynamicClassLoader extends SecureClassLoader {
      * @param classpath
      */
     public static void invalidate(String classpath) {
-	Util.logDebug("DynamicClassLoader.invalidate("+classpath+")\n");
+	if(Util.logLevel>5) Util.logDebug("DynamicClassLoader.invalidate("+classpath+")\n");
 	classLoaderCache.remove(classpath);
     }
 

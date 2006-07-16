@@ -5,7 +5,7 @@
 
     <!-- Faces Servlet -->
     <servlet>
-        <servlet-name>Faces Servlet</servlet-name>
+        <servlet-name>PhpFacesServlet</servlet-name>
         <servlet-class>php.java.faces.FacesServlet</servlet-class>
         <load-on-startup>0</load-on-startup>
     </servlet>
@@ -75,12 +75,24 @@
          <!-- Use the fast cgi interface instead of cgi when running -->
          <!-- php as a CGI sub component (when php is not installed as an -->
          <!-- Apache or IIS module). Values: Off, On, Autostart. -->
-         <!-- Default is Autostart, if the web application is "JavaBridge" -->
-         <!-- and On otherwise -->
+         <!-- Default is Autostart. -->
         <!-- 
          <init-param>
            <param-name>use_fast_cgi</param-name>
            <param-value>Off</param-value>
+         </init-param>
+        -->
+
+         <!-- Share the FastCGI pool from the JavaBridge PhpCGIServlet with -->
+         <!-- the GlobalPhpCGIServlet used by all other web apps. -->
+         <!-- Set this to On in both, the JavaBridge/WEB-INF/web.xml and -->
+         <!-- in the global conf/web.xml. -->
+         <!-- Default is Off. -->
+         <!-- See http://php-java-bridge.sf.net#global-servlet for details. -->
+        <!-- 
+         <init-param>
+           <param-name>shared_fast_cgi_pool</param-name>
+           <param-value>On</param-value>
          </init-param>
         -->
 
@@ -90,7 +102,7 @@
 
     <!-- Faces Servlet Mapping -->
     <servlet-mapping>
-        <servlet-name>Faces Servlet</servlet-name>
+        <servlet-name>PhpFacesServlet</servlet-name>
         <url-pattern>*.jsf</url-pattern>
     </servlet-mapping>
 

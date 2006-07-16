@@ -23,11 +23,12 @@ import php.java.bridge.Util;
  */
 public class SocketContextServer extends PipeContextServer implements Runnable {
     private ISocketFactory socket = null;
+
     protected static class Channel extends PipeContextServer.Channel {
         protected Socket sock;
         
-        public Channel(InputStream in, OutputStream out, Socket sock) {
-            super(in, out);
+        public Channel(String name, InputStream in, OutputStream out, Socket sock) {
+            super(name, in, out);
             this.sock = sock;
         }
         public InputStream getInputStream() {
@@ -43,13 +44,12 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
         }
         protected static void shutdown(Socket sock) {
             if(sock!=null) try {sock.close();}catch (IOException e){}           
-             }
+        }
 
         public void shutdown() {
             super.shutdown();
             shutdown(sock);
          }    
-
     }
     /**
      * Create a new ContextServer using the ThreadPool. 
@@ -85,21 +85,20 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
 	    try {socket = this.socket.accept();} catch (IOException ex) {return false;} // socket closed
 	    in=socket.getInputStream();
 	    out=socket.getOutputStream();
-	    ContextRunner runner = new ContextRunner(contextServer, new Channel(in, out, socket));
+	    ContextRunner runner = new ContextRunner(contextServer, new Channel(getChannelName(), in, out, socket));
 	    if(threadPool!=null) {
 	        threadPool.start(runner);
 	    } else {
 	    	Thread t = new Thread(runner, "JavaBridgeContextRunner");
 	    	t.start();
-
 	    }
 	} catch (SecurityException t) {
-	    (new Channel(in, out, socket)).shutdown();
+	    Channel.shutdown(socket);
 	    ContextFactory.destroyAll();
 	    Util.printStackTrace(t);
 	    return false;
 	} catch (Throwable t) {
-	    (new Channel(in, out, socket)).shutdown();
+	    Channel.shutdown(socket);
 	    Util.printStackTrace(t);
 	}
 	return true;
@@ -139,8 +138,7 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
     public String getChannelName() {
         return socket.getSocketName();
     }
-    
-    public boolean start(String channelName) {
-        return isAvailable();
+    public boolean start(ContextRunner runner) {
+	return isAvailable();
     }
 }

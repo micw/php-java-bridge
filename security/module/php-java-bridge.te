@@ -26,7 +26,7 @@ files_pid_file(javabridge_var_run_t)
 # javabridge local policy
 #
 gen_require(`
-	type var_log_t,devpts_t,httpd_t,java_exec_t;
+	type sbin_t,inaddr_any_node_t,netif_t,lo_node_t,httpd_sys_content_t,port_t,var_log_t,devpts_t,httpd_t,java_exec_t;
 ')
 allow javabridge_t var_log_t:file ra_file_perms;
 allow javabridge_t javabridge_tmp_t:file manage_file_perms;
@@ -37,8 +37,24 @@ allow javabridge_t javabridge_exec_t:file execute_no_trans;
 allow javabridge_t self:process { execmem signal };
 allow javabridge_t self:unix_stream_socket { accept listen };
 
+#########
+# Connect from httpd.
 allow httpd_t javabridge_exec_t:file getattr;
 allow httpd_t javabridge_t:unix_stream_socket connectto;
+
+# Connect from httpd using tcp sockets
+allow javabridge_t self:tcp_socket { accept bind connect create getattr listen read setopt write shutdown };
+allow javabridge_t port_t:tcp_socket { name_bind name_connect recv_msg send_msg };
+
+corenet_tcp_sendrecv_generic_if(javabridge_t)
+corenet_non_ipsec_sendrecv(javabridge_t)
+allow javabridge_t lo_node_t:node { tcp_recv tcp_send };
+allow javabridge_t lo_node_t:tcp_socket node_bind;
+
+dontaudit javabridge_t inaddr_any_node_t:tcp_socket node_bind;
+dontaudit javabridge_t sbin_t:dir search;
+#########
+
 #########
 # /usr/bin/java
 corecmd_exec_bin(javabridge_t);
@@ -72,6 +88,11 @@ libs_use_shared_libs(javabridge_t)
 miscfiles_read_localization(javabridge_t)
 # Read global fonts and font config
 miscfiles_read_fonts(javabridge_t)
+
+# Read /var/www
+allow javabridge_t httpd_sys_content_t:dir r_dir_perms;
+allow javabridge_t httpd_sys_content_t:file r_file_perms;
+allow javabridge_t httpd_sys_content_t:lnk_file r_file_perms;
 
 sysnet_read_config(javabridge_t)
 #########

@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.Iterator;
@@ -76,10 +78,17 @@ public class FastCGIServlet extends CGIServlet {
      * The Fast CGI default port
      */ 
     public static final int FCGI_CHANNEL = 9667;
+    
+    /** The actual socket# and socket */
+    protected static int fcgi_channel;
+    protected static ServerSocket fcgi_socket = null;
+    
     /**
      * This controls how many child processes the PHP process spawns.
+     * Default is 20.
+     * @see Util#THREAD_POOL_MAX_SIZE
      */
-    private static final String PHP_FCGI_CHILDREN = "20";
+    private static final String PHP_FCGI_CHILDREN = Util.THREAD_POOL_MAX_SIZE;
     
     /**
      * This controls how many requests each child process will handle before
@@ -97,13 +106,14 @@ public class FastCGIServlet extends CGIServlet {
 
     protected boolean canStartFCGI = false;
     protected boolean override_hosts = true;
+    protected boolean delegateToJavaBridgeContext = false;
 
     protected String php_fcgi_children = PHP_FCGI_CHILDREN;
     protected int php_fcgi_children_number = Integer.parseInt(PHP_FCGI_CHILDREN);
     protected String php_fcgi_max_requests = PHP_FCGI_MAX_REQUESTS;
 
     private final Object lockObject = new Object();
-    private ConnectionPool fcgiConnectionPool = null;
+    private static ConnectionPool fcgiConnectionPool = null;
     private final ConnectionPool.Factory defaultPoolFactory = new ConnectionPool.Factory() {
       public Socket connect(String host, int port) throws ConnectionException, SocketException { 
 	  Socket s = super.connect(host, port);
@@ -167,6 +177,17 @@ public class FastCGIServlet extends CGIServlet {
 	    }
 	  }  catch (Throwable t) {Util.printStackTrace(t);}      
     }
+    private void selectFCGIChannel(boolean select) {
+	fcgi_channel=FCGI_CHANNEL; fcgi_socket=null;
+	for(int i=FCGI_CHANNEL+1; select && (i<FCGI_CHANNEL+100); i++) {
+	    try {
+		ServerSocket s = new ServerSocket(i, Util.BACKLOG, InetAddress.getByName("127.0.0.1"));
+		fcgi_channel = i;
+		fcgi_socket = s;
+		break;
+	    } catch (IOException e) {/*ignore*/}
+	}
+    }
     /**
      * Create a new FastCGI servlet which connects to a PHP FastCGI server using a connection pool.
      * 
@@ -203,15 +224,27 @@ public class FastCGIServlet extends CGIServlet {
 	    if(val==null) val = System.getProperty("php.java.bridge.php_fcgi_max_requests");	    
 	} catch (Throwable t) {/*ignore*/}
 	if(val!=null) php_fcgi_max_requests = val;
-	fcgiIsConfigured = fcgiIsAvailable = true;
+	fcgiIsAvailable = fcgiIsConfigured = true;
 	checkCgiBinary(config);
+	
+	try {
+	    value = config.getInitParameter("shared_fast_cgi_pool");
+	    if(value==null) value="";
+	    value = value.trim();
+	    value = value.toLowerCase();
+	    if(value.equals("on") || value.equals("true")) 
+		delegateToJavaBridgeContext=true;
+	} catch (Throwable t) {/*ignore*/}
+
+	selectFCGIChannel(canStartFCGI && !delegateToJavaBridgeContext);
     }
     /**
      * Destroys the FastCGI connection pool, if it exists.
      */
     public void destroy() {
     	if(fcgiConnectionPool!=null) fcgiConnectionPool.destroy();
-        super.destroy();
+    	if(fcgi_socket!=null) try { fcgi_socket.close(); } catch (Exception e) {/*ignore*/}
+    	super.destroy();
     }
 
     protected StringBuffer getCgiDir() {
@@ -229,6 +262,10 @@ public class FastCGIServlet extends CGIServlet {
 	    super(req, res, context);
 	}
 	protected static final String empty_string = "";
+	// in a shared environment, the PhpCGIServlet JavaBridge context reserves 3 php-cgi instances 
+	// for activation and for handling JavaBridge/foo.php requests.
+	// the rest is available for the GlobalPhpCGIServlet
+	private static final int JAVABRIDGE_RESERVE = 3;
 	protected String[] findCGI(String pathInfo, String webAppRootDir,
 				   String contextPath, String servletPath,
 				   String cgiPathPrefix) {
@@ -237,7 +274,13 @@ public class FastCGIServlet extends CGIServlet {
 	    synchronized(lockObject) {
 		if(null == (connectionPool=fcgiConnectionPool))
 		    try {
-			fcgiConnectionPool=connectionPool = new ConnectionPool("127.0.0.1", FCGI_CHANNEL, php_fcgi_children_number, defaultPoolFactory);
+			int children = php_fcgi_children_number;
+			if(delegateToJavaBridgeContext) { 
+			    // NOTE: the  shared_fast_cgi_pool options from the GlobalPhpCGIServlet and from the PhpCGIServlet must match.
+			    boolean isJavaBridgeWc = isJavaBridgeWc(contextPath);
+			    children = isJavaBridgeWc ? JAVABRIDGE_RESERVE : php_fcgi_children_number-JAVABRIDGE_RESERVE;
+			}
+			fcgiConnectionPool=connectionPool = new ConnectionPool("127.0.0.1", fcgi_channel, children, defaultPoolFactory);
 		    } catch (Exception e) {
 			Util.logDebug(e+": FastCGI channel not available, switching off fast cgi. " + startFcgiMessage());
 			
@@ -253,6 +296,9 @@ public class FastCGIServlet extends CGIServlet {
 		contextPath+servletPath,  		// sCGIScriptName: the php file relative to webappRootDir, e.g.: /index.php 
 		empty_string,       	// sCGIFullName: not used (used in setPathInfo, which we don't use)
 		empty_string};      	// sCGIName: not used anywhere
+	}
+	protected boolean isJavaBridgeWc(String contextPath) {
+	    return (contextPath!=null && contextPath.endsWith("JavaBridge"));
 	}
     }
     /**

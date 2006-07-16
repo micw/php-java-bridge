@@ -92,7 +92,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
   	    return rawPath;
         }
         private String makeContextDir(String rawContextDir) {
-            rawContextDir += rawContextDir.endsWith("/") ? "lib/" : "/lib/";
+            rawContextDir = new File(rawContextDir, "lib").getAbsolutePath();
             return rawContextDir;
         }
 	/**
@@ -136,9 +136,9 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
   		    StringBuffer buf= new StringBuffer();
   		    if((f=new File(s)).isFile() || f.isAbsolute()) {
   		    	buf.append(s); file = f;
-  		    } else if ((f=new File(contextDir + s)).isFile()) {
+  		    } else if ((f=new File(contextDir, s)).isFile()) {
   		    	buf.append(f.getAbsolutePath()); file = f;
-  		    } else if ((f=new File("/usr/share/java/" + s)).isFile()) {
+  		    } else if ((f=new File("/usr/share/java/"+ s)).isFile()) {
   			buf.append(f.getAbsolutePath()); file = f;
   		    } else {
   			buf.append(s); file = new File(s);
@@ -241,7 +241,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
         if(Util.logLevel>4) {
             if(mf!=null) {
                 Set main = mf.getMainAttributes().entrySet();
-                Util.logDebug("ClassLoader: loaded file: " + f + ", main attributes: " + main);
+                if(Util.logLevel>5) Util.logDebug("ClassLoader: loaded file: " + f + ", main attributes: " + main);
             }
         }
         jar.close();
@@ -405,7 +405,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	try {
 	    return super.loadClass(name); 
 	} catch (ClassNotFoundException e) {
-	    throw new ClassNotFoundException(("Could not find " + name + " in java_require(\""+toString()+"\") path. Please check the path and the SEL and File permissions "), e);    
+	    throw new ClassNotFoundException(("Could not find " + name + " in java_require() path. Please check the path and the SEL and File permissions."), e);    
 	}
     }
     /**

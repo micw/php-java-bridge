@@ -94,7 +94,7 @@ PHP_RSHUTDOWN_FUNCTION(EXT)
 {
   shutdown_connections(TSRMLS_C);
   if(JG(cb_stack)) { 
-	assert(zend_stack_is_empty(JG(cb_stack)));
+	zend_stack_destroy(JG(cb_stack));
 	efree(JG(cb_stack)); JG(cb_stack) = 0; 
   }
   JG(is_closed)=1;
@@ -363,7 +363,7 @@ EXT_FUNCTION(EXT_GLOBAL(get_values))
  * echo "Java says that PHP says: $object\n";
  * \endcode
  *
- * When a php instance is supplied as a argument, that environment will be used
+ * When a php instance is supplied as an argument, the environment will be used
  * instead. When a string or key/value map is supplied as a second argument,
  * the java procedure names are mapped to the php procedure names. Example:
  * \code
@@ -469,7 +469,7 @@ static int java_call_user_function_ex(HashTable *function_table, zval **object_p
   efree(params_array);
 
   /* this is a dummy which is never called. It is here so that gcc
-	 enables auto-import. If it is missing, the dll will crash (!??) */
+	 enables auto-import. */
   assert(!function_table);
   if(function_table) call_user_function_ex(function_table, object_pp, function_name, retval_ptr_ptr, param_count, params, no_separation, symbol_table TSRMLS_CC);
 
@@ -801,7 +801,8 @@ PHP_INI_BEGIN()
   PHP_INI_ENTRY(EXT_NAME()/**/".persistent_connections",   NULL, PHP_INI_SYSTEM, OnIniPersistentConnections)
   PHP_INI_END()
 
-/* vm_alloc_globals_ctor(zend_vm_globals *vm_globals) */
+/* PREFORK calls this once. All childs receive cloned values. However,
+   the WORKER MPM calls this for the master and for all childs */
   static void EXT_GLOBAL(alloc_globals_ctor)(EXT_GLOBAL_EX(zend_,globals,_) *EXT_GLOBAL(globals) TSRMLS_DC)
 {
   EXT_GLOBAL(globals)->jenv=0;
@@ -814,6 +815,9 @@ PHP_INI_BEGIN()
 
   zend_hash_init(&EXT_GLOBAL(globals)->connections, 0, 0, 0, 1);
   EXT_GLOBAL(globals)->cb_stack=0;
+
+  EXT_GLOBAL(globals)->peer = EXT_GLOBAL(globals)->peerr = -1;
+  EXT_GLOBAL(globals)->servlet_ctx = 0;
 }
 
 #ifdef ZEND_ENGINE_2
@@ -1698,9 +1702,11 @@ PHP_MINIT_FUNCTION(EXT)
   EXT_INIT_MODULE_GLOBALS(EXT, EXT_GLOBAL(alloc_globals_ctor), NULL);
   
   assert(!EXT_GLOBAL (cfg) );
-  if(!EXT_GLOBAL (cfg) ) EXT_GLOBAL (cfg) = malloc(sizeof *EXT_GLOBAL (cfg) ); if(!EXT_GLOBAL (cfg) ) exit(9);
+  if(!EXT_GLOBAL (cfg) ) EXT_GLOBAL (cfg) = malloc(sizeof *EXT_GLOBAL (cfg) ); 
+  if(!EXT_GLOBAL (cfg) ) exit(9);
 
   if(REGISTER_INI_ENTRIES()==SUCCESS) {
+	char *tmpdir, sockname_shm[] = SOCKNAME_SHM, sockname[] = SOCKNAME;
 	/* set the default values for all undefined */
 	
 	EXT_GLOBAL(init_cfg) (TSRMLS_C);
@@ -1708,8 +1714,12 @@ PHP_MINIT_FUNCTION(EXT)
 	EXT_GLOBAL(clone_cfg)(TSRMLS_C);
 	EXT_GLOBAL(start_server) (TSRMLS_C);
 	EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);
-
+	EXT_GLOBAL(mktmpdir)();
 	
+#ifndef __MINGW32__
+	EXT_GLOBAL(cfg)->pid = getpid();
+#endif
+
   } 
   return SUCCESS;
 }
@@ -1834,8 +1844,11 @@ PHP_MSHUTDOWN_FUNCTION(EXT)
   EXT_GLOBAL(shutdown_library) ();
 
   assert(EXT_GLOBAL (cfg));
-  if(EXT_GLOBAL (cfg) ) { free(EXT_GLOBAL (cfg) ); EXT_GLOBAL (cfg) = 0; }
-
+  if(EXT_GLOBAL (cfg) ) { 
+	EXT_GLOBAL(rmtmpdir)();
+	free(EXT_GLOBAL (cfg) ); EXT_GLOBAL (cfg) = 0; 
+  }
+	
   return SUCCESS;
 }
 

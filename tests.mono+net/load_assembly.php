@@ -8,7 +8,8 @@ if (!extension_loaded('mono')) {
     exit(2);
   }
 }
-mono_require("sample_lib");
+$here=getcwd();
+mono_require("$here/sample_lib.dll");
 
 $ArrayToString=new MonoClass("sample.ArrayToString");
 
@@ -19,7 +20,7 @@ for($i=0; $i<$length; $i++) {
   $arr[$i]=$i;
 }
 
-// ... and post it to vm.  Should print integers
+// ... and post it to the VM.  Should print integers
 print "integer array: ". $ArrayToString->Convert($arr) . "\n";
 
 

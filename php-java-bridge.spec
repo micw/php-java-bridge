@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 3.1.4
+%define version 3.1.6devel
 %define release 1
 %define PHP_MAJOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | sed 's/\\\..*$//')
 %define PHP_MINOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | LANG=C cut -d. -f2)
@@ -77,7 +77,7 @@ Group: System Environment/Daemons
 Summary: Standalone back-end for the PHP/Java Bridge
 Requires: php-java-bridge = %{version}
 Requires: ed
-# php4 is stored in /usr/lib/php4, php5 and above in /usr/lib/php
+# php4 is stored in %{_libdir}/php4, php5 and above in %{_libdir}/php
 %if %{PHP_MAJOR_VERSION} == 4
 Requires: php >= 4.3.2
 Requires: php < 5.0.0
@@ -119,8 +119,8 @@ echo Building for PHP %{PHP_MAJOR_VERSION}.
 
 %build
 set -x
-PATH=/bin:/usr/bin
-LD_LIBRARY_PATH=/lib:/usr/lib
+PATH=/bin:%{_bindir}
+LD_LIBRARY_PATH=/lib:%{_libdir}
 
 # calculate java dir
 %if %{have_j2} == 1
@@ -139,7 +139,7 @@ echo "using java_dir: $java_dir"
 if test X$java_dir = X; then echo "ERROR: java not installed" >2; exit 1; fi
 
 phpize
-./configure --prefix=/usr --with-java=${java_dir}
+./configure --prefix=%{_exec_prefix} --with-java=${java_dir}
 make
 %if %{have_policy_modules} == 1
 (cd security/module; make; rm -rf tmp;)
@@ -205,10 +205,10 @@ echo $mod_dir/RunJavaBridge >filelist-standalone
 cat java-standalone.ini | sed 's|^;java\.java_home[\t =].*$|java.java_home = @JAVA_HOME@|; s|^;java\.java[\t =].*$|java.java = @JAVA_JAVA@|' >$RPM_BUILD_ROOT/etc/php.d/java-standalone.ini
 #echo /etc/php.d/java-standalone.ini >>filelist-standalone
 
-mkdir -p $RPM_BUILD_ROOT/usr/sbin
-cp php-java-bridge $RPM_BUILD_ROOT/usr/sbin
-chmod +x $RPM_BUILD_ROOT/usr/sbin/php-java-bridge
-#echo /usr/sbin/php-java-bridge >>filelist-standalone
+mkdir -p $RPM_BUILD_ROOT%{_sbindir}
+cp php-java-bridge $RPM_BUILD_ROOT%{_sbindir}
+chmod +x $RPM_BUILD_ROOT%{_sbindir}/php-java-bridge
+#echo %{_sbindir}/php-java-bridge >>filelist-standalone
 
 mkdir -p $RPM_BUILD_ROOT/etc/init.d
 cp php-java-bridge.service $RPM_BUILD_ROOT/etc/init.d/php-java-bridge
@@ -240,7 +240,7 @@ exit 0
 %post tomcat
 if test -f /etc/selinux/config; then
   if test -d /etc/selinux/%{__policy_tree}/modules; then 
-    /usr/sbin/semodule -i %{_docdir}/%{name}-tomcat-%{version}/security/module/php-java-bridge-tomcat.pp
+    %{_sbindir}/semodule -i %{_docdir}/%{name}-tomcat-%{version}/security/module/php-java-bridge-tomcat.pp
   else
 	te=/etc/selinux/%{__policy_tree}/src/policy/domains/program/php-java-bridge.te
 	fc=/etc/selinux/%{__policy_tree}/src/policy/file_contexts/program/php-java-bridge.fc
@@ -293,8 +293,8 @@ fi
 
 if test -f /etc/selinux/config; then
   if test -d /etc/selinux/%{__policy_tree}/modules; then 
-    /usr/sbin/semodule -i %{_docdir}/%{name}-standalone-%{version}/security/module/php-java-bridge.pp
-    chcon -t javabridge_exec_t /usr/lib/php/modules/RunJavaBridge
+    %{_sbindir}/semodule -i %{_docdir}/%{name}-standalone-%{version}/security/module/php-java-bridge.pp
+    chcon -t javabridge_exec_t %{_libdir}/php/modules/RunJavaBridge
   else
 	te=/etc/selinux/%{__policy_tree}/src/policy/domains/program/php-java-bridge.te
 	fc=/etc/selinux/%{__policy_tree}/src/policy/file_contexts/program/php-java-bridge.fc
@@ -315,9 +315,9 @@ echo
 exit 0
 
 %post devel
-mkdir -p /usr/java/packages/lib/ext/ 2>/dev/null
-ln -fs /usr/share/java/JavaBridge.jar /usr/java/packages/lib/ext/
-ln -fs /usr/share/java/php-script.jar /usr/java/packages/lib/ext/
+mkdir -p %{_exec_prefix}/java/packages/lib/ext/ 2>/dev/null
+ln -fs %{shared_java}/JavaBridge.jar %{_exec_prefix}/java/packages/lib/ext/
+ln -fs %{shared_java}/php-script.jar %{_exec_prefix}/java/packages/lib/ext/
 exit 0
 
 %preun standalone
@@ -326,25 +326,24 @@ if [ $1 = 0 ]; then
 	/sbin/chkconfig php-java-bridge off
 	/sbin/chkconfig --del php-java-bridge
     if test -d /etc/selinux/%{__policy_tree}/modules; then 
-		/usr/sbin/semodule -r javabridge
+		%{_sbindir}/semodule -r javabridge
 	fi
 fi
 
 %preun tomcat
 if [ $1 = 0 ]; then
-	if test -e /var/www/html/JavaBridge && test %{tomcat_webapps}/JavaBridge -ef /var/www/html/JavaBridge; then
+	if test -e /var/www/html/JavaBridge && test -e %{tomcat_webapps}/JavaBridge && test %{tomcat_webapps}/JavaBridge -ef /var/www/html/JavaBridge; then
       rm -f /var/www/html/JavaBridge;
     fi
-    rm -f /var/www/html/JavaBridge
 	rm -rf %{tomcat_webapps}/JavaBridge
     if test -d /etc/selinux/%{__policy_tree}/modules; then 
-		/usr/sbin/semodule -r javabridge
+		%{_sbindir}/semodule -r javabridge
 	fi
 fi
 
 %preun devel
 if [ $1 = 0 ]; then
-	rm -f /usr/java/packages/lib/ext/JavaBridge.jar /usr/java/packages/lib/ext/php-java.jar
+	rm -f %{_exec_prefix}/java/packages/lib/ext/JavaBridge.jar %{_exec_prefix}/java/packages/lib/ext/php-java.jar
 fi
 
 
@@ -355,7 +354,7 @@ fi
 %files standalone -f filelist-standalone
 %defattr(6111,apache,apache)
 %attr(-,root,root) /etc/php.d/java-standalone.ini
-%attr(-,root,root) /usr/sbin/php-java-bridge 
+%attr(-,root,root) %{_sbindir}/php-java-bridge 
 %attr(-,root,root) /etc/init.d/php-java-bridge
 %doc %attr(-,root,root) README INSTALL INSTALL.LINUX LICENSE security 
 

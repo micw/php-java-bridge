@@ -51,7 +51,7 @@ class Parser {
 	}
 	return OK; 
     }
-    
+    private boolean response = true;
     private ParserTag tag[] = null;
     private byte buf[] = new byte[RECV_SIZE];
     private int len=SLEN;
@@ -92,7 +92,7 @@ class Parser {
 	    buf.append(eot?"/>":">"); eot=false;
 	    bridge.logDebug(buf.toString());
     	}
-	handler.begin(tag);
+	response = handler.begin(tag);
     }
     void CALL_END() {
     	if(bridge.logLevel>=4) {
@@ -157,7 +157,7 @@ class Parser {
 		    }
 		    tag[0].n=tag[1].n=tag[2].n=0; i0=i=0;      		/* RESET */
 		    type=VOJD;
-		    if(level==0) eor=1; 
+		    if(level==0 && response) eor=1; 
 		    break;
 		case ';':
 		    if(type==ENTITY) {
@@ -205,5 +205,12 @@ class Parser {
 	c=0;
 	len=SLEN;
 	s=new byte[len];
+    }
+    /**
+     * Set the current bridge object
+     * @param bridge The bridge
+     */
+    public void setBridge(JavaBridge bridge) {
+	this.bridge = bridge;
     }
 }

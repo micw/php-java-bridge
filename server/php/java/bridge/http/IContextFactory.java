@@ -16,20 +16,28 @@ public interface IContextFactory {
   /**
    * Synchronize the current state with id.
    * <p>
-   * When persistent connections are used, the bridge instances recycle their context factories. 
-   * However, a jsr223 client may have passed a fresh context id. If this happened, the bridge calls this method, 
+   * When persistent connections are used, the bridge instances recycle their context factories (persistent
+   * php clients store their context id, so that they don't have to aquire a new one).
+   * However, a client of a php client may have passed a fresh context id. 
+   * If this happened, the bridge calls this method, 
    * which may update the current context with the fresh values from id.</p>
-   * <p>This method automatically destroys the fresh context id</p>   
+   * <p>Typically the ContextFactory implements this method. It should find the ContextFactory for id,
+   * check that the Factory is not in use (and throw a SecurityException, if isInitialized() returns true),
+   * remove it by calling removeOrphaned() and 
+   * call its recycle() method passing it the current ContextFactory. 
+   * </p>
    * @param id The fresh id
    * @throws NullPointerException if the current id is not initialized
+   * @throws SecurityException if the found ContextFactory is initialized.
    * @see #recycle(ContextFactory)
    * @see php.java.bridge.JavaBridge#recycle()
    */
   public void recycle(String id) throws SecurityException;
   
   /**
-   * Typically this method should attach the fresh ContextFactory to the target by calling
+   * Typically the visitor implements this method, it should attach itself to the target by calling
    * <code>target.accept(this)</code>.
+   * @see #recycle(String)
    * @see php.java.bridge.http.ContextFactory#accept(IContextFactoryVisitor)
    * @see php.java.bridge.http.IContextFactoryVisitor#visit(ContextFactory)
    * @see php.java.bridge.http.SimpleContextFactory
@@ -40,14 +48,13 @@ public interface IContextFactory {
   /**
    * Removes the context factory from the classloader's list of context factories
    * and destroys its content.
-   * @see #remove()
    */
   public void destroy();
 
   /**
-   * Removes the context factory from the classloader's list of context factories.
+   * Removes the unused context factory from the classloader's list of context factories.
    */
-  public void remove();
+  public void removeOrphaned();
 
   /**
    * Wait until this context is finished.
@@ -57,7 +64,7 @@ public interface IContextFactory {
   public void waitFor() throws InterruptedException;
 
   /**
-   * Return the serializable ID of the context manager
+   * Return the serializable ID of the context factory
    * @return The ID
    */
   public String getId();
@@ -79,12 +86,6 @@ public interface IContextFactory {
   public void setContext(Object context);
 
   /**
-   * Set the JavaBridge into this context.
-   * @param bridge The bridge to set.
-   */
-  public void setBridge(JavaBridge bridge);
-
-  /**
    * Return the JavaBridge.
    * @return Returns the bridge.
    */
@@ -98,4 +99,5 @@ public interface IContextFactory {
    * @see php.java.bridge.ISession
    */
    public ISession getSession(String name, boolean clientIsNew, int timeout);
+
 }

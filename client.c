@@ -13,6 +13,9 @@
 /* setenv */
 #include <stdlib.h>
 
+/* signal */
+#include <signal.h>
+
 /* miscellaneous */
 #include <stdio.h>
 #include <errno.h>
@@ -421,6 +424,66 @@ static void end(parser_string_t st[1], parser_cb_t *cb){
 	break;
   }
 }
+static void remove_pipe(proxyenv*env) {
+  struct pipe *pipe = &((*env)->pipe);
+  if((*env)->is_shared) return;
+
+  close(pipe->lockfile); unlink(pipe->channel);
+  unlink(pipe->in); unlink(pipe->out);
+}
+/**
+ * Server agreed that we can re-use the connection for a different web
+ * context.  See ContextRunner.recycle() and ABOUT.HTM#global-servlet
+ * for details.
+ */
+static void share_connection(proxyenv*env, char*redirect_port TSRMLS_DC) {
+  assert(redirect_port);
+  (*env)->servlet_ctx=JG(servlet_ctx);
+  (*env)->peer = JG(peer);
+  if(*redirect_port=='/') {		/* pipe */
+	remove_pipe(env);
+	(*env)->peerr = JG(peerr);
+	EXT_GLOBAL(redirect_pipe)(env);
+  }
+  (*env)->is_shared=1;
+  (*env)->must_reopen=0;		/* do not send a header */
+}
+
+
+#ifndef __MINGW32__
+static void redirect(proxyenv*env, char*redirect_port, char*channel_in, char*channel_out TSRMLS_DC) {
+  assert(redirect_port);
+  if(*redirect_port!='/') { /* socket */
+	char *server = EXT_GLOBAL(test_server)(&(*env)->peer, 0, 0 TSRMLS_CC);
+	assert(server); if(!server) exit(9);
+	free(server);
+
+	/* the default peer */
+	if(JG(peer)==-1) JG(peer)=(*env)->peer;
+  } else {						/* pipe */
+	(*env)->peerr = open(channel_in, O_RDONLY);
+	(*env)->peer = open(channel_out, O_WRONLY);
+	if((-1==(*env)->peerr) || (-1==(*env)->peer)) {
+	  php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Fatal: could not open comm. pipe.",92);
+	  exit(9);
+	}
+	EXT_GLOBAL(redirect_pipe)(env);
+
+	/* the default peer */
+	if(JG(peer)==-1) JG(peer)=(*env)->peer;
+	if(JG(peerr)==-1) JG(peerr)=(*env)->peerr;
+  }
+}
+#else
+static void redirect(proxyenv*env, char*redirect_port, char*channel_in, char*channel_out TSRMLS_DC) {
+  char *server = EXT_GLOBAL(test_server)(&(*env)->peer, 0, 0 TSRMLS_CC);
+  assert(server); if(!server) exit(9);
+  free(server);
+
+  /* the default peer */
+  if(JG(peer)==-1) JG(peer)=(*env)->peer;
+}
+#endif
 
 static const char key_hosts[]="java.hosts";
 static const char key_servlet[] = "java.servlet";
@@ -459,6 +522,7 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
 	  char *key;
 	  static const char context[] = "X_JAVABRIDGE_CONTEXT";
 	  static const char redirect[]= "X_JAVABRIDGE_REDIRECT";
+	  static const char kontext[]= "X_JAVABRIDGE_CONTEXT_DEFAULT";
 	  if(!(*ctx)->peer_redirected && !strcasecmp(str, redirect)) {
 		char *key = (char*)PARSER_GET_STRING(tag[1].strings, 0);
 		size_t key_len = tag[1].strings[0].length;
@@ -482,6 +546,12 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
 	  } else if((!(*ctx)->servlet_ctx)&&(!strcasecmp(str, context))) {
 		key = (char*)PARSER_GET_STRING(tag[1].strings, 0);
 		(*ctx)->servlet_ctx = strdup(key);
+		if(!JG(servlet_ctx)) JG(servlet_ctx)=(*ctx)->servlet_ctx;
+
+	  } else if(!strcasecmp(str, kontext)) {
+		assert(JG(servlet_ctx));
+
+		(*ctx)->must_share = 1;
 	  }
 	  break;
 	}
@@ -538,34 +608,33 @@ static short handle_request(proxyenv *env) {
 	(*env)->f_recv = (*env)->f_recv0;
 	(*env)->f_send = (*env)->f_send0;
 	(*env)->peer0 = -1;
-  } else	 /* Override redirect opens a secondary channel to the
+  } else {	 /* Override redirect opens a secondary channel to the
 			  backend. Skip the following if an override redirect
-			  happened in the middle of redirect/reopen handling, i.e.
-			  between "begin redirect" above (must_reopen=2) or "begin
-			  reopen" (must_reopen=1) and "redirect finish" or "end
-			  reopen" (see must_reopen=0 in function end() and
-			  protocol_end() in protocol.c).  In other words: handle
-			  override redirect _or_ redirect for one packet, but not
-			  both. */
-
-  /* re-open a closed HTTP connection */
-  if((*env)->must_reopen) {
-	char*server;
-	if((*env)->must_reopen==2) { // redirect
+			  happened in the middle of redirect/reopen handling. */
+	switch(((*env)->must_reopen)) {
+	  /* re-open a closed HTTP connection */
+	  char*server;
+	case 2: // redirect
 	  (*env)->peer_redirected = 1;
 	  JG(ini_user)&=~(U_SERVLET|U_SOCKNAME);
-
+	  
 	  assert((*env)->peer!=-1); 
 	  if((*env)->peer!=-1) { close((*env)->peer); (*env)->peer=-1; }
-	  EXT_GLOBAL(redirect)(env, JG(redirect_port), JG(channel_in), JG(channel_out) TSRMLS_CC);
-	} else {
+	  if((*env)->must_share) 
+		share_connection(env, JG(redirect_port) TSRMLS_CC);
+	  else
+		redirect(env, JG(redirect_port), (*env)->pipe.in, (*env)->pipe.out TSRMLS_CC);
+	  break;
+	case 1: // reopen 
 	  assert((*env)->peer!=-1); 
 	  if((*env)->peer!=-1) close((*env)->peer);
 	  server = EXT_GLOBAL(test_server)(&(*env)->peer, 0, 0 TSRMLS_CC);
 	  assert(server); if(!server) exit(9);
 	  free(server);
+	  break;
 	}
   }
+
   if(tail_call) {
 	memset(&ctx, 0, sizeof ctx);
 	goto handle_request;
@@ -695,6 +764,7 @@ static proxyenv*adjust_servlet_environment(proxyenv *env, char*servlet_context_s
   if((SUCCESS==zend_eval_string((char*)context, &val, (char*)name TSRMLS_CC)) && (Z_TYPE(val)==IS_STRING)) {
 	(*env)->current_servlet_ctx = strdup(Z_STRVAL(val));
     if(!(*env)->servlet_ctx) (*env)->servlet_ctx = (*env)->current_servlet_ctx;
+	if(!JG(servlet_ctx)) JG(servlet_ctx) = (*env)->servlet_ctx;
 								/* back-end must have created a session
 								   proxy, otherwise we wouldn't see a
 								   context. */
@@ -732,7 +802,19 @@ static proxyenv*recycle_connection(char *context TSRMLS_DC) {
   }
   return 0;
 }
-static void init_channel(TSRMLS_D);
+/**
+ * Send the header, if this is a new connection.
+ */
+static void add_header(proxyenv *env) {
+  unsigned char mode = EXT_GLOBAL (get_mode) ();
+  (*env)->send_len=1; 
+  *(*env)->send=mode;
+}
+static void init_channel(proxyenv *env);
+/**
+ * Create a new connection to the server or re-use a previous
+ * connection.
+ */
 static proxyenv*create_connection(char *context_string TSRMLS_DC) {
   char *server, *context;
   int sock;
@@ -749,13 +831,12 @@ static proxyenv*create_connection(char *context_string TSRMLS_DC) {
   jenv = EXT_GLOBAL(createSecureEnvironment)
 	(sock, handle_request, handle_cached, server, is_local, &saddr);
   if(jenv) {
-	init_channel(TSRMLS_C);
+	if(! (is_local || !context_string)) init_channel(jenv);
 	if(EXT_GLOBAL(cfg)->persistent_connections)
 	  zend_hash_update(&JG(connections), context, len, &jenv, sizeof(proxyenv *), 0);
 	if(is_local || !context_string) {
 	  /* "standard" local backend, send the protocol header */
-	  unsigned char mode = EXT_GLOBAL (get_mode) ();
-	  (*jenv)->send_len=1; *(*jenv)->send=mode;
+	  add_header(jenv);
 	} else {
 	  /* create a jenv for a servlet backend, aquire a context then
 		 redirect */
@@ -788,7 +869,7 @@ static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {
   jenv = create_connection(servlet_context_string TSRMLS_CC);
   if(!jenv) {
 	if (bail) 
-	  EXT_GLOBAL(sys_error)("Could not connect to server. Have you started the "/**/EXT_NAME()/**/" back-end (either a servlet engine, an application server, JavaBridge.jar or MonoBridge.exe) and set the "/**/EXT_NAME()/**/".socketname or "/**/EXT_NAME()/**/".hosts option?",52);
+	  EXT_GLOBAL(sys_error)("Could not connect to server %s(%s). Have you started the "/**/EXT_NAME()/**/" back-end (either a servlet engine, an application server, JavaBridge.jar or MonoBridge.exe) and set the "/**/EXT_NAME()/**/".socketname or "/**/EXT_NAME()/**/".hosts option?", 52);
 	EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);
 	return 0;
   }
@@ -803,24 +884,24 @@ proxyenv *EXT_GLOBAL(try_connect_to_server)(TSRMLS_D) {
 
 #ifdef __MINGW32__
 /* named pipes are not available on windows */
-static void init_channel(TSRMLS_D) {
-  JG(channel_in) = JG(channel_out) = JG(channel) = 0;
+static void init_channel(proxyenv *env) {
+  (*env)->pipe.in = (*env)->pipe.out = (*env)->pipe.channel = 0;
 }
-void EXT_GLOBAL(destroy_channel)(TSRMLS_D) {
+void EXT_GLOBAL(destroy_channel)(proxyenv *env) {
 }
 
 #else
 
 static const char in[] = ".i";
 static const char out[] = ".o";
-static short create_pipe(char*sockname TSRMLS_DC) {
+static short create_pipe(char*sockname) {
   if((mkfifo(sockname, 0) == -1) || chmod(sockname, 0666) == -1) return 0;
   return 1;
 }
-static short create_pipes(char*basename, size_t basename_len TSRMLS_DC) {
+static short create_pipes(proxyenv*env, char*basename, size_t basename_len) {
   char *e = basename+basename_len;
   short success;
-  if((JG(lockfile) = mkstemp(basename)) == -1) return 0;
+  if(((*env)->pipe.lockfile = mkstemp(basename)) == -1) return 0;
   if(!create_pipe(strcat(basename, in) TSRMLS_CC)) {
 	*e=0;
 	unlink(basename);
@@ -829,51 +910,66 @@ static short create_pipes(char*basename, size_t basename_len TSRMLS_DC) {
   *e=0;
   success = create_pipe(strcat(basename, out) TSRMLS_CC);
   assert(success); if(!success) exit(6);
-  JG(channel_out) = strdup(basename);
+  (*env)->pipe.out = strdup(basename);
   *e=0;
-  JG(channel_in) = strdup(strcat(basename, in));
+  (*env)->pipe.in = strdup(strcat(basename, in));
   *e=0;
-  JG(channel) = basename;
+  (*env)->pipe.channel = basename;
 
   return 1;
 }
-static void init_channel(TSRMLS_D) {
+/* same as init_channel, but doesn't use a tmpdir */
+static void init_channel_raw(proxyenv*env) {
   static const char sockname[] = SOCKNAME;
   static const char sockname_shm[] = SOCKNAME_SHM;
-  static const char length = sizeof(sockname)>sizeof(sockname_shm)?sizeof(sockname):sizeof(sockname_shm);
+  static const size_t length = sizeof(sockname)>sizeof(sockname_shm)?sizeof(sockname):sizeof(sockname_shm);
   char *pipe;
 
   /* pipe communication channel only available in servlets */
-  JG(channel)=0;
+  (*env)->pipe.channel=0;
   if(!EXT_GLOBAL(option_set_by_user) (U_SERVLET, EXT_GLOBAL(ini_user))) return;
 
   pipe=malloc(length+2); /* "name.i" */
   assert(pipe); if(!pipe) exit(6);
   
-  create_pipes(strcpy(pipe,sockname_shm), sizeof(sockname_shm)-1 TSRMLS_CC)||
-	create_pipes(strcpy(pipe,sockname), sizeof(sockname)-1 TSRMLS_CC);
+  create_pipes(env, strcpy(pipe,sockname_shm), sizeof(sockname_shm)-1 
+			   TSRMLS_CC) ||
+	create_pipes(env, strcpy(pipe,sockname), sizeof(sockname)-1 TSRMLS_CC);
 
-  if(!JG(channel)) free(pipe);
-  //assert(JG(channel));
+  if(!(*env)->pipe.channel) free(pipe);
 }
+/* create named pipe channel in tmpdir */
+static void init_channel(proxyenv*env) {
+  static const char sockname[] = "/php_java_bridgeXXXXXX";
+  char *pipe;
+  size_t length;
+  if(!EXT_GLOBAL(cfg)->tmpdir) { init_channel_raw(env TSRMLS_CC); return; }
 
-void EXT_GLOBAL(destroy_channel)(TSRMLS_D) {
-  char *channel = (JG(channel));
+  /* pipe communication channel only available in servlets */
+  (*env)->pipe.channel=0;
+  if(!EXT_GLOBAL(option_set_by_user) (U_SERVLET, EXT_GLOBAL(ini_user))) return;
+  length=strlen(EXT_GLOBAL(cfg)->tmpdir)+sizeof(sockname);
+  pipe=malloc(length+2); /* "name.i" */
+  assert(pipe); if(!pipe) exit(6);
+  
+  strcpy(pipe, EXT_GLOBAL(cfg)->tmpdir); strcat(pipe, sockname);
+  create_pipes(env, pipe, length-1 TSRMLS_CC);
+  if(!(*env)->pipe.channel) free(pipe);
+}
+void EXT_GLOBAL(destroy_channel)(proxyenv*env) {
+  char *channel = (*env)->pipe.channel;
   if(!channel) return;
 
-  close(JG(lockfile)); unlink(channel);
-  unlink(JG(channel_in));
-  unlink(JG(channel_out));
-  
-  free(channel);
-  free(JG(channel_in));
-  free(JG(channel_out));
-  JG(channel_in) = JG(channel_out) = (JG(channel)) = 0;
+  remove_pipe(env);
+
+  free(channel); free((*env)->pipe.in); free((*env)->pipe.out);
+
+  (*env)->pipe.in = (*env)->pipe.out = (*env)->pipe.channel = 0;
 }
 #endif
-const char *EXT_GLOBAL(get_channel) (TSRMLS_D) {
+const char *EXT_GLOBAL(get_channel) (proxyenv*env) {
   static const char empty[] = "";
-  char *channel = JG(channel);
+  char *channel = (*env)->pipe.channel;
   if(channel) return channel;
   return empty;
 }
@@ -909,6 +1005,11 @@ void EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_D) {
   JG(ini_user)=0;
   JG(hosts)=0;
   JG(servlet)=0;
+}
+char *EXT_GLOBAL(getDefaultSessionFactory)(TSRMLS_D) {
+  static const char invalid[] = "0";
+  register char *context = JG(servlet_ctx);
+  return context?context:(char*)invalid;
 }
 
 #ifndef PHP_WRAPPER_H

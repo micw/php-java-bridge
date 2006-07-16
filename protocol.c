@@ -32,11 +32,10 @@
 #endif
 
 static char *getSessionFactory(proxyenv *env) {
-  static char invalid[] = "0";
+  static const char invalid[] = "0";
   register char *context = (*env)->servlet_ctx;
-  return context?context:invalid;
+  return context?context:(char*)invalid;
 }
-
 static char*get_context(proxyenv *env, char context[256], short*context_length) {
 	size_t l = strlen((*env)->servlet_ctx);
 	
@@ -97,7 +96,7 @@ static short end(proxyenv *env) {
 	unsigned char mode = EXT_GLOBAL (get_mode) ();
 
 	assert(!(*env)->peer_redirected || ((*env)->peer_redirected && (((*env)->peer0)==-1)));
-	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", servlet_context, (unsigned long)(size+1), EXT_GLOBAL(get_channel)(TSRMLS_C), getSessionFactory(env), mode);
+	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\nX_JAVABRIDGE_CONTEXT_DEFAULT: %s\r\n\r\n%c", servlet_context, (unsigned long)(size+1), EXT_GLOBAL(get_channel)(env), getSessionFactory(env), EXT_GLOBAL(getDefaultSessionFactory)(TSRMLS_C), mode);
 
 	success = add_header(env, &size, header, header_length);
   } else {						/* re-directed */
@@ -148,7 +147,7 @@ static short end_session(proxyenv *env) {
 
   (*env)->finish=end;
   
-  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_REDIRECT: %d\r\n%sX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", (*env)->servlet_context_string, (unsigned long)(size+1), override_redirect, get_cookies(&val, env), EXT_GLOBAL(get_channel)(TSRMLS_C), getSessionFactory(env), mode);
+  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_REDIRECT: %d\r\n%sX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\nX_JAVABRIDGE_CONTEXT_DEFAULT: %s\r\n\r\n%c", (*env)->servlet_context_string, (unsigned long)(size+1), override_redirect, get_cookies(&val, env), EXT_GLOBAL(get_channel)(env), getSessionFactory(env), EXT_GLOBAL(getDefaultSessionFactory)(TSRMLS_C), mode);
 
   success = add_header(env, &size, header, header_length);
   if(success) success = send_data(env, (char*)(*env)->send, size);
@@ -203,7 +202,7 @@ static short end_connection (proxyenv *env) {
 
 	assert(!(*env)->peer_redirected);
 
-	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\n\r\n%c", servlet_context, (unsigned long)(size+1), EXT_GLOBAL(get_channel)(TSRMLS_C),  getSessionFactory(env), mode);
+	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\nX_JAVABRIDGE_CONTEXT_DEFAULT: %s\r\n\r\n%c", servlet_context, (unsigned long)(size+1), EXT_GLOBAL(get_channel)(env),  getSessionFactory(env), EXT_GLOBAL(getDefaultSessionFactory)(TSRMLS_C), mode);
 
 	success = add_header(env, &size, header, header_length);
 	if(success) success = send_data(env, (char*)(*env)->send, size);
@@ -260,32 +259,10 @@ void EXT_GLOBAL(end_async) (proxyenv*env) {
 	(*env)->f_send = (*env)->f_send0 = (*env)->async_ctx.f_send;
   }
 }
-
-#ifndef __MINGW32__
-void EXT_GLOBAL(redirect)(proxyenv*env, char*redirect_port, char*channel_in, char*channel_out TSRMLS_DC) {
-  assert(redirect_port);
-  if(*redirect_port!='/') { /* socket */
-	char *server = EXT_GLOBAL(test_server)(&(*env)->peer, 0, 0 TSRMLS_CC);
-	assert(server); if(!server) exit(9);
-	free(server);
-  } else {						/* pipe */
-	(*env)->peerr = open(channel_in, O_RDONLY);
-	(*env)->peer = open(channel_out, O_WRONLY);
-	if((-1==(*env)->peerr) || (-1==(*env)->peer)) {
-	  php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Fatal: could not open comm. pipe.",92);
-	  exit(9);
-	}
+void EXT_GLOBAL(redirect_pipe)(proxyenv*env) {
 	(*env)->f_recv0 = (*env)->f_recv = recv_pipe;
 	(*env)->f_send0 = (*env)->f_send = send_pipe;
-  }
 }
-#else
-void EXT_GLOBAL(redirect)(proxyenv*env, char*redirect_port, char*channel_in, char*channel_out TSRMLS_DC) {
-  char *server = EXT_GLOBAL(test_server)(&(*env)->peer, 0, 0 TSRMLS_CC);
-  assert(server); if(!server) exit(9);
-  free(server);
-}
-#endif
 void EXT_GLOBAL(check_session) (proxyenv *env TSRMLS_DC) {
   if(!(*env)->is_local && IS_SERVLET_BACKEND(env) && !(*env)->backend_has_session_proxy) {
 	if((*env)->peer_redirected) { /* override redirect */
@@ -563,21 +540,21 @@ static void close_connection(proxyenv *env TSRMLS_DC) {
 	if((*env)->peer!=-1) {
 	  /* end servlet session */
 	  if(!(*env)->connection_is_closed) (*env)->writeEndConnection(env, 'E');
-	  close((*env)->peer);
+	  if(!(*env)->is_shared) close((*env)->peer);
 	}
-	if((*env)->peerr!=-1) close((*env)->peerr);
-	if((*env)->peer0!=-1) close((*env)->peer0);
+	if(((*env)->peerr!=-1) && (!(*env)->is_shared)) close((*env)->peerr);
+	if(((*env)->peer0!=-1) && (!(*env)->is_shared)) close((*env)->peer0);
 	if((*env)->s) free((*env)->s);
 	if((*env)->send) free((*env)->send);
 	if((*env)->server_name) free((*env)->server_name);
 	if((*env)->current_servlet_ctx && (*env)->servlet_ctx != (*env)->current_servlet_ctx) free((*env)->current_servlet_ctx);
-	if((*env)->servlet_ctx) free((*env)->servlet_ctx);
+	if((*env)->servlet_ctx && (!(*env)->is_shared)) free((*env)->servlet_ctx);
 	if((*env)->servlet_context_string) free((*env)->servlet_context_string);
 	if((*env)->cfg.hosts) free((*env)->cfg.hosts);
 	if((*env)->cfg.servlet) free((*env)->cfg.servlet);
+	EXT_GLOBAL(destroy_channel)(env);
 	free(*env);
 	free(env);
-	EXT_GLOBAL(destroy_channel)(TSRMLS_C);
 	EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);
   }
 }
@@ -627,6 +604,7 @@ proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, short (*handle_request)
 
    (*env)->peer = peer;
    (*env)->peer0 = (*env)->peerr = -1;
+   (*env)->is_shared = 0;
    (*env)->peer_redirected = 0;
    memcpy(&(*env)->orig_peer_saddr, saddr, sizeof (struct sockaddr));
    
@@ -650,7 +628,7 @@ proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, short (*handle_request)
    (*env)->is_local = is_local;
 
    (*env)->server_name = server_name;
-   (*env)->must_reopen = 0;
+   (*env)->must_reopen = (*env)->must_share = 0;
    (*env)->connection_is_closed = 0;
    (*env)->current_servlet_ctx = 
 	 (*env)->servlet_ctx = (*env)->servlet_context_string = 0;

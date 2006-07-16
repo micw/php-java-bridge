@@ -75,7 +75,7 @@ class Session implements ISession {
     /* (non-Javadoc)
      * @see php.java.bridge.ISession#getAll()
      */
-    public Map getAll() {
+	public Map getAll() {
 	this.lastAccessedTime=System.currentTimeMillis();
 	return new HashMap(map); // unshare the map 
     }

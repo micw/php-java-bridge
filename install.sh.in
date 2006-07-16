@@ -272,7 +272,7 @@ if test -f modules/JavaBridge.jar && test "X$j2ee" = "Xno"; then
           (/bin/chown $user:$group $ext/RunJavaBridge &&
            /bin/chmod 6111 $ext/RunJavaBridge) || /bin/rm -f $ext/RunJavaBridge
         else
-          /bin/rm -f $ext/RunJavaBridge
+	   /bin/chmod 111 $ext/RunJavaBridge || /bin/rm -f $ext/RunJavaBridge
         fi
 	if test X$ini != X; then 
 	    /bin/cat java-standalone.ini | sed 's|^;java\.java_home[\t =].*$|;java.java_home = |; s|^;java\.java[\t =].*$|java.java = '$jre'|' >${ini}/java-standalone.ini

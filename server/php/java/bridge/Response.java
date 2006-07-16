@@ -728,6 +728,12 @@ public class Response {
     protected void reset() {
 	writer.reset();
     }
+    /** Set the current bridge object
+     * @param bridge The bridge
+     */
+    protected void setBridge(JavaBridge bridge) {
+	this.bridge = bridge;
+    }
     /** re-initialize for keep alive */
     protected void recycle() {
         reset();

@@ -10,52 +10,41 @@ import php.java.bridge.ThreadPool;
  * 
  * There can be more than one ContextServer instance per classloader, but the ContextFactory.get() checks
  * if it is called with the same ContextServer and throws a SecurityException otherwise. 
- * So one cannot access contexts from other servers.
+ * So one cannot access contexts belonging to other ContextServers.
  *  
  * @author jostb
  * @see php.java.bridge.http.PipeContextServer
  * @see php.java.bridge.http.SocketContextServer
  */
 public final class ContextServer {
-
-    PipeContextServer ctx;
-    SocketContextServer sock = null;
-    ThreadPool pool;
+    private PipeContextServer ctx;
+    private static SocketContextServer sock = null;
+    private ThreadPool pool;
     
-    public abstract class ChannelName {
-        protected String name;
-        public ChannelName(String name) {
-            this.name = name;
-        }
-        public String getName() {
-            return name;
-        }
-        public abstract boolean startChannel();
-    }
-    private class PipeChannelName extends ChannelName {
-        public PipeChannelName(String name) {super(name);}
+    private class PipeChannelName extends IContextServer.ChannelName {
+        public PipeChannelName(String name, String kontext, IContextFactory ctx) {super(name, kontext, ctx);}
 
-        /* (non-Javadoc)
-         * @see php.java.bridge.http.ContextServer.ChannelName#start()
-         */
         public boolean startChannel() {
-            return ctx.start(name);
+            return ctx.start(this);
         }
-         public String toString() {
-            return "Pipe:"+name;
-        }
-    }
-    private class SocketChannelName extends ChannelName {
-        public SocketChannelName(String name) {super(name);}
-        
-        /* (non-Javadoc)
-         * @see php.java.bridge.http.ContextServer.ChannelName#start()
-         */
-        public boolean startChannel() {
-            return sock.start(name);
+        public String schedule() {
+            return defaultName = ctx.schedule(this);
         }
         public String toString() {
-            return "Socket:"+name;
+            return "Pipe:"+getDefaultName();
+        }
+    }
+    private class SocketChannelName extends IContextServer.ChannelName {
+        public SocketChannelName(String name, String kontext, IContextFactory ctx) {super(name, kontext, ctx);}
+        
+        public boolean startChannel() {
+            return sock.start(this);
+        }
+        public String schedule() {
+            return sock.schedule(this);
+        }
+        public String toString() {
+            return "Socket:"+getDefaultName();
         }
     }
     public ContextServer(ThreadPool pool) {
@@ -68,25 +57,6 @@ public final class ContextServer {
         this.pool = pool;
     }
     
-    private int runnables = 0;    
-    /**
-     * Get the next runnable
-     * @return True if there is a runnable in the queue, false otherwise.
-      */
-    public final synchronized boolean getNext() {
-	if(runnables==0) return false;
-	runnables--;
-	return true;
-    }
-
-    /**
-     * Add a runnable to the queue.
-     * @see ContextServer#getNext()
-     */
-    public final synchronized void schedule() {
-	runnables++;
-    }
-
     /* (non-Javadoc)
      * @see php.java.bridge.http.IContextServer#destroy()
      */
@@ -101,22 +71,36 @@ public final class ContextServer {
      */
     public boolean isAvailable(String channelName) {
         if(channelName!=null && ctx.isAvailable()) return true;
-        if(sock==null) sock=new SocketContextServer(this, pool);
+        SocketContextServer sock=getSocketContextServer(this, pool);
         return sock!=null && sock.isAvailable();
+    }
+
+    private static synchronized SocketContextServer getSocketContextServer(ContextServer server, ThreadPool pool) {
+	if(sock!=null) return sock;
+	return sock=new SocketContextServer(server, pool);
     }
 
     /* (non-Javadoc)
      * @see php.java.bridge.http.IContextServer#start(java.lang.String)
      */
-    public void start(ChannelName channelName) {
-        if(channelName == null) throw new NullPointerException("channelName");
-        boolean started = channelName.startChannel();
-        if(!started) throw new IllegalStateException("Pipe- and SocketRunner not available");
+    public void start(IContextServer.ChannelName channelName) {
+	ContextRunner runner = channelName.getRunner();
+	if(runner != null) {
+	    runner.recycle(channelName.getCtx(), this);	    
+	} else {
+	    boolean started = channelName.startChannel();
+	    if(!started) throw new IllegalStateException("Pipe- and SocketRunner not available");
+	}
     }
     
-    public ChannelName getFallbackChannelName(String channelName) {
-        if(channelName!=null && ctx.isAvailable()) return new PipeChannelName(channelName);
-        if(sock==null) sock=new SocketContextServer(this, pool);
-        return new SocketChannelName(sock.getChannelName());
+    public String schedule(IContextServer.ChannelName channelName) {
+        if(channelName == null) throw new NullPointerException("channelName");
+        return channelName.schedule();
+    }
+
+    public IContextServer.ChannelName getFallbackChannelName(String channelName, String kontext, IContextFactory currentCtx) {
+        if(channelName!=null && ctx.isAvailable()) return new PipeChannelName(channelName, kontext, currentCtx);
+        SocketContextServer sock=getSocketContextServer(this, pool);
+        return new SocketChannelName(sock.getChannelName(), kontext, currentCtx);
     }
 }

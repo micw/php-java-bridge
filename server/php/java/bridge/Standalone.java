@@ -40,13 +40,26 @@ public class Standalone {
 
 	return socket;
     }
-    private static void usage() {
+    private static void monoUsage() {
+	System.err.println("PHP/Mono+NET Bridge version "+Util.VERSION);
+	System.err.println("Usage: MonoBridge.exe [SOCKETNAME LOGLEVEL LOGFILE]");
+	System.err.println("Example: MonoBridge.exe");
+	System.err.println("Example: MonoBridge.exe INET_LOCAL:0 3 MonoBridge.log");
+    }
+    private static void javaUsage() {
 	System.err.println("PHP/Java Bridge version "+Util.VERSION);
 	System.err.println("Usage: java -jar JavaBridge.jar [SOCKETNAME LOGLEVEL LOGFILE]");
 	System.err.println("Usage: java -jar JavaBridge.jar --convert PHP_INCLUDE_DIR [JARFILES]");
 	System.err.println("Example: java -jar JavaBridge.jar");
-	System.err.println("Example: java -Djava.awt.headless=\"true\" -Dphp.java.bridge.threads=50 -jar JavaBridge.jar INET:0 3 JavaBridge.log");
+	System.err.println("Example: java -Djava.awt.headless=\"true\" -Dphp.java.bridge.threads=50 -jar JavaBridge.jar INET_LOCAL:0 3 JavaBridge.log");
 	System.err.println("Example: java -jar JavaBridge.jar --convert /usr/share/pear lucene.jar ...");
+    }
+    private static void usage() {
+	if(Util.IS_MONO)
+	    monoUsage();
+	else
+	    javaUsage();
+	
 	System.exit(1);
     }
 

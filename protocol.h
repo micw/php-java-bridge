@@ -73,11 +73,17 @@ struct proxyenv_ {
   /* peer */
   int peer, peerr, peer0;		/* peer0 contains peer during override
 								   redirect */
+  short is_shared;				/* 1, if peer, peerr, servlet_ctx is shared */
   short peer_redirected;		/* remains true during override
 								   redirect */
   struct sockaddr orig_peer_saddr; /* only valid if peer is a servlet, it
 								   points to the original peer */
 
+  /* the name of the comm. pipe */
+  struct pipe {
+	char*channel, *in, *out;
+	int lockfile;
+  } pipe;
 
   /* used by the parser implementation */
   unsigned char*s; size_t len; 
@@ -94,7 +100,7 @@ struct proxyenv_ {
   short is_local;
 
   /* for servlets: re-open connection */
-  short must_reopen; 
+  short must_reopen, must_share;
   short connection_is_closed;
 
   struct async_ctx {

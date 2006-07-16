@@ -8,15 +8,16 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.Vector;
-import java.util.HashMap;
 
 /**
  * Miscellaneous functions.
@@ -28,6 +29,10 @@ public final class Util {
     static {
         initGlobals();
     }
+
+    // method to load a CLR assembly
+    static Method loadMethod, loadFileMethod;
+    static Class CLRAssembly;
     
     private Util() {}
     
@@ -155,6 +160,10 @@ public final class Util {
       */
     public static final int BACKLOG = 20;
 
+    static final Object[] ZERO_ARG = new Object[0];
+
+    static final Class[] ZERO_PARAM = new Class[0];
+
     /**
      * The default log file. Default is stderr, if started as a
      * sub-process of Apache/IIS or <code>EXTENSION_NAME</code>.log,
@@ -176,8 +185,17 @@ public final class Util {
     public static String osArch;
     /** Only for internal use */
     public static String osName;
+    /** Only for internal use */
+    public static boolean IS_MONO;
 
     private static void initGlobals() {
+    	try {
+    	    IS_MONO=false;
+    	    Util.CLRAssembly = Class.forName("cli.System.Reflection.Assembly");
+    	    Util.loadFileMethod = Util.CLRAssembly.getMethod("LoadFile", new Class[] {String.class});
+    	    Util.loadMethod = Util.CLRAssembly.getMethod("Load", new Class[] {String.class});
+    	    IS_MONO=true;
+    	} catch (Exception e) {}
         Properties p = new Properties();
 	try {
 	    InputStream in = Util.class.getResourceAsStream("global.properties");
@@ -764,6 +782,12 @@ public final class Util {
      * @param logFile the log file
      */
     static void redirectOutput(boolean redirectOutput, String logFile) {
+	if(IS_MONO)
+	    redirectMonoOutput(redirectOutput, logFile); 
+	else
+	    redirectJavaOutput(redirectOutput, logFile);
+    }
+    static void redirectJavaOutput(boolean redirectOutput, String logFile) {
         Util.logStream = System.err;
 	if(!redirectOutput) {
 	    if(logFile != null && logFile.length()>0) 
@@ -773,6 +797,99 @@ public final class Util {
 	    try { System.setErr(logStream); } catch (Exception e) {e.printStackTrace(); }
 	}
 	try { System.setOut(logStream); } catch (Exception e) {e.printStackTrace(); System.exit(9); }
+    }
+    /** Wrapper for the Mono StreamWriter */ 
+    private static class MonoOutputStream extends OutputStream {
+	Class StreamWriter;
+	Object streamWriter;
+	private Method Write, Close, Flush;
+	public MonoOutputStream(Class StreamWriter, Object streamWriter) throws SecurityException, NoSuchMethodException {
+	    this.streamWriter = StreamWriter;
+	    this.streamWriter = streamWriter;
+	    Write = StreamWriter.getMethod("Write", new Class[]{String.class});
+	    Close = StreamWriter.getMethod("Close", ZERO_PARAM);
+	    Flush = StreamWriter.getMethod("Flush", ZERO_PARAM);
+	}
+	public void write(byte b[], int off, int len) throws IOException {
+	    try {
+		String s = new String(b, off, len);
+		Write.invoke(streamWriter, new Object[]{s});
+	    } catch (Exception e) {
+		IOException ex = new IOException();
+		ex.initCause(e);
+		throw ex;
+	    }
+	}
+	public void write(int b) throws IOException {
+	    throw new NotImplementedException();
+	}
+	public void flush() throws IOException {
+	    try {
+		Flush.invoke(streamWriter, ZERO_ARG);
+	    } catch (Exception e) { 
+		IOException ex = new IOException();
+		ex.initCause(e);
+		throw ex;
+	    }	    
+	}
+	public void close() throws IOException {
+	    try {
+		Close.invoke(streamWriter, ZERO_ARG);
+	    } catch (Exception e) { 
+		IOException ex = new IOException();
+		ex.initCause(e);
+		throw ex;
+	    }	    
+	}
+    }
+    static void redirectMonoOutput(boolean redirectOutput, String logFile) {
+	try {
+	    boolean redirected = false;
+	    Class Console = Class.forName("cli.System.Console");
+	    Class TextWriter = Class.forName("cli.System.IO.TextWriter");
+	    Class StreamWriter = Class.forName("cli.System.IO.StreamWriter");
+	    Method get_Error = Console.getMethod("get_Error", new Class[]{});
+	    Object errorStream = get_Error.invoke(Console, new Object[]{});
+	    Method setOut = Console.getMethod("SetOut", new Class[]{TextWriter});
+	    if(!redirectOutput && (logFile != null && logFile.length()>0)) {
+		// redirect to log file, if possible
+		try {
+		    Constructor constructor = StreamWriter.getConstructor(new Class[]{String.class});
+		    Object streamWriter = constructor.newInstance(new Object[]{logFile});
+		    Method set_AutoFlush = StreamWriter.getMethod("set_AutoFlush", new Class[]{Boolean.TYPE});
+		    set_AutoFlush.invoke(streamWriter, new Object[]{Boolean.TRUE});
+		    Method setErr = Console.getMethod("SetError", new Class[]{TextWriter});
+		    Object[] args = new Object[]{streamWriter};
+		    setOut.invoke(Console, args);
+		    setErr.invoke(Console, args);
+
+		    MonoOutputStream out = new MonoOutputStream(StreamWriter, streamWriter);
+		    logStream = new PrintStream(out, true);
+		    System.setErr(logStream);
+		    System.setOut(logStream);
+		    redirected = true;
+		} catch (Exception e) {e.printStackTrace();}
+	    } 
+	    if(!redirected) { 
+		// else redirect to mono stderr
+		try { 
+		    setOut.invoke(Console, new Object[]{errorStream});
+
+		    MonoOutputStream out = new MonoOutputStream(TextWriter, errorStream);
+		    logStream = new PrintStream(out, true);
+		    System.setErr(logStream);
+		    System.setOut(logStream);
+		    redirected = true;
+		} catch (Exception e) {e.printStackTrace(); }
+	    }
+	    if(!redirected) {
+		// redirect to mono failed, at least do not print anything to stdout, because that's connected
+		// with a pipe
+		try {System.setOut(System.err); } catch (Exception e) {e.printStackTrace(); System.exit(9); }
+	    }
+	} catch (Exception ex) {
+	    ex.printStackTrace(); 
+	}
     }
 
     private static final Class[] STRING_PARAM = new Class[]{String.class};

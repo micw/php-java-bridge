@@ -132,9 +132,9 @@ public class PhpCGIServlet extends FastCGIServlet {
         if(proc!=null) return null;
 	    String port;
 	    if(System.getProperty("php.java.bridge.promiscuous", "false").toLowerCase().equals("true")) 
-		port = ":"+String.valueOf(FCGI_CHANNEL);
+		port = ":"+String.valueOf(fcgi_channel);
 	    else
-		port = "127.0.0.1:"+String.valueOf(FCGI_CHANNEL);
+		port = "127.0.0.1:"+String.valueOf(fcgi_channel);
 
 		// Set override hosts so that php does not try to start a VM.
 		// The value itself doesn't matter, we'll pass the real value
@@ -257,13 +257,14 @@ public class PhpCGIServlet extends FastCGIServlet {
 	    return ret;
 	        	
 	}
+
 	private void waitForDaemon() throws UnknownHostException, InterruptedException {
       	    long T0 = System.currentTimeMillis();
       	    int count = 15;
       	    InetAddress addr = InetAddress.getByName("127.0.0.1");
       	    while(count-->0) {
       		try {
-      		    Socket s = new Socket(addr, FCGI_CHANNEL);
+      		    Socket s = new Socket(addr, fcgi_channel);
       		    s.close();
       		    break;
       		} catch (IOException e) {/*ignore*/}
@@ -271,8 +272,15 @@ public class PhpCGIServlet extends FastCGIServlet {
       		Thread.sleep(100);
       	    }
 	}
-	private void startFCGI() throws UnknownHostException, InterruptedException {
-      	    Thread t = (new Thread("JavaBridgeFastCGIRunner") {
+	private void startFCGI(String contextPath) throws InterruptedException, IOException {
+	    // backward-compatibility: JavaBridge context always uses 9667
+	    if(isJavaBridgeWc(contextPath)) fcgi_channel = FCGI_CHANNEL;
+	    startFCGI();
+	}
+	private void startFCGI() throws InterruptedException, IOException {
+	    if(fcgi_socket!=null) { fcgi_socket.close(); fcgi_socket=null; }// replace the allocated socket# with the real fcgi server
+
+	    Thread t = (new Thread("JavaBridgeFastCGIRunner") {
       		    public void run() {
       			Map env = (Map) processEnvironment.clone();
       			env.put("PHP_FCGI_CHILDREN", php_fcgi_children);
@@ -290,7 +298,7 @@ public class PhpCGIServlet extends FastCGIServlet {
 	private void delegateOrStartFCGI(boolean isJavaBridgeContext) {
           try {
               if(isJavaBridgeContext) {
-                  if(canStartFCGI(isJavaBridgeContext)) startFCGI();
+                  if(canStartFCGI()) startFCGI();
               } else {
                   if(canStartFCGI) {
                       delegateFCGI();
@@ -301,11 +309,8 @@ public class PhpCGIServlet extends FastCGIServlet {
               Util.printStackTrace(e);
           }
 	}
-	private boolean isJavaBridgeWc(String contextPath) {
-	    return (contextPath!=null && contextPath.endsWith("JavaBridge"));
-	}
-	private boolean canStartFCGI(boolean isJavaBridgeContext) {
-	    return canStartFCGI || (fcgiIsConfigured && isJavaBridgeContext);
+	private boolean canStartFCGI() {
+	    return canStartFCGI;
 	}
 	/**
 	 * If this context is not JavaBridge but is set up to connect to a FastCGI server,
@@ -346,25 +351,27 @@ public class PhpCGIServlet extends FastCGIServlet {
 				   String cgiPathPrefix) {
 	    String[] retval;
 	    /*
-	     * Try to start the FastCGI server, delegate to the JavaBridge web context, if necessary.
-	     * 
-	     * All JavaBridge wc instances wait until one JavaBridge wc instance sets fcgiStarted to true.
-	     * Each non-JavaBridge wc instance opens a URLConnection to a JavaBridge instance and waits 
-	     * for a notify from the URLConnection.
-	     * This even works if fcgiStarted is shared by non-JavaBridge and JavaBridge web contexts. Although
-	     * this isn't the usual case because different web contexts are usually loaded via different 
-	     * ClassLoaders.
+	     * Try to start the FastCGI server,
 	     */
 	    synchronized(fcgiStartLock) {
 	      if(!fcgiStarted) {
-		boolean isJavaBridgeWc = isJavaBridgeWc(contextPath); // check if this is the JavaBridge wc
-		delegateOrStartFCGI(isJavaBridgeWc);
-		fcgiStarted = true;
+		  if(delegateToJavaBridgeContext) {
+		      // if this is the GlobalPhpJavaServlet, try to delegate
+		      // to the JavaBridge context
+		      // check if this is the JavaBridge wc
+		      boolean isJavaBridgeWc = isJavaBridgeWc(contextPath);
+		      delegateOrStartFCGI(isJavaBridgeWc);
+		  } else {
+		      if(canStartFCGI()) 
+			  try {
+			      startFCGI(contextPath);
+			  } catch (Exception e) {/*ignore*/}
+		  }
+		  fcgiStarted = true; // mark as started, even if start failed
 	      } 
 	    }
 	    /*
-	     * Now that FCGI is started (or failed to start), connect to the FCGI server or delegate to the 
-	     * parent, the tomcat cgi servlet.
+	     * Now that FCGI is started (or failed to start), connect to the FCGI server 
 	     */
 	    if((retval=super.findCGI(pathInfo, webAppRootDir, contextPath, servletPath, cgiPathPrefix))!=null) return retval;
 	    cgiRunnerFactory = defaultCgiRunnerFactory;
@@ -474,7 +481,7 @@ public class PhpCGIServlet extends FastCGIServlet {
     private boolean checkPool(HttpServletResponse res) throws ServletException, IOException {
       synchronized (lockObject) {
 	if(count++>=cgi_max_requests) {
-            res.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Out of system resources. Try again shortly or use the Apache or IIS frontend instead.");
+            res.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Out of system resources. Try again shortly or use the Apache or IIS front end instead.");
             Util.logFatal("Out of system resources. Adjust max_requests or set up the Apache or IIS front end.");
             return false;
         }

@@ -13,6 +13,7 @@ import php.java.bridge.http.HttpRequest;
 import php.java.bridge.http.HttpResponse;
 import php.java.bridge.http.HttpServer;
 import php.java.bridge.http.IContextFactory;
+import php.java.bridge.http.IContextServer;
 
 /**
  * This is the main entry point for the PHP/Java Bridge library.
@@ -57,11 +58,17 @@ public class JavaBridgeRunner extends HttpServer {
     }
 
     private static IContextFactory getContextFactory(HttpRequest req, HttpResponse res) {
-    	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
+    	String id = getHeader("X_JAVABRIDGE_CONTEXT", req);
     	IContextFactory ctx = ContextFactory.get(id, ctxServer);
 	if(ctx==null) ctx = ContextFactory.addNew();
      	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
     	return ctx;
+    }
+    private static String getHeader(String key, HttpRequest req) {
+  	String val = req.getHeader(key);
+  	if(val==null) return null;
+  	if(val.length()==0) val=null;
+  	return val;
     }
 
     /**
@@ -74,7 +81,7 @@ public class JavaBridgeRunner extends HttpServer {
      */
     protected void parseBody (HttpRequest req, HttpResponse res) throws IOException {
     	super.parseBody(req, res);
-	boolean override_redirect="1".equals(req.getHeader("X_JAVABRIDGE_REDIRECT"));
+	boolean override_redirect="1".equals(getHeader("X_JAVABRIDGE_REDIRECT", req));
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
 	IContextFactory ctx = getContextFactory(req, res);
 
@@ -90,16 +97,19 @@ public class JavaBridgeRunner extends HttpServer {
 
 	try {
 	    if(r.init(sin, sout)) {
-	        ContextServer.ChannelName channelName = ctxServer.getFallbackChannelName(req.getHeader("X_JAVABRIDGE_CHANNEL"));
-		res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getName());
-	    	r.handleRequests();
+		String kontext = getHeader("X_JAVABRIDGE_CONTEXT_DEFAULT", req);
+		IContextServer.ChannelName channelName = 
+	            ctxServer.getFallbackChannelName(getHeader("X_JAVABRIDGE_CHANNEL", req), kontext, ctx);
+		boolean hasDefault = ctxServer.schedule(channelName) != null;
+		res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getDefaultName());
+		if(hasDefault) res.setHeader("X_JAVABRIDGE_CONTEXT_DEFAULT", kontext);
+		r.handleRequests();
 
 		// redirect and re-open
 		if(override_redirect) {
 		    bridge.logDebug("restore state");
 		    bridge.in = bin; bridge.out = bout; bridge.request = br; 
 		} else {
-		    ctxServer.schedule();
 		    if(bridge.logLevel>3) 
 			bridge.logDebug("re-directing to port# "+ channelName);
 		}

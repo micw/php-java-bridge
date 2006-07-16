@@ -37,10 +37,10 @@ extern short EXT_GLOBAL(get_property_handler)(char*name, zval *object, zval *ret
 extern void EXT_GLOBAL(destructor)(zend_rsrc_list_entry *rsrc TSRMLS_DC);
 
 extern proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, short (*handle_request)(proxyenv *env), short (*handle_cached)(proxyenv *env), char*server, short is_local, struct sockaddr*saddr);
-extern void EXT_GLOBAL(redirect)(proxyenv*env, char*redirect_port, char*channel_in, char*channel_out TSRMLS_DC);
+extern void EXT_GLOBAL(redirect_pipe)(proxyenv*env);
 
-extern void EXT_GLOBAL(destroy_channel)(TSRMLS_D);
-extern const char*EXT_GLOBAL(get_channel)(TSRMLS_D);
+extern void EXT_GLOBAL(destroy_channel)(proxyenv*env);
+extern const char*EXT_GLOBAL(get_channel)(proxyenv*env);
 
 extern void EXT_GLOBAL (begin_async) (proxyenv*env);
 extern void EXT_GLOBAL (end_async) (proxyenv*env);
@@ -58,8 +58,11 @@ extern void EXT_GLOBAL (init_cfg) (TSRMLS_D);
 extern void EXT_GLOBAL(shutdown_library) (void);
 extern void EXT_GLOBAL(destroy_cfg) (int);
 extern void EXT_GLOBAL(sys_error)(const char *str, int code);
-  
 
 extern unsigned char EXT_GLOBAL (get_mode) (void);
 
+extern void EXT_GLOBAL(mktmpdir) ();
+extern void EXT_GLOBAL(rmtmpdir) ();
+
+extern char *EXT_GLOBAL(getDefaultSessionFactory)(TSRMLS_D);
 #endif
