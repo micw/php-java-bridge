@@ -43,7 +43,7 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
             return sock;
         }
         protected static void shutdown(Socket sock) {
-            if(sock!=null) try {sock.close();}catch (IOException e){}           
+            if(sock!=null) try {sock.close();}catch (IOException e){}
         }
 
         public void shutdown() {
@@ -138,7 +138,7 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
     public String getChannelName() {
         return socket.getSocketName();
     }
-    public boolean start(ContextRunner runner) {
+    public boolean start(IContextServer.ChannelName channelName) {
 	return isAvailable();
     }
 }

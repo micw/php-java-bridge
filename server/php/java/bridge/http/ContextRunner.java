@@ -35,6 +35,7 @@ public class ContextRunner implements Runnable {
     private static final HashMap runners = new HashMap(Integer.parseInt(Util.THREAD_POOL_MAX_SIZE));
     
     private IContextFactory ctx;
+    private String key;
     private Request request;
     private InputStream in;
     private OutputStream out;
@@ -73,7 +74,7 @@ public class ContextRunner implements Runnable {
 	String name = readName();
     	ctx = (IContextFactory) ContextFactory.get(name, contextServer);
     	if(ctx == null) throw new IOException("No context available for: " + name + ".");
-    	put(name, this);
+    	put(key=name, this);
     	JavaBridge bridge = ctx.getBridge();
 	// The first statement was executed with the default
 	// classloader, now set the dynamic class loader into the
@@ -141,7 +142,7 @@ public class ContextRunner implements Runnable {
 	    Util.printStackTrace(e);
 	} finally {
 	    if(ctx!=null) {
-		remove(ctx.getId());
+		remove(key);
 		ctx.destroy();
 	    }
 	    channel.shutdown();

@@ -1604,14 +1604,18 @@ PHP_MINIT_FUNCTION(EXT)
   static const char nserialize[]="__sleep", ndeserialize[]="__wakeup";
   zend_internal_function serialize, deserialize;
   zend_class_entry ce;
+
+#if !defined(ZEND_ENGINE_2) && defined(__MINGW32__)
   INIT_OVERLOADED_CLASS_ENTRY(ce, EXT_NAME(), NULL,
 							  EXT_GLOBAL(call_function_handler4),
-#if !defined(ZEND_ENGINE_2) && defined(__MINGW32__)
 							  return_msc_structure,
-#else
-							  get_property_handler,
-#endif
 							  set_property_handler);
+#else
+  INIT_OVERLOADED_CLASS_ENTRY(ce, EXT_NAME(), NULL,
+							  EXT_GLOBAL(call_function_handler4),
+							  get_property_handler,
+							  set_property_handler);
+#endif
 
   EXT_GLOBAL(class_entry) = zend_register_internal_class(&ce TSRMLS_CC);
 

@@ -77,9 +77,7 @@ public class PipeContextServer implements IContextServer {
     public boolean start(IContextServer.ChannelName channelName) {
         if(!isAvailable()) return false;
         try {
-            ContextRunner runner = channelName.getRunner();
-            if(runner==null)
-        	runner = new ContextRunner(contextServer, new Channel(channelName.getName()));
+            ContextRunner runner = new ContextRunner(contextServer, new Channel(channelName.getName()));
             if(threadPool!=null) {
 	        threadPool.start(runner);
 	    } else {

@@ -469,6 +469,12 @@ static void redirect(proxyenv*env, char*redirect_port, char*channel_in, char*cha
 	}
 	EXT_GLOBAL(redirect_pipe)(env);
 
+	/* we can unlink the channel_in and channel_out right here because
+	   the above open() calls block until both the server and the
+	   client are connected. Unix will automatically remove the inodes
+	   as soon as the channel isn't used anymore. */
+	EXT_GLOBAL(unlink_channel)(env);
+
 	/* the default peer */
 	if(JG(peer)==-1) JG(peer)=(*env)->peer;
 	if(JG(peerr)==-1) JG(peerr)=(*env)->peerr;
@@ -887,7 +893,7 @@ proxyenv *EXT_GLOBAL(try_connect_to_server)(TSRMLS_D) {
 static void init_channel(proxyenv *env) {
   (*env)->pipe.in = (*env)->pipe.out = (*env)->pipe.channel = 0;
 }
-void EXT_GLOBAL(destroy_channel)(proxyenv *env) {
+void EXT_GLOBAL(unlink_channel)(proxyenv *env) {
 }
 
 #else
@@ -902,13 +908,13 @@ static short create_pipes(proxyenv*env, char*basename, size_t basename_len) {
   char *e = basename+basename_len;
   short success;
   if(((*env)->pipe.lockfile = mkstemp(basename)) == -1) return 0;
-  if(!create_pipe(strcat(basename, in) TSRMLS_CC)) {
+  if(!create_pipe(strcat(basename, in))) {
 	*e=0;
 	unlink(basename);
 	return 0;
   }
   *e=0;
-  success = create_pipe(strcat(basename, out) TSRMLS_CC);
+  success = create_pipe(strcat(basename, out));
   assert(success); if(!success) exit(6);
   (*env)->pipe.out = strdup(basename);
   *e=0;
@@ -932,9 +938,8 @@ static void init_channel_raw(proxyenv*env) {
   pipe=malloc(length+2); /* "name.i" */
   assert(pipe); if(!pipe) exit(6);
   
-  create_pipes(env, strcpy(pipe,sockname_shm), sizeof(sockname_shm)-1 
-			   TSRMLS_CC) ||
-	create_pipes(env, strcpy(pipe,sockname), sizeof(sockname)-1 TSRMLS_CC);
+  create_pipes(env, strcpy(pipe,sockname_shm), sizeof(sockname_shm)-1) ||
+	create_pipes(env, strcpy(pipe,sockname), sizeof(sockname)-1);
 
   if(!(*env)->pipe.channel) free(pipe);
 }
@@ -943,7 +948,7 @@ static void init_channel(proxyenv*env) {
   static const char sockname[] = "/php_java_bridgeXXXXXX";
   char *pipe;
   size_t length;
-  if(!EXT_GLOBAL(cfg)->tmpdir) { init_channel_raw(env TSRMLS_CC); return; }
+  if(!EXT_GLOBAL(cfg)->tmpdir) { init_channel_raw(env); return; }
 
   /* pipe communication channel only available in servlets */
   (*env)->pipe.channel=0;
@@ -953,10 +958,14 @@ static void init_channel(proxyenv*env) {
   assert(pipe); if(!pipe) exit(6);
   
   strcpy(pipe, EXT_GLOBAL(cfg)->tmpdir); strcat(pipe, sockname);
-  create_pipes(env, pipe, length-1 TSRMLS_CC);
+  create_pipes(env, pipe, length-1);
   if(!(*env)->pipe.channel) free(pipe);
 }
-void EXT_GLOBAL(destroy_channel)(proxyenv*env) {
+/**
+ * Remove the link to the pipe. Note that this does not destroy
+ * the channel, it only removes its name
+ */
+void EXT_GLOBAL(unlink_channel)(proxyenv*env) {
   char *channel = (*env)->pipe.channel;
   if(!channel) return;
 

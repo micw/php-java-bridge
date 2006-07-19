@@ -9,16 +9,16 @@
 #include <sys/select.h>
 #endif
 #endif
-#include <sys/types.h>
-#include <unistd.h>
 
 /* opendir */
 #ifndef __MINGW32__
 #include <dirent.h>
 #endif
 
-/* stat */
+/* stat, mkdir */
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 /* fcntl */
 #include <fcntl.h>
@@ -1049,6 +1049,50 @@ void EXT_GLOBAL(sys_error)(const char *str, int code) {
   php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d) system error code: %ld. %s.", code, (long)GetLastError(), str);
 #endif
 }
+
+static void fcgi_do_rmtmpdir() {
+#ifndef __MINGW32__
+  extern EXT_GLOBAL(is_parent);
+  static const char lck[] = ".lck";
+  DIR * dir;
+  struct dirent * file;
+  size_t len;
+  char *name, *lock_name;
+  int lock_file, err;
+
+  /* If this is not an fcgi child, do nothing. */
+  if(!EXT_GLOBAL(cfg) || !EXT_GLOBAL(cfg)->tmpdir) return;
+
+  len = strlen(EXT_GLOBAL(cfg)->tmpdir);
+
+  lock_name = malloc(len+sizeof lck);
+  strcpy(lock_name, (EXT_GLOBAL(cfg)->tmpdir));
+  strcat(lock_name, lck);
+  lock_file = open(lock_name, O_CREAT | O_EXCL, 0700);
+  unlink(lock_name);
+  free(lock_name);
+  if(lock_file==-1) return;
+
+  dir = opendir(EXT_GLOBAL(cfg)->tmpdir);
+  if(!dir) return;
+  while(file = readdir(dir)) {
+	if(file->d_name[0]!='p') continue;
+	name = malloc(len + strlen(file->d_name)+2);
+	if(!name) exit(6);
+	strcpy(name, (EXT_GLOBAL(cfg)->tmpdir));
+	strcat(name, "/");
+	strcat(name, file->d_name);
+	unlink(name);
+	free(name);
+  }
+  closedir(dir);
+  rmdir(EXT_GLOBAL(cfg)->tmpdir);
+#endif
+}
+static void fcgi_rmtmpdir(int sig) {
+  fcgi_do_rmtmpdir();
+  exit(0);
+}
 /* Delete the temp directory which contains the comm. pipes */
 static void rmtmpdir () {
 #ifndef __MINGW32__
@@ -1058,10 +1102,10 @@ static void rmtmpdir () {
   size_t len;
   char *name;
   int err;
+  int lock;
 
   /* If this is a child, do nothing. */
   if(!EXT_GLOBAL(cfg) || !EXT_GLOBAL(cfg)->tmpdir || EXT_GLOBAL(cfg)->pid!=getpid()) return;
-
   len = strlen(EXT_GLOBAL(cfg)->tmpdir);
   dir = opendir(EXT_GLOBAL(cfg)->tmpdir);
   if(!dir) { EXT_GLOBAL(sys_error)("Could not open tmpdir", 65); return; }
@@ -1072,6 +1116,7 @@ static void rmtmpdir () {
 	strcpy(name, (EXT_GLOBAL(cfg)->tmpdir));
 	strcat(name, "/");
 	strcat(name, file->d_name);
+	php_error(E_NOTICE, "php_mod_"/**/EXT_NAME()/**/"(%d): Removing %s which is not (yet?) connected. ", 66, name);
 	unlink(name);
 	free(name);
   }
@@ -1089,20 +1134,40 @@ void EXT_GLOBAL(rmtmpdir) () {
 								/* see FastCGI comment below */
   if(!EXT_GLOBAL(cfg)->is_fcgi_servlet) rmtmpdir();	
 }
+#ifndef __MINGW32__
+static char *makedtemp(char tmpl[]) {
+#ifdef HAVE_MKDTEMP
+  char *str = 0, *s = mkdtemp (tmpl);
+  if(s) if(!(str=strdup(s))) { rmdir(s); exit(6); }
+  return str;
+#else
+  char *s, *p = strrchr(tmpl, '/');
+  char c = *p;
+  *p=0; 
+  p[6]=0; 
+  s = tempnam(tmpl,p+1); 
+  *p=c;
+  if(!s) return 0;
+  if(-1==mkdir(s, 0700)) { free(s); return 0; }
+  return s;
+#endif
+}
+#endif
 void EXT_GLOBAL(mktmpdir) () {
 #ifndef __MINGW32__
   char sockname[] = SOCKNAME;
   char sockname_shm[] = SOCKNAME_SHM;
   char *tmpdir;
 
-  atexit(rmtmpdir); /* The FastCGI SAPI is completely odd, it calls
-					   the parent(!) mshutdown for each killed
-					   child. Ignore this nonsense and call rmtmpdir
-					   ourselfs, when the parent exits. */
-  tmpdir = mkdtemp(sockname_shm);
-  if(!tmpdir) tmpdir = mkdtemp(sockname);
+  /* The FastCGI SAPI is completely odd, it calls the parent(!)
+	 mshutdown for each killed child. Ignore this nonsense and call
+	 rmtmpdir ourselfs when the parent exits. */
+  if(EXT_GLOBAL(cfg)->is_fcgi_servlet) signal(SIGTERM, fcgi_rmtmpdir); 
+
+  tmpdir = makedtemp(sockname_shm);
+  if(!tmpdir) tmpdir = makedtemp(sockname);
   if(!tmpdir) {EXT_GLOBAL(cfg)->tmpdir=0; return;}
-  EXT_GLOBAL(cfg)->tmpdir=strdup(tmpdir); if(!EXT_GLOBAL(cfg)->tmpdir) { rmdir(tmpdir); exit(6); }
+  EXT_GLOBAL(cfg)->tmpdir=tmpdir;
   chmod(tmpdir, 01777);
 #else  /* There's no standard tmpdir on windows */
   EXT_GLOBAL(cfg)->tmpdir=0;

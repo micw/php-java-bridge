@@ -39,7 +39,7 @@ extern void EXT_GLOBAL(destructor)(zend_rsrc_list_entry *rsrc TSRMLS_DC);
 extern proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, short (*handle_request)(proxyenv *env), short (*handle_cached)(proxyenv *env), char*server, short is_local, struct sockaddr*saddr);
 extern void EXT_GLOBAL(redirect_pipe)(proxyenv*env);
 
-extern void EXT_GLOBAL(destroy_channel)(proxyenv*env);
+extern void EXT_GLOBAL(unlink_channel)(proxyenv*env);
 extern const char*EXT_GLOBAL(get_channel)(proxyenv*env);
 
 extern void EXT_GLOBAL (begin_async) (proxyenv*env);

@@ -1,3 +1,39 @@
+2006-07-18  Jost Boekemeier  <jostb@intern>
+
+	* client.c
+	(unlink_channel): new from destroy channel
+	(destroy_channel): removed
+	(redirect): unlink the channel directly after the server and
+	client are connected. Unix will automatically remove the inodes
+	when the pipes are not needed anymore.
+
+	* bind.c
+	(rmtmpdir): Display a notice if the tmpdir is not empty, which
+	means that we remove a comm. link which is not (yet) connected.
+
+	* server/php/java/bridge/http/PipeContextServer.java 
+	(start): No need to check if runner is really null.
+
+	* server/php/java/bridge/http/SocketContextServer.java
+	(start): Fixed a typo: The start signature has changed in
+	3.1.6devel, so that this method was not called anymore. Instead
+	the parent method from PipeContextServer was called, which returns
+	false on Windows. This means that the bridge could not use any
+	context server and had to send one statement after the other
+	through the HTTP tunnel, so the Windows version was very slow. --
+	We cannot use @override to avoid these problems because we still
+	support jdk1.4.
+	
+	* VERSION, php-java-bridge.spec: Version 3.1.6 released
+	
+2006-07-17  Jost Boekemeier  <jostb@intern>
+
+	* config.m4, bind.c (makedtemp): Added for Solaris.
+
+	* bind.c (fcgi_rmtmpdir): Added for FreeBSD.
+	
+	* VERSION, php-java-bridge.spec: Version 3.1.6devel1 released
+	
 2006-07-16  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/http/ContextRunner.java

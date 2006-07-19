@@ -40,6 +40,7 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
        JAVA_CHECK_BROKEN_STDIO_BUFFERING
        JAVA_CHECK_ABSTRACT_NAMESPACE
        JAVA_CHECK_STRUCT_UCRED
+       AC_CHECK_FUNCS(mkdtemp)
 
 # find includes eg. -I/opt/jdk1.4/include -I/opt/jdk1.4/include/linux
         if test "$PHP_JAVA" != "yes"; then

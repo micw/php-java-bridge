@@ -136,7 +136,7 @@ Java knowledge is not necessary and it is neither necessary nor recommended to w
 
 <ul>
 <li>
-  <code>new <strong>Java</strong>("CLASSNAME")</code>: References and instantiates the class CLASSNAME.
+  <code>new <strong><a href="documentation/PHP-API/html/java_8c.html#a54">Java</a></strong>("CLASSNAME")</code>: References and instantiates the class CLASSNAME.
  After script
      execution the referenced classes may be garbage collected. Example: <br><br>
      
@@ -152,7 +152,7 @@ echo (int)($v->elementAt(0)->toString()) + 2;<br>
 </blockquote>
 <br>
 <li>
-  <code>new <strong>JavaClass</strong>("CLASSNAME")</code>: References the class CLASSNAME without creating an instance. The returned object is the class object itself, not an object of the class.
+  <code>new <strong><a href="documentation/PHP-API/html/java_8c.html#a55">JavaClass</a></strong>("CLASSNAME")</code>: References the class CLASSNAME without creating an instance. The returned object is the class object itself, not an object of the class.
  After script
      execution the referenced classes may be garbage collected. Example: <br><br>
      
@@ -167,7 +167,7 @@ echo (int)($v->elementAt(0)->toString()) + 2;<br>
 <br>
 
 <li>
-  <code><strong>java_require</strong>("JAR1;JAR2")</code>: Makes additional libraries
+  <code><strong><a href="documentation/PHP-API/html/java_8c.html#a23">java_require</a></strong>("JAR1;JAR2")</code>: Makes additional libraries
      available to the current script.  JAR can either be  
      a "http:", "ftp:", "file:" or a "jar:" or a default <a href="#jar-location">location</a>. On &quot;Security Enhanced Linux&quot; (<a href="README">please see the README</a>) the <a href="#sel">location must be tagged</a> with a <em>lib_t</em> security context. Example: <br><br>
 <code>
@@ -188,7 +188,7 @@ echo "Evaluated in $delta ms.\n";<br>
 <br>
 <br>
 <li>
-  <code><strong>java_context()</strong></code>: Makes the <code>javax.script.ScriptContext</code>
+  <code><strong><a href="documentation/PHP-API/html/java_8c.html#a26">java_context</a></strong>()</code>: Makes the <code>javax.script.ScriptContext</code>
      available to the current script. All implicit web objects (session, servlet context, etc.) are <a href="server/documentation/API/php/java/servlet/Context.html#getHttpServletRequest()">available from the context</a>, if the back-end is running in a servlet engine or application server. The following example uses the jdk1.6 <a href="http://java.sun.com/javase/6/docs/tooldocs/share/jrunscript.html"><code>jrunscript</code></a> to eval PHP statements interactively:  <br><br>
 <code>
 /opt/jdk1.6/bin/jrunscript -l php-intractive<br>
@@ -198,7 +198,7 @@ php-interactive&gt; echo (string)(java_context()->getAttribute("javax.script.fil
 </code>
 <br>
 <li>
-  <code><strong>java_values</strong>(JAVA_OBJECT)</code>: Fetches the values for <code>JAVA_OBJECT</code>, if possible. Examples:<br><br><blockquote>
+  <code><strong><a href="documentation/PHP-API/html/java_8c.html#a31">java_values</a></strong>(JAVA_OBJECT)</code>: Fetches the values for <code>JAVA_OBJECT</code>, if possible. Examples:<br><br><blockquote>
 <code>
 $str = new java("java.lang.String", "hello");
 echo $str;<br>
@@ -219,7 +219,7 @@ print (java_values(new java("java.lang.Object")));<br>
 </blockquote>
 <br>
 <li>
-  <code><strong>java_begin_document</strong>()</code> and <code><strong>java_end_document</strong>()</code>: Enables/disables XML stream mode. In XML stream mode the PHP/Java Bridge XML statements are sent in one XML stream. Compared with SOAP, which usually creates the entire XML document before sending it, this mode uses much less resources on the web-server side. Raised server-side exceptions are reported when <code>java_end_document()</code> is invoked. Example:<br><br><blockquote>
+  <code><strong><a href="documentation/PHP-API/html/java_8c.html#a29">java_begin_document</a></strong>()</code> and <code><strong><a href="documentation/PHP-API/html/java_8c.html#a30">java_end_document</a></strong>()</code>: Enables/disables XML stream mode. In XML stream mode the PHP/Java Bridge XML statements are sent in one XML stream. Compared with SOAP, which usually creates the entire XML document before sending it, this mode uses much less resources on the web-server side. Raised server-side exceptions are reported when <code>java_end_document()</code> is invoked. Example:<br><br><blockquote>
 <code>
 // send the following XML statements in one stream<br>
 java_begin_document();<br>
@@ -236,7 +236,7 @@ java_end_document(); // back to synchronous mode<br>
 </blockquote>
 <br>
 <li>
-  <code><strong>java_closure</strong>(ENVIRONMENT, MAP, TYPE)</code>: Makes it possible to call PHP code from Java.  It closes over the PHP environment, packages it up as a java class and returns an instance of the class.  If the ENVIRONMENT is missing, the current environment is used. If MAP is missing, the PHP procedures must have the same name as the required procedures. If TYPE is missing, the generated class is "generic", i.e. the interface it implements is determined when the closure is applied. Example:<br><br><blockquote>
+  <code><strong><a href="documentation/PHP-API/html/java_8c.html#a32">java_closure</a></strong>(ENVIRONMENT, MAP, TYPE)</code>: Makes it possible to call PHP code from Java.  It closes over the PHP environment, packages it up as a java class and returns an instance of the class.  If the ENVIRONMENT is missing, the current environment is used. If MAP is missing, the PHP procedures must have the same name as the required procedures. If TYPE is missing, the generated class is "generic", i.e. the interface it implements is determined when the closure is applied. Example:<br><br><blockquote>
 <code>
 &lt;?php<br>
 function toString() { return "hello" ; }<br>
@@ -247,7 +247,7 @@ echo (string)java_closure();<br>
 </blockquote>
 <br>
 <li>
-  <code>$session=<strong>java_session</strong>()</code>: Creates or retrieves a session context. When the back-end is running in a J2EE environment, the session is taken from the request object, otherwise it is taken from PHP. Please see the  <a href="server/documentation/API/php/java/bridge/ISession.html">ISession interface documentation</a> for details. The <code>java_session()</code> must be called <a href="http://www.php.net/manual/en/function.headers-sent.php">before the response headers have been sent</a> and it should be called as the first statement within a PHP script.
+  <code>$session=<strong><a href="documentation/PHP-API/html/java_8c.html#a25">java_session</a></strong>()</code>: Creates or retrieves a session context. When the back-end is running in a J2EE environment, the session is taken from the request object, otherwise it is taken from PHP. Please see the  <a href="server/documentation/API/php/java/bridge/ISession.html">ISession interface documentation</a> for details. The <code>java_session()</code> must be called <a href="http://www.php.net/manual/en/function.headers-sent.php">before the response headers have been sent</a> and it should be called as the first statement within a PHP script.
 <blockquote>
 <code>
 $session = java_session();<Mr>
@@ -259,7 +259,7 @@ $servletRequest->setAttribute(...);<br>
 <br>
 <li>
 
-  <code>$session=<strong>java_session</strong>(SESSIONNAME)</code>:
+  <code>$session=<strong><a href="documentation/PHP-API/html/java_8c.html#a25">java_session</a></strong>(SESSIONNAME)</code>:
 Creates or retrieves the session <code>SESSIONNAME</code>. This
 primitive uses a "private" session store with the name
 SESSIONNAME. Please see the <a
@@ -302,7 +302,7 @@ $instance=$Cache->instance; //instance will stay in the VM until the VM runs sho
 </code>
 </blockquote>
 <br>
-  <li> <code><strong>JavaException</strong></code>: A java exception class. Available in PHP 5 and
+  <li> <code><strong><a href="documentation/PHP-API/html/java_8c.html#a54">JavaException</a></strong></code>: A java exception class. Available in PHP 5 and
     above only.  Example:<br><br>
 <blockquote>
 <code>
@@ -343,7 +343,7 @@ for ($i = 0; $i < $Array->getLength($entries); $i++) { <br>
 </code>
 </blockquote>
 <br>
-  <li> <code><strong>java_instanceof</strong>(JAVA_OBJ, JAVA_CLASS)</code>: Tests if JAVA_OBJ is an instance of JAVA_CLASS.  Example:<br><br>
+  <li> <code><strong><a href="documentation/PHP-API/html/java_8c.html#a24">java_instanceof</a></strong>(JAVA_OBJ, JAVA_CLASS)</code>: Tests if JAVA_OBJ is an instance of JAVA_CLASS.  Example:<br><br>
 <blockquote>
 <code>
 $Collection=new JavaClass("java.util.Collection");<br>
@@ -363,10 +363,10 @@ foreach ($list as $value) { <br>
 </blockquote>
 <br>
 
-  <li> <code>java_last_exception_get()</code>: Returns the last exception instance or
+  <li> <code><a href="documentation/PHP-API/html/java_8c.html#a20">java_last_exception_get</a>()</code>: Returns the last exception instance or
      null. Since PHP 5 you can use <code>try/catch</code> instead.<br><br>
 
-  <li> <code>java_last_exception_clear()</code>: Clears the error condition.  Since PHP 5 you can use <code>try/catch</code> instead.
+  <li> <code><a href="documentation/PHP-API/html/java_8c.html#a21">java_last_exception_clear</a>()</code>: Clears the error condition.  Since PHP 5 you can use <code>try/catch</code> instead.
 </ul>
 <br>
 <A NAME="type-mapping"></A>
@@ -525,7 +525,7 @@ echo $ex->getCause();<br>
 <ol>
 <li>
     Somewhere on a HTTP or FTP server, see PHP function
-      java_require. <a name="sel">
+      <a href="documentation/PHP-API/html/java_8c.html#a23">java_require</a>. <a name="sel">
 On Security Enhanced Linux <code>.jar</code> files can only be loaded from locations which are tagged with the <em>lib_t</em> security context.
 
    <li> In the sub-directory "lib" of the PHP extension directory, if it

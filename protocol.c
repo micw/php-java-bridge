@@ -552,7 +552,7 @@ static void close_connection(proxyenv *env TSRMLS_DC) {
 	if((*env)->servlet_context_string) free((*env)->servlet_context_string);
 	if((*env)->cfg.hosts) free((*env)->cfg.hosts);
 	if((*env)->cfg.servlet) free((*env)->cfg.servlet);
-	EXT_GLOBAL(destroy_channel)(env);
+	EXT_GLOBAL(unlink_channel)(env);
 	free(*env);
 	free(env);
 	EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);
