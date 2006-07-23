@@ -135,7 +135,7 @@ public class JavaBridge implements Runnable {
     private ConstructorCache constructorCache = new ConstructorCache();
     StringCache stringCache = new StringCache(this);
 
-    private SessionFactory sessionFactory;
+    SessionFactory sessionFactory;
     /** 
      * For internal use only.
      */
@@ -1374,17 +1374,6 @@ public class JavaBridge implements Runnable {
     }
     
     /**
-     * Only for internal use. Sets a new Input/OutputStream into the bridge
-     * @param in the new InputStream
-     * @param out the new OutputStream
-     */
-    public void setIO(InputStream in, OutputStream out) {
-	request.reset();
-    	this.in=in;
-    	this.out=out;	
-    }
-    
-    /**
      * Return map for the value (PHP 5 only)
      * @param value - The value which must be an array or implement Map or Collection.
      * @return The PHP map.
@@ -1919,6 +1908,7 @@ public class JavaBridge implements Runnable {
 	cl.recycle();
         options.recycle();
         request.recycle();
+        sessionFactory.recycle();
         
         // TODO: recycle common entries such as bridge.require(), etc.
         methodCache.clear();

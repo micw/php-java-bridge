@@ -4,6 +4,7 @@ package php.java.script;
 
 import javax.script.ScriptContext;
 
+import php.java.bridge.http.ContextFactory;
 import php.java.bridge.http.IContextFactory;
 
 /**
@@ -22,5 +23,8 @@ public class PhpScriptContextFactory extends php.java.bridge.http.SimpleContextF
 	PhpScriptContextFactory ctx = new PhpScriptContextFactory();
 	ctx.setContext(context);
 	return ctx;
+    }
+    public PhpScriptContextFactory() {
+	super(ContextFactory.EMPTY_CONTEXT_NAME);
     }
 }

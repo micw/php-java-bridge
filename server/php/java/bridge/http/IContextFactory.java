@@ -81,7 +81,7 @@ public interface IContextFactory {
    * Set the Context into this factory.
    * Should be called by Context.addNew() only.
    * @param context
-   * @see php.java.bridge.http.ContextFactory#addNew()
+   * @see php.java.bridge.http.ContextFactory#addNew(String)
    */
   public void setContext(Object context);
 

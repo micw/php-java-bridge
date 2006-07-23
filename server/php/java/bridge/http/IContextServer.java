@@ -60,8 +60,16 @@ public interface IContextServer {
      * @author jostb
      */
     public static abstract class ChannelName {
-        protected String defaultName, name, kontext;
+        protected String name, kontext;
+        protected ContextRunner runner;
         protected IContextFactory currentCtx;
+        
+        /**
+         * Create a new ChannelName. 
+         * @param name The name of the channel, see X_JAVABRIDGE_CHANNEL
+         * @param kontext The name of client's default context, see X_JAVABRIDGE_CONTEXT_DEFAULT
+         * @param currentCtx The ContextFactory associated with the current request.
+         */
         public ChannelName(String name, String kontext, IContextFactory currentCtx) {
             this.name = name;
             this.kontext = kontext;
@@ -81,7 +89,7 @@ public interface IContextServer {
          * @see #getName()
          */
         public String getDefaultName() {
-            if(hasDefault()) return defaultName;
+            if(runner!=null) return runner.getChannel().getName();
             return name;
         }
         /**
@@ -89,22 +97,7 @@ public interface IContextServer {
          * @return true, if the persistent name exists, false otherwise.
          */
         public boolean hasDefault() {
-            return defaultName!=null;
-        }
-        private ContextRunner runner;
-        /**
-         * Save the current runner.
-         * @param runner the ContextRunner or null
-         */
-        public void setRunner(ContextRunner runner) {
-            this.runner = runner;
-        }
-        /**
-         * Retrieve the current runner
-         * @return the saved runner or null
-         */
-        public ContextRunner getRunner() {
-            return runner;
+            return runner!=null;
         }
         /**
          * Return the 
@@ -123,7 +116,7 @@ public interface IContextServer {
         /**
          * Start the channel. This method calls IContextServer.start()
          */
-        public abstract boolean startChannel();
+        protected abstract boolean startChannel();
         
         /**
          * Check if there's a persistent ContextRunner available for the kontext.
@@ -132,7 +125,28 @@ public interface IContextServer {
          * {@link #hasDefault()}.
          * @return the default name or null.
          */
-        public abstract String schedule();
+        public ContextRunner schedule() {
+            return runner = ContextRunner.checkRunner(this);
+        }
+        /**
+         * Recycle a ContextRunner for a new ContextServer. It checks if a ContextRunner is available for the 
+         * default ContextFactory and updates the ContextRunner with the JavaBridge from the fresh ContextFactory.
+         * The new JavaBridge and ContextFactory instance are destroyed, when the request is done.
+         */
+	public void recycle() {
+	    if(runner != null) 
+		runner.recycle(currentCtx);
+	}
+	/**
+	 * Start a new ContextRunner for a given ContextServer. The current ContextFactory becomes the 
+	 * default for this runner.
+	 * @return true, if the channel is available, false otherwise.
+	 */
+	public boolean start() {
+	    if(runner == null) 
+		return startChannel();
+	    return true;
+	}
     }
 
     /**
@@ -140,11 +154,4 @@ public interface IContextServer {
      * @param channel The channel name
      */
     public boolean start(ChannelName channel);
-    
-    /**
-     * Check if there's a persistent ContextRunner available for the kontext.
-     * @return the default name or null.
-     * @see php.java.bridge.http.IContextServer.ChannelName#schedule()
-     */
-    public String schedule(ChannelName channelName);
 }

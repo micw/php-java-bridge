@@ -14,8 +14,9 @@ import php.java.bridge.Request;
 import php.java.bridge.Util;
 
 /**
- * The ContextRunner manages the "high speed" communication link.  It
- * pulls a context and executes it.  After execution the context is destroyed.
+ * The ContextRunner usually represents the physical connection,
+ * it manages the "high speed" communication link.  It
+ * pulls a ContextFactory and executes it.  After execution the context is destroyed.
  * <p>ContextRunners are kept in a per-loader map and each client may refer to its runner by
  * passing X_JAVARIDGE_CONTEXT_DEFAULT. The ContextRunner may ignore this hint
  * and prepare for a new physical connection, if the ID does not exist in its map. This
@@ -34,13 +35,12 @@ public class ContextRunner implements Runnable {
     
     private static final HashMap runners = new HashMap(Integer.parseInt(Util.THREAD_POOL_MAX_SIZE));
     
-    private IContextFactory ctx;
-    private String key;
+    private IContextFactory ctx; /* the persistent ContextFactory */
     private Request request;
     private InputStream in;
     private OutputStream out;
     private IContextServer.Channel channel;
-    private ContextServer contextServer;
+    private ContextServer contextServer; /* the persistent ContextServer */
     
     protected ContextRunner(ContextServer contextServer, IContextServer.Channel channel) {
 	this.contextServer = contextServer;
@@ -61,8 +61,20 @@ public class ContextRunner implements Runnable {
     private String readName() throws IOException {
 	return readString(readLength());
     }
+    /**
+     * Sets a new Input/OutputStream into the bridge
+     * @param bridge the JavaBridge
+     * @param in the new InputStream
+     * @param out the new OutputStream
+     */
+    private void setIO(JavaBridge bridge, InputStream in, OutputStream out) {
+	bridge.request.reset();
+    	bridge.in=in;
+    	bridge.out=out;	
+    }
 
     private void init() throws IOException {
+	if(Util.logLevel>4) Util.logDebug("starting a new ContextRunner " + this);
 	out = channel.getOuptutStream();
 	in = channel.getInputStream();
 
@@ -74,7 +86,7 @@ public class ContextRunner implements Runnable {
 	String name = readName();
     	ctx = (IContextFactory) ContextFactory.get(name, contextServer);
     	if(ctx == null) throw new IOException("No context available for: " + name + ".");
-    	put(key=name, this);
+    	put(name, this);
     	JavaBridge bridge = ctx.getBridge();
 	// The first statement was executed with the default
 	// classloader, now set the dynamic class loader into the
@@ -90,7 +102,7 @@ public class ContextRunner implements Runnable {
 	catch (ClassCastException e1) {/*ignore*/}
 	loader.setClassLoader(xloader);
 	
-	bridge.setIO(in, out);
+	setIO(bridge, in, out);
 	this.request = bridge.request;
     }
     /**
@@ -102,19 +114,14 @@ public class ContextRunner implements Runnable {
      * (k contextServers) and up to k*n ContextFactory and JavaBridge instances.
      * 
      * @param channelName the channelName. This procedure sets the runner into channelName as a side effect.
-     * @param contextServer the current contextServer or null
      * @return the ContextRunner, if found, otherwise null.
      */
-    public static synchronized String checkRunner(IContextServer.ChannelName channelName, ContextServer contextServer) {
+    public static synchronized ContextRunner checkRunner(IContextServer.ChannelName channelName) {
 	String id = channelName.getKontext();
 	IContextFactory ctx = channelName.getCtx();
 	ContextRunner runner = null;
 	if(ctx!=null && id!=null) runner = (ContextRunner)runners.get(id);
-	if(runner!=null) {
-	    channelName.setRunner(runner);
-	    return runner.channel.getName();
-	}	
-	return null;
+	return runner;
     }
     private static synchronized void put(String kontext, ContextRunner runner) {
 	runners.put(kontext, runner);
@@ -125,14 +132,20 @@ public class ContextRunner implements Runnable {
     /**
      * Recycle the runner for a different web context.
      * @param ctx the old contextFacory belonging to a different contextServer
-     * @param contextServer the new ContextServer
      */
-    public void recycle(IContextFactory ctx, ContextServer contextServer) {
+    public void recycle(IContextFactory ctx) {
 	if(this.ctx == ctx) return; 
+	if(Util.logLevel>4) Util.logDebug("recycle " + this.ctx + " for " + ctx + ", ContextRunner: " + this);
 	
 	request.setBridge(ctx.getBridge());
-	this.contextServer = contextServer;
-	this.ctx = ctx;
+    }
+    
+    /**
+     * Return the channel of the current runner.
+     * @return The Channel
+     */
+    public IContextServer.Channel getChannel() {
+	return channel;
     }
     public void run() {
 	try {
@@ -142,7 +155,7 @@ public class ContextRunner implements Runnable {
 	    Util.printStackTrace(e);
 	} finally {
 	    if(ctx!=null) {
-		remove(key);
+		remove(ctx.getId());
 		ctx.destroy();
 	    }
 	    channel.shutdown();

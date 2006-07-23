@@ -60,7 +60,7 @@ public class JavaBridgeRunner extends HttpServer {
     private static IContextFactory getContextFactory(HttpRequest req, HttpResponse res) {
     	String id = getHeader("X_JAVABRIDGE_CONTEXT", req);
     	IContextFactory ctx = ContextFactory.get(id, ctxServer);
-	if(ctx==null) ctx = ContextFactory.addNew();
+	if(ctx==null) ctx = ContextFactory.addNew(ContextFactory.EMPTY_CONTEXT_NAME);
      	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
     	return ctx;
     }
@@ -104,6 +104,7 @@ public class JavaBridgeRunner extends HttpServer {
 		res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getDefaultName());
 		if(hasDefault) res.setHeader("X_JAVABRIDGE_CONTEXT_DEFAULT", kontext);
 		r.handleRequests();
+		ctxServer.recycle(channelName);
 
 		// redirect and re-open
 		if(override_redirect) {

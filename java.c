@@ -72,6 +72,10 @@ static short shutdown_connections(TSRMLS_D) {
   short success = EXT_GLOBAL(close_connection) (JG(jenv), EXT_GLOBAL(cfg)->persistent_connections TSRMLS_CC);
   if(!success) {				/* error: close all connections */
 	proxyenv **env;
+
+	/* destroy default connection */
+	JG(peer)=JG(peerr)=-1; JG(servlet_ctx)=0;
+
 	zend_hash_internal_pointer_reset(connections);
 	while(SUCCESS==zend_hash_get_current_data(connections, (void**)&env)) {
 	  if(*env!=current) {

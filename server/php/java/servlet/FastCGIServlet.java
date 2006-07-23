@@ -99,9 +99,9 @@ public class FastCGIServlet extends CGIServlet {
     protected String php = null; 
     protected boolean phpTryOtherLocations = false;
     
-    /** default: true, switched off, if fcgi is not configured */
+    /** default: true. Switched off when fcgi is not configured */
     protected boolean fcgiIsConfigured;
-    /** default: true, switched off, if fcgi is not configured or if fcgi server failed */
+    /** default: true. Switched off when fcgi is not configured or if fcgi server failed */
     protected boolean fcgiIsAvailable;
 
     protected boolean canStartFCGI = false;
@@ -191,12 +191,13 @@ public class FastCGIServlet extends CGIServlet {
     /**
      * Create a new FastCGI servlet which connects to a PHP FastCGI server using a connection pool.
      * 
-     * If the JavaBridge context exists and the JavaBridge context can start
-     * a FastCGI server and the current context is configured to connect to a FastCGI 
-     * server, the current context connects to the JavaBridge context to start the server
-     * and then uses this server for all subsequent requests, until the server is 
-     * stopped. When FastCGI is not available (anymore), the parent CGI servlet is 
-     * used instead.
+     * If the JavaBridge context exists and the JavaBridge context can
+     * start a FastCGI server and the current context is configured to
+     * connect to a FastCGI server, the current context connects to
+     * the JavaBridge context to start the server and then uses this
+     * server for all subsequent requests until the server is
+     * stopped. When FastCGI is not available (anymore), the parent
+     * CGI servlet is used instead.
      * @see php.java.servlet.ConnectionPool
      * @see #destroy()
      */
@@ -212,7 +213,8 @@ public class FastCGIServlet extends CGIServlet {
 	} catch (Throwable t) {Util.printStackTrace(t);}      
 	String val = null;
 	try {
-	    val = getServletConfig().getInitParameter("PHP_FCGI_CHILDREN");
+	    val = getServletConfig().getInitParameter("php_fcgi_children");
+	    if(val==null) val = getServletConfig().getInitParameter("PHP_FCGI_CHILDREN");
 	    if(val==null) val = System.getProperty("php.java.bridge.php_fcgi_children");
 	    if(val!=null) php_fcgi_children_number = Integer.parseInt(val);
 	} catch (Throwable t) {/*ignore*/}
@@ -220,7 +222,8 @@ public class FastCGIServlet extends CGIServlet {
 	
 	val = null;
 	try {
-	    val = getServletConfig().getInitParameter("PHP_FCGI_MAX_REQUESTS");
+	    val = getServletConfig().getInitParameter("php_fcgi_max_requests");
+	    if(val==null) val = getServletConfig().getInitParameter("PHP_FCGI_MAX_REQUESTS");
 	    if(val==null) val = System.getProperty("php.java.bridge.php_fcgi_max_requests");	    
 	} catch (Throwable t) {/*ignore*/}
 	if(val!=null) php_fcgi_max_requests = val;
@@ -262,9 +265,10 @@ public class FastCGIServlet extends CGIServlet {
 	    super(req, res, context);
 	}
 	protected static final String empty_string = "";
-	// in a shared environment, the PhpCGIServlet JavaBridge context reserves 3 php-cgi instances 
-	// for activation and for handling JavaBridge/foo.php requests.
-	// the rest is available for the GlobalPhpCGIServlet
+	// in a shared environment the PhpCGIServlet JavaBridge
+	// context reserves 3 php-cgi instances for activation and for
+	// handling JavaBridge/foo.php requests.  The rest is
+	// available to the GlobalPhpCGIServlet
 	private static final int JAVABRIDGE_RESERVE = 3;
 	protected String[] findCGI(String pathInfo, String webAppRootDir,
 				   String contextPath, String servletPath,
@@ -276,7 +280,9 @@ public class FastCGIServlet extends CGIServlet {
 		    try {
 			int children = php_fcgi_children_number;
 			if(delegateToJavaBridgeContext) { 
-			    // NOTE: the  shared_fast_cgi_pool options from the GlobalPhpCGIServlet and from the PhpCGIServlet must match.
+			    // NOTE: the shared_fast_cgi_pool options
+			    // from the GlobalPhpCGIServlet and from
+			    // the PhpCGIServlet must match.
 			    boolean isJavaBridgeWc = isJavaBridgeWc(contextPath);
 			    children = isJavaBridgeWc ? JAVABRIDGE_RESERVE : php_fcgi_children_number-JAVABRIDGE_RESERVE;
 			}

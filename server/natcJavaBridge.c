@@ -226,9 +226,7 @@ JNIEXPORT jboolean JNICALL Java_php_java_bridge_JavaBridge_openLog
 	logfile = strdup(LOGFILE);
   }
   if(logfile) {
-	int fd, null;
-	null = open("/dev/null", O_RDONLY);
-	if(null!=-1) dup2 (null,0); 
+	int fd;
 	if(!*logfile) {	/* java.log_file="": direct everything to stderr */
 	  jboolean ret = JNI_TRUE;
 	  if(dup2(2,1)==-1) ret = JNI_FALSE;

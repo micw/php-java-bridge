@@ -46,13 +46,20 @@ import php.java.bridge.Util;
  * is traced. If 5 seconds is not enough during debugging, change the ORPHANED_TIMEOUT.
  * </p>
  * <p>
- * There can be only one instance of a ContextFactory per classloader.
+ * In a shared environment with k web contexts there can be up to n*k active JavaBridge/ContextFactory instances 
+ * (where n is the number of active php clients). All ContextFactories are kept in a shared, per-loader
+ * map. But the map can only be accessed via {@link #get(String, ContextServer)}, which checks if the ContextFactory
+ * belongs to the same ContextServer.
  * </p>
  * @see php.java.servlet.ServletContextFactory
  * @see php.java.bridge.http.ContextServer
  * @see php.java.bridge.SessionFactory#TIMER_FREQ
  */
 public final class ContextFactory extends SessionFactory implements IContextFactory {
+
+    /** This context name can be used when a ContextFactory is used 
+     * outside of a servlet environment */
+    public static final String EMPTY_CONTEXT_NAME = "";
 
     static {
        getTimer().addJob(new Runnable() {public void run() {destroyOrphaned();}});
@@ -74,10 +81,10 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     private IContextFactory visitor; 
 
     private static long counter = 0;
-    private static synchronized String addNext(ContextFactory thiz) {
+    private static synchronized String addNext(String webContext, ContextFactory thiz) {
         String id;
-        if(++counter==0) counter++;
-        contexts.put(id=Long.toHexString(counter), thiz);
+        counter++;
+        contexts.put(id=Long.toHexString(counter)+"@"+webContext, thiz);
         return id;
     }
     private static synchronized void remove(String id) {
@@ -90,20 +97,22 @@ public final class ContextFactory extends SessionFactory implements IContextFact
         if((o = contexts.remove(id))!=null) { liveContexts.put(id, o); return (ContextFactory)o; }
         return null;
     }
-    public ContextFactory() {
+    public ContextFactory(String webContext) {
       super();
       timestamp = System.currentTimeMillis();
-      id=addNext(this);
+      id=addNext(webContext, this);
       if(Util.logLevel>4) Util.logDebug("new context: " + id + ", # of contexts: " + contexts.size());
     }
 
     /**
      * Create a new ContextFactory and add it to the list of context factories kept by this classloader.
+     * @param webContext The current web context, use ContextFactory.EMPTY_CONTEXT 
+     * if servlet web contexts are not available, config.getServletContext().getRealPath("") otherwise.
      * @return The created ContextFactory.
      * @see php.java.bridge.http.ContextFactory#get(String, ContextServer)
      */
-    public static IContextFactory addNew() {
-    	ContextFactory factory = new ContextFactory();
+    public static IContextFactory addNew(String webContext) {
+    	ContextFactory factory = new ContextFactory(webContext);
     	factory.visitor = factory;
     	return factory;
     }
@@ -115,7 +124,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * @param id The ID
      * @param server Your context server.
      * @return The ContextFactory or null.
-     * @see #addNew()
+     * @see #addNew(String)
      * @throws SecurityException if id belongs to a different ContextServer.
      */
     /* See PhpJavaServlet#contextServer, http.ContextRunner#contextServer and 
@@ -127,7 +136,8 @@ public final class ContextFactory extends SessionFactory implements IContextFact
         if(factory==null) return null;
         
         if(factory.contextServer==null) factory.contextServer = server;
-        if(factory.contextServer != server) throw new SecurityException("Illegal access");
+        if(factory.contextServer != server) 
+            throw new SecurityException("Illegal access");
         return factory.visitor;
     }
     /* (non-Javadoc)
@@ -142,6 +152,14 @@ public final class ContextFactory extends SessionFactory implements IContextFact
         target.removeOrphaned();
         target.recycle(this);
     }
+    /**
+     * Recycle the factory for new reqests.
+     */    
+    public void recycle() {
+	super.recycle();
+	contextServer=null;
+    }
+    
     /* (non-Javadoc)
      * @see php.java.bridge.http.IContextFactory#destroy()
      */
@@ -226,8 +244,8 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     public String toString() {
 	return "Context# " +id + ", isInitialized: " + isInitialized();
     }
-    /* (non-Javadoc)
-     * @see php.java.bridge.http.IContextFactory#getContext()
+    /**
+     * Returns the visitor's context.
      */
     public Object getContext() {
 	return visitor.getContext();
@@ -237,7 +255,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * Set the Context into this factory.
      * Should be called by Context.addNew() only.
      * @param context
-     * @see #addNew()
+     * @see #addNew(String)
      */
     public void setContext(Object context) {
         visitor.setContext(context);

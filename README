@@ -4,10 +4,76 @@ What is the PHP/Java Bridge?
   The PHP/Java Bridge is a network protocol which can be used to
   connect PHP with a java or ECMA 335 VM.
 
-  Please read the ABOUT.HTM contained in the download archive or
-  http://php-java-bridge.sf.net for more information.
 
+Overview
+--------
 
+  Although it is possible to start Java manually or automatically as
+  a sub-component of the HTTP server (see below), it is recommended to
+  start the Java VM via a J2EE application server or servlet engine:
+
+* When a native HTTP server (Apache or IIS) is not available, the
+  bridge can run PHP applications within a pure Java application server
+  or servlet engine using the PHP FastCGI SAPI:
+
+   internet 
+  clients 
+        \                    
+         \ jsp/servlet/php req.                     .
+           \                                        .
+            ---- :8080 -- J2EE AS                   .
+           /                 |                      .
+          |                  |                      .
+          |                  ---- servlet         /------ :9667
+          |                  ---- FastCGIServlet /  .   PHP FastCGI Server
+          |                  ---- jsp               .        |
+          |                  ->-- PhpJavaServlet    .        \--- php
+          |                  ---- ...            \ ------->--\--- php -->|
+          |                                         .  P-J-B      ...    |
+          |                                         .  PROTOCOL          |
+          ------------------------------<--------------------------------|
+                                   P-J-B PROTOCOL   .
+
+  * When Apache or IIS is available, the administrator may set up the
+  mod_jk adapter to forward JSP/Servlet requests to the J2EE AS. In
+  this setup the J2EE port not visible to internet clients and the
+  Apache/IIS document root is not used:
+
+  internet
+  clients  <->  :80---> Apache or IIS                        ----> J2EE AS
+                             | |                            / /     |
+                             |  mod_jk -->----------------/  /      |
+                             |                              /     servlet
+                             --- php                       /   PhpJavaServlet
+                             --> php  ---------->---------/        jsp     |
+                             /   ...      P-J-B PROTOCOL           ...     |
+                           /                                               |
+                          ----------------------<--------------------------|
+                                          P-J-B PROTOCOL
+
+  * The HTTP server and the J2EE server are both connected to the
+  internet. In this setup the Apache/IIS and J2EE ports are accessible
+  from the internet, they share the same document root:
+
+              :80---> Apache or IIS
+            /                |
+           / php req.        ---- php
+          /                  ---- php  -->----------|
+                               /  ...               |
+  internet                    |                     |
+  clients                     -------<--------|     |
+          \                    P-J-B PROTOCOL |     |
+           \jsp/servlet req.                  |     |
+            \                                 |     |
+             |--> :8080--> J2EE AS            |     |
+              /                |              |     |
+             /                 \--- servlet   |     |
+             |                 \--- PhpJavaServlet  |
+             |                 \--- jsp             |
+             |                      ...             |
+             -------------<-------------------------|
+                    P-J-B PROTOCOL
+  
 Build and execution instructions:
 ---------------------------------
   NOTE: If you run Security Enhanced Linux, you must update the policy

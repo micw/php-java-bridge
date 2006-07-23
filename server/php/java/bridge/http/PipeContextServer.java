@@ -14,13 +14,16 @@ import php.java.bridge.ThreadPool;
 import php.java.bridge.Util;
 
 /**
- * This class manages the ContextRunners.  It pulls a ContextRunner
- * from the list of available runners and invokes it.
- * 
- * We currently check only if the number of runners requested is less
- * than or equal to the number of runners created by the servlet
- * requests.
- * 
+ * This class represents the physical connection on Unix or Linux machines.
+ * PHP clients create a pair of named pipes and pass their location via the X_JAVABRIDGE_REDIRECT
+ * header (see PhpJavaServlet}. When isAvailable() returns true, all further communication goes
+ * through the pair of pipes, see response header X_JAVABRIDGE_REDIRECT.
+ * <p>
+ * It is possible to switch off this server by setting the VM property php.java.bridge.no_pipe_server to true,
+ * e.g.: -Dphp.java.bridge.no_pipe_server=true.
+ * </p>
+ * @see php.java.bridge.http.SocketContextServer
+ * @see php.java.bridge.http.ContextServer
  */
 public class PipeContextServer implements IContextServer {
     protected ThreadPool threadPool;
@@ -70,9 +73,6 @@ public class PipeContextServer implements IContextServer {
     public PipeContextServer (ContextServer contextServer, ThreadPool threadPool) {
         this.contextServer = contextServer;
     	this.threadPool = threadPool;
-    }
-    public String schedule(IContextServer.ChannelName channelName) {
-	return ContextRunner.checkRunner(channelName, contextServer);
     }
     public boolean start(IContextServer.ChannelName channelName) {
         if(!isAvailable()) return false;

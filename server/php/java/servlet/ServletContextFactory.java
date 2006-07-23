@@ -22,7 +22,7 @@ public class ServletContextFactory extends php.java.bridge.http.SimpleContextFac
     protected ServletContext kontext;
 
     protected ServletContextFactory(ServletContext ctx, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res) {
-    	super();
+    	super(ctx.getRealPath(""));
     	this.kontext = ctx;
     	this.proxy = proxy;
     	this.req = req;

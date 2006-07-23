@@ -25,8 +25,8 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
      */
     protected Object context;
     
-    protected SimpleContextFactory() {
-  	visited = new ContextFactory();
+    protected SimpleContextFactory(String webContext) {
+  	visited = new ContextFactory(webContext);
   	visited.accept(this);
     }
     
@@ -48,6 +48,11 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
     public String toString() {
 	return "Visited: " + visited + ", Current: ";
     }
+    /**
+     * Create a new context. The default implementation
+     * creates a dummy context which emulates the JSR223 context.
+     * @return The context.
+     */
     protected Object createContext() {
       return new Context();
   }

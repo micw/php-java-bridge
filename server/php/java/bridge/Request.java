@@ -21,7 +21,7 @@ import java.util.TreeMap;
 public final class Request implements IDocHandler {
 
     private Parser parser;
-    private JavaBridge bridge;
+    private JavaBridge defaultBridge, bridge;
     protected static final class IntegerComparator implements Comparator {
       public int compare(Object arg0, Object arg1) {
 	  int k0 = ((PhpArrayKey)arg0).key;
@@ -627,10 +627,19 @@ public final class Request implements IDocHandler {
 	parser.reset();
     }
     /**
-     * Set the current bridge object
-     * @param bridge The bridge
+     * Set a temporary bridge into this request. The bridge and its 
+     * associated session-/contextFactory will be automatically destroyed when the request is done. 
+     * The {@link php.java.bridge.http.ContextRunner#recycle(php.java.bridge.http.IContextFactory) }
+     * uses this to temporarily update the runner with the new bridge obtained from the 
+     * ContextServer's ContextFactory while keeping the same connection to the client: in a shared environment
+     * a PHP client may be subscribed to n web contexts while using only one persistent ContextRunner, but 
+     * JavaBridges and their ContextFactories may contain state (session vars, globalRef, ...) and belong to 
+     * exactly one web context ContextServer.
+     * 
+     * @param bridge The fresh bridge and its ContextFactory
      */
     public void setBridge(JavaBridge bridge) {
+	defaultBridge = this.bridge;
 	bridge.in = this.bridge.in;
 	bridge.out = this.bridge.out;
 	this.bridge = bridge;
@@ -638,10 +647,20 @@ public final class Request implements IDocHandler {
 	response.setBridge(bridge);
 	parser.setBridge(bridge);
     }
+    private void resetBridge() {
+        if(defaultBridge!=null) {
+            bridge.sessionFactory.destroy();
+            bridge = defaultBridge;
+            response.setBridge(bridge);
+            parser.setBridge(bridge);
+            defaultBridge = null;
+        }
+    }
     /** re-initialize for new requests */
     public void recycle() {
         reset();
         arg.reset();
+        resetBridge();
         response.recycle();
     }
 

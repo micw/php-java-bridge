@@ -7,18 +7,19 @@ import php.java.bridge.ThreadPool;
 /**
  * A bridge pattern which either uses the PipeContextServer or the SocketContextServer, 
  * depending on the OS and/or the security restrictions.
- * 
+ * <p>
+ * A ContextServer instance represents the current web context. 
  * There can be more than one ContextServer instance per classloader, but the ContextFactory.get() checks
  * if it is called with the same ContextServer and throws a SecurityException otherwise. 
  * So one cannot access contexts belonging to other ContextServers.
- *  
+ * </p>
  * @author jostb
  * @see php.java.bridge.http.PipeContextServer
  * @see php.java.bridge.http.SocketContextServer
  */
 public final class ContextServer {
     private PipeContextServer ctx;
-    private static SocketContextServer sock = null;
+    private SocketContextServer sock = null;
     private ThreadPool pool;
     
     private class PipeChannelName extends IContextServer.ChannelName {
@@ -26,9 +27,6 @@ public final class ContextServer {
 
         public boolean startChannel() {
             return ctx.start(this);
-        }
-        public String schedule() {
-            return defaultName = ctx.schedule(this);
         }
         public String toString() {
             return "Pipe:"+getDefaultName();
@@ -40,13 +38,14 @@ public final class ContextServer {
         public boolean startChannel() {
             return sock.start(this);
         }
-        public String schedule() {
-            return sock.schedule(this);
-        }
         public String toString() {
             return "Socket:"+getDefaultName();
         }
     }
+    /**
+     * Create a new ContextServer using a thread pool.
+     * @param pool The thread pool.
+     */
     public ContextServer(ThreadPool pool) {
         /*
          * We need both because the client may not support named pipes.
@@ -56,18 +55,19 @@ public final class ContextServer {
         
         this.pool = pool;
     }
-    
-    /* (non-Javadoc)
-     * @see php.java.bridge.http.IContextServer#destroy()
+    /**
+     * Destroy the pipe or socket context server.
      */
     public void destroy() {
         ctx.destroy();
         if(sock!=null) sock.destroy();
     }
 
-
-    /* (non-Javadoc)
-     * @see php.java.bridge.http.IContextServer#isAvailable()
+    /**
+     * Check if either the pipe of the socket context server is available. This function
+     * may try start a SocketContextServer, if a PipeContextServer is not available. 
+     * @param channelName The header value for X_JAVABRIDGE_CHANNEL, may be null.  
+     * @return true if either the pipe or the socket context server is available.
      */
     public boolean isAvailable(String channelName) {
         if(channelName!=null && ctx.isAvailable()) return true;
@@ -75,29 +75,44 @@ public final class ContextServer {
         return sock!=null && sock.isAvailable();
     }
 
-    private static synchronized SocketContextServer getSocketContextServer(ContextServer server, ThreadPool pool) {
+    private synchronized SocketContextServer getSocketContextServer(ContextServer server, ThreadPool pool) {
 	if(sock!=null) return sock;
 	return sock=new SocketContextServer(server, pool);
     }
 
-    /* (non-Javadoc)
-     * @see php.java.bridge.http.IContextServer#start(java.lang.String)
+    /**
+     * Start a channel name.
+     * @param channelName The ChannelName.
+     * @throws IllegalStateException if there's no Pipe- or SocketContextServer available
      */
     public void start(IContextServer.ChannelName channelName) {
-	ContextRunner runner = channelName.getRunner();
-	if(runner != null) {
-	    runner.recycle(channelName.getCtx(), this);	    
-	} else {
-	    boolean started = channelName.startChannel();
-	    if(!started) throw new IllegalStateException("Pipe- and SocketRunner not available");
-	}
+	boolean started = channelName.start();
+	if(!started) throw new IllegalStateException("Pipe- and SocketContextServer not available");
     }
     
-    public String schedule(IContextServer.ChannelName channelName) {
-        if(channelName == null) throw new NullPointerException("channelName");
+    /**
+     * Check for a ContextRunner for channelName
+     * @param channelName The ChannelName
+     * @return The ContextRunner or null.
+     */
+    public ContextRunner schedule(IContextServer.ChannelName channelName) {
         return channelName.schedule();
     }
 
+    /**
+     * Recycle a ContextRunner, if possible.
+     * @param channelName The ChannelName.
+     */
+    public void recycle(IContextServer.ChannelName channelName) {
+	channelName.recycle();
+    }
+    /**
+     * Return the channelName which be passed to the client as X_JAVABRIDGE_REDIRECT
+     * @param channelName The name of the channel, see X_JAVABRIDGE_CHANNEL
+     * @param kontext The name of the client's default ContextFactory, see X_JAVABRIDGE_CONTEXT_DEFAULT
+     * @param currentCtx The current ContextFactory, see X_JAVABRIDGE_CONTEXT
+     * @return The channel name of the Pipe- or SocketContextServer.
+     */
     public IContextServer.ChannelName getFallbackChannelName(String channelName, String kontext, IContextFactory currentCtx) {
         if(channelName!=null && ctx.isAvailable()) return new PipeChannelName(channelName, kontext, currentCtx);
         SocketContextServer sock=getSocketContextServer(this, pool);

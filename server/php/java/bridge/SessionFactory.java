@@ -101,4 +101,16 @@ public class SessionFactory {
             } catch (InterruptedException e) {/*ignore*/}
         }
     }
+
+    /**
+     * Recycle the factory for new reqests.
+     */
+    public void recycle() {
+    }
+
+    /**
+     * Destroy the factory
+     */
+    public void destroy() {
+    }
 }

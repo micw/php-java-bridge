@@ -195,7 +195,7 @@ public final class Util {
     	    Util.loadFileMethod = Util.CLRAssembly.getMethod("LoadFile", new Class[] {String.class});
     	    Util.loadMethod = Util.CLRAssembly.getMethod("Load", new Class[] {String.class});
     	    IS_MONO=true;
-    	} catch (Exception e) {}
+    	} catch (Exception e) {/*ignore*/}
         Properties p = new Properties();
 	try {
 	    InputStream in = Util.class.getResourceAsStream("global.properties");

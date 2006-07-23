@@ -161,7 +161,7 @@ static short end_session(proxyenv *env) {
  */
 static short finish(proxyenv *env) {
   short success = (*env)->finish(env);
-  if(!success) { (*env)->connection_is_closed = 1; return 0; }
+  if(!success) return 0;
   (*env)->send_len=0;
   return 1;
 }
@@ -176,6 +176,9 @@ static short flush(proxyenv *env) {
   if((*env)->connection_is_closed) return 0;
   success = finish(env);
   if(success) success=(*env)->handle(env);
+
+  if(!success) (*env)->connection_is_closed = 1;
+
   return success;
 }
 

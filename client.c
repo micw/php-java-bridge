@@ -945,7 +945,7 @@ static void init_channel_raw(proxyenv*env) {
 }
 /* create named pipe channel in tmpdir */
 static void init_channel(proxyenv*env) {
-  static const char sockname[] = "/php_java_bridgeXXXXXX";
+  static const char sockname[] = "/php_XXXXXX";
   char *pipe;
   size_t length;
   if(!EXT_GLOBAL(cfg)->tmpdir) { init_channel_raw(env); return; }

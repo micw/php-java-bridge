@@ -40,8 +40,10 @@ public class ChainsawLogger extends Log4jLogger implements ILogger {
         Constructor constructor = clazz.getConstructor(new Class[]{String.class, int.class});
         Object socketAppender = constructor.newInstance(new Object[]{defaultHost, new Integer(defaultPort)});
         clazz = loader.forName("org.apache.log4j.BasicConfigurator");
+        Method method = clazz.getMethod("resetConfiguration", Util.ZERO_PARAM);
+        method.invoke(clazz, Util.ZERO_ARG);
         Class appender = loader.forName("org.apache.log4j.Appender");
-        Method method = clazz.getMethod("configure", new Class[]{appender});
+        method = clazz.getMethod("configure", new Class[]{appender});
         method.invoke(clazz, new Object[]{socketAppender});
     }
     protected void init() throws Exception {

@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 3.1.6
+%define version 3.1.6.1
 %define release 1
 %define PHP_MAJOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | sed 's/\\\..*$//')
 %define PHP_MINOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | LANG=C cut -d. -f2)
@@ -361,7 +361,7 @@ fi
 %files tomcat -f filelist-tomcat
 %defattr(-,tomcat,tomcat)
 %attr(-,root,root) /etc/php.d/java-servlet.ini
-%doc %attr(-,root,root) README INSTALL.J2EE LICENSE security  
+%doc %attr(-,root,root) README INSTALL.J2EE INSTALL.ORACLE INSTALL.WEBSPHERE LICENSE security  
 
 %files devel -f filelist-devel
 %defattr(-,root,root)

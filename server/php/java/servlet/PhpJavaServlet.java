@@ -219,12 +219,13 @@ public class PhpJavaServlet extends HttpServlet {
 		res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getDefaultName());
 		if(hasDefault) res.setHeader("X_JAVABRIDGE_CONTEXT_DEFAULT", kontext);
 	    	r.handleRequests();
+	    	contextServer.recycle(channelName);
 
 		// redirect and re-open
 		res.setContentLength(sout.size());
 		resOut = res.getOutputStream();
 		sout.writeTo(resOut);
-		if(bridge.logLevel>3) bridge.logDebug("re-directing to port# "+ channelName);
+		if(bridge.logLevel>3) bridge.logDebug("redirecting to port# "+ channelName);
 	    	sin.close(); sin=null;
 		try {res.flushBuffer(); } catch (Throwable t) {Util.printStackTrace(t);}
 		contextServer.start(channelName);

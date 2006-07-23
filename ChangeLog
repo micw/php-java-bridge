@@ -1,3 +1,64 @@
+2006-07-22  Jost Boekemeier  <jostb@intern>
+
+	The new connection sharing feature introduced in 3.1.6 wasn't
+	reliable. When Apache/IIS was used as a front-end and a J2EE
+	server as a back-end, it was necessary to switch off
+	java.persistent_connections: The X_JAVABRIDGE_CONTEXT and
+	X_JAVABRIDGE_CONTEXT_DEFAULT did not carry any information about
+	the web context so that the client could the confuse contexts and
+	pass a context to an unrelated ContextServer.
+	
+	* server/php/java/bridge/http/ContextFactory
+	(addNew,addNext,ContextFactory): Create a unique ContextFactory
+	for each web context.
+	(recycle): New method.
+
+	* server/php/java/bridge/http/ContextRunner
+	(checkRunner,recycle): rewritten
+	(getChannel): New function.
+
+	* server/php/java/bridge/http/ContextServer.java
+	(start,schedule): rewritten
+	(recycle): New method
+
+	* server/php/java/bridge/JavaBridge.java
+	(setIO): Removed
+	(recycle): recycle sessionFactory
+
+	* server/php/java/bridge/Request.java
+	(setBridge): rewritten
+	(resetBridge): new procedure
+	(recycle): reset the bridge
+
+	* server/php/java/servlet/PhpJavaServlet.java
+	(handleSocketConnection): Recycle, if necessary, *before* we open
+	the comm. link
+
+	* server/php/java/bridge/JavaBridgeRunner.java
+	(parseBody): Recycle, if necessary, before we open the comm. link
+
+	* java.c (shutdown_connections): destroy default, otherwise
+	X_JAVABRIDGE_CONTEXT_DEFAULT will send garbage after the
+	connection has been aborted.
+
+	* protocol.c (finish,flush): set connection_is_closed after
+	checking the r/w channels.
+	
+	
+	* java.c (MINIT): gcc 2.x doesn't like conditionals in a macro
+	application.
+
+	* client.c
+	(create_pipe,create_pipes,init_channel,init_channel_raw): Remove
+	obsolete arg so that it can compile with ZTS on Unix.
+
+	* server/php/java/bridge/ChainsawLogger.java (configure): Remove
+	other appenders.
+
+	* server/natcJavaBridge.c (openLog): Do not discard stdin.
+
+	* VERSION, php-java-bridge.spec: Version 3.1.6.1 released
+	
 2006-07-18  Jost Boekemeier  <jostb@intern>
 
 	* client.c
