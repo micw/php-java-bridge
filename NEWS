@@ -3,6 +3,22 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 3.1.7:
+
+* The system property php.java.bridge.promiscuous=true can be used to
+connect php clients with a J2EE node running in the same intranet
+network. For example when the HTTP/PHP web server is running on
+computer W, and the tomcat cluster nodes are on computer K1, ..., Kn,
+the nodes can be started with:
+
+  JAVA_HOME=/opt/jdk1.5 \
+  JAVA_OPTS="-Dphp.java.bridge.promiscuous=true" \
+    /opt/node_n_/tomcat/bin/catalina.sh start
+
+The communication ports in the range [9267, ..., 9367[ must not be
+accessible from the internet, of course.
+
+
 Version 3.1.6:
 
 * When the PhpJavaServlet or PhpCGIServlet is used globally (see

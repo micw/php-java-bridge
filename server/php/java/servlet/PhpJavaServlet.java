@@ -256,8 +256,10 @@ public class PhpJavaServlet extends HttpServlet {
     protected void doPut (HttpServletRequest req, HttpServletResponse res)
 	throws ServletException, IOException {
     	short redirect =(short) req.getIntHeader("X_JAVABRIDGE_REDIRECT");
-    	boolean local = isLocal(req);
-    	if(!local && !allowHttpTunnel) throw new SecurityException("Non-local clients not allowed per default. Set allow_http_tunnel in your web.xml.");
+    	boolean local = Util.JAVABRIDGE_PROMISCUOUS || isLocal(req);
+    	if(!local && !allowHttpTunnel) throw new SecurityException("Non-local clients not allowed per default. " +
+    			"Either \na) set allow_http_tunnel in your web.xml or \nb) recommended: start the Java VM with -Dphp.java.bridge.promiscuous=true " +
+    			"to enable the SocketContextServer for non-local clients.");
     	String channel = getHeader("X_JAVABRIDGE_CHANNEL", req);
     	
     	try {

@@ -105,7 +105,11 @@ public class PipeContextServer implements IContextServer {
           return !"true".equals(System.getProperty(property));
         } catch (Throwable t) {return false;}
     }
-    private static final boolean pipeServer = checkTestTunnel("php.java.bridge.no_pipe_server");
+    /** Don't use named pipes if 
+     * -Dphp.java.bridge.promiscuous=true or 
+     * -Dphp.java.bridge.no_pipe_server=true
+     */
+    private static final boolean pipeServer = !Util.JAVABRIDGE_PROMISCUOUS && checkTestTunnel("php.java.bridge.no_pipe_server");
     /**
      * Check if the ContextServer is ready
      * @return true, if the server is available

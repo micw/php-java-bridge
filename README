@@ -36,7 +36,7 @@ Overview
 
   * When Apache or IIS is available, the administrator may set up the
   mod_jk adapter to forward JSP/Servlet requests to the J2EE AS. In
-  this setup the J2EE port not visible to internet clients and the
+  this setup the J2EE port is not visible to internet clients and the
   Apache/IIS document root is not used:
 
   internet
@@ -51,7 +51,7 @@ Overview
                           ----------------------<--------------------------|
                                           P-J-B PROTOCOL
 
-  * The HTTP server and the J2EE server are both connected to the
+  * Or the HTTP server and the J2EE server are both connected to the
   internet. In this setup the Apache/IIS and J2EE ports are accessible
   from the internet, they share the same document root:
 
@@ -74,6 +74,7 @@ Overview
              -------------<-------------------------|
                     P-J-B PROTOCOL
   
+
 Build and execution instructions:
 ---------------------------------
   NOTE: If you run Security Enhanced Linux, you must update the policy

@@ -56,6 +56,7 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
             shutdown(sock);
          }    
     }
+    private static final String BIND_PORT=Util.JAVABRIDGE_PROMISCUOUS?"INET:0":"INET_LOCAL:0";
     /**
      * Create a new ContextServer using the ThreadPool. 
      * @param threadPool Obtain runnables from this pool. If null, new threads will be created.
@@ -63,7 +64,7 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
     public SocketContextServer (ContextServer contextServer, ThreadPool threadPool) {
     	super(contextServer, threadPool);
         try {
-	    socket = JavaBridge.bind("INET_LOCAL:0");
+	    socket = JavaBridge.bind(BIND_PORT);
 	    try {
 	        SecurityManager sec = System.getSecurityManager();
 	        if(sec!=null) sec.checkAccept("127.0.0.1", Integer.parseInt(socket.getSocketName()));

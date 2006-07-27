@@ -163,6 +163,11 @@ public final class Util {
     static final Object[] ZERO_ARG = new Object[0];
 
     static final Class[] ZERO_PARAM = new Class[0];
+    
+    /**
+     * Set to true, if the Java VM has been started with -Dphp.java.bridge.promiscuous=true;
+     */
+    public static boolean JAVABRIDGE_PROMISCUOUS;
 
     /**
      * The default log file. Default is stderr, if started as a
@@ -190,6 +195,10 @@ public final class Util {
 
     private static void initGlobals() {
     	try {
+    	    JAVABRIDGE_PROMISCUOUS = false;
+	    JAVABRIDGE_PROMISCUOUS = System.getProperty("php.java.bridge.promiscuous", "false").toLowerCase().equals("true");	    
+	} catch (Exception e) {/*ignore*/}
+	try {
     	    IS_MONO=false;
     	    Util.CLRAssembly = Class.forName("cli.System.Reflection.Assembly");
     	    Util.loadFileMethod = Util.CLRAssembly.getMethod("LoadFile", new Class[] {String.class});
@@ -550,7 +559,7 @@ public final class Util {
     public static String getHostAddress() {
 	String addr = "127.0.0.1";
 	try {
-	    if(System.getProperty("php.java.bridge.promiscuous", "false").toLowerCase().equals("true")) 
+	    if(JAVABRIDGE_PROMISCUOUS) 
 		addr = InetAddress.getLocalHost().getHostAddress();
 	} catch (UnknownHostException e) {/*ignore*/}
 	return addr;

@@ -1,3 +1,24 @@
+2006-07-26  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/servlet/FastCGIServlet.java 
+	(doRead): php 5.1.4 splits fastcgi packets.
+
+	* server/php/java/bridge/Util.java
+	(JAVABRIDGE_PROMISCUOUS): New const
+	
+	* server/php/java/bridge/http/PipeContextServer.java
+	(pipeServer): Switch off the pipe communication if the system
+	property php.java.bridge.promiscuous=true
+
+	* server/php/java/bridge/http/SocketContextServer.java
+	(BIND_PORT): new const
+	(SocketContextServer): Bind to all available network interfaces
+	when php.java.bridge.promiscuous=true
+
+	* server/php/java/servlet/PhpJavaServlet.java
+	(doPut): Use the SocketContextServer for promiscuous. Otherwise try
+	to use the HTTP tunnel (if allowed) or fail.
+	
 2006-07-22  Jost Boekemeier  <jostb@intern>
 
 	The new connection sharing feature introduced in 3.1.6 wasn't
@@ -5,7 +26,7 @@
 	server as a back-end, it was necessary to switch off
 	java.persistent_connections: The X_JAVABRIDGE_CONTEXT and
 	X_JAVABRIDGE_CONTEXT_DEFAULT did not carry any information about
-	the web context so that the client could the confuse contexts and
+	the web context so that the client could confuse contexts and
 	pass a context to an unrelated ContextServer.
 	
 	* server/php/java/bridge/http/ContextFactory

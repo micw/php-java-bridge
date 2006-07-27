@@ -410,17 +410,20 @@ public class FastCGIServlet extends CGIServlet {
 	    }
 	}
         public int doRead(byte buf[]) throws IOException {
-	    if(buf.length!=FCGI_BUF_SIZE) throw new IOException("Invalid block size");
+            int n, i;
+	    //assert if(buf.length!=FCGI_BUF_SIZE) throw new IOException("Invalid block size");
 	    byte header[] = new byte[FCGI_HEADER_LEN];
-	    if(FCGI_HEADER_LEN!=read(header, 0, header.length)) throw new IOException ("Protocol error");
+	    for(n=0; (i=read(header, n, FCGI_HEADER_LEN-n)) > 0; ) n+=i;
+	    if(FCGI_HEADER_LEN != n) throw new IOException ("Protocol error");
 	    int type = header[1] & 0xFF;
 	    int contentLength = ((header[4] & 0xFF) << 8) | (header[5] & 0xFF);
 	    int paddingLength = header[6] & 0xFF;
 	    switch(type) {
 	    case FCGI_STDERR: 
 	    case FCGI_STDOUT: {
-		int n = read(buf, 0, contentLength);
-		if(n!=contentLength) throw new IOException("Protocol error while reading FCGI data");
+		for(n=0; (i=read(buf, n, contentLength-n)) > 0; ) n+=i;
+		if(n!=contentLength) 
+		    throw new IOException("Protocol error while reading FCGI data");
 		if(type==FCGI_STDERR) { 
 		    String s = new String(buf, 0, n, Util.ASCII);
 		    log(s); 
@@ -430,13 +433,14 @@ public class FastCGIServlet extends CGIServlet {
 		}
 		if(paddingLength>0) {
 		    byte b[] = new byte[paddingLength];
-		    n = read(b, 0, b.length);
-		    if(n!=paddingLength) throw new IOException("Protocol error while reading FCGI padding");
+		    for(n=0; (i=read(b, n, b.length-n)) > 0; ) n+=i;
+		    if(n!=paddingLength) 
+			throw new IOException("Protocol error while reading FCGI padding");
 		}
 		return contentLength;
 	    }
 	    case FCGI_END_REQUEST: {
-		int n = read(buf, 0, contentLength);
+		for(n=0; (i=read(buf, n, contentLength-n)) > 0; ) n+=i;
 		if(n!=contentLength) throw new IOException("Protocol error while reading EOF data");
 		if(paddingLength>0) {
 		    n = super.read(buf, 0, paddingLength);		
@@ -481,7 +485,10 @@ public class FastCGIServlet extends CGIServlet {
 	        doRun();
 	    } catch (ConnectionPool.ConnectionException ex) {
 	        fcgiIsAvailable = false;
-	        Util.logDebug("PHP FastCGI server failed, switching off FastCGI SAPI: " + ex);
+	        if(Util.logLevel>1) {
+	            Util.logDebug("PHP FastCGI server failed, switching off FastCGI SAPI: " + ex);
+	            Util.printStackTrace(ex);
+	        }
 	        throw new ServletException("PHP FastCGI server failed, switching off FastCGI SAPI: " +ex);
 	    } catch (IOException e) {
 	      if(Util.logLevel>4) {
