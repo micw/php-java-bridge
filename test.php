@@ -1,9 +1,9 @@
 #!/bin/env php
 <?php
 
-   /**
-    * Check the standard name, java.so or php_java.dll
-    */
+/**
+ * Check the standard name, java.so or php_java.dll
+ */
 function java_get_simple_ext_name() {
   static $ext_name=null;
   if($ext_name!=null) return $ext_name;
@@ -49,9 +49,9 @@ function java_load_extension() {
   if(!$success) $success = java_dl($current=$ext_servlet);
   if (!$success) {
     echo "Please permanently activate the extension. Loading java extension $ext now...\n";
-    echo "Error: Either the java extension is not installed \n";
-    echo "or it was compiled against an older or newer php version.\n";
-    echo "See the HTTP (IIS or Apache) server log for details.\n";
+    echo "\n<br><strong>Error: Either the java extension is not installed <br>\n";
+    echo "or it was compiled against an older or newer php version.<br>\n";
+    echo "See the HTTP (IIS or Apache) server log for details.</strong><br>\n";
     exit(2);
   }
   return $current;

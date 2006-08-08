@@ -2,6 +2,8 @@
 
 package php.java.bridge.http;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -84,6 +86,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     private static synchronized String addNext(String webContext, ContextFactory thiz) {
         String id;
         counter++;
+        try {webContext=URLEncoder.encode(webContext, Util.DEFAULT_ENCODING);} catch (UnsupportedEncodingException e) {Util.printStackTrace(e);}
         contexts.put(id=Long.toHexString(counter)+"@"+webContext, thiz);
         return id;
     }

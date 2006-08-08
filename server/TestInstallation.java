@@ -32,7 +32,7 @@ public class TestInstallation {
 	    out.println("@echo off");
 	    out.println("");
 	    out.println("echo Now check the RESULT.html.");
-	    out.println("echo Read the INSTALL.WINDOWS document.");
+	    out.println("echo Read the INSTALL.J2EE document.");
 	    out.println("pause");
 	    out.close();
 	    out = new PrintWriter(new FileOutputStream(new File(base, "php.ini").getAbsoluteFile()));
@@ -101,7 +101,7 @@ public class TestInstallation {
   	    in = loader.getResourceAsStream("WEB-INF/cgi/java-x86-sunos.so");
   	    extractFile(in, new File(ext, "java.so").getAbsoluteFile());
   	    in.close();
-        } else { System.out.println("Unknown OS: " + os); System.exit(1); }
+        } else { System.err.println("Unknown OS: " + os); System.exit(1); }
 	InputStream in = loader.getResourceAsStream("WEB-INF/lib/JavaBridge.jar");
 	extractFile(in, new File(ext, "JavaBridge.jar").getAbsoluteFile());
 	in.close();

@@ -11,11 +11,7 @@
 # endif
 #endif
 
-/* longjump */
-#include <setjmp.h>
-
 /* socket */
-#include <sys/types.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -73,21 +69,7 @@
 
 #include "jni.h"
 
-#define ID(peer, name) \
-if(logLevel>=LOG_DEBUG) logDebug(env, "send: "/**/#name); \
-id(peer, name);
-
-#define ASSERTM(expr) \
-if(!expr) { \
-  logMemoryError(env, __FILE__, __LINE__); \
-  exit(9); \
-}
-
-#ifndef EXTENSION_DIR
-#error EXTENSION_DIR must point to the PHP extension directory
-#endif
-
-static jint logLevel=4;
+static jint logLevel=3;
 static jclass bridge=NULL;
 
 static char*sockname=NULL;
@@ -100,22 +82,6 @@ static void doLog (JNIEnv *jenv, char *msg, jmethodID logMessageID) {
   (*jenv)->CallStaticVoidMethod(jenv, bridge, logMessageID, str);
   (*jenv)->DeleteLocalRef(jenv, str);
 }
-static void logDebug(JNIEnv *jenv, char *msg) {
-  static jmethodID logMessageID=NULL;
-  assert(bridge);
-  if(logLevel<=3 || !bridge) return;
-  if(!logMessageID)
-	logMessageID = (*jenv)->GetStaticMethodID(jenv, bridge, "logDebug", "(Ljava/lang/String;)V");
-  doLog(jenv, msg, logMessageID);
-}
-static void logError(JNIEnv *jenv, char *msg) {
-  static jmethodID logMessageID=NULL;
-  assert(bridge);
-  if(logLevel<=1 || !bridge) return;
-  if(!logMessageID)
-	logMessageID = (*jenv)->GetStaticMethodID(jenv, bridge, "logError", "(Ljava/lang/String;)V");
-  doLog(jenv, msg, logMessageID);
-}
 static void logFatal(JNIEnv *jenv, char *msg) {
   static jmethodID logMessageID=NULL;
   assert(bridge);
@@ -124,33 +90,10 @@ static void logFatal(JNIEnv *jenv, char *msg) {
 	logMessageID = (*jenv)->GetStaticMethodID(jenv, bridge, "logFatal", "(Ljava/lang/String;)V");
   doLog(jenv, msg, logMessageID);
 }
-static void logSysError(JNIEnv *jenv, char *msg) {
-  char s[512];
-  sprintf(s, "system error: %s: %s", msg, strerror(errno));
-  logError(jenv, s);
-}
 static void logSysFatal(JNIEnv *jenv, char *msg) {
   char s[512];
   sprintf(s, "system error: %s: %s", msg, strerror(errno));
   logFatal(jenv, s);
-}
-static void logMemoryError(JNIEnv *jenv, char *file, int pos) {
-  static char s[512];
-  sprintf(s, "system error: out of memory error in: %s, line: %d", file, pos);
-  logFatal(jenv, s);
-  exit(9);
-}
-
-static void logRcv(JNIEnv*env, char c) {
-  char*s;
-  if(logLevel<=3) return;
-
-  s=malloc(20);
-  assert(s);
-  if(!s) return;
-  sprintf(s, "recv: %i", (unsigned int)c);
-  logDebug(env, s);
-  free(s);
 }
 
 static void atexit_bridge() {
@@ -185,8 +128,8 @@ static void initGlobals(JNIEnv *env) {
    kernel. 
  */
 static int prep_cred(int sock) {
-  static const int true = 1;
-  int ret = setsockopt(sock, SOL_SOCKET, SO_PASSCRED, (void*)&true, sizeof true);
+  static const int is_true = 1;
+  int ret = setsockopt(sock, SOL_SOCKET, SO_PASSCRED, (void*)&is_true, sizeof is_true);
   return ret;
 }
 

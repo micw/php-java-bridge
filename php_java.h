@@ -95,7 +95,6 @@ extern int EXT_GLOBAL(ini_updated), EXT_GLOBAL (ini_user),
 #define U_HOSTS (1<<8)
 #define U_SERVLET (1<<9)
 #define U_WRAPPER (1<<10)
-#define U_EXT_JAVA_COMPATIBILITY  (1<<11)
 #define U_PERSISTENT_CONNECTIONS  (1<<12)
 #define U_POLICY (1<<13)
 
@@ -163,8 +162,6 @@ struct cfg {
   short is_cgi_servlet, is_fcgi_servlet; /* 1: cgi env available */
   /** 1: local backend; 0: backend from the host list */
   short socketname_set;
-  /** 0: Compatibility with ext/java is off (default), 1: on  */
-  short extJavaCompatibility;
   short persistent_connections;
 
   /* the temporary directory for the named pipes */

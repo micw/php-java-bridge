@@ -29,6 +29,15 @@ Revert it!
 #define NDEBUG
 #endif
 
+/** compatibility with php 6 */
+#ifndef ZSTR
+typedef char *zstr;
+#define ZSTR(x) (x)
+#define ZSTR_S ZSTR
+#else
+#define ZSTR_S(x) ((x).s)
+#endif
+
 #include <assert.h>
 #include "init_cfg.h"
 

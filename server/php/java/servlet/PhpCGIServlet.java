@@ -106,14 +106,21 @@ public class PhpCGIServlet extends FastCGIServlet {
              this.realPath = realPath;
         }
 	protected String argsToString(String php, String[] args) {
+	    StringBuffer buf;
 	    if(USE_SH_WRAPPER) {
-		StringBuffer buf = new StringBuffer("/bin/sh ");
+		buf = new StringBuffer("/bin/sh ");
 		buf.append(realPath);
 		buf.append("/php-fcgi.sh ");
 		buf.append(super.argsToString(php, args));
-		return buf.toString();
-	    } 
-	    return super.argsToString(php, args);
+	    } else {
+		buf = new StringBuffer(realPath);
+		buf.append(File.separatorChar);
+		buf.append("launcher.exe -a \"");
+		buf.append(php);
+		buf.append("\" -b ");
+		buf.append(fcgi_channel);
+	    }
+	    return buf.toString();
 	}
 	public void start() throws NullPointerException, IOException {
 	    super.start();
@@ -262,6 +269,7 @@ public class PhpCGIServlet extends FastCGIServlet {
       	    long T0 = System.currentTimeMillis();
       	    int count = 15;
       	    InetAddress addr = InetAddress.getByName("127.0.0.1");
+      	    if(Util.logLevel>3) Util.logDebug("Waiting for PHP FastCGI daemon");
       	    while(count-->0) {
       		try {
       		    Socket s = new Socket(addr, fcgi_channel);
@@ -271,6 +279,8 @@ public class PhpCGIServlet extends FastCGIServlet {
       		if(System.currentTimeMillis()-1600>T0) break;
       		Thread.sleep(100);
       	    }
+      	    if(count==-1) Util.logError("Timeout waiting for PHP FastCGI daemon");
+      	    if(Util.logLevel>3) Util.logDebug("done waiting for PHP FastCGI daemon");
 	}
 	private void startFCGI(String contextPath) throws InterruptedException, IOException {
 	    // backward-compatibility: JavaBridge context always uses 9667

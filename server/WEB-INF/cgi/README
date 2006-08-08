@@ -1,16 +1,69 @@
-If this directory does NOT contain a php CGI executable called
-php-cgi-<architecture>-<os>[.exe|.sh], the following system default
-FastCGI or CGI binary will used: /usr/bin/php-cgi or c:/php/php-cgi.exe.
-
-If this directory DOES contain a php CGI executable, the bridge will
-call it using the CGI interface.
+If this directory contains a PHP FastCGI executable called
+php-cgi-<architecture>-<os>[.exe|.sh], the PHP/Java Bridge library
+tries to call it via a /bin/sh wrapper (see php-fcgi.sh) or via a
+"launcher.exe" when the server or the web context starts:
 
 
-Copy an executable PHP CGI binary into this directory. Or copy a PHP
-CGI binary into this directory and create a wrapper
-(recommended). Please see the php-cgi-x86-linux.sh and
-php-cgi-i386-linux.sh for a template.
+   internet 
+  clients 
+        \                    
+         \ jsp/servlet/php req.                     .
+           \                                        .
+            ---- :8080 -- J2EE AS                   .
+           /                 |                      .
+          |                  |                      .
+          |                  ---- servlet         /------ :9667
+          |                  ---- FastCGIServlet /  .   PHP FastCGI Server
+          |                  ---- jsp               .        |
+          |                  ->-- PhpJavaServlet    .        \--- php
+          |                  ---- ...            \ ------->--\--- php -->|
+          |                                         .  P-J-B      ...    |
+          |                                         .  PROTOCOL          |
+          ------------------------------<--------------------------------|
+                                   P-J-B PROTOCOL   .
 
-Note that FastCGI is currently only available on Unix/Linux; the
-pre-compiled Windows php-cgi.exe doesn't support the necessary -b
-option.
+
+
+
+UNIX: If /bin/sh is available and the php-cgi supports the -b flag,
+the library executes the following command during startup:
+
+X_JAVABRIDGE_OVERRIDE_HOSTS="/" \
+PHP_FCGI_CHILDREN="20" \
+PHP_FCGI_MAX_REQUESTS="5000" \
+php-fcgi.sh php-cgi-arch-os -c php-cgi-arch-os.ini -b 127.0.0.1:9667
+
+
+WINDOWS: If /bin/sh is not available or if the php-cgi.exe does not
+support the -b flag, the library executes the following command during
+startup:
+
+X_JAVABRIDGE_OVERRIDE_HOSTS="/"
+PHP_FCGI_CHILDREN="20" 
+PHP_FCGI_MAX_REQUESTS="5000"
+launcher.exe -a php-cgi -b 9667
+
+
+----------------------------------------------------------------------
+Installation:
+
+On Unix compile a FastCGI PHP binary and copy it into this directory
+and rename it to php-cgi-arch-os. Create a /bin/sh wrapper called
+php-cgi-arch-os.sh and create a PHP .ini file, see the
+php-cgi-i386-linux.sh and php-cgi-i386-linux.ini for a template.
+
+On Windows copy the php-cgi.exe and the php5ts.dll into this
+directory. Copy the wrapper "launcher.exe"[1] and the libraries it
+needs (e.g. msvcr70.dll) into this directory and create a PHP .ini
+file called php-cgi.ini.
+
+Start the web context, browse to http://localhost/webContext/test.php
+and check if the application server has started 20 php-cgi-arch-os
+executables.
+
+If the FastCGI SAPI fails, the bridge writes a message to the log, the
+FastCGIServlet is switched off and the PhpCGIServlet takes over.
+
+
+[1] See PHPIntKitForWindows.zip available from
+http://www-128.ibm.com/alphaworks

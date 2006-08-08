@@ -1,13 +1,19 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
+#include "php_java.h"
+
 /* execve, mkfifo */
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
 /* strings */
+#ifdef HAVE_STRING_H
 #include <string.h>
+#endif
+#ifdef HAVE_STRINGS_H
 #include <strings.h>
+#endif
 #include <ctype.h>
 
 /* setenv */
@@ -21,7 +27,6 @@
 #include <errno.h>
 
 /* php */
-#include "php_java.h"
 #ifdef ZEND_ENGINE_2
 #include "zend_exceptions.h"
 #else
@@ -666,7 +671,7 @@ unsigned char EXT_GLOBAL (get_mode) () {
   if (is_level)
 	level = EXT_GLOBAL(cfg)->logLevel_val>7?7:EXT_GLOBAL(cfg)->logLevel_val;
   
-  return (is_level<<7)|64|(level<<2)|compat|EXT_GLOBAL(cfg)->extJavaCompatibility;
+  return (is_level<<7)|64|(level<<2)|compat;
 }
 
 /**
@@ -875,7 +880,7 @@ static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {
   jenv = create_connection(servlet_context_string TSRMLS_CC);
   if(!jenv) {
 	if (bail) 
-	  EXT_GLOBAL(sys_error)("Could not connect to server %s(%s). Have you started the "/**/EXT_NAME()/**/" back-end (either a servlet engine, an application server, JavaBridge.jar or MonoBridge.exe) and set the "/**/EXT_NAME()/**/".socketname or "/**/EXT_NAME()/**/".hosts option?", 52);
+	  EXT_GLOBAL(sys_error)("Could not connect to server. Have you started the "/**/EXT_NAME()/**/" back-end (either a servlet engine, an application server, JavaBridge.jar or MonoBridge.exe) and set the "/**/EXT_NAME()/**/".socketname or "/**/EXT_NAME()/**/".hosts option?", 52);
 	EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);
 	return 0;
   }

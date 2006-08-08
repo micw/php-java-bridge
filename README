@@ -2,7 +2,7 @@ What is the PHP/Java Bridge?
 ----------------------------
 
   The PHP/Java Bridge is a network protocol which can be used to
-  connect PHP with a java or ECMA 335 VM.
+  connect PHP with a Java or ECMA 335 VM.
 
 
 Overview
@@ -84,7 +84,7 @@ Build and execution instructions:
   In the directory php-java-bridge-p.x.y type:
 
           java -version        # 1.4.2 or above (JDK or JRE >= 1.6 recommended)
-          gcc --version        # 3.2.3 or above (4.0.x recommended)
+          gcc --version        # 3.2.3 or above (4.1.x recommended)
           apachectl -version   # Apache 1.3 or above (2.x recommended)
           php-config --version # PHP 4.3.4 or above (5.x or 6.x recommended)
           make null --version  # GNU make
@@ -118,7 +118,7 @@ Build and execution instructions:
   The bridge consists of two parts, the "front-end", usually Apache,
   PHP and our PHP java extension, and a "back-end". The following
   describes how to start the back-end (if necessary) and how to configure
-  the front-end so that it connects to the back-end.
+  PHP so that it connects to the back-end.
 
   To permanently activate the extension for all users, please add the
   following lines to the php.ini. Or add a file java.ini to the
@@ -128,8 +128,8 @@ Build and execution instructions:
   extension = java.so ;; php_java.dll on windows
 
 
-  To direct the extension to a specific back-end, please add the
-  following lines to the php.ini. Or add a file java-<backend>.ini,
+  To direct the extension to a specific back-end, add the following 
+  options to the global php.ini file. Or add a file java-<backend>.ini,
   e.g. "java-tomcat.ini" or "java-standalone.ini" to the directory that
   contains the PHP module descriptions, usually /etc/php.d/, with the
   following content. Options:
@@ -151,19 +151,13 @@ Build and execution instructions:
  
  
   2) java.socketname set: local system back-end started by the
-  system "php-java-bridge" service script. Example:
- 
-  [java]
-  java.java_home  = /opt/jdk1.5
-  java.java       = /opt/jdk1.5/bin/java
-  java.log_file   = /var/log/php-java-bridge.log
-  java.log_level  = 3
-  java.socketname = /var/run/.php-java-bridge_socket
+  system "php-java-bridge" service script. Deprecated: You need a
+  service script for your operating system.
  
  
   3) java.hosts set: external back-end(s) on different server
-     machines. The back-ends can be started on these servers with e.g.:
-     java -jar JavaBridge.jar. Example:
+  machines. The back-ends can be started on these servers with e.g.:
+  java -jar JavaBridge.jar. Example:
  
   [java]
   java.hosts     = 192.168.5.203:9267 192.168.5.204:9267
@@ -199,8 +193,25 @@ Build and execution instructions:
   command (e.g.): X_JAVABRIDGE_OVERRIDE_HOSTS="/" PHP_FCGI_CHILDREN="20"
   PHP_FCGI_MAX_REQUESTS="5000" php-cgi -c java.ini -b 127.0.0.1:9667. 
   php-cgi starts automatically if no PHP server is listening on port 9667.
+  Usually the bridge uses the official HTTP port to connect PHP with the 
+  server. However, when no official HTTP port exists or if the init-param
+  "override_hosts" is switched off in the servlet's WEB-INF/web.xml, the
+  the bridge can use a dedicated local port# to connect PHP with Java:
+  
+  Example tomcat conf/server.xml setting which opens the local port 9157:
+
+  <Service name="Catalina">
+     [...]
+     <!-- Local communication port used by the PHP/Java Bridge -->
+     <Connector port="9157" address="127.0.0.1"  />
+     [...]
+  </Service>
  
+  The corresponding php.ini setting uses this port:
+
   [java]
+  java.hosts = 127.0.0.1:9157
+  java.servlet = On
   java.log_level = 3
 
 
@@ -208,7 +219,7 @@ Build and execution instructions:
   back-end. Example for option:
 
   #1: Not needed, back-end starts automatically
-  #2: service php-java-bridge restart (see [note: SERVICE] below)
+  #2: <depends on the operating system>
   #3: java -jar JavaBridge.jar INET:9267 3 php-java-bridge.log
   #4: service tomcat5 restart
   #5: service tomcat5 restart
@@ -217,7 +228,6 @@ Build and execution instructions:
   The Linux RPM binaries use the following options:
 
   php-java-bridge*.rpm            : Option #1
-  php-java-bridge-standalone*.rpm : Option #2
   php-java-bridge-tomcat*.rpm     : Option #5
   php-java-bridge-devel*.rpm      : Option #6
    
@@ -250,8 +260,9 @@ Build and execution instructions:
   ------------------------------------------
 
   When the java.socketname and java.hosts options are not set, the web
-  server will start or re-start the bridge automatically as a sub
-  component when the HTTP service is started or re-started.
+  server will start or re-start the bridge (and a VM, if necessary)
+  automatically as a sub component when the HTTP service is started or
+  re-started.
 
   However, when running the bridge in a production environment, it is
   recommended to start Java from a separate service script. Tomcat5 for
@@ -339,9 +350,30 @@ Build and execution instructions:
 
   A more reasonable approach would be to remove mod_jk, to create a
   shared web directory for tomcat and apache and to forward to the
-  "back-end", when necessary. Most modern frameworks, Java Server Faces
-  for example, require that you manually forward to the "back-end",
-  anyway. The code would look like:
+  "back-end", when necessary:
+
+              :80---> Apache or IIS
+            /                |
+           / php req.        ---- php
+          /                  ---- php  -->----------|
+              |                /  ...               |
+  internet    | forward       |                     |
+  clients     v               -------<--------|     |
+          \                    P-J-B PROTOCOL |     |
+           \jsp/servlet req.                  |     |
+            \                                 |     |
+             |--> :8080--> J2EE AS            |     |
+              /                |              |     |
+             /                 \--- servlet   |     |
+             |                 \--- PhpJavaServlet  |
+             |                 \--- jsp             |
+             |                      ...             |
+             -------------<-------------------------|
+                    P-J-B PROTOCOL
+  
+  Most modern frameworks, Java Server Faces for example, require that
+  you manually forward to the "back-end", anyway. The code would look
+  like:
 
   <?php
    ...
@@ -381,13 +413,6 @@ Build and execution instructions:
   Read the following instructions only if you don't want to use
   Apache or IIS.
 
-  It is possible to run PHP from java. Unlike the JSR223 sample
-  implementation, which uses the JNI interface to load/call the native
-  PHP5 shared library, we use the Fast CGI interface to call the PHP
-  binary and use a local channel to connect the two components. This is
-  more reliable; in case a PHP instance crashes, it will not take down
-  the whole servlet engine or application server.
-  
   Please follow the AS or Tomcat installation instructions above, then
   visit http://localhost:8080/JavaBridge and run the supplied JSP and PHP
   examples.
@@ -395,7 +420,7 @@ Build and execution instructions:
   If the parameter name "use_fast_cgi" is set to "Autostart" in the
   web.xml and a fcgi server does not listen on port 9667 and a fcgi
   binary can be found as either /usr/bin/php-cgi or /usr/bin/php or
-  c:/php/php-cgi.exe, then the back-end automatically starts the fast
+  c:/php/php-cgi.exe, then the back-end automatically starts the Fast-
   CGI server on this computer, with the command:
 
     cd $HOME
@@ -404,7 +429,19 @@ Build and execution instructions:
     export PHP_FCGI_MAX_REQUESTS="5000"
     /usr/bin/php-cgi -b 127.0.0.1:9667
 
-  It starts when the VM starts and stops when the VM terminates.
+  On Windows the php-cgi.exe doesn't support the -b flag. Therefore an
+  external "launcher.exe" is required; IBM Websphere users can find such
+  a binary in the "PHP Integration Kit for Windows":
+  PHPIntKitForWindows.zip, available from alphaworks. The command is:
+
+    set X_JAVABRIDGE_OVERRIDE_HOSTS "/"
+    set PHP_FCGI_CHILDREN "20"
+    set PHP_FCGI_MAX_REQUESTS "5000"
+    launcher.exe -a "c:\php\php-cgi" -b 9667
+
+
+  The PHP FastCGI server starts when the VM or the web context starts
+  and stops when the VM or web context terminates.
 
 
   If that failed, the bridge searches for a CGI binary called:
@@ -505,8 +542,8 @@ Build and execution instructions:
   Example: make CFLAGS="-O0 -g3"
 
 ------------------------------------
-  Log levels
-  ----------
+  Log level
+  ---------
 
   You can set the java.log_level to 7 values:
 
@@ -585,14 +622,14 @@ Build and execution instructions:
         semodule -i php-java-bridge.pp 
 
   3. The rules apply to the javabridge_t domain. Another rule
-     specifies that when an executable is called from the initrc_t domain
+     specifies that when an executable is called from the httpd_t domain
      and the executable is tagged as javabridge_exec_t, a domain transition
      to javabridge_t occurs. It is therefore important that RunJavaBridge
      is tagged with javabridge_exec_t and that it is called from the
-     initrc_t domain:
+     httpd_t domain. Furthermore the java executable must be a binary:
 
         chcon -t javabridge_exec_t /usr/lib/php/modules/RunJavaBridge
-        chcon -t initrc_exec_t /etc/init.d/php-java-bridge
+        chcon -t bin_t /usr/lib/php/modules/java
 
   4. The policy module can be removed with the command:
   
@@ -607,19 +644,6 @@ Build and execution instructions:
   end of the "php-java-bridge.te" file and load the updated policy into
   the kernel. Don't forget to switch back, for example with "setenforce
   Enforcing".
-
-  [note: SERVICE] A domain transition occurs only if the RunJavaBridge 
-  executable is called from the initrc_t domain. If you want to start
-  the /usr/sbin/php-java-bridge script manually, use runcon or newrole:
-
-        su -                                      # become super user
-        newrole -t initrc_t                       # change domain
-        kill `cat /var/run/php-java-bridge.pid`   # terminate the old process
-        /usr/sbin/php-java-bridge                 # start a new back-end
-
-  or simply use the service script:
-
-        service php-java-bridge restart
 
   Please note that SEL security is orthogonal to the standard Unix 
   security. For example you could also put the java process into 
@@ -658,10 +682,12 @@ Build and execution instructions:
   ----------------------------------
 
   Java libraries should either be translated into PEAR classes (see
-  above) or be installed into one of the following directories: :
+  above) or be installed in one of the following directories:
   /usr/share/java/ext or extension_dir/lib or, for the J2EE/servlet
   back-end, WEB-INF/lib. Libraries in these directories are
-  automatically loaded by a static loader whenever the JVM starts.
+  automatically loaded by a static loader whenever the JVM starts. --
+  The location of the extension_dir depends on the PHP .ini
+  extension_dir setting, it is usually /usr/lib/php/modules or c:\php.
 
   Impure java libraries (=libraries which use the java native interface)
   must be stored in /usr/share/java/ext or in the PHP extension_dir/lib
@@ -670,7 +696,7 @@ Build and execution instructions:
   is usually the PHP extension_dir directory.
 
   Java libraries can also be loaded or re-loaded on demand by a
-  dynamic loader.. They should have the following file name:
+  dynamic loader. They should have the following file name:
   <name>-<version>.jar and be stored in a sub directory of the PHP
   extension_dir/lib/ directory or in a sub directory of
   /usr/share/java directory. For example:
@@ -718,10 +744,15 @@ Build and execution instructions:
 
   Disadvantages of the static loader:
 
+  * All java libraries are loaded when the Java- or Mono VM
+    starts. For the PHP CLI component, which usually starts a new VM for
+    each PHP invocation (unless java.hosts or java.socketname is set),
+    this may cause a noticeable delay (a few 100 ms).
+
   * The static loader can only load libraries which are stored in the
     /usr/share/java/ext or in the PHP extension_dir/lib directory. Hot
     deployment is not possible because all classes are loaded when the
-    JVM starts.
+    VM starts.
 
   It is recommended to store Java libraries which are API stable or
   use the java native interface into the PHP extension_dir/lib directory
@@ -749,13 +780,28 @@ Build and execution instructions:
   needs. If you have written software where certain methods require an
   optional library, please document this in the method header.
 
+  If receive this error when using a Java library, this may mean the
+  following:
+
+    * an old or different JDK than expected by the library is used,
+      for example GNU Java instead of SUN or IBM Java.
+
+    * java_require("foo.jar"); java_require("bar.jar"); was used instead of
+      java_require("foo.jar;bar.jar"); to load two interconnected libraries.
+
+    * the library is simply broken or it expects certain parameters in
+      its environment (applet parameter or system property or property file).
+
+    * the library may only work within a J2EE environment from a
+      certain vendor, for example the WebSphere Application server or
+      the Sun Java Application server.
+
 ------------------------------------
-  PHP 5 issues
+  PHP issues
   ------------
 
-  All PHP 5 versions < 5.0.4 crash when the dl() function is
-  used. They first unload the module and then try to invoke its
-  shutdown method.
+  All PHP versions between 4.4.1 and 5.0.3 crash when the dl()
+  function is used.
 
   If you use one of these versions, please add an entry to the
   php.ini, see install instructions above.

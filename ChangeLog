@@ -1,3 +1,77 @@
+2006-08-06  Jost Boekemeier  <jostb@intern>
+
+	* sio.c, sio.h: New files.
+	
+	* protocol.c (close_connection, end_async, begin_async): Close the
+	async buffer upon rshutdown.
+	
+	* config.m4, server/configure.in: Added sio.c and sio.h
+	
+	* server/php/java/bridge/http/ContextFactory.java
+	(addNext): URLEncode the web context, otherwise the bridge will
+	fail on US Windows systems where the app path contains a space:
+	"c:\program files\tomcat\...".
+
+	* config.m4: Set the mono binary to "mono", --with-mono was given.
+
+	* install.sh.in, php-java-bridge.spec,
+	security/module/php-java-bridge.te,
+	security/module/php-java-bridge-tomcat.te: Separate SEL context
+	for tomcat.
+
+	* examples/php+jsp/excel.php: Use standard mime type.
+
+	* server/WEB-INF/cgi/php-fcgi.sh: Avoid warning.
+	
+	* VERSION, php-java-bridge.spec: Version 3.1.7 released
+
+2006-08-05  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/JavaBridge.java (setException): Only
+	print a stack trace if logLevel >= DEBUG.
+	
+	* api.c (get_closure): php 6.0.0
+
+	* java_bridge.c (writeArgument): php 6.0.0
+
+	* java.c (iterator_current_key): php 6.0.0
+
+	* binc.c (exec_vm): Close all file descriptors to avoid SEL
+	messages.
+
+	* client.c (get_mode): Removed ext_java_compatibility option
+
+	* config.m4: Always compile bridge to native code.
+
+	* init_cfg.c.in (update_compatibility): Removed ext_java_compatibility
+
+	* java.c (OnIniExtJavaCompatibility): Removed ext_java_compatibility
+
+	* install.sh.in, php-java-bridge.spec: Removed standalone
+	back-end.
+	
+	* php-java-bridge.spec: Always create native code
+
+	* security/module/php-java-bridge.fc.in,
+	security/module/php-java-bridge.te,
+	security/php-java-bridge.fc.in, security/php-java-bridge.te: Added
+	rules for the native component.
+
+	* server/configure.in, server/Makefile.am: Always compile to
+	native code.
+
+	* server/php/java/bridge/Snarf.java (writeHeader): Constructor
+	must return the wrapper class or Foo()->createFoo($val) fails
+	because $val is not a java value.
+
+	* unsupported/itext.jar: New library
+
+	* examples/office/itext_pdf.php: New example
+
+	* examples/search/lucene_search.php: Rewritten
+	
+	* server/itext4php.spec, server/lucene4php.spec: New files
+	
 2006-07-26  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/servlet/FastCGIServlet.java 

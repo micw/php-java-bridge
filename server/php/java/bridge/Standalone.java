@@ -69,7 +69,7 @@ public class Standalone {
 		StringBuffer buf=new StringBuffer();
 		for(int i=2; i<s.length; i++) {
 		    buf.append(s[i]);
-		    if(i+1<s.length) buf.append(File.separatorChar);
+		    if(i+1<s.length) buf.append(File.pathSeparatorChar);
 		}
             
 		int length = s.length >= 3 ? 2 :s.length-1;

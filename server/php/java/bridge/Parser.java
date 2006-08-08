@@ -37,7 +37,7 @@ class Parser {
 
 		// OPTIONS
 	    default:
-	    	if((ch&64)!=0) bridge.options.options=(byte) (ch&3); 
+	    	if((ch&64)!=0) bridge.options.updateOptions((byte) (ch&3)); 
 	    	if((ch&128)!=0) {
 	    	    if(bridge.logLevel>3 && (bridge.logLevel!=((ch>>2)&7)))
 		        bridge.logDebug("Client changed its request log level to: " + ((ch>>2)&7));

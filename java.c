@@ -8,6 +8,8 @@
  *
  */
 
+#include "php_java.h"
+
 /* wait */
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -17,7 +19,6 @@
 #include <assert.h>
 #include <errno.h>
 
-#include "php_java.h"
 #include "php_globals.h"
 #include "ext/standard/info.h"
 
@@ -698,13 +699,6 @@ static PHP_INI_MH(OnIniHosts)
   }
   return SUCCESS;
 }
-static PHP_INI_MH(OnIniExtJavaCompatibility)
-{
-  if (new_value) {
-	EXT_GLOBAL(update_compatibility)(new_value);
-  }
-  return SUCCESS;
-}
 static PHP_INI_MH(OnIniPersistentConnections)
 {
   if(new_value) {
@@ -801,7 +795,6 @@ PHP_INI_BEGIN()
 
   PHP_INI_ENTRY(EXT_NAME()/**/".log_level",   NULL, PHP_INI_SYSTEM, OnIniLogLevel)
   PHP_INI_ENTRY(EXT_NAME()/**/".log_file",   NULL, PHP_INI_SYSTEM, OnIniLogFile)
-  PHP_INI_ENTRY(EXT_NAME()/**/".ext_java_compatibility",   NULL, PHP_INI_SYSTEM, OnIniExtJavaCompatibility)
   PHP_INI_ENTRY(EXT_NAME()/**/".persistent_connections",   NULL, PHP_INI_SYSTEM, OnIniPersistentConnections)
   PHP_INI_END()
 
@@ -1255,6 +1248,16 @@ static int cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_
 	case IS_STRING:
 	  (*jenv)->writeInvokeBegin(jenv, 0, "castToString", 0, 'I', writeobj);
 	  (*jenv)->writeObject(jenv, obj);
+#ifdef ZEND_ENGINE_2
+	  if (instanceof_function(Z_OBJCE_P(readobj), EXT_GLOBAL(exception_class_entry) TSRMLS_CC)) {
+		zval *trace = 0;
+		zval fname;
+		ZVAL_STRINGL(&fname, "gettraceasstring", sizeof("gettraceasstring")-1, 0);
+		call_user_function_ex(0, &readobj, &fname, &trace, 0, 0, 1, 0 TSRMLS_CC);
+		if(trace) 
+		  (*jenv)->writeString(jenv, Z_STRVAL_P(trace), Z_STRLEN_P(trace));
+	  }
+#endif
 	  obj = (*jenv)->writeInvokeEnd(jenv);
 	  break;
 	case IS_BOOL:
@@ -1347,7 +1350,7 @@ static void iterator_current_data(zend_object_iterator *iter, zval ***data TSRML
   *data = &iterator->current_object;
 }
 
-static int iterator_current_key(zend_object_iterator *iter, char **str_key, uint *str_key_len, ulong *int_key TSRMLS_DC)
+static int iterator_current_key(zend_object_iterator *iter, zstr *str_key, uint *str_key_len, ulong *int_key TSRMLS_DC)
 {
   vm_iterator *iterator = (vm_iterator *)iter;
   zval *presult;
@@ -1364,9 +1367,9 @@ static int iterator_current_key(zend_object_iterator *iter, char **str_key, uint
 
   if(iterator->type == HASH_KEY_IS_STRING) {
 	size_t strlen = Z_STRLEN_P(presult);
-	*str_key = emalloc(strlen+1);
-	memcpy(*str_key, Z_STRVAL_P(presult), strlen);
-	(*str_key)[strlen]=0;
+	ZSTR_S(*str_key) = emalloc(strlen+1);
+	memcpy(ZSTR_S(*str_key), Z_STRVAL_P(presult), strlen);
+	(ZSTR_S(*str_key))[strlen]=0;
 
 	// len+1 is due to a bug in php. It assignes the len with
 	// key->value.str.len = str_key_len-1; In the evaluator the
@@ -1484,15 +1487,9 @@ static zend_object_iterator *get_iterator(zend_class_entry *ce, zval *object TSR
 static void make_lambda(zend_internal_function *f,
 						void (*handler)(INTERNAL_FUNCTION_PARAMETERS))
 {
+  memset(f, 0, sizeof*f);
   f->type = ZEND_INTERNAL_FUNCTION;
   f->handler = handler;
-  f->function_name = NULL;
-  f->scope = NULL;
-  f->fn_flags = 0;
-  f->prototype = NULL;
-  f->num_args = 0;
-  f->arg_info = NULL;
-  f->pass_rest_by_reference = 0;
 }
 
 #else
@@ -1799,11 +1796,6 @@ PHP_MINFO_FUNCTION(EXT)
 #if EXTENSION == JAVA
   if(EXT_GLOBAL(option_set_by_user) (U_SERVLET, EXT_GLOBAL(ini_user)))  
 	php_info_print_table_row(2, EXT_NAME()/**/".servlet", JG(servlet)?JG(servlet):off);
-#endif
-#ifndef ZEND_ENGINE_2
-  php_info_print_table_row(2, EXT_NAME()/**/".ext_java_compatibility", on);
-#else
-  php_info_print_table_row(2, EXT_NAME()/**/".ext_java_compatibility", EXT_GLOBAL(cfg)->extJavaCompatibility?on:off);
 #endif
   php_info_print_table_row(2, EXT_NAME()/**/".persistent_connections", EXT_GLOBAL(cfg)->persistent_connections?on:off);
   if(!server || is_local) {

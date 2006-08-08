@@ -442,6 +442,8 @@ public class JavaBridge implements Runnable {
     }
     
     void setException(Response response, Throwable e, String method, Object obj, String name, Object args[], Class params[]) {
+	if(logLevel>3) printStackTrace(e);
+
 	if (e instanceof InvocationTargetException) {
 	    Throwable t = ((InvocationTargetException)e).getTargetException();
 	    if (t!=null) e=t;
@@ -466,7 +468,9 @@ public class JavaBridge implements Runnable {
 	buf.append(".");
 	buf.append(" Cause: ");
 	buf.append(String.valueOf(e));
-
+	buf.append(" Responsible VM: ");
+	buf.append(Util.VM_NAME);
+	
 	lastException = new Exception(buf.toString(), e);
 	StackTraceElement[] trace = e.getStackTrace();
 	if(trace!=null) lastException.setStackTrace(trace);
@@ -474,7 +478,9 @@ public class JavaBridge implements Runnable {
     }
 
     private Exception getUnresolvedExternalReferenceException(Throwable e, String what) {
-        return 	new ClassNotFoundException("Unresolved external reference: "+ e+ ". -- Unable to "+what+" because it or one of its parameters refer to the mentioned external class which is not available in the current \"java_require()\" path. Please check the path and the SEL and File permissions and remember that all interconnected classes must be loaded with a single java_require() call, i.e. use java_require(\"foo.jar;bar.jar\") instead of java_require(\"foo.jar\"); java_require(\"bar.jar\"). Please check the Java Bridge log file for details.", e);
+        return 	new ClassNotFoundException("Unresolved external reference: "+ e+ ". -- " +
+        		"Unable to "+what+", see the README section \"Java platform issues\" " +
+        				"for details.", e);
     }
     
     /**
@@ -542,7 +548,6 @@ public class JavaBridge implements Runnable {
 		getClassLoader().clearCaches();
 		e = getUnresolvedExternalReferenceException(e, "call constructor");
 	    }
-	    printStackTrace(e);
 	    setException(response, e, createInstance?"CreateInstance":"ReferenceClass", null, name, args, params);
 	}
     }
@@ -1079,7 +1084,6 @@ public class JavaBridge implements Runnable {
 		e = getUnresolvedExternalReferenceException(e, "call the method");
 	    }
 	    
-	    printStackTrace(e);
             if (selected != null && e instanceof IllegalArgumentException) {
                 if (this.logLevel>1) {
                     String errMsg = "\nInvoked "+method + " on "+objectDebugDescription(object)+"\n";
@@ -1276,7 +1280,6 @@ public class JavaBridge implements Runnable {
 		getClassLoader().clearCaches();
 		e = getUnresolvedExternalReferenceException(e, "invoke a property");
 	    }
-	    printStackTrace(e);
 	    setException(response, e, set?"SetProperty":"GetProperty", object, prop, args, params);
 	}
     }
@@ -1315,6 +1318,19 @@ public class JavaBridge implements Runnable {
      */
     public Object castToString(Object ob) {
 	return cast(ob, String.class);
+    }
+
+    /**
+     * Cast a throwable to a string
+     * @param throwable The throwable to cast
+     * @param trace The PHP stack trace 
+     * @return The result String object, will be coerced by the appropriate writer.
+     */
+    public Object castToString(Exception throwable, String trace) {
+	StringBuffer buf = new StringBuffer();
+	Util.appendObject(throwable, buf);
+	Util.appendTrace(throwable, trace, buf);
+	return castToString(buf);
     }
             
     /**
@@ -1485,7 +1501,7 @@ public class JavaBridge implements Runnable {
      * @param fileEncoding The file encoding.
      */
     public void setFileEncoding(String fileEncoding) {
-	this.options.encoding=fileEncoding.intern();
+	options.setEncoding(fileEncoding.intern());
     }
 
     /**
@@ -1526,7 +1542,7 @@ public class JavaBridge implements Runnable {
 
     /**
      * Returns a string representation of the object
-     * @param ob The Thrwable
+     * @param ob The Throwable
      * @param trace The stack trace
      * @return A string representation.
      */
@@ -1534,19 +1550,7 @@ public class JavaBridge implements Runnable {
 	    StringBuffer buf = new StringBuffer("[");
 	try {
 	    Util.appendObject(ob, buf);
-	    buf.append(" at:\n");
-	    StackTraceElement stack[] = ob.getStackTrace();
-	    int top=stack.length;
-	    int count = 0;
-	    for(int i=0; i<top; i++) {
-		buf.append("#-");
-		buf.append(top-i);
-		buf.append(" ");
-		buf.append(stack[i].toString());
-		buf.append("\n");
-		if (++count==5) break;
-	    }
-	    buf.append(trace);
+	    Util.appendTrace(ob, trace, buf);
 	} catch (Request.AbortException sub) {
 	    throw sub;
 	} catch (Exception t) {

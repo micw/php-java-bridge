@@ -40,7 +40,7 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
        JAVA_CHECK_BROKEN_STDIO_BUFFERING
        JAVA_CHECK_ABSTRACT_NAMESPACE
        JAVA_CHECK_STRUCT_UCRED
-       AC_CHECK_FUNCS(mkdtemp)
+       AC_CHECK_FUNCS(mkdtemp poll)
 
 # find includes eg. -I/opt/jdk1.4/include -I/opt/jdk1.4/include/linux
         if test "$PHP_JAVA" != "yes"; then
@@ -52,7 +52,11 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
 	 PHP_EVAL_INCLINE($JAVA_INCLUDES)
 	AC_CHECK_PROG(have_ar, ar, "yes", "no")
  	 JAVA_CHECK_JNI
-	 COND_GCJ=0
+         AC_CHECK_PROG(have_gcj, gcj, "yes", "no")
+         COND_GCJ=1
+         if test X$PHP_JRE != X || test $have_jni = no || test $have_gcj = no; then
+	   COND_GCJ=0
+         fi
 	else
 	 AC_CHECK_PROG(have_ar, ar, "yes", "no")
 	 JAVA_CHECK_JNI
@@ -64,9 +68,9 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
          # --with-mono=/path/to/mono.exe,/path/to/ikvmc/dir
          PHP_JRE="`echo $PHP_MONO | LANG=C awk -F, '{print $1}'`"
 
-	PHP_NEW_EXTENSION(mono, php_java_snprintf.c java.c api.c java_bridge.c client.c parser.c protocol.c bind.c init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\"])
+	PHP_NEW_EXTENSION(mono, php_java_snprintf.c java.c api.c java_bridge.c client.c parser.c sio.c protocol.c bind.c init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\"])
           EXTENSION_NAME=MONO
-	  if test X$PHP_JRE = X; then
+	  if test "X$PHP_JRE" = "X" || test "X$PHP_JRE" = "Xyes"; then
 		  PHP_JAVA_BIN="mono"
 	  else
 		  PHP_JAVA_BIN="${PHP_JRE}"
@@ -88,7 +92,7 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
         done
         else 
 # create java.so, compile with -DEXTENSION_DIR="\"$(EXTENSION_DIR)\""
-	PHP_NEW_EXTENSION(java, php_java_snprintf.c php_java_strtod.c java.c api.c java_bridge.c client.c parser.c protocol.c bind.c init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\"])
+	PHP_NEW_EXTENSION(java, php_java_snprintf.c php_java_strtod.c java.c api.c java_bridge.c client.c parser.c sio.c protocol.c bind.c init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\"])
           EXTENSION_NAME=JAVA
 	  if test X$PHP_JRE = X; then
 		  PHP_JAVA_BIN="java"
@@ -104,7 +108,7 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
 # note: PHP_JAVA is JRE_HOME, PHP_JAVA_SDK is JAVA_HOME and 
 # PHP_JAVA_BIN is ${JRE_HOME}/bin/java
 	BRIDGE_VERSION="`cat $ext_builddir/VERSION`"
-        for i in java-standalone.ini init_cfg.c init_cfg.h install.sh; do 
+        for i in init_cfg.c init_cfg.h install.sh; do 
 	  sed "s*@PHP_JAVA@*${PHP_JRE}*
 	     s*@JAVA_SOCKETNAME@*${JAVA_SOCKETNAME}*
 	     s*@PHP_JAVA_SDK@*${PHP_JAVA}*
@@ -129,7 +133,7 @@ if test "$PHP_BACKEND" = "yes" ; then
         else
 	    AC_CONFIG_SUBDIRS(server)
         fi
-        for i in ${ext_builddir}/server/configure.gnu security/php-java-bridge.fc security/update_policy.sh; do
+        for i in ${ext_builddir}/server/configure.gnu ${ext_builddir}/security/php-java-bridge.fc ${ext_builddir}/security/module/php-java-bridge.fc ${ext_builddir}/security/module/php-java-bridge-tomcat.fc ${ext_builddir}/security/update_policy.sh; do
           sed "s*@EXTENSION_DIR@*${EXTENSION_DIR}*
                s*@phplibdir@*`pwd`/modules*" \
             <${i}.in >${i}

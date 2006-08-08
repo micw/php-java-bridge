@@ -1,9 +1,12 @@
+/*-*- mode: C; tab-width:4 -*-*/
+
+#include "php_java.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
 
-#include "php_java.h"
 #include "parser.h"
 
 #define APPEND(c) { \

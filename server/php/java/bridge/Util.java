@@ -118,15 +118,22 @@ public final class Util {
     public static final String UTF8 = "UTF-8";
 
     /**
+     * DEFAULT currently UTF-8, will be changed when most OS support and use UTF-16.
+     */
+    public static final String DEFAULT_ENCODING = "UTF-8";
+
+    /**
      * The default buffer size
      */
     public static final int BUF_SIZE = 8192;
 
     /**
-     * The default extension directories. If one of the directories 
-     * "/usr/share/java/ext", "/usr/java/packages/lib/ext" contains java libraries,
-     * the bridge loads these libraries automatically.
-     * Useful, if you have non-pure java libraries (=libraries which use the Java Native Interface to load native dll's or shared libraries).
+     * The default extension directories. If one of the directories
+     * "/usr/share/java/ext", "/usr/java/packages/lib/ext" contains
+     * java libraries, the bridge loads these libraries automatically.
+     * Useful if you have non-pure java libraries (=libraries which
+     * use the Java Native Interface to load native dll's or shared
+     * libraries).
      */
     public static final String DEFAULT_EXT_DIRS[] = { "/usr/share/java/ext", "/usr/java/packages/lib/ext" };
     
@@ -163,7 +170,9 @@ public final class Util {
     static final Object[] ZERO_ARG = new Object[0];
 
     static final Class[] ZERO_PARAM = new Class[0];
-    
+
+    /** The name of the VM, for example "1.4.2@http://java.sun.com/" or "1.4.2@http://gcc.gnu.org/java/".*/
+    public static String VM_NAME;
     /**
      * Set to true, if the Java VM has been started with -Dphp.java.bridge.promiscuous=true;
      */
@@ -195,6 +204,10 @@ public final class Util {
 
     private static void initGlobals() {
     	try {
+    	    VM_NAME = "unknown";
+	    VM_NAME = System.getProperty("java.version")+"@" + System.getProperty("java.vendor.url");	    
+	} catch (Exception e) {/*ignore*/}
+    	try {
     	    JAVABRIDGE_PROMISCUOUS = false;
 	    JAVABRIDGE_PROMISCUOUS = System.getProperty("php.java.bridge.promiscuous", "false").toLowerCase().equals("true");	    
 	} catch (Exception e) {/*ignore*/}
@@ -225,10 +238,6 @@ public final class Util {
 	    DEFAULT_LOG_LEVEL = Integer.parseInt(s);
 	    Util.logLevel=Util.DEFAULT_LOG_LEVEL; /* java.log_level in php.ini overrides */
 	} catch (NumberFormatException e) {/*ignore*/}
-//	try {
-//	    String s = getProperty(p, "BACKLOG", "20");
-//	    BACKLOG = Integer.parseInt(s);
-//	} catch (NumberFormatException e) {/*ignore*/}
 	DEFAULT_LOG_FILE = getProperty(p, "DEFAULT_LOG_FILE", Util.EXTENSION_NAME+".log");
 	String separator = "/-+.,;: ";
 	try {
@@ -379,6 +388,27 @@ public final class Util {
 	buf.append("\"");
 	buf.append(Util.stringValueOf(obj));
 	buf.append("\"");
+    }
+    /**
+     * Append a stack trace to buf.
+     * @param throwable The throwable object
+     * @param trace The trace from PHP
+     * @param buf The current buffer.
+     */
+    public static void appendTrace(Throwable throwable, String trace, StringBuffer buf) {
+	    buf.append(" at:\n");
+	    StackTraceElement stack[] = throwable.getStackTrace();
+	    int top=stack.length;
+	    int count = 0;
+	    for(int i=0; i<top; i++) {
+		buf.append("#-");
+		buf.append(top-i);
+		buf.append(" ");
+		buf.append(stack[i].toString());
+		buf.append("\n");
+		if (++count==3) break;
+	    }
+	    buf.append(trace);
     }
     /**
      * Append a parameter object to a StringBuffer

@@ -1,23 +1,23 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
-/**\file
- * Mediates between php and the server.
- *
- * Creates the proxyenv structure and handles invoke, get/set
- * property.
+/**\file 
+ * This file contains most of the internal function
+ * prototypes. The public API is in api.h and php_java.h.
  */
 
 
 #ifndef JAVA_BRIDGE_H
 #define JAVA_BRIDGE_H
 
+#include "php_java.h"
+
+#include <unistd.h>
+
 /* PHP Includes */
 #include "php_wrapper.h"
 #include "zend_compile.h"
 #include "php_ini.h"
 #include "php_globals.h"
-
-#include "php_java.h"
 
 #define IS_EXCEPTION 86
 
@@ -42,7 +42,7 @@ extern void EXT_GLOBAL(redirect_pipe)(proxyenv*env);
 extern void EXT_GLOBAL(unlink_channel)(proxyenv*env);
 extern const char*EXT_GLOBAL(get_channel)(proxyenv*env);
 
-extern void EXT_GLOBAL (begin_async) (proxyenv*env);
+extern short EXT_GLOBAL (begin_async) (proxyenv*env);
 extern void EXT_GLOBAL (end_async) (proxyenv*env);
 extern void EXT_GLOBAL (check_session) (proxyenv *env TSRMLS_DC);
 extern void EXT_GLOBAL (setResultWith_context) (char*key, char*val, char*path);

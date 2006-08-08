@@ -3,12 +3,16 @@
 lib_LTLIBRARIES = $(JNI_LIBS)
 EXTRA_LTLIBRARIES = libnatcJavaBridge.la
 libnatcJavaBridge_la_SOURCES = natcJavaBridge.c
-libnatcJavaBridge_la_LDFLAGS = -rpath $(libdir) -shared -avoid-version -prefer-pic
+libnatcJavaBridge_la_LDFLAGS = -rpath $(EXTENSION_DIR) -shared -avoid-version -prefer-pic
 libnatcJavaBridge_la_LIBADD =
+java_SOURCES= java.c php/java/bridge/BaseThreadPool.java php/java/bridge/ChainsawLogger.java php/java/bridge/ClassicParserString.java php/java/bridge/ConstructorCache.java php/java/bridge/DynamicClassLoader.java php/java/bridge/DynamicJavaBridgeClassLoader.java php/java/bridge/FileLogger.java php/java/bridge/GlobalRef.java php/java/bridge/IDocHandler.java php/java/bridge/IllegalArgumentException.java php/java/bridge/ILogger.java php/java/bridge/Invocable.java php/java/bridge/ISession.java php/java/bridge/ISocketFactory.java php/java/bridge/JavaBridgeClassLoader.java php/java/bridge/JavaBridge.java php/java/bridge/JavaBridgeRunner.java php/java/bridge/JavaBridgeSecurityManager.java php/java/bridge/LocalServerSocket.java php/java/bridge/LocalSocketInputStream.java php/java/bridge/LocalSocket.java php/java/bridge/LocalSocketOutputStream.java php/java/bridge/Log4jLogger.java php/java/bridge/MethodCache.java php/java/bridge/NotImplementedException.java php/java/bridge/Options.java php/java/bridge/Parser.java php/java/bridge/ParserString.java php/java/bridge/ParserTag.java php/java/bridge/PhpMap.java php/java/bridge/PhpProcedure.java php/java/bridge/PhpProcedureProxy.java php/java/bridge/Request.java php/java/bridge/Response.java php/java/bridge/SessionFactory.java php/java/bridge/Session.java php/java/bridge/SimpleJavaBridgeClassLoader.java php/java/bridge/Snarf.java php/java/bridge/Standalone.java php/java/bridge/StringCache.java php/java/bridge/TCPServerSocket.java php/java/bridge/ThreadPool.java php/java/bridge/Util.java php/java/bridge/http/ContextFactory.java php/java/bridge/http/Context.java php/java/bridge/http/ContextRunner.java php/java/bridge/http/ContextServer.java php/java/bridge/http/HttpRequest.java php/java/bridge/http/HttpResponse.java php/java/bridge/http/HttpServer.java php/java/bridge/http/IContextFactory.java php/java/bridge/http/IContextFactoryVisitor.java php/java/bridge/http/IContextServer.java php/java/bridge/http/PipeContextServer.java php/java/bridge/http/SimpleContextFactory.java php/java/bridge/http/SocketContextServer.java
+java_LDADD=libnatcJavaBridge.la
+java_LDFLAGS=-rpath $(EXTENSION_DIR)
+AM_GCJFLAGS=-fjni
+bin_PROGRAMS=$(VM_BINARIES)
 
 if COND_GCJ
 # create java executable with GNU GCC when --with-java was given
-bin_PROGRAMS=$(VM_BINARIES)
 EXTRA_PROGRAMS=java RunJavaBridge RunMonoBridge
 
 dist_data_DATA=$(MONO_BRIDGE_EXE) stamp
@@ -17,7 +21,6 @@ mono_dlls=ICSharpCode.SharpZipLib.dll IKVM.AWT.WinForms.dll IKVM.GNU.Classpath.d
 EXTRA_DATA=MonoBridge.exe $(mono_dlls)
 
 RunJavaBridge_SOURCES= RunJavaBridge.c
-java_SOURCES= java.c php/java/bridge/BaseThreadPool.java php/java/bridge/ChainsawLogger.java php/java/bridge/ClassicParserString.java php/java/bridge/ConstructorCache.java php/java/bridge/DynamicClassLoader.java php/java/bridge/DynamicJavaBridgeClassLoader.java php/java/bridge/FileLogger.java php/java/bridge/GlobalRef.java php/java/bridge/IDocHandler.java php/java/bridge/IllegalArgumentException.java php/java/bridge/ILogger.java php/java/bridge/Invocable.java php/java/bridge/ISession.java php/java/bridge/ISocketFactory.java php/java/bridge/JavaBridgeClassLoader.java php/java/bridge/JavaBridge.java php/java/bridge/JavaBridgeRunner.java php/java/bridge/JavaBridgeSecurityManager.java php/java/bridge/LocalServerSocket.java php/java/bridge/LocalSocketInputStream.java php/java/bridge/LocalSocket.java php/java/bridge/LocalSocketOutputStream.java php/java/bridge/Log4jLogger.java php/java/bridge/MethodCache.java php/java/bridge/NotImplementedException.java php/java/bridge/Options.java php/java/bridge/Parser.java php/java/bridge/ParserString.java php/java/bridge/ParserTag.java php/java/bridge/PhpMap.java php/java/bridge/PhpProcedure.java php/java/bridge/PhpProcedureProxy.java php/java/bridge/Request.java php/java/bridge/Response.java php/java/bridge/SessionFactory.java php/java/bridge/Session.java php/java/bridge/SimpleJavaBridgeClassLoader.java php/java/bridge/Snarf.java php/java/bridge/Standalone.java php/java/bridge/StringCache.java php/java/bridge/TCPServerSocket.java php/java/bridge/ThreadPool.java php/java/bridge/Util.java php/java/bridge/http/ContextFactory.java php/java/bridge/http/Context.java php/java/bridge/http/ContextRunner.java php/java/bridge/http/ContextServer.java php/java/bridge/http/HttpRequest.java php/java/bridge/http/HttpResponse.java php/java/bridge/http/HttpServer.java php/java/bridge/http/IContextFactory.java php/java/bridge/http/IContextFactoryVisitor.java php/java/bridge/http/IContextServer.java php/java/bridge/http/PipeContextServer.java php/java/bridge/http/SimpleContextFactory.java php/java/bridge/http/SocketContextServer.java
 
 stamp:
 	date >stamp
@@ -30,14 +33,10 @@ MonoBridge.exe: $(PHP_MONO)
 	mv JavaBridge.exe MonoBridge.exe
 	rm -f JavaBridge.jar
 
-java_LDADD=libnatcJavaBridge.la
-java_LDFLAGS=-rpath $(EXTENSION_DIR)
-AM_GCJFLAGS=-fjni
-
 else 
 # use a real VM when --with-java=$JAVA_HOME was given
 
-bin_PROGRAMS=RunJavaBridge
+EXTRA_PROGRAMS=java RunJavaBridge
 RunJavaBridge_SOURCES=RunJavaBridge.c
 
 dist_data_DATA=javabridge.policy JavaBridge.jar $(JAVA_BRIDGE_WAR) $(SCRIPT) $(JAVA_BRIDGE_SCRIPT_JAR) stamp

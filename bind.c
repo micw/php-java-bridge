@@ -1,5 +1,7 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
+#include "php_java.h"
+
 /* execve,select */
 #ifndef __MINGW32__
 #ifdef HAVE_SYS_TIME_H
@@ -10,15 +12,15 @@
 #endif
 #endif
 
-/* opendir */
-#ifndef __MINGW32__
-#include <dirent.h>
-#endif
-
 /* stat, mkdir */
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+/* opendir */
+#ifndef __MINGW32__
+#include <dirent.h>
+#endif
 
 /* fcntl */
 #include <fcntl.h>
@@ -32,7 +34,9 @@
 #include <signal.h>
 
 /* poll */
+#ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>
+#endif
 
 /* wait */
 #include <sys/wait.h>
@@ -46,7 +50,6 @@
 #include "php_wrapper.h"
 #include "zend.h"
 
-#include "php_java.h"
 #include "java_bridge.h"
 
 #ifndef EXTENSION_DIR
@@ -323,6 +326,7 @@ char*EXT_GLOBAL(get_server_string)(TSRMLS_D) {
 }
 
 static void exec_vm(TSRMLS_D) {
+  int i, n;
   static char*env[N_SENV];
   static char*_args[N_SARGS+1];
   char **args=_args+1, *cmd;
@@ -331,6 +335,7 @@ static void exec_vm(TSRMLS_D) {
 	if(*env[0]) putenv(env[0]);
 	if(*env[1]) putenv(env[1]);
   }
+  for(i=3, n=dup(1); i<=n; i++) close(i);
   if(use_wrapper(EXT_GLOBAL(cfg)->wrapper)) {
 	*--args = strdup(EXT_GLOBAL(cfg)->wrapper);
 	execv(args[0], args);
@@ -473,21 +478,28 @@ static void sleep_ms() {
   select(0, 0, 0, 0, &timeval);
 }
 static int wait_server(void) {
-#ifndef __MINGW32__
+#ifndef __MINGW32__ 
   static const int wait_count = 30;
   int count=wait_count, sock;
+
+#ifdef HAVE_POLL /* some ancient OS (Darwin, OSX) don't have poll */
   struct pollfd pollfd[1] = {{EXT_GLOBAL(cfg)->err, POLLIN, 0}};
+#endif
   
   /* wait for the server that has just started */
   while(EXT_GLOBAL(cfg)->cid && -1==(sock=test_local_server()) && --count) {
+#ifdef HAVE_POLL
 	if(EXT_GLOBAL(cfg)->err && poll(pollfd, 1, 0)) 
 	  return FAILURE; /* server terminated with error code */
+#endif
 	sleep_ms();
   }
   count=30;
   while(EXT_GLOBAL(cfg)->cid && -1==sock && -1==(sock=test_local_server()) && --count) {
+#ifdef HAVE_POLL
 	if(EXT_GLOBAL(cfg)->err && poll(pollfd, 1, 0)) 
 	  return FAILURE; /* server terminated with error code */
+#endif
 	php_error(E_NOTICE, "php_mod_"/**/EXT_NAME()/**/"(%d): waiting for server another %d seconds",57, count);
 	sleep(1);
   }
@@ -1050,6 +1062,9 @@ void EXT_GLOBAL(sys_error)(const char *str, int code) {
 #endif
 }
 
+/**
+ * Called when the FCGI master has received the kill signal.
+ */
 static void fcgi_do_rmtmpdir() {
 #ifndef __MINGW32__
   extern EXT_GLOBAL(is_parent);
@@ -1087,13 +1102,20 @@ static void fcgi_do_rmtmpdir() {
   }
   closedir(dir);
   rmdir(EXT_GLOBAL(cfg)->tmpdir);
+  free(EXT_GLOBAL(cfg)->tmpdir);
+  EXT_GLOBAL(cfg)->tmpdir=0;
 #endif
 }
+/** 
+ * Signal handler for FastCGI
+ */
 static void fcgi_rmtmpdir(int sig) {
   fcgi_do_rmtmpdir();
   exit(0);
 }
-/* Delete the temp directory which contains the comm. pipes */
+/**
+ * Delete the temp directory which contains the comm. pipes 
+ */
 static void rmtmpdir () {
 #ifndef __MINGW32__
   extern EXT_GLOBAL(is_parent);
@@ -1130,10 +1152,18 @@ static void rmtmpdir () {
   EXT_GLOBAL(cfg)->tmpdir=0;
 #endif
 }
+/**
+ * Called from MSHUTDOWN. This method does nothing if this is a
+ * FastCGI servlet, because the FCGI SAPI calls MSHUTDOWN everytime a
+ * child is killed, which is nonsense, of course.
+ */
 void EXT_GLOBAL(rmtmpdir) () {
 								/* see FastCGI comment below */
   if(!EXT_GLOBAL(cfg)->is_fcgi_servlet) rmtmpdir();	
 }
+/**
+ * Wrapper for mkdtemp().
+ */
 #ifndef __MINGW32__
 static char *makedtemp(char tmpl[]) {
 #ifdef HAVE_MKDTEMP
@@ -1153,6 +1183,10 @@ static char *makedtemp(char tmpl[]) {
 #endif
 }
 #endif
+/**
+ * Called from MINIT, creates a directory which will contain the
+ * comm. pipes on Unix. See rmtmpdir above.
+ */
 void EXT_GLOBAL(mktmpdir) () {
 #ifndef __MINGW32__
   char sockname[] = SOCKNAME;

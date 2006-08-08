@@ -1,14 +1,17 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
+#include "php_java.h"
+
 #include <stdarg.h>
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "protocol.h"
-#include "php_java.h"
 #include "java_bridge.h"
 #include "php_java_snprintf.h"
+#include "sio.h"
 
 #define SLEN 256 // initial length of the parser string
 #define SEND_SIZE 8192 // initial size of the send buffer
@@ -36,13 +39,13 @@ static char *getSessionFactory(proxyenv *env) {
   register char *context = (*env)->servlet_ctx;
   return context?context:(char*)invalid;
 }
-static char*get_context(proxyenv *env, char context[256], short*context_length) {
+static char*get_context(proxyenv *env, char context[CONTEXT_LEN_MAX], short*context_length) {
 	size_t l = strlen((*env)->servlet_ctx);
 	
-	assert(l<256);
+	assert(l<CONTEXT_LEN_MAX);
 	*context_length = 
 	  EXT_GLOBAL(snprintf) (context, 
-							256, 
+							CONTEXT_LEN_MAX, 
 							"%c%c%s", 
 							077, l&0xFF,
 							(*env)->servlet_ctx);
@@ -81,7 +84,7 @@ static short end(proxyenv *env) {
   char *servlet_context;
   char *context;
   short context_length = 0;
-  char kontext[256];
+  char kontext[CONTEXT_LEN_MAX];
   /* get the context for the re-redirected connection */
   if((*env)->must_reopen==2) context = get_context(env, kontext, &context_length);
   (*env)->must_reopen=0;
@@ -188,7 +191,7 @@ static short end_connection (proxyenv *env) {
   short context_length = 0;
   char *context;
   size_t size = (*env)->send_len;
-  char kontext[256];
+  char kontext[CONTEXT_LEN_MAX];
   unsigned char mode = EXT_GLOBAL (get_mode) ();
 
   if((*env)->must_reopen==2) context = get_context(env, kontext, &context_length);
@@ -216,7 +219,7 @@ static short end_connection (proxyenv *env) {
   return success;
 }
 static ssize_t send_async(proxyenv*env, const void*buf, size_t length) {
-  return (ssize_t)fwrite(buf, 1ul, length, (*env)->async_ctx.peer);
+  return EXT_GLOBAL(sfwrite)(buf, length, (*env)->async_ctx.peer);
 }
 static ssize_t send_pipe(proxyenv*env, const void*buf, size_t length) {
   return write((*env)->peer, buf, length);
@@ -233,18 +236,20 @@ static ssize_t recv_socket(proxyenv*env, void*buf, size_t length) {
   return recv((*env)->peer, buf, length, 0);
 }
 
-void EXT_GLOBAL(begin_async) (proxyenv*env) {
+short EXT_GLOBAL(begin_async) (proxyenv*env) {
   assert(((*env)->peer0==-1));	/* secondary "override redirect"
 								   channel cannot be used during
 								   stream mode */
-  (*env)->handle=(*env)->async_ctx.handle_request;
-  (*env)->async_ctx.peer = fdopen((*env)->peer, "w");
+  if(((*env)->peer) != -1) (*env)->async_ctx.peer = EXT_GLOBAL(sfdopen)(env);
 
-  //assert((*env)->async_ctx.peer);
   if((*env)->async_ctx.peer) {
 								/* save default f_send, use send_async */
+	(*env)->handle = (*env)->async_ctx.handle_request;
 	(*env)->async_ctx.f_send = (*env)->f_send;
 	(*env)->f_send = (*env)->f_send0 = send_async;
+	return 1;
+  } else {
+	return 0;
   }
 }
 void EXT_GLOBAL(end_async) (proxyenv*env) {
@@ -253,13 +258,11 @@ void EXT_GLOBAL(end_async) (proxyenv*env) {
 								   stream mode */
   (*env)->handle=(*env)->handle_request;
   if((*env)->async_ctx.peer) {
-	int err = fflush((*env)->async_ctx.peer);
-	if(err) {
-	  php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Fatal: could not fflush async buffer.",93);
-	  exit(9);
-	}
+	int err = EXT_GLOBAL(sfclose)((*env)->async_ctx.peer);
 								/* restore default f_send */
 	(*env)->f_send = (*env)->f_send0 = (*env)->async_ctx.f_send;
+	(*env)->async_ctx.peer = 0;
+	if(err) EXT_GLOBAL(sys_error)("could not close async buffer",93);
   }
 }
 void EXT_GLOBAL(redirect_pipe)(proxyenv*env) {
@@ -540,8 +543,15 @@ static short EndConnection(proxyenv *env, char property) {
 
 static void close_connection(proxyenv *env TSRMLS_DC) {
   if(env && *env) {
-	if((*env)->peer!=-1) {
-	  /* end servlet session */
+	if((*env)->peer!=-1) { /* end servlet session */
+
+	  /* end async */
+	  if((*env)->async_ctx.peer) {
+		EXT_GLOBAL(sfclose)((*env)->async_ctx.peer); (*env)->async_ctx.peer=0;
+		(*env)->handle = (*env)->handle_request;
+		(*env)->f_send = (*env)->f_send0 = (*env)->async_ctx.f_send;
+	  }
+
 	  if(!(*env)->connection_is_closed) (*env)->writeEndConnection(env, 'E');
 	  if(!(*env)->is_shared) close((*env)->peer);
 	}

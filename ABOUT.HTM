@@ -128,7 +128,7 @@ while($iter->hasNext()) {<br>
 <p>
 Java knowledge is not necessary and it is neither necessary nor recommended to write custom- or glue logic in the Java programming language. 
 </p>
-<p>The following sections describe the low-level Java interface. It can be used to create dynamic PHP proxies or PHP/Java Bridge bindings for other languages such as Perl or Python.
+<p>The following sections describe the low-level interface. It can be used to create dynamic PHP proxies or PHP/Java Bridge bindings for other languages such as Perl or Python.
 </p>
 <H1>Description</H1>
 <P><FONT > The bridge adds the following primitives to PHP.  The type
@@ -259,15 +259,16 @@ $servletRequest->setAttribute(...);<br>
 <br>
 <li>
 
-  <code>$session=<strong><a href="documentation/PHP-API/html/java_8c.html#a25">java_session</a></strong>(SESSIONNAME)</code>:
+  <code>$session=<strong><a
+href="documentation/PHP-API/html/java_8c.html#a25">java_session</a></strong>(SESSIONNAME)</code>:
 Creates or retrieves the session <code>SESSIONNAME</code>. This
-primitive uses a "private" session store with the name
-SESSIONNAME. Please see the <a
+primitive uses a session store with the name SESSIONNAME which is
+independent of the current PHP session. Please see the <a
 href="server/documentation/API/php/java/bridge/ISession.html">ISession
-interface documentation</a> for details. For java values
+interface documentation</a> for details. For Java values
 <code>$_SESSION['var']=val</code> is syntactic sugar for
-<code>java_session(session_id())-&gt;put('var', val)</code>.
-<blockquote>
+<code>java_session("internal-prefix@".session_id())-&gt;put('var',
+val)</code>.  <blockquote>
 
 <code>
 $session=java_session("testSession");<br>
@@ -292,12 +293,13 @@ The <strong><code>java_session</code></strong> primitive is meant for values whi
 <code>
 // Compile this class, create cache.jar and copy it to /usr/share/java<br>
 public class Cache {<br>
-&nbsp;&nbsp; public static Cache instance = makeInstance();<br>
+&nbsp;&nbsp; private static final Cache instance = makeInstance();<br>
+&nbsp;&nbsp; public static Cache getInstance() { return instance; }<br>
 }<br><br>
 &lt;?php<br>
 java_require(&quot;cache.jar&quot;);<br>
 $Cache = new JavaClass(&quot;Cache&quot;);<br>
-$instance=$Cache->instance; //instance will stay in the VM until the VM runs short of memory<br>
+$instance=$Cache->getInstance(); //instance will stay in the VM until the VM runs short of memory<br>
 ?&gt;<br>
 </code>
 </blockquote>
@@ -416,7 +418,7 @@ $outbuf=new java("java.io.PrintStream", $buf);<br>
 ><TD
 >exact number</TD
 ><TD
->integer (default) or long, depending on the flag <a href="#ext_java_compatibility">java.ext_java_compatibility</a>.</TD
+>integer (default) or long.</TD
 ><TD
 >64 bit data on protocol level, coerced to 32bit int/Integer or 64bit long/Long</TD
 ><TD
@@ -538,7 +540,7 @@ On Security Enhanced Linux <code>.jar</code> files can only be loaded from locat
 </FONT></P>
 </P>
 </a></a>
-<P><FONT > The PHP/Java Bridge can operate in 5 different modes: <ol>
+<P><FONT > The PHP/Java Bridge can operate in 4 different modes: <ol>
   <li> Invoked from the dl() function.  In this mode the bridge starts
   when the HTTP server receives a client request and terminates after the response
   is written.  This is very slow because it starts a new back-end (Java or .NET VM) for
@@ -550,12 +552,6 @@ On Security Enhanced Linux <code>.jar</code> files can only be loaded from locat
  when the HTTP server terminates. Recommended during
  development. Please see <a href="#mode2">web server installation
  below</a>.
-
-   <li> Permanently activated in the global php.ini file with an
-      external Java process.  Recommended for <a
-      href="#mode3">production systems</a>.  This mode is used by the
-      RPM package available for Red Hat Enterprise Linux.  In this mode
-      the bridge starts and stops as a system service.
 
    <li> Permanently activated in the global php.ini file with an
       external <a href="#mode4">application server or servlet engine</a>.
@@ -593,26 +589,36 @@ All binary files are digitally signed. Before you install the RPM binaries you s
 <code>rpm --import RPM-GPG-KEY</code>
 </blockquote>
 <H3>RPM binaries</H3>
-Either install the bridge and standalone back-end
+Install the PHP/Java Bridge and the libraries you're interested
+in. For example:
+<p>
+<blockquote>
+<code>
+rpm -i php-java-bridge-x.y.z-1-i386.rpm <br>
+rpm -i lucene4php-x.y.z-1.i386.rpm <br>
+rpm -i itext4php-x.y.z-1.i386.rpm <br>
+</code> 
+</blockquote>
+
+Note that the PHP/Java Bridge and the libraries are native code do
+<em>not</em> need Java installed on the system unless the <a
+href="#ini-options">PHP .ini</a> option <code>java.java</code> is set.
+
+</p> 
+Optional: install Java, a J2EE server or servlet engine and the
+PHP/Java Bridge J2EE component.
+
 <p>
 <blockquote>
 <code>
 rpm -i jdk-1_5_0-linux-i586.rpm<br>
-rpm -i php-java-bridge-x.y.z-1-i386.rpm <br>
-rpm -i php-java-bridge-standalone-x.y.z-1-i386.rpm<br>
-</code> 
-</blockquote>
-</p>
-or the tomcat back-end
-<p>
-<blockquote>
-<code>
 rpm -i tomcat5-5.0.30-5jpp_6fc.i386.rpm<br>
-rpm -i php-java-bridge-tomcat-x.y.z-1.i386.rpm
+rpm -i php-java-bridge-tomcat-x.y.z-1.i386.rpm<br>
 </code>
 </blockquote>
+The advantage of a J2EE server or servlet engine is that a real Java VM runs outside of the Apache HTTP server domain and can be restarted independently. It sets a <a href="#ini-options">PHP .ini</a> option so that all PHP Java statements are executed by the J2EE server or servlet engine.
 </p>
-or the development files for JDK 1.6
+Optional: install Java 1.6 and the PHP development files for JDK 1.6.
 <p>
 <blockquote>
 <code>
@@ -620,6 +626,14 @@ rpm -i jdk-6-linux-i586.rpm<br>
 rpm -i rpm -i php-java-bridge-devel-x.y.z-1.i386.rpm<br>
 </code>
 </blockquote>
+If you have installed the development RPM, you can run PHP scripts interactively, either from your Eclipse IDE (when available) or with the <a href="http://java.sun.com/javase/6/docs/tooldocs/share/jrunscript.html"><code>jrunscript</code></a> command:
+<p>
+<blockquote>
+<code>
+/usr/java/default/bin/jrunscript -l php-interactive
+</code>
+</blockquote>
+</p>
 </p>
 If you run a 64bit system <em>and</em> a 64bit JVM, you need to build a  64bit RPM using the command:
 <p>
@@ -628,14 +642,7 @@ If you run a 64bit system <em>and</em> a 64bit JVM, you need to build a  64bit R
 rpmbuild --rebuild php-java-bridge-x.y.z-1.src.rpm<br>
 </code>
 </blockquote>
-</p>
-If you have installed the development RPM, you can run PHP scripts interactively, either from your Eclipse IDE (when available) or with the <a href="http://java.sun.com/javase/6/docs/tooldocs/share/jrunscript.html"><code>jrunscript</code></a> command:
-<p>
-<blockquote>
-<code>
-/usr/java/default/bin/jrunscript -l php-interactive
-</code>
-</blockquote>
+and install these.
 </p>
 <H2>Installation from source</H2>
  For other operating systems, e.g. Solaris, Windows, BSD or Mac-OSX, please follow 
@@ -668,8 +675,6 @@ phpize &amp;&amp; ./configure
 Do you want to install the Servlet/J2EE back-end (recommended)?<br>
 install j2ee back-end (yes/no): no<br>
 <br>
-Do you want to start the standalone back-end from a service script?<br>
-install service script (yes/no): no<br>
 </code>
 <br>
 The created PHP ini file (usually <code>java.ini</code> located in <code>/etc/php.d/</code> or <code>php.ini</code> located in <code>c:\winnt\</code>) should contain:
@@ -678,25 +683,6 @@ The created PHP ini file (usually <code>java.ini</code> located in <code>/etc/ph
 	the apache service with the command: <code>apachectl restart</code></FONT></P>
 	<LI><P><FONT >You can now test
 	the web installation. Copy the test.php file to the document root (usually /var/www/html) and invoke the file with your browser. You should see that the bridge module is activated and running.  The bridge back-end automatically starts or re-starts whenever you start or re-start the web-server.
-	</P>
-	<LI><P><FONT ><A name="mode3">In a <strong>production environment</strong> it is recommended to separate the java VM and the HTTP process by setting the communication channel:
-<br><br>
-<code>
-Do you want to install the Servlet/J2EE back-end (recommended)?<br>
-install j2ee back-end (yes/no): no<br>
-<br>
-Do you want to start the standalone back-end from a service script?<br>
-install service script (yes/no): yes<br>
-run the back-end with limited rights (yes/no): yes<br>
-run the back-end as user (default: apache): <br>
-run the back-end as group (default: apache): <br>
-location of the java executable (/usr/bin/java): /opt/jdk1.5/jre/bin/java<br>
-start now? (yes/no): yes<br>
-</code>
-<br>
-The <code>java.socketname</code> has been set to the name of the socket, it will be created, if it doesn't exist.  The java section of the created PHP ini file (usually <code>java-standalone.ini</code> located in <code>/etc/php.d</code> or <code>php.ini</code> located in <code>c:\winnt\</code>) file should contain a <code>java.socketname</code> option. The following is an example from Red Hat Enterprise Linux and Fedora:
-<BR><BR><code>extension = java.so<BR>[java]<BR>java.socketname="/var/run/.php-java-bridge_socket"</code><br><br>The advantage of this mode is that the java VM no longer depends on the web server and can be examined and re-started independently. The download file contains a script, <code>php-java-bridge.service</code>, which can be used to start/stop the PHP/Java Bridge back-end as a system service. All available <code>.ini</code> options are listed in <a href="#ini-options">table 2</a>.</A> </FONT>
-
 	</P>
 	<LI><P><FONT ><A name="mode4">In a production environment which requires <strong>load balancing and fail over</strong> or <strong>session sharing between PHP, JSP and Servlets</strong> it is recommended deploy the back-end into a servlet engine or an application server; <a href="http://www.onjava.com/pub/a/onjava/2004/03/31/clustering.html">a tomcat 5 cluster</a> for example:
 <br><br>
@@ -838,23 +824,11 @@ java.libpath="/usr/local/lib"
 ></TR
 ><TR
 ><TD
-><A name="ext_java_compatibility">java.ext_java_compatibility</A></TD
-><TD
->Off</TD
-><TD
->Since version 3 the bridge is no longer backward compatible to its predecessor "ext/java": Exact PHP numbers are now represented as java integers, java return values are no longer auto-converted into PHP values. <em>Leave it off, if possible</em>.</TD
-><TD
->
-java.ext_java_compatibility=On
-</TD
-></TR
-><TR
-><TD
 ><A name="persistent_connections">java.persistent_connections</A></TD
 ><TD
 >On</TD
 ><TD
->Use persistent connections to the back-end. If this flag is set to <code>On</code>, the Apache/Tomcat combination delivers java based content as fast as
+>Use persistent connections to the back-end. If this flag is set to <code>On</code>, the Apache/Tomcat combination delivers Java based content as fast as
 Tomcat standalone.</TD
 ><TD
 >
@@ -880,7 +854,7 @@ java.security_policy="c:/windows/javabridge.policy"
 <br><br>
 <H2>Further information</H2>
 <P><FONT >For further
-information please read the <a href="README">README</a>, <a href="INSTALL">INSTALL</a>, <a href="INSTALL.LINUX">INSTALL.LINUX</a>, <a href="INSTALL.J2EE">INSTALL.J2EE</a>, <a href="INSTALL.WEBSPHERE">INSTALL.WEBSPHERE</a>, <a href="INSTALL.ORACLE">INSTALL.ORACLE</a> and <a href="INSTALL.WINDOWS">INSTALL.WINDOWS</a> documents contained in
+information please read the <a href="README">README</a>, <a href="INSTALL">INSTALL</a>, <a href="INSTALL.LINUX">INSTALL.LINUX</a>, <a href="INSTALL.J2EE">INSTALL.J2EE</a>, <a href="INSTALL.WEBSPHERE">INSTALL.WEBSPHERE</a>, <a href="INSTALL.ORACLE">INSTALL.ORACLE</a> documents contained in
 the download files.</p>
 <p>The <a href="NEWS">NEWS</a> file lists the latest user visible changes, development documentation can be found in the <a href="documentation/PHP-API/html/java_8c.html"><code>documentation</code></a> and <a href="server/documentation/API/overview-summary.html"><code>server/documentation</code></a> folder.
 
@@ -1167,7 +1141,7 @@ BORDER="1"
 <p>
 If you want to start <em>one persistent VM per HTTP server</em> running on a computer, see 
 the <a href="#mode2">web server installation</a> description. 
-If you want to start <em>one persistent VM per computer</em>, please see <a href="#mode3">Linux RPM package</a> or the <a href="#mode4">application server or servlet engine</a> description.
+If you want to start <em>one persistent VM per computer</em>, please see the <a href="#mode4">application server or servlet engine</a> description.
 </p>
 <p>Furthermore it is possible to start a standalone back-end, for example with the command:<br><br>
 <code>
@@ -1196,7 +1170,7 @@ java.wrapper=/path/to/wrapper/binary<br>
 On Unix the bridge terminates the sub-process hierarchy with <code>SIGTERM</code>, sleep 5 seconds and <code>SIGTERM</code>, if necessary, sleep 5 seconds and <code>SIGKILL</code>, if necessary. On Windows the bridge emulates the Unix kill behaviour, the bridge kills the entire sub-process hierarchy so that you can use a <code>cmd /c</code> wrapper.
 </p>
 <p>
-Please see the wrapper <code>RunJavaBridge</code> from the  RedHat <code>php-java-bridge-standalone</code> RPM for an example.
+Please see the wrapper <code>RunJavaBridge</code> for an example.
 </p>
 <li> <H4>I want to use the bridge as a replacement for the <a href="http://www.php.net/manual/sl/ref.java.php#java.servlet">PHP 4 servlet API</a>, how do I install it into tomcat?</H4> 
 <p>
@@ -1204,7 +1178,7 @@ Download the J2EE binary and copy the <code>JavaBridge.war</code> into the tomca
 Please see <code>webapps/JavaBridge/WEB-INF/cgi/README</code> for details.
 </p>
 <li> <a name="global-servlet"><H4>I want to use PHP for all tomcat applications. Apache and IIS are not available, but performance is important. How do I install it?</H4></a>
-<p> Check if your PHP cgi binary supports the <code>-b</code> flag. If not, compile PHP with the <code>--enable-fastcgi</code> option or <a href="#http-front-end">use Apache or IIS as a front-end</a> instead.</p>
+<p> Check if your PHP cgi binary supports the <code>-b</code> flag. If not, compile PHP with the <code>--enable-fastcgi</code> option or <a href="#http-front-end">use Apache or IIS as a front-end</a> instead. On Windows one could also copy a wrapper binary into the <code>WEB-INF/cgi/</code> folder, for example the <code>launcher.exe</code> from the <code>PHPIntKitForWindows.zip</code> available from <a href="http://www-128.ibm.com/alphaworks">alphaworks</a>.</p>
 <p>
 Download and install the J2EE binary: copy <code>JavaBridge.war</code> into the tomcat <code>webapps</code> folder.
 </p>
@@ -1477,17 +1451,20 @@ refences the <code>DocumentHome</code> from the library, which is assignment-inc
 In contrast the Sun J2EE server correctly separates the beans/applications; the <code>$objref</code> is a unique proxy generated by a parent of the <code>WebAppClassLoader</code>, so that <code>narrow</code> can always cast the proxy to <code>DocumentHome@WebAppClassLoader</code>, even if a class with the same name is already available from the <code>WebAppClassLoader</code>.</p>
 </ul>
 
-</FONT></P> <H1>Related</H1> <P><FONT > <ul> <li> <a
-href="http://www.eclipse.org/proposals/php-ide/">A PHP IDE</a>.  <li>
-<a href="http://zez.org/article/articleview/26/">A tutorial how to use
-the predecessor &quot;ext/java&quot;</a>.  <li> <a
-href="http://www.caucho.com/resin-3.0/php/index.xtp">A commercial free
-(GPL) PHP engine written in pure java</a>.  <li> <a
+</FONT></P> <H1>Related</H1> <P><FONT > <ul> 
+<li> <a
+href="http://www.eclipse.org/proposals/php-ide/">A PHP IDE</a>.  
+<li> <a
+href="http://www.caucho.com/resin-3.0/php/index.xtp">A commercial, free
+(GPL) PHP engine written in pure java</a>.  
+<li> <a
 href="http://www.zend.com/store/products/zend-platform/java.php">A
-commercial non-free bridge which uses the same technology as the
-PHP/Java Bridge</a>.  <li> <a
+commercial, non-free bridge which uses the same technology as the
+PHP/Java Bridge</a>.  
+<li> <a
 href="http://www.devx.com/Java/Article/21707">Calling Enterprise Java
-Beans from PHP/SOAP</a>.  <li> <a
+Beans from PHP/SOAP</a>.  
+<li> <a
 href="examples/J2EE/RMI-IIOP/README">Calling
 Enterprise Java Beans from the PHP/Java Bridge</a>.  </ul> </FONT></P>
 

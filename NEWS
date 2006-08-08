@@ -3,13 +3,60 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 3.1.8:
+
+* Bugfixes only, see the ChangeLog for details.
+
+
 Version 3.1.7:
 
+* The php-java-bridge does not use Java anymore. The bridge and all
+libraries which depend on it are compiled to native code. For backward
+compatibility the bridge uses a real VM when the PHP .ini option
+java.java=<java> is set or if the autoconf scripts do not detect a
+sufficient compiler (gcc >= 3.2.3 is required).
+
+* The Lucene4php and Itext4php libraries are now available as native code.
+
+* The install instructions and install procedure for the standalone
+component has been removed in favor of the J2EE or native
+component. -- For those who know how to install the standalone
+component: this option is still available and supported, but new users
+should use the native or J2EE component instead.
+
+* The INSTALL.WINDOWS document has been removed, please read the
+INSTALL.J2EE document instead.
+
+* The ext/java compatibility option has been removed.
+
+* A cast to string now behaves as __toString(). In previous versions
+"{$ex->__toString()}" was necessary to print the stack trace. The
+following code now works as expected:
+
+catch (JavaException $ex) {
+  echo "Exception occured: $ex";
+}
+
+
+* FastCGI SAPI on Windows: On Windows the php-cgi.exe currently does
+not support the required "-b" flag, therefore the bridge tries to
+start a persistend php-cgi process via a program called
+"launcher.exe".  It uses the following arguments:
+...\WEB-INF\cgi\launcher.exe -a "path\to\php-cgi.exe" -b 9667. If this
+fails (for example if launcher.exe does not exist), the bridge
+switches off FastCGI after 1.5 seconds, as before. The "launcher.exe"
+is not part of the PHP/Java Bridge download; IBM Websphere users can
+find such a binary in the "PHP Integration Kit for Windows":
+PHPIntKitForWindows.zip, available from alphaworks.
+
+* java_session(<name>) with a non-null <name> does no longer allocate a
+session from the J2EE container.
+
 * The system property php.java.bridge.promiscuous=true can be used to
-connect php clients with a J2EE node running in the same intranet
-network. For example when the HTTP/PHP web server is running on
-computer W, and the tomcat cluster nodes are on computer K1, ..., Kn,
-the nodes can be started with:
+allow php clients running on the HTTP server to connect back to a J2EE
+node running in the same intranet network. For example when the
+HTTP/PHP web server is running on computer W and the tomcat cluster
+nodes are on computer K1, ..., Kn, the nodes can be started with:
 
   JAVA_HOME=/opt/jdk1.5 \
   JAVA_OPTS="-Dphp.java.bridge.promiscuous=true" \

@@ -15,11 +15,13 @@ int main() {
   FILE *peer;
   char probe1=76, probe1R;
   char probe2=34, probe2R;
+  char *name = tmpnam(0);
   int n, pid, ret, sock;
 
   saddr.sun_family = AF_UNIX;
   memset(saddr.sun_path, 0, sizeof saddr.sun_path);
-  *strcpy(saddr.sun_path, "test.socket")=0;
+  if(!name) name = "test.socket";
+  *strcpy(saddr.sun_path, name)=0;
   unlink(saddr.sun_path);
   if(!(pid=fork())) {
     sock = socket (PF_UNIX, SOCK_STREAM, 0);
@@ -62,7 +64,6 @@ int main() {
 [have_abstract_namespace=no])
 ])
 
-  rm -f test.socket
   if test "$have_abstract_namespace" = "yes"; then
 	AC_MSG_RESULT(yes)
 	AC_DEFINE(HAVE_ABSTRACT_NAMESPACE,1, [Define if your system supports the linux abstract namespace])

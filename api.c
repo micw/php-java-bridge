@@ -195,6 +195,7 @@ short EXT_GLOBAL(reset)(INTERNAL_FUNCTION_PARAMETERS)
   return 1;
 }
 
+static const char end[] = "endDocument";
 short EXT_GLOBAL(begin_document)(INTERNAL_FUNCTION_PARAMETERS)
 {
   static const char begin[] = "beginDocument";
@@ -209,12 +210,15 @@ short EXT_GLOBAL(begin_document)(INTERNAL_FUNCTION_PARAMETERS)
 
   (*jenv)->writeInvokeBegin(jenv, 0, (char*)begin, sizeof(begin)-1, 'I', return_value);
   if(!(*jenv)->writeInvokeEnd(jenv)) return 0;
-  EXT_GLOBAL(begin_async)(jenv);
+  if(!EXT_GLOBAL(begin_async)(jenv)) {
+	(*jenv)->writeInvokeBegin(jenv, 0, (char*)end, sizeof(end)-1, 'I', return_value);
+	(*jenv)->writeInvokeEnd(jenv);
+	EXT_GLOBAL(sys_error)("could not open async buffer",94);
+  }
   return 1;
 }
 
 short EXT_GLOBAL(end_document)(INTERNAL_FUNCTION_PARAMETERS) {
-  static const char end[] = "endDocument";
   proxyenv *jenv;
   if (ZEND_NUM_ARGS()!=0) WRONG_PARAM_COUNT_WITH_RETVAL(0);
   jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
@@ -263,10 +267,7 @@ short EXT_GLOBAL(values)(INTERNAL_FUNCTION_PARAMETERS)
 
 static const char warn_session[] = 
   "the session module's session_write_close() tried to write garbage, aborted. \
--- Have you loaded the session module before the java module? \n Use \
-java_session(session_id())->put(key,val) instead of the \
-\"$_SESSION[key]=val\" syntax, if you don't want to depend on the \
-session module. Else if \"session_write_close();\" at the end of \
+-- If \"session_write_close();\" at the end of \
 your script fixes this problem, please report this bug \
 to the PHP release team.";
 static const char identity[] = "serialID";
@@ -369,7 +370,7 @@ short EXT_GLOBAL(deserialize)(INTERNAL_FUNCTION_PARAMETERS)
 
 short EXT_GLOBAL(get_closure)(INTERNAL_FUNCTION_PARAMETERS)
 {
-  char *string_key;
+  zstr string_key;
   ulong num_key;
   zval **pobj, **pfkt, **pclass, **val;
   long class = 0;
@@ -399,8 +400,8 @@ short EXT_GLOBAL(get_closure)(INTERNAL_FUNCTION_PARAMETERS)
       while ((key_type = zend_hash_get_current_key(Z_ARRVAL_PP(pfkt), &string_key, &num_key, 1)) != HASH_KEY_NON_EXISTANT) {
 	if ((zend_hash_get_current_data(Z_ARRVAL_PP(pfkt), (void**)&val) == SUCCESS)) {
 	  if(Z_TYPE_PP(val) == IS_STRING && key_type==HASH_KEY_IS_STRING) { 
-	    size_t len = strlen(string_key);
-	    (*jenv)->writePairBegin_s(jenv, string_key, len);
+	    size_t len = strlen(ZSTR_S(string_key));
+	    (*jenv)->writePairBegin_s(jenv, ZSTR_S(string_key), len);
 	    (*jenv)->writeString(jenv, Z_STRVAL_PP(val), Z_STRLEN_PP(val));
 	    (*jenv)->writePairEnd(jenv);
 	  } else {

@@ -151,8 +151,7 @@ installation and start the system http service again.
 
 The modules/ directory also contains a file "JavaBridge.war" which can
 be used to run php within a pure java application server. Please see
-the bottom of the INSTALL.J2EE document how to install it into IBM
-WebSphere, Oracle 10g, Tomcat5 or others.
+the INSTALL.WEBSPHERE or INSTALL.ORACLE documents for details.
 
 If something went wrong, for example if you have forgotten to set
 JAVA_HOME or if configure failed because the installed autoconf
@@ -230,8 +229,8 @@ installed autoconf scripts are too old).
 
 To create a windows php_java.dll you'll need:
 
-* A Unix machine with a C cross compiler, for example
-  386-pc-mingw32-gcc
+* A Windows machine with MINGW installed or a Unix machine with a C
+  cross compiler, for example i386-pc-mingw32-gcc.
 
 * the standard windows includes in the ./include directory
 

@@ -3,9 +3,7 @@ Build and execution instructions:
   NOTE: If you have Security Enhanced Linux, you must update the policy
   and tag the files with the correct SEL contexts, please see the README.
 
-  Install mono 1.1.8 or above. Install the IKVM.GNU.Classpath.dll and
-  IKVM.Runtime.dll. Install ikvmc.exe from the IKVM project:
-  http://www.ikvm.net.
+  Install mono 1.1.8 or above, if not already installed.
 
   In the directory php-java-bridge-p.x.y type:
 
@@ -47,7 +45,7 @@ Build and execution instructions:
           apachectl restart
 
 
-  OPTION 1: You can start the bridge as a sub-process of apache. Disable
+  You can start the bridge as a sub-process of apache. Disable
   mono.socketname, and mono.hosts. For example:
 
           extension = java.so

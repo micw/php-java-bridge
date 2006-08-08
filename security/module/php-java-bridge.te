@@ -1,4 +1,4 @@
-policy_module(javabridge,2.0.0)
+policy_module(javabridge,3.1.7)
 
 ########################################
 #
@@ -12,9 +12,6 @@ init_daemon_domain(javabridge_t,javabridge_exec_t)
 domain_type(javabridge_t)
 domain_entry_file(javabridge_t, javabridge_exec_t)
 
-#type javabridge_log_t;
-#logging_log_file(javabridge_log_t)
-
 type javabridge_tmp_t;
 files_tmp_file(javabridge_tmp_t)
 
@@ -26,10 +23,20 @@ files_pid_file(javabridge_var_run_t)
 # javabridge local policy
 #
 gen_require(`
-	type sbin_t,inaddr_any_node_t,netif_t,lo_node_t,httpd_sys_content_t,port_t,var_log_t,devpts_t,httpd_t,java_exec_t;
+	type httpd_log_t,sbin_t,inaddr_any_node_t,netif_t,lo_node_t,httpd_sys_content_t,port_t,var_log_t,devpts_t,httpd_t,java_exec_t;
 ')
-allow javabridge_t var_log_t:file ra_file_perms;
-allow javabridge_t javabridge_tmp_t:file manage_file_perms;
+
+####################
+# Domain transitions
+domain_auto_trans(httpd_t, javabridge_exec_t, javabridge_t)
+
+
+#####################
+# tmp 
+allow javabridge_t javabridge_tmp_t:dir create_dir_perms;
+allow javabridge_t javabridge_tmp_t:file create_file_perms;
+files_tmp_filetrans(javabridge_t,javabridge_tmp_t,{ file dir })
+
 
 ###########
 allow javabridge_t devpts_t:chr_file { read write };
@@ -55,7 +62,7 @@ dontaudit javabridge_t inaddr_any_node_t:tcp_socket node_bind;
 dontaudit javabridge_t sbin_t:dir search;
 #########
 
-#########
+##################################
 # /usr/bin/java
 corecmd_exec_bin(javabridge_t);
 # /usr/bin/gij
@@ -89,14 +96,26 @@ miscfiles_read_localization(javabridge_t)
 # Read global fonts and font config
 miscfiles_read_fonts(javabridge_t)
 
+###################################################
 # Read /var/www
 allow javabridge_t httpd_sys_content_t:dir r_dir_perms;
 allow javabridge_t httpd_sys_content_t:file r_file_perms;
 allow javabridge_t httpd_sys_content_t:lnk_file r_file_perms;
 
 sysnet_read_config(javabridge_t)
-#########
 
+###################################################
+# Running the back-end as a sub-component of apache
+apache_use_fds(javabridge_t)
+apache_sigchld(javabridge_t)
+allow javabridge_t httpd_t:fifo_file rw_file_perms;
+allow httpd_t javabridge_t:process { sigkill signal };
+# append to apache log
+allow javabridge_t httpd_log_t:file append;
+allow javabridge_t self:fifo_file { getattr read write };
+allow javabridge_t self:process { getsched sigkill };
+
+####################################################
 # Insane settings needed for sun java 1.5.  Comment this out, if you
 # can.
 allow javabridge_t javabridge_tmp_t:file { execute };

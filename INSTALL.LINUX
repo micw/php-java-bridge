@@ -1,77 +1,73 @@
-Installing the PHP/Java Bridge on Linux
----------------------------------------
+Installing the PHP/Java Bridge native Component
+-----------------------------------------------
 
-On RedHat Enterprise Linux ("RHEL") or Fedora Linux ("FC") download
-and install the java, PHP, httpd and php-java-bridge RPM files. You
-need to download the following PHP/Java Bridge RPM files:
+* Check if the Java libraries you're interested in are available as
+  native binaries. If not, you need to install Java and the J2EE
+  component, see below.
 
-  For PHP 4 (>= 4.3.2): php-java-bridge-x.y.z-1.RHEL.i386.rpm
-  For PHP 5.0.x       : php-java-bridge-x.y.z-1.FC4.i386.rpm
-  For PHP >= 5.1.1    : php-java-bridge-x.y.z-1.FC5.i386.rpm
+* Download and install the PHP/Java Bridge base and the libraries. For
+  example:
 
-------------------------------------------------------------------------
-On other Linux variants please either create a binary RPM distribution
-from the source RPM, for example with the command:
+    rpm -i php-java-bridge-x.y.z-1-i386.rpm
+    rpm -i lucene4php-x.y.z-1.i386.rpm
+    rpm -i itext4php-x.y.z-1.i386.rpm
 
-   rpmbuild --rebuild php-java-bridge*src.rpm
+* Each native library contains at least one PHP example in
 
-or, if you have downloaded the source tarball, use the commands:
+    /usr/share/doc/<libname>/example.
 
-   tar xjf php-java-bridge_*.tar.bz2
-   cp php-java-bridge-*/php-java-bridge.spec /usr/src/redhat/SPECS
-   cp php-java-bridge_*.tar.bz2 /usr/src/redhat/SOURCES
-   rpmbuild -bb /usr/src/redhat/SPECS/php-java-bridge.spec
+* Please report bugs/problems to the mailing list:
 
-or follow the instructions from the generic INSTALL.J2EE document
-instead.
-------------------------------------------------------------------------
-
-Install the RPM files, for example with:
-
-    rpm -i j2re-1_4_2_09-linux-i586.rpm
-    rpm -i httpd-2.y.z-p.i386.rpm
-    rpm -i php-x.y.z-p.i386.rpm
-    rpm -i php-java-bridge-x.y.z-p.i386.rpm
-
-Either install the tomcat back-end:
-
-    rpm -i tomcat5-x.y.z-p.i386.rpm
-    rpm -i php-java-bridge-tomcat-x.y.z-p.i386.rpm
-
-Or install the standalone back-end:
-
-    rpm -i php-java-bridge-standalone-x.y.z-p.i386.rpm
-
-Or deploy the J2EE back-end:
-
-    Copy the JavaBridge.war to the autodeploy folder of your J2EE
-    server and edit the java.hosts and java.servlet options in
-    /etc/php.d/java.ini, see the INSTALL.J2EE document for details.
-
-If Security Enhanced Linux is enabled, the above commands should have
-provided instructions how to install the php-java-bridge.te and
-php-java-bridge.fc policy files.
+    php-java-bridge-users@lists.sourceforge.net
 
 
-J2EE/Servlet back-end
-----------------------
+Installing the PHP/Java Bridge J2EE Component
+---------------------------------------------
 
-If you have installed the tomcat or J2EE back-end, check the PHP .ini
-settings. If the Apache document root should not be shared with the
-J2EE or servlet webapps directory, set java.servlet to On, example:
+* Download and install a J2EE application server or servlet engine,
+  for example Apache Tomcat:
 
-  java.hosts=127.0.0.1:8080; or 8888 for Oracle, 9080 for WebSphere
-  java.servlet=On
+    rpm -i tomcat5-5.0.30-5jpp_6fc.i386.rpm
 
-If the Apache document root should be shared with the J2EE or servlet webapps
-directory, set java.servlet to User:
+* Download and install the PHP/Java Bridge base:
 
-  java.hosts=127.0.0.1:8080; or 8888 for Oracle, 9080 for WebSphere
-  java.servlet=User
+    rpm -i php-java-bridge-x.y.z-1-i386.rpm
 
-and change the DocumentRoot and Directory setting in the Apache httpd
-configuration file /etc/httpd/conf/httpd.conf. Old lines marked with 
-a -, added lines with a +:
+* Either download and install the precompiled PHP/Java Bridge component
+  for tomcat:
+
+    rpm -i php-java-bridge-tomcat-x.y.z-1.i386.rpm
+
+  This creates a file /etc/php.d/java-servlet.ini which contains the
+  following settings:
+
+     [java]
+     java.hosts     = 127.0.0.1:8080
+     java.servlet   = On
+
+  Or install the J2EE component "JavaBridge.war" manually: disable
+  Security Enhanced Linux (if enabled), deploy the JavaBridge.war into
+  your J2EE server, example for Tomcat:
+  
+    setenforce Permissive
+    cp JavaBridge.war /usr/share/tomcat5/webapps
+
+  Create the file /etc/php.d/java-servlet.ini with the following content:
+
+     [java]
+     java.hosts     = 127.0.0.1:8080 ;or 8888 for Oracle, 9080 for WebSphere
+     java.servlet   = On
+
+* If the HTTP document root should be shared with the J2EE or
+  servlet webapps directory, change /etc/php.d/java-servlet.ini; set
+  java.servlet to User:
+
+     java.hosts     = 127.0.0.1:8080; or 8888 for Oracle, 9080 for WebSphere
+     java.servlet   = User
+
+   and change the DocumentRoot and Directory setting in the Apache httpd
+   configuration file /etc/httpd/conf/httpd.conf. Old lines are marked
+   with a -, added lines with a +:
 
     # DocumentRoot: The directory out of which you will serve your
     # documents. By default, all requests are taken from this directory, but
@@ -85,63 +81,62 @@ a -, added lines with a +:
   - <Directory "/var/www/html">
   + <Directory "/usr/share/tomcat5/webapps">
 
-The above example assumes that the shared webapps directory is
-/usr/share/tomcat5/webapps. Change it accordingly.
+  The above example assumes that the shared webapps directory is
+  /usr/share/tomcat5/webapps. Change it accordingly.
 
+* Restart the HTTP server and the J2EE back-end, for example:
 
-Re-start the tomcat or J2EE back-end and the Apache HTTP server, for example with:
-    
     service tomcat5 restart
     service httpd restart
 
-and browse to;
+* Visit http://localhost:<port>/JavaBridge and click on test.php.
+  The <port> is 8888 (Oracle), 9080 (WebSphere) or 8080 (Tomcat/Geronimo).
 
-    http://localhost:8080/JavaBridge/test.php 
-    http://yourHost/JavaBridge/test.php
+* If the HTTP document root is shared with the J2EE or servlet webapps
+  directory, browse to http://your.host.com/JavaBridge and click on
+  test.php. Otherwise copy test.php to the document root of the web 
+  server (/var/www/html) and browse to http://your.host.com/test.php.
 
+* Copy your java libraries (.jar files) into the extension_dir/lib [1]
+  directory and your native shared libraries into extension_dir [1].
 
-Standalone back-end
--------------------
+* Please report bugs/problems to the mailing list:
 
-If you have installed the standalone back-end, re-start the back-end
-and apache, copy the test.php from the documentation folder
-(/usr/share/doc/php-java-bridge-[version]) to the web server document
-root (/var/www/html) and check:
+    php-java-bridge-users@lists.sourceforge.net
 
-    http://yourHost/test.php
+---
+[1] The extension_dir is the PHP extension directory, usually
+/usr/lib/php/modules. It can be set in the php .ini file [2] with
+(example): extension_dir="/usr/local/lib/php/modules".
 
-
-Custom Libraries
-----------------
-
-You can install your java libraries (.jar files) in extension_dir/lib
-(see output of phpinfo) or in the J2EE back-end's WEB-INF/lib folder
-or in /usr/share/java/ext or /usr/share/java.
-
-All java libraries located in extension_dir/lib, /usr/share/java/ext
-and WEB-INF/lib (for the J2EE/servlet back-end) are automatically
-loaded whenever the JVM starts.
-
-Impure java libraries (=libraries which use the java native interface)
-must be stored in /usr/share/java/ext or extension_dir/lib. Shared
-libraries required by the impure java libraries must be stored in the
-java.library.path, which is usually the PHP extension_dir.
-
-Java libraries which should be loaded or re-loaded on demand can be
-stored in a sub-directory of /usr/share/java or in a sub-directory of
-extension_dir/lib. They can be linked into the PHP files at run-time
-using the command java_require("library1.jar;library2.jar;..."), see
-the README for details.
+[2] The php .ini file is the global PHP configuration file. It
+consists of a main file /etc/php.ini and several module specific files
+located in /etc/php.d/. The two relevant files are /etc/php.d/java.ini
+and /etc/php.d/java-servlet.ini.
 
 
-Optional: Translating Java to PHP classes
------------------------------------------
+Known Linux Issues 
+------------------
 
-PHP classes can be created from Java libraries with the command:
+* Only the precompiled php-java-bridge-tomcat-x.y.z-1.i386.rpm contains 
+  Security Enhanced Linux contexts. When the J2EE component "JavaBridge.war"
+  has been installed manually, one can extract the permissions
+  from the audit log or with the command: audit2allow -ld and add the
+  rules to the base php-java-bridge-x.y.z-1-i386.rpm, see
+  /usr/share/doc/php-java-bridge-3.1.7/security/README (Fedora Core 4 or
+  below) or /usr/share/doc/php-java-bridge-3.1.7/security/module/README
+  (Fedora Core 5 or above).
 
-   java -jar JavaBridge.jar --convert /usr/share/pear JAVALIBRARY.jar
+* On Linux the default Java VM is GNU Java. If you want to use the SUN
+  or IBM Java VM, set the JAVA_HOME option in /etc/tomcat5/tomcat5.conf.
 
-The PHP classes are installed in /usr/share/pear/JAVALIBRARY
+* The precompiled php-java-bridge*.rpm binaries are 32 bit binaries
+  for the x86 architecture. It is possible to build sparc, powerpc or
+  64 bit binaries with the following command: 
 
-Please see the README and http://php-java-bridge.sourceforge.net
-for further information.
+    rpmbuild --rebuild php-java-bridge-x.y.z-1.src.rpm
+
+  or, if you have downloaded the source archive:
+
+    rpmbuild -tb php-java-bridge_x.y.z.tar.bz2
+

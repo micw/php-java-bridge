@@ -23,6 +23,7 @@ try {
     new java("java.lang.String", null);
   } catch(java_exception $ex) {
     // print the stack trace to $trace
+    // note that a simple "echo (string)$ex" also prints the stack trace
     $trace = new java("java.io.ByteArrayOutputStream");
     $ex->printStackTrace(new java("java.io.PrintStream", $trace));
 

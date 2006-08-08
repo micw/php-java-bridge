@@ -27,12 +27,15 @@ import php.java.servlet.ConnectionPool.ConnectionException;
  * administrator and if a fast cgi binary is installed in the JavaBridge web application or
  * DEFAULT_CGI_LOCATIONS, the bridge can automatically start one FCGI
  * server on the computer. Default is Autostart.  
- * The admin may start a FCGI
+ * <p>The admin may start a FCGI
  * server for all users with the command:<br><code> cd /tmp<br>
  * X_JAVABRIDGE_OVERRIDE_HOSTS="/" PHP_FCGI_CHILDREN="20"
  * PHP_FCGI_MAX_REQUESTS="5000" /usr/bin/php-cgi -b 127.0.0.1:9667<br>
  * </code>
- * 
+ * </p>
+ * <p>When the program <code>/bin/sh</code> does not exist, a program called <code>launcher.exe</code>
+ * is called instead:
+ * <code>launcher.exe -a "path_to_php-cgi.exe" -b 9667</code>.</p>
  * @see php.java.bridge.Util#DEFAULT_CGI_LOCATIONS
  * @author jostb
  */
@@ -139,7 +142,8 @@ public class FastCGIServlet extends CGIServlet {
 "For example with the commands: \n\n" +
 "cd " + base + "\n" + 
 "chmod +x " + wrapper + "\n" + 
-"X_JAVABRIDGE_OVERRIDE_HOSTS=\"/\" PHP_FCGI_CHILDREN=\"20\" PHP_FCGI_MAX_REQUESTS=\"5000\" "+wrapper+" -c "+wrapper+".ini -b 127.0.0.1:9667\n\n";
+"X_JAVABRIDGE_OVERRIDE_HOSTS=\"/\" PHP_FCGI_CHILDREN=\"20\" PHP_FCGI_MAX_REQUESTS=\"5000\" "+wrapper+" -c "+wrapper+".ini -b 127.0.0.1:" +
+fcgi_channel+"\n\n";
         return msg;
     }
     
@@ -570,7 +574,8 @@ public class FastCGIServlet extends CGIServlet {
 	    } catch (InterruptedException e) {
 	      throw new ServletException(e);
 	    } finally {
-	        // Destroy physical connection, if exception occured, so that the PHP side doesn't keep unsent data
+	        // Destroy physical connection if exception occured, 
+		// so that the PHP side doesn't keep unsent data
 	        // A more elegant approach would be to use the FCGI ABORT request.
 		if(connection!=null) connection.setIsClosed(); 
 	        if(in!=null) try {in.close();} catch (IOException e) {}

@@ -9,6 +9,10 @@ daemon_domain(javabridge, `, nscd_client_domain');
 # log_domain(javabridge);
 tmp_domain(javabridge);
 
+# Domain transitions
+####################
+domain_auto_trans(httpd_t, javabridge_exec_t, javabridge_t)
+
 # -- base file read access ---------
 # We can't use the base_file_read_access macro on FC3.
 # The following is a copy of the FC4 macro:
@@ -64,6 +68,12 @@ allow javabridge_t etc_runtime_t:{ file lnk_file } r_file_perms;
 
 # Read /var/www
 r_dir_file(javabridge_t, httpd_sys_content_t)
+
+###################################################
+# Running the back-end as a sub-component of apache
+allow javabridge_t httpd_log_t:file append;
+allow httpd_t javabridge_t:process { sigkill signal };
+
 
 # Insane settings needed for sun java 1.5.  Comment this out, if you
 # can.

@@ -2,29 +2,33 @@ Testing the included PHP 5 binaries
 -----------------------------------
 
 * The JavaBridge.war file contains PHP binaries for Solaris (x86),
-  Linux (x86), and Windows (x86). To test them double-click on test.bat
-  or test.sh. The test extracts the JavaBridge.jar, the php_java.dll or
-  java.so module and the PHP 5.1 php-cgi executable and runs a simple
-  test.
+Linux (x86), and Windows (x86). To test them double-click on test.bat
+or test.sh. The test extracts the JavaBridge.jar, the php_java.dll or
+java.so module and the PHP 5.1 php-cgi executable and runs a simple
+test.
 
 * Check the RESULT.html, it should contain the settings of the
-  PHP/Java Bridge module and the Java properties at the bottom of the
-  page.
+PHP/Java Bridge module and the Java properties at the bottom of the
+page.
 
 
 Installing the PHP/Java Bridge J2EE Component
 ---------------------------------------------
 
 * Install a J2EE application server or servlet engine, for example
-  Tomcat 5.5.9, Oracle 10g or WebSphere 6.
+  Apache Geronimo, Tomcat 5.5.9, Oracle 10g or WebSphere 6.
 
 * Extract the files from the php-java-bridge J2EE download and deploy
-  JavaBridge.war into your J2EE server, example for tomcat:
+  JavaBridge.war into your J2EE server, example for Tomcat on Unix: 
   
     cp JavaBridge.war $CATALINA_HOME/webapps/
 
+  Example for Apache Geronimo on Windows:
+
+    copy JavaBridge.war "\Program Files\IBM\WebSphereCommunityEdition\deploy"
+
 * Visit http://localhost:<port>/JavaBridge and click on test.php.
-  The <port> is 8888 (Oracle), 9080 (WebSphere) or 8080 (Tomcat).
+  The <port> is 8888 (Oracle), 9080 (WebSphere) or 8080 (Tomcat/Geronimo).
 
 * Please see the README and http://php-java-bridge.sourceforge.net
   for further information.
@@ -37,9 +41,15 @@ NOTE: Linux RPMs contain Security Enhanced Linux contexts. If you want
 to install software on a SEL system (RHEL, Fedora, ...), please use
 the RPM build system instead, see INSTALL.LINUX.
 
-* Install Apache or IIS. Install PHP, for example PHP 5.1.x.
+* Install Apache or IIS, if not already installed.
 
-* Check if your php extension_dir contains the java extension. If not,
+* Install PHP, if not already installed. For example add these lines
+  to the end of your Apache2 httpd.conf file:
+
+    LoadModule php5_module "c:/php/php5apache2.dll"
+    AddType application/x-httpd-php .php
+
+* Check if your php extension_dir [1] contains the java extension. If not,
   copy the appropriate java-<architecture>-<os>.so or
   java-<architecture>-<os>.dll from the JavaBridge.war file to your php
   extension directory:
@@ -54,10 +64,8 @@ the RPM build system instead, see INSTALL.LINUX.
   compile a php_java.dll or java.so from the source, as described in the
   INSTALL document located in the source download archive.
 
-* Check if the java .ini entry (usually
-  /usr/local/lib/php.ini or /etc/php.d/java.ini or c:\windows\php.ini
-  or c:\winnt\php.ini) loads the java extension and connects php to
-  the servlet back-end, e.g.:
+* Check if the java .ini [2] entry loads the java extension and
+  connects php to the servlet back-end, e.g.:
   
     extension = java.so
     ; extension = php_java.dll
@@ -82,23 +90,58 @@ the RPM build system instead, see INSTALL.LINUX.
 
     http://yourHost.com/JavaBridge/test.php
 
-* On production systems set the following flags in your php ini file
+* On production systems set the following flags in your php ini file [2]
   so that the back-end can generate standard error pages.
 
     log_errors     = On
     display_errors = Off
     html_errors    = Off
 
+* Copy your java libraries (.jar files) into the extension_dir/lib [1]
+  directory and your native shared libraries (on windows: dll files)
+  into extension_dir [1].
+
 * Please report bugs/problems to the mailing list:
 
     php-java-bridge-users@lists.sourceforge.net
+
+---
+[1] The extension_dir is the PHP extension directory, usually
+/usr/lib/php/modules or c:\php on windows. It can be set in the php
+.ini file [2] with (example): extension_dir="d:/php".
+
+[2] The php .ini file is the global PHP configuration file, usually
+/usr/local/lib/php.ini or /etc/php.d/java.ini or c:\windows\php.ini or
+c:\winnt\php.ini.
 
 
 Known AS Issues 
 ---------------
 
-* If you see a script exception when running java-server-faces/index.php
-  and the name is displayed as "null", check if apache is able to
-  execute the script. If not, stop apache or change the script
-  location from "@80:/java-server-faces/helloWorld.php" to
-  "/java-server-faces/helloWorld.php".
+* On Windows the php-cgi.exe doesn't support the -b flag. Therefore
+either a IIS or Apache front-end or an external PHP "launcher.exe" is
+required to run PHP efficiently. IBM Websphere or Apache Geronimo
+users can find the "launcher.exe" in the "PHP Integration Kit for
+Windows": PHPIntKitForWindows.zip, available from alphaworks.
+
+* If you see a script exception when running
+java-server-faces/index.php and the name is displayed as "null", check
+if Java can call the PHP script on the web server (PHP >= 5 must be
+installed on the web server). If not, stop the web server or change
+the script location from "@80:/java-server-faces/helloWorld.php" to
+"/java-server-faces/helloWorld.php".
+
+
+FAQ
+---
+
+Q: In previous versions it was possible to just drop the
+JavaBridge.jar and the PHP java dll into the PHP extension
+directory. Why isn't this option availablable anmore? Starting a Java
+application server just to call out to some Java libraries seems to be
+overkill.
+
+A: This is still possible. But since the J2EE component is available,
+the standalone component is obsolete. The J2EE component works in a
+full featured 1GB application server as well as in a 100K servlet
+engine.

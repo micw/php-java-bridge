@@ -1,0 +1,50 @@
+This simple example shows how to create PDF documents from PHP
+
+Installing the itext.jar library on a web server
+-------------------------------------------------
+
+1. Note: If you have already installed the Itext PHP classes, for example
+   in /usr/share/pear, you can skip this step.
+
+   Locate the JavaBridge.jar, the itext.jar and choose an include
+   directory from the PHP include_path, for example /usr/share/pear. The
+   following example assumes that JavaBridge.jar and itext.jar are in
+   the current working directory. It reads both files, creates and
+   installs the itext PHP classes in /usr/share/pear/.
+
+     java -jar JavaBridge.jar --convert /usr/share/pear itext.jar
+
+  If you don't have Java installed and you have configured the
+  PHP/Java Bridge to run without Java (i.e. configured without the
+  "--with-java=..." option), use:
+
+     modules/java --convert /usr/share/pear itext.jar
+
+
+2. Test the installation, type:
+
+     php itext_pdf.php >HelloWorld.pdf
+
+3. Copy the /usr/share/pear/itext directory over to the machine that
+   hosts the web server, copy the itext_pdf.php to the web server
+   document root and copy the java.so to the web server PHP extension
+   directory. 
+
+4. If Java is not installed on the web server machine, the bridge
+   should have been configured to run without Java (ommit the
+   --with-java=... configure option). In this case also copy the files
+   "java" and "libnatcJavaBridge.so" over to the web server PHP
+   extension directory.
+
+5. For better performance it is recommended to add a php .ini
+   entry. If this entry is missing, the web server must start the bridge
+   for each request. Example:
+
+     extension=java.so
+     [java]
+
+6. Browse to:
+     
+     http://your.server.com/itext_pdf.php
+
+Please see the Itext documentation for further information.

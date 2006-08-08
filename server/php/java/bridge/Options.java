@@ -12,15 +12,20 @@ package php.java.bridge;
  */
 public final class Options {
 
-    protected byte options;
-    protected String encoding = Util.UTF8;
+    private byte options = 0;
+
+    /**
+     * Default encoding: UTF-8
+     */
+    private String encoding = null;
 
     /**
      * Returns the file encoding, see java_set_file_encoding(). This option may change for each packet.
      * @return The file encoding
      */
     public String getEncoding() {
-    	return encoding;
+	if(encoding!=null) return encoding;
+	return encoding=extJavaCompatibility()?Util.UTF8:Util.DEFAULT_ENCODING;
     }
     
     /**
@@ -64,6 +69,23 @@ public final class Options {
  
     /** re-initialize for keep alive */
     protected void recycle() {
-        encoding = Util.UTF8;
+        encoding = null;
+    }
+
+    /**
+     * Set the new file encoding.
+     * @param symbol The new file encoding, for example "UTF-8".
+     */
+    public void setEncoding(String symbol) {
+	this.encoding = symbol;
+    }
+
+    /**
+     * Update the current request options
+     * @param b The options from the request header.
+     */
+    public void updateOptions(byte b) {
+	encoding = null;
+	this.options = b;
     }
 }

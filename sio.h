@@ -1,39 +1,23 @@
-#ifndef SIO_H
-#define SIO_H
+/*-*- mode: C; tab-width:4 -*-*/
+
+/**\file 
+ * Proxyenv IO decorator which buffers the output.
+ */
+
+#ifndef JAVA_SIO_H
+#define JAVA_SIO_H
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#ifdef HAVE_BROKEN_STDIO
-				/* Workaround for broken stdio
-				   implementations on Solaris and
-				   Windows */
-typedef struct {
-  short eof:1;
-  short err:1;
-  int file;
-} SFILE;
+#include <unistd.h>
+#include "java_bridge.h"
 
-extern size_t sfwrite(const  void  *ptr,  size_t  size,  size_t  nmemb,  SFILE *stream);
-extern size_t sfread(void  *ptr,  size_t  size,  size_t  nmemb,  SFILE *stream);
-extern SFILE* sfdopen(int fd, char*flags);
-extern int sfclose(SFILE *stream);
-#define SFREAD sfread
-#define SFWRITE sfwrite
-#define SFDOPEN sfdopen
-#define SFCLOSE sfclose
-#define SFEOF(peer) (peer->eof) 
-#define SFERROR(peer) (peer->err)
-#else
-				/* Linux, BSD, ... */
-#define SFILE FILE
-#define SFWRITE fwrite
-#define SFREAD  fread
-#define SFDOPEN fdopen
-#define SFCLOSE fclose
-#define SFEOF   feof
-#define SFERROR ferror
-#endif
+#define ASYNC_SEND_SIZE 8192
+
+extern ssize_t EXT_GLOBAL(sfwrite)(const void *ptr, size_t length, SFILE *stream);
+extern SFILE* EXT_GLOBAL(sfdopen)(proxyenv*env);
+extern int EXT_GLOBAL(sfclose)(SFILE *stream);
 
 #endif

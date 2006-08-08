@@ -33,6 +33,11 @@
 /* Linux: pipes created in the shared memory */
 #define SOCKNAME_SHM "/dev/shm/.php_java_bridge"/**/"XXXXXX"
 
+/* 
+ * Max. number of bytes in a context ID, should be > POSIX_PATH_MAX 
+ */
+#define CONTEXT_LEN_MAX 512
+
 
 /*
  * default log file is System.out
@@ -67,6 +72,7 @@
    re-direct or because we override re-direct */
 #define IS_OVERRIDE_REDIRECT(env) ((((*env)->peer0!=-1) || EXT_GLOBAL (get_servlet_context) (TSRMLS_C)))
 
+typedef struct sfile SFILE;
 typedef struct proxyenv_ *proxyenv;
 struct proxyenv_ {
 
@@ -107,7 +113,7 @@ struct proxyenv_ {
 	short (*handle_request)(proxyenv *env);
 	unsigned long nextValue;
 	void *result;
-	FILE *peer;
+	SFILE *peer;
 	ssize_t (*f_send)(proxyenv*env, const void *buf, size_t len);
   } async_ctx;
 

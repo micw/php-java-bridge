@@ -27,21 +27,24 @@ AC_ARG_WITH(java,  [  --with-java[[=JAVA_HOME[[,JRE_HOME]]]]
                           the binary. Otherwise the java executable will 
                           be searched using the PATH environment variable
 			  Example: --with-java=/opt/jdk1.4,/usr/java/jre1.6], PHP_JAVA="$withval", PHP_JAVA="yes")
-AC_ARG_WITH(mono,  [  --with-mono[[=/path/to/mono.exe]]
+AC_ARG_WITH(mono,  [  --with-mono[[=/path/to/mono/exe,[/path/to/dir-containing-ikvmc.exe+dlls]]] 
                           include mono support
                           Example: --with-mono=/opt/mono/bin/mono], PHP_MONO="$withval", PHP_MONO="no")
 AC_ARG_WITH(extdir,  [  --with-extdir[[=DIR]]	
                           directory which contains the shared java 
                           extension], EXTENSION_DIR="$withval", EXTENSION_DIR="`php-config --extension-dir`")
 AC_ARG_ENABLE(servlet,  [  --enable-servlet[[=JAR]]	
-                          JAR must be j2ee.jar or servlet.jar which 
-                          contains the servlet classes], SERVLET="$enableval", SERVLET="yes")
+                          include java servlet support. JAR must be the 
+                          location of j2ee.jar or servlet.jar; creates 
+                          JavaBridge.war], SERVLET="$enableval", SERVLET="yes")
 AC_ARG_ENABLE(script,  [  --enable-script[[=JAR]]	
-                          if you use JDK < 1.6 JAR must be script-api.jar 
-                          which contains the jsr223 script api], SCRIPT="$enableval", SCRIPT="yes")
+                          include java script support. If you use a 
+                          JDK < 1.6 JAR must be the location of 
+                          script-api.jar; creates php-script.jar], SCRIPT="$enableval", SCRIPT="yes")
 AC_ARG_ENABLE(faces,  [  --enable-faces[[=JAR]]	
-                          JAR must be jsf-api.jar which contains the java 
-                          server faces api], FACES="$enableval", FACES="yes")
+                          include java server faces support. JAR must be 
+                          the location of jsf-api.jar; creates 
+                          php-faces.jar], FACES="$enableval", FACES="yes")
 
 if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
 
@@ -83,6 +86,8 @@ if test "$have_jni" = "no"; then
 fi
 fi
 
+AC_CHECK_PROG(have_gcj, gcj, "yes", "no")
+
 TCP_SOCKETNAME="9167"
 EXTENSION_DISPLAY_NAME="MonoBridge"
 MONO_BRIDGE_EXE="MonoBridge.exe ICSharpCode.SharpZipLib.dll IKVM.AWT.WinForms.dll IKVM.GNU.Classpath.dll IKVM.Runtime.dll"
@@ -92,14 +97,20 @@ if test "$PHP_MONO" = "no"; then
   MONO_BRIDGE_EXE=
   TCP_SOCKETNAME="9267"
   EXTENSION_DISPLAY_NAME="JavaBridge"
-  VM_BINARIES="java RunJavaBridge"
+  if test X$PHP_JRE != X || test $have_jni = no || test $have_gcj = no; then
+    VM_BINARIES="RunJavaBridge"
+  else
+    VM_BINARIES="java RunJavaBridge"
+  fi
   MONO_BRIDGE_EXE=
 fi
 if test "$PHP_MONO" != "no"; then
    # --with-mono=/path/to/mono.exe,/path/to/ikvmc/dir
    PHP_JAVA="`echo $PHP_MONO | LANG=C awk -F, '{print $1}'`"
    PHP_MONO="`echo $PHP_MONO | LANG=C awk -F, '{print $2}'`"
-   if test "$PHP_JAVA" = "yes"; then PHP_JAVA="mono"; fi
+   if test "X$PHP_JAVA" = "X" || test "$PHP_JAVA" = "yes"; then 
+     PHP_JAVA="mono"; 
+   fi
    if test "X${PHP_MONO}" = "X"; then PHP_MONO="../unsupported"; fi
    if ! test -f ${PHP_MONO}/ikvmc.exe; then 
      AC_MSG_ERROR([ikvmc.exe not found])

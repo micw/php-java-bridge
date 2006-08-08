@@ -1,14 +1,20 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
-#include <stdlib.h>
 #include "php_java.h"
+
+#include <stdlib.h>
 #include "java_bridge.h"
 
 /* miscellaneous */
 #include <stdio.h>
 
 /* strings */
+#ifdef HAVE_STRING_H
 #include <string.h>
+#endif
+#ifdef HAVE_STRINGS_H
+#include <strings.h>
+#endif
 
 #ifdef ZEND_ENGINE_2
 #include "zend_exceptions.h"
@@ -270,7 +276,7 @@ static void writeArgument(pval* arg, short ignoreNonJava TSRMLS_DC)
     case IS_ARRAY:
       {
       zval **value;
-      char *string_key;
+      zstr string_key;
       ulong num_key;
 	  short wrote_begin=0;
 
@@ -283,7 +289,7 @@ static void writeArgument(pval* arg, short ignoreNonJava TSRMLS_DC)
 			  wrote_begin=1; 
 			  (*jenv)->writeCompositeBegin_h(jenv); 
 			}
-			(*jenv)->writePairBegin_s(jenv, string_key, strlen(string_key));
+			(*jenv)->writePairBegin_s(jenv, ZSTR_S(string_key), strlen(ZSTR_S(string_key)));
 			writeArgument(*value, ignoreNonJava TSRMLS_CC);
 			(*jenv)->writePairEnd(jenv);
             break;

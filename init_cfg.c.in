@@ -1,13 +1,24 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
+#include "php_java.h"
+
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+
+/* strncasecmp */
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
+#ifdef HAVE_STRINGS_H
+#include <strings.h>
+#endif
+
+
 /* mktemp */
 #include <stdlib.h>
 
-/* time */
-#include <time.h>
-
 #include "protocol.h"
-#include "php_java.h"
 #include "java_bridge.h"
 #include "php_java_snprintf.h"
 
@@ -74,13 +85,6 @@ void EXT_GLOBAL(update_socketname)(const char*new_value) {
 	EXT_GLOBAL(cfg)->socketname_set=1;
 	assert(EXT_GLOBAL(cfg)->sockname); if(!EXT_GLOBAL(cfg)->sockname) exit(6);
 	EXT_GLOBAL(ini_updated)|=U_SOCKNAME;
-}
-void EXT_GLOBAL(update_compatibility) (const char*new_value) {
-  if(!strncasecmp(on, new_value, 2) || !strncasecmp(on2, new_value, 1))
-	EXT_GLOBAL(cfg)->extJavaCompatibility=1;
-  else
-	EXT_GLOBAL(cfg)->extJavaCompatibility=0;
-  EXT_GLOBAL(ini_updated)|=U_EXT_JAVA_COMPATIBILITY;
 }
 void EXT_GLOBAL(update_persistent_connections)(const char*new_value) {
   /* don't bother enabling persistent connections if this sapi cannot
@@ -216,7 +220,6 @@ void EXT_GLOBAL (init_cfg) (TSRMLS_D) {
   if(!(EXT_GLOBAL (ini_updated) &U_LIBRARY_PATH)) EXT_GLOBAL(cfg)->ld_library_path=strdup(CFG_LD_LIBRARY_PATH);
   if(!(EXT_GLOBAL (ini_updated) &U_JAVA)) EXT_GLOBAL(cfg)->vm=strdup(CFG_JAVA);
   if(!(EXT_GLOBAL (ini_updated) &U_JAVA_HOME)) EXT_GLOBAL(cfg)->vm_home=strdup(CFG_JAVA_HOME);
-  if(!(EXT_GLOBAL (ini_updated) &U_EXT_JAVA_COMPATIBILITY)) EXT_GLOBAL(cfg)->extJavaCompatibility=0;
   if(!(EXT_GLOBAL (ini_updated) &U_PERSISTENT_CONNECTIONS)) EXT_GLOBAL(cfg)->persistent_connections=1;
   if(!(EXT_GLOBAL (ini_updated) &U_LOGLEVEL)) {
 	EXT_GLOBAL(cfg)->logLevel=strdup(DEFAULT_LEVEL);
@@ -274,7 +277,6 @@ short EXT_GLOBAL(option_set_by_user)(short option, int ini_user) {
   case U_SERVLET: entry = EXT_GLOBAL(cfg)->servlet; break;
   case U_WRAPPER: entry = EXT_GLOBAL(cfg)->wrapper; break;
   case U_POLICY: entry = EXT_GLOBAL(cfg)->policy; break;
-  case U_EXT_JAVA_COMPATIBILITY: return EXT_GLOBAL(cfg)->extJavaCompatibility;
   case U_PERSISTENT_CONNECTIONS: return EXT_GLOBAL(cfg)->persistent_connections;
   default: assert(0);
   }  
