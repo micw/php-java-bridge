@@ -17,7 +17,7 @@ function check($name) {
 }
 /**
  * Check if the user has copied the pre-compiled binaries from the
- * JavaBridge.war to c:/php. We currently have binaries for Linux
+ * javabridge_JavaBridge.war to c:/php. We currently have binaries for Linux
  * (php5.1), Solaris (php5.1) and Windows (php5.1 and php5.0).
  */
 function java_get_servlet_ext_name() {
@@ -52,7 +52,8 @@ function java_load_extension() {
     echo "\n<br><strong>Error: Either the java extension is not installed <br>\n";
     echo "or it was compiled against an older or newer php version.<br>\n";
     echo "See the HTTP (IIS or Apache) server log for details.</strong><br>\n";
-    exit(2);
+    echo "Will use pure PHP implementation<br>\n";
+    require_once("javabridge/Java.php");
   }
   return $current;
 } 

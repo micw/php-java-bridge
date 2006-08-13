@@ -49,8 +49,13 @@ public class ContextRunner implements Runnable {
     private int readLength() throws IOException{
 	byte buf[] = new byte[1];
 	in.read(buf);
-
-	return (0xFF&buf[0]);
+	int val = (0xFF&buf[0]);
+	if(val==0xFF) {
+	    buf = new byte[2];
+	    in.read(buf);
+	    val = (0xFF&buf[0]) | (0xFF&(buf[0]<<8));
+	}
+	return val;
     }
     private String readString(int length) throws IOException {
 	byte buf[] = new byte[length];

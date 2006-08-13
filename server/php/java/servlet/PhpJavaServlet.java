@@ -38,7 +38,7 @@ public class PhpJavaServlet extends HttpServlet {
     private static final long serialVersionUID = 3257854259629144372L;
 
     private ContextServer contextServer;
-
+    
     protected static class Logger implements ILogger {
 	private ServletContext ctx;
 	protected Logger(ServletContext ctx) {
@@ -63,8 +63,6 @@ public class PhpJavaServlet extends HttpServlet {
  	String value;
         try {
 	    value = config.getInitParameter("servlet_log_level");
-	    //value = "6"; //XFIXME
-	    if(value!=null && value.trim().length()!=0) Util.logLevel=Integer.parseInt(value.trim());
         } catch (Throwable t) {Util.printStackTrace(t);}      
   	try {
 	    value = config.getInitParameter("allow_http_tunnel");

@@ -318,6 +318,25 @@ $instance=$Cache->getInstance(); //instance will stay in the VM until the VM run
 
 </code>
 </blockquote>
+The original exception can be retrieved with <code>$ex->getCause()</code>, for example:
+<blockquote>
+<code>
+         function rethrow($ex) {<br>
+         &nbsp;&nbsp;static $NullPointerException=new JavaClass("java.lang.NullPointerException");<br>
+         &nbsp;&nbsp;$ex=$ex->getCause();
+	 &nbsp;&nbsp;if(java_instanceof($ex, $NullPointerException)) {<br>
+         &nbsp;&nbsp;&nbsp;&nbsp;throw new NullPointerException($ex); <br>
+         &nbsp;&nbsp;}<br>
+         &nbsp;&nbsp;...
+         &nbsp;&nbsp;die("unexpected exception: $ex");<br>
+         }
+      try {<br>
+       &nbsp;&nbsp;new java("java.lang.String", null);<br>
+      } catch(JavaException $ex) {<br>
+      &nbsp;&nbsp;rethrow($ex);<br>
+      }<br>
+</code>
+</blockquote>
 <br>
   <li> <code>foreach(COLLECTION)</code>: It is possible to iterate over values of java classes that implement java.util.Collection or java.util.Map.  Available in PHP 5 and above only. Example:<br><br>
 <blockquote>
@@ -555,7 +574,7 @@ On Security Enhanced Linux <code>.jar</code> files can only be loaded from locat
 
    <li> Permanently activated in the global php.ini file with an
       external <a href="#mode4">application server or servlet engine</a>.
-      PHP be can run as a CGI or FastCGI sub-component within a pure java application server or be installed as a Apache/IIS module. 
+      PHP can be run as a CGI or FastCGI sub-component within a pure java application server or be installed as a Apache/IIS module. 
 
    <li> As a script extension within a pure java application (requires Java >= 1.6).
 

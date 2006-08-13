@@ -46,8 +46,8 @@ static char*get_context(proxyenv *env, char context[CONTEXT_LEN_MAX], short*cont
 	*context_length = 
 	  EXT_GLOBAL(snprintf) (context, 
 							CONTEXT_LEN_MAX, 
-							"%c%c%s", 
-							077, l&0xFF,
+							"%c%c%c%c%s", 
+							077, 0xFF,0xFF&(l>>8),0xFF&l,
 							(*env)->servlet_ctx);
 	return context;
 }

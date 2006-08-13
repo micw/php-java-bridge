@@ -1,3 +1,31 @@
+2006-08-13  Jost Boekemeier  <jostb@intern>
+
+	* PROTOCOL.TXT: Context IDs are optional.
+	
+	* protocol.c
+	(get_context),server/php/java/bridge/http/ContextRunner.java
+	(readLength): Contexts may be larger than 256 chars.
+
+	* server/php/java/servlet/PhpJavaServlet.java (init): Removed
+	servlet_log_level. The bridge has only a global
+	php.java.bridge.default_log_level which can be set via a system
+	property and a per-request log level which can be specified in the
+	php.ini file. The servlet must not alter the global log level and
+	it cannot modify the request log level either.
+
+	* server/WEB-INF/web.xml: Removed servlet_log_level.
+
+	* test.php: Use the pure PHP implementation.
+
+	* COPYING: New file.
+	
+	* javabridge/Client.php, javabridge/GlobalRef.php,
+	javabridge/IDocHandler.php, javabridge/Java.php,
+	javabridge/JavaProxy.php, javabridge/Parser.php,
+	javabridge/Protocol.php, javabridge/README: New files.
+
+	* VERSION, php-java-bridge.spec: Version 3.1.8devel
+
 2006-08-06  Jost Boekemeier  <jostb@intern>
 
 	* sio.c, sio.h: New files.

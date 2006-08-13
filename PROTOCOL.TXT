@@ -1,4 +1,4 @@
-PHP/Java Bridge protocol version 3.0
+PHP/Java Bridge protocol version 3.2
 
 Requests are marked with "->", responses with "<-".  The server
 continues to process requests until EOF. Only the first character is
@@ -11,7 +11,9 @@ example the location of a cell where the response should be stored; a
 structure or something like that. In PHP for example we allocate a
 pval and pass it as the ID to the Invoke or Create request. When the
 response arrives, we receive our ID along with the result so we know
-exactly where to store the result.
+exactly where to store the result. Context ID's are optional and can
+be switched off, if the client can keep track of the context, see
+NOTES below.
 
 Example:
 
@@ -165,7 +167,7 @@ call. If v is null, the function name p must be searched in the
 
 ->
 Result:
-<R i=ID> ...ARG...
+<R i=ID> ...ARG... //FIXME: wozu id?
 </R>
 i: unsigned long
 
@@ -215,14 +217,10 @@ If the first byte is neither a "<" nor a space, bits [0,1], [2,4] and
 
 Bit 1 0
 -------
-    0 0: Backward compatibility disabled, client sends and receives O,
-         O id's are base 10
-    0 1: Backward compatibility disabled, client sends and receives O,
-         O id's are base 16
-    1 0: Backward compatibility disabled, clients sends and receives X/P
-         O id's are base 10
-    1 1: Backward compatibility enabled, client sends and receives X/P
-         O id's are base 10
+    0 0: Client sends and receives O, O id's are base 10
+    0 1: Client sends and receives O, O id's are base 16
+    1 0: Client sends and receives X/P O id's are base 10
+    1 1: Client sends and receives O, id's are base 16, no context ID is used
 
 Bit 2,3,4: log level (from java.log_level)
 
@@ -231,8 +229,8 @@ Bit 5: always 0
 Bit 6: set to 1 if bit[0,1] are used
 Bit 7: set to 1 if bit[2,4] are used
 
-The default is 0304 for PHP5, protocol version < 3.0,  0307 for PHP4,
-0306 for PHP5, protocol version >= 3.0.
+The default is 0304 for PHP5, protocol version < 3.0,  0306 for PHP4,
+0307 for PHP5, protocol version >= 3.0.
 
 
 It is possible to "ping" the server by sending it the byte 0x0. If
