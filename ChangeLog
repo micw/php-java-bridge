@@ -1,5 +1,50 @@
 2006-08-13  Jost Boekemeier  <jostb@intern>
 
+	* server/php/java/bridge/ContextRunner.java 
+	(readLength): Read lenght >255 correctly. Thanks to Marco Walther.
+
+	* java.c (java_cast, do_cast): New procedure for compatibility with the
+	new pure PHP implementation.
+
+	* PROTOCOL.TXT: describe header.
+
+	* server/php/java/bridge/Base64EncodingOutputBuffer.java,
+	server/php/java/bridge/ClassicResponse.java,
+	server/php/java/bridge/HexOutputBuffer.java: New files to help the
+	pure PHP implementation.
+
+	* server/php/java/bridge/Request, server/php/java/bridge/Response:
+	The pure PHP implementation doesn't know about context ID's.
+
+	* server/php/java/bridge/JavaBridge.java
+	(offsetExists,offsetGet,offsetUnset): The server must coerce to
+	Number, not the client.
+
+	* server/php/java/bridge/PhpMap.java
+	(offsetExists,offsetGet,offsetUnset): Removed, now in
+	JavaBridge.java.
+	
+	* server/php/java/bridge/Options.java: Rewritten to disable
+	context ID's.
+
+	* server/php/java/bridge/Snarf.java: Use the pure PHP
+	implementation, if available.
+
+	* server/php/java/bridge/Parser.java: Initialize the default
+	options, according to PROTOCOL.TXT.
+	
+	* javabridge/Client.php, javabridge/GlobalRef.php,
+	javabridge/IDocHandler.php, javabridge/Java.php,
+	javabridge/JavaProxy.php, javabridge/Parser.php,
+	javabridge/Protocol.php, javabridge/README: Removed.
+	
+	* java/Client.php, java/GlobalRef.php,
+	java/IDocHandler.php, java/Java.php,
+	java/JavaProxy.php, java/Parser.php,
+	java/Protocol.php, java/README: New from the javabridge/* files.
+	
+2006-08-13  Jost Boekemeier  <jostb@intern>
+
 	* PROTOCOL.TXT: Context IDs are optional.
 	
 	* protocol.c

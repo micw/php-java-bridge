@@ -109,11 +109,6 @@ String:
 v: string
 i: unsigned long (reply only)
 
-or, if protocol header is 0XX3:
-<-
-String:
-<S>string</S>
-
 <->
 Boolean:
 <B v=T|F [i=ID] />
