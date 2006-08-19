@@ -12,7 +12,7 @@
 
 <?php
 if (!extension_loaded('java')) {
-  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
     echo "java extension not installed.";
     exit(2);
   }
@@ -24,26 +24,26 @@ java_set_file_encoding("ISO-8859-1");
 $string = new Java("java.lang.String", "Grüß Gott"); 
 
 // decode string into UTF-8
-print $string->getBytes("UTF-8") . "\n";
+print java_values($string->getBytes("UTF-8")) . "\n";
 
 // decode string using System.getProperty("file.encoding");
-print $string->getBytes() . "\n";
+print java_values($string->getBytes()) . "\n";
 
 // decode string using file encoding
-print $string->toString() . "\n";
+print java_values($string->toString()) . "\n";
 
 
 // the following is rewritten into new String(..., "ISO-8859-1");
 $string = new Java("java.lang.String", "Grüß Gott", 0, 9); 
 
 // decode string into UTF-8
-print $string->getBytes("UTF-8") . "\n";
+print java_values($string->getBytes("UTF-8")) . "\n";
 
 // decode string using System.getProperty("file.encoding");
-print $string->getBytes() . "\n";
+print java_values($string->getBytes()) . "\n";
 
 // decode string using file encoding
-print $string->toString() . "\n";
+print java_values($string->toString()) . "\n";
 
 
 ?>

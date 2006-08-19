@@ -297,6 +297,59 @@ EXT_FUNCTION(EXT_GLOBAL(reset))
 }
 
 /**
+ * Proto: object java_cast(object, string).
+ *
+ *
+ * Converts the java object obj into a PHP object. The second argument
+ * must be [s]tring, [b]oolean, [i]nteger, [f]loat or [d]ouble,
+ * [a]rray, [n]ull or [o]bject (which does nothing).<p> This procedure
+ * is for compatibility with the pure PHP implementation, in the C
+ * implementation this procedure is called automatically for each type
+ * cast or when settype() is called.
+ *
+ *
+ * Example:
+ * \code 
+ * $str = new java("java.lang.String", "12");
+ * echo $str;
+ * => [o(String):"12"]
+ * $phpString = "$str";
+ * echo $phpString;
+ * => "12"
+ * $phpNumber = (integer)$str;
+ * echo $phpNumber;
+ * => 12
+ * $phpNumber2 = java_cast($str, "integer");
+ * echo $phpNumber2;
+ * => 12
+ * \endcode
+ *
+ *
+ */
+EXT_FUNCTION(EXT_GLOBAL(cast))
+{
+  static int do_cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_DC);
+  proxyenv *jenv;
+  zval **object=0, **type=0;
+  int argc=ZEND_NUM_ARGS();
+  char *s;
+  if (argc!=2 || zend_get_parameters_ex(argc, &object, &type) == FAILURE)
+    WRONG_PARAM_COUNT_WITH_RETVAL(0);
+  convert_to_string_ex(type);
+  s = Z_STRVAL_PP(type);
+  switch(*s) {
+  case 'S': case 's': tval = IS_STRING; break;
+  case 'B': case 'b': tval = IS_BOOL; break;
+  case 'L': case 'l': case 'I': case 'i': tval = IS_LONG; break;
+  case 'D': case 'd': case 'F': case 'f': tval = IS_DOUBLE;
+  case 'A': case 'a': tval = IS_ARRAY; break;
+  case 'N': case 'n': tval = IS_NULL; break;
+  case 'O': case 'o': tval = IS_OBJECT; break;
+  }
+  do_cast(*object, *return_value, tval, 0 TSRMLS_CC);
+}
+
+/**
  * Proto: void java_begin_document(void)
  *
  * Enters stream mode (asynchronuous protocol). The statements are
@@ -595,6 +648,7 @@ function_entry EXT_GLOBAL(functions)[] = {
   EXT_FE(EXT_GLOBAL(exception_handler), NULL)
   EXT_FE(EXT_GLOBAL(inspect), NULL)
   EXT_FE(EXT_GLOBAL(reset), NULL)
+  EXT_FE(EXT_GLOBAL(cast), NULL)
 
   EXT_FE(EXT_GLOBAL(begin_document), NULL)
   EXT_FE(EXT_GLOBAL(end_document), NULL)
@@ -833,21 +887,21 @@ PHP_INI_BEGIN()
  * \endcode
  * \code
  * require_once("rt/java_util_LinkedList.php");
- * class org_apache_lucene_search_IndexSearcher extends php_Java {
+ * class org_apache_lucene_search_IndexSearcher extends java_Bridge {
  *   __construct() { 
  *     $args = func_get_args();
  *     array_unshift($args, "org.apache.lucene.search.IndexSearcher");
  *     $java = new Java($args); 
  *   }
  * }
- * class org_apache_lucene_search_PhraseQuery extends php_Java {
+ * class org_apache_lucene_search_PhraseQuery extends java_Bridge {
  *   __construct() { 
  *     $args = func_get_args();
  *     array_unshift($args, "org.apache.lucene.search.PhraseQuery");
  *     $java = new Java($args); 
  *   }
  * }
- * class org_apache_lucene_index_Term extends php_Java {
+ * class org_apache_lucene_index_Term extends java_Bridge {
  *   __construct() { 
  *     $args = func_get_args();
  *     array_unshift($args, "org.apache.lucene.index.Term");
@@ -1215,14 +1269,7 @@ static function_entry (class_class_functions)[] = {
 
 
 
-#if ZEND_EXTENSION_API_NO >= 220060519 
-static int cast(zval *readobj, zval *writeobj, int type TSRMLS_DC)
-{
-  int should_free = 0;
-#else
-static int cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_DC)
-{
-#endif
+static int do_cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_DC) {
   proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
   long obj = 0;
   zval free_obj;
@@ -1276,20 +1323,9 @@ static int cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_
 	  obj = (*jenv)->writeInvokeEnd(jenv);
 	  break;
 	case IS_OBJECT: 
-	  {
-		long obj2;
-		if(jenv && (Z_TYPE_P(readobj) == IS_OBJECT)) {
-		  EXT_GLOBAL(get_jobject_from_object)(readobj, &obj2 TSRMLS_CC);
-		}
-		if(obj2) {
-		  (*jenv)->writeInvokeBegin(jenv, 0, "cast", 0, 'I', writeobj);
-		  (*jenv)->writeObject(jenv, obj);
-		  (*jenv)->writeObject(jenv, obj2);
-		  obj = (*jenv)->writeInvokeEnd(jenv);
-		} else {
-		  obj = 0; //failed
-		}
-	  }
+	  *writeobj = *readobj;
+	  zval_copy_ctor(writeobj);
+	  convert_to_object_ex(writeobj);
 	  break;
 	case IS_ARRAY: 
 #ifdef ZEND_ENGINE_2
@@ -1311,6 +1347,16 @@ static int cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_
 
   return obj?SUCCESS:FAILURE;
 }
+#if ZEND_EXTENSION_API_NO >= 220060519 
+static int cast(zval *readobj, zval *writeobj, int type TSRMLS_DC)
+{
+  int should_free = 0;
+#else
+static int cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_DC)
+{
+#endif
+  return do_cast(readobj, writeobj, type, should_free TSRMLS_CC);
+ }
 
 
 typedef struct {

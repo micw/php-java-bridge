@@ -3,7 +3,7 @@
 <?php
 
 if (!extension_loaded('java')) {
-  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
     echo "java extension not installed.";
     exit(2);
   }
@@ -42,6 +42,6 @@ if(!$v) {
 } else {
   echo "cont. session\n";
 }
-echo $v[1]->toString()."\n". $v[2]->toString()."\n";
+echo ($v[1]->__toString())."\n". $v[2]->__toString()."\n";
 ?>
 

@@ -3,7 +3,7 @@
 <?php
 
 if (!extension_loaded('java')) {
-  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
     echo "java extension not installed.";
     exit(2);
   }
@@ -27,7 +27,7 @@ try {
     $trace = new java("java.io.ByteArrayOutputStream");
     $ex->printStackTrace(new java("java.io.PrintStream", $trace));
 
-    echo "Exception occured:" . $trace . "\n";
+    echo "Exception occured:" . $trace->__toString() . "\n";
     return 0;
   }
 } catch (exception $err) {

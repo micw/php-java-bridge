@@ -3,7 +3,7 @@
 <?php
 
 if (!extension_loaded('java')) {
-  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
     echo "java extension not installed.";
     exit(2);
   }
@@ -27,13 +27,13 @@ if(!$here) $here=getcwd();
     $e->inner->meth(42);
     return 2;
   } catch (java_exception $exception) {
-    echo "An exception occured: $exception\n";
+    echo "An exception occured: ".java_cast($exception, "S")."\n";
 
     $cause = $exception->getCause();
-    echo "exception ". $cause ." --> " . $cause->getID() . "\n";
+    echo "exception ".java_cast($cause,"S")." --> " . $cause->getID() . "\n";
     return ($cause->getID() == 42) ? 0 : 3; 
   }
 } catch (exception $err) {
-  print "$err \n";
+  print "unexpected: ".java_cast($err, "S")." \n";
   return 4;
 }

@@ -141,7 +141,7 @@ public class JavaBridge implements Runnable {
      */
     static final SessionFactory defaultSessionFactory = new SessionFactory();
 
-    Options options = new Options();
+    Options options;
     
     /**
      * Returns the connection options
@@ -442,7 +442,7 @@ public class JavaBridge implements Runnable {
     }
     
     void setException(Response response, Throwable e, String method, Object obj, String name, Object args[], Class params[]) {
-	if(logLevel>3) printStackTrace(e);
+	if(logLevel>2) printStackTrace(e);
 
 	if (e instanceof InvocationTargetException) {
 	    Throwable t = ((InvocationTargetException)e).getTargetException();
@@ -749,15 +749,13 @@ public class JavaBridge implements Runnable {
 			result[i]=new Long(n.longValue());
 	    	} else {
 		    if(arg.getClass()==Request.PhpNumber.class) {
-	    		if(!options.extJavaCompatibility()) {
+	    		{
 			    Class c = parms[i];
 			    if(c.isAssignableFrom(Integer.class)) {
 		    		result[i] = new Integer(((Number)arg).intValue());
 			    } else {
 		    		result[i] = new Long(((Number)arg).longValue());				
 			    }
-			} else {
-			    result[i] = new Long(((Number)arg).longValue());
 			}
 		    }
 	    	}
@@ -1839,8 +1837,8 @@ public class JavaBridge implements Runnable {
     public void offsetUnset(List value, Number pos) {
 	offsetSet(value, pos, null);
     }
-    boolean offsetExists(int length, Object pos) {
-	int i = ((Number)pos).intValue();
+    boolean offsetExists(int length, Number pos) {
+	int i = pos.intValue();
 	return (i>0 && i<length);
     }
     /**
@@ -1849,7 +1847,7 @@ public class JavaBridge implements Runnable {
      * @param pos The position
      * @return true if an element exists at this position, false otherwise.
      */
-    public boolean offsetExists(Object value, Object pos) {
+    public boolean offsetExists(Object value, Number pos) {
         return offsetExists(Array.getLength(value), pos);
     }
     
@@ -1859,8 +1857,8 @@ public class JavaBridge implements Runnable {
      * @param pos The position.
      * @return The object at the given position.
      */    
-    public Object offsetGet(Object value, Object pos) {
-	int i = ((Number)pos).intValue();
+    public Object offsetGet(Object value, Number pos) {
+	int i = pos.intValue();
 	Object o = Array.get(value, i);
 	return o==this ? null : o;
    }
@@ -1887,8 +1885,8 @@ public class JavaBridge implements Runnable {
      * @param pos The position.
      * @param val The object.
      */
-    public void offsetSet(Object value, Object pos, Object val) {
-	int i = ((Number)pos).intValue();
+    public void offsetSet(Object value, Number pos, Object val) {
+	int i = pos.intValue();
 	Array.set(value, i, coerce(value.getClass().getComponentType(), val, request.response));
     }
     /**
@@ -1896,8 +1894,8 @@ public class JavaBridge implements Runnable {
      * @param value The array.
      * @param pos The position.
       */
-    public void offsetUnset(Object value, Object pos) {
-	int i = ((Number)pos).intValue();
+    public void offsetUnset(Object value, Number pos) {
+	int i = pos.intValue();
 	Array.set(value, i, null);
     }
     /** 
@@ -1974,5 +1972,13 @@ public class JavaBridge implements Runnable {
      */    
     public String getCachedString(byte[] b, int start, int length) {
         return stringCache.getString(b, start, length, options.getEncoding());
+    }
+    /**
+     * Create a response object for this bridge, according to options.
+     * @return The response object
+     */
+    Response createResponse() {
+	if(options.passContext()) return new ClassicResponse(this);
+	return new Response(this);
     }
 }

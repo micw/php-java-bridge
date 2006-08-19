@@ -2,7 +2,7 @@
 
 <?php
 if (!extension_loaded('java')) {
-  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
     echo "java extension not installed.";
     exit(2);
   }
@@ -43,10 +43,10 @@ $memoryStream = new java("java.io.ByteArrayOutputStream");
 $streamResult = new java("javax.xml.transform.stream.StreamResult", $memoryStream);
 $myTransformer->transform($src, $streamResult);
 $data = $memoryStream->toByteArray();
-echo "$data\n";
+echo java_values($data)."\n";
 
 $fp = fopen("ellipse.svg", "w");
-fwrite($fp, $data);
+fwrite($fp, java_values($data));
 fclose($fp);
 
 ?>

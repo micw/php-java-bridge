@@ -1,31 +1,33 @@
 <?php
 
 if (!extension_loaded('java')) {
-  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
     echo "java extension not installed.";
     exit(2);
   }
 }
+ini_set("max_execution_time", 0);
 
 $here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
 if(!$here) $here=getcwd();
 java_set_library_path("$here/binaryData.jar");
 
 $binaryData = new java("BinaryData");
-$data = $binaryData->getData(700*1024);
+$data = java_values($binaryData->getData(700*1024));
 for($i=0; $i < 10; $i++) {
-  $data=$binaryData->compare($data);
+  $data=java_values($binaryData->compare($data));
   $str1=substr($data, 255, 256);
 }
 $str='&;a&amp;&quote"&quot;&&&;;"';
 $binaryData->b='&;a&amp;&quote"&quot;&&&;;"';
 $binaryData->compare('&;a&amp;&quote"&quot;&&&;;"');
-if($str!=$binaryData->toString()) { echo "ERROR\n"; exit(1); }
+if($str!=java_values($binaryData->toString())) { echo "ERROR\n"; exit(1); }
 
-$data = $binaryData->getData(1024);
-$s1=substr($binaryData->toString(), 0, 256);
+$data = java_values($binaryData->getData(1024));
+if(strlen($data)!=1024) { echo "ERROR\n"; exit(5); }
+$s1=substr(java_values($binaryData->toString()), 0, 256);
 $binaryData->b=$str1;
-$s2=substr($binaryData->toString(), 0, 256);
+$s2=substr(java_values($binaryData->toString()), 0, 256);
 
 if($s1!=$s2) { echo "ERROR\n"; exit(2); }
 echo "test ok\n";

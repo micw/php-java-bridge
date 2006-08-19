@@ -52,8 +52,8 @@ function java_load_extension() {
     echo "\n<br><strong>Error: Either the java extension is not installed <br>\n";
     echo "or it was compiled against an older or newer php version.<br>\n";
     echo "See the HTTP (IIS or Apache) server log for details.</strong><br>\n";
-    echo "Will use pure PHP implementation<br>\n";
-    require_once("javabridge/Java.php");
+    echo "Will use the pure PHP PHP/Java Bridge implementation<br>\n";
+    require_once("java/Java.php");
   }
   return $current;
 } 

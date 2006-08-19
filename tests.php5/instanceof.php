@@ -3,7 +3,7 @@
 <?php
 
 if (!extension_loaded('java')) {
-  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
     echo "java extension not installed.";
     exit(2);
   }
@@ -29,7 +29,7 @@ foreach ($list as $key=>$value) {
 
       echo "[I have found myself!] \n";
     } else {
-      echo "[found java object: " .$value->toString() . "] \n";
+      echo "[found java object: " .java_cast($value, "S"). "] \n";
     }
   } else {
       echo "$value\n";

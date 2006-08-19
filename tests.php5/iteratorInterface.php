@@ -3,7 +3,7 @@
 <?php
 
 if (!extension_loaded('java')) {
-  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
     echo "java extension not installed.";
     exit(2);
   }
@@ -20,6 +20,6 @@ $conversion->put("array of doubles", "double[]");
 $conversion->put("array of boolean", "boolean[]");
 $conversion->put("mixed array", "");
 foreach ($conversion as $key=>$value) {               
-  echo "$key => $value\n";
+  echo "$key => ".java_cast($value, "S")."\n";
 }
 ?>

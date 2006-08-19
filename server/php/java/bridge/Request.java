@@ -221,13 +221,34 @@ public final class Request implements IDocHandler {
     };
 
     static final Object[] ZERO_ARGS = new Object[0];
+    private class SimpleContext {
+	public void parseID(ParserString string) {}
+	public void setID(Response response) {}
+    }
+    private class Context extends SimpleContext {
+    	protected long id;
+	public void parseID(ParserString string) {
+	    this.id = string.getLongValue();
+	}
+	public void setID(Response response) {
+	    response.setID(id);
+	}
+    }
+    private SimpleContext contextCache;
+    SimpleContext getContext() {
+	if(contextCache!=null) return contextCache;
+	if(bridge.options.passContext()) {
+	    return contextCache = new Context();
+	}
+	return contextCache = new SimpleContext();
+    }
     private abstract class Arg {
     	protected byte type;
     	protected Object callObject;
     	protected Throwable exception;
     	protected String method;
+    	protected SimpleContext id = getContext();
     	protected boolean predicate;
-    	protected long id;
     	protected Object key;
     	protected byte composite;
     	 
@@ -250,7 +271,6 @@ public final class Request implements IDocHandler {
 	    type=0;
 	    callObject=null;
 	    method=null;
-	    id=0;
 	    key=null;
      	}
     }
@@ -311,7 +331,6 @@ public final class Request implements IDocHandler {
     public Request(JavaBridge bridge) {
 	this.bridge=bridge;
 	this.parser=new Parser(bridge, this);
-	this.arg=new SimpleArg();
     }
     static final byte[] ZERO={0};
     static final Object ZERO_OBJECT=new Object();
@@ -349,19 +368,14 @@ public final class Request implements IDocHandler {
 	    return val;
     }
     private Object createExact(ParserString st[]) {
-        if(!bridge.options.extJavaCompatibility()) {
+        {
 	    int val = st[0].getIntValue();
 	    if(bridge.options.hexNumbers() && st[1].string[st[1].off]!='O')
 		val *= -1;
             return (new Integer(val));
-	} else {
-	    long val = st[0].getLongValue();
-	    if(bridge.options.hexNumbers() && st[1].string[st[1].off]!='O')
-		val *= -1;
-            return (new Long(val));
 	}
     }
-    
+
     /* (non-Javadoc)
      * @see php.java.bridge.IDocHandler#begin(php.java.bridge.ParserTag[])
      */
@@ -376,14 +390,14 @@ public final class Request implements IDocHandler {
 	    arg.callObject=i==0?bridge:getGlobalRef(i);
 	    arg.method=st[1].getCachedStringValue();
 	    arg.predicate=st[2].string[st[2].off]=='P';
-	    arg.id=st[3].getLongValue();
+	    arg.id.parseID(st[3]);
 	    break;
 	}
 	case 'C': {
 	    arg.type=ch;
 	    arg.callObject=st[0].getCachedStringValue();
 	    arg.predicate=st[1].string[st[1].off]=='C';
-	    arg.id=st[2].getLongValue();
+	    arg.id.parseID(st[2]);
 	    break;
 	}
 	case 'F': {
@@ -393,7 +407,7 @@ public final class Request implements IDocHandler {
 	}
 	case 'R': {
 	    arg.type=ch;
-	    arg.id=st[0].getLongValue();
+	    arg.id.parseID(st[0]);
 	    break;
 	}
 	
@@ -420,13 +434,14 @@ public final class Request implements IDocHandler {
 	    reply=false; // U is the only top-level request which doesn't need a reply
 	    break;
 	}
-	case 'S': {
+	case 'S': 
+	  if(tag[2].n>0) { // handle <S v=... />
 	    if(arg.composite!='H') 
 	        arg.add(new PhpParserString(bridge, st[0]));
 	    else // hash has no type information
 	        arg.add(st[0].getStringValue());
-	    break;
-	}
+	  }
+	  break;
 	case 'B': {
 	    arg.add(new Boolean(st[0].string[st[0].off]=='T'));
 	    break;
@@ -489,7 +504,7 @@ public final class Request implements IDocHandler {
     private int handleRequest() throws IOException {
 	int retval;
 	if(Parser.OK==(retval=parser.parse(bridge.in))) {
-	    response.setResultID(arg.id);
+	    arg.id.setID(response);
 	    switch(arg.type){
 	    case 'I':
 		try {
@@ -540,7 +555,8 @@ public final class Request implements IDocHandler {
      * @throws IOException
      */
     public void handleRequests() throws IOException {
-    	if(response==null) response=new Response(bridge);
+    	if(response==null) response=bridge.createResponse();
+	this.arg=new SimpleArg();    	
 	while(Parser.OK==handleRequest())
 	    ;
     }
@@ -569,7 +585,7 @@ public final class Request implements IDocHandler {
     	response = response.copyResponse(); // must keep the current response state, for example coerceWriter for castToString() 
     	arg = new SimpleArg();
 	while(Parser.OK==parser.parse(bridge.in)){
-	    response.setResultID(arg.id); 
+	    arg.id.setID(response); 
 	    switch(arg.type){
 	    case 'I':
 		if(arg.predicate)

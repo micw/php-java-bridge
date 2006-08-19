@@ -1,6 +1,12 @@
 <?php
+if (!extension_loaded('java')) {
+  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+    echo "java extension not installed.";
+    exit(2);
+  }
+}
 
-define("SCRIPT_NAME", "/tmp/t.php");
+define("SCRIPT_NAME", "script_api.php");
 java_require("php-script.jar;script-api.jar");
 
 $IRunnable = new JavaClass("java.lang.Runnable");

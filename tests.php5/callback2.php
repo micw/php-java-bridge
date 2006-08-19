@@ -2,7 +2,7 @@
 
 <?php
 if (!extension_loaded('java')) {
-  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
     echo "java extension not installed.";
     exit(2);
   }
@@ -26,13 +26,13 @@ $Proxy = new JavaClass("java.lang.reflect.Proxy");
 $proc = $Proxy->getInvocationHandler($environment);
 
 // implicit toString() should display "php top level environment"
-echo $environment;
+echo $environment->__toString();
 
 // invoke java function "hello" which is backed by our php hello()
 // function
-echo "\ncalling $proc"."->invoke(...);\n";
+echo "\ncalling ".$proc->__toString()."->invoke(...);\n";
 $val = $proc->invoke($environment, "hello", array(true, 7, 3.14));
 
 // should display "Hello java from php"
-echo "=> $val\n";
+echo "=> ".($val->__toString())."\n";
 ?>

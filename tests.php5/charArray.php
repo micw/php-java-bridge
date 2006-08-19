@@ -2,7 +2,7 @@
 
 <?php
 if (!extension_loaded('java')) {
-  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
     echo "java extension not installed.";
     exit(2);
   }
@@ -10,7 +10,7 @@ if (!extension_loaded('java')) {
 
 $s=new java("java.lang.String", 12);
 $c=$s->toCharArray();
-if($c[0]==1 && $c[1]==2) {
+if(java_cast($c[0],'integer')==1 && java_cast($c[1],"integer")==2) {
   echo "test okay\n";
   exit(0);
 }

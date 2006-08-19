@@ -2,7 +2,7 @@
 
 <?php
 if (!extension_loaded('java')) {
-  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
     echo "java extension not installed.";
     exit(2);
   }
@@ -53,7 +53,7 @@ try {				// must succeed
 }
 try {				// must succeed
   $res = new Java("java.util.Vector", $ar->collection(array("3"=>3, "2"=>2, "1"=>1)));
-  if($res[0]!='1' || $res[1]!='2' || $res[2]!='3') throw new Exception("test failed");
+  if(java_values($res[0])!='1' || java_values($res[1])!='2' || java_values($res[2])!='3') throw new Exception("test failed");
   echo "<br>\n";
 } catch (Exception $e) {
   echo "test failed7: $e\n"; exit(7);

@@ -2,7 +2,7 @@
 
 <?php
 if (!extension_loaded('java')) {
-  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
     echo "java extension not installed.";
     exit(2);
   }
@@ -10,8 +10,8 @@ if (!extension_loaded('java')) {
 
 $h=array("k"=>"v", "k2"=>"v2");
 $m=new java("java.util.Properties",$h);
-echo $m->size() . " " . $m->getProperty("k", "ERROR") . " \n";
-if($m->getProperty("k2", "ERROR") != "v2") {
+echo $m->size() . " " . java_cast($m->getProperty("k", "ERROR"),"S")." \n";
+if(java_values($m->getProperty("k2", "ERROR")) != "v2") {
   echo "ERROR\n";
   exit(1);
 }

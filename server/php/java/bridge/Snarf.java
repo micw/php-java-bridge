@@ -91,7 +91,8 @@ class Snarf {
 	  String jarname = file.getName();
 	  String name = jarname.substring(0, jarname.length()-4); // strip off .jar
 	  baseFile = (baseDir!=null) ? new File(baseDir, name) : new File(name);
-	  if(!baseFile.exists()) baseFile.mkdirs();
+	  File javaDir = new File(baseFile, "java");
+	  if(!javaDir.exists()) javaDir.mkdirs();
 	  base=baseFile.getAbsolutePath();
 
 	  copyFile(file, jarName=new File(base, jarname));
@@ -136,18 +137,19 @@ class Snarf {
   }
 
   private void writePhpJava() throws FileNotFoundException {
-    FileOutputStream stream = new FileOutputStream(getFile("php_Java.php"));
+      
+    FileOutputStream stream = new FileOutputStream(getFile("java/Bridge.php"));
     PrintWriter out = new PrintWriter(stream);
     out.println("<?php");
     out.println("if (!extension_loaded('java')) {");
-    out.println("  if (!(PHP_SHLIB_SUFFIX=='so' && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=='dll' && dl('php_java.dll'))) {");
+    out.println("  if (!(include_once('java/Java.php'))&&!(PHP_SHLIB_SUFFIX=='so' && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=='dll' && dl('php_java.dll'))) {");
     out.println("    echo 'java extension not installed.';");
     out.println("    exit(2);");
     out.println("  }");
     out.println("}");
     out.println("");
     out.println("function java_coerce_value($value) {");
-    out.println("  if($value instanceof php_Java) return $value->java;");
+    out.println("  if($value instanceof java_Bridge) return $value->java;");
     out.println("  return $value;");
     out.println("}");
     out.println("function java_require_once($jar) {");
@@ -158,7 +160,7 @@ class Snarf {
     out.println("  }");
     out.println("}");
     out.println("");
-    out.println("class php_Java {");
+    out.println("class java_Bridge {");
     out.println("  var $java;");
     out.println("  function __java_coerceArgs($array) {return array_map('java_coerce_value', $array);}");
     out.println("  function __java_coerceArg($arg) {return java_coerce_value($arg);}");
@@ -173,14 +175,14 @@ class Snarf {
   }
   private void writeHeader(PrintWriter out, String clazz, String phpClazz) {
       out.println("<?php");
-      out.println("require_once(\'php_Java.php\');");
+      out.println("require_once(\'java/Bridge.php\');");
       out.print("java_require_once('");
       out.print(jarName.getAbsolutePath());
       out.println("');");
       out.println("");
       out.print("class ");
       out.print(phpClazz);
-      out.println(" extends php_Java {");
+      out.println(" extends java_Bridge {");
       out.println("  function __construct() {");
       out.println("    $args = $this->__java_coerceArgs(func_get_args());");
       out.print("    array_unshift($args, '");

@@ -35,7 +35,7 @@ LD_LIBRARY_PATH=/lib:%{_libdir}
 rm -rf $RPM_BUILD_ROOT
 
 %makeinstall converter=%{_libdir}/php/modules/java | tee install.log
-rm -rf $RPM_BUILD_ROOT/%{_datadir}/pear/rt $RPM_BUILD_ROOT/%{_datadir}/pear/php_Java.php
+rm -rf $RPM_BUILD_ROOT/%{_datadir}/pear/rt $RPM_BUILD_ROOT/%{_datadir}/pear/java/Bridge.php
 echo %{_datadir}/pear/lucene >filelist
 for i in `find $RPM_BUILD_ROOT/%{_datadir}/pear/lucene -name "*.php" -print`; do
 ed -s $i <<end || true

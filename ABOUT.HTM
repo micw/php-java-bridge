@@ -323,11 +323,11 @@ The original exception can be retrieved with <code>$ex->getCause()</code>, for e
 <code>
          function rethrow($ex) {<br>
          &nbsp;&nbsp;static $NullPointerException=new JavaClass("java.lang.NullPointerException");<br>
-         &nbsp;&nbsp;$ex=$ex->getCause();
+         &nbsp;&nbsp;$ex=$ex->getCause();<br>
 	 &nbsp;&nbsp;if(java_instanceof($ex, $NullPointerException)) {<br>
          &nbsp;&nbsp;&nbsp;&nbsp;throw new NullPointerException($ex); <br>
          &nbsp;&nbsp;}<br>
-         &nbsp;&nbsp;...
+         &nbsp;&nbsp;...<br>
          &nbsp;&nbsp;die("unexpected exception: $ex");<br>
          }
       try {<br>
@@ -703,7 +703,7 @@ The created PHP ini file (usually <code>java.ini</code> located in <code>/etc/ph
 	<LI><P><FONT >You can now test
 	the web installation. Copy the test.php file to the document root (usually /var/www/html) and invoke the file with your browser. You should see that the bridge module is activated and running.  The bridge back-end automatically starts or re-starts whenever you start or re-start the web-server.
 	</P>
-	<LI><P><FONT ><A name="mode4">In a production environment which requires <strong>load balancing and fail over</strong> or <strong>session sharing between PHP, JSP and Servlets</strong> it is recommended deploy the back-end into a servlet engine or an application server; <a href="http://www.onjava.com/pub/a/onjava/2004/03/31/clustering.html">a tomcat 5 cluster</a> for example:
+	<LI><P><FONT ><A name="mode4">In a production environment which requires <strong>load balancing and fail over</strong> or <strong>session sharing between PHP, JSP and Servlets</strong>, it is recommended to deploy the back-end into a servlet engine or an application server; <a href="http://www.onjava.com/pub/a/onjava/2004/03/31/clustering.html">a tomcat 5 cluster</a> for example:
 <br><br>
 <code>
 Do you want to install the Servlet/J2EE back-end (recommended)?<br>

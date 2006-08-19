@@ -2,7 +2,7 @@
 
 <?php
 if (!extension_loaded('java')) {
-  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
     echo "java extension not installed.";
     exit(2);
   }
@@ -17,14 +17,14 @@ $arrayArray=$Array->create(10);
 $String=new java_class("java.lang.String");
 for($i=0; $i<10; $i++) {
 	$ar = $arrayArray[$i]->array;
-	echo $ar . " " .$ar[0] . "\n"; 
+	echo java_cast($ar,"S") . " " .java_cast($ar[0],"S") . "\n"; 
 }
 
 echo "\n";
 
 foreach($arrayArray as $value) {
 	$ar = $value->array;
-	echo $ar . " " .$ar[0] ."\n";
+	echo java_cast($ar,"S") . " " .java_cast($ar[0],"S") ."\n";
 }
 
 

@@ -12,8 +12,8 @@ size of less than 30MB. The complete Oracle 10g AS has a download size
 of more than 1GB and includes Apache and other software you don't need
 during development.
 
-Install the PHP/Java Bridge and copy the JavaBridge.war to the
-$J2EE_HOME/applications directory.
+Download and unpack the PHP/Java Bridge J2EE component, and copy the
+JavaBridge.war to the $J2EE_HOME/applications directory.
 
 Edit $J2EE_HOME/config/application.xml so that it contains the
 following line:

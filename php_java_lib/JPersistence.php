@@ -21,11 +21,12 @@ class JPersistenceProxy {
     $this->serialID; 
   }
   function __sleep() {
+    echo "sleep called::\n";
     $buf = new java("java.io.ByteArrayOutputStream");
     $out = new java("java.io.ObjectOutputStream", $buf);
     $out->writeObject($this->java);
     $out->close();
-    $this->serialID = base64_encode((string)$buf->toByteArray());
+    $this->serialID = base64_encode(java_cast($buf->toByteArray(),"S"));
     return array("serialID");
   }
   function __wakeup() {
@@ -44,7 +45,7 @@ class JPersistenceProxy {
 
 class JPersistenceAdapter extends JPersistenceProxy {
   function __get($arg)       { if(!is_null($this->java)) return $this->java->__get($arg); }
-  function __put($key, $val) { if(!is_null($this->java)) return $this->java->__put($key, $val); }
+  function __set($key, $val) { if(!is_null($this->java)) return $this->java->__set($key, $val); }
   function __call($m, $a)    { if(!is_null($this->java)) return $this->java->__call($m,$a); }
   function __toString()      { if(!is_null($this->java)) return $this->java->__toString(); }
 }

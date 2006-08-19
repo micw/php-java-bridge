@@ -5,8 +5,9 @@ The following description assumes that you have the IBM WebSphere
 6.x Application Server installed and that $WAS_HOME points to the
 /opt/IBM/WebSphere/AppServer directory.
 
-Install the PHP/Java Bridge. Start the application server, for
-example with the command:
+Download and unpack the PHP/Java Bridge J2EE component:
+"JavaBridge.war". Start the application server, for example with the
+command:
 
 $WAS_HOME/bin/startServer.sh  server1
 

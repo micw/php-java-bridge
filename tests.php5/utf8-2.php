@@ -2,7 +2,7 @@
 
 <?php
 if (!extension_loaded('java')) {
-  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
     echo "java extension not installed.";
     exit(2);
   }
@@ -18,6 +18,6 @@ if(!$here) $here=getcwd();
 java_set_library_path("$here/arrayToString.jar");
 $ArrayToString = new JavaClass("ArrayToString");
 $ar=array("Cześć!", " שלום", " Grüß Gott", " Dobrý deň", " Dobrý den", " こんにちは, ｺﾝﾆﾁﾊ");
-print $ArrayToString->arrayToString($ar) . "\n";
+print java_values($ArrayToString->arrayToString($ar)) . "\n";
 
 ?>

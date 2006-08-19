@@ -3,7 +3,7 @@
 <?php
 
 if (!extension_loaded('java')) {
-  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
     echo "java extension not installed.";
     exit(2);
   }
@@ -14,6 +14,7 @@ $java_output = "workbook_java.xls";
 $php_output = "workbook_php.xls";
 $php_output2 = "workbook_php2.xls";
 
+ini_set("max_execution_time", 0);
 $sys = new java("java.lang.System");
 
 // fetch classes and compile them to native code.

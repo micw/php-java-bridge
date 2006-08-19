@@ -109,6 +109,11 @@ String:
 v: string
 i: unsigned long (reply only)
 
+or, if protocol header is 0XX3:
+<-
+String:
+<S>string</S>
+
 <->
 Boolean:
 <B v=T|F [i=ID] />
@@ -144,7 +149,7 @@ NULL values can be sent as either v="" or v="0"
 Object:
 <O v=object p=TYPE i=ID />
 v: unsigned long
-p: char ([A]rray, [O]bject)
+p: char ([A]rray, [C]ollection, [O]bject, [E]xception)
 i: unsigned long 
 
 <-
@@ -167,7 +172,7 @@ call. If v is null, the function name p must be searched in the
 
 ->
 Result:
-<R i=ID> ...ARG... //FIXME: wozu id?
+<R i=ID> ...ARG...
 </R>
 i: unsigned long
 
@@ -217,10 +222,14 @@ If the first byte is neither a "<" nor a space, bits [0,1], [2,4] and
 
 Bit 1 0
 -------
-    0 0: Client sends and receives O, O id's are base 10
-    0 1: Client sends and receives O, O id's are base 16
-    1 0: Client sends and receives X/P O id's are base 10
-    1 1: Client sends and receives O, id's are base 16, no context ID is used
+         keep object  keep array  base  send   binary             comment/
+          identity     identity          ID     data              php impl.
+
+    - -    yes          no         10   yes    base64 encoded     default
+    0 0    yes          yes        16   no     binary             Java.php
+    0 1    yes          yes        16   yes    binary             java.so (>4)
+    1 0    no           no         16   yes    binary             java.so (=4)
+    1 1    yes          yes        16   no     base64 encoded     Java.php
 
 Bit 2,3,4: log level (from java.log_level)
 
@@ -228,9 +237,6 @@ Bit 5: always 0
 
 Bit 6: set to 1 if bit[0,1] are used
 Bit 7: set to 1 if bit[2,4] are used
-
-The default is 0304 for PHP5, protocol version < 3.0,  0306 for PHP4,
-0307 for PHP5, protocol version >= 3.0.
 
 
 It is possible to "ping" the server by sending it the byte 0x0. If

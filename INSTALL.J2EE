@@ -34,8 +34,8 @@ Installing the PHP/Java Bridge J2EE Component
   for further information.
 
 
-Installing and testing the front-end on Linux, Unix, Windows
-------------------------------------------------------------
+OPTIONAL: Installing and testing the front-end on Linux, Unix, Windows
+----------------------------------------------------------------------
 
 NOTE: Linux RPMs contain Security Enhanced Linux contexts. If you want
 to install software on a SEL system (RHEL, Fedora, ...), please use

@@ -29,7 +29,13 @@ class Parser {
 	     * 
 	     */
 	    switch(ch=buf[c]) {
-	    case '<': case '\t': case '\f': case '\n': case '\r': case ' ': 
+	    case '<': case '\t': case '\f': case '\n': case '\r': case ' ':
+		bridge.options = new Options(){
+		    public boolean hexNumbers() { return false; }
+		    public boolean base64Data() { return true; }
+		    public boolean preferValues() { return false; }
+		    public boolean passContext() { return true; }
+		};
 	    	break;
 	    case 0:	
 		// PING
@@ -37,6 +43,7 @@ class Parser {
 
 		// OPTIONS
 	    default:
+		bridge.options = new Options();
 	    	if((ch&64)!=0) bridge.options.updateOptions((byte) (ch&3)); 
 	    	if((ch&128)!=0) {
 	    	    if(bridge.logLevel>3 && (bridge.logLevel!=((ch>>2)&7)))

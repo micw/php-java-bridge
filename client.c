@@ -100,12 +100,14 @@ static void setResultFromObject (pval *presult, long value, char type) {
   
   if (Z_TYPE_P(presult) != IS_OBJECT) {
 	switch(type) {
+	case 'C':
 	case 'A': 
 	  object_init_ex(presult, EXT_GLOBAL(array_entry));
 	  break;
 	default: 
 	  assert(0);
 	case 'O':
+	case 'E':
 	  object_init_ex(presult, EXT_GLOBAL(class_entry));
 	  break;
 	}
@@ -113,7 +115,7 @@ static void setResultFromObject (pval *presult, long value, char type) {
 	presult->refcount=1;
 
   } else {
-	if(type=='A' && 
+	if((type=='C' || type=='A') && 
 	   !instanceof_function(Z_OBJCE_P(presult), EXT_GLOBAL(array_entry) TSRMLS_CC)) {
 	  object_init_ex(presult, EXT_GLOBAL(array_entry));
 	}

@@ -61,14 +61,6 @@
 #endif
 #endif 
 
-/** PROTOCOL.TXT doesn't have a way to send hex numbers,
- * if backward compatibility is enabled */
-#ifndef ZEND_ENGINE_2
-#ifndef DISABLE_HEX
-#define DISABLE_HEX
-#endif
-#endif
-
 extern zend_module_entry EXT_GLOBAL(module_entry);
 extern zend_class_entry *EXT_GLOBAL(class_entry);
 extern zend_class_entry *EXT_GLOBAL(array_entry);

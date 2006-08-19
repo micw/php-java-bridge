@@ -38,9 +38,9 @@ public abstract class PhpMap {
     
     /**
      * Returns the key at the current position.
-     * @return The current key.
+     * @return The current key, either a string or a number.
      */
-    public abstract Request.PhpString currentKey();
+    public abstract Object currentKey();
     
     /**
      * Forward one element.
@@ -61,43 +61,6 @@ public abstract class PhpMap {
     public boolean getType() {
 	return keyType;
     }
-
-    /**
-     * Checks if a given position exists. Use one of the methods from JavaBridge instead.
-     * @param pos The position
-     * @return true if an element exists at this position, false otherwise.
-     * @see php.java.bridge.JavaBridge#offsetExists(Object, Object)
-     * @see php.java.bridge.JavaBridge#offsetExists(Map, Object)
-     */
-    public abstract boolean offsetExists(Object pos);
-    
-    /**
-     * Returns the object at the posisition. Use one of the methods from JavaBridge instead.
-     * @param pos The position.
-     * @return The object at the given position.
-     * @see php.java.bridge.JavaBridge#offsetGet(Object, Object)
-     * @see php.java.bridge.JavaBridge#offsetGet(Map, Object)
-     */
-    public abstract Object offsetGet(Object pos);
-    
-    /**
-     * Set an object at position. Use one of the methods from JavaBridge instead.
-     * @param pos The position.
-     * @param val The object.
-     * @see php.java.bridge.JavaBridge#offsetSet(Object, Object, Object)
-     * @see php.java.bridge.JavaBridge#offsetSet(Map, Object, Object)
-     */
-    public abstract void offsetSet(Object pos, Object val);
-    
-    /**
-     * Remove an object from the position. Use one of the methods from JavaBridge instead.
-     * @param pos The position.
-      * @see php.java.bridge.JavaBridge#offsetUnset(Object, Object)
-     * @see php.java.bridge.JavaBridge#offsetUnset(Map, Object)
-     */
-    public abstract void offsetUnset(Object pos); 
-    
-
     /**
      * Returns a PhpMap for a given value.
      * @param value The value, must be an array or implement Map or Collection
@@ -123,9 +86,9 @@ public abstract class PhpMap {
 			if(!valid) return null;
 			return Array.get(this.value, i);
 		    }
-		    public Request.PhpString currentKey() {
+		    public Object currentKey() {
 			if(!valid) return null;
-			return new Request.SimplePhpString(_bridge, (String.valueOf(i)));
+			return _bridge.castToExact(new Integer(i));
 		    }
 		    public boolean moveForward() {
 			valid=++i<length;
@@ -133,19 +96,6 @@ public abstract class PhpMap {
 		    }
 		    public boolean hasMore() {
 			return valid?true:false;
-		    }
-
-		    public boolean offsetExists(Object pos) {
-		        return _bridge.offsetExists(length, pos);
-		    }
-		    public Object offsetGet(Object pos) {
-		        return _bridge.offsetGet((Object)this.value, pos);
-		    }
-		    public void offsetSet(Object pos, Object val) {
-		        _bridge.offsetSet((Object)this.value, pos, val);
-		    }
-		    public void offsetUnset(Object pos) {
-		        _bridge.offsetUnset((Object)this.value, pos);
 		    }
 		};
 	}
@@ -168,8 +118,8 @@ public abstract class PhpMap {
 		    public Object currentData() {
 			return this.value;
 		    }
-		    public Request.PhpString currentKey() {
-			return new Request.SimplePhpString(_bridge, String.valueOf(i));
+		    public Object currentKey() {
+			return _bridge.castToExact(new Integer(i));
 		    }
 		    public boolean moveForward() {
 			if(iter.hasNext()) {
@@ -182,26 +132,6 @@ public abstract class PhpMap {
 		    }
 		    public boolean hasMore() {
 			return valid;
-		    }
-
-		    private void bail() {
-			throw new UnsupportedOperationException("A collection does not have an offset. You can only iterate over its values.");
-		    }
-
-		    // Should we really care?
-		    public boolean offsetExists(Object pos) {
-			bail();
-			return false;
-		    }
-		    public Object offsetGet(Object pos) {
-			bail();
-			return null;
-		    }
-		    public void offsetSet(Object pos, Object val) {
-			bail();
-		    }
-		    public void offsetUnset(Object pos) {
-			bail();
 		    }
 		};
 	}
@@ -231,19 +161,6 @@ public abstract class PhpMap {
 		    }
 		    public boolean hasMore() {
 			return currentKey==null?false:true;
-		    }
-
-		    public boolean offsetExists(Object pos) {
-		        return _bridge.offsetExists((Map) this.value, pos);
-		    }
-		    public Object offsetGet(Object pos) {
-		        return _bridge.offsetGet((Map) this.value, pos);
-		    }
-		    public void offsetSet(Object pos, Object val) {
-			_bridge.offsetSet((Map) this.value, pos, val);
-		    }
-		    public void offsetUnset(Object pos) {
-			_bridge.offsetUnset((Map) this.value, pos);
 		    }
 		};
 	}

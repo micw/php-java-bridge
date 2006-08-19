@@ -2,7 +2,7 @@
 
 <?php
 if (!extension_loaded('java')) {
-  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
     echo "java extension not installed.";
     exit(2);
   }
@@ -17,23 +17,24 @@ function toString() {
   $s=$v=$t=null;
   if($count<10) {
     $c = $count++;
-    return java_closure() . "$c";
+    return java_cast(java_closure(), "String") . "$c";
   }
   return "leaf";
 }
 
 $res=java_closure();
-if("$res" != "leaf9876543210") {
+if(java_cast($res, "S") != "leaf9876543210") {
   echo "test failed\n";
   exit(1);
  }
-if("$res" != "leaf") {
+
+if(java_cast($res, "S") != "leaf") {
   echo "test failed\n";
   exit(2);
  }
-echo $res; echo "\n";
+echo java_cast($res, "S"); echo "\n";
 $count=0; 
-echo "$res\n";
+echo java_cast($res, "S")."\n";
 echo "test okay\n";
 exit(0);
 

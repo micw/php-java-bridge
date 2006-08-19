@@ -1,5 +1,6 @@
 <?php
 
+include_once("java/Java.php");
 header("Content-type: application/vnd.ms-excel");
 header("Content-Disposition: attachment; filename=downloaded.xls");
 
@@ -21,6 +22,6 @@ java_end_document(); // back to "normal" protocol mode
 $memoryStream = new java ("java.io.ByteArrayOutputStream");
 $workbook->write($memoryStream);
 $memoryStream->close();
-echo (string)$memoryStream->toByteArray();
+echo java_values($memoryStream->toByteArray());
 ?>
 

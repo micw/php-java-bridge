@@ -1,7 +1,7 @@
 <?php
 
 if (!extension_loaded('java')) {
-  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
     echo "java extension not installed.";
     exit(2);
   }
@@ -19,7 +19,7 @@ try { java_require("$here/../../unsupported/kawa.jar"); } catch (JavaException $
 
 $s = new java("kawa.standard.Scheme");
 for($i=0; $i<100; $i++) {
-  $res=(float)$s->eval("
+  $res=java_cast($s->eval("
 
 (letrec
  ((f (lambda(v)
@@ -32,7 +32,7 @@ for($i=0; $i<100; $i++) {
 	  v)))))
  (f $i))
 
-");
+"), "D");
 
   if($ex=java_last_exception_get()) $res=$ex->toString();
   java_last_exception_clear();
@@ -41,5 +41,5 @@ for($i=0; $i<100; $i++) {
 $t2=$system->currentTimeMillis();
 $delta=($t2-$t1)/1000.0;
 $now=new java("java.sql.Timestamp",$system->currentTimeMillis());
-echo  "Evaluation took $delta s -- at: ".$now->toString() . "\n";
+echo  "Evaluation took $delta s -- at: ".java_cast($now, "S") . "\n";
 ?>

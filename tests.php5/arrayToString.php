@@ -2,7 +2,7 @@
 
 <?php
 if (!extension_loaded('java')) {
-  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
     echo "java extension not installed.";
     exit(2);
   }
@@ -21,7 +21,7 @@ for($i=0; $i<$length; $i++) {
 }
 
 // ... and post it to java.  Should print integers
-print "integer array: ". $ArrayToString->arrayToString($arr) . "<br>\n";
+print "integer array: ". java_values($ArrayToString->arrayToString($arr)) . "<br>\n";
 
 
 // double
@@ -30,7 +30,7 @@ for($i=0; $i<$length; $i++) {
 }
 
 // should print doubles
-print "double array: ". $ArrayToString->arrayToString($arr) . "<br>\n";
+print "double array: ". java_values($ArrayToString->arrayToString($arr)) . "<br>\n";
 
 
 // boolean
@@ -39,6 +39,6 @@ for($i=0; $i<$length; $i++) {
 }
 
 // should print booleans
-print "boolean array: ". $ArrayToString->arrayToString($arr) ."<br>\n";
+print "boolean array: ". java_values($ArrayToString->arrayToString($arr)) ."<br>\n";
 
 ?>

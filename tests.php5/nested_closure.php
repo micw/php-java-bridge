@@ -2,7 +2,7 @@
 
 <?php
 if (!extension_loaded('java')) {
-  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
     echo "java extension not installed.";
     exit(2);
   }
@@ -18,7 +18,7 @@ function toString() {
 }
 function getClosure() {
   $cl = java_closure(new c());
-  $res = (string)$cl;
+  $res = java_cast($cl, "S");
   if($res != "class c") throw new JavaException ("java.lang.Exception", "test failed");
   return $cl;
 }
@@ -28,7 +28,7 @@ try {
   $Proxy = new JavaClass("java.lang.reflect.Proxy");
   $proc = $Proxy->getInvocationHandler($cl);
   $ncl = $proc->invoke($cl, "getClosure", array());
-  $res = (string)$ncl;
+  $res = java_cast($ncl, "S");
   if($res != "class c") throw new Exception ("test failed");
   echo "test okay<br>\n";
 } catch (Exception $e) {

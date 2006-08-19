@@ -2,7 +2,7 @@
 
 <?php
 if (!extension_loaded('java')) {
-  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
     echo "java extension not installed.";
     exit(2);
   }
@@ -25,7 +25,7 @@ $l=$Arrays->asList($ar);
 $v->add(1, null);
 $l2 = $v->sublist(0,$v->size());
 
-echo "$l\n$l2 \n";
+echo java_cast($l, "S")."\n".java_cast($l2,"S")."\n";
 $res1 = java_values($l);
 $res2 = java_values($l2);
 $res3 = array();

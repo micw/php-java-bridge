@@ -2,7 +2,7 @@
 
 <?php 
 if (!extension_loaded('java')) {
-  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
     echo "java extension not installed.";
     exit(2);
   }
@@ -18,8 +18,19 @@ $entries[3] ="Die Verfolgung und Ermordung Jean Paul Marats dargestellt durch di
 $entries[4] ="Der Mann mit den Messern, Heinrich Böll, 1917--1985";
 $entries[5] ="Biedermann und die Brandstifter, Max Frisch, 1911--1991";
 $entries[6] ="Seelandschaft mit Pocahontas, Arno Schmidt, 1914--1979";
-for ($i = 0; $i < $Array->getLength($entries); $i++) { 
-  echo "$i: $entries[$i]\n";
-}
+if(extension_loaded("java")) {
+  for ($i = 0; $i < $Array->getLength($entries); $i++) { 
+    echo "$i: $entries[$i]\n";
+  }
+ } else {			// hack for the pure PHP
+				// implementation which currently
+				// behaves like PHP4: arrays etc. are
+				// resolved immediately so that
+				// $entries is not a java object
+				// anymore.
+  for ($i = 0; $i < 6; $i++) { 
+    echo "$i: ".java_values($entries[$i])."\n";
+  }
+ }
 
 ?>

@@ -10,7 +10,7 @@ package php.java.bridge;
  * @author jostb
  *
  */
-public final class Options {
+public class Options {
 
     private byte options = 0;
 
@@ -25,7 +25,7 @@ public final class Options {
      */
     public String getEncoding() {
 	if(encoding!=null) return encoding;
-	return encoding=extJavaCompatibility()?Util.UTF8:Util.DEFAULT_ENCODING;
+	return encoding=Util.DEFAULT_ENCODING;
     }
     
     /**
@@ -44,27 +44,31 @@ public final class Options {
    
     
     /**
-     * Returns true, if bit 1 of the request header is set (see PROTOCOL.TXT). This option stays the same for all packets.
-     * @return the value of the request header bit 1.
+     * Returns true when the bridge must destroy array, Map, Collection identity (see PROTOCOL.TXT) due 
+     * to limitations in the client (for PHP4 for example). 
+     * This option stays the same for all packets.
+     * @return the appropriate value from the request header.
      */
     public boolean sendArraysAsValues() {
-        return (options & 2)==2;
+        return (options & 3)==2;
     }
 
     /**
-     * Returns true, if bit 0 of the request header is set (see PROTOCOL.TXT). This options stays the same for all packets.
-     * @return the value of the request header
+     * Returns true when the bridge must destroy object identity (see PROTOCOL.TXT) due 
+     * to limitations in the client (for PHP4 for example). 
+     * This option stays the same for all packets.
+     * @return the appropriate value from the request header.
      */
-    public boolean extJavaCompatibility() {
-    	return this.options == 3;
+    public boolean preferValues() {
+    	return sendArraysAsValues();
     }
  
     /**
-     * Returns true, if exact numbers are base 16 (see PROTOCOL.TXT). This options stays the same for all packets.
-     * @return the value of the request header
+     * Returns always true unless the client hasn't sent a request header (for backward compatibility).
+     * @return true if the bridge should encode/decode exact numbers in hex.
      */
     public boolean hexNumbers() {
-    	return this.options == 1;
+    	return true;
     }
  
     /** re-initialize for keep alive */
@@ -87,5 +91,34 @@ public final class Options {
     public void updateOptions(byte b) {
 	encoding = null;
 	this.options = b;
+    }
+    private boolean base64Cache, base64CacheSet=false;
+    /**
+     * Return true if we must return a base 64 encoded string
+     * due to limitations in the client's XML parser.
+     * This option stays the same for all packets.
+     * @return true if the bridge must return strings as cdata, false otherwise.
+     */
+    public boolean base64Data() {
+	if(!base64CacheSet) {
+	    int options = 3 & this.options;
+	    base64CacheSet = true;
+	    return base64Cache = options==3;
+	}
+	return base64Cache;
+    }
+    private boolean contextCache, contextCacheSet=false;
+    /**
+     * Return true, if the client cannot keep a back-pointer to its own data structures.
+     * This option stays the same for all packets.
+     * @return true if the bridge must accept and pass a context ID, false otherwise.
+     */
+    public boolean passContext() {
+	if(!contextCacheSet) {
+	    int options = 3 & this.options;
+	    contextCacheSet = true;
+	    return contextCache = !((options==3) || (options==0));
+	}
+	return contextCache;
     }
 }

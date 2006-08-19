@@ -2,7 +2,7 @@
 
 <?php
 if (!extension_loaded('java')) {
-  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
     echo "java extension not installed.";
     exit(2);
   }
@@ -20,12 +20,12 @@ while ($iterator->hasNext()) {
   $next = $iterator->next();
   $key = $next->getKey();
   $value = $next->getValue();
-  echo "$key => $value\n";
+  echo java_values($key)." => ".java_values($value)."\n";
 }
 
 echo "\n";
 
 $idx = $array->getIndex("Seelandschaft mit Pocahontas, Arno Schmidt, 1914--1979");
 $entry = $array->getEntry($idx);
-echo "$idx => $entry\n";
+echo java_values($idx)." => ".java_values($entry)."\n";
 ?>

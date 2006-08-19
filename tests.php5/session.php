@@ -1,7 +1,7 @@
 <?php
 
 if (!extension_loaded('java')) {
-  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
     echo "java extension not installed.";
     exit(2);
   }
@@ -18,14 +18,14 @@ else {
   echo "cont session\n";
 }
 
-$session->put("a", $session->get("a")+1);
-$session->put("b", $session->get("b")-1);
+$session->put("a", java_values($session->get("a"))+1);
+$session->put("b", java_values($session->get("b"))-1);
 
 $val=$session->get("a");
 $c=$session->get("c");
 if($c!=null) {echo "test failed"; exit(1);}
-echo "session var: $val\n";
+echo "session var: ".java_values($val)."\n";
 
-if($session->get("b")==0) $session->destroy();
+if(java_values($session->get("b"))==0) $session->destroy();
 
 ?>
