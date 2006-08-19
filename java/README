@@ -9,20 +9,19 @@ IMPLEMENTATION.
 Installation
 ------------
 
-* Copy all files from this directory into your web server's PHP
-  include path.
+* Copy this directory into your web server's PHP include path.
 
 * Copy the Java libraries you need into the WEB-INF/lib folder within
   JavaBridge.war and copy JavaBridge.war into the deploy folder of the
   J2EE server or servlet engine and start it (if necessary).
 
-* To call out to your Java libraries require the javabridge/Java.php
+* To call out to your Java libraries require java/Java.php
   and use the provided Java class as usual. Example:
 
 <?php
 
-  require_once("javabridge/Java.php");
-  $string = new java("java.lang.String", "HelloWorld");
+  require_once("java/Java.php");
+  $string = new Java("java.lang.String", "HelloWorld");
   echo $string;
 
 ?>

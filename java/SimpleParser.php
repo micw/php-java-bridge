@@ -1,45 +1,60 @@
 <?php /*-*- mode: php; tab-width:4 -*-*/
 
-/* javabridge_Parser.php -- PHP/Java Bridge protocol parser.
+  /* java_SimpleParser.php -- PHP/Java Bridge protocol parser.
 
-   Copyright (C) 2006 Jost Boekemeier
+  Copyright (C) 2006 Jost Boekemeier
 
-This file is part of the PHP/Java Bridge.
+  This file is part of the PHP/Java Bridge.
 
-This file ("the library") is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2, or (at
-your option) any later version.
+  This file ("the library") is free software; you can redistribute it
+  and/or modify it under the terms of the GNU General Public License as
+  published by the Free Software Foundation; either version 2, or (at
+  your option) any later version.
 
-The library is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
+  The library is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with the PHP/Java Bridge; see the file COPYING.  If not, write to the
-Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-02111-1307 USA.
+  You should have received a copy of the GNU General Public License
+  along with the PHP/Java Bridge; see the file COPYING.  If not, write to the
+  Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+  02111-1307 USA.
 
-Linking this file statically or dynamically with other modules is
-making a combined work based on this library.  Thus, the terms and
-conditions of the GNU General Public License cover the whole
-combination.
+  Linking this file statically or dynamically with other modules is
+  making a combined work based on this library.  Thus, the terms and
+  conditions of the GNU General Public License cover the whole
+  combination.
 
-As a special exception, the copyright holders of this library give you
-permission to link this library with independent modules to produce an
-executable, regardless of the license terms of these independent
-modules, and to copy and distribute the resulting executable under
-terms of your choice, provided that you also meet, for each linked
-independent module, the terms and conditions of the license of that
-module.  An independent module is a module which is not derived from
-or based on this library.  If you modify this library, you may extend
-this exception to your version of the library, but you are not
-obligated to do so.  If you do not wish to do so, delete this
-exception statement from your version. */
+  As a special exception, the copyright holders of this library give you
+  permission to link this library with independent modules to produce an
+  executable, regardless of the license terms of these independent
+  modules, and to copy and distribute the resulting executable under
+  terms of your choice, provided that you also meet, for each linked
+  independent module, the terms and conditions of the license of that
+  module.  An independent module is a module which is not derived from
+  or based on this library.  If you modify this library, you may extend
+  this exception to your version of the library, but you are not
+  obligated to do so.  If you do not wish to do so, delete this
+  exception statement from your version. */
 
-require_once("javabridge/IDocHandler.php");
-class javabridge_Parser {
+class java_ParserString {
+  var $string, $off, $length;
+  function toString() {
+	return $this->getString();
+  }
+  function getString() {
+	return substr($this->string, $this->off, $this->length);
+  }
+}
+class java_ParserTag {
+  var $n, $strings;
+  function java_ParserTag() {
+	$this->strings = array();
+	$this->n = 0;
+  }
+}
+class java_SimpleParser {
   var $SLEN=256; // initial length of the parser string
 
   var $handler;
@@ -47,9 +62,9 @@ class javabridge_Parser {
   var $tag, $buf, $len, $s;
   var $type;
 
-  function javabridge_Parser($handler) {
+  function java_SimpleParser($handler) {
     $this->handler = $handler;
-    $this->tag = array(new javabridge_ParserTag(), new javabridge_ParserTag(), new javabridge_ParserTag());
+    $this->tag = array(new java_ParserTag(), new java_ParserTag(), new java_ParserTag());
 	$this->len = $this->SLEN;
 	$this->s = str_repeat(" ", $this->SLEN);
 	$this->type = $this->VOJD;
@@ -77,10 +92,21 @@ class javabridge_Parser {
 	$this->s[$this->i++]=$c; 
   }
   function CALL_BEGIN() {
-	$this->handler->begin($this->tag);
+    $pt=&$this->tag[1]->strings;
+	$st=&$this->tag[2]->strings;
+    $t=&$this->tag[0]->strings[0];
+    $name=$t->string[$t->off];
+	$n = $this->tag[2]->n;
+	$ar = array();
+	for($i=0; $i<$n; $i++) {
+	  $ar[$pt[$i]->getString()] = $st[$i]->getString();
+	}
+	$this->handler->begin($name, $ar);
   }
   function CALL_END() {
-	$this->handler->end($this->tag);
+    $t=&$this->tag[0]->strings[0];
+    $name=$t->string[$t->off];
+	$this->handler->end($name);
   }
   function PUSH($t) { 
 	$str = &$this->tag[$t]->strings;
@@ -168,9 +194,11 @@ class javabridge_Parser {
 		} /* ------------------ End of ansi C block ---------------- */
 	  $this->c++;
 	}
-	$rc = $this->eor;
    	$this->RESET();
-   	return $rc;
+  }
+
+  function getData($str) {
+	return $str;
   }
 }
 ?>

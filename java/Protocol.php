@@ -1,47 +1,51 @@
 <?php /*-*- mode: php; tab-width:4 -*-*/
 
-/* javabridge_Client.php -- PHP/Java Bridge protocol implementation
+  /* java_Client.php -- PHP/Java Bridge protocol implementation
 
-   Copyright (C) 2006 Jost Boekemeier
+  Copyright (C) 2006 Jost Boekemeier
 
-This file is part of the PHP/Java Bridge.
+  This file is part of the PHP/Java Bridge.
 
-This file ("the library") is free software; you can redistribute it
-and/or modify it under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2, or (at
-your option) any later version.
+  This file ("the library") is free software; you can redistribute it
+  and/or modify it under the terms of the GNU General Public License as
+  published by the Free Software Foundation; either version 2, or (at
+  your option) any later version.
 
-The library is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
+  The library is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with the PHP/Java Bridge; see the file COPYING.  If not, write to the
-Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-02111-1307 USA.
+  You should have received a copy of the GNU General Public License
+  along with the PHP/Java Bridge; see the file COPYING.  If not, write to the
+  Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+  02111-1307 USA.
 
-Linking this file statically or dynamically with other modules is
-making a combined work based on this library.  Thus, the terms and
-conditions of the GNU General Public License cover the whole
-combination.
+  Linking this file statically or dynamically with other modules is
+  making a combined work based on this library.  Thus, the terms and
+  conditions of the GNU General Public License cover the whole
+  combination.
 
-As a special exception, the copyright holders of this library give you
-permission to link this library with independent modules to produce an
-executable, regardless of the license terms of these independent
-modules, and to copy and distribute the resulting executable under
-terms of your choice, provided that you also meet, for each linked
-independent module, the terms and conditions of the license of that
-module.  An independent module is a module which is not derived from
-or based on this library.  If you modify this library, you may extend
-this exception to your version of the library, but you are not
-obligated to do so.  If you do not wish to do so, delete this
-exception statement from your version. */
+  As a special exception, the copyright holders of this library give you
+  permission to link this library with independent modules to produce an
+  executable, regardless of the license terms of these independent
+  modules, and to copy and distribute the resulting executable under
+  terms of your choice, provided that you also meet, for each linked
+  independent module, the terms and conditions of the license of that
+  module.  An independent module is a module which is not derived from
+  or based on this library.  If you modify this library, you may extend
+  this exception to your version of the library, but you are not
+  obligated to do so.  If you do not wish to do so, delete this
+  exception statement from your version. */
 
-class javabridge_SocketHandler {
+class java_SocketHandler {
   var $protocol, $sock;
+  var $COMPATIBILITY = false; // set to true to destroy object
+							  // identity: sends X/P and immediately
+							  // converts strings, numbers, byte
+							  // arrays into the equivalent PHP type.
 
-  function javabridge_SocketHandler($protocol, $sock) {
+  function java_SocketHandler($protocol, $sock) {
 	$this->protocol = $protocol;
 	$this->sock = $sock;
   }
@@ -61,13 +65,13 @@ class javabridge_SocketHandler {
 	die("not implemented: use java_session() as the first statement in a script");
   }
 }
-class javabridge_HttpHandler extends javabridge_SocketHandler {
+class java_HttpHandler extends java_SocketHandler {
   var $headers;
   var $RECV_SIZE;
   var $context;
   var $redirect;
   
-  function javabridge_HttpHandler($protocol, $sock) {
+  function java_HttpHandler($protocol, $sock) {
 	$this->protocol = $protocol;
 	$this->sock = $sock;
 	$this->RECV_SIZE = $protocol->client->RECV_SIZE;
@@ -112,7 +116,12 @@ class javabridge_HttpHandler extends javabridge_SocketHandler {
 	  :null;
   }
   function write($data) {
-	$compatibility = chr(0101); //hex numbers + id
+
+	$compatibility = $this->protocol->client->RUNTIME["PARSER"]=="NATIVE"
+	  ? chr(0103)
+	  : $compatibility = chr(0100);
+	$this->protocol->client->RUNTIME["COMPATIBILITY"]=$compatibility;
+
 	$this->headers = null;
 	$sock = $this->sock;
 	$len = 1 + strlen($data);
@@ -182,14 +191,14 @@ class javabridge_HttpHandler extends javabridge_SocketHandler {
 	  $len2 = chr($len&0xFF);
 	  $sock = fsockopen("127.0.0.1", $port, $errno, $errstr, 30);
 	  if (!$sock) die("$errstr ($errno)\n");
-	  $this->protocol->socketHandler=new javabridge_SocketHandler($this->protocol,$sock);
+	  $this->protocol->socketHandler=new java_SocketHandler($this->protocol,$sock);
 	  $this->protocol->write("\077${len0}${len1}${len2}${context}");
 	}
 	fclose($this->sock);
 	$this->protocol->handler = $this->protocol->socketHandler;
   }
 }
-class javabridge_Protocol {
+class java_Protocol {
   var $send;
   var $client;
   var $webContext;
@@ -214,12 +223,12 @@ class javabridge_Protocol {
 	  $port = $ar[1];
 	  $this->webContext = $ar[3];
 	}
-	$this->serverName = "http://$host:$port";
+	$this->client->RUNTIME["SERVER"] = $this->serverName = "$port";
 	$sock = fsockopen($host, $port, $errno, $errstr, 30);
 	if (!$sock) die("$errstr ($errno)\n");
-	return new javabridge_HttpHandler($this, $sock);
+	return new java_HttpHandler($this, $sock);
   }
-  function javabridge_Protocol ($client) {
+  function java_Protocol ($client) {
     $this->client = $client;
 	$this->handler = $this->createHttpHandler();
   }
@@ -260,32 +269,29 @@ class javabridge_Protocol {
 	$this->redirect();
   }
   
-  function createObjectBegin($name, $createInstance, $result) {
-	$this->write(sprintf("<C v=\"%s\" p=\"%s\" i=\"%x\">", $name, $createInstance, $result));
+  function createObjectBegin($name, $createInstance) {
+	$this->write(sprintf("<C v=\"%s\" p=\"%s\">", $name, $createInstance));
   }
   function createObjectEnd() {
     $this->write("</C>");
     $this->finish();
   }
-  function invokeBegin($object, $method, $property, $result) {
- 	$this->write(sprintf("<I v=\"%x\" m=\"%s\" p=\"%s\" i=\"%x\">",$object, $method, $property, $result));
+  function invokeBegin($object, $method, $property) {
+ 	$this->write(sprintf("<I v=\"%x\" m=\"%s\" p=\"%s\">",$object, $method, $property));
   }
   function invokeEnd() {
     $this->write("</I>");
     $this->finish();
   }
-  function resultBegin($result) {
-	$this->write(sprintf("<R i=\"%x\">", $result));
+  function resultBegin() {
+	$this->write("<R>");
   }
   function resultEnd() {
     $this->write("</R>");
 	$this->flush();
   }
-  function replaceQuote($s) {
-    return str_replace(array("\"","&"), array("&quot;", "&amp;"), $s);
-  }
   function writeString($name) {
-    $this->write(sprintf("<S v=\"%s\"/>",$this->replaceQuote($name)));
+    $this->write(sprintf("<S v=\"%s\"/>",htmlspecialchars($name, ENT_COMPAT)));
   }
   function writeBoolean($boolean) {
     $c=$boolean?"T":"F";
@@ -299,7 +305,7 @@ class javabridge_Protocol {
     }
   }
   function writeDouble($d) {
-    $this->write(sprintf("<D v=\"%14e\"/>", $d));
+    $this->write(sprintf("<D v=\"%.14e\"/>", $d));
   }
   function writeObject($object) {
     if(is_null($object)) {
@@ -325,7 +331,7 @@ class javabridge_Protocol {
     $this->write("</X>");
   }
   function writePairBegin_s($key) {
-    $this->write("<P t=\"S\" v=\"%s\">", $key);
+    $this->write(sprintf("<P t=\"S\" v=\"%s\">", $key));
   }
   function writePairBegin_n($key) {
     $this->write(sprintf("<P t=\"N\" v=\"%x\">",$key));
@@ -342,6 +348,9 @@ class javabridge_Protocol {
 
   function getSession($args) {
 	return $this->handler->getSession($args);
+  }
+  function getServerName() {
+	return $this->serverName;
   }
 }
 ?>
