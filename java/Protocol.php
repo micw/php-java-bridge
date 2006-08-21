@@ -6,10 +6,10 @@
 
   This file is part of the PHP/Java Bridge.
 
-  This file ("the library") is free software; you can redistribute it
-  and/or modify it under the terms of the GNU General Public License as
-  published by the Free Software Foundation; either version 2, or (at
-  your option) any later version.
+  The PHP/Java Bridge ("the library") is free software; you can
+  redistribute it and/or modify it under the terms of the GNU General
+  Public License as published by the Free Software Foundation; either
+  version 2, or (at your option) any later version.
 
   The library is distributed in the hope that it will be useful, but
   WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -80,10 +80,10 @@ class java_HttpHandler extends java_SocketHandler {
 	$str="";
 	$first=true;
 	foreach($_COOKIE as $k => $v) {
-	  $str = $str . ($first ? "Cookie: $k=$v":"; $k=$v");
+	  $str .= ($first ? "Cookie: $k=$v":"; $k=$v");
 	  $first=false;
 	}
-	if(!$first) $str = $str . '\r\n';
+	if(!$first) $str .= "\r\n";
 	return $str;
   }
   function getContextFromCgiEnvironment() {
@@ -92,12 +92,13 @@ class java_HttpHandler extends java_SocketHandler {
 			:(array_key_exists('X_JAVABRIDGE_CONTEXT', $_SERVER)
 			  ?$_SERVER['X_JAVABRIDGE_CONTEXT']
 			  :null));
+	return $ctx;
   }
   function getContext() {
 	$ctx = $this->getContextFromCgiEnvironment();
 	$context = "";
 	if($ctx) {
-	  sprintf($context, "X_JAVABRIDGE_CONTEXT: %s\r\n", $ctx);
+	  $context = sprintf("X_JAVABRIDGE_CONTEXT: %s\r\n", $ctx);
 	}
 	return $context;
   }
@@ -130,17 +131,20 @@ class java_HttpHandler extends java_SocketHandler {
 	$context = $this->getContext();
 	$redirect = $this->redirect;
 	if(!$webapp) $webapp = "/JavaBridge/JavaBridge.phpjavabridge";
-
-	fputs($sock, "PUT ${webapp} HTTP/1.0\r\n");
-	fputs($sock, "Host: localhost\r\n");
-	fputs($sock, "Content-Length: " . $len . "\r\n");
-	if($context) fputs($sock, $context);
-	if($cookies) fputs($sock, $cookies);
-	if($redirect) fputs($sock, $redirect);
-	fputs($sock, "\r\n");
-	fwrite($sock, "${compatibility}${data}");
+	$res = "PUT ";
+	$res .= $webapp;
+	$res .= " HTTP/1.0\r\n";
+	$res .= "Host: localhost\r\n";
+	$res .= "Content-Length: "; $res .= $len; $res .= "\r\n";
+	$res .= $context;
+	$res .= $cookies;
+	$res .= $redirect;
+	$res .= "\r\n";
+	$res .= $compatibility;
+	$res .= $data;
+	fwrite($sock, $res); fflush($sock);
   }
-  function setCookie($path, $key, $val) {
+  function doSetCookie($key, $val, $path) {
 	$path=trim($path);
 
 	$webapp = $this->getWebApp(); if(!$webapp) $path=null;
@@ -167,7 +171,7 @@ class java_HttpHandler extends java_SocketHandler {
 		  $path = "";
 		  if(isset($ar[1])) $p=explode("=", $ar[1]);
 		  if(isset($p)) $path=$p[1];
-		  $this->setCookie($cookie[0], $cookie[1], $path);
+		  $this->doSetCookie($cookie[0], $cookie[1], $path);
 		}
 	  }
 	}
@@ -214,17 +218,23 @@ class java_Protocol {
   }
   function createHttpHandler() {
 	$host = "127.0.0.1";
-	$port = "8080";
+	$port = "8443";
 
 	$overrideHosts = $this->getOverrideHosts();
+	$ssl = "";
 	if($overrideHosts) {
+	  // handle "s:127.0.0.1:8080//JavaBridge/test.phpjavabridge" 
+	  // or "s:127.0.0.1:8080" 
+	  // or "/" 
+	  // or ""
 	  $ar = split(":|//", $overrideHosts);
-	  $host = $ar[0];
-	  $port = $ar[1];
-	  $this->webContext = $ar[3];
+	  $ssl              = (isset($ar[0]) && ($ar[0] == 's')) ? "ssl://" : "";
+	  $host             = $ar[1];
+	  $port             = $ar[2];
+	  if(isset($ar[3])) $this->webContext = "/".$ar[3];
 	}
-	$this->client->RUNTIME["SERVER"] = $this->serverName = "$port";
-	$sock = fsockopen($host, $port, $errno, $errstr, 30);
+	$this->client->RUNTIME["SERVER"] = $this->serverName = "$host:$port";
+	$sock = fsockopen("${ssl}${host}", $port, $errno, $errstr, 30);
 	if (!$sock) die("$errstr ($errno)\n");
 	return new java_HttpHandler($this, $sock);
   }

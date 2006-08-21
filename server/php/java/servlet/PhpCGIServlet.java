@@ -2,6 +2,28 @@
 
 package php.java.servlet;
 
+/*
+ * Copyright (C) 2006 Jost Boekemeier
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -137,11 +159,7 @@ public class PhpCGIServlet extends FastCGIServlet {
     /* Start a fast CGI Server process on this computer. Switched off per default. */
     private final Process startFcgi(Map env, String php) throws IOException {
         if(proc!=null) return null;
-	    String port;
-	    if(System.getProperty("php.java.bridge.promiscuous", "false").toLowerCase().equals("true")) 
-		port = ":"+String.valueOf(fcgi_channel);
-	    else
-		port = "127.0.0.1:"+String.valueOf(fcgi_channel);
+        	String port = Util.getHostAddress()+":"+String.valueOf(fcgi_channel);
 
 		// Set override hosts so that php does not try to start a VM.
 		// The value itself doesn't matter, we'll pass the real value
@@ -217,12 +235,15 @@ public class PhpCGIServlet extends FastCGIServlet {
 	    	/* Inform the client that we are a cgi servlet and send the re-direct port */
 	      String override;
 	      if(override_hosts) { 
-		    StringBuffer buf = new StringBuffer("127.0.0.1:");
+		    StringBuffer buf = new StringBuffer();
 		    if(!req.isSecure())
-			buf.append(this.env.get("SERVER_PORT"));
+			buf.append("h:");
 		    else
-			buf.append(CGI_SSL_CHANNEL);
-		    buf.append("/");
+			buf.append("s:");
+		    buf.append(Util.getHostAddress());
+		    buf.append(":");
+		    buf.append(this.env.get("SERVER_PORT")); 
+		    buf.append('/');
 		    buf.append(req.getRequestURI());
 		    buf.append("javabridge");
 		    override = buf.toString();

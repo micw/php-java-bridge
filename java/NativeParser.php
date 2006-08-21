@@ -6,10 +6,10 @@
 
   This file is part of the PHP/Java Bridge.
 
-  This file ("the library") is free software; you can redistribute it
-  and/or modify it under the terms of the GNU General Public License as
-  published by the Free Software Foundation; either version 2, or (at
-  your option) any later version.
+  The PHP/Java Bridge ("the library") is free software; you can
+  redistribute it and/or modify it under the terms of the GNU General
+  Public License as published by the Free Software Foundation; either
+  version 2, or (at your option) any later version.
 
   The library is distributed in the hope that it will be useful, but
   WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -69,7 +69,7 @@ class java_NativeParser {
   }
   function parse() {
 	// NOTE: RECV_SIZE must be the same as the underlying 
-	// stream buffer size, otherwise this function may hang.
+	// PHP stream buffer size, otherwise this function will hang.
 	do {
 	  $this->event = false;
 	  $buf=$this->handler->read($this->handler->RECV_SIZE); 

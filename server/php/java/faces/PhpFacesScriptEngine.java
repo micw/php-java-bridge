@@ -2,6 +2,28 @@
 
 package php.java.faces;
 
+/*
+ * Copyright (C) 2006 Jost Boekemeier
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 import java.util.Map;
 
 import javax.script.Bindings;
@@ -61,11 +83,15 @@ public class PhpFacesScriptEngine extends PhpScriptEngine implements Invocable {
 	 * call handleRedirectConnection */
 	env.put("X_JAVABRIDGE_CONTEXT", kontext.getId());
 	/* redirect to ourself */
-	StringBuffer buf = new StringBuffer("127.0.0.1:");
+	StringBuffer buf = new StringBuffer();
 	if(!request.isSecure())
-	    buf.append(php.java.servlet.CGIServlet.getLocalPort(request));
+	    buf.append("h:");
 	else 
-	    buf.append(php.java.servlet.PhpCGIServlet.CGI_SSL_CHANNEL);
+	    buf.append("s:");
+	buf.append(Util.getHostAddress());
+	buf.append(":");
+	buf.append(php.java.servlet.CGIServlet.getLocalPort(request));
+	
 	buf.append("/");
 	buf.append(request.getRequestURI());
 	buf.append(".phpjavabridge"); // it doesn't matter what we

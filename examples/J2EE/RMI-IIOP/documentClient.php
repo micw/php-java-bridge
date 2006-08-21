@@ -1,6 +1,8 @@
 #!/bin/env php
 <?php
 
+require_once("java/Java.php");
+
 class SERVER {const JBOSS=1, WEBSPHERE=2, SUN=3, ORACLE=4;}
 
 // -------------- adjust these variables, if necessary

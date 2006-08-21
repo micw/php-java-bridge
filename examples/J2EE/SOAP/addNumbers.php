@@ -5,6 +5,8 @@
   * This example uses the PHP/Java Bridge to connect to a SOAP service.
   */
 
+require_once("java/Java.php");
+
 include("wsimport.php");
 
 try {

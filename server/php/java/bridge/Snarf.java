@@ -1,10 +1,36 @@
+/*-*- mode: Java; tab-width:8 -*-*/
+
 package php.java.bridge;
+
+/*
+ * Copyright (C) 2006 Jost Boekemeier
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.JarURLConnection;
 import java.net.MalformedURLException;
@@ -28,6 +54,8 @@ class Snarf {
   
   private File jarName;
   private PrintWriter all;
+
+  private URLClassLoader loader;      
 
   public static void main(String[] args) throws Exception {
       (new Snarf(args)).run();
@@ -77,22 +105,23 @@ class Snarf {
       }
       base=baseDir;
       File baseFile = new File(base);
-      if(!baseFile.exists()) baseFile.mkdirs();
+      File javaFile = new File(baseFile, "java");
+      if(!javaFile.exists()) javaFile.mkdirs();
       writePhpJava();
       List fileList = new LinkedList();
       List urlList = new LinkedList();
       addURLs(urlList, fileList, bootPath);
       URL[] urls = (URL[]) urlList.toArray(new URL[urlList.size()]);
       File[] files = (File[]) fileList.toArray(new File[urls.length]);
-      URLClassLoader loader = new URLClassLoader(urls);      
+      loader = new URLClassLoader(urls);      
       for(int i=0; i<urls.length; i++) {
 	  URL url = urls[i];
 	  File file = files[i];
 	  String jarname = file.getName();
 	  String name = jarname.substring(0, jarname.length()-4); // strip off .jar
+	  name = name.toLowerCase();
 	  baseFile = (baseDir!=null) ? new File(baseDir, name) : new File(name);
-	  File javaDir = new File(baseFile, "java");
-	  if(!javaDir.exists()) javaDir.mkdirs();
+	  if(!baseFile.exists()) baseFile.mkdirs();
 	  base=baseFile.getAbsolutePath();
 
 	  copyFile(file, jarName=new File(base, jarname));
@@ -109,19 +138,52 @@ class Snarf {
 		  mod=~0;
 	      }
 	      if(Modifier.isPublic(mod))
-		  writeClass(className);
+		  writeClass(url.toExternalForm(), className);
 	  }
 	  all.println("?>");
 	  all.close();
       }
   }
 
+  private void writeMethod(PrintWriter writer, Method method) {
+      Class[] params = method.getParameterTypes();
+      Class ret = method.getReturnType();
+      writer.print("function ");
+      writer.print(method.getName());
+      writer.print("(");
+      int end = params.length-1;
+      for(int i=0; i<params.length; i++) {
+	  Class param = params[i];
+	  writer.print("/* ");
+	  writer.print(Util.getShortName(param));
+	  writer.print(" */");
+	  writer.print("$");
+	  writer.print("p");
+	  writer.print(i);
+	  if(i!=end) writer.print(", ");
+      }
+      writer.print(");");
+      writer.print("\t/* ");
+      writer.print(Util.getShortName(ret));
+      writer.println(" */");
+  }
+  private void writerMethods(PrintWriter writer, String className) throws ClassNotFoundException {
+      Class clazz = Class.forName(className, false, loader);
+      Method[] methods = clazz.getMethods();
+      for(int i=0; i<methods.length; i++) {
+	  Method method = methods[i];
+	  int mod = method.getModifiers();
+	  if(Modifier.isPublic(mod)) writeMethod(writer, method);
+      }
+  }
   private static final Pattern subClass = Pattern.compile("\\$");
-  private void writeClass(String clazz) throws FileNotFoundException {
-      String name = clazz.replace('.', '_');
+  private void writeClass(String file, String className) throws FileNotFoundException, ClassNotFoundException {
+      String name = className.replace('.', '_');
       name=subClass.matcher(name).replaceAll("__");
       PrintWriter writer = createClass(name);
-      writeHeader(writer, clazz, name);
+      writeHeader(writer, file, className, name);
+      writerMethods(writer, className);
+      writer.println("?>");
       writer.close();
   }
   private void addIndex(String name) {
@@ -141,6 +203,8 @@ class Snarf {
     FileOutputStream stream = new FileOutputStream(getFile("java/Bridge.php"));
     PrintWriter out = new PrintWriter(stream);
     out.println("<?php");
+    out.println("/* auto-generated file, do not edit */");
+    out.println("");
     out.println("if (!extension_loaded('java')) {");
     out.println("  if (!(include_once('java/Java.php'))&&!(PHP_SHLIB_SUFFIX=='so' && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=='dll' && dl('php_java.dll'))) {");
     out.println("    echo 'java extension not installed.';");
@@ -156,7 +220,7 @@ class Snarf {
     out.println("  static $map = array();");
     out.println("  if(!isset($map[$jar])) {");
     out.println("    $map[$jar]=true;");
-    out.println("    java_require($jar);");
+    out.println("    @java_require($jar);");
     out.println("  }");
     out.println("}");
     out.println("");
@@ -166,15 +230,21 @@ class Snarf {
     out.println("  function __java_coerceArg($arg) {return java_coerce_value($arg);}");
     out.println("  function __java_init($path) { } ");
     out.println("  function __get($arg) { if(!is_null($this->java)) return $this->java->__get($this->__java_coerceArg($arg)); }");
-    out.println("  function __put($key, $val) { if(!is_null($this->java)) return $this->java->__put($this->__java_coerceArg($key), $this->__java_coerceArg($val)); }");
+    out.println("  function __set($key, $val) { if(!is_null($this->java)) return $this->java->__set($this->__java_coerceArg($key), $this->__java_coerceArg($val)); }");
     out.println("  function __call($m, $a) { if(!is_null($this->java)) return $this->java->__call($m, $this->__java_coerceArgs($a)); }");
     out.println("  function __toString() { if(!is_null($this->java)) return $this->java->__toString(); }");
     out.println("}");
     out.println("?>");
     out.close();
   }
-  private void writeHeader(PrintWriter out, String clazz, String phpClazz) {
+  private void writeHeader(PrintWriter out, String file, String clazz, String phpClazz) {
       out.println("<?php");
+      out.println("/* auto-generated file, do not edit */");
+      out.println("/* Use the command:");
+      out.println(" * java -jar JavaBridge.jar --convert . "+file);
+      out.println(" * to recreate it.");
+      out.println(" */");
+      out.println("");
       out.println("require_once(\'java/Bridge.php\');");
       out.print("java_require_once('");
       out.print(jarName.getAbsolutePath());
@@ -216,7 +286,6 @@ class Snarf {
       out.println("    $this->java=$java;");
       out.println("  }");
       out.println("}");
-      out.println("?>");
   }
   
   private static List getClasses(URL url) throws IOException {

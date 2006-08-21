@@ -1,5 +1,7 @@
 <?php
 
+require_once("java/Java.php");
+
 /**
  * This class keeps the state of our simple application.  The
  * framework will save/restore the state if necessary.
@@ -12,11 +14,13 @@ class helloWorld {
 
   /* standard getter and setter for all state variables */
 
-  function getValue($prop) {
+  function getValue($idx) {
+    $prop = java_values($idx);
     return $this->$prop;
   }
 
-  function setValue($prop, $val) {
+  function setValue($idx, $val) {
+    $prop = java_values($idx);
     $this->$prop = $val;
   }
 
@@ -37,7 +41,7 @@ class helloWorld {
       // this message goes to the server log
       echo "helloWorld.php:: throws validate exception.";
 
-      $message = new Java("javax.faces.application.FacesMessage", "$value invalid, enter yourname");
+      $message = new Java("javax.faces.application.FacesMessage", $value->__toString()." invalid, enter yourname");
       throw 
 	new JavaException("javax.faces.validator.ValidatorException", $message);
     }

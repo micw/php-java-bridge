@@ -53,7 +53,7 @@ public class ContextRunner implements Runnable {
 	if(val==0xFF) {
 	    buf = new byte[2];
 	    in.read(buf);
-	    val = (0xFF&buf[0]) | (0xFF00&(buf[0]<<8));
+	    val = (0xFF&buf[0]) | (0xFF00&(buf[1]<<8));
 	}
 	return val;
     }

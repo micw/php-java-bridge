@@ -1,5 +1,43 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
+/* bind.c -- create and connect to the PHP/Java Bridge back end.
+
+  Copyright (C) 2006 Jost Boekemeier
+
+  This file is part of the PHP/Java Bridge.
+
+  The PHP/Java Bridge ("the library") is free software; you can
+  redistribute it and/or modify it under the terms of the GNU General
+  Public License as published by the Free Software Foundation; either
+  version 2, or (at your option) any later version.
+
+  The library is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with the PHP/Java Bridge; see the file COPYING.  If not, write to the
+  Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+  02111-1307 USA.
+
+  Linking this file statically or dynamically with other modules is
+  making a combined work based on this library.  Thus, the terms and
+  conditions of the GNU General Public License cover the whole
+  combination.
+
+  As a special exception, the copyright holders of this library give you
+  permission to link this library with independent modules to produce an
+  executable, regardless of the license terms of these independent
+  modules, and to copy and distribute the resulting executable under
+  terms of your choice, provided that you also meet, for each linked
+  independent module, the terms and conditions of the license of that
+  module.  An independent module is a module which is not derived from
+  or based on this library.  If you modify this library, you may extend
+  this exception to your version of the library, but you are not
+  obligated to do so.  If you do not wish to do so, delete this
+  exception statement from your version. */
+
 #include "php_java.h"
 
 /* execve,select */
@@ -122,13 +160,12 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   char*sys_libpath=getenv("LD_LIBRARY_PATH");
   char*home=EXT_GLOBAL(cfg)->vm_home;
   char *ext = php_ini_string((char*)ext_dir, sizeof ext_dir, 0);
-#ifdef CFG_JAVA_SOCKET_INET
   const char* s_prefix = inet_socket_prefix;
   short any_port = 1;			/* let back-end select the port# */
-#else
-  const char *s_prefix = local_socket_prefix;
-  short any_port = for_display;
-#endif
+  if(!EXT_GLOBAL(cfg)->java_socket_inet) {
+	s_prefix = local_socket_prefix;
+	any_port = 0; //for_display
+  }
   char *sockname, *cfg_sockname=EXT_GLOBAL(get_sockname)(TSRMLS_C), *cfg_logFile=EXT_GLOBAL(cfg)->logFile;
 
   /* if socketname is off, show the user how to start a TCP backend */
@@ -231,15 +268,14 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   static const char executable[] = "/MonoBridge.exe";
   char *p, *slash;
   char*program=EXT_GLOBAL(cfg)->vm;
-#ifdef CFG_JAVA_SOCKET_INET
   const char* s_prefix = inet_socket_prefix;
   short any_port = 1;			/* let back-end select the port# */
-#else
-  const char *s_prefix = local_socket_prefix;
-  short any_port = for_display;
-#endif
   char *sockname, *cfg_sockname=EXT_GLOBAL(get_sockname)(TSRMLS_C), *cfg_logFile=EXT_GLOBAL(cfg)->logFile;
   char*home = EXT_GLOBAL(cfg)->vm_home;
+  if(!EXT_GLOBAL(cfg)->java_socket_inet) {
+	s_prefix = local_socket_prefix;
+	any_port = 0; //for_display
+  }
   if(!(EXT_GLOBAL(option_set_by_user) (U_JAVA_HOME, EXT_GLOBAL(ini_user)))) {	/* look into extension_dir then */
 	char *ext = php_ini_string((char*)ext_dir, sizeof ext_dir, 0);
 	if(ext) home = ext;
@@ -351,14 +387,22 @@ static void exec_vm(TSRMLS_D) {
 static const int is_true = 1;
 static int test_local_server(void) {
   int sock, n;
+  if(!EXT_GLOBAL(cfg)->java_socket_inet) {
 #ifndef CFG_JAVA_SOCKET_INET
-  sock = socket (PF_LOCAL, SOCK_STREAM, 0);
-#else
-  sock = socket (PF_INET, SOCK_STREAM, 0);
-  if(sock!=-1) setsockopt(sock, 0x6, TCP_NODELAY, (void*)&is_true, sizeof is_true);
+	sock = socket (PF_LOCAL, SOCK_STREAM, 0);
 #endif
+  } else {
+	sock = socket (PF_INET, SOCK_STREAM, 0);
+	if(sock!=-1) setsockopt(sock, 0x6, TCP_NODELAY, (void*)&is_true, sizeof is_true);
+  }
   if(sock==-1) return -1;
-  n = connect(sock,(struct sockaddr*)&EXT_GLOBAL(cfg)->saddr, sizeof EXT_GLOBAL(cfg)->saddr);
+  if(EXT_GLOBAL(cfg)->java_socket_inet) {
+	n = connect(sock,(struct sockaddr*)&EXT_GLOBAL(cfg)->saddr.in, sizeof EXT_GLOBAL(cfg)->saddr.in);
+  } else {
+#ifndef CFG_JAVA_SOCKET_INET
+	n = connect(sock,(struct sockaddr*)&EXT_GLOBAL(cfg)->saddr.un, sizeof EXT_GLOBAL(cfg)->saddr.un);
+#endif
+  }
   if(n==-1) { close(sock); return -1; }
   return sock;
 }
@@ -893,22 +937,34 @@ static void s_kill(int sig) {
 
 
 #endif
-static void make_local_socket_info(TSRMLS_D) {
-  memset(&EXT_GLOBAL(cfg)->saddr, 0, sizeof EXT_GLOBAL(cfg)->saddr);
+static void make_local_socket_info(short java_socket_inet TSRMLS_DC) {
+  if(!java_socket_inet) {
 #ifndef CFG_JAVA_SOCKET_INET
-  EXT_GLOBAL(cfg)->saddr.sun_family = AF_LOCAL;
-  memset(EXT_GLOBAL(cfg)->saddr.sun_path, 0, sizeof EXT_GLOBAL(cfg)->saddr.sun_path);
-  strcpy(EXT_GLOBAL(cfg)->saddr.sun_path, EXT_GLOBAL(get_sockname)(TSRMLS_C));
-# ifdef HAVE_ABSTRACT_NAMESPACE
-  *EXT_GLOBAL(cfg)->saddr.sun_path=0;
-# endif
-#else
-  EXT_GLOBAL(cfg)->saddr.sin_family = AF_INET;
-  EXT_GLOBAL(cfg)->saddr.sin_port=htons(atoi(EXT_GLOBAL(get_sockname)(TSRMLS_C)));
-  EXT_GLOBAL(cfg)->saddr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
+	memset(&EXT_GLOBAL(cfg)->saddr.un, 0, sizeof EXT_GLOBAL(cfg)->saddr.un);
+	EXT_GLOBAL(cfg)->saddr.un.sun_family = AF_LOCAL;
+	memset(EXT_GLOBAL(cfg)->saddr.un.sun_path, 0, sizeof EXT_GLOBAL(cfg)->saddr.un.sun_path);
+	strcpy(EXT_GLOBAL(cfg)->saddr.un.sun_path, EXT_GLOBAL(get_sockname)(TSRMLS_C));
+#ifdef HAVE_ABSTRACT_NAMESPACE
+	*EXT_GLOBAL(cfg)->saddr.un.sun_path=0;
 #endif
+	assert(EXT_GLOBAL(cfg)->java_socket_inet == 0);
+	EXT_GLOBAL(cfg)->java_socket_inet = 0;
+#endif
+  } else {
+	memset(&EXT_GLOBAL(cfg)->saddr.in, 0, sizeof EXT_GLOBAL(cfg)->saddr.in);
+	EXT_GLOBAL(cfg)->java_socket_inet = 1;
+	EXT_GLOBAL(cfg)->saddr.in.sin_family = AF_INET;
+	EXT_GLOBAL(cfg)->saddr.in.sin_port=htons(atoi(EXT_GLOBAL(get_sockname)(TSRMLS_C)));
+	EXT_GLOBAL(cfg)->saddr.in.sin_addr.s_addr = inet_addr( "127.0.0.1" );
+  }
 }
 
+short is_socket_inet(char *old_name, char *name) {
+#ifdef CFG_JAVA_SOCKET_INET 
+  return 1;
+#endif
+  return strcmp(old_name, name) ? 0 : 1;
+}
 void EXT_GLOBAL(start_server)(TSRMLS_D) {
   int pid=0, err=-1, p[2], st[2], stx;
   char buf[127], count, *test_server = 0, *name;
@@ -950,14 +1006,20 @@ void EXT_GLOBAL(start_server)(TSRMLS_D) {
 	if(count&&((read(p[0], buf, sizeof buf))==count)) {
 	  /* received channel # */
 	  size_t n = count;
+	  short inet;
 	  name = malloc(n+1); if(!name) exit(9);
 	  memcpy(name, buf, n); name[n]=0;
 	  //php_printf("got server channel: %ld, %s", n, name);
+	  inet = is_socket_inet(EXT_GLOBAL(cfg)->default_sockname, name);
 	  free(EXT_GLOBAL(cfg)->default_sockname);
 	  EXT_GLOBAL(cfg)->default_sockname=name;
-	  make_local_socket_info(TSRMLS_C);
+	  make_local_socket_info(inet TSRMLS_CC);
 	} else {
-	  make_local_socket_info(TSRMLS_C);
+#ifdef CFG_JAVA_SOCKET_INET 
+	  make_local_socket_info(1 TSRMLS_C);
+#else
+	  make_local_socket_info(0 TSRMLS_C);
+#endif
 	  wait_server();
 	}
   } else 
@@ -998,9 +1060,9 @@ void EXT_GLOBAL(start_server)(TSRMLS_D) {
 		  //php_printf("got server channel: %ld, %s", bread, name);
 		  free(EXT_GLOBAL(cfg)->default_sockname);
 		  EXT_GLOBAL(cfg)->default_sockname=name;
-		  make_local_socket_info(TSRMLS_C);
+		  make_local_socket_info(1 TSRMLS_CC);
 		} else {
-		  make_local_socket_info(TSRMLS_C);
+		  make_local_socket_info(1 TSRMLS_CC);
 		  wait_server();
 		}
 		CloseHandle(s_pid.p.hThread);
@@ -1008,13 +1070,17 @@ void EXT_GLOBAL(start_server)(TSRMLS_D) {
 	  } else {
 	  cannot_fork:
 		php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d) system error: Could not start back-end: %s; Code: %ld.", 105, cmd, (long)GetLastError());
-		make_local_socket_info(TSRMLS_C);
+		make_local_socket_info(1 TSRMLS_CC);
 	  }
 	  free(cmd);
 	} else
 #endif /* MINGW32 */
 	  {
-		make_local_socket_info(TSRMLS_C);
+#ifdef CFG_JAVA_SOCKET_INET 
+		make_local_socket_info(1 TSRMLS_CC);
+#else
+		make_local_socket_info(0 TSRMLS_CC);
+#endif
 		EXT_GLOBAL(cfg)->cid=EXT_GLOBAL(cfg)->err=0;
 	  }
   if(test_server) free(test_server);

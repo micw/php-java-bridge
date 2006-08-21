@@ -75,11 +75,17 @@ Overview
                     P-J-B PROTOCOL
   
 
+NOTE: The folder "java" contains a pure PHP implementation of the
+PHP/Java Bridge. It is currently 10 times slower than the C based
+implementation but easier to install. See the java/README for
+details. The following describes the C based implementation.
+
 Build and execution instructions:
 ---------------------------------
   NOTE: If you run Security Enhanced Linux, you must update the policy
   and tag the files with the correct SEL contexts, please see below, or 
   please install the binary RPM instead.
+
 
   In the directory php-java-bridge-p.x.y type:
 

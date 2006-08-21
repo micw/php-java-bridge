@@ -1,9 +1,12 @@
 <?php 
+
+require_once("java/Java.php");
+
 /* PHP version of numberguess.jsp */
 $session = java_session();
 
 if(is_null($numguess=$session->get("bean"))) {
-  $session->put("bean", $numguess=new java("num.NumberGuessBean"));
+  $session->put("bean", $numguess=new Java("num.NumberGuessBean"));
 }
 if($_POST['guess']) {
   $numguess->setGuess($_POST['guess']);
@@ -36,7 +39,7 @@ if($_POST['guess']) {
 
 <?php } else { ?>
 
-  Good guess, but nope.  Try <b><?php echo (string)$numguess->getHint() ?></b>.
+  Good guess, but nope.  Try <b><?php echo java_cast($numguess->getHint(),"S") ?></b>.
 
   You have made <?php echo $numguess->getNumGuesses() ?> guesses.<p>
 

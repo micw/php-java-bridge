@@ -1,5 +1,7 @@
 <?php
 
+require_once("java/Java.php");
+
   // redirect to backend.
 function redirect() {
   $target=dirname($_SERVER['PHP_SELF']);

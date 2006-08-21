@@ -1,5 +1,7 @@
 <?php
 
+require_once("java/Java.php");
+
 $session = java_session();
 $System = new JavaClass("java.lang.System");
 
@@ -12,8 +14,8 @@ if(!$doc=$session->get("$name"))
 
 try {
   /* add pages to the remote document */
-  $doc->addPage(new java ("Page", 0, "this is page 1"));
-  $doc->addPage(new java ("Page", 0, "this is page 2"));
+  $doc->addPage(new Java ("Page", 0, "this is page 1"));
+  $doc->addPage(new Java ("Page", 0, "this is page 2"));
 
   /* and print a summary */
   print $doc->analyze() . "\n";
@@ -42,7 +44,7 @@ if($_GET['logout']) {
  */
 function createDocument($jndiname, $serverArgs) {
   // find initial context
-  $initial = new java("javax.naming.InitialContext", $serverArgs);
+  $initial = new Java("javax.naming.InitialContext", $serverArgs);
   
   try {
     // find the service

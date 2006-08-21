@@ -6,10 +6,10 @@
 
   This file is part of the PHP/Java Bridge.
 
-  This file ("the library") is free software; you can redistribute it
-  and/or modify it under the terms of the GNU General Public License as
-  published by the Free Software Foundation; either version 2, or (at
-  your option) any later version.
+  The PHP/Java Bridge ("the library") is free software; you can
+  redistribute it and/or modify it under the terms of the GNU General
+  Public License as published by the Free Software Foundation; either
+  version 2, or (at your option) any later version.
 
   The library is distributed in the hope that it will be useful, but
   WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -81,20 +81,21 @@ function java_require($arg) {
   return $client->invokeMethod(0, "updateJarLibraryPath", 
 						array($arg, ini_get("extension_dir")));
 }
-function java_session_internal($args) {
+function java_session_array($args) {
   $client = __javaproxy_Client_getClient();
+  if(!isset($args[0])) $args[0]=null;
   if(!isset($args[1])) $args[1]=false;
   if(!isset($args[2])) {
 	$sesion_max_lifetime=ini_get("session.gc_maxlifetime");
-	if(is_null($session_max_lifetime)) $session_max_lifetime=1440;
+	if(!isset($session_max_lifetime)) $session_max_lifetime=1440;
 	$args[2] = $session_max_lifetime;
   }
   return $client->getSession($args);
 }
 function java_session() {
-  return java_session_internal(func_get_args());
+  return java_session_array(func_get_args());
 }
-function java_servername() {
+function java_server_name() {
   $client = __javaproxy_Client_getClient();
   return $client->getServerName();
 }
@@ -102,13 +103,13 @@ function java_context() {
   $client = __javaproxy_Client_getClient();
   return $client->getContext();
 }
-function java_closure_internal($args) {
+function java_closure_array($args) {
   $client = __javaproxy_Client_getClient();
   $args[0] = isset($args[0]) ? $client->globalRef->add($args[0]) : 0;
   return $client->invokeMethod(0, "makeClosure", $args);
 }
 function java_closure() {
-  return java_closure_internal(func_get_args());
+  return java_closure_array(func_get_args());
 }
 function java_begin_document() {
   $client = __javaproxy_Client_getClient();
@@ -175,8 +176,8 @@ class java_JavaProxyClass extends java_JavaProxy {
 }
 
 class java_objectIterator implements Iterator {
-  var $javaProxy;
-  var $phpMap, $__java;
+  var $proxy;
+  var $__java, $__client;
   var $hasNext;
 
   function java_ObjectIterator($javaProxy) {
@@ -185,8 +186,8 @@ class java_objectIterator implements Iterator {
   }
   function rewind() {
 	$proxy = array($this->proxy);
-	$this->phpMap = $this->__client->invokeMethod(0, "getPhpMap", $proxy);
-	$this->__java = $this->phpMap->__java;
+	$phpMap = $this->__client->invokeMethod(0, "getPhpMap", $proxy);
+	$this->__java = $phpMap->__java;
   }
   function valid() {
 	if(isset($this->hasNext)) return $this->hasNext;

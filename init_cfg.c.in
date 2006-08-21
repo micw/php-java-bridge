@@ -142,6 +142,12 @@ static void override_ini_from_cgi(void) {
 								   information */
 	  {
 		char *kontext, *host = strdup(hosts);
+		/* FIXME: unpleasantly low tech */
+		if(host[0]=='s') {
+		  php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): SSL tunnel not supported. Please use a dedicated HTTP port instead: Switch off the servlet init-param \"override_hosts\" in the WEB-INF/web.xml, set the php .ini entry java.hosts=127.0.0.1:9157 and add &lt;Connector port=\"9157\" address=\"127.0.0.1\"  /&gt to your tomcat conf/server.xml.", 29);
+		  exit(7);
+		}
+		host+=2;
 		kontext = strchr(host, '/');
 		if(kontext) *kontext++=0;
 /* 		zend_alter_ini_entry((char*)key_hosts, sizeof key_hosts, */
@@ -205,6 +211,13 @@ static void init_socket(void) {
 #endif
 
 void EXT_GLOBAL (init_cfg) (TSRMLS_D) {
+
+#ifdef CFG_JAVA_SOCKET_INET
+  EXT_GLOBAL(cfg)->java_socket_inet = 1;
+#else
+  EXT_GLOBAL(cfg)->java_socket_inet = 0;
+#endif
+
   override_ini_from_cgi();
 
   init_socket();

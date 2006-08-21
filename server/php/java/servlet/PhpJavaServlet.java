@@ -2,6 +2,28 @@
 
 package php.java.servlet;
 
+/*
+ * Copyright (C) 2006 Jost Boekemeier
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,6 +60,7 @@ public class PhpJavaServlet extends HttpServlet {
     private static final long serialVersionUID = 3257854259629144372L;
 
     private ContextServer contextServer;
+    protected int logLevel = -1;
     
     protected static class Logger implements ILogger {
 	private ServletContext ctx;
@@ -58,11 +81,14 @@ public class PhpJavaServlet extends HttpServlet {
      }
     
     private boolean allowHttpTunnel = false;
+
     /**@inheritDoc*/
     public void init(ServletConfig config) throws ServletException {
  	String value;
         try {
 	    value = config.getInitParameter("servlet_log_level");
+	    //value = "6"; //XFIXME
+	    if(value!=null && value.trim().length()!=0) logLevel=Integer.parseInt(value.trim());
         } catch (Throwable t) {Util.printStackTrace(t);}      
   	try {
 	    value = config.getInitParameter("allow_http_tunnel");
@@ -94,19 +120,27 @@ public class PhpJavaServlet extends HttpServlet {
     }
     
     private ServletContextFactory getContextFactory(HttpServletRequest req, HttpServletResponse res) {
-    	ServletContextFactory ctx = null;
+    	JavaBridge bridge;
+	ServletContextFactory ctx = null;
     	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
     	if(id!=null) ctx = (ServletContextFactory) ContextFactory.get(id, contextServer);
     	if(ctx==null) {
     	  ctx = ServletContextFactory.addNew(getServletContext(), null, req, res); // no session sharing
-    	  ctx.getBridge().logDebug("first request (session is new).");
+    	  bridge = ctx.getBridge();
+    	  bridge.logDebug("first request (session is new).");
     	} else {
-    	    ctx.getBridge().logDebug("cont. session");
+    	    bridge = ctx.getBridge();
+    	    bridge.logDebug("cont. session");
     	}
+    	updateRequestLogLevel(bridge);
     	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
     	return ctx;
     }
     
+    private void updateRequestLogLevel(JavaBridge bridge) {
+	if(logLevel>-1) bridge.logLevel = logLevel;
+    }
+
     /**
      * Handle the override re-direct for "java_get_session()" when php
      * runs within apache.  We

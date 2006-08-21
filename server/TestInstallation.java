@@ -101,7 +101,12 @@ public class TestInstallation {
   	    in = loader.getResourceAsStream("WEB-INF/cgi/java-x86-sunos.so");
   	    extractFile(in, new File(ext, "java.so").getAbsoluteFile());
   	    in.close();
-        } else { System.err.println("Unknown OS: " + os); System.exit(1); }
+        } else { 
+	    System.err.println("Unknown OS: " + os);
+	    System.err.println("Use the pure PHP implementation instead.");
+	    System.err.println("Extract and read java/README from JavaBridge.war for details.");
+	    System.exit(1); 
+	}
 	InputStream in = loader.getResourceAsStream("WEB-INF/lib/JavaBridge.jar");
 	extractFile(in, new File(ext, "JavaBridge.jar").getAbsoluteFile());
 	in.close();
