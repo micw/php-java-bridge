@@ -21,7 +21,6 @@ class JPersistenceProxy {
     $this->serialID; 
   }
   function __sleep() {
-    echo "sleep called::\n";
     $buf = new java("java.io.ByteArrayOutputStream");
     $out = new java("java.io.ObjectOutputStream", $buf);
     $out->writeObject($this->java);

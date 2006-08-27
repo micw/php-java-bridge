@@ -1,6 +1,5 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-
 /*
  * Based on Base64.java:
  * 
@@ -138,6 +137,5 @@ class Base64EncodingOutputBuffer extends HexOutputBuffer {
         }
 
         write(0xa);
-        
     }
-   }
+}

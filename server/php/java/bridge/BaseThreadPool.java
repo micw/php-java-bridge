@@ -51,7 +51,13 @@ public class BaseThreadPool {
 	public Delegate(String name) { super(name); }
 	public Delegate(ThreadGroup group, String name) { super(group, name); }
 	protected void terminate() {}
-	protected void end() {}
+	protected void end() { /* clean the associated class loader */
+	    DynamicJavaBridgeClassLoader loader;
+	    try {
+		loader = (DynamicJavaBridgeClassLoader) getContextClassLoader();
+		loader.clear();
+	    } catch (ClassCastException ex) {/*ignore*/}
+	}
 	protected void createThread(String name) { startNewThread(name); }
 	
 	public void run() {

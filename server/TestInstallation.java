@@ -11,7 +11,7 @@ import java.util.StringTokenizer;
 public class TestInstallation {
 
     public static void main(String[] args) throws IOException {
-        String os = null;
+	String os = null;
 	String separator = "/-+.,;: ";
 	try {
 	    String val = System.getProperty("os.name").toLowerCase();
@@ -63,6 +63,7 @@ public class TestInstallation {
 	    out.println("echo 'Read the INSTALL.LINUX or INSTALL.J2EE document.'");
 	    out.close();
 	    out = new PrintWriter(new FileOutputStream(new File(base, "php.ini").getAbsoluteFile()));
+	    out.println("include_path=.");
 	    out.println("extension_dir=ext");
 	    out.println("extension=java.so");
 	    out.println("[java]");
@@ -87,6 +88,7 @@ public class TestInstallation {
 	    out.println("echo 'Read the INSTALL.J2EE document.'");
 	    out.close();
 	    out = new PrintWriter(new FileOutputStream(new File(base, "php.ini").getAbsoluteFile()));
+	    out.println("include_path=.");
 	    out.println("extension_dir=ext");
 	    out.println("extension=java.so");
 	    out.println("[java]");
@@ -103,15 +105,39 @@ public class TestInstallation {
   	    in.close();
         } else { 
 	    System.err.println("Unknown OS: " + os);
-	    System.err.println("Use the pure PHP implementation instead.");
-	    System.err.println("Extract and read java/README from JavaBridge.war for details.");
-	    System.exit(1); 
+	    System.err.println("Will use the pure PHP implementation instead.");
+	    PrintWriter out = new PrintWriter(new FileOutputStream(new File(base, "testphp.sh").getAbsoluteFile()));
+	    out.println("#!/bin/sh");
+	    out.println((new File(System.getProperty("java.home"), "bin"+File.separator+"java")) +" -classpath ext/JavaBridge.jar php.java.bridge.JavaBridgeRunner 8080 &");
+	    out.println("echo Java started, waiting 5 seconds");
+	    out.println("sleep 5");
+	    out.println("php -c php.ini test.php >RESULT.html || echo 'test failed!'");
+	    out.println("kill $!");
+	    out.println("");	    
+	    out.println("echo 'Now check the RESULT.html.'");
+	    out.println("echo 'Read the INSTALL.J2EE document.'");
+	    out.close();
+	    out = new PrintWriter(new FileOutputStream(new File(base, "php.ini").getAbsoluteFile()));
+	    out.println("include_path=.");
+	    out.close();
 	}
+        extractPurePhpJavaBridge(base, loader);
 	InputStream in = loader.getResourceAsStream("WEB-INF/lib/JavaBridge.jar");
 	extractFile(in, new File(ext, "JavaBridge.jar").getAbsoluteFile());
 	in.close();
 	in = loader.getResourceAsStream("test.php");
 	extractFile(in, new File(base, "test.php").getAbsoluteFile());
+	in.close();
+    }
+    private static void extractPurePhpJavaBridge(File base, ClassLoader loader) throws IOException {
+	String files[] = {"Client.php", "GlobalRef.php", "Java.php", "JavaProxy.php", "NativeParser.php", "Options.php", "Parser.php", "Protocol.php", "SimpleParser.php", "README" };
+	File javaDir = new File(base, "java");
+	if(!javaDir.exists()) javaDir.mkdir();
+	for(int i=0; i<files.length; i++) {
+	    InputStream in = loader.getResourceAsStream("java/"+files[i]);
+	    extractFile(in, new File(javaDir, files[i]).getAbsoluteFile());
+	    in.close();
+	}
     }
     private static void extractFile(InputStream in, File target) throws IOException {
 	byte[] buf = new byte[8192];

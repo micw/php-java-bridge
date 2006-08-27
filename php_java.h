@@ -87,6 +87,7 @@ extern int EXT_GLOBAL(ini_updated), EXT_GLOBAL (ini_user),
 #define U_HOSTS (1<<8)
 #define U_SERVLET (1<<9)
 #define U_WRAPPER (1<<10)
+#define U_SECURE (1<<11) /* if X_JAVABRIDGE_OVERRIDE contains a s: prefix */
 #define U_PERSISTENT_CONNECTIONS  (1<<12)
 #define U_POLICY (1<<13)
 
@@ -200,6 +201,9 @@ struct cfg {
 
   /* set to 1 if the back-end uses TCP sockets, 0 otherwise */
   short java_socket_inet;
+
+  /* set to 1 if SSL is used */
+  short is_secure;
 
 #ifndef __MINGW32__
   pid_t pid; 						/* the pid of the group leader or 0 */

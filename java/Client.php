@@ -398,7 +398,7 @@ class java_Client /* implements IDocHandler */ {
 	  $arg->setException($st['m']);
 	  break;
 	default: 
-	  die("not implemented");
+	  $this->parser->parserError();
 	}
   }
   function end($name) {
@@ -500,8 +500,9 @@ class java_Client /* implements IDocHandler */ {
 	  $this->writeArg($res);
 	  $this->protocol->resultEnd();
 	} catch (JavaException $e) {
+	  $trace = $e->getTraceAsString();
 	  $this->protocol->resultBegin();
-	  $this->protocol->writeException($e->__java, $e->getTraceAsString());
+	  $this->protocol->writeException($e->__java, $trace);
 	  $this->protocol->resultEnd();
 	} catch(Exception $ex) {
 	  $e = new Java("java.lang.Exception", $ex->getMessage);

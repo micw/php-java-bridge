@@ -963,7 +963,7 @@ short is_socket_inet(char *old_name, char *name) {
 #ifdef CFG_JAVA_SOCKET_INET 
   return 1;
 #endif
-  return strcmp(old_name, name) ? 0 : 1;
+  return strcmp(old_name, name);
 }
 void EXT_GLOBAL(start_server)(TSRMLS_D) {
   int pid=0, err=-1, p[2], st[2], stx;
@@ -1016,9 +1016,9 @@ void EXT_GLOBAL(start_server)(TSRMLS_D) {
 	  make_local_socket_info(inet TSRMLS_CC);
 	} else {
 #ifdef CFG_JAVA_SOCKET_INET 
-	  make_local_socket_info(1 TSRMLS_C);
+	  make_local_socket_info(1 TSRMLS_CC);
 #else
-	  make_local_socket_info(0 TSRMLS_C);
+	  make_local_socket_info(0 TSRMLS_CC);
 #endif
 	  wait_server();
 	}

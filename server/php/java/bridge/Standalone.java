@@ -24,6 +24,7 @@ package php.java.bridge;
  */
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * This is the standalone container of the PHP/Java Bridge. It starts
@@ -49,17 +50,24 @@ public class Standalone {
      * @param logLevel the current logLevel
      * @param sockname the socket name
      * @return the server socket
+     * @throws IOException 
      */
-    static ISocketFactory bind(int logLevel, String sockname) throws Exception {
+    static ISocketFactory bind(int logLevel, String sockname) throws IOException {
 	ISocketFactory socket = null;
 	try {
 	    socket = LocalServerSocket.create(logLevel, sockname, Util.BACKLOG);
-	} catch (Throwable e) {/*ignore*/}
+	} catch (Throwable e) {
+	    try {
+	    // do not access Util at this point, static final fields are an exception.
+	    boolean promiscuous = System.getProperty("php.java.bridge.promiscuous", "false").toLowerCase().equals("true");
+	    socket = TCPServerSocket.create(promiscuous?"INET:0":"INET_LOCAL:0", Util.BACKLOG);
+	    } catch(Throwable t) {/*ignore*/}
+	}
 	if(null==socket)
 	    socket = TCPServerSocket.create(sockname, Util.BACKLOG);
 
 	if(null==socket)
-	    throw new Exception("Could not create socket: " + sockname);
+	    throw new IOException("Could not create socket: " + sockname);
 
 	return socket;
     }

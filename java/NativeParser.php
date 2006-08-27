@@ -42,6 +42,8 @@ class java_NativeParser {
   var $parser, $handler;
   var $level, $event;
 
+  var $buf;
+
   function java_NativeParser($handler) {
 	$this->handler = $handler;
 	$this->parser = xml_parser_create();
@@ -72,7 +74,7 @@ class java_NativeParser {
 	// PHP stream buffer size, otherwise this function will hang.
 	do {
 	  $this->event = false;
-	  $buf=$this->handler->read($this->handler->RECV_SIZE); 
+	  $buf = $this->buf = $this->handler->read($this->handler->RECV_SIZE); 
 	  if(!xml_parse($this->parser, $buf)) {
 		die(sprintf("protocol error: %s, %s at col %d",
 					$buf,
@@ -84,6 +86,10 @@ class java_NativeParser {
 
   function __destruct() {
 	xml_parser_free($this->parser);
+  }
+
+  function parserError() {
+	die(sprintf("protocol error: %s", $this->buf));
   }
 }
 ?>

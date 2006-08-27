@@ -243,8 +243,24 @@ static short handle_exception(zval*presult TSRMLS_DC) {
 	//php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Unhandled exception during callback in user function: %s.", 25, fname);
 	EXT_GLOBAL(get_jobject_from_object)(stack_elem->exception, &result TSRMLS_CC);
 	has_exception=1;
-	(*jenv)->writeResultBegin(jenv, presult);
+#ifdef ZEND_ENGINE_2
+	{
+		zval *ex = 0;
+		zval fname;
+		ZVAL_STRINGL(&fname, "__toString", sizeof("__toString")-1, 0);
+		call_user_function_ex(0, &stack_elem->exception, &fname, &ex, 0, 0, 1, 0 TSRMLS_CC);
+		if(ex) {
+		  (*jenv)->writeResultBegin(jenv, presult);
+		  (*jenv)->writeException(jenv, result, 
+								  Z_STRVAL_P(ex), Z_STRLEN_P(ex));
+		} else {
+		  (*jenv)->writeResultBegin(jenv, presult);
+		  (*jenv)->writeException(jenv, result, "php exception", 0);
+		}
+	  }
+#else
 	(*jenv)->writeException(jenv, result, "php exception", 0);
+#endif
 	(*jenv)->writeResultEnd(jenv);
 	zval_ptr_dtor(&stack_elem->exception);
 #if defined(ZEND_ENGINE_2)
@@ -274,6 +290,46 @@ static void setResultFromApply(zval *presult, unsigned char *cname, size_t clen,
 
   if(retval_ptr) 
 	zval_ptr_dtor(&retval_ptr);
+  zval_ptr_dtor(&func);
+}
+/*
+ * Since PHP doesn't offer an easy way to call a PHP function without
+ * accessing a global variable we must push the arguments on a stack
+ * and call zend_eval_string. It evaluates a wrapper function which in
+ * turn calls a user function on PHP level to provide the argument
+ * array.
+ */
+void EXT_GLOBAL(call_php_function)(unsigned char *name, size_t len, zval *func_params, zval **retval_ptr) {
+  zval *object = 0, *func;
+
+  TSRMLS_FETCH();
+
+  MAKE_STD_ZVAL(func);
+  setResultFromString(func, name, len);
+
+  if (call_user_cb(&object, func, retval_ptr, func_params TSRMLS_CC) != SUCCESS) {
+	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not call php function: %s.", 24, name);
+	exit(9);
+  } else {
+	struct cb_stack_elem *stack_elem;
+	int err = zend_stack_top(JG(cb_stack), (void**)&stack_elem); 
+	assert(SUCCESS==err);
+#ifdef ZEND_ENGINE_2
+	if(stack_elem->exception&&Z_TYPE_P(stack_elem->exception)!=IS_NULL) {
+	  zval *ex = 0;
+	  zval fname;
+	  ZVAL_STRINGL(&fname, "__toString", sizeof("__toString")-1, 0);
+	  call_user_function_ex(0, &stack_elem->exception, &fname, &ex, 0, 0, 1, 0 TSRMLS_CC);
+	  if(ex) {
+		php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Exception in PHP function %s: %s.", 43, name, Z_STRVAL_P(ex));
+	  } else {
+		php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Exception in PHP function %s.", 43, name);
+	  }
+	}
+#endif
+	err = zend_stack_del_top(JG(cb_stack));
+	assert(SUCCESS==err);
+  }
   zval_ptr_dtor(&func);
 }
 
@@ -654,7 +710,10 @@ static short handle_request(proxyenv *env) {
 
   /* revert override redirect */
   if((*env)->peer0!=-1) {
-	close((*env)->peer);
+
+	(*env)->f_close(env);
+	(*env)->redirect(env);
+
 	(*env)->peer = (*env)->peer0;
 	(*env)->f_recv = (*env)->f_recv0;
 	(*env)->f_send = (*env)->f_send0;
@@ -670,7 +729,10 @@ static short handle_request(proxyenv *env) {
 	  JG(ini_user)&=~(U_SERVLET|U_SOCKNAME);
 	  
 	  assert((*env)->peer!=-1); 
-	  if((*env)->peer!=-1) { close((*env)->peer); (*env)->peer=-1; }
+
+	  if((*env)->peer!=-1) { (*env)->f_close(env); (*env)->peer=-1; }
+	  (*env)->redirect(env);
+
 	  if((*env)->must_share) 
 		share_connection(env, JG(redirect_port) TSRMLS_CC);
 	  else
@@ -678,7 +740,7 @@ static short handle_request(proxyenv *env) {
 	  break;
 	case 1: // reopen 
 	  assert((*env)->peer!=-1); 
-	  if((*env)->peer!=-1) close((*env)->peer);
+	  if((*env)->peer!=-1) (*env)->f_close(env);
 	  server = EXT_GLOBAL(test_server)(&(*env)->peer, 0, 0 TSRMLS_CC);
 	  assert(server); if(!server) exit(9);
 	  free(server);
@@ -698,10 +760,10 @@ static short handle_request(proxyenv *env) {
 unsigned char EXT_GLOBAL (get_mode) () {
 #ifndef ZEND_ENGINE_2
   // we want arrays as values
-  static const unsigned char compat = 3;
+  static const unsigned char compat = 2;
 #else
 #ifdef DISABLE_HEX
-  static const unsigned char compat = 0;
+# error not available
 #else
   static const unsigned char compat = 1;
 #endif
@@ -730,10 +792,21 @@ void EXT_GLOBAL(override_ini_for_redirect)(TSRMLS_D) {
   if((SUCCESS==zend_eval_string((char*)override, &val, (char*)name TSRMLS_CC)) && (Z_TYPE(val)==IS_STRING)) {
 	/* request servlet -> fast cgi server: connect back to servlet */
 
-	char *kontext, *hosts;
-	hosts = malloc(Z_STRLEN(val)+1+100);
-	strncpy(hosts, Z_STRVAL(val), Z_STRLEN(val));
-	hosts[Z_STRLEN(val)]=0;
+	char *tmp, *kontext, *hosts;
+	size_t len;
+	tmp = Z_STRVAL(val);
+	len = Z_STRLEN(val);
+	if((tmp[0]=='s' || tmp[0]=='h') && tmp[1]==':') {
+	  if(*tmp=='s') 
+		JG(ini_user) |= U_SECURE; 
+	  else 
+		JG(ini_user) &= ~U_SECURE;
+	  tmp+=2;
+	  len-=2;
+	}
+	hosts = malloc(len+1);
+	strncpy(hosts, tmp, len);
+	hosts[len]=0;
 	if(JG(hosts)) free(JG(hosts));
 	JG(hosts)=hosts;
 	kontext = strchr(hosts, '/');
@@ -748,15 +821,16 @@ void EXT_GLOBAL(override_ini_for_redirect)(TSRMLS_D) {
   } else {
 	/* request HTTP -> fast cgi or apache module: connect to java_hosts  */
 
-	/* Coerce a http://xyz.com/kontext/foo.php request to the backend:
-	   http://xyz.com:{java_hosts[0]}/kontext/foo.php.  For example if
-	   we receive a request: http://localhost/sessionSharing.php and
-	   java.servlet is On and java.hosts is "127.0.0.1:8080" the code
-	   would connect to the backend:
+	/* Coerce a http://xyz.com/kontext/foo.php request to the back
+	   end: http://xyz.com:{java_hosts[0]}/kontext/foo.php.  For
+	   example if we receive a request:
+	   http://localhost/sessionSharing.php and java.servlet is On and
+	   java.hosts is "127.0.0.1:8080" the code would connect to the
+	   back end:
 	   http://127.0.0.1:8080/sessionSharing.phpjavabridge. This
-	   creates a cookie with PATH value "/".  For a request:
-	   http://localhost/myContext/sessionSharing.php the code would
-	   connect to
+	   creates a cookie with PATH value "/".  If java_servlet is User
+	   the request http://localhost/myContext/sessionSharing.php the
+	   code would connect to
 	   http://127.0.0.1/myContext/sessionSharing.phpjavabridge and a
 	   cookie with a PATH value "/myContext" would be created.
 	*/
@@ -863,24 +937,30 @@ static void add_header(proxyenv *env) {
 }
 static void init_channel(proxyenv *env);
 /**
+ * Return a procedure which can be used to create an environment.
+ */
+static environment_factory *getEnvironmentFactory(TSRMLS_D) {
+  return (JG(ini_user) & U_SECURE) ? 
+	EXT_GLOBAL(createSecureEnvironment) :
+	EXT_GLOBAL(createEnvironment);
+}
+/**
  * Create a new connection to the server or re-use a previous
  * connection.
  */
 static proxyenv*create_connection(char *context_string TSRMLS_DC) {
+  environment_factory *factory = getEnvironmentFactory(TSRMLS_C);
   char *server, *context;
   int sock;
   proxyenv *jenv;
-  struct sockaddr saddr;
   short is_local;
   size_t len;
   if(!(context = context_string)) context = empty;
   len = get_context_len(context);
 
-  if(!(server=EXT_GLOBAL(test_server)(&sock, &is_local, &saddr TSRMLS_CC))) {
-	return 0;
-  }
-  jenv = EXT_GLOBAL(createSecureEnvironment)
-	(sock, handle_request, handle_cached, server, is_local, &saddr);
+  jenv = 
+	(*factory)(handle_request, handle_cached, &is_local);
+
   if(jenv) {
 	if(! (is_local || !context_string)) init_channel(jenv);
 	if(EXT_GLOBAL(cfg)->persistent_connections)

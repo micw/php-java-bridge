@@ -108,6 +108,5 @@ class HexOutputBuffer extends ByteArrayOutputStream {
     protected void appendString(byte s[]) {
         append(Response.S);
         appendQuoted(s);
-        append(Response.e);
     }
 }

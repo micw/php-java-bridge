@@ -331,7 +331,85 @@ EXT_FUNCTION(EXT_GLOBAL(reset))
   API_CALL(reset);
 }
 
-static int do_cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_DC);
+static int do_cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_DC) {
+  proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
+  long obj = 0;
+  zval free_obj;
+
+  if(!jenv) return FAILURE;
+  if((*jenv)->handle==(*jenv)->async_ctx.handle_request) { /* async protocol */
+	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): cast() invalid while in stream mode", 21);
+	return FAILURE;
+  }
+
+  if (should_free)
+	free_obj = *writeobj;
+
+  if(jenv && (Z_TYPE_P(readobj) == IS_OBJECT)) {
+	EXT_GLOBAL(get_jobject_from_object)(readobj, &obj TSRMLS_CC);
+  }
+
+  if(obj) {
+	INIT_PZVAL(writeobj);
+    ZVAL_NULL(writeobj);
+	switch(type) {
+
+	case IS_STRING:
+	  (*jenv)->writeInvokeBegin(jenv, 0, "castToString", 0, 'I', writeobj);
+	  (*jenv)->writeObject(jenv, obj);
+#ifdef ZEND_ENGINE_2
+	  if (instanceof_function(Z_OBJCE_P(readobj), EXT_GLOBAL(exception_class_entry) TSRMLS_CC)) {
+		zval *trace = 0;
+		zval fname;
+		ZVAL_STRINGL(&fname, "getTraceAsString", sizeof("gettraceasstring")-1, 0);
+		call_user_function_ex(0, &readobj, &fname, &trace, 0, 0, 1, 0 TSRMLS_CC);
+		if(trace) 
+		  (*jenv)->writeString(jenv, Z_STRVAL_P(trace), Z_STRLEN_P(trace));
+	  }
+#endif
+	  obj = (*jenv)->writeInvokeEnd(jenv);
+	  break;
+	case IS_BOOL:
+	  (*jenv)->writeInvokeBegin(jenv, 0, "castToBoolean", 0, 'I', writeobj);
+	  (*jenv)->writeObject(jenv, obj);
+	  obj = (*jenv)->writeInvokeEnd(jenv);
+	  break;
+	case IS_LONG:
+	  (*jenv)->writeInvokeBegin(jenv, 0, "castToExact", 0, 'I', writeobj);
+	  (*jenv)->writeObject(jenv, obj);
+	  obj = (*jenv)->writeInvokeEnd(jenv);
+	  break;
+	case IS_DOUBLE:
+	  (*jenv)->writeInvokeBegin(jenv, 0, "castToInexact", 0, 'I', writeobj);
+	  (*jenv)->writeObject(jenv, obj);
+	  obj = (*jenv)->writeInvokeEnd(jenv);
+	  break;
+	case IS_OBJECT: 
+	  *writeobj = *readobj;
+	  zval_copy_ctor(writeobj);
+	  convert_to_object(writeobj);
+	  break;
+	case IS_ARRAY: 
+#ifdef ZEND_ENGINE_2
+	  (*jenv)->writeInvokeBegin(jenv, 0, "castToArray", 0, 'I', writeobj);
+	  (*jenv)->writeObject(jenv, obj);
+	  obj = (*jenv)->writeInvokeEnd(jenv);
+#else
+	  obj = 0; // failed
+#endif
+	  break;
+	default:
+	  obj = 0; // failed
+	  break;
+	}
+  }
+
+  if (should_free)
+	zval_dtor(&free_obj);
+
+  return obj?SUCCESS:FAILURE;
+}
+
 /**
  * Proto: object java_cast(object, string).
  *
@@ -575,15 +653,15 @@ static void call_with_params(int count, zval ***func_params TSRMLS_DC) {
   if(allocate_php4_exception(TSRMLS_C)) {/* checked and destroyed in client. handle_exception() */
 	struct cb_stack_elem *stack_elem;
 	int err, e;
-#ifdef ZEND_ENGINE_2
-	php_set_error_handling(EH_THROW, zend_exception_get_default() TSRMLS_CC);
-#endif
+/* #ifdef ZEND_ENGINE_2 */
+/* 	php_set_error_handling(EH_THROW, zend_exception_get_default() TSRMLS_CC); */
+/* #endif */
 	e = zend_stack_top(JG(cb_stack), (void**)&stack_elem);
 	assert(SUCCESS==e);
 	err = java_call_user_function_ex(0, stack_elem->object, stack_elem->func, stack_elem->retval_ptr, count, func_params, 1, 0 TSRMLS_CC);
-#ifdef ZEND_ENGINE_2
-	php_std_error_handling();
-#endif
+/* #ifdef ZEND_ENGINE_2 */
+/* 	php_std_error_handling(); */
+/* #endif */
 	if (err != SUCCESS) {
 	  php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not call user function: %s.", 23, Z_STRVAL_P(stack_elem->func));
 	}
@@ -1304,84 +1382,6 @@ static function_entry (class_class_functions)[] = {
 
 
 
-static int do_cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_DC) {
-  proxyenv *jenv = EXT_GLOBAL(connect_to_server)(TSRMLS_C);
-  long obj = 0;
-  zval free_obj;
-
-  if(!jenv) return FAILURE;
-  if((*jenv)->handle==(*jenv)->async_ctx.handle_request) { /* async protocol */
-	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): cast() invalid while in stream mode", 21);
-	return FAILURE;
-  }
-
-  if (should_free)
-	free_obj = *writeobj;
-
-  if(jenv && (Z_TYPE_P(readobj) == IS_OBJECT)) {
-	EXT_GLOBAL(get_jobject_from_object)(readobj, &obj TSRMLS_CC);
-  }
-
-  if(obj) {
-	INIT_PZVAL(writeobj);
-    ZVAL_NULL(writeobj);
-	switch(type) {
-
-	case IS_STRING:
-	  (*jenv)->writeInvokeBegin(jenv, 0, "castToString", 0, 'I', writeobj);
-	  (*jenv)->writeObject(jenv, obj);
-#ifdef ZEND_ENGINE_2
-	  if (instanceof_function(Z_OBJCE_P(readobj), EXT_GLOBAL(exception_class_entry) TSRMLS_CC)) {
-		zval *trace = 0;
-		zval fname;
-		ZVAL_STRINGL(&fname, "gettraceasstring", sizeof("gettraceasstring")-1, 0);
-		call_user_function_ex(0, &readobj, &fname, &trace, 0, 0, 1, 0 TSRMLS_CC);
-		if(trace) 
-		  (*jenv)->writeString(jenv, Z_STRVAL_P(trace), Z_STRLEN_P(trace));
-	  }
-#endif
-	  obj = (*jenv)->writeInvokeEnd(jenv);
-	  break;
-	case IS_BOOL:
-	  (*jenv)->writeInvokeBegin(jenv, 0, "castToBoolean", 0, 'I', writeobj);
-	  (*jenv)->writeObject(jenv, obj);
-	  obj = (*jenv)->writeInvokeEnd(jenv);
-	  break;
-	case IS_LONG:
-	  (*jenv)->writeInvokeBegin(jenv, 0, "castToExact", 0, 'I', writeobj);
-	  (*jenv)->writeObject(jenv, obj);
-	  obj = (*jenv)->writeInvokeEnd(jenv);
-	  break;
-	case IS_DOUBLE:
-	  (*jenv)->writeInvokeBegin(jenv, 0, "castToInexact", 0, 'I', writeobj);
-	  (*jenv)->writeObject(jenv, obj);
-	  obj = (*jenv)->writeInvokeEnd(jenv);
-	  break;
-	case IS_OBJECT: 
-	  *writeobj = *readobj;
-	  zval_copy_ctor(writeobj);
-	  convert_to_object(writeobj);
-	  break;
-	case IS_ARRAY: 
-#ifdef ZEND_ENGINE_2
-	  (*jenv)->writeInvokeBegin(jenv, 0, "castToArray", 0, 'I', writeobj);
-	  (*jenv)->writeObject(jenv, obj);
-	  obj = (*jenv)->writeInvokeEnd(jenv);
-#else
-	  obj = 0; // failed
-#endif
-	  break;
-	default:
-	  obj = 0; // failed
-	  break;
-	}
-  }
-
-  if (should_free)
-	zval_dtor(&free_obj);
-
-  return obj?SUCCESS:FAILURE;
-}
 #if ZEND_EXTENSION_API_NO >= 220060519 
 static int cast(zval *readobj, zval *writeobj, int type TSRMLS_DC)
 {
@@ -1464,7 +1464,14 @@ static int iterator_current_key(zend_object_iterator *iter, zstr *str_key, uint 
 	*str_key_len = strlen+1;
 
   } else {
-	ulong i =(unsigned long)atol((char*)Z_STRVAL_P(presult));
+	ulong i;
+	if(Z_TYPE_P(presult)==IS_STRING) { /* old servers send strings
+										  instead of long */
+	  i=(unsigned long)atol((char*)Z_STRVAL_P(presult));
+	} else {
+	  assert(Z_TYPE_P(presult)==IS_LONG);
+	  i=(unsigned long)Z_LVAL_P(presult);
+	}
 	*int_key = i;
   }
   zval_ptr_dtor((zval**)&presult);

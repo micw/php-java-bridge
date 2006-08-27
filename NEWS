@@ -3,15 +3,12 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
-
 Version 3.1.8 
 
 * A pure PHP implementation of the PHP/Java Bridge is now available in
 the "java" folder. This means that it is no longer necessary to
 compile and to install a non-standard PHP extension on the web or J2EE
 server.
-
-* Bugfixes only, see the ChangeLog for details.
 
 Version 3.1.7:
 

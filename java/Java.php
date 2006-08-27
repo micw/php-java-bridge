@@ -40,7 +40,7 @@
 
 if(!extension_loaded('java')) {
   $version = phpversion();
-  if ((version_compare("5.1.4", $version, ">"))) {
+  if ((version_compare("5.1.2", $version, ">"))) {
 	$msg = "<br><strong>PHP $version too old.</strong><br>\nFor PHP versions < 5.1.4 install the PECL extension, see INSTALL document from http://php-java-bridge.sourceforge.net/INSTALL.<br>\nOr set the path to the PHP executable, see php_exec in the WEB-INF/web.xml";
 	die($msg);
   }

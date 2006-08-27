@@ -573,6 +573,7 @@ public class Response {
 
     void writeString(byte s[]) {
 	buf.appendString(s);
+        buf.append(e);	
     }
     void writeString(String s) {
 	writeString(bridge.options.getBytes(s));

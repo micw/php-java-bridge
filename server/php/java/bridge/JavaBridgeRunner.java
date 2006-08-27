@@ -52,11 +52,13 @@ import php.java.bridge.http.IContextServer;
  */
 public class JavaBridgeRunner extends HttpServer {
 
+    private static String serverPort;
     /**
      * Create a new JavaBridgeRunner and ContextServer.
+     * @throws IOException 
      * @see ContextServer
      */
-    public JavaBridgeRunner() {
+    public JavaBridgeRunner() throws IOException {
 	super();
 	if(ctxServer!=null) throw new IllegalStateException("There can be only one JavaBridgeRunner per class loader");
 	ctxServer = new ContextServer(new ThreadPool("JavaBridgeContextRunner", Integer.parseInt(Util.THREAD_POOL_MAX_SIZE)));
@@ -66,23 +68,19 @@ public class JavaBridgeRunner extends HttpServer {
 
     /**
      * Create a server socket.
+     * @param addr The host address, either INET:port or INET_LOCAL:port
+     * @return The server socket.
      */
-    public ISocketFactory bind() {
-	try {
-            boolean promisc = (System.getProperty("php.java.bridge.promiscuous", "false").toLowerCase().equals("true"));
-	    socket =  promisc ? JavaBridge.bind("INET:0") : JavaBridge.bind("INET_LOCAL:0");
-	    if(Util.logLevel>3) Util.logDebug("JavaBridgeRunner started on port " + socket);
-	    return socket;
-	} catch (Exception e) {
-	    Util.printStackTrace(e);
-	    return null;
-	}
+    public ISocketFactory bind(String addr) throws IOException {
+	if(serverPort!=null) addr = (Util.JAVABRIDGE_PROMISCUOUS ? "INET:" :"INET_LOCAL:") +serverPort;  
+	socket =  JavaBridge.bind(addr);
+	return socket;
     }
 
     private static IContextFactory getContextFactory(HttpRequest req, HttpResponse res) {
     	String id = getHeader("X_JAVABRIDGE_CONTEXT", req);
     	IContextFactory ctx = ContextFactory.get(id, ctxServer);
-	if(ctx==null) ctx = ContextFactory.addNew(ContextFactory.EMPTY_CONTEXT_NAME);
+	if(ctx==null) ctx = ContextFactory.addNew();
      	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
     	return ctx;
     }
@@ -101,9 +99,8 @@ public class JavaBridgeRunner extends HttpServer {
      * @param req The HttpRequest
      * @param res The HttpResponse
      */
-    protected void parseBody (HttpRequest req, HttpResponse res) throws IOException {
-    	super.parseBody(req, res);
-	boolean override_redirect="1".equals(getHeader("X_JAVABRIDGE_REDIRECT", req));
+    protected void doPut (HttpRequest req, HttpResponse res) throws IOException {
+    	boolean override_redirect="1".equals(getHeader("X_JAVABRIDGE_REDIRECT", req));
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
 	IContextFactory ctx = getContextFactory(req, res);
 
@@ -162,12 +159,15 @@ public class JavaBridgeRunner extends HttpServer {
     /**
      * For internal tests only.
      * @throws InterruptedException 
+     * @throws IOException 
      */
-    public static void main(String s[]) throws InterruptedException {
-	//System.setProperty("php.java.bridge.default_log_level", "4");
-	//System.setProperty("php.java.bridge.default_log_file", "");
-	JavaBridgeRunner r = new JavaBridgeRunner();
-	r.httpServer.join();
-	r.destroy();
+    public static void main(String s[]) throws InterruptedException, IOException {
+	 if(s!=null) {
+	     if(s.length>0 && s[0]!=null) serverPort = s[0];
+	 }
+	 Util.logMessage("JavaBridgeRunner started on port " + serverPort);
+	 JavaBridgeRunner r = new JavaBridgeRunner();
+	 r.httpServer.join();
+	 r.destroy();
     }
 }

@@ -72,7 +72,7 @@ public class PhpJavaServlet extends HttpServlet {
 	    ctx.log(s); 
 	}
 	public void printStackTrace(Throwable t) {
-	    ctx.log("", t);
+	    //ctx.log("", t);
 	    if(Util.logLevel>5) t.printStackTrace();
 	}
 	public void warn(String msg) {

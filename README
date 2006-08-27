@@ -217,8 +217,7 @@ Build and execution instructions:
 
   [java]
   java.hosts = 127.0.0.1:9157
-  java.servlet = On
-  java.log_level = 3
+  java.servlet = User
 
 
   After you have created the correct .ini entries, start the

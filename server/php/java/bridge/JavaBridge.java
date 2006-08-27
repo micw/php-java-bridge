@@ -204,7 +204,6 @@ public class JavaBridge implements Runnable {
 	    }
 
 	    globalRef=null;
-	    cl.clear();
 	    logDebug("END: JavaBridge.run()");
 
         } catch (Throwable t) {
@@ -219,8 +218,9 @@ public class JavaBridge implements Runnable {
      * Create a new server socket and return it.
      * @param sockname the socket name
      * @return the server socket
+     * @throws IOException 
      */
-    public static ISocketFactory bind(String sockname) throws Exception {
+    public static ISocketFactory bind(String sockname) throws IOException  {
         return Standalone.bind(Util.logLevel, sockname);
     }
     /**

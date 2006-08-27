@@ -200,5 +200,9 @@ class java_SimpleParser {
   function getData($str) {
 	return $str;
   }
+
+  function parserError() {
+	die(sprintf("protocol error: %s", $this->s));
+  }
 }
 ?>

@@ -1,6 +1,14 @@
 <?php
 
-require_once("java/Java.php");
+function check($name) {
+  $len = strlen($name);
+  return strncasecmp(php_uname(), $name, $len) == 0;
+}
+function appendIncludeDir($dir) {
+  $append = check("windows")?";$dir":":$dir";
+  ini_set("include_path", ini_get("include_path").$append);
+}
+appendIncludeDir(".."); require_once("java/Java.php");
 
   // redirect to backend.
 function redirect() {

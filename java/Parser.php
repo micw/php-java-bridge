@@ -63,4 +63,7 @@ class java_Parser {
   function getData($str) {
 	return $this->parser->getData($str);
   }
+  function parserError() {
+	$this->parser->parserError();
+  }
 }

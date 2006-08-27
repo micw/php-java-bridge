@@ -37,6 +37,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -145,35 +146,44 @@ class Snarf {
       }
   }
 
-  private void writeMethod(PrintWriter writer, Method method) {
-      Class[] params = method.getParameterTypes();
-      Class ret = method.getReturnType();
-      writer.print("function ");
-      writer.print(method.getName());
-      writer.print("(");
-      int end = params.length-1;
-      for(int i=0; i<params.length; i++) {
-	  Class param = params[i];
-	  writer.print("/* ");
-	  writer.print(Util.getShortName(param));
-	  writer.print(" */");
-	  writer.print("$");
-	  writer.print("p");
-	  writer.print(i);
-	  if(i!=end) writer.print(", ");
-      }
-      writer.print(");");
-      writer.print("\t/* ");
-      writer.print(Util.getShortName(ret));
-      writer.println(" */");
+  private void writeMethod(PrintWriter writer, String method) {
+//      writer.print("  function ");
+//      writer.print(method);
+//      writer.print("() {");
+//      writer.print("$this->__call('");
+//      writer.print(method);
+//      writer.print("', ");
+//      writer.print("func_get_args()");
+//      writer.println(");}");
   }
-  private void writerMethods(PrintWriter writer, String className) throws ClassNotFoundException {
+  private void writeMethods(PrintWriter writer, String className) throws ClassNotFoundException {
       Class clazz = Class.forName(className, false, loader);
       Method[] methods = clazz.getMethods();
+      HashSet methodNames = new HashSet(methods.length);
       for(int i=0; i<methods.length; i++) {
 	  Method method = methods[i];
+	  String name = method.getName();
 	  int mod = method.getModifiers();
-	  if(Modifier.isPublic(mod)) writeMethod(writer, method);
+	  if(Modifier.isPublic(mod) && !Modifier.isStatic(mod))
+	      methodNames.add(name);
+      }
+      for(Iterator ii = methodNames.iterator(); ii.hasNext(); ) {
+	  writeMethod(writer, (String) ii.next());
+      }
+  }
+  private void writeProcedures(PrintWriter writer, String className) throws ClassNotFoundException {
+      Class clazz = Class.forName(className, false, loader);
+      Method[] methods = clazz.getMethods();
+      HashSet methodNames = new HashSet(methods.length);
+      for(int i=0; i<methods.length; i++) {
+	  Method method = methods[i];
+	  String name = method.getName();
+	  int mod = method.getModifiers();
+	  if(Modifier.isPublic(mod) && Modifier.isStatic(mod))
+	      methodNames.add(name);
+      }
+      for(Iterator ii = methodNames.iterator(); ii.hasNext(); ) {
+	  writeMethod(writer, (String) ii.next());
       }
   }
   private static final Pattern subClass = Pattern.compile("\\$");
@@ -181,8 +191,7 @@ class Snarf {
       String name = className.replace('.', '_');
       name=subClass.matcher(name).replaceAll("__");
       PrintWriter writer = createClass(name);
-      writeHeader(writer, file, className, name);
-      writerMethods(writer, className);
+      writeClass(writer, file, className, name);
       writer.println("?>");
       writer.close();
   }
@@ -237,7 +246,7 @@ class Snarf {
     out.println("?>");
     out.close();
   }
-  private void writeHeader(PrintWriter out, String file, String clazz, String phpClazz) {
+  private void writeClass(PrintWriter out, String file, String clazz, String phpClazz) throws ClassNotFoundException {
       out.println("<?php");
       out.println("/* auto-generated file, do not edit */");
       out.println("/* Use the command:");
@@ -250,18 +259,7 @@ class Snarf {
       out.print(jarName.getAbsolutePath());
       out.println("');");
       out.println("");
-      out.print("class ");
-      out.print(phpClazz);
-      out.println(" extends java_Bridge {");
-      out.println("  function __construct() {");
-      out.println("    $args = $this->__java_coerceArgs(func_get_args());");
-      out.print("    array_unshift($args, '");
-      out.print(clazz);
-      out.println("');");
-      out.println("    $this->java = new Java($args);");
-      out.println("  }");
-      out.println("}");
-      out.println("");
+
       out.print("function ");
       out.print(phpClazz);
       out.println("() {");
@@ -279,13 +277,29 @@ class Snarf {
       out.println("");
       out.print("class ");
       out.print(phpClazz);
-      out.print("___Class extends ");
-      out.print(phpClazz);
-      out.println(" {");
+      out.println("___Class extends java_Bridge {");
       out.println("  function __construct($java) {");
       out.println("    $this->java=$java;");
       out.println("  }");
+      writeProcedures(out, clazz);
       out.println("}");
+      out.println("");
+
+      out.print("class ");
+      out.print(phpClazz);
+      out.print(" extends ");
+      out.print(phpClazz);
+      out.println("___Class {");
+      out.println("  function __construct() {");
+      out.println("    $args = $this->__java_coerceArgs(func_get_args());");
+      out.print("    array_unshift($args, '");
+      out.print(clazz);
+      out.println("');");
+      out.println("    $this->java = new Java($args);");
+      out.println("  }");
+      writeMethods(out, clazz);
+      out.println("}");
+      
   }
   
   private static List getClasses(URL url) throws IOException {

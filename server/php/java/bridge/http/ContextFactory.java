@@ -2,6 +2,28 @@
 
 package php.java.bridge.http;
 
+/*
+ * Copyright (C) 2006 Jost Boekemeier
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
@@ -118,6 +140,15 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     	ContextFactory factory = new ContextFactory(webContext);
     	factory.visitor = factory;
     	return factory;
+    }
+    /**
+     * Create a new simple ContextFactory (a factory which creates an emulated JSR223 context) and add it 
+     * to the list of context factories kept by this classloader.
+     * @return The created ContextFactory.
+     * @see php.java.bridge.http.ContextFactory#get(String, ContextServer)
+     */
+    public static IContextFactory addNew() {
+    	return new SimpleContextFactory(EMPTY_CONTEXT_NAME);
     }
     
    /**

@@ -68,7 +68,7 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
          # --with-mono=/path/to/mono.exe,/path/to/ikvmc/dir
          PHP_JRE="`echo $PHP_MONO | LANG=C awk -F, '{print $1}'`"
 
-	PHP_NEW_EXTENSION(mono, php_java_snprintf.c java.c api.c java_bridge.c client.c parser.c sio.c protocol.c bind.c init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\"])
+	PHP_NEW_EXTENSION(mono, php_java_snprintf.c java.c api.c java_bridge.c client.c parser.c sio.c protocol.c secure_protocol.c bind.c init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\"])
           EXTENSION_NAME=MONO
 	  if test "X$PHP_JRE" = "X" || test "X$PHP_JRE" = "Xyes"; then
 		  PHP_JAVA_BIN="mono"
@@ -92,7 +92,7 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
         done
         else 
 # create java.so, compile with -DEXTENSION_DIR="\"$(EXTENSION_DIR)\""
-	PHP_NEW_EXTENSION(java, php_java_snprintf.c php_java_strtod.c java.c api.c java_bridge.c client.c parser.c sio.c protocol.c bind.c init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\"])
+	PHP_NEW_EXTENSION(java, php_java_snprintf.c php_java_strtod.c java.c api.c java_bridge.c client.c parser.c sio.c protocol.c secure_protocol.c bind.c init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\"])
           EXTENSION_NAME=JAVA
 	  if test X$PHP_JRE = X; then
 		  PHP_JAVA_BIN="java"

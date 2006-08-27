@@ -18,7 +18,7 @@ try {
   $doc->addPage(new Java ("Page", 0, "this is page 2"));
 
   /* and print a summary */
-  print $doc->analyze() . "\n";
+  print java_values($doc->analyze()) . "\n";
 } catch (JavaException $ex) {
   $cause = $ex->getCause(); if(is_null($ex->getCause())) $cause = $ex;
   echo "Could not access remote document. <br>\n";

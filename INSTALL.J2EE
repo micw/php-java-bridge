@@ -1,19 +1,5 @@
-Testing the included PHP 5 binaries
------------------------------------
-
-* The JavaBridge.war file contains PHP binaries for Solaris (x86),
-Linux (x86), and Windows (x86). To test them double-click on test.bat
-or test.sh. The test extracts the JavaBridge.jar, the php_java.dll or
-java.so module and the PHP 5.1 php-cgi executable and runs a simple
-test.
-
-* Check the RESULT.html, it should contain the settings of the
-PHP/Java Bridge module and the Java properties at the bottom of the
-page.
-
-
-Installing the PHP/Java Bridge J2EE Component
----------------------------------------------
+Installing PHP into a pure Java Application Server
+--------------------------------------------------
 
 * Install a J2EE application server or servlet engine, for example
   Apache Geronimo, Tomcat 5.5.9, Oracle 10g or WebSphere 6.
@@ -33,13 +19,67 @@ Installing the PHP/Java Bridge J2EE Component
 * Please see the README and http://php-java-bridge.sourceforge.net
   for further information.
 
+Known AS Issues :
 
-OPTIONAL: Installing and testing the front-end on Linux, Unix, Windows
-----------------------------------------------------------------------
+- On Windows the php-cgi.exe doesn't support the -b flag. Therefore
+either an IIS or Apache front-end or an external PHP "launcher.exe" is
+required to run PHP efficiently. IBM Websphere or Apache Geronimo
+users can find the "launcher.exe" in the "PHP Integration Kit for
+Windows": PHPIntKitForWindows.zip, available from alphaworks.
+
+- If you see a script exception when running
+java-server-faces/index.php and the name is displayed as "null", check
+if Java can call the PHP script on the web server (PHP >= 5 must be
+installed on the web server). If not, stop the web server or change
+the script location from "@80:/java-server-faces/helloWorld.php" to
+"/java-server-faces/helloWorld.php".
+
+- The JavaBridge.war contains PHP binaries for Linux (x86), Solaris
+(x86) and Windows. On other operating systems the PHP binaries are
+searched in /usr/bin/php-cgi or c:\php\php-cgi.exe and a pure PHP
+implementation of the PHP/Java Bridge is used. This implementation is
+currently 10 times slower than the native, C based implementation. The
+INSTALL document located in the source download archive contains
+information how to compile the C based implementation for your
+operating system version and the java/README document located in the
+JavaBridge.war zip file contains information how to install the pure
+PHP implementation of the PHP/Java Bridge.
+
+
+OPTIONAL: Installing PHP into Apache or IIS
+-------------------------------------------
 
 NOTE: Linux RPMs contain Security Enhanced Linux contexts. If you want
 to install software on a SEL system (RHEL, Fedora, ...), please use
 the RPM build system instead, see INSTALL.LINUX.
+
+Pure Java application server or servlet implementations cannot
+directly respond to requests on the HTTP port number 80; they cannot
+listen on this port without having admin privileges and they cannot
+drop their privileges due to posix related restrictions in the Java
+architecture. Running the entire application server with admin
+privileges causes security problems. Therefore it is recommended to
+install a native HTTP server with PHP as a front end:
+
+              :80---> Apache or IIS
+            /                |
+           / php req.        ---- php
+          /                  ---- php  -->----------|
+                               /  ...               |
+  internet                    |                     |
+  clients                     -------<--------|     |
+          \                    P-J-B PROTOCOL |     |
+           \jsp/servlet req.                  |     |
+            \                                 |     |
+             |--> :8080--> J2EE AS            |     |
+              /                |              |     |
+             /                 \--- servlet   |     |
+             |                 \--- PhpJavaServlet  |
+             |                 \--- jsp             |
+             |                      ...             |
+             -------------<-------------------------|
+                    P-J-B PROTOCOL
+  
 
 * Install Apache or IIS, if not already installed.
 
@@ -49,23 +89,38 @@ the RPM build system instead, see INSTALL.LINUX.
     LoadModule php5_module "c:/php/php5apache2.dll"
     AddType application/x-httpd-php .php
 
-* Check if your php extension_dir [1] contains the java extension. If not,
-  copy the appropriate java-<architecture>-<os>.so or
-  java-<architecture>-<os>.dll from the JavaBridge.war file to your php
+* The PHP/Java Bridge front-end is available a) as a pure PHP component
+  or b) as a C based PHP extension. 
+
+* The pure PHP component is currently 10 times slower than the C based
+  extension, but it is easier to install. See the java/README located in
+  the JavaBridge.war zip archive for details.
+
+* The native, C based PHP extension needs a non-standard PHP "java.so"
+  or "php_java.dll" installed on the web server. Check if your PHP
+  extension_dir [1] contains this PHP extension. If not, copy the
+  appropriate java-<architecture>-<os>.so or
+  java-<architecture>-<os>.dll from the JavaBridge.war file to your PHP
   extension directory:
 
   for PHP >= 4.3.4: php-4-java-<arch>-<os>[.so|.dll]
   for PHP >= 5.0.0: php-5.0-java-<arch>-<os>[.so|.dll]
   for PHP >= 5.1.0: java-<arch>-<os>[.so|.dll]
-  for PHP >= 6.0.0: php-6-java-<arch>-<os>[.so|.dll]
+  ...
+  
+  Rename it to java.so (Unix) or php_java.dll (Windows). 
 
-  Rename it to java.so (Unix) or php_java.dll (Windows). If the binary
-  download doesn't contain a PHP executable for your operating system,
-  compile a php_java.dll or java.so from the source, as described in the
-  INSTALL document located in the source download archive.
+  Please see the INSTALL document located in the source download
+  archive for information how to compile a php_java.dll or java.so from
+  the source.
+
+  NOTE: The pure PHP implementation of the PHP/Java Bridge currently
+  does not read the following php.ini entries. The java.hosts and
+  java.servlet values are coded in java/Options.php, change them
+  accordingly. See java/README for details.
 
 * Check if the java .ini [2] entry loads the java extension and
-  connects php to the servlet back-end, e.g.:
+  connects php to the servlet or J2EE back-end, e.g.:
   
     extension = java.so
     ; extension = php_java.dll
@@ -113,23 +168,6 @@ the RPM build system instead, see INSTALL.LINUX.
 [2] The php .ini file is the global PHP configuration file, usually
 /usr/local/lib/php.ini or /etc/php.d/java.ini or c:\windows\php.ini or
 c:\winnt\php.ini.
-
-
-Known AS Issues 
----------------
-
-* On Windows the php-cgi.exe doesn't support the -b flag. Therefore
-either a IIS or Apache front-end or an external PHP "launcher.exe" is
-required to run PHP efficiently. IBM Websphere or Apache Geronimo
-users can find the "launcher.exe" in the "PHP Integration Kit for
-Windows": PHPIntKitForWindows.zip, available from alphaworks.
-
-* If you see a script exception when running
-java-server-faces/index.php and the name is displayed as "null", check
-if Java can call the PHP script on the web server (PHP >= 5 must be
-installed on the web server). If not, stop the web server or change
-the script location from "@80:/java-server-faces/helloWorld.php" to
-"/java-server-faces/helloWorld.php".
 
 
 FAQ

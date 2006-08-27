@@ -2,6 +2,28 @@
 
 package php.java.bridge.http;
 
+/*
+ * Copyright (C) 2006 Jost Boekemeier
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -15,6 +37,9 @@ import php.java.bridge.NotImplementedException;
  */
 public class HttpRequest {
     private HashMap headers;
+    private String method;
+    private String uri;
+    
     private InputStream in;
 
     private byte [] buf;
@@ -42,6 +67,20 @@ public class HttpRequest {
 	return (String) headers.get(string);
     }
 
+    /**
+     * Return the request Method
+     * @return GET, PUT or POST
+     */
+    public String getMethod() {
+	return method;
+    }
+    /**
+     *  Return the request URI
+     * @return The request URI
+     */
+    public String getRequestURI() {
+	return uri;
+    }
     /**
      * Returns the InputStream
      * @return The InputStream
@@ -107,8 +146,15 @@ public class HttpRequest {
 		(line.substring(0, line.indexOf(":")).trim(),
 		 line.substring(line.indexOf(":") + 1).trim());
 	}
-	catch (Exception e) {/*not a valid header*/}
-
+	catch (StringIndexOutOfBoundsException e) { /* not a valid header, assume method */
+	    int i1=-1, i2=-1;
+	    i1 = line.indexOf(' ');
+	    if(i1!=-1) {
+		method = (line.substring(0, i1)).trim().toUpperCase().intern();
+		i2 = line.indexOf(' ', i1+1); 
+	    }
+	    if(i2>i1) uri = line.substring(i1+1, i2);
+	}
     }
 
     /**

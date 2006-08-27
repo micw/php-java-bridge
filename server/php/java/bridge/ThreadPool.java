@@ -109,6 +109,7 @@ public class ThreadPool extends BaseThreadPool {
 	    }
 	}
 	protected void end() {
+	    super.end();
 	    if(Util.logLevel>4) Util.logDebug("end: " + this);
 	    ThreadGroup group = appGroup;
 	    if(group!=null)  

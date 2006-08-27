@@ -38,12 +38,10 @@
   obligated to do so.  If you do not wish to do so, delete this
   exception statement from your version. */
 
+require_once ("Options.php");
+
 class java_SocketHandler {
   var $protocol, $sock;
-  var $COMPATIBILITY = false; // set to true to destroy object
-							  // identity: sends X/P and immediately
-							  // converts strings, numbers, byte
-							  // arrays into the equivalent PHP type.
 
   function java_SocketHandler($protocol, $sock) {
 	$this->protocol = $protocol;
@@ -110,11 +108,24 @@ class java_HttpHandler extends java_SocketHandler {
 	$context = $this->protocol->webContext;
 	if(isset($context)) return $context;
 
-	// guess
-	return (array_key_exists('PHP_SELF', $_SERVER) &&
-			array_key_exists('HTTP_HOST', $_SERVER)) 
-	  ?$_SERVER['PHP_SELF']
-	  :null;
+	/* Coerce a http://xyz.com/kontext/foo.php request to the back
+	   end: http://xyz.com:{java_hosts[0]}/kontext/foo.php.  For
+	   example if we receive a request:
+	   http://localhost/sessionSharing.php and java.servlet is On and
+	   java.hosts is "127.0.0.1:8080" the code would connect to the
+	   back end:
+	   http://127.0.0.1:8080/sessionSharing.phpjavabridge. This
+	   creates a cookie with PATH value "/".  If java_servlet is User
+	   the request http://localhost/myContext/sessionSharing.php the
+	   code would connect to
+	   http://127.0.0.1/myContext/sessionSharing.phpjavabridge and a
+	   cookie with a PATH value "/myContext" would be created.
+	*/
+	return (JAVA_SERVLET == "User" &&
+			array_key_exists('PHP_SELF', $_SERVER) &&
+			array_key_exists('HTTP_HOST', $_SERVER))
+	  ? $_SERVER['PHP_SELF']
+	  : "/JavaBridge/JavaBridge.phpjavabridge";
   }
   function write($data) {
 
@@ -122,6 +133,9 @@ class java_HttpHandler extends java_SocketHandler {
 	  ? chr(0103)
 	  : $compatibility = chr(0100);
 	$this->protocol->client->RUNTIME["COMPATIBILITY"]=$compatibility;
+	if(is_int(JAVA_LOG_LEVEL)) {
+	  $compatibility |= 128 | (7 & JAVA_LOG_LEVEL)<<2;
+	}
 
 	$this->headers = null;
 	$sock = $this->sock;
@@ -130,7 +144,6 @@ class java_HttpHandler extends java_SocketHandler {
 	$cookies = $this->getCookies();
 	$context = $this->getContext();
 	$redirect = $this->redirect;
-	if(!$webapp) $webapp = "/JavaBridge/JavaBridge.phpjavabridge";
 	$res = "PUT ";
 	$res .= $webapp;
 	$res .= " HTTP/1.0\r\n";
@@ -157,11 +170,11 @@ class java_HttpHandler extends java_SocketHandler {
 	while ($str = trim(fgets($this->sock, $this->RECV_SIZE))) {
 	  if($str[0]=='X') {
 		if(!strncasecmp("X_JAVABRIDGE_CONTEXT_DEFAULT", $str, 28)) {
-		  $this->headers["kontext"]=substr($str, 30);
+		  $this->headers["kontext"]=trim(substr($str, 29));
 		} else if(!strncasecmp("X_JAVABRIDGE_REDIRECT", $str, 21)) {
-		  $this->headers["redirect"]=substr($str, 23);
+		  $this->headers["redirect"]=trim(substr($str, 22));
 		} else if(!strncasecmp("X_JAVABRIDGE_CONTEXT", $str, 20)) {
-		  $this->headers["context"]=substr($str, 22);
+		  $this->headers["context"]=trim(substr($str, 21));
 		}
 	  } else if($str[0]=='S') {	// Set-Cookie:
 		if(!strncasecmp("SET-COOKIE", $str, 10)) {
@@ -187,13 +200,15 @@ class java_HttpHandler extends java_SocketHandler {
   function overrideRedirect() {}
   function redirect() {
 	if(!isset($this->protocol->socketHandler)) {
+	  $hostVec = java_Protocol::getHost();
+	  $host = $hostVec[0];
 	  $port = $this->headers["redirect"];
 	  $context = $this->headers["context"];
 	  $len = strlen($context);
 	  $len0 = chr(0xFF);
 	  $len1 = chr($len&0xFF); $len>>=8;
 	  $len2 = chr($len&0xFF);
-	  $sock = fsockopen("127.0.0.1", $port, $errno, $errstr, 30);
+	  $sock = fsockopen($host, $port, $errno, $errstr, 30);
 	  if (!$sock) die("$errstr ($errno)\n");
 	  $this->protocol->socketHandler=new java_SocketHandler($this->protocol,$sock);
 	  $this->protocol->write("\077${len0}${len1}${len2}${context}");
@@ -216,9 +231,18 @@ class java_Protocol {
 		 ?$_SERVER['X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT']
 		 :null));
   }
+  static function getHost() {
+	static $host;
+	if(!isset($host)) {
+	  $hosts = explode(";", JAVA_HOSTS);
+	  $host = explode(":", $hosts[0]); // TODO: check host list
+	}
+	return $host;
+  }
   function createHttpHandler() {
-	$host = "127.0.0.1";
-	$port = "8443";
+	$hostVec = java_Protocol::getHost();
+	$host = $hostVec[0];
+	$port = $hostVec[1];
 
 	$overrideHosts = $this->getOverrideHosts();
 	$ssl = "";
@@ -235,7 +259,7 @@ class java_Protocol {
 	}
 	$this->client->RUNTIME["SERVER"] = $this->serverName = "$host:$port";
 	$sock = fsockopen("${ssl}${host}", $port, $errno, $errstr, 30);
-	if (!$sock) die("$errstr ($errno)\n");
+	if (!$sock) die("Could not connect to the J2EE server. Please start it, for example with the command: \"java -classpath JavaBridge.jar php.java.bridge.JavaBridgeRunner 8080\". Error message: $errstr ($errno)\n");
 	return new java_HttpHandler($this, $sock);
   }
   function java_Protocol ($client) {

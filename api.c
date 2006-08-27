@@ -174,8 +174,7 @@ short EXT_GLOBAL(session)(INTERNAL_FUNCTION_PARAMETERS)
   /* create a new connection to the
      back-end if java_session() is not
      the first statement in a script */
-  EXT_GLOBAL(check_session) (jenv TSRMLS_CC);
-
+  (*jenv)->checkSession (jenv);
   (*jenv)->writeInvokeBegin(jenv, 0, "getSession", 0, 'I', return_value);
   /* call getSession(String id, ...), if necessary */
   if(current_ctx && current_ctx != (*jenv)->servlet_ctx)
@@ -584,7 +583,7 @@ short EXT_GLOBAL(toString)(INTERNAL_FUNCTION_PARAMETERS) {
 #ifdef ZEND_ENGINE_2
 	if (instanceof_function(Z_OBJCE_P(getThis()), EXT_GLOBAL(exception_class_entry) TSRMLS_CC)) {
 	  zval fname;
-	  ZVAL_STRINGL(&fname, "gettraceasstring", sizeof("gettraceasstring")-1, 0);
+	  ZVAL_STRINGL(&fname, "getTraceAsString", sizeof("gettraceasstring")-1, 0);
 	  call_user_function_ex(0, &getThis(), &fname, &trace, 0, 0, 1, 0 TSRMLS_CC);
 	  if(trace) 
 		(*jenv)->writeString(jenv, Z_STRVAL_P(trace), Z_STRLEN_P(trace));

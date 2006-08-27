@@ -85,7 +85,7 @@ static char*get_context(proxyenv *env, char context[CONTEXT_LEN_MAX], short*cont
 	  EXT_GLOBAL(snprintf) (context, 
 							CONTEXT_LEN_MAX, 
 							"%c%c%c%c%s", 
-							077, 0xFF,0xFF&(l>>8),0xFF&l,
+							077, 0xFF,0xFF&l,0xFF&(l>>8),
 							(*env)->servlet_ctx);
 	return context;
 }
@@ -307,30 +307,6 @@ void EXT_GLOBAL(redirect_pipe)(proxyenv*env) {
 	(*env)->f_recv0 = (*env)->f_recv = recv_pipe;
 	(*env)->f_send0 = (*env)->f_send = send_pipe;
 }
-void EXT_GLOBAL(check_session) (proxyenv *env TSRMLS_DC) {
-  if(!(*env)->is_local && IS_SERVLET_BACKEND(env) && !(*env)->backend_has_session_proxy) {
-	if((*env)->peer_redirected) { /* override redirect */
-	  int sock = socket (PF_INET, SOCK_STREAM, 0);
-	  struct sockaddr *saddr = &(*env)->orig_peer_saddr;
-	  if (-1!=sock) {
-		static const int is_true = 1;
-		setsockopt(sock, 0x6, TCP_NODELAY, (void*)&is_true, sizeof is_true);
-		if (-1!=connect(sock, saddr, sizeof (struct sockaddr))) {
-		  (*env)->peer0 = (*env)->peer;
-		  (*env)->peer = sock;
-		  (*env)->f_recv = recv_socket;
-		  (*env)->f_send = send_socket;
-		} else {				/* could not connect */
-		  close(sock);
-		  EXT_GLOBAL(sys_error)("Could not connect to server",78);
-		}
-	  } else
-		EXT_GLOBAL(sys_error)("Could not create socket",79);
-	}
-	(*env)->finish=end_session;
-  }
-}
-
 void EXT_GLOBAL(setResultWith_context) (char*key, char*val, char*path) {
   static const char empty[] = "/";
   static const char name[] = "setResultWith_cookie";
@@ -579,6 +555,51 @@ static short EndConnection(proxyenv *env, char property) {
 
  
 
+static void redirect(proxyenv *env) {
+  assert(0);
+}
+static short close_socket(proxyenv *env) {
+  int err = close((*env)->peer);
+  return err == -1 ? 0 : 1;
+}
+static void check_session (proxyenv *env) {
+
+  TSRMLS_FETCH();
+
+  if(!(*env)->is_local && IS_SERVLET_BACKEND(env) && !(*env)->backend_has_session_proxy) {
+	if((*env)->peer_redirected) { /* override redirect */
+	  int sock = socket (PF_INET, SOCK_STREAM, 0);
+	  struct sockaddr *saddr = &(*env)->orig_peer_saddr;
+	  if (-1!=sock) {
+		static const int is_true = 1;
+		setsockopt(sock, 0x6, TCP_NODELAY, (void*)&is_true, sizeof is_true);
+		if (-1!=connect(sock, saddr, sizeof (struct sockaddr))) {
+		  (*env)->peer0 = (*env)->peer;
+		  (*env)->peer = sock;
+		  (*env)->f_recv = recv_socket;
+		  (*env)->f_send = send_socket;
+		} else {				/* could not connect */
+		  close(sock);
+		  EXT_GLOBAL(sys_error)("Could not connect to server",78);
+		}
+	  } else
+		EXT_GLOBAL(sys_error)("Could not create socket",79);
+	}
+	(*env)->finish=(*env)->endSession;
+  }
+}
+static void destruct(proxyenv *env) {
+	if(((*env)->peerr!=-1) && (!(*env)->is_shared)) close((*env)->peerr);
+	if(((*env)->peer0!=-1) && (!(*env)->is_shared)) close((*env)->peer0);
+	if((*env)->s) free((*env)->s);
+	if((*env)->send) free((*env)->send);
+	if((*env)->server_name) free((*env)->server_name);
+	if((*env)->current_servlet_ctx && (*env)->servlet_ctx != (*env)->current_servlet_ctx) free((*env)->current_servlet_ctx);
+	if((*env)->servlet_ctx && (!(*env)->is_shared)) free((*env)->servlet_ctx);
+	if((*env)->servlet_context_string) free((*env)->servlet_context_string);
+	if((*env)->cfg.hosts) free((*env)->cfg.hosts);
+	if((*env)->cfg.servlet) free((*env)->cfg.servlet);
+}
 static void close_connection(proxyenv *env TSRMLS_DC) {
   if(env && *env) {
 	if((*env)->peer!=-1) { /* end servlet session */
@@ -591,18 +612,9 @@ static void close_connection(proxyenv *env TSRMLS_DC) {
 	  }
 
 	  if(!(*env)->connection_is_closed) (*env)->writeEndConnection(env, 'E');
-	  if(!(*env)->is_shared) close((*env)->peer);
+	  if(!(*env)->is_shared) (*env)->f_close(env);
 	}
-	if(((*env)->peerr!=-1) && (!(*env)->is_shared)) close((*env)->peerr);
-	if(((*env)->peer0!=-1) && (!(*env)->is_shared)) close((*env)->peer0);
-	if((*env)->s) free((*env)->s);
-	if((*env)->send) free((*env)->send);
-	if((*env)->server_name) free((*env)->server_name);
-	if((*env)->current_servlet_ctx && (*env)->servlet_ctx != (*env)->current_servlet_ctx) free((*env)->current_servlet_ctx);
-	if((*env)->servlet_ctx && (!(*env)->is_shared)) free((*env)->servlet_ctx);
-	if((*env)->servlet_context_string) free((*env)->servlet_context_string);
-	if((*env)->cfg.hosts) free((*env)->cfg.hosts);
-	if((*env)->cfg.servlet) free((*env)->cfg.servlet);
+	(*env)->destruct(env);
 	EXT_GLOBAL(unlink_channel)(env);
 	free(*env);
 	free(env);
@@ -643,78 +655,103 @@ short EXT_GLOBAL(close_connection)(proxyenv*env, short persistent_connection TSR
   if(!persistent_connection || !success) close_connection(env TSRMLS_CC);
   return success;
 }
-proxyenv *EXT_GLOBAL(createSecureEnvironment) (int peer, short (*handle_request)(proxyenv *env), short (*handle_cached)(proxyenv *env), char *server_name, short is_local, struct sockaddr *saddr) {
-   proxyenv *env;  
-   env=(proxyenv*)malloc(sizeof *env);     
-   if(!env) return 0;
-   *env=(proxyenv)calloc(1, sizeof **env); 
-   if(!*env) {free(env); return 0;}
+short EXT_GLOBAL(init_environment) (struct proxyenv_ *env, short (*handle_request)(proxyenv *env), short (*handle_cached)(proxyenv *env), short is_local) {
 
-   (*env)->f_recv0 = (*env)->f_recv = recv_socket;
-   (*env)->f_send0 = (*env)->f_send = send_socket;
+  env->is_local = is_local;
+  env->handle = env->handle_request = handle_request;
+  env->async_ctx.handle_request = handle_cached;
 
-   (*env)->peer = peer;
-   (*env)->peer0 = (*env)->peerr = -1;
-   (*env)->is_shared = 0;
-   (*env)->peer_redirected = 0;
-   memcpy(&(*env)->orig_peer_saddr, saddr, sizeof (struct sockaddr));
+  env->f_recv0 = env->f_recv = recv_socket;
+  env->f_send0 = env->f_send = send_socket;
+  env->f_close=close_socket;
+
+  env->peer0 = env->peerr = -1;
+  env->is_shared = 0;
+  env->peer_redirected = 0;
+  
+  env->async_ctx.peer = 0;
+  env->async_ctx.nextValue = 0;
+  
+  /* parser variables */
+  env->pos=env->c = 0;
+  env->len = SLEN; 
+  env->s=malloc(env->len);
+  if(!env->s) return 0;
+  
+  /* send buffer */
+  env->send_size=SEND_SIZE;
+  env->send=malloc(SEND_SIZE);
+  if(!env->send) {free(env->s); return 0;}
+  env->send_len=0;
    
-   (*env)->handle = (*env)->handle_request = handle_request;
-   (*env)->async_ctx.handle_request = handle_cached;
-   (*env)->async_ctx.peer = 0;
-   (*env)->async_ctx.nextValue = 0;
+  env->must_reopen = env->must_share = 0;
+  env->connection_is_closed = 0;
+  env->current_servlet_ctx = 
+	env->servlet_ctx = env->servlet_context_string = 0;
+  env->backend_has_session_proxy = 0;
+  env->cfg.ini_user = 0;
+  env->cfg.hosts = env->cfg.servlet = 0;
+  env->checkSession = check_session;
 
-   /* parser variables */
-   (*env)->pos=(*env)->c = 0;
-   (*env)->len = SLEN; 
-   (*env)->s=malloc((*env)->len);
-   if(!(*env)->s) {free(*env); free(env); return 0;}
+  env->writeInvokeBegin=InvokeBegin;
+  env->writeInvokeEnd=InvokeEnd;
+  env->writeResultBegin=ResultBegin;
+  env->writeResultEnd=ResultEnd;
+  env->writeCreateObjectBegin=CreateObjectBegin;
+  env->writeCreateObjectEnd=CreateObjectEnd;
 
-   /* send buffer */
-   (*env)->send_size=SEND_SIZE;
-   (*env)->send=malloc(SEND_SIZE);
-   if(!(*env)->send) {free((*env)->s); free(*env); free(env); return 0;}
-   (*env)->send_len=0;
-   
-   (*env)->is_local = is_local;
+  env->writeString=String;
+  env->writeBoolean=Boolean;
+  env->writeLong=Long;
+  env->writeDouble=Double;
+  env->writeObject=Object;
+  env->writeException=Exception;
+  env->writeCompositeBegin_a=CompositeBegin_a;
+  env->writeCompositeBegin_h=CompositeBegin_h;
+  env->writeCompositeEnd=CompositeEnd;
+  env->writePairBegin=PairBegin;
+  env->writePairBegin_s=PairBegin_s;
+  env->writePairBegin_n=PairBegin_n;
+  env->writePairEnd=PairEnd;
+  env->writeUnref=Unref;
 
-   (*env)->server_name = server_name;
-   (*env)->must_reopen = (*env)->must_share = 0;
-   (*env)->connection_is_closed = 0;
-   (*env)->current_servlet_ctx = 
-	 (*env)->servlet_ctx = (*env)->servlet_context_string = 0;
-   (*env)->backend_has_session_proxy = 0;
-   (*env)->cfg.ini_user = 0;
-   (*env)->cfg.hosts = (*env)->cfg.servlet = 0;
+  env->writeEndConnection=EndConnection;
 
-   (*env)->writeInvokeBegin=InvokeBegin;
-   (*env)->writeInvokeEnd=InvokeEnd;
-   (*env)->writeResultBegin=ResultBegin;
-   (*env)->writeResultEnd=ResultEnd;
-   (*env)->writeCreateObjectBegin=CreateObjectBegin;
-   (*env)->writeCreateObjectEnd=CreateObjectEnd;
+  env->endSession=end_session;
+  env->redirect=redirect;
+  env->finish=end;
 
-   (*env)->writeString=String;
-   (*env)->writeBoolean=Boolean;
-   (*env)->writeLong=Long;
-   (*env)->writeDouble=Double;
-   (*env)->writeObject=Object;
-   (*env)->writeException=Exception;
-   (*env)->writeCompositeBegin_a=CompositeBegin_a;
-   (*env)->writeCompositeBegin_h=CompositeBegin_h;
-   (*env)->writeCompositeEnd=CompositeEnd;
-   (*env)->writePairBegin=PairBegin;
-   (*env)->writePairBegin_s=PairBegin_s;
-   (*env)->writePairBegin_n=PairBegin_n;
-   (*env)->writePairEnd=PairEnd;
-   (*env)->writeUnref=Unref;
+  env->destruct=destruct;
 
-   (*env)->writeEndConnection=EndConnection;
-   (*env)->finish=end;
+  return 1;
+}
+proxyenv *EXT_GLOBAL(createEnvironment) (short (*handle_request)(proxyenv *env), short (*handle_cached)(proxyenv *env), short *is_local) {
+  char *server;
+  int peer;
+  proxyenv *env;  
+  struct sockaddr saddr;
+  
+  TSRMLS_FETCH();
+  if(!(server=EXT_GLOBAL(test_server)(&peer, is_local, &saddr TSRMLS_CC))) 
+	return 0;
 
-   return env;
- }
+  env=(proxyenv*)malloc(sizeof *env);     
+  if(!env) return 0;
+  *env=(proxyenv)calloc(1, sizeof **env); 
+  if(!*env) {free(env); return 0;}
+  
+  (*env)->peer = peer;
 
+  memcpy(&(*env)->orig_peer_saddr, &saddr, sizeof (struct sockaddr));
+  (*env)->server_name = server;
+  
+  if(!EXT_GLOBAL(init_environment)(*env, handle_request, handle_cached, *is_local)) {
+	free(*env); free(env); return 0;
+  }
+  return env;
+}
+	
+	
 #ifndef PHP_WRAPPER_H
 #error must include php_wrapper.h
 #endif

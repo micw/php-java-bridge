@@ -79,7 +79,8 @@ else
   if test X$overwrite = "Xyes"; then
     /bin/rm $v -f "${phpini}.backup"
     /bin/mv $v "$phpini" "${phpini}.backup"
-    /bin/cat java.ini >"$phpini"
+    echo "include_path=/usr/share/pear:." >"$phpini"
+    /bin/cat java.ini >>"$phpini"
   fi
 fi
 
@@ -143,6 +144,7 @@ echo "the ${phpinc} directory?"
 echo -n "convert java libraries (yes/no): "; read convert;
 if ! test "X$convert" = "Xno"; then
 $jre -Djava.library.path=./modules -Djava.class.path=./modules/JavaBridge.jar -Djava.awt.headless=true -Dphp.java.bridge.base=./modules php.java.bridge.JavaBridge --convert ${phpinc} unsupported/lucene.jar:unsupported/itext.jar
+/bin/cp java/*.php ${phpinc}/java
 echo ""
 fi
 

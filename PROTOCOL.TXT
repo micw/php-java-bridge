@@ -144,7 +144,7 @@ NULL values can be sent as either v="" or v="0"
 Object:
 <O v=object p=TYPE i=ID />
 v: unsigned long
-p: char ([A]rray, [C]ollection, [O]bject, [E]xception)
+p: char ([A]rray/Map, [C]ollection, [O]bject, [E]xception)
 i: unsigned long 
 
 <-
@@ -217,8 +217,9 @@ If the first byte is neither a "<" nor a space, bits [0,1], [2,4] and
 
 Bit 1 0
 -------
-         keep object  keep array  base  send   binary             comment/
-          identity     identity          ID     data              php impl.
+         keep object  keep array, base  send   binary             comment/
+          identity    Map, Coll.         ID     data              php impl.
+                      identity
 
     - -    yes          no         10   yes    base64 encoded     default
     0 0    yes          yes        16   no     binary             Java.php

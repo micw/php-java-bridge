@@ -39,7 +39,6 @@ public class ClassicResponse extends Response {
     private class ClassicOutputBuffer extends Base64EncodingOutputBuffer {
 	ClassicOutputBuffer(JavaBridge bridge) {
 	    super(bridge);
-	    // TODO Auto-generated constructor stub
 	}
 	protected void append(long i) {
 	    append(String.valueOf(i).getBytes());
@@ -47,12 +46,6 @@ public class ClassicResponse extends Response {
 	protected void appendLong(long l) {
 	    append(L);
 	    append(l);
-	}
-	protected void appendString(byte s[]) {
-	    append(S);
-	    appendQuoted(s);
-	    append(I); append(result);
-	    append(e);
 	}
     }
     private class Base64OutputBuffer extends ClassicOutputBuffer {
@@ -91,6 +84,11 @@ public class ClassicResponse extends Response {
     }
     protected void setID(long id) {
 	this.result = id;
+    }
+    void writeString(byte s[]) {
+	buf.appendString(s);
+	buf.append(I); buf.append(result);
+	buf.append(e);
     }
 
     void writeBoolean(boolean b) {

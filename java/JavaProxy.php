@@ -178,6 +178,7 @@ class java_JavaProxyClass extends java_JavaProxy {
 class java_objectIterator implements Iterator {
   var $proxy;
   var $__java, $__client;
+  var $phpMap; // must keep a reference otherwise it will be gc'ed.
   var $hasNext;
 
   function java_ObjectIterator($javaProxy) {
@@ -186,7 +187,8 @@ class java_objectIterator implements Iterator {
   }
   function rewind() {
 	$proxy = array($this->proxy);
-	$phpMap = $this->__client->invokeMethod(0, "getPhpMap", $proxy);
+	$this->phpMap = 
+	  $phpMap = $this->__client->invokeMethod(0, "getPhpMap", $proxy);
 	$this->__java = $phpMap->__java;
   }
   function valid() {

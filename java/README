@@ -2,14 +2,14 @@ This directory contains a pure PHP implementation of the PHP/Java
 Bridge: it doesn't require a Java extension ("java.so" or
 "php_java.dll") installed on the web server.
 
-WARNING: THIS IMPLEMENTATION IS 11 TIMES SLOWER THAN THE C
+WARNING: THIS IMPLEMENTATION IS 10 TIMES SLOWER THAN THE C
 IMPLEMENTATION.
 
 
 Installation
 ------------
 
-* Copy this directory into your web server's PHP include path.
+* Copy the PHP classes to the web server.
 
 * Copy the Java libraries you need into the WEB-INF/lib folder within
   JavaBridge.war and copy JavaBridge.war into the deploy folder of the
@@ -27,8 +27,8 @@ Installation
 ?>
 
 * If the J2EE server or servlet engine does not run on the same
-  computer as the web server, change the method
-  Protocol::createHttpHandler() accordingly.
+  computer as the web server, change the JAVA_HOSTS option (see
+  Options.php) accordingly.
 
 
 Mailing List

@@ -291,12 +291,6 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     }
 
     /**
-     * Clears all caches.
-     */
-    public void clear() {
-    	super.clear();
-    }
-    /**
      * Reset to initial state.
      */
     public void reset() {

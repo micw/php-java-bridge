@@ -105,6 +105,14 @@
 
 typedef struct sfile SFILE;
 typedef struct proxyenv_ *proxyenv;
+
+/** A procedure type which can be used to create a procedure to create
+	a proxy environment, e.g. a secure (SSL) or a standard environment */
+typedef proxyenv* (environment_factory) 
+  (short (*handle_request)(proxyenv *env), 
+   short (*handle_cached)(proxyenv *env), 
+   short *is_local);
+
 struct proxyenv_ {
 
   /* peer */
@@ -162,6 +170,9 @@ struct proxyenv_ {
   short (*handle)(proxyenv *env);
   short (*handle_request)(proxyenv *env);
 
+  void  (*checkSession)(proxyenv *env);
+  void  (*redirect)(proxyenv *env);
+
   void (*writeCreateObjectBegin)(proxyenv *env, char*name, size_t strlen, char createInstance, void *result);
   short (*writeCreateObjectEnd)(proxyenv *env);
   void (*writeInvokeBegin)(proxyenv *env, unsigned long object, char*method, size_t strlen, char property, void* result);
@@ -184,11 +195,15 @@ struct proxyenv_ {
   void (*writeUnref)(proxyenv *env, unsigned long object);
   short (*writeEndConnection)(proxyenv *env, char property);
   short (*finish)(proxyenv *env);
+  short (*endSession)(proxyenv *env);
 
+  short   (*f_close)(proxyenv *env);
   ssize_t (*f_recv)(proxyenv*env, void *buf, size_t len);
   ssize_t (*f_recv0)(proxyenv*env, void *buf, size_t len);
   ssize_t (*f_send)(proxyenv*env, const void *buf, size_t len);
   ssize_t (*f_send0)(proxyenv*env, const void *buf, size_t len);
+
+  void (*destruct)(proxyenv *env);
 };
 
 #endif

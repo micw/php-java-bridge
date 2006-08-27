@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 3.1.8devel1
+%define version 3.1.8rc
 %define release 1
 %define PHP_MAJOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | sed 's/\\\..*$//')
 %define PHP_MINOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | LANG=C cut -d. -f2)
@@ -9,6 +9,7 @@
 %define tomcat_name        tomcat5
 %define tomcat_webapps		%{_localstatedir}/lib/%{tomcat_name}/webapps
 %define shared_java        %{_datadir}/java
+%define shared_pear        %{_datadir}/pear
 
 Name: php-java-bridge
 Summary: PHP Hypertext Preprocessor to Java Bridge
@@ -142,6 +143,13 @@ for i in $files;
 done
 cp $mod_dir/JavaBridge.jar $RPM_BUILD_ROOT/%{shared_java}/JavaBridge.jar; 
 echo %{shared_java}/JavaBridge.jar >>filelist-devel
+
+files="Client.php GlobalRef.php Java.php JavaProxy.php NativeParser.php Options.php Parser.php Protocol.php SimpleParser.php"
+mkdir -p $RPM_BUILD_ROOT/%{shared_pear}/java
+for i in $files; 
+  do cp java/$i $RPM_BUILD_ROOT/%{shared_pear}/java/$i; 
+  echo %{shared_pear}/java/$i >>filelist
+done
 
 files='java libnatcJavaBridge.so JavaBridge.jar java.so'
 mkdir -p $RPM_BUILD_ROOT/$mod_dir

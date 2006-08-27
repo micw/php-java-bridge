@@ -30,7 +30,7 @@ if(java_get_server_name()!=null){
   }
   echo "<br>\n";
   $Util = new JavaClass("php.java.bridge.Util");
-  echo "JavaBridge back-end version: {$Util->VERSION}<br>\n";
+  echo "JavaBridge back-end version: ".java_values($Util->VERSION)."<br>\n";
   echo "<br>\n";
 
  } else {
@@ -41,7 +41,7 @@ if(java_get_server_name()!=null){
   /* java_get_server_name() == null means that the back-end is not
    running */
 
-  $ext_name=java_get_ext_name();
+  $ext_name=java_get_server_name();
   echo "Error: The PHP/Java Bridge back-end is not running.\n";
   echo "\n";
   echo "Please start it and/or check if the directory\n";
