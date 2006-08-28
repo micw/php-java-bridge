@@ -1618,6 +1618,22 @@ EXT_GLOBAL(call_function_handler4)(INTERNAL_FUNCTION_PARAMETERS, zend_property_r
 	}
 
   zend_get_parameters_array_ex(arg_count, arguments);
+								/* flatten array into arg list, for
+								   compatibility with the php5
+								   implementation */
+  if(arg_count==1 && Z_TYPE_PP(arguments[0])==IS_ARRAY) {
+	zval **param_ptr, *arr = *arguments[0], ***argument_array, ***ptr;
+	int n = zend_hash_num_elements(Z_ARRVAL_P(arr));
+	ptr = argument_array = (zval ***) safe_emalloc(sizeof(zval **), n, 0);
+	zend_hash_internal_pointer_reset(Z_ARRVAL_P(arr));
+	while(zend_hash_get_current_data(Z_ARRVAL_P(arr), (void**)&param_ptr) == SUCCESS) {
+	  *(ptr++) = param_ptr;
+	  zend_hash_move_forward(Z_ARRVAL_P(arr));
+	}
+	efree(arguments);
+	arg_count = n;
+	arguments = argument_array;
+  }
 
   if(!strcmp(name, ce->name)) constructor = CONSTRUCTOR;
   EXT_GLOBAL(call_function_handler)(INTERNAL_FUNCTION_PARAM_PASSTHRU, 

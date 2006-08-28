@@ -49,12 +49,87 @@ When the bridge has been configured to run with an external back-end, three back
 <p> 
 To access Java libraries from PHP the following is necessary:
 <ol>
-<li> the extension module and the optional back-end should be installed in the PHP <code>extension_dir</code> directory. For example if the bridge has been configured to use the standalone back-end on Unix/Linux, the files <code>java.so</code> and <code>JavaBridge.jar</code> should be copied to the PHP <code>extension_dir</code>
-<li>  a PHP <code>.ini</code> entry is necessary to activate the extension. For example the following line in the global php.ini file activates the extension on Unix/Linux:
-<code> extension=java.so </code>
-</ol>
+<li>
+ A VM must be running somewhere on the local network.
+<li> 
+The JavaBridge.jar (or the JavaBridge.war or MonoBridge.exe variant) must
+be accessible by this VM.  
+</ol> </p> <p> The Java/.NET libraries can be called from any PHP implementation
+by opening a socket connection to the VM and by sending
+PHP/Java Bridge protocol requests:
+<blockquote>
+<code>
+&lt;?php<br>
+class Protocol {<br>
+&nbsp;&nbsp;const Pc="&lt;C v=\"%s\" p=\"I\"&gt;", PC="&lt;/C&gt;";<br>
+&nbsp;&nbsp;const Pi="&lt;I v=\"%d\" m=\"%s\" p=\"I\"&gt;", PI="&lt;/I&gt;";<br>
+&nbsp;&nbsp;const Ps="&lt;S v=\"%s\"/&gt;", Pl="&lt;L v=\"%d\" p=\"%s\"/&gt;", Po="&lt;O v=\"%d\"/&gt;";<br>
+&nbsp;&nbsp;var $c;<br>
+&nbsp;&nbsp;<br>
+&nbsp;&nbsp;function __construct() { $this-&gt;c=fsockopen("127.0.0.1",9267); fwrite($this-&gt;c, chr(0100)); }<br>
+<br>
+&nbsp;&nbsp;function createBegin($s) { fwrite($this-&gt;c, sprintf(self::Pc, $s)); }<br>
+&nbsp;&nbsp;function createEnd() { fwrite($this-&gt;c, self::PC); }<br>
+<br>
+&nbsp;&nbsp;function invokeBegin($o, $m) { fwrite($this-&gt;c, sprintf(self::Pi, $o, $m)); }<br>
+&nbsp;&nbsp;function invokeEnd() { fwrite($this-&gt;c, self::PI); }<br>
+<br>
+&nbsp;&nbsp;function writeString($s) {fwrite($this-&gt;c, sprintf(self::Ps, $s));}<br>
+&nbsp;&nbsp;function writeInt($s) { fwrite($this-&gt;c, sprintf(self::Pl, $s&lt;0?-$s:$s, $s&lt;0?"A":"O")); }<br>
+&nbsp;&nbsp;function writeObject($s) { fwrite($this-&gt;c, sprintf(self::Po, $s-&gt;java)); }<br>
+&nbsp;&nbsp;function writeVal($s) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if(is_string($s)) $this-&gt;writeString($s);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;else if(is_int($s)) $this-&gt;writeInt($s);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;else $this-&gt;writeObject($s);<br>
+&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;function getResult() { $res = fread($this-&gt;c, 8192); $ar = sscanf($res, "%s v=\"%s"); return substr($ar[1], 0, strpos($ar[1], "\"")); }<br>
+}<br>
+<br>
+function getProtocol() { static $protocol; if(!isset($protocol)) $protocol=new Protocol(); return $protocol; }<br>
+<br>
+class Java {<br>
+&nbsp;&nbsp;var $java;<br>
+&nbsp;&nbsp;function __construct() {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if(!func_num_args()) return;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$protocol=getProtocol();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$ar = func_get_args();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$protocol-&gt;createBegin(array_shift($ar));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;foreach($ar as $arg) { $protocol-&gt;writeVal($arg); }<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$protocol-&gt;createEnd();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$ar = sscanf($protocol-&gt;getResult(), "%d");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$this-&gt;java=$ar[0];<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;function __call($method, $args) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$protocol=getProtocol();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$protocol-&gt;invokeBegin($this-&gt;java, $method);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;foreach($args as $arg) { $protocol-&gt;writeVal($arg); }<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$protocol-&gt;invokeEnd();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$proxy = new Java();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$ar = sscanf($protocol-&gt;getResult(), "%d");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$proxy-&gt;java=$ar[0];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return $proxy;<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;function toString() {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$protocol=getProtocol();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$protocol-&gt;invokeBegin("", "castToString");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$protocol-&gt;writeVal($this);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$protocol-&gt;invokeEnd();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return $protocol-&gt;getResult();<br>
+&nbsp;&nbsp;}<br>
+}<br>
+// Test<br>
+$i1 = new Java("java.math.BigInteger",  "1");<br>
+$i2 = new Java("java.math.BigInteger",  "2");<br>
+$i3 = $i1-&gt;add($i2);<br>
+echo $i3-&gt;toString() . "\n";<br>
+?&gt;<br>
+</code>
+</blockquote>
 </p>
-<p><a name="proxies">It is recommended, although not required, to create PHP classes from the Java libraries and to install them into the PHP PEAR <code>include_path</code>.</a> For example the following command translates the Java library <code>lucene.jar</code> into PHP classes and installs them into the <code>/usr/share/pear/lucene</code> directory: 
+
+<p><a name="proxies">To make programming more convenient it is recommended, although not required, to install the <a href="java/README">pure PHP-</a> or the <a href="#installation">C-based "PECL" extension</a>. Furthermore PHP classes can be created from Java libraries and be installed in the PHP PEAR <code>include_path</code>.</a> For example the following command translates the Java library <code>lucene.jar</code> into PHP and installs it  into the <code>/usr/share/pear/lucene</code> directory: 
+
 <blockquote>
 <code>java -jar JavaBridge.jar --convert /usr/share/pear lucene.jar</code>
 </blockquote>
@@ -87,10 +162,10 @@ while($iter->hasNext()) {<br>
 <p>
 Java knowledge is not necessary and it is neither necessary nor recommended to write custom- or glue logic in the Java programming language. 
 </p>
-<p>The following sections describe the low-level interface. It can be used to create dynamic PHP proxies or PHP/Java Bridge bindings for other languages such as Perl or Python.
+<p>The following sections describe the low-level interface provided by the PHP/Java Bridge implementations.
 </p>
 <H1>Description</H1>
-<P><FONT > The bridge adds the following primitives to PHP.  The type
+<P><FONT > The bridge implementations add the following primitives to PHP.  The type
   mappings are shown in <a href="#type-mapping">table 1</a>.
 
 <ul>
@@ -555,8 +630,8 @@ VM.
 </FONT></P>
 <P STYLE="margin-top: 0.42cm; page-break-after: avoid"><BR><BR>
 </P>
-<H1>Installation
-instructions</H1>
+<H1><a name="installation">Installation
+instructions</a></H1>
 <P STYLE="margin-top: 0.42cm; page-break-after: avoid"><FONT ><FONT SIZE=3>If
 you have a Unix, Windows or Linux system, <a href="http://www.sourceforge.net/projects/php-java-bridge">download</a> either the binary or the source and install it.
 <H2>Installation on Linux</H2>
@@ -1466,7 +1541,9 @@ this means that PHP cannot connect back to the official SSL port.
 Please check the 
 "Registered Stream Socket Transports" from the <code>phpinfo()</code> (see the <code>test.php</code> page), it should display: <code>tcp, udp, ssl, sslv3, sslv2, tls</code>. If not, please recompile PHP with SSL enabled, use the flag <code>--with-openssl</code>.
 <p>
-A workaround is to open a dedicated local (non-SSL) HTTP port for the PHP-Java communication. The following example is for Tomcat:
+A workaround is to use the official non-SSL port or to open a
+dedicated local port for the PHP-Java communication. The following
+example is for Tomcat:
 <p>
 <ol>
 <li>Disable <code>override_hosts</code> in the web application <code>WEB-INF/web.xml</code>:
@@ -1478,7 +1555,7 @@ A workaround is to open a dedicated local (non-SSL) HTTP port for the PHP-Java c
          &lt;/init-param&gt;<br>
 </code>
 </blockquote>
-<li> Open a local port in the tomcat <code>conf/server.xml</code>:
+<li> Open a local port in the tomcat <code>conf/server.xml</code> (only necessary if you have disabled the official non-SSL port):
 <blockquote>
 <code>
   &lt;Service name="Catalina"&gt;<br>
@@ -1497,6 +1574,8 @@ A workaround is to open a dedicated local (non-SSL) HTTP port for the PHP-Java c
 </code>
 </blockquote>
 </ol>
+If you want to use the official non-SSL port (usually port number
+8080), change the <code>java.hosts</code> line accordingly.<p>
 Restart the application server or servlet engine. Check the settings by running <code>phpinfo()</code> or by visiting the <code>test.php</code> page. 
 </p>
 </a>

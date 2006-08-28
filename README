@@ -745,7 +745,7 @@ Build and execution instructions:
     cannot use the global VM class cache.
 
   * Libraries must be explicitly required by using the php
-    java_require() syntax.
+    java_require() procedure.
 
   Disadvantages of the static loader:
 

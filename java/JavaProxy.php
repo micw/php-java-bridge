@@ -249,13 +249,13 @@ class java_ExceptionProxy extends java_JavaProxy {
   }
 }
 /**
- * This decorator overrides all magic methods and delegates to the
- * proxy so that it may handle them or pass them on to the back-end.
- * The delegate isn't passed via the constructor but allocated from
- * the back-end, based on the type of the Java instance, see
- * PROTOCOL.TXT: "p: char ([A]rray, [C]ollection, [O]bject,
- * [E]xception)". See the getProxy() and create() methods in
- * Client.php and writeObject() and getType() in Response.java.<p>
+ * This decorator/bridge overrides all magic methods and delegates to
+ * the proxy so that it may handle them or pass them on to the
+ * back-end.  The actual implementation of this bridge depends on the
+ * back-end response, see PROTOCOL.TXT: "p: char ([A]rray,
+ * [C]ollection, [O]bject, [E]xception)". See the getProxy() and
+ * create() methods in Client.php and writeObject() and getType() in
+ * Response.java.<p>
  *
  * The constructor is an exception. If it is called, the user has
  * already allocated Java, so that $wrap is false and the proxy is
@@ -297,27 +297,64 @@ class Java extends java_JavaProxy implements IteratorAggregate, ArrayAccess {
   function __toString() {
     return $this->__delegate->__toString();
   }
+
+  // The following functions are for backward compatibility
   function getIterator() {
-	return $this->__delegate->getIterator();
+	if(func_num_args()==0) return $this->__delegate->getIterator();
+	$args = func_get_args(); return $this->__call("getIterator", $args);
   }
   function offsetExists($idx) {
-    return $this->__delegate->offsetExists($idx);
-  }  
+	if(func_num_args()==1) return $this->__delegate->offsetExists($idx);
+	$args = func_get_args(); return $this->__call("offsetExists", $args);
+  }
   function offsetGet($idx) {
-    return $this->__delegate->offsetGet($idx);
+	if(func_num_args()==1) return $this->__delegate->offsetGet($idx);
+	$args = func_get_args(); return $this->__call("offsetGet", $args);
   }
   function offsetSet($idx, $val) {
-    return $this->__delegate->offsetSet($idx, $val);
+	if(func_num_args()==2) return $this->__delegate->offsetSet($idx, $val);
+	$args = func_get_args(); return $this->__call("offsetSet", $args);
   }
   function offsetUnset($idx) {
-    return $this->__delegate->offsetUnset($idx);
+	if(func_num_args()==1) return $this->__delegate->offsetUnset($idx);
+	$args = func_get_args(); return $this->__call("offsetUnset", $args);
   }
 }
-class java_class extends Java {
+class JavaObject extends Java {
+  function Java() {
+	$delegate = $this->__delegate = java_create(func_get_args(), true);
+	$this->__java = $delegate->__java;
+	$this->__client = $delegate->__client;
+  }
+
+  function getIterator() {
+	$args = func_get_args(); return $this->__call("getIterator", $args);
+  }
+  function offsetExists($idx) {
+	$args = func_get_args(); return $this->__call("offsetExists", $args);
+  }
+  function offsetGet($idx) {
+	$args = func_get_args(); return $this->__call("offsetGet", $args);
+  }
+  function offsetSet($idx, $val) {
+	$args = func_get_args(); return $this->__call("offsetSet", $args);
+  }
+  function offsetUnset($idx) {
+	$args = func_get_args(); return $this->__call("offsetUnset", $args);
+  }
+}  
+class java_class extends JavaObject {
   function java_class() {
 	$delegate = $this->__delegate = java_create(func_get_args(), false);
 	$this->__java = $delegate->__java;
 	$this->__client = $delegate->__client;
+  }
+}
+class java_InternalJavaObject extends JavaObject {
+  function java_InternalJavaObject($proxy) {
+	$this->__delegate = $proxy;
+	$this->__java = $proxy->__java;
+	$this->__client = $proxy->__client;
   }
 }
 class JavaClass extends java_class{}

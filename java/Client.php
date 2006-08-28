@@ -60,15 +60,21 @@ class java_ProxyFactory extends java_SimpleFactory {
   function create($result) {
 	return new java_JavaProxy($result);
   }
+  function createInternal($proxy) {
+	return new java_InternalJavaObject($proxy);	// no array access
+  }
   function getProxy($result, $wrap) {
 	$proxy = $this->create($result);
-	if($wrap) $proxy = new java_InternalJava($proxy);
+	if($wrap) $proxy = $this->createInternal($proxy);
 	return $proxy;
   }
 }
 class java_ArrayProxyFactory extends java_ProxyFactory {
   function java_ArrayProxyFactory($client) {
 	parent::java_ProxyFactory($client);
+  }
+  function createInternal($proxy) {
+	return new java_InternalJava($proxy); // array access
   }
   function create($result) {
 	return new java_ArrayProxy($result);

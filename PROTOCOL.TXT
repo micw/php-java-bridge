@@ -122,7 +122,7 @@ v: long
 i: unsigned long (reply only)
 
 <->
-unsigned Long: (if header bit [0,1] == 1)
+unsigned Long: (if base 16, see protocol header description below)
 <L v=l p=[O|A] [i=ID] />
 v: unsigned long
 p: char (p[O]sitive, neg[A]tive)
