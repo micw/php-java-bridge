@@ -146,8 +146,14 @@ public class Standalone {
 		t.printStackTrace();
 	    }
 	    ISocketFactory socket = bind(logLevel, sockname);
-	    if(s.length>1) System.out.write(socket.getSocketName().getBytes());
-	    System.out.close(); 
+	    StringBuffer buf = new StringBuffer();
+	    buf.append('@');
+	    buf.append(socket.getSocketName());
+	    buf.append('\n');
+	    if(s.length>1) {
+		System.out.write(buf.toString().getBytes());
+		System.out.close(); 
+	    }
 	    if("true".equals(System.getProperty("php.java.bridge.test.startup"))) System.exit(0);
 	    JavaBridge.init(socket, logLevel, s);
 	} catch (RuntimeException e) { throw e; } 

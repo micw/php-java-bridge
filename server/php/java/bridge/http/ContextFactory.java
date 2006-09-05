@@ -50,7 +50,8 @@ import php.java.bridge.Util;
  * </p>
  * <p>
  * Clients of the PHP clients may attach additional data and run with
- * a customized ContextFactory by using the visitor pattern, @see #accept(IContextFactory).
+ * a customized ContextFactory by using the visitor pattern, 
+ * see {@link #accept(IContextFactory)}.
  * </p>
  * <p>
  * The string ID of the instance should be passed to the client, which may
@@ -279,7 +280,8 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	return "Context# " +id + ", isInitialized: " + isInitialized();
     }
     /**
-     * Returns the visitor's context.
+     * Returns the context.
+     * @return The context or null.
      */
     public Object getContext() {
 	return visitor.getContext();
@@ -288,7 +290,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     /**
      * Set the Context into this factory.
      * Should be called by Context.addNew() only.
-     * @param context
+     * @param context The context.
      * @see #addNew(String)
      */
     public void setContext(Object context) {

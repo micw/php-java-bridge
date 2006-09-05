@@ -11,7 +11,21 @@
 Bridge?</H1> <P><FONT > The PHP/Java Bridge
   is an optimized, XML-based network protocol which can be used to connect a native script engine with a Java or <a href="http://www.ecma-international.org/publications/standards/Ecma-335.htm">ECMA 335</a> virtual machine. It is more than 50 times faster than local RPC via SOAP, uses less resources on the web-server side and it is faster and more reliable than a communication via the Java Native Interface.</p>
 <p>
-The <a href="documentation/PHP-API/html/java_8c.html">php java extension</a> or the <a href="java/README">pure PHP PHP/Java Bridge implementation</a> use this protocol to connect running PHP instances with already running Java or .NET <a href="server/documentation/API/overview-summary.html">back-ends</a>. The communication works in both directions, the <A HREF="http://www.jcp.org/aboutJava/communityprocess/edr/jsr223/">JSR 223</A> interface can be used to connect to a running PHP server (Apache/IIS, FastCGI, ...) so that Java components can call PHP instances and PHP scripts can invoke CLR (e.g. VB.NET, C#, COM) or Java (e.g. Java, KAWA, JRuby) based applications or transfer control back to the environment where the request came from. The bridge can be set up to automatically start the PHP front-end or the Java/.NET back-end, if needed.
+
+The <a href="documentation/PHP-API/html/java_8c.html">php java
+extension</a> and the <a href="java/README">pure PHP</a> PHP/Java
+Bridge implementation</a> use this protocol to connect running PHP
+instances with already running Java or .NET <a
+href="server/documentation/API/overview-summary.html">back-ends</a>. The
+communication works in both directions, the <A
+HREF="http://www.jcp.org/aboutJava/communityprocess/edr/jsr223/">JSR
+223</A> interface can be used to connect to a running PHP server
+(Apache/IIS, FastCGI, ...) so that Java components can call PHP
+instances and PHP scripts can invoke CLR (e.g. VB.NET, C#, COM) or
+Java (e.g. Java, KAWA, JRuby) based applications or transfer control
+back to the environment where the request came from. The bridge can be
+set up to automatically start the PHP front-end or the Java/.NET
+back-end, if needed.
 
 <p><FONT > Each request-handling PHP process of a multi-process HTTP
 server communicates with a corresponding thread spawned by the VM.
@@ -41,32 +55,43 @@ case a PHP instance crashes, it will not take down the java
 application server or servlet engine.  </FONT></P>
 
 <H1>Overview</H1>
-<P><FONT > The PHP/Java Bridge download contains a <a href="java/README">pure PHP implementation</a> or an <a href="INSTALL">extension module</a> for PHP versions >= 4.3.2 and a set of optional, auto-generated <a href="#proxies">PHP classes</a>. When the bridge has been configured to run without an external back-end, no Java, .NET or Mono is necessary;  popular Java libraries such as <code>lucene.jar</code> or <code>itext.jar</code> can be <a href="README.GNU_JAVA">interpreted by the bridge code</a> without using a Java SDK or Java JRE.
-</p>
+
+<P><FONT > The PHP/Java Bridge download contains a <a
+href="java/README">pure PHP implementation</a> or a C based <a
+href="INSTALL">extension module</a> for PHP versions >= 4.3.2. When
+the bridge has been configured to run without an external back-end, no
+Java, .NET or Mono is necessary; popular Java libraries such as
+<code>lucene.jar</code> or <code>itext.jar</code> can be <a
+href="README.GNU_JAVA">interpreted by the bridge code</a> without
+using a Java SDK or Java JRE.  </p>
+
 <p>
 When the bridge has been configured to run with an external back-end, three back-ends are available: a "standalone back-end" called <code>JavaBridge.jar</code>, a J2EE back-end and Servlet SAPI <code>JavaBridge.war</code> and a Mono/.NET back-end called <code>MonoBridge.exe</code>.
 </p>
 <p> 
-To access Java libraries from PHP the following is necessary:
+To access pure Java (or .NET) libraries from PHP the following is
+necessary:
 <ol>
 <li>
  A VM must be running somewhere on the local network.
 <li> 
 The JavaBridge.jar (or the JavaBridge.war or MonoBridge.exe variant) must
 be accessible by this VM.  
-</ol> </p> <p> The Java/.NET libraries can be called from any PHP implementation
+</ol> </p> 
+<p>
+ The Java/.NET libraries can be called from any PHP implementation
 by opening a socket connection to the VM and by sending
 PHP/Java Bridge protocol requests:
-<blockquote>
+</font></font></p><blockquote>
 <code>
-&lt;?php<br>
+<font><font>&lt;?php<br>
 class Protocol {<br>
-&nbsp;&nbsp;const Pc="&lt;C v=\"%s\" p=\"I\"&gt;", PC="&lt;/C&gt;";<br>
-&nbsp;&nbsp;const Pi="&lt;I v=\"%d\" m=\"%s\" p=\"I\"&gt;", PI="&lt;/I&gt;";<br>
-&nbsp;&nbsp;const Ps="&lt;S v=\"%s\"/&gt;", Pl="&lt;L v=\"%d\" p=\"%s\"/&gt;", Po="&lt;O v=\"%d\"/&gt;";<br>
+&nbsp;&nbsp;const Pc='&lt;C v="%s" p="I"&gt;', PC='&lt;/C&gt;';<br>
+&nbsp;&nbsp;const Pi='&lt;I v="%d" m="%s" p="I"&gt;', PI='&lt;/I&gt;';<br>
+&nbsp;&nbsp;const Ps='&lt;S v="%s"/&gt;', Pl='&lt;L v="%d" p="%s"/&gt;', Po='&lt;O v="%d"/&gt;';<br>
 &nbsp;&nbsp;var $c;<br>
 &nbsp;&nbsp;<br>
-&nbsp;&nbsp;function __construct() { $this-&gt;c=fsockopen("127.0.0.1",9267); fwrite($this-&gt;c, chr(0100)); }<br>
+&nbsp;&nbsp;function __construct() { $this-&gt;c=fsockopen("127.0.0.1",9267); fwrite($this-&gt;c, "\177@"); }<br>
 <br>
 &nbsp;&nbsp;function createBegin($s) { fwrite($this-&gt;c, sprintf(self::Pc, $s)); }<br>
 &nbsp;&nbsp;function createEnd() { fwrite($this-&gt;c, self::PC); }<br>
@@ -83,7 +108,8 @@ class Protocol {<br>
 &nbsp;&nbsp;&nbsp;&nbsp;else $this-&gt;writeObject($s);<br>
 &nbsp;&nbsp;}<br>
 <br>
-&nbsp;&nbsp;function getResult() { $res = fread($this-&gt;c, 8192); $ar = sscanf($res, "%s v=\"%s"); return substr($ar[1], 0, strpos($ar[1], "\"")); }<br>
+&nbsp;&nbsp;function getResult() { $res = fread($this-&gt;c, 8192); $ar
+= sscanf($res, '%s v="%[^"]"'); return $ar[1]; }<br>
 }<br>
 <br>
 function getProtocol() { static $protocol; if(!isset($protocol)) $protocol=new Protocol(); return $protocol; }<br>
@@ -124,16 +150,18 @@ $i2 = new Java("java.math.BigInteger",  "2");<br>
 $i3 = $i1-&gt;add($i2);<br>
 echo $i3-&gt;toString() . "\n";<br>
 ?&gt;<br>
-</code>
+</font></font></code>
 </blockquote>
+However, to make programming more convenient it is recommended, although not required, to install the </a><a href="java/README">pure PHP-</a> or the <a href="#installation">C-based "PECL" extension</a>. 
 </p>
-
-<p><a name="proxies">To make programming more convenient it is recommended, although not required, to install the <a href="java/README">pure PHP-</a> or the <a href="#installation">C-based "PECL" extension</a>. Furthermore PHP classes can be created from Java libraries and be installed in the PHP PEAR <code>include_path</code>.</a> For example the following command translates the Java library <code>lucene.jar</code> into PHP and installs it  into the <code>/usr/share/pear/lucene</code> directory: 
+<p><a name="proxies">Furthermore PHP classes can be created from Java libraries and be installed in the PHP PEAR <code>include_path</code>.</a> For example the following command translates the Java library <code>lucene.jar</code> into PHP and installs it  into the <code>/usr/share/pear/lucene</code> directory: 
 
 <blockquote>
 <code>java -jar JavaBridge.jar --convert /usr/share/pear lucene.jar</code>
 </blockquote>
-The Java libraries can be accessed by including the PHP classes once. PHP code can call all public Java methods or procedures and examine all public fields. All public PHP procedures can be called from Java, all PHP classes may implement Java interfaces and PHP objects may be passed to Java procedures or methods. Example:
+</p>
+<p>
+PHP code can call all public Java methods or procedures and examine all public fields. All public PHP procedures can be called from Java, all PHP classes may implement Java interfaces and PHP objects may be passed to Java procedures or methods. Example:
 <blockquote>
 <code>
 &lt;?php<br>
@@ -253,6 +281,25 @@ print (java_values(new java("java.lang.Object")));<br>
 </blockquote>
 <br>
 <li>
+  <code><strong><a href="documentation/PHP-API/html/java_8c.html#a31">java_cast</a></strong>(JAVA_VALUE, php_type)</code>: Converts a primitive JAVA_VALUE to a php value of type php_type. Unlike <code>java_values</code>, which return the "natural" php value for the JAVA_VALUE, the cast can convert the JAVA_VALUE into the desired php_type before it is returned. Allowed conversions are "string", "boolean", "integer" or "long", "double" or "float", "null", "array" and "object". The "object" conversion is the identiy function. Since PHP5 (php_type)JAVA_VALUE is identical to java_cast(JAVA_VALUE, php_type) (Zend Engine 2 and above only).  Examples:<br><br><blockquote>
+<code>
+$str = new java("java.lang.String", "12");
+echo $str;<br>
+=&gt; [o(String):"12"]<br>
+<br>
+// fetch the php string from the java string<br>
+echo java_cast($str, "string");<br>
+=&gt; "12"<br>
+<br>
+echo java_cast($str, "integer" );<br>
+=&gt; 12<br>
+<br>
+var_dump (java_cast($str, "boolean"));<br>
+=&gt; true
+</code>
+</blockquote>
+<br>
+<li>
   <code><strong><a href="documentation/PHP-API/html/java_8c.html#a29">java_begin_document</a></strong>()</code> and <code><strong><a href="documentation/PHP-API/html/java_8c.html#a30">java_end_document</a></strong>()</code>: Enables/disables XML stream mode. In XML stream mode the PHP/Java Bridge XML statements are sent in one XML stream. Compared with SOAP, which usually creates the entire XML document before sending it, this mode uses much less resources on the web-server side. Raised server-side exceptions are reported when <code>java_end_document()</code> is invoked. Example:<br><br><blockquote>
 <code>
 // send the following XML statements in one stream<br>
@@ -345,6 +392,8 @@ $instance=$Cache->getInstance(); //instance will stay in the VM until the VM run
       try {<br>
        &nbsp;&nbsp;new java("java.lang.String", null);<br>
       } catch(JavaException $ex) {<br>
+&nbsp;&nbsp;         $exStr = java_cast($ex, "string");
+&nbsp;&nbsp;         echo "Exception occured; mixed trace: $exStr\n";
 &nbsp;&nbsp;         $trace = new java("java.io.ByteArrayOutputStream");<br>
 &nbsp;&nbsp;         $ex-&gt;printStackTrace(new java("java.io.PrintStream", $trace));<br>
 &nbsp;&nbsp;         print "java stack trace: $trace\n";<br>
@@ -575,7 +624,7 @@ echo $ex->getCause();<br>
 <P><FONT >
 <a name="jar-location">
   Custom java libraries (.jar files) can be stored in the following
-  locations:
+  locations:</a>
 
 <ol>
 <li>
@@ -592,42 +641,7 @@ On Security Enhanced Linux <code>.jar</code> files can only be loaded from locat
 </ol>
 </FONT></P>
 </P>
-</a></a>
-<P><FONT > The PHP/Java Bridge can operate in 4 different modes: <ol>
-  <li> Invoked from the dl() function.  In this mode the bridge starts
-  when the HTTP server receives a client request and terminates after the response
-  is written.  This is very slow because it starts a new back-end (Java or .NET VM) for
-  each request. But it does not require any administrative privileges.
-
-   <li> Permanently activated in the global php.ini file with an
- internal Java process running in the HTTP server domain.  In this
- mode the bridge back-end starts when the HTTP server starts and terminates
- when the HTTP server terminates. Recommended during
- development. Please see <a href="#mode2">web server installation
- below</a>.
-
-   <li> Permanently activated in the global php.ini file with an
-      external <a href="#mode4">application server or servlet engine</a>.
-      PHP can be run as a CGI or FastCGI sub-component within a pure java application server or be installed as a Apache/IIS module. 
-
-   <li> As a script extension within a pure java application (requires Java >= 1.6).
-
-</ol>
-<P><FONT > Furthermore the PHP/Java Bridge can be: <ul> <li> Compiled
-into PHP.  This is not recommended because it requires a compilation
-of the entire PHP library. If you want to do this, please read the
-README file. 
-
-   <li> Configured and compiled to run without java. The GNU gcc 4
-compiler library gcj can used to interpret java libraries. Thus it is
-possible to use popular java libraries such as Apache's lucene or
-Lowagi's itext directly from PHP, without the need to install a java
-VM.
-
-   <li> Compiled with Novell's MONO (a ".NET" clone).  This is
- available as a separate download.  </ul>
-
-</FONT></P>
+</a>
 <P STYLE="margin-top: 0.42cm; page-break-after: avoid"><BR><BR>
 </P>
 <H1><a name="installation">Installation
@@ -635,7 +649,7 @@ instructions</a></H1>
 <P STYLE="margin-top: 0.42cm; page-break-after: avoid"><FONT ><FONT SIZE=3>If
 you have a Unix, Windows or Linux system, <a href="http://www.sourceforge.net/projects/php-java-bridge">download</a> either the binary or the source and install it.
 <H2>Installation on Linux</H2>
-Open a command shell and type the following commands:
+On RedHat or a compatible Linux distribution (WhiteBox, Fedora, ...) open a command shell and type the following commands:
 <H3>Public key</H3>
 All binary files are digitally signed. Before you install the RPM binaries you should install the <a href="RPM-GPG-KEY">public key</a>, so that the integrity can be checked. If you haven't installed the key, type: 
 <blockquote>
@@ -653,7 +667,7 @@ rpm -i itext4php-x.y.z-1.i386.rpm <br>
 </code> 
 </blockquote>
 
-Note that the PHP/Java Bridge and the libraries are native code do
+Note that the PHP/Java Bridge and the libraries are native code and do
 <em>not</em> need Java installed on the system unless the <a
 href="#ini-options">PHP .ini</a> option <code>java.java</code> is set.
 

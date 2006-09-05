@@ -32,18 +32,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import php.java.bridge.DynamicJavaBridgeClassLoader;
 import php.java.bridge.ThreadPool;
 import php.java.bridge.Util;
 
 /**
- * This class represents the physical connection on Unix or Linux machines.
- * PHP clients create a pair of named pipes and pass their location via the X_JAVABRIDGE_REDIRECT
- * header (see PhpJavaServlet}. When isAvailable() returns true, all further communication goes
- * through the pair of pipes, see response header X_JAVABRIDGE_REDIRECT.
- * <p>
- * It is possible to switch off this server by setting the VM property php.java.bridge.no_pipe_server to true,
- * e.g.: -Dphp.java.bridge.no_pipe_server=true.
- * </p>
+ * This class manages the physical connection on Unix or Linux
+ * machines.  PHP clients create a pair of named pipes and pass their
+ * location via the X_JAVABRIDGE_REDIRECT header (see
+ * PhpJavaServlet}. When isAvailable() returns true, all further
+ * communication goes through the pair of pipes, see response header
+ * X_JAVABRIDGE_REDIRECT.  <p> It is possible to switch off this
+ * server by setting the VM property php.java.bridge.no_pipe_server to
+ * true, e.g.: -Dphp.java.bridge.no_pipe_server=true.  </p>
  * @see php.java.bridge.http.SocketContextServer
  * @see php.java.bridge.http.ContextServer
  */
@@ -104,6 +105,7 @@ public class PipeContextServer implements IContextServer {
 	        threadPool.start(runner);
 	    } else {
 	    	Thread t = new Thread(runner, "JavaBridgeContextRunner");
+		t.setContextClassLoader(DynamicJavaBridgeClassLoader.newInstance(Util.getContextClassLoader()));	    	
 	    	t.start();
 	    }
 	} catch (SecurityException t) {

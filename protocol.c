@@ -137,7 +137,7 @@ static short end(proxyenv *env) {
 	unsigned char mode = EXT_GLOBAL (get_mode) ();
 
 	assert(!(*env)->peer_redirected || ((*env)->peer_redirected && (((*env)->peer0)==-1)));
-	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\nX_JAVABRIDGE_CONTEXT_DEFAULT: %s\r\n\r\n%c", servlet_context, (unsigned long)(size+1), EXT_GLOBAL(get_channel)(env), getSessionFactory(env), EXT_GLOBAL(getDefaultSessionFactory)(TSRMLS_C), mode);
+	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\nX_JAVABRIDGE_CONTEXT_DEFAULT: %s\r\n\r\n%c%c", servlet_context, (unsigned long)(size+2), EXT_GLOBAL(get_channel)(env), getSessionFactory(env), EXT_GLOBAL(getDefaultSessionFactory)(TSRMLS_C), 127, mode);
 
 	success = add_header(env, &size, header, header_length);
   } else {						/* re-directed */
@@ -188,7 +188,7 @@ static short end_session(proxyenv *env) {
 
   (*env)->finish=end;
   
-  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_REDIRECT: %d\r\n%sX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\nX_JAVABRIDGE_CONTEXT_DEFAULT: %s\r\n\r\n%c", (*env)->servlet_context_string, (unsigned long)(size+1), override_redirect, get_cookies(&val, env), EXT_GLOBAL(get_channel)(env), getSessionFactory(env), EXT_GLOBAL(getDefaultSessionFactory)(TSRMLS_C), mode);
+  header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_REDIRECT: %d\r\n%sX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\nX_JAVABRIDGE_CONTEXT_DEFAULT: %s\r\n\r\n%c%c", (*env)->servlet_context_string, (unsigned long)(size+2), override_redirect, get_cookies(&val, env), EXT_GLOBAL(get_channel)(env), getSessionFactory(env), EXT_GLOBAL(getDefaultSessionFactory)(TSRMLS_C), 127, mode);
 
   success = add_header(env, &size, header, header_length);
   if(success) success = send_data(env, (char*)(*env)->send, size);
@@ -246,7 +246,7 @@ static short end_connection (proxyenv *env) {
 
 	assert(!(*env)->peer_redirected);
 
-	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\nX_JAVABRIDGE_CONTEXT_DEFAULT: %s\r\n\r\n%c", servlet_context, (unsigned long)(size+1), EXT_GLOBAL(get_channel)(env),  getSessionFactory(env), EXT_GLOBAL(getDefaultSessionFactory)(TSRMLS_C), mode);
+	header_length=EXT_GLOBAL(snprintf) (header, sizeof(header), "PUT %s HTTP/1.1\r\nHost: localhost\r\nConnection: Close\r\nContent-Type: text/html\r\nContent-Length: %lu\r\nX_JAVABRIDGE_CHANNEL: %s\r\nX_JAVABRIDGE_CONTEXT: %s\r\nX_JAVABRIDGE_CONTEXT_DEFAULT: %s\r\n\r\n%c%c", servlet_context, (unsigned long)(size+2), EXT_GLOBAL(get_channel)(env),  getSessionFactory(env), EXT_GLOBAL(getDefaultSessionFactory)(TSRMLS_C), 127, mode);
 
 	success = add_header(env, &size, header, header_length);
 	if(success) success = send_data(env, (char*)(*env)->send, size);

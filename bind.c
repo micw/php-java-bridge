@@ -105,6 +105,9 @@ static short use_wrapper(char*wrapper) {
   short use_wrapper=(EXT_GLOBAL(option_set_by_user) (U_WRAPPER, EXT_GLOBAL(ini_user)));
   if(use_wrapper) return use_wrapper;
 #ifndef __MINGW32__
+  /* do not change privileges when we are not running as root.
+	 The RunJavaBridge and RunMonoBridge contains a similar test */
+  if(getuid()) return 0;
   if(!stat(wrapper, &buf) && (S_IFREG&buf.st_mode)) {
 	if(getuid()==buf.st_uid)
 	  use_wrapper=(S_IXUSR&buf.st_mode);
@@ -965,9 +968,93 @@ short is_socket_inet(char *old_name, char *name) {
 #endif
   return strcmp(old_name, name);
 }
+//static char line[] = "\na\n\nstr\n\n";
+/**
+ * Cuts a string into lines. Unlike strtok this can return empty
+ * tokens:
+ *
+ * \na\n\nstr\n
+ * -> 
+ * -> a
+ * -> 
+ * -> str
+ *
+ * @param s the string or null
+ * @return each new token, may be empty
+ */
+static char *linesep(char *s) {
+  static const char chr = '\n';
+  static char *str; if(s) str=s;
+  char *pos = str, *c;
+  if(pos) { 
+    c = strchr(str, chr);
+    // if we found a match and it is followed by \0, we're done
+    if((str=c) && ((*str++=0),!*str)) str = 0;
+  }
+  return pos;
+}
+/**
+ * Read "@channel\n" from the System.out.  Some insane VM
+ * implementations (the Sun VM since 1.4.2) incorrectly write debug
+ * output to System.out instead of System.err, so we have to deal with
+ * this garbage. The Sun 1.5.0 VM for example writes "Listening for
+ * transport dt_socket at address: 9147" if it was called with
+ * -agentlib:jdwp=transport=dt_socket,address=127.0.0.1:9147,server=y,suspend=n
+ * the quiet=y option only exists in 1.6 and higher.
+ */
+#ifndef __MINGW32__
+static char *readChannel(int fd, char*buf, size_t size) {
+#else
+static char *readChannel(HANDLE fd, char*buf, size_t size) {
+  DWORD bwrite;
+#endif
+  ssize_t err;
+  char *line, *next, delim;
+  short contLine=0;
+#ifndef __MINGW32__
+  while((err=read(fd, buf, size-1))>0) {
+#else
+  while(ReadFile(fd, buf, size-1, &err, NULL) && err>0) {
+#endif
+    delim = buf[err-1];
+    buf[err]=0;
+    for(line=linesep(buf); line; line=next) {
+      next = linesep(0);
+      size_t len = strlen(line);
+      if(len && line[0]=='@' && !contLine) {
+		if(next || (delim=='\n')) return line;
+		if(size<=len+1) return 0;
+		memmove(buf, line, len);
+#ifndef __MINGW32__
+		err = read(fd, buf+len, size-len); if(err==-1) return 0;
+#else
+		if((!ReadFile(fd, buf+len, size-len, &err, NULL))||(err<=0)) return 0;
+#endif
+		len += err;
+		next = strchr(buf, '\n'); 
+		if(next) *next=0; else buf[len-1]=0;
+		return buf;
+      } else {
+		/* we have recived garbage, most likely debug output from some
+		   insane VM implementation, pass it on to System.err */
+		size_t len = strlen(line);
+		if(len) write(2, line, strlen(line));
+		if(next || (!next && delim=='\n')) write(2, "\n", 1);
+		contLine = 0;
+      }
+    }
+    contLine = delim!='\n';
+  }
+  return 0;
+}
+
+/**
+ * Start a VM as a sub process of the HTTP server
+ */
 void EXT_GLOBAL(start_server)(TSRMLS_D) {
   int pid=0, err=-1, p[2], st[2], stx;
-  char buf[127], count, *test_server = 0, *name;
+  char buf[255], *channel = 0;
+  char count, *test_server = 0, *name;
 #ifndef __MINGW32__
   if(can_fork() && !(test_server=EXT_GLOBAL(test_server)(0, 0, 0 TSRMLS_CC)) && pipe(p)!=-1) {
 	if(!(pid=fork())) {		/* daemon */
@@ -986,9 +1073,10 @@ void EXT_GLOBAL(start_server)(TSRMLS_D) {
 		signal(SIGTERM, SIG_IGN);
 		
 		write(p[1], &pid, sizeof pid);
-		if(stx!=-1 && close(st[1])!=-1) err = read(st[0], buf, sizeof buf);
-		count = (err==-1) ? 0 : (0xff & err);
-		write(p[1], &count, 1); if(count) write(p[1], buf, count);
+		if(stx!=-1 && close(st[1])!=-1)
+		  channel = readChannel(st[0], buf, sizeof buf);
+		count = 0xFF & strlen(channel);
+		write(p[1], &count, 1); if(count) write(p[1], channel, count);
 
 		waitpid(pid, &err, 0);
 		write(p[1], &err, sizeof err);
@@ -1007,8 +1095,9 @@ void EXT_GLOBAL(start_server)(TSRMLS_D) {
 	  /* received channel # */
 	  size_t n = count;
 	  short inet;
+	  n-=1;
 	  name = malloc(n+1); if(!name) exit(9);
-	  memcpy(name, buf, n); name[n]=0;
+	  memcpy(name, buf+1, n); name[n]=0;
 	  //php_printf("got server channel: %ld, %s", n, name);
 	  inet = is_socket_inet(EXT_GLOBAL(cfg)->default_sockname, name);
 	  free(EXT_GLOBAL(cfg)->default_sockname);
@@ -1026,7 +1115,7 @@ void EXT_GLOBAL(start_server)(TSRMLS_D) {
 #else
 	if(can_fork() && !(test_server=EXT_GLOBAL(test_server)(0, 0, 0 TSRMLS_CC))) {
 	  char *cmd = get_server_string(0 TSRMLS_CC);
-	  DWORD properties = CREATE_NEW_CONSOLE | CREATE_NEW_PROCESS_GROUP;
+	  DWORD properties = /*CREATE_NEW_CONSOLE | */CREATE_NEW_PROCESS_GROUP;
 	  STARTUPINFO su_info;
 	  HANDLE read_pipe, write_pipe, read_pipe_dup;
 	  SECURITY_ATTRIBUTES pipe_sattr = {sizeof(SECURITY_ATTRIBUTES),NULL,TRUE};
@@ -1040,6 +1129,7 @@ void EXT_GLOBAL(start_server)(TSRMLS_D) {
 		goto cannot_fork;
 	  }
 	  CloseHandle(read_pipe);
+	  
 
 	  s_pid.use_wrapper = use_wrapper(EXT_GLOBAL(cfg)->wrapper);
 
@@ -1050,14 +1140,15 @@ void EXT_GLOBAL(start_server)(TSRMLS_D) {
 	  su_info.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
 	  su_info.hStdOutput = write_pipe;
 	  EXT_GLOBAL(cfg)->cid=0;
-	  if(CreateProcess(NULL, cmd, 
+	  if(CreateProcess(NULL, cmd,
 					   NULL, NULL, 1, properties, NULL, NULL, 
 					   &su_info, &s_pid.p)) {
+		CloseHandle(write_pipe);
 		EXT_GLOBAL(cfg)->cid=s_pid.p.dwProcessId;
-		if(ReadFile(read_pipe_dup, buf, sizeof(buf), &bread, NULL) && bread) {
-		  name = malloc(bread+1); if(!name) exit(9);
-		  memcpy(name, buf, bread); name[bread]=0;
-		  //php_printf("got server channel: %ld, %s", bread, name);
+		if(channel=readChannel(read_pipe_dup, buf, sizeof buf)) {
+		  count = strlen(channel)-1;
+		  name = malloc(count+1); if(!name) exit(9);
+		  memcpy(name, channel+1, count); name[count]=0;
 		  free(EXT_GLOBAL(cfg)->default_sockname);
 		  EXT_GLOBAL(cfg)->default_sockname=name;
 		  make_local_socket_info(1 TSRMLS_CC);

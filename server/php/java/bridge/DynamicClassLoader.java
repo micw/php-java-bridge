@@ -82,7 +82,7 @@ public class DynamicClassLoader extends SecureClassLoader {
     /*
      * Clear but keep the input vectors.
      */
-    public void clearCaches() {
+    protected void clearLoaderCaches() {
 	clearCache();
 	Iterator iter = classPaths.iterator();
 	while (iter.hasNext()) {
@@ -170,7 +170,7 @@ public class DynamicClassLoader extends SecureClassLoader {
 	}
     }
 
-    public void clear() {
+    protected void clearLoader() {
       if(Util.logLevel>5) Util.logDebug("DynamicClassLoader("+System.identityHashCode(this)+").clear()\n");
 	classLoaders.clear();
 	classPaths.clear();

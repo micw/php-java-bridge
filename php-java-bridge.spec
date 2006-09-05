@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 3.1.8rc1
+%define version 3.1.8rc3
 %define release 1
 %define PHP_MAJOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | sed 's/\\\..*$//')
 %define PHP_MINOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | LANG=C cut -d. -f2)
@@ -16,7 +16,7 @@ Summary: PHP Hypertext Preprocessor to Java Bridge
 Group: Development/Languages
 Version: %{version}
 Release: %{release}
-License: The PHP license (see "LICENSE" file included in distribution)
+License: LGPL
 URL: http://www.sourceforge.net/projects/php-java-bridge
 Source0: http://osdn.dl.sourceforge.net/sourceforge/php-java-bridge/php-java-bridge_%{version}.tar.bz2
 
@@ -286,13 +286,13 @@ fi
 %files -f filelist
 %defattr(-,root,root)
 %attr(6111,apache,apache) %{_libdir}/php/modules/RunJavaBridge
-%doc README LICENSE CREDITS NEWS test.php INSTALL.LINUX security 
+%doc README COPYING CREDITS NEWS test.php INSTALL.LINUX security 
 
 %files tomcat -f filelist-tomcat
 %defattr(-,tomcat,tomcat)
 %attr(-,root,root) /etc/php.d/java-servlet.ini
-%doc %attr(-,root,root) README INSTALL.J2EE INSTALL.ORACLE INSTALL.WEBSPHERE LICENSE security  
+%doc %attr(-,root,root) README INSTALL.J2EE INSTALL.ORACLE INSTALL.WEBSPHERE COPYING security  
 
 %files devel -f filelist-devel
 %defattr(-,root,root)
-%doc CREDITS ABOUT.HTM README.GNU_JAVA README.MONO+NET ChangeLog README PROTOCOL.TXT LICENSE server documentation examples tests.php5 tests.php4 php_java_lib NEWS INSTALL.LINUX INSTALL
+%doc CREDITS ABOUT.HTM README.GNU_JAVA README.MONO+NET ChangeLog README PROTOCOL.TXT COPYING server documentation examples tests.php5 tests.php4 php_java_lib NEWS INSTALL.LINUX INSTALL

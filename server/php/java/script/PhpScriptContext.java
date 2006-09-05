@@ -48,7 +48,7 @@ public class PhpScriptContext extends SimpleScriptContext implements IPhpScriptC
 
     static {
 	try {
-	    bridgeRunner = new JavaBridgeRunner();
+	    bridgeRunner = JavaBridgeRunner.getInstance();
 	} catch (Exception e) {
 	    Util.printStackTrace(e);
 	}
@@ -75,7 +75,7 @@ public class PhpScriptContext extends SimpleScriptContext implements IPhpScriptC
 
 
     public Writer getWriter() {
-	if(writer == null) return writer = new PhpScriptWriter(System.out);
+	if(writer == null) return writer = new PhpScriptLogWriter();
 	return writer;
     }
 	

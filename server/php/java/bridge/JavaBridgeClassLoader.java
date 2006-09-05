@@ -2,6 +2,8 @@
 
 package php.java.bridge;
 
+import java.io.IOException;
+
 /*
  * Copyright (C) 2006 Jost Boekemeier
  *
@@ -33,6 +35,7 @@ package php.java.bridge;
  * @see java.lang.ClassLoader
  */
 public class JavaBridgeClassLoader extends SimpleJavaBridgeClassLoader {
+    private boolean mustReset;
     /**
      * Create a bridge ClassLoader using a dynamic loader.
      * @param loader The dynamic loader, may be null.
@@ -54,4 +57,12 @@ public class JavaBridgeClassLoader extends SimpleJavaBridgeClassLoader {
 	}
 	return true;
     }
+    public void setClassLoader(DynamicJavaBridgeClassLoader loader) throws IOException {
+        if(loader!=null && mustReset) loader.reset();
+        super.setClassLoader(loader);
+    }
+    public void reset() {
+	if (!checkCl()) mustReset=true;
+	super.reset();
+    }    
 }

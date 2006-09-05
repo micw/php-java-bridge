@@ -3,7 +3,17 @@
 
 /* load extension and check it */
 function check_extension() {
-  require_once("java/Java.php");
+  if(!extension_loaded('java')) {
+    $sapi_type = php_sapi_name();
+    if ($sapi_type == "cgi" || $sapi_type == "cli") {
+      if(!(PHP_SHLIB_SUFFIX=="so" && @dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && @dl('php_java.dll'))&&!(include_once("java/Java.php"))) {
+	echo "java extension not installed.";
+	exit(2);
+      }
+    } else {
+      require_once("java/Java.php");
+    }
+  }
   if(!function_exists("java_get_server_name")) {
     echo "Fatal: The loaded java extension is not the PHP/Java Bridge";
     exit(7);

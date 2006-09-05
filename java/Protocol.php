@@ -48,10 +48,10 @@ class java_SocketHandler {
 	$this->sock = $sock;
   }
   function write($data) {
-	fwrite($this->sock, $data);
+      fwrite($this->sock, $data);
   }
   function read($size) {
-	return fread($this->sock, $size);
+      return fread($this->sock, $size);
   }
   function redirect() {}
 
@@ -139,7 +139,7 @@ class java_HttpHandler extends java_SocketHandler {
 
 	$this->headers = null;
 	$sock = $this->sock;
-	$len = 1 + strlen($data);
+	$len = 2 + strlen($data);
 	$webapp = $this->getWebApp();
 	$cookies = $this->getCookies();
 	$context = $this->getContext();
@@ -153,6 +153,7 @@ class java_HttpHandler extends java_SocketHandler {
 	$res .= $cookies;
 	$res .= $redirect;
 	$res .= "\r\n";
+	$res .= chr(127);
 	$res .= $compatibility;
 	$res .= $data;
 	fwrite($sock, $res); fflush($sock);
@@ -224,12 +225,19 @@ class java_Protocol {
   var $serverName;
 
   function getOverrideHosts() {
-	return 
-	  (array_key_exists('HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER)
-	   ?$_SERVER['HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT']
-	   :(array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER)
-		 ?$_SERVER['X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT']
-		 :null));
+      if(array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS', $_ENV)) {
+          $override = $_ENV['X_JAVABRIDGE_OVERRIDE_HOSTS'];
+          if($override!='/') return $override;
+
+          // fcgi: override for redirect
+          return 
+              (array_key_exists('HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER)
+               ?$_SERVER['HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT']
+               :(array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER)
+                 ?$_SERVER['X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT']
+                 :null));
+      }
+      return null;
   }
   static function getHost() {
 	static $host;
@@ -259,7 +267,7 @@ class java_Protocol {
 	}
 	$this->client->RUNTIME["SERVER"] = $this->serverName = "$host:$port";
 	$sock = fsockopen("${ssl}${host}", $port, $errno, $errstr, 30);
-	if (!$sock) die("Could not connect to the J2EE server. Please start it, for example with the command: \"java -classpath JavaBridge.jar php.java.bridge.JavaBridgeRunner 8080\". Error message: $errstr ($errno)\n");
+	if (!$sock) die("Could not connect to the J2EE server. Please start it, for example with the command: \"java -Dphp.java.bridge.default_log_level=3 -Dphp.java.bridge.default_log_file=\"\" -Dphp.java.bridge.promiscuous=true -classpath JavaBridge.jar php.java.bridge.JavaBridgeRunner 8080\". Error message: $errstr ($errno)\n");
 	return new java_HttpHandler($this, $sock);
   }
   function java_Protocol ($client) {

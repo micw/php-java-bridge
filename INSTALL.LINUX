@@ -1,5 +1,19 @@
+Overview
+--------
+
+On Linux Java libraries can be:
+
+* compiled into native code and be called directly or
+
+* they can be installed into a Java application server and be accessed
+  via RPC, as usual.
+
+
 Installing the PHP/Java Bridge native Component
 -----------------------------------------------
+
+NOTE: The Linux RPM files are for RedHat Linux and compabile
+distributions (WhiteBox, Fedora, ...).
 
 * Check if the Java libraries you're interested in are available as
   native binaries. If not, you need to install Java and the J2EE
@@ -120,12 +134,8 @@ Known Linux Issues
 
 * Only the precompiled php-java-bridge-tomcat-x.y.z-1.i386.rpm contains 
   Security Enhanced Linux contexts. When the J2EE component "JavaBridge.war"
-  has been installed manually, one can extract the permissions
-  from the audit log or with the command: audit2allow -ld and add the
-  rules to the base php-java-bridge-x.y.z-1-i386.rpm, see
-  /usr/share/doc/php-java-bridge-3.1.7/security/README (Fedora Core 4 or
-  below) or /usr/share/doc/php-java-bridge-3.1.7/security/module/README
-  (Fedora Core 5 or above).
+  has been installed manually, Security Enhanced Linux must be switched off
+  or the SEL modules must be installed separately, see the README.
 
 * On Linux the default Java VM is GNU Java. If you want to use the SUN
   or IBM Java VM, set the JAVA_HOME option in /etc/tomcat5/tomcat5.conf.

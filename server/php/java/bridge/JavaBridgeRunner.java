@@ -58,12 +58,16 @@ public class JavaBridgeRunner extends HttpServer {
      * @throws IOException 
      * @see ContextServer
      */
-    public JavaBridgeRunner() throws IOException {
+    private JavaBridgeRunner() throws IOException {
 	super();
-	if(ctxServer!=null) throw new IllegalStateException("There can be only one JavaBridgeRunner per class loader");
-	ctxServer = new ContextServer(new ThreadPool("JavaBridgeContextRunner", Integer.parseInt(Util.THREAD_POOL_MAX_SIZE)));
+	int maxSize =  Integer.parseInt(Util.THREAD_POOL_MAX_SIZE);
+	ctxServer = new ContextServer(maxSize == 0 ? null : new ThreadPool("JavaBridgeContextRunner", maxSize));
     }
-
+    private static JavaBridgeRunner runner;
+    public static synchronized JavaBridgeRunner getInstance() throws IOException {
+	if(runner==null) return runner = new JavaBridgeRunner();
+	return runner;
+    }
     private static ContextServer ctxServer = null;
 
     /**
@@ -166,7 +170,7 @@ public class JavaBridgeRunner extends HttpServer {
 	     if(s.length>0 && s[0]!=null) serverPort = s[0];
 	 }
 	 Util.logMessage("JavaBridgeRunner started on port " + serverPort);
-	 JavaBridgeRunner r = new JavaBridgeRunner();
+	 JavaBridgeRunner r = getInstance();
 	 r.httpServer.join();
 	 r.destroy();
     }

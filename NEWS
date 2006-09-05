@@ -5,10 +5,33 @@ Please send bug reports, questions and suggestions to
 
 Version 3.1.8 
 
+* The recommended way to run Java is to start it via a servlet engine
+or application server. A very simple servlet engine (less 200 lines of
+Java code) is contained in the JavaBridge.jar and can be started with
+the command: java -Dphp.java.bridge.default_log_level=3
+-Dphp.java.bridge.default_log_file=""
+-Dphp.java.bridge.promiscuous=true -classpath JavaBridge.jar
+php.java.bridge.JavaBridgeRunner 8080.
+
+* Incompatible change for those who run Java directly within Apache or
+IIS: The bridge now looks for @channelName\n instead of
+channelName. This means that both, the php_java.dll or java.so AND the
+JavaBridge.jar must be upgraded. If you have copied the JavaBridge.jar
+and the php_java.dll or java.so to the extension directory, make sure
+that the version numbers match; the version number of the back end can
+be found in the global.properties within the JavaBridge.jar zip file
+and the version # of the front end can be checked by temporarily
+setting java.socketname=0 and running the phpinfo() or the
+test.php. However, users who run PHP in Apache or IIS and Java in a
+servlet engine or J2EE AS are not affected.
+
 * A pure PHP implementation of the PHP/Java Bridge is now available in
 the "java" folder. This means that it is no longer necessary to
 compile and to install a non-standard PHP extension on the web or J2EE
 server.
+
+* The license has been changed to LGPL.
+
 
 Version 3.1.7:
 

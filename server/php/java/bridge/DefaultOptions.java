@@ -3,7 +3,7 @@
 package php.java.bridge;
 
 /*
- * Copyright (C) 2006 Jost Boekemeier
+ * Copyright (c) 2006 Jost Boekemeier
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,47 +25,18 @@ package php.java.bridge;
  */
 
 /**
- * The log interface for the PHP/Java Bridge log.
- * @see php.java.bridge.FileLogger
- * @see php.java.bridge.ChainsawLogger
- * @see php.java.bridge.Log4jLogger
+ * Exposes the request options. There is one Options instance for each request, but certain options may change for each packet.
+ * For example if a user calls java_set_file_encoding(enc), the new file encoding becomes available in the next packet.
  * @author jostb
  *
  */
-public interface ILogger {
 
-    /** 
-     * fatal log level
-     */
-    public static final int FATAL=1;
-    /** 
-     * error log level
-     */
-    public static final int ERROR=2;
-    /** 
-     * info log level
-     */
-    public static final int INFO=3;
-    /** 
-     * debug log level
-     */
-    public static final int DEBUG=4;
-    /**
-     * Log a stack trace
-     * @param t The Throwable
-     */
-    public void printStackTrace(Throwable t);
+public final class DefaultOptions extends Options {
+    public boolean hexNumbers() { return false; }
 
-    /**
-     * Log a message.
-     * @param level The log level 0: FATAL, 1:ERROR, 2: INFO, 3: DEBUG
-     * @param msg The message
-     */
-    public void log(int level, String msg);
+    public boolean base64Data() { return true; }
 
-    /**
-     * Display a warning if logLevel >= 1
-     * @param msg The warn message
-     */
-    public void warn(String msg);
+    public boolean preferValues() { return false; }
+
+    public boolean passContext() { return true; }
 }

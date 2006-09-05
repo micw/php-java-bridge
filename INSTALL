@@ -142,7 +142,10 @@ su -c "echo '<?php phpinfo() ?>' >$INST/htdocs/phpinfo.php; chmod +xr $INST/htdo
 echo '<?php phpinfo() ?>' | php | fgrep java
 
 # checking web, should return "java running"
-wget -olog -O-  http://localhost/phpinfo.php|fgrep java
+# (the <port> is the Listen port defined in $INST/conf/httpd.conf
+# usually 80 or 8000)
+wget -olog -O-  http://localhost:<port>/phpinfo.php|fgrep java
+
 
 If the above test succeeded, copy the files "java.so",
 "libnatcJavaBridge.so" and "JavaBridge.jar" (on Windows: php_java.dll
@@ -158,6 +161,10 @@ JAVA_HOME or if configure failed because the installed autoconf
 version is too old, you can only remove the build directory and start
 from the beginning; removing the autom4te cache directories from the
 build directory may be enough sometimes, but not always.
+
+If the above cli test succeeded but the web test failed, check if
+something is blocking the defined http port, the system httpd service
+for example.
 
 
 

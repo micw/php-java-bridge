@@ -55,7 +55,8 @@ public class BaseThreadPool {
 	    DynamicJavaBridgeClassLoader loader;
 	    try {
 		loader = (DynamicJavaBridgeClassLoader) getContextClassLoader();
-		loader.clear();
+		loader.clear();	
+		setContextClassLoader(loader.clearVMLoader());
 	    } catch (ClassCastException ex) {/*ignore*/}
 	}
 	protected void createThread(String name) { startNewThread(name); }
@@ -78,7 +79,7 @@ public class BaseThreadPool {
 	d.start();
     }
     protected synchronized boolean checkReserve() {
-      return idles+(poolMaxSize-threads) > poolReserve;
+      return threads-idles < poolReserve;
     }
     /*
      * Helper: Pull a runnable off the list of runnables. If there's
@@ -120,6 +121,7 @@ public class BaseThreadPool {
      * @param poolMaxSize - The max. number of threads, must be >= 1.
      */
     public BaseThreadPool (String name, int poolMaxSize) {
+	if(poolMaxSize<1) throw new IllegalArgumentException("poolMaxSize must be >0");
         ClassLoader loader = null;
         try {loader = Util.getContextClassLoader();} catch (SecurityException e) {/*ignore*/}
         init(name, poolMaxSize, loader);
@@ -132,6 +134,7 @@ public class BaseThreadPool {
      * @param loader The class loader, may be null.
      */
     public BaseThreadPool (String name, int poolMaxSize, ClassLoader loader) {
+	if(poolMaxSize<1) throw new IllegalArgumentException("poolMaxSize must be >0");
         init(name, poolMaxSize, loader);
     }
 }

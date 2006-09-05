@@ -2,6 +2,15 @@ This folder contains examples which show how to connect to the
 PHP/Java Bridge from PYTHON and Chicken/SCHEME.
 
 
+* sample.php: A pure PHP example which communicates directly with the
+  server.
+
+  Start the server with java -jar JavaBridge.jar and invoke the
+  example with:
+ 
+    php sample.php
+
+
 * getProperties.py: Connects to the PHP/Java Bridge, asks for
   System.getProperties() and displays the first entry. 
 

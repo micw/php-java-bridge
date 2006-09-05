@@ -587,7 +587,7 @@ fcgi_channel+"\n\n";
 		    }
 		    // body
 		    if(eoh) {
-			if(out!=null) out.write(buf, i, N-i);
+			if(out!=null && i<N) out.write(buf, i, N-i);
 			i=0;
 		    }
 		}

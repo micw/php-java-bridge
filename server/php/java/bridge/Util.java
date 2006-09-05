@@ -59,6 +59,8 @@ public final class Util {
     private Util() {}
     
     /**
+     * Only for internal use. Use Util.getLogger() instread.
+     * 
      * A bridge which uses log4j or the default logger.
      *
      */
@@ -579,7 +581,7 @@ public final class Util {
 	    }
 	    // body
 	    if(eoh) {
-		if(out!=null) out.write(buf, i, N-i); 
+		if(out!=null && i<N) out.write(buf, i, N-i); 
 		i=0;
 	    }
 	}

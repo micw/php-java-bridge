@@ -32,7 +32,7 @@ package php.java.bridge;
  */
 public class Options {
 
-    private byte options = 0;
+    protected byte options = 0;
 
     /**
      * Default encoding: UTF-8

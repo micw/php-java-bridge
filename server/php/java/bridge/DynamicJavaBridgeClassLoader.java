@@ -1,7 +1,7 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
 /*
- * Copyright (C) 2006, 2006 Kai Londenberg, Jost Boekemeier
+ * Copyright (C) 2005, 2006 Kai Londenberg, Jost Boekemeier
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -49,7 +49,7 @@ import java.util.jar.Manifest;
  * Instances of this class are shared. 
  * Use the JavaBridgeClassLoader if you need to access the current request-handling bridge instance. 
  * */
-public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
+public class DynamicJavaBridgeClassLoader extends DynamicClassLoader implements Cloneable {
     // maps rawPath -> URL[]
     private static Map urlCache = Collections.synchronizedMap(new HashMap()); //TODO: keep only recent entries
 	    
@@ -289,15 +289,40 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     /**@deprecated*/
     public static synchronized void initClassLoader(String phpConfigDir) {
     }
-
+    /**
+     * The VM associates a map with each loader to speed up Class.forName(). Since our
+     * loader can shrink, we discard the VM cache when clear() or reset() is called.
+     * @return A new instance which should be used instead of the current instance.
+     */
+    public DynamicJavaBridgeClassLoader clearVMLoader() {
+	try {
+	    return (DynamicJavaBridgeClassLoader) clone();
+	} catch (CloneNotSupportedException e) { Util.printStackTrace(e); }
+	return null;
+    }
     /**
      * Reset to initial state.
+     * @return A new instance which should be used instead of this one.
      */
     public void reset() {
 	synchronized(getClass()) {
-	    clear();
+	    clearLoader();
 	    clearCache();
 	}
+    }
+    /**
+     * Clear all loader caches. 
+     * @return A new instance which must be used instead of this one.
+     */
+    public void clearCaches() {
+	clearLoaderCaches();
+    }
+    /**
+     * Clear the loader so that it can be used in new requests.
+     * @return A new instance which must be used instead of this one.
+     */
+    public void clear() {
+	clearLoader();
     }
     private static final boolean checkVM() {
 	try {
@@ -422,21 +447,6 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	    return super.loadClass(name); 
 	} catch (ClassNotFoundException e) {
 	    throw new ClassNotFoundException(("Could not find " + name + " in java_require() path. Please check the path and the SEL and File permissions."), e);    
-	}
-    }
-    /**
-     * Create an instance of the dynamic java bridge classloader
-     * It may return null due to security restrictions on certain systems, so don't
-     * use this method directly but call: 
-     * new JavaBridgeClassLoader(bridge, DynamicJavaBridgeClassLoader.newInstance()) instead.
-     */
-    public static synchronized DynamicJavaBridgeClassLoader newInstance() {
-	try {
-	    DynamicJavaBridgeClassLoader cl = new DynamicJavaBridgeClassLoader();
-	    cl.setUrlClassLoaderFactory(cl.getUrlClassLoaderFactory());
-	    return cl;
-	} catch (java.security.AccessControlException e) {
-	    return null;
 	}
     }
     /**

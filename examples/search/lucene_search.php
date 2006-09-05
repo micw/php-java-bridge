@@ -46,7 +46,7 @@ try {
   while($iter->hasNext()) {
     $next = $iter->next();
     $name = $next->get("name");
-    echo "$name\n";
+    echo java_cast($name, "string")."\n";
   }
   delete_index_dir();
 } catch (JavaException $e) {
@@ -58,9 +58,9 @@ $tmp_file=null;
 $tmp_dir=null;
 /** create a temporary directory for the lucene index files. Make sure
  * to create the tmpdir from Java so that the directory has
- * javabridge_tmp_t permission. Note that PHP does not have access to
- * tempfiles with java_bridge_tmp_t: PHP inherits the rights from the
- * HTTPD, usually httpd_tmp_t.
+ * javabridge_tmp_t Security Enhanced Linux permission. Note that PHP
+ * does not have access to tempfiles with java_bridge_tmp_t: PHP
+ * inherits the rights from the HTTPD, usually httpd_tmp_t.
  */
 function create_index_dir() {
   global $tmp_file, $tmp_dir;

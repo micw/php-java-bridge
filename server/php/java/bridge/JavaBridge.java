@@ -1658,6 +1658,7 @@ public class JavaBridge implements Runnable {
      * @return the proxy
      */
     public Object makeClosure(long object, Map names) {
+	if(names==null) return makeClosure(object);
     	return new PhpProcedureProxy(this, names, null, object);
     }
     /**
@@ -1671,7 +1672,22 @@ public class JavaBridge implements Runnable {
      * @return the proxy
      */
     public Object makeClosure(long object, Map names, Class interfaces[]) {
+	if(names==null) names=emptyMap;
     	return new PhpProcedureProxy(this, names, interfaces, object);
+    }
+    /**
+     * Create a dynamic proxy proxy for calling PHP code.<br>
+     * Example: <br>
+     * java_closure($this, $map, $interfaces);<br>
+     * 
+     * @param object the PHP environment (the php "class")
+     * @param names maps java to php names
+     * @param iface interface which the PHP environment must implement
+     * @return the proxy
+     */
+    public Object makeClosure(long object, Map names, Class iface) {
+	Class[] interfaces = iface==null ? null : new Class[] {iface};
+	return makeClosure(object, names, interfaces);
     }
     /**
      * Create a dynamic proxy proxy for calling PHP code.<br>
@@ -1683,6 +1699,7 @@ public class JavaBridge implements Runnable {
      * @return the proxy
      */
     public Object makeClosure(long object, String name) {
+	if(name==null) return makeClosure(object);
     	return new PhpProcedureProxy(this, name, null, object);
     }
     /**
@@ -1696,6 +1713,7 @@ public class JavaBridge implements Runnable {
      * @return the proxy
      */
     public Object makeClosure(long object, String name, Class interfaces[]) {
+	if(name==null) return makeClosure(object, emptyMap, interfaces);
     	return new PhpProcedureProxy(this, name, interfaces, object);
     }
     private static final HashMap emptyMap = new HashMap();
@@ -1720,7 +1738,7 @@ public class JavaBridge implements Runnable {
      * @see php.java.bridge.Session#reset()
      */
     public void reset() {
-	warn("Your PHP script has called the privileged procedure \"reset()\", which resets the backend to its initial state. Therefore all session variables and all caches are now gone.");
+	if(Util.logLevel>3) warn("Your PHP script has called the privileged procedure \"reset()\", which resets the backend to its initial state. Therefore all session variables and all caches are now gone.");
 	getClassLoader().reset();
     }
     /**

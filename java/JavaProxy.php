@@ -61,7 +61,7 @@ function java_values($object) {
 }
 function java_reset() {
   $client = __javaproxy_Client_getClient();
-  echo ("ERROR: Your script has called the privileged procedure \"java_reset()\" which resets the java back-end to its initial state. Therefore all java caches are gone.");
+  user_error("Your script has called the privileged procedure \"java_reset()\" which resets the java back-end to its initial state. Therefore all java caches are gone.");
   return $client->invokeMethod(0, "reset", array());
 }
 function java_inspect($object) {
@@ -86,7 +86,7 @@ function java_session_array($args) {
   if(!isset($args[0])) $args[0]=null;
   if(!isset($args[1])) $args[1]=false;
   if(!isset($args[2])) {
-	$sesion_max_lifetime=ini_get("session.gc_maxlifetime");
+	$sesion_max_lifetime=(int)ini_get("session.gc_maxlifetime");
 	if(!isset($session_max_lifetime)) $session_max_lifetime=1440;
 	$args[2] = $session_max_lifetime;
   }
@@ -126,6 +126,10 @@ function java_end_document() {
 function java_create($args, $instance) {
   $client = __javaproxy_Client_getClient();
   $name = array_shift($args);
+
+  // compatibility with the C implementation
+  if(is_array($name)) return java_create($name, $instance);
+
   $rc = $client->createObject($name, $args, $instance);
   return $rc;
 }
@@ -140,14 +144,14 @@ class java_JavaProxy {
 	return $this->__client->cast($this, $type);
   }
   function __sleep() {
-	$lifetime = ini_get("session.gc_maxlifetime");
+	$lifetime = (int)ini_get("session.gc_maxlifetime");
 	if(!isset($lifetime)) $lifetime = 1440;
 	$args = array($this, $lifetime);
 	$this->__serialID = $this->__client->invokeMethod(0, "serialize", $args);
     return array("__serialID");
   }
   function __wakeup() {
-	$lifetime = ini_get("session.gc_maxlifetime");
+	$lifetime = (int)ini_get("session.gc_maxlifetime");
 	if(!isset($lifetime)) $lifetime = 1440;
 	if(!isset($this->__client)) $this->__client=__javaproxy_Client_getClient();
 	$args = array($this->__serialID, $lifetime);

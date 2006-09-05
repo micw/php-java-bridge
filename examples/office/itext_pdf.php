@@ -25,7 +25,7 @@ try {
   // print the generated document
   header("Content-type: application/pdf");
   header("Content-Disposition: attachment; filename=HelloWorld.pdf");
-  echo "{$out->toByteArray()}";
+  echo java_cast($out->toByteArray(), "string");
 } catch (JavaException $e) {
   echo "Exception occured: $e<br>\n";
 }

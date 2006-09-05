@@ -932,8 +932,9 @@ static proxyenv*recycle_connection(char *context TSRMLS_DC) {
  */
 static void add_header(proxyenv *env) {
   unsigned char mode = EXT_GLOBAL (get_mode) ();
-  (*env)->send_len=1; 
-  *(*env)->send=mode;
+  (*env)->send_len=2; 
+  ((*env)->send)[0]=127;
+  ((*env)->send)[1]=mode;
 }
 static void init_channel(proxyenv *env);
 /**

@@ -2,8 +2,9 @@
 
 package php.java.bridge;
 
+
 /*
- * Copyright (C) 2006 Jost Boekemeier
+ * Copyright (c) 2006 Jost Boekemeier
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,48 +25,42 @@ package php.java.bridge;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+
 /**
- * The log interface for the PHP/Java Bridge log.
- * @see php.java.bridge.FileLogger
- * @see php.java.bridge.ChainsawLogger
- * @see php.java.bridge.Log4jLogger
+ * Exposes the request options. There is one Options instance for each request, but certain options may change for each packet.
+ * For example if a user calls java_set_file_encoding(enc), the new file encoding becomes available in the next packet.
  * @author jostb
  *
  */
-public interface ILogger {
-
-    /** 
-     * fatal log level
-     */
-    public static final int FATAL=1;
-    /** 
-     * error log level
-     */
-    public static final int ERROR=2;
-    /** 
-     * info log level
-     */
-    public static final int INFO=3;
-    /** 
-     * debug log level
-     */
-    public static final int DEBUG=4;
-    /**
-     * Log a stack trace
-     * @param t The Throwable
-     */
-    public void printStackTrace(Throwable t);
+public final class StandardOptions extends Options {
 
     /**
-     * Log a message.
-     * @param level The log level 0: FATAL, 1:ERROR, 2: INFO, 3: DEBUG
-     * @param msg The message
+     * Returns true, if bit 1 of the request header is set (see PROTOCOL.TXT). This option stays the same for all packets.
+     * @return the value of the request header bit 1.
      */
-    public void log(int level, String msg);
+    public boolean sendArraysAsValues() {
+        return (options & 2)==2;
+    }
 
     /**
-     * Display a warning if logLevel >= 1
-     * @param msg The warn message
+     * Returns true, if bit 0 of the request header is set (see PROTOCOL.TXT). This options stays the same for all packets.
+     * @return the value of the request header
      */
-    public void warn(String msg);
+    public boolean extJavaCompatibility() {
+    	return this.options == 3;
+    }
+ 
+    /**
+     * Returns true, if exact numbers are base 16 (see PROTOCOL.TXT). This options stays the same for all packets.
+     * @return the value of the request header
+     */
+    public boolean hexNumbers() {
+    	return this.options == 1;
+    }
+    public boolean passContext() {
+	return true;
+    }
+    public boolean base64Data() {
+	return false;
+    }
 }

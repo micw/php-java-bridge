@@ -1,5 +1,18 @@
-Installing PHP into a pure Java Application Server
---------------------------------------------------
+Overview
+--------
+
+The PHP/Java Bridge can be installed with two copy operations:
+
+* the JavaBridge.war must be copied into the autodeploy folder of the
+  J2EE server and
+
+* the pure PHP PHP/Java Bridge classes or the C-based extension module
+  must be copied into the web server document root or into the PHP
+  extension directory, respectively.
+
+
+Install PHP into a pure Java Application Server
+-----------------------------------------------
 
 * Install a J2EE application server or servlet engine, for example
   Apache Geronimo, Tomcat 5.5.9, Oracle 10g or WebSphere 6.
@@ -19,6 +32,11 @@ Installing PHP into a pure Java Application Server
 * Please see the README and http://php-java-bridge.sourceforge.net
   for further information.
 
+* Please report bugs/problems to the mailing list:
+
+    php-java-bridge-users@lists.sourceforge.net
+
+
 Known AS Issues :
 
 - On Windows the php-cgi.exe doesn't support the -b flag. Therefore
@@ -29,57 +47,52 @@ Windows": PHPIntKitForWindows.zip, available from alphaworks.
 
 - If you see a script exception when running
 java-server-faces/index.php and the name is displayed as "null", check
-if Java can call the PHP script on the web server (PHP >= 5 must be
-installed on the web server). If not, stop the web server or change
-the script location from "@80:/java-server-faces/helloWorld.php" to
-"/java-server-faces/helloWorld.php".
+if Java can call the PHP script on the external web server (PHP >= 5 must 
+be installed on the web server). If not, stop the external web server or 
+change the script location from "@80:/java-server-faces/helloWorld.php" 
+to "/java-server-faces/helloWorld.php" so that the internal web server
+built into your servlet engine or application server is used.
 
 - The JavaBridge.war contains PHP binaries for Linux (x86), Solaris
 (x86) and Windows. On other operating systems the PHP binaries are
 searched in /usr/bin/php-cgi or c:\php\php-cgi.exe and a pure PHP
-implementation of the PHP/Java Bridge is used. This implementation is
-currently 10 times slower than the native, C based implementation. The
-INSTALL document located in the source download archive contains
-information how to compile the C based implementation for your
-operating system version and the java/README document located in the
-JavaBridge.war zip file contains information how to install the pure
-PHP implementation of the PHP/Java Bridge.
+implementation of the PHP/Java Bridge is used.
 
 
-OPTIONAL: Installing PHP into Apache or IIS
--------------------------------------------
+OPTIONAL: Copy the pure PHP classes into an existing PHP Web Server
+-------------------------------------------------------------------
+
+* Double-click on test.bat or test.sh. Copy the created "java" folder
+  and the test.php over to the document root of your web server.
+
+* Copy the JavaBridge.war into the autodeploy folder of your Application
+  Server or servlet engine, as described above.
+
+* Copy your Java libraries (.jar files) into the extension_dir/lib [1]
+  directory and your native shared libraries (on windows: dll files)
+  into extension_dir [1].
+
+* Visit http://yourHost.com/test.php.
+
+* Please report bugs/problems to the mailing list:
+
+    php-java-bridge-users@lists.sourceforge.net
+
+
+Known Issues :
+
+- The pure PHP PHP/Java Bridge implementation is currently 10 times
+slower than the C implementation described below. Since PHP doesn't
+contain a JIT, a "Just In Time" compiler, it is recommended to compile
+the bridge to native code, if possible:
+
+
+OPTIONAL: Install the native, C-based extension
+-----------------------------------------------
 
 NOTE: Linux RPMs contain Security Enhanced Linux contexts. If you want
 to install software on a SEL system (RHEL, Fedora, ...), please use
 the RPM build system instead, see INSTALL.LINUX.
-
-Pure Java application server or servlet implementations cannot
-directly respond to requests on the HTTP port number 80; they cannot
-listen on this port without having admin privileges and they cannot
-drop their privileges due to posix related restrictions in the Java
-architecture. Running the entire application server with admin
-privileges causes security problems. Therefore it is recommended to
-install a native HTTP server with PHP as a front end:
-
-              :80---> Apache or IIS
-            /                |
-           / php req.        ---- php
-          /                  ---- php  -->----------|
-                               /  ...               |
-  internet                    |                     |
-  clients                     -------<--------|     |
-          \                    P-J-B PROTOCOL |     |
-           \jsp/servlet req.                  |     |
-            \                                 |     |
-             |--> :8080--> J2EE AS            |     |
-              /                |              |     |
-             /                 \--- servlet   |     |
-             |                 \--- PhpJavaServlet  |
-             |                 \--- jsp             |
-             |                      ...             |
-             -------------<-------------------------|
-                    P-J-B PROTOCOL
-  
 
 * Install Apache or IIS, if not already installed.
 
@@ -89,14 +102,7 @@ install a native HTTP server with PHP as a front end:
     LoadModule php5_module "c:/php/php5apache2.dll"
     AddType application/x-httpd-php .php
 
-* The PHP/Java Bridge front-end is available a) as a pure PHP component
-  or b) as a C based PHP extension. 
-
-* The pure PHP component is currently 10 times slower than the C based
-  extension, but it is easier to install. See the java/README located in
-  the JavaBridge.war zip archive for details.
-
-* The native, C based PHP extension needs a non-standard PHP "java.so"
+* The native, C-based PHP extension needs a non-standard PHP "java.so"
   or "php_java.dll" installed on the web server. Check if your PHP
   extension_dir [1] contains this PHP extension. If not, copy the
   appropriate java-<architecture>-<os>.so or
@@ -113,11 +119,6 @@ install a native HTTP server with PHP as a front end:
   Please see the INSTALL document located in the source download
   archive for information how to compile a php_java.dll or java.so from
   the source.
-
-  NOTE: The pure PHP implementation of the PHP/Java Bridge currently
-  does not read the following php.ini entries. The java.hosts and
-  java.servlet values are coded in java/Options.php, change them
-  accordingly. See java/README for details.
 
 * Check if the java .ini [2] entry loads the java extension and
   connects php to the servlet or J2EE back-end, e.g.:
@@ -152,7 +153,7 @@ install a native HTTP server with PHP as a front end:
     display_errors = Off
     html_errors    = Off
 
-* Copy your java libraries (.jar files) into the extension_dir/lib [1]
+* Copy your Java libraries (.jar files) into the extension_dir/lib [1]
   directory and your native shared libraries (on windows: dll files)
   into extension_dir [1].
 
@@ -168,18 +169,3 @@ install a native HTTP server with PHP as a front end:
 [2] The php .ini file is the global PHP configuration file, usually
 /usr/local/lib/php.ini or /etc/php.d/java.ini or c:\windows\php.ini or
 c:\winnt\php.ini.
-
-
-FAQ
----
-
-Q: In previous versions it was possible to just drop the
-JavaBridge.jar and the PHP java dll into the PHP extension
-directory. Why isn't this option availablable anmore? Starting a Java
-application server just to call out to some Java libraries seems to be
-overkill.
-
-A: This is still possible. But since the J2EE component is available,
-the standalone component is obsolete. The J2EE component works in a
-full featured 1GB application server as well as in a 100K servlet
-engine.

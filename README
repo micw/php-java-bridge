@@ -4,6 +4,9 @@ What is the PHP/Java Bridge?
   The PHP/Java Bridge is a network protocol which can be used to
   connect PHP with a Java or ECMA 335 VM.
 
+  Please read the ABOUT.HTM contained in the download archive or
+  http://php-java-bridge.sf.net for more information.
+
 
 Overview
 --------
@@ -75,13 +78,14 @@ Overview
                     P-J-B PROTOCOL
   
 
-NOTE: The folder "java" contains a pure PHP implementation of the
-PHP/Java Bridge. It is currently 10 times slower than the C based
-implementation but easier to install. See the java/README for
-details. The following describes the C based implementation.
-
 Build and execution instructions:
 ---------------------------------
+
+  NOTE: The folder "java" contains a pure PHP implementation of the
+  PHP/Java Bridge. It is currently 10 times slower than the C based
+  implementation but easier to install. See the java/README for
+  details. The following describes the C based implementation.
+
   NOTE: If you run Security Enhanced Linux, you must update the policy
   and tag the files with the correct SEL contexts, please see below, or 
   please install the binary RPM instead.
@@ -253,7 +257,6 @@ Build and execution instructions:
   java.servlet   = <On/Off/User>, see NEWS for version 3.0.2
   java.wrapper   = Reserved for OS vendor
 
-  java.ext_java_compatibility = <On/Off>, backward compatibility with ext/java
   java.persistent_connections = <On/Off>, see NEWS for version 3.1.0
   java.security_policy        = <On/Off/Path>, see NEWS for version 3.1.0
 
@@ -424,9 +427,9 @@ Build and execution instructions:
 
   If the parameter name "use_fast_cgi" is set to "Autostart" in the
   web.xml and a fcgi server does not listen on port 9667 and a fcgi
-  binary can be found as either /usr/bin/php-cgi or /usr/bin/php or
-  c:/php/php-cgi.exe, then the back-end automatically starts the Fast-
-  CGI server on this computer, with the command:
+  binary can be found as either /usr/bin/php-cgi or c:/php/php-cgi.exe,
+  then the back-end automatically starts the Fast- CGI server on this
+  computer, with the command:
 
     cd $HOME
     export X_JAVABRIDGE_OVERRIDE_HOSTS="/"
@@ -445,7 +448,7 @@ Build and execution instructions:
     launcher.exe -a "c:\php\php-cgi" -b 9667
 
 
-  The PHP FastCGI server starts when the VM or the web context starts
+  The PHP FastCGI server starts when the VM or the web context starts,
   and stops when the VM or web context terminates.
 
 
@@ -849,6 +852,76 @@ Build and execution instructions:
     $str=new Java ("java.lang.String", "Cze????! -- ???????? -- Gr");
     echo (string)$str;  // in PHP5 or higher
     echo $str->toString(); // in PHP4
+
+------------------------------------
+  Creating thread dumps in Java 6
+  -------------------------------
+
+  * Become "super user" or "admin user" and start the program jconsole
+    located in the JDK 1.6 bin directory, for example with the following
+    command:
+
+      su -c "/opt/jdk1.6/bin/jconsole"
+
+    On Windows make sure you have admin privileges before starting
+    jconsole.
+     
+  * In the "Create new connection" dialog select "local process" and
+    click on the "JavaBridge" entry. -- If the JavaBridge doesn't appear
+    there, check if the JavaBridge is running within a Java 1.6 VM and if
+    the jconsole has been started with sufficient permissions.
+
+  * Click "connect".
+
+  * Open the "Threads" tab and click on the thread you're interested in.
+
+------------------------------------
+  Creating thread dumps in Java < 6
+  ---------------------------------
+
+  Older Java VM must be started with the following options:
+  
+  -Xdebug -Xrunjdwp:transport=dt_socket,address=9147,server=y,suspend=n
+  
+  The following description assume that Java is running as a sub
+  component of Apache or IIS:
+
+  * On Windows set the "java.java" php .ini option (in the global php.ini
+    file) to:
+  
+    extension=php_java.dll
+    [java]
+    java.java="javaw -Xdebug -Xrunjdwp:transport=dt_socket,address=9147,server=y,suspend=n"
+  
+  * On Unix add the "java.wrapper" php .ini option (in the global php.ini
+    file or in /etc/php.d/java.ini):
+  
+    extension = java.so
+    [java]
+    java.wrapper = /tmp/java.wrapper
+  
+    Create the file /tmp/java.wrapper with the following content:
+  
+    #!/bin/sh
+    set -x
+    java=$1; shift
+    exec $java "-Xdebug -Xrunjdwp:transport=dt_socket,address=9147,server=y,suspend=n" "$@"
+  
+    Add the required permissions; in a command window type (as super user):
+    
+    chmod +x /tmp/java.wrapper
+    /usr/sbin/setenforce 0     # Security Enhanced Linux only
+  
+  * On Windows or Unix: restart the web server, for example with:
+
+    apachectl restart
+  
+  * Open a command window and type the following commands:
+  
+    jdb -attach 127.0.0.1:9147
+    suspend
+    where all
+    resume
 
 ------------------------------------
   Mailing List

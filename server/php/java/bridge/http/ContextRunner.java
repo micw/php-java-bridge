@@ -36,22 +36,27 @@ import php.java.bridge.Request;
 import php.java.bridge.Util;
 
 /**
- * The ContextRunner usually represents the physical connection,
- * it manages the "high speed" communication link.  It
- * pulls a ContextFactory and executes it.  After execution the context is destroyed.
- * <p>ContextRunners are kept in a per-loader map and each client may refer to its runner by
- * passing X_JAVARIDGE_CONTEXT_DEFAULT. The ContextRunner may ignore this hint
- * and prepare for a new physical connection, if the ID does not exist in its map. This
- * usually happens when there are two separate bridges installed in context A and context B and the client
- * uses a persistent connection to context A. An attempt to re-use the same connection for B fails
- * because the classes are loaded via two separate class loaders. A client must check the returned 
- * X_JAVABRIDGE_CONTEXT_DEFAULT value. If it is not set, the client must create a new physical connection.
- * For named pipes this means that the connection should have been prepared and sent via X_JAVABRIDGE_CHANNEL,
- * as usual. Otherwise the bridge will use the SocketContextServer instead. -- The client may destroy 
- * the new pipe, if the server has accepted X_JAVABRIDGE_CONTEXT_DEFAULT, of course.
- * </p>
- * <p>See <a href="http://php-java-bridge.sourceforge.net#global-servlet">http://php-java-bridge.sourceforge.net#global-servlet</a> for details how to install
- * the bridge globally.</p>
+ * The ContextRunner usually represents the physical connection, it
+ * manages the "high speed" communication link.  It pulls a
+ * ContextFactory and executes it.  After execution the context is
+ * destroyed.  <p>ContextRunners are kept in a per-loader map and each
+ * client may refer to its runner by passing
+ * X_JAVARIDGE_CONTEXT_DEFAULT. The ContextRunner may ignore this hint
+ * and prepare for a new physical connection, if the ID does not exist
+ * in its map. This usually happens when there are two separate
+ * bridges installed in context A and context B and the client uses a
+ * persistent connection to context A. An attempt to re-use the same
+ * connection for B fails because the classes are loaded via two
+ * separate class loaders. A client must check the returned
+ * X_JAVABRIDGE_CONTEXT_DEFAULT value. If it is not set, the client
+ * must create a new physical connection.  For named pipes this means
+ * that the connection should have been prepared and sent via
+ * X_JAVABRIDGE_CHANNEL, as usual. Otherwise the bridge will use the
+ * SocketContextServer instead. -- The client may destroy the new
+ * pipe, if the server has accepted X_JAVABRIDGE_CONTEXT_DEFAULT, of
+ * course.  </p> <p>See <a
+ * href="http://php-java-bridge.sourceforge.net#global-servlet">http://php-java-bridge.sourceforge.net#global-servlet</a>
+ * for details how to install the bridge globally.</p>
  */
 public class ContextRunner implements Runnable {
     
@@ -100,13 +105,15 @@ public class ContextRunner implements Runnable {
     	bridge.out=out;	
     }
 
-    private void init() throws IOException {
+    private boolean init() throws IOException {
 	if(Util.logLevel>4) Util.logDebug("starting a new ContextRunner " + this);
 	out = channel.getOuptutStream();
 	in = channel.getInputStream();
 
 	int c = in.read();
 	if(c!=077) {
+	    if(c==-1) return false; // client has closed the connection
+	    
 	    try {out.write(0); }catch(IOException e){}
 	    throw new IOException("Protocol violation");
 	}
@@ -131,6 +138,7 @@ public class ContextRunner implements Runnable {
 	
 	setIO(bridge, in, out);
 	this.request = bridge.request;
+	return true;
     }
     /**
      * May be called to recycle the runner from the pool of ContextRunners for a new contextServer. 
@@ -176,8 +184,8 @@ public class ContextRunner implements Runnable {
     }
     public void run() {
 	try {
-	    init();
-	    request.handleRequests();
+	    if(init())
+		request.handleRequests();
 	} catch (IOException e) {
 	    Util.printStackTrace(e);
 	} finally {

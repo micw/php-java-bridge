@@ -1263,7 +1263,7 @@ public class CGIServlet extends HttpServlet {
 		    }
 		    // body
 		    if(eoh) {
-			if(out!=null) out.write(buf, i, N-i);
+			if(out!=null && i<N) out.write(buf, i, N-i);
 			i=0;
 		    }
 		}

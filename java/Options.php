@@ -26,7 +26,7 @@
 
 // The version number of this pure PHP implementation
 
-define ("JAVA_PEAR_VERSION", "0.7.0");
+define ("JAVA_PEAR_VERSION", "1.0.0");
 
 
 // Deploy JavaBridge.war and re-start the servlet engine or the

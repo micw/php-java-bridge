@@ -35,16 +35,17 @@ import php.java.bridge.ThreadPool;
 import php.java.bridge.Util;
 
 /**
- * This class represents the fallback physical connection for the operating system which doesn't support named pipes: "Windows".
- * When isAvailable() returns true, a server socket bound to the local interface (127.0.0.1) 
- * has been created on a port in the range [9267,...,[9367
- * and will be used for further communication, see response header X_JAVABRIDGE_REDIRECT. 
- * If this communication channel is not available either,
- * the PHP clients must continue to send all statements via PUT requests.
- * <p>
- * It is possible to switch off this server by setting the VM property php.java.bridge.no_socket_server to true,
- * e.g.: -Dphp.java.bridge.no_socket_server=true.
- * </p>
+ * This class manages the fallback physical connection for the
+ * operating system which doesn't support named pipes: "Windows".
+ * When isAvailable() returns true, a server socket bound to the local
+ * interface (127.0.0.1) has been created on a port in the range
+ * [9267,...,[9367 and will be used for further communication, see
+ * response header X_JAVABRIDGE_REDIRECT.  If this communication
+ * channel is not available either, the PHP clients must continue to
+ * send all statements via PUT requests.  <p> It is possible to switch
+ * off this server by setting the VM property
+ * php.java.bridge.no_socket_server to true, e.g.:
+ * -Dphp.java.bridge.no_socket_server=true.  </p>
  * @see php.java.bridge.http.PipeContextServer
  * @see php.java.bridge.http.ContextServer
  */

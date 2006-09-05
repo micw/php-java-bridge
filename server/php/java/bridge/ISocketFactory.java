@@ -28,14 +28,14 @@ import java.io.IOException;
 import java.net.Socket;
 
 /**
- * Create and destroy socket instances.
+ * Create socket instances.
  * @author jostb
  *
  */
 public interface ISocketFactory {
     
     /**
-     * Close the socket instance.
+     * Close all instances.
      * @throws IOException
      */
     public void close() throws IOException;
