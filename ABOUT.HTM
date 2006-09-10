@@ -50,7 +50,7 @@ native interface ("JNI"). PHP instances are allocated from the HTTP
 (Apache/IIS) pool, instances of java/j2ee components are allocated
 from the back-end. The allocated instances communicate using a
 "continuation passing style", see <a
-href="documentation/PHP-API/html/java_8c.html#a32"><code>java_closure()</code></a> and the <a href="server/documentation/API/php/java/bridge/Invocable.html">invocable interface</a>. In
+href="documentation/PHP-API/html/java_8c.html#doc32"><code>java_closure()</code></a> and the <a href="server/documentation/API/php/java/bridge/Invocable.html">invocable interface</a>. In
 case a PHP instance crashes, it will not take down the java
 application server or servlet engine.  </FONT></P>
 
@@ -198,7 +198,7 @@ Java knowledge is not necessary and it is neither necessary nor recommended to w
 
 <ul>
 <li>
-  <code>new <strong><a href="documentation/PHP-API/html/java_8c.html#a54">Java</a></strong>("CLASSNAME")</code>: References and instantiates the class CLASSNAME.
+  <code>new <strong><a href="documentation/PHP-API/html/java_8c.html#doc54">Java</a></strong>("CLASSNAME")</code>: References and instantiates the class CLASSNAME.
  After script
      execution the referenced classes may be garbage collected. Example: <br><br>
      
@@ -214,7 +214,7 @@ echo (int)($v->elementAt(0)->toString()) + 2;<br>
 </blockquote>
 <br>
 <li>
-  <code>new <strong><a href="documentation/PHP-API/html/java_8c.html#a55">JavaClass</a></strong>("CLASSNAME")</code>: References the class CLASSNAME without creating an instance. The returned object is the class object itself, not an object of the class.
+  <code>new <strong><a href="documentation/PHP-API/html/java_8c.html#doc55">JavaClass</a></strong>("CLASSNAME")</code>: References the class CLASSNAME without creating an instance. The returned object is the class object itself, not an object of the class.
  After script
      execution the referenced classes may be garbage collected. Example: <br><br>
      
@@ -229,7 +229,7 @@ echo (int)($v->elementAt(0)->toString()) + 2;<br>
 <br>
 
 <li>
-  <code><strong><a href="documentation/PHP-API/html/java_8c.html#a23">java_require</a></strong>("JAR1;JAR2")</code>: Makes additional libraries
+  <code><strong><a href="documentation/PHP-API/html/java_8c.html#doc23">java_require</a></strong>("JAR1;JAR2")</code>: Makes additional libraries
      available to the current script.  JAR can either be  
      a "http:", "ftp:", "file:" or a "jar:" or a default <a href="#jar-location">location</a>. On &quot;Security Enhanced Linux&quot; (<a href="README">please see the README</a>) the <a href="#sel">location must be tagged</a> with a <em>lib_t</em> security context. Example: <br><br>
 <code>
@@ -250,7 +250,7 @@ echo "Evaluated in $delta ms.\n";<br>
 <br>
 <br>
 <li>
-  <code><strong><a href="documentation/PHP-API/html/java_8c.html#a26">java_context</a></strong>()</code>: Makes the <code>javax.script.ScriptContext</code>
+  <code><strong><a href="documentation/PHP-API/html/java_8c.html#doc26">java_context</a></strong>()</code>: Makes the <code>javax.script.ScriptContext</code>
      available to the current script. All implicit web objects (session, servlet context, etc.) are <a href="server/documentation/API/php/java/servlet/Context.html#getHttpServletRequest()">available from the context</a>, if the back-end is running in a servlet engine or application server. The following example uses the jdk1.6 <a href="http://java.sun.com/javase/6/docs/tooldocs/share/jrunscript.html"><code>jrunscript</code></a> to eval PHP statements interactively:  <br><br>
 <code>
 /opt/jdk1.6/bin/jrunscript -l php-intractive<br>
@@ -260,7 +260,7 @@ php-interactive&gt; echo (string)(java_context()->getAttribute("javax.script.fil
 </code>
 <br>
 <li>
-  <code><strong><a href="documentation/PHP-API/html/java_8c.html#a31">java_values</a></strong>(JAVA_OBJECT)</code>: Fetches the values for <code>JAVA_OBJECT</code>, if possible. Examples:<br><br><blockquote>
+  <code><strong><a href="documentation/PHP-API/html/java_8c.html#doc31">java_values</a></strong>(JAVA_OBJECT)</code>: Fetches the values for <code>JAVA_OBJECT</code>, if possible. Examples:<br><br><blockquote>
 <code>
 $str = new java("java.lang.String", "hello");
 echo $str;<br>
@@ -281,7 +281,7 @@ print (java_values(new java("java.lang.Object")));<br>
 </blockquote>
 <br>
 <li>
-  <code><strong><a href="documentation/PHP-API/html/java_8c.html#a31">java_cast</a></strong>(JAVA_VALUE, php_type)</code>: Converts a primitive JAVA_VALUE to a php value of type php_type. Unlike <code>java_values</code>, which return the "natural" php value for the JAVA_VALUE, the cast can convert the JAVA_VALUE into the desired php_type before it is returned. Allowed conversions are "string", "boolean", "integer" or "long", "double" or "float", "null", "array" and "object". The "object" conversion is the identiy function. Since PHP5 (php_type)JAVA_VALUE is identical to java_cast(JAVA_VALUE, php_type) (Zend Engine 2 and above only).  Examples:<br><br><blockquote>
+  <code><strong><a href="documentation/PHP-API/html/java_8c.html#doc88">java_cast</a></strong>(JAVA_VALUE, php_type)</code>: Converts a primitive JAVA_VALUE to a php value of type php_type. Unlike <code>java_values</code>, which return the "natural" php value for the JAVA_VALUE, the cast can convert the JAVA_VALUE into the desired php_type before it is returned. Allowed conversions are "string", "boolean", "integer" or "long", "double" or "float", "null", "array" and "object". The "object" conversion is the identiy function. Since PHP5 (php_type)JAVA_VALUE is identical to java_cast(JAVA_VALUE, php_type) (Zend Engine 2 and above only).  Examples:<br><br><blockquote>
 <code>
 $str = new java("java.lang.String", "12");
 echo $str;<br>
@@ -300,7 +300,7 @@ var_dump (java_cast($str, "boolean"));<br>
 </blockquote>
 <br>
 <li>
-  <code><strong><a href="documentation/PHP-API/html/java_8c.html#a29">java_begin_document</a></strong>()</code> and <code><strong><a href="documentation/PHP-API/html/java_8c.html#a30">java_end_document</a></strong>()</code>: Enables/disables XML stream mode. In XML stream mode the PHP/Java Bridge XML statements are sent in one XML stream. Compared with SOAP, which usually creates the entire XML document before sending it, this mode uses much less resources on the web-server side. Raised server-side exceptions are reported when <code>java_end_document()</code> is invoked. Example:<br><br><blockquote>
+  <code><strong><a href="documentation/PHP-API/html/java_8c.html#doc29">java_begin_document</a></strong>()</code> and <code><strong><a href="documentation/PHP-API/html/java_8c.html#a30">java_end_document</a></strong>()</code>: Enables/disables XML stream mode. In XML stream mode the PHP/Java Bridge XML statements are sent in one XML stream. Compared with SOAP, which usually creates the entire XML document before sending it, this mode uses much less resources on the web-server side. Raised server-side exceptions are reported when <code>java_end_document()</code> is invoked. Example:<br><br><blockquote>
 <code>
 // send the following XML statements in one stream<br>
 java_begin_document();<br>
@@ -317,7 +317,7 @@ java_end_document(); // back to synchronous mode<br>
 </blockquote>
 <br>
 <li>
-  <code><strong><a href="documentation/PHP-API/html/java_8c.html#a32">java_closure</a></strong>(ENVIRONMENT, MAP, TYPE)</code>: Makes it possible to call PHP code from Java.  It closes over the PHP environment, packages it up as a java class and returns an instance of the class.  If the ENVIRONMENT is missing, the current environment is used. If MAP is missing, the PHP procedures must have the same name as the required procedures. If TYPE is missing, the generated class is "generic", i.e. the interface it implements is determined when the closure is applied. Example:<br><br><blockquote>
+  <code><strong><a href="documentation/PHP-API/html/java_8c.html#doc32">java_closure</a></strong>(ENVIRONMENT, MAP, TYPE)</code>: Makes it possible to call PHP code from Java.  It closes over the PHP environment, packages it up as a java class and returns an instance of the class.  If the ENVIRONMENT is missing, the current environment is used. If MAP is missing, the PHP procedures must have the same name as the required procedures. If TYPE is missing, the generated class is "generic", i.e. the interface it implements is determined when the closure is applied. Example:<br><br><blockquote>
 <code>
 &lt;?php<br>
 function toString() { return "hello" ; }<br>
@@ -328,7 +328,7 @@ echo (string)java_closure();<br>
 </blockquote>
 <br>
 <li>
-  <code>$session=<strong><a href="documentation/PHP-API/html/java_8c.html#a25">java_session</a></strong>()</code>: Creates or retrieves a session context. When the back-end is running in a J2EE environment, the session is taken from the request object, otherwise it is taken from PHP. Please see the  <a href="server/documentation/API/php/java/bridge/ISession.html">ISession interface documentation</a> for details. The <code>java_session()</code> must be called <a href="http://www.php.net/manual/en/function.headers-sent.php">before the response headers have been sent</a> and it should be called as the first statement within a PHP script.
+  <code>$session=<strong><a href="documentation/PHP-API/html/java_8c.html#doc25">java_session</a></strong>()</code>: Creates or retrieves a session context. When the back-end is running in a J2EE environment, the session is taken from the request object, otherwise it is taken from PHP. Please see the  <a href="server/documentation/API/php/java/bridge/ISession.html">ISession interface documentation</a> for details. The <code>java_session()</code> must be called <a href="http://www.php.net/manual/en/function.headers-sent.php">before the response headers have been sent</a> and it should be called as the first statement within a PHP script.
 <blockquote>
 <code>
 $session = java_session();<Mr>
@@ -341,7 +341,7 @@ $servletRequest->setAttribute(...);<br>
 <li>
 
   <code>$session=<strong><a
-href="documentation/PHP-API/html/java_8c.html#a25">java_session</a></strong>(SESSIONNAME)</code>:
+href="documentation/PHP-API/html/java_8c.html#doc25">java_session</a></strong>(SESSIONNAME)</code>:
 Creates or retrieves the session <code>SESSIONNAME</code>. This
 primitive uses a session store with the name SESSIONNAME which is
 independent of the current PHP- or Java session. Please see the <a
@@ -385,15 +385,15 @@ $instance=$Cache->getInstance(); //instance will stay in the VM until the VM run
 </code>
 </blockquote>
 <br>
-  <li> <code><strong><a href="documentation/PHP-API/html/java_8c.html#a54">JavaException</a></strong></code>: A java exception class. Available in PHP 5 and
+  <li> <code><strong><a href="documentation/PHP-API/html/java_8c.html#doc54">JavaException</a></strong></code>: A java exception class. Available in PHP 5 and
     above only.  Example:<br><br>
 <blockquote>
 <code>
       try {<br>
        &nbsp;&nbsp;new java("java.lang.String", null);<br>
       } catch(JavaException $ex) {<br>
-&nbsp;&nbsp;         $exStr = java_cast($ex, "string");
-&nbsp;&nbsp;         echo "Exception occured; mixed trace: $exStr\n";
+&nbsp;&nbsp;         $exStr = java_cast($ex, "string");<br>
+&nbsp;&nbsp;         echo "Exception occured; mixed trace: $exStr\n";<br>
 &nbsp;&nbsp;         $trace = new java("java.io.ByteArrayOutputStream");<br>
 &nbsp;&nbsp;         $ex-&gt;printStackTrace(new java("java.io.PrintStream", $trace));<br>
 &nbsp;&nbsp;         print "java stack trace: $trace\n";<br>
@@ -447,7 +447,7 @@ for ($i = 0; $i < $Array->getLength($entries); $i++) { <br>
 </code>
 </blockquote>
 <br>
-  <li> <code><strong><a href="documentation/PHP-API/html/java_8c.html#a24">java_instanceof</a></strong>(JAVA_OBJ, JAVA_CLASS)</code>: Tests if JAVA_OBJ is an instance of JAVA_CLASS.  Example:<br><br>
+  <li> <code><strong><a href="documentation/PHP-API/html/java_8c.html#doc24">java_instanceof</a></strong>(JAVA_OBJ, JAVA_CLASS)</code>: Tests if JAVA_OBJ is an instance of JAVA_CLASS.  Example:<br><br>
 <blockquote>
 <code>
 $Collection=new JavaClass("java.util.Collection");<br>
@@ -467,10 +467,10 @@ foreach ($list as $value) { <br>
 </blockquote>
 <br>
 
-  <li> <code><a href="documentation/PHP-API/html/java_8c.html#a20">java_last_exception_get</a>()</code>: Returns the last exception instance or
+  <li> <code><a href="documentation/PHP-API/html/java_8c.html#doc20">java_last_exception_get</a>()</code>: Returns the last exception instance or
      null. Since PHP 5 you can use <code>try/catch</code> instead.<br><br>
 
-  <li> <code><a href="documentation/PHP-API/html/java_8c.html#a21">java_last_exception_clear</a>()</code>: Clears the error condition.  Since PHP 5 you can use <code>try/catch</code> instead.
+  <li> <code><a href="documentation/PHP-API/html/java_8c.html#doc21">java_last_exception_clear</a>()</code>: Clears the error condition.  Since PHP 5 you can use <code>try/catch</code> instead.
 </ul>
 <br>
 <A NAME="type-mapping"></A>
@@ -629,7 +629,7 @@ echo $ex->getCause();<br>
 <ol>
 <li>
     Somewhere on a HTTP or FTP server, see PHP function
-      <a href="documentation/PHP-API/html/java_8c.html#a23">java_require</a>. <a name="sel">
+      <a href="documentation/PHP-API/html/java_8c.html#doc23">java_require</a>. <a name="sel">
 On Security Enhanced Linux <code>.jar</code> files can only be loaded from locations which are tagged with the <em>lib_t</em> security context.
 
    <li> In the sub-directory "lib" of the PHP extension directory, if it
@@ -1011,7 +1011,7 @@ e.g. <code>java_session()->put("buf", $stringBuffer)</code> or via
 <code>$_SESSION</code> is syntactic sugar provided by the <a
 href="http://www.php.net/manual/en/ref.session.php">php session
 module</a>, it uses <code><a
-href="documentation/PHP-API/html/java_8c.html#a25">java_session()<a></code>
+href="documentation/PHP-API/html/java_8c.html#doc25">java_session()<a></code>
 internaly. If you don't want depend on the PHP session module, for
 example if you have compiled PHP without the <code>session.so</code>,
 use java_session() instead.</p> <p> If you use the <a
@@ -1539,7 +1539,7 @@ Please see the JSF implementation for a reference.
 </p>
 <li> <H4>How can PHP classes extend Java classes and Java methods?</H4> 
 <p>
-By using <a href="documentation/PHP-API/html/java_8c.html#a32"><code>java_closure()</code></a> and the visitor pattern for example. The <code>tests.php5</code> folder contains a <code>script_api.php</code> example which shows how to implement <code>java.lang.Runnable</code> to run multiple PHP threads, concurrently accessing a shared resource.
+By using <a href="documentation/PHP-API/html/java_8c.html#doc32"><code>java_closure()</code></a> and the visitor pattern for example. The <code>tests.php5</code> folder contains a <code>script_api.php</code> example which shows how to implement <code>java.lang.Runnable</code> to run multiple PHP threads, concurrently accessing a shared resource.
 </p><li> 
 <a name="ssl">
 <H4>On Windows some PHP binaries do not support HTTPS/SSL</H4> 

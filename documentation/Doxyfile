@@ -166,7 +166,7 @@ INHERIT_DOCS           = YES
 # member in the group (if any) for the other members of the group. By default 
 # all members of a group must be documented explicitly.
 
-DISTRIBUTE_GROUP_DOC   = NO
+DISTRIBUTE_GROUP_DOC   = YES
 
 # If the SEPARATE_MEMBER_PAGES tag is set to YES, then doxygen will produce 
 # a new page for each member. If set to NO, the documentation of a member will 
@@ -483,7 +483,7 @@ EXCLUDE_SYMLINKS       = NO
 # EXCLUDE_PATTERNS tag to specify one or more wildcard patterns to exclude 
 # certain files from those directories.
 
-EXCLUDE_PATTERNS       = config.h init_cfg.h init_cfg.c
+EXCLUDE_PATTERNS       = config.h init_cfg.h init_cfg.c bind.c client.c protocol.h parser.h php_java.h java_bridge.c secure_protocol.c sio.c
 
 # The EXAMPLE_PATH tag can be used to specify one or more files or 
 # directories that contain example code fragments that are included (see 
@@ -574,7 +574,7 @@ REFERENCES_RELATION    = YES
 # will generate a verbatim copy of the header file for each class for 
 # which an include is specified. Set to NO to disable this.
 
-VERBATIM_HEADERS       = YES
+VERBATIM_HEADERS       = NO
 
 #---------------------------------------------------------------------------
 # configuration options related to the alphabetical class index
@@ -986,8 +986,7 @@ INCLUDE_FILE_PATTERNS  =
 # undefined via #undef or recursively expanded use the := operator 
 # instead of the = operator.
 
-#PREDEFINED             = ZEND_ENGINE_2=1 "EXT_METHOD(a)"="PHP_METHOD a()" EXT_GLOBAL(x)="x" PHP_INI_ENTRY(x)=""  OnIniServlet OnIniSockname OnIniHosts OnIniClassPath OnIniLibPath OnIniJava OnIniJavaHome OnIniLogLevel PHP_INI_SYSTEM PHP_INI_ALL NULL EXT_FUNCTION(x)="PHP_FUNCTION x()" 
-PREDEFINED             = ZEND_ENGINE_2=1 "EXT_METHOD(EXT,a)"="PHP_METHOD a()" EXT_GLOBAL(x)="x"  EXT_FUNCTION(p)="PHP_FUNCTION p()" EXT_DECLARE_MODULE_GLOBALS(EXT) PHP_INI_BEGIN() PHP_INI_BEGIN()="static foo(){" PHP_INI_END()="}"
+PREDEFINED             = GENERATE_DOC=1 "EXT_ARRAY"=1 ZEND_ENGINE_2=1 "EXT_METHOD(EXT,a)"="PHP_METHOD a()" EXT_GLOBAL(x)="x"  EXT_FUNCTION(p)="PHP_FUNCTION p()" EXT_DECLARE_MODULE_GLOBALS(EXT) PHP_INI_BEGIN() PHP_INI_BEGIN()="static foo(){" PHP_INI_END()="}"
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then 
 # this tag can be used to specify a list of macro names that should be expanded. 

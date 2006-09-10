@@ -58,11 +58,39 @@ public class JavaBridgeClassLoader extends SimpleJavaBridgeClassLoader {
 	return true;
     }
     public void setClassLoader(DynamicJavaBridgeClassLoader loader) throws IOException {
-        if(loader!=null && mustReset) loader.reset();
+        if(loader!=null && mustReset) { 
+            loader.reset(); 
+            try { Thread.currentThread().setContextClassLoader(loader = loader.clearVMLoader()); } catch (SecurityException e) { Util.printStackTrace(e); } 
+        }
         super.setClassLoader(loader);
     }
+    /**
+     * reset loader to the loader to its initial state, clear the VM cache and set a new ThreadContextClassLoader
+     */
     public void reset() {
 	if (!checkCl()) mustReset=true;
-	super.reset();
+	else { 
+	    super.doReset();
+	    try { Thread.currentThread().setContextClassLoader(cl); } catch (SecurityException e) { Util.printStackTrace(e); }  
+	}
+    }
+    /**
+     * clear all loader caches but
+     * not the input vectors, clear the VM cache and set a new ThreadContextClassLoader
+     */
+    public void clearCaches() {
+	if (checkCl()) {
+	    super.doClearCaches();
+	    try { Thread.currentThread().setContextClassLoader(cl); }  catch (SecurityException e) { Util.printStackTrace(e); } 
+	}
+    }
+    /**
+     * clear the caches and the input vectors, clear the VM cache and set a new ThreadContextClassLoader
+     */
+    public void clear() {
+	if(checkCl()) {
+	    super.doClear();
+	    try { Thread.currentThread().setContextClassLoader(cl); }  catch (SecurityException e) { Util.printStackTrace(e); } 	    
+	}
     }    
 }

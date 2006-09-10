@@ -73,9 +73,11 @@ public class PhpScriptContext extends SimpleScriptContext implements IPhpScriptC
         super();
     }
 
-
+     private Writer getWriter(boolean isStandalone) {
+	 return isStandalone ? new PhpScriptLogWriter() : new PhpScriptWriter(System.out);
+     }
     public Writer getWriter() {
-	if(writer == null) return writer = new PhpScriptLogWriter();
+	if(writer == null) return writer =  getWriter(bridgeRunner.isStandalone());
 	return writer;
     }
 	

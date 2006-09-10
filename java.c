@@ -3,9 +3,9 @@
 /**\file 
  * This is the main entry point for the java extension. 
 
- * It contains the global structures and the callbacks required for
- * zend engine 1 and 2.
- *
+  It contains the global structures and the callbacks required for
+  zend engine 1 and 2.
+
   Copyright (C) 2006 Jost Boekemeier
 
   This file is part of the PHP/Java Bridge.
@@ -157,6 +157,7 @@ static short can_reconnect(TSRMLS_D) {
 /**
  * Proto: object java_last_exception_get(void)
  *
+ * \anchor doc20
  * Get last Java exception
  * \deprecated Use PHP5 try/catch instead.
  */
@@ -169,6 +170,7 @@ EXT_FUNCTION(EXT_GLOBAL(last_exception_get))
 /**
  * Proto: void java_last_exception_clear(void)
  *
+ * \anchor doc21
  * Clear last java extension.
  * \deprecated Use PHP5 try/catch instead.
 */
@@ -194,6 +196,7 @@ EXT_FUNCTION(EXT_GLOBAL(set_file_encoding))
 /**
  * Proto: void java_require(string path) or java_set_library_path(string path)
  *
+ * \anchor doc23
  * Set the library path. Example: 
  * \code
  * java_require("foo.jar;bar.jar"); 
@@ -222,6 +225,7 @@ EXT_FUNCTION(EXT_GLOBAL(require))
 /**
  * Proto:  bool java_instanceof(object object, object clazz)
  *
+ * \anchor doc24
  * Tests if object is an instance of clazz. 
  * Example: 
  * \code
@@ -236,6 +240,7 @@ EXT_FUNCTION(EXT_GLOBAL(instanceof))
 /**
  * Proto: object java_session([string], [bool]) or object java_get_session([string], [bool])
  *
+ * \anchor doc25
  * Return a session handle.  When java_session() is called without 
  * arguments, the session is shared with java.
  * Example: 
@@ -247,7 +252,7 @@ EXT_FUNCTION(EXT_GLOBAL(instanceof))
  * example with:
  * \code getSession().getAttribute("key"); \endcode
  *
- * When java_get_session() is called with a session handle, the session
+ * When java_get_session() is called with a session name, the session
  * is not shared with java and no cookies are set. Example:
  * \code
  * java_get_session("myPublicApplicationStore")->put("key", "value");
@@ -269,6 +274,7 @@ EXT_FUNCTION(EXT_GLOBAL(get_session))
 /**
  * Proto: object java_context(void) or object java_get_context(void)
  *
+ * \anchor doc26
  * Returns the jsr223 script context handle.
  *
  * Example which closes over the current environment and passes it back to java:
@@ -413,7 +419,7 @@ static int do_cast(zval *readobj, zval *writeobj, int type, int should_free TSRM
 /**
  * Proto: object java_cast(object, string).
  *
- *
+ * \anchor doc88
  * Converts the java object obj into a PHP object. The second argument
  * must be [s]tring, [b]oolean, [i]nteger, [f]loat or [d]ouble,
  * [a]rray, [n]ull or [o]bject (which does nothing).<p> This procedure
@@ -465,6 +471,7 @@ EXT_FUNCTION(EXT_GLOBAL(cast))
 /**
  * Proto: void java_begin_document(void)
  *
+ * \anchor doc29
  * Enters stream mode (asynchronuous protocol). The statements are
  * sent to the back-end in one XML stream.
 */
@@ -494,7 +501,10 @@ EXT_FUNCTION(EXT_GLOBAL(__wakeup))
 }
 #endif
 
-/** Proto: mixed java_values(val) or mixed java_get_values(object ob)
+/** 
+ * Proto: mixed java_values(val) or mixed java_get_values(object ob)
+ *
+ * \anchor doc31
  * Evaluates the object and fetches its content, if possible.
  * A java array, Map or Collection object is returned
  * as a php array. An array, Map or Collection proxy is returned as a java array, Map or Collection object, and a null proxy is returned as null. All values of java types for which a primitive php type exists are returned as php values. Everything else is returned unevaluated. Please make sure that the values do not not exceed
@@ -526,6 +536,7 @@ EXT_FUNCTION(EXT_GLOBAL(get_values))
 /**
  * Proto: object java_closure([object],[array|string],[object]) or object java_get_closure([object],[array|string],[object])
  *
+ * \anchor doc32
  * Closes over the php environment and packages it up as a java
  * class. Example: 
  * \code
@@ -732,7 +743,7 @@ EXT_FUNCTION(EXT_GLOBAL(call_with_exception_handler))
 EXT_FUNCTION(EXT_GLOBAL(inspect)) {
   API_CALL(inspect);
 }
-
+#ifndef GENERATE_DOC
 function_entry EXT_GLOBAL(functions)[] = {
   EXT_FE(EXT_GLOBAL(last_exception_get), NULL)
   EXT_FE(EXT_GLOBAL(last_exception_clear), NULL)
@@ -780,6 +791,7 @@ zend_module_entry EXT_GLOBAL(module_entry) = {
   NO_VERSION_YET,
   STANDARD_MODULE_PROPERTIES
 };
+#endif /* !GENERATE_DOC */
 
 #if defined(COMPILE_DL_JAVA) || defined(COMPILE_DL_MONO)
 EXT_GET_MODULE(EXT)
@@ -989,6 +1001,7 @@ PHP_INI_BEGIN()
 /**
  * Proto: object Java::Java (string classname [, string argument1, .\ .\ .\ ]) or object Java::Java (array arguments)  or object Java::java_exception (string classname [, string argument1, .\ .\ .\ ]) or object Java::JavaException (string classname [, string argument1, .\ .\ .\ ]);
  *
+ * \anchor doc54
  * Java constructor. Example:
  * \code
  * $object = new Java("java.lang.String", "hello world"); 
@@ -1045,6 +1058,7 @@ EXT_FUNCTION(EXT_GLOBAL(construct))
 /** 
  * Proto: object Java::JavaClass ( string classname) or object java::java_class ( string classname);
  *
+ * \anchor doc55
  * References a java class. Example: 
  * \code
  * $Object = new JavaClass("java.lang.Object");
@@ -1260,8 +1274,9 @@ EXT_METHOD(EXT, __wakeup)
 }
 
 
-#define EXT_ARRAY EXTC##Array
-
+#ifndef GENERATE_DOC
+# define EXT_ARRAY EXTC##Array
+#endif 
 /** Proto: bool Java::offsetExists()
  * 
  * Checks if an object exists at the given position.
@@ -1354,6 +1369,7 @@ function_entry EXT_GLOBAL(class_functions)[] = {
   {NULL, NULL, NULL}
 };
 #else
+#ifndef GENERATE_DOC
 function_entry EXT_GLOBAL(class_functions)[] = {
   ZEND_FENTRY(__construct, EXT_FN(EXT_GLOBAL(construct)), NULL, 0)
   EXT_ME(EXT, __call, arginfo_set, ZEND_ACC_PUBLIC)
@@ -1378,6 +1394,7 @@ static function_entry (class_class_functions)[] = {
   ZEND_FENTRY(__construct, EXT_FN(EXT_GLOBAL(construct_class)), NULL, 0)
   {NULL, NULL, NULL}
 };
+#endif /*!GENERATE_DOC*/
 #endif
 
 
@@ -1394,10 +1411,17 @@ static int cast(zval *readobj, zval *writeobj, int type, int should_free TSRMLS_
  }
 
 
+/**
+ * Keeps the state of the iterator.
+ */
 typedef struct {
+  /** The iterator */
   zend_object_iterator intern;
+  /** A reference to the PhpMap instance */
   long vm_iterator;
+  /** The current value */
   zval *current_object;
+  /** The key type, string or long */
   int type;
 } vm_iterator;
 
@@ -1618,10 +1642,15 @@ EXT_GLOBAL(call_function_handler4)(INTERNAL_FUNCTION_PARAMETERS, zend_property_r
 	}
 
   zend_get_parameters_array_ex(arg_count, arguments);
-								/* flatten array into arg list, for
-								   compatibility with the php5
-								   implementation */
-  if(arg_count==1 && Z_TYPE_PP(arguments[0])==IS_ARRAY) {
+  if(!strcmp(name, ce->name)) constructor = CONSTRUCTOR;
+
+								/* flatten constructor array into arg
+								   list, for compatibility with the
+								   php5 implementation: new
+								   Java(array) or new
+								   JavaClass(array).*/
+  if(constructor==CONSTRUCTOR &&
+	 arg_count==1 && Z_TYPE_PP(arguments[0])==IS_ARRAY) {
 	zval **param_ptr, *arr = *arguments[0], ***argument_array, ***ptr;
 	int n = zend_hash_num_elements(Z_ARRVAL_P(arr));
 	ptr = argument_array = (zval ***) safe_emalloc(sizeof(zval **), n, 0);
@@ -1635,7 +1664,6 @@ EXT_GLOBAL(call_function_handler4)(INTERNAL_FUNCTION_PARAMETERS, zend_property_r
 	arguments = argument_array;
   }
 
-  if(!strcmp(name, ce->name)) constructor = CONSTRUCTOR;
   EXT_GLOBAL(call_function_handler)(INTERNAL_FUNCTION_PARAM_PASSTHRU, 
 									name, constructor, createInstance, 
 									object, 
@@ -1832,9 +1860,16 @@ PHP_MINIT_FUNCTION(EXT)
   } 
   return SUCCESS;
 }
+/**
+ * A stack element which keeps the current cfg.
+ */
 struct save_cfg {
+  /** A copy of the ini options set by the user */
   int ini_user;
-  char *servlet, *hosts;
+  /** A copy of servlet context */
+  char *servlet;
+  /** A copy of the host list */
+  char *hosts;
 };
 static void push_cfg(struct save_cfg*cfg TSRMLS_DC) {
   cfg->ini_user = JG(ini_user);

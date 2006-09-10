@@ -41,7 +41,11 @@ import java.util.LinkedList;
 public class SessionFactory {
 
   /** Check for expired sessions or contexts every 10 minutes */
+  public static final long TIMER_DURATION = 600000;
+
+  /** @deprecated Use {@link #TIMER_DURATION} */
   public static final long TIMER_FREQ = 600000;
+
   private static final SessionTimer timer = new SessionTimer();
   
   private ISession session(String name, boolean clientIsNew, int timeout) {
@@ -112,7 +116,7 @@ public class SessionFactory {
         public void run() {
             try {
                 while(true) {
-                    Thread.sleep(TIMER_FREQ);
+                    Thread.sleep(TIMER_DURATION);
                     Session.expire();
                     
                     for(Iterator ii = jobs.iterator(); ii.hasNext();) {

@@ -50,8 +50,9 @@ import php.java.bridge.Util;
  */
 public class PipeContextServer implements IContextServer {
     protected ThreadPool threadPool;
-    protected ContextServer contextServer;
+    protected ContextFactory.ICredentials contextServer;
     private boolean isAvailable = true;
+    protected String contextName;
     
     protected static class Channel extends IContextServer.Channel {
         protected InputStream in = null;
@@ -93,9 +94,10 @@ public class PipeContextServer implements IContextServer {
      * Create a new ContextServer using the ThreadPool. 
      * @param threadPool Obtain runnables from this pool. If null, new threads will be created.
      */
-    public PipeContextServer (ContextServer contextServer, ThreadPool threadPool) {
+    public PipeContextServer (ContextFactory.ICredentials contextServer, ThreadPool threadPool, String contextName) {
         this.contextServer = contextServer;
     	this.threadPool = threadPool;
+    	this.contextName = contextName;
     }
     public boolean start(IContextServer.ChannelName channelName) {
         if(!isAvailable()) return false;
@@ -104,7 +106,7 @@ public class PipeContextServer implements IContextServer {
             if(threadPool!=null) {
 	        threadPool.start(runner);
 	    } else {
-	    	Thread t = new Thread(runner, "JavaBridgeContextRunner");
+	    	Thread t = new Thread(runner, "JavaBridgeContextRunner("+contextName+")");
 		t.setContextClassLoader(DynamicJavaBridgeClassLoader.newInstance(Util.getContextClassLoader()));	    	
 	    	t.start();
 	    }

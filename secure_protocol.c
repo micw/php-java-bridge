@@ -1,6 +1,6 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
-/**\file protocol.c -- implementation of the PHP/Java Bridge XML
+/* secure_protocol.c -- implementation of the PHP/Java Bridge XML
    protocol, uses SSL to communicate with the J2EE server.
 
   Copyright (C) 2006 Jost Boekemeier

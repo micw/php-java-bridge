@@ -481,6 +481,7 @@ public class Response {
     }
 
     public void setFinish(boolean keepAlive) {
+	setDefaultWriter();
         writer.setFinish(keepAlive);
     }
     /**
@@ -685,6 +686,7 @@ public class Response {
     /** re-initialize for keep alive */
     protected void recycle() {
         reset();
+        setDefaultWriter();
     }
     public String toString() {
     	return newString(buf.getFirstBytes());

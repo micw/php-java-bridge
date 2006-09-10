@@ -1,7 +1,6 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
-/**\file 
- * This file contains the API implementation.
+/** This file contains the API implementation.
 
   Copyright (C) 2006 Jost Boekemeier
 
@@ -291,7 +290,7 @@ short EXT_GLOBAL(values)(INTERNAL_FUNCTION_PARAMETERS)
   if(!obj) {
 	*return_value = **pobj;
 	zval_copy_ctor(return_value);
-	return 0;
+	return 1;
   }
 
   (*jenv)->writeInvokeBegin(jenv, 0, "getValues", 0, 'I', return_value);

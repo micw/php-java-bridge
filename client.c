@@ -257,11 +257,13 @@ static short handle_exception(zval*presult TSRMLS_DC) {
 		  (*jenv)->writeResultBegin(jenv, presult);
 		  (*jenv)->writeException(jenv, result, "php exception", 0);
 		}
+		(*jenv)->writeResultEnd(jenv);
 	  }
 #else
+	(*jenv)->writeResultBegin(jenv, presult);
 	(*jenv)->writeException(jenv, result, "php exception", 0);
-#endif
 	(*jenv)->writeResultEnd(jenv);
+#endif
 	zval_ptr_dtor(&stack_elem->exception);
 #if defined(ZEND_ENGINE_2)
 	zend_clear_exception(TSRMLS_C);

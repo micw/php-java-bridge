@@ -5,7 +5,7 @@
 function check_extension() {
   if(!extension_loaded('java')) {
     $sapi_type = php_sapi_name();
-    if ($sapi_type == "cgi" || $sapi_type == "cli") {
+    if ($sapi_type == "cgi" || $sapi_type == "cgi-fcgi" || $sapi_type == "cli") {
       if(!(PHP_SHLIB_SUFFIX=="so" && @dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && @dl('php_java.dll'))&&!(include_once("java/Java.php"))) {
 	echo "java extension not installed.";
 	exit(2);
@@ -50,8 +50,10 @@ if(java_get_server_name()!=null){
 
   /* java_get_server_name() == null means that the back-end is not
    running */
+  if(PHP_SHLIB_SUFFIX=="so") $ext_name="java.so";
+  else if(PHP_SHLIB_SUFFIX=="dll") $ext_name="php_java.dll";
+  else $ext_name="unknown suffix: ".PHP_SHLIB_SUFFIX;
 
-  $ext_name=java_get_server_name();
   echo "Error: The PHP/Java Bridge back-end is not running.\n";
   echo "\n";
   echo "Please start it and/or check if the directory\n";

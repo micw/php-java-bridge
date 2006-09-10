@@ -358,9 +358,9 @@ class java_Protocol {
   }
   function writeException($object, $str) {
     if(is_null($object)) {
-      $this->write(sprintf("<E v=\"\" m=\"%s\"/>", $str));
+      $this->write(sprintf("<E v=\"\" m=\"%s\"/>", htmlspecialchars($str, ENT_COMPAT)));
     } else {
-      $this->write(sprintf("<E v=\"%x\" m=\"%s\"/>",$object, $str));
+      $this->write(sprintf("<E v=\"%x\" m=\"%s\"/>",$object, htmlspecialchars($str, ENT_COMPAT)));
     }
   }
   function writeCompositeBegin_a() {
@@ -373,7 +373,7 @@ class java_Protocol {
     $this->write("</X>");
   }
   function writePairBegin_s($key) {
-    $this->write(sprintf("<P t=\"S\" v=\"%s\">", $key));
+    $this->write(sprintf("<P t=\"S\" v=\"%s\">", htmlspecialchars($key, ENT_COMPAT)));
   }
   function writePairBegin_n($key) {
     $this->write(sprintf("<P t=\"N\" v=\"%x\">",$key));

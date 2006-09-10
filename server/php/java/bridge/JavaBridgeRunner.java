@@ -53,6 +53,7 @@ import php.java.bridge.http.IContextServer;
 public class JavaBridgeRunner extends HttpServer {
 
     private static String serverPort;
+    private boolean isStandalone = false;
     /**
      * Create a new JavaBridgeRunner and ContextServer.
      * @throws IOException 
@@ -60,12 +61,16 @@ public class JavaBridgeRunner extends HttpServer {
      */
     private JavaBridgeRunner() throws IOException {
 	super();
-	int maxSize =  Integer.parseInt(Util.THREAD_POOL_MAX_SIZE);
-	ctxServer = new ContextServer(maxSize == 0 ? null : new ThreadPool("JavaBridgeContextRunner", maxSize));
+	ctxServer = new ContextServer(ContextFactory.EMPTY_CONTEXT_NAME);
     }
     private static JavaBridgeRunner runner;
     public static synchronized JavaBridgeRunner getInstance() throws IOException {
 	if(runner==null) return runner = new JavaBridgeRunner();
+	return runner;
+    }
+    public static synchronized JavaBridgeRunner getStandaloneInstance() throws IOException {
+	if(runner==null) return runner = new JavaBridgeRunner();
+	runner.isStandalone = true;
 	return runner;
     }
     private static ContextServer ctxServer = null;
@@ -81,9 +86,9 @@ public class JavaBridgeRunner extends HttpServer {
 	return socket;
     }
 
-    private static IContextFactory getContextFactory(HttpRequest req, HttpResponse res) {
+    private static IContextFactory getContextFactory(HttpRequest req, HttpResponse res, ContextFactory.ICredentials credentials) {
     	String id = getHeader("X_JAVABRIDGE_CONTEXT", req);
-    	IContextFactory ctx = ContextFactory.get(id, ctxServer);
+    	IContextFactory ctx = ContextFactory.get(id, credentials);
 	if(ctx==null) ctx = ContextFactory.addNew();
      	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
     	return ctx;
@@ -106,7 +111,10 @@ public class JavaBridgeRunner extends HttpServer {
     protected void doPut (HttpRequest req, HttpResponse res) throws IOException {
     	boolean override_redirect="1".equals(getHeader("X_JAVABRIDGE_REDIRECT", req));
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
-	IContextFactory ctx = getContextFactory(req, res);
+    	String channel = getHeader("X_JAVABRIDGE_CHANNEL", req);
+	String kontext = getHeader("X_JAVABRIDGE_CONTEXT_DEFAULT", req);
+	ContextFactory.ICredentials credentials = ctxServer.getCredentials(channel, kontext);
+	IContextFactory ctx = getContextFactory(req, res, credentials);
 
     	JavaBridge bridge = ctx.getBridge();
 	// save old state for override_redirect
@@ -120,9 +128,8 @@ public class JavaBridgeRunner extends HttpServer {
 
 	try {
 	    if(r.init(sin, sout)) {
-		String kontext = getHeader("X_JAVABRIDGE_CONTEXT_DEFAULT", req);
 		IContextServer.ChannelName channelName = 
-	            ctxServer.getFallbackChannelName(getHeader("X_JAVABRIDGE_CHANNEL", req), kontext, ctx);
+	            ctxServer.getFallbackChannelName(channel, kontext, ctx);
 		boolean hasDefault = ctxServer.schedule(channelName) != null;
 		res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getDefaultName());
 		if(hasDefault) res.setHeader("X_JAVABRIDGE_CONTEXT_DEFAULT", kontext);
@@ -159,7 +166,13 @@ public class JavaBridgeRunner extends HttpServer {
 	    try {if(resOut!=null) resOut.close();} catch (IOException e2) {}
 	}
     }
-    
+    /**
+     * Return true if this is a standalone server
+     * @return true if this runner is a standalone runner (see {@link #main(String[])}) , false otherwise.
+     */
+    public boolean isStandalone() {
+	return isStandalone;
+    }
     /**
      * For internal tests only.
      * @throws InterruptedException 
@@ -170,7 +183,7 @@ public class JavaBridgeRunner extends HttpServer {
 	     if(s.length>0 && s[0]!=null) serverPort = s[0];
 	 }
 	 Util.logMessage("JavaBridgeRunner started on port " + serverPort);
-	 JavaBridgeRunner r = getInstance();
+	 JavaBridgeRunner r = getStandaloneInstance();
 	 r.httpServer.join();
 	 r.destroy();
     }

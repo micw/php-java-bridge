@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 3.1.8rc3
+%define version 3.1.8
 %define release 1
 %define PHP_MAJOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | sed 's/\\\..*$//')
 %define PHP_MINOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | LANG=C cut -d. -f2)
@@ -271,7 +271,7 @@ if [ $1 = 0 ]; then
 	if test -e /var/www/html/JavaBridge && test -e %{tomcat_webapps}/JavaBridge && test %{tomcat_webapps}/JavaBridge -ef /var/www/html/JavaBridge; then
       rm -f /var/www/html/JavaBridge;
     fi
-	rm -rf %{tomcat_webapps}/JavaBridge
+	rm -rf %{tomcat_webapps}/JavaBridge %{tomcat_webapps}/work/*
     if test -d /etc/selinux/%{__policy_tree}/modules; then 
 		%{_sbindir}/semodule -r javabridge_tomcat
 	fi

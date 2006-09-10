@@ -382,7 +382,7 @@ public final class Util {
     }
     /**
      * Return the short class name
-     * @param obj The object
+     * @param clazz The class
      * @return The class name
      */
     public static String getShortName(Class clazz) {

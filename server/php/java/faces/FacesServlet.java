@@ -65,7 +65,7 @@ public final class FacesServlet
             f.getApplication();
         }
         catch(NullPointerException kaputt) {
-            servletConfig.getServletContext().log("ERROR: Your servlet engine does not read META-INF/*.tld from the jsf-impl.jar. Please upgrade your servlet engine or use tomcat or an application server instead. ", kaputt);            
+            servletConfig.getServletContext().log("ERROR: Please use JSF 1.1_01. ", kaputt);            
         }
         catch(Throwable e)
         {
@@ -76,7 +76,12 @@ public final class FacesServlet
     public void service(ServletRequest request, ServletResponse response)
         throws IOException, ServletException
     {
-        FacesContext context = facesContextFactory.getFacesContext(servletConfig.getServletContext(), request, response, lifecycle);
+	FacesContext context = null;
+	try {
+	     context = facesContextFactory.getFacesContext(servletConfig.getServletContext(), request, response, lifecycle);
+	} catch (Throwable kaputt) {
+            throw new ServletException("ERROR: Please use JSF 1.1_01", kaputt);
+	}
         try
         {
             lifecycle.execute(context);

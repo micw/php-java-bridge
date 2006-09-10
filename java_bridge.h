@@ -1,6 +1,6 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
-/**\file java_bridge.h -- contains utility procedures.
+/** java_bridge.h -- contains utility procedures.
 
   Copyright (C) 2006 Jost Boekemeier
 

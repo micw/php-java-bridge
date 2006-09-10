@@ -1,7 +1,7 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
-/**\file php_java_strtod.h -- strtod implementation which does not
- *depend on the LANG setting.
+/** php_java_strtod.h -- strtod implementation which does not depend
+	on the LANG setting.
 
   Copyright (C) 2006 Jost Boekemeier
 

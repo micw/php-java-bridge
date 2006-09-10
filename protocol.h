@@ -1,6 +1,6 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
-/**\file protocol.h -- implementation of the PHP/Java Bridge XML protocol.
+/** protocol.h -- implementation of the PHP/Java Bridge XML protocol.
 
   Copyright (C) 2006 Jost Boekemeier
 

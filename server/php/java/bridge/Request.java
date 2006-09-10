@@ -192,7 +192,7 @@ public final class Request implements IDocHandler {
             }
          }
     }
-    protected static final class PhpNumber extends Number {
+    protected static final class PhpExactNumber extends Number {
 
 	/**
 	 * 
@@ -203,7 +203,7 @@ public final class Request implements IDocHandler {
 	/**
 	 * @param l
 	 */
-	public PhpNumber(long l) {
+	public PhpExactNumber(long l) {
 	    this.l = l;
 	}
 
@@ -470,7 +470,7 @@ public final class Request implements IDocHandler {
 	}
 	case 'L': {
 	    if(arg.composite!='H')
-	        arg.add(new PhpNumber(getPhpLong(st)));
+	        arg.add(new PhpExactNumber(getPhpLong(st)));
 	    else // hash has no type information
 	        arg.add(createExact(st));
 	    break;

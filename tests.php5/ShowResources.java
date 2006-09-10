@@ -72,6 +72,13 @@ public class ShowResources {
 	JarURLConnection jarConnection =
 	    (JarURLConnection) jarUrl.openConnection(); 
  
+	JarFile file = null;
+	try { 
+	    file = jarConnection.getJarFile(); 
+	} catch (java.util.zip.ZipException ex) { 
+	    System.err.println("could not open: "+file); 
+	    return; 
+	}
 	for (Enumeration entries = jarConnection.getJarFile().entries();
 	     entries.hasMoreElements(); ) {
 	    JarEntry entry = (JarEntry) entries.nextElement();

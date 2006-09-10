@@ -1,6 +1,6 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
-/**\file -- proxyenv IO decorator which can buffer the output.
+/* -- proxyenv IO decorator which can buffer the output.
 
   Copyright (C) 2006 Jost Boekemeier
 

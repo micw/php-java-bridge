@@ -39,7 +39,6 @@ import javax.servlet.http.HttpServletResponse;
 import php.java.bridge.ILogger;
 import php.java.bridge.JavaBridge;
 import php.java.bridge.Request;
-import php.java.bridge.ThreadPool;
 import php.java.bridge.Util;
 import php.java.bridge.http.ContextFactory;
 import php.java.bridge.http.ContextServer;
@@ -99,14 +98,14 @@ public class PhpJavaServlet extends HttpServlet {
 	} catch (Throwable t) {Util.printStackTrace(t);}      
 
 
-    	contextServer = new ContextServer(new ThreadPool("JavaBridgeContextRunner", Integer.parseInt(Util.THREAD_POOL_MAX_SIZE)));
+	String servletContextName=config.getServletContext().getRealPath("");
+	if(servletContextName==null) servletContextName="";
+	contextServer = new ContextServer(servletContextName);
     	 
     	super.init(config);
        
 	Util.setLogger(new Util.Logger(new Logger(config.getServletContext())));
 
-	String servletContextName=config.getServletContext().getRealPath("");
-	if(servletContextName==null) servletContextName="";
 	if(Util.VERSION!=null)
     	    Util.logMessage("PHP/Java Bridge servlet "+servletContextName+" version "+Util.VERSION+" ready.");
 	else
@@ -119,11 +118,11 @@ public class PhpJavaServlet extends HttpServlet {
     	super.destroy();
     }
     
-    private ServletContextFactory getContextFactory(HttpServletRequest req, HttpServletResponse res) {
+    private ServletContextFactory getContextFactory(HttpServletRequest req, HttpServletResponse res, ContextFactory.ICredentials credentials) {
     	JavaBridge bridge;
 	ServletContextFactory ctx = null;
     	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
-    	if(id!=null) ctx = (ServletContextFactory) ContextFactory.get(id, contextServer);
+    	if(id!=null) ctx = (ServletContextFactory) ContextFactory.get(id, credentials);
     	if(ctx==null) {
     	  ctx = ServletContextFactory.addNew(getServletContext(), null, req, res); // no session sharing
     	  bridge = ctx.getBridge();
@@ -152,10 +151,10 @@ public class PhpJavaServlet extends HttpServlet {
      * @throws ServletException
      * @throws IOException
      */
-    protected void handleRedirectConnection(HttpServletRequest req, HttpServletResponse res) 
+    protected void handleRedirectConnection(HttpServletRequest req, HttpServletResponse res, String channel, String kontext) 
 	throws ServletException, IOException {
 	InputStream in; ByteArrayOutputStream out; OutputStream resOut;
-	ServletContextFactory ctx = getContextFactory(req, res);
+	ServletContextFactory ctx = getContextFactory(req, res, contextServer.getCredentials(channel, kontext));
 	JavaBridge bridge = ctx.getBridge();
 	ctx.setSession(req);
 	if(bridge.logLevel>3) bridge.logDebug("override redirect starts for " + ctx.getId());		
@@ -194,10 +193,10 @@ public class PhpJavaServlet extends HttpServlet {
      * @throws ServletException
      * @throws IOException
      */
-    protected void handleHttpConnection (HttpServletRequest req, HttpServletResponse res, boolean session)
+    protected void handleHttpConnection (HttpServletRequest req, HttpServletResponse res, String channel, String kontext, boolean session)
 	throws ServletException, IOException {
 	InputStream in; ByteArrayOutputStream out;
-	ServletContextFactory ctx = getContextFactory(req, res);
+	ServletContextFactory ctx = getContextFactory(req, res, contextServer.getCredentials(channel, kontext));
 	JavaBridge bridge = ctx.getBridge();
 	if(session) ctx.setSession(req);
 
@@ -232,10 +231,10 @@ public class PhpJavaServlet extends HttpServlet {
      * @throws ServletException
      * @throws IOException
      */
-    protected void handleSocketConnection (HttpServletRequest req, HttpServletResponse res, String channel, boolean session)
+    protected void handleSocketConnection (HttpServletRequest req, HttpServletResponse res, String channel, String kontext, boolean session)
 	throws ServletException, IOException {
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
-	ServletContextFactory ctx = getContextFactory(req, res);
+	ServletContextFactory ctx = getContextFactory(req, res, contextServer.getCredentials(channel, kontext));
 	JavaBridge bridge = ctx.getBridge();
 	if(session) ctx.setSession(req);
 
@@ -245,7 +244,6 @@ public class PhpJavaServlet extends HttpServlet {
 	
 	try {
 	    if(r.init(sin, sout)) {
-		String kontext = getHeader("X_JAVABRIDGE_CONTEXT_DEFAULT", req);
 		IContextServer.ChannelName channelName = contextServer.getFallbackChannelName(channel, kontext, ctx);
 		boolean hasDefault = contextServer.schedule(channelName) != null;
 		res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getDefaultName());
@@ -293,14 +291,15 @@ public class PhpJavaServlet extends HttpServlet {
     			"Either \na) set allow_http_tunnel in your web.xml or \nb) recommended: start the Java VM with -Dphp.java.bridge.promiscuous=true " +
     			"to enable the SocketContextServer for non-local clients.");
     	String channel = getHeader("X_JAVABRIDGE_CHANNEL", req);
+	String kontext = getHeader("X_JAVABRIDGE_CONTEXT_DEFAULT", req);
     	
     	try {
 	    if(redirect==1) 
-		handleRedirectConnection(req, res); /* override re-direct */
+		handleRedirectConnection(req, res, channel, kontext); /* override re-direct */
 	    else if(local && contextServer.isAvailable(channel)) 
-		handleSocketConnection(req, res, channel, redirect==2); /* re-direct */
+		handleSocketConnection(req, res, channel, kontext, redirect==2); /* re-direct */
 	    else
-		handleHttpConnection(req, res, redirect==2); /* standard http tunnel */
+		handleHttpConnection(req, res, channel, kontext, redirect==2); /* standard http tunnel */
 
 	} catch (Throwable t) {
 	    Util.printStackTrace(t);

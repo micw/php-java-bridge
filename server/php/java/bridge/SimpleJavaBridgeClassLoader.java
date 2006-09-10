@@ -44,7 +44,7 @@ public class SimpleJavaBridgeClassLoader {
 
     DynamicJavaBridgeClassLoader cl = null;
     ClassLoader scl = null;
-
+    
     /** The default class loader used by the PHP/Java Bridge */
     public static final ClassLoader DEFAULT_CLASS_LOADER = getDefaultClassLoader(); 
     private static final ClassLoader getContextClassLoader() {
@@ -157,20 +157,26 @@ public class SimpleJavaBridgeClassLoader {
 	if(checkCl()) return (ClassLoader)cl;
 	return scl;
     }
-
+    protected void doReset() {
+	cl.reset(); 
+	cl=cl.clearVMLoader();
+    }
     /**
      * reset loader to the initial state
      */
     public void reset() {
-	if (checkCl()) cl.reset();
+	if (checkCl()) doReset();
     }
-
+    protected void doClearCaches() {
+	 cl.clearCaches(); 
+	 cl=cl.clearVMLoader();
+    }
     /**
      * clear all loader caches but
      * not the input vectors
      */
     public void clearCaches() {
-	if (checkCl()) cl.clearCaches();
+	if (checkCl()) doClearCaches();
     }
 
     /**
@@ -181,13 +187,17 @@ public class SimpleJavaBridgeClassLoader {
      */
     public Class forName(String name) throws ClassNotFoundException {
     	if(!checkCl()) return Class.forName(name, false, scl);
-    	return cl.loadClass(name);
+    	return Class.forName(name, false, cl);
+    }
+    protected void doClear() {
+	cl.clear(); 
+	cl=cl.clearVMLoader();
     }
     /**
-     * clear the input vectors
+     * clear caches and the input vectors
      */
     public void clear() {
-	if(checkCl()) cl.clear();
+	if(checkCl()) doClear();
     }
     
     /** re-initialize for keep alive */

@@ -43,6 +43,7 @@ sed 's/^.*=> //' | sed 's/ *$//; s/^ *//' |
 LANG=C awk '{for(i=1; i<=(split($0, ar, "[;:]")); i++) if(substr(ar[i], 1) != "." && substr(ar[i], 1) != "..") print ar[i] }' |
 head -1`
 /bin/rm -f /tmp/phpinfo.$$
+if test -d $phpini; then phpini="${phpini}/php.ini"; fi
 
 # install generic ini
 make install >install.log || exit 1
@@ -57,6 +58,8 @@ echo "java.ini and java-servlet.ini not installed,"
 echo "will use file $phpini instead."
 if test -f ${phpini}; then
    echo -n "Overwrite existing php.ini file (yes/no): "; read overwrite;
+else
+   overwrite="yes"
 fi
 fi
 
@@ -77,8 +80,10 @@ if test X$ini != X; then
  /bin/cp $v java.ini $ini
 else
   if test X$overwrite = "Xyes"; then
-    /bin/rm $v -f "${phpini}.backup"
-    /bin/mv $v "$phpini" "${phpini}.backup"
+    if test -f $phpini; then
+      /bin/rm $v -f "${phpini}.backup"
+      /bin/mv $v "$phpini" "${phpini}.backup"
+    fi
     echo "include_path=/usr/share/pear:." >"$phpini"
     /bin/cat java.ini >>"$phpini"
   fi

@@ -49,10 +49,13 @@ import java.util.jar.Manifest;
  * Instances of this class are shared. 
  * Use the JavaBridgeClassLoader if you need to access the current request-handling bridge instance. 
  * */
-public class DynamicJavaBridgeClassLoader extends DynamicClassLoader implements Cloneable {
+public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     // maps rawPath -> URL[]
     private static Map urlCache = Collections.synchronizedMap(new HashMap()); //TODO: keep only recent entries
 	    
+    protected DynamicJavaBridgeClassLoader(DynamicJavaBridgeClassLoader other) {
+    	super(other);
+    }
     protected DynamicJavaBridgeClassLoader(ClassLoader parent) {
     	super(parent);
     }
@@ -295,14 +298,12 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader implements 
      * @return A new instance which should be used instead of the current instance.
      */
     public DynamicJavaBridgeClassLoader clearVMLoader() {
-	try {
-	    return (DynamicJavaBridgeClassLoader) clone();
-	} catch (CloneNotSupportedException e) { Util.printStackTrace(e); }
-	return null;
+	DynamicJavaBridgeClassLoader that = new DynamicJavaBridgeClassLoader(this);
+	copyInto(that);
+	return that;
     }
     /**
      * Reset to initial state.
-     * @return A new instance which should be used instead of this one.
      */
     public void reset() {
 	synchronized(getClass()) {
@@ -312,14 +313,12 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader implements 
     }
     /**
      * Clear all loader caches. 
-     * @return A new instance which must be used instead of this one.
      */
     public void clearCaches() {
 	clearLoaderCaches();
     }
     /**
      * Clear the loader so that it can be used in new requests.
-     * @return A new instance which must be used instead of this one.
      */
     public void clear() {
 	clearLoader();

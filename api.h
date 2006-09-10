@@ -1,7 +1,6 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
-/**\file
- * This file contains the API implementation.
+/** This file contains the API implementation.
 
   Copyright (C) 2006 Jost Boekemeier
 

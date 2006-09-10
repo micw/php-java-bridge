@@ -1,6 +1,6 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
-/**\file parser.h -- a fast parser for the PHP/Java Bridge XML protocol.
+/** parser.h -- a fast parser for the PHP/Java Bridge XML protocol.
 
   Copyright (C) 2006 Jost Boekemeier
 

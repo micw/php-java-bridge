@@ -8,10 +8,10 @@ Version 3.1.8
 * The recommended way to run Java is to start it via a servlet engine
 or application server. A very simple servlet engine (less 200 lines of
 Java code) is contained in the JavaBridge.jar and can be started with
-the command: java -Dphp.java.bridge.default_log_level=3
--Dphp.java.bridge.default_log_file=""
--Dphp.java.bridge.promiscuous=true -classpath JavaBridge.jar
-php.java.bridge.JavaBridgeRunner 8080.
+the command: 
+
+java -jar JavaBridge.jar SERVLET:8080 3 javabridge_servlet.log
+
 
 * Incompatible change for those who run Java directly within Apache or
 IIS: The bridge now looks for @channelName\n instead of

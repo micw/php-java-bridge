@@ -25,24 +25,34 @@ package php.java.bridge.http;
  */
 
 import php.java.bridge.ThreadPool;
+import php.java.bridge.Util;
+import php.java.bridge.http.ContextFactory.ICredentials;
 
 /**
  * A bridge pattern which either uses the PipeContextServer or the SocketContextServer, 
- * depending on the OS and/or the security restrictions.
+ * depending on the OS and/or the security restrictions. On windows, which cannot use named pipes,
+ * a SocketContextServer is used. All other operating systems use a PipeContextServer unless the 
+ * system property php.java.bridge.promiscuous is set to true or the system property
+ * php.java.bridge.no_pipe_server is set to true.
  * <p>
  * A ContextServer instance represents the current web context. 
- * There can be more than one ContextServer instance per classloader, but the ContextFactory.get() checks
- * if it is called with the same ContextServer and throws a SecurityException otherwise. 
- * So one cannot access contexts belonging to other ContextServers.
+ * When the PipeContextServer is used, there can be more than one PipeContextServer instance per classloader, the ContextFactory.get() checks
+ * if it is called with the same ContextServer and throws a SecurityException otherwise. So one cannot access contexts belonging to other web contexts.
+ * </p><p>
+ * The SocketContextServer uses only one server socket for all shared web contexts and cannot do any security checks.
  * </p>
  * @author jostb
  * @see php.java.bridge.http.PipeContextServer
  * @see php.java.bridge.http.SocketContextServer
  */
-public final class ContextServer {
+public final class ContextServer implements ContextFactory.ICredentials {
+    // One PipeContextServer for each web context, carries this ContextServer as a security token.
     private PipeContextServer ctx;
-    private SocketContextServer sock = null;
-    private ThreadPool pool;
+    // There's only one  shared SocketContextServer instance, otherwise we have to allocate a new ServerSocket for each web context
+    // No secutiry token
+    private static SocketContextServer sock = null; 
+    // One pool for both, the Socket- and the PipeContextServer
+    private static final ThreadPool pool = new ThreadPool("JavaBridgeContextRunner", Integer.parseInt(Util.THREAD_POOL_MAX_SIZE));
     
     private class PipeChannelName extends IContextServer.ChannelName {
         public PipeChannelName(String name, String kontext, IContextFactory ctx) {super(name, kontext, ctx);}
@@ -66,16 +76,14 @@ public final class ContextServer {
     }
     /**
      * Create a new ContextServer using a thread pool.
-     * @param pool The thread pool.
+     * @param contextName The the name of the web context to which this server belongs.
      */
-    public ContextServer(ThreadPool pool) {
+    public ContextServer(String contextName) {
         /*
          * We need both because the client may not support named pipes.
          */
-        ctx = new PipeContextServer(this, pool);
+        ctx = new PipeContextServer(this, pool, contextName);
         /* socket context server will be created on demand */
-        
-        this.pool = pool;
     }
     /**
      * Destroy the pipe or socket context server.
@@ -97,9 +105,9 @@ public final class ContextServer {
         return sock!=null && sock.isAvailable();
     }
 
-    private synchronized SocketContextServer getSocketContextServer(ContextServer server, ThreadPool pool) {
+    private static synchronized SocketContextServer getSocketContextServer(ContextServer server, ThreadPool pool) {
 	if(sock!=null) return sock;
-	return sock=new SocketContextServer(server, pool);
+	return sock=new SocketContextServer(pool);
     }
 
     /**
@@ -139,5 +147,18 @@ public final class ContextServer {
         if(channelName!=null && ctx.isAvailable()) return new PipeChannelName(channelName, kontext, currentCtx);
         SocketContextServer sock=getSocketContextServer(this, pool);
         return new SocketChannelName(sock.getChannelName(), kontext, currentCtx);
+    }
+    
+    /**
+     * Return the credentials provided by the ContextServer. The SocketContextServer is insecure and cannot provide any, because there's 
+     * only one SocketContextServer instance for all shared web contexts. The PipeContextServer
+     * returns a token which will be used in ContextFactory.get() to check if the web context is allowed to access this contextFactory instance or not.
+     * @param channelName The name of the channel, see X_JAVABRIDGE_CHANNEL
+     * @param kontext The name of the client's default ContextFactory, see X_JAVABRIDGE_CONTEXT_DEFAULT
+     * @return A security token.
+     */
+    public ICredentials getCredentials(String channelName, String kontext) {
+        if(channelName!=null && ctx.isAvailable()) return this; // PipeContextServer
+        return ContextFactory.NO_CREDENTIALS; // SocketContextServer 
     }
 }

@@ -574,6 +574,16 @@ Build and execution instructions:
   back-end uses the "default" log level supplied when the back-end was
   started (the second argument after java -jar JavaBridge.jar ...).
 
+  The log4j viewer "Chainsaw" can be used to automatically capture the
+  log from the bridge, regardless in which environment it is
+  running. log4j.jar must be in the Java VM's java.ext.dirs (usually
+  jre/lib/ext), Chainsaw must be running and the back end must have
+  been started without a log file argument or with the .ini option
+  java.log_file="@127.0.0.1:4445". Chainsaw can be started with e.g.:
+
+   /opt/jdk1.5/bin/java -cp /opt/jdk1.5/jre/lib/ext/log4j.jar \
+                                               org.apache.log4j.chainsaw.Main
+
 ---------------------------------------------
   GCJ/GNU Java issues
   -------------------

@@ -36,13 +36,17 @@ import php.java.bridge.Util;
 
 /**
  * This class manages the fallback physical connection for the
- * operating system which doesn't support named pipes: "Windows".
+ * operating system which doesn't support named pipes, "Windows", or when the 
+ * System property php.java.bridge.promiscuous is set to true.
+ * <p>
  * When isAvailable() returns true, a server socket bound to the local
  * interface (127.0.0.1) has been created on a port in the range
  * [9267,...,[9367 and will be used for further communication, see
  * response header X_JAVABRIDGE_REDIRECT.  If this communication
  * channel is not available either, the PHP clients must continue to
- * send all statements via PUT requests.  <p> It is possible to switch
+ * send all statements via PUT requests. 
+ * </p>
+ *  <p> It is possible to switch
  * off this server by setting the VM property
  * php.java.bridge.no_socket_server to true, e.g.:
  * -Dphp.java.bridge.no_socket_server=true.  </p>
@@ -51,7 +55,7 @@ import php.java.bridge.Util;
  */
 public class SocketContextServer extends PipeContextServer implements Runnable {
     private ISocketFactory socket = null;
-
+    
     protected static class Channel extends PipeContextServer.Channel {
         protected Socket sock;
         
@@ -84,8 +88,8 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
      * Create a new ContextServer using the ThreadPool. 
      * @param threadPool Obtain runnables from this pool. If null, new threads will be created.
      */
-    public SocketContextServer (ContextServer contextServer, ThreadPool threadPool) {
-    	super(contextServer, threadPool);
+    public SocketContextServer (ThreadPool threadPool) {
+    	super(ContextFactory.NO_CREDENTIALS, threadPool, ContextFactory.EMPTY_CONTEXT_NAME);
         try {
 	    socket = JavaBridge.bind(BIND_PORT);
 	    try {
@@ -94,7 +98,7 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
 	    } catch (SecurityException sec) {
 	        throw new Exception("Add the line: grant {permission java.net.SocketPermission \"*\", \"accept,resolve\";}; to your server.policy file or run this AS on an operating system which supports named pipes (e.g.: Unix, Linux, BSD, Mac OSX, ...).", sec);
 	    } catch (Throwable t) {/*ignore*/};
-            Thread t = new Thread(this, "JavaBridgeContextServer");
+            Thread t = new Thread(this, "JavaBridgeSocketContextServer("+socket.getSocketName()+")");
 	    t.setDaemon(true);
 	    t.start();
         } catch (Throwable t) {
@@ -118,7 +122,7 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
 	    if(threadPool!=null) {
 	        threadPool.start(runner);
 	    } else {
-	    	Thread t = new Thread(runner, "JavaBridgeContextRunner");
+	    	Thread t = new Thread(runner, "JavaBridgeContextRunner(" + contextName+")");
 	    	t.start();
 	    }
 	} catch (SecurityException t) {

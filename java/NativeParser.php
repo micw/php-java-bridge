@@ -75,7 +75,8 @@ class java_NativeParser {
 	do {
 	  $this->event = false;
 	  $buf = $this->buf = $this->handler->read($this->handler->RECV_SIZE); 
-	  if(!xml_parse($this->parser, $buf)) {
+	  $len = strlen($buf);
+	  if(!xml_parse($this->parser, $buf, $len==0)) {
 		die(sprintf("protocol error: %s, %s at col %d",
 					$buf,
 					xml_error_string(xml_get_error_code($this->parser)),

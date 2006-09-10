@@ -1,3 +1,178 @@
+2006-09-10  Jost Boekemeier  <jostb@intern>
+
+	* VERSION, php-java-bridge.spec: Version 3.1.8 released.
+	
+2006-09-09  Jost Boekemeier  <jostb@intern>
+
+	* bind.c (use_wrapper): Only use the wrapper when we're called
+	with super user privileges or when explicitly set with
+	java.wrapper=...  Some JVM implementations open their binary to
+	check the stack direction, such tests will fail when the
+	permissions are apache/apache 6111 and the current user is not
+	the apache user.
+	(get_server_args): Always display the real java command.
+	(is_socket_inet,linesep,readChannel): New functions
+	(make_local_socket_info,start_server): Rewritten to allow channel
+	negotiation.
+
+	* client.c (setResultFromObject): Compatibility with our pure PHP
+	implementation.
+	(call_php_function): New function
+	(handle_request): close and redirect are now virtual
+	(get_mode,add_header,create_connection): extended header
+	(override_ini_for_redirect): Check for secure channel
+	(getEnvironmentFactory): New function
+	(create_connection): Create secure or http channel
+
+	* secure_protocol.c: New file
+	
+	* config.m4: Added secure_protocol.c
+
+	* init_cfg.c.in (override_ini_from_cgi,init_cfg): Initialize secure
+	channel.
+
+	* java.c (cast,do_cast): Implemented java_cast for compatibility with
+	our pure PHP implementation.
+
+	* java_bridge.c (checkError): Check for cb_stack, otherwise PHP4
+	users will not see exception warnings anymore.
+
+	* LICENSE: Removed
+
+	* COPYING: New file
+	
+	* php-java-bridge.spec: License changed from PHP to LGPL
+
+	* php-java-bridge.spec: Install our pure PHP implementation.
+
+	* protocol.c (get_context,end,end_session,end_connection): Use the
+	extended header.
+	(check_session,close,redirect): Methods are now virtual
+	(Exception,PairBegin_s): encode strings as they may contain
+	special chars
+	(destruct): New virtual method.
+	(recycle_connection): shut down async mode.
+	(init_environment): New procedure
+	(createSecureEnvironment): Removed, see secure_protocol.c
+	(createEnvironment): New function
+	
+	* test.php: Rewritten
+
+	* server/TestInstallation.java: Extract and check the pure PHP
+	implementation
+
+	* server/itext4php.spec, server/lucene4php.spec: Version 1.0 
+
+	* server/natcJavaBridge.c (java_bridge_main): Do not abort when an
+	exception occurs, for example if SERVLET:8080 is already bound.
+
+	* server/WEB-INF/web.xml: Re-added servlet_log_level for backward
+	compatibility. The servlet_log_level changes the request log
+	level.
+
+	* server/WEB-INF/cgi/php-cgi-i386-linux.ini: Set include_path for
+	the pure PHP implementation.
+
+	* server/WEB-INF/cgi/php-fcgi.sh: Use read instead of cat. When
+	the bash waits for a child, the wait cannot be interrupted and all
+	signals are lost(!).
+
+	* server/php/java/bridge/Base64EncodingOutputBuffer.java: New file.
+
+	* server/php/java/bridge/BaseThreadPool.java
+	(end): Clean the class loader and the VM class loader, otherwise
+	we'll run into problems because two assignment incompatible class
+	versions are used by the this loader, one from the VM cache,
+	returned via Class.forName, and the other one from the dynamic
+	loader chain.
+	(checkReserve): Corrected test
+
+	* server/php/java/bridge/DynamicClassLoader.java
+	(init,copyInto): New procedures
+	(DynamicClassLoader): Must clean the VM cache.
+
+	* server/php/java/bridge/DynamicJavaBridgeClassLoader.java
+	(clearVMLoader): New function
+
+	* server/php/java/bridge/HexOutputBuffer.java: New file
+
+	* server/php/java/bridge/JavaBridge.java
+	(initLog): New procedure
+	(weight): Request.PhpExactNumber -> Integer is allowed
+	(MetaClassIterator): New class
+	(getClassInterator): check for MetaClassIterator
+	(reset): Only warn if logLevel>3
+	(offsetExists,offsetGet,offsetSet,offsetUnset): Accept all types
+	and then call the appropriate method.
+	(createResponse): New function
+	
+	* server/php/java/bridge/JavaBridgeClassLoader.java
+	(setClassLoader): Check if reset() was the first statement in a
+	script and reset the loader.
+
+	* server/php/java/bridge/http/ContextFactory.java
+	(ICredentials): New interface
+	(get): Check the credentials
+		
+	* server/php/java/bridge/http/ContextServer.java
+	(getCredentials): New method which returns the credentials for the
+	PipeContextServer or a dummy for the SocketContextServer.
+
+	* server/php/java/bridge/http/ContextRunner.java
+
+	* server/php/java/bridge/JavaBridgeRunner.java: Rewritten to allow
+	users to start the built in servlet engine with: java -jar
+	JavaBridge.jar SERVLET:8080
+
+	* server/php/java/bridge/Standalone.java 
+	(checkServlet): New procedure
+	(init): Check for SERVLET:port
+
+	* server/php/java/bridge/DefaultOptions.java: New class
+
+	* server/php/java/bridge/StandardOptions.java: New Class
+
+	* server/php/java/bridge/Options.java: Rewritten
+
+	* server/php/java/bridge/Parser.java (initOptions): Rewritten
+
+	* server/php/java/bridge/Request.java
+	(SimpleContext,Context): New classes
+	(getContext): New function
+	(Arg): Create context according to Options.
+
+	* server/php/java/bridge/Response.java: Rewritten to allow Base64
+	and responses without context ID's, needed by the pure PHP
+	implementation.
+
+	* server/php/java/bridge/Util.java (getShortName): New function.
+	
+	* server/php/java/bridge/Util.java (parseBody),
+	server/php/java/servlet/CGIServlet.java (run),
+	server/php/java/servlet/FastCGIServlet.java (parseBody): Do not
+	write an empty record at the end.
+
+	* server/php/java/bridge/http/HttpRequest.java,
+	server/php/java/bridge/http/HttpServer.java: Rewritten to allow
+	GET,POST,PUT.
+
+	* server/php/java/faces/PhpFacesScriptEngine.java
+	(setNewContextFactory): check for HTTPS and allocate a secure
+	channel, if necessary.
+	
+	* server/php/java/script/PhpScriptEngine.java
+	(setNewContextFactory): check for HTTPS and allocate a secure
+	channel, if necessary.
+
+	* server/php/java/script/PhpScriptLogWriter.java: New class
+	
+	* server/php/java/script/PhpScriptContext.java
+	(getWriter): Check if this is a standalone server.
+
+	* server/php/java/servlet/PhpCGIServlet.java (startFcgi): Use
+	:port instead of host:port so that PHP binds to all available
+	interfaces, including loopback, if php.java.bridge.promiscuous=true
+	
 2006-08-13  Jost Boekemeier  <jostb@intern>
 
 	* PROTOCOL.TXT: Context IDs are optional.

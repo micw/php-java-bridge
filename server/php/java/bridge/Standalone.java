@@ -31,8 +31,10 @@ import java.io.IOException;
  * the standalone back-end, listenes for protocol requests and handles
  * CreateInstance, GetSetProp and Invoke requests. Supported protocol
  * modes are INET (listens on all interfaces), INET_LOCAL (loopback
- * only) and LOCAL (uses a local, invisible communication channel,
- * requires natcJavaBridge.so).  <p> Example:<br> <code> java
+ * only), LOCAL (uses a local, invisible communication channel,
+ * requires natcJavaBridge.so) , SERVLET and SERVLET_LOCAL 
+ * (starts the built-in servlet engine listening on all interfaces or loopback).  
+ * <p> Example:<br> <code> java
  * -Djava.awt.headless=true -jar JavaBridge.jar INET_LOCAL:9676 5
  * bridge.log &<br> telnet localhost 9676<br> &lt;CreateInstance
  * value="java.lang.Long" predicate="Instance" id="0"&gt;<br> &lt;Long
@@ -81,8 +83,11 @@ public class Standalone {
 	System.err.println("PHP/Java Bridge version "+Util.VERSION);
 	System.err.println("Usage: java -jar JavaBridge.jar [SOCKETNAME LOGLEVEL LOGFILE]");
 	System.err.println("Usage: java -jar JavaBridge.jar --convert PHP_INCLUDE_DIR [JARFILES]");
+	System.err.println("[SOCKETNAME] is one of LOCAL, INET_LOCAL, INET, SERVLET");
 	System.err.println("Example: java -jar JavaBridge.jar");
-	System.err.println("Example: java -Djava.awt.headless=\"true\" -Dphp.java.bridge.threads=50 -jar JavaBridge.jar INET_LOCAL:0 3 JavaBridge.log");
+	System.err.println("Example: java -jar JavaBridge.jar LOCAL:/tmp/javabridge_native.socket 3 /var/log/php-java-bridge.log");
+	System.err.println("Example: java -Djava.awt.headless=\"true\" -Dphp.java.bridge.threads=50 -jar JavaBridge.jar INET:9267 3 JavaBridge.log");
+	System.err.println("Example: java -Dphp.java.bridge.promiscuous=true -jar JavaBridge.jar SERVLET:8080 3 JavaBridge.log");
 	System.err.println("Example: java -jar JavaBridge.jar --convert /usr/share/pear lucene.jar ...");
     }
     private static void usage() {
@@ -145,6 +150,7 @@ public class Standalone {
 	    } catch (Throwable t) {
 		t.printStackTrace();
 	    }
+	    checkServlet(logLevel, sockname, s);
 	    ISocketFactory socket = bind(logLevel, sockname);
 	    StringBuffer buf = new StringBuffer();
 	    buf.append('@');
@@ -155,11 +161,23 @@ public class Standalone {
 		System.out.close(); 
 	    }
 	    if("true".equals(System.getProperty("php.java.bridge.test.startup"))) System.exit(0);
+	    JavaBridge.initLog(String.valueOf(socket), logLevel, s);
 	    JavaBridge.init(socket, logLevel, s);
 	} catch (RuntimeException e) { throw e; } 
 	catch (Throwable ex) { throw new RuntimeException(ex); }
     }
 
+    private static void checkServlet(int logLevel, String sockname, String[] s) throws InterruptedException, IOException {
+	if(sockname==null) return;
+	if(sockname.startsWith("SERVLET_LOCAL:")) System.setProperty("php.java.bridge.promiscuous", "false");
+	else if(sockname.startsWith("SERVLET:"))  System.setProperty("php.java.bridge.promiscuous", "true");
+	else return;
+	
+	JavaBridge.initLog(sockname, logLevel, s);
+	sockname=sockname.substring(sockname.indexOf(':')+1);
+	JavaBridgeRunner.main(new String[] {sockname});
+	return;
+    }
     /**
      * Start the PHP/Java Bridge. <br>
      * Example:<br>

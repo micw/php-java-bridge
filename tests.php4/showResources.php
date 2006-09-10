@@ -9,7 +9,7 @@ if (!extension_loaded('java')) {
 }
 
 $here=getcwd();
-java_set_library_path("$here/showResources.jar");
+java_set_library_path("$here/../tests.php5/showResources.jar");
 $sr=new java("ShowResources");
 $sr->main(array());
 echo "\n\n";

@@ -51,7 +51,7 @@ import php.java.bridge.Util;
  * <p>
  * Clients of the PHP clients may attach additional data and run with
  * a customized ContextFactory by using the visitor pattern, 
- * see {@link #accept(IContextFactory)}.
+ * see {@link #accept(IContextFactoryVisitor)}.
  * </p>
  * <p>
  * The string ID of the instance should be passed to the client, which may
@@ -73,18 +73,24 @@ import php.java.bridge.Util;
  * <p>
  * In a shared environment with k web contexts there can be up to n*k active JavaBridge/ContextFactory instances 
  * (where n is the number of active php clients). All ContextFactories are kept in a shared, per-loader
- * map. But the map can only be accessed via {@link #get(String, ContextServer)}, which checks if the ContextFactory
+ * map. But the map can only be accessed via {@link #get(String, ICredentials)}, which checks if the ContextFactory
  * belongs to the same ContextServer.
  * </p>
  * @see php.java.servlet.ServletContextFactory
  * @see php.java.bridge.http.ContextServer
- * @see php.java.bridge.SessionFactory#TIMER_FREQ
+ * @see php.java.bridge.SessionFactory#TIMER_DURATION
  */
 public final class ContextFactory extends SessionFactory implements IContextFactory {
+
+    /** The credentials provided by the web context, usually this ContextFactory. */
+    public static interface ICredentials {}
 
     /** This context name can be used when a ContextFactory is used 
      * outside of a servlet environment */
     public static final String EMPTY_CONTEXT_NAME = "";
+    
+    /** Use this if you don't care about security. This is used by the {@link php.java.bridge.http.SocketContextServer} */
+    protected static final ICredentials NO_CREDENTIALS = new ICredentials() {};
 
     static {
        getTimer().addJob(new Runnable() {public void run() {destroyOrphaned();}});
@@ -102,7 +108,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     private String id;
     private long timestamp;
 
-    private ContextServer contextServer = null;
+    private ICredentials contextServer = null;
     private IContextFactory visitor; 
 
     private static long counter = 0;
@@ -135,7 +141,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * @param webContext The current web context, use ContextFactory.EMPTY_CONTEXT 
      * if servlet web contexts are not available, config.getServletContext().getRealPath("") otherwise.
      * @return The created ContextFactory.
-     * @see php.java.bridge.http.ContextFactory#get(String, ContextServer)
+     * @see php.java.bridge.http.ContextFactory#get(String, ICredentials)
      */
     public static IContextFactory addNew(String webContext) {
     	ContextFactory factory = new ContextFactory(webContext);
@@ -146,7 +152,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * Create a new simple ContextFactory (a factory which creates an emulated JSR223 context) and add it 
      * to the list of context factories kept by this classloader.
      * @return The created ContextFactory.
-     * @see php.java.bridge.http.ContextFactory#get(String, ContextServer)
+     * @see php.java.bridge.http.ContextFactory#get(String, ICredentials)
      */
     public static IContextFactory addNew() {
     	return new SimpleContextFactory(EMPTY_CONTEXT_NAME);
@@ -164,7 +170,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      */
     /* See PhpJavaServlet#contextServer, http.ContextRunner#contextServer and 
      * JavaBridgeRunner#ctxServer. */
-    public static IContextFactory get(String id, ContextServer server) {
+    public static IContextFactory get(String id, ICredentials server) {
         if(server == null) throw new NullPointerException("server");
 
         ContextFactory factory = moveContext(id); 

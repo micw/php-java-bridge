@@ -1,6 +1,6 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
-/**\file protocol.c -- implementation of the PHP/Java Bridge XML protocol.
+/* protocol.c -- implementation of the PHP/Java Bridge XML protocol.
 
   Copyright (C) 2006 Jost Boekemeier
 
@@ -493,8 +493,9 @@ static short EndConnection(proxyenv *env, char property) {
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void Exception(proxyenv *env, unsigned long object, char *str, size_t len) {
-   size_t flen;
+   size_t flen, newlen;
    if(!len) len=strlen(str);
+   str = replaceQuote(str, len, &newlen); len = newlen;
    GROW(FLEN+ILEN+len);
    if(!object) 
 	 (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<E v=\"\" m=\"%s\"/>", str);
@@ -521,9 +522,10 @@ static short EndConnection(proxyenv *env, char property) {
    assert((*env)->send_len<=(*env)->send_size);
  }
  static void PairBegin_s(proxyenv *env, char*key, size_t len) {
-   size_t flen;
+   size_t flen, newlen;
    assert(strlen(key));
    if(!len) len=strlen(key);
+   key = replaceQuote(key, len, &newlen); len = newlen;
    GROW(FLEN+len);
    (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<P t=\"S\" v=\"%s\">", key);
    assert((*env)->send_len<=(*env)->send_size);
@@ -555,9 +557,7 @@ static short EndConnection(proxyenv *env, char property) {
 
  
 
-static void redirect(proxyenv *env) {
-  assert(0);
-}
+static void redirect(proxyenv *env) {}
 static short close_socket(proxyenv *env) {
   int err = close((*env)->peer);
   return err == -1 ? 0 : 1;
@@ -626,6 +626,9 @@ static short recycle_connection(proxyenv *env TSRMLS_DC) {
 	if((*env)->connection_is_closed) return 0;
 	if((*env)->peer!=-1) {
 
+	  /* end async protocol */
+	  if((*env)->handle==(*env)->async_ctx.handle_request) 
+		EXT_GLOBAL(end_async(env));
 	  if(!(*env)->writeEndConnection(env, 'A')) { 
 		(*env)->connection_is_closed=1;
 		return 0;
@@ -638,6 +641,7 @@ static short recycle_connection(proxyenv *env TSRMLS_DC) {
 	  free((*env)->current_servlet_ctx); 
 	}
 	(*env)->current_servlet_ctx = 0; 
+	(*env)->async_ctx.nextValue = 0;
   }
   return 1;
 }

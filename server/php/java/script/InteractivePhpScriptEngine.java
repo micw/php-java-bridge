@@ -70,7 +70,7 @@ public class InteractivePhpScriptEngine extends PhpScriptEngine {
 	
 	if(!hasScript) {
 	    super.eval("<?php " +
-		       "if(!extension_loaded('java')) {(@include_once(\"java/Java.php\"))||@dl('java.so')||@dl('php_java.dll')};\n" +
+		       "if(!extension_loaded('java')) {(@include_once(\"java/Java.php\"))||@dl('java.so')||@dl('php_java.dll');}\n" +
 		       "ini_set('max_execution_time', 0);\n" +
 		       "$javabridge_values = array();\n"+
 		       "$javabridge_ignored_keys = array(\"javabridge_key\", \"javabridge_val\", \"javabridge_values\", \"javabridge_ignored_keys\", \"javabridge_param\");\n"+

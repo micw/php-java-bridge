@@ -1,6 +1,6 @@
 /*-*- mode: C; tab-width:4 -*-*/
 
-/**\file php_wrapper.h -- adjust/revert some of PHP's choices.
+/** php_wrapper.h -- adjust/revert some of PHP's choices.
 
   Copyright (C) 2006 Jost Boekemeier
 

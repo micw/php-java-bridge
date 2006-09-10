@@ -67,9 +67,9 @@ public class ContextRunner implements Runnable {
     private InputStream in;
     private OutputStream out;
     private IContextServer.Channel channel;
-    private ContextServer contextServer; /* the persistent ContextServer */
+    private ContextFactory.ICredentials contextServer; /* the ContextServer of the web application, used for security checks in ContextFactory.get(...)  */
     
-    protected ContextRunner(ContextServer contextServer, IContextServer.Channel channel) {
+    protected ContextRunner(ContextFactory.ICredentials contextServer, IContextServer.Channel channel) {
 	this.contextServer = contextServer;
 	this.channel = channel;
     }

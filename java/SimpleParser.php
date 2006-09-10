@@ -125,7 +125,7 @@ class java_SimpleParser {
 	  if($this->c>=$this->pos) { 
 		
 		$this->buf=$this->handler->read($this->handler->RECV_SIZE); 
-		if(is_null($this->buf)) break;
+		if(is_null($this->buf) || strlen($this->buf) == 0) die("protocol error");
 		$this->pos=strlen($this->buf);
 		if($this->pos==0) break;
 		$this->c=0; 

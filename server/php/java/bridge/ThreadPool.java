@@ -85,6 +85,7 @@ public class ThreadPool extends BaseThreadPool {
 	        terminate = true;
 	        String name = getName();
 	        setName(name+",isDaemon=true");
+	        if(Util.logLevel>5) name+="+";
 	        createThread(name);
 	    }
 	    end();

@@ -292,7 +292,7 @@ public class JavaBridge implements Runnable {
         Standalone.init(s);
     }
     // called by Standalone.init()
-    static void init(ISocketFactory socket, int logLevel, String s[]) {
+    static void initLog(String socket, int logLevel, String s[]) {
 	String logFile=null, rawLogFile=null;
 	
 	if(logLevel==-1) logLevel = Util.DEFAULT_LOG_LEVEL;
@@ -346,14 +346,20 @@ public class JavaBridge implements Runnable {
 	    Util.logMessage(Util.EXTENSION_NAME + " logFile         : " + rawLogFile);
 	    Util.logMessage(Util.EXTENSION_NAME + " default logLevel: " + Util.logLevel);
 	    Util.logMessage(Util.EXTENSION_NAME + " socket          : " + socket);
+	} catch (Throwable t) {
+	    throw new RuntimeException(t);
+	}
+    }
+    // called by Standalone.init()
+    static void init(ISocketFactory socket, int logLevel, String s[]) {	    
+	try {
+	    ThreadPool pool = null;
 	    int maxSize = 20;
 	    try {
 	    	maxSize = Integer.parseInt(Util.THREAD_POOL_MAX_SIZE);
 	    } catch (Throwable t) {
 	    	Util.printStackTrace(t);
 	    }
-	    
-	    ThreadPool pool = null;
 	    if(maxSize>0) {
 	        pool = new ThreadPool(Util.EXTENSION_NAME, maxSize);
 		    Util.logMessage(Util.EXTENSION_NAME + " thread pool size: " + maxSize);
@@ -581,7 +587,7 @@ public class JavaBridge implements Runnable {
     private int weight(Class param, Object arg) {
 	int w = 0;
 	if (param.isInstance(arg)) {
-	    for (Class c=arg.getClass(); (c=c.getSuperclass()) != null; ) {
+ 	    for (Class c=arg.getClass(); (c=c.getSuperclass()) != null; ) {
 		if (!param.isAssignableFrom(c)) {
 		    break;
 		}
@@ -646,6 +652,10 @@ public class JavaBridge implements Runnable {
 	    } else {
 		w+=9999;
 	    }
+	} else if(Number.class.isAssignableFrom(param)) {
+	    if(param==Float.class || param==Double.class) {
+		if(!(arg instanceof Double)) w+=9999;
+	    } else if(!(arg instanceof Request.PhpExactNumber)) w+=9999;
 	} else {
 	    w+=9999;
 	}
@@ -656,7 +666,7 @@ public class JavaBridge implements Runnable {
 
     private Object select(LinkedList methods, Object args[]) {
 	if (methods.size() == 1) return methods.getFirst();
-	Object selected = null;
+	Object similar = null, selected = null;
 	int best = Integer.MAX_VALUE;
 	int n = 0;
 	
@@ -688,12 +698,24 @@ public class JavaBridge implements Runnable {
 		}
 		best = w;
 		selected = element;
-		if(logLevel>4) logDebug("best: " + selected + " " + w);
+		if(logLevel>2) { 
+		    similar = null;
+		    if(logLevel>4) logDebug("best: " + selected + " " + w);
+		}
 	    } else {
-	        if(logLevel>4) logDebug("skip: " + element + " " + w);
+		if(logLevel>2) {
+			if(w==best) similar = element;
+	        	if(logLevel>4) logDebug("skip: " + element + " " + w);
+		}
 	    }
 	}
-	
+	if(logLevel>2 && similar!=null) {
+	    StringBuffer buf = new StringBuffer();
+	    for(int i=0; i<args.length; i++) {
+		Util.appendParam(args[i], buf);
+	    }
+	    logMessage("Portability warning: " + selected + " and " + similar + " both match " + buf.toString());
+	}
 	if(logLevel>4) logDebug("Selected: " + selected + " " + best);
 	return selected;
     }
@@ -771,7 +793,7 @@ public class JavaBridge implements Runnable {
 		    else if (c == Long.TYPE && !(n instanceof Long))
 			result[i]=new Long(n.longValue());
 	    	} else {
-		    if(arg.getClass()==Request.PhpNumber.class) {
+		    if(arg.getClass()==Request.PhpExactNumber.class) {
 	    		{
 			    Class c = parms[i];
 			    if(c.isAssignableFrom(Integer.class)) {
@@ -963,7 +985,10 @@ public class JavaBridge implements Runnable {
 	    return jclass;
 	}
     }
-
+    private static ClassIterator getClassClassIterator(Class clazz) {
+	if(clazz==Class.class) return new MetaClassIterator();
+	return new ClassClassIterator();
+    }
     private static abstract class ClassIterator {
 	Object object;
 	Class current;
@@ -972,7 +997,7 @@ public class JavaBridge implements Runnable {
 	public static ClassIterator getInstance(Object object, FindMatchingInterface match) {
 	    ClassIterator c;
 	    if(object instanceof Class)
-		c = new ClassClassIterator();
+		c = getClassClassIterator((Class)object);
 	    else
 		c = new ObjectClassIterator();
 
@@ -1018,6 +1043,22 @@ public class JavaBridge implements Runnable {
 	public boolean isVisible(int modifier) {
 	    // all members of the class class or only static members of the class
 	    return !hasNext || ((modifier&Modifier.STATIC)!=0);  
+	}
+    }
+    static class MetaClassIterator extends ClassIterator {
+ 	private Class next() {
+	    // The ClassClass has the ClassClass as its class
+	    if(current == null) { return current = (Class)object;}
+	    return null;
+	}
+	public Class getNext() {
+	    return next();
+	}
+	public boolean checkAccessible(AccessibleObject o) {
+	    return true;
+	}
+	public boolean isVisible(int modifier) {
+	    return true;
 	}
     }
 
@@ -1738,7 +1779,7 @@ public class JavaBridge implements Runnable {
      * @see php.java.bridge.Session#reset()
      */
     public void reset() {
-	if(Util.logLevel>3) warn("Your PHP script has called the privileged procedure \"reset()\", which resets the backend to its initial state. Therefore all session variables and all caches are now gone.");
+	if(logLevel>3) warn("Your PHP script has called the privileged procedure \"reset()\", which resets the backend to its initial state. Therefore all session variables and all caches are now gone.");
 	getClassLoader().reset();
     }
     /**
@@ -1807,7 +1848,7 @@ public class JavaBridge implements Runnable {
      * @param pos The position
      * @return true if an element exists at this position, false otherwise.
      */
-    public boolean offsetExists(Map value, Object pos) {
+    private boolean offsetExists(Map value, Object pos) {
 	return value.containsKey(pos);
     }
     /**
@@ -1816,7 +1857,7 @@ public class JavaBridge implements Runnable {
      * @param pos The position.
      * @return The object at the given position.
      */    
-    public Object offsetGet(Map value, Object pos) {
+    private Object offsetGet(Map value, Object pos) {
 	return value.get(pos);
     }
     /**
@@ -1825,7 +1866,7 @@ public class JavaBridge implements Runnable {
      * @param pos The position.
      * @param val The object.
      */
-    public void offsetSet(Map value, Object pos, Object val) {
+    private void offsetSet(Map value, Object pos, Object val) {
         Class type = value.getClass().getComponentType();
         if(type!=null) val = coerce(type, val, request.response);
 	value.put(pos, val);
@@ -1835,7 +1876,7 @@ public class JavaBridge implements Runnable {
      * @param value The map.
      * @param pos The position.
       */
-    public void offsetUnset(Map value, Object pos) {
+    private void offsetUnset(Map value, Object pos) {
 	offsetSet(value, pos, null);
     }
     /**
@@ -1844,7 +1885,7 @@ public class JavaBridge implements Runnable {
      * @param pos The position
      * @return true if an element exists at this position, false otherwise.
      */
-    public boolean offsetExists(List value, Number pos) {
+    private boolean offsetExists(List value, int pos) {
 	try {
 	    offsetGet(value, pos);
 	    return true;
@@ -1858,8 +1899,8 @@ public class JavaBridge implements Runnable {
      * @param pos The position.
      * @return The object at the given position.
      */    
-    public Object offsetGet(List value, Number pos) {
-	return value.get(pos.intValue());
+    private Object offsetGet(List value, int pos) {
+	return value.get(pos);
     }
     /**
      * Set an object at position. 
@@ -1867,19 +1908,19 @@ public class JavaBridge implements Runnable {
      * @param pos The position.
      * @param val The object.
      */
-    public void offsetSet(List value, Number pos, Object val) {
-	value.set(pos.intValue(), val);
+    private void offsetSet(List value, int pos, Object val) {
+	value.set(pos, val);
     }
     /**
      * Remove an object from the position.
      * @param value The list.
      * @param pos The position.
       */
-    public void offsetUnset(List value, Number pos) {
+    private void offsetUnset(List value, int pos) {
 	offsetSet(value, pos, null);
     }
-    boolean offsetExists(int length, Number pos) {
-	int i = pos.intValue();
+    boolean offsetExists(int length, int pos) {
+	int i = pos;
 	return (i>0 && i<length);
     }
     /**
@@ -1888,21 +1929,43 @@ public class JavaBridge implements Runnable {
      * @param pos The position
      * @return true if an element exists at this position, false otherwise.
      */
-    public boolean offsetExists(Object value, Number pos) {
+    private boolean offsetExists(Object value, int pos) {
         return offsetExists(Array.getLength(value), pos);
     }
     
+    /**
+     * Checks if a given position exists.
+     * @param table The table.
+     * @param off The offset
+     * @return true if an element exists at this position, false otherwise.
+     */
+    public boolean offsetExists(Object table, Object off) {
+	if(table.getClass().isArray()) return offsetExists(table, ((Number)off).intValue());
+	if(table instanceof List) return offsetExists((List)table, ((Number)off).intValue());
+	return offsetExists((Map)table, off);
+    }
     /**
      * Returns the object at the posisition.
      * @param value The array.
      * @param pos The position.
      * @return The object at the given position.
      */    
-    public Object offsetGet(Object value, Number pos) {
-	int i = pos.intValue();
+    private Object offsetGet(Object value, int pos) {
+	int i = pos;
 	Object o = Array.get(value, i);
 	return o==this ? null : o;
    }
+    /**
+     * Returns the object at the posisition.
+     * @param table The table.
+     * @param off The offset.
+     * @return The object at the given position.
+     */    
+    public Object offsetGet(Object table, Object off) {
+	if(table.getClass().isArray()) return offsetGet(table, ((Number)off).intValue());
+	if(table instanceof List) return offsetGet((List)table, ((Number)off).intValue());
+	return offsetGet((Map)table, off);	
+    }
     /**
      * Selects the asynchronuous protocol mode.
      */
@@ -1926,18 +1989,38 @@ public class JavaBridge implements Runnable {
      * @param pos The position.
      * @param val The object.
      */
-    public void offsetSet(Object value, Number pos, Object val) {
-	int i = pos.intValue();
-	Array.set(value, i, coerce(value.getClass().getComponentType(), val, request.response));
+    private void offsetSet(Object value, int pos, Object val) {
+	Array.set(value, pos, coerce(value.getClass().getComponentType(), val, request.response));
+    }
+    /**
+     * Set an object at position. 
+     * @param table The table
+     * @param off The offset.
+     * @param val The value
+     */
+    public void offsetSet(Object table, Object off, Object val) {
+	if(table.getClass().isArray()) offsetSet(table, ((Number)off).intValue(), val);
+	else if(table instanceof List) offsetSet((List)table, ((Number)off).intValue(), val);
+	else offsetSet((Map)table, off, val);	
     }
     /**
      * Remove an object from the position.
      * @param value The array.
      * @param pos The position.
       */
-    public void offsetUnset(Object value, Number pos) {
-	int i = pos.intValue();
+    private void offsetUnset(Object value, int pos) {
+	int i = pos;
 	Array.set(value, i, null);
+    }
+    /**
+     * Remove an object from the position.
+     * @param table The table.
+     * @param off The offset.
+      */
+    public void offsetUnset(Object table, Object off) {
+	if(table.getClass().isArray()) offsetUnset(table, ((Number)off).intValue());
+	else if(table instanceof List) offsetUnset((List)table, ((Number)off).intValue());
+	else offsetUnset((Map)table, off);	
     }
     /** 
      * Re-initialize the current bridge for keep-alive

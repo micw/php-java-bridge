@@ -283,7 +283,6 @@ class java_Client /* implements IDocHandler */ {
 	$this->asyncHandler = new java_AsyncHandler($this);
   }
   function __destruct() { 
-	//FIXME: shutdown connection etc.
   }
 
   function read($size) {

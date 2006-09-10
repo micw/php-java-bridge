@@ -132,16 +132,44 @@ public class DynamicClassLoader extends SecureClassLoader {
 	return u;
     }
 
-    protected int instanceIndex = 0;
-    protected HashMap classLoaders = new HashMap(); // Map of Classpath=>URLClassLoaderEntries of this DynamicClassLoader (Hard References)
-    protected LinkedList classPaths = new LinkedList(); // List of Classpaths (corresponding to URLClassLoaderEntries) of this DynamicClassLoader
-    protected LinkedList urlsToAdd = new LinkedList(); // List of URLs to add (lazy evaluation)
-    protected long cacheTimeout = 5000; // Minimum interval to check for file modification dates
-    protected boolean lazy = true; // Lazy Classloader Creation ?
-    protected HashMap parentCache = null; // Fetched globally from parentCacheMap
+    protected int instanceIndex;
+    protected HashMap classLoaders; // Map of Classpath=>URLClassLoaderEntries of this DynamicClassLoader (Hard References)
+    protected LinkedList classPaths; // List of Classpaths (corresponding to URLClassLoaderEntries) of this DynamicClassLoader
+    protected LinkedList urlsToAdd; // List of URLs to add (lazy evaluation)
+    protected long cacheTimeout; // Minimum interval to check for file modification dates
+    protected boolean lazy; // Lazy Classloader Creation ?
+    protected HashMap parentCache; // Fetched globally from parentCacheMap
 
+    private void init() {
+	instanceIndex = 0;
+	classLoaders = new HashMap(); // Map of Classpath=>URLClassLoaderEntries of this DynamicClassLoader (Hard References)
+	classPaths = new LinkedList(); // List of Classpaths (corresponding to URLClassLoaderEntries) of this DynamicClassLoader
+	urlsToAdd = new LinkedList(); // List of URLs to add (lazy evaluation)
+	cacheTimeout = 5000; // Minimum interval to check for file modification dates
+	lazy = true; // Lazy Classloader Creation ?
+	parentCache = null; // Fetched globally from parentCacheMap
+    }
+    /**
+     * We create a new copy of the DynamicClassLoader for each request. 
+     * This is necessary to avoid problems with the associated cache (see tests.php5/loader_test.php).
+     * To avoid problems with some clone implementations (IBM) we use an empty contstructor and copy all fields ourselfs.
+     * @param that The new uninitialized instance of the DynamicClassLoader.
+     */
+    protected void copyInto(DynamicClassLoader that) {
+	that.instanceIndex = instanceIndex;
+	that.classLoaders = classLoaders;
+	that.classPaths = classPaths;
+	that.urlsToAdd = urlsToAdd;
+	that.cacheTimeout = cacheTimeout;
+	that.lazy = lazy;
+	that.parentCache = parentCache;
+    }
+    protected DynamicClassLoader(DynamicClassLoader other) {
+	super(other.getParent());
+    }
     public DynamicClassLoader(ClassLoader parent) {
 	super(parent);
+	init();
 	this.cacheTimeout = defaultCacheTimeout;
 	this.lazy = defaultLazy;
 	this.instanceIndex = instanceCount++;
@@ -157,6 +185,7 @@ public class DynamicClassLoader extends SecureClassLoader {
 
     public DynamicClassLoader() {
 	super();
+	init();
 	ClassLoader parent = ClassLoader.getSystemClassLoader();
 	this.cacheTimeout = defaultCacheTimeout;
 	this.lazy = defaultLazy;
@@ -465,5 +494,4 @@ public class DynamicClassLoader extends SecureClassLoader {
 	}
 	return null;
     }
-
 }

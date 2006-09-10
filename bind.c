@@ -89,6 +89,7 @@
 #include "zend.h"
 
 #include "java_bridge.h"
+#include "init_cfg.h"
 
 #ifndef EXTENSION_DIR
 #error EXTENSION_DIR must point to the PHP extension directory
@@ -1105,6 +1106,9 @@ void EXT_GLOBAL(start_server)(TSRMLS_D) {
 	  make_local_socket_info(inet TSRMLS_CC);
 	} else {
 #ifdef CFG_JAVA_SOCKET_INET 
+	  free(EXT_GLOBAL(cfg)->default_sockname);
+	  EXT_GLOBAL(cfg)->default_sockname=strdup(DEFAULT_PORT);
+	  assert(EXT_GLOBAL(cfg)->default_sockname); if(!EXT_GLOBAL(cfg)->default_sockname) exit(6);
 	  make_local_socket_info(1 TSRMLS_CC);
 #else
 	  make_local_socket_info(0 TSRMLS_CC);
@@ -1129,7 +1133,6 @@ void EXT_GLOBAL(start_server)(TSRMLS_D) {
 		goto cannot_fork;
 	  }
 	  CloseHandle(read_pipe);
-	  
 
 	  s_pid.use_wrapper = use_wrapper(EXT_GLOBAL(cfg)->wrapper);
 
@@ -1153,6 +1156,9 @@ void EXT_GLOBAL(start_server)(TSRMLS_D) {
 		  EXT_GLOBAL(cfg)->default_sockname=name;
 		  make_local_socket_info(1 TSRMLS_CC);
 		} else {
+		  free(EXT_GLOBAL(cfg)->default_sockname);
+		  EXT_GLOBAL(cfg)->default_sockname=strdup(DEFAULT_PORT);
+		  assert(EXT_GLOBAL(cfg)->default_sockname); if(!EXT_GLOBAL(cfg)->default_sockname) exit(6);
 		  make_local_socket_info(1 TSRMLS_CC);
 		  wait_server();
 		}

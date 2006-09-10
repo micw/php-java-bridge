@@ -7,6 +7,11 @@ if (!extension_loaded('java')) {
     exit(2);
   }
 }
+ini_set("max_execution_time", 0);
+if($argc<2) {
+  echo "No automatic test. Use php swing-button.php --force to run this test.\n";
+  exit(0);
+ }
 
 $here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
 if(!$here) $here=getcwd();

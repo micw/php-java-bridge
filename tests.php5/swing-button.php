@@ -20,7 +20,7 @@ if (!extension_loaded('java')) {
 }
 ini_set("max_execution_time", 0);
 if($argc<2) {
-  echo "No automatic test. Use php swing-button.php --force tu run this test.\n";
+  echo "No automatic test. Use php swing-button.php --force to run this test.\n";
   exit(0);
  }
 

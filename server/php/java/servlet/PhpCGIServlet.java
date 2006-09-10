@@ -159,8 +159,11 @@ public class PhpCGIServlet extends FastCGIServlet {
     /* Start a fast CGI Server process on this computer. Switched off per default. */
     private final Process startFcgi(Map env, String php) throws IOException {
         if(proc!=null) return null;
-        	String port = Util.getHostAddress()+":"+String.valueOf(fcgi_channel);
-
+        	StringBuffer buf = new StringBuffer(Util.JAVABRIDGE_PROMISCUOUS ? "" : "127.0.0.1"); // bind to all available or loopback only
+        	buf.append(':');
+        	buf.append(String.valueOf(fcgi_channel));
+        	String port = buf.toString();
+        	
 		// Set override hosts so that php does not try to start a VM.
 		// The value itself doesn't matter, we'll pass the real value
 		// via the (HTTP_)X_JAVABRIDGE_OVERRIDE_HOSTS header field

@@ -418,9 +418,7 @@ void java_bridge_main(int argc, char**argv)
   (*jenv)->CallStaticVoidMethod(jenv, reflectClass, init, arr);
   (*jvm)->DestroyJavaVM(jvm);
 
-  assert(0);
-  while(1)			  /* DestroyJavaVM should already block forever */
-	sleep(65535);
+  exit(1);
 }
 
 void java_bridge_main_gcj(int argc, char**_argv) 

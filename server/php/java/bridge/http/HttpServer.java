@@ -66,7 +66,7 @@ public abstract class HttpServer implements Runnable {
      * @param addr The host address, either INET:port or INET_LOCAL:port
      * @return The server socket.
      */
-    public abstract ISocketFactory bind(String port) throws IOException;
+    public abstract ISocketFactory bind(String addr) throws IOException;
 
     /**
      * Create a new HTTP Server.
