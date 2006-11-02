@@ -43,6 +43,7 @@ sed 's/^.*=> //' | sed 's/ *$//; s/^ *//' |
 LANG=C awk '{for(i=1; i<=(split($0, ar, "[;:]")); i++) if(substr(ar[i], 1) != "." && substr(ar[i], 1) != "..") print ar[i] }' |
 head -1`
 /bin/rm -f /tmp/phpinfo.$$
+if test -d $phpini; then phpini="${phpini}/php.ini"; fi
 
 # install generic ini
 make install >install.log || exit 1
@@ -53,10 +54,12 @@ overwrite="no"
 if test X$ini = X; then
 echo ""
 echo "This php installation does not have a config-file-scan-dir,"
-echo "java.ini, java-standalone.ini and java-servlet.ini not installed,"
+echo "java.ini and java-servlet.ini not installed,"
 echo "will use file $phpini instead."
 if test -f ${phpini}; then
    echo -n "Overwrite existing php.ini file (yes/no): "; read overwrite;
+else
+   overwrite="yes"
 fi
 fi
 
@@ -77,13 +80,16 @@ if test X$ini != X; then
  /bin/cp $v java.ini $ini
 else
   if test X$overwrite = "Xyes"; then
-    /bin/rm $v -f "${phpini}.backup"
-    /bin/mv $v "$phpini" "${phpini}.backup"
-    /bin/cat java.ini >"$phpini"
+    if test -f $phpini; then
+      /bin/rm $v -f "${phpini}.backup"
+      /bin/mv $v "$phpini" "${phpini}.backup"
+    fi
+    echo "include_path=/usr/share/pear:." >"$phpini"
+    /bin/cat java.ini >>"$phpini"
   fi
 fi
 
-if test 0 = 1; then
+if test 1 = 1; then
 jre=modules/java
 else
 jre=java
@@ -142,7 +148,8 @@ echo "Generate PHP classes from standard Java classes and install them in"
 echo "the ${phpinc} directory?"
 echo -n "convert java libraries (yes/no): "; read convert;
 if ! test "X$convert" = "Xno"; then
-$jre -Djava.library.path=./modules -Djava.class.path=./modules/JavaBridge.jar -Djava.awt.headless=true -Dphp.java.bridge.base=./modules php.java.bridge.JavaBridge --convert ${phpinc} unsupported/lucene.jar
+$jre -Djava.library.path=./modules -Djava.class.path=./modules/JavaBridge.jar -Djava.awt.headless=true -Dphp.java.bridge.base=./modules php.java.bridge.JavaBridge --convert ${phpinc} unsupported/lucene.jar:unsupported/itext.jar
+/bin/cp java/*.php ${phpinc}/java
 echo ""
 fi
 
@@ -159,15 +166,27 @@ check_document_root() {
     fi
 }
 
+install_sel_module() {
+ (
+	cd security/module; 
+	/usr/bin/make; 
+	/usr/sbin/semodule -i php-java-bridge.pp
+	/usr/bin/chcon -t javabridge_exec_t $ext/RunJavaBridge
+	/usr/bin/chcon -t bin_t $ext/java
+	if test X$javabridgeservice != X; then /usr/bin/chcon -t initrc_exec_t $javabridgeservice; fi
+ )
+}
+
 j2ee=no
 # j2ee/servlet
 /bin/rm $v -f ${ini}/java-servlet.ini 2>/dev/null
+if test -f /etc/selinux/config && test -f /usr/sbin/semodule; then 
+    /usr/sbin/semodule -r javabridge 2>/dev/null
+    /usr/sbin/semodule -r javabridge_tomcat 2>/dev/null
+fi
 if test -f modules/JavaBridge.war; then
     echo ""
     echo "Do you want to start the Servlet/J2EE back-end as a service?";
-    echo "This is the fastest and easiest service, only RedHat Enterprise"
-    echo "or Fedora Linux users should say no here."
-    echo "Say no, if you want to enable Security Enhanced Linux."
     echo "Say no, if you want to start the service automatically with Apache."
     echo "If unsure, say no";
     echo -n "install j2ee back-end (yes/no): "; read j2ee;
@@ -194,8 +213,10 @@ if test -f modules/JavaBridge.war; then
       fi
       if test -f /etc/selinux/config && test -f /usr/sbin/semodule; then 
         if test X$v = X; then
+            install_sel_module >/dev/null
 	    (cd security/module; /usr/bin/make; /usr/sbin/semodule -i php-java-bridge-tomcat.pp) >/dev/null
 	else
+            install_sel_module;
 	    (cd security/module; /usr/bin/make; /usr/sbin/semodule -i php-java-bridge-tomcat.pp) 
 	fi
       fi
@@ -218,101 +239,8 @@ if test -f modules/JavaBridge.war; then
       echo "Browse to http://localhost/JavaBridge to see the test page from the web server."
       echo ""
     fi
-fi
-
-
-# standalone
-/bin/rm $v -f ${ini}/java-standalone.ini 2>/dev/null
-for i in /etc/init.d /etc/rc.d/init.d /etc/rc.d; do
-    if test -f ${i}/php-java-bridge; then
-	/bin/rm $v -f ${i}/php-java-bridge
-	break;
-    fi
-done
-install_sel_module() {
- (
-	cd security/module; 
-	/usr/bin/make; 
-	/usr/sbin/semodule -i php-java-bridge.pp
-	/usr/bin/chcon -t javabridge_exec_t $ext/RunJavaBridge
-	/usr/bin/chcon -t sbin_t /usr/sbin/php-java-bridge
-	if test X$javabridgeservice != X; then /usr/bin/chcon -t initrc_exec_t $javabridgeservice; fi
- )
-}
-if test -f modules/JavaBridge.jar && test "X$j2ee" = "Xno"; then
-    echo ""
-    echo "Do you want to start the standalone back-end from a service script?"
-    echo "Non- RedHat Enterprise or Fedora Linux users probably want to say no here.";
-    echo "Say no, if you want to start the service automatically with Apache."
-    echo "Say no, if this operating system doesn't support SysV service scripts."
-    echo "Say yes, if you want to enable Security Enhanced Linux."
-    echo "If unsure, say no";
-    echo -n "install service script (yes/no): "; read standalone;
-    if test "X$standalone" = "Xyes"; then
-	/bin/cp $v php-java-bridge /usr/sbin
-	/bin/chmod +x /usr/sbin/php-java-bridge
-	if test X$v != X; then echo "Installed /usr/sbin/php-java-bridge"; fi
-	for i in /etc/init.d /etc/rc.d/init.d /etc/rc.d; do
-	if test -d $i; then
-	    /bin/cp $v php-java-bridge.service ${i}/php-java-bridge
-	    /bin/chmod +x ${i}/php-java-bridge
-	    javabridgeservice=${i}/php-java-bridge # used in install_sel_module
-	    if test X$v != X; then echo "Installed service ${i}/php-java-bridge"; fi
-	    break;
-	fi
-	done
-	/sbin/chkconfig --add php-java-bridge &&
-	/sbin/chkconfig php-java-bridge on
-        echo -n "run the back-end with limited rights (yes/no): "; read limited;
-        if test "X$limited" = "Xyes"; then
-          echo -n "run the back-end as user (default: apache): "; read user;
-	  if test X$user = X; then user="apache"; fi
-          echo -n "run the back-end as group (default: apache): "; read group;
-	  if test X$group = X; then group=$user; fi
-          (/bin/chown $user:$group $ext/RunJavaBridge &&
-           /bin/chmod 6111 $ext/RunJavaBridge) || /bin/rm -f $ext/RunJavaBridge
-        else
-	   /bin/chmod 111 $ext/RunJavaBridge || /bin/rm -f $ext/RunJavaBridge
-        fi
-	if test X$ini != X; then 
-	    /bin/cat java-standalone.ini | sed 's|^;java\.java_home[\t =].*$|;java.java_home = |; s|^;java\.java[\t =].*$|java.java = '$jre'|' >${ini}/java-standalone.ini
-	    if test X$v != X; then echo "Installed ${ini}/java-standalone.ini"; fi
-	    
-        else
-           if test X$overwrite = "Xyes"; then
-	       /bin/cat java-standalone.ini | sed 's|^;java\.java_home[\t =].*$|;java.java_home = |; s|^;java\.java[\t =].*$|java.java = '$jre'|' >"$phpini"
-	   fi
-	fi
-	check_document_root || exit 5;
-	if test -d ${document_root} && ! test -e ${document_root}/test.php; then
-          /bin/cp $v test.php ${document_root}/test.php
-	  if test X$v != X; then echo "Installed ${document_root}/test.php."; fi
-	fi
-        echo -n "start now? (yes/no): "; read restart;
-	if test -f /etc/selinux/config && test -f /usr/sbin/semodule; then 
-          if test X$v = X; then
-	    install_sel_module >/dev/null
-	  else
-	    install_sel_module
-	  fi
-        fi
-        if test "X${restart}" != "Xno"; then
-            /sbin/service php-java-bridge restart
-            /sbin/service httpd restart
-        fi
-	echo ""
-	echo "The php-java-bridge service has been installed. It can be started with:"
-	echo ""
-	echo "    service php-java-bridge restart"
-	echo "    service httpd restart"
-	echo ""
-        echo "Browse to http://localhost/test.php to see the test page."
-	echo ""
-    else
-	/bin/rm $v -f /usr/sbin/php-java-bridge $ext/RunJavaBridge
-    fi
 else
-    /bin/rm $v -f /usr/sbin/php-java-bridge $ext/RunJavaBridge
+    install_sel_module;
 fi
 
 echo "PHP/Java Bridge installed."
