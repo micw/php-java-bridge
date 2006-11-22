@@ -26,7 +26,7 @@
 
 // The version number of this pure PHP implementation
 
-define ("JAVA_PEAR_VERSION", "1.0.0");
+define ("JAVA_PEAR_VERSION", "1.1.0");
 
 
 // Deploy JavaBridge.war and re-start the servlet engine or the
@@ -43,13 +43,3 @@ define ("JAVA_SERVLET", "On"); // On ;; On or User
 // overrides this value. The default level is 2.
 
 define ("JAVA_LOG_LEVEL", null); // integer between 0 and 4
-
-// If you want to use log4j "chainsaw" running on localhost, port 4445
-// start log4j viewer, for example with
-//
-// java -classpath log4j.jar org.apache.log4j.chainsaw.Main 
-//
-// set the log file to @127.0.0.1:4445. The default "log file" is the
-// standard error.
-
-define ("JAVA_LOG_FILE", null); // file or @host:port

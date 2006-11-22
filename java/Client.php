@@ -244,8 +244,8 @@ class java_AsyncHandler extends java_Handler {
 class java_Client /* implements IDocHandler */ {
   var $RUNTIME;
 
-  var $RECV_SIZE=8192;
-  var $SEND_SIZE=8192;
+  const RECV_SIZE=8192;
+  const SEND_SIZE=8192;
 
   var $result, $exception;
   var $parser;

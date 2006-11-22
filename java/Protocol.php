@@ -1,6 +1,6 @@
 <?php /*-*- mode: php; tab-width:4 -*-*/
 
-  /* java_Client.php -- PHP/Java Bridge protocol implementation
+  /* java_Protocol.php -- PHP/Java Bridge protocol implementation
 
   Copyright (C) 2006 Jost Boekemeier
 
@@ -38,7 +38,8 @@
   obligated to do so.  If you do not wish to do so, delete this
   exception statement from your version. */
 
-require_once ("Options.php");
+require_once ("java/Options.php");
+require_once ("java/Client.php");
 
 class java_SocketHandler {
   var $protocol, $sock;
@@ -65,14 +66,12 @@ class java_SocketHandler {
 }
 class java_HttpHandler extends java_SocketHandler {
   var $headers;
-  var $RECV_SIZE;
   var $context;
   var $redirect;
   
   function java_HttpHandler($protocol, $sock) {
 	$this->protocol = $protocol;
 	$this->sock = $sock;
-	$this->RECV_SIZE = $protocol->client->RECV_SIZE;
   }
   function getCookies() {
 	$str="";
@@ -103,7 +102,7 @@ class java_HttpHandler extends java_SocketHandler {
   function getSession() {
 	$this->redirect = "X_JAVABRIDGE_REDIRECT: 2\r\n";
   }
-  function getWebapp() {
+  function getWebAppInternal() {
 	// from createHttpHandler
 	$context = $this->protocol->webContext;
 	if(isset($context)) return $context;
@@ -125,8 +124,14 @@ class java_HttpHandler extends java_SocketHandler {
 			array_key_exists('PHP_SELF', $_SERVER) &&
 			array_key_exists('HTTP_HOST', $_SERVER))
 	  ? $_SERVER['PHP_SELF']
-	  : "/JavaBridge/JavaBridge.phpjavabridge";
+	  : null;
   }
+  function getWebApp() {
+	$context = $this->getWebAppInternal();
+	if(is_null($context)) $context = "/JavaBridge/JavaBridge.phpjavabridge";
+	return $context;
+  }
+
   function write($data) {
 
 	$compatibility = $this->protocol->client->RUNTIME["PARSER"]=="NATIVE"
@@ -161,14 +166,12 @@ class java_HttpHandler extends java_SocketHandler {
   function doSetCookie($key, $val, $path) {
 	$path=trim($path);
 
-	$webapp = $this->getWebApp(); if(!$webapp) $path=null;
-
-	if($path[0]!='/') $path='/'.$path;
+	$webapp = $this->getWebAppInternal(); if(!$webapp) $path="/";
 	setcookie($key, $val, 0, $path);
   }
   function parseHeaders() {
 	$this->headers = array();
-	while ($str = trim(fgets($this->sock, $this->RECV_SIZE))) {
+	while ($str = trim(fgets($this->sock, java_Client::RECV_SIZE))) {
 	  if($str[0]=='X') {
 		if(!strncasecmp("X_JAVABRIDGE_CONTEXT_DEFAULT", $str, 28)) {
 		  $this->headers["kontext"]=trim(substr($str, 29));
@@ -210,6 +213,7 @@ class java_HttpHandler extends java_SocketHandler {
 	  $len1 = chr($len&0xFF); $len>>=8;
 	  $len2 = chr($len&0xFF);
 	  $sock = fsockopen($host, $port, $errno, $errstr, 30);
+	  stream_set_timeout($sock, -1);
 	  if (!$sock) die("$errstr ($errno)\n");
 	  $this->protocol->socketHandler=new java_SocketHandler($this->protocol,$sock);
 	  $this->protocol->write("\077${len0}${len1}${len2}${context}");
@@ -291,7 +295,7 @@ class java_Protocol {
     $this->send=null;
   }
   function sendAsyncData() {
-	if(sizeof($this->send)>=$this->client->SEND_SIZE) {
+	if(strlen($this->send)>=java_client::SEND_SIZE*3/4) {
 	  $this->handler->write($this->send);
 	  $this->send=null;
 	}

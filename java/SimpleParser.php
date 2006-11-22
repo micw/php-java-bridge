@@ -38,6 +38,8 @@
   obligated to do so.  If you do not wish to do so, delete this
   exception statement from your version. */
 
+require_once("java/Client.php");
+
 class java_ParserString {
   var $string, $off, $length;
   function toString() {
@@ -124,7 +126,7 @@ class java_SimpleParser {
 	while($this->eor==0) {
 	  if($this->c>=$this->pos) { 
 		
-		$this->buf=$this->handler->read($this->handler->RECV_SIZE); 
+		$this->buf=$this->handler->read(java_Client::RECV_SIZE); 
 		if(is_null($this->buf) || strlen($this->buf) == 0) die("protocol error");
 		$this->pos=strlen($this->buf);
 		if($this->pos==0) break;

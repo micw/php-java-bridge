@@ -38,6 +38,8 @@
   obligated to do so.  If you do not wish to do so, delete this
   exception statement from your version. */
 
+require_once("java/Client.php");
+
 class java_NativeParser {
   var $parser, $handler;
   var $level, $event;
@@ -74,7 +76,7 @@ class java_NativeParser {
 	// PHP stream buffer size, otherwise this function will hang.
 	do {
 	  $this->event = false;
-	  $buf = $this->buf = $this->handler->read($this->handler->RECV_SIZE); 
+	  $buf = $this->buf = $this->handler->read(java_Client::RECV_SIZE); 
 	  $len = strlen($buf);
 	  if(!xml_parse($this->parser, $buf, $len==0)) {
 		die(sprintf("protocol error: %s, %s at col %d",
