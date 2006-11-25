@@ -615,7 +615,16 @@ static void close_connection(proxyenv *env TSRMLS_DC) {
 	  if(!(*env)->is_shared) (*env)->f_close(env);
 	}
 	(*env)->destruct(env);
+
+	/* remove the remaining of the pipe channel. In and out are
+	   usually unlinked and removed immediately, but the channel name
+	   is kept for override redirect */
 	EXT_GLOBAL(unlink_channel)(env);
+	if((*env)->pipe.channel) {
+	  free((*env)->pipe.channel); 
+	  (*env)->pipe.channel = 0;
+	}
+
 	free(*env);
 	free(env);
 	EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);

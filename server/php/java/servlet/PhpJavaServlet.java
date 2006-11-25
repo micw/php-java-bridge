@@ -259,6 +259,7 @@ public class PhpJavaServlet extends HttpServlet {
 	    	sin.close(); sin=null;
 		try {res.flushBuffer(); } catch (Throwable t) {Util.printStackTrace(t);}
 		contextServer.start(channelName);
+		ctx.waitFor();
 	    }
 	    else {
 	        sin.close(); sin=null;

@@ -693,90 +693,7 @@ Build and execution instructions:
   On other systems, such as Windows and Mac OSX, the bridge opens a
   local TCP port on 9167 (MonoBridge.exe) or 9267 (JavaBridge.jar), 9567
   (JavaBridge.war) or 9667 (FastCGI). Please make sure that the ports in
-  the range [9167, ..., 9667] cannot be accessed from the interned.
-
-------------------------------------
-  Loading user classes and libraries
-  ----------------------------------
-
-  Java libraries should either be translated into PEAR classes (see
-  above) or be installed in one of the following directories:
-  /usr/share/java/ext or extension_dir/lib or, for the J2EE/servlet
-  back-end, WEB-INF/lib. Libraries in these directories are
-  automatically loaded by a static loader whenever the JVM starts. --
-  The location of the extension_dir depends on the PHP .ini
-  extension_dir setting, it is usually /usr/lib/php/modules or c:\php.
-
-  Impure java libraries (=libraries which use the java native interface)
-  must be stored in /usr/share/java/ext or in the PHP extension_dir/lib
-  directory. Shared libraries (on windows: "DLL's") required by the
-  impure java libraries must be stored in the java.library.path, which
-  is usually the PHP extension_dir directory.
-
-  Java libraries can also be loaded or re-loaded on demand by a
-  dynamic loader. They should have the following file name:
-  <name>-<version>.jar and be stored in a sub directory of the PHP
-  extension_dir/lib/ directory or in a sub directory of
-  /usr/share/java directory. For example:
-
-    /usr/share/java/batStore/batStore-1.0.jar.
-
-  Java libraries can be created from .class files with the following
-  command:
-
-    jar cvf myLibrary-0.1.jar my/package/*.class 
-
-  The dynamic loader can link java libraries into PHP files at
-  run-time, if the PHP files contain the command:
-
-    java_require("<library1>;<libraryN>");
-
-  Note that <library> can also be a directory containing .jar files.
-
-  For example:
-
-    <?php
-      // process order
-      java_require("j2ee.jar;myProject/myLibrary-0.1.jar");
-
-      $proc = new Java("my.package.InputProcessor", ...);
-      $proc->doSomething($_POST);
-      ...
-    ?>
-
-  Minor upgrades of dynamic-loaded libraries can be installed at
-  run-time. When the dynamic loader detects that the time stamp or the
-  version number of the .jar file has changed, it automatically loads
-  the new version.
-
-  Disadvantages of the dynamic loader:
-
-  * An attempt to load an impure java library immediately throws an
-    UnsatisfiedLinkError.
-
-  * Class loading via the dynamic loader is slower, because it
-    cannot use the global VM class cache.
-
-  * Libraries must be explicitly required by using the php
-    java_require() procedure.
-
-  Disadvantages of the static loader:
-
-  * All java libraries are loaded when the Java- or Mono VM
-    starts. For the PHP CLI component, which usually starts a new VM for
-    each PHP invocation (unless java.hosts or java.socketname is set),
-    this may cause a noticeable delay (a few 100 ms).
-
-  * The static loader can only load libraries which are stored in the
-    /usr/share/java/ext or in the PHP extension_dir/lib directory. Hot
-    deployment is not possible because all classes are loaded when the
-    VM starts.
-
-  It is recommended to store Java libraries which are API stable or
-  use the java native interface into the PHP extension_dir/lib directory
-  or into /usr/share/java/ext. All other libraries can go into a project
-  specific directory within extension_dir/lib/ or /usr/share/java/ and
-  be loaded on-demand.
+  the range [9167, ..., 9667] cannot be accessed from the internet.
 
 ------------------------------------
   Sun java platform issues
@@ -813,6 +730,163 @@ Build and execution instructions:
     * the library may only work within a J2EE environment from a
       certain vendor, for example the WebSphere Application server or
       the Sun Java Application server.
+
+------------------------------------
+  Loading user classes and libraries
+  ----------------------------------
+
+  It is recommended to copy all Java libraries and Java classes
+  into the WEB-INF/lib or WEB-INF/classes directories within
+  JavaBridge.war and to deploy JavaBridge.war into your J2EE server
+  or servlet engine. Unlike .NET or Mono the SUN Java implementation
+  doesn't integrate well with the host operating system. A Java
+  "operating environment" on top of the host operating system is
+  needed to hidesthe problems connected with different class versions
+  or different Java class loaders.
+
+  If you don't want to install an J2EE application server or servlet
+  engine, read on.
+  
+  The traditional way to add libraries to the Java VM is to modify the
+  CLASSPATH, reflected by the java.classpath setting:
+
+    java.classpath="/tmp/JavaBridge.jar:/tmp/myClasses.jar"
+
+  This solution is not recommended. First of all this is not portable,
+  Unix uses a ":" while Windows uses ";" and the php.ini parser
+  interprets an unquoted semi-colon as the start of a comment line.
+
+  Since Java 1.3 the Java VM support an module directory per VM, usually
+  located in $JAVA_HOME/jre/lib/ext. The system property "java.ext.dirs"
+   
+    $Sys = new JavaClass("java.lang.System");
+    echo $Sys->getProperty("java.ext.dirs");
+
+  points to this directory. The problem with this solution is that
+  the repository is not shared.
+
+  The free Java world (GNU Java, GCC, classpath, ...) have
+  introduced a shared, global repository for all Java implementations as
+  well as mechanisms how to manage the libraries, see jpackage.org for
+  details. However, the upcoming Sun Java 1.6 implementation ignores this
+  solution and introduces a "global" repository located in
+  /usr/java/packages/lib/ext. The problem with the Sun solution is that
+  nobody uses it.
+
+  Since the PHP/Java Bridge cannot force users to install a J2EE
+  server or servlet engine and PHP users usually expect practical
+  solutions, the PHP/Java Bridge contains a static loader as well as a
+  dynamic loader. The static loader loads all Java libraries from
+  /usr/share/java/ext and /usr/java/package/lib/ext and from the PHP
+  extension_dir/lib directory. The dynamic loader can load Java
+  libraries at run-time, either from the PHP extension_dir/lib or from
+  the /usr/share/java repository or from a specified directory:
+  
+    java_require("c:/foo.jar");
+    $foo = new Java("Foo");
+
+  Java libraries can be created from .class files with the following
+  command:
+
+    jar cvf myLibrary-0.1.jar my/package/*.class 
+
+  The dynamic loader can link java libraries into PHP files at
+  run-time, if the PHP files contain the command:
+
+    java_require("<library1>;<libraryN>");
+
+  Note that <library> can also be a directory containing .jar files.
+
+  For example:
+
+    <?php
+      // process order
+      java_require("j2ee.jar;myProject/myLibrary-0.1.jar");
+
+      $proc = new Java("my.package.InputProcessor", ...);
+      $proc->doSomething($_POST);
+      ...
+    ?>
+
+  Minor upgrades of dynamic-loaded libraries can be installed at
+  run-time. When the dynamic loader detects that the time stamp or the
+  version number of the .jar file has changed, it automatically loads
+  the new version.
+
+
+  Disadvantages of the J2EE server or servlet engine:
+
+  <none>
+
+
+  Disadvantages of the PHP/Java Bridge static- and dynamic loader:
+
+  * The naive method to load two interconnected libraries doesn't work as
+    expected:
+
+    java_require("foo.jar"); java_require("bar.jar");
+    $foo = new Java("foo");
+    $bar = $foo->getBar(); // ERROR: Unsatisfied link error
+
+    The above code doesn't work because classes loaded from foo.jar cannot
+    see the classes from bar.jar, because both were loaded via two isolated
+    class loaders. 
+
+  * Users who are unaware of the Sun Java class loading issues may
+    ignore it. For example the following code doesn't use the dynamic
+    loader and therefore doesn't work as expected:
+
+    java_require("mm.mysql-2.0.4-bin.jar");
+    $C = new JavaClass("java.lang.Class");
+    $Class = $C->forName("org.gjt.mm.mysql.Driver"); // ERROR: ClassNotFound
+   
+    doesn't work because $Class->forName() loads the driver using the
+    default ("bootstrap") loader, which has no access to the loader of
+    the mysql library. The above code should have been written as 
+      
+    java_require("mm.mysql-2.0.4-bin.jar");
+    $C = new JavaClass("java.lang.Class");
+    $Thread = new JavaClass("java.lang.Thread");
+    $t = $Thread->currentThread();
+    // now load the driver from the dynamic class loader
+    $C->forName("org.gjt.mm.mysql.Driver", false, $t->getContextClassLoader());
+    $C->newInstance();
+
+    or simply
+
+    java_require("mm.mysql-2.0.4-bin.jar");
+    new Java("org.gjt.mm.mysql.Driver");
+
+
+  Disadvantages of the PHP/Java Bridge dynamic loader:
+
+  * An attempt to load an impure java library immediately throws an
+    UnsatisfiedLinkError.
+
+  * Class loading via the dynamic loader is slower, because it
+    cannot use the global VM class cache.
+
+  * Libraries must be explicitly required by using the php
+    java_require() procedure.
+
+
+  Disadvantages of the static loader:
+
+  * All java libraries are loaded when the Java- or Mono VM
+    starts. For the PHP CLI component, which usually starts a new VM for
+    each PHP invocation (unless java.hosts or java.socketname is set),
+    this may cause a noticeable delay (a few 100 ms).
+
+  * The static loader can only load libraries which are stored in the
+    /usr/share/java/ext or in the PHP extension_dir/lib directory. Hot
+    deployment is not possible because all classes are loaded when the
+    VM starts.
+
+  It is recommended to store Java libraries which are API stable or
+  use the java native interface into the PHP extension_dir/lib directory
+  or into /usr/share/java/ext. All other libraries can go into a project
+  specific directory within extension_dir/lib/ or /usr/share/java/ and
+  be loaded on-demand.
 
 ------------------------------------
   PHP issues

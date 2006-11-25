@@ -59,6 +59,7 @@
 
 #include "java_bridge.h"
 #include "api.h"
+#include "php_java_snprintf.h"
 
 #ifdef ZEND_ENGINE_2
 #include "zend_interfaces.h"
@@ -460,7 +461,7 @@ EXT_FUNCTION(EXT_GLOBAL(cast))
   case 'S': case 's': tval = IS_STRING; break;
   case 'B': case 'b': tval = IS_BOOL; break;
   case 'L': case 'l': case 'I': case 'i': tval = IS_LONG; break;
-  case 'D': case 'd': case 'F': case 'f': tval = IS_DOUBLE;
+  case 'D': case 'd': case 'F': case 'f': tval = IS_DOUBLE; break;
   case 'A': case 'a': tval = IS_ARRAY; break;
   case 'N': case 'n': tval = IS_NULL; break;
   case 'O': case 'o': tval = IS_OBJECT; break;
@@ -1123,7 +1124,7 @@ EXT_FUNCTION(EXT_GLOBAL(construct_class))
  *
  * class JPersistenceAdapter extends JPersistenceProxy {
  *  function __get($arg)       { if($this->java) return $this->java->__get($arg); }
- *  function __put($key, $val) { if($this->java) return $this->java->__put($key, $val); }
+ *  function __set($key, $val) { if($this->java) return $this->java->__set($key, $val); }
  *  function __call($m, $a)    { if($this->java) return $this->java->__call($m,$a); }
  *  function __toString()      { if($this->java) return $this->java->__toString(); }
  * }
@@ -1210,7 +1211,7 @@ EXT_METHOD(EXT, __set)
  *
  * class JSessionAdapter extends JSessionProxy {
  *  function __get($arg)       { if($this->java) return $this->java->__get($arg); }
- *  function __put($key, $val) { if($this->java) return $this->java->__put($key, $val); }
+ *  function __set($key, $val) { if($this->java) return $this->java->__set($key, $val); }
  *  function __call($m, $a)    { if($this->java) return $this->java->__call($m,$a); }
  *  function __toString()      { if($this->java) return $this->java->__toString(); }
  * }
@@ -1933,8 +1934,17 @@ PHP_MINFO_FUNCTION(EXT)
   if(EXT_GLOBAL(option_set_by_user) (U_HOSTS, EXT_GLOBAL(ini_user)))  
 	php_info_print_table_row(2, EXT_NAME()/**/".hosts", JG(hosts));
 #if EXTENSION == JAVA
-  if(EXT_GLOBAL(option_set_by_user) (U_SERVLET, EXT_GLOBAL(ini_user)))  
-	php_info_print_table_row(2, EXT_NAME()/**/".servlet", JG(servlet)?JG(servlet):off);
+  if(EXT_GLOBAL(option_set_by_user) (U_SERVLET, EXT_GLOBAL(ini_user))) {
+	char buf[255], *url;
+	if(JG(servlet)) {
+	  EXT_GLOBAL(snprintf)(buf, sizeof buf, "http%s://%s:%s", 
+						   (EXT_GLOBAL(ini_user) & U_SECURE) ?"s":"", server, JG(servlet));
+	  url = buf;
+	} else {
+	  url = off;
+	}
+	php_info_print_table_row(2, EXT_NAME()/**/".servlet", url);
+  }
 #endif
   php_info_print_table_row(2, EXT_NAME()/**/".persistent_connections", EXT_GLOBAL(cfg)->persistent_connections?on:off);
   if(!server || is_local) {

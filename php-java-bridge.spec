@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 3.1.8
+%define version 3.2.1
 %define release 1
 %define PHP_MAJOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | sed 's/\\\..*$//')
 %define PHP_MINOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | LANG=C cut -d. -f2)
@@ -286,6 +286,8 @@ fi
 %files -f filelist
 %defattr(-,root,root)
 %attr(6111,apache,apache) %{_libdir}/php/modules/RunJavaBridge
+%attr(731,root,root) %{_libdir}/php/modules/JavaBridge.jar
+%attr(731,root,root) %{shared_java}/JavaBridge.jar
 %doc README COPYING CREDITS NEWS test.php INSTALL.LINUX security 
 
 %files tomcat -f filelist-tomcat

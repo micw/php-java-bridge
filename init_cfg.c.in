@@ -122,7 +122,6 @@ static void override_ini_from_cgi(void) {
   char *hosts;
   EXT_GLOBAL(cfg)->is_cgi_servlet=0;
   EXT_GLOBAL(cfg)->is_fcgi_servlet=0;
-  EXT_GLOBAL(cfg)->is_secure=0;
   
   if ((hosts=getenv("X_JAVABRIDGE_OVERRIDE_HOSTS"))) {
 	switch(*hosts) {

@@ -30,7 +30,7 @@ Build and execution instructions:
    -------------------------------
 
   To permanently activate the extension for all users please add the
-  following lines to the php.ini or add a file java.ini to the
+  following lines to the php.ini or add a file mono.ini to the
   directory that contains the PHP module descriptions (usually
   /etc/php.d/) with the following content:
 
@@ -48,10 +48,10 @@ Build and execution instructions:
   You can start the bridge as a sub-process of apache. Disable
   mono.socketname, and mono.hosts. For example:
 
-          extension = java.so
-          [java]
-          java.log_level="3"
-          java.log_file="/var/log/php-mono-bridge.log"
+          extension = mono.so
+          [mono]
+          mono.log_level="3"
+          mono.log_file="/var/log/php-mono-bridge.log"
 
   Re-start apache and check if apache has started mono as a
   sub-process.  For example with the commands:

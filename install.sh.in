@@ -123,6 +123,7 @@ if test -f modules/php-script.jar; then
 	/bin/cp $v modules/JavaBridge.jar \
 	      modules/php-script.jar \
 	      modules/script-api.jar /usr/share/java
+        chmod +x /usr/share/java/JavaBridge.jar
 
 	/bin/mkdir -p /usr/java/packages/lib/ext 2>/dev/null
 

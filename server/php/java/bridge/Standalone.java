@@ -32,7 +32,7 @@ import java.io.IOException;
  * CreateInstance, GetSetProp and Invoke requests. Supported protocol
  * modes are INET (listens on all interfaces), INET_LOCAL (loopback
  * only), LOCAL (uses a local, invisible communication channel,
- * requires natcJavaBridge.so) , SERVLET and SERVLET_LOCAL 
+ * requires natcJavaBridge.so), SERVLET and SERVLET_LOCAL 
  * (starts the built-in servlet engine listening on all interfaces or loopback).  
  * <p> Example:<br> <code> java
  * -Djava.awt.headless=true -jar JavaBridge.jar INET_LOCAL:9676 5
@@ -79,18 +79,18 @@ public class Standalone {
 	System.err.println("Example: MonoBridge.exe");
 	System.err.println("Example: MonoBridge.exe INET_LOCAL:0 3 MonoBridge.log");
     }
-    private static void javaUsage() {
+    protected void javaUsage() {
 	System.err.println("PHP/Java Bridge version "+Util.VERSION);
 	System.err.println("Usage: java -jar JavaBridge.jar [SOCKETNAME LOGLEVEL LOGFILE]");
 	System.err.println("Usage: java -jar JavaBridge.jar --convert PHP_INCLUDE_DIR [JARFILES]");
-	System.err.println("[SOCKETNAME] is one of LOCAL, INET_LOCAL, INET, SERVLET");
+	System.err.println("SOCKETNAME is one of LOCAL, INET_LOCAL, INET, SERVLET_LOCAL, SERVLET");
 	System.err.println("Example: java -jar JavaBridge.jar");
 	System.err.println("Example: java -jar JavaBridge.jar LOCAL:/tmp/javabridge_native.socket 3 /var/log/php-java-bridge.log");
 	System.err.println("Example: java -Djava.awt.headless=\"true\" -Dphp.java.bridge.threads=50 -jar JavaBridge.jar INET:9267 3 JavaBridge.log");
-	System.err.println("Example: java -Dphp.java.bridge.promiscuous=true -jar JavaBridge.jar SERVLET:8080 3 JavaBridge.log");
+	System.err.println("Example: java -jar JavaBridge.jar SERVLET:8080 3 JavaBridge.log");
 	System.err.println("Example: java -jar JavaBridge.jar --convert /usr/share/pear lucene.jar ...");
     }
-    private static void usage() {
+    protected void usage() {
 	if(Util.IS_MONO)
 	    monoUsage();
 	else
@@ -99,7 +99,7 @@ public class Standalone {
 	System.exit(1);
     }
 
-    private static void checkOption(String s[]) {
+    protected void checkOption(String s[]) {
 	if("--convert".equals(s[0])) {
 	    try {
 		StringBuffer buf=new StringBuffer();
@@ -132,7 +132,7 @@ public class Standalone {
      * for the channel name.
      * @param s an array of [socketname, level, logFile]
      */
-    public static void init(String s[]) {
+    protected void init(String s[]) {
 	String sockname=null;
 	int logLevel = -1;
 	if(s.length>3) checkOption(s);
@@ -191,7 +191,7 @@ public class Standalone {
 	    System.loadLibrary("natcJavaBridge");
 	} catch (Throwable t) {/*ignore*/}
 	try {
-	    init(s);
+	    (new Standalone()).init(s);
 	} catch (Throwable t) {
 	    t.printStackTrace();
 	    System.exit(9);

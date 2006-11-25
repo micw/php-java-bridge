@@ -194,9 +194,6 @@ struct cfg {
   /* set to 1 if the back-end uses TCP sockets, 0 otherwise */
   short java_socket_inet;
 
-  /* set to 1 if SSL is used */
-  short is_secure;
-
 #ifndef __MINGW32__
   pid_t pid; 						/* the pid of the group leader or 0 */
 #endif

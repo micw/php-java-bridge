@@ -335,6 +335,7 @@ JNIEXPORT jint JNICALL Java_php_java_bridge_JavaBridge_accept
   return socket;
 }
 
+#ifdef HAVE_JVM
 JNINativeMethod javabridge[]={
   {"startNative", "(IILjava/lang/String;)I", Java_php_java_bridge_JavaBridge_startNative},
   {"openLog", "(Ljava/lang/String;)Z", Java_php_java_bridge_JavaBridge_openLog},
@@ -440,3 +441,4 @@ void java_bridge_main_gcj(int argc, char**_argv)
   }
   java_bridge_main(N_SARGS, argv);
 }
+#endif /* HAVE_JVM */

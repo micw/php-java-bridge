@@ -289,7 +289,7 @@ public class JavaBridge implements Runnable {
      * @param s an array of [socketname, level, logFile]
      */
     public static void init(String s[]) {
-        Standalone.init(s);
+        (new Standalone()).init(s);
     }
     // called by Standalone.init()
     static void initLog(String socket, int logLevel, String s[]) {
@@ -298,29 +298,6 @@ public class JavaBridge implements Runnable {
 	if(logLevel==-1) logLevel = Util.DEFAULT_LOG_LEVEL;
 	Util.logLevel = logLevel;
 
-	// show our additional ext dirs
-	if(Util.DEFAULT_EXT_DIRS.length>0) { 
-	    try {
-		StringBuffer buf = new StringBuffer();
-		String ext = System.getProperty("java.ext.dirs");
-		if(ext!=null) { buf.append(ext);  buf.append(File.pathSeparator); }
-		for(int i=0; i<Util.DEFAULT_EXT_DIRS.length; i++) {
-		    buf.append(Util.DEFAULT_EXT_DIRS[i]);
-		    if(i+1!=Util.DEFAULT_EXT_DIRS.length)  buf.append(File.pathSeparator);
-		}
-		// PR1502480
-		ext = System.getProperty("php.java.bridge.base");
-		if(ext!=null && ext.length()>0) {
-		    buf.append(File.pathSeparator);
-		    buf.append(ext);
-		    buf.append(File.pathSeparator);
-		    buf.append(ext);
-		    if(!ext.endsWith(File.separator)) buf.append(File.separator);
-		    buf.append("lib");
-		}
-		System.setProperty("java.ext.dirs", buf.toString());
-	    } catch (Throwable t) {/*ignore*/}
-        }
 	try {
 	    try {
 		rawLogFile=logFile=s.length>0?"":Util.DEFAULT_LOG_FILE;
@@ -346,6 +323,7 @@ public class JavaBridge implements Runnable {
 	    Util.logMessage(Util.EXTENSION_NAME + " logFile         : " + rawLogFile);
 	    Util.logMessage(Util.EXTENSION_NAME + " default logLevel: " + Util.logLevel);
 	    Util.logMessage(Util.EXTENSION_NAME + " socket          : " + socket);
+	    Util.logMessage(Util.EXTENSION_NAME + " library path    : " + System.getProperty("java.ext.dirs"));
 	} catch (Throwable t) {
 	    throw new RuntimeException(t);
 	}

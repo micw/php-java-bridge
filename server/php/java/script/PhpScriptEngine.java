@@ -193,6 +193,10 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
 	
 	return invoke(scriptClosure, methodName, args);
     }
+    public Object invokeFunction(String methodName, Object[] args)
+	throws ScriptException {
+	return invoke(methodName, args);
+    }
 
     /* (non-Javadoc)
      * @see javax.script.Invocable#call(java.lang.String, java.lang.Object, java.lang.Object[])
@@ -210,6 +214,13 @@ public class PhpScriptEngine extends AbstractScriptEngine implements Invocable {
 	    Util.printStackTrace(e);
 	    throw new PhpScriptException("invoke failed", new Exception(e));
 	}
+    }
+    /* (non-Javadoc)
+     * @see javax.script.Invocable#call(java.lang.String, java.lang.Object, java.lang.Object[])
+     */
+    public Object invokeMethod(Object thiz, String methodName, Object[] args)
+	throws ScriptException, RuntimeException {
+	return invoke(thiz, methodName, args);
     }
 
     /* (non-Javadoc)

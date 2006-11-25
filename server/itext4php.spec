@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 1.0.0
+%define version 1.1.0
 %define release 1
 Name: itext4php
 Summary: The itext library for the PHP Hypertext Preprocessor

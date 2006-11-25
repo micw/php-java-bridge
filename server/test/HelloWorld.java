@@ -26,12 +26,12 @@ public class HelloWorld {
 	    String s = "<?php extension_loaded('java')||@dl('java.so')||@dl('php_java.dll'); echo 'HelloWorld!\n'; java_context()->call(java_closure()) ||die('oops!');?>";
 
 	    engine.eval(new StringReader(s));
-	    String name = (String) ((Invocable)engine).invoke("java_get_server_name", new Object[]{});
+	    String name = (String) ((Invocable)engine).invokeFunction("java_get_server_name", new Object[]{});
 	    System.out.println("PHP/Java communication port: " + name);
 	    
 	    for(int i=0; i<2000; i++) {
 		    engine.eval(new StringReader(s));
-		    name = (String) ((Invocable)engine).invoke("java_get_server_name", new Object[]{});
+		    name = (String) ((Invocable)engine).invokeFunction("java_get_server_name", new Object[]{});
 		    if(name==null) { System.err.println("ERROR"); System.exit(1); }
 
 	    }

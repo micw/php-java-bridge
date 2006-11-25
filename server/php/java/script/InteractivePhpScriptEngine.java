@@ -79,7 +79,7 @@ public class InteractivePhpScriptEngine extends PhpScriptEngine {
 		       "global $javabridge_ignored_keys;\n" +
 		       "ob_start();\n" +
 		       restoreState +
-		       "eval(\"$javabridge_param\");\n" +
+		       "eval(java_cast($javabridge_param,\"s\"));\n" +
 		       saveState +
 		       "$javabridge_retval = ob_get_contents();\n" +
 		       "ob_end_clean();\n" +
@@ -91,7 +91,7 @@ public class InteractivePhpScriptEngine extends PhpScriptEngine {
 	}
 	script=script.trim() + ";";
 	Object o = null;
-	try {o=((Invocable)this).invoke("javabridge_eval", new Object[]{script});}catch(NoSuchMethodException ex){/*ignore*/};
+	try {o=((Invocable)this).invokeFunction("javabridge_eval", new Object[]{script});}catch(NoSuchMethodException ex){/*ignore*/};
 	return o;
     }
 }

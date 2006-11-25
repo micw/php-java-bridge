@@ -81,7 +81,7 @@ public class Script
      */
     private Object call(String name, Object[] args, String script) throws UnknownHostException, MalformedURLException, IOException {
 	try {
-	    return ((Invocable)((PhpFacesContext)FacesContext.getCurrentInstance()).getScriptEngine(this, new URL(script))).invoke(name, args); 
+	    return ((Invocable)((PhpFacesContext)FacesContext.getCurrentInstance()).getScriptEngine(this, new URL(script))).invokeFunction(name, args); 
 	} catch (ScriptException e1) {
 	    Util.printStackTrace(e1);
 	    return null;		

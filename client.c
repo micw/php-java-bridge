@@ -531,8 +531,8 @@ static void remove_pipe(proxyenv*env) {
   struct pipe *pipe = &((*env)->pipe);
   if((*env)->is_shared) return;
 
-  close(pipe->lockfile); unlink(pipe->channel);
   unlink(pipe->in); unlink(pipe->out);
+  close(pipe->lockfile); unlink(pipe->channel);
 }
 /**
  * Server agreed that we can re-use the connection for a different web
@@ -1095,13 +1095,13 @@ static void init_channel(proxyenv*env) {
  */
 void EXT_GLOBAL(unlink_channel)(proxyenv*env) {
   char *channel = (*env)->pipe.channel;
-  if(!channel) return;
+  if(!channel || !(*env)->pipe.in) return;
 
   remove_pipe(env);
 
-  free(channel); free((*env)->pipe.in); free((*env)->pipe.out);
+  free((*env)->pipe.in); free((*env)->pipe.out);
 
-  (*env)->pipe.in = (*env)->pipe.out = (*env)->pipe.channel = 0;
+  (*env)->pipe.in = (*env)->pipe.out = 0;
 }
 #endif
 const char *EXT_GLOBAL(get_channel) (proxyenv*env) {

@@ -21,7 +21,7 @@ public interface Invocable {
      * @throws ScriptException if the invocation of the scripting procedure
      *         fails
 	 */
-    public Object invoke(String methodName, Object[] args)
+    public Object invokeFunction(String methodName, Object[] args)
             throws ScriptException, NoSuchMethodException;
     
     /**
@@ -36,7 +36,7 @@ public interface Invocable {
 	 * @throws ScriptException if the invocation of the procedure 
      *         fails
 	 */
-	public Object invoke(Object thiz,String methodName,Object[] args) throws 
+	public Object invokeMethod(Object thiz,String methodName,Object[] args) throws 
             ScriptException, NoSuchMethodException;
 	
     /**

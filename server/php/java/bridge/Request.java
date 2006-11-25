@@ -46,35 +46,13 @@ public final class Request implements IDocHandler {
     private JavaBridge defaultBridge, bridge;
     protected static final class IntegerComparator implements Comparator {
       public int compare(Object arg0, Object arg1) {
-	  int k0 = ((PhpArrayKey)arg0).key;
-	  int k1 = ((PhpArrayKey)arg1).key;
+	  int k0 = ((Integer)arg0).intValue();
+	  int k1 = ((Integer)arg1).intValue();
 	  if(k0 < k1) return -1; else if(k0 > k1) return 1;
 	  return 0;
       }
     }
     protected static final IntegerComparator PHP_ARRAY_KEY_COMPARATOR = new IntegerComparator();
-    protected static final class PhpArrayKey extends Number {
-        private static final long serialVersionUID = 2816799824753952383L;
-	protected int key;
-        public PhpArrayKey(int key) {
-            this.key = key;
-        }
-	public int intValue() {
-	  return key;
-	}
-	public long longValue() {
-	  return key;
-	}
-	public float floatValue() {
-	  return key;
-	}
-	public double doubleValue() {
-	  return key;
-	}
-	public String toString() {
-	    return String.valueOf(key);
-	}
-    }
     protected static final class PhpArray extends AbstractMap { // for PHP's array()
 	private static final long serialVersionUID = 3905804162838115892L;
 	private TreeMap t = new TreeMap(PHP_ARRAY_KEY_COMPARATOR);
@@ -82,7 +60,7 @@ public final class Request implements IDocHandler {
 	public Object put(Object key, Object value) {
 	    if(m!=null) return m.put(key, value);
 	    try {
-	        return t.put((PhpArrayKey)key, value);
+	        return t.put((Integer)key, value);
 	    } catch (ClassCastException e) {
 	        m = new HashMap(t);
 	        t = null;
@@ -97,7 +75,7 @@ public final class Request implements IDocHandler {
 	public int arraySize() {
 	    if(t!=null) {
 		if(t.size()==0) return 0;
-		return 1+((PhpArrayKey)t.lastKey()).intValue();
+		return 1+((Integer)t.lastKey()).intValue();
 	    }
 	    throw new IllegalArgumentException("The passed PHP \"array\" is not a sequence but a dictionary");
 	}
@@ -311,7 +289,7 @@ public final class Request implements IDocHandler {
 		    ht.put(key, val);
 		}
 		else {
-		    ht.put(new PhpArrayKey(count++), val);
+		    ht.put(new Integer(count++), val);
 		}
 
         }
@@ -443,7 +421,7 @@ public final class Request implements IDocHandler {
 		if(st[0].string[st[0].off]=='S')
 		    arg.key = st[1].getCachedStringValue();
 		else {
-		   arg.key = new PhpArrayKey(st[1].getIntValue());
+		   arg.key = new Integer(st[1].getIntValue());
 		}
 	    } else // array
 		arg.key=null;

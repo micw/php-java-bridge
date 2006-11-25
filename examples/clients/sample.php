@@ -5,7 +5,7 @@ class Protocol {
   const Ps="<S v=\"%s\"/>", Pl="<L v=\"%d\" p=\"%s\"/>", Po="<O v=\"%d\"/>";
   var $c;
   
-  function __construct() { $this->c=fsockopen("192.168.5.203",9267); fwrite($this->c, "\177@"); }
+  function __construct() { $this->c=fsockopen("127.0.0.1",9267); fwrite($this->c, "\177@"); }
 
   function createBegin($s) { fwrite($this->c, sprintf(self::Pc, $s)); }
   function createEnd() { fwrite($this->c, self::PC); }
@@ -22,7 +22,7 @@ class Protocol {
     else $this->writeObject($s);
   }
 
-  function getResult() { $res = fread($this->c, 8192); $ar = sscanf($res, '%s v="%[^"]"'); var_dump($ar); return $ar[1]; }
+  function getResult() { $res = fread($this->c, 8192); $ar = sscanf($res, '%s v="%[^"]"'); return $ar[1]; }
 }
 
 function getProtocol() { static $protocol; if(!isset($protocol)) $protocol=new Protocol(); return $protocol; }

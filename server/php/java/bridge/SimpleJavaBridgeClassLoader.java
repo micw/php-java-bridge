@@ -73,7 +73,8 @@ public class SimpleJavaBridgeClassLoader {
         }
         // PR1502480
         String ext = System.getProperty("php.java.bridge.base");
-        if(ext!=null && ext.length()>0) {
+	if(ext==null || ext.length()==0) ext = System.getProperty("user.home");
+	if(ext!=null && ext.length()>0) {
             StringBuffer buf = new StringBuffer(ext);
             if(!ext.endsWith(File.separator)) buf.append(File.separator);
             File f = new File(buf.toString());

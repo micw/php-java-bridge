@@ -24,7 +24,7 @@ public class HelloWorld2 {
 
 	    engine.put("key", "testVal");
 	    engine.eval(new URLReader(new URL("http://192.168.5.203:80/HelloWorld.php")));
-	    System.out.println(((Invocable)engine).invoke("sayHello", new Object[]{}));
+	    System.out.println(((Invocable)engine).invokeFunction("sayHello", new Object[]{}));
 
 	    engine.release();
 	} catch (Exception e) {
