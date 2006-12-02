@@ -5,3 +5,4 @@
 
 @EXTENSION_DIR@/RunJavaBridge -- gen_context(system_u:object_r:javabridge_exec_t,s0)
 @EXTENSION_DIR@/java          -- gen_context(system_u:object_r:bin_t,s0)
+

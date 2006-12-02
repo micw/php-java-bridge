@@ -126,9 +126,9 @@ Build and execution instructions:
    -------------------------------
 
   The bridge consists of two parts, the "front-end", usually Apache,
-  PHP and our PHP java extension, and a "back-end". The following
-  describes how to start the back-end (if necessary) and how to configure
-  PHP so that it connects to the back-end.
+  PHP and our PHP java extension, and a "back end". The following
+  describes how to start the back end (if necessary) and how to configure
+  PHP so that it connects to the back end.
 
   To permanently activate the extension for all users, please add the
   following lines to the php.ini. Or add a file java.ini to the
@@ -138,14 +138,14 @@ Build and execution instructions:
   extension = java.so ;; php_java.dll on windows
 
 
-  To direct the extension to a specific back-end, add the following 
+  To direct the extension to a specific back end, add the following 
   options to the global php.ini file. Or add a file java-<backend>.ini,
   e.g. "java-tomcat.ini" or "java-standalone.ini" to the directory that
   contains the PHP module descriptions, usually /etc/php.d/, with the
   following content. Options:
 
   1) java.socketname, java.hosts and java.servlet not set: local
-  back-end which starts automatically (default). Example #1:
+  back end which starts automatically (default). Example #1:
 
   ;; empty
 
@@ -160,13 +160,13 @@ Build and execution instructions:
   java.log_level = 2
  
  
-  2) java.socketname set: local system back-end started by the
+  2) java.socketname set: local system back end started by the
   system "php-java-bridge" service script. Deprecated: You need a
   service script for your operating system.
  
  
-  3) java.hosts set: external back-end(s) on different server
-  machines. The back-ends can be started on these servers with e.g.:
+  3) java.hosts set: external back end(s) on different server
+  machines. The back ends can be started on these servers with e.g.:
   java -jar JavaBridge.jar. Example:
  
   [java]
@@ -175,13 +175,13 @@ Build and execution instructions:
  
  
   4) java.hosts=127.0.0.1:<port> and java.servlet=User: user
-  back-end(s) deployed into a local j2ee application server with a shared
+  back end(s) deployed into a local j2ee application server with a shared
   document root directory (see DocumentRoot setting in the
-  httpd.conf). Several JavaBridge back-ends, e.g. "MyBridge.war" or
+  httpd.conf). Several JavaBridge back ends, e.g. "MyBridge.war" or
   "Bridge31.war", can coexist in the same j2ee server. If the Apache or
   IIS server uses the same document root as the j2ee server, the
   front-end automatically connects to the associated "MyBridge" or
-  "Bridge31" back-end. Example:
+  "Bridge31" back end. Example:
  
   [java]
   java.hosts     = 127.0.0.1:8080
@@ -189,7 +189,7 @@ Build and execution instructions:
   java.log_level = 3
  
  
-  5) java.hosts set and java.servlet=On: "JavaBridge.war" back-end
+  5) java.hosts set and java.servlet=On: "JavaBridge.war" back end
   deployed into a j2ee application server or servlet engine. Example:
  
   [java]
@@ -202,9 +202,9 @@ Build and execution instructions:
   without Apache or IIS front-end. A PHP server can be started with the
   command (e.g.): X_JAVABRIDGE_OVERRIDE_HOSTS="/" PHP_FCGI_CHILDREN="20"
   PHP_FCGI_MAX_REQUESTS="5000" php-cgi -c java.ini -b 127.0.0.1:9667. 
-  php-cgi starts automatically if no PHP server is listening on port 9667.
+  php-cgi starts automatically, if no PHP server is listening on port 9667.
   Usually the bridge uses the official HTTP port to connect PHP with the 
-  server. However, when no official HTTP port exists or if the init-param
+  server. However, when no official HTTP port exists, or if the init-param
   "override_hosts" is switched off in the servlet's WEB-INF/web.xml, the
   the bridge can use a dedicated local port# to connect PHP with Java:
   
@@ -225,14 +225,14 @@ Build and execution instructions:
 
 
   After you have created the correct .ini entries, start the
-  back-end. Example for option:
+  back end. Example for option:
 
-  #1: Not needed, back-end starts automatically
+  #1: Not needed, back end starts automatically
   #2: <depends on the operating system>
   #3: java -jar JavaBridge.jar INET:9267 3 php-java-bridge.log
   #4: service tomcat5 restart
   #5: service tomcat5 restart
-  #6: Not needed, back-end is the calling VM 
+  #6: Not needed, back end is the calling VM 
 
   The Linux RPM binaries use the following options:
 
@@ -253,7 +253,7 @@ Build and execution instructions:
   java.java_home = <system dependent path to the java install dir>
   java.java      = <system dependent path to the java binary>
   java.socketname= <local ("unix domain") communication channel>
-  java.hosts     = <add. back-ends e.g.: server1:9267 server2:9268>
+  java.hosts     = <add. back ends e.g.: server1:9267 server2:9268>
   java.servlet   = <On/Off/User>, see NEWS for version 3.0.2
   java.wrapper   = Reserved for OS vendor
 
@@ -311,89 +311,6 @@ Build and execution instructions:
   ?>
 
 ------------------------------------
-  Sample settings for Apache/Tomcat
-  ---------------------------------
-
-  Assuming that tomcat is installed (e.g. in /opt/tomcat5),
-  MyJavaBridge.war is deployed (e.g. in /opt/tomcat5/webapps), java.so
-  (or php_java.dll) is installed in the php modules directory (e.g. in
-  /usr/lib/php/modules/), mod_jk and php5 are installed in the apache modules
-  directory (e.g. in /usr/lib/httpd/modules/), we recommend following
-  settings:
-
-
-  The following settings in httpd.conf direct all .jsp requests to the
-  tomcat servlet engine and all .php requests to the php module:
-
-    httpd.conf:
-    ----------
-    LoadModule php5_module        modules/libphp5.so
-    LoadModule jk_module          modules/mod_jk.so
-
-    AddType application/x-httpd-php .php
-    JkAutoAlias /opt/tomcat5/webapps
-    JkMount /MyJavaBridge/*.jsp ajp13
-    JkMount /MyJavaBridge/ ajp13
-
-
-  The following settings in php.ini direct all php "Java(...)" calls to
-  the tomcat servlet engine:
-
-    php.ini:
-    --------
-    extension = java.so
-    ;; on windows: extension = php_java.dll
-    [java]
-    java.hosts     = "127.0.0.1:8080"
-    java.servlet   = User ;; or: /MyJavaBridge/JavaBridge.phpjavabridge
-
-  To check the above settings, please visit http://localhost/MyJavaBridge/
-  and run the sessionSharing.jsp and sessionSharing.php examples.
-
-  Please don't misunderstand the role of the mod_jk adapter. 
-  It is only used to "mount" the tomcat webapps directory into apache and
-  to forward requests for .jsp files.  The mod_jk adapter does this by
-  "copying" the non jsp files from the tomcat webapps directory into
-  the apache document root directory at run-time.
-
-  A more reasonable approach would be to remove mod_jk, to create a
-  shared web directory for tomcat and apache and to forward to the
-  "back-end", when necessary:
-
-              :80---> Apache or IIS
-            /                |
-           / php req.        ---- php
-          /                  ---- php  -->----------|
-              |                /  ...               |
-  internet    | forward       |                     |
-  clients     v               -------<--------|     |
-          \                    P-J-B PROTOCOL |     |
-           \jsp/servlet req.                  |     |
-            \                                 |     |
-             |--> :8080--> J2EE AS            |     |
-              /                |              |     |
-             /                 \--- servlet   |     |
-             |                 \--- PhpJavaServlet  |
-             |                 \--- jsp             |
-             |                      ...             |
-             -------------<-------------------------|
-                    P-J-B PROTOCOL
-  
-  Most modern frameworks, Java Server Faces for example, require that
-  you manually forward to the "back-end", anyway. The code would look
-  like:
-
-  <?php
-   ...
-   function jsfValidateEntry($ctx, $arg, $value) { ...}
-
-   // check if we're called from the framework, forward if call failed.
-   java_context()->call(java_closure()) || header("Location: index.jsf");
-  ?>
-   
-  So you probably won't miss mod_jk's automatic forward.
-
-------------------------------------
   64 Bit issues
   -------------
   
@@ -421,15 +338,16 @@ Build and execution instructions:
   Read the following instructions only if you don't want to use
   Apache or IIS.
 
-  Please follow the AS or Tomcat installation instructions above, then
-  visit http://localhost:8080/JavaBridge and run the supplied JSP and PHP
+  Please deploy the JavaBridge.war into the Tomcat or J2EE server (see
+  FAQ section in the ABOUT.HTM), then visit
+  http://localhost:8080/JavaBridge and run the supplied JSP and PHP
   examples.
 
   If the parameter name "use_fast_cgi" is set to "Autostart" in the
-  web.xml and a fcgi server does not listen on port 9667 and a fcgi
+  web.xml, and a fcgi server does not listen on port 9667, and a fcgi
   binary can be found as either /usr/bin/php-cgi or c:/php/php-cgi.exe,
-  then the back-end automatically starts the Fast- CGI server on this
-  computer, with the command:
+  then the back end automatically starts the Fast-CGI server on this
+  computer. With the command:
 
     cd $HOME
     export X_JAVABRIDGE_OVERRIDE_HOSTS="/"
@@ -449,7 +367,7 @@ Build and execution instructions:
 
 
   The PHP FastCGI server starts when the VM or the web context starts,
-  and stops when the VM or web context terminates.
+  it stops when the VM or web context terminates.
 
 
   If that failed, the bridge searches for a CGI binary called:
@@ -460,7 +378,7 @@ Build and execution instructions:
 
     php-cgi-<architecture>-<os>
 
-  in the directory WEB-INF/cgi/. On Unix the binary must be executable, it
+  in the directory WEB-INF/cgi/. On Unix the binary must be executable. It
   is therefore recommended to always use a wrapper .sh script, for example:
 
   #!/bin/sh
@@ -571,7 +489,7 @@ Build and execution instructions:
       to debug certain parts of the bridge.
 
   The default log level is 2.  If java.log_level is missing, the
-  back-end uses the "default" log level supplied when the back-end was
+  back end uses the "default" log level supplied when the back end was
   started (the second argument after java -jar JavaBridge.jar ...).
 
   The log4j viewer "Chainsaw" can be used to automatically capture the
@@ -681,12 +599,12 @@ Build and execution instructions:
   The bridge uses abstract local sockets, named pipes (located in
   /dev/shm/ or /tmp/) or local TCP sockets as communication channels.
 
-  It is recommended to use the local back-end on a Unix machine which
+  It is recommended to use the local back end on a Unix machine which
   supports abstract local ("unix domain") sockets or named pipes. On
   these systems the communication channel is not visible and cannot be
   attacked. If you are running a Security Enhanced Linux kernel, which
-  is standard since RHEL4 or FC3, the back-end is also protected by the
-  SEL policy. The servlet back-end uses a HTTP tunnel to execute one
+  is standard since RHEL4 or FC3, the back end is also protected by the
+  SEL policy. The servlet back end uses a HTTP tunnel to execute one
   statement and then switches to named pipes for the rest of the
   communication.
 
@@ -694,6 +612,126 @@ Build and execution instructions:
   local TCP port on 9167 (MonoBridge.exe) or 9267 (JavaBridge.jar), 9567
   (JavaBridge.war) or 9667 (FastCGI). Please make sure that the ports in
   the range [9167, ..., 9667] cannot be accessed from the internet.
+
+------------------------------------
+  Loading user classes and libraries
+  ----------------------------------
+
+  Java libraries should either be translated into PEAR classes (see
+  above) or be installed in one of the following directories:
+  /usr/share/java/ext or extension_dir/lib or, for the J2EE/servlet
+  back end, WEB-INF/lib. Libraries in these directories are
+  automatically loaded by a static loader whenever the JVM starts. --
+  The location of the extension_dir depends on the PHP .ini
+  extension_dir setting, it is usually /usr/lib/php/modules or c:\php.
+
+  Impure java libraries (=libraries which use the java native interface)
+  must be stored in /usr/share/java/ext or in the PHP extension_dir/lib
+  directory. Shared libraries (on windows: "DLL's") required by the
+  impure java libraries must be stored in the java.library.path, which
+  is usually the PHP extension_dir directory.
+
+  Java libraries can also be loaded or re-loaded on demand by a
+  dynamic loader. They should have the following file name:
+  <name>-<version>.jar and be stored in a sub directory of the PHP
+  extension_dir/lib/ directory or in a sub directory of
+  /usr/share/java directory. For example:
+
+    /usr/share/java/batStore/batStore-1.0.jar.
+
+  Java libraries can be created from .class files with the following
+  command:
+
+    jar cvf myLibrary-0.1.jar my/package/*.class 
+
+  The dynamic loader can link java libraries into PHP files at
+  run-time, if the PHP files contain the command:
+
+    java_require("<library1>;<libraryN>");
+
+  Note that <library> can also be a directory containing .jar files.
+
+  For example:
+
+    <?php
+      // process order
+      java_require("j2ee.jar;myProject/myLibrary-0.1.jar");
+
+      $proc = new Java("my.package.InputProcessor", ...);
+      $proc->doSomething($_POST);
+      ...
+    ?>
+
+  Minor upgrades of dynamic-loaded libraries can be installed at
+  run-time. When the dynamic loader detects that the time stamp or the
+  version number of the .jar file has changed, it automatically loads
+  the new version.
+
+  Disadvantages of the dynamic loader:
+
+  * An attempt to load an impure java library immediately throws an
+    UnsatisfiedLinkError.
+
+  * Class loading via the dynamic loader is slower, because it
+    cannot use the global VM class cache.
+
+  * Libraries must be explicitly required by using the php
+    java_require() procedure.
+
+  Disadvantages of the static loader:
+
+  * All java libraries are loaded when the Java- or Mono VM
+    starts. For the PHP CLI component, which usually starts a new VM for
+    each PHP invocation (unless java.hosts or java.socketname is set),
+    this may cause a noticeable delay (a few 100 ms).
+
+  * The static loader can only load libraries which are stored in the
+    /usr/share/java/ext or in the PHP extension_dir/lib directory. Hot
+    deployment is not possible because all classes are loaded when the
+    VM starts.
+
+  It is recommended to store Java libraries which are API stable or
+  use the java native interface into the PHP extension_dir/lib directory
+  or into /usr/share/java/ext. All other libraries can go into a project
+  specific directory within extension_dir/lib/ or /usr/share/java/ and
+  be loaded on-demand.
+
+  Note that classes loaded from two different class loader instances
+  cannot access each other. This means that, e.g., neither
+
+    java_require("foo.jar");
+    ...
+    Class.forName("foo");  // wrong!
+
+  nor 
+
+    java_require("foo.jar"); java_require("bar.jar");
+    $foo = new Java("foo");
+    $foo->callWithBar(); // error!
+
+  work as expected.
+
+  In the first example the class was loaded from the bootstrap class
+  loader, which cannot access foo.jar's class loader. In the second example
+  foo and bar depend on each other, so that the call fails because bar
+  cannot be accessed from foo.jar's class loader.
+
+  The first example can be corrected by using the current class
+  loader:
+
+     java_require("foo.jar");
+     ...
+     Class.forName("foo",true,Thread.currentThread().getContextClassLoader());
+
+  or simply:
+
+      java_require("foo.jar");
+      new JavaClass("foo");
+
+  The second example can be corrected by loading the interconnected
+  libraries from the same class loader:
+   
+     java_require("foo.jar;bar.jar");
 
 ------------------------------------
   Sun java platform issues
@@ -730,163 +768,6 @@ Build and execution instructions:
     * the library may only work within a J2EE environment from a
       certain vendor, for example the WebSphere Application server or
       the Sun Java Application server.
-
-------------------------------------
-  Loading user classes and libraries
-  ----------------------------------
-
-  It is recommended to copy all Java libraries and Java classes
-  into the WEB-INF/lib or WEB-INF/classes directories within
-  JavaBridge.war and to deploy JavaBridge.war into your J2EE server
-  or servlet engine. Unlike .NET or Mono the SUN Java implementation
-  doesn't integrate well with the host operating system. A Java
-  "operating environment" on top of the host operating system is
-  needed to hidesthe problems connected with different class versions
-  or different Java class loaders.
-
-  If you don't want to install an J2EE application server or servlet
-  engine, read on.
-  
-  The traditional way to add libraries to the Java VM is to modify the
-  CLASSPATH, reflected by the java.classpath setting:
-
-    java.classpath="/tmp/JavaBridge.jar:/tmp/myClasses.jar"
-
-  This solution is not recommended. First of all this is not portable,
-  Unix uses a ":" while Windows uses ";" and the php.ini parser
-  interprets an unquoted semi-colon as the start of a comment line.
-
-  Since Java 1.3 the Java VM support an module directory per VM, usually
-  located in $JAVA_HOME/jre/lib/ext. The system property "java.ext.dirs"
-   
-    $Sys = new JavaClass("java.lang.System");
-    echo $Sys->getProperty("java.ext.dirs");
-
-  points to this directory. The problem with this solution is that
-  the repository is not shared.
-
-  The free Java world (GNU Java, GCC, classpath, ...) have
-  introduced a shared, global repository for all Java implementations as
-  well as mechanisms how to manage the libraries, see jpackage.org for
-  details. However, the upcoming Sun Java 1.6 implementation ignores this
-  solution and introduces a "global" repository located in
-  /usr/java/packages/lib/ext. The problem with the Sun solution is that
-  nobody uses it.
-
-  Since the PHP/Java Bridge cannot force users to install a J2EE
-  server or servlet engine and PHP users usually expect practical
-  solutions, the PHP/Java Bridge contains a static loader as well as a
-  dynamic loader. The static loader loads all Java libraries from
-  /usr/share/java/ext and /usr/java/package/lib/ext and from the PHP
-  extension_dir/lib directory. The dynamic loader can load Java
-  libraries at run-time, either from the PHP extension_dir/lib or from
-  the /usr/share/java repository or from a specified directory:
-  
-    java_require("c:/foo.jar");
-    $foo = new Java("Foo");
-
-  Java libraries can be created from .class files with the following
-  command:
-
-    jar cvf myLibrary-0.1.jar my/package/*.class 
-
-  The dynamic loader can link java libraries into PHP files at
-  run-time, if the PHP files contain the command:
-
-    java_require("<library1>;<libraryN>");
-
-  Note that <library> can also be a directory containing .jar files.
-
-  For example:
-
-    <?php
-      // process order
-      java_require("j2ee.jar;myProject/myLibrary-0.1.jar");
-
-      $proc = new Java("my.package.InputProcessor", ...);
-      $proc->doSomething($_POST);
-      ...
-    ?>
-
-  Minor upgrades of dynamic-loaded libraries can be installed at
-  run-time. When the dynamic loader detects that the time stamp or the
-  version number of the .jar file has changed, it automatically loads
-  the new version.
-
-
-  Disadvantages of the J2EE server or servlet engine:
-
-  <none>
-
-
-  Disadvantages of the PHP/Java Bridge static- and dynamic loader:
-
-  * The naive method to load two interconnected libraries doesn't work as
-    expected:
-
-    java_require("foo.jar"); java_require("bar.jar");
-    $foo = new Java("foo");
-    $bar = $foo->getBar(); // ERROR: Unsatisfied link error
-
-    The above code doesn't work because classes loaded from foo.jar cannot
-    see the classes from bar.jar, because both were loaded via two isolated
-    class loaders. 
-
-  * Users who are unaware of the Sun Java class loading issues may
-    ignore it. For example the following code doesn't use the dynamic
-    loader and therefore doesn't work as expected:
-
-    java_require("mm.mysql-2.0.4-bin.jar");
-    $C = new JavaClass("java.lang.Class");
-    $Class = $C->forName("org.gjt.mm.mysql.Driver"); // ERROR: ClassNotFound
-   
-    doesn't work because $Class->forName() loads the driver using the
-    default ("bootstrap") loader, which has no access to the loader of
-    the mysql library. The above code should have been written as 
-      
-    java_require("mm.mysql-2.0.4-bin.jar");
-    $C = new JavaClass("java.lang.Class");
-    $Thread = new JavaClass("java.lang.Thread");
-    $t = $Thread->currentThread();
-    // now load the driver from the dynamic class loader
-    $C->forName("org.gjt.mm.mysql.Driver", false, $t->getContextClassLoader());
-    $C->newInstance();
-
-    or simply
-
-    java_require("mm.mysql-2.0.4-bin.jar");
-    new Java("org.gjt.mm.mysql.Driver");
-
-
-  Disadvantages of the PHP/Java Bridge dynamic loader:
-
-  * An attempt to load an impure java library immediately throws an
-    UnsatisfiedLinkError.
-
-  * Class loading via the dynamic loader is slower, because it
-    cannot use the global VM class cache.
-
-  * Libraries must be explicitly required by using the php
-    java_require() procedure.
-
-
-  Disadvantages of the static loader:
-
-  * All java libraries are loaded when the Java- or Mono VM
-    starts. For the PHP CLI component, which usually starts a new VM for
-    each PHP invocation (unless java.hosts or java.socketname is set),
-    this may cause a noticeable delay (a few 100 ms).
-
-  * The static loader can only load libraries which are stored in the
-    /usr/share/java/ext or in the PHP extension_dir/lib directory. Hot
-    deployment is not possible because all classes are loaded when the
-    VM starts.
-
-  It is recommended to store Java libraries which are API stable or
-  use the java native interface into the PHP extension_dir/lib directory
-  or into /usr/share/java/ext. All other libraries can go into a project
-  specific directory within extension_dir/lib/ or /usr/share/java/ and
-  be loaded on-demand.
 
 ------------------------------------
   PHP issues
@@ -1006,6 +887,38 @@ Build and execution instructions:
     suspend
     where all
     resume
+
+------------------------------------
+  Running PHP in a J2SE environment
+  ---------------------------------
+
+  Since Java 1.6 the JSR 223 script interface is available. To run PHP
+  within a J2SE environment, the JavaBridge.jar and the php-script.jar
+  must be in the J2SE class path. On Unix or Linux these libraries can
+  be copied to /usr/java/packages/lib/ext/.
+
+  The command:
+
+    jrunscript -l php phpFile.php 
+
+  or:
+
+    jrunscript -Dphp.java.bridge.php_exec=/usr/bin/php-cgi -l php phpFile.php
+
+  can be used to evaluate PHP files from Java.
+
+  The optional Invocable interface is also supported. However, the PHP
+  scripts must be invocable. Invocable PHP scripts must end with the
+  line:
+
+   java_context()->call(java_closure());
+
+  The PHP procedures java_context() and java_closure() are exported
+  from the pure PHP/Java Bridge implementation "java/Java.php" and from
+  the C based PHP "Java extension" ("java.so" or "php_java.dll"). 
+
+  Please see the PHP Java Server Faces implementation for details how
+  to define, and how to invoke PHP "beans" from a Java framework.
 
 ------------------------------------
   Mailing List

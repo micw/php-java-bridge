@@ -5,6 +5,7 @@
 %define PHP_MINOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | LANG=C cut -d. -f2)
 %define have_j2 %((rpm -q --whatprovides j2re || rpm -q --whatprovides j2sdk) >/dev/null && echo 1 || echo 0)
 %define have_policy_modules %(if test -f /etc/selinux/config && test -d /etc/selinux/%{__policy_tree}/modules; then echo 1; else echo 0; fi)
+%define have_policy_devel %(if test -f %{_datadir}/selinux/devel/Makefile; then echo 1; else echo 0; fi)
 
 %define tomcat_name        tomcat5
 %define tomcat_webapps		%{_localstatedir}/lib/%{tomcat_name}/webapps
@@ -36,7 +37,11 @@ BuildRequires: j2sdk >= 1.4.2
 BuildRequires: java-devel >= 1.4.2
 %endif
 %if %{have_policy_modules} == 1
+BuildRequires: selinux-policy
 BuildRequires: policycoreutils checkpolicy coreutils
+%if %{have_policy_devel} == 0
+BuildRequires: selinux-policy-devel
+%endif
 %endif
 
 # PHP 4 or PHP 5 or PHP 5.1

@@ -90,6 +90,14 @@ public class ConnectionPool {
             initCause(ex);
         }
     }
+    /** Thrown when the server is not available anymore */
+    public static class ConnectException extends IOException {
+	private static final long serialVersionUID = 5242564093021250550L;
+	protected ConnectException(IOException ex) {
+            super();
+            initCause(ex);
+        }
+    }
     /**
      * In-/OutputStream factory.
      * 
@@ -108,11 +116,11 @@ public class ConnectionPool {
          * @throws UnknownHostException
          * @throws ConnectionException
          */
-        public Socket connect(String host, int port) throws ConnectionException, SocketException {
+        public Socket connect(String host, int port) throws ConnectException, SocketException {
             try {
 	      return new Socket(InetAddress.getByName(host), port);
 	    } catch (IOException e) {
-	        throw new ConnectionException(e);
+	        throw new ConnectException(e);
 	    }
         }
         /** 
@@ -253,14 +261,14 @@ public class ConnectionPool {
 	protected void reset() {
             this.state = this.ostate = 0;	    
 	}
-	protected void init() throws ConnectionException, SocketException {
+	protected void init() throws ConnectException, SocketException {
             this.socket = factory.connect(host, port);
             this.isClosed = false;
             inputStream = null;
             outputStream = null;
             reset();
 	}
-	protected Connection(String host, int port, Factory factory) throws ConnectionException, SocketException {
+	protected Connection(String host, int port, Factory factory) throws ConnectException, SocketException {
             this.host = host;
             this.port = port;
             this.factory = factory;
@@ -269,7 +277,7 @@ public class ConnectionPool {
 	protected void setIsClosed() {
 	    isClosed=true;
 	}
-	protected void close() throws ConnectionException, SocketException {
+	protected void close() throws ConnectException, SocketException {
 	    if(isClosed) {
 	        destroy();
 	        init();
@@ -318,7 +326,7 @@ public class ConnectionPool {
      * @throws UnknownHostException 
      * @see ConnectionPool.Factory
      */
-    public ConnectionPool(String host, int port, int limit, Factory factory) throws ConnectionException {
+    public ConnectionPool(String host, int port, int limit, Factory factory) throws ConnectException {
         this.host = host;
         this.port = port;
         this.limit = limit;
@@ -329,10 +337,10 @@ public class ConnectionPool {
 	  testSocket = new Socket(InetAddress.getByName(host), port);
 	  testSocket.close();
 	} catch (IOException e) {
-	  throw new ConnectionException(e);
+	  throw new ConnectException(e);
 	}
     }
-    private Connection createNewConnection() throws ConnectionException, SocketException {
+    private Connection createNewConnection() throws ConnectException, SocketException {
         Connection connection = new Connection(host, port, factory);
         connectionList.add(connection);
         connections++;
@@ -346,7 +354,7 @@ public class ConnectionPool {
      * @throws SocketException 
      * @throws IOException 
      */
-    public synchronized Connection openConnection() throws InterruptedException, ConnectionException, SocketException {
+    public synchronized Connection openConnection() throws InterruptedException, ConnectException, SocketException {
         Connection connection;
       	if(freeList.isEmpty() && connections<limit) {
       	    connection = createNewConnection();

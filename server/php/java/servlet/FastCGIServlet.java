@@ -43,7 +43,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.NotImplementedException;
 import php.java.bridge.Util;
-import php.java.servlet.ConnectionPool.ConnectionException;
+import php.java.servlet.ConnectionPool.ConnectException;
 
 /**
  * A CGI Servlet which connects to a FastCGI server. If allowed by the
@@ -141,7 +141,7 @@ public class FastCGIServlet extends CGIServlet {
     private final Object lockObject = new Object();
     private static ConnectionPool fcgiConnectionPool = null;
     private final ConnectionPool.Factory defaultPoolFactory = new ConnectionPool.Factory() {
-      public Socket connect(String host, int port) throws ConnectionException, SocketException { 
+      public Socket connect(String host, int port) throws ConnectException, SocketException { 
 	  Socket s = super.connect(host, port);
 	  s.setTcpNoDelay(true);
 	  return s; 
@@ -510,7 +510,7 @@ fcgi_channel+"\n\n";
 	protected void run() throws IOException, ServletException {
 	    try {
 	        doRun();
-	    } catch (ConnectionPool.ConnectionException ex) {
+	    } catch (ConnectionPool.ConnectException ex) {
 	        fcgiIsAvailable = false;
 	        if(Util.logLevel>1) {
 	            Util.logDebug("PHP FastCGI server failed, switching off FastCGI SAPI: " + ex);

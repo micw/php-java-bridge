@@ -54,6 +54,7 @@ class Snarf {
   private String pkg = null;
   
   private File jarName;
+  private boolean isRtJar = false;
   private PrintWriter all;
 
   private URLClassLoader loader;      
@@ -119,13 +120,19 @@ class Snarf {
 	  URL url = urls[i];
 	  File file = files[i];
 	  String jarname = file.getName();
+
+	  // the apple VM is incompatible with the SUN and GNU implementations
+	  if(jarname.equals("classes.jar")) jarname = "rt.jar";
+
 	  String name = jarname.substring(0, jarname.length()-4); // strip off .jar
 	  name = name.toLowerCase();
 	  baseFile = (baseDir!=null) ? new File(baseDir, name) : new File(name);
 	  if(!baseFile.exists()) baseFile.mkdirs();
 	  base=baseFile.getAbsolutePath();
 
-	  copyFile(file, jarName=new File(base, jarname));
+	  if(!(isRtJar = (jarname.equals("rt.jar"))) 
+	     copyFile(file, jarName=new File(base, jarname));
+
 	  all=new PrintWriter(new FileOutputStream(new File(base, "All.php")));
 	  all.println("<?php");
 	  for(Iterator ii = getClasses(url).iterator(); ii.hasNext(); ) {
@@ -255,9 +262,11 @@ class Snarf {
       out.println(" */");
       out.println("");
       out.println("require_once(\'java/Bridge.php\');");
-      out.print("java_require_once('");
-      out.print(jarName.getAbsolutePath());
-      out.println("');");
+      if(!isRtJar) {
+	  out.print("java_require_once('");
+	  out.print(jarName.getAbsolutePath());
+	  out.println("');");
+      }
       out.println("");
 
       out.print("function ");

@@ -154,11 +154,11 @@ static long session_get_default_lifetime() {
 short EXT_GLOBAL(session)(INTERNAL_FUNCTION_PARAMETERS)
 {
   proxyenv *jenv;
-  zval **session=0, **is_new=0;
+  zval **session=0, **is_new=0, **lifetime=0;
   int argc=ZEND_NUM_ARGS();
   char *current_ctx;
   
-  if (argc>2 || zend_get_parameters_ex(argc, &session, &is_new) == FAILURE)
+  if (argc>3 || zend_get_parameters_ex(argc, &session, &is_new, &lifetime) == FAILURE)
     WRONG_PARAM_COUNT_WITH_RETVAL(0);
 
   jenv=EXT_GLOBAL(connect_to_server)(TSRMLS_C);
@@ -186,9 +186,12 @@ short EXT_GLOBAL(session)(INTERNAL_FUNCTION_PARAMETERS)
     (*jenv)->writeObject(jenv, 0);
   }
   (*jenv)->writeBoolean(jenv, (argc<2||Z_TYPE_PP(is_new)==IS_NULL)?0:Z_BVAL_PP(is_new)); 
-
-  (*jenv)->writeLong(jenv, session_get_default_lifetime()); // session.gc_maxlifetime
-
+  if(argc==3) {
+	convert_to_number_ex(lifetime);
+	(*jenv)->writeLong(jenv, Z_LVAL_PP(lifetime)); // session.gc_maxlifetime
+  } else {
+	(*jenv)->writeLong(jenv, session_get_default_lifetime()); // session.gc_maxlifetime
+  }
   if(!(*jenv)->writeInvokeEnd(jenv)) return 0;
   (*jenv)->backend_has_session_proxy=1;
   return 1;

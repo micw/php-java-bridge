@@ -239,7 +239,7 @@ EXT_FUNCTION(EXT_GLOBAL(instanceof))
 }
 
 /**
- * Proto: object java_session([string], [bool]) or object java_get_session([string], [bool])
+ * Proto: object java_session([string], [bool], [exact number]) or object java_get_session([string], [bool], [exact number])
  *
  * \anchor doc25
  * Return a session handle.  When java_session() is called without 
@@ -265,6 +265,9 @@ EXT_FUNCTION(EXT_GLOBAL(instanceof))
  * \code
  * java_get_session(null, true)->put("key", "val");
  * \endcode.
+ *
+ * The optional third argument specifies the default lifetime of the session, it defaults to \code session.gc_maxlifetime \endcode. The value 0 means that the session never times out.
+ *
  * @see get_context()
  */
 EXT_FUNCTION(EXT_GLOBAL(get_session))
