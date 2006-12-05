@@ -52,12 +52,11 @@ public class ServletContextFactory extends php.java.bridge.http.SimpleContextFac
     }
     
     /**
-     * Set the HttpServletRequest for session sharing. 
-     *
+     * Set the HttpServletRequest for session sharing. This implementation does nothing, the proxy must have been set in the constructor.
+     * @see php.java.servlet.RemoteServletContextFactory#setSession(HttpServletRequest) 
      * @param req The HttpServletRequest
      */
     public void setSession(HttpServletRequest req) {
-    	this.proxy = req;
     }
     public ISession getSession(String name, boolean clientIsNew, int timeout) {
 	 // if name != null return a "named" php session which is not shared with jsp

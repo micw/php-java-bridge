@@ -112,7 +112,9 @@ the RPM build system instead, see INSTALL.LINUX.
   for PHP >= 4.3.4: php-4-java-<arch>-<os>[.so|.dll]
   for PHP >= 5.0.0: php-5.0-java-<arch>-<os>[.so|.dll]
   for PHP >= 5.1.0: java-<arch>-<os>[.so|.dll]
-  ...
+  for PHP >= 5.2.0: a custom php_java.dll or java.so must be 
+                    used (see INSTALL document how to compile 
+                    it from the C source).
   
   Rename it to java.so (Unix) or php_java.dll (Windows). 
 

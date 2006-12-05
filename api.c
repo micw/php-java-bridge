@@ -186,8 +186,7 @@ short EXT_GLOBAL(session)(INTERNAL_FUNCTION_PARAMETERS)
     (*jenv)->writeObject(jenv, 0);
   }
   (*jenv)->writeBoolean(jenv, (argc<2||Z_TYPE_PP(is_new)==IS_NULL)?0:Z_BVAL_PP(is_new)); 
-  if(argc==3) {
-	convert_to_number_ex(lifetime);
+  if(argc==3 && (Z_TYPE_PP(lifetime)==IS_LONG)) {
 	(*jenv)->writeLong(jenv, Z_LVAL_PP(lifetime)); // session.gc_maxlifetime
   } else {
 	(*jenv)->writeLong(jenv, session_get_default_lifetime()); // session.gc_maxlifetime

@@ -559,8 +559,10 @@ public class CGIServlet extends HttpServlet {
             this.valid = setCGIEnvironment(req, res);
 
             if (this.valid) {
-                workingDirectory = new File(command.substring(0,
-							      command.lastIndexOf(File.separator)));
+		int idx = command.lastIndexOf(File.separator);
+		if(idx==-1) idx = command.lastIndexOf("/");
+		if(idx==-1) throw new IllegalArgumentException("command is not a file path");
+                workingDirectory = new File(command.substring(0,idx));
             }
         }
 

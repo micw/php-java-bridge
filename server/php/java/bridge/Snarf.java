@@ -130,7 +130,7 @@ class Snarf {
 	  if(!baseFile.exists()) baseFile.mkdirs();
 	  base=baseFile.getAbsolutePath();
 
-	  if(!(isRtJar = (jarname.equals("rt.jar"))) 
+	  if(!(isRtJar = (jarname.equals("rt.jar")))) 
 	     copyFile(file, jarName=new File(base, jarname));
 
 	  all=new PrintWriter(new FileOutputStream(new File(base, "All.php")));

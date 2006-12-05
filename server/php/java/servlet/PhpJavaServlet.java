@@ -124,7 +124,7 @@ public class PhpJavaServlet extends HttpServlet {
     	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
     	if(id!=null) ctx = (ServletContextFactory) ContextFactory.get(id, credentials);
     	if(ctx==null) {
-    	  ctx = ServletContextFactory.addNew(getServletContext(), null, req, res); // no session sharing
+    	  ctx = RemoteServletContextFactory.addNew(getServletContext(), null, req, res); // no session sharing
     	  bridge = ctx.getBridge();
     	  bridge.logDebug("first request (session is new).");
     	} else {
@@ -259,7 +259,6 @@ public class PhpJavaServlet extends HttpServlet {
 	    	sin.close(); sin=null;
 		try {res.flushBuffer(); } catch (Throwable t) {Util.printStackTrace(t);}
 		contextServer.start(channelName);
-		ctx.waitFor();
 	    }
 	    else {
 	        sin.close(); sin=null;
