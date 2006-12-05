@@ -1,0 +1,126 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+# This file was originally written by Joey Hess and Craig Small.
+# As a special exception, when this file is copied by dh-make into a
+# dh-make output file, you may use that output file without restriction.
+# This special exception was added by Craig Small in version 0.37 of dh-make.
+
+# Uncomment this to turn on verbose mode.
+export DH_VERBOSE=1
+
+# AFM  27nov2006 variables MUST be set outside target rules
+	DESTDIR := ${CURDIR}/debian/php-java-bridge
+	PHP_EXT_DIR := $(shell /usr/bin/php-config --extension-dir)
+
+
+
+CFLAGS = -Wall -g
+
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+	CFLAGS += -O0
+else
+	CFLAGS += -O2
+endif
+
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+	# Add here commands to configure the package.
+#	phpize --clean
+	phpize
+# AFM 04dec2006
+	mv --force --verbose ${CURDIR}/debian/Makefile.frag ${CURDIR}
+# AFM 27nov2006
+	./configure --with-java=/usr/lib/jvm/java-1.5.0-sun --prefix=${DESTDIR}
+
+	touch configure-stamp
+
+
+
+
+build: build-stamp
+
+
+build-stamp: configure-stamp 
+	dh_testdir
+
+	# Add here commands to compile the package.
+	$(MAKE)
+	#docbook-to-man debian/php-java-bridge.sgml > php-java-bridge.1
+
+	touch $@
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp configure-stamp
+
+	# Add here commands to clean up after the build process.
+	-$(MAKE) clean
+
+	dh_clean 
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k 
+	dh_installdirs 
+
+	# Add here commands to install the package into debian/php-java-bridge.
+# AFM 27nov2006 trying to specifiy destdir debian way?
+	$(MAKE) install-modules DESTDIR=${DESTDIR}
+
+# AFM 23nov2006
+	mkdir -p ${DESTDIR}/etc/php5/conf.d
+	cp java.ini ${DESTDIR}/etc/php5/conf.d/java.ini
+	cp java-servlet.ini ${DESTDIR}/etc/php5/conf.d/java-servlet.ini
+	cp mono.ini ${DESTDIR}/etc/php5/conf.d/mono.ini
+
+
+
+
+# Build architecture-independent files here.
+binary-indep: build install
+# AFM 27nov2006 .war file is java
+
+	mkdir -p ${DESTDIR}/var/lib/tomcat5/webapps
+	cp ${DESTDIR}$(PHP_EXT_DIR)/JavaBridge.war ${DESTDIR}/var/lib/tomcat5/webapps
+# AFM 28nov2006
+	cp --recursive server/documentation server_documentation
+	cp --recursive server/php server_php
+	cp --recursive server/test server_test
+
+# Build architecture-dependent files here.
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs ChangeLog
+	dh_installdocs
+	dh_installexamples
+#	dh_install
+#	dh_installmenu
+#	dh_installdebconf	
+#	dh_installlogrotate
+#	dh_installemacsen
+#	dh_installpam
+#	dh_installmime
+#	dh_python
+#	dh_installinit
+#	dh_installcron
+#	dh_installinfo
+	dh_installman
+	dh_link
+	dh_strip
+	dh_compress
+	dh_fixperms
+#	dh_perl
+#	dh_makeshlibs
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure

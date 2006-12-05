@@ -1,0 +1,10 @@
+php-java-bridge for Debian
+--------------------------
+
+This Debian package was compiled for installing modules, not a complete install.
+Also, it must use Sun Java 5, as of today.
+Compilation against GCJ is possible, but some tweaks must be done. Read the other document files.
+The Makefile.frag must be copied over the original one at the php-java-bridge source directory.
+
+
+ -- Andre Felipe Machado <af-machado@uol.com.br>  Tue, 04 Dec 2006 08:19:32 -0200
