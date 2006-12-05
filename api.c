@@ -425,7 +425,7 @@ short EXT_GLOBAL(get_closure)(INTERNAL_FUNCTION_PARAMETERS)
   }
 
   (*jenv)->writeInvokeBegin(jenv, 0, "makeClosure", 0, 'I', return_value);
-  (*jenv)->writeLong(jenv, (argc==0||Z_TYPE_PP(pobj)==IS_NULL)?0:(long)*pobj);
+  (*jenv)->writeULong(jenv, (argc==0||Z_TYPE_PP(pobj)==IS_NULL)?0:(long)*pobj);
 
   /* fname -> cname Map */
   if(argc>1) {

@@ -182,6 +182,7 @@ struct proxyenv_ {
   void (*writeString)(proxyenv *env, char*name, size_t strlen);
   void (*writeBoolean)(proxyenv *env, short boolean);
   void (*writeLong)(proxyenv *env, long l);
+  void (*writeULong)(proxyenv *env, unsigned long l);
   void (*writeDouble)(proxyenv *env, double d);
   void (*writeObject)(proxyenv *env, unsigned long object);
   void (*writeException)(proxyenv *env, unsigned long object, char*str, size_t len);

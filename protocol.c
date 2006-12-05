@@ -466,6 +466,12 @@ static short EndConnection(proxyenv *env, char property) {
    (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<L v=\"%ld\"/>", l);
    assert((*env)->send_len<=(*env)->send_size);
  }
+ static void ULong(proxyenv *env, unsigned long l) {
+   size_t flen;
+   GROW(FLEN+ILEN);
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<L v=\"%lu\"/>", l);
+   assert((*env)->send_len<=(*env)->send_size);
+ }
 #else
  static void Long(proxyenv *env, long l) {
    size_t flen;
@@ -474,6 +480,12 @@ static short EndConnection(proxyenv *env, char property) {
 	 (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<L v=\""/**/HEX_ARG/**/"\" p=\"A\"/>", (unsigned long)(-l));
    else
 	 (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<L v=\""/**/HEX_ARG/**/"\" p=\"O\"/>", (unsigned long)l);
+   assert((*env)->send_len<=(*env)->send_size);
+ }
+ static void ULong(proxyenv *env, unsigned long l) {
+   size_t flen;
+   GROW(FLEN+ILEN);
+   (*env)->send_len+=EXT_GLOBAL(snprintf)((char*)((*env)->send+(*env)->send_len), flen, "<L v=\""/**/HEX_ARG/**/"\" p=\"O\"/>", (unsigned long)l);
    assert((*env)->send_len<=(*env)->send_size);
  }
 #endif
@@ -716,6 +728,7 @@ short EXT_GLOBAL(init_environment) (struct proxyenv_ *env, short (*handle_reques
   env->writeString=String;
   env->writeBoolean=Boolean;
   env->writeLong=Long;
+  env->writeULong=ULong;
   env->writeDouble=Double;
   env->writeObject=Object;
   env->writeException=Exception;

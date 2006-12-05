@@ -350,6 +350,9 @@ class java_Protocol {
       $this->write(sprintf("<L v=\"%x\" p=\"O\"/>",$l));
     }
   }
+  function writeULong($l) {
+	$this->write(sprintf("<L v=\"%x\" p=\"O\"/>",$l));
+  }
   function writeDouble($d) {
     $this->write(sprintf("<D v=\"%.14e\"/>", $d));
   }
