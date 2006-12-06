@@ -3,6 +3,24 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 3.2.1
+
+* A third optional parameter (timeout) has been added to the
+java_session() implementation of the Java extension module, so that
+the C extension module is now compatible with our pure PHP PHP/Java
+Bridge implementation.
+
+* The pure PHP PHP/Java Bridge is now the reference implementation.
+
+* Since PHP>= 5.2 the Windows java extension ("java-x86-windows.dll"
+or "php_java.dll") is not necessary anymore. Please use our pure PHP
+PHP/Java Bridge implementation instead.
+
+* Fedora 6 Linux binary packages are available.
+
+* Debian Linux packages are available.
+
+
 Version 3.1.8 
 
 * The recommended way to run Java is to start it via a servlet engine

@@ -28,7 +28,8 @@ Installing the itext.jar library on a web server
 3. Copy the /usr/share/pear/itext directory over to the machine that
    hosts the web server, copy the itext_pdf.php to the web server
    document root and copy the java.so to the web server PHP extension
-   directory. 
+   directory, or copy the java directory (the pure PHP implementation)
+   to the web server document root.
 
 4. If Java is not installed on the web server machine, the bridge
    should have been configured to run without Java (ommit the
@@ -37,11 +38,19 @@ Installing the itext.jar library on a web server
    extension directory.
 
 5. For better performance it is recommended to add a php .ini
-   entry. If this entry is missing, the web server must start the bridge
-   for each request. Example:
+   entry:
 
      extension=java.so
      [java]
+
+   Or, if the pure PHP implementation is used, start an external
+   J2EE or servlet back end, for example with the command:
+
+     java -jar JavaBridge.jar SERVLET:8080
+
+   If the bridge has been configured to run without Java, use the command:
+
+    modules/java SERVLET:8080
 
 6. Browse to:
      

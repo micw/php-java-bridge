@@ -1,3 +1,93 @@
+2006-12-03  Jost Boekemeier  <jostb@intern>
+
+	* api.c (session): Added optional parameter "lifetime" for
+	compatibility with the pure PHP PHP/Java Bridge implementation.
+	(get_closure): address must be unsigned long
+	
+	* java/JavaProxy.php (java_closure_array): address must be unsigned long
+
+	* client.c (unlink_channel): the back-end needs the channel name
+
+	* INSTALL.J2EE: PHP >= 5.2.0 users must use the pure PHP
+	implementation. Or they must compile a php_java.dll or java.so
+	themselfs.
+
+	* install.sh.in: Make JavaBridge.jar executable, useful when using
+	JDK 1.6 or above.
+
+	* java/Options.php: version 1.1.0
+
+	* java/Protocol.php (getWebAppInternal): New function.
+	(redirect): No timeout.
+	(sendAsyncData): Correct send size
+	(writeULong): New procedure
+
+	* protocol.c (ULong): New procedure.
+
+	* java.c (cast): Added missing break statement so that
+	java_cast($val,"double") works correctly.
+	(MINFO): display secure channel
+
+	* php-java-bridge.spec: Added required selinux-policy-devel needed by FC6
+
+	* security/module/php-java-bridge.fc.in: Added missing newline at
+	end of file, required by FC6.
+
+	* server/javax/script/Invocable.java (invoke): Removed
+	(invokeFunction, invokeMethod): Renamed from invoke. Change was
+	necessary because Sun has renamed their API's. BTW: the name
+	"invokeFunction" isn't right, it should be "invokeProcedure"...
+
+	* server/php/java/faces/Script.java: Use new invokeFunction.
+
+	* server/php/java/script/InteractiveScriptEngine.java (eval): Use
+	new invokeFunction.
+
+	* server/php/java/script/InteractiveScriptEngine.java (eval): Use
+	java_cast instead of implicit cast to support the pure PHP
+	implementation.
+
+	* server/php/java/script/PhpScriptEngine.java (invokeFunction,
+	invokeMethod): New procedures.
+
+	* server/php/java/servlet/CGIServlet.java (init): Use slash, if
+	appropriate.
+
+	* server/php/java/servlet/ConnectionPool.java (ConnectException): New class
+	(getOutputStream, getInputStream): removed
+	(createOutputStream, createInputStream): New procedures.
+	(abort): New procedure.
+
+	* server/php/java/servlet/FastCGIServlet.java (destroy): Destroy fcgi_socket.
+	(read, run): handle ConnectionException
+	(parseBody): destroy the connection, if fcgi instance failed
+
+	* server/php/java/servlet/PhpJavaServlet.java (getContextFactory):
+	Use RemoteContextFactory, so that remote users cannot access the
+	implicit web objects.
+
+	* server/php/java/servlet/ServletContextFactory.java (setSession):
+	Dummy, setSession is only useful for the RemoteContextFactory,
+	i.e. Apache or IIS front-end.
+	
+	* server/php/java/servlet/RemoteContext.java,
+	server/php/java/servlet/RemoteHttpSessionFacade.java,
+	server/php/java/servlet/RemoteServletContextFactory.java: New
+	files.
+	
+	* server/Makefile.am: Changed for gcc 4.2.
+
+	* server/java.c: Removed
+	
+	* server/php/java/bridge/StandaloneGCC.java: New file, from java.c
+
+	* server/php/java/bridge/Request.java (PhpArrayKey): Removed.
+
+	* server/php/java/bridge/SimpleJavaBridgeClassLoader.java
+	(buildUrlArray): default ext dir is {user.home}/lib
+
+	* server/php/java/bridge/Snarf.java (isRtJar): Support the Apple VM.
+	
 2006-09-10  Jost Boekemeier  <jostb@intern>
 
 	* VERSION, php-java-bridge.spec: Version 3.1.8 released.

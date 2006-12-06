@@ -44,6 +44,7 @@ import javax.servlet.http.HttpServletResponse;
 import php.java.bridge.NotImplementedException;
 import php.java.bridge.Util;
 import php.java.servlet.ConnectionPool.ConnectException;
+import php.java.servlet.ConnectionPool.ConnectionException;
 
 /**
  * A CGI Servlet which connects to a FastCGI server. If allowed by the
@@ -146,8 +147,8 @@ public class FastCGIServlet extends CGIServlet {
 	  s.setTcpNoDelay(true);
 	  return s; 
       }
-      public InputStream getInputStream() { return new FastCGIInputStream(); }
-      public OutputStream getOutputStream() { return new FastCGIOutputStream(); }
+      public InputStream createInputStream() { return new FastCGIInputStream(); }
+      public OutputStream createOutputStream() { return new FastCGIOutputStream(); }
     };
     private final CGIRunnerFactory defaultCGIRunnerFactory = new CGIRunnerFactory();
 
@@ -273,7 +274,7 @@ fcgi_channel+"\n\n";
      */
     public void destroy() {
     	if(fcgiConnectionPool!=null) fcgiConnectionPool.destroy();
-    	if(fcgi_socket!=null) try { fcgi_socket.close(); } catch (Exception e) {/*ignore*/}
+    	if(fcgi_socket!=null) try { fcgi_socket.close(); fcgi_socket=null;} catch (Exception e) {/*ignore*/}
     	super.destroy();
     }
 
@@ -432,6 +433,8 @@ fcgi_channel+"\n\n";
 	public int read(byte buf[]) throws ConnectionPool.ConnectionException {
 	    try {
 	      return doRead(buf);
+	    } catch (ConnectionPool.ConnectionException ex) {
+		throw ex;
 	    } catch (IOException e) {
 	        throw new ConnectionPool.ConnectionException(e);
 	    }
@@ -441,7 +444,8 @@ fcgi_channel+"\n\n";
 	    //assert if(buf.length!=FCGI_BUF_SIZE) throw new IOException("Invalid block size");
 	    byte header[] = new byte[FCGI_HEADER_LEN];
 	    for(n=0; (i=read(header, n, FCGI_HEADER_LEN-n)) > 0; ) n+=i;
-	    if(FCGI_HEADER_LEN != n) throw new IOException ("Protocol error");
+	    if(FCGI_HEADER_LEN != n) 
+		throw new IOException ("Protocol error");
 	    int type = header[1] & 0xFF;
 	    int contentLength = ((header[4] & 0xFF) << 8) | (header[5] & 0xFF);
 	    int paddingLength = header[6] & 0xFF;
@@ -517,6 +521,12 @@ fcgi_channel+"\n\n";
 	            Util.printStackTrace(ex);
 	        }
 	        throw new ServletException("PHP FastCGI server failed, switching off FastCGI SAPI: " +ex);
+	    } catch (ConnectionPool.ConnectionException x) {
+	        if(Util.logLevel>1) {
+	            Util.logDebug("PHP FastCGI instance failed: " + x);
+	            Util.printStackTrace(x);
+	        }
+	        throw new ServletException("PHP FastCGI instance failed: " +x);
 	    } catch (IOException e) {
 	      if(Util.logLevel>4) {
 		  Util.logDebug("IOException caused by internet browser: " + e);
@@ -600,7 +610,7 @@ fcgi_channel+"\n\n";
 	        // Destroy physical connection if exception occured, 
 		// so that the PHP side doesn't keep unsent data
 	        // A more elegant approach would be to use the FCGI ABORT request.
-		if(connection!=null) connection.setIsClosed(); 
+		if(connection!=null) connection.abort(); 
 	        if(in!=null) try {in.close();} catch (IOException e) {}
 		if(natIn!=null) try {natIn.close();} catch (IOException e) {}
 		if(natOut!=null) try {natOut.close();} catch (IOException e) {}

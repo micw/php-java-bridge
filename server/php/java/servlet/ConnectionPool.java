@@ -127,7 +127,7 @@ public class ConnectionPool {
          * Create a new InputStream.
          * @return The input stream. 
          */
-        public InputStream getInputStream() throws ConnectionException {
+        public InputStream createInputStream() throws ConnectionException {
            DefaultInputStream in = new DefaultInputStream();
            return in;
         }
@@ -136,10 +136,9 @@ public class ConnectionPool {
          * @return The output stream.
          * @throws ConnectionException
          */
-        public OutputStream getOutputStream() throws ConnectionException {
+        public OutputStream createOutputStream() throws ConnectionException {
             DefaultOutputStream out = new DefaultOutputStream();
             return out;
-            
         }
     }
     /**
@@ -274,8 +273,12 @@ public class ConnectionPool {
             this.factory = factory;
             init();
         }
-	protected void setIsClosed() {
+	private void setIsClosed() {
 	    isClosed=true;
+	}
+	protected void abort()  throws ConnectException, SocketException {
+	    setIsClosed();
+	    close();
 	}
 	protected void close() throws ConnectException, SocketException {
 	    if(isClosed) {
@@ -297,7 +300,7 @@ public class ConnectionPool {
 	 */
 	public OutputStream getOutputStream() throws ConnectionException {
 	    if(outputStream != null) return outputStream;
-	    DefaultOutputStream outputStream = (DefaultOutputStream) factory.getOutputStream();
+	    DefaultOutputStream outputStream = (DefaultOutputStream) factory.createOutputStream();
 	    outputStream.setConnection(this);
 	    ostate |= 2;
 	    return outputStream;
@@ -309,7 +312,7 @@ public class ConnectionPool {
 	 */
 	public InputStream getInputStream() throws ConnectionException {
 	    if(inputStream != null) return inputStream;
-	    DefaultInputStream inputStream = (DefaultInputStream) factory.getInputStream();
+	    DefaultInputStream inputStream = (DefaultInputStream) factory.createInputStream();
 	    inputStream.setConnection(this);
 	    ostate |= 1;
 	    return inputStream;
