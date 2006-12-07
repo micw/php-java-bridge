@@ -10,6 +10,8 @@
 export DH_VERBOSE=1
 
 # AFM  27nov2006 variables MUST be set outside target rules
+# target rules MUST start at column 1, then followed by :
+# actions MUST start after a TAB, not blank spaces
 	DESTDIR := ${CURDIR}/debian/php-java-bridge
 	PHP_EXT_DIR := $(shell /usr/bin/php-config --extension-dir)
 
@@ -23,14 +25,19 @@ else
 	CFLAGS += -O2
 endif
 
-configure: configure-stamp
+# AFM 07dec2006 using dpatch for flexibility
+#configure: configure-stamp
+configure: patchsource configure-stamp
+
 configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
 #	phpize --clean
 	phpize
 # AFM 04dec2006
-	mv --force --verbose ${CURDIR}/debian/Makefile.frag ${CURDIR}
+# AFM 07dec2006 using dpatch for flexibility no mv anymore
+#	mv --force --verbose ${CURDIR}/debian/Makefile.frag ${CURDIR}
+
 # AFM 27nov2006
 	./configure --with-java=/usr/lib/jvm/java-1.5.0-sun --prefix=${DESTDIR}
 
@@ -41,8 +48,9 @@ configure-stamp:
 
 build: build-stamp
 
-
-build-stamp: configure-stamp 
+# AFM 07dec2006 using dpatch for flexibility no mv anymore
+#build-stamp: configure-stamp
+build-stamp: configure 
 	dh_testdir
 
 	# Add here commands to compile the package.
@@ -51,7 +59,9 @@ build-stamp: configure-stamp
 
 	touch $@
 
-clean:
+# AFM 07dec2006 using dpatch for flexibility
+#clean:
+clean-patched:
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp configure-stamp
@@ -124,3 +134,16 @@ binary-arch: build install
 
 binary: binary-indep binary-arch
 .PHONY: build clean binary-indep binary-arch binary install configure
+
+# AFM 07dec2006 using dpatch for flexibility
+unpatch:
+	dpatch deapply-all
+	rm -rf patch-stamp debian/patched
+
+patchsource: patch-stamp
+
+patch-stamp:
+	dpatch apply-all
+	dpatch cat-all >patch-stamp
+
+clean: clean-patched unpatch
