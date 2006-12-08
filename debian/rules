@@ -26,7 +26,6 @@ else
 endif
 
 # AFM 07dec2006 using dpatch for flexibility
-#configure: configure-stamp
 configure: patchsource configure-stamp
 
 configure-stamp:
@@ -34,9 +33,6 @@ configure-stamp:
 	# Add here commands to configure the package.
 #	phpize --clean
 	phpize
-# AFM 04dec2006
-# AFM 07dec2006 using dpatch for flexibility no mv anymore
-#	mv --force --verbose ${CURDIR}/debian/Makefile.frag ${CURDIR}
 
 # AFM 27nov2006
 	./configure --with-java=/usr/lib/jvm/java-1.5.0-sun --prefix=${DESTDIR}
@@ -49,7 +45,6 @@ configure-stamp:
 build: build-stamp
 
 # AFM 07dec2006 using dpatch for flexibility no mv anymore
-#build-stamp: configure-stamp
 build-stamp: configure 
 	dh_testdir
 
@@ -60,7 +55,6 @@ build-stamp: configure
 	touch $@
 
 # AFM 07dec2006 using dpatch for flexibility
-#clean:
 clean-patched:
 	dh_testdir
 	dh_testroot
@@ -92,14 +86,10 @@ install: build
 
 # Build architecture-independent files here.
 binary-indep: build install
-# AFM 27nov2006 .war file is java
 
+# AFM 27nov2006 .war file is java
 	mkdir -p ${DESTDIR}/var/lib/tomcat5/webapps
 	cp ${DESTDIR}$(PHP_EXT_DIR)/JavaBridge.war ${DESTDIR}/var/lib/tomcat5/webapps
-# AFM 28nov2006
-	cp --recursive server/documentation server_documentation
-	cp --recursive server/php server_php
-	cp --recursive server/test server_test
 
 # Build architecture-dependent files here.
 binary-arch: build install
