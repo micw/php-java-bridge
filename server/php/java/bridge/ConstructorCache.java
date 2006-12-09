@@ -143,7 +143,7 @@ public final class ConstructorCache {
     	Class params[] = new Class[args.length];
     	for (int i=0; i<args.length; i++) {
 	    Class c = args[i] == null ? null : args[i].getClass();
-	    if(c == Request.PhpArray.class) return noCache;
+	    if(c == PhpArray.class) return noCache;
 	    params[i] = c;
     	}
 	return new Entry(name, params);

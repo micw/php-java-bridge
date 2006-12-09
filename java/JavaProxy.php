@@ -110,7 +110,7 @@ function java_closure_array($args) {
   /* The following is identical to 
    return $client->invokeMethod(0, "makeClosure", $args); 
    except that the ref (args[0]) must be an unsigned value */
-  $client->protocol->invokeBegin($object, $method, "I");
+  $client->protocol->invokeBegin(0, "makeClosure", "I");
   $n = count($args);
   $client->protocol->writeULong($args[0]); // proper PHP "long" -> Java 64 bit value conversion
   for($i=1; $i<$n; $i++) {

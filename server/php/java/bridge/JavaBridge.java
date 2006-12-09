@@ -51,7 +51,6 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.Map.Entry;
 
-import php.java.bridge.Request.PhpArray;
 import php.java.bridge.http.IContextFactory;
 
 /**
@@ -574,20 +573,20 @@ public class JavaBridge implements Runnable {
 				// over Object hashMap.
 	    }
 	} else if (param == java.lang.String.class) {
-	    if ((arg != null) && !(arg instanceof String) && !(arg instanceof Request.PhpString))
+	    if ((arg != null) && !(arg instanceof String) && !(arg instanceof PhpString))
 	        if(arg instanceof byte[])
 	            w+=32;
 	        else
 	            w+=8000; // conversion to string is always possible
 	} else if (param.isArray()) {
 	    if (arg != null) {
-	        if(arg instanceof Request.PhpString) {
+	        if(arg instanceof PhpString) {
 	            Class c=param.getComponentType();
 	            if(c == byte.class) 
 	                w+=32;
 	            else
 	                w+=9999;
-	        } else if(arg.getClass() == Request.PhpArray.class) {
+	        } else if(arg.getClass() == PhpArray.class) {
 		    Iterator iterator = ((Map)arg).values().iterator();
 		    if(iterator.hasNext()) {
 			Object elem = iterator.next();
@@ -603,7 +602,7 @@ public class JavaBridge implements Runnable {
 		else w+=9999;
 	    }
 	} else if ((java.util.Collection.class).isAssignableFrom(param)) {
-	    if ((arg != null) && !(arg instanceof Request.PhpArray))
+	    if ((arg != null) && !(arg instanceof PhpArray))
 		w+=9999;
 	} else if (param.isPrimitive()) {
 	    Class c=param;
@@ -625,7 +624,7 @@ public class JavaBridge implements Runnable {
 		if (c!=Boolean.TYPE) w+=9999;
 	    } else if (arg instanceof Character) {
 		if (c!=Character.TYPE) w+=9999;
-	    } else if ((arg instanceof String)||(arg instanceof Request.PhpString)) {
+	    } else if ((arg instanceof String)||(arg instanceof PhpString)) {
 		    w+=64;
 	    } else {
 		w+=9999;
@@ -633,7 +632,7 @@ public class JavaBridge implements Runnable {
 	} else if(Number.class.isAssignableFrom(param)) {
 	    if(param==Float.class || param==Double.class) {
 		if(!(arg instanceof Double)) w+=9999;
-	    } else if(!(arg instanceof Request.PhpExactNumber)) w+=9999;
+	    } else if(!(arg instanceof PhpExactNumber)) w+=9999;
 	} else {
 	    w+=9999;
 	}
@@ -734,14 +733,14 @@ public class JavaBridge implements Runnable {
 	    if((arg=args[i]) == null) continue;
 	    
 	    if(parms[i]==String.class) {
-	    	if (arg instanceof Request.PhpString)
-		    result[i] = ((Request.PhpString)arg).getString();
+	    	if (arg instanceof PhpString)
+		    result[i] = ((PhpString)arg).getString();
 	    	else 
 		    result[i] = arg.toString();
-	    } else if (arg instanceof Request.PhpString || arg instanceof String) {
+	    } else if (arg instanceof PhpString || arg instanceof String) {
 	        if(!parms[i].isArray()) {
 		Class c = parms[i];
-		String s = (arg instanceof String) ? (String) arg : ((Request.PhpString)arg).getString();
+		String s = (arg instanceof String) ? (String) arg : ((PhpString)arg).getString();
 		result[i] = s;
 		try {
 		    if (c == Boolean.TYPE) result[i]=new Boolean(s);
@@ -757,7 +756,7 @@ public class JavaBridge implements Runnable {
 		    // oh well, we tried!
 		}
 	        } else {
-	            result[i]=((Request.PhpString)arg).getBytes();
+	            result[i]=((PhpString)arg).getBytes();
 	        }
 	    } else if (arg instanceof Number) {
 	    	if (parms[i].isPrimitive()) {
@@ -771,7 +770,7 @@ public class JavaBridge implements Runnable {
 		    else if (c == Long.TYPE && !(n instanceof Long))
 			result[i]=new Long(n.longValue());
 	    	} else {
-		    if(arg.getClass()==Request.PhpExactNumber.class) {
+		    if(arg.getClass()==PhpExactNumber.class) {
 	    		{
 			    Class c = parms[i];
 			    if(c.isAssignableFrom(Integer.class)) {
@@ -782,7 +781,7 @@ public class JavaBridge implements Runnable {
 			}
 		    }
 	    	}
-	    } else if (arg instanceof Request.PhpArray) {
+	    } else if (arg instanceof PhpArray) {
 	    	if(parms[i].isArray()) {
 	    	    Map.Entry e = null;
 	    	    Object tempArray = null;
@@ -840,8 +839,8 @@ public class JavaBridge implements Runnable {
 		    }
 		} else if ((java.util.Map.class).isAssignableFrom(parms[i])) {
 		    result[i]=arg;
-		} else if(arg instanceof Request.PhpString) {
-		    result[i] = ((Request.PhpString)arg).getString(); // always prefer strings over byte[]
+		} else if(arg instanceof PhpString) {
+		    result[i] = ((PhpString)arg).getString(); // always prefer strings over byte[]
 		} 
 		}
 	}

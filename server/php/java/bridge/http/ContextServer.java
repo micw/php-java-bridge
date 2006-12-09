@@ -54,7 +54,7 @@ public final class ContextServer implements ContextFactory.ICredentials {
     // One pool for both, the Socket- and the PipeContextServer
     private static final ThreadPool pool = new ThreadPool("JavaBridgeContextRunner", Integer.parseInt(Util.THREAD_POOL_MAX_SIZE));
     
-    private class PipeChannelName extends IContextServer.ChannelName {
+    private class PipeChannelName extends AbstractChannelName {
         public PipeChannelName(String name, String kontext, IContextFactory ctx) {super(name, kontext, ctx);}
 
         public boolean startChannel() {
@@ -64,7 +64,7 @@ public final class ContextServer implements ContextFactory.ICredentials {
             return "Pipe:"+getDefaultName();
         }
     }
-    private class SocketChannelName extends IContextServer.ChannelName {
+    private class SocketChannelName extends AbstractChannelName {
         public SocketChannelName(String name, String kontext, IContextFactory ctx) {super(name, kontext, ctx);}
         
         public boolean startChannel() {
@@ -115,7 +115,7 @@ public final class ContextServer implements ContextFactory.ICredentials {
      * @param channelName The ChannelName.
      * @throws IllegalStateException if there's no Pipe- or SocketContextServer available
      */
-    public void start(IContextServer.ChannelName channelName) {
+    public void start(AbstractChannelName channelName) {
 	boolean started = channelName.start();
 	if(!started) throw new IllegalStateException("Pipe- and SocketContextServer not available");
     }
@@ -125,7 +125,7 @@ public final class ContextServer implements ContextFactory.ICredentials {
      * @param channelName The ChannelName
      * @return The ContextRunner or null.
      */
-    public ContextRunner schedule(IContextServer.ChannelName channelName) {
+    public ContextRunner schedule(AbstractChannelName channelName) {
         return channelName.schedule();
     }
 
@@ -133,7 +133,7 @@ public final class ContextServer implements ContextFactory.ICredentials {
      * Recycle a ContextRunner, if possible.
      * @param channelName The ChannelName.
      */
-    public void recycle(IContextServer.ChannelName channelName) {
+    public void recycle(AbstractChannelName channelName) {
 	channelName.recycle();
     }
     /**
@@ -143,7 +143,7 @@ public final class ContextServer implements ContextFactory.ICredentials {
      * @param currentCtx The current ContextFactory, see X_JAVABRIDGE_CONTEXT
      * @return The channel name of the Pipe- or SocketContextServer.
      */
-    public IContextServer.ChannelName getFallbackChannelName(String channelName, String kontext, IContextFactory currentCtx) {
+    public AbstractChannelName getFallbackChannelName(String channelName, String kontext, IContextFactory currentCtx) {
         if(channelName!=null && ctx.isAvailable()) return new PipeChannelName(channelName, kontext, currentCtx);
         SocketContextServer sock=getSocketContextServer(this, pool);
         return new SocketChannelName(sock.getChannelName(), kontext, currentCtx);

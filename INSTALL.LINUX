@@ -148,5 +148,5 @@ Known Linux Issues
 
   or, if you have downloaded the source archive:
 
-    rpmbuild -tb php-java-bridge_x.y.z.tar.bz2
+    rpmbuild -tb php-java-bridge_x.y.z.tar.gz
 

@@ -66,10 +66,10 @@ public class ContextRunner implements Runnable {
     private Request request;
     private InputStream in;
     private OutputStream out;
-    private IContextServer.Channel channel;
+    private AbstractChannel channel;
     private ContextFactory.ICredentials contextServer; /* the ContextServer of the web application, used for security checks in ContextFactory.get(...)  */
     
-    protected ContextRunner(ContextFactory.ICredentials contextServer, IContextServer.Channel channel) {
+    protected ContextRunner(ContextFactory.ICredentials contextServer, AbstractChannel channel) {
 	this.contextServer = contextServer;
 	this.channel = channel;
     }
@@ -151,7 +151,7 @@ public class ContextRunner implements Runnable {
      * @param channelName the channelName. This procedure sets the runner into channelName as a side effect.
      * @return the ContextRunner, if found, otherwise null.
      */
-    public static synchronized ContextRunner checkRunner(IContextServer.ChannelName channelName) {
+    public static synchronized ContextRunner checkRunner(AbstractChannelName channelName) {
 	String id = channelName.getKontext();
 	IContextFactory ctx = channelName.getCtx();
 	ContextRunner runner = null;
@@ -179,7 +179,7 @@ public class ContextRunner implements Runnable {
      * Return the channel of the current runner.
      * @return The Channel
      */
-    public IContextServer.Channel getChannel() {
+    public AbstractChannel getChannel() {
 	return channel;
     }
     public void run() {

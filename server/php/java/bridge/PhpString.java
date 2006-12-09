@@ -1,6 +1,6 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-package php.java.bridge.http;
+package php.java.bridge;
 
 /*
  * Copyright (C) 2006 Jost Boekemeier
@@ -24,28 +24,25 @@ package php.java.bridge.http;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
 /**
- * The interface that all ContextServer must implement.
- * 
- * @author jostb
- */
-public interface IContextServer {
-     /**
-     * Destroy the server
+     * A php string is a UTF-8 coded byte array.
      *
      */
-    public void destroy();
+   abstract class PhpString {
+        /**
+         * Get the encoded string representation
+         * @return The encoded string.
+         */
+        public abstract String getString();
+        
 
-    /**
-     * Check if the ContextServer is ready, i.e. it has created a server socket.
-     * @return true if there's a server socket listening, false otherwise.
-     */
-    public boolean isAvailable();
-    
-    /**
-     * Start the runner.
-     * @param channel The channel name
-     */
-    public boolean start(AbstractChannelName channel);
-}
+        /**
+         * Get the encoded byte representation
+         * @return The encoded bytes.
+         */
+        public abstract byte[] getBytes();
+
+        public String toString() {
+            return getString();
+        }
+    }

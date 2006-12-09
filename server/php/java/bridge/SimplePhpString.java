@@ -1,6 +1,6 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-package php.java.bridge.http;
+package php.java.bridge;
 
 /*
  * Copyright (C) 2006 Jost Boekemeier
@@ -24,28 +24,19 @@ package php.java.bridge.http;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+final class SimplePhpString extends PhpString {
+   String s; 
+   JavaBridge bridge;
 
-/**
- * The interface that all ContextServer must implement.
- * 
- * @author jostb
- */
-public interface IContextServer {
-     /**
-     * Destroy the server
-     *
-     */
-    public void destroy();
+   SimplePhpString(JavaBridge bridge, String s) {
+       this.bridge = bridge;
+       this.s = s;
+    }
 
-    /**
-     * Check if the ContextServer is ready, i.e. it has created a server socket.
-     * @return true if there's a server socket listening, false otherwise.
-     */
-    public boolean isAvailable();
-    
-    /**
-     * Start the runner.
-     * @param channel The channel name
-     */
-    public boolean start(AbstractChannelName channel);
+   public String getString() {
+    return s;
+}
+public byte[] getBytes() {
+    return bridge.options.getBytes(s);
+}
 }

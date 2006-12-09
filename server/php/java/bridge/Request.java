@@ -27,13 +27,7 @@ package php.java.bridge;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.util.AbstractMap;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Set;
-import java.util.TreeMap;
 
 /**
  * This class is used to handle requests from the front-end.
@@ -44,43 +38,7 @@ public final class Request implements IDocHandler {
 
     private Parser parser;
     private JavaBridge defaultBridge, bridge;
-    protected static final class IntegerComparator implements Comparator {
-      public int compare(Object arg0, Object arg1) {
-	  int k0 = ((Integer)arg0).intValue();
-	  int k1 = ((Integer)arg1).intValue();
-	  if(k0 < k1) return -1; else if(k0 > k1) return 1;
-	  return 0;
-      }
-    }
     protected static final IntegerComparator PHP_ARRAY_KEY_COMPARATOR = new IntegerComparator();
-    protected static final class PhpArray extends AbstractMap { // for PHP's array()
-	private static final long serialVersionUID = 3905804162838115892L;
-	private TreeMap t = new TreeMap(PHP_ARRAY_KEY_COMPARATOR);
-	private HashMap m = null;
-	public Object put(Object key, Object value) {
-	    if(m!=null) return m.put(key, value);
-	    try {
-	        return t.put((Integer)key, value);
-	    } catch (ClassCastException e) {
-	        m = new HashMap(t);
-	        t = null;
-	        return m.put(key, value);
-	    }
-	}
-	public Set entrySet() {
-	    if(t!=null) return t.entrySet();
-	    return m.entrySet();
-	}
-
-	public int arraySize() {
-	    if(t!=null) {
-		if(t.size()==0) return 0;
-		return 1+((Integer)t.lastKey()).intValue();
-	    }
-	    throw new IllegalArgumentException("The passed PHP \"array\" is not a sequence but a dictionary");
-	}
-    }
- 
     // Only used when the async. protocol is enabled.
     protected static final class PhpNull {}
     protected static final PhpNull PHPNULL = new PhpNull();
@@ -89,136 +47,6 @@ public final class Request implements IDocHandler {
 	if(ref == PHPNULL) return null;
 	return ref;
     }
-
-    /**
-     * A php string is a UTF-8 coded byte array.
-     *
-     */
-   protected static abstract class PhpString {
-        /**
-         * Get the encoded string representation
-         * @return The encoded string.
-         */
-        public abstract String getString();
-        
-
-        /**
-         * Get the encoded byte representation
-         * @return The encoded bytes.
-         */
-        public abstract byte[] getBytes();
-
-        public String toString() {
-            return getString();
-        }
-    }
-   protected static final class SimplePhpString extends PhpString {
-       String s; 
-       JavaBridge bridge;
-       
-       SimplePhpString(JavaBridge bridge, String s) {
-           this.bridge = bridge;
-           this.s = s;
-        }
-
-       public String getString() {
-        return s;
-    }
-    public byte[] getBytes() {
-        return bridge.options.getBytes(s);
-    }
-    }
-    static final class PhpParserString extends PhpString {
-        ParserString st;
-        private JavaBridge bridge;
-        /**
-         * @param st The ParserString
-         */
-        public PhpParserString(JavaBridge bridge, ParserString st) {
-            this.bridge = bridge;
-            getBytes(st);
-        }
-        private byte[] bytes;
-        private void getBytes(ParserString st) {
-             if(bytes==null) {
-                bytes=new byte[st.length];
-                System.arraycopy(st.string,st.off,bytes,0,bytes.length);
-            }
-        }
-        public byte[] getBytes() {
-            return bytes;
-        }
-        private String newString(byte[] b) {
-            return bridge.getString(b, 0, b.length);
-        }
-        /**
-         * Get the encoded string representation
-         * @param res The response.
-         * @return The encoded string.
-         */
-        public String getString() {
-            return newString(getBytes());
-        }
-        /**
-         * Use UTF-8 encoding, for debugging only
-         */
-        public String toString() {
-            try {
-                return new String(getBytes(), Util.UTF8);
-            } catch (UnsupportedEncodingException e) {
-                return new String(getBytes());               
-            }
-         }
-    }
-    protected static final class PhpExactNumber extends Number {
-
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 3257566187666749240L;
-	private long l;
-
-	/**
-	 * @param l
-	 */
-	public PhpExactNumber(long l) {
-	    this.l = l;
-	}
-
-	/* (non-Javadoc)
-	 * @see java.lang.Number#intValue()
-	 */
-	public int intValue() {
-			
-	    return (int)l;
-	}
-
-	/* (non-Javadoc)
-	 * @see java.lang.Number#longValue()
-	 */
-	public long longValue() {
-	    return l;
-	}
-
-	/* (non-Javadoc)
-	 * @see java.lang.Number#floatValue()
-	 */
-	public float floatValue() {
-	    return l;
-	}
-
-	/* (non-Javadoc)
-	 * @see java.lang.Number#doubleValue()
-	 */
-	public double doubleValue() {
-	    return l;
-	}
-		
-	public String toString() {
-	    return String.valueOf(l);
-	}
-    	
-    };
 
     static final Object[] ZERO_ARGS = new Object[0];
     private class SimpleContext {

@@ -271,7 +271,7 @@ class java_Protocol {
 	}
 	$this->client->RUNTIME["SERVER"] = $this->serverName = "$host:$port";
 	$sock = fsockopen("${ssl}${host}", $port, $errno, $errstr, 30);
-	if (!$sock) die("Could not connect to the J2EE server. Please start it, for example with the command: \"java -Dphp.java.bridge.default_log_level=3 -Dphp.java.bridge.default_log_file=\"\" -Dphp.java.bridge.promiscuous=true -classpath JavaBridge.jar php.java.bridge.JavaBridgeRunner 8080\". Error message: $errstr ($errno)\n");
+	if (!$sock) die("Could not connect to the J2EE server. Please start it, for example with the command: \"java -jar JavaBridge.jar SERVLET:8080 3 JavaBridge.log\" or, if the back end has been compiled to native code, with \"modules/java SERVLET:8080 3 JavaBridge.log\". Error message: $errstr ($errno)\n");
 	return new java_HttpHandler($this, $sock);
   }
   function java_Protocol ($client) {

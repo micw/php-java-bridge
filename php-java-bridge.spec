@@ -19,13 +19,13 @@ Version: %{version}
 Release: %{release}
 License: LGPL
 URL: http://www.sourceforge.net/projects/php-java-bridge
-Source0: http://osdn.dl.sourceforge.net/sourceforge/php-java-bridge/php-java-bridge_%{version}.tar.bz2
+Source0: http://osdn.dl.sourceforge.net/sourceforge/php-java-bridge/php-java-bridge_%{version}.tar.gz
 
 
 BuildRequires: php-devel >= 4.3.4
 BuildRequires: gcc >= 3.2.3
 BuildRequires: gcc-c++
-BuildRequires: gcc-java
+BuildRequires: gcc-java >= 3.3.3
 BuildRequires: libstdc++-devel
 BuildRequires: httpd make 
 BuildRequires: libtool >= 1.4.3
@@ -156,7 +156,7 @@ for i in $files;
   echo %{shared_pear}/java/$i >>filelist
 done
 
-files='java libnatcJavaBridge.so JavaBridge.jar java.so'
+files='java libnatcJavaBridge.so java.so'
 mkdir -p $RPM_BUILD_ROOT/$mod_dir
 for i in $files; do
  if test -f $mod_dir/$i; then
@@ -166,6 +166,9 @@ for i in $files; do
  fi
 done
 i=RunJavaBridge
+cp $mod_dir/$i $RPM_BUILD_ROOT/$mod_dir/$i
+rm -f $mod_dir/$i
+i=JavaBridge.jar
 cp $mod_dir/$i $RPM_BUILD_ROOT/$mod_dir/$i
 rm -f $mod_dir/$i
 
@@ -291,8 +294,8 @@ fi
 %files -f filelist
 %defattr(-,root,root)
 %attr(6111,apache,apache) %{_libdir}/php/modules/RunJavaBridge
-%attr(731,root,root) %{_libdir}/php/modules/JavaBridge.jar
-%attr(731,root,root) %{shared_java}/JavaBridge.jar
+%attr(755,root,root) %{_libdir}/php/modules/JavaBridge.jar
+%attr(755,root,root) %{shared_java}/JavaBridge.jar
 %doc README COPYING CREDITS NEWS test.php INSTALL.LINUX security 
 
 %files tomcat -f filelist-tomcat

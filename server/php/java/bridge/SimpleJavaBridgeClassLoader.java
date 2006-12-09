@@ -31,8 +31,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.LinkedList;
 
-import php.java.bridge.DynamicJavaBridgeClassLoader.JarLibraryPath;
-
 
 /**
  * A bridge pattern which allows us to vary the class loader as run-time.

@@ -1,6 +1,6 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-package php.java.bridge.http;
+package php.java.bridge;
 
 /*
  * Copyright (C) 2006 Jost Boekemeier
@@ -24,28 +24,35 @@ package php.java.bridge.http;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.util.AbstractMap;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.TreeMap;
 
-/**
- * The interface that all ContextServer must implement.
- * 
- * @author jostb
- */
-public interface IContextServer {
-     /**
-     * Destroy the server
-     *
-     */
-    public void destroy();
+final class PhpArray extends AbstractMap { // for PHP's array()
+    private static final long serialVersionUID = 3905804162838115892L;
+    private TreeMap t = new TreeMap(Request.PHP_ARRAY_KEY_COMPARATOR);
+    private HashMap m = null;
+    public Object put(Object key, Object value) {
+        if(m!=null) return m.put(key, value);
+        try {
+            return t.put((Integer)key, value);
+        } catch (ClassCastException e) {
+            m = new HashMap(t);
+            t = null;
+            return m.put(key, value);
+        }
+    }
+    public Set entrySet() {
+        if(t!=null) return t.entrySet();
+        return m.entrySet();
+    }
 
-    /**
-     * Check if the ContextServer is ready, i.e. it has created a server socket.
-     * @return true if there's a server socket listening, false otherwise.
-     */
-    public boolean isAvailable();
-    
-    /**
-     * Start the runner.
-     * @param channel The channel name
-     */
-    public boolean start(AbstractChannelName channel);
+    public int arraySize() {
+        if(t!=null) {
+    	if(t.size()==0) return 0;
+    	return 1+((Integer)t.lastKey()).intValue();
+        }
+        throw new IllegalArgumentException("The passed PHP \"array\" is not a sequence but a dictionary");
+    }
 }

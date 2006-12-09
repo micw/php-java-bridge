@@ -29,13 +29,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import php.java.bridge.http.AbstractChannelName;
 import php.java.bridge.http.ContextFactory;
 import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.HttpRequest;
 import php.java.bridge.http.HttpResponse;
 import php.java.bridge.http.HttpServer;
 import php.java.bridge.http.IContextFactory;
-import php.java.bridge.http.IContextServer;
 
 /**
  * This is the main entry point for the PHP/Java Bridge library.
@@ -128,7 +128,7 @@ public class JavaBridgeRunner extends HttpServer {
 
 	try {
 	    if(r.init(sin, sout)) {
-		IContextServer.ChannelName channelName = 
+		AbstractChannelName channelName = 
 	            ctxServer.getFallbackChannelName(channel, kontext, ctx);
 		boolean hasDefault = ctxServer.schedule(channelName) != null;
 		res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getDefaultName());

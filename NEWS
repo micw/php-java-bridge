@@ -5,6 +5,8 @@ Please send bug reports, questions and suggestions to
 
 Version 3.2.1
 
+* gcc >= 3.3.3 is required.
+
 * A third optional parameter (timeout) has been added to the
 java_session() implementation of the Java extension module, so that
 the C extension module is now compatible with our pure PHP PHP/Java

@@ -1,6 +1,6 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-package php.java.bridge.http;
+package php.java.bridge;
 
 /*
  * Copyright (C) 2006 Jost Boekemeier
@@ -24,28 +24,52 @@ package php.java.bridge.http;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-/**
- * The interface that all ContextServer must implement.
- * 
- * @author jostb
- */
-public interface IContextServer {
-     /**
-     * Destroy the server
-     *
-     */
-    public void destroy();
+final class PhpExactNumber extends Number {
 
     /**
-     * Check if the ContextServer is ready, i.e. it has created a server socket.
-     * @return true if there's a server socket listening, false otherwise.
+     * 
      */
-    public boolean isAvailable();
-    
+    private static final long serialVersionUID = 3257566187666749240L;
+    private long l;
+
     /**
-     * Start the runner.
-     * @param channel The channel name
+     * @param l
      */
-    public boolean start(AbstractChannelName channel);
+    public PhpExactNumber(long l) {
+        this.l = l;
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Number#intValue()
+     */
+    public int intValue() {
+    		
+        return (int)l;
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Number#longValue()
+     */
+    public long longValue() {
+        return l;
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Number#floatValue()
+     */
+    public float floatValue() {
+        return l;
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Number#doubleValue()
+     */
+    public double doubleValue() {
+        return l;
+    }
+    	
+    public String toString() {
+        return String.valueOf(l);
+    }
+	
 }

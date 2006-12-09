@@ -24,28 +24,37 @@ package php.java.bridge.http;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
- * The interface that all ContextServer must implement.
- * 
+ * Represents the pipe or socket channel.
  * @author jostb
+ *
  */
-public interface IContextServer {
-     /**
-     * Destroy the server
-     *
-     */
-    public void destroy();
-
+public abstract class AbstractChannel {
     /**
-     * Check if the ContextServer is ready, i.e. it has created a server socket.
-     * @return true if there's a server socket listening, false otherwise.
+     * Returns the channel's input stream.
+     * @return The InputStream
+     * @throws FileNotFoundException
      */
-    public boolean isAvailable();
+    public abstract InputStream getInputStream() throws FileNotFoundException;
+    /**
+     * Returns the channel's output stream.
+     * @return The OutputStream.
+     * @throws FileNotFoundException
+     */
+    public abstract OutputStream getOuptutStream() throws FileNotFoundException;
+    /**
+     * Shut down the channel, closes the in- and output stream and other resources.
+     */
+    public abstract void shutdown();
     
     /**
-     * Start the runner.
-     * @param channel The channel name
+     * Returns the name of the channel, for example the socket # or the pipe name.
+     * @see php.java.bridge.http.AbstractChannelName#getDefaultName()
+     * @return the name of the channel.
      */
-    public boolean start(AbstractChannelName channel);
+    public abstract String getName();
 }

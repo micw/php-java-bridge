@@ -44,7 +44,6 @@ import javax.servlet.http.HttpServletResponse;
 import php.java.bridge.NotImplementedException;
 import php.java.bridge.Util;
 import php.java.servlet.ConnectionPool.ConnectException;
-import php.java.servlet.ConnectionPool.ConnectionException;
 
 /**
  * A CGI Servlet which connects to a FastCGI server. If allowed by the

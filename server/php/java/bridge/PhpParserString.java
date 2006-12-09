@@ -1,6 +1,6 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-package php.java.bridge.http;
+package php.java.bridge;
 
 /*
  * Copyright (C) 2006 Jost Boekemeier
@@ -24,28 +24,47 @@ package php.java.bridge.http;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.io.UnsupportedEncodingException;
 
-/**
- * The interface that all ContextServer must implement.
- * 
- * @author jostb
- */
-public interface IContextServer {
-     /**
-     * Destroy the server
-     *
-     */
-    public void destroy();
-
+final class PhpParserString extends PhpString {
+    ParserString st;
+    private JavaBridge bridge;
     /**
-     * Check if the ContextServer is ready, i.e. it has created a server socket.
-     * @return true if there's a server socket listening, false otherwise.
+     * @param st The ParserString
      */
-    public boolean isAvailable();
-    
+    public PhpParserString(JavaBridge bridge, ParserString st) {
+        this.bridge = bridge;
+        getBytes(st);
+    }
+    private byte[] bytes;
+    private void getBytes(ParserString st) {
+         if(bytes==null) {
+            bytes=new byte[st.length];
+            System.arraycopy(st.string,st.off,bytes,0,bytes.length);
+        }
+    }
+    public byte[] getBytes() {
+        return bytes;
+    }
+    private String newString(byte[] b) {
+        return bridge.getString(b, 0, b.length);
+    }
     /**
-     * Start the runner.
-     * @param channel The channel name
+     * Get the encoded string representation
+     * @param res The response.
+     * @return The encoded string.
      */
-    public boolean start(AbstractChannelName channel);
+    public String getString() {
+        return newString(getBytes());
+    }
+    /**
+     * Use UTF-8 encoding, for debugging only
+     */
+    public String toString() {
+        try {
+            return new String(getBytes(), Util.UTF8);
+        } catch (UnsupportedEncodingException e) {
+            return new String(getBytes());               
+        }
+     }
 }

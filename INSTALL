@@ -112,7 +112,7 @@ cd ..
 #
 # BUILD PHP
 #
-bunzip2 < php-x.y.z.tar.bz2 | tar xf -
+gunzip < php-x.y.z.tar.gz | tar xf -
 cd php-x.y.z
 ./configure --prefix=$INST --disable-all --with-apxs2=$INST/bin/apxs
 make && su -c "make install"
@@ -124,7 +124,7 @@ cd ..
 #
 # BUILD THE PHP/JAVA BRIDGE
 #
-bunzip2 < php-java-bridge_p.x.y.tar.bz2 | tar xf -
+gunzip < php-java-bridge_p.x.y.tar.gz | tar xf -
 cd php-java-bridge-p.x.y
 phpize
 ./configure --with-java=$JAVA_HOME,$JRE_HOME

@@ -1,6 +1,6 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-package php.java.bridge.http;
+package php.java.bridge;
 
 /*
  * Copyright (C) 2006 Jost Boekemeier
@@ -24,28 +24,13 @@ package php.java.bridge.http;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.util.Comparator;
 
-/**
- * The interface that all ContextServer must implement.
- * 
- * @author jostb
- */
-public interface IContextServer {
-     /**
-     * Destroy the server
-     *
-     */
-    public void destroy();
-
-    /**
-     * Check if the ContextServer is ready, i.e. it has created a server socket.
-     * @return true if there's a server socket listening, false otherwise.
-     */
-    public boolean isAvailable();
-    
-    /**
-     * Start the runner.
-     * @param channel The channel name
-     */
-    public boolean start(AbstractChannelName channel);
+final class IntegerComparator implements Comparator {
+  public int compare(Object arg0, Object arg1) {
+      int k0 = ((Integer)arg0).intValue();
+      int k1 = ((Integer)arg1).intValue();
+      if(k0 < k1) return -1; else if(k0 > k1) return 1;
+      return 0;
+  }
 }

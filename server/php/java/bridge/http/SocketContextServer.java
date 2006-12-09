@@ -171,7 +171,7 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
     public String getChannelName() {
         return socket.getSocketName();
     }
-    public boolean start(IContextServer.ChannelName channelName) {
+    public boolean start(AbstractChannelName channelName) {
 	return isAvailable();
     }
 }

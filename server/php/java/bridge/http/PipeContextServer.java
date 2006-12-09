@@ -54,7 +54,7 @@ public class PipeContextServer implements IContextServer {
     private boolean isAvailable = true;
     protected String contextName;
     
-    protected static class Channel extends IContextServer.Channel {
+    protected static class Channel extends AbstractChannel {
         protected InputStream in = null;
         protected OutputStream out = null;
         private String channelName;
@@ -99,7 +99,7 @@ public class PipeContextServer implements IContextServer {
     	this.threadPool = threadPool;
     	this.contextName = contextName;
     }
-    public boolean start(IContextServer.ChannelName channelName) {
+    public boolean start(AbstractChannelName channelName) {
         if(!isAvailable()) return false;
         try {
             ContextRunner runner = new ContextRunner(contextServer, new Channel(channelName.getName()));

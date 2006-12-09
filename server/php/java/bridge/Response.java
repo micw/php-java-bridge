@@ -231,8 +231,8 @@ public class Response {
 		writeString((byte[])value);
 	    } else if (value instanceof java.lang.String) {
 		writeString((String)value);
-	    } else if (value instanceof Request.PhpString) {
-	        writeString(((Request.PhpString)value).getBytes());
+	    } else if (value instanceof PhpString) {
+	        writeString(((PhpString)value).getBytes());
 	    } else if (value instanceof java.lang.Number) {
 
 		if (value instanceof java.lang.Integer ||
@@ -279,8 +279,8 @@ public class Response {
    		else if(staticType == Character.TYPE) 
 		    writeString(Util.stringValueOf(value));
    		else { Util.logFatal("Unknown type"); writeObject(value); }
-	    } else if(value instanceof Request.PhpString) //  No need to check for Request.PhpNumber, this cannot happen.
-	        writeString(((Request.PhpString)value).getBytes());
+	    } else if(value instanceof PhpString) //  No need to check for Request.PhpNumber, this cannot happen.
+	        writeString(((PhpString)value).getBytes());
 	    else if(!delegate.setResult(value))
 		writeObject(value);
 	    return true;
@@ -353,8 +353,8 @@ public class Response {
 	}
 
 	public boolean setResult(Object value) {
-		 if(value instanceof Request.PhpString) 
-		     value = ((Request.PhpString)value).getString();
+		 if(value instanceof PhpString) 
+		     value = ((PhpString)value).getString();
 
 		 if(staticType.isPrimitive()) {
 		if(staticType == Boolean.TYPE) {

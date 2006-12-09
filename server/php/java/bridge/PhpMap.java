@@ -174,7 +174,7 @@ public abstract class PhpMap {
 			return ((Map)(this.value)).get(currentKey);
 		    }
 		    public Object currentKey() {
-			return new Request.SimplePhpString(_bridge, String.valueOf(currentKey));
+			return new SimplePhpString(_bridge, String.valueOf(currentKey));
 		    }
 		    public boolean moveForward() {
 			currentKey = iter.hasNext() ? iter.next() : null;

@@ -40,9 +40,9 @@ import php.java.bridge.ILogger;
 import php.java.bridge.JavaBridge;
 import php.java.bridge.Request;
 import php.java.bridge.Util;
+import php.java.bridge.http.AbstractChannelName;
 import php.java.bridge.http.ContextFactory;
 import php.java.bridge.http.ContextServer;
-import php.java.bridge.http.IContextServer;
 
 /**
  * Handles requests from PHP clients.  <p> When Apache, IIS or php
@@ -244,7 +244,7 @@ public class PhpJavaServlet extends HttpServlet {
 	
 	try {
 	    if(r.init(sin, sout)) {
-		IContextServer.ChannelName channelName = contextServer.getFallbackChannelName(channel, kontext, ctx);
+		AbstractChannelName channelName = contextServer.getFallbackChannelName(channel, kontext, ctx);
 		boolean hasDefault = contextServer.schedule(channelName) != null;
 		res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getDefaultName());
 		if(hasDefault) res.setHeader("X_JAVABRIDGE_CONTEXT_DEFAULT", kontext);
