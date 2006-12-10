@@ -27,6 +27,6 @@ try {
   header("Content-Disposition: attachment; filename=HelloWorld.pdf");
   echo java_cast($out->toByteArray(), "string");
 } catch (JavaException $e) {
-  echo "Exception occured: $e<br>\n";
+  echo "Exception occured: {$e->__toString()}<br>\n";
 }
 ?>

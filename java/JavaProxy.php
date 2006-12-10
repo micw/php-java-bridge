@@ -170,7 +170,7 @@ class java_JavaProxy {
     $this->__java = $this->__client->invokeMethod(0, "deserialize", $args);
   }
   function __destruct() { 
-	$this->__client->unref($this->__java);
+	if(isset($this->__client)) $this->__client->unref($this->__java);
   }
   function __get($key) { 
     return $this->__client->getProperty($this->__java, $key);

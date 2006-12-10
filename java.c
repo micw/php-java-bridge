@@ -1944,7 +1944,7 @@ PHP_MINFO_FUNCTION(EXT)
 						   (EXT_GLOBAL(ini_user) & U_SECURE) ?"s":"", server, JG(servlet));
 	  url = buf;
 	} else {
-	  url = off;
+	  url = (char*)off;
 	}
 	php_info_print_table_row(2, EXT_NAME()/**/".servlet", url);
   }

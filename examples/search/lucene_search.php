@@ -50,7 +50,7 @@ try {
   }
   delete_index_dir();
 } catch (JavaException $e) {
-  echo "Exception occured: $e<br>\n";
+  echo "Exception occured: {$e->__toString()}<br>\n";
 }
 
 /** helper functions */
@@ -64,10 +64,12 @@ $tmp_dir=null;
  */
 function create_index_dir() {
   global $tmp_file, $tmp_dir;
-  $tmp_file=tempnam(java_lang_System()->getProperty("java.io.tmpdir"), "idx");
+  $javaTmpdir = java_lang_System()->getProperty("java.io.tmpdir");
+  $tmpdir = java_values($javaTmpdir);
+  $tmp_file=tempnam($tmpdir, "idx");
   $tmp_dir=new java_io_File("${tmp_file}.d");
   $tmp_dir->mkdir();
-  return "{$tmp_dir->toString()}";
+  return java_values($tmp_dir->toString());
 }
 
 /** delete the lucene index files */

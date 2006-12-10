@@ -35,7 +35,7 @@ Installing the lucene.jar library on a web server
    to the web server document root.
 
 4. If Java is not installed on the web server machine, the bridge
-   should have been configured to run without Java (ommit the
+   should have been configured to run without Java (omit the
    --with-java=... configure option). In this case also copy the files
    "java" and "libnatcJavaBridge.so" over to the web server PHP
    extension directory.
