@@ -10,9 +10,11 @@
 export DH_VERBOSE=1
 
 # AFM  27nov2006 variables MUST be set outside target rules
-# target rules MUST start at column 1, then followed by :
+# target rules MUST start at column 1, then followed by ":"
 # actions MUST start after a TAB, not blank spaces
-	DESTDIR := ${CURDIR}/debian/php-java-bridge
+# AFM 11dec2006 builddir for using dh_install for .war files.
+	BUILDDIR := debian/php-java-bridge
+	DESTDIR := ${CURDIR}/${BUILDDIR}
 	PHP_EXT_DIR := $(shell /usr/bin/php-config --extension-dir)
 
 
@@ -44,7 +46,7 @@ configure-stamp:
 
 build: build-stamp
 
-# AFM 07dec2006 using dpatch for flexibility no mv anymore
+# AFM 07dec2006 using dpatch for flexibility, no mv anymore
 build-stamp: configure 
 	dh_testdir
 
@@ -72,24 +74,21 @@ install: build
 	dh_installdirs 
 
 	# Add here commands to install the package into debian/php-java-bridge.
-# AFM 27nov2006 trying to specifiy destdir debian way?
+
+# AFM 27nov2006 to specifiy destdir debian way
 	$(MAKE) install-modules DESTDIR=${DESTDIR}
 
-# AFM 23nov2006
-	mkdir -p ${DESTDIR}/etc/php5/conf.d
-	cp java.ini ${DESTDIR}/etc/php5/conf.d/java.ini
-	cp java-servlet.ini ${DESTDIR}/etc/php5/conf.d/java-servlet.ini
-	cp mono.ini ${DESTDIR}/etc/php5/conf.d/mono.ini
-
-
+# AFM 11dec2006 using dh_installdirs and dh_install for this task
+# note the absence of leading "/"
+	dh_install java.ini java-servlet.ini mono.ini etc/php5/conf.d
 
 
 # Build architecture-independent files here.
 binary-indep: build install
 
-# AFM 27nov2006 .war file is java
-	mkdir -p ${DESTDIR}/var/lib/tomcat5/webapps
-	cp ${DESTDIR}$(PHP_EXT_DIR)/JavaBridge.war ${DESTDIR}/var/lib/tomcat5/webapps
+# AFM 11dec2006 using dh_installdirs and dh_install for this task
+# note the absence of leading "/"
+	dh_install ${BUILDDIR}$(PHP_EXT_DIR)/JavaBridge.war var/lib/tomcat5/webapps
 
 # Build architecture-dependent files here.
 binary-arch: build install

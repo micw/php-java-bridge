@@ -1,2 +1,4 @@
 usr/bin
 usr/sbin
+etc/php5/conf.d
+var/lib/tomcat5/webapps
