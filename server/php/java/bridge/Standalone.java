@@ -26,6 +26,8 @@ package php.java.bridge;
 import java.io.File;
 import java.io.IOException;
 
+import javax.swing.JOptionPane;
+
 /**
  * This is the standalone container of the PHP/Java Bridge. It starts
  * the standalone back-end, listenes for protocol requests and handles
@@ -73,14 +75,21 @@ public class Standalone {
 
 	return socket;
     }
+    protected static void disclaimer() {
+	System.err.println("Copyright (C) 2003, 2006 Jost Bökemeier and others.");
+	System.err.println("This is free software; see the source for copying conditions.  There is NO");
+	System.err.println("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.");
+    }
     private static void monoUsage() {
 	System.err.println("PHP/Mono+NET Bridge version "+Util.VERSION);
+	disclaimer();
 	System.err.println("Usage: MonoBridge.exe [SOCKETNAME LOGLEVEL LOGFILE]");
 	System.err.println("Example: MonoBridge.exe");
 	System.err.println("Example: MonoBridge.exe INET_LOCAL:0 3 MonoBridge.log");
     }
     protected void javaUsage() {
 	System.err.println("PHP/Java Bridge version "+Util.VERSION);
+	disclaimer();
 	System.err.println("Usage: java -jar JavaBridge.jar [SOCKETNAME LOGLEVEL LOGFILE]");
 	System.err.println("Usage: java -jar JavaBridge.jar --convert PHP_INCLUDE_DIR [JARFILES]");
 	System.err.println("SOCKETNAME is one of LOCAL, INET_LOCAL, INET, SERVLET_LOCAL, SERVLET");
@@ -124,6 +133,7 @@ public class Standalone {
 	}
 	usage();
     }
+    
     /**
      * Global init. Redirects System.out and System.err to the server
      * log file(s) or to System.err and creates and opens the
@@ -149,6 +159,15 @@ public class Standalone {
 		usage();
 	    } catch (Throwable t) {
 		t.printStackTrace();
+	    }
+	    if(s.length==0) {
+		try {
+		    Object result = JOptionPane. showInputDialog(null,
+			    "Start a socket listener on port", "Starting the PHP/Java Bridge", JOptionPane.QUESTION_MESSAGE, null,
+		            new String[] {"SERVLET_LOCAL:8080","INET:9267","INET:9167", "LOCAL:/var/run/.php-java-bridge_socket"}, "SERVLET_LOCAL:8080");
+		       if(result==null) System.exit(0);
+		      sockname  = result.toString();
+		} catch (Throwable t) {/*ignore*/}
 	    }
 	    checkServlet(logLevel, sockname, s);
 	    ISocketFactory socket = bind(logLevel, sockname);

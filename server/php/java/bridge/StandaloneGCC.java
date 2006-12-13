@@ -45,6 +45,7 @@ public class StandaloneGCC extends Standalone {
 
     protected void javaUsage() {
 	System.err.println("PHP/Java Bridge version "+Util.VERSION);
+	disclaimer();
 	System.err.println("Usage: java [SOCKETNAME LOGLEVEL LOGFILE]");
 	System.err.println("Usage: java --convert PHP_INCLUDE_DIR [JARFILES]");
 	System.err.println("SOCKETNAME is one of LOCAL, INET_LOCAL, INET, SERVLET_LOCAL, SERVLET");

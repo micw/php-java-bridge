@@ -108,8 +108,8 @@ public class TestInstallation {
 	    System.err.println("Will use the pure PHP implementation instead.");
 	    PrintWriter out = new PrintWriter(new FileOutputStream(new File(base, "testphp.sh").getAbsoluteFile()));
 	    out.println("#!/bin/sh");
-	    out.println((new File(System.getProperty("java.home"), "bin"+File.separator+"java")) +" -classpath ext/JavaBridge.jar php.java.bridge.JavaBridgeRunner 8080 &");
-	    out.println("echo Java started, waiting 5 seconds");
+	    out.println((new File(System.getProperty("java.home"), "bin"+File.separator+"java")) +" -jar ext/JavaBridge.jar SERVLET:8080 &");
+	    out.println("echo Java servlet engine started, waiting 5 seconds");
 	    out.println("sleep 5");
 	    out.println("php -c php.ini test.php >RESULT.html || echo 'test failed!'");
 	    out.println("kill $!");

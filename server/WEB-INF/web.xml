@@ -54,7 +54,7 @@
         -->
 
          <!-- Your php binary. Default is /usr/bin/php-cgi or -->
-         <!-- c:/php/php-cgi. -->
+         <!-- c:/php/php-cgi.exe -->
         <!-- 
          <init-param>
            <param-name>php_exec</param-name>
