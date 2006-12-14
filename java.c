@@ -623,7 +623,11 @@ static void call_with_handler(char*handler, const char*name TSRMLS_DC) {
 	int err, e;
 	struct cb_stack_elem *stack_elem;
 #ifdef ZEND_ENGINE_2
+#if ZEND_EXTENSION_API_NO >= 220060519
+	php_set_error_handling(EH_THROW, zend_exception_get_default(TSRMLS_C) TSRMLS_CC);
+#else
 	php_set_error_handling(EH_THROW, zend_exception_get_default() TSRMLS_CC);
+#endif
 #endif
 	e = zend_stack_top(JG(cb_stack), (void**)&stack_elem); assert(SUCCESS==e);
 	err = 
@@ -1815,7 +1819,11 @@ PHP_MINIT_FUNCTION(EXT)
 							  (zend_function*)&get, 
 							  (zend_function*)&set);
   
+#if ZEND_EXTENSION_API_NO >= 220060519
+  parent = (zend_class_entry *) zend_exception_get_default(TSRMLS_C);
+#else
   parent = (zend_class_entry *) zend_exception_get_default();
+#endif
   EXT_GLOBAL(exception_class_entry) =
 	zend_register_internal_class_ex(&ce, parent, NULL TSRMLS_CC);
   // only cast and clone; no iterator, no array access

@@ -171,7 +171,11 @@ zend_object_value EXT_GLOBAL(create_exception_object)(zend_class_entry *class_ty
   zend_hash_init(object->parent.properties, 0, NULL, ZVAL_PTR_DTOR, 0);
   
   /* create a standard exception object */
+#if ZEND_EXTENSION_API_NO >= 220060519
+  tmp.value.obj= zend_exception_get_default(TSRMLS_C)->create_object(class_type TSRMLS_CC);
+#else
   tmp.value.obj= zend_exception_get_default()->create_object(class_type TSRMLS_CC);
+#endif
   temp_exception_object=zend_objects_get_address(&tmp TSRMLS_CC);
 
   /* and copy the trace from there */
@@ -266,7 +270,7 @@ short EXT_GLOBAL(call_function_handler)(INTERNAL_FUNCTION_PARAMETERS, char*name,
 
 	EXT_GLOBAL(get_jobject_from_object)(object, &obj TSRMLS_CC);
 	if(!obj) {
-	  php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Call object is null, check back-end log file(s).", 98);
+	  php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Call object is null: The connection to the current back end doesn't exist anymore; probably the current back end has been restarted w/o restarting the front end.", 98);
 	  ZVAL_NULL(object); return 0;
 	}
 
