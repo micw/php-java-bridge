@@ -125,6 +125,9 @@ public class TestInstallation {
 	InputStream in = loader.getResourceAsStream("WEB-INF/lib/JavaBridge.jar");
 	extractFile(in, new File(ext, "JavaBridge.jar").getAbsoluteFile());
 	in.close();
+	in = loader.getResourceAsStream("WEB-INF/lib/php-script.jar");
+	extractFile(in, new File(ext, "php-script.jar").getAbsoluteFile());
+	in.close();
 	in = loader.getResourceAsStream("test.php");
 	extractFile(in, new File(base, "test.php").getAbsoluteFile());
 	in.close();

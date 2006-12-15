@@ -301,7 +301,7 @@ fi
 %files tomcat -f filelist-tomcat
 %defattr(-,tomcat,tomcat)
 %attr(-,root,root) /etc/php.d/java-servlet.ini
-%doc %attr(-,root,root) README INSTALL.J2EE INSTALL.ORACLE INSTALL.WEBSPHERE COPYING security  
+%doc %attr(-,root,root) README INSTALL.J2EE INSTALL.J2SE INSTALL.ORACLE INSTALL.WEBSPHERE COPYING security  
 
 %files devel -f filelist-devel
 %defattr(-,root,root)

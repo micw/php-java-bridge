@@ -5,14 +5,19 @@ Please send bug reports, questions and suggestions to
 
 Version 3.2.1
 
-* gcc >= 3.3.3 is required.
+* The pure PHP PHP/Java Bridge is now the reference implementation.
+
+* A PHP script implementation for J2SE is available. For example it
+can be used to install PHP as a script plugin into a Java report
+engine such as BIRT; PHP can be used to evaluate formula fields, group
+selection formulas, etc.
 
 * A third optional parameter (timeout) has been added to the
 java_session() implementation of the Java extension module, so that
 the C extension module is now compatible with our pure PHP PHP/Java
 Bridge implementation.
 
-* The pure PHP PHP/Java Bridge is now the reference implementation.
+* gcc >= 3.3.3 is required to compile C PHP/Java Bridge implementation.
 
 * Since PHP>= 5.2 the Windows java extension ("java-x86-windows.dll"
 or "php_java.dll") is not necessary anymore. Please use our pure PHP

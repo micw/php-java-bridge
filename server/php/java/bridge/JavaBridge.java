@@ -518,6 +518,11 @@ public class JavaBridge implements Runnable {
 		    selected = (Constructor)select(matches, args);
 		    if(selected!=null) constructorCache.put(entry, selected);
 		}
+	    } else {
+		if(args.length>0) {
+		    args = Util.ZERO_ARG;
+		    logMessage("Argument list for ReferenceClass ignored.");
+		}
 	    }
 
 	    if (selected == null) {

@@ -133,7 +133,6 @@ public class Standalone {
 	}
 	usage();
     }
-    
     /**
      * Global init. Redirects System.out and System.err to the server
      * log file(s) or to System.err and creates and opens the
@@ -145,6 +144,7 @@ public class Standalone {
     protected void init(String s[]) {
 	String sockname=null;
 	int logLevel = -1;
+	
 	if(s.length>3) checkOption(s);
 	try {
 	    if(s.length>0) {
@@ -163,7 +163,7 @@ public class Standalone {
 	    if(s.length==0) {
 		try {
 		    Object result = JOptionPane. showInputDialog(null,
-			    "Start a socket listener on port", "Starting the PHP/Java Bridge", JOptionPane.QUESTION_MESSAGE, null,
+			    "Start a socket listener on port", "Starting the PHP/Java Bridge ...", JOptionPane.QUESTION_MESSAGE, null,
 		            new String[] {"SERVLET_LOCAL:8080","INET:9267","INET:9167", "LOCAL:/var/run/.php-java-bridge_socket"}, "SERVLET_LOCAL:8080");
 		       if(result==null) System.exit(0);
 		      sockname  = result.toString();
@@ -197,6 +197,14 @@ public class Standalone {
 	JavaBridgeRunner.main(new String[] {sockname});
 	return;
     }
+    /* Don't use Util or DynamicJavaBridgeClassLoader at this stage! */
+    private static final boolean checkGNUVM() {
+	try {
+	    return "libgcj".equals(System.getProperty("gnu.classpath.vm.shortname"));
+	} catch (Throwable t) {
+	    return false;
+	}
+    }
     /**
      * Start the PHP/Java Bridge. <br>
      * Example:<br>
@@ -208,6 +216,12 @@ public class Standalone {
     public static void main(String s[]) {
 	try {
 	    System.loadLibrary("natcJavaBridge");
+	} catch (Throwable t) {/*ignore*/}
+	try { // Hack for Unix: execute the standalone container using the default SUN VM
+	    if(s.length==0 && (new File("/usr/java/default/bin/java")).exists() && checkGNUVM()) {
+		Object p = Runtime.getRuntime().exec("/usr/java/default/bin/java -classpath " + System.getProperty("java.class.path") + " php.java.bridge.Standalone");
+		if(p != null) System.exit(0);
+	    }
 	} catch (Throwable t) {/*ignore*/}
 	try {
 	    (new Standalone()).init(s);

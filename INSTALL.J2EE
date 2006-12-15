@@ -53,11 +53,6 @@ change the script location from "@80:/java-server-faces/helloWorld.php"
 to "/java-server-faces/helloWorld.php" so that the internal web server
 built into your servlet engine or application server is used.
 
-- The JavaBridge.war contains PHP binaries for Linux (x86), Solaris
-(x86) and Windows. On other operating systems the PHP binaries are
-searched in /usr/bin/php-cgi or c:\php\php-cgi.exe and a pure PHP
-implementation of the PHP/Java Bridge is used.
-
 
 OPTIONAL: Copy the pure PHP classes into an existing PHP Web Server
 -------------------------------------------------------------------
@@ -65,8 +60,11 @@ OPTIONAL: Copy the pure PHP classes into an existing PHP Web Server
 * Double-click on test.bat or test.sh. Copy the created "java" folder
   and the test.php over to the document root of your web server.
 
-* Copy the JavaBridge.war into the autodeploy folder of your Application
-  Server or servlet engine, as described above.
+* Copy the JavaBridge.war into the autodeploy folder of your
+  Application Server or servlet engine, as described above. Or use the
+  included servlet engine: right-click on ext/JavaBridge.jar and select
+  "Open with Java ...".  In the "Staring the PHP/Java Bridge" dialog box
+  select "SERVLET_LOCAL:8080" and click OK.
 
 * Copy your Java libraries (.jar files) into the extension_dir/lib [1]
   directory and your native shared libraries (on windows: dll files)
@@ -87,7 +85,7 @@ contain a JIT, a "Just In Time" compiler, it is recommended to compile
 the bridge to native code, if possible:
 
 
-OPTIONAL: Install the native, C-based extension
+OBSOLETE: Install the native, C-based extension
 -----------------------------------------------
 
 NOTE: Linux RPMs contain Security Enhanced Linux contexts. If you want
@@ -102,25 +100,9 @@ the RPM build system instead, see INSTALL.LINUX.
     LoadModule php5_module "c:/php/php5apache2.dll"
     AddType application/x-httpd-php .php
 
-* The native, C-based PHP extension needs a non-standard PHP "java.so"
-  or "php_java.dll" installed on the web server. Check if your PHP
-  extension_dir [1] contains this PHP extension. If not, copy the
-  appropriate java-<architecture>-<os>.so or
-  java-<architecture>-<os>.dll from the JavaBridge.war file to your PHP
-  extension directory:
-
-  for PHP >= 4.3.4: php-4-java-<arch>-<os>[.so|.dll]
-  for PHP >= 5.0.0: php-5.0-java-<arch>-<os>[.so|.dll]
-  for PHP >= 5.1.0: java-<arch>-<os>[.so|.dll]
-  for PHP >= 5.2.0: a custom php_java.dll or java.so must be 
-                    used (see INSTALL document how to compile 
-                    it from the C source).
-  
-  Rename it to java.so (Unix) or php_java.dll (Windows). 
-
-  Please see the INSTALL document located in the source download
-  archive for information how to compile a php_java.dll or java.so from
-  the source.
+* Compile [3] a Windows "php_java.dll" or Unix "java.so" from the source,
+  as described in the INSTALL document from the source download archive,
+  and copy it to your PHP extension_dir [1].
 
 * Check if the java .ini [2] entry loads the java extension and
   connects php to the servlet or J2EE back-end, e.g.:
@@ -171,3 +153,7 @@ the RPM build system instead, see INSTALL.LINUX.
 [2] The php .ini file is the global PHP configuration file, usually
 /usr/local/lib/php.ini or /etc/php.d/java.ini or c:\windows\php.ini or
 c:\winnt\php.ini.
+
+[3] For older PHP versions the JavaBridge.war contains a java-4-*.dll
+(PHP4), java-5.0-*.dll (PHP5.0) and a java-x86-windows.dll (PHP5.1)
+for Windows and a java.so for Solaris and Linux (PHP5.1).
