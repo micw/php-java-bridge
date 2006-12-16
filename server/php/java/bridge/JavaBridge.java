@@ -518,11 +518,6 @@ public class JavaBridge implements Runnable {
 		    selected = (Constructor)select(matches, args);
 		    if(selected!=null) constructorCache.put(entry, selected);
 		}
-	    } else {
-		if(args.length>0) {
-		    args = Util.ZERO_ARG;
-		    logMessage("Argument list for ReferenceClass ignored.");
-		}
 	    }
 
 	    if (selected == null) {
@@ -1074,7 +1069,9 @@ public class JavaBridge implements Runnable {
 	Method selected = null;
 	try {
 	    if(object==null) {object = Request.PHPNULL;throw new NullPointerException("call object is null, check the server log file(s).");}
-	    MethodCache.Entry entry = methodCache.getEntry(method, Util.getClass(object), args);
+	    /* PR1616498: Do not use Util.getClass(): if object is a class, we must pass the class class.  
+	     * All VM, including gcc >= 3.3.3, return the class class for class.getClass(), not null. This is okay for the cache implementation. */
+	    MethodCache.Entry entry = methodCache.getEntry(method, object.getClass(), args);
 	    selected = (Method) methodCache.get(entry);
 	    
 	    // gather

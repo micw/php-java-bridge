@@ -395,9 +395,9 @@ public final class Util {
     }
     
     /**
-     * Return the class.
+     * Return the class or the object, if obj is already a class.
      * @param obj The object
-     * @return The class
+     * @return Either obj or the class of obj.
      */
     public static Class getClass(Object obj) {
 	if(obj==null) return null;

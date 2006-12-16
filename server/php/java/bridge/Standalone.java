@@ -76,7 +76,7 @@ public class Standalone {
 	return socket;
     }
     protected static void disclaimer() {
-	System.err.println("Copyright (C) 2003, 2006 Jost Bökemeier and others.");
+	System.err.println("Copyright (C) 2003, 2006 Jost Boekemeier and others.");
 	System.err.println("This is free software; see the source for copying conditions.  There is NO");
 	System.err.println("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.");
     }
@@ -133,6 +133,7 @@ public class Standalone {
 	}
 	usage();
     }
+    
     /**
      * Global init. Redirects System.out and System.err to the server
      * log file(s) or to System.err and creates and opens the
@@ -144,7 +145,6 @@ public class Standalone {
     protected void init(String s[]) {
 	String sockname=null;
 	int logLevel = -1;
-	
 	if(s.length>3) checkOption(s);
 	try {
 	    if(s.length>0) {
@@ -218,8 +218,8 @@ public class Standalone {
 	    System.loadLibrary("natcJavaBridge");
 	} catch (Throwable t) {/*ignore*/}
 	try { // Hack for Unix: execute the standalone container using the default SUN VM
-	    if(s.length==0 && (new File("/usr/java/default/bin/java")).exists() && checkGNUVM()) {
-		Object p = Runtime.getRuntime().exec("/usr/java/default/bin/java -classpath " + System.getProperty("java.class.path") + " php.java.bridge.Standalone");
+	    if(s.length==0 && (new File("/usr/java/default/bin/java")).exists() && checkGNUVM() && (System.getProperty("php.java.bridge.exec_sun_vm", "true").equals("true"))) {
+		Object p = Runtime.getRuntime().exec("/usr/java/default/bin/java -Dphp.java.bridge.exec_sun_vm=false -classpath " + System.getProperty("java.class.path") + " php.java.bridge.Standalone");
 		if(p != null) System.exit(0);
 	    }
 	} catch (Throwable t) {/*ignore*/}

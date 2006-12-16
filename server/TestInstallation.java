@@ -19,8 +19,12 @@ public class TestInstallation {
 	    os = t.nextToken();
 	} catch (Throwable t) {/*ignore*/}
 	if(os==null) os="unknown";
-        
-        File ext = (args.length==0) ? new File("ext") : new File(args[0], "ext");
+        File ext = null;
+        try {
+            ext = (args.length==0) ? new File(new File(System.getProperty("java.class.path")).getParentFile().getAbsoluteFile(), "ext") : new File(args[0], "ext");
+        } catch (Throwable t) {
+            ext = (args.length==0) ? new File("ext") : new File(args[0], "ext");         
+        }
 	if(!ext.isDirectory()) ext.mkdirs();
 	File base = ext.getParentFile();
 	
@@ -124,9 +128,6 @@ public class TestInstallation {
         extractPurePhpJavaBridge(base, loader);
 	InputStream in = loader.getResourceAsStream("WEB-INF/lib/JavaBridge.jar");
 	extractFile(in, new File(ext, "JavaBridge.jar").getAbsoluteFile());
-	in.close();
-	in = loader.getResourceAsStream("WEB-INF/lib/php-script.jar");
-	extractFile(in, new File(ext, "php-script.jar").getAbsoluteFile());
 	in.close();
 	in = loader.getResourceAsStream("test.php");
 	extractFile(in, new File(base, "test.php").getAbsoluteFile());

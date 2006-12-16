@@ -1,3 +1,29 @@
+2006-12-16  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/IllegalArgumentException.java: Removed,
+	see PR1616498
+
+	* server/php/java/bridge/JavaBridge.java (Invoke): getClass(clazz)
+	must return the class class, see PR1616498
+
+	* tests.php5/testClass2.php: Test the above fix.
+	
+	* VERSION, php-java-bridge.spec: Version 3.2.1 released.
+	
+2006-12-03  Jost Boekemeier  <jostb@intern>
+
+	* server/TestInstallation.java: Correct output. 	 
+	  	 
+	* server/WEB-INF/web.xml: Executable must be php-cgi.exe,
+	otherwise IBM's launcher.exe fails. 	 
+	  	 
+	* php/java/bridge/Standalone.java: Display an option dialog, if 
+	user has double-clicked on JavaBridge.jar. 	 
+	(disclaimer): New procedure. 	 
+	  	 
+	* php/java/bridge/StandaloneGCC.java (javaUsage): Show disclaimer. 	 
+
+
 2006-12-03  Jost Boekemeier  <jostb@intern>
 
 	* api.c (session): Added optional parameter "lifetime" for

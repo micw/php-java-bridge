@@ -716,67 +716,7 @@ rpmbuild --rebuild php-java-bridge-x.y.z-1.src.rpm<br>
 </blockquote>
 and install these.
 </p>
-<H2>Installation from source</H2>
- For other operating systems, e.g. Solaris, Windows, BSD or Mac-OSX, please follow 
-the instructions below (on Security Enhanced Linux please use the RPM or please read the README before installation).</FONT></FONT></P>
-<UL>
-	<LI><P><FONT >Make sure you
-	have java version 1.4.2 or higher, gcc 3.3.3 or higher, apache 1.3 or
-	higher, <em>GNU autoconf </em> 2.57 or higher, <em>GNU libtool</em> 1.4.3 or higher, <em>GNU automake</em> 1.6.3 or higher, GNU make and php 4.3.4 or higher
-	installed. You can check the version numbers with the commands <code>java
-	-version</code>, <code>gcc --version</code>, <code>apachectl -version</code>, <code>libtool --version</code>, <code>automake --version</code>, <code>make null --version</code>, <code>autoconf --version</code> and
-	<code>php-config --version</code>.
-	</P>
-	<LI><P><FONT ><FONT >Download
-	the source code of the bridge from
-	</FONT><A HREF="http://www.sourceforge.net/projects/php-java-bridge"><FONT >http://www.sourceforge.net/projects/php-java-bridge</FONT></A></FONT></P>
-	<LI><P><FONT >Extract the file
-	with the command: <code>cat php-java-bridge_v.x.y.tar.gz | gunzip |
-	tar xf -</code></FONT></P>
-	<LI><P STYLE="font-style: normal"><FONT >In
-	the directory php-java-bridge-v.x.y build the module: 
-<BR><BR><code># compile with jdk1.4, use jre1.6 at run-time<br>
-phpize &amp;&amp; ./configure
-	--with-java=/usr/java/jdk1.4,/usr/java/jre1.6 &amp;&amp; make </code></FONT></P>
-	<LI><P STYLE="font-style: normal"><FONT >Then
-	install the module as root. Type:<BR><BR><code>su -c 'sh
-	install.sh'<BR>&lt;enter password&gt;</code></FONT></P>
-	<LI><P STYLE="font-style: normal"><FONT ><A name="mode2">The PHP/Java Bridge can be run as a <strong>sub-component of the web server</strong>: 
-<br><br>
-<code>
-Do you want to install the Servlet/J2EE back end (recommended)?<br>
-install j2ee back end (yes/no): no<br>
-<br>
-</code>
-<br>
-The created PHP ini file (usually <code>java.ini</code> located in <code>/etc/php.d/</code> or <code>php.ini</code> located in <code>c:\winnt\</code>) should contain:
-	<BR><BR><code>extension = java.so<BR>[java]</code></FONT></A></P>
-	<LI><P STYLE="font-style: normal"><FONT >Restart
-	the apache service with the command: <code>apachectl restart</code></FONT></P>
-	<LI><P><FONT >You can now test
-	the web installation. Copy the test.php file to the document root (usually /var/www/html) and invoke the file with your browser. You should see that the bridge module is activated and running.  The bridge back end automatically starts or re-starts whenever you start or re-start the web-server.
-	</P>
-	<LI><P><FONT ><A name="mode4">In a production environment which requires <strong>load balancing and fail over</strong> or <strong>session sharing between PHP, JSP and Servlets</strong>, it is recommended to deploy the back end into a servlet engine or an application server; <a href="http://www.onjava.com/pub/a/onjava/2004/03/31/clustering.html">a tomcat 5 cluster</a> for example:
-<br><br>
-<code>
-Do you want to install the Servlet/J2EE back end (recommended)?<br>
-install j2ee back end (yes/no): yes<br>
-<br>
-Enter the location of the autodeploy folder.<br>
-autodeploy (/usr/share/tomcat5/webapps): /opt/SUNWappserver/domains/domain1/autodeploy<br>
-</code>
-<br>
-The created PHP ini file (usually <code>php-servlet.ini</code> located in <code>/etc/php.d</code> or <code>php.ini</code> located in <code>c:\winnt\</code>) should contain:
-<BR><BR><code>extension = java.so<BR>[java]<br>
-java.hosts=&quot;127.0.0.1:8080&quot<br>
-java.servlet=On
-</code>
-<br><br>
-If you don't have Apache or IIS, install PHP as a CGI or FastCGI binary so that your application server <a href="server/documentation/API/php/java/bridge/Util.html#DEFAULT_CGI_LOCATIONS">can find it</a> or <a href="server/WEB-INF/web.xml"> enable the <code>php_exec</code> setting</a> and start the application server.
-</A> </FONT>
-
-	</P>
-</UL>
+The following <a href="#ini-options">PHP .ini</a> option are only used by the native, "C" based extension described above, see the README and INSTALL documents for details.
 <A NAME="ini-options"></A>
 <center>
 <B
@@ -923,10 +863,24 @@ java.security_policy="c:/windows/javabridge.policy"
 ></TABLE
 >
 </center>
-<br><br>
+<br>
+<H2>Installation from source</H2>
+On other operating systems, e.g. Solaris, Windows, BSD or Mac-OSX, please follow 
+the instructions below (on Security Enhanced Linux please use the RPM or please read the README before installation).</FONT></FONT></P>
+<UL>
+	<LI><P>Download and install <a href="http://java.sun.com">J2SE >= 1.6</a> or <a href="http://java.sun.com">J2EE >= 1.4</a>.</P>
+	<LI><P>Download and install <a href="http://www.php.net">PHP >= 5.1.4</a> or the <a href="http://www.caucho.com/resin-3.0/php/index.xtp"> pure Java implementation of PHP</a>. If you want to use <a href="http://www.php.net">PHP < 5.1.4</a>, you need to compile a "java.so" or "php_java.dll" extension, see the README and INSTALL document for details.</P>
+	<LI><P>Download and extract the <a href="http://www.sourceforge.net/projects/php-java-bridge">PHP/Java Bridge zip file</a> into a folder.</P>
+	<LI><P>Right-click on "JavaBridge.war" and select "Open with Java ...", this creates two directories: "ext", "java" and a file "test.php".</P>
+	<LI><P>Move the created "java" folder to the web server document root.</P>
+	<LI><P>Copy the "JavaBridge.war" file to the autodeploy folder of your J2EE server. Or, if use don't want to use J2EE, open the "ext" folder, right-click on "JavaBridge.jar" and select "Open with Java ..."; in the following dialog box click "OK". Use <code>java -jar JavaBridge.jar --help</code> for more information.</P>
+ 	<LI><P>Copy the file "test.php" to the web server document root and browse to <a href="http://localhost/test.php">test.php</a>.</P>
+ 	<LI><P>Java libraries can be installed in a sub-directory of <code>extension_dir</code>/lib, see output from "test.php", or be packaged with the "JavaBridge.war" web component.</P>
+</UL>
+<br>
 <H2>Further information</H2>
 <P><FONT >For further
-information please read the <a href="README">README</a>, <a href="INSTALL">INSTALL</a>, <a href="INSTALL.LINUX">INSTALL.LINUX</a>, <a href="INSTALL.J2EE">INSTALL.J2EE</a>, <a href="INSTALL.WEBSPHERE">INSTALL.WEBSPHERE</a>, <a href="INSTALL.ORACLE">INSTALL.ORACLE</a> documents contained in
+information please read the <a href="README">README</a>, <a href="INSTALL">INSTALL</a>, <a href="INSTALL.LINUX">INSTALL.LINUX</a>, <a href="INSTALL.J2EE">INSTALL.J2EE</a>, <a href="INSTALL.J2SE">INSTALL.J2SE</a>, <a href="INSTALL.WEBSPHERE">INSTALL.WEBSPHERE</a>, <a href="INSTALL.ORACLE">INSTALL.ORACLE</a> documents contained in
 the download files.</p>
 <p>The <a href="NEWS">NEWS</a> file lists the latest user visible changes, development documentation can be found in the <a href="documentation/PHP-API/html/java_8c.html"><code>documentation</code></a> and <a href="server/documentation/API/overview-summary.html"><code>server/documentation</code></a> folder.
 
@@ -934,7 +888,7 @@ the download files.</p>
 <P><BR><BR>
 </P>
 
-</P> <H1>FAQ</H1> <P><FONT > <ul> <li><H4>The bridge doesn't compile
+</P> <H1>FAQ</H1> <P><FONT > <ul> <li><H4>The "C" extension doesn't compile
 on my system!?!</H4> <p>Please follow the instructions from the
 <a href="INSTALL">INSTALL document</a> as close as possible. In particular the back end needs the specified versions of <em>GNU autoconf</em>, <em>GNU libtool</em> and <em>GNU automake</em> in the path. Don't try to re-use specialized versions which came with your operating system (e.g. symlink libtool-1.5 to libtool), this will not work; if you don't have autoconf 2.59, automake 1.9 and libtool 1.5.20, you must compile and install them, as described in the INSTALL document. 
 If there are problems compiling the bridge code against any PHP version >= 4.3.4 on Windows,
@@ -950,54 +904,9 @@ the back end compilation can be switched off with the <code>--disable-backend</c
 installations (RHEL, Fedora) please install one of the binary RPMs or
 compile a binary RPM from the source RPM using the command:
 <code>rpmbuild --rebuild php-java-bridge*src.rpm</code> and install it.</p> <p>On
-recent Debian X86 installations, Ubuntu for example, it is also
-possible to install the RPM binaries: Open the <a href="#binary-versions">appropriate binary RPM</a>
-with a file manager and drag and drop the contents of the <code>lib/php</code>
-directory to <code>/usr/lib/php</code> and restart apache.</p>
+recent Debian installations, Ubuntu for example, a binary package can be created with the command: <code>fakeroot debian/rules binary</code>.</p>
 <p>If everything else fails, use the <a href="java/README">pure PHP implementation</a> of the PHP/Java Bridge.
 <p>
-<A NAME="binary-versions"></A>
-<center>
-<B
->Table 3. Binary Versions</B
-></P
->
-<TABLE
-BORDER="1"
-><COL><COL><COL><COL><THEAD
-><TR
-><TH
->Name</TH
-><TH
->ABI</TH
-></TR
-></THEAD><TBODY
-><TR
-><TD
->php-java-bridge-x.y.z-1.RHEL.i386.rpm</TD
-><TD
->PHP 4 (&gt;= 4.3.2)</TD
-></TR
->
-<TR
-><TD
->php-java-bridge-x.y.z-1.FC4.i386.rpm</TD
-><TD
->PHP 5.0.x</TD
-></TR
->
-<TR
-><TD
->php-java-bridge-x.y.z-1.FC5.i386.rpm</TD
-><TD
->PHP 5.1 or PHP 6.x</TD
-></TR
->
-</TBODY>
-</TABLE
->
-</center>
- 
 
 <li> <H4>Can I use java libraries without
 installing java?</H4> <p>Yes. Simply ommit the
