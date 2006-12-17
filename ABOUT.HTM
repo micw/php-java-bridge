@@ -417,11 +417,6 @@ The original exception can be retrieved with <code>$ex->getCause()</code>, for e
          &nbsp;&nbsp;}<br>
          &nbsp;&nbsp;...<br>
          &nbsp;&nbsp;die("unexpected exception: $ex");<br>
-         }
-      try {<br>
-       &nbsp;&nbsp;new java("java.lang.String", null);<br>
-      } catch(JavaException $ex) {<br>
-      &nbsp;&nbsp;rethrow($ex);<br>
       }<br>
 </code>
 </blockquote>
