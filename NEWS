@@ -3,6 +3,17 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 3.2.2
+
+* The J2EE and J2SE download ("JavaBridge.war") doesn't contain php
+executables anymore. The command: "java -jar JavaBridge.war" can be used
+on all operating systems to test the PHP/Java Bridge against the
+current PHP installation.
+
+* All references to the (now obsolete) "php_java.dll" or "java.so"
+have been removed from the binary download.
+
+
 Version 3.2.1
 
 * The pure PHP PHP/Java Bridge is now the reference implementation.

@@ -707,7 +707,7 @@ public final class Util {
 		}
             }
             if(php==null && tryOtherLocations) php=PHP_EXEC;
-            if(php==null) php=args[0];
+            if(php==null && args[0]!=null && (new File(args[0]).exists())) php=args[0];
             if(php==null) php="php-cgi";
             if(Util.logLevel>3) Util.logDebug("Using php binary: " + php);
 

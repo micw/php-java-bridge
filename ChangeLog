@@ -1,3 +1,20 @@
+2006-12-21  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/Util.java (start): Start a "php-cgi" from the
+	system path, if WEB-INF/cgi doesn't contain an executable.
+	
+	* server/TestInstallation.java: Rewritten.
+
+	* server/php/java/bridge/JavaBridgeIllegalArgumentException.java:
+	New class, needed for backward compatibility with JDK 1.4.
+
+	* server/php/java/bridge/JavaBridge.java (coerce): throw
+	JavaBridgeIllegalArgumentException to avoid a "no such method"
+	exception on JDK 1.4 while throwing an IllegalArgumentException.
+
+	* INSTALL.J2EE: Binary download doesn't contain any php_java.dll
+	files anymore.
+	
 2006-12-16  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/IllegalArgumentException.java: Removed,

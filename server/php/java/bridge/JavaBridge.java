@@ -796,7 +796,7 @@ public class JavaBridge implements Runnable {
 			tempArray = Array.newInstance(targetType, size);
 		    } catch (Exception ex) {
 			//logError("Could not create array from Map: " + objectDebugDescription(arg) + ". Cause: " + ex);
-			throw new IllegalArgumentException("Could not create array from Map: " + firstChars(arg), ex);
+			throw new JavaBridgeIllegalArgumentException("Could not create array from Map: " + firstChars(arg), ex);
 		    }
 		    try {
 		        for (Iterator ii = ht.entrySet().iterator(); ii.hasNext(); ) {
@@ -806,7 +806,7 @@ public class JavaBridge implements Runnable {
 			result[i]=tempArray;
 		    } catch (Exception ex) {
 			//logError("Could not create array of type: " + targetType + ", size: " + size + ", " + " failed entry at: " + e + ", from Map: " + objectDebugDescription(arg) + ". Cause: " + ex);
-			throw new IllegalArgumentException("Could not create array of type: " + targetType + ", size: " + size + ", " + " failed entry at: " + e, ex);
+			throw new JavaBridgeIllegalArgumentException("Could not create array of type: " + targetType + ", size: " + size + ", " + " failed entry at: " + e, ex);
 		    }
 		} else if ((java.util.Collection.class).isAssignableFrom(parms[i])) {
 		    try {
@@ -823,7 +823,7 @@ public class JavaBridge implements Runnable {
 			result[i]=c;
 		    } catch (Exception ex) {
 			//logError("Could not create Collection from Map: " +objectDebugDescription(arg) + ". Cause: " + ex);
-			throw new IllegalArgumentException("Could not create Collection from Map: " + firstChars(arg), ex);
+			throw new JavaBridgeIllegalArgumentException("Could not create Collection from Map: " + firstChars(arg), ex);
 		    }
 		} else if ((java.util.Hashtable.class).isAssignableFrom(parms[i])) {
 		    try {
@@ -835,7 +835,7 @@ public class JavaBridge implements Runnable {
 			result[i]=res;
 		    } catch (Exception ex) {
 			logError("Could not create Hashtable from Map: " +objectDebugDescription(arg) + ". Cause: " + ex);
-			throw new IllegalArgumentException("Could not create Hashtable from Map: " + firstChars(arg), ex);
+			throw new JavaBridgeIllegalArgumentException("Could not create Hashtable from Map: " + firstChars(arg), ex);
 		    }
 		} else if ((java.util.Map.class).isAssignableFrom(parms[i])) {
 		    result[i]=arg;
