@@ -3,7 +3,7 @@
 package php.java.servlet;
 
 /*
- * Copyright (C) 2006 Jost Boekemeier
+ * Copyright (C) 2003-2007 Jost Boekemeier
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,26 +42,26 @@ public class RemoteContext extends Context {
     }
 
     /**
-     * Returns the HttpServletRequest
-     * @return always null.
+     * throws IllegalStateException
+     * @throws IllegalStateException
      */
-    public HttpServletRequest getHttpServletRequest() {
-    	return null;
+    public Object getHttpServletRequest() {
+	throw new IllegalStateException("PHP not running in a servlet environment");
     }
     
     /**
-     * Returns the ServletContext
-     * @return always null.
+     * throws IllegalStateException
+     * @throws IllegalStateException
      */
-    public ServletContext getServletContext() {
-        return null;
+    public Object getServletContext() {
+	throw new IllegalStateException("PHP not running in a servlet environment");
     }
     
     /**
-     * Returns the ServletResponse
-     * @return always null.
+     * throws IllegalStateException
+     * @throws IllegalStateException
      */
-    public HttpServletResponse getHttpServletResponse() {
-        return null;
+    public Object getHttpServletResponse() {
+	throw new IllegalStateException("PHP not running in a servlet environment");
     }
 }

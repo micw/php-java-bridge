@@ -4,8 +4,7 @@ What is the PHP/Java Bridge?
   The PHP/Java Bridge is a network protocol which can be used to
   connect PHP with a Java or ECMA 335 VM.
 
-  Please read the ABOUT.HTM contained in the download archive or
-  http://php-java-bridge.sf.net for more information.
+  Please read the http://php-java-bridge.sf.net for more information.
 
 
 Overview
@@ -82,7 +81,7 @@ Build and execution instructions:
 ---------------------------------
 
   NOTE: The folder "java" contains a pure PHP implementation of the
-  PHP/Java Bridge. It is currently 10 times slower than the C based
+  PHP/Java Bridge. It is currently 2 to 10 times slower than the C based
   implementation but easier to install. See the java/README for
   details. The following describes the C based implementation.
 
@@ -200,13 +199,14 @@ Build and execution instructions:
  
   6) Standalone java application (see JSR223) or AS or servlet engine
   without Apache or IIS front-end. A PHP server can be started with the
-  command (e.g.): X_JAVABRIDGE_OVERRIDE_HOSTS="/" PHP_FCGI_CHILDREN="20"
-  PHP_FCGI_MAX_REQUESTS="5000" php-cgi -c java.ini -b 127.0.0.1:9667. 
-  php-cgi starts automatically, if no PHP server is listening on port 9667.
-  Usually the bridge uses the official HTTP port to connect PHP with the 
-  server. However, when no official HTTP port exists, or if the init-param
-  "override_hosts" is switched off in the servlet's WEB-INF/web.xml, the
-  the bridge can use a dedicated local port# to connect PHP with Java:
+  command (e.g.): REDIRECT_STATUS=200 X_JAVABRIDGE_OVERRIDE_HOSTS="/"
+  PHP_FCGI_CHILDREN="20" PHP_FCGI_MAX_REQUESTS="5000" php-cgi -c
+  java.ini -b 127.0.0.1:9667. php-cgi starts automatically, if no PHP
+  server is listening on port 9667. Usually the bridge uses the official
+  HTTP port to connect PHP with the server. However, when no official
+  HTTP port exists, or if the init-param "override_hosts" is switched
+  off in the servlet's WEB-INF/web.xml, the the bridge can use a
+  dedicated local port# to connect PHP with Java:
   
   Example tomcat conf/server.xml setting which opens the local port 9157:
 
@@ -338,10 +338,10 @@ Build and execution instructions:
   Read the following instructions only if you don't want to use
   Apache or IIS.
 
-  Please deploy the JavaBridge.war into the Tomcat or J2EE server (see
-  FAQ section in the ABOUT.HTM), then visit
-  http://localhost:8080/JavaBridge and run the supplied JSP and PHP
-  examples.
+  Please deploy the JavaBridge.war into the Tomcat or J2EE server
+  (please see or FAQ section on http://php-java-bridge.sf.net), then
+  visit http://localhost:8080/JavaBridge and run the supplied JSP and
+  PHP examples.
 
   If the parameter name "use_fast_cgi" is set to "Autostart" in the
   web.xml, and a fcgi server does not listen on port 9667, and a fcgi
@@ -350,6 +350,7 @@ Build and execution instructions:
   computer. With the command:
 
     cd $HOME
+    export REDIRECT_STATUS="200"
     export X_JAVABRIDGE_OVERRIDE_HOSTS="/"
     export PHP_FCGI_CHILDREN="20"
     export PHP_FCGI_MAX_REQUESTS="5000"
@@ -360,6 +361,7 @@ Build and execution instructions:
   a binary in the "PHP Integration Kit for Windows":
   PHPIntKitForWindows.zip, available from alphaworks. The command is:
 
+    set REDIRECT_STATUS "200"
     set X_JAVABRIDGE_OVERRIDE_HOSTS "/"
     set PHP_FCGI_CHILDREN "20"
     set PHP_FCGI_MAX_REQUESTS "5000"
@@ -423,27 +425,6 @@ Build and execution instructions:
       permission java.net.SocketPermission  "*", "accept,resolve";
     };
 
-
-------------------------------------
-  Loading on-demand with dl()
-  ---------------------------
-
-  It is possible to load the bridge for each new request, for example
-  with:
-
-    <?php
-    if (!extension_loaded('java')) {
-      if (!dl("java.so")) {
-        exit(1);
-      }
-    }
-    phpinfo();
-    ?>
-
-  However, this feature is meant for testing, only.  For a production
-  system it is recommended to compile PHP in safe mode (which switches
-  off the dl() function) and to activate all modules in the global
-  PHP ini file.
 
 ------------------------------------
   Recognized CFLAGS
@@ -619,14 +600,22 @@ Build and execution instructions:
 
   Java libraries should either be translated into PEAR classes (see
   above) or be installed in one of the following directories:
-  /usr/share/java/ext or extension_dir/lib or, for the J2EE/servlet
-  back end, WEB-INF/lib. Libraries in these directories are
-  automatically loaded by a static loader whenever the JVM starts. --
-  The location of the extension_dir depends on the PHP .ini
-  extension_dir setting, it is usually /usr/lib/php/modules or c:\php.
+  java.ext.dirs or php.java.bridge.base/lib or, for the
+  J2EE/servlet back end, WEB-INF/lib. Libraries in these directories are
+  automatically loaded by a static loader whenever the JVM starts.
 
+  The location of the php.java.bridge.base depends on the Java system
+  property -Dphp.java.bridge.base. It defaults to user.home/lib. When
+  the standalone component is invoked as a sub component of Apache or
+  IIS, php.java.bridge.base is initialized with the PHP .ini
+  extension_dir setting, which is usually /usr/lib/php/modules or
+  c:\php. For example the php.ini setting extension_dir=x:/php sets the
+  back end system property: -Dphp.java.bridge.base=x:/php. The command:
+  "java -jar JavaBridge.jar INET:0 3" displays the default values for
+  php.java.bridge.base and java.ext.dirs.
+  
   Impure java libraries (=libraries which use the java native interface)
-  must be stored in /usr/share/java/ext or in the PHP extension_dir/lib
+  must be stored in java.ext.dirs or in the php.java.bridge.base/lib
   directory. Shared libraries (on windows: "DLL's") required by the
   impure java libraries must be stored in the java.library.path, which
   is usually the PHP extension_dir directory.
@@ -634,7 +623,7 @@ Build and execution instructions:
   Java libraries can also be loaded or re-loaded on demand by a
   dynamic loader. They should have the following file name:
   <name>-<version>.jar and be stored in a sub directory of the PHP
-  extension_dir/lib/ directory or in a sub directory of
+  extension_dir/lib/ directory or in a sub directory of the
   /usr/share/java directory. For example:
 
     /usr/share/java/batStore/batStore-1.0.jar.
@@ -645,7 +634,7 @@ Build and execution instructions:
     jar cvf myLibrary-0.1.jar my/package/*.class 
 
   The dynamic loader can link java libraries into PHP files at
-  run-time, if the PHP files contain the command:
+  run-time if the PHP files contain the command:
 
     java_require("<library1>;<libraryN>");
 
@@ -686,15 +675,19 @@ Build and execution instructions:
     this may cause a noticeable delay (a few 100 ms).
 
   * The static loader can only load libraries which are stored in the
-    /usr/share/java/ext or in the PHP extension_dir/lib directory. Hot
-    deployment is not possible because all classes are loaded when the
-    VM starts.
+    /usr/share/java/ext or in the php.java.bridge.base/lib directory. Hot
+    deployment is not possible because all classes are loaded when the VM
+    starts.
+
+  * The standard directories /usr/share/java/ext or
+    /usr/java/packages/lib/ext/ don't exist on Windows so that users must
+    check the windows registry to find the "standard" java extension dir.
 
   It is recommended to store Java libraries which are API stable or
-  use the java native interface into the PHP extension_dir/lib directory
-  or into /usr/share/java/ext. All other libraries can go into a project
-  specific directory within extension_dir/lib/ or /usr/share/java/ and
-  be loaded on-demand.
+  use the java native interface into the php.java.bridge.base/lib
+  directory or into java.ext.dirs. All other libraries can go into a
+  project specific directory within php.java.bridge.base/lib/ or
+  /usr/share/java/ and be loaded on-demand.
 
   Note that classes loaded from two different class loader instances
   cannot access each other. This means that, e.g., neither
@@ -888,37 +881,60 @@ Build and execution instructions:
     where all
     resume
 
+
 ------------------------------------
-  Running PHP in a J2SE environment
-  ---------------------------------
+  Performance tuning
+  ------------------
 
-  Since Java 1.6 the JSR 223 script interface is available. To run PHP
-  within a J2SE environment, the JavaBridge.jar and the php-script.jar
-  must be in the J2SE class path. On Unix or Linux these libraries can
-  be copied to /usr/java/packages/lib/ext/.
+  The PHP/Java Bridge protocol is very sensitive to network
+  latency. If the Java server and PHP client do not run on the same
+  computer, the objective is to minimize the number of network
+  round-trips; java_values() can be used to obtain a Java array, Map
+  or Collection in one round-trip and java_begin_document(),
+  java_end_document() can be used to execute PHP code on the server.
+  
+  The call java_values($obj) evaluates $obj on the server-side and, if
+  it is a Java array, Map or Collection, retrieves its values in one
+  call.
 
-  The command:
+  The java_begin_document()/java_end_document() pair encapsulates PHP
+  code, sends an image of it (as a streamed XML document) to the server
+  and executes it there. This works for all PHP statements. But the
+  following primitives are not allowed while in stream mode:
+  java_session(), java_begin_document(), java_end_document(),
+  java_values(), __toString(), and the PHP iterator cannot be used to
+  iterate values of Java objects.
 
-    jrunscript -l php phpFile.php 
+  Example:
 
-  or:
+    $iter = $hits->iterator();                       // 1 round trip
+    $resultList = new Java("java.util.LinkedList");  // 1 round trip
+    $n = $hits->length()                             // 1 round trip
 
-    jrunscript -Dphp.java.bridge.php_exec=/usr/bin/php-cgi -l php phpFile.php
+    java_begin_document();                           // 1 round trip
+    while($n--) {
+      $next = $iter->next();
+      $resultList->add($next->get("name"));
+    }
+    java_end_document();                             // 1 round trip
+    $ar = java_values($resultList);                  // 1 round trip
 
-  can be used to evaluate PHP files from Java.
+  Assuming that a ping to the back-end reveils an average round-trip
+  time of 6ms, the above code costs 6*6ms = 36ms (ignoring CPU and
+  network bandwidth contraints).
 
-  The optional Invocable interface is also supported. However, the PHP
-  scripts must be invocable. Invocable PHP scripts must end with the
-  line:
+  The more intuitive approach:
 
-   java_context()->call(java_closure());
-
-  The PHP procedures java_context() and java_closure() are exported
-  from the pure PHP/Java Bridge implementation "java/Java.php" and from
-  the C based PHP "Java extension" ("java.so" or "php_java.dll"). 
-
-  Please see the PHP Java Server Faces implementation for details how
-  to define, and how to invoke PHP "beans" from a Java framework.
+    $n = $hits->length();                            // $n = 30000
+    while($iter->hasNext()) {                        // $n * 6ms
+      $next = $iter->next();                         // $n * 6ms
+      $a[$i++]=$next->get("name");                   // $n * 6ms
+    }
+ 
+  costs 30000*18ms + 6 ms = 9 min. It is 15000 times slower, 
+  assuming that the client CPU can generate and send the XML document
+  within 6ms and that the server CPU can generate/send the values of the
+  resultList within 6ms, which usually isn't the case.
 
 ------------------------------------
   Mailing List

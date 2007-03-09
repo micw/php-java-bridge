@@ -3,7 +3,7 @@
 package php.java.servlet;
 
 /*
- * Copyright (C) 2006 Jost Boekemeier
+ * Copyright (C) 2003-2007 Jost Boekemeier
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -39,7 +39,7 @@ import php.java.bridge.NotImplementedException;
 /**
  * A connection pool. Example:<br><br>
  * <code>
- * ConnectionPool pool = new ConnectionPool("127.0.0.1", 8080, 20, new ConnectionPool.Factory());<br>
+ * ConnectionPool pool = new ConnectionPool("127.0.0.1", 8080, 20, 5000, new ConnectionPool.Factory());<br>
  * ConnectionPool.Connection conn = pool.openConnection();<br>
  * InputStream in =  conn.getInputStream();<br>
  * OutputStream out = conn.getOutputStream();<br>
@@ -73,6 +73,7 @@ public class ConnectionPool {
     private List freeList = new LinkedList();
     private List connectionList = new LinkedList();
     private Factory factory;
+    private int maxRequests;
     
     private static final class BufferedOutputStream extends java.io.BufferedOutputStream {
         public BufferedOutputStream(OutputStream out) {
@@ -85,9 +86,10 @@ public class ConnectionPool {
     /** Thrown when an IO exception occurs */
     public static class ConnectionException extends IOException {
        private static final long serialVersionUID = -5174286702617481362L;
-	protected ConnectionException(IOException ex) {
+	protected ConnectionException(Connection con, IOException ex) {
             super();
             initCause(ex);
+            con.setIsClosed();
         }
     }
     /** Thrown when the server is not available anymore */
@@ -148,7 +150,7 @@ public class ConnectionPool {
      *
      */
     public static class DefaultInputStream extends InputStream {
-      private Connection connection;
+      protected Connection connection;
       private InputStream in;
 
       protected void setConnection(Connection connection) throws ConnectionException {
@@ -156,7 +158,7 @@ public class ConnectionPool {
 	  try {
 	    this.in = connection.socket.getInputStream();
 	  } catch (IOException e) {
-	      throw new ConnectionException(e);
+	      throw new ConnectionException(connection, e);
 	  }	  
       }
       public int read(byte buf[]) throws ConnectionException {
@@ -170,8 +172,7 @@ public class ConnectionPool {
 	      }
 	      return count;
 	  } catch (IOException ex) {
-	      connection.setIsClosed();
-	      throw new ConnectionException(ex);
+	      throw new ConnectionException(connection, ex);
 	  }
       }
       public int read() throws ConnectionException {
@@ -183,7 +184,7 @@ public class ConnectionPool {
 	    try {
 	      connection.close();
 	    } catch (IOException e) {
-	      throw new ConnectionException(e);
+	      throw new ConnectionException(connection, e);
 	    }
       }
     }
@@ -202,7 +203,7 @@ public class ConnectionPool {
             try {
 	      this.out = new BufferedOutputStream(connection.socket.getOutputStream());
 	    } catch (IOException e) {
-	      throw new ConnectionException(e);
+	      throw new ConnectionException(connection, e);
 	    }
 	}
 	public void write(byte buf[]) throws ConnectionException {
@@ -212,8 +213,7 @@ public class ConnectionPool {
 	  try {
 	      out.write(buf, off, buflength);
 	  } catch (IOException ex) {
-	      connection.setIsClosed();
-	      throw new ConnectionException(ex);
+	      throw new ConnectionException(connection, ex);
 	  }
 	}
 	public void write(int b) throws ConnectionException {
@@ -228,7 +228,7 @@ public class ConnectionPool {
 		  try {
 		    connection.close();
 		  } catch (IOException e) {
-		     throw new ConnectionException(e);
+		      throw new ConnectionException(connection, e);
 		  }
 	    }
 	}
@@ -236,8 +236,7 @@ public class ConnectionPool {
 	    try {
 	        out.flush();
 	    } catch (IOException ex) {
-	        connection.setIsClosed();
-	        throw new ConnectionException(ex);
+	        throw new ConnectionException(connection, ex);
 	    }
 	}
     }
@@ -256,31 +255,40 @@ public class ConnectionPool {
 	private DefaultInputStream inputStream;
 	private boolean isClosed;
 	private Factory factory;
+	private int maxRequests;
+	private int counter;
 	
 	protected void reset() {
-            this.state = this.ostate = 0;	    
-	}
-	protected void init() throws ConnectException, SocketException {
-            this.socket = factory.connect(host, port);
-            this.isClosed = false;
+            this.state = this.ostate = 0;
+ 	}
+	protected void init() {
             inputStream = null;
             outputStream = null;
-            reset();
+            counter = maxRequests; 
+           reset();
 	}
-	protected Connection(String host, int port, Factory factory) throws ConnectException, SocketException {
+	protected Connection reopen() throws ConnectException, SocketException {
+            if(isClosed) this.socket = factory.connect(host, port);
+            this.isClosed = false;
+            return this;
+	}
+	protected Connection(String host, int port, int maxRequests, Factory factory) throws ConnectException, SocketException {
             this.host = host;
             this.port = port;
             this.factory = factory;
+            this.isClosed = true;
+            this.maxRequests = maxRequests;
             init();
         }
-	private void setIsClosed() {
+	/** Set the closed/abort flag for this connection */
+	public void setIsClosed() {
 	    isClosed=true;
 	}
-	protected void abort()  throws ConnectException, SocketException {
-	    setIsClosed();
-	    close();
-	}
 	protected void close() throws ConnectException, SocketException {
+	    // PHP child terminated: mark as closed, so that reopen() can allocate 
+	    // a new connection for the new PHP child
+	    if (maxRequests>0 && --counter==0) isClosed = true;
+	    
 	    if(isClosed) {
 	        destroy();
 	        init();
@@ -288,7 +296,7 @@ public class ConnectionPool {
 	    closeConnection(this);
         }
 
-	protected void destroy() {
+	private void destroy() {
 	    try {
 	        socket.close();
 	    } catch (IOException e) {/*ignore*/}
@@ -325,16 +333,16 @@ public class ConnectionPool {
      * @param port The port number
      * @param limit The max. number of physical connections
      * @param factory A factory for creating In- and OutputStreams.
-     * @throws ConnectionException 
-     * @throws UnknownHostException 
-     * @see ConnectionPool.Factory
+     * @throws ConnectException 
+      * @see ConnectionPool.Factory
      */
-    public ConnectionPool(String host, int port, int limit, Factory factory) throws ConnectException {
+    public ConnectionPool(String host, int port, int limit, int maxRequests, Factory factory) throws ConnectException {
         this.host = host;
         this.port = port;
         this.limit = limit;
         this.factory = factory;
- 
+        this.maxRequests = maxRequests;
+        
         Socket testSocket;
 	try {
 	  testSocket = new Socket(InetAddress.getByName(host), port);
@@ -343,8 +351,10 @@ public class ConnectionPool {
 	  throw new ConnectException(e);
 	}
     }
+
+    /* helper for openConnection() */
     private Connection createNewConnection() throws ConnectException, SocketException {
-        Connection connection = new Connection(host, port, factory);
+        Connection connection = new Connection(host, port, maxRequests, factory);
         connectionList.add(connection);
         connections++;
         return connection;
@@ -366,7 +376,7 @@ public class ConnectionPool {
       	    connection = (Connection) freeList.remove(0);
       	    connection.reset();
       	}
-      	return connection;
+      	return connection.reopen();
     }
     private synchronized void closeConnection(Connection connection) {
         freeList.add(connection);

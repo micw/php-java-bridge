@@ -3,7 +3,7 @@
 package php.java.bridge;
 
 /*
- * Copyright (C) 2006 Jost Boekemeier
+ * Copyright (C) 2003-2007 Jost Boekemeier
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -106,8 +106,7 @@ public class SessionFactory {
     protected static class SessionTimer implements Runnable {
         LinkedList jobs = new LinkedList();
         public SessionTimer() {
-          Thread t = (new Thread(this, "JavaBridgeSessionTimer"));
-          t.setDaemon(true);
+          Thread t = (new Util.Thread(this, "JavaBridgeSessionTimer"));
           t.start();
         }
         public void addJob(Runnable r) {

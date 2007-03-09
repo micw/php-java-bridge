@@ -3,7 +3,7 @@
 package php.java.script;
 
 /*
- * Copyright (C) 2006 Jost Boekemeier
+ * Copyright (C) 2003-2007 Jost Boekemeier
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,7 +40,7 @@ import javax.script.ScriptException;
  * @author jostb
  *
  */
-public class InteractivePhpScriptEngine extends PhpScriptEngine {
+public class InteractivePhpScriptEngine extends InvocablePhpScriptEngine {
 
     private static final String restoreState = "foreach ($javabridge_values as $javabridge_key=>$javabridge_val) {eval(\"\\$$javabridge_key=\\$javabridge_values[\\$javabridge_key];\");}\n";
     private static final String saveState = "foreach (get_defined_vars() as $javabridge_key=>$javabridge_val) {if(in_array($javabridge_key, $javabridge_ignored_keys)) continue;eval(\"\\$javabridge_values[\\$javabridge_key]=\\$$javabridge_key;\");};\n";
@@ -70,7 +70,6 @@ public class InteractivePhpScriptEngine extends PhpScriptEngine {
 	
 	if(!hasScript) {
 	    super.eval("<?php " +
-		       "if(!extension_loaded('java')) {(@include_once(\"java/Java.php\"))||@dl('java.so')||@dl('php_java.dll');}\n" +
 		       "ini_set('max_execution_time', 0);\n" +
 		       "$javabridge_values = array();\n"+
 		       "$javabridge_ignored_keys = array(\"javabridge_key\", \"javabridge_val\", \"javabridge_values\", \"javabridge_ignored_keys\", \"javabridge_param\");\n"+
@@ -85,7 +84,6 @@ public class InteractivePhpScriptEngine extends PhpScriptEngine {
 		       "ob_end_clean();\n" +
 		       "return $javabridge_retval;\n" +
 		       "};\n" +
-		       "$javabridge_ctx=java_context();$javabridge_ctx->call(java_closure());unset($javabridge_ctx);\n" +
 		       "?>", context);
 	    hasScript = true;
 	}

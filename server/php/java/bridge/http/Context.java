@@ -3,7 +3,7 @@
 package php.java.bridge.http;
 
 /*
- * Copyright (C) 2006 Jost Boekemeier
+ * Copyright (C) 2003-2007 Jost Boekemeier
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -244,6 +244,30 @@ public class Context implements Invocable {
 	    throw new IllegalArgumentException("invalid scope");
 			
 	}
+    }
+    
+    /**
+     * throws IllegalStateException
+     * @throws IllegalStateException
+     */
+    public Object getHttpServletRequest() {
+	throw new IllegalStateException("PHP not running in a servlet environment");
+    }
+    
+    /**
+     * throws IllegalStateException
+     * @throws IllegalStateException
+     */
+    public Object getServletContext() {
+	throw new IllegalStateException("PHP not running in a servlet environment");
+    }
+    
+    /**
+     * throws IllegalStateException
+     * @throws IllegalStateException
+     */
+    public Object getHttpServletResponse() {
+	throw new IllegalStateException("PHP not running in a servlet environment");
     }
 
     /* (non-Javadoc)

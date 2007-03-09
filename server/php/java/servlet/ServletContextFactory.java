@@ -3,7 +3,7 @@
 package php.java.servlet;
 
 /*
- * Copyright (C) 2006 Jost Boekemeier
+ * Copyright (C) 2003-2007 Jost Boekemeier
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -44,7 +44,7 @@ public class ServletContextFactory extends php.java.bridge.http.SimpleContextFac
     protected ServletContext kontext;
 
     protected ServletContextFactory(ServletContext ctx, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res) {
-    	super(ctx.getRealPath(""));
+    	super(CGIServlet.getRealPath(ctx, ""));
     	this.kontext = ctx;
     	this.proxy = proxy;
     	this.req = req;

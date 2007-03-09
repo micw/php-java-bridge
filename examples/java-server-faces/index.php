@@ -8,7 +8,7 @@ function appendIncludeDir($dir) {
   $append = check("windows")?";$dir":":$dir";
   ini_set("include_path", ini_get("include_path").$append);
 }
-appendIncludeDir(".."); require_once("java/Java.php");
+appendIncludeDir(".."); require_once("java/Java.inc");
 
   // redirect to backend.
 function redirect() {

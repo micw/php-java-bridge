@@ -1,14 +1,10 @@
 <?php
 
-function check($name) {
-  $len = strlen($name);
-  return strncasecmp(php_uname(), $name, $len) == 0;
-}
-function appendIncludeDir($dir) {
-  $append = check("windows")?";$dir":":$dir";
-  ini_set("include_path", ini_get("include_path").$append);
-}
-appendIncludeDir(".."); require_once("java/Java.php");
+/**
+ * Fetch Java from the back end
+ */
+$pwd=dirname($_SERVER["PHP_SELF"]);
+require_once("http://127.0.0.1:$_SERVER[SERVER_PORT]$pwd/java/Java.inc");
 
 /**
  * This class keeps the state of our simple application.  The

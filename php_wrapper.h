@@ -2,7 +2,7 @@
 
 /** php_wrapper.h -- adjust/revert some of PHP's choices.
 
-  Copyright (C) 2006 Jost Boekemeier
+  Copyright (C) 2003-2007 Jost Boekemeier
 
   This file is part of the PHP/Java Bridge.
 

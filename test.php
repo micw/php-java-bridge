@@ -1,17 +1,25 @@
 #!/bin/env php
 <?php
 
+  /**
+   * require_once("http://localhost:8080/JavaBridge/java/Java.inc");
+   * $System = new Java("java.lang.System");
+   * phpinfo();
+   * echo $System->getProperties();
+   */
+
 /* load extension and check it */
 function check_extension() {
   if(!extension_loaded('java')) {
     $sapi_type = php_sapi_name();
+    $port= (isset($_SERVER['SERVER_PORT']) && (($_SERVER['SERVER_PORT'])>1024)) ? $_SERVER['SERVER_PORT'] : '8080';
     if ($sapi_type == "cgi" || $sapi_type == "cgi-fcgi" || $sapi_type == "cli") {
-      if(!(PHP_SHLIB_SUFFIX=="so" && @dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && @dl('php_java.dll'))&&!(include_once("java/Java.php"))) {
+      if(!(PHP_SHLIB_SUFFIX=="so" && @dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && @dl('php_java.dll'))&&!(require_once("http://127.0.0.1:$port/JavaBridge/java/Java.inc"))) {
 	echo "java extension not installed.";
 	exit(2);
       }
     } else {
-      require_once("java/Java.php");
+      require_once("http://127.0.0.1:$port/JavaBridge/java/Java.inc");
     }
   }
   if(!function_exists("java_get_server_name")) {

@@ -1,3 +1,192 @@
+2007-02-10  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/servlet/CGIServlet.java
+	(getRealPath): New function to workaround a bug in BEA WebLogic
+	
+	* server/php/java/servlet/PhpCGIServlet.java
+	(startFcgi): Set the environment variable REDIRECT_STATUS="200",
+	to appease the PHP FastCGI server.
+	
+2007-01-21  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/servlet/ConnectionPool.java
+	(maxRequests, counter): New variables
+	(close): mark as closed if we know that the current PHP instance
+	has terminated, i.e. counter==php_fcgi_max_requests
+	(ConnectionPool, Connection, createNewConnection): Pass
+	maxRequests
+
+	* server/php/java/servlet/FastCGIServlet.java
+	(php_fcgi_max_requests_number): New global from
+	PHP_FCGI_MAX_REQUESTS
+	(findCGI): Pass maxRequests to pool
+	(doRun): Report an error if a PHP instance from the PHP FastCGI
+	server terminated unexpectedly. But do not pass this error to the
+	client, as the administrator may have killed and re-started the
+	PHP FastCGI server with a different PHP_FCGI_MAX_REQUESTS
+	environment setting. -- In the future we should hard-code
+	PHP_FCGI_MAX_REQUESTS to 5000.
+	
+	* README: Performance section added.
+
+	* examples/search/lucene_search.php: Use java_values to speed up
+	script execution, as described in the README.
+	
+	* server/META-INF/java/Client.inc
+	(isAsync): New check, needed because the high level API must not
+	use java_values, java_inspect, java_instanceof, java_cast,
+	java_session_array, java_server_name, java_closure_array,
+	java_begin_document, java_end_document directly.
+
+	* server/META-INF/java/JavaProxy.inc
+	(java_values, java_inspect, java_instanceof, java_cast,
+	java_session_array, java_server_name, java_closure_array,
+	java_begin_document, __sleep, java_ObjectIterator): These
+	procedures cannot be used while in async ("stream") mode.
+	(java_end_document): This procedure cannot be used when not in
+	stream mode.
+
+	* server/php/java/bridge/Snarf.java
+	(writePhpJava): Added wrappers for java_values, java_inspect,
+	java_instanceof, java_cast, java_session_array, java_server_name,
+	java_closure_array, java_begin_document and java_end_document,
+	because these cannot be used directly, see above checks in
+	JavaProxy.inc. Users of the high level API must use e.g.:
+
+	$result = java_lang_System::javaValues($resultList);
+
+	instead of:
+
+	$result = java_values($resultList);
+
+	
+	* server/META-INF/java/Java.inc
+	(java_RuntimeException, java_IllegalArgumentException): Throw
+	these exceptions instead of simply aborting the script.
+
+	* itext4php.spec, lucene4php.spec: Version 1.2.0
+
+	* server/php/java/bridge/Standalone.java
+	(init): SERVLET_LOCAL is now default
+
+	* server/php/java/bridge/http/HttpResponse.java
+	(h2): Send the creation date, so that the script can be cached.
+	
+	* server/php/java/bridge/http/HttpServer.java
+	(createThreadPool): New procedure
+	(bind): Use our own createThreadPool procedure in order to avoid
+	log messages at this stage.
+
+	* server/php/java/script/InvocablePhpScriptEngine.java
+	(eval): Create a dummy script instead of throwing an exception so
+	that
+
+	ScriptEngineManager m = new ScriptEngineManager();
+	ScriptEngine e = m.getEngineByName("php-invocable");
+	e.invoke("phpinfo", new Object[]{});
+	System.exit(0);
+	
+	works as expected.
+
+	* server/WEB-INF/cgi/php-fcgi.sh
+	(read): the original bourne shell (*BSD) needs an argument to make
+	the FastCGI SAPI work.
+
+	* server/TestInstallation.java
+	(start): Set the SERVER_PORT, needed by test.php
+
+	* test.php: Do not hard code SERVER_PORT to 8080 so that the test
+	can be used if a servlet engine is already running on port 8080.
+
+	* server/META-INF/services/javax.script.ScriptEngineFactory:
+	gcj doesn't like comments starting at col.> 0
+	
+	* VERSION, php-java-bridge.spec: Version 4.0.1
+	
+2007-01-14  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/JavaBridge.java
+	(Invoke): The fix for PR1616498 was incorrect. Since version 3.2.1
+	the bridge was not able to call static methods anymore: a cached
+	Clazz1.invoke() was returned instead of Clazz2.invoke().
+
+	* server/php/java/bridge/MethodCache.java
+	(Entry): make sure that instanceOfClazz1.meth != Clazz1.meth and
+	Clazz2.meth != Clazz1.meth.
+	(hashCode, equals): check isStatic flag.
+
+	
+	* server/php/java/bridge/Util.java (createThreadPool): New procedure
+
+	* server/php/java/bridge/JavaBridgeRunner.java
+	(createInstance, createStandaloneInstance): set the standalone
+	flag
+	(doPut): Rewritten
+	
+	* server/php/java/bridge/http/HttpServer.java
+	(HttpServer): Create thread pool, if possible.
+	(Runner): New class
+	(doRun): Use thread pool, if possible
+	
+	* VERSION, php-java-bridge.spec: Version 4.0.1rc5
+	
+
+2007-01-07  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/script/InvocablePhpScriptEngine.java
+	(eval): Added missing ';' so that php 5.1.6 doesn't complain about
+	and "unexpected "}" character anymore.
+	
+	* VERSION, php-java-bridge.spec: Version 4.0.1devel
+	
+2007-01-06  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/servlet/FastCGIServlet.java
+	(FastCgiInputStream): check entire error string.
+
+	* server/php/java/bridge/Util.java
+	(ProcessWithErrorHandler,checkError): check entire error string
+	
+	
+	The time between the open and first read/write must be less than
+	1000ms, otherwise PHP marks the connection as invalid
+	
+	* server/php/java/servlet/ConnectionPool.java
+	(ConnectionException): mark connection as closed.
+	(setConnection,read,write,flush,close): mark on exception
+	(reopen): new method
+	(abort): removed
+	(init): open the connection lazily
+	(openConnection): open or reopen the connection lazily
+
+	* server/php/java/servlet/FastCGIServlet.java
+	(read): mark on exception
+	(parseBody): the check is now obsolete
+	
+	* java/Client.java,java/GlobalRef.java,java/Java.java,java/JavaProxy.java,java/NativeParser.java,java/Options.java,java/Parser.java,java/Protocol.java,java/SimpleParser.java,java/README,java/TODO: Removed.
+
+	* server/META-INF/java/Client.inc,server/META-INF/java/GlobalRef.inc,server/META-INF/java/Java.inc,server/META-INF/java/JavaProxy.inc,server/META-INF/java/NativeParser.inc,server/META-INF/java/Options.inc,server/META-INF/java/Parser.inc,server/META-INF/java/Protocol.inc,server/META-INF/java/SimpleParser.inc,server/META-INF/java/README,server/META-INF/java/TODO: moved here.
+	
+	* server/Makefile.am: add PHP files to JavaBridge.jar and
+	JavaBridge.war.
+
+	* INSTALL.ORACLE,INSTALL.WEBSPHERE: Removed
+
+	* server/WEB-INF/web.xml: Removed Java Server Faces support
+
+	* ABOUT.HTM: Removed
+
+	* php-java-bridge.spec, debian/docs: Removed ABOUT.htm
+
+	* server/test/TestInvocable.java: new File.
+
+	* server/php/java/script/PhpScriptEngine.java: Don't implement Invocable.
+	
+	* server/php/java/script/InvocablePhpScriptEngine.java,
+	server/php/java/script/InvocablePhpScriptEngineFactory.java: New
+	files.
+
+	
 2006-12-21  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/Util.java (start): Start a "php-cgi" from the

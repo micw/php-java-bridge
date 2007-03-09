@@ -28,6 +28,7 @@ tries to call it via a /bin/sh wrapper (see php-fcgi.sh) or via a
 UNIX: If /bin/sh is available and the php-cgi supports the -b flag,
 the library executes the following command during startup:
 
+REDIRECT_STATUS="200" \
 X_JAVABRIDGE_OVERRIDE_HOSTS="/" \
 PHP_FCGI_CHILDREN="20" \
 PHP_FCGI_MAX_REQUESTS="5000" \
@@ -38,9 +39,10 @@ WINDOWS: If /bin/sh is not available or if the php-cgi.exe does not
 support the -b flag, the library executes the following command during
 startup:
 
-X_JAVABRIDGE_OVERRIDE_HOSTS="/"
-PHP_FCGI_CHILDREN="20" 
-PHP_FCGI_MAX_REQUESTS="5000"
+set REDIRECT_STATUS "200"
+set X_JAVABRIDGE_OVERRIDE_HOSTS "/"
+set PHP_FCGI_CHILDREN "20" 
+set PHP_FCGI_MAX_REQUESTS "5000"
 launcher.exe -a php-cgi -b 9667
 
 

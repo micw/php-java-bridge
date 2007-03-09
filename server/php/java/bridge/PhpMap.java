@@ -3,7 +3,7 @@
 package php.java.bridge;
 
 /*
- * Copyright (C) 2006 Jost Boekemeier
+ * Copyright (C) 2003-2007 Jost Boekemeier
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,7 +30,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * Maps php array get/set and foreach to java array, Map and Collections access.
+ * Maps php iterator to java iterator.
  * @author jostb
  *
  */

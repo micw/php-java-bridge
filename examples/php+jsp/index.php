@@ -19,6 +19,14 @@
 </tr>
 <tr/>
 <tr VALIGN=TOP>
+<td>Hello</td>
+
+<td WIDTH="30%"><a href="hello.php">Execute</a></td>
+
+<td WIDTH="30%"><a href="source.php?source=hello.php">Source</a></td>
+</tr>
+
+<tr VALIGN=TOP>
 <td>Session sharing</td>
 
 <td WIDTH="30%"><a href="sessionSharing.php">Execute</a></td>
@@ -50,6 +58,7 @@
 <td WIDTH="30%"><a href="source.php?source=excel.php">Source</a></td>
 </tr>
 
+<!-- 
 <tr VALIGN=TOP>
 <td>Java Server Faces Framework</td>
 
@@ -57,6 +66,8 @@
 
 <td WIDTH="30%"><a href="source.php?source=java-server-faces/helloWorld.php">Source</a></td>
 </tr>
+ -->
+
 <tr VALIGN=TOP>
 <td>RMI/IIOP</td>
 

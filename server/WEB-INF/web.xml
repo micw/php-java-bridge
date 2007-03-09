@@ -4,11 +4,13 @@
 <web-app>
 
     <!-- Faces Servlet -->
+  <!--
     <servlet>
         <servlet-name>PhpFacesServlet</servlet-name>
         <servlet-class>php.java.faces.FacesServlet</servlet-class>
         <load-on-startup>0</load-on-startup>
     </servlet>
+   -->
 
     <!-- PHP Servlet: back-end for Apache or IIS -->
     <servlet>
@@ -102,10 +104,12 @@
 
 
     <!-- Faces Servlet Mapping -->
+   <!--
     <servlet-mapping>
         <servlet-name>PhpFacesServlet</servlet-name>
         <url-pattern>*.jsf</url-pattern>
     </servlet-mapping>
+   -->
 
     <!-- PHP Servlet Mapping -->
     <servlet-mapping>

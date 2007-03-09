@@ -3,7 +3,7 @@
 package php.java.bridge.http;
 
 /*
- * Copyright (C) 2006 Jost Boekemeier
+ * Copyright (C) 2003-2007 Jost Boekemeier
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,7 +42,7 @@ import php.java.bridge.Util;
  * destroyed.  <p>ContextRunners are kept in a per-loader map and each
  * client may refer to its runner by passing
  * X_JAVARIDGE_CONTEXT_DEFAULT. The ContextRunner may ignore this hint
- * and prepare for a new physical connection, if the ID does not exist
+ * and prepare for a new physical connection if the ID does not exist
  * in its map. This usually happens when there are two separate
  * bridges installed in context A and context B and the client uses a
  * persistent connection to context A. An attempt to re-use the same
@@ -53,10 +53,8 @@ import php.java.bridge.Util;
  * that the connection should have been prepared and sent via
  * X_JAVABRIDGE_CHANNEL, as usual. Otherwise the bridge will use the
  * SocketContextServer instead. -- The client may destroy the new
- * pipe, if the server has accepted X_JAVABRIDGE_CONTEXT_DEFAULT, of
- * course.  </p> <p>See <a
- * href="http://php-java-bridge.sourceforge.net#global-servlet">http://php-java-bridge.sourceforge.net#global-servlet</a>
- * for details how to install the bridge globally.</p>
+ * pipe if the server has accepted X_JAVABRIDGE_CONTEXT_DEFAULT, of
+ * course.  </p>
  */
 public class ContextRunner implements Runnable {
     
@@ -144,7 +142,7 @@ public class ContextRunner implements Runnable {
      * May be called to recycle the runner from the pool of ContextRunners for a new contextServer. 
      * Reduces the # of physical connections when there is only one 
      * ContextFactory factory but several ContextServer instances per ClassLoader, 
-     * for example when the PhpCGIServlet is used globally, see ABOUT.HTM#global-servlet".
+     * for example when the PhpCGIServlet is used globally.".
      * In this setup we have n PHP childs using n physical connections (n ContextRunner instances), k web contexts
      * (k contextServers) and up to k*n ContextFactory and JavaBridge instances.
      * 

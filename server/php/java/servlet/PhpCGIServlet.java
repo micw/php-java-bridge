@@ -3,7 +3,7 @@
 package php.java.servlet;
 
 /*
- * Copyright (C) 2006 Jost Boekemeier
+ * Copyright (C) 2003-2007 Jost Boekemeier
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,6 +35,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 import javax.servlet.ServletConfig;
@@ -127,22 +128,25 @@ public class PhpCGIServlet extends FastCGIServlet {
              super(args, homeDir, env, tryOtherLocations);
              this.realPath = realPath;
         }
-	protected String argsToString(String php, String[] args) {
-	    StringBuffer buf;
+	protected String[] getArgumentArray(String[] php, String[] args) {
+	    LinkedList buf = new LinkedList();
 	    if(USE_SH_WRAPPER) {
-		buf = new StringBuffer("/bin/sh ");
-		buf.append(realPath);
-		buf.append("/php-fcgi.sh ");
-		buf.append(super.argsToString(php, args));
+		buf.add("/bin/sh");
+		buf.add(realPath+"/php-fcgi.sh");
+		buf.addAll(java.util.Arrays.asList(php));
+		for(int i=1; i<args.length; i++) {
+		    buf.add(args[i]);
+		}
 	    } else {
-		buf = new StringBuffer(realPath);
-		buf.append(File.separatorChar);
-		buf.append("launcher.exe -a \"");
-		buf.append(php);
-		buf.append("\" -b ");
-		buf.append(fcgi_channel);
+		buf.add(realPath+File.separator+"launcher.exe");
+		buf.add("-a");
+		buf.addAll(java.util.Arrays.asList(php));
+		buf.add("-d");
+		buf.add("allow_url_include=On");
+		buf.add("-b");
+		buf.add(String.valueOf(fcgi_channel));
 	    }
-	    return buf.toString();
+	    return (String[]) buf.toArray(new String[buf.size()]);
 	}
 	public void start() throws NullPointerException, IOException {
 	    super.start();
@@ -169,10 +173,11 @@ public class PhpCGIServlet extends FastCGIServlet {
 		// via the (HTTP_)X_JAVABRIDGE_OVERRIDE_HOSTS header field
 		// later.
 		env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", override_hosts?"/":"");
-		String[] args = new String[]{php, "-b", port};
+		env.put("REDIRECT_STATUS", "200");
+		String[] args = new String[]{php, "-d", "allow_url_include=On", "-b", port};
 		File home = null;
-		try { home = ((new File(php)).getParentFile()); } catch (Exception e) {Util.printStackTrace(e);}
-		proc = new FCGIProcess(args, home, env, context.getRealPath(cgiPathPrefix), phpTryOtherLocations);
+		if(php!=null) try { home = ((new File(php)).getParentFile()); } catch (Exception e) {Util.printStackTrace(e);}
+		proc = new FCGIProcess(args, home, env, getRealPath(context, cgiPathPrefix), phpTryOtherLocations);
 		proc.start();
             return (Process)proc;
     }
@@ -191,7 +196,7 @@ public class PhpCGIServlet extends FastCGIServlet {
 	} catch (Throwable t) {Util.printStackTrace(t);}      
 
 	Util.TCP_SOCKETNAME = String.valueOf(CGI_CHANNEL);
-	DOCUMENT_ROOT = context.getRealPath("");
+	DOCUMENT_ROOT = getRealPath(context, "");
 	SERVER_SIGNATURE = context.getServerInfo();
     }
 
@@ -230,7 +235,7 @@ public class PhpCGIServlet extends FastCGIServlet {
 
 	/** PATH_INFO and PATH_TRANSLATED not needed for PHP, SCRIPT_FILENAME is enough */
         protected void setPathInfo(HttpServletRequest req, HashMap envp, String sCGIFullName) {
-            envp.put("SCRIPT_FILENAME", nullsToBlanks(context.getRealPath(servletPath)));          
+            envp.put("SCRIPT_FILENAME", nullsToBlanks(getRealPath(context, servletPath)));          
         }
 	protected boolean setCGIEnvironment(HttpServletRequest req, HttpServletResponse res) {
 	    boolean ret = super.setCGIEnvironment(req, res);
@@ -314,7 +319,7 @@ public class PhpCGIServlet extends FastCGIServlet {
 	private void startFCGI() throws InterruptedException, IOException {
 	    if(fcgi_socket!=null) { fcgi_socket.close(); fcgi_socket=null; }// replace the allocated socket# with the real fcgi server
 
-	    Thread t = (new Thread("JavaBridgeFastCGIRunner") {
+	    Thread t = (new Util.Thread("JavaBridgeFastCGIRunner") {
       		    public void run() {
       			Map env = (Map) processEnvironment.clone();
       			env.put("PHP_FCGI_CHILDREN", php_fcgi_children);
@@ -322,8 +327,7 @@ public class PhpCGIServlet extends FastCGIServlet {
       			runFcgi(env, php);
       		    }
       		});
-      	    t.setDaemon(true);
-    	    t.start();
+     	    t.start();
       	    waitForDaemon();
 	}
 	/*
@@ -356,7 +360,7 @@ public class PhpCGIServlet extends FastCGIServlet {
 	    URL url = new URL("http", "127.0.0.1", getLocalPort(req), "/JavaBridge/.php");
 	    URLConnection conn = url.openConnection();
 	    // use a new thread to avoid a dead lock if the servlet's thread pool is full.
-	    (new Thread("JavaBridgeFCGIActivator") {
+	    (new Util.Thread("JavaBridgeFCGIActivator") {
 	      URLConnection conn;
 	      public Thread init(URLConnection conn) {
 		  this.conn=conn;
@@ -458,7 +462,7 @@ public class PhpCGIServlet extends FastCGIServlet {
 	    InputStream in = null;
 	    OutputStream out = null;
     	    try {
-        	proc = Util.ProcessWithErrorHandler.start(new String[]{php}, wd, env, phpTryOtherLocations);
+        	proc = Util.ProcessWithErrorHandler.start(new String[]{php, "-d", "allow_url_include=On"}, wd, env, phpTryOtherLocations);
 
         	byte[] buf = new byte[BUF_SIZE];// headers cannot be larger than this value!
 
@@ -480,10 +484,10 @@ public class PhpCGIServlet extends FastCGIServlet {
     		Util.parseBody(buf, natIn, out, new Util.HeaderParser() {protected void parseHeader(String header) {addHeader(header);}});
 
     		try {
-                proc.waitFor();
-            } catch (InterruptedException e) {
-                Util.printStackTrace(e);
-            }
+     		    proc.waitFor();
+     		} catch (InterruptedException e) {
+    		    Util.printStackTrace(e);
+    		}
     	    } finally {
     		if(in!=null) try {in.close();} catch (IOException e) {}
     		if(natIn!=null) try {natIn.close();} catch (IOException e) {}

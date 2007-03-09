@@ -3,7 +3,7 @@
 package php.java.script;
 
 /*
- * Copyright (C) 2006 Jost Boekemeier
+ * Copyright (C) 2003-2007 Jost Boekemeier
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,6 +25,7 @@ package php.java.script;
  */
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -35,6 +36,7 @@ import java.util.Map;
 
 import php.java.bridge.PhpProcedureProxy;
 import php.java.bridge.Util;
+import php.java.bridge.Util.Process;
 
 /**
  * This class can be used to run a PHP CGI binary. Used only when
@@ -85,13 +87,27 @@ public abstract class CGIRunner extends Thread {
 	this.env = env;
 	this.out = out;
     }
-
+    private static class ProcessWithErrorHandler extends Util.ProcessWithErrorHandler {
+	protected ProcessWithErrorHandler(String[] args, File homeDir, Map env, boolean tryOtherLocations) throws IOException {
+	    super(args, homeDir, env, tryOtherLocations);
+	}
+	protected String checkError(String s) {
+	    return s;
+	}
+        public static Process start(String[] args, File homeDir, Map env, boolean tryOtherLocations) throws IOException {
+            ProcessWithErrorHandler proc = new ProcessWithErrorHandler(args, homeDir, env, tryOtherLocations);
+            proc.start();
+            return proc;
+        }	
+    }
     public void run() {
 	try {
 	    doRun();
 	} catch (IOException e) {
 	    Util.printStackTrace(e);
 	    phpScript.val = e;
+	} catch (Util.ProcessWithErrorHandler.PhpException e1) {
+	    phpScript.val = e1;	    
 	} catch (Exception ex) {
 	    Util.printStackTrace(ex);
 	} finally {
@@ -102,10 +118,9 @@ public abstract class CGIRunner extends Thread {
 	    }
 	}
     }
-    
     protected void doRun() throws IOException {
 	int n;    
-        Process proc = Util.ProcessWithErrorHandler.start(null, null, env, true);
+        Process proc = ProcessWithErrorHandler.start(new String[] {null, "-d", "allow_url_include=On"}, null, env, true);
 
 	InputStream natIn = null;
 	Writer writer = null;
@@ -156,12 +171,12 @@ public abstract class CGIRunner extends Thread {
      * @return The php continuation.
      * @throws InterruptedException
      */
-    public PhpProcedureProxy getPhpScript() throws InterruptedException, IOException {
+    public PhpProcedureProxy getPhpScript() throws Exception {
         Object val = phpScript.getVal(); 
         try {
             return (PhpProcedureProxy)val;
         } catch (ClassCastException e) {
-            throw (IOException)val; 
+            throw (Exception)val; 
         }
     }
 	

@@ -65,6 +65,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -81,6 +83,8 @@ import javax.servlet.UnavailableException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import php.java.bridge.Util;
 
 
 /**
@@ -574,7 +578,7 @@ public class CGIServlet extends HttpServlet {
          */
         protected void setupFromContext(ServletContext context) {
             this.context = context;
-            this.webAppRootDir = context.getRealPath("/");
+            this.webAppRootDir = CGIServlet.getRealPath(context,"/");
         }
 
 
@@ -876,7 +880,7 @@ public class CGIServlet extends HttpServlet {
            *
            */
           if (sPathInfoCGI != null && !("".equals(sPathInfoCGI))) {
-              sPathTranslatedCGI = context.getRealPath(sPathInfoCGI);
+              sPathTranslatedCGI = CGIServlet.getRealPath(context, sPathInfoCGI);
           } else {
               sPathTranslatedCGI = null;
           }
@@ -1010,6 +1014,37 @@ public class CGIServlet extends HttpServlet {
     }
 
 
+    /**
+     * Identical to context2.getRealPath(pathInfoCGI). On BEA
+     * WebLogic, which has a broken getRealPath() implementation, we
+     * use context2.getResource(pathInfoCGI)) instead.
+     * @param context2 The servlet context.
+     * @param pathInfoCGI  may be "" or "/" for example.
+     * @return a valid path or null
+     * @throws MalformedURLException 
+     */
+    public static String getRealPath(ServletContext context2, String pathInfoCGI) {
+	String ret = context2.getRealPath(pathInfoCGI);
+	if(ret!=null) return ret;
+
+	// The following is the workaround for BEA WebLogic
+	boolean stripSlash=false; 
+	if(!pathInfoCGI.endsWith("/")) {
+	    stripSlash=true;
+	    if("".equals(pathInfoCGI)) pathInfoCGI = "/";
+	}
+	URL url = null;
+	try { 
+	    url = context2.getResource(pathInfoCGI);
+	} catch (MalformedURLException e) {
+	    Util.printStackTrace(e);
+	    return null;
+	}
+	if(!"file".equals(url.getProtocol())) return null;
+	ret = url.getPath();
+	if(stripSlash&&ret.endsWith("/")) ret = ret.substring(0, ret.length()-1);
+	return ret.replace('/', File.separatorChar);
+    }
 
     /**
      * Encapsulates the knowledge of how to run a CGI script, given the
@@ -1214,7 +1249,7 @@ public class CGIServlet extends HttpServlet {
             OutputStream out = null;
 	    try {
 		proc = rt.exec(cmdAndArgs.toString(), hashToStringArray(env), wd);
-		(new Thread("CGIErrorReader") {
+		(new Util.Thread("CGIErrorReader") {
 			private Process proc;
 			public Thread init(Process proc) {
 			    this.proc = proc;

@@ -3,7 +3,7 @@
 package php.java.bridge;
 
 /*
- * Copyright (C) 2006 Jost Boekemeier
+ * Copyright (C) 2003-2007 Jost Boekemeier
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,7 +42,7 @@ import php.java.bridge.http.IContextFactory;
  * Example:<br>
  * public MyClass { <br>
  * &nbsp;&nbsp;public static void main(String s[]) {<br>
- * &nbsp;&nbsp;&nbsp;&nbsp; JavaBridgeRunner runner = new JavaBridgeRunner();<br>
+ * &nbsp;&nbsp;&nbsp;&nbsp; JavaBridgeRunner runner = JavaBridgeRunner.getInstance();<br>
  * &nbsp;&nbsp;&nbsp;&nbsp; // connect to port 9267 and send protocol requests ... <br>
  * &nbsp;&nbsp;&nbsp;&nbsp;runner.destroy();<br>
  * &nbsp;&nbsp;}<br>
@@ -64,12 +64,26 @@ public class JavaBridgeRunner extends HttpServer {
 	ctxServer = new ContextServer(ContextFactory.EMPTY_CONTEXT_NAME);
     }
     private static JavaBridgeRunner runner;
+    /**
+     * Return a instance.
+     * @return a standalone runner
+     * @throws IOException
+     */
     public static synchronized JavaBridgeRunner getInstance() throws IOException {
-	if(runner==null) return runner = new JavaBridgeRunner();
+	if(runner!=null) return runner;
+	runner = new JavaBridgeRunner();
 	return runner;
     }
+    
+    /**
+     * Return a standalone instance. 
+     * It sets a flag which indicates that the runner will be used as a standalone component outside of the Servlet environment.
+     * @return a standalone runner
+     * @throws IOException
+     */
     public static synchronized JavaBridgeRunner getStandaloneInstance() throws IOException {
-	if(runner==null) return runner = new JavaBridgeRunner();
+	if(runner!=null) return runner;
+	runner = new JavaBridgeRunner();
 	runner.isStandalone = true;
 	return runner;
     }
@@ -125,46 +139,58 @@ public class JavaBridgeRunner extends HttpServer {
 	bridge.in = sin=req.getInputStream();
 	bridge.out = sout = new ByteArrayOutputStream();
 	Request r = bridge.request = new Request(bridge);
-
+        if(r.init(sin, sout)) {
+        	AbstractChannelName channelName = 
+                    ctxServer.getFallbackChannelName(channel, kontext, ctx);
+        	boolean hasDefault = ctxServer.schedule(channelName) != null;
+        	res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getDefaultName());
+        	if(hasDefault) res.setHeader("X_JAVABRIDGE_CONTEXT_DEFAULT", kontext);
+        	r.handleRequests();
+        	ctxServer.recycle(channelName);
+        
+        	// redirect and re-open
+        	if(override_redirect) {
+        	    bridge.logDebug("restore state");
+        	    bridge.in = bin; bridge.out = bout; bridge.request = br; 
+        	} else {
+        	    if(bridge.logLevel>3) 
+        		bridge.logDebug("re-directing to port# "+ channelName);
+        	}
+        	res.setContentLength(sout.size());
+        	resOut = res.getOutputStream();
+        	sout.writeTo(resOut);
+            resOut.close();
+            if(!override_redirect) {
+                ctxServer.start(channelName);
+        	    if(bridge.logLevel>3) 
+        		bridge.logDebug("waiting for context: " +ctx.getId());
+        	    try { ctx.waitFor(); } catch (InterruptedException e) { Util.printStackTrace(e); }
+        	}
+        }
+        else {
+            ctx.destroy();
+        }
+    }
+    /**
+     * Handle doGet requests. For example java_require("http://localhost:8080/JavaBridge/java/Java.inc");
+     * @param req The HttpRequest
+     * @param res The HttpResponse
+     */
+    protected void doGet (HttpRequest req, HttpResponse res) throws IOException {
+	String name =req.getRequestURI(); 
+	if(name==null) { super.doGet(req, res); return; }
+	name = name.replaceAll("/JavaBridge", "META-INF");
+	InputStream in = JavaBridgeRunner.class.getClassLoader().getResourceAsStream(name);
+	if(in==null) { res.setContentLength(ERROR.length); res.getOutputStream().write(ERROR); return; }
+	ByteArrayOutputStream bout = new ByteArrayOutputStream();
+	byte[] buf = new byte[Util.BUF_SIZE];
+	int c;
+	while((c=in.read(buf))>0) bout.write(buf, 0, c);
+	res.setContentLength(bout.size());
+	OutputStream out = res.getOutputStream();
 	try {
-	    if(r.init(sin, sout)) {
-		AbstractChannelName channelName = 
-	            ctxServer.getFallbackChannelName(channel, kontext, ctx);
-		boolean hasDefault = ctxServer.schedule(channelName) != null;
-		res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getDefaultName());
-		if(hasDefault) res.setHeader("X_JAVABRIDGE_CONTEXT_DEFAULT", kontext);
-		r.handleRequests();
-		ctxServer.recycle(channelName);
-
-		// redirect and re-open
-		if(override_redirect) {
-		    bridge.logDebug("restore state");
-		    bridge.in = bin; bridge.out = bout; bridge.request = br; 
-		} else {
-		    if(bridge.logLevel>3) 
-			bridge.logDebug("re-directing to port# "+ channelName);
-		}
-		res.setContentLength(sout.size());
-		resOut = res.getOutputStream();
-		sout.writeTo(resOut);
-	    	sin.close(); sin=null;
-	    	resOut.close(); resOut=null;
-	    	if(!override_redirect) {
-		    ctxServer.start(channelName);
-		    if(bridge.logLevel>3) 
-			bridge.logDebug("waiting for context: " +ctx.getId());
-		    ctx.waitFor();
-		}
-	    }
-	    else {
-	        sin.close(); sin=null;
-	        ctx.destroy();
-	    }
-	} catch (Exception e) {
-	    Util.printStackTrace(e);
-	    try {if(sin!=null) sin.close();} catch (IOException e1) {}
-	    try {if(resOut!=null) resOut.close();} catch (IOException e2) {}
-	}
+	    bout.writeTo(out);
+	} catch (IOException e) { /* may happen when the client is not interested, see require_once() */}
     }
     /**
      * Return true if this is a standalone server

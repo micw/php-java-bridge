@@ -1,7 +1,7 @@
 #!/bin/env php
 <?php
 
-require_once("java/Java.php");
+require_once("java/Java.inc");
 
 class SERVER {const JBOSS=1, WEBSPHERE=2, SUN=3, ORACLE=4;}
 

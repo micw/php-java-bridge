@@ -3,7 +3,7 @@
 package php.java.bridge;
 
 /*
- * Copyright (C) 2006 Jost Boekemeier
+ * Copyright (C) 2003-2007 Jost Boekemeier
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -70,8 +70,7 @@ public class SimpleJavaBridgeClassLoader {
             list.add(new URL("file", null, f.getAbsolutePath()+"/"));
         }
         // PR1502480
-        String ext = System.getProperty("php.java.bridge.base");
-	if(ext==null || ext.length()==0) ext = System.getProperty("user.home");
+        String ext = System.getProperty("php.java.bridge.base",  System.getProperty("user.home"));
 	if(ext!=null && ext.length()>0) {
             StringBuffer buf = new StringBuffer(ext);
             if(!ext.endsWith(File.separator)) buf.append(File.separator);

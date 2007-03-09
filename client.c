@@ -2,7 +2,7 @@
 
 /* client.c -- communicates with the PHP/Java Bridge back end.
 
-  Copyright (C) 2006 Jost Boekemeier
+  Copyright (C) 2003-2007 Jost Boekemeier
 
   This file is part of the PHP/Java Bridge.
 
@@ -536,8 +536,7 @@ static void remove_pipe(proxyenv*env) {
 }
 /**
  * Server agreed that we can re-use the connection for a different web
- * context.  See ContextRunner.recycle() and ABOUT.HTM#global-servlet
- * for details.
+ * context.
  */
 static void share_connection(proxyenv*env, char*redirect_port TSRMLS_DC) {
   assert(redirect_port);

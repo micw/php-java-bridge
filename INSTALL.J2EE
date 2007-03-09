@@ -1,21 +1,42 @@
 Overview
 --------
 
-The PHP/Java Bridge can be installed with two copy operations:
+This document describes how to call Java methods from PHP. And how to
+embed PHP applications into a pure Java application server or servlet
+engine. Please see the INSTALL.J2SE document for details how to call
+PHP methods from a pure Java application.
+
+The PHP/Java Bridge can be installed with one copy operation:
 
 * the JavaBridge.war must be copied into the autodeploy folder of the
-  J2EE server and
-
-* the pure PHP PHP/Java Bridge classes or the C-based extension module
-  must be copied into the web server document root or into the PHP
-  extension directory, respectively.
+  J2EE server.
 
 
-Install PHP into a pure Java Application Server
------------------------------------------------
+Development
+-----------
+
+* Extract the JavaBridge.jar from the JavaBridge.war zip file from the
+  PHP/Java Bridge binary download. Double-click on JavaBridge.jar or
+  type "java -jar JavaBridge.jar" and click "OK" to start a servlet
+  engine back end for all computers on the local network.
+
+* Link Java.inc and your Java libraries into PHP at run-time. Example:
+  
+   <?php
+    require_once("http://localhost:8080/JavaBridge/java/Java.inc");
+
+    // call Java libraries using the provided Java class...
+    java_require("myLibs/myLib.jar;dependentLib1.jar;...);
+    $my = new Java("myPackage.MyClass", ...);
+    $my->callSomething(...);
+   ?>
+
+
+Deployment
+----------
 
 * Install a J2EE application server or servlet engine, for example
-  Apache Geronimo, Tomcat 5.5.9, Oracle 10g or WebSphere 6.
+  Apache Geronimo, Tomcat, Glassfish, ...
 
 * Extract the files from the php-java-bridge J2EE download and deploy
   JavaBridge.war into your J2EE server, example for Tomcat on Unix: 
@@ -26,79 +47,45 @@ Install PHP into a pure Java Application Server
 
     copy JavaBridge.war "\Program Files\IBM\WebSphereCommunityEdition\deploy"
 
-* Visit http://localhost:<port>/JavaBridge and click on test.php.
-  The <port> is 8888 (Oracle), 9080 (WebSphere) or 8080 (Tomcat/Geronimo).
+* If you want to run PHP as a sub component of the J2EE server or
+  servlet engine, visit http://localhost:8080/JavaBridge and click on
+  test.php. 
 
-* Please see the README and http://php-java-bridge.sourceforge.net
-  for further information.
+* If you want to run PHP as a sub component of Apache or IIS or from
+  the command line, create a simple test.php file and call it as usual.
+  For example:
 
-* Please report bugs/problems to the mailing list:
+  <?php
+    require_once("http://localhost:8080/JavaBridge/java/Java.inc");
+    $s = new Java("java.lang.System");
+    echo $s->getProperties();
+  ?>
 
-    php-java-bridge-users@lists.sourceforge.net
+  copy it to the web server document root and browse to
+  http://yourHost.com/test.php or use the PHP command line
+  interface. For example:
 
+    php-cgi test.php >result.html
 
-Known AS Issues :
+* Firewall-out the J2EE/Servlet port 8080, if necessary. Or modify
+  the J2EE/Servlet so that it listens only on the local
+  interface. 
 
-- On Windows the php-cgi.exe doesn't support the -b flag. Therefore
-either an IIS or Apache front-end or an external PHP "launcher.exe" is
-required to run PHP efficiently. IBM Websphere or Apache Geronimo
-users can find the "launcher.exe" in the "PHP Integration Kit for
-Windows": PHPIntKitForWindows.zip, available from alphaworks.
-
-- If you see a script exception when running
-java-server-faces/index.php and the name is displayed as "null", check
-if Java can call the PHP script on the external web server (PHP >= 5 must 
-be installed on the web server). If not, stop the external web server or 
-change the script location from "@80:/java-server-faces/helloWorld.php" 
-to "/java-server-faces/helloWorld.php" so that the internal web server
-built into your servlet engine or application server is used.
-
-
-OPTIONAL: Add Java support to Apache or IIS
--------------------------------------------
-
-* Download and install PHP into Apache or IIS, if not already
-  installed.
-
-* Download and extract the PHP/Java Bridge into a folder.
-
-* Double-click on test.bat or test.sh. Copy the created "java" folder
-  and the test.php over to the document root of your web server.
-
-* Copy the JavaBridge.war into the autodeploy folder of your
-  J2EE application server or servlet engine, as described above. Or
-  right-click on ext/JavaBridge.jar and select "Open with Java ...".  In
-  the "Starting the PHP/Java Bridge" dialog box select
-  "SERVLET_LOCAL:8080" and click OK.
-
-* Copy your Java libraries (.jar files) into extension_dir/lib [1] or
-  into the library path of the J2EE module (e.g. the WEB-INF/lib
-  folder within JavaBridge.war).
-
-* Visit http://yourHost.com/test.php.
+* Note that the PHP/Java Bridge rejects requests from non-local
+  ("127.0.0.1") PHP clients. For a intranet server start the
+  J2EE/Servlet VM with the parameter -Dphp.java.bridge.promiscuous=true
+  and make sure that your computer cannot be accessed from the
+  internet. At least firewall-out the ports 8080 and all ports in the
+  range [9267,...,[9367 and read the "security" sections from README.
 
 * Please report bugs/problems to the mailing list:
 
     php-java-bridge-users@lists.sourceforge.net
 
 
-Known Issues :
+* An optimized implementation, which is up to 10 times faster than the
+  pure PHP implementation described above, is available as C source. 
+  Please see the README and INSTALL document located in the source
+  download archive how to compile an optimized "php_java.dll" or
+  "java.so" for your operating system.
 
-- The pure PHP PHP/Java Bridge implementation described above is
-currently 10 times slower than the "C" implementation described in the
-README. Since PHP doesn't contain a JIT, a "Just In Time" compiler, it
-is recommended to compile the bridge front end to native code, if
-possible. See the INSTALL document from the source download for
-details how to compile a PHP Java extension, "php_java.dll" or
-"java.so", from the C source.
-
----
-NOTES:
-
-[1] The extension_dir is the PHP extension directory, usually
-/usr/lib/php/modules or c:\php on windows. It can be set in the php
-.ini file [2] with (example): extension_dir="d:/php".
-
-[2] The php .ini file is the global PHP configuration file, usually
-/usr/local/lib/php.ini or /etc/php.d/java.ini or c:\windows\php.ini or
-c:\winnt\php.ini.

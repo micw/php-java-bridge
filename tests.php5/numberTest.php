@@ -2,8 +2,8 @@
 
 <?php
 if (!extension_loaded('java')) {
-  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
-    require_once("java/Java.php");
+  if (!(require_once("http://127.0.0.1:8080/JavaBridge/java/Java.inc"))) {
+    require_once("java/Java.inc");
   }
 }
 

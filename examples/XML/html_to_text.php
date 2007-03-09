@@ -3,7 +3,7 @@
 <?php
 
 if (!extension_loaded('java')) {
-  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(require_once("http://127.0.0.1:8080/JavaBridge/java/Java.inc"))) {
     echo "java extension not installed.";
     exit(2);
   }
@@ -49,12 +49,12 @@ class HandlerBase {
   function characters ($chars, $start, $length)
   {
     $s = new java("java.lang.String", $chars, $start, $length);
-    echo "$s";
+    echo java_values($s);
   }
   function ignorableWhitespace ($chars, $start, $length)
   {
     $s = new java("java.lang.String", $chars, $start, $length);
-    echo "$s";
+    echo java_values($s);
   }
 
   function processingInstruction ($target, $data)

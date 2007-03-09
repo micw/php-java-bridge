@@ -3,7 +3,7 @@
 package php.java.faces;
 
 /*
- * Copyright (C) 2006 Jost Boekemeier
+ * Copyright (C) 2003-2007 Jost Boekemeier
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -37,7 +37,7 @@ import javax.servlet.http.HttpServletResponse;
 import php.java.bridge.Util;
 import php.java.bridge.http.IContextFactory;
 import php.java.script.IPhpScriptContext;
-import php.java.script.PhpScriptEngine;
+import php.java.script.InvocablePhpScriptEngine;
 import php.java.script.PhpScriptWriter;
 
 
@@ -46,7 +46,7 @@ import php.java.script.PhpScriptWriter;
  * @author jostb
  *
  */
-public class PhpFacesScriptEngine extends PhpScriptEngine implements Invocable {
+public class PhpFacesScriptEngine extends InvocablePhpScriptEngine implements Invocable {
 
     private ServletContext ctx;
     private HttpServletRequest request;

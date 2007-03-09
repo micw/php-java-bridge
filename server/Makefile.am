@@ -49,7 +49,7 @@ stamp:
 
 JavaBridge.jar:
 	$(PHP_JAVA)/bin/javac $(SOURCE_VERSION) -classpath . php/java/bridge/http/*.java php/java/bridge/*.java
-	$(PHP_JAVA)/bin/jar cMf JavaBridge.jar META-INF/MANIFEST.MF php/java/bridge/http/*.class php/java/bridge/*.class  php/java/bridge/*.properties
+	$(PHP_JAVA)/bin/jar cMf JavaBridge.jar META-INF/java/*.inc META-INF/java/README META-INF/MANIFEST.MF php/java/bridge/http/*.class php/java/bridge/*.class  php/java/bridge/*.properties
 	chmod +x JavaBridge.jar
 
 php-servlet.jar: JavaBridge.jar $(SERVLET)
@@ -75,12 +75,14 @@ JavaBridge.war: JavaBridge.jar $(SERVLET) $(JAVA_BRIDGE_SERVLET_JAR) $(SCRIPT) $
 	rm WEB-INF/lib/servlet-api.jar WEB-INF/lib/log4j.jar
 	cp ../examples/php+jsp/*.jar WEB-INF/lib
 	cp -r ../examples/java-server-faces .
-	cp ../examples/php+jsp/*.php ../examples/php+jsp/*.jsp  .
+	cp -r ../examples/php+jsp/locale ../examples/php+jsp/*.php ../examples/php+jsp/*.jsp  .
 	cp ../test.php .
 	rm -f META-INF/MANIFEST.MF.standalone
 	mv META-INF/MANIFEST.MF META-INF/MANIFEST.MF.standalone
+	rm -rf java; cp -r META-INF/java .
 	sed '/Main-Class/s/php.java.bridge.Standalone/TestInstallation/' <META-INF/MANIFEST.MF.standalone >META-INF/MANIFEST.MF
-	$(PHP_JAVA)/bin/jar cMf JavaBridge.war *.php java-server-faces *.jsp META-INF/MANIFEST.MF WEB-INF/web.xml WEB-INF/faces-config.xml WEB-INF/cgi/*.sh WEB-INF/cgi/*.ini WEB-INF/cgi/README WEB-INF/lib/*.jar
+	$(PHP_JAVA)/bin/jar cMf JavaBridge.war *.php locale/* java/*.inc java/README java-server-faces *.jsp META-INF/MANIFEST.MF WEB-INF/web.xml WEB-INF/faces-config.xml WEB-INF/cgi/*.sh WEB-INF/cgi/*.ini WEB-INF/cgi/README WEB-INF/lib/*.jar
 	rm -f META-INF/MANIFEST.MF
+	rm -rf java
 	mv META-INF/MANIFEST.MF.standalone META-INF/MANIFEST.MF
 endif

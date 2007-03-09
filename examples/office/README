@@ -46,11 +46,11 @@ Installing the itext.jar library on a web server
    Or, if the pure PHP implementation is used, start an external
    J2EE or servlet back end, for example with the command:
 
-     java -jar JavaBridge.jar SERVLET:8080
+     java -jar JavaBridge.jar SERVLET_LOCAL:8080
 
    If the bridge has been configured to run without Java, use the command:
 
-    modules/java SERVLET:8080
+    modules/java SERVLET_LOCAL:8080
 
 6. Browse to:
      

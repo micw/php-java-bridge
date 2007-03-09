@@ -3,7 +3,7 @@
 package php.java.bridge.http;
 
 /*
- * Copyright (C) 2006 Jost Boekemeier
+ * Copyright (C) 2003-2007 Jost Boekemeier
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -106,7 +106,7 @@ public class PipeContextServer implements IContextServer {
             if(threadPool!=null) {
 	        threadPool.start(runner);
 	    } else {
-	    	Thread t = new Thread(runner, "JavaBridgeContextRunner("+contextName+")");
+	    	Thread t = new Util.Thread(runner, "JavaBridgeContextRunner("+contextName+")");
 		t.setContextClassLoader(DynamicJavaBridgeClassLoader.newInstance(Util.getContextClassLoader()));	    	
 	    	t.start();
 	    }

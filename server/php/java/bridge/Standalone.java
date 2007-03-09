@@ -2,7 +2,7 @@
 package php.java.bridge;
 
 /*
- * Copyright (C) 2006 Jost Boekemeier
+ * Copyright (C) 2003-2007 Jost Boekemeier
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -94,10 +94,11 @@ public class Standalone {
 	System.err.println("Usage: java -jar JavaBridge.jar --convert PHP_INCLUDE_DIR [JARFILES]");
 	System.err.println("SOCKETNAME is one of LOCAL, INET_LOCAL, INET, SERVLET_LOCAL, SERVLET");
 	System.err.println("Example: java -jar JavaBridge.jar");
-	System.err.println("Example: java -jar JavaBridge.jar LOCAL:/tmp/javabridge_native.socket 3 /var/log/php-java-bridge.log");
-	System.err.println("Example: java -Djava.awt.headless=\"true\" -Dphp.java.bridge.threads=50 -jar JavaBridge.jar INET:9267 3 JavaBridge.log");
-	System.err.println("Example: java -jar JavaBridge.jar SERVLET:8080 3 JavaBridge.log");
+	System.err.println("Example: LD_LIBRARY_PATH=/usr/lib/php/modules/ java -jar JavaBridge.jar LOCAL:/tmp/javabridge_native.socket 3 /var/log/php-java-bridge.log");
+	System.err.println("Example: java -jar JavaBridge.jar SERVLET_LOCAL:8080 3 JavaBridge.log");
 	System.err.println("Example: java -jar JavaBridge.jar --convert /usr/share/pear lucene.jar ...");
+	System.err.println("Influential system properties: threads, php_exec, default_log_file, default_log_level, base.");
+	System.err.println("Example: java -Djava.awt.headless=\"true\" -Dphp.java.bridge.threads=50 -Dphp.java.bridge.base=/usr/lib/php/modules -Dphp.java.bridge.php_exec=/usr/local/bin/php-cgi -Dphp.java.bridge.default_log_file= -Dphp.java.bridge.default_log_level=5 -jar JavaBridge.jar");
     }
     protected void usage() {
 	if(Util.IS_MONO)
@@ -133,7 +134,6 @@ public class Standalone {
 	}
 	usage();
     }
-    
     /**
      * Global init. Redirects System.out and System.err to the server
      * log file(s) or to System.err and creates and opens the
@@ -164,7 +164,7 @@ public class Standalone {
 		try {
 		    Object result = JOptionPane. showInputDialog(null,
 			    "Start a socket listener on port", "Starting the PHP/Java Bridge ...", JOptionPane.QUESTION_MESSAGE, null,
-		            new String[] {"SERVLET_LOCAL:8080","INET:9267","INET:9167", "LOCAL:/var/run/.php-java-bridge_socket"}, "SERVLET_LOCAL:8080");
+		            new String[] {"LOCAL:/var/run/.php-java-bridge_socket", "INET_LOCAL:9267","INET:9267","INET_LOCAL:9167","INET:9167","SERVLET_LOCAL:8080","SERVLET:8080"}, "SERVLET_LOCAL:8080");
 		       if(result==null) System.exit(0);
 		      sockname  = result.toString();
 		} catch (Throwable t) {/*ignore*/}
@@ -219,8 +219,8 @@ public class Standalone {
 	} catch (Throwable t) {/*ignore*/}
 	try { // Hack for Unix: execute the standalone container using the default SUN VM
 	    if(s.length==0 && (new File("/usr/java/default/bin/java")).exists() && checkGNUVM() && (System.getProperty("php.java.bridge.exec_sun_vm", "true").equals("true"))) {
-		Object p = Runtime.getRuntime().exec("/usr/java/default/bin/java -Dphp.java.bridge.exec_sun_vm=false -classpath " + System.getProperty("java.class.path") + " php.java.bridge.Standalone");
-		if(p != null) System.exit(0);
+		Process p = Runtime.getRuntime().exec(new String[] {"/usr/java/default/bin/java", "-Dphp.java.bridge.exec_sun_vm=false", "-classpath", System.getProperty("java.class.path"), "php.java.bridge.Standalone"});
+		if(p != null) System.exit(p.waitFor());
 	    }
 	} catch (Throwable t) {/*ignore*/}
 	try {

@@ -1,6 +1,6 @@
 <?php 
 
-require_once("java/Java.php");
+require_once("java/Java.inc");
 
 /* PHP version of numberguess.jsp */
 $session = java_session();

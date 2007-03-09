@@ -3,7 +3,7 @@
 package php.java.servlet;
 
 /*
- * Copyright (C) 2006 Jost Boekemeier
+ * Copyright (C) 2003-2007 Jost Boekemeier
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -97,8 +97,7 @@ public class PhpJavaServlet extends HttpServlet {
 	    if(value.equals("on") || value.equals("true")) allowHttpTunnel=true;
 	} catch (Throwable t) {Util.printStackTrace(t);}      
 
-
-	String servletContextName=config.getServletContext().getRealPath("");
+	String servletContextName=CGIServlet.getRealPath(config.getServletContext(), "");
 	if(servletContextName==null) servletContextName="";
 	contextServer = new ContextServer(servletContextName);
     	 

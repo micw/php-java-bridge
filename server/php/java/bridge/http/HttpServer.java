@@ -3,7 +3,7 @@
 package php.java.bridge.http;
 
 /*
- * Copyright (C) 2006 Jost Boekemeier
+ * Copyright (C) 2003-2007 Jost Boekemeier
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 
 import php.java.bridge.ISocketFactory;
+import php.java.bridge.ThreadPool;
 import php.java.bridge.Util;
 
 
@@ -60,6 +61,7 @@ public abstract class HttpServer implements Runnable {
     
     protected ISocketFactory socket;
     protected Thread httpServer;
+    private ThreadPool pool;
 
     /**
      * Create a server socket.
@@ -75,9 +77,24 @@ public abstract class HttpServer implements Runnable {
      */
     public HttpServer() throws IOException {
 	socket = bind(Util.JAVABRIDGE_PROMISCUOUS ? "INET:0" : "INET_LOCAL:0");
-	httpServer = new Thread(this, "JavaBridgeHttpServer");
-	httpServer.setDaemon(true);
+	try {
+		pool = createThreadPool(Util.EXTENSION_NAME+"HttpServerThreadPool");
+	} catch (SecurityException e) {/*ignore*/}
+	httpServer = new Util.Thread(this, Util.EXTENSION_NAME+"HttpServer");
         httpServer.start();
+    }
+
+    /**
+     * Same as Util.createThreadPool, but does not log anything at this stage.
+     * @param name The name of the pool
+     * @return The thread pool instance.
+     */
+    private static ThreadPool createThreadPool(String name) {
+        ThreadPool pool = null;
+        int maxSize = 20;
+        try { maxSize = Integer.parseInt(Util.THREAD_POOL_MAX_SIZE); } catch (Throwable t) {/*ignore*/}
+        if(maxSize>0) pool = new ThreadPool(name, maxSize);
+        return pool;
     }
 
     /**
@@ -117,6 +134,25 @@ public abstract class HttpServer implements Runnable {
 	return i!=0;
     }
 		
+    private class Runner implements Runnable {
+        private Socket sock;
+	private HttpRequest req;
+        private HttpResponse res;
+        public Runner(Socket sock) throws IOException {
+            this.sock = sock;
+            this.req = new HttpRequest(sock.getInputStream());
+            this.res = new HttpResponse(sock.getOutputStream());
+         }
+        public void run() {
+            try {
+        	if(parseHeader(req)) service(req, res);
+            } catch (IOException e) {
+        	Util.printStackTrace(e);
+ 	    } finally {
+  		try {this.sock.close();} catch (IOException e) {/*ignore*/}
+ 	    }
+        }
+    }
     /**
      * accept, create a HTTP request and response, parse the header and body
      * @throws IOException
@@ -126,37 +162,35 @@ public abstract class HttpServer implements Runnable {
 	    Socket sock;
 	    try {sock = socket.accept();} catch (IOException e) {return;} // socket closed
 	    Util.logDebug("Socket connection accepted");
-	    (new Thread("JavaBridgeHttpRunner") {
-	        Socket sock;
-	        public Thread init(Socket sock) {
-	            this.sock = sock;
-	            return this;
-	        }
-	        public void run() {
-	            try {
-	        	HttpRequest req = new HttpRequest(sock.getInputStream());
-	        	HttpResponse res = new HttpResponse(sock.getOutputStream());
-	        	if(parseHeader(req)) service(req, res);
-	            } catch (IOException e) {
-	        	Util.printStackTrace(e);
-		    }
-	        }
-	        }).init(sock).start();
+	    if(pool==null) {
+		Util.logDebug("Starting new HTTP server thread");
+        	(new Util.Thread(new Runner(sock), Util.EXTENSION_NAME+"HttpServerRunner")).start();
+	    } else { 
+                Util.logDebug("Starting HTTP server thread from thread pool");
+		pool.start(new Runner(sock));
+	    }
 	}
     }
 
-    private static final byte[] ERROR = Util.toBytes("not implemented");
-    protected void doGet(HttpRequest req, HttpResponse res) throws IOException {
+    protected static final byte[] ERROR = Util.toBytes(
+	    "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">"+
+	    "<html><head>" +
+	    "<title>404 Not Found</title>" +
+	    "</head><body>" +
+	    "<h1>Not Found</h1>" +
+	    "<p>The requested URL as not found on this server.</p>" +
+	    "<hr>"+
+    "</body></html>");
+    protected void doPost(HttpRequest req, HttpResponse res) throws IOException {
 	res.setContentLength(ERROR.length);
 	OutputStream out = res.getOutputStream();
 	out.write(ERROR);
-	out.close();
+    }
+    protected void doGet(HttpRequest req, HttpResponse res) throws IOException { 
+	doPost(req, res); 
     }
     protected void doPut(HttpRequest req, HttpResponse res) throws IOException { 
-	doGet(req, res); 
-    }
-    protected void doPost(HttpRequest req, HttpResponse res) throws IOException { 
-	doGet(req, res); 
+	doPost(req, res); 
     }
     
     /**

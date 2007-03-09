@@ -3,7 +3,7 @@
 package php.java.bridge;
 
 /*
- * Copyright (C) 2006 Jost Boekemeier
+ * Copyright (C) 2003-2007 Jost Boekemeier
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -66,14 +66,17 @@ public final class MethodCache {
      * A cache entry.
      */
     public static class Entry {
+	boolean isStatic;
 	String name;
 	Class clazz;
 	Class params[];
 		
 	protected Entry () {}
-	protected Entry (String name, Class clazz, Class params[]) {
+	protected Entry (String name, Object obj, Class params[]) {
 	    this.name = name; // intern() is ~10% slower than lazy string comparison
-	    this.clazz = clazz;
+	    boolean isStatic = obj instanceof Class;
+	    this.clazz = isStatic?(Class)obj:obj.getClass();
+	    this.isStatic = isStatic;
 	    this.params = params;
 	}
 	private boolean hasResult = false;
@@ -85,12 +88,14 @@ public final class MethodCache {
 	    }
 	    result = result * 31 + clazz.hashCode();
 	    result = result * 31 + name.hashCode();
+	    result = result * 31 + (isStatic? 1231 : 1237);
 	    hasResult = true;
 	    return result;
 	}
 	public boolean equals(Object o) {
 	    Entry that = (Entry) o;
 	    if(clazz != that.clazz) return false;
+	    if(isStatic != that.isStatic) return false;
 	    if(params.length != that.params.length) return false;
 	    if(!name.equals(that.name)) return false;
 	    for(int i=0; i<params.length; i++) {
@@ -141,18 +146,18 @@ public final class MethodCache {
     /**
      * Get a cache entry from a name, class and arguments.
      * @param name The method name
-     * @param clazz The class
+     * @param obj The object or class
      * @param args The arguments
      * @return A cache entry.
      */
-    public Entry getEntry (String name, Class clazz, Object args[]){
+    public Entry getEntry (String name, Object obj, Object args[]){
     	Class params[] = new Class[args.length];
     	for (int i=0; i<args.length; i++) {
 	    Class c = args[i] == null ? null : args[i].getClass();
 	    if(c == PhpArray.class) return noCache;
 	    params[i] = c;
     	}
-	return new Entry(name, clazz, params);
+	return new Entry(name, obj, params);
     }
     
     /**

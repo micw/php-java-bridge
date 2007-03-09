@@ -1,9 +1,11 @@
 <?php
 require_once('rt/java_io_File.php');
 require_once('rt/java_lang_System.php');
+require_once('rt/java_util_LinkedList.php');
 require_once('lucene/All.php');
 
 try {
+  echo "indexing ... ";
   /* Create an index */
   $cwd=getcwd();
   /* create the index files in the tmp dir */
@@ -30,24 +32,43 @@ try {
   }
   $writer->optimize();
   $writer->close();
+  echo "done\n";
 
+  echo "searching... ";
   /* Search */
   $searcher = new org_apache_lucene_search_IndexSearcher($tmp);
-  $term=new org_apache_lucene_index_Term("name", "lucene_search.php");
-  $phrase = new org_apache_lucene_search_PhraseQuery();
-  $phrase->add($term);
+  $phrase = new org_apache_lucene_search_MatchAllDocsQuery();
   $hits = $searcher->search($phrase);
 
   /* Print result */
   $iter = $hits->iterator();
   $n = $hits->length();
+  echo "done\n";
   echo "Hits: $n\n";
 
-  while($iter->hasNext()) {
+  /* Instead of retrieving the values one-by-one, we store them into a
+   * LinkedList on the server side and then retrieve the list in one
+   * query:
+   */
+  $resultList = new java_util_LinkedList();
+
+				// create an XML document from the
+				// following PHP code, ...
+  java_lang_System::javaBeginDocument();
+  while($n--) {
     $next = $iter->next();
     $name = $next->get("name");
-    echo java_cast($name, "string")."\n";
+    $resultList->add($name);
   }
+				//  ... execute the XML document on
+				//  the server side, ...
+  java_lang_System::javaEndDocument();
+  
+				// .. retrieve the result, ...
+  $result = java_lang_System::javaValues($resultList); 
+				// ... print the result array
+  print_r($result);
+
   delete_index_dir();
 } catch (JavaException $e) {
   echo "Exception occured: {$e->__toString()}<br>\n";

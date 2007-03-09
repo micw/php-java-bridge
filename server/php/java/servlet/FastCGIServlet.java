@@ -2,7 +2,7 @@
 package php.java.servlet;
 
 /*
- * Copyright (C) 2006 Jost Boekemeier
+ * Copyright (C) 2003-2007 Jost Boekemeier
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -52,7 +52,7 @@ import php.java.servlet.ConnectionPool.ConnectException;
  * server on the computer. Default is Autostart.  
  * <p>The admin may start a FCGI
  * server for all users with the command:<br><code> cd /tmp<br>
- * X_JAVABRIDGE_OVERRIDE_HOSTS="/" PHP_FCGI_CHILDREN="20"
+ * REDIRECT_STATUS=200 X_JAVABRIDGE_OVERRIDE_HOSTS="/" PHP_FCGI_CHILDREN="20"
  * PHP_FCGI_MAX_REQUESTS="5000" /usr/bin/php-cgi -b 127.0.0.1:9667<br>
  * </code>
  * </p>
@@ -114,13 +114,13 @@ public class FastCGIServlet extends CGIServlet {
      * Default is 20.
      * @see Util#THREAD_POOL_MAX_SIZE
      */
-    private static final String PHP_FCGI_CHILDREN = Util.THREAD_POOL_MAX_SIZE;
+    public static final String PHP_FCGI_CHILDREN = Util.THREAD_POOL_MAX_SIZE;
     
     /**
      * This controls how many requests each child process will handle before
-     * exitting. When one process exits, another will be created. 
+     * exitting. When one process exits, another will be created. Default is 5000.
      */
-    private static final String PHP_FCGI_MAX_REQUESTS = "5000";
+    public static final String PHP_FCGI_MAX_REQUESTS = "5000";
     
     protected String php = null; 
     protected boolean phpTryOtherLocations = false;
@@ -137,6 +137,7 @@ public class FastCGIServlet extends CGIServlet {
     protected String php_fcgi_children = PHP_FCGI_CHILDREN;
     protected int php_fcgi_children_number = Integer.parseInt(PHP_FCGI_CHILDREN);
     protected String php_fcgi_max_requests = PHP_FCGI_MAX_REQUESTS;
+    protected int php_fcgi_max_requests_number = Integer.parseInt(PHP_FCGI_MAX_REQUESTS);
 
     private final Object lockObject = new Object();
     private static ConnectionPool fcgiConnectionPool = null;
@@ -152,7 +153,7 @@ public class FastCGIServlet extends CGIServlet {
     private final CGIRunnerFactory defaultCGIRunnerFactory = new CGIRunnerFactory();
 
     protected String startFcgiMessage() {
-	String base = context.getRealPath(cgiPathPrefix);
+	String base = CGIServlet.getRealPath(context, cgiPathPrefix);
 	StringBuffer buf = new StringBuffer(".");
 	buf.append(File.separator);
 	buf.append("php-cgi-");
@@ -165,7 +166,7 @@ public class FastCGIServlet extends CGIServlet {
 "For example with the commands: \n\n" +
 "cd " + base + "\n" + 
 "chmod +x " + wrapper + "\n" + 
-"X_JAVABRIDGE_OVERRIDE_HOSTS=\"/\" PHP_FCGI_CHILDREN=\"20\" PHP_FCGI_MAX_REQUESTS=\"5000\" "+wrapper+" -c "+wrapper+".ini -b 127.0.0.1:" +
+"REDIRECT_STATUS=200 X_JAVABRIDGE_OVERRIDE_HOSTS=\"/\" PHP_FCGI_CHILDREN=\"20\" PHP_FCGI_MAX_REQUESTS=\""+php_fcgi_max_requests+"\" "+wrapper+" -d allow_url_include=On -c "+wrapper+".ini -b 127.0.0.1:" +
 fcgi_channel+"\n\n";
         return msg;
     }
@@ -181,7 +182,7 @@ fcgi_channel+"\n\n";
 		    }
 		    File f = new File(value);
 		    if(!f.isAbsolute()) {
-		      value = config.getServletContext().getRealPath(cgiPathPrefix)+File.separator+value;
+		      value = getRealPath(config.getServletContext(), cgiPathPrefix)+File.separator+value;
 		    }
 		    php = value;
 		}  catch (Throwable t) {Util.printStackTrace(t);}      
@@ -251,9 +252,12 @@ fcgi_channel+"\n\n";
 	try {
 	    val = getServletConfig().getInitParameter("php_fcgi_max_requests");
 	    if(val==null) val = getServletConfig().getInitParameter("PHP_FCGI_MAX_REQUESTS");
-	    if(val==null) val = System.getProperty("php.java.bridge.php_fcgi_max_requests");	    
+	    if(val==null) val = System.getProperty("php.java.bridge.php_fcgi_max_requests");
+	    if(val != null) {
+		php_fcgi_max_requests_number = Integer.parseInt(val);
+		php_fcgi_max_requests = val;
+	    }
 	} catch (Throwable t) {/*ignore*/}
-	if(val!=null) php_fcgi_max_requests = val;
 	fcgiIsAvailable = fcgiIsConfigured = true;
 	checkCgiBinary(config);
 	
@@ -278,7 +282,7 @@ fcgi_channel+"\n\n";
     }
 
     protected StringBuffer getCgiDir() {
-       	String webAppRootDir = getServletContext().getRealPath("/");
+       	String webAppRootDir = getRealPath(getServletContext(), "/");
         StringBuffer cgiDir = new StringBuffer(webAppRootDir);
         if(!webAppRootDir.endsWith(File.separator)) cgiDir.append(File.separatorChar);
         cgiDir.append(cgiPathPrefix);
@@ -313,7 +317,7 @@ fcgi_channel+"\n\n";
 			    boolean isJavaBridgeWc = isJavaBridgeWc(contextPath);
 			    children = isJavaBridgeWc ? JAVABRIDGE_RESERVE : php_fcgi_children_number-JAVABRIDGE_RESERVE;
 			}
-			fcgiConnectionPool=connectionPool = new ConnectionPool("127.0.0.1", fcgi_channel, children, defaultPoolFactory);
+			fcgiConnectionPool=connectionPool = new ConnectionPool("127.0.0.1", fcgi_channel, children, php_fcgi_max_requests_number, defaultPoolFactory);
 		    } catch (Exception e) {
 			Util.logDebug(e+": FastCGI channel not available, switching off fast cgi. " + startFcgiMessage());
 			
@@ -425,9 +429,9 @@ fcgi_channel+"\n\n";
 
     }
     private final class FastCGIInputStream extends ConnectionPool.DefaultInputStream {
-	private String error;
+	private StringBuffer error;
 	public String getError() {
-	    return error;
+	    return error==null?null:Util.checkError(error.toString());
 	}
 	public int read(byte buf[]) throws ConnectionPool.ConnectionException {
 	    try {
@@ -435,7 +439,7 @@ fcgi_channel+"\n\n";
 	    } catch (ConnectionPool.ConnectionException ex) {
 		throw ex;
 	    } catch (IOException e) {
-	        throw new ConnectionPool.ConnectionException(e);
+	        throw new ConnectionPool.ConnectionException(connection, e);
 	    }
 	}
         public int doRead(byte buf[]) throws IOException {
@@ -458,8 +462,9 @@ fcgi_channel+"\n\n";
 		    String s = new String(buf, 0, n, Util.ASCII);
 		    log(s); 
 		    contentLength = 0;
-		    if(error==null)
-		      error = Util.checkError(s);
+
+		    if(error==null) error = new StringBuffer(s);
+		    else error.append(s);
 		}
 		if(paddingLength>0) {
 		    byte b[] = new byte[paddingLength];
@@ -506,7 +511,7 @@ fcgi_channel+"\n\n";
 	    try {
 	        parseBody();
 	    } catch (ConnectionPool.ConnectionException ex) {
-	        Util.logDebug("PHP application terminated (see PHP_FCGI_MAX_REQUESTS), trying again using a new application: " + ex);
+	        Util.logError("PHP application terminated unexpectedly, have you started php-cgi with the environment setting PHP_FCGI_MAX_REQUESTS=" + php_fcgi_max_requests + "? Trying again using a new connection: " + ex);
 	        parseBody();
 	    }
 	}
@@ -519,19 +524,19 @@ fcgi_channel+"\n\n";
 	            Util.logDebug("PHP FastCGI server failed, switching off FastCGI SAPI: " + ex);
 	            Util.printStackTrace(ex);
 	        }
-	        throw new ServletException("PHP FastCGI server failed, switching off FastCGI SAPI: " +ex);
+	        throw new ServletException("PHP FastCGI server failed, switching off FastCGI SAPI.", ex);
 	    } catch (ConnectionPool.ConnectionException x) {
 	        if(Util.logLevel>1) {
 	            Util.logDebug("PHP FastCGI instance failed: " + x);
 	            Util.printStackTrace(x);
 	        }
-	        throw new ServletException("PHP FastCGI instance failed: " +x);
+	        throw new ServletException("PHP FastCGI instance failed.", x);
 	    } catch (IOException e) {
 	      if(Util.logLevel>4) {
 		  Util.logDebug("IOException caused by internet browser: " + e);
 		  Util.printStackTrace(e);
 	      }	      
-	      throw e;
+	      	throw new ServletException("IOException caused by internet browser", e);
 	    }
 	    
 	}
@@ -576,7 +581,7 @@ fcgi_channel+"\n\n";
 		natOut.close(); natOut = null;
 		
 		// the header and content
-		// NOTE: unlike cgi, fcgi headers must be semt in _one_ packet
+		// NOTE: unlike cgi, fcgi headers must be sent in _one_ packet
 		// leading or trailing zero length packets are allowed.
 		while((n = natIn.read(buf)) !=-1) {
 		    int N = i + n;
@@ -600,16 +605,17 @@ fcgi_channel+"\n\n";
 			i=0;
 		    }
 		}
-		natIn.close(); String phpFatalError = natIn.getError(); 
+		natIn.close(); String phpFatalError = natIn.getError();
 		natIn = null; connection = null;
+		
 		if(phpFatalError!=null) throw new RuntimeException(phpFatalError);
 	    } catch (InterruptedException e) {
-	      throw new ServletException(e);
+		throw new ServletException(e);
 	    } finally {
 	        // Destroy physical connection if exception occured, 
 		// so that the PHP side doesn't keep unsent data
 	        // A more elegant approach would be to use the FCGI ABORT request.
-		if(connection!=null) connection.abort(); 
+		if(connection!=null) connection.setIsClosed(); 
 	        if(in!=null) try {in.close();} catch (IOException e) {}
 		if(natIn!=null) try {natIn.close();} catch (IOException e) {}
 		if(natOut!=null) try {natOut.close();} catch (IOException e) {}

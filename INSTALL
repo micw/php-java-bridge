@@ -1,6 +1,6 @@
 This file contains very detailed installation instructions. For most
-users the build section in the ABOUT.HTM or README and the install.sh
-script should be sufficient. 
+users the build section from the README and the install.sh script
+should be sufficient.
 
 NOTE for Fedora and RedHat Enterprise Linux: Linux RPMs contain
 Security Enhanced Linux contexts. If you want to install software on a
@@ -154,7 +154,7 @@ installation and start the system http service again.
 
 The modules/ directory also contains a file "JavaBridge.war" which can
 be used to run php within a pure java application server. Please see
-the INSTALL.WEBSPHERE or INSTALL.ORACLE documents for details.
+the INSTALL.J2EE document for details.
 
 If something went wrong, for example if you have forgotten to set
 JAVA_HOME or if configure failed because the installed autoconf

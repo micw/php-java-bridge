@@ -3,7 +3,7 @@
 package php.java.bridge;
 
 /*
- * Copyright (C) 2006 Jost Boekemeier and others.
+ * Copyright (C) 2003-2007 Jost Boekemeier and others.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -318,11 +318,12 @@ public class JavaBridge implements Runnable {
 
 	    Util.redirectOutput(redirectOutput, logFile);
 	    if(Util.VERSION != null)
-		Util.logMessage(Util.EXTENSION_NAME+  " version         : " + Util.VERSION);
-	    Util.logMessage(Util.EXTENSION_NAME + " logFile         : " + rawLogFile);
-	    Util.logMessage(Util.EXTENSION_NAME + " default logLevel: " + Util.logLevel);
-	    Util.logMessage(Util.EXTENSION_NAME + " socket          : " + socket);
-	    Util.logMessage(Util.EXTENSION_NAME + " library path    : " + System.getProperty("java.ext.dirs"));
+		Util.logMessage(Util.EXTENSION_NAME+  " version             : " + Util.VERSION);
+	    Util.logMessage(Util.EXTENSION_NAME + " logFile             : " + rawLogFile);
+	    Util.logMessage(Util.EXTENSION_NAME + " default logLevel    : " + Util.logLevel);
+	    Util.logMessage(Util.EXTENSION_NAME + " socket              : " + socket);
+	    Util.logMessage(Util.EXTENSION_NAME + " java.ext.dirs       : " + System.getProperty("java.ext.dirs"));
+	    Util.logMessage(Util.EXTENSION_NAME + " php.java.bridge.base: " + System.getProperty("php.java.bridge.base", System.getProperty("user.home")));
 	} catch (Throwable t) {
 	    throw new RuntimeException(t);
 	}
@@ -330,21 +331,10 @@ public class JavaBridge implements Runnable {
     // called by Standalone.init()
     static void init(ISocketFactory socket, int logLevel, String s[]) {	    
 	try {
-	    ThreadPool pool = null;
-	    int maxSize = 20;
-	    try {
-	    	maxSize = Integer.parseInt(Util.THREAD_POOL_MAX_SIZE);
-	    } catch (Throwable t) {
-	    	Util.printStackTrace(t);
-	    }
-	    if(maxSize>0) {
-	        pool = new ThreadPool(Util.EXTENSION_NAME, maxSize);
-		    Util.logMessage(Util.EXTENSION_NAME + " thread pool size: " + maxSize);
-	    }
-
+	    ThreadPool pool = Util.createThreadPool(Util.EXTENSION_NAME+"ThreadPool");
 	    try {
 	        String policy = System.getProperty("java.security.policy");
-	        String base = System.getProperty("php.java.bridge.base");
+	        String base = System.getProperty("php.java.bridge.base", System.getProperty("user.home"));
 	        if(policy!=null && base!=null) {
 	            SecurityManager manager = new php.java.bridge.JavaBridgeSecurityManager();
 	            System.setSecurityManager(manager);
@@ -361,12 +351,12 @@ public class JavaBridge implements Runnable {
 		Socket sock = socket.accept();
                 Util.logDebug("Socket connection accepted");
 		JavaBridge bridge = new JavaBridge(sock.getInputStream(), sock.getOutputStream());
-                if(maxSize>0) {
-                    Util.logDebug("Starting bridge from Thread Pool");
+                if(pool!=null) {
+                    Util.logDebug("Starting bridge thread from thread pool");
 		    pool.start(bridge); // Uses thread pool
 		} else {
-                    Util.logDebug("Starting bridge from new Thread");
-		    Thread t = new Thread(bridge);
+                    Util.logDebug("Starting new bridge thread");
+		    Thread t = new Util.Thread(bridge);
 		    t.setContextClassLoader(DynamicJavaBridgeClassLoader.newInstance(Util.getContextClassLoader()));
 		    t.start();
 		}
@@ -950,7 +940,7 @@ public class JavaBridge implements Runnable {
 			    String nm = jfields[j].getName();
 			    boolean eq = ignoreCase ? nm.equalsIgnoreCase(name) : nm.equals(name);
 			    if (eq) {
-			    	if(bridge.logLevel>3) bridge.logDebug("smatching interface for GetSetProp: "+ jclass);
+			    	if(bridge.logLevel>3) bridge.logDebug("matching interface for GetSetProp: "+ jclass);
 				return jclass;
 			    }
 			}
@@ -1071,7 +1061,7 @@ public class JavaBridge implements Runnable {
 	    if(object==null) {object = Request.PHPNULL;throw new NullPointerException("call object is null, check the server log file(s).");}
 	    /* PR1616498: Do not use Util.getClass(): if object is a class, we must pass the class class.  
 	     * All VM, including gcc >= 3.3.3, return the class class for class.getClass(), not null. This is okay for the cache implementation. */
-	    MethodCache.Entry entry = methodCache.getEntry(method, object.getClass(), args);
+	    MethodCache.Entry entry = methodCache.getEntry(method, object, args);
 	    selected = (Method) methodCache.get(entry);
 	    
 	    // gather

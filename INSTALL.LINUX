@@ -1,23 +1,23 @@
 Overview
 --------
 
-On Linux Java libraries can be:
+This document describes how to install the PHP/Java Bridge Linux
+packages. The Linux RPM files contain a compiled, native version of
+the PHP/Java Bridge which doesn't need any Java installed on the
+system. Furthermore the RPM files contain Security Enhanced Linux
+contexts.
 
-* compiled into native code and be called directly or
+If you want to use a Java VM and you don't want to use Security
+Enhanced Linux protection, read the INSTALL.J2EE or INSTALL.J2SE
+documents.
 
-* they can be installed into a Java application server and be accessed
-  via RPC, as usual.
-
-
-Installing the PHP/Java Bridge native Component
------------------------------------------------
-
-NOTE: The Linux RPM files are for RedHat Linux and compabile
-distributions (WhiteBox, Fedora, ...).
+Installation on RedHat, Fedora, CentOS ...
+------------------------------------------
 
 * Check if the Java libraries you're interested in are available as
   native binaries. If not, you need to install Java and the J2EE
-  component, see below.
+  component, see the INSTALL.J2EE or INSTALL.J2SE document and the 
+  Security Enhanced Linux secion in the README.
 
 * Download and install the PHP/Java Bridge base and the libraries. For
   example:
@@ -30,123 +30,34 @@ distributions (WhiteBox, Fedora, ...).
 
     /usr/share/doc/<libname>/example.
 
-* Please report bugs/problems to the mailing list:
 
-    php-java-bridge-users@lists.sourceforge.net
+Installation on Debian, Ubuntu, ...
+-----------------------------------
 
+* Debian based Linux distributions currently don't support Security
+  Enhanced Linux. A compiled, native back end is not available; the
+  debian port of the PHP/Java Bridge needs Java and a servlet container
+  to start a Java VM.
 
-Installing the PHP/Java Bridge J2EE Component
----------------------------------------------
+* The php-java-bridge_x.y.z-1_i386.deb Debian package installs as
+  modules, places the .war file at the tomcat5 deploy dir, places many
+  code examples at the docs directory and was created for Debian Etch
+  4.0, with tomcat5, sun-java5, php 5.2.x. It can be installed with e.g.:
 
-* Download and install a J2EE application server or servlet engine,
-  for example Apache Tomcat:
+    dpkg -i php-java-bridge_x.y.z-1_i386.deb    
 
-    rpm -i tomcat5-5.0.30-5jpp_6fc.i386.rpm
-
-* Download and install the PHP/Java Bridge base:
-
-    rpm -i php-java-bridge-x.y.z-1-i386.rpm
-
-* Either download and install the precompiled PHP/Java Bridge component
-  for tomcat:
-
-    rpm -i php-java-bridge-tomcat-x.y.z-1.i386.rpm
-
-  This creates a file /etc/php.d/java-servlet.ini which contains the
-  following settings:
-
-     [java]
-     java.hosts     = 127.0.0.1:8080
-     java.servlet   = On
-
-  Or install the J2EE component "JavaBridge.war" manually: disable
-  Security Enhanced Linux (if enabled), deploy the JavaBridge.war into
-  your J2EE server, example for Tomcat:
+* Use the command:
   
-    setenforce Permissive
-    cp JavaBridge.war /usr/share/tomcat5/webapps
+    sh debian/rules binary
 
-  Create the file /etc/php.d/java-servlet.ini with the following content:
+  in the php-java-bridge-x.y.z directory from the source download to
+  re-create the debian binary package.
 
-     [java]
-     java.hosts     = 127.0.0.1:8080 ;or 8888 for Oracle, 9080 for WebSphere
-     java.servlet   = On
 
-* If the HTTP document root should be shared with the J2EE or
-  servlet webapps directory, change /etc/php.d/java-servlet.ini; set
-  java.servlet to User:
-
-     java.hosts     = 127.0.0.1:8080; or 8888 for Oracle, 9080 for WebSphere
-     java.servlet   = User
-
-   and change the DocumentRoot and Directory setting in the Apache httpd
-   configuration file /etc/httpd/conf/httpd.conf. Old lines are marked
-   with a -, added lines with a +:
-
-    # DocumentRoot: The directory out of which you will serve your
-    # documents. By default, all requests are taken from this directory, but
-    # symbolic links and aliases may be used to point to other locations.
-    #
-  - DocumentRoot "/var/www/html"
-  + DocumentRoot "/usr/share/tomcat5/webapps"
-  [...]
-    # This should be changed to whatever you set DocumentRoot to.
-    #
-  - <Directory "/var/www/html">
-  + <Directory "/usr/share/tomcat5/webapps">
-
-  The above example assumes that the shared webapps directory is
-  /usr/share/tomcat5/webapps. Change it accordingly.
-
-* Restart the HTTP server and the J2EE back-end, for example:
-
-    service tomcat5 restart
-    service httpd restart
-
-* Visit http://localhost:<port>/JavaBridge and click on test.php.
-  The <port> is 8888 (Oracle), 9080 (WebSphere) or 8080 (Tomcat/Geronimo).
-
-* If the HTTP document root is shared with the J2EE or servlet webapps
-  directory, browse to http://your.host.com/JavaBridge and click on
-  test.php. Otherwise copy test.php to the document root of the web 
-  server (/var/www/html) and browse to http://your.host.com/test.php.
-
-* Copy your java libraries (.jar files) into the extension_dir/lib [1]
-  directory and your native shared libraries into extension_dir [1].
+Support
+-------
 
 * Please report bugs/problems to the mailing list:
 
     php-java-bridge-users@lists.sourceforge.net
-
----
-[1] The extension_dir is the PHP extension directory, usually
-/usr/lib/php/modules. It can be set in the php .ini file [2] with
-(example): extension_dir="/usr/local/lib/php/modules".
-
-[2] The php .ini file is the global PHP configuration file. It
-consists of a main file /etc/php.ini and several module specific files
-located in /etc/php.d/. The two relevant files are /etc/php.d/java.ini
-and /etc/php.d/java-servlet.ini.
-
-
-Known Linux Issues 
-------------------
-
-* Only the precompiled php-java-bridge-tomcat-x.y.z-1.i386.rpm contains 
-  Security Enhanced Linux contexts. When the J2EE component "JavaBridge.war"
-  has been installed manually, Security Enhanced Linux must be switched off
-  or the SEL modules must be installed separately, see the README.
-
-* On Linux the default Java VM is GNU Java. If you want to use the SUN
-  or IBM Java VM, set the JAVA_HOME option in /etc/tomcat5/tomcat5.conf.
-
-* The precompiled php-java-bridge*.rpm binaries are 32 bit binaries
-  for the x86 architecture. It is possible to build sparc, powerpc or
-  64 bit binaries with the following command: 
-
-    rpmbuild --rebuild php-java-bridge-x.y.z-1.src.rpm
-
-  or, if you have downloaded the source archive:
-
-    rpmbuild -tb php-java-bridge_x.y.z.tar.gz
 

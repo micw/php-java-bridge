@@ -4,7 +4,7 @@
 
 // PLEASE DO NOT USE SWING TO CREATE A JAVA GUI. If you want to
 // create a GUI application, please use SWT or GTK, please see
-// the gtk-button.php, gtk-fileselector.php and swt-button.php
+// the gtk-button.inc, gtk-fileselector.php and swt-button.php
 // examples.
 
 // Please see the server/tests/SwingTest.java and
@@ -13,7 +13,7 @@
 // to avoid issues with swing's background threads.
 
 if (!extension_loaded('java')) {
-  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(require_once("http://127.0.0.1:8080/JavaBridge/java/Java.inc"))) {
     echo "java extension not installed.";
     exit(2);
   }

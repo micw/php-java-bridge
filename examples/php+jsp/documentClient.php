@@ -1,6 +1,6 @@
 <?php
 
-require_once("java/Java.php");
+require_once("java/Java.inc");
 
 $session = java_session();
 $System = new JavaClass("java.lang.System");

@@ -7,7 +7,7 @@ import java.io.StringReader;
 
 import javax.script.Invocable;
 
-import php.java.script.PhpScriptEngine;
+import php.java.script.InvocablePhpScriptEngine;
 
 /**
  * @author jostb
@@ -22,7 +22,7 @@ public class HelloWorld {
 	System.setProperty("php.java.bridge.php_exec", "php-cgi");
 
 	try {
-	    PhpScriptEngine engine = new PhpScriptEngine();
+	    InvocablePhpScriptEngine engine = new InvocablePhpScriptEngine();
 	    String s = "<?php extension_loaded('java')||@dl('java.so')||@dl('php_java.dll'); echo 'HelloWorld!\n'; java_context()->call(java_closure()) ||die('oops!');?>";
 
 	    engine.eval(new StringReader(s));

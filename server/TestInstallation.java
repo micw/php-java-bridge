@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -60,7 +59,7 @@ public class TestInstallation implements Runnable {
     }
     private static HashMap getProcessEnvironment() {
 	HashMap defaultEnv = new HashMap();
-      String val = null;
+	String val = null;
 	// Bug in WINNT and WINXP.
 	// If SystemRoot is missing, php cannot access winsock.
 	if(winnt.isDirectory()) val="c:\\winnt";
@@ -68,23 +67,23 @@ public class TestInstallation implements Runnable {
 	try {
 	    String s = System.getenv("SystemRoot"); 
 	    if(s!=null) val=s;
-      } catch (Throwable t) {/*ignore*/}
-      try {
+	} catch (Throwable t) {/*ignore*/}
+	try {
 	    String s = System.getProperty("Windows.SystemRoot");
 	    if(s!=null) val=s;
-      } catch (Throwable t) {/*ignore*/}
+	} catch (Throwable t) {/*ignore*/}
 	if(val!=null) defaultEnv.put("SystemRoot", val);
-      try {
-        Method m = System.class.getMethod("getenv", EMPTY_PARAM);
-        Map map = (Map) m.invoke(System.class, EMPTY_ARG);
-        defaultEnv.putAll(map);
-    } catch (Exception e) {
-	defaultEnv.putAll(COMMON_ENVIRONMENT);
+	try {
+	    Method m = System.class.getMethod("getenv", EMPTY_PARAM);
+	    Map map = (Map) m.invoke(System.class, EMPTY_ARG);
+	    defaultEnv.putAll(map);
+	} catch (Exception e) {
+	    defaultEnv.putAll(COMMON_ENVIRONMENT);
+	}
+	return defaultEnv;
     }
-    return defaultEnv;
-  }
 
-   /**
+    /**
      * A map containing common environment values for JDK <= 1.4:
      * "PATH", "LD_LIBRARY_PATH", "LD_ASSUME_KERNEL", "USER", "TMP", "TEMP", "HOME", "HOMEPATH", "LANG", "TZ", "OS"
      * They can be set with e.g.: <code>java -DPATH="$PATH" -DHOME="$HOME" -jar JavaBridge.jar</code> or
@@ -101,11 +100,11 @@ public class TestInstallation implements Runnable {
 	for(int i=0; i<entries.length; i++) {
 	    val = null;
 	    if (m!=null) { 
-	      try {
-	        val = (String) m.invoke(System.class, (Object[])new String[]{entries[i]});
-	      } catch (Exception e) {
-		 m = null;
-	      }
+		try {
+		    val = (String) m.invoke(System.class, (Object[])new String[]{entries[i]});
+		} catch (Exception e) {
+		    m = null;
+		}
 	    }
 	    if(val==null) {
 	        try { val = System.getProperty(entries[i]); } catch (Exception e) {/*ignore*/}
@@ -121,8 +120,11 @@ public class TestInstallation implements Runnable {
 	in.close();
     }
     private void startRunner() throws IOException {
-	String cmd = (new File(System.getProperty("java.home"), "bin"+File.separator+"java")) +" -jar "+base+File.separator+"ext"+File.separator+"JavaBridge.jar SERVLET_LOCAL:"+socket;
-	System.err.println("Starting a simple servlet engine: " + cmd);
+	String[] cmd = new String[] {(String.valueOf(new File(System.getProperty("java.home"), "bin"+File.separator+"java"))),
+				     "-jar",
+				     base+File.separator+"ext"+File.separator+"JavaBridge.jar",
+				     "SERVLET_LOCAL:"+socket};
+	System.err.println("Starting a simple servlet engine: " + java.util.Arrays.asList(cmd));
 	Process p = runner = Runtime.getRuntime().exec(cmd);
 	(new Thread(new TestInstallation(p))).start();
 	InputStream i = p.getInputStream();
@@ -170,47 +172,46 @@ public class TestInstallation implements Runnable {
         }
 	if(!ext.isDirectory()) ext.mkdirs();
 	base = ext.getParentFile();
-	
-        ClassLoader loader = TestInstallation.class.getClassLoader();
-        PrintWriter out = new PrintWriter(new FileOutputStream(new File(base, "php.ini").getAbsoluteFile()));
-        out.println("include_path=.");
-	out.close();
-
-        extractPurePhpJavaBridge(base, loader);
+		
+	ClassLoader loader = TestInstallation.class.getClassLoader();
 	InputStream in = loader.getResourceAsStream("WEB-INF/lib/JavaBridge.jar");
 	extractFile(in, new File(ext, "JavaBridge.jar").getAbsoluteFile());
 	in.close();
 	in = loader.getResourceAsStream("WEB-INF/lib/php-script.jar");
 	extractFile(in, new File(ext, "php-script.jar").getAbsoluteFile());
 	in.close();
+	in = loader.getResourceAsStream("WEB-INF/lib/script-api.jar");
+	extractFile(in, new File(ext, "script-api.jar").getAbsoluteFile());
+	in.close();
 	in = loader.getResourceAsStream("test.php");
 	extractFile(in, new File(base, "test.php").getAbsoluteFile());
 	in.close();
-
-	// start back end
-        (new Thread(new TestInstallation())).start();
-        int count = 20;
-        while(count-->0) {
-           Thread.sleep(500);
-           try {Socket s = new Socket("127.0.0.1", Integer.parseInt(socket)); if(s!=null) s.close(); break;} catch (IOException e) {/* ignore */}
-         }
-        if(count==0) throw new IOException("Could not start test servlet engine");
 	
+	// start back end
+	(new Thread(new TestInstallation())).start();
+	int count = 20;
+	while(count-->0) {
+	    Thread.sleep(500);
+	    try {Socket s = new Socket("127.0.0.1", Integer.parseInt(socket)); if(s!=null) s.close(); break;} catch (IOException e) {/* ignore */}
+	}
+	if(count==0) throw new IOException("Could not start test servlet engine");
+		
 	FileOutputStream o = new FileOutputStream(new File(base,"RESULT.html"));
 	String php = "php-cgi";
 	for(int i=0; i<DEFAULT_CGI_LOCATIONS.length; i++) {
 	    File location = new File(DEFAULT_CGI_LOCATIONS[i]);
 	    if(location.exists()) {php = location.getAbsolutePath(); break;}
 	}
-	
+		
 	// start front end
-	String cmd = php + " -c "+new File(base, "php.ini")+" "+new File(base,"test.php");
-	System.err.println("Invoking php: " + cmd);
+	String[] cmd = new String[] {php,  "-d","allow_url_include=On",String.valueOf(new File(base,"test.php"))};
+	System.err.println("Invoking php: " + java.util.Arrays.asList(cmd));
 	HashMap env = (HashMap) processEnvironment.clone();
+	env.put("SERVER_PORT", socket);
 	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", "h:127.0.0.1:"+socket+"//JavaBridge/test.phpjavabridge");
 	Process p = Runtime.getRuntime().exec(cmd, hashToStringArray(env));
 	(new Thread(new TestInstallation(p))).start();
-	
+		
 	InputStream i = p.getInputStream();
 	int c;
 	while((c=i.read())!=-1) o.write(c);
@@ -218,20 +219,11 @@ public class TestInstallation implements Runnable {
 	p.getOutputStream().close();
 	o.close();
 	p.destroy(); if(runner!=null) runner.destroy();
+	
 	System.out.flush();
 	System.err.flush();
 	System.out.println("\nNow check the " + new File(base, "RESULT.html."));
 	System.out.println("Read the INSTALL.J2EE and/or INSTALL.J2SE document.");
-}
-    private static void extractPurePhpJavaBridge(File base, ClassLoader loader) throws IOException {
-	String files[] = {"Client.php", "GlobalRef.php", "Java.php", "JavaProxy.php", "NativeParser.php", "Options.php", "Parser.php", "Protocol.php", "SimpleParser.php", "README" };
-	File javaDir = new File(base, "java");
-	if(!javaDir.exists()) javaDir.mkdir();
-	for(int i=0; i<files.length; i++) {
-	    InputStream in = loader.getResourceAsStream("java/"+files[i]);
-	    extractFile(in, new File(javaDir, files[i]).getAbsoluteFile());
-	    in.close();
-	}
     }
     private static void extractFile(InputStream in, File target) throws IOException {
 	byte[] buf = new byte[8192];

@@ -3,7 +3,7 @@
 package php.java.bridge;
 
 /*
- * Copyright (C) 2006 Jost Boekemeier
+ * Copyright (C) 2003-2007 Jost Boekemeier
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,6 +36,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
@@ -637,7 +638,7 @@ public final class Util {
      * @param buf The base name, e.g.: /opt/tomcat/webapps/JavaBridge/WEB-INF/cgi/php-cgi
      * @return The full name or null.
      */
-    public static String checkCgiBinary(StringBuffer buf) {
+    public static String[] checkCgiBinary(StringBuffer buf) {
     	File location;
  
     	buf.append("-");
@@ -647,29 +648,69 @@ public final class Util {
 
 	location = new File(buf.toString() + ".sh");
 	if(Util.logLevel>3) Util.logDebug("trying: " + location);
-	if(location.exists()) return "/bin/sh " + location.getAbsolutePath();
+	if(location.exists()) return new String[] {"/bin/sh", location.getAbsolutePath()};
 		
 	location = new File(buf.toString() + ".exe");
 	if(Util.logLevel>3) Util.logDebug("trying: " + location);
-	if(location.exists()) return location.getAbsolutePath();
+	if(location.exists()) return new String[] {location.getAbsolutePath()};
 
 	location = new File(buf.toString());
 	if(Util.logLevel>3) Util.logDebug("trying: " + location);
-	if(location.exists()) return location.getAbsolutePath();
+	if(location.exists()) return new String[] {location.getAbsolutePath()};
 	
 	return null;
     }
 
     /**
-     * Returns s if s starts with "PHP Fatal error:";
+     * Returns s if s contains "PHP Fatal error:";
      * @param s The error string
      * @return The fatal error or null
      */
     public static String checkError(String s) {
-        //TODO: Parse the error code from response header instead of looking for "PHP Fatal error"
-        return s.startsWith("PHP Fatal error:") ? s : null;
+        // Is there a better way to check for a fatal error?
+        return s.indexOf("PHP Fatal error:")>-1 ? s : null;
     }
 
+    /** 
+     * Convenience daemon thread class
+      */
+    public static class Thread extends java.lang.Thread {
+	public Thread() {
+	    super();
+	    initThread();
+	}
+	public Thread(String name) {
+	    super(name);
+	    initThread();
+	}
+	public Thread(Runnable target) {
+	    super(target);
+	    initThread();
+	}
+	public Thread(ThreadGroup group, Runnable target) {
+	    super(group, target);
+	    initThread();
+	}
+	public Thread(ThreadGroup group, String name) {
+	    super(group, name);
+	    initThread();
+	}
+	public Thread(Runnable target, String name) {
+	    super(target, name);
+	    initThread();
+	}
+	public Thread(ThreadGroup group, Runnable target, String name) {
+	    super(group, target, name);
+	    initThread();
+	}
+	public Thread(ThreadGroup group, Runnable target, String name, long stackSize) {
+	    super(group, target, name, stackSize);
+	    initThread();
+	}
+	private void initThread() {
+	    setDaemon(true);
+	}
+    }
     /**
      * Starts a CGI process and returns the process handle.
      */
@@ -681,40 +722,50 @@ public final class Util {
 	private Map env;
 	private boolean tryOtherLocations;
 
-	protected String argsToString(String php, String[] args) {
-	    StringBuffer buf = new StringBuffer(php);
+	protected String[] getArgumentArray(String[] php, String[] args) {
+	    LinkedList buf = new LinkedList();
+	    buf.addAll(java.util.Arrays.asList(php));
 	    for(int i=1; i<args.length; i++) {
-		buf.append(" ");
-		buf.append(args[i]);
+		buf.add(args[i]);
 	    }
-	    return buf.toString();
+	    return  (String[]) buf.toArray(new String[buf.size()]);
 	}
 	private static final String PHP_EXEC = System.getProperty("php.java.bridge.php_exec");
 	protected void start() throws NullPointerException, IOException {
 	    File location;
-	    String php = null;
 	    Runtime rt = Runtime.getRuntime();
+
+	    /*
+	     * Extract the php executable from args[0] ...
+	     */
+	    String[] php = new String[] {null};
 	    if(args==null) args=new String[]{null};
-	    php = args[0];
-            if(php != null) {
-		StringBuffer buf = new StringBuffer(php);
-		php = checkCgiBinary(buf);
-	    }
-            if(PHP_EXEC==null && tryOtherLocations && php==null) {
+	    String phpExec = args[0];
+	    String[] cgiBinary = null;
+            if(phpExec != null && (cgiBinary=checkCgiBinary(new StringBuffer(phpExec))) != null) php = cgiBinary;
+            
+            /*
+             * ... resolve it ..
+             */            
+            if(PHP_EXEC==null && tryOtherLocations && php[0]==null) {
 		for(int i=0; i<DEFAULT_CGI_LOCATIONS.length; i++) {
 		    location = new File(DEFAULT_CGI_LOCATIONS[i]);
-		    if(location.exists()) {php = location.getAbsolutePath(); break;}
+		    if(location.exists()) {php[0] = location.getAbsolutePath(); break;}
 		}
             }
-            if(php==null && tryOtherLocations) php=PHP_EXEC;
-            if(php==null && args[0]!=null && (new File(args[0]).exists())) php=args[0];
-            if(php==null) php="php-cgi";
-            if(Util.logLevel>3) Util.logDebug("Using php binary: " + php);
+            if(php[0]==null && tryOtherLocations) php[0]=PHP_EXEC;
+            if(php[0]==null && args[0]!=null && (new File(args[0]).exists())) php[0]=args[0];
+            if(php[0]==null) php[0]="php-cgi";
+            if(Util.logLevel>3) Util.logDebug("Using php binary: " + java.util.Arrays.asList(php));
 
+            /*
+             * ... and construct a new argument array for this specific process.
+             */
             if(homeDir!=null &&!homeDir.exists()) homeDir = null;
-	    String s = argsToString(php, args);
+	    String[] s = getArgumentArray(php, args);
+	    
 	    proc = rt.exec(s, hashToStringArray(env), homeDir);
-	    if(Util.logLevel>3) Util.logDebug("Started "+ s);
+	    if(Util.logLevel>3) Util.logDebug("Started "+ java.util.Arrays.asList(s));
         }
 	protected Process(String[] args, File homeDir, Map env, boolean tryOtherLocations) {
 	    this.args = args;
@@ -788,19 +839,40 @@ public final class Util {
      * Starts a CGI process with an error handler attached and returns the process handle.
      */
     public static class ProcessWithErrorHandler extends Process {
-	String error = null;
+	StringBuffer error = null;
 	InputStream in = null;
+
+	public static class PhpException extends RuntimeException {
+	    private static final long serialVersionUID = 767047598257671018L;
+	    private String errorString;
+	    public PhpException(String errorString) {
+		super(errorString);
+		this.errorString = errorString;
+	    }
+	    public String getError() {
+		return errorString;
+	    }
+	};
 
 	protected ProcessWithErrorHandler(String[] args, File homeDir, Map env, boolean tryOtherLocations) throws IOException {
 	    super(args, homeDir, env, tryOtherLocations);
 	}
 	protected void start() throws IOException {
 	    super.start();
-	    (new Thread("CGIErrorReader") {public void run() {readErrorStream();}}).start();
+	    (new Util.Thread("CGIErrorReader") {public void run() {readErrorStream();}}).start();
+	}
+        /**
+         * Returns s if s contains "PHP Fatal error:";
+         * @param s The error string
+         * @return The fatal error or null
+         */	
+	protected String checkError(String s) {
+	    return Util.checkError(s);
 	}
 	public void destroy() {
 	    try {proc.destroy();} catch (Exception e) {}
-	    if(error!=null) throw new RuntimeException(error);
+	    String errorString = error==null?null:checkError(error.toString());
+	    if(errorString!=null) throw new PhpException(errorString);
 	}
 	private synchronized void readErrorStream() {
 	    byte[] buf = new byte[BUF_SIZE];
@@ -810,7 +882,8 @@ public final class Util {
 		while((c=in.read(buf))!=-1) {
 		    String s = new String(buf, 0, c, ASCII); 
 		    Util.logError(s);
-		    error = Util.checkError(s);
+		    if(error==null) error = new StringBuffer(s);
+		    else error.append(s);
 		}
 	    } catch (IOException e) {
 		e.printStackTrace();
@@ -1010,5 +1083,20 @@ public final class Util {
         String s = String.valueOf(object);
         if(s==null) s = String.valueOf(s);
         return s;
+    }
+
+    public static ThreadPool createThreadPool(String name) {
+        ThreadPool pool = null;
+        int maxSize = 20;
+        try {
+        	maxSize = Integer.parseInt(Util.THREAD_POOL_MAX_SIZE);
+        } catch (Throwable t) {
+        	Util.printStackTrace(t);
+        }
+        if(maxSize>0) {
+            pool = new ThreadPool(name, maxSize);
+            Util.logMessage(Util.EXTENSION_NAME + " thread pool size: " + maxSize);
+            }
+        return pool;
     }
 }

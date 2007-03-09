@@ -3,15 +3,36 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
-Version 3.2.2
+Version 4.0.1
 
-* The J2EE and J2SE download ("JavaBridge.war") doesn't contain php
-executables anymore. The command: "java -jar JavaBridge.war" can be used
-on all operating systems to test the PHP/Java Bridge against the
-current PHP installation.
+* It is no longer necessary to install the PHP/Java Bridge on a
+computer. The following code connects to the server "myServer" and
+calls System.getProperties():
 
-* All references to the (now obsolete) "php_java.dll" or "java.so"
-have been removed from the binary download.
+  require_once("http://myServer.8080/JavaBridge/java/Java.inc");
+  $s = new Java("java.lang.System");
+  echo $s->getProperties();
+
+* The JavaBridge.jar is now executable, so that Java 1.6 users can
+simply double-click on it to start the bridge for all computers on the
+local network.
+
+* PHP 4 and PHP 5.0 are no longer supported (obsolete). If you want to
+use PHP 4 or PHP 5.0.x, please see the README from the
+php-java-bridge-legacy.zip download.
+
+* The special installation instructions for Oracle and IBM WebSphere
+have been removed (obsolete).
+
+* Most of the features of the PHP/Java Bridge require Java 1.6. Old
+Java versions (gcj "GNU Java", Java 1.4 and Java 1.5) need the legacy
+library "script-api.jar" which is contained in the JavaBridge.war.
+
+* The Java Server Faces bindings are not supported anymore. Use the
+script API instead.
+
+* The php script engine doesn't implement the Invocable interface
+anymore. Please use the php-invocable script engine instead.
 
 
 Version 3.2.1

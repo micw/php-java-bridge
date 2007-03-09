@@ -3,7 +3,7 @@
 # For the following test start the java VM with: 
 # java -Dfile.encoding=ASCII -jar JavaBridge.jar INET:0 4 ""
 # and run the test as follows:
-# php utf8-1.php | grep '^Gr' | od -c
+# php utf8-1.inc | grep '^Gr' | od -c
 # =>
 # 0000000   G   r 303 274 303 237       G   o   t   t  \n   G   r   ?   ?
 # 0000020       G   o   t   t  \n   G   r 374 337       G   o   t   t  \n
@@ -12,7 +12,7 @@
 
 <?php
 if (!extension_loaded('java')) {
-  if (!(include_once("java/Java.php"))&&!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
+  if (!(require_once("http://127.0.0.1:8080/JavaBridge/java/Java.inc"))) {
     echo "java extension not installed.";
     exit(2);
   }

@@ -10,7 +10,7 @@ import javax.script.Invocable;
 import javax.script.ScriptException;
 import javax.swing.SwingUtilities;
 
-import php.java.script.PhpScriptEngine;
+import php.java.script.InvocablePhpScriptEngine;
 
 /**
  * @author jostb
@@ -26,7 +26,7 @@ public class SwingTest {
 	System.setProperty("php.java.bridge.default_log_file", "");
 	System.setProperty("php.java.bridge.php_exec", "/usr/bin/php-cgi");
 
-	    PhpScriptEngine engine = new PhpScriptEngine();
+	    InvocablePhpScriptEngine engine = new InvocablePhpScriptEngine();
 	    engine.eval(new FileReader("test/SwingTest.php"));
 	    SwingApplication phpApp = (SwingApplication) ((Invocable)engine).getInterface(SwingApplication.class);
 	    phpApp.init();

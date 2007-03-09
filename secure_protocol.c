@@ -3,7 +3,7 @@
 /* secure_protocol.c -- implementation of the PHP/Java Bridge XML
    protocol, uses SSL to communicate with the J2EE server.
 
-  Copyright (C) 2006 Jost Boekemeier
+  Copyright (C) 2003-2007 Jost Boekemeier
 
   This file is part of the PHP/Java Bridge.
 

@@ -1,18 +1,17 @@
 Overview
 --------
 
-Since Java 1.6 and PHP 5.1.4 it is possible to embed PHP into pure
-Java J2SE applications. For example it is possible to use PHP as a
-script plugin for a Java report engine such as BIRT; for formula
-fields, group selection formulas, etc.
+This document describes how to call PHP methods from Java. For example
+it is possible to use PHP as a script plugin for a Java report engine
+such as BIRT; for formula fields, group selection formulas,
+etc. Please see the INSTALL.J2EE document for details how to embed PHP
+into a pure J2EE application server or how to call Java methods from
+PHP.
 
-The PHP/Java Bridge can be installed with two copy operations:
+The PHP/Java Bridge can be installed with one copy operation:
 
 * the "JavaBridge.jar" and the "php-script.jar" must be copied into
-the J2SE library path and
-
-* the "java" folder containing the file "Java.php" must be copied into
-PHP include path.
+the J2SE java.ext.dirs directory.
 
 
 Install PHP into J2SE
@@ -21,24 +20,17 @@ Install PHP into J2SE
 * Install Java 1.6 or above. For older Java versions you'll need the
 script-api.jar contained in the JavaBridge.war file.
 
-* Install PHP 5.1.4 or above. Or install the PHP engine written in pure
-Java (called "Quercus").
+* Install PHP 5.1.4 or above.
 
-* Download and extract "php-java-bridge_3.2.1_j2ee.zip" file into a
-folder and double-click on test.sh or test.bat.
+* Download and extract the PHP/Java Bridge binary download into a
+folder and double-click on test.sh or test.bat. Check the RESULT.html.
 
 * Copy the created "JavaBridge.jar" and "php-script.jar" from the
 "ext" folder to the J2SE library path. On Windows the location depends
-on the version and vendor of the JDK. On Linux the directory is:
+on the version and vendor of the JDK (see java.ext.dirs from the above
+RESULT.html). On Linux the directory is:
 
   /usr/java/packages/lib/ext/
-
-
-* Copy the created "java" folder into the PHP 5 include path. On Windows
-the location depends on the version of the operating system ("winnt"
-or "windows"). On Linux the directory is:
-
-  /usr/share/pear/
 
 
 * Use the command "jrunscript" to evaluate PHP scripts from Java, for
@@ -51,24 +43,26 @@ example:
     jrunscript -Dphp.java.bridge.php_exec=/usr/bin/php-cgi -l php phpFile.php
 
 
-* The optional Invocable interface is also supported. Invocable PHP
-scripts must end with the line:
+* A convenience ScriptEngine is available which makes it easier to
+invoke PHP methods from Java. Example:
 
-  java_context()->call(java_closure());
+    System.setProperty("php.java.bridge.default_log_file", "");
 
-Example:
+    ScriptEngineManager manager = new ScriptEngineManager();
+    ScriptEngine e = manager.getEngineByName("php-invocable");
 
-  ScriptEngineManager manager = new ScriptEngineManager();
-  ScriptEngine e = manager.getEngineByName("php");
-  str="<?function f() {return 'I am PHP';};java_context()->call(java_closure())?>";
-  e.eval(str);          // evaluate and hold the above script
-  i=(Invocable)e;
-  System.out.println("PHP says: " . i->invokeFunction("f", new Object[]{}));
-  e.eval((Reader)null); // release the allocated script
+    e.eval("<?php class f {function a($p) {return java_values($p)+1;}}\n" +
+                     "java_context()->setAttribute('f', java_closure(new f()), 100); ?>");
+    Invocable i = (Invocable)e;
+
+    Object f = e.getContext().getAttribute("f", 100);
+    System.out.println(i.invokeMethod(f, "a", new Object[] {new Integer(1)}));
+
+    e.eval((Reader)null);
 
 
-* The php-script.jar also exports an "interactive" php script engine.
-It can be used to implement a REPL. Example:
+* Another convenience ScriptEngine can be used to implement a
+  REPL. Example:
 
   ScriptEngineManager manager = new ScriptEngineManager();
   ScriptEngine e = manager.getEngineByName("php-interactive");

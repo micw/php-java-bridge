@@ -1,11 +1,4 @@
 <?php
-if (!extension_loaded('java')) {
-  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
-    echo "java extension not installed.";
-    exit(2);
-  }
-}
-
 ini_set("max_execution_time", 0);
 
 class SwingApplication {
@@ -52,5 +45,10 @@ class SwingApplication {
 } 
 
 java_context()->call(java_closure(new SwingApplication())) || die("must be called from java");
+
+// The php-invocable engine automatically adds java_context()->call(java_closure()) 
+// to the bottom of each invocable script. Explicitly call exit(0) to avoid calling
+// the Java continuation again.
 echo "terminating";
+exit(0);
 ?>

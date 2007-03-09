@@ -3,7 +3,7 @@
 package php.java.bridge;
 
 /*
- * Copyright (C) 2006 Jost Boekemeier
+ * Copyright (C) 2003-2007 Jost Boekemeier
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -221,8 +221,8 @@ class Snarf {
     out.println("<?php");
     out.println("/* auto-generated file, do not edit */");
     out.println("");
-    out.println("if (!extension_loaded('java')) {");
-    out.println("  if (!(include_once('java/Java.php'))&&!(PHP_SHLIB_SUFFIX=='so' && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=='dll' && dl('php_java.dll'))) {");
+    out.println("if (!extension_loaded('java') && !function_exists('java_get_base')) {");
+    out.println("  if (!(require_once(\"http://127.0.0.1:8080/JavaBridge/java/Java.inc\"))) {");
     out.println("    echo 'java extension not installed.';");
     out.println("    exit(2);");
     out.println("  }");
@@ -236,12 +236,25 @@ class Snarf {
     out.println("  static $map = array();");
     out.println("  if(!isset($map[$jar])) {");
     out.println("    $map[$jar]=true;");
-    out.println("    @java_require($jar);");
+    out.println("    java_require($jar);");
     out.println("  }");
     out.println("}");
     out.println("");
     out.println("class java_Bridge {");
     out.println("  var $java;");
+    out.println("  static function javaValues($arg) {return java_values(java_coerce_value($arg));}");
+    out.println("  static function javaBeginDocument() {java_begin_document();}");
+    out.println("  static function javaEndDocument() {java_end_document();}");
+    out.println("  static function javaReset() {java_reset();}");
+    out.println("  static function javaInspect() {return java_inspect();}");
+    out.println("  static function javaSetFileEncoding($enc) {java_set_file_encoding($enc);}");
+    out.println("  static function javaInstanceof($o,$c) {return java_instanceof(java_coerce_value($o), java_coerce_value($c));}");
+    out.println("  static function javaCast($o) {return java_cast(java_coerce_value($o));}");
+    out.println("  static function javaRequire($s) {return java_require($s);}");
+    out.println("  static function javaSession() {return java_session();}");
+    out.println("  static function javaServer_name() {return java_server_name();}");
+    out.println("  static function javaContext() {return java_context();}");
+    out.println("  static function javaClosure() {return java_closure();}");
     out.println("  function __java_coerceArgs($array) {return array_map('java_coerce_value', $array);}");
     out.println("  function __java_coerceArg($arg) {return java_coerce_value($arg);}");
     out.println("  function __java_init($path) { } ");

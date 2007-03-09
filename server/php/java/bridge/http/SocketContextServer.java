@@ -3,7 +3,7 @@
 package php.java.bridge.http;
 
 /*
- * Copyright (C) 2006 Jost Boekemeier
+ * Copyright (C) 2003-2007 Jost Boekemeier
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -98,8 +98,7 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
 	    } catch (SecurityException sec) {
 	        throw new Exception("Add the line: grant {permission java.net.SocketPermission \"*\", \"accept,resolve\";}; to your server.policy file or run this AS on an operating system which supports named pipes (e.g.: Unix, Linux, BSD, Mac OSX, ...).", sec);
 	    } catch (Throwable t) {/*ignore*/};
-            Thread t = new Thread(this, "JavaBridgeSocketContextServer("+socket.getSocketName()+")");
-	    t.setDaemon(true);
+            Thread t = new Util.Thread(this, "JavaBridgeSocketContextServer("+socket.getSocketName()+")");
 	    t.start();
         } catch (Throwable t) {
 	    Util.warn("Local communication channel not available. The PHP/Java bridge will be very slow.");
@@ -122,7 +121,7 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
 	    if(threadPool!=null) {
 	        threadPool.start(runner);
 	    } else {
-	    	Thread t = new Thread(runner, "JavaBridgeContextRunner(" + contextName+")");
+	    	Thread t = new Util.Thread(runner, "JavaBridgeContextRunner(" + contextName+")");
 	    	t.start();
 	    }
 	} catch (SecurityException t) {
