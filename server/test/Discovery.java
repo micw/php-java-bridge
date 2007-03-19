@@ -16,8 +16,8 @@ public class Discovery  {
 	e.put("s", s);
 	e.eval("<?php " +
 			"$s = java_context()->getAttribute('s');" +
-			"$s->append((string)java_context()->getAttribute('hello'));" +
-			"echo (string)$s;" +
+			"$s->append(java_values(java_context()->getAttribute('hello')));" +
+			"echo java_values($s);" +
 			"java_context()->setAttribute('hello', '!', 100);" +
 			"?>");
 	s.append(e.get("hello"));

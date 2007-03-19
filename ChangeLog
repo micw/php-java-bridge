@@ -1,3 +1,60 @@
+2007-03-19  Jost Boekemeier  <jostb@intern>
+
+	* server/META-INF/java/JavaProxy.inc 
+	(java_JavaType): New super interface for Java and JavaException
+	(java_values,java_inspect,java_instanceof,java_cast,java_closure_array): Correct test.
+	
+	* server/META-INF/java/JavaProxy.inc 
+	(java_instanceof): Correct test
+	
+	* server/META-INF/java/JavaProxy.inc 
+	(java_closure_array): third arg may be an array of interfaces
+
+	* VERSION, php-java-bridge.spec: Version 4.0.2 released.
+
+	
+2007-03-11  Jost Boekemeier  <jostb@intern>
+
+	* server/META-INF/java/Client.inc (java_Client): Set up named pipe
+	communication.
+	(getSession): Implement override-redirect.
+
+	* server/META-INF/java/Protocol.inc 
+	(java_SocketChannel): Rewritten.
+	(java_EmptyPipeChannel): New class
+	(java_PipeChannel): New Class
+	(java_SocketHandler): Rewritten.
+	(getSession): override-redirect implemented.
+	(java_HttpHandler): Rewritten.
+	(java_OverrideRedirectHandler): New class
+
+	* server/META-INF/java/TODO: Obsolete.
+
+	* server/php/java/bridge/Parser
+	(parse): parse header from pfsockopen().
+	
+	* server/php/java/servlet/fastcgi/Channel.java,server/php/java/servlet/fastcgi/ChannelName.java,server/php/java/servlet/fastcgi/ConnectException.java,server/php/java/servlet/fastcgi/ConnectionException.java,server/php/java/servlet/fastcgi/ConnectionPool.java,server/php/java/servlet/fastcgi/DefaultInputStream.java,server/php/java/servlet/fastcgi/DefaultOutputStream.java,server/php/java/servlet/fastcgi/Factory.java,server/php/java/servlet/fastcgi/FastCGIInputStream.java,server/php/java/servlet/fastcgi/FastCGIOutputStream.java,server/php/java/servlet/fastcgi/FastCGIServlet.java,server/php/java/servlet/fastcgi/FCGIProcess.java,server/php/java/servlet/fastcgi/NPChannel.java,server/php/java/servlet/fastcgi/NPChannelName.java,server/php/java/servlet/fastcgi/RandomAccessFileInputStream.java,server/php/java/servlet/fastcgi/RandomAccessFileOutputStream.java,server/php/java/servlet/fastcgi/SocketChannel.java,server/php/java/servlet/fastcgi/SocketChannelName.java: New files, refactored from FastCGIServlet and ConnectionPool.
+
+	* server/php/java/servlet/FastCGIServlet.java: Removed
+	
+	* server/php/java/servlet/ConnectionPool.java: Removed
+
+	* server/php/java/bridge/Util.java
+	(appendParam, appendArgs): Display the parameter and argument
+	type.
+
+	* server/WEB-INF/cgi/launcher.sh: New file
+
+	* server/WEB-INF/cgi/launcher.exe: New file
+
+	* server/WEB-INF/cgi/launcher.c: New file
+
+	* server/WEB-INF/cgi/php-fcgi.sh: Removed
+	
+	
+server/php/java/servlet/fastcgi/*.java
+	
+	
 2007-02-10  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/servlet/CGIServlet.java

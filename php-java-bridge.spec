@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 4.0.1
+%define version 4.0.2
 %define release 1
 %define PHP_MAJOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | sed 's/\\\..*$//')
 %define PHP_MINOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | LANG=C cut -d. -f2)
@@ -149,7 +149,7 @@ done
 cp $mod_dir/JavaBridge.jar $RPM_BUILD_ROOT/%{shared_java}/JavaBridge.jar; 
 echo %{shared_java}/JavaBridge.jar >>filelist-devel
 
-files="Client.inc GlobalRef.inc Java.inc JavaProxy.inc NativeParser.inc Options.inc Parser.inc Protocol.inc SimpleParser.inc"
+files="Client.inc GlobalRef.inc Java.inc JavaBridge.inc JavaProxy.inc NativeParser.inc Options.inc Parser.inc Protocol.inc SimpleParser.inc"
 mkdir -p $RPM_BUILD_ROOT/%{shared_pear}/java
 for i in $files; 
   do cp server/META-INF/java/$i $RPM_BUILD_ROOT/%{shared_pear}/java/$i; 
@@ -296,13 +296,13 @@ fi
 %attr(6111,apache,apache) %{_libdir}/php/modules/RunJavaBridge
 %attr(755,root,root) %{_libdir}/php/modules/JavaBridge.jar
 %attr(755,root,root) %{shared_java}/JavaBridge.jar
-%doc README COPYING CREDITS NEWS test.php INSTALL.LINUX security 
+%doc README FAQ.html COPYING CREDITS NEWS test.php INSTALL.LINUX security 
 
 %files tomcat -f filelist-tomcat
 %defattr(-,tomcat,tomcat)
 %attr(-,root,root) /etc/php.d/java-servlet.ini
-%doc %attr(-,root,root) README INSTALL.J2EE COPYING security  
+%doc %attr(-,root,root) README FAQ.html INSTALL.J2EE COPYING security  
 
 %files devel -f filelist-devel
 %defattr(-,root,root)
-%doc CREDITS README.GNU_JAVA README.MONO+NET ChangeLog README PROTOCOL.TXT COPYING server documentation examples tests.php5 tests.php4 php_java_lib NEWS INSTALL.LINUX INSTALL
+%doc FAQ.html CREDITS README.GNU_JAVA README.MONO+NET ChangeLog README PROTOCOL.TXT COPYING server documentation examples tests.php5 tests.php4 php_java_lib NEWS INSTALL.LINUX INSTALL

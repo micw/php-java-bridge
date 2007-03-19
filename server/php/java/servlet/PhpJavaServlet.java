@@ -52,6 +52,9 @@ import php.java.bridge.http.ContextServer;
  * php and java. It is even 1.5 times faster than local ("unix
  * domain") sockets used by the php.java.bridge.JavaBridge standalone
  * listener.  </p>
+ * <p>
+ * To enable fcg/servlet debug code start the servlet engine with -Dphp.java.bridge.default_log_level=6.
+ * For example: <code>java -Dphp.java.bridge.default_log_level=6 -jar /opt/jakarta-tomcat-5.5.9/bin/bootstrap.jar</code>
  * @see php.java.bridge.JavaBridge
  *  */
 public class PhpJavaServlet extends HttpServlet {
@@ -79,22 +82,19 @@ public class PhpJavaServlet extends HttpServlet {
 	}
      }
     
-    private boolean allowHttpTunnel = false;
-
     /**@inheritDoc*/
     public void init(ServletConfig config) throws ServletException {
  	String value;
         try {
 	    value = config.getInitParameter("servlet_log_level");
-	    //value = "6"; //XFIXME
 	    if(value!=null && value.trim().length()!=0) logLevel=Integer.parseInt(value.trim());
         } catch (Throwable t) {Util.printStackTrace(t);}      
   	try {
-	    value = config.getInitParameter("allow_http_tunnel");
+	    value = config.getInitParameter("promiscuous");
 	    if(value==null) value="";
 	    value = value.trim();
 	    value = value.toLowerCase();
-	    if(value.equals("on") || value.equals("true")) allowHttpTunnel=true;
+	    if(value.equals("on") || value.equals("true")) Util.JAVABRIDGE_PROMISCUOUS=true;
 	} catch (Throwable t) {Util.printStackTrace(t);}      
 
 	String servletContextName=CGIServlet.getRealPath(config.getServletContext(), "");
@@ -123,7 +123,7 @@ public class PhpJavaServlet extends HttpServlet {
     	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
     	if(id!=null) ctx = (ServletContextFactory) ContextFactory.get(id, credentials);
     	if(ctx==null) {
-    	  ctx = RemoteServletContextFactory.addNew(getServletContext(), null, req, res); // no session sharing
+    	  ctx = RemoteServletContextFactory.addNew(this, getServletContext(), null, req, res); // no session sharing
     	  bridge = ctx.getBridge();
     	  bridge.logDebug("first request (session is new).");
     	} else {
@@ -286,8 +286,8 @@ public class PhpJavaServlet extends HttpServlet {
 	throws ServletException, IOException {
     	short redirect =(short) req.getIntHeader("X_JAVABRIDGE_REDIRECT");
     	boolean local = Util.JAVABRIDGE_PROMISCUOUS || isLocal(req);
-    	if(!local && !allowHttpTunnel) throw new SecurityException("Non-local clients not allowed per default. " +
-    			"Either \na) set allow_http_tunnel in your web.xml or \nb) recommended: start the Java VM with -Dphp.java.bridge.promiscuous=true " +
+    	if(!local) throw new SecurityException("Non-local clients not allowed per default. " +
+    			"Either \na) set promiscuous in your web.xml or \nb) start the Java VM with -Dphp.java.bridge.promiscuous=true " +
     			"to enable the SocketContextServer for non-local clients.");
     	String channel = getHeader("X_JAVABRIDGE_CHANNEL", req);
 	String kontext = getHeader("X_JAVABRIDGE_CONTEXT_DEFAULT", req);

@@ -67,16 +67,15 @@ Deployment
 
     php-cgi test.php >result.html
 
-* Firewall-out the J2EE/Servlet port 8080, if necessary. Or modify
-  the J2EE/Servlet so that it listens only on the local
-  interface. 
-
-* Note that the PHP/Java Bridge rejects requests from non-local
-  ("127.0.0.1") PHP clients. For a intranet server start the
-  J2EE/Servlet VM with the parameter -Dphp.java.bridge.promiscuous=true
-  and make sure that your computer cannot be accessed from the
-  internet. At least firewall-out the ports 8080 and all ports in the
-  range [9267,...,[9367 and read the "security" sections from README.
+* Firewall-out the J2EE/Servlet port 8080, if necessary. Or modify the
+  J2EE/Servlet so that it listens only on the local interface. Note that
+  in the default setup the PHP/Java Bridge rejects requests from non-local
+  PHP clients. For a intranet server start the J2EE/Servlet VM with the
+  parameter -Dphp.java.bridge.promiscuous=true or set the "promiscuous"
+  init-param in the J2EE WEB-INF/web.xml and make sure that your
+  computer cannot be accessed from the internet. At least firewall-out
+  the ports 8080 and all ports in the range [9267,...,[9367 and read the
+  "security" sections from README.
 
 * Please report bugs/problems to the mailing list:
 

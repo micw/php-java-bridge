@@ -71,9 +71,9 @@ public class Context extends php.java.bridge.http.Context {
 	    throw new IllegalArgumentException("name cannot be null");
 	}
 	          
-	if ((engineScope!=null) && (result=engineScope.get(name)) != null) {
+	if ((getEngineScope()!=null) && (result=getEngineScope().get(name)) != null) {
 	    return result;
-	} else if ((globalScope!=null) && (result=globalScope.get(name)) != null) {
+	} else if ((getGlobalScope()!=null) && (result=getGlobalScope().get(name)) != null) {
 	    return result;
 	} else if ((result=request.getAttribute(name)) != null)  {
 	    return result;
@@ -101,6 +101,7 @@ public class Context extends php.java.bridge.http.Context {
     /**
      * Returns the HttpServletRequest
      * @return The HttpServletRequest.
+    * @deprecated Use java_context()->getAttribute(...) instead
      */
     public Object getHttpServletRequest() {
     	return this.request;
@@ -109,6 +110,7 @@ public class Context extends php.java.bridge.http.Context {
     /**
      * Returns the ServletContext
      * @return The ServletContext.
+    * @deprecated Use java_context()->getAttribute(...) instead
      */
     public Object getServletContext() {
         return this.context;
@@ -117,6 +119,7 @@ public class Context extends php.java.bridge.http.Context {
     /**
      * Returns the ServletResponse
      * @return The ServletResponse.
+    * @deprecated Use java_context()->getAttribute(...) instead
      */
     public Object getHttpServletResponse() {
         return this.response;

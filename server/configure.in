@@ -44,7 +44,7 @@ AC_ARG_ENABLE(script,  [  --enable-script[[=JAR]]
 AC_ARG_ENABLE(faces,  [  --enable-faces[[=JAR]]	
                           include java server faces support. JAR must be 
                           the location of jsf-api.jar; creates 
-                          php-faces.jar], FACES="$enableval", FACES="yes")
+                          php-faces.jar], FACES="$enableval", FACES="no")
 
 if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
 
@@ -121,6 +121,7 @@ fi
 JAVA_BRIDGE_FACES_JAR="php-faces.jar"
 if test "$FACES" = "no"; then
   JAVA_BRIDGE_FACES_JAR=""
+  FACES=""
 else
   if test "$SCRIPT" = "no"; then
   SCRIPT="yes";

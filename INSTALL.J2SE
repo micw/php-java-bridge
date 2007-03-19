@@ -72,6 +72,18 @@ invoke PHP methods from Java. Example:
   e.eval((Reader)null);
 
 
+* Furthermore it is possible to execute remote scripts running in a
+  FastCGI or Apache/IIS server:
+
+  ScriptEngineManager manager = new ScriptEngineManager();
+  ScriptEngine e = manager.getEngineByName("php-invocable");
+  Reader r = new php.java.script.URLReader(new URL("http://localhost:80/beanMethods.php"));
+  e.eval(r);
+  Invocable i = (Invocable)e;
+  ...
+  e.eval((Reader)null);
+
+
 * Please see the JSR 223 specification for details.
 
 * Please report bugs/problems to the mailing list:

@@ -415,14 +415,14 @@ public final class Util {
 
     	if(obj instanceof Class) {
 	    if(((Class)obj).isInterface()) 
-		buf.append("i(");
+		buf.append("[i:");
 	    else
-		buf.append("c(");
+		buf.append("[c:");
     	} else {
-	    buf.append("o(");
+	    buf.append("[o:");
 	}
         buf.append(getShortClassName(obj));
-	buf.append("):");
+	buf.append("]:");
 	buf.append("\"");
 	buf.append(Util.stringValueOf(obj));
 	buf.append("\"");
@@ -458,13 +458,29 @@ public final class Util {
 
     	if(obj instanceof Class) {
 	    if(((Class)obj).isInterface()) 
-		buf.append("i(");
+		buf.append("[i:");
 	    else
-		buf.append("c(");
+		buf.append("[c:");
     	} else {
-	    buf.append("o(");
+	    buf.append("[o:");
 	}
         buf.append(getShortClassName(obj));
+	buf.append("]");
+    }
+    
+    /**
+     * Append a function parameter to a StringBuffer
+     * @param c The parameter 
+     * @param buf The StringBuffer
+     */
+    public static void appendParam(Class c, StringBuffer buf) {
+	if(c.isInterface()) 
+	    buf.append("(i:");
+	else if (c==java.lang.Class.class)
+	    buf.append("(c:");
+	else
+	    buf.append("(o:");
+	buf.append(getShortClassName(c));
 	buf.append(")");
     }
     
@@ -474,7 +490,15 @@ public final class Util {
      * @param buf The StringBuffer
      */
     public static void appendParam(Object obj, StringBuffer buf) {
-    	buf.append("(");
+	if(obj instanceof Class) {
+	    Class c = (Class)obj;
+	    if(c.isInterface()) 
+		buf.append("(i:");
+	    else
+		buf.append("(c:");
+	}
+	else
+	    buf.append("(o:");
 	buf.append(getShortClassName(obj));
 	buf.append(")");
     }

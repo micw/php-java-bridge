@@ -1,6 +1,6 @@
 javax.script
 php.java.bridge
 php.java.bridge.http
-php.java.faces
 php.java.script
 php.java.servlet
+php.java.servlet.fastcgi

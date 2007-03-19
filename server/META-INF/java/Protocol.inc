@@ -41,37 +41,126 @@
 require_once ("${JAVA_BASE}/Options.inc");
 require_once ("${JAVA_BASE}/Client.inc");
 
-class java_SocketHandler {
-  var $protocol, $sock;
+class java_SocketChannel {
+  var $peer;
+  function java_SocketChannel($protocol, $host, $channel) {
+	$this->peer = pfsockopen($host, $channel, $errno, $errstr, 30);
+	if (!$this->peer) throw new java_RuntimeException("Could not connect to socket channel: $errstr ($errno)\n");
+	stream_set_timeout($this->peer, -1);
+  }
+  function fwrite($data) {
+	fwrite($this->peer, $data);
+  }
+  function fread($size) {
+	return fread($this->peer, $size);
+  }
+  function __destruct() {
+	// required by protocol
+	fwrite($this->peer, "<F p=\"A\" />");
+	fread($this->peer, 10); // <F p="A"/>
+  }
+}
+class java_EmptyPipeChannel {
+  function open() {
+	throw new java_RuntimeException("protocol error: socket channel names must not start with a slash");
+  }
+  function getName() {
+	return null;
+  }
+}
+class java_PipeChannel extends java_EmptyPipeChannel {
+  var $peer, $peerr, $peerr_desc, $name;
+  var $fifo, $fifor;
+  var $iname, $oname;
 
-  function java_SocketHandler($protocol, $sock) {
+  function java_PipeChannel($name) {
+	$this->name = $name;
+	$this->iname = $this->name . ".i";
+	$this->fifor = posix_mkfifo($this->iname, 0666);
+	$this->oname = $this->name . ".o";
+	$this->fifo = posix_mkfifo($this->oname, 0666);
+  }
+  function open($handler) {
+	$this->peerr = fopen($this->iname, "r");
+	$this->peerr_desc = array($this->peerr);
+	stream_set_blocking($this->peerr, false);
+	$this->peer = fopen($this->oname, "w");
+	unlink($this->iname);
+	unlink($this->oname);
+	unlink($this->name);
+	return $this;
+  }
+  function fwrite($data) {
+	fwrite($this->peer, $data);
+  }
+  function fread($size) {
+	stream_select($this->peerr_desc, $out=NULL, $ex=NULL, 30);
+	return fread($this->peerr, $size);
+  }
+  function getName() {
+	return $this->name;
+  }
+}
+
+class java_SocketHandler {
+  var $protocol, $channel;
+  var $handler; // the original HTTP handler
+
+  function getChannel($protocol, $handler, $channelName) {
+	if($channelName[0]=='/') return $handler->channel->open($handler);
+	return new java_SocketChannel($protocol, $handler->host, $channelName);
+  }
+  function java_SocketHandler($protocol, $handler, $channelName) {
+	$this->handler = $handler;
+	$this->channel = $this->getChannel($protocol, $handler, $channelName);
 	$this->protocol = $protocol;
-	$this->sock = $sock;
   }
   function write($data) {
-      fwrite($this->sock, $data);
+	$this->channel->fwrite($data);
   }
   function read($size) {
-      return fread($this->sock, $size);
+	return $this->channel->fread($size);
   }
   function redirect() {}
 
-  function overrideRecirect() {
-	$this->protocol->handler = createHttpHandler();
+  function overrideRedirect() {
+	$this->protocol->flush();
+	$this->protocol->handler = new java_OverrideRedirectHandler($this->handler);
   }
 
   function getSession() {
-	throw new java_RuntimeException("Override-redirect not implemented in Protocol.php; write to php-java-bridge-users@lists.sourceforge.net if you want to implement it. Please create and copy the \"java.so\" or \"php_java.dll\" to your PHP extension directory. Or move the java_session() call to the beginning of your PHP script.");
+	throw new java_RuntimeException("getSession cannot be called w/o overrideRedirect");
   }
 }
 class java_HttpHandler extends java_SocketHandler {
   var $headers;
-  var $context;
   var $redirect;
   
-  function java_HttpHandler($protocol, $sock) {
+  var $context, $ssl, $port; // used by reopen (overrideRedirect)
+  var $host; // used when creating a socket channel lazily. the port# is passed via X_JAVABRIDGE_CHANNEL
+
+  var $socket; // we write to the socket directly and keep the pipe channel for later use
+  
+  function createPipeChannel($host, $pipe_dir) {
+	if(!is_null($pipe_dir) && ($host == "127.0.0.1" || (substr($host,0,9) == "localhost")))
+	  return new java_PipeChannel(tempnam($pipe_dir, ".php_java_bridge"));
+	return new java_EmptyPipeChannel();
+  }
+  function close() {
+	fflush($this->socket);
+  }
+  function open() {
+	$socket = pfsockopen("{$this->ssl}{$this->host}", $this->port, $errno, $errstr, 30);
+	if (!$socket) throw new java_RuntimeException("Could not connect to the J2EE server {$this->ssl}{$this->host}:{$this->port}. Please start it, for example with the command: \"java -jar JavaBridge.jar SERVLET:8080 3 JavaBridge.log\" or, if the back end has been compiled to native code, with \"modules/java SERVLET:8080 3 JavaBridge.log\". Error message: $errstr ($errno)\n");
+	return $socket;
+  }
+  function java_HttpHandler($protocol, $ssl, $host, $port) {
 	$this->protocol = $protocol;
-	$this->sock = $sock;
+	$this->ssl = $ssl;
+	$this->host = $host;
+	$this->port = $port;
+	$this->channel = $this->createPipeChannel($host, $protocol->client->RUNTIME['PIPE_DIR']);
+	$this->socket = $this->open();
   }
   function getCookies() {
 	$str="";
@@ -90,6 +179,10 @@ class java_HttpHandler extends java_SocketHandler {
 			  ?$_SERVER['X_JAVABRIDGE_CONTEXT']
 			  :null));
 	return $ctx;
+  }
+  function getChannel() {
+	$name = $this->channel->getName();
+	return !is_null($name) ? sprintf("X_JAVABRIDGE_CHANNEL: %s\r\n", $name) : null;
   }
   function getContext() {
 	$ctx = $this->getContextFromCgiEnvironment();
@@ -128,7 +221,9 @@ class java_HttpHandler extends java_SocketHandler {
   }
   function getWebApp() {
 	$context = $this->getWebAppInternal();
-	if(is_null($context)) $context = "/JavaBridge/JavaBridge.phpjavabridge";
+	if(is_null($context)) $context = JAVA_SERVLET;
+	if(is_null($context) || $context[0]!="/") 
+	  $context = "/JavaBridge/JavaBridge.phpjavabridge";
 	return $context;
   }
 
@@ -143,25 +238,27 @@ class java_HttpHandler extends java_SocketHandler {
 	}
 
 	$this->headers = null;
-	$sock = $this->sock;
+	$socket = $this->socket;
 	$len = 2 + strlen($data);
 	$webapp = $this->getWebApp();
 	$cookies = $this->getCookies();
+	$channel = $this->getChannel();
 	$context = $this->getContext();
 	$redirect = $this->redirect;
 	$res = "PUT ";
 	$res .= $webapp;
-	$res .= " HTTP/1.0\r\n";
+	$res .= " HTTP/1.1\r\n";
 	$res .= "Host: localhost\r\n";
 	$res .= "Content-Length: "; $res .= $len; $res .= "\r\n";
 	$res .= $context;
 	$res .= $cookies;
 	$res .= $redirect;
+	if(!is_null($channel)) $res .= $channel;
 	$res .= "\r\n";
 	$res .= chr(127);
 	$res .= $compatibility;
 	$res .= $data;
-	fwrite($sock, $res); fflush($sock);
+	fwrite($socket, $res); fflush($socket);
   }
   function doSetCookie($key, $val, $path) {
 	$path=trim($path);
@@ -171,7 +268,7 @@ class java_HttpHandler extends java_SocketHandler {
   }
   function parseHeaders() {
 	$this->headers = array();
-	while ($str = trim(fgets($this->sock, java_Client::RECV_SIZE))) {
+	while ($str = trim(fgets($this->socket, java_Client::RECV_SIZE))) {
 	  if($str[0]=='X') {
 		if(!strncasecmp("X_JAVABRIDGE_CONTEXT_DEFAULT", $str, 28)) {
 		  $this->headers["kontext"]=trim(substr($str, 29));
@@ -190,22 +287,16 @@ class java_HttpHandler extends java_SocketHandler {
 		  if(isset($p)) $path=$p[1];
 		  $this->doSetCookie($cookie[0], $cookie[1], $path);
 		}
+	  } else if($str[0]=='C') { // Content-Length
+		if(!strncasecmp("CONTENT-LENGTH", $str, 14)) {
+		  $this->headers["content_length"]=trim(substr($str, 15));
+		}
 	  }
 	}
-	// This implementation only supports the SocketContextServer.
-	// If your J2EE server denies socket accept/resolve, install the
-	// C based extension instead. It supports named pipe communication
-	// and a HTTP tunnel. See the INSTALL document from the source
-	// download archive how to compile the C extension.
- 	if(!isset($this->headers["redirect"]))
- 	  throw new java_RuntimeException("named-pipe communication not implemented in Protocol.php; write to php-java-bridge-users@lists.sourceforge.net if you want to implement it. Please create and copy the \"java.so\" or \"php_java.dll\" to your PHP extension directory. Or allow your J2EE server to accept/resolve socket connections on the local interface.");
   }
   function read($size) {
-	if(is_null($this->headers)) $this->parseHeaders();
-	$data = "";
-	while(!feof($this->sock)) {
-	  $data .= fread($this->sock, $size);
-	}
+ 	if(is_null($this->headers)) $this->parseHeaders();
+	$data = fread($this->socket, $this->headers['content_length']);
 	return $data;
   }
   function overrideRedirect() {}
@@ -213,20 +304,43 @@ class java_HttpHandler extends java_SocketHandler {
 	if(!isset($this->protocol->socketHandler)) {
 	  $hostVec = java_Protocol::getHost();
 	  $host = $hostVec[0];
-	  $port = $this->headers["redirect"];
+	  $channelName = $this->headers["redirect"];
 	  $context = $this->headers["context"];
 	  $len = strlen($context);
 	  $len0 = chr(0xFF);
 	  $len1 = chr($len&0xFF); $len>>=8;
 	  $len2 = chr($len&0xFF);
-	  $sock = fsockopen($host, $port, $errno, $errstr, 30);
-	  stream_set_timeout($sock, -1);
-	  if (!$sock) die("$errstr ($errno)\n");
-	  $this->protocol->socketHandler=new java_SocketHandler($this->protocol,$sock);
+	  $this->protocol->socketHandler=new java_SocketHandler($this->protocol, $this, $channelName);
 	  $this->protocol->write("\077${len0}${len1}${len2}${context}");
+	  $this->context = sprintf("X_JAVABRIDGE_CONTEXT: %s\r\n", $context);
 	}
-	fclose($this->sock);
+	$this->close();
 	$this->protocol->handler = $this->protocol->socketHandler;
+  }
+}
+class java_OverrideRedirectHandler extends java_HttpHandler {
+  function java_OverrideRedirectHandler($handler) {
+	$this->protocol = $handler->protocol;
+	$this->ssl = $handler->ssl;
+	$this->host = $handler->host;
+	$this->port = $handler->port;
+	$this->channel = $handler->channel;
+	$this->context = $handler->context;
+	$this->socket = $handler->open();
+  }
+  function overrideRedirect() {
+	// cannot happen
+	throw new java_RuntimeException("protocol error: overrideRedirect called for a override redirect connection");
+  }
+  function redirect() {
+	$this->protocol->handler = $this->protocol->socketHandler;
+	$this->close();
+  }				 
+  function getSession() {
+	$this->redirect = "X_JAVABRIDGE_REDIRECT: 1\r\n";
+  }
+  function getContext() {
+	return $this->context;
   }
 }
 class java_Protocol {
@@ -276,10 +390,8 @@ class java_Protocol {
 	  $port             = $ar[2];
 	  if(isset($ar[3])) $this->webContext = "/".$ar[3];
 	}
-	$this->client->RUNTIME["SERVER"] = $this->serverName = "$host:$port";
-	$sock = fsockopen("${ssl}${host}", $port, $errno, $errstr, 30);
-	if (!$sock) throw new java_RuntimeException("Could not connect to the J2EE server. Please start it, for example with the command: \"java -jar JavaBridge.jar SERVLET:8080 3 JavaBridge.log\" or, if the back end has been compiled to native code, with \"modules/java SERVLET:8080 3 JavaBridge.log\". Error message: $errstr ($errno)\n");
-	return new java_HttpHandler($this, $sock);
+	$this->serverName = "$host:$port";
+	return new java_HttpHandler($this, $ssl, $host, $port);
   }
   function java_Protocol ($client) {
     $this->client = $client;

@@ -24,11 +24,13 @@ package php.java.servlet;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.ISession;
+import php.java.bridge.http.IContext;
 
 /**
  * Create session contexts for servlets.<p> In addition to the
@@ -42,13 +44,15 @@ public class ServletContextFactory extends php.java.bridge.http.SimpleContextFac
     protected HttpServletRequest proxy, req;
     protected HttpServletResponse res;
     protected ServletContext kontext;
+    protected Servlet servlet;
 
-    protected ServletContextFactory(ServletContext ctx, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res) {
+    protected ServletContextFactory(Servlet servlet, ServletContext ctx, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res) {
     	super(CGIServlet.getRealPath(ctx, ""));
     	this.kontext = ctx;
     	this.proxy = proxy;
     	this.req = req;
     	this.res = res;
+    	this.servlet = servlet;
     }
     
     /**
@@ -72,8 +76,8 @@ public class ServletContextFactory extends php.java.bridge.http.SimpleContextFac
      * @param res The HttpServletResponse
      * @return The created ContextFactory
      */
-    public static ServletContextFactory addNew(ServletContext kontext, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res) {
-        ServletContextFactory ctx = new ServletContextFactory(kontext, proxy, req, res);
+    public static ServletContextFactory addNew(Servlet servlet, ServletContext kontext, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res) {
+        ServletContextFactory ctx = new ServletContextFactory(servlet, kontext, proxy, req, res);
     	return ctx;
     }	
 
@@ -90,7 +94,13 @@ public class ServletContextFactory extends php.java.bridge.http.SimpleContextFac
      * @see php.java.faces.PhpFacesScriptContextFactory#getContext()
      * @see php.java.servlet.Context
      */
-    public Object createContext() {
-	return new Context(kontext, req, res);
+    public IContext createContext() {
+	IContext ctx = new Context(kontext, req, res);
+	ctx.setAttribute(IContext.SERVLET_CONTEXT, kontext, IContext.ENGINE_SCOPE);
+	ctx.setAttribute(IContext.SERVLET_CONFIG, servlet.getServletConfig(), IContext.ENGINE_SCOPE);
+	ctx.setAttribute(IContext.SERVLET_REQUEST, req, IContext.ENGINE_SCOPE);
+	ctx.setAttribute(IContext.SERVLET_RESPONSE, res, IContext.ENGINE_SCOPE);
+	ctx.setAttribute(IContext.SERVLET, servlet, IContext.ENGINE_SCOPE);
+	return ctx;
     }
 }

@@ -97,7 +97,7 @@ public interface IContextFactory {
    * @see php.java.servlet.ServletContextFactory#getContext()
    * @see php.java.bridge.http.Context
    */
-  public Object getContext();
+  public IContext getContext();
 
   /**
    * Set the Context into this factory.
@@ -105,7 +105,7 @@ public interface IContextFactory {
    * @param context
    * @see php.java.bridge.http.ContextFactory#addNew(String)
    */
-  public void setContext(Object context);
+  public void setContext(IContext context);
 
   /**
    * Return the JavaBridge.

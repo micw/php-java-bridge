@@ -33,6 +33,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.PhpProcedureProxy;
+import php.java.bridge.http.IContext;
 
 
 /**
@@ -41,16 +42,16 @@ import php.java.bridge.PhpProcedureProxy;
  * @author jostb
  *
  */
-public class PhpSimpleHttpScriptContext extends SimpleScriptContext implements IPhpScriptContext {
+public class PhpSimpleHttpScriptContext extends SimpleScriptContext implements IContext, IPhpScriptContext {
 
     /** Integer value for the level of SCRIPT_SCOPE */
     public static final int REQUEST_SCOPE = 0;
     
     /** Integer value for the level of SESSION_SCOPE */   
-    public static final int SESSION_SCOPE = 100;
+    public static final int SESSION_SCOPE = 150;
     
     /** Integer value for the level of APPLICATION_SCOPE */
-    public static final int APPLICATION_SCOPE = 200;
+    public static final int APPLICATION_SCOPE = 175;
 
     protected HttpServletRequest request;
     protected HttpServletResponse response;

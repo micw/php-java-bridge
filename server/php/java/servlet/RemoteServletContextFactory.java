@@ -24,11 +24,13 @@ package php.java.servlet;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.ISession;
+import php.java.bridge.http.IContext;
 
 /**
  * Create session contexts for servlets.<p> In addition to the
@@ -39,8 +41,8 @@ import php.java.bridge.ISession;
  * @see php.java.bridge.http.ContextServer
  */
 public class RemoteServletContextFactory extends ServletContextFactory {
-    protected RemoteServletContextFactory(ServletContext ctx, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res) {
-	super(ctx, proxy, req, res);
+    protected RemoteServletContextFactory(Servlet servlet, ServletContext ctx, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res) {
+	super(servlet, ctx, proxy, req, res);
     }
 
     /**
@@ -65,8 +67,8 @@ public class RemoteServletContextFactory extends ServletContextFactory {
      * @param res The HttpServletResponse
      * @return The created ContextFactory
      */
-    public static ServletContextFactory addNew(ServletContext kontext, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res) {
-        RemoteServletContextFactory ctx = new RemoteServletContextFactory(kontext, proxy, req, res);
+    public static ServletContextFactory addNew(Servlet servlet, ServletContext kontext, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res) {
+        RemoteServletContextFactory ctx = new RemoteServletContextFactory(servlet, kontext, proxy, req, res);
     	return ctx;
     }	
     /**
@@ -75,7 +77,9 @@ public class RemoteServletContextFactory extends ServletContextFactory {
      * @see php.java.faces.PhpFacesScriptContextFactory#getContext()
      * @see php.java.servlet.Context
      */
-    public Object createContext() {
-	return new RemoteContext(kontext, req, res);
+    public IContext createContext() {
+	IContext ctx = new RemoteContext(kontext, req, res);
+	ctx.setAttribute("ServletConfig", servlet.getServletConfig(), IContext.ENGINE_SCOPE);	
+	return ctx;
     }
 }

@@ -3,6 +3,40 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 4.0.2
+
+* FastCGI on Windows: FastCGI is default on all operating systems. The
+bridge now uses its own "launcher.exe" and "named pipes" to
+communicate with the FastCGI server. IBM's "launcher.exe", which was
+required until now, should not be used anymore.
+
+* The default standalone container does not start in promiscuous mode
+anymore. Select SERVLET:8080 to enable it.
+
+* Promiscuous mode: It is now possible to set promiscuous mode in the
+servlet's WEB-INF/web.xml. A web page, "settings.php", has been added
+which displays the current PHP/Java Bridge settings from the web.xml.
+
+* Java.inc loads much faster: If no accelerator technology ("php
+opcode cache") is used, the bridge loads much faster. Java.inc has
+been renamed to JavaBridge.inc and Java.inc is auto-generated from
+Java.inc.
+
+* The error message format has been changed. It now displays the
+required parameter types and the passed argument types. Example: The
+error message "System->getProperty((o:String)[c:String]) failed ..."
+means that an instance of the String class is required, not the String
+class itself.
+
+* Persistent connections: The pure PHP implementation now supports
+override redirect, named-pipe communication and persistent
+connections. On Unix the implementation uses named pipes unless the
+back end is running on a different computer and/or promiscuous mode is
+enabled. On all other operating systems the implementation uses
+persistent tcp sockets ("pfsockopen"). As a side effect the
+implementation now understands "override redirect", which means that
+java_session() can be called anywhere.
+
 Version 4.0.1
 
 * It is no longer necessary to install the PHP/Java Bridge on a

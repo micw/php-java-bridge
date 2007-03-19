@@ -24,9 +24,8 @@ package php.java.script;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import javax.script.ScriptContext;
-
 import php.java.bridge.http.ContextFactory;
+import php.java.bridge.http.IContext;
 import php.java.bridge.http.IContextFactory;
 
 /**
@@ -41,7 +40,7 @@ public class PhpScriptContextFactory extends php.java.bridge.http.SimpleContextF
      * @param context
      * @return The ContextFactory.
      */
-    public static IContextFactory addNew(ScriptContext context) {
+    public static IContextFactory addNew(IContext context) {
 	PhpScriptContextFactory ctx = new PhpScriptContextFactory();
 	ctx.setContext(context);
 	return ctx;

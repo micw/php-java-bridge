@@ -24,10 +24,6 @@ PHP_ARG_ENABLE(script, for java script support, [  --enable-script[[=JAR]]
                           include java script support. If you use a 
                           JDK < 1.6 JAR must be the location of 
                           script-api.jar; creates php-script.jar])
-PHP_ARG_ENABLE(faces, for java server faces support, [  --enable-faces[[=JAR]]
-                          include java server faces support. JAR must be 
-                          the location of jsf-api.jar; creates 
-                          php-faces.jar])
 AC_ARG_ENABLE(backend, [  --disable-backend] 
                           do not create the JavaBridge.jar back-end, PHP_BACKEND="$enableval", PHP_BACKEND="yes")
 

@@ -27,6 +27,7 @@ package php.java.script;
 import java.io.Writer;
 
 import php.java.bridge.Invocable;
+import php.java.bridge.http.IContext;
 
 /**
  * Common methods for all PHP ScriptContexts
@@ -34,7 +35,7 @@ import php.java.bridge.Invocable;
  * @author jostb
  *
  */
-public interface IPhpScriptContext extends Invocable {
+public interface IPhpScriptContext extends Invocable, IContext {
     
     /**
      * Returns the Writer

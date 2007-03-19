@@ -45,7 +45,7 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
     /**
      * The jsr223 context or the emulated jsr223 context.
      */
-    protected Object context;
+    protected IContext context;
     
     protected SimpleContextFactory(String webContext) {
   	visited = new ContextFactory(webContext);
@@ -75,10 +75,10 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
      * creates a dummy context which emulates the JSR223 context.
      * @return The context.
      */
-    protected Object createContext() {
+    protected IContext createContext() {
       return new Context();
   }
-    public Object getContext() {
+    public IContext getContext() {
 	if(context==null) setContext(createContext());
         return context;
     }
@@ -95,8 +95,9 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
     public ISession getSession(String name, boolean clientIsNew, int timeout) {
         return visited.getSimpleSession(name, clientIsNew, timeout);
     }
-    public void setContext(Object context) {
+    public void setContext(IContext context) {
         this.context = context;
+        this.context.setAttribute(IContext.JAVA_BRIDGE, getBridge(), IContext.ENGINE_SCOPE);
     }
     public void recycle(ContextFactory visited) {
         visited.accept(this);

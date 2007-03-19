@@ -90,7 +90,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     public static final String EMPTY_CONTEXT_NAME = "";
     
     /** Use this if you don't care about security. This is used by the {@link php.java.bridge.http.SocketContextServer} */
-    protected static final ICredentials NO_CREDENTIALS = new ICredentials() {};
+    public static final ICredentials NO_CREDENTIALS = new ICredentials() {};
 
     static {
        getTimer().addJob(new Runnable() {public void run() {destroyOrphaned();}});
@@ -289,7 +289,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * Returns the context.
      * @return The context or null.
      */
-    public Object getContext() {
+    public IContext getContext() {
 	return visitor.getContext();
     }
 	
@@ -299,7 +299,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * @param context The context.
      * @see #addNew(String)
      */
-    public void setContext(Object context) {
+    public void setContext(IContext context) {
         visitor.setContext(context);
     }
     /* (non-Javadoc)

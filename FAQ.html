@@ -1,0 +1,759 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html">
+	<TITLE>PHP/ Java Bridge FAQ</TITLE>
+</HEAD>
+<H1>PHP/Java Bridge FAQ</H1>
+This file contains answers to frequently asked questions.
+
+<H2>General questions about the C- or pure PHP implementation</H2>
+
+<H4>Do I need a Java Application server or Servlet engine?</H4>
+<p>No. The bridge and the VM can run as a sub component of IIS or Apache. The C based extension automatically starts a VM in the <code>minit()</code> and terminates it in the <code>mshutdown()</code> hook. The request-handling threads attach themselfs to the VM (using the PHP/Java Bridge protocol) to execute Java methods.
+<p>
+<H4>What's the advantage/disadvantage of the pure PHP implementation?</H4>
+<p>Both implementations support the same features. But since PHP doesn't contain a "just in time compiler", the C based extension module is 2 to 10 times faster than the the pure PHP implementation (depending on whether a PHP opcode cache is used).
+</p>
+<p>The pure PHP implementation needs an external Java process. It can be started with <code>java -jar JavaBridge.jar SERVLET:8080</code>, but it is recommended to start the external Java VM via a J2EE server or servlet engine. The tomcat servlet engine can be used to start Java as a system service on Windows and Linux.
+</p>
+<p>
+The C based implementation compiles and works on all operating systems, including Windows, see the INSTALL document for details. But we cannot provide binaries for all operating systems. If you cannot compile C code, use the pure PHP implementation instead.
+</p>
+<H4>Why is Java.inc obfuscated?</H4>
+<p>The pure PHP implementation contained in <code>Java.inc</code> is created during compilation from the other *.inc files located in the java folder. Since some older PHP implementations don't have a opcode cache (sometimes called "accelerator"), we have removed all comments and white space from the source files. Use 
+<blockquote>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;require_once("http://localhost:8080/java/JavaBridge.inc";
+</code> 
+</blockquote>
+if you want to run the original code.</p>
+
+<H4>Can I use Java libraries without installing java?</H4> <p>Yes. Simply compile the C based extension and omit the
+<code>--with-java=</code> configure option. The <a href="README.GNU_JAVA">bridge will use the
+<code>libgcj</code> library</a>, which is part of the GNU gcc compiler. This library also uses much less system
+resources (memory, files) than a "real" Java VM.</p> 
+<H4>Can I compile the C code without compiling the Java classes to native code?</H4> <p>Yes. If your C compiler cannot compile Java classes to native code, use the <code>--disable-backend</code> configure option and add a <code>java.java=/path/to/your/java/executable</code> option to your php.ini <code>[java]</code> section.</p> 
+<H4>Can I use Python instead of PHP?</H4>
+<p>Yes, see the examples folder from the source download.</p>
+<H4>Can I access Mono or .NET libraries using the pure PHP implementation?</H4>
+<p>No. You need to compile the C implementation and use the configure option <code>--with-mono</code>.</p>
+<H4>Where is my output?</H4> <p><code>System.out</code> and <code>System.err</code> are redirected to the server log file(s). When PHP scripts are invoked from a java framework (Java Server Faces for example), even the PHP output is redirected. For the standalone back end the output appears in the <code>/var/log/php-java-bridge.log</code> or in JavaBridge.log, see .ini option <code>java.log_file</code>. For the j2ee back end the location of the log file(s) depends on the j2ee server configuration.</p> 
+
+<H4>How can I configure the bridge?</H4>
+
+<p>The three config options <code>java.log_level</code>, <code>java.servlet</code> and <code>java.hosts</code> can be changed in the <code>php.ini</code> file (C based implementation) or <code>Java.inc</code>, which is created from <code>Options.inc</code> (pure PHP implementation).
+
+
+<H2>Running Java as a sub component of Apache or IIS</H2>
+
+<H4>How do I lock down the VM so that users cannot start
+threads or call System.exit?</H4> <p>Usually with a java policy
+file. An <a href="server/javabridge.policy">example file</a> has been installed in the php extension directory and can be enabled with:
+<code>
+java.security_policy=On
+</code>
+ </p> 
+
+<H4>I want to start the back end automatically as a sub-component of my HTTP Server. How do I pass my own java options and how do I change the security context and the UID of the Java process?</H4> 
+<p>
+The bridge uses a wrapper binary which can carry the SUID bit and can be tagged with the SEL security context. This wrapper also allows you to change the standard options, which are: <code>java -Djava.library.path=...  -Djava.class.path=... -Djava.awt.headless=true -Dphp.java.bridge.base=... php.java.bridge.JavaBridge SOCKET_NAME LOG_LEVEL LOG_FILE</code>.
+A custom wrapper can be set with:<br><br>
+<code>
+java.wrapper=/path/to/wrapper/binary<br>
+</code>
+</p>
+<p>
+On Unix the bridge terminates the sub-process hierarchy with <code>SIGTERM</code>, sleep 5 seconds and <code>SIGTERM</code>, if necessary, sleep 5 seconds and <code>SIGKILL</code>, if necessary. On Windows the bridge emulates the Unix kill behaviour, the bridge kills the entire sub-process hierarchy so that you can use a <code>cmd /c</code> wrapper.
+</p>
+<p>
+Please see the wrapper <code>RunJavaBridge</code> for an example.
+</p>
+
+
+<H2>Class loading questions</H2>
+
+<H4>How do I load Java libraries?</H4>
+<p> With <code>java_require("foo.jar;bar.jar, ...");. See the README for details.</p>
+
+<H4>Why can't Apache load my /foo/bar/baz.jar file?</H4>
+<p>It probably doesn't have the permission to access it. Try to disable Security Enhanced Linux and store the jar file into a folder accessible by the apache user and then extract the required Security Enhanced Linux permissions from the audit log.</p>
+
+<H4>Why do I get a ClassNotFoundException?</H4>
+<p>You probably haven't required the relevant Java library. Check which library exports the feature and add the library to the <code>java_require()</code> statement.</code></p>
+
+<H4>Why do I get a NoClassDefFoundError?</H4>
+<p>Because Java doesn't have a module system. All interconnected libraries must be loaded with a single <code>java_require()</code> call. See the README for details.</p>
+
+<H4>I cannot require my JDBC driver!?!</H4>
+<p>The <code>java_require()</code> uses the current class loader, not the bootstrap loader. Use:
+<blockquote>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;java_require("foo.jar");<br>
+&nbsp;&nbsp;&nbsp;&nbsp; ...<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Class.forName("foo",true,Thread.currentThread().getContextClassLoader());<br>
+</code>
+</blockquote>
+instead.
+</p>
+
+<H4>How do I load impure Java libraries?</H4>
+<p>You can't. Java libraries must be pure Java.</p>
+<p> Please read the
+documentation of your J2EE server, Servlet engine or Java VM to see if and
+how the environment can handle impure Java libraries. A common approach is to store the Java part in <code>java.ext.dirs</code> and the native part in <code>java.library.path</code>.</p>
+
+
+<H2>J2EE/Servlet questions</H2>
+
+<H4>I want to use the bridge as a replacement for the PHP 4 servlet API, how do I install it into tomcat?</H4>
+<p>
+Download the J2EE binary and copy the <code>JavaBridge.war</code> into the tomcat <code>webapps</code> folder. After that visit <code>http://localhost:8080/JavaBridge</code> and run the supplied PHP examples.
+Please see <code>webapps/JavaBridge/WEB-INF/cgi/README</code> for details.
+</p>
+
+<a name="global-servlet">
+<H4>I want to use PHP for all tomcat applications. Apache and IIS are not available, but performance is important. How do I install it?</H4>
+</a>
+<p> Check if your PHP cgi binary supports the <code>-b</code> flag. If not, compile PHP with the <code>--enable-fastcgi</code> option or <a href="#http-front-end">use Apache or IIS as a front-end</a> instead. On Windows one could also copy a wrapper binary into the <code>WEB-INF/cgi/</code> folder, for example the <code>launcher.exe</code> from the <code>PHPIntKitForWindows.zip</code> available from <a href="http://www-128.ibm.com/alphaworks">alphaworks</a>.</p>
+<p>
+Download and install the J2EE binary: copy <code>JavaBridge.war</code> into the tomcat <code>webapps</code> folder.
+</p>
+<p>
+Copy the <code>JavaBridge.jar</code> and the <code>php-servlet.jar</code> from the JavaBridge.war into the tomcat <code>shared/lib</code> folder. Uncomment the <code>shared_fast_cgi_pool</code> parameter in the <code>JavaBridge/WEB-INF/web.xml</code> and add the lines marked with a <code>+</code> to the tomcat <code>conf/web.xml</code>:
+<blockquote>
+<code>
+<br>
+   &lt;!-- ================== Built In Servlet Definitions ==================== --&gt;<br>
+<br>
++    &lt;!-- PHP Servlet --&gt;<br>
++    &lt;servlet&gt;<br>
++        &lt;servlet-name&gt;GlobalPhpJavaServlet&lt;/servlet-name&gt;<br>
++        &lt;servlet-class&gt;php.java.servlet.PhpJavaServlet&lt;/servlet-class&gt;<br>
++    &lt;/servlet&gt;<br>
++    &lt;!-- PHP CGI Servlet --&gt;<br>
++    &lt;servlet&gt;<br>
++        &lt;servlet-name&gt;GlobalPhpCGIServlet&lt;/servlet-name&gt;<br>
++        &lt;servlet-class&gt;php.java.servlet.PhpCGIServlet&lt;/servlet-class&gt;<br>
++        &lt;init-param&gt;<br>
++        &lt;!-- Remember to set the shared_fast_cgi_pool option --&gt;<br>
++        &lt;!-- in JavaBridge/WEB-INF/web.xml to On, too. --&gt;<br>
++        &lt;param-name&gt;shared_fast_cgi_pool&lt;/param-name&gt;<br>
++        &lt;param-value&gt;On&lt;/param-value&gt;<br>
++        &lt;/init-param&gt;<br>
++    &lt;/servlet&gt;<br>
+<br>
+   &lt;!-- The default servlet for all web applications, that serves static     --&gt;<br>
+   &lt;!-- resources.  It processes all requests that are not mapped to other   --&gt;<br>
+[...]<br>
+   &lt;!-- ================ Built In Servlet Mappings ========================= --&gt;<br>
+<br>
++    &lt;!-- PHP Servlet Mapping --&gt;<br>
++    &lt;servlet-mapping&gt;<br>
++        &lt;servlet-name&gt;GlobalPhpJavaServlet&lt;/servlet-name&gt;<br>
++        &lt;url-pattern&gt;*.phpjavabridge&lt;/url-pattern&gt;<br>
++    &lt;/servlet-mapping&gt;<br>
++    &lt;!-- CGI Servlet Mapping --&gt;<br>
++    &lt;servlet-mapping&gt;<br>
++        &lt;servlet-name&gt;GlobalPhpCGIServlet&lt;/servlet-name&gt;<br>
++        &lt;url-pattern&gt;*.php&lt;/url-pattern&gt;<br>
++    &lt;/servlet-mapping&gt;<br>
+<br>
+   &lt;!-- The servlet mappings for the built in servlets defined above.  Note  --&gt;<br>
+   &lt;!-- that, by default, the CGI and SSI servlets are *not* mapped.  You    --&gt;<br>
+<br>
+ &lt;/web-app&gt;<br>
+</code>
+</blockquote>
+</p>
+To test the above settings create a directory <code>testapp</code> and copy the <code>test.php</code> file from the <code>JavaBridge.war</code> into this folder. Type <code>cd testapp; jar cf ../testapp.war *</code> and copy the testapp.war into the tomcat <code>webapps</code> folder.
+Restart tomcat, browse to 
+<code>http://yourHost.com:8080/testapp/test.php</code>.
+</p>
+<p>
+Check if the PHP Fast-CGI server is running. The process list should display 5 (default) PHP instances waiting in the PHP Fast-CGI pool. If not, check if your PHP binary has been compiled with Fast-CGI enabled. Copy a Fast-CGI enabled binary into the <code>webapps/JavaBridge/WEB-INF/cgi/</code> folder, if necessary.
+</p>
+<a name="php-web-app">
+<H4>How do I create a standalone PHP web application for distribution and how can users deploy it into tomcat?</H4>
+</a>
+<p>
+Create a directory <code>myApplication</code>, create the directories <code>myApplication/WEB-INF/lib/</code> and <code>myApplication/WEB-INF/cgi/</code>.
+Download the J2EE binary and copy the <code>JavaBridge.jar</code> and the <code>php-servlet.jar</code> from the JavaBridge.war to the <code>myApplication/WEB-INF/lib/</code> folder. Copy the contents of the <code>cgi</code> folder to <code>myApplication/WEB-INF/cgi/</code>. Create the file <code>myApplication/WEB-INF/web.xml</code> with the following content:
+<blockquote>
+<code>
+<br>
+&lt;web-app&gt;<br>
+    &lt;!-- PHP Servlet --&gt;<br>
+    &lt;servlet&gt;<br>
+        &lt;servlet-name&gt;PhpJavaServlet&lt;/servlet-name&gt;<br>
+        &lt;servlet-class&gt;php.java.servlet.PhpJavaServlet&lt;/servlet-class&gt;<br>
+    &lt;/servlet&gt;<br>
+    &lt;!-- PHP CGI processing servlet, used when Apache/IIS are not available --&gt;<br>
+    &lt;servlet&gt;<br>
+        &lt;servlet-name&gt;PhpCGIServlet&lt;/servlet-name&gt;<br>
+        &lt;servlet-class&gt;php.java.servlet.PhpCGIServlet&lt;/servlet-class&gt;<br>
+    &lt;/servlet&gt;<br>
+<br>
+    &lt;!-- PHP Servlet Mapping --&gt;<br>
+    &lt;servlet-mapping&gt;<br>
+        &lt;servlet-name&gt;PhpJavaServlet&lt;/servlet-name&gt;<br>
+        &lt;url-pattern&gt;*.phpjavabridge&lt;/url-pattern&gt;<br>
+    &lt;/servlet-mapping&gt;<br>
+    &lt;!--PHP CGI Servlet Mapping --&gt;<br>
+    &lt;servlet-mapping&gt;<br>
+        &lt;servlet-name&gt;PhpCGIServlet&lt;/servlet-name&gt;<br>
+        &lt;url-pattern&gt;*.php&lt;/url-pattern&gt;<br>
+    &lt;/servlet-mapping&gt;<br>
+<br>
+    &lt;!-- Welcome files --&gt;<br>
+    &lt;welcome-file-list&gt;<br>
+        &lt;welcome-file&gt;index.php&lt;/welcome-file&gt;<br>
+    &lt;/welcome-file-list&gt;<br>
+ &lt;/web-app&gt;<br>
+</code>
+</blockquote>
+</p>
+<p>
+Copy the files <code>sessionSharing.jsp</code> and <code>sessionSharing.php</code> from the <code>JavaBridge.war</code> to <code>myApplication</code> and create <code>myApplication.war</code>, for example with the commands: <code>cd myApplication; jar cf ../myApplication.war *</code>. </p>
+<p>The web archive can now be distributed, copy it to the tomcat <code>webapps</code> directory and re-start tomcat. Visit <code>http://localhost/myApplication/sessionSharing.php</code> and <code>http://localhost/myApplication/sessionSharing.jsp</code>.
+</p>
+
+<a name="http-front-end">
+<H4>I want to use Apache/IIS as a front-end and tomcat as a back end. How do I enable PHP for all my applications?</H4>
+</a>
+<p>
+Download and install the J2EE binary: copy <code>JavaBridge.war</code> into the tomcat <code>webapps</code> folder.
+Check if the tomcat <code>webapps</code> directory is shared with the Apache/IIS <code>htdocs</code> directory. If not, change the Apache/IIS setting, the following example is for Apache 2. Edit e.g. <code>/etc/httpd/conf/httpd.conf</code> as follows: 
+<blockquote>
+<code>
+ # documents. By default, all requests are taken from this directory, but<br>
+ # symbolic links and aliases may be used to point to other locations.<br>
+ #<br>
+-DocumentRoot "/var/www/html"<br>
++DocumentRoot "/var/lib/tomcat5/webapps"<br>
+<br>
+ #<br>
+ # Each directory to which Apache has access can be configured with respect<br>
+ #<br>
+ # This should be changed to whatever you set DocumentRoot to.<br>
+ #<br>
+-&lt;Directory "/var/www/html"&gt;<br>
++&lt;Directory "/var/lib/tomcat5/webapps"&gt;<br>
+</code>
+</blockquote>
+</p>
+<p>
+Edit the <code>java.host</code> and <code>java.servlet</code> options in your <code>Java.inc</code> or, if you use the C implementation, the <code>php.ini</code>:
+<blockquote>
+<code>
+[java]<br>
+java.hosts = 127.0.0.1:8080<br>
+java.servlet = On<br>
+</code>
+</blockquote>
+</p>
+To test the above settings create a directory <code>testapp</code> and copy the <code>sessionSharing.php</code> file from the <code>JavaBridge.war</code> into this folder. Type <code>cd testapp; jar cf ../testapp.war *</code> and copy the testapp.war into the tomcat <code>webapps</code> folder.
+Restart Apache or IIS and tomcat, browse to 
+<code>http://localhost/testapp</code>, click on sessionSharing.php and check the generated cookie value. The <code>path</code> value must be <code>/</code>.
+</p>
+
+<a name="php-jsp-session-sharing">
+<H4>I want to use Apache/IIS as a front-end and tomcat as a back end. How do I enable PHP and JSP for all my applications?</H4>
+</a>
+<p>
+Download the J2EE binary and copy the <code>JavaBridge.jar</code> and the <code>php-servlet.jar</code> from the JavaBridge.war into the tomcat <code>shared/lib</code> folder. Add the lines marked with a <code>+</code> to the tomcat <code>conf/web.xml</code>:
+<blockquote>
+<code>
+<br>
+   &lt;!-- ================== Built In Servlet Definitions ==================== --&gt;<br>
+<br>
++    &lt;!-- PHP Servlet --&gt;<br>
++    &lt;servlet&gt;<br>
++        &lt;servlet-name&gt;GlobalPhpJavaServlet&lt;/servlet-name&gt;<br>
++        &lt;servlet-class&gt;php.java.servlet.PhpJavaServlet&lt;/servlet-class&gt;<br>
++    &lt;/servlet&gt;<br>
+<br>
+   &lt;!-- The default servlet for all web applications, that serves static     --&gt;<br>
+   &lt;!-- resources.  It processes all requests that are not mapped to other   --&gt;<br>
+[...]<br>
+   &lt;!-- ================ Built In Servlet Mappings ========================= --&gt;<br>
+<br>
++    &lt;!-- PHP Servlet Mapping --&gt;<br>
++    &lt;servlet-mapping&gt;<br>
++        &lt;servlet-name&gt;GlobalPhpJavaServlet&lt;/servlet-name&gt;<br>
++        &lt;url-pattern&gt;*.phpjavabridge&lt;/url-pattern&gt;<br>
++    &lt;/servlet-mapping&gt;<br>
+<br>
+   &lt;!-- The servlet mappings for the built in servlets defined above.  Note  --&gt;<br>
+   &lt;!-- that, by default, the CGI and SSI servlets are *not* mapped.  You    --&gt;<br>
+<br>
+ &lt;/web-app&gt;<br>
+</code>
+</blockquote>
+</p>
+<p>
+Check if the tomcat <code>webapps</code> directory is shared with the Apache/IIS <code>htdocs</code> directory. If not, change the Apache/IIS setting, the following example is for Apache 2. Edit e.g. <code>/etc/httpd/conf/httpd.conf</code> as follows: 
+<blockquote>
+<code>
+ # documents. By default, all requests are taken from this directory, but<br>
+ # symbolic links and aliases may be used to point to other locations.<br>
+ #<br>
+-DocumentRoot "/var/www/html"<br>
++DocumentRoot "/var/lib/tomcat5/webapps"<br>
+<br>
+ #<br>
+ # Each directory to which Apache has access can be configured with respect<br>
+ #<br>
+ # This should be changed to whatever you set DocumentRoot to.<br>
+ #<br>
+-&lt;Directory "/var/www/html"&gt;<br>
++&lt;Directory "/var/lib/tomcat5/webapps"&gt;<br>
+</code>
+</blockquote>
+</p>
+<p>
+Now that tomcat knows how to handle PHP <code>.phpjavabridge</code> requests and Apache or IIS can access the tomcat webapps, connect the two components: Edit the <code>java.host</code> and <code>java.servlet</code> options in your <code>Java.inc</code> or, if you use the C implementation, the <code>php.ini</code>:
+<blockquote>
+<code>
+[java]<br>
+java.hosts = 127.0.0.1:8080<br>
+java.servlet = User<br>
+</code>
+</blockquote>
+The above <code>User</code> setting enables session sharing between PHP and JSP, it forwards from <code>http://host<em>/myApp/foo.php</em></code> to the tomcat back end at <code>127.0.0.1:8080</code> using the request <code>PUT <em>/myApp/foo.php</em>javabridge</code>. This triggers the <code>GlobalPhpJavaServlet</code> configured in the tomcat <code>web.xml</code>.
+</p>
+<p>
+Now you need to do the same for JSP. Unlike the PHP/Java Bridge, which only forwards embedded java statements, the tomcat <code>mod_jk</code> adapter must forward all JSP requests.
+Download and install <code>mod jk</code>, for example
+<code>jakarta-tomcat-connectors-1.2.14.1-src.tar.gz</code>, extract the file into a
+folder and type the following commands:
+<blockquote>
+<code>
+cd jakarta-tomcat-connectors-1.2.14.1-src/jk/native/<br>
+./configure --with-apxs && make && su -c "make install"<br>
+</code>
+</blockquote>
+Add the following lines to the end of the <code>httpd.conf</code>, the following example is for Apache 2:
+<blockquote>
+<code>
+LoadModule jk_module modules/mod_jk.so<br>
+JkAutoAlias /var/lib/tomcat5/webapps<br>
+JkMount *.jsp ajp13<br>
+</code>
+</blockquote>
+</p>
+To test the above settings create a directory <code>testapp</code> and copy the <code>sessionSharing.php</code> and <code>sessionSharing.jsp</code> from the <code>JavaBridge.war</code> into this folder. Type <code>cd testapp; jar cf ../testapp.war *</code> and copy the testapp.war into the tomcat <code>webapps</code> folder.
+Restart Apache or IIS and tomcat, browse to 
+<code>http://localhost/testapp</code>, click on sessionSharing.php and check the generated cookie value. The <code>path</code> value must be <code>/testapp</code>. Click on sessionSharing.jsp.
+</p>
+
+
+
+<H4>Does the
+bridge run native code within my servlet engine or application
+server?</H4> <p>No. The bridge back end is written in pure java, it
+doesn't use any native code. Native PHP runs within Apache, IIS, a
+FCGI server or via CGI. If the PHP instance crashes, an error page is
+returned to the client and the Apache, IIS, CGI container usually starts a new PHP instance for the next
+request.</p> 
+
+
+<a name="ssl">
+<H4>On Windows some PHP binaries do not support HTTPS/SSL</H4> 
+</a>
+<p>
+If you see the message:
+<blockquote>
+<code>
+Warning: fsockopen() [function.fsockopen]: unable to connect to ssl://127.0.0.1:8443
+(Unable to find the socket transport "ssl" - did you forget to enable it when you configured PHP?)
+</code>
+</blockquote>
+this means that PHP cannot connect back to the official SSL port. 
+Please check the 
+"Registered Stream Socket Transports" from the <code>phpinfo()</code> (see the <code>test.php</code> page), it should display: <code>tcp, udp, ssl, sslv3, sslv2, tls</code>. If not, please recompile PHP with SSL enabled, use the flag <code>--with-openssl</code>.
+<p>
+A workaround is to use the official non-SSL port or to open a
+dedicated local port for the PHP-Java communication. The following
+example is for Tomcat:
+<p>
+<ol>
+Disable <code>override_hosts</code> in the web application <code>WEB-INF/web.xml</code>:
+<blockquote>
+<code>
+         &lt;init-param&gt;<br>
+           &lt;param-name&gt;override_hosts&lt;/param-name&gt;<br>
+           &lt;param-value&gt;Off&lt;/param-value&gt;<br>
+         &lt;/init-param&gt;<br>
+</code>
+</blockquote>
+ Open a local port in the tomcat <code>conf/server.xml</code> (only necessary if you have disabled the official non-SSL port):
+<blockquote>
+<code>
+  &lt;Service name="Catalina"&gt;<br>
+     [...]<br>
+     &lt;Connector port="9157" address="127.0.0.1"  /&gt;<br>
+     [...]<br>
+  &lt;/Service&gt;<br>
+</code>
+</blockquote>
+ Set the communication port in the PHP <code>.ini</code> (the <code>phpinfo()</code> or <code>test.php</code> displays the location of the responsible <code>.ini</code> file):
+<blockquote>
+<code>
+  [java]<br>
+  java.hosts = 127.0.0.1:9157<br>
+  java.servlet = User<br>
+</code>
+</blockquote>
+</ol>
+If you want to use the official non-SSL port (usually port number
+8080), change the <code>java.hosts</code> line accordingly.<p>
+Restart the application server or servlet engine. Check the settings by running <code>phpinfo()</code> or by visiting the <code>test.php</code> page. 
+</p>
+
+
+<H4>The EJB example works with the Sun J2EE server, but in JBoss I get a ClassCastException, what's wrong?</H4> 
+<p>It's a JBoss problem, although this problem may also appear in other application servers which do not strictly separate the application/bean domains. The JavaBridge.war already contains the <code>documentClient.jar</code> as a library, so JBoss references the library classes instead of the bean classes. Just remove the <code>documentClient.jar</code> from the <code>JavaBridge.war</code>, re-deploy <code>JavaBridge.war</code> and run the test again.
+</p><p>
+In JBoss' default setup the code:
+<blockquote>
+<code>
+  // access the home interface<br>
+  $DocumentHome = new JavaClass("DocumentHome");<br>
+  $PortableRemoteObject = new JavaClass("javax.rmi.PortableRemoteObject");<br>
+  $home=$PortableRemoteObject-&gt;narrow($objref, $DocumentHome);<br>
+</code>
+</blockquote>
+refences the <code>DocumentHome</code> from the library, which is assignment-incompatible to <code>DocumentHome</code> from the enterprise bean (<code>DocumentHome@WebAppClassLoader</code> !=  <code>DocumentHome@BeanClassLoader</code>), so you get a ClassCastException in <code>narrow</code>.
+</p>
+<p>
+In contrast the Sun J2EE server correctly separates the beans/applications; the <code>$objref</code> is a unique proxy generated by a parent of the <code>WebAppClassLoader</code>, so that <code>narrow</code> can always cast the proxy to <code>DocumentHome@WebAppClassLoader</code>, even if a class with the same name is already available from the <code>WebAppClassLoader</code>.</p>
+
+ <H4>How do I install PHP into the Nutch, Spring, JSF, ..., Framework?</H4> 
+<p>By providing PHP beans and a description how to manage them, as usual. IOC (sometimes called "dependency injection") requires that you give up control so that the framework can call you when it becomes necessary. The code
+<blockquote>
+<code>
+  class Bean { ... }<br>
+  java_context()->call(java_closure(new Bean())) || header("$framework");
+</code>
+</blockquote>
+can be used to pass control from the web server to the framework running on a J2EE node. 
+</p>
+<p>
+The standard <a href="http://www.jcp.org/aboutJava/communityprocess/edr/jsr223/">java script interface</a> or the proxy used by the <a href="server/documentation/API/php/java/bridge/Invocable.html">invocable interface</a> can be used to call from the framework running on a J2EE node into the allocated PHP scripts running on the web server. The following excerpt from the JSF implementation calls methods from the above PHP bean:
+<blockquote>
+<code>
+  ((Invocable)((PhpFacesContext)FacesContext.getCurrentInstance()).getScriptEngine(this, new URL(phpScript))).invoke(method, args); 
+</code>
+</blockquote>
+Please see the JSF implementation for a reference.
+</p>
+
+<H2>General runtime questions</H2>
+
+
+<H4>How do I make my script state (objects or variables) persistent?</H4> 
+<p>If you must code it yourself: with
+e.g. <code>java_session()->put("buf", $stringBuffer)</code> or via
+<code>$_SESSION["buf"]=$stringBuffer</code>. The
+<code>$_SESSION</code> is syntactic sugar provided by the <a
+href="http://www.php.net/manual/en/ref.session.php">php session
+module</a>, it uses <code><a
+href="documentation/PHP-API/html/java_8c.html#doc25">java_session()<a></code>
+internaly. If you don't want depend on the PHP session module, for
+example if you have compiled PHP without the <code>session.so</code>,
+use java_session() instead.</p> <p> If you use the <a
+href="http://www.jcp.org/en/jsr/detail?id=127">Java Server Faces</a>
+framework, you declare the scope of the script in the <a
+href="server/WEB-INF/faces-config.xml">PHP
+managed bean descriptor<a>. For example, if the
+<code>managed-bean-scope</code> is changed from <code>request</code>
+to <code>session</code>, the framework automatically saves the state
+of the PHP script instance and restores it when the next request
+belonging to the same session comes in.</p>  
+
+<H4>How many threads does the bridge start?</H4> 
+<p>Request-handling threads are started
+from a thread pool, which limits the number of user requests to 20
+(default), see system property
+<code>php.java.bridge.threads</code>. All further requests have to
+wait until one of the worker threads returns to the pool. <p> <p>When
+running in a servlet engine, a <a
+href="server/documentation/API/php/java/bridge/http/ContextServer.html">ContextServer</a>
+is started which handles the pipe or local socket communication
+channel.  </p> <p>When java invokes local scripts outside of a HTTP
+environment, the bridge starts a <a
+href="server/documentation/API/php/java/bridge/http/HttpServer.html">HttpServer</a>,
+a <a
+href="server/documentation/API/php/java/bridge/http/ContextServer.html">ContextServer</a>
+and a <a
+href="server/documentation/API/php/java/script/HttpProxy.html">HttpProxy</a>. The
+HttpProxy represents the PHP continuation and the HttpServer the
+request-handling java continuation associated with the JSR223 script.
+</p> 
+
+ <H4>How do I access enums or inner classes?</H4> 
+With the <code>classname$inner</code> syntax. For example <br><br>
+<code>
+public interface php {<br>
+&nbsp;&nbsp;public class java {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;public enum bridge {JavaBridge, JavaBridgeRunner};<br>
+&nbsp;&nbsp;}<br>
+}<br>
+</code><br>
+can be accessed with:<br><br>
+<code>
+&lt;?php<br>
+java_require(getcwd()); // load php.class<br>
+$bridge = new java('php$java$bridge');<br>
+echo $bridge->JavaBridgeRunner;<br>
+?&gt;<br>
+</code><br>
+The above code is not a good programming example but it demonstrates why a different syntax is used to access inner classes. 
+</p>
+
+ <H4>How do I create a primitive array?</H4> 
+<p>
+Primitive types are wrapped by associated java classes. 
+The following example uses <code>reflect.Array</code> to create a new <code>byte</code> array:<br><br>
+<code>
+$Byte = new JavaClass("java.lang.Byte");<br>
+$byte = $Byte->TYPE;<br>
+$Array = new JavaClass("java.lang.reflect.Array");<br>
+$byteArray = $Array->newInstance($byte, 255);<br>
+$System = new JavaClass("java.lang.System");<br>
+$length = $System->in->read($byteArray);<br>
+$str = new Java("java.lang.String", $byteArray, 0, $length);<br>
+echo "You have typed: $str\n";<br>
+</code>
+</p>
+
+ <H4>How fast is it?</H4> <p> 
+The following scripts were
+executed on one 1.688 GHZ x86 cpu running RedHat Fedora Core 4 Linux and Sun jdk1.6.0:
+</p>
+The PHP 5.1.2 code<br>
+<p>
+<code>
+&lt;?php<br>
+$String = new JavaClass("java.lang.String");<br>
+$buf=new java("java.lang.StringBuffer");<br>
+<br>
+$i=0;<br>
+java_begin_document();<br>
+while($i&lt;400000) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$i=$i+1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$buf-&gt;append(new java("java.lang.String", $String-&gt;valueOf($i)));<br>
+}<br>
+java_end_document();<br>
+<br>
+print $buf-&gt;length() . "\n";<br>
+?&gt;<br>
+</code>
+</p>
+The BSH 2.0 code<br>
+<p>
+<code>
+buf=new java.lang.StringBuffer();<br>
+<br>
+int i=0;<br>
+while(i<400000) {<br>
+&nbsp;&nbsp;i=i+1;<br>
+&nbsp;&nbsp;buf.append(new String(String.valueOf(i)));<br>
+}<br>
+<br>
+print (buf.length()); print("\n");<br>
+</code>
+</p>
+The ECMAScript ("Mozilla Rhino") code<br>
+<p>
+<code>
+buf = new java.lang.StringBuffer();<br>
+for(i=0; i<400000; i++) buf.append(new String(i));<br>
+print (buf.toString().length());<br>
+</code>
+</p>
+<p>
+<center>
+<TABLE
+BORDER="1"
+><COL><COL><COL><COL><THEAD
+><TR
+><TH
+>Command</TH
+><TH
+>Script Engine</TH
+><TH
+>Communication Channel</TH
+><TH
+>Execution time (real, user, sys)</TH
+></TR
+></THEAD
+
+<TBODY
+><TR
+><TD
+>time jrunscript -l php t11.php</TD
+><TD
+>PHP5 + PHP/Java Bridge 3.0.8</TD
+><TD
+>named pipes</TD
+><TD
+>0m20.112s,<br>
+0m18.999s,<br>
+0m0.651s
+</TD
+></TR
+>
+
+<TBODY
+><TR
+><TD
+>time jrunscript -l bsh t11.bsh</TD
+><TD
+>BSH 2.0</TD
+><TD
+>none (native code)</TD
+><TD
+>0m21.342s,<br>
+0m20.779s,<br>
+0m0.291s
+</TD
+></TR
+>
+</TBODY>
+
+<TBODY
+><TR
+><TD
+>time jrunscript -J-Xmx512M -J-Xms512M -l js t11.js</TD
+><TD
+>ECMA script</TD
+><TD
+>none (native code)</TD
+><TD
+>1m36.877s,<br>
+0m55.398s,<br>
+0m0.323s
+</TD
+></TR
+>
+
+</TABLE
+>
+</center>
+</p>
+<p>
+</p>
+ <H4>How do I start a persistent VM?</H4> 
+<p>
+If you want to start <em>one persistent VM per HTTP server</em> running on a computer, see 
+the <a href="#mode2">web server installation</a> description. 
+If you want to start <em>one persistent VM per computer</em>, please see the <a href="#mode4">application server or servlet engine</a> description.
+</p>
+<p>Furthermore it is possible to start a standalone back end, for example with the command:<br><br>
+<code>
+&nbsp;&nbsp;java -jar JavaBridge.jar INET_LOCAL:9676 3<br>
+</code>
+<br>
+The <code>php.ini</code> entry might look like:<br><br>
+<code>
+&nbsp;&nbsp;[java]<br>
+&nbsp;&nbsp;java.hosts = 127.0.0.1:9676<br>
+&nbsp;&nbsp;java.servlet = Off<br>
+</code>
+<br>
+Please see the <a href="server/documentation/API/php/java/bridge/JavaBridge.html">JavaBridge</a> documentation for details.
+</p>
+
+<!--
+AS test ports  (Sun Mar 16 09:54:17 CET 2003, Jost Boekemeier)
+
+* Oracle:     http://localhost:8888/
+
+* Websphere:  http://localhost:9060/ibm/console/secure/logon.do
+                   http://localhost:9080/JavaBridge/
+
+* BEA:        http://localhost:7001
+* Jrun4:      https://localhost:9100
+-->
+ 
+ <H4>How does the bridge handle OutOfMemoryErrors?</H4> 
+<p>
+OutOfMemoryErrors may happen because a cached object cannot be released, either because <p>
+<ol>
+ the object is permanently referenced by a request-handling thread or
+ the object has been entered into the session or application store or 
+ the object is referenced by a thread outside of the scope of the PHP/Java Bridge.
+</ol>
+</p>
+</p>
+<p>When a <code>java.lang.OutOfMemoryError</code> reaches the request-handling thread, the PHP/Java Bridge thread pool removes the thread from its pool and writes a message <code>FATAL: OutOfMemoryError</code> to the PHP/Java Bridge log file. The session store is cleaned and all client connections are terminated without confirmation.
+</p>
+<p>
+If the OutOfMemoryError persists, this means that a thread outside of the PHP/Java Bridge has caused this error condition.
+</p>
+<p>
+The following code example could cause an OutOfMemoryError:<br><br>
+<code>
+&lt;?php<br>
+session_start();<br>
+if(!$_SESSION["buffer"]) $_SESSION["buffer"]=new java("java.lang.StringBuffer");<br>
+$_SESSION["buffer"]->append(...);<br>
+?&gt;
+</code>
+</p>
+<p>
+OutOfMemory conditions can be debugged by running the back end with e.g.:<br><br>
+<code>
+java -agentlib:hprof=heap=sites -jar JavaBridge.jar<br>
+</code>
+</p>
+ 
+<H4>How can PHP classes extend Java classes and Java methods?</H4> 
+<p>
+By using <a href="documentation/PHP-API/html/java_8c.html#doc32"><code>java_closure()</code></a> and the visitor pattern for example. The <code>tests.php5</code> folder contains a <code>script_api.php</code> example which shows how to implement <code>java.lang.Runnable</code> to run multiple PHP threads, concurrently accessing a shared resource.
+</p> 
+<H4>How can I execute PHP code on the server?</H4> 
+<p>
+With <code>java_begin_document()/java_end_document()</code>. For example:
+<blockquote>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;java_begin_document();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$s = new Java("java.lang.StringBuffer");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;for($i=0; $i<10000; $i++) $s->append($i);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;java_end_document();<br>
+</code>
+</blockquote>
+The above code sends the PHP code as an XML image to the server and executes it there.
+</p> 
+<H4>How can I convert a Java object into a PHP object?</H4>
+<p>
+With <code>java_values()</code>. For example:
+<blockquote>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;$s = new Java("java.lang.String");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$c = $chr = $s->toCharArray();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;print  (java_values($s));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;print_r(java_values($c));<br>
+</code>
+</blockquote>
+</p>
+<H4> How can I convert a PHP object into a Java object?</H4>
+<p>
+With <code>java_closure()</code>. For example:
+<blockquote>
+<code>
+&nbsp;&nbsp;&nbsp;&nbsp;class Foo {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;function toString() {return "php::foo";}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$foo = new Foo();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$jObj = java_closure($foo);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$String = new Java("java.lang.String");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;echo $String->valueOf($jObj);<br>
+</code>
+</blockquote>
+</p>
+
+</BODY>
+</HTML>

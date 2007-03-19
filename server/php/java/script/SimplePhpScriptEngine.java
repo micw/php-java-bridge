@@ -41,6 +41,7 @@ import javax.script.SimpleBindings;
 
 import php.java.bridge.PhpProcedureProxy;
 import php.java.bridge.Util;
+import php.java.bridge.http.IContext;
 import php.java.bridge.http.IContextFactory;
 
 /**
@@ -161,7 +162,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
         IPhpScriptContext context = (IPhpScriptContext)getContext(); 
 	env = (Map) this.processEnvironment.clone();
 
-	ctx = PhpScriptContextFactory.addNew((ScriptContext)context);
+	ctx = PhpScriptContextFactory.addNew((IContext)context);
     	
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */

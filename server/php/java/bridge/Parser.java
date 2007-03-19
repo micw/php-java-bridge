@@ -27,6 +27,7 @@ package php.java.bridge;
 import java.io.IOException;
 import java.io.InputStream;
 
+import php.java.bridge.http.ContextFactory;
 
 class Parser {
     static final int RECV_SIZE = 8192; // initial size of the receive buffer
@@ -213,6 +214,15 @@ class Parser {
 			PUSH(type);
 			type = KEY;
 		    }
+		    break;
+		case 077: if(in_dquote) {APPEND(ch); break;} 
+		    // the header used to be binary encoded
+		    int len =(0xFF&buf[c+2]) | (0xFF00&(buf[c+3]<<8));
+		    String newContext = new String(buf, c+4, c+len,  Util.ASCII);
+		    // @see ContextRunner#recycle. Since this is called only for a pfsockopen reconnect, we can pass
+		    // NO_CREDENTIALS. sockets are insecure anyway.
+		    bridge.request.setBridge((ContextFactory.get(newContext, ContextFactory.NO_CREDENTIALS)).getBridge());
+		    c+=len+3;
 		    break;
 		default:
 		    APPEND(ch);

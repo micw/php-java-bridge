@@ -17,17 +17,16 @@
         <servlet-name>PhpJavaServlet</servlet-name>
         <servlet-class>php.java.servlet.PhpJavaServlet</servlet-class>
 
-         <!-- Allow non-local clients. These clients connect to the -->
-         <!-- back-end using a HTTP tunnel. Default is Off. -->
+         <!-- Allow non-local PHP clients.  Default is Off. -->
          <!-- Leave this off if your server is connected to the internet. --> 
        <!--
          <init-param>
-           <param-name>allow_http_tunnel</param-name>
+           <param-name>promiscuous</param-name>
            <param-value>On</param-value>
          </init-param>
         -->
 
-         <!-- Default it the java.log_level from the php.ini. -->
+         <!-- Default is the java.log_level from the php.ini. -->
          <!-- See also the system property php.java.bridge.default_log_level -->
         <!--
          <init-param>
@@ -86,10 +85,17 @@
          </init-param>
         -->
 
-         <!-- Share the FastCGI pool from the JavaBridge PhpCGIServlet with -->
-         <!-- the GlobalPhpCGIServlet used by all other web apps. -->
-         <!-- Set this to On in both, the JavaBridge/WEB-INF/web.xml and -->
-         <!-- in the global conf/web.xml. -->
+         <!-- Share the FastCGI server from the global PHP/Java Bridge -->
+         <!-- with the PHP/Java Bridge  from the JavaBridge web context. -->
+         <!-- WARNING: If you copy the PHP/Java Bridge library into the global -->
+         <!-- classpath of the servlet engine and you do not disable the JavaBridge -->
+         <!-- web context, make sure that these options match. -->
+         <!-- If both bridges access the same FastCGI server, and these options do not -->
+         <!-- match (see global web.xml and WEB-INF/web.xml), either the connection -->
+         <!-- pool from the "JavaBridge" web context or the connection pool from the -->
+         <!-- global PHP/Java Bridge library will hang. - Since both bridges are -->
+         <!-- loaded via two separate classloaders, we don't have the chance to check -->
+         <!-- this configuration error. -->
          <!-- Default is Off. -->
          <!-- See http://php-java-bridge.sf.net#global-servlet for details. -->
         <!-- 

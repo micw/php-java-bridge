@@ -17,7 +17,17 @@
 
 <td WIDTH="30%"></td>
 </tr>
+<tr VALIGN=TOP>
+<td>PHP/Java Servlet configuration</td>
+
+<td WIDTH="30%"><a href="settings.php">Show</a></td>
+
+<td WIDTH="30%"><a href="source.php?source=settings.php">Source</a></td>
+</tr>
+
 <tr/>
+<tr/>
+
 <tr VALIGN=TOP>
 <td>Hello</td>
 

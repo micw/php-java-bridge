@@ -24,9 +24,33 @@
  */
 
 
+/**
+ * Helper function: Extract the URL from base and
+ * and set host, port and servlet accordingly.
+ * For example when the user has called:
+ * require_once("http://localhost:8080/JavaBridge/java/Java.inc");
+ * the JAVA_HOSTS is set to localhost:8080 and
+ * JAVA_SERVLET to /JavaBridge/JavaBridge.phpjavabridge.
+ */
+function defineHostFromInitialQuery($java_base) {
+  if($java_base!="java/") {
+	$url = parse_url($java_base);
+	if(isset($url["scheme"]) && ($url["scheme"]=="http")) {
+	  $host = $url["host"];
+	  $port = $url["port"];
+	  $path = $url["path"];
+	  define ("JAVA_HOSTS", "$host:$port");
+	  $dir = dirname($path);
+	  define ("JAVA_SERVLET", "$dir/JavaBridge.phpjavabridge"); // On ;; On or User
+	  return true;
+	}
+  }
+  return false;
+}
+
 // The version number of this pure PHP implementation
 
-define ("JAVA_PEAR_VERSION", "1.1.0");
+define ("JAVA_PEAR_VERSION", "2.1.0");
 
 
 // Deploy JavaBridge.war and re-start the servlet engine or the
@@ -46,27 +70,3 @@ if(!defineHostFromInitialQuery($JAVA_BASE)) {
 // overrides this value. The default level is 2.
 
 define ("JAVA_LOG_LEVEL", null); // integer between 0 and 4
-
-/**
- * Helper function: Extract the URL from base and
- * and set host, port and servlet accordingly.
- * For example when the user has called:
- * require_once("http://localhost:8080/JavaBridge/java/Java.inc");
- * the JAVA_HOSTS is set to localhost:8080 and
- * JAVA_SERVLET to /JavaBridge/JavaBridge.phpjavabridge.
- */
-function defineHostFromInitialQuery($java_base) {
-  if($java_base!="java/") {
-	$url = parse_url($java_base);
-	if(isset($url["scheme"]) && ($url["scheme"]=="http")) {
-	  $host = $url["host"];
-	  $port = $url["port"];
-	  $path = $url["path"];
-	  define ("JAVA_HOSTS", "$host:$port");
-	  $dir = dirname(dirname($path));
-	  define ("JAVA_SERVLET", "$dir/JavaBridge.phpjavabridge"); // On ;; On or User
-	  return true;
-	}
-  }
-  return false;
-}

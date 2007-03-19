@@ -179,9 +179,19 @@ public class JavaBridgeRunner extends HttpServer {
     protected void doGet (HttpRequest req, HttpResponse res) throws IOException {
 	String name =req.getRequestURI(); 
 	if(name==null) { super.doGet(req, res); return; }
-	name = name.replaceAll("/JavaBridge", "META-INF");
+	name = name.replaceFirst("/JavaBridge", "META-INF");
 	InputStream in = JavaBridgeRunner.class.getClassLoader().getResourceAsStream(name);
-	if(in==null) { res.setContentLength(ERROR.length); res.getOutputStream().write(ERROR); return; }
+	if(in==null) { // Java.inc may not exist in the source download, use JavaBridge.inc instead.
+	    name = name.replaceFirst("Java\\.inc", "JavaBridge.inc");
+	    in = JavaBridgeRunner.class.getClassLoader().getResourceAsStream(name);
+	    if(in==null) {
+		res.setContentLength(ERROR.length); res.getOutputStream().write(ERROR); 
+		return;
+	    } else {
+		if(Util.logLevel>4) 
+		    Util.logDebug("Java.inc not found, using JavaBridge.inc instead");
+	    }
+	 }
 	ByteArrayOutputStream bout = new ByteArrayOutputStream();
 	byte[] buf = new byte[Util.BUF_SIZE];
 	int c;

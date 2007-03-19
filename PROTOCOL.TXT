@@ -1,4 +1,4 @@
-PHP/Java Bridge protocol version 3.2
+PHP/Java Bridge protocol version 4.0
 
 Requests are marked with "->", responses with "<-".  The server
 continues to process requests until EOF. Only the first character is
@@ -212,32 +212,8 @@ After the F=... reply appeared, it is save to switch to a secondary
 
 NOTES:
 
-If the first byte is neither a "<" nor a space, bits [0,1], [2,4] and
-[6,7] have a special meaning:
-
-Bits 0..6 set to 1: the following byte contains an extended header
-described below.
-
-Bit 1 0
--------
-    0 0: Backward compatibility disabled, client sends and receives O,
-         O id's are base 10
-    0 1: Backward compatibility disabled, client sends and receives O,
-         O id's are base 16
-    1 0: Backward compatibility disabled, clients sends and receives X/P
-         O id's are base 10
-    1 1: Backward compatibility enabled, client sends and receives X/P
-         O id's are base 10
-
-Bit 2,3,4: log level (from java.log_level)
-
-Bit 5: always 0
-
-Bit 6: set to 1 if bit[0,1] are used
-Bit 7: set to 1 if bit[2,4] are used
-
-
-Extended header (byte 1)
+If the first byte is 0x80 (i.e. it is neither a space or a "<"), the
+following byte has a special meaning:
 
 Bit 1 0
 -------

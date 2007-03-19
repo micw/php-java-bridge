@@ -40,7 +40,7 @@ import php.java.bridge.Util;
  * Example:<p>
  * <code>
  * PhpScriptEngine e = new PhpScriptEngine();<br>
- * e.eval(new URLConnection(new URL("http://localhost:80/foo.php"));<br>
+ * e.eval(new URLReader(new URL("http://localhost:80/foo.php"));<br>
  * System.out.println(((Invocable)e).invoke("java_get_server_name", new Object[]{}));<br>
  * e.release();<br>
  * </code>

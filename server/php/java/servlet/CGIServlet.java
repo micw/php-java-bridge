@@ -255,7 +255,7 @@ import php.java.bridge.Util;
 public class CGIServlet extends HttpServlet {
 
     // IO buffer size
-    protected static final int BUF_SIZE = 8192;
+    public static final int BUF_SIZE = 8192;
 
     /* some vars below copied from Craig R. McClanahan's InvokerServlet */
 
@@ -268,7 +268,7 @@ public class CGIServlet extends HttpServlet {
     private static final long serialVersionUID = 3258132448955937337L;
 
     /** the Context container associated with our web context. */
-    protected ServletContext context = null;
+    public ServletContext context = null;
 
     /** the debugging detail level for this servlet. */
     private int debug = 0;
@@ -282,7 +282,7 @@ public class CGIServlet extends HttpServlet {
      *    (or webAppRootDir alone if cgiPathPrefix is
      *    null)
      */
-    protected String cgiPathPrefix = "/WEB-INF/cgi";
+    public String cgiPathPrefix = "/WEB-INF/cgi";
 
     /**
      * Header encoding
@@ -290,7 +290,7 @@ public class CGIServlet extends HttpServlet {
     private static final String ASCII = "ASCII";
     private static final String UTF = "UTF-8";
 
-    protected HashMap processEnvironment = null;
+    public HashMap processEnvironment = null;
     private static final File winnt = new File("c:/winnt");
     private static final File windows = new File("c:/windows");
     private static final Class[] EMPTY_PARAM = new Class[0];
@@ -519,7 +519,7 @@ public class CGIServlet extends HttpServlet {
         protected ServletContext context = null;
 
         /** context path of enclosing servlet */
-        protected String contextPath = null;
+        public String contextPath = null;
 
         /** servlet URI of the enclosing servlet */
         protected String servletPath = null;
@@ -559,7 +559,7 @@ public class CGIServlet extends HttpServlet {
             setupFromRequest(req);
         }
 
-        protected void init(HttpServletRequest req, HttpServletResponse res) {
+        public void init(HttpServletRequest req, HttpServletResponse res) {
             this.valid = setCGIEnvironment(req, res);
 
             if (this.valid) {

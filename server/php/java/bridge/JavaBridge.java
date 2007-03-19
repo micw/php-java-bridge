@@ -95,6 +95,21 @@ public class JavaBridge implements Runnable {
     public int logLevel = Util.logLevel;
   
     /**
+     * Return the log level:
+     * <br>
+     * 0: log off <br>
+     * 1: log fatal <br>
+     * 2: log messages/exceptions <br>
+     * 3: log verbose <br>
+     * 4: log debug <br>
+     * 5: log method invocations
+     * @return The request log level.
+     */
+    public int getLogLevel() {
+	return logLevel;
+    }
+    
+    /**
      * For internal use only. The current request (if any)
      * 
      */
@@ -317,6 +332,7 @@ public class JavaBridge implements Runnable {
 	    } catch (Throwable t) {/*ignore*/}
 
 	    Util.redirectOutput(redirectOutput, logFile);
+	    Util.logMessage(Util.EXTENSION_NAME + " VM                  : " + Util.VM_NAME);
 	    if(Util.VERSION != null)
 		Util.logMessage(Util.EXTENSION_NAME+  " version             : " + Util.VERSION);
 	    Util.logMessage(Util.EXTENSION_NAME + " logFile             : " + rawLogFile);
@@ -512,12 +528,14 @@ public class JavaBridge implements Runnable {
 
 	    if (selected == null) {
 		if (args.length > 0) {
-		    throw new InstantiationException("No matching constructor found. " + "Candidates: " + String.valueOf(candidates));
+		    throw createInstance? 
+			    (Exception)new InstantiationException("No matching constructor found. " + "Candidates: " + String.valueOf(candidates)):
+				(Exception)new JavaBridgeIllegalArgumentException("ReferenceClass must be called w/o arguments; either write new JavaClass(\""+name+"\") or new Java(\""+name+"\", args...).");
 		} else {
 		    // for classes which have no visible constructor, return the class
 		    // useful for classes like java.lang.System and java.util.Calendar.
 		    if(createInstance && logLevel>2) {
-		    	logMessage("No visible constructor found in: "+ name +", returning the class instead of an instance; this may not be what you want. Please correct this error or please use new JavaClass("+name+") instead.");
+		    	logMessage("No visible constructor found in: "+ name +", returning the class instead of an instance; this may not be what you want. Please correct this error or please use new JavaClass(\""+name+"\") instead.");
 		    }
 		    response.setResultClass(clazz);
 		    return;

@@ -39,7 +39,10 @@
   exception statement from your version. */
 
 require_once("${JAVA_BASE}/Client.inc");
-  
+
+/* implemented by JavaException and Java */
+interface java_JavaType {};
+
 function __javaproxy_Client_getClient() {
   static $client;
   if(!isset($client)) {
@@ -56,7 +59,7 @@ function java_last_exception_clear() {
   $client->setProperty(0, "lastException", null);
 }
 function java_values($object) {
-  if(!$object instanceof Java) return $object;
+  if(!$object instanceof java_JavaType) return $object;
   $client = __javaproxy_Client_getClient();
   if($client->isAsync()) 
 	throw new java_RuntimeException("values not allowed while in stream mode");
@@ -68,7 +71,7 @@ function java_reset() {
   return $client->invokeMethod(0, "reset", array());
 }
 function java_inspect($object) {
-  if(!$object instanceof Java) throw new java_IllegalArgumentException($object);
+  if(!$object instanceof java_JavaType) throw new java_IllegalArgumentException($object);
   $client = __javaproxy_Client_getClient();
   if($client->isAsync()) 
 	throw new java_RuntimeException("inspect not allowed while in stream mode");
@@ -79,15 +82,15 @@ function java_set_file_encoding($enc) {
   return $client->invokeMethod(0, "setFileEncoding", array($enc));
 }
 function java_instanceof($ob, $clazz) {
-  if(!$object instanceof Java) throw new java_IllegalArgumentException($object);
-  if(!$clazz instanceof Java) throw new java_IllegalArgumentException($clazz);
+  if(!$ob instanceof java_JavaType) throw new java_IllegalArgumentException($ob);
+  if(!$clazz instanceof java_JavaType) throw new java_IllegalArgumentException($clazz);
   $client = __javaproxy_Client_getClient();
   if($client->isAsync()) 
 	throw new java_RuntimeException("instanceof not allowed while in stream mode");
   return $client->invokeMethod(0, "instanceOf", array($ob, $clazz));
 }
 function java_cast($object, $type) { 
-    if(!$object instanceof Java) throw new java_IllegalArgumentException($object);
+    if(!$object instanceof java_JavaType) throw new java_IllegalArgumentException($object);
 	return $object->__cast($type); 
 }
 function java_require($arg) {
@@ -122,7 +125,8 @@ function java_context() {
   return $client->getContext();
 }
 function java_closure_array($args) {
-  if(isset($args[2]) && (!$args[2] instanceof Java)) throw new java_IllegalArgumentException($args[2]);
+  if(isset($args[2]) && ((!$args[2] instanceof java_JavaType)||!is_array($args[2])))
+	throw new java_IllegalArgumentException($args[2]);
 
   $client = __javaproxy_Client_getClient();
   if($client->isAsync()) 
@@ -313,7 +317,7 @@ class java_ExceptionProxy extends java_JavaProxy {
  * returned and set into $__delegate. 
  * @see #java_InternalJava
 */
-class Java extends java_JavaProxy implements IteratorAggregate, ArrayAccess {
+class Java extends java_JavaProxy implements IteratorAggregate, ArrayAccess, java_JavaType {
   var $__delegate;
   function Java() {
 	$delegate = $this->__delegate = java_create(func_get_args(), true);
@@ -419,7 +423,7 @@ class java_InternalJava extends Java {
 /**
  * A decorator pattern which overrides all magic methods.
  */
-class java_exception extends Exception {
+class java_exception extends Exception implements java_JavaType {
   var $__serialID, $__java, $__client;
   var $__delegate;
   function java_exception() {

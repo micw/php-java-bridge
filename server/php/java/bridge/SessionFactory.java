@@ -27,6 +27,8 @@ package php.java.bridge;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+import php.java.bridge.http.IContext;
+
 /**
  * Create new session or context instances
  * @see php.java.bridge.Session
@@ -97,7 +99,7 @@ public class SessionFactory {
      * @return Always null
      * @see php.java.bridge.http.ContextFactory#getContext()
      */
-    public Object getContext() {
+    public IContext getContext() {
 	return null;
     }
     protected static final SessionTimer getTimer() {

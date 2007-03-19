@@ -264,6 +264,11 @@ class java_Client /* implements IDocHandler */ {
 
   function java_Client() {
 	$this->RUNTIME = array();
+	// named pipes are enabled if shared memory is accessible
+	$this->RUNTIME['PIPE_DIR']=null;
+	if((function_exists("posix_mkfifo") && file_exists("/dev/shm")))
+	  $this->RUNTIME['PIPE_DIR']="/dev/shm";
+
 	$this->parser = new java_Parser($this);
 	$this->protocol = new java_Protocol($this);
 
@@ -550,8 +555,7 @@ class java_Client /* implements IDocHandler */ {
 	return $this->invokeMethod(0, "getContext", array());
   }
   function getSession($args) {
-	//TODO: Handle override redirect when java_session() is not
-	// the first statement in a script
+	$this->protocol->overrideRedirect();
 	$this->protocol->getSession($args);
 	return $this->invokeMethod(0, "getSession", $args);
   }
