@@ -1,3 +1,16 @@
+php-java-bridge (4.0.2-1) unstable; urgency=low
+
+  * New upstream version.
+
+ -- Andre Felipe Machado<af-machado@uol.com.br>  Tue, 20 Mar 2007 08:25:26 -0300
+
+php-java-bridge (4.0.1-2) unstable; urgency=low
+
+  * Corrected the /debian subdir for new release and rebuild from cvs 
+    tree on a real Debian Etch machine.
+
+ -- Andre Felipe Machado <af-machado@uol.com.br>  Mon, 12 Mar 2007 15:52:15 -0300
+
 php-java-bridge (3.2.1-1) unstable; urgency=low
 
   * Initial release 
