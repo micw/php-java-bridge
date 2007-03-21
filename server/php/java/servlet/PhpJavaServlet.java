@@ -116,8 +116,17 @@ public class PhpJavaServlet extends HttpServlet {
       	contextServer.destroy();
     	super.destroy();
     }
-    
-    private ServletContextFactory getContextFactory(HttpServletRequest req, HttpServletResponse res, ContextFactory.ICredentials credentials) {
+    /**
+     * This hook can be used to create a custom context factory. The default implementation checks if there's a ContextFactory 
+     * by calling ContextFactory.get(req.getHeader("X_JAVABRIDGE_CONTEXT"), credentials); 
+     * If it doesn't exist, a new RemoteServletContextFactory is created.
+     * This procedure should set the response header X_JAVABRIDGE_CONTEXT as a side effect.
+     * @param req The HttpServletRequest
+     * @param res The HttpServletResponse
+     * @param credentials The provided credentials.
+     * @return The (new) ServletContextFactory.
+     */
+    protected ServletContextFactory getContextFactory(HttpServletRequest req, HttpServletResponse res, ContextFactory.ICredentials credentials) {
     	JavaBridge bridge;
 	ServletContextFactory ctx = null;
     	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
@@ -134,11 +143,30 @@ public class PhpJavaServlet extends HttpServlet {
     	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
     	return ctx;
     }
-    
-    private void updateRequestLogLevel(JavaBridge bridge) {
+    /**
+     * Set the log level from the servlet into the bridge
+     * @param bridgeThe JavaBridge from the ContextFactory.
+     */
+    protected void updateRequestLogLevel(JavaBridge bridge) {
 	if(logLevel>-1) bridge.logLevel = logLevel;
     }
 
+    /**
+     * <p>
+     * This hook can be used to suspend the termination of the servlet until the (Remote-)ServletContextFactory is finished.
+     * It may be useful if one wants to access the Servlet, ServletContext or ServletRequest from a remote PHP script.
+     * The notification comes from the php script when it is running as a sub component of the J2EE server or servlet engine.
+     * </p><p>
+     * The default is to not wait for a RemoteContextFactory because it cannot reliably determine if a remote php script has terminated.
+     * For example the script <code>&lt;?php java_context(); ?&gt;</code> allocates a RemoteContextFactory but doesn't do 
+     * anything with it. The contextFactory.waitFor() method will block until it is cleaned after 10 minutes.
+     * </p>
+     * <p>The default is to wait for a local ServletContextFactory and to not wait for a RemoteContextFactory.</p>
+     * @param ctx The (Remote-) ContextFactory.
+     */
+    protected void waitForContext(ServletContextFactory ctx) {
+	/* Default: Wait for local ContextFactory, but do not wait for a RemoteContextFactory. */
+    }
     /**
      * Handle the override re-direct for "java_get_session()" when php
      * runs within apache.  We
@@ -258,6 +286,7 @@ public class PhpJavaServlet extends HttpServlet {
 	    	sin.close(); sin=null;
 		try {res.flushBuffer(); } catch (Throwable t) {Util.printStackTrace(t);}
 		contextServer.start(channelName);
+		this.waitForContext(ctx);
 	    }
 	    else {
 	        sin.close(); sin=null;
