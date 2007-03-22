@@ -272,7 +272,12 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     public synchronized void waitFor() throws InterruptedException {
     	if(!removed) wait();
     }
-    
+    /* (non-Javadoc)
+     * @see php.java.bridge.http.IContextFactory#waitFor()
+     */
+    public synchronized void waitFor(long timeout) throws InterruptedException {
+	if(!removed) wait(timeout);
+    }
     /* (non-Javadoc)
      * @see php.java.bridge.http.IContextFactory#getId()
      */

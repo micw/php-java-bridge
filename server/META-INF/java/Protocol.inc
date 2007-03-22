@@ -42,8 +42,9 @@ require_once ("${JAVA_BASE}/Options.inc");
 require_once ("${JAVA_BASE}/Client.inc");
 
 class java_SocketChannel {
-  var $peer;
+  var $peer, $protocol;
   function java_SocketChannel($protocol, $host, $channel) {
+  $this->protocol = $protocol;
 	$this->peer = pfsockopen($host, $channel, $errno, $errstr, 30);
 	if (!$this->peer) throw new java_RuntimeException("Could not connect to socket channel: $errstr ($errno)\n");
 	stream_set_timeout($this->peer, -1);
@@ -56,6 +57,7 @@ class java_SocketChannel {
   }
   function __destruct() {
 	// required by protocol
+	$this->protocol->flush();
 	fwrite($this->peer, "<F p=\"A\" />");
 	fread($this->peer, 10); // <F p="A"/>
   }

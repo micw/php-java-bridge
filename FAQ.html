@@ -5,12 +5,12 @@
 	<TITLE>PHP/ Java Bridge FAQ</TITLE>
 </HEAD>
 <H1>PHP/Java Bridge FAQ</H1>
-This file contains answers to frequently asked questions.
+This file contains answers to frequently asked questions. Please see <a href="http://php-java-bridge.sourceforge.net/pjb">http://php-java-bridge.sourceforge.net</a> for more information.
 
 <H2>General questions about the C- or pure PHP implementation</H2>
 
-<H4>Do I need a Java Application server or Servlet engine?</H4>
-<p>No. The bridge and the VM can run as a sub component of IIS or Apache. The C based extension automatically starts a VM in the <code>minit()</code> and terminates it in the <code>mshutdown()</code> hook. The request-handling threads attach themselfs to the VM (using the PHP/Java Bridge protocol) to execute Java methods.
+<H4>Do I need a Java Application Server or Servlet Engine?</H4>
+<p>No. The bridge and the VM can run as a sub component of IIS or Apache. The C based extension automatically starts a VM in the <code>minit()</code> and terminates it in the <code>mshutdown()</code> hook. The request-handling threads attach themselfs to the persistent VM using the PHP/Java Bridge protocol.
 <p>
 <H4>What's the advantage/disadvantage of the pure PHP implementation?</H4>
 <p>Both implementations support the same features. But since PHP doesn't contain a "just in time compiler", the C based extension module is 2 to 10 times faster than the the pure PHP implementation (depending on whether a PHP opcode cache is used).
@@ -18,32 +18,74 @@ This file contains answers to frequently asked questions.
 <p>The pure PHP implementation needs an external Java process. It can be started with <code>java -jar JavaBridge.jar SERVLET:8080</code>, but it is recommended to start the external Java VM via a J2EE server or servlet engine. The tomcat servlet engine can be used to start Java as a system service on Windows and Linux.
 </p>
 <p>
-The C based implementation compiles and works on all operating systems, including Windows, see the INSTALL document for details. But we cannot provide binaries for all operating systems. If you cannot compile C code, use the pure PHP implementation instead.
+The C based implementation compiles and works on all operating systems, including Windows. But we cannot provide binaries for all operating systems. If you cannot compile C code, use the pure PHP implementation instead.
 </p>
 <H4>Why is Java.inc obfuscated?</H4>
 <p>The pure PHP implementation contained in <code>Java.inc</code> is created during compilation from the other *.inc files located in the java folder. Since some older PHP implementations don't have a opcode cache (sometimes called "accelerator"), we have removed all comments and white space from the source files. Use 
 <blockquote>
 <code>
-&nbsp;&nbsp;&nbsp;&nbsp;require_once("http://localhost:8080/java/JavaBridge.inc";
+&nbsp;&nbsp;require_once("http://localhost:8080/JavaBridge/java/JavaBridge.inc";
 </code> 
 </blockquote>
 if you want to run the original code.</p>
 
 <H4>Can I use Java libraries without installing java?</H4> <p>Yes. Simply compile the C based extension and omit the
-<code>--with-java=</code> configure option. The <a href="README.GNU_JAVA">bridge will use the
-<code>libgcj</code> library</a>, which is part of the GNU gcc compiler. This library also uses much less system
+<code>--with-java=</code> configure option. The bridge will use the
+<code>libgcj</code> library, which is part of the GNU gcc compiler. This library also uses much less system
 resources (memory, files) than a "real" Java VM.</p> 
 <H4>Can I compile the C code without compiling the Java classes to native code?</H4> <p>Yes. If your C compiler cannot compile Java classes to native code, use the <code>--disable-backend</code> configure option and add a <code>java.java=/path/to/your/java/executable</code> option to your php.ini <code>[java]</code> section.</p> 
 <H4>Can I use Python instead of PHP?</H4>
 <p>Yes, see the examples folder from the source download.</p>
 <H4>Can I access Mono or .NET libraries using the pure PHP implementation?</H4>
 <p>No. You need to compile the C implementation and use the configure option <code>--with-mono</code>.</p>
-<H4>Where is my output?</H4> <p><code>System.out</code> and <code>System.err</code> are redirected to the server log file(s). When PHP scripts are invoked from a java framework (Java Server Faces for example), even the PHP output is redirected. For the standalone back end the output appears in the <code>/var/log/php-java-bridge.log</code> or in JavaBridge.log, see .ini option <code>java.log_file</code>. For the j2ee back end the location of the log file(s) depends on the j2ee server configuration.</p> 
-
 <H4>How can I configure the bridge?</H4>
 
 <p>The three config options <code>java.log_level</code>, <code>java.servlet</code> and <code>java.hosts</code> can be changed in the <code>php.ini</code> file (C based implementation) or <code>Java.inc</code>, which is created from <code>Options.inc</code> (pure PHP implementation).
 
+<H4>What if the Java back end is not available anymore?</H4>
+
+<p>
+Then the bridge uses the next entry from the <code>java.hosts</code>
+list. If there are no more entries, the php function java_server_name()
+returns null and all other java procedures cannot be used anymore.
+</p>
+
+<H4>Can I set the java.hosts option at run-time?</H4>
+
+<p>Yes. The bridge examines the environment variables
+<code>X_JAVABRIDGE_OVERRIDE_HOSTS</code> and
+<code>X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT</code>.
+</p>
+<p>To direct a php script to a web context FOO running on computer
+192.168.4.98, port 8080, use the following code: 
+
+<blockquote> <code> &nbsp;&nbsp;&lt?php<br>
+&nbsp;&nbsp;$_SERVER['X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT']="h:192.168.4.98:8080//FOO/JavaBridge.phpjavabridge";<br>
+&nbsp;&nbsp;echo java_server_name();<br>
+&nbsp;&nbsp;?&gt; </code> </blockquote>
+
+Assuming that the option <code>java.servlet</code> or
+<code>JAVA_SERVLET</code> (pure PHP implementation) is set to
+<code>On</code>, the above example uses plain HTTP to connect to the
+server 192.168.4.98 on port 8080 using the web context FOO. If PHP has
+been compiled with openssl enabled, <code>s:..</code> can be used to
+connect to a SSL port. When <code>java.servlet</code> or
+<code>JAVA_SERVLET</code> is set to <code>User</code> or
+<code>Off</code>, the bridge ignores the specified <code>FOO</code>
+context and uses the request context instead, or it connects to a
+standalone socket listener directly (if the option is Off).
+</p>
+<p>
+To direct a php instance to a to a web context FOO running on computer
+192.168.4.98, port 8080, use the variable
+<code>X_JAVABRIDGE_OVERRIDE_HOSTS</code> instead. This variable must
+be set before the PHP instance starts.
+</p>
+<p>
+When <code>X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT</code> is used and
+the php instance already has a persistent connection to another host,
+it opens a second persistent connection to the new host.
+</p>
 
 <H2>Running Java as a sub component of Apache or IIS</H2>
 
@@ -77,10 +119,17 @@ Please see the wrapper <code>RunJavaBridge</code> for an example.
 <p> With <code>java_require("foo.jar;bar.jar, ...");. See the README for details.</p>
 
 <H4>Why can't Apache load my /foo/bar/baz.jar file?</H4>
-<p>It probably doesn't have the permission to access it. Try to disable Security Enhanced Linux and store the jar file into a folder accessible by the apache user and then extract the required Security Enhanced Linux permissions from the audit log.</p>
+<p>It probably doesn't have the permission to access it. Check if
+baz.jar is a valid Java archive and if its main class is public. Try
+to disable Security Enhanced Linux and store the jar file into a
+folder accessible by the apache user and then extract the required
+Security Enhanced Linux permissions from the audit log.</p>
 
 <H4>Why do I get a ClassNotFoundException?</H4>
-<p>You probably haven't required the relevant Java library. Check which library exports the feature and add the library to the <code>java_require()</code> statement.</code></p>
+<p>You probably haven't required the relevant Java library. Or the
+class doesn't exist or it is not public or it throws a java.lang.Error
+during initialization. Check which library exports the feature and add
+the library to the <code>java_require()</code> statement.</code></p>
 
 <H4>Why do I get a NoClassDefFoundError?</H4>
 <p>Because Java doesn't have a module system. All interconnected libraries must be loaded with a single <code>java_require()</code> call. See the README for details.</p>
@@ -89,9 +138,9 @@ Please see the wrapper <code>RunJavaBridge</code> for an example.
 <p>The <code>java_require()</code> uses the current class loader, not the bootstrap loader. Use:
 <blockquote>
 <code>
-&nbsp;&nbsp;&nbsp;&nbsp;java_require("foo.jar");<br>
-&nbsp;&nbsp;&nbsp;&nbsp; ...<br>
-&nbsp;&nbsp;&nbsp;&nbsp;Class.forName("foo",true,Thread.currentThread().getContextClassLoader());<br>
+&nbsp;&nbsp;java_require("foo.jar");<br>
+&nbsp;&nbsp; ...<br>
+&nbsp;&nbsp;Class.forName("foo",true,Thread.currentThread().getContextClassLoader());<br>
 </code>
 </blockquote>
 instead.
@@ -451,6 +500,34 @@ Please see the JSF implementation for a reference.
 
 <H2>General runtime questions</H2>
 
+<H4>How can is access the Servlet, ServletContext or ServletRequest from a remote PHP script?</H4>
+<p>
+Unless you write your own servlet, you can't. The default
+implementation of the PhpJavaServlet does not wait for a
+RemoteServletContextFactory to finish because it cannot reliably determine if a
+remote script terminated or not.
+</p>
+<p>If you can provide this information, override the PhpJavaServlet's
+<code>getContextFactory()</code>. Provide your own
+RemoteServletContextFactory and create a custom Context in your
+<code>createContext()</code> method. Then wait for the context by
+overriding the <code>waitForContext() method.</code>. Ask yourself how
+to handle a situation where a script asks for a context but doesn't
+do anything with it, for example: <code>&lt;?php java_context();
+?&gt;</code>. Is it okay that the servlet waits 10 minutes until the
+orphaned context is destroyed?
+<p>
+
+<H4>Where is my output?</H4> <p><code>System.out</code> and
+<code>System.err</code> are redirected to the server log file(s). When
+PHP scripts are invoked from a java framework (Java Server Faces for
+example), even the PHP output is redirected. For the standalone back
+end the output appears in the
+<code>/var/log/php-java-bridge.log</code> or in JavaBridge.log, see
+.ini option <code>java.log_file</code>. For the j2ee back end the
+location of the log file(s) depends on the j2ee server
+configuration.</p>
+
 
 <H4>How do I make my script state (objects or variables) persistent?</H4> 
 <p>If you must code it yourself: with
@@ -462,7 +539,9 @@ module</a>, it uses <code><a
 href="documentation/PHP-API/html/java_8c.html#doc25">java_session()<a></code>
 internaly. If you don't want depend on the PHP session module, for
 example if you have compiled PHP without the <code>session.so</code>,
-use java_session() instead.</p> <p> If you use the <a
+use java_session() instead.</p> 
+<!--
+<p> If you use the <a
 href="http://www.jcp.org/en/jsr/detail?id=127">Java Server Faces</a>
 framework, you declare the scope of the script in the <a
 href="server/WEB-INF/faces-config.xml">PHP
@@ -471,6 +550,7 @@ managed bean descriptor<a>. For example, if the
 to <code>session</code>, the framework automatically saves the state
 of the PHP script instance and restores it when the next request
 belonging to the same session comes in.</p>  
+-->
 
 <H4>How many threads does the bridge start?</H4> 
 <p>Request-handling threads are started
@@ -496,9 +576,9 @@ request-handling java continuation associated with the JSR223 script.
 With the <code>classname$inner</code> syntax. For example <br><br>
 <code>
 public interface php {<br>
-&nbsp;&nbsp;public class java {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;public enum bridge {JavaBridge, JavaBridgeRunner};<br>
-&nbsp;&nbsp;}<br>
+&nbsp;public class java {<br>
+&nbsp;&nbsp;public enum bridge {JavaBridge, JavaBridgeRunner};<br>
+&nbsp;}<br>
 }<br>
 </code><br>
 can be accessed with:<br><br>
@@ -542,8 +622,8 @@ $buf=new java("java.lang.StringBuffer");<br>
 $i=0;<br>
 java_begin_document();<br>
 while($i&lt;400000) {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;$i=$i+1;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;$buf-&gt;append(new java("java.lang.String", $String-&gt;valueOf($i)));<br>
+&nbsp;&nbsp;$i=$i+1;<br>
+&nbsp;&nbsp;$buf-&gt;append(new java("java.lang.String", $String-&gt;valueOf($i)));<br>
 }<br>
 java_end_document();<br>
 <br>
@@ -558,8 +638,8 @@ buf=new java.lang.StringBuffer();<br>
 <br>
 int i=0;<br>
 while(i<400000) {<br>
-&nbsp;&nbsp;i=i+1;<br>
-&nbsp;&nbsp;buf.append(new String(String.valueOf(i)));<br>
+&nbsp;i=i+1;<br>
+&nbsp;buf.append(new String(String.valueOf(i)));<br>
 }<br>
 <br>
 print (buf.length()); print("\n");<br>
@@ -645,6 +725,7 @@ BORDER="1"
 </p>
 <p>
 </p>
+<!--
  <H4>How do I start a persistent VM?</H4> 
 <p>
 If you want to start <em>one persistent VM per HTTP server</em> running on a computer, see 
@@ -653,20 +734,19 @@ If you want to start <em>one persistent VM per computer</em>, please see the <a 
 </p>
 <p>Furthermore it is possible to start a standalone back end, for example with the command:<br><br>
 <code>
-&nbsp;&nbsp;java -jar JavaBridge.jar INET_LOCAL:9676 3<br>
+&nbsp;java -jar JavaBridge.jar INET_LOCAL:9676 3<br>
 </code>
 <br>
 The <code>php.ini</code> entry might look like:<br><br>
 <code>
-&nbsp;&nbsp;[java]<br>
-&nbsp;&nbsp;java.hosts = 127.0.0.1:9676<br>
-&nbsp;&nbsp;java.servlet = Off<br>
+&nbsp;[java]<br>
+&nbsp;java.hosts = 127.0.0.1:9676<br>
+&nbsp;java.servlet = Off<br>
 </code>
 <br>
 Please see the <a href="server/documentation/API/php/java/bridge/JavaBridge.html">JavaBridge</a> documentation for details.
 </p>
 
-<!--
 AS test ports  (Sun Mar 16 09:54:17 CET 2003, Jost Boekemeier)
 
 * Oracle:     http://localhost:8888/
@@ -719,10 +799,10 @@ By using <a href="documentation/PHP-API/html/java_8c.html#doc32"><code>java_clos
 With <code>java_begin_document()/java_end_document()</code>. For example:
 <blockquote>
 <code>
-&nbsp;&nbsp;&nbsp;&nbsp;java_begin_document();<br>
-&nbsp;&nbsp;&nbsp;&nbsp;$s = new Java("java.lang.StringBuffer");<br>
-&nbsp;&nbsp;&nbsp;&nbsp;for($i=0; $i<10000; $i++) $s->append($i);<br>
-&nbsp;&nbsp;&nbsp;&nbsp;java_end_document();<br>
+&nbsp;&nbsp;java_begin_document();<br>
+&nbsp;&nbsp;$s = new Java("java.lang.StringBuffer");<br>
+&nbsp;&nbsp;for($i=0; $i<10000; $i++) $s->append($i);<br>
+&nbsp;&nbsp;java_end_document();<br>
 </code>
 </blockquote>
 The above code sends the PHP code as an XML image to the server and executes it there.
@@ -732,10 +812,10 @@ The above code sends the PHP code as an XML image to the server and executes it 
 With <code>java_values()</code>. For example:
 <blockquote>
 <code>
-&nbsp;&nbsp;&nbsp;&nbsp;$s = new Java("java.lang.String");<br>
-&nbsp;&nbsp;&nbsp;&nbsp;$c = $chr = $s->toCharArray();<br>
-&nbsp;&nbsp;&nbsp;&nbsp;print  (java_values($s));<br>
-&nbsp;&nbsp;&nbsp;&nbsp;print_r(java_values($c));<br>
+&nbsp;&nbsp;$s = new Java("java.lang.String");<br>
+&nbsp;&nbsp;$c = $chr = $s->toCharArray();<br>
+&nbsp;&nbsp;print  (java_values($s));<br>
+&nbsp;&nbsp;print_r(java_values($c));<br>
 </code>
 </blockquote>
 </p>
@@ -744,13 +824,13 @@ With <code>java_values()</code>. For example:
 With <code>java_closure()</code>. For example:
 <blockquote>
 <code>
-&nbsp;&nbsp;&nbsp;&nbsp;class Foo {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;function toString() {return "php::foo";}<br>
-&nbsp;&nbsp;&nbsp;&nbsp;}<br>
-&nbsp;&nbsp;&nbsp;&nbsp;$foo = new Foo();<br>
-&nbsp;&nbsp;&nbsp;&nbsp;$jObj = java_closure($foo);<br>
-&nbsp;&nbsp;&nbsp;&nbsp;$String = new Java("java.lang.String");<br>
-&nbsp;&nbsp;&nbsp;&nbsp;echo $String->valueOf($jObj);<br>
+&nbsp;&nbsp;class Foo {<br>
+&nbsp;&nbsp;&nbsp;function toString() {return "php::foo";}<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;$foo = new Foo();<br>
+&nbsp;&nbsp;$jObj = java_closure($foo);<br>
+&nbsp;&nbsp;$String = new Java("java.lang.String");<br>
+&nbsp;&nbsp;echo $String->valueOf($jObj);<br>
 </code>
 </blockquote>
 </p>

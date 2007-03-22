@@ -63,7 +63,9 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
     public void waitFor() throws InterruptedException {
         visited.waitFor();
     }
-    
+    public void waitFor(long timeout) throws InterruptedException {
+	visited.waitFor(timeout);
+    }    
     public String getId() { 
         return visited.getId();
     }

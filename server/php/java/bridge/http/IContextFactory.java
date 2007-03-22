@@ -84,6 +84,14 @@ public interface IContextFactory {
    * @see php.java.bridge.http.ContextRunner
    */
   public void waitFor() throws InterruptedException;
+ 
+  /**
+   * Wait until this context is finished.
+   * @param timeout The timeout
+   * @throws InterruptedException
+   * @see php.java.bridge.http.ContextRunner
+   */
+  public void waitFor(long timeout) throws InterruptedException;
 
   /**
    * Return the serializable ID of the context factory
