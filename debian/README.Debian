@@ -31,8 +31,7 @@ cp --recursive --update --verbose --archive --preserve php-java-bridge-4.0.2/*  
 
 1.1.2 Commit the (eventual) changes to the repository. Ideally, you will not to do this, if step 1.1.1.1 is not needed.
 
-1.1.3 Create a upstream tag. The formating is very strict. Adapt to the suitable version.
-Create tag: upstream_version_4_0_2 
+1.1.3 Create an upstream tag. The formating is very strict. Adapt to the suitable version.
 cd ~/compilation/php-java-bridge
 cvs -f tag 'upstream_version_4_0_2' '.'
 
@@ -62,7 +61,7 @@ If you are only building the package, you could use the anonymous cvs pserver lo
 mkdir ~/compilation_tmp
 cd ~/compilation/php-java-bridge
 
-Hint: You may need to specify the absolute path to the temporary scratchpad working area instead of ~/.
+Hint: You need to specify the absolute path to the temporary scratchpad working area instead of ~/.
 
 cvs-buildpackage  -rfakeroot -uc -us -R. -W/home/andremachado/compilation_tmp
 
