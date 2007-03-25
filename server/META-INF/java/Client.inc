@@ -265,9 +265,10 @@ class java_Client /* implements IDocHandler */ {
   function java_Client() {
 	$this->RUNTIME = array();
 	// named pipes are enabled if shared memory is accessible
-	$this->RUNTIME['PIPE_DIR']=null;
-	if((function_exists("posix_mkfifo") && file_exists("/dev/shm")))
-	  $this->RUNTIME['PIPE_DIR']="/dev/shm";
+	if(JAVA_PIPE_DIR && function_exists("posix_mkfifo")) 
+	  $this->RUNTIME['PIPE_DIR']=JAVA_PIPE_DIR;
+	else
+	  $this->RUNTIME['PIPE_DIR']=null;
 
 	$this->parser = new java_Parser($this);
 	$this->protocol = new java_Protocol($this);

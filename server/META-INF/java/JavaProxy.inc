@@ -125,7 +125,7 @@ function java_context() {
   return $client->getContext();
 }
 function java_closure_array($args) {
-  if(isset($args[2]) && ((!$args[2] instanceof java_JavaType)||!is_array($args[2])))
+  if(isset($args[2]) && ((!($args[2] instanceof java_JavaType))&&!is_array($args[2])))
 	throw new java_IllegalArgumentException($args[2]);
 
   $client = __javaproxy_Client_getClient();

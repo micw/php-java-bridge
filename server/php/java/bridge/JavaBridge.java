@@ -332,14 +332,17 @@ public class JavaBridge implements Runnable {
 	    } catch (Throwable t) {/*ignore*/}
 
 	    Util.redirectOutput(redirectOutput, logFile);
-	    Util.logMessage(Util.EXTENSION_NAME + " VM                  : " + Util.VM_NAME);
+	    Util.logMessage("VM                  : " + Util.VM_NAME);
 	    if(Util.VERSION != null)
 		Util.logMessage(Util.EXTENSION_NAME+  " version             : " + Util.VERSION);
-	    Util.logMessage(Util.EXTENSION_NAME + " logFile             : " + rawLogFile);
-	    Util.logMessage(Util.EXTENSION_NAME + " default logLevel    : " + Util.logLevel);
-	    Util.logMessage(Util.EXTENSION_NAME + " socket              : " + socket);
-	    Util.logMessage(Util.EXTENSION_NAME + " java.ext.dirs       : " + System.getProperty("java.ext.dirs"));
-	    Util.logMessage(Util.EXTENSION_NAME + " php.java.bridge.base: " + System.getProperty("php.java.bridge.base", System.getProperty("user.home")));
+	    Util.logMessage("logFile             : " + rawLogFile);
+	    Util.logMessage("default logLevel    : " + Util.logLevel);
+	    Util.logMessage("socket              : " + socket);
+	    Util.logMessage("java.ext.dirs       : " + System.getProperty("java.ext.dirs"));
+	    String base = System.getProperty("php.java.bridge.base", System.getProperty("user.home"));
+	    Util.logMessage("php.java.bridge.base: " + base);
+	    Util.logMessage("extra library dir   : " + base+File.separator+"lib");
+	    Util.logMessage("thread pool size    : " + Util.THREAD_POOL_MAX_SIZE);
 	} catch (Throwable t) {
 	    throw new RuntimeException(t);
 	}
@@ -571,7 +574,8 @@ public class JavaBridge implements Runnable {
     //
     private int weight(Class param, Object arg) {
 	int w = 0;
-	if (param.isInstance(arg)) {
+	if(arg!=null) {
+	 if (param.isInstance(arg)) {
  	    for (Class c=arg.getClass(); (c=c.getSuperclass()) != null; ) {
 		if (!param.isAssignableFrom(c)) {
 		    break;
@@ -581,13 +585,12 @@ public class JavaBridge implements Runnable {
 				// over Object hashMap.
 	    }
 	} else if (param == java.lang.String.class) {
-	    if ((arg != null) && !(arg instanceof String) && !(arg instanceof PhpString))
+	    if (!(arg instanceof String) && !(arg instanceof PhpString))
 	        if(arg instanceof byte[])
 	            w+=32;
 	        else
 	            w+=8000; // conversion to string is always possible
 	} else if (param.isArray()) {
-	    if (arg != null) {
 	        if(arg instanceof PhpString) {
 	            Class c=param.getComponentType();
 	            if(c == byte.class) 
@@ -608,9 +611,8 @@ public class JavaBridge implements Runnable {
 		    }
 		}
 		else w+=9999;
-	    }
-	} else if ((java.util.Collection.class).isAssignableFrom(param)) {
-	    if ((arg != null) && !(arg instanceof PhpArray))
+	    } else if ((java.util.Collection.class).isAssignableFrom(param)) {
+	    if (!(arg instanceof PhpArray))
 		w+=9999;
 	} else if (param.isPrimitive()) {
 	    Class c=param;
@@ -644,7 +646,7 @@ public class JavaBridge implements Runnable {
 	} else {
 	    w+=9999;
 	}
-	
+	}
 	if(logLevel>4) logDebug("weight " + param + " " + Util.getClass(arg) + ": " +w);
 	return w;
     }
@@ -1587,6 +1589,15 @@ public class JavaBridge implements Runnable {
 		}
 	    buf.append("]");
 	    return (String)castToString(buf.toString());
+    }
+
+    /**
+     * Returns a string representation of the object
+     * @param ob The object
+     * @return A string representation.
+     */
+    public String ObjectToString(String ob) {
+	    return (String)castToString(ob);
     }
 
     /**

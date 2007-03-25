@@ -53,7 +53,7 @@ JavaBridge.jar: META-INF/java/Java.inc
 	chmod +x JavaBridge.jar
 
 META-INF/java/Java.inc:
-	cat META-INF/java/JavaBridge.inc META-INF/java/Options.inc META-INF/java/Client.inc META-INF/java/GlobalRef.inc META-INF/java/JavaProxy.inc META-INF/java/NativeParser.inc META-INF/java/Parser.inc META-INF/java/Protocol.inc META-INF/java/SimpleParser.inc  | sed  '/!java_defined/d;/<?/d;/?>/d;s|/\*|\n/*\n|;s|\*/|\n*/\n|'|sed '/\/\*/,/\*\//d;s|^[ \t]*//.*$$||;1i<?php'|sed '/^[ \t]*require_once/d;$$a}\n?>' >META-INF/java/Java.inc
+	cat META-INF/java/JavaBridge.inc META-INF/java/Options.inc META-INF/java/Client.inc META-INF/java/GlobalRef.inc META-INF/java/JavaProxy.inc META-INF/java/NativeParser.inc META-INF/java/Parser.inc META-INF/java/Protocol.inc META-INF/java/SimpleParser.inc | sed -f extract.sed | sed '/\/\*/,/\*\//d' >META-INF/java/Java.inc
 
 php-servlet.jar: JavaBridge.jar $(SERVLET)
 	$(PHP_JAVA)/bin/javac $(SOURCE_VERSION) -classpath .:$(SERVLET) php/java/script/*.java php/java/bridge/http/*.java php/java/bridge/*.java php/java/servlet/*.java php/java/servlet/fastcgi/*.java

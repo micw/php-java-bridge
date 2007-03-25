@@ -24,7 +24,7 @@ The C based implementation compiles and works on all operating systems, includin
 <p>The pure PHP implementation contained in <code>Java.inc</code> is created during compilation from the other *.inc files located in the java folder. Since some older PHP implementations don't have a opcode cache (sometimes called "accelerator"), we have removed all comments and white space from the source files. Use 
 <blockquote>
 <code>
-&nbsp;&nbsp;require_once("http://localhost:8080/JavaBridge/java/JavaBridge.inc";
+&nbsp;&nbsp;require_once("http://localhost:8080/JavaBridge/java/JavaBridge.inc");
 </code> 
 </blockquote>
 if you want to run the original code.</p>
@@ -33,7 +33,7 @@ if you want to run the original code.</p>
 <code>--with-java=</code> configure option. The bridge will use the
 <code>libgcj</code> library, which is part of the GNU gcc compiler. This library also uses much less system
 resources (memory, files) than a "real" Java VM.</p> 
-<H4>Can I compile the C code without compiling the Java classes to native code?</H4> <p>Yes. If your C compiler cannot compile Java classes to native code, use the <code>--disable-backend</code> configure option and add a <code>java.java=/path/to/your/java/executable</code> option to your php.ini <code>[java]</code> section.</p> 
+<H4>Can I compile the C based implementation of the PHP/Java Bridge without compiling the Java classes to native code?</H4> <p>Yes. If your C compiler cannot compile Java classes to native code, use the <code>--disable-backend</code> configure option and add a <code>java.java=/path/to/your/java/executable</code> option to your php.ini <code>[java]</code> section.</p> 
 <H4>Can I use Python instead of PHP?</H4>
 <p>Yes, see the examples folder from the source download.</p>
 <H4>Can I access Mono or .NET libraries using the pure PHP implementation?</H4>
@@ -61,6 +61,7 @@ returns null and all other java procedures cannot be used anymore.
 
 <blockquote> <code> &nbsp;&nbsp;&lt?php<br>
 &nbsp;&nbsp;$_SERVER['X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT']="h:192.168.4.98:8080//FOO/JavaBridge.phpjavabridge";<br>
+&nbsp;&nbsp;if(!extension_loaded('java') require_once("http://localhost:8080/JavaBridge/java/Java.inc");<br>
 &nbsp;&nbsp;echo java_server_name();<br>
 &nbsp;&nbsp;?&gt; </code> </blockquote>
 
@@ -85,6 +86,31 @@ be set before the PHP instance starts.
 When <code>X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT</code> is used and
 the php instance already has a persistent connection to another host,
 it opens a second persistent connection to the new host.
+</p>
+
+<H4>How do I start the bridge back end when there's another Java VM listening on port 8080?</H4>
+<p>Simply deploy the PHP/Java Bridge web archive into the servlet engine or application server listening on port 8080.</p>
+
+<H4>Whenever I reboot my computer I have to start the bridge back end again. How can I automate this?</H4>
+<p>Tomcat starts and stops as a system service on Unix and Windows.</p>
+<p>Download and install the tomcat servlet engine, deploy the PHP/Java Bridge web archive into the tomcat servlet engine and configure it so that it only listens for requests from local PHP scripts (default).<p>
+
+<H4>Do I have to require Java.inc in each of my scripts? Isn't that very slow?</H4>
+<p>The pure PHP/Java Bridge library <code>Java.inc</code> must be included before it can be used. Therefore the scripts should contain the statement
+<blockquote>
+<code>
+&nbsp;&nbsp;require_once("...java/Java.inc");
+</code>
+</blockquote>
+at the beginning of the script. PHP compiles and caches PHP scripts, the <code>Java.inc</code> library is loaded only once.
+</p>
+<p>If the C based implementation is used, the pure PHP implementation can be used as a fall back:
+<blockquote>
+<code>
+&nbsp;&nbsp;if(!extension_loaded('java'))<br>
+&nbsp;&nbsp;require_once("http://localhost:8080/JavaBridge/java/Java.inc");
+</code>
+</blockquote>
 </p>
 
 <H2>Running Java as a sub component of Apache or IIS</H2>
@@ -164,7 +190,7 @@ Please see <code>webapps/JavaBridge/WEB-INF/cgi/README</code> for details.
 <a name="global-servlet">
 <H4>I want to use PHP for all tomcat applications. Apache and IIS are not available, but performance is important. How do I install it?</H4>
 </a>
-<p> Check if your PHP cgi binary supports the <code>-b</code> flag. If not, compile PHP with the <code>--enable-fastcgi</code> option or <a href="#http-front-end">use Apache or IIS as a front-end</a> instead. On Windows one could also copy a wrapper binary into the <code>WEB-INF/cgi/</code> folder, for example the <code>launcher.exe</code> from the <code>PHPIntKitForWindows.zip</code> available from <a href="http://www-128.ibm.com/alphaworks">alphaworks</a>.</p>
+<p> Check if your PHP cgi binary supports the <code>-b</code> flag. If not, compile PHP with the <code>--enable-fastcgi</code> option </p>
 <p>
 Download and install the J2EE binary: copy <code>JavaBridge.war</code> into the tomcat <code>webapps</code> folder.
 </p>
@@ -502,10 +528,11 @@ Please see the JSF implementation for a reference.
 
 <H4>How can is access the Servlet, ServletContext or ServletRequest from a remote PHP script?</H4>
 <p>
-Unless you write your own servlet, you can't. The default
-implementation of the PhpJavaServlet does not wait for a
-RemoteServletContextFactory to finish because it cannot reliably determine if a
-remote script terminated or not.
+Unless you write your own servlet (see
+testContextAwarePhpJavaServlet.php from the tests.php5 folder), you
+can't. The default implementation of the PhpJavaServlet does not wait
+for a RemoteServletContextFactory to finish because it cannot reliably
+determine if a remote script terminated or not.
 </p>
 <p>If you can provide this information, override the PhpJavaServlet's
 <code>getContextFactory()</code>. Provide your own
@@ -725,6 +752,52 @@ BORDER="1"
 </p>
 <p>
 </p>
+
+<H4>How fast is the pure PHP/Java implementation compared to the C based implementation or JSP?</H4>
+<p>On modern operating systems (Windows, Solaris and Linux), the pure PHP implementation is only 2-3 times slower than either the C based implementation or compiled JSP (=Java servlets).<p>
+<p>
+The following table displays the result of the command:
+<blockquote>
+<code>
+time for i in `seq 200`<br> 
+&nbsp;&nbsp;do wget -O/dev/null -o/dev/null http://localhost:8080/JavaBridge/sessionSharing.[php|jsp]<br>
+done
+</code>
+</blockquote>
+<center>
+<TABLE
+BORDER="1"
+><COL><COL><COL><COL><THEAD
+><TR
+><TH
+>OS</TH
+><TH
+>PHP (tcp sockets + tcp sockets)</TH
+><TH
+>PHP (named pipes + tcp sockets)</TH
+><TH
+>JSP</TH
+></TR
+></THEAD
+<TBODY>
+<TR>
+<TD>Linux (RedHat Fedora 6)</TD
+><TD>0m9.465s</TD><TD
+>0m9.477s</TD><TD
+>0m3.126s</TD>
+</TR>
+<TR>
+<TD>WinNT (2000)</TD
+><TD>0m39.439s</TD><TD
+>not available</TD><TD
+>0m22.904s</TD>
+</TR>
+</TBODY>
+</TABLE>
+</center>
+</p>
+
+
 <!--
  <H4>How do I start a persistent VM?</H4> 
 <p>

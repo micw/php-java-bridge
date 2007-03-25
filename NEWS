@@ -3,6 +3,30 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 4.0.5
+
+* It is now possible to access the ServletContext, ServletRequest and
+Servlet from the remote context for not more than 30 seconds. See
+tests.php5/testContextAwarePhpJavaServlet.php
+
+
+Version 4.0.4
+
+[no user visible changes]
+
+
+Version 4.0.3
+
+* A java.lang.String object now displays as a primitive type. Example:
+
+$buf = new Java("java.lang.StringBuffer", "hello world");
+$s = $buf->toString();
+$s = $s->substring(0, 5);
+echo $s; echo " is "; echo is_string($s) ? "" : "not "; echo "a php string\n";
+
+=> hello is not a php string
+
+
 Version 4.0.2
 
 * FastCGI on Windows: FastCGI is default on all operating systems. The

@@ -50,7 +50,7 @@ function defineHostFromInitialQuery($java_base) {
 
 // The version number of this pure PHP implementation
 
-define ("JAVA_PEAR_VERSION", "2.1.0");
+define ("JAVA_PEAR_VERSION", "4.0.5");
 
 
 // Deploy JavaBridge.war and re-start the servlet engine or the
@@ -70,3 +70,14 @@ if(!defineHostFromInitialQuery($JAVA_BASE)) {
 // overrides this value. The default level is 2.
 
 define ("JAVA_LOG_LEVEL", null); // integer between 0 and 4
+
+
+// May we use named pipes instead of local TCP sockets?  Set this to
+// the directory in which the named pipes should be created.
+// Note that pipes are a little bit slower than persistent TCP
+// sockets. But they are more secure.
+// Example: define("JAVA_PIPE_DIR", "/tmp");
+// Default is to use /dev/shm on Linux, false otherwise.
+if(!defined("JAVA_PIPE_DIR"))
+  define("JAVA_PIPE_DIR", file_exists("/dev/shm") ? "/dev/shm" 
+		 : file_exists("/tmp" ? "/tmp" : null ));

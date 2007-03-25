@@ -61,7 +61,7 @@ class Runnable {
  */
 function createRunnable($nr, $name) {
   global $IRunnable;
-  $r = new Java("php.java.script.PhpScriptEngine");
+  $r = new Java("php.java.script.InvocablePhpScriptEngine");
   $r->eval(new Java("java.io.FileReader", $name));
   $r->put("nr", $nr);
   $r->put("name", $name);
@@ -77,8 +77,10 @@ function main() {
   $count = 5;
   $argv = ($_SERVER['argv']); 
   $name = realpath($argv[0]);
+  unlink("${name}.out");
   $here = dirname($name);
-  java_require("$here/../modules/php-script.jar;$here/../modules/script-api.jar");
+  // make sure php-script.jar and script-api.jar are in the classpath
+  //java_require("$here/../modules/php-script.jar;$here/../modules/script-api.jar");
   $runnables = array();
   for($i=1; $i<=$count; $i++) {
     $runnables[$i]=createRunnable($i, $name);
@@ -90,6 +92,12 @@ function main() {
     $runnables[$i]->get("thread")->join();
     $runnables[$i]->release(); // release the PHP continuation
   }
+  $result = system('cat '.${name}.'.out | sed "s/./&\n/g" |sort | uniq -c | tr -d " \n"');
+  echo "\n";
+  if($result!="101102103104105") die($result);
+
+  echo "test okay\n";
 }
+
 
 ?>

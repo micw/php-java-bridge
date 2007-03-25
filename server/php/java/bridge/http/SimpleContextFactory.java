@@ -40,7 +40,7 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
     /**
      * The visited ContextFactory
      */
-    private ContextFactory visited;
+    protected ContextFactory visited;
 
     /**
      * The jsr223 context or the emulated jsr223 context.
@@ -60,11 +60,19 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
         visited.destroy();
     }
     
+    /**
+     * Wait for the context factory to finish. The default implementation does nothing.
+     * Call visited.waitFor() if you want to wait.
+     */
     public void waitFor() throws InterruptedException {
-        visited.waitFor();
+        //visited.waitFor();
     }
+    /**
+     * Wait for the context factory to finish. The default implementation does nothing.
+     * Call visited.waitFor() if you want to wait.
+     */
     public void waitFor(long timeout) throws InterruptedException {
-	visited.waitFor(timeout);
+	//visited.waitFor(timeout);
     }    
     public String getId() { 
         return visited.getId();

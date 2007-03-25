@@ -44,24 +44,6 @@ public class RemoteContext extends Context {
     /**
      * throws IllegalStateException
      * @throws IllegalStateException
-     * @deprecated Use java_context()->getAttribute(...) instead
-     */
-    public Object getHttpServletRequest() {
-	throw new IllegalStateException("PHP not running in a servlet environment");
-    }
-    
-    /**
-     * throws IllegalStateException
-     * @throws IllegalStateException
-    * @deprecated Use java_context()->getAttribute(...) instead
-     */
-    public Object getServletContext() {
-	throw new IllegalStateException("PHP not running in a servlet environment");
-    }
-    
-    /**
-     * throws IllegalStateException
-     * @throws IllegalStateException
     * @deprecated Use java_context()->getAttribute(...) instead
      */
     public Object getHttpServletResponse() {

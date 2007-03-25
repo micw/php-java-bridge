@@ -150,18 +150,15 @@ Build and execution instructions:
     export X_JAVABRIDGE_OVERRIDE_HOSTS="/"
     export PHP_FCGI_CHILDREN="5"
     export PHP_FCGI_MAX_REQUESTS="5000"
-    /usr/bin/php-cgi -b 127.0.0.1:9667
+    /usr/bin/php-cgi -d allow_url_include=On -b 127.0.0.1:9667
 
-  On Windows the php-cgi.exe doesn't support the -b flag. Therefore an
-  external "launcher.exe" is required; IBM Websphere users can find such
-  a binary in the "PHP Integration Kit for Windows":
-  PHPIntKitForWindows.zip, available from alphaworks. The command is:
+  On Windows the command is:
 
     set REDIRECT_STATUS "200"
     set X_JAVABRIDGE_OVERRIDE_HOSTS "/"
     set PHP_FCGI_CHILDREN "5"
     set PHP_FCGI_MAX_REQUESTS "5000"
-    launcher.exe -a "c:\php\php-cgi" -b 9667
+    launcher.exe php-cgi \\.\pipe\JavaBridge@9667 -d allow_url_include=On
 
 
   The PHP FastCGI server starts when the VM or the web context starts,

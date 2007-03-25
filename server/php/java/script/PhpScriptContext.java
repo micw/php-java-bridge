@@ -83,11 +83,17 @@ public class PhpScriptContext extends SimpleScriptContext implements IContext, I
     }
 	
     /**
+     * Ignore the default java_context()->call(java_closure()) call at the end
+     * of the invocable script, if the user has provided its own.
+     */
+    private boolean continuationCalled;
+    /**
      * Set the php continuation
      * @param kont - The continuation.
      */
     public void setContinuation(HttpProxy kont) {
 	this.kont = kont;
+	continuationCalled = false;
     }
 
 
@@ -96,8 +102,8 @@ public class PhpScriptContext extends SimpleScriptContext implements IContext, I
      */
     /**@inheritDoc*/
     public boolean call(PhpProcedureProxy kont) throws InterruptedException {
-	this.kont.call(kont);
-	return true;
+    	if(!continuationCalled) this.kont.call(kont);
+    	return continuationCalled = true;
     }
 
 

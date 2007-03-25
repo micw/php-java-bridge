@@ -38,22 +38,6 @@ public class RemoteHttpSessionFacade extends HttpSessionFacade {
     }
     
     /**
-     * throws IllegalStateException
-     * @throws IllegalStateException
-    */
-    public HttpServletRequest getHttpServletRequest() {
-	throw new IllegalStateException("PHP not running in a servlet environment");
-    }
-    
-    /**
-     * throws IllegalStateException
-     * @throws IllegalStateException
-     */
-    public ServletContext getServletContext() {
-	throw new IllegalStateException("PHP not running in a servlet environment");
-    }
-    
-    /**
      * throws IllegalStateException.
      * @throws IllegalStateException
      */

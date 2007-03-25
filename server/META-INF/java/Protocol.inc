@@ -149,7 +149,10 @@ class java_HttpHandler extends java_SocketHandler {
 	return new java_EmptyPipeChannel();
   }
   function close() {
-	fflush($this->socket);
+    if($this->headers['connection_close'])
+      fclose($this->socket);
+    else
+      fflush($this->socket);
   }
   function open() {
 	$socket = pfsockopen("{$this->ssl}{$this->host}", $this->port, $errno, $errstr, 30);
@@ -293,6 +296,9 @@ class java_HttpHandler extends java_SocketHandler {
 		if(!strncasecmp("CONTENT-LENGTH", $str, 14)) {
 		  $this->headers["content_length"]=trim(substr($str, 15));
 		}
+		if(!strncasecmp("CONNECTION", $str, 10)) {
+		  $this->headers["connection_close"]=!strncasecmp("CLOSE", trim(substr($str, 11)), 5);
+		}
 	  }
 	}
   }
@@ -354,17 +360,15 @@ class java_Protocol {
   function getOverrideHosts() {
       if(array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS', $_ENV)) {
           $override = $_ENV['X_JAVABRIDGE_OVERRIDE_HOSTS'];
-          if($override!='/') return $override;
-
-          // fcgi: override for redirect
-          return 
-              (array_key_exists('HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER)
-               ?$_SERVER['HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT']
-               :(array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER)
-                 ?$_SERVER['X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT']
-                 :null));
-      }
-      return null;
+          if(!is_null($override) && $override!='/') return $override;
+	  }
+	  // fcgi: override for redirect
+	  return 
+		(array_key_exists('HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER)
+		 ?$_SERVER['HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT']
+		 :(array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER)
+		   ?$_SERVER['X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT']
+		   :null));
   }
   static function getHost() {
 	static $host;

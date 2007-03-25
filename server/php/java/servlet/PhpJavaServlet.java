@@ -55,9 +55,14 @@ import php.java.bridge.http.ContextServer;
  * <p>
  * To enable fcg/servlet debug code start the servlet engine with -Dphp.java.bridge.default_log_level=6.
  * For example: <code>java -Dphp.java.bridge.default_log_level=6 -jar /opt/jakarta-tomcat-5.5.9/bin/bootstrap.jar</code>
- * @see php.java.bridge.JavaBridge
- *  */
-public class PhpJavaServlet extends HttpServlet {
+ * </p>
+ * <p>There cannot be more than one PhpJavaServlet instance per web application. If you extend from this class, make sure to change
+ * the .phpjavabridge =&gt; PhpJavaServlet mapping in the WEB-INF/web.xml. </p>
+ */
+public /*singleton*/ class PhpJavaServlet extends HttpServlet {
+
+    /** how long shall we wait for a remote client to terminate? */
+    protected static final int MAX_WAIT = 30000;
 
     private static final long serialVersionUID = 3257854259629144372L;
 
@@ -161,11 +166,15 @@ public class PhpJavaServlet extends HttpServlet {
      * For example the script <code>&lt;?php java_context(); ?&gt;</code> allocates a RemoteContextFactory but doesn't do 
      * anything with it. The contextFactory.waitFor() method will block until it is cleaned after 10 minutes.
      * </p>
-     * <p>The default is to wait for a local ServletContextFactory and to not wait for a RemoteContextFactory.</p>
+     * <p>The default is to wait for a local ServletContextFactory and to wait RemoteContextFactory for 30 seconds.</p>
      * @param ctx The (Remote-) ContextFactory.
      */
     protected void waitForContext(ServletContextFactory ctx) {
-	/* Default: Wait for local ContextFactory, but do not wait for a RemoteContextFactory. */
+	try {
+	    ctx.waitFor(MAX_WAIT);
+        } catch (InterruptedException e) {
+	    Util.printStackTrace(e);
+        }
     }
     /**
      * Handle the override re-direct for "java_get_session()" when php

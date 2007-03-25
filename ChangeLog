@@ -1,3 +1,59 @@
+2007-03-25  Jost Boekemeier  <jostb@intern>
+
+	* server/META-INF/java/Protocol.inc
+	(getOverrideHosts): Allow X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT w/o
+	X_JAVABRIDGE_OVERRIDE_HOSTS.
+
+	* server/php/java/servlet/PhpJavaServlet.java 
+	(waitForContext): Wait. But no longer than 30 seconds.
+
+	* server/php/java/servlet/RemoteServletContextFactory.java
+	(createContext): Allow access to ServletRequest, Servlet and
+	ServletContext, but not ServletResponse. If a ServletResponse
+	instance is needed, fake one.
+
+	* VERSION, php-java-bridge.spec: Version 4.0.5 released.
+
+	
+2007-03-24  Jost Boekemeier  <jostb@intern>
+
+	* server/META-INF/java/Protocol.inc
+	(close,open): Re-open a closed connection.
+
+	* server/META-INF/java/JavaProxy.inc
+	(java_closure_array): Correct test.
+
+	* server/extract.sed: New file
+	
+	* server/Makefile.am: Refactored: use extract cmd file
+
+	* server/META-INF/java/Options.inc
+	(JAVA_PIPE_DIR): New option
+
+	* server/php/java/bridge/JavaBridge.java
+	(initLog): Log thread pool size.
+	(weight): null arguments do not contribute anything
+
+	* server/php/java/script/PhpScriptContext.java
+	(setContinuation, call): Ignore further calls so that the default
+	java_context()->call() is void if the user has already called into
+	the continuation.
+	
+	* tests.php5/script_api.php
+	(createRunnable): Use InvocablePhpScriptEngine. PhpScriptEngine
+	cannot call.
+
+	* VERSION, php-java-bridge.spec: Version 4.0.4 released.
+	
+	
+2007-03-21  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/JavaBridge.java 
+	(ObjectToString): New method.
+
+	* VERSION, php-java-bridge.spec: Version 4.0.3 released.
+	
+	
 2007-03-19  Jost Boekemeier  <jostb@intern>
 
 	* server/META-INF/java/JavaProxy.inc 

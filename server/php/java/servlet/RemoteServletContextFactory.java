@@ -78,8 +78,21 @@ public class RemoteServletContextFactory extends ServletContextFactory {
      * @see php.java.servlet.Context
      */
     public IContext createContext() {
-	IContext ctx = new RemoteContext(kontext, req, res);
-	ctx.setAttribute("ServletConfig", servlet.getServletConfig(), IContext.ENGINE_SCOPE);	
+	IContext ctx = super.createContext();
+	ctx.removeAttribute(IContext.SERVLET_RESPONSE, IContext.ENGINE_SCOPE);
 	return ctx;
     }
+    /**
+     * Wait for the context factory to finish. 
+     */
+    public void waitFor() throws InterruptedException {
+        visited.waitFor();
+    }
+    /**
+     * Wait for the context factory to finish. 
+     */
+    public void waitFor(long timeout) throws InterruptedException {
+	visited.waitFor(timeout);
+    }    
+
 }
