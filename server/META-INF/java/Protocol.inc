@@ -78,9 +78,11 @@ class java_PipeChannel extends java_EmptyPipeChannel {
   function java_PipeChannel($name) {
 	$this->name = $name;
 	$this->iname = $this->name . ".i";
+	$mask = umask(0);
 	$this->fifor = posix_mkfifo($this->iname, 0666);
 	$this->oname = $this->name . ".o";
 	$this->fifo = posix_mkfifo($this->oname, 0666);
+	umask($mask);
   }
   function open($handler) {
 	$this->peerr = fopen($this->iname, "r");
@@ -149,7 +151,7 @@ class java_HttpHandler extends java_SocketHandler {
 	return new java_EmptyPipeChannel();
   }
   function close() {
-    if($this->headers['connection_close'])
+    if(array_key_exists('connection_close',$this->headers))
       fclose($this->socket);
     else
       fflush($this->socket);

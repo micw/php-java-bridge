@@ -101,7 +101,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     
     private static final long ORPHANED_TIMEOUT = 5000; // every 5 seconds
 
-    private boolean removed=false;
+    private boolean invalid=false;
 
     private JavaBridge bridge = null;
 
@@ -158,6 +158,10 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     	return new SimpleContextFactory(EMPTY_CONTEXT_NAME);
     }
     
+    private void init(ICredentials cred) {
+	contextServer = cred;
+	invalid = false;
+    }
    /**
      * Only for internal use.
      *  
@@ -176,7 +180,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
         ContextFactory factory = moveContext(id); 
         if(factory==null) return null;
         
-        if(factory.contextServer==null) factory.contextServer = server;
+        if(factory.contextServer==null) factory.init(server);
         if(factory.contextServer != server) 
             throw new SecurityException("Illegal access");
         return factory.visitor;
@@ -196,9 +200,12 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     /**
      * Recycle the factory for new reqests.
      */    
-    public void recycle() {
+    public synchronized void recycle() {
 	super.recycle();
 	contextServer=null;
+	bridge=null;
+	invalid=true;
+	notify();
     }
     
     /* (non-Javadoc)
@@ -208,7 +215,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	if(Util.logLevel>4) Util.logDebug("context finished: " +getId());
 	remove(getId());
 	bridge=null;
-	removed=true;
+	invalid=true;
 	notify();
    }
     
@@ -241,7 +248,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	    ContextFactory ctx = ((ContextFactory)ii.next());
 	    if(ctx.timestamp+ORPHANED_TIMEOUT<timestamp) {
 	        synchronized(ctx) {
-	            ctx.removed=true;
+	            ctx.invalid=true;
 	            ctx.notify();
 	        }
 	        if(Util.logLevel>4) Util.logDebug("Orphaned context: " + ctx.getId() + " removed.");
@@ -259,7 +266,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	for(Iterator ii=contexts.values().iterator(); ii.hasNext();) {
 	    ContextFactory ctx = ((ContextFactory)ii.next());
 	    synchronized(ctx) {
-		ctx.removed=true;
+		ctx.invalid=true;
 		ctx.notify();
 	    }
 	    ii.remove();
@@ -270,13 +277,13 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * @see php.java.bridge.http.IContextFactory#waitFor()
      */
     public synchronized void waitFor() throws InterruptedException {
-    	if(!removed) wait();
+    	if(!invalid) wait();
     }
     /* (non-Javadoc)
      * @see php.java.bridge.http.IContextFactory#waitFor()
      */
     public synchronized void waitFor(long timeout) throws InterruptedException {
-	if(!removed) wait(timeout);
+	if(!invalid) wait(timeout);
     }
     /* (non-Javadoc)
      * @see php.java.bridge.http.IContextFactory#getId()
@@ -356,7 +363,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     public synchronized void removeOrphaned() {
 	Object ob = contexts.remove(id);
         if(Util.logLevel>4) Util.logDebug("removed empty context: " + ob + ", # of contexts: " + contexts.size());
-	removed=true;
+	invalid=true;
 	notify();
     }
 }

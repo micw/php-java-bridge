@@ -292,18 +292,17 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 		resOut = res.getOutputStream();
 		sout.writeTo(resOut);
 		if(bridge.logLevel>3) bridge.logDebug("redirecting to port# "+ channelName);
-	    	sin.close(); sin=null;
-		try {res.flushBuffer(); } catch (Throwable t) {Util.printStackTrace(t);}
+	    	sin.close();
+		try {res.flushBuffer(); } catch (Throwable t) {Util.printStackTrace(t);} // resin ignores resOut.close()
+		try {resOut.close(); } catch (Throwable t) {Util.printStackTrace(t);} // Sun Java System AS 9 ignores flushBuffer()
 		contextServer.start(channelName);
 		this.waitForContext(ctx);
 	    }
 	    else {
-	        sin.close(); sin=null;
 	        ctx.destroy();
 	    }
 	} catch (Exception e) {
 	    Util.printStackTrace(e);
-	    try {if(sin!=null) sin.close();} catch (IOException e1) {}
 	}
     }
 
@@ -340,7 +339,6 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 
 	} catch (Throwable t) {
 	    Util.printStackTrace(t);
-	    try {req.getInputStream().close();} catch (IOException x2) {}
 	}
     }
     /** For backward compatibility */

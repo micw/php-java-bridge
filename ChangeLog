@@ -1,3 +1,24 @@
+2007-03-26  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/servlet/PhpJavaServlet.java
+	(handleSocketConnection): Explicitly close down the output stream
+	before waiting for the remote context. Otherwise the Sun Java
+	System AS 9 delays the response and a remote script hangs for
+	30 seconds in waitForContext() until the servlet terminates.
+
+	* /server/php/java/bridge/http/ContextFactory.java
+	(recycle): notify a servlet waiting in waitForContext() that the
+	script terminated.
+	(init): New method.
+	(get): initialize, if necessary.
+		
+	* server/META-INF/java/Protocol.inc
+	(close): check null
+	(java_PipeChannel): Set the umask so that files created by apache
+	can be accessed by the J2EE back end.
+	
+	* VERSION, php-java-bridge.spec: Version 4.0.6 released.
+	
 2007-03-25  Jost Boekemeier  <jostb@intern>
 
 	* server/META-INF/java/Protocol.inc
@@ -106,9 +127,6 @@
 	* server/WEB-INF/cgi/launcher.c: New file
 
 	* server/WEB-INF/cgi/php-fcgi.sh: Removed
-	
-	
-server/php/java/servlet/fastcgi/*.java
 	
 	
 2007-02-10  Jost Boekemeier  <jostb@intern>
