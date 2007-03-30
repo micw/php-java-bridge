@@ -215,13 +215,25 @@ class Parser {
 			type = KEY;
 		    }
 		    break;
-		case 077: if(in_dquote) {APPEND(ch); break;} 
+		case 077: if(in_dquote) {APPEND(ch); break;}
+		    /* This code is called by the pure PHP implementation.
+                        Unlike the C implementation, which simply keeps a persistent connection to the ContextRunner, the 
+                        pure PHP implementation must contact the servlet port to see on which port there's a persistent connection to
+                        a contextRunner. Since the one statement executed by the servlet may have updated the loader path, we must update 
+                        the persistent loader with the fresh information  before we can set the servlet's bridge into the ContextRunner.
+                        The pure PHP implementation passes information obtained from the servlet as a normal protocol header
+                        to the ContextRunner.
+                        */
 		    // the header used to be binary encoded
 		    int len =(0xFF&buf[c+2]) | (0xFF00&(buf[c+3]<<8));
 		    String newContext = new String(buf, c+4, c+len,  Util.ASCII);
+		    // the fresh bridge from the servlet
+		    JavaBridge bridge = (ContextFactory.get(newContext, ContextFactory.NO_CREDENTIALS)).getBridge();
+		    // @see ContextRunner#init. Update the persistent cl with the information from the loader 
+		    bridge.getClassLoader().setClassLoader(this.bridge.getClassLoader().cl);
 		    // @see ContextRunner#recycle. Since this is called only for a pfsockopen reconnect, we can pass
 		    // NO_CREDENTIALS. sockets are insecure anyway.
-		    bridge.request.setBridge((ContextFactory.get(newContext, ContextFactory.NO_CREDENTIALS)).getBridge());
+		    this.bridge.request.setBridge(bridge);
 		    c+=len+3;
 		    break;
 		default:

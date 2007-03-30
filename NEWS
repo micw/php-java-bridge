@@ -10,11 +10,6 @@ Servlet from the remote context for not more than 30 seconds. See
 tests.php5/testContextAwarePhpJavaServlet.php
 
 
-Version 4.0.4
-
-[no user visible changes]
-
-
 Version 4.0.3
 
 * A java.lang.String object now displays as a primitive type. Example:

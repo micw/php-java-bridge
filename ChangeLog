@@ -1,3 +1,12 @@
+2007-03-28  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/Parser.java
+	(parse): Parse the protocol header correctly. Since the pure PHP
+	implementation always contacts the servlet, the ContextRunner needs
+	an updated classloader.
+	
+	* VERSION, php-java-bridge.spec: Version 4.0.7 released.
+	
 2007-03-26  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/servlet/PhpJavaServlet.java
