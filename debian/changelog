@@ -1,3 +1,10 @@
+php-java-bridge (4.0.7-1) unstable; urgency=low
+
+  * New upstream version
+  * Splitted in multiple packages
+
+ -- Andre Felipe Machado <af-machado@uol.com.br>  Mon,  2 Apr 2007 16:34:41 -0300
+
 php-java-bridge (4.0.6-1) unstable; urgency=low
 
   * New upstream version

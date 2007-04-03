@@ -67,11 +67,8 @@ clean-patched:
 
 	dh_clean 
 
-install: build
-	dh_testdir
-	dh_testroot
-	dh_clean -k 
-	dh_installdirs 
+
+install: installbasic
 
 	# Add here commands to install the package into debian/php-java-bridge.
 
@@ -79,19 +76,102 @@ install: build
 	$(MAKE) install-modules DESTDIR=${DESTDIR}
 
 # AFM 11dec2006 using dh_installdirs and dh_install for this task
-# note the absence of leading "/"
-	dh_install java.ini java-servlet.ini mono.ini etc/php5/conf.d
+# note the absence of leading "/" and one per line to avoid jumping to next rule
+installini:
+	dh_install java.ini etc/php5/conf.d
+	dh_install mono.ini etc/php5/conf.d
 
+installinij2ee:
+#	dh_install java-servlet.ini etc/php5/conf.d
+
+# AFM 03apr2007 to avoid multiple binary packages conflicts
+installbasic: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k 
+	dh_installdirs 
 
 # Build architecture-independent files here.
-binary-indep: build install
+# AFM 03apr2007 creating also docs package without examples files. See /debian/*.docs file
+binary-indep: build install php-java-bridge-j2ee php-java-bridge-docs php-java-bridge-j2ee-docs
 
+# AFM 03apr2007 creating j2ee package . See /debian/*j2ee.* files
+# note the -p$@ to use target name package files in /debian as parameters
+php-java-bridge-j2ee: build install installinij2ee
+	dh_testdir
+	dh_testroot
+	dh_installdirs -p$@
+	dh_installchangelogs -p$@ ChangeLog
+	dh_installdocs -p$@
+#	dh_installexamples -p$@
 # AFM 11dec2006 using dh_installdirs and dh_install for this task
 # note the absence of leading "/"
-	dh_install ${BUILDDIR}$(PHP_EXT_DIR)/JavaBridge.war var/lib/tomcat5/webapps
+	dh_install -p$@ ${BUILDDIR}$(PHP_EXT_DIR)/JavaBridge.war var/lib/tomcat5/webapps
+	dh_install -p$@
+#	dh_installmenu -p$@
+#	dh_installdebconf -p$@
+#	dh_installlogrotate -p$@
+#	dh_installemacsen -p$@
+#	dh_installpam -p$@
+#	dh_installmime -p$@
+#	dh_python -p$@
+#	dh_installinit -p$@
+#	dh_installcron -p$@
+#	dh_installinfo -p$@
+	dh_installman -p$@
+	dh_link -p$@
+	dh_strip
+	dh_compress -p$@
+	dh_fixperms -p$@
+#	dh_perl -p$@
+#	dh_makeshlibs -p$@
+	dh_installdeb -p$@
+	dh_shlibdeps -p$@
+	dh_gencontrol -p$@
+	dh_md5sums -p$@
+	dh_builddeb -p$@
+
+
+
+# AFM 03apr2007 creating docs package without examples files. See /debian/*.docs file
+# pitfall: packages have "-" in their name. Do not create intermediate rules with this character
+php-java-bridge-docs: installdocs
+
+php-java-bridge-j2ee-docs: installdocs
+
+installdocs: build installbasic
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs ChangeLog
+	dh_installdocs
+#	dh_installexamples
+#	dh_install
+#	dh_installmenu
+#	dh_installdebconf	
+#	dh_installlogrotate
+#	dh_installemacsen
+#	dh_installpam
+#	dh_installmime
+#	dh_python
+#	dh_installinit
+#	dh_installcron
+#	dh_installinfo
+	dh_installman
+	dh_link
+	dh_strip
+	dh_compress
+	dh_fixperms
+#	dh_perl
+#	dh_makeshlibs
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
 
 # Build architecture-dependent files here.
-binary-arch: build install
+binary-arch: build install installini
 	dh_testdir
 	dh_testroot
 	dh_installchangelogs ChangeLog
@@ -122,7 +202,7 @@ binary-arch: build install
 	dh_builddeb
 
 binary: binary-indep binary-arch
-.PHONY: build clean binary-indep binary-arch binary install configure
+.PHONY: build clean binary-indep binary-arch binary install configure installdocs installbasic installini installinij2ee 
 
 # AFM 07dec2006 using dpatch for flexibility
 unpatch:
