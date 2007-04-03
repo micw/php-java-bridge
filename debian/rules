@@ -16,7 +16,7 @@ export DH_VERBOSE=1
 	BUILDDIR := debian/php-java-bridge
 	DESTDIR := ${CURDIR}/${BUILDDIR}
 	PHP_EXT_DIR := $(shell /usr/bin/php-config --extension-dir)
-
+	PHP_INCLUDE_DIR := $(shell /usr/bin/php-config --include-dir)
 
 
 CFLAGS = -Wall -g
@@ -73,7 +73,8 @@ install: installbasic
 	# Add here commands to install the package into debian/php-java-bridge.
 
 # AFM 27nov2006 to specifiy destdir debian way
-	$(MAKE) install-modules DESTDIR=${DESTDIR}
+#	$(MAKE) install-modules DESTDIR=${DESTDIR}
+	$(MAKE) install DESTDIR=${DESTDIR}
 
 # AFM 11dec2006 using dh_installdirs and dh_install for this task
 # note the absence of leading "/" and one per line to avoid jumping to next rule
@@ -81,8 +82,6 @@ installini:
 	dh_install java.ini etc/php5/conf.d
 	dh_install mono.ini etc/php5/conf.d
 
-installinij2ee:
-#	dh_install java-servlet.ini etc/php5/conf.d
 
 # AFM 03apr2007 to avoid multiple binary packages conflicts
 installbasic: build
@@ -93,11 +92,12 @@ installbasic: build
 
 # Build architecture-independent files here.
 # AFM 03apr2007 creating also docs package without examples files. See /debian/*.docs file
-binary-indep: build install php-java-bridge-j2ee php-java-bridge-docs php-java-bridge-j2ee-docs
+binary-indep: build install php-java-bridge-j2ee php-java-bridge-docs php-java-bridge-j2ee-docs php-java-bridge-devel
 
 # AFM 03apr2007 creating j2ee package . See /debian/*j2ee.* files
 # note the -p$@ to use target name package files in /debian as parameters
-php-java-bridge-j2ee: build install installinij2ee
+php-java-bridge-j2ee: build install
+
 	dh_testdir
 	dh_testroot
 	dh_installdirs -p$@
@@ -130,6 +130,43 @@ php-java-bridge-j2ee: build install installinij2ee
 	dh_gencontrol -p$@
 	dh_md5sums -p$@
 	dh_builddeb -p$@
+
+
+# AFM 03apr2007 creating devel package . See /debian/*devel.* files
+# note the -p$@ to use target name package files in /debian as parameters
+php-java-bridge-devel: build install
+	dh_testdir
+	dh_testroot
+	dh_installdirs -p$@
+	dh_installchangelogs -p$@ ChangeLog
+	dh_installdocs -p$@
+	dh_installexamples -p$@
+	dh_install -p$@ ${BUILDDIR}$(PHP_EXT_DIR)/*.jar $(PHP_INCLUDE_DIR)/ext/php-java-bridge
+#	dh_install -p$@
+#	dh_installmenu -p$@
+#	dh_installdebconf -p$@
+#	dh_installlogrotate -p$@
+#	dh_installemacsen -p$@
+#	dh_installpam -p$@
+#	dh_installmime -p$@
+#	dh_python -p$@
+#	dh_installinit -p$@
+#	dh_installcron -p$@
+#	dh_installinfo -p$@
+	dh_installman -p$@
+	dh_link -p$@
+	dh_strip
+	dh_compress -p$@
+	dh_fixperms -p$@
+#	dh_perl -p$@
+#	dh_makeshlibs -p$@
+	dh_installdeb -p$@
+	dh_shlibdeps -p$@
+	dh_gencontrol -p$@
+	dh_md5sums -p$@
+	dh_builddeb -p$@
+
+
 
 
 
@@ -176,7 +213,7 @@ binary-arch: build install installini
 	dh_testroot
 	dh_installchangelogs ChangeLog
 	dh_installdocs
-	dh_installexamples
+#	dh_installexamples
 #	dh_install
 #	dh_installmenu
 #	dh_installdebconf	
@@ -202,7 +239,7 @@ binary-arch: build install installini
 	dh_builddeb
 
 binary: binary-indep binary-arch
-.PHONY: build clean binary-indep binary-arch binary install configure installdocs installbasic installini installinij2ee 
+.PHONY: build clean binary-indep binary-arch binary install configure installdocs installbasic installini
 
 # AFM 07dec2006 using dpatch for flexibility
 unpatch:
