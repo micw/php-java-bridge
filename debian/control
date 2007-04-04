@@ -2,7 +2,7 @@ Source: php-java-bridge
 Section: web
 Priority: optional
 Maintainer: Andre Felipe Machado <af-machado@uol.com.br>
-Build-Depends:  debhelper (>= 5), libncurses5-dev (>= 5.5-2 ), libselinux1-dev (>= 1.30-1 ), libsepol1-dev (>= 1.12.24-1 ), php5-dev (>= 5.1.0 ) | php4-dev (>= 4.4.4 ), automake (>= 1.6.3 ) | automake1.7 | automake1.8 | automake1.9, sun-java5-jdk (>= 1 ),  locales (>= 2.3.6.ds1-4 ),  gcc (>= 3.2 ),  make (>= 1 ), liblucene-java, libitext-java
+Build-Depends:  debhelper (>= 5), libncurses5-dev (>= 5.5-2 ), libselinux1-dev (>= 1.30-1 ), libsepol1-dev (>= 1.12.24-1 ), php5-dev (>= 5.1.0 ) | php4-dev (>= 4.4.4 ), automake (>= 1.6.3 ) | automake1.7 | automake1.8 | automake1.9, sun-java5-jdk (>= 1 ),  locales (>= 2.3.6.ds1-4 ),  gcc (>= 3.2 ),  make (>= 1 ), liblucene-java, libitext-java, dpatch
 Standards-Version: 3.7.2
 
 
