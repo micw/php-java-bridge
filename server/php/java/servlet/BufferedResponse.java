@@ -24,16 +24,6 @@ package php.java.servlet;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-/**
- * A custom session, used when remote PHP scripts access the servlet.In this case only the session object is available, the HttpServletRequest, HttpServletResponse and ServletContext
- * objects are set to null.
- */
-public class RemoteHttpSessionFacade extends HttpSessionFacade {
-    protected RemoteHttpSessionFacade (ServletContextFactory ctxFactory, ServletContext ctx, HttpServletRequest req, HttpServletResponse res, int timeout) {
-	super(ctxFactory, ctx, req, res, timeout);
-    }
+interface BufferedResponse {
+    public byte[] getBufferContents();
 }

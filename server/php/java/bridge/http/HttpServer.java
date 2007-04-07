@@ -178,7 +178,7 @@ public abstract class HttpServer implements Runnable {
 	    "<title>404 Not Found</title>" +
 	    "</head><body>" +
 	    "<h1>Not Found</h1>" +
-	    "<p>The requested URL as not found on this server.</p>" +
+	    "<p>The requested URL was not found on this server.</p>" +
 	    "<hr>"+
     "</body></html>");
     protected void doPost(HttpRequest req, HttpResponse res) throws IOException {

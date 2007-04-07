@@ -52,11 +52,11 @@ class FastCGIInputStream extends DefaultInputStream {
             throw new ConnectionException(connection, e);
         }
     }
-    public int doRead(byte buf[]) throws IOException {
+   private byte header[] = new byte[FastCGIServlet.FCGI_HEADER_LEN];
+   public int doRead(byte buf[]) throws IOException {
         int n, i;
         //assert if(buf.length!=FCGI_BUF_SIZE) throw new IOException("Invalid block size");
-        byte header[] = new byte[FastCGIServlet.FCGI_HEADER_LEN];
-        for(n=0; (i=read(header, n, FastCGIServlet.FCGI_HEADER_LEN-n)) > 0; ) n+=i;
+        for(n=0; (i=read(header, n, FastCGIServlet.FCGI_HEADER_LEN-n)) > 0; )  n+=i;
         if(FastCGIServlet.FCGI_HEADER_LEN != n) 
     	throw new IOException ("Protocol error");
         int type = header[1] & 0xFF;

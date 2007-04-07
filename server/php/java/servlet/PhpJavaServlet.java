@@ -161,12 +161,9 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
      * This hook can be used to suspend the termination of the servlet until the (Remote-)ServletContextFactory is finished.
      * It may be useful if one wants to access the Servlet, ServletContext or ServletRequest from a remote PHP script.
      * The notification comes from the php script when it is running as a sub component of the J2EE server or servlet engine.
-     * </p><p>
-     * The default is to not wait for a RemoteContextFactory because it cannot reliably determine if a remote php script has terminated.
-     * For example the script <code>&lt;?php java_context(); ?&gt;</code> allocates a RemoteContextFactory but doesn't do 
-     * anything with it. The contextFactory.waitFor() method will block until it is cleaned after 10 minutes.
      * </p>
-     * <p>The default is to wait for a local ServletContextFactory and to wait RemoteContextFactory for 30 seconds.</p>
+     * <p>The default is to not wait for a local ServletContextFactory (the ContextFactory is passed from the PhpCGIServlet) 
+     * and to wait RemoteContextFactory for 30 seconds.</p>
      * @param ctx The (Remote-) ContextFactory.
      */
     protected void waitForContext(ServletContextFactory ctx) {
@@ -192,7 +189,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	InputStream in; ByteArrayOutputStream out; OutputStream resOut;
 	ServletContextFactory ctx = getContextFactory(req, res, contextServer.getCredentials(channel, kontext));
 	JavaBridge bridge = ctx.getBridge();
-	ctx.setSession(req);
+	ctx.setSessionFactory(req);
 	if(bridge.logLevel>3) bridge.logDebug("override redirect starts for " + ctx.getId());		
 	// save old state
 	InputStream bin = bridge.in;
@@ -234,7 +231,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	InputStream in; ByteArrayOutputStream out;
 	ServletContextFactory ctx = getContextFactory(req, res, contextServer.getCredentials(channel, kontext));
 	JavaBridge bridge = ctx.getBridge();
-	if(session) ctx.setSession(req);
+	if(session) ctx.setSessionFactory(req);
 
 	if(req.getContentLength()==0) {
 	    if(req.getHeader("Connection").equals("Close")) {
@@ -272,7 +269,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
 	ServletContextFactory ctx = getContextFactory(req, res, contextServer.getCredentials(channel, kontext));
 	JavaBridge bridge = ctx.getBridge();
-	if(session) ctx.setSession(req);
+	if(session) ctx.setSessionFactory(req);
 
 	bridge.in = sin=req.getInputStream();
 	bridge.out = sout = new ByteArrayOutputStream();

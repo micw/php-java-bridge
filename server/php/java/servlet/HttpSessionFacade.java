@@ -43,23 +43,19 @@ public class HttpSessionFacade implements ISession {
 
     private HttpSession session;
     private int timeout;
-    private HttpServletRequest req=null;
     private HttpSession sessionCache=null;
     private boolean isNew;
-    private ServletContext ctx;
-    private HttpServletResponse res;
+    private ServletContextFactory ctxFactory;
     
-    private HttpSession getSession() {
+    HttpSession getSession() {
 	if(sessionCache!=null) return sessionCache;
 	sessionCache = session;
 	sessionCache.setMaxInactiveInterval(timeout);
 	return sessionCache;
     }
-    protected HttpSessionFacade (ServletContext ctx, HttpServletRequest req, HttpServletResponse res, int timeout) {
+    protected HttpSessionFacade (ServletContextFactory ctxFactory, ServletContext ctx, HttpServletRequest req, HttpServletResponse res, int timeout) {
+	this.ctxFactory = ctxFactory;
 	this.session = req.getSession();
-	this.req = req;
-	this.ctx = ctx;
-	this.res = res;
 	this.timeout = timeout;
 	this.isNew = session.isNew();
     }
@@ -67,25 +63,28 @@ public class HttpSessionFacade implements ISession {
     /**
      * Returns the HttpServletRequest
      * @return The HttpServletRequest.
+     * @deprecated Use {@link Context#getHttpServletRequest()}
      */
     public HttpServletRequest getHttpServletRequest() {
-    	return this.req;
+    	return (HttpServletRequest) ((Context)ctxFactory.getContext()).getHttpServletRequest();
     }
     
     /**
      * Returns the ServletContext
      * @return The ServletContext.
+     * @deprecated Use {@link Context#getServletContext()}
      */
     public ServletContext getServletContext() {
-        return this.ctx;
+        return (ServletContext) ((Context)ctxFactory.getContext()).getServletContext();
     }
     
     /**
      * Returns the ServletResponse
      * @return The ServletResponse.
+     * @deprecated Use {@link Context#getHttpServletResponse()}
      */
     public HttpServletResponse getHttpServletResponse() {
-        return this.res;
+        return (HttpServletResponse) ((Context)ctxFactory.getContext()).getHttpServletResponse();
     }
     /**@inheritDoc*/
     public Object get(Object ob) {

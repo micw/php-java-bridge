@@ -28,6 +28,8 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import php.java.bridge.http.IContext;
+
 
 /**
  * A custom context, used when remote PHP scripts access the servlet. In this case the HttpServletRequest, HttpServletResponse and ServletContext
@@ -42,11 +44,33 @@ public class RemoteContext extends Context {
     }
 
     /**
-     * throws IllegalStateException
-     * @throws IllegalStateException
     * @deprecated Use java_context()->getAttribute(...) instead
      */
     public Object getHttpServletResponse() {
-	throw new IllegalStateException("PHP not running in a servlet environment");
+	return getAttribute(IContext.SERVLET_RESPONSE);
     }
+    /**
+    * @deprecated Use java_context()->getAttribute(...) instead
+     */
+    public Object getHttpServletRequest() {
+	return getAttribute(IContext.SERVLET_REQUEST);
+    }
+    /**
+    * @deprecated Use java_context()->getAttribute(...) instead
+     */
+    public Object getServlet() {
+	return getAttribute(IContext.SERVLET);
+    }
+    /**
+     * @deprecated Use java_context()->getAttribute(...) instead
+      */
+     public Object getServletConfig() {
+ 	return getAttribute(IContext.SERVLET_CONFIG);
+     }
+     /**
+      * @deprecated Use java_context()->getAttribute(...) instead
+       */
+      public Object getServletContext() {
+  	return getAttribute(IContext.SERVLET_CONTEXT);
+      }
 }

@@ -24,6 +24,7 @@ package php.java.servlet;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -49,16 +50,17 @@ public class RemoteServletContextFactory extends ServletContextFactory {
      * Set the HttpServletRequest for session sharing.
      *  @param req The HttpServletRequest
      */
-    public void setSession(HttpServletRequest req) {
+    protected void setSessionFactory(HttpServletRequest req) {
     	this.proxy = req;
     }
 
     public ISession getSession(String name, boolean clientIsNew, int timeout) {
+	if(session!=null) return session;
 	 // if name != null return a "named" php session which is not shared with jsp
-	if(name!=null) return super.getSession(name, clientIsNew, timeout);
+	if(name!=null) return session = super.getSession(name, clientIsNew, timeout);
 	
     	if(proxy==null) throw new NullPointerException("This context "+getId()+" doesn't have a session proxy.");
-	return new RemoteHttpSessionFacade(kontext, proxy, res, timeout);
+	return session = new RemoteHttpSessionFacade(this, kontext, proxy, res, timeout);
     }
     
     /**
@@ -70,7 +72,8 @@ public class RemoteServletContextFactory extends ServletContextFactory {
     public static ServletContextFactory addNew(Servlet servlet, ServletContext kontext, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res) {
         RemoteServletContextFactory ctx = new RemoteServletContextFactory(servlet, kontext, proxy, req, res);
     	return ctx;
-    }	
+    }
+    
     /**
      * Return an emulated JSR223 context.
      * @return The context.
@@ -78,8 +81,14 @@ public class RemoteServletContextFactory extends ServletContextFactory {
      * @see php.java.servlet.Context
      */
     public IContext createContext() {
-	IContext ctx = super.createContext();
-	ctx.removeAttribute(IContext.SERVLET_RESPONSE, IContext.ENGINE_SCOPE);
+	IContext ctx = new Context(kontext, req, res);
+	ctx.setAttribute(IContext.SERVLET_CONTEXT, kontext, IContext.ENGINE_SCOPE);
+	ctx.setAttribute(IContext.SERVLET_CONFIG, servlet.getServletConfig(), IContext.ENGINE_SCOPE);
+	ctx.setAttribute(IContext.SERVLET, servlet, IContext.ENGINE_SCOPE);
+
+	ctx.setAttribute(IContext.SERVLET_REQUEST, new RemoteHttpServletRequest(this, req), IContext.ENGINE_SCOPE);
+	ctx.setAttribute(IContext.SERVLET_RESPONSE, new RemoteHttpServletResponse(this), IContext.ENGINE_SCOPE);
+	
 	return ctx;
     }
     /**
@@ -94,5 +103,4 @@ public class RemoteServletContextFactory extends ServletContextFactory {
     public void waitFor(long timeout) throws InterruptedException {
 	visited.waitFor(timeout);
     }    
-
 }

@@ -324,7 +324,7 @@ public class PhpCGIServlet extends FastCGIServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
 	throws ServletException, IOException {
     	try {
-    	    if(!checkPool(res)) return;
+    	   if(!checkPool(res)) return;
  	    super.doGet(req, res);
     	} catch (IOException e) {
     	    try {res.reset();} catch (Exception ex) {/*ignore*/}

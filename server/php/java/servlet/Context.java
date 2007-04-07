@@ -31,6 +31,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import php.java.bridge.http.IContext;
 import php.java.script.PhpSimpleHttpScriptContext;
 
 
@@ -99,29 +100,33 @@ public class Context extends php.java.bridge.http.Context {
 	return response.getWriter();
     }
     /**
-     * Returns the HttpServletRequest
-     * @return The HttpServletRequest.
-    * @deprecated Use java_context()->getAttribute(...) instead
-     */
-    public Object getHttpServletRequest() {
-    	return this.request;
-    }
-    
-    /**
-     * Returns the ServletContext
-     * @return The ServletContext.
-    * @deprecated Use java_context()->getAttribute(...) instead
-     */
-    public Object getServletContext() {
-        return this.context;
-    }
-    
-    /**
-     * Returns the ServletResponse
-     * @return The ServletResponse.
-    * @deprecated Use java_context()->getAttribute(...) instead
-     */
-    public Object getHttpServletResponse() {
-        return this.response;
-    }
+     * @deprecated Use java_context()->getAttribute(...) instead
+      */
+     public Object getHttpServletResponse() {
+ 	return getAttribute(IContext.SERVLET_RESPONSE);
+     }
+     /**
+     * @deprecated Use java_context()->getAttribute(...) instead
+      */
+     public Object getHttpServletRequest() {
+ 	return getAttribute(IContext.SERVLET_REQUEST);
+     }
+     /**
+     * @deprecated Use java_context()->getAttribute(...) instead
+      */
+     public Object getServlet() {
+ 	return getAttribute(IContext.SERVLET);
+     }
+     /**
+      * @deprecated Use java_context()->getAttribute(...) instead
+       */
+      public Object getServletConfig() {
+  	return getAttribute(IContext.SERVLET_CONFIG);
+      }
+      /**
+       * @deprecated Use java_context()->getAttribute(...) instead
+        */
+       public Object getServletContext() {
+   	return getAttribute(IContext.SERVLET_CONTEXT);
+       }
 }

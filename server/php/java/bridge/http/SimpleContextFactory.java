@@ -38,6 +38,11 @@ import php.java.bridge.JavaBridge;
 public class SimpleContextFactory implements IContextFactoryVisitor {
     
     /**
+     * The session object
+     */
+    protected ISession session;
+    
+    /**
      * The visited ContextFactory
      */
     protected ContextFactory visited;
@@ -58,6 +63,7 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
 
     public void destroy() {
         visited.destroy();
+        session = null;
     }
     
     /**
@@ -103,14 +109,15 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
         this.visited=visited;
     }
     public ISession getSession(String name, boolean clientIsNew, int timeout) {
-        return visited.getSimpleSession(name, clientIsNew, timeout);
+	if(session != null) return session;
+	return session = visited.getSimpleSession(name, clientIsNew, timeout);
     }
     public void setContext(IContext context) {
         this.context = context;
         this.context.setAttribute(IContext.JAVA_BRIDGE, getBridge(), IContext.ENGINE_SCOPE);
     }
     public void recycle(ContextFactory visited) {
-        visited.accept(this);
+	visited.accept(this);
     }
     public void removeOrphaned() {
         visited.removeOrphaned();
@@ -119,6 +126,6 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
      * @deprecated Use {@link #destroy()} instead
      */
     public void remove() {
-        visited.destroy();
+        destroy();
     }
 }
