@@ -222,6 +222,7 @@ EXT_BEGIN_MODULE_GLOBALS(EXT)
   char *hosts, *servlet;
   char *redirect_port; 			/* the port sub-string from hosts */
   int ini_user;
+  short java_socket_inet;		/* copy of java_socket_inet */
 
   /* for user CB's */
   zend_stack *cb_stack;

@@ -52,41 +52,7 @@ returns null and all other java procedures cannot be used anymore.
 
 <H4>Can I set the java.hosts option at run-time?</H4>
 
-<p>Yes. The bridge examines the environment variables
-<code>X_JAVABRIDGE_OVERRIDE_HOSTS</code> and
-<code>X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT</code>.
-</p>
-<p>To direct a php <em>script</em> to a web context FOO running on computer
-192.168.4.98, port 8080, use the following code: 
-
-<blockquote> <code> &nbsp;&nbsp;&lt?php<br>
-&nbsp;&nbsp;$_SERVER['X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT']="h:192.168.4.98:8080//FOO/JavaBridge.phpjavabridge";<br>
-&nbsp;&nbsp;if(!extension_loaded('java')) require_once("http://localhost:8080/JavaBridge/java/Java.inc");<br>
-&nbsp;&nbsp;echo java_server_name();<br>
-&nbsp;&nbsp;?&gt; </code> </blockquote>
-
-Assuming that the option <code>java.servlet</code> or
-<code>JAVA_SERVLET</code> (pure PHP implementation) is set to
-<code>On</code>, the above example uses plain HTTP to connect to the
-server 192.168.4.98 on port 8080 using the web context FOO. If PHP has
-been compiled with openssl enabled, <code>s:..</code> can be used to
-connect to a SSL port. When <code>java.servlet</code> or
-<code>JAVA_SERVLET</code> is set to <code>User</code> or
-<code>Off</code>, the bridge ignores the specified <code>FOO</code>
-context and uses the request context instead, or it connects to a
-standalone socket listener directly (if the option is Off).
-</p>
-<p>
-To direct a php <em>instance</em> to a web context FOO running on computer
-192.168.4.98, port 8080, use the variable
-<code>X_JAVABRIDGE_OVERRIDE_HOSTS</code> instead. This variable must
-be set before the PHP instance starts.
-</p>
-<p>
-When <code>X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT</code> is used and
-the php instance already has a persistent connection to another host,
-it opens a second persistent connection to the new host.
-</p>
+<p>Yes. Simply use <code>require_once("http://YOURSERVER:PORT/CONTEXT/java/Java.inc");</code></p>
 
 <H4>How do I start the bridge back end when there's another Java VM listening on port 8080?</H4>
 <p>Simply deploy the PHP/Java Bridge web archive into the servlet engine or application server listening on port 8080.</p>
@@ -96,7 +62,7 @@ it opens a second persistent connection to the new host.
 <p>Download and install the tomcat servlet engine, deploy the PHP/Java Bridge web archive into the tomcat servlet engine and configure it so that it only listens for requests from local PHP scripts (default).<p>
 
 <H4>Do I have to require Java.inc in each of my scripts? Isn't that very slow?</H4>
-<p>The pure PHP/Java Bridge library <code>Java.inc</code> must be included before it can be used. Therefore the scripts should contain the statement
+<p>The PHP/Java Bridge library <code>Java.inc</code> must be included before it can be used. Therefore the scripts should contain the statement
 <blockquote>
 <code>
 &nbsp;&nbsp;require_once("...java/Java.inc");
@@ -104,14 +70,18 @@ it opens a second persistent connection to the new host.
 </blockquote>
 at the beginning of the script. PHP compiles and caches PHP scripts, the <code>Java.inc</code> library is loaded only once.
 </p>
-<p>If the C based implementation is used, the pure PHP implementation can be used as a fall back:
+
+<H4>I get a blank page!?!</H4>
+<p>
+Check the PHP error log, see your <code>php.ini</code> file for details. If the command:
 <blockquote>
 <code>
-&nbsp;&nbsp;if(!extension_loaded('java'))<br>
-&nbsp;&nbsp;require_once("http://localhost:8080/JavaBridge/java/Java.inc");
+echo '&lt;?php require_once("http://localhost:8080/JavaBridge/java/Java.inc"); echo java("java.lang.System")-&gt;getProperties();?&gt;' | php -n -d allow_url_include=On
 </code>
 </blockquote>
+works in the shell but not within apache, then there's something wrong with your <code>php.ini</code> file.
 </p>
+
 
 <H2>Running Java as a sub component of Apache or IIS</H2>
 
@@ -142,7 +112,7 @@ Please see the wrapper <code>RunJavaBridge</code> for an example.
 <H2>Class loading questions</H2>
 
 <H4>How do I load Java libraries?</H4>
-<p> With <code>java_require("foo.jar;bar.jar, ...");. See the README for details.</p>
+<p> With <code>java_require("foo.jar;bar.jar;...");. See the README for details.</p>
 
 <H4>Why can't Apache load my /foo/bar/baz.jar file?</H4>
 <p>It probably doesn't have the permission to access it. Check if
@@ -509,7 +479,7 @@ In contrast the Sun J2EE server correctly separates the beans/applications; the 
 <blockquote>
 <code>
   class Bean { ... }<br>
-  java_context()->call(java_closure(new Bean())) || header("$framework");
+  java_context()-&gt;call(java_closure(new Bean())) || header("$framework");
 </code>
 </blockquote>
 can be used to pass control from the web server to the framework running on a J2EE node. 
@@ -526,24 +496,33 @@ Please see the JSF implementation for a reference.
 
 <H2>General runtime questions</H2>
 
-<H4>How can is access the Servlet, ServletContext or ServletRequest from a remote PHP script?</H4>
+<H4>How do I reference a class w/o creating an instance?</H4>
 <p>
-Unless you write your own servlet (see
-testContextAwarePhpJavaServlet.php from the tests.php5 folder), you
-can't. The default implementation of the PhpJavaServlet does not wait
-for a RemoteServletContextFactory to finish because it cannot reliably
-determine if a remote script terminated or not.
+With the <code>java</code> function, for example: <code>java("java.lang.System")</code>.
 </p>
-<p>If you can provide this information, override the PhpJavaServlet's
-<code>getContextFactory()</code>. Provide your own
-RemoteServletContextFactory and create a custom Context in your
-<code>createContext()</code> method. Then wait for the context by
-overriding the <code>waitForContext() method.</code>. Ask yourself how
-to handle a situation where a script asks for a context but doesn't
-do anything with it, for example: <code>&lt;?php java_context();
-?&gt;</code>. Is it okay that the servlet waits 10 minutes until the
-orphaned context is destroyed?
+<p>The function is defined in <code>http://localhost:8080/JavaBridge/java/Java.inc</code> as:
+<blockquote>
+<code>
+function java($clazz) {<br>
+&nbsp;&nbsp;static $classMap = array();<br>
+&nbsp;&nbsp;if(array_key_exists($clazz, $classMap)) return $classMap[$clazz];<br>
+&nbsp;&nbsp;return classMap[$clazz]=new JavaClass($clazz);<br>
+}
+</code>
+</blockquote>
+</p>
+
+<H4>Why does java_context()-&gt;getHttpServletRequest()-&gt;getSession() return null?</H4>
 <p>
+PHP scripts must explicitly allocate a session with <code><a href="documentation/PHP-API/html/java_8c.html#doc25">java_session()</a></code>. For example:
+<blockquote>
+<code>
+java_session(); <br>
+// now the (Remote-)HttpServletRequest knows about the session: <br>
+echo java_context()-&gt;getHttpServletRequest()-&gt;getSession(); <br>
+</code>
+</blockquote>
+</p>
 
 <H4>Where is my output?</H4> <p><code>System.out</code> and
 <code>System.err</code> are redirected to the server log file(s). When
@@ -558,7 +537,7 @@ configuration.</p>
 
 <H4>How do I make my script state (objects or variables) persistent?</H4> 
 <p>If you must code it yourself: with
-e.g. <code>java_session()->put("buf", $stringBuffer)</code> or via
+e.g. <code>java_session()-&gt;put("buf", $stringBuffer)</code> or via
 <code>$_SESSION["buf"]=$stringBuffer</code>. The
 <code>$_SESSION</code> is syntactic sugar provided by the <a
 href="http://www.php.net/manual/en/ref.session.php">php session
@@ -567,25 +546,15 @@ href="documentation/PHP-API/html/java_8c.html#doc25">java_session()<a></code>
 internaly. If you don't want depend on the PHP session module, for
 example if you have compiled PHP without the <code>session.so</code>,
 use java_session() instead.</p> 
-<!--
-<p> If you use the <a
-href="http://www.jcp.org/en/jsr/detail?id=127">Java Server Faces</a>
-framework, you declare the scope of the script in the <a
-href="server/WEB-INF/faces-config.xml">PHP
-managed bean descriptor<a>. For example, if the
-<code>managed-bean-scope</code> is changed from <code>request</code>
-to <code>session</code>, the framework automatically saves the state
-of the PHP script instance and restores it when the next request
-belonging to the same session comes in.</p>  
--->
+
 
 <H4>How many threads does the bridge start?</H4> 
 <p>Request-handling threads are started
 from a thread pool, which limits the number of user requests to 20
 (default), see system property
 <code>php.java.bridge.threads</code>. All further requests have to
-wait until one of the worker threads returns to the pool. <p> <p>When
-running in a servlet engine, a <a
+wait until one of the worker threads returns to the pool. </p> 
+<p>When running in a servlet engine, a <a
 href="server/documentation/API/php/java/bridge/http/ContextServer.html">ContextServer</a>
 is started which handles the pipe or local socket communication
 channel.  </p> <p>When java invokes local scripts outside of a HTTP
@@ -613,7 +582,7 @@ can be accessed with:<br><br>
 &lt;?php<br>
 java_require(getcwd()); // load php.class<br>
 $bridge = new java('php$java$bridge');<br>
-echo $bridge->JavaBridgeRunner;<br>
+echo $bridge-&gt;JavaBridgeRunner;<br>
 ?&gt;<br>
 </code><br>
 The above code is not a good programming example but it demonstrates why a different syntax is used to access inner classes. 
@@ -625,11 +594,11 @@ Primitive types are wrapped by associated java classes.
 The following example uses <code>reflect.Array</code> to create a new <code>byte</code> array:<br><br>
 <code>
 $Byte = new JavaClass("java.lang.Byte");<br>
-$byte = $Byte->TYPE;<br>
+$byte = $Byte-&gt;TYPE;<br>
 $Array = new JavaClass("java.lang.reflect.Array");<br>
-$byteArray = $Array->newInstance($byte, 255);<br>
+$byteArray = $Array-&gt;newInstance($byte, 255);<br>
 $System = new JavaClass("java.lang.System");<br>
-$length = $System->in->read($byteArray);<br>
+$length = $System-&gt;in-&gt;read($byteArray);<br>
 $str = new Java("java.lang.String", $byteArray, 0, $length);<br>
 echo "You have typed: $str\n";<br>
 </code>
@@ -798,28 +767,18 @@ BORDER="1"
 </p>
 
 
-<!--
- <H4>How do I start a persistent VM?</H4> 
+<H4>How do I start a persistent VM?</H4> 
+<p> 
+During development the bridge back end can be started with <code>java -jar JavaBridge.jar SERVLET_LOCAL:port#</code>. Unfortunately the simple servlet engine built into JavaBridge.jar is not very efficient. Please use some other servlet engine instead.
+The tomcat servlet engine for example contains scripts which allow you to start Java as a system service on Windows and Unix/Linux.
+</p>
+<p>If you have compiled the C implementation, Apache or IIS can automatically start/stop the Java VM as a sub component.
+But in this setup the Java VM runs with the same (restricted) rights as the HTTP server, which may or may not be what you want. On Linux for example the VM is started by a RunJavaBridge executable as a child of the Apache main process. The Java VM runs as user apache/apache and uses the Security Enhanced Linux domain <code>javabridge_t</code>. It cannot access files such as /etc/passwd and it cannot open tcp sockets to other servers.
+</p>
 <p>
-If you want to start <em>one persistent VM per HTTP server</em> running on a computer, see 
-the <a href="#mode2">web server installation</a> description. 
-If you want to start <em>one persistent VM per computer</em>, please see the <a href="#mode4">application server or servlet engine</a> description.
-</p>
-<p>Furthermore it is possible to start a standalone back end, for example with the command:<br><br>
-<code>
-&nbsp;java -jar JavaBridge.jar INET_LOCAL:9676 3<br>
-</code>
-<br>
-The <code>php.ini</code> entry might look like:<br><br>
-<code>
-&nbsp;[java]<br>
-&nbsp;java.hosts = 127.0.0.1:9676<br>
-&nbsp;java.servlet = Off<br>
-</code>
-<br>
-Please see the <a href="server/documentation/API/php/java/bridge/JavaBridge.html">JavaBridge</a> documentation for details.
-</p>
+Unless you know how to pass options to child processes on Windows or Unix (see the java.wrapper option), and how set/change permissions (see chcon, chmod, chown), we recommend to start the PHP/Java Bridge via a servlet engine or J2EE server. -- You probably already have a servlet engine or J2EE server listening on 8080 or some other port, so that it might not be necessary to install a servlet engine or J2EE server to start the bridge back end.</p>
 
+<!--
 AS test ports  (Sun Mar 16 09:54:17 CET 2003, Jost Boekemeier)
 
 * Oracle:     http://localhost:8888/
@@ -835,9 +794,9 @@ AS test ports  (Sun Mar 16 09:54:17 CET 2003, Jost Boekemeier)
 <p>
 OutOfMemoryErrors may happen because a cached object cannot be released, either because <p>
 <ol>
- the object is permanently referenced by a request-handling thread or
- the object has been entered into the session or application store or 
- the object is referenced by a thread outside of the scope of the PHP/Java Bridge.
+<li> the object is permanently referenced by a request-handling thread or</li>
+<li> the object has been entered into the session or application store or 
+ the object is referenced by a thread outside of the scope of the PHP/Java Bridge.</li>
 </ol>
 </p>
 </p>
@@ -852,7 +811,7 @@ The following code example could cause an OutOfMemoryError:<br><br>
 &lt;?php<br>
 session_start();<br>
 if(!$_SESSION["buffer"]) $_SESSION["buffer"]=new java("java.lang.StringBuffer");<br>
-$_SESSION["buffer"]->append(...);<br>
+$_SESSION["buffer"]-&gt;append(...);<br>
 ?&gt;
 </code>
 </p>
@@ -874,19 +833,19 @@ With <code>java_begin_document()/java_end_document()</code>. For example:
 <code>
 &nbsp;&nbsp;java_begin_document();<br>
 &nbsp;&nbsp;$s = new Java("java.lang.StringBuffer");<br>
-&nbsp;&nbsp;for($i=0; $i<10000; $i++) $s->append($i);<br>
+&nbsp;&nbsp;for($i=0; $i<10000; $i++) $s-&gt;append($i);<br>
 &nbsp;&nbsp;java_end_document();<br>
 </code>
 </blockquote>
 The above code sends the PHP code as an XML image to the server and executes it there.
 </p> 
-<H4>How can I convert a Java object into a PHP object?</H4>
+<H4>How can I convert a Java object into a PHP value?</H4>
 <p>
 With <code>java_values()</code>. For example:
 <blockquote>
 <code>
 &nbsp;&nbsp;$s = new Java("java.lang.String");<br>
-&nbsp;&nbsp;$c = $chr = $s->toCharArray();<br>
+&nbsp;&nbsp;$c = $chr = $s-&gt;toCharArray();<br>
 &nbsp;&nbsp;print  (java_values($s));<br>
 &nbsp;&nbsp;print_r(java_values($c));<br>
 </code>
@@ -903,10 +862,50 @@ With <code>java_closure()</code>. For example:
 &nbsp;&nbsp;$foo = new Foo();<br>
 &nbsp;&nbsp;$jObj = java_closure($foo);<br>
 &nbsp;&nbsp;$String = new Java("java.lang.String");<br>
-&nbsp;&nbsp;echo $String->valueOf($jObj);<br>
+&nbsp;&nbsp;echo $String-&gt;valueOf($jObj);<br>
 </code>
 </blockquote>
 </p>
-
+<H4>How do I call JSP tags from PHP?</H4>
+<p>
+Example:
+<blockquote>
+<code>
+require_once("http://localhost:8080/JavaBridge/java/Java.inc");<br>
+java_require("myLibs/baz-taglib.jar");<br>
+$tag = new Java("foo.bar.BazTag");<br>
+<br>
+$session = java_session();<br>
+$ctx = java_context();<br>
+$servlet = $ctx-&gt;getAttribute("php.java.servlet.Servlet");<br>
+$response = $ctx-&gt;getAttribute("php.java.servlet.HttpServletResponse");<br>
+$request = $ctx-&gt;getAttribute("php.java.servlet.HttpServletRequest");<br>
+$factory = java("javax.servlet.jsp.JspFactory")-&gt;getDefaultFactory();<br>
+$pc = $factory-&gt;getPageContext($servlet, $request, $response, null, true, 8192, false);<br>
+<br>
+$tag-&gt;setPageContext($pc);<br>
+$value = $tag-&gt;doStartTag();<br>
+if(($value != Java("javax.servlet.jsp.tagext.Tag")-&gt;SKIP_BODY) {<br>
+&nbsp;&nbsp;if($value != Java("javax.servlet.jsp.tagext.Tag")-&gt;EVAL_BODY_INCLUDE)) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$tag-&gt;setBodyContent($pc-&gt;pushBody());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$tag-&gt;doInitBody();<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;do {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;...<br>
+&nbsp;&nbsp;} while($tag-&gt;doAfterBody() == Java("javax.servlet.jsp.tagext.BodyTag")-&gt;EVAL_BODY_AGAIN)<br>
+}<br>
+if($value != Java("javax.servlet.jsp.tagext.Tag")-&gt;EVAL_BODY_INCLUDE) $pc-&gt;popBody();<br>
+$tag-&gt;doEndTag();<br>
+</blockquote>
+</code>
+</p><p>
+The generated content (if any) can be retrieved from the servlet output stream with:
+<blockquote>
+<code>
+java_values($response-&gt;getBufferContents();
+</code>
+</blockquote>
+</p>
+<p>Please see the <code>php_java_lib/JspTag.php</code> and <code>tests.php5/tag.php</code> for details.</p>
 </BODY>
 </HTML>

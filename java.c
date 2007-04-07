@@ -412,8 +412,50 @@ static int do_cast(zval *readobj, zval *writeobj, int type, int should_free TSRM
 	  obj = 0; // failed
 	  break;
 	}
-  }
+  } else {
+	if(jenv) {
+	  obj = 1;
+	  INIT_PZVAL(writeobj);
+	  ZVAL_NULL(writeobj);
 
+	  switch(type) {
+		
+	  case IS_STRING:
+		*writeobj = *readobj;
+		zval_copy_ctor(writeobj);
+		convert_to_string(writeobj);
+		break;
+	  case IS_BOOL:
+		*writeobj = *readobj;
+		zval_copy_ctor(writeobj);
+		convert_to_boolean(writeobj);
+		break;
+	  case IS_LONG:
+		*writeobj = *readobj;
+		zval_copy_ctor(writeobj);
+		convert_to_long(writeobj);
+		break;
+	  case IS_DOUBLE:
+		*writeobj = *readobj;
+		zval_copy_ctor(writeobj);
+		convert_to_double(writeobj);
+		break;
+	  case IS_OBJECT: 
+		*writeobj = *readobj;
+		zval_copy_ctor(writeobj);
+		convert_to_object(writeobj);
+		break;
+	  case IS_ARRAY: 
+		*writeobj = *readobj;
+		zval_copy_ctor(writeobj);
+		convert_to_array(writeobj);
+		break;
+	  default:
+		obj = 0; // failed
+		break;
+	  }
+	}
+  }
   if (should_free)
 	zval_dtor(&free_obj);
 
@@ -993,6 +1035,7 @@ PHP_INI_BEGIN()
   EXT_GLOBAL(globals)->is_closed=-1;
 
   EXT_GLOBAL(globals)->ini_user=0;
+  EXT_GLOBAL(globals)->java_socket_inet=0;
 
   EXT_GLOBAL(globals)->hosts=0;
   EXT_GLOBAL(globals)->servlet=0;
@@ -1882,9 +1925,11 @@ struct save_cfg {
   char *servlet;
   /** A copy of the host list */
   char *hosts;
+  short java_socket_inet;
 };
 static void push_cfg(struct save_cfg*cfg TSRMLS_DC) {
   cfg->ini_user = JG(ini_user);
+  cfg->java_socket_inet = JG(java_socket_inet);
   cfg->servlet = JG(servlet);
   cfg->hosts = JG(hosts);
   JG(ini_user) = EXT_GLOBAL(ini_user);
@@ -1893,6 +1938,7 @@ static void push_cfg(struct save_cfg*cfg TSRMLS_DC) {
 }
 static void pop_cfg(struct save_cfg*cfg TSRMLS_DC) {
   JG(ini_user) = cfg->ini_user;
+  JG(java_socket_inet) = cfg->java_socket_inet;
   if(JG(servlet)) free(JG(servlet)); 
   JG(servlet) = cfg->servlet;
   if(JG(hosts)) free(JG(hosts)); 

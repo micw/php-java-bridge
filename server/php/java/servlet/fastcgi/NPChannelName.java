@@ -41,7 +41,7 @@ class NPChannelName extends ChannelName {
     private String testRaPath;
     
     public void test() throws ConnectException {
-	// TODO Auto-generated method stub
+	if(!new File(raPath).canWrite()) throw new ConnectException(new IOException("File " + raPath + " not writable"));
     }
     private NPChannel doConnect() throws ConnectException {
 	try {

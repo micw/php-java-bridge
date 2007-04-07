@@ -1,3 +1,65 @@
+2007-04-06  Jost Boekemeier  <jostb@intern>
+
+	* bind.c
+	(get_server_args,test_local_server,can_fork,test_server,wait_server,start_server):
+	check for X_JAVABRIDGE_OVERRIDE_REDIRECT
+	
+	* client.c
+	(create_connection,init_channel_raw,init_channel,clone_cfg,passivate_connection,activate_connection,destroy_cloned_cfg,oberride_ini_for_redirect):
+	check for X_JAVABRIDGE_OVERRIDE_REDIRECT
+	
+	* bind.c (get_server_args): display SERVLET port #
+
+	* init_cfg.c.in
+	(option_set_by_user): check for X_JAVABRIDGE_OVERRIDE_REDIRECT
+
+	* java.c (do_cast): accept integral types for compatibility with the pure PHP implementation.
+
+	* java.c (alloc_globals_ctor,push_cfg,pop_cfg): check for X_JAVABRIDGE_OVERRIDE_REDIRECT
+
+	* server/Makefile.am: hard-code Java.inc into the "java" binary
+	when compiling the back end to native code.
+
+	* server/META-INF/java/JavaBridge.inc (java): New function
+
+	* server/META-INF/java/Protocol.inc (open,close): Do not use
+	pfsockopen for override redirect so that PHP does not try to
+	re-use the existing connection, which waiting for the servlet,
+	which in turn is waiting for this PHP instance.
+
+	* server/php/java/bridge/http/ContextFactory.java (recycle): Do
+	not destroy the bridge, it will be used in the following <F p=F />
+	call. Test case: <?php java_get_server_name() ?>.
+
+	* tests.php5/simple.php: New test for the above fix.
+
+	* server/php/java/bridge/http/SimpleContextFactory.java
+	(destroy, getSession): Cache the obtained session.
+
+	* server/php/java/bridge/JavaBridgeRunner.java
+	(doGet): cache the obtained Java.inc
+
+	* server/php/java/bridge/Util.java (createThreadPool): Removed
+	duplicated output
+
+	* server/php/java/servlet/fastcgi/NPChannelName.java (test): Check the fifo.
+
+	* server/php/java/servlet/RemoteContext.java: Return a wrapped context for remote PHP scripts.
+
+	* server/php/java/servlet/RemoteResponse.java: Return a wrapped response for remote PHP scripts.
+	
+	* server/php/java/servlet/RemoteRequest.java: Return a wrapped request for remote PHP scripts.
+
+	* server/php/java/servlet/RemoteHttpSessionFacade.java: Use the cached session.
+
+	* server/php/java/servlet/RemoteServletContextFactory: Create wrapped request, context, response
+
+	* server/php/java/servlet/ServletContextFactory.java: Create a
+	response which complies to the interface used by remote scripts.
+
+	* VERSION, php-java-bridge.spec: Version 4.0.8test1
+	
+	
 2007-03-28  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/Parser.java

@@ -817,6 +817,7 @@ void EXT_GLOBAL(override_ini_for_redirect)(TSRMLS_D) {
 	  free(JG(servlet));
 	  JG(servlet) = strdup(kontext);
 	  JG(ini_user)|=U_SERVLET;
+	  JG(java_socket_inet) = 1;
 	}
 	JG(ini_user)|=U_HOSTS;
   } else {
@@ -865,6 +866,7 @@ array_key_exists('HTTP_HOST', $_SERVER)) ?$_SERVER['PHP_SELF']:null;";
 	  strcpy(tmp, strval);
 	  strcat(tmp, bridge_extension);
 	  JG(ini_user)|=U_SERVLET;
+	  JG(java_socket_inet) = 1;
 	}
   }
 }
@@ -937,7 +939,7 @@ static void add_header(proxyenv *env) {
   ((*env)->send)[0]=127;
   ((*env)->send)[1]=mode;
 }
-static void init_channel(proxyenv *env);
+static void init_channel(proxyenv *env TSRMLS_DC);
 /**
  * Return a procedure which can be used to create an environment.
  */
@@ -964,7 +966,7 @@ static proxyenv*create_connection(char *context_string TSRMLS_DC) {
 	(*factory)(handle_request, handle_cached, &is_local);
 
   if(jenv) {
-	if(! (is_local || !context_string)) init_channel(jenv);
+	if(! (is_local || !context_string)) init_channel(jenv TSRMLS_CC);
 	if(EXT_GLOBAL(cfg)->persistent_connections)
 	  zend_hash_update(&JG(connections), context, len, &jenv, sizeof(proxyenv *), 0);
 	if(is_local || !context_string) {
@@ -1017,7 +1019,7 @@ proxyenv *EXT_GLOBAL(try_connect_to_server)(TSRMLS_D) {
 
 #ifdef __MINGW32__
 /* named pipes are not available on windows */
-static void init_channel(proxyenv *env) {
+static void init_channel(proxyenv *env TSRMLS_DC) {
   (*env)->pipe.in = (*env)->pipe.out = (*env)->pipe.channel = 0;
 }
 void EXT_GLOBAL(unlink_channel)(proxyenv *env) {
@@ -1052,7 +1054,7 @@ static short create_pipes(proxyenv*env, char*basename, size_t basename_len) {
   return 1;
 }
 /* same as init_channel, but doesn't use a tmpdir */
-static void init_channel_raw(proxyenv*env) {
+static void init_channel_raw(proxyenv*env TSRMLS_DC) {
   static const char sockname[] = SOCKNAME;
   static const char sockname_shm[] = SOCKNAME_SHM;
   static const size_t length = sizeof(sockname)>sizeof(sockname_shm)?sizeof(sockname):sizeof(sockname_shm);
@@ -1060,7 +1062,7 @@ static void init_channel_raw(proxyenv*env) {
 
   /* pipe communication channel only available in servlets */
   (*env)->pipe.channel=0;
-  if(!EXT_GLOBAL(option_set_by_user) (U_SERVLET, EXT_GLOBAL(ini_user))) return;
+  if(!EXT_GLOBAL(option_set_by_user) (U_SERVLET, JG(ini_user))) return;
 
   pipe=malloc(length+2); /* "name.i" */
   assert(pipe); if(!pipe) exit(6);
@@ -1071,15 +1073,15 @@ static void init_channel_raw(proxyenv*env) {
   if(!(*env)->pipe.channel) free(pipe);
 }
 /* create named pipe channel in tmpdir */
-static void init_channel(proxyenv*env) {
+static void init_channel(proxyenv*env TSRMLS_DC) {
   static const char sockname[] = "/php_XXXXXX";
   char *pipe;
   size_t length;
-  if(!EXT_GLOBAL(cfg)->tmpdir) { init_channel_raw(env); return; }
+  if(!EXT_GLOBAL(cfg)->tmpdir) { init_channel_raw(env TSRMLS_CC); return; }
 
   /* pipe communication channel only available in servlets */
   (*env)->pipe.channel=0;
-  if(!EXT_GLOBAL(option_set_by_user) (U_SERVLET, EXT_GLOBAL(ini_user))) return;
+  if(!EXT_GLOBAL(option_set_by_user) (U_SERVLET, JG(ini_user))) return;
   length=strlen(EXT_GLOBAL(cfg)->tmpdir)+sizeof(sockname);
   pipe=malloc(length+2); /* "name.i" */
   assert(pipe); if(!pipe) exit(6);
@@ -1111,6 +1113,7 @@ const char *EXT_GLOBAL(get_channel) (proxyenv*env) {
 }
 void EXT_GLOBAL(clone_cfg)(TSRMLS_D) {
   JG(ini_user)=EXT_GLOBAL(ini_user);
+  JG(java_socket_inet) = EXT_GLOBAL(cfg)->java_socket_inet;
   if(JG(hosts)) free(JG(hosts));
   if(!(JG(hosts)=strdup(EXT_GLOBAL(cfg)->hosts))) exit(9);
   if(JG(servlet)) free(JG(servlet));
@@ -1118,6 +1121,7 @@ void EXT_GLOBAL(clone_cfg)(TSRMLS_D) {
 }
 void EXT_GLOBAL(passivate_connection)(proxyenv *env TSRMLS_DC) {
   (*env)->cfg.ini_user=JG(ini_user);
+  (*env)->cfg.java_socket_inet=JG(java_socket_inet);
   if((*env)->cfg.hosts) free(((*env)->cfg.hosts));
   if(!((*env)->cfg.hosts=strdup(JG(hosts)))) exit(9);
   if((*env)->cfg.servlet) free(((*env)->cfg.servlet));
@@ -1126,6 +1130,7 @@ void EXT_GLOBAL(passivate_connection)(proxyenv *env TSRMLS_DC) {
 /* see override_ini_for_redirect */
 void EXT_GLOBAL(activate_connection)(proxyenv *env TSRMLS_DC) {
   JG(ini_user)=(*env)->cfg.ini_user;
+  JG(java_socket_inet)=(*env)->cfg.java_socket_inet;
 
   //assert(!JG(hosts));
   if(JG(hosts)) free(JG(hosts)); 
@@ -1139,6 +1144,7 @@ void EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_D) {
   if(JG(hosts)) free(JG(hosts));
   if(JG(servlet)) free(JG(servlet));
   JG(ini_user)=0;
+  JG(java_socket_inet)=0;
   JG(hosts)=0;
   JG(servlet)=0;
 }

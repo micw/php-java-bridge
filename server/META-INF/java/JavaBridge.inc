@@ -38,6 +38,31 @@
   obligated to do so.  If you do not wish to do so, delete this
   exception statement from your version. */
 
+if(extension_loaded('java') && !function_exists("java_set_base")) {
+  // the C extension doesn't define a Java(className) function
+  function Java($name) {
+	static $classMap = array();
+	if(array_key_exists($name, $classMap)) return $classMap[$name];
+	return $classMap[$name]=new JavaClass($name);
+  }
+  function java_set_base() {
+	$ar = get_required_files();
+	$arLen = sizeof($ar);
+	if($arLen>0) {
+	  $java_base = dirname($ar[$arLen-1]);
+	  $url = parse_url($java_base);
+	  if(isset($url["scheme"]) && ($url["scheme"]=="http")) {
+		$host = $url["host"];
+		$port = $url["port"];
+		$path = $url["path"];
+		$dir = dirname($path);
+		$_SERVER['X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT']="h:${host}:${port}/${dir}/JavaBridge.phpjavabridge";
+	  }
+	}
+  }
+  java_set_base();
+ }
+
 if(!extension_loaded('java') && !function_exists("java_get_base")) {
   $version = phpversion();
   if ((version_compare("5.1.2", $version, ">"))) {
@@ -64,8 +89,11 @@ if(!extension_loaded('java') && !function_exists("java_get_base")) {
 	}
   };
 
-  function Java($name) { return java_create(array($name), false); }
-  
+  function Java($name) { 
+	static $classMap = array();
+	if(array_key_exists($name, $classMap)) return $classMap[$name];
+	return $classMap[$name]=java_create(array($name), false);
+  }
   function java_get_closure() {return java_closure_array(func_get_args());}
   function java_get_values($arg) { return java_values($arg); }
   function java_get_session() {return java_session_array(func_get_args());}

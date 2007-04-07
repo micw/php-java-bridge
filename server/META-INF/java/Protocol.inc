@@ -336,8 +336,21 @@ class java_OverrideRedirectHandler extends java_HttpHandler {
 	$this->port = $handler->port;
 	$this->channel = $handler->channel;
 	$this->context = $handler->context;
-	$this->socket = $handler->open();
+	$this->socket = $this->open();
   }
+  /**
+   * Open a new connection to the back end. Do not use pfsockopen as this would recycle the
+   * persistent connection to the servlet instance waiting for this php instance to die
+   * (see PhpJavaServlet#waitForContext() for details).
+  */
+  function open() {
+	$socket = fsockopen("{$this->ssl}{$this->host}", $this->port, $errno, $errstr, 30);
+	if (!$socket) throw new java_RuntimeException("Could not re-connect to the J2EE server {$this->ssl}{$this->host}:{$this->port}. Error message: $errstr ($errno)\n");
+	return $socket;
+  }
+  function close() {
+      fclose($this->socket);
+  }	
   function overrideRedirect() {
 	// cannot happen
 	throw new java_RuntimeException("protocol error: overrideRedirect called for a override redirect connection");

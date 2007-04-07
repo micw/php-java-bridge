@@ -60,7 +60,7 @@ public class RemoteServletContextFactory extends ServletContextFactory {
 	if(name!=null) return session = super.getSession(name, clientIsNew, timeout);
 	
     	if(proxy==null) throw new NullPointerException("This context "+getId()+" doesn't have a session proxy.");
-	return session = new RemoteHttpSessionFacade(this, kontext, proxy, res, timeout);
+	return session = new RemoteHttpSessionFacade(this, kontext, proxy, res, clientIsNew, timeout);
     }
     
     /**
@@ -87,7 +87,7 @@ public class RemoteServletContextFactory extends ServletContextFactory {
 	ctx.setAttribute(IContext.SERVLET, servlet, IContext.ENGINE_SCOPE);
 
 	ctx.setAttribute(IContext.SERVLET_REQUEST, new RemoteHttpServletRequest(this, req), IContext.ENGINE_SCOPE);
-	ctx.setAttribute(IContext.SERVLET_RESPONSE, new RemoteHttpServletResponse(this), IContext.ENGINE_SCOPE);
+	ctx.setAttribute(IContext.SERVLET_RESPONSE, new RemoteHttpServletResponse(), IContext.ENGINE_SCOPE);
 	
 	return ctx;
     }

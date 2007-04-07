@@ -203,7 +203,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	    if(r.init(in, out)) {
 		r.handleRequests();
 	    }
-	} catch (Throwable e) {
+	} catch (Exception e) {
 	    Util.printStackTrace(e);
 	}
 	// restore state
@@ -247,7 +247,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	    if(r.init(in, out)) {
 		r.handleRequests();
 	    }
-	} catch (Throwable e) {
+	} catch (Exception e) {
 	    Util.printStackTrace(e);
 	}
 	res.setContentLength(out.size());

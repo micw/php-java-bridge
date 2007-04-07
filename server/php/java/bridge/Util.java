@@ -1119,8 +1119,7 @@ public final class Util {
         }
         if(maxSize>0) {
             pool = new ThreadPool(name, maxSize);
-            Util.logMessage(Util.EXTENSION_NAME + " thread pool size: " + maxSize);
-            }
+	}
         return pool;
     }
 }

@@ -288,8 +288,8 @@ short EXT_GLOBAL(option_set_by_user)(short option, int ini_user) {
   case U_LIBRARY_PATH: entry = EXT_GLOBAL(cfg)->ld_library_path; break;
   case U_CLASSPATH: entry = EXT_GLOBAL(cfg)->classpath; break;
   case U_SOCKNAME: entry = EXT_GLOBAL(cfg)->sockname; break;
-  case U_HOSTS: entry = EXT_GLOBAL(cfg)->hosts; break;
-  case U_SERVLET: entry = EXT_GLOBAL(cfg)->servlet; break;
+  case U_HOSTS: { TSRMLS_FETCH(); entry = JG(hosts) ? JG(hosts) : EXT_GLOBAL(cfg)->hosts; break; }
+  case U_SERVLET: { TSRMLS_FETCH(); entry = JG(servlet) ? JG(servlet) : EXT_GLOBAL(cfg)->servlet; break; }
   case U_WRAPPER: entry = EXT_GLOBAL(cfg)->wrapper; break;
   case U_POLICY: entry = EXT_GLOBAL(cfg)->policy; break;
   case U_PERSISTENT_CONNECTIONS: return EXT_GLOBAL(cfg)->persistent_connections;

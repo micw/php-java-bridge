@@ -162,8 +162,9 @@ struct proxyenv_ {
   char *servlet_context_string;	/* original rinit value from
 								   get_servlet_context() */
   short backend_has_session_proxy;
-  struct saved_cfg {
+  struct saved_cfg {			/* copy of JG(cfg) used in activate/passivate connection */
 	int ini_user;
+	short java_socket_inet;
 	char *hosts, *servlet;
   } cfg;
   

@@ -184,9 +184,9 @@ public class ContextRunner implements Runnable {
 	try {
 	    if(init())
 		request.handleRequests();
-	} catch (IOException e) {
+	} catch (Exception e) {
 	    Util.printStackTrace(e);
-	} finally {
+        } finally {
 	    if(ctx!=null) {
 		remove(ctx.getId());
 		ctx.destroy();

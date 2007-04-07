@@ -47,15 +47,15 @@ public class HttpSessionFacade implements ISession {
     private boolean isNew;
     private ServletContextFactory ctxFactory;
     
-    HttpSession getSession() {
+    HttpSession getCachedSession() {
 	if(sessionCache!=null) return sessionCache;
 	sessionCache = session;
 	sessionCache.setMaxInactiveInterval(timeout);
 	return sessionCache;
     }
-    protected HttpSessionFacade (ServletContextFactory ctxFactory, ServletContext ctx, HttpServletRequest req, HttpServletResponse res, int timeout) {
+    protected HttpSessionFacade (ServletContextFactory ctxFactory, ServletContext ctx, HttpServletRequest req, HttpServletResponse res, boolean clientIsNew, int timeout) {
 	this.ctxFactory = ctxFactory;
-	this.session = req.getSession();
+	this.session = clientIsNew? req.getSession(true) : req.getSession();
 	this.timeout = timeout;
 	this.isNew = session.isNew();
     }
@@ -88,31 +88,31 @@ public class HttpSessionFacade implements ISession {
     }
     /**@inheritDoc*/
     public Object get(Object ob) {
-	return getSession().getAttribute(String.valueOf(ob));
+	return getCachedSession().getAttribute(String.valueOf(ob));
     }
 
     /**@inheritDoc*/
     public void put(Object ob1, Object ob2) {
-	getSession().setAttribute(String.valueOf(ob1), ob2);
+	getCachedSession().setAttribute(String.valueOf(ob1), ob2);
     }
 
     /**@inheritDoc*/
    public Object remove(Object ob) {
 	String key = String.valueOf(ob);
-	Object o = getSession().getAttribute(key);
+	Object o = getCachedSession().getAttribute(key);
 	if(o!=null)
-	    getSession().removeAttribute(key);
+	    getCachedSession().removeAttribute(key);
 	return o;
     }
 
    /**@inheritDoc*/
     public void setTimeout(int timeout) {
-	getSession().setMaxInactiveInterval(timeout);
+	getCachedSession().setMaxInactiveInterval(timeout);
     }
 
     /**@inheritDoc*/
     public int getTimeout() {
-	return getSession().getMaxInactiveInterval();
+	return getCachedSession().getMaxInactiveInterval();
     }
 
     /**@inheritDoc*/
@@ -127,7 +127,7 @@ public class HttpSessionFacade implements ISession {
 
     /**@inheritDoc*/
     public void destroy() {
-	getSession().invalidate();
+	getCachedSession().invalidate();
     }
 
     /**@inheritDoc*/
@@ -141,7 +141,7 @@ public class HttpSessionFacade implements ISession {
 
     /**@inheritDoc*/
     public Map getAll() {
-	HttpSession session = getSession();
+	HttpSession session = getCachedSession();
 	HashMap map = new HashMap();
 	for(Enumeration ee = session.getAttributeNames(); ee.hasMoreElements();) {
 	    Object key = ee.nextElement();
@@ -152,10 +152,10 @@ public class HttpSessionFacade implements ISession {
     }
     /**@inheritDoc*/
     public long getCreationTime() {
-      return getSession().getCreationTime();
+      return getCachedSession().getCreationTime();
     }
     /**@inheritDoc*/
     public long getLastAccessedTime() {
-      return getSession().getLastAccessedTime();
+      return getCachedSession().getLastAccessedTime();
     }
 }

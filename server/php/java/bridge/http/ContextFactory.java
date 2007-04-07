@@ -203,7 +203,6 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     public synchronized void recycle() {
 	super.recycle();
 	contextServer=null;
-	bridge=null;
 	invalid=true;
 	notify();
     }

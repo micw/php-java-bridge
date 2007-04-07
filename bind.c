@@ -95,6 +95,7 @@
 #error EXTENSION_DIR must point to the PHP extension directory
 #endif
 
+const static char servlet_socket_prefix[]="SERVLET_LOCAL:";
 const static char inet_socket_prefix[]="INET_LOCAL:";
 const static char local_socket_prefix[]="LOCAL:";
 const static char ext_dir[] = "extension_dir";
@@ -166,7 +167,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   char *ext = php_ini_string((char*)ext_dir, sizeof ext_dir, 0);
   const char* s_prefix = inet_socket_prefix;
   short any_port = 1;			/* let back-end select the port# */
-  if(!EXT_GLOBAL(cfg)->java_socket_inet) {
+  if(!JG(java_socket_inet)) {
 	s_prefix = local_socket_prefix;
 	any_port = 0; //for_display
   }
@@ -174,9 +175,19 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
 
   /* if socketname is off, show the user how to start a TCP backend */
   if(any_port && !(EXT_GLOBAL(option_set_by_user) (U_SOCKNAME, EXT_GLOBAL(ini_user)))) {
-	cfg_sockname="0";
-	s_prefix=inet_socket_prefix;
-    //cfg_logFile="";
+	if(EXT_GLOBAL(option_set_by_user)(U_SERVLET, JG(ini_user))) {
+	  static const char default_port[] = "8080";
+	  char *s = JG(hosts);
+	  char *p = s ? strpbrk(s, "; ") : 0; if(p) *p=0;
+	  p = s ? strchr(s, ':') : 0;
+	  if(p) p++;
+	  cfg_sockname = p ? p : (char*)default_port;
+	  s_prefix=servlet_socket_prefix;
+	} else {
+	  cfg_sockname="0";
+	  s_prefix=inet_socket_prefix;
+	  //cfg_logFile="";
+	}
   }
   /* send a prefix so that the server does not select a different
    protocol */
@@ -276,7 +287,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   short any_port = 1;			/* let back-end select the port# */
   char *sockname, *cfg_sockname=EXT_GLOBAL(get_sockname)(TSRMLS_C), *cfg_logFile=EXT_GLOBAL(cfg)->logFile;
   char*home = EXT_GLOBAL(cfg)->vm_home;
-  if(!EXT_GLOBAL(cfg)->java_socket_inet) {
+  if(!JG(java_socket_inet)) {
 	s_prefix = local_socket_prefix;
 	any_port = 0; //for_display
   }
@@ -389,9 +400,9 @@ static void exec_vm(TSRMLS_D) {
 }
 
 static const int is_true = 1;
-static int test_local_server(void) {
+static int test_local_server(TSRMLS_D) {
   int sock, n;
-  if(!EXT_GLOBAL(cfg)->java_socket_inet) {
+  if(!JG(java_socket_inet)) {
 #ifndef CFG_JAVA_SOCKET_INET
 	sock = socket (PF_LOCAL, SOCK_STREAM, 0);
 #endif
@@ -400,7 +411,7 @@ static int test_local_server(void) {
 	if(sock!=-1) setsockopt(sock, 0x6, TCP_NODELAY, (void*)&is_true, sizeof is_true);
   }
   if(sock==-1) return -1;
-  if(EXT_GLOBAL(cfg)->java_socket_inet) {
+  if(JG(java_socket_inet)) {
 	n = connect(sock,(struct sockaddr*)&EXT_GLOBAL(cfg)->saddr.in, sizeof EXT_GLOBAL(cfg)->saddr.in);
   } else {
 #ifndef CFG_JAVA_SOCKET_INET
@@ -412,10 +423,11 @@ static int test_local_server(void) {
 }
 
 /*
-  return 0 if user has hard-coded the socketname
-*/
-static short can_fork(void) {
-  return EXT_GLOBAL(cfg)->can_fork;
+ * return 0 if user has hard-coded the socketname or if
+ * X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT is set at run-time.
+ */
+static short can_fork(TSRMLS_D) {
+  return EXT_GLOBAL(cfg)->can_fork && !(EXT_GLOBAL(option_set_by_user) (U_SERVLET, JG(ini_user)));
 }
 
 /*
@@ -438,8 +450,8 @@ char* EXT_GLOBAL(test_server)(int *_socket, short *local, struct sockaddr*_saddr
 	 backend ourselfs. Do not check if socketname not set and we are
 	 called from init, in which case we know that a local backend is
 	 not running. */
-  if (((socketname_set || can_fork()) && (socketname_set || !called_from_init))
-	  && -1!=(sock=test_local_server()) ) {
+  if (((socketname_set || can_fork(TSRMLS_C)) && (socketname_set || !called_from_init))
+	  && -1!=(sock=test_local_server(TSRMLS_C)) ) {
 	if(_socket) {
 	  *_socket=sock;
 	} else {
@@ -505,8 +517,8 @@ char* EXT_GLOBAL(test_server)(int *_socket, short *local, struct sockaddr*_saddr
   }
 
   socketname_set = EXT_GLOBAL(option_set_by_user) (U_SOCKNAME, JG(ini_user)) ;
-  if (((socketname_set || can_fork()) && (socketname_set || !called_from_init))
-	  && -1!=(sock=test_local_server()) ) {
+  if (((socketname_set || can_fork(TSRMLS_C)) && (socketname_set || !called_from_init))
+	  && -1!=(sock=test_local_server(TSRMLS_C)) ) {
 	if(_socket) {
 	  *_socket=sock;
 	} else {
@@ -525,7 +537,7 @@ static void sleep_ms() {
   struct timeval timeval = {0l, timeout};
   select(0, 0, 0, 0, &timeval);
 }
-static int wait_server(void) {
+static int wait_server(TSRMLS_D) {
 #ifndef __MINGW32__ 
   static const int wait_count = 30;
   int count=wait_count, sock;
@@ -535,7 +547,7 @@ static int wait_server(void) {
 #endif
   
   /* wait for the server that has just started */
-  while(EXT_GLOBAL(cfg)->cid && -1==(sock=test_local_server()) && --count) {
+  while(EXT_GLOBAL(cfg)->cid && -1==(sock=test_local_server(TSRMLS_C)) && --count) {
 #ifdef HAVE_POLL
 	if(EXT_GLOBAL(cfg)->err && poll(pollfd, 1, 0)) 
 	  return FAILURE; /* server terminated with error code */
@@ -543,7 +555,7 @@ static int wait_server(void) {
 	sleep_ms();
   }
   count=30;
-  while(EXT_GLOBAL(cfg)->cid && -1==sock && -1==(sock=test_local_server()) && --count) {
+  while(EXT_GLOBAL(cfg)->cid && -1==sock && -1==(sock=test_local_server(TSRMLS_C)) && --count) {
 #ifdef HAVE_POLL
 	if(EXT_GLOBAL(cfg)->err && poll(pollfd, 1, 0)) 
 	  return FAILURE; /* server terminated with error code */
@@ -554,11 +566,11 @@ static int wait_server(void) {
 #else
   static const int wait_count = 5;
   int count=wait_count, sock;
-  while(EXT_GLOBAL(cfg)->cid && -1==(sock=test_local_server()) && --count) {
+  while(EXT_GLOBAL(cfg)->cid && -1==(sock=test_local_server(TSRMLS_C)) && --count) {
 	Sleep(500);
   }
   count=15;
-  while(EXT_GLOBAL(cfg)->cid && -1==sock && -1==(sock=test_local_server()) && --count) {
+  while(EXT_GLOBAL(cfg)->cid && -1==sock && -1==(sock=test_local_server(TSRMLS_C)) && --count) {
 	php_error(E_NOTICE, "php_mod_"/**/EXT_NAME()/**/"(%d): waiting for server another %d interval",57, count);
 	Sleep(500);
   }
@@ -1057,7 +1069,7 @@ void EXT_GLOBAL(start_server)(TSRMLS_D) {
   char buf[255], *channel = 0;
   char count, *test_server = 0, *name;
 #ifndef __MINGW32__
-  if(can_fork() && !(test_server=EXT_GLOBAL(test_server)(0, 0, 0 TSRMLS_CC)) && pipe(p)!=-1) {
+  if(can_fork(TSRMLS_C) && !(test_server=EXT_GLOBAL(test_server)(0, 0, 0 TSRMLS_CC)) && pipe(p)!=-1) {
 	if(!(pid=fork())) {		/* daemon */
 	  close(p[0]);
 	  stx = pipe(st);
@@ -1113,11 +1125,11 @@ void EXT_GLOBAL(start_server)(TSRMLS_D) {
 #else
 	  make_local_socket_info(0 TSRMLS_CC);
 #endif
-	  wait_server();
+	  wait_server(TSRMLS_C);
 	}
   } else 
 #else
-	if(can_fork() && !(test_server=EXT_GLOBAL(test_server)(0, 0, 0 TSRMLS_CC))) {
+	if(can_fork(TSRMLS_C) && !(test_server=EXT_GLOBAL(test_server)(0, 0, 0 TSRMLS_CC))) {
 	  char *cmd = get_server_string(0 TSRMLS_CC);
 	  DWORD properties = /*CREATE_NEW_CONSOLE | */CREATE_NEW_PROCESS_GROUP;
 	  STARTUPINFO su_info;
@@ -1160,7 +1172,7 @@ void EXT_GLOBAL(start_server)(TSRMLS_D) {
 		  EXT_GLOBAL(cfg)->default_sockname=strdup(DEFAULT_PORT);
 		  assert(EXT_GLOBAL(cfg)->default_sockname); if(!EXT_GLOBAL(cfg)->default_sockname) exit(6);
 		  make_local_socket_info(1 TSRMLS_CC);
-		  wait_server();
+		  wait_server(TSRMLS_C);
 		}
 		CloseHandle(s_pid.p.hThread);
 		CloseHandle(read_pipe_dup);

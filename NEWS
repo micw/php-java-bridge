@@ -3,6 +3,34 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 4.0.8
+
+* It is now possible to call JSP taglibs from (remote-) php
+scripts. See tests.php5/tag.php for a test case.
+
+* It is now possible to direct a PHP script to different back ends at
+run-time. When the PHP script contains a
+
+  require_once("http://myHost.com:8080/JavaBridge/java/Java.inc"),
+
+statement, both, the C and the pure PHP implementation connect to
+myHost.com on port 8080 instead of the local back end started with
+Apache or IIS.
+
+* The C implementation of java_cast now accepts values. For example
+java_cast(1, "string") returns "1". This is consistent with the pure
+PHP implementation
+
+* A bug, introduced in version 4.0.1, has been fixed. The bridge
+instance was removed too early, which caused a NullPointerExeption on
+the server side if the PHP script contains only a
+"java_get_server_name()" statement.
+
+* The HTTP tunnel (used when both, the SocketContextServer and
+PipeContextServer are switched off) works again, due to the above bug
+fix.
+
+
 Version 4.0.5
 
 * It is now possible to access the ServletContext, ServletRequest and

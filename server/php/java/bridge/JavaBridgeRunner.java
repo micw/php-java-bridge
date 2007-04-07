@@ -28,6 +28,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 
 import php.java.bridge.http.AbstractChannelName;
 import php.java.bridge.http.ContextFactory;
@@ -52,8 +53,15 @@ import php.java.bridge.http.IContextFactory;
  */
 public class JavaBridgeRunner extends HttpServer {
 
+    private static Class JavaInc;
     private static String serverPort;
     private boolean isStandalone = false;
+
+    static {
+	try {
+	    JavaInc = Class.forName("php.java.bridge.JavaInc");
+        } catch (ClassNotFoundException e) {/*ignore*/}
+    }
     /**
      * Create a new JavaBridgeRunner and ContextServer.
      * @throws IOException 
@@ -129,7 +137,7 @@ public class JavaBridgeRunner extends HttpServer {
 	String kontext = getHeader("X_JAVABRIDGE_CONTEXT_DEFAULT", req);
 	ContextFactory.ICredentials credentials = ctxServer.getCredentials(channel, kontext);
 	IContextFactory ctx = getContextFactory(req, res, credentials);
-
+	
     	JavaBridge bridge = ctx.getBridge();
 	// save old state for override_redirect
 	InputStream bin = bridge.in;
@@ -171,14 +179,36 @@ public class JavaBridgeRunner extends HttpServer {
             ctx.destroy();
         }
     }
+    
+    private byte[] cache;
     /**
      * Handle doGet requests. For example java_require("http://localhost:8080/JavaBridge/java/Java.inc");
      * @param req The HttpRequest
      * @param res The HttpResponse
      */
     protected void doGet (HttpRequest req, HttpResponse res) throws IOException {
-	String name =req.getRequestURI(); 
+	String name =req.getRequestURI();
+	byte[] buf;
+	OutputStream out;
 	if(name==null) { super.doGet(req, res); return; }
+	if(cache != null) {
+	    res.setContentLength(cache.length);
+	    res.getOutputStream().write(cache);
+	    return;
+	}
+	    
+	if(JavaInc!=null && name.endsWith("Java.inc")) {
+	    try {
+	        Field f = JavaInc.getField("bytes");
+	        cache = buf = (byte[]) f.get(JavaInc);
+	        res.setContentLength(buf.length);
+		out =res.getOutputStream();
+		out.write(buf);
+		return;
+            } catch (SecurityException e) {/*ignore*/        	
+            } catch (Exception e) {Util.printStackTrace(e);
+            }
+	}
 	name = name.replaceFirst("/JavaBridge", "META-INF");
 	InputStream in = JavaBridgeRunner.class.getClassLoader().getResourceAsStream(name);
 	if(in==null) { // Java.inc may not exist in the source download, use JavaBridge.inc instead.
@@ -193,13 +223,15 @@ public class JavaBridgeRunner extends HttpServer {
 	    }
 	 }
 	ByteArrayOutputStream bout = new ByteArrayOutputStream();
-	byte[] buf = new byte[Util.BUF_SIZE];
+	buf = new byte[Util.BUF_SIZE];
+
 	int c;
 	while((c=in.read(buf))>0) bout.write(buf, 0, c);
 	res.setContentLength(bout.size());
-	OutputStream out = res.getOutputStream();
+	out = res.getOutputStream();
 	try {
-	    bout.writeTo(out);
+	    cache = bout.toByteArray();
+	    out.write(cache);
 	} catch (IOException e) { /* may happen when the client is not interested, see require_once() */}
     }
     /**

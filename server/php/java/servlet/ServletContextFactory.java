@@ -69,7 +69,7 @@ public class ServletContextFactory extends php.java.bridge.http.SimpleContextFac
 	if(name!=null) return super.getSession(name, clientIsNew, timeout);
 	
     	if(proxy==null) throw new NullPointerException("This context "+getId()+" doesn't have a session proxy.");
-	return session = new HttpSessionFacade(this, kontext, proxy, res, timeout);
+	return session = new HttpSessionFacade(this, kontext, proxy, res, clientIsNew, timeout);
     }
     
     /**
@@ -111,7 +111,7 @@ public class ServletContextFactory extends php.java.bridge.http.SimpleContextFac
      * Return the http session handle or null;
      */
     public HttpSession getSession() {
-	if(session!=null) return ((HttpSessionFacade)session).getSession();
+	if(session!=null) return ((HttpSessionFacade)session).getCachedSession();
 	return null;
     }
 }

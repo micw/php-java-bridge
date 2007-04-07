@@ -37,11 +37,9 @@ import php.java.bridge.NotImplementedException;
 
 final class RemoteHttpServletResponse implements HttpServletResponse, BufferedResponse {
     
-    private ServletContextFactory factory;
     private ByteArrayOutputStream buffer;
 
-    public RemoteHttpServletResponse(ServletContextFactory factory) {
-	this.factory = factory;
+    public RemoteHttpServletResponse() {
 	this.buffer = new ByteArrayOutputStream();
     }
     public byte[] getBufferContents() {
@@ -115,70 +113,70 @@ final class RemoteHttpServletResponse implements HttpServletResponse, BufferedRe
     }
 
     public void addCookie(Cookie arg0) {
-	throw new NotImplementedException();
+	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
     }
 
     public void addDateHeader(String arg0, long arg1) {
-	throw new NotImplementedException();
+	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
     }
 
     public void addHeader(String arg0, String arg1) {
-	throw new NotImplementedException();
+	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
     }
 
     public void addIntHeader(String arg0, int arg1) {
-	throw new NotImplementedException();
+	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
     }
 
     public boolean containsHeader(String arg0) {
-	throw new NotImplementedException();
+	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
     }
 
     public String encodeRedirectURL(String arg0) {
-	throw new NotImplementedException();
+	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
     }
 
     public String encodeRedirectUrl(String arg0) {
-	throw new NotImplementedException();
+	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
     }
 
     public String encodeURL(String arg0) {
-	throw new NotImplementedException();
+	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
     }
 
     public String encodeUrl(String arg0) {
-	throw new NotImplementedException();
+	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
     }
 
     public void sendError(int arg0) throws IOException {
-	throw new NotImplementedException();
+	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
     }
 
     public void sendError(int arg0, String arg1) throws IOException {
-	throw new NotImplementedException();
+	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
     }
 
     public void sendRedirect(String arg0) throws IOException {
-	throw new NotImplementedException();
+	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
     }
 
     public void setDateHeader(String arg0, long arg1) {
-	throw new NotImplementedException();
+	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
     }
 
     public void setHeader(String arg0, String arg1) {
-	throw new NotImplementedException();
+	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
     }
 
     public void setIntHeader(String arg0, int arg1) {
-	throw new NotImplementedException();
+	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
     }
 
     public void setStatus(int arg0) {
-	throw new NotImplementedException();
+	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
     }
 
     public void setStatus(int arg0, String arg1) {
-	throw new NotImplementedException();
+	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
     }
 }

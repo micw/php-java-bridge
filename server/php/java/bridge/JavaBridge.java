@@ -213,7 +213,7 @@ public class JavaBridge implements Runnable {
 	    if(logLevel>3) logDebug("Request from client with uid/gid "+uid+"/"+gid);
 	    try {
 		request.handleRequests();
-	    } catch (Throwable e) {
+	    } catch (Exception e) {
 		printStackTrace(e);
 	    }
 
