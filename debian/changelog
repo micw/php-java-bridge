@@ -1,19 +1,29 @@
+php-java-bridge (4.0.8-1) unstable; urgency=low
+
+  * New upstream version.
+  * C implementation now in sync with php J2EE implementation.
+
+ -- Andre Felipe Machado <af-machado@uol.com.br>  Mon,  9 Apr 2007 09:38:09 -0300
+
 php-java-bridge (4.0.7-1) unstable; urgency=low
 
   * New upstream version
   * Splitted in multiple packages
+  * C implementation is still the same as 4.0.1
 
  -- Andre Felipe Machado <af-machado@uol.com.br>  Mon,  2 Apr 2007 16:34:41 -0300
 
 php-java-bridge (4.0.6-1) unstable; urgency=low
 
   * New upstream version
+  * C implementation is still the same as 4.0.1
 
  -- Andre Felipe Machado <af-machado@uol.com.br>  Mon, 26 Mar 2007 13:18:49 -0300
 
 php-java-bridge (4.0.2-1) unstable; urgency=low
 
   * New upstream version.
+  * C implementation is still the same as 4.0.1
 
  -- Andre Felipe Machado <af-machado@uol.com.br>  Tue, 20 Mar 2007 08:25:26 -0300
 
