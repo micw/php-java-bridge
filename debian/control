@@ -20,7 +20,7 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
  Interface.
  This Debian package installs C implementation as php modules.
 
- Homepage: http://php-java-bridge.sourceforge.net
+ XBS-Homepage: http://php-java-bridge.sourceforge.net
 
 
 Package: php-java-bridge-docs
@@ -36,7 +36,7 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
  Interface.
  This Debian package installs user documentation.
 
- Homepage: http://php-java-bridge.sourceforge.net
+ XBS-Homepage: http://php-java-bridge.sourceforge.net
 
 Package: php-java-bridge-j2ee-docs
 Architecture: any
@@ -51,7 +51,7 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
  Interface.
  This Debian package installs J2EE server user documentation.
 
- Homepage: http://php-java-bridge.sourceforge.net
+ XBS-Homepage: http://php-java-bridge.sourceforge.net
 
 Package: php-java-bridge-j2ee
 Architecture: any
@@ -67,7 +67,7 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
  This Debian package installs the bridge J2EE server 
  implementation.
 
- Homepage: http://php-java-bridge.sourceforge.net
+ XBS-Homepage: http://php-java-bridge.sourceforge.net
 
 Package: php-java-bridge-devel
 Architecture: any
@@ -84,4 +84,4 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
  Also the development files needed to create java applications
  with embedded PHP scripts.
 
- Homepage: http://php-java-bridge.sourceforge.net
+ XBS-Homepage: http://php-java-bridge.sourceforge.net
