@@ -69,9 +69,6 @@ Hint: You need to specify the absolute path to the temporary scratchpad working 
 
 cvs-buildpackage  -rfakeroot -uc -us -R. -W/home/andremachado/compilation_tmp
 
-
-(Untested: cvs-buildpackage --linda --lintian -rfakeroot -uc -us )
-
 The generated files will result at the specified temporary scratchpad working area.
 
 
