@@ -1,5 +1,35 @@
 2007-04-06  Jost Boekemeier  <jostb@intern>
 
+	* bind.c (exec_vm): Use the canonical name if the configured
+	name wasn't not found.
+
+	* java.c (MINFO): Correct typo
+
+	* examples/php+jsp/settings.php, server/WEB-INF/web.xml: Added 
+	prefer_system_php_exec config option.
+
+	* server/php/java/bridge/Util.java, server/php/java/script/CGIRunner.java, server/php/java/servlet/PhpCGIServlet.java: Added prefer_system_php_exec config option.
+
+	There must be only one ConnectionPool/FastCGI pool per class
+	loader: 
+
+	* server/php/java/servlet/fastcgi/ChannelName.java
+	(updatePort): Removed
+	(initialize): New from updatePort
+	(fcgiStartLock): Use only one lock per class loader, otherwise the
+	lock wouldn't make any sense.
+	(fcgiActivatorRunning): Only the first request sets the lock and
+	activates the FastCGI servlet.
+	(toString): New method.  *
+	server/php/java/servlet/fastcgi/FastCGIServlet.java
+	(lockObject): Removed
+	(globalCtxLock, javaBridgeCtxLock): New locks.
+	(findCGI): Separate the global- and the "JavaBridge" pool.
+	
+	* VERSION, php-java-bridge.spec: Version 4.0.8test2
+	
+2007-04-06  Jost Boekemeier  <jostb@intern>
+
 	* bind.c
 	(get_server_args,test_local_server,can_fork,test_server,wait_server,start_server):
 	check for X_JAVABRIDGE_OVERRIDE_REDIRECT

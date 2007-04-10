@@ -117,7 +117,7 @@ class SocketChannelName extends ChannelName {
 			String[] args = new String[]{php, "-d", "allow_url_include=On", "-b", port};
 			File home = null;
 			if(php!=null) try { home = ((new File(php)).getParentFile()); } catch (Exception e) {Util.printStackTrace(e);}
-			proc = new FCGIProcess(args, home, env, CGIServlet.getRealPath(servlet.context, servlet.cgiPathPrefix), servlet.phpTryOtherLocations);
+			proc = new FCGIProcess(args, home, env, CGIServlet.getRealPath(servlet.context, servlet.cgiPathPrefix), servlet.phpTryOtherLocations, servlet.preferSystemPhp);
 			proc.start();
 	            return (Process)proc;
 	    }

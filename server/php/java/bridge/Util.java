@@ -745,7 +745,8 @@ public final class Util {
 	private File homeDir;
 	private Map env;
 	private boolean tryOtherLocations;
-
+	private boolean preferSystemPhp;
+	
 	protected String[] getArgumentArray(String[] php, String[] args) {
 	    LinkedList buf = new LinkedList();
 	    buf.addAll(java.util.Arrays.asList(php));
@@ -766,17 +767,29 @@ public final class Util {
 	    if(args==null) args=new String[]{null};
 	    String phpExec = args[0];
 	    String[] cgiBinary = null;
-            if(phpExec != null && (cgiBinary=checkCgiBinary(new StringBuffer(phpExec))) != null) php = cgiBinary;
-            
-            /*
-             * ... resolve it ..
-             */            
-            if(PHP_EXEC==null && tryOtherLocations && php[0]==null) {
-		for(int i=0; i<DEFAULT_CGI_LOCATIONS.length; i++) {
-		    location = new File(DEFAULT_CGI_LOCATIONS[i]);
-		    if(location.exists()) {php[0] = location.getAbsolutePath(); break;}
+	    if(!preferSystemPhp) {
+		if(phpExec != null && (cgiBinary=checkCgiBinary(new StringBuffer(phpExec))) != null) php = cgiBinary;
+		/*
+		 * ... resolve it ..
+		 */            
+		if(PHP_EXEC==null && tryOtherLocations && php[0]==null) {
+		    for(int i=0; i<DEFAULT_CGI_LOCATIONS.length; i++) {
+			location = new File(DEFAULT_CGI_LOCATIONS[i]);
+			if(location.exists()) {php[0] = location.getAbsolutePath(); break;}
+		    }
 		}
-            }
+	    } else {
+		/*
+		 * ... resolve it ..
+		 */            
+		if(PHP_EXEC==null && tryOtherLocations && php[0]==null) {
+		    for(int i=0; i<DEFAULT_CGI_LOCATIONS.length; i++) {
+			location = new File(DEFAULT_CGI_LOCATIONS[i]);
+			if(location.exists()) {php[0] = location.getAbsolutePath(); break;}
+		    }
+		}
+		if(php[0]==null && phpExec != null && (cgiBinary=checkCgiBinary(new StringBuffer(phpExec))) != null) php = cgiBinary;
+	    }
             if(php[0]==null && tryOtherLocations) php[0]=PHP_EXEC;
             if(php[0]==null && args[0]!=null && (new File(args[0]).exists())) php[0]=args[0];
             if(php[0]==null) php[0]="php-cgi";
@@ -791,11 +804,12 @@ public final class Util {
 	    proc = rt.exec(s, hashToStringArray(env), homeDir);
 	    if(Util.logLevel>3) Util.logDebug("Started "+ java.util.Arrays.asList(s));
         }
-	protected Process(String[] args, File homeDir, Map env, boolean tryOtherLocations) {
+	protected Process(String[] args, File homeDir, Map env, boolean tryOtherLocations, boolean preferSystemPhp) {
 	    this.args = args;
 	    this.homeDir = homeDir;
 	    this.env = env;
 	    this.tryOtherLocations = tryOtherLocations;
+	    this.preferSystemPhp = preferSystemPhp;
 	}
         /**
 	 * Starts a CGI process and returns the process handle.
@@ -808,8 +822,8 @@ public final class Util {
 	 * @throws IOException
 	 * @see Util#checkCgiBinary(StringBuffer)
 	 */	  
-        public static Process start(String[] args, File homeDir, Map env, boolean tryOtherLocations) throws IOException {
-            Process proc = new Process(args, homeDir, env, tryOtherLocations);
+        public static Process start(String[] args, File homeDir, Map env, boolean tryOtherLocations, boolean preferSystemPhp) throws IOException {
+            Process proc = new Process(args, homeDir, env, tryOtherLocations, preferSystemPhp);
             proc.start();
             return proc;
         }
@@ -878,8 +892,8 @@ public final class Util {
 	    }
 	};
 
-	protected ProcessWithErrorHandler(String[] args, File homeDir, Map env, boolean tryOtherLocations) throws IOException {
-	    super(args, homeDir, env, tryOtherLocations);
+	protected ProcessWithErrorHandler(String[] args, File homeDir, Map env, boolean tryOtherLocations, boolean preferSystemPhp) throws IOException {
+	    super(args, homeDir, env, tryOtherLocations, preferSystemPhp);
 	}
 	protected void start() throws IOException {
 	    super.start();
@@ -934,8 +948,8 @@ public final class Util {
          * @throws IOException
          * @see Util#checkCgiBinary(StringBuffer)
          */
-        public static Process start(String[] args, File homeDir, Map env, boolean tryOtherLocations) throws IOException {
-            Process proc = new ProcessWithErrorHandler(args, homeDir, env, tryOtherLocations);
+        public static Process start(String[] args, File homeDir, Map env, boolean tryOtherLocations, boolean preferSystemPhp) throws IOException {
+            Process proc = new ProcessWithErrorHandler(args, homeDir, env, tryOtherLocations, preferSystemPhp);
             proc.start();
             return proc;
         }

@@ -3,15 +3,6 @@
 
 <web-app>
 
-    <!-- Faces Servlet -->
-  <!--
-    <servlet>
-        <servlet-name>PhpFacesServlet</servlet-name>
-        <servlet-class>php.java.faces.FacesServlet</servlet-class>
-        <load-on-startup>0</load-on-startup>
-    </servlet>
-   -->
-
     <!-- PHP Servlet: back-end for Apache or IIS -->
     <servlet>
         <servlet-name>PhpJavaServlet</servlet-name>
@@ -63,6 +54,14 @@
          </init-param>
         -->
 
+         <!-- Prefer the system php-cgi executable (see DEFAULT_CGI_LOCATIONS) -->
+         <!-- over a local WEB-INF/cgi/php-cgi-xxx-yyy[.sh|.exe]? -->
+         <!-- Default is to try a local php-cgi executable first. -->
+         <init-param>
+           <param-name>prefer_system_php_exec</param-name>
+           <param-value>On</param-value>
+         </init-param>
+
          <!-- The number of concurrent cgi requests -->
          <!-- Note that this value should be 1/2 of the servlet engine's -->
          <!-- thread pool size because each PhpCGIServlet instance also -->
@@ -107,15 +106,6 @@
 
         <load-on-startup>0</load-on-startup>
   </servlet>
-
-
-    <!-- Faces Servlet Mapping -->
-   <!--
-    <servlet-mapping>
-        <servlet-name>PhpFacesServlet</servlet-name>
-        <url-pattern>*.jsf</url-pattern>
-    </servlet-mapping>
-   -->
 
     <!-- PHP Servlet Mapping -->
     <servlet-mapping>

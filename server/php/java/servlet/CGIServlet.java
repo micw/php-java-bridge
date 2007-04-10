@@ -519,7 +519,7 @@ public class CGIServlet extends HttpServlet {
         protected ServletContext context = null;
 
         /** context path of enclosing servlet */
-        public String contextPath = null;
+        protected String contextPath = null;
 
         /** servlet URI of the enclosing servlet */
         protected String servletPath = null;

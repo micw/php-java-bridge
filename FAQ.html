@@ -85,8 +85,19 @@ works in the shell but not within apache, then there's something wrong with your
 
 <H2>Running Java as a sub component of Apache or IIS</H2>
 
-<H4>How do I lock down the VM so that users cannot start
-threads or call System.exit?</H4> <p>Usually with a java policy
+<H4>How do I hard code the path to java into the C extension?</H4>
+<p>With the configure option <code>--with-java=COMPILETIME_JAVA_HOME,RUNTIME_JAVA_HOME</code>. For example:
+<blockquote>
+<code>
+phpize &&<br>
+./configure --with-java=/opt/jdk1.5,/usr/java/default &&<br>
+make &&<br>
+make install<br>
+</code>
+</blockquote>
+</p>
+
+<H4>How do I lock down the VM so that users cannot start threads or call System.exit?</H4> <p>Usually with a java policy
 file. An <a href="server/javabridge.policy">example file</a> has been installed in the php extension directory and can be enabled with:
 <code>
 java.security_policy=On

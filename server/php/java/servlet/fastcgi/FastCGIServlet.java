@@ -114,6 +114,7 @@ public class FastCGIServlet extends CGIServlet {
     
     protected String php = null; 
     protected boolean phpTryOtherLocations = false;
+    protected boolean preferSystemPhp = false; // prefer /usr/bin/php-cgi over WEB-INF/cgi/php-cgi?
     
     /** default: true. Switched off when fcgi is not configured */
     protected boolean fcgiIsConfigured;
@@ -129,8 +130,17 @@ public class FastCGIServlet extends CGIServlet {
     protected String php_fcgi_max_requests = PHP_FCGI_MAX_REQUESTS;
     protected int php_fcgi_max_requests_number = Integer.parseInt(PHP_FCGI_MAX_REQUESTS);
 
-    private final Object lockObject = new Object();
+    /* There may be two connection pools accessing only one FastCGI server. 
+     * We reserve 1 connection for the JavaBridge web context, the remaining 4 connections
+     * can be used by the GlobalPhpJavaServlet.
+     * The FastCGIServer is started in ChannelName#startServer (invoked by createConnectionPool).
+     * by opening a dummy URLConnection  from the global- to the JavaBridge web context.
+     * The following variables guard the creation of the global and "JavaBridge" connection pools.
+     */
+    private static final Object globalCtxLock = new Object();
+    private static final Object javaBridgeCtxLock = new Object();
     private static ConnectionPool fcgiConnectionPool = null;
+    
     private final Factory defaultPoolFactory = new Factory() {
       public InputStream createInputStream() { return new FastCGIInputStream(FastCGIServlet.this); }
       public OutputStream createOutputStream() { return new FastCGIOutputStream(); }
@@ -140,7 +150,7 @@ public class FastCGIServlet extends CGIServlet {
     };
     private final CGIRunnerFactory defaultCGIRunnerFactory = new CGIRunnerFactory();
     protected ChannelName channelName;
-    
+
     protected void checkCgiBinary(ServletConfig config) {
 	String value;
 	if (php==null) {
@@ -197,7 +207,14 @@ public class FastCGIServlet extends CGIServlet {
 	    value = value.trim();
 	    value = value.toLowerCase();
 	    if(value.equals("off") || value.equals("false")) override_hosts=false;
-	} catch (Throwable t) {Util.printStackTrace(t);}      
+	} catch (Throwable t) {Util.printStackTrace(t);}
+    	try {
+	    value = config.getInitParameter("prefer_system_php_exec");
+	    if(value==null) value="";
+	    value = value.trim();
+	    value = value.toLowerCase();
+	    if(value.equals("on") || value.equals("true")) preferSystemPhp=true;
+	} catch (Throwable t) {Util.printStackTrace(t);}	
 	String val = null;
 	try {
 	    val = getServletConfig().getInitParameter("php_fcgi_children");
@@ -265,6 +282,9 @@ public class FastCGIServlet extends CGIServlet {
 				   String cgiPathPrefix) {
 
 	    if(!fcgiIsAvailable) return null;
+	    
+	    boolean isJavaBridgeWc = isJavaBridgeWc(contextPath);
+	    Object lockObject = isJavaBridgeWc?javaBridgeCtxLock:globalCtxLock;
 	    synchronized(lockObject) {
 		if(null == (connectionPool=fcgiConnectionPool))
 		    try {
@@ -273,7 +293,6 @@ public class FastCGIServlet extends CGIServlet {
 			    // NOTE: the shared_fast_cgi_pool options
 			    // from the GlobalPhpCGIServlet and from
 			    // the PhpCGIServlet must match.
-			    boolean isJavaBridgeWc = FastCGIServlet.isJavaBridgeWc(contextPath);
 			    children = isJavaBridgeWc ? JAVABRIDGE_RESERVE : php_fcgi_children_number-JAVABRIDGE_RESERVE;
 			}
 			fcgiConnectionPool=connectionPool = createConnectionPool(children);
@@ -296,7 +315,7 @@ public class FastCGIServlet extends CGIServlet {
 		empty_string};      	// sCGIName: not used anywhere
 	}
 	private ConnectionPool createConnectionPool(int children) throws ConnectException {
-	    channelName.updatePort((PhpCGIServlet)FastCGIServlet.this, (PhpCGIServlet.CGIEnvironment)this);
+	    channelName.initialize((PhpCGIServlet)FastCGIServlet.this, (PhpCGIServlet.CGIEnvironment)this, contextPath);
 
 	    // Start the launcher.exe or launcher.sh
 	    fcgiIsAvailable = channelName.startServer();

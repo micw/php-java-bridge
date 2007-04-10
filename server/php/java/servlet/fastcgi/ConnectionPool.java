@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import php.java.bridge.Util;
 
 /**
  * A connection pool. Example:<br><br>
@@ -164,6 +165,7 @@ public class ConnectionPool {
       * @see Factory
      */
     public ConnectionPool(ChannelName channelName, int limit, int maxRequests, Factory factory) throws ConnectException {
+	if(Util.logLevel>3) Util.logDebug("Creating new connection pool for: " +channelName);
         this.channelName = channelName;
         this.limit = limit;
         this.factory = factory;

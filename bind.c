@@ -393,6 +393,12 @@ static void exec_vm(TSRMLS_D) {
   }
   if(*args[0]=='/') execv(args[0], args); else execvp(args[0], args);
 
+#if EXTENSION == JAVA
+  execvp("java", args);
+#elif EXTENSION == MONO
+  execvp("mono", args);
+#endif
+
   /* exec failed */
   cmd = get_server_string(0 TSRMLS_CC);
   php_error(E_WARNING, "php_mod_"/**/EXT_NAME()/**/"(%d) system error: Could not execute backend: %s: %s", 105, cmd, strerror(errno));

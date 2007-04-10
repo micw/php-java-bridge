@@ -39,8 +39,8 @@ import php.java.servlet.PhpCGIServlet;
  */
 class FCGIProcess extends Util.Process {
     String realPath;
-    public FCGIProcess(String[] args, File homeDir, Map env, String realPath, boolean tryOtherLocations) throws IOException {
-         super(args, homeDir, env, tryOtherLocations);
+    public FCGIProcess(String[] args, File homeDir, Map env, String realPath, boolean tryOtherLocations, boolean preferSystemPhp) throws IOException {
+         super(args, homeDir, env, tryOtherLocations, preferSystemPhp);
          this.realPath = realPath;
     }
     protected String[] getArgumentArray(String[] php, String[] args) {

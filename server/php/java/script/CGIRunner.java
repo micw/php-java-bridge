@@ -89,7 +89,7 @@ public abstract class CGIRunner extends Thread {
     }
     private static class ProcessWithErrorHandler extends Util.ProcessWithErrorHandler {
 	protected ProcessWithErrorHandler(String[] args, File homeDir, Map env, boolean tryOtherLocations) throws IOException {
-	    super(args, homeDir, env, tryOtherLocations);
+	    super(args, homeDir, env, tryOtherLocations, true);
 	}
 	protected String checkError(String s) {
 	    return s;

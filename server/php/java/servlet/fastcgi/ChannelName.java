@@ -43,22 +43,29 @@ import php.java.servlet.PhpCGIServlet;
 public abstract class ChannelName {
     protected PhpCGIServlet servlet;
     protected PhpCGIServlet.CGIEnvironment env;
+    protected String contextPath;
+    
+    /* The fast CGI Server process on this computer. Switched off per default. */
+    protected static FCGIProcess proc = null;
+    private static boolean fcgiStarted = false;
+    private static final Object fcgiStartLock = new Object(); // one lock for all servlet intances of this class loader
+    
     
     /**
      * Start the FastCGI server
      * @return false if the FastCGI server failed to start.
      */
-    public boolean startServer() {
+    public final boolean startServer() {
 	    /*
 	     * Try to start the FastCGI server,
 	     */
-	    synchronized(servlet.fcgiStartLock) {
-	      if(!servlet.fcgiStarted) {
+	    synchronized(ChannelName.fcgiStartLock) {
+	      if(!fcgiStarted) {
 		  if(servlet.delegateToJavaBridgeContext) {
 		      // if this is the GlobalPhpJavaServlet, try to delegate
 		      // to the JavaBridge context
 		      // check if this is the JavaBridge wc
-		      boolean isJavaBridgeWc = FastCGIServlet.isJavaBridgeWc(env.contextPath);
+		      boolean isJavaBridgeWc = FastCGIServlet.isJavaBridgeWc(contextPath);
 		      delegateOrStartFCGI(isJavaBridgeWc);
 		  } else {
 		      if(canStartFCGI()) 
@@ -66,10 +73,10 @@ public abstract class ChannelName {
 			      bind();
 			  } catch (Exception e) {/*ignore*/}
 		  }
-		 servlet. fcgiStarted = true; // mark as started, even if start failed
+		 fcgiStarted = true; // mark as started, even if start failed
 	      } 
 	    }
-	    return servlet.fcgiStarted; //FIXME refactor local vars
+	    return fcgiStarted;
     }
     /**
      * Test the FastCGI server.
@@ -93,9 +100,6 @@ public abstract class ChannelName {
 		    } catch (Exception e) {Util.logDebug("Could not start FCGI server: " + e);};
 	    }
 
-	    /* The fast CGI Server process on this computer. Switched off per default. */
-	    protected FCGIProcess proc = null;
-	    
 	    protected abstract Process doBind(Map env, String php) throws IOException;
 		protected void bind() throws InterruptedException, IOException {
 		    Thread t = (new Util.Thread("JavaBridgeFastCGIRunner") {
@@ -109,6 +113,8 @@ public abstract class ChannelName {
 		    t.start();
 		    waitForDaemon();
 		}
+
+	private static boolean fcgiActivatorRunning = false;
 	/*
 	 * Delegate to the JavaBridge context, if necessary.
 	 */
@@ -118,8 +124,9 @@ public abstract class ChannelName {
               if(canStartFCGI()) bind();
           } else {
               if(canStartFCGI()) {
-                  delegateFCGI();
-                  try { servlet.fcgiStartLock.wait(); } catch (InterruptedException e) {/*ignore*/}
+                  if(!fcgiActivatorRunning) activateFCGI(); fcgiActivatorRunning = true;
+                  // stop all childs until the fcgi activator has started the fcgi processes
+                  try { fcgiStartLock.wait(); } catch (InterruptedException e) {/*ignore*/}
               }
           }
       } catch (Exception e) {
@@ -143,7 +150,7 @@ public abstract class ChannelName {
 	    }
 	    proc.destroy();
 	    proc=null;
-	    servlet.fcgiStarted = false;
+	    fcgiStarted = false;
 	}
 
 	/**
@@ -159,7 +166,7 @@ public abstract class ChannelName {
 	 * @throws IOException
 	 * @throws InterruptedException 
 	 */
-	protected void delegateFCGI() throws IOException, InterruptedException {
+	private void activateFCGI() throws IOException, InterruptedException {
 	    URL url = new URL("http", "127.0.0.1", CGIServlet.getLocalPort(env.req), "/JavaBridge/.php");
 	    URLConnection conn = url.openConnection();
 	    // use a new thread to avoid a dead lock if the servlet's thread pool is full.
@@ -182,7 +189,7 @@ public abstract class ChannelName {
 		      Util.printStackTrace(e);
 		  } finally {
 		     if(in!=null) try { in.close(); } catch (Exception e){/*ignore*/}
-		     synchronized (servlet.fcgiStartLock) { servlet.fcgiStartLock.notify(); }
+		     synchronized (ChannelName.fcgiStartLock) { fcgiStartLock.notify(); }
 		  }
 	      }
 	    }).init(conn).start();
@@ -192,10 +199,11 @@ public abstract class ChannelName {
 	 * @param servlet The servlet
 	 * @param env The current CGI environment.
 	 */
-	public void updatePort(PhpCGIServlet servlet, PhpCGIServlet.CGIEnvironment env) {
+	public void initialize(PhpCGIServlet servlet, PhpCGIServlet.CGIEnvironment env, String contextPath) {
 	    this.servlet = servlet;
 	    this.env = env;
-	    if(FastCGIServlet.isJavaBridgeWc(env.contextPath)) {
+	    this.contextPath = contextPath;
+	    if(FastCGIServlet.isJavaBridgeWc(contextPath)) {
 		setDefaultPort();
 	    } else {
 		setDynamicPort();
@@ -227,5 +235,9 @@ public abstract class ChannelName {
 		return new SocketChannelName();
 	    else 
 		return new NPChannelName();
+	}
+	
+	public String toString() {
+	    return "ChannelName@" + contextPath==null ? "<not initialized>" : contextPath;
 	}
 }

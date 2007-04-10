@@ -66,7 +66,7 @@ class NPChannelName extends ChannelName {
 	String[] args = new String[]{php, raPath, "-d", "allow_url_include=On"};
 	File home = null;
 	if(php!=null) try { home = ((new File(php)).getParentFile()); } catch (Exception e) {Util.printStackTrace(e);}
-	proc = new FCGIProcess(args, home, env, CGIServlet.getRealPath(servlet.context, servlet.cgiPathPrefix), servlet.phpTryOtherLocations);
+	proc = new FCGIProcess(args, home, env, CGIServlet.getRealPath(servlet.context, servlet.cgiPathPrefix), servlet.phpTryOtherLocations, servlet.preferSystemPhp);
 	proc.start();
     return (Process)proc;
     }

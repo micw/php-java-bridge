@@ -1988,13 +1988,13 @@ PHP_MINFO_FUNCTION(EXT)
 	  php_info_print_table_row(2, EXT_NAME()/**/".log_file", EXT_GLOBAL(cfg)->logFile);
   }
   php_info_print_table_row(2, EXT_NAME()/**/".log_level", is_level ? EXT_GLOBAL(cfg)->logLevel : "no value (use back-end's default level)");
-  if(EXT_GLOBAL(option_set_by_user) (U_HOSTS, EXT_GLOBAL(ini_user)))  
+  if(EXT_GLOBAL(option_set_by_user) (U_HOSTS, JG(ini_user)))  
 	php_info_print_table_row(2, EXT_NAME()/**/".hosts", JG(hosts));
 #if EXTENSION == JAVA
-  if(EXT_GLOBAL(option_set_by_user) (U_SERVLET, EXT_GLOBAL(ini_user))) {
+  if(EXT_GLOBAL(option_set_by_user) (U_SERVLET, JG(ini_user))) {
 	char buf[255], *url;
 	if(JG(servlet)) {
-	  EXT_GLOBAL(snprintf)(buf, sizeof buf, "http%s://%s:%s", 
+	  EXT_GLOBAL(snprintf)(buf, sizeof buf, "http%s://%s/%s", 
 						   (EXT_GLOBAL(ini_user) & U_SECURE) ?"s":"", server, JG(servlet));
 	  url = buf;
 	} else {

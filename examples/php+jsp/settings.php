@@ -91,6 +91,12 @@ It starts a PHP FastCGI server, if possible and necessary. Requests for PHP scri
 </tr>
 
 <tr>
+<td>prefer_system_php_exec</td>
+<td><?php $val=java_values($config->getInitParameter("prefer_system_php_exec")); echo $val?$val:"Off"?></td>
+<td>May we use /usr/bin/php-cgi or c:/php/php-cgi.exe if a local WEB-INF/cgi/php-cgi-ARCH-OS executable is available?</td>
+</tr>
+
+<tr>
 <td>max_requests</td>
 <td><?php $val=java_values($config->getInitParameter("max_requests")); echo $val?$val:"50"?></td>
 <td>How many parallel requests should the servlet engine handle?</td>

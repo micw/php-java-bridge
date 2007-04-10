@@ -54,8 +54,6 @@ import php.java.servlet.fastcgi.FastCGIServlet;
 public class PhpCGIServlet extends FastCGIServlet {
 
     public static final boolean USE_SH_WRAPPER = new File("/bin/sh").exists();
-    public final Object fcgiStartLock = new Object();
-    public boolean fcgiStarted = false;
     private static final long serialVersionUID = 38983388211187962L;
 
     /**
@@ -102,7 +100,6 @@ public class PhpCGIServlet extends FastCGIServlet {
     /**@inheritDoc*/
     public void init(ServletConfig config) throws ServletException {
 	String value;
-	fcgiStarted = false;
     	super.init(config);
     	try {
 	    value = config.getInitParameter("max_requests");
@@ -251,7 +248,7 @@ public class PhpCGIServlet extends FastCGIServlet {
 	    InputStream in = null;
 	    OutputStream out = null;
     	    try {
-        	proc = Util.ProcessWithErrorHandler.start(new String[]{php, "-d", "allow_url_include=On"}, wd, env, phpTryOtherLocations);
+        	proc = Util.ProcessWithErrorHandler.start(new String[]{php, "-d", "allow_url_include=On"}, wd, env, phpTryOtherLocations, preferSystemPhp);
 
         	byte[] buf = new byte[BUF_SIZE];// headers cannot be larger than this value!
 
