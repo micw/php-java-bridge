@@ -62,6 +62,9 @@ JavaBridge.jar: META-INF/java/Java.inc
 	$(PHP_JAVA)/bin/jar cMf JavaBridge.jar META-INF/java/*.inc META-INF/java/README META-INF/MANIFEST.MF php/java/bridge/http/*.class php/java/bridge/*.class  php/java/bridge/*.properties
 	chmod +x JavaBridge.jar
 
+TestInstallation.class: TestInstallation.java
+	$(PHP_JAVA)/bin/javac $(SOURCE_VERSION) -classpath . TestInstallation.java
+
 php-servlet.jar: JavaBridge.jar $(SERVLET)
 	$(PHP_JAVA)/bin/javac $(SOURCE_VERSION) -classpath .:$(SERVLET) php/java/script/*.java php/java/bridge/http/*.java php/java/bridge/*.java php/java/servlet/*.java php/java/servlet/fastcgi/*.java
 	$(PHP_JAVA)/bin/jar cf php-servlet.jar php/java/servlet/*.class php/java/servlet/fastcgi/*.class
@@ -78,7 +81,7 @@ php-faces.jar: JavaBridge.jar $(FACES) $(SERVLET)
 	$(PHP_JAVA)/bin/javac $(SOURCE_VERSION) -classpath .:$(SERVLET):$(SCRIPT):$(FACES) php/java/bridge/http/*.java php/java/bridge/*.java php/java/script/*.java php/java/faces/*.java
 	$(PHP_JAVA)/bin/jar cf php-faces.jar php/java/faces/*.class
 
-JavaBridge.war: JavaBridge.jar $(SERVLET) $(JAVA_BRIDGE_SERVLET_JAR) $(SCRIPT) $(JAVA_BRIDGE_SCRIPT_JAR) $(FACES) $(JAVA_BRIDGE_FACES_JAR)
+JavaBridge.war: JavaBridge.jar $(SERVLET) $(JAVA_BRIDGE_SERVLET_JAR) $(SCRIPT) $(JAVA_BRIDGE_SCRIPT_JAR) $(FACES) $(JAVA_BRIDGE_FACES_JAR) TestInstallation.class
 	$(PHP_JAVA)/bin/javac $(SOURCE_VERSION) -classpath $(SERVLET):$(SCRIPT) php/java/script/*.java php/java/bridge/http/*.java php/java/bridge/*.java php/java/servlet/*.java php/java/servlet/fastcgi/*.java
 	-mkdir WEB-INF/lib WEB-INF/classes
 	cp JavaBridge.jar $(SCRIPT) $(JAVA_BRIDGE_SERVLET_JAR) $(JAVA_BRIDGE_SCRIPT_JAR) $(JAVA_BRIDGE_FACES_JAR) ../unsupported/*.jar WEB-INF/lib
@@ -90,7 +93,7 @@ JavaBridge.war: JavaBridge.jar $(SERVLET) $(JAVA_BRIDGE_SERVLET_JAR) $(SCRIPT) $
 	mv META-INF/MANIFEST.MF META-INF/MANIFEST.MF.standalone
 	rm -rf java; cp -r META-INF/java .
 	sed '/Main-Class/s/php.java.bridge.Standalone/TestInstallation/' <META-INF/MANIFEST.MF.standalone >META-INF/MANIFEST.MF
-	$(PHP_JAVA)/bin/jar cMf JavaBridge.war *.php locale/* java/*.inc java/README *.jsp META-INF/MANIFEST.MF WEB-INF/web.xml WEB-INF/cgi/*.sh WEB-INF/cgi/*.ini WEB-INF/cgi/*.exe WEB-INF/cgi/README WEB-INF/lib/*.jar
+	$(PHP_JAVA)/bin/jar cMf JavaBridge.war TestInstallation.class *.php locale/* java/*.inc java/README *.jsp META-INF/MANIFEST.MF WEB-INF/web.xml WEB-INF/cgi/*.sh WEB-INF/cgi/*.ini WEB-INF/cgi/*.exe WEB-INF/cgi/README WEB-INF/lib/*.jar
 	rm -f META-INF/MANIFEST.MF
 	rm -rf java
 	mv META-INF/MANIFEST.MF.standalone META-INF/MANIFEST.MF

@@ -1,3 +1,19 @@
+2007-04-15  Jost Boekemeier  <jostb@intern>
+
+	* server/Makefile.am: Add TestInstallation.class 
+
+	* server/META-INF/java/JavaBridge.inc: Do not destroy redirect from
+	the servlet.
+
+	* server/php/java/bridge/http/ContextFactory.java (recycle): call
+	finishContext so that the visitor can clean up its internal state.
+
+	* server/php/java/bridge/http/IContextFactory.java
+	(finishContext): New procedure.
+
+	* server/php/java/bridge/http/SimpleContextFactory.java
+	(finishContext): New procedure: reset the session cache.
+	
 2007-04-06  Jost Boekemeier  <jostb@intern>
 
 	* bind.c (exec_vm): Use the canonical name if the configured

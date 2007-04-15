@@ -60,7 +60,8 @@ if(extension_loaded('java') && !function_exists("java_set_base")) {
 	  }
 	}
   }
-  java_set_base();
+  if(!array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER))
+	java_set_base();
  }
 
 if(!extension_loaded('java') && !function_exists("java_get_base")) {

@@ -254,7 +254,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	out.writeTo(res.getOutputStream());
 	in.close();
     }
-    
+
     /**
      * Handle a redirected connection. The local channel is more than 50 
      * times faster than the HTTP tunnel. Used by Apache and cgi.

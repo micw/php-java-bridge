@@ -66,7 +66,7 @@ public class ServletContextFactory extends php.java.bridge.http.SimpleContextFac
     public ISession getSession(String name, boolean clientIsNew, int timeout) {
 	if(session != null) return session;
 	 // if name != null return a "named" php session which is not shared with jsp
-	if(name!=null) return super.getSession(name, clientIsNew, timeout);
+	if(name!=null) return session = visited.getSimpleSession(name, clientIsNew, timeout);
 	
     	if(proxy==null) throw new NullPointerException("This context "+getId()+" doesn't have a session proxy.");
 	return session = new HttpSessionFacade(this, kontext, proxy, res, clientIsNew, timeout);

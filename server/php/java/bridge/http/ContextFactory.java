@@ -202,6 +202,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      */    
     public synchronized void recycle() {
 	super.recycle();
+	visitor.finishContext();
 	contextServer=null;
 	invalid=true;
 	notify();
@@ -365,4 +366,6 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	invalid=true;
 	notify();
     }
+    /** Called by recycle at the end of the script */
+    public void finishContext() {}
 }

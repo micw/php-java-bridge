@@ -128,4 +128,11 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
     public void remove() {
         destroy();
     }
+
+    /**
+     * Called by recycle at the end of the script
+     */
+    public void finishContext() {
+	session = null;
+    }
 }
