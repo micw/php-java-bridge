@@ -9,10 +9,12 @@
 # Uncomment this to turn on verbose mode.
 export DH_VERBOSE=1
 
-# AFM  27nov2006 variables MUST be set outside target rules
+# Read http://wiki.debian.org/PkgSplit "How to split a package into several 
+# smaller packages" for details of this file.
+# variables MUST be set outside target rules
 # target rules MUST start at column 1, then followed by ":"
 # actions MUST start after a TAB, not blank spaces
-# AFM 11dec2006 builddir for using dh_install for .war files.
+# builddir for using dh_install for .war files.
 	BUILDDIR := debian/php-java-bridge
 	DESTDIR := ${CURDIR}/${BUILDDIR}
 	PHP_EXT_DIR := $(shell /usr/bin/php-config --extension-dir)
@@ -26,7 +28,7 @@ else
 	CFLAGS += -O2
 endif
 
-# AFM 07dec2006 using dpatch for flexibility
+# using dpatch for flexibility
 configure: patchsource configure-stamp
 
 configure-stamp:
@@ -34,14 +36,12 @@ configure-stamp:
 	# Add here commands to configure the package.
 #	phpize --clean
 	phpize
-
-# AFM 27nov2006
 	./configure --with-java=/usr/lib/jvm/java-1.5.0-sun --prefix=${DESTDIR}
 	touch configure-stamp
 
 build: build-stamp
 
-# AFM 07dec2006 using dpatch for flexibility, no mv anymore
+# using dpatch for flexibility, no mv anymore
 build-stamp: configure 
 	dh_testdir
 	# Add here commands to compile the package.
@@ -49,12 +49,11 @@ build-stamp: configure
 	#docbook-to-man debian/php-java-bridge.sgml > php-java-bridge.1
 	touch $@
 
-# AFM 07dec2006 using dpatch for flexibility
+# using dpatch for flexibility
 clean-patched:
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp configure-stamp
-
 	# Add here commands to clean up after the build process.
 	-$(MAKE) clean
 	dh_clean 
@@ -64,17 +63,10 @@ install: installbasic
 
 	# Add here commands to install the package into debian/php-java-bridge.
 
-# AFM 27nov2006 to specifiy destdir debian way
+# specifiy destdir debian way
 	$(MAKE) install DESTDIR=${DESTDIR}
 
-# AFM 11dec2006 using dh_installdirs and dh_install for this task
-# note the absence of leading "/" and one per line to avoid jumping to next rule
-installini:
-	dh_install java.ini etc/php5/conf.d
-	dh_install mono.ini etc/php5/conf.d
-
-
-# AFM 03apr2007 to avoid multiple binary packages conflicts
+# avoid multiple binary packages conflicts
 installbasic: build
 	dh_testdir
 	dh_testroot
@@ -82,10 +74,10 @@ installbasic: build
 	dh_installdirs 
 
 # Build architecture-independent files here.
-# AFM 03apr2007 creating also docs package without examples files. See /debian/*.docs file
+# creating also docs package without examples files. See /debian/*.docs file
 binary-indep: build install php-java-bridge-j2ee php-java-bridge-docs php-java-bridge-j2ee-docs php-java-bridge-devel
 
-# AFM 03apr2007 creating j2ee package . See /debian/*j2ee.* files
+# creating j2ee package . See /debian/*j2ee.* files
 # note the -p$@ to use target name package files in /debian as parameters
 php-java-bridge-j2ee: build install
 	dh_testdir
@@ -94,7 +86,7 @@ php-java-bridge-j2ee: build install
 	dh_installchangelogs -p$@ ChangeLog
 	dh_installdocs -p$@
 #	dh_installexamples -p$@
-# AFM 11dec2006 using dh_installdirs and dh_install for this task
+# using dh_installdirs and dh_install for this task
 # note the absence of leading "/"
 	dh_install -p$@ ${BUILDDIR}$(PHP_EXT_DIR)/JavaBridge.war var/lib/tomcat5/webapps
 	dh_install -p$@
@@ -121,7 +113,7 @@ php-java-bridge-j2ee: build install
 	dh_md5sums -p$@
 	dh_builddeb -p$@
 
-# AFM 03apr2007 creating devel package . See /debian/*devel.* files
+# creating devel package . See /debian/*devel.* files
 # note the -p$@ to use target name package files in /debian as parameters
 php-java-bridge-devel: build install
 	dh_testdir
@@ -155,7 +147,7 @@ php-java-bridge-devel: build install
 	dh_md5sums -p$@
 	dh_builddeb -p$@
 
-# AFM 03apr2007 creating docs package without examples files. See /debian/*.docs file
+# creating docs package without examples files. See /debian/*.docs file
 # pitfall: packages have "-" in their name. Do not create intermediate rules with this character
 php-java-bridge-docs: installdocs
 
@@ -192,13 +184,13 @@ installdocs: build installbasic
 	dh_builddeb
 
 # Build architecture-dependent files here.
-binary-arch: build install installini
+binary-arch: build install
 	dh_testdir
 	dh_testroot
 	dh_installchangelogs ChangeLog
 	dh_installdocs
 #	dh_installexamples
-#	dh_install
+	dh_install
 #	dh_installmenu
 #	dh_installdebconf	
 #	dh_installlogrotate
@@ -223,9 +215,9 @@ binary-arch: build install installini
 	dh_builddeb
 
 binary: binary-indep binary-arch
-.PHONY: build clean binary-indep binary-arch binary install configure installdocs installbasic installini
+.PHONY: build clean binary-indep binary-arch binary install configure installdocs installbasic
 
-# AFM 07dec2006 using dpatch for flexibility
+# using dpatch for flexibility
 unpatch:
 	dpatch deapply-all
 	rm -rf patch-stamp debian/patched

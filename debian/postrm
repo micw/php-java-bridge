@@ -20,28 +20,20 @@ set -e
 
 
 javaini=/etc/php5/conf.d/java.ini
-javaservletini=/etc/php5/conf.d/java-servlet.ini
-monoini=/etc/php5/conf.d/mono.ini
 
 
 
 case "$1" in
     remove|upgrade)
 	invoke-rc.d apache2 restart;
-	invoke-rc.d tomcat5 restart;
     ;;
 
     purge|failed-upgrade|abort-install|abort-upgrade|disappear)
 	if which ucf >/dev/null 2>&1; then
 		ucf --purge $javaini;
-		ucf --purge $javaservletini;
-		ucf --purge $monoini;
 	fi
 	rm -f $javaini;
-	rm -f $javaservletini;
-	rm -f $monoini;
 	invoke-rc.d apache2 restart;
-	invoke-rc.d tomcat5 restart;
 	;;
 
     *)

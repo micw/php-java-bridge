@@ -21,12 +21,10 @@ set -e
 case "$1" in
     configure)
 	invoke-rc.d apache2 restart;
-	invoke-rc.d tomcat5 restart;
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
 	invoke-rc.d apache2 restart;
-	invoke-rc.d tomcat5 restart;
     ;;
 
     *)
