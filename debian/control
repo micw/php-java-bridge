@@ -23,7 +23,7 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
 
 
 Package: php-java-bridge-docs
-Architecture: any
+Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends}, ${php:Depends}
 Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
  The PHP/Java Bridge is an optimized, XML-based network 
@@ -36,7 +36,7 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
  This Debian package installs user documentation.
 
 Package: php-java-bridge-j2ee-docs
-Architecture: any
+Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends}, ${php:Depends}
 Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
  The PHP/Java Bridge is an optimized, XML-based network 
@@ -49,7 +49,7 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
  This Debian package installs J2EE server user documentation.
 
 Package: php-java-bridge-j2ee
-Architecture: any
+Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends}, ${php:Depends}, sun-java5-jre, tomcat5, liblucene-java, libitext-java
 Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
  The PHP/Java Bridge is an optimized, XML-based network 
@@ -63,7 +63,7 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
  implementation.
 
 Package: php-java-bridge-devel
-Architecture: any
+Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends}, ${php:Depends}, sun-java5-jre, liblucene-java, libitext-java, php-java-bridge
 Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
  The PHP/Java Bridge is an optimized, XML-based network 
