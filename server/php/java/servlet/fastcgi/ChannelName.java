@@ -213,7 +213,7 @@ public abstract class ChannelName {
 	protected abstract void setDefaultPort();
 
 	/**
-	 * Return a commant which may be useful for starting the FastCGI server as a separate command.
+	 * Return a command which may be useful for starting the FastCGI server as a separate command.
 	 * @param base The context directory
 	 * @param php_fcgi_max_requests The number of requests, see appropriate servlet option.
 	 * @return A command string

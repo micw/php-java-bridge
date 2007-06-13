@@ -264,13 +264,14 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
      * @throws ServletException
      * @throws IOException
      */
-    protected void handleSocketConnection (HttpServletRequest req, HttpServletResponse res, String channel, String kontext, boolean session)
+    protected void handleSocketConnection (HttpServletRequest req, HttpServletResponse res, String channel, String kontext, boolean session, boolean legacyClient)
 	throws ServletException, IOException {
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
-	ServletContextFactory ctx = getContextFactory(req, res, contextServer.getCredentials(channel, kontext));
+	ServletContextFactory ctx = getContextFactory(req, res, null);
 	JavaBridge bridge = ctx.getBridge();
 	if(session) ctx.setSessionFactory(req);
-
+	ctx.setIsLegacyClient(legacyClient);
+	
 	bridge.in = sin=req.getInputStream();
 	bridge.out = sout = new ByteArrayOutputStream();
 	Request r = bridge.request = new Request(bridge);
@@ -282,7 +283,6 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 		res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getDefaultName());
 		if(hasDefault) res.setHeader("X_JAVABRIDGE_CONTEXT_DEFAULT", kontext);
 	    	r.handleRequests();
-	    	contextServer.recycle(channelName);
 
 		// redirect and re-open
 		res.setContentLength(sout.size());
@@ -318,7 +318,9 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
      */
     protected void doPut (HttpServletRequest req, HttpServletResponse res)
 	throws ServletException, IOException {
-    	short redirect =(short) req.getIntHeader("X_JAVABRIDGE_REDIRECT");
+    	short redirectValue =(short) req.getIntHeader("X_JAVABRIDGE_REDIRECT");
+    	boolean isLegacyClient = (redirectValue & 4) == 4; // Used by the C code, which cannot open persistent connections to the servlet
+    	short redirect = (short) (redirectValue & 3);
     	boolean local = Util.JAVABRIDGE_PROMISCUOUS || isLocal(req);
     	if(!local) throw new SecurityException("Non-local clients not allowed per default. " +
     			"Either \na) set promiscuous in your web.xml or \nb) start the Java VM with -Dphp.java.bridge.promiscuous=true " +
@@ -330,7 +332,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	    if(redirect==1) 
 		handleRedirectConnection(req, res, channel, kontext); /* override re-direct */
 	    else if(local && contextServer.isAvailable(channel)) 
-		handleSocketConnection(req, res, channel, kontext, redirect==2); /* re-direct */
+		handleSocketConnection(req, res, channel, kontext, redirect==2, isLegacyClient); /* re-direct */
 	    else
 		handleHttpConnection(req, res, channel, kontext, redirect==2); /* standard http tunnel */
 

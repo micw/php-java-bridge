@@ -2,7 +2,6 @@
 
 package php.java.bridge;
 
-import java.io.IOException;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -36,19 +35,11 @@ import java.io.IOException;
  */
 public class JavaBridgeClassLoader extends SimpleJavaBridgeClassLoader {
     private boolean mustReset;
-    /**
-     * Create a bridge ClassLoader using a dynamic loader.
-     * @param loader The dynamic loader, may be null.
-     */
-    public JavaBridgeClassLoader(DynamicJavaBridgeClassLoader loader) {
-        super(loader);
+    public JavaBridgeClassLoader(ClassLoader xloader) {
+	super(null, xloader);
     }
-    /**
-     * Create a bridge class loader using the default class loader.
-     *
-     */
     public JavaBridgeClassLoader() {
-        super();
+	super();
     }
     protected boolean checkCl() {
 	if(cl==null) {
@@ -57,21 +48,20 @@ public class JavaBridgeClassLoader extends SimpleJavaBridgeClassLoader {
 	}
 	return true;
     }
-    public void setClassLoader(DynamicJavaBridgeClassLoader loader) throws IOException {
+    public void setClassLoader(DynamicJavaBridgeClassLoader loader) {
         if(loader!=null && mustReset) { 
             loader.reset(); 
-            try { Thread.currentThread().setContextClassLoader(loader = loader.clearVMLoader()); } catch (SecurityException e) { Util.printStackTrace(e); } 
         }
         super.setClassLoader(loader);
     }
     /**
      * reset loader to the loader to its initial state, clear the VM cache and set a new ThreadContextClassLoader
+     * This is only called by the API function "java_reset()", which is deprecated.
      */
     public void reset() {
 	if (!checkCl()) mustReset=true;
 	else { 
 	    super.doReset();
-	    try { Thread.currentThread().setContextClassLoader(cl); } catch (SecurityException e) { Util.printStackTrace(e); }  
 	}
     }
     /**
@@ -81,7 +71,6 @@ public class JavaBridgeClassLoader extends SimpleJavaBridgeClassLoader {
     public void clearCaches() {
 	if (checkCl()) {
 	    super.doClearCaches();
-	    try { Thread.currentThread().setContextClassLoader(cl); }  catch (SecurityException e) { Util.printStackTrace(e); } 
 	}
     }
     /**
@@ -90,7 +79,6 @@ public class JavaBridgeClassLoader extends SimpleJavaBridgeClassLoader {
     public void clear() {
 	if(checkCl()) {
 	    super.doClear();
-	    try { Thread.currentThread().setContextClassLoader(cl); }  catch (SecurityException e) { Util.printStackTrace(e); } 	    
 	}
     }    
 }

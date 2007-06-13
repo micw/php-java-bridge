@@ -29,7 +29,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 
-import php.java.bridge.DynamicJavaBridgeClassLoader;
 import php.java.bridge.JavaBridge;
 import php.java.bridge.JavaBridgeClassLoader;
 import php.java.bridge.Request;
@@ -123,16 +122,11 @@ public class ContextRunner implements Runnable {
 	// The first statement was executed with the default
 	// classloader, now set the dynamic class loader into the
 	// bridge:
-	JavaBridgeClassLoader loader = bridge.getClassLoader();
-	DynamicJavaBridgeClassLoader xloader = null;
-	try {
-	    xloader = 
-		(DynamicJavaBridgeClassLoader) 
-		Thread.currentThread().getContextClassLoader();
-	} 
-	catch (SecurityException e) {/*ignore*/}
-	catch (ClassCastException e1) {/*ignore*/}
-	loader.setClassLoader(xloader);
+	ClassLoader xloader = ctx.getClassLoader();
+	if(Util.logLevel>4) Util.logDebug(ctx + " created new thread, using class loader: " + System.identityHashCode(xloader.getParent()));
+	JavaBridgeClassLoader loader = new JavaBridgeClassLoader(xloader);
+	bridge.setClassLoader(loader);
+	loader.switchedThreadContext();
 	
 	setIO(bridge, in, out);
 	this.request = bridge.request;
@@ -148,6 +142,7 @@ public class ContextRunner implements Runnable {
      * 
      * @param channelName the channelName. This procedure sets the runner into channelName as a side effect.
      * @return the ContextRunner, if found, otherwise null.
+     * BOGUS: This could be removed if we modify the C code to always pass the header.
      */
     public static synchronized ContextRunner checkRunner(AbstractChannelName channelName) {
 	String id = channelName.getKontext();
@@ -162,18 +157,7 @@ public class ContextRunner implements Runnable {
     private static synchronized void remove(String kontext) {
 	runners.remove(kontext);
     }
-    /**
-     * Recycle the runner for a different web context.
-     * @param ctx the old contextFacory belonging to a different contextServer
-     */
-    public void recycle(IContextFactory ctx) {
-	if(this.ctx == ctx) return; 
-	if(Util.logLevel>4) Util.logDebug("recycle " + this.ctx + " for " + ctx + ", ContextRunner: " + this);
-	
-	request.setBridge(ctx.getBridge());
-    }
-    
-    /**
+   /**
      * Return the channel of the current runner.
      * @return The Channel
      */

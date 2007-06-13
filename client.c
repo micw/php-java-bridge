@@ -540,7 +540,9 @@ static void remove_pipe(proxyenv*env) {
  */
 static void share_connection(proxyenv*env, char*redirect_port TSRMLS_DC) {
   assert(redirect_port);
-  (*env)->servlet_ctx=JG(servlet_ctx);
+  if(!(*env)->servlet_ctx) /* shouldn't happen */
+	(*env)->servlet_ctx=JG(servlet_ctx);
+
   (*env)->peer = JG(peer);
   if(*redirect_port=='/') {		/* pipe */
 	remove_pipe(env);
@@ -548,7 +550,7 @@ static void share_connection(proxyenv*env, char*redirect_port TSRMLS_DC) {
 	EXT_GLOBAL(redirect_pipe)(env);
   }
   (*env)->is_shared=1;
-  (*env)->must_reopen=0;		/* do not send a header */
+  (*env)->must_reopen=2;		/* send a header */
 }
 
 
@@ -925,7 +927,7 @@ static proxyenv*recycle_connection(char *context TSRMLS_DC) {
 	if(!(*env)->is_local && context) {
 	  env = adjust_servlet_environment(env, context TSRMLS_CC);
 	}
-
+	(*env)->must_reopen=2;		/* send a header */
 	return env;
   }
   return 0;

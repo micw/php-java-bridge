@@ -97,7 +97,7 @@ public class Standalone {
 	System.err.println("Example: LD_LIBRARY_PATH=/usr/lib/php/modules/ java -jar JavaBridge.jar LOCAL:/tmp/javabridge_native.socket 3 /var/log/php-java-bridge.log");
 	System.err.println("Example: java -jar JavaBridge.jar SERVLET_LOCAL:8080 3 JavaBridge.log");
 	System.err.println("Example: java -jar JavaBridge.jar --convert /usr/share/pear lucene.jar ...");
-	System.err.println("Influential system properties: threads, php_exec, default_log_file, default_log_level, base.");
+	System.err.println("Influential system properties: threads, ext_java_compatibility, php_exec, default_log_file, default_log_level, base.");
 	System.err.println("Example: java -Djava.awt.headless=\"true\" -Dphp.java.bridge.threads=50 -Dphp.java.bridge.base=/usr/lib/php/modules -Dphp.java.bridge.php_exec=/usr/local/bin/php-cgi -Dphp.java.bridge.default_log_file= -Dphp.java.bridge.default_log_level=5 -jar JavaBridge.jar");
     }
     protected void usage() {

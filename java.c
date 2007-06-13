@@ -84,6 +84,10 @@ int *__errno (void) { return (int*)&java_errno; }
 #define php_info_print_table_end() php_printf("</table><br />\n")
 #endif
 #endif
+
+/** used by classNameCache */
+static void classNameCacheEl_dtor(void *v) { zval_ptr_dtor((zval**)v); }
+
 /**
  * Called when a new request starts.  Opens a connection to the
  * back-end, creates an instance of the proxyenv structure and clones
@@ -95,6 +99,7 @@ PHP_RINIT_FUNCTION(EXT)
 	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Synchronization problem, rinit with active connection called. Cannot continue, aborting now. Please report this to: php-java-bridge-users@lists.sourceforge.net",59);
   }
   JG(is_closed)=0;
+  zend_hash_init(&JG(classNameCache), 0, 0, classNameCacheEl_dtor, 0);
   return SUCCESS;
 }
 
@@ -139,6 +144,7 @@ PHP_RSHUTDOWN_FUNCTION(EXT)
 	efree(JG(cb_stack)); JG(cb_stack) = 0; 
   }
   JG(is_closed)=1;
+  zend_hash_destroy(&JG(classNameCache));
   return SUCCESS;
 }
 
@@ -536,6 +542,49 @@ EXT_FUNCTION(EXT_GLOBAL(end_document))
   API_CALL(end_document);
 }
 
+/**
+ * \anchor doc98
+ * Proto: void java(string)
+ *
+ * Returns a reference to the java class which name is passed as an argument.
+ *
+ * Example:
+ * \code 
+ * print_r (java_values(java("java.lang.System")->getProperties()));
+ * \endcode
+*/
+EXT_FUNCTION(EXT)
+{
+  static const char s1[] = "new JavaClass(\"";
+  static const char s2[] = "\")";
+  static const char name[] = "java";
+  char *s, *arg;
+  zval **str, **pobj;
+  int argc = ZEND_NUM_ARGS();
+  size_t len;;
+  if (ZEND_NUM_ARGS()!=1 || zend_get_parameters_ex(1, &str) == FAILURE) WRONG_PARAM_COUNT;
+  convert_to_string_ex(str);
+  s = Z_STRVAL_PP(str);
+  len = Z_STRLEN_PP(str);
+
+  if(SUCCESS==zend_hash_find(&JG(classNameCache), s, len, (void**)&pobj)) {
+	*return_value = **pobj;
+	zval_copy_ctor(return_value);
+	return;
+  }	
+
+  arg = malloc(sizeof(s1)+(sizeof(s2)-1)+strlen(s));
+  strcpy(arg, s1);
+  strcat(arg, s);
+  strcat(arg, s2);
+  if((SUCCESS!=zend_eval_string(arg, return_value, (char*)name TSRMLS_CC)) || (Z_TYPE_P(return_value)!=IS_OBJECT)) {
+	WRONG_PARAM_COUNT;
+  } else {
+	zend_hash_add(&JG(classNameCache), s, len, &return_value, sizeof(pval *), NULL);
+	zval_add_ref(&return_value);
+  }
+}
+
 #ifndef ZEND_ENGINE_2
 EXT_FUNCTION(EXT_GLOBAL(__sleep))
 {
@@ -826,6 +875,7 @@ function_entry EXT_GLOBAL(functions)[] = {
 
   EXT_FE(EXT_GLOBAL(begin_document), NULL)
   EXT_FE(EXT_GLOBAL(end_document), NULL)
+  EXT_FE(EXT, NULL)
   {NULL, NULL, NULL}
 };
 

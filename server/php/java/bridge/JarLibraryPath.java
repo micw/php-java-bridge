@@ -139,6 +139,8 @@ public class JarLibraryPath {
     	    	buf.append(f.getAbsolutePath()); file = f;
     	    } else if ((f=new File("/usr/share/java/"+ s)).isFile()) {
     		buf.append(f.getAbsolutePath()); file = f;
+    	    } else if ((f=new File(Util.JAVABRIDGE_LIB, s)).isFile()) {
+    		buf.append(f.getAbsolutePath()); file = f;    		
     	    } else {
     		buf.append(s); file = new File(s);
     	    }

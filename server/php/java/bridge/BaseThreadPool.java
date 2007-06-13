@@ -36,7 +36,6 @@ import java.util.LinkedList;
  *
  */
 public class BaseThreadPool {
-    private ClassLoader loader = null;
     private String name;
     private int threads = 0, idles = 0, poolMaxSize, poolReserve;
     private LinkedList runnables = new LinkedList();
@@ -51,14 +50,7 @@ public class BaseThreadPool {
 	public Delegate(String name) { super(name); }
 	public Delegate(ThreadGroup group, String name) { super(group, name); }
 	protected void terminate() {}
-	protected void end() { /* clean the associated class loader */
-	    DynamicJavaBridgeClassLoader loader;
-	    try {
-		loader = (DynamicJavaBridgeClassLoader) getContextClassLoader();
-		loader.clear();	
-		setContextClassLoader(loader.clearVMLoader());
-	    } catch (ClassCastException ex) {/*ignore*/}
-	}
+	protected void end() {}
 	protected void createThread(String name) { startNewThread(name); }
 	
 	public void run() {
@@ -73,9 +65,6 @@ public class BaseThreadPool {
     }
     protected void startNewThread(String name) {
         Delegate d = createDelegate(name);
-	ClassLoader loader = null;
-	if(this.loader!=null) loader=DynamicJavaBridgeClassLoader.newInstance(this.loader);
-	if(loader!=null) d.setContextClassLoader(loader);
 	d.start();
     }
     protected synchronized boolean checkReserve() {
@@ -109,11 +98,10 @@ public class BaseThreadPool {
 	    notify();
     }
     
-    protected void init(String name, int poolMaxSize, ClassLoader loader) {
+    protected void init(String name, int poolMaxSize) {
 	this.name = name;
     	this.poolMaxSize = poolMaxSize;
     	this.poolReserve = (poolMaxSize>>>2)*3;
-	this.loader = loader;        
     }
     /**
      * Creates a new thread pool.
@@ -122,19 +110,6 @@ public class BaseThreadPool {
      */
     public BaseThreadPool (String name, int poolMaxSize) {
 	if(poolMaxSize<1) throw new IllegalArgumentException("poolMaxSize must be >0");
-        ClassLoader loader = null;
-        try {loader = Util.getContextClassLoader();} catch (SecurityException e) {/*ignore*/}
-        init(name, poolMaxSize, loader);
-    }
-
-    /**
-     * Creates a new thread pool.
-     * @param name  The name of the pool threads.
-     * @param poolMaxSize The max. number of threads, must be >= 1.
-     * @param loader The class loader, may be null.
-     */
-    public BaseThreadPool (String name, int poolMaxSize, ClassLoader loader) {
-	if(poolMaxSize<1) throw new IllegalArgumentException("poolMaxSize must be >0");
-        init(name, poolMaxSize, loader);
+        init(name, poolMaxSize);
     }
 }

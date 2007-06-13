@@ -1,3 +1,41 @@
+2007-05-28  Jost Boekemeier  <jostb@intern>
+
+	* api.c (construct_class): JavaClass() requires exactly one argument.
+
+	* php-java-bridge/install.sh.in: Correct path
+
+	* java.c (classNameCacheEl_dtor, java): New procedures.
+	(rinit, rshutdown): Initialize java class cache.
+
+	* server/META-INF/java/Protocol.inc (java):
+	Compatibility with the C implementation.
+	(open, fread, getName, getChannel): disable timeout
+	(getChannel): Removed
+	(getChannelName): New from getChannel
+
+	* server/php/java/bridge/JarLibraryPath.java 
+	(createUrls): look into ~/lib/
+
+	* php/java/bridge/JavaBridgeRunner.java 
+	(doGet): Do not cache anything exept Java.inc
+
+	* server/TestInstallation.java: Extract java/Java.inc.
+
+	* VERSION, php-java-bridge.spec: Version 4.1.1test1
+	
+	
+2007-05-28  Jost Boekemeier  <jostb@intern>
+
+	* VERSION, php-java-bridge.spec: Version 4.0.8 released
+	
+2007-05-05  Jost Boekemeier  <jostb@intern>
+
+	* java.c(MINIT): Implement java() function on C level.
+
+	* server/META-INF/java/JavaBridge.inc (java): Removed, now in java.c
+
+	* server/META-INF/java/Protocol.inc (open, fread): Disable timeout.
+	
 2007-04-15  Jost Boekemeier  <jostb@intern>
 
 	* server/Makefile.am: Add TestInstallation.class 

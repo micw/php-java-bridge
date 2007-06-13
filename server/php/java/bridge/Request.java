@@ -357,7 +357,7 @@ public final class Request implements IDocHandler {
 		}
 		break;
 	   case 'F': 
-	         if(arg.predicate) { // keep alive
+	         if(arg.predicate && bridge.getOptions().canKeepAlive()) { // keep alive
 	           bridge.recycle();
 	           try {
 	     	       ((ThreadPool.Delegate)Thread.currentThread()).setPersistent();
@@ -490,14 +490,15 @@ public final class Request implements IDocHandler {
 	this.bridge.request = this;
 	response.setBridge(bridge);
 	parser.setBridge(bridge);
+	Thread.currentThread().setContextClassLoader(bridge.getClassLoader().getClassLoader()); //FIXME check security exception
     }
     private void resetBridge() {
         if(defaultBridge!=null) {
-            bridge.sessionFactory.destroy();
             bridge = defaultBridge;
             response.setBridge(bridge);
             parser.setBridge(bridge);
             defaultBridge = null;
+            Thread.currentThread().setContextClassLoader(bridge.getClassLoader().getClassLoader()); //FIXME check security exception
         }
     }
     /** re-initialize for new requests */

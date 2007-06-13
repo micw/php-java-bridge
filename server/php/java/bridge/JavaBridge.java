@@ -51,8 +51,6 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.Map.Entry;
 
-import php.java.bridge.http.IContextFactory;
-
 /**
  * This is the main interface of the PHP/Java Bridge. It
  * contains utility methods which can be used by clients.
@@ -76,7 +74,7 @@ public class JavaBridge implements Runnable {
     /**
      * For internal use only. The classloader. 
      */
-    private JavaBridgeClassLoader cl = null;
+    private SimpleJavaBridgeClassLoader cl = null;
 
     static HashMap sessionHash = new HashMap();
 
@@ -172,7 +170,9 @@ public class JavaBridge implements Runnable {
     private ConstructorCache constructorCache = new ConstructorCache();
     StringCache stringCache = new StringCache(this);
 
-    SessionFactory sessionFactory;
+    /** For internal use only. */
+    public SessionFactory sessionFactory;
+    
     /** 
      * For internal use only.
      */
@@ -196,12 +196,6 @@ public class JavaBridge implements Runnable {
         try {
 	    logDebug("START: JavaBridge.run()");
 	    setSessionFactory(defaultSessionFactory);
-	    try {
-		setClassLoader(new JavaBridgeClassLoader((DynamicJavaBridgeClassLoader) Thread.currentThread().getContextClassLoader()));
-	    } catch (ClassCastException ex) {
-	         // should never happen
-		setClassLoader(new JavaBridgeClassLoader(null));
-	    }
 	    request = new Request(this);
           
 	    try {
@@ -339,9 +333,8 @@ public class JavaBridge implements Runnable {
 	    Util.logMessage("default logLevel    : " + Util.logLevel);
 	    Util.logMessage("socket              : " + socket);
 	    Util.logMessage("java.ext.dirs       : " + System.getProperty("java.ext.dirs"));
-	    String base = System.getProperty("php.java.bridge.base", System.getProperty("user.home"));
-	    Util.logMessage("php.java.bridge.base: " + base);
-	    Util.logMessage("extra library dir   : " + base+File.separator+"lib");
+	    Util.logMessage("php.java.bridge.base: " + Util.JAVABRIDGE_BASE);
+	    Util.logMessage("extra library dir   : " + Util.JAVABRIDGE_LIB);
 	    Util.logMessage("thread pool size    : " + Util.THREAD_POOL_MAX_SIZE);
 	} catch (Throwable t) {
 	    throw new RuntimeException(t);
@@ -353,7 +346,7 @@ public class JavaBridge implements Runnable {
 	    ThreadPool pool = Util.createThreadPool(Util.EXTENSION_NAME+"ThreadPool");
 	    try {
 	        String policy = System.getProperty("java.security.policy");
-	        String base = System.getProperty("php.java.bridge.base", System.getProperty("user.home"));
+	        String base = Util.JAVABRIDGE_BASE;
 	        if(policy!=null && base!=null) {
 	            SecurityManager manager = new php.java.bridge.JavaBridgeSecurityManager();
 	            System.setSecurityManager(manager);
@@ -370,13 +363,12 @@ public class JavaBridge implements Runnable {
 		Socket sock = socket.accept();
                 Util.logDebug("Socket connection accepted");
 		JavaBridge bridge = new JavaBridge(sock.getInputStream(), sock.getOutputStream());
-                if(pool!=null) {
+		if(pool!=null) {
                     Util.logDebug("Starting bridge thread from thread pool");
 		    pool.start(bridge); // Uses thread pool
 		} else {
                     Util.logDebug("Starting new bridge thread");
 		    Thread t = new Util.Thread(bridge);
-		    t.setContextClassLoader(DynamicJavaBridgeClassLoader.newInstance(Util.getContextClassLoader()));
 		    t.start();
 		}
 	    }
@@ -1429,6 +1421,7 @@ public class JavaBridge implements Runnable {
     public JavaBridge(InputStream in, OutputStream out) {
 	this.in = in;
 	this.out = out;
+	this.setClassLoader(new JavaBridgeClassLoader());
     }
 
     /**
@@ -1830,14 +1823,14 @@ public class JavaBridge implements Runnable {
      * @param cl The ClassLoader
      * 
      */
-    public void setClassLoader(JavaBridgeClassLoader cl) {
+    public void setClassLoader(SimpleJavaBridgeClassLoader cl) {
 	this.cl = cl;
     }
     /**
      * Return the current ClassLoader
      * @return The ClassLoader.
      */
-    public JavaBridgeClassLoader getClassLoader() {
+    public SimpleJavaBridgeClassLoader getClassLoader() {
 	return cl;
     }
     /**
@@ -2039,35 +2032,8 @@ public class JavaBridge implements Runnable {
         constructorCache.clear();
         stringCache.clear();
     }
-    /**
-     * The php client calls this (through getContext or getSession),
-     * if it is running with a different context id than the one
-     * suggested from its (e.g.: PhpCgiServlet- or FacesServlet-)
-     * client.  Example: The PhpCgiServlet creates a context id and
-     * passes it to the php client. Usually the client passes this id
-     * back to the PhpJavaServlet which re-directs to a private
-     * communication channel. However, when
-     * java.persistent_connections is switched on and the client is
-     * already connected to one of PhpJavaServlet's communication
-     * channels (and it is therefore running on a different context id
-     * than the one suggested by the PhpCgiServlet), the PhpCgiServlet
-     * needs some way to pass the fresh information from the suggested
-     * id to the recycled id. Therefore all clients of php clients can implement
-     * a <code>recycle(ContextFactory target)</code> callback which
-     * allows them to attach the information to the recycled
-     * context. The suggested way to do this is to extend SimpleContextFactory
-     * which already implements a suitable recycle and visit method.
-     * 
-     * @param id The suggested context id (from the client of the php client).
-     * @see php.java.bridge.http.ContextFactory#recycle(ContextFactory)     
-     */    
     private void recycleContext(String id) {
-      // defaultSessionFactory is shared among *all* clients
-      if(sessionFactory==defaultSessionFactory) return;
-      // sessionFactory != default: must be a ContextFactory
-      IContextFactory current = ((IContextFactory)sessionFactory);
-      current.recycle(id);
-  }
+   }
     
     /**
      * Return a new string using the current file encoding (see java_set_file_encoding()).

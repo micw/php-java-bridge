@@ -27,7 +27,7 @@ package php.java.bridge;
 import java.io.IOException;
 import java.io.InputStream;
 
-import php.java.bridge.http.ContextFactory;
+import php.java.bridge.http.IContextFactory;
 
 class Parser {
     static final int RECV_SIZE = 8192; // initial size of the receive buffer
@@ -43,7 +43,9 @@ class Parser {
 	this.handler=handler;
 	tag=new ParserTag[]{new ParserTag(1), new ParserTag(MAX_ARGS), new ParserTag(MAX_ARGS) };
     }
-    
+    private Options getOptions() {
+	return Util.EXT_JAVA_COMPATIBILITY ? new OldOptions() : new Options();
+    }
     short initOptions(InputStream in) throws IOException {
 	if((pos=in.read(buf, 0, RECV_SIZE)) >0) { 
 
@@ -63,7 +65,7 @@ class Parser {
 	    default:
 	    	if(ch==127) { // extended header
 	    	    ch=buf[++c];
-	    	    bridge.options = new Options();
+	    	    bridge.options = getOptions();
 	    	} else {
 	    	    bridge.options = new StandardOptions();
 	    	}
@@ -216,24 +218,12 @@ class Parser {
 		    }
 		    break;
 		case 077: if(in_dquote) {APPEND(ch); break;}
-		    /* This code is called by the pure PHP implementation.
-                        Unlike the C implementation, which simply keeps a persistent connection to the ContextRunner, the 
-                        pure PHP implementation must contact the servlet port to see on which port there's a persistent connection to
-                        a contextRunner. Since the one statement executed by the servlet may have updated the loader path, we must update 
-                        the persistent loader with the fresh information  before we can set the servlet's bridge into the ContextRunner.
-                        The pure PHP implementation passes information obtained from the servlet as a normal protocol header
-                        to the ContextRunner.
-                        */
 		    // the header used to be binary encoded
 		    int len =(0xFF&buf[c+2]) | (0xFF00&(buf[c+3]<<8));
 		    String newContext = new String(buf, c+4, c+len,  Util.ASCII);
-		    // the fresh bridge from the servlet
-		    JavaBridge bridge = (ContextFactory.get(newContext, ContextFactory.NO_CREDENTIALS)).getBridge();
-		    // @see ContextRunner#init. Update the persistent cl with the information from the loader 
-		    bridge.getClassLoader().setClassLoader(this.bridge.getClassLoader().cl);
-		    // @see ContextRunner#recycle. Since this is called only for a pfsockopen reconnect, we can pass
-		    // NO_CREDENTIALS. sockets are insecure anyway.
-		    this.bridge.request.setBridge(bridge);
+		    IContextFactory factory = (IContextFactory)bridge.sessionFactory;
+		    factory.recycle(newContext);
+		   // factory.updateTheCurrentThreadClassLoader(factory.getClassLoader());
 		    c+=len+3;
 		    break;
 		default:

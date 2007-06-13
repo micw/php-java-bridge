@@ -29,7 +29,10 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 
 /**
@@ -43,23 +46,37 @@ public class SimpleJavaBridgeClassLoader {
     DynamicJavaBridgeClassLoader cl = null;
     ClassLoader scl = null;
     
-    /** The default class loader used by the PHP/Java Bridge */
-    public static final ClassLoader DEFAULT_CLASS_LOADER = getDefaultClassLoader(); 
-    private static final ClassLoader getContextClassLoader() {
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
+    private static final Map map = Collections.synchronizedMap(new HashMap()); //TODO: keep only recent entries
+    private static final URL[] urlArray = getUrlArray();
+    public static final ClassLoader getContextClassLoader() {
+        ClassLoader loader = null;
+        try {loader = Thread.currentThread().getContextClassLoader();} catch (SecurityException ex) {/*ignore*/}
 	if(loader==null) loader = JavaBridge.class.getClassLoader();
         return loader;
     }
-    private static ClassLoader getDefaultClassLoader() {
-	ClassLoader contextLoader = getContextClassLoader();
+    public static ClassLoader getDefaultClassLoader(ClassLoader contextLoader) {
+	ClassLoader el = (ClassLoader) map.get(contextLoader);
+	if(el!=null) 
+	    return el;
+	
 	try {
-	    URL url[] = buildUrlArray();
-	    if(url!=null && url.length > 0) return new URLClassLoader(url, contextLoader); 
-	    return contextLoader;
+	    URL url[] = urlArray;
+	    if(url!=null && url.length > 0)
+		map.put(contextLoader, el=new URLClassLoader(url, contextLoader));
+	    else
+		map.put(contextLoader, el=contextLoader);
 	} catch (Exception e) {
-	    e.printStackTrace();
-	    return contextLoader;
+	    Util.printStackTrace(e);
+	    map.put(contextLoader, el=contextLoader);
 	}
+	return el;
+    }
+    private static URL[] getUrlArray() {
+	URL[] urls = null;
+	try {
+	    urls = buildUrlArray();
+	} catch (Throwable t) { t.printStackTrace(); }
+	return urls;
     }
     private static URL[] buildUrlArray() throws MalformedURLException {
         LinkedList list = new LinkedList();
@@ -70,7 +87,7 @@ public class SimpleJavaBridgeClassLoader {
             list.add(new URL("file", null, f.getAbsolutePath()+"/"));
         }
         // PR1502480
-        String ext = System.getProperty("php.java.bridge.base",  System.getProperty("user.home"));
+        String ext = Util.JAVABRIDGE_BASE;
 	if(ext!=null && ext.length()>0) {
             StringBuffer buf = new StringBuffer(ext);
             if(!ext.endsWith(File.separator)) buf.append(File.separator);
@@ -88,41 +105,37 @@ public class SimpleJavaBridgeClassLoader {
      * Create a bridge ClassLoader using a dynamic loader.
      * @param loader The dynamic loader, may be null.
      */
-    protected SimpleJavaBridgeClassLoader(DynamicJavaBridgeClassLoader loader) {
+    protected SimpleJavaBridgeClassLoader(DynamicJavaBridgeClassLoader loader, ClassLoader xloader) {
     	cl = loader;
     	if(cl==null)
-    	    scl = DEFAULT_CLASS_LOADER; 
+    	    scl = xloader; 
 	else 
 	    cl.clear();
     }
 
-    /**
-     * Create a bridge class loader using the default class loader.
-     *
-     */
     public SimpleJavaBridgeClassLoader() {
-        this((DynamicJavaBridgeClassLoader)null);
+	scl = getDefaultClassLoader(getContextClassLoader());
     }
 
     /** pass path from the first HTTP statement to the ContextRunner */
     protected JarLibraryPath cachedPath;
+    protected boolean clEnabled = false;
     protected boolean checkCl() {
       	return cl!=null;
     }
-
     /**
      * Set a DynamicJavaBridgeClassLoader.
      * @param loader The dynamic class loader
      * @throws IOException 
      */
-    public void setClassLoader(DynamicJavaBridgeClassLoader loader) throws IOException {
+    protected void setClassLoader(DynamicJavaBridgeClassLoader loader) {
         if(loader==null) { cachedPath = null; cl = null; return; }
 	if(cl != null) throw new IllegalStateException("cl");
 	cl = loader;
-	if(cachedPath != null) 
+	if(cachedPath != null) {
 	    cl.updateJarLibraryPath(cachedPath);
+	}
     }
-
     /**
      * Append the path to the current library path
      * @param path A file or url list, separated by ';' 
@@ -130,7 +143,7 @@ public class SimpleJavaBridgeClassLoader {
      * @throws IOException 
      */
     public void updateJarLibraryPath(String path, String extensionDir) throws IOException  {
-	if(!checkCl()) {
+	if(!clEnabled) {
 	    /*
 	     * We must check the path now. But since we don't have
 	     * a thread from our pool yet, we don't have a
@@ -142,8 +155,12 @@ public class SimpleJavaBridgeClassLoader {
 	     */
 	    cachedPath = DynamicJavaBridgeClassLoader.checkJarLibraryPath(path, extensionDir);
 	    return;
+	} else if(!checkCl()) {
+	    DynamicJavaBridgeClassLoader loader = DynamicJavaBridgeClassLoader.newInstance(scl);
+	    setClassLoader(loader);
+	    Thread.currentThread().setContextClassLoader(loader); //FIXME: check security exception
 	}
-
+	    
 	cl.updateJarLibraryPath(path, extensionDir);
     }
 
@@ -155,19 +172,23 @@ public class SimpleJavaBridgeClassLoader {
 	if(checkCl()) return (ClassLoader)cl;
 	return scl;
     }
+    /**
+     * Reset the loader.
+     * This is only called by the API function "java_reset()", which is deprecated.
+     */
     protected void doReset() {
 	cl.reset(); 
 	cl=cl.clearVMLoader();
     }
     /**
      * reset loader to the initial state
+     * This is only called by the API function "java_reset()", which is deprecated.
      */
     public void reset() {
 	if (checkCl()) doReset();
     }
     protected void doClearCaches() {
 	 cl.clearCaches(); 
-	 cl=cl.clearVMLoader();
     }
     /**
      * clear all loader caches but
@@ -189,7 +210,6 @@ public class SimpleJavaBridgeClassLoader {
     }
     protected void doClear() {
 	cl.clear(); 
-	cl=cl.clearVMLoader();
     }
     /**
      * clear caches and the input vectors
@@ -200,7 +220,15 @@ public class SimpleJavaBridgeClassLoader {
     
     /** re-initialize for keep alive */
     protected void recycle() {
-      	clear();
+      	cl = null;
       	cachedPath = null;
+    }
+    public void switchedThreadContext() {
+        clEnabled = true;
+        if(cl==null && cachedPath!=null) {
+            DynamicJavaBridgeClassLoader loader = DynamicJavaBridgeClassLoader.newInstance(scl);
+            setClassLoader(loader);
+        }
+        Thread.currentThread().setContextClassLoader(getClassLoader()); // FIXME check security exception
     }
 }

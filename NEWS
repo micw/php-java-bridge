@@ -3,6 +3,26 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 4.1.1
+
+* For compatibility with the pure PHP implementation the C
+implementation now exports a java() function.
+
+* The DynamicJavaBridgeClassLoader is now optional. The bridge
+now uses the current web app class loader, wrapped by a URLClassLoader which
+checks {php.java.bridge.base}/lib/. When the java_require() procedure is called,
+the bridge enables the DynamicJavaBridgeClassLoader, which uses the current
+URLClassLoader as a fall back.
+
+* The PHP/Java Bridge can now be used in a shared environment. For example:
+  require_once("http://localhost:8080/webApp1/Java.inc");
+  java_require("myClass");
+loads myClass from webApp1, even if JavaBridge.jar and php-servlet.jar were loaded
+from the global class path.
+
+* new JavaClass("NonPublicClass") or java("NonPublicClass") now immediately throw
+an IllegalAccessException.
+
 Version 4.0.8
 
 * It is now possible to call JSP taglibs from (remote-) php

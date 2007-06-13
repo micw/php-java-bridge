@@ -124,18 +124,12 @@ public final class ContextServer implements ContextFactory.ICredentials {
      * Check for a ContextRunner for channelName
      * @param channelName The ChannelName
      * @return The ContextRunner or null.
+    * BOGUS: This could be removed if we modify the C code to always pass the header.
      */
     public ContextRunner schedule(AbstractChannelName channelName) {
         return channelName.schedule();
     }
 
-    /**
-     * Recycle a ContextRunner, if possible.
-     * @param channelName The ChannelName.
-     */
-    public void recycle(AbstractChannelName channelName) {
-	channelName.recycle();
-    }
     /**
      * Return the channelName which be passed to the client as X_JAVABRIDGE_REDIRECT
      * @param channelName The name of the channel, see X_JAVABRIDGE_CHANNEL

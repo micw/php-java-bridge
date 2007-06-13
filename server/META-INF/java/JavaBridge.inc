@@ -39,12 +39,6 @@
   exception statement from your version. */
 
 if(extension_loaded('java') && !function_exists("java_set_base")) {
-  // the C extension doesn't define a Java(className) function
-  function Java($name) {
-	static $classMap = array();
-	if(array_key_exists($name, $classMap)) return $classMap[$name];
-	return $classMap[$name]=new JavaClass($name);
-  }
   function java_set_base() {
 	$ar = get_required_files();
 	$arLen = sizeof($ar);
@@ -62,6 +56,18 @@ if(extension_loaded('java') && !function_exists("java_set_base")) {
   }
   if(!array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER))
 	java_set_base();
+
+  /*
+   * java.so or php_java.dll < 4.1.1 don't export a Java() function.
+   * Provide one.
+   */
+  if(!function_exists("Java")) {
+	function Java($name) { 
+	  static $classMap = array();
+	  if(array_key_exists($name, $classMap)) return $classMap[$name];
+	  return $classMap[$name]=new JavaClass(array($name), false);
+	}
+  }
  }
 
 if(!extension_loaded('java') && !function_exists("java_get_base")) {
@@ -93,7 +99,7 @@ if(!extension_loaded('java') && !function_exists("java_get_base")) {
   function Java($name) { 
 	static $classMap = array();
 	if(array_key_exists($name, $classMap)) return $classMap[$name];
-	return $classMap[$name]=java_create(array($name), false);
+	return $classMap[$name]=new JavaClass(array($name), false);
   }
   function java_get_closure() {return java_closure_array(func_get_args());}
   function java_get_values($arg) { return java_values($arg); }

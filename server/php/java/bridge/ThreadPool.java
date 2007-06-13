@@ -131,11 +131,4 @@ public class ThreadPool extends BaseThreadPool {
      * @param poolMaxSize - The max. number of threads, must be >= 1.
      */
     public ThreadPool(String name, int poolMaxSize) { super(name, poolMaxSize); }
-    /**
-     * Creates a new thread pool.
-     * @param name  The name of the pool threads.
-     * @param poolMaxSize The max. number of threads, must be >= 1.
-     * @param loader The class loader, may be null.
-     */
-    public ThreadPool (String name, int poolMaxSize, ClassLoader loader) { super(name, poolMaxSize, loader); }
 }

@@ -150,7 +150,7 @@ echo "the ${phpinc} directory?"
 echo -n "convert java libraries (yes/no): "; read convert;
 if ! test "X$convert" = "Xno"; then
 $jre -Djava.library.path=./modules -Djava.class.path=./modules/JavaBridge.jar -Djava.awt.headless=true -Dphp.java.bridge.base=./modules php.java.bridge.JavaBridge --convert ${phpinc} unsupported/lucene.jar:unsupported/itext.jar
-/bin/cp java/*.php ${phpinc}/java
+/bin/cp server/META-INF/java/*.inc ${phpinc}/java
 echo ""
 fi
 

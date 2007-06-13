@@ -131,7 +131,9 @@ public class JavaBridgeRunner extends HttpServer {
      * @param res The HttpResponse
      */
     protected void doPut (HttpRequest req, HttpResponse res) throws IOException {
-    	boolean override_redirect="1".equals(getHeader("X_JAVABRIDGE_REDIRECT", req));
+	String overrideRedirectString = getHeader("X_JAVABRIDGE_REDIRECT", req);
+	short overrideRedirectValue = (short) Integer.parseInt(overrideRedirectString);
+    	boolean override_redirect = (3 & overrideRedirectValue) == 1;
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
     	String channel = getHeader("X_JAVABRIDGE_CHANNEL", req);
 	String kontext = getHeader("X_JAVABRIDGE_CONTEXT_DEFAULT", req);
@@ -154,7 +156,6 @@ public class JavaBridgeRunner extends HttpServer {
         	res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getDefaultName());
         	if(hasDefault) res.setHeader("X_JAVABRIDGE_CONTEXT_DEFAULT", kontext);
         	r.handleRequests();
-        	ctxServer.recycle(channelName);
         
         	// redirect and re-open
         	if(override_redirect) {
@@ -187,6 +188,7 @@ public class JavaBridgeRunner extends HttpServer {
      * @param res The HttpResponse
      */
     protected void doGet (HttpRequest req, HttpResponse res) throws IOException {
+	boolean ignoreCache = false;
 	String name =req.getRequestURI();
 	byte[] buf;
 	OutputStream out;
@@ -208,11 +210,14 @@ public class JavaBridgeRunner extends HttpServer {
             } catch (SecurityException e) {/*ignore*/        	
             } catch (Exception e) {Util.printStackTrace(e);
             }
+	} else {
+	    ignoreCache = true;
 	}
 	name = name.replaceFirst("/JavaBridge", "META-INF");
 	InputStream in = JavaBridgeRunner.class.getClassLoader().getResourceAsStream(name);
 	if(in==null) { // Java.inc may not exist in the source download, use JavaBridge.inc instead.
 	    name = name.replaceFirst("Java\\.inc", "JavaBridge.inc");
+	    ignoreCache = true;
 	    in = JavaBridgeRunner.class.getClassLoader().getResourceAsStream(name);
 	    if(in==null) {
 		res.setContentLength(ERROR.length); res.getOutputStream().write(ERROR); 
@@ -230,8 +235,9 @@ public class JavaBridgeRunner extends HttpServer {
 	res.setContentLength(bout.size());
 	out = res.getOutputStream();
 	try {
-	    cache = bout.toByteArray();
+	    byte[] cache = bout.toByteArray();
 	    out.write(cache);
+	    if(!ignoreCache) this.cache = cache;
 	} catch (IOException e) { /* may happen when the client is not interested, see require_once() */}
     }
     /**

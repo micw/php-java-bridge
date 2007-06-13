@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.Vector;
+import java.util.Arrays;
 
 public class TestInstallation implements Runnable {
     // See Util.DEFAULT_CGI_LOCATIONS
@@ -124,8 +125,13 @@ public class TestInstallation implements Runnable {
 				     "-jar",
 				     base+File.separator+"ext"+File.separator+"JavaBridge.jar",
 				     "SERVLET_LOCAL:"+socket};
-	System.err.println("Starting a simple servlet engine: " + java.util.Arrays.asList(cmd));
-	Process p = runner = Runtime.getRuntime().exec(cmd);
+	System.err.println("Starting a simple servlet engine: " + Arrays.asList(cmd));
+	Process p;
+	try {
+	    p = runner = Runtime.getRuntime().exec(cmd);
+	} catch (java.io.IOException ex) {
+	    throw new RuntimeException("Could not run "+Arrays.asList(cmd)+".", ex);
+	}
 	(new Thread(new TestInstallation(p))).start();
 	InputStream i = p.getInputStream();
 	int c;
@@ -172,6 +178,8 @@ public class TestInstallation implements Runnable {
         }
 	if(!ext.isDirectory()) ext.mkdirs();
 	base = ext.getParentFile();
+	File java = new File(base, "java");
+	if(!java.isDirectory()) java.mkdirs();
 		
 	ClassLoader loader = TestInstallation.class.getClassLoader();
 	InputStream in = loader.getResourceAsStream("WEB-INF/lib/JavaBridge.jar");
@@ -185,6 +193,9 @@ public class TestInstallation implements Runnable {
 	in.close();
 	in = loader.getResourceAsStream("test.php");
 	extractFile(in, new File(base, "test.php").getAbsoluteFile());
+	in.close();
+	in = loader.getResourceAsStream("java/Java.inc");
+	extractFile(in, new File(java, "Java.inc").getAbsoluteFile());
 	in.close();
 	
 	// start back end
@@ -205,11 +216,16 @@ public class TestInstallation implements Runnable {
 		
 	// start front end
 	String[] cmd = new String[] {php,  "-d","allow_url_include=On",String.valueOf(new File(base,"test.php"))};
-	System.err.println("Invoking php: " + java.util.Arrays.asList(cmd));
+	System.err.println("Invoking php: " + Arrays.asList(cmd));
 	HashMap env = (HashMap) processEnvironment.clone();
 	env.put("SERVER_PORT", socket);
 	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", "h:127.0.0.1:"+socket+"//JavaBridge/test.phpjavabridge");
-	Process p = Runtime.getRuntime().exec(cmd, hashToStringArray(env));
+	Process p;
+	try {
+	    p = Runtime.getRuntime().exec(cmd, hashToStringArray(env));
+	} catch (java.io.IOException ex) {
+	    throw new RuntimeException("Could not run PHP ("+Arrays.asList(cmd)+"), please check if php-cgi is in the path.", ex);
+	}
 	(new Thread(new TestInstallation(p))).start();
 		
 	InputStream i = p.getInputStream();

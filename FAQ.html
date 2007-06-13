@@ -81,7 +81,75 @@ echo '&lt;?php require_once("http://localhost:8080/JavaBridge/java/Java.inc"); e
 </blockquote>
 works in the shell but not within apache, then there's something wrong with your <code>php.ini</code> file.
 </p>
-
+<H4>How do I publish my PHP/Java pages?</H4>
+<p>
+Check if your ISP supports Java. Look for a servlet engine like "tomcat" or a J2EE application server like "resin". Check if your ISP supports PHP >= 4.3.2.
+</p>
+<p>
+In the following example we'll call our web context "webContext".
+</p>
+<p> Unzip the JavaBridge.jar file and edit Java.inc, replace 8080 with your j2EE port number and JAVA_SERVLET=On to JAVA_SERVLET=User. Example for Linux:
+<blockquote>
+<code>
+mkdir webContext <br>
+cd webContext <br>
+jar xvf ../JavaBridge.war<br>
+</code>
+</blockquote>
+Edit <code>java/Java.inc</code> as follows (lines marked with a "-" should be 
+removed, lines marked with a "+" should be added):
+<blockquote>
+<code>
+&nbsp;&nbsp;if(!defineHostFromInitialQuery($JAVA_BASE)) {<br>
+-&nbsp;define("JAVA_HOSTS", "127.0.0.1:8080");<br>
++&nbsp;define("JAVA_HOSTS", "127.0.0.1:YOUR_J2EE_PORT_NUMBER");<br>
+-&nbsp;define("JAVA_SERVLET", "On");<br>
++&nbsp;define("JAVA_SERVLET", "User");<br>
+&nbsp;&nbsp;}<br>
+</code>
+</blockquote>
+</p>
+<p>
+Create a Java web archive, for example "webContext.war". Example for Linux:
+<blockquote>
+<code>
+# ... still within the webContext directory ... <br>
+cp ../myJavaLibs/*.jar WEB-INF/lib/ <br>
+cp ../myPhpPages/*.php . <br>
+jar cvf ../webContext.war *<br>
+</code>
+</blockquote>
+Deploy it into the J2EE application server or servlet engine. Example for Linux:
+<blockquote>
+<code>
+cp ../webContext.war /usr/share/tomcat5/webapps/<br>
+</code>
+</blockquote>
+</p>
+<p>
+Copy or symlink the web context "webContext" (or whatever you've called it) to the Apache or IIS htdocs (sometimes called "public_html") directory. Example for Linux:
+<blockquote>
+<code>
+ln -s /usr/share/tomcat5/webapps/webContext $HOME/public_html/webContext<br>
+</code>
+</blockquote>
+</p>
+<p>
+If you want to use the C implementation, "java.so" or "php_java.dll", edit the php.ini so that the java.hosts and java.servlet point to your servlet/J2EE back end. Example:
+<blockquote>
+<code>
+java.hosts=127.0.0.1:8080 # replace 8080 with the port number of your J2EE server<br>
+java.servlet="User" # or "On" or "/webContext/JavaBridge.phpjavabridge"<br>
+</code>
+</blockquote>
+</p>
+<p>
+Browse to <code>http://HOSTNAME/webContext/yourPhpScript.php</code>. Again, replace the web context "webContext" with the name of your web context.
+</p>
+<p>NOTE: If you want to run the Java VM on a different computer, start 
+Tomcat or the J2EE server on that computer using the option <code>-Dphp.java.bridge.promiscuous=true</code>.
+Change the <code>127.0.0.1</code> above to the IP address of the computer running
+the Java VM and make sure that the computer cannot be accessed directly from the internet!
 
 <H2>Running Java as a sub component of Apache or IIS</H2>
 
@@ -119,11 +187,16 @@ On Unix the bridge terminates the sub-process hierarchy with <code>SIGTERM</code
 Please see the wrapper <code>RunJavaBridge</code> for an example.
 </p>
 
-
 <H2>Class loading questions</H2>
 
 <H4>How do I load Java libraries?</H4>
-<p> With <code>java_require("foo.jar;bar.jar;...");. See the README for details.</p>
+<p> With <code>java_require("foo.jar;bar.jar;...");</code>. See the README for details.</p>
+
+<H4>Where can I store my java libraries for the PHP/Java Bridge?</H4>
+<p>In <code>php.java.bridge.base</code>/lib.</p>
+<p> When the system property <code>php.java.bridge.base</code> is not set, libraries are loaded from <code>$HOME/lib</code> where <code>$HOME</code> denotes the home directory of the person or component which has started the java VM.</p>
+<p> If libraries should be available globally, store them in <code>java.ext.dirs</code>, for example in <code>/usr/share/java/ext</code>.</p>
+<p> If a library is not yet API-stable, store it into a sub directory of the <code>lib</code> directory and use the <code>java_require()</code> procedure. For example <code>java_require("myLibs0.2/foo.jar")</code> loads <code>foo.jar</code> from <code>php.java.bridge.base/lib/myLibs0.2</code>.</p>
 
 <H4>Why can't Apache load my /foo/bar/baz.jar file?</H4>
 <p>It probably doesn't have the permission to access it. Check if
@@ -158,6 +231,27 @@ instead.
 <p> Please read the
 documentation of your J2EE server, Servlet engine or Java VM to see if and
 how the environment can handle impure Java libraries. A common approach is to store the Java part in <code>java.ext.dirs</code> and the native part in <code>java.library.path</code>.</p>
+
+<H4>I have two different classes with the same name in two different web apps. 
+When using the <a href="#global-servlet">GlobalPhpJavaServlet</a>, the bridge uses only one of these classes!?!</H4>
+<p>This is a known bug in all PHP/Java Bridge versions < 4.1.0.</p>
+<p>Please upgrade to a PHP/Java Bridge version >= 4.1.0 or use a PHP/Java Bridge version <= 3.0.8 and switch off persistent connections: <code>java.persistent_connections=Off</code>.</p>
+<p>Since version 4.1.0, the PHP/Java Bridge correctly uses the current thread context class loader so that, when the Java.inc is loaded from a <code>webApp</code>, the class loader from that web application is used. For example:
+
+<blockquote>
+<code>
+require_once("http://localhost:8080/webApp1/java/Java.inc");<br>
+echo java("my.TestClass")->getId(); // assuming that a getId() procedure exists<br>
+=> TestClass of webApp1<br>
+</code>
+</blockquote>
+<blockquote>
+<code>
+require_once("http://localhost:8080/webApp2/java/Java.inc");<br>
+echo java("my.TestClass")->getId(); // assuming that a getId() procedure exists<br>
+=> TestClass of webApp2<br>
+</code>
+</blockquote>
 
 
 <H2>J2EE/Servlet questions</H2>
@@ -918,5 +1012,12 @@ java_values($response-&gt;getBufferContents();
 </blockquote>
 </p>
 <p>Please see the <code>php_java_lib/JspTag.php</code> and <code>tests.php5/tag.php</code> for details.</p>
+<H4>How does the bridge support Java generics?</H4>
+<p>
+You can ignore the parameter type.
+</p>
+<p>
+Java doesn't support real generics on byte-code level. The generics in JDK 1.5 and above are implemented as "erasures"; they are syntactic sugar, useful only for the Java compiler. The generated byte-code is the same as in JDK 1.4.
+</p>
 </BODY>
 </HTML>

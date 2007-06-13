@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 1.2.0
+%define version 1.2.1
 %define release 1
 Name: lucene4php
 Summary: The lucene library for the PHP Hypertext Preprocessor

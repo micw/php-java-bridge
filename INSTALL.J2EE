@@ -18,12 +18,13 @@ Development
 * Extract the JavaBridge.jar from the JavaBridge.war zip file from the
   PHP/Java Bridge binary download. Double-click on JavaBridge.jar or
   type "java -jar JavaBridge.jar" and click "OK" to start a servlet
-  engine back end for all computers on the local network.
+  engine back end for all computers on the local network. Type java -jar
+  JavaBridge.jar --help to see the list of available options.
 
 * Link Java.inc and your Java libraries into PHP at run-time. Example:
   
    <?php
-    require_once("http://localhost:8080/JavaBridge/java/Java.inc");
+    require_once("java/Java.inc");
 
     // call Java libraries using the provided Java class...
     java_require("myLibs/myLib.jar;dependentLib1.jar;...);
@@ -31,6 +32,17 @@ Development
     $my->callSomething(...);
    ?>
 
+* Create a PHP web archive for distribution, for example with the commands:
+
+  mkdir JavaBridge
+  cd JavaBridge
+  jar xvf ../JavaBridge.war
+
+  cd ../myPhpApp
+  cp -r ../JavaBridge/WEB-INF JavaBridge/java .
+  cp -r MYLIBS/*.jar WEB-INF/lib
+  jar cvf ../myPhpApp.war *
+  
 
 Deployment
 ----------
@@ -38,8 +50,12 @@ Deployment
 * Install a J2EE application server or servlet engine, for example
   Apache Geronimo, Tomcat, Glassfish, ...
 
-* Extract the files from the php-java-bridge J2EE download and deploy
-  JavaBridge.war into your J2EE server, example for Tomcat on Unix: 
+* Copy your web application myPhpApp.war to the autodeploy folder of
+  your J2EE server or servlet engine. The following examples assume that
+  you don't have a myPhpApp.war yet, they use the "JavaBridge.war" example
+  application. 
+
+  Example for Tomcat on Unix:
   
     cp JavaBridge.war $CATALINA_HOME/webapps/
 
@@ -52,20 +68,24 @@ Deployment
   test.php. 
 
 * If you want to run PHP as a sub component of Apache or IIS or from
-  the command line, create a simple test.php file and call it as usual.
-  For example:
+  the command line, copy the directory which contains the web
+  application "myPhpApp" over to the Apache/IIS document root or to
+  the some local directory accessible by the PHP command line executable.
 
-  <?php
-    require_once("http://localhost:8080/JavaBridge/java/Java.inc");
-    $s = new Java("java.lang.System");
-    echo $s->getProperties();
-  ?>
+* If you use PHP < 5.1.4, you must compile and install "java.so" or
+  "php_java.dll" (see the README and INSTALL documents from the source
+  download) and add the following to your php.ini file:
 
-  copy it to the web server document root and browse to
-  http://yourHost.com/test.php or use the PHP command line
-  interface. For example:
+    extension=java.so ;; php_java.dll on windows
+    [java]
+    java.hosts=127.0.0.1:8080
+    java.servlet=User ;; or On or /myPhpApp/JavaBridge.phpjavabridge
+  
+* If you use PHP >= 5.1.4, edit DOCUMENT_ROOT/myPhpApp/java/Java.inc
+  so that it connects to 127.0.0.1:8080/myPhpApp. For example:
 
-    php-cgi test.php >result.html
+    define("JAVA_HOSTS", "127.0.0.1:8080"); 
+    define("JAVA_SERVLET", "User"); 
 
 * Firewall-out the J2EE/Servlet port 8080, if necessary. Or modify the
   J2EE/Servlet so that it listens only on the local interface. Note that
@@ -83,8 +103,8 @@ Deployment
 
 
 * An optimized implementation, which is up to 10 times faster than the
-  pure PHP implementation described above, is available as C source. 
-  Please see the README and INSTALL document located in the source
-  download archive how to compile an optimized "php_java.dll" or
-  "java.so" for your operating system.
+  pure PHP implementation described above, is available as C
+  source. Please see the README, INSTALL or INSTALL.LINUX document
+  located in the source download archive how to compile an optimized
+  "php_java.dll" or "java.so" for your operating system.
 

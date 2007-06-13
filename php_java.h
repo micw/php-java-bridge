@@ -234,6 +234,9 @@ EXT_BEGIN_MODULE_GLOBALS(EXT)
    may share these and set (*env)->is_shared=1 */
   int peer, peerr;
   char *servlet_ctx;
+
+  /* Class name cache, used by the java() function */
+  HashTable classNameCache;
 EXT_END_MODULE_GLOBALS(EXT)
 
 

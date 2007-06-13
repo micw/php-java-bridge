@@ -1,12 +1,12 @@
 Overview
 --------
 
-This document describes how to call PHP methods from Java. For example
-it is possible to use PHP as a script plugin for a Java report engine
-such as BIRT; for formula fields, group selection formulas,
-etc. Please see the INSTALL.J2EE document for details how to embed PHP
-into a pure J2EE application server or how to call Java methods from
-PHP.
+This document describes how to call PHP methods from Java using the
+JSR223 interface. For example it is possible to use PHP as a script
+plugin for a Java report engine such as BIRT; for formula fields,
+group selection formulas, etc. Please see the INSTALL.J2EE document
+for details how to embed PHP into a pure J2EE application server or
+how to call Java methods from PHP.
 
 The PHP/Java Bridge can be installed with one copy operation:
 

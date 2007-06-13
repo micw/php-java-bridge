@@ -79,7 +79,6 @@ static char *getSessionFactory(proxyenv *env) {
 }
 static char*get_context(proxyenv *env, char context[CONTEXT_LEN_MAX], short*context_length) {
 	size_t l = strlen((*env)->servlet_ctx);
-	
 	assert(l<CONTEXT_LEN_MAX);
 	*context_length = 
 	  EXT_GLOBAL(snprintf) (context, 
@@ -181,9 +180,9 @@ static short end_session(proxyenv *env) {
   int peer0 = (*env)->peer0;
   char header[SEND_SIZE];
   int header_length;
-  short override_redirect = (peer0!=-1)?1:2;
+  short override_redirect = 4 + ((peer0!=-1)?1:2); // legacy flag + override_redirect or getSession
   unsigned char mode = EXT_GLOBAL (get_mode) ();
-
+	
   TSRMLS_FETCH();
 
   (*env)->finish=end;

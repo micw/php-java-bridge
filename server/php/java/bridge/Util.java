@@ -210,7 +210,13 @@ public final class Util {
      * @see System property <code>php.java.bridge.default_log_file</code>
      */
     public static String DEFAULT_LOG_FILE;
-	
+
+    /** The base directory of the PHP/Java Bridge. Usually /usr/php/modules/ or $HOME  */
+    public static String JAVABRIDGE_BASE;
+    
+    /** The library directory of the PHP/Java Bridge. Usually /usr/php/modules/lib or $HOME/lib */
+    public static String JAVABRIDGE_LIB;
+    
     private static String getProperty(Properties p, String key, String defaultValue) {
 	String s = null;
 	if(p!=null) s = p.getProperty(key);
@@ -226,9 +232,20 @@ public final class Util {
     public static String osName;
     /** Only for internal use */
     public static boolean IS_MONO;
+    /** Only for internal use */
+    public static String PHP_EXEC;
+    /** Only for internal use */
+    public static boolean EXT_JAVA_COMPATIBILITY;
 
     private static void initGlobals() {
-    	try {
+	try {
+	    JAVABRIDGE_BASE = System.getProperty("php.java.bridge.base",  System.getProperty("user.home"));
+	    JAVABRIDGE_LIB =  JAVABRIDGE_BASE + File.separator +"lib";
+	} catch (Exception e) {
+	    JAVABRIDGE_BASE=".";
+	    JAVABRIDGE_LIB=".";	    
+	}
+	try {
     	    VM_NAME = "unknown";
 	    VM_NAME = System.getProperty("java.version")+"@" + System.getProperty("java.vendor.url");	    
 	} catch (Exception e) {/*ignore*/}
@@ -258,12 +275,14 @@ public final class Util {
 	};
 	TCP_SOCKETNAME = getProperty(p, "TCP_SOCKETNAME", "9267");
 	EXTENSION_NAME = getProperty(p, "EXTENSION_DISPLAY_NAME", "JavaBridge");
+	PHP_EXEC = getProperty(p, "PHP_EXEC", null);
 	try {
 	    String s = getProperty(p, "DEFAULT_LOG_LEVEL", "3");
 	    DEFAULT_LOG_LEVEL = Integer.parseInt(s);
 	    Util.logLevel=Util.DEFAULT_LOG_LEVEL; /* java.log_level in php.ini overrides */
 	} catch (NumberFormatException e) {/*ignore*/}
 	DEFAULT_LOG_FILE = getProperty(p, "DEFAULT_LOG_FILE", Util.EXTENSION_NAME+".log");
+	EXT_JAVA_COMPATIBILITY = "true".equals(getProperty(p, "EXT_JAVA_COMPATIBILITY", "false"));
 	String separator = "/-+.,;: ";
 	try {
 	    String val = System.getProperty("os.arch").toLowerCase();
@@ -755,7 +774,6 @@ public final class Util {
 	    }
 	    return  (String[]) buf.toArray(new String[buf.size()]);
 	}
-	private static final String PHP_EXEC = System.getProperty("php.java.bridge.php_exec");
 	protected void start() throws NullPointerException, IOException {
 	    File location;
 	    Runtime rt = Runtime.getRuntime();
@@ -957,9 +975,9 @@ public final class Util {
 
     /**
      * @return The thread context class loader.
-     */
+      */
     public static ClassLoader getContextClassLoader() {
-        return JavaBridgeClassLoader.DEFAULT_CLASS_LOADER;
+          return JavaBridgeClassLoader.getDefaultClassLoader(JavaBridgeClassLoader.getContextClassLoader());
     }
     /** Redirect System.out and System.err to the configured logFile or System.err.
      * System.out is always redirected, either to the logFile or to System.err.

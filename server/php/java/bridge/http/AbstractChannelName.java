@@ -97,15 +97,6 @@ package php.java.bridge.http;
         public ContextRunner schedule() {
             return runner = ContextRunner.checkRunner(this);
         }
-        /**
-         * Recycle a ContextRunner for a new ContextServer. It checks if a ContextRunner is available for the 
-         * default ContextFactory and updates the ContextRunner with the JavaBridge from the fresh ContextFactory.
-         * The new JavaBridge and ContextFactory instance are destroyed, when the request is done.
-         */
-	public void recycle() {
-	    if(runner != null) 
-		runner.recycle(currentCtx);
-	}
 	/**
 	 * Start a new ContextRunner for a given ContextServer. The current ContextFactory becomes the 
 	 * default for this runner.

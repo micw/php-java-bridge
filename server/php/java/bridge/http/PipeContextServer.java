@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import php.java.bridge.DynamicJavaBridgeClassLoader;
 import php.java.bridge.ThreadPool;
 import php.java.bridge.Util;
 
@@ -107,7 +106,6 @@ public class PipeContextServer implements IContextServer {
 	        threadPool.start(runner);
 	    } else {
 	    	Thread t = new Util.Thread(runner, "JavaBridgeContextRunner("+contextName+")");
-		t.setContextClassLoader(DynamicJavaBridgeClassLoader.newInstance(Util.getContextClassLoader()));	    	
 	    	t.start();
 	    }
 	} catch (SecurityException t) {

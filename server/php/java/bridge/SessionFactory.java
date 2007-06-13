@@ -40,7 +40,7 @@ import php.java.bridge.http.IContext;
   * @author jostb
  *
  */
-public class SessionFactory {
+public class SessionFactory extends JavaBridgeFactory {
 
   /** Check for expired sessions or contexts every 10 minutes */
   public static final long TIMER_DURATION = 600000;

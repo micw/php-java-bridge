@@ -24,8 +24,8 @@ package php.java.bridge.http;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import php.java.bridge.IJavaBridgeFactory;
 import php.java.bridge.ISession;
-import php.java.bridge.JavaBridge;
 
 /**
  * Interface that the ContextFactories must implement.
@@ -33,7 +33,7 @@ import php.java.bridge.JavaBridge;
  * @author jostb
  *
  */
-public interface IContextFactory {
+public interface IContextFactory extends IJavaBridgeFactory {
 
   /**
    * Synchronize the current state with id.
@@ -114,12 +114,6 @@ public interface IContextFactory {
    * @see php.java.bridge.http.ContextFactory#addNew(String)
    */
   public void setContext(IContext context);
-
-  /**
-   * Return the JavaBridge.
-   * @return Returns the bridge.
-   */
-  public JavaBridge getBridge();
   
   /**
    * @param name The session name. If name is null, the name PHPSESSION will be used.
@@ -136,4 +130,9 @@ public interface IContextFactory {
     */ 
    public void finishContext();
 
+   public void setClassLoader(ClassLoader loader);
+   
+   public ClassLoader getClassLoader();
+
+   public void setIsLegacyClient(boolean isLegacyClient);
 }

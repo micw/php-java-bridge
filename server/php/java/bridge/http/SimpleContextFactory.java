@@ -26,6 +26,7 @@ package php.java.bridge.http;
 
 import php.java.bridge.ISession;
 import php.java.bridge.JavaBridge;
+import php.java.bridge.Util;
 
 
 /**
@@ -55,6 +56,7 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
     protected SimpleContextFactory(String webContext) {
   	visited = new ContextFactory(webContext);
   	visited.accept(this);
+    	setClassLoader(Util.getContextClassLoader());
     }
     
     public void recycle(String id) throws SecurityException {
@@ -99,9 +101,6 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
         return context;
     }
 	
-    public void setBridge(JavaBridge bridge) {
-        visited.setBridge(bridge);
-    }
     public JavaBridge getBridge() {
         return visited.getBridge();
     }
@@ -135,4 +134,27 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
     public void finishContext() {
 	session = null;
     }
+
+    /**
+     * Return the current class loader.
+     * @return the current DynamicJavaBridgeClassLoader
+     */
+    public ClassLoader getClassLoader() {
+	return visited.getClassLoader();
+    }
+
+    /**
+     * Set the current class loader
+     * @param The DynamicJavaBridgeClassLoader
+     */
+    public void setClassLoader(ClassLoader loader) {
+	if(loader==null) 
+	    throw new NullPointerException("loader");
+	visited.setClassLoader(loader);
+    }
+    
+    public void setIsLegacyClient(boolean legacyClient) {
+	visited.setIsLegacyClient(legacyClient);
+    }
+
 }

@@ -381,22 +381,6 @@ class JavaObject extends Java {
 	$this->__java = $delegate->__java;
 	$this->__client = $delegate->__client;
   }
-
-  function getIterator() {
-	$args = func_get_args(); return $this->__call("getIterator", $args);
-  }
-  function offsetExists($idx) {
-	$args = func_get_args(); return $this->__call("offsetExists", $args);
-  }
-  function offsetGet($idx) {
-	$args = func_get_args(); return $this->__call("offsetGet", $args);
-  }
-  function offsetSet($idx, $val) {
-	$args = func_get_args(); return $this->__call("offsetSet", $args);
-  }
-  function offsetUnset($idx) {
-	$args = func_get_args(); return $this->__call("offsetUnset", $args);
-  }
 }  
 class java_class extends JavaObject {
   function java_class() {

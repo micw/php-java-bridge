@@ -33,7 +33,8 @@ package php.java.bridge;
 public class Options {
 
     protected byte options = 0;
-
+    protected boolean canKeepAlive = true;
+    
     /**
      * Default encoding: UTF-8
      */
@@ -94,8 +95,19 @@ public class Options {
     /** re-initialize for keep alive */
     protected void recycle() {
         encoding = null;
+        canKeepAlive = true;
     }
 
+    /** Only for internal use */
+    public void disableKeepAlive() {
+	canKeepAlive = false;
+    }
+    
+    /** Only for internal use */
+    public boolean canKeepAlive() {
+	return canKeepAlive;
+    }
+    
     /**
      * Set the new file encoding.
      * @param symbol The new file encoding, for example "UTF-8".

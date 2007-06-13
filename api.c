@@ -175,9 +175,6 @@ short EXT_GLOBAL(session)(INTERNAL_FUNCTION_PARAMETERS)
      the first statement in a script */
   (*jenv)->checkSession (jenv);
   (*jenv)->writeInvokeBegin(jenv, 0, "getSession", 0, 'I', return_value);
-  /* call getSession(String id, ...), if necessary */
-  if(current_ctx && current_ctx != (*jenv)->servlet_ctx)
-    (*jenv)->writeString(jenv, current_ctx, strlen(current_ctx));
 
   if(argc>0 && Z_TYPE_PP(session)!=IS_NULL) {
     convert_to_string_ex(session);
@@ -210,9 +207,6 @@ short EXT_GLOBAL(context)(INTERNAL_FUNCTION_PARAMETERS)
   current_ctx = (*jenv)->current_servlet_ctx;
   assert(EXT_GLOBAL(cfg)->is_cgi_servlet && current_ctx ||!EXT_GLOBAL(cfg)->is_cgi_servlet);
   (*jenv)->writeInvokeBegin(jenv, 0, "getContext", 0, 'I', return_value);
-  /* call getContext(String id, ...), if necessary */
-  if(current_ctx && current_ctx != (*jenv)->servlet_ctx)
-    (*jenv)->writeString(jenv, current_ctx, strlen(current_ctx));
   return (*jenv)->writeInvokeEnd(jenv);
 }
 
@@ -520,7 +514,7 @@ short EXT_GLOBAL(construct_class)(INTERNAL_FUNCTION_PARAMETERS)
     JAVA_RETURN_NULL();
   }
   
-  if(argc<1 || Z_TYPE_PP(argv[0])!=IS_STRING) WRONG_PARAM_COUNT_WITH_RETVAL(0);
+  if(argc!=1 || Z_TYPE_PP(argv[0])!=IS_STRING) WRONG_PARAM_COUNT_WITH_RETVAL(0);
   
   rc = EXT_GLOBAL(call_function_handler)(INTERNAL_FUNCTION_PARAM_PASSTHRU,
 					 EXT_NAME(), CONSTRUCTOR, 0, 

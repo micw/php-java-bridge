@@ -63,7 +63,7 @@ class java_SocketChannel {
   }
 }
 class java_EmptyPipeChannel {
-  function open() {
+  function open($handler) {
 	throw new java_RuntimeException("protocol error: socket channel names must not start with a slash");
   }
   function getName() {
@@ -88,17 +88,21 @@ class java_PipeChannel extends java_EmptyPipeChannel {
 	$this->peerr = fopen($this->iname, "r");
 	$this->peerr_desc = array($this->peerr);
 	stream_set_blocking($this->peerr, false);
+	stream_set_timeout($this->peerr, -1);
+
 	$this->peer = fopen($this->oname, "w");
 	unlink($this->iname);
 	unlink($this->oname);
 	unlink($this->name);
+	stream_set_timeout($this->peer, -1);
 	return $this;
   }
   function fwrite($data) {
 	fwrite($this->peer, $data);
   }
   function fread($size) {
-	stream_select($this->peerr_desc, $out=NULL, $ex=NULL, 30);
+	static $empty = NULL;
+	stream_select($this->peerr_desc, $empty, $empty, 0x7FFFFFFF);
 	return fread($this->peerr, $size);
   }
   function getName() {
@@ -159,6 +163,7 @@ class java_HttpHandler extends java_SocketHandler {
   function open() {
 	$socket = pfsockopen("{$this->ssl}{$this->host}", $this->port, $errno, $errstr, 30);
 	if (!$socket) throw new java_RuntimeException("Could not connect to the J2EE server {$this->ssl}{$this->host}:{$this->port}. Please start it, for example with the command: \"java -jar JavaBridge.jar SERVLET:8080 3 JavaBridge.log\" or, if the back end has been compiled to native code, with \"modules/java SERVLET:8080 3 JavaBridge.log\". Error message: $errstr ($errno)\n");
+	stream_set_timeout($socket, -1);
 	return $socket;
   }
   function java_HttpHandler($protocol, $ssl, $host, $port) {
@@ -187,7 +192,7 @@ class java_HttpHandler extends java_SocketHandler {
 			  :null));
 	return $ctx;
   }
-  function getChannel() {
+  function getChannelName() {
 	$name = $this->channel->getName();
 	return !is_null($name) ? sprintf("X_JAVABRIDGE_CHANNEL: %s\r\n", $name) : null;
   }
@@ -249,7 +254,7 @@ class java_HttpHandler extends java_SocketHandler {
 	$len = 2 + strlen($data);
 	$webapp = $this->getWebApp();
 	$cookies = $this->getCookies();
-	$channel = $this->getChannel();
+	$channel = $this->getChannelName();
 	$context = $this->getContext();
 	$redirect = $this->redirect;
 	$res = "PUT ";
@@ -346,6 +351,7 @@ class java_OverrideRedirectHandler extends java_HttpHandler {
   function open() {
 	$socket = fsockopen("{$this->ssl}{$this->host}", $this->port, $errno, $errstr, 30);
 	if (!$socket) throw new java_RuntimeException("Could not re-connect to the J2EE server {$this->ssl}{$this->host}:{$this->port}. Error message: $errstr ($errno)\n");
+	stream_set_timeout($socket, -1);
 	return $socket;
   }
   function close() {
