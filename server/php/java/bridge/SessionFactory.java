@@ -50,6 +50,10 @@ public class SessionFactory extends JavaBridgeFactory {
 
   private static final SessionTimer timer = new SessionTimer();
   
+  public ClassLoader getClassLoader() {
+      return Util.getContextClassLoader();
+  }
+  
   private ISession session(String name, boolean clientIsNew, int timeout) {
 	synchronized(JavaBridge.sessionHash) {
 	    Session ref = null;

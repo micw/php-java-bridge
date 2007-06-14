@@ -44,6 +44,8 @@ public abstract class JavaBridgeFactory implements IJavaBridgeFactory {
     
     protected JavaBridge bridge = null;
 
+    public abstract ClassLoader getClassLoader();
+    
     protected JavaBridge checkBridge() {
 	return bridge;
     }
@@ -53,7 +55,7 @@ public abstract class JavaBridgeFactory implements IJavaBridgeFactory {
      */
     public JavaBridge getBridge() {
 	if(bridge != null) return bridge;
-	bridge=new JavaBridge();
+	bridge=new JavaBridge(new JavaBridgeClassLoader(getClassLoader()));
 	if(Util.logLevel>=4) Util.logDebug("created new bridge: " + bridge);
 	bridge.setSessionFactory((SessionFactory)this);
 	return bridge;

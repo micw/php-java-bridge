@@ -132,7 +132,7 @@ public class JavaBridgeRunner extends HttpServer {
      */
     protected void doPut (HttpRequest req, HttpResponse res) throws IOException {
 	String overrideRedirectString = getHeader("X_JAVABRIDGE_REDIRECT", req);
-	short overrideRedirectValue = (short) Integer.parseInt(overrideRedirectString);
+	short overrideRedirectValue = (short) (overrideRedirectString==null?0:Integer.parseInt(overrideRedirectString));
     	boolean override_redirect = (3 & overrideRedirectValue) == 1;
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
     	String channel = getHeader("X_JAVABRIDGE_CHANNEL", req);

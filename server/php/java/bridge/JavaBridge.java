@@ -171,13 +171,18 @@ public class JavaBridge implements Runnable {
     StringCache stringCache = new StringCache(this);
 
     /** For internal use only. */
-    public SessionFactory sessionFactory;
+    private SessionFactory sessionFactory;
     
     /** 
      * For internal use only.
      */
     static final SessionFactory defaultSessionFactory = new SessionFactory();
 
+    public SessionFactory getSessionFactory() {
+	if(sessionFactory==null) return sessionFactory = defaultSessionFactory;
+	return sessionFactory;
+    }
+    
     Options options;
     
     /**
@@ -195,7 +200,6 @@ public class JavaBridge implements Runnable {
     public void run() {
         try {
 	    logDebug("START: JavaBridge.run()");
-	    setSessionFactory(defaultSessionFactory);
 	    request = new Request(this);
           
 	    try {
@@ -1417,22 +1421,26 @@ public class JavaBridge implements Runnable {
      * @param out the OutputStream
      * @see php.java.bridge.JavaBridgeRunner
      * @see php.java.bridge.JavaBridge#main(String[])
-     */
-    public JavaBridge(InputStream in, OutputStream out) {
+    */
+    protected JavaBridge(InputStream in, OutputStream out) {
 	this.in = in;
 	this.out = out;
-	this.setClassLoader(new JavaBridgeClassLoader());
+	this.setSessionFactory(defaultSessionFactory);
+	this.setClassLoader(new JavaBridgeClassLoader(sessionFactory.getClassLoader()));
     }
-
+ 
     /**
      * Only for internal use.
      * @see php.java.bridge.JavaBridge#main(String[])
      * @see php.java.bridge.JavaBridgeRunner
      */
-    public JavaBridge() {
+    protected JavaBridge() {
 	this(null, null);
     }
     
+    public JavaBridge(SimpleJavaBridgeClassLoader loader) {
+	setClassLoader(loader);
+    }
     /**
      * Return map for the value (PHP 5 only)
      * @param value - The value which must be an array or implement Map or Collection.

@@ -221,7 +221,7 @@ class Parser {
 		    // the header used to be binary encoded
 		    int len =(0xFF&buf[c+2]) | (0xFF00&(buf[c+3]<<8));
 		    String newContext = new String(buf, c+4, c+len,  Util.ASCII);
-		    IContextFactory factory = (IContextFactory)bridge.sessionFactory;
+		    IContextFactory factory = (IContextFactory)bridge.getSessionFactory();
 		    factory.recycle(newContext);
 		   // factory.updateTheCurrentThreadClassLoader(factory.getClassLoader());
 		    c+=len+3;

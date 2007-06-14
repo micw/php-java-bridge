@@ -196,7 +196,6 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	ContextFactory factory = (ContextFactory) contexts.get(id);
 	return factory == null ? null : factory.visitor;
     }
-    private IContextFactory oldVisitor = null;
     /*
      * We have to handle 3 different cases:
      * 1. the pure PHP bridge implementation is used, it uses a persistent connection to the servlet and obtains the (persistent) context+bridge from there. (both cases: apache and PhpCgiServlet)
@@ -209,7 +208,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	JavaBridge bridge = getBridge();
 	JavaBridge newBridge = factory.checkBridge();
 	if(newBridge!=null) { // set the new bridge which keeps a reference to the fresh context
-	    if(Util.logLevel>4) Util.logDebug("setting new bridge. visited: " + bridge.sessionFactory + " <= visitor: " + newBridge.sessionFactory); 
+	    if(Util.logLevel>4) Util.logDebug("setting new bridge. visited: " + bridge.getSessionFactory() + " <= visitor: " + newBridge.getSessionFactory()); 
 	    bridge.request.setBridge(newBridge);
 	    bridge = newBridge;
 	    if(!isLegacyClient) // case #1: PHP code
@@ -262,8 +261,6 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	visitor.finishContext();
 	contextServer=null;
 	invalid=true;
-	if(oldVisitor!=null)// isLegacyClient
-	    oldVisitor.recycle(this);
 	notify();
     }
     

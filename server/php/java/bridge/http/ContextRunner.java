@@ -30,8 +30,8 @@ import java.io.OutputStream;
 import java.util.HashMap;
 
 import php.java.bridge.JavaBridge;
-import php.java.bridge.JavaBridgeClassLoader;
 import php.java.bridge.Request;
+import php.java.bridge.SimpleJavaBridgeClassLoader;
 import php.java.bridge.Util;
 
 /**
@@ -119,13 +119,8 @@ public class ContextRunner implements Runnable {
     	if(ctx == null) throw new IOException("No context available for: " + name + ".");
     	put(name, this);
     	JavaBridge bridge = ctx.getBridge();
-	// The first statement was executed with the default
-	// classloader, now set the dynamic class loader into the
-	// bridge:
-	ClassLoader xloader = ctx.getClassLoader();
-	if(Util.logLevel>4) Util.logDebug(ctx + " created new thread, using class loader: " + System.identityHashCode(xloader.getParent()));
-	JavaBridgeClassLoader loader = new JavaBridgeClassLoader(xloader);
-	bridge.setClassLoader(loader);
+	if(Util.logLevel>4) Util.logDebug(ctx + " created new thread, using class loader: " + System.identityHashCode(ctx.getClassLoader().getParent()));
+	SimpleJavaBridgeClassLoader loader = bridge.getClassLoader();
 	loader.switchedThreadContext();
 	
 	setIO(bridge, in, out);

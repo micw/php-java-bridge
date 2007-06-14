@@ -1,5 +1,107 @@
+2007-06-14  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/JavaBridge.java
+	(getSessionFactory): New function
+	(JavaBridge): public constructor which takes the current class
+	loader as an argument
+	(JavaBridge): Non-public constructors, Create an internal bridge
+	with the default class loader, used by non-servlet
+	environments. Users can still call these constructors, if they
+	extend the JavaBridge class. Obtain the class loader from the
+	factory, which may either be a session- or a context factory.
+	(recycleContext): Removed
+
+	* server/php/java/bridge/JavaBridgeFactory.java
+	(getClassLoader): New function
+
+	* server/php/java/bridge/SessionFactory.java
+	(getClassLoader): New function
+	
+	* server/php/java/bridge/http/ContextRunner.java
+	(init): Do not allocate a new JavaBridgeClassLoader, the bridge
+	already has one.
+
+	* server/php/java/bridge/JavaBridgeRunner.java
+	(doPut): X_JAVABRIDGE_REDIRECT is optional.
+
+	* VERSION, php-java-bridge.spec: Version 4.1.0a
+
+	
+2007-06-10  Jost Boekemeier  <jostb@intern>
+
+	* api.c (session, context): Do not call getSession(String, String,
+	int)/getContext(String) anymore, it is deprecated.
+
+	* client.c (share_connection,recycle_connection): Always send a
+	protocol header, so that the logic on the server-side can be
+	cleaned up.
+	
+	* install.sh.in: Use new location
+
+	* protocol.c (end_session): Set bit 2, so that the back end can
+	handle legacy binaries.
+
+	* server/META-INF/java/JavaBridge.inc (Java): Provide a Java
+	function if this function doesn't exist.
+
+	* server/php/java/bridge/BaseThreadPool.java: Do not use a global
+	class loader.
+
+	* server/php/java/bridge/global.properties.in: Added documentation
+
+	* server/php/java/bridge/http/AbstractChannelName.java (recycle):
+	removed
+
+	* server/php/java/bridge/http/ContextFactory.java (peek): New function.
+	(get): Use peek if no credentials provided.
+	(recycle): Rewritten.
+	(setBridge,getBridge): removed
+	(setClassLoader,getClassLoader): New procedures
+	(setIsLegacyClient): New procedure
+
+	* server/php/java/bridge/http/ContextRunner.java (init): Rewritten
+	(recycle): Removed
+	
+	* server/php/java/bridge/http/ContextServer.java
+	(recycle): Removed
+
+	* server/php/java/bridge/http/JavaBridgeFactory.java, server/php/java/bridge/http/IJavaBridgeFactory.java: New classes
+
+	* server/php/java/bridge/http/SimpleContextFactory.java
+	(SimpleContextFactory): Set the currentThreadClassLoader from the
+	servlet into the ContextFactory.
+
+	* server/php/java/bridge/Options.java
+	(disableKeepAlive,canKeepAlive): New procedures for backward
+	compatibility (will be implemented in 4.1.1). -- Currently not
+	implemented; if an old client connects to the new code, it will
+	simply crash.
+	
+	* server/php/java/bridge/Request.java
+	(handleRequest): Check for legacy client
+
+	* server/php/java/bridge/SessionFactory.java
+	(getClassLoader): New procedure
+
+	* server/php/java/bridge/SimpleJavaBridgeClassLoader.java: Rewritten.
+
+	* server/php/java/bridge/Util.java (getContextClassLoader): Rewritten
+
+	* server/php/java/servlet/PhpJavaServlet.java
+	(handleSocketConnection): Check for legacy client
+	(handleSocketConnection): Pass null as the credentials, the
+	ContextFactory must not be a liveContext at this stage. Live
+	contexts may appear in override-redirect or in the http tunnel,
+	but not during the servlet -> contextRunner switch.
+	(doPut): check for legacy client.
+	
+	* VERSION, php-java-bridge.spec: Version 4.1.0
+	
 2007-05-28  Jost Boekemeier  <jostb@intern>
 
+	* server/php/java/bridge/JavaBridge.java
+	(recycleContext): Removed
+	
 	* api.c (construct_class): JavaClass() requires exactly one argument.
 
 	* php-java-bridge/install.sh.in: Correct path
@@ -21,8 +123,6 @@
 
 	* server/TestInstallation.java: Extract java/Java.inc.
 
-	* VERSION, php-java-bridge.spec: Version 4.1.1test1
-	
 	
 2007-05-28  Jost Boekemeier  <jostb@intern>
 
