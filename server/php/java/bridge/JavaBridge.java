@@ -1425,8 +1425,7 @@ public class JavaBridge implements Runnable {
     protected JavaBridge(InputStream in, OutputStream out) {
 	this.in = in;
 	this.out = out;
-	this.setSessionFactory(defaultSessionFactory);
-	this.setClassLoader(new JavaBridgeClassLoader(sessionFactory.getClassLoader()));
+	this.setClassLoader(this.getSessionFactory().getJavaBridgeClassLoader());
     }
  
     /**

@@ -36,15 +36,21 @@ import java.util.Map;
 
 
 /**
+ * <p>
  * A bridge pattern which allows us to vary the class loader as run-time.
  * The decision is based on whether we are allowed to use a dynamic
  * classloader or not (cl==null) or security exception at run-time.
- * @see java.lang.ClassLoader
+ * </p>
+ * <p>
+ * The SimpleJavaBridgeClassLoader should be used outside of the J2EE environment. 
+ * If you need to switch from a servlet to a ContextRunner thread, use the JavaBridgeClassLoader instead.
+ * </p>
+ * @see php.java.bridge.JavaBridgeClassLoader
  */
 public class SimpleJavaBridgeClassLoader {
 
-    DynamicJavaBridgeClassLoader cl = null;
-    ClassLoader scl = null;
+    protected DynamicJavaBridgeClassLoader cl = null;
+    protected ClassLoader scl = null;
     
     private static final Map map = Collections.synchronizedMap(new HashMap()); //TODO: keep only recent entries
     private static final URL[] urlArray = getUrlArray();
@@ -105,8 +111,8 @@ public class SimpleJavaBridgeClassLoader {
      * Create a bridge ClassLoader using a dynamic loader.
      * @param loader The dynamic loader, may be null.
      */
-    protected SimpleJavaBridgeClassLoader(DynamicJavaBridgeClassLoader loader, ClassLoader xloader) {
-    	cl = loader;
+    private SimpleJavaBridgeClassLoader(DynamicJavaBridgeClassLoader loader, ClassLoader xloader) {
+	cl = loader;
     	if(cl==null)
     	    scl = xloader; 
 	else 
@@ -117,9 +123,11 @@ public class SimpleJavaBridgeClassLoader {
 	scl = getDefaultClassLoader(getContextClassLoader());
     }
 
+    public SimpleJavaBridgeClassLoader(ClassLoader xloader) {
+	this(null, xloader);
+    }
     /** pass path from the first HTTP statement to the ContextRunner */
     protected JarLibraryPath cachedPath;
-    protected boolean clEnabled = false;
     protected boolean checkCl() {
       	return cl!=null;
     }
@@ -143,19 +151,7 @@ public class SimpleJavaBridgeClassLoader {
      * @throws IOException 
      */
     public void updateJarLibraryPath(String path, String extensionDir) throws IOException  {
-	if(!clEnabled) {
-	    /*
-	     * We must check the path now. But since we don't have
-	     * a thread from our pool yet, we don't have a
-	     * DynamicJavaBridgeClassLoader instance.  Save the path
-	     * for the next statement, which is usually executed from
-	     * the ContextRunner. -- If this is a HTTP tunnel, which
-	     * doesn't have a ContextRunner, an exception will be
-	     * thrown.
-	     */
-	    cachedPath = DynamicJavaBridgeClassLoader.checkJarLibraryPath(path, extensionDir);
-	    return;
-	} else if(!checkCl()) {
+	if(!checkCl()) {
 	    DynamicJavaBridgeClassLoader loader = DynamicJavaBridgeClassLoader.newInstance(scl);
 	    setClassLoader(loader);
 	    Thread.currentThread().setContextClassLoader(loader); //FIXME: check security exception
@@ -172,6 +168,11 @@ public class SimpleJavaBridgeClassLoader {
 	if(checkCl()) return (ClassLoader)cl;
 	return scl;
     }
+    
+    public ClassLoader getDefaultClassLoader() {
+	return scl;
+    }
+    
     /**
      * Reset the loader.
      * This is only called by the API function "java_reset()", which is deprecated.
@@ -179,6 +180,7 @@ public class SimpleJavaBridgeClassLoader {
     protected void doReset() {
 	cl.reset(); 
 	cl=cl.clearVMLoader();
+	Thread.currentThread().setContextClassLoader(cl); //FIXME: check security exception
     }
     /**
      * reset loader to the initial state
@@ -223,12 +225,11 @@ public class SimpleJavaBridgeClassLoader {
       	cl = null;
       	cachedPath = null;
     }
-    public void switchedThreadContext() {
-        clEnabled = true;
-        if(cl==null && cachedPath!=null) {
-            DynamicJavaBridgeClassLoader loader = DynamicJavaBridgeClassLoader.newInstance(scl);
-            setClassLoader(loader);
-        }
-        Thread.currentThread().setContextClassLoader(getClassLoader()); // FIXME check security exception
+    /**
+     * Switch the current thread context class loader.
+     * @throws IllegalStateException A SimpleJavaBridgeClassLoader cannot be used in a web environment.
+     */
+    public void switcheThreadContextClassLoader() {
+	throw new IllegalStateException("Use the JavaBridgeClassLoader instead");
     }
 }

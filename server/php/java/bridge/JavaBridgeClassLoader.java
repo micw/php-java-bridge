@@ -2,6 +2,8 @@
 
 package php.java.bridge;
 
+import java.io.IOException;
+
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -34,12 +36,9 @@ package php.java.bridge;
  * @see java.lang.ClassLoader
  */
 public class JavaBridgeClassLoader extends SimpleJavaBridgeClassLoader {
-    private boolean mustReset;
+    protected boolean clEnabled = false;
     public JavaBridgeClassLoader(ClassLoader xloader) {
-	super(null, xloader);
-    }
-    public JavaBridgeClassLoader() {
-	super();
+	super(xloader);
     }
     protected boolean checkCl() {
 	if(cl==null) {
@@ -48,21 +47,13 @@ public class JavaBridgeClassLoader extends SimpleJavaBridgeClassLoader {
 	}
 	return true;
     }
-    public void setClassLoader(DynamicJavaBridgeClassLoader loader) {
-        if(loader!=null && mustReset) { 
-            loader.reset(); 
-        }
-        super.setClassLoader(loader);
-    }
     /**
      * reset loader to the loader to its initial state, clear the VM cache and set a new ThreadContextClassLoader
      * This is only called by the API function "java_reset()", which is deprecated.
      */
     public void reset() {
-	if (!checkCl()) mustReset=true;
-	else { 
+	if (checkCl())
 	    super.doReset();
-	}
     }
     /**
      * clear all loader caches but
@@ -80,5 +71,38 @@ public class JavaBridgeClassLoader extends SimpleJavaBridgeClassLoader {
 	if(checkCl()) {
 	    super.doClear();
 	}
+    }
+    /**
+     * Append the path to the current library path
+     * @param path A file or url list, separated by ';' 
+     * @param extensionDir Usually ini_get("extension_dir"); 
+     * @throws IOException 
+     */
+    public void updateJarLibraryPath(String path, String extensionDir) throws IOException {
+        if(!clEnabled) {
+            /*
+             * We must check the path now. But since we don't have
+             * a thread from our pool yet, we don't have a
+             * DynamicJavaBridgeClassLoader instance.  Save the path
+             * for the next statement, which is usually executed from
+             * the ContextRunner. -- If this is a HTTP tunnel, which
+             * doesn't have a ContextRunner, an exception will be
+             * thrown.
+             */
+            cachedPath = DynamicJavaBridgeClassLoader.checkJarLibraryPath(path, extensionDir);
+            return;
+        } else super.updateJarLibraryPath(path, extensionDir);
+    }
+    /**
+     * Enable the DynamicJavaBridgeClassLoader, if needed.
+     * This method changes the current thread context classLoader as a side effect.
+     */
+    public void switcheThreadContextClassLoader() {
+        clEnabled = true;
+        if(cl==null && cachedPath!=null) {
+            DynamicJavaBridgeClassLoader loader = DynamicJavaBridgeClassLoader.newInstance(scl);
+            setClassLoader(loader);
+        }
+        Thread.currentThread().setContextClassLoader(getClassLoader()); // FIXME check security exception
     }    
 }

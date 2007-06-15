@@ -236,8 +236,15 @@ public final class Util {
     public static String PHP_EXEC;
     /** Only for internal use */
     public static boolean EXT_JAVA_COMPATIBILITY;
+    /** Only for internal use */
+    public static File HOME_DIR;
 
     private static void initGlobals() {
+	try {
+	    HOME_DIR = new File(System.getProperty("user.home"));
+	} catch (Exception e) {
+	    HOME_DIR = null;
+	}
 	try {
 	    JAVABRIDGE_BASE = System.getProperty("php.java.bridge.base",  System.getProperty("user.home"));
 	    JAVABRIDGE_LIB =  JAVABRIDGE_BASE + File.separator +"lib";
@@ -803,7 +810,11 @@ public final class Util {
 		if(PHP_EXEC==null && tryOtherLocations && php[0]==null) {
 		    for(int i=0; i<DEFAULT_CGI_LOCATIONS.length; i++) {
 			location = new File(DEFAULT_CGI_LOCATIONS[i]);
-			if(location.exists()) {php[0] = location.getAbsolutePath(); break;}
+			if(location.exists()) {
+			    php[0] = location.getAbsolutePath(); 
+			    homeDir = HOME_DIR; // do not read ./php.ini
+			    break;
+			}
 		    }
 		}
 		if(php[0]==null && phpExec != null && (cgiBinary=checkCgiBinary(new StringBuffer(phpExec))) != null) php = cgiBinary;

@@ -21,7 +21,7 @@ php/java/bridge/JavaInc.java: META-INF/java/Java.inc
 
 java_LDADD=libnatcJavaBridge.la
 java_LDFLAGS=--main=php.java.bridge.StandaloneGCC -rpath $(EXTENSION_DIR)
-AM_GCJFLAGS=-fjni
+AM_GCJFLAGS=-fjni -w
 bin_PROGRAMS=$(VM_BINARIES)
 
 if COND_GCJ

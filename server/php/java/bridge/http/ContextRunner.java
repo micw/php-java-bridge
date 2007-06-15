@@ -121,7 +121,7 @@ public class ContextRunner implements Runnable {
     	JavaBridge bridge = ctx.getBridge();
 	if(Util.logLevel>4) Util.logDebug(ctx + " created new thread, using class loader: " + System.identityHashCode(ctx.getClassLoader().getParent()));
 	SimpleJavaBridgeClassLoader loader = bridge.getClassLoader();
-	loader.switchedThreadContext();
+	loader.switcheThreadContextClassLoader();
 	
 	setIO(bridge, in, out);
 	this.request = bridge.request;

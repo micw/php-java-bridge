@@ -490,7 +490,7 @@ public final class Request implements IDocHandler {
 	this.bridge.request = this;
 	response.setBridge(bridge);
 	parser.setBridge(bridge);
-	Thread.currentThread().setContextClassLoader(bridge.getClassLoader().getClassLoader()); //FIXME check security exception
+	bridge.getClassLoader().switcheThreadContextClassLoader();
     }
     private void resetBridge() {
         if(defaultBridge!=null) {
@@ -498,7 +498,7 @@ public final class Request implements IDocHandler {
             response.setBridge(bridge);
             parser.setBridge(bridge);
             defaultBridge = null;
-            Thread.currentThread().setContextClassLoader(bridge.getClassLoader().getClassLoader()); //FIXME check security exception
+            bridge.getClassLoader().switcheThreadContextClassLoader();
         }
     }
     /** re-initialize for new requests */

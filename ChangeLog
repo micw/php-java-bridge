@@ -1,3 +1,50 @@
+2007-06-15  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/Request.java
+	(setBridge,resetBridge): switch context
+	
+	* server/php/java/bridge/SimpleJavaBridgeClassLoader.java
+	(getDefaultClassLoader): New method
+	(doReset): Update the thread context class loader
+	
+	* server/php/java/bridge/http/ContextFactory.java
+	(recycle): Corrected assertion
+	
+	* server/Makefile.am: ignore gcj warnings
+
+	* php-java-bridge.spec: Fedora FC7 is supported
+
+	* security/module/Makefile: Correct HEADERDIR
+
+	* server/php/java/bridge/JavaBridgeFactory.java
+	(getBridge): get the appropriate Simple- or JavaBridgeClassLoader
+	(getJavaBridgeClassLoader): New method
+	
+	* server/php/java/bridge/SessionFactory.java
+	(getJavaBridgeClassLoader): New method: Create a
+	SimpleJavaBridgeClassLoader
+
+	* server/php/java/bridge/SimpleJavaBridgeClassLoader.java
+	(updateJarLibraryPath): ignore a thread context switch
+	(switchedThreadContext): Removed
+	(switcheThreadContextClassLoader): Renamed from switchedThreadContext
+	(switcheThreadContextClassLoader): ignore a thread context switch
+	
+	* server/php/java/bridge/Util.java
+	(Process): Start the system php_exec with user.home as the current
+	directory so that the system php executable doesn't read
+	WEB-INF/cgi/php.ini.
+
+	* server/php/java/bridge/http/ContextFactory.java
+	(getJavaBridgeClassLoader): New method: Create a
+	JavaBridgeClassLoader.
+
+	* server/php/java/bridge/JavaBridgeClassLoader.java
+	(updateJarLibraryPath): handle a thread context switch
+	(switcheThreadContextClassLoader): New method.
+
+	* VERSION, php-java-bridge.spec: Version 4.1.0b
+
 2007-06-14  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/JavaBridge.java

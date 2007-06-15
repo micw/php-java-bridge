@@ -31,7 +31,9 @@ import java.util.Iterator;
 
 import php.java.bridge.ISession;
 import php.java.bridge.JavaBridge;
+import php.java.bridge.JavaBridgeClassLoader;
 import php.java.bridge.SessionFactory;
+import php.java.bridge.SimpleJavaBridgeClassLoader;
 import php.java.bridge.Util;
 
 
@@ -225,7 +227,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	    throw new IllegalStateException("no bridge");
 	}
 	
-	if(factory.getClassLoader() != getClassLoader()) 
+	if(factory.getClassLoader() !=bridge.getClassLoader().getDefaultClassLoader()) 
 	    throw new IllegalStateException("class loader");
 	if(Util.logLevel>4) Util.logDebug(this + " is swiching thread context, using classloader: " + System.identityHashCode( factory.getClassLoader().getParent()));
 
@@ -421,6 +423,9 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     private ClassLoader loader;
     public void setClassLoader(ClassLoader loader) {
 	this.loader = loader;
+    }
+    public SimpleJavaBridgeClassLoader getJavaBridgeClassLoader() {
+	return new JavaBridgeClassLoader(getClassLoader());
     }
     public ClassLoader getClassLoader() {
 	return this.loader;

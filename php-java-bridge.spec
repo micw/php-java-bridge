@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 4.1.0a
+%define version 4.1.0b
 %define release 1
 %define PHP_MAJOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | sed 's/\\\..*$//')
 %define PHP_MINOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | LANG=C cut -d. -f2)
@@ -49,15 +49,11 @@ BuildRequires: selinux-policy-devel
 Requires: php >= 4.3.2
 Requires: php < 5.0.0
 %else
-%if %{PHP_MAJOR_VERSION} == 6
-Requires: php >= 6.0.0
-%else
-%if %{PHP_MINOR_VERSION} == 1
+%if %{PHP_MAJOR_VERSION} == 5
 Requires: php >= 5.1.1
+Requires: php < 6.0.0
 %else
-Requires: php >= 5.0.4
-Requires: php < 5.1.0
-%endif
+Requires: php >= 5.2.0
 %endif
 %endif
 Requires: httpd 
