@@ -51,6 +51,8 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.Map.Entry;
 
+import php.java.bridge.http.IContextFactory;
+
 /**
  * This is the main interface of the PHP/Java Bridge. It
  * contains utility methods which can be used by clients.
@@ -2039,8 +2041,19 @@ public class JavaBridge implements Runnable {
         constructorCache.clear();
         stringCache.clear();
     }
+    /**
+     * @param id The suggested context id (from the client of the php client).
+     * @see php.java.bridge.http.ContextFactory#recycle(ContextFactory)     
+     * @deprecated Use a C client >= version 4.1.1 instead or use the pure PHP implementation.
+     */    
     private void recycleContext(String id) {
-   }
+      // defaultSessionFactory is shared among *all* clients
+      if(sessionFactory==defaultSessionFactory) return;
+      // sessionFactory != default: must be a ContextFactory
+      IContextFactory current = ((IContextFactory)sessionFactory);
+      current.recycleLegacy(id);
+      Util.logDebug("Deprecated recycleContext called. Please use the pure PHP implementation or upgrade the C client to 4.1.1 or above");
+  }
     
     /**
      * Return a new string using the current file encoding (see java_set_file_encoding()).

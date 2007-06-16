@@ -93,7 +93,6 @@ public class ServletContextFactory extends php.java.bridge.http.SimpleContextFac
     /**
      * Return an emulated JSR223 context.
      * @return The context.
-     * @see php.java.faces.PhpFacesScriptContextFactory#getContext()
      * @see php.java.servlet.Context
      */
     public IContext createContext() {

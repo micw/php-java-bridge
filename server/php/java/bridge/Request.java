@@ -434,8 +434,11 @@ public final class Request implements IDocHandler {
 	            bridge.recycle();
 	            try {
 			((ThreadPool.Delegate)Thread.currentThread()).setPersistent();
-		    } catch (ClassCastException ex) {/*no thread pool*/}
 		    	response.setFinish(true);
+		    } catch (ClassCastException ex) {
+			/* no thread pool */
+		    	response.setFinish(false);			
+		    }
 	        } else { // terminate or terminate keep alive
 	            response.setFinish(false);
 	        }
@@ -473,13 +476,7 @@ public final class Request implements IDocHandler {
     /**
      * Set a temporary bridge into this request. The bridge and its 
      * associated session-/contextFactory will be automatically destroyed when the request is done. 
-     * The {@link php.java.bridge.http.ContextRunner#recycle(php.java.bridge.http.IContextFactory) }
-     * uses this to temporarily update the runner with the new bridge obtained from the 
-     * ContextServer's ContextFactory while keeping the same connection to the client: in a shared environment
-     * a PHP client may be subscribed to n web contexts while using only one persistent ContextRunner, but 
-     * JavaBridges and their ContextFactories may contain state (session vars, globalRef, ...) and belong to 
-     * exactly one web context ContextServer.
-     * 
+     * @see php.java.bridge.http.IContextFactory#recycle(String)
      * @param bridge The fresh bridge and its ContextFactory
      */
     public void setBridge(JavaBridge bridge) {

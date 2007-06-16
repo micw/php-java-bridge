@@ -1,3 +1,16 @@
+2007-06-16  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/SimpleJavaBridgeClassLoader.java
+	(recycle): Restore the threadContextClassLoader
+
+	* server/php/java/bridge/http/IContextFactory.java
+	(recycleLegacy): New method.
+	
+	* server/php/java/bridge/JavaBridge.java
+	(recycleContext): Use recycleLegacy, display warning.
+	
+	* VERSION, php-java-bridge.spec: Version 4.1.1
+
 2007-06-15  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/Request.java

@@ -25,7 +25,14 @@ package php.java.bridge;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
+/**
+ * Create PHP/Java Bridge instances.
+ */
 public interface IJavaBridgeFactory {
+    /**
+     * Return an instance of the PHP/Java Bridge.
+     * 
+     * @return an instance of the JavaBridge
+     */
     public JavaBridge getBridge();
 }

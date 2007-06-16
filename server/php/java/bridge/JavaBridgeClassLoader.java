@@ -103,6 +103,8 @@ public class JavaBridgeClassLoader extends SimpleJavaBridgeClassLoader {
             DynamicJavaBridgeClassLoader loader = DynamicJavaBridgeClassLoader.newInstance(scl);
             setClassLoader(loader);
         }
-        Thread.currentThread().setContextClassLoader(getClassLoader()); // FIXME check security exception
+        try {
+            Thread.currentThread().setContextClassLoader(getClassLoader());
+        } catch (SecurityException e) {Util.printStackTrace(e);}
     }    
 }

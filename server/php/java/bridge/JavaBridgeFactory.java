@@ -43,8 +43,16 @@ import php.java.bridge.Util;
 public abstract class JavaBridgeFactory implements IJavaBridgeFactory {
     
     protected JavaBridge bridge = null;
-
+    
+    /**
+     * Return an instance of the JavaBridgeClassLoader
+     * @return The JavaBridgeClassLoader
+     */
     public abstract SimpleJavaBridgeClassLoader getJavaBridgeClassLoader();
+    /**
+     * Return an instance of the current thread context class loader.
+     * @return The CurrentThreadContextClassLoader
+     */
     public abstract ClassLoader getClassLoader();
     
     protected JavaBridge checkBridge() {

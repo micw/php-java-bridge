@@ -36,34 +36,30 @@ import php.java.bridge.ISession;
 public interface IContextFactory extends IJavaBridgeFactory {
 
   /**
-   * Synchronize the current state with id.
    * <p>
-   * When persistent connections are used, the bridge instances recycle their context factories (persistent
-   * php clients store their context id, so that they don't have to aquire a new one).
-   * However, a client of a php client may have passed a fresh context id. 
-   * If this happened, the bridge calls this method, 
-   * which may update the current context with the fresh values from id.</p>
-   * <p>Typically the ContextFactory implements this method. It should find the ContextFactory for id,
-   * check that the Factory is not in use (and throw a SecurityException, if isInitialized() returns true),
-   * remove it by calling removeOrphaned() and 
-   * call its recycle() method passing it the current ContextFactory. 
+   * Update the context factory with the new JavaBridge obtained from the servlet.
+   * </p>
+   * <p>
+   * Since version 4.1.1 both, the C and the pure PHP implementation pass the context factory via a protocol header.
+   * This procedure must obtain the factory for id and pass the bridge to the current context factory. Furthermore it must
+   * update the currentThreadContextClassLoader.
+   * After the request is done, the ContextFactory#recycle() method is called, which must restore the currentThreadContextClassLoader and
+   * the old context factory.
    * </p>
    * @param id The fresh id
-   * @throws NullPointerException if the current id is not initialized
-   * @throws SecurityException if the found ContextFactory is initialized.
-   * @see #recycle(ContextFactory)
-   * @see php.java.bridge.JavaBridge#recycle()
+   * @see php.java.bridge.http.ContextFactory#recycle()
+   * @see php.java.bridge.Request#setBridge(php.java.bridge.JavaBridge)
+   * @see php.java.bridge.Request#recycle()
    */
-  public void recycle(String id) throws SecurityException;
+    public void recycle(String id) throws SecurityException;
+
+    /**
+     * @deprecated Use recycle(String id) instead.
+     */
+    public void recycleLegacy(String id) throws SecurityException;
   
   /**
-   * Typically the visitor implements this method, it should attach itself to the target by calling
-   * <code>target.accept(this)</code>.
-   * @see #recycle(String)
-   * @see php.java.bridge.http.ContextFactory#accept(IContextFactoryVisitor)
-   * @see php.java.bridge.http.IContextFactoryVisitor#visit(ContextFactory)
-   * @see php.java.bridge.http.SimpleContextFactory
-   * @param target The persistent ContextFactory.
+   * @deprecated Use recycle(String id) instead.
    */
   public void recycle(ContextFactory target);
 
@@ -130,9 +126,21 @@ public interface IContextFactory extends IJavaBridgeFactory {
     */ 
    public void finishContext();
 
+   /**
+    * Set the class loader obtained from the current servlet into the context.
+    * @param loader The currentThreadContextClassLoader
+    */
    public void setClassLoader(ClassLoader loader);
    
+   /**
+    * Get the class loader from the servlet.
+    * @return The currentThreadContextClassLoader of the servlet.
+    */
    public ClassLoader getClassLoader();
 
+   /**
+    * Will be called by the PhpJavaServlet and by the JavaBridgeRunner when the client is not the pure PHP client.
+    * @param isLegacyClient
+    */
    public void setIsLegacyClient(boolean isLegacyClient);
 }

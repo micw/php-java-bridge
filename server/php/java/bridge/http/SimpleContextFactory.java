@@ -34,7 +34,6 @@ import php.java.bridge.Util;
  *  
  * @see php.java.servlet.ServletContextFactory
  * @see php.java.script.PhpScriptContextFactory
- * @see php.java.faces.PhpFacesScriptContextFactory
  */
 public class SimpleContextFactory implements IContextFactoryVisitor {
     
@@ -145,7 +144,7 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
 
     /**
      * Set the current class loader
-     * @param The DynamicJavaBridgeClassLoader
+     * @param loader The DynamicJavaBridgeClassLoader
      */
     public void setClassLoader(ClassLoader loader) {
 	if(loader==null) 
@@ -157,4 +156,7 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
 	visited.setIsLegacyClient(legacyClient);
     }
 
+    public void recycleLegacy(String id) throws SecurityException {
+        visited.recycle(id);
+    }
 }

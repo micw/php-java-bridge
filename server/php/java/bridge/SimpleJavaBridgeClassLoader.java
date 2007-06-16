@@ -154,7 +154,9 @@ public class SimpleJavaBridgeClassLoader {
 	if(!checkCl()) {
 	    DynamicJavaBridgeClassLoader loader = DynamicJavaBridgeClassLoader.newInstance(scl);
 	    setClassLoader(loader);
-	    Thread.currentThread().setContextClassLoader(loader); //FIXME: check security exception
+	    try {
+		Thread.currentThread().setContextClassLoader(loader);
+	    }catch (SecurityException e) {Util.printStackTrace(e);}
 	}
 	    
 	cl.updateJarLibraryPath(path, extensionDir);
@@ -180,7 +182,9 @@ public class SimpleJavaBridgeClassLoader {
     protected void doReset() {
 	cl.reset(); 
 	cl=cl.clearVMLoader();
-	Thread.currentThread().setContextClassLoader(cl); //FIXME: check security exception
+	try {
+	Thread.currentThread().setContextClassLoader(cl);
+	}catch (SecurityException e) {Util.printStackTrace(e);}
     }
     /**
      * reset loader to the initial state
@@ -224,6 +228,9 @@ public class SimpleJavaBridgeClassLoader {
     protected void recycle() {
       	cl = null;
       	cachedPath = null;
+      	try {
+      	    Thread.currentThread().setContextClassLoader(scl);
+      	}catch (SecurityException e) {Util.printStackTrace(e);}
     }
     /**
      * Switch the current thread context class loader.
