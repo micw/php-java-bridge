@@ -143,4 +143,10 @@ public interface IContextFactory extends IJavaBridgeFactory {
     * @param isLegacyClient
     */
    public void setIsLegacyClient(boolean isLegacyClient);
+   
+   /**
+    * Check if this is a C client.
+    * @return true if this is a legacy C client, false if the client is the pure PHP PHP/Java Bridge client.
+    */
+   public boolean isLegacyClient();
 }

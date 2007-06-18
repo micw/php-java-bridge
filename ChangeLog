@@ -1,3 +1,28 @@
+2007-06-17  Jost Boekemeier  <jostb@intern>
+	
+	* protocol.c (get_context): Always pass the current context.
+
+	* server/php/java/bridge/ContextFactory.java
+	(addNew): Removed
+	(recycle): renamed to recycleBridge
+	(recycleBridge): New from recycle
+	(recycleBridge): handle empty contexts passed from the C
+	implementation: recycle the bridge and attach the class loader
+	from the visitor.
+
+	* server/php/java/bridge/JavaBridge.java
+	(JavaBridge): Rewritten.
+
+	* server/php/java/bridge/JavaBridgeFactory.java
+	(getSession,getContext,recycle,destroy): New prototypes
+
+	* server/php/java/bridge/http/ContextFactory.java,
+	server/php/java/bridge/http/SimpleContextFactory.java
+	(setClassLoader,getClassLoader): Store the class loader in the
+	visitor
+
+	* VERSION, php-java-bridge.spec: Version 4.1.2
+
 2007-06-16  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/SimpleJavaBridgeClassLoader.java

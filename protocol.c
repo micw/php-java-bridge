@@ -78,15 +78,16 @@ static char *getSessionFactory(proxyenv *env) {
   return context?context:(char*)invalid;
 }
 static char*get_context(proxyenv *env, char context[CONTEXT_LEN_MAX], short*context_length) {
-	size_t l = strlen((*env)->servlet_ctx);
-	assert(l<CONTEXT_LEN_MAX);
-	*context_length = 
-	  EXT_GLOBAL(snprintf) (context, 
-							CONTEXT_LEN_MAX, 
-							"%c%c%c%c%s", 
-							077, 0xFF,0xFF&l,0xFF&(l>>8),
-							(*env)->servlet_ctx);
-	return context;
+  char *ctx = (*env)->current_servlet_ctx ? (*env)->current_servlet_ctx : (*env)->servlet_ctx;
+  size_t l = strlen(ctx);
+  assert(l<CONTEXT_LEN_MAX);
+  *context_length = 
+	EXT_GLOBAL(snprintf) (context, 
+						  CONTEXT_LEN_MAX, 
+						  "%c%c%c%c%s", 
+						  077, 0xFF,0xFF&l,0xFF&(l>>8),
+						  ctx);
+  return context;
 }
 
 /**

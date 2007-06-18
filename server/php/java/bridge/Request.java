@@ -357,7 +357,7 @@ public final class Request implements IDocHandler {
 		}
 		break;
 	   case 'F': 
-	         if(arg.predicate && bridge.getOptions().canKeepAlive()) { // keep alive
+	         if(arg.predicate) { // keep alive
 	           bridge.recycle();
 	           try {
 	     	       ((ThreadPool.Delegate)Thread.currentThread()).setPersistent();
@@ -495,7 +495,7 @@ public final class Request implements IDocHandler {
             response.setBridge(bridge);
             parser.setBridge(bridge);
             defaultBridge = null;
-            bridge.getClassLoader().switcheThreadContextClassLoader();
+            // bridge.getClassLoader().switcheThreadContextClassLoader() will be called in contextFactory.recycle()
         }
     }
     /** re-initialize for new requests */

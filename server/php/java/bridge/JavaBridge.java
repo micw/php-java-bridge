@@ -173,14 +173,14 @@ public class JavaBridge implements Runnable {
     StringCache stringCache = new StringCache(this);
 
     /** For internal use only. */
-    private SessionFactory sessionFactory;
+    private JavaBridgeFactory sessionFactory;
     
     /** 
      * For internal use only.
      */
     static final SessionFactory defaultSessionFactory = new SessionFactory();
 
-    public SessionFactory getSessionFactory() {
+    public JavaBridgeFactory getFactory() {
 	if(sessionFactory==null) return sessionFactory = defaultSessionFactory;
 	return sessionFactory;
     }
@@ -1427,7 +1427,7 @@ public class JavaBridge implements Runnable {
     protected JavaBridge(InputStream in, OutputStream out) {
 	this.in = in;
 	this.out = out;
-	this.setClassLoader(this.getSessionFactory().getJavaBridgeClassLoader());
+	this.setClassLoader(this.getFactory().getJavaBridgeClassLoader());
     }
  
     /**
@@ -1439,8 +1439,13 @@ public class JavaBridge implements Runnable {
 	this(null, null);
     }
     
-    public JavaBridge(SimpleJavaBridgeClassLoader loader) {
-	setClassLoader(loader);
+    /**
+     * Create a new bridge using a factory.
+     * @param factory The session/context factory.
+     */
+    public JavaBridge(JavaBridgeFactory factory) {
+	setFactory(factory);
+	setClassLoader(factory.getJavaBridgeClassLoader());
     }
     /**
      * Return map for the value (PHP 5 only)
@@ -1787,7 +1792,7 @@ public class JavaBridge implements Runnable {
      * implement session sharing.
      * @param sessionFactory The sessionFactory to set.
      */
-    public void setSessionFactory(SessionFactory sessionFactory) {
+    public void setFactory(JavaBridgeFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
     }
 
@@ -1827,12 +1832,15 @@ public class JavaBridge implements Runnable {
     	session.put(id, obj);
     	return (String)castToString(id);
     }
+    
+    private SimpleJavaBridgeClassLoader defaultClassLoader=null;
     /**
      * Set a new ClassLoader
      * @param cl The ClassLoader
      * 
      */
     public void setClassLoader(SimpleJavaBridgeClassLoader cl) {
+	defaultClassLoader = this.cl;
 	this.cl = cl;
     }
     /**
@@ -2031,9 +2039,19 @@ public class JavaBridge implements Runnable {
 	this.sessionCache = null;
         globalRef = new GlobalRef();
         lastException = lastAsyncException = null;
-	cl.recycle();
+	
+        /* resets the classLoader: make sure to set the default loader before calling sessionFactory.recycle() */
+        if(defaultClassLoader!=null)  {
+	    cl = defaultClassLoader;
+	    defaultClassLoader = null;
+        }
+        cl.recycle();
+        
         options.recycle();
+        
+        /* resets the bridge: make sure to set the original bridge before calling sessionFactory.recycle() */
         request.recycle();
+        /* resets the currentThreadContextClassLoader from the bridge's loader */
         sessionFactory.recycle();
         
         // TODO: recycle common entries such as bridge.require(), etc.

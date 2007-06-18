@@ -5,6 +5,7 @@ package php.java.bridge;
 import php.java.bridge.IJavaBridgeFactory;
 import php.java.bridge.JavaBridge;
 import php.java.bridge.Util;
+import php.java.bridge.http.IContext;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -49,12 +50,24 @@ public abstract class JavaBridgeFactory implements IJavaBridgeFactory {
      * @return The JavaBridgeClassLoader
      */
     public abstract SimpleJavaBridgeClassLoader getJavaBridgeClassLoader();
-    /**
-     * Return an instance of the current thread context class loader.
-     * @return The CurrentThreadContextClassLoader
-     */
-    public abstract ClassLoader getClassLoader();
     
+    /**
+     * Return a session for the JavaBridge
+     * @param name The session name. If name is null, the name PHPSESSION will be used.
+     * @param clientIsNew true if the client wants a new session
+     * @param timeout timeout in seconds. If 0 the session does not expire.
+     * @return The session
+     * @see php.java.bridge.ISession
+     */
+    public abstract ISession getSession(String name, boolean clientIsNew, int timeout);
+
+    /**
+     * Return the associated JSR223 context
+     * @return Always null
+     * @see php.java.bridge.http.ContextFactory#getContext()
+     */
+    public abstract IContext getContext();
+
     protected JavaBridge checkBridge() {
 	return bridge;
     }
@@ -64,9 +77,20 @@ public abstract class JavaBridgeFactory implements IJavaBridgeFactory {
      */
     public JavaBridge getBridge() {
 	if(bridge != null) return bridge;
-	bridge=new JavaBridge(getJavaBridgeClassLoader());
+	bridge=new JavaBridge(this);
 	if(Util.logLevel>=4) Util.logDebug("created new bridge: " + bridge);
-	bridge.setSessionFactory((SessionFactory)this);
 	return bridge;
+    }
+
+    /**
+     * Recycle the factory for new reqests.
+     */
+    public void recycle() {
+    }
+
+    /**
+     * Destroy the factory
+     */
+    public void destroy() {
     }
 }

@@ -135,16 +135,4 @@ public class SessionFactory extends JavaBridgeFactory {
             } catch (InterruptedException e) {/*ignore*/}
         }
     }
-
-    /**
-     * Recycle the factory for new reqests.
-     */
-    public void recycle() {
-    }
-
-    /**
-     * Destroy the factory
-     */
-    public void destroy() {
-    }
 }

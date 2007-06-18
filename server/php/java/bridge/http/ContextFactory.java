@@ -108,7 +108,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     private long timestamp;
 
     private ICredentials contextServer = null;
-    private IContextFactory visitor; 
+    private IContextFactoryVisitor visitor; 
 
     private static long counter = 0;
     private static synchronized String addNext(String webContext, ContextFactory thiz) {
@@ -136,18 +136,6 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     }
 
     /**
-     * Create a new ContextFactory and add it to the list of context factories kept by this classloader.
-     * @param webContext The current web context, use ContextFactory.EMPTY_CONTEXT 
-     * if servlet web contexts are not available, config.getServletContext().getRealPath("") otherwise.
-     * @return The created ContextFactory.
-     * @see php.java.bridge.http.ContextFactory#get(String, ICredentials)
-     */
-    public static IContextFactory addNew(String webContext) {
-    	ContextFactory factory = new ContextFactory(webContext);
-    	factory.visitor = factory;
-    	return factory;
-    }
-    /**
      * Create a new simple ContextFactory (a factory which creates an emulated JSR223 context) and add it 
      * to the list of context factories kept by this classloader.
      * @return The created ContextFactory.
@@ -168,7 +156,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * @param id The ID
      * @param server Your context server.
      * @return The ContextFactory or null.
-     * @see #addNew(String)
+     * @see php.java.bridge.http.SimpleContextFactory#addNew(String)
      * @throws SecurityException if id belongs to a different ContextServer.
      */
     /* See PhpJavaServlet#contextServer, http.ContextRunner#contextServer and 
@@ -201,32 +189,45 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     
     public void recycle(ContextFactory factory) {}
     /*
-     * We have to handle 3 different cases:
+     * We have to handle 4 different cases:
      * 1. the pure PHP bridge implementation is used, it uses a persistent connection to the servlet and obtains the (persistent) context+bridge from there. (both cases: apache and PhpCgiServlet)
-     * 2. the C code has allocated a new context+bridge for persistent connections. We must attach the context+bridge for later.(legagy C, step1, from apache)
-     * 3. the C code has passed a saved (live) context. We must use the context+bridge from the list. (legacy C, step2, from apache)
+     * 2. the client of a php client, usually PhpCgiServlet, has allocated an empty context for C. We must attach the context to the current
+     * 3. the C code has allocated a new context+bridge for persistent connections. We must attach the context+bridge for later.(legagy C, step1, from apache)
+     * 4. the C code has passed a saved (live) context. We must use the context+bridge from the list. (legacy C, step2, from apache)
      * (non-Javadoc)
      * @see php.java.bridge.http.IContextFactory#recycle(php.java.bridge.http.ContextFactory)
-     */
-    private void recycleBridge(ContextFactory factory) {
+     */ 
+    private void switchContext(ContextFactory factory) {
 	JavaBridge bridge = getBridge();
 	JavaBridge newBridge = factory.checkBridge();
 	if(newBridge!=null) { // set the new bridge which keeps a reference to the fresh context
-	    if(Util.logLevel>4) Util.logDebug("setting new bridge. visited: " + bridge.getSessionFactory() + " <= visitor: " + newBridge.getSessionFactory()); 
+	    if(Util.logLevel>4) Util.logDebug("setting new bridge. visited: " + bridge.getFactory() + " <= visitor: " + newBridge.getFactory()); 
+	    
+	    /* set the new bridge and the associated threadContextClassLoader, will be reset in recycle() */
 	    bridge.request.setBridge(newBridge);
 	    bridge = newBridge;
+	    
+	    /* remove the fresh context factory and/or move it to the liveContexts and store a reference to it */
 	    if(!isLegacyClient) // case #1: PHP code
 		factory.visitor.removeOrphaned();
-	    else { // legacy C code  (case #2 and #3), but ignore live contexts already attached to this factory, they will be cleaned up in destroy()
-		if(!factory.isAttachedLiveContext) { /* case #2 */
+	    else { // legacy C code  (case #3 and #4), but ignore live contexts already attached to this factory, they will be cleaned up in destroy()
+		if(!factory.isAttachedLiveContext) { /* case #3 */
 		    String id = factory.getId();
 		    attachedLiveContexts.put(id, factory);
 		    liveContexts.put(id, contexts.remove(id));
 		    factory.init(contextServer);
-		}		
+		}
 	    }
-	} else { 
-	    throw new IllegalStateException("no bridge");
+	} else { /* case #2 */
+	    if(Util.logLevel>4) Util.logDebug("updating existing bridge. visited: " + this + " <= visitor: " + factory.visitor);
+	    if(!isLegacyClient) 
+		throw new IllegalStateException("recycle empty context");
+	    factory.visitor.removeOrphaned();
+	    
+	    /* keep the bridge, but update its contextFactory with the fresh values and set the class loader, will be reset in recycle() */
+	    accept(factory.visitor);
+	    bridge.setClassLoader(getJavaBridgeClassLoader());
+	    bridge.getClassLoader().switcheThreadContextClassLoader();
 	}
 	
 	if(factory.getClassLoader() !=bridge.getClassLoader().getDefaultClassLoader()) 
@@ -254,7 +255,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	    factory.isAttachedLiveContext = true;
 	}
 	
-         recycleBridge(factory);
+         switchContext(factory);
    }
     /**
      * Recycle the factory for new reqests.
@@ -265,6 +266,10 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	visitor.finishContext();
 	contextServer=null;
 	invalid=true;
+	
+	if(bridge!=null) 
+	    bridge.getClassLoader().switcheThreadContextClassLoader();
+	
 	notify();
     }
     
@@ -378,12 +383,12 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * Set the Context into this factory.
      * Should be called by Context.addNew() only.
      * @param context The context.
-     * @see #addNew(String)
+     * @see php.java.bridge.http.SimpleContextFactory#addNew(String)
      */
     public void setContext(IContext context) {
         visitor.setContext(context);
     }
-    private void setVisitor(IContextFactory newVisitor) {
+    private void setVisitor(IContextFactoryVisitor newVisitor) {
         visitor = newVisitor;
     }
     /**
@@ -422,19 +427,21 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     /** Called by recycle at the end of the script */
     public void finishContext() {}
     
-    private ClassLoader loader;
     public void setClassLoader(ClassLoader loader) {
-	this.loader = loader;
+	visitor.setClassLoader(loader);
     }
     public SimpleJavaBridgeClassLoader getJavaBridgeClassLoader() {
 	return new JavaBridgeClassLoader(getClassLoader());
     }
     public ClassLoader getClassLoader() {
-	return this.loader;
+	return visitor.getClassLoader();
     }
     private boolean isLegacyClient = false;
     public void setIsLegacyClient(boolean isLegacyClient) {
 	this.isLegacyClient = isLegacyClient; 
+    }
+    public boolean isLegacyClient() {
+	return isLegacyClient;
     }
     /**
      * @deprecated

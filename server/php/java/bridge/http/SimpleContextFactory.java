@@ -134,12 +134,13 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
 	session = null;
     }
 
+    private ClassLoader loader;
     /**
      * Return the current class loader.
      * @return the current DynamicJavaBridgeClassLoader
      */
     public ClassLoader getClassLoader() {
-	return visited.getClassLoader();
+	return loader;
     }
 
     /**
@@ -149,11 +150,14 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
     public void setClassLoader(ClassLoader loader) {
 	if(loader==null) 
 	    throw new NullPointerException("loader");
-	visited.setClassLoader(loader);
+	this.loader = loader;
     }
     
     public void setIsLegacyClient(boolean legacyClient) {
 	visited.setIsLegacyClient(legacyClient);
+    }
+    public boolean isLegacyClient() {
+	return visited.isLegacyClient();
     }
 
     public void recycleLegacy(String id) throws SecurityException {
