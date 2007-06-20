@@ -76,11 +76,11 @@ public final class Util {
             logger = new FileLogger(); // log to logStream        
         }
         /**
-         * Use chainsaw, if available of the specified logger.
+         * Use chainsaw, if available.
          * @param logger The specified logger.
          */
         public Logger(ILogger logger) {
-            try {this.clogger = ChainsawLogger.createChainsawLogger();} catch (Throwable t) {
+            try {this.clogger = Log4jLogger.createChainsawLogger();} catch (Throwable t) {
                 this.logger = logger;
             }
         }
@@ -1165,4 +1165,64 @@ public final class Util {
 	}
         return pool;
     }
+    
+    
+    /**
+     * parse java.log_file=@HOST:PORT
+     * @param logFile The log file from the PHP .ini file
+     * @return true, if we can use the log4j logger, false otherwise.
+     */
+    public static boolean setConfiguredLogger(String logFile) {
+        try {
+	  return tryConfiguredChainsawLogger(logFile);
+	} catch (Exception e) {
+	  printStackTrace(e);
+	  Util.setLogger(new FileLogger());
+	}
+	return true;
+    }
+    private static final class ConfiguredChainsawLogger extends ChainsawLogger {
+        private String host;
+	private int port;
+	private ConfiguredChainsawLogger(String host, int port) {
+	    super();
+	    this.host=host;
+	    this.port=port;
+        }
+        public static ConfiguredChainsawLogger createLogger(String host, int port) throws Exception {
+            ConfiguredChainsawLogger logger = new ConfiguredChainsawLogger(host, port);
+            logger.init();
+	    return logger;
+        }
+        public void configure(String host, int port) throws Exception {
+            host = this.host!=null ? this.host : host;
+            port = this.port > 0 ? this.port : port;
+            super.configure(host, port);
+        }
+    }
+    /**
+     * parse java.log_file=@HOST:PORT
+     * @param logFile The log file from the PHP .ini file
+     * @return true, if we can use the log4j logger, false otherwise.
+     * @throws Exception
+     */
+    private static boolean tryConfiguredChainsawLogger(String logFile) throws Exception {
+	if(logFile!=null && logFile.length()>0 && logFile.charAt(0)=='@') {
+	    logFile=logFile.substring(1, logFile.length());
+	    int idx = logFile.indexOf(':');
+	    int port = -1;
+	    String host = null;
+	    if(idx!=-1) {
+		String p = logFile.substring(idx+1, logFile.length());
+		if(p.length()>0) port = Integer.parseInt(p);
+		host = logFile.substring(0, idx);
+	    } else {
+		if(logFile.length()>0) host = logFile;
+	    }
+	    Util.setLogger(ConfiguredChainsawLogger.createLogger(host, port));
+	    return true;
+	}
+	return false;
+    }
+
 }

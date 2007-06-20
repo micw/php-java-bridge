@@ -173,14 +173,14 @@ public class JavaBridge implements Runnable {
     StringCache stringCache = new StringCache(this);
 
     /** For internal use only. */
-    private JavaBridgeFactory sessionFactory;
+    private IJavaBridgeFactory sessionFactory;
     
     /** 
      * For internal use only.
      */
     static final SessionFactory defaultSessionFactory = new SessionFactory();
 
-    public JavaBridgeFactory getFactory() {
+    public IJavaBridgeFactory getFactory() {
 	if(sessionFactory==null) return sessionFactory = defaultSessionFactory;
 	return sessionFactory;
     }
@@ -238,63 +238,6 @@ public class JavaBridge implements Runnable {
         return Standalone.bind(Util.logLevel, sockname);
     }
     /**
-     * parse java.log_file=@HOST:PORT
-     * @param logFile The log file from the PHP .ini file
-     * @return true, if we can use the log4j logger, false otherwise.
-     */
-    private static boolean setChainsawLogger(String logFile) {
-        try {
-	  return doSetChainsawLogger(logFile);
-	} catch (Exception e) {
-	  e.printStackTrace();
-	  Util.setLogger(new FileLogger());
-	}
-	return true;
-    }
-    private static final class Logger extends ChainsawLogger {
-        private String host;
-	private int port;
-	private Logger(String host, int port) {
-	    super();
-	    this.host=host;
-	    this.port=port;
-        }
-        public static Logger createLogger(String host, int port) throws Exception {
-            Logger logger = new Logger(host, port);
-            logger.init();
-	    return logger;
-        }
-        public void configure(String host, int port) throws Exception {
-            host = this.host!=null ? this.host : host;
-            port = this.port > 0 ? this.port : port;
-            super.configure(host, port);
-        }
-    }
-    /**
-     * parse java.log_file=@HOST:PORT
-     * @param logFile The log file from the PHP .ini file
-     * @return true, if we can use the log4j logger, false otherwise.
-     * @throws Exception
-     */
-    private static boolean doSetChainsawLogger(String logFile) throws Exception {
-	if(logFile!=null && logFile.length()>0 && logFile.charAt(0)=='@') {
-	    logFile=logFile.substring(1, logFile.length());
-	    int idx = logFile.indexOf(':');
-	    int port = -1;
-	    String host = null;
-	    if(idx!=-1) {
-		String p = logFile.substring(idx+1, logFile.length());
-		if(p.length()>0) port = Integer.parseInt(p);
-		host = logFile.substring(0, idx);
-	    } else {
-		if(logFile.length()>0) host = logFile;
-	    }
-	    Util.setLogger(Logger.createLogger(host, port));
-	    return true;
-	}
-	return false;
-    }
-    /**
      * Global init. Redirects System.out and System.err to the server
      * log file(s) or to System.err and creates and opens the
      * communcation channel. Note: Do not write anything to
@@ -317,7 +260,7 @@ public class JavaBridge implements Runnable {
 		rawLogFile=logFile=s.length>0?"":Util.DEFAULT_LOG_FILE;
 		if(s.length>2) {
 		    rawLogFile=logFile=s[2];
-		    if(setChainsawLogger(logFile))
+		    if(Util.setConfiguredLogger(logFile))
 		        logFile=null; // when log4j is used, System.out and System.err are not redirected
 		    else
 		        Util.setLogger(new FileLogger()); // use specified log file
@@ -1443,7 +1386,7 @@ public class JavaBridge implements Runnable {
      * Create a new bridge using a factory.
      * @param factory The session/context factory.
      */
-    public JavaBridge(JavaBridgeFactory factory) {
+    public JavaBridge(IJavaBridgeFactory factory) {
 	setFactory(factory);
 	setClassLoader(factory.getJavaBridgeClassLoader());
     }
@@ -1792,7 +1735,7 @@ public class JavaBridge implements Runnable {
      * implement session sharing.
      * @param sessionFactory The sessionFactory to set.
      */
-    public void setFactory(JavaBridgeFactory sessionFactory) {
+    public void setFactory(IJavaBridgeFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
     }
 

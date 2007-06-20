@@ -120,12 +120,6 @@ public interface IContextFactory extends IJavaBridgeFactory {
    */
    public ISession getSession(String name, boolean clientIsNew, int timeout);
 
-   /** 
-    * Called by recycle() at the end of the script.
-    *  Use this method to clean up the instance. for a new child. 
-    */ 
-   public void finishContext();
-
    /**
     * Set the class loader obtained from the current servlet into the context.
     * @param loader The currentThreadContextClassLoader

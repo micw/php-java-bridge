@@ -108,7 +108,12 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     	 
     	super.init(config);
        
-	Util.setLogger(new Util.Logger(new Logger(config.getServletContext())));
+    	String logFile = null;
+        try {
+	    logFile = config.getInitParameter("servlet_log_file");
+        } catch (Throwable t) {Util.printStackTrace(t);}      
+    	if(!(Util.setConfiguredLogger(logFile)))
+    		Util.setLogger(new Util.Logger(new Logger(config.getServletContext())));
 
 	if(Util.VERSION!=null)
     	    Util.logMessage("PHP/Java Bridge servlet "+servletContextName+" version "+Util.VERSION+" ready.");

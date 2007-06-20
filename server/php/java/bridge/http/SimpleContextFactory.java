@@ -27,6 +27,7 @@ package php.java.bridge.http;
 import php.java.bridge.ISession;
 import php.java.bridge.JavaBridge;
 import php.java.bridge.Util;
+import php.java.bridge.SimpleJavaBridgeClassLoader;
 
 
 /**
@@ -130,7 +131,7 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
     /**
      * Called by recycle at the end of the script
      */
-    public void finishContext() {
+    public void recycle() {
 	session = null;
     }
 
@@ -141,6 +142,14 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
      */
     public ClassLoader getClassLoader() {
 	return loader;
+    }
+
+    /**
+     * Return the JavaBridgeClassLoader, which wraps the
+     * DynamicJavaBridgeClassLoader
+     */
+    public SimpleJavaBridgeClassLoader getJavaBridgeClassLoader() {
+	return visited.getJavaBridgeClassLoader();
     }
 
     /**

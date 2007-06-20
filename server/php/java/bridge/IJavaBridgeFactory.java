@@ -25,14 +25,49 @@ package php.java.bridge;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import php.java.bridge.http.IContext;
+
 /**
  * Create PHP/Java Bridge instances.
  */
 public interface IJavaBridgeFactory {
+
     /**
-     * Return an instance of the PHP/Java Bridge.
-     * 
-     * @return an instance of the JavaBridge
+     * Return an instance of the JavaBridgeClassLoader
+     * @return The JavaBridgeClassLoader
+     */
+    public SimpleJavaBridgeClassLoader getJavaBridgeClassLoader();
+    
+    /**
+     * Return a session for the JavaBridge
+     * @param name The session name. If name is null, the name PHPSESSION will be used.
+     * @param clientIsNew true if the client wants a new session
+     * @param timeout timeout in seconds. If 0 the session does not expire.
+     * @return The session
+     * @see php.java.bridge.ISession
+     */
+    public ISession getSession(String name, boolean clientIsNew, int timeout);
+
+    /**
+     * Return the associated JSR223 context
+     * @return Always null
+     * @see php.java.bridge.http.ContextFactory#getContext()
+     */
+    public IContext getContext();
+
+    /**
+     * Return the JavaBridge.
+     * @return Returns the bridge.
      */
     public JavaBridge getBridge();
+
+    /**
+     * Recycle the factory for new reqests.
+     */
+    public void recycle();
+
+    /**
+     * Destroy the factory
+     */
+    public void destroy();
 }

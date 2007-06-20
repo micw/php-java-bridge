@@ -28,7 +28,7 @@ package php.java.bridge;
  * The log interface for the PHP/Java Bridge log.
  * @see php.java.bridge.FileLogger
  * @see php.java.bridge.ChainsawLogger
- * @see php.java.bridge.Log4jLogger
+ * @see php.java.bridge.SimpleLog4jLogger
  * @author jostb
  *
  */

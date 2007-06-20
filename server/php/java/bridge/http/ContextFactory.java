@@ -263,7 +263,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     public synchronized void recycle() {
 	if(Util.logLevel>=4) Util.logDebug("finish context called " + this.visitor);
 	super.recycle();
-	visitor.finishContext();
+	visitor.recycle();
 	contextServer=null;
 	invalid=true;
 	

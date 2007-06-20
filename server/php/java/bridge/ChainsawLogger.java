@@ -32,14 +32,14 @@ import java.net.Socket;
 /**
  * A logger class which connects to chainsaw -- chainsaw is a log4j viewer. Requires that log4j.jar is in the classpath.
  * 
- * Start chainsaw, for example by clicking on Applications ->
- * Programming -> Chainsaw or via:<blockquote><code>java -classpath
+ * Start chainsaw, for example by clicking on Applications -&gt;
+ * Programming -&gt; Chainsaw or via:<blockquote><code>java -classpath
  * /usr/share/java/log4j.jar org.apache.log4j.chainsaw.Main</code></blockquote>
  * and then start the PHP/Java Bridge:<br> 
  * <blockquote><code>java -classpath /usr/share/java/log4j.jar:/usr/share/java/JavaBridge.jar php.java.bridge.JavaBridge</code></blockquote>
  * or set the PHP .ini option <blockquote><code>java.log_file=@127.0.0.1:4445</code></blockquote>.
  */
-public class ChainsawLogger extends Log4jLogger implements ILogger {
+public class ChainsawLogger extends SimpleLog4jLogger implements ILogger {
     /** The default chainsaw port */    
     public static final int DEFAULT_PORT=4445;
     /** The default chainsaw port */    
@@ -68,7 +68,7 @@ public class ChainsawLogger extends Log4jLogger implements ILogger {
         method = clazz.getMethod("configure", new Class[]{appender});
         method.invoke(clazz, new Object[]{socketAppender});
     }
-    protected void init() throws Exception {
+    protected void init() throws Exception{
 	configure(DEFAULT_HOST, Integer.parseInt(System.getProperty("chainsaw.port", DEFAULT_PORT_NAME)));
 	logger = new LoggerProxy();      
     }
