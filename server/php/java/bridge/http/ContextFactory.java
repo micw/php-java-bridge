@@ -242,16 +242,16 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * @see php.java.bridge.http.IContextFactory#recycle(java.lang.String)
      */
     public void recycle(String id) throws SecurityException {
-	if(getId().equals(id)) return; //TODO: symbol?
-
 	ContextFactory factory = null;
 	if(isLegacyClient) // a saved live context (C code only)
 	    factory = ((ContextFactory)attachedLiveContexts.get(id));
 
 	if(factory==null) { // this is a fresh context from the servlet (C code or PHP)
 	    factory=((ContextFactory)contexts.get(id));
+	    if(factory == null || factory == this) return;
 	    factory.isAttachedLiveContext = false;
 	} else {
+	    if(factory == this) return;
 	    factory.isAttachedLiveContext = true;
 	}
 	
@@ -424,9 +424,6 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	invalid=true;
 	notify();
     }
-    /** Called by recycle at the end of the script */
-    public void finishContext() {}
-    
     public void setClassLoader(ClassLoader loader) {
 	visitor.setClassLoader(loader);
     }

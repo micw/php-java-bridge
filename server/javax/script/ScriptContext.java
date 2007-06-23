@@ -1,7 +1,9 @@
 
 package javax.script;
 
+import java.io.Reader;
 import java.io.Writer;
+import java.util.List;
 
 /**
  * The ScriptContext interface exposes the key-value pairs in various
@@ -66,14 +68,6 @@ public interface ScriptContext {
     public Bindings getBindings(int scope);
     
     /**
-     * Retrieves an instance of java.io.Writer which can be used by 
-     * scripts to display their output.
-     * 
-     * @return an instance of java.io.Writer
-     */
-    public Writer getWriter();
-    
-    /**
      * Removes the given attribute form the specified scope. Returns 
      * the removed object or null if no value is associated with the 
      * specified key in specified level of scope. 
@@ -111,4 +105,65 @@ public interface ScriptContext {
 	public void setBindings(Bindings namespace,int scope) throws 
             IllegalArgumentException;
     
+        /**
+         * Returns the <code>Writer</code> for scripts to use when displaying output.
+         *
+         * @return The <code>Writer</code>.
+         */
+        public Writer getWriter();
+        
+        
+        /**
+         * Returns the <code>Writer</code> used to display error output.
+         *
+         * @return The <code>Writer</code>
+         */
+        public Writer getErrorWriter();
+        
+        /**
+         * Sets the <code>Writer</code> for scripts to use when displaying output.
+         *
+         * @param writer The new <code>Writer</code>.
+         * @deprecated Use #setWriter(Writer, String) instead
+         */
+        public void setWriter(Writer writer);
+
+        /**
+         * Sets the <code>Writer</code> for scripts to use when displaying output.
+         *
+         * @param writer The new <code>Writer</code>.
+         * @param encoding The charset encoding
+         */
+        public void setWriter(Writer writer, String encoding);
+        
+        
+        /**
+         * Sets the <code>Writer</code> used to display error output.
+         *
+         * @param writer The <code>Writer</code>.
+         */
+        public void setErrorWriter(Writer writer);
+        
+        /**
+         * Returns a <code>Reader</code> to be used by the script to read
+         * input.
+         *
+         * @return The <code>Reader</code>.
+         */
+        public Reader getReader();
+         
+        /**
+         * Sets the <code>Reader</code> for scripts to read input
+         * .
+         * @param reader The new <code>Reader</code>.
+         */
+        public void setReader(Reader reader);
+        
+        /**
+         * Returns immutable <code>List</code> of all the valid values for
+         * scope in the ScriptContext.
+         *
+         * @return list of scope values
+         */
+        public List getScopes();	
 }

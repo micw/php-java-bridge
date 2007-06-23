@@ -93,7 +93,7 @@ public class HttpResponse {
     }
 
     private final byte[] h1 = Util.toBytes("HTTP/1.0 200 OK\r\n"); 
-    private final byte[] h2 = Util.toBytes("Host: localhost\r\nConnection: close\r\nLast-Modified: Wed, 17 Jan 2007 19:52:43 GMT\r\n"); 
+    private final byte[] h2 = Util.toBytes("Host: localhost\r\nConnection: close\r\n"); 
     private final byte[] h3 = Util.toBytes("\r\n"); 
     private final byte[] h4 = Util.toBytes(": ");
     private void writeHeaders() throws IOException {

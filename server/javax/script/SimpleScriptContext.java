@@ -1,7 +1,11 @@
 package javax.script;
 
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.Reader;
 import java.io.Writer;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * The GenericScriptContext is a simple implementation of ScriptContext.
@@ -16,7 +20,7 @@ public class SimpleScriptContext implements ScriptContext {
     
 	/** namespace of the scope of level ENGINE_SCOPE */
 	protected Bindings engineScope;
-	
+
 	public SimpleScriptContext() {
 	        engineScope = new SimpleBindings();
 	}
@@ -107,19 +111,7 @@ public class SimpleScriptContext implements ScriptContext {
         		return null;
         }
     }
-    
-    /**
-     * Retrieves an instance of java.io.Writer which can be used by 
-     * scripts to display their output.
-     * 
-     * @return an instance of java.io.Writer
-     */
-    public Writer getWriter() {
         
-        // autoflush is ture so that I can see the output immediately
-        return new PrintWriter(System.out, true); 
-    }
-    
     /**
      * Removes the specified attribute form the specified level of 
      * scope.
@@ -198,5 +190,48 @@ public class SimpleScriptContext implements ScriptContext {
 			
 		}
     }
-	
+
+        private static final List scopes = Arrays.asList(new Integer[] {new Integer(ENGINE_SCOPE), new Integer(GLOBAL_SCOPE)});
+	public List getScopes() {
+	    return scopes;
+        }
+
+	protected Writer errorWriter;
+	public Writer getErrorWriter() {
+	    if(this.errorWriter==null) return this.errorWriter = new PrintWriter(System.err, true);
+	    return errorWriter;
+	}
+
+	public void setErrorWriter(Writer writer) {
+	    this.errorWriter = writer;
+	}
+
+	protected Reader reader;
+	public Reader getReader() {
+	    if(this.reader == null) return new InputStreamReader(System.in);
+	    return reader;
+	}
+
+	public void setReader(Reader reader) {
+	    this.reader = reader;
+	}
+
+	protected Writer writer;
+        public Writer getWriter() {
+            // autoflush is true so that I can see the output immediately
+            if(writer==null) {
+        	writer = new PrintWriter(System.out, true);
+        	this.encoding = null;
+             }
+            return writer;
+        }
+	public void setWriter(Writer writer) {
+	    this.writer = writer;
+	    this.encoding = null;
+	}
+	protected String encoding;
+	public void setWriter(Writer writer, String encoding) {
+	    this.writer = writer;
+	    this.encoding = encoding;
+	}
 }

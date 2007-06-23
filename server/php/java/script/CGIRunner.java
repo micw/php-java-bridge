@@ -54,7 +54,7 @@ public abstract class CGIRunner extends Thread {
 	
     protected boolean running = true;
     protected Map env;
-    protected OutputStream out;
+    protected OutputStream out, err;
     protected Reader reader;
     
     protected Lock phpScript = new Lock();
@@ -81,21 +81,22 @@ public abstract class CGIRunner extends Thread {
 	    notify();
 	}
     }
-    protected CGIRunner(String name, Reader reader, Map env, OutputStream out) {
+    protected CGIRunner(String name, Reader reader, Map env, OutputStream out, OutputStream err) {
 	super(name);
     	this.reader = reader;
 	this.env = env;
 	this.out = out;
+	this.err = err;
     }
     private static class ProcessWithErrorHandler extends Util.ProcessWithErrorHandler {
-	protected ProcessWithErrorHandler(String[] args, File homeDir, Map env, boolean tryOtherLocations) throws IOException {
-	    super(args, homeDir, env, tryOtherLocations, true);
+	protected ProcessWithErrorHandler(String[] args, File homeDir, Map env, boolean tryOtherLocations, OutputStream err) throws IOException {
+	    super(args, homeDir, env, tryOtherLocations, true, err);
 	}
 	protected String checkError(String s) {
 	    return s;
 	}
-        public static Process start(String[] args, File homeDir, Map env, boolean tryOtherLocations) throws IOException {
-            ProcessWithErrorHandler proc = new ProcessWithErrorHandler(args, homeDir, env, tryOtherLocations);
+        public static Process start(String[] args, File homeDir, Map env, boolean tryOtherLocations, OutputStream err) throws IOException {
+            ProcessWithErrorHandler proc = new ProcessWithErrorHandler(args, homeDir, env, tryOtherLocations, err);
             proc.start();
             return proc;
         }	
@@ -120,7 +121,7 @@ public abstract class CGIRunner extends Thread {
     }
     protected void doRun() throws IOException {
 	int n;    
-        Process proc = ProcessWithErrorHandler.start(new String[] {null, "-d", "allow_url_include=On"}, null, env, true);
+        Process proc = ProcessWithErrorHandler.start(new String[] {null, "-d", "allow_url_include=On"}, null, env, true, err);
 
 	InputStream natIn = null;
 	Writer writer = null;
@@ -192,5 +193,7 @@ public abstract class CGIRunner extends Thread {
 	    } catch (InterruptedException e) {
 		Util.printStackTrace(e);
 	    }
+	try { out.close(); } catch (IOException e) {/*ignore*/}
+	try { err.close(); } catch (IOException e) {/*ignore*/}
     }
 }

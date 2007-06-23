@@ -127,7 +127,7 @@ public class JarLibraryPath {
 
         try {
     	url = new URL(s);
-    	DynamicJavaBridgeClassLoader.checkUrl(url);
+    	url = DynamicJavaBridgeClassLoader.checkUrl(url);
         } catch (MalformedURLException e) {
     	try {
     	    File f=null;

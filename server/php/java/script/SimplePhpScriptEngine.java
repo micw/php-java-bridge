@@ -201,7 +201,10 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
 	
     protected HttpProxy getContinuation(Reader reader, ScriptContext context) {
     	IPhpScriptContext phpScriptContext = (IPhpScriptContext)context;
-    	HttpProxy kont = new HttpProxy(reader, env, ((PhpScriptWriter)(context.getWriter())).getOutputStream()); 
+    	HttpProxy kont = new HttpProxy(reader, 
+    		env,
+    		((PhpScriptWriter)(context.getWriter())).getOutputStream(), 
+    		((PhpScriptWriter)(context.getErrorWriter())).getOutputStream()); 
      	phpScriptContext.setContinuation(kont);
 	return kont;
     }

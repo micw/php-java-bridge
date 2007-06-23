@@ -64,7 +64,6 @@ public class PhpScriptContext extends SimpleScriptContext implements IContext, I
     }
 
     private HttpProxy kont;
-    private Writer writer;
 	
     /**
      * Create a standalone PHP script context.
@@ -81,7 +80,13 @@ public class PhpScriptContext extends SimpleScriptContext implements IContext, I
 	if(writer == null) return writer =  getWriter(bridgeRunner.isStandalone());
 	return writer;
     }
-	
+    private Writer getErrorWriter(boolean isStandalone) {
+	 return isStandalone ? new PhpScriptLogWriter() : new PhpScriptWriter(System.err);
+    }
+    public Writer getErrorWriter() {
+	if(errorWriter == null) return writer =  getErrorWriter(bridgeRunner.isStandalone());
+	return writer;	
+    }
     /**
      * Ignore the default java_context()->call(java_closure()) call at the end
      * of the invocable script, if the user has provided its own.
@@ -106,12 +111,32 @@ public class PhpScriptContext extends SimpleScriptContext implements IContext, I
     	return continuationCalled = true;
     }
 
-
-    /**@inheritDoc*/
+    /**
+     * Sets the <code>Writer</code> for scripts to use when displaying output.
+     *
+     * @param writer The new <code>Writer</code>.
+     */
     public void setWriter(Writer writer) {
-        this.writer = writer;
+	super.setWriter(new PhpScriptWriter(new DefaultCharsetOutputStreamWriter(writer)));
     }
-
+    /**
+     * Sets the <code>Writer</code> for scripts to use when displaying output.
+     *
+     * @param writer The new <code>Writer</code>.
+     */
+    public void setWriter(Writer writer, String encoding) {
+	super.setWriter(new PhpScriptWriter(new OutputStreamWriter(writer, encoding)));
+    }
+    
+    
+    /**
+     * Sets the <code>Writer</code> used to display error output.
+     *
+     * @param writer The <code>Writer</code>.
+     */
+    public void setErrorWriter(Writer writer) {
+	super.setErrorWriter(new PhpScriptWriter(new DefaultCharsetOutputStreamWriter(writer)));
+    }
 
     /**@inheritDoc*/
     public HttpProxy getContinuation() {

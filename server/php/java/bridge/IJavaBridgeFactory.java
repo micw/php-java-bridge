@@ -33,7 +33,10 @@ import php.java.bridge.http.IContext;
 public interface IJavaBridgeFactory {
 
     /**
-     * Return an instance of the JavaBridgeClassLoader
+     * Return an instance of the JavaBridgeClassLoader. 
+     * Return an instance of SimpleJavaBridgeClassLoader, or, if you want to support java_require(), an instance of the JavaBridgeClassLoader
+     * with the current thread context class loader as a delegate.
+     * @see php.java.bridge.Util#getContextClassLoader() 
      * @return The JavaBridgeClassLoader
      */
     public SimpleJavaBridgeClassLoader getJavaBridgeClassLoader();
@@ -50,7 +53,7 @@ public interface IJavaBridgeFactory {
 
     /**
      * Return the associated JSR223 context
-     * @return Always null
+     * @return The JSR223 context, if supported by the environment or null.
      * @see php.java.bridge.http.ContextFactory#getContext()
      */
     public IContext getContext();

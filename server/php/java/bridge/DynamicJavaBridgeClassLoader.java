@@ -93,8 +93,16 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
             addURLs(key, urls, false); // Uses protected method to explicitly set the classpath entry that is added.
         path.addToCache();
     }
-    static void checkUrl(URL url) {
-        url.getProtocol();
+     private static synchronized URL checkHttpUrl(URL url) throws IOException {
+	 URL u = new URL("jar", null, -1, url.toExternalForm()+"!/",  new DynamicHttpURLConnectionHandler());
+	 return u;
+   }
+    static URL checkUrl(URL url) throws IOException {
+        String protocol = url.getProtocol();
+        if(!protocol.startsWith("file:") && !protocol.startsWith("jar:")) {
+            return checkHttpUrl(url);
+        }
+        return url;
     }
     static void checkJarFile(File f) throws IOException {
         try {
@@ -107,15 +115,17 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     }
     private static void doCheckJarFile(File f) throws IOException {
         JarFile jar = new JarFile(f);
-        Manifest mf = jar.getManifest();
-        if(Util.logLevel>4) {
-            if(mf!=null) {
-                Set main = mf.getMainAttributes().entrySet();
-                if(Util.logLevel>5) Util.logDebug("ClassLoader: loaded file: " + f + ", main attributes: " + main);
+        try {
+            Manifest mf = jar.getManifest();
+            if(Util.logLevel>4) {
+        	if(mf!=null) {
+        	    Set main = mf.getMainAttributes().entrySet();
+        	    if(Util.logLevel>5) Util.logDebug("ClassLoader: loaded file: " + f + ", main attributes: " + main);
+        	}
             }
+        } finally {
+            try {jar.close();} catch (Exception e) {/*ignore*/}
         }
-        jar.close();
-        
     }
     /*
      * Add all .jar files in a directory
@@ -155,7 +165,8 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	    clearLoader();
 	    clearCache();
 	}
-    }
+    }        
+
     /**
      * Clear all loader caches. 
      */

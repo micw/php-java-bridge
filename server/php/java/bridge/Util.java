@@ -34,12 +34,15 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.text.DateFormat;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
+import java.util.TimeZone;
 import java.util.Vector;
 
 /**
@@ -908,6 +911,7 @@ public final class Util {
     public static class ProcessWithErrorHandler extends Process {
 	StringBuffer error = null;
 	InputStream in = null;
+	OutputStream err = null;
 
 	public static class PhpException extends RuntimeException {
 	    private static final long serialVersionUID = 767047598257671018L;
@@ -921,8 +925,9 @@ public final class Util {
 	    }
 	};
 
-	protected ProcessWithErrorHandler(String[] args, File homeDir, Map env, boolean tryOtherLocations, boolean preferSystemPhp) throws IOException {
+	protected ProcessWithErrorHandler(String[] args, File homeDir, Map env, boolean tryOtherLocations, boolean preferSystemPhp, OutputStream err) throws IOException {
 	    super(args, homeDir, env, tryOtherLocations, preferSystemPhp);
+	    this.err = err;
 	}
 	protected void start() throws IOException {
 	    super.start();
@@ -947,10 +952,11 @@ public final class Util {
 	    try { 
 		in =  proc.getErrorStream();
 		while((c=in.read(buf))!=-1) {
-		    String s = new String(buf, 0, c, ASCII); 
-		    Util.logError(s);
-		    if(error==null) error = new StringBuffer(s);
-		    else error.append(s);
+			err.write(buf, 0, c);
+			String s = new String(buf, 0, c, ASCII); 
+			Util.logError(s);
+			if(error==null) error = new StringBuffer(s);
+			else error.append(s);
 		}
 	    } catch (IOException e) {
 		e.printStackTrace();
@@ -977,8 +983,8 @@ public final class Util {
          * @throws IOException
          * @see Util#checkCgiBinary(StringBuffer)
          */
-        public static Process start(String[] args, File homeDir, Map env, boolean tryOtherLocations, boolean preferSystemPhp) throws IOException {
-            Process proc = new ProcessWithErrorHandler(args, homeDir, env, tryOtherLocations, preferSystemPhp);
+        public static Process start(String[] args, File homeDir, Map env, boolean tryOtherLocations, boolean preferSystemPhp, OutputStream err) throws IOException {
+            Process proc = new ProcessWithErrorHandler(args, homeDir, env, tryOtherLocations, preferSystemPhp, err);
             proc.start();
             return proc;
         }
@@ -1223,6 +1229,14 @@ public final class Util {
 	    return true;
 	}
 	return false;
+    }
+
+    public static String formatDateTime(long ms) {
+	java.sql.Timestamp t = new java.sql.Timestamp(ms);
+	DateFormat formatter = DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.LONG, Locale.ENGLISH);
+	formatter.setTimeZone(TimeZone.getTimeZone("GMT"));
+	String str =  formatter.format(t);
+	return str;
     }
 
 }

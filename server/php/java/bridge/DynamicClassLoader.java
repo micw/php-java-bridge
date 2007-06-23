@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.Vector;
 import java.util.WeakHashMap;
+
 /**
  * <p>Title: php-java-bridge</p>
  * <p>
@@ -302,8 +303,7 @@ public class DynamicClassLoader extends SecureClassLoader {
 		    lm = conn.getLastModified();
 		}
 		if (lm>lastModified) lastModified = lm;
-	    } catch (IOException ioe) {
-	    }
+	    } catch (IOException e) {Util.printStackTrace(e);}
 	}
 	return lastModified;
     }
