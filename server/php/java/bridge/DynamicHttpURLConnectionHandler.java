@@ -23,14 +23,43 @@ package php.java.bridge;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
+import java.util.Map;
+import java.util.jar.JarFile;
 
 public class DynamicHttpURLConnectionHandler extends URLStreamHandler {
 
+    private JarFile jarFile;
+    private File baseFile;
+    private Map headerFields;
+
+    public DynamicHttpURLConnectionHandler() {
+	if(Util.logLevel>4) Util.logDebug("tempfile create DynamicHttpURLConnectionHander " + this);
+    }
     protected URLConnection openConnection(URL u) throws IOException {
-	return new DynamicJarURLConnection(u);
+	return new DynamicJarURLConnection(u, this);
+    }
+
+    public void deleteTempFile() {
+	if(Util.logLevel>4) Util.logDebug("classloader tempfile deleted: " + baseFile + " handler: " + this);
+	baseFile.delete();
+    }
+    public Map getHeaderFields() {
+	return headerFields;
+    }
+    public JarFile getTempFile() {
+	return jarFile;
+    }
+    public void setTempFile(JarFile jarFile, File baseFile) {
+	if(Util.logLevel>4) Util.logDebug("classloader tempfile created: " + baseFile + " handler" + this);
+	this.jarFile = jarFile;
+	this.baseFile = baseFile;
+    }
+    public void setHeaderFields(Map headerFields) {
+	this.headerFields = headerFields;
     }
 }

@@ -56,15 +56,6 @@ public class JavaBridgeClassLoader extends SimpleJavaBridgeClassLoader {
 	    super.doReset();
     }
     /**
-     * clear all loader caches but
-     * not the input vectors, clear the VM cache and set a new ThreadContextClassLoader
-     */
-    public void clearCaches() {
-	if (checkCl()) {
-	    super.doClearCaches();
-	}
-    }
-    /**
      * clear the caches and the input vectors, clear the VM cache and set a new ThreadContextClassLoader
      */
     public void clear() {

@@ -1,18 +1,97 @@
+2007-06-27  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/DynamicClassLoader.java
+	(classLoaderCache): New
+	(clearLoaderCaches): Obsolete
+	(TempFileObserver, DeleteTempFileAction, rewriteURLs, getReference): New
+	(createURLClassLoader): Use DeleteTempFileAction to track changes in remote Jar files.
+	
+	* server/php/java/bridge/DynamicHttpURLConnectionHandler.java
+	(deleteTempFile, getHeaderFields, getTempFile, setTempFile, setHeaderFields): New
+	(openConnection): Store state here
+
+	* server/php/java/bridge/DynamicHttpURLConnectionHandler: Rewritten
+
+	* server/php/java/bridge/DynamicJavaBridgeClassLoader.java
+	(checkHttpUrl): Removed
+	(checkUrl): Do not check a remote url.
+	(clearCaches): Obsolete
+	
+	* server/php/java/bridge/http/ContextFactory.java
+	(switchContext): Always accept the context from the servlet; the servlet waits for it!
+	(waitFor): The servlet must not wait for an invalid context
+	(removeOrphaned): Do not notify too early.
+	
+	* server/php/java/bridge/JavaBridgeClassLoader.java
+	(clearCaches): Obsolete
+	
+	* server/php/java/bridge/JavaBridge.java
+	(CreateObject): Correct error message
+
+	* server/php/java/bridge/JavaBridgeRunner.java
+	(doGet): Close the input
+
+	* server/php/java/bridge/SimpleJavaBridgeClassLoader.java
+	(buildUrlArray): Add jars from the user's home/lib directory only.
+
+	* server/WEB-INF/web.xml: Added distributable flag
+	
+	* server/php/java/servlet/PhpJavaServlet.java
+	(IS_DISTRIBUTABLE): New flag
+	(handleRedirectConnection): Deprecated
+	(handleHttpConnection): Deprecated
+
+	* VERSION, php-java-bridge.spec: Version 4.1.5
+	
+2007-06-20  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/IJavaBridgeFactory.java
+	(getSession,getContext,recycle,destroy): New prototypes
+
+	* server/php/java/bridge/JavaBridge.java
+	(setChainsawLogger, doSetChainsawLogger): removed
+
+	* server/php/java/bridge/Log4jLogger.java: rewritten
+
+	* server/php/java/bridge/http/IContextFactory.java
+	(finishContext): Removed; obsolete, we use recycle() as specified
+	by IJavaBridgeFactory.
+
+	* server/php/java/bridge/http/SimpleContextFactory.java
+	(finishContext): Removed
+	(recycle): New, renamed from finishContext
+
+	* server/php/java/servlet/PhpJavaServlet.java
+	(init): Reset the log4j configuration if servlet init parameter
+	servlet_log_level is ...@CHAINSAW_PORT
+
+	* server/php/java/bridge/SimpleLog4jLogger.java: New file
+
+	* VERSION, php-java-bridge.spec: Version 4.1.3
+
+	
 2007-06-17  Jost Boekemeier  <jostb@intern>
 	
 	* protocol.c (get_context): Always pass the current context.
 
-	* server/php/java/bridge/ContextFactory.java
+	* server/php/java/bridge/http/ContextFactory.java
 	(addNew): Removed
-	(recycle): renamed to recycleBridge
-	(recycleBridge): New from recycle
-	(recycleBridge): handle empty contexts passed from the C
+	(recycle): renamed to switchContext
+	(switchContext): New from recycle
+	(switchContext): handle empty contexts passed from the C
 	implementation: recycle the bridge and attach the class loader
-	from the visitor.
+	obtained from the visitor.
+	(recycle): restore the threadContextClassLoader
 
+	* server/php/java/bridge/Request.java
+	(resetBridge): contextClassLoader now restored in
+	ContextFactory.recycle()
+	
 	* server/php/java/bridge/JavaBridge.java
 	(JavaBridge): Rewritten.
-
+	(setClassLoader): save the default class loader
+	(recycle): restore the default class loader
+	
 	* server/php/java/bridge/JavaBridgeFactory.java
 	(getSession,getContext,recycle,destroy): New prototypes
 

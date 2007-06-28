@@ -198,6 +198,8 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * @see php.java.bridge.http.IContextFactory#recycle(php.java.bridge.http.ContextFactory)
      */ 
     private void switchContext(ContextFactory factory) {
+	accept(factory.visitor);
+	
 	JavaBridge bridge = getBridge();
 	JavaBridge newBridge = factory.checkBridge();
 	if(newBridge!=null) { // set the new bridge which keeps a reference to the fresh context
@@ -351,13 +353,15 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * @see php.java.bridge.http.IContextFactory#waitFor()
      */
     public synchronized void waitFor() throws InterruptedException {
-    	if(!invalid) wait();
+	if(invalid) throw new IllegalStateException("waitFor");
+    	wait();
     }
     /* (non-Javadoc)
      * @see php.java.bridge.http.IContextFactory#waitFor()
      */
     public synchronized void waitFor(long timeout) throws InterruptedException {
-	if(!invalid) wait(timeout);
+	if(invalid) throw new IllegalStateException("waitFor");
+	wait(timeout);
     }
     /* (non-Javadoc)
      * @see php.java.bridge.http.IContextFactory#getId()
@@ -422,7 +426,6 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	Object ob = contexts.remove(id);
         if(Util.logLevel>4) Util.logDebug("removed empty context: " + ob + ", # of contexts: " + contexts.size());
 	invalid=true;
-	notify();
     }
     public void setClassLoader(ClassLoader loader) {
 	visitor.setClassLoader(loader);

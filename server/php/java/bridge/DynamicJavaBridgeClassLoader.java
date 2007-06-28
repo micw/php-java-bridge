@@ -93,15 +93,8 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
             addURLs(key, urls, false); // Uses protected method to explicitly set the classpath entry that is added.
         path.addToCache();
     }
-     private static synchronized URL checkHttpUrl(URL url) throws IOException {
-	 URL u = new URL("jar", null, -1, url.toExternalForm()+"!/",  new DynamicHttpURLConnectionHandler());
-	 return u;
-   }
     static URL checkUrl(URL url) throws IOException {
-        String protocol = url.getProtocol();
-        if(!protocol.startsWith("file:") && !protocol.startsWith("jar:")) {
-            return checkHttpUrl(url);
-        }
+        url.getProtocol();
         return url;
     }
     static void checkJarFile(File f) throws IOException {
@@ -167,12 +160,6 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	}
     }        
 
-    /**
-     * Clear all loader caches. 
-     */
-    public void clearCaches() {
-	clearLoaderCaches();
-    }
     /**
      * Clear the loader so that it can be used in new requests.
      */

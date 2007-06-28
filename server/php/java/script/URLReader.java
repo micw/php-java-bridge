@@ -34,6 +34,7 @@ import java.net.UnknownHostException;
 import java.util.Map;
 
 import php.java.bridge.Util;
+import php.java.bridge.Util.HeaderParser;
 
 /**
  * This class can be used to connect to a HTTP server to allocate and to invoke php scripts.
@@ -86,7 +87,7 @@ public class URLReader extends Reader {
      * @param out The OutputStream.
      * @throws IOException
      */
-    public void read(Map env, OutputStream out) throws IOException {
+    public void read(Map env, OutputStream out, HeaderParser headerParser) throws IOException {
 	InputStream in = null;
 	OutputStream natOut = null;
 	
@@ -107,7 +108,7 @@ public class URLReader extends Reader {
 	    natOut.write(Util.toBytes("Connection: close" + "\r\n\r\n"));
 	    natOut.flush();
 	    in = socket.getInputStream();
-	    Util.parseBody(buf, in, out, Util.DEFAULT_HEADER_PARSER);
+	    Util.parseBody(buf, in, out, headerParser);
 	} catch (IOException x) {
 	    Util.printStackTrace(x);
 	    throw x;

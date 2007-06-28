@@ -479,7 +479,7 @@ public class JavaBridge implements Runnable {
 		    // for classes which have no visible constructor, return the class
 		    // useful for classes like java.lang.System and java.util.Calendar.
 		    if(createInstance && logLevel>2) {
-		    	logMessage("No visible constructor found in: "+ name +", returning the class instead of an instance; this may not be what you want. Please correct this error or please use new JavaClass(\""+name+"\") instead.");
+		    	logMessage("No visible constructor found in: "+ name +", returning the class instead of an instance; this may not be what you want. Please correct this error or please use the function java(\""+name+"\") instead.");
 		    }
 		    response.setResultClass(clazz);
 		    return;
@@ -503,7 +503,7 @@ public class JavaBridge implements Runnable {
 		throw (OutOfMemoryError)e; // abort
 	    }
 	    if(e instanceof NoClassDefFoundError) {
-		getClassLoader().clearCaches();
+		getClassLoader().reset();
 		e = getUnresolvedExternalReferenceException(e, "call constructor");
 	    }
 	    setException(response, e, createInstance?"CreateInstance":"ReferenceClass", null, name, args, params);
@@ -1072,7 +1072,7 @@ public class JavaBridge implements Runnable {
 		throw (OutOfMemoryError)e; // abort
 	    }
 	    if(e instanceof NoClassDefFoundError) {
-		getClassLoader().clearCaches();
+		getClassLoader().reset();
 		e = getUnresolvedExternalReferenceException(e, "call the method");
 	    }
 	    
@@ -1269,7 +1269,7 @@ public class JavaBridge implements Runnable {
 		throw (OutOfMemoryError)e; // abort
 	    }
 	    if(e instanceof NoClassDefFoundError) {
-		getClassLoader().clearCaches();
+		getClassLoader().reset();
 		e = getUnresolvedExternalReferenceException(e, "invoke a property");
 	    }
 	    setException(response, e, set?"SetProperty":"GetProperty", object, prop, args, params);

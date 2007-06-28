@@ -3,6 +3,9 @@
 
 <web-app>
 
+    <!-- support for tomcat cluster -->
+    <distributable/>
+
     <!-- PHP Servlet: back-end for Apache or IIS -->
     <servlet>
         <servlet-name>PhpJavaServlet</servlet-name>

@@ -100,9 +100,14 @@ public class PhpScriptEngine extends SimplePhpScriptEngine {
     
             /* now evaluate our script */
             localReader = new InputStreamReader(new ByteArrayInputStream(out.toByteArray()));
-            try { this.script = doEval(localReader, context);} catch (Exception e) {throw this.scriptException = new PhpScriptException("Could not evaluate script: ", e);}
-            try { localReader.close(); localReader=null;} catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not evaluate footer", e);}
-    
+            try { this.script = doEval(localReader, context);} catch (Exception e) {
+        	Util.printStackTrace(e);
+        	throw this.scriptException = new PhpScriptException("Could not evaluate script: ", e);
+            }
+            try { localReader.close(); localReader=null;} catch (IOException e) {
+        	Util.printStackTrace(e);
+        	throw this.scriptException = new PhpScriptException("Could not evaluate footer", e);
+            }
          } finally {
             if(w!=null)  try { w.close(); } catch (IOException e) {/*ignore*/}
             if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}

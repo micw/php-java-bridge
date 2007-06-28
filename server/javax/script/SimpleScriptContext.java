@@ -221,17 +221,10 @@ public class SimpleScriptContext implements ScriptContext {
             // autoflush is true so that I can see the output immediately
             if(writer==null) {
         	writer = new PrintWriter(System.out, true);
-        	this.encoding = null;
-             }
+               }
             return writer;
         }
 	public void setWriter(Writer writer) {
 	    this.writer = writer;
-	    this.encoding = null;
-	}
-	protected String encoding;
-	public void setWriter(Writer writer, String encoding) {
-	    this.writer = writer;
-	    this.encoding = encoding;
 	}
 }

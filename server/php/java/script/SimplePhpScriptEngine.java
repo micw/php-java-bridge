@@ -26,11 +26,14 @@ package php.java.script;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.script.AbstractScriptEngine;
 import javax.script.Bindings;
@@ -186,7 +189,10 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
       	setNewContextFactory();
             setName(name);
     
-            try { doEval(reader, context); } catch (Exception e) {throw this.scriptException = new PhpScriptException("Could not evaluate script", e);}
+            try { doEval(reader, context); } catch (Exception e) {
+        	Util.printStackTrace(e);
+        	throw this.scriptException = new PhpScriptException("Could not evaluate script", e);
+            }
         } finally {
             release();
         }
@@ -198,13 +204,55 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
     public Object eval(Reader reader, ScriptContext context) throws ScriptException {
         return eval(reader, context, String.valueOf(reader));
    }
-	
+
+    private void updateGlobalEnvironment(ScriptContext context) {
+	Bindings bindings = context.getBindings(ScriptContext.GLOBAL_SCOPE);
+	for(Iterator ii = bindings.entrySet().iterator(); ii.hasNext(); ) {
+	    Entry entry = (Entry) ii.next();
+	    Object key = entry.getKey();
+	    Object val = entry.getValue();
+	    env.put(key, val);
+	}
+    }
+    private final class HeaderParser extends Util.HeaderParser {
+	private OutputStreamWriter writer;
+	public HeaderParser(OutputStreamWriter writer) {
+		this.writer = writer;
+	}
+	public void parseHeader(String header) {
+	    if(header==null) return;
+	    int idx = header.indexOf(':');
+	    if(idx==-1) return;
+	    String key = header.substring(0, idx).trim().toLowerCase();
+	    String val = header.substring(idx+1).trim();
+	    addHeader(key, val);
+	}
+	protected void addHeader(String key, String val) {
+	    if(val!=null && key.equals("content-type")) {
+		int idx = val.indexOf(';');
+		if(idx==-1) return;
+		String enc = val.substring(idx+1).trim();
+		idx = enc.indexOf('=');
+		if(idx==-1) return;
+		enc=enc.substring(idx+1);
+		writer.setEncoding(enc);
+	    }
+	}
+    }
     protected HttpProxy getContinuation(Reader reader, ScriptContext context) {
-    	IPhpScriptContext phpScriptContext = (IPhpScriptContext)context;
-    	HttpProxy kont = new HttpProxy(reader, 
-    		env,
-    		((PhpScriptWriter)(context.getWriter())).getOutputStream(), 
-    		((PhpScriptWriter)(context.getErrorWriter())).getOutputStream()); 
+    	Util.HeaderParser headerParser = Util.DEFAULT_HEADER_PARSER; // ignore encoding, we pass everything directly
+	IPhpScriptContext phpScriptContext = (IPhpScriptContext)context;
+    	updateGlobalEnvironment(context);
+    	OutputStream out =((PhpScriptWriter)(context.getWriter())).getOutputStream();
+    	OutputStream err =  ((PhpScriptWriter)(context.getErrorWriter())).getOutputStream();
+
+    	 /*
+    	  * encode according to content-type charset
+    	  */
+    	if(out instanceof OutputStreamWriter)
+    	    headerParser = new HeaderParser((OutputStreamWriter)out);
+
+    	HttpProxy kont = new HttpProxy(reader, env, out,  err, headerParser); 
      	phpScriptContext.setContinuation(kont);
 	return kont;
     }

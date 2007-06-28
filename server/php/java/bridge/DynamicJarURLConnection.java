@@ -27,8 +27,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
 import java.net.JarURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -53,59 +51,31 @@ import java.util.zip.ZipFile;
  */
 public class DynamicJarURLConnection extends JarURLConnection {
 
-    private static final ReferenceQueue TEMP_FILE_QUEUE = new ReferenceQueue();
-    private static class DeleteTempFileAction extends WeakReference {
-	private File file;
-	public DeleteTempFileAction(Object arg0, ReferenceQueue arg1, File file) {
-	    super(arg0, arg1);
-	    this.file = file;
-        }
-	public void command() {
-	    file.delete();
-	}	
-    }
-    private static final class TempFileObserver extends Thread{
-	public TempFileObserver(String name) {
-	    super(name);
-	    setDaemon(true);
-	    start();
-	}
-	public void run() {
-	    try {
-	        DeleteTempFileAction action = (DeleteTempFileAction) TEMP_FILE_QUEUE.remove();
-	        action.command();
-            } catch (InterruptedException e) {
-	        e.printStackTrace();
-            }
-	}
-
-	public static void observe(File f, URL url) {
-	    new DeleteTempFileAction(url, TEMP_FILE_QUEUE, f);
-	}
-    }
-    static final TempFileObserver THE_TEMP_FILE_OBSERVER = new TempFileObserver("JavaBridgeTempFileObserver");
+    private DynamicHttpURLConnectionHandler handler;
     
-    protected DynamicJarURLConnection(URL u) throws MalformedURLException {
+    protected DynamicJarURLConnection(URL u, DynamicHttpURLConnectionHandler handler) throws MalformedURLException {
 	super(u);
+	this.handler = handler;
+	if(Util.logLevel>4) Util.logDebug("tempfile create DynamicJarURLConnection for " + handler);	
     }
     public void connect() throws IOException
     {
 	if(!connected) {
+	    if(Util.logLevel>4) Util.logDebug("tempfile open connection for " + handler);
 	    jarFileURLConnection = getJarFileURL().openConnection();
 	    jarFileURLConnection.connect();
 	    connected = true;
 	}
     }
-    public int getContentLength() {
-	int i = super.getContentLength();
-	return i;
-    }
 
     private Map headerFields;
+    
     public Map getHeaderFields() {
 	if(this.headerFields!=null) return this.headerFields;
+	if((this.headerFields = this.handler.getHeaderFields())!=null) return this.headerFields;
 	try {
 	    if(!connected) connect();
+	    if(Util.logLevel>4) Util.logDebug("tempfile getHeaderFields for " + handler);
 	    this.headerFields = new HashMap();
 	    Map headerFields = jarFileURLConnection.getHeaderFields();
 	    StringBuffer b = new StringBuffer();
@@ -129,6 +99,7 @@ public class DynamicJarURLConnection extends JarURLConnection {
 		this.headerFields.put(k, b.toString());
 		b.setLength(0);
 	    }
+	    this.handler.setHeaderFields(this.headerFields);
 	    return this.headerFields;
 	} catch (IOException e) {
 	    Util.printStackTrace(e);
@@ -143,18 +114,20 @@ public class DynamicJarURLConnection extends JarURLConnection {
     private JarFile jarFile;
     public JarFile getJarFile() throws IOException {
 	if(this.jarFile!=null) return this.jarFile;
+	if((this.jarFile = this.handler.getTempFile())!=null) return this.jarFile;
 	if(!connected) connect();
+	if(Util.logLevel>4) Util.logDebug("tempfile getJarFile for " + handler);
 	InputStream is = jarFileURLConnection.getInputStream();
 	byte[] buf = new byte[Util.BUF_SIZE];
 	File f = File.createTempFile("cache", "jar");
 	f.deleteOnExit();
-	TempFileObserver.observe(f, getURL());
 	FileOutputStream fos = new FileOutputStream(f);
 	int len = 0;
 	while((len = is.read(buf)) != -1)  fos.write(buf, 0, len);
         fos.close();
-	JarFile jarfile = new JarFile(f, true, ZipFile.OPEN_READ);
-	return this.jarFile = jarfile;
+	JarFile zipFile = new JarFile(f, true, ZipFile.OPEN_READ);
+	this.handler.setTempFile(zipFile, f);
+	return this.jarFile = zipFile;
     }
     private JarEntry entry;
     public InputStream getInputStream()  throws IOException {
@@ -166,5 +139,19 @@ public class DynamicJarURLConnection extends JarURLConnection {
 	int len = (int) size;
 	getHeaderFields().put("content-length", String.valueOf(len));
 	return getJarFile().getInputStream(entry);
+    }
+    /**
+     * Use the original value.
+     */
+    public long getLastModified() {
+	long lastModified = 0;
+	try {
+	    if(!connected) connect();
+	    if(Util.logLevel>4) Util.logDebug("tempfile getLastModified for " + handler);
+	    lastModified = jarFileURLConnection.getLastModified();
+	} catch (IOException e) {
+	    Util.printStackTrace(e);
+	}
+	return lastModified;
     }
 }

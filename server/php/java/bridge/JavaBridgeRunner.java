@@ -69,7 +69,7 @@ public class JavaBridgeRunner extends HttpServer {
     static {
 	try {
 	    JavaInc = Class.forName("php.java.bridge.JavaInc");
-        } catch (ClassNotFoundException e) {/*ignore*/}
+        } catch (Exception e) {/*ignore*/}
     }
     /**
      * Create a new JavaBridgeRunner and ContextServer.
@@ -202,15 +202,17 @@ public class JavaBridgeRunner extends HttpServer {
     protected boolean showDirectory(String fullName, File f, int length, HttpRequest req, HttpResponse res) throws IOException {
 	if(!f.isDirectory()) return false;
 	ByteArrayOutputStream xout = new ByteArrayOutputStream();
-	PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(xout, "UTF-8")));
+	PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(xout, Util.UTF8)));
 	out.println("<html>");
 	out.println("<head>");
 	out.println("<title>Directory Listing for "+fullName+"/</title>");
 	out.println("<STYLE><!--H1{font-family : sans-serif,Arial,Tahoma;color : white;background-color : #0086b2;} H3{font-family : sans-serif,Arial,Tahoma;color : white;background-color : #0086b2;} BODY{font-family : sans-serif,Arial,Tahoma;color : black;background-color : white;} B{color : white;background-color : #0086b2;} A{color : black;} HR{color : #0086b2;} --></STYLE> </head>");
-	String parentName = f.getParentFile().getName();
+	File parentFile = f.getParentFile();
+	String parentName = parentFile==null?"/":parentFile.getName();
 	out.println("<body><h1>Directory Listing for "+fullName+" - <a href=\"../\"><b>Up To "+parentName+"</b></a></h1><HR size=\"1\" noshade><table width=\"100%\" cellspacing=\"0\" cellpadding=\"5\" align=\"center\">");
 	out.println("<tr>");
 	out.println("<td align=\"left\"><font size=\"+1\"><strong>Filename</strong></font></td>");
+	out.println("<td align=\"left\"><font size=\"+1\"><strong>Type</strong></font></td>");
 	out.println("<td align=\"center\"><font size=\"+1\"><strong>Size</strong></font></td>");
 	out.println("<td align=\"right\"><font size=\"+1\"><strong>Last Modified</strong></font></td>");
 	out.println("");
@@ -238,11 +240,16 @@ public class JavaBridgeRunner extends HttpServer {
 
 	    out.println("<td align=\"left\">&nbsp;&nbsp;");
 
-	    if(file.isDirectory())
+	    if(file.isDirectory()) {
 	    	out.println("<a href=\""+b.toString()+"\"><tt>"+file.getName()+"/</tt></a></td>");
-	    else
+	    	out.println("<td align=\"left\">&nbsp;&nbsp;");
+	    	out.println("<a href=\""+b.toString()+"?edit\"><tt>directory</tt></a></td>");
+	    }
+	    else {
 	    	out.println("<a href=\""+b.toString()+"\"><tt>"+file.getName()+"</tt></a></td>");
-		
+	    	out.println("<td align=\"left\">&nbsp;&nbsp;");
+	    	out.println("<a href=\""+b.toString()+"?show\"><tt>file</tt></a></td>");
+	    }
 	    out.println("<td align=\"right\"><tt>"+file.length()+"</tt></td>");
 	    out.println("<td align=\"right\"><tt>"+Util.formatDateTime(file.lastModified())+"</tt></td>");
 	    out.println("</tr>");
@@ -265,55 +272,50 @@ public class JavaBridgeRunner extends HttpServer {
      * java -jar JavaBridge.jar SERVLET_LOCAL:8080. Browse to http://localhost:8080/test.php. 
      * @param fullName The full name of the file
      * @param f The full name as a file
+     * @param params The request parameter
      * @param length The length of the file
      * @param req The HTTP request object
      * @param res The HTTP response object
      * @return true if the runner could evaluate the script, false otherwise.
      * @throws IOException
      */
-    protected boolean handleScriptContent(String name, File f, int length, HttpRequest req, HttpResponse res) throws IOException {
+    protected boolean handleScriptContent(String name, String params, File f, int length, HttpRequest req, HttpResponse res) throws IOException {
+		if("show".equals(params)) 
+		    return false;
+		
 		int extIdx = name.lastIndexOf('.');
 		if(extIdx == -1) return false;
-		name = name.substring(extIdx+1);
+		String ext = name.substring(extIdx+1);
 		try {
 		Class c = Class.forName("javax.script.ScriptEngineManager");
 		Object o = c.newInstance();
 		Method e = c.getMethod("getEngineByName", new Class[] {String.class});
-		Object engine = e.invoke(o, new String[]{name});
+		Object engine = e.invoke(o, new String[]{ext});
 		if(engine==null) return false;
 		ByteArrayOutputStream xout = new ByteArrayOutputStream();
 
 		Method getContext = engine.getClass().getMethod("getContext", new Class[] {});
 		Method eval = engine.getClass().getMethod("eval", new Class[] {Reader.class});
 		Object ctx = getContext.invoke(engine, new Object[] {});
-		Method setWriter1 = ctx.getClass().getMethod("setWriter", new Class[] {Writer.class});
+		Method setWriter = ctx.getClass().getMethod("setWriter", new Class[] {Writer.class});
 		Method setErrorWriter = ctx.getClass().getMethod("setErrorWriter", new Class[] {Writer.class});
-		Writer writer = new java.io.OutputStreamWriter(xout);
-		Method setWriter = null;
-		try {
-		    setWriter = ctx.getClass().getMethod("setWriter", new Class[] {Writer.class, String.class});
-		} catch (NoSuchMethodException ex) {/*ignore*/}
-		if(setWriter==null)
-		    setWriter1.invoke(ctx, new Object[] {writer});
-		else
-		    setWriter.invoke(ctx, new Object[] {writer, "UTF-8"});
+		Writer writer = new java.io.OutputStreamWriter(xout, Util.UTF8);
+		setWriter.invoke(ctx, new Object[] {writer});
 
 		setErrorWriter.invoke(ctx, new Object[] {writer});
-		
+		FileReader r = null;;
 		try {
-		    eval.invoke(engine, new Object[] {new FileReader(f)});
+		    eval.invoke(engine, new Object[] {r=new FileReader(f)});
                 } catch (Exception e1) {
                     Util.printStackTrace(e1);
                 } finally {	
                     try { eval.invoke(engine, new Object[] {null});} catch (Exception e1) {/*ignore*/};
-                }
-                res.addHeader("Content-Type", "text/html" +((setWriter==null)?"":"; charset=UTF-8"));
+                    if(r!=null) try { r.close(); } catch (Exception e1) {/*ignore*/};                
+                 }
+                res.addHeader("Content-Type", "text/html; charset=UTF-8");
                 res.setContentLength(xout.size());
 		OutputStream out = res.getOutputStream();
                 xout.writeTo(out);
-                //out.close();
-                res.getOutputStream().close();
-                req.getInputStream().close();
 		} catch (Exception e) {
 		    Util.printStackTrace(e);
 		    return false;
@@ -324,16 +326,20 @@ public class JavaBridgeRunner extends HttpServer {
      * Display a simple text file
      * @param fullName The full name of the file
      * @param f The full name as a file
+     * @param params The request parameter
      * @param length The length of the file
      * @param req The HTTP request object
      * @param res The HTTP response object
      * @throws IOException
      */
-    protected void showTextFile(String name, File f, int length, HttpRequest req, HttpResponse res) throws IOException {
+    protected void showTextFile(String name, String params, File f, int length, HttpRequest req, HttpResponse res) throws IOException {
+	boolean show = "show".equals(params);
 	byte[] buf;
 	OutputStream out;
 	int c;
+	if(Util.logLevel>4) Util.logDebug("web server: show text file:" + name);
 	res.addHeader("Last-Modified", Util.formatDateTime(f.lastModified()));
+	if(show) res.addHeader("Content-Type", "text/plain");
 	res.setContentLength(length);
 	InputStream in = new FileInputStream(f);
 	buf = new byte[Util.BUF_SIZE];
@@ -358,16 +364,22 @@ public class JavaBridgeRunner extends HttpServer {
 	if(name==null) { super.doGet(req, res); return; }
 	if(!name.startsWith("/JavaBridge")) {
 	    if(name.startsWith("/")) name = name.substring(1);
-	    File f = new File(name);
-	    if(f==null || !f.exists()) f = new File(Util.HOME_DIR, name);
+	    String params = null;
+	    int idx = name.indexOf('?');
+	    if(idx!=-1) { 
+		params = name.substring(idx+1);
+		name = name.substring(0, idx);
+	    }
+	    File f = new File(Util.HOME_DIR, name);
+	    if(f==null || !f.exists()) f = new File(name);
 	    if(f==null || !f.exists()) return;
 	    if(f.isHidden()) return;
 	    long l = f.length();
 	    if(l>= Integer.MAX_VALUE) throw new IOException("file " + name + " too large");
 	    int length = (int)l;
 	    if(showDirectory(name, f, length, req, res)) return;
-	    if(handleScriptContent(name, f, length , req, res)) return;
-	    showTextFile(name, f, length, req, res);
+	    if(handleScriptContent(name, params,  f, length , req, res)) return;
+	    showTextFile(name, params, f, length, req, res);
 	    return;
 	}
 	if(cache != null) {
@@ -404,18 +416,22 @@ public class JavaBridgeRunner extends HttpServer {
 		    Util.logDebug("Java.inc not found, using JavaBridge.inc instead");
 	    }
 	 }
-	ByteArrayOutputStream bout = new ByteArrayOutputStream();
-	buf = new byte[Util.BUF_SIZE];
-
-	while((c=in.read(buf))>0) bout.write(buf, 0, c);
-	res.addHeader("Last-Modified", "Wed, 17 Jan 2007 19:52:43 GMT"); // bogus
-	res.setContentLength(bout.size());
-	out = res.getOutputStream();
 	try {
+	    ByteArrayOutputStream bout = new ByteArrayOutputStream();
+	    buf = new byte[Util.BUF_SIZE];
+
+	    while((c=in.read(buf))>0) bout.write(buf, 0, c);
+	    res.addHeader("Last-Modified", "Wed, 17 Jan 2007 19:52:43 GMT"); // bogus
+	    res.setContentLength(bout.size());
+	    out = res.getOutputStream();
 	    byte[] cache = bout.toByteArray();
 	    out.write(cache);
 	    if(!ignoreCache) this.cache = cache;
-	} catch (IOException e) { /* may happen when the client is not interested, see require_once() */}
+	} catch (IOException e) { 
+	    /* may happen when the client is not interested, see require_once() */
+	 } finally {
+	     try {in.close();} catch (IOException e) {/*ignore*/}
+	 }
     }
     /**
      * Return true if this is a standalone server

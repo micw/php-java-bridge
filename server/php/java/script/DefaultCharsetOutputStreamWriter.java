@@ -35,7 +35,7 @@ import php.java.bridge.NotImplementedException;
  * @author jostb
  *
  */
-public class DefaultCharsetOutputStreamWriter extends OutputStream {
+public abstract class DefaultCharsetOutputStreamWriter extends OutputStream {
 
     protected Writer out;
  	
@@ -50,9 +50,8 @@ public class DefaultCharsetOutputStreamWriter extends OutputStream {
     public void write(int b) throws IOException {
 	throw new NotImplementedException();
     }
-    public void write(byte b[], int off, int len) throws IOException {
-	out.write(new String(b), off, len);
-    }
+    public abstract void write(byte b[], int off, int len) throws IOException;
+    
     public void flush() throws IOException {
 	out.flush();
     }

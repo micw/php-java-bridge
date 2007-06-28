@@ -69,6 +69,15 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     private ContextServer contextServer;
     protected int logLevel = -1;
     
+    /**
+     * If you want to use the HTTP tunnel or "override redirect", set the
+     * following flag to false and remove the &lt;distributable/&gt from
+     * the WEB-INF/web.xml.
+     * @see #handleHttpConnection(HttpServletRequest, HttpServletResponse, String, String, boolean)
+     * @see #handleRedirectConnection(HttpServletRequest, HttpServletResponse, String, String)
+     */
+    public static final boolean IS_DISTRIBUTABLE = true;
+    
     protected static class Logger implements ILogger {
 	private ServletContext ctx;
 	protected Logger(ServletContext ctx) {
@@ -188,9 +197,19 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
      * @param res
      * @throws ServletException
      * @throws IOException
+     * @deprecated
      */
     protected void handleRedirectConnection(HttpServletRequest req, HttpServletResponse res, String channel, String kontext) 
 	throws ServletException, IOException {
+	
+	/**
+	 * The alternative would be to store the context in the session and to mark the context and all the classes it depends on
+	 * (JavaBridge, ...) as java.io.Serializable.
+	 */
+	if(IS_DISTRIBUTABLE) 
+	    throw new ServletException("java_session() must be the first java statement in a distributable web application. " +
+		    "Either move \"java_session()\" to the beginning of your script or remove the distributable flag from PhpJavaServlet and WEB-INF/web.xml.");
+	
 	InputStream in; ByteArrayOutputStream out; OutputStream resOut;
 	ServletContextFactory ctx = getContextFactory(req, res, contextServer.getCredentials(channel, kontext));
 	JavaBridge bridge = ctx.getBridge();
@@ -230,9 +249,18 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
      * @param res
      * @throws ServletException
      * @throws IOException
+     * @deprecated 
      */
     protected void handleHttpConnection (HttpServletRequest req, HttpServletResponse res, String channel, String kontext, boolean session)
 	throws ServletException, IOException {
+
+	/**
+	 * The alternative would be to store the context in the session and to mark the context and all the classes it depends on
+	 * (JavaBridge, ...) as java.io.Serializable.
+	 */
+	if(IS_DISTRIBUTABLE) throw new ServletException("HTTP tunnel not available in a distributable web application. " +
+			"Either enable the Pipe- or SocketContextServer or remove the distributable flag from PhpJavaServlet and WEB-INF/web.xml.");
+
 	InputStream in; ByteArrayOutputStream out;
 	ServletContextFactory ctx = getContextFactory(req, res, contextServer.getCredentials(channel, kontext));
 	JavaBridge bridge = ctx.getBridge();

@@ -124,19 +124,9 @@ public interface ScriptContext {
          * Sets the <code>Writer</code> for scripts to use when displaying output.
          *
          * @param writer The new <code>Writer</code>.
-         * @deprecated Use #setWriter(Writer, String) instead
          */
         public void setWriter(Writer writer);
 
-        /**
-         * Sets the <code>Writer</code> for scripts to use when displaying output.
-         *
-         * @param writer The new <code>Writer</code>.
-         * @param encoding The charset encoding
-         */
-        public void setWriter(Writer writer, String encoding);
-        
-        
         /**
          * Sets the <code>Writer</code> used to display error output.
          *

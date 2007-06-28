@@ -190,7 +190,10 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
     
             /* now evaluate our script */
             localReader = new InputStreamReader(new ByteArrayInputStream(out.toByteArray()));
-            try { this.script = doEval(localReader, context);} catch (Exception e) {throw this.scriptException = new PhpScriptException("Could not evaluate script", e);}
+            try { this.script = doEval(localReader, context);} catch (Exception e) {
+        	Util.printStackTrace(e);
+        	throw this.scriptException = new PhpScriptException("Could not evaluate script", e);
+            }
             try { localReader.close(); } catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not evaluate footer", e);}
     
             /* get the proxy, either the one from the user script or our default proxy */

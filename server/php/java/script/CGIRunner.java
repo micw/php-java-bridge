@@ -36,6 +36,7 @@ import java.util.Map;
 
 import php.java.bridge.PhpProcedureProxy;
 import php.java.bridge.Util;
+import php.java.bridge.Util.HeaderParser;
 import php.java.bridge.Util.Process;
 
 /**
@@ -58,6 +59,7 @@ public abstract class CGIRunner extends Thread {
     protected Reader reader;
     
     protected Lock phpScript = new Lock();
+    protected HeaderParser headerParser;
 
     protected class Lock {
 	private Object val = null;
@@ -81,12 +83,13 @@ public abstract class CGIRunner extends Thread {
 	    notify();
 	}
     }
-    protected CGIRunner(String name, Reader reader, Map env, OutputStream out, OutputStream err) {
+    protected CGIRunner(String name, Reader reader, Map env, OutputStream out, OutputStream err, HeaderParser headerParser) {
 	super(name);
     	this.reader = reader;
 	this.env = env;
 	this.out = out;
 	this.err = err;
+	this.headerParser = headerParser;
     }
     private static class ProcessWithErrorHandler extends Util.ProcessWithErrorHandler {
 	protected ProcessWithErrorHandler(String[] args, File homeDir, Map env, boolean tryOtherLocations, OutputStream err) throws IOException {
@@ -135,7 +138,7 @@ public abstract class CGIRunner extends Thread {
 	}
 	writer.close();
 	byte[] buf = new byte[Util.BUF_SIZE];
-	Util.parseBody(buf, natIn, out, Util.DEFAULT_HEADER_PARSER);
+	Util.parseBody(buf, natIn, out, headerParser);
 	try {
         proc.waitFor();
     } catch (InterruptedException e1) {

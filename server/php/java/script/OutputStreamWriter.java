@@ -27,24 +27,31 @@ package php.java.script;
 import java.io.IOException;
 import java.io.Writer;
 
+import php.java.bridge.Util;
+
 /**
  * A PrintWriter backed by an OutputStream.
  * @author jostb
  *
  */
-public class OutputStreamWriter extends DefaultCharsetOutputStreamWriter {
+public final class OutputStreamWriter extends DefaultCharsetOutputStreamWriter {
 
-    protected String charsetName;
-	
+    protected String charsetName = Util.DEFAULT_ENCODING;
+    private boolean written = false;
+    
+    public void setEncoding(String charsetName) {
+	if(written) throw new IllegalStateException("setEncoding");
+	this.charsetName = charsetName;
+    }
     /**
      * Create a new PhpScriptWriter.
      * @param out The OutputStream
      */
-    public OutputStreamWriter(Writer out, String charsetName) {
+    public OutputStreamWriter(Writer out) {
 	super(out);
-	this.charsetName = charsetName;
     }
     public void write(byte b[], int off, int len) throws IOException {
+	written = true;
 	out.write(new String(b, charsetName), off, len);
     }
  }

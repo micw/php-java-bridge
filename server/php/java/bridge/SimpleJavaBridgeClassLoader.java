@@ -96,9 +96,10 @@ public class SimpleJavaBridgeClassLoader {
         String ext = Util.JAVABRIDGE_BASE;
 	if(ext!=null && ext.length()>0) {
             StringBuffer buf = new StringBuffer(ext);
-            if(!ext.endsWith(File.separator)) buf.append(File.separator);
             File f = new File(buf.toString());
-            DynamicJavaBridgeClassLoader.addJars(list, f);
+            if(!ext.endsWith(File.separator)) buf.append(File.separator);
+            if(Util.HOME_DIR==null || (Util.HOME_DIR!=null && !Util.HOME_DIR.equals(f)))        	
+        	DynamicJavaBridgeClassLoader.addJars(list, f);
             buf.append("lib");
             f = new File(buf.toString());
             DynamicJavaBridgeClassLoader.addJars(list, f);
@@ -192,16 +193,6 @@ public class SimpleJavaBridgeClassLoader {
      */
     public void reset() {
 	if (checkCl()) doReset();
-    }
-    protected void doClearCaches() {
-	 cl.clearCaches(); 
-    }
-    /**
-     * clear all loader caches but
-     * not the input vectors
-     */
-    public void clearCaches() {
-	if (checkCl()) doClearCaches();
     }
 
     /**

@@ -30,6 +30,8 @@ import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
 
+import php.java.bridge.Util.HeaderParser;
+
 /**
  * Represents the script continuation.
  * This class can be used to allocate php scripts on a HTTP server.
@@ -46,8 +48,8 @@ public class HttpProxy extends CGIRunner {
      * @param env - The environment, must contain values for X_JAVABRIDGE_CONTEXT. It may contain X_JAVABRIDGE_OVERRIDE_HOSTS.
      * @param out - The OutputStream
      */
-    public HttpProxy(Reader reader, Map env, OutputStream out, OutputStream err) {
-	super("HttpProxy", reader, env, out, err);
+    public HttpProxy(Reader reader, Map env, OutputStream out, OutputStream err, HeaderParser headerParser) {
+	super("HttpProxy", reader, env, out, err, headerParser);
     }
     
     /**
@@ -55,16 +57,16 @@ public class HttpProxy extends CGIRunner {
      * @param reader - The reader, for example a URLReader
      * @param ctx - The context
      */
-    public HttpProxy(Reader reader, String ctx, OutputStream out, OutputStream err) {
+    public HttpProxy(Reader reader, String ctx, OutputStream out, OutputStream err, HeaderParser headerParser) {
 	this(reader, (new HashMap() {
 		private static final long serialVersionUID = 3257005462371971380L;
 		public HashMap init(String ctx) {put("X_JAVABRIDGE_CONTEXT", ctx); return this;}}
-	).init(ctx), out, err);
+	).init(ctx), out, err, headerParser);
     }
 
     protected void doRun() throws IOException {
     	if(reader instanceof URLReader) {
-	    ((URLReader)reader).read(env, out);
+	    ((URLReader)reader).read(env, out, headerParser);
      	} else {
 	    super.doRun();
      	}

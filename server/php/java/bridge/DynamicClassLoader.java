@@ -2,6 +2,7 @@ package php.java.bridge;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -9,12 +10,15 @@ import java.net.URLClassLoader;
 import java.net.URLConnection;
 import java.security.SecureClassLoader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Hashtable;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Vector;
 import java.util.WeakHashMap;
@@ -41,7 +45,7 @@ import java.util.WeakHashMap;
  */
 public class DynamicClassLoader extends SecureClassLoader {
 
-    protected static Hashtable classLoaderCache = new Hashtable(); // Global Cache Map of Classpath=>Soft Reference=>URLClassLoaderEntry
+    protected static Map classLoaderCache = Collections.synchronizedMap(new HashMap()); // Global Cache Map of Classpath=>Soft Reference=>URLClassLoaderEntry
     protected static Map parentCacheMap = new WeakHashMap(); // Holds global caches for parent Classloaders
     public static long defaultCacheTimeout = 2000;  // By default minumum file modification check interval is 2 seconds, that should be fast enough :)
     public static boolean defaultLazy = true;  // By default lazy classpath addition
@@ -80,18 +84,6 @@ public class DynamicClassLoader extends SecureClassLoader {
 	classLoaderCache.clear();
     }
 
-    /*
-     * Clear but keep the input vectors.
-     */
-    protected void clearLoaderCaches() {
-	clearCache();
-	Iterator iter = classPaths.iterator();
-	while (iter.hasNext()) {
-	    Object key = iter.next();
-	    URLClassLoaderEntry entry = (URLClassLoaderEntry) classLoaders.get(key);
-	    classLoaders.put(key, new URLClassLoaderEntry(entry.cl, entry.lastModified));
-	}     
-    }
     /**
      * Invalidates a given classpath, so that the corresponding classloader gets reloaded.
      * @param urls The urls.
@@ -317,11 +309,89 @@ public class DynamicClassLoader extends SecureClassLoader {
     public void setUrlClassLoaderFactory(URLClassLoaderFactory factory) {
 	this.factory = factory;
     }
+    /** the reference queue, used to get a notification when a class loader entry has been gc'ed */
+    private static final ReferenceQueue TEMP_FILE_QUEUE = new ReferenceQueue();
+    /** prevent the soft references to the class loader entries from beeing garbage collected */
+    private static final Set DELETE_TEMP_FILE_ACTIONS = Collections.synchronizedSet(new HashSet());
+    /** clean up the temp files as soon as their class loader entry doesn't exist anymore */
+    private static final class TempFileObserver extends Thread {
+	public TempFileObserver(String name) {
+	    super(name);
+	    setDaemon(true);
+	    start();
+	}
+	public void run() {
+	    try {
+		while (true) {
+		    DynamicClassLoader.DeleteTempFileAction action = 
+			(DynamicClassLoader.DeleteTempFileAction) DynamicClassLoader.TEMP_FILE_QUEUE.remove();
+		    action.command();
+		    DELETE_TEMP_FILE_ACTIONS.remove(action);
+		}
+            } catch (InterruptedException e) {
+	        e.printStackTrace();
+            }
+	}
+    }
+    static final TempFileObserver THE_TEMP_FILE_OBSERVER = new TempFileObserver("JavaBridgeTempFileObserver");
+    /** delete all temp files created for this class loader entry */
+    private static class DeleteTempFileAction extends SoftReference {
+	List handlers;
+	public DeleteTempFileAction(Object arg0, ReferenceQueue arg1, List handlers) {
+	    super(arg0, arg1);
+	    this.handlers = handlers;
+	    DELETE_TEMP_FILE_ACTIONS.add(this);
+	    if(Util.logLevel>4) {
+		int count = 0, orphaned = 0;
+		for(Iterator ii = DELETE_TEMP_FILE_ACTIONS.iterator(); ii.hasNext(); ) {
+		    SoftReference val = (SoftReference) ii.next();
+		    count++;
+		    if(val.get()==null) orphaned++;
+		}
+		Util.logDebug("classloader stats: entries: " + count + " orphaned: " + orphaned);
+	    }
+        }
+	public void command() {
+	    for(Iterator ii = handlers.iterator(); ii.hasNext(); ) {
+		DynamicHttpURLConnectionHandler handler = (DynamicHttpURLConnectionHandler) ii.next();
+		handler.deleteTempFile();
+	    }
+	}	
+    }
+    /** wrap http urls so that we can check its modification time. The dynamic class loader always fetches
+     * the modification time header field and, if the time has changed, fetches the entire jar file again */ 
+    private static URL[] rewriteURLs(URL urls[], List handlers) {
+	URL[] newUrls = new URL[urls.length];
+	for(int i=0; i<urls.length; i++) {
+	    URL url = urls[i];
+	    String protocol = url.getProtocol();
+	    if(!"file".equals(protocol) && !"jar".equals(protocol)) {
+		try {
+		    DynamicHttpURLConnectionHandler handler = new DynamicHttpURLConnectionHandler();
+	            url = new URL("jar", null, -1, url.toExternalForm()+"!/",  handler);
+	            handlers.add(handler);
+		} catch (MalformedURLException e) {
+                    Util.printStackTrace(e);
+                }
+	    }
+            newUrls[i] = url;
+	}
+	return newUrls;
+    }
+    private SoftReference getReference(URLClassLoaderEntry entry, List handlers) {
+	if(handlers.isEmpty()) {
+	    return new SoftReference(entry);
+	} else {
+	    return new DeleteTempFileAction(entry, TEMP_FILE_QUEUE, handlers);
+	}
+    }
     protected URLClassLoaderEntry createURLClassLoader(String classPath, URL urls[]) {
+	List handlers = new LinkedList();
+	urls = rewriteURLs(urls, handlers);
         if(Util.logLevel>5) Util.logDebug("DynamicClassLoader("+System.identityHashCode(this)+").createURLClassLoader(\""+classPath+"\","+getStringFromURLArray(urls)+")\n");
 	URLClassLoader cl = factory.createUrlClassLoader(classPath, urls, this.getParent());
 	URLClassLoaderEntry entry = new URLClassLoaderEntry(cl, System.currentTimeMillis());
-	SoftReference cacheEntry = new SoftReference(entry);
+	SoftReference cacheEntry = getReference(entry, handlers);
 	classLoaderCache.put(classPath, cacheEntry);
 	return entry;
     }

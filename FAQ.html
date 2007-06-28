@@ -256,12 +256,163 @@ echo java("my.TestClass")->getId(); // assuming that a getId() procedure exists<
 
 <H2>J2EE/Servlet questions</H2>
 
-<H4>I want to use the bridge as a replacement for the PHP 4 servlet API, how do I install it into tomcat?</H4>
+<H4>Ho do I enable logging?</H4>
 <p>
-Download the J2EE binary and copy the <code>JavaBridge.war</code> into the tomcat <code>webapps</code> folder. After that visit <code>http://localhost:8080/JavaBridge</code> and run the supplied PHP examples.
-Please see <code>webapps/JavaBridge/WEB-INF/cgi/README</code> for details.
+Copy <code>log4j.jar</code> into <code>java.ext.dirs</code>. Example for JDK 6:
+<blockquote>
+<code>
+cp log4j.jar /usr/java/packages/lib/ext
+</code>
+</blockquote>
 </p>
-
+<p>
+Start the log4j viewer. Example for JDK 6:
+<blockquote>
+<code>
+/opt/jdk1.6/bin/java org.apache.log4j.chainsaw.Main
+</code>
+</blockquote>
+</p>
+<p>
+Start the application server with the options <code>-Dphp.java.bridge.default_log_level=LEVEL</code>. Example for tomcat:
+<blockquote>
+<code>
+JAVA_HOME=/opt/jdk1.6 JAVA_OPTS="-Dphp.java.bridge.default_log_level=5" bin/catalina.sh run
+</code>
+</blockquote>
+</p>
+<H4>Ho do I set up a tomcat cluster?</H4>
+<p>
+Download tomcat 5 or higher, a Java JRE 5 or higher and the PHP/Java Bridge 4.1.5 or higher.
+</p>
+<p>
+The following example uses two nodes running on two machines called
+"carlos" and "diego". The web server is running on a third machine
+which has full access to both nodes (at least it needs access to the
+ports from the range [9267, [9367).
+</p>
+<p>
+On all nodes: Extract the tomcat distribution into a directory.
+</p>
+<p>On <strong>"diego"</strong> add the following to <code>conf/server.xml</code>:
+<blockquote>
+<code>
+&lt;Cluster className="org.apache.catalina.ha.tcp.SimpleTcpCluster"<br>
+&nbsp;&nbsp;channelSendOptions="8"&gt;<br>
+&nbsp;&nbsp;&lt;Manager className="org.apache.catalina.ha.session.DeltaManager"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;expireSessionsOnShutdown="false"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;notifyListenersOnReplication="true"/&gt;<br>
+&nbsp;&nbsp;&lt;Channel className="org.apache.catalina.tribes.group.GroupChannel"&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Receiver className="org.apache.catalina.tribes.transport.nio.NioReceiver"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;address="<strong>diego</strong>"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;port="4000"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;autoBind="100"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;selectorTimeout="5000"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;maxThreads="6"/&gt;<br>
+&nbsp;&nbsp;&lt;/Channel&gt;<br>
+&lt;/Cluster&gt;<br>
+</code>
+</blockquote>
+</p>
+<p>On <strong>"carlos"</strong> add the following to <code>conf/server.xml</code>:
+<blockquote>
+<code>
+&lt;Cluster className="org.apache.catalina.ha.tcp.SimpleTcpCluster"<br>
+&nbsp;&nbsp;channelSendOptions="8"&gt;<br>
+&nbsp;&nbsp;&lt;Manager className="org.apache.catalina.ha.session.DeltaManager"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;expireSessionsOnShutdown="false"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;notifyListenersOnReplication="true"/&gt;<br>
+&nbsp;&nbsp;&lt;Channel className="org.apache.catalina.tribes.group.GroupChannel"&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;Receiver className="org.apache.catalina.tribes.transport.nio.NioReceiver"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;address="<strong>carlos</strong>"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;port="4000"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;autoBind="100"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;selectorTimeout="5000"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;maxThreads="6"/&gt;<br>
+&nbsp;&nbsp;&lt;/Channel&gt;<br>
+&lt;/Cluster&gt;<br>
+</code>
+</blockquote>
+</p>
+<p>Copy the "JavaBridge.war" into the "webapps" directory on "diego" and "carlos" and start both nodes. For example with the command:
+<blockquote>
+<code>
+JAVA_OPTS="-Dphp.java.bridge.promiscuous=true" JAVA_HOME=/opt/jdk1.5 bin/catalina.sh run
+</code>
+</blockquote>
+</p>
+<p>Start the web server on the third computer "timon". For example with the command:
+<blockquote>
+<code>
+apachectl restart
+</code>
+</blockquote>
+</p>
+<p>Create a PHP script called "sessionSharing-diego.php" and copy it into the web server document root (usually "/var/www/html" or "~/public_html") on "timon":
+<blockquote>
+<code>
+&lt;?php<br>
+require_once("http://diego:8080/JavaBridge/java/Java.inc");<br>
+$session = java_session();<br>
+if(is_null($session-&gt;get("counter"))) <br>
+&nbsp;&nbsp;$session-&gt;put("counter", new Java("java.lang.Integer", 1));<br>
+<br>
+$counter = java_values($session-&gt;get("counter"));<br>
+print "HttpSession variable \"counter\": $counter&lt;br&gt;\n";<br>
+$next = new Java("java.lang.Integer", $counter+1);<br>
+$session-&gt;put("counter", $next);<br>
+?&gt;<br>
+</code>
+</blockquote>
+</p>
+<p>Create a PHP script called "sessionSharing-carlos.php" and copy it into the web server document root (usually "/var/www/html" or "~/public_html") on "timon":
+<blockquote>
+<code>
+&lt;?php<br>
+require_once("http://carlos:8080/JavaBridge/java/Java.inc");<br>
+$session = java_session();<br>
+if(is_null($session-&gt;get("counter"))) <br>
+&nbsp;&nbsp;$session-&gt;put("counter", new Java("java.lang.Integer", 1));<br>
+<br>
+$counter = java_values($session-&gt;get("counter"));<br>
+print "HttpSession variable \"counter\": $counter&lt;br&gt;\n";<br>
+$next = new Java("java.lang.Integer", $counter+1);<br>
+$session-&gt;put("counter", $next);<br>
+?&gt;<br>
+</code>
+</blockquote>
+</p>
+<p>Start a web brower and remove all cookies</p>
+<p>
+Browse to <code>http://timon/sessionSharing-carlos.php</code> and check the generated cookie. It should have the key "JSESSIONID", host attribute "timon" and the path attribute "/". The value should be "1". Click on the browser refresh button to increase the value.
+</p>
+<p>
+Use the same browser window and navigate to <code>http://timon/sessionSharing-diego.php</code> and check if there is still only one cookie with the same attributes as before. The value should be "3"
+</p>
+<p>
+Use the same browser window and navigate to <code>http://timon/sessionSharing-carlos.php</code> and check if there is still only one cookie with the same attributes as before. The value should be "4".
+</p>
+<p>
+Switch off "diego" and start it again.
+</p>
+<p>
+Use the same browser window and navigate to <code>http://timon/sessionSharing-diego.php</code> and check if there is still only one cookie with the same attributes as before. The value should be "5"
+</p>
+<p>
+Switch off "carlos".
+</p>
+<p>
+Use the same browser window and navigate to <code>http://timon/sessionSharing-carlos.php</code> and check if you get an exception.
+</p>
+<p>
+Start "carlos".
+</p>
+<p>
+Use the same browser window and navigate to <code>http://timon/sessionSharing-carlos.php</code> and check if there is still only one cookie with the same attributes as before. The value should be "6"
+</p>
+<p>
+Please see your HTTP server documentation how to set it up as a load balancer. This differs from the architecture described above in that the load balancer forwards the requests to the nodes and the nodes run PHP using the FastCGI mechanism.
+</p>
 <a name="global-servlet">
 <H4>I want to use PHP for all tomcat applications. Apache and IIS are not available, but performance is important. How do I install it?</H4>
 </a>
@@ -1021,3 +1172,4 @@ Java doesn't support real generics on byte-code level. The generics in JDK 1.5 a
 </p>
 </BODY>
 </HTML>
+

@@ -78,14 +78,16 @@ public class PhpScriptContext extends SimpleScriptContext implements IContext, I
      }
     public Writer getWriter() {
 	if(writer == null) return writer =  getWriter(bridgeRunner.isStandalone());
+	else if(! (writer instanceof PhpScriptWriter)) setWriter(writer);
 	return writer;
     }
     private Writer getErrorWriter(boolean isStandalone) {
 	 return isStandalone ? new PhpScriptLogWriter() : new PhpScriptWriter(System.err);
     }
     public Writer getErrorWriter() {
-	if(errorWriter == null) return writer =  getErrorWriter(bridgeRunner.isStandalone());
-	return writer;	
+	if(errorWriter == null) return errorWriter =  getErrorWriter(bridgeRunner.isStandalone());
+	else if(! (errorWriter instanceof PhpScriptWriter)) setErrorWriter(errorWriter);
+	return errorWriter;	
     }
     /**
      * Ignore the default java_context()->call(java_closure()) call at the end
@@ -117,15 +119,7 @@ public class PhpScriptContext extends SimpleScriptContext implements IContext, I
      * @param writer The new <code>Writer</code>.
      */
     public void setWriter(Writer writer) {
-	super.setWriter(new PhpScriptWriter(new DefaultCharsetOutputStreamWriter(writer)));
-    }
-    /**
-     * Sets the <code>Writer</code> for scripts to use when displaying output.
-     *
-     * @param writer The new <code>Writer</code>.
-     */
-    public void setWriter(Writer writer, String encoding) {
-	super.setWriter(new PhpScriptWriter(new OutputStreamWriter(writer, encoding)));
+	super.setWriter(new PhpScriptWriter(new OutputStreamWriter(writer)));
     }
     
     
@@ -135,7 +129,7 @@ public class PhpScriptContext extends SimpleScriptContext implements IContext, I
      * @param writer The <code>Writer</code>.
      */
     public void setErrorWriter(Writer writer) {
-	super.setErrorWriter(new PhpScriptWriter(new DefaultCharsetOutputStreamWriter(writer)));
+	super.setErrorWriter(new PhpScriptWriter(new OutputStreamWriter(writer)));
     }
 
     /**@inheritDoc*/
