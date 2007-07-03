@@ -980,7 +980,7 @@ static PHP_INI_MH(OnIniHosts)
 }
 static PHP_INI_MH(OnIniPersistentConnections)
 {
-  if(new_value) {
+  if(new_value && 0) { //BROKEN
 	EXT_GLOBAL(update_persistent_connections)(new_value);
   }
   return SUCCESS;

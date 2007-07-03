@@ -70,11 +70,10 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     protected int logLevel = -1;
     
     /**
-     * If you want to use the HTTP tunnel or "override redirect", set the
+     * If you want to use the HTTP tunnel , set the
      * following flag to false and remove the &lt;distributable/&gt from
      * the WEB-INF/web.xml.
      * @see #handleHttpConnection(HttpServletRequest, HttpServletResponse, String, String, boolean)
-     * @see #handleRedirectConnection(HttpServletRequest, HttpServletResponse, String, String)
      */
     public static final boolean IS_DISTRIBUTABLE = true;
     
@@ -187,58 +186,6 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	    Util.printStackTrace(e);
         }
     }
-    /**
-     * Handle the override re-direct for "java_get_session()" when php
-     * runs within apache.  We
-     * execute one statement and return the result and the allocated
-     * session.  Used by Apache only.
-     * 
-     * @param req
-     * @param res
-     * @throws ServletException
-     * @throws IOException
-     * @deprecated
-     */
-    protected void handleRedirectConnection(HttpServletRequest req, HttpServletResponse res, String channel, String kontext) 
-	throws ServletException, IOException {
-	
-	/**
-	 * The alternative would be to store the context in the session and to mark the context and all the classes it depends on
-	 * (JavaBridge, ...) as java.io.Serializable.
-	 */
-	if(IS_DISTRIBUTABLE) 
-	    throw new ServletException("java_session() must be the first java statement in a distributable web application. " +
-		    "Either move \"java_session()\" to the beginning of your script or remove the distributable flag from PhpJavaServlet and WEB-INF/web.xml.");
-	
-	InputStream in; ByteArrayOutputStream out; OutputStream resOut;
-	ServletContextFactory ctx = getContextFactory(req, res, contextServer.getCredentials(channel, kontext));
-	JavaBridge bridge = ctx.getBridge();
-	ctx.setSessionFactory(req);
-	if(bridge.logLevel>3) bridge.logDebug("override redirect starts for " + ctx.getId());		
-	// save old state
-	InputStream bin = bridge.in;
-	OutputStream bout = bridge.out;
-	Request br  = bridge.request;
-	
-	bridge.in = in = req.getInputStream();
-	bridge.out = out = new ByteArrayOutputStream();
-	Request r = bridge.request = new Request(bridge);
-	try {
-	    if(r.init(in, out)) {
-		r.handleRequests();
-	    }
-	} catch (Exception e) {
-	    Util.printStackTrace(e);
-	}
-	// restore state
-	bridge.in = bin; bridge.out = bout; bridge.request = br;
-	
-	res.setContentLength(out.size());
-	resOut = res.getOutputStream();
-	out.writeTo(resOut);
-	in.close();
-	if(bridge.logLevel>3) bridge.logDebug("override redirect finished for " + ctx.getId());
-    }
     
     /**
      * Handle a standard HTTP tunnel connection. Used when the local
@@ -251,20 +198,20 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
      * @throws IOException
      * @deprecated 
      */
-    protected void handleHttpConnection (HttpServletRequest req, HttpServletResponse res, String channel, String kontext, boolean session)
+    protected void handleHttpConnection (HttpServletRequest req, HttpServletResponse res, String channel)
 	throws ServletException, IOException {
 
 	/**
 	 * The alternative would be to store the context in the session and to mark the context and all the classes it depends on
 	 * (JavaBridge, ...) as java.io.Serializable.
 	 */
-	if(IS_DISTRIBUTABLE) throw new ServletException("HTTP tunnel not available in a distributable web application. " +
+	if(IS_DISTRIBUTABLE) Util.logMessage("HTTP tunnel not available in a distributable web application. " +
 			"Either enable the Pipe- or SocketContextServer or remove the distributable flag from PhpJavaServlet and WEB-INF/web.xml.");
 
 	InputStream in; ByteArrayOutputStream out;
-	ServletContextFactory ctx = getContextFactory(req, res, contextServer.getCredentials(channel, kontext));
+	ServletContextFactory ctx = getContextFactory(req, res, contextServer.getCredentials(channel));
 	JavaBridge bridge = ctx.getBridge();
-	if(session) ctx.setSessionFactory(req);
+	ctx.setSessionFactory(req);
 
 	if(req.getContentLength()==0) {
 	    if(req.getHeader("Connection").equals("Close")) {
@@ -297,13 +244,12 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
      * @throws ServletException
      * @throws IOException
      */
-    protected void handleSocketConnection (HttpServletRequest req, HttpServletResponse res, String channel, String kontext, boolean session, boolean legacyClient)
+    protected void handleLocalConnection (HttpServletRequest req, HttpServletResponse res, String channel)
 	throws ServletException, IOException {
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
 	ServletContextFactory ctx = getContextFactory(req, res, null);
 	JavaBridge bridge = ctx.getBridge();
-	if(session) ctx.setSessionFactory(req);
-	ctx.setIsLegacyClient(legacyClient);
+	ctx.setSessionFactory(req);
 	
 	bridge.in = sin=req.getInputStream();
 	bridge.out = sout = new ByteArrayOutputStream();
@@ -311,10 +257,8 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	
 	try {
 	    if(r.init(sin, sout)) {
-		AbstractChannelName channelName = contextServer.getFallbackChannelName(channel, kontext, ctx);
-		boolean hasDefault = contextServer.schedule(channelName) != null;
-		res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getDefaultName());
-		if(hasDefault) res.setHeader("X_JAVABRIDGE_CONTEXT_DEFAULT", kontext);
+		AbstractChannelName channelName = contextServer.getFallbackChannelName(channel, ctx);
+		res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getName());
 	    	r.handleRequests();
 
 		// redirect and re-open
@@ -351,27 +295,16 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
      */
     protected void doPut (HttpServletRequest req, HttpServletResponse res)
 	throws ServletException, IOException {
-    	short redirectValue =(short) req.getIntHeader("X_JAVABRIDGE_REDIRECT");
-    	boolean isLegacyClient = (redirectValue & 4) == 4; // Used by the C code, which cannot open persistent connections to the servlet
-    	short redirect = (short) (redirectValue & 3);
     	boolean local = Util.JAVABRIDGE_PROMISCUOUS || isLocal(req);
     	if(!local) throw new SecurityException("Non-local clients not allowed per default. " +
     			"Either \na) set promiscuous in your web.xml or \nb) start the Java VM with -Dphp.java.bridge.promiscuous=true " +
     			"to enable the SocketContextServer for non-local clients.");
     	String channel = getHeader("X_JAVABRIDGE_CHANNEL", req);
-	String kontext = getHeader("X_JAVABRIDGE_CONTEXT_DEFAULT", req);
-    	
-    	try {
-	    if(redirect==1) 
-		handleRedirectConnection(req, res, channel, kontext); /* override re-direct */
-	    else if(local && contextServer.isAvailable(channel)) 
-		handleSocketConnection(req, res, channel, kontext, redirect==2, isLegacyClient); /* re-direct */
-	    else
-		handleHttpConnection(req, res, channel, kontext, redirect==2); /* standard http tunnel */
 
-	} catch (Throwable t) {
-	    Util.printStackTrace(t);
-	}
+    	if(local && contextServer.isAvailable(channel)) 
+    	    handleLocalConnection(req, res, channel); /* re-direct */
+    	else
+    	    handleHttpConnection(req, res, channel); /* standard http tunnel */
     }
     /** For backward compatibility */
     protected void doGet(HttpServletRequest req, HttpServletResponse res)

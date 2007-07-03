@@ -63,7 +63,7 @@ public class HttpSessionFacade implements ISession {
     /**
      * Returns the HttpServletRequest
      * @return The HttpServletRequest.
-     * @deprecated Use {@link Context#getHttpServletRequest()}
+     * Use {@link Context#getHttpServletRequest()}
      */
     public HttpServletRequest getHttpServletRequest() {
     	return (HttpServletRequest) ((Context)ctxFactory.getContext()).getHttpServletRequest();
@@ -72,7 +72,7 @@ public class HttpSessionFacade implements ISession {
     /**
      * Returns the ServletContext
      * @return The ServletContext.
-     * @deprecated Use {@link Context#getServletContext()}
+     *  Use {@link Context#getServletContext()}
      */
     public ServletContext getServletContext() {
         return (ServletContext) ((Context)ctxFactory.getContext()).getServletContext();
@@ -81,7 +81,7 @@ public class HttpSessionFacade implements ISession {
     /**
      * Returns the ServletResponse
      * @return The ServletResponse.
-     * @deprecated Use {@link Context#getHttpServletResponse()}
+     *  Use {@link Context#getHttpServletResponse()}
      */
     public HttpServletResponse getHttpServletResponse() {
         return (HttpServletResponse) ((Context)ctxFactory.getContext()).getHttpServletResponse();

@@ -485,21 +485,6 @@ public class Response {
         writer.setFinish(keepAlive);
     }
     /**
-     * Selects a different writer.
-     * @param writerType Must be Response#VALUES_WRITER or Response#COERCE_WRITER.
-     * @return The seleted writer.
-     * @see Response#VALUES_WRITER
-     * @see Response#COERCE_WRITER
-     * @deprecated Use setArrayValuesWriter or setCoerceWriter instead.
-     */
-    public Writer selectWriter(int writerType) {
-     	switch(writerType) {
-    	case VALUES_WRITER: return setArrayValuesWriter();
-    	case COERCE_WRITER: return setCoerceWriter();
-    	default: throw new IllegalArgumentException(String.valueOf(writerType));
-    	}
-    }
-    /**
      * Selects a specialized writer which writes objects as an array.
      * Used by castToArray().
      * @see JavaBridge#castToArray(Object)

@@ -86,7 +86,7 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
         return visited.getId();
     }
     public String toString() {
-	return "Visited: " + visited + ", Current: ";
+	return "ContextFactory: " + visited + ", SimpleContextFactory: " +getClass() + ", current loader: " + loader;
     }
     /**
      * Create a new context. The default implementation
@@ -115,17 +115,8 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
         this.context = context;
         this.context.setAttribute(IContext.JAVA_BRIDGE, getBridge(), IContext.ENGINE_SCOPE);
     }
-    public void recycle(ContextFactory visited) {
-	visited.accept(this);
-    }
     public void removeOrphaned() {
         visited.removeOrphaned();
-    }
-    /**
-     * @deprecated Use {@link #destroy()} instead
-     */
-    public void remove() {
-        destroy();
     }
 
     /**
@@ -160,16 +151,5 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
 	if(loader==null) 
 	    throw new NullPointerException("loader");
 	this.loader = loader;
-    }
-    
-    public void setIsLegacyClient(boolean legacyClient) {
-	visited.setIsLegacyClient(legacyClient);
-    }
-    public boolean isLegacyClient() {
-	return visited.isLegacyClient();
-    }
-
-    public void recycleLegacy(String id) throws SecurityException {
-        visited.recycle(id);
     }
 }

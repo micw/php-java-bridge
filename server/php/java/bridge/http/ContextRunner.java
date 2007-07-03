@@ -27,7 +27,6 @@ package php.java.bridge.http;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
 
 import php.java.bridge.JavaBridge;
 import php.java.bridge.Request;
@@ -39,25 +38,25 @@ import php.java.bridge.Util;
  * manages the "high speed" communication link.  It pulls a
  * ContextFactory and executes it.  After execution the context is
  * destroyed.  <p>ContextRunners are kept in a per-loader map and each
- * client may refer to its runner by passing
- * X_JAVARIDGE_CONTEXT_DEFAULT. The ContextRunner may ignore this hint
- * and prepare for a new physical connection if the ID does not exist
- * in its map. This usually happens when there are two separate
+ * client may refer to its runner by keeping a persistent connection to it. The ContextFactory may ignore this
+ * and prepare for a new physical connection by sending back the ID of a new ContextServer.
+ * This usually happens when there are two separate
  * bridges installed in context A and context B and the client uses a
  * persistent connection to context A. An attempt to re-use the same
  * connection for B fails because the classes are loaded via two
- * separate class loaders. A client must check the returned
- * X_JAVABRIDGE_CONTEXT_DEFAULT value. If it is not set, the client
- * must create a new physical connection.  For named pipes this means
+ * separate class loaders.  For named pipes this means
  * that the connection should have been prepared and sent via
  * X_JAVABRIDGE_CHANNEL, as usual. Otherwise the bridge will use the
  * SocketContextServer instead. -- The client may destroy the new
- * pipe if the server has accepted X_JAVABRIDGE_CONTEXT_DEFAULT, of
+ * pipe if the server has accepted the previous ID, of
  * course.  </p>
+ * <p>
+ * Example: Two web apps WA1 and WA2, two ContextServers, @9667 and @9668. Client has persistent connection to @9667, sends
+ * initial HTTP PUT request to WA2. WA2 responds with a redirect to @9668. Client uses this new persistent connection (but keeps persistent
+ * connection to @9667, of course).
+ * </p>
  */
 public class ContextRunner implements Runnable {
-    
-    private static final HashMap runners = new HashMap(Integer.parseInt(Util.THREAD_POOL_MAX_SIZE));
     
     private IContextFactory ctx; /* the persistent ContextFactory */
     private Request request;
@@ -117,7 +116,6 @@ public class ContextRunner implements Runnable {
 	String name = readName();
     	ctx = (IContextFactory) ContextFactory.get(name, contextServer);
     	if(ctx == null) throw new IOException("No context available for: " + name + ".");
-    	put(name, this);
     	JavaBridge bridge = ctx.getBridge();
 	if(Util.logLevel>4) Util.logDebug(ctx + " created new thread, using class loader: " + System.identityHashCode(ctx.getClassLoader().getParent()));
 	SimpleJavaBridgeClassLoader loader = bridge.getClassLoader();
@@ -126,31 +124,6 @@ public class ContextRunner implements Runnable {
 	setIO(bridge, in, out);
 	this.request = bridge.request;
 	return true;
-    }
-    /**
-     * May be called to recycle the runner from the pool of ContextRunners for a new contextServer. 
-     * Reduces the # of physical connections when there is only one 
-     * ContextFactory factory but several ContextServer instances per ClassLoader, 
-     * for example when the PhpCGIServlet is used globally.".
-     * In this setup we have n PHP childs using n physical connections (n ContextRunner instances), k web contexts
-     * (k contextServers) and up to k*n ContextFactory and JavaBridge instances.
-     * 
-     * @param channelName the channelName. This procedure sets the runner into channelName as a side effect.
-     * @return the ContextRunner, if found, otherwise null.
-     * BOGUS: This could be removed if we modify the C code to always pass the header.
-     */
-    public static synchronized ContextRunner checkRunner(AbstractChannelName channelName) {
-	String id = channelName.getKontext();
-	IContextFactory ctx = channelName.getCtx();
-	ContextRunner runner = null;
-	if(ctx!=null && id!=null) runner = (ContextRunner)runners.get(id);
-	return runner;
-    }
-    private static synchronized void put(String kontext, ContextRunner runner) {
-	runners.put(kontext, runner);
-    }
-    private static synchronized void remove(String kontext) {
-	runners.remove(kontext);
     }
    /**
      * Return the channel of the current runner.
@@ -167,7 +140,6 @@ public class ContextRunner implements Runnable {
 	    Util.printStackTrace(e);
         } finally {
 	    if(ctx!=null) {
-		remove(ctx.getId());
 		ctx.destroy();
 	    }
 	    channel.shutdown();

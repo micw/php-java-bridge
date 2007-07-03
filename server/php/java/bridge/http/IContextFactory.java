@@ -53,16 +53,6 @@ public interface IContextFactory extends IJavaBridgeFactory {
    */
     public void recycle(String id) throws SecurityException;
 
-    /**
-     * @deprecated Use recycle(String id) instead.
-     */
-    public void recycleLegacy(String id) throws SecurityException;
-  
-  /**
-   * @deprecated Use recycle(String id) instead.
-   */
-  public void recycle(ContextFactory target);
-
   /**
    * Removes the context factory from the classloader's list of context factories
    * and destroys its content.
@@ -131,16 +121,4 @@ public interface IContextFactory extends IJavaBridgeFactory {
     * @return The currentThreadContextClassLoader of the servlet.
     */
    public ClassLoader getClassLoader();
-
-   /**
-    * Will be called by the PhpJavaServlet and by the JavaBridgeRunner when the client is not the pure PHP client.
-    * @param isLegacyClient
-    */
-   public void setIsLegacyClient(boolean isLegacyClient);
-   
-   /**
-    * Check if this is a C client.
-    * @return true if this is a legacy C client, false if the client is the pure PHP PHP/Java Bridge client.
-    */
-   public boolean isLegacyClient();
 }

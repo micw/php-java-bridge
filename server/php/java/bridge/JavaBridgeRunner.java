@@ -145,8 +145,7 @@ public class JavaBridgeRunner extends HttpServer {
     	boolean override_redirect = (3 & overrideRedirectValue) == 1;
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
     	String channel = getHeader("X_JAVABRIDGE_CHANNEL", req);
-	String kontext = getHeader("X_JAVABRIDGE_CONTEXT_DEFAULT", req);
-	ContextFactory.ICredentials credentials = ctxServer.getCredentials(channel, kontext);
+	ContextFactory.ICredentials credentials = ctxServer.getCredentials(channel);
 	IContextFactory ctx = getContextFactory(req, res, credentials);
 	
     	JavaBridge bridge = ctx.getBridge();
@@ -160,10 +159,8 @@ public class JavaBridgeRunner extends HttpServer {
 	Request r = bridge.request = new Request(bridge);
         if(r.init(sin, sout)) {
         	AbstractChannelName channelName = 
-                    ctxServer.getFallbackChannelName(channel, kontext, ctx);
-        	boolean hasDefault = ctxServer.schedule(channelName) != null;
-        	res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getDefaultName());
-        	if(hasDefault) res.setHeader("X_JAVABRIDGE_CONTEXT_DEFAULT", kontext);
+                    ctxServer.getFallbackChannelName(channel, ctx);
+        	res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getName());
         	r.handleRequests();
         
         	// redirect and re-open
@@ -303,6 +300,20 @@ public class JavaBridgeRunner extends HttpServer {
 		setWriter.invoke(ctx, new Object[] {writer});
 
 		setErrorWriter.invoke(ctx, new Object[] {writer});
+
+		Method getBindings = engine.getClass().getMethod("getBindings", new Class[] {int.class});
+		Object bindings = getBindings.invoke(engine, new Object[] {new Integer(200)});
+		Method put = bindings.getClass().getMethod("put", new Class[] {Object.class, Object.class});
+		StringBuffer buf = new StringBuffer("/");
+		buf.append(name);
+		if(params!=null) {
+		    buf.append("?");
+		    buf.append(params);
+		}
+		put.invoke(bindings, new Object[] {"REQUEST_URI", buf.toString()});
+		put.invoke(bindings, new Object[] {"SCRIPT_FILENAME", f.getAbsolutePath()});
+		put.invoke(bindings, new Object[] {"PHP_SELF", name});
+
 		FileReader r = null;;
 		try {
 		    eval.invoke(engine, new Object[] {r=new FileReader(f)});

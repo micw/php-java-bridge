@@ -1,3 +1,27 @@
+2007-07-01  Jost Boekemeier  <jostb@intern>
+	
+	* server/php/java/bridge/http/AbstractChannelName.java,server/php/java/bridge/http/ContextFactory.java,server/php/java/bridge/http/ContextRunner.java,server/php/java/bridge/http/ContextServer.java,server/php/java/bridge/http/IContextFactory.java,server/php/java/bridge/http/SimpleContextFactory.java,server/php/java/bridge/JavaBridgeClassLoader.java,server/php/java/bridge/JavaBridge.java,server/php/java/bridge/JavaBridgeRunner.java,server/php/java/bridge/Response.java,server/php/java/bridge/SimpleJavaBridgeClassLoader.java,server/php/java/bridge/ThreadPool.java,server/php/java/script/SimplePhpScriptEngine.java,server/php/java/servlet/Context.java,server/php/java/servlet/HttpSessionFacade.java,server/php/java/servlet/PhpJavaServlet.java,server/php/java/servlet/ServletContextFactory.java:
+	Removed all deprecated.
+
+	* client.c (create_connection): Disabled persistent connections to
+	a J2EE back end, see NEWS.
+	
+	* server/META-INF/java/Protocol.inc
+	(java_SocketHander,java_HttpHandler,getSession,overrideRedirect):
+	Optimization: do not get a session proxy if we already have
+	one (e.g. from the FastCGI servlet)
+	
+	* VERSION, php-java-bridge.spec: Version 4.1.7
+	
+2007-06-30  Jost Boekemeier  <jostb@intern>
+	
+	* server/META-INF/java/Protocol.inc (parseHeaders): Do not use
+	split, which cannot handle urls like http://host//foo/bar. The
+	apache load balancer creates these.
+
+	* VERSION, php-java-bridge.spec: Version 4.1.6
+	
+	
 2007-06-27  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/DynamicClassLoader.java

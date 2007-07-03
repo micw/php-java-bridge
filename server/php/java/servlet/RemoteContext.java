@@ -44,31 +44,31 @@ public class RemoteContext extends Context {
     }
 
     /**
-    * @deprecated Use java_context()->getAttribute(...) instead
+    *  Use java_context()->getAttribute(...) instead
      */
     public Object getHttpServletResponse() {
 	return getAttribute(IContext.SERVLET_RESPONSE);
     }
     /**
-    * @deprecated Use java_context()->getAttribute(...) instead
+    *  Use java_context()->getAttribute(...) instead
      */
     public Object getHttpServletRequest() {
 	return getAttribute(IContext.SERVLET_REQUEST);
     }
     /**
-    * @deprecated Use java_context()->getAttribute(...) instead
+    *  Use java_context()->getAttribute(...) instead
      */
     public Object getServlet() {
 	return getAttribute(IContext.SERVLET);
     }
     /**
-     * @deprecated Use java_context()->getAttribute(...) instead
+     *  Use java_context()->getAttribute(...) instead
       */
      public Object getServletConfig() {
  	return getAttribute(IContext.SERVLET_CONFIG);
      }
      /**
-      * @deprecated Use java_context()->getAttribute(...) instead
+      *  Use java_context()->getAttribute(...) instead
        */
       public Object getServletContext() {
   	return getAttribute(IContext.SERVLET_CONTEXT);

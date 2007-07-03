@@ -45,9 +45,6 @@ public class SessionFactory extends JavaBridgeFactory {
   /** Check for expired sessions or contexts every 10 minutes */
   public static final long TIMER_DURATION = 600000;
 
-  /** @deprecated Use {@link #TIMER_DURATION} */
-  public static final long TIMER_FREQ = 600000;
-
   private static final SessionTimer timer = new SessionTimer();
   
   public SimpleJavaBridgeClassLoader getJavaBridgeClassLoader() {

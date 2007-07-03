@@ -102,7 +102,7 @@ class java_PipeChannel extends java_EmptyPipeChannel {
   }
   function fread($size) {
 	static $empty = NULL;
-	stream_select($this->peerr_desc, $empty, $empty, 0x7FFFFFFF);
+	stream_select($this->peerr_desc, $empty, $empty, 1677216);
 	return fread($this->peerr, $size);
   }
   function getName() {
@@ -113,6 +113,7 @@ class java_PipeChannel extends java_EmptyPipeChannel {
 class java_SocketHandler {
   var $protocol, $channel;
   var $handler; // the original HTTP handler
+  var $hasSessionProxy;
 
   function getChannel($protocol, $handler, $channelName) {
 	if($channelName[0]=='/') return $handler->channel->open($handler);
@@ -122,6 +123,7 @@ class java_SocketHandler {
 	$this->handler = $handler;
 	$this->channel = $this->getChannel($protocol, $handler, $channelName);
 	$this->protocol = $protocol;
+    $this->hasSessionProxy = $handler->hasSessionProxy;
   }
   function write($data) {
 	$this->channel->fwrite($data);
@@ -132,15 +134,17 @@ class java_SocketHandler {
   function redirect() {}
 
   function overrideRedirect() {
-	$this->protocol->flush();
-	$this->protocol->handler = new java_OverrideRedirectHandler($this->handler);
+    if(!$this->hasSessionProxy) {
+	  $this->protocol->flush();
+	  $this->protocol->handler = new java_OverrideRedirectHandler($this->handler);
+      $this->hasSessionProxy = true;
+    }
   }
 
-  function getSession() {
-	throw new java_RuntimeException("getSession cannot be called w/o overrideRedirect");
-  }
+  function getSession() {}
 }
 class java_HttpHandler extends java_SocketHandler {
+  var $hasSessionProxy;
   var $headers;
   var $redirect;
   
@@ -167,6 +171,7 @@ class java_HttpHandler extends java_SocketHandler {
 	return $socket;
   }
   function java_HttpHandler($protocol, $ssl, $host, $port) {
+    $this->hasSessionProxy = false; // will be set in getContext() if this is a (Fast-)CGI binary
 	$this->protocol = $protocol;
 	$this->ssl = $ssl;
 	$this->host = $host;
@@ -201,6 +206,7 @@ class java_HttpHandler extends java_SocketHandler {
 	$context = "";
 	if($ctx) {
 	  $context = sprintf("X_JAVABRIDGE_CONTEXT: %s\r\n", $ctx);
+      $this->hasSessionProxy = true;
 	}
 	return $context;
   }
@@ -282,9 +288,7 @@ class java_HttpHandler extends java_SocketHandler {
 	$this->headers = array();
 	while ($str = trim(fgets($this->socket, java_Client::RECV_SIZE))) {
 	  if($str[0]=='X') {
-		if(!strncasecmp("X_JAVABRIDGE_CONTEXT_DEFAULT", $str, 28)) {
-		  $this->headers["kontext"]=trim(substr($str, 29));
-		} else if(!strncasecmp("X_JAVABRIDGE_REDIRECT", $str, 21)) {
+		if(!strncasecmp("X_JAVABRIDGE_REDIRECT", $str, 21)) {
 		  $this->headers["redirect"]=trim(substr($str, 22));
 		} else if(!strncasecmp("X_JAVABRIDGE_CONTEXT", $str, 20)) {
 		  $this->headers["context"]=trim(substr($str, 21));
@@ -411,11 +415,31 @@ class java_Protocol {
 	  // or "s:127.0.0.1:8080" 
 	  // or "/" 
 	  // or ""
-	  $ar = split(":|//", $overrideHosts);
-	  $ssl              = (isset($ar[0]) && ($ar[0] == 's')) ? "ssl://" : "";
-	  $host             = $ar[1];
-	  $port             = $ar[2];
-	  if(isset($ar[3])) $this->webContext = "/".$ar[3];
+	 $s=$overrideHosts;
+     if((strlen($s)>2) && ($s[1]==':')) {
+       if($s[0]=='s')
+         $ssl="ssl://";
+       $s = substr($s, 2);
+     }
+     $webCtx = strpos($s, "//");
+     if($webCtx)
+       $host = substr($s, 0, $webCtx);
+     else
+       $host = $s;
+
+     $idx = strpos($host, ':');
+     if($idx) {
+       if($webCtx)
+         $port = substr($host, $idx+1, $webCtx);
+       else
+         $port = substr($host, $idx+1);
+       $host = substr($host, 0, $idx);
+     } else {
+       $port = "8080";
+     }
+ 
+     if($webCtx) $webCtx = substr($s, $webCtx+1);
+	  $this->webContext = $webCtx;
 	}
 	$this->serverName = "$host:$port";
 	return new java_HttpHandler($this, $ssl, $host, $port);
@@ -541,8 +565,8 @@ class java_Protocol {
     $this->write(sprintf("<U v=\"%x\"/>", $object));
   }
 
-  function getSession($args) {
-	return $this->handler->getSession($args);
+  function getSession() {
+	return $this->handler->getSession();
   }
   function getServerName() {
 	return $this->serverName;

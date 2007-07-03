@@ -137,9 +137,6 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	    }
 	}
     }
-    /**@deprecated*/
-    public static synchronized void initClassLoader(String phpConfigDir) {
-    }
     /**
      * The VM associates a map with each loader to speed up Class.forName(). Since our
      * loader can shrink, we discard the VM cache when clear() or reset() is called.

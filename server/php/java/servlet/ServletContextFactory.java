@@ -88,7 +88,7 @@ public class ServletContextFactory extends php.java.bridge.http.SimpleContextFac
     	proxy=null;
     }
     public String toString() {
-	return super.toString() + " has proxy: " +(proxy==null?"false":"true");
+	return super.toString() + ", HttpServletRequest: " + proxy ;
     }
     /**
      * Return an emulated JSR223 context.

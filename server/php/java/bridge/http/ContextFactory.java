@@ -119,8 +119,8 @@ public final class ContextFactory extends SessionFactory implements IContextFact
         return id;
     }
     private static synchronized void remove(String id) {
-	Object ob = liveContexts.remove(id);
-        if(Util.logLevel>4) Util.logDebug("removed context: " + ob + ", # of contexts: " + contexts.size());
+	ContextFactory ob = (ContextFactory) liveContexts.remove(id);
+        if(Util.logLevel>4) Util.logDebug("contextfactory: removed context: " + ob.visitor + ", # of contexts: " + contexts.size());
     }
     private static synchronized ContextFactory moveContext(String id) {
         Object o;
@@ -132,7 +132,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
       super();
       timestamp = System.currentTimeMillis();
       id=addNext(webContext, this);
-      if(Util.logLevel>4) Util.logDebug("new context: " + id + ", # of contexts: " + contexts.size());
+      if(Util.logLevel>4) Util.logDebug("contextfactory: new context: " + id + " for web context" + webContext + ", # of contexts: " + contexts.size());
     }
 
     /**
@@ -187,86 +187,53 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	return factory == null ? null : factory.visitor;
     }
     
-    public void recycle(ContextFactory factory) {}
     /*
-     * We have to handle 4 different cases:
-     * 1. the pure PHP bridge implementation is used, it uses a persistent connection to the servlet and obtains the (persistent) context+bridge from there. (both cases: apache and PhpCgiServlet)
-     * 2. the client of a php client, usually PhpCgiServlet, has allocated an empty context for C. We must attach the context to the current
-     * 3. the C code has allocated a new context+bridge for persistent connections. We must attach the context+bridge for later.(legagy C, step1, from apache)
-     * 4. the C code has passed a saved (live) context. We must use the context+bridge from the list. (legacy C, step2, from apache)
+     * The pure PHP bridge implementation is used, it uses a persistent connection to the servlet and obtains the (persistent) context+bridge from there. (both cases: apache and PhpCgiServlet)
+     * As of version 4.1.6 this code doesn't support the C front end anymore. It will be rewritten so that it uses the same path as the pure PHP implementation.
      * (non-Javadoc)
      * @see php.java.bridge.http.IContextFactory#recycle(php.java.bridge.http.ContextFactory)
      */ 
-    private void switchContext(ContextFactory factory) {
-	accept(factory.visitor);
-	
+    private void switchContext(ContextFactory factory) {	
 	JavaBridge bridge = getBridge();
 	JavaBridge newBridge = factory.checkBridge();
 	if(newBridge!=null) { // set the new bridge which keeps a reference to the fresh context
-	    if(Util.logLevel>4) Util.logDebug("setting new bridge. visited: " + bridge.getFactory() + " <= visitor: " + newBridge.getFactory()); 
+	    if(Util.logLevel>4) Util.logDebug("contextfactory: setting new bridge. visited: " + bridge.getFactory() + " <= visitor: " + newBridge.getFactory()); 
 	    
 	    /* set the new bridge and the associated threadContextClassLoader, will be reset in recycle() */
 	    bridge.request.setBridge(newBridge);
 	    bridge = newBridge;
 	    
 	    /* remove the fresh context factory and/or move it to the liveContexts and store a reference to it */
-	    if(!isLegacyClient) // case #1: PHP code
-		factory.visitor.removeOrphaned();
-	    else { // legacy C code  (case #3 and #4), but ignore live contexts already attached to this factory, they will be cleaned up in destroy()
-		if(!factory.isAttachedLiveContext) { /* case #3 */
-		    String id = factory.getId();
-		    attachedLiveContexts.put(id, factory);
-		    liveContexts.put(id, contexts.remove(id));
-		    factory.init(contextServer);
-		}
-	    }
-	} else { /* case #2 */
-	    if(Util.logLevel>4) Util.logDebug("updating existing bridge. visited: " + this + " <= visitor: " + factory.visitor);
-	    if(!isLegacyClient) 
-		throw new IllegalStateException("recycle empty context");
 	    factory.visitor.removeOrphaned();
-	    
-	    /* keep the bridge, but update its contextFactory with the fresh values and set the class loader, will be reset in recycle() */
 	    accept(factory.visitor);
-	    bridge.setClassLoader(getJavaBridgeClassLoader());
-	    bridge.getClassLoader().switcheThreadContextClassLoader();
+	} else {
+		throw new IllegalStateException("recycle empty context");
 	}
 	
 	if(factory.getClassLoader() !=bridge.getClassLoader().getDefaultClassLoader()) 
 	    throw new IllegalStateException("class loader");
-	if(Util.logLevel>4) Util.logDebug(this + " is swiching thread context, using classloader: " + System.identityHashCode( factory.getClassLoader().getParent()));
+	if(Util.logLevel>4) Util.logDebug("contextfactory: " +this + " is swiching thread context, using classloader: " + System.identityHashCode( factory.getClassLoader().getParent()));
 
-	factory.invalid = false;
+	invalid=false;
+	if(Util.logLevel>4) Util.logDebug("contextfactory: accepted visitor: " + factory.visitor);
     }
-    private HashMap attachedLiveContexts = new HashMap();
-    private boolean isAttachedLiveContext;
     /* (non-Javadoc)
      * @see php.java.bridge.http.IContextFactory#recycle(java.lang.String)
      */
     public void recycle(String id) throws SecurityException {
 	ContextFactory factory = null;
-	if(isLegacyClient) // a saved live context (C code only)
-	    factory = ((ContextFactory)attachedLiveContexts.get(id));
+	factory=((ContextFactory)contexts.get(id));
+	if(factory == null || factory == this) return;
 
-	if(factory==null) { // this is a fresh context from the servlet (C code or PHP)
-	    factory=((ContextFactory)contexts.get(id));
-	    if(factory == null || factory == this) return;
-	    factory.isAttachedLiveContext = false;
-	} else {
-	    if(factory == this) return;
-	    factory.isAttachedLiveContext = true;
-	}
-	
-         switchContext(factory);
+	switchContext(factory);
    }
     /**
      * Recycle the factory for new reqests.
      */    
     public synchronized void recycle() {
-	if(Util.logLevel>=4) Util.logDebug("finish context called " + this.visitor);
+	if(Util.logLevel>=4) Util.logDebug("contextfactory: finish context called (recycle context factory) " + this.visitor);
 	super.recycle();
 	visitor.recycle();
-	contextServer=null;
 	invalid=true;
 	
 	if(bridge!=null) 
@@ -279,29 +246,13 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * @see php.java.bridge.http.IContextFactory#destroy()
      */
     public synchronized void destroy() {
-	if(Util.logLevel>4) Util.logDebug("context destroyed: " +visitor);
+	if(Util.logLevel>4) Util.logDebug("contextfactory: context destroyed (remove context factory): " +visitor);
 	remove(getId());
 	bridge=null;
 	invalid=true;
-	if(isLegacyClient)
-	    for(Iterator ii = attachedLiveContexts.values().iterator(); ii.hasNext();) {
-		ContextFactory factory = (ContextFactory) ii.next();
-		if(Util.logLevel>4) Util.logDebug("attached context destroyed: " +factory.visitor);
-		factory.bridge = null; 
-		factory.invalid = true;
-		remove(factory.getId());
-		ii.remove();
-	    }
 	notify();
    }
     
-    /**
-     * @deprecated
-     * @see #destroyAll()
-     */
-    public static void removeAll() {
-        destroyAll();
-    }
     private boolean isInitialized() {
         return (contextServer!=null);
     }
@@ -327,7 +278,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	            ctx.invalid=true;
 	            ctx.notify();
 	        }
-	        if(Util.logLevel>4) Util.logDebug("Orphaned context: " + ctx.getId() + " removed.");
+	        if(Util.logLevel>4) Util.logDebug("contextfactory: Orphaned context: " + ctx.visitor + " removed.");
 	        ii.remove();
 	    }
 	}        
@@ -353,15 +304,19 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * @see php.java.bridge.http.IContextFactory#waitFor()
      */
     public synchronized void waitFor() throws InterruptedException {
+	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet is waiting for ContextFactory " +visitor);
 	if(invalid) throw new IllegalStateException("waitFor");
     	wait();
-    }
+	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet done waiting for ContextFactory " +visitor);
+   }
     /* (non-Javadoc)
      * @see php.java.bridge.http.IContextFactory#waitFor()
      */
     public synchronized void waitFor(long timeout) throws InterruptedException {
+	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet is waiting for ContextFactory " +visitor + " for " +timeout+" ms");
 	if(invalid) throw new IllegalStateException("waitFor");
 	wait(timeout);
+	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet done waiting for ContextFactory " +visitor+ " for " +timeout+" ms");
     }
     /* (non-Javadoc)
      * @see php.java.bridge.http.IContextFactory#getId()
@@ -373,7 +328,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * @see php.java.bridge.http.IContextFactory#toString()
      */
     public String toString() {
-	return "Context# " +id + ", isInitialized: " + isInitialized();
+	return "Context# " +id + ", isInitialized: " + isInitialized() + ", isValid: " + !invalid;
     }
     /**
      * Returns the context.
@@ -423,8 +378,8 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	return visitor.getSession(name, clientIsNew, timeout);
     }
     public synchronized void removeOrphaned() {
-	Object ob = contexts.remove(id);
-        if(Util.logLevel>4) Util.logDebug("removed empty context: " + ob + ", # of contexts: " + contexts.size());
+	ContextFactory ob = (ContextFactory) contexts.remove(id);
+        if(Util.logLevel>4) Util.logDebug("contextfactory: removed empty context: " + ob.visitor + ", # of contexts: " + contexts.size());
 	invalid=true;
     }
     public void setClassLoader(ClassLoader loader) {
@@ -435,20 +390,5 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     }
     public ClassLoader getClassLoader() {
 	return visitor.getClassLoader();
-    }
-    private boolean isLegacyClient = false;
-    public void setIsLegacyClient(boolean isLegacyClient) {
-	this.isLegacyClient = isLegacyClient; 
-    }
-    public boolean isLegacyClient() {
-	return isLegacyClient;
-    }
-    /**
-     * @deprecated
-     */
-    public void recycleLegacy(String id) throws SecurityException {
-        IContextFactory target = ((ContextFactory)contexts.get(id)).visitor;
-        target.removeOrphaned();
-        target.recycle(this);
     }
 }

@@ -632,7 +632,6 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
 	  char *key;
 	  static const char context[] = "X_JAVABRIDGE_CONTEXT";
 	  static const char redirect[]= "X_JAVABRIDGE_REDIRECT";
-	  static const char kontext[]= "X_JAVABRIDGE_CONTEXT_DEFAULT";
 	  if(!(*ctx)->peer_redirected && !strcasecmp(str, redirect)) {
 		char *key = (char*)PARSER_GET_STRING(tag[1].strings, 0);
 		size_t key_len = tag[1].strings[0].length;
@@ -658,11 +657,8 @@ static void begin_header(parser_tag_t tag[3], parser_cb_t *cb){
 		(*ctx)->servlet_ctx = strdup(key);
 		if(!JG(servlet_ctx)) JG(servlet_ctx)=(*ctx)->servlet_ctx;
 
-	  } else if(!strcasecmp(str, kontext)) {
-		assert(JG(servlet_ctx));
-
-		(*ctx)->must_share = 1;
 	  }
+
 	  break;
 	}
   }
@@ -1149,11 +1145,6 @@ void EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_D) {
   JG(java_socket_inet)=0;
   JG(hosts)=0;
   JG(servlet)=0;
-}
-char *EXT_GLOBAL(getDefaultSessionFactory)(TSRMLS_D) {
-  static const char invalid[] = "0";
-  register char *context = JG(servlet_ctx);
-  return context?context:(char*)invalid;
 }
 
 #ifndef PHP_WRAPPER_H

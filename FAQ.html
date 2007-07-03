@@ -152,6 +152,46 @@ Change the <code>127.0.0.1</code> above to the IP address of the computer runnin
 the Java VM and make sure that the computer cannot be accessed directly from the internet!
 
 <H2>Running Java as a sub component of Apache or IIS</H2>
+<a name="load-balancing">
+<H4>How do I set up a load balancer for the PHP/Java Bridge cluster?</H4>
+<p>
+Set up the PHP/Java Bridge cluster as <a href="#cluster">described below</a>. The example uses two nodes named "carlos" and "diego". The HTTP server front end runs on the web server "timon".
+</p>
+<p>Install Apache 2.2.0 or higher.</p>
+<p>Enable <code>proxy_module</code> and <code>proxy_balancer_module</code>. The following example is for Linux (lines marked with "+" should be added to the <code>conf/httpd.conf</code> file):
+<blockquote>
+<code>
+&nbsp;&nbsp;&nbsp;LoadModule rewrite_module modules/mod_rewrite.so<br>
+&nbsp;+&nbsp;LoadModule proxy_module modules/mod_proxy.so<br>
+&nbsp;+&nbsp;LoadModule proxy_balancer_module modules/mod_proxy_balancer.so<br>
+&nbsp;&nbsp;&nbsp;LoadModule cache_module modules/mod_cache.so<br>
+</code>
+</blockquote>
+</p>
+<p>
+Add the following code to the bottom of your <code>conf/httpd.conf</code> file:
+<blockquote>
+<code>
+ProxyPass /JavaBridge balancer://mycluster maxattempts=2<br>
+&lt;Proxy balancer://mycluster&gt;<br>
+&nbsp;&nbsp;BalancerMember http://diego:8080/JavaBridge<br>
+&nbsp;&nbsp;BalancerMember http://carlos:8080/JavaBridge<br>
+&lt;/Proxy&gt;<br>
+&lt;Location /balancer-manager&gt;<br>
+&nbsp;&nbsp;SetHandler balancer-manager<br>
+&nbsp;&nbsp;Deny from all<br>
+&nbsp;&nbsp;Allow from 127.0.0.1<br>
+&lt;/Location&gt;<br>
+</code>
+</blockquote>
+</p>
+<p>Start the cluster nodes on "carlos" and "diego".</p>
+<p>Browse to <code>http://timon/JavaBridge/</code> (note the trailing slash) and click on the test.php. Click on refresh. Check if both nodes respond.</p>
+<p>Browse to <code>http://timon/JavaBridge/sessionSharing.php</code> and click on refresh. Check the cookie value.</p>
+<p>Browse to <code>http://timon/JavaBridge/numberGuess.jsp</code>. You should get an exception saying that the class does not implement <code>java.io.Serializable</code>.</p>
+<p>Browse to <code>http://timon/balancer-manager/</code>.
+<p>Please see the <code>mod_rewrite</code> documentation for more information how to rewrite incoming URLs.</p>
+</a>
 
 <H4>How do I hard code the path to java into the C extension?</H4>
 <p>With the configure option <code>--with-java=COMPILETIME_JAVA_HOME,RUNTIME_JAVA_HOME</code>. For example:
@@ -281,9 +321,10 @@ JAVA_HOME=/opt/jdk1.6 JAVA_OPTS="-Dphp.java.bridge.default_log_level=5" bin/cata
 </code>
 </blockquote>
 </p>
+<a name="cluster">
 <H4>Ho do I set up a tomcat cluster?</H4>
 <p>
-Download tomcat 5 or higher, a Java JRE 5 or higher and the PHP/Java Bridge 4.1.5 or higher.
+Download tomcat 5 or higher, a Java JRE 5 or higher and the PHP/Java Bridge 4.1.6 or higher.
 </p>
 <p>
 The following example uses two nodes running on two machines called
@@ -352,7 +393,7 @@ apachectl restart
 <blockquote>
 <code>
 &lt;?php<br>
-require_once("http://diego:8080/JavaBridge/java/Java.inc");<br>
+require_once("http://diego:8080/JavaBridge/java/Java.inc"); // change to "java/Java.inc" if you use a load balancer<br>
 $session = java_session();<br>
 if(is_null($session-&gt;get("counter"))) <br>
 &nbsp;&nbsp;$session-&gt;put("counter", new Java("java.lang.Integer", 1));<br>
@@ -369,7 +410,7 @@ $session-&gt;put("counter", $next);<br>
 <blockquote>
 <code>
 &lt;?php<br>
-require_once("http://carlos:8080/JavaBridge/java/Java.inc");<br>
+require_once("http://carlos:8080/JavaBridge/java/Java.inc"); // change to "java/Java.inc" if you use a load balancer<br>
 $session = java_session();<br>
 if(is_null($session-&gt;get("counter"))) <br>
 &nbsp;&nbsp;$session-&gt;put("counter", new Java("java.lang.Integer", 1));<br>
@@ -411,8 +452,9 @@ Start "carlos".
 Use the same browser window and navigate to <code>http://timon/sessionSharing-carlos.php</code> and check if there is still only one cookie with the same attributes as before. The value should be "6"
 </p>
 <p>
-Please see your HTTP server documentation how to set it up as a load balancer. This differs from the architecture described above in that the load balancer forwards the requests to the nodes and the nodes run PHP using the FastCGI mechanism.
+Please see your HTTP server documentation and <a href="#load-balancing">the description above</a> how to set it up as a load balancer. This differs from the architecture described above in that the load balancer forwards the requests to the nodes and the nodes run PHP using the FastCGI mechanism.
 </p>
+</a>
 <a name="global-servlet">
 <H4>I want to use PHP for all tomcat applications. Apache and IIS are not available, but performance is important. How do I install it?</H4>
 </a>

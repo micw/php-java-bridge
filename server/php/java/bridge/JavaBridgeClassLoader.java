@@ -49,7 +49,7 @@ public class JavaBridgeClassLoader extends SimpleJavaBridgeClassLoader {
     }
     /**
      * reset loader to the loader to its initial state, clear the VM cache and set a new ThreadContextClassLoader
-     * This is only called by the API function "java_reset()", which is deprecated.
+     * This is only called by the API function "java_reset()", used only for tests.
      */
     public void reset() {
 	if (checkCl())

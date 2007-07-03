@@ -95,7 +95,7 @@ public class ThreadPool extends BaseThreadPool {
 	    group.unlock(); super.createThread(name); group.lock();
 	}
 	protected void terminate() {
-	    if(Util.logLevel>4) Util.logDebug("term: " + this);
+	    if(Util.logLevel>4) Util.logDebug("term (thread removed from pool): " + this);
 	    ThreadGroup group = appGroup;
 	    if(group!=null) {  
 	        try {
@@ -111,7 +111,7 @@ public class ThreadPool extends BaseThreadPool {
 	}
 	protected void end() {
 	    super.end();
-	    if(Util.logLevel>4) Util.logDebug("end: " + this);
+	    if(Util.logLevel>4) Util.logDebug("end (thread returned to pool): " + this);
 	    ThreadGroup group = appGroup;
 	    if(group!=null)  
 	        try {

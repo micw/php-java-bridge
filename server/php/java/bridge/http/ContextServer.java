@@ -55,23 +55,23 @@ public final class ContextServer implements ContextFactory.ICredentials {
     private static final ThreadPool pool = new ThreadPool("JavaBridgeContextRunner", Integer.parseInt(Util.THREAD_POOL_MAX_SIZE));
     
     private class PipeChannelName extends AbstractChannelName {
-        public PipeChannelName(String name, String kontext, IContextFactory ctx) {super(name, kontext, ctx);}
+        public PipeChannelName(String name, IContextFactory ctx) {super(name,  ctx);}
 
         public boolean startChannel() {
             return ctx.start(this);
         }
         public String toString() {
-            return "Pipe:"+getDefaultName();
+            return "Pipe:"+getName();
         }
     }
     private class SocketChannelName extends AbstractChannelName {
-        public SocketChannelName(String name, String kontext, IContextFactory ctx) {super(name, kontext, ctx);}
+        public SocketChannelName(String name,IContextFactory ctx) {super(name,  ctx);}
         
         public boolean startChannel() {
             return sock.start(this);
         }
         public String toString() {
-            return "Socket:"+getDefaultName();
+            return "Socket:"+getName();
         }
     }
     /**
@@ -119,28 +119,17 @@ public final class ContextServer implements ContextFactory.ICredentials {
 	boolean started = channelName.start();
 	if(!started) throw new IllegalStateException("Pipe- and SocketContextServer not available");
     }
-    
-    /**
-     * Check for a ContextRunner for channelName
-     * @param channelName The ChannelName
-     * @return The ContextRunner or null.
-    * BOGUS: This could be removed if we modify the C code to always pass the header.
-     */
-    public ContextRunner schedule(AbstractChannelName channelName) {
-        return channelName.schedule();
-    }
 
     /**
      * Return the channelName which be passed to the client as X_JAVABRIDGE_REDIRECT
      * @param channelName The name of the channel, see X_JAVABRIDGE_CHANNEL
-     * @param kontext The name of the client's default ContextFactory, see X_JAVABRIDGE_CONTEXT_DEFAULT
      * @param currentCtx The current ContextFactory, see X_JAVABRIDGE_CONTEXT
      * @return The channel name of the Pipe- or SocketContextServer.
      */
-    public AbstractChannelName getFallbackChannelName(String channelName, String kontext, IContextFactory currentCtx) {
-        if(channelName!=null && ctx.isAvailable()) return new PipeChannelName(channelName, kontext, currentCtx);
+    public AbstractChannelName getFallbackChannelName(String channelName, IContextFactory currentCtx) {
+        if(channelName!=null && ctx.isAvailable()) return new PipeChannelName(channelName,  currentCtx);
         SocketContextServer sock=getSocketContextServer(this, pool);
-        return new SocketChannelName(sock.getChannelName(), kontext, currentCtx);
+        return new SocketChannelName(sock.getChannelName(),  currentCtx);
     }
     
     /**
@@ -148,10 +137,9 @@ public final class ContextServer implements ContextFactory.ICredentials {
      * only one SocketContextServer instance for all shared web contexts. The PipeContextServer
      * returns a token which will be used in ContextFactory.get() to check if the web context is allowed to access this contextFactory instance or not.
      * @param channelName The name of the channel, see X_JAVABRIDGE_CHANNEL
-     * @param kontext The name of the client's default ContextFactory, see X_JAVABRIDGE_CONTEXT_DEFAULT
      * @return A security token.
      */
-    public ICredentials getCredentials(String channelName, String kontext) {
+    public ICredentials getCredentials(String channelName) {
         if(channelName!=null && ctx.isAvailable()) return this; // PipeContextServer
         return ContextFactory.NO_CREDENTIALS; // SocketContextServer 
     }

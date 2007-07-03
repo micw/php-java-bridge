@@ -3,6 +3,29 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 4.1.7
+
+* Forcibly switched off java.persistent connections when the C front
+end is used with a J2EE back end. The persistent connection handling
+in java.c was a hack which assumed ownership of the back end. Now that
+we support a J2EE cluster and the Apache load balancer, the C code
+must be rewritten so that it uses the same algorithm as the pure
+PHP/Java Bridge implementation: connect to the servlet to obtain the
+session and the local channel#, then switch to the (persistent-)
+channel.
+
+* Removed all deprecated code from the back end. The back end 
+now throws an exception if it is used with an old C front end.
+
+Version 4.1.6
+
+* Fixed a bug in the pure PHP/Java Bridge implementation, which did
+not handle urls like http://foo.org//bar/baz.php correctly (the apache
+load balancer emits such URL's).
+
+* Apache load balancer supported. See the FAQ entry "How to I enable
+load balancing for the PHP/Java Bridge cluster".
+
 Version 4.1.5
 
 * The simple web server built into the JavaBridge.jar can now handle

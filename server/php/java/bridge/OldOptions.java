@@ -35,7 +35,7 @@ package php.java.bridge;
 public final class OldOptions extends Options {
 
     /**
-     * Force backward compatibility with the deprecated php4 extension.
+     * Force backward compatibility with the old php4 extension.
      * This option can be set by setting the system property php.java.bridge.ext_java_compatibility=true
      * See php.java.bridge.global.properties
      * @return true.

@@ -178,7 +178,7 @@ public class SimpleJavaBridgeClassLoader {
     
     /**
      * Reset the loader.
-     * This is only called by the API function "java_reset()", which is deprecated.
+     * This is only called by the API function "java_reset()", used only for testing.
      */
     protected void doReset() {
 	cl.reset(); 
@@ -189,7 +189,7 @@ public class SimpleJavaBridgeClassLoader {
     }
     /**
      * reset loader to the initial state
-     * This is only called by the API function "java_reset()", which is deprecated.
+     * This is only called by the API function "java_reset()", used only for testing.
      */
     public void reset() {
 	if (checkCl()) doReset();

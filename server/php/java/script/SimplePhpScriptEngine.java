@@ -207,6 +207,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
 
     private void updateGlobalEnvironment(ScriptContext context) {
 	Bindings bindings = context.getBindings(ScriptContext.GLOBAL_SCOPE);
+	if(bindings==null) return;
 	for(Iterator ii = bindings.entrySet().iterator(); ii.hasNext(); ) {
 	    Entry entry = (Entry) ii.next();
 	    Object key = entry.getKey();

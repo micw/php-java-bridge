@@ -51,8 +51,6 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.Map.Entry;
 
-import php.java.bridge.http.IContextFactory;
-
 /**
  * This is the main interface of the PHP/Java Bridge. It
  * contains utility methods which can be used by clients.
@@ -334,7 +332,7 @@ public class JavaBridge implements Runnable {
      * Note: Do not write anything to System.out, this
      * stream is connected with a pipe which waits for the channel name.
      * @param s an array of [socketname, level, logFile]
-     * @deprecated Use Standalone.main()
+     *  Use Standalone.main()
      * @see php.java.bridge.Standalone#main(String[])
      */
     public static void main(String s[]) {
@@ -1401,13 +1399,6 @@ public class JavaBridge implements Runnable {
     }
 
     /**
-     * @deprecated
-     * @see #updateJarLibraryPath(String, String)
-     */
-    public void setJarLibraryPath(String path, String extensionDir) throws IOException {
-        updateJarLibraryPath(path, extensionDir);
-    }
-    /**
      * Append the path to the current library path<br>
      * Examples:<br>
      * setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");<br>
@@ -1420,13 +1411,6 @@ public class JavaBridge implements Runnable {
     	getClassLoader().updateJarLibraryPath(path, extensionDir.intern());
     }
 
-    /**
-     * @deprecated
-     * @see #updateLibraryPath(String, String)
-     */
-    public void setLibraryPath(String rawPath, String extensionDir) {
-        updateLibraryPath(rawPath, extensionDir);
-    }
     /**
      * Update the library path for ECMA dll's
      * @param rawPath A file or url list, usually separated by ';'
@@ -1586,18 +1570,6 @@ public class JavaBridge implements Runnable {
 	if(contextCache!=null) return contextCache;
     	return contextCache = sessionFactory.getContext();
     }
-    /**
-     * Returns the JSR223 context when using persistent connections.
-     * @return The JSR223 context.
-     * @param id The fresh context id, as specified by the jsr223 client, will be aliased to the current id
-     * @return The JSR223 context.
-     * @see #recycle()
-     * @see #getContext()
-     */
-    public Object getContext(String id) {
-	recycleContext(id);
-    	return getContext();
-    }
     private ISession sessionCache = null;
     /**
      * Return a session handle shared among all JavaBridge
@@ -1620,21 +1592,6 @@ public class JavaBridge implements Runnable {
 	  printStackTrace(t);
 	  throw t;
 	}
-    }
-    /**
-     * Return a session handle when using persistent connections.
-     * @throws Exception 
-     * @param id The fresh context id, as specified by the jsr223 client, will be aliased to the current id
-     * @param name The session name, if any
-     * @param clientIsNew true, if the client wants a new session
-     * @param timeout session timeout in seconds
-     * @return The session context.
-     * @see #recycle()
-     * @see #getSession(String, boolean, int)
-     */
-    public ISession getSession(String id, String name, boolean clientIsNew, int timeout) throws Exception {
-	recycleContext(id);
-	return getSession(name, clientIsNew, timeout);
     }
     
     /**
@@ -2002,19 +1959,6 @@ public class JavaBridge implements Runnable {
         constructorCache.clear();
         stringCache.clear();
     }
-    /**
-     * @param id The suggested context id (from the client of the php client).
-     * @see php.java.bridge.http.ContextFactory#recycle(ContextFactory)     
-     * @deprecated Use a C client >= version 4.1.1 instead or use the pure PHP implementation.
-     */    
-    private void recycleContext(String id) {
-      // defaultSessionFactory is shared among *all* clients
-      if(sessionFactory==defaultSessionFactory) return;
-      // sessionFactory != default: must be a ContextFactory
-      IContextFactory current = ((IContextFactory)sessionFactory);
-      current.recycleLegacy(id);
-      Util.logDebug("Deprecated recycleContext called. Please use the pure PHP implementation or upgrade the C client to 4.1.1 or above");
-  }
     
     /**
      * Return a new string using the current file encoding (see java_set_file_encoding()).
