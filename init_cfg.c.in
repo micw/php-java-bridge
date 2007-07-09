@@ -235,7 +235,11 @@ void EXT_GLOBAL (init_cfg) (TSRMLS_D) {
   if(!(EXT_GLOBAL (ini_updated) &U_LIBRARY_PATH)) EXT_GLOBAL(cfg)->ld_library_path=strdup(CFG_LD_LIBRARY_PATH);
   if(!(EXT_GLOBAL (ini_updated) &U_JAVA)) EXT_GLOBAL(cfg)->vm=strdup(CFG_JAVA);
   if(!(EXT_GLOBAL (ini_updated) &U_JAVA_HOME)) EXT_GLOBAL(cfg)->vm_home=strdup(CFG_JAVA_HOME);
+#if defined(ZEND_ENGINE_2)
+  if(!(EXT_GLOBAL (ini_updated) &U_PERSISTENT_CONNECTIONS)) EXT_GLOBAL(cfg)->persistent_connections=1;
+#else  /* PHP4 */
   if(!(EXT_GLOBAL (ini_updated) &U_PERSISTENT_CONNECTIONS)) EXT_GLOBAL(cfg)->persistent_connections=0; //BROKEN
+#endif
   if(!(EXT_GLOBAL (ini_updated) &U_LOGLEVEL)) {
 	EXT_GLOBAL(cfg)->logLevel=strdup(DEFAULT_LEVEL);
 	EXT_GLOBAL(cfg)->logLevel_val=atoi(DEFAULT_LEVEL);

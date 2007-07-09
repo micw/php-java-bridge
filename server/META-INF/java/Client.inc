@@ -556,8 +556,6 @@ class java_Client /* implements IDocHandler */ {
 	return $this->invokeMethod(0, "getContext", array());
   }
   function getSession($args) {
-	$this->protocol->overrideRedirect();
-	$this->protocol->getSession();
 	return $this->invokeMethod(0, "getSession", $args);
   }
   function getServerName() {

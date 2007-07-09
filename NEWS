@@ -3,6 +3,45 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 4.1.8
+
+* The old C extension doesn't exist anymore. 
+
+* For backward compatibility the file "java.c" loads "Java.inc",
+compiles and caches it. Although this temporarily makes the C
+implementation up to 10 times slower (due to a slow XML parser/writer
+on PHP level), it allows us to use certain optimizations on opcode
+level. Furthermore the C-based XML parser and XML writer is still
+there and will be used by the pure PHP/Java Bridge implementation in
+the future.
+
+* Since the C extension doesn't use any object-level API's anymore (at
+the moment it uses only zend_compile() and zend_execute()), it will
+compile against all future versions of the zend engine. Furthermore it
+should now be easy to compile it on operating systems which don't
+support autoconf.
+
+* The user option java.persistent_connections has been
+removed. Persistent connections are always switched on in PHP >= 5.
+
+* The pure PHP/Java Bridge implementation looks for a function
+"java_get_default_channel()". If it exists and returns a string or
+integer, the bridge will use this port number. It is used by Apache or
+IIS to communicate the port number of the Java sub component (if any)
+to PHP. Outside of Apache/IIS this can be used as follows:
+
+  # start java from a service script 
+  java -jar JavaBridge.jar INET_LOCAL:9876 
+
+  # In each PHP script define the default channel# before 
+  # loading Java.inc
+  if(!function_exists("java_get_default_channel")) {
+   function java_get_default_channel() { return 9876; }
+   require_once("java/Java.inc");
+  }
+  echo java("java.lang.System")->getProperties();
+
+
 Version 4.1.7
 
 * Forcibly switched off java.persistent connections when the C front

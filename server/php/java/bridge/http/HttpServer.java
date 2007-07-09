@@ -149,6 +149,8 @@ public abstract class HttpServer implements Runnable {
             } catch (IOException e) {
         	Util.printStackTrace(e);
  	    } finally {
+ 		try {this.req.close(); } catch (IOException e) {/*ignore*/}
+ 		try {this.res.close(); } catch (IOException e) {/*ignore*/}
   		try {this.sock.close();} catch (IOException e) {/*ignore*/}
  	    }
         }

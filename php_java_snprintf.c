@@ -55,7 +55,9 @@
  * <panos@alumni.cs.colorado.edu> for xinetd.
  */
 
-#ifndef ZEND_ENGINE_2
+#include "zend.h"
+#include "init_cfg.h"
+#if !defined(ZEND_ENGINE_2) || EXTENSION == MONO
 
 #include "php_java.h"
 #include "php_java_snprintf.h"

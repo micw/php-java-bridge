@@ -23,18 +23,12 @@ package php.java.script;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import java.util.Arrays;
-import java.util.List;
-
 import javax.script.ScriptEngine;
 
-public class InteractivePhpScriptEngineFactory extends PhpScriptEngineFactory {
+public class InteractivePhpScriptEngineFactory extends InvocablePhpScriptEngineFactory {
 
   public String getLanguageName() {
     return "php-interactive";
-  }
-  public List getNames() {
-    return Arrays.asList(new String[]{getLanguageName()});
   }
 
   public ScriptEngine getScriptEngine() {

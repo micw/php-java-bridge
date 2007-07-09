@@ -38,6 +38,8 @@ import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Iterator;
+import java.util.List;
 
 import php.java.bridge.http.AbstractChannelName;
 import php.java.bridge.http.ContextFactory;
@@ -140,19 +142,12 @@ public class JavaBridgeRunner extends HttpServer {
      * @param res The HttpResponse
      */
     protected void doPut (HttpRequest req, HttpResponse res) throws IOException {
-	String overrideRedirectString = getHeader("X_JAVABRIDGE_REDIRECT", req);
-	short overrideRedirectValue = (short) (overrideRedirectString==null?0:Integer.parseInt(overrideRedirectString));
-    	boolean override_redirect = (3 & overrideRedirectValue) == 1;
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
     	String channel = getHeader("X_JAVABRIDGE_CHANNEL", req);
 	ContextFactory.ICredentials credentials = ctxServer.getCredentials(channel);
 	IContextFactory ctx = getContextFactory(req, res, credentials);
 	
     	JavaBridge bridge = ctx.getBridge();
-	// save old state for override_redirect
-	InputStream bin = bridge.in;
-	OutputStream bout = bridge.out;
-	Request br  = bridge.request;
 
 	bridge.in = sin=req.getInputStream();
 	bridge.out = sout = new ByteArrayOutputStream();
@@ -164,24 +159,17 @@ public class JavaBridgeRunner extends HttpServer {
         	r.handleRequests();
         
         	// redirect and re-open
-        	if(override_redirect) {
-        	    bridge.logDebug("restore state");
-        	    bridge.in = bin; bridge.out = bout; bridge.request = br; 
-        	} else {
         	    if(bridge.logLevel>3) 
         		bridge.logDebug("re-directing to port# "+ channelName);
-        	}
-        	res.setContentLength(sout.size());
+         	res.setContentLength(sout.size());
         	resOut = res.getOutputStream();
         	sout.writeTo(resOut);
-            resOut.close();
-            if(!override_redirect) {
+        	resOut.close();
                 ctxServer.start(channelName);
         	    if(bridge.logLevel>3) 
         		bridge.logDebug("waiting for context: " +ctx.getId());
         	    try { ctx.waitFor(); } catch (InterruptedException e) { Util.printStackTrace(e); }
         	}
-        }
         else {
             ctx.destroy();
         }
@@ -253,7 +241,34 @@ public class JavaBridgeRunner extends HttpServer {
 	    b.setLength(0);
 	}
 	out.println("</table>");
-	out.println("<HR size=\"1\" noshade><h3>PHP/Java Bridge "+(Util.VERSION==null?"":Util.VERSION)+"</h3></body>");
+	out.println("<HR size=\"1\" noshade><h3>Simple JSR 223 enabled web server version 0.0.1</h3>");
+	out.println("<h4>Available script engines</h4><ul>");
+	try {
+		Class c = Class.forName("javax.script.ScriptEngineManager");
+		Object o = c.newInstance();
+		Method e = c.getMethod("getEngineFactories", new Class[] {});
+		List factories = (List) e.invoke(o, new Object[]{});
+		StringBuffer buf = new StringBuffer();
+		for(Iterator ii = factories.iterator(); ii.hasNext(); ) {
+		    o = ii.next();
+		    Method getName = o.getClass().getMethod("getEngineName", new Class[] {});
+		    Method getVersion = o.getClass().getMethod("getEngineVersion", new Class[] {});
+		    Method getNames = o.getClass().getMethod("getNames", new Class[] {});
+		    Method getExtensions = o.getClass().getMethod("getExtensions", new Class[] {});
+		    buf.append("<li>");
+		    buf.append(getName.invoke(o, new Object[] {})); buf.append(", ");
+		    buf.append("ver.: "); buf.append(getVersion.invoke(o, new Object[] {})); buf.append(", ");
+		    buf.append("alias: "); buf.append(getNames.invoke(o, new Object[] {})); buf.append(", ");
+		    buf.append(".ext: "); buf.append(getExtensions.invoke(o, new Object[] {}));
+		    buf.append("</li>");
+		    out.println(buf);
+		    buf.setLength(0);
+		}
+	} catch (Exception e) {
+	  e.printStackTrace();
+	}
+	out.println("</font></ul>");
+	out.println("</body>");
 	out.println("</html>");
 	res.addHeader("Content-Type", "text/html; charset=UTF-8");
 	res.addHeader("Last-Modified", Util.formatDateTime(f.lastModified()));
@@ -286,8 +301,14 @@ public class JavaBridgeRunner extends HttpServer {
 		try {
 		Class c = Class.forName("javax.script.ScriptEngineManager");
 		Object o = c.newInstance();
-		Method e = c.getMethod("getEngineByName", new Class[] {String.class});
+		Method e = c.getMethod("getEngineByExtension", new Class[] {String.class});
+		if("php".equals(ext)) 
+		    ext="phtml"; // we don't want bug reports from "quercus" users
 		Object engine = e.invoke(o, new String[]{ext});
+		if(engine==null) {
+		    e = c.getMethod("getEngineByName", new Class[] {String.class});
+		    engine = e.invoke(o, new String[]{ext});
+		}
 		if(engine==null) return false;
 		ByteArrayOutputStream xout = new ByteArrayOutputStream();
 
@@ -296,7 +317,7 @@ public class JavaBridgeRunner extends HttpServer {
 		Object ctx = getContext.invoke(engine, new Object[] {});
 		Method setWriter = ctx.getClass().getMethod("setWriter", new Class[] {Writer.class});
 		Method setErrorWriter = ctx.getClass().getMethod("setErrorWriter", new Class[] {Writer.class});
-		Writer writer = new java.io.OutputStreamWriter(xout, Util.UTF8);
+		PrintWriter writer = new PrintWriter(new OutputStreamWriter(xout, Util.UTF8));
 		setWriter.invoke(ctx, new Object[] {writer});
 
 		setErrorWriter.invoke(ctx, new Object[] {writer});
@@ -312,12 +333,12 @@ public class JavaBridgeRunner extends HttpServer {
 		}
 		put.invoke(bindings, new Object[] {"REQUEST_URI", buf.toString()});
 		put.invoke(bindings, new Object[] {"SCRIPT_FILENAME", f.getAbsolutePath()});
-		put.invoke(bindings, new Object[] {"PHP_SELF", name});
 
 		FileReader r = null;;
 		try {
 		    eval.invoke(engine, new Object[] {r=new FileReader(f)});
-                } catch (Exception e1) {
+                } catch (Throwable e1) {
+                    e1.printStackTrace(writer);
                     Util.printStackTrace(e1);
                 } finally {	
                     try { eval.invoke(engine, new Object[] {null});} catch (Exception e1) {/*ignore*/};
@@ -326,6 +347,7 @@ public class JavaBridgeRunner extends HttpServer {
                 res.addHeader("Content-Type", "text/html; charset=UTF-8");
                 res.setContentLength(xout.size());
 		OutputStream out = res.getOutputStream();
+		writer.close();
                 xout.writeTo(out);
 		} catch (Exception e) {
 		    Util.printStackTrace(e);

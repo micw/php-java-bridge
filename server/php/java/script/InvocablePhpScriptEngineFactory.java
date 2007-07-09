@@ -24,6 +24,8 @@ package php.java.script;
  */
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 import javax.script.ScriptEngine;
@@ -36,6 +38,11 @@ public class InvocablePhpScriptEngineFactory extends PhpScriptEngineFactory {
   public List getNames() {
     return Arrays.asList(new String[]{getLanguageName()});
   }
+
+  private List ext = Collections.unmodifiableList(new LinkedList());
+  public List getExtensions() {
+      return ext;
+    }
 
   public ScriptEngine getScriptEngine() {
       return new InvocablePhpScriptEngine(this);

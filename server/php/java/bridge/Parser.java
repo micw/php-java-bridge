@@ -63,7 +63,7 @@ class Parser {
 
 		// OPTIONS
 	    default:
-	    	if(ch==127) { // extended header
+	    	if(ch==0177) { // extended header
 	    	    ch=buf[++c];
 	    	    bridge.options = getOptions();
 	    	} else {
@@ -217,8 +217,9 @@ class Parser {
 			type = KEY;
 		    }
 		    break;
-		case 077: if(in_dquote) {APPEND(ch); break;}
+		case 0177: if(in_dquote) {APPEND(ch); break;}
 		    // the header used to be binary encoded
+		    if((0xFF&(buf[1]))!=0xFF) {c++; break;}
 		    int len =(0xFF&buf[c+2]) | (0xFF00&(buf[c+3]<<8));
 		    String newContext = new String(buf, c+4, c+len,  Util.ASCII);
 		    IContextFactory factory = (IContextFactory)bridge.getFactory();

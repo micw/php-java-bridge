@@ -124,6 +124,13 @@ public final class Util {
 		}
 	}
     }
+    
+    /** The default HTTP port for management clients */
+    public static final int HTTP_PORT_BASE = 8080;
+    /** The default Port for Mono and .NET clients */
+    public static final int MONO_TCP_PORT_BASE = 9167;
+    /** The default port for Java clients */
+    public static final int JAVA_TCP_PORT_BASE = 9267;
 
     /**
      * The default CGI locations: <code>"/usr/bin/php-cgi"</code>, <code>"c:/php/php-cgi.exe</code>
@@ -795,8 +802,9 @@ public final class Util {
 	    if(args==null) args=new String[]{null};
 	    String phpExec = args[0];
 	    String[] cgiBinary = null;
-	    if(!preferSystemPhp) {
-		if(phpExec != null && (cgiBinary=checkCgiBinary(new StringBuffer(phpExec))) != null) php = cgiBinary;
+	    if(phpExec != null && PHP_EXEC==null) {
+	      if(!preferSystemPhp) {
+		if((cgiBinary=checkCgiBinary(new StringBuffer(phpExec))) != null) php = cgiBinary;
 		/*
 		 * ... resolve it ..
 		 */            
@@ -806,7 +814,7 @@ public final class Util {
 			if(location.exists()) {php[0] = location.getAbsolutePath(); break;}
 		    }
 		}
-	    } else {
+	      } else {
 		/*
 		 * ... resolve it ..
 		 */            
@@ -815,21 +823,24 @@ public final class Util {
 			location = new File(DEFAULT_CGI_LOCATIONS[i]);
 			if(location.exists()) {
 			    php[0] = location.getAbsolutePath(); 
-			    homeDir = HOME_DIR; // do not read ./php.ini
 			    break;
 			}
 		    }
 		}
-		if(php[0]==null && phpExec != null && (cgiBinary=checkCgiBinary(new StringBuffer(phpExec))) != null) php = cgiBinary;
+		if(php[0]==null &&  (cgiBinary=checkCgiBinary(new StringBuffer(phpExec))) != null) php = cgiBinary;
+	      }
 	    }
             if(php[0]==null && tryOtherLocations) php[0]=PHP_EXEC;
-            if(php[0]==null && args[0]!=null && (new File(args[0]).exists())) php[0]=args[0];
+            if(php[0]==null && phpExec!=null && (new File(phpExec).exists())) php[0]=phpExec;
             if(php[0]==null) php[0]="php-cgi";
             if(Util.logLevel>3) Util.logDebug("Using php binary: " + java.util.Arrays.asList(php));
 
             /*
              * ... and construct a new argument array for this specific process.
              */
+            if(cgiBinary ==null)
+        	homeDir = HOME_DIR; // do not read ./php.ini
+            
             if(homeDir!=null &&!homeDir.exists()) homeDir = null;
 	    String[] s = getArgumentArray(php, args);
 	    

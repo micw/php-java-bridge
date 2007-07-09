@@ -145,7 +145,7 @@ public class PhpCGIServlet extends FastCGIServlet {
 			buf.append("h:");
 		    else
 			buf.append("s:");
-		    buf.append(Util.getHostAddress());
+		    buf.append("127.0.0.1");
 		    buf.append(":");
 		    buf.append(this.env.get("SERVER_PORT")); 
 		    buf.append('/');

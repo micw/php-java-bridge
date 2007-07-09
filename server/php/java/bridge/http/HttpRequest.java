@@ -24,6 +24,7 @@ package php.java.bridge.http;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -54,7 +55,7 @@ public class HttpRequest {
      * @param inputStream The InputStream
      */
     public HttpRequest(InputStream inputStream) {
-	in = new HttpInputStream(inputStream);
+	in = new HttpInputStream(new BufferedInputStream(inputStream));
 	headers = new HashMap();
     }
 
@@ -165,5 +166,13 @@ public class HttpRequest {
     public void setContentLength(int contentLength) {
 	this.count = 0;
 	this.contentLength = contentLength;
+    }
+    /** Close the request */
+    public void close() throws IOException {
+	try {
+	    if(in!=null) in.close();
+	} finally {
+	    in = null;
+	}
     }
 }

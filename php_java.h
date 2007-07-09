@@ -258,6 +258,7 @@ extern void EXT_GLOBAL(clone_cfg)(TSRMLS_D);
 extern void EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_D);
 
 extern char* EXT_GLOBAL(test_server)(int *socket, short *is_local, struct sockaddr*saddr TSRMLS_DC);
+extern short EXT_GLOBAL(can_fork)(TSRMLS_D);
 
 /* returns the servlet context or null */
 extern char *EXT_GLOBAL(get_servlet_context)(TSRMLS_D);

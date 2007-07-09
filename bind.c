@@ -436,6 +436,10 @@ static short can_fork(TSRMLS_D) {
   return EXT_GLOBAL(cfg)->can_fork && !(EXT_GLOBAL(option_set_by_user) (U_SERVLET, JG(ini_user)));
 }
 
+short EXT_GLOBAL(can_fork)(TSRMLS_D) {
+  return can_fork(TSRMLS_C);
+}
+
 /*
  * Test for a running server.  Return the server name and the socket
  * if _socket!=NULL. If all ckecks fail a local backend is started.

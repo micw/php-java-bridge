@@ -1,0 +1,11 @@
+<?php
+
+try {
+    $s = new Java("java.lang.String", "Hello World!");
+    echo $s->substring(0, 5);   echo "<br>\n";
+    echo $s->substring(6);      echo "<br>\n";
+} catch (Exception $e) {
+  echo $e;                      echo "<br>\n";
+}
+
+?>

@@ -24,10 +24,10 @@
 #define N_SENV N_MONO_SENV
 #define EXT mono
 #define EXTC Mono
-
+#endif
+// disable unix domain sockets until we add support callback to java.c
 #ifndef CFG_JAVA_SOCKET_INET
 # define CFG_JAVA_SOCKET_INET
-#endif
 #endif
 
 #define EXT_CONCAT(prefix, ext, sep, fkt) prefix##ext##sep##fkt

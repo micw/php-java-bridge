@@ -33,8 +33,9 @@ import php.java.bridge.Util;
 
 public class PhpScriptEngineFactory implements ScriptEngineFactory {
 
+  private static final String ENGINE_NAME=Util.EXTENSION_NAME + " php script engine for Java";
   public String getEngineName() {
-    return Util.EXTENSION_NAME;
+    return ENGINE_NAME;
   }
 
   public String getEngineVersion() {
@@ -46,7 +47,7 @@ public class PhpScriptEngineFactory implements ScriptEngineFactory {
   }
 
   public String getLanguageVersion() {
-    return "5";
+    return "6";
   }
 
   public List getExtensions() {
@@ -56,9 +57,10 @@ public class PhpScriptEngineFactory implements ScriptEngineFactory {
   public List getMimeTypes() {
     return Arrays.asList(new String[]{});
   }
-
+  List names;
   public List getNames() {
-    return Arrays.asList(new String[]{getLanguageName()});
+     if(names==null) names = Arrays.asList(new String[]{getLanguageName(), "phtml", "php4", "php5", "php6"});
+    return names;
   }
 
   public ScriptEngine getScriptEngine() {

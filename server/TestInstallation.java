@@ -7,12 +7,22 @@ import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.Vector;
-import java.util.Arrays;
+
+import javax.swing.JEditorPane;
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLFrameHyperlinkEvent;
 
 public class TestInstallation implements Runnable {
     // See Util.DEFAULT_CGI_LOCATIONS
@@ -27,7 +37,62 @@ public class TestInstallation implements Runnable {
     TestInstallation(Process proc) {
 	this.proc = proc;
     }
+    public static class SimpleBrowser implements Runnable,  HyperlinkListener {
+	private String port;
+	public SimpleBrowser(String port) {
+	    this.port = port;
+	}
+	public void hyperlinkUpdate(HyperlinkEvent e) {
+	    if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+		JEditorPane pane = (JEditorPane) e.getSource();
+		if (e instanceof HTMLFrameHyperlinkEvent) {
+		    HTMLFrameHyperlinkEvent  evt = (HTMLFrameHyperlinkEvent)e;
+		    HTMLDocument doc = (HTMLDocument)pane.getDocument();
+		    doc.processHTMLFrameHyperlinkEvent(evt);
+		} else {
+		    try {
+			URL url = e.getURL();
+			if(url.getFile().endsWith("/"))
+			    pane.setPage(e.getURL());
+			else {
+			    JFrame frame = new JFrame(url.toExternalForm());
+			    JEditorPane p = null;
+			    frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+			    p = new JEditorPane(url);
+			    p.setEditable(false);
+			    p.addHyperlinkListener(this);
+			    JScrollPane scroll = new JScrollPane(p);
+			    frame.getContentPane().add(scroll);
+			    frame.setSize(800,600);
+			    frame.setVisible(true);
+			}	        	  
+		    } catch (Throwable t) {
+			t.printStackTrace();
+		    }
+		}
+	    }
+	}
+	   
+	public void run() {
+	    try {
+		URL url = new URL("http://127.0.0.1:"+port+"/server/tests.php5/");
+	    	JEditorPane p = null;
+	    	JFrame frame = new JFrame(url.toExternalForm());
+	    	frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		p = new JEditorPane(url);
+		p.setEditable(false);
+		p.addHyperlinkListener(this);
+		JScrollPane scroll = new JScrollPane(p);
+		frame.getContentPane().add(scroll);
+		frame.setSize(800,600);
+	 	 
+		frame.setVisible(true);
+	    } catch (IOException e) {
+		System.exit(0);
+	    }
+	}
 
+    }
     private static String findSocket() {
 	for(int i=8080; i<8080+200; i++) {
 	    try {
@@ -138,7 +203,6 @@ public class TestInstallation implements Runnable {
 	while((c=i.read())!=-1) System.out.write(c);
 	System.out.flush();
 	System.err.flush();
-	System.exit(0);
     }
     public void run() {
 	try {
@@ -148,7 +212,33 @@ public class TestInstallation implements Runnable {
 	    e.printStackTrace();
 	}
     }
-    public static void main(String[] args) {
+    /* Don't use Util or DynamicJavaBridgeClassLoader at this stage! */
+    private static final boolean checkGNUVM() {
+	try {
+	    return "libgcj".equals(System.getProperty("gnu.classpath.vm.shortname"));
+	} catch (Throwable t) {
+	    return false;
+	}
+    }
+   public static void main(String[] args) {
+	try { // Hack for Unix: execute the standalone container using the default SUN VM
+	    if(args.length==0 && (new File("/usr/java/default/bin/java")).exists() && checkGNUVM() && (System.getProperty("php.java.bridge.exec_sun_vm", "true").equals("true"))) {
+		Process p = Runtime.getRuntime().exec(new String[] {"/usr/java/default/bin/java", "-Dphp.java.bridge.exec_sun_vm=false", "-classpath", System.getProperty("java.class.path"), "TestInstallation"});
+		(new Thread() { 
+		    InputStream in;
+		    public Thread init(InputStream in) { this.in = in; return this; }
+		    public void run() { int c; try { while((c=in.read())!=-1) System.out.write(c); } catch (IOException e) { e.printStackTrace(); } }
+		}).init(p.getInputStream()).start();
+		(new Thread() { 
+		    InputStream in;
+		    public Thread init(InputStream in) { this.in = in; return this; }
+		    public void run() { int c; try { while((c=in.read())!=-1) System.err.write(c); } catch (IOException e) { e.printStackTrace(); } }
+		}).init(p.getErrorStream()).start();
+		
+		if(p != null) System.exit(p.waitFor());
+	    }
+	} catch (Throwable t) {/*ignore*/}
+
 	try {
 	    start(args);
 	} catch (Throwable t) {
@@ -156,7 +246,6 @@ public class TestInstallation implements Runnable {
 	    if(runner!=null) runner.destroy();
 	    System.exit(1);
 	}
-	System.exit(0);
     }
     public static void start(String[] args) throws Exception {
 	String socket = findSocket();
@@ -215,7 +304,7 @@ public class TestInstallation implements Runnable {
 	}
 		
 	// start front end
-	String[] cmd = new String[] {php,  "-d","allow_url_include=On",String.valueOf(new File(base,"test.php"))};
+	String[] cmd = new String[] {php, "-n", "-d","allow_url_include=On",String.valueOf(new File(base,"test.php"))};
 	System.err.println("Invoking php: " + Arrays.asList(cmd));
 	HashMap env = (HashMap) processEnvironment.clone();
 	env.put("SERVER_PORT", socket);
@@ -234,12 +323,17 @@ public class TestInstallation implements Runnable {
 	i.close();
 	p.getOutputStream().close();
 	o.close();
-	p.destroy(); if(runner!=null) runner.destroy();
+
+	//p.destroy(); if(runner!=null) runner.destroy();
 	
 	System.out.flush();
 	System.err.flush();
 	System.out.println("\nNow check the " + new File(base, "RESULT.html."));
-	System.out.println("Read the INSTALL.J2EE and/or INSTALL.J2SE document.");
+	System.out.println("Read the INSTALL.J2EE and/or INSTALL.J2SE documents.");
+
+	try {
+	    SwingUtilities.invokeAndWait(new SimpleBrowser(socket));
+	} catch (Throwable err) {System.exit(0);}
     }
     private static void extractFile(InputStream in, File target) throws IOException {
 	byte[] buf = new byte[8192];

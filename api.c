@@ -38,6 +38,10 @@
   obligated to do so.  If you do not wish to do so, delete this
   exception statement from your version. */
 
+#include "zend.h"
+#include "init_cfg.h"
+#if !defined(ZEND_ENGINE_2) || EXTENSION == MONO
+
 #include "api.h"
 
 /* return zval_null and don't try again using a new connection */
@@ -795,3 +799,4 @@ short EXT_GLOBAL(construct)(INTERNAL_FUNCTION_PARAMETERS)
   
   return rc;
 }
+#endif

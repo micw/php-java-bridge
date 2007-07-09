@@ -38,6 +38,10 @@
   obligated to do so.  If you do not wish to do so, delete this
   exception statement from your version. */
 
+#include "zend.h"
+#include "init_cfg.h"
+#if !defined(ZEND_ENGINE_2) || EXTENSION == MONO
+
 #include "php_java.h"
 
 /* execve, mkfifo */
@@ -980,7 +984,7 @@ static proxyenv*create_connection(char *context_string TSRMLS_DC) {
   return jenv;
 }
 static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {
-  char *servlet_context_string = 0;
+  char *host_string = 0;
   proxyenv *jenv =JG(jenv);
   if(jenv) return jenv;
 
@@ -989,17 +993,15 @@ static proxyenv *try_connect_to_server(short bail TSRMLS_DC) {
   if(!EXT_GLOBAL(cfg)->is_cgi_servlet || EXT_GLOBAL(cfg)->is_fcgi_servlet) {
 	EXT_GLOBAL(override_ini_for_redirect)(TSRMLS_C);
   }
-  servlet_context_string = EXT_GLOBAL (get_servlet_context) (TSRMLS_C);
-  jenv = recycle_connection(servlet_context_string TSRMLS_CC);
-  if(jenv) return JG(jenv) = jenv;
-  
+  host_string = EXT_GLOBAL (get_servlet_context) (TSRMLS_C);
+
   if(JG(is_closed)) {
 	php_error(E_ERROR, "php_mod_"/**/EXT_NAME()/**/"(%d): Could not connect to server: Session is closed. -- This usually means that you have tried to access the server in your class' __destruct() method.",51);
 	EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);
 	return 0;
   }
   
-  jenv = create_connection(servlet_context_string TSRMLS_CC);
+  jenv = create_connection(host_string TSRMLS_CC);
   if(!jenv) {
 	if (bail) 
 	  EXT_GLOBAL(sys_error)("Could not connect to server. Have you started the "/**/EXT_NAME()/**/" back-end (either a servlet engine, an application server, JavaBridge.jar or MonoBridge.exe) and set the "/**/EXT_NAME()/**/".socketname or "/**/EXT_NAME()/**/".hosts option?", 52);
@@ -1109,14 +1111,6 @@ const char *EXT_GLOBAL(get_channel) (proxyenv*env) {
   if(channel) return channel;
   return empty;
 }
-void EXT_GLOBAL(clone_cfg)(TSRMLS_D) {
-  JG(ini_user)=EXT_GLOBAL(ini_user);
-  JG(java_socket_inet) = EXT_GLOBAL(cfg)->java_socket_inet;
-  if(JG(hosts)) free(JG(hosts));
-  if(!(JG(hosts)=strdup(EXT_GLOBAL(cfg)->hosts))) exit(9);
-  if(JG(servlet)) free(JG(servlet));
-  if(!(JG(servlet)=strdup(EXT_GLOBAL(cfg)->servlet))) exit(9);
-}
 void EXT_GLOBAL(passivate_connection)(proxyenv *env TSRMLS_DC) {
   (*env)->cfg.ini_user=JG(ini_user);
   (*env)->cfg.java_socket_inet=JG(java_socket_inet);
@@ -1138,15 +1132,9 @@ void EXT_GLOBAL(activate_connection)(proxyenv *env TSRMLS_DC) {
   if(JG(servlet)) free(JG(servlet)); 
   if(!(JG(servlet)=strdup((*env)->cfg.servlet))) exit(9);
 }
-void EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_D) {
-  if(JG(hosts)) free(JG(hosts));
-  if(JG(servlet)) free(JG(servlet));
-  JG(ini_user)=0;
-  JG(java_socket_inet)=0;
-  JG(hosts)=0;
-  JG(servlet)=0;
-}
 
 #ifndef PHP_WRAPPER_H
 #error must include php_wrapper.h
+#endif
+
 #endif

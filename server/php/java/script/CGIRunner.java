@@ -122,21 +122,23 @@ public abstract class CGIRunner extends Thread {
 	    }
 	}
     }
+    private Writer writer;
     protected void doRun() throws IOException {
-	int n;    
         Process proc = ProcessWithErrorHandler.start(new String[] {null, "-d", "allow_url_include=On"}, null, env, true, err);
 
 	InputStream natIn = null;
-	Writer writer = null;
 	try {
 	natIn = proc.getInputStream();
 	OutputStream natOut = proc.getOutputStream();
-	char[] cbuf = new char[Util.BUF_SIZE];
 	writer = new BufferedWriter(new OutputStreamWriter(natOut));
-	while((n = reader.read(cbuf))!=-1) {
-	    writer.write(cbuf, 0, n);
-	}
-	writer.close();
+	(new Thread() { // write the script asynchronously to avoid deadlock
+	    public void doRun() throws IOException {
+		char[] cbuf = new char[Util.BUF_SIZE]; int n;    
+		while((n = reader.read(cbuf))!=-1) writer.write(cbuf, 0, n);
+		try { writer.close(); } catch (IOException ex) {/*ignore*/}
+	    }
+	    public void run() { try {doRun(); } catch (IOException e) {Util.printStackTrace(e); }}
+	}).start();
 	byte[] buf = new byte[Util.BUF_SIZE];
 	Util.parseBody(buf, natIn, out, headerParser);
 	try {

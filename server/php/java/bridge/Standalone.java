@@ -25,6 +25,7 @@ package php.java.bridge;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.ServerSocket;
 
 import javax.swing.JOptionPane;
 
@@ -134,6 +135,21 @@ public class Standalone {
 	}
 	usage();
     }
+    private static boolean testPort(int port) {
+	try {
+	    ServerSocket sock = new ServerSocket(port);
+	    sock.close();
+	    return true;
+	} catch (IOException e) {/*ignore*/}
+	return false;
+    }
+    private static int findFreePort(int start) {
+	for (int port = start; port < start+100; port++) {
+	    if(testPort(port)) return port;
+	}
+	return start;
+   }
+
     /**
      * Global init. Redirects System.out and System.err to the server
      * log file(s) or to System.err and creates and opens the
@@ -162,9 +178,14 @@ public class Standalone {
 	    }
 	    if(s.length==0) {
 		try {
+		    int freeJavaPort = findFreePort(Util.JAVA_TCP_PORT_BASE);
+		    int freeMonoPort = findFreePort(Util.MONO_TCP_PORT_BASE);
+		    int freeHttpPort = findFreePort(Util.HTTP_PORT_BASE);
 		    Object result = JOptionPane. showInputDialog(null,
 			    "Start a socket listener on port", "Starting the PHP/Java Bridge ...", JOptionPane.QUESTION_MESSAGE, null,
-		            new String[] {"LOCAL:/var/run/.php-java-bridge_socket", "INET_LOCAL:9267","INET:9267","INET_LOCAL:9167","INET:9167","SERVLET_LOCAL:8080","SERVLET:8080"}, "SERVLET_LOCAL:8080");
+		            new String[] {"LOCAL:/var/run/.php-java-bridge_socket", 
+			    "INET_LOCAL:"+freeJavaPort,"INET:"+freeJavaPort,"INET_LOCAL:"+freeMonoPort,"INET:"+freeMonoPort,
+			    "SERVLET_LOCAL:"+freeHttpPort,"SERVLET:"+freeHttpPort}, "SERVLET_LOCAL:"+freeHttpPort);
 		       if(result==null) System.exit(0);
 		      sockname  = result.toString();
 		} catch (Throwable t) {/*ignore*/}

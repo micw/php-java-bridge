@@ -38,6 +38,10 @@
   obligated to do so.  If you do not wish to do so, delete this
   exception statement from your version. */
 
+#include "zend.h"
+#include "init_cfg.h"
+#if !defined(ZEND_ENGINE_2) || EXTENSION == MONO
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -123,3 +127,4 @@ int EXT_GLOBAL(sfclose)(SFILE *f) {
   free(f);
   return !success ? EOF : 0;
 }
+#endif

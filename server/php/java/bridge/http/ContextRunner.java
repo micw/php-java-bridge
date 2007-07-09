@@ -77,7 +77,9 @@ public class ContextRunner implements Runnable {
 	    buf = new byte[2];
 	    in.read(buf);
 	    val = (0xFF&buf[0]) | (0xFF00&(buf[1]<<8));
-	}
+	} else 
+	    throw new IllegalStateException("context length");
+	
 	return val;
     }
     private String readString(int length) throws IOException {
@@ -107,7 +109,7 @@ public class ContextRunner implements Runnable {
 	in = channel.getInputStream();
 
 	int c = in.read();
-	if(c!=077) {
+	if(c!=0177) {
 	    if(c==-1) return false; // client has closed the connection
 	    
 	    try {out.write(0); }catch(IOException e){}

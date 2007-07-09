@@ -24,6 +24,7 @@ package php.java.bridge.http;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -50,7 +51,7 @@ public class HttpResponse {
      * @param outputStream The OutputStream.
      */
     public HttpResponse(OutputStream outputStream) {
-	this.outputStream = outputStream;
+	this.outputStream = new BufferedOutputStream(outputStream);
 	this.headers = new HashMap();
 	this.headersWritten = false;
     }
@@ -123,4 +124,12 @@ public class HttpResponse {
 	this.headersWritten = true;
     }
 
+    /** Close the response */
+    public void close() throws IOException {
+	try {
+	    if(outputStream!=null) outputStream.close();
+	} finally {
+	    outputStream = null;
+	}
+    }
 }

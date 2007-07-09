@@ -38,6 +38,10 @@
   obligated to do so.  If you do not wish to do so, delete this
   exception statement from your version. */  
 
+#include "zend.h"
+#include "init_cfg.h"
+#if !defined(ZEND_ENGINE_2) || EXTENSION == MONO
+
 #include "php_java.h"
 
 #include <stdarg.h>
@@ -85,7 +89,7 @@ static char*get_context(proxyenv *env, char context[CONTEXT_LEN_MAX], short*cont
 	EXT_GLOBAL(snprintf) (context, 
 						  CONTEXT_LEN_MAX, 
 						  "%c%c%c%c%s", 
-						  077, 0xFF,0xFF&l,0xFF&(l>>8),
+						  0177, 0xFF,0xFF&l,0xFF&(l>>8),
 						  ctx);
   return context;
 }
@@ -780,4 +784,6 @@ proxyenv *EXT_GLOBAL(createEnvironment) (short (*handle_request)(proxyenv *env),
 	
 #ifndef PHP_WRAPPER_H
 #error must include php_wrapper.h
+#endif
+
 #endif

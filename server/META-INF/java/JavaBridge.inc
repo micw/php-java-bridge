@@ -38,39 +38,7 @@
   obligated to do so.  If you do not wish to do so, delete this
   exception statement from your version. */
 
-if(extension_loaded('java') && !function_exists("java_set_base")) {
-  function java_set_base() {
-	$ar = get_required_files();
-	$arLen = sizeof($ar);
-	if($arLen>0) {
-	  $java_base = dirname($ar[$arLen-1]);
-	  $url = parse_url($java_base);
-	  if(isset($url["scheme"]) && ($url["scheme"]=="http")) {
-		$host = $url["host"];
-		$port = $url["port"];
-		$path = $url["path"];
-		$dir = dirname($path);
-		$_SERVER['X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT']="h:${host}:${port}/${dir}/JavaBridge.phpjavabridge";
-	  }
-	}
-  }
-  if(!array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER))
-	java_set_base();
-
-  /*
-   * java.so or php_java.dll < 4.1.1 don't export a Java() function.
-   * Provide one.
-   */
-  if(!function_exists("Java")) {
-	function Java($name) { 
-	  static $classMap = array();
-	  if(array_key_exists($name, $classMap)) return $classMap[$name];
-	  return $classMap[$name]=new JavaClass(array($name), false);
-	}
-  }
- }
-
-if(!extension_loaded('java') && !function_exists("java_get_base")) {
+if(!function_exists("java_get_base")) {
   $version = phpversion();
   if ((version_compare("5.1.2", $version, ">"))) {
 	$msg = "<br><strong>PHP $version too old.</strong><br>\nFor PHP versions < 5.1.4 install the java.so or php_java.dll from the php-java-bridge-legacy download.<br>\nOr set the path to the PHP executable, see php_exec in the WEB-INF/web.xml";

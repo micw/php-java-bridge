@@ -1,0 +1,13 @@
+This directory contains JSR 223 tests for the pure Java PHP
+implementation "quercus". To run them start the PHP/Java Bridge with
+the command:
+
+  java -jar JavaBridge.jar SERVLET_LOCAL:8090 3
+
+and browse to 
+
+  http://localhost:8090/tests.php5/
+
+
+These files need a Java library called "quercus" which can be obtained
+from www.caucho.com.

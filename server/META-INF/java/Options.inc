@@ -56,20 +56,23 @@ define ("JAVA_PEAR_VERSION", "4.1.0");
 // Deploy JavaBridge.war and re-start the servlet engine or the
 // application server. The following settings direct PHP to the 
 // java virtual machine:
-
-if(!defineHostFromInitialQuery($JAVA_BASE)) {
-  define("JAVA_HOSTS", "127.0.0.1:8080"); // host1:port1;host2:port2;...
-  define("JAVA_SERVLET", "On"); // On ;; On or User
+if(!defined("JAVA_HOSTS")) {
+  if(!defineHostFromInitialQuery($JAVA_BASE)) {
+	define("JAVA_HOSTS", "127.0.0.1:8080"); // host1:port1;host2:port2;...
+	define("JAVA_SERVLET", "On"); // On ;; On or User
+  }
+ } else {
+  if(!defined("JAVA_SERVLET")) 
+	define("JAVA_SERVLET", "On"); // On ;; On or User
  }
-
-
 // The request log level between 0 (log off) and 4 (log debug). The
 // default request log level is initialized with the value from to the
 // Java system property "php.java.bridge.default_log_level".  The
 // servlet's init-param: servlet_log_level (see WEB-INF/web.xml)
 // overrides this value. The default level is 2.
 
-define ("JAVA_LOG_LEVEL", null); // integer between 0 and 4
+if(!defined("JAVA_LOG_LEVEL"))
+  define ("JAVA_LOG_LEVEL", null); // integer between 0 and 4
 
 
 // May we use named pipes instead of local TCP sockets?  Set this to

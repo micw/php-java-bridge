@@ -1,3 +1,83 @@
+2007-07-07  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/servlet/PhpCGIServlet.java
+	(setCGIEnvironment): Always use the local address. A load balancer
+	may return the wrong "official" address.
+	
+	* server/META-INF/java/Protocol.inc
+	(open,close): Do not use persistent connections to the J2EE back
+	end. It may not be able to handle hundreds of connections from PHP
+	clients very well. Do keep persistent connections to the
+	ContextRunners, though.
+	(parseHeaders): connection-close detection is now obsolete.
+	
+	* php_java_snprintf.c, php_java_strtod.c, api.c, client.c, sio.c,
+	java_bridge.c, secure_protocol.c: Disabled, only used in PHP 4
+
+	* java.c: Rewritten. It now simply compiles and caches Java.inc.
+
+	* java_php4.c: New from java.c, for PHP 4.
+
+	* config.m4: Add java_inc.c
+
+	* init_cfg.c.in: Always enable persistent connections in PHP >= 5,
+	disable persistent connections in PHP 4
+
+	* init_cfg.h.in: Disable "unix domain" socket support.
+
+	* Makefile.frag: Create java_inc.c from Java.inc.
+	
+	* server/META-INF/java/Client.inc (getSession): overrideRedirect is
+	obsolete.
+	
+	* server/META-INF/java/JavaBridge.inc: Don't check for ourself:
+	the pure PHP PHP/Java Bridge implementation *is* the java
+	extension.
+
+	* server/META-INF/java/Protocol.inc
+	(overrideRedirect): removed
+	(getSession): removed
+	(createSimpleHandler): new method.
+	(createHandler): new method: check if global func
+	"java_get_default_channel()" exists and create a simple handler
+	with a local channel. Used by Apache/IIS.
+
+	* server/php/java/script/CGIRunner.java
+	(doRun): Write asynchronously to avoid deadlock.
+	
+	* tests.quercus/simple.php, tests.quercus/README: New files
+	
+	* server/TestInstallation.java (SimpleBrowser): Start a browser at the end of the test.
+	
+	* server/javax/script/ScriptEngineManager.java
+	(getEngineByExtention): Removed
+	(getEngineByExtension): New function.
+	(getEngineFactories): According to spec.
+	
+	* server/php/java/bridge/JavaBridgeRunner.java
+	(showDirectory): display available script engines
+
+	* server/php/java/bridge/http/HttpRequest.java
+	(HttpRequest): Use a buffered stream
+	(close): New procedure
+
+	* server/php/java/bridge/http/HttpResponse.java
+	(HttpResponse): use a buffered stream
+	(close): New procedure
+	
+	* server/php/java/bridge/http/HttpServer.java
+	(run): shut down
+	
+	* server/php/java/script/InvocablePhpScriptEngineFactory.java
+	(getExtensions): Doesn't support file extensions
+	
+	* server/php/java/script/InteractivePhpScriptEngineFactory.java
+	(InteractivePhpScriptEngineFactory): Doesn't support file extensions
+	(getNames): Obsolete
+	
+	
+	* VERSION, php-java-bridge.spec: Version 4.1.8
+
 2007-07-01  Jost Boekemeier  <jostb@intern>
 	
 	* server/php/java/bridge/http/AbstractChannelName.java,server/php/java/bridge/http/ContextFactory.java,server/php/java/bridge/http/ContextRunner.java,server/php/java/bridge/http/ContextServer.java,server/php/java/bridge/http/IContextFactory.java,server/php/java/bridge/http/SimpleContextFactory.java,server/php/java/bridge/JavaBridgeClassLoader.java,server/php/java/bridge/JavaBridge.java,server/php/java/bridge/JavaBridgeRunner.java,server/php/java/bridge/Response.java,server/php/java/bridge/SimpleJavaBridgeClassLoader.java,server/php/java/bridge/ThreadPool.java,server/php/java/script/SimplePhpScriptEngine.java,server/php/java/servlet/Context.java,server/php/java/servlet/HttpSessionFacade.java,server/php/java/servlet/PhpJavaServlet.java,server/php/java/servlet/ServletContextFactory.java:

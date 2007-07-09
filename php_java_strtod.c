@@ -89,8 +89,11 @@
  *	directly -- and assumed always to succeed.
  */
 
+#include "zend.h"
+#include "init_cfg.h"
+#if !defined(ZEND_ENGINE_2) || EXTENSION == MONO
+
 #include "php_java.h"
-#ifndef ZEND_ENGINE_2
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-PHP/Java Bridge protocol version 4.0
+PHP/Java Bridge protocol version 4.2
 
 Requests are marked with "->", responses with "<-".  The server
 continues to process requests until EOF. Only the first character is
@@ -212,8 +212,7 @@ After the F=... reply appeared, it is save to switch to a secondary
 
 NOTES:
 
-If the first byte is 0x80 (i.e. it is neither a space or a "<"), the
-following byte has a special meaning:
+If the first byte is 0177, the following byte has a special meaning:
 
 Bit 1 0
 -------
@@ -234,6 +233,16 @@ Bit 5: always 0
 Bit 6: set to 1 if bit[0,1] are used
 Bit 7: set to 1 if bit[2,4] are used
 
+It is possible to send the header even though the connection has
+already been established. The bridge will ignore the header if the
+byte is not 0xFF. This is convenient as some clients don't know if
+they use a fresh or a recycled connection.
+
+Otherwise the back end interprets the following two bytes (low/high)
+as the length of the following context string. The client may initiate
+such a context switch if it has received a context ID belonging to a
+different ContextServer from a client (e.g.: PhpCGIServlet) while
+keeping a persistent connection to a ContextRunner.
 
 It is possible to "ping" the server by sending it the byte 0x0. If
 alive it will send back a 0x0.

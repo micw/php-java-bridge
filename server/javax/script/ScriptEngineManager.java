@@ -3,9 +3,12 @@ package javax.script;
 
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 
 
 /**
@@ -110,7 +113,7 @@ public class ScriptEngineManager {
 	 * @return a new instance of a ScriptingEngine which supports the
      *         specified script file extension
 	 */
-    public ScriptEngine getEngineByExtention(String extension){
+    public ScriptEngine getEngineByExtension(String extension){
         
         ScriptEngine engine = null;
         
@@ -181,9 +184,9 @@ public class ScriptEngineManager {
      * @return an array of all discovered ScriptEngineFactory 
      *         instances 
      */
-    public ScriptEngineFactory[] getEngineFactories(){
-        return (ScriptEngineFactory[])engineSpis.toArray();
-    }
+    public List getEngineFactories(){
+	return Collections.unmodifiableList(Arrays.asList(engineSpis.toArray()));
+     }
     
     /**
      * Retrieves the namespace corresponds to GLOBAL_SCOPE.

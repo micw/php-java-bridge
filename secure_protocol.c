@@ -39,6 +39,10 @@
   obligated to do so.  If you do not wish to do so, delete this
   exception statement from your version. */  
 
+#include "zend.h"
+#include "init_cfg.h"
+#if !defined(ZEND_ENGINE_2) || EXTENSION == MONO
+
 #include "php_java.h"
 
 #include <stdarg.h>
@@ -263,4 +267,6 @@ proxyenv *EXT_GLOBAL(createSecureEnvironment) (short (*handle_request)(proxyenv 
 
 #ifndef PHP_WRAPPER_H
 #error must include php_wrapper.h
+#endif
+
 #endif
