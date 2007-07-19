@@ -50,7 +50,7 @@ function defineHostFromInitialQuery($java_base) {
 
 // The version number of this pure PHP implementation
 
-define ("JAVA_PEAR_VERSION", "4.1.0");
+define ("JAVA_PEAR_VERSION", "4.2.0");
 
 
 // Deploy JavaBridge.war and re-start the servlet engine or the
@@ -84,3 +84,12 @@ if(!defined("JAVA_LOG_LEVEL"))
 if(!defined("JAVA_PIPE_DIR"))
   define("JAVA_PIPE_DIR", file_exists("/dev/shm") ? "/dev/shm" 
 		 : file_exists("/tmp" ? "/tmp" : null ));
+
+// debug mode
+if(!defined("JAVA_DEBUG")) 
+  define("JAVA_DEBUG", false);
+
+// cache needs Proxy and ProxyException interfaces
+if(!defined("JAVA_CACHE_ENABLED")) 
+  define("JAVA_CACHE_ENABLED", true);
+

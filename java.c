@@ -63,15 +63,8 @@
 #include "php_globals.h"
 #include "ext/standard/info.h"
 
-#include "java_bridge.h"
-#include "api.h"
-#include "php_java_snprintf.h"
-
-#ifdef ZEND_ENGINE_2
-#include "zend_interfaces.h"
-#include "zend_exceptions.h"
-#endif
 #include "zend_extensions.h"
+#include "TSRM.h"
 
 EXT_DECLARE_MODULE_GLOBALS(EXT)
 
@@ -80,6 +73,17 @@ EXT_DECLARE_MODULE_GLOBALS(EXT)
  * This structure is shared by all php instances
  */
 struct cfg *EXT_GLOBAL (cfg)  = 0;
+
+#ifdef __MINGW32__
+static const int java_errno=0;
+int *__errno (void) { return (int*)&java_errno; }
+#ifdef ZEND_ENGINE_2
+#define php_info_print_table_row(a, b, c) php_info_print_table_row_ex(a, "v", b, c)
+#else
+#define php_info_print_table_end() php_printf("</table><br />\n")
+#endif
+#endif
+
 
 extern char java_inc[];
 extern size_t java_inc_length();
@@ -101,7 +105,7 @@ static long java_stream_fteller(void *handle TSRMLS_DC) {
   return (long)*(size_t*)handle;
 }
 
-static zend_op_array *java_compile_string(zval*func, char*name) {
+static zend_op_array *java_compile_string(zval*func, char*name TSRMLS_DC) {
   zend_file_handle file_handle = {0};
   zend_stream stream = {0};
   size_t pos = 0;
@@ -110,12 +114,14 @@ static zend_op_array *java_compile_string(zval*func, char*name) {
   stream.handle = &pos;
   stream.reader = java_stream_reader;
   stream.closer = java_stream_closer;
+#if ZEND_EXTENSION_API_NO >= 220051025
   stream.fteller = java_stream_fteller;
+#endif
   file_handle.type = ZEND_HANDLE_STREAM;
   file_handle.filename = name;
   file_handle.free_filename = 0;
   file_handle.handle.stream = stream;
-  array = zend_compile_file(&file_handle, ZEND_REQUIRE_ONCE);
+  array = zend_compile_file(&file_handle, ZEND_REQUIRE_ONCE TSRMLS_CC);
   zend_destroy_file_handle(&file_handle TSRMLS_CC);
   return array;
 }
@@ -129,7 +135,7 @@ PHP_RINIT_FUNCTION(EXT)
 
   if(!ar) {
 	ZVAL_STRING(&func, java_inc,0);
-	ar = java_compile_string(&func, "Java.inc");
+	ar = java_compile_string(&func, "Java.inc" TSRMLS_CC);
   }
   if(!ar) abort();
   EG(return_value_ptr_ptr) = &result;
@@ -470,19 +476,6 @@ PHP_MINFO_FUNCTION(EXT)
   php_info_print_table_row(2, EXT_NAME()/**/".log_level", is_level ? EXT_GLOBAL(cfg)->logLevel : "no value (use back-end's default level)");
   if(EXT_GLOBAL(option_set_by_user) (U_HOSTS, JG(ini_user)))  
 	php_info_print_table_row(2, EXT_NAME()/**/".hosts", JG(hosts));
-#if EXTENSION == JAVA
-  if(EXT_GLOBAL(option_set_by_user) (U_SERVLET, JG(ini_user))) {
-	char buf[255], *url;
-	if(JG(servlet)) {
-	  EXT_GLOBAL(snprintf)(buf, sizeof buf, "http%s://%s/%s", 
-						   (EXT_GLOBAL(ini_user) & U_SECURE) ?"s":"", server, JG(servlet));
-	  url = buf;
-	} else {
-	  url = (char*)off;
-	}
-	php_info_print_table_row(2, EXT_NAME()/**/".servlet", url);
-  }
-#endif
   if(!server || is_local) {
 	if(!EXT_GLOBAL(cfg)->policy) {
 	  php_info_print_table_row(2, EXT_NAME()/**/".security_policy", "Off");

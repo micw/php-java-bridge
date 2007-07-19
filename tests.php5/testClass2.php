@@ -22,5 +22,6 @@ try {
   echo "test failed";
   exit(1);
 }
+echo "test okay\n";
 exit(0);
 ?>

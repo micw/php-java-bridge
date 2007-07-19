@@ -50,13 +50,6 @@ public final class StandardOptions extends Options {
     	return this.options == 3;
     }
  
-    /**
-     * Returns true, if exact numbers are base 16 (see PROTOCOL.TXT). This options stays the same for all packets.
-     * @return the value of the request header
-     */
-    public boolean hexNumbers() {
-    	return this.options == 1;
-    }
     public boolean passContext() {
 	return true;
     }

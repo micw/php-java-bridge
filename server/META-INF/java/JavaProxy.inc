@@ -51,42 +51,36 @@ function __javaproxy_Client_getClient() {
   return $client;
 }
 function java_last_exception_get() {
-  $client = __javaproxy_Client_getClient();
+  $client=__javaproxy_Client_getClient();
   return $client->getProperty(0, "lastException");
 }
 function java_last_exception_clear() {
-  $client = __javaproxy_Client_getClient();
+  $client=__javaproxy_Client_getClient();
   $client->setProperty(0, "lastException", null);
 }
 function java_values($object) {
   if(!$object instanceof java_JavaType) return $object;
-  $client = __javaproxy_Client_getClient();
-  if($client->isAsync()) 
-	throw new java_RuntimeException("values not allowed while in stream mode");
+  $client=__javaproxy_Client_getClient();
   return $client->invokeMethod(0, "getValues", array($object));
 }
 function java_reset() {
-  $client = __javaproxy_Client_getClient();
+  $client=__javaproxy_Client_getClient();
   user_error("Your script has called the privileged procedure \"java_reset()\" which resets the java back-end to its initial state. Therefore all java caches are gone.");
   return $client->invokeMethod(0, "reset", array());
 }
 function java_inspect($object) {
   if(!$object instanceof java_JavaType) throw new java_IllegalArgumentException($object);
-  $client = __javaproxy_Client_getClient();
-  if($client->isAsync()) 
-	throw new java_RuntimeException("inspect not allowed while in stream mode");
+  $client=__javaproxy_Client_getClient();
   return $client->invokeMethod(0, "inspect", array($object));
 }
 function java_set_file_encoding($enc) {
-  $client = __javaproxy_Client_getClient();
+  $client=__javaproxy_Client_getClient();
   return $client->invokeMethod(0, "setFileEncoding", array($enc));
 }
 function java_instanceof($ob, $clazz) {
   if(!$ob instanceof java_JavaType) throw new java_IllegalArgumentException($ob);
   if(!$clazz instanceof java_JavaType) throw new java_IllegalArgumentException($clazz);
-  $client = __javaproxy_Client_getClient();
-  if($client->isAsync()) 
-	throw new java_RuntimeException("instanceof not allowed while in stream mode");
+  $client=__javaproxy_Client_getClient();
   return $client->invokeMethod(0, "instanceOf", array($ob, $clazz));
 }
 function java_cast($object, $type) { 
@@ -94,14 +88,12 @@ function java_cast($object, $type) {
 	return $object->__cast($type); 
 }
 function java_require($arg) {
-  $client = __javaproxy_Client_getClient();
+  $client=__javaproxy_Client_getClient();
   return $client->invokeMethod(0, "updateJarLibraryPath", 
 						array($arg, ini_get("extension_dir")));
 }
 function java_session_array($args) {
-  $client = __javaproxy_Client_getClient();
-  if($client->isAsync()) 
-	throw new java_RuntimeException("get_session not allowed while in stream mode");
+  $client=__javaproxy_Client_getClient();
   if(!isset($args[0])) $args[0]=null;
   if(!isset($args[1])) $args[1]=false;
   if(!isset($args[2])) {
@@ -115,28 +107,24 @@ function java_session() {
   return java_session_array(func_get_args());
 }
 function java_server_name() {
-  $client = __javaproxy_Client_getClient();
-  if($client->isAsync()) 
-	throw new java_RuntimeException("get_server_name not allowed while in stream mode");
+  $client=__javaproxy_Client_getClient();
   return $client->getServerName();
 }
 function java_context() {
-  $client = __javaproxy_Client_getClient();
+  $client=__javaproxy_Client_getClient();
   return $client->getContext();
 }
 function java_closure_array($args) {
   if(isset($args[2]) && ((!($args[2] instanceof java_JavaType))&&!is_array($args[2])))
 	throw new java_IllegalArgumentException($args[2]);
 
-  $client = __javaproxy_Client_getClient();
-  if($client->isAsync()) 
-	throw new java_RuntimeException("closure not allowed while in stream mode");
+  $client=__javaproxy_Client_getClient();
   $args[0] = isset($args[0]) ? $client->globalRef->add($args[0]) : 0;
 
   /* The following is identical to 
    return $client->invokeMethod(0, "makeClosure", $args); 
    except that the ref (args[0]) must be an unsigned value */
-  $client->protocol->invokeBegin(0, "makeClosure", "I");
+  $client->protocol->invokeBegin(0, "makeClosure", "5", "6");
   $n = count($args);
   $client->protocol->writeULong($args[0]); // proper PHP "long" -> Java 64 bit value conversion
   for($i=1; $i<$n; $i++) {
@@ -150,61 +138,42 @@ function java_closure() {
   return java_closure_array(func_get_args());
 }
 function java_begin_document() {
-  $client = __javaproxy_Client_getClient();
-  if($client->isAsync()) 
-	throw new java_RuntimeException("begin_document not allowed while in stream mode");
-  $rc = $client->invokeMethod(0, "beginDocument", array());
-  $client->setAsyncHandler();
-  return $rc;
+  //FIXME
 }
 function java_end_document() {
-  $client = __javaproxy_Client_getClient();
-  if(!$client->isAsync()) 
-	throw new java_RuntimeException("end_document not allowed when not in stream mode");
-  $client->setDefaultHandler();
-  return $client->invokeMethod(0, "endDocument", array());
+  //FIXME
 }
 
-function java_create($args, $instance) {
-  $client = __javaproxy_Client_getClient();
-  $name = array_shift($args);
-
-  // compatibility with the C implementation
-  if(is_array($name)) return java_create($name, $instance);
-
-  $rc = $client->createObject($name, $args, $instance);
-  return $rc;
-}
 class java_JavaProxy {
-  var $__serialID, $__java, $__client;
-
-  function java_JavaProxy($java){ 
-	$this->__client = __javaproxy_Client_getClient();
+  var $__serialID, $__java;
+  var $__signature;
+  var $__client;
+  function java_JavaProxy($java, $signature){ 
 	$this->__java=$java;
+	$this->__signature=$signature;
+	$this->__client = __javaproxy_Client_getClient();
   }
   function __cast($type) {
 	return $this->__client->cast($this, $type);
   }
   function __sleep() {
-	if($this->__client->isAsync()) 
-	  throw new java_RuntimeException("__sleep not allowed when not in stream mode");
 	$lifetime = (int)ini_get("session.gc_maxlifetime");
 	if(!isset($lifetime)) $lifetime = 1440;
 	$args = array($this, $lifetime);
 	$this->__serialID = $this->__client->invokeMethod(0, "serialize", $args);
+	if(JAVA_DEBUG) echo "proxy sleep called for $this->__java, $this->__signature\n";
     return array("__serialID");
   }
   function __wakeup() {
 	$lifetime = (int)ini_get("session.gc_maxlifetime");
 	if(!isset($lifetime)) $lifetime = 1440;
-	if(!isset($this->__client)) $this->__client=__javaproxy_Client_getClient();
-	if($this->__client->isAsync()) 
-	  throw new java_RuntimeException("__wakeup not allowed when not in stream mode");
 	$args = array($this->__serialID, $lifetime);
+	if(JAVA_DEBUG) echo "proxy wakeup called for $this->__java, $this->__signature\n";
     $this->__java = $this->__client->invokeMethod(0, "deserialize", $args);
   }
   function __destruct() { 
-	if(isset($this->__client)) $this->__client->unref($this->__java);
+	if(isset($this->__client)) 
+	  $this->__client->unref($this->__java);
   }
   function __get($key) { 
     return $this->__client->getProperty($this->__java, $key);
@@ -216,57 +185,47 @@ class java_JavaProxy {
     return $this->__client->invokeMethod($this->__java, $method, $args);
   }
   function __toString() {
-	if($this->__client->isAsync()) 
-	  throw new java_RuntimeException("__toString not allowed when not in stream mode");
     return $this->__client->invokeMethod(0,"ObjectToString",array($this));
-  }
-}
-class java_JavaProxyClass extends java_JavaProxy {
-  function java_JavaProxyClass($java){ 
-	parent::java_JavaProxy($java);
   }
 }
 
 class java_objectIterator implements Iterator {
   var $proxy;
-  var $__java, $__client;
+  var $__java, $client;
   var $phpMap; // must keep a reference otherwise it will be gc'ed.
   var $hasNext;
 
   function java_ObjectIterator($javaProxy) {
 	$this->proxy = $javaProxy;
-	$this->__client = $javaProxy->__client;
-
-	if($this->__client->isAsync()) 
-	  throw new java_RuntimeException('object iterator not allowed while in stream mode. Use $arr=java_values($java_obj); java_begin_document(); foreach($arr as ...) ...; java_end_document(); instead.');
+	$this->client = __javaproxy_Client_getClient();
   }
   function rewind() {
 	$proxy = array($this->proxy);
 	$this->phpMap = 
-	  $phpMap = $this->__client->invokeMethod(0, "getPhpMap", $proxy);
+	  $phpMap = $this->client->invokeMethod(0, "getPhpMap", $proxy);
 	$this->__java = $phpMap->__java;
   }
   function valid() {
 	if(isset($this->hasNext)) return $this->hasNext;
 	return $this->hasNext =
-	  $this->__client->invokeMethod($this->__java, "hasMore", array());
+	  $this->client->invokeMethod($this->__java, "hasMore", array());
   }
   function next() {
 	return $this->hasNext = 
-	  $this->__client->invokeMethod($this->__java, "moveForward", array());
+	  $this->client->invokeMethod($this->__java, "moveForward", array());
   }
   function key() {
 	return 
-	  $this->__client->invokeMethod($this->__java, "currentKey", array());
+	  $this->client->invokeMethod($this->__java, "currentKey", array());
   }
   function current() {
 	return 
-	  $this->__client->invokeMethod($this->__java, "currentData", array());
+	  $this->client->invokeMethod($this->__java, "currentData", array());
   }
 }
 class java_IteratorProxy extends java_JavaProxy implements IteratorAggregate {
-  function java_IteratorProxy($java) {
-	parent::java_JavaProxy($java);
+  function java_IteratorProxy($java, $signature) {
+	parent::java_JavaProxy($java, $signature);
   }
   function getIterator() {
 	return new java_ObjectIterator($this);
@@ -274,8 +233,8 @@ class java_IteratorProxy extends java_JavaProxy implements IteratorAggregate {
 }
 class java_ArrayProxy extends java_IteratorProxy implements ArrayAccess {
   
-  function java_ArrayProxy($java) {
-	parent::java_JavaProxy($java);
+  function java_ArrayProxy($java, $signature) {
+	parent::java_JavaProxy($java, $signature);
   }
   function offsetExists($idx) {
 	$ar = array($this, $idx);
@@ -295,8 +254,8 @@ class java_ArrayProxy extends java_IteratorProxy implements ArrayAccess {
   }
 }
 class java_ExceptionProxy extends java_JavaProxy {
-  function java_ExceptionProxy($java){ 
-	parent::java_JavaProxy($java);
+  function java_ExceptionProxy($java, $signature){ 
+	parent::java_JavaProxy($java, $signature);
   }
   function __toExceptionString($trace) {
 	$args = array($this, $trace);
@@ -317,103 +276,267 @@ class java_ExceptionProxy extends java_JavaProxy {
  * returned and set into $__delegate. 
  * @see #java_InternalJava
 */
-class Java extends java_JavaProxy implements IteratorAggregate, ArrayAccess, java_JavaType {
+abstract class java_AbstractJava implements IteratorAggregate,ArrayAccess,java_JavaType {
   var $__delegate;
-  function Java() {
-	$delegate = $this->__delegate = java_create(func_get_args(), true);
-	$this->__java = $delegate->__java;
-	$this->__client = $delegate->__client;
+
+  var $__serialID;
+
+  var $__factory;
+  var $__java, $__signature;
+
+  function __createDelegate() {
+	$proxy = $this->__delegate = 
+	  $this->__factory->create($this->__java, $this->__signature);
+	$this->__java = $proxy->__java;
+	$this->__signature = $proxy->__signature;
   }
   function __cast($type) {
+	if(!isset($this->__delegate)) $this->__createDelegate();
 	return $this->__delegate->__cast($type);
   }
   function __sleep() {
+	if(!isset($this->__delegate)) $this->__createDelegate();
 	$rc = $this->__delegate->__sleep();
 	$this->__serialID = $this->__delegate->__serialID;
 	return array("__delegate");
   }
   function __wakeup() {
+	if(!isset($this->__delegate)) $this->__createDelegate();
 	$this->__delegate->__wakeup();
 	$this->__java = $this->__delegate->__java;
   }
-  function __destruct() { 
-	$this->__delegate = null;
-	$this->__client = null;
-  }
   function __get($key) { 
-    return $this->__delegate->__get($key);
+ 	if(!isset($this->__delegate)) $this->__createDelegate();
+	return $this->__delegate->__get($key);
   }
   function __set($key, $val) {
-    $this->__delegate->__set($key, $val);
+ 	if(!isset($this->__delegate)) $this->__createDelegate();
+	$this->__delegate->__set($key, $val);
   }
   function __call($method, $args) { 
+	if(!isset($this->__delegate)) $this->__createDelegate();
     return $this->__delegate->__call($method, $args);
   }
   function __toString() {
+	if(!isset($this->__delegate)) $this->__createDelegate();
     return $this->__delegate->__toString();
   }
 
   // The following functions are for backward compatibility
   function getIterator() {
+	if(!isset($this->__delegate)) $this->__createDelegate();
 	if(func_num_args()==0) return $this->__delegate->getIterator();
 	$args = func_get_args(); return $this->__call("getIterator", $args);
   }
   function offsetExists($idx) {
+	if(!isset($this->__delegate)) $this->__createDelegate();
 	if(func_num_args()==1) return $this->__delegate->offsetExists($idx);
 	$args = func_get_args(); return $this->__call("offsetExists", $args);
   }
   function offsetGet($idx) {
+	if(!isset($this->__delegate)) $this->__createDelegate();
 	if(func_num_args()==1) return $this->__delegate->offsetGet($idx);
 	$args = func_get_args(); return $this->__call("offsetGet", $args);
   }
   function offsetSet($idx, $val) {
+	if(!isset($this->__delegate)) $this->__createDelegate();
 	if(func_num_args()==2) return $this->__delegate->offsetSet($idx, $val);
 	$args = func_get_args(); return $this->__call("offsetSet", $args);
   }
   function offsetUnset($idx) {
+	if(!isset($this->__delegate)) $this->__createDelegate();
 	if(func_num_args()==1) return $this->__delegate->offsetUnset($idx);
 	$args = func_get_args(); return $this->__call("offsetUnset", $args);
   }
 }
-class JavaObject extends Java {
+
+class Java extends java_AbstractJava {
+  var $__client;
+
   function Java() {
-	$delegate = $this->__delegate = java_create(func_get_args(), true);
-	$this->__java = $delegate->__java;
-	$this->__client = $delegate->__client;
+	$client = $this->__client = __javaproxy_Client_getClient();
+	
+	$args = func_get_args();
+	$name = array_shift($args);
+
+	// compatibility with the C implementation
+	if(is_array($name)) {$args = $name; $name = array_shift($args);}
+
+    $sig="&{$this->__signature}@{$name}";
+	$len = count($args);
+	$args2 = array();
+	for($i=0; $i<$len; $i++) {
+      switch(gettype($val = $args[$i])) {
+      case 'boolean': array_push($args2, $val); $sig.='@b'; break; 
+      case 'integer': array_push($args2, $val); $sig.='@i'; break; 
+      case 'double': array_push($args2, $val); $sig.='@d'; break; 
+      case 'string': array_push($args2, htmlspecialchars($val, ENT_COMPAT)); $sig.='@s'; break; 
+      case 'array':$sig="~INVALID"; break; 
+      case 'object':
+		if($val instanceof java_JavaType) {
+		  array_push($args2, $val->__java);
+		  $sig.="@o{$val->__signature}"; 
+		}
+		else {
+		  $sig="~INVALID";
+		}
+		break;
+      case 'resource': array_push($args2, $val); $sig.='@r'; break; 
+      case 'NULL': array_push($args2, $val); $sig.='@N'; break; 
+      case 'unknown type': array_push($args2, $val); $sig.='@u'; break;
+	  default: throw new java_IllegalArgumentException($val);
+      }
+    }
+
+    if(JAVA_CACHE_ENABLED && array_key_exists($sig, $client->methodCache)) {
+	  if(JAVA_DEBUG) { echo "cache hit for new Java: $sig\n"; }
+      $cacheEntry = &$client->methodCache[$sig];
+	  $client->sendBuffer.= $client->preparedToSendBuffer;
+	  $client->preparedToSendBuffer=vsprintf($cacheEntry->fmt, $args2);
+
+	  if(JAVA_DEBUG) {
+		print_r($args2);
+		echo "set prepared to send buffer: $client->preparedToSendBuffer, $cacheEntry->fmt, for key: $sig\n";
+	  }
+ 	  $this->__java = ++$client->asyncCtx;
+	  if(JAVA_DEBUG) {echo "setresult from new Java cache: object:"; echo sprintf("%x", $client->asyncCtx); echo "\n";}
+	  $this->__factory = $cacheEntry->factory;
+  	  $this->__signature = $cacheEntry->signature;
+	} else {
+	  if(JAVA_DEBUG) { echo "cache miss for new Java: $sig\n"; }
+      $client->currentCacheKey = $sig;
+	  $delegate = $this->__delegate = $client->createObject($name, $args);
+	  $this->__java = $delegate->__java;
+	  $this->__signature = $delegate->__signature;
+	}
   }
-}  
-class java_class extends JavaObject {
-  function java_class() {
-	$delegate = $this->__delegate = java_create(func_get_args(), false);
-	$this->__java = $delegate->__java;
-	$this->__client = $delegate->__client;
+  function __destruct() {
+	if(!isset($this->__client)) return;
+	$client = $this->__client;
+
+	$preparedToSendBuffer = &$client->preparedToSendBuffer;
+	$asyncCtx = &$client->asyncCtx;
+
+	if($preparedToSendBuffer && ($asyncCtx==$this->__java)) {
+	  $preparedToSendBuffer[6]="3";
+	  if(JAVA_DEBUG) {
+		echo "cancel result proxy creation:"; echo $this->__java; echo " {$client->preparedToSendBuffer}"; echo "\n";
+	  }
+	  $client->sendBuffer.=$preparedToSendBuffer;
+	  $preparedToSendBuffer = null;
+	  --$asyncCtx;
+	} else {
+	  if(!$this->__delegate) { // write unref ourselfs if we don't have a delegate yet
+		if(JAVA_DEBUG) {
+		  echo "unref java:"; echo $this->__java; echo "\n";
+		}
+		$client->unref($this->__java);
+	  }
+	}	
+  }
+  function __call($method, $args) { 
+	$client = $this->__client;
+
+    $sig="@{$this->__signature}@$method";
+	$len = count($args);
+	$args2=array($this->__java);
+	for($i=0; $i<$len; $i++) {
+      switch(gettype($val = $args[$i])) {
+      case 'boolean': array_push($args2, $val); $sig.='@b'; break; 
+      case 'integer': array_push($args2, $val); $sig.='@i'; break; 
+      case 'double': array_push($args2, $val); $sig.='@d'; break; 
+      case 'string': array_push($args2, htmlspecialchars($val, ENT_COMPAT)); $sig.='@s'; break; 
+      case 'array':$sig="~INVALID"; break; 
+      case 'object':
+		if($val instanceof java_JavaType) {
+		  array_push($args2, $val->__java);
+		  $sig.="@o{$val->__signature}"; 
+		}
+		else {
+		  $sig="~INVALID";
+		}
+		break;
+      case 'resource': array_push($args2, $val); $sig.='@r'; break; 
+      case 'NULL': array_push($args2, $val); $sig.='@N'; break; 
+      case 'unknown type': array_push($args2, $val); $sig.='@u'; break; 
+	  default: throw new java_IllegalArgumentException($val);
+      }
+    }
+
+    if(JAVA_CACHE_ENABLED && array_key_exists($sig, $client->methodCache)) {
+	  if(JAVA_DEBUG) { echo "cache hit for __call: $sig\n"; }
+      $cacheEntry = &$client->methodCache[$sig];
+	  $client->sendBuffer.=$client->preparedToSendBuffer;
+	  $client->preparedToSendBuffer=vsprintf($cacheEntry->fmt, $args2);
+	  if(JAVA_DEBUG) {
+		print_r($args2);
+		echo "set prepared to send buffer: {$client->preparedToSendBuffer}, {$cacheEntry->fmt}\n";
+	  }
+	  if($cacheEntry->resultVoid) {
+		return null;
+	  } else {
+		$result = clone($client->cachedJavaPrototype);
+		$result->__factory = $cacheEntry->factory;
+		$result->__java = ++$client->asyncCtx;
+		if(JAVA_DEBUG) {echo "setresult from __call cache: object:"; echo sprintf("%x", $client->asyncCtx); echo "\n";}
+		$result->__signature = $cacheEntry->signature;
+		return $result;
+	  }
+    } else {
+	  if(JAVA_DEBUG) { echo "cache miss for __call: $sig\n"; }
+      $client->currentCacheKey = $sig;
+      $retval = parent::__call($method, $args);
+      return $retval;
+    }
   }
 }
-class java_InternalJavaObject extends JavaObject {
-  function java_InternalJavaObject($proxy) {
-	$this->__delegate = $proxy;
-	$this->__java = $proxy->__java;
-	$this->__client = $proxy->__client;
-  }
-}
-class JavaClass extends java_class{}
+
 class java_InternalJava extends Java {
   function java_InternalJava($proxy) {
 	$this->__delegate = $proxy;
 	$this->__java = $proxy->__java;
+	$this->__signature = $proxy->__signature;
 	$this->__client = $proxy->__client;
   }
 }
+
+class java_class extends Java {
+  function java_class() {
+	$this->__client = __javaproxy_Client_getClient();
+
+	$args = func_get_args();
+	$name = array_shift($args);
+
+	// compatibility with the C implementation
+	if(is_array($name)) { $args = $name; $name = array_shift($args); }
+
+	$delegate = $this->__delegate = $this->__client->referenceObject($name, $args);
+
+	$this->__java = $delegate->__java;
+	$this->__signature = $delegate->__signature;
+  }
+}
+class JavaClass extends java_class{}
 /**
  * A decorator pattern which overrides all magic methods.
  */
 class java_exception extends Exception implements java_JavaType {
   var $__serialID, $__java, $__client;
   var $__delegate;
+  var $__signature;
   function java_exception() {
-	$delegate = $this->__delegate = java_create(func_get_args(), true);
+	$this->__client = __javaproxy_Client_getClient();
+
+	$args = func_get_args();
+	$name = array_shift($args);
+
+	// compatibility with the C implementation
+	if(is_array($name)) { $args = $name; $name = array_shift($args); }
+
+	$delegate = $this->__delegate = $this->__client->createObject($name, $args);
+
 	$this->__java = $delegate->__java;
-	$this->__client = $delegate->__client;
+	$this->__signature = $delegate->__signature;
   }
   function __cast($type) {
 	return $this->__delegate->__cast($type);
@@ -426,10 +549,6 @@ class java_exception extends Exception implements java_JavaType {
   function __wakeup() {
 	$this->__delegate->__wakeup();
 	$this->__java = $this->__delegate->__java;
-  }
-  function __destruct() { 
-	$this->__delegate = null;
-	$this->__client = null;
   }
   function __get($key) { 
     return $this->__delegate->__get($key);
@@ -449,8 +568,14 @@ class java_InternalException extends JavaException {
   function java_InternalException($proxy) {
 	$this->__delegate = $proxy;
 	$this->__java = $proxy->__java;
+	$this->__signature = $proxy->__signature;
 	$this->__client = $proxy->__client;
   }
 }
-	
+
+class java_JavaProxyProxy extends Java {
+  function java_JavaProxyProxy($client) {
+	$this->__client = $client;
+  }
+}
 ?>

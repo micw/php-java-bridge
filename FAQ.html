@@ -12,14 +12,6 @@ This file contains answers to frequently asked questions. Please see <a href="ht
 <H4>Do I need a Java Application Server or Servlet Engine?</H4>
 <p>No. The bridge and the VM can run as a sub component of IIS or Apache. The C based extension automatically starts a VM in the <code>minit()</code> and terminates it in the <code>mshutdown()</code> hook. The request-handling threads attach themselfs to the persistent VM using the PHP/Java Bridge protocol.
 <p>
-<H4>What's the advantage/disadvantage of the pure PHP implementation?</H4>
-<p>Both implementations support the same features. But since PHP doesn't contain a "just in time compiler", the C based extension module is 2 to 10 times faster than the pure PHP implementation (depending on whether a PHP opcode cache is used).
-</p>
-<p>The pure PHP implementation needs an external Java process. It can be started with <code>java -jar JavaBridge.jar SERVLET:8080</code>, but it is recommended to start the external Java VM via a J2EE server or servlet engine. The tomcat servlet engine can be used to start Java as a system service on Windows and Linux.
-</p>
-<p>
-The C based implementation compiles and works on all operating systems, including Windows. But we cannot provide binaries for all operating systems. If you cannot compile C code, use the pure PHP implementation instead.
-</p>
 <H4>Why is Java.inc obfuscated?</H4>
 <p>The pure PHP implementation contained in <code>Java.inc</code> is created during compilation from the other *.inc files located in the java folder. Since some older PHP implementations don't have a opcode cache (sometimes called "accelerator"), we have removed all comments and white space from the source files. Use 
 <blockquote>
@@ -151,7 +143,7 @@ Tomcat or the J2EE server on that computer using the option <code>-Dphp.java.bri
 Change the <code>127.0.0.1</code> above to the IP address of the computer running
 the Java VM and make sure that the computer cannot be accessed directly from the internet!
 
-<H2>Running Java as a sub component of Apache or IIS</H2>
+<H2>Apache or IIS</H2>
 <a name="load-balancing">
 <H4>How do I set up a load balancer for the PHP/Java Bridge cluster?</H4>
 <p>

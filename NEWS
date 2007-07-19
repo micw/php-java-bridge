@@ -3,6 +3,15 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 4.2.0
+
+* This is an experimental release.
+
+* A cache has been added to the pure PHP PHP/Java Bridge
+implementation. If enabled, scripts which call a java routine more
+than once will execute up to 7 times faster.
+
+
 Version 4.1.8
 
 * The old C extension doesn't exist anymore. 

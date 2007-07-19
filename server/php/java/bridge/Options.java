@@ -84,14 +84,6 @@ public class Options {
     	return sendArraysAsValues();
     }
  
-    /**
-     * Returns always true unless the client hasn't sent a request header (for backward compatibility).
-     * @return true if the bridge should encode/decode exact numbers in hex.
-     */
-    public boolean hexNumbers() {
-    	return true;
-    }
- 
     /** re-initialize for keep alive */
     protected void recycle() {
         encoding = null;

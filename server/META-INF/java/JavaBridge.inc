@@ -58,6 +58,7 @@ if(!function_exists("java_get_base")) {
   require_once("${JAVA_BASE}/JavaProxy.inc");
 
   class java_RuntimeException extends Exception {};
+  class java_IllegalStateException extends java_RuntimeException {};
   class java_IllegalArgumentException extends java_RuntimeException {
 	function __construct($ob) {
 	  parent::__construct(is_object($ob)?$ob->__toString():(string)$ob);

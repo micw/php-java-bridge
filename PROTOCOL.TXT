@@ -1,4 +1,4 @@
-PHP/Java Bridge protocol version 4.2
+PHP/Java Bridge protocol version 4.2.1
 
 Requests are marked with "->", responses with "<-".  The server
 continues to process requests until EOF. Only the first character is
@@ -20,13 +20,13 @@ Example:
      $o = new java("java.lang.Long", 6);
      $o->toString(); // discard result
 
-->  <CreateInstance value="java.lang.Long" predicate="Instance" id="78532"> 
+->  <CreateInstance predicate="I" value="java.lang.Long" id="78532"> 
       <Long value="6"/> 
     </CreateInstance>
 
 <-  <Object value="1" predicate="O" id="78532"/>
 
-->  <Invoke value="1" method="toString" predicate="Invoke" id="0">
+->  <Invoke predicate="I" value="1" method="toString" id="0">
     </Invoke>
 
 <-  <Object value="2" predicate="O" id="0"/>
@@ -37,31 +37,19 @@ Example:
 
 A second example which shows how to avoid round-trips. 
 
-     java_begin_document()
      $o = new java("java.lang.Long", 6);
      $o->toString(); // discard result
-     java_end_document();
 
-->  <Invoke value="0" method="beginDocument" predicate="Invoke" id="0">
-    </Invoke>
-
-<-  <Null id="0"/>
-
-->  <CreateInstance value="java.lang.Long" predicate="Instance" id="78532"> 
+->  <CreateInstance predicate="J" value="java.lang.Long" id="0"> 
       <Long value="6" /> 
     </CreateInstance>
 
-->  <Invoke value="1" method="toString" predicate="Invoke" id="0">
+->  <Invoke predicate="J" value="1" method="toString" id="0">
     </Invoke>
 
-->  <Unref value="2" />
+->  <Unref value="2" /> # result from toString
 
-->  <Unref value="1" />
-
-->  <Invoke value="0" method="endDocument" predicate="Invoke" id="0">
-    </Invoke>
-
-<-  <Null id="0"/>
+->  <Unref value="1" /> # result from CreateInstance
 
 
 Optional requests:
@@ -79,9 +67,10 @@ it is also possible to simply close the connection.
 
 Main requests:
 
+
 ->
 CreateInstance:
-<C v=name p=C|I i=ID> ...ARGS...
+<C v=name p=C|I [i=ID]> ...ARGS...
 </C>
 v: string
 p: char (Reference[C]lass, Create[I]nstance)
@@ -89,7 +78,7 @@ i: unsigned long
 
 ->
 Invoke:
-<I v=object m=method p=P|I i=ID> ...ARGS...
+<I v=object m=method p=P|I [i=ID]> ...ARGS...
 </I>
 v: unsigned long
 m: string
@@ -99,6 +88,51 @@ i: unsigned long
 When v=0, the call is directed to the current request-handling
 instance of the java bridge.
 
+->
+ReferenceClass (alternate form)
+<H p=1|2|3 v=name [i=ID]> ...ARGS...
+</H>
+p: char 
+v: string
+i: unsigned long
+Predicate 2 does not write a result, but stores a result proxy under ++CID.
+Predicate 3 does not write a result and does not create a result proxy.
+
+->
+CreateInstance (alternate form)
+<K p=1|2|3 v=name [i=ID]> ...ARGS...
+</K>
+p: char
+v: string
+i: unsigned long
+Predicate 2 does not write a result, but stores a result proxy under ++CID.
+Predicate 3 does not write a result and does not create a result proxy.
+
+->
+PropertyAccess (alternate form)
+<G p=1|2|3 v=object m=method [i=ID]> ...ARGS...
+</G>
+p: char 
+v: unsigned long
+m: string
+i: unsigned long
+Predicate 2 does not write a result, but stores a result proxy under ++CID.
+Predicate 3 does not write a result and does not create a result proxy.
+
+->
+Invoke (alternate form)
+<Y p=1|2|3 v=object m=method [i=ID]> ...ARGS...
+</Y>
+p: char (examine[P]roperty, [I]nvoke method)
+v: unsigned long
+m: string
+i: unsigned long
+Predicate 2 does not write a result, but stores a result proxy under ++CID.
+Predicate 3 does not write a result and does not create a result proxy.
+
+
+When v=0, the call is directed to the current request-handling
+instance of the java bridge.
 
 
 
@@ -115,18 +149,22 @@ Boolean:
 v: char ([T]rue, [F]alse)
 i: unsigned long (reply only)
 
-<->
-Long:
-<L v=l [i=ID] />
-v: long
-i: unsigned long (reply only)
+->
+Boolean:(alternate form)
+<T v=1]OTHER />
+v: char [1]: true, everything else: false
 
 <->
-unsigned Long: (if base 16, see protocol header description below)
+Long: 
 <L v=l p=[O|A] [i=ID] />
 v: unsigned long
 p: char (p[O]sitive, neg[A]tive)
 i: unsigned long (reply only)
+
+->
+Long: (alternate form)
+<J v=l />
+v: long (signed number)
 
 <->
 Double:
@@ -142,19 +180,25 @@ NULL values can be sent as either v="" or v="0"
 
 <-
 Object:
-<O v=object p=TYPE i=ID />
+<O v=object m=TYPE p=TYPE [i=ID] />
 v: unsigned long
+m: string
 p: char ([A]rray/Map, [C]ollection, [O]bject, [E]xception)
 i: unsigned long 
 
 <-
 Null:
-<N i=ID />
+<N [i=ID] />
+i: unsigned long 
+
+<-
+Void:
+<V [i=ID] />
 i: unsigned long 
 
 <-
 Apply:
-<A v=object p=cname m=fname n=param# i=ID> ...PAIRS...
+<A v=object p=cname m=fname n=param# [i=ID]> ...PAIRS...
 </A>
 v: unsigned long
 p: string
@@ -167,7 +211,7 @@ call. If v is null, the function name p must be searched in the
 
 ->
 Result:
-<R i=ID> ...ARG...
+<R [i=ID]> ...ARG...
 </R>
 i: unsigned long
 
@@ -205,8 +249,7 @@ v: unsigned long
 EndConnection:
 <F p=A|E />
 p: char (Keep [A]live, [E]nd connection)
-After the F=... reply appeared, it is save to switch to a secondary
-("override-redirect") channel.
+
 
 
 
@@ -222,7 +265,7 @@ Bit 1 0
 
     - -    yes          no         10   yes    base64 encoded     default
     0 0    yes          yes        16   no     binary             PHP
-    0 1    yes          yes        16   yes    binary             C, php>4
+    0 1    yes          yes        16   yes    binary             not used
     1 0    no           no         16   yes    binary             C, php=4
     1 1    yes          yes        16   no     base64 encoded     PHP
 
@@ -235,8 +278,8 @@ Bit 7: set to 1 if bit[2,4] are used
 
 It is possible to send the header even though the connection has
 already been established. The bridge will ignore the header if the
-byte is not 0xFF. This is convenient as some clients don't know if
-they use a fresh or a recycled connection.
+second byte is not 0xFF. This is convenient as some clients don't know
+if they use a fresh or a recycled connection.
 
 Otherwise the back end interprets the following two bytes (low/high)
 as the length of the following context string. The client may initiate

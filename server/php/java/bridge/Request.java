@@ -76,9 +76,10 @@ public final class Request implements IDocHandler {
     	protected Throwable exception;
     	protected String method;
     	protected SimpleContext id = getContext();
-    	protected boolean predicate;
+    	protected byte predicate;
     	protected Object key;
     	protected byte composite;
+    	 protected int globalRefCID;
     	 
     	public abstract void add(Object val);
     	public abstract Object[] getArgs();
@@ -189,16 +190,22 @@ public final class Request implements IDocHandler {
     	return true;
     }
     
+    private long getClassicPhpLong(ParserString st[]) {
+	return st[0].getClassicLongValue();
+    }
+    private Object createClassicExact(ParserString st[]) {
+	return new Integer(st[0].getClassicIntValue());
+    }
     private long getPhpLong(ParserString st[]) {
 	    long val = st[0].getLongValue();
-	    if(bridge.options.hexNumbers() && st[1].string[st[1].off]!='O')
+	    if(st[1].string[st[1].off]!='O')
 		val *= -1;
 	    return val;
     }
     private Object createExact(ParserString st[]) {
         {
 	    int val = st[0].getIntValue();
-	    if(bridge.options.hexNumbers() && st[1].string[st[1].off]!='O')
+	    if(st[1].string[st[1].off]!='O')
 		val *= -1;
             return (new Integer(val));
 	}
@@ -212,25 +219,43 @@ public final class Request implements IDocHandler {
 	ParserString[] st=tag[2].strings;
 	byte ch;
 	switch (ch=tag[0].strings[0].string[0]) {
+	case 'G':
+	case 'Y': {
+	    arg.type=ch;
+	    arg.predicate=st[0].string[st[0].off];
+	    int i= st[1].getIntValue();
+	    arg.callObject=i==0?bridge:getGlobalRef(i);
+	    arg.method=st[2].getCachedStringValue();
+	    arg.id.parseID(st[3]);
+	    break;
+	}
 	case 'I': {
 	    arg.type=ch;
 	    int i= st[0].getIntValue();
 	    arg.callObject=i==0?bridge:getGlobalRef(i);
 	    arg.method=st[1].getCachedStringValue();
-	    arg.predicate=st[2].string[st[2].off]=='P';
+	    arg.predicate=st[2].string[st[2].off];
 	    arg.id.parseID(st[3]);
+	    break;
+	}
+	case 'H':
+	case 'K': {
+	    arg.type=ch;
+	    arg.predicate=st[0].string[st[0].off];
+	    arg.callObject=st[1].getCachedStringValue();
+	    arg.id.parseID(st[2]);
 	    break;
 	}
 	case 'C': {
 	    arg.type=ch;
 	    arg.callObject=st[0].getCachedStringValue();
-	    arg.predicate=st[1].string[st[1].off]=='C';
+	    arg.predicate=st[1].string[st[0].off];
 	    arg.id.parseID(st[2]);
 	    break;
 	}
 	case 'F': {
 	    arg.type=ch;
-	    arg.predicate = st[0].string[st[0].off]=='A';
+	    arg.predicate = st[0].string[st[0].off];
 	    break;
 	}
 	case 'R': {
@@ -258,6 +283,9 @@ public final class Request implements IDocHandler {
 
 	case 'U': {
 	    int i=st[0].getIntValue();
+	    if(Util.logLevel>4) { 
+		Util.logDebug("unref: " + bridge.globalRef.get(i));
+	    }
 	    bridge.globalRef.remove(i);
 	    reply=false; // U is the only top-level request which doesn't need a reply
 	    break;
@@ -274,11 +302,22 @@ public final class Request implements IDocHandler {
 	    arg.add(new Boolean(st[0].string[st[0].off]=='T'));
 	    break;
 	}
+	case 'T': {
+	    arg.add(new Boolean(st[0].string[st[0].off]=='1'));
+	    break;
+	}
 	case 'L': {
 	    if(arg.composite!='H')
 	        arg.add(new PhpExactNumber(getPhpLong(st)));
 	    else // hash has no type information
 	        arg.add(createExact(st));
+	    break;
+	}
+	case 'J': {
+	    if(arg.composite!='H')
+	        arg.add(new PhpExactNumber(getClassicPhpLong(st)));
+	    else // hash has no type information
+	        arg.add(createClassicExact(st));
 	    break;
 	}
 	case 'D': {
@@ -335,29 +374,83 @@ public final class Request implements IDocHandler {
 	    arg.id.setID(response);
 	    switch(arg.type){
 	    case 'I':
-		try {
-		    if(arg.predicate)
-			bridge.GetSetProp(arg.callObject, arg.method, arg.getArgs(), response);
-		    else
-			bridge.Invoke(arg.callObject, arg.method, arg.getArgs(), response);
-		    response.flush();
-		} catch (AbortException sub) {
-		    bridge.printStackTrace(sub);
-		}
-		break;
+		      try {
+			switch(arg.predicate) {
+			case 'P': bridge.GetSetProp(arg.callObject, arg.method, arg.getArgs(), response); break;
+			case 'I':  bridge.Invoke(arg.callObject, arg.method, arg.getArgs(), response);  break;
+			default: throw new IOException("Protocol error");
+			}
+			response.flush();
+		      } catch (AbortException sub) {
+			  bridge.printStackTrace(sub);
+		      }
+		      break;
+	    case 'G':
+		      try {
+			switch(arg.predicate) {
+			case '2': response.setAsyncWriter();
+			case '1': bridge.GetSetProp(arg.callObject, arg.method, arg.getArgs(), response); break;
+			case '3': response.setAsyncNullWriter(); bridge.GetSetProp(arg.callObject, arg.method, arg.getArgs(), response); break;
+			default: throw new IOException("Protocol error");
+			}
+			response.flush();
+		      } catch (AbortException sub) {
+			  bridge.printStackTrace(sub);
+		      }
+		      break;
+	    case 'Y':
+		      try {
+			switch(arg.predicate) {
+			case '2':  response.setAsyncWriter();
+			case '1':  bridge.Invoke(arg.callObject, arg.method, arg.getArgs(), response);  break;
+			case '3': response.setAsyncNullWriter(); bridge.Invoke(arg.callObject, arg.method, arg.getArgs(), response);  break;
+			default: throw new IOException("Protocol error");
+			}
+			response.flush();
+		      } catch (AbortException sub) {
+			  bridge.printStackTrace(sub);
+		      }
+		      break;
 	    case 'C':
-		try {
-		    if(arg.predicate)
-			bridge.CreateObject((String)arg.callObject, false, arg.getArgs(), response);
-		    else
-			bridge.CreateObject((String)arg.callObject, true, arg.getArgs(), response);
-		    response.flush();
-		} catch (AbortException sub) {
-		    bridge.printStackTrace(sub);
-		}
-		break;
+		      try {
+			switch(arg.predicate) {
+			case 'C': bridge.CreateObject((String)arg.callObject, false, arg.getArgs(), response); break;
+			case 'I':  bridge.CreateObject((String)arg.callObject, true, arg.getArgs(), response);  break;
+			default: throw new IOException("Protocol error");
+			}
+			response.flush();
+		      } catch (AbortException sub) {
+			  bridge.printStackTrace(sub);
+		      }
+		      break;
+	    case 'H':
+		      try {
+			switch(arg.predicate) {
+			case '2': response.setAsyncWriter();
+			case '1': bridge.CreateObject((String)arg.callObject, false, arg.getArgs(), response); break;
+			case '3': response.setAsyncNullWriter(); bridge.CreateObject((String)arg.callObject, false, arg.getArgs(), response);  break;
+			default: throw new IOException("Protocol error");
+			}
+			response.flush();
+		      } catch (AbortException sub) {
+			  bridge.printStackTrace(sub);
+		      }
+		      break;
+	    case 'K':
+		      try {
+			switch(arg.predicate) {
+			case '2': response.setAsyncWriter();
+			case '1':  bridge.CreateObject((String)arg.callObject, true, arg.getArgs(), response);  break;
+			case '3': response.setAsyncNullWriter(); bridge.CreateObject((String)arg.callObject, true, arg.getArgs(), response); break;
+			default: throw new IOException("Protocol error");
+			}
+			response.flush();
+		      } catch (AbortException sub) {
+			  bridge.printStackTrace(sub);
+		      }
+		      break;
 	   case 'F': 
-	         if(arg.predicate) { // keep alive
+	         if(arg.predicate=='A') { // keep alive
 	           bridge.recycle();
 	           try {
 	     	       ((ThreadPool.Delegate)Thread.currentThread()).setPersistent();
@@ -416,21 +509,59 @@ public final class Request implements IDocHandler {
 	    arg.id.setID(response); 
 	    switch(arg.type){
 	    case 'I':
-		if(arg.predicate)
-		    bridge.GetSetProp(arg.callObject, arg.method, arg.getArgs(), response);
-		else
-		    bridge.Invoke(arg.callObject, arg.method, arg.getArgs(), response);
+		switch(arg.predicate) {
+		case 'P': bridge.GetSetProp(arg.callObject, arg.method, arg.getArgs(), response); break;
+		case 'I':  bridge.Invoke(arg.callObject, arg.method, arg.getArgs(), response); break;
+		default: throw new IOException("Protocol error");
+		}
+		response.flush();
+		break;
+	    case 'G':
+		switch(arg.predicate) {
+		case '2': response.setAsyncWriter();
+		case '1': bridge.GetSetProp(arg.callObject, arg.method, arg.getArgs(), response); break;
+		case '3': response.setAsyncNullWriter(); bridge.GetSetProp(arg.callObject, arg.method, arg.getArgs(), response); break;
+		default: throw new IOException("Protocol error");
+		}
+		response.flush();
+		break;
+	    case 'Y':
+		switch(arg.predicate) {
+		case '2':  response.setAsyncWriter();
+		case '1':  bridge.Invoke(arg.callObject, arg.method, arg.getArgs(), response); break;
+		case '3':  response.setAsyncNullWriter(); bridge.Invoke(arg.callObject, arg.method, arg.getArgs(), response); break;
+		default: throw new IOException("Protocol error");
+		}
 		response.flush();
 		break;
 	    case 'C':
-		if(arg.predicate)
-		    bridge.CreateObject((String)arg.callObject, false, arg.getArgs(), response);
-		else
-		    bridge.CreateObject((String)arg.callObject, true, arg.getArgs(), response);
+		switch(arg.predicate) {
+		case 'C':bridge.CreateObject((String)arg.callObject, false, arg.getArgs(), response); break;
+		case 'I':  bridge.CreateObject((String)arg.callObject, true, arg.getArgs(), response);  break;
+		default: throw new IOException("Protocol error");
+		}
+		response.flush();
+		break;
+	    case 'H':
+		switch(arg.predicate) {
+		case '2':response.setAsyncWriter();
+		case '1':bridge.CreateObject((String)arg.callObject, false, arg.getArgs(), response); break;
+		case '3':response.setAsyncNullWriter(); bridge.CreateObject((String)arg.callObject, false, arg.getArgs(), response); break;
+		default: throw new IOException("Protocol error");
+		}
+		response.flush();
+		break;
+	    case 'K':
+		switch(arg.predicate) {
+		case '2':  response.setAsyncWriter();
+		case '1':  bridge.CreateObject((String)arg.callObject, true, arg.getArgs(), response);  break;
+		case '3':  response.setAsyncNullWriter(); bridge.CreateObject((String)arg.callObject, true, arg.getArgs(), response);  break;
+		default: throw new IOException("Protocol error");
+		}
 		response.flush();
 		break;
 	    case 'F':	
-	        if(arg.predicate) { // keep alive
+	        if(arg.predicate=='A') { // keep alive
 	            bridge.recycle();
 	            try {
 			((ThreadPool.Delegate)Thread.currentThread()).setPersistent();
@@ -511,9 +642,6 @@ public final class Request implements IDocHandler {
      * @return The parser string
      */
     public ParserString createParserString() {
-        if(bridge.options.hexNumbers())
-            return new ParserString(bridge);
-        else
-            return new ClassicParserString(bridge);
+	return new ParserString(bridge);
     }
 }

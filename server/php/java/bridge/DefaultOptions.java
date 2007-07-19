@@ -33,7 +33,6 @@ package php.java.bridge;
  */
 
 public final class DefaultOptions extends Options {
-    public boolean hexNumbers() { return false; }
 
     public boolean base64Data() { return true; }
 

@@ -55,9 +55,6 @@ Build and execution instructions:
 
      phpize && ./configure && make && make install
 
-  The optimized implementation uses persistent connections via "named
-  pipes" and runs up to 10 times faster than the generic implementation.
-
 ------------------------------------
    Permanently activate the module
    -------------------------------

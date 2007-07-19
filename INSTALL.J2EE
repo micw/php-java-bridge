@@ -102,9 +102,3 @@ Deployment
     php-java-bridge-users@lists.sourceforge.net
 
 
-* An optimized implementation, which is up to 10 times faster than the
-  pure PHP implementation described above, is available as C
-  source. Please see the README, INSTALL or INSTALL.LINUX document
-  located in the source download archive how to compile an optimized
-  "php_java.dll" or "java.so" for your operating system.
-

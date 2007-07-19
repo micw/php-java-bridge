@@ -87,10 +87,6 @@ class java_NativeParser {
 	} while(!$this->event || $this->level>0);
   }
 
-  function __destruct() {
-	xml_parser_free($this->parser);
-  }
-
   function parserError() {
 	die(sprintf("protocol error: %s", $this->buf));
   }

@@ -53,9 +53,8 @@ class java_SocketChannel {
   function fread($size) {
 	return fread($this->peer, $size);
   }
-  function __destruct() {
-	// required by protocol
-	$this->protocol->flush();
+  function keepAlive() {
+	// keep alive, required by protocol
 	fwrite($this->peer, "<F p=\"A\" />");
 	fread($this->peer, 10); // <F p="A"/>
   }
@@ -67,6 +66,7 @@ class java_EmptyPipeChannel {
   function getName() {
 	return null;
   }
+  function keepAlive() {}
 }
 class java_PipeChannel extends java_EmptyPipeChannel {
   var $peer, $peerr, $peerr_desc, $name;
@@ -122,6 +122,9 @@ class java_SocketHandler {
 	return $this->channel->fread($size);
   }
   function redirect() {}
+  function keepAlive() {
+	$this->channel->keepAlive();
+  }
 }
 class java_HttpHandler extends java_SocketHandler {
   var $headers;
@@ -319,7 +322,6 @@ class java_HttpHandler extends java_SocketHandler {
 }
 
 class java_Protocol {
-  var $send;
   var $client;
   var $webContext;
   var $serverName;
@@ -429,23 +431,29 @@ class java_Protocol {
   }
 
   function sendData() {
-	$this->handler->write($this->send);
-    $this->send=null;
+	$this->handler->write($this->client->sendBuffer);
+    $this->client->sendBuffer=null;
   }
   function sendAsyncData() {
-	if(strlen($this->send)>=java_client::SEND_SIZE*3/4) {
-	  $this->handler->write($this->send);
-	  $this->send=null;
+	if(strlen($this->client->sendBuffer)>=java_client::SEND_SIZE*3/4) {
+	  $this->handler->write($this->client->sendBuffer);
+	  $this->client->sendBuffer=null;
 	}
   }
   function flush() {
-	$this->client->sendData();
+	if(JAVA_DEBUG) {
+	  echo "sending::: "; echo $this->client->sendBuffer; echo "\n";
+	}
+	$this->sendData();
+  }
+  function keepAlive() {
+	$this->handler->keepAlive();
   }
   function handle() {
     $this->client->handleRequests();
   }
   function write($data) {
-    $this->send.=$data;
+    $this->client->sendBuffer.=$data;
   }
   function finish() {
     $this->flush();
@@ -453,35 +461,98 @@ class java_Protocol {
 	$this->redirect();
   }
   
-  function createObjectBegin($name, $createInstance) {
-	$this->write(sprintf("<C v=\"%s\" p=\"%s\">", $name, $createInstance));
+  function referenceBegin($name) {
+	$this->client->sendBuffer.=$this->client->preparedToSendBuffer;
+	if(JAVA_DEBUG) {
+	  echo "flushed preparedToSendBuffer: ".$this->client->preparedToSendBuffer."\n";
+	}
+	$this->client->preparedToSendBuffer=null;
+
+    $signature=sprintf("<H p=\"1\" v=\"%s\">", $name);
+    $this->write($signature);
+    $signature[6]="2";
+    $this->client->currentArgumentsFormat = $signature;
+  }
+  function referenceEnd() {
+    $this->client->currentArgumentsFormat.=$format="</H>";
+    $this->write($format);
+    $this->finish();
+	$this->client->currentCacheKey=null;
+  }
+  function createObjectBegin($name) {
+	$this->client->sendBuffer.=$this->client->preparedToSendBuffer;
+	if(JAVA_DEBUG) {
+	  echo "flushed preparedToSendBuffer: ".$this->client->preparedToSendBuffer."\n";
+	}
+	$this->client->preparedToSendBuffer=null;
+
+    $signature=sprintf("<K p=\"1\" v=\"%s\">", $name);
+    $this->write($signature);
+    $signature[6]="2";
+    $this->client->currentArgumentsFormat = $signature;
   }
   function createObjectEnd() {
-    $this->write("</C>");
+    $this->client->currentArgumentsFormat.=$format="</K>";
+    $this->write($format);
     $this->finish();
+	$this->client->currentCacheKey=null;
   }
-  function invokeBegin($object, $method, $property) {
- 	$this->write(sprintf("<I v=\"%x\" m=\"%s\" p=\"%s\">",$object, $method, $property));
+  function propertyAccessBegin($object, $method) {
+	$this->client->sendBuffer.=$this->client->preparedToSendBuffer;
+	if(JAVA_DEBUG) {
+	  echo "flushed preparedToSendBuffer: ".$this->client->preparedToSendBuffer."\n";
+	}
+	$this->client->preparedToSendBuffer=null;
+
+    $this->write(sprintf("<G p=\"1\" v=\"%x\" m=\"%s\">", $object, $method));
+    $this->client->currentArgumentsFormat="<G p=\"2\" v=\"%x\" m=\"${method}\">";
+  }
+  function propertyAccessEnd() {
+    $this->client->currentArgumentsFormat.=$format="</G>";
+    $this->write($format);
+    $this->finish();
+	$this->client->currentCacheKey=null;
+  }
+  function invokeBegin($object, $method) {
+	$this->client->sendBuffer.=$this->client->preparedToSendBuffer;
+	if(JAVA_DEBUG) {
+	  echo "flushed preparedToSendBuffer: ".$this->client->preparedToSendBuffer."\n";
+	}
+	$this->client->preparedToSendBuffer=null;
+
+    $this->write(sprintf("<Y p=\"1\" v=\"%x\" m=\"%s\">", $object, $method));
+    $this->client->currentArgumentsFormat="<Y p=\"2\" v=\"%x\" m=\"${method}\">";
   }
   function invokeEnd() {
-    $this->write("</I>");
+    $this->client->currentArgumentsFormat.=$format="</Y>";
+    $this->write($format);
     $this->finish();
+	$this->client->currentCacheKey=null;
   }
   function resultBegin() {
+	$this->client->sendBuffer.=$this->client->preparedToSendBuffer;
+	if(JAVA_DEBUG) {
+	  echo "flushed preparedToSendBuffer: ".$this->client->preparedToSendBuffer."\n";
+	}
+	$this->client->preparedToSendBuffer=null;
+	
 	$this->write("<R>");
   }
   function resultEnd() {
-    $this->write("</R>");
+	$this->write("</R>");
 	$this->flush();
   }
   function writeString($name) {
-    $this->write(sprintf("<S v=\"%s\"/>",htmlspecialchars($name, ENT_COMPAT)));
+    $this->client->currentArgumentsFormat.=$format="<S v=\"%s\"/>";
+    $this->write(sprintf($format, htmlspecialchars($name, ENT_COMPAT)));
+
   }
   function writeBoolean($boolean) {
-    $c=$boolean?"T":"F";
-    $this->write(sprintf("<B v=\"%s\"/>",$c));
+    $this->client->currentArgumentsFormat.=$format="<T v=\"%s\"/>";
+    $this->write(sprintf($format, $boolean));
   }
   function writeLong($l) {
+    $this->client->currentArgumentsFormat.="<J v=\"%d\"/>";
     if($l<0) {
       $this->write(sprintf("<L v=\"%x\" p=\"A\"/>",-$l));
     } else {
@@ -489,24 +560,21 @@ class java_Protocol {
     }
   }
   function writeULong($l) {
-	$this->write(sprintf("<L v=\"%x\" p=\"O\"/>",$l));
+    $this->client->currentArgumentsFormat.=$format="<L v=\"%x\" p=\"O\"/>";
+	$this->write(sprintf($format,$l));
   }
   function writeDouble($d) {
-    $this->write(sprintf("<D v=\"%.14e\"/>", $d));
+    $this->client->currentArgumentsFormat.=$format="<D v=\"%.14e\"/>";
+    $this->write(sprintf($format, $d));
   }
   function writeObject($object) {
-    if(is_null($object)) {
-      $this->write("<O v=\"\"/>");
-    } else {
-      $this->write(sprintf("<O v=\"%x\"/>", $object));
-    }
+    $this->client->currentArgumentsFormat.=$format="<O v=\"%x\"/>";
+	$this->write(sprintf($format, $object));
   }
+
+  /* the following routines are not cached */
   function writeException($object, $str) {
-    if(is_null($object)) {
-      $this->write(sprintf("<E v=\"\" m=\"%s\"/>", htmlspecialchars($str, ENT_COMPAT)));
-    } else {
-      $this->write(sprintf("<E v=\"%x\" m=\"%s\"/>",$object, htmlspecialchars($str, ENT_COMPAT)));
-    }
+	$this->write(sprintf("<E v=\"%x\" m=\"%s\"/>",$object, htmlspecialchars($str, ENT_COMPAT)));
   }
   function writeCompositeBegin_a() {
     $this->write("<X t=\"A\">");
@@ -530,6 +598,9 @@ class java_Protocol {
     $this->write("</P>");
   }
   function writeUnref($object) {
+	$this->client->sendBuffer.=$this->client->preparedToSendBuffer;
+	//echo "clear prepared to send buffer\n";
+	$this->client->preparedToSendBuffer=null;
     $this->write(sprintf("<U v=\"%x\"/>", $object));
   }
 

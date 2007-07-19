@@ -2,10 +2,6 @@ This directory contains a pure PHP implementation of the PHP/Java
 Bridge: it doesn't require a Java extension ("java.so" or
 "php_java.dll") installed on the web server.
 
-WARNING: THIS IMPLEMENTATION IS 2 TO 10 TIMES SLOWER THAN THE C
-IMPLEMENTATION[1].
-
-
 
 Usage
 -----
@@ -33,14 +29,3 @@ Please report bugs/problems to the mailing list:
 
   php-java-bridge-users@lists.sourceforge.net
 
-
-[1] Depending on whether a PHP opcode cache and a native XML parser is
-used. And whether or not the operating system uses Nagle's algorithm
-for the local interface. When PHP >= 5.1.4 is used on Linux, Solaris
-or Windows with eaccelerator enabled, the pure PHP implementation
-isn't much slower than the C based implementation.
-
-However, on other operating systems (MacOSX, FreeBSD, NetBSD, OpenBSD)
-you may need to tune TCP socket performance and recompile the PHP
-binary or use the C based implementation with Unix domain sockets
-instead.

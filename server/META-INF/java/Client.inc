@@ -48,7 +48,7 @@ class java_SimpleFactory {
   function java_SimpleFactory($client) {
 	$this->client = $client;
   }
-  function getProxy($result,$wrap) {
+  function getProxy($result, $signature, $wrap) {
 	return $result;
   }
   function checkResult($result) {}
@@ -57,14 +57,14 @@ class java_ProxyFactory extends java_SimpleFactory {
   function java_ProxyFactory($client) {
 	parent::java_SimpleFactory($client);
   }
-  function create($result) {
-	return new java_JavaProxy($result);
+  function create($result, $signature) {
+	return new java_JavaProxy($result, $signature);
   }
   function createInternal($proxy) {
-	return new java_InternalJavaObject($proxy);	// no array access
+	return new java_InternalJava($proxy);
   }
-  function getProxy($result, $wrap) {
-	$proxy = $this->create($result);
+  function getProxy($result, $signature, $wrap) {
+	$proxy = $this->create($result, $signature);
 	if($wrap) $proxy = $this->createInternal($proxy);
 	return $proxy;
   }
@@ -73,31 +73,28 @@ class java_ArrayProxyFactory extends java_ProxyFactory {
   function java_ArrayProxyFactory($client) {
 	parent::java_ProxyFactory($client);
   }
-  function createInternal($proxy) {
-	return new java_InternalJava($proxy); // array access
-  }
-  function create($result) {
-	return new java_ArrayProxy($result);
+  function create($result, $signature) {
+	return new java_ArrayProxy($result, $signature);
   }	
 }
 class java_IteratorProxyFactory extends java_ProxyFactory {
   function java_IteratorProxyFactory($client) {
 	parent::java_ProxyFactory($client);
   }
-  function create($result) {
-	return new java_IteratorProxy($result);
+  function create($result, $signature) {
+	return new java_IteratorProxy($result, $signature);
   }	
 }
 class java_ExceptionProxyFactory extends java_SimpleFactory {
   function java_ExceptionProxyFactory($client) {
 	parent::java_SimpleFactory($client);
   }
-  function create($result) {
+  function create($result, $signature) {
 	static $count = 0;
-	return new java_ExceptionProxy($result);
+	return new java_ExceptionProxy($result, $signature);
   }
-  function getProxy($result, $wrap) {
-	$proxy = $this->create($result);
+  function getProxy($result, $signature, $wrap) {
+	$proxy = $this->create($result, $signature);
 	if($wrap) $proxy = new java_InternalException($proxy);
 	return $proxy;
   }
@@ -106,8 +103,8 @@ class java_ThrowExceptionProxyFactory extends java_ExceptionProxyFactory {
   function java_ThrowExceptionProxyFactory($client) {
 	parent::java_ExceptionProxyFactory($client);
   }
-  function getProxy($result, $wrap) {
-	$proxy = $this->create($result);
+  function getProxy($result, $signature, $wrap) {
+	$proxy = $this->create($result, $signature);
 	// don't check for $wrap, which may be wrong (type Java instead of
 	// JavaException) when the user has managed to create an exception
 	// from a Java constructor, e.g.: new Java("java.lang.String",
@@ -121,10 +118,23 @@ class java_ThrowExceptionProxyFactory extends java_ExceptionProxyFactory {
   }
 }
 
+class java_CacheEntry {
+  var $fmt, $signature, $factory, $java;
+  var $resultVoid;
+
+  function java_CacheEntry($fmt, $signature, $factory, $resultVoid) {
+	$this->fmt = $fmt;
+	$this->signature = $signature;
+	$this->factory = $factory;
+	$this->resultVoid = $resultVoid;
+  }
+}
+
 class java_Arg {
   var $client;
   var $exception; 				// string representation for php4
   var $factory, $val;
+  var $signature; // class type
   
   function java_Arg($client) {
 	$this->client = $client;
@@ -137,8 +147,9 @@ class java_Arg {
 	$this->val = &$val;
   }
   function getResult($wrap) {
-	$rc = $this->factory->getProxy($this->val, $wrap);
+	$rc = $this->factory->getProxy($this->val, $this->signature, $wrap);
 	$factory = $this->factory;
+
 	$this->factory = $this->client->simpleFactory;
 	$factory->checkResult($rc);
 	return $rc;
@@ -148,6 +159,32 @@ class java_Arg {
   }
   function setException($string) {
 	$this->exception = $string;
+  }
+  function setVoidSignature() {
+	$this->signature = "@N";
+	// update cache
+	$key = $this->client->currentCacheKey;
+	$this->client->currentArgumentsFormat[6]="3";
+	if(JAVA_DEBUG) {
+	  echo "ignore further results:";  echo "\n";
+	}
+	if(JAVA_DEBUG) {
+	  echo "updating cache $key, argformat: {$this->client->currentArgumentsFormat}, classType: {$this->signature}\n";
+	}
+	$cacheEntry = new java_CacheEntry($this->client->currentArgumentsFormat, $this->signature, $this->factory, true);
+	$this->client->methodCache[$key]=$cacheEntry;
+  }
+  function setSignature($signature) {
+	$this->signature = $signature;
+	// update cache
+	$key = $this->client->currentCacheKey;
+	if($key && $key[0]!='~') {			// don't cache array(...) or non-java objects
+	  if(JAVA_DEBUG) {
+		echo "updating cache $key, argformat: {$this->client->currentArgumentsFormat}, classType: {$this->signature}\n";
+	  }
+	  $cacheEntry = new java_CacheEntry($this->client->currentArgumentsFormat, $this->signature, $this->factory, false);
+	  $this->client->methodCache[$key]=$cacheEntry;
+	}
   }
 }
 class java_CompositeArg extends java_Arg {
@@ -172,7 +209,7 @@ class java_CompositeArg extends java_Arg {
 	$this->val[$this->idx]=&$val;
   }
   function setResult($val) {
-	$this->val[$this->idx]=$this->factory->getProxy($val, true);
+	$this->val[$this->idx]=$this->factory->getProxy($val, $this->signature, true);
 	$this->factory = $this->client->simpleFactory;
   }
 }
@@ -188,59 +225,6 @@ class java_ApplyArg extends java_CompositeArg {
   }
 }
 
-class java_Handler {
-  var $client;
-  
-  function java_Handler($client) {
-	$this->client = $client;
-  }
-
-  function flush() {}
-
-  function sendData() {
-    $this->client->protocol->sendData();
-  }
-
-  function handleRequests() {
-	$client = $this->client;
-	do {
-	  $tail_call = false;
-	  $this->client->stack=array($this->client->arg=$this->client->simpleArg);
-	  $client->idx = 0;
-	  $client->parser->parse();
-
-	  /* pull off A, if any */
-	  if((count($client->stack)) > 1) {
-		$arg = array_pop($client->stack);
-		$client->apply($arg);
-		$tail_call = 1;			// we don't expect a result
-	  } else {
-		$tail_call = 0;
-	  }
-
-	  $client->stack=null;
-	} while($tail_call);
-	return 1;
-  }
-}
-class java_AsyncHandler extends java_Handler {
-  var $arg;
-  function java_AsyncHandler($client) {
-	$this->client = $client;
-	$this->arg = $client->simpleArg;
-  }
-  function flush() {
-    $this->client->protocol->sendData();
-  }
-  function sendData() {
-    $this->client->protocol->sendAsyncData();
-  }
-
-  function handleRequests() {
-	$this->arg->setFactory($this->client->proxyFactory);
-	$this->arg->setResult(++$this->client->asyncCtx);
-  }
-}
 class java_Client /* implements IDocHandler */ {
   var $RUNTIME;
 
@@ -258,9 +242,16 @@ class java_Client /* implements IDocHandler */ {
   var $arg;
   var $asyncCtx;
   var $globalRef;
-  var $defaultHandler, $asyncHandler, $handler;
 
   var $stack;
+
+  // the cache
+  var $methodCache = array(), $currentCacheKey, $currentArgumentsFormat;
+  var $cachedJavaPrototype;
+  
+  // send buffer
+  var $sendBuffer, $preparedToSendBuffer;
+
 
   function java_Client() {
 	$this->RUNTIME = array();
@@ -280,41 +271,44 @@ class java_Client /* implements IDocHandler */ {
 	$this->exceptionProxyFactory = new java_ExceptionProxyFactory($this);
 	$this->throwExceptionProxyFactory = new java_ThrowExceptionProxyFactory($this);
 
+	$this->cachedJavaPrototype=new java_JavaProxyProxy($this);
+
 	$this->simpleArg = new java_Arg($this);
 
 	$this->globalRef = new java_GlobalRef();
 
 	$this->asyncCtx = 0;
-	$this->handler = $this->defaultHandler = new java_Handler($this);
-	$this->asyncHandler = new java_AsyncHandler($this);
   }
 
   function __destruct() { 
+	if(JAVA_DEBUG) echo "the client destroyed\n";
+	$this->protocol->flush();
+	$this->protocol->keepAlive();
   }
 
   function read($size) {
 	return $this->protocol->read($size);
   }
 
-  function setDefaultHandler() {
-	$this->handler->flush();
-	$this->handler = $this->defaultHandler;
-  }
-
-  function setAsyncHandler() {
-	$this->handler = $this->asyncHandler;
-  }
-
-  function isAsync() {
-	return $this->handler === $this->asyncHandler;
-  }
-
   function handleRequests() {
-	$this->handler->handleRequests();
-  }
+	do {
+	  $tail_call = false;
+	  $this->stack=array($this->arg=$this->simpleArg);
+	  $this->idx = 0;
+	  $this->parser->parse();
 
-  function sendData() {
-	$this->handler->sendData();
+	  /* pull off A, if any */
+	  if((count($this->stack)) > 1) {
+		$arg = array_pop($this->stack);
+		$this->apply($arg);
+		$tail_call = 1;			// we don't expect a result
+	  } else {
+		$tail_call = 0;
+	  }
+
+	  $this->stack=null;
+	} while($tail_call);
+	return 1;
   }
 
   function getWrappedResult($wrap) {
@@ -399,6 +393,10 @@ class java_Client /* implements IDocHandler */ {
 	case 'D':
 	  $arg->setResult($this->getInexact($st['v']));
 	  break;
+	case 'V':
+	  if(JAVA_DEBUG) {echo "setresult VOID:"; echo "\n";}
+	  $arg->setVoidSignature();
+	  /* fall through */
 	case 'N':
 	  $arg->setResult(null);
 	  break;
@@ -407,10 +405,13 @@ class java_Client /* implements IDocHandler */ {
 	case 'O': 
 	  $arg->setFactory($this->getProxyFactory($st['p']));
 	  $arg->setResult($this->asyncCtx=$this->getExact($st['v']));
+	  $arg->setSignature($st['m']);
+	  if(JAVA_DEBUG) {echo "setresult object:"; echo sprintf("%x", $this->asyncCtx); echo "\n";}
 	  break;
 	case 'E':
 	  $arg->setFactory($this->throwExceptionProxyFactory);
 	  $arg->setResult($this->asyncCtx=$this->getExact($st['v']));
+	  if(JAVA_DEBUG) {echo "setresult exception:"; echo sprintf("%x", $this->asyncCtx); echo "\n";}
 	  $arg->setException($st['m']);
 	  break;
 	default: 
@@ -477,27 +478,33 @@ class java_Client /* implements IDocHandler */ {
 	  $this->writeArg($args[$i]);
 	}
   }
-  function createObject($name, $args, $createInstance) {
-	$instance = $createInstance?"I":"C";
-    $this->protocol->createObjectBegin($name, $instance);
+  function createObject($name, $args) {
+    $this->protocol->createObjectBegin($name);
     $this->writeArgs($args);
     $this->protocol->createObjectEnd();
 	$val = $this->getInternalResult();
 	return $val;
   }
+  function referenceObject($name, $args) {
+    $this->protocol->referenceBegin($name);
+    $this->writeArgs($args);
+    $this->protocol->referenceEnd();
+	$val = $this->getInternalResult();
+	return $val;
+  }
   function getProperty($object, $property) {
-	$this->protocol->invokeBegin($object, $property, "P");
-	$this->protocol->invokeEnd();
+	$this->protocol->propertyAccessBegin($object, $property);
+	$this->protocol->propertyAccessEnd();
 	return $this->getResult();
   }
   function setProperty($object, $property, $arg) {
-	$this->protocol->invokeBegin($object, $property, "P");
+	$this->protocol->propertyAccessBegin($object, $property);
 	$this->writeArg($arg);
-	$this->protocol->invokeEnd();
+	$this->protocol->propertyAccessEnd();
 	$this->getResult();
   }
   function invokeMethod($object, $method, $args) {
-	$this->protocol->invokeBegin($object, $method, "I");
+	$this->protocol->invokeBegin($object, $method);
 	$this->writeArgs($args);
 	$this->protocol->invokeEnd();
 	$val = $this->getResult();

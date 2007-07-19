@@ -1879,7 +1879,7 @@ public class JavaBridge implements Runnable {
      */
     public void beginDocument() {
 	Response res = request.response;
-	res.setAsyncWriter();
+	res.setPersistentAsyncWriter();
 	lastAsyncException = null;
     }
     /**

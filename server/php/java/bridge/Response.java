@@ -266,7 +266,6 @@ public class Response {
     protected class DefaultWriter extends WriterWithDelegate {
 
 	public boolean setResult(Object value) {
-	    if(value==null) {writeNull(); return true;}
 	    if(staticType.isPrimitive()) {
    		if(staticType == Boolean.TYPE)
 		    writeBoolean(((Boolean) value).booleanValue());
@@ -278,11 +277,15 @@ public class Response {
 		    writeDouble(((Number)value).doubleValue());
    		else if(staticType == Character.TYPE) 
 		    writeString(Util.stringValueOf(value));
-   		else { Util.logFatal("Unknown type"); writeObject(value); }
-	    } else if(value instanceof PhpString) //  No need to check for Request.PhpNumber, this cannot happen.
-	        writeString(((PhpString)value).getBytes());
-	    else if(!delegate.setResult(value))
+   		else if(staticType == java.lang.Void.TYPE)
+   		    writeVoid();
+  		else { Util.logFatal("Unknown type"); writeObject(value); }
+	    } else if(value instanceof PhpString) {//  No need to check for Request.PhpNumber, this cannot happen.
+		if(value==null) writeNull();
+		else writeString(((PhpString)value).getBytes());
+	    } else if(!delegate.setResult(value)) {
 		writeObject(value);
+	    }
 	    return true;
         }        	     	
     }
@@ -304,8 +307,7 @@ public class Response {
 	    return true;
 	}
     }
-  	
-    protected final class AsyncWriter extends Writer {
+    protected class AsyncWriter extends Writer {
 	public void setResultProcedure(long object, String cname, String name, Object[] args) {
 	    throw new IllegalStateException("Cannot call "+name+": callbacks not allowed in stream mode");
 	}
@@ -332,9 +334,6 @@ public class Response {
 	    setResultObject(value);
 	    return true;
 	}
-	public void reset() {
-	    buf.reset();
-	}
 	/**
 	 * Called at the end of each packed.
 	 */
@@ -345,7 +344,31 @@ public class Response {
      	    reset();
 	}
     }
-  	
+    protected final class AsyncNullWriter extends Writer {
+	public void setResultProcedure(long object, String cname, String name, Object[] args) {
+	    throw new IllegalStateException("Cannot call "+name+": callbacks not allowed in stream mode");
+	}
+	public void setResultException(Throwable o, String str) {
+	    bridge.lastAsyncException = o;
+	}
+	public void setResultObject(Object value) {}
+	public void setResultClass(Class value) {}
+	public boolean setResult(Object value) { 
+	    return true;
+	}
+	public void flush() throws IOException {
+     	    if(bridge.logLevel>=4) {
+       	     bridge.logDebug(" |<- <NONE>");
+            }
+     	    reset();
+	}	
+    }
+    protected final class PersistentAsyncWriter extends AsyncWriter {
+	public void reset() {
+	    buf.reset();
+	}
+    }
+ 	
     protected class CoerceWriter extends Writer {
 	public void setResult(Object value, Class resultType) {
 	    // ignore resultType and use the coerce type
@@ -376,6 +399,8 @@ public class Response {
 		    }
 		} else if(staticType == Character.TYPE) {
 		    writeString(Util.stringValueOf(value));
+		} else if(staticType == java.lang.Void.TYPE) {
+   		    writeVoid();
 		} else { Util.logFatal("Unknown type"); writeObject(value); }
 	    } else if(staticType == String.class) {
 		 if (value instanceof byte[])
@@ -406,7 +431,8 @@ public class Response {
     }
      
     private WriterWithDelegate defaultWriter;
-    private Writer writer, currentWriter, arrayValuesWriter=null, arrayValueWriter=null, coerceWriter=null, asyncWriter=null;
+    private Writer writer, currentWriter, arrayValuesWriter=null, arrayValueWriter=null, coerceWriter=null; 
+    private Writer asyncWriter=null, asyncNullWriter=null, persistentAsyncWriter = null;
 
     protected HexOutputBuffer createBase64OutputBuffer() {
 	return new Base64OutputBuffer(bridge);
@@ -514,7 +540,23 @@ public class Response {
      * @return The async. writer
      */
     public Writer setAsyncWriter() {
-	return currentWriter = getAsyncWriter();
+	return writer = getAsyncWriter();
+    }
+    /**
+     * Selects a specialized writer which does not write anything and does not generate a result proxy
+     * Used by async. protocol.
+     * @return The async. writer
+     */
+    public Writer setAsyncNullWriter() {
+	return writer = getAsyncNullWriter();
+    }
+    /**
+     * Selects a specialized writer which does not write anything.
+     * Used by async. protocol. This writer will not be reset at the end of the script.
+     * @return The async. writer
+     */
+    public Writer setPersistentAsyncWriter() {
+	return currentWriter = getPersistentAsyncWriter();
     }
     /**
      * Selects the default writer
@@ -535,7 +577,9 @@ public class Response {
     static final byte[] E="<E v=\"".getBytes();
     static final byte[] O="<O v=\"".getBytes();
     static final byte[] N="<N i=\"".getBytes();
+    static final byte[] V="<V i=\"".getBytes();
     static final byte[] Nul="<N />".getBytes();
+    static final byte[] Void="<V />".getBytes();
     static final byte[] m="\" m=\"".getBytes();
     static final byte[] n="\" n=\"".getBytes();
     static final byte[] p="\" p=\"".getBytes();
@@ -576,6 +620,9 @@ public class Response {
 	buf.append(D); buf.append(d);
 	buf.append(e);
     }
+    void writeVoid() {
+	buf.append(Void);
+    }
     void writeNull() {
 	buf.append(Nul);
     }
@@ -591,16 +638,20 @@ public class Response {
         }
         return po;
     }
+    /** write object (class, interface, object) */
     void writeObject(Object o) {
         if(o==null) { writeNull(); return; }
         Class dynamicType = o.getClass();
 	buf.append(O); buf.append(this.bridge.globalRef.append(o));
+	buf.append(m); buf.append(Util.toBytes(dynamicType.getName()));
 	buf.append(getType(dynamicType));
 	buf.append(e);
     }
+    /** write object of type class. Only called from new JavaClass(...) */
     void writeClass(Class o) {
         if(o==null) { writeNull(); return; }
     	buf.append(O); buf.append(this.bridge.globalRef.append(o));
+	buf.append(m); buf.append(Util.toBytes(o.getName()));
     	buf.append(po);
     	buf.append(e);
     }
@@ -703,8 +754,16 @@ public class Response {
         if(coerceWriter==null) return coerceWriter = new CoerceWriter();
         return coerceWriter;
     }
+    private Writer getPersistentAsyncWriter() {
+	if(persistentAsyncWriter==null) return persistentAsyncWriter = new PersistentAsyncWriter();
+	return persistentAsyncWriter;
+    }
     private Writer getAsyncWriter() {
-      if(asyncWriter==null) return asyncWriter = new AsyncWriter();
-      return asyncWriter;
+	if(asyncWriter==null) return asyncWriter = new AsyncWriter();
+	return asyncWriter;
+    }
+    private Writer getAsyncNullWriter() {
+	if(asyncNullWriter==null) return asyncNullWriter = new AsyncNullWriter();
+	return asyncNullWriter;
     }
 }

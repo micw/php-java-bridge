@@ -26,7 +26,7 @@ package php.java.bridge;
 import java.io.IOException;
 
 /**
- * This class is used to write the response to the front-end.
+ * This class is used to write the response to the front-end. Kept for PHP 4, which needs the ID=...
  * 
  * @author jostb
  *
@@ -60,10 +60,7 @@ public class ClassicResponse extends Response {
 	return new Base64OutputBuffer(bridge);
     }
     protected HexOutputBuffer createOutputBuffer() {
-        if(bridge.options.hexNumbers())
-            return super.createOutputBuffer();
-        else
-            return new ClassicOutputBuffer(bridge);
+	return super.createOutputBuffer();
     }    
     /**
      * Creates a new response object. The object is re-used for each packed.
@@ -109,6 +106,11 @@ public class ClassicResponse extends Response {
     }
     void writeNull() {
 	buf.append(N);
+	buf.append(result);
+	buf.append(e);
+    }
+    void writeVoid() {
+	buf.append(V);
 	buf.append(result);
 	buf.append(e);
     }
