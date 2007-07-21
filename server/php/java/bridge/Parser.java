@@ -47,7 +47,7 @@ class Parser {
 	return Util.EXT_JAVA_COMPATIBILITY ? new OldOptions() : new Options();
     }
     short initOptions(InputStream in) throws IOException {
-	if((pos=in.read(buf, 0, RECV_SIZE)) >0) { 
+	if((pos=read(in, buf, 0, RECV_SIZE)) >0) { 
 
 	    /*
 	     * Special handling if the first byte is neither a space nor "<"
@@ -82,6 +82,15 @@ class Parser {
 	    return EOF;
 	}
 	return OK; 
+    }
+    /* On Windogs PHP doesn't properly close a persistent stream. Avoid printing a "connection reset" exception. */
+    private static int read(InputStream in, byte[] buf2, int j, int recv_size2) {
+	try {
+	    return in.read(buf2, j, recv_size2);
+	} catch (IOException e) {
+	    if(Util.logLevel>4) Util.printStackTrace(e);
+	    return -1;
+	}
     }
     private boolean response = true;
     private ParserTag tag[] = null;
