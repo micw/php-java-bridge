@@ -410,7 +410,9 @@ class java_Protocol {
     return $handler;
   }
   function createHandler() {
-    if(function_exists("java_get_default_channel") && ($defaultChannel=java_get_default_channel())) {
+    if(!array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER)
+     && function_exists("java_get_default_channel") &&
+      ($defaultChannel=java_get_default_channel())) {
       // if bind.c has started a local back end from Apache/IIS
       return $this->createSimpleHandler($defaultChannel);
     } else {
@@ -444,7 +446,10 @@ class java_Protocol {
 	if(JAVA_DEBUG) {
 	  echo "sending::: "; echo $this->client->sendBuffer; echo "\n";
 	}
-	$this->sendData();
+	if(JAVA_CACHE_ENABLED) 
+	  $this->sendData();
+	else
+	  $this->client->handler->sendData();
   }
   function keepAlive() {
 	$this->handler->keepAlive();

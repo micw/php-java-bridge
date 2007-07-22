@@ -1,3 +1,42 @@
+2007-07-22  Jost Boekemeier  <jostb@intern>
+
+	* java.c (MINIT, MINFO): Correct info
+	
+	* server/META-INF/java/JavaProxy.inc
+	(__wakeup): restore __client.
+	
+	* server/php/java/bridge/Parser.java
+	(read): New function.
+	(parse): Do not print "connection reset" exceptions on Windogs. --
+	They appear due to a PHP bug which doesn't properly close the
+	persistent connection in its mshutdown hook when more than one
+	connection is in the persistent hash. This isn't a problem because
+	all operating systems track resources, anyway. However, Windows
+	shuts down the connection so that the back end receives a
+	"connection reset" exception.
+
+	* server/META-INF/java/Options.inc: Temporarily switch off the
+	cache.
+	
+	* VERSION, php-java-bridge.spec: Version 4.2.1
+	
+2007-07-19  Jost Boekemeier  <jostb@intern>
+
+	* java.c: Use TSRM
+
+	* VERSION, php-java-bridge.spec: Version 4.2.0
+	
+2007-07-15  Jost Boekemeier  <jostb@intern>
+
+	* PROTOCOL.TXT: Added new protocol requests
+
+	* server/php/java/bridge/ClassicParserString.java: removed
+
+	* server/php/java/bridge/Request.java, server/php/java/bridge/Request.java: Added new protocol requests
+	
+	* server/META-INF/java/Client.inc, server/META-INF/java/JavaBridge.inc, server/META-INF/java/JavaProxy.inc, server/META-INF/java/Options.inc, server/META-INF/java/Protocol.inc: Added client-side cache.
+
+	
 2007-07-07  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/servlet/PhpCGIServlet.java

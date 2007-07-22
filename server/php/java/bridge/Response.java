@@ -253,6 +253,21 @@ public class Response {
 	    return true;
 	}
   }
+    protected abstract class IncompleteArrayValueWriter extends WriterWithDelegate {
+	      
+	public boolean setResult(Object value) {
+	    if (value == null) {
+		writeNull();
+	    } else if (value instanceof PhpString) {
+	        writeString(((PhpString)value).getBytes());
+	    } else if (value instanceof PhpExactNumber) {
+	        writeLong(((PhpExactNumber)value).longValue());
+	    } else {
+	        return false;
+	    }
+	    return true;
+	}
+  }
 
     protected class ClassicWriter extends IncompleteClassicWriter {
  
@@ -290,12 +305,12 @@ public class Response {
         }        	     	
     }
 
-    protected class ArrayValueWriter extends IncompleteClassicWriter {
+    protected class ArrayValueWriter extends IncompleteArrayValueWriter {
 	public void setResult(Object value, Class type) {
 	    if(!delegate.setResult(value)) setResultArray(value);
 	}
 	public boolean setResult(Object value) {
-	    if(!super.setResult(value)) writeString(Util.stringValueOf(value));
+	    if(!super.setResult(value)) writeObject(value);
 	    return true;
 	}
 	private boolean setResultArray(Object value) {

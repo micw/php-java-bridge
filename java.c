@@ -395,9 +395,14 @@ PHP_MINIT_FUNCTION(EXT)
 	EXT_GLOBAL(mktmpdir)();
   } 
 
-  REGISTER_STRING_CONSTANT("JAVA_HOSTS", EXT_GLOBAL(cfg)->hosts, CONST_CS | CONST_PERSISTENT);
-  REGISTER_STRING_CONSTANT("JAVA_SERVLET", EXT_GLOBAL(cfg)->servlet, CONST_CS | CONST_PERSISTENT);
+  if(EXT_GLOBAL(option_set_by_user)(U_HOSTS, EXT_GLOBAL(ini_user)) && !(!EXT_GLOBAL(cfg)->is_fcgi_servlet)) {
+	REGISTER_STRING_CONSTANT("JAVA_HOSTS", EXT_GLOBAL(cfg)->hosts, CONST_CS | CONST_PERSISTENT);
+	if(EXT_GLOBAL(option_set_by_user)(U_SERVLET, EXT_GLOBAL(ini_user)) && !(!EXT_GLOBAL(cfg)->is_fcgi_servlet))
+	  REGISTER_STRING_CONSTANT("JAVA_SERVLET", EXT_GLOBAL(cfg)->servlet, CONST_CS | CONST_PERSISTENT);
+  }
+
   REGISTER_STRING_CONSTANT("JAVA_PIPE_DIR", EXT_GLOBAL(cfg)->tmpdir, CONST_CS | CONST_PERSISTENT);
+  REGISTER_LONG_CONSTANT("JAVA_CACHE_ENABLED", 0, CONST_CS | CONST_PERSISTENT); //FIXME
 
   return SUCCESS;
 }
@@ -438,20 +443,29 @@ PHP_MINFO_FUNCTION(EXT)
 {
   static const char on[]="On";
   static const char off[]="Off";
-  short is_local, is_level;
-  char*s, *server;
+  short is_local=0, is_level;
+  char*s, *server=0;
   struct save_cfg saved_cfg;
 
   push_cfg(&saved_cfg TSRMLS_CC);
   s = EXT_GLOBAL(get_server_string) (TSRMLS_C);
-  server = EXT_GLOBAL(test_server) (0, &is_local, 0 TSRMLS_CC);
+
+  if(!EXT_GLOBAL(cfg)->is_fcgi_servlet)
+	server = EXT_GLOBAL(test_server) (0, &is_local, 0 TSRMLS_CC);
+  else {						/* we don't own the back end */
+	zval retval;
+	static const char str[]=EXT_NAME()/**/"_server_name();";
+	static const char name[]=EXT_NAME()/**/"_server_name";
+	int val = zend_eval_string((char*)str, &retval, (char*)name TSRMLS_CC);
+	if(SUCCESS==val && (Z_TYPE(retval)==IS_STRING)) server = strdup(Z_STRVAL(retval));
+  }
   is_level = ((EXT_GLOBAL (ini_user)&U_LOGLEVEL)!=0);
 
   php_info_print_table_start();
   php_info_print_table_row(2, EXT_NAME()/**/" support", "Enabled");
   php_info_print_table_row(2, EXT_NAME()/**/" bridge", EXT_GLOBAL(bridge_version));
 #if EXTENSION == JAVA
-  if(is_local) {
+  if(!server || is_local) {
 								/* don't show default value, they may
 								   not be used anyway */
 	if((EXT_GLOBAL(option_set_by_user) (U_LIBRARY_PATH, EXT_GLOBAL(ini_user))))
@@ -472,11 +486,10 @@ PHP_MINFO_FUNCTION(EXT)
 	  php_info_print_table_row(2, EXT_NAME()/**/".log_file", "<stderr>");
 	else
 	  php_info_print_table_row(2, EXT_NAME()/**/".log_file", EXT_GLOBAL(cfg)->logFile);
-  }
-  php_info_print_table_row(2, EXT_NAME()/**/".log_level", is_level ? EXT_GLOBAL(cfg)->logLevel : "no value (use back-end's default level)");
-  if(EXT_GLOBAL(option_set_by_user) (U_HOSTS, JG(ini_user)))  
-	php_info_print_table_row(2, EXT_NAME()/**/".hosts", JG(hosts));
-  if(!server || is_local) {
+	
+	php_info_print_table_row(2, EXT_NAME()/**/".log_level", is_level ? EXT_GLOBAL(cfg)->logLevel : "no value (use back-end's default level)");
+	if(EXT_GLOBAL(option_set_by_user) (U_HOSTS, JG(ini_user)))  
+	  php_info_print_table_row(2, EXT_NAME()/**/".hosts", JG(hosts));
 	if(!EXT_GLOBAL(cfg)->policy) {
 	  php_info_print_table_row(2, EXT_NAME()/**/".security_policy", "Off");
 	} else {
@@ -486,10 +499,10 @@ PHP_MINFO_FUNCTION(EXT)
 	  else
 		php_info_print_table_row(2, EXT_NAME()/**/".security_policy", "Off");
 	}
+	php_info_print_table_row(2, EXT_NAME()/**/" command", s);
   }
-  php_info_print_table_row(2, EXT_NAME()/**/" command", s);
-  php_info_print_table_row(2, EXT_NAME()/**/" status", server?"running":"not running");
   php_info_print_table_row(2, EXT_NAME()/**/" server", server?server:"localhost");
+  php_info_print_table_row(2, EXT_NAME()/**/" status", server?"running":"not running");
   php_info_print_table_end();
   
   free(server);

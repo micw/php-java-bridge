@@ -277,6 +277,9 @@ public class TestInstallation implements Runnable {
 	in = loader.getResourceAsStream("WEB-INF/lib/php-script.jar");
 	extractFile(in, new File(ext, "php-script.jar").getAbsoluteFile());
 	in.close();
+	in = loader.getResourceAsStream("WEB-INF/lib/php-servlet.jar");
+	extractFile(in, new File(ext, "php-servlet.jar").getAbsoluteFile());
+	in.close();
 	in = loader.getResourceAsStream("WEB-INF/lib/script-api.jar");
 	extractFile(in, new File(ext, "script-api.jar").getAbsoluteFile());
 	in.close();

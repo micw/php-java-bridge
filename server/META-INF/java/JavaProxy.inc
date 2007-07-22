@@ -138,10 +138,21 @@ function java_closure() {
   return java_closure_array(func_get_args());
 }
 function java_begin_document() {
-  //FIXME
+  if(JAVA_CACHE_ENABLED) return false;
+  $client = __javaproxy_Client_getClient();
+  if($client->isAsync()) 
+	throw new java_RuntimeException("begin_document not allowed while in stream mode");
+  $rc = $client->invokeMethod(0, "beginDocument", array());
+  $client->setAsyncHandler();
+  return $rc;
 }
 function java_end_document() {
-  //FIXME
+  if(JAVA_CACHE_ENABLED) return false;
+  $client = __javaproxy_Client_getClient();
+  if(!$client->isAsync()) 
+	throw new java_RuntimeException("end_document not allowed when not in stream mode");
+  $client->setDefaultHandler();
+  return $client->invokeMethod(0, "endDocument", array());
 }
 
 class java_JavaProxy {
@@ -169,6 +180,7 @@ class java_JavaProxy {
 	if(!isset($lifetime)) $lifetime = 1440;
 	$args = array($this->__serialID, $lifetime);
 	if(JAVA_DEBUG) echo "proxy wakeup called for $this->__java, $this->__signature\n";
+	$this->__client = __javaproxy_Client_getClient();
     $this->__java = $this->__client->invokeMethod(0, "deserialize", $args);
   }
   function __destruct() { 
@@ -304,6 +316,7 @@ abstract class java_AbstractJava implements IteratorAggregate,ArrayAccess,java_J
 	if(!isset($this->__delegate)) $this->__createDelegate();
 	$this->__delegate->__wakeup();
 	$this->__java = $this->__delegate->__java;
+	$this->__client = $this->__delegate->__client;
   }
   function __get($key) { 
  	if(!isset($this->__delegate)) $this->__createDelegate();
@@ -549,6 +562,7 @@ class java_exception extends Exception implements java_JavaType {
   function __wakeup() {
 	$this->__delegate->__wakeup();
 	$this->__java = $this->__delegate->__java;
+	$this->__client = $this->__delegate->__client;
   }
   function __get($key) { 
     return $this->__delegate->__get($key);

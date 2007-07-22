@@ -127,7 +127,7 @@ class java_SimpleParser {
 	  if($this->c>=$this->pos) { 
 		
 		$this->buf=$this->handler->read(java_Client::RECV_SIZE); 
-		if(is_null($this->buf) || strlen($this->buf) == 0) die("protocol error");
+		if(is_null($this->buf) || strlen($this->buf) == 0) die("protocol error. Check the back end log for details.");
 		$this->pos=strlen($this->buf);
 		if($this->pos==0) break;
 		$this->c=0; 
@@ -204,7 +204,7 @@ class java_SimpleParser {
   }
 
   function parserError() {
-	die(sprintf("protocol error: %s", $this->s));
+	die(sprintf("protocol error: %s. Check the back end log for details.", $this->s));
   }
 }
 ?>

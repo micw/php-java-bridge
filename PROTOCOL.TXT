@@ -1,4 +1,4 @@
-PHP/Java Bridge protocol version 4.2.1
+PHP/Java Bridge protocol version 4.2.2
 
 Requests are marked with "->", responses with "<-".  The server
 continues to process requests until EOF. Only the first character is
@@ -40,16 +40,13 @@ A second example which shows how to avoid round-trips.
      $o = new java("java.lang.Long", 6);
      $o->toString(); // discard result
 
-->  <CreateInstance predicate="J" value="java.lang.Long" id="0"> 
-      <Long value="6" /> 
-    </CreateInstance>
+->  <K p="2" v="java.lang.Long" i="0"> 
+      <L v="6" /> 
+    </K
 
-->  <Invoke predicate="J" value="1" method="toString" id="0">
-    </Invoke>
+->  <Y p="3" v="1" m="toString" i="0"></Y>
 
-->  <Unref value="2" /> # result from toString
-
-->  <Unref value="1" /> # result from CreateInstance
+->  <U value="1" /> # result from CreateInstance
 
 
 Optional requests:
@@ -263,7 +260,7 @@ Bit 1 0
           identity    Map, Coll.         ID     data              impl. (pure
                       identity                                    PHP or C)
 
-    - -    yes          no         10   yes    base64 encoded     default
+    - -    yes          no         16   yes    base64 encoded     default
     0 0    yes          yes        16   no     binary             PHP
     0 1    yes          yes        16   yes    binary             not used
     1 0    no           no         16   yes    binary             C, php=4

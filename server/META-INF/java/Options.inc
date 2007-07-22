@@ -50,7 +50,7 @@ function defineHostFromInitialQuery($java_base) {
 
 // The version number of this pure PHP implementation
 
-define ("JAVA_PEAR_VERSION", "4.2.0");
+define ("JAVA_PEAR_VERSION", "4.2.1");
 
 
 // Deploy JavaBridge.war and re-start the servlet engine or the

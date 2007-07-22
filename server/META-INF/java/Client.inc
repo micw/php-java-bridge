@@ -224,6 +224,61 @@ class java_ApplyArg extends java_CompositeArg {
 	$this->n = $n;
   }
 }
+/**@deprecated*/
+class java_Handler {
+  var $client;
+  
+  function java_Handler($client) {
+	$this->client = $client;
+  }
+
+  function flush() {}
+
+  function sendData() {
+    $this->client->protocol->sendData();
+  }
+
+  function handleRequests() {
+	$client = $this->client;
+	do {
+	  $tail_call = false;
+	  $this->client->stack=array($this->client->arg=$this->client->simpleArg);
+	  $client->idx = 0;
+	  $client->parser->parse();
+
+	  /* pull off A, if any */
+	  if((count($client->stack)) > 1) {
+		$arg = array_pop($client->stack);
+		$client->apply($arg);
+		$tail_call = 1;			// we don't expect a result
+	  } else {
+		$tail_call = 0;
+	  }
+
+	  $client->stack=null;
+	} while($tail_call);
+	return 1;
+  }
+}
+/**@deprecated*/
+class java_AsyncHandler extends java_Handler {
+  var $arg;
+  function java_AsyncHandler($client) {
+	$this->client = $client;
+	$this->arg = $client->simpleArg;
+  }
+  function flush() {
+    $this->client->protocol->sendData();
+  }
+  function sendData() {
+    $this->client->protocol->sendAsyncData();
+  }
+
+  function handleRequests() {
+	$this->arg->setFactory($this->client->proxyFactory);
+	$this->arg->setResult(++$this->client->asyncCtx);
+  }
+}
 
 class java_Client /* implements IDocHandler */ {
   var $RUNTIME;
@@ -252,6 +307,8 @@ class java_Client /* implements IDocHandler */ {
   // send buffer
   var $sendBuffer, $preparedToSendBuffer;
 
+  /**@deprecated*/
+  var $defaultHandler, $asyncHandler, $handler;
 
   function java_Client() {
 	$this->RUNTIME = array();
@@ -278,6 +335,10 @@ class java_Client /* implements IDocHandler */ {
 	$this->globalRef = new java_GlobalRef();
 
 	$this->asyncCtx = 0;
+
+	/**@deprecated*/
+	$this->handler = $this->defaultHandler = new java_Handler($this);
+	$this->asyncHandler = new java_AsyncHandler($this);
   }
 
   function __destruct() { 
@@ -290,7 +351,22 @@ class java_Client /* implements IDocHandler */ {
 	return $this->protocol->read($size);
   }
 
+  function setDefaultHandler() {
+	$this->handler->flush();
+	$this->handler = $this->defaultHandler;
+  }
+
+  function setAsyncHandler() {
+	$this->handler = $this->asyncHandler;
+  }
+
+  function isAsync() {
+	return $this->handler === $this->asyncHandler;
+  }
+
   function handleRequests() {
+	if(!JAVA_CACHE_ENABLED) { $this->handler->handleRequests(); return 1;}
+	  
 	do {
 	  $tail_call = false;
 	  $this->stack=array($this->arg=$this->simpleArg);
@@ -395,9 +471,9 @@ class java_Client /* implements IDocHandler */ {
 	  break;
 	case 'V':
 	  if(JAVA_DEBUG) {echo "setresult VOID:"; echo "\n";}
-	  $arg->setVoidSignature();
 	  /* fall through */
-	case 'N':
+	case 'N':					// FIXME
+	  $arg->setVoidSignature();
 	  $arg->setResult(null);
 	  break;
 	case 'F':

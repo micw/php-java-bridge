@@ -26,6 +26,7 @@ package php.java.bridge;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.SocketException;
 
 import php.java.bridge.http.IContextFactory;
 
@@ -84,10 +85,10 @@ class Parser {
 	return OK; 
     }
     /* On Windogs PHP doesn't properly close a persistent stream. Avoid printing a "connection reset" exception. */
-    private static int read(InputStream in, byte[] buf2, int j, int recv_size2) {
+    private static int read(InputStream in, byte[] buf2, int j, int recv_size2) throws IOException {
 	try {
 	    return in.read(buf2, j, recv_size2);
-	} catch (IOException e) {
+	} catch (SocketException e) {
 	    if(Util.logLevel>4) Util.printStackTrace(e);
 	    return -1;
 	}
@@ -162,7 +163,7 @@ class Parser {
     	
     	while(eor==0) {
 	    if(c==pos) { 
-	    	pos=in.read(buf, 0, RECV_SIZE); 
+	    	pos=read(in, buf, 0, RECV_SIZE); 
 		if(pos<=0) return eof=EOF;
 		c=0; 
 
