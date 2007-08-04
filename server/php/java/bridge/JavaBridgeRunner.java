@@ -65,24 +65,51 @@ import php.java.bridge.http.IContextFactory;
 public class JavaBridgeRunner extends HttpServer {
 
     private static Class JavaInc;
-    private static String serverPort;
     private boolean isStandalone = false;
+    protected static JavaBridgeRunner runner;
 
     static {
 	try {
 	    JavaInc = Class.forName("php.java.bridge.JavaInc");
         } catch (Exception e) {/*ignore*/}
     }
+    
+    protected JavaBridgeRunner(String serverPort) throws IOException {
+	super(serverPort);
+	ctxServer = new ContextServer(ContextFactory.EMPTY_CONTEXT_NAME);	
+    }
     /**
      * Create a new JavaBridgeRunner and ContextServer.
      * @throws IOException 
      * @see ContextServer
      */
-    private JavaBridgeRunner() throws IOException {
+    protected JavaBridgeRunner() throws IOException {
 	super();
 	ctxServer = new ContextServer(ContextFactory.EMPTY_CONTEXT_NAME);
     }
-    private static JavaBridgeRunner runner;
+    /**
+     * Return a instance.
+     * @return a standalone runner
+     * @throws IOException
+     */
+    public static synchronized JavaBridgeRunner getInstance(String serverPort) throws IOException {
+	if(runner!=null) return runner;
+	runner = new JavaBridgeRunner(serverPort);
+	return runner;
+    }
+    /**
+     * Return a instance.
+     * @return a standalone runner
+     */
+    public static synchronized JavaBridgeRunner getRequiredInstance(String serverPort) {
+	if(runner!=null) return runner;
+	try {
+	    runner = new JavaBridgeRunner(serverPort);
+        } catch (IOException e) {
+	    Util.printStackTrace(e);
+        }
+	return runner;
+    }
     /**
      * Return a instance.
      * @return a standalone runner
@@ -94,6 +121,33 @@ public class JavaBridgeRunner extends HttpServer {
 	return runner;
     }
     
+    /**
+     * Return a standalone instance. 
+     * It sets a flag which indicates that the runner will be used as a standalone component outside of the Servlet environment.
+     * @return a standalone runner
+     * @throws IOException
+     */
+    public static synchronized JavaBridgeRunner getStandaloneInstance(String serverPort) throws IOException {
+	if(runner!=null) return runner;
+	runner = new JavaBridgeRunner(serverPort);
+	runner.isStandalone = true;
+	return runner;
+    }
+    /**
+     * Return a standalone instance. 
+     * It sets a flag which indicates that the runner will be used as a standalone component outside of the Servlet environment.
+     * @return a standalone runner
+     */
+    public static synchronized JavaBridgeRunner getRequiredStandaloneInstance(String serverPort) {
+	if(runner!=null) return runner;
+	try {
+	    runner = new JavaBridgeRunner(serverPort);
+        } catch (IOException e) {
+	    Util.printStackTrace(e);
+        }
+	runner.isStandalone = true;
+	return runner;
+    }
     /**
      * Return a standalone instance. 
      * It sets a flag which indicates that the runner will be used as a standalone component outside of the Servlet environment.
@@ -114,7 +168,6 @@ public class JavaBridgeRunner extends HttpServer {
      * @return The server socket.
      */
     public ISocketFactory bind(String addr) throws IOException {
-	if(serverPort!=null) addr = (Util.JAVABRIDGE_PROMISCUOUS ? "INET:" :"INET_LOCAL:") +serverPort;  
 	socket =  JavaBridge.bind(addr);
 	return socket;
     }
@@ -479,11 +532,12 @@ public class JavaBridgeRunner extends HttpServer {
      * @throws IOException 
      */
     public static void main(String s[]) throws InterruptedException, IOException {
-	 if(s!=null) {
-	     if(s.length>0 && s[0]!=null) serverPort = s[0];
+	String serverPort = null; 
+	if(s!=null) {
+	     if(s.length>0 && s[0]!=null) serverPort = (Util.JAVABRIDGE_PROMISCUOUS ? "INET:" :"INET_LOCAL:") +s[0];
 	 }
 	 Util.logMessage("JavaBridgeRunner started on port " + serverPort);
-	 JavaBridgeRunner r = getStandaloneInstance();
+	 JavaBridgeRunner r = getStandaloneInstance(serverPort);
 	 r.httpServer.join();
 	 r.destroy();
     }

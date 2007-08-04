@@ -175,7 +175,7 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
 
         try {
             /* header: <? require_once("http://localhost:<ourPort>/JavaBridge/java/Java.inc"); ?> */
-            localReader = new StringReader("<?php if(!extension_loaded('java')) {(require_once(\""+getHost()+"/java/Java.inc\"));}?>");
+            localReader = new StringReader("<?php if(!extension_loaded('java')) {if(!defined('JAVA_CACHE_ENABLED'))define('JAVA_CACHE_ENABLED', true);(require_once(\""+getHost()+"/java/Java.inc\"));}?>");
             try { while((c=localReader.read(buf))>0) w.write(buf, 0, c);} catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not read header", e);}
             try { localReader.close(); } catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not close header", e);}
     

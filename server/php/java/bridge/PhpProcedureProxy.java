@@ -32,7 +32,7 @@ import java.util.Map;
  * second argument to the closure() call, that type will be used for
  * the proxy. Otherwise the proxy is generic.
  */
-public class PhpProcedureProxy {
+public final class PhpProcedureProxy {
     JavaBridge bridge;
     Map names = null;
     String name = null;

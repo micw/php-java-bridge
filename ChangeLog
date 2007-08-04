@@ -1,3 +1,16 @@
+2007-07-29  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/JavaBridge.java
+	(select): select the most specific, not the most general
+
+	* server/php/java/bridge/ConstructorCache.java
+	(getEntry): Do not cache PhpProcedureProxy.
+
+	* server/php/java/bridge/MethodCache.java
+	(getEntry): Do not cache PhpProcedureProxy.
+	
+	* VERSION, php-java-bridge.spec: Version 4.2.2
+	
 2007-07-22  Jost Boekemeier  <jostb@intern>
 
 	* java.c (MINIT, MINFO): Correct info

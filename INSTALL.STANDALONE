@@ -1,0 +1,50 @@
+Overview
+--------
+
+This document describes how to call into a non-J2EE application.
+Please see the INSTALL.J2SE document for details how to call PHP
+methods from Java. Please see the INSTALL.J2EE document for details
+how to embed PHP into a pure J2EE application server or how to call
+Java/J2EE methods from PHP.
+
+Install the back end into your non-J2EE application
+---------------------------------------------------
+
+* Extract the JavaBridge.jar library, for example with the command:
+
+   java -jar JavaBridge.war
+   
+* Add the following 3 lines to the main class of your non-J2EE
+application:
+
+     public static final String JAVABRIDGE_PORT="8087";
+     static final php.java.bridge.JavaBridgeRunner runner = 
+       php.java.bridge.JavaBridgeRunner.getRequiredInstance(JAVABRIDGE_PORT);
+     
+* Add JavaBridge.jar to the main library of you non-J2EE
+application. This can be done by adding the following line to your
+application's META-INF/MANIFEST.MF:
+  
+    Class-Path: JavaBridge.jar
+
+It is also possible to simply merge all files into your non-J2EE
+application..
+  
+* Start your non-J2EE application.
+
+
+Call your Java methods from PHP
+-------------------------------
+
+* Use the following code to call methods:
+
+    <?php require_once("http://localhost:8087/JavaBridge/java/Java.inc");
+
+    $myClass = new java("com.my.non.j2ee.application.MyClass");
+    $myClass->myMethod(...);
+    ?>
+
+
+* Please report bugs/problems to the mailing list:
+
+    php-java-bridge-users@lists.sourceforge.net

@@ -91,5 +91,5 @@ if(!defined("JAVA_DEBUG"))
 
 // cache needs Proxy and ProxyException interfaces
 if(!defined("JAVA_CACHE_ENABLED")) 
-  define("JAVA_CACHE_ENABLED", true);
+  define("JAVA_CACHE_ENABLED", false);
 

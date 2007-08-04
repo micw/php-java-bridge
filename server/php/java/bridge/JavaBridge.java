@@ -609,7 +609,7 @@ public class JavaBridge implements Runnable {
 		if(arg instanceof PhpProcedureProxy) {
 		    PhpProcedureProxy proxy = ((PhpProcedureProxy)arg);
 		    if(proxy.suppliedInterfaces==null) {
-		        continue; // exact match
+			arg = args[i] = proxy.getNewFromInterface(null);
 		    } else {
 			arg = args[i] = proxy.getProxy(null);        
 		    }
