@@ -1,13 +1,13 @@
 #! /bin/sh /usr/share/dpatch/dpatch-run
-## 10_MakefileFrag_patch.dpatch by  Andre Felipe Machado <af-machado@uol.com.br>
+## 10_MakefileFrag_patch.dpatch by  <andremachado@serpro-1440128.pae.serpro>
 ##
 ## All lines beginning with `## DP:' are a description of the patch.
-## DP: To avoid complete substitution of original file and improve flexibility.
+## DP: No description.
 
 @DPATCH@
 diff -urNad php-java-bridge~/Makefile.frag php-java-bridge/Makefile.frag
---- php-java-bridge~/Makefile.frag	2007-02-11 15:26:57.000000000 -0200
-+++ php-java-bridge/Makefile.frag	2007-03-20 08:14:54.000000000 -0300
+--- php-java-bridge~/Makefile.frag	2007-08-06 11:57:47.000000000 -0300
++++ php-java-bridge/Makefile.frag	2007-08-06 11:59:20.000000000 -0300
 @@ -1,4 +1,8 @@
  # -*- mode: Makefile; -*-
 +tmp_prefix:=$(prefix)
@@ -15,5 +15,5 @@ diff -urNad php-java-bridge~/Makefile.frag php-java-bridge/Makefile.frag
 +TMP_EXTENSION_DIR:=$(EXTENSION_DIR)
 +EXTENSION_DIR=${DESTDIR}$(TMP_EXTENSION_DIR)
  
- $(phplibdir)/stamp:
- 	cd $(srcdir)/server; $(MAKE) CFLAGS="$(CFLAGS_CLEAN)" GCJFLAGS="$(GCJFLAGS) `echo $(CFLAGS_CLEAN)|sed 's/-D[^ ]*//g'`" install
+ $(srcdir)/java_inc.c: $(srcdir)/server/META-INF/java/Java.inc
+ 	echo -n 'char java_inc[]="' >$(srcdir)/java_inc.c
