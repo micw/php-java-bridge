@@ -1,3 +1,13 @@
+php-java-bridge (4.2.2-1) unstable; urgency=low
+
+  * New upstream development version.
+  * Deprecated C extension implementation since 4.1.7.
+  * Remotion of java extension documentation.
+  * Dependency on jdk 1.6.
+  * Correction for JavaBridge.war inclusion at j2ee package instead of docs package.
+
+ -- Andre Felipe Machado <af-machado@uol.com.br>  Mon,  7 Aug 2007 11:27:07 -0300
+
 php-java-bridge (4.0.8a-1) unstable; urgency=low
 
   * new upstream version
