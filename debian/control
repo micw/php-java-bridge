@@ -2,7 +2,7 @@ Source: php-java-bridge
 Section: web
 Priority: optional
 Maintainer: Andre Felipe Machado <af-machado@uol.com.br>
-Build-Depends:  debhelper (>= 5), libncurses5-dev (>= 5.5-2 ), libselinux1-dev (>= 1.30-1 ), libsepol1-dev (>= 1.12.24-1 ), php5-dev (>= 5.1.0 ) | php4-dev (>= 4.4.4 ), automake (>= 1.6.3 ) | automake1.7 | automake1.8 | automake1.9, sun-java5-jdk (>= 1 ),  locales (>= 2.3.6.ds1-4 ),  gcc (>= 3.2 ),  make (>= 1 ), liblucene-java, libitext-java, dpatch
+Build-Depends:  debhelper (>= 5), libncurses5-dev (>= 5.5-2 ), libselinux1-dev (>= 1.30-1 ), libsepol1-dev (>= 1.12.24-1 ), php5-dev (>= 5.1.0 ) | php4-dev (>= 4.4.4 ), automake (>= 1.6.3 ) | automake1.7 | automake1.8 | automake1.9, sun-java6-jdk (>= 1 ),  locales (>= 2.3.6.ds1-4 ),  gcc (>= 3.2 ),  make (>= 1 ), liblucene-java, libitext-java, dpatch
 Standards-Version: 3.7.2
 XBS-Homepage: http://php-java-bridge.sourceforge.net
 
@@ -21,6 +21,19 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
  Interface.
  This Debian package installs C implementation as php modules.
 
+Package: php-java-bridge-j2ee
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${php:Depends}, sun-java5-jre, tomcat5, liblucene-java, libitext-java
+Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
+ The PHP/Java Bridge is an optimized, XML-based network 
+ protocol which can be used to connect a native script 
+ engine with a Java or ECMA 335 virtual machine. 
+ It is more than 50 times faster than local RPC via SOAP, 
+ uses less resources on the web-server side and it is faster 
+ and more reliable than a communication via the Java Native 
+ Interface.
+ This Debian package installs the bridge J2EE server 
+ implementation.
 
 Package: php-java-bridge-docs
 Architecture: all
@@ -47,20 +60,6 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
  and more reliable than a communication via the Java Native 
  Interface.
  This Debian package installs J2EE server user documentation.
-
-Package: php-java-bridge-j2ee
-Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${php:Depends}, sun-java5-jre, tomcat5, liblucene-java, libitext-java
-Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
- The PHP/Java Bridge is an optimized, XML-based network 
- protocol which can be used to connect a native script 
- engine with a Java or ECMA 335 virtual machine. 
- It is more than 50 times faster than local RPC via SOAP, 
- uses less resources on the web-server side and it is faster 
- and more reliable than a communication via the Java Native 
- Interface.
- This Debian package installs the bridge J2EE server 
- implementation.
 
 Package: php-java-bridge-devel
 Architecture: all
