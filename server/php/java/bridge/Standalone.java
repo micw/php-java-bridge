@@ -92,12 +92,10 @@ public class Standalone {
 	System.err.println("PHP/Java Bridge version "+Util.VERSION);
 	disclaimer();
 	System.err.println("Usage: java -jar JavaBridge.jar [SOCKETNAME LOGLEVEL LOGFILE]");
-	System.err.println("Usage: java -jar JavaBridge.jar --convert PHP_INCLUDE_DIR [JARFILES]");
 	System.err.println("SOCKETNAME is one of LOCAL, INET_LOCAL, INET, SERVLET_LOCAL, SERVLET");
 	System.err.println("Example: java -jar JavaBridge.jar");
 	System.err.println("Example: LD_LIBRARY_PATH=/usr/lib/php/modules/ java -jar JavaBridge.jar LOCAL:/tmp/javabridge_native.socket 3 /var/log/php-java-bridge.log");
 	System.err.println("Example: java -jar JavaBridge.jar SERVLET_LOCAL:8080 3 JavaBridge.log");
-	System.err.println("Example: java -jar JavaBridge.jar --convert /usr/share/pear lucene.jar ...");
 	System.err.println("Influential system properties: threads, ext_java_compatibility, php_exec, default_log_file, default_log_level, base.");
 	System.err.println("Example: java -Djava.awt.headless=\"true\" -Dphp.java.bridge.threads=50 -Dphp.java.bridge.base=/usr/lib/php/modules -Dphp.java.bridge.php_exec=/usr/local/bin/php-cgi -Dphp.java.bridge.default_log_file= -Dphp.java.bridge.default_log_level=5 -jar JavaBridge.jar");
     }
@@ -111,25 +109,7 @@ public class Standalone {
     }
 
     protected void checkOption(String s[]) {
-	if("--convert".equals(s[0])) {
-	    try {
-		StringBuffer buf=new StringBuffer();
-		for(int i=2; i<s.length; i++) {
-		    buf.append(s[i]);
-		    if(i+1<s.length) buf.append(File.pathSeparatorChar);
-		}
-            
-		int length = s.length >= 3 ? 2 :s.length-1;
-		String str[] = new String[length];
-		if(length==2) str[1] = buf.toString();
-		if(length>=1) str[0] = s[1];
-		Snarf.main(str);
-		System.exit(0);
-	    } catch (Exception e) {
-		e.printStackTrace();
-		System.exit(1);
-	    }
-	} else if ("--version".equals(s[0])) {
+	if ("--version".equals(s[0])) {
 	    System.out.println(Util.VERSION);
 	    System.exit(0);
 	}

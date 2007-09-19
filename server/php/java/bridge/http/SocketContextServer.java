@@ -31,7 +31,7 @@ import java.net.Socket;
 
 import php.java.bridge.ISocketFactory;
 import php.java.bridge.JavaBridge;
-import php.java.bridge.ThreadPool;
+import php.java.bridge.AppThreadPool;
 import php.java.bridge.Util;
 
 /**
@@ -88,7 +88,7 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
      * Create a new ContextServer using the ThreadPool. 
      * @param threadPool Obtain runnables from this pool. If null, new threads will be created.
      */
-    public SocketContextServer (ThreadPool threadPool) {
+    public SocketContextServer (AppThreadPool threadPool) {
     	super(ContextFactory.NO_CREDENTIALS, threadPool, ContextFactory.EMPTY_CONTEXT_NAME);
         try {
 	    socket = JavaBridge.bind(BIND_PORT);

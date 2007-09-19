@@ -273,7 +273,9 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
     /**@inheritDoc*/
     public Object eval(String script, ScriptContext context)
 	throws ScriptException {
-      	script = script.trim();
+      	if(script==null) return eval((Reader)null, context, null);
+      	
+	script = script.trim();
 	Reader localReader = new StringReader(script);
 	Object obj = eval(localReader, context, String.valueOf(script));
 	try { localReader.close(); } catch (IOException e) {/*ignore*/}

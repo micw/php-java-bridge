@@ -1169,8 +1169,8 @@ public final class Util {
         return s;
     }
 
-    public static ThreadPool createThreadPool(String name) {
-        ThreadPool pool = null;
+    public static AppThreadPool createThreadPool(String name) {
+        AppThreadPool pool = null;
         int maxSize = 20;
         try {
         	maxSize = Integer.parseInt(Util.THREAD_POOL_MAX_SIZE);
@@ -1178,7 +1178,7 @@ public final class Util {
         	Util.printStackTrace(t);
         }
         if(maxSize>0) {
-            pool = new ThreadPool(name, maxSize);
+            pool = new AppThreadPool(name, maxSize);
 	}
         return pool;
     }

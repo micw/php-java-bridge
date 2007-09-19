@@ -65,6 +65,46 @@ if(!function_exists("java_get_base")) {
 	}
   };
 
+
+  function java_javabridge($j, $p) {
+    static $classMap = array();
+    if(array_key_exists($j, $classMap)) return $classMap[$j];
+    return $classMap[$j]=new $p(new JavaClass($j));
+  }
+
+  function java_autoload_function($x) {
+	$str=str_replace("_", ".", $x);
+
+	$client=__javaproxy_Client_getClient();
+	if(!($client->invokeMethod(0, "typeExists", array($str)))) return false;
+
+	$clazz = "class ${x}___Class extends java_JavaBridge {".
+	  'function __construct($java) {$this->java=$java;}'.
+	  "}";
+	$instance = "class ${x} extends ${x}___Class {".
+	  "static function type(\$sub=null){if(\$sub) \$sub='\$'.\$sub; return java_javabridge('${str}'.\"\$sub\", '${x}___Class');}".
+	  'function __construct() {$args = '.
+	  '$this->__java_coerceArgs(func_get_args());'.
+	  'array_unshift($args, '."'$str'".'); $this->java = new Java($args);}}';
+	eval ("$clazz");
+	eval ("$instance");
+	return true;
+  }
+  function java_autoload($libs=null) {
+	static $once = false;
+	if($once) 
+	  throw new java_IllegalStateException("java_autoload called more than once");
+	$once = true;
+	java_require($libs);
+	if(function_exists("spl_autoload_register")) {
+	  spl_autoload_register("java_autoload_function");
+	} else {
+	  function __autoload($x) {
+		return java_autoload_function($x);
+	  }
+	}
+  }
+
   function Java($name) { 
 	static $classMap = array();
 	if(array_key_exists($name, $classMap)) return $classMap[$name];

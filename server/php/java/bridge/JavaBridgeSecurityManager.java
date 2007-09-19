@@ -53,10 +53,10 @@ public class JavaBridgeSecurityManager extends SecurityManager {
 	    throw new NullPointerException("thread group can't be null");
 	}
 	// one of our request-handling thread groups, check only if called from an application thread
-	if((g instanceof ThreadPool.Group) && ((ThreadPool.Group)g).isLocked) 
+	if((g instanceof AppThreadPool.Group) && ((AppThreadPool.Group)g).isLocked) 
 	    checkPermission(MODIFY_THREADGROUP_PERMISSION);
 	// an application thread group, check this one
-	else if(g instanceof ThreadPool.AppGroup) 
+	else if(g instanceof AppThreadPool.AppGroup) 
 	    checkPermission(MODIFY_THREADGROUP_PERMISSION);
 	// a system thread group
 	// disabled: Sun jdk1.5 calls checkAccess from a system thread
@@ -77,7 +77,7 @@ public class JavaBridgeSecurityManager extends SecurityManager {
      */
     public ThreadGroup getThreadGroup() {
         try {
-            ThreadPool.Delegate delegate = (ThreadPool.Delegate)Thread.currentThread();
+            AppThreadPool.Delegate delegate = (AppThreadPool.Delegate)Thread.currentThread();
             return delegate.getAppGroup();
         } catch (ClassCastException e) {
             // must be a system thread

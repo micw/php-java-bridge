@@ -68,16 +68,6 @@
 <td WIDTH="30%"><a href="source.php?source=excel.php">Source</a></td>
 </tr>
 
-<!-- 
-<tr VALIGN=TOP>
-<td>Java Server Faces Framework</td>
-
-<td WIDTH="30%"><a href="java-server-faces/index.php">Execute</a></td>
-
-<td WIDTH="30%"><a href="source.php?source=java-server-faces/helloWorld.php">Source</a></td>
-</tr>
- -->
-
 <tr VALIGN=TOP>
 <td>RMI/IIOP</td>
 

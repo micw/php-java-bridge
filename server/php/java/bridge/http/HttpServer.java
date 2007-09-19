@@ -31,7 +31,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 
 import php.java.bridge.ISocketFactory;
-import php.java.bridge.ThreadPool;
+import php.java.bridge.AppThreadPool;
 import php.java.bridge.Util;
 
 
@@ -61,7 +61,7 @@ public abstract class HttpServer implements Runnable {
     
     protected ISocketFactory socket;
     protected Thread httpServer;
-    private ThreadPool pool;
+    private AppThreadPool pool;
 
     /**
      * Create a server socket.
@@ -100,11 +100,11 @@ public abstract class HttpServer implements Runnable {
      * @param name The name of the pool
      * @return The thread pool instance.
      */
-    private static ThreadPool createThreadPool(String name) {
-        ThreadPool pool = null;
+    private static AppThreadPool createThreadPool(String name) {
+        AppThreadPool pool = null;
         int maxSize = 20;
         try { maxSize = Integer.parseInt(Util.THREAD_POOL_MAX_SIZE); } catch (Throwable t) {/*ignore*/}
-        if(maxSize>0) pool = new ThreadPool(name, maxSize);
+        if(maxSize>0) pool = new AppThreadPool(name, maxSize);
         return pool;
     }
 

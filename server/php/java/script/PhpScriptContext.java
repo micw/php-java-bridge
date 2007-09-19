@@ -109,8 +109,12 @@ public class PhpScriptContext extends SimpleScriptContext implements IContext, I
      */
     /**@inheritDoc*/
     public boolean call(PhpProcedureProxy kont) throws InterruptedException {
-    	if(!continuationCalled) this.kont.call(kont);
-    	return continuationCalled = true;
+    	if(!continuationCalled) {
+    	    this.kont.call(kont);
+    	    continuationCalled = true;
+    	    return false;
+    	}
+    	return true;
     }
 
     /**

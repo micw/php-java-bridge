@@ -198,24 +198,7 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
     
             /* get the proxy, either the one from the user script or our default proxy */
             try { this.scriptClosure = this.script.getProxy(new Class[]{}); } catch (Exception e) { return null; }
-            // make sure to properly release them upon System.exit().
-            synchronized(engines) {
-                if(!registeredHook) {
-            	registeredHook = true;
-            	try {
-            	    Runtime.getRuntime().addShutdownHook(new Util.Thread() {
-            		public void run() {
-            		    synchronized(engines) {
-            			for(Iterator ii = engines.iterator(); ii.hasNext(); ii.remove()) {
-            			    InvocablePhpScriptEngine e = (InvocablePhpScriptEngine) ii.next();
-            			    e.releaseInternal();
-            			}
-            		    }
-            		}});
-            	} catch (SecurityException e) {/*ignore*/}
-                }
-                engines.add(this);
-            }
+            handleRelease();
         } finally {
             if(w!=null)  try { w.close(); } catch (IOException e) {/*ignore*/}
             if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}            
@@ -223,6 +206,26 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
        return null;
     }
 
+    protected void handleRelease() {
+        // make sure to properly release them upon System.exit().
+        synchronized(engines) {
+            if(!registeredHook) {
+        	registeredHook = true;
+        	try {
+        	    Runtime.getRuntime().addShutdownHook(new Util.Thread() {
+        		public void run() {
+        		    synchronized(engines) {
+        			for(Iterator ii = engines.iterator(); ii.hasNext(); ii.remove()) {
+        			    InvocablePhpScriptEngine e = (InvocablePhpScriptEngine) ii.next();
+        			    e.releaseInternal();
+        			}
+        		    }
+        		}});
+        	} catch (SecurityException e) {/*ignore*/}
+            }
+            engines.add(this);
+        }
+    }
     private void releaseInternal() {
 	super.release();
     }

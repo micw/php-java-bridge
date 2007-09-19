@@ -1,8 +1,8 @@
 <?php
-require_once('rt/java_io_File.php');
-require_once('rt/java_lang_System.php');
-require_once('rt/java_util_LinkedList.php');
-require_once('lucene/All.php');
+if(!extension_loaded("java"))
+  require_once("http://localhost:8080/JavaBridge/java/Java.inc");
+java_autoload("lucene.jar");
+
 
 try {
   echo "indexing ... ";
@@ -15,7 +15,7 @@ try {
   $file = new java_io_File($cwd);
   $files = $file->listFiles();
   if(is_null($files)) {
-    $user = java_lang_System()->getProperty("user.name");
+    $user = java_lang_System::type()->getProperty("user.name");
     echo("$cwd does not exist or is not readable.\n");
     echo("The directory must be readable by the user $user and it must not\n");
     echo("be protected by a SEL rule.\n");
@@ -26,8 +26,8 @@ try {
     $doc->add(new org_apache_lucene_document_Field(
 	       "name", 
 	       $f->getName(), 
-	       org_apache_lucene_document_Field__Store()->YES, 
-	       org_apache_lucene_document_Field__Index()->UN_TOKENIZED));
+	       org_apache_lucene_document_Field::type("Store")->YES, 
+	       org_apache_lucene_document_Field::type("Index")->UN_TOKENIZED));
     $writer->addDocument($doc);
   }
   $writer->optimize();
@@ -48,13 +48,13 @@ try {
 
   /* Instead of retrieving the values one-by-one, we store them into a
    * LinkedList on the server side and then retrieve the list in one
-   * query:
+   * query using java_values():
    */
   $resultList = new java_util_LinkedList();
 
 				// create an XML document from the
 				// following PHP code, ...
-  java_lang_System::javaBeginDocument();
+  java_begin_document();
   while($n--) {
     $next = $iter->next();
     $name = $next->get("name");
@@ -62,16 +62,16 @@ try {
   }
 				//  ... execute the XML document on
 				//  the server side, ...
-  java_lang_System::javaEndDocument();
+  java_end_document();
   
 				// .. retrieve the result, ...
-  $result = java_lang_System::javaValues($resultList); 
+  $result = java_values($resultList); 
 				// ... print the result array
   print_r($result);
 
   delete_index_dir();
 } catch (JavaException $e) {
-  echo "Exception occured: {$e->__toString()}<br>\n";
+  echo "Exception occured: "; echo $e; echo "<br>\n";
 }
 
 /** helper functions */
@@ -85,7 +85,7 @@ $tmp_dir=null;
  */
 function create_index_dir() {
   global $tmp_file, $tmp_dir;
-  $javaTmpdir = java_lang_System()->getProperty("java.io.tmpdir");
+  $javaTmpdir = java_lang_System::type()->getProperty("java.io.tmpdir");
   $tmpdir = java_values($javaTmpdir);
   $tmp_file=tempnam($tmpdir, "idx");
   $tmp_dir=new java_io_File("${tmp_file}.d");

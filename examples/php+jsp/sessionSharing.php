@@ -1,6 +1,5 @@
-<?php
-
-if(!extension_loaded('java')) require_once("java/Java.inc");
+<?php require_once("java/Java.inc");
+java_autoload();
 
 $session = java_session();
 ?>
@@ -10,12 +9,12 @@ $session = java_session();
 <BODY>
 <?php
 if(is_null($session->get("counter"))) {
-  $session->put("counter", new Java("java.lang.Integer", 1));
+  $session->put("counter", new java_lang_Integer(1));
 }
 
 $counter = java_values($session->get("counter"));
 print "HttpSession variable \"counter\": $counter<br>\n";
-$next = new Java("java.lang.Integer", $counter+1);
+$next = new java_lang_Integer($counter+1);
 $session->put("counter", $next);
 ?>
 <a href="sessionSharing.jsp">JSP page</a>

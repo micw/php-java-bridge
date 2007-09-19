@@ -453,7 +453,7 @@ public final class Request implements IDocHandler {
 	         if(arg.predicate=='A') { // keep alive
 	           bridge.recycle();
 	           try {
-	     	       ((ThreadPool.Delegate)Thread.currentThread()).setPersistent();
+	     	       ((AppThreadPool.Delegate)Thread.currentThread()).setPersistent();
 	           } catch (ClassCastException ex) {/*no thread pool*/}
 	           response.setFinish(true);
 	         } else { // terminate or terminate keep alive
@@ -564,7 +564,7 @@ public final class Request implements IDocHandler {
 	        if(arg.predicate=='A') { // keep alive
 	            bridge.recycle();
 	            try {
-			((ThreadPool.Delegate)Thread.currentThread()).setPersistent();
+			((AppThreadPool.Delegate)Thread.currentThread()).setPersistent();
 		    	response.setFinish(true);
 		    } catch (ClassCastException ex) {
 			/* no thread pool */

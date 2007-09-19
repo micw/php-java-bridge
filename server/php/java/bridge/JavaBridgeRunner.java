@@ -357,10 +357,10 @@ public class JavaBridgeRunner extends HttpServer {
 		Method e = c.getMethod("getEngineByExtension", new Class[] {String.class});
 		if("php".equals(ext)) 
 		    ext="phtml"; // we don't want bug reports from "quercus" users
-		Object engine = e.invoke(o, new String[]{ext});
+		Object engine = e.invoke(o, (Object[])new String[]{ext});
 		if(engine==null) {
 		    e = c.getMethod("getEngineByName", new Class[] {String.class});
-		    engine = e.invoke(o, new String[]{ext});
+		    engine = e.invoke(o, (Object[])new String[]{ext});
 		}
 		if(engine==null) return false;
 		ByteArrayOutputStream xout = new ByteArrayOutputStream();

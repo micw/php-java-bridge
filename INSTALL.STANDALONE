@@ -1,11 +1,11 @@
 Overview
 --------
 
-This document describes how to call into a non-J2EE application.
-Please see the INSTALL.J2SE document for details how to call PHP
-methods from Java. Please see the INSTALL.J2EE document for details
-how to embed PHP into a pure J2EE application server or how to call
-Java/J2EE methods from PHP.
+This document describes how to call out to a non-J2EE
+application. Please see the INSTALL.J2SE document for details how to
+call PHP methods from Java. Please see the INSTALL.J2EE document for
+details how to embed PHP into a pure J2EE application server or how to
+call Java/J2EE methods from PHP.
 
 Install the back end into your non-J2EE application
 ---------------------------------------------------

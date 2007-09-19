@@ -1,9 +1,7 @@
-<?php
-
-if(!extension_loaded('java')) require_once("java/Java.inc");
+<?php require_once("java/Java.inc");
+java_autoload();
 
 $session = java_session();
-$System = new JavaClass("java.lang.System");
 
 /* The name of the remote document */
 $name = "RMIdocument";
@@ -14,13 +12,13 @@ if(!$doc=$session->get("$name"))
 
 try {
   /* add pages to the remote document */
-  $doc->addPage(new Java ("Page", 0, "this is page 1"));
-  $doc->addPage(new Java ("Page", 0, "this is page 2"));
+  $doc->addPage(new Page(0, "this is page 1"));
+  $doc->addPage(new Page(0, "this is page 2"));
 
   /* and print a summary */
   print java_values($doc->analyze()) . "\n";
 } catch (JavaException $ex) {
-  $cause = $ex->getCause(); if(is_null($ex->getCause())) $cause = $ex;
+  $cause = $ex->getCause();
   echo "Could not access remote document. <br>\n";
   echo "$cause <br>\nin file: {$ex->getFile()}<br>\nline:{$ex->getLine()}\n";
   $session->destroy();
@@ -44,22 +42,21 @@ if($_GET['logout']) {
  */
 function createDocument($jndiname, $serverArgs) {
   // find initial context
-  $initial = new Java("javax.naming.InitialContext", $serverArgs);
+  $initial = new javax_naming_InitialContext($serverArgs);
   
   try {
     // find the service
     $objref  = $initial->lookup("$jndiname");
     
     // access the home interface
-    $DocumentHome = new JavaClass("DocumentHome");
-    $PortableRemoteObject = new JavaClass("javax.rmi.PortableRemoteObject");
-    $home = $PortableRemoteObject->narrow($objref, $DocumentHome);
-    if(is_null($home)) throw new JavaException("java.lang.NullPointerException", "home");
+    $home = javax_rmi_PortableRemoteObject::type()->narrow($objref, 
+						   DocumentHome::type());
+    if(is_null($home)) throw new Exception("home");
 
     // create a new remote document and return it
     $doc = $home->create();
   } catch (JavaException $ex) {
-    $cause = $ex->getCause(); if(is_null($ex->getCause())) $cause = $ex;
+    $cause = $ex->getCause();
     echo "Could not create remote document. Have you deployed documentBean.jar?<br>\n";
     echo "$cause <br>\nin file: {$ex->getFile()}<br>\nline:{$ex->getLine()}\n";
     exit (1);

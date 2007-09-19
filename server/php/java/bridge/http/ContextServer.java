@@ -24,7 +24,7 @@ package php.java.bridge.http;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import php.java.bridge.ThreadPool;
+import php.java.bridge.AppThreadPool;
 import php.java.bridge.Util;
 import php.java.bridge.http.ContextFactory.ICredentials;
 
@@ -52,7 +52,7 @@ public final class ContextServer implements ContextFactory.ICredentials {
     // No secutiry token
     private static SocketContextServer sock = null; 
     // One pool for both, the Socket- and the PipeContextServer
-    private static final ThreadPool pool = new ThreadPool("JavaBridgeContextRunner", Integer.parseInt(Util.THREAD_POOL_MAX_SIZE));
+    private static final AppThreadPool pool = new AppThreadPool("JavaBridgeContextRunner", Integer.parseInt(Util.THREAD_POOL_MAX_SIZE));
     
     private class PipeChannelName extends AbstractChannelName {
         public PipeChannelName(String name, IContextFactory ctx) {super(name,  ctx);}
@@ -105,7 +105,7 @@ public final class ContextServer implements ContextFactory.ICredentials {
         return sock!=null && sock.isAvailable();
     }
 
-    private static synchronized SocketContextServer getSocketContextServer(ContextServer server, ThreadPool pool) {
+    private static synchronized SocketContextServer getSocketContextServer(ContextServer server, AppThreadPool pool) {
 	if(sock!=null) return sock;
 	return sock=new SocketContextServer(pool);
     }

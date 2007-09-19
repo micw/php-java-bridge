@@ -50,6 +50,10 @@ function __javaproxy_Client_getClient() {
   }
   return $client;
 }
+function java_coerce_value($value) {
+  if($value instanceof java_JavaBridge) return $value->java;
+  return $value;
+}
 function java_last_exception_get() {
   $client=__javaproxy_Client_getClient();
   return $client->getProperty(0, "lastException");
@@ -58,34 +62,46 @@ function java_last_exception_clear() {
   $client=__javaproxy_Client_getClient();
   $client->setProperty(0, "lastException", null);
 }
-function java_values($object) {
+function java_values_internal($object) {
   if(!$object instanceof java_JavaType) return $object;
   $client=__javaproxy_Client_getClient();
   return $client->invokeMethod(0, "getValues", array($object));
+}
+function java_values($object) {
+  return java_values_internal(java_coerce_value($object));
 }
 function java_reset() {
   $client=__javaproxy_Client_getClient();
   user_error("Your script has called the privileged procedure \"java_reset()\" which resets the java back-end to its initial state. Therefore all java caches are gone.");
   return $client->invokeMethod(0, "reset", array());
 }
-function java_inspect($object) {
+function java_inspect_internal($object) {
   if(!$object instanceof java_JavaType) throw new java_IllegalArgumentException($object);
   $client=__javaproxy_Client_getClient();
   return $client->invokeMethod(0, "inspect", array($object));
+}
+function java_inspect($object) {
+  return java_inspect_internal(java_coerce_value($object));
 }
 function java_set_file_encoding($enc) {
   $client=__javaproxy_Client_getClient();
   return $client->invokeMethod(0, "setFileEncoding", array($enc));
 }
-function java_instanceof($ob, $clazz) {
+function java_instanceof_internal($ob, $clazz) {
   if(!$ob instanceof java_JavaType) throw new java_IllegalArgumentException($ob);
   if(!$clazz instanceof java_JavaType) throw new java_IllegalArgumentException($clazz);
   $client=__javaproxy_Client_getClient();
   return $client->invokeMethod(0, "instanceOf", array($ob, $clazz));
 }
-function java_cast($object, $type) { 
+function java_instanceof($ob, $clazz) {
+  return java_instanceof_internal(java_coerce_value($ob), java_coerce_value($clazz));
+}
+function java_cast_internal($object, $type) { 
     if(!$object instanceof java_JavaType) throw new java_IllegalArgumentException($object);
 	return $object->__cast($type); 
+}
+function java_cast($object, $type) { 
+  return java_cast_internal(java_coerce_value($object), java_coerce_values($type));
 }
 function java_require($arg) {
   $client=__javaproxy_Client_getClient();
@@ -591,5 +607,16 @@ class java_JavaProxyProxy extends Java {
   function java_JavaProxyProxy($client) {
 	$this->__client = $client;
   }
+}
+
+class java_JavaBridge {
+  var $java;
+  function __java_coerceArgs($array) {return array_map('java_coerce_value', $array);}
+  function __java_coerceArg($arg) {return java_coerce_value($arg);}
+  function __java_init($path) { } 
+  function __get($arg) { if(!is_null($this->java)) return $this->java->__get($this->__java_coerceArg($arg)); }
+  function __set($key, $val) { if(!is_null($this->java)) return $this->java->__set($this->__java_coerceArg($key), $this->__java_coerceArg($val)); }
+  function __call($m, $a) { if(!is_null($this->java)) return $this->java->__call($m, $this->__java_coerceArgs($a)); }
+  function __toString() { if(!is_null($this->java)) return $this->java->__toString(); }
 }
 ?>

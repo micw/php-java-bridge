@@ -45,7 +45,7 @@
 
 #include "zend.h"
 #include "init_cfg.h"
-#if !defined(ZEND_ENGINE_2) || EXTENSION == MONO
+#if !defined(ZEND_ENGINE_2)
 # include "java_php4.c"
 #else
 
@@ -395,9 +395,14 @@ PHP_MINIT_FUNCTION(EXT)
 	EXT_GLOBAL(mktmpdir)();
   } 
 
-  if(EXT_GLOBAL(option_set_by_user)(U_HOSTS, EXT_GLOBAL(ini_user)) && !(!EXT_GLOBAL(cfg)->is_fcgi_servlet)) {
+  /* 
+   * don't bother setting JAVA_HOSTS if this is a fcgi servlet
+   * (getenv("X_JAVABRIDGE_OVERRIDE_HOSTS")=="/") as the servlet will
+   * set X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT anyway
+   */
+  if(EXT_GLOBAL(option_set_by_user)(U_HOSTS, EXT_GLOBAL(ini_user)) && !(EXT_GLOBAL(cfg)->is_fcgi_servlet)) {
 	REGISTER_STRING_CONSTANT("JAVA_HOSTS", EXT_GLOBAL(cfg)->hosts, CONST_CS | CONST_PERSISTENT);
-	if(EXT_GLOBAL(option_set_by_user)(U_SERVLET, EXT_GLOBAL(ini_user)) && !(!EXT_GLOBAL(cfg)->is_fcgi_servlet))
+	if(EXT_GLOBAL(option_set_by_user)(U_SERVLET, EXT_GLOBAL(ini_user)))
 	  REGISTER_STRING_CONSTANT("JAVA_SERVLET", EXT_GLOBAL(cfg)->servlet, CONST_CS | CONST_PERSISTENT);
   }
 

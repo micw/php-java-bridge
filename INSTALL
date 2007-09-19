@@ -1,6 +1,9 @@
 This file contains very detailed installation instructions. For most
-users the build section from the README and the install.sh script
-should be sufficient.
+users the command
+
+  phpize && ./configure --with-java=$JAVA_HOME && make 
+
+and the install.sh script should be sufficient.
 
 NOTE for Fedora and RedHat Enterprise Linux: Linux RPMs contain
 Security Enhanced Linux contexts. If you want to install software on a

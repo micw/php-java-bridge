@@ -11,9 +11,11 @@ What is the PHP/Java Bridge?
 Overview
 --------
 
-  The generic PHP/Java Bridge implementation is distributed as a web
-  archive called "JavaBridge.war". It is a zip archive which contains
-  the libraries "JavaBridge.jar", "php-script.jar" and "script-api.jar".
+  The generic PHP/Java Bridge implementation is distributed as an
+  example web archive called "JavaBridge.war". It is a zip archive which
+  contains the libraries "JavaBridge.jar", "php-script.jar" and
+  "script-api.jar". Furthermore it contains some PHP examples which
+  can be run in any pure Java J2EE server or servlet engine.
 
   The PHP/Java Bridge web application contains two servlets. The
   "PhpJavaServlet" handles requests from remote PHP clients running in
@@ -35,16 +37,18 @@ Build and execution instructions:
 ---------------------------------
 
   Type java -jar JavaBridge.war to extract the JavaBridge.jar from
-  the web archive. 
+  the web archive. The command extracts ext/JavaBridge.jar and
+  java/Java.inc from the web archive.
 
   Double-click on JavaBridge.jar and select SERVLET_LOCAL:8080 to
-  start a servlet engine listening on the local host interface. Type
-  java -jar JavaBridge.jar --help to see the list of available options.
+  start a local HTTP server. Type java -jar ext/JavaBridge.jar --help
+  to see the list of available options.
 
   Use the following code to access Java from your PHP scripts:
 
     <?php
-    require_once("http://localhost:8080/JavaBridge/java/Java.inc");
+    if(!extension_loaded("java"))
+      require_once("http://localhost:8080/JavaBridge/java/Java.inc");
     $s = new Java("java.lang.String", "hello");
     ...
     ?>
@@ -55,73 +59,126 @@ Build and execution instructions:
 
      phpize && ./configure && make && make install
 
+
+  For PHP 4, which cannot run PHP 5 code, a C extension "php_java.dll"
+  or "java.so" is needed to access Java. Download and extract the
+  PHP/Java Bridge source download, follow the instructions from the
+  INSTALL document and set the following php.ini options:
+
+     extension=java.so ;; or php_java.dll on windows
+     [java]
+     java.hosts=127.0.0.1:8080
+     java.servlet=On
+
+  Both implementations, the Java.inc and the C code are API compatible.
+
 ------------------------------------
-   Permanently activate the module
-   -------------------------------
+  Permanently activate the module
+  -------------------------------
 
   Installation for the web:
+  -------------------------
 
-  Copy the JavaBridge.war file into the autodeploy folder
-  of the J2EE server or servlet engine.
+  Install a local J2EE server or servlet engine. For example Tomcat
+  version 6. Copy the JavaBridge.war file into the autodeploy folder of
+  the J2EE server or servlet engine.
 
   Example for Apache/Tomcat on Linux:
 
     cp JavaBridge.war /usr/share/tomcat5/webapps/
 
+  Restart tomcat and wait until the directory webapps/JavaBridge
+  appears.
+
+  Then copy or symlink the JavaBridge folder to the document root
+  of your HTTP server. Example for Linux:
+
+    cp -r /usr/share/tomcat5/webapps/JavaBridge/ $HOME/public_html
+
 
   Installation for standalone Java J2SE applications:
+  ---------------------------------------------------
 
   Copy the JavaBridge.jar, php-script.jar and script-api.jar to
   the java.ext.dirs. Example for JDK1.6 on Linux:
 
     cp ext/*.jar /usr/java/packages/lib/ext/
 
+  Type
+
+    /usr/java/default/bin/jrunscript -l php-interactive
+
+  to start an interactive PHP session.
+
 ---------------------------------------------
   Starting the PHP/Java Bridge automatically
   ------------------------------------------
 
   For the web:
+  ------------
 
-  Start the J2EE server or servlet engine as a service. The
+  Install the J2EE server or servlet engine as a service. The
   Apache/Tomcat servlet engine automatically installs as a service on
   Windows and Linux.
 
 
-  In standalone J2SE applications the bridge starts automatically
-  when the JSR223 context is accessed.
+  For standalone J2SE applications:
+  ----------------------------------
+
+  No installation necessary; the bridge starts automatically when the
+  JSR 223 context is accessed. Example:
+
+    jrunscript -classpath JavaBridge.jar -l php-interactive 
+
+  automatically starts a "php-cgi" executable from the path. Please
+  see the INSTALL.J2SE document for details how to access persistent
+  script engines from a HTTP or FastCGI pool using the JSR 223
+  interface.
   
 ---------------------------------------------
-  Translating Java into PHP PEAR classes
-  --------------------------------------
+  High-level interface
+  --------------------
 
-  Java libraries can be translated into PEAR classes using the command:
+  When the PHP standard library is available (PHP 5.2 and above), the
+  procedure java_autoload() can be used to import Java classes into PHP.
+  Example:
 
-    java -jar JavaBridge.jar --convert /path/to/PEAR/repository ARCHIVE.JAR
+  <?php require_once("http://localhost.8080/JavaBridge/java/Java.inc");
+ 
+    java_autoload("lucene.jar");
+ 
+    $searcher = new org_apache_lucene_search_IndexSearcher(getcwd());
+    $term = new org_apache_lucene_index_Term("name", "test.php");
+    $phrase = new org_apache_lucene_search_PhraseQuery();
+    $phrase->add($term);
 
-  or, if you have configured the PHP/Java extension to run without Java:
+    $hits = $searcher->search($phrase);
+    $iter = $hits->iterator();
 
-    modules/java --convert /path/to/PEAR/repository ARCHIVE.JAR
+    while($iter->hasNext()) {
+      $next = $iter->next();
+      $name = $next->get("name");
+      echo "found: $name\n";
+    }
+  ?>
 
+  The procedure type(<detail>) can be used to access class features. Example:
 
-  Example for Apache/Lucene:
+  echo java_inspect(java_lang_System::type()->out);
+  
+  Details of <detail> can be accessed by appending $detail. Example:
 
-     modules/java --convert /usr/share/pear /usr/share/java/lucene.jar
+  package org.my.package;
+  public interface Php {
+    public class java {
+      public enum bridge {JavaBridge, JavaBridgeRunner};
+    }
+  }
 
-  <?php
-     require_once("lucene/All.php")
-     $searcher = new org_apache_lucene_search_IndexSearcher(getcwd());
-     $term = new org_apache_lucene_index_Term("name", "test.php");
-     $phrase = new org_apache_lucene_search_PhraseQuery();
-     $phrase->add($term);
+  <? require_once("http://localhost:8080/JavaBridge/java/Java.inc");
+    java_autoload("myPackage.jar");
 
-     $hits = $searcher->search($phrase);
-     $iter = $hits->iterator();
-
-     while($iter->hasNext()) {
-       $next = $iter->next();
-       $name = $next->get("name");
-       echo "found: $name\n";
-     }
+    echo org_my_package.Php::type('java$bridge');
   ?>
 
 ---------------------------------------------
@@ -381,8 +438,7 @@ Build and execution instructions:
   Loading user classes and libraries
   ----------------------------------
 
-  Java libraries should either be translated into PEAR classes (see
-  above) or be installed in one of the following directories:
+  Java libraries should be installed in one of the following directories:
   java.ext.dirs or php.java.bridge.base/lib or, for the
   J2EE/servlet back end, WEB-INF/lib. Libraries in these directories are
   automatically loaded by a static loader whenever the JVM starts.
@@ -520,7 +576,7 @@ Build and execution instructions:
   needs. If you have written software where certain methods require an
   optional library, please document this in the method header.
 
-  If receive this error when using a Java library, this may mean the
+  If you receive this error when using a Java library, this may mean the
   following:
 
     * an old or different JDK than expected by the library is used,
@@ -543,8 +599,13 @@ Build and execution instructions:
   All PHP versions between 4.4.1 and 5.0.3 crash when the dl()
   function is used.
 
-  If you use one of these versions, please add an entry to the
-  php.ini, see install instructions above.
+  If you use one of these versions, please add the following entry
+  to your php.ini file:
+
+    extension=java.so ;; php_java.dll on windows
+    [java]
+    java.hosts=127.0.0.1:8080
+    java.servlet=On
 
 ---------------------------------------------
   GCJ/GNU Java issues
@@ -583,8 +644,8 @@ Build and execution instructions:
   UTF-8
   -----
   
-  Since PHP does not support Unicode, the PHP/Java Bridge uses UTF-8 to
-  convert characters into the host representation. All strings are
+  Since PHP does not support unicode, the PHP/Java Bridge uses UTF-8
+  to convert characters into the host representation. All strings are
   created with new String(..., "UTF-8") and all internal String->byte[]
   conversions use getBytes("UTF-8").
   
@@ -726,7 +787,7 @@ Build and execution instructions:
     java_end_document();                             // 1 round trip
     $ar = java_values($resultList);                  // 1 round trip
 
-  Assuming that a ping to the back-end reveils an average round-trip
+  Assuming that a ping to the back-end reveals an average round-trip
   time of 6ms, the above code costs 6*6ms = 36ms (ignoring CPU and
   network bandwidth contraints).
 

@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 4.2.2
+%define version 4.3.0test1
 %define release 1
 %define PHP_MAJOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | sed 's/\\\..*$//')
 %define PHP_MINOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | LANG=C cut -d. -f2)
@@ -218,7 +218,6 @@ if test -f /etc/selinux/config; then
     echo
   fi
 fi
-%{_libdir}/php/modules/java --convert %{_datadir}/pear ""
 echo "PHP/Java Bridge installed."
 echo "Now install the tomcat or J2EE back-end or the native (lucene/itext) libs."
 echo
@@ -262,7 +261,6 @@ exit 0
 
 %preun
 if [ $1 = 0 ]; then
-	rm -rf %{_datadir}/pear/java/Bridge.php %{_datadir}/pear/rt
 	/sbin/service httpd stop > /dev/null 2>&1
     if test -d /etc/selinux/%{__policy_tree}/modules; then 
 		%{_sbindir}/semodule -r javabridge

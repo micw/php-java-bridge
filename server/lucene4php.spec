@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 1.2.1
+%define version 2.1.0
 %define release 1
 Name: lucene4php
 Summary: The lucene library for the PHP Hypertext Preprocessor
@@ -11,7 +11,6 @@ URL: http://www.sourceforge.net/projects/php-java-bridge
 Source0: http://osdn.dl.sourceforge.net/sourceforge/php-java-bridge/lucene4php_%{version}.tar.gz
 
 
-BuildRequires: ed
 BuildRequires: php-java-bridge
 
 Requires: php >= 4.3.2
@@ -34,16 +33,8 @@ LD_LIBRARY_PATH=/lib:%{_libdir}
 %install
 rm -rf $RPM_BUILD_ROOT
 
-%makeinstall converter=%{_libdir}/php/modules/java | tee install.log
-rm -rf $RPM_BUILD_ROOT/%{_datadir}/pear/rt $RPM_BUILD_ROOT/%{_datadir}/pear/java/Bridge.php
+%makeinstall
 echo %{_datadir}/pear/lucene >filelist
-for i in `find $RPM_BUILD_ROOT/%{_datadir}/pear/lucene -name "*.php" -print`; do
-ed -s $i <<end || true
-1,\$s|${RPM_BUILD_ROOT}||
-w
-q
-end
-done
 
 %clean
 rm -rf $RPM_BUILD_ROOT

@@ -1,12 +1,11 @@
-<?php
-
-if(!extension_loaded('java')) require_once("java/Java.inc");
+<?php require_once("java/Java.inc");
+java_autoload();
 
 header("Content-type: application/vnd.ms-excel");
 header("Content-Disposition: attachment; filename=downloaded.xls");
 
 // create a 50x40 excel sheet and return it to the client
-$workbook = new Java("org.apache.poi.hssf.usermodel.HSSFWorkbook");
+$workbook = new org_apache_poi_hssf_usermodel_HSSFWorkbook();
 $sheet = $workbook->createSheet("new sheet");
 
 java_begin_document(); // send the following as a streamed XML document
@@ -20,7 +19,7 @@ for($y=0; $y<40; $y++) {
 java_end_document(); // back to "normal" protocol mode
 
 // create and return the excel sheet to the client
-$memoryStream = new Java ("java.io.ByteArrayOutputStream");
+$memoryStream = new java_io_ByteArrayOutputStream();
 $workbook->write($memoryStream);
 $memoryStream->close();
 echo java_values($memoryStream->toByteArray());

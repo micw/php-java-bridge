@@ -3,60 +3,22 @@ This example shows how to use the Apache/Lucene library from PHP.
 Installing the lucene.jar library on a web server
 -------------------------------------------------
 
-1. Note: If you have already installed the Lucene PHP classes, for example
-   in /usr/share/pear, you can skip this step.
+1. Start Java as follows:
 
-   Locate the JavaBridge.jar, the lucene.jar and choose an include
-   directory from the PHP include_path, for example /usr/share/pear. The
-   following example assumes that JavaBridge.jar and lucene.jar are in
-   the current working directory. It reads both files, creates and
-   installs the lucene PHP classes in /usr/share/pear/.
+     java -classpath lucene.jar -jar JavaBridge.jar SERVLET_LOCAL:8080 1 &
 
-     java -jar JavaBridge.jar --convert /usr/share/pear lucene.jar
+   or, if you have compiled lucene.jar to native code, add the following
+   lines to your php.ini file:
 
-  If you don't have Java installed and you have configured the
-  PHP/Java Bridge to run without Java (i.e. configured without the
-  "--with-java=..." option), use:
-
-     modules/java --convert /usr/share/pear lucene.jar
+     extension=java.so
+     [java]
 
 
 2. Test the installation, type:
 
      php lucene_search.php
 
-   It indexes the current working directory and then lists all files
-   from this directory.
-
-3. Copy the /usr/share/pear/lucene directory over to the machine that
-   hosts the web server, copy the lucene_search.php to the web server
-   document root and copy the java.so to the web server PHP extension
-   directory, or copy the java directory (the pure PHP implementation)
-   to the web server document root.
-
-4. If Java is not installed on the web server machine, the bridge
-   should have been configured to run without Java (omit the
-   --with-java=... configure option). In this case also copy the files
-   "java" and "libnatcJavaBridge.so" over to the web server PHP
-   extension directory.
-
-5. For better performance it is recommended to add a php .ini
-   entry:
-
-     extension=java.so
-     [java]
-
-   Or, if the pure PHP implementation is used, start an external
-   J2EE or servlet back end, for example with the command:
-
-     java -jar JavaBridge.jar SERVLET_LOCAL:8080
-
-   If the bridge has been configured to run without Java, use the command:
-
-    modules/java SERVLET_LOCAL:8080
-
-
-6. Browse to:
+3. Browse to:
      
      http://your.server.com/lucene_search.php
 

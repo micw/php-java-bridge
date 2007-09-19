@@ -40,7 +40,7 @@
 
 #include "zend.h"
 #include "init_cfg.h"
-#if !defined(ZEND_ENGINE_2) || EXTENSION == MONO
+#if !defined(ZEND_ENGINE_2)
 
 #include <errno.h>
 #include <stdio.h>

@@ -32,7 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import php.java.bridge.ThreadPool;
+import php.java.bridge.AppThreadPool;
 import php.java.bridge.Util;
 
 /**
@@ -48,7 +48,7 @@ import php.java.bridge.Util;
  * @see php.java.bridge.http.ContextServer
  */
 public class PipeContextServer implements IContextServer {
-    protected ThreadPool threadPool;
+    protected AppThreadPool threadPool;
     protected ContextFactory.ICredentials contextServer;
     private boolean isAvailable = true;
     protected String contextName;
@@ -93,7 +93,7 @@ public class PipeContextServer implements IContextServer {
      * Create a new ContextServer using the ThreadPool. 
      * @param threadPool Obtain runnables from this pool. If null, new threads will be created.
      */
-    public PipeContextServer (ContextFactory.ICredentials contextServer, ThreadPool threadPool, String contextName) {
+    public PipeContextServer (ContextFactory.ICredentials contextServer, AppThreadPool threadPool, String contextName) {
         this.contextServer = contextServer;
     	this.threadPool = threadPool;
     	this.contextName = contextName;

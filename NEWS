@@ -3,6 +3,38 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 4.3.0
+
+* It is now possible to access PHP (HTTP- or FastCGI) pool instances
+from servlets or frameworks such as Spring or JSF using the JSR 223
+API. See script/EngineFactory.java and servlet/ContextLoaderListener.java.
+
+* New high-level API:
+
+ java_autoload() or java_autoload("foo.jar;bar.jar;...");
+ echo new java_lang_String("hello");
+ => hello
+
+ echo java_lang_String::type();
+ => type: java.lang.String
+
+ echo java_lang_Boolean::type()->TYPE;
+ => primitive type: boolean
+
+ echo php_java_bridge_Util::type("Logger");
+ => type: php.java.bridge.Util$Logger
+
+ echo php_java_bridge_Util::type('ProcessWithErrorHandler$PhpException');
+ => type: php.java.bridge.Util$ProcessWithErrorHandler$PhpException
+
+* Backward compatibility for Linux/Windows: The PHP binary extension
+has been removed entirely and replaced by a Zend extension which
+compiles Java.inc to native code. This allows us to ship one
+pre-compiled (Windows- and Linux-) binary for all PHP versions. --
+However, it is recommended to use the pure PHP implementation
+"Java.inc", which works on all platforms.
+
+
 Version 4.2.0
 
 * This is an experimental release.

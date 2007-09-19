@@ -290,7 +290,7 @@ public class JavaBridge implements Runnable {
     // called by Standalone.init()
     static void init(ISocketFactory socket, int logLevel, String s[]) {	    
 	try {
-	    ThreadPool pool = Util.createThreadPool(Util.EXTENSION_NAME+"ThreadPool");
+	    AppThreadPool pool = Util.createThreadPool(Util.EXTENSION_NAME+"ThreadPool");
 	    try {
 	        String policy = System.getProperty("java.security.policy");
 	        String base = Util.JAVABRIDGE_BASE;
@@ -1536,6 +1536,19 @@ public class JavaBridge implements Runnable {
 
     /**
      * Returns a string representation of the object
+     * @param ob The object
+     * @return A string representation.
+     */
+    public String ObjectToString(byte[] ob) {
+	   try {
+	        return new String ((byte[])castToString(ob), options.getEncoding());
+	    } catch (UnsupportedEncodingException e) {
+		return new String ((byte[])castToString(ob));
+	    }
+    }
+ 
+    /**
+     * Returns a string representation of the object
      * @param ob The Throwable
      * @param trace The stack trace
      * @return A string representation.
@@ -1993,5 +2006,13 @@ public class JavaBridge implements Runnable {
     Response createResponse() {
 	if(options.passContext()) return new ClassicResponse(this);
 	return new Response(this);
+    }
+    
+    public boolean typeExists(String name) {
+	try {
+	    getClassLoader().forName(name);
+	    return true;
+	} catch (ClassNotFoundException ex) {/*ignore*/}
+	return false;
     }
 }

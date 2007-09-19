@@ -1,8 +1,8 @@
 <html>
 <?php 
 if(!extension_loaded('java')) require_once("java/Java.inc");
-$CGIServlet = new JavaClass("php.java.servlet.CGIServlet");
-$Util = new JavaClass("php.java.bridge.Util");
+$CGIServlet = java("php.java.servlet.CGIServlet");
+$Util = java("php.java.bridge.Util");
 $ctx = java_context();
 /* get the current instance of the JavaBridge, ServletConfig and Context */
 $bridge = $ctx->getAttribute(  "php.java.bridge.JavaBridge",      100);
@@ -34,7 +34,7 @@ It listens for PHP/Java Bridge protocol requests on the local interface or on al
 <code>
 &lt;?php <br>
 require_once("http://localhost:8080/JavaBridge/java/Java.inc");<br>
-$System = new JavaClass("java.lang.System");<br>
+$System = java("java.lang.System");<br>
 echo $System->getProperties();<br>
 ?&gt;
 </code>
