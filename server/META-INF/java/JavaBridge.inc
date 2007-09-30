@@ -44,6 +44,9 @@ if(!function_exists("java_get_base")) {
 	$msg = "<br><strong>PHP $version too old.</strong><br>\nFor PHP versions < 5.1.4 install the java.so or php_java.dll from the php-java-bridge-legacy download.<br>\nOr set the path to the PHP executable, see php_exec in the WEB-INF/web.xml";
 	die($msg);
   }
+  /**
+   * @access private
+   */
   function java_get_base() {
 	$ar = get_required_files();
 	$arLen = sizeof($ar);
@@ -57,8 +60,17 @@ if(!function_exists("java_get_base")) {
   $JAVA_BASE=java_get_base();
   require_once("${JAVA_BASE}/JavaProxy.inc");
 
+  /**
+   * @access private
+   */
   class java_RuntimeException extends Exception {};
+  /**
+   * @access private
+   */
   class java_IllegalStateException extends java_RuntimeException {};
+  /**
+   * @access private
+   */
   class java_IllegalArgumentException extends java_RuntimeException {
 	function __construct($ob) {
 	  parent::__construct(is_object($ob)?$ob->__toString():(string)$ob);
@@ -66,12 +78,18 @@ if(!function_exists("java_get_base")) {
   };
 
 
+  /**
+   * @access private
+   */
   function java_javabridge($j, $p) {
     static $classMap = array();
     if(array_key_exists($j, $classMap)) return $classMap[$j];
     return $classMap[$j]=new $p(new JavaClass($j));
   }
 
+  /**
+   * @access private
+   */
   function java_autoload_function($x) {
 	$str=str_replace("_", ".", $x);
 
@@ -90,6 +108,18 @@ if(!function_exists("java_get_base")) {
 	eval ("$instance");
 	return true;
   }
+  /**
+   * Load a set of java libraries and make them available in the current name space.
+   * Available since php 5.2.0. Example:
+   * <code>
+   * java_autoload("itext.jar;log4j.jar");
+   * $byte = java_lang_Byte::type()->TYPE;
+   * $reader = new com_lowagie_text_pdf_PdfReader("mypdf.pdf");
+   * ...
+   *</code>
+   * @param $libs The libraries separated by a semicolon
+   * @access public
+   */
   function java_autoload($libs=null) {
 	static $once = false;
 	if($once) 
@@ -105,16 +135,59 @@ if(!function_exists("java_get_base")) {
 	}
   }
 
+  /**
+   * Access the java type with the given name.
+   *
+   * Example: <code> java("java.lang.System")->getProperties(); </code>
+   *
+   * @access public
+   * @param $name The type name
+   */
   function Java($name) { 
 	static $classMap = array();
 	if(array_key_exists($name, $classMap)) return $classMap[$name];
-	return $classMap[$name]=new JavaClass(array($name), false);
+	return $classMap[$name]=new JavaClass($name);
   }
+  /**
+   * Alias for java_closure();
+   * @access private
+   * @see #java_closure();
+   */
   function java_get_closure() {return java_closure_array(func_get_args());}
+  
+  /**
+   * Alias for java_values();
+   * @access private
+   * @see #java_values();
+   */
   function java_get_values($arg) { return java_values($arg); }
+
+  /**
+   * Alias for java_session();
+   * @access private
+   * @see #java_session();
+   */
   function java_get_session() {return java_session_array(func_get_args());}
+
+  /**
+   * Alias for java_context();
+   * @access private
+   * @see #java_context();
+   */
   function java_get_context() {return java_context(); }
+
+  /**
+   * Alias for java_server_name();
+   * @access private
+   * @see #java_server_name();
+   */
   function java_get_server_name() { return java_server_name(); }
+
+  /**
+   * @deprecated: Use java_require() instead.
+   * @access private
+   * @see #java_require();
+   */
   function java_set_library_path($arg) { return java_require($arg); }
  } //!java_defined  DO NOT REMOVE THIS LINE
 ?>

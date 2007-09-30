@@ -39,21 +39,55 @@
    obligated to do so.  If you do not wish to do so, delete this
    exception statement from your version. */
 
+  /**
+   * This class implements a global map which references PHP objects passed to Java
+   * In case "java_session()" was called, PHP objects backing the Java proxies are
+   * stored in the session allocated from PHP.
+   * @access private
+   */
 class java_GlobalRef {
   var $map;
+  var $client;
+  var $mapsMerged;
 
-  function java_GlobalRef() {
+  function java_GlobalRef($client) {
     $this->map = array();
+	$this->client = $client;
+	$this->mapsMerged = true;
   }
 
+  /**
+   * If the user has allocated a session, merge the bindings from the
+   * session with the bindings allocated in the current script and
+   * store the new map into the session.<br>
+   *
+   * Test case:
+   * class C { var $state; function toString() {return "C::$state";} }
+   * java_session()-&gt;put("key", java_closure(new C()));
+   * @access private
+   */
+  function mergeMaps() {
+	if(!$this->mapsMerged && array_key_exists($this->client->RUNTIME, "SESSION")) {
+	  $map = $_SESSION["JAVA_GLOBAL_REF"];
+	  foreach($map as $key=>$val) {
+		if(!array_key_exists($this->map, $key)) {
+		  $this->map[$key]=$val;
+		}
+	  }
+	  $_SESSION["JAVA_GLOBAL_REF"]=$this->map;
+	}
+	$this->mapsMerged = true;
+  }
+	
   function add($object) {
     if(is_null($object)) return 0;
+	if(!$this->mapsMerged) $this->mergeMaps();
     return array_push($this->map, $object);
   }
-
   function get($id) {
     if(!$id) return 0;
-    return $this->map[--$id];
+	if(!$this->mapsMerged) $this->mergeMaps();
+	return $this->map[--$id];
   }
 }
 ?>

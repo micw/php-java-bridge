@@ -81,7 +81,7 @@ export LD_LIBRARY_PATH=$INST/lib:$LD_LIBRARY_PATH
 su - -c "service httpd stop"
 
 # adjust the java version
-JAVA_HOME=/opt/jdk1.4.2
+JAVA_HOME=/usr/java/default
 #JRE_HOME=/opt/jre1.6.0 # enable this, if you want to hard-code the JRE path
 
 # The following software components are required during the build

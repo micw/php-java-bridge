@@ -84,6 +84,7 @@ public final class Util {
          */
         public Logger(ILogger logger) {
             try {this.clogger = Log4jLogger.createChainsawLogger();} catch (Throwable t) {
+        	if(Util.logLevel>5) t.printStackTrace();
                 this.logger = logger;
             }
         }
@@ -128,8 +129,6 @@ public final class Util {
     /** The default HTTP port for management clients */
     public static final int HTTP_PORT_BASE = 8080;
     /** The default Port for Mono and .NET clients */
-    public static final int MONO_TCP_PORT_BASE = 9167;
-    /** The default port for Java clients */
     public static final int JAVA_TCP_PORT_BASE = 9267;
 
     /**

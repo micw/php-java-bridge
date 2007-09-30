@@ -249,7 +249,7 @@ public final class Request implements IDocHandler {
 	case 'C': {
 	    arg.type=ch;
 	    arg.callObject=st[0].getCachedStringValue();
-	    arg.predicate=st[1].string[st[0].off];
+	    arg.predicate=st[1].string[st[1].off];
 	    arg.id.parseID(st[2]);
 	    break;
 	}

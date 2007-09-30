@@ -5,6 +5,10 @@ Please send bug reports, questions and suggestions to
 
 Version 4.3.0
 
+* A php-java-bridge-mono RPM is now available.
+
+* Renamed JavaBridge to VMBridge.
+
 * It is now possible to access PHP (HTTP- or FastCGI) pool instances
 from servlets or frameworks such as Spring or JSF using the JSR 223
 API. See script/EngineFactory.java and servlet/ContextLoaderListener.java.
@@ -26,13 +30,6 @@ API. See script/EngineFactory.java and servlet/ContextLoaderListener.java.
 
  echo php_java_bridge_Util::type('ProcessWithErrorHandler$PhpException');
  => type: php.java.bridge.Util$ProcessWithErrorHandler$PhpException
-
-* Backward compatibility for Linux/Windows: The PHP binary extension
-has been removed entirely and replaced by a Zend extension which
-compiles Java.inc to native code. This allows us to ship one
-pre-compiled (Windows- and Linux-) binary for all PHP versions. --
-However, it is recommended to use the pure PHP implementation
-"Java.inc", which works on all platforms.
 
 
 Version 4.2.0

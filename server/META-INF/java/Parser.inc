@@ -42,6 +42,9 @@
 require_once("${JAVA_BASE}/SimpleParser.inc");
 require_once("${JAVA_BASE}/NativeParser.inc");
 
+/**
+ * @access private
+ */
 class java_Parser {
   var $ENABLE_NATIVE = true;
   var $DISABLE_SIMPLE= false;

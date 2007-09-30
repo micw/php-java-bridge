@@ -40,6 +40,9 @@
 
 require_once("${JAVA_BASE}/Client.inc");
 
+/**
+ * @access private
+ */
 class java_NativeParser {
   var $parser, $handler;
   var $level, $event;

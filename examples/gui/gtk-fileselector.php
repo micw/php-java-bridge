@@ -1,6 +1,6 @@
 #!/usr/bin/php -nq
 
-# To run the following example gtk-sharp ver. 2.0.0.0, (key# 35e10195dab3c99f)
+# To run the following example gtk-sharp ver. 2.10, (key# 35e10195dab3c99f)
 # must be installed.
 
 <?php
@@ -27,7 +27,7 @@ class GtkFileSelectorDemo {
     // Name is a property of AssemblyName, set_Name(...) calls the
     // setter, get_Name() calls the getter
     $assemblyName->set_Name("gtk-sharp");
-    $assemblyName->set_Version(new Mono("System.Version", "2.0.0.0"));
+    $assemblyName->set_Version(new Mono("System.Version", "2.10"));
 
     // pack converts the hex string into a byte array
     $assemblyName->setPublicKeyToken(pack("H16", "35e10195dab3c99f"));

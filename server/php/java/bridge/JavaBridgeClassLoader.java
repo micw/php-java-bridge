@@ -69,7 +69,7 @@ public class JavaBridgeClassLoader extends SimpleJavaBridgeClassLoader {
      * @param extensionDir Usually ini_get("extension_dir"); 
      * @throws IOException 
      */
-    public void updateJarLibraryPath(String path, String extensionDir) throws IOException {
+    public void updateJarLibraryPath(String path, String extensionDir, String cwd, String searchpath) throws IOException {
         if(!clEnabled) {
             /*
              * We must check the path now. But since we don't have
@@ -80,9 +80,9 @@ public class JavaBridgeClassLoader extends SimpleJavaBridgeClassLoader {
              * doesn't have a ContextRunner, an exception will be
              * thrown.
              */
-            cachedPath = DynamicJavaBridgeClassLoader.checkJarLibraryPath(path, extensionDir);
+            cachedPath = DynamicJavaBridgeClassLoader.checkJarLibraryPath(path, extensionDir, cwd, searchpath);
             return;
-        } else super.updateJarLibraryPath(path, extensionDir);
+        } else super.updateJarLibraryPath(path, extensionDir, extensionDir, extensionDir);
     }
     /**
      * Enable the DynamicJavaBridgeClassLoader, if needed.

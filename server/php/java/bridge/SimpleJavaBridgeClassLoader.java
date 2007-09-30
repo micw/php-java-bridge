@@ -149,9 +149,11 @@ public class SimpleJavaBridgeClassLoader {
      * Append the path to the current library path
      * @param path A file or url list, separated by ';' 
      * @param extensionDir Usually ini_get("extension_dir"); 
+     * @param searchpath 
+     * @param cwd 
      * @throws IOException 
      */
-    public void updateJarLibraryPath(String path, String extensionDir) throws IOException  {
+    public void updateJarLibraryPath(String path, String extensionDir, String cwd, String searchpath) throws IOException  {
 	if(!checkCl()) {
 	    DynamicJavaBridgeClassLoader loader = DynamicJavaBridgeClassLoader.newInstance(scl);
 	    setClassLoader(loader);
@@ -160,7 +162,7 @@ public class SimpleJavaBridgeClassLoader {
 	    }catch (SecurityException e) {Util.printStackTrace(e);}
 	}
 	    
-	cl.updateJarLibraryPath(path, extensionDir);
+	cl.updateJarLibraryPath(path, extensionDir, cwd, searchpath);
     }
 
     /**

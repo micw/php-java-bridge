@@ -43,6 +43,9 @@ require_once("${JAVA_BASE}/Parser.inc");
 require_once("${JAVA_BASE}/Protocol.inc");
 require_once("${JAVA_BASE}/GlobalRef.inc");
 
+/**
+ * @access private
+ */
 class java_SimpleFactory {
   var $client;
   function java_SimpleFactory($client) {
@@ -53,6 +56,9 @@ class java_SimpleFactory {
   }
   function checkResult($result) {}
 }
+/**
+ * @access private
+ */
 class java_ProxyFactory extends java_SimpleFactory {
   function java_ProxyFactory($client) {
 	parent::java_SimpleFactory($client);
@@ -69,6 +75,9 @@ class java_ProxyFactory extends java_SimpleFactory {
 	return $proxy;
   }
 }
+/**
+ * @access private
+ */
 class java_ArrayProxyFactory extends java_ProxyFactory {
   function java_ArrayProxyFactory($client) {
 	parent::java_ProxyFactory($client);
@@ -77,6 +86,9 @@ class java_ArrayProxyFactory extends java_ProxyFactory {
 	return new java_ArrayProxy($result, $signature);
   }	
 }
+/**
+ * @access private
+ */
 class java_IteratorProxyFactory extends java_ProxyFactory {
   function java_IteratorProxyFactory($client) {
 	parent::java_ProxyFactory($client);
@@ -85,6 +97,9 @@ class java_IteratorProxyFactory extends java_ProxyFactory {
 	return new java_IteratorProxy($result, $signature);
   }	
 }
+/**
+ * @access private
+ */
 class java_ExceptionProxyFactory extends java_SimpleFactory {
   function java_ExceptionProxyFactory($client) {
 	parent::java_SimpleFactory($client);
@@ -99,6 +114,9 @@ class java_ExceptionProxyFactory extends java_SimpleFactory {
 	return $proxy;
   }
 }
+/**
+ * @access private
+ */
 class java_ThrowExceptionProxyFactory extends java_ExceptionProxyFactory {
   function java_ThrowExceptionProxyFactory($client) {
 	parent::java_ExceptionProxyFactory($client);
@@ -118,6 +136,9 @@ class java_ThrowExceptionProxyFactory extends java_ExceptionProxyFactory {
   }
 }
 
+/**
+ * @access private
+ */
 class java_CacheEntry {
   var $fmt, $signature, $factory, $java;
   var $resultVoid;
@@ -130,6 +151,9 @@ class java_CacheEntry {
   }
 }
 
+/**
+ * @access private
+ */
 class java_Arg {
   var $client;
   var $exception; 				// string representation for php4
@@ -187,6 +211,9 @@ class java_Arg {
 	}
   }
 }
+/**
+ * @access private
+ */
 class java_CompositeArg extends java_Arg {
   var $parentArg;
   var $idx;						// position within $val;
@@ -213,6 +240,9 @@ class java_CompositeArg extends java_Arg {
 	$this->factory = $this->client->simpleFactory;
   }
 }
+/**
+ * @access private
+ */
 class java_ApplyArg extends java_CompositeArg {
   var $m, $p, $v, $n; 			// see PROTOCOL.TXT
 
@@ -225,6 +255,9 @@ class java_ApplyArg extends java_CompositeArg {
   }
 }
 /**@deprecated*/
+/**
+ * @access private
+ */
 class java_Handler {
   var $client;
   
@@ -261,6 +294,9 @@ class java_Handler {
   }
 }
 /**@deprecated*/
+/**
+ * @access private
+ */
 class java_AsyncHandler extends java_Handler {
   var $arg;
   function java_AsyncHandler($client) {
@@ -280,6 +316,9 @@ class java_AsyncHandler extends java_Handler {
   }
 }
 
+/**
+ * @access private
+ */
 class java_Client /* implements IDocHandler */ {
   var $RUNTIME;
 
@@ -332,7 +371,7 @@ class java_Client /* implements IDocHandler */ {
 
 	$this->simpleArg = new java_Arg($this);
 
-	$this->globalRef = new java_GlobalRef();
+	$this->globalRef = new java_GlobalRef($this);
 
 	$this->asyncCtx = 0;
 

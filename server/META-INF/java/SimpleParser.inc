@@ -40,6 +40,9 @@
 
 require_once("${JAVA_BASE}/Client.inc");
 
+/**
+ * @access private
+ */
 class java_ParserString {
   var $string, $off, $length;
   function toString() {
@@ -49,6 +52,9 @@ class java_ParserString {
 	return substr($this->string, $this->off, $this->length);
   }
 }
+/**
+ * @access private
+ */
 class java_ParserTag {
   var $n, $strings;
   function java_ParserTag() {
@@ -56,6 +62,9 @@ class java_ParserTag {
 	$this->n = 0;
   }
 }
+/**
+ * @access private
+ */
 class java_SimpleParser {
   var $SLEN=256; // initial length of the parser string
 

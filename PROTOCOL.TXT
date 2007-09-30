@@ -20,13 +20,13 @@ Example:
      $o = new java("java.lang.Long", 6);
      $o->toString(); // discard result
 
-->  <CreateInstance predicate="I" value="java.lang.Long" id="78532"> 
+->  <CreateInstance value="java.lang.Long" predicate="I" id="78532"> 
       <Long value="6"/> 
     </CreateInstance>
 
 <-  <Object value="1" predicate="O" id="78532"/>
 
-->  <Invoke predicate="I" value="1" method="toString" id="0">
+->  <Invoke value="1" method="toString" predicate="I" id="0">
     </Invoke>
 
 <-  <Object value="2" predicate="O" id="0"/>

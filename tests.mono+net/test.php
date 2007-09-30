@@ -1,18 +1,13 @@
-#!/usr/bin/php
 <?php
-if (!extension_loaded('mono')) {
-  if ((version_compare("5.0.0", phpversion(), "<=")) && (version_compare("5.0.4", phpversion(), ">"))) {
-    echo "This PHP version does not support dl().\n";
-    echo "Please add an extension=mono.so or extension=php_mono.dll entry to your php.ini file.\n";
-    exit(1);
-  }
+if(!extension_loaded("mono")) {
+  $n = php_sapi_name();
+  if($n=="cgi"||$n=="cgi-fcgi"||$n=="cli") @dl("mono.so")||@dl('php_mono.dll');
+ }
+if(!extension_loaded("mono")) {
+  $port= (isset($_SERVER['SERVER_PORT']) && (($_SERVER['SERVER_PORT'])>1024)) ? $_SERVER['SERVER_PORT'] : '8080';
+  require_once("http://localhost:${port}/JavaBridge/java/Mono.inc");
+ }
 
-  echo "Please permanently activate the extension. Loading mono extension now...\n";
-  if (!dl('mono.so')&&!dl('php_mono.dll')) {
-    echo "mono extension not installed.";
-    exit(2);
-  }
-}
 phpinfo();
 print "\n\n";
 

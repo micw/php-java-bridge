@@ -41,10 +41,6 @@ AC_ARG_ENABLE(script,  [  --enable-script[[=JAR]]
                           include java script support. If you use a 
                           JDK < 1.6 JAR must be the location of 
                           script-api.jar; creates php-script.jar], SCRIPT="$enableval", SCRIPT="yes")
-AC_ARG_ENABLE(faces,  [  --enable-faces[[=JAR]]	
-                          include java server faces support. JAR must be 
-                          the location of jsf-api.jar; creates 
-                          php-faces.jar], FACES="$enableval", FACES="no")
 
 if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
 
@@ -67,9 +63,9 @@ AM_CPPFLAGS="${AM_CPPFLAGS} -DEXTENSION_DIR=\"\\\"\$(EXTENSION_DIR)\\\"\""
 if test "$PHP_JAVA" != "yes"; then
 # --with-java=/opt/compiletime/jdk,/usr/runtime/jre
 PHP_JRE="`echo $PHP_JAVA | LANG=C awk -F, '{print $2}'`"
-PHP_JAVA="`echo $PHP_JAVA | LANG=C awk -F, '{print $1}'`"
+PHP_JAVA_DIR="`echo $PHP_JAVA | LANG=C awk -F, '{print $1}'`"
 
-JAVA_INCLUDES=`for i in \`find $PHP_JAVA/include -follow -type d -print\`; do echo -n "-I$i "; done`
+JAVA_INCLUDES=`for i in \`find $PHP_JAVA_DIR/include -follow -type d -print\`; do echo -n "-I$i "; done`
 AM_CPPFLAGS="${AM_CPPFLAGS} $JAVA_INCLUDES"
 AC_CHECK_PROG(have_ar, ar, "yes", "no")
 JAVA_CHECK_JNI
@@ -88,50 +84,41 @@ fi
 
 AC_CHECK_PROG(have_gcj, gcj, "yes", "no")
 
-TCP_SOCKETNAME="9167"
-EXTENSION_DISPLAY_NAME="MonoBridge"
-MONO_BRIDGE_EXE="MonoBridge.exe ICSharpCode.SharpZipLib.dll IKVM.AWT.WinForms.dll IKVM.GNU.Classpath.dll IKVM.Runtime.dll"
-VM_BINARIES="${MONO_BRIDGE_EXE} RunMonoBridge"
+JAVA_BRIDGE_JAR=
+MONO_BRIDGE_EXE=
+TCP_SOCKETNAME="9267"
+EXTENSION_DISPLAY_NAME="VMBridge"
+VM_BINARIES=
 
-if test "$PHP_MONO" = "no"; then
-  MONO_BRIDGE_EXE=
-  TCP_SOCKETNAME="9267"
-  EXTENSION_DISPLAY_NAME="JavaBridge"
+if test "$PHP_JAVA" != "no"; then
   if test X$PHP_JRE != X || test $have_jni = no || test $have_gcj = no; then
-    VM_BINARIES="RunJavaBridge"
+   VM_BINARIES="RunJavaBridge"
   else
-    VM_BINARIES="java RunJavaBridge"
+   VM_BINARIES="java RunJavaBridge"
   fi
-  MONO_BRIDGE_EXE=
 fi
+if test "$PHP_JAVA" != "yes" && test "$PHP_JAVA" != "no"; then
+  JAVA_BRIDGE_JAR="javabridge.policy JavaBridge.jar"
+else
+  SCRIPT="no"
+  SERVLET="no"
+fi
+
 if test "$PHP_MONO" != "no"; then
+
+   MONO_BRIDGE_EXE="MonoBridge.exe ICSharpCode.SharpZipLib.dll IKVM.AWT.WinForms.dll IKVM.GNU.Classpath.dll IKVM.Runtime.dll"
+   VM_BINARIES="${VM_BINARIES} ${MONO_BRIDGE_EXE} RunMonoBridge"
+   
    # --with-mono=/path/to/mono.exe,/path/to/ikvmc/dir
-   PHP_JAVA="`echo $PHP_MONO | LANG=C awk -F, '{print $1}'`"
+   PHP_MONO_BINARY="`echo $PHP_MONO | LANG=C awk -F, '{print $1}'`"
    PHP_MONO="`echo $PHP_MONO | LANG=C awk -F, '{print $2}'`"
-   if test "X$PHP_JAVA" = "X" || test "$PHP_JAVA" = "yes"; then 
-     PHP_JAVA="mono"; 
+   if test "X$PHP_MONO_BINARY" = "X" || test "$PHP_MONO_BINARY" = "yes"; then 
+     PHP_MONO_BINARY="mono"; 
    fi
    if test "X${PHP_MONO}" = "X"; then PHP_MONO="../unsupported"; fi
    if ! test -f ${PHP_MONO}/ikvmc.exe; then 
      AC_MSG_ERROR([ikvmc.exe not found])
    fi
-fi
-
-# optional faces, requires script, servlet
-JAVA_BRIDGE_FACES_JAR="php-faces.jar"
-if test "$FACES" = "no"; then
-  JAVA_BRIDGE_FACES_JAR=""
-  FACES=""
-else
-  if test "$SCRIPT" = "no"; then
-  SCRIPT="yes";
-  fi
-  if test "$SERVLET" = "no"; then
-  SERVLET="yes";
-  fi
-fi
-if test "$FACES" = "yes"; then
-  FACES="../unsupported/jsf-api.jar"
 fi
 
 # optional script, requires servlet
@@ -174,7 +161,8 @@ AC_SUBST(SOURCE_VERSION)
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(BACKEND_VERSION)
 AC_SUBST(EXTENSION_DIR)
-AC_SUBST(PHP_JAVA)
+AC_SUBST(PHP_JAVA_DIR)
+AC_SUBST(PHP_MONO_BINARY)
 AC_SUBST(PHP_MONO)
 AC_SUBST(TCP_SOCKETNAME)
 AC_SUBST(EXTENSION_DISPLAY_NAME)
@@ -182,6 +170,7 @@ AC_SUBST(VM_BINARIES)
 AC_SUBST(MONO_BRIDGE_EXE)
 AC_SUBST(SERVLET)
 AC_SUBST(JAVA_BRIDGE_WAR)
+AC_SUBST(JAVA_BRIDGE_JAR)
 AC_SUBST(JAVA_BRIDGE_SERVLET_JAR)
 
 # jni
@@ -190,37 +179,32 @@ AC_SUBST(JNI_LIBS)
 # optional script
 AC_SUBST(SCRIPT)
 AC_SUBST(JAVA_BRIDGE_SCRIPT_JAR)
-# optional faces
-AC_SUBST(FACES)
-AC_SUBST(JAVA_BRIDGE_FACES_JAR)
-AM_CONDITIONAL([COND_GCJ], [test "$PHP_MONO" != "no" || test "$PHP_JAVA" = "yes"])
 AC_OUTPUT(Makefile)
 
-echo "-----------------------------------------------------------------"
-echo "The PHP/Java Bridge back-end will be compiled with:"
-if test "$PHP_MONO" != "no"; then
-echo "  MONO DIR: $PHP_MONO"
-echo "  Will use GNU gcc, gcj and ikvmc to compile back-end to CLR bytecode."
-else if test "$PHP_JAVA" = "yes"; then
-echo "  JAVA: --with-java not specified."
-echo "  Will use GNU gcc, gcj to compile back-end to native code."
-else
-echo "  JAVA (compile time)    : $PHP_JAVA"
-echo "  JAVA (run time)        : $PHP_JRE"
-jni_available="available"
-if test "$have_jni" = "no"; then 
-  jni_available="not available"
-fi
-echo "  LOCAL (secure) channel : $jni_available"
-echo ""
-echo "  The following additional jars will be created:"
-echo "  SERVLET                : $JAVA_BRIDGE_SERVLET_JAR"
-echo "  SCRIPT                 : $JAVA_BRIDGE_SCRIPT_JAR"
-echo "  JAVA SERVER FACES      : $JAVA_BRIDGE_FACES_JAR"
-fi
-fi
-echo "-----------------------------------------------------------------"
-echo ""
+dnl echo "-----------------------------------------------------------------"
+dnl echo "The PHP/Java Bridge back-end will be compiled with:"
+dnl if test "$PHP_MONO" != "no"; then
+dnl echo "  MONO DIR: $PHP_MONO"
+dnl echo "  Will use GNU gcc, gcj and ikvmc to compile back-end to CLR bytecode."
+dnl else if test "$PHP_JAVA" = "yes"; then
+dnl echo "  JAVA: --with-java not specified."
+dnl echo "  Will use GNU gcc, gcj to compile back-end to native code."
+dnl else
+dnl echo "  JAVA (compile time)    : $PHP_JAVA_DIR"
+dnl echo "  JAVA (run time)        : $PHP_JRE"
+dnl jni_available="available"
+dnl if test "$have_jni" = "no"; then 
+dnl   jni_available="not available"
+dnl fi
+dnl echo "  LOCAL (secure) channel : $jni_available"
+dnl echo ""
+dnl echo "  The following additional jars will be created:"
+dnl echo "  SERVLET                : $JAVA_BRIDGE_SERVLET_JAR"
+dnl echo "  SCRIPT                 : $JAVA_BRIDGE_SCRIPT_JAR"
+dnl fi
+dnl fi
+dnl echo "-----------------------------------------------------------------"
+dnl echo ""
 
 else
 

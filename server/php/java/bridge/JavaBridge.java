@@ -1408,16 +1408,37 @@ public class JavaBridge implements Runnable {
      * @throws IOException 
      */
     public void updateJarLibraryPath(String path, String extensionDir) throws IOException {
-    	getClassLoader().updateJarLibraryPath(path, extensionDir.intern());
+    	updateJarLibraryPath(path, extensionDir, null, null);
     }
-
+    /**
+     * Append the path to the current library path<br>
+     * Examples:<br>
+     * setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");<br>
+     * setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");<br>
+     * @param path A file or url list, usually separated by ';'
+     * @param extensionDir The php extension directory. 
+     * @throws IOException 
+     */
+    public void updateJarLibraryPath(String path, String extensionDir, String cwd, String searchpath) throws IOException {
+    	getClassLoader().updateJarLibraryPath(path, extensionDir.intern(), cwd, searchpath);   	
+    }
+    
     /**
      * Update the library path for ECMA dll's
      * @param rawPath A file or url list, usually separated by ';'
      * @param extensionDir The php extension directory. 
      */
     public void updateLibraryPath(String rawPath, String extensionDir) {
-        if(rawPath==null || rawPath.length()<2) return;
+    	updateLibraryPath(rawPath, extensionDir, null, null);
+    }
+    /**
+     * Update the library path for ECMA dll's
+     * @param rawPath A file or url list, usually separated by ';'
+     * @param extensionDir The php extension directory. 
+     */
+    public void updateLibraryPath(String rawPath, String extensionDir, String cwd, String searchpath) {
+    	
+    	if(rawPath==null || rawPath.length()<2) return;
         String contextDir = new File(extensionDir, "lib").getAbsolutePath();
         // add a token separator if first char is alnum
 	char c=rawPath.charAt(0);
@@ -1436,6 +1457,15 @@ public class JavaBridge implements Runnable {
 		    buf.append(s);
 		    Util.loadFileMethod.invoke(Util.CLRAssembly, new Object[] {buf.toString()} );
 		} else if ((f=new File(contextDir, s)).isFile()) {
+		    buf.append(f.getAbsolutePath());
+		    Util.loadFileMethod.invoke(Util.CLRAssembly, new Object[] {buf.toString()} );
+		} else if ((f=new File(Util.JAVABRIDGE_LIB, s)).isFile()) {
+		    buf.append(f.getAbsolutePath());
+		    Util.loadFileMethod.invoke(Util.CLRAssembly, new Object[] {buf.toString()} );
+		} else if ((f=JarLibraryPath.checkSearchPath(s, searchpath))!=null) {
+		    buf.append(f.getAbsolutePath());
+		    Util.loadFileMethod.invoke(Util.CLRAssembly, new Object[] {buf.toString()} );
+		} else if ((cwd!=null) && (f=new File(cwd, s)).isFile()) {
 		    buf.append(f.getAbsolutePath());
 		    Util.loadFileMethod.invoke(Util.CLRAssembly, new Object[] {buf.toString()} );
 		} else {

@@ -40,23 +40,28 @@ public class JarLibraryPath {
     private String path;
 
     private boolean isCached;
-    private String rawPath, rawContextDir;
+    private String rawPath, rawContextDir, cwd, searchpath;
     private URL[] urls;
+
     /** create an invalid entry */
     protected JarLibraryPath() { isCached = true; }
     /** Create a checked JarLibraryPath entry
      * @param rawPath The path or file in the local file system or url
      * @param rawContextDir The context directory, for example c:\php
+ * @param searchpath 
+ * @param cwd 
      * @throws IOException, if the local path or file does not exist or cannot be accessed
      */
-    public JarLibraryPath(String rawPath, String rawContextDir) throws IOException {
+    public JarLibraryPath(String rawPath, String rawContextDir, String cwd, String searchpath) throws IOException {
         if(rawContextDir == null) throw new NullPointerException("rawContextDir");
         this.rawPath = rawPath;
         // How to check that rawContextDir is really a symbol?
         this.rawContextDir = rawContextDir;
-	    this.path = makePath(rawPath);
-	    
-	    this.urls = checkURLs();
+        this.path = makePath(rawPath);
+        this.cwd = cwd;
+        this.searchpath = searchpath;
+        
+        this.urls = checkURLs();
     }
     private boolean hasResult;
     private int result = 1;
@@ -112,11 +117,29 @@ public class JarLibraryPath {
         isCached = false;
         return createUrls();
     }
+    static File checkSearchPath(String s, String searchpath) {
+	if(searchpath==null) return null;
+	
+	StringTokenizer st = new StringTokenizer(searchpath, File.pathSeparator);
+	File f = new File(s);
+	boolean hasParent = f.getParent() != null;
+	if(!hasParent) {       /* find path/ITEMNAME/ITEMNAME.jar */
+	    int idx = s.lastIndexOf('.');
+	    if(idx!=-1) s = s.substring(0, idx) + File.separator + s;
+	}
+	while (st.hasMoreTokens()) {
+	    String el = st.nextToken();
+	    if ((f=new File(el, s)).isFile()) {
+		return f;
+	    }
+	}
+	return null;
+    }
     private URL[] createUrls() throws IOException {
       /*
        * Parse the path.
        */
-  	List toAdd = new LinkedList();
+	List toAdd = new LinkedList();
     String currentPath = path.substring(1);
     StringTokenizer st = new StringTokenizer(currentPath, path.substring(0, 1));
     String contextDir = makeContextDir(rawContextDir);
@@ -140,6 +163,10 @@ public class JarLibraryPath {
     	    } else if ((f=new File("/usr/share/java/"+ s)).isFile()) {
     		buf.append(f.getAbsolutePath()); file = f;
     	    } else if ((f=new File(Util.JAVABRIDGE_LIB, s)).isFile()) {
+    		buf.append(f.getAbsolutePath()); file = f;    		
+    	    } else if ((f=checkSearchPath(s, searchpath))!=null) {
+    		buf.append(f.getAbsolutePath()); file = f;    		
+    	    } else if ((cwd != null) && (f=new File(cwd, s)).isFile()) {
     		buf.append(f.getAbsolutePath()); file = f;    		
     	    } else {
     		buf.append(s); file = new File(s);

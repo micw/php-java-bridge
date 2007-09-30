@@ -33,7 +33,7 @@ package php.java.bridge;
  * (starts the built-in servlet engine listening on all interfaces or loopback).  
  * <p> Example:<br> <code> java
  * INET_LOCAL:9676 5
- * bridge.log &<br> telnet localhost 9676<br> &lt;CreateInstance
+ * bridge.log &amp;<br> telnet localhost 9676<br> &lt;CreateInstance
  * value="java.lang.Long" predicate="Instance" id="0"&gt;<br> &lt;Long
  * value="6"/&gt; <br> &lt;/CreateInstance&gt;<br> &lt;Invoke
  * value="1" method="toString" predicate="Invoke" id="0"/&gt;<br>
@@ -47,13 +47,11 @@ public class StandaloneGCC extends Standalone {
 	System.err.println("PHP/Java Bridge version "+Util.VERSION);
 	disclaimer();
 	System.err.println("Usage: java [SOCKETNAME LOGLEVEL LOGFILE]");
-	System.err.println("Usage: java --convert PHP_INCLUDE_DIR [JARFILES]");
 	System.err.println("SOCKETNAME is one of LOCAL, INET_LOCAL, INET, SERVLET_LOCAL, SERVLET");
 	System.err.println("Example: java");
 	System.err.println("Example: java LOCAL:/tmp/javabridge_native.socket 3 /var/log/php-java-bridge.log");
 	System.err.println("Example: java INET:9267 3 JavaBridge.log");
 	System.err.println("Example: java SERVLET:8080 3 JavaBridge.log");
-	System.err.println("Example: java --convert /usr/share/pear lucene.jar ...");
     }
 
     /**

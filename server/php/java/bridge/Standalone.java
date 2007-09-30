@@ -159,12 +159,11 @@ public class Standalone {
 	    if(s.length==0) {
 		try {
 		    int freeJavaPort = findFreePort(Util.JAVA_TCP_PORT_BASE);
-		    int freeMonoPort = findFreePort(Util.MONO_TCP_PORT_BASE);
 		    int freeHttpPort = findFreePort(Util.HTTP_PORT_BASE);
 		    Object result = JOptionPane. showInputDialog(null,
 			    "Start a socket listener on port", "Starting the PHP/Java Bridge ...", JOptionPane.QUESTION_MESSAGE, null,
 		            new String[] {"LOCAL:/var/run/.php-java-bridge_socket", 
-			    "INET_LOCAL:"+freeJavaPort,"INET:"+freeJavaPort,"INET_LOCAL:"+freeMonoPort,"INET:"+freeMonoPort,
+			    "INET_LOCAL:"+freeJavaPort,"INET:"+freeJavaPort,
 			    "SERVLET_LOCAL:"+freeHttpPort,"SERVLET:"+freeHttpPort}, "SERVLET_LOCAL:"+freeHttpPort);
 		       if(result==null) System.exit(0);
 		      sockname  = result.toString();

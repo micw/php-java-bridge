@@ -31,8 +31,9 @@
  * require_once("http://localhost:8080/JavaBridge/java/Java.inc");
  * the JAVA_HOSTS is set to localhost:8080 and
  * JAVA_SERVLET to /JavaBridge/JavaBridge.phpjavabridge.
+ * @access private
  */
-function defineHostFromInitialQuery($java_base) {
+function java_defineHostFromInitialQuery($java_base) {
   if($java_base!="java/") {
 	$url = parse_url($java_base);
 	if(isset($url["scheme"]) && ($url["scheme"]=="http")) {
@@ -52,12 +53,17 @@ function defineHostFromInitialQuery($java_base) {
 
 define ("JAVA_PEAR_VERSION", "4.2.1");
 
+// parse "java.ini" for backward compatibility
+$ini=@parse_ini_file("java.ini");
+if(array_key_exists("java.hosts", $ini)) define("JAVA_HOSTS", $ini["java.hosts"]);
+if(array_key_exists("java.servlet", $ini)) define("JAVA_SERVLET", $ini["java.servlet"]);
+if(array_key_exists("java.log_level", $ini)) define("JAVA_LOG_LEVEL", $ini["java.log_level"]);
 
 // Deploy JavaBridge.war and re-start the servlet engine or the
 // application server. The following settings direct PHP to the 
 // java virtual machine:
 if(!defined("JAVA_HOSTS")) {
-  if(!defineHostFromInitialQuery($JAVA_BASE)) {
+  if(!java_defineHostFromInitialQuery($JAVA_BASE)) {
 	define("JAVA_HOSTS", "127.0.0.1:8080"); // host1:port1;host2:port2;...
 	define("JAVA_SERVLET", "On"); // On ;; On or User
   }

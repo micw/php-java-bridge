@@ -41,6 +41,9 @@
 require_once ("${JAVA_BASE}/Options.inc");
 require_once ("${JAVA_BASE}/Client.inc");
 
+/**
+ * @access private
+ */
 class java_SocketChannel {
   var $peer, $protocol;
   function java_SocketChannel($peer, $protocol) {
@@ -59,6 +62,9 @@ class java_SocketChannel {
 	fread($this->peer, 10); // <F p="A"/>
   }
 }
+/**
+ * @access private
+ */
 class java_EmptyPipeChannel {
   function open($handler) {
 	throw new java_RuntimeException("protocol error: socket channel names must not start with a slash");
@@ -68,6 +74,9 @@ class java_EmptyPipeChannel {
   }
   function keepAlive() {}
 }
+/**
+ * @access private
+ */
 class java_PipeChannel extends java_EmptyPipeChannel {
   var $peer, $peerr, $peerr_desc, $name;
   var $fifo, $fifor;
@@ -108,6 +117,9 @@ class java_PipeChannel extends java_EmptyPipeChannel {
   }
 }
 
+/**
+ * @access private
+ */
 class java_SocketHandler {
   var $protocol, $channel;
 
@@ -126,6 +138,9 @@ class java_SocketHandler {
 	$this->channel->keepAlive();
   }
 }
+/**
+ * @access private
+ */
 class java_HttpHandler extends java_SocketHandler {
   var $headers;
   var $redirect;
@@ -321,6 +336,9 @@ class java_HttpHandler extends java_SocketHandler {
   }
 }
 
+/**
+ * @access private
+ */
 class java_Protocol {
   var $client;
   var $webContext;
@@ -388,12 +406,23 @@ class java_Protocol {
 	$this->serverName = "$host:$port";
 	return new java_HttpHandler($this, $ssl, $host, $port);
   }
+  /**
+   * connect to a local channel (no servlet engine or app server)
+   */
   function createSimpleHandler($channelName) {
-    if(is_string($channelName)) 
-      list($host, $channelName) = explode(":", $channelName);
-    else
-      $host = "127.0.0.1";
-    $peer = pfsockopen($host, $channelName, $errno, $errstr, 30);
+    if(!is_string($channelName)) {
+	  $peer = pfsockopen("127.0.0.1", $channelName, $errno, $errstr, 30);
+	} else {
+	  $type = $channelName[0];
+	  if($type=='@' || $type=='/') {		 // unix domain socket
+		if($type=='@') $channelName[0]="\0"; // abstract name space
+		$peer = pfsockopen("unix://${channelName}", null, $errno, $errstr, 30);
+	  }
+	  else {					// tcp socket
+		list($host, $channelName) = explode(":", $channelName);
+		$peer = pfsockopen($host, $channelName, $errno, $errstr, 30);
+	  }
+	}
     if (!$peer) throw new java_RuntimeException("Could not connect to the context server {$handler->host}:{$channelName}. Error message: $errstr ($errno)\n");
     stream_set_timeout($peer, -1);
     $handler = new java_SocketHandler($this, new java_SocketChannel($peer, $this));

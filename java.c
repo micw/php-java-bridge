@@ -85,6 +85,7 @@ int *__errno (void) { return (int*)&java_errno; }
 #endif
 
 
+#if EXTENSION == JAVA
 extern char java_inc[];
 extern size_t java_inc_length();
 static size_t java_stream_reader(void *handle, char *buf, size_t len TSRMLS_DC) {
@@ -99,13 +100,29 @@ static size_t java_stream_reader(void *handle, char *buf, size_t len TSRMLS_DC) 
   }
   return 0;
 }
+#else
+extern char mono_inc[];
+extern size_t mono_inc_length();
+static size_t java_stream_reader(void *handle, char *buf, size_t len TSRMLS_DC) {
+  size_t end = mono_inc_length()-1;
+  size_t *pos = (size_t*)handle;
+  size_t remain = end-*pos;
+  if(end>*pos) {
+	if(remain<len) len=remain;
+	memcpy(buf, mono_inc+*pos, len);
+	*pos+=len;
+	return len;
+  }
+  return 0;
+}
+#endif
 static void java_stream_closer(void *handle TSRMLS_DC) {
 }
 static long java_stream_fteller(void *handle TSRMLS_DC) {
   return (long)*(size_t*)handle;
 }
 
-static zend_op_array *java_compile_string(zval*func, char*name TSRMLS_DC) {
+static zend_op_array *java_compile_string(char*name TSRMLS_DC) {
   zend_file_handle file_handle = {0};
   zend_stream stream = {0};
   size_t pos = 0;
@@ -130,12 +147,10 @@ PHP_RINIT_FUNCTION(EXT)
 {
   static zend_op_array *ar;
   zend_op_array *current;
-  zval func;
   zval *result = 0;
 
   if(!ar) {
-	ZVAL_STRING(&func, java_inc,0);
-	ar = java_compile_string(&func, "Java.inc" TSRMLS_CC);
+	ar = java_compile_string(EXT_NAME()/**/".inc" TSRMLS_CC);
   }
   if(!ar) abort();
   EG(return_value_ptr_ptr) = &result;
@@ -168,7 +183,12 @@ PHP_RSHUTDOWN_FUNCTION(EXT)
 EXT_FUNCTION(EXT_GLOBAL(get_default_channel))
 {
   if(EXT_GLOBAL(can_fork)(TSRMLS_C) && (EXT_GLOBAL(cfg)->default_sockname)) {
-	RETURN_LONG(atoi(EXT_GLOBAL(cfg)->default_sockname));
+	char *name = EXT_GLOBAL(cfg)->default_sockname;
+	if(name[0]=='@' || name[0]=='/') { /* unix domain socket */
+	  RETURN_STRING(name, 1);
+	} else {					/* tcp socket */
+	  RETURN_LONG(atoi(EXT_GLOBAL(cfg)->default_sockname));
+	}
   } else {
 	RETURN_NULL();
   }
@@ -177,7 +197,6 @@ EXT_FUNCTION(EXT_GLOBAL(get_default_channel))
 #ifndef GENERATE_DOC
 function_entry EXT_GLOBAL(functions)[] = {
   EXT_FE(EXT_GLOBAL(get_default_channel), NULL)
-  /* TODO: Add XML parser and writer callbacks from parser.c */
   {NULL, NULL, NULL}
 };
 
@@ -401,12 +420,12 @@ PHP_MINIT_FUNCTION(EXT)
    * set X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT anyway
    */
   if(EXT_GLOBAL(option_set_by_user)(U_HOSTS, EXT_GLOBAL(ini_user)) && !(EXT_GLOBAL(cfg)->is_fcgi_servlet)) {
-	REGISTER_STRING_CONSTANT("JAVA_HOSTS", EXT_GLOBAL(cfg)->hosts, CONST_CS | CONST_PERSISTENT);
+	REGISTER_STRING_CONSTANT(EXT_NAME()/**/"_HOSTS", EXT_GLOBAL(cfg)->hosts, CONST_CS | CONST_PERSISTENT);
 	if(EXT_GLOBAL(option_set_by_user)(U_SERVLET, EXT_GLOBAL(ini_user)))
-	  REGISTER_STRING_CONSTANT("JAVA_SERVLET", EXT_GLOBAL(cfg)->servlet, CONST_CS | CONST_PERSISTENT);
+	  REGISTER_STRING_CONSTANT(EXT_NAME()/**/"_SERVLET", EXT_GLOBAL(cfg)->servlet, CONST_CS | CONST_PERSISTENT);
   }
 
-  REGISTER_STRING_CONSTANT("JAVA_PIPE_DIR", EXT_GLOBAL(cfg)->tmpdir, CONST_CS | CONST_PERSISTENT);
+  REGISTER_STRING_CONSTANT(EXT_NAME()/**/"_PIPE_DIR", EXT_GLOBAL(cfg)->tmpdir, CONST_CS | CONST_PERSISTENT);
 
   return SUCCESS;
 }
@@ -452,6 +471,7 @@ PHP_MINFO_FUNCTION(EXT)
   struct save_cfg saved_cfg;
 
   push_cfg(&saved_cfg TSRMLS_CC);
+  EXT_GLOBAL(clone_cfg)(TSRMLS_C);
   s = EXT_GLOBAL(get_server_string) (TSRMLS_C);
 
   if(!EXT_GLOBAL(cfg)->is_fcgi_servlet)
@@ -511,6 +531,7 @@ PHP_MINFO_FUNCTION(EXT)
   
   free(server);
   free(s);
+  EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);
   pop_cfg(&saved_cfg TSRMLS_CC);
 }
 

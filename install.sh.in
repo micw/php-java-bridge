@@ -142,18 +142,6 @@ if test -f modules/php-script.jar; then
       fi
 fi
 
-# convert Java -> PHP
-if test X$phpinc = X; then phpinc="/usr/share/pear"; fi
-echo "";
-echo "Generate PHP classes from standard Java classes and install them in"
-echo "the ${phpinc} directory?"
-echo -n "convert java libraries (yes/no): "; read convert;
-if ! test "X$convert" = "Xno"; then
-$jre -Djava.library.path=./modules -Djava.class.path=./modules/JavaBridge.jar -Djava.awt.headless=true -Dphp.java.bridge.base=./modules php.java.bridge.JavaBridge --convert ${phpinc} unsupported/lucene.jar:unsupported/itext.jar
-/bin/cp server/META-INF/java/*.inc ${phpinc}/java
-echo ""
-fi
-
 check_document_root() {
     document_root="/var/www/html";
     if ! test -d /var/www/html; then

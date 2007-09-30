@@ -1,89 +1,53 @@
-#!/bin/env php
-<?php
+<?php 
+if(!extension_loaded("java")) {
+  $n = php_sapi_name();
+  if($n=="cgi"||$n=="cgi-fcgi"||$n=="cli") @dl("java.so")||@dl('php_java.dll');
+ }
+if(!extension_loaded("java")) {
+  $port= (isset($_SERVER['SERVER_PORT']) && (($_SERVER['SERVER_PORT'])>1024)) ? $_SERVER['SERVER_PORT'] : '8080';
+  require_once("http://localhost:${port}/JavaBridge/java/Java.inc");
+ }
 
-  /**
-   * require_once("http://localhost:8080/JavaBridge/java/Java.inc");
-   * $System = new Java("java.lang.System");
-   * phpinfo();
-   * echo $System->getProperties();
+  /* 
+   * Use the new style which works with PHP 5 and above only. This
+   * code makes use of the new PHP 5 features try/catch, the PHP
+   * standard library and the automatic __toString() conversion. 
+   *
+   * See the test.php4 if you still use PHP 4.
    */
 
+/* autoload NAME.jar from include_path/NAME/NAME.jar or ~/lib/NAME.jar */
+java_autoload(/*"myLib1.jar;myLib2.jar;..."*/);
 
-   /*
-    * Don't try to understand the code below ...
-    */
+phpinfo();
 
-/* load extension and check it */
-function check_extension() {
-  if(!extension_loaded('java')) {
-    $sapi_type = php_sapi_name();
-    $port= (isset($_SERVER['SERVER_PORT']) && (($_SERVER['SERVER_PORT'])>1024)) ? $_SERVER['SERVER_PORT'] : '8080';
-    if ($sapi_type == "cgi" || $sapi_type == "cgi-fcgi" || $sapi_type == "cli") {
-      if(!(PHP_SHLIB_SUFFIX=="so" && @dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && @dl('php_java.dll'))&&!(@include_once("java/Java.inc"))&&!(require_once("http://127.0.0.1:$port/JavaBridge/java/Java.inc"))) {
-	echo "java extension not installed.";
-	exit(2);
-      }
-    } else {
-      if(!(@include_once("java/Java.inc")))
-	require_once("http://127.0.0.1:$port/JavaBridge/java/Java.inc");
-    }
-  }
-  if(!function_exists("java_get_server_name")) {
-    echo "Fatal: The loaded java extension is not the PHP/Java Bridge";
-    exit(7);
-  }
-}
+try {
 
-check_extension();
-if(java_get_server_name()!=null){
-
-  phpinfo();
-  print "\n\n";
+  /* invoke java.lang.System.getProperties() */
+  $props = java_lang_System::type()->getProperties();
   
-  $v = new JavaClass("java.lang.System");
-  $p = @$v->getProperties();
-  if($ex=java_last_exception_get()) {
-    $trace = new Java("java.io.ByteArrayOutputStream");
-    $ex->printStackTrace(new java("java.io.PrintStream", $trace));
-    echo "Exception $ex occured:<br>\n" . $trace . "\n";
-    exit(1);
-  }
-  $arr=java_values($p);
-  foreach ($arr as $key => $value) {
-    print $key . " -> " .  $value . "<br>\n";
+  /* convert the result object into a PHP array */
+  $array = java_values($props);
+  foreach($array as $k=>$v) {
+    echo "$k=>$v"; echo "<br>\n";
   }
   echo "<br>\n";
-  $Util = new JavaClass("php.java.bridge.Util");
-  echo "JavaBridge back-end version: ".java_values($Util->VERSION)."<br>\n";
-  echo "<br>\n";
-
- } else {
   
-  phpinfo();
-  print "\n\n";
+  /* create a PHP class which implements the Java toString() method */
+  class MyClass {
+    function toString() { return "hello PHP from Java!"; }
+  }
+  
+  /* create a Java object from the PHP object */
+  $javaObject = java_closure(new MyClass());
+  echo "PHP says that Java says: "; echo $javaObject;  echo "<br>\n";
+  echo "<br>\n";
+  
 
-  /* java_get_server_name() == null means that the back-end is not
-   running */
-  if(PHP_SHLIB_SUFFIX=="so") $ext_name="java.so";
-  else if(PHP_SHLIB_SUFFIX=="dll") $ext_name="php_java.dll";
-  else $ext_name="unknown suffix: ".PHP_SHLIB_SUFFIX;
+  echo php_java_bridge_Util::type()->VERSION; echo "<br>\n";
 
-  echo "Error: The PHP/Java Bridge back-end is not running.\n";
-  echo "\n";
-  echo "Please start it and/or check if the directory\n";
-  echo "\n\t".ini_get("extension_dir")."\n\n";
-  echo "contains \"$ext_name\" and \"JavaBridge.jar\".\n";
-  echo "\n";
-  echo " Check if the following values are correct:\n\n";
-  echo "\tjava.java_home = ".ini_get("java.java_home")."\n";
-  echo "\tjava.java = ".ini_get("java.java")."\n\n";
-  echo "If you want to start the back-end automatically, disable:\n\n";
-  echo "\tjava.socketname = ".ini_get("java.socketname")."\n";
-  echo "\tjava.hosts = ".ini_get("java.hosts")."\n";
-  echo "\tjava.servlet = ".ini_get("java.servlet")."\n";
-  echo "\n";
-  echo "If that still doesn't work, please check the \"java command\" above and\n";
-  echo "report this problem to:\n\n";
-  echo "\tphp-java-bridge-users@lists.sourceforge.net.\n";
+} catch (JavaException $ex) {
+  echo "An exception occured: "; echo $ex; echo "<br>\n";
 }
+
 ?>

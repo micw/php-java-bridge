@@ -64,11 +64,13 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
      * The first char must be the token separator.
      * @param rawPath The path
      * @param rawContextDir The context dir, e.g. /usr/lib/php/extensions
+ * @param searchpath 
+ * @param cwd 
      * @throws IOException 
      */
-    public static JarLibraryPath checkJarLibraryPath(String rawPath, String rawContextDir) throws IOException {
+    public static JarLibraryPath checkJarLibraryPath(String rawPath, String rawContextDir, String cwd, String searchpath) throws IOException {
         if(rawPath==null || rawPath.length()<1) return EMPTY_PATH;
-    	return new JarLibraryPath(rawPath, rawContextDir);
+    	return new JarLibraryPath(rawPath, rawContextDir, cwd, searchpath);
     }
     /** Update the library path for the bridge instance. Examples:
      * setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");<br>
@@ -76,10 +78,12 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
      * The first char must be the token separator.
      * @param rawPath The path
      * @param rawContextDir The context dir, e.g. /usr/lib/php/extensions
+     * @param searchpath 
+     * @param cwd 
      * @throws IOException 
      */
-    public void updateJarLibraryPath(String rawPath, String rawContextDir) throws IOException {
-        updateJarLibraryPath(checkJarLibraryPath(rawPath, rawContextDir));
+    public void updateJarLibraryPath(String rawPath, String rawContextDir, String cwd, String searchpath) throws IOException {
+        updateJarLibraryPath(checkJarLibraryPath(rawPath, rawContextDir, cwd, searchpath));
     }
     /** Update the library path for the bridge instance. 
      * @param path the checked JarLibraryPath

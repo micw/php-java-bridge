@@ -14,35 +14,9 @@ This file contains answers to frequently asked questions. Please see <a href="ht
 Furthermore IBM's Zero framework for Eclipse contains a PHP interpreter written in pure Java and a php to java bridge which can call Java methods in-process.</p>
 <p>The only free alternatives are SOAP and XML-RPC, which are up to 50 times slower than the XML protocol implementation used by this PHP/Java Bridge.</p>
 
-<H4>Do I need a Java Application Server or Servlet Engine?</H4>
-<p>Not necessarily. The bridge and the VM can run as a sub component
-of IIS or Apache. The C based extension automatically starts
-a VM when the HTTP server activates the PHP script engine pool (in
-<code>minit()</code>) and terminates it when the pool is destroyed (in
-the <code>mshutdown()</code> hook). The request-handling threads
-attach to the persistent VM using the PHP/Java Bridge protocol.
-</p>
-<p>
-However, the main advantage of starting the VM via an external
-application server or servlet engine is that it provides a standard
-execution environment for Java which is independent of the HTTP server
-and its PHP script engine pool.
-</p>
-
 <H4>Does it support PHP 4?</H4>
 <p>Yes. But for PHP versions < 5.1.4 you must compile and install a support library called "java.so" or "php_java.dll" from the C sources; please see the INSTALL document for details.</p>
-<p>For X86 windows operating systems a "php_java.dll" for PHP 4 is contained in the binary download.</p>
-<p>Add the following <code>php.ini</code> entries:
-<blockquote>
-<code>
-extension=java.so ;; php_java.dll on windows<br>
-[java]<br>
-java.hosts=127.0.0.1:8080<br>
-java.servlet=On<br>
-</code> 
-</blockquote>
-</p>
-<p>And use the following code to skip loading the Java.inc:
+<p>Use the following code to detect the binary and skip loading the Java.inc:
 <blockquote>
 <code>
 if(!extension_loaded("java"))<br>
@@ -51,22 +25,92 @@ if(!extension_loaded("java"))<br>
 </blockquote>
 </p>
 
-<H4>Why is Java.inc obfuscated?</H4>
-<p>The pure PHP implementation contained in <code>Java.inc</code> is created during installation from the other *.inc files located in the java folder. Since some older PHP implementations don't have a opcode cache (sometimes called "accelerator"), we have removed all comments and white space from the source files. Use 
+<H4>What about portability?</H4>
+<p>A portable PHP application can use the "new Java(...)" constructor
+and the "java(...)" function. To access a Java type use
 <blockquote>
 <code>
-&nbsp;&nbsp;require_once("http://localhost:8080/JavaBridge/java/JavaBridge.inc");
-</code> 
+$System = java("java.lang.System");
+</code>
 </blockquote>
-if you want to run the original code.</p>
+To create an instance of a Java type use
+<blockquote>
+<code>
+$hashMap = new java("java.util.HashMap");
+</code>
+</blockquote>
+</p>
+<p>PHP 4 does not support exceptions. And results from method
+invocations and property access are always converted into the appropriate PHP
+value. For example the following code does <strong>not</strong> work in PHP 4:
+<blockquote>
+<code>
+$s = new Java("java.lang.String", '${var}');<br>
+$s = $s-&gt;substring(2); // PHP4 returns a PHP string, not a Java string <br>
+echo $s-&gt;substring(0,$s-&gt;length()-1);<br>
+</code>
+</blockquote>
+</p>
+<p>PHP 4 needs a "java.so" or "php_java.dll" support library. Use the following code to load it:
+<code>
+&lt;?php<br>
+if(!extension_loaded("java")) require_once("http://localhost:8080/JavaBridge/java/Java.inc");<br>
+...<br>
+?&gt;
+</code>
+</blockquote>
+</p>
 
-<H4>Can I use Java libraries without installing java?</H4> <p>Yes. Simply compile the C based extension and omit the
-<code>--with-java=</code> configure option. The bridge will use the
-<code>libgcj</code> library, which is part of the GNU gcc compiler. This library also uses much less system
-resources (memory, files) than a "real" Java VM.</p> 
+<H4>Do I need a Java Application Server or Servlet Engine?</H4>
+<p>Not necessarily. The bridge and the VM can run as a sub component
+of IIS or Apache. If you have compiled and installed the support
+library "java.so" or "php_java.dll", it can automatically start a VM when
+the HTTP server activates the PHP script engine pool (in
+<code>minit()</code>) and terminates it when the pool is destroyed (in
+the <code>mshutdown()</code> hook). The request-handling threads
+attach to the persistent VM using the PHP/Java Bridge protocol.
+</p>
+<p>
+However, the main advantage of starting the VM via an external
+application server or servlet engine is that it provides a standard
+execution environment for Java which is independent of the HTTP server
+and how it manages its internal PHP script engine pool.
+</p>
+<p>
+A simple "servlet engine" emulation is built into the
+JavaBridge.jar. It can be started by double-clicking on JavaBridge.jar
+or with the command:
+<blockquote>
+<code>
+java JVM-OPTIONS -jar BRIDGE-OPTIONS JavaBridge.jar SOCKET LOG-LEVEL LOG-FILE
+</code>
+</blockquote>
+Please see the output of <code>java -jar JavaBridge.jar --help</code>
+and the INSTALL.STANDALONE document for details.
+</p>
+
 <H4>How can I configure the bridge?</H4>
 
-<p>The three config options <code>java.log_level</code>, <code>java.servlet</code> and <code>java.hosts</code> can be changed in the <code>php.ini</code> file (C based implementation) or <code>Java.inc</code>, which is created from <code>Options.inc</code> (pure PHP implementation).
+<p>You may add a file <code>java.ini</code> to your project or to the
+directory which contains the PHP module descriptions
+(usually <code>/etc/php.d/</code> on Linux) with the following
+content:
+<blockquote>
+<code>
+;extension=java.so ;; or php_java.dll, uncomment if you have compiled and installed the extension<br>
+[java]<br>
+;java.hosts=127.0.0.1:8080 ;; the location of your Java process<br>
+;java.servlet=On ;; or Off or User <br>
+</code>
+</blockquote>
+</p>
+<p>However, it is recommended to not use a ini file and to not store any Java
+related information in the global php.ini file. When the library is
+loaded
+via <code>require_once("http://SERVER:PORT/path/to/Java.inc");</code>,
+it has all the information needed to locate the running Java
+process.
+</p>
 
 <H4>What if the Java back end is not available anymore?</H4>
 
@@ -84,8 +128,7 @@ returns null and all other java procedures cannot be used anymore.
 <p>INET_LOCAL always uses local TCP socket communication.</p>
 
 <H4>Whenever I reboot my computer I have to start the bridge back end again. How can I automate this?</H4>
-<p>Install a servlet engine or J2EE server, for example tomcat.</p>
-<p>Download and install the tomcat servlet engine, deploy the PHP/Java Bridge web archive into the tomcat servlet engine and configure it so that it only listens for requests from local PHP scripts (default).<p>
+<p>Download and install a servlet engine or J2EE server, for example tomcat.</p>
 
 <H4>Do I have to require Java.inc in each of my scripts? Isn't that very slow?</H4>
 <p>The PHP/Java Bridge library <code>Java.inc</code> must be included before it can be used. Therefore the scripts should contain the statement
@@ -96,6 +139,12 @@ returns null and all other java procedures cannot be used anymore.
 </blockquote>
 at the beginning of the script. PHP compiles and caches PHP scripts, the <code>Java.inc</code> library is loaded only once.
 </p>
+
+<H4>Can I use Java libraries without installing java?</H4> <p>Yes. On a GNU operating system (e.g.: GNU/Linux, GNU/windows (aka "cygwin"), ...) you can use the GCC compiler to compile Java classes to native code. 
+Simply compile the C based extension and omit the
+<code>--with-java=</code> configure option. The bridge will use the
+<code>libgcj</code> library, which is part of the GNU gcc compiler. This library also uses much less system
+resources (memory, files) than a "real" Java VM.</p> 
 
 <H4>I get a blank page or some other error!?!</H4>
 <p>
@@ -178,12 +227,14 @@ Tomcat or the J2EE server on that computer using the option <code>-Dphp.java.bri
 And change the <code>127.0.0.1</code> above to the IP address of the computer running
 the Java VM and make sure that the computer cannot be accessed directly from the internet!
 
-<H4>Can I install the Linux RedHat RPM package on Suse Linux?</H4> 
-<p>No. RedHat and compatibles (Fedora, CenOs, ...) are the only distributions which support Security Enhanced Linux contexts built into the RPM.</p> <p>If you use a distribution which doesn't support SEL, install Java and use the generic binary download instead.</p>
 <H4>Can I use Python instead of PHP?</H4>
 <p>Yes, see the examples folder from the source download.</p>
+
 <H4>Can I access Mono or .NET libraries using the pure PHP implementation?</H4>
-<p>Yes, there's a PHP library "Mono.inc" generated from "Java.inc". However, you can also compile the C implementation and use the configure option <code>--with-mono</code>.</p>
+<p>Yes, there's a PHP library "Mono.inc" generated from "Java.inc" and
+a "MonoBridge.exe" generated from "JavaBridge.jar". If you want to
+compile from source, use the configure
+option <code>--with-mono</code>.</p>
 
 <H2>Class loading questions</H2>
 

@@ -1,71 +1,40 @@
-#!/usr/bin/php
-<?php
-if (!extension_loaded('java')) {
-  if ((version_compare("5.0.0", phpversion(), "<=")) && (version_compare("5.0.4", phpversion(), ">"))) {
-    echo "This PHP version does not support dl().\n";
-    echo "Please add an extension=java.so or extension=php_java.dll entry to your php.ini file.\n";
-    exit(1);
-  }
+<?php 
 
-  echo "Please permanently activate the extension. Loading java extension now...\n";
-  if (!@dl('java.so')&&!@dl('php_java.dll')) {
-    echo "Error: Either the java extension is not installed \n";
-    echo "or it was compiled against an older or newer php version.\n";
-    echo "See the HTTP (IIS or Apache) server log for details.\n";
-    !dl('java.so')&&!dl('php_java.dll');
-    exit(2);
-  }
+  /* 
+   * Use the old style which works with PHP 4 and PHP 5. Note that we
+   * cannot use java_autoload() and try/catch because PHP 4 doesn't
+   * support these features.
+   */
+if(!extension_loaded("java")) {
+  die("Please create and install the java.so or php_java.dll from the source download");
  }
-if(@java_get_server_name() != null) {
 
-  phpinfo();
-  print "\n\n";
-  
-  $v = new JavaClass("java.lang.System");
-  $p = @$v->getProperties();
-  if($ex=java_last_exception_get()) {
-    $trace = new Java("java.io.ByteArrayOutputStream");
-    $ex->printStackTrace(new java("java.io.PrintStream", $trace));
-    echo "Exception $ex occured:<br>\n" . $trace . "\n";
-    exit(1);
-  }
-  $arr=java_values($p);
-  foreach ($arr as $key => $value) {
-    print $key . " -> " .  $value . "<br>\n";
-  }
-  echo "<br>\n";
-  $Util = new JavaClass("php.java.bridge.Util");
-  echo "JavaBridge backend version: {$Util->VERSION}<br>\n";
-  echo "<br>\n";
-
- } else {
-  
-  phpinfo();
-  print "\n\n";
-
-  /* java_get_server_name() == null means that the backend is not
-   running */
-
-  $ext_name="java.so";
-  if(PHP_SHLIB_SUFFIX != "so") $ext_name="php_java.dll";
-
-  echo "Error: The PHP/Java Bridge backend is not running.\n";
-  echo "\n";
-  echo "Please start it and/or check if the directory\n";
-  echo "\n\t".ini_get("extension_dir")."\n\n";
-  echo "contains \"$ext_name\" and \"JavaBridge.jar\".\n";
-  echo "\n";
-  echo " Check if the following values are correct:\n\n";
-  echo "\tjava.java_home = ".ini_get("java.java_home")."\n";
-  echo "\tjava.java = ".ini_get("java.java")."\n\n";
-  echo "If you want to start the backend automatically, disable:\n\n";
-  echo "\tjava.socketname = ".ini_get("java.socketname")."\n";
-  echo "\tjava.hosts = ".ini_get("java.hosts")."\n";
-  echo "\tjava.servlet = ".ini_get("java.servlet")."\n";
-  echo "\n";
-  echo "If that still doesn't work, please check the \"java command\" above and\n";
-  echo "report this problem to:\n\n";
-  echo "\tphp-java-bridge-users@lists.sourceforge.net.\n";
-
+/*
+ * check if this is really the PHP/Java Bridge from sourceforge
+ */
+if(!function_exists("java_get_server_name")) {
+  die("Fatal: The loaded java extension is not the PHP/Java Bridge");
  }
+
+
+phpinfo();
+
+$System = new JavaClass("java.lang.System");
+$props = $System->getProperties();
+$array = java_values($props);
+foreach($array as $k=>$v) {
+  echo "$k=>$v"; echo "<br>\n";
+}
+echo "<br>\n";
+  
+/* create a PHP class which implements the Java toString() method */
+class MyClass {
+  function toString() { return "hello PHP from Java!"; }
+}
+  
+/* create a Java object from the PHP object */
+$javaObject = java_closure(new MyClass());
+echo "PHP says that Java says: "; echo $javaObject->toString();  echo "<br>\n";
+echo "<br>\n";
+
 ?>

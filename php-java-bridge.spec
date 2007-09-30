@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 4.3.0test1
+%define version 4.3.0
 %define release 1
 %define PHP_MAJOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | sed 's/\\\..*$//')
 %define PHP_MINOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | LANG=C cut -d. -f2)
@@ -24,6 +24,7 @@ Source0: http://osdn.dl.sourceforge.net/sourceforge/php-java-bridge/php-java-bri
 
 BuildRequires: php-devel >= 4.3.4
 BuildRequires: gcc >= 3.2.3
+BuildRequires: mono-core >= 1.1.8
 BuildRequires: gcc-c++
 BuildRequires: gcc-java >= 3.3.3
 BuildRequires: libstdc++-devel
@@ -70,6 +71,33 @@ Java module/extension for the PHP script language.  Contains the basic
 files: java extension for PHP/Apache HTTP server and a simple back-end
 which automatically starts and stops when the HTTP server
 starts/stops. The bridge log appears in the http server error log.
+
+
+%package mono
+Group: Development/Languages
+Summary: Mono module/extension for the PHP script language.
+Requires: mono-core >= 1.1.8
+%description mono
+Java module/extension for the PHP script language.  Contains the basic
+files: java extension for PHP/Apache HTTP server and a simple back-end
+which automatically starts and stops when the HTTP server
+starts/stops. The bridge log appears in the http server error log.
+
+
+%package lucene
+Group: System Environment/Daemons
+Summary: lucene library for PHP
+Requires: php-java-bridge = %{version}
+%description lucene
+Lucene search library for PHP
+
+%package itext
+Group: System Environment/Daemons
+Summary: itext library for PHP
+Requires: php-java-bridge = %{version}
+%description itext
+PDF manipulation library for PHP
+
 
 %package tomcat
 Group: System Environment/Daemons
@@ -119,7 +147,7 @@ echo "using java_dir: $java_dir"
 if test X$java_dir = X; then echo "ERROR: java not installed" >2; exit 1; fi
 
 phpize
-./configure --prefix=%{_exec_prefix} --with-java=$java_dir
+./configure --prefix=%{_exec_prefix} --with-java=$java_dir --with-mono
 make
 %if %{have_policy_modules} == 1
 (cd security/module; make; rm -rf tmp;)
@@ -130,6 +158,9 @@ rm -rf $RPM_BUILD_ROOT
 
 %makeinstall | tee install.log
 echo >filelist
+echo >filelist-mono
+echo >filelist-itext
+echo >filelist-lucene
 echo >filelist-tomcat
 echo >filelist-devel
 
@@ -168,6 +199,30 @@ i=JavaBridge.jar
 cp $mod_dir/$i $RPM_BUILD_ROOT/$mod_dir/$i
 rm -f $mod_dir/$i
 
+files='mono.so ICSharpCode.SharpZipLib.dll IKVM.AWT.WinForms.dll IKVM.GNU.Classpath.dll IKVM.Runtime.dll'
+for i in $files; do
+ if test -f $mod_dir/$i; then
+  cp $mod_dir/$i $RPM_BUILD_ROOT/$mod_dir/$i
+  rm -f $mod_dir/$i
+  echo $mod_dir/$i >>filelist-mono
+ fi
+done
+i=RunMonoBridge
+cp $mod_dir/$i $RPM_BUILD_ROOT/$mod_dir/$i
+rm -f $mod_dir/$i
+i=MonoBridge.exe
+cp $mod_dir/$i $RPM_BUILD_ROOT/$mod_dir/$i
+rm -f $mod_dir/$i
+
+mkdir -p $RPM_BUILD_ROOT/%{_datadir}/pear/itext
+cp unsupported/itext.jar $RPM_BUILD_ROOT/%{_datadir}/pear/itext
+echo %{_datadir}/pear/itext >>filelist-itext
+
+mkdir -p $RPM_BUILD_ROOT/%{_datadir}/pear/lucene
+cp unsupported/lucene.jar $RPM_BUILD_ROOT/%{_datadir}/pear/lucene
+echo %{_datadir}/pear/lucene >>filelist-lucene
+
+
 files=JavaBridge.war
 mkdir -p $RPM_BUILD_ROOT/%{tomcat_webapps}
 for i in $files; 
@@ -179,6 +234,7 @@ done
 mkdir -p $RPM_BUILD_ROOT/etc/php.d
 cat java-servlet.ini  >$RPM_BUILD_ROOT/etc/php.d/java-servlet.ini
 cat java.ini  >$RPM_BUILD_ROOT/etc/php.d/java.ini
+cat mono.ini  >$RPM_BUILD_ROOT/etc/php.d/mono.ini
 echo /etc/php.d/java.ini >>filelist
 
 mkdir $RPM_BUILD_ROOT/$mod_dir/lib
@@ -291,6 +347,21 @@ fi
 %attr(755,root,root) %{_libdir}/php/modules/JavaBridge.jar
 %attr(755,root,root) %{shared_java}/JavaBridge.jar
 %doc README FAQ.html COPYING CREDITS NEWS test.php INSTALL.LINUX security 
+
+%files mono -f filelist-mono
+%defattr(-,root,root)
+%attr(-,root,root) /etc/php.d/mono.ini
+%attr(111,root,root) %{_libdir}/php/modules/RunMonoBridge
+%attr(755,root,root) %{_libdir}/php/modules/MonoBridge.exe
+%doc README.MONO+NET COPYING CREDITS NEWS tests.mono+net
+
+%files itext -f filelist-itext
+%defattr(-,root,root)
+%doc examples/office
+
+%files lucene -f filelist-lucene
+%defattr(-,root,root)
+%doc examples/search
 
 %files tomcat -f filelist-tomcat
 %defattr(-,tomcat,tomcat)
