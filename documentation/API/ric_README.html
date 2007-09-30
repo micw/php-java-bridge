@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  <html xmlns="http://www.w3.org/1999/xhtml">
+		<head>
+			<!-- template designed by Marco Von Ballmoos -->
+			<title></title>
+			<link rel="stylesheet" href="media/stylesheet.css" />
+			<meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'/>
+		</head>
+		<body>
+						<h1 align="center">README</h1>
+<pre>
+This directory contains a pure PHP implementation of the PHP/Java
+Bridge: it doesn't require a Java extension (&quot;java.so&quot; or
+&quot;php_java.dll&quot;) installed on the web server.
+
+
+Usage
+-----
+
+* Type java -jar JavaBridge.jar SERVLET:8080
+
+* To call out to your Java libraries require java/Java.inc
+  and use the provided Java class as usual. Example:
+
+&lt;?php
+
+  require_once(&quot;http://localhost:8080/JavaBridge/java/Java.inc&quot;);
+  $string = new Java(&quot;java.lang.String&quot;, &quot;HelloWorld&quot;);
+  echo $string;
+
+?&gt;
+
+* On a server connected to the internet use SERVLET_LOCAL:8080 or
+  use a J2EE/Servlet engine and the JavaBridge.war instead.
+
+
+Mailing List
+------------
+Please report bugs/problems to the mailing list:
+
+  php-java-bridge-users@lists.sourceforge.net
+
+
+</pre>
+	<p class="notes" id="credit">
+		Documentation generated on Sun, 30 Sep 2007 10:33:26 +0200 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.0a2</a>
+	</p>
+	</body>
+</html>
