@@ -1,10 +1,14 @@
 examples
 test.php
+test.bat
+test.php4
 run-tests.php
 security
+tests.m4
 tests.mono+net
 tests.php4
 tests.php5
+tests.quercus
 unsupported
 server/php/
 server/test/
