@@ -549,6 +549,7 @@ class java_Client /* implements IDocHandler */ {
 	if(is_string($arg)) {
 	  $this->protocol->writeString($arg);
 	} else if(is_object($arg)) {
+      if (!$arg instanceof java_JavaType) throw new java_IllegalArgumentException($arg);
 	  $this->protocol->writeObject($arg->__java);
 	  return $arg;
 	} else if(is_null($arg)) {
@@ -646,12 +647,7 @@ class java_Client /* implements IDocHandler */ {
 	  $this->protocol->writeException($e->__java, $trace);
 	  $this->protocol->resultEnd();
 	} catch(Exception $ex) {
-	  $e = new Java("java.lang.Exception", $ex->getMessage);
-	  $t = new Java("java.lang.reflect.UndeclaredThrowableException",$e);
-	  $trace = $ex->getTraceAsString();
-	  $this->protocol->resultBegin();
-	  $this->protocol->writeException($t->__java, $trace);
-	  $this->protocol->resultEnd();
+	   die ($ex);
 	}	  
   }
   function cast($object, $type) {

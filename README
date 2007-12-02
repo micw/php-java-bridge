@@ -331,6 +331,12 @@ Build and execution instructions:
    /opt/jdk1.5/bin/java -cp /opt/jdk1.5/jre/lib/ext/log4j.jar \
                                                org.apache.log4j.chainsaw.Main
 
+   Example which starts tomcat with a full debug log:
+
+   JAVA_HOME=/usr/java/default \
+    JAVA_OPTS="-Dphp.java.bridge.default_log_level=6" \
+    /opt/tomcat/bin/catalina.sh run
+
 ------------------------------------
   Security Enhanced Linux
   -----------------------

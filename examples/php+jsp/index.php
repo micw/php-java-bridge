@@ -69,6 +69,22 @@
 </tr>
 
 <tr VALIGN=TOP>
+<td>JSR 223 example</td>
+
+<td WIDTH="30%"><a href="jsr223.jsp">Execute</a></td>
+
+<td WIDTH="30%"><a href="source.php?source=jsr223.jsp">Source</a></td>
+</tr>
+
+<tr VALIGN=TOP>
+<td>JSR 223 example2</td>
+
+<td WIDTH="30%"><a href="jsp%2Bphp.jsp">Execute</a></td>
+
+<td WIDTH="30%"><a href="source.php?source=jsp%2Bphp.jsp">Source</a></td>
+</tr>
+
+<tr VALIGN=TOP>
 <td>RMI/IIOP</td>
 
 <td WIDTH="30%"><a href="documentClient.php">Execute</a></td>

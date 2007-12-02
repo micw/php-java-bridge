@@ -73,7 +73,7 @@ if(!function_exists("java_get_base")) {
    */
   class java_IllegalArgumentException extends java_RuntimeException {
 	function __construct($ob) {
-	  parent::__construct(is_object($ob)?$ob->__toString():(string)$ob);
+	  parent::__construct("illegal argument: ".gettype($ob));
 	}
   };
 

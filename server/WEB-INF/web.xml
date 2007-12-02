@@ -5,6 +5,10 @@
 
     <!-- support for tomcat cluster -->
     <distributable/>
+    <!-- TODO --> 
+   <listener>
+        <listener-class>php.java.servlet.ContextLoaderListener</listener-class>
+    </listener>
 
     <!-- PHP Servlet: back-end for Apache or IIS -->
     <servlet>

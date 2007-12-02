@@ -63,7 +63,6 @@ public class InteractivePhpScriptEngine extends InvocablePhpScriptEngine {
     public Object eval(String script, ScriptContext context)
 	throws ScriptException {
 	if(script==null) {
-	    hasScript = false;
 	    release();
 	    return null;
 	}
@@ -92,4 +91,10 @@ public class InteractivePhpScriptEngine extends InvocablePhpScriptEngine {
 	try {o=((Invocable)this).invokeFunction("javabridge_eval", new Object[]{script});}catch(NoSuchMethodException ex){/*ignore*/};
 	return o;
     }
+    public void release() {
+	    super.release();
+	    hasScript = false;
+    }
+ 
+    
 }

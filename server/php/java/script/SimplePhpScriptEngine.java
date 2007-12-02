@@ -50,7 +50,7 @@ import php.java.bridge.http.IContextFactory;
 /**
  * This class implements the ScriptEngine.<p>
  *@see php.java.script.InvocablePhpScriptEngine
-*@see php.java.script.PhpScriptEngine
+ *@see php.java.script.PhpScriptEngine
  *@author jostb
  */
 abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
@@ -70,11 +70,12 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
     protected HttpProxy continuation = null;
     protected final HashMap processEnvironment = getProcessEnvironment();
     protected Map env = null;
+    IContextFactory ctx = null;
     
     private ScriptEngineFactory factory = null;
 
     protected void initialize() {
-      setContext(getPhpScriptContext());
+	setContext(getPhpScriptContext());
     }
 
     private static final Class[] EMPTY_PARAM = new Class[0];
@@ -101,7 +102,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
      */
     protected HashMap getProcessEnvironment() {
 	HashMap defaultEnv = new HashMap();
-      String val = null;
+	String val = null;
 	// Bug in WINNT and WINXP.
 	// If SystemRoot is missing, php cannot access winsock.
 	if(winnt.isDirectory()) val="c:\\winnt";
@@ -109,21 +110,21 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
 	try {
 	    String s = System.getenv("SystemRoot"); 
 	    if(s!=null) val=s;
-      } catch (Throwable t) {/*ignore*/}
-      try {
+	} catch (Throwable t) {/*ignore*/}
+	try {
 	    String s = System.getProperty("Windows.SystemRoot");
 	    if(s!=null) val=s;
-      } catch (Throwable t) {/*ignore*/}
+	} catch (Throwable t) {/*ignore*/}
 	if(val!=null) defaultEnv.put("SystemRoot", val);
-      try {
-        Method m = System.class.getMethod("getenv", EMPTY_PARAM);
-        Map map = (Map) m.invoke(System.class, EMPTY_ARG);
-        defaultEnv.putAll(map);
-    } catch (Exception e) {
-	defaultEnv.putAll(Util.COMMON_ENVIRONMENT);
+	try {
+	    Method m = System.class.getMethod("getenv", EMPTY_PARAM);
+	    Map map = (Map) m.invoke(System.class, EMPTY_ARG);
+	    defaultEnv.putAll(map);
+	} catch (Exception e) {
+	    defaultEnv.putAll(Util.COMMON_ENVIRONMENT);
+	}
+	return defaultEnv;
     }
-    return defaultEnv;
-  }
 
     /**
      * Create a new ScriptEngine with a default context.
@@ -161,7 +162,6 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
      *
      */
     protected void setNewContextFactory() {
-        IContextFactory ctx;
         IPhpScriptContext context = (IPhpScriptContext)getContext(); 
 	env = (Map) this.processEnvironment.clone();
 
@@ -186,7 +186,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
 	try {
             if(reader==null) return null;
       	
-      	setNewContextFactory();
+	    setNewContextFactory();
             setName(name);
     
             try { doEval(reader, context); } catch (Exception e) {
@@ -203,7 +203,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
      */
     public Object eval(Reader reader, ScriptContext context) throws ScriptException {
         return eval(reader, context, String.valueOf(reader));
-   }
+    }
 
     private void updateGlobalEnvironment(ScriptContext context) {
 	Bindings bindings = context.getBindings(ScriptContext.GLOBAL_SCOPE);
@@ -218,7 +218,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
     private final class HeaderParser extends Util.HeaderParser {
 	private OutputStreamWriter writer;
 	public HeaderParser(OutputStreamWriter writer) {
-		this.writer = writer;
+	    this.writer = writer;
 	}
 	public void parseHeader(String header) {
 	    if(header==null) return;
@@ -247,9 +247,9 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
     	OutputStream out =((PhpScriptWriter)(context.getWriter())).getOutputStream();
     	OutputStream err =  ((PhpScriptWriter)(context.getErrorWriter())).getOutputStream();
 
-    	 /*
-    	  * encode according to content-type charset
-    	  */
+	/*
+	 * encode according to content-type charset
+	 */
     	if(out instanceof OutputStreamWriter)
     	    headerParser = new HeaderParser((OutputStreamWriter)out);
 
@@ -294,7 +294,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
         namespace = createBindings();
         scriptContext.setBindings(namespace,ScriptContext.ENGINE_SCOPE);
         scriptContext.setBindings(getBindings(ScriptContext.GLOBAL_SCOPE),
-				   ScriptContext.GLOBAL_SCOPE);
+				  ScriptContext.GLOBAL_SCOPE);
         
         return scriptContext;
     }    
@@ -311,6 +311,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
      */
     public void release() {
 	if(continuation != null) {
+	    ctx.removeOrphaned(); ctx = null;
 	    continuation.release();
 	    continuation = null;
 	    script = null;
@@ -326,4 +327,4 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
     public Bindings createBindings() {
         return new SimpleBindings();
     } 
- }
+}

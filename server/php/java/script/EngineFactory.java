@@ -2,7 +2,11 @@
 
 package php.java.script;
 
-import java.net.URL;
+import java.net.MalformedURLException;
+import javax.servlet.Servlet;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -29,10 +33,45 @@ import java.net.URL;
 public class EngineFactory {
     public static final String ROOT_ENGINE_FACTORY_ATTRIBUTE = EngineFactory.class.getName()+".ROOT";
     public EngineFactory() {}
-    public javax.script.ScriptEngine getPhpScriptEngine(URL base, String scriptName) {
-	return new RemotePhpScriptEngine(base, scriptName);
+    public javax.script.ScriptEngine getScriptEngine(Servlet servlet, 
+		     ServletContext ctx, 
+		     HttpServletRequest req, 
+		     HttpServletResponse res) throws MalformedURLException {
+	    return new PhpServletScriptEngine(servlet, ctx, req, res);
     }
-    public javax.script.ScriptEngine getInvocablePhpScriptEngine(URL base, String scriptName) {
-	return new RemoteInvocablePhpScriptEngine(base, scriptName);
+    public javax.script.ScriptEngine getInvocableScriptEngine(Servlet servlet, 
+		     ServletContext ctx, 
+		     HttpServletRequest req, 
+		     HttpServletResponse res) throws MalformedURLException {
+	    return new InvocablePhpServletScriptEngine(servlet, ctx, req, res);
     }
+    public static EngineFactory getEngineFactory(ServletContext ctx) {
+	EngineFactory attr = (EngineFactory) 
+	    ctx.getAttribute(php.java.script.EngineFactory.ROOT_ENGINE_FACTORY_ATTRIBUTE);
+	return attr;
+    }
+
+    public static EngineFactory getRequiredEngineFactory(ServletContext ctx) throws IllegalStateException {
+	EngineFactory attr = getEngineFactory (ctx);
+	if (attr==null) 
+	    throw new IllegalStateException("No EngineFactory found. Have you registered a listener?");
+	return attr;
+    }
+	    
+    public static javax.script.ScriptEngine getPhpScriptEngine (Servlet servlet, 
+								ServletContext ctx, 
+								HttpServletRequest req, 
+								HttpServletResponse res) throws 
+								    MalformedURLException, IllegalStateException {
+	return EngineFactory.getRequiredEngineFactory(ctx).getScriptEngine(servlet, ctx, req, res);
+    }
+	    
+    public static javax.script.ScriptEngine getInvocablePhpScriptEngine (Servlet servlet, 
+									 ServletContext ctx, 
+									 HttpServletRequest req, 
+									 HttpServletResponse res) throws 
+									     MalformedURLException, IllegalStateException {
+	    return EngineFactory.getRequiredEngineFactory(ctx).getInvocableScriptEngine(servlet, ctx, req, res);
+    }
+
 }

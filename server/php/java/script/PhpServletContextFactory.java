@@ -1,8 +1,6 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-package php.java.servlet;
-
-import javax.servlet.ServletContext;
+package php.java.script;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -26,18 +24,35 @@ import javax.servlet.ServletContext;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-public class EngineFactoryUtil {
-    private EngineFactoryUtil() {}
+import javax.servlet.Servlet;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
-    public static Object getEngineFactory(ServletContext ctx) {
-	Object attr = ctx.getAttribute(php.java.script.EngineFactory.ROOT_ENGINE_FACTORY_ATTRIBUTE);
-	return attr;
-    }
+import php.java.bridge.http.IContext;
+import php.java.bridge.http.IContextFactory;
 
-    public static Object getRequiredEngineFactory(ServletContext ctx) throws IllegalStateException {
-	Object attr =getEngineFactory (ctx);
-	if (attr==null) 
-	    throw new IllegalStateException("No EngineFactory found. Have you registered a listener?");
-	return attr;
+/**
+ * A custom context factory, creates a ContextFactory for JSR223 contexts.
+ * @author jostb
+ *
+ */
+public class PhpServletContextFactory extends php.java.servlet.ServletContextFactory {
+
+    protected PhpServletContextFactory(Servlet servlet, ServletContext ctx,
+			HttpServletRequest proxy, HttpServletRequest req,
+			HttpServletResponse res) {
+		super(servlet, ctx, proxy, req, res);
+	}
+    /**
+     * Add the PhpScriptContext
+     * @param context
+     * @return The ContextFactory.
+     */
+    public static IContextFactory addNew(IContext context, Servlet servlet, 
+		    ServletContext ctx, HttpServletRequest req, HttpServletResponse res) {
+	    PhpServletContextFactory kontext = new PhpServletContextFactory(servlet, ctx, req, req, res);
+	    kontext.setContext(context);
+	    return kontext;
     }
 }

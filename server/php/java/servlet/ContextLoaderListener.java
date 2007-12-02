@@ -37,13 +37,10 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
 	    ServletContext ctx = event.getServletContext();
 	    ctx.setAttribute(php.java.script.EngineFactory.ROOT_ENGINE_FACTORY_ATTRIBUTE, clazz.newInstance());
         } catch (InstantiationException e) {
-	    // TODO Auto-generated catch block
 	    e.printStackTrace();
         } catch (IllegalAccessException e) {
-	    // TODO Auto-generated catch block
 	    e.printStackTrace();
         } catch (ClassNotFoundException e) {
-	    // TODO Auto-generated catch block
 	    e.printStackTrace();
         }
     }

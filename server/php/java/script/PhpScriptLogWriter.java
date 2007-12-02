@@ -35,7 +35,7 @@ import php.java.bridge.Util;
  * A PrintWriter which uses the JavaBridge logger.
  *
  */
-public class PhpScriptLogWriter extends PhpScriptWriter {
+class PhpScriptLogWriter extends PhpScriptWriter {
 
     public PhpScriptLogWriter() {
 	super(getLogOutputStream());

@@ -16,7 +16,7 @@ META-INF/java/Java.inc: JavaRaw.inc
 
 
 META-INF/java/JavaProxy.php: META-INF/java/Java.inc
-	cat META-INF/java/Java.inc | sed '$$iinclude($$_SERVER["X_JAVABRIDGE_INCLUDE"]);java_context()->call(java_closure());' >META-INF/java/JavaProxy.php
+	cat META-INF/java/Java.inc | sed '$$iinclude(array_key_exists("HTTP_X_JAVABRIDGE_INCLUDE", $$_SERVER)?$$_SERVER["HTTP_X_JAVABRIDGE_INCLUDE"]:$$_SERVER["X_JAVABRIDGE_INCLUDE"]);java_context()->call(java_closure());' >META-INF/java/JavaProxy.php
 
 META-INF/java/Mono.inc: JavaRaw.inc
 	cat JavaRaw.inc | sed 's/JAVA/MONO/g;s/java/mono/g;s/Java/Mono/g;s/^.*do not delete this line.*$$/$$name="cli.".$$name;/;' >META-INF/java/Mono.inc

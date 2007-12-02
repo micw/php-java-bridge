@@ -379,7 +379,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     }
     public synchronized void removeOrphaned() {
 	ContextFactory ob = (ContextFactory) contexts.remove(id);
-        if(Util.logLevel>4) Util.logDebug("contextfactory: removed empty context: " + ob.visitor + ", # of contexts: " + contexts.size());
+        if(Util.logLevel>4) Util.logDebug("contextfactory: removed empty context: " + (ob!=null?String.valueOf(ob.visitor):"<already handled>") + ", # of contexts: " + contexts.size()+", # of live contexts: "+ liveContexts.size());
 	invalid=true;
     }
     public void setClassLoader(ClassLoader loader) {

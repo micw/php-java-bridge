@@ -77,8 +77,7 @@ public class URLReader extends Reader {
      * @see URLReader#read(Map, OutputStream)
      */
     public int read(char[] cbuf, int off, int len) throws IOException {
-	close();
-	return 0;
+	    throw new IllegalStateException("Use urlReader.read(Hashtable, OutputStream) or use a FileReader() instead.");
     }
 	
     /**
@@ -93,12 +92,15 @@ public class URLReader extends Reader {
 	
 	try {
 	    String overrideHosts = (String) env.get("X_JAVABRIDGE_OVERRIDE_HOSTS");
+	    String include = (String) env.get("X_JAVABRIDGE_INCLUDE");
 	    byte[] buf = new byte[Util.BUF_SIZE];
 	    
 	    natOut = new java.io.BufferedOutputStream(socket.getOutputStream());
 	    natOut.write(Util.toBytes("GET "+url.getFile()+" HTTP/1.1\r\n"));
 	    natOut.write(Util.toBytes("Host: " + url.getHost()+":"+url.getPort()+ "\r\n"));
 	    natOut.write(Util.toBytes("X_JAVABRIDGE_CONTEXT: " +env.get("X_JAVABRIDGE_CONTEXT")+"\r\n"));
+	    if(include!=null) 
+		    natOut.write(Util.toBytes("X_JAVABRIDGE_INCLUDE:" + include+"\r\n"));
 	    if(overrideHosts!=null) {
 	        natOut.write(Util.toBytes("X_JAVABRIDGE_OVERRIDE_HOSTS:" + overrideHosts+"\r\n"));
 	        // workaround for a problem in php (it confuses the OVERRIDE_HOSTS from the environment with OVERRIDE_HOSTS from the request meta-data 
@@ -118,13 +120,9 @@ public class URLReader extends Reader {
 	    if(socket!=null) try {socket.close(); } catch (IOException e) {/*ignore*/}
 	}
     }
-    
-    /**
-    * @throws NotImplementedException
-    * @see URLReader#read(Map, OutputStream)
-    */
+
+    /**{@inheritDoc}*/
     public void close() throws IOException {
-	throw new IllegalStateException("Use urlReader.read(Hashtable, OutputStream) or use a FileReader() instead.");
     }
     
     /**{@inheritDoc}*/

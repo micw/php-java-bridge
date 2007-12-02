@@ -3,6 +3,23 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 4.3.1
+
+* JSP or servlets can now access PHP as follows:
+
+  <%  out.println ("I AM A SERVLET ... "); 
+      javax.script.ScriptEngine e = 
+        php.java.script.EngineFactory.getPhpScriptEngine 
+                                       (this, application, request, response);
+      e.getContext().setWriter (out);
+      e.eval ("<?php echo '... AND I AM AN EMBEDDED PHP SCRIPT';?>");
+      e.eval ("<?php echo java_inspect (java_closure()); ?>");
+  %>
+
+  The InvocablePhpScriptEngine can be retrieved with 
+  EngineFactory.getInvocablePhpScriptEngine(...);
+
+
 Version 4.3.0
 
 * A php-java-bridge-mono RPM is now available.

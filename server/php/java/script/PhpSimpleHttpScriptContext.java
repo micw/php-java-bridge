@@ -56,7 +56,6 @@ public class PhpSimpleHttpScriptContext extends SimpleScriptContext implements I
     protected HttpServletRequest request;
     protected HttpServletResponse response;
     protected ServletContext context;
-    protected PhpScriptWriter writer;
 
     /**
      * Initialize the context.
@@ -118,9 +117,19 @@ public class PhpSimpleHttpScriptContext extends SimpleScriptContext implements I
 	    super.setAttribute(key, value, scope);    
 	}
     }
-    public Writer getWriter() {
-        return (Writer) writer;
-    }
+    /** {@inheritDoc} */
+   public Writer getWriter() {
+	if(writer == null) writer =  super.getWriter ();
+	if(! (writer instanceof PhpScriptWriter)) setWriter(writer);
+	return writer;
+   }
+
+   /** {@inheritDoc} */
+   public Writer getErrorWriter() {
+	if(errorWriter == null) errorWriter = super.getErrorWriter ();
+	if(! (errorWriter instanceof PhpScriptWriter)) setErrorWriter(errorWriter);
+	return errorWriter;	
+   }
 		
     /**
      * Get the servlet response
@@ -159,11 +168,23 @@ public class PhpSimpleHttpScriptContext extends SimpleScriptContext implements I
 	return true;
     }
 
-    /**@inheritDoc*/
+    /**
+     * Sets the <code>Writer</code> for scripts to use when displaying output.
+     *TODO: test
+     * @param writer The new <code>Writer</code>.
+     */
     public void setWriter(Writer writer) {
-        this.writer = (PhpScriptWriter) writer;
+	super.setWriter(new PhpScriptWriter(new OutputStreamWriter(writer)));
     }
-
+    
+    /**
+     * Sets the <code>Writer</code> used to display error output.
+     *
+     * @param writer The <code>Writer</code>.
+     */
+    public void setErrorWriter(Writer writer) {
+	super.setErrorWriter(new PhpScriptWriter(new OutputStreamWriter(writer)));
+    }
     /**@inheritDoc*/
     public HttpProxy getContinuation() {
         return this.kont;

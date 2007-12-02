@@ -26,6 +26,10 @@ PHP_ARG_ENABLE(script, for java script support, [  --enable-script[[=JAR]]
 AC_ARG_ENABLE(backend, [  --disable-backend] 
                           do not create the JavaBridge.jar back-end, PHP_BACKEND="$enableval", PHP_BACKEND="yes")
 
+if test "$PHP_JAVA" = "no" && test "$PHP_MONO" = "no"; then
+PHP_JAVA="yes"
+fi
+
 if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
        JAVA_FUNCTION_CHECKS
        PTHREADS_CHECK
@@ -56,6 +60,37 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
 	 JAVA_CHECK_JNI
 	 COND_GCJ=1
 	fi
+
+## JAVA 
+       	if test "$PHP_JAVA" != "no";then 
+# create java.so, compile with -DEXTENSION_DIR="\"$(EXTENSION_DIR)\""
+	PHP_NEW_EXTENSION(java, php_java_snprintf.c php_java_strtod.c java.c api.c java_bridge.c client.c parser.c sio.c protocol.c secure_protocol.c bind.c init_cfg.c java_inc.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\"])
+          EXTENSION_NAME=JAVA
+	  if test X$PHP_JRE = X; then
+		  PHP_JAVA_BIN="java"
+	  else
+		  PHP_JAVA_BIN="${PHP_JRE}/bin/java"
+          fi
+	  if test "$have_jni" = "yes"; then
+            JAVA_SOCKETNAME="/var/run/.php-java-bridge_socket"
+          else
+            JAVA_SOCKETNAME="9267"
+          fi
+# create init_cfg.c from the template (same as AC_CONFIG_FILES)
+# note: PHP_JAVA is JRE_HOME, PHP_JAVA_SDK is JAVA_HOME and 
+# PHP_JAVA_BIN is ${JRE_HOME}/bin/java
+	BRIDGE_VERSION="`cat $ext_builddir/VERSION`"
+        for i in init_cfg.c init_cfg.h install.sh; do 
+	  sed "s*@PHP_JAVA@*${PHP_JRE}*
+	     s*@JAVA_SOCKETNAME@*${JAVA_SOCKETNAME}*
+	     s*@PHP_JAVA_SDK@*${PHP_JAVA}*
+	     s*@COND_GCJ@*${COND_GCJ}*
+             s*@PHP_JAVA_BIN@*${PHP_JAVA_BIN}*
+             s*@EXTENSION@*${EXTENSION_NAME}*
+             s*@BRIDGE_VERSION@*${BRIDGE_VERSION}*" \
+            <$ext_builddir/${i}.in >$ext_builddir/${i}
+        done
+        fi
 
 ## MONO
         if test "$PHP_MONO" != "no";then 
@@ -89,36 +124,6 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
         ln java.c bind.c php_java.h php_wrapper.h mono_dir
         fi
 
-## JAVA 
-       	if test "$PHP_JAVA" != "no";then 
-# create java.so, compile with -DEXTENSION_DIR="\"$(EXTENSION_DIR)\""
-	PHP_NEW_EXTENSION(java, php_java_snprintf.c php_java_strtod.c java.c api.c java_bridge.c client.c parser.c sio.c protocol.c secure_protocol.c bind.c init_cfg.c java_inc.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\"])
-          EXTENSION_NAME=JAVA
-	  if test X$PHP_JRE = X; then
-		  PHP_JAVA_BIN="java"
-	  else
-		  PHP_JAVA_BIN="${PHP_JRE}/bin/java"
-          fi
-	  if test "$have_jni" = "yes"; then
-            JAVA_SOCKETNAME="/var/run/.php-java-bridge_socket"
-          else
-            JAVA_SOCKETNAME="9267"
-          fi
-# create init_cfg.c from the template (same as AC_CONFIG_FILES)
-# note: PHP_JAVA is JRE_HOME, PHP_JAVA_SDK is JAVA_HOME and 
-# PHP_JAVA_BIN is ${JRE_HOME}/bin/java
-	BRIDGE_VERSION="`cat $ext_builddir/VERSION`"
-        for i in init_cfg.c init_cfg.h install.sh; do 
-	  sed "s*@PHP_JAVA@*${PHP_JRE}*
-	     s*@JAVA_SOCKETNAME@*${JAVA_SOCKETNAME}*
-	     s*@PHP_JAVA_SDK@*${PHP_JAVA}*
-	     s*@COND_GCJ@*${COND_GCJ}*
-             s*@PHP_JAVA_BIN@*${PHP_JAVA_BIN}*
-             s*@EXTENSION@*${EXTENSION_NAME}*
-             s*@BRIDGE_VERSION@*${BRIDGE_VERSION}*" \
-            <$ext_builddir/${i}.in >$ext_builddir/${i}
-        done
-        fi
 
        JAVA_CHECK_BROKEN_GCC_INSTALLATION
        if test "$have_broken_gcc_installation" = "yes"; then
@@ -126,6 +131,7 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
 	  sleep 10
        fi
 
+PHP_ADD_MAKEFILE_FRAGMENT
 if test "$PHP_BACKEND" = "yes" ; then
 # bootstrap the server's configure script
 	if test -d ext/java/server; then
@@ -140,7 +146,6 @@ if test "$PHP_BACKEND" = "yes" ; then
         done
 
 # an artificial target so that the server/ part gets compiled
-	PHP_ADD_MAKEFILE_FRAGMENT
 	PHP_SUBST(JAVA_SHARED_LIBADD)
 	PHP_MODULES="$PHP_MODULES \$(phplibdir)/stamp"
 fi

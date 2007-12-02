@@ -137,7 +137,9 @@ public abstract class CGIRunner extends Thread {
 		while((n = reader.read(cbuf))!=-1) writer.write(cbuf, 0, n);
 		try { writer.close(); } catch (IOException ex) {/*ignore*/}
 	    }
-	    public void run() { try {doRun(); } catch (IOException e) {Util.printStackTrace(e); }}
+	    public void run() { try {doRun(); } catch (IOException e) {Util.printStackTrace(e);} 
+	                                  finally {try {writer.close();} catch (IOException ex) {/*ignore*/}}
+	    }
 	}).start();
 	byte[] buf = new byte[Util.BUF_SIZE];
 	Util.parseBody(buf, natIn, out, headerParser);
@@ -151,7 +153,6 @@ public abstract class CGIRunner extends Thread {
 	    throw e;
 	} finally {
 	    if(natIn!=null) try {natIn.close();} catch (IOException ex) {/*ignore*/}
-	    if(writer!=null) try {writer.close();} catch (IOException ex) {/*ignore*/}
 	    proc.destroy();
 	}
     }

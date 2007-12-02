@@ -34,8 +34,8 @@ import php.java.bridge.Util;
  * @author jostb
  *
  */
-public final class OutputStreamWriter extends DefaultCharsetOutputStreamWriter {
-
+class OutputStreamWriter extends DefaultCharsetOutputStreamWriter {
+    
     protected String charsetName = Util.DEFAULT_ENCODING;
     private boolean written = false;
     

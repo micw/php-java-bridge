@@ -109,9 +109,9 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
 	try {
 	    return invoke(scriptClosure, methodName, args);
 	} catch (php.java.bridge.Request.AbortException e) {
-	    System.exit(0);
+	    release ();
+	    throw new ScriptException(e);
 	}
-	return null; // never reached
     }
     public Object invokeFunction(String methodName, Object[] args)
 	throws ScriptException, NoSuchMethodException {
@@ -175,6 +175,7 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
 
         try {
             /* header: <? require_once("http://localhost:<ourPort>/JavaBridge/java/Java.inc"); ?> */
+            // TODO: enable cache globally and remove this
             localReader = new StringReader("<?php if(!extension_loaded('java')) {if(!defined('JAVA_CACHE_ENABLED'))define('JAVA_CACHE_ENABLED', true);(require_once(\""+getHost()+"/java/Java.inc\"));}?>");
             try { while((c=localReader.read(buf))>0) w.write(buf, 0, c);} catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not read header", e);}
             try { localReader.close(); } catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not close header", e);}

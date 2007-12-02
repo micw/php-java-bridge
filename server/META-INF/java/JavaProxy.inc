@@ -64,6 +64,10 @@ function java_coerce_value($value) {
   if($value instanceof java_JavaBridge) return $value->java;
   return $value;
 }
+function java_wrap_value($value) {
+  if($value instanceof java_JavaType) return new java_JavaBridgeValue($value);
+  return $value;
+}
 /**
  * @deprecated: Use PHP5 try/catch instead
  * @access private
@@ -91,6 +95,7 @@ function java_values_internal($object) {
 }
 /**
  * Evaluates the object and fetches its content, if possible.
+ *
  * A java array, Map or Collection object is returned
  * as a php array. An array, Map or Collection proxy is returned as a java array, Map or Collection object, and a null proxy is returned as null. All values of java types for which a primitive php type exists are returned as php values. Everything else is returned unevaluated. Please make sure that the values do not not exceed
  * php's memory limit. Example:
@@ -141,6 +146,7 @@ function java_inspect_internal($object) {
 /**
  * Returns the contents (public fields, public methods, public
  * classes) of object as a string.
+ *
  * Example:
  * <code>
  * echo java_inspect(java_get_context());
@@ -152,7 +158,9 @@ function java_inspect($object) {
   return java_inspect_internal(java_coerce_value($object));
 }
 /**
- * Set the java file encoding, for example UTF-8 or ASCII. Needed
+ * Set the java file encoding, for example UTF-8 or ASCII.
+ *
+ * Needed
  * because php does not support unicode. All string to byte array
  * conversions use this encoding. Example: 
  * <code>
@@ -179,7 +187,8 @@ function java_instanceof_internal($ob, $clazz) {
   return $client->invokeMethod(0, "instanceOf", array($ob, $clazz));
 }
 /**
- * Tests if object is an instance of clazz. 
+ * Tests if object is an instance of clazz.
+ *
  * Example: 
  * <code>
  * return($o instanceof Java && $c instanceof Java && java_instanceof($o, $c)); 
@@ -200,7 +209,9 @@ function java_cast_internal($object, $type) {
 	return $object->__cast($type); 
 }
 /**
- * Converts the java object obj into a PHP object. The second argument
+ * Converts the java object obj into a PHP value. 
+ *
+ * The second argument
  * must be [s]tring, [b]oolean, [i]nteger, [f]loat or [d]ouble,
  * [a]rray, [n]ull or [o]bject (which does nothing).<p> This procedure
  * is for compatibility with the pure PHP implementation, in the C
@@ -232,7 +243,9 @@ function java_cast($object, $type) {
 }
 
 /**
- * Set the library path. Example: 
+ * Set the library path.
+ *
+ * Example: 
  * <code>
  * java_require("foo.jar;bar.jar"); 
  * </code>
@@ -280,7 +293,9 @@ function java_session_array($args) {
   return $client->getSession($args);
 }
 /**
- * Return a session handle.  When java_session() is called without 
+ * Return a session handle.
+ *
+ * When java_session() is called without 
  * arguments, the session is shared with java.
  * Example: 
  * <code>
@@ -316,7 +331,9 @@ function java_session() {
 }
 
 /**
- * Returns the name of the back-end or null, if the back-end is not running. Example:
+ * Returns the name of the back-end or null, if the back-end is not running.O
+ *
+ * Example:
  * <code>
  * $backend = java_get_server_name();
  * if(!$backend) wakeup_administrator("back-end not running");
@@ -376,7 +393,9 @@ function java_closure_array($args) {
 }
 /**
  * Closes over the php environment and packages it up as a java
- * class. Example: 
+ * class. 
+ *
+ * Example: 
  * <code>
  * function toString() {return "helloWorld";};
  * $object = java_get_closure();
@@ -411,7 +430,9 @@ function java_closure() {
 }
 
 /**
- * Enters stream mode (asynchronuous protocol). The statements are
+ * Enters stream mode (asynchronuous protocol). 
+ *
+ * The statements are
  * sent to the back-end in one XML stream.  
  *
  * Use this protocol
@@ -446,7 +467,7 @@ function java_end_document() {
 /**
  * @access private
  */
-class java_JavaProxy {
+class java_JavaProxy implements java_JavaType {
   var $__serialID, $__java;
   var $__signature;
   var $__client;
@@ -674,6 +695,128 @@ abstract class java_AbstractJava implements IteratorAggregate,ArrayAccess,java_J
  */
 class Java extends java_AbstractJava {
   var $__client;
+
+
+
+/**
+ * Returns the jsr223 script context handle.
+ *
+ * Example which closes over the current environment and passes it back to java:
+ * <code>
+ * java::getContext()->call(java_closure()) || die "Script should be called from java";
+ * </code>
+ *
+ * It is possible to access implicit web objects (the session, the
+ * application store etc.) from the context. Please see the JSR223
+ * documentation for details. Example:
+ * <code>
+ * java::getContext()->getHttpServletRequest();
+ * </code>
+ * @access public
+ */
+  static function getContext () {
+	return java_wrap_value (java_context());
+  }
+
+/**
+ * Return a session handle.
+ *
+ * When java::getSession() is called without 
+ * arguments, the session is shared with java.
+ * Example: 
+ * <code>
+ * java::getSession()->put("key", new Java("java.lang.Object"));
+ * [...]
+ * </code>
+ * The java components (jsp, servlets) can retrieve the value, for
+ * example with:
+ * <code>
+ * java::getSession().getAttribute("key");
+ * </code>
+ *
+ * When java_get_session() is called with a session name, the session
+ * is not shared with java and no cookies are set. Example:
+ * <code>
+ * java::getSession("myPublicApplicationStore")->put("key", "value");
+ * </code>
+ *
+ * When java_get_session() is called with a second argument set to true,
+ * a new session is allocated, the old session is destroyed if necessary.
+ * Example:
+ * <code>
+ * java::getSession(null, true)->put("key", "val");
+ * </code>
+ *
+ * The optional third argument specifies the default lifetime of the session, it defaults to \code session.gc_maxlifetime \endcode. The value 0 means that the session never times out.
+ *
+ * @access public
+ * @see #java_context()
+ */
+  static function getSession () {
+	return java_wrap_value(java_session_array(func_get_args()));
+  }
+
+/**
+ * Closes over the php environment and packages it up as a java
+ * class. 
+ *
+ * Example: 
+ * <code>
+ * function toString() {return "helloWorld";};
+ * $object = java_get_closure();
+ * echo "Java says that PHP says: $object\n";
+ * </code>
+ *
+ * When a php instance is supplied as an argument, the environment will be used
+ * instead. When a string or key/value map is supplied as a second argument,
+ * the java procedure names are mapped to the php procedure names. Example:
+ * <code>
+ * function hello() {return "hello";};
+ * echo (string)java_get_closure(null, "hello");
+ * </code>
+ * 
+ * When an array of java interfaces is supplied as a third argument,
+ * the environment must implement these interfaces.
+ * Example:
+ * <code>
+ * class Listener {
+ *   function actionPerformed($actionEvent) {
+ *       ...
+ *     }
+ * }
+ * function getListener() {
+ *     return Java::getClosure(new Listener(), null, array(new Java("java.awt.event.ActionListener")));
+ * }
+ * </code>
+ * @access public
+ */
+  static function getClosure () {
+	return java_wrap_value(java_closure_array(func_get_args()));
+  }
+  
+  static function getValues ($obj) {
+	return java_values ($obj);
+  }
+
+  static function inspect ($obj) {
+	return java_inspect($obj);
+  }
+
+  static function set_file_encoding($enc) {
+	return java_set_file_encoding($enc);
+  }
+
+  static function getServerName() {
+	return java_server_name();
+  }
+
+  static function beginDocument() {
+	return java_begin_document();
+  }
+
+  static function endDocument() {
+	return java_end_document();
+  }
 
   /**
    * Create a new instance of a java type. 
@@ -993,9 +1136,12 @@ class java_JavaBridge {
   function __java_coerceArgs($array) {return array_map('java_coerce_value', $array);}
   function __java_coerceArg($arg) {return java_coerce_value($arg);}
   function __java_init($path) { } 
-  function __get($arg) { if(!is_null($this->java)) return $this->java->__get($this->__java_coerceArg($arg)); }
-  function __set($key, $val) { if(!is_null($this->java)) return $this->java->__set($this->__java_coerceArg($key), $this->__java_coerceArg($val)); }
-  function __call($m, $a) { if(!is_null($this->java)) return $this->java->__call($m, $this->__java_coerceArgs($a)); }
+  function __get($arg) { if(!is_null($this->java)) return java_wrap_value($this->java->__get($this->__java_coerceArg($arg))); }
+  function __set($key, $val) { if(!is_null($this->java))  return $this->java->__set($this->__java_coerceArg($key), $this->__java_coerceArg($val)); }
+  function __call($m, $a) { if(!is_null($this->java)) return java_wrap_value($this->java->__call($m, $this->__java_coerceArgs($a))); }
   function __toString() { if(!is_null($this->java)) return $this->java->__toString(); }
+}
+class java_JavaBridgeValue extends java_JavaBridge {
+  function __construct($java) {$this->java=$java;}
 }
 ?>

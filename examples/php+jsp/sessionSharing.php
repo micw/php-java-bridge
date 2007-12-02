@@ -1,7 +1,7 @@
 <?php require_once("java/Java.inc");
 java_autoload();
 
-$session = java_session();
+$session = java::getSession();
 ?>
 
 <HTML>
@@ -12,7 +12,7 @@ if(is_null($session->get("counter"))) {
   $session->put("counter", new java_lang_Integer(1));
 }
 
-$counter = java_values($session->get("counter"));
+$counter = java::getValues($session->get("counter"));
 print "HttpSession variable \"counter\": $counter<br>\n";
 $next = new java_lang_Integer($counter+1);
 $session->put("counter", $next);
