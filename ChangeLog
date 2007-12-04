@@ -1,3 +1,14 @@
+2007-12-04  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/script/OutputStreamWriter.java (write): Fixed a
+	typo which generated garbage output.
+
+	* server/php/java/script/URLReader.java (read): Use HTTP/1.0
+	instead of 1.1. The bridge doesn't handle chunked content.
+	
+	* VERSION, php-java-bridge.spec: Version 4.3.1a released
+	
+	
 2007-07-29  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/JavaBridge.java

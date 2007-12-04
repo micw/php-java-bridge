@@ -81,33 +81,18 @@ if(!function_exists("java_get_base")) {
   /**
    * @access private
    */
-  function java_javabridge($j, $p) {
-    static $classMap = array();
-    if(array_key_exists($j, $classMap)) return $classMap[$j];
-    return $classMap[$j]=new $p(new JavaClass($j));
-  }
-
-  /**
-   * @access private
-   */
   function java_autoload_function($x) {
 	$str=str_replace("_", ".", $x);
-
 	$client=__javaproxy_Client_getClient();
 	if(!($client->invokeMethod(0, "typeExists", array($str)))) return false;
-
-	$clazz = "class ${x}___Class extends java_JavaBridge {".
-	  'function __construct($java) {$this->java=$java;}'.
-	  "}";
-	$instance = "class ${x} extends ${x}___Class {".
-	  "static function type(\$sub=null){if(\$sub) \$sub='\$'.\$sub; return java_javabridge('${str}'.\"\$sub\", '${x}___Class');}".
-	  'function __construct() {$args = '.
-	  '$this->__java_coerceArgs(func_get_args());'.
-	  'array_unshift($args, '."'$str'".'); $this->java = new Java($args);}}';
-	eval ("$clazz");
+	$instance = "class ${x} extends Java {".
+	  "static function type(\$sub=null){if(\$sub) \$sub='\$'.\$sub; return java('${str}'.\"\$sub\");}".
+	  'function __construct() {$args = func_get_args();'.
+	  'array_unshift($args, '."'$str'".'); parent::__construct($args);}}';
 	eval ("$instance");
 	return true;
   }
+
   /**
    * Load a set of java libraries and make them available in the current name space.
    * Available since php 5.2.0. Example:

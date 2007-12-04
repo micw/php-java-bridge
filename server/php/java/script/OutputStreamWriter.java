@@ -52,6 +52,7 @@ class OutputStreamWriter extends DefaultCharsetOutputStreamWriter {
     }
     public void write(byte b[], int off, int len) throws IOException {
 	written = true;
-	out.write(new String(b, charsetName), off, len);
+	String s = new String (b, off, len, charsetName);
+	out.write(s);
     }
  }

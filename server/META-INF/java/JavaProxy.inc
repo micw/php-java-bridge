@@ -56,18 +56,7 @@ function __javaproxy_Client_getClient() {
   }
   return $client;
 }
-/**
- * Only for internal use
- * @access private
- */
-function java_coerce_value($value) {
-  if($value instanceof java_JavaBridge) return $value->java;
-  return $value;
-}
-function java_wrap_value($value) {
-  if($value instanceof java_JavaType) return new java_JavaBridgeValue($value);
-  return $value;
-}
+
 /**
  * @deprecated: Use PHP5 try/catch instead
  * @access private
@@ -123,7 +112,7 @@ function java_values_internal($object) {
  * @access public
  */
 function java_values($object) {
-  return java_values_internal(java_coerce_value($object));
+  return java_values_internal($object);
 }
 /**
  * Only for internal use.
@@ -155,7 +144,7 @@ function java_inspect_internal($object) {
  * @access public
  */
 function java_inspect($object) {
-  return java_inspect_internal(java_coerce_value($object));
+  return java_inspect_internal($object);
 }
 /**
  * Set the java file encoding, for example UTF-8 or ASCII.
@@ -198,7 +187,7 @@ function java_instanceof_internal($ob, $clazz) {
  * @access public
  */
 function java_instanceof($ob, $clazz) {
-  return java_instanceof_internal(java_coerce_value($ob), java_coerce_value($clazz));
+  return java_instanceof_internal($ob, $clazz);
 }
 /**
  * Only for internal use
@@ -239,7 +228,7 @@ function java_cast_internal($object, $type) {
  * @access public
  */
 function java_cast($object, $type) { 
-  return java_cast_internal(java_coerce_value($object), java_coerce_value($type));
+  return java_cast_internal($object, $type);
 }
 
 /**
@@ -715,7 +704,7 @@ class Java extends java_AbstractJava {
  * @access public
  */
   static function getContext () {
-	return java_wrap_value (java_context());
+	return java_context();
   }
 
 /**
@@ -753,7 +742,7 @@ class Java extends java_AbstractJava {
  * @see #java_context()
  */
   static function getSession () {
-	return java_wrap_value(java_session_array(func_get_args()));
+	return java_session_array(func_get_args());
   }
 
 /**
@@ -791,7 +780,7 @@ class Java extends java_AbstractJava {
  * @access public
  */
   static function getClosure () {
-	return java_wrap_value(java_closure_array(func_get_args()));
+	return java_closure_array(func_get_args());
   }
   
   static function getValues ($obj) {
@@ -1128,20 +1117,5 @@ class java_JavaProxyProxy extends Java {
   }
 }
 
-/**
- * @access private
- */
-class java_JavaBridge {
-  var $java;
-  function __java_coerceArgs($array) {return array_map('java_coerce_value', $array);}
-  function __java_coerceArg($arg) {return java_coerce_value($arg);}
-  function __java_init($path) { } 
-  function __get($arg) { if(!is_null($this->java)) return java_wrap_value($this->java->__get($this->__java_coerceArg($arg))); }
-  function __set($key, $val) { if(!is_null($this->java))  return $this->java->__set($this->__java_coerceArg($key), $this->__java_coerceArg($val)); }
-  function __call($m, $a) { if(!is_null($this->java)) return java_wrap_value($this->java->__call($m, $this->__java_coerceArgs($a))); }
-  function __toString() { if(!is_null($this->java)) return $this->java->__toString(); }
-}
-class java_JavaBridgeValue extends java_JavaBridge {
-  function __construct($java) {$this->java=$java;}
-}
+
 ?>
