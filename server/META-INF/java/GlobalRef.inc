@@ -46,9 +46,9 @@
    * @access private
    */
 class java_GlobalRef {
-  var $map;
-  var $client;
-  var $mapsMerged;
+  public $map;
+  public $client;
+  public $mapsMerged;
 
   function java_GlobalRef($client) {
     $this->map = array();
@@ -62,7 +62,7 @@ class java_GlobalRef {
    * store the new map into the session.<br>
    *
    * Test case:
-   * class C { var $state; function toString() {return "C::$state";} }
+   * class C { public $state; function toString() {return "C::$state";} }
    * java_session()-&gt;put("key", java_closure(new C()));
    * @access private
    */

@@ -271,7 +271,7 @@ function java_session_array($args) {
   if(!isset($args[0])) $args[0]=null;
   if(!isset($args[1])) $args[1]=false;
   if(!isset($args[2])) {
-	$sesion_max_lifetime=(int)ini_get("session.gc_maxlifetime");
+	$session_max_lifetime=(int)ini_get("session.gc_maxlifetime");
 	if(!isset($session_max_lifetime)) $session_max_lifetime=1440;
 	$args[2] = $session_max_lifetime;
   }
@@ -457,9 +457,9 @@ function java_end_document() {
  * @access private
  */
 class java_JavaProxy implements java_JavaType {
-  var $__serialID, $__java;
-  var $__signature;
-  var $__client;
+  public $__serialID, $__java;
+  public $__signature;
+  public $__client;
   function java_JavaProxy($java, $signature){ 
 	$this->__java=$java;
 	$this->__signature=$signature;
@@ -506,10 +506,10 @@ class java_JavaProxy implements java_JavaType {
  * @access private
  */
 class java_objectIterator implements Iterator {
-  var $proxy;
-  var $__java, $client;
-  var $phpMap; // must keep a reference otherwise it will be gc'ed.
-  var $hasNext;
+  public $proxy;
+  public $__java, $client;
+  public $phpMap; // must keep a reference otherwise it will be gc'ed.
+  public $hasNext;
 
   function java_ObjectIterator($javaProxy) {
 	$this->proxy = $javaProxy;
@@ -603,12 +603,12 @@ class java_ExceptionProxy extends java_JavaProxy {
  * @see #java_InternalJava
 */
 abstract class java_AbstractJava implements IteratorAggregate,ArrayAccess,java_JavaType {
-  var $__delegate;
+  public $__delegate;
 
-  var $__serialID;
+  public $__serialID;
 
-  var $__factory;
-  var $__java, $__signature;
+  public $__factory;
+  public $__java, $__signature;
 
   function __createDelegate() {
 	$proxy = $this->__delegate = 
@@ -622,7 +622,7 @@ abstract class java_AbstractJava implements IteratorAggregate,ArrayAccess,java_J
   }
   function __sleep() {
 	if(!isset($this->__delegate)) $this->__createDelegate();
-	$rc = $this->__delegate->__sleep();
+	$this->__delegate->__sleep();
 	$this->__serialID = $this->__delegate->__serialID;
 	return array("__delegate");
   }
@@ -683,129 +683,7 @@ abstract class java_AbstractJava implements IteratorAggregate,ArrayAccess,java_J
  * @see #JavaException
  */
 class Java extends java_AbstractJava {
-  var $__client;
-
-
-
-/**
- * Returns the jsr223 script context handle.
- *
- * Example which closes over the current environment and passes it back to java:
- * <code>
- * java::getContext()->call(java_closure()) || die "Script should be called from java";
- * </code>
- *
- * It is possible to access implicit web objects (the session, the
- * application store etc.) from the context. Please see the JSR223
- * documentation for details. Example:
- * <code>
- * java::getContext()->getHttpServletRequest();
- * </code>
- * @access public
- */
-  static function getContext () {
-	return java_context();
-  }
-
-/**
- * Return a session handle.
- *
- * When java::getSession() is called without 
- * arguments, the session is shared with java.
- * Example: 
- * <code>
- * java::getSession()->put("key", new Java("java.lang.Object"));
- * [...]
- * </code>
- * The java components (jsp, servlets) can retrieve the value, for
- * example with:
- * <code>
- * java::getSession().getAttribute("key");
- * </code>
- *
- * When java_get_session() is called with a session name, the session
- * is not shared with java and no cookies are set. Example:
- * <code>
- * java::getSession("myPublicApplicationStore")->put("key", "value");
- * </code>
- *
- * When java_get_session() is called with a second argument set to true,
- * a new session is allocated, the old session is destroyed if necessary.
- * Example:
- * <code>
- * java::getSession(null, true)->put("key", "val");
- * </code>
- *
- * The optional third argument specifies the default lifetime of the session, it defaults to \code session.gc_maxlifetime \endcode. The value 0 means that the session never times out.
- *
- * @access public
- * @see #java_context()
- */
-  static function getSession () {
-	return java_session_array(func_get_args());
-  }
-
-/**
- * Closes over the php environment and packages it up as a java
- * class. 
- *
- * Example: 
- * <code>
- * function toString() {return "helloWorld";};
- * $object = java_get_closure();
- * echo "Java says that PHP says: $object\n";
- * </code>
- *
- * When a php instance is supplied as an argument, the environment will be used
- * instead. When a string or key/value map is supplied as a second argument,
- * the java procedure names are mapped to the php procedure names. Example:
- * <code>
- * function hello() {return "hello";};
- * echo (string)java_get_closure(null, "hello");
- * </code>
- * 
- * When an array of java interfaces is supplied as a third argument,
- * the environment must implement these interfaces.
- * Example:
- * <code>
- * class Listener {
- *   function actionPerformed($actionEvent) {
- *       ...
- *     }
- * }
- * function getListener() {
- *     return Java::getClosure(new Listener(), null, array(new Java("java.awt.event.ActionListener")));
- * }
- * </code>
- * @access public
- */
-  static function getClosure () {
-	return java_closure_array(func_get_args());
-  }
-  
-  static function getValues ($obj) {
-	return java_values ($obj);
-  }
-
-  static function inspect ($obj) {
-	return java_inspect($obj);
-  }
-
-  static function set_file_encoding($enc) {
-	return java_set_file_encoding($enc);
-  }
-
-  static function getServerName() {
-	return java_server_name();
-  }
-
-  static function beginDocument() {
-	return java_begin_document();
-  }
-
-  static function endDocument() {
-	return java_end_document();
-  }
+  public $__client;
 
   /**
    * Create a new instance of a java type. 
@@ -1017,9 +895,9 @@ class JavaClass extends java_class{}
  * @access public
  */
 class java_exception extends Exception implements java_JavaType {
-  var $__serialID, $__java, $__client;
-  var $__delegate;
-  var $__signature;
+  public $__serialID, $__java, $__client;
+  public $__delegate;
+  public $__signature;
   
   /**
    * Create a new Exception.

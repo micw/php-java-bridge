@@ -66,10 +66,12 @@ public class InvocablePhpServletScriptEngine extends InvocablePhpScriptEngine {
 	this.res = res;
 	File tempfile= new File("java/JavaProxy.php");
 	url = new java.net.URL((req.getRequestURL().toString()));
+	String filePath = (new File(new File(url.getFile()).getParentFile(), 
+				tempfile.getPath())).getPath();
+	if (File.separatorChar != '/') filePath = filePath.replace(File.separatorChar, '/');
 	url = new URL (url.getProtocol(), 
 		       url.getHost(), url.getPort(), 
-		       (new File(new File(url.getFile()).getParentFile(), 
-				 tempfile.getPath())).getPath());
+		       filePath);
 
 	path = new File(CGIServlet.getRealPath(ctx, ""));
     }

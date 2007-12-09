@@ -115,10 +115,12 @@ public class PhpServletScriptEngine extends PhpScriptEngine {
 		writer.write(cbuf, 0, length);
 	    writer.close();
 
+	    String filePath = (new File(new File(url.getFile()).getParentFile(), 
+				       tempfile.getName())).getPath();
+	    if (File.separatorChar != '/') filePath = filePath.replace(File.separatorChar, '/');
 	    url = new URL (url.getProtocol(), 
 			   url.getHost(), url.getPort(), 
-			   (new File(new File(url.getFile()).getParentFile(), 
-				     tempfile.getName())).getPath());
+			   filePath);
 
 	    
             /* now evaluate our script */

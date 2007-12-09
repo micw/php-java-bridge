@@ -46,9 +46,9 @@ require_once("${JAVA_BASE}/NativeParser.inc");
  * @access private
  */
 class java_Parser {
-  var $ENABLE_NATIVE = true;
-  var $DISABLE_SIMPLE= false;
-  var $parser;
+  public $ENABLE_NATIVE = true;
+  public $DISABLE_SIMPLE= false;
+  public $parser;
 
   function java_Parser($handler) {
     if($this->ENABLE_NATIVE && function_exists("xml_parser_create")) {

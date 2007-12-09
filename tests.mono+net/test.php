@@ -4,8 +4,7 @@ if(!extension_loaded("mono")) {
   if($n=="cgi"||$n=="cgi-fcgi"||$n=="cli") @dl("mono.so")||@dl('php_mono.dll');
  }
 if(!extension_loaded("mono")) {
-  $port= (isset($_SERVER['SERVER_PORT']) && (($_SERVER['SERVER_PORT'])>1024)) ? $_SERVER['SERVER_PORT'] : '8080';
-  require_once("http://localhost:${port}/JavaBridge/java/Mono.inc");
+  require_once("Mono.inc");
  }
 
 phpinfo();

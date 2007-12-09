@@ -1,3 +1,15 @@
+2007-12-09  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/script/InvocablePhpServletScriptEngine.java
+	(InvocablePhpServletScriptEngine): Fix for windows: use / instead
+	of \ for URL's.
+	
+	* server/php/java/script/PhpServletScriptEngine.java
+	(eval): Fix for windows: use / instead of \ for URL's.
+
+	* VERSION, php-java-bridge.spec: Version 4.3.2 released
+	
+	
 2007-12-04  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/script/OutputStreamWriter.java (write): Fixed a

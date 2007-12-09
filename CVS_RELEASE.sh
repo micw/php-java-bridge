@@ -1,10 +1,10 @@
 #!/bin/sh
-
-rm -rf rm -rf [^C][^V][^S]* .??* *~
+set -x
+rm -rf [^C][^V][^S]* .??* *~
 cvs -Q update -APd 
 find . -print | xargs touch
-
-set -x
+dirs=`ls -l | grep '^d' | fgrep -v CVS | awk '{print $8}'`
+find $dirs -name "CVS" -print | xargs rm -rf
 
 version=`cat VERSION`
 ln -s `pwd` php-java-bridge-${version}
@@ -23,9 +23,30 @@ fi
 
 cp server/JavaBridge.war server/src.zip .
 cp -r php_java_lib tests.php5 server
-list="FAQ.html INSTALL.J2EE INSTALL.J2SE INSTALL.LINUX INSTALL.STANDALONE documentation server/documentation server/php_java_lib server/test server/tests.php5 server/javabridge.policy src.zip test.bat test.sh FAQ.html INSTALL.J2EE INSTALL.J2SE INSTALL.LINUX INSTALL.STANDALONE documentation server/documentation server/php_java_lib server/test server/tests.php5 server/javabridge.policy src.zip test.bat test.sh README JavaBridge.war"
+
+# mkdir MONO.STANDALONE
+# for i in ICSharpCode.SharpZipLib.dll IKVM.GNU.Classpath.dll IKVM.Runtime.dll MonoBridge.exe; do
+#  cp modules/$i MONO.STANDALONE
+# done
+# cp tests.mono+net/test.php MONO.STANDALONE
+# cp server/META-INF/java/Mono.inc MONO.STANDALONE
+# cp README.MONO+NET MONO.STANDALONE
+
+mkdir JAVA.STANDALONE
+for i in JavaBridge.jar javabridge.policy php-script.jar script-api.jar; do
+ cp modules/$i JAVA.STANDALONE
+done
+cp test.php JAVA.STANDALONE
+cp server/META-INF/java/Java.inc JAVA.STANDALONE
+cp INSTALL.STANDALONE JAVA.STANDALONE
+
+mv server documentation
+mv README FAQ.html documentation
+list="JAVA.STANDALONE INSTALL.J2EE INSTALL.J2SE INSTALL.LINUX documentation/API documentation/README documentation/FAQ.html src.zip JavaBridge.war documentation/server/documentation documentation/server/php_java_lib documentation/server/test documentation/server/tests.php5 documentation/server/javabridge.policy"
 find $list -type d -name "CVS" -print | xargs rm -rf
 
-chmod +x JavaBridge.war test.sh
+chmod +x JavaBridge.war
 # create j2ee download
 zip -q -r php-java-bridge_${version}_j2ee.zip $list
+rm -rf $dirs
+cvs -Q update -APd 

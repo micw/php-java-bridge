@@ -1,9 +1,10 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 4.3.1a
+%define version 4.3.2
 %define release 1
 %define PHP_MAJOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | sed 's/\\\..*$//')
 %define PHP_MINOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | LANG=C cut -d. -f2)
-%define have_j2 %((rpm -q --whatprovides j2re || rpm -q --whatprovides j2sdk) >/dev/null && echo 1 || echo 0)
+%define have_j2 %((rpm -q --whatprovides j2sdk) >/dev/null && echo 1 || echo 0)
+%define have_j3 %((rpm -q --whatprovides jdk) >/dev/null && echo 1 || echo 0)
 %define have_policy_modules %(if test -f /etc/selinux/config && test -d /etc/selinux/%{__policy_tree}/modules; then echo 1; else echo 0; fi)
 %define have_policy_devel %(if test -f %{_datadir}/selinux/devel/Makefile; then echo 1; else echo 0; fi)
 
@@ -32,10 +33,14 @@ BuildRequires: httpd make
 BuildRequires: libtool >= 1.4.3
 BuildRequires: automake >= 1.6.3
 BuildRequires: autoconf >= 2.57
+%if %{have_j3} == 1
+BuildRequires: jdk >= 1.4.2
+%else
 %if %{have_j2} == 1
 BuildRequires: j2sdk >= 1.4.2
 %else
 BuildRequires: java-devel >= 1.4.2
+%endif
 %endif
 %if %{have_policy_modules} == 1
 BuildRequires: selinux-policy
@@ -131,10 +136,14 @@ PATH=/bin:%{_bindir}
 LD_LIBRARY_PATH=/lib:%{_libdir}
 
 # calculate java dir
+%if %{have_j3} == 1
+pkgid=`rpm -q --whatprovides jdk --queryformat "%{PKGID} %{VERSION}\n" | sed 's/\./0/g;s/_/./' |sort -r -k 2,2 -n | head -1 | awk '{print $1}'`
+%else
 %if %{have_j2} == 1
 pkgid=`rpm -q --whatprovides j2sdk --queryformat "%{PKGID} %{VERSION}\n" | sed 's/\./0/g;s/_/./' |sort -r -k 2,2 -n | head -1 | awk '{print $1}'`
 %else
 pkgid=`rpm -q --whatprovides java-devel --queryformat "%{PKGID} %{VERSION}\n" | sed 's/\./0/g;s/_/./' |sort -r -k 2,2 -n | head -1 | awk '{print $1}'`
+%endif
 %endif
 jdk=`rpm  -q --pkgid $pkgid`
 java=`rpm -ql $jdk | grep 'bin/java$' | head -1`

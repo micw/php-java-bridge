@@ -45,7 +45,7 @@ require_once ("${JAVA_BASE}/Client.inc");
  * @access private
  */
 class java_SocketChannel {
-  var $peer, $protocol;
+  public $peer, $protocol;
   function java_SocketChannel($peer, $protocol) {
     $this->peer = $peer;
     $this->protocol = $protocol;
@@ -67,6 +67,7 @@ class java_SocketChannel {
  */
 class java_EmptyPipeChannel {
   function open($handler) {
+  	if (false) $handler = $handler;
 	throw new java_RuntimeException("protocol error: socket channel names must not start with a slash");
   }
   function getName() {
@@ -78,9 +79,9 @@ class java_EmptyPipeChannel {
  * @access private
  */
 class java_PipeChannel extends java_EmptyPipeChannel {
-  var $peer, $peerr, $peerr_desc, $name;
-  var $fifo, $fifor;
-  var $iname, $oname;
+  public $peer, $peerr, $peerr_desc, $name;
+  public $fifo, $fifor;
+  public $iname, $oname;
 
   function java_PipeChannel($name) {
 	$this->name = $name;
@@ -92,6 +93,8 @@ class java_PipeChannel extends java_EmptyPipeChannel {
 	umask($mask);
   }
   function open($handler) {
+  	if (false) $handler = $handler;
+  	
 	$this->peerr = fopen($this->iname, "r");
 	$this->peerr_desc = array($this->peerr);
 	stream_set_blocking($this->peerr, false);
@@ -121,7 +124,7 @@ class java_PipeChannel extends java_EmptyPipeChannel {
  * @access private
  */
 class java_SocketHandler {
-  var $protocol, $channel;
+  public $protocol, $channel;
 
   function java_SocketHandler($protocol, $channel) {
 	$this->protocol = $protocol;
@@ -142,13 +145,13 @@ class java_SocketHandler {
  * @access private
  */
 class java_HttpHandler extends java_SocketHandler {
-  var $headers;
-  var $redirect;
+  public $headers;
+  public $redirect;
   
-  var $context, $ssl, $port; // used by reopen
-  var $host; // used when creating a socket channel lazily. the port# is passed via X_JAVABRIDGE_CHANNEL
+  public $context, $ssl, $port; // used by reopen
+  public $host; // used when creating a socket channel lazily. the port# is passed via X_JAVABRIDGE_CHANNEL
 
-  var $socket; // we write to the socket directly and keep the pipe channel for later use
+  public $socket; // we write to the socket directly and keep the pipe channel for later use
   
   function createPipeChannel($host, $pipe_dir) {
 	if(!is_null($pipe_dir) && ($host == "127.0.0.1" || (substr($host,0,9) == "localhost")))
@@ -159,6 +162,7 @@ class java_HttpHandler extends java_SocketHandler {
     fclose($this->socket);
   }
   function open() {
+  	$errno = null; $errstr = null;
   /* Do not pfsockopen here, the J2EE server may not be able to handle
     hundreds of persistent connections to the servlet very well */
 	$socket = fsockopen("{$this->ssl}{$this->host}", $this->port, $errno, $errstr, 30);
@@ -276,7 +280,7 @@ class java_HttpHandler extends java_SocketHandler {
   }
   function parseHeaders() {
 	$this->headers = array();
-	while ($str = trim(fgets($this->socket, java_Client::RECV_SIZE))) {
+	while (($str = trim(fgets($this->socket, java_Client::RECV_SIZE)))) {
 	  if($str[0]=='X') {
 		if(!strncasecmp("X_JAVABRIDGE_REDIRECT", $str, 21)) {
 		  $this->headers["redirect"]=trim(substr($str, 22));
@@ -301,15 +305,18 @@ class java_HttpHandler extends java_SocketHandler {
 	}
   }
   function read($size) {
+  	if (false) $size = $size;
+  	
  	if(is_null($this->headers)) $this->parseHeaders();
 	$data = fread($this->socket, $this->headers['content_length']);
 	return $data;
   }
 
   function getChannel($channelName) {
+  	$errstr = null; $errno = null;
 	if($channelName[0]=='/') return $this->channel->open($this);
 	$peer = pfsockopen($this->host, $channelName, $errno, $errstr, 30);
-	if (!$peer) throw new java_RuntimeException("Could not connect to the context server {$handler->host}:{$channelName}. Error message: $errstr ($errno)\n");
+	if (!$peer) throw new java_RuntimeException("Could not connect to the context server {$this->host}:{$channelName}. Error message: $errstr ($errno)\n");
 	stream_set_timeout($peer, -1);
 	return new java_SocketChannel($peer, $this->protocol);
   }
@@ -320,7 +327,7 @@ class java_HttpHandler extends java_SocketHandler {
 	}
 	if(!isset($this->protocol->socketHandler)) {
 	  $hostVec = java_Protocol::getHost();
-	  $host = $hostVec[0];
+	  $this->host = $hostVec[0];
 	  $channelName = $this->headers["redirect"];
 	  $context = $this->headers["context"];
 	  $len = strlen($context);
@@ -340,9 +347,9 @@ class java_HttpHandler extends java_SocketHandler {
  * @access private
  */
 class java_Protocol {
-  var $client;
-  var $webContext;
-  var $serverName;
+  public $client;
+  public $webContext;
+  public $serverName;
 
   function getOverrideHosts() {
       if(array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS', $_ENV)) {
@@ -411,6 +418,7 @@ class java_Protocol {
    */
   function createSimpleHandler($channelName) {
     if(!is_string($channelName)) {
+      $errno = null; $errstr = null;
 	  $peer = pfsockopen("127.0.0.1", $channelName, $errno, $errstr, 30);
 	} else {
 	  $type = $channelName[0];
@@ -423,7 +431,7 @@ class java_Protocol {
 		$peer = pfsockopen($host, $channelName, $errno, $errstr, 30);
 	  }
 	}
-    if (!$peer) throw new java_RuntimeException("Could not connect to the context server {$handler->host}:{$channelName}. Error message: $errstr ($errno)\n");
+    if (!$peer) throw new java_RuntimeException("Could not connect to the context server $channelName. Error message: $errstr ($errno)\n");
     stream_set_timeout($peer, -1);
     $handler = new java_SocketHandler($this, new java_SocketChannel($peer, $this));
     

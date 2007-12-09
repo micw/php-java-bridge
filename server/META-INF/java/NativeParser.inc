@@ -44,10 +44,10 @@ require_once("${JAVA_BASE}/Client.inc");
  * @access private
  */
 class java_NativeParser {
-  var $parser, $handler;
-  var $level, $event;
+  public $parser, $handler;
+  public $level, $event;
 
-  var $buf;
+  public $buf;
 
   function java_NativeParser($handler) {
 	$this->handler = $handler;
@@ -59,16 +59,20 @@ class java_NativeParser {
 	$this->level = 0;
   }
   function begin($parser, $name, $param) {
+  	if (false) $parser = $parser;
+  	
 	$this->event = true;
 	switch($name) {
-	case 'X': case 'A': $this->level++;
+	case 'X': case 'A': $this->level+=1;
 	}
 	$this->handler->begin($name, $param);
   }
   function end($parser, $name) {
+  	if (false) $parser = $parser;
+  	
 	$this->handler->end($name);
 	switch($name) {
-	case 'X': case 'A': $this->level--;
+	case 'X': case 'A': $this->level-=1;
 	}
   }
   function getData($str) {

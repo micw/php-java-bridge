@@ -44,7 +44,7 @@ require_once("${JAVA_BASE}/Client.inc");
  * @access private
  */
 class java_ParserString {
-  var $string, $off, $length;
+  public $string, $off, $length;
   function toString() {
 	return $this->getString();
   }
@@ -56,7 +56,7 @@ class java_ParserString {
  * @access private
  */
 class java_ParserTag {
-  var $n, $strings;
+  public $n, $strings;
   function java_ParserTag() {
 	$this->strings = array();
 	$this->n = 0;
@@ -66,12 +66,12 @@ class java_ParserTag {
  * @access private
  */
 class java_SimpleParser {
-  var $SLEN=256; // initial length of the parser string
+  public $SLEN=256; // initial length of the parser string
 
-  var $handler;
+  public $handler;
   
-  var $tag, $buf, $len, $s;
-  var $type;
+  public $tag, $buf, $len, $s;
+  public $type;
 
   function java_SimpleParser($handler) {
     $this->handler = $handler;
@@ -82,9 +82,9 @@ class java_SimpleParser {
   }
   
   // VOJD is VOID for f... windows (VOID is in winsock2.h)
-  var $BEGIN=0, $KEY=1, $VAL=2, $ENTITY=3, $VOJD=5, $END=6; 
-  var $level=0, $eor=0; var $in_dquote, $eot=false;
-  var $pos=0, $c=0, $i=0, $i0=0, $e;
+  public $BEGIN=0, $KEY=1, $VAL=2, $ENTITY=3, $VOJD=5, $END=6; 
+  public $level=0, $eor=0; public $in_dquote, $eot=false;
+  public $pos=0, $c=0, $i=0, $i0=0, $e;
 
   function RESET() {
 	$this->type=$this->VOJD;
@@ -144,7 +144,7 @@ class java_SimpleParser {
 	  switch(($ch=$this->buf[$this->c])) 
 		{/* --- This block must be compilable with an ansi C compiler or javac --- */
 		case '<': if($this->in_dquote) {$this->APPEND($ch); break;}
-		  $this->level++;
+		  $this->level+=1;
 		  $this->type=$this->BEGIN;
 		  break;
 		case '\t': case '\f': case '\n': case '\r': case ' ': if($this->in_dquote) {$this->APPEND($ch); break;}
@@ -158,8 +158,8 @@ class java_SimpleParser {
 		  $this->type=$this->VAL;
 		  break;
 		case '/': if($this->in_dquote) {$this->APPEND($ch); break;}
-		  if($this->type==$this->BEGIN) { $this->type=$this->END; $this->level--; }
-		  $this->level--;
+		  if($this->type==$this->BEGIN) { $this->type=$this->END; $this->level-=1; }
+		  $this->level-=1;
 		  $this->eot=true; // used for debugging only
 		  break;
 		case '>': if($this->in_dquote) {$this->APPEND($ch); break;}
@@ -203,7 +203,7 @@ class java_SimpleParser {
 		default:
 		  $this->APPEND($ch);
 		} /* ------------------ End of ansi C block ---------------- */
-	  $this->c++;
+	  $this->c+=1;
 	}
    	$this->RESET();
   }

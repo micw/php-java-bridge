@@ -169,6 +169,13 @@ if(!function_exists("java_get_base")) {
   function java_get_server_name() { return java_server_name(); }
 
   /**
+   * Alias for java_set_file_encoding();
+   * @access private
+   * @see #java_set_file_encoding();
+   */
+  function java_set_encoding($enc) { return java_set_file_encoding ($enc); }
+
+  /**
    * @deprecated: Use java_require() instead.
    * @access private
    * @see #java_require();

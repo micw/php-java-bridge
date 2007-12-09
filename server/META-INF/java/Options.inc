@@ -51,13 +51,15 @@ function java_defineHostFromInitialQuery($java_base) {
 
 // The version number of this pure PHP implementation
 
-define ("JAVA_PEAR_VERSION", "4.2.1");
+define ("JAVA_PEAR_VERSION", "4.3.2");
 
 // parse "java.ini" for backward compatibility
-$ini=@parse_ini_file("java.ini");
-if(array_key_exists("java.hosts", $ini)) define("JAVA_HOSTS", $ini["java.hosts"]);
-if(array_key_exists("java.servlet", $ini)) define("JAVA_SERVLET", $ini["java.servlet"]);
-if(array_key_exists("java.log_level", $ini)) define("JAVA_LOG_LEVEL", $ini["java.log_level"]);
+if (defined ("JAVA_PARSE_INI_FILE") && JAVA_PARSE_INI_FILE) {
+  $ini=@parse_ini_file("java.ini");
+  if(array_key_exists("java.hosts", $ini)) define("JAVA_HOSTS", $ini["java.hosts"]);
+  if(array_key_exists("java.servlet", $ini)) define("JAVA_SERVLET", $ini["java.servlet"]);
+  if(array_key_exists("java.log_level", $ini)) define("JAVA_LOG_LEVEL", $ini["java.log_level"]);
+ }
 
 // Deploy JavaBridge.war and re-start the servlet engine or the
 // application server. The following settings direct PHP to the 
@@ -87,10 +89,11 @@ if(!defined("JAVA_LOG_LEVEL"))
 // sockets. But they are more secure.
 // Example: define("JAVA_PIPE_DIR", "/tmp");
 // Default is to use /dev/shm on Linux, false otherwise.
-if(!defined("JAVA_PIPE_DIR"))
-  define("JAVA_PIPE_DIR", file_exists("/dev/shm") ? "/dev/shm" 
-		 : file_exists("/tmp" ? "/tmp" : null ));
-
+if(!defined("JAVA_PIPE_DIR")) {
+  if (file_exists ("/dev/shm")) define("JAVA_PIPE_DIR", "/dev/shm" );
+  elseif (file_exists ("/tmp")) define("JAVA_PIPE_DIR", "/tmp" );
+  else                          define ("JAVA_PIPE_DIR", null);
+}
 // debug mode
 if(!defined("JAVA_DEBUG")) 
   define("JAVA_DEBUG", false);

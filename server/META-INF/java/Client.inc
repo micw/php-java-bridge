@@ -47,14 +47,17 @@ require_once("${JAVA_BASE}/GlobalRef.inc");
  * @access private
  */
 class java_SimpleFactory {
-  var $client;
+  public $client;
   function java_SimpleFactory($client) {
 	$this->client = $client;
   }
   function getProxy($result, $signature, $wrap) {
-	return $result;
+	if (false) { $signature = $signature; $wrap = $wrap; }
+  	return $result;
   }
-  function checkResult($result) {}
+  function checkResult($result) {
+  	if (false) $result = $result;
+  }
 }
 /**
  * @access private
@@ -105,7 +108,6 @@ class java_ExceptionProxyFactory extends java_SimpleFactory {
 	parent::java_SimpleFactory($client);
   }
   function create($result, $signature) {
-	static $count = 0;
 	return new java_ExceptionProxy($result, $signature);
   }
   function getProxy($result, $signature, $wrap) {
@@ -122,7 +124,8 @@ class java_ThrowExceptionProxyFactory extends java_ExceptionProxyFactory {
 	parent::java_ExceptionProxyFactory($client);
   }
   function getProxy($result, $signature, $wrap) {
-	$proxy = $this->create($result, $signature);
+    if (false) $wrap = $wrap;
+  	$proxy = $this->create($result, $signature);
 	// don't check for $wrap, which may be wrong (type Java instead of
 	// JavaException) when the user has managed to create an exception
 	// from a Java constructor, e.g.: new Java("java.lang.String",
@@ -140,8 +143,8 @@ class java_ThrowExceptionProxyFactory extends java_ExceptionProxyFactory {
  * @access private
  */
 class java_CacheEntry {
-  var $fmt, $signature, $factory, $java;
-  var $resultVoid;
+  public $fmt, $signature, $factory, $java;
+  public $resultVoid;
 
   function java_CacheEntry($fmt, $signature, $factory, $resultVoid) {
 	$this->fmt = $fmt;
@@ -155,10 +158,10 @@ class java_CacheEntry {
  * @access private
  */
 class java_Arg {
-  var $client;
-  var $exception; 				// string representation for php4
-  var $factory, $val;
-  var $signature; // class type
+  public $client;
+  public $exception; 				// string representation for php4
+  public $factory, $val;
+  public $signature; // class type
   
   function java_Arg($client) {
 	$this->client = $client;
@@ -215,10 +218,10 @@ class java_Arg {
  * @access private
  */
 class java_CompositeArg extends java_Arg {
-  var $parentArg;
-  var $idx;						// position within $val;
-  var $type;					// for A and X
-  var $counter;
+  public $parentArg;
+  public $idx;						// position within $val;
+  public $type;					// for A and X
+  public $counter;
 
   function java_CompositeArg($client, $type) {
 	parent::java_Arg($client);
@@ -244,7 +247,7 @@ class java_CompositeArg extends java_Arg {
  * @access private
  */
 class java_ApplyArg extends java_CompositeArg {
-  var $m, $p, $v, $n; 			// see PROTOCOL.TXT
+  public $m, $p, $v, $n; 			// see PROTOCOL.TXT
 
   function java_ApplyArg($client, $type, $m, $p, $v, $n) {
 	parent::java_CompositeArg($client, $type);
@@ -259,7 +262,7 @@ class java_ApplyArg extends java_CompositeArg {
  * @access private
  */
 class java_Handler {
-  var $client;
+  public $client;
   
   function java_Handler($client) {
 	$this->client = $client;
@@ -298,7 +301,7 @@ class java_Handler {
  * @access private
  */
 class java_AsyncHandler extends java_Handler {
-  var $arg;
+  public $arg;
   function java_AsyncHandler($client) {
 	$this->client = $client;
 	$this->arg = $client->simpleArg;
@@ -320,34 +323,34 @@ class java_AsyncHandler extends java_Handler {
  * @access private
  */
 class java_Client /* implements IDocHandler */ {
-  var $RUNTIME;
+  public $RUNTIME;
 
   const RECV_SIZE=8192;
   const SEND_SIZE=8192;
 
-  var $result, $exception;
-  var $parser;
+  public $result, $exception;
+  public $parser;
 
-  var $simpleArg, $compositeArg;
-  var $simpleFactory, 
+  public $simpleArg, $compositeArg;
+  public $simpleFactory, 
 	$proxyFactory, $iteratorProxyFacroty, 
 	$arrayProxyFactory, $exceptionProxyFactory, $throwExceptionProxyFactory;
   
-  var $arg;
-  var $asyncCtx;
-  var $globalRef;
+  public $arg;
+  public $asyncCtx;
+  public $globalRef;
 
-  var $stack;
+  public $stack;
 
   // the cache
-  var $methodCache = array(), $currentCacheKey, $currentArgumentsFormat;
-  var $cachedJavaPrototype;
+  public $methodCache = array(), $currentCacheKey, $currentArgumentsFormat;
+  public $cachedJavaPrototype;
   
   // send buffer
-  var $sendBuffer, $preparedToSendBuffer;
+  public $sendBuffer, $preparedToSendBuffer;
 
   /**@deprecated*/
-  var $defaultHandler, $asyncHandler, $handler;
+  public $defaultHandler, $asyncHandler, $handler;
 
   function java_Client() {
 	$this->RUNTIME = array();
@@ -459,7 +462,8 @@ class java_Client /* implements IDocHandler */ {
 	return hexdec($str);
   }
   function getInexact($str) {
-	sscanf($str, "%e", $val);
+	$val = null;
+  	sscanf($str, "%e", $val);
 	return $val;
   }
   function begin($name, $st) {
