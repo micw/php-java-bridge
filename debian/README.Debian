@@ -3,7 +3,7 @@ php-java-bridge for Debian
 
 This Debian package was compiled for installing php5 C modules, j2ee server, docs and development files using separated packages.
 Also, it must use Sun Java 5, as of today.
-You do not need C implemantation and php J2EE server versions simultaneously.
+You do not need C implementation and php J2EE server versions simultaneously.
 If you use php4, you will have to adjust the /debian/control for your needs and rebuild binary packages.
 Use the command 
 debuild -rfakeroot -uc -us
@@ -77,4 +77,4 @@ The generated files will result at the specified temporary scratchpad working ar
 
 
 
- -- Andre Felipe Machado <af-machado@uol.com.br>  Tue, 09 Apr 2007 09:25:26 -0300
+ -- Andre Felipe Machado <andremachado@techforce.com.br>  Thu, 20 Dec 2007 10:35:26 -0300
