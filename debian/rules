@@ -15,6 +15,23 @@ export DH_VERBOSE=1
 # target rules MUST start at column 1, then followed by ":"
 # actions MUST start after a TAB, not blank spaces
 # builddir for using dh_install for .war files.
+
+# Copyright (C) 2007  Andre Felipe Machado <andremachado@techforce.com.br>
+# et al from Debian Project http://www.debian.org , Joey Hess, Craig Small.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 	BUILDDIR := debian/php-java-bridge
 	DESTDIR := ${CURDIR}/${BUILDDIR}
 	PHP_EXT_DIR := $(shell /usr/bin/php-config --extension-dir)
@@ -198,7 +215,7 @@ binary-arch: build install
 #	dh_installpam -a
 #	dh_installmime -a
 #	dh_python -a
-#	dh_installinit -a
+	dh_installinit -a
 #	dh_installcron -a
 #	dh_installinfo -a
 	dh_installman -a

@@ -1,3 +1,11 @@
+php-java-bridge (4.3.2-1) unstable; urgency=low
+
+  * New upstream development version
+  * Included LSB compatible (needs status command) initscripts for Debian systems
+  * Corrected some miscreated top-level directories bugs
+
+ -- Andre Felipe Machado <andremachado@techforce.com.br>  Thu, 20 Dec 2007 13:14:22 -0200
+
 php-java-bridge (4.3.0-1) unstable; urgency=low
 
   * New upstream development version
