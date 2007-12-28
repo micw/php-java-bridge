@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 4.3.2
+%define version 4.3.3
 %define release 1
 %define PHP_MAJOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | sed 's/\\\..*$//')
 %define PHP_MINOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | LANG=C cut -d. -f2)
@@ -379,4 +379,4 @@ fi
 
 %files devel -f filelist-devel
 %defattr(-,root,root)
-%doc FAQ.html CREDITS README.GNU_JAVA README.MONO+NET ChangeLog README PROTOCOL.TXT COPYING server documentation examples tests.php5 tests.php4 php_java_lib NEWS INSTALL.LINUX INSTALL
+%doc FAQ.html CREDITS README.GNU_JAVA README.MONO+NET ChangeLog README PROTOCOL.TXT COPYING server documentation examples tests.php5 php_java_lib NEWS INSTALL.LINUX INSTALL

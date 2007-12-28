@@ -50,10 +50,6 @@ import php.java.bridge.Util;
  */
 public class PhpScriptEngine extends SimplePhpScriptEngine {
      
-    protected void initialize() {
-      setContext(getPhpScriptContext());
-    }
-
     /**
      * Create a new ScriptEngine with a default context.
      */
@@ -83,6 +79,8 @@ public class PhpScriptEngine extends SimplePhpScriptEngine {
   	setNewContextFactory();
         setName(name);
 
+        IPhpScriptContext ctx = (IPhpScriptContext)getContext(); 
+
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Writer w = new OutputStreamWriter(out);
         Reader localReader = null;
@@ -90,7 +88,7 @@ public class PhpScriptEngine extends SimplePhpScriptEngine {
         int c;
         try {
              /* header: <? require_once("http://localhost:<ourPort>/JavaBridge/java/Java.inc"); ?> */
-            localReader = new StringReader("<?php if(!extension_loaded('java')) {(require_once(\""+getHost()+"/java/Java.inc\"));}?>");
+            localReader = new StringReader("<?php if(!extension_loaded('java')) {(require_once(\""+ctx.getContextString()+"/java/Java.inc\"));}?>");
             try { while((c=localReader.read(buf))>0) w.write(buf, 0, c);} catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not read header", e);}
             try { localReader.close(); localReader=null;} catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not close header", e);}
     

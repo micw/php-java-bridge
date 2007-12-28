@@ -24,25 +24,29 @@ fi
 cp server/JavaBridge.war server/src.zip .
 cp -r php_java_lib tests.php5 server
 
-# mkdir MONO.STANDALONE
-# for i in ICSharpCode.SharpZipLib.dll IKVM.GNU.Classpath.dll IKVM.Runtime.dll MonoBridge.exe; do
-#  cp modules/$i MONO.STANDALONE
-# done
-# cp tests.mono+net/test.php MONO.STANDALONE
-# cp server/META-INF/java/Mono.inc MONO.STANDALONE
-# cp README.MONO+NET MONO.STANDALONE
+mkdir MONO.STANDALONE
+for i in ICSharpCode.SharpZipLib.dll IKVM.GNU.Classpath.dll IKVM.Runtime.dll MonoBridge.exe; do
+ cp modules/$i MONO.STANDALONE
+done
+cp tests.mono+net/test.php tests.mono+net/sample_lib.cs tests.mono+net/sample_lib.dll tests.mono+net/load_assembly.php MONO.STANDALONE
+cp server/META-INF/java/Mono.inc MONO.STANDALONE
+cp README.MONO+NET MONO.STANDALONE
 
 mkdir JAVA.STANDALONE
 for i in JavaBridge.jar javabridge.policy php-script.jar script-api.jar; do
  cp modules/$i JAVA.STANDALONE
 done
 cp test.php JAVA.STANDALONE
+cp examples/bench/exceltest.jar examples/bench/ExcelTest.java examples/bench/excel_antitest.php JAVA.STANDALONE
+sed 's|\.\./\.\./unsupported/||' <examples/bench/bench.php >JAVA.STANDALONE/bench.php
+cp unsupported/poi.jar JAVA.STANDALONE
+cp unsupported/log4j.jar JAVA.STANDALONE
 cp server/META-INF/java/Java.inc JAVA.STANDALONE
 cp INSTALL.STANDALONE JAVA.STANDALONE
 
 mv server documentation
 mv README FAQ.html documentation
-list="JAVA.STANDALONE INSTALL.J2EE INSTALL.J2SE INSTALL.LINUX documentation/API documentation/README documentation/FAQ.html src.zip JavaBridge.war documentation/server/documentation documentation/server/php_java_lib documentation/server/test documentation/server/tests.php5 documentation/server/javabridge.policy"
+list="JAVA.STANDALONE MONO.STANDALONE INSTALL.J2EE INSTALL.J2SE INSTALL.LINUX documentation/API documentation/README documentation/FAQ.html src.zip JavaBridge.war documentation/server/documentation documentation/server/php_java_lib documentation/server/test documentation/server/tests.php5 documentation/server/javabridge.policy"
 find $list -type d -name "CVS" -print | xargs rm -rf
 
 chmod +x JavaBridge.war

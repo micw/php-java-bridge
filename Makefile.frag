@@ -23,7 +23,7 @@ $(srcdir)/mono_inc.c: $(srcdir)/Mono.inc
 
 
 $(srcdir)/Mono.inc: $(srcdir)/JavaRaw.inc
-	cat $(srcdir)/JavaRaw.inc | sed 's/JAVA/MONO/g;s/java/mono/g;s/Java/Mono/g;s/updateJarLibraryPath/updateLibraryPath/;s/^.*do not delete this line.*$$/$$name="cli.".$$name;/;' >$(srcdir)/Mono.inc
+	cat $(srcdir)/JavaRaw.inc | sed -f $(srcdir)/server/append.sed | sed 's/JAVA/MONO/g;s/java/mono/g;s/Java/Mono/g;s/updateJarLibraryPath/updateLibraryPath/;s/^.*do not delete this line.*$$/$$name="cli.".$$name;/;' >$(srcdir)/Mono.inc
 
 
 $(phplibdir)/stamp:

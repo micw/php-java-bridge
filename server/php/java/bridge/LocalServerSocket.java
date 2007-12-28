@@ -43,7 +43,8 @@ class LocalServerSocket implements ISocketFactory {
 	throws IOException {
 	if(name.startsWith("LOCAL:")) name=name.substring(6);
 	this.name=name;
-	if(0==(this.peer=JavaBridge.startNative(logLevel, backlog, name))) throw new IOException("Unix domain sockets not available.");
+	if(Util.IS_MONO || (0==(this.peer=JavaBridge.startNative(logLevel, backlog, name)))) 
+		throw new IOException("Unix domain sockets not available.");
 		
     }
     public void close() throws IOException {

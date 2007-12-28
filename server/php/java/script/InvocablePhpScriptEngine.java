@@ -72,10 +72,6 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
     private static boolean registeredHook = false;
     private static List engines = new LinkedList();
      
-    protected void initialize() {
-      setContext(getPhpScriptContext());
-    }
-
     /**
      * Create a new ScriptEngine with a default context.
      */
@@ -167,6 +163,8 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
   	setNewContextFactory();
         setName(name);
 
+        IPhpScriptContext ctx = (IPhpScriptContext)getContext(); 
+        
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Writer w = new OutputStreamWriter(out);
         Reader localReader = null;
@@ -176,7 +174,7 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
         try {
             /* header: <? require_once("http://localhost:<ourPort>/JavaBridge/java/Java.inc"); ?> */
             // TODO: enable cache globally and remove this
-            localReader = new StringReader("<?php if(!extension_loaded('java')) {if(!defined('JAVA_CACHE_ENABLED'))define('JAVA_CACHE_ENABLED', true);(require_once(\""+getHost()+"/java/Java.inc\"));}?>");
+            localReader = new StringReader("<?php if(!extension_loaded('java')) {(require_once(\""+ctx.getContextString()+"/java/Java.inc\"));}?>");
             try { while((c=localReader.read(buf))>0) w.write(buf, 0, c);} catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not read header", e);}
             try { localReader.close(); } catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not close header", e);}
     
@@ -215,6 +213,7 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
         	try {
         	    Runtime.getRuntime().addShutdownHook(new Util.Thread() {
         		public void run() {
+        		    if (engines==null) return;
         		    synchronized(engines) {
         			for(Iterator ii = engines.iterator(); ii.hasNext(); ii.remove()) {
         			    InvocablePhpScriptEngine e = (InvocablePhpScriptEngine) ii.next();

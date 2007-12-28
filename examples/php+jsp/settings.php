@@ -1,13 +1,14 @@
 <html>
 <?php 
 if(!extension_loaded('java')) require_once("java/Java.inc");
-$CGIServlet = java("php.java.servlet.CGIServlet");
 $Util = java("php.java.bridge.Util");
 $ctx = java_context();
 /* get the current instance of the JavaBridge, ServletConfig and Context */
 $bridge = $ctx->getAttribute(  "php.java.bridge.JavaBridge",      100);
 $config = $ctx->getAttribute ( "php.java.servlet.ServletConfig",  100);
 $context = $ctx->getAttribute( "php.java.servlet.ServletContext", 100);
+$CGIServlet = java("php.java.servlet.PhpCGIServlet");
+$servlet = $ctx->getAttribute( "php.java.servlet.Servlet", 100);
 ?>
 <head>
    <title>PHP/Java Bridge settings</title>
@@ -60,6 +61,7 @@ echo $System->getProperties();<br>
 </table>
 </p>
 <p>
+<?php if (java_instanceof ($servlet, $CGIServlet)) { ?>
 <H2>PhpCGIServlet</H2>
 <p>
 The <code>PhpCGIServlet</code> runs PHP scripts within the J2EE/Servlet engine.
@@ -98,7 +100,7 @@ It starts a PHP FastCGI server, if possible and necessary. Requests for PHP scri
 
 <tr>
 <td>max_requests</td>
-<td><?php $val=java_values($config->getInitParameter("max_requests")); echo $val?$val:"50"?></td>
+<td><?php $val=java_values($servlet->getCGIMaxRequests()); echo $val?$val:"20"?></td>
 <td>How many parallel requests should the servlet engine handle?</td>
 </tr>
 
@@ -117,6 +119,8 @@ It starts a PHP FastCGI server, if possible and necessary. Requests for PHP scri
 
 </table>
 </p>
+
+<?php /* current sevlet is CGIServlet */ } ?>
 
 The settings were taken from the <a href="file://<?php 
 echo java_values($CGIServlet->getRealPath($context, '/WEB-INF/web.xml'))

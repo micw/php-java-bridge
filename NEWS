@@ -3,6 +3,30 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 4.3.3
+
+This release contains bug fixes only. The following "bugs" have
+been fixed:
+
+* The asynchronous protocol can now be used everywhere. Please see
+  examples/bench/bench.php for details.
+
+* The Apache/IIS front end and the tomcat back end can be restarted
+  independently. Tomcat doesn't keep references to old classes when
+  the context is reloaded.
+
+* When gcj is used, dynamic proxies are created by the default
+  classloader. This is necessary because gcj doesn't have a class GC.
+
+* The JSR223 script engines now wait for the SimpleContextFactory to
+  finish. In previous versions the script engines were recycled at the
+  end of the PHP script, not at the end of the PHP to Java
+  communication.
+
+* The old C implementation has been removed. PHP 4 is not supported
+  anymore.
+
+
 Version 4.3.1
 
 * JSP or servlets can now access PHP as follows:

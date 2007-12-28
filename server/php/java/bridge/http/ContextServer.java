@@ -50,7 +50,7 @@ public final class ContextServer implements ContextFactory.ICredentials {
     private PipeContextServer ctx;
     // There's only one  shared SocketContextServer instance, otherwise we have to allocate a new ServerSocket for each web context
     // No secutiry token
-    private static SocketContextServer sock = null; 
+    private  static SocketContextServer sock = null; 
     // One pool for both, the Socket- and the PipeContextServer
     private static final AppThreadPool pool = new AppThreadPool("JavaBridgeContextRunner", Integer.parseInt(Util.THREAD_POOL_MAX_SIZE));
     
@@ -91,6 +91,11 @@ public final class ContextServer implements ContextFactory.ICredentials {
     public void destroy() {
         ctx.destroy();
         if(sock!=null) sock.destroy();
+        ContextFactory.destroyAll();
+	php.java.bridge.SessionFactory.destroyTimer();
+	php.java.bridge.DynamicClassLoader.destroyObserver();
+	pool.destroy();
+	Util.destroy();
     }
 
     /**

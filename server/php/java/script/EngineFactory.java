@@ -3,6 +3,7 @@
 package php.java.script;
 
 import java.net.MalformedURLException;
+
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -33,13 +34,13 @@ import javax.servlet.http.HttpServletResponse;
 public class EngineFactory {
     public static final String ROOT_ENGINE_FACTORY_ATTRIBUTE = EngineFactory.class.getName()+".ROOT";
     public EngineFactory() {}
-    public javax.script.ScriptEngine getScriptEngine(Servlet servlet, 
+    private Object getScriptEngine(Servlet servlet, 
 		     ServletContext ctx, 
 		     HttpServletRequest req, 
 		     HttpServletResponse res) throws MalformedURLException {
 	    return new PhpServletScriptEngine(servlet, ctx, req, res);
     }
-    public javax.script.ScriptEngine getInvocableScriptEngine(Servlet servlet, 
+    private Object getInvocableScriptEngine(Servlet servlet, 
 		     ServletContext ctx, 
 		     HttpServletRequest req, 
 		     HttpServletResponse res) throws MalformedURLException {
@@ -63,7 +64,7 @@ public class EngineFactory {
 								HttpServletRequest req, 
 								HttpServletResponse res) throws 
 								    MalformedURLException, IllegalStateException {
-	return EngineFactory.getRequiredEngineFactory(ctx).getScriptEngine(servlet, ctx, req, res);
+	return (javax.script.ScriptEngine)EngineFactory.getRequiredEngineFactory(ctx).getScriptEngine(servlet, ctx, req, res);
     }
 	    
     public static javax.script.ScriptEngine getInvocablePhpScriptEngine (Servlet servlet, 
@@ -71,7 +72,7 @@ public class EngineFactory {
 									 HttpServletRequest req, 
 									 HttpServletResponse res) throws 
 									     MalformedURLException, IllegalStateException {
-	    return EngineFactory.getRequiredEngineFactory(ctx).getInvocableScriptEngine(servlet, ctx, req, res);
+	    return (javax.script.ScriptEngine)EngineFactory.getRequiredEngineFactory(ctx).getInvocableScriptEngine(servlet, ctx, req, res);
     }
 
 }

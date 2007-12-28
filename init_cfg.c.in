@@ -20,7 +20,6 @@
 
 #include "protocol.h"
 #include "java_bridge.h"
-#include "php_java_snprintf.h"
 
 #ifndef EXTENSION_DIR
 #error EXTENSION_DIR must point to the PHP extension directory
@@ -47,10 +46,6 @@
 #else
 #define CFG_JAVA_HOME "@PHP_JAVA@"
 #endif
-#endif
-
-#ifndef BRIDGE_VERSION
-#define BRIDGE_VERSION "@BRIDGE_VERSION@"
 #endif
 
 const char * const EXT_GLOBAL (bridge_version) = BRIDGE_VERSION;

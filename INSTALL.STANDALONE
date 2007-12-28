@@ -1,18 +1,31 @@
 Overview
 --------
 
-This document describes how to call out to a non-J2EE
-application. Please see the INSTALL.J2SE document for details how to
-call PHP methods from Java. Please see the INSTALL.J2EE document for
-details how to embed PHP into a pure J2EE application server or how to
-call Java/J2EE methods from PHP.
+This document describes how to call a non-J2EE application. Please see
+the INSTALL.J2SE document for details how to call PHP methods from
+Java. Please see the INSTALL.J2EE document for details how to embed
+PHP into a pure J2EE application server or how to call Java/J2EE
+methods from PHP.
 
-Install the back end into your non-J2EE application
----------------------------------------------------
+Development
+-----------
 
-* Extract the JavaBridge.jar library, for example with the command:
+* Right-click on log4j.jar and select "open with Java ..."
 
-   java -jar JavaBridge.war
+* Right-click on JavaBridge.jar and select "open with Java ...". In
+  the "Starting ..." dialog select SERVLET_LOCAL:8080.
+
+* Run your PHP scripts. For example browse to http://127.0.0.1:8080
+  and click on test.php.
+
+
+Deployment
+----------
+
+* Extract the JavaBridge.jar library from JavaBridge.war, for example
+  with the command:
+
+   java -classpath JavaBridge.war TestInstallation
    
 * Add the following 3 lines to the main class of your non-J2EE
 application:
@@ -43,6 +56,23 @@ Call your Java methods from PHP
     $myClass = new java("com.my.non.j2ee.application.MyClass");
     $myClass->myMethod(...);
     ?>
+
+
+Logging
+-------
+
+* Download and copy log4j.jar to java.ext.dirs. Example for JDK 1.6 on
+  Linux:
+
+  mkdir -p /usr/java/packages/lib/ext
+  cp log4j.jar /usr/java/packages/lib/ext
+
+* Start the log4j viewer. For example with the command:
+
+  /usr/java/default/bin/java org.apache.log4j.chainsaw.Main
+
+* Restart the standalone application. The log appears in the log4j
+  window.
 
 
 * Please report bugs/problems to the mailing list:

@@ -13,6 +13,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
 
+import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
 import javax.servlet.Servlet;
@@ -56,18 +57,37 @@ public class PhpServletScriptEngine extends PhpScriptEngine {
     protected File path;
     protected URL url;
    
+    protected PhpSimpleHttpScriptContext scriptContext;
+    
     public PhpServletScriptEngine(Servlet servlet, 
 				  ServletContext ctx, 
 				  HttpServletRequest req, 
 				  HttpServletResponse res) throws MalformedURLException {
+	super ();
+
 	this.servlet = servlet;
 	this.servletCtx = ctx;
 	this.req = req;
 	this.res = res;
 	    
+	scriptContext.initialize(servlet, servletCtx, req, res);
+
 	url = new java.net.URL((req.getRequestURL().toString()));
 	path = new File(CGIServlet.getRealPath(ctx, ""));
     }
+
+    protected ScriptContext getPhpScriptContext() {
+        Bindings namespace;
+        scriptContext = new PhpSimpleHttpScriptContext();
+        
+        namespace = createBindings();
+        scriptContext.setBindings(namespace,ScriptContext.ENGINE_SCOPE);
+        scriptContext.setBindings(getBindings(ScriptContext.GLOBAL_SCOPE),
+				  ScriptContext.GLOBAL_SCOPE);
+        
+        return scriptContext;
+    }    
+
     /**
      * Create a new context ID and a environment map which we send to the client.
      *
@@ -85,7 +105,7 @@ public class PhpServletScriptEngine extends PhpScriptEngine {
 	StringBuffer buf = new StringBuffer("h:");
 	buf.append(Util.getHostAddress());
 	buf.append(':');
-	buf.append(PhpScriptContext.getHttpServer().getSocket().getSocketName());
+	buf.append(context.getSocketName());
 	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS",buf.toString());
 
     }

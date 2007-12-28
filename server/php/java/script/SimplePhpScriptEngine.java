@@ -174,9 +174,8 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
 	StringBuffer buf = new StringBuffer("h:");
 	buf.append(Util.getHostAddress());
 	buf.append(':');
-	buf.append(PhpScriptContext.getHttpServer().getSocket().getSocketName());
+	buf.append(context.getSocketName());
 	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS",buf.toString());
-
     }
 
     protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
@@ -298,21 +297,20 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
         
         return scriptContext;
     }    
-  
-    protected String getHost() {
-	StringBuffer buf = new StringBuffer("http://127.0.0.1:");
-	buf.append(PhpScriptContext.getHttpServer().getSocket().getSocketName());
-	buf.append("/JavaBridge");
-	return buf.toString();
-    }
-    
+
     /**
      * Release the continuation
+ * @throws InterruptedException 
      */
     public void release() {
 	if(continuation != null) {
+	    try {
+		continuation.release();
+	        ctx.waitFor();
+	    } catch (InterruptedException e) {
+		    return;
+	    }
 	    ctx.removeOrphaned(); ctx = null;
-	    continuation.release();
 	    continuation = null;
 	    script = null;
 	    scriptClosure = null;

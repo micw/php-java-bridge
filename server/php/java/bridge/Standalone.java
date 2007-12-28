@@ -156,9 +156,9 @@ public class Standalone {
 	    } catch (Throwable t) {
 		t.printStackTrace();
 	    }
-	    if(s.length==0) {
+	    if(s.length==0 && !Util.IS_MONO) {
 		try {
-		    int freeJavaPort = findFreePort(Util.JAVA_TCP_PORT_BASE);
+		    int freeJavaPort = findFreePort(Util.EXTENSION_TCP_PORT_BASE);
 		    int freeHttpPort = findFreePort(Util.HTTP_PORT_BASE);
 		    Object result = JOptionPane. showInputDialog(null,
 			    "Start a socket listener on port", "Starting the PHP/Java Bridge ...", JOptionPane.QUESTION_MESSAGE, null,
@@ -168,6 +168,11 @@ public class Standalone {
 		       if(result==null) System.exit(0);
 		      sockname  = result.toString();
 		} catch (Throwable t) {/*ignore*/}
+	    }
+
+	    if(s.length==0) {
+		// do not access Util unless invoked as standalone component
+		TCPServerSocket.TCP_PORT_BASE=Integer.parseInt(Util.TCP_SOCKETNAME);
 	    }
 	    checkServlet(logLevel, sockname, s);
 	    ISocketFactory socket = bind(logLevel, sockname);
@@ -219,7 +224,7 @@ public class Standalone {
 	} catch (Throwable t) {/*ignore*/}
 	try { // Hack for Unix: execute the standalone container using the default SUN VM
 	    if(s.length==0 && (new File("/usr/java/default/bin/java")).exists() && checkGNUVM() && (System.getProperty("php.java.bridge.exec_sun_vm", "true").equals("true"))) {
-		Process p = Runtime.getRuntime().exec(new String[] {"/usr/java/default/bin/java", "-Dphp.java.bridge.exec_sun_vm=false", "-classpath", System.getProperty("java.class.path"), "php.java.bridge.Standalone"});
+		Process p = Runtime.getRuntime().exec(new String[] {"/usr/java/default/bin/java", "-Dphp.java.bridge.exec_sun_vm=false", "-classpath", System.getProperty("java.class.path"), "php.java.bridge.Standalone"}, null, Util.getCanonicalWindowsFile(""));
 		if(p != null) System.exit(p.waitFor());
 	    }
 	} catch (Throwable t) {/*ignore*/}

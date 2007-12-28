@@ -12,6 +12,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
 
+import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
 import javax.servlet.Servlet;
@@ -52,6 +53,8 @@ public class InvocablePhpServletScriptEngine extends InvocablePhpScriptEngine {
     protected HttpServletRequest req;
     protected HttpServletResponse res;
     
+    protected PhpSimpleHttpScriptContext scriptContext;
+
     private File path;
     private URL url;
     private File tempfile = null;
@@ -60,10 +63,15 @@ public class InvocablePhpServletScriptEngine extends InvocablePhpScriptEngine {
 					   ServletContext ctx, 
 					   HttpServletRequest req, 
 					   HttpServletResponse res) throws MalformedURLException {
+	super();
+
 	this.servlet = servlet;
 	this.servletCtx = ctx;
 	this.req = req;
 	this.res = res;
+
+	scriptContext.initialize(servlet, servletCtx, req, res);
+	
 	File tempfile= new File("java/JavaProxy.php");
 	url = new java.net.URL((req.getRequestURL().toString()));
 	String filePath = (new File(new File(url.getFile()).getParentFile(), 
@@ -75,6 +83,17 @@ public class InvocablePhpServletScriptEngine extends InvocablePhpScriptEngine {
 
 	path = new File(CGIServlet.getRealPath(ctx, ""));
     }
+    protected ScriptContext getPhpScriptContext() {
+	        Bindings namespace;
+	        scriptContext = new PhpSimpleHttpScriptContext();
+	        
+	        namespace = createBindings();
+	        scriptContext.setBindings(namespace,ScriptContext.ENGINE_SCOPE);
+	        scriptContext.setBindings(getBindings(ScriptContext.GLOBAL_SCOPE),
+					  ScriptContext.GLOBAL_SCOPE);
+	        
+	        return scriptContext;
+	    }    
     /**
      * Create a new context ID and a environment map which we send to the client.
      *
@@ -92,7 +111,7 @@ public class InvocablePhpServletScriptEngine extends InvocablePhpScriptEngine {
 	StringBuffer buf = new StringBuffer("h:");
 	buf.append(Util.getHostAddress());
 	buf.append(':');
-	buf.append(PhpScriptContext.getHttpServer().getSocket().getSocketName());
+	buf.append(context.getSocketName());
 	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS",buf.toString());
 	env.put("X_JAVABRIDGE_INCLUDE", tempfile.getPath());
     }

@@ -24,11 +24,11 @@ package php.java.servlet;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import php.java.bridge.ISession;
 import php.java.bridge.http.IContext;
@@ -41,39 +41,44 @@ import php.java.bridge.http.IContext;
  * @see php.java.bridge.http.ContextFactory
  * @see php.java.bridge.http.ContextServer
  */
-public class RemoteServletContextFactory extends AbstractServletContextFactory {
-    protected RemoteServletContextFactory(Servlet servlet, ServletContext ctx, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res) {
-	super(servlet, ctx, proxy, req, res);
-    }
+public class AbstractServletContextFactory extends php.java.bridge.http.SimpleContextFactory {
+    protected HttpServletRequest proxy, req;
+    protected HttpServletResponse res;
+    protected ServletContext kontext;
+    protected Servlet servlet;
 
+    protected AbstractServletContextFactory(Servlet servlet, ServletContext ctx, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res) {
+    	super(CGIServlet.getRealPath(ctx, ""));
+    	this.kontext = ctx;
+    	this.proxy = proxy;
+    	this.req = req;
+    	this.res = res;
+    	this.servlet = servlet;
+    }
+    
     /**
-     * Set the HttpServletRequest for session sharing.
-     *  @param req The HttpServletRequest
+     * Set the HttpServletRequest for session sharing. This implementation does nothing, the proxy must have been set in the constructor.
+     * @see php.java.servlet.RemoteServletContextFactory#setSessionFactory(HttpServletRequest) 
+     * @param req The HttpServletRequest
      */
     protected void setSessionFactory(HttpServletRequest req) {
-    	this.proxy = req;
     }
-
     public ISession getSession(String name, boolean clientIsNew, int timeout) {
-	if(session!=null) return session;
+	if(session != null) return session;
 	 // if name != null return a "named" php session which is not shared with jsp
 	if(name!=null) return session = visited.getSimpleSession(name, clientIsNew, timeout);
 	
     	if(proxy==null) throw new NullPointerException("This context "+getId()+" doesn't have a session proxy.");
-	return session = new RemoteHttpSessionFacade(this, kontext, proxy, res, clientIsNew, timeout);
+	return session = new HttpSessionFacade(this, kontext, proxy, res, clientIsNew, timeout);
     }
     
-    /**
-     * Create and add a new ContextFactory.
-     * @param req The HttpServletRequest
-     * @param res The HttpServletResponse
-     * @return The created ContextFactory
-     */
-    public static RemoteServletContextFactory addNew(Servlet servlet, ServletContext kontext, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res) {
-        RemoteServletContextFactory ctx = new RemoteServletContextFactory(servlet, kontext, proxy, req, res);
-    	return ctx;
+    public synchronized void destroy() {
+    	super.destroy();
+    	proxy=null;
     }
-    
+    public String toString() {
+	return super.toString() + ", HttpServletRequest: " + proxy ;
+    }
     /**
      * Return an emulated JSR223 context.
      * @return The context.
@@ -85,9 +90,16 @@ public class RemoteServletContextFactory extends AbstractServletContextFactory {
 	ctx.setAttribute(IContext.SERVLET_CONFIG, servlet.getServletConfig(), IContext.ENGINE_SCOPE);
 	ctx.setAttribute(IContext.SERVLET, servlet, IContext.ENGINE_SCOPE);
 
-	ctx.setAttribute(IContext.SERVLET_REQUEST, new RemoteHttpServletRequest(this, req), IContext.ENGINE_SCOPE);
-	ctx.setAttribute(IContext.SERVLET_RESPONSE, new RemoteHttpServletResponse(), IContext.ENGINE_SCOPE);
-	
+	ctx.setAttribute(IContext.SERVLET_REQUEST, req, IContext.ENGINE_SCOPE);
+	ctx.setAttribute(IContext.SERVLET_RESPONSE, new SimpleHttpServletResponse(res), IContext.ENGINE_SCOPE);
 	return ctx;
+    }
+
+    /**
+     * Return the http session handle or null;
+     */
+    public HttpSession getSession() {
+	if(session!=null) return ((HttpSessionFacade)session).getCachedSession();
+	return null;
     }
 }

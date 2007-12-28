@@ -321,19 +321,30 @@ public class DynamicClassLoader extends SecureClassLoader {
 	    start();
 	}
 	public void run() {
+            if (Util.logLevel>5) 
+        	    System.out.println ("lifecycle: init observer "+System.identityHashCode(DynamicClassLoader.class));
+
 	    try {
-		while (true) {
+		while (!interrupted()) {
 		    DynamicClassLoader.DeleteTempFileAction action = 
 			(DynamicClassLoader.DeleteTempFileAction) DynamicClassLoader.TEMP_FILE_QUEUE.remove();
 		    action.command();
 		    DELETE_TEMP_FILE_ACTIONS.remove(action);
 		}
             } catch (InterruptedException e) {
-	        e.printStackTrace();
-            }
+		if (Util.logLevel>5) 
+			System.out.println ("lifecycle: observer got interrupt"+System.identityHashCode(SessionFactory.class));
+	    }
+            if (Util.logLevel>5) 
+        	    System.out.println ("lifecycle: observer terminating "+System.identityHashCode(DynamicClassLoader.class));
 	}
     }
     static final TempFileObserver THE_TEMP_FILE_OBSERVER = new TempFileObserver("JavaBridgeTempFileObserver");
+    /** Destroy the temp file observer. Should be called before the
+     * class is unloaded (in servlet.destroy() for example). */
+    public static final void destroyObserver() {
+	THE_TEMP_FILE_OBSERVER.interrupt();
+    }
     /** delete all temp files created for this class loader entry */
     private static class DeleteTempFileAction extends SoftReference {
 	List handlers;

@@ -19,7 +19,7 @@
  * ContextFactories and 5 CGIRunners.
  */
 
-if (!extension_loaded('java')) {
+if (!function_exists("java_get_base") && !extension_loaded('java')) {
   if (!(require_once("http://127.0.0.1:8080/JavaBridge/java/Java.inc"))) {
     echo "java extension not installed.";
     exit(2);
@@ -30,7 +30,8 @@ if (!extension_loaded('java')) {
  * failed, start main().
  */
 $IRunnable = new JavaClass("java.lang.Runnable");
-java_context()->call(java_closure(new Runnable(), null, $IRunnable)) || main();
+java_context()->call(java_closure(new Runnable(), null, $IRunnable));
+if (!java_context()->getAttribute("name", 100)) main();
 
 /**
  * This class implements IRunnable. Its run method is called by each
@@ -62,9 +63,9 @@ class Runnable {
 function createRunnable($nr, $name) {
   global $IRunnable;
   $r = new Java("php.java.script.InvocablePhpScriptEngine");
+  $r->put("name", $name);
   $r->eval(new Java("java.io.FileReader", $name));
   $r->put("nr", $nr);
-  $r->put("name", $name);
   $r->put("thread",new java("java.lang.Thread",$r->getInterface($IRunnable)));
   return $r;
 }
@@ -75,9 +76,13 @@ function createRunnable($nr, $name) {
  */
 function main() {
   $count = 5;
-  $argv = ($_SERVER['argv']); 
-  $name = realpath($argv[0]);
-  unlink("${name}.out");
+  if (array_key_exists("argv", $_SERVER)) {
+    $argv = ($_SERVER['argv']); 
+    $name = realpath($argv[0]);
+  } else {
+    $name = $_SERVER["SCRIPT_FILENAME"];
+  }
+  @unlink("${name}.out");
   $here = dirname($name);
   // make sure php-script.jar and script-api.jar are in the classpath
   //java_require("$here/../modules/php-script.jar;$here/../modules/script-api.jar");
@@ -92,7 +97,7 @@ function main() {
     $runnables[$i]->get("thread")->join();
     $runnables[$i]->release(); // release the PHP continuation
   }
-  $result = system('cat '.${name}.'.out | sed "s/./&\n/g" |sort | uniq -c | tr -d " \n"');
+  $result = system('cat '.$name.'.out | sed "s/./&\n/g" |sort | uniq -c | tr -d " \n"');
   echo "\n";
   if($result!="101102103104105") die($result);
 

@@ -84,12 +84,12 @@ class Parser {
 	}
 	return OK; 
     }
-    /* On Windogs PHP doesn't properly close a persistent stream. Avoid printing a "connection reset" exception. */
-    private static int read(InputStream in, byte[] buf2, int j, int recv_size2) throws IOException {
+     private static int read(InputStream in, byte[] buf2, int j, int recv_size2) throws IOException {
 	try {
 	    return in.read(buf2, j, recv_size2);
 	} catch (SocketException e) {
-	    if(Util.logLevel>4) Util.printStackTrace(e);
+	    // may happen if we reload the context and destroy the socket
+	    if(Util.logLevel>5) Util.printStackTrace(e);
 	    return -1;
 	}
     }

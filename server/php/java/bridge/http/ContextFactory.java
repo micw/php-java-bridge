@@ -188,10 +188,8 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     }
     
     /*
-     * The pure PHP bridge implementation is used, it uses a persistent connection to the servlet and obtains the (persistent) context+bridge from there. (both cases: apache and PhpCgiServlet)
-     * As of version 4.1.6 this code doesn't support the C front end anymore. It will be rewritten so that it uses the same path as the pure PHP implementation.
-     * (non-Javadoc)
-     * @see php.java.bridge.http.IContextFactory#recycle(php.java.bridge.http.ContextFactory)
+     * Attach the new factory to the persistent one
+     * @factory The fresh factory from the servlet
      */ 
     private void switchContext(ContextFactory factory) {	
 	JavaBridge bridge = getBridge();
@@ -230,27 +228,26 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     /**
      * Recycle the factory for new reqests.
      */    
-    public synchronized void recycle() {
+    public void recycle() {
 	if(Util.logLevel>=4) Util.logDebug("contextfactory: finish context called (recycle context factory) " + this.visitor);
 	super.recycle();
 	visitor.recycle();
 	invalid=true;
+	visitor.invalidate();
 	
 	if(bridge!=null) 
 	    bridge.getClassLoader().switcheThreadContextClassLoader();
-	
-	notify();
     }
     
     /* (non-Javadoc)
      * @see php.java.bridge.http.IContextFactory#destroy()
      */
-    public synchronized void destroy() {
+    public void destroy() {
 	if(Util.logLevel>4) Util.logDebug("contextfactory: context destroyed (remove context factory): " +visitor);
 	remove(getId());
 	bridge=null;
 	invalid=true;
-	notify();
+	visitor.invalidate();
    }
     
     private boolean isInitialized() {
@@ -274,10 +271,8 @@ public final class ContextFactory extends SessionFactory implements IContextFact
         for(Iterator ii=contexts.values().iterator(); ii.hasNext();) {
 	    ContextFactory ctx = ((ContextFactory)ii.next());
 	    if(ctx.timestamp+ORPHANED_TIMEOUT<timestamp) {
-	        synchronized(ctx) {
-	            ctx.invalid=true;
-	            ctx.notify();
-	        }
+		ctx.invalid=true;
+	        ctx.visitor.invalidate();
 	        if(Util.logLevel>4) Util.logDebug("contextfactory: Orphaned context: " + ctx.visitor + " removed.");
 	        ii.remove();
 	    }
@@ -289,34 +284,31 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * @see php.java.bridge.http.ContextServer
      */
     public static synchronized void destroyAll() {
-	destroyOrphaned();
+        for(Iterator ii=contexts.values().iterator(); ii.hasNext();) {
+	    ContextFactory ctx = ((ContextFactory)ii.next());
+	    ctx.invalid=true;
+	    ctx.visitor.invalidate();
+	    if(Util.logLevel>4) Util.logDebug("contextfactory: Orphaned context: " + ctx.visitor + " removed.");
+	    ii.remove();
+	}
 	for(Iterator ii=contexts.values().iterator(); ii.hasNext();) {
 	    ContextFactory ctx = ((ContextFactory)ii.next());
-	    synchronized(ctx) {
-		ctx.invalid=true;
-		ctx.notify();
-	    }
+	    ctx.invalid=true;
+	    ctx.visitor.invalidate();
 	    ii.remove();
 	}
     }
-    
     /* (non-Javadoc)
      * @see php.java.bridge.http.IContextFactory#waitFor()
      */
-    public synchronized void waitFor() throws InterruptedException {
-	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet is waiting for ContextFactory " +visitor);
-	if(invalid) throw new IllegalStateException("waitFor");
-    	wait();
-	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet done waiting for ContextFactory " +visitor);
-   }
+    public void waitFor() throws InterruptedException {
+	    visitor.waitFor();
+    }
     /* (non-Javadoc)
      * @see php.java.bridge.http.IContextFactory#waitFor()
      */
-    public synchronized void waitFor(long timeout) throws InterruptedException {
-	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet is waiting for ContextFactory " +visitor + " for " +timeout+" ms");
-	if(invalid) throw new IllegalStateException("waitFor");
-	wait(timeout);
-	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet done waiting for ContextFactory " +visitor+ " for " +timeout+" ms");
+    public void waitFor(long timeout) throws InterruptedException {
+	    visitor.waitFor(timeout);
     }
     /* (non-Javadoc)
      * @see php.java.bridge.http.IContextFactory#getId()

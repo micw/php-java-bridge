@@ -71,7 +71,6 @@ public class ConnectionPool {
     private Factory factory;
     private int maxRequests;
     private ChannelName channelName;
-    
     /**
      * Represents the connection kept by the pool.
      * 

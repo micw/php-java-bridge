@@ -33,7 +33,7 @@ import java.net.Socket;
 // The default path should only load the Standalone and the Socket classes
 class TCPServerSocket implements ISocketFactory {
 
-    private static final int TCP_PORT_BASE=9267; //try to find a free port in the range 9267, ..., 9366
+    static int TCP_PORT_BASE=9267; //try to find a free port in the range 9267, ..., 9366
     private ServerSocket sock;
     private int port;
     boolean local;

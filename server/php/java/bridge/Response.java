@@ -322,14 +322,35 @@ public class Response {
 	    return true;
 	}
     }
-    protected class AsyncWriter extends Writer {
-	public void setResultProcedure(long object, String cname, String name, Object[] args) {
-	    throw new IllegalStateException("Cannot call "+name+": callbacks not allowed in stream mode");
-	}
+    /** Writer used by the async protocol. It always returns <V ...> or <O ...>, even for NULL, Class or Exception values. 
+     * When the client-side cache is enabled, the client will select an Async or AsyncVoidWriter in the next call. */
+    protected class ObjectWriter extends Writer {
 	public void setResultException(Throwable o, String str) {
 	    setResultObject(bridge.lastAsyncException = o);
 	}
 	public void setResultObject(Object value) {
+	    if(staticType == java.lang.Void.TYPE)  { writeVoid(); return; }
+
+	    if(value==null) value=Request.PHPNULL;
+ 	    writeObject(value);
+	}
+	public void setResultClass(Class value) {
+	    if(value==null) value=Request.PhpNull.class; // shouldn't happen
+	    writeClass(value);
+	}
+	public boolean setResult(Object value) { 
+	    setResultObject(value);
+	    return true;
+	}
+    }
+    /** Writer used by the async protocol. It writes nothing but stores the result in global ref*/
+    protected class AsyncWriter extends Writer {
+	public void setResultException(Throwable o, String str) {
+	    setResultObject(bridge.lastAsyncException = o);
+	}
+	public void setResultObject(Object value) {
+	    if(staticType == java.lang.Void.TYPE)  throw new IllegalStateException ("Use the AsyncVoidWriter instead");
+	    
  	    if(value==null) value=Request.PHPNULL;
  	    if(bridge.logLevel>=4) {
 		writeObject(value);
@@ -359,7 +380,8 @@ public class Response {
      	    reset();
 	}
     }
-    protected final class AsyncNullWriter extends Writer {
+    /** Writer used by the async protocol. It writes nothing and doesn't create a result */
+    protected final class AsyncVoidWriter extends Writer {
 	public void setResultProcedure(long object, String cname, String name, Object[] args) {
 	    throw new IllegalStateException("Cannot call "+name+": callbacks not allowed in stream mode");
 	}
@@ -377,11 +399,6 @@ public class Response {
             }
      	    reset();
 	}	
-    }
-    protected final class PersistentAsyncWriter extends AsyncWriter {
-	public void reset() {
-	    buf.reset();
-	}
     }
  	
     protected class CoerceWriter extends Writer {
@@ -447,7 +464,7 @@ public class Response {
      
     private WriterWithDelegate defaultWriter;
     private Writer writer, currentWriter, arrayValuesWriter=null, arrayValueWriter=null, coerceWriter=null; 
-    private Writer asyncWriter=null, asyncNullWriter=null, persistentAsyncWriter = null;
+    private Writer asyncWriter=null, asyncVoidWriter=null, objectWriter = null;
 
     protected HexOutputBuffer createBase64OutputBuffer() {
 	return new Base64OutputBuffer(bridge);
@@ -497,13 +514,7 @@ public class Response {
     public void setResultException(Throwable value, String asString) {
      	writer.setResultException(value, asString);
     }
-    /**
-      * Set the result packet.
-      * @param value The result object.
-      */
-    public void setResultObject(Object value) {
-     	writer.setResultObject(value);
-    }
+
     /**
       * Set the result packet.
       * @param value The result object.
@@ -562,16 +573,16 @@ public class Response {
      * Used by async. protocol.
      * @return The async. writer
      */
-    public Writer setAsyncNullWriter() {
-	return writer = getAsyncNullWriter();
+    public Writer setAsyncVoidWriter() {
+	return writer = getAsyncVoidWriter();
     }
     /**
-     * Selects a specialized writer which does not write anything.
-     * Used by async. protocol. This writer will not be reset at the end of the script.
+     * Selects a specialized writer which always writes <O ...> or <V ..>, even for NULL, Class and Exception values.
+     * This triggers the client cache so that it selects the AsyncNull or AsyncWriter.
      * @return The async. writer
      */
-    public Writer setPersistentAsyncWriter() {
-	return currentWriter = getPersistentAsyncWriter();
+    public Writer setObjectWriter() {
+	return currentWriter = getObjectWriter();
     }
     /**
      * Selects the default writer
@@ -769,16 +780,16 @@ public class Response {
         if(coerceWriter==null) return coerceWriter = new CoerceWriter();
         return coerceWriter;
     }
-    private Writer getPersistentAsyncWriter() {
-	if(persistentAsyncWriter==null) return persistentAsyncWriter = new PersistentAsyncWriter();
-	return persistentAsyncWriter;
+    private Writer getObjectWriter() {
+	if(objectWriter==null) return objectWriter = new ObjectWriter();
+	return objectWriter;
     }
     private Writer getAsyncWriter() {
 	if(asyncWriter==null) return asyncWriter = new AsyncWriter();
 	return asyncWriter;
     }
-    private Writer getAsyncNullWriter() {
-	if(asyncNullWriter==null) return asyncNullWriter = new AsyncNullWriter();
-	return asyncNullWriter;
+    private Writer getAsyncVoidWriter() {
+	if(asyncVoidWriter==null) return asyncVoidWriter = new AsyncVoidWriter();
+	return asyncVoidWriter;
     }
 }

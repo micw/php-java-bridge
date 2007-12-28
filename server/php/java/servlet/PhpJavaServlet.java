@@ -30,13 +30,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import php.java.bridge.ILogger;
 import php.java.bridge.JavaBridge;
 import php.java.bridge.Request;
 import php.java.bridge.Util;
@@ -69,6 +67,8 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     private ContextServer contextServer;
     protected int logLevel = -1;
     
+    private static Object illegalStateTest = new Object();
+    
     /**
      * If you want to use the HTTP tunnel , set the
      * following flag to false and remove the &lt;distributable/&gt from
@@ -77,26 +77,15 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
      */
     public static final boolean IS_DISTRIBUTABLE = true;
     
-    protected static class Logger implements ILogger {
-	private ServletContext ctx;
-	protected Logger(ServletContext ctx) {
-	    this.ctx = ctx;
-	}
-	public void log(int level, String s) {
-	    if(Util.logLevel>5) System.out.println(s);
-	    ctx.log(s); 
-	}
-	public void printStackTrace(Throwable t) {
-	    //ctx.log("", t);
-	    if(Util.logLevel>5) t.printStackTrace();
-	}
-	public void warn(String msg) {
-	    ctx.log(msg);
-	}
-     }
-    
     /**@inheritDoc*/
     public void init(ServletConfig config) throws ServletException {
+	if (illegalStateTest == null) {
+	    String msg = "FATAL ERROR: You're trying to recycle a destroyed servlet. Please unload this class!";
+	    System.err.println (msg);
+	    log (msg);
+	    throw new ServletException (msg);
+	}
+	
  	String value;
         try {
 	    value = config.getInitParameter("servlet_log_level");
@@ -133,6 +122,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     public void destroy() {
       	contextServer.destroy();
     	super.destroy();
+    	illegalStateTest = null;
     }
     /**
      * This hook can be used to create a custom context factory. The default implementation checks if there's a ContextFactory 
@@ -144,11 +134,11 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
      * @param credentials The provided credentials.
      * @return The (new) ServletContextFactory.
      */
-    protected ServletContextFactory getContextFactory(HttpServletRequest req, HttpServletResponse res, ContextFactory.ICredentials credentials) {
+    protected AbstractServletContextFactory getContextFactory(HttpServletRequest req, HttpServletResponse res, ContextFactory.ICredentials credentials) {
     	JavaBridge bridge;
-	ServletContextFactory ctx = null;
+	AbstractServletContextFactory ctx = null;
     	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
-    	if(id!=null) ctx = (ServletContextFactory) ContextFactory.get(id, credentials);
+    	if(id!=null) ctx = (AbstractServletContextFactory) ContextFactory.get(id, credentials);
     	if(ctx==null) {
     	  ctx = RemoteServletContextFactory.addNew(this, getServletContext(), null, req, res); // no session sharing
     	  bridge = ctx.getBridge();
@@ -179,7 +169,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
      * and to wait RemoteContextFactory for 30 seconds.</p>
      * @param ctx The (Remote-) ContextFactory.
      */
-    protected void waitForContext(ServletContextFactory ctx) {
+    protected void waitForContext(AbstractServletContextFactory ctx) {
 	try {
 	    ctx.waitFor(MAX_WAIT);
         } catch (InterruptedException e) {
@@ -209,7 +199,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 			"Either enable the Pipe- or SocketContextServer or remove the distributable flag from PhpJavaServlet and WEB-INF/web.xml.");
 
 	InputStream in; ByteArrayOutputStream out;
-	ServletContextFactory ctx = getContextFactory(req, res, contextServer.getCredentials(channel));
+	AbstractServletContextFactory ctx = getContextFactory(req, res, contextServer.getCredentials(channel));
 	JavaBridge bridge = ctx.getBridge();
 	ctx.setSessionFactory(req);
 
@@ -247,7 +237,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     protected void handleLocalConnection (HttpServletRequest req, HttpServletResponse res, String channel)
 	throws ServletException, IOException {
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
-	ServletContextFactory ctx = getContextFactory(req, res, null);
+	AbstractServletContextFactory ctx = getContextFactory(req, res, null);
 	JavaBridge bridge = ctx.getBridge();
 	ctx.setSessionFactory(req);
 	

@@ -24,15 +24,16 @@ package php.java.script;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.io.IOException;
+import java.io.Reader;
 import java.io.Writer;
 
-import javax.script.SimpleScriptContext;
+import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import php.java.bridge.PhpProcedureProxy;
 import php.java.bridge.http.IContext;
 
 
@@ -42,21 +43,13 @@ import php.java.bridge.http.IContext;
  * @author jostb
  *
  */
-public class PhpSimpleHttpScriptContext extends SimpleScriptContext implements IContext, IPhpScriptContext {
-
-    /** Integer value for the level of SCRIPT_SCOPE */
-    public static final int REQUEST_SCOPE = 0;
-    
-    /** Integer value for the level of SESSION_SCOPE */   
-    public static final int SESSION_SCOPE = 150;
-    
-    /** Integer value for the level of APPLICATION_SCOPE */
-    public static final int APPLICATION_SCOPE = 175;
+public class PhpSimpleHttpScriptContext extends AbstractPhpScriptContext implements IContext, IPhpScriptContext {
 
     protected HttpServletRequest request;
     protected HttpServletResponse response;
     protected ServletContext context;
-
+    protected Servlet servlet;
+    
     /**
      * Initialize the context.
      * @param ctx The ServletContext
@@ -65,13 +58,14 @@ public class PhpSimpleHttpScriptContext extends SimpleScriptContext implements I
      * @param writer The PhpScriptWriter
      * @throws ServletException
      */
-    public void initialize(ServletContext ctx,
+    public void initialize(Servlet servlet,
+		    	   ServletContext ctx,
 			   HttpServletRequest req,
-			   HttpServletResponse res, PhpScriptWriter writer) throws ServletException {
+			   HttpServletResponse res) {
 	this.context = ctx;
 	this.request = req;
 	this.response = res;
-	this.writer = writer;
+	this.servlet = servlet;
     }
 
     public Object getAttribute(String key, int scope){
@@ -117,19 +111,6 @@ public class PhpSimpleHttpScriptContext extends SimpleScriptContext implements I
 	    super.setAttribute(key, value, scope);    
 	}
     }
-    /** {@inheritDoc} */
-   public Writer getWriter() {
-	if(writer == null) writer =  super.getWriter ();
-	if(! (writer instanceof PhpScriptWriter)) setWriter(writer);
-	return writer;
-   }
-
-   /** {@inheritDoc} */
-   public Writer getErrorWriter() {
-	if(errorWriter == null) errorWriter = super.getErrorWriter ();
-	if(! (errorWriter instanceof PhpScriptWriter)) setErrorWriter(errorWriter);
-	return errorWriter;	
-   }
 		
     /**
      * Get the servlet response
@@ -155,38 +136,65 @@ public class PhpSimpleHttpScriptContext extends SimpleScriptContext implements I
         return context;
     }
 
-    private HttpProxy kont;
-
-    /**@inheritDoc*/
-    public void setContinuation(HttpProxy kont) {
-        this.kont = kont;
+    public String getContextString() {
+	StringBuffer buf = new StringBuffer();
+	if(!request.isSecure())
+		buf.append("h:");
+	else
+		buf.append("s:");
+	buf.append("127.0.0.1");
+	buf.append(":");
+	buf.append(getSocketName()); 
+	buf.append('/');
+	buf.append(request.getRequestURI());
+	buf.append("javabridge");
+	return buf.toString();
     }
 
-    /**@inheritDoc*/
-    public boolean call(PhpProcedureProxy kont) throws Exception {
-	this.kont.call(kont);
-	return true;
+    public String getSocketName() {
+	return String.valueOf(php.java.servlet.CGIServlet.getLocalPort(request));
+    }
+    private Writer _writer;
+    /** {@inheritDoc} */
+    public Writer getWriter() {
+ 	if(_writer == null)
+ 		try {
+ 			_writer = writer =  response.getWriter(); 
+ 		} catch (IllegalStateException x) {
+ 			/*ignore*/
+ 		} catch (IOException e) {
+ 			/*ignore*/
+ 		}
+ 	
+ 	if(_writer == null)
+ 		try { 
+ 			_writer = writer = new PhpScriptWriter (response.getOutputStream());
+ 		} catch (IOException ex) { 
+ 			throw new RuntimeException(ex); 
+ 		}
+
+ 	if(! (writer instanceof PhpScriptWriter)) setWriter(writer);
+ 	return writer;
     }
 
-    /**
-     * Sets the <code>Writer</code> for scripts to use when displaying output.
-     *TODO: test
-     * @param writer The new <code>Writer</code>.
-     */
-    public void setWriter(Writer writer) {
-	super.setWriter(new PhpScriptWriter(new OutputStreamWriter(writer)));
+    private Writer _errorWriter;
+    /** {@inheritDoc} */
+    public Writer getErrorWriter() {
+ 	if(_errorWriter == null)
+ 		_errorWriter = errorWriter = PhpScriptLogWriter.getWriter(new php.java.servlet.Logger(context));
+
+ 	if(! (errorWriter instanceof PhpScriptWriter)) setErrorWriter(errorWriter);
+ 	return errorWriter;	
     }
-    
-    /**
-     * Sets the <code>Writer</code> used to display error output.
-     *
-     * @param writer The <code>Writer</code>.
-     */
-    public void setErrorWriter(Writer writer) {
-	super.setErrorWriter(new PhpScriptWriter(new OutputStreamWriter(writer)));
-    }
-    /**@inheritDoc*/
-    public HttpProxy getContinuation() {
-        return this.kont;
+
+    private Reader _reader;
+    public Reader getReader() {
+        if (_reader == null)
+	        try {
+	                _reader = reader = request.getReader();
+                } catch (IOException e) {
+                	throw new RuntimeException(e);
+                }
+	return reader;
     }
 }

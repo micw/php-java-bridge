@@ -188,7 +188,7 @@ class java_Arg {
 	$this->exception = $string;
   }
   function setVoidSignature() {
-	$this->signature = "@N";
+	$this->signature = "@V";
 	// update cache
 	$key = $this->client->currentCacheKey;
 	$this->client->currentArgumentsFormat[6]="3";
@@ -257,67 +257,6 @@ class java_ApplyArg extends java_CompositeArg {
 	$this->n = $n;
   }
 }
-/**@deprecated*/
-/**
- * @access private
- */
-class java_Handler {
-  public $client;
-  
-  function java_Handler($client) {
-	$this->client = $client;
-  }
-
-  function flush() {}
-
-  function sendData() {
-    $this->client->protocol->sendData();
-  }
-
-  function handleRequests() {
-	$client = $this->client;
-	do {
-	  $tail_call = false;
-	  $this->client->stack=array($this->client->arg=$this->client->simpleArg);
-	  $client->idx = 0;
-	  $client->parser->parse();
-
-	  /* pull off A, if any */
-	  if((count($client->stack)) > 1) {
-		$arg = array_pop($client->stack);
-		$client->apply($arg);
-		$tail_call = 1;			// we don't expect a result
-	  } else {
-		$tail_call = 0;
-	  }
-
-	  $client->stack=null;
-	} while($tail_call);
-	return 1;
-  }
-}
-/**@deprecated*/
-/**
- * @access private
- */
-class java_AsyncHandler extends java_Handler {
-  public $arg;
-  function java_AsyncHandler($client) {
-	$this->client = $client;
-	$this->arg = $client->simpleArg;
-  }
-  function flush() {
-    $this->client->protocol->sendData();
-  }
-  function sendData() {
-    $this->client->protocol->sendAsyncData();
-  }
-
-  function handleRequests() {
-	$this->arg->setFactory($this->client->proxyFactory);
-	$this->arg->setResult(++$this->client->asyncCtx);
-  }
-}
 
 /**
  * @access private
@@ -337,20 +276,20 @@ class java_Client /* implements IDocHandler */ {
 	$arrayProxyFactory, $exceptionProxyFactory, $throwExceptionProxyFactory;
   
   public $arg;
-  public $asyncCtx;
+  public $asyncCtx, $cancelProxyCreationCounter;
   public $globalRef;
 
   public $stack;
 
   // the cache
-  public $methodCache = array(), $currentCacheKey, $currentArgumentsFormat;
+  public $defaultCache = array(), $asyncCache = array(), $methodCache;
+  public $isAsync = 0;
+  public $currentCacheKey, $currentArgumentsFormat;
   public $cachedJavaPrototype;
+  
   
   // send buffer
   public $sendBuffer, $preparedToSendBuffer;
-
-  /**@deprecated*/
-  public $defaultHandler, $asyncHandler, $handler;
 
   function java_Client() {
 	$this->RUNTIME = array();
@@ -376,16 +315,14 @@ class java_Client /* implements IDocHandler */ {
 
 	$this->globalRef = new java_GlobalRef($this);
 
-	$this->asyncCtx = 0;
-
-	/**@deprecated*/
-	$this->handler = $this->defaultHandler = new java_Handler($this);
-	$this->asyncHandler = new java_AsyncHandler($this);
+	$this->asyncCtx = $this->cancelProxyCreationCounter = 0;
+	
+	$this->methodCache = $this->defaultCache;
   }
 
   function __destruct() { 
 	if(JAVA_DEBUG) echo "the client destroyed\n";
-	$this->protocol->flush();
+	if ($this->sendBuffer) $this->protocol->flush();
 	$this->protocol->keepAlive();
   }
 
@@ -394,21 +331,15 @@ class java_Client /* implements IDocHandler */ {
   }
 
   function setDefaultHandler() {
-	$this->handler->flush();
-	$this->handler = $this->defaultHandler;
+	$this->methodCache = $this->defaultCache;
   }
 
   function setAsyncHandler() {
-	$this->handler = $this->asyncHandler;
+	$this->methodCache = $this->asyncCache;
   }
 
-  function isAsync() {
-	return $this->handler === $this->asyncHandler;
-  }
 
   function handleRequests() {
-	if(!JAVA_CACHE_ENABLED) { $this->handler->handleRequests(); return 1;}
-	  
 	do {
 	  $tail_call = false;
 	  $this->stack=array($this->arg=$this->simpleArg);
@@ -487,10 +418,13 @@ class java_Client /* implements IDocHandler */ {
 	case 'P':
 	  if($arg->type=='H') { /* hash table */
 		$s = $st['t'];
+		if(JAVA_DEBUG) {echo "setresult prepare hash:"; echo sprintf("%s", $st['t']); echo "\n";}
 		if($s[0]=='N') { /* number */
 		  $arg->setIndex($this->getExact($st['v']));
+		  if(JAVA_DEBUG) {echo "setresult array: index:"; echo sprintf("%s", $st['v']); echo "\n";}
 		} else {
 		  $arg->setIndex($this->parser->getData($st['v']));
+		  if(JAVA_DEBUG) {echo "setresult hash: index:"; echo sprintf("%s", $this->parser->getData($st['v'])); echo "\n";}
 		}
 	  } else {					/* array */
 		$arg->setNextIndex();
@@ -498,28 +432,36 @@ class java_Client /* implements IDocHandler */ {
 	  break;
 	case 'S':
 	  $arg->setResult($this->parser->getData($st['v']));
+	  if(JAVA_DEBUG) {echo "setresult string:"; echo sprintf("%s", $this->parser->getData($st['v'])); echo "\n";}
 	  break;
 	case 'B':
 	  $s=$st['v'];
 	  $arg->setResult($s[0]=='T');
+	  if(JAVA_DEBUG) {echo "setresult bool:"; echo sprintf("%s", $st['v']); echo "\n";}
 	  break;
 	case 'L':					// unsigned long
 	  $sign = $st['p'];
 	  $val = $this->getExact($st['v']);
 	  if($sign[0]=='A') $val*=-1;
 	  $arg->setResult($val);
+	  if(JAVA_DEBUG) {echo "setresult long:"; echo sprintf("%s, sign: %s", $st['v'], $st['p']); echo "\n";}
 	  break;
 	case 'D':
 	  $arg->setResult($this->getInexact($st['v']));
+	  if(JAVA_DEBUG) {echo "setresult double:"; echo sprintf("%s", $st['v']); echo "\n";}
 	  break;
 	case 'V':
-	  if(JAVA_DEBUG) {echo "setresult VOID:"; echo "\n";}
-	  /* fall through */
-	case 'N':					// FIXME
-	  $arg->setVoidSignature();
+	  if ($this->isAsync) {
+		if(JAVA_DEBUG) {echo "setresult VOID:"; echo "\n";}
+		$arg->setVoidSignature();
+	  }
+	  // fall through
+	case 'N':
 	  $arg->setResult(null);
+	  if(JAVA_DEBUG) {echo "setresult null\n"; }
 	  break;
 	case 'F':
+	  if(JAVA_DEBUG) {echo "comm. end\n"; }
 	  break;
 	case 'O': 
 	  $arg->setFactory($this->getProxyFactory($st['p']));
@@ -637,11 +579,16 @@ class java_Client /* implements IDocHandler */ {
 	$name = $arg->p;
 	$object = $arg->v;
 	$ob = $object ? array(&$object, $name) : $name;
+
+	$isAsync = $this->isAsync;
+    $methodCache = $this->methodCache;
+
 	try {
   	$res = $arg->getResult(true);
 	  if((!$object && !function_exists($name)) || ($object && !method_exists($object, $name))) throw new JavaException("java.lang.NoSuchMethodException", "$name");
 	  
 	  $res = call_user_func_array($ob, $res);
+
 	  $this->protocol->resultBegin();
 	  $this->writeArg($res);
 	  $this->protocol->resultEnd();
@@ -653,6 +600,9 @@ class java_Client /* implements IDocHandler */ {
 	} catch(Exception $ex) {
 	   die ($ex);
 	}	  
+
+	$this->isAsync = $isAsync;
+	$this->methodCache = $methodCache;
   }
   function cast($object, $type) {
     switch($type[0]) {

@@ -28,8 +28,12 @@ Development
 
     // call Java libraries using the provided Java class...
     java_require("myLibs/myLib.jar;dependentLib1.jar;...);
-    $my = new Java("myPackage.MyClass", ...);
-    $my->callSomething(...);
+
+    $SystemClazz =     Java("java.lang.System"); 
+    echo $SystemClazz->getProperties();
+
+    $myInstance  = NEW Java("myPackage.MyClass", ...); 
+    $myInstance->callSomething(...);
    ?>
 
 * Create a PHP web archive for distribution, for example with the commands:
@@ -72,17 +76,8 @@ Deployment
   application "myPhpApp" over to the Apache/IIS document root or to
   the some local directory accessible by the PHP command line executable.
 
-* If you use PHP < 5.1.4, you must compile and install "java.so" or
-  "php_java.dll" (see the README and INSTALL documents from the source
-  download) and add the following to your php.ini file:
-
-    extension=java.so ;; php_java.dll on windows
-    [java]
-    java.hosts=127.0.0.1:8080
-    java.servlet=User ;; or On or /myPhpApp/JavaBridge.phpjavabridge
-  
-* If you use PHP >= 5.1.4, edit DOCUMENT_ROOT/myPhpApp/java/Java.inc
-  so that it connects to 127.0.0.1:8080/myPhpApp. For example:
+* Edit DOCUMENT_ROOT/myPhpApp/java/Java.inc so that it
+  connects PHP with the Java VM "127.0.0.1:8080/myPhpApp". For example:
 
     define("JAVA_HOSTS", "127.0.0.1:8080"); 
     define("JAVA_SERVLET", "User"); 
@@ -96,6 +91,22 @@ Deployment
   computer cannot be accessed from the internet. At least firewall-out
   the ports 8080 and all ports in the range [9267,...,[9367 and read the
   "security" sections from README.
+
+Logging
+-------
+
+* Download and copy log4j.jar to java.ext.dirs. Example for JDK 1.6 on
+  Linux:
+
+  mkdir -p /usr/java/packages/lib/ext
+  cp log4j.jar /usr/java/packages/lib/ext
+
+* Start the log4j viewer. For example with the command:
+
+  /usr/java/default/bin/java org.apache.log4j.chainsaw.Main
+
+* Restart the J2EE server. The log appears in the log4j window.
+
 
 * Please report bugs/problems to the mailing list:
 

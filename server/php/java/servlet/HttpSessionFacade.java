@@ -45,7 +45,7 @@ public class HttpSessionFacade implements ISession {
     private int timeout;
     private HttpSession sessionCache=null;
     private boolean isNew;
-    private ServletContextFactory ctxFactory;
+    private AbstractServletContextFactory ctxFactory;
     
     HttpSession getCachedSession() {
 	if(sessionCache!=null) return sessionCache;
@@ -53,7 +53,7 @@ public class HttpSessionFacade implements ISession {
 	sessionCache.setMaxInactiveInterval(timeout);
 	return sessionCache;
     }
-    protected HttpSessionFacade (ServletContextFactory ctxFactory, ServletContext ctx, HttpServletRequest req, HttpServletResponse res, boolean clientIsNew, int timeout) {
+    protected HttpSessionFacade (AbstractServletContextFactory ctxFactory, ServletContext ctx, HttpServletRequest req, HttpServletResponse res, boolean clientIsNew, int timeout) {
 	this.ctxFactory = ctxFactory;
 	this.session = clientIsNew? req.getSession(true) : req.getSession();
 	this.timeout = timeout;

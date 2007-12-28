@@ -431,13 +431,12 @@ function java_closure() {
  * @access public
  */
 function java_begin_document() {
-  if(JAVA_CACHE_ENABLED) return false;
   $client = __javaproxy_Client_getClient();
-  if($client->isAsync()) 
-	throw new java_RuntimeException("begin_document not allowed while in stream mode");
-  $rc = $client->invokeMethod(0, "beginDocument", array());
-  $client->setAsyncHandler();
-  return $rc;
+  if (!$client->isAsync) {
+	$client->invokeMethod(0, "beginDocument", array());
+	$client->setAsyncHandler();
+  }
+  $client->isAsync+=1;
 }
 /**
  * Ends stream mode. Fires a JavaException if any statement executed during
@@ -445,12 +444,12 @@ function java_begin_document() {
  * @access public
  */
 function java_end_document() {
-  if(JAVA_CACHE_ENABLED) return false;
   $client = __javaproxy_Client_getClient();
-  if(!$client->isAsync()) 
-	throw new java_RuntimeException("end_document not allowed when not in stream mode");
-  $client->setDefaultHandler();
-  return $client->invokeMethod(0, "endDocument", array());
+  if ($client->isAsync==1) {
+	$client->setDefaultHandler();
+	$client->invokeMethod(0, "endDocument", array());
+  }
+  if ($client->isAsync > 0) $client->isAsync-=1;
 }
 
 /**
@@ -506,37 +505,25 @@ class java_JavaProxy implements java_JavaType {
  * @access private
  */
 class java_objectIterator implements Iterator {
-  public $proxy;
-  public $__java, $client;
-  public $phpMap; // must keep a reference otherwise it will be gc'ed.
-  public $hasNext;
+  private $var;
 
   function java_ObjectIterator($javaProxy) {
-	$this->proxy = $javaProxy;
-	$this->client = __javaproxy_Client_getClient();
+	$this->var = java_values ($javaProxy);
   }
   function rewind() {
-	$proxy = array($this->proxy);
-	$this->phpMap = 
-	  $phpMap = $this->client->invokeMethod(0, "getPhpMap", $proxy);
-	$this->__java = $phpMap->__java;
+	reset($this->var);
   }
   function valid() {
-	if(isset($this->hasNext)) return $this->hasNext;
-	return $this->hasNext =
-	  $this->client->invokeMethod($this->__java, "hasMore", array());
+	return $this->current() !== false;
   }
   function next() {
-	return $this->hasNext = 
-	  $this->client->invokeMethod($this->__java, "moveForward", array());
+	return next($this->var);
   }
   function key() {
-	return 
-	  $this->client->invokeMethod($this->__java, "currentKey", array());
+	return key($this->var);
   }
   function current() {
-	return 
-	  $this->client->invokeMethod($this->__java, "currentData", array());
+	return current($this->var);
   }
 }
 /**
@@ -609,6 +596,8 @@ abstract class java_AbstractJava implements IteratorAggregate,ArrayAccess,java_J
 
   public $__factory;
   public $__java, $__signature;
+
+  public $__cancelProxyCreationTag;
 
   function __createDelegate() {
 	$proxy = $this->__delegate = 
@@ -739,7 +728,7 @@ class Java extends java_AbstractJava {
       }
     }
 
-    if(JAVA_CACHE_ENABLED && array_key_exists($sig, $client->methodCache)) {
+    if($client->isAsync && array_key_exists($sig, $client->methodCache)) {
 	  if(JAVA_DEBUG) { echo "cache hit for new Java: $sig\n"; }
       $cacheEntry = &$client->methodCache[$sig];
 	  $client->sendBuffer.= $client->preparedToSendBuffer;
@@ -749,13 +738,16 @@ class Java extends java_AbstractJava {
 		print_r($args2);
 		echo "set prepared to send buffer: $client->preparedToSendBuffer, $cacheEntry->fmt, for key: $sig\n";
 	  }
- 	  $this->__java = ++$client->asyncCtx;
+	  $this->__java = ++$client->asyncCtx;
+
 	  if(JAVA_DEBUG) {echo "setresult from new Java cache: object:"; echo sprintf("%x", $client->asyncCtx); echo "\n";}
 	  $this->__factory = $cacheEntry->factory;
   	  $this->__signature = $cacheEntry->signature;
+
+	  $result->__cancelProxyCreationTag = ++$client->cancelProxyCreationTag;
 	} else {
 	  if(JAVA_DEBUG) { echo "cache miss for new Java: $sig\n"; }
-      $client->currentCacheKey = $sig;
+          $client->currentCacheKey = $sig;
 	  $delegate = $this->__delegate = $client->createObject($name, $args);
 	  $this->__java = $delegate->__java;
 	  $this->__signature = $delegate->__signature;
@@ -766,18 +758,23 @@ class Java extends java_AbstractJava {
 	$client = $this->__client;
 
 	$preparedToSendBuffer = &$client->preparedToSendBuffer;
-	$asyncCtx = &$client->asyncCtx;
 
-	if($preparedToSendBuffer && ($asyncCtx==$this->__java)) {
+	// Cancel proxy creation: If the created instance is collected
+	// before the next java statement is executed, we set the result
+	// type to void
+	if($client->isAsync &&
+	   $preparedToSendBuffer &&
+	   $client->cancelProxyCreationTag==$this->__cancelProxyCreationTag) {
+
 	  $preparedToSendBuffer[6]="3";
 	  if(JAVA_DEBUG) {
 		echo "cancel result proxy creation:"; echo $this->__java; echo " {$client->preparedToSendBuffer}"; echo "\n";
 	  }
 	  $client->sendBuffer.=$preparedToSendBuffer;
 	  $preparedToSendBuffer = null;
-	  --$asyncCtx;
+	  $client->asyncCtx -= 1;
 	} else {
-	  if(!$this->__delegate) { // write unref ourselfs if we don't have a delegate yet
+	  if(!$this->__delegate) { // write unref ourselfs if we don't have a delegate yet (see cachedJavaPrototype and Java::__factory in __call below)
 		if(JAVA_DEBUG) {
 		  echo "unref java:"; echo $this->__java; echo "\n";
 		}
@@ -824,7 +821,7 @@ class Java extends java_AbstractJava {
       }
     }
 
-    if(JAVA_CACHE_ENABLED && array_key_exists($sig, $client->methodCache)) {
+    if($client->isAsync && array_key_exists($sig, $client->methodCache)) {
 	  if(JAVA_DEBUG) { echo "cache hit for __call: $sig\n"; }
       $cacheEntry = &$client->methodCache[$sig];
 	  $client->sendBuffer.=$client->preparedToSendBuffer;
@@ -834,6 +831,7 @@ class Java extends java_AbstractJava {
 		echo "set prepared to send buffer: {$client->preparedToSendBuffer}, {$cacheEntry->fmt}\n";
 	  }
 	  if($cacheEntry->resultVoid) {
+		$client->cancelProxyCreationTag += 1; // expire tag
 		return null;
 	  } else {
 		$result = clone($client->cachedJavaPrototype);
@@ -841,6 +839,7 @@ class Java extends java_AbstractJava {
 		$result->__java = ++$client->asyncCtx;
 		if(JAVA_DEBUG) {echo "setresult from __call cache: object:"; echo sprintf("%x", $client->asyncCtx); echo "\n";}
 		$result->__signature = $cacheEntry->signature;
+		$result->__cancelProxyCreationTag = ++$client->cancelProxyCreationTag;
 		return $result;
 	  }
     } else {

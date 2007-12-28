@@ -9,7 +9,7 @@ contexts.
 
 If you want to use a Java VM and you don't want to use Security
 Enhanced Linux protection, read the INSTALL.J2EE or INSTALL.J2SE
-documents.
+or INSTALL.STANDALONE documents.
 
 Installation on RedHat, Fedora, CentOS ...
 ------------------------------------------

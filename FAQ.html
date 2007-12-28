@@ -15,15 +15,7 @@ Furthermore IBM's Zero framework for Eclipse contains a PHP interpreter written 
 <p>The only free alternatives are SOAP and XML-RPC, which are up to 50 times slower than the XML protocol implementation used by this PHP/Java Bridge.</p>
 
 <H4>Does it support PHP 4?</H4>
-<p>Yes. But for PHP versions < 5.1.4 you must compile and install a support library called "java.so" or "php_java.dll" from the C sources; please see the INSTALL document for details.</p>
-<p>Use the following code to detect the binary and skip loading the Java.inc:
-<blockquote>
-<code>
-if(!extension_loaded("java"))<br>
-&nbsp;&nbsp;require_once("http://localhost:8080/JavaBridge/java/Java.inc");
-</code> 
-</blockquote>
-</p>
+<p>No. Use PHP/Java Bridge version 4.3.2 or below instead.</p>
 
 <H4>What about portability?</H4>
 <p>A portable PHP application can use the "new Java(...)" constructor
@@ -37,26 +29,6 @@ To create an instance of a Java type use
 <blockquote>
 <code>
 $hashMap = new java("java.util.HashMap");
-</code>
-</blockquote>
-</p>
-<p>PHP 4 does not support exceptions. And results from method
-invocations and property access are always converted into the appropriate PHP
-value. For example the following code does <strong>not</strong> work in PHP 4:
-<blockquote>
-<code>
-$s = new Java("java.lang.String", '${var}');<br>
-$s = $s-&gt;substring(2); // PHP4 returns a PHP string, not a Java string <br>
-echo $s-&gt;substring(0,$s-&gt;length()-1);<br>
-</code>
-</blockquote>
-</p>
-<p>PHP 4 needs a "java.so" or "php_java.dll" support library. Use the following code to load it:
-<code>
-&lt;?php<br>
-if(!extension_loaded("java")) require_once("http://localhost:8080/JavaBridge/java/Java.inc");<br>
-...<br>
-?&gt;
 </code>
 </blockquote>
 </p>
@@ -82,42 +54,62 @@ JavaBridge.jar. It can be started by double-clicking on JavaBridge.jar
 or with the command:
 <blockquote>
 <code>
-java JVM-OPTIONS -jar BRIDGE-OPTIONS JavaBridge.jar SOCKET LOG-LEVEL LOG-FILE
+java JVM-OPTIONS -jar JavaBridge.jar SOCKET LOG-LEVEL LOG-FILE
 </code>
 </blockquote>
 Please see the output of <code>java -jar JavaBridge.jar --help</code>
 and the INSTALL.STANDALONE document for details.
 </p>
 
-<H4>How can I configure the bridge?</H4>
-
-<p>You may add a file <code>java.ini</code> to your project or to the
-directory which contains the PHP module descriptions
-(usually <code>/etc/php.d/</code> on Linux) with the following
-content:
+<H4>Ho do I enable logging?</H4>
+<p>
+Copy <code>log4j.jar</code> into <code>java.ext.dirs</code>. Example for JDK 6:
 <blockquote>
 <code>
-;extension=java.so ;; or php_java.dll, uncomment if you have compiled and installed the extension<br>
-[java]<br>
-;java.hosts=127.0.0.1:8080 ;; the location of your Java process<br>
-;java.servlet=On ;; or Off or User <br>
+cp log4j.jar /usr/java/packages/lib/ext
 </code>
 </blockquote>
 </p>
-<p>However, it is recommended to not use a ini file and to not store any Java
-related information in the global php.ini file. When the library is
-loaded
-via <code>require_once("http://SERVER:PORT/path/to/Java.inc");</code>,
-it has all the information needed to locate the running Java
-process.
+<p>
+Start the log4j viewer. Example for JDK 6:
+<blockquote>
+<code>
+/opt/jdk1.6/bin/java org.apache.log4j.chainsaw.Main
+</code>
+</blockquote>
+</p>
+<p>
+Start the application server with the options <code>-Dphp.java.bridge.default_log_level=LEVEL</code>. Example for tomcat:
+<blockquote>
+<code>
+JAVA_HOME=/opt/jdk1.6 JAVA_OPTS="-Dphp.java.bridge.default_log_level=5" bin/catalina.sh run
+</code>
+</blockquote>
+Example for the standalone container:
+<blockquote>
+<code>
+java -Dphp.java.bridge.default_log_level=5 -jar JavaBridge.jar SERVLET:8080
+</code>
+</blockquote>
 </p>
 
-<H4>What if the Java back end is not available anymore?</H4>
+<H4>How can I configure the bridge?</H4>
 
-<p>
-Then the bridge uses the next entry from the <code>java.hosts</code>
-list. If there are no more entries, the php function java_server_name()
-returns null and all other java procedures cannot be used anymore.
+<p>Useful options which can be set before the Java.inc/Mono.inc is loaded are:
+<blockquote>
+<code>
+define ("JAVA_DEBUG", false);<br>
+define ("JAVA_HOSTS", "127.0.0.1:8080");<br>
+define ("JAVA_PIPE_DIR", null);<br>
+require_once ("java/Java.inc");<br>
+...
+</code>
+</blockquote>
+Please see the Options.inc for details.
+</p>
+<p>Server-side options can be set in the
+php.java.bridge.global.properties file, see the JavaBridge.jar zip
+file (contained in the JavaBridge.war zip file) for details.
 </p>
 
 <H4>How do I start the bridge back end when there's another Java VM listening on port 8080?</H4>
@@ -210,15 +202,6 @@ ln -s /usr/share/tomcat5/webapps/webContext $HOME/public_html/webContext<br>
 </blockquote>
 </p>
 <p>
-Users who want to use the C implementation, "java.so" or "php_java.dll", need to edit the php.ini so that the java.hosts and java.servlet point to their servlet/J2EE back end. Example:
-<blockquote>
-<code>
-java.hosts=127.0.0.1:8080 # replace 8080 with the port number of your J2EE server<br>
-java.servlet="User" # or "On" or "/webContext/JavaBridge.phpjavabridge"<br>
-</code>
-</blockquote>
-</p>
-<p>
 After restarting the HTTP server, they can
 browse to <code>http://HOSTNAME/webContext/yourPhpScript.php</code>. Again, replace the web context "webContext" with the name of your web context.
 </p>
@@ -282,32 +265,6 @@ documentation of your J2EE server, Servlet engine or Java VM to see if and
 how the environment can handle impure Java libraries. A common approach is to store the Java part in <code>java.ext.dirs</code> and the native part in <code>java.library.path</code>.</p>
 
 <H2>J2EE/Servlet questions</H2>
-
-<H4>Ho do I enable logging?</H4>
-<p>
-Copy <code>log4j.jar</code> into <code>java.ext.dirs</code>. Example for JDK 6:
-<blockquote>
-<code>
-cp log4j.jar /usr/java/packages/lib/ext
-</code>
-</blockquote>
-</p>
-<p>
-Start the log4j viewer. Example for JDK 6:
-<blockquote>
-<code>
-/opt/jdk1.6/bin/java org.apache.log4j.chainsaw.Main
-</code>
-</blockquote>
-</p>
-<p>
-Start the application server with the options <code>-Dphp.java.bridge.default_log_level=LEVEL</code>. Example for tomcat:
-<blockquote>
-<code>
-JAVA_HOME=/opt/jdk1.6 JAVA_OPTS="-Dphp.java.bridge.default_log_level=5" bin/catalina.sh run
-</code>
-</blockquote>
-</p>
 
 <a name="load-balancing">
 <H4>How do I set up a load balancer for the PHP/Java Bridge cluster?</H4>
@@ -802,23 +759,23 @@ refences the <code>DocumentHome</code> from the library, which is assignment-inc
 In contrast the Sun J2EE server correctly separates the beans/applications; the <code>$objref</code> is a unique proxy generated by a parent of the <code>WebAppClassLoader</code>, so that <code>narrow</code> can always cast the proxy to <code>DocumentHome@WebAppClassLoader</code>, even if a class with the same name is already available from the <code>WebAppClassLoader</code>.</p>
 
  <H4>How do I install PHP into the Nutch, Spring, JSF, ..., Framework?</H4> 
-<p>By providing PHP beans and a description how to manage them, as usual. IOC (sometimes called "dependency injection") requires that you give up control so that the framework can call you when it becomes necessary. The code
+<p>By providing JSR 223 based PHP beans and a description how to manage them, as usual. The code
 <blockquote>
 <code>
-  class Bean { ... }<br>
-  java_context()-&gt;call(java_closure(new Bean())) || header("$framework");
+  javax.script.ScriptEngine e = <br>
+      php.java.script.EngineFactory.getInvocablePhpScriptEngine (this, <br>
+                                                        application, <br>
+                                                        request, response);<br>
 </code>
 </blockquote>
-can be used to pass control from the web server to the framework running on a J2EE node. 
-</p>
-<p>
-The standard <a href="http://www.jcp.org/aboutJava/communityprocess/edr/jsr223/">java script interface</a> or the proxy used by the <a href="server/documentation/API/php/java/bridge/Invocable.html">invocable interface</a> can be used to call from the framework running on a J2EE node into the allocated PHP scripts running on the web server. The following excerpt from the JSF implementation calls methods from the above PHP bean:
+can be used to access the JSR 223 ScriptEngine from the framework, provided that a listener has been configured in the WEB-INF/web.xml:
 <blockquote>
 <code>
-  ((Invocable)((PhpFacesContext)FacesContext.getCurrentInstance()).getScriptEngine(this, new URL(phpScript))).invoke(method, args); 
+   &lt;listener&gt;
+       &lt;listener-class&gt;php.java.servlet.ContextLoaderListener&lt;/listener-class&gt;
+   &lt;/listener&gt;
 </code>
 </blockquote>
-Please see the JSF implementation for a reference.
 </p>
 
 <H2>General runtime questions</H2>
@@ -856,7 +813,7 @@ echo java_context()-&gt;getHttpServletRequest()-&gt;getSession(); <br>
 PHP scripts are invoked from a java framework (Java Server Faces for
 example), even the PHP output is redirected. For the standalone back
 end the output appears in the
-<code>/var/log/php-java-bridge.log</code> or in JavaBridge.log, see
+<code>/var/log/php-java-bridge.log</code> or in VMBridge.log, see
 .ini option <code>java.log_file</code>. For the j2ee back end the
 location of the log file(s) depends on the j2ee server
 configuration.</p>
@@ -933,39 +890,24 @@ echo "You have typed: $str\n";<br>
 
  <H4>How fast is it?</H4> <p> 
 The following scripts were
-executed on one 1.688 GHZ x86 cpu running RedHat Fedora Core 4 Linux and Sun jdk1.6.0:
+executed on one 1.688 GHZ x86 cpu running RedHat Fedora Core 4 Linux and Sun jdk1.6.0_02:
 </p>
-The PHP 5.1.2 code<br>
+The PHP 5.2.2 code<br>
 <p>
 <code>
 &lt;?php<br>
-$String = new JavaClass("java.lang.String");<br>
+java_begin_document();<br>
 $buf=new java("java.lang.StringBuffer");<br>
 <br>
 $i=0;<br>
-java_begin_document();<br>
 while($i&lt;400000) {<br>
 &nbsp;&nbsp;$i=$i+1;<br>
-&nbsp;&nbsp;$buf-&gt;append(new java("java.lang.String", $String-&gt;valueOf($i)));<br>
+&nbsp;&nbsp;$buf-&gt;append($i);<br>
 }<br>
-java_end_document();<br>
 <br>
 print $buf-&gt;length() . "\n";<br>
+java_end_document();<br>
 ?&gt;<br>
-</code>
-</p>
-The BSH 2.0 code<br>
-<p>
-<code>
-buf=new java.lang.StringBuffer();<br>
-<br>
-int i=0;<br>
-while(i<400000) {<br>
-&nbsp;i=i+1;<br>
-&nbsp;buf.append(new String(String.valueOf(i)));<br>
-}<br>
-<br>
-print (buf.length()); print("\n");<br>
 </code>
 </p>
 The ECMAScript ("Mozilla Rhino") code<br>
@@ -998,46 +940,28 @@ BORDER="1"
 ><TD
 >time jrunscript -l php t11.php</TD
 ><TD
->PHP5 + PHP/Java Bridge 3.0.8</TD
+>PHP5 + PHP/Java Bridge 4.3.3</TD
 ><TD
 >named pipes</TD
 ><TD
->0m20.112s,<br>
-0m18.999s,<br>
-0m0.651s
+>0m18.703s,<br>
+0m16.209s,<br>
+0m0.138s
 </TD
 ></TR
 >
-
 <TBODY
 ><TR
 ><TD
->time jrunscript -l bsh t11.bsh</TD
-><TD
->BSH 2.0</TD
-><TD
->none (native code)</TD
-><TD
->0m21.342s,<br>
-0m20.779s,<br>
-0m0.291s
-</TD
-></TR
->
-</TBODY>
-
-<TBODY
-><TR
-><TD
->time jrunscript -J-Xmx512M -J-Xms512M -l js t11.js</TD
+>time jrunscript -l js t11.js</TD
 ><TD
 >ECMA script</TD
 ><TD
 >none (native code)</TD
 ><TD
->1m36.877s,<br>
-0m55.398s,<br>
-0m0.323s
+>0m15.338s,<br>
+0m14.996s,<br>
+0m0.116s
 </TD
 ></TR
 >

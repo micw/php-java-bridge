@@ -46,9 +46,13 @@ require_once ("${JAVA_BASE}/Client.inc");
  */
 class java_SocketChannel {
   public $peer, $protocol;
-  function java_SocketChannel($peer, $protocol) {
+  private $channelName, $host;
+
+  function java_SocketChannel($peer, $protocol, $host, $channelName) {
     $this->peer = $peer;
     $this->protocol = $protocol;
+	$this->host = $host;
+	$this->channelName = $channelName;
   }
   function fwrite($data) {
 	fwrite($this->peer, $data);
@@ -58,8 +62,8 @@ class java_SocketChannel {
   }
   function keepAlive() {
 	// keep alive, required by protocol
-	fwrite($this->peer, "<F p=\"A\" />");
-	fread($this->peer, 10); // <F p="A"/>
+	$this->fwrite("<F p=\"A\" />");
+	$this->fread(10); // <F p="A"/>
   }
 }
 /**
@@ -167,6 +171,7 @@ class java_HttpHandler extends java_SocketHandler {
     hundreds of persistent connections to the servlet very well */
 	$socket = fsockopen("{$this->ssl}{$this->host}", $this->port, $errno, $errstr, 30);
 	if (!$socket) throw new java_RuntimeException("Could not connect to the J2EE server {$this->ssl}{$this->host}:{$this->port}. Please start it, for example with the command: \"java -jar JavaBridge.jar SERVLET:8080 3 JavaBridge.log\" or, if the back end has been compiled to native code, with \"modules/java SERVLET:8080 3 JavaBridge.log\". Error message: $errstr ($errno)\n");
+	stream_set_timeout($socket, -1);
 	return $socket;
   }
   function java_HttpHandler($protocol, $ssl, $host, $port) {
@@ -318,7 +323,7 @@ class java_HttpHandler extends java_SocketHandler {
 	$peer = pfsockopen($this->host, $channelName, $errno, $errstr, 30);
 	if (!$peer) throw new java_RuntimeException("Could not connect to the context server {$this->host}:{$channelName}. Error message: $errstr ($errno)\n");
 	stream_set_timeout($peer, -1);
-	return new java_SocketChannel($peer, $this->protocol);
+	return new java_SocketChannel($peer, $this->protocol, $this->host, $channelName);
   }
 
   function redirect() {
@@ -419,12 +424,13 @@ class java_Protocol {
   function createSimpleHandler($channelName) {
     if(!is_string($channelName)) {
       $errno = null; $errstr = null;
-	  $peer = pfsockopen("127.0.0.1", $channelName, $errno, $errstr, 30);
+	  $peer = pfsockopen($host="127.0.0.1", $channelName, $errno, $errstr, 30);
 	} else {
 	  $type = $channelName[0];
 	  if($type=='@' || $type=='/') {		 // unix domain socket
 		if($type=='@') $channelName[0]="\0"; // abstract name space
-		$peer = pfsockopen("unix://${channelName}", null, $errno, $errstr, 30);
+		$peer = pfsockopen($host="unix://${channelName}", null, $errno, $errstr, 30);
+        $channelName = null;
 	  }
 	  else {					// tcp socket
 		list($host, $channelName) = explode(":", $channelName);
@@ -433,7 +439,8 @@ class java_Protocol {
 	}
     if (!$peer) throw new java_RuntimeException("Could not connect to the context server $channelName. Error message: $errstr ($errno)\n");
     stream_set_timeout($peer, -1);
-    $handler = new java_SocketHandler($this, new java_SocketChannel($peer, $this));
+    $handler = new java_SocketHandler($this, new java_SocketChannel($peer, $this, 
+																	$host, $channelName));
     
     $compatibility = $this->client->RUNTIME["PARSER"]=="NATIVE"
       ? chr(0103)
@@ -483,10 +490,7 @@ class java_Protocol {
 	if(JAVA_DEBUG) {
 	  echo "sending::: "; echo $this->client->sendBuffer; echo "\n";
 	}
-	if(JAVA_CACHE_ENABLED) 
-	  $this->sendData();
-	else
-	  $this->client->handler->sendData();
+	$this->sendData();
   }
   function keepAlive() {
 	$this->handler->keepAlive();

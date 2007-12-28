@@ -27,6 +27,7 @@ package php.java.bridge;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+import php.java.bridge.Util.Thread;
 import php.java.bridge.http.IContext;
 
 /**
@@ -109,18 +110,34 @@ public class SessionFactory extends JavaBridgeFactory {
     protected static final SessionTimer getTimer() {
         return timer;
     }
+    
+    /** Only for internal use */
+    public static final void destroyTimer() {
+	    getTimer().interrupt();
+    }
     protected static class SessionTimer implements Runnable {
         LinkedList jobs = new LinkedList();
+	private Thread thread;
         public SessionTimer() {
-          Thread t = (new Util.Thread(this, "JavaBridgeSessionTimer"));
-          t.start();
+
+            if (Util.logLevel>5) 
+        	    System.out.println("lifecycle: init session timer "+System.identityHashCode(SessionFactory.class));
+
+	    thread = (new Util.Thread(this, "JavaBridgeSessionTimer"));
+	    thread.start();
         }
         public void addJob(Runnable r) {
             jobs.add(r);
         }
+        public void interrupt () {
+	    if (Util.logLevel>5)
+		    System.out.println ("lifecycle: sending session timer interrupt " + +System.identityHashCode(SessionFactory.class));
+
+	    thread.interrupt();
+        }
         public void run() {
             try {
-                while(true) {
+                while(!java.lang.Thread.interrupted()) {
                     Thread.sleep(TIMER_DURATION);
                     Session.expire();
                     
@@ -129,7 +146,12 @@ public class SessionFactory extends JavaBridgeFactory {
                         job.run();
                     }
                 }
-            } catch (InterruptedException e) {/*ignore*/}
+            } catch (InterruptedException e) {
+		if (Util.logLevel>5) 
+		    System.out.println ("lifecycle: session timer got interrupt"+System.identityHashCode(SessionFactory.class));
+	    }
+	    if (Util.logLevel>5) 
+		    System.out.println ("lifecycle: session timer terminating"+System.identityHashCode(SessionFactory.class));
         }
     }
 }

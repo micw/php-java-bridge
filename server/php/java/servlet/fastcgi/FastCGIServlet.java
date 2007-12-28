@@ -255,6 +255,7 @@ public class FastCGIServlet extends CGIServlet {
     	if(fcgiConnectionPool!=null) fcgiConnectionPool.destroy();
     	channelName.destroy();
     	super.destroy();
+    	fcgiConnectionPool = null;
     }
 
     protected StringBuffer getCgiDir() {
@@ -281,11 +282,11 @@ public class FastCGIServlet extends CGIServlet {
 				   String contextPath, String servletPath,
 				   String cgiPathPrefix) {
 
-	    if(!fcgiIsAvailable) return null;
 	    
 	    boolean isJavaBridgeWc = isJavaBridgeWc(contextPath);
 	    Object lockObject = isJavaBridgeWc?javaBridgeCtxLock:globalCtxLock;
 	    synchronized(lockObject) {
+		if(!fcgiIsAvailable) return null;
 		if(null == (connectionPool=fcgiConnectionPool))
 		    try {
 			int children = php_fcgi_children_number;

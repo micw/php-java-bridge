@@ -97,8 +97,3 @@ if(!defined("JAVA_PIPE_DIR")) {
 // debug mode
 if(!defined("JAVA_DEBUG")) 
   define("JAVA_DEBUG", false);
-
-// cache needs Proxy and ProxyException interfaces
-if(!defined("JAVA_CACHE_ENABLED")) 
-  define("JAVA_CACHE_ENABLED", false);
-

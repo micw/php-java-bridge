@@ -5,7 +5,8 @@
 
     <!-- support for tomcat cluster -->
     <distributable/>
-    <!-- TODO --> 
+
+    <!-- Attach the JSR223 script factory to the servlet context -->
    <listener>
         <listener-class>php.java.servlet.ContextLoaderListener</listener-class>
     </listener>
@@ -76,7 +77,7 @@
         <!-- 
          <init-param>
            <param-name>max_requests</param-name>
-           <param-value>50</param-value>
+           <param-value>19</param-value>
          </init-param>
         -->
 

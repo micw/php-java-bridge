@@ -456,8 +456,8 @@ public class JavaBridgeRunner extends HttpServer {
 		params = name.substring(idx+1);
 		name = name.substring(0, idx);
 	    }
-	    File f = new File(Util.HOME_DIR, name);
-	    if(f==null || !f.exists()) f = new File(name);
+	    File f = Util.getCanonicalWindowsFile(name);
+	    if(f==null || !f.exists()) f = new File(Util.HOME_DIR, name);
 	    if(f==null || !f.exists()) return;
 	    if(f.isHidden()) return;
 	    long l = f.length();

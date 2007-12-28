@@ -35,12 +35,14 @@ import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.Vector;
@@ -129,7 +131,7 @@ public final class Util {
     /** The default HTTP port for management clients */
     public static final int HTTP_PORT_BASE = 8080;
     /** The default Port for Mono and .NET clients */
-    public static final int JAVA_TCP_PORT_BASE = 9267;
+    public static int EXTENSION_TCP_PORT_BASE;
 
     /**
      * The default CGI locations: <code>"/usr/bin/php-cgi"</code>, <code>"c:/php/php-cgi.exe</code>
@@ -171,6 +173,10 @@ public final class Util {
      */
     public static final String DEFAULT_EXT_DIRS[] = { "/usr/share/java/ext", "/usr/java/packages/lib/ext" };
     
+    
+    /** Set to true if the VM is gcj, false otherwise */
+    public static final boolean IS_GNU_JAVA = checkVM();
+
     /** 
      * The TCP socket name. Default is 9267.
      * @see System property <code>php.java.bridge.tcp_socketname</code>
@@ -276,7 +282,8 @@ public final class Util {
     	    Util.loadMethod = Util.CLRAssembly.getMethod("Load", new Class[] {String.class});
     	    IS_MONO=true;
     	} catch (Exception e) {/*ignore*/}
-        Properties p = new Properties();
+
+    	Properties p = new Properties();
 	try {
 	    InputStream in = Util.class.getResourceAsStream("global.properties");
 	    p.load(in);
@@ -289,7 +296,13 @@ public final class Util {
 	} catch (Throwable t) {
 	    //t.printStackTrace();
 	};
-	TCP_SOCKETNAME = getProperty(p, "TCP_SOCKETNAME", "9267");
+	if (IS_MONO) {
+	    	EXTENSION_TCP_PORT_BASE = 9167;
+		TCP_SOCKETNAME = String.valueOf(Integer.parseInt(getProperty(p, "TCP_SOCKETNAME", "9267"))-100);
+	} else {
+	    	EXTENSION_TCP_PORT_BASE = 9267;
+		TCP_SOCKETNAME = getProperty(p, "TCP_SOCKETNAME", String.valueOf(EXTENSION_TCP_PORT_BASE));
+	}
 	EXTENSION_NAME = getProperty(p, "EXTENSION_DISPLAY_NAME", "JavaBridge");
 	PHP_EXEC = getProperty(p, "PHP_EXEC", null);
 	try {
@@ -344,7 +357,7 @@ public final class Util {
     }
     
     /**
-     * Display a warning if logLevel >= 1
+     * Display a warning if logLevel &gt;= 1
      * @param msg The warn message
      */
     public static void warn(String msg) {
@@ -691,7 +704,18 @@ public final class Util {
 	} catch (UnknownHostException e) {/*ignore*/}
 	return addr;
     }
-	
+    /**
+     * Returns the canonical windows file. For example c:\program files instead of c:\programme
+     * @param path The path, may be an empty string.
+     * @return the canonical file.
+     */
+    public static File getCanonicalWindowsFile (String path) {
+	    try {
+	        return new File(path).getCanonicalFile();
+        } catch (IOException e) {
+	        return new File(path);
+        }
+    }
     /**
      * Checks if the cgi binary buf-&lt;os.arch&gt;-&lt;os.name&gt;.sh or buf-&lt;os.arch&gt;-&lt;os.name&gt;.exe or buf-&lt;os.arch&gt;-&lt;os.name&gt; exists.
      * @param buf The base name, e.g.: /opt/tomcat/webapps/JavaBridge/WEB-INF/cgi/php-cgi
@@ -801,13 +825,14 @@ public final class Util {
 	    if(args==null) args=new String[]{null};
 	    String phpExec = args[0];
 	    String[] cgiBinary = null;
-	    if(phpExec != null && PHP_EXEC==null) {
+	    if(PHP_EXEC==null) {
 	      if(!preferSystemPhp) {
-		if((cgiBinary=checkCgiBinary(new StringBuffer(phpExec))) != null) php = cgiBinary;
+		if(phpExec != null && 
+				((cgiBinary=checkCgiBinary(new StringBuffer(phpExec))) != null)) php = cgiBinary;
 		/*
 		 * ... resolve it ..
 		 */            
-		if(PHP_EXEC==null && tryOtherLocations && php[0]==null) {
+		if(tryOtherLocations && php[0]==null) {
 		    for(int i=0; i<DEFAULT_CGI_LOCATIONS.length; i++) {
 			location = new File(DEFAULT_CGI_LOCATIONS[i]);
 			if(location.exists()) {php[0] = location.getAbsolutePath(); break;}
@@ -817,7 +842,7 @@ public final class Util {
 		/*
 		 * ... resolve it ..
 		 */            
-		if(PHP_EXEC==null && tryOtherLocations && php[0]==null) {
+		if(tryOtherLocations && php[0]==null) {
 		    for(int i=0; i<DEFAULT_CGI_LOCATIONS.length; i++) {
 			location = new File(DEFAULT_CGI_LOCATIONS[i]);
 			if(location.exists()) {
@@ -826,7 +851,8 @@ public final class Util {
 			}
 		    }
 		}
-		if(php[0]==null &&  (cgiBinary=checkCgiBinary(new StringBuffer(phpExec))) != null) php = cgiBinary;
+		if(phpExec != null && 
+				(php[0]==null &&  (cgiBinary=checkCgiBinary(new StringBuffer(phpExec))) != null)) php = cgiBinary;
 	      }
 	    }
             if(php[0]==null && tryOtherLocations) php[0]=PHP_EXEC;
@@ -870,6 +896,19 @@ public final class Util {
             return proc;
         }
 
+        public static class PhpException extends Exception {
+	    private static final long serialVersionUID = 767047598257671018L;
+	    private String errorString;
+	    public PhpException(String errorString) {
+		super(errorString);
+		this.errorString = errorString;
+	    }
+	    public String getError() {
+		return errorString;
+	    }
+	};
+
+	public void checkError() throws PhpException {}
 
         /* (non-Javadoc)
          * @see java.lang.Process#getOutputStream()
@@ -923,18 +962,6 @@ public final class Util {
 	InputStream in = null;
 	OutputStream err = null;
 
-	public static class PhpException extends RuntimeException {
-	    private static final long serialVersionUID = 767047598257671018L;
-	    private String errorString;
-	    public PhpException(String errorString) {
-		super(errorString);
-		this.errorString = errorString;
-	    }
-	    public String getError() {
-		return errorString;
-	    }
-	};
-
 	protected ProcessWithErrorHandler(String[] args, File homeDir, Map env, boolean tryOtherLocations, boolean preferSystemPhp, OutputStream err) throws IOException {
 	    super(args, homeDir, env, tryOtherLocations, preferSystemPhp);
 	    this.err = err;
@@ -948,13 +975,12 @@ public final class Util {
          * @param s The error string
          * @return The fatal error or null
          */	
-	protected String checkError(String s) {
-	    return Util.checkError(s);
+	public void checkError() throws PhpException {
+	    String errorString = error==null?null:Util.checkError(error.toString());
+	    if(errorString!=null) throw new PhpException(errorString);
 	}
 	public void destroy() {
-	    try {proc.destroy();} catch (Exception e) {}
-	    String errorString = error==null?null:checkError(error.toString());
-	    if(errorString!=null) throw new PhpException(errorString);
+	    proc.destroy();
 	}
 	private synchronized void readErrorStream() {
 	    byte[] buf = new byte[BUF_SIZE];
@@ -964,7 +990,7 @@ public final class Util {
 		while((c=in.read(buf))!=-1) {
 			err.write(buf, 0, c);
 			String s = new String(buf, 0, c, ASCII); 
-			Util.logError(s);
+			if(Util.logLevel>4) Util.logError(s);
 			if(error==null) error = new StringBuffer(s);
 			else error.append(s);
 		}
@@ -1248,5 +1274,48 @@ public final class Util {
 	String str =  formatter.format(t);
 	return str;
     }
+    public static void destroy () {
+	    Util.logLevel = 0;
+    }
+    public static int getMBeanProperty(String pattern, String property) {
+            try {
+             Class objectNameClazz = Class.forName("javax.management.ObjectName");
+             Constructor constructor = objectNameClazz.getConstructor(new Class[]{String.class});
+             Object objectName = constructor.newInstance(new Object[]{pattern});
+             
+             
+             Class clazz = Class.forName("javax.management.MBeanServerFactory");
+             Method method = clazz.getMethod("findMBeanServer", new Class[]{String.class});
+             ArrayList servers = (ArrayList)method.invoke(clazz, new Object[]{null});
+             Object server = servers.get(0);
+             
+             Class mBeanServerClazz = Class.forName("javax.management.MBeanServer");
+             clazz = Class.forName("javax.management.QueryExp");
+             method = mBeanServerClazz.getMethod("queryMBeans", new Class[]{objectNameClazz, clazz});
+             
+             Set s = (Set)method.invoke(server, new Object[]{objectName, null});
+             Iterator ii = s.iterator(); 
+             
+             if (ii.hasNext()) {
+        	     clazz = Class.forName("javax.management.ObjectInstance");
+             method = clazz.getMethod("getObjectName", Util.ZERO_PARAM);
+             objectName = method.invoke(ii.next(), Util.ZERO_ARG);
+             
+             method = mBeanServerClazz.getMethod("getAttribute", new Class[]{objectNameClazz, String.class});
+        	     Object result = method.invoke(server, new Object[]{objectName, property});
+        	     return Integer.parseInt(String.valueOf(result));
+             }
+	} catch (Exception t) {
+		if (Util.logLevel>5) Util.printStackTrace(t);
+	}
+	return 0;
+   }
 
+    static final boolean checkVM() {
+	try {
+	    return "libgcj".equals(System.getProperty("gnu.classpath.vm.shortname"));
+	} catch (Throwable t) {
+	    return false;
+	}
+    }
 }

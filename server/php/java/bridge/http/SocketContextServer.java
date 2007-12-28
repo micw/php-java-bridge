@@ -28,10 +28,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
+import php.java.bridge.AppThreadPool;
 import php.java.bridge.ISocketFactory;
 import php.java.bridge.JavaBridge;
-import php.java.bridge.AppThreadPool;
 import php.java.bridge.Util;
 
 /**
@@ -53,15 +57,16 @@ import php.java.bridge.Util;
  * @see php.java.bridge.http.PipeContextServer
  * @see php.java.bridge.http.ContextServer
  */
-public class SocketContextServer extends PipeContextServer implements Runnable {
-    private ISocketFactory socket = null;
+public final class SocketContextServer extends PipeContextServer implements Runnable {
+    private ISocketFactory serverSocket = null;
+    protected List sockets = Collections.synchronizedList(new ArrayList());
     
-    protected static class Channel extends PipeContextServer.Channel {
+    protected class Channel extends PipeContextServer.Channel {
         protected Socket sock;
         
         public Channel(String name, InputStream in, OutputStream out, Socket sock) {
             super(name, in, out);
-            this.sock = sock;
+	    sockets.add(this.sock = sock);
         }
         public InputStream getInputStream() {
             return in;
@@ -74,8 +79,8 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
         public Socket getSocket() {
             return sock;
         }
-        protected static void shutdown(Socket sock) {
-            if(sock!=null) try {sock.close();}catch (IOException e){}
+        protected void shutdown(Socket sock) {
+            if(sockets.remove(sock)) try {sock.close();}catch (IOException e){}
         }
 
         public void shutdown() {
@@ -91,20 +96,20 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
     public SocketContextServer (AppThreadPool threadPool) {
     	super(ContextFactory.NO_CREDENTIALS, threadPool, ContextFactory.EMPTY_CONTEXT_NAME);
         try {
-	    socket = JavaBridge.bind(BIND_PORT);
+	    serverSocket = JavaBridge.bind(BIND_PORT);
 	    try {
 	        SecurityManager sec = System.getSecurityManager();
-	        if(sec!=null) sec.checkAccept("127.0.0.1", Integer.parseInt(socket.getSocketName()));
+	        if(sec!=null) sec.checkAccept("127.0.0.1", Integer.parseInt(serverSocket.getSocketName()));
 	    } catch (SecurityException sec) {
 	        throw new Exception("Add the line: grant {permission java.net.SocketPermission \"*\", \"accept,resolve\";}; to your server.policy file or run this AS on an operating system which supports named pipes (e.g.: Unix, Linux, BSD, Mac OSX, ...).", sec);
 	    } catch (Throwable t) {/*ignore*/};
-            Thread t = new Util.Thread(this, "JavaBridgeSocketContextServer("+socket.getSocketName()+")");
+            Thread t = new Util.Thread(this, "JavaBridgeSocketContextServer("+serverSocket.getSocketName()+")");
 	    t.start();
         } catch (Throwable t) {
 	    Util.warn("Local communication channel not available. The PHP/Java bridge will be very slow.");
             Util.printStackTrace(t);
-            if(socket!=null) try{socket.close();}catch(IOException e) {}
-            socket=null;
+            if(serverSocket!=null) try{serverSocket.close();}catch(IOException e) {}
+            serverSocket=null;
         }
     }
 
@@ -112,12 +117,12 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
 	InputStream in=null;
 	OutputStream out=null;
 	Socket socket=null;
-	
+	Channel channel = null;
 	try {
-	    try {socket = this.socket.accept();} catch (IOException ex) {return false;} // socket closed
+	    try {socket = this.serverSocket.accept();} catch (IOException ex) {return false;} // socket closed
 	    in=socket.getInputStream();
 	    out=socket.getOutputStream();
-	    ContextRunner runner = new ContextRunner(contextServer, new Channel(getChannelName(), in, out, socket));
+	    ContextRunner runner = new ContextRunner(contextServer, channel = new Channel(getChannelName(), in, out, socket));
 	    if(threadPool!=null) {
 	        threadPool.start(runner);
 	    } else {
@@ -125,32 +130,44 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
 	    	t.start();
 	    }
 	} catch (SecurityException t) {
-	    Channel.shutdown(socket);
+	    if(channel!=null) channel.shutdown(socket);
 	    ContextFactory.destroyAll();
 	    Util.printStackTrace(t);
 	    return false;
 	} catch (Throwable t) {
-	    Channel.shutdown(socket);
+	    if(channel!=null) channel.shutdown(socket);
 	    Util.printStackTrace(t);
 	}
 	return true;
     }
     public void run() {
-	while(socket!=null) {
+	while(serverSocket!=null) {
 	    if(!accept()) destroy();
 	}
 	Util.logDebug("SocketContextServer stopped, the local channel is not available anymore.");
     }
 
+    private void closeAllSockets () {
+	    synchronized (sockets) {
+		    for (Iterator ii = sockets.iterator(); ii.hasNext(); ) {
+			    Socket sock = (Socket)ii.next();
+			    ii.remove();
+			    try {sock.close();}catch (IOException e){}
+		    }
+	    }
+    }
      /**
      * Destroy the server
      *
      */
     public void destroy() {
         super.destroy();
-	if(socket!=null) {
-	    try {socket.close();} catch (IOException e) {Util.printStackTrace(e);}
-	    socket = null;
+
+        closeAllSockets();
+
+	if(serverSocket!=null) {
+	    try {serverSocket.close();} catch (IOException e) {Util.printStackTrace(e);}
+	    serverSocket = null;
 	}
     }
     
@@ -160,7 +177,7 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
      * @return true if there's a server socket listening, false otherwise.
      */
     public boolean isAvailable() {
-    	return socketServer && socket!=null;
+    	return socketServer && serverSocket!=null;
     }
 
     /**
@@ -168,7 +185,7 @@ public class SocketContextServer extends PipeContextServer implements Runnable {
      * @return The server port.
      */
     public String getChannelName() {
-        return socket.getSocketName();
+        return serverSocket.getSocketName();
     }
     public boolean start(AbstractChannelName channelName) {
 	return isAvailable();

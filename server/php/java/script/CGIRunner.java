@@ -25,7 +25,6 @@ package php.java.script;
  */
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -37,7 +36,6 @@ import java.util.Map;
 import php.java.bridge.PhpProcedureProxy;
 import php.java.bridge.Util;
 import php.java.bridge.Util.HeaderParser;
-import php.java.bridge.Util.Process;
 
 /**
  * This class can be used to run a PHP CGI binary. Used only when
@@ -53,14 +51,28 @@ import php.java.bridge.Util.Process;
 
 public abstract class CGIRunner extends Thread {
 	
-    protected boolean running = true;
     protected Map env;
     protected OutputStream out, err;
     protected Reader reader;
     
+    protected ScriptLock scriptLock = new ScriptLock();
     protected Lock phpScript = new Lock();
     protected HeaderParser headerParser;
 
+    // used to wait for the script to terminate
+    private static class ScriptLock {
+	    private boolean running = true;
+	    public synchronized void waitForRunner () throws InterruptedException {
+		    if (running)
+                        wait();
+	    }
+	    public synchronized void finish () {
+		    running = false;
+		    notify();
+	    }
+    }
+    
+    // used to wait for the cont.call(cont) call from the script
     protected class Lock {
 	private Object val = null;
 	private boolean finish = false;
@@ -91,70 +103,69 @@ public abstract class CGIRunner extends Thread {
 	this.err = err;
 	this.headerParser = headerParser;
     }
-    private static class ProcessWithErrorHandler extends Util.ProcessWithErrorHandler {
-	protected ProcessWithErrorHandler(String[] args, File homeDir, Map env, boolean tryOtherLocations, OutputStream err) throws IOException {
-	    super(args, homeDir, env, tryOtherLocations, true, err);
-	}
-	protected String checkError(String s) {
-	    return s;
-	}
-        public static Process start(String[] args, File homeDir, Map env, boolean tryOtherLocations, OutputStream err) throws IOException {
-            ProcessWithErrorHandler proc = new ProcessWithErrorHandler(args, homeDir, env, tryOtherLocations, err);
-            proc.start();
-            return proc;
-        }	
-    }
     public void run() {
 	try {
 	    doRun();
 	} catch (IOException e) {
 	    Util.printStackTrace(e);
 	    phpScript.val = e;
-	} catch (Util.ProcessWithErrorHandler.PhpException e1) {
+	} catch (Util.Process.PhpException e1) {
 	    phpScript.val = e1;	    
 	} catch (Exception ex) {
 	    Util.printStackTrace(ex);
-	} finally {
-	    synchronized(this) {
-		notify();
-		running = false;
-		phpScript.finish();
-	    }
+        } finally {
+	    phpScript.finish();
+	    scriptLock.finish();
 	}
     }
     private Writer writer;
-    protected void doRun() throws IOException {
-        Process proc = ProcessWithErrorHandler.start(new String[] {null, "-d", "allow_url_include=On"}, null, env, true, err);
+    protected void doRun() throws IOException, Util.Process.PhpException {
+        Util.Process proc = Util.ProcessWithErrorHandler.start(new String[] {null, "-d", "allow_url_include=On"}, null, env, true, true, err);
 
 	InputStream natIn = null;
 	try {
 	natIn = proc.getInputStream();
 	OutputStream natOut = proc.getOutputStream();
 	writer = new BufferedWriter(new OutputStreamWriter(natOut));
+
 	(new Thread() { // write the script asynchronously to avoid deadlock
 	    public void doRun() throws IOException {
-		char[] cbuf = new char[Util.BUF_SIZE]; int n;    
-		while((n = reader.read(cbuf))!=-1) writer.write(cbuf, 0, n);
-		try { writer.close(); } catch (IOException ex) {/*ignore*/}
+		char[] cbuf = new char[Util.BUF_SIZE]; 
+		int n;    
+		while((n = reader.read(cbuf))!=-1) 
+			writer.write(cbuf, 0, n);
 	    }
-	    public void run() { try {doRun(); } catch (IOException e) {Util.printStackTrace(e);} 
-	                                  finally {try {writer.close();} catch (IOException ex) {/*ignore*/}}
+	    public void run() { 
+		    try {
+			    doRun(); 
+		    } catch (IOException e) {
+			    Util.printStackTrace(e);
+		    } finally {
+			    try {
+				    writer.close();
+			    } catch (IOException ex) {
+				    /*ignore*/
+			    }
+		    }
 	    }
 	}).start();
+
 	byte[] buf = new byte[Util.BUF_SIZE];
 	Util.parseBody(buf, natIn, out, headerParser);
-	try {
-        proc.waitFor();
-    } catch (InterruptedException e1) {
-        Util.printStackTrace(e1);
-    }
+	proc.waitFor();
 	} catch (IOException e) {
 	    Util.printStackTrace(e);
 	    throw e;
+	} catch (InterruptedException e) {
+		/*ignore*/
 	} finally {
 	    if(natIn!=null) try {natIn.close();} catch (IOException ex) {/*ignore*/}
-	    proc.destroy();
+	    try { out.flush(); } catch (IOException e) {/*ignore*/}
+	    try { err.flush(); } catch (IOException e) {/*ignore*/}
+	    try {proc.destroy(); } catch (Exception e) { Util.printStackTrace(e); }
 	}
+	
+	proc.checkError();
     }
 
     /**
@@ -176,7 +187,6 @@ public abstract class CGIRunner extends Thread {
     /**
      * One must call this function if one is interested in the php continuation.
      * @return The php continuation.
-     * @throws InterruptedException
      */
     public PhpProcedureProxy getPhpScript() throws Exception {
         Object val = phpScript.getVal(); 
@@ -186,20 +196,21 @@ public abstract class CGIRunner extends Thread {
             throw (Exception)val; 
         }
     }
-	
+
+    /* Release the cont.call(cont) from PHP. After that the PHP script may terminate */
+    private synchronized void releaseContinuation () {
+	notify();
+    }
     /**
      * This function must be called to release the allocated php continuation.
+     * Note that simply calling this method does not guarantee that
+     * the script is finished, as the ContextRunner may still produce output.
+     * Use contextFactory.waitFor() to wait for the script to terminate.
+     * @throws InterruptedException 
      *
      */
-    public synchronized void release() {
-	notify();
-	if(running)
-	    try {
-		wait();
-	    } catch (InterruptedException e) {
-		Util.printStackTrace(e);
-	    }
-	try { out.close(); } catch (IOException e) {/*ignore*/}
-	try { err.close(); } catch (IOException e) {/*ignore*/}
+    public void release() throws InterruptedException {
+	    releaseContinuation();
+	    scriptLock.waitForRunner();
     }
 }

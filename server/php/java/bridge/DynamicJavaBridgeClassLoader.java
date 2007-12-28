@@ -167,13 +167,6 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     public void clear() {
 	clearLoader();
     }
-    private static final boolean checkVM() {
-	try {
-	    return "libgcj".equals(System.getProperty("gnu.classpath.vm.shortname"));
-	} catch (Throwable t) {
-	    return false;
-	}
-    }
     private static final String getLD_LIBRARY_PATH() {
 	try {
 	    return System.getProperty("java.library.path");
@@ -188,7 +181,6 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 	    return "[error: no java.ext.dirs set]";
 	}
     }
-    static final boolean IS_GNU_JAVA = checkVM();
     static final String LD_LIBRARY_PATH = getLD_LIBRARY_PATH();
     static final String CLASSPATH = getCLASSPATH();
 
@@ -253,7 +245,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 			    }
 			    protected String findLibrary(String name) {
 				if(Util.logLevel>4) Util.logDebug("trying to load library: " +name + " from: "+"LOADER-ID"+System.identityHashCode(this));
-				if(!IS_GNU_JAVA) throw new UnsatisfiedLinkError("This java VM can only load pure java libraries. Either use GNU java instead or move the java library to " + CLASSPATH + " and the shared library "+ name +" to "+ LD_LIBRARY_PATH);
+				if(!Util.IS_GNU_JAVA) throw new UnsatisfiedLinkError("This java VM can only load pure java libraries. Either use GNU java instead or move the java library to " + CLASSPATH + " and the shared library "+ name +" to "+ LD_LIBRARY_PATH);
 				String s = super.findLibrary(name);
 				if(s!=null) return s;
 				return resolveLibraryName(name);

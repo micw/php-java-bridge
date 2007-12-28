@@ -1,7 +1,7 @@
 <?php require_once("java/Java.inc");
-java_autoload();
-
 $session = java_session();
+
+java_autoload();
 
 /* The name of the remote document */
 $name = "RMIdocument";

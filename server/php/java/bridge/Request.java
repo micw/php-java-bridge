@@ -390,7 +390,7 @@ public final class Request implements IDocHandler {
 			switch(arg.predicate) {
 			case '2': response.setAsyncWriter();
 			case '1': bridge.GetSetProp(arg.callObject, arg.method, arg.getArgs(), response); break;
-			case '3': response.setAsyncNullWriter(); bridge.GetSetProp(arg.callObject, arg.method, arg.getArgs(), response); break;
+			case '3': response.setAsyncVoidWriter(); bridge.GetSetProp(arg.callObject, arg.method, arg.getArgs(), response); break;
 			default: throw new IOException("Protocol error");
 			}
 			response.flush();
@@ -403,7 +403,7 @@ public final class Request implements IDocHandler {
 			switch(arg.predicate) {
 			case '2':  response.setAsyncWriter();
 			case '1':  bridge.Invoke(arg.callObject, arg.method, arg.getArgs(), response);  break;
-			case '3': response.setAsyncNullWriter(); bridge.Invoke(arg.callObject, arg.method, arg.getArgs(), response);  break;
+			case '3': response.setAsyncVoidWriter(); bridge.Invoke(arg.callObject, arg.method, arg.getArgs(), response);  break;
 			default: throw new IOException("Protocol error");
 			}
 			response.flush();
@@ -428,7 +428,7 @@ public final class Request implements IDocHandler {
 			switch(arg.predicate) {
 			case '2': response.setAsyncWriter();
 			case '1': bridge.CreateObject((String)arg.callObject, false, arg.getArgs(), response); break;
-			case '3': response.setAsyncNullWriter(); bridge.CreateObject((String)arg.callObject, false, arg.getArgs(), response);  break;
+			case '3': response.setAsyncVoidWriter(); bridge.CreateObject((String)arg.callObject, false, arg.getArgs(), response);  break;
 			default: throw new IOException("Protocol error");
 			}
 			response.flush();
@@ -441,7 +441,7 @@ public final class Request implements IDocHandler {
 			switch(arg.predicate) {
 			case '2': response.setAsyncWriter();
 			case '1':  bridge.CreateObject((String)arg.callObject, true, arg.getArgs(), response);  break;
-			case '3': response.setAsyncNullWriter(); bridge.CreateObject((String)arg.callObject, true, arg.getArgs(), response); break;
+			case '3': response.setAsyncVoidWriter(); bridge.CreateObject((String)arg.callObject, true, arg.getArgs(), response); break;
 			default: throw new IOException("Protocol error");
 			}
 			response.flush();
@@ -520,7 +520,7 @@ public final class Request implements IDocHandler {
 		switch(arg.predicate) {
 		case '2': response.setAsyncWriter();
 		case '1': bridge.GetSetProp(arg.callObject, arg.method, arg.getArgs(), response); break;
-		case '3': response.setAsyncNullWriter(); bridge.GetSetProp(arg.callObject, arg.method, arg.getArgs(), response); break;
+		case '3': response.setAsyncVoidWriter(); bridge.GetSetProp(arg.callObject, arg.method, arg.getArgs(), response); break;
 		default: throw new IOException("Protocol error");
 		}
 		response.flush();
@@ -529,7 +529,7 @@ public final class Request implements IDocHandler {
 		switch(arg.predicate) {
 		case '2':  response.setAsyncWriter();
 		case '1':  bridge.Invoke(arg.callObject, arg.method, arg.getArgs(), response); break;
-		case '3':  response.setAsyncNullWriter(); bridge.Invoke(arg.callObject, arg.method, arg.getArgs(), response); break;
+		case '3':  response.setAsyncVoidWriter(); bridge.Invoke(arg.callObject, arg.method, arg.getArgs(), response); break;
 		default: throw new IOException("Protocol error");
 		}
 		response.flush();
@@ -546,7 +546,7 @@ public final class Request implements IDocHandler {
 		switch(arg.predicate) {
 		case '2':response.setAsyncWriter();
 		case '1':bridge.CreateObject((String)arg.callObject, false, arg.getArgs(), response); break;
-		case '3':response.setAsyncNullWriter(); bridge.CreateObject((String)arg.callObject, false, arg.getArgs(), response); break;
+		case '3':response.setAsyncVoidWriter(); bridge.CreateObject((String)arg.callObject, false, arg.getArgs(), response); break;
 		default: throw new IOException("Protocol error");
 		}
 		response.flush();
@@ -555,7 +555,7 @@ public final class Request implements IDocHandler {
 		switch(arg.predicate) {
 		case '2':  response.setAsyncWriter();
 		case '1':  bridge.CreateObject((String)arg.callObject, true, arg.getArgs(), response);  break;
-		case '3':  response.setAsyncNullWriter(); bridge.CreateObject((String)arg.callObject, true, arg.getArgs(), response);  break;
+		case '3':  response.setAsyncVoidWriter(); bridge.CreateObject((String)arg.callObject, true, arg.getArgs(), response);  break;
 		default: throw new IOException("Protocol error");
 		}
 		response.flush();

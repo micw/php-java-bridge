@@ -8,9 +8,12 @@
 #define MONO 2
 #define java java
 #define mono mono
+#define ap_php_snprintf snprintf
+
 
 #define EXTENSION @EXTENSION@
 #if EXTENSION == JAVA
+#define java_snprintf ap_php_snprintf 
 #define DEFAULT_WRAPPER DEFAULT_JAVA_WRAPPER
 #define DEFAULT_PORT DEFAULT_JAVA_PORT /* init_cfg.h overrides */
 #define N_SARGS N_JAVA_SARGS	/* # of server args for exec */
@@ -18,6 +21,7 @@
 #define EXT java
 #define EXTC Java
 #else
+#define mono_snprintf ap_php_snprintf 
 #define DEFAULT_PORT DEFAULT_MONO_PORT
 #define DEFAULT_WRAPPER DEFAULT_MONO_WRAPPER
 #define N_SARGS N_MONO_SARGS
@@ -25,6 +29,11 @@
 #define EXT mono
 #define EXTC Mono
 #endif
+
+#ifndef BRIDGE_VERSION
+#define BRIDGE_VERSION "@BRIDGE_VERSION@"
+#endif
+
 
 #define EXT_CONCAT(prefix, ext, sep, fkt) prefix##ext##sep##fkt
 #define EXT_EXPAND(prefix, ext, sep, fkt) EXT_CONCAT(prefix, ext, sep, fkt)

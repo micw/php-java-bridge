@@ -53,6 +53,8 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
      */
     protected IContext context;
     
+    private boolean isValid = true;
+    
     protected SimpleContextFactory(String webContext) {
   	visited = new ContextFactory(webContext);
   	visited.accept(this);
@@ -68,19 +70,25 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
         session = null;
     }
     
-    /**
-     * Wait for the context factory to finish. The default implementation does nothing.
-     * Call visited.waitFor() if you want to wait.
-     */
-    public void waitFor() throws InterruptedException {
-        //visited.waitFor();
+    public synchronized void invalidate() {
+	    isValid = false;
+	    notifyAll(); // the servlet and the http proxy, see SimplePhpScriptEngine.release
     }
     /**
-     * Wait for the context factory to finish. The default implementation does nothing.
-     * Call visited.waitFor() if you want to wait.
+     * Wait for the context factory to finish. 
      */
-    public void waitFor(long timeout) throws InterruptedException {
-	//visited.waitFor(timeout);
+    public synchronized void waitFor() throws InterruptedException {
+	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet is waiting for ContextFactory " +System.identityHashCode(this));
+	if (isValid) wait();
+	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet done waiting for ContextFactory " +System.identityHashCode(this));
+    }
+    /**
+     * Wait for the context factory to finish. 
+     */
+    public synchronized void waitFor(long timeout) throws InterruptedException {
+	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet is waiting for ContextFactory " +System.identityHashCode(this) + " for " +timeout+" ms");
+	if (isValid) wait(timeout);
+	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet done waiting for ContextFactory " +System.identityHashCode(this)+ " for " +timeout+" ms");
     }    
     public String getId() { 
         return visited.getId();

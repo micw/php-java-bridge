@@ -339,12 +339,6 @@ public class JavaBridge implements Runnable {
         Standalone.main(s);
     }
 
-    //
-    // Helper routines which encapsulate the native methods
-    //
-    void setResult(Response response, Object value, Class type) {
-    	response.setResult(value, type);
-    }
 
     /**
      * Print a stack trace to the log file.
@@ -489,9 +483,9 @@ public class JavaBridge implements Runnable {
 	    if (this.logLevel>4) {
 	        Object result = selected.newInstance(coercedArgs);
 	        logInvoke(result, name, coercedArgs);
-    	    	response.setResultObject(result);
+    	    	response.setResult(result, clazz);
 	    } else {
-  	    	response.setResultObject(selected.newInstance(coercedArgs));
+  	    	response.setResult(selected.newInstance(coercedArgs), clazz);
   	    }
 	} catch (Throwable e) {
 	    if(e instanceof InvocationTargetException) e = ((InvocationTargetException)e).getTargetException();
@@ -1058,9 +1052,9 @@ public class JavaBridge implements Runnable {
 	        logInvoke(object, method, coercedArgs); 
 	        Object result = selected.invoke(object, coercedArgs);
 	        logResult(result);
-	        setResult(response, result, selected.getReturnType());
+	        response.setResult(result, selected.getReturnType());
 	    } else {
-	        setResult(response, selected.invoke(object, coercedArgs), selected.getReturnType());	      
+	        response.setResult(selected.invoke(object, coercedArgs), selected.getReturnType());	      
 	    }
 	} catch (Throwable e) {
 	    if(e instanceof InvocationTargetException) e = ((InvocationTargetException)e).getTargetException();
@@ -1190,7 +1184,7 @@ public class JavaBridge implements Runnable {
 			    } else {
 			    	res=fld.get(object);
 			    }
-			    setResult(response, res, ctype);
+			    response.setResult(res, ctype);
 			    return;
 			}
 		    }
@@ -1220,7 +1214,7 @@ public class JavaBridge implements Runnable {
 				matches.clear();
 				break again1;
 			    }
-			    setResult(response, method.invoke(object, args), method.getReturnType());
+			    response.setResult(method.invoke(object, args), method.getReturnType());
 			    return;
 			}
 		    }
@@ -1251,7 +1245,7 @@ public class JavaBridge implements Runnable {
 			    } else {
 				res = fld.get(object);
 			    }
-			    setResult(response, res, ctype);
+			    response.setResult(res, ctype);
 			    return;
 			}
 		    }
@@ -1918,15 +1912,15 @@ public class JavaBridge implements Runnable {
 	return offsetGet((Map)table, off);	
     }
     /**
-     * Selects the asynchronuous protocol mode.
+     * Selects the asynchronous protocol mode.
      */
     public void beginDocument() {
 	Response res = request.response;
-	res.setPersistentAsyncWriter();
+	res.setObjectWriter();
 	lastAsyncException = null;
     }
     /**
-     * Back to synchronuous protocol mode
+     * Back to synchronous protocol mode
      */
     public void endDocument() throws Throwable {
 	Response res = request.response;

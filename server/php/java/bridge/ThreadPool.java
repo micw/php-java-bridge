@@ -24,6 +24,7 @@ package php.java.bridge;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.util.Iterator;
 import java.util.LinkedList;
 
 /**
@@ -39,6 +40,7 @@ public class ThreadPool {
     private String name;
     private int threads = 0, idles = 0, poolMaxSize, poolReserve;
     private LinkedList runnables = new LinkedList();
+    private LinkedList threadList = new LinkedList();
 
     /**
      * Threads continue to pull runnables and run them in the thread
@@ -56,7 +58,10 @@ public class ThreadPool {
 	public void run() {
 	    try {
 		while(!terminate) { getNextRunnable().run(); end(); }
-	    } catch (Throwable t) { Util.printStackTrace(t); createThread(getName()); 
+	    } catch (InterruptedException e) {
+		    /*ignore*/
+	    }catch (Throwable t) { 
+	           Util.printStackTrace(t); createThread(getName()); 
 	    } finally { terminate(); }
 	}
     }
@@ -65,6 +70,7 @@ public class ThreadPool {
     }
     protected void startNewThread(String name) {
         Delegate d = createDelegate(name);
+        threadList.add(d);
 	d.start();
     }
     protected synchronized boolean checkReserve() {
@@ -102,6 +108,15 @@ public class ThreadPool {
 	this.name = name;
     	this.poolMaxSize = poolMaxSize;
     	this.poolReserve = (poolMaxSize>>>2)*3;
+    }
+    
+    /** Terminate all threads in the pool. */
+    public void destroy() {
+	    for (Iterator ii = threadList.iterator(); ii.hasNext(); ) {
+		    Delegate d = (Delegate) ii.next();
+		    d.terminate = true;
+		    d.interrupt();
+	    }
     }
     /**
      * Creates a new thread pool.

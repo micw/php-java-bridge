@@ -17,7 +17,7 @@ public class cli {
 	System.out.println(eng.eval("$a=122"));
 	try {
 		System.out.println(eng.eval("die();")); 
-	} catch (Exception e) {}
+	} catch (Exception e) {System.err.println("got exception: " + e);}
 	System.out.println(eng.eval("echo $a;"));
 	eng.eval((String)null);
 

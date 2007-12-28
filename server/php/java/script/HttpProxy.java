@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import php.java.bridge.Util.HeaderParser;
+import php.java.bridge.Util.Process.PhpException;
 
 /**
  * Represents the script continuation.
@@ -64,7 +65,7 @@ public class HttpProxy extends CGIRunner {
 	).init(ctx), out, err, headerParser);
     }
 
-    protected void doRun() throws IOException {
+    protected void doRun() throws IOException, PhpException {
     	if(reader instanceof URLReader) {
 	    ((URLReader)reader).read(env, out, headerParser);
      	} else {

@@ -22,8 +22,8 @@ script-api.jar contained in the JavaBridge.war file.
 
 * Install PHP 5.1.4 or above.
 
-* Download and extract the PHP/Java Bridge binary download into a
-folder and double-click on test.sh or test.bat. Check the RESULT.html.
+* Download and extract the php-java-bridge_j2ee*.zip archive into a
+folder and type: java -classpath JavaBridge.war TestInstallation
 
 * Copy the created "JavaBridge.jar" and "php-script.jar" from the
 "ext" folder to the J2SE library path. On Windows the location depends
@@ -40,7 +40,7 @@ example:
 
   or:
 
-    jrunscript -Dphp.java.bridge.php_exec=/usr/bin/php-cgi -l php phpFile.php
+    jrunscript -J-Dphp.java.bridge.php_exec=/usr/bin/php-cgi -l php phpFile.php
 
 
 * A convenience ScriptEngine is available which makes it easier to

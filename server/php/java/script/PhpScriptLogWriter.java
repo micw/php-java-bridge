@@ -29,21 +29,23 @@ import java.io.OutputStream;
 
 import php.java.bridge.ILogger;
 import php.java.bridge.NotImplementedException;
-import php.java.bridge.Util;
 
 /**
  * A PrintWriter which uses the JavaBridge logger.
  *
  */
-class PhpScriptLogWriter extends PhpScriptWriter {
+public class PhpScriptLogWriter extends PhpScriptWriter {
 
-    public PhpScriptLogWriter() {
-	super(getLogOutputStream());
+    private PhpScriptLogWriter(OutputStream out) {
+	super(out);
     }
-    private static class LogOutputStream extends OutputStream {
+    public static final PhpScriptLogWriter getWriter (ILogger logger) {
+	    return new PhpScriptLogWriter (new LogOutputStream(logger));
+    }
+    static class LogOutputStream extends OutputStream {
 	private ILogger logger;
-	public LogOutputStream() {
-	    logger = Util.getLogger();
+	public LogOutputStream(ILogger logger) {
+	    this.logger = logger;
 	}
 	    public void write(int b) throws IOException {
 		throw new NotImplementedException();
@@ -51,8 +53,5 @@ class PhpScriptLogWriter extends PhpScriptWriter {
 	    public void write(byte b[], int off, int len) throws IOException {
 		logger.log(ILogger.INFO, new String(b, off, len));
 	    }
-    }
-    private static OutputStream getLogOutputStream() {
-	return new LogOutputStream();
     }
 }

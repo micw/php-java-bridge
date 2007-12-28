@@ -1,6 +1,4 @@
 <?php require_once("java/Java.inc");
-java_autoload();
-
 $session = java_session();
 ?>
 
@@ -8,6 +6,8 @@ $session = java_session();
 <TITLE>PHP and JSP session sharing</title>
 <BODY>
 <?php
+java_autoload();
+
 if(is_null($session->get("counter"))) {
   $session->put("counter", new java_lang_Integer(1));
 }

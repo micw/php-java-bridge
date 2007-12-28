@@ -46,7 +46,7 @@
 #include "zend.h"
 #include "init_cfg.h"
 #if !defined(ZEND_ENGINE_2)
-# include "java_php4.c"
+# error "PHP 4 is not supported anymore. Use php-java-bridge-4.3.2 instead"
 #else
 
 #include "php_java.h"
@@ -65,6 +65,8 @@
 
 #include "zend_extensions.h"
 #include "TSRM.h"
+
+#include "init_cfg.h"
 
 EXT_DECLARE_MODULE_GLOBALS(EXT)
 
@@ -557,6 +559,129 @@ PHP_MSHUTDOWN_FUNCTION(EXT)
 	
   return SUCCESS;
 }
+
+
+
+/** Zend module stuff */
+
+int EXT_GLOBAL(zend_startup)(zend_extension *extension)
+{
+	return zend_startup_module(&EXT_GLOBAL(module_entry));
+}
+
+void EXT_GLOBAL(zend_shutdown)(zend_extension *extension)
+{
+	/* Do nothing. */
+}
+
+int EXT_GLOBAL(api_no_check)(int api_no) 
+{
+  return SUCCESS;
+}
+
+#if 0
+static size_t count_catch_blocks (zend_op_array *op_array) 
+{
+  size_t count = 0;
+  opline = op_array->opcodes+2;
+  end = opline + op_array->last;
+  while (opline < end) {
+	if (opline[-2]==42 && opline[-1]==109 && opline[0]==107) {
+	  count++;
+	}
+  }
+  return count;
+}
+
+static void grow_op_array  (zend_op_array *op_array, size_t size)
+{
+  op_array->size = size;
+  op_array->opcodes = 
+	erealloc(op_array->opcodes, (op_array->size)*sizeof(zend_op));
+}
+
+static void patch_addresses (zend_op_array *op_array, size_t pos)
+{
+  opline = op_array->opcodes + pos;
+  end = opline + op_array->last;
+  while (opline < end) {
+	switch (opline->opcode) {
+	case ZEND_JMP:
+	  opline->op1.u.jmp_addr += 1;
+	  break;
+	case ZEND_JMPZ:
+	case ZEND_JMPNZ:
+	case ZEND_JMPZ_EX:
+	case ZEND_JMPNZ_EX:
+	  opline->op2.u.jmp_addr += 1;
+	  break;
+	  }
+  }
+}
+static void patch_position (zend_op_array *op_array, size_t pos)
+{
+  memmove (op_array+pos+1, op_array+pos, op_array->last-pos);
+  op_array[pos]=ZEND_NOP;
+  patch_addresses(op_array, ++pos);
+}
+
+static void patch_op_array (zend_op_array *op_array)
+{
+  opline = op_array->opcodes+2;
+  end = opline + op_array->last;
+  while (opline < end) {
+	if (opline[-2]==42 && opline[-1]==109 && opline[0]==107) {
+	  patch_position (op_array, opline-op_array);
+	  opline++;
+	}
+  }
+}
+#endif
+/** 
+ * Modify the oparray to gain speed. 
+ *
+ * The PHP/Java Bridge protocol supports an asynchronous protocol mode
+ * which allows the front- and back end to run in parallel. This mode
+ * is 20 times faster than the default protocol mode, but, at certain
+ * points the state must be synchronized.
+ *
+ * The following code inserts the synchronization points. Since it
+ * depends on the way the language scanner works, this code is
+ * currently not portable.
+ */
+void EXT_GLOBAL(op_array_handler)(zend_op_array *op_array) 
+{
+#if 0
+  patch_op_array();
+#endif
+}
+
+#ifndef ZEND_EXT_API
+#define ZEND_EXT_API    /**/
+#endif
+ZEND_EXTENSION();
+
+zend_extension zend_extension_entry = {
+  EXT_NAME(),
+  BRIDGE_VERSION,
+  "The PHP/Java Bridge authors",
+  "(C) 2003-2007 by the authors",
+  "http://php-java-bridge.sf.net",
+  EXT_GLOBAL(zend_startup),
+  EXT_GLOBAL(zend_shutdown),
+  NULL,           /* activate_func_t */
+  NULL,           /* deactivate_func_t */
+  NULL,           /* message_handler_func_t */
+  EXT_GLOBAL(op_array_handler),           /* op_array_handler_func_t */
+  NULL,           /* statement_handler_func_t */
+  NULL,           /* fcall_begin_handler_func_t */
+  NULL,           /* fcall_end_handler_func_t */
+  NULL,           /* op_array_ctor_func_t */
+  NULL,           /* op_array_dtor_func_t */
+  NULL,
+  COMPAT_ZEND_EXTENSION_PROPERTIES
+};
+
 #endif	/* >= PHP5 */
 
 #ifndef PHP_WRAPPER_H

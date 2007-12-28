@@ -36,9 +36,9 @@ Overview
 Build and execution instructions:
 ---------------------------------
 
-  Type java -jar JavaBridge.war to extract the JavaBridge.jar from
-  the web archive. The command extracts ext/JavaBridge.jar and
-  java/Java.inc from the web archive.
+  Type java -classpath JavaBridge.war TestInstallation to extract the
+  JavaBridge.jar from the web archive. The command extracts
+  ext/JavaBridge.jar and java/Java.inc from the web archive.
 
   Double-click on JavaBridge.jar and select SERVLET_LOCAL:8080 to
   start a local HTTP server. Type java -jar ext/JavaBridge.jar --help
@@ -59,18 +59,6 @@ Build and execution instructions:
 
      phpize && ./configure && make && make install
 
-
-  For PHP 4, which cannot run PHP 5 code, a C extension "php_java.dll"
-  or "java.so" is needed to access Java. Download and extract the
-  PHP/Java Bridge source download, follow the instructions from the
-  INSTALL document and set the following php.ini options:
-
-     extension=java.so ;; or php_java.dll on windows
-     [java]
-     java.hosts=127.0.0.1:8080
-     java.servlet=On
-
-  Both implementations, the Java.inc and the C code are API compatible.
 
 ------------------------------------
   Permanently activate the module
@@ -773,11 +761,7 @@ Build and execution instructions:
 
   The java_begin_document()/java_end_document() pair encapsulates PHP
   code, sends an image of it (as a streamed XML document) to the server
-  and executes it there. This works for all PHP statements. But the
-  following primitives are not allowed while in stream mode:
-  java_session(), java_begin_document(), java_end_document(),
-  java_values(), __toString(), and the PHP iterator cannot be used to
-  iterate values of Java objects.
+  and executes it there. This works for all PHP statements.
 
   Example:
 

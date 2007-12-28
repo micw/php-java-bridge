@@ -26,12 +26,8 @@ package php.java.script;
 
 import java.io.Writer;
 
-import javax.script.SimpleScriptContext;
-
 import php.java.bridge.JavaBridgeRunner;
-import php.java.bridge.PhpProcedureProxy;
 import php.java.bridge.Util;
-import php.java.bridge.http.HttpServer;
 import php.java.bridge.http.IContext;
 
 /**
@@ -44,7 +40,7 @@ import php.java.bridge.http.IContext;
  * @author jostb
  *
  */
-public class PhpScriptContext extends SimpleScriptContext implements IContext, IPhpScriptContext {
+public class PhpScriptContext extends AbstractPhpScriptContext implements IContext, IPhpScriptContext {
     static JavaBridgeRunner bridgeRunner = null;
 
     static {
@@ -54,17 +50,7 @@ public class PhpScriptContext extends SimpleScriptContext implements IContext, I
 	    Util.printStackTrace(e);
 	}
     }
-
-    /**
-     * Return the http server associated with this VM.
-     * @return The http server.
-     */
-    public static HttpServer getHttpServer() {
-      return bridgeRunner;
-    }
-
-    private HttpProxy kont;
-	
+ 	
     /**
      * Create a standalone PHP script context.
      *
@@ -74,7 +60,7 @@ public class PhpScriptContext extends SimpleScriptContext implements IContext, I
     }
 
      private Writer getWriter(boolean isStandalone) {
-	 return isStandalone ? new PhpScriptLogWriter() : new PhpScriptWriter(System.out);
+	 return isStandalone ? PhpScriptLogWriter.getWriter(Util.getLogger()) : new PhpScriptWriter(System.out);
      }
     public Writer getWriter() {
 	if(writer == null) return writer =  getWriter(bridgeRunner.isStandalone());
@@ -82,62 +68,21 @@ public class PhpScriptContext extends SimpleScriptContext implements IContext, I
 	return writer;
     }
     private Writer getErrorWriter(boolean isStandalone) {
-	 return isStandalone ? new PhpScriptLogWriter() : new PhpScriptWriter(System.err);
+	 return isStandalone ? PhpScriptLogWriter.getWriter(Util.getLogger()) : new PhpScriptWriter(System.err);
     }
     public Writer getErrorWriter() {
 	if(errorWriter == null) return errorWriter =  getErrorWriter(bridgeRunner.isStandalone());
 	else if(! (errorWriter instanceof PhpScriptWriter)) setErrorWriter(errorWriter);
 	return errorWriter;	
     }
-    /**
-     * Ignore the default java_context()->call(java_closure()) call at the end
-     * of the invocable script, if the user has provided its own.
-     */
-    private boolean continuationCalled;
-    /**
-     * Set the php continuation
-     * @param kont - The continuation.
-     */
-    public void setContinuation(HttpProxy kont) {
-	this.kont = kont;
-	continuationCalled = false;
-    }
 
-
-    /* (non-Javadoc)
-     * @see php.java.bridge.Invocable#call(php.java.bridge.PhpProcedureProxy)
-     */
-    /**@inheritDoc*/
-    public boolean call(PhpProcedureProxy kont) throws InterruptedException {
-    	if(!continuationCalled) {
-    	    this.kont.call(kont);
-    	    continuationCalled = true;
-    	    return false;
-    	}
-    	return true;
+    public String getSocketName() {
+	    return bridgeRunner.getSocket().getSocketName();
     }
-
-    /**
-     * Sets the <code>Writer</code> for scripts to use when displaying output.
-     *
-     * @param writer The new <code>Writer</code>.
-     */
-    public void setWriter(Writer writer) {
-	super.setWriter(new PhpScriptWriter(new OutputStreamWriter(writer)));
-    }
-    
-    
-    /**
-     * Sets the <code>Writer</code> used to display error output.
-     *
-     * @param writer The <code>Writer</code>.
-     */
-    public void setErrorWriter(Writer writer) {
-	super.setErrorWriter(new PhpScriptWriter(new OutputStreamWriter(writer)));
-    }
-
-    /**@inheritDoc*/
-    public HttpProxy getContinuation() {
-        return kont;
+    public String getContextString() {
+	    StringBuffer buf = new StringBuffer("http://127.0.0.1:");
+	    buf.append(getSocketName());
+	    buf.append("/JavaBridge");
+	    return buf.toString();
     }
 }

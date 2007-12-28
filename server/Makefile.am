@@ -7,19 +7,18 @@ libnatcJavaBridge_la_LDFLAGS = -rpath $(EXTENSION_DIR) -shared -avoid-version -p
 libnatcJavaBridge_la_LIBADD =
 java_SOURCES=php/java/bridge/AppThreadPool.java php/java/bridge/Base64EncodingOutputBuffer.java php/java/bridge/ChainsawLogger.java php/java/bridge/ClassicResponse.java php/java/bridge/ConstructorCache.java php/java/bridge/DefaultOptions.java php/java/bridge/DynamicClassLoader.java php/java/bridge/DynamicHttpURLConnectionHandler.java php/java/bridge/DynamicJarURLConnection.java php/java/bridge/DynamicJavaBridgeClassLoader.java php/java/bridge/FileLogger.java php/java/bridge/GlobalRef.java php/java/bridge/HexOutputBuffer.java php/java/bridge/IDocHandler.java php/java/bridge/IJavaBridgeFactory.java php/java/bridge/ILogger.java php/java/bridge/IntegerComparator.java php/java/bridge/Invocable.java php/java/bridge/ISession.java php/java/bridge/ISocketFactory.java php/java/bridge/JarLibraryPath.java php/java/bridge/JavaBridgeClassLoader.java php/java/bridge/JavaBridgeFactory.java php/java/bridge/JavaBridgeIllegalArgumentException.java php/java/bridge/JavaBridge.java php/java/bridge/JavaBridgeRunner.java php/java/bridge/JavaBridgeSecurityManager.java php/java/bridge/LocalServerSocket.java php/java/bridge/LocalSocketInputStream.java php/java/bridge/LocalSocket.java php/java/bridge/LocalSocketOutputStream.java php/java/bridge/Log4jLogger.java php/java/bridge/MethodCache.java php/java/bridge/NotImplementedException.java php/java/bridge/OldOptions.java php/java/bridge/Options.java php/java/bridge/Parser.java php/java/bridge/ParserString.java php/java/bridge/ParserTag.java php/java/bridge/PhpArray.java php/java/bridge/PhpExactNumber.java php/java/bridge/PhpMap.java php/java/bridge/PhpParserString.java php/java/bridge/PhpProcedure.java php/java/bridge/PhpProcedureProxy.java php/java/bridge/PhpString.java php/java/bridge/Request.java php/java/bridge/Response.java php/java/bridge/SessionFactory.java php/java/bridge/Session.java php/java/bridge/SimpleJavaBridgeClassLoader.java php/java/bridge/SimpleLog4jLogger.java php/java/bridge/SimplePhpString.java php/java/bridge/StandaloneGCC.java php/java/bridge/Standalone.java php/java/bridge/StandardOptions.java php/java/bridge/StringCache.java php/java/bridge/TCPServerSocket.java php/java/bridge/ThreadPool.java php/java/bridge/Util.java php/java/bridge/http/AbstractChannel.java php/java/bridge/http/AbstractChannelName.java php/java/bridge/http/ContextFactory.java php/java/bridge/http/Context.java php/java/bridge/http/ContextRunner.java php/java/bridge/http/ContextServer.java php/java/bridge/http/HttpRequest.java php/java/bridge/http/HttpResponse.java php/java/bridge/http/HttpServer.java php/java/bridge/http/IContextFactory.java php/java/bridge/http/IContextFactoryVisitor.java php/java/bridge/http/IContext.java php/java/bridge/http/IContextServer.java php/java/bridge/http/PipeContextServer.java php/java/bridge/http/SimpleContextFactory.java php/java/bridge/http/SocketContextServer.java
 
-
 JavaRaw.inc:
 	cat META-INF/java/JavaBridge.inc META-INF/java/Options.inc META-INF/java/Client.inc META-INF/java/GlobalRef.inc META-INF/java/NativeParser.inc META-INF/java/Parser.inc META-INF/java/Protocol.inc META-INF/java/SimpleParser.inc META-INF/java/JavaProxy.inc | sed -f extract.sed | sed '/^\/\*/,/\*\/$$/d' >JavaRaw.inc
 
 META-INF/java/Java.inc: JavaRaw.inc
 	cat JavaRaw.inc | sed '/do not delete this line/d' >META-INF/java/Java.inc
 
-
 META-INF/java/JavaProxy.php: META-INF/java/Java.inc
 	cat META-INF/java/Java.inc | sed '$$iinclude(array_key_exists("HTTP_X_JAVABRIDGE_INCLUDE", $$_SERVER)?$$_SERVER["HTTP_X_JAVABRIDGE_INCLUDE"]:$$_SERVER["X_JAVABRIDGE_INCLUDE"]);java_context()->call(java_closure());' >META-INF/java/JavaProxy.php
 
 META-INF/java/Mono.inc: JavaRaw.inc
-	cat JavaRaw.inc | sed 's/JAVA/MONO/g;s/java/mono/g;s/Java/Mono/g;s/^.*do not delete this line.*$$/$$name="cli.".$$name;/;' >META-INF/java/Mono.inc
+	cat JavaRaw.inc | sed -f append.sed | sed 's/JAVA/MONO/g;s/java/mono/g;s/Java/Mono/g;s/updateJarLibraryPath/updateLibraryPath/;s/^.*do not delete this line.*$$/$$name="cli.".$$name;/;' >META-INF/java/Mono.inc
+
 
 php/java/bridge/JavaInc.java: META-INF/java/Java.inc
 	echo "package php.java.bridge;" >php/java/bridge/JavaInc.java
@@ -36,7 +35,7 @@ bin_PROGRAMS=$(VM_BINARIES)
 
 
 
-MonoBridge.exe: $(PHP_MONO)
+MonoBridge.exe: $(PHP_MONO) META-INF/java/Mono.inc
 	$(GCJ) -w -ftarget=1.4 -classpath .:$(SCRIPT) -C php/java/bridge/*.java php/java/bridge/http/*.java
 	fastjar cMf JavaBridge.jar META-INF/MANIFEST.MF php/java/bridge/*.class php/java/bridge/http/*.class php/java/bridge/*.properties || jar cMf JavaBridge.jar META-INF/MANIFEST.MF php/java/bridge/*.class php/java/bridge/http/*.class php/java/bridge/*.properties
 	$(PHP_MONO_BINARY) $(PHP_MONO)/ikvmc.exe JavaBridge.jar

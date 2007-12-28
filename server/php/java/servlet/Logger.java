@@ -1,6 +1,6 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-package php.java.bridge.http;
+package php.java.servlet;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -24,21 +24,25 @@ package php.java.bridge.http;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/**
- * Interface that ContextFactory visitors must implement.
- * 
- * @author jostb
- *
- */
-public interface IContextFactoryVisitor extends IContextFactory {
- /**
-   * Called when a visitor has been attached.
-   * @param visited The context factory
-   */
-  public void visit(ContextFactory visited);
-  
-  /**
-   * Called at the end of the visitor's life cycle
-   */
-  public void invalidate();
-}
+import javax.servlet.ServletContext;
+
+import php.java.bridge.ILogger;
+import php.java.bridge.Util;
+
+public class Logger implements ILogger {
+	private ServletContext ctx;
+	public Logger(ServletContext ctx) {
+	    this.ctx = ctx;
+	}
+	public void log(int level, String s) {
+	    if(Util.logLevel>5) System.out.println(s);
+	    ctx.log(s); 
+	}
+	public void printStackTrace(Throwable t) {
+	    //ctx.log("", t);
+	    if(Util.logLevel>5) t.printStackTrace();
+	}
+	public void warn(String msg) {
+	    ctx.log(msg);
+	}
+     }

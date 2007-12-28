@@ -5,7 +5,7 @@ if(!extension_loaded("java")) {
  }
 if(!extension_loaded("java")) {
   $port= (isset($_SERVER['SERVER_PORT']) && (($_SERVER['SERVER_PORT'])>1024)) ? $_SERVER['SERVER_PORT'] : '8080';
-  require_once("http://localhost:${port}/JavaBridge/java/Java.inc");
+  require_once("http://127.0.0.1:${port}/JavaBridge/java/Java.inc");
  }
 
   /* 

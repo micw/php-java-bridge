@@ -96,7 +96,7 @@ public abstract class ChannelName {
 		    // proc.OutputStream should be closed in shutdown, see PhpCGIServlet.destroy()
 		    InputStream in = proc.getErrorStream();
 		    while((c=in.read(buf))!=-1) System.err.write(buf, 0, c);
-			if(proc!=null) try {proc.destroy(); proc=null;} catch(Throwable t) {/*ignore*/}
+			if(proc!=null) try {proc.destroy(); proc=null;} catch(Exception t) {/*ignore*/}
 		    } catch (Exception e) {Util.logDebug("Could not start FCGI server: " + e);};
 	    }
 

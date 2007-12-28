@@ -37,14 +37,7 @@ public interface IContextFactory extends IJavaBridgeFactory {
 
   /**
    * <p>
-   * Update the context factory with the new JavaBridge obtained from the servlet.
-   * </p>
-   * <p>
-   * Since version 4.1.1 both, the C and the pure PHP implementation pass the context factory via a protocol header.
-   * This procedure must obtain the factory for id and pass the bridge to the current context factory. Furthermore it must
-   * update the currentThreadContextClassLoader.
-   * After the request is done, the ContextFactory#recycle() method is called, which must restore the currentThreadContextClassLoader and
-   * the old context factory.
+   * Update the context factory with the new JavaBridge obtained from the servlet
    * </p>
    * @param id The fresh id
    * @see php.java.bridge.http.ContextFactory#recycle()

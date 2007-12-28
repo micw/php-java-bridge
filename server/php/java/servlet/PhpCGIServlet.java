@@ -91,7 +91,7 @@ public class PhpCGIServlet extends FastCGIServlet {
      * <p>The value should be less than 1/2 of the servlet engine's thread pool size as this 
      * servlet also consumes an instance of PhpJavaServlet.</p>
      */
-    public static final int CGI_MAX_REQUESTS = 50;
+    private static final int CGI_MAX_REQUESTS = 19;
     private int cgi_max_requests = CGI_MAX_REQUESTS;
     private final CGIRunnerFactory defaultCgiRunnerFactory = new CGIRunnerFactory();
     
@@ -113,7 +113,19 @@ public class PhpCGIServlet extends FastCGIServlet {
 	DOCUMENT_ROOT = getRealPath(context, "");
 	SERVER_SIGNATURE = context.getServerInfo();
     }
+    
+    private boolean cgiMaxRequestsSet = false;
+    /** Return the number of max requests. In Tomcat this is 1/2 http thread pool size -1 */
+    public int getCGIMaxRequests () {
+	    if (cgiMaxRequestsSet) return cgi_max_requests;
+	    cgiMaxRequestsSet = true;
 
+	int maxRequests = Util.getMBeanProperty("*:type=ThreadPool,name=http*", "maxThreads");
+	if (maxRequests > 2) cgi_max_requests = maxRequests/2-1;
+	
+	return cgi_max_requests;
+    }
+    
     public void destroy() {
       super.destroy();
     }
@@ -122,7 +134,7 @@ public class PhpCGIServlet extends FastCGIServlet {
      * Adjust the standard tomcat CGI env. CGI only.
      */
     public class CGIEnvironment extends FastCGIServlet.CGIEnvironment {
-    	protected ServletContextFactory sessionFactory;
+    	protected AbstractServletContextFactory sessionFactory;
 	public HttpServletRequest req;
     	
 	protected CGIEnvironment(HttpServletRequest req, HttpServletResponse res, ServletContext context) {
@@ -272,14 +284,16 @@ public class PhpCGIServlet extends FastCGIServlet {
     		try {
      		    proc.waitFor();
      		} catch (InterruptedException e) {
-    		    Util.printStackTrace(e);
+    		    /*ignore*/
     		}
     	    } finally {
-    		if(in!=null) try {in.close();} catch (IOException e) {}
-    		if(natIn!=null) try {natIn.close();} catch (IOException e) {}
-    		if(natOut!=null) try {natOut.close();} catch (IOException e) {}
-    		if(proc!=null) proc.destroy();
+    		if(in!=null) try {in.close();} catch (IOException e) {/*ignore*/}
+    		if(natIn!=null) try {natIn.close();} catch (IOException e) {/*ignore*/}
+    		if(natOut!=null) try {natOut.close();} catch (IOException e) {/*ignore*/}
+    		if(proc!=null) try {proc.destroy();} catch (Exception e) {/*ignore*/}
     	    }
+    	    
+    	    if (proc!=null) try {proc.checkError(); } catch (Util.Process.PhpException e) {throw new ServletException(e);}
         }
     } //class CGIRunner
     
@@ -304,7 +318,7 @@ public class PhpCGIServlet extends FastCGIServlet {
      */
     private boolean checkPool(HttpServletResponse res) throws ServletException, IOException {
       synchronized (lockObject) {
-	if(count++>=cgi_max_requests) {
+	if(count++>=getCGIMaxRequests()) {
             res.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Out of system resources. Try again shortly or use the Apache or IIS front end instead.");
             Util.logFatal("Out of system resources. Adjust max_requests or set up the Apache or IIS front end.");
             return false;
