@@ -41,7 +41,7 @@ import php.java.bridge.http.IContext;
  * @see php.java.bridge.http.ContextFactory
  * @see php.java.bridge.http.ContextServer
  */
-public class RemoteServletContextFactory extends AbstractServletContextFactory {
+public class RemoteServletContextFactory extends SimpleServletContextFactory {
     protected RemoteServletContextFactory(Servlet servlet, ServletContext ctx, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res) {
 	super(servlet, ctx, proxy, req, res);
     }

@@ -34,6 +34,12 @@ import php.java.bridge.http.IContextFactory;
 
 /**
  * A custom context factory, creates a ContextFactory for JSR223 contexts.
+ * This context factory does not wait for the continuation to terminate. 
+ * 
+ * Use the InvocablePhpServletContextFactory if you need to wait for
+ * the end of the php to java communication.
+ * 
+ * @see InvocablePhpServletContextFactory
  * @author jostb
  *
  */

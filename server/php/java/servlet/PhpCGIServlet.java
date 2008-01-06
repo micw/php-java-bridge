@@ -38,6 +38,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
 import php.java.bridge.Util.Process;
+import php.java.bridge.http.IContextFactory;
 import php.java.servlet.fastcgi.FastCGIServlet;
 
 /**
@@ -134,7 +135,7 @@ public class PhpCGIServlet extends FastCGIServlet {
      * Adjust the standard tomcat CGI env. CGI only.
      */
     public class CGIEnvironment extends FastCGIServlet.CGIEnvironment {
-    	protected AbstractServletContextFactory sessionFactory;
+    	protected SimpleServletContextFactory sessionFactory;
 	public HttpServletRequest req;
     	
 	protected CGIEnvironment(HttpServletRequest req, HttpServletResponse res, ServletContext context) {
@@ -196,8 +197,9 @@ public class PhpCGIServlet extends FastCGIServlet {
 		/* send the session context now, otherwise the client has to 
 		 * call handleRedirectConnection */
 	    	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
-	    	if(id==null) id = ServletContextFactory.addNew(PhpCGIServlet.this, PhpCGIServlet.this.getServletContext(), req, req, res).getId();
-		this.env.put("X_JAVABRIDGE_CONTEXT", id);
+	    	if(id==null) 
+	    	    id = (ctx=ServletContextFactory.addNew(PhpCGIServlet.this, PhpCGIServlet.this.getServletContext(), req, req, res)).getId();
+	    	this.env.put("X_JAVABRIDGE_CONTEXT", id);
 	    }
 	    return ret;
 	        	
@@ -249,9 +251,11 @@ public class PhpCGIServlet extends FastCGIServlet {
     	}
     }
     protected class CGIRunner extends CGIServlet.CGIRunner {
+	protected IContextFactory ctx;
 	
 	protected CGIRunner(CGIServlet.CGIEnvironment env) {
 	    super(env);
+	    ctx = ((CGIEnvironment)env).ctx;
 	}
         protected void run() throws IOException, ServletException {
 	    Process proc = null;
@@ -291,6 +295,9 @@ public class PhpCGIServlet extends FastCGIServlet {
     		if(natIn!=null) try {natIn.close();} catch (IOException e) {/*ignore*/}
     		if(natOut!=null) try {natOut.close();} catch (IOException e) {/*ignore*/}
     		if(proc!=null) try {proc.destroy();} catch (Exception e) {/*ignore*/}
+    		
+    		if (ctx!=null) ctx.release();
+    		ctx = null;
     	    }
     	    
     	    if (proc!=null) try {proc.checkError(); } catch (Util.Process.PhpException e) {throw new ServletException(e);}

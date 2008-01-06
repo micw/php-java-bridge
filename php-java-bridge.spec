@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 4.3.3
+%define version 5.0.0
 %define release 1
 %define PHP_MAJOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | sed 's/\\\..*$//')
 %define PHP_MINOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | LANG=C cut -d. -f2)
@@ -92,14 +92,15 @@ starts/stops. The bridge log appears in the http server error log.
 %package lucene
 Group: System Environment/Daemons
 Summary: lucene library for PHP
-Requires: php-java-bridge = %{version}
+Requires: php-java-bridge
+Requires: lucene
 %description lucene
 Lucene search library for PHP
 
 %package itext
 Group: System Environment/Daemons
 Summary: itext library for PHP
-Requires: php-java-bridge = %{version}
+Requires: php-java-bridge
 %description itext
 PDF manipulation library for PHP
 
@@ -159,7 +160,7 @@ phpize
 ./configure --prefix=%{_exec_prefix} --with-java=$java_dir --with-mono
 make
 %if %{have_policy_modules} == 1
-(cd security/module; make; rm -rf tmp;)
+(cd security/module; make -f %{_datadir}/selinux/devel/Makefile; rm -rf tmp;)
 %endif
 
 %install
@@ -228,7 +229,6 @@ cp unsupported/itext.jar $RPM_BUILD_ROOT/%{_datadir}/pear/itext
 echo %{_datadir}/pear/itext >>filelist-itext
 
 mkdir -p $RPM_BUILD_ROOT/%{_datadir}/pear/lucene
-cp unsupported/lucene.jar $RPM_BUILD_ROOT/%{_datadir}/pear/lucene
 echo %{_datadir}/pear/lucene >>filelist-lucene
 
 

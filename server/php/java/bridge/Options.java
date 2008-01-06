@@ -71,9 +71,10 @@ public class Options {
      * @return the appropriate value from the request header.
      */
     public boolean sendArraysAsValues() {
-        return (options & 3)==2;
+	return false;
     }
 
+    private boolean valuesCache, valuesCacheSet=false;
     /**
      * Returns true when the bridge must destroy object identity (see PROTOCOL.TXT) due 
      * to limitations in the client (for PHP4 for example). 
@@ -81,7 +82,12 @@ public class Options {
      * @return the appropriate value from the request header.
      */
     public boolean preferValues() {
-    	return sendArraysAsValues();
+	if(!valuesCacheSet) {
+	    int options = 3 & this.options;
+	    valuesCacheSet = true;
+	    return valuesCache = options==2 || options==1;
+	}
+	return valuesCache;
     }
  
     /** re-initialize for keep alive */
@@ -114,24 +120,18 @@ public class Options {
      */
     public boolean base64Data() {
 	if(!base64CacheSet) {
-	    int options = 3 & this.options;
+	    int options = 2 & this.options;
 	    base64CacheSet = true;
-	    return base64Cache = options==3;
+	    return base64Cache = options==2;
 	}
 	return base64Cache;
     }
-    private boolean contextCache, contextCacheSet=false;
     /**
      * Return true, if the client cannot keep a back-pointer to its own data structures.
      * This option stays the same for all packets.
      * @return true if the bridge must accept and pass a context ID, false otherwise.
      */
     public boolean passContext() {
-	if(!contextCacheSet) {
-	    int options = 3 & this.options;
-	    contextCacheSet = true;
-	    return contextCache = !((options==3) || (options==0));
-	}
-	return contextCache;
+	return false;
     }
 }

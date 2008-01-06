@@ -221,7 +221,7 @@ public class JavaBridgeRunner extends HttpServer {
                 ctxServer.start(channelName);
         	    if(bridge.logLevel>3) 
         		bridge.logDebug("waiting for context: " +ctx.getId());
-        	    try { ctx.waitFor(); } catch (InterruptedException e) { Util.printStackTrace(e); }
+        	    try { ctx.waitFor(Util.MAX_WAIT); } catch (InterruptedException e) { Util.printStackTrace(e); }
         	}
         else {
             ctx.destroy();

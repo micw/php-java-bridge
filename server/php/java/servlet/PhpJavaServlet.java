@@ -59,9 +59,6 @@ import php.java.bridge.http.ContextServer;
  */
 public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 
-    /** how long shall we wait for a remote client to terminate? */
-    protected static final int MAX_WAIT = 30000;
-
     private static final long serialVersionUID = 3257854259629144372L;
 
     private ContextServer contextServer;
@@ -134,11 +131,11 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
      * @param credentials The provided credentials.
      * @return The (new) ServletContextFactory.
      */
-    protected AbstractServletContextFactory getContextFactory(HttpServletRequest req, HttpServletResponse res, ContextFactory.ICredentials credentials) {
+    protected SimpleServletContextFactory getContextFactory(HttpServletRequest req, HttpServletResponse res, ContextFactory.ICredentials credentials) {
     	JavaBridge bridge;
-	AbstractServletContextFactory ctx = null;
+	SimpleServletContextFactory ctx = null;
     	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
-    	if(id!=null) ctx = (AbstractServletContextFactory) ContextFactory.get(id, credentials);
+    	if(id!=null) ctx = (SimpleServletContextFactory) ContextFactory.get(id, credentials);
     	if(ctx==null) {
     	  ctx = RemoteServletContextFactory.addNew(this, getServletContext(), null, req, res); // no session sharing
     	  bridge = ctx.getBridge();
@@ -169,9 +166,9 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
      * and to wait RemoteContextFactory for 30 seconds.</p>
      * @param ctx The (Remote-) ContextFactory.
      */
-    protected void waitForContext(AbstractServletContextFactory ctx) {
+    protected void waitForContext(SimpleServletContextFactory ctx) {
 	try {
-	    ctx.waitFor(MAX_WAIT);
+	    ctx.waitFor(Util.MAX_WAIT);
         } catch (InterruptedException e) {
 	    Util.printStackTrace(e);
         }
@@ -199,7 +196,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 			"Either enable the Pipe- or SocketContextServer or remove the distributable flag from PhpJavaServlet and WEB-INF/web.xml.");
 
 	InputStream in; ByteArrayOutputStream out;
-	AbstractServletContextFactory ctx = getContextFactory(req, res, contextServer.getCredentials(channel));
+	SimpleServletContextFactory ctx = getContextFactory(req, res, contextServer.getCredentials(channel));
 	JavaBridge bridge = ctx.getBridge();
 	ctx.setSessionFactory(req);
 
@@ -237,7 +234,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     protected void handleLocalConnection (HttpServletRequest req, HttpServletResponse res, String channel)
 	throws ServletException, IOException {
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
-	AbstractServletContextFactory ctx = getContextFactory(req, res, null);
+	SimpleServletContextFactory ctx = getContextFactory(req, res, null);
 	JavaBridge bridge = ctx.getBridge();
 	ctx.setSessionFactory(req);
 	

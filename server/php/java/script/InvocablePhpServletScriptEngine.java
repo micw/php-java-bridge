@@ -72,15 +72,18 @@ public class InvocablePhpServletScriptEngine extends InvocablePhpScriptEngine {
 
 	scriptContext.initialize(servlet, servletCtx, req, res);
 	
-	File tempfile= new File("java/JavaProxy.php");
-	url = new java.net.URL((req.getRequestURL().toString()));
-	String filePath = (new File(new File(url.getFile()).getParentFile(), 
-				tempfile.getPath())).getPath();
-	if (File.separatorChar != '/') filePath = filePath.replace(File.separatorChar, '/');
-	url = new URL (url.getProtocol(), 
-		       url.getHost(), url.getPort(), 
-		       filePath);
-
+	if (!new File(CGIServlet.getRealPath(ctx, "java/JavaProxy.php")).exists()) {
+	    url = new java.net.URL((req.getRequestURL().toString()));
+	    url = new URL (url.getProtocol(), 
+		    url.getHost(), url.getPort(), 
+	    	    "/JavaBridge/java/JavaProxy.php");
+	} else {
+	    url = new java.net.URL((req.getRequestURL().toString()));
+	    String filePath = req.getContextPath()+"/java/JavaProxy.php";
+    	    url = new URL (url.getProtocol(), 
+    		    url.getHost(), url.getPort(), 
+    		    filePath);
+	}
 	path = new File(CGIServlet.getRealPath(ctx, ""));
     }
     protected ScriptContext getPhpScriptContext() {
@@ -102,7 +105,7 @@ public class InvocablePhpServletScriptEngine extends InvocablePhpScriptEngine {
         IPhpScriptContext context = (IPhpScriptContext)getContext(); 
 	env = (Map) this.processEnvironment.clone();
 
-	ctx = PhpServletContextFactory.addNew((IContext)context, servlet, servletCtx, req, res);
+	ctx = InvocablePhpServletContextFactory.addNew((IContext)context, servlet, servletCtx, req, res);
     	
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */
@@ -160,5 +163,4 @@ public class InvocablePhpServletScriptEngine extends InvocablePhpScriptEngine {
 	super.release();
 	if(tempfile!=null) tempfile.delete();
     }
-
 }

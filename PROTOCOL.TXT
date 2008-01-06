@@ -177,10 +177,11 @@ NULL values can be sent as either v="" or v="0"
 
 <-
 Object:
-<O v=object m=TYPE p=TYPE [i=ID] />
+<O v=object m=TYPE p=TYPE n=[T|F] [i=ID] />
 v: unsigned long
 m: string
 p: char ([A]rray/Map, [C]ollection, [O]bject, [E]xception)
+n: char result can be cached (T) or not (F)
 i: unsigned long 
 
 <-
@@ -190,8 +191,9 @@ i: unsigned long
 
 <-
 Void:
-<V [i=ID] />
+<V m=[T|F] [i=ID] />
 i: unsigned long 
+n: char result can be cached (T) or not (F)
 
 <-
 Apply:
@@ -256,15 +258,15 @@ If the first byte is 0177, the following byte has a special meaning:
 
 Bit 1 0
 -------
-         keep object  keep array, base  send   binary             comment/php
-          identity    Map, Coll.         ID     data              impl. (pure
-                      identity                                    PHP or C)
+         keep object  keep array, send   binary             comment/php
+          identity    Map, Coll.    ID     data              impl. (pure
+                      identity                               PHP or C)
 
-    - -    yes          no         16   yes    base64 encoded     default
-    0 0    yes          yes        16   no     binary             PHP
-    0 1    yes          yes        16   yes    binary             not used
-    1 0    no           no         16   yes    binary             C, php=4
-    1 1    yes          yes        16   no     base64 encoded     PHP
+    - -    no           no         yes    base64 encoded     default
+    0 0    yes          yes        no     binary             PHP
+    0 1    no           yes        no     binary             PHP
+    1 0    no           yes        no     base64 encoded     PHP
+    1 1    yes          yes        no     base64 encoded     PHP
 
 Bit 2,3,4: log level (from java.log_level)
 

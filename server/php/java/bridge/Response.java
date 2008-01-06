@@ -75,8 +75,8 @@ public class Response {
     protected abstract class DelegateWriter {
     	protected Class staticType;
 
-	public abstract boolean setResult(Object value);
-
+    	public abstract boolean setResult(Object value);
+	
 	/**
 	 * @param type - The result type
 	 */
@@ -85,12 +85,15 @@ public class Response {
 	}
     }
     protected abstract class Writer extends DelegateWriter {
+	public boolean isAsync () {
+	    return false;
+	}
 	public void setResultProcedure(long object, String cname, String name, Object[] args) {
 	    int argsLength = args==null?0:args.length;
 	    writeApplyBegin(object, cname, name, argsLength);
 	    for (int i=0; i<argsLength; i++) {
 		writePairBegin();
-		setResult(args[i], args[i].getClass());
+		setResult(args[i], args[i].getClass(), true); // PHP backed methods are always synchronous don't need to declare that they throw exceptions 
 		writePairEnd();
 	    }
 	    writeApplyEnd();
@@ -104,7 +107,7 @@ public class Response {
 	public void setResultClass(Class value) {
 	    writeClass(value);
 	}
-	public void setResult(Object value, Class type) {
+	public void setResult(Object value, Class type, boolean hasDeclaredExceptions) {
 	    setType(type);
 	    setResult(value);
 	}
@@ -322,29 +325,42 @@ public class Response {
 	    return true;
 	}
     }
-    /** Writer used by the async protocol. It always returns <V ...> or <O ...>, even for NULL, Class or Exception values. 
+    /** Writer used by the async protocol. It always returns <V ...> or <O ...>, even for NULL, Class values, although
+     * Exceptions are handled.
      * When the client-side cache is enabled, the client will select an Async or AsyncVoidWriter in the next call. */
-    protected class ObjectWriter extends Writer {
-	public void setResultException(Throwable o, String str) {
-	    setResultObject(bridge.lastAsyncException = o);
-	}
+    protected class DefaultObjectWriter extends Writer {
+	protected boolean hasDeclaredExceptions;
 	public void setResultObject(Object value) {
-	    if(staticType == java.lang.Void.TYPE)  { writeVoid(); return; }
+	    if(staticType == java.lang.Void.TYPE)  { writeVoid(hasDeclaredExceptions); return; }
 
 	    if(value==null) value=Request.PHPNULL;
- 	    writeObject(value);
+ 	    writeObject(value, hasDeclaredExceptions);
 	}
 	public void setResultClass(Class value) {
 	    if(value==null) value=Request.PhpNull.class; // shouldn't happen
-	    writeClass(value);
+	    writeClass(value, hasDeclaredExceptions);
 	}
 	public boolean setResult(Object value) { 
 	    setResultObject(value);
 	    return true;
 	}
+	public void setResult(Object value, Class type, boolean hasDeclaredExceptions) {
+	    this.hasDeclaredExceptions = hasDeclaredExceptions;
+	    super.setResult(value, type, hasDeclaredExceptions);
+	}
+    }
+    /** Writer used by the async protocol (begin/end document). It always returns <V ...> or <O ...>, even for NULL, Class or Exception values. 
+     * When the client-side cache is enabled, the client will select an Async or AsyncVoidWriter in the next call. */
+    protected final class ObjectWriter extends DefaultObjectWriter {
+	public void setResultException(Throwable o, String str) {
+	    setResultObject(bridge.lastAsyncException = o);
+	}
     }
     /** Writer used by the async protocol. It writes nothing but stores the result in global ref*/
-    protected class AsyncWriter extends Writer {
+    protected final class AsyncWriter extends Writer {
+	public boolean isAsync () {
+	    return true;
+	}
 	public void setResultException(Throwable o, String str) {
 	    setResultObject(bridge.lastAsyncException = o);
 	}
@@ -382,6 +398,9 @@ public class Response {
     }
     /** Writer used by the async protocol. It writes nothing and doesn't create a result */
     protected final class AsyncVoidWriter extends Writer {
+	public boolean isAsync () {
+	    return true;
+	}
 	public void setResultProcedure(long object, String cname, String name, Object[] args) {
 	    throw new IllegalStateException("Cannot call "+name+": callbacks not allowed in stream mode");
 	}
@@ -401,7 +420,7 @@ public class Response {
 	}	
     }
  	
-    protected class CoerceWriter extends Writer {
+    protected final class CoerceWriter extends Writer {
 	public void setResult(Object value, Class resultType) {
 	    // ignore resultType and use the coerce type
 	    setResult(value);
@@ -445,24 +464,23 @@ public class Response {
 	    return true;
 	}
     }
-    DelegateWriter getDefaultDelegate() {
+    private DelegateWriter getDefaultDelegate() {
 	if(bridge.options.sendArraysAsValues())
 	    return new ClassicArrayValuesWriter();
 	else
 	    return new ArrayWriter();
     }
 	
-    WriterWithDelegate newWriter(DelegateWriter delegate) {
-     	WriterWithDelegate writer;
-    	if(bridge.options.preferValues())
+    private Writer getDefaultWriter() {
+	if(bridge.options.preferValues()) {
+	    WriterWithDelegate writer;
 	    writer = new ClassicWriter();
-    	else 
-	    writer = new DefaultWriter();
-    	writer.delegate = delegate;
-	return writer;
+	    writer.delegate = getDefaultDelegate();
+	    return writer;
+	}
+	return getDefaultObjectWriter();
     }
-     
-    private WriterWithDelegate defaultWriter;
+    private Writer defaultWriter;
     private Writer writer, currentWriter, arrayValuesWriter=null, arrayValueWriter=null, coerceWriter=null; 
     private Writer asyncWriter=null, asyncVoidWriter=null, objectWriter = null;
 
@@ -475,6 +493,7 @@ public class Response {
         else
             return new HexOutputBuffer(bridge);
     }
+    
     /**
      * Creates a new response object. The object is re-used for each packed.
      * @param bridge The bridge.
@@ -482,13 +501,13 @@ public class Response {
     public Response(JavaBridge bridge) {
 	this.bridge=bridge;
 	buf=createOutputBuffer();
-	currentWriter = writer = defaultWriter = newWriter(getDefaultDelegate());
+	currentWriter = writer = defaultWriter = getDefaultWriter();
     }
 
     protected Response(JavaBridge bridge, HexOutputBuffer buf) {
         this.bridge = bridge;
         this.buf=buf;
-        this.currentWriter = this.writer = this.defaultWriter = newWriter(getDefaultDelegate());      
+        this.currentWriter = this.writer = this.defaultWriter = getDefaultWriter();      
     }
     /** Flush the current output buffer and create a new Response object 
      * where are writers have their default value */
@@ -528,10 +547,14 @@ public class Response {
       * @param value The result object.
       * @param type The type of the result object.
       */
-    public void setResult(Object value, Class type) {
-     	writer.setResult(value, type);
+    public void setResult(Object value, Class type, boolean hasDeclaredExceptions) {
+     	writer.setResult(value, type, hasDeclaredExceptions);
     }
 
+    public boolean isAsync () {
+	return writer.isAsync();
+    }
+    
     public void setFinish(boolean keepAlive) {
 	setDefaultWriter();
         writer.setFinish(keepAlive);
@@ -605,9 +628,12 @@ public class Response {
     static final byte[] N="<N i=\"".getBytes();
     static final byte[] V="<V i=\"".getBytes();
     static final byte[] Nul="<N />".getBytes();
-    static final byte[] Void="<V />".getBytes();
+    static final byte[] VoidF="<V n=\"F\"/>".getBytes();
+    static final byte[] VoidT="<V n=\"T\"/>".getBytes();
     static final byte[] m="\" m=\"".getBytes();
     static final byte[] n="\" n=\"".getBytes();
+    static final byte[] nT="\" n=\"T".getBytes();
+    static final byte[] nF="\" n=\"F".getBytes();
     static final byte[] p="\" p=\"".getBytes();
     static final byte[] pa="\" p=\"A".getBytes();
     static final byte[] pc="\" p=\"C".getBytes();
@@ -646,8 +672,11 @@ public class Response {
 	buf.append(D); buf.append(d);
 	buf.append(e);
     }
+    void writeVoid(boolean hasDeclaredExceptions) {
+	buf.append(hasDeclaredExceptions?VoidT:VoidF);
+    }
     void writeVoid() {
-	buf.append(Void);
+	buf.append(VoidT);
     }
     void writeNull() {
 	buf.append(Nul);
@@ -665,20 +694,39 @@ public class Response {
         return po;
     }
     /** write object (class, interface, object) */
+    void writeObject(Object o, boolean hasDeclaredExceptions) {
+        if(o==null) { writeNull(); return; }
+        Class dynamicType = o.getClass();
+	buf.append(O); buf.append(this.bridge.globalRef.append(o));
+	buf.append(m); buf.append(Util.toBytes(dynamicType.getName()));
+	buf.append(getType(dynamicType));
+	buf.append(hasDeclaredExceptions?nT:nF);
+	buf.append(e);
+    }
     void writeObject(Object o) {
         if(o==null) { writeNull(); return; }
         Class dynamicType = o.getClass();
 	buf.append(O); buf.append(this.bridge.globalRef.append(o));
 	buf.append(m); buf.append(Util.toBytes(dynamicType.getName()));
 	buf.append(getType(dynamicType));
+	buf.append(nT);
 	buf.append(e);
     }
     /** write object of type class. Only called from new JavaClass(...) */
+    void writeClass(Class o, boolean hasDeclaredExceptions) {
+        if(o==null) { writeNull(); return; }
+    	buf.append(O); buf.append(this.bridge.globalRef.append(o));
+	buf.append(m); buf.append(Util.toBytes(o.getName()));
+    	buf.append(po);
+	buf.append(hasDeclaredExceptions?nT:nF);
+    	buf.append(e);
+    }
     void writeClass(Class o) {
         if(o==null) { writeNull(); return; }
     	buf.append(O); buf.append(this.bridge.globalRef.append(o));
 	buf.append(m); buf.append(Util.toBytes(o.getName()));
     	buf.append(po);
+	buf.append(nT);
     	buf.append(e);
     }
     void writeException(Object o, String str) {
@@ -779,6 +827,10 @@ public class Response {
     private Writer getCoerceWriter() {
         if(coerceWriter==null) return coerceWriter = new CoerceWriter();
         return coerceWriter;
+    }
+    private Writer getDefaultObjectWriter() {
+	if(objectWriter==null) return objectWriter = new DefaultObjectWriter();
+	return objectWriter;
     }
     private Writer getObjectWriter() {
 	if(objectWriter==null) return objectWriter = new ObjectWriter();

@@ -80,7 +80,7 @@
 #define LOG_ERROR 2
 #define LOG_INFO 3 
 #define LOG_DEBUG 4
-#define DEFAULT_LEVEL "1"
+#define DEFAULT_LEVEL "2"
 
 #define N_JAVA_SARGS 10
 #define N_JAVA_SENV 3 

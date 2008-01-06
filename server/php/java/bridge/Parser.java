@@ -44,9 +44,6 @@ class Parser {
 	this.handler=handler;
 	tag=new ParserTag[]{new ParserTag(1), new ParserTag(MAX_ARGS), new ParserTag(MAX_ARGS) };
     }
-    private Options getOptions() {
-	return Util.EXT_JAVA_COMPATIBILITY ? new OldOptions() : new Options();
-    }
     short initOptions(InputStream in) throws IOException {
 	if((pos=read(in, buf, 0, RECV_SIZE)) >0) { 
 
@@ -66,9 +63,9 @@ class Parser {
 	    default:
 	    	if(ch==0177) { // extended header
 	    	    ch=buf[++c];
-	    	    bridge.options = getOptions();
+	    	    bridge.options = new Options();
 	    	} else {
-	    	    bridge.options = new StandardOptions();
+	    	    throw new IllegalArgumentException ("Standard header not supported anymore. Use the extended header.");
 	    	}
 	        if((ch&64)!=0) bridge.options.updateOptions((byte) (ch&3));
 	    	if((ch&128)!=0) {

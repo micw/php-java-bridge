@@ -41,4 +41,11 @@ public interface IContextFactoryVisitor extends IContextFactory {
    * Called at the end of the visitor's life cycle
    */
   public void invalidate();
+
+  /**
+   * Called when the context is requested
+   * @see IContextFactory#waitForInitializedContext()
+   */
+  public void initialize ();
+
 }

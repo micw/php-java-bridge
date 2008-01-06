@@ -55,7 +55,7 @@ class java_SocketChannel {
 	$this->channelName = $channelName;
   }
   function fwrite($data) {
-	fwrite($this->peer, $data);
+	return fwrite($this->peer, $data);
   }
   function fread($size) {
 	return fread($this->peer, $size);
@@ -112,7 +112,7 @@ class java_PipeChannel extends java_EmptyPipeChannel {
 	return $this;
   }
   function fwrite($data) {
-	fwrite($this->peer, $data);
+      return fwrite($this->peer, $data);
   }
   function fread($size) {
 	static $empty = NULL;
@@ -135,7 +135,7 @@ class java_SocketHandler {
 	$this->channel = $channel;
   }
   function write($data) {
-	$this->channel->fwrite($data);
+      return $this->channel->fwrite($data);
   }
   function read($size) {
 	return $this->channel->fread($size);
@@ -247,8 +247,8 @@ class java_HttpHandler extends java_SocketHandler {
   function write($data) {
 
 	$compatibility = $this->protocol->client->RUNTIME["PARSER"]=="NATIVE"
-	  ? chr(0103)
-	  : $compatibility = chr(0100);
+	  ? chr(0103-JAVA_PREFER_VALUES)
+	  : $compatibility = chr(0100+JAVA_PREFER_VALUES);
 	$this->protocol->client->RUNTIME["COMPATIBILITY"]=$compatibility;
 	if(is_int(JAVA_LOG_LEVEL)) {
 	  $compatibility |= 128 | (7 & JAVA_LOG_LEVEL)<<2;
@@ -275,7 +275,7 @@ class java_HttpHandler extends java_SocketHandler {
 	$res .= "\177";
 	$res .= $compatibility;
 	$res .= $data;
-	fwrite($socket, $res); fflush($socket);
+	return fwrite($socket, $res); fflush($socket);
   }
   function doSetCookie($key, $val, $path) {
 	$path=trim($path);
@@ -285,7 +285,7 @@ class java_HttpHandler extends java_SocketHandler {
   }
   function parseHeaders() {
 	$this->headers = array();
-	while (($str = trim(fgets($this->socket, java_Client::RECV_SIZE)))) {
+	while (($str = trim(fgets($this->socket, JAVA_RECV_SIZE)))) {
 	  if($str[0]=='X') {
 		if(!strncasecmp("X_JAVABRIDGE_REDIRECT", $str, 21)) {
 		  $this->headers["redirect"]=trim(substr($str, 22));
@@ -479,12 +479,6 @@ class java_Protocol {
   function sendData() {
 	$this->handler->write($this->client->sendBuffer);
     $this->client->sendBuffer=null;
-  }
-  function sendAsyncData() {
-	if(strlen($this->client->sendBuffer)>=java_client::SEND_SIZE*3/4) {
-	  $this->handler->write($this->client->sendBuffer);
-	  $this->client->sendBuffer=null;
-	}
   }
   function flush() {
 	if(JAVA_DEBUG) {

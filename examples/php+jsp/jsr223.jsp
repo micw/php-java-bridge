@@ -8,6 +8,12 @@ javax.script.ScriptEngine e =
                                                     request, 
                                                     response);
 e.getContext().setWriter (out);
-e.eval ("<?php $x = java_context(); echo 'hello from PHP '.$x.'<br>\n'?>");
+e.eval (
+    "<?php "+
+     "require_once ($_SERVER['DOCUMENT_ROOT'].'/java/Java.inc');" +
+     "$ctx = java_context();" +
+     "echo 'hello from PHP '.$ctx.'<br>\n'"+
+    "?>"
+);
 
 %>

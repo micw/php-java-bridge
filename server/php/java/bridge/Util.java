@@ -61,6 +61,8 @@ public final class Util {
     // method to load a CLR assembly
     static Method loadMethod, loadFileMethod;
     static Class CLRAssembly;
+    /** how long shall we wait for a remote client to terminate? */
+    public static final int MAX_WAIT = 30000;
     
     private Util() {}
     

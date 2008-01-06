@@ -48,6 +48,7 @@ import php.java.bridge.http.ContextFactory.ICredentials;
 public final class ContextServer implements ContextFactory.ICredentials {
     // One PipeContextServer for each web context, carries this ContextServer as a security token.
     private PipeContextServer ctx;
+    private String contextName;
     // There's only one  shared SocketContextServer instance, otherwise we have to allocate a new ServerSocket for each web context
     // No secutiry token
     private  static SocketContextServer sock = null; 
@@ -79,7 +80,8 @@ public final class ContextServer implements ContextFactory.ICredentials {
      * @param contextName The the name of the web context to which this server belongs.
      */
     public ContextServer(String contextName) {
-        /*
+        this.contextName = contextName;
+	/*
          * We need both because the client may not support named pipes.
          */
         ctx = new PipeContextServer(this, pool, contextName);
@@ -147,5 +149,9 @@ public final class ContextServer implements ContextFactory.ICredentials {
     public ICredentials getCredentials(String channelName) {
         if(channelName!=null && ctx.isAvailable()) return this; // PipeContextServer
         return ContextFactory.NO_CREDENTIALS; // SocketContextServer 
+    }
+    
+    public String toString () {
+	return "ContextServer: " + contextName;
     }
 }

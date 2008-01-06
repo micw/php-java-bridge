@@ -7,7 +7,7 @@ javax.script.ScriptEngine e =
                                                     response);
 e.getContext().setWriter (out);
 
-e.eval ("<?php function f($arg) {return 1 + $arg->intValue(); }; ?>");
+e.eval ("<?php function f($arg) {return 1 + java_values($arg); }; ?>");
 
 javax.script.Invocable i = (javax.script.Invocable) e;
 

@@ -3,6 +3,33 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 5.0.0
+
+This version is no longer backward compatible with earlier versions:
+
+* Undeclared exceptions thrown by Java procedures can no longer be
+  caught by PHP code. This change may cause confusion, but it is
+  consistent with other container implementations, for example EJB.
+
+* No automatic Java -> PHP value conversion. Use java_values($javaValue) 
+  to retrieve the value from a Java proxy.[1]
+
+* Java NULL values are represented as PhpNull proxies. Use java_values()
+  to retrieve the value.[1]
+
+[1] Note that in PHP versions <= 5.3
+
+  class Clazz { function __toString() {return "42"; } }
+  var_dump((int)(string)new Clazz());
+
+works correctly but 
+
+  var_dump((int)new Clazz());
+
+does not. This means that if you want to convert an object into
+a value, you must convert it into a string first.
+    
+
 Version 4.3.3
 
 This release contains bug fixes only. The following "bugs" have

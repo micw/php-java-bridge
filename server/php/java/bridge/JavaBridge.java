@@ -390,8 +390,6 @@ public class JavaBridge implements Runnable {
     }
     
     void setException(Response response, Throwable e, String method, Object obj, String name, Object args[], Class params[]) {
-	if(logLevel>2) printStackTrace(e);
-
 	if (e instanceof InvocationTargetException) {
 	    Throwable t = ((InvocationTargetException)e).getTargetException();
 	    if (t!=null) e=t;
@@ -480,12 +478,13 @@ public class JavaBridge implements Runnable {
 
 	    Object coercedArgs[] = coerce(params=entry.getParameterTypes(selected), args, response);
 	    // If we have a logLevel of 5 or above, do very detailed invocation logging
+	    boolean hasDeclaredExceptions = selected.getExceptionTypes().length!=0;
 	    if (this.logLevel>4) {
 	        Object result = selected.newInstance(coercedArgs);
 	        logInvoke(result, name, coercedArgs);
-    	    	response.setResult(result, clazz);
+    	    	response.setResult(result, clazz, hasDeclaredExceptions);
 	    } else {
-  	    	response.setResult(selected.newInstance(coercedArgs), clazz);
+  	    	response.setResult(selected.newInstance(coercedArgs), clazz, hasDeclaredExceptions);
   	    }
 	} catch (Throwable e) {
 	    if(e instanceof InvocationTargetException) e = ((InvocationTargetException)e).getTargetException();
@@ -499,6 +498,8 @@ public class JavaBridge implements Runnable {
 		e = getUnresolvedExternalReferenceException(e, "call constructor");
 	    }
 	    setException(response, e, createInstance?"CreateInstance":"ReferenceClass", null, name, args, params);
+	    
+	    if (response.isAsync()) throw new IllegalStateException ("Out of sync", e); // abort
 	}
     }
 
@@ -1047,14 +1048,16 @@ public class JavaBridge implements Runnable {
 		}
 		coercedArgs = coerce(params=entry.getParameterTypes(selected), args, response);
 	    } while(again);
+	    
+	    boolean hasDeclaredExceptions = selected.getExceptionTypes().length!=0;
 	    // If we have a logLevel of 5 or above, do very detailed invocation logging
 	    if (this.logLevel>4) {
 	        logInvoke(object, method, coercedArgs); 
 	        Object result = selected.invoke(object, coercedArgs);
 	        logResult(result);
-	        response.setResult(result, selected.getReturnType());
+	        response.setResult(result, selected.getReturnType(), hasDeclaredExceptions);
 	    } else {
-	        response.setResult(selected.invoke(object, coercedArgs), selected.getReturnType());	      
+	        response.setResult(selected.invoke(object, coercedArgs), selected.getReturnType(), hasDeclaredExceptions);	      
 	    }
 	} catch (Throwable e) {
 	    if(e instanceof InvocationTargetException) e = ((InvocationTargetException)e).getTargetException();
@@ -1090,6 +1093,8 @@ public class JavaBridge implements Runnable {
                 }
             }
 	    setException(response, e, "Invoke", object, method, args, params);
+	    
+	    if (response.isAsync()) throw new IllegalStateException ("Out of sync", e); // abort
 	}
     }
 
@@ -1184,7 +1189,7 @@ public class JavaBridge implements Runnable {
 			    } else {
 			    	res=fld.get(object);
 			    }
-			    response.setResult(res, ctype);
+			    response.setResult(res, ctype, false);
 			    return;
 			}
 		    }
@@ -1214,7 +1219,8 @@ public class JavaBridge implements Runnable {
 				matches.clear();
 				break again1;
 			    }
-			    response.setResult(method.invoke(object, args), method.getReturnType());
+			    boolean hasDeclaredExceptions = method.getExceptionTypes().length!=0;
+			    response.setResult(method.invoke(object, args), method.getReturnType(), hasDeclaredExceptions);
 			    return;
 			}
 		    }
@@ -1245,7 +1251,7 @@ public class JavaBridge implements Runnable {
 			    } else {
 				res = fld.get(object);
 			    }
-			    response.setResult(res, ctype);
+			    response.setResult(res, ctype, false);
 			    return;
 			}
 		    }
@@ -1265,6 +1271,8 @@ public class JavaBridge implements Runnable {
 		e = getUnresolvedExternalReferenceException(e, "invoke a property");
 	    }
 	    setException(response, e, set?"SetProperty":"GetProperty", object, prop, args, params);
+	    
+	    if (response.isAsync()) throw new IllegalStateException ("Out of sync.", e); // abort
 	}
     }
 
@@ -1530,23 +1538,8 @@ public class JavaBridge implements Runnable {
      * @return A string representation.
      */
     public String ObjectToString(Object ob) {
-	    StringBuffer buf = new StringBuffer("[");
-	try {
-	    Util.appendObject(ob, buf);
-	} catch (Request.AbortException sub) {
-	    throw sub;
-	} catch (Exception t) {
-		    Util.printStackTrace(t);
-		    buf.append("[Exception in toString(): ");
-		    buf.append(t);
-		    if(t.getCause()!=null) {
-		      buf.append(", Cause: ");
-		      buf.append(t.getCause());
-		    }
-		    buf.append("]");
-		}
-	    buf.append("]");
-	    return (String)castToString(buf.toString());
+	if (ob==null && !options.preferValues()) ob = Request.PHPNULL;
+	return (String)castToString(Util.stringValueOf(ob));
     }
 
     /**

@@ -8,7 +8,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
-import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
@@ -125,19 +124,12 @@ public class PhpServletScriptEngine extends PhpScriptEngine {
 	    char[] cbuf = new char[Util.BUF_SIZE];
 	    int length;
 
-	    /* header: <? require_once("http://localhost:<ourPort>/JavaBridge/java/Java.inc"); ?> */
-            localReader = new StringReader("<?php if(!extension_loaded('java')) {(@include_once(\"java/Java.inc\"));}?>");
-	    while((length=localReader.read(cbuf, 0, cbuf.length))>0) 
-		writer.write(cbuf, 0, length);
-            try { localReader.close(); localReader=null;} catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not close header", e);}
-
 	    while((length=reader.read(cbuf, 0, cbuf.length))>0) 
 		writer.write(cbuf, 0, length);
 	    writer.close();
 
-	    String filePath = (new File(new File(url.getFile()).getParentFile(), 
-				       tempfile.getName())).getPath();
-	    if (File.separatorChar != '/') filePath = filePath.replace(File.separatorChar, '/');
+	    String filePath = req.getContextPath()+"/"+tempfile.getName();
+	    req.getContextPath();
 	    url = new URL (url.getProtocol(), 
 			   url.getHost(), url.getPort(), 
 			   filePath);

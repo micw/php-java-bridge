@@ -53,6 +53,7 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
      */
     protected IContext context;
     
+    private boolean isInitialized = false;
     private boolean isValid = true;
     
     protected SimpleContextFactory(String webContext) {
@@ -74,12 +75,15 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
 	    isValid = false;
 	    notifyAll(); // the servlet and the http proxy, see SimplePhpScriptEngine.release
     }
+    public synchronized void initialize () {
+	isInitialized = true;
+    }
     /**
      * Wait for the context factory to finish. 
      */
-    public synchronized void waitFor() throws InterruptedException {
+    public synchronized void waitForInitializedContext() throws InterruptedException {
 	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet is waiting for ContextFactory " +System.identityHashCode(this));
-	if (isValid) wait();
+	if (isInitialized && isValid) wait();
 	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet done waiting for ContextFactory " +System.identityHashCode(this));
     }
     /**
@@ -123,8 +127,8 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
         this.context = context;
         this.context.setAttribute(IContext.JAVA_BRIDGE, getBridge(), IContext.ENGINE_SCOPE);
     }
-    public void removeOrphaned() {
-        visited.removeOrphaned();
+    public void release() {
+        visited.release();
     }
 
     /**

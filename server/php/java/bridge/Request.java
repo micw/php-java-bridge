@@ -40,7 +40,11 @@ public final class Request implements IDocHandler {
     private JavaBridge defaultBridge, bridge;
     protected static final IntegerComparator PHP_ARRAY_KEY_COMPARATOR = new IntegerComparator();
     // Only used when the async. protocol is enabled.
-    protected static final class PhpNull {}
+    protected static final class PhpNull {
+	public String toString () {
+	    return ""; //evaluates to false
+	}
+    }
     protected static final PhpNull PHPNULL = new PhpNull();
     protected Object getGlobalRef(int i) {
 	Object ref = bridge.globalRef.get(i);

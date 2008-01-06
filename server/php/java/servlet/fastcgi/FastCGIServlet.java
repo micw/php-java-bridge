@@ -34,6 +34,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
+import php.java.bridge.http.IContextFactory;
 import php.java.servlet.CGIServlet;
 import php.java.servlet.PhpCGIServlet;
 
@@ -267,7 +268,8 @@ public class FastCGIServlet extends CGIServlet {
     }
 
     protected class CGIEnvironment extends CGIServlet.CGIEnvironment {
-	ConnectionPool connectionPool;
+	private ConnectionPool connectionPool;
+    	public IContextFactory ctx;
 
 	protected CGIEnvironment(HttpServletRequest req, HttpServletResponse res, ServletContext context) {
 	    super(req, res, context);
@@ -347,7 +349,8 @@ public class FastCGIServlet extends CGIServlet {
 
     protected class CGIRunner extends CGIServlet.CGIRunner {
 
-	ConnectionPool connectionPool;
+	private ConnectionPool connectionPool;
+	protected IContextFactory ctx;
 	
 	/**
 	 * @param command
@@ -357,6 +360,7 @@ public class FastCGIServlet extends CGIServlet {
 	protected CGIRunner(CGIServlet.CGIEnvironment env) {
 	    super(env);
 	    connectionPool = ((CGIEnvironment)env).connectionPool;
+	    ctx = ((CGIEnvironment)env).ctx;
 	}
 
 	protected void doRun() throws IOException, ServletException {
@@ -389,6 +393,9 @@ public class FastCGIServlet extends CGIServlet {
 		  Util.printStackTrace(e);
 	      }	      
 	      	throw new ServletException("IOException caused by internet browser", e);
+	    } finally {
+    		if(ctx!=null) ctx.release();
+    		ctx = null;
 	    }
 	    
 	}

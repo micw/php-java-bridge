@@ -54,10 +54,10 @@ public abstract class CGIRunner extends Thread {
     protected Map env;
     protected OutputStream out, err;
     protected Reader reader;
-    
-    protected ScriptLock scriptLock = new ScriptLock();
-    protected Lock phpScript = new Lock();
     protected HeaderParser headerParser;
+    
+    private ScriptLock scriptLock = new ScriptLock();
+    private Lock phpScript = new Lock();
 
     // used to wait for the script to terminate
     private static class ScriptLock {
@@ -114,6 +114,8 @@ public abstract class CGIRunner extends Thread {
 	} catch (Exception ex) {
 	    Util.printStackTrace(ex);
         } finally {
+	    try { out.flush(); } catch (IOException e) {/*ignore*/}
+	    try { err.flush(); } catch (IOException e) {/*ignore*/}
 	    phpScript.finish();
 	    scriptLock.finish();
 	}
@@ -160,8 +162,6 @@ public abstract class CGIRunner extends Thread {
 		/*ignore*/
 	} finally {
 	    if(natIn!=null) try {natIn.close();} catch (IOException ex) {/*ignore*/}
-	    try { out.flush(); } catch (IOException e) {/*ignore*/}
-	    try { err.flush(); } catch (IOException e) {/*ignore*/}
 	    try {proc.destroy(); } catch (Exception e) { Util.printStackTrace(e); }
 	}
 	

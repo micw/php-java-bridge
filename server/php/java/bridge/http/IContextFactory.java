@@ -53,16 +53,21 @@ public interface IContextFactory extends IJavaBridgeFactory {
   public void destroy();
 
   /**
-   * Removes the unused context factory from the classloader's list of context factories.
+   * Releases the context factory. This method should be called when the
+   * factory is not needed anymore.
+   * Implementations could then remove any unused context factory from the 
+   * classloader's list of context factories.
    */
-  public void removeOrphaned();
+  public void release();
 
   /**
-   * Wait until this context is finished.
+   * Wait until this context is finished. This method returns immediately if this context
+   * is not in use yet or it is no longer in use. Call this method only if you're sure
+   * that the PHP script is finished!
    * @throws InterruptedException
    * @see php.java.bridge.http.ContextRunner
    */
-  public void waitFor() throws InterruptedException;
+  public void waitForInitializedContext() throws InterruptedException;
  
   /**
    * Wait until this context is finished.

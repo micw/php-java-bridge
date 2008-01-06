@@ -82,7 +82,7 @@ public class JavaBridgeClassLoader extends SimpleJavaBridgeClassLoader {
              */
             cachedPath = DynamicJavaBridgeClassLoader.checkJarLibraryPath(path, extensionDir, cwd, searchpath);
             return;
-        } else super.updateJarLibraryPath(path, extensionDir, extensionDir, extensionDir);
+        } else super.updateJarLibraryPath(path, extensionDir, cwd, searchpath);
     }
     /**
      * Enable the DynamicJavaBridgeClassLoader, if needed.

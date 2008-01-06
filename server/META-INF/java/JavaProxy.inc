@@ -728,10 +728,16 @@ class Java extends java_AbstractJava {
       }
     }
 
-    if($client->isAsync && array_key_exists($sig, $client->methodCache)) {
+    if(array_key_exists($sig, $client->methodCache)) {
 	  if(JAVA_DEBUG) { echo "cache hit for new Java: $sig\n"; }
       $cacheEntry = &$client->methodCache[$sig];
 	  $client->sendBuffer.= $client->preparedToSendBuffer;
+	  if(strlen($client->sendBuffer)>=JAVA_SEND_SIZE) {
+	      if($client->protocol->handler->write($client->sendBuffer)<=0) 
+	         throw new java_IllegalStateException("Connection out of sync, check backend log for details.");
+	      $client->sendBuffer=null;
+	  }
+	  
 	  $client->preparedToSendBuffer=vsprintf($cacheEntry->fmt, $args2);
 
 	  if(JAVA_DEBUG) {
@@ -762,8 +768,7 @@ class Java extends java_AbstractJava {
 	// Cancel proxy creation: If the created instance is collected
 	// before the next java statement is executed, we set the result
 	// type to void
-	if($client->isAsync &&
-	   $preparedToSendBuffer &&
+	if($preparedToSendBuffer &&
 	   $client->cancelProxyCreationTag==$this->__cancelProxyCreationTag) {
 
 	  $preparedToSendBuffer[6]="3";
@@ -821,10 +826,15 @@ class Java extends java_AbstractJava {
       }
     }
 
-    if($client->isAsync && array_key_exists($sig, $client->methodCache)) {
+    if(array_key_exists($sig, $client->methodCache)) {
 	  if(JAVA_DEBUG) { echo "cache hit for __call: $sig\n"; }
       $cacheEntry = &$client->methodCache[$sig];
 	  $client->sendBuffer.=$client->preparedToSendBuffer;
+	  if(strlen($client->sendBuffer)>=JAVA_SEND_SIZE) {
+	      if($client->protocol->handler->write($client->sendBuffer)<=0) 
+	         throw new java_IllegalStateException("Out of sync. Check backend log for details.");
+	      $client->sendBuffer=null;
+	  }
 	  $client->preparedToSendBuffer=vsprintf($cacheEntry->fmt, $args2);
 	  if(JAVA_DEBUG) {
 		print_r($args2);
@@ -993,6 +1003,5 @@ class java_JavaProxyProxy extends Java {
 	$this->__client = $client;
   }
 }
-
 
 ?>

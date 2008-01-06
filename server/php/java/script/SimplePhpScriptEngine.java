@@ -306,11 +306,13 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
 	if(continuation != null) {
 	    try {
 		continuation.release();
-	        ctx.waitFor();
+		ctx.waitForInitializedContext();
 	    } catch (InterruptedException e) {
 		    return;
 	    }
-	    ctx.removeOrphaned(); ctx = null;
+	    ctx.release(); 
+	    ctx = null;
+	    
 	    continuation = null;
 	    script = null;
 	    scriptClosure = null;

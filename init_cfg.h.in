@@ -20,6 +20,7 @@
 #define N_SENV N_JAVA_SENV		/* # of server env entries */
 #define EXT java
 #define EXTC Java
+#define EXTU "JAVA"
 #else
 #define mono_snprintf ap_php_snprintf 
 #define DEFAULT_PORT DEFAULT_MONO_PORT
@@ -28,6 +29,7 @@
 #define N_SENV N_MONO_SENV
 #define EXT mono
 #define EXTC Mono
+#define EXTU "MONO"
 #endif
 
 #ifndef BRIDGE_VERSION

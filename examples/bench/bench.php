@@ -1,6 +1,7 @@
 #!/usr/bin/php
 
 <?php
+   //define ("JAVA_DEBUG", true);
 if (!extension_loaded('java')) {
   if (!(require_once("http://127.0.0.1:8080/JavaBridge/java/Java.inc"))) {
     echo "java extension not installed.";
@@ -27,13 +28,12 @@ $excel->createWorkbook("/dev/null", 1, 1);
 
 // test starts
 $sys->gc();
-$start = $sys->currentTimeMillis();
+$start = java_values($sys->currentTimeMillis());
 $excel = new java("ExcelTest");
 $excel->createWorkbook("$here/$java_output", 200, 200);
 $sys->gc();
-$t_java = $sys->currentTimeMillis() - $start;
+$t_java = java_values($sys->currentTimeMillis()) - $start;
 
-if(function_exists("java_begin_document")) java_begin_document();
 include("$here/excel_antitest.php");
 $sys->gc();
 $start = java_values($sys->currentTimeMillis());
@@ -41,7 +41,6 @@ createWorkbook("$here/$php_output", 200, 200);
 $sys->gc();
 
 $t_php = java_values($sys->currentTimeMillis()) - $start;
-if(function_exists("java_end_document")) java_end_document();
 
 echo "$java_output\t: $t_java ms.\n";
 echo "$php_output\t: $t_php ms.\t(" . $t_php/$t_java .")\n";

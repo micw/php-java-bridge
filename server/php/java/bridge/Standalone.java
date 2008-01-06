@@ -222,9 +222,22 @@ public class Standalone {
 	try {
 	    System.loadLibrary("natcJavaBridge");
 	} catch (Throwable t) {/*ignore*/}
-	try { // Hack for Unix: execute the standalone container using the default SUN VM
-	    if(s.length==0 && (new File("/usr/java/default/bin/java")).exists() && checkGNUVM() && (System.getProperty("php.java.bridge.exec_sun_vm", "true").equals("true"))) {
-		Process p = Runtime.getRuntime().exec(new String[] {"/usr/java/default/bin/java", "-Dphp.java.bridge.exec_sun_vm=false", "-classpath", System.getProperty("java.class.path"), "php.java.bridge.Standalone"}, null, Util.getCanonicalWindowsFile(""));
+	try { // this hack tries to workaround two problems
+	      // 1. On Unix an older JDK may be in the path, even though sun jdk >= 1.6 is installed
+	      // 2. The standard Unix desktop ("Gnome") executes JavaBridge.jar from the $HOME dir, not the current dir
+	    String cp = System.getProperty("java.class.path", ".");
+	    File jbFile = null;
+	    boolean isExecutableJavaBridgeJar = (cp.indexOf(File.pathSeparatorChar)==-1) && 
+	    					cp.endsWith("JavaBridge.jar") && 
+	    					((jbFile=new File(cp)).isAbsolute());
+	    File wd = Util.getCanonicalWindowsFile(isExecutableJavaBridgeJar ? jbFile.getParent() : "");
+	    boolean sunJavaInstalled = (new File("/usr/java/default/bin/java")).exists();
+	    String javaExec = sunJavaInstalled ? "/usr/java/default/bin/java" : "java";
+
+	    if(s.length==0 && 
+		    (System.getProperty("php.java.bridge.exec_sun_vm", "true").equals("true")) &&
+		    ((sunJavaInstalled && checkGNUVM()) || isExecutableJavaBridgeJar)) {
+		Process p = Runtime.getRuntime().exec(new String[] {javaExec, "-Dphp.java.bridge.exec_sun_vm=false", "-classpath", cp, "php.java.bridge.Standalone"}, null, wd);
 		if(p != null) System.exit(p.waitFor());
 	    }
 	} catch (Throwable t) {/*ignore*/}

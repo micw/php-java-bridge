@@ -3,7 +3,7 @@
 /* PHP version of numberguess.jsp */
 $session = java_session();
 
-if(is_null($numguess=$session->get("bean"))) {
+if(is_null(java_values($numguess=$session->get("bean")))) {
   $session->put("bean", $numguess=new Java("num.NumberGuessBean"));
 }
 if($_POST['guess']) {
@@ -16,15 +16,15 @@ if($_POST['guess']) {
 <body bgcolor="white">
 <font size=4>
 
-<?php if($numguess->getSuccess()) { ?>
+<?php if(java_values($numguess->getSuccess())) { ?>
   Congratulations!  You got it.
-  And after just <?php echo $numguess->getNumGuesses(); ?> tries.<p>
+  And after just <?php echo java_values($numguess->getNumGuesses()); ?> tries.<p>
 
   <?php $session->destroy(); ?>
 
   Care to <a href="numberguess.php">try again</a>?
 
-<?php } else if ($numguess->getNumGuesses() == 0) { ?>
+<?php } else if (java_values($numguess->getNumGuesses()) == 0) { ?>
 
   Welcome to the Number Guess game.<p>
 
@@ -39,7 +39,7 @@ if($_POST['guess']) {
 
   Good guess, but nope.  Try <b><?php echo java_cast($numguess->getHint(),"S") ?></b>.
 
-  You have made <?php echo $numguess->getNumGuesses() ?> guesses.<p>
+  You have made <?php echo java_values($numguess->getNumGuesses()) ?> guesses.<p>
 
   I'm thinking of a number between 1 and 100.<p>
 

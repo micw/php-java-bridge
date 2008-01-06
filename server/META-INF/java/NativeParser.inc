@@ -83,7 +83,7 @@ class java_NativeParser {
 	// PHP stream buffer size, otherwise this function will hang.
 	do {
 	  $this->event = false;
-	  $buf = $this->buf = $this->handler->read(java_Client::RECV_SIZE); 
+	  $buf = $this->buf = $this->handler->read(JAVA_RECV_SIZE); 
 	  $len = strlen($buf);
 	  if(!xml_parse($this->parser, $buf, $len==0)) {
 		die(sprintf("protocol error: %s, %s at col %d. Check the back end log for details.",

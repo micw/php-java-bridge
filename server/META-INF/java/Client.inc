@@ -264,9 +264,6 @@ class java_ApplyArg extends java_CompositeArg {
 class java_Client /* implements IDocHandler */ {
   public $RUNTIME;
 
-  const RECV_SIZE=8192;
-  const SEND_SIZE=8192;
-
   public $result, $exception;
   public $parser;
 
@@ -451,7 +448,7 @@ class java_Client /* implements IDocHandler */ {
 	  if(JAVA_DEBUG) {echo "setresult double:"; echo sprintf("%s", $st['v']); echo "\n";}
 	  break;
 	case 'V':
-	  if ($this->isAsync) {
+	  if ($st['n']!='T') {
 		if(JAVA_DEBUG) {echo "setresult VOID:"; echo "\n";}
 		$arg->setVoidSignature();
 	  }
@@ -466,7 +463,7 @@ class java_Client /* implements IDocHandler */ {
 	case 'O': 
 	  $arg->setFactory($this->getProxyFactory($st['p']));
 	  $arg->setResult($this->asyncCtx=$this->getExact($st['v']));
-	  $arg->setSignature($st['m']);
+	  if($st['n']!='T') $arg->setSignature($st['m']);
 	  if(JAVA_DEBUG) {echo "setresult object:"; echo sprintf("%x", $this->asyncCtx); echo "\n";}
 	  break;
 	case 'E':

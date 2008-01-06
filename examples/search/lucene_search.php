@@ -42,7 +42,7 @@ try {
 
   /* Print result */
   $iter = $hits->iterator();
-  $n = $hits->length();
+  $n = java_values($hits->length());
   echo "done\n";
   echo "Hits: $n\n";
 

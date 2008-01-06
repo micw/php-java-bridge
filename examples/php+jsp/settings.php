@@ -50,12 +50,12 @@ echo $System->getProperties();<br>
 </tr>
 <tr>
 <td>servlet_log_level</td>
-<td><?php echo $bridge->getlogLevel();?></td>
+<td><?php echo java_values($bridge->getlogLevel());?></td>
 <td>The request log level.</td>
 </tr>
 <tr>
 <td>promiscuous</td>
-<td><?php echo $Util->JAVABRIDGE_PROMISCUOUS ? "On" : "Off" ?></td>
+<td><?php echo java_values($Util->JAVABRIDGE_PROMISCUOUS) ? "On" : "Off" ?></td>
 <td>Shall the bridge accept requests from <strong>non-local</strong> PHP scripts?</td>
 </tr>
 </table>
@@ -82,7 +82,7 @@ It starts a PHP FastCGI server, if possible and necessary. Requests for PHP scri
 </tr>
 <tr>
 <td>override_hosts</td>
-<td><?php $val=$config->getInitParameter("override_hosts"); echo $val?$val:"On"?></td>
+<td><?php $val=java_values($config->getInitParameter("override_hosts")); echo $val?$val:"On"?></td>
 <td>Should the servlet engine delegate protocol requests back to the current VM?</td>
 </tr>
 

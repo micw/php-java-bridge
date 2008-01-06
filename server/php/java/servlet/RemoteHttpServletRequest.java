@@ -9,8 +9,8 @@ import javax.servlet.http.HttpSession;
 
 final class RemoteHttpServletRequest extends HttpServletRequestWrapper {
 
-    private AbstractServletContextFactory factory;
-    public RemoteHttpServletRequest(AbstractServletContextFactory factory, HttpServletRequest req) {
+    private SimpleServletContextFactory factory;
+    public RemoteHttpServletRequest(SimpleServletContextFactory factory, HttpServletRequest req) {
 	super(req);
 	this.factory = factory;
     }

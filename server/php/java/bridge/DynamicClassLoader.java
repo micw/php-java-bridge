@@ -134,13 +134,9 @@ public class DynamicClassLoader extends SecureClassLoader {
     protected HashMap parentCache; // Fetched globally from parentCacheMap
 
     private void init() {
-	instanceIndex = 0;
 	classLoaders = new HashMap(); // Map of Classpath=>URLClassLoaderEntries of this DynamicClassLoader (Hard References)
 	classPaths = new LinkedList(); // List of Classpaths (corresponding to URLClassLoaderEntries) of this DynamicClassLoader
 	urlsToAdd = new LinkedList(); // List of URLs to add (lazy evaluation)
-	cacheTimeout = 5000; // Minimum interval to check for file modification dates
-	lazy = true; // Lazy Classloader Creation ?
-	parentCache = null; // Fetched globally from parentCacheMap
     }
     /**
      * We create a new copy of the DynamicClassLoader for each request. 

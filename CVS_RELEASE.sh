@@ -44,9 +44,14 @@ cp unsupported/log4j.jar JAVA.STANDALONE
 cp server/META-INF/java/Java.inc JAVA.STANDALONE
 cp INSTALL.STANDALONE JAVA.STANDALONE
 
+mkdir LINUX
+rpm --addsign /usr/src/redhat/RPMS/i386/php-java-bridge*${version}*.rpm
+cp /usr/src/redhat/RPMS/i386/php-java-bridge-${version}*.rpm /usr/src/redhat/RPMS/i386/php-java-bridge-lucene-${version}*.rpm /usr/src/redhat/RPMS/i386/php-java-bridge-itext-${version}*.rpm LINUX
+cp INSTALL.LINUX LINUX
+
+cp  src.zip README FAQ.html INSTALL.J2EE INSTALL.J2SE NEWS documentation
 mv server documentation
-mv README FAQ.html documentation
-list="JAVA.STANDALONE MONO.STANDALONE INSTALL.J2EE INSTALL.J2SE INSTALL.LINUX documentation/API documentation/README documentation/FAQ.html src.zip JavaBridge.war documentation/server/documentation documentation/server/php_java_lib documentation/server/test documentation/server/tests.php5 documentation/server/javabridge.policy"
+list="LINUX JAVA.STANDALONE MONO.STANDALONE  documentation/API documentation/README documentation/FAQ.html documentation/INSTALL.J2EE documentation/INSTALL.J2SE documentation/src.zip documentation/NEWS JavaBridge.war documentation/server/documentation documentation/server/php_java_lib documentation/server/test documentation/server/tests.php5 documentation/server/javabridge.policy"
 find $list -type d -name "CVS" -print | xargs rm -rf
 
 chmod +x JavaBridge.war

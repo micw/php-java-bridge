@@ -8,14 +8,13 @@ $session = java_session();
 <?php
 java_autoload();
 
-if(is_null($session->get("counter"))) {
-  $session->put("counter", new java_lang_Integer(1));
+if(is_null(java_values($session->get("counter")))) {
+  $session->put("counter", 1);
 }
 
 $counter = java_values($session->get("counter"));
 print "HttpSession variable \"counter\": $counter<br>\n";
-$next = new java_lang_Integer($counter+1);
-$session->put("counter", $next);
+$session->put("counter", $counter+1);
 ?>
 <a href="sessionSharing.jsp">JSP page</a>
 </BODY>

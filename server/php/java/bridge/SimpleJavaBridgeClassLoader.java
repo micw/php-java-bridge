@@ -158,7 +158,7 @@ public class SimpleJavaBridgeClassLoader {
 	    DynamicJavaBridgeClassLoader loader = DynamicJavaBridgeClassLoader.newInstance(scl);
 	    setClassLoader(loader);
 	    try {
-		Thread.currentThread().setContextClassLoader(loader);
+		Thread.currentThread().setContextClassLoader(getClassLoader());
 	    }catch (SecurityException e) {Util.printStackTrace(e);}
 	}
 	    

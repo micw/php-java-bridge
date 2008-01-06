@@ -37,10 +37,10 @@ import javax.servlet.http.HttpServletResponse;
  * @see php.java.bridge.http.ContextFactory
  * @see php.java.bridge.http.ContextServer
  */
-public class ServletContextFactory extends AbstractServletContextFactory {
+public class ServletContextFactory extends SimpleServletContextFactory {
     protected ServletContextFactory(Servlet servlet, ServletContext ctx,
                         HttpServletRequest proxy, HttpServletRequest req,HttpServletResponse res) { super(servlet, ctx, proxy, req, res); }
-    public synchronized void waitFor() throws InterruptedException {}
+    public synchronized void waitForInitializedContext() throws InterruptedException {}
     public synchronized void waitFor(long timeout) throws InterruptedException {}
     /**
      * Create and add a new ContextFactory.
@@ -52,6 +52,4 @@ public class ServletContextFactory extends AbstractServletContextFactory {
         ServletContextFactory ctx = new ServletContextFactory(servlet, kontext, proxy, req, res);
     	return ctx;
     }	
-
-
 }

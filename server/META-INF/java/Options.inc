@@ -51,7 +51,14 @@ function java_defineHostFromInitialQuery($java_base) {
 
 // The version number of this pure PHP implementation
 
-define ("JAVA_PEAR_VERSION", "4.3.2");
+define ("JAVA_PEAR_VERSION", "5.0.0");
+
+if(!defined("JAVA_SEND_SIZE")) 
+  define("JAVA_SEND_SIZE", 8192);
+
+if(!defined("JAVA_RECV_SIZE")) 
+  define("JAVA_RECV_SIZE", 8192);
+ 
 
 // parse "java.ini" for backward compatibility
 if (defined ("JAVA_PARSE_INI_FILE") && JAVA_PARSE_INI_FILE) {
@@ -94,6 +101,11 @@ if(!defined("JAVA_PIPE_DIR")) {
   elseif (file_exists ("/tmp")) define("JAVA_PIPE_DIR", "/tmp" );
   else                          define ("JAVA_PIPE_DIR", null);
 }
+
+// Set to 1 for compatibility with earlier versions
+if (!defined("JAVA_PREFER_VALUES"))
+  define("JAVA_PREFER_VALUES", 0);
+
 // debug mode
 if(!defined("JAVA_DEBUG")) 
   define("JAVA_DEBUG", false);
