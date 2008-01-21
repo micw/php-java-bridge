@@ -40,5 +40,5 @@ public final class DefaultOptions extends Options {
     
     public boolean sendArraysAsValues() { return true; }
 
-    public boolean passContext() { return true; }
+    public boolean passContext() { return false; }
 }

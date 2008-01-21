@@ -22,8 +22,8 @@ for($i=0; $i<100; $i++) {
   $class = $Class->forName("ArrayToString", false, $loader);
   $class2 = $loader->loadClass("ArrayToString");
   $System = new JavaClass("java.lang.System");
-  $hc1 = $System->identityHashCode($class) ;
-  $hc2 = $System->identityHashCode($class2);
+  $hc1 = java_values($System->identityHashCode($class));
+  $hc2 = java_values($System->identityHashCode($class2));
   $rc = $hc1==$hc2;
   if(!$rc) { 
     $Util = new JavaClass("php.java.bridge.Util");

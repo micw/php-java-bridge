@@ -58,13 +58,13 @@ public class ChainsawLogger extends SimpleLog4jLogger implements ILogger {
     public void configure (String defaultHost, int defaultPort) throws Exception {
         Socket s = new Socket(defaultHost, defaultPort);
         s.close();
-        Class clazz = loader.forName("org.apache.log4j.net.SocketAppender");
+        Class clazz = Class.forName("org.apache.log4j.net.SocketAppender");
         Constructor constructor = clazz.getConstructor(new Class[]{String.class, int.class});
         Object socketAppender = constructor.newInstance(new Object[]{defaultHost, new Integer(defaultPort)});
-        clazz = loader.forName("org.apache.log4j.BasicConfigurator");
+        clazz = Class.forName("org.apache.log4j.BasicConfigurator");
         Method method = clazz.getMethod("resetConfiguration", Util.ZERO_PARAM);
         method.invoke(clazz, Util.ZERO_ARG);
-        Class appender = loader.forName("org.apache.log4j.Appender");
+        Class appender = Class.forName("org.apache.log4j.Appender");
         method = clazz.getMethod("configure", new Class[]{appender});
         method.invoke(clazz, new Object[]{socketAppender});
     }

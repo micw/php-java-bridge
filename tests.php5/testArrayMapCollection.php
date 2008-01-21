@@ -18,14 +18,14 @@ try {				// must fail
   echo "<br>\n";
   echo "test failed1\n"; exit(1);
 } catch (JavaException $e) {
-  echo "test okay $e<br>\n";
+  echo "test okay <br>\n";
 }
 try {				// must fail
   echo $ar->array(array(1=>$ar, 2=>$ar, "a"=>$ar));
   echo "<br>\n";
   echo "test failed2\n"; exit(2);
 } catch (JavaException $e) {
-  echo "test okay $e<br>\n";
+  echo "test okay <br>\n";
 }
 try {				// must succeed
   echo $ar->array(array(1=>$ar, 2=>$ar, 3=>$ar));

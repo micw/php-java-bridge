@@ -1,5 +1,5 @@
 <?php require_once("java/Java.inc");
-java_autoload("/home/src/opt/apache-tomcat-6.0.14/webapps/JavaBridge/WEB-INF/lib/poi.jar");
+java_autoload();
 
 header("Content-type: application/vnd.ms-excel");
 header("Content-Disposition: attachment; filename=downloaded.xls");

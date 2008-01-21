@@ -33,7 +33,7 @@ import java.util.Enumeration;
 public class Log4jLogger extends ChainsawLogger {
     private boolean forceChainsawLogger;
     public void configure (String defaultHost, int defaultPort) throws Exception {
-	Class clazz = loader.forName("org.apache.log4j.Category");
+	Class clazz = Class.forName("org.apache.log4j.Category");
 	Method method = clazz.getMethod("getRoot", new Class[]{});
 	Object root = method.invoke(clazz, new Object[]{});
 	method = clazz.getMethod("getAllAppenders", new Class[]{});

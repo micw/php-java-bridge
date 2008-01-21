@@ -1,6 +1,6 @@
 public class Exception {
 
-    public class Ex extends RuntimeException {
+    public class Ex extends java.lang.Exception {
 	int id;
 	public Ex(int id) {
 	    this.id = id;
@@ -12,7 +12,7 @@ public class Exception {
 
     public class Inner {
 	public Integer o = new Integer(33);
-	public Integer meth(int val) {
+	public Integer meth(int val) throws Ex {
 	    if(val==o.intValue()) throw new Ex(o.intValue());
 	    return o;
 	}

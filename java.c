@@ -158,7 +158,9 @@ PHP_RINIT_FUNCTION(EXT)
   EG(return_value_ptr_ptr) = &result;
   current = EG(active_op_array);
   EG(active_op_array) = ar;
+  EG(no_extensions)=1;
   zend_execute(ar TSRMLS_CC);
+  EG(no_extensions)=0;
 #if 1
   destroy_op_array(ar TSRMLS_CC);
   efree(ar);

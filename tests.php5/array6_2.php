@@ -22,7 +22,7 @@ $here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
 if(!$here) $here=getcwd();
 java_require("$here/array6.jar");
 $array6 = new java("Array6");
-$success = $array6->check($testobj);
+$success = java_values($array6->check($testobj));
 var_dump(java_values($testobj[0][0][0][0]));
 if(!$success) {
   echo "ERROR\n";

@@ -61,8 +61,7 @@ public class PhpProcedure implements InvocationHandler {
 	PhpProcedure handler = new PhpProcedure(bridge, object, name, names);
 	SimpleJavaBridgeClassLoader bridgeClassLoader = bridge.getClassLoader();
 
-	// gcj doesn't have a class gc. 
-	ClassLoader loader = Util.IS_GNU_JAVA ? bridgeClassLoader.getDefaultClassLoader() : bridgeClassLoader.getClassLoader();
+	ClassLoader loader = bridgeClassLoader.getClassLoader();
 
 	Object proxy = Proxy.newProxyInstance(loader, interfaces, handler);
 	return proxy;

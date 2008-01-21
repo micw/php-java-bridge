@@ -31,17 +31,16 @@ import java.lang.reflect.Method;
  */
 public abstract class SimpleLog4jLogger implements ILogger {
     protected LoggerProxy logger;
-    protected SimpleJavaBridgeClassLoader loader;
     
     protected class LoggerProxy {
 	Object logger;
 	protected Class priority;
 	protected Object fatal, error, warn, info, debug;
 	protected LoggerProxy() throws Exception {
-	    Class c = loader.forName("org.apache.log4j.Logger");
+	    Class c = Class.forName("org.apache.log4j.Logger");
 	    Method m = c.getMethod("getLogger", new Class[]{String.class});
 	    logger = m.invoke(c, new Object[]{"php.java.bridge.JavaBridge"});
-	    c = priority = loader.forName("org.apache.log4j.Priority");
+	    c = priority = Class.forName("org.apache.log4j.Priority");
 	    fatal=c.getField("FATAL").get(c);
 	    error=c.getField("ERROR").get(c);
 	    warn=c.getField("WARN").get(c);
@@ -72,7 +71,6 @@ public abstract class SimpleLog4jLogger implements ILogger {
      * @see php.java.bridge.Util#setLogger(ILogger)
      */
     protected SimpleLog4jLogger() {
-        loader = new SimpleJavaBridgeClassLoader();
     }
     public void printStackTrace(Throwable t) {
 	try {

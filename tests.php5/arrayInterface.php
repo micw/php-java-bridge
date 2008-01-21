@@ -18,19 +18,8 @@ $entries[3] ="Die Verfolgung und Ermordung Jean Paul Marats dargestellt durch di
 $entries[4] ="Der Mann mit den Messern, Heinrich Böll, 1917--1985";
 $entries[5] ="Biedermann und die Brandstifter, Max Frisch, 1911--1991";
 $entries[6] ="Seelandschaft mit Pocahontas, Arno Schmidt, 1914--1979";
-if(extension_loaded("java")) {
-  for ($i = 0; $i < $Array->getLength($entries); $i++) { 
-    echo "$i: $entries[$i]\n";
-  }
- } else {			// hack for the pure PHP
-				// implementation which currently
-				// behaves like PHP4: arrays etc. are
-				// resolved immediately so that
-				// $entries is not a java object
-				// anymore.
-  for ($i = 0; $i < 6; $i++) { 
-    echo "$i: ".java_values($entries[$i])."\n";
-  }
+for ($i = 0; $i < java_values($Array->getLength($entries)); $i++) { 
+  echo "$i: $entries[$i]\n";
  }
 
 ?>

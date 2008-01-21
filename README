@@ -432,10 +432,10 @@ Build and execution instructions:
   Loading user classes and libraries
   ----------------------------------
 
-  Java libraries should be installed in one of the following directories:
-  java.ext.dirs or php.java.bridge.base/lib or, for the
-  J2EE/servlet back end, WEB-INF/lib. Libraries in these directories are
-  automatically loaded by a static loader whenever the JVM starts.
+  Java libraries should be installed in one of the following
+  directories: java.ext.dirs or, for the J2EE/servlet back end,
+  WEB-INF/lib. Libraries in these directories are automatically loaded
+  by a static loader whenever the JVM starts.
 
   The location of the php.java.bridge.base depends on the Java system
   property -Dphp.java.bridge.base. It defaults to user.home. When
@@ -446,8 +446,8 @@ Build and execution instructions:
   
   Java libraries can also be loaded or re-loaded on demand by a
   dynamic loader. They should have the following file name:
-  <name>-<version>.jar and be stored in a sub directory of the PHP
-  extension_dir/lib/ directory or in a sub directory of the
+  <name>-<version>.jar and be stored in a sub directory of the
+  php.java.bridge.base/lib/ directory or in a sub directory of the
   /usr/share/java directory. For example:
 
     /usr/share/java/batStore/batStore-1.0.jar.
@@ -499,19 +499,18 @@ Build and execution instructions:
     this may cause a noticeable delay (a few 100 ms).
 
   * The static loader can only load libraries which are stored in the
-    /usr/share/java/ext or in the php.java.bridge.base/lib directory. Hot
-    deployment is not possible because all classes are loaded when the VM
-    starts.
+    /usr/share/java/ext directory. Hot deployment is not possible
+    because all classes are loaded when the VM starts.
 
   * The standard directories /usr/share/java/ext or
     /usr/java/packages/lib/ext/ don't exist on Windows so that users must
     check the windows registry to find the "standard" java extension dir.
 
   It is recommended to store Java libraries which are API stable or
-  use the java native interface into the php.java.bridge.base/lib
-  directory or into java.ext.dirs. All other libraries can go into a
-  project specific directory within php.java.bridge.base/lib/ or
-  /usr/share/java/ and be loaded on-demand.
+  use the java native interface into java.ext.dirs. All other
+  libraries can go into a project specific directory within
+  php.java.bridge.base/lib/ or /usr/share/java/ and be loaded
+  on-demand.
 
   Note that classes loaded from two different class loader instances
   cannot access each other. This means that, e.g., neither
@@ -525,6 +524,11 @@ Build and execution instructions:
     java_require("foo.jar"); java_require("bar.jar");
     $foo = new Java("foo");
     $foo->callWithBar(); // error!
+
+  nor
+ 
+    java_require("myJdbcDriver.jar");
+    java("java.sql.DriverManager")->doSomethingWith(myJdbcDriver);
 
   work as expected.
 
@@ -549,6 +553,13 @@ Build and execution instructions:
   libraries from the same class loader:
    
      java_require("foo.jar;bar.jar");
+
+  The third example can be corrected by loading the JDBC driver and a class
+  which uses the jdbc driver from the same class loader. For example:
+
+    java_require("myJdbcDriver.jar;myDriverManager.jar");
+
+  After that the "myDriverManager" class can access "myJdbcDriver" as usual.
 
 ------------------------------------
   Sun java platform issues

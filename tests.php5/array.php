@@ -16,7 +16,7 @@ $array = new java("Array");
 $map = $array->getConversion();
 $set = $map->entrySet();
 $iterator = $set->iterator();
-while ($iterator->hasNext()) {
+while (java_values($iterator->hasNext())) {
   $next = $iterator->next();
   $key = $next->getKey();
   $value = $next->getValue();

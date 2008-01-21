@@ -191,15 +191,17 @@ class java_Arg {
 	$this->signature = "@V";
 	// update cache
 	$key = $this->client->currentCacheKey;
-	$this->client->currentArgumentsFormat[6]="3";
-	if(JAVA_DEBUG) {
-	  echo "ignore further results:";  echo "\n";
-	}
-	if(JAVA_DEBUG) {
-	  echo "updating cache $key, argformat: {$this->client->currentArgumentsFormat}, classType: {$this->signature}\n";
-	}
-	$cacheEntry = new java_CacheEntry($this->client->currentArgumentsFormat, $this->signature, $this->factory, true);
-	$this->client->methodCache[$key]=$cacheEntry;
+	if($key && $key[0]!='~') {			// don't cache array(...) or non-java objects
+	  $this->client->currentArgumentsFormat[6]="3";
+	  if(JAVA_DEBUG) {
+	    echo "ignore further results:";  echo "\n";
+	  }
+	  if(JAVA_DEBUG) {
+	    echo "updating cache $key, argformat: {$this->client->currentArgumentsFormat}, classType: {$this->signature}\n";
+	  }
+	  $cacheEntry = new java_CacheEntry($this->client->currentArgumentsFormat, $this->signature, $this->factory, true);
+	  $this->client->methodCache[$key]=$cacheEntry;
+    }
   }
   function setSignature($signature) {
 	$this->signature = $signature;
@@ -577,9 +579,13 @@ class java_Client /* implements IDocHandler */ {
 	$object = $arg->v;
 	$ob = $object ? array(&$object, $name) : $name;
 
-	$isAsync = $this->isAsync;
-    $methodCache = $this->methodCache;
-
+	// save the current state
+	$isAsync                = $this->isAsync;
+    $methodCache            = $this->methodCache;
+    $currentArgumentsFormat = $this->currentArgumentsFormat;
+    // the currentCacheKey is destroyed when the result is received
+    // so that apply calls are not cached
+        
 	try {
   	$res = $arg->getResult(true);
 	  if((!$object && !function_exists($name)) || ($object && !method_exists($object, $name))) throw new JavaException("java.lang.NoSuchMethodException", "$name");
@@ -598,8 +604,10 @@ class java_Client /* implements IDocHandler */ {
 	   die ($ex);
 	}	  
 
-	$this->isAsync = $isAsync;
-	$this->methodCache = $methodCache;
+	// restore the state
+	$this->isAsync                = $isAsync;
+	$this->methodCache            = $methodCache;
+	$this->currentArgumentsFormat = $currentArgumentsFormat;
   }
   function cast($object, $type) {
     switch($type[0]) {

@@ -8,14 +8,6 @@ if (!extension_loaded('java')) {
   }
 }
 
-/*
- * Return php value(s) for the java object
- */
-function getPhpValues($ob) {
-  if($ob instanceof Java) return java_values($ob);
-  return $ob;
-}
-
 
 $ar=array(1, 2, 3, 5, 7, 11, -13, -17.01, 19);
 unset($ar[1]);
@@ -33,17 +25,17 @@ $res4 = array();
 $i=0;
 
 foreach($v as $key=>$val) {
-  $res3[$i++]=getPhpValues($val);
+  $res3[$i++]=java_values($val);
 }
-for($i=0; $i<$l2->size(); $i++) {
-  $res4[$i]=getPhpValues($l2[$i]);
+for($i=0; $i<java_values($l2->size()); $i++) {
+  $res4[$i]=java_values($l2[$i]);
 }
 
 if(!$l->equals($l2)) {
   echo "ERROR\n";
   exit(1);
 }
-if($l[1] != null || $res3 != $res1 || $res4 != $res1) {
+if(java_values($l[1]) != null || (string)$res3 != (string)$res1 || (string)$res4 != (string)$res1) {
   echo "ERROR\n";
   exit(2);
 }

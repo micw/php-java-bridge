@@ -31,7 +31,7 @@ if(!$here) $here=getcwd();
 
     $cause = $exception->getCause();
     echo "exception ".java_cast($cause,"S")." --> " . $cause->getID() . "\n";
-    return ($cause->getID() == 42) ? 0 : 3; 
+    return (java_values($cause->getID()) == 42) ? 0 : 3; 
   }
 } catch (exception $err) {
   print "unexpected: ".java_cast($err, "S")." \n";

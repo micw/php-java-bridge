@@ -17,8 +17,8 @@ if(!class_exists("java_Tag")) {
     var $out = null;
     var $pc = null;
 
-    function java_PageContext() {
-      $session = java_session();
+    function java_PageContext($java_session) {
+      if (!(string)$java_session) throw new Exception ("session is null");
       $ctx = java_context();
       $this->servlet = $ctx->getAttribute("php.java.servlet.Servlet");
       $this->response = $ctx->getAttribute("php.java.servlet.HttpServletResponse");
@@ -28,6 +28,10 @@ if(!class_exists("java_Tag")) {
       $this->pc = $factory->getPageContext($this->servlet, $this->request, $this->response, null, true, 8192, false);
       $this->out = $this->pc->out;
 
+    }
+
+    function getPageContext () {
+      return $this->pc;
     }
   }
   class java_Tag {

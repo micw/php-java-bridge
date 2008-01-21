@@ -24,15 +24,7 @@ package php.java.bridge;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
 
 
 /**
@@ -52,61 +44,11 @@ public class SimpleJavaBridgeClassLoader {
     protected DynamicJavaBridgeClassLoader cl = null;
     protected ClassLoader scl = null;
     
-    private static final Map map = Collections.synchronizedMap(new HashMap()); //TODO: keep only recent entries
-    private static final URL[] urlArray = getUrlArray();
     public static final ClassLoader getContextClassLoader() {
         ClassLoader loader = null;
         try {loader = Thread.currentThread().getContextClassLoader();} catch (SecurityException ex) {/*ignore*/}
 	if(loader==null) loader = JavaBridge.class.getClassLoader();
         return loader;
-    }
-    public static ClassLoader getDefaultClassLoader(ClassLoader contextLoader) {
-	ClassLoader el = (ClassLoader) map.get(contextLoader);
-	if(el!=null) 
-	    return el;
-	
-	try {
-	    URL url[] = urlArray;
-	    if(url!=null && url.length > 0)
-		map.put(contextLoader, el=new URLClassLoader(url, contextLoader));
-	    else
-		map.put(contextLoader, el=contextLoader);
-	} catch (Exception e) {
-	    Util.printStackTrace(e);
-	    map.put(contextLoader, el=contextLoader);
-	}
-	return el;
-    }
-    private static URL[] getUrlArray() {
-	URL[] urls = null;
-	try {
-	    urls = buildUrlArray();
-	} catch (Throwable t) { t.printStackTrace(); }
-	return urls;
-    }
-    private static URL[] buildUrlArray() throws MalformedURLException {
-        LinkedList list = new LinkedList();
-        for(int i=0; i<Util.DEFAULT_EXT_DIRS.length; i++) {
-            String arg = Util.DEFAULT_EXT_DIRS[i];
-            File f = new File(arg);
-            DynamicJavaBridgeClassLoader.addJars(list, f);
-            list.add(new URL("file", null, f.getAbsolutePath()+"/"));
-        }
-        // PR1502480
-        String ext = Util.JAVABRIDGE_BASE;
-	if(ext!=null && ext.length()>0) {
-            StringBuffer buf = new StringBuffer(ext);
-            File f = new File(buf.toString());
-            if(!ext.endsWith(File.separator)) buf.append(File.separator);
-            if(Util.HOME_DIR==null || (Util.HOME_DIR!=null && !Util.HOME_DIR.equals(f)))        	
-        	DynamicJavaBridgeClassLoader.addJars(list, f);
-            buf.append("lib");
-            f = new File(buf.toString());
-            DynamicJavaBridgeClassLoader.addJars(list, f);
-            list.add(new URL("file", null, f.getAbsolutePath()+"/"));
-        }
-        
-        return (URL[]) list.toArray(new URL[list.size()]);
     }
     /**
      * Create a bridge ClassLoader using a dynamic loader.
@@ -118,10 +60,6 @@ public class SimpleJavaBridgeClassLoader {
     	    scl = xloader; 
 	else 
 	    cl.clear();
-    }
-
-    public SimpleJavaBridgeClassLoader() {
-	scl = getDefaultClassLoader(getContextClassLoader());
     }
 
     public SimpleJavaBridgeClassLoader(ClassLoader xloader) {

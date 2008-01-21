@@ -20,16 +20,16 @@ Example:
      $o = new java("java.lang.Long", 6);
      $o->toString(); // discard result
 
-->  <CreateInstance value="java.lang.Long" predicate="I" id="78532"> 
+->  <CreateInstance value="java.lang.Long" predicate="I"> 
       <Long value="6"/> 
     </CreateInstance>
 
-<-  <Object value="1" predicate="O" id="78532"/>
+<-  <Object value="1" predicate="O"/>
 
-->  <Invoke value="1" method="toString" predicate="I" id="0">
+->  <Invoke value="1" method="toString" predicate="I">
     </Invoke>
 
-<-  <Object value="2" predicate="O" id="0"/>
+<-  <Object value="2" predicate="O"/>
 
 ->  <Unref value="2" />
 
@@ -75,55 +75,50 @@ i: unsigned long
 
 ->
 Invoke:
-<I v=object m=method p=P|I [i=ID]> ...ARGS...
+<I v=object m=method p=P|I> ...ARGS...
 </I>
 v: unsigned long
 m: string
 p: char (examine[P]roperty, [I]nvoke method)
-i: unsigned long
 
 When v=0, the call is directed to the current request-handling
 instance of the java bridge.
 
 ->
 ReferenceClass (alternate form)
-<H p=1|2|3 v=name [i=ID]> ...ARGS...
+<H p=1|2|3 v=name> ...ARGS...
 </H>
 p: char 
 v: string
-i: unsigned long
 Predicate 2 does not write a result, but stores a result proxy under ++CID.
 Predicate 3 does not write a result and does not create a result proxy.
 
 ->
 CreateInstance (alternate form)
-<K p=1|2|3 v=name [i=ID]> ...ARGS...
+<K p=1|2|3 v=name> ...ARGS...
 </K>
 p: char
 v: string
-i: unsigned long
 Predicate 2 does not write a result, but stores a result proxy under ++CID.
 Predicate 3 does not write a result and does not create a result proxy.
 
 ->
 PropertyAccess (alternate form)
-<G p=1|2|3 v=object m=method [i=ID]> ...ARGS...
+<G p=1|2|3 v=object m=method> ...ARGS...
 </G>
 p: char 
 v: unsigned long
 m: string
-i: unsigned long
 Predicate 2 does not write a result, but stores a result proxy under ++CID.
 Predicate 3 does not write a result and does not create a result proxy.
 
 ->
 Invoke (alternate form)
-<Y p=1|2|3 v=object m=method [i=ID]> ...ARGS...
+<Y p=1|2|3 v=object m=method> ...ARGS...
 </Y>
 p: char (examine[P]roperty, [I]nvoke method)
 v: unsigned long
 m: string
-i: unsigned long
 Predicate 2 does not write a result, but stores a result proxy under ++CID.
 Predicate 3 does not write a result and does not create a result proxy.
 
@@ -136,15 +131,13 @@ instance of the java bridge.
 ARGS or response:
 <->
 String:
-<S v=str [i=ID] />
+<S v=str/>
 v: string
-i: unsigned long (reply only)
 
 <->
 Boolean:
-<B v=T|F [i=ID] />
+<B v=T|F/>
 v: char ([T]rue, [F]alse)
-i: unsigned long (reply only)
 
 ->
 Boolean:(alternate form)
@@ -153,10 +146,9 @@ v: char [1]: true, everything else: false
 
 <->
 Long: 
-<L v=l p=[O|A] [i=ID] />
+<L v=l p=[O|A]/>
 v: unsigned long
 p: char (p[O]sitive, neg[A]tive)
-i: unsigned long (reply only)
 
 ->
 Long: (alternate form)
@@ -165,9 +157,8 @@ v: long (signed number)
 
 <->
 Double:
-<D v=d [i=ID] />
+<D v=d/>
 v: double
-i: unsigned long (reply only)
 
 ->
 Object:
@@ -177,56 +168,49 @@ NULL values can be sent as either v="" or v="0"
 
 <-
 Object:
-<O v=object m=TYPE p=TYPE n=[T|F] [i=ID] />
+<O v=object m=TYPE p=TYPE n=[T|F]/>
 v: unsigned long
 m: string
 p: char ([A]rray/Map, [C]ollection, [O]bject, [E]xception)
 n: char result can be cached (T) or not (F)
-i: unsigned long 
 
 <-
 Null:
-<N [i=ID] />
-i: unsigned long 
+<N/>
 
 <-
 Void:
-<V m=[T|F] [i=ID] />
-i: unsigned long 
+<V m=[T|F]/>
 n: char result can be cached (T) or not (F)
 
 <-
 Apply:
-<A v=object p=cname m=fname n=param# [i=ID]> ...PAIRS...
+<A v=object p=cname m=fname n=param#> ...PAIRS...
 </A>
 v: unsigned long
 p: string
 m: string
 n: unsigned long
-i: unsigned long
 Result can be used to send back the result of the current apply
 call. If v is null, the function name p must be searched in the
 "current" environment.
 
 ->
 Result:
-<R [i=ID]> ...ARG...
+<R > ...ARG...
 </R>
-i: unsigned long
 
 <->
 Exception:
-<E v=object m=stringRepresentation [i=ID] />
+<E v=object m=stringRepresentation/>
 v: unsigned long
 m: string
-i: unsigned long
 
 ->  (or <->, see below)
 Composite:
-<X t=A|H [i=ID] /> ...PAIRS...
+<X t=A|H /> ...PAIRS...
 </X>
 t: char ([A]rray, [H]ashtable)
-i: unsigned long (reply only)
 
 ->  (or <->, see below)
 Pair:
@@ -258,15 +242,15 @@ If the first byte is 0177, the following byte has a special meaning:
 
 Bit 1 0
 -------
-         keep object  keep array, send   binary             comment/php
-          identity    Map, Coll.    ID     data              impl. (pure
+         keep object  keep array,   binary             comment/php
+          identity    Map, Coll.     data              impl. (pure
                       identity                               PHP or C)
 
-    - -    no           no         yes    base64 encoded     default
-    0 0    yes          yes        no     binary             PHP
-    0 1    no           yes        no     binary             PHP
-    1 0    no           yes        no     base64 encoded     PHP
-    1 1    yes          yes        no     base64 encoded     PHP
+    - -    no           no         base64 encoded      default
+    0 0    yes          yes        binary              PHP
+    0 1    no           yes        binary              PHP
+    1 0    no           yes        base64 encoded      PHP
+    1 1    yes          yes        base64 encoded      PHP
 
 Bit 2,3,4: log level (from java.log_level)
 

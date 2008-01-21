@@ -3,6 +3,24 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 5.1.0
+
+* This release contains only bugfixes.
+
+* The procedure which calculates the weight of the potential method
+  candidates has been rewritten. It is compatible with Sam Ruby's code
+  written for PHP 4 except that arrays with a non matching component
+  type have a much larger weight.
+
+* The bridge now uses the same code as zend_eval_string() to load
+  the PHP code into the zend engine. If your debugger or some other
+  component "xxx" crashes in xxx_execute(), check if it honors the 
+  EG(no_extensions)==1 flag.
+
+* The bridge no longer tries to load libraries from
+  php.java.bridge.base/lib. Use java.ext.dirs instead.
+
+
 Version 5.0.0
 
 This version is no longer backward compatible with earlier versions:

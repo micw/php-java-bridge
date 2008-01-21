@@ -194,8 +194,25 @@ function java_instanceof($ob, $clazz) {
  * @access private
  */
 function java_cast_internal($object, $type) { 
-    if(!$object instanceof java_JavaType) throw new java_IllegalArgumentException($object);
-	return $object->__cast($type); 
+    if(!$object instanceof java_JavaType) {
+      switch($type[0]) {
+	case 'S': case 's':
+	  return (string)$object;
+	case 'B': case 'b':
+	  return (boolean)$object;
+	case 'L': case 'I': case 'l': case 'i':
+	  return (integer)$object;
+	case 'D': case 'd': case 'F': case 'f':
+	  return (float) $object;
+	case 'N': case 'n':
+	  return null;
+	case 'A': case 'a':
+	  return (array)$object;
+	case 'O': case 'o':
+	  return (object)$object;
+      }
+    }    
+    return $object->__cast($type); 
 }
 /**
  * Converts the java object obj into a PHP value. 
@@ -508,7 +525,7 @@ class java_objectIterator implements Iterator {
   private $var;
 
   function java_ObjectIterator($javaProxy) {
-	$this->var = java_values ($javaProxy);
+	$this->var = java_cast ($javaProxy, "A");
   }
   function rewind() {
 	reset($this->var);

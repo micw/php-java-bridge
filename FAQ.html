@@ -34,31 +34,8 @@ $hashMap = new java("java.util.HashMap");
 </p>
 
 <H4>Do I need a Java Application Server or Servlet Engine?</H4>
-<p>Not necessarily. The bridge and the VM can run as a sub component
-of IIS or Apache. If you have compiled and installed the support
-library "java.so" or "php_java.dll", it can automatically start a VM when
-the HTTP server activates the PHP script engine pool (in
-<code>minit()</code>) and terminates it when the pool is destroyed (in
-the <code>mshutdown()</code> hook). The request-handling threads
-attach to the persistent VM using the PHP/Java Bridge protocol.
-</p>
-<p>
-However, the main advantage of starting the VM via an external
-application server or servlet engine is that it provides a standard
-execution environment for Java which is independent of the HTTP server
-and how it manages its internal PHP script engine pool.
-</p>
-<p>
-A simple "servlet engine" emulation is built into the
-JavaBridge.jar. It can be started by double-clicking on JavaBridge.jar
-or with the command:
-<blockquote>
-<code>
-java JVM-OPTIONS -jar JavaBridge.jar SOCKET LOG-LEVEL LOG-FILE
-</code>
-</blockquote>
-Please see the output of <code>java -jar JavaBridge.jar --help</code>
-and the INSTALL.STANDALONE document for details.
+<p>Not necessarily. But a servlet engine or J2EE service is easier to
+install and to handle than a standalone Java service.
 </p>
 
 <H4>Ho do I enable logging?</H4>
@@ -221,8 +198,9 @@ option <code>--with-mono</code>.</p>
 
 <H2>Class loading questions</H2>
 
+<a name="java-require">
 <H4>How do I load Java libraries?</H4>
-<p> With <code>java_require("foo.jar;bar.jar;...");</code>. See the README for details.</p>
+<p> With <code>java_require("myApplication.jar;myLib1.jar;myDriver1.jar;...");</code>. See the README for details.</p>
 
 <H4>Where can I store my java libraries for the PHP/Java Bridge?</H4>
 <p>In <code>php.java.bridge.base</code>/lib.</p>
@@ -247,15 +225,26 @@ the library to the <code>java_require()</code> statement.</code></p>
 <p>Because Java doesn't have a module system. All interconnected libraries must be loaded with a single <code>java_require()</code> call. See the README for details.</p>
 
 <H4>I cannot require my JDBC driver!?!</H4>
-<p>The <code>java_require()</code> uses the current class loader, not the bootstrap loader. Use:
+<p> Please re-read the <a href="#java-require">class loading section</a>. The following code loads all interconnected libraries using a single java_require() call:
 <blockquote>
 <code>
-&nbsp;&nbsp;java_require("foo.jar");<br>
+&nbsp;&nbsp;java_require("myApplication.jar;myJdbcDriver.jar");<br>
 &nbsp;&nbsp; ...<br>
-&nbsp;&nbsp;Class.forName("foo",true,Thread.currentThread().getContextClassLoader());<br>
+&nbsp;&nbsp;$myApplication->callWithMyJdbcDriver();<br>
 </code>
 </blockquote>
-instead.
+</p>
+<p>
+The following incorrect code fails because the application (the "JavaBridge.jar" in this case) cannot be
+accessed by the jdbc driver. This constraint is checked by the DriverManager:
+<blockquote>
+<code>
+&nbsp;&nbsp;java_require("myJdbcDriver.jar"); // WRONG!<br>
+&nbsp;&nbsp;new java("my.jdbc.Driver");<br>
+&nbsp;&nbsp;java("java.sql.DriverManager")-&gt;getDriver("myJdbcURL"); // FAILS!<br>
+</code>
+</blockquote>
+If you really need to access the driver directly from PHP code, either use the driver API directly or load "JavaBridge.jar" and "myJdbcDriver.jar" from the same class loader so that the DriverManager can link them together. Use the extra library directory (usually <code>~/lib/</code>) or the global repository (usually <code>/usr/java/packages/lib/ext</code>).
 </p>
 
 <H4>How do I load impure Java libraries?</H4>

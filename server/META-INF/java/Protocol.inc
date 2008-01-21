@@ -248,8 +248,7 @@ class java_HttpHandler extends java_SocketHandler {
 
 	$compatibility = $this->protocol->client->RUNTIME["PARSER"]=="NATIVE"
 	  ? chr(0103-JAVA_PREFER_VALUES)
-	  : $compatibility = chr(0100+JAVA_PREFER_VALUES);
-	$this->protocol->client->RUNTIME["COMPATIBILITY"]=$compatibility;
+	  : chr(0100+JAVA_PREFER_VALUES);
 	if(is_int(JAVA_LOG_LEVEL)) {
 	  $compatibility |= 128 | (7 & JAVA_LOG_LEVEL)<<2;
 	}
@@ -439,13 +438,12 @@ class java_Protocol {
 	}
     if (!$peer) throw new java_RuntimeException("Could not connect to the context server $channelName. Error message: $errstr ($errno)\n");
     stream_set_timeout($peer, -1);
-    $handler = new java_SocketHandler($this, new java_SocketChannel($peer, $this, 
-																	$host, $channelName));
-    
+    $handler = new java_SocketHandler($this, new java_SocketChannel($peer, $this, $host, $channelName));
+
     $compatibility = $this->client->RUNTIME["PARSER"]=="NATIVE"
-      ? chr(0103)
-      : $compatibility = chr(0100);
-    $this->client->RUNTIME["COMPATIBILITY"]=$compatibility;
+	  ? chr(0103-JAVA_PREFER_VALUES)
+	  : chr(0100+JAVA_PREFER_VALUES);
+    
     if(is_int(JAVA_LOG_LEVEL)) {
       $compatibility |= 128 | (7 & JAVA_LOG_LEVEL)<<2;
     }
@@ -579,7 +577,8 @@ class java_Protocol {
 	$this->write("<R>");
   }
   function resultEnd() {
-	$this->write("</R>");
+    $this->client->currentCacheKey=null;
+    $this->write("</R>");
 	$this->flush();
   }
   function writeString($name) {

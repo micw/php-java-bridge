@@ -1032,7 +1032,7 @@ public final class Util {
      * @return The thread context class loader.
       */
     public static ClassLoader getContextClassLoader() {
-          return JavaBridgeClassLoader.getDefaultClassLoader(JavaBridgeClassLoader.getContextClassLoader());
+          return JavaBridgeClassLoader.getContextClassLoader();
     }
     /** Redirect System.out and System.err to the configured logFile or System.err.
      * System.out is always redirected, either to the logFile or to System.err.

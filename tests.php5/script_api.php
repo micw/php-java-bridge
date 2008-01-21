@@ -31,7 +31,7 @@ if (!function_exists("java_get_base") && !extension_loaded('java')) {
  */
 $IRunnable = new JavaClass("java.lang.Runnable");
 java_context()->call(java_closure(new Runnable(), null, $IRunnable));
-if (!java_context()->getAttribute("name", 100)) main();
+if (!java_values(java_context()->getAttribute("name", 100))) main();
 
 /**
  * This class implements IRunnable. Its run method is called by each

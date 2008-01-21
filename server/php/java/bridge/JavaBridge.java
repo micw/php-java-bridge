@@ -281,7 +281,6 @@ public class JavaBridge implements Runnable {
 	    Util.logMessage("socket              : " + socket);
 	    Util.logMessage("java.ext.dirs       : " + System.getProperty("java.ext.dirs"));
 	    Util.logMessage("php.java.bridge.base: " + Util.JAVABRIDGE_BASE);
-	    Util.logMessage("extra library dir   : " + Util.JAVABRIDGE_LIB);
 	    Util.logMessage("thread pool size    : " + Util.THREAD_POOL_MAX_SIZE);
 	} catch (Throwable t) {
 	    throw new RuntimeException(t);
@@ -394,7 +393,8 @@ public class JavaBridge implements Runnable {
 	    Throwable t = ((InvocationTargetException)e).getTargetException();
 	    if (t!=null) e=t;
 	}
-
+	if (logLevel>3) printStackTrace(e);
+	
 	StringBuffer buf=new StringBuffer(method);
 	buf.append(" failed: ");
 	if(obj!=null) {
@@ -414,7 +414,7 @@ public class JavaBridge implements Runnable {
 	buf.append(".");
 	buf.append(" Cause: ");
 	buf.append(String.valueOf(e));
-	buf.append(" Responsible VM: ");
+	buf.append(" VM: ");
 	buf.append(Util.VM_NAME);
 	
 	lastException = new Exception(buf.toString(), e);
@@ -503,86 +503,87 @@ public class JavaBridge implements Runnable {
 	}
     }
 
+    private static final Iterator EMPTY_ITERATOR = (new LinkedList()).iterator();
     //
     // Select the best match from a list of methods
     //
-    private int weight(Class param, Object arg) {
-	int w = 0;
-	if(arg!=null) {
-	 if (param.isInstance(arg)) {
- 	    for (Class c=arg.getClass(); (c=c.getSuperclass()) != null; ) {
-		if (!param.isAssignableFrom(c)) {
-		    break;
-		}
-		w+=16;		// prefer more specific arg, for
-				// example AbstractMap hashMap
-				// over Object hashMap.
-	    }
-	} else if (param == java.lang.String.class) {
-	    if (!(arg instanceof String) && !(arg instanceof PhpString))
-	        if(arg instanceof byte[])
-	            w+=32;
-	        else
-	            w+=8000; // conversion to string is always possible
-	} else if (param.isArray()) {
-	        if(arg instanceof PhpString) {
-	            Class c=param.getComponentType();
-	            if(c == byte.class) 
-	                w+=32;
-	            else
-	                w+=9999;
-	        } else if(arg.getClass() == PhpArray.class) {
-		    Iterator iterator = ((Map)arg).values().iterator();
-		    if(iterator.hasNext()) {
-			Object elem = iterator.next();
-			Class c=param.getComponentType();
-			w+=weight(c, elem);
-		    }
-		} else if(arg.getClass().isArray()) {
-		    int length = Array.getLength(arg);
-		    if(length>0) {
-			w+=weight(param.getComponentType(), Array.get(arg,0));
-		    }
-		}
-		else w+=9999;
-	    } else if ((java.util.Collection.class).isAssignableFrom(param)) {
-	    if (!(arg instanceof PhpArray))
-		w+=9999;
-	} else if (param.isPrimitive()) {
-	    Class c=param;
-	    if (arg instanceof Number) {
-		if(arg instanceof Double) {
-		    if (c==Float.TYPE) w+=1;
-		    else if (c==Double.TYPE) w+=0;
-		    else w+=256;
-		} else {
-		    if (c==Boolean.TYPE) w+=5;
-		    else if (c==Character.TYPE) w+=4;
-		    else if (c==Byte.TYPE) w+=3;
-		    else if (c==Short.TYPE) w+=2;
-		    else if (c==Integer.TYPE) w+=1;
-		    else if (c==Long.TYPE) w+=0;
-		    else w+=256;
-		}
-	    } else if (arg instanceof Boolean) {
-		if (c!=Boolean.TYPE) w+=9999;
-	    } else if (arg instanceof Character) {
-		if (c!=Character.TYPE) w+=9999;
-	    } else if ((arg instanceof String)||(arg instanceof PhpString)) {
-		    w+=64;
-	    } else {
-		w+=9999;
-	    }
-	} else if(Number.class.isAssignableFrom(param)) {
-	    if(param==Float.class || param==Double.class) {
-		if(!(arg instanceof Double)) w+=9999;
-	    } else if(!(arg instanceof PhpExactNumber)) w+=9999;
-	} else {
-	    w+=9999;
-	}
-	}
-	if(logLevel>4) logDebug("weight " + param + " " + Util.getClass(arg) + ": " +w);
-	return w;
+    private int weight(Class param, Class arg, Object phpArrayValue) {
+        int w = 0;
+        if (param.isAssignableFrom(arg)) {
+            for (Class c=arg; (c=c.getSuperclass()) != null; ) {
+                if (!param.isAssignableFrom(c)) {
+                    break;
+                }
+                w+=16;          // prefer more specific arg, for
+                                // example AbstractMap hashMap
+                                // over Object hashMap.
+            }
+        } else if (param == java.lang.String.class) {
+            if (!(String.class.isAssignableFrom(arg)) && !(PhpString.class.isAssignableFrom(arg)))
+                if(byte[].class.isAssignableFrom(arg))
+                    w+=32;
+                else
+                    w+=8000; // conversion to string is always possible
+        } else if (param.isArray()) {
+                if(PhpString.class.isAssignableFrom(arg)) {
+                    Class c=param.getComponentType();
+                    if(c == byte.class) 
+                        w+=32;
+                    else
+                        w+=9999;
+                } else if(arg == PhpArray.class) {
+                    Iterator iterator = phpArrayValue == null ? EMPTY_ITERATOR : ((Map)phpArrayValue).values().iterator();
+                    if(iterator.hasNext()) {
+                        Object elem = iterator.next();
+                        Class ptype = param.getComponentType(), atype = elem.getClass();
+                        if (ptype!=atype) {
+                            w+=8200+weight(ptype, atype, null);
+                        }
+                    }
+                } else if(arg.isArray()) {
+                    Class ptype = param.getComponentType(), atype = arg.getComponentType();
+                    if (ptype!=atype) {
+                        w+=8200+weight(ptype, atype, null);
+                    }
+                }
+                else w+=9999;
+            } else if ((java.util.Collection.class).isAssignableFrom(param)) {
+                if (java.util.Map.class.isAssignableFrom(arg)) w+=8100; // conversion to Collection is always possible
+                else if (!(PhpArray.class.isAssignableFrom(arg))) w+=9999;
+        } else if (param.isPrimitive()) {
+            Class c=param;
+            if (Number.class.isAssignableFrom(arg)) {
+                if(Double.class.isAssignableFrom(arg)) {
+                    if (c==Float.TYPE) w+=1;
+                    else if (c==Double.TYPE) w+=0;
+                    else w+=256;
+                } else {
+                    if (c==Boolean.TYPE) w+=5;
+                    else if (c==Character.TYPE) w+=4;
+                    else if (c==Byte.TYPE) w+=3;
+                    else if (c==Short.TYPE) w+=2;
+                    else if (c==Integer.TYPE) w+=1;
+                    else if (c==Long.TYPE) w+=0;
+                    else w+=256;
+                }
+            } else if (Boolean.class.isAssignableFrom(arg)) {
+                if (c!=Boolean.TYPE) w+=9999;
+            } else if (Character.class.isAssignableFrom(arg)) {
+                if (c!=Character.TYPE) w+=9999;
+            } else if ((String.class.isAssignableFrom(arg))||(PhpString.class.isAssignableFrom(arg))) {
+                    w+=64;
+            } else {
+                w+=9999;
+            }
+        } else if(Number.class.isAssignableFrom(param)) {
+            if(param==Float.class || param==Double.class) {
+                if(!(Double.class.isAssignableFrom(arg))) w+=9999;
+            } else if(!(PhpExactNumber.class.isAssignableFrom(arg))) w+=9999;
+        } else {
+            w+=9999;
+        }
+        if(logLevel>4) logDebug("weight " + param + " " + arg + ": " +w);
+        return w;
     }
 
     private Object select(LinkedList methods, Object args[]) {
@@ -609,8 +610,8 @@ public class JavaBridge implements Runnable {
 			arg = args[i] = proxy.getProxy(null);        
 		    }
 		}
-		
-		w+=weight(parms[i], arg);
+		if (arg!=null)
+		    w+=weight(parms[i], arg.getClass(), arg);
 	    }
 	    if (w < best) {
 		if (w == 0) {
@@ -1072,7 +1073,7 @@ public class JavaBridge implements Runnable {
 	    }
 	    
             if (selected != null && e instanceof IllegalArgumentException) {
-                if (this.logLevel>1) {
+                if (this.logLevel>3) {
                     String errMsg = "\nInvoked "+method + " on "+objectDebugDescription(object)+"\n";
                     errMsg += " Expected Arguments for this Method:\n";
                     Class paramTypes[] = selected.getParameterTypes();
@@ -1527,9 +1528,9 @@ public class JavaBridge implements Runnable {
      * @param claz The class or an instance of a class
      * @return true if ob is an instance of class, false otherwise.
      */
-    public static boolean InstanceOf(Object ob, Object claz) {
+    public boolean InstanceOf(Object ob, Object claz) {
 	Class clazz = Util.getClass(claz);
-	return clazz.isInstance(ob);
+	return clazz.isInstance(castToBoolean(ob));
     }
 
     /**
@@ -1548,7 +1549,8 @@ public class JavaBridge implements Runnable {
      * @return A string representation.
      */
     public String ObjectToString(String ob) {
-	    return (String)castToString(ob);
+	if (ob==null) return ObjectToString((Object) null);   
+	return (String)castToString(ob);
     }
 
     /**
@@ -1557,11 +1559,12 @@ public class JavaBridge implements Runnable {
      * @return A string representation.
      */
     public String ObjectToString(byte[] ob) {
-	   try {
-	        return new String ((byte[])castToString(ob), options.getEncoding());
-	    } catch (UnsupportedEncodingException e) {
-		return new String ((byte[])castToString(ob));
-	    }
+	if (ob==null) return ObjectToString((Object) null);   
+	try {
+	    return new String ((byte[])castToString(ob), options.getEncoding());
+    	} catch (UnsupportedEncodingException e) {
+    	    return new String ((byte[])castToString(ob));
+    	}
     }
  
     /**
@@ -1742,7 +1745,7 @@ public class JavaBridge implements Runnable {
 	ISession session = defaultSessionFactory.getSessionInternal(false, timeout);
 	Object obj = session.get(serialID);
 	if(obj==null) throw new IllegalArgumentException("Session serialID " +  serialID + " expired.");
-	return globalRef.append(obj);
+	return globalRef.append(castToExact(obj));
     }
     private static int counter=0;
     private static synchronized int getSerialID() {
@@ -2021,7 +2024,6 @@ public class JavaBridge implements Runnable {
      * @return The response object
      */
     Response createResponse() {
-	if(options.passContext()) return new ClassicResponse(this);
 	return new Response(this);
     }
     

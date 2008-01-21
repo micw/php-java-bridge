@@ -1,6 +1,7 @@
 <?php
 
-if(!extension_loaded("java")) dl('java.so');
+if(!extension_loaded("java")) 
+  require_once ("http://127.0.0.1:8080/JavaBridge/java/Java.inc");
 
 is_string(java_cast(1, "string")) || die("string");
 is_long(java_cast("1", "long")) || die("long");

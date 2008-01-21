@@ -29,7 +29,6 @@ import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 
 /**
@@ -38,7 +37,7 @@ import java.util.Map;
  * @author jostb
  *
  */
-public class Response {
+public final class Response {
 
     /**
      * A specialized writer which writes arrays as values.
@@ -93,7 +92,7 @@ public class Response {
 	    writeApplyBegin(object, cname, name, argsLength);
 	    for (int i=0; i<argsLength; i++) {
 		writePairBegin();
-		setResult(args[i], args[i].getClass(), true); // PHP backed methods are always synchronous don't need to declare that they throw exceptions 
+		setResult(args[i], args[i].getClass(), true); // PHP backed methods are always synchronous, they don't need to declare that they throw exceptions 
 		writePairEnd();
 	    }
 	    writeApplyEnd();
@@ -172,54 +171,19 @@ public class Response {
 		    writePairEnd();
 		}
 		writeCompositeEnd();
-	    } else if (value instanceof java.util.List) {
-		List ht = (List) value;
-		writeCompositeBegin_h();
-		for (ListIterator e = ht.listIterator(); e.hasNext(); ) {
-		    int key = e.nextIndex();
-		    Object val = e.next();
-		    writePairBegin_n(key);
-		    writer.setResult(val);
-		    writePairEnd();
-		}
-		writeCompositeEnd();
-	    } else {
-		return false;
+	    } else if (value instanceof java.util.Collection) {
+                Collection ht = (Collection) value;
+                writeCompositeBegin_h();
+                int counter = 0;
+                for (Iterator e = ht.iterator(); e.hasNext(); ) {
+                    Object val = e.next();
+                    writePairBegin_n(counter++);
+                    writer.setResult(val);
+                    writePairEnd();
+                }
+                writeCompositeEnd();
 	    }
-	    return true;
-        }
-    }
-    protected class ClassicArrayValuesWriter extends DelegateWriter {
-	public boolean setResult(Object value) {
-	    if (value.getClass().isArray()) {
-		long length = Array.getLength(value);
-		writeCompositeBegin_a();
-		for (int i=0; i<length; i++) {
-		    writePairBegin();
-		    writer.setResult(Array.get(value, i));
-		    writePairEnd();
-		}
-		writeCompositeEnd();
-	    } else if (value instanceof java.util.Map) {
-		Map ht = (Map) value;
-		writeCompositeBegin_h();
-		for (Iterator e = ht.entrySet().iterator(); e.hasNext(); ) {
-		    Map.Entry entry = (Map.Entry)e.next();
-		    Object key = entry.getKey();
-		    Object val = entry.getValue();
-		    if (key instanceof Number &&
-			!(key instanceof Double || key instanceof Float)) {
-			writePairBegin_n(((Number)key).intValue());
-			writer.setResult(val);
-		    }
-		    else {
-			writePairBegin_s(String.valueOf(key));
-			writer.setResult(ht.get(key));
-		    }
-		    writePairEnd();
-		}
-		writeCompositeEnd();
-	    } else {
+	    else {
 		return false;
 	    }
 	    return true;
@@ -309,7 +273,7 @@ public class Response {
     }
 
     protected class ArrayValueWriter extends IncompleteArrayValueWriter {
-	public void setResult(Object value, Class type) {
+        public void setResult(Object value, Class type, boolean hasDeclaredExceptions) {
 	    if(!delegate.setResult(value)) setResultArray(value);
 	}
 	public boolean setResult(Object value) {
@@ -421,7 +385,7 @@ public class Response {
     }
  	
     protected final class CoerceWriter extends Writer {
-	public void setResult(Object value, Class resultType) {
+	public void setResult(Object value, Class resultType, boolean hasDeclaredExceptions) {
 	    // ignore resultType and use the coerce type
 	    setResult(value);
 	}
@@ -466,7 +430,7 @@ public class Response {
     }
     private DelegateWriter getDefaultDelegate() {
 	if(bridge.options.sendArraysAsValues())
-	    return new ClassicArrayValuesWriter();
+	    return new ArrayValuesWriter();
 	else
 	    return new ArrayWriter();
     }
@@ -474,7 +438,7 @@ public class Response {
     private Writer getDefaultWriter() {
 	if(bridge.options.preferValues()) {
 	    WriterWithDelegate writer;
-	    writer = new ClassicWriter();
+	    writer = new DefaultWriter();
 	    writer.delegate = getDefaultDelegate();
 	    return writer;
 	}
