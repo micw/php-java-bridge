@@ -1,7 +1,5 @@
 examples
 install.sh.in
-php-java-bridge
-php-java-bridge.service
 php-java-bridge.spec
 test.php
 test.bat
@@ -15,8 +13,6 @@ tests.php4
 tests.php5
 tests.quercus
 unsupported
-update-about.sh
-update_policy.sh.in
 server/php/
 server/test/
 php_java_lib
