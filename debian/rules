@@ -105,8 +105,8 @@ php-java-bridge-j2ee: build install
 #	dh_installexamples -p$@
 # using dh_installdirs and dh_install for this task
 # note the absence of leading "/"
-	dh_install -i -p$@ ${BUILDDIR}$(PHP_EXT_DIR)/JavaBridge.war var/lib/tomcat5/webapps
-	dh_install -i -p$@
+	dh_install -i --package=$@ ${BUILDDIR}$(PHP_EXT_DIR)/JavaBridge.war var/lib/tomcat5/webapps
+#	dh_install -i -p$@
 #	dh_installmenu -i -p$@
 #	dh_installdebconf -i -p$@
 #	dh_installlogrotate -i -p$@
@@ -207,7 +207,7 @@ binary-arch: build install
 	dh_installchangelogs -a ChangeLog
 	dh_installdocs -a
 #	dh_installexamples -a
-	dh_install -a
+	dh_install --exclude=JavaBridge.war -a
 #	dh_installmenu -a
 #	dh_installdebconf -a	
 #	dh_installlogrotate -a
@@ -215,7 +215,7 @@ binary-arch: build install
 #	dh_installpam -a
 #	dh_installmime -a
 #	dh_python -a
-	dh_installinit -a
+#	dh_installinit -a
 #	dh_installcron -a
 #	dh_installinfo -a
 	dh_installman -a
