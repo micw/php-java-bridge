@@ -104,7 +104,7 @@ php-java-bridge-j2ee: build install
 #	dh_installexamples -p$@
 # using dh_installdirs and dh_install for this task
 # note the absence of leading "/"
-	dh_install -i --package=$@ ${BUILDDIR}$(PHP_EXT_DIR)/JavaBridge.war var/lib/tomcat5/webapps
+	dh_install -i --list-missing --package=$@ ${BUILDDIR}$(PHP_EXT_DIR)/JavaBridge.war var/lib/tomcat5/webapps
 #	dh_install -i -p$@
 #	dh_installmenu -i -p$@
 #	dh_installdebconf -i -p$@
@@ -138,7 +138,7 @@ php-java-bridge-devel: build install
 	dh_installchangelogs -i -p$@ ChangeLog
 	dh_installdocs -i -p$@
 	dh_installexamples -i -p$@
-	dh_install -i -p$@ ${BUILDDIR}$(PHP_EXT_DIR)/*.jar $(PHP_INCLUDE_DIR)/ext/php-java-bridge
+	dh_install -i --list-missing -p$@ ${BUILDDIR}$(PHP_EXT_DIR)/*.jar $(PHP_INCLUDE_DIR)/ext/php-java-bridge
 #	dh_install -i -p$@
 #	dh_installmenu -i -p$@
 #	dh_installdebconf -i -p$@
@@ -206,7 +206,7 @@ binary-arch: build install
 	dh_installchangelogs -a ChangeLog
 	dh_installdocs -a
 #	dh_installexamples -a
-	dh_install --exclude=JavaBridge.war -a ${BUILDDIR}$(PHP_EXT_DIR)/* $(PHP_EXT_DIR)
+	dh_install --exclude=JavaBridge.war -a --list-missing ${BUILDDIR}$(PHP_EXT_DIR)/* $(PHP_EXT_DIR)
 #	dh_installmenu -a
 #	dh_installdebconf -a	
 #	dh_installlogrotate -a
