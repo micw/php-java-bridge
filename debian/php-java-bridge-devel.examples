@@ -9,7 +9,6 @@ run-tests.php
 security
 tests.m4
 tests.mono+net
-tests.php4
 tests.php5
 tests.quercus
 unsupported
