@@ -4,8 +4,10 @@ php-java-bridge (5.1.0-1) unstable; urgency=low
   * Droped support for php4.
   * Deprecated C implementation.
   * Droped initscript.
+  * Packaging improvements and corrections. 
+    Adjustments of package sizes and contents.
 
- -- Andre Felipe Machado <andremachado@techforce.com.br>  Fri, 25 Jan 2008 13:02:33 -0200
+ -- Andre Felipe Machado <andremachado@techforce.com.br>  Tue, 29 Jan 2008 12:02:33 -0200
 
 php-java-bridge (4.3.2-1) unstable; urgency=low
 
