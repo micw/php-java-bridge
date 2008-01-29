@@ -32,7 +32,7 @@ export DH_VERBOSE=1
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-	BUILDDIR := debian/php-java-bridge
+	BUILDDIR := debian/build
 	DESTDIR := ${CURDIR}/${BUILDDIR}
 	PHP_EXT_DIR := $(shell /usr/bin/php-config --extension-dir)
 	PHP_INCLUDE_DIR := $(shell /usr/bin/php-config --include-dir)
@@ -73,8 +73,7 @@ clean-patched:
 	rm -f build-stamp configure-stamp
 	# Add here commands to clean up after the build process.
 	-$(MAKE) clean
-	dh_clean 
-
+	dh_clean
 
 install: installbasic
 
@@ -207,7 +206,7 @@ binary-arch: build install
 	dh_installchangelogs -a ChangeLog
 	dh_installdocs -a
 #	dh_installexamples -a
-	dh_install --exclude=JavaBridge.war -a
+	dh_install --exclude=JavaBridge.war -a ${BUILDDIR}$(PHP_EXT_DIR)/* $(PHP_EXT_DIR)
 #	dh_installmenu -a
 #	dh_installdebconf -a	
 #	dh_installlogrotate -a
