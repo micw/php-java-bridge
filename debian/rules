@@ -74,6 +74,7 @@ clean-patched:
 	# Add here commands to clean up after the build process.
 	-$(MAKE) clean
 	dh_clean
+	rm -rf ${BUILDDIR}
 
 install: installbasic
 
