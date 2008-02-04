@@ -193,11 +193,9 @@ class java_HttpHandler extends java_SocketHandler {
 	return $str;
   }
   function getContextFromCgiEnvironment() {
-	$ctx = (array_key_exists('HTTP_X_JAVABRIDGE_CONTEXT', $_SERVER)
-			?$_SERVER['HTTP_X_JAVABRIDGE_CONTEXT']
-			:(array_key_exists('X_JAVABRIDGE_CONTEXT', $_SERVER)
+	$ctx = array_key_exists('X_JAVABRIDGE_CONTEXT', $_SERVER)
 			  ?$_SERVER['X_JAVABRIDGE_CONTEXT']
-			  :null));
+			  :null;
 	return $ctx;
   }
   function getChannelName() {
@@ -362,11 +360,9 @@ class java_Protocol {
 	  }
 	  // fcgi: override for redirect
 	  return 
-		(array_key_exists('HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER)
-		 ?$_SERVER['HTTP_X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT']
-		 :(array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER)
+		array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER)
 		   ?$_SERVER['X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT']
-		   :null));
+		   :null;
   }
   static function getHost() {
 	static $host;

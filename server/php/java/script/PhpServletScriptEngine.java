@@ -100,13 +100,6 @@ public class PhpServletScriptEngine extends PhpScriptEngine {
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */
 	env.put("X_JAVABRIDGE_CONTEXT", ctx.getId());
-	/* the client should connect back to us */
-	StringBuffer buf = new StringBuffer("h:");
-	buf.append(Util.getHostAddress());
-	buf.append(':');
-	buf.append(context.getSocketName());
-	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS",buf.toString());
-
     }
     
     protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {

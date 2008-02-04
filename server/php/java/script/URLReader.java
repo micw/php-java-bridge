@@ -28,10 +28,25 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
-import java.net.Socket;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.X509TrustManager;
 
 import php.java.bridge.Util;
 import php.java.bridge.Util.HeaderParser;
@@ -51,8 +66,35 @@ import php.java.bridge.Util.HeaderParser;
 public class URLReader extends Reader {
 
     private URL url;
-    private Socket socket;
+    private HttpURLConnection conn;
 
+    private HostnameVerifier hostNameVerifier;
+    private HostnameVerifier getHostNameVerifier () {
+        if (hostNameVerifier != null) return hostNameVerifier;
+        return hostNameVerifier = new HostnameVerifier () {
+            public boolean verify(String arg0, SSLSession arg1) {
+                return true;
+            }
+         };
+    }
+    
+    private SSLSocketFactory sslSocketFactory;
+    private SSLSocketFactory getSslSocketFactory () throws NoSuchAlgorithmException, KeyManagementException {
+        if (sslSocketFactory != null) return sslSocketFactory;
+        
+        X509TrustManager tm = new X509TrustManager() {
+            public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException { /*ignore*/ }
+            public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException { /*ignore*/ }
+            public X509Certificate[] getAcceptedIssuers() { return null; }
+        };
+        KeyManager[] km = null;
+        X509TrustManager[] tma = new X509TrustManager[] { tm };
+        SSLContext sslContext = null;
+        sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(km, tma, new java.security.SecureRandom());
+        return sslSocketFactory = sslContext.getSocketFactory();
+    }
+    
     /**
      * Create a special reader which can be used to read data from a URL.
      * @param url
@@ -60,16 +102,33 @@ public class URLReader extends Reader {
      * @throws UnknownHostException
      */
     public URLReader(URL url) throws UnknownHostException, IOException {
-	this.url = url;
-	this.socket = new Socket(url.getHost(), url.getPort());
+        this.url = url;
+        this.conn = (HttpURLConnection) url.openConnection();
+        if (this.conn instanceof HttpsURLConnection) {
+            allowSelfSignedCertificates ();
+        }
+            
+        this.conn.setDoInput(true);
     }
-	
+        
+    private void allowSelfSignedCertificates() {
+        HttpsURLConnection xcon = (HttpsURLConnection) this.conn;
+        try {
+            xcon.setSSLSocketFactory(getSslSocketFactory());
+        } catch (KeyManagementException e) {
+            Util.printStackTrace(e);
+        } catch (NoSuchAlgorithmException e) {
+            Util.printStackTrace(e);
+        }
+        xcon.setHostnameVerifier(getHostNameVerifier());
+    }
+
     /**
      * Returns the URL to which this reader connects.
      * @return the URL.
      */
     public URL getURL() {
-	return url;
+        return url;
     }
 
     /**
@@ -77,9 +136,17 @@ public class URLReader extends Reader {
      * @see URLReader#read(Map, OutputStream)
      */
     public int read(char[] cbuf, int off, int len) throws IOException {
-	    throw new IllegalStateException("Use urlReader.read(Hashtable, OutputStream) or use a FileReader() instead.");
+            throw new IllegalStateException("Use urlReader.read(Hashtable, OutputStream) or use a FileReader() instead.");
     }
-	
+
+    private void appendListValues (StringBuffer buf, List list)
+    {
+        for (Iterator ii=list.iterator(); ii.hasNext(); ) {
+            buf.append (ii.next());
+            if (ii.hasNext()) 
+                buf.append ("; ");
+        }
+    }
     /**
      * Read from the URL and write the data to out.
      * @param env The environment, must contain values for X_JAVABRIDGE_CONTEXT. It may contain X_JAVABRIDGE_OVERRIDE_HOSTS.
@@ -87,38 +154,48 @@ public class URLReader extends Reader {
      * @throws IOException
      */
     public void read(Map env, OutputStream out, HeaderParser headerParser) throws IOException {
-	InputStream in = null;
-	OutputStream natOut = null;
-	
-	try {
-	    String overrideHosts = (String) env.get("X_JAVABRIDGE_OVERRIDE_HOSTS");
-	    String include = (String) env.get("X_JAVABRIDGE_INCLUDE");
-	    byte[] buf = new byte[Util.BUF_SIZE];
-	    
-	    natOut = new java.io.BufferedOutputStream(socket.getOutputStream());
-	    natOut.write(Util.toBytes("GET "+url.getFile()+" HTTP/1.0\r\n"));
-	    natOut.write(Util.toBytes("Host: " + url.getHost()+":"+url.getPort()+ "\r\n"));
-	    natOut.write(Util.toBytes("X_JAVABRIDGE_CONTEXT: " +env.get("X_JAVABRIDGE_CONTEXT")+"\r\n"));
-	    if(include!=null) 
-		    natOut.write(Util.toBytes("X_JAVABRIDGE_INCLUDE:" + include+"\r\n"));
-	    if(overrideHosts!=null) {
-	        natOut.write(Util.toBytes("X_JAVABRIDGE_OVERRIDE_HOSTS:" + overrideHosts+"\r\n"));
-	        // workaround for a problem in php (it confuses the OVERRIDE_HOSTS from the environment with OVERRIDE_HOSTS from the request meta-data 
-	        natOut.write(Util.toBytes("X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT:" + overrideHosts+"\r\n"));
-	    }
-	    natOut.write(Util.toBytes("Content-Length: 0\r\n"));
-	    natOut.write(Util.toBytes("Connection: close" + "\r\n\r\n"));
-	    natOut.flush();
-	    in = socket.getInputStream();
-	    Util.parseBody(buf, in, out, headerParser);
-	} catch (IOException x) {
-	    Util.printStackTrace(x);
-	    throw x;
-	} finally {
-	    if(natOut!=null) try { natOut.close(); } catch (IOException e) {/*ignore*/}
-	    if(in!=null) try { in.close(); } catch (IOException e) {/*ignore*/}
-	    if(socket!=null) try {socket.close(); } catch (IOException e) {/*ignore*/}
-	}
+        InputStream natIn = null;
+        OutputStream natOut = null;
+        
+        try {
+            
+            String overrideHosts = (String) env.get("X_JAVABRIDGE_OVERRIDE_HOSTS");
+            String include = (String) env.get("X_JAVABRIDGE_INCLUDE");
+            byte[] buf = new byte[Util.BUF_SIZE];
+            
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty ("X_JAVABRIDGE_CONTEXT", (String)env.get("X_JAVABRIDGE_CONTEXT"));
+            if(include!=null) 
+                conn.setRequestProperty("X_JAVABRIDGE_INCLUDE", include);
+            if(overrideHosts!=null) {
+                conn.setRequestProperty("X_JAVABRIDGE_OVERRIDE_HOSTS", overrideHosts);
+                // workaround for a problem in php (it confuses the OVERRIDE_HOSTS from the environment with OVERRIDE_HOSTS from the request meta-data 
+                conn.setRequestProperty("X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT", overrideHosts);
+            }
+            natIn = conn.getInputStream();
+            if (headerParser != Util.DEFAULT_HEADER_PARSER) {
+                StringBuffer sbuf = new StringBuffer ();
+                for (Iterator ii = conn.getHeaderFields().entrySet().iterator(); ii.hasNext(); )
+                {
+                    Map.Entry e = (Entry) ii.next();
+                    sbuf.append (e.getKey());
+                    sbuf.append (": ");
+                    appendListValues (sbuf, (List) e.getValue());
+                    headerParser.parseHeader(sbuf.toString());
+                    sbuf.setLength(0);
+                }
+            }
+            int count;
+            while ((count=natIn.read(buf)) > 0)
+                out.write (buf, 0, count);
+            natIn.close();
+        } catch (IOException x) {
+            Util.printStackTrace(x);
+            throw x;
+        } finally {
+            if(natOut!=null) try { natOut.close(); } catch (IOException e) {/*ignore*/}
+            if(natIn!=null) try { natIn.close(); } catch (IOException e) {/*ignore*/}
+        }
     }
 
     /**{@inheritDoc}*/

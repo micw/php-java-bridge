@@ -160,7 +160,7 @@ public class PhpCGIServlet extends FastCGIServlet {
 			buf.append("s:");
 		    buf.append("127.0.0.1");
 		    buf.append(":");
-		    buf.append(this.env.get("SERVER_PORT")); 
+		    buf.append(this.environment.get("SERVER_PORT")); 
 		    buf.append('/');
 		    buf.append(req.getRequestURI());
 		    buf.append("javabridge");
@@ -169,29 +169,29 @@ public class PhpCGIServlet extends FastCGIServlet {
 		else 
 		    override = "";
 
-	        this.env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", override);
+	        this.environment.put("X_JAVABRIDGE_OVERRIDE_HOSTS", override);
 	        // same for fastcgi, which already contains X_JAVABRIDGE_OVERRIDE_HOSTS=/ in its environment
-	        this.env.put("X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT", override); 
-	        this.env.put("REDIRECT_STATUS", "200");
-	        this.env.put("SERVER_SOFTWARE", Util.EXTENSION_NAME);
-	        this.env.put("HTTP_HOST", this.env.get("SERVER_NAME")+":"+this.env.get("SERVER_PORT"));
+	        this.environment.put("X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT", override); 
+	        this.environment.put("REDIRECT_STATUS", "200");
+	        this.environment.put("SERVER_SOFTWARE", Util.EXTENSION_NAME);
+	        this.environment.put("HTTP_HOST", this.environment.get("SERVER_NAME")+":"+this.environment.get("SERVER_PORT"));
 	        String remotePort = null;
 	        try {
 	            remotePort = String.valueOf(req.getRemotePort());
 	        } catch (Throwable t) {
 	            remotePort = String.valueOf(t);
 	        }
-	        this.env.put("REMOTE_PORT", remotePort);
+	        this.environment.put("REMOTE_PORT", remotePort);
 	        String query = req.getQueryString();
 	        if(query!=null)
-	            this.env.put("REQUEST_URI", nullsToBlanks(req.getRequestURI() + "?" + query));
+	            this.environment.put("REQUEST_URI", nullsToBlanks(req.getRequestURI() + "?" + query));
 	        else
-	            this.env.put("REQUEST_URI", nullsToBlanks(req.getRequestURI()));	          
+	            this.environment.put("REQUEST_URI", nullsToBlanks(req.getRequestURI()));	          
 	        
-	        this.env.put("SERVER_ADDR", req.getServerName());
-	        this.env.put("SERVER_SIGNATURE", SERVER_SIGNATURE);
-	        this.env.put("DOCUMENT_ROOT", DOCUMENT_ROOT);
-	        if(req.isSecure()) this.env.put("HTTPS", "On");
+	        this.environment.put("SERVER_ADDR", req.getServerName());
+	        this.environment.put("SERVER_SIGNATURE", SERVER_SIGNATURE);
+	        this.environment.put("DOCUMENT_ROOT", DOCUMENT_ROOT);
+	        if(req.isSecure()) this.environment.put("HTTPS", "On");
 	        
 	        
 		/* send the session context now, otherwise the client has to 
@@ -199,7 +199,7 @@ public class PhpCGIServlet extends FastCGIServlet {
 	    	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
 	    	if(id==null) 
 	    	    id = (ctx=ServletContextFactory.addNew(PhpCGIServlet.this, PhpCGIServlet.this.getServletContext(), req, req, res)).getId();
-	    	this.env.put("X_JAVABRIDGE_CONTEXT", id);
+	    	this.environment.put("X_JAVABRIDGE_CONTEXT", id);
 	    }
 	    return ret;
 	        	
@@ -246,7 +246,7 @@ public class PhpCGIServlet extends FastCGIServlet {
 	protected HeaderParser(CGIRunner runner) {
 	    this.runner = runner;
     	}
-    	protected void parseHeader(String header) {
+    	public void parseHeader(String header) {
 	    runner.addHeader(header);
     	}
     }
@@ -257,7 +257,7 @@ public class PhpCGIServlet extends FastCGIServlet {
 	    super(env);
 	    ctx = ((CGIEnvironment)env).ctx;
 	}
-        protected void run() throws IOException, ServletException {
+        protected void execute() throws IOException, ServletException {
 	    Process proc = null;
 	    InputStream natIn = null;
 	    OutputStream natOut = null;
@@ -283,7 +283,7 @@ public class PhpCGIServlet extends FastCGIServlet {
          	natIn = proc.getInputStream();
     		out = response.getOutputStream();
 
-    		Util.parseBody(buf, natIn, out, new Util.HeaderParser() {protected void parseHeader(String header) {addHeader(header);}});
+    		Util.parseBody(buf, natIn, out, new Util.HeaderParser() {public void parseHeader(String header) {addHeader(header);}});
 
     		try {
      		    proc.waitFor();
@@ -339,11 +339,11 @@ public class PhpCGIServlet extends FastCGIServlet {
      *  (non-Javadoc)
      * @see javax.servlet.http.HttpServlet#doGet(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
      */
-    protected void doGet(HttpServletRequest req, HttpServletResponse res)
+    protected void handle(HttpServletRequest req, HttpServletResponse res, boolean handleInput)
 	throws ServletException, IOException {
     	try {
     	   if(!checkPool(res)) return;
- 	    super.doGet(req, res);
+ 	    super.handle(req, res, handleInput);
     	} catch (IOException e) {
     	    try {res.reset();} catch (Exception ex) {/*ignore*/}
 	    StringBuffer buf = new StringBuffer(getRealPath(getServletConfig().getServletContext(), cgiPathPrefix));

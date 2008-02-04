@@ -31,6 +31,12 @@ Installation on RedHat, Fedora, CentOS ...
     /usr/share/doc/<libname>/example.
 
 
+* To rebuild the RPM files download the php-java-bridge*.tar.gz
+  archive and type (as root):
+
+    rpmbuild -tb php-java-bridge*.tar.gz
+
+
 Installation on Debian, Ubuntu, ...
 -----------------------------------
 

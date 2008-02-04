@@ -55,7 +55,7 @@ import php.java.servlet.PhpCGIServlet;
  * @see php.java.bridge.Util#DEFAULT_CGI_LOCATIONS
  * @author jostb
  */
-public class FastCGIServlet extends CGIServlet {
+public abstract class FastCGIServlet extends CGIServlet {
     /**
      * 
      */
@@ -363,7 +363,7 @@ public class FastCGIServlet extends CGIServlet {
 	    ctx = ((CGIEnvironment)env).ctx;
 	}
 
-	protected void doRun() throws IOException, ServletException {
+	protected void doExecute() throws IOException, ServletException {
 	    try {
 	        parseBody();
 	    } catch (ConnectionException ex) {
@@ -371,9 +371,9 @@ public class FastCGIServlet extends CGIServlet {
 	        parseBody();
 	    }
 	}
-	protected void run() throws IOException, ServletException {
+	protected void execute() throws IOException, ServletException {
 	    try {
-	        doRun();
+	        doExecute();
 	    } catch (ConnectException ex) {
 	        fcgiIsAvailable = false;
 	        if(Util.logLevel>1) {

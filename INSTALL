@@ -172,59 +172,32 @@ for example.
 
 
 ------------------------------------
+Load balancer setup
+-------------------
+
+Assuming that there are 3 tomcat nodes running on diego, carlos and
+localhost, append the following lines at the end of your apache
+httpd.conf:
+
+    ProxyPass /JavaBridge balancer://mycluster maxattempts=3
+    <Proxy balancer://mycluster>
+      BalancerMember http://diego:8080/JavaBridge
+      BalancerMember http://carlos:8080/JavaBridge
+      BalancerMember http://localhost:8080/JavaBridge
+    </Proxy>
+
+Restart Apache and start at least one node. Check
+
+    http://localhost/JavaBridge/jsp+php.jsp
+
+and, if SSL is enabled
+
+    https://localhost/JavaBridge/jsp+php.jsp
+
+
+------------------------------------
 Installation of Tomcat/mod jk
 -----------------------------
 
-Optionally you can install the tomcat servlet engine to serve .jsp
-files
-
-Download and extract tomcat into a directory, for example /opt/tomcat5
-and set the environment variable CATALINA_HOME, for example:
-
-export CATALINA_HOME=/opt/tomcat5
-
-
-Download and install mod jk, for example
-jakarta-tomcat-connectors-1.2.14.1-src.tar.gz, extract the file into a
-folder and type the following commands:
-
-cd jakarta-tomcat-connectors-1.2.14.1-src/jk/native/
-./configure --with-apxs=$INST/bin/apxs && make && su -c "make install"
-
-# now activate mod_jk in the httpd.conf, mount the tomcat webapps
-# directory and ask tomcat to handle all .jsp files
-su -c "echo -e 'LoadModule jk_module modules/mod_jk.so\nJkAutoAlias $CATALINA_HOME/webapps\nJkMount /JavaBridge/*.jsp ajp13\nJkMount /JavaBridge/ ajp13' >>$INST/conf/httpd.conf"
-
-Start tomcat, for example with the command:
-
-$CATALINA_HOME/bin/catalina.sh start
-
-
-Copy the JavaBridge.war file (which you should have created when
-compiling the PHP/Java Bridge, see flag "--enable-servlet" above) from
-the modules directory into the tomcat webapps directory, for example
-with the command:
-
-cp modules/JavaBridge.war $CATALINA_HOME/webapps
-
-Check if tomcat has created the $CATALINA_HOME/webapps/JavaBridge
-directory, if not, please check the tomcat logs for errors.
-
-Direct php to tomcat:
-su -c "echo -e 'extension=java.so\n[java]\njava.servlet=User\njava.hosts=127.0.0.1:8080' >$INST/lib/php.ini"
-
-Start or re-start apache, for example with:
-su -c "apachectl restart"
-
-Visit http://localhost/JavaBridge and run the supplied examples.
-
-The php .ini file [java] section should contain only java.log_level,
-java.servlet and java.hosts entries.  Example:
-
-       [java]
-       java.log_level="2"
-       java.servlet=User
-       java.hosts="127.0.0.1:8080"
-
-The PHP/Java Bridge log output appears in the server log file, for
-example in $CATALINA_HOME/logs/localhost_log.*.txt
+NOTE: MOD_JK SHOULD NOT BE USED ANYMORE. Please use Apache's ProxyPass
+directive instead, see above.

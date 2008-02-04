@@ -110,12 +110,6 @@ public class InvocablePhpServletScriptEngine extends InvocablePhpScriptEngine {
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */
 	env.put("X_JAVABRIDGE_CONTEXT", ctx.getId());
-	/* the client should connect back to us */
-	StringBuffer buf = new StringBuffer("h:");
-	buf.append(Util.getHostAddress());
-	buf.append(':');
-	buf.append(context.getSocketName());
-	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS",buf.toString());
 	env.put("X_JAVABRIDGE_INCLUDE", tempfile.getPath());
     }
     

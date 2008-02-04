@@ -626,7 +626,7 @@ public final class Util {
      * @author jostb
      * @see Util#parseBody(byte[], InputStream, OutputStream, HeaderParser)
      */
-    public static class HeaderParser {protected void parseHeader(String header) {/*template*/}}
+    public static class HeaderParser {public void parseHeader(String header) {/*template*/}}
     /**
      * Discards all header fields from a HTTP connection and write the body to the OutputStream
      * @param buf A buffer, for example new byte[BUF_SIZE]
