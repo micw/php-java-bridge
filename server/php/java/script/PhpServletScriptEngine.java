@@ -123,10 +123,7 @@ public class PhpServletScriptEngine extends PhpScriptEngine {
 
 	    String filePath = req.getContextPath()+"/"+tempfile.getName();
 	    req.getContextPath();
-	    url = new URL (url.getProtocol(), 
-			   url.getHost(), url.getPort(), 
-			   filePath);
-
+	    url = new URL (url.getProtocol(), url.getHost(), url.getPort(), filePath);
 	    
             /* now evaluate our script */
 	    

@@ -279,6 +279,12 @@ function java_require($arg) {
   return $client->invokeMethod(0, "updateJarLibraryPath", 
 							   array($arg, ini_get("extension_dir"), getcwd(), ini_get("include_path")));
 }
+function get_lifetime ()
+{
+  $session_max_lifetime=ini_get("session.gc_maxlifetime");
+  return $session_max_lifetime ? (int)$session_max_lifetime : 1440;
+}
+  
 /**
  * Only for internal use
  * @access private
@@ -288,9 +294,7 @@ function java_session_array($args) {
   if(!isset($args[0])) $args[0]=null;
   if(!isset($args[1])) $args[1]=false;
   if(!isset($args[2])) {
-	$session_max_lifetime=(int)ini_get("session.gc_maxlifetime");
-	if(!isset($session_max_lifetime)) $session_max_lifetime=1440;
-	$args[2] = $session_max_lifetime;
+	$args[2] = get_lifetime ();
   }
   if(function_exists("session_start")) {
 	@session_start();
@@ -485,17 +489,13 @@ class java_JavaProxy implements java_JavaType {
 	return $this->__client->cast($this, $type);
   }
   function __sleep() {
-	$lifetime = (int)ini_get("session.gc_maxlifetime");
-	if(!isset($lifetime)) $lifetime = 1440;
-	$args = array($this, $lifetime);
+	$args = array($this, get_lifetime());
 	$this->__serialID = $this->__client->invokeMethod(0, "serialize", $args);
 	if(JAVA_DEBUG) echo "proxy sleep called for $this->__java, $this->__signature\n";
     return array("__serialID");
   }
   function __wakeup() {
-	$lifetime = (int)ini_get("session.gc_maxlifetime");
-	if(!isset($lifetime)) $lifetime = 1440;
-	$args = array($this->__serialID, $lifetime);
+	$args = array($this->__serialID, get_lifetime());
 	if(JAVA_DEBUG) echo "proxy wakeup called for $this->__java, $this->__signature\n";
 	$this->__client = __javaproxy_Client_getClient();
     $this->__java = $this->__client->invokeMethod(0, "deserialize", $args);

@@ -753,7 +753,7 @@ public final class Util {
      */
     public static String checkError(String s) {
         // Is there a better way to check for a fatal error?
-        return s.indexOf("PHP Fatal error:")>-1 ? s : null;
+        return s.indexOf("PHP Fatal error:")>-1 || s.indexOf("PHP Parse error:")>-1 ? s : null;
     }
 
     /** 
@@ -892,7 +892,7 @@ public final class Util {
 	 * @throws IOException
 	 * @see Util#checkCgiBinary(StringBuffer)
 	 */	  
-        public static Process start(String[] args, File homeDir, Map env, boolean tryOtherLocations, boolean preferSystemPhp) throws IOException {
+        public static Process start(String[] args, File homeDir, Map env, boolean tryOtherLocations, boolean preferSystemPhp, OutputStream err) throws IOException {
             Process proc = new Process(args, homeDir, env, tryOtherLocations, preferSystemPhp);
             proc.start();
             return proc;

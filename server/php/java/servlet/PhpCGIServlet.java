@@ -24,6 +24,7 @@ package php.java.servlet;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -259,12 +260,16 @@ public class PhpCGIServlet extends FastCGIServlet {
 	}
         protected void execute() throws IOException, ServletException {
 	    Process proc = null;
+	    
 	    InputStream natIn = null;
 	    OutputStream natOut = null;
+	    ByteArrayOutputStream natErr = new ByteArrayOutputStream();
+	    
 	    InputStream in = null;
 	    OutputStream out = null;
-    	    try {
-        	proc = Util.ProcessWithErrorHandler.start(new String[]{php, "-d", "allow_url_include=On"}, wd, env, phpTryOtherLocations, preferSystemPhp);
+
+	    try {
+        	proc = Util.ProcessWithErrorHandler.start(new String[]{php, "-d", "allow_url_include=On"}, wd, env, phpTryOtherLocations, preferSystemPhp, natErr);
 
         	byte[] buf = new byte[BUF_SIZE];// headers cannot be larger than this value!
 
@@ -300,7 +305,12 @@ public class PhpCGIServlet extends FastCGIServlet {
     		ctx = null;
     	    }
     	    
-    	    if (proc!=null) try {proc.checkError(); } catch (Util.Process.PhpException e) {throw new ServletException(e);}
+    	    if (proc!=null)
+    	    {
+    	        if(natErr.size()>0) Util.logMessage(natErr.toString());
+    	        try {proc.checkError(); } catch (Util.Process.PhpException e) {throw new ServletException(e);}
+    	    }
+    	    
         }
     } //class CGIRunner
     

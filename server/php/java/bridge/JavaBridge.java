@@ -1610,12 +1610,13 @@ public class JavaBridge implements Runnable {
      * the servlet or jsp.
      * @param name The session name, if any
      * @param clientIsNew true, if the client wants a new session
-     * @param timeout session timeout in seconds
+     * @param timeout session timeout in seconds. If timeout is <= 0, the session will never expire
      * @return The session context.
      * @throws Exception 
      * @see php.java.bridge.ISession
      */
     public ISession getSession(String name, boolean clientIsNew, int timeout) throws Exception {
+        if (timeout == 0) timeout = -1;
 	if(sessionCache!=null) return sessionCache;
 	try {
 	ISession session= sessionFactory.getSession(name, clientIsNew, timeout);

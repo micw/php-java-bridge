@@ -71,19 +71,13 @@ public class InvocablePhpServletScriptEngine extends InvocablePhpScriptEngine {
 	this.res = res;
 
 	scriptContext.initialize(servlet, servletCtx, req, res);
-	
-	if (!new File(CGIServlet.getRealPath(ctx, "java/JavaProxy.php")).exists()) {
-	    url = new java.net.URL((req.getRequestURL().toString()));
-	    url = new URL (url.getProtocol(), 
-		    url.getHost(), url.getPort(), 
-	    	    "/JavaBridge/java/JavaProxy.php");
-	} else {
-	    url = new java.net.URL((req.getRequestURL().toString()));
-	    String filePath = req.getContextPath()+"/java/JavaProxy.php";
-    	    url = new URL (url.getProtocol(), 
-    		    url.getHost(), url.getPort(), 
-    		    filePath);
-	}
+	String filePath;
+        url = new java.net.URL((req.getRequestURL().toString()));
+	if (!new File(CGIServlet.getRealPath(ctx, "java/JavaProxy.php")).exists())
+	    filePath = "/JavaBridge/java/JavaProxy.php";
+	else
+	    filePath = req.getContextPath()+"/java/JavaProxy.php";
+        url = new URL (url.getProtocol(), url.getHost(), url.getPort(), filePath);
 	path = new File(CGIServlet.getRealPath(ctx, ""));
     }
     protected ScriptContext getPhpScriptContext() {

@@ -40,7 +40,10 @@ class FastCGIInputStream extends DefaultInputStream {
         this.servlet = servlet;
     }
     private StringBuffer error;
-    public String getError() {
+    public StringBuffer getError () {
+        return error;
+    }
+    public String checkError() {
         return error==null?null:Util.checkError(error.toString());
     }
     public int read(byte buf[]) throws ConnectionException {

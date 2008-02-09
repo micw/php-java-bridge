@@ -231,12 +231,12 @@ class java_HttpHandler extends java_SocketHandler {
 	return (JAVA_SERVLET == "User" &&
 			array_key_exists('PHP_SELF', $_SERVER) &&
 			array_key_exists('HTTP_HOST', $_SERVER))
-	  ? $_SERVER['PHP_SELF']
+	  ? $_SERVER['PHP_SELF']."javabridge"
 	  : null;
   }
   function getWebApp() {
 	$context = $this->getWebAppInternal();
-	if(is_null($context)) $context = JAVA_SERVLET;
+	if(is_null($context) && JAVA_SERVLET=="On") $context = JAVA_SERVLET;
 	if(is_null($context) || $context[0]!="/") 
 	  $context = "/JavaBridge/JavaBridge.phpjavabridge";
 	return $context;

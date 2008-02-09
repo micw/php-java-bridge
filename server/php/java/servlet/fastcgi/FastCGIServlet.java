@@ -464,7 +464,10 @@ public abstract class FastCGIServlet extends CGIServlet {
 			i=0;
 		    }
 		}
-		natIn.close(); String phpFatalError = natIn.getError();
+		natIn.close(); 
+		String phpFatalError = natIn.checkError();
+		StringBuffer phpError = natIn.getError();
+		if (phpError!=null) Util.logMessage(phpError.toString());
 		natIn = null; connection = null;
 		
 		if(phpFatalError!=null) throw new RuntimeException(phpFatalError);
