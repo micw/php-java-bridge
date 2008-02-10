@@ -1,85 +1,30 @@
-Build and execution instructions:
----------------------------------
-  NOTE: If you have Security Enhanced Linux, you must update the policy
-  and tag the files with the correct SEL contexts, please see the README.
+Overview
+--------
 
-  Install mono 1.1.8 or above, if not already installed.
-
-  In the directory php-java-bridge-p.x.y type:
-
-          mono --version       # 1.0.6 or above.
-          gcj --version        # 3.2.3 or above.
-          apachectl -version   # Apache 1.3 or above.
-          php-config --version # PHP 4.3.4 or above.
-          make null --version  # GNU make
-
-          phpize && 
-          ./configure --with-mono=/usr/bin/mono &&
-          make &&
-          su -c "make install"
-
-  If your administrator allows you to dynamically load extensions, you
-  can now test the extension by invoking the test.php with the 
-  command: php ./tests.mono+net/test.php.
-
-  Please see the output of ./configure --help=recursive for further
-  configure options.
-
-------------------------------------
-   Permanently activate the module
-   -------------------------------
-
-  To permanently activate the extension for all users please add the
-  following lines to the php.ini or add a file mono.ini to the
-  directory that contains the PHP module descriptions (usually
-  /etc/php.d/) with the following content:
-
-          extension = mono.so
-          [mono]
-          mono.log_level="3"
-          mono.log_file="/var/log/php-mono-bridge.log"
-          mono.socketname="9167"
-
-  Re-start the web server, for example with the command:
-
-          apachectl restart
+The Linux binary associates a PHP script (or a HTTP Server) with a
+managed (and persistent) Mono VM or an external J2EE server. The
+"mono.so" file contained in the Linux binary packages is the PHP
+"Mono.inc" compiled to native code. It supports the Zend and the
+standard PHP extension mechanism.
 
 
-  You can start the bridge as a sub-process of apache. Disable
-  mono.socketname, and mono.hosts. For example:
+Installation on RedHat, Fedora, CentOS ...
+------------------------------------------
 
-          extension = mono.so
-          [mono]
-          mono.log_level="3"
-          mono.log_file="/var/log/php-mono-bridge.log"
+* Download and install the PHP/Java Bridge base and the libraries. For
+  example:
 
-  Re-start apache and check if apache has started mono as a
-  sub-process.  For example with the commands:
+    rpm -i php-java-bridge-mono-x.y.z-1-i386.rpm
 
-          apachectl restart
-          pstree | fgrep httpd
+  On non-Linux OS start the .NET VM by double-clicking on MonoBridge.exe
 
+* There are three Mono/.NET examples which show how to create a GUI
+  using GTK and how to load and access .NET assemblies.
 
-  Check the status:
+* To rebuild the RPM files, download the php-java-bridge*.tar.gz
+  archive and type (as root):
 
-          echo "<?php phpinfo()?>" | php | fgrep "mono status"
-
-  Other configuration options which should have been set up by the
-  configure script but which can be changed later are:
-
-          mono.socketname= <local TCP communication channel >
-          mono.hosts     = <add. bridge hosts e.g.: server1:9167;server2:9168>
-
-  Please first look at the output of phpinfo() to see the original
-  values.  
-
----------------------------------------------
-  Starting the PHP/Mono Bridge automatically
-  ------------------------------------------
-
-  When the mono.socketname and mono.hosts options are not set, the web
-  server will start or re-start the mono back-end automatically as a sub
-  component when the HTTP service is started or re-started.
+    rpmbuild -tb php-java-bridge*.tar.gz
 
 ------------------------------------
   Mailing List

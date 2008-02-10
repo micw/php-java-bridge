@@ -1,6 +1,10 @@
 Overview
 --------
 
+The J2EE interface associates a PHP web context or the entire J2EE
+server with a managed and persistent PHP executable or an external
+HTTP server running PHP.
+
 This document describes how to call Java methods from PHP. And how to
 embed PHP applications into a pure Java application server or servlet
 engine. Please see the INSTALL.J2SE document for details how to call
@@ -8,18 +12,23 @@ PHP methods from a pure Java application.
 
 The PHP/Java Bridge can be installed with one copy operation:
 
-* the JavaBridge.war must be copied into the autodeploy folder of the
-  J2EE server.
+* the JavaBridge.war (renamed to "myPhpApp.war") should be copied into
+  the autodeploy folder of the J2EE server.
 
 
 Development
 -----------
 
 * Extract the JavaBridge.jar from the JavaBridge.war zip file from the
-  PHP/Java Bridge binary download. Double-click on JavaBridge.jar or
-  type "java -jar JavaBridge.jar" and click "OK" to start a servlet
-  engine back end for all computers on the local network. Type java -jar
-  JavaBridge.jar --help to see the list of available options.
+  PHP/Java Bridge binary download. For example with the command:
+
+    java -classpath JavaBridge.war TestInstallation
+
+  Double-click on JavaBridge.jar or type "java -jar JavaBridge.jar"
+  and click "OK" to start a servlet engine back end for all computers
+  on the local network. Type java -jar JavaBridge.jar --help to see
+  the list of available options.
+
 
 * Link Java.inc and your Java libraries into PHP at run-time. Example:
   
@@ -35,6 +44,7 @@ Development
     $myInstance  = NEW Java("myPackage.MyClass", ...); 
     $myInstance->callSomething(...);
    ?>
+
 
 * Create a PHP web archive for distribution, for example with the commands:
 
@@ -54,33 +64,43 @@ Deployment
 * Install a J2EE application server or servlet engine, for example
   Apache Geronimo, Tomcat, Glassfish, ...
 
+
 * Copy your web application myPhpApp.war to the autodeploy folder of
-  your J2EE server or servlet engine. The following examples assume that
-  you don't have a myPhpApp.war yet, they use the "JavaBridge.war" example
-  application. 
+  your J2EE server or servlet engine. If you don't have a myPhpApp.war
+  yet, simply rename "JavaBridge.war" to "myPhpApp.war".
 
   Example for Tomcat on Unix:
   
-    cp JavaBridge.war $CATALINA_HOME/webapps/
+    cp myPhpApp.war $CATALINA_HOME/webapps/
 
   Example for Apache Geronimo on Windows:
 
-    copy JavaBridge.war "\Program Files\IBM\WebSphereCommunityEdition\deploy"
+    copy myPhpApp.war "\Program Files\IBM\WebSphereCommunityEdition\deploy"
+
+  Wait until the "myPhpApp" directory appears (restart your J2EE
+  server, if necessary).
+
 
 * If you want to run PHP as a sub component of the J2EE server or
-  servlet engine, visit http://localhost:8080/JavaBridge and click on
+  servlet engine, visit http://localhost:8080/myPhpApp and click on
   test.php. 
 
 * If you want to run PHP as a sub component of Apache or IIS or from
   the command line, copy the directory which contains the web
   application "myPhpApp" over to the Apache/IIS document root or to
-  the some local directory accessible by the PHP command line executable.
+  the some local directory accessible by the PHP command line
+  executable. Example for Apache Tomcat on Unix:
 
-* Edit DOCUMENT_ROOT/myPhpApp/java/Java.inc so that it
-  connects PHP with the Java VM "127.0.0.1:8080/myPhpApp". For example:
+    cp -r $CATALINA_HOME/webapps/myPhpApp/ /var/www/html/
+
+
+* Edit the copied web application, if necessary. For example edit
+  DOCUMENT_ROOT/myPhpApp/java/Java.inc so that it connects PHP with
+  the Java VM "127.0.0.1:8080/myPhpApp". For example:
 
     define("JAVA_HOSTS", "127.0.0.1:8080"); 
     define("JAVA_SERVLET", "User"); 
+
 
 * Firewall-out the J2EE/Servlet port 8080, if necessary. Or modify the
   J2EE/Servlet so that it listens only on the local interface. Note that

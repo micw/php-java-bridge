@@ -1,8 +1,11 @@
 Overview
 --------
 
+The PHP JSR 223 interface associates a managed and persistent PHP
+executable or the current PHP web context with a JSR 223 ScriptEngine.
+
 This document describes how to call PHP methods from Java using the
-JSR223 interface. For example it is possible to use PHP as a script
+JSR 223 interface. For example it is possible to use PHP as a script
 plugin for a Java report engine such as BIRT; for formula fields,
 group selection formulas, etc. Please see the INSTALL.J2EE document
 for details how to embed PHP into a pure J2EE application server or
@@ -10,7 +13,7 @@ how to call Java methods from PHP.
 
 The PHP/Java Bridge can be installed with one copy operation:
 
-* the "JavaBridge.jar" and the "php-script.jar" must be copied into
+* the "JavaBridge.jar" and the "php-script.jar" should be copied into
 the J2SE java.ext.dirs directory.
 
 

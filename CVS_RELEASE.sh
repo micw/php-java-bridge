@@ -28,7 +28,7 @@ mkdir MONO.STANDALONE
 for i in ICSharpCode.SharpZipLib.dll IKVM.GNU.Classpath.dll IKVM.Runtime.dll MonoBridge.exe; do
  cp modules/$i MONO.STANDALONE
 done
-cp tests.mono+net/test.php tests.mono+net/sample_lib.cs tests.mono+net/sample_lib.dll tests.mono+net/load_assembly.php MONO.STANDALONE
+cp examples/gui/gtk-button.php examples/gui/gtk-fileselector.php tests.mono+net/test.php tests.mono+net/sample_lib.cs tests.mono+net/sample_lib.dll tests.mono+net/load_assembly.php MONO.STANDALONE
 cp server/META-INF/java/Mono.inc MONO.STANDALONE
 cp README.MONO+NET MONO.STANDALONE
 
@@ -48,6 +48,7 @@ mkdir LINUX
 rpm --addsign /usr/src/redhat/RPMS/i386/php-java-bridge*${version}*.rpm
 cp /usr/src/redhat/RPMS/i386/php-java-bridge-${version}*.rpm /usr/src/redhat/RPMS/i386/php-java-bridge-lucene-${version}*.rpm /usr/src/redhat/RPMS/i386/php-java-bridge-itext-${version}*.rpm LINUX
 cp INSTALL.LINUX LINUX
+cp /usr/src/redhat/RPMS/i386/php-java-bridge-mono-${version}*.rpm  MONO.STANDALONE
 
 cp  src.zip README FAQ.html INSTALL.J2EE INSTALL.J2SE NEWS documentation
 mv server documentation

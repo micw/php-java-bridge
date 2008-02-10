@@ -1,6 +1,9 @@
 Overview
 --------
 
+The standalone JavaBridge.jar associates Java applications with PHP
+scripts.
+
 This document describes how to call a non-J2EE application. Please see
 the INSTALL.J2SE document for details how to call PHP methods from
 Java. Please see the INSTALL.J2EE document for details how to embed

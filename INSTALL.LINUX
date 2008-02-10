@@ -1,6 +1,12 @@
 Overview
 --------
 
+The Linux binary associates a HTTP Server with a managed and
+persistent Java VM or an external J2EE server. The "java.so" file
+contained in the Linux binary packages is the PHP "Java.inc" compiled
+to native code. It supports the Zend and the standard PHP extension
+mechanism.
+
 This document describes how to install the PHP/Java Bridge Linux
 packages. The Linux RPM files contain a compiled, native version of
 the PHP/Java Bridge which doesn't need any Java installed on the
@@ -10,6 +16,7 @@ contexts.
 If you want to use a Java VM and you don't want to use Security
 Enhanced Linux protection, read the INSTALL.J2EE or INSTALL.J2SE
 or INSTALL.STANDALONE documents.
+
 
 Installation on RedHat, Fedora, CentOS ...
 ------------------------------------------
@@ -31,7 +38,7 @@ Installation on RedHat, Fedora, CentOS ...
     /usr/share/doc/<libname>/example.
 
 
-* To rebuild the RPM files download the php-java-bridge*.tar.gz
+* To rebuild the RPM files, download the php-java-bridge*.tar.gz
   archive and type (as root):
 
     rpmbuild -tb php-java-bridge*.tar.gz
