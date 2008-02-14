@@ -47,26 +47,31 @@ Installation on RedHat, Fedora, CentOS ...
 Installation on Debian, Ubuntu, ...
 -----------------------------------
 
-* Debian 3.1 Sarge based Linux distributions currently (Feb 2007) don't 
-  support Security Enhanced Linux. 
-  A compiled, native back end is not available; the
-  Debian port of the PHP/Java Bridge needs Java and a servlet container
-  to start a Java VM.
+* You must read the README.Debian and debian/changelog for updated
+  information about Debian packages and compilation options.
 
 * As of Debian GNU / Linux 4.0 Etch and newer versions, SE Linux is 
   supported and deactivated by default.
   See http://wiki.debian.org/SELinux
   The pre-compiled php-java-bridge Debian package uses the libraries.
 
-* As of Ubuntu Breezy updated (february 2007) SE Linux should be available.
+* Debian 3.1 Sarge based Linux distributions as of Feb 2007 don't 
+  support Security Enhanced Linux. 
+  A compiled, native back end is not available; the
+  Debian port of the PHP/Java Bridge needs Java and a servlet container
+  to start a Java VM.
+
+* As of Ubuntu Breezy updated at february 2007, SE Linux should be available.
   See https://wiki.ubuntu.com/SELinux
 
 * The php-java-bridge_x.y.z-1_i386.deb Debian package installs as
   modules, places the .war file at the tomcat5 deploy dir, places many
   code examples at the docs directory and was created for Debian Etch
-  4.0, with tomcat5, sun-java5, php 5.2.x. It can be installed with e.g.:
+  4.0, with tomcat5, sun-java6, php 5.2.x. It can be installed with e.g.:
 
     dpkg -i php-java-bridge_x.y.z-w_i386.deb    
+    
+* The C code implementation is deprecated since php-java-bridge version 5.x.
 
 * To rebuild the Debian package in your specific version / distribution:
   The Debian GNU / Linux package was compiled in a pure Debian Etch 4.0 machine.
