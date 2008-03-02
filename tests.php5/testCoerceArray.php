@@ -1,6 +1,5 @@
 <?php
-if(!extension_loaded("java"))
-   require_once("http://127.0.0.1:8080/JavaBridge/java/Java.inc");
+require_once ("java/Java.inc");
 
 $here=getcwd();
 try {

@@ -2,12 +2,7 @@
 
 <?php
 
-if (!extension_loaded('java')) {
-  if (!(PHP_SHLIB_SUFFIX=="so" && dl('java.so'))&&!(PHP_SHLIB_SUFFIX=="dll" && dl('php_java.dll'))) {
-    echo "java extension not installed.";
-    exit(2);
-  }
-}
+require_once ("java/Java.inc");
 ini_set("max_execution_time", 0);
 
 class ButtonDemo {

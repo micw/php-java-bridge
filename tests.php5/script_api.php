@@ -19,12 +19,7 @@
  * ContextFactories and 5 CGIRunners.
  */
 
-if (!function_exists("java_get_base") && !extension_loaded('java')) {
-  if (!(require_once("http://127.0.0.1:8080/JavaBridge/java/Java.inc"))) {
-    echo "java extension not installed.";
-    exit(2);
-  }
-}
+require_once ("java/Java.inc");
 /*
  * Call the Java continuation from the PHP continuation. If that
  * failed, start main().

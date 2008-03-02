@@ -223,14 +223,8 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
 				throw new ClassNotFoundException(name);
 			    }
 			    private Class doLoadClass(String name) throws ClassNotFoundException {
-  	                    	ClassLoader parent;
-  	                    	Class c = null;
   	                    	try {
-  	                    	    if((parent=getParent())!=null) 
-  	                    	    	try {
-  	                    	    	    c = parent.loadClass(name);
-  	                    	    	} catch (ClassNotFoundException ex) {/*ignore*/}
-  	                    	    if(c==null) c = super.findClass(name);
+								Class c = super.loadClass(name);
   	                    	    if(c!=null) return c;
   	                    	} catch (ClassNotFoundException e) {
   	                    	    throw e;

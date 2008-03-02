@@ -1,6 +1,6 @@
 <html>
 <?php 
-if(!extension_loaded('java')) require_once("java/Java.inc");
+require_once ("java/Java.inc");
 $Util = java("php.java.bridge.Util");
 $ctx = java_context();
 /* get the current instance of the JavaBridge, ServletConfig and Context */

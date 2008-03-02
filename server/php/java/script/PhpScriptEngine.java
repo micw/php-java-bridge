@@ -66,12 +66,6 @@ public class PhpScriptEngine extends SimplePhpScriptEngine {
         super(factory);
     }
 
-    /* Revert constructor chain. Call super(false); privateInit(); super.initialize(), 
-     * see PhpFacesScriptEngine constructor and PhpScriptEngine() constructor. -- The jsr223 API is really odd ... */
-    protected PhpScriptEngine(boolean initialize) {
-        super(initialize);
-    }
-
     protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
         if(continuation != null) release();
   	if(reader==null) return null;
@@ -88,7 +82,7 @@ public class PhpScriptEngine extends SimplePhpScriptEngine {
         int c;
         try {
              /* header: <? require_once("http://localhost:<ourPort>/JavaBridge/java/Java.inc"); ?> */
-            localReader = new StringReader("<?php if(!extension_loaded('java')) {(require_once(\""+ctx.getContextString()+"/java/Java.inc\"));}?>");
+            localReader = new StringReader("<?php require_once(\""+ctx.getContextString()+"/java/Java.inc\");?>");
             try { while((c=localReader.read(buf))>0) w.write(buf, 0, c);} catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not read header", e);}
             try { localReader.close(); localReader=null;} catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not close header", e);}
     

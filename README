@@ -46,9 +46,7 @@ Build and execution instructions:
 
   Use the following code to access Java from your PHP scripts:
 
-    <?php
-    if(!extension_loaded("java"))
-      require_once("http://localhost:8080/JavaBridge/java/Java.inc");
+    <?php require_once("http://localhost:8080/JavaBridge/java/Java.inc");
     $s = new Java("java.lang.String", "hello");
     ...
     ?>

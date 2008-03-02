@@ -4,12 +4,7 @@
 //
 // this test must be called twice with a standalone or J2EE back end
 //
-if (!extension_loaded('java')) {
-  if (!(require_once("http://127.0.0.1:8080/JavaBridge/java/Java.inc"))) {
-    echo "java extension not installed.";
-    exit(2);
-  }
-}
+require_once ("java/Java.inc");
 
 $rc=false;
 for($i=0; $i<100; $i++) {

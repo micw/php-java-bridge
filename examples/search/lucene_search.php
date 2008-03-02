@@ -1,6 +1,5 @@
 <?php
-if(!extension_loaded("java"))
-  require_once("http://localhost:8080/JavaBridge/java/Java.inc");
+require_once ("java/Java.inc");
 java_autoload("lucene.jar");
 
 

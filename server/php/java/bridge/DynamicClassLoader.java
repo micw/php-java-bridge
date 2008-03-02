@@ -445,13 +445,6 @@ public class DynamicClassLoader extends SecureClassLoader {
 	    c = parentCache.get(name);
 	    if (c!=nf) {
 		if (c!=null) return (Class)c;
-		try {
-		    result = super.loadClass(name);
-		    parentCache.put(name, result);
-		    return result;
-		} catch (ClassNotFoundException cnfe) {
-		    parentCache.put(name, nf);
-		}
 	    }
 	}
 	Iterator iter = classPaths.iterator();
@@ -490,6 +483,13 @@ public class DynamicClassLoader extends SecureClassLoader {
 		}
 	    }
 	    e = addDelayedURLs();
+	}
+	try {
+	    result = super.loadClass(name);
+	    parentCache.put(name, result);
+	    return result;
+	} catch (ClassNotFoundException cnfe) {
+	    parentCache.put(name, nf);
 	}
 	if (result==null) {
 	    throw new ClassNotFoundException("Class "+name+" not found");
@@ -530,13 +530,6 @@ public class DynamicClassLoader extends SecureClassLoader {
 	synchronized(parentCache) {
 	    c = parentCache.get(cacheName);
 	    if ((c!=nf) && (c!=null)) return (URL)c;
-	    c = super.findResource(name);
-	    if (c!=null) {
-		parentCache.put(cacheName, c);
-		return (URL)c;
-	    } else {
-		parentCache.put(cacheName, nf);
-	    }
 	}
 	Iterator iter = classPaths.iterator();
 	URLClassLoaderEntry e = null;
@@ -568,6 +561,13 @@ public class DynamicClassLoader extends SecureClassLoader {
 		}
 	    }
 	    e = addDelayedURLs();
+	}
+	c = super.findResource(name);
+	if (c!=null) {
+	    parentCache.put(cacheName, c);
+	    return (URL)c;
+	} else {
+	    parentCache.put(cacheName, nf);
 	}
 	return null;
     }

@@ -3,7 +3,7 @@
 
 <web-app>
 
-    <!-- support for tomcat cluster -->
+    <!-- support for J2EE cluster -->
     <distributable/>
 
     <!-- Attach the JSR223 script factory to the servlet context -->

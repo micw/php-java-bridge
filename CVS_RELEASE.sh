@@ -1,9 +1,11 @@
 #!/bin/sh
 set -x
+LANG=C
+
 rm -rf [^C][^V][^S]* .??* *~
 cvs -Q update -APd 
 find . -print | xargs touch
-dirs=`ls -l | grep '^d' | fgrep -v CVS | awk '{print $8}'`
+dirs=`ls -l | grep '^d' | fgrep -v CVS | awk '{print $9}'`
 find $dirs -name "CVS" -print | xargs rm -rf
 
 version=`cat VERSION`

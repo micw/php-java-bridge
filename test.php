@@ -1,12 +1,4 @@
-<?php 
-if(!extension_loaded("java")) {
-  $n = php_sapi_name();
-  if($n=="cgi"||$n=="cgi-fcgi"||$n=="cli") @dl("java.so")||@dl('php_java.dll');
- }
-if(!extension_loaded("java")) {
-  $port= (isset($_SERVER['SERVER_PORT']) && (($_SERVER['SERVER_PORT'])>1024)) ? $_SERVER['SERVER_PORT'] : '8080';
-  require_once("http://127.0.0.1:${port}/JavaBridge/java/Java.inc");
- }
+<?php require_once("java/Java.inc");
 
   /* 
    * Use the new style which works with PHP 5 and above only. This

@@ -2,12 +2,7 @@
 
 <?php
    //define ("JAVA_DEBUG", true);
-if (!extension_loaded('java')) {
-  if (!(require_once("http://127.0.0.1:8080/JavaBridge/java/Java.inc"))) {
-    echo "java extension not installed.";
-    exit(2);
-  }
-}
+require_once ("java/Java.inc");
 
 $here = getcwd();
 $java_output = "workbook_java.xls";

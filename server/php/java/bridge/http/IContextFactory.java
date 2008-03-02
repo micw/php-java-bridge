@@ -63,7 +63,8 @@ public interface IContextFactory extends IJavaBridgeFactory {
   /**
    * Wait until this context is finished. This method returns immediately if this context
    * is not in use yet or it is no longer in use. Call this method only if you're sure
-   * that the PHP script is finished!
+   * that the PHP script context is initialized! For example when the PHP script is finished, 
+   * you can use this method to wait until the remaining communication is finished.
    * @throws InterruptedException
    * @see php.java.bridge.http.ContextRunner
    */

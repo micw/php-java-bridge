@@ -1,11 +1,4 @@
-<?php
-if(!extension_loaded("mono")) {
-  $n = php_sapi_name();
-  if($n=="cgi"||$n=="cgi-fcgi"||$n=="cli") @dl("mono.so")||@dl('php_mono.dll');
- }
-if(!extension_loaded("mono")) {
-  require_once("Mono.inc");
- }
+<?php require_once("Mono.inc");
 
 phpinfo();
 print "\n\n";

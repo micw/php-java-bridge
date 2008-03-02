@@ -1,12 +1,7 @@
 #!/usr/bin/php
 
 <?php
-if (!extension_loaded('java')) {
-  if (!(require_once("http://127.0.0.1:8080/JavaBridge/java/Java.inc"))) {
-    echo "java extension not installed.";
-    exit(2);
-  }
-}
+require_once ("java/Java.inc");
 
 $Array = new JavaClass("java.lang.reflect.Array");
 $testobj=$Array->newInstance(new JavaClass("java.lang.String"), array(2, 2, 2, 2, 2, 2));

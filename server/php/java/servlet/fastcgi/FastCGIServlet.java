@@ -392,7 +392,7 @@ public abstract class FastCGIServlet extends CGIServlet {
 		  Util.logDebug("IOException caused by internet browser: " + e);
 		  Util.printStackTrace(e);
 	      }	      
-	      	throw new ServletException("IOException caused by internet browser", e);
+	      //throw new ServletException("IOException caused by internet browser", e);
 	    } finally {
     		if(ctx!=null) ctx.release();
     		ctx = null;

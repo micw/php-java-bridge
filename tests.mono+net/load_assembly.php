@@ -1,13 +1,4 @@
-#!/usr/bin/php
-<?php
-
-if(!extension_loaded("mono")) {
-  $n = php_sapi_name();
-  if($n=="cgi"||$n=="cgi-fcgi"||$n=="cli") @dl("mono.so")||@dl('php_mono.dll');
- }
-if(!extension_loaded("mono")) {
-  require_once("Mono.inc");
- }
+<?php require_once("Mono.inc");
 
 $here=getcwd();
 mono_require("$here/sample_lib.dll");

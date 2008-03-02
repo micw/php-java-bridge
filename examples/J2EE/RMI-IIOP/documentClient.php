@@ -32,7 +32,7 @@ switch($server) {
  case SERVER::JBOSS: 
    echo "jboss. Loading $JBOSS_HOME/lib \n";
 
-   if(!$props['java.vm.vendor']->toLowerCase()->startsWith("sun"))
+   if(!java_values($props['java.vm.vendor']->toLowerCase()->startsWith("sun")))
       echo "WARNING: You need to run this example with the SUN VM\n";
    if(!is_dir($JBOSS_HOME)) die("ERROR: Incorrect $JBOSS_HOME.");
 
@@ -46,7 +46,7 @@ switch($server) {
  case SERVER::WEBSPHERE: 
    echo "websphere. Loading $WAS_HOME/lib/\n";
 
-   if(!$props['java.vm.vendor']->toLowerCase()->startsWith("ibm"))
+   if(!java_values($props['java.vm.vendor']->toLowerCase()->startsWith("ibm")))
       echo "WARNING: You need to run this example with the IBM VM\n";
    if(!is_dir($WAS_HOME)) die("ERROR: Incorrect $WAS_HOME.");
 
@@ -60,7 +60,7 @@ switch($server) {
  case SERVER::SUN:
    echo "sun. Loading: $app_server/lib\n";
 
-   if(!$props['java.vm.vendor']->toLowerCase()->startsWith("sun"))
+   if(!java_values($props['java.vm.vendor']->toLowerCase()->startsWith("sun")))
       echo "WARNING: You need to run this example with the SUN VM\n";
    if(!is_dir($app_server)) die("ERROR: Incorrect $app_server.");
 

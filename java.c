@@ -86,92 +86,8 @@ int *__errno (void) { return (int*)&java_errno; }
 #endif
 #endif
 
-
-#if EXTENSION == JAVA
-extern char java_inc[];
-extern size_t java_inc_length();
-static size_t java_stream_reader(void *handle, char *buf, size_t len TSRMLS_DC) {
-  size_t end = java_inc_length()-1;
-  size_t *pos = (size_t*)handle;
-  size_t remain = end-*pos;
-  if(end>*pos) {
-	if(remain<len) len=remain;
-	memcpy(buf, java_inc+*pos, len);
-	*pos+=len;
-	return len;
-  }
-  return 0;
-}
-#else
-extern char mono_inc[];
-extern size_t mono_inc_length();
-static size_t java_stream_reader(void *handle, char *buf, size_t len TSRMLS_DC) {
-  size_t end = mono_inc_length()-1;
-  size_t *pos = (size_t*)handle;
-  size_t remain = end-*pos;
-  if(end>*pos) {
-	if(remain<len) len=remain;
-	memcpy(buf, mono_inc+*pos, len);
-	*pos+=len;
-	return len;
-  }
-  return 0;
-}
-#endif
-static void java_stream_closer(void *handle TSRMLS_DC) {
-}
-static long java_stream_fteller(void *handle TSRMLS_DC) {
-  return (long)*(size_t*)handle;
-}
-
-static zend_op_array *java_compile_string(char*name TSRMLS_DC) {
-  zend_file_handle file_handle = {0};
-  zend_stream stream = {0};
-  size_t pos = 0;
-  zend_op_array *array;
-
-  stream.handle = &pos;
-  stream.reader = java_stream_reader;
-  stream.closer = java_stream_closer;
-#if ZEND_EXTENSION_API_NO >= 220051025
-  stream.fteller = java_stream_fteller;
-#endif
-  file_handle.type = ZEND_HANDLE_STREAM;
-  file_handle.filename = name;
-  file_handle.free_filename = 0;
-  file_handle.handle.stream = stream;
-  array = zend_compile_file(&file_handle, ZEND_REQUIRE_ONCE TSRMLS_CC);
-  zend_destroy_file_handle(&file_handle TSRMLS_CC);
-  return array;
-}
-  
 PHP_RINIT_FUNCTION(EXT) 
 {
-  static zend_op_array *ar;
-  zend_op_array *current;
-  zval *result = 0;
-
-  if(!ar) {
-	ar = java_compile_string(EXT_NAME()/**/".inc" TSRMLS_CC);
-  }
-  if(!ar) abort();
-  EG(return_value_ptr_ptr) = &result;
-  current = EG(active_op_array);
-  EG(active_op_array) = ar;
-  EG(no_extensions)=1;
-  zend_execute(ar TSRMLS_CC);
-  EG(no_extensions)=0;
-#if 1
-  destroy_op_array(ar TSRMLS_CC);
-  efree(ar);
-  ar = 0;
-#endif
-  if (!EG(exception)) {
-	if (EG(return_value_ptr_ptr)) {
-	  zval_ptr_dtor(EG(return_value_ptr_ptr));
-	}
-  }
-  EG(active_op_array) = current;
   return SUCCESS;
 }
 
@@ -581,83 +497,6 @@ int EXT_GLOBAL(api_no_check)(int api_no)
   return SUCCESS;
 }
 
-#if 0
-static size_t count_catch_blocks (zend_op_array *op_array) 
-{
-  size_t count = 0;
-  opline = op_array->opcodes+2;
-  end = opline + op_array->last;
-  while (opline < end) {
-	if (opline[-2]==42 && opline[-1]==109 && opline[0]==107) {
-	  count++;
-	}
-  }
-  return count;
-}
-
-static void grow_op_array  (zend_op_array *op_array, size_t size)
-{
-  op_array->size = size;
-  op_array->opcodes = 
-	erealloc(op_array->opcodes, (op_array->size)*sizeof(zend_op));
-}
-
-static void patch_addresses (zend_op_array *op_array, size_t pos)
-{
-  opline = op_array->opcodes + pos;
-  end = opline + op_array->last;
-  while (opline < end) {
-	switch (opline->opcode) {
-	case ZEND_JMP:
-	  opline->op1.u.jmp_addr += 1;
-	  break;
-	case ZEND_JMPZ:
-	case ZEND_JMPNZ:
-	case ZEND_JMPZ_EX:
-	case ZEND_JMPNZ_EX:
-	  opline->op2.u.jmp_addr += 1;
-	  break;
-	  }
-  }
-}
-static void patch_position (zend_op_array *op_array, size_t pos)
-{
-  memmove (op_array+pos+1, op_array+pos, op_array->last-pos);
-  op_array[pos]=ZEND_NOP;
-  patch_addresses(op_array, ++pos);
-}
-
-static void patch_op_array (zend_op_array *op_array)
-{
-  opline = op_array->opcodes+2;
-  end = opline + op_array->last;
-  while (opline < end) {
-	if (opline[-2]==42 && opline[-1]==109 && opline[0]==107) {
-	  patch_position (op_array, opline-op_array);
-	  opline++;
-	}
-  }
-}
-#endif
-/** 
- * Modify the oparray to gain speed. 
- *
- * The PHP/Java Bridge protocol supports an asynchronous protocol mode
- * which allows the front- and back end to run in parallel. This mode
- * is 20 times faster than the default protocol mode, but, at certain
- * points the state must be synchronized.
- *
- * The following code inserts the synchronization points. Since it
- * depends on the way the language scanner works, this code is
- * currently not portable.
- */
-void EXT_GLOBAL(op_array_handler)(zend_op_array *op_array) 
-{
-#if 0
-  patch_op_array();
-#endif
-}
-
 #ifndef ZEND_EXT_API
 #define ZEND_EXT_API    /**/
 #endif
@@ -667,14 +506,14 @@ zend_extension zend_extension_entry = {
   EXT_NAME(),
   BRIDGE_VERSION,
   "The PHP/Java Bridge authors",
-  "(C) 2003-2007 by the authors",
+  "(C) 2003-2008 by the authors",
   "http://php-java-bridge.sf.net",
   EXT_GLOBAL(zend_startup),
   EXT_GLOBAL(zend_shutdown),
   NULL,           /* activate_func_t */
   NULL,           /* deactivate_func_t */
   NULL,           /* message_handler_func_t */
-  EXT_GLOBAL(op_array_handler),           /* op_array_handler_func_t */
+  NULL,           /* op_array_handler_func_t */
   NULL,           /* statement_handler_func_t */
   NULL,           /* fcall_begin_handler_func_t */
   NULL,           /* fcall_end_handler_func_t */

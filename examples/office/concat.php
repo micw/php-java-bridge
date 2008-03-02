@@ -1,5 +1,5 @@
 #!/usr/bin/php
-<?php if(!extension_loaded("java")) require_once("http://localhost:8080/JavaBridge/java/Java.inc");
+require_once ("java/Java.inc");
 java_autoload("itext.jar");
 
 /*
@@ -19,9 +19,9 @@ $master = new java_util_ArrayList();
 while(--$argc) {
   $reader = new com_lowagie_text_pdf_PdfReader($args[$f]);
   $reader->consolidateNamedDestinations();
-  $n = $reader->getNumberOfPages();
+  $n = java_values($reader->getNumberOfPages());
   $bookmarks = com_lowagie_text_pdf_SimpleBookmark::type()->getBookmark($reader);
-  if($bookmarks!=null) {
+  if(java_values($bookmarks)!=null) {
     if($pageOffset!=0) {
       com_lowagie_text_pdf_SimpleBookmark::type()->shiftPageNumbers($bookmarks, $pageOffset, null);
       $master->addAll($bookmarks);
@@ -41,11 +41,11 @@ while(--$argc) {
     echo "Processed page: " .$i; echo "\n";
   }
   $form = $reader->getAcroForm();
-  if($form!=null)
+  if(java_values($form)!=null)
     $writer->copyAcroForm($reader);
   $f++;
 }
-if($master->size()>0) {
+if(java_values($master->size())>0) {
   $writer->setOutlines($master);
  }
 $document->close();

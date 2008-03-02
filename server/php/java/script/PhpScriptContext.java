@@ -45,7 +45,7 @@ public class PhpScriptContext extends AbstractPhpScriptContext implements IConte
 
     static {
 	try {
-	    bridgeRunner = JavaBridgeRunner.getInstance();
+	    bridgeRunner = JavaBridgeRunner.getRequiredInstance();
 	} catch (Exception e) {
 	    Util.printStackTrace(e);
 	}
