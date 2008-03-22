@@ -282,6 +282,7 @@ PHP_INI_BEGIN()
    the WORKER MPM calls this for the master and for all childs */
   static void EXT_GLOBAL(alloc_globals_ctor)(EXT_GLOBAL_EX(zend_,globals,_) *EXT_GLOBAL(globals) TSRMLS_DC)
 {
+  memset (EXT_GLOBAL(globals), 0, sizeof*EXT_GLOBAL(globals));
 }
 
 
@@ -302,6 +303,7 @@ void EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_D) {
   JG(servlet)=0;
 }
 
+static int pid;
 /**
  * Called when the module is initialized. Creates the Java and
  * JavaClass structures and tries to start the back-end if
@@ -316,6 +318,8 @@ PHP_MINIT_FUNCTION(EXT)
 {
   zend_class_entry *parent;
   
+  pid = getpid ();
+
   EXT_INIT_MODULE_GLOBALS(EXT, EXT_GLOBAL(alloc_globals_ctor), NULL);
   
   assert(!EXT_GLOBAL (cfg) );
@@ -463,6 +467,8 @@ PHP_MINFO_FUNCTION(EXT)
  */
 PHP_MSHUTDOWN_FUNCTION(EXT) 
 {
+  if (pid != getpid()) return SUCCESS; // workaround for a PHP/Apache 2.2.8 bug
+
   EXT_GLOBAL(destroy_cfg) (EXT_GLOBAL(ini_set));
   EXT_GLOBAL(ini_user) = EXT_GLOBAL(ini_set) = 0;
 

@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Map;
 
@@ -62,7 +63,7 @@ public class InvocablePhpServletScriptEngine extends InvocablePhpScriptEngine {
     public InvocablePhpServletScriptEngine(Servlet servlet, 
 					   ServletContext ctx, 
 					   HttpServletRequest req, 
-					   HttpServletResponse res) throws MalformedURLException {
+					   HttpServletResponse res) throws MalformedURLException, URISyntaxException {
 	super();
 
 	this.servlet = servlet;
@@ -77,7 +78,7 @@ public class InvocablePhpServletScriptEngine extends InvocablePhpScriptEngine {
 	    filePath = "/JavaBridge/java/JavaProxy.php";
 	else
 	    filePath = req.getContextPath()+"/java/JavaProxy.php";
-        url = new URL (url.getProtocol(), url.getHost(), url.getPort(), filePath);
+	url = new java.net.URI(url.getProtocol(), null, url.getHost(), url.getPort(), filePath, null, null).toURL();
 	path = new File(CGIServlet.getRealPath(ctx, ""));
     }
     protected ScriptContext getPhpScriptContext() {

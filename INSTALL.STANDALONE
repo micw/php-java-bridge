@@ -13,6 +13,8 @@ methods from PHP.
 Development
 -----------
 
+Test the PHP/Java Bridge functionality:
+
 * Right-click on log4j.jar and select "open with Java ..."
 
 * Right-click on JavaBridge.jar and select "open with Java ...". In
@@ -25,18 +27,13 @@ Development
 Deployment
 ----------
 
+Add the PHP/Java Bridge to your Java application(s):
+
 * Extract the JavaBridge.jar library from JavaBridge.war, for example
   with the command:
 
    java -classpath JavaBridge.war TestInstallation
    
-* Add the following 3 lines to the main class of your non-J2EE
-application:
-
-     public static final String JAVABRIDGE_PORT="8087";
-     static final php.java.bridge.JavaBridgeRunner runner = 
-       php.java.bridge.JavaBridgeRunner.getRequiredInstance(JAVABRIDGE_PORT);
-     
 * Add JavaBridge.jar to the main library of you non-J2EE
 application. This can be done by adding the following line to your
 application's META-INF/MANIFEST.MF:
@@ -45,14 +42,21 @@ application's META-INF/MANIFEST.MF:
 
 It is also possible to simply merge all files into your non-J2EE
 application..
-  
-* Start your non-J2EE application.
 
+* Add the following 3 lines to the main class of your non-J2EE
+application:
+
+     public static final String JAVABRIDGE_PORT="8087";
+     static final php.java.bridge.JavaBridgeRunner runner = 
+       php.java.bridge.JavaBridgeRunner.getRequiredInstance(JAVABRIDGE_PORT);
+     
 
 Call your Java methods from PHP
 -------------------------------
 
-* Use the following code to call methods:
+* Start your Java application.
+
+* Use the following code to call methods of your running(!) Java application:
 
     <?php require_once("http://localhost:8087/JavaBridge/java/Java.inc");
 

@@ -42,6 +42,16 @@ sed 's/<[/a-z ="0-9]*>//g' |
 sed 's/^.*=> //' | sed 's/ *$//; s/^ *//' |
 LANG=C awk '{for(i=1; i<=(split($0, ar, "[;:]")); i++) if(substr(ar[i], 1) != "." && substr(ar[i], 1) != "..") print ar[i] }' |
 head -1`
+
+have_include_path=yes
+if test X$phpinc = X; then
+echo ""
+echo "This php installation does not have a proper include_path,"
+echo "will use /usr/share/java instead."
+phpinc="/usr/share/java"
+have_include_path=
+fi
+
 /bin/rm -f /tmp/phpinfo.$$
 if test -d $phpini; then phpini="${phpini}/php.ini"; fi
 
@@ -78,6 +88,9 @@ fi
 if test X$ini != X; then
  /bin/mkdir -p $ini
  /bin/cp $v java.ini $ini
+ if test X$have_include_path=X; then
+    echo "include_path=${phpinc}:." >>"$phpini"
+ fi
 else
   if test X$overwrite = "Xyes"; then
     if test -f $phpini; then
@@ -88,6 +101,7 @@ else
     /bin/cat java.ini >>"$phpini"
   fi
 fi
+cp $v -R server/META-INF/java $phpinc
 
 if test @COND_GCJ@ = 1; then
 jre=modules/java
@@ -158,7 +172,7 @@ check_document_root() {
 install_sel_module() {
  (
 	cd security/module; 
-	/usr/bin/make; 
+	/usr/bin/make -f /usr/share/selinux/devel/Makefile 
 	/usr/sbin/semodule -i php-java-bridge.pp
 	/usr/bin/chcon -t javabridge_exec_t $ext/RunJavaBridge
 	/usr/bin/chcon -t bin_t $ext/java

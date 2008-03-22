@@ -34,10 +34,26 @@ $hashMap = new java("java.util.HashMap");
 </p>
 
 <H4>Do I need a Java Application Server or Servlet Engine?</H4>
-<p>Not necessarily. But a servlet engine or J2EE service is easier to
-install and to handle than a standalone Java service.
+<p>Java needs an execution environment. Although there's a "java.so"
+and a "php_java.dll", which can start Java as a sub process of a HTTP
+server, a servlet engine or J2EE service is <a href="http://tomcat.apache.org">easier to install</a> and to
+handle than a standalone Java process started from some HTTP server.
 </p>
-
+<p>
+You can also add PHP support to your Java application by adding the
+following line to its main class:
+<blockquote>
+<code>
+static final php.java.bridge.JavaBridgeRunner runner = php.java.bridge.JavaBridgeRunner.getRequiredInstance(8087);
+</code>
+</blockquote>
+The above code opens the port 8087, so that local PHP scripts can call
+methods/procedures from your Java application, as long as your Java
+application is running.
+</p>
+<p>The third option is the standard JSR 223 script interface, which
+allows one to execute PHP code/scripts from Java applications.
+</p>
 <H4>Ho do I enable logging?</H4>
 <p>
 Copy <code>log4j.jar</code> into <code>java.ext.dirs</code>. Example for JDK 6:
@@ -97,16 +113,42 @@ file (contained in the JavaBridge.war zip file) for details.
 <p>INET_LOCAL always uses local TCP socket communication.</p>
 
 <H4>Whenever I reboot my computer I have to start the bridge back end again. How can I automate this?</H4>
-<p>Download and install a servlet engine or J2EE server, for example tomcat.</p>
+<p>Download and install a servlet engine or J2EE server as a Windows
+or Unix service.</p>
 
 <H4>Do I have to require Java.inc in each of my scripts? Isn't that very slow?</H4>
-<p>The PHP/Java Bridge library <code>Java.inc</code> must be included before it can be used. Therefore the scripts should contain the statement
+<p>In order to communicate with Java, a PHP "Java" class definition is needed. Here's a simple PHP "Java" class definition which fits into one line:
+<blockquote>
+<code>
+&lt;?php<br>
+// The following is the "Java" class definition, stripped down to fit into one line<br>
+// To use this sample start Java with: java -jar JavaBridge.jar INET:9267<br>
+// Or enable java.so or php_java.dll, which automatically start the above<br>
+// process Then type: php sample.php<br>
+//<br>
+class P {const Pc="&lt;C v=\"%s\" p=\"I\"&gt;", PC="&lt;/C&gt;"; const Pi="&lt;I v=\"%d\" m=\"%s\" p=\"I\"&gt;", PI="&lt;/I&gt;"; const Ps="&lt;S v=\"%s\"/&gt;", Pl="&lt;L v=\"%d\" p=\"%s\"/&gt;", Po="&lt;O v=\"%d\"/&gt;"; private $c; function str($s){fwrite($this-&gt;c, sprintf(self::Ps, $s));} function obj($s){fwrite($this-&gt;c, sprintf(self::Po, $s-&gt;java));} function __construct(){$this-&gt;c=fsockopen("127.0.0.1",9267);} function cBeg($s){fwrite($this-&gt;c, sprintf(self::Pc, $s));} function cEnd(){fwrite($this-&gt;c, self::PC);} function iBeg($o, $m){fwrite($this-&gt;c, sprintf(self::Pi, $o, $m));} function iEnd(){fwrite($this-&gt;c, self::PI);} function val($s){if(is_object($s))$this-&gt;obj($s);else $this-&gt;str((string)$s);} function res(){$r=sscanf(fread($this-&gt;c, 8192),"%s v=\"%[^\&quot;]\"");return $r[1];}} class Java {var $java, $p; function __construct() {if(!func_num_args()) return; $this-&gt;p=new P(); $ar=func_get_args(); $this-&gt;p-&gt;cBeg(array_shift($ar)); foreach($ar as $arg) $this-&gt;p-&gt;val($arg); $this-&gt;p-&gt;cEnd(); $ar = sscanf($this-&gt;p-&gt;res(), "%d"); $this-&gt;java=$ar[0];} function __call($meth, $args) {$this-&gt;p-&gt;iBeg($this-&gt;java, $meth); foreach($args as $arg) $this-&gt;p-&gt;val($arg); $this-&gt;p-&gt;iEnd(); $proxy = new Java(); $ar = sscanf($this-&gt;p-&gt;res(), "%d"); $proxy-&gt;java=$ar[0]; $proxy-&gt;p=$this-&gt;p; return $proxy;} function toString() {$this-&gt;p-&gt;iBeg("", "castToString"); $this-&gt;p-&gt;val($this); $this-&gt;p-&gt;iEnd(); return base64_decode($this-&gt;p-&gt;res());}}<br>
+<br>
+// Test<br>
+$i1 = new Java("java.math.BigInteger",  "1");<br>
+$i2 = new Java("java.math.BigInteger",  "2");<br>
+$i3 = $i1-&gt;add($i2);<br>
+echo $i3-&gt;toString() . "\n";<br>
+<br>
+?&gt;<br>
+</code>
+</blockquote>
+</p>
+<p>The above simple "Java" class assumes that some Java VM has been
+started on host "127.0.0.1", port "9267". And it cannot handle values
+larger than 8192 bytes. Therefore the PHP/Java Bridge
+library <code>Java.inc</code> should be used. Scripts should contain
+the statement
 <blockquote>
 <code>
 &nbsp;&nbsp;require_once("...java/Java.inc");
 </code>
 </blockquote>
-at the beginning of the script. PHP compiles and caches PHP scripts, the <code>Java.inc</code> library is loaded only once.
+at the beginning of each script. PHP compiles and caches PHP scripts, the <code>Java.inc</code> library is loaded only once.
 </p>
 
 <H4>Can I use Java libraries without installing java?</H4> <p>Yes. On a GNU operating system (e.g.: GNU/Linux, GNU/windows (aka "cygwin"), ...) you can use the GCC compiler to compile Java classes to native code. 
@@ -114,6 +156,12 @@ Simply compile the C based extension and omit the
 <code>--with-java=</code> configure option. The bridge will use the
 <code>libgcj</code> library, which is part of the GNU gcc compiler. This library also uses much less system
 resources (memory, files) than a "real" Java VM.</p> 
+
+<H4>I can't load the resource or file from the current working directory!?!</H4>
+<p>
+The "current working directory" is not useful, as the Java back end may be running
+on a different server or from a different working directory. Use a full path or a URL resource instead.
+</p>
 
 <H4>I get a blank page or some other error!?!</H4>
 <p>
@@ -1124,6 +1172,11 @@ public class Varargs {<br>
 </code>
 </blockquote>
 </p>
+<H4>NULL tests</H4>
+<p>
+Use <code>java_is_null($value)</code> or <code>is_null (java_values ($value))</code> to test for a (Java-) NULL value.
+</p>
+
 
 </BODY>
 </HTML>

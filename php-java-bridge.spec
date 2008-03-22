@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 5.2.0
+%define version 5.2.1
 %define release 1
 %define PHP_MAJOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | sed 's/\\\..*$//')
 %define PHP_MINOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | LANG=C cut -d. -f2)
@@ -208,6 +208,13 @@ rm -f $mod_dir/$i
 i=JavaBridge.jar
 cp $mod_dir/$i $RPM_BUILD_ROOT/$mod_dir/$i
 rm -f $mod_dir/$i
+
+files="Mono.inc"
+mkdir -p $RPM_BUILD_ROOT/%{shared_pear}/mono
+for i in $files; 
+  do cp server/META-INF/java/$i $RPM_BUILD_ROOT/%{shared_pear}/mono/$i; 
+  echo %{shared_pear}/mono/$i >>filelist-mono
+done
 
 files='mono.so ICSharpCode.SharpZipLib.dll IKVM.AWT.WinForms.dll IKVM.GNU.Classpath.dll IKVM.Runtime.dll'
 for i in $files; do

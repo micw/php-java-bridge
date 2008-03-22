@@ -1,4 +1,4 @@
-#!/usr/bin/php
+<?php
 require_once ("java/Java.inc");
 java_autoload("itext.jar");
 

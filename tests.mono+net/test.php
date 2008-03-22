@@ -1,4 +1,4 @@
-<?php require_once("Mono.inc");
+<?php require_once("mono/Mono.inc");
 
 phpinfo();
 print "\n\n";

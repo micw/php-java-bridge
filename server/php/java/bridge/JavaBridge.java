@@ -499,7 +499,7 @@ public class JavaBridge implements Runnable {
 	    }
 	    setException(response, e, createInstance?"CreateInstance":"ReferenceClass", null, name, args, params);
 	    
-	    if (response.isAsync()) throw new IllegalStateException ("Out of sync", e); // abort
+	    if (response.isAsync()) throw new JavaBridgeIllegalStateException ("Out of sync", e); // abort
 	}
     }
 
@@ -689,12 +689,13 @@ public class JavaBridge implements Runnable {
 		result[i] = s;
 		try {
 		    if (c == Boolean.TYPE) result[i]=new Boolean(s);
-		    if (c == Byte.TYPE)    result[i]=new Byte(s);
-		    if (c == Short.TYPE)   result[i]=new Short(s);
-		    if (c == Integer.TYPE) result[i]=new Integer(s);
-		    if (c == Float.TYPE)   result[i]=new Float(s);
-		    if (c == Long.TYPE)    result[i]=new Long(s);
-		    if (c == Character.TYPE && s.length()>0)
+		    else if (c == Byte.TYPE)    result[i]=new Byte(s);
+		    else if (c == Short.TYPE)   result[i]=new Short(s);
+		    else if (c == Integer.TYPE) result[i]=new Integer(s);
+            else if (c == Float.TYPE)   result[i]=new Float(s);
+            else if (c == Double.TYPE)  result[i]=new Double(s);
+		    else if (c == Long.TYPE)    result[i]=new Long(s);
+		    else if (c == Character.TYPE && s.length()>0)
 			result[i]=new Character(s.charAt(0));
 		} catch (NumberFormatException n) {
 		    printStackTrace(n);
@@ -711,7 +712,8 @@ public class JavaBridge implements Runnable {
 		    else if (c == Byte.TYPE)    result[i]=new Byte(n.byteValue());
 		    else if (c == Short.TYPE)   result[i]=new Short(n.shortValue());
 		    else if (c == Integer.TYPE) result[i]=new Integer(n.intValue());
-		    else if (c == Float.TYPE)   result[i]=new Float(n.floatValue());
+            else if (c == Float.TYPE)   result[i]=new Float(n.floatValue());
+            else if (c == Double.TYPE)  result[i]=new Double(n.doubleValue());
 		    else if (c == Long.TYPE && !(n instanceof Long))
 			result[i]=new Long(n.longValue());
 	    	} else {
@@ -1095,7 +1097,7 @@ public class JavaBridge implements Runnable {
             }
 	    setException(response, e, "Invoke", object, method, args, params);
 	    
-	    if (response.isAsync()) throw new IllegalStateException ("Out of sync", e); // abort
+	    if (response.isAsync()) throw new JavaBridgeIllegalStateException ("Out of sync", e); // abort
 	}
     }
 
@@ -1273,7 +1275,7 @@ public class JavaBridge implements Runnable {
 	    }
 	    setException(response, e, set?"SetProperty":"GetProperty", object, prop, args, params);
 	    
-	    if (response.isAsync()) throw new IllegalStateException ("Out of sync.", e); // abort
+	    if (response.isAsync()) throw new JavaBridgeIllegalStateException ("Out of sync.", e); // abort
 	}
     }
 

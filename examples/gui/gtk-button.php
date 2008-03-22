@@ -4,7 +4,7 @@
 # must be installed.
 
 <?php
-require_once ("java/Java.inc");
+require_once ("mono/Mono.inc");
 ini_set("max_execution_time", 0);
 
 class GtkDemo {
@@ -15,7 +15,7 @@ class GtkDemo {
 
     // The following is equivalent to the above mono_require
     // statement. It shows how to load a library from the GAC.
-    $Assembly=new MonoClass("System.Reflection.Assembly");
+    $Assembly=          mono("System.Reflection.Assembly");
     $assemblyName = new Mono("System.Reflection.AssemblyName");
 
     // Name is a property of AssemblyName, set_Name(...) calls the

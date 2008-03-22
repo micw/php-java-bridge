@@ -3,6 +3,7 @@
 package php.java.script;
 
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
@@ -43,7 +44,7 @@ public class EngineFactory {
     private Object getInvocableScriptEngine(Servlet servlet, 
 		     ServletContext ctx, 
 		     HttpServletRequest req, 
-		     HttpServletResponse res) throws MalformedURLException {
+		     HttpServletResponse res) throws MalformedURLException, URISyntaxException {
 	    return new InvocablePhpServletScriptEngine(servlet, ctx, req, res);
     }
     public static EngineFactory getEngineFactory(ServletContext ctx) {
@@ -71,7 +72,7 @@ public class EngineFactory {
 									 ServletContext ctx, 
 									 HttpServletRequest req, 
 									 HttpServletResponse res) throws 
-									     MalformedURLException, IllegalStateException {
+									     MalformedURLException, IllegalStateException, URISyntaxException {
 	    return (javax.script.ScriptEngine)EngineFactory.getRequiredEngineFactory(ctx).getInvocableScriptEngine(servlet, ctx, req, res);
     }
 

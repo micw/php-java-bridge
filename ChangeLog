@@ -1,3 +1,23 @@
+2008-03-16  Jost Boekemeier  <jostb@intern>
+
+	* server/META-INF/java/JavaProxy.inc (Java): correct type: use
+	$this->__cancelProxyCreationTag
+
+	* java.c (PHP_MSHUTDOWN_FUNCTION, PHP_MINIT_FUNCTION): Workaround
+	for a PHP/Apache 2.2.8 bug
+
+        * server/php/java/script/InvocablePhpServletScriptEngine.java
+        (InvocablePhpServletScriptEngine): Use URI instead of URL in order
+        to properly URLEncode the file path.
+	
+        * server/php/java/script/PhpServletScriptEngine.java
+        (eval): Use URI instead of URL in order
+        to properly URLEncode the file path.
+
+        * install.sh.in: Install java/Java.inc
+
+	* VERSION, php-java-bridge.spec: Version 5.2.1 released
+	
 2007-12-09  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/script/InvocablePhpServletScriptEngine.java

@@ -279,6 +279,9 @@ function java_require($arg) {
   return $client->invokeMethod(0, "updateJarLibraryPath", 
 							   array($arg, ini_get("extension_dir"), getcwd(), ini_get("include_path")));
 }
+/**
+ * @access private
+ */
 function java_get_lifetime ()
 {
   $session_max_lifetime=ini_get("session.gc_maxlifetime");
@@ -767,7 +770,7 @@ class Java extends java_AbstractJava {
 	  $this->__factory = $cacheEntry->factory;
   	  $this->__signature = $cacheEntry->signature;
 
-	  $result->__cancelProxyCreationTag = ++$client->cancelProxyCreationTag;
+	  $this->__cancelProxyCreationTag = ++$client->cancelProxyCreationTag;
 	} else {
 	  if(JAVA_DEBUG) { echo "cache miss for new Java: $sig\n"; }
           $client->currentCacheKey = $sig;

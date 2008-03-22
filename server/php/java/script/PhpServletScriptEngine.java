@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Map;
 
@@ -123,7 +124,7 @@ public class PhpServletScriptEngine extends PhpScriptEngine {
 
 	    String filePath = req.getContextPath()+"/"+tempfile.getName();
 	    req.getContextPath();
-	    url = new URL (url.getProtocol(), url.getHost(), url.getPort(), filePath);
+	    url = new java.net.URI(url.getProtocol(), null, url.getHost(), url.getPort(), filePath, null, null).toURL();
 	    
             /* now evaluate our script */
 	    
@@ -137,7 +138,9 @@ public class PhpServletScriptEngine extends PhpScriptEngine {
 	    Util.printStackTrace(e);
 	} catch (IOException e) {
 	    Util.printStackTrace(e);
-        } finally {
+        } catch (URISyntaxException e) {
+            Util.printStackTrace(e);
+    } finally {
             if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}
             if(fout!=null) try { fout.close(); } catch (IOException e) {/*ignore*/}
             if(tempfile!=null) tempfile.delete();

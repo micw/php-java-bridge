@@ -272,7 +272,8 @@ class java_HttpHandler extends java_SocketHandler {
 	$res .= "\177";
 	$res .= $compatibility;
 	$res .= $data;
-	return fwrite($socket, $res); fflush($socket);
+	$count = fwrite($socket, $res); fflush($socket);
+	return $count;
   }
   function doSetCookie($key, $val, $path) {
 	$path=trim($path);

@@ -169,6 +169,24 @@ if(!function_exists("java_get_base")) {
   function java_get_server_name() { return java_server_name(); }
 
   /**
+   * Alias for java_is_null();
+   * @access private
+   * @see #java_is_null();
+   */
+  function java_isnull($value) { return is_null (java_values ($value)); }
+
+  /**
+   * Checks whether a value is null or not.
+   *
+   * Example: <code> java_is_null(java("java.lang.System")->;getProperty("foo")) </code>
+   *
+   * @access public
+   * @param $value A Java object or a PHP value
+   * @return true if $value is the PHP or Java null value.
+   */
+  function java_is_null($value) { return is_null (java_values ($value)); }
+
+  /**
    * Alias for java_set_file_encoding();
    * @access private
    * @see #java_set_file_encoding();
