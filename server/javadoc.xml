@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="javadoc">
+    <target name="javadoc">
+        <javadoc access="public" author="true" classpath="../php-java-bridge/unsupported/servlet-api.jar" destdir="documentation/API" doctitle="PHP/Java Bridge" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" packagenames="php.java.servlet,javax.script,php.java.servlet.fastcgi,php.java.bridge,php.java.script,php.java.bridge.http" source="1.3" sourcepath="." splitindex="true" use="true" version="true"/>
+    </target>
+</project>
