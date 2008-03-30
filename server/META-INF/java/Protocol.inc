@@ -236,7 +236,7 @@ class java_HttpHandler extends java_SocketHandler {
   }
   function getWebApp() {
 	$context = $this->getWebAppInternal();
-	if(is_null($context) && JAVA_SERVLET=="On") $context = JAVA_SERVLET;
+	if(is_null($context)) $context = JAVA_SERVLET;
 	if(is_null($context) || $context[0]!="/") 
 	  $context = "/JavaBridge/JavaBridge.phpjavabridge";
 	return $context;

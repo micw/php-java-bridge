@@ -111,7 +111,6 @@ public class PhpCGIServlet extends FastCGIServlet {
 	    }
 	} catch (Throwable t) {Util.printStackTrace(t);}      
 
-	Util.TCP_SOCKETNAME = String.valueOf(CGI_CHANNEL);
 	DOCUMENT_ROOT = getRealPath(context, "");
 	SERVER_SIGNATURE = context.getServerInfo();
     }

@@ -41,7 +41,8 @@
 if(!function_exists("java_get_base")) {
   $version = phpversion();
   if ((version_compare("5.1.2", $version, ">"))) {
-	$msg = "<br><strong>PHP $version too old.</strong><br>\nFor PHP versions < 5.1.4 install the java.so or php_java.dll from the php-java-bridge-legacy download.<br>\nOr set the path to the PHP executable, see php_exec in the WEB-INF/web.xml";
+	$msg = "<br><strong>PHP $version too old.</strong><br>\nPlease set the path to
+a PHP 5.1.x executable, see php_exec in the WEB-INF/web.xml";
 	die($msg);
   }
   /**

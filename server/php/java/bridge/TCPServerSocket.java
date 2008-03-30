@@ -42,16 +42,12 @@ class TCPServerSocket implements ISocketFactory {
 	int p;
 	boolean local = false;
 
-	if(name==null) name=Util.TCP_SOCKETNAME;
+	if(name==null) throw new NullPointerException ("name");
 	if(name.startsWith("INET:")) name=name.substring(5);
 	if(name.startsWith("INET_LOCAL:")) { local = true; name=name.substring(11); }
 	else if(name.startsWith("LOCAL:")) return null;
 	    
-	try {
-	    p=Integer.parseInt(name);
-	} catch (NumberFormatException e) {
-	    p=Integer.parseInt(Util.TCP_SOCKETNAME);
-	}
+	p=Integer.parseInt(name);
 	TCPServerSocket s = new TCPServerSocket(p, backlog, local);
 	return s;
     }

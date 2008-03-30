@@ -537,13 +537,13 @@ public class JavaBridge implements Runnable {
                         Object elem = iterator.next();
                         Class ptype = param.getComponentType(), atype = elem.getClass();
                         if (ptype!=atype) {
-                            w+=8200+weight(ptype, atype, null);
+                            w+=(ptype==Object.class?10:8200)+weight(ptype, atype, null);
                         }
                     }
                 } else if(arg.isArray()) {
                     Class ptype = param.getComponentType(), atype = arg.getComponentType();
                     if (ptype!=atype) {
-                        w+=8200+weight(ptype, atype, null);
+                        w+=(ptype==Object.class?10:8200)+weight(ptype, atype, null);
                     }
                 }
                 else w+=9999;

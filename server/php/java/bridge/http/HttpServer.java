@@ -86,7 +86,7 @@ public abstract class HttpServer implements Runnable {
      */
     protected HttpServer(String serverPort) throws IOException {
 	if(serverPort==null) serverPort = "0";
-	if(!serverPort.startsWith("INET")) serverPort = Util.JAVABRIDGE_PROMISCUOUS ? "INET:" : "INET_LOCAL:" + serverPort;
+	if(!serverPort.startsWith("INET")) serverPort = (Util.JAVABRIDGE_PROMISCUOUS ? "INET:" : "INET_LOCAL:") + serverPort;
 	socket = bind(serverPort);
 	try {
 		pool = createThreadPool(Util.EXTENSION_NAME+"HttpServerThreadPool");

@@ -74,12 +74,11 @@ if (defined ("JAVA_PARSE_INI_FILE") && JAVA_PARSE_INI_FILE) {
 if(!defined("JAVA_HOSTS")) {
   if(!java_defineHostFromInitialQuery($JAVA_BASE)) {
 	define("JAVA_HOSTS", "127.0.0.1:8080"); // host1:port1;host2:port2;...
-	define("JAVA_SERVLET", "On"); // On ;; On or User
   }
- } else {
-  if(!defined("JAVA_SERVLET")) 
-	define("JAVA_SERVLET", "On"); // On ;; On or User
  }
+if(!defined("JAVA_SERVLET")) {
+  define("JAVA_SERVLET", "On"); // On ;; On or User
+}
 // The request log level between 0 (log off) and 4 (log debug). The
 // default request log level is initialized with the value from to the
 // Java system property "php.java.bridge.default_log_level".  The

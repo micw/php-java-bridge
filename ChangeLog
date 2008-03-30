@@ -1,3 +1,25 @@
+2008-03-22  Jost Boekemeier  <jostb@intern>
+
+	Util must not be accessed before JavaBridge.initLog is called, see
+	test php.java.bridge.test.startup=true in Standalone.java::init().
+	* server/php/java/bridge/Util.java (getCanonicalWindowsFile):
+	Moved to Standalone.
+
+	* server/php/java/bridge/Standalone.java (getCanonicalWindowsFile):
+	Added from Util.
+
+	* server/php/java/bridge/SessionFactory.java (SessionTimer):
+	Do not use Util at this stage. Util must not be used
+	before Standalone.initLog.
+
+	* server/META-INF/java/Protocol.inc (getWebApp):
+	Connect Apache's /myPhpWebApp/ with the J2EE /myPhpWebApp
+
+	* tests.php5/script_api.php: Corrected a bug in the test code.
+	
+	* VERSION, php-java-bridge.spec: Version 5.2.2 released
+	
+	
 2008-03-16  Jost Boekemeier  <jostb@intern>
 
 	* server/META-INF/java/JavaProxy.inc (Java): correct type: use

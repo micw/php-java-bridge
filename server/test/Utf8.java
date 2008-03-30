@@ -7,6 +7,7 @@ import java.io.StringReader;
 import javax.script.Invocable;
 import javax.script.ScriptException;
 
+import php.java.script.InvocablePhpScriptEngine;
 import php.java.script.PhpScriptEngine;
 
 /**
@@ -36,7 +37,7 @@ public class Utf8 {
 	    "java_context()->call(java_closure()); \n"+
 	    "?>";
 
-	PhpScriptEngine engine = new PhpScriptEngine();
+	InvocablePhpScriptEngine engine = new InvocablePhpScriptEngine();
 	StringReader reader = new StringReader(phpCode);
 	engine.eval(reader);
 

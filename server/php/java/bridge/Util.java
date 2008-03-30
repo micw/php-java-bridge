@@ -130,11 +130,6 @@ public final class Util {
 	}
     }
     
-    /** The default HTTP port for management clients */
-    public static final int HTTP_PORT_BASE = 8080;
-    /** The default Port for Mono and .NET clients */
-    public static int EXTENSION_TCP_PORT_BASE;
-
     /**
      * The default CGI locations: <code>"/usr/bin/php-cgi"</code>, <code>"c:/php/php-cgi.exe</code>
      */
@@ -178,12 +173,6 @@ public final class Util {
     
     /** Set to true if the VM is gcj, false otherwise */
     public static final boolean IS_GNU_JAVA = checkVM();
-
-    /** 
-     * The TCP socket name. Default is 9267.
-     * @see System property <code>php.java.bridge.tcp_socketname</code>
-     */
-    public static String TCP_SOCKETNAME;
 
     /**
      * The name of the extension, usually "JavaBridge" or "MonoBridge"
@@ -277,13 +266,8 @@ public final class Util {
     	    JAVABRIDGE_PROMISCUOUS = false;
 	    JAVABRIDGE_PROMISCUOUS = System.getProperty("php.java.bridge.promiscuous", "false").toLowerCase().equals("true");	    
 	} catch (Exception e) {/*ignore*/}
-	try {
-    	    IS_MONO=false;
-    	    Util.CLRAssembly = Class.forName("cli.System.Reflection.Assembly");
-    	    Util.loadFileMethod = Util.CLRAssembly.getMethod("LoadFile", new Class[] {String.class});
-    	    Util.loadMethod = Util.CLRAssembly.getMethod("Load", new Class[] {String.class});
-    	    IS_MONO=true;
-    	} catch (Exception e) {/*ignore*/}
+
+	IS_MONO = Standalone.checkMono();
 
     	Properties p = new Properties();
 	try {
@@ -298,13 +282,6 @@ public final class Util {
 	} catch (Throwable t) {
 	    //t.printStackTrace();
 	};
-	if (IS_MONO) {
-	    	EXTENSION_TCP_PORT_BASE = 9167;
-		TCP_SOCKETNAME = String.valueOf(Integer.parseInt(getProperty(p, "TCP_SOCKETNAME", "9267"))-100);
-	} else {
-	    	EXTENSION_TCP_PORT_BASE = 9267;
-		TCP_SOCKETNAME = getProperty(p, "TCP_SOCKETNAME", String.valueOf(EXTENSION_TCP_PORT_BASE));
-	}
 	EXTENSION_NAME = getProperty(p, "EXTENSION_DISPLAY_NAME", "JavaBridge");
 	PHP_EXEC = getProperty(p, "PHP_EXEC", null);
 	try {
@@ -705,18 +682,6 @@ public final class Util {
 		addr = InetAddress.getLocalHost().getHostAddress();
 	} catch (UnknownHostException e) {/*ignore*/}
 	return addr;
-    }
-    /**
-     * Returns the canonical windows file. For example c:\program files instead of c:\programme
-     * @param path The path, may be an empty string.
-     * @return the canonical file.
-     */
-    public static File getCanonicalWindowsFile (String path) {
-	    try {
-	        return new File(path).getCanonicalFile();
-        } catch (IOException e) {
-	        return new File(path);
-        }
     }
     /**
      * Checks if the cgi binary buf-&lt;os.arch&gt;-&lt;os.name&gt;.sh or buf-&lt;os.arch&gt;-&lt;os.name&gt;.exe or buf-&lt;os.arch&gt;-&lt;os.name&gt; exists.

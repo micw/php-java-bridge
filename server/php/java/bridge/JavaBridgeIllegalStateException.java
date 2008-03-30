@@ -28,7 +28,12 @@ package php.java.bridge;
 public class JavaBridgeIllegalStateException extends
     java.lang.IllegalStateException {
 
-  public JavaBridgeIllegalStateException(String string, Throwable e) {
+  /**
+     * 
+     */
+    private static final long serialVersionUID = -2335751296956301571L;
+
+public JavaBridgeIllegalStateException(String string, Throwable e) {
       super(string);
       initCause(e);
   }

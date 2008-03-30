@@ -146,7 +146,7 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
      * @see javax.script.Invocable#getInterface(java.lang.Object, java.lang.Class)
      */
     public Object getInterface(Object thiz, Class clasz) {
-      if(thiz==null) throw new NullPointerException("Object thiz cannot be null.");
+      if(thiz==null) throw new NullPointerException("Object thiz cannot be null. Please check if the previous call to eval() reported any errors.");
       return ((PhpProcedureProxy)thiz).getNewFromInterface(clasz);
     }
 

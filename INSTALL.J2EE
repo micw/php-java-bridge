@@ -99,8 +99,17 @@ Deployment
   the Java VM "127.0.0.1:8080/myPhpApp". For example:
 
     define("JAVA_HOSTS", "127.0.0.1:8080"); 
-    define("JAVA_SERVLET", "User"); 
+    define("JAVA_SERVLET", "/myPhpApp/JavaBridge.phpjavabridge"); 
 
+  Or set JAVA_PARSE_INI_FILE and use the following java.ini file:
+
+    [java]
+    java.servlet=/myPhpApp/JavaBridge.phpjavabridge
+    
+    <?php define ("JAVA_PARSE_INI_FILE", true);
+          require_once("java/Java.inc");
+      ...
+    ?>
 
 * Firewall-out the J2EE/Servlet port 8080, if necessary. Or modify the
   J2EE/Servlet so that it listens only on the local interface. Note that

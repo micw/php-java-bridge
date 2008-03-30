@@ -49,6 +49,9 @@ import javax.swing.JOptionPane;
 
 public class Standalone {
 
+    /** The default HTTP port for management clients */
+    public static final int HTTP_PORT_BASE = 8080;
+
     /**
      * Create a new server socket and return it. This procedure should only
      * be used at boot time. Use JavaBridge.bind instead.
@@ -131,6 +134,21 @@ public class Standalone {
    }
 
     /**
+     * Copy of Util.IS_MONO. This is here because Util must not be accessed during startup.
+     * @return true if this is the Mono VM, false otherwise
+     */
+    static boolean checkMono () {
+        boolean IS_MONO = false;
+        try {
+            Util.CLRAssembly = Class.forName("cli.System.Reflection.Assembly");
+            Util.loadFileMethod = Util.CLRAssembly.getMethod("LoadFile", new Class[] {String.class});
+            Util.loadMethod = Util.CLRAssembly.getMethod("Load", new Class[] {String.class});
+            IS_MONO=true;
+        } catch (Exception e) {/*ignore*/}
+        return IS_MONO;
+    }
+    
+    /**
      * Global init. Redirects System.out and System.err to the server
      * log file(s) or to System.err and creates and opens the
      * communcation channel. Note: Do not write anything to
@@ -141,6 +159,9 @@ public class Standalone {
     protected void init(String s[]) {
 	String sockname=null;
 	int logLevel = -1;
+	boolean isMono = checkMono();
+        String tcpSocketName = isMono ? "9167" : "9267";
+	
 	if(s.length>3) checkOption(s);
 	try {
 	    if(s.length>0) {
@@ -156,10 +177,11 @@ public class Standalone {
 	    } catch (Throwable t) {
 		t.printStackTrace();
 	    }
-	    if(s.length==0 && !Util.IS_MONO) {
+	    if(s.length==0 && !isMono) {
 		try {
-		    int freeJavaPort = findFreePort(Util.EXTENSION_TCP_PORT_BASE);
-		    int freeHttpPort = findFreePort(Util.HTTP_PORT_BASE);
+		    int tcpSocket = Integer.parseInt(tcpSocketName);
+		    int freeJavaPort = findFreePort(tcpSocket);
+		    int freeHttpPort = findFreePort(Standalone.HTTP_PORT_BASE);
 		    Object result = JOptionPane. showInputDialog(null,
 			    "Start a socket listener on port", "Starting the PHP/Java Bridge ...", JOptionPane.QUESTION_MESSAGE, null,
 		            new String[] {"LOCAL:/var/run/.php-java-bridge_socket", 
@@ -172,7 +194,7 @@ public class Standalone {
 
 	    if(s.length==0) {
 		// do not access Util unless invoked as standalone component
-		TCPServerSocket.TCP_PORT_BASE=Integer.parseInt(Util.TCP_SOCKETNAME);
+		TCPServerSocket.TCP_PORT_BASE=Integer.parseInt(tcpSocketName);
 	    }
 	    checkServlet(logLevel, sockname, s);
 	    ISocketFactory socket = bind(logLevel, sockname);
@@ -191,6 +213,18 @@ public class Standalone {
 	catch (Throwable ex) { throw new RuntimeException(ex); }
     }
 
+    /**
+     * Returns the canonical windows file. For example c:\program files instead of c:\programme
+     * @param path The path, may be an empty string.
+     * @return the canonical file.
+     */
+    public static File getCanonicalWindowsFile (String path) {
+            try {
+                return new File(path).getCanonicalFile();
+        } catch (IOException e) {
+                return new File(path);
+        }
+    }
     private static void checkServlet(int logLevel, String sockname, String[] s) throws InterruptedException, IOException {
 	if(sockname==null) return;
 	if(sockname.startsWith("SERVLET_LOCAL:")) System.setProperty("php.java.bridge.promiscuous", "false");
@@ -230,7 +264,7 @@ public class Standalone {
 	    boolean isExecutableJavaBridgeJar = (cp.indexOf(File.pathSeparatorChar)==-1) && 
 	    					cp.endsWith("JavaBridge.jar") && 
 	    					((jbFile=new File(cp)).isAbsolute());
-	    File wd = Util.getCanonicalWindowsFile(isExecutableJavaBridgeJar ? jbFile.getParent() : "");
+	    File wd = Standalone.getCanonicalWindowsFile(isExecutableJavaBridgeJar ? jbFile.getParent() : "");
 	    boolean sunJavaInstalled = (new File("/usr/java/default/bin/java")).exists();
 	    String javaExec = sunJavaInstalled ? "/usr/java/default/bin/java" : "java";
 

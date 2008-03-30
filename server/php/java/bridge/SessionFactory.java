@@ -120,8 +120,11 @@ public class SessionFactory extends JavaBridgeFactory {
 	private Thread thread;
         public SessionTimer() {
 
+/*
+ Must not access Util at this point
             if (Util.logLevel>5) 
         	    System.out.println("lifecycle: init session timer "+System.identityHashCode(SessionFactory.class));
+*/
 
 	    thread = (new Util.Thread(this, "JavaBridgeSessionTimer"));
 	    thread.start();

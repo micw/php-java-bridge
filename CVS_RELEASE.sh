@@ -31,7 +31,8 @@ for i in ICSharpCode.SharpZipLib.dll IKVM.GNU.Classpath.dll IKVM.Runtime.dll Mon
  cp modules/$i MONO.STANDALONE
 done
 cp examples/gui/gtk-button.php examples/gui/gtk-fileselector.php tests.mono+net/test.php tests.mono+net/sample_lib.cs tests.mono+net/sample_lib.dll tests.mono+net/load_assembly.php MONO.STANDALONE
-cp server/META-INF/java/Mono.inc MONO.STANDALONE
+mkdir MONO.STANDALONE/mono
+cp server/META-INF/java/Mono.inc MONO.STANDALONE/mono
 cp README.MONO+NET MONO.STANDALONE
 
 mkdir JAVA.STANDALONE
@@ -43,7 +44,8 @@ cp examples/bench/exceltest.jar examples/bench/ExcelTest.java examples/bench/exc
 sed 's|\.\./\.\./unsupported/||' <examples/bench/bench.php >JAVA.STANDALONE/bench.php
 cp unsupported/poi.jar JAVA.STANDALONE
 cp unsupported/log4j.jar JAVA.STANDALONE
-cp server/META-INF/java/Java.inc JAVA.STANDALONE
+mkdir JAVA.STANDALONE/java
+cp server/META-INF/java/Java.inc JAVA.STANDALONE/java
 cp INSTALL.STANDALONE JAVA.STANDALONE
 
 mkdir LINUX

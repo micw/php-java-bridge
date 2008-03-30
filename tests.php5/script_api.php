@@ -19,12 +19,12 @@
  * ContextFactories and 5 CGIRunners.
  */
 
-require_once ("java/Java.inc");
+include_once("java/Java.inc");
 /*
  * Call the Java continuation from the PHP continuation. If that
  * failed, start main().
  */
-$IRunnable = new JavaClass("java.lang.Runnable");
+$IRunnable = java("java.lang.Runnable");
 java_context()->call(java_closure(new Runnable(), null, $IRunnable));
 if (!java_values(java_context()->getAttribute("name", 100))) main();
 
@@ -37,7 +37,7 @@ class Runnable {
   function run() {
     $name = java_values(java_context()->getAttribute("name", 100)); // engine scope
     $out = new Java("java.io.FileOutputStream", "$name.out", true);
-    $Thread = new JavaClass("java.lang.Thread");
+    $Thread = java("java.lang.Thread");
     $nr = java_values(java_context()->getAttribute("nr", 100));
     echo "started thread: $nr\n";
     for($i=0; $i<10; $i++) {

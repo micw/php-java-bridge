@@ -3,6 +3,11 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 5.2.2
+
+* This version contains bug fixes only.
+
+
 Version 5.2.1
 
 * java_isnull() or java_is_null() can be used to test for a Java NULL value. 
