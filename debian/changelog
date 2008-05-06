@@ -1,3 +1,11 @@
+php-java-bridge (5.2.2-1) unstable; urgency=low
+
+  * New upstream release.
+  * Packaging improvements and corrections. 
+    Adjustments of package sizes and contents.
+
+ -- Andre Felipe Machado <andremachado@techforce.com.br>  Tue, 06 May 2008 12:02:33 -0300
+
 php-java-bridge (5.1.0-1) unstable; urgency=low
 
   * New upstream release.
