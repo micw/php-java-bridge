@@ -3,7 +3,6 @@ test.php
 run-tests.php
 security
 tests.mono+net
-tests.php4
 tests.php5
 unsupported
 server/php/
