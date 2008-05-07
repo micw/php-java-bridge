@@ -3,7 +3,6 @@ install.sh.in
 php-java-bridge.spec
 test.php
 test.bat
-test.php4
 test.sh
 run-tests.php
 security
