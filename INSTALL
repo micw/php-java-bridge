@@ -8,7 +8,7 @@ and the install.sh script should be sufficient.
 NOTE for Fedora and RedHat Enterprise Linux: Linux RPMs contain
 Security Enhanced Linux contexts. If you want to install software on a
 SEL system (RHEL, Fedora, ...), please use the RPM build system
-instead (rpmbuild --rebuild php-java-bridge*src.rpm).  However, for a
+instead (rpmbuild -tb php-java-bridge*.tar.gz).  However, for a
 development system you can switch off SEL and follow the instructions
 below.
 
@@ -25,11 +25,11 @@ export INST LD_LIBRARY_PATH PATH
 (cd autoconf-2.59; ./configure --prefix=$INST && make && make install)
 (cd automake-1.9; ./configure --prefix=$INST && make && make install)
 (cd libtool-1.5.20; ./configure --prefix=$INST && make && make install)
-(cd php-5.*; ./configure --prefix=$INST --disable-all --enable-fastcgi && make && make install)
-(cd php-java-bridge-3.*; phpize && ./configure --with-java=/usr/java/jdk1.5.0 && make && make install)
+(cd php*; ./configure --prefix=$INST --disable-all --enable-fastcgi && make && make install)
+(cd php-java-bridge*; phpize && ./configure --with-java=/usr/java/jdk1.5.0 && make && make install)
 
 # test
-php php-java-bridge-3.*/test.php >result.html
+php php-java-bridge*/test.php >result.html
 
 
 

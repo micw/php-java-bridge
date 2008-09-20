@@ -48,14 +48,7 @@ import php.java.servlet.CGIServlet;
  */
 
 
-public class InvocablePhpServletScriptEngine extends InvocablePhpScriptEngine {
-    protected Servlet servlet;
-    protected ServletContext servletCtx;
-    protected HttpServletRequest req;
-    protected HttpServletResponse res;
-    
-    protected PhpSimpleHttpScriptContext scriptContext;
-
+public class InvocablePhpServletScriptEngine extends InvocablePhpServletLocalScriptEngine {
     private File path;
     private URL url;
     private File tempfile = null;
@@ -64,52 +57,15 @@ public class InvocablePhpServletScriptEngine extends InvocablePhpScriptEngine {
 					   ServletContext ctx, 
 					   HttpServletRequest req, 
 					   HttpServletResponse res) throws MalformedURLException, URISyntaxException {
-	super();
-
-	this.servlet = servlet;
-	this.servletCtx = ctx;
-	this.req = req;
-	this.res = res;
-
-	scriptContext.initialize(servlet, servletCtx, req, res);
-	String filePath;
-        url = new java.net.URL((req.getRequestURL().toString()));
-	if (!new File(CGIServlet.getRealPath(ctx, "java/JavaProxy.php")).exists())
-	    filePath = "/JavaBridge/java/JavaProxy.php";
-	else
-	    filePath = req.getContextPath()+"/java/JavaProxy.php";
-	url = new java.net.URI(url.getProtocol(), null, url.getHost(), url.getPort(), filePath, null, null).toURL();
+	super(servlet, ctx, req, res);
 	path = new File(CGIServlet.getRealPath(ctx, ""));
     }
-    protected ScriptContext getPhpScriptContext() {
-	        Bindings namespace;
-	        scriptContext = new PhpSimpleHttpScriptContext();
-	        
-	        namespace = createBindings();
-	        scriptContext.setBindings(namespace,ScriptContext.ENGINE_SCOPE);
-	        scriptContext.setBindings(getBindings(ScriptContext.GLOBAL_SCOPE),
-					  ScriptContext.GLOBAL_SCOPE);
-	        
-	        return scriptContext;
-	    }    
-    /**
-     * Create a new context ID and a environment map which we send to the client.
-     *
-     */
-    protected void setNewContextFactory() {
-        IPhpScriptContext context = (IPhpScriptContext)getContext(); 
-	env = (Map) this.processEnvironment.clone();
-
-	ctx = InvocablePhpServletContextFactory.addNew((IContext)context, servlet, servletCtx, req, res);
-    	
-	/* send the session context now, otherwise the client has to 
-	 * call handleRedirectConnection */
-	env.put("X_JAVABRIDGE_CONTEXT", ctx.getId());
-	env.put("X_JAVABRIDGE_INCLUDE", tempfile.getPath());
-    }
-    
     protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
-        if(continuation != null) release();
+
+	// use a short path, if the script file already exists
+	if (reader instanceof ScriptFileReader) return super.eval(reader, context, name);
+	
+	if(continuation != null) release();
      	FileOutputStream fout = null;
         Reader localReader = null;
   	if(reader==null) return null;

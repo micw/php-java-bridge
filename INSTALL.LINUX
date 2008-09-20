@@ -1,11 +1,9 @@
 Overview
 --------
 
-The Linux binary associates a HTTP Server with a managed and
-persistent Java VM or an external J2EE server. The "java.so" file
-contained in the Linux binary packages is the PHP "Java.inc" compiled
-to native code. It supports the Zend and the standard PHP extension
-mechanism.
+
+The "java.so" file contained in the Linux binary packages starts a
+Java VM as a sub process of the HTTP server.
 
 This document describes how to install the PHP/Java Bridge Linux
 packages. The Linux RPM files contain a compiled, native version of

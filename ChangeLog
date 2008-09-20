@@ -1,5 +1,22 @@
 2008-03-22  Jost Boekemeier  <jostb@intern>
 
+	* sample_lib.cs: Removed debug code.
+	
+	* examples/php+jsp/jsr223.jsp, examples/php+jsp/jsp+php.jsp: Cache the scripts
+	
+	* server/php/java/script/InvocablePhpServletLocalScriptEngine.java, server/php/java/script/PhpServletLocalScriptEngine.java: new files
+
+	* server/php/java/script/PhpServletScriptEngine.java, server/php/java/script/InnvocablePhpServletScriptEngine.java: Use a short path if the scripts are cached.
+	
+	* server/php/java/script/EngineFactory.java (getPhpScript): New function.
+	
+	* java.c (PHP_MINIT_FUNCTION): Make sure that the php-java-bridge
+	directory can be removed.
+
+	* VERSION, php-java-bridge.spec: Version 5.2.2.1 released
+
+2008-03-22  Jost Boekemeier  <jostb@intern>
+
 	Util must not be accessed before JavaBridge.initLog is called, see
 	test php.java.bridge.test.startup=true in Standalone.java::init().
 	* server/php/java/bridge/Util.java (getCanonicalWindowsFile):

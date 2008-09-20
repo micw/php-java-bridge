@@ -2,6 +2,10 @@
 
 package php.java.script;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 
@@ -9,6 +13,9 @@ import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import php.java.bridge.Util;
+
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -76,4 +83,21 @@ public class EngineFactory {
 	    return (javax.script.ScriptEngine)EngineFactory.getRequiredEngineFactory(ctx).getInvocableScriptEngine(servlet, ctx, req, res);
     }
 
+    public static FileReader getPhpScript (String path) {
+	try {
+	    return new ScriptFileReader(new File(path+"._cache_.php"));
+        } catch (IOException e) {
+	    Util.printStackTrace(e);
+        }
+	return null;
+    }
+    
+    public static FileReader getPhpScript (String path, Reader scriptReader) {
+	try {
+	    return new ScriptFileReader(new File(path+"._cache_.php"), scriptReader);
+        } catch (IOException e) {
+	    Util.printStackTrace(e);
+        }
+	return null;
+    }
 }

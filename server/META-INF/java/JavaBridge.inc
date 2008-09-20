@@ -188,6 +188,42 @@ a PHP 5.1.x executable, see php_exec in the WEB-INF/web.xml";
   function java_is_null($value) { return is_null (java_values ($value)); }
 
   /**
+   * Alias for java_is_null();
+   * @access private
+   * @see #java_is_null();
+   */
+  function java_istrue($value) { return  (boolean)(java_values ($value)); }
+
+  /**
+   * Checks whether a value is null or not.
+   *
+   * Example: <code> java_is_null(java("java.lang.System")->;getProperty("foo")) </code>
+   *
+   * @access public
+   * @param $value A Java object or a PHP value
+   * @return true if $value is the PHP or Java null value.
+   */
+  function java_is_true($value) { return (boolean)(java_values ($value)); }
+
+  /**
+   * Alias for java_is_null();
+   * @access private
+   * @see #java_is_null();
+   */
+  function java_isfalse($value) { return !(java_values ($value)); }
+
+  /**
+   * Checks whether a value is null or not.
+   *
+   * Example: <code> java_is_null(java("java.lang.System")->;getProperty("foo")) </code>
+   *
+   * @access public
+   * @param $value A Java object or a PHP value
+   * @return true if $value is the PHP or Java null value.
+   */
+  function java_is_false($value) { return !(java_values ($value)); }
+
+  /**
    * Alias for java_set_file_encoding();
    * @access private
    * @see #java_set_file_encoding();

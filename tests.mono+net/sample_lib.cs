@@ -3,10 +3,6 @@ using System.Text;
 
 namespace sample {
   public class ArrayToString {
-    public static string Convert(params object[] arr) {
-	Console.WriteLine("gotit");
-	return null;
-    }
     public static string Convert(int[] arr) {
 	StringBuilder b = new StringBuilder(arr.Length);
 	for(int i=0; i<arr.Length; i++) {

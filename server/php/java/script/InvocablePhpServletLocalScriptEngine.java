@@ -48,60 +48,95 @@ import php.java.servlet.CGIServlet;
  */
 
 
-public class PhpServletScriptEngine extends PhpServletLocalScriptEngine {
-    private File path;
-    public PhpServletScriptEngine(Servlet servlet, 
-				  ServletContext ctx, 
-				  HttpServletRequest req, 
-				  HttpServletResponse res) throws MalformedURLException {
-	super (servlet, ctx, req, res);
-	path = new File(CGIServlet.getRealPath(ctx, ""));
-    }
-    protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
+abstract class InvocablePhpServletLocalScriptEngine extends InvocablePhpScriptEngine {
+    protected Servlet servlet;
+    protected ServletContext servletCtx;
+    protected HttpServletRequest req;
+    protected HttpServletResponse res;
+    
+    protected PhpSimpleHttpScriptContext scriptContext;
 
-	// use a short path if the script file already exists
-	if (reader instanceof ScriptFileReader) return super.eval(reader, context, name);
-	
-    	File tempfile = null;
-    	FileOutputStream fout = null;
+    protected URL url;
+    private File scriptFile = null;
+  
+    public InvocablePhpServletLocalScriptEngine(Servlet servlet, 
+					   ServletContext ctx, 
+					   HttpServletRequest req, 
+					   HttpServletResponse res) throws MalformedURLException, URISyntaxException {
+	super();
+
+	this.servlet = servlet;
+	this.servletCtx = ctx;
+	this.req = req;
+	this.res = res;
+
+	scriptContext.initialize(servlet, servletCtx, req, res);
+	String filePath;
+        url = new java.net.URL((req.getRequestURL().toString()));
+	if (!new File(CGIServlet.getRealPath(ctx, "java/JavaProxy.php")).exists())
+	    filePath = "/JavaBridge/java/JavaProxy.php";
+	else
+	    filePath = req.getContextPath()+"/java/JavaProxy.php";
+	url = new java.net.URI(url.getProtocol(), null, url.getHost(), url.getPort(), filePath, null, null).toURL();
+    }
+    protected ScriptContext getPhpScriptContext() {
+	        Bindings namespace;
+	        scriptContext = new PhpSimpleHttpScriptContext();
+	        
+	        namespace = createBindings();
+	        scriptContext.setBindings(namespace,ScriptContext.ENGINE_SCOPE);
+	        scriptContext.setBindings(getBindings(ScriptContext.GLOBAL_SCOPE),
+					  ScriptContext.GLOBAL_SCOPE);
+	        
+	        return scriptContext;
+	    }    
+    /**
+     * Create a new context ID and a environment map which we send to the client.
+     *
+     */
+    protected void setNewContextFactory() {
+        IPhpScriptContext context = (IPhpScriptContext)getContext(); 
+	env = (Map) this.processEnvironment.clone();
+
+	ctx = InvocablePhpServletContextFactory.addNew((IContext)context, servlet, servletCtx, req, res);
+    	
+	/* send the session context now, otherwise the client has to 
+	 * call handleRedirectConnection */
+	env.put("X_JAVABRIDGE_CONTEXT", ctx.getId());
+	env.put("X_JAVABRIDGE_INCLUDE", scriptFile.getPath());
+    }
+    
+    protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
+  	ScriptFileReader scriptReader = (ScriptFileReader) reader;
+  	
+        if(continuation != null) release();
+     	FileOutputStream fout = null;
         Reader localReader = null;
   	if(reader==null) return null;
   	
-  	setNewContextFactory();
-        setName(name);
-        
         try {
-	    fout = new FileOutputStream(tempfile=File.createTempFile("tempfile", ".php", path));
-	    OutputStreamWriter writer = new OutputStreamWriter(fout);
-	    char[] cbuf = new char[Util.BUF_SIZE];
-	    int length;
+            scriptFile = scriptReader.getFile().getAbsoluteFile();
+            
+	    setNewContextFactory();
+	    setName(name);
 
-	    while((length=reader.read(cbuf, 0, cbuf.length))>0) 
-		writer.write(cbuf, 0, length);
-	    writer.close();
-
-	    String filePath = req.getContextPath()+"/"+tempfile.getName();
-	    url = new java.net.URI(url.getProtocol(), null, url.getHost(), url.getPort(), filePath, null, null).toURL();
-	    
             /* now evaluate our script */
-	    
 	    localReader = new URLReader(url);
             try { this.script = doEval(localReader, context);} catch (Exception e) {
         	Util.printStackTrace(e);
         	throw this.scriptException = new PhpScriptException("Could not evaluate script", e);
             }
             try { localReader.close(); localReader=null; } catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not close script", e);}
+            /* get the proxy, either the one from the user script or our default proxy */
+            try { this.scriptClosure = this.script.getProxy(new Class[]{}); } catch (Exception e) { return null; }
+            handleRelease();
 	} catch (FileNotFoundException e) {
 	    Util.printStackTrace(e);
 	} catch (IOException e) {
 	    Util.printStackTrace(e);
-        } catch (URISyntaxException e) {
-            Util.printStackTrace(e);
-    } finally {
+        } finally {
             if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}
             if(fout!=null) try { fout.close(); } catch (IOException e) {/*ignore*/}
-            if(tempfile!=null) tempfile.delete();
-            release ();
         }
 	return null;
     }

@@ -292,6 +292,8 @@ class java_Client /* implements IDocHandler */ {
 
   function java_Client() {
 	$this->RUNTIME = array();
+	$this->RUNTIME["NOTICE"]='***USE echo java_inspect(jVal) OR print_r(java_values(jVal)) TO SEE THE CONTENTS OF THIS JAVA OBJECT!***';
+
 	// named pipes are enabled if shared memory is accessible
 	if(JAVA_PIPE_DIR && function_exists("posix_mkfifo")) 
 	  $this->RUNTIME['PIPE_DIR']=JAVA_PIPE_DIR;

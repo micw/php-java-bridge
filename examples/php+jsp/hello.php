@@ -20,6 +20,7 @@
 
 <td>
 <?php
+if(!function_exists("bindtextdomain")) die("function bindtextdomain not found. Please install language support, see http://php.net for details");
 bindtextdomain("hello", "./locale");
 textdomain("hello");
 setlocale(LC_ALL, $lang);

@@ -4,9 +4,7 @@ package php.java.script;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -48,44 +46,79 @@ import php.java.servlet.CGIServlet;
  */
 
 
-public class PhpServletScriptEngine extends PhpServletLocalScriptEngine {
-    private File path;
-    public PhpServletScriptEngine(Servlet servlet, 
+abstract class PhpServletLocalScriptEngine extends PhpScriptEngine {
+    protected Servlet servlet;
+    protected ServletContext servletCtx;
+    protected HttpServletRequest req;
+    protected HttpServletResponse res;
+    
+    protected URL url;
+   
+    protected PhpSimpleHttpScriptContext scriptContext;
+    
+    public PhpServletLocalScriptEngine(Servlet servlet, 
 				  ServletContext ctx, 
 				  HttpServletRequest req, 
 				  HttpServletResponse res) throws MalformedURLException {
-	super (servlet, ctx, req, res);
-	path = new File(CGIServlet.getRealPath(ctx, ""));
-    }
-    protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
+	super ();
 
-	// use a short path if the script file already exists
-	if (reader instanceof ScriptFileReader) return super.eval(reader, context, name);
-	
-    	File tempfile = null;
-    	FileOutputStream fout = null;
-        Reader localReader = null;
+	this.servlet = servlet;
+	this.servletCtx = ctx;
+	this.req = req;
+	this.res = res;
+	    
+	scriptContext.initialize(servlet, servletCtx, req, res);
+
+	url = new java.net.URL((req.getRequestURL().toString()));
+    }
+
+    protected ScriptContext getPhpScriptContext() {
+        Bindings namespace;
+        scriptContext = new PhpSimpleHttpScriptContext();
+        
+        namespace = createBindings();
+        scriptContext.setBindings(namespace,ScriptContext.ENGINE_SCOPE);
+        scriptContext.setBindings(getBindings(ScriptContext.GLOBAL_SCOPE),
+				  ScriptContext.GLOBAL_SCOPE);
+        
+        return scriptContext;
+    }    
+
+    /**
+     * Create a new context ID and a environment map which we send to the client.
+     *
+     */
+    protected void setNewContextFactory() {
+        IPhpScriptContext context = (IPhpScriptContext)getContext(); 
+	env = (Map) this.processEnvironment.clone();
+
+	ctx = PhpServletContextFactory.addNew((IContext)context, servlet, servletCtx, req, res);
+    	
+	/* send the session context now, otherwise the client has to 
+	 * call handleRedirectConnection */
+	env.put("X_JAVABRIDGE_CONTEXT", ctx.getId());
+    }
+    
+    protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
   	if(reader==null) return null;
+    	ScriptFileReader fileReader = (ScriptFileReader) reader;
   	
   	setNewContextFactory();
         setName(name);
         
         try {
-	    fout = new FileOutputStream(tempfile=File.createTempFile("tempfile", ".php", path));
-	    OutputStreamWriter writer = new OutputStreamWriter(fout);
-	    char[] cbuf = new char[Util.BUF_SIZE];
-	    int length;
-
-	    while((length=reader.read(cbuf, 0, cbuf.length))>0) 
-		writer.write(cbuf, 0, length);
-	    writer.close();
-
-	    String filePath = req.getContextPath()+"/"+tempfile.getName();
+            String path1 = new File(CGIServlet.getRealPath(servletCtx, "")).getCanonicalPath();
+            path1=path1.replace("\\", "/");
+            if(!path1.endsWith("/")) path1+="/";
+            String path2 = fileReader.getFile().getCanonicalPath();
+            path2=path2.replace("\\", "/");
+            String path3 = path2.substring(path1.length());
+	    String filePath = req.getContextPath()+"/"+path3;
 	    url = new java.net.URI(url.getProtocol(), null, url.getHost(), url.getPort(), filePath, null, null).toURL();
 	    
             /* now evaluate our script */
 	    
-	    localReader = new URLReader(url);
+	    URLReader localReader = new URLReader(url);
             try { this.script = doEval(localReader, context);} catch (Exception e) {
         	Util.printStackTrace(e);
         	throw this.scriptException = new PhpScriptException("Could not evaluate script", e);
@@ -98,9 +131,6 @@ public class PhpServletScriptEngine extends PhpServletLocalScriptEngine {
         } catch (URISyntaxException e) {
             Util.printStackTrace(e);
     } finally {
-            if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}
-            if(fout!=null) try { fout.close(); } catch (IOException e) {/*ignore*/}
-            if(tempfile!=null) tempfile.delete();
             release ();
         }
 	return null;

@@ -3,6 +3,11 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 5.2.2.1
+
+* The JSR223 scripts can now be cached. See jsp+php.jsp and jsr223.jsp for details.
+
+
 Version 5.2.2
 
 * This version contains bug fixes only.

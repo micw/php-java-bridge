@@ -1,4 +1,4 @@
-policy_module(javabridge,4.3.3)
+policy_module(javabridge,5.2.2.1)
 
 ########################################
 #
@@ -103,9 +103,9 @@ miscfiles_read_fonts(javabridge_t)
 
 ###################################################
 # Read /var/www
-allow javabridge_t httpd_sys_content_t:dir r_dir_perms;
-allow javabridge_t httpd_sys_content_t:file r_file_perms;
-allow javabridge_t httpd_sys_content_t:lnk_file r_file_perms;
+allow javabridge_t httpd_sys_content_t:dir list_dir_perms;
+allow javabridge_t httpd_sys_content_t:file read_file_perms;
+allow javabridge_t httpd_sys_content_t:lnk_file read_file_perms;
 
 sysnet_read_config(javabridge_t)
 

@@ -331,6 +331,7 @@ PHP_MINIT_FUNCTION(EXT)
 	/* set the default values for all undefined */
 	
 	EXT_GLOBAL(init_cfg) (TSRMLS_C);
+	EXT_GLOBAL(cfg)->pid = pid;
 
 	EXT_GLOBAL(clone_cfg)(TSRMLS_C);
 	EXT_GLOBAL(start_server) (TSRMLS_C);
