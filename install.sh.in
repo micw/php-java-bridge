@@ -47,8 +47,8 @@ have_include_path=yes
 if test X$phpinc = X; then
 echo ""
 echo "This php installation does not have a proper include_path,"
-echo "will use /usr/share/java instead."
-phpinc="/usr/share/java"
+echo "will use /usr/share/pear instead."
+phpinc="/usr/share/pear"
 have_include_path=
 fi
 
@@ -97,10 +97,11 @@ else
       /bin/rm $v -f "${phpini}.backup"
       /bin/mv $v "$phpini" "${phpini}.backup"
     fi
-    echo "include_path=/usr/share/pear:." >"$phpini"
+    echo "include_path=${phpinc}:." >"$phpini"
     /bin/cat java.ini >>"$phpini"
   fi
 fi
+mkdir -p $phpinc 2>/dev/null
 cp $v -R server/META-INF/java $phpinc
 
 if test @COND_GCJ@ = 1; then

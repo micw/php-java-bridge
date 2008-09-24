@@ -70,7 +70,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
     protected HttpProxy continuation = null;
     protected final HashMap processEnvironment = getProcessEnvironment();
     protected Map env = null;
-    IContextFactory ctx = null;
+    protected IContextFactory ctx = null;
     
     private ScriptEngineFactory factory = null;
 
@@ -145,11 +145,6 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
         this.factory = factory;
     }
 
-    /* Revert constructor chain. Call super(false); privateInit(); super.initialize(), 
-     * see PhpFacesScriptEngine constructor and PhpScriptEngine() constructor. -- The jsr223 API is really odd ... */
-    protected SimplePhpScriptEngine(boolean initialize) {
-        if(initialize) initialize();
-    }
     protected void setName(String name) {
         int length = name.length();
         if(length>160) length=160;
@@ -170,6 +165,13 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */
 	env.put("X_JAVABRIDGE_CONTEXT", ctx.getId());
+	
+	/* the client should connect back to us */
+	StringBuffer buf = new StringBuffer("h:");
+	buf.append(Util.getHostAddress());
+	buf.append(':');
+	buf.append(context.getSocketName());
+	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS",buf.toString());
     }
 
     protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
@@ -294,7 +296,6 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
 
     /**
      * Release the continuation
- * @throws InterruptedException 
      */
     public void release() {
 	if(continuation != null) {

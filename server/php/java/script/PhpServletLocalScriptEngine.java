@@ -97,28 +97,30 @@ abstract class PhpServletLocalScriptEngine extends PhpScriptEngine {
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */
 	env.put("X_JAVABRIDGE_CONTEXT", ctx.getId());
+	// X_JAVABRIDGE_OVERRIDE_REDIRECT is set in the URLReader
     }
     
     protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
   	if(reader==null) return null;
     	ScriptFileReader fileReader = (ScriptFileReader) reader;
-  	
+    	URLReader localReader = null;
+    	
   	setNewContextFactory();
         setName(name);
         
         try {
             String path1 = new File(CGIServlet.getRealPath(servletCtx, "")).getCanonicalPath();
-            path1=path1.replace("\\", "/");
+            path1=path1.replace('\\', '/');
             if(!path1.endsWith("/")) path1+="/";
             String path2 = fileReader.getFile().getCanonicalPath();
-            path2=path2.replace("\\", "/");
+            path2=path2.replace('\\', '/');
             String path3 = path2.substring(path1.length());
 	    String filePath = req.getContextPath()+"/"+path3;
 	    url = new java.net.URI(url.getProtocol(), null, url.getHost(), url.getPort(), filePath, null, null).toURL();
 	    
             /* now evaluate our script */
 	    
-	    URLReader localReader = new URLReader(url);
+	    localReader = new URLReader(url);
             try { this.script = doEval(localReader, context);} catch (Exception e) {
         	Util.printStackTrace(e);
         	throw this.scriptException = new PhpScriptException("Could not evaluate script", e);
@@ -130,7 +132,8 @@ abstract class PhpServletLocalScriptEngine extends PhpScriptEngine {
 	    Util.printStackTrace(e);
         } catch (URISyntaxException e) {
             Util.printStackTrace(e);
-    } finally {
+        } finally {
+            if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}
             release ();
         }
 	return null;

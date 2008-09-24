@@ -1,10 +1,10 @@
 <%!
 /* The following code makes sure that the PHP script is generated with the servlet instance.
    When the servlet is generated, a file jsp+php.jsp._cache_.php appears */
-private static java.io.Reader script;
-private static java.io.Reader getScript(String path) {
+private static java.io.File script;
+private static java.io.File getScript(String path) {
   if(script!=null) return script;
-  return script=php.java.script.EngineFactory.getPhpScript(path, 
+  return script=php.java.script.servlet.EngineFactory.getPhpScript(path, 
     new java.io.StringReader(
       "<?php function f($arg) {return 1 + java_values($arg); }; ?>"));
 }
@@ -12,7 +12,7 @@ private static java.io.Reader getScript(String path) {
 <%
 /* Create a standard script engine */
 javax.script.ScriptEngine e = 
-  php.java.script.EngineFactory.getInvocablePhpScriptEngine (this, 
+  php.java.script.servlet.EngineFactory.getInvocablePhpScriptEngine (this, 
                                                     application, 
                                                     request, 
                                                     response);
@@ -20,7 +20,10 @@ javax.script.ScriptEngine e =
 e.getContext().setWriter (out);
 
 /* evaluate the script, cache it in the file ".../jsp+php.jsp._cache_.php" */
-e.eval (getScript(application.getRealPath(request.getServletPath())));
+java.io.File script = getScript(application.getRealPath(request.getServletPath()));
+java.io.FileReader reader = php.java.script.servlet.EngineFactory.createPhpScriptFileReader(script);
+e.eval (reader);
+reader.close();
 
 /* make the script engine invocable */
 javax.script.Invocable i = (javax.script.Invocable) e;

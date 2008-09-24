@@ -32,7 +32,7 @@ import java.io.PrintWriter;
  * @author jostb
  *
  */
-class PhpScriptWriter extends PrintWriter {
+public class PhpScriptWriter extends PrintWriter {
 
     OutputStream out;
 	

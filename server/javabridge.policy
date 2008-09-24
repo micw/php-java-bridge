@@ -3,13 +3,16 @@
   * the ../security/ folder
    */
 
-/** for the standalone component */
 grant codeBase "file:${php.java.bridge.base}/JavaBridge.jar" {
+  permission java.security.AllPermission;
+};
+
+grant {
+  permission java.io.FilePermission "${user.home}${/}-", "read,write,delete";
+  permission java.io.FilePermission "${java.io.tmpdir}${/}-", "read,write,delete";
+  permission java.io.FilePermission "${java.home}${/}-", "read";
+
   permission java.util.PropertyPermission "*", "read";
-  permission java.net.SocketPermission "*", "accept, resolve";
-  permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
-  permission java.lang.RuntimePermission "createClassLoader";
-  permission java.lang.RuntimePermission "setContextClassLoader";
-  permission java.io.FilePermission "file:${php.java.bridge.base}/lib/-", "read";
-  permission java.io.FilePermission "file:/usr/share/java/-", "read";
+  permission java.lang.RuntimePermission "getClassLoader";
+  permission java.lang.RuntimePermission "accessClassInPackage.sun.tools.*";
 };

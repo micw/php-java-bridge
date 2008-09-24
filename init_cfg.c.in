@@ -118,7 +118,14 @@ static void override_ini_from_cgi(void) {
   EXT_GLOBAL(cfg)->is_cgi_servlet=0;
   EXT_GLOBAL(cfg)->is_fcgi_servlet=0;
   
+#if EXTENSION == JAVA
   if ((hosts=getenv("X_JAVABRIDGE_OVERRIDE_HOSTS"))) {
+#elif EXTENSION == MONO
+  if ((hosts=getenv("X_MONOBRIDGE_OVERRIDE_HOSTS"))) {
+#else
+  if (0) {
+#endif
+
 	switch(*hosts) {
 	case '/': 				/* this is fast cgi, override
 							   information will be passed via

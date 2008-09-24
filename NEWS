@@ -3,9 +3,24 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
-Version 5.2.2.1
+Version 5.2.2.4
 
-* The JSR223 scripts can now be cached. See jsp+php.jsp and jsr223.jsp for details.
+* The mono.so does not interfere with the pure Java PHP/Java Bridge
+  implementation anymore.
+
+Version 5.2.2.3
+
+* The deprecated php_java.dll and java.so may trash the pure Java
+  PHP/Java Bridge implementation.  Revert all changes made by the
+  java.so or php_java.dll and use our own settings.
+
+Version 5.2.2.2
+
+* The JSR223 scripts can now be cached. See jsp+php.jsp and jsr223.jsp
+  for details.
+
+* The standalone component now uses a very restrictive security
+  setting by default. It can be switched off in java.ini.
 
 
 Version 5.2.2

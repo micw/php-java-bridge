@@ -13,7 +13,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Map;
 
-import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
 import javax.servlet.Servlet;
@@ -50,7 +49,6 @@ import php.java.servlet.CGIServlet;
 
 public class InvocablePhpServletScriptEngine extends InvocablePhpServletLocalScriptEngine {
     private File path;
-    private URL url;
     private File tempfile = null;
   
     public InvocablePhpServletScriptEngine(Servlet servlet, 
@@ -60,6 +58,24 @@ public class InvocablePhpServletScriptEngine extends InvocablePhpServletLocalScr
 	super(servlet, ctx, req, res);
 	path = new File(CGIServlet.getRealPath(ctx, ""));
     }
+ 
+    /**
+     * Create a new context ID and a environment map which we send to the client.
+     *
+     */
+    protected void setNewContextFactory() {
+        IPhpScriptContext context = (IPhpScriptContext)getContext(); 
+	env = (Map) this.processEnvironment.clone();
+
+	ctx = InvocablePhpServletContextFactory.addNew((IContext)context, servlet, servletCtx, req, res);
+    	
+	/* send the session context now, otherwise the client has to 
+	 * call handleRedirectConnection */
+	env.put("X_JAVABRIDGE_CONTEXT", ctx.getId());
+	env.put("X_JAVABRIDGE_INCLUDE", tempfile.getPath());
+	// X_JAVABRIDGE_OVERRIDE_REDIRECT is set in the URLReader
+    }
+ 
     protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
 
 	// use a short path, if the script file already exists

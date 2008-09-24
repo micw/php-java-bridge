@@ -24,7 +24,7 @@ package php.java.script;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-class PhpScriptException extends javax.script.ScriptException {
+public class PhpScriptException extends javax.script.ScriptException {
   private static final long serialVersionUID = 7664096304464958875L;
 
   public PhpScriptException(String string) {

@@ -90,7 +90,17 @@ public class JavaBridgeSecurityManager extends SecurityManager {
      * <code>permission java.lang.RuntimePermission "exitVM";</code> 
      * from the policy file.
      */
-    public void checkExit(int status) {
-	super.checkExit(status);
+    public void checkExit(int status) {      
+	//super.checkExit(status);
+
+	// from Sun's Launcher.java
+	// protected PermissionCollection getPermissions(CodeSource codesource)
+	// {
+        // PermissionCollection perms = super.getPermissions(codesource);
+        // perms.add(new RuntimePermission("exitVM"));
+        //return perms;
+	// so switch off exitVM once and for all:
+	
+	throw new SecurityException("exitVM disabled by JavaBridgeSecurityManager.java");
     }
 }

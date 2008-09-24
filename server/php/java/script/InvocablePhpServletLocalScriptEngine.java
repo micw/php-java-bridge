@@ -94,7 +94,7 @@ abstract class InvocablePhpServletLocalScriptEngine extends InvocablePhpScriptEn
      * Create a new context ID and a environment map which we send to the client.
      *
      */
-    protected void setNewContextFactory() {
+    private void setNewLocalContextFactory() {
         IPhpScriptContext context = (IPhpScriptContext)getContext(); 
 	env = (Map) this.processEnvironment.clone();
 
@@ -104,20 +104,20 @@ abstract class InvocablePhpServletLocalScriptEngine extends InvocablePhpScriptEn
 	 * call handleRedirectConnection */
 	env.put("X_JAVABRIDGE_CONTEXT", ctx.getId());
 	env.put("X_JAVABRIDGE_INCLUDE", scriptFile.getPath());
+	// X_JAVABRIDGE_OVERRIDE_REDIRECT is set in the URLReader
     }
     
     protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
   	ScriptFileReader scriptReader = (ScriptFileReader) reader;
   	
         if(continuation != null) release();
-     	FileOutputStream fout = null;
         Reader localReader = null;
   	if(reader==null) return null;
   	
         try {
             scriptFile = scriptReader.getFile().getAbsoluteFile();
             
-	    setNewContextFactory();
+	    setNewLocalContextFactory();
 	    setName(name);
 
             /* now evaluate our script */
@@ -136,7 +136,6 @@ abstract class InvocablePhpServletLocalScriptEngine extends InvocablePhpScriptEn
 	    Util.printStackTrace(e);
         } finally {
             if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}
-            if(fout!=null) try { fout.close(); } catch (IOException e) {/*ignore*/}
         }
 	return null;
     }

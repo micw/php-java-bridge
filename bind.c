@@ -236,7 +236,7 @@ static void EXT_GLOBAL(get_server_args)(char*env[N_SENV], char*args[N_SARGS], sh
   args[2] = p;					/* user classes */
 
   /* policy */
-  s="-Djava.security.policy="; p=0;
+  s="-Djava.security.policy=="; p=0;
   if(!p && EXT_GLOBAL(option_set_by_user) (U_POLICY, EXT_GLOBAL(ini_user))) {
 	char *cp = EXT_GLOBAL(cfg)->policy;
 	if(*cp==0||cp[1]==0) {		/* policy=On (stored as '\0' or '1\0') */

@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 5.2.2.1
+%define version 5.2.2.4
 %define release 1
 %define PHP_MAJOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | sed 's/\\\..*$//')
 %define PHP_MINOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | LANG=C cut -d. -f2)
@@ -184,7 +184,7 @@ for i in $files;
   echo %{shared_java}/$i >>filelist-devel
 done
 cp $mod_dir/JavaBridge.jar $RPM_BUILD_ROOT/%{shared_java}/JavaBridge.jar; 
-echo %{shared_java}/JavaBridge.jar >>filelist-devel
+#echo %{shared_java}/JavaBridge.jar >>filelist-devel
 
 files="Client.inc GlobalRef.inc Java.inc JavaBridge.inc JavaProxy.inc NativeParser.inc Options.inc Parser.inc Protocol.inc SimpleParser.inc"
 mkdir -p $RPM_BUILD_ROOT/%{shared_pear}/java
@@ -326,9 +326,6 @@ echo
 exit 0
 
 %post devel
-mkdir -p %{_exec_prefix}/java/packages/lib/ext/ 2>/dev/null
-ln -fs %{shared_java}/JavaBridge.jar %{_exec_prefix}/java/packages/lib/ext/
-ln -fs %{shared_java}/php-script.jar %{_exec_prefix}/java/packages/lib/ext/
 exit 0
 
 %preun
@@ -353,7 +350,7 @@ fi
 
 %preun devel
 if [ $1 = 0 ]; then
-	rm -f %{_exec_prefix}/java/packages/lib/ext/JavaBridge.jar %{_exec_prefix}/java/packages/lib/ext/php-java.jar
+   /bin/true
 fi
 
 
@@ -361,7 +358,6 @@ fi
 %defattr(-,root,root)
 %attr(6111,apache,apache) %{_libdir}/php/modules/RunJavaBridge
 %attr(755,root,root) %{_libdir}/php/modules/JavaBridge.jar
-%attr(755,root,root) %{shared_java}/JavaBridge.jar
 %doc README FAQ.html COPYING CREDITS NEWS test.php INSTALL.LINUX security 
 
 %files mono -f filelist-mono
@@ -386,4 +382,5 @@ fi
 
 %files devel -f filelist-devel
 %defattr(-,root,root)
+%attr(755,root,root) %{shared_java}/JavaBridge.jar
 %doc FAQ.html CREDITS README.GNU_JAVA README.MONO+NET ChangeLog README PROTOCOL.TXT COPYING server documentation examples tests.php5 php_java_lib NEWS INSTALL.LINUX INSTALL

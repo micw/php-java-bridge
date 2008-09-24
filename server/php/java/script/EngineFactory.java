@@ -3,8 +3,10 @@
 package php.java.script;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -83,18 +85,32 @@ public class EngineFactory {
 	    return (javax.script.ScriptEngine)EngineFactory.getRequiredEngineFactory(ctx).getInvocableScriptEngine(servlet, ctx, req, res);
     }
 
-    public static FileReader getPhpScript (String path) {
+    private static File getFile(File file, Reader reader) throws IOException {
+	FileOutputStream fout = new FileOutputStream(file);
+	OutputStreamWriter writer = new OutputStreamWriter(fout);
+	char[] cbuf = new char[Util.BUF_SIZE];
+	int length;
+	while((length=reader.read(cbuf, 0, cbuf.length))>0) 
+	    writer.write(cbuf, 0, length);
+	writer.close();
+	return file;
+    }
+    
+    public static File getPhpScript (String path, Reader reader) {
 	try {
-	    return new ScriptFileReader(new File(path+"._cache_.php"));
-        } catch (IOException e) {
+	    return getFile(new File(path+"._cache_.php"), reader);
+	} catch (IOException e) {
 	    Util.printStackTrace(e);
         }
 	return null;
     }
+    public static File getPhpScript (String path) {
+	return new File(path+"._cache_.php");
+    }
     
-    public static FileReader getPhpScript (String path, Reader scriptReader) {
+    public static FileReader createPhpScriptFileReader (File phpScriptFile) {
 	try {
-	    return new ScriptFileReader(new File(path+"._cache_.php"), scriptReader);
+	    return new ScriptFileReader(phpScriptFile);
         } catch (IOException e) {
 	    Util.printStackTrace(e);
         }

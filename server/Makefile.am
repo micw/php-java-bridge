@@ -66,27 +66,23 @@ TestInstallation.class: TestInstallation.java
 	$(PHP_JAVA_DIR)/bin/javac $(SOURCE_VERSION) -classpath . TestInstallation.java
 
 php-servlet.jar: JavaBridge.jar $(SERVLET)
-	$(PHP_JAVA_DIR)/bin/javac $(SOURCE_VERSION) -classpath .:$(SERVLET) php/java/script/*.java php/java/bridge/http/*.java php/java/bridge/*.java php/java/servlet/*.java php/java/servlet/fastcgi/*.java
-	$(PHP_JAVA_DIR)/bin/jar cf php-servlet.jar php/java/servlet/*.class php/java/servlet/fastcgi/*.class
+	$(PHP_JAVA_DIR)/bin/javac $(SOURCE_VERSION) -classpath .:$(SERVLET) php/java/script/*.java php/java/script/servlet/*.java php/java/bridge/http/*.java php/java/bridge/*.java php/java/servlet/*.java php/java/servlet/fastcgi/*.java
+	$(PHP_JAVA_DIR)/bin/jar cf php-servlet.jar php/java/script/servlet/*.class php/java/servlet/*.class php/java/servlet/fastcgi/*.class
 
 script-api.jar: JavaBridge.jar $(SERVLET)
 	$(PHP_JAVA_DIR)/bin/javac $(SOURCE_VERSION) -classpath .:$(SERVLET) javax/script/*.java
 	$(PHP_JAVA_DIR)/bin/jar cf script-api.jar javax/script/*.class
 
 php-script.jar: JavaBridge.jar $(SCRIPT) $(SERVLET)
-	$(PHP_JAVA_DIR)/bin/javac $(SOURCE_VERSION) -classpath .:$(SERVLET):$(SCRIPT) php/java/bridge/http/*.java php/java/bridge/*.java php/java/script/*.java
+	$(PHP_JAVA_DIR)/bin/javac $(SOURCE_VERSION) -classpath .:$(SERVLET):$(SCRIPT) php/java/bridge/http/*.java php/java/bridge/*.java php/java/script/*.java php/java/script/servlet/*.java
 	$(PHP_JAVA_DIR)/bin/jar cf php-script.jar META-INF/services/javax.script.ScriptEngineFactory php/java/script/*.class
-
-php-faces.jar: JavaBridge.jar $(FACES) $(SERVLET)
-	$(PHP_JAVA_DIR)/bin/javac $(SOURCE_VERSION) -classpath .:$(SERVLET):$(SCRIPT):$(FACES) php/java/bridge/http/*.java php/java/bridge/*.java php/java/script/*.java php/java/faces/*.java
-	$(PHP_JAVA_DIR)/bin/jar cf php-faces.jar php/java/faces/*.class
 
 src.zip: META-INF/java/Mono.inc META-INF/java/JavaProxy.php META-INF/java/Mono.inc
 	$(PHP_JAVA_DIR)/bin/jar cf src.zip WEB-INF/cgi/launcher.c WEB-INF/cgi/launcher.sh WEB-INF/cgi/README WEB-INF/cgi/rename* javax/script/*.java php/java/bridge/http/*.java php/java/bridge/*.java php/java/servlet/fastcgi/*.java php/java/servlet/*.java php/java/script/*.java $(java_inc)
 
 
 JavaBridge.war: src.zip JavaBridge.jar $(SERVLET) $(JAVA_BRIDGE_SERVLET_JAR) $(SCRIPT) $(JAVA_BRIDGE_SCRIPT_JAR) $(FACES) $(JAVA_BRIDGE_FACES_JAR) TestInstallation.class META-INF/java/JavaProxy.php
-	$(PHP_JAVA_DIR)/bin/javac $(SOURCE_VERSION) -classpath $(SERVLET):$(SCRIPT) php/java/script/*.java php/java/bridge/http/*.java php/java/bridge/*.java php/java/servlet/*.java php/java/servlet/fastcgi/*.java
+	$(PHP_JAVA_DIR)/bin/javac $(SOURCE_VERSION) -classpath $(SERVLET):$(SCRIPT) php/java/script/*.java php/java/script/servlet/*.java php/java/bridge/http/*.java php/java/bridge/*.java php/java/servlet/*.java php/java/servlet/fastcgi/*.java
 	-mkdir WEB-INF/lib WEB-INF/classes
 	cp JavaBridge.jar $(SCRIPT) $(JAVA_BRIDGE_SERVLET_JAR) $(JAVA_BRIDGE_SCRIPT_JAR) $(JAVA_BRIDGE_FACES_JAR) ../unsupported/*.jar WEB-INF/lib
 	cat WEB-INF/cgi/rename_to_php-cgi-i386-linux.ini | sed 's/i386-linux/x86-sunos/;s/^extension=.*$$/;&/' >WEB-INF/cgi/php-cgi-x86-sunos.ini
@@ -96,7 +92,9 @@ JavaBridge.war: src.zip JavaBridge.jar $(SERVLET) $(JAVA_BRIDGE_SERVLET_JAR) $(S
 	cat WEB-INF/cgi/rename_to_php-cgi-x86-linux.sh | sed 's/i386-linux/i386-freebsd/g' >WEB-INF/cgi/php-cgi-i386-freebsd.sh
 
 	cat WEB-INF/cgi/rename_to_php-cgi-i386-linux.ini | sed 's/^extension=.*$$/;&/' >WEB-INF/cgi/php-cgi-i386-linux.ini
+	cat WEB-INF/cgi/rename_to_php-cgi-i386-linux.ini | sed 's/^extension=.*$$/;&/' >WEB-INF/cgi/php-cgi-x86-linux.ini
 	cat WEB-INF/cgi/rename_to_php-cgi-x86-linux.sh  >WEB-INF/cgi/php-cgi-x86-linux.sh
+	cat WEB-INF/cgi/rename_to_php-cgi-i386-linux.sh  >WEB-INF/cgi/php-cgi-i386-linux.sh
 
 	cat WEB-INF/cgi/rename_to_php-cgi-i386-linux.ini | sed 's/i386-linux.so/x86-windows.dll/;s/^extension=.*$$/;&/' >WEB-INF/cgi/php.ini
 

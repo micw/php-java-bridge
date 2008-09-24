@@ -2,6 +2,9 @@
 
 package php.java.servlet;
 
+import javax.servlet.ServletContext;
+import javax.servlet.ServletContextEvent;
+
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
  *
@@ -23,19 +26,18 @@ package php.java.servlet;
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-import javax.servlet.*;
 
 public class ContextLoaderListener implements javax.servlet.ServletContextListener {
     
     public void contextDestroyed(ServletContextEvent event) {
 	ServletContext ctx = event.getServletContext();
-	ctx.removeAttribute(php.java.script.EngineFactory.ROOT_ENGINE_FACTORY_ATTRIBUTE);
+	ctx.removeAttribute(php.java.script.servlet.EngineFactory.ROOT_ENGINE_FACTORY_ATTRIBUTE);
     }
     public void contextInitialized(ServletContextEvent event) {
 	try {
-	    Class clazz = Class.forName("php.java.script.EngineFactory",true,Thread.currentThread().getContextClassLoader());
+	    Class clazz = Class.forName("php.java.script.servlet.EngineFactory",true,Thread.currentThread().getContextClassLoader());
 	    ServletContext ctx = event.getServletContext();
-	    ctx.setAttribute(php.java.script.EngineFactory.ROOT_ENGINE_FACTORY_ATTRIBUTE, clazz.newInstance());
+	    ctx.setAttribute(php.java.script.servlet.EngineFactory.ROOT_ENGINE_FACTORY_ATTRIBUTE, clazz.newInstance());
         } catch (InstantiationException e) {
 	    e.printStackTrace();
         } catch (IllegalAccessException e) {

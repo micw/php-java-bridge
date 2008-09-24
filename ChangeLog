@@ -1,4 +1,38 @@
-2008-03-22  Jost Boekemeier  <jostb@intern>
+2008-09-24  Jost Boekemeier  <jostb@intern>
+
+	* init_cfg.c.in (override_ini_from_cgi): The mono.so
+	must not interfere with the pure Java PHP/Java Bridge implementation. 
+
+    * server/php/java/script/servlet/EngineFactory.java,server/php/java/script/servlet/InvocablePhpServletContextFactory.java,server/php/java/script/servlet/InvocablePhpServletLocalScriptEngine.java,server/php/java/script/servlet/InvocablePhpServletScriptEngine.java,server/php/java/script/servlet/PhpServletContextFactory.java,server/php/java/script/servlet/PhpServletLocalScriptEngine.java,server/php/java/script/servlet/PhpServletScriptEngine.java,server/php/java/script/servlet/PhpSimpleHttpScriptContext.java,server/php/java/script/servlet/ScriptFileReader.java: New files, moved here from php/java/script package
+    
+    * server/php/java/script/EngineFactory.java,server/php/java/script/InvocablePhpServletContextFactory.java,server/php/java/script/InvocablePhpServletLocalScriptEngine.java,server/php/java/script/InvocablePhpServletScriptEngine.java,server/php/java/script/PhpServletContextFactory.java,server/php/java/script/PhpServletLocalScriptEngine.java,server/php/java/script/PhpServletScriptEngine.java,server/php/java/script/PhpSimpleHttpScriptContext.java,server/php/java/script/ScriptFileReader.java: Removed
+    
+    * server/Makefile.am: moved servlet script engines to the php-servlet.jar
+    
+    * examples/php+jsp/jsr223.jsp, examples/php+jsp/jsp+php.jsp: Use the php.java.script.servlet.EngineFactory
+    
+        * VERSION, php-java-bridge.spec: Version 5.2.2.4 released
+
+2008-09-23  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/script/SimplePhpScriptEngine.java (setNewContextFactory): The java.so
+	and php_java.dll must not trash the pure Java PHP/Java Bridge implementation. Override
+	any settings from the java.so or php_java.dll and use our own settings.
+    
+        * VERSION, php-java-bridge.spec: Version 5.2.2.3 released
+
+2008-09-21  Jost Boekemeier  <jostb@intern>
+
+	* java.ini: Use a very restrictive security setting.
+	
+	* examples/php+jsp/jsr223.jsp, examples/php+jsp/jsp+php.jsp: Rewritten
+	
+	* server/php/java/script/EngineFactory.java (createPhpScriptFileReader): New function.
+
+	* VERSION, php-java-bridge.spec: Version 5.2.2.2 released
+
+
+2008-09-20  Jost Boekemeier  <jostb@intern>
 
 	* sample_lib.cs: Removed debug code.
 	
