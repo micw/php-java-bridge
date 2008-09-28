@@ -3,6 +3,15 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 5.2.3
+
+* Java boolean values now display as 0/1:
+
+    echo ((bool)(string)new java("java.lang.Boolean", false)) ? "#t":"#f";
+    => #f
+    echo ((bool)(string)new java("java.lang.Boolean", true )) ? "#t":"#f";
+    => #t
+
 Version 5.2.2.4
 
 * The mono.so does not interfere with the pure Java PHP/Java Bridge

@@ -24,6 +24,9 @@ package php.java.script;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/**
+ * This class is needed for compatibility with JDK 1.4
+ */
 public class PhpScriptException extends javax.script.ScriptException {
   private static final long serialVersionUID = 7664096304464958875L;
 

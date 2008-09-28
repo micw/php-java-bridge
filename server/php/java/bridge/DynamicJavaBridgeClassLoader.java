@@ -88,7 +88,7 @@ public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     /** Update the library path for the bridge instance. 
      * @param path the checked JarLibraryPath
      * @throws IOException 
-     * @see #checkJarLibraryPath(String, String)
+     * @see #checkJarLibraryPath(String, String, String, String)
      */
     public void updateJarLibraryPath(JarLibraryPath path) {
         String key = path.getPath();

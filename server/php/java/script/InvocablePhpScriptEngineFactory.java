@@ -30,6 +30,10 @@ import java.util.List;
 
 import javax.script.ScriptEngine;
 
+
+/**
+ * Create a standalone invocable PHP script engines.
+ */
 public class InvocablePhpScriptEngineFactory extends PhpScriptEngineFactory {
 
   public String getLanguageName() {

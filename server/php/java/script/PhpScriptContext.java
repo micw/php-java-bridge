@@ -35,7 +35,7 @@ import php.java.bridge.http.IContext;
  * <code>JavaBridgeRunner</code> which listens for requests from php instances.<p>
  * 
  * In a servlet environment please use a <code>php.java.script.PhpSimpleHttpScriptContext</code> instead.
- * @see php.java.script.PhpSimpleHttpScriptContext
+ * @see php.java.script.PhpScriptContext
  * @see php.java.bridge.JavaBridgeRunner
  * @author jostb
  *

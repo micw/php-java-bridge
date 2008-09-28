@@ -1,3 +1,11 @@
+2008-09-28  Jost Boekemeier  <jostb@intern>
+
+    * server/php/java/script/InvocablePhpScriptEngine.java (eval): Avoid a loop if Java.inc cannot be evaluated
+    
+    * server/php/java/bridge/JavaBridge.java (ObjectToString): Boolean values display as 1/0
+    
+    * VERSION, php-java-bridge.spec: Version 5.2.3 released
+
 2008-09-24  Jost Boekemeier  <jostb@intern>
 
 	* init_cfg.c.in (override_ini_from_cgi): The mono.so

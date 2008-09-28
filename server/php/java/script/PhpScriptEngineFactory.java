@@ -31,6 +31,9 @@ import javax.script.ScriptEngineFactory;
 
 import php.java.bridge.Util;
 
+/**
+ * Create a standalone PHP script engines.
+ */
 public class PhpScriptEngineFactory implements ScriptEngineFactory {
 
   private static final String ENGINE_NAME=Util.EXTENSION_NAME + " php script engine for Java";

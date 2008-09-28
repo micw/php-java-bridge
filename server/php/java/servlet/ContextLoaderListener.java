@@ -26,7 +26,18 @@ import javax.servlet.ServletContextEvent;
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-
+/**
+ * Register a PHP JSR 223 EngineFactory when the web context starts. Used when the web application
+ * WEB-INF/web.xml contains a listener attribute:
+ * <blockquote>
+ * <code>
+ * &lt;listener&gt;
+ * &nbsp;&nbsp;&lt;listener-class&gt;php.java.servlet.ContextLoaderListener&lt;/listener-class&gt;
+ *&lt;/listener&gt;
+ * </code>
+ * </blockquote>
+ * @see php.java.script.servlet.EngineFactory
+ */
 public class ContextLoaderListener implements javax.servlet.ServletContextListener {
     
     public void contextDestroyed(ServletContextEvent event) {

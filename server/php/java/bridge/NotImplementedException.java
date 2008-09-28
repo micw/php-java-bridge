@@ -23,6 +23,7 @@ package php.java.bridge;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/** Thrown when a feature is not and will not be implemented */
 public class NotImplementedException extends RuntimeException {
     private static final long serialVersionUID = 3546638798315468084L;
 }

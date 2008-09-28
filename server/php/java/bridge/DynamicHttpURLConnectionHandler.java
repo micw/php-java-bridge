@@ -31,7 +31,7 @@ import java.net.URLStreamHandler;
 import java.util.Map;
 import java.util.jar.JarFile;
 
-public class DynamicHttpURLConnectionHandler extends URLStreamHandler {
+class DynamicHttpURLConnectionHandler extends URLStreamHandler {
 
     private JarFile jarFile;
     private File baseFile;

@@ -54,19 +54,6 @@ import php.java.bridge.Util;
  * System.out.println(((Invocable)e).invokeFunction("f", new Object[]{}));<br>
  * e.eval((String)null);<br>
  * </code><br>
- * When using an URLReader, the external PHP script must contain a call() back into our java continuation at the end of the script:<br>
- * <code>
- * &lt;?php java_context->call(java_closure()) ?&gt;<br>
- * </code><br>
- * And, if the C-based PHP/Java Bridge extension is used,  the php.ini must contain a java.servlet setting, so that the bridge selects the servlet- instead of the standalone back-end. Example:<br>
- * <code>
- * extension=java.so<br>
- * ;;on windows use: extension=php_java.dll<br>
- * [java]<br>
- * java.servlet=On<br>
- * </code>
- * @author jostb
- *
  */
 public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements Invocable {
     private static boolean registeredHook = false;
@@ -188,9 +175,13 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
             }
             try { localReader.close(); } catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not evaluate footer", e);}
     
-            /* get the proxy, either the one from the user script or our default proxy */
-            try { this.scriptClosure = this.script.getProxy(new Class[]{}); } catch (Exception e) { return null; }
-            handleRelease();
+            if (this.script!=null) {
+        	/* get the proxy, either the one from the user script or our default proxy */
+        	try { this.scriptClosure = this.script.getProxy(new Class[]{}); } catch (Exception e) { return null; }
+        	handleRelease();
+            } else {
+        	throw this.scriptException = new PhpScriptException("Could not evaluate script, please check your php.ini file and see the error log for details.");
+            }
         } finally {
             if(w!=null)  try { w.close(); } catch (IOException e) {/*ignore*/}
             if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}            

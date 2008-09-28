@@ -44,7 +44,6 @@ import php.java.bridge.PhpProcedureProxy;
  * </code>
  * @see php.java.script.IPhpScriptContext
  * @see javax.script.ScriptContext
- * @see php.java.script.PhpSimpleHttpScriptContext
  * @see php.java.script.PhpScriptContext
  * @author jostb
  *

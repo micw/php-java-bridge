@@ -863,13 +863,22 @@ public final class Util {
             return proc;
         }
 
+        /** A generic PHP exception */
         public static class PhpException extends Exception {
 	    private static final long serialVersionUID = 767047598257671018L;
 	    private String errorString;
+	    /** 
+	     * Create a PHP exception 
+	     * @param errorString the PHP error string 
+	     */
 	    public PhpException(String errorString) {
 		super(errorString);
 		this.errorString = errorString;
 	    }
+	    /** 
+	     * Return the error string
+	     * @return the PHP error string
+	     */
 	    public String getError() {
 		return errorString;
 	    }
@@ -938,9 +947,7 @@ public final class Util {
 	    (new Util.Thread("CGIErrorReader") {public void run() {readErrorStream();}}).start();
 	}
         /**
-         * Returns s if s contains "PHP Fatal error:";
-         * @param s The error string
-         * @return The fatal error or null
+         * Throw a PhpException when a fatal error occured.
          */	
 	public void checkError() throws PhpException {
 	    String errorString = error==null?null:Util.checkError(error.toString());

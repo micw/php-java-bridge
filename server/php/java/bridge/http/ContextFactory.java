@@ -156,7 +156,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * @param id The ID
      * @param server Your context server.
      * @return The ContextFactory or null.
-     * @see php.java.bridge.http.SimpleContextFactory#addNew(String)
+     * @see php.java.bridge.http.ContextFactory#addNew()
      * @throws SecurityException if id belongs to a different ContextServer.
      */
     /* See PhpJavaServlet#contextServer, http.ContextRunner#contextServer and 
@@ -330,7 +330,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * Set the Context into this factory.
      * Should be called by Context.addNew() only.
      * @param context The context.
-     * @see php.java.bridge.http.SimpleContextFactory#addNew(String)
+     * @see php.java.bridge.http.ContextFactory#addNew()
      */
     public void setContext(IContext context) {
         visitor.setContext(context);

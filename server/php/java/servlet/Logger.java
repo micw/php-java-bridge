@@ -29,6 +29,10 @@ import javax.servlet.ServletContext;
 import php.java.bridge.ILogger;
 import php.java.bridge.Util;
 
+/**
+ * A logger class, uses log4j if possible 
+ *
+ */
 public class Logger implements ILogger {
 	private ServletContext ctx;
 	public Logger(ServletContext ctx) {

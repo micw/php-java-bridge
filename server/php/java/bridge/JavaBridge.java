@@ -1550,6 +1550,16 @@ public class JavaBridge implements Runnable {
      * @param ob The object
      * @return A string representation.
      */
+    public String ObjectToString(Boolean ob) {
+	if (ob==null) return ObjectToString((Object) null);   
+	return (String)castToString(ob.booleanValue()?"1":"");
+    }
+
+    /**
+     * Returns a string representation of the object
+     * @param ob The object
+     * @return A string representation.
+     */
     public String ObjectToString(String ob) {
 	if (ob==null) return ObjectToString((Object) null);   
 	return (String)castToString(ob);

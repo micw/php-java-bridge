@@ -43,7 +43,7 @@ import php.java.bridge.Util;
  * Example:<p>
  * <code>
  * ScriptEngine e = (new ScriptEngineManager()).getEngineByName("php");<br>
- * try { e.eval(<?php foo() ?>"); } catch (ScriptException e) { ... }<br>
+ * try { e.eval(&lt;?php foo() ?&gt;"); } catch (ScriptException e) { ... }<br>
  * </code>
  * @author jostb
  *

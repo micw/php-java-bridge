@@ -70,7 +70,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
      * If you want to use the HTTP tunnel , set the
      * following flag to false and remove the &lt;distributable/&gt from
      * the WEB-INF/web.xml.
-     * @see #handleHttpConnection(HttpServletRequest, HttpServletResponse, String, String, boolean)
+     * @see #handleHttpConnection(HttpServletRequest, HttpServletResponse, String)
      */
     public static final boolean IS_DISTRIBUTABLE = true;
     

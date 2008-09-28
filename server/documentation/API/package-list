@@ -2,5 +2,6 @@ javax.script
 php.java.bridge
 php.java.bridge.http
 php.java.script
+php.java.script.servlet
 php.java.servlet
 php.java.servlet.fastcgi

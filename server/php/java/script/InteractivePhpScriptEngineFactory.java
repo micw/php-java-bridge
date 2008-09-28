@@ -25,6 +25,10 @@ package php.java.script;
 
 import javax.script.ScriptEngine;
 
+/**
+ * Create a standalone interactive PHP script engines.
+ */
+
 public class InteractivePhpScriptEngineFactory extends InvocablePhpScriptEngineFactory {
 
   public String getLanguageName() {

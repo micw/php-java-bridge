@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
-public class ScriptFileReader extends FileReader {
+class ScriptFileReader extends FileReader {
 
     private File tempfile;
 

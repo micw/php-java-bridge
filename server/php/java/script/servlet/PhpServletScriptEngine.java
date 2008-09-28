@@ -22,6 +22,7 @@ import php.java.bridge.Util;
 import php.java.script.PhpScriptException;
 import php.java.script.URLReader;
 import php.java.servlet.CGIServlet;
+import php.java.servlet.ContextLoaderListener;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -43,6 +44,66 @@ import php.java.servlet.CGIServlet;
  * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/**
+ * A PHP script engine for Servlets. See {@link ContextLoaderListener} for details.
+ * 
+ * In order to evaluate PHP methods follow these steps:<br>
+ * <ol>
+ * <li> Create a factory which creates a PHP script file from a reader using the methods from {@link EngineFactory}:
+ * <blockquote>
+ * <code>
+ * private static File script;<br>
+ * private static final File getHelloScript() {<br>
+ * &nbsp;&nbsp; if (script!=null) return script;<br><br>
+ * &nbsp;&nbsp; String webCacheDir = ctx.getRealPath(req.getServletPath());<br>
+ * &nbsp;&nbsp; Reader reader = new StringReader ("&lt;?php echo 'hello from PHP'; ?&gt;");<br>
+ * &nbsp;&nbsp; return EngineFactory.getPhpScript(webCacheDir, reader);<br>
+ * }<br>
+ * </code>
+ * </blockquote>
+ * <li> Aquire a PHP script engine from the {@link EngineFactory}:
+ * <blockquote>
+ * <code>
+ * ScriptEngine scriptEngine = EngineFactory.getPhpScriptEngine(this, ctx, req, res);
+ * </code>
+ * </blockquote> 
+ * <li> Create a FileReader for the created script file:
+ * <blockquote>
+ * <code>
+ * Reader readerHello = EngineFactory.createPhpScriptFileReader(getHelloScript());
+ * </code>
+ * </blockquote>
+ * <li> Connect its output:
+ * <blockquote>
+ * <code>
+ * scriptEngine.getContext().setWriter (out);
+ * </code>
+ * </blockquote>
+ * <li> Evaluate the engine:
+ * <blockquote>
+ * <code>
+ * scriptEngine.eval(readerHello);
+ * </code>
+ * </blockquote> 
+ * <li> Close the reader:
+ * <blockquote>
+ * <code>
+ * readerHello.close();
+ * </code>
+ * </blockquote> 
+ * </ol>
+ * <br>
+ * Alternatively one may use the following "quick and dirty" code which creates a new PHP script for 
+ * each eval:
+ * <blockquote>
+ * <code>
+ * ScriptEngine e = EngineFactory.getPhpScriptEngine(this, ctx, req, res);<br>
+ * e.getContext().setWriter (out);<br>
+ * e.eval("&lt;?php echo "hello java world"; ?&gt;");<br>
+ * </code>
+ * </blockquote>
  */
 
 

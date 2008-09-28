@@ -133,7 +133,7 @@ public class URLReader extends Reader {
 
     /**
      * @throws NotImplementedException
-     * @see URLReader#read(Map, OutputStream)
+     * @see #read(Map, OutputStream, HeaderParser)
      */
     public int read(char[] cbuf, int off, int len) throws IOException {
             throw new IllegalStateException("Use urlReader.read(Hashtable, OutputStream) or use a FileReader() instead.");

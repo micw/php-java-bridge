@@ -53,7 +53,7 @@ public abstract class AbstractChannel {
     
     /**
      * Returns the name of the channel, for example the socket # or the pipe name.
-     * @see php.java.bridge.http.AbstractChannelName#getDefaultName()
+     * @see php.java.bridge.http.AbstractChannelName#getName()
      * @return the name of the channel.
      */
     public abstract String getName();

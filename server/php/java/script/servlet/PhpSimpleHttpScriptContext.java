@@ -59,7 +59,6 @@ public class PhpSimpleHttpScriptContext extends AbstractPhpScriptContext impleme
      * @param ctx The ServletContext
      * @param req The HttpServletRequest
      * @param res The HttpServletResponse
-     * @param writer The PhpScriptWriter
      * @throws ServletException
      */
     public void initialize(Servlet servlet,

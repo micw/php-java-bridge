@@ -25,6 +25,7 @@ import php.java.script.IPhpScriptContext;
 import php.java.script.PhpScriptException;
 import php.java.script.URLReader;
 import php.java.servlet.CGIServlet;
+import php.java.servlet.ContextLoaderListener;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -48,7 +49,84 @@ import php.java.servlet.CGIServlet;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
+/**
+ * A PHP script engine which implements the Invocable interface for Servlets. See {@link ContextLoaderListener} for details.
+ * 
+ * PHP scripts are evaluated as follows:
+ * <ol>
+ * <li> &lt;?php require_once("http://127.0.0.1:CURRENT_PORT/CURRENT_WEBAPP/java/Java.inc"?&gt;<br>
+ * <li> Your script is evaluated
+ * <li> &lt;?php java_context()-&gt;call(java_closure());?&gt; is called in order to make the script invocable<br>
+ * </ol>
+ * In order to evaluate PHP methods follow these steps:<br>
+ * <ol>
+ * <li> Create a factory which creates a PHP script file from a reader using the methods from {@link EngineFactory}:
+ * <blockquote>
+ * <code>
+ * private static File script;<br>
+ * private static final File getScriptF() {<br>
+ * &nbsp;&nbsp; if (script!=null) return script;<br><br>
+ * &nbsp;&nbsp; String webCacheDir = ctx.getRealPath(req.getServletPath());<br>
+ * &nbsp;&nbsp; Reader reader = new StringReader ("&lt;?php function f($v) {return "passed:".$v;} ?&gt;");<br>
+ * &nbsp;&nbsp; return EngineFactory.getPhpScript(webCacheDir, reader);<br>
+ * }<br>
+ * </code>
+ * </blockquote>
+ * <li> Aquire a PHP invocable script engine from the {@link EngineFactory}:
+ * <blockquote>
+ * <code>
+ * ScriptEngine scriptEngine = EngineFactory.getInvocablePhpScriptEngine(this, ctx, req, res);
+ * </code>
+ * </blockquote> 
+ * <li> Create a FileReader for the created script file:
+ * <blockquote>
+ * <code>
+ * Reader readerF = EngineFactory.createPhpScriptFileReader(getScriptF());
+ * </code>
+ * </blockquote>
+ * <li> Evaluate the engine:
+ * <blockquote>
+ * <code>
+ * scriptEngine.eval(readerF);
+ * </code>
+ * </blockquote> 
+ * <li> Close the reader obtained from the {@link EngineFactory}:
+ * <blockquote>
+ * <code>
+ * readerF.close();
+ * </code>
+ * </blockquote> 
+ * <li> Cast the engine to Invocable:
+ * <blockquote>
+ * <code>
+ * Invocable invocableEngine = (Invocable)scriptEngine;
+ * </code>
+ * </blockquote> 
+ * <li> Call PHP functions or methods:
+ * <blockquote>
+ * <code>
+ * System.out.println("result from PHP:" + invocableEngine.invoceFunction(f, new Object[]{"arg1"}));
+ * </code>
+ * </blockquote> 
+ * <li> Release the invocable by evaluating the engine again with a NULL value.
+ * <blockquote>
+ * <code>
+ * scriptEngine.eval((Reader)null);
+ * </code>
+ * </blockquote> 
+ * </ol>
+ * <br>
+ * Alternatively one may use the following "quick and dirty" code which creates a new PHP script for 
+ * each eval and removes it when the invocable is released:
+ * <blockquote>
+ * <code>
+ * ScriptEngine e = EngineFactory.getInvocablePhpScriptEngine(this, ctx, req, res);<br>
+ * e.eval("&lt;?php function f($v) {return "passed:".$v;} ?&gt;");<br>
+ * ((Invocable)e).invoceFunction("f", new Object[]{"arg1"};<br>
+ * e.eval((Reader)null);<br>
+ * </code>
+ * </blockquote>
+ */
 public class InvocablePhpServletScriptEngine extends InvocablePhpServletLocalScriptEngine {
     private File path;
     private File tempfile = null;

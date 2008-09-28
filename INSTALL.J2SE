@@ -94,7 +94,7 @@ invoke PHP methods from Java. Example:
 
   <%
     javax.script.ScriptEngine e = 
-      php.java.script.EngineFactory.getPhpScriptEngine (this, 
+      php.java.script.servlet.EngineFactory.getPhpScriptEngine (this, 
                                                         application, 
                                                         request, response);
     e.getContext().setWriter (out);
@@ -107,7 +107,7 @@ invoke PHP methods from Java. Example:
 
   <%
     javax.script.ScriptEngine e = 
-      php.java.script.EngineFactory.getInvocablePhpScriptEngine (this, 
+      php.java.script.servlet.EngineFactory.getInvocablePhpScriptEngine (this, 
                                                         application, 
                                                         request, response);
     e.getContext().setWriter (out);
