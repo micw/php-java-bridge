@@ -500,16 +500,28 @@ public final class Request implements IDocHandler {
 	private static final long serialVersionUID = 7778150395848350732L;
     }
     /**
+     * When within a sub request, handle an IOException as EOF 
+     * @return EOF if an IOException or EOF occurred, otherwise the parser status is returned
+     */
+    private short parseSubRequestUntilEof () {
+	try {
+	    return parser.parse(bridge.in);
+        } catch (IOException e) {
+	    bridge.printStackTrace(e);
+	    return Parser.EOF;
+        }
+    }
+    /**
      * Handle protocol sub-requests, see <code>R</code> and <code>A</code> in the protocol spec.
      * @return An array of one object. The object is the result of the Apply call.
      * @throws IOException
      * @throws Throwable thrown by the PHP code.
      */
-    protected Object[] handleSubRequests() throws AbortException, IOException, Throwable {
+    protected Object[] handleSubRequests() throws AbortException, Throwable {
       	Response currentResponse = response; Arg current = arg;
     	response = response.copyResponse(); // must keep the current response state, for example coerceWriter for castToString() 
     	arg = new SimpleArg();
-	while(Parser.OK==parser.parse(bridge.in)){
+	while(Parser.OK==parseSubRequestUntilEof()){
 	    arg.id.setID(response); 
 	    switch(arg.type){
 	    case 'I':

@@ -15,6 +15,11 @@ Development
 
 Test the PHP/Java Bridge functionality:
 
+* Download and extract the php-java-bridge*_j2ee.zip file into a
+  folder.
+
+* Navigate to the created JAVA.STANDALONE folder.
+
 * Right-click on log4j.jar and select "open with Java ..."
 
 * Right-click on JavaBridge.jar and select "open with Java ...". In
