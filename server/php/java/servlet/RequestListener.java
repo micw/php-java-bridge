@@ -2,8 +2,14 @@
 
 package php.java.servlet;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.servlet.ServletContext;
-import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletRequestEvent;
+import javax.servlet.http.HttpServletRequest;
+
+import php.java.script.servlet.EngineFactory;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -39,26 +45,26 @@ import javax.servlet.ServletContextEvent;
  *&lt;/listener&gt;
  * </code>
  * </blockquote>
- * @see php.java.servlet.RequestListener
  * @see php.java.script.servlet.EngineFactory
  */
-public class ContextLoaderListener implements javax.servlet.ServletContextListener {
-    
-    public void contextDestroyed(ServletContextEvent event) {
+public class RequestListener implements javax.servlet.ServletRequestListener {
+    /** The key used to store the engine list in the servlet request */
+    public static final String ROOT_ENGINES_COLLECTION_ATTRIBUTE = RequestListener.class.getName()+".ROOT";;
+    public void requestDestroyed(ServletRequestEvent event) {
+	HttpServletRequest req = (HttpServletRequest) event.getServletRequest();
 	ServletContext ctx = event.getServletContext();
-	ctx.removeAttribute(php.java.script.servlet.EngineFactory.ROOT_ENGINE_FACTORY_ATTRIBUTE);
+	String isSubRequest = req.getHeader("X_JAVABRIDGE_CONTEXT");
+	List list = (List) req.getAttribute(ROOT_ENGINES_COLLECTION_ATTRIBUTE);
+	if (list == null) return;
+	
+	EngineFactory factory = (EngineFactory) ctx.getAttribute(php.java.script.servlet.EngineFactory.ROOT_ENGINE_FACTORY_ATTRIBUTE);
+	req.removeAttribute(ROOT_ENGINES_COLLECTION_ATTRIBUTE);
+	factory.releaseScriptEngines(list);
     }
-    public void contextInitialized(ServletContextEvent event) {
-	try {
-	    Class clazz = Class.forName("php.java.script.servlet.EngineFactory",true,Thread.currentThread().getContextClassLoader());
-	    ServletContext ctx = event.getServletContext();
-	    ctx.setAttribute(php.java.script.servlet.EngineFactory.ROOT_ENGINE_FACTORY_ATTRIBUTE, clazz.newInstance());
-        } catch (InstantiationException e) {
-	    e.printStackTrace();
-        } catch (IllegalAccessException e) {
-	    e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-	    e.printStackTrace();
-        }
+    public void requestInitialized(ServletRequestEvent event) {
+	HttpServletRequest req = (HttpServletRequest) event.getServletRequest();
+	String isSubRequest = req.getHeader("X_JAVABRIDGE_CONTEXT");
+	if(isSubRequest==null)
+	    req.setAttribute(ROOT_ENGINES_COLLECTION_ATTRIBUTE, new ArrayList());
     }
 }

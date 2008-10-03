@@ -10,13 +10,20 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
+import javax.script.ScriptException;
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
+import php.java.script.SimplePhpScriptEngine;
+import php.java.servlet.PhpCGIServlet;
+import php.java.servlet.RequestListener;
 
 
 /*
@@ -212,5 +219,35 @@ public class EngineFactory {
 	    Util.printStackTrace(e);
         }
 	return null;
+    }
+    /**
+     * Release all managed script engines. Will be called automatically at the end of each request,
+     * if a RequestListener has been declared.
+     * @param list the list from the request attribute {@link RequestListener#ROOT_ENGINES_COLLECTION_ATTRIBUTE}
+     */
+    public void releaseScriptEngines(List list) {
+	for (Iterator ii=list.iterator(); ii.hasNext(); ) {
+	    SimplePhpScriptEngine e = (SimplePhpScriptEngine) ii.next();
+	    PhpCGIServlet.releaseReservedContinuation();
+	    e.release();
+	}
+	list.clear();
+    }
+    /**
+     * Manage a script engine
+     * @param req the servlet request
+     * @param engine the engine to manage
+     * @throws ScriptException 
+     * @see #releaseScriptEngines(List)
+     */
+    public static void addManaged(HttpServletRequest req,
+            InvocablePhpServletLocalScriptEngine engine) throws ScriptException {
+	ArrayList list = (ArrayList) req.getAttribute(RequestListener.ROOT_ENGINES_COLLECTION_ATTRIBUTE);
+	if (list!=null) {
+	    list.add(engine);
+	    
+	    // check
+	    PhpCGIServlet.reserveContinuation();
+	}
     }
 }

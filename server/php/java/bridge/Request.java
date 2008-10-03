@@ -648,9 +648,9 @@ public final class Request implements IDocHandler {
     /** re-initialize for new requests */
     public void recycle() {
         reset();
-        arg.reset();
+        if(arg != null) arg.reset();
         resetBridge();
-        response.recycle();
+        if (response != null) response.recycle();
     }
 
     /**

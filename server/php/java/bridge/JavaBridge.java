@@ -172,15 +172,14 @@ public class JavaBridge implements Runnable {
 
     /** For internal use only. */
     private IJavaBridgeFactory sessionFactory;
-    
-    /** 
-     * For internal use only.
-     */
-    static final SessionFactory defaultSessionFactory = new SessionFactory();
-
     public IJavaBridgeFactory getFactory() {
-	if(sessionFactory==null) return sessionFactory = defaultSessionFactory;
+	if(sessionFactory==null) throw new NullPointerException("session factory");
 	return sessionFactory;
+    }
+    private SessionFactory defaultSessionFactory;
+    private SessionFactory getDefaultSessionFactory() {
+	if(defaultSessionFactory==null) return defaultSessionFactory = new SessionFactory();
+	return defaultSessionFactory;
     }
     
     Options options;
@@ -223,6 +222,7 @@ public class JavaBridge implements Runnable {
         } finally {
 	    try {in.close();} catch (IOException e1) {printStackTrace(e1);}
 	    try {out.close();} catch (IOException e2) {printStackTrace(e2);}
+	    sessionFactory.destroy();
 	}
     }
 
@@ -308,7 +308,11 @@ public class JavaBridge implements Runnable {
 	    while(true) {
 		Socket sock = socket.accept();
                 Util.logDebug("Socket connection accepted");
-		JavaBridge bridge = new JavaBridge(sock.getInputStream(), sock.getOutputStream());
+
+                JavaBridge bridge = new SessionFactory().getBridge();
+                bridge.in = sock.getInputStream();
+                bridge.out = sock.getOutputStream();
+
 		if(pool!=null) {
                     Util.logDebug("Starting bridge thread from thread pool");
 		    pool.start(bridge); // Uses thread pool
@@ -420,7 +424,9 @@ public class JavaBridge implements Runnable {
 	lastException = new Exception(buf.toString(), e);
 	StackTraceElement[] trace = e.getStackTrace();
 	if(trace!=null) lastException.setStackTrace(trace);
-	response.setResultException(lastException, lastException.toString());
+	String message = e.getMessage();
+	if (message==null) message = Util.stringValueOf(e);
+	response.setResultException(lastException, message);
     }
 
     private Exception getUnresolvedExternalReferenceException(Throwable e, String what) {
@@ -1364,28 +1370,6 @@ public class JavaBridge implements Runnable {
     }
 
     /**
-     * Only for internal use. 
-     * @param in the InputStream
-     * @param out the OutputStream
-     * @see php.java.bridge.JavaBridgeRunner
-     * @see php.java.bridge.JavaBridge#main(String[])
-    */
-    protected JavaBridge(InputStream in, OutputStream out) {
-	this.in = in;
-	this.out = out;
-	this.setClassLoader(this.getFactory().getJavaBridgeClassLoader());
-    }
- 
-    /**
-     * Only for internal use.
-     * @see php.java.bridge.JavaBridge#main(String[])
-     * @see php.java.bridge.JavaBridgeRunner
-     */
-    protected JavaBridge() {
-	this(null, null);
-    }
-    
-    /**
      * Create a new bridge using a factory.
      * @param factory The session/context factory.
      */
@@ -1651,7 +1635,7 @@ public class JavaBridge implements Runnable {
      */
     public Object makeClosure(long object, Map names) {
 	if(names==null) return makeClosure(object);
-    	return new PhpProcedureProxy(this, names, null, object);
+    	return new PhpProcedureProxy(getFactory(), names, null, object);
     }
     /**
      * Create a dynamic proxy proxy for calling PHP code.<br>
@@ -1665,7 +1649,7 @@ public class JavaBridge implements Runnable {
      */
     public Object makeClosure(long object, Map names, Class interfaces[]) {
 	if(names==null) names=emptyMap;
-    	return new PhpProcedureProxy(this, names, interfaces, object);
+    	return new PhpProcedureProxy(getFactory(), names, interfaces, object);
     }
     /**
      * Create a dynamic proxy proxy for calling PHP code.<br>
@@ -1692,7 +1676,7 @@ public class JavaBridge implements Runnable {
      */
     public Object makeClosure(long object, String name) {
 	if(name==null) return makeClosure(object);
-    	return new PhpProcedureProxy(this, name, null, object);
+    	return new PhpProcedureProxy(getFactory(), name, null, object);
     }
     /**
      * Create a dynamic proxy proxy for calling PHP code.<br>
@@ -1706,7 +1690,7 @@ public class JavaBridge implements Runnable {
      */
     public Object makeClosure(long object, String name, Class interfaces[]) {
 	if(name==null) return makeClosure(object, emptyMap, interfaces);
-    	return new PhpProcedureProxy(this, name, interfaces, object);
+    	return new PhpProcedureProxy(getFactory(), name, interfaces, object);
     }
     private static final HashMap emptyMap = new HashMap();
 
@@ -1720,7 +1704,7 @@ public class JavaBridge implements Runnable {
      * @return the proxy
      */
     public Object makeClosure(long object) {
-    	return new PhpProcedureProxy(this, emptyMap, null, object);
+    	return new PhpProcedureProxy(getFactory(), emptyMap, null, object);
     }
 
     /**
@@ -1738,7 +1722,7 @@ public class JavaBridge implements Runnable {
      * implement session sharing.
      * @param sessionFactory The sessionFactory to set.
      */
-    public void setFactory(IJavaBridgeFactory sessionFactory) {
+    void setFactory(IJavaBridgeFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
     }
 
@@ -1755,7 +1739,7 @@ public class JavaBridge implements Runnable {
      * @throws IllegalArgumentException if serialID does not exist anymore.
      */
     public int deserialize(String serialID, int timeout) {
-	ISession session = defaultSessionFactory.getSessionInternal(false, timeout);
+	ISession session = getDefaultSessionFactory().getSessionInternal(false, timeout);
 	Object obj = session.get(serialID);
 	if(obj==null) throw new IllegalArgumentException("Session serialID " +  serialID + " expired.");
 	return globalRef.append(castToExact(obj));
@@ -1773,7 +1757,7 @@ public class JavaBridge implements Runnable {
      * @return the serialID
      */
     public String serialize(Object obj, int timeout) {
-    	ISession session = defaultSessionFactory.getSessionInternal(false, timeout);
+    	ISession session = getDefaultSessionFactory().getSessionInternal(false, timeout);
     	String id = Integer.toHexString(getSerialID());
     	session.put(id, obj);
     	return (String)castToString(id);

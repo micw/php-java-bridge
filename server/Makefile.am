@@ -78,7 +78,7 @@ php-script.jar: JavaBridge.jar $(SCRIPT) $(SERVLET)
 	$(PHP_JAVA_DIR)/bin/jar cf php-script.jar META-INF/services/javax.script.ScriptEngineFactory php/java/script/*.class
 
 src.zip: META-INF/java/Mono.inc META-INF/java/JavaProxy.php META-INF/java/Mono.inc
-	$(PHP_JAVA_DIR)/bin/jar cf src.zip WEB-INF/cgi/launcher.c WEB-INF/cgi/launcher.sh WEB-INF/cgi/README WEB-INF/cgi/rename* javax/script/*.java php/java/bridge/http/*.java php/java/bridge/*.java php/java/servlet/fastcgi/*.java php/java/servlet/*.java php/java/script/*.java $(java_inc)
+	$(PHP_JAVA_DIR)/bin/jar cf src.zip WEB-INF/cgi/launcher.c WEB-INF/cgi/launcher.sh WEB-INF/cgi/README WEB-INF/cgi/rename* javax/script/*.java php/java/bridge/http/*.java php/java/bridge/*.java php/java/servlet/fastcgi/*.java php/java/servlet/*.java php/java/script/*.java java php/java/script/servlet/*.java $(java_inc)
 
 
 JavaBridge.war: src.zip JavaBridge.jar $(SERVLET) $(JAVA_BRIDGE_SERVLET_JAR) $(SCRIPT) $(JAVA_BRIDGE_SCRIPT_JAR) $(FACES) $(JAVA_BRIDGE_FACES_JAR) TestInstallation.class META-INF/java/JavaProxy.php

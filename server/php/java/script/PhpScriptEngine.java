@@ -83,22 +83,22 @@ public class PhpScriptEngine extends SimplePhpScriptEngine {
         try {
              /* header: <? require_once("http://localhost:<ourPort>/JavaBridge/java/Java.inc"); ?> */
             localReader = new StringReader("<?php require_once(\""+ctx.getContextString()+"/java/Java.inc\");?>");
-            try { while((c=localReader.read(buf))>0) w.write(buf, 0, c);} catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not read header", e);}
-            try { localReader.close(); localReader=null;} catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not close header", e);}
+            try { while((c=localReader.read(buf))>0) w.write(buf, 0, c);} catch (IOException e) {throw new PhpScriptException("Could not read header", e);}
+            try { localReader.close(); localReader=null;} catch (IOException e) {throw new PhpScriptException("Could not close header", e);}
     
             /* the script: */
-            try { while((c=reader.read(buf))>0) w.write(buf, 0, c);} catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not read script ", e);}
+            try { while((c=reader.read(buf))>0) w.write(buf, 0, c);} catch (IOException e) {throw new PhpScriptException("Could not read script ", e);}
             try { w.close();} catch (IOException e) {/*ignore*/}; w=null;
     
             /* now evaluate our script */
             localReader = new InputStreamReader(new ByteArrayInputStream(out.toByteArray()));
             try { this.script = doEval(localReader, context);} catch (Exception e) {
         	Util.printStackTrace(e);
-        	throw this.scriptException = new PhpScriptException("Could not evaluate script: ", e);
+        	throw new PhpScriptException("Could not evaluate script: ", e);
             }
             try { localReader.close(); localReader=null;} catch (IOException e) {
         	Util.printStackTrace(e);
-        	throw this.scriptException = new PhpScriptException("Could not evaluate footer", e);
+        	throw new PhpScriptException("Could not evaluate footer", e);
             }
          } finally {
             if(w!=null)  try { w.close(); } catch (IOException e) {/*ignore*/}

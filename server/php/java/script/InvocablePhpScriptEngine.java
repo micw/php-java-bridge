@@ -57,7 +57,7 @@ import php.java.bridge.Util;
  */
 public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements Invocable {
     private static boolean registeredHook = false;
-    private static List engines = new LinkedList();
+    private static final List engines = new LinkedList();
      
     /**
      * Create a new ScriptEngine with a default context.
@@ -95,11 +95,15 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
 	return invoke(methodName, args);
     }
 
+    private void checkPhpClosure(Object thiz) {
+	if(thiz==null) throw new IllegalStateException("PHP script did not pass its continuation to us!. Please check if the previous call to eval() reported any errors. Or else check if it called OUR continuation.");
+    }
     /* (non-Javadoc)
      * @see javax.script.Invocable#call(java.lang.String, java.lang.Object, java.lang.Object[])
      */
     public Object invoke(Object thiz, String methodName, Object[] args)
 	throws ScriptException, NoSuchMethodException {
+	checkPhpClosure(thiz);
 	PhpProcedure proc = (PhpProcedure)(Proxy.getInvocationHandler(thiz));
 	try {
 	    return proc.invoke(script, methodName, args);
@@ -133,7 +137,7 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
      * @see javax.script.Invocable#getInterface(java.lang.Object, java.lang.Class)
      */
     public Object getInterface(Object thiz, Class clasz) {
-      if(thiz==null) throw new NullPointerException("Object thiz cannot be null. Please check if the previous call to eval() reported any errors.");
+      checkPhpClosure(thiz);
       return ((PhpProcedureProxy)thiz).getNewFromInterface(clasz);
     }
 
@@ -155,32 +159,32 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
         try {
             /* header: <? require_once("http://localhost:<ourPort>/JavaBridge/java/Java.inc"); ?> */
             localReader = new StringReader("<?php require_once(\""+ctx.getContextString()+"/java/Java.inc\"); ?>");
-            try { while((c=localReader.read(buf))>0) w.write(buf, 0, c);} catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not read header", e);}
-            try { localReader.close(); } catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not close header", e);}
+            try { while((c=localReader.read(buf))>0) w.write(buf, 0, c);} catch (IOException e) {throw new PhpScriptException("Could not read header", e);}
+            try { localReader.close(); } catch (IOException e) {throw new PhpScriptException("Could not close header", e);}
     
             /* the script: */
-            try { while((c=reader.read(buf))>0) w.write(buf, 0, c);} catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not read script", e);}
+            try { while((c=reader.read(buf))>0) w.write(buf, 0, c);} catch (IOException e) {throw new PhpScriptException("Could not read script", e);}
     
             /* get the default, top-level, closure and call it, to stop the script from terminating */
             localReader =  new StringReader("<?php java_context()->call(java_closure()); ?>");
-            try { while((c=localReader.read(buf))>0) w.write(buf, 0, c);} catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not read footer", e);}
-            try { localReader.close(); } catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not read footer", e);}
+            try { while((c=localReader.read(buf))>0) w.write(buf, 0, c);} catch (IOException e) {throw new PhpScriptException("Could not read footer", e);}
+            try { localReader.close(); } catch (IOException e) {throw new PhpScriptException("Could not read footer", e);}
             try { w.close(); } catch (IOException e) {/*ignore*/}
     
             /* now evaluate our script */
             localReader = new InputStreamReader(new ByteArrayInputStream(out.toByteArray()));
             try { this.script = doEval(localReader, context);} catch (Exception e) {
         	Util.printStackTrace(e);
-        	throw this.scriptException = new PhpScriptException("Could not evaluate script", e);
+        	throw new PhpScriptException("Could not evaluate script", e);
             }
-            try { localReader.close(); } catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not evaluate footer", e);}
+            try { localReader.close(); } catch (IOException e) {throw new PhpScriptException("Could not evaluate footer", e);}
     
             if (this.script!=null) {
         	/* get the proxy, either the one from the user script or our default proxy */
         	try { this.scriptClosure = this.script.getProxy(new Class[]{}); } catch (Exception e) { return null; }
         	handleRelease();
             } else {
-        	throw this.scriptException = new PhpScriptException("Could not evaluate script, please check your php.ini file and see the error log for details.");
+        	throw new PhpScriptException("Could not evaluate script, please check your php.ini file and see the error log for details.");
             }
         } finally {
             if(w!=null)  try { w.close(); } catch (IOException e) {/*ignore*/}

@@ -44,6 +44,7 @@ import php.java.bridge.http.IContext;
 public abstract class JavaBridgeFactory implements IJavaBridgeFactory {
     
     protected JavaBridge bridge = null;
+    protected SimpleJavaBridgeClassLoader javaBridgeClassLoader;
     
     /**
      * Return an instance of the JavaBridgeClassLoader
@@ -82,15 +83,21 @@ public abstract class JavaBridgeFactory implements IJavaBridgeFactory {
 	return bridge;
     }
 
+    public boolean isNew() {
+	return bridge==null;
+    }
+    
     /**
      * Recycle the factory for new reqests.
      */
     public void recycle() {
+	javaBridgeClassLoader = null;
     }
 
     /**
      * Destroy the factory
      */
     public void destroy() {
+	this.bridge = null;
     }
 }

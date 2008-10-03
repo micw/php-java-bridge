@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 
+import javax.script.ScriptException;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -40,6 +41,8 @@ import javax.servlet.http.HttpServletResponse;
 import php.java.bridge.Util;
 import php.java.bridge.Util.Process;
 import php.java.bridge.http.IContextFactory;
+import php.java.script.PhpScriptException;
+import php.java.script.servlet.PhpScriptTemporarilyOutOfResourcesException;
 import php.java.servlet.fastcgi.FastCGIServlet;
 
 /**
@@ -93,38 +96,33 @@ public class PhpCGIServlet extends FastCGIServlet {
      * <p>The value should be less than 1/2 of the servlet engine's thread pool size as this 
      * servlet also consumes an instance of PhpJavaServlet.</p>
      */
-    private static final int CGI_MAX_REQUESTS = 19;
-    private int cgi_max_requests = CGI_MAX_REQUESTS;
+    private static final int CGI_MAX_REQUESTS = Integer.parseInt(Util.THREAD_POOL_MAX_SIZE)-1;
+    private static int servletPoolSize = CGI_MAX_REQUESTS;
     private final CGIRunnerFactory defaultCgiRunnerFactory = new CGIRunnerFactory();
     
     private String DOCUMENT_ROOT;
     private String SERVER_SIGNATURE;
     /**@inheritDoc*/
     public void init(ServletConfig config) throws ServletException {
-	String value;
     	super.init(config);
-    	try {
-	    value = config.getInitParameter("max_requests");
-	    if(value!=null) {
-	        value = value.trim();
-	        cgi_max_requests=Integer.parseInt(value);
-	    }
-	} catch (Throwable t) {Util.printStackTrace(t);}      
 
 	DOCUMENT_ROOT = getRealPath(context, "");
 	SERVER_SIGNATURE = context.getServerInfo();
     }
     
-    private boolean cgiMaxRequestsSet = false;
-    /** Return the number of max requests. In Tomcat this is 1/2 http thread pool size -1 */
-    public int getCGIMaxRequests () {
-	    if (cgiMaxRequestsSet) return cgi_max_requests;
-	    cgiMaxRequestsSet = true;
+    private static final Object lockObject = new Object();   
+    private static boolean servletPoolSizeDetermined = false;
+    /** Return the servlet pool size */
+    public static int getServletPoolSize () {
+	synchronized (lockObject) {
+	    if (servletPoolSizeDetermined) return servletPoolSize;
+	    servletPoolSizeDetermined = true;
 
-	int maxRequests = Util.getMBeanProperty("*:type=ThreadPool,name=http*", "maxThreads");
-	if (maxRequests > 2) cgi_max_requests = maxRequests/2-1;
+	    int size = Util.getMBeanProperty("*:type=ThreadPool,name=http*", "maxThreads");
+	    if (size > 2) servletPoolSize = size;
 	
-	return cgi_max_requests;
+	    return servletPoolSize;
+	}
     }
     
     public void destroy() {
@@ -268,7 +266,7 @@ public class PhpCGIServlet extends FastCGIServlet {
 	    OutputStream out = null;
 
 	    try {
-        	proc = Util.ProcessWithErrorHandler.start(new String[]{php, "-d", "allow_url_include=On"}, wd, env, phpTryOtherLocations, preferSystemPhp, natErr);
+        	proc = Util.ProcessWithErrorHandler.start(Util.getPhpArgs(new String[]{php}), wd, env, phpTryOtherLocations, preferSystemPhp, natErr);
 
         	byte[] buf = new byte[BUF_SIZE];// headers cannot be larger than this value!
 
@@ -314,7 +312,6 @@ public class PhpCGIServlet extends FastCGIServlet {
     } //class CGIRunner
     
     private static short count = 0;
-    private static final Object lockObject = new Object();
 
     /**
      * This is necessary because some servlet engines only have one global servlet pool. 
@@ -333,15 +330,35 @@ public class PhpCGIServlet extends FastCGIServlet {
      * @throws IOException
      */
     private boolean checkPool(HttpServletResponse res) throws ServletException, IOException {
-      synchronized (lockObject) {
-	if(count++>=getCGIMaxRequests()) {
+	if(count++>=(getServletPoolSize()/2-1)) {
             res.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Out of system resources. Try again shortly or use the Apache or IIS front end instead.");
-            Util.logFatal("Out of system resources. Adjust max_requests or set up the Apache or IIS front end.");
+            Util.logFatal("Out of system resources. Adjust php.java.bridge.threads and the pool size in server.xml.");
             return false;
         }
         return true;
-      }
     }
+    private static int engineCount = 0;
+    /**
+     * Since each script captures up to two servlet instances, we must check the servlet engine's thread pool.
+     * Check if a script continuation is available and capture it. Otherwise throw a PhpScriptException.
+     * @param how many entries should be reserved
+     * @throws ScriptException
+     */
+    /*
+     * @see PhpCGIServlet#checkPool(javax.servlet.http.HttpServletResponse)
+     * @see JavaBridgeRunner#doGet(php.java.bridge.http.HttpRequest, php.java.bridge.http.HttpResponse)
+     */
+    public static void reserveContinuation () throws ScriptException {
+	if (engineCount++ >= (PhpCGIServlet.getServletPoolSize()/3-1) || count>=(getServletPoolSize()/2-1)) 
+	    throw new PhpScriptTemporarilyOutOfResourcesException ("Out of system resources. Adjust php.java.bridge.threads and the pool size in server.xml.");
+    }
+    /** 
+     * Release a captured continuation
+     */
+    public static void releaseReservedContinuation () {
+	--engineCount;
+    }
+    
     /**
      * Used when running as a cgi binary only.
      * 

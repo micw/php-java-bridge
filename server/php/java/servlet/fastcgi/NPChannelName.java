@@ -63,7 +63,7 @@ class NPChannelName extends ChannelName {
 	// later.
 	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", servlet.override_hosts?"/":"");
 	env.put("REDIRECT_STATUS", "200");
-	String[] args = new String[]{php, raPath, "-d", "allow_url_include=On"};
+	String[] args = Util.getPhpArgs(new String[]{php, raPath});
 	File home = null;
 	if(php!=null) try { home = ((new File(php)).getParentFile()); } catch (Exception e) {Util.printStackTrace(e);}
 	proc = new FCGIProcess(args, home, env, CGIServlet.getRealPath(servlet.context, servlet.cgiPathPrefix), servlet.phpTryOtherLocations, servlet.preferSystemPhp);

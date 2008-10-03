@@ -47,6 +47,7 @@ import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.Vector;
 
+
 /**
  * Miscellaneous functions.
  * @author jostb
@@ -129,6 +130,11 @@ public final class Util {
 		}
 	}
     }
+
+    /** 
+     * The default PHP arguments
+     */
+    public static final String PHP_ARGS[] = new String[] {"-d", "allow_url_include=On", "-d", "display_errors=Off", "-d", "log_errors=On"};
     
     /**
      * The default CGI locations: <code>"/usr/bin/php-cgi"</code>, <code>"c:/php/php-cgi.exe</code>
@@ -1251,6 +1257,13 @@ public final class Util {
     public static void destroy () {
 	    Util.logLevel = 0;
     }
+    /**
+     * Return an mbean property.
+     * Example: <code>Util.getMBeanProperty("*:type=ThreadPool,name=http*", "maxThreads")</code>
+     * @param pattern the pattern string 
+     * @param property the property key
+     * @return the property value
+     */
     public static int getMBeanProperty(String pattern, String property) {
             try {
              Class objectNameClazz = Class.forName("javax.management.ObjectName");
@@ -1291,5 +1304,21 @@ public final class Util {
 	} catch (Throwable t) {
 	    return false;
 	}
+    }
+    /**
+     * Return args + PHP_ARGS
+     * @param args The prefix
+     * @return args with PHP_ARGS appended
+     */
+    public static final String[] getPhpArgs(String[] args) {
+	String[] allArgs = new String[args.length+PHP_ARGS.length];
+	int i=0;
+	for(i=0; i<args.length; i++) {
+	    allArgs[i]=args[i];
+	}
+	for(int j=0; j<PHP_ARGS.length; j++) {
+	    allArgs[i++]=PHP_ARGS[j];
+	}
+	return allArgs;
     }
 }

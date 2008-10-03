@@ -36,12 +36,13 @@ import java.util.Map;
  */
 public class PhpProcedure implements InvocationHandler {
 	
-    private JavaBridge bridge;
+    private IJavaBridgeFactory bridge;
     private long object;
     private Map names;
     protected String name;
+    private JavaBridge myBridge;
 	
-    protected PhpProcedure(JavaBridge bridge, long object, String name, Map names) {
+    protected PhpProcedure(IJavaBridgeFactory bridge, long object, String name, Map names) {
 	this.bridge = bridge;
 	this.object = object;
 	this.names = names;
@@ -57,9 +58,9 @@ public class PhpProcedure implements InvocationHandler {
      * @param object - An opaque object ID (protocol-level).
      * @return A new proxy instance.
      */
-    protected static Object createProxy(JavaBridge bridge, String name, Map names, Class interfaces[], long object) {
+    protected static Object createProxy(IJavaBridgeFactory bridge, String name, Map names, Class interfaces[], long object) {
 	PhpProcedure handler = new PhpProcedure(bridge, object, name, names);
-	SimpleJavaBridgeClassLoader bridgeClassLoader = bridge.getClassLoader();
+	SimpleJavaBridgeClassLoader bridgeClassLoader = bridge.getJavaBridgeClassLoader();
 
 	ClassLoader loader = bridgeClassLoader.getClassLoader();
 
@@ -68,7 +69,8 @@ public class PhpProcedure implements InvocationHandler {
     }
 	
     private Object invoke(Object proxy, String method, Class returnType, Object[] args) throws Throwable {
-    	if(bridge.logLevel>3) bridge.logDebug("invoking callback: " + method);
+	JavaBridge bridge = this.bridge.getBridge();
+	if(bridge.logLevel>3) bridge.logDebug("invoking callback: " + method);
 	String cname;
 	if(name!=null) {
 	    cname=name;
@@ -82,6 +84,10 @@ public class PhpProcedure implements InvocationHandler {
 	return bridge.coerce(returnType, result[0], bridge.request.response);
     }
 
+    private void checkPhpContinuation() throws IllegalStateException {
+	if (bridge.isNew())
+	    throw new IllegalStateException ("Cannot call closure anymore: the closed-over PHP script continuation has been terminated."); 
+    }
     /**
      * Invoke a PHP function or a PHP method.
      * @param proxy The php environment or the PHP object
@@ -91,10 +97,12 @@ public class PhpProcedure implements InvocationHandler {
      * @throws a script exception.
      */
     public Object invoke(Object proxy, String method, Object[] args) throws Throwable {
+	checkPhpContinuation();
+	
 	Thread thread = Thread.currentThread();
 	ClassLoader loader = thread.getContextClassLoader();
 	try {
-	    try { thread.setContextClassLoader(bridge.getClassLoader().getClassLoader()); } catch (SecurityException e) {/*ignore*/}
+	    try { thread.setContextClassLoader(bridge.getBridge().getClassLoader().getClassLoader()); } catch (SecurityException e) {/*ignore*/}
 	    return invoke(proxy, method, Object.class, args);
 	} finally {
 	  try { thread.setContextClassLoader(loader); } catch (SecurityException e) {/*ignore*/}
@@ -105,6 +113,8 @@ public class PhpProcedure implements InvocationHandler {
      * @see java.lang.reflect.InvocationHandler#invoke(java.lang.Object, java.lang.reflect.Method, java.lang.Object[])
      */
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+	checkPhpContinuation ();
+	
 	return invoke(proxy, method.getName(), method.getReturnType(), args);
     }
 }

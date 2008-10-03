@@ -419,13 +419,34 @@ public class JavaBridgeRunner extends HttpServer {
 	in.close();
     }
 
+    private int count = 0;
+    /**
+     * Handle doGet requests. For example java_require("http://localhost:8080/JavaBridge/java/Java.inc");
+     *
+     * Since each script may also consume a HttpServer continuation (PUT ...), there
+     * cannot be more than THREAD_POOL_MAX_SIZE/2 GET requests.
+     * @param req The HttpRequest
+     * @param res The HttpResponse
+     */
+    protected void doGet (HttpRequest req, HttpResponse res) throws IOException {
+	try {
+	    if(count++>=(maxRunnables/2-1))
+		writeServiceUnavailable(req, res);
+	    else 
+		handleDoGet (req, res);
+	} finally {
+	    count--;
+	}
+    }
+	
     private byte[] cache;
     /**
      * Handle doGet requests. For example java_require("http://localhost:8080/JavaBridge/java/Java.inc");
      * @param req The HttpRequest
      * @param res The HttpResponse
      */
-    protected void doGet (HttpRequest req, HttpResponse res) throws IOException {
+    protected void handleDoGet (HttpRequest req, HttpResponse res) throws IOException {
+	
 	byte[] buf;
 	OutputStream out;
 	int c;

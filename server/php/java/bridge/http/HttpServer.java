@@ -62,6 +62,7 @@ public abstract class HttpServer implements Runnable {
     protected ISocketFactory socket;
     protected Thread httpServer;
     private AppThreadPool pool;
+    protected int maxRunnables = Integer.MAX_VALUE;
 
     /**
      * Create a server socket.
@@ -100,11 +101,12 @@ public abstract class HttpServer implements Runnable {
      * @param name The name of the pool
      * @return The thread pool instance.
      */
-    private static AppThreadPool createThreadPool(String name) {
+    private AppThreadPool createThreadPool(String name) {
         AppThreadPool pool = null;
         int maxSize = 20;
         try { maxSize = Integer.parseInt(Util.THREAD_POOL_MAX_SIZE); } catch (Throwable t) {/*ignore*/}
-        if(maxSize>0) pool = new AppThreadPool(name, maxSize);
+        if(maxSize>0) pool = new AppThreadPool(name, maxRunnables=maxSize);
+ 
         return pool;
     }
 
@@ -185,6 +187,20 @@ public abstract class HttpServer implements Runnable {
 	}
     }
 
+    protected static final byte[] ERROR_UNAVAIL = Util.toBytes(
+	    "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">"+
+	    "<html><head>" +
+	    "<title>503 Service Unavailable</title>" +
+	    "</head><body>" +
+	    "<h1>Out of system resources</h1>" +
+	    "<p>Try again shortly or use the Apache or IIS front end instead.</p>" +
+	    "<hr>"+
+    "</body></html>");
+    protected void writeServiceUnavailable(HttpRequest req, HttpResponse res) throws IOException {
+	res.setContentLength(ERROR_UNAVAIL.length);
+	OutputStream out = res.getOutputStream();
+	out.write(ERROR_UNAVAIL);
+    }
     protected static final byte[] ERROR = Util.toBytes(
 	    "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">"+
 	    "<html><head>" +
@@ -194,16 +210,19 @@ public abstract class HttpServer implements Runnable {
 	    "<p>The requested URL was not found on this server.</p>" +
 	    "<hr>"+
     "</body></html>");
-    protected void doPost(HttpRequest req, HttpResponse res) throws IOException {
+    protected void writeError(HttpRequest req, HttpResponse res) throws IOException {
 	res.setContentLength(ERROR.length);
 	OutputStream out = res.getOutputStream();
 	out.write(ERROR);
     }
+    protected void doPost(HttpRequest req, HttpResponse res) throws IOException {
+	writeError(req, res);
+    }
     protected void doGet(HttpRequest req, HttpResponse res) throws IOException { 
-	doPost(req, res); 
+	writeError(req, res);
     }
     protected void doPut(HttpRequest req, HttpResponse res) throws IOException { 
-	doPost(req, res); 
+	writeError(req, res);
     }
     
     /**

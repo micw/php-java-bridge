@@ -24,9 +24,13 @@ package php.java.script;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.io.IOException;
+
 import javax.script.Invocable;
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
+
+import php.java.bridge.Util;
 
 /**
  * A convenience variant of the PHP script engine which can be used interactively.<p>
@@ -42,8 +46,16 @@ import javax.script.ScriptException;
  */
 public class InteractivePhpScriptEngine extends InvocablePhpScriptEngine {
 
-    private static final String restoreState = "foreach ($javabridge_values as $javabridge_key=>$javabridge_val) {eval(\"\\$$javabridge_key=\\$javabridge_values[\\$javabridge_key];\");}\n";
-    private static final String saveState = "foreach (get_defined_vars() as $javabridge_key=>$javabridge_val) {if(in_array($javabridge_key, $javabridge_ignored_keys)) continue;eval(\"\\$javabridge_values[\\$javabridge_key]=\\$$javabridge_key;\");};\n";
+    private static final String restoreState = "" +
+    		"$javabridge_values=unserialize(java_values(java_context()->getAttribute('javabridge_values', 100)));" +
+    		"if($javabridge_values)" +
+    		"foreach ($javabridge_values as $javabridge_key=>$javabridge_val) " +
+    		"{eval(\"\\$$javabridge_key=\\$javabridge_values[\\$javabridge_key];\");}\n";
+    private static final String saveState = "" +
+    		"foreach (get_defined_vars() as $javabridge_key=>$javabridge_val) " +
+    		"{if(in_array($javabridge_key, $javabridge_ignored_keys)) continue;" +
+    		"eval(\"\\$javabridge_values[\\$javabridge_key]=\\$$javabridge_key;\");};" +
+    		"java_context()->setAttribute('javabridge_values', serialize($javabridge_values), 100);\n";
 
 
     /**
@@ -89,6 +101,10 @@ public class InteractivePhpScriptEngine extends InvocablePhpScriptEngine {
 	script=script.trim() + ";";
 	Object o = null;
 	try {o=((Invocable)this).invokeFunction("javabridge_eval", new Object[]{script});}catch(NoSuchMethodException ex){/*ignore*/};
+
+	try { context.getWriter().flush(); }      catch (IOException e) { Util.printStackTrace(e); }
+	try { context.getErrorWriter().flush(); } catch (IOException e) { Util.printStackTrace(e); }
+	
 	return o;
     }
     public void release() {

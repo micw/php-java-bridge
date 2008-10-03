@@ -188,9 +188,6 @@ struct cfg {
   short socketname_set;
   short persistent_connections;
 
-  /* the temporary directory for the named pipes */
-  char *tmpdir;
-
   /* set to 1 if the back-end uses TCP sockets, 0 otherwise */
   short java_socket_inet;
 

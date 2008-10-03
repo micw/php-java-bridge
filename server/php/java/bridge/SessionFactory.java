@@ -49,7 +49,8 @@ public class SessionFactory extends JavaBridgeFactory {
   private static final SessionTimer timer = new SessionTimer();
   
   public SimpleJavaBridgeClassLoader getJavaBridgeClassLoader() {
-      return new SimpleJavaBridgeClassLoader(getClassLoader());
+      if (javaBridgeClassLoader!=null) return javaBridgeClassLoader;
+      return javaBridgeClassLoader=new SimpleJavaBridgeClassLoader(getClassLoader());
   }
   public ClassLoader getClassLoader() {
       return Util.getContextClassLoader();

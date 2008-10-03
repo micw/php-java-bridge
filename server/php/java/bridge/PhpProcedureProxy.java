@@ -33,20 +33,20 @@ import java.util.Map;
  * the proxy. Otherwise the proxy is generic.
  */
 public final class PhpProcedureProxy {
-    JavaBridge bridge;
+    IJavaBridgeFactory bridge;
     Map names = null;
     String name = null;
     Class[] suppliedInterfaces;
     long object;
 
-    protected PhpProcedureProxy(JavaBridge bridge, Map strings, Class[] interfaces, long object) {
+    protected PhpProcedureProxy(IJavaBridgeFactory bridge, Map strings, Class[] interfaces, long object) {
 
 	this.bridge = bridge;
 	this.names = strings;
 	this.suppliedInterfaces = interfaces;
 	this.object = object;
     }
-    protected PhpProcedureProxy(JavaBridge bridge, String string, Class[] interfaces, long object) {
+    protected PhpProcedureProxy(IJavaBridgeFactory bridge, String string, Class[] interfaces, long object) {
 
 	this.bridge = bridge;
 	this.name = string;

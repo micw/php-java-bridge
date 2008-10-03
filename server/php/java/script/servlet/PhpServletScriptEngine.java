@@ -23,6 +23,7 @@ import php.java.script.PhpScriptException;
 import php.java.script.URLReader;
 import php.java.servlet.CGIServlet;
 import php.java.servlet.ContextLoaderListener;
+import php.java.servlet.PhpCGIServlet;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -144,19 +145,21 @@ public class PhpServletScriptEngine extends PhpServletLocalScriptEngine {
 	    
             /* now evaluate our script */
 	    
+	    PhpCGIServlet.reserveContinuation(); //  engines need a PHP- and an optional Java continuation
 	    localReader = new URLReader(url);
             try { this.script = doEval(localReader, context);} catch (Exception e) {
         	Util.printStackTrace(e);
-        	throw this.scriptException = new PhpScriptException("Could not evaluate script", e);
+        	throw new PhpScriptException("Could not evaluate script", e);
             }
-            try { localReader.close(); localReader=null; } catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not close script", e);}
+            try { localReader.close(); localReader=null; } catch (IOException e) {throw new PhpScriptException("Could not close script", e);}
 	} catch (FileNotFoundException e) {
 	    Util.printStackTrace(e);
 	} catch (IOException e) {
 	    Util.printStackTrace(e);
         } catch (URISyntaxException e) {
             Util.printStackTrace(e);
-    } finally {
+        } finally {
+            PhpCGIServlet.releaseReservedContinuation();
             if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}
             if(fout!=null) try { fout.close(); } catch (IOException e) {/*ignore*/}
             if(tempfile!=null) tempfile.delete();

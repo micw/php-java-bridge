@@ -122,7 +122,7 @@ public abstract class CGIRunner extends Thread {
     }
     private Writer writer;
     protected void doRun() throws IOException, Util.Process.PhpException {
-        Util.Process proc = Util.ProcessWithErrorHandler.start(new String[] {null, "-d", "allow_url_include=On"}, null, env, true, true, err);
+        Util.Process proc = Util.ProcessWithErrorHandler.start(Util.getPhpArgs(new String[] {null}), null, env, true, true, err);
 
 	InputStream natIn = null;
 	try {

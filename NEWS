@@ -3,6 +3,25 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 5.3.0
+
+* The bridge now uses real PHP 6 namespaces. Example:
+
+   java_autoload("lucene.jar");
+
+   use org::apache::lucene;
+   use org::apache::lucene::index;
+   use org::apache::lucene::search;
+   use org::apache::lucene::search::IndexSearcher as LuceneSearcher;
+
+   $searcher = new LuceneSearcher(...);
+   $term = new index::Term("name", "someTerm");
+   $phrase = new search::PhraseQuery();
+   
+   $phrase->add($term);
+   $hits = $searcher->search($phrase);
+
+
 Version 5.2.3
 
 * Java boolean values now display as 0/1:

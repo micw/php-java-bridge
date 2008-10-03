@@ -51,8 +51,8 @@ class java_SimpleFactory {
   function java_SimpleFactory($client) {
 	$this->client = $client;
   }
-  function getProxy($result, $signature, $wrap) {
-	if (false) { $signature = $signature; $wrap = $wrap; }
+  function getProxy($result, $signature, $exception, $wrap) {
+	if (false) { $signature = $signature; $wrap = $wrap; $exception = $exception; }
   	return $result;
   }
   function checkResult($result) {
@@ -72,7 +72,8 @@ class java_ProxyFactory extends java_SimpleFactory {
   function createInternal($proxy) {
 	return new java_InternalJava($proxy);
   }
-  function getProxy($result, $signature, $wrap) {
+  function getProxy($result, $signature, $exception, $wrap) {
+	if (false) { $exception = $exception; }
 	$proxy = $this->create($result, $signature);
 	if($wrap) $proxy = $this->createInternal($proxy);
 	return $proxy;
@@ -110,9 +111,9 @@ class java_ExceptionProxyFactory extends java_SimpleFactory {
   function create($result, $signature) {
 	return new java_ExceptionProxy($result, $signature);
   }
-  function getProxy($result, $signature, $wrap) {
+  function getProxy($result, $signature, $exception, $wrap) {
 	$proxy = $this->create($result, $signature);
-	if($wrap) $proxy = new java_InternalException($proxy);
+	if($wrap) $proxy = new java_InternalException($proxy, $exception);
 	return $proxy;
   }
 }
@@ -123,15 +124,16 @@ class java_ThrowExceptionProxyFactory extends java_ExceptionProxyFactory {
   function java_ThrowExceptionProxyFactory($client) {
 	parent::java_ExceptionProxyFactory($client);
   }
-  function getProxy($result, $signature, $wrap) {
-    if (false) $wrap = $wrap;
+  function getProxy($result, $signature, $exception, $wrap) {
+	if (false) { $wrap = $wrap; }
   	$proxy = $this->create($result, $signature);
 	// don't check for $wrap, which may be wrong (type Java instead of
 	// JavaException) when the user has managed to create an exception
 	// from a Java constructor, e.g.: new Java("java.lang.String",
 	// null). Since we'll discard the possibly wrong type anyway, we
 	// can create a fresh proxy without any further checks:
-	$proxy = new java_InternalException($proxy);
+
+	$proxy = new java_InternalException($proxy, $exception);
 	return $proxy;
   }
   function checkResult($result) {
@@ -174,7 +176,7 @@ class java_Arg {
 	$this->val = &$val;
   }
   function getResult($wrap) {
-	$rc = $this->factory->getProxy($this->val, $this->signature, $wrap);
+	$rc = $this->factory->getProxy($this->val, $this->signature, $this->exception, $wrap);
 	$factory = $this->factory;
 
 	$this->factory = $this->client->simpleFactory;
@@ -241,7 +243,7 @@ class java_CompositeArg extends java_Arg {
 	$this->val[$this->idx]=&$val;
   }
   function setResult($val) {
-	$this->val[$this->idx]=$this->factory->getProxy($val, $this->signature, true);
+	$this->val[$this->idx]=$this->factory->getProxy($val, $this->signature, $this->exception, true);
 	$this->factory = $this->client->simpleFactory;
   }
 }
@@ -314,7 +316,7 @@ class java_Client /* implements IDocHandler */ {
 
 	$this->simpleArg = new java_Arg($this);
 
-	$this->globalRef = new java_GlobalRef($this);
+	$this->globalRef = new java_GlobalRef();
 
 	$this->asyncCtx = $this->cancelProxyCreationCounter = 0;
 	
@@ -472,9 +474,9 @@ class java_Client /* implements IDocHandler */ {
 	  break;
 	case 'E':
 	  $arg->setFactory($this->throwExceptionProxyFactory);
-	  $arg->setResult($this->asyncCtx=$this->getExact($st['v']));
 	  if(JAVA_DEBUG) {echo "setresult exception:"; echo sprintf("%x", $this->asyncCtx); echo "\n";}
-	  $arg->setException($st['m']);
+	  $arg->setException($this->parser->getData($st['m']));
+	  $arg->setResult($this->asyncCtx=$this->getExact($st['v']));
 	  break;
 	default: 
 	  $this->parser->parserError();

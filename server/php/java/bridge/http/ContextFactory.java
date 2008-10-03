@@ -248,7 +248,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     public void destroy() {
 	if(Util.logLevel>4) Util.logDebug("contextfactory: context destroyed (remove context factory): " +visitor);
 	remove(getId());
-	bridge=null;
+	super.destroy();
 	visitor.invalidate();
    }
     
@@ -373,7 +373,8 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	visitor.setClassLoader(loader);
     }
     public SimpleJavaBridgeClassLoader getJavaBridgeClassLoader() {
-	return new JavaBridgeClassLoader(getClassLoader());
+	if (javaBridgeClassLoader!=null) return javaBridgeClassLoader;
+	return javaBridgeClassLoader=new JavaBridgeClassLoader(getClassLoader());
     }
     public ClassLoader getClassLoader() {
 	return visitor.getClassLoader();

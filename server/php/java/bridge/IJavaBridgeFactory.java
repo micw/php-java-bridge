@@ -58,6 +58,12 @@ public interface IJavaBridgeFactory {
      */
     public IContext getContext();
 
+    /** 
+     * Return true if this factory has already created a bridge or not.
+     * @return true if this factory is new, false otherwise
+     */
+    public boolean isNew ();
+    
     /**
      * Return the JavaBridge.
      * @return Returns the bridge.

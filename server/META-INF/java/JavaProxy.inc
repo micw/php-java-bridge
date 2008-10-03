@@ -483,6 +483,8 @@ class java_JavaProxy implements java_JavaType {
   public $__serialID, $__java;
   public $__signature;
   public $__client;
+  public $__tempGlobalRef;
+
   function java_JavaProxy($java, $signature){ 
 	$this->__java=$java;
 	$this->__signature=$signature;
@@ -494,13 +496,17 @@ class java_JavaProxy implements java_JavaType {
   function __sleep() {
 	$args = array($this, java_get_lifetime());
 	$this->__serialID = $this->__client->invokeMethod(0, "serialize", $args);
+	$this->__tempGlobalRef = $this->__client->globalRef;
 	if(JAVA_DEBUG) echo "proxy sleep called for $this->__java, $this->__signature\n";
-    return array("__serialID");
+    return array("__serialID", "__tempGlobalRef");
   }
   function __wakeup() {
 	$args = array($this->__serialID, java_get_lifetime());
 	if(JAVA_DEBUG) echo "proxy wakeup called for $this->__java, $this->__signature\n";
 	$this->__client = __javaproxy_Client_getClient();
+	if($this->__tempGlobalRef)
+		$this->__client->globalRef = $this->__tempGlobalRef;
+	$this->__tempGlobalRef = null;
     $this->__java = $this->__client->invokeMethod(0, "deserialize", $args);
   }
   function __destruct() { 
@@ -517,7 +523,12 @@ class java_JavaProxy implements java_JavaType {
     return $this->__client->invokeMethod($this->__java, $method, $args);
   }
   function __toString() {
-    return $this->__client->invokeMethod(0,"ObjectToString",array($this));
+    try {
+      return $this->__client->invokeMethod(0,"ObjectToString",array($this));
+    } catch (JavaException $ex) {
+	  trigger_error("Exception in Java::__toString(): ". (string)$ex, E_USER_WARNING);
+	  return "";
+    }
   }
 }
 
@@ -632,7 +643,6 @@ abstract class java_AbstractJava implements IteratorAggregate,ArrayAccess,java_J
   function __sleep() {
 	if(!isset($this->__delegate)) $this->__createDelegate();
 	$this->__delegate->__sleep();
-	$this->__serialID = $this->__delegate->__serialID;
 	return array("__delegate");
   }
   function __wakeup() {
@@ -944,6 +954,8 @@ class java_exception extends Exception implements java_JavaType {
 	// compatibility with the C implementation
 	if(is_array($name)) { $args = $name; $name = array_shift($args); }
 
+	if (count($args) >= 1) Exception::__construct($args[0]);
+
 	/* do not delete this line, it is used when generating Mono.inc from Java.inc */
 
 	$delegate = $this->__delegate = $this->__client->createObject($name, $args);
@@ -961,9 +973,8 @@ class java_exception extends Exception implements java_JavaType {
    * @access private
    */
   function __sleep() {
-	$rc = $this->__delegate->__sleep();
-	$this->__serialID = $this->__delegate->__serialID;
-	return $rc;
+	$this->__delegate->__sleep();
+	return array("__delegate");
   }
   /**
    * @access private
@@ -1007,7 +1018,9 @@ class JavaException extends java_exception {}
  * @access private
  */
 class java_InternalException extends JavaException {
-  function java_InternalException($proxy) {
+  function java_InternalException($proxy, $exception) {
+	Exception::__construct($exception);
+
 	$this->__delegate = $proxy;
 	$this->__java = $proxy->__java;
 	$this->__signature = $proxy->__signature;

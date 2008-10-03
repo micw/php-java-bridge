@@ -26,6 +26,8 @@ import php.java.script.PhpScriptException;
 import php.java.script.URLReader;
 import php.java.servlet.CGIServlet;
 import php.java.servlet.ContextLoaderListener;
+import php.java.servlet.PhpCGIServlet;
+import php.java.servlet.RequestListener;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -177,19 +179,18 @@ public class InvocablePhpServletScriptEngine extends InvocablePhpServletLocalScr
 	    while((length=reader.read(cbuf, 0, cbuf.length))>0) 
 		writer.write(cbuf, 0, length);
 	    writer.close();
-
-	    
+	  	
             /* now evaluate our script */
 	    
+	    EngineFactory.addManaged(req, this);
 	    localReader = new URLReader(url);
             try { this.script = doEval(localReader, context);} catch (Exception e) {
         	Util.printStackTrace(e);
-        	throw this.scriptException = new PhpScriptException("Could not evaluate script", e);
+        	throw new PhpScriptException("Could not evaluate script", e);
             }
-            try { localReader.close(); localReader=null; } catch (IOException e) {throw this.scriptException = new PhpScriptException("Could not close script", e);}
+            try { localReader.close(); localReader=null; } catch (IOException e) {throw new PhpScriptException("Could not close script", e);}
             /* get the proxy, either the one from the user script or our default proxy */
             try { this.scriptClosure = this.script.getProxy(new Class[]{}); } catch (Exception e) { return null; }
-            handleRelease();
 	} catch (FileNotFoundException e) {
 	    Util.printStackTrace(e);
 	} catch (IOException e) {
@@ -200,6 +201,10 @@ public class InvocablePhpServletScriptEngine extends InvocablePhpServletLocalScr
         }
 	return null;
     }
+    /**
+     * Release the continuation. Must be called explicitly or
+     * via the {@link RequestListener}
+     */
     public void release() {
 	super.release();
 	if(tempfile!=null) tempfile.delete();

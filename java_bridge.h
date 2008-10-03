@@ -96,8 +96,5 @@ extern void EXT_GLOBAL(sys_error)(const char *str, int code);
 
 extern unsigned char EXT_GLOBAL (get_mode) (void);
 
-extern void EXT_GLOBAL(mktmpdir) ();
-extern void EXT_GLOBAL(rmtmpdir) ();
-
 extern char *EXT_GLOBAL(getDefaultSessionFactory)(TSRMLS_D);
 #endif

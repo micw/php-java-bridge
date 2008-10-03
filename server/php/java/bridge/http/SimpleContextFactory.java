@@ -112,7 +112,10 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
 	if(context==null) setContext(createContext());
         return context;
     }
-	
+
+    public boolean isNew () {
+	return visited.isNew();
+    }
     public JavaBridge getBridge() {
         return visited.getBridge();
     }

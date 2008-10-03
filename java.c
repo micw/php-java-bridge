@@ -336,7 +336,6 @@ PHP_MINIT_FUNCTION(EXT)
 	EXT_GLOBAL(clone_cfg)(TSRMLS_C);
 	EXT_GLOBAL(start_server) (TSRMLS_C);
 	EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);
-	EXT_GLOBAL(mktmpdir)();
   } 
 
   /* 
@@ -349,9 +348,6 @@ PHP_MINIT_FUNCTION(EXT)
 	if(EXT_GLOBAL(option_set_by_user)(U_SERVLET, EXT_GLOBAL(ini_user)))
 	  REGISTER_STRING_CONSTANT(EXTU/**/"_SERVLET", EXT_GLOBAL(cfg)->servlet, CONST_CS | CONST_PERSISTENT);
   }
-
-  REGISTER_STRING_CONSTANT(EXTU/**/"_PIPE_DIR", EXT_GLOBAL(cfg)->tmpdir, CONST_CS | CONST_PERSISTENT);
-
   return SUCCESS;
 }
 /**
@@ -478,7 +474,6 @@ PHP_MSHUTDOWN_FUNCTION(EXT)
 
   assert(EXT_GLOBAL (cfg));
   if(EXT_GLOBAL (cfg) ) { 
-	EXT_GLOBAL(rmtmpdir)();
 	free(EXT_GLOBAL (cfg) ); EXT_GLOBAL (cfg) = 0; 
   }
 	

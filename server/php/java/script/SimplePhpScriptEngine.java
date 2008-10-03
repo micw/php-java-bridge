@@ -51,9 +51,8 @@ import php.java.bridge.http.IContextFactory;
  * This class implements the ScriptEngine.<p>
  *@see php.java.script.InvocablePhpScriptEngine
  *@see php.java.script.PhpScriptEngine
- *@author jostb
  */
-abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
+public abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
 
 	
     /**
@@ -61,7 +60,6 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
      */
     protected PhpProcedureProxy script = null;
     protected Object scriptClosure = null;
-    protected ScriptException scriptException = null;
     protected String name = null;
     
     /**
@@ -186,7 +184,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
     
             try { doEval(reader, context); } catch (Exception e) {
         	Util.printStackTrace(e);
-        	throw this.scriptException = new PhpScriptException("Could not evaluate script", e);
+        	throw new PhpScriptException("Could not evaluate script", e);
             }
         } finally {
             release();
@@ -311,7 +309,6 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
 	    continuation = null;
 	    script = null;
 	    scriptClosure = null;
-	    scriptException = null;
 	}
     }
 

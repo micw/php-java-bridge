@@ -10,6 +10,10 @@
    <listener>
         <listener-class>php.java.servlet.ContextLoaderListener</listener-class>
     </listener>
+    <!-- Terminate invocable scripts when the JSP/framework request finishes -->
+   <listener>
+        <listener-class>php.java.servlet.RequestListener</listener-class>
+    </listener>
 
     <!-- PHP Servlet: back-end for Apache or IIS -->
     <servlet>
@@ -42,17 +46,6 @@
         <servlet-name>PhpCGIServlet</servlet-name>
         <servlet-class>php.java.servlet.PhpCGIServlet</servlet-class>
 
-         <!-- Allow us to override the java.hosts, java.servlet and -->
-         <!-- java.socketname settings from your php.ini so that we can -->
-         <!-- use the current VM (see X_JAVABRIDGE_OVERRIDE_HOSTS). -->
-         <!-- Default is On. -->
-        <!-- 
-         <init-param>
-           <param-name>override_hosts</param-name>
-           <param-value>Off</param-value>
-         </init-param>
-        -->
-
          <!-- Your php binary. Default is /usr/bin/php-cgi or -->
          <!-- c:/php/php-cgi.exe -->
         <!-- 
@@ -70,45 +63,12 @@
            <param-value>On</param-value>
          </init-param>
 
-         <!-- The number of concurrent cgi requests -->
-         <!-- Note that this value should be 1/2 of the servlet engine's -->
-         <!-- thread pool size because each PhpCGIServlet instance also -->
-         <!-- consumes one PhpJavaServlet instance -->
+        <!-- The number of PHP processes waiting in the FastCGI pool -->
+        <!-- Default is 5. -->
         <!-- 
          <init-param>
-           <param-name>max_requests</param-name>
-           <param-value>19</param-value>
-         </init-param>
-        -->
-
-         <!-- Use the fast cgi interface instead of cgi when running -->
-         <!-- php as a CGI sub component (when php is not installed as an -->
-         <!-- Apache or IIS module). Values: Off, On, Autostart. -->
-         <!-- Default is Autostart. -->
-        <!-- 
-         <init-param>
-           <param-name>use_fast_cgi</param-name>
-           <param-value>Off</param-value>
-         </init-param>
-        -->
-
-         <!-- Share the FastCGI server from the global PHP/Java Bridge -->
-         <!-- with the PHP/Java Bridge  from the JavaBridge web context. -->
-         <!-- WARNING: If you copy the PHP/Java Bridge library into the global -->
-         <!-- classpath of the servlet engine and you do not disable the JavaBridge -->
-         <!-- web context, make sure that these options match. -->
-         <!-- If both bridges access the same FastCGI server, and these options do not -->
-         <!-- match (see global web.xml and WEB-INF/web.xml), either the connection -->
-         <!-- pool from the "JavaBridge" web context or the connection pool from the -->
-         <!-- global PHP/Java Bridge library will hang. - Since both bridges are -->
-         <!-- loaded via two separate classloaders, we don't have the chance to check -->
-         <!-- this configuration error. -->
-         <!-- Default is Off. -->
-         <!-- See http://php-java-bridge.sf.net#global-servlet for details. -->
-        <!-- 
-         <init-param>
-           <param-name>shared_fast_cgi_pool</param-name>
-           <param-value>On</param-value>
+           <param-name>php_fcgi_children</param-name>
+           <param-value>5</param-value>
          </init-param>
         -->
 
