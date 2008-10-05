@@ -82,6 +82,8 @@ public class InteractivePhpScriptEngine extends InvocablePhpScriptEngine {
 	if(!hasScript) {
 	    super.eval("<?php " +
 		       "ini_set('max_execution_time', 0);\n" +
+		       "ini_set('display_errors','stderr');\n" +
+		       "ini_set('log_errors','Off');\n" +
 		       "$javabridge_values = array();\n"+
 		       "$javabridge_ignored_keys = array(\"javabridge_key\", \"javabridge_val\", \"javabridge_values\", \"javabridge_ignored_keys\", \"javabridge_param\");\n"+
 		       "function javabridge_eval($javabridge_param) {\n" +

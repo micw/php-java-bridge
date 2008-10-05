@@ -96,7 +96,7 @@ public class PhpCGIServlet extends FastCGIServlet {
      * <p>The value should be less than 1/2 of the servlet engine's thread pool size as this 
      * servlet also consumes an instance of PhpJavaServlet.</p>
      */
-    private static final int CGI_MAX_REQUESTS = Integer.parseInt(Util.THREAD_POOL_MAX_SIZE)-1;
+    private static final int CGI_MAX_REQUESTS = Integer.parseInt(Util.THREAD_POOL_MAX_SIZE);
     private static int servletPoolSize = CGI_MAX_REQUESTS;
     private final CGIRunnerFactory defaultCgiRunnerFactory = new CGIRunnerFactory();
     
@@ -118,7 +118,13 @@ public class PhpCGIServlet extends FastCGIServlet {
 	    if (servletPoolSizeDetermined) return servletPoolSize;
 	    servletPoolSizeDetermined = true;
 
+	    // tomcat
 	    int size = Util.getMBeanProperty("*:type=ThreadPool,name=http*", "maxThreads");
+	    // jetty
+	    if (size < 2) size = Util.getMBeanProperty("*:ServiceModule=*,J2EEServer=*,name=JettyWebConnector,j2eeType=*", "maxThreads");
+	    // sun 
+	    if (size < 2) size = Util.getMBeanProperty("*:type=protocolHandler,className=*HttpProtocol", "maxThreads");
+	    // fail
 	    if (size > 2) servletPoolSize = size;
 	
 	    return servletPoolSize;
@@ -330,7 +336,7 @@ public class PhpCGIServlet extends FastCGIServlet {
      * @throws IOException
      */
     private boolean checkPool(HttpServletResponse res) throws ServletException, IOException {
-	if(count++>=(getServletPoolSize()/2-1)) {
+	if(count++>=(getServletPoolSize()/2)) {
             res.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Out of system resources. Try again shortly or use the Apache or IIS front end instead.");
             Util.logFatal("Out of system resources. Adjust php.java.bridge.threads and the pool size in server.xml.");
             return false;
@@ -349,7 +355,7 @@ public class PhpCGIServlet extends FastCGIServlet {
      * @see JavaBridgeRunner#doGet(php.java.bridge.http.HttpRequest, php.java.bridge.http.HttpResponse)
      */
     public static void reserveContinuation () throws ScriptException {
-	if (engineCount++ >= (PhpCGIServlet.getServletPoolSize()/3-1) || count>=(getServletPoolSize()/2-1)) 
+	if (engineCount++ >= (PhpCGIServlet.getServletPoolSize()/3) || count>=(getServletPoolSize()/2)) 
 	    throw new PhpScriptTemporarilyOutOfResourcesException ("Out of system resources. Adjust php.java.bridge.threads and the pool size in server.xml.");
     }
     /** 

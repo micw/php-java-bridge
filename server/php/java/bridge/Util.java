@@ -1259,7 +1259,8 @@ public final class Util {
     }
     /**
      * Return an mbean property.
-     * Example: <code>Util.getMBeanProperty("*:type=ThreadPool,name=http*", "maxThreads")</code>
+     * Example: <code>Util.getMBeanProperty("*:type=ThreadPool,name=http*", "maxThreads")</code> or 
+     * <code>Util.getMBeanProperty("*:ServiceModule=*,J2EEServer=*,name=JettyWebConnector,j2eeType=*", "maxThreads");</code>
      * @param pattern the pattern string 
      * @param property the property key
      * @return the property value

@@ -1,3 +1,15 @@
+2008-10-05  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/script/CGIRunner.java
+	(run): Do not call flush() in the finally block to work around a
+	bug in the Sun "Grassfish" J2EE server, which assumes that the
+	current thread is an instance of SSLWorkerThread, see
+	SSLOutputWriter, line 28: (SSLWorkerThread)Thread.currentThread();
+	=> java.lang.ClassCastException: php.java.script.HttpProxy cannot
+	be cast to
+	com.sun.enterprise.web.connector.grizzly.ssl.SSLWorkerThread
+	
+	
 2008-10-03  Jost Boekemeier  <jostb@intern>
 
 	* server/WEB-INF/web.xml: Added RequestListener declaration.
