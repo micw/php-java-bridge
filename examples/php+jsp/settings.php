@@ -72,18 +72,13 @@ internet browser &lt;--&gt; PhpCGIServlet &lt;--&gt; php-cgi &lt;--&gt; PhpJavaS
 </code>
 </blockquote>
 <p>
-It starts a PHP FastCGI server, if possible and necessary. Requests for PHP scripts are delegated to the FastCGI server. If the PHP code contains Java calls, the PHP/Java Bridge protocol requests are delegated back to the current VM, to an instance of the <code>PhpJavaServlet</code>.
+It starts a PHP FastCGI server, if possible and neccessary. Requests for PHP scripts are delegated to the FastCGI server. If the PHP code contains Java calls, the PHP/Java Bridge protocol requests are delegated back to the current VM, to an instance of the <code>PhpJavaServlet</code>.
 </p>
 <table BORDER=1 CELLSPACING=5 WIDTH="85%" >
 <tr VALIGN=TOP>
 <th>Option</th>
 <th>Value</th>
 <th WIDTH="60%">Description</th>
-</tr>
-<tr>
-<td>override_hosts</td>
-<td><?php $val=java_values($config->getInitParameter("override_hosts")); echo $val?$val:"On"?></td>
-<td>Should the servlet engine delegate protocol requests back to the current VM?</td>
 </tr>
 
 <tr>
@@ -99,22 +94,11 @@ It starts a PHP FastCGI server, if possible and necessary. Requests for PHP scri
 </tr>
 
 <tr>
-<td>max_requests</td>
-<td><?php $val=java_values($servlet->getCGIMaxRequests()); echo $val?$val:"20"?></td>
-<td>How many parallel requests should the servlet engine handle?</td>
-</tr>
-
-
-<tr>
-<td>use_fast_cgi</td>
-<td><?php $val=java_values($config->getInitParameter("use_fast_cgi")); echo $val?$val:"Autostart"?></td>
-<td>Shall the bridge start an internal, or use an external or no PHP FastCGI server?</td>
-</tr>
-
-<tr>
-<td>shared_fast_cgi_pool</td>
-<td><?php $val=java_values($config->getInitParameter("shared_fast_cgi_pool")); echo $val?$val:"Off"?></td>
-<td>Are there two bridges accessing the same FastCGI pool? Set this to On in <strong>both</strong>, the global web.xml and in the WEB-INF/web.xml of the JavaBridge context.</td>
+<td>thread pool size</td>
+<td><?php $val=java_values($servlet->getServletPoolSize()); echo $val?$val:"unknown"?></td>
+<td>The servlet thread pool size, taken from <code>Util.getMBeanProperty("*:type=ThreadPool,name=http*", "maxThreads")</code> or 
+      <code>Util.getMBeanProperty("*:ServiceModule=*,J2EEServer=*,name=JettyWebConnector,j2eeType=*", "maxThreads");</code> or 
+     from the system property <code>php.java.bridge.threads</code>.</td>
 </tr>
 
 </table>
