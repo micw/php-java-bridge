@@ -44,7 +44,7 @@ You can also add PHP support to your Java application by adding the
 following line to its main class:
 <blockquote>
 <code>
-static final php.java.bridge.JavaBridgeRunner runner = php.java.bridge.JavaBridgeRunner.getRequiredInstance(8087);
+static final php.java.bridge.JavaBridgeRunner runner = php.java.bridge.JavaBridgeRunner.getInstance(8087);
 </code>
 </blockquote>
 The above code opens the port 8087, so that local PHP scripts can call
@@ -92,6 +92,7 @@ java -Dphp.java.bridge.default_log_level=5 -jar JavaBridge.jar SERVLET:8080
 <blockquote>
 <code>
 define ("JAVA_DEBUG", false);<br>
+define ("JAVA_PREFER_VALUES", false);<br>
 define ("JAVA_HOSTS", "127.0.0.1:8080");<br>
 define ("JAVA_PIPE_DIR", null);<br>
 require_once ("java/Java.inc");<br>

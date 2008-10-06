@@ -1,3 +1,15 @@
+2008-10-06  Jost Boekemeier  <jostb@intern>
+
+	* php/java/servlet/RemoteHttpServletResponse.java
+	(encodeRedirectUrl, encodeUrl, setStatus): Deprecated according to
+	interface
+
+	* php/java/script/SimplePhpScriptEngine.java
+	(release): Always flush the output at the end of the script
+
+	* FAQ.html, INSTALL.STANDALONE: Correct spelling.
+	
+	
 2008-10-05  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/script/CGIRunner.java

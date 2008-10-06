@@ -136,6 +136,7 @@ final class RemoteHttpServletResponse implements HttpServletResponse, BufferedRe
 	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
     }
 
+    /**@deprecated*/
     public String encodeRedirectUrl(String arg0) {
 	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
     }
@@ -144,6 +145,7 @@ final class RemoteHttpServletResponse implements HttpServletResponse, BufferedRe
 	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
     }
 
+    /**@deprecated*/
     public String encodeUrl(String arg0) {
 	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
     }
@@ -176,6 +178,7 @@ final class RemoteHttpServletResponse implements HttpServletResponse, BufferedRe
 	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
     }
 
+    /**@deprecated*/
     public void setStatus(int arg0, String arg1) {
 	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
     }

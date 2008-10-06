@@ -53,7 +53,7 @@ application:
 
      public static final String JAVABRIDGE_PORT="8087";
      static final php.java.bridge.JavaBridgeRunner runner = 
-       php.java.bridge.JavaBridgeRunner.getRequiredInstance(JAVABRIDGE_PORT);
+       php.java.bridge.JavaBridgeRunner.getInstance(JAVABRIDGE_PORT);
      
 
 Call your Java methods from PHP

@@ -309,6 +309,9 @@ public abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
 	    continuation = null;
 	    script = null;
 	    scriptClosure = null;
+	    
+	    try {getContext().getWriter().flush();} catch (Exception e) {Util.printStackTrace(e);}
+	    try {getContext().getErrorWriter().flush();} catch (Exception e) {Util.printStackTrace(e);}
 	}
     }
 
