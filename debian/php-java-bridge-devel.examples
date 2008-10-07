@@ -1,4 +1,4 @@
-examples
+examples/*
 install.sh.in
 php-java-bridge.spec
 test.php

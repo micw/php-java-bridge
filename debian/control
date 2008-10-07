@@ -11,7 +11,7 @@ XBS-Homepage: http://php-java-bridge.sourceforge.net
 Package: php-java-bridge
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, ${php:Depends}, sun-java6-jre, liblucene-java, libitext-java, php5-cli
-Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
+Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm
  The PHP/Java Bridge is an optimized, XML-based network 
  protocol which can be used to connect a native script 
  engine with a Java or ECMA 335 virtual machine. 
@@ -24,7 +24,7 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
 Package: php-java-bridge-j2ee
 Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends}, ${php:Depends}, sun-java6-jre, tomcat5, liblucene-java, libitext-java
-Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
+Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm
  The PHP/Java Bridge is an optimized, XML-based network 
  protocol which can be used to connect a native script 
  engine with a Java or ECMA 335 virtual machine. 
@@ -38,7 +38,7 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
 Package: php-java-bridge-docs
 Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends}, ${php:Depends}
-Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
+Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm
  The PHP/Java Bridge is an optimized, XML-based network 
  protocol which can be used to connect a native script 
  engine with a Java or ECMA 335 virtual machine. 
@@ -51,7 +51,7 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
 Package: php-java-bridge-j2ee-docs
 Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends}, ${php:Depends}
-Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
+Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm
  The PHP/Java Bridge is an optimized, XML-based network 
  protocol which can be used to connect a native script 
  engine with a Java or ECMA 335 virtual machine. 
@@ -64,7 +64,7 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
 Package: php-java-bridge-devel
 Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends}, ${php:Depends}, sun-java6-jdk, liblucene-java, libitext-java, php-java-bridge
-Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm.
+Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm
  The PHP/Java Bridge is an optimized, XML-based network 
  protocol which can be used to connect a native script 
  engine with a Java or ECMA 335 virtual machine. 

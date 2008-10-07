@@ -1,5 +1,5 @@
-This package was debianized by Andre Felipe Machado <af-machado@uol.com.br> on
-Thu, 23 Nov 2006 13:32:33 -0200.
+This package was debianized by Andre Felipe Machado 
+<andremachado@techforce.com.br> on Thu, 23 Nov 2006 13:32:33 -0200.
 
 It was downloaded from http://php-java-bridge.sourceforge.net
 
@@ -27,8 +27,9 @@ On Debian systems, the complete text of the GNU Lesser General
 Public License can be found in `/usr/share/common-licenses/LGPL'.
 
 
-The Debian packaging is (C) 2006, Andre Felipe Machado <af-machado@uol.com.br> and
-is licensed under the GPL, see `/usr/share/common-licenses/GPL'.
+The Debian packaging is (C) 2006, Andre Felipe Machado 
+<andremachado@techforce.com.br> and is licensed under the GPL, 
+see `/usr/share/common-licenses/GPL'.
 
 
 # Please also look if there are files or directories which have a
