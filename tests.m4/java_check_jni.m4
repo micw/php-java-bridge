@@ -12,11 +12,11 @@ end
 have_jni=no
 if test "$have_ar" = "yes"; then
  if test "$PHP_JAVA" != "yes"; then
-  $CC -olibjni.so $JAVA_INCLUDES -shared jni.c 2>test.log
+  $CC $lt_prog_compiler_pic -olibjni.so $JAVA_INCLUDES -shared jni.c 2>test.log
   $PHP_JAVA/bin/javac jni.java 2>>test.log
   LD_LIBRARY_PATH=`pwd` $PHP_JAVA/bin/java -Djava.library.path=`pwd` jni 2>>test.log && have_jni=yes 
  else 
-  $CC -olibjni.so -shared jni.c 2>test.log && have_jni=yes
+  $CC $lt_prog_compiler_pic -olibjni.so -shared jni.c 2>test.log && have_jni=yes
  fi
 fi
 rm -f libjni.so jni.java jni.c test.log

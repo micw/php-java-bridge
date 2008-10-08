@@ -1,3 +1,12 @@
+2008-10-08  Jost Boekemeier  <jostb@intern>
+
+	* tests.m4/java_check_jni.m4: Added $lt_prog_compiler_pic 
+	
+2008-10-07  Andre Machado
+
+	* server/Makefile.am: removed incorrect java entry
+	
+	
 2008-10-06  Jost Boekemeier  <jostb@intern>
 
 	* php/java/servlet/RemoteHttpServletResponse.java
