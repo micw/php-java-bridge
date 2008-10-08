@@ -84,7 +84,7 @@ install: installbasic
 	$(MAKE) install DESTDIR=${DESTDIR}
 
 # avoid multiple binary packages conflicts
-installbasic: build
+installbasic:
 	dh_testdir
 	dh_testroot
 	dh_clean -k 
@@ -92,11 +92,11 @@ installbasic: build
 
 # Build architecture-independent files here.
 # creating also docs package without examples files. See /debian/*.docs file
-binary-indep: build install php-java-bridge-j2ee php-java-bridge-docs php-java-bridge-j2ee-docs php-java-bridge-devel
+binary-indep: php-java-bridge-devel php-java-bridge-j2ee
 
 # creating j2ee package . See /debian/*j2ee.* files
 # note the -p$@ to use target name package files in /debian as parameters
-php-java-bridge-j2ee: build install
+php-java-bridge-j2ee: 
 	dh_testdir
 	dh_testroot
 	dh_installdirs -i -p$@
@@ -105,7 +105,7 @@ php-java-bridge-j2ee: build install
 #	dh_installexamples -p$@
 # using dh_installdirs and dh_install for this task
 # note the absence of leading "/"
-	dh_install -i --list-missing --package=$@ ${BUILDDIR}$(PHP_EXT_DIR)/JavaBridge.war var/lib/tomcat5/webapps
+	dh_install -i --fail-missing --package=$@ ${BUILDDIR}$(PHP_EXT_DIR)/JavaBridge.war var/lib/tomcat5/webapps
 #	dh_install -i -p$@
 #	dh_installmenu -i -p$@
 #	dh_installdebconf -i -p$@
@@ -132,14 +132,14 @@ php-java-bridge-j2ee: build install
 
 # creating devel package . See /debian/*devel.* files
 # note the -p$@ to use target name package files in /debian as parameters
-php-java-bridge-devel: build install
+php-java-bridge-devel:
 	dh_testdir
 	dh_testroot
 	dh_installdirs -i -p$@
 	dh_installchangelogs -i -p$@ ChangeLog
 	dh_installdocs -i -p$@
 	dh_installexamples -i -p$@
-	dh_install -i --list-missing -p$@ ${BUILDDIR}$(PHP_EXT_DIR)/*.jar $(PHP_INCLUDE_DIR)/ext/php-java-bridge
+	dh_install -i --exclude=java-servlet.ini --fail-missing -p$@ ${BUILDDIR}$(PHP_EXT_DIR)/*.jar $(PHP_INCLUDE_DIR)/ext/php-java-bridge
 #	dh_install -i -p$@
 #	dh_installmenu -i -p$@
 #	dh_installdebconf -i -p$@
@@ -166,42 +166,45 @@ php-java-bridge-devel: build install
 
 # creating docs package without examples files. See /debian/*.docs file
 # pitfall: packages have "-" in their name. Do not create intermediate rules with this character
-php-java-bridge-docs: installdocs
 
-php-java-bridge-j2ee-docs: installdocs
+binary-docs: php-java-bridge-docs php-java-bridge-j2ee-docs
 
-installdocs: build installbasic
+# use different entry points for same code to avoid duplicate processing
+# and multiple entries conffiles
+php-java-bridge-docs:
+php-java-bridge-j2ee-docs:
+installdocs:
 	dh_testdir
 	dh_testroot
-	dh_installchangelogs -i ChangeLog
-	dh_installdocs -i
-#	dh_installexamples -i
-#	dh_install -i
-#	dh_installmenu -i
-#	dh_installdebconf -i	
-#	dh_installlogrotate -i
-#	dh_installemacsen -i
-#	dh_installpam -i
-#	dh_installmime -i
-#	dh_python -i
-#	dh_installinit -i
-#	dh_installcron -i
-#	dh_installinfo -i
-	dh_installman -i
-	dh_link -i
-	dh_strip -i
-	dh_compress -i
-	dh_fixperms -i
-#	dh_perl -i
-#	dh_makeshlibs -i
-	dh_installdeb -i
-	dh_shlibdeps -i
-	dh_gencontrol -i
-	dh_md5sums -i
-	dh_builddeb -i
+	dh_installchangelogs -i -p$@ ChangeLog
+	dh_installdocs -i -p$@
+#	dh_installexamples -i -p$@
+#	dh_install -i -p$@
+#	dh_installmenu -i -p$@
+#	dh_installdebconf -i	 -p$@
+#	dh_installlogrotate -i -p$@
+#	dh_installemacsen -i -p$@
+#	dh_installpam -i -p$@
+#	dh_installmime -i -p$@
+#	dh_python -i -p$@
+#	dh_installinit -i -p$@
+#	dh_installcron -i -p$@
+#	dh_installinfo -i -p$@
+	dh_installman -i -p$@
+	dh_link -i -p$@
+	dh_strip -i -p$@
+	dh_compress -i -p$@
+	dh_fixperms -i -p$@
+#	dh_perl -i -p$@
+#	dh_makeshlibs -i -p$@
+	dh_installdeb -i -p$@
+	dh_shlibdeps -i -p$@
+	dh_gencontrol -i -p$@
+	dh_md5sums -i -p$@
+	dh_builddeb -i -p$@
 
 # Build architecture-dependent files here.
-binary-arch: build install
+binary-arch:
 	dh_testdir
 	dh_testroot
 	dh_installchangelogs -a ChangeLog
@@ -231,8 +234,8 @@ binary-arch: build install
 	dh_md5sums -a
 	dh_builddeb -a
 
-binary: binary-indep binary-arch
-.PHONY: build clean binary-indep binary-arch binary install configure installdocs installbasic
+binary: build install binary-indep binary-arch binary-docs
+.PHONY: build build-stamp clean clean-patched binary-indep binary-arch binary-docs binary install configure configure-stamp installdocs installbasic unpatch patchsource patch-stamp  php-java-bridge-j2ee php-java-bridge-devel
 
 # using dpatch for flexibility
 unpatch:
