@@ -1,8 +1,17 @@
-php-java-bridge (5.3.2-1) unstable; urgency=low
+php-java-bridge (5.3.2.1.1-1) unstable; urgency=low
 
   * New upstream release.
+  * Detailed control of build and install process using implicit and explicit
+    rules.
+  * Correct interpretation of -a, -i, -p rules options, clearing all errors.
+  * Correct use of intermediate targets.
+  * Correct use of .PHONY, binary-indep, binary-arch targets.
+  * Intermediate targets does not understand -p@ option. Instead, use complete
+    target copy.
+  * Intermediate target installbasic does not include dh_install rule anymore.
+  * Improved comments at debian/rules file.
 
- -- Andre Felipe Machado <andremachado@techforce.com.br>  Mon, 06 Oct 2008 17:04:08 -0300
+ -- Andre Felipe Machado <andremachado@techforce.com.br>  Fri, 10 Oct 2008 11:04:08 -0300
 
 
 php-java-bridge (5.2.2-1) unstable; urgency=low
