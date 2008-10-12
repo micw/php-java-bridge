@@ -431,8 +431,8 @@ public class JavaBridge implements Runnable {
 
     private Exception getUnresolvedExternalReferenceException(Throwable e, String what) {
         return 	new ClassNotFoundException("Unresolved external reference: "+ e+ ". -- " +
-        		"Unable to "+what+", see the README section \"Java platform issues\" " +
-        				"for details.", e);
+					   "Unable to "+what+", see the README section \"Java platform issues\" " +
+					   "for details.", e);
     }
     
     /**
@@ -469,8 +469,8 @@ public class JavaBridge implements Runnable {
 	    if (selected == null) {
 		if (args.length > 0) {
 		    throw createInstance? 
-			    (Exception)new InstantiationException("No matching constructor found. " + "Candidates: " + String.valueOf(candidates)):
-				(Exception)new JavaBridgeIllegalArgumentException("ReferenceClass must be called w/o arguments; either write new JavaClass(\""+name+"\") or new Java(\""+name+"\", args...).");
+			(Exception)new InstantiationException("No matching constructor found. " + "Candidates: " + String.valueOf(candidates)):
+			(Exception)new JavaBridgeIllegalArgumentException("ReferenceClass must be called w/o arguments; either write new JavaClass(\""+name+"\") or new Java(\""+name+"\", args...).");
 		} else {
 		    // for classes which have no visible constructor, return the class
 		    // useful for classes like java.lang.System and java.util.Calendar.
@@ -531,31 +531,31 @@ public class JavaBridge implements Runnable {
                 else
                     w+=8000; // conversion to string is always possible
         } else if (param.isArray()) {
-                if(PhpString.class.isAssignableFrom(arg)) {
-                    Class c=param.getComponentType();
-                    if(c == byte.class) 
-                        w+=32;
-                    else
-                        w+=9999;
-                } else if(arg == PhpArray.class) {
-                    Iterator iterator = phpArrayValue == null ? EMPTY_ITERATOR : ((Map)phpArrayValue).values().iterator();
-                    if(iterator.hasNext()) {
-                        Object elem = iterator.next();
-                        Class ptype = param.getComponentType(), atype = elem.getClass();
-                        if (ptype!=atype) {
-                            w+=(ptype==Object.class?10:8200)+weight(ptype, atype, null);
-                        }
-                    }
-                } else if(arg.isArray()) {
-                    Class ptype = param.getComponentType(), atype = arg.getComponentType();
-                    if (ptype!=atype) {
-                        w+=(ptype==Object.class?10:8200)+weight(ptype, atype, null);
-                    }
-                }
-                else w+=9999;
-            } else if ((java.util.Collection.class).isAssignableFrom(param)) {
-                if (java.util.Map.class.isAssignableFrom(arg)) w+=8100; // conversion to Collection is always possible
-                else if (!(PhpArray.class.isAssignableFrom(arg))) w+=9999;
+	    if(PhpString.class.isAssignableFrom(arg)) {
+		Class c=param.getComponentType();
+		if(c == byte.class) 
+		    w+=32;
+		else
+		    w+=9999;
+	    } else if(arg == PhpArray.class) {
+		Iterator iterator = phpArrayValue == null ? EMPTY_ITERATOR : ((Map)phpArrayValue).values().iterator();
+		if(iterator.hasNext()) {
+		    Object elem = iterator.next();
+		    Class ptype = param.getComponentType(), atype = elem.getClass();
+		    if (ptype!=atype) {
+			w+=(ptype==Object.class?10:8200)+weight(ptype, atype, null);
+		    }
+		}
+	    } else if(arg.isArray()) {
+		Class ptype = param.getComponentType(), atype = arg.getComponentType();
+		if (ptype!=atype) {
+		    w+=(ptype==Object.class?10:8200)+weight(ptype, atype, null);
+		}
+	    }
+	    else w+=9999;
+	} else if ((java.util.Collection.class).isAssignableFrom(param)) {
+	    if (java.util.Map.class.isAssignableFrom(arg)) w+=8100; // conversion to Collection is always possible
+	    else if (!(PhpArray.class.isAssignableFrom(arg))) w+=9999;
         } else if (param.isPrimitive()) {
             Class c=param;
             if (Number.class.isAssignableFrom(arg)) {
@@ -577,7 +577,7 @@ public class JavaBridge implements Runnable {
             } else if (Character.class.isAssignableFrom(arg)) {
                 if (c!=Character.TYPE) w+=9999;
             } else if ((String.class.isAssignableFrom(arg))||(PhpString.class.isAssignableFrom(arg))) {
-                    w+=64;
+		w+=64;
             } else {
                 w+=9999;
             }
@@ -632,8 +632,8 @@ public class JavaBridge implements Runnable {
 		}
 	    } else {
 		if(logLevel>2) {
-			if(w==best) similar = element;
-	        	if(logLevel>4) logDebug("skip: " + element + " " + w);
+		    if(w==best) similar = element;
+		    if(logLevel>4) logDebug("skip: " + element + " " + w);
 		}
 	    }
 	}
@@ -690,23 +690,23 @@ public class JavaBridge implements Runnable {
 		    result[i] = arg.toString();
 	    } else if (arg instanceof PhpString || arg instanceof String) {
 	        if(!parms[i].isArray()) {
-		Class c = parms[i];
-		String s = (arg instanceof String) ? (String) arg : ((PhpString)arg).getString();
-		result[i] = s;
-		try {
-		    if (c == Boolean.TYPE) result[i]=new Boolean(s);
-		    else if (c == Byte.TYPE)    result[i]=new Byte(s);
-		    else if (c == Short.TYPE)   result[i]=new Short(s);
-		    else if (c == Integer.TYPE) result[i]=new Integer(s);
-            else if (c == Float.TYPE)   result[i]=new Float(s);
-            else if (c == Double.TYPE)  result[i]=new Double(s);
-		    else if (c == Long.TYPE)    result[i]=new Long(s);
-		    else if (c == Character.TYPE && s.length()>0)
-			result[i]=new Character(s.charAt(0));
-		} catch (NumberFormatException n) {
-		    printStackTrace(n);
-		    // oh well, we tried!
-		}
+		    Class c = parms[i];
+		    String s = (arg instanceof String) ? (String) arg : ((PhpString)arg).getString();
+		    result[i] = s;
+		    try {
+			if (c == Boolean.TYPE) result[i]=new Boolean(s);
+			else if (c == Byte.TYPE)    result[i]=new Byte(s);
+			else if (c == Short.TYPE)   result[i]=new Short(s);
+			else if (c == Integer.TYPE) result[i]=new Integer(s);
+			else if (c == Float.TYPE)   result[i]=new Float(s);
+			else if (c == Double.TYPE)  result[i]=new Double(s);
+			else if (c == Long.TYPE)    result[i]=new Long(s);
+			else if (c == Character.TYPE && s.length()>0)
+			    result[i]=new Character(s.charAt(0));
+		    } catch (NumberFormatException n) {
+			printStackTrace(n);
+			// oh well, we tried!
+		    }
 	        } else {
 	            result[i]=((PhpString)arg).getBytes();
 	        }
@@ -718,8 +718,8 @@ public class JavaBridge implements Runnable {
 		    else if (c == Byte.TYPE)    result[i]=new Byte(n.byteValue());
 		    else if (c == Short.TYPE)   result[i]=new Short(n.shortValue());
 		    else if (c == Integer.TYPE) result[i]=new Integer(n.intValue());
-            else if (c == Float.TYPE)   result[i]=new Float(n.floatValue());
-            else if (c == Double.TYPE)  result[i]=new Double(n.doubleValue());
+		    else if (c == Float.TYPE)   result[i]=new Float(n.floatValue());
+		    else if (c == Double.TYPE)  result[i]=new Double(n.doubleValue());
 		    else if (c == Long.TYPE && !(n instanceof Long))
 			result[i]=new Long(n.longValue());
 	    	} else {
@@ -766,13 +766,13 @@ public class JavaBridge implements Runnable {
 			Map m = (Map)arg;
 			Collection c = m.values();
 			if(!parms[i].isInstance(c))
-			  try { // could be a concrete class, for example LinkedList.
-			    Collection collection = (Collection) parms[i].newInstance();
-			    collection.addAll(c);
-			    c=collection;
-			  } catch (Exception e) { // it was an interface, try some concrete class
-			      try { c = new ArrayList(c); } catch (Exception ex) {/*we've tried*/}
-			  }
+			    try { // could be a concrete class, for example LinkedList.
+				Collection collection = (Collection) parms[i].newInstance();
+				collection.addAll(c);
+				c=collection;
+			    } catch (Exception e) { // it was an interface, try some concrete class
+				try { c = new ArrayList(c); } catch (Exception ex) {/*we've tried*/}
+			    }
 			result[i]=c;
 		    } catch (Exception ex) {
 			//logError("Could not create Collection from Map: " +objectDebugDescription(arg) + ". Cause: " + ex);
@@ -795,7 +795,7 @@ public class JavaBridge implements Runnable {
 		} else if(arg instanceof PhpString) {
 		    result[i] = ((PhpString)arg).getString(); // always prefer strings over byte[]
 		} 
-		}
+	    }
 	}
 	return result;
     }
@@ -1001,11 +1001,11 @@ public class JavaBridge implements Runnable {
 	}
 	dmsg += ");\n";
 	Util.logDebug(dmsg);
-  }
+    }
     public static void logResult(Object obj) {
 	String dmsg = "\nResult "+objectDebugDescription(obj) + "\n";
 	Util.logDebug(dmsg);
-  }
+    }
 
     /**
      * Invoke a method on a given object
@@ -1570,24 +1570,24 @@ public class JavaBridge implements Runnable {
      * @return A string representation.
      */
     public String ObjectToString(Throwable ob, String trace) {
-	    StringBuffer buf = new StringBuffer("[");
+	StringBuffer buf = new StringBuffer("[");
 	try {
 	    Util.appendObject(ob, buf);
 	    Util.appendTrace(ob, trace, buf);
 	} catch (Request.AbortException sub) {
 	    throw sub;
 	} catch (Exception t) {
-		    Util.printStackTrace(t);
-		    buf.append("[Exception in toString(): ");
-		    buf.append(t);
-		    if(t.getCause()!=null) {
-		      buf.append(", Cause: ");
-		      buf.append(t.getCause());
-		    }
-		    buf.append("]");
-		}
+	    Util.printStackTrace(t);
+	    buf.append("[Exception in toString(): ");
+	    buf.append(t);
+	    if(t.getCause()!=null) {
+		buf.append(", Cause: ");
+		buf.append(t.getCause());
+	    }
 	    buf.append("]");
-	    return (String)castToString(buf.toString());
+	}
+	buf.append("]");
+	return (String)castToString(buf.toString());
     }
     
     private Object contextCache = null;
@@ -1615,12 +1615,12 @@ public class JavaBridge implements Runnable {
         if (timeout == 0) timeout = -1;
 	if(sessionCache!=null) return sessionCache;
 	try {
-	ISession session= sessionFactory.getSession(name, clientIsNew, timeout);
-	if(session==null) throw new NullPointerException("session is null");
-	return sessionCache = session;
+	    ISession session= sessionFactory.getSession(name, clientIsNew, timeout);
+	    if(session==null) throw new NullPointerException("session is null");
+	    return sessionCache = session;
 	} catch (Exception t) {
-	  printStackTrace(t);
-	  throw t;
+	    printStackTrace(t);
+	    throw t;
 	}
     }
     
@@ -1813,7 +1813,7 @@ public class JavaBridge implements Runnable {
      * Remove an object from the position.
      * @param value The map.
      * @param pos The position.
-      */
+     */
     private void offsetUnset(Map value, Object pos) {
 	offsetSet(value, pos, null);
     }
@@ -1853,7 +1853,7 @@ public class JavaBridge implements Runnable {
      * Remove an object from the position.
      * @param value The list.
      * @param pos The position.
-      */
+     */
     private void offsetUnset(List value, int pos) {
 	offsetSet(value, pos, null);
     }
@@ -1892,7 +1892,7 @@ public class JavaBridge implements Runnable {
 	int i = pos;
 	Object o = Array.get(value, i);
 	return o==this ? null : o;
-   }
+    }
     /**
      * Returns the object at the posisition.
      * @param table The table.
@@ -1945,7 +1945,7 @@ public class JavaBridge implements Runnable {
      * Remove an object from the position.
      * @param value The array.
      * @param pos The position.
-      */
+     */
     private void offsetUnset(Object value, int pos) {
 	int i = pos;
 	Array.set(value, i, null);
@@ -1954,7 +1954,7 @@ public class JavaBridge implements Runnable {
      * Remove an object from the position.
      * @param table The table.
      * @param off The offset.
-      */
+     */
     public void offsetUnset(Object table, Object off) {
 	if(table.getClass().isArray()) offsetUnset(table, ((Number)off).intValue());
 	else if(table instanceof List) offsetUnset((List)table, ((Number)off).intValue());
@@ -1998,8 +1998,8 @@ public class JavaBridge implements Runnable {
      * @return The encoded string.
      */    
     public String getString(byte[] b, int start, int length) {
-//      return stringCache.getString(b, start, length, options.getEncoding());
-      try {
+	//      return stringCache.getString(b, start, length, options.getEncoding());
+	try {
 	    return new String(b, start, length, options.getEncoding());
 	} catch (UnsupportedEncodingException e) {
 	    printStackTrace(e);

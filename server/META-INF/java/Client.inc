@@ -325,6 +325,8 @@ class java_Client /* implements IDocHandler */ {
 
   function __destruct() { 
 	if(JAVA_DEBUG) echo "the client destroyed\n";
+	if (!isset($this->protocol)) return;
+
 	if ($this->sendBuffer) $this->protocol->flush();
 	$this->protocol->keepAlive();
   }

@@ -51,9 +51,11 @@ interface java_JavaType {};
  */
 function __javaproxy_Client_getClient() {
   static $client;
-  if(!isset($client)) {
-	$client=new java_Client();
-  }
+  if(isset($client)) return $client;
+  
+  if (function_exists("java_create_client")) $client = java_create_client();
+  else $client=new java_Client();
+  
   return $client;
 }
 
@@ -355,8 +357,12 @@ function java_session() {
  * @access public
 */
 function java_server_name() {
-  $client=__javaproxy_Client_getClient();
-  return $client->getServerName();
+  try {
+    $client=__javaproxy_Client_getClient();
+    return $client->getServerName();
+  } catch (java_ConnectException $ex) {
+    return null;
+  }
 }
 
 /**

@@ -170,7 +170,7 @@ class java_HttpHandler extends java_SocketHandler {
   /* Do not pfsockopen here, the J2EE server may not be able to handle
     hundreds of persistent connections to the servlet very well */
 	$socket = fsockopen("{$this->ssl}{$this->host}", $this->port, $errno, $errstr, 30);
-	if (!$socket) throw new java_RuntimeException("Could not connect to the J2EE server {$this->ssl}{$this->host}:{$this->port}. Please start it, for example with the command: \"java -jar JavaBridge.jar SERVLET:8080 3 JavaBridge.log\" or, if the back end has been compiled to native code, with \"modules/java SERVLET:8080 3 JavaBridge.log\". Error message: $errstr ($errno)\n");
+	if (!$socket) throw new java_ConnectException("Could not connect to the J2EE server {$this->ssl}{$this->host}:{$this->port}. Please start it, for example with the command: \"java -jar JavaBridge.jar SERVLET:8080 3 JavaBridge.log\" or, if the back end has been compiled to native code, with \"modules/java SERVLET:8080 3 JavaBridge.log\". Error message: $errstr ($errno)\n");
 	stream_set_timeout($socket, -1);
 	return $socket;
   }
@@ -433,7 +433,7 @@ class java_Protocol {
 		$peer = pfsockopen($host, $channelName, $errno, $errstr, 30);
 	  }
 	}
-    if (!$peer) throw new java_RuntimeException("Could not connect to the context server $channelName. Error message: $errstr ($errno)\n");
+    if (!$peer) throw new java_ConnectException("Could not connect to the server $channelName. Error message: $errstr ($errno)\n");
     stream_set_timeout($peer, -1);
     $handler = new java_SocketHandler($this, new java_SocketChannel($peer, $this, $host, $channelName));
 

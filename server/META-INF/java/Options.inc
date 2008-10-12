@@ -51,7 +51,7 @@ function java_defineHostFromInitialQuery($java_base) {
 
 // The version number of this pure PHP implementation
 
-define ("JAVA_PEAR_VERSION", "5.0.0");
+define ("JAVA_PEAR_VERSION", "5.3.2");
 
 if(!defined("JAVA_SEND_SIZE")) 
   define("JAVA_SEND_SIZE", 8192);
@@ -76,6 +76,27 @@ if(!defined("JAVA_HOSTS")) {
 	define("JAVA_HOSTS", "127.0.0.1:8080"); // host1:port1;host2:port2;...
   }
  }
+
+// Rewrite rules for incoming HTTP requests. Used in conjunction with
+// JAVA_HOSTS and a servlet/J2EE back end 
+// "On"; Hard-codes the context to "JavaBridge":
+// http://foo.com/test.php => http://host1:port1/JavaBridge/test.phpjavabridge
+// cookie path: always "/"
+//
+// "bar/JavaBridge.phpjavabridge"; Hard-codes the context to "bar":
+// http://foo.com/test.php => http://host1:port1/bar/test.phpjavabridge
+// cookie path: always "/"
+//
+// "User"; Separates different web apps:
+// http://foo.com/mApp1/test.php => http://host1:port1/mApp1/test.phpjavabridge
+// cookie path: /mApp1
+// http://foo.com/mApp2/test.php => http://host1:port1/mApp2/test.phpjavabridge
+// cookie path: /mApp2
+//
+// "Off" doesn't use a web context at all (no cookies are generated, no
+// PHP/Java session sharing). Back-end must have been started with
+// INET:PORT or INET_LOCAL:PORT, no Servlet engine, no J2EE server.
+//
 if(!defined("JAVA_SERVLET")) {
   define("JAVA_SERVLET", "On"); // On ;; On or User
 }

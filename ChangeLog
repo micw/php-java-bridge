@@ -1,3 +1,23 @@
+2008-10-12  Jost Boekemeier  <jostb@intern>
+
+	* server/META-INF/java/Client.inc
+	(__destruct): Check if initialized
+
+	* server/META-INF/java/JavaBridge.inc
+	(java_IOException, java_ConnectException): New types
+
+	* server/META-INF/java/Protocol.inc
+	(open): throw java_ConnectException
+	(createSimpleHandler): throw java_ConnectException
+	
+	* server/META-INF/java/JavaProxy.inc
+	(java_server_name): Check java_ConnectException and return
+	null, according to spec.
+	
+	* server/META-INF/java/Options.inc
+	(JAVA_PEAR_VERSION): Version 5.3.2
+	
+	
 2008-10-08  Jost Boekemeier  <jostb@intern>
 
 	* tests.m4/java_check_jni.m4: Added $lt_prog_compiler_pic 

@@ -68,6 +68,14 @@ a PHP 5.1.x executable, see php_exec in the WEB-INF/web.xml";
   /**
    * @access private
    */
+  class java_IOException extends Exception {};
+  /**
+   * @access private
+   */
+  class java_ConnectException extends java_IOException {};
+  /**
+   * @access private
+   */
   class java_IllegalStateException extends java_RuntimeException {};
   /**
    * @access private
