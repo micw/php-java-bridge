@@ -44,6 +44,16 @@ require_once ("${JAVA_BASE}/Client.inc");
 /**
  * @access private
  */
+function java_getHeader($name, $array) {
+  if (array_key_exists($name, $array)) return $array[$name];
+  $name="HTTP_$name"; // apache uses HTTP_ prefix
+  if (array_key_exists($name, $array)) return $array[$name];
+  return null;
+}
+
+/**
+ * @access private
+ */
 class java_SocketChannel {
   public $peer, $protocol;
   private $channelName, $host;
@@ -193,9 +203,7 @@ class java_HttpHandler extends java_SocketHandler {
 	return $str;
   }
   function getContextFromCgiEnvironment() {
-	$ctx = array_key_exists('X_JAVABRIDGE_CONTEXT', $_SERVER)
-			  ?$_SERVER['X_JAVABRIDGE_CONTEXT']
-			  :null;
+	$ctx = java_getHeader('X_JAVABRIDGE_CONTEXT', $_SERVER);
 	return $ctx;
   }
   function getChannelName() {
@@ -361,9 +369,7 @@ class java_Protocol {
 	  }
 	  // fcgi: override for redirect
 	  return 
-		array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER)
-		   ?$_SERVER['X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT']
-		   :null;
+		java_getHeader('X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER);
   }
   static function getHost() {
 	static $host;
@@ -449,7 +455,7 @@ class java_Protocol {
     return $handler;
   }
   function createHandler() {
-    if(!array_key_exists('X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER)
+    if(!java_getHeader('X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER)
      && function_exists("java_get_default_channel") &&
       ($defaultChannel=java_get_default_channel())) {
       // if bind.c has started a local back end from Apache/IIS

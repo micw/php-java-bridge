@@ -85,6 +85,14 @@
 </tr>
 
 <tr VALIGN=TOP>
+<td>JSR 223 and IIS/Apache interaction</td>
+
+<td WIDTH="30%"><a href="jsp%2Bphp2.jsp">Execute</a></td>
+
+<td WIDTH="30%"><a href="source.php?source=jsp%2Bphp2.jsp">Source</a></td>
+</tr>
+
+<tr VALIGN=TOP>
 <td>RMI/IIOP</td>
 
 <td WIDTH="30%"><a href="documentClient.php">Execute</a></td>

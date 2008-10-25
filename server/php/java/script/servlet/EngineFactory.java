@@ -10,6 +10,7 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -21,8 +22,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
-import php.java.script.SimplePhpScriptEngine;
-import php.java.servlet.PhpCGIServlet;
 import php.java.servlet.RequestListener;
 
 
@@ -64,20 +63,34 @@ public class EngineFactory {
 		     ServletContext ctx, 
 		     HttpServletRequest req, 
 		     HttpServletResponse res) throws MalformedURLException {
-	    return new PhpServletScriptEngine(servlet, ctx, req, res);
+	URL url = new java.net.URL((req.getRequestURL().toString()));
+	return new PhpServletScriptEngine(servlet, ctx, req, res, url.getProtocol(), url.getPort());
     }
     private Object getInvocableScriptEngine(Servlet servlet, 
 		     ServletContext ctx, 
 		     HttpServletRequest req, 
 		     HttpServletResponse res) throws MalformedURLException, URISyntaxException {
-	    return new InvocablePhpServletScriptEngine(servlet, ctx, req, res);
+	URL url = new java.net.URL((req.getRequestURL().toString()));
+	return new InvocablePhpServletScriptEngine(servlet, ctx, req, res, url.getProtocol(), url.getPort());
     }
-    /** 
+    private Object getInvocableScriptEngine(Servlet servlet, 
+	     ServletContext ctx, 
+	     HttpServletRequest req, 
+	     HttpServletResponse res, String protocol, int port) throws MalformedURLException, URISyntaxException {
+	return new InvocablePhpServletLocalHttpServerScriptEngine(servlet, ctx, req, res, protocol, port);
+   }
+    private Object getInvocableScriptEngine(Servlet servlet, 
+	     ServletContext ctx, 
+	     HttpServletRequest req, 
+	     HttpServletResponse res, String protocol, int port, String proxy) throws MalformedURLException, URISyntaxException {
+	return new InvocablePhpServletLocalHttpServerScriptEngine(servlet, ctx, req, res, protocol, port, proxy);
+   }
+   /** 
      * Get an engine factory from the servlet context
      * @param ctx The servlet context
      * @return the factory or null
      */
-    public static EngineFactory getEngineFactory(ServletContext ctx) {
+    static EngineFactory getEngineFactory(ServletContext ctx) {
 	EngineFactory attr = (EngineFactory) 
 	    ctx.getAttribute(php.java.script.servlet.EngineFactory.ROOT_ENGINE_FACTORY_ATTRIBUTE);
 	return attr;
@@ -88,7 +101,7 @@ public class EngineFactory {
      * @return the factory
      * @throws IllegalStateException
      */
-    public static EngineFactory getRequiredEngineFactory(ServletContext ctx) throws IllegalStateException {
+    static EngineFactory getRequiredEngineFactory(ServletContext ctx) throws IllegalStateException {
 	EngineFactory attr = getEngineFactory (ctx);
 	if (attr==null) 
 	    throw new IllegalStateException("No EngineFactory found. Have you registered a listener?");
@@ -101,7 +114,7 @@ public class EngineFactory {
      * Example:<br>
      * <blockquote>
      * <code>
-     * ScriptEngine scriptEngine = EngineFactory.PhpScriptengine(this, application, request, response);<br>
+     * ScriptEngine scriptEngine = EngineFactory.getPhpScriptEngine(this, application, request, response);<br>
      * scriptEngine.eval(reader);<br>
      * reader.close();<br>
      * </code>
@@ -121,7 +134,6 @@ public class EngineFactory {
 								    MalformedURLException, IllegalStateException {
 	return (javax.script.ScriptEngine)EngineFactory.getRequiredEngineFactory(ctx).getScriptEngine(servlet, ctx, req, res);
     }
-	    
     /**
      * Get a PHP JSR 223 ScriptEngine which implements the Invocable interface from the servlet context.
      *
@@ -153,8 +165,80 @@ public class EngineFactory {
 									     MalformedURLException, IllegalStateException, URISyntaxException {
 	    return (javax.script.ScriptEngine)EngineFactory.getRequiredEngineFactory(ctx).getInvocableScriptEngine(servlet, ctx, req, res);
     }
+    /**
+     * Get a PHP JSR 223 ScriptEngine, which implements the Invocable interface, from a HTTP server running on the local host.
+     *
+     * Example:<br>
+     * <blockquote>
+     * <code>
+     * ScriptEngine scriptEngine = EngineFactory.getInvocablePhpScriptEngine(this, application, request, response, "HTTP", 80);<br>
+     * ...<br>
+     * scriptEngine.eval(reader);<br>
+     * reader.close ();<br>
+     * Invocable invocableEngine = (Invocable)scriptEngine;<br>
+     * invocableEngine.invoceFunction("phpinfo", new Object[]{});<br>
+     * ...<br>
+     * scriptEngine.eval ((Reader)null);<br>
+     * </code>
+     * </blockquote>
+     * @param servlet the servlet
+     * @param ctx the servlet context
+     * @param req the request
+     * @param res the response
+     * @param protocol either "HTTP" or "HTTPS"
+     * @param port the port number
+     * @return the invocable PHP JSR 223 ScriptEngine, an instance of the {@link InvocablePhpServletScriptEngine}
+     * @throws MalformedURLException
+     * @throws IllegalStateException
+     */
+    public static javax.script.ScriptEngine getInvocablePhpScriptEngine (Servlet servlet, 
+									 ServletContext ctx, 
+									 HttpServletRequest req, 
+									 HttpServletResponse res,
+									 String protocol,
+									 int port) throws 
+									     MalformedURLException, IllegalStateException, URISyntaxException {
+	    return (javax.script.ScriptEngine)EngineFactory.getRequiredEngineFactory(ctx).getInvocableScriptEngine(servlet, ctx, req, res, protocol, port);
+    }
+    /**
+     * Get a PHP JSR 223 ScriptEngine, which implements the Invocable interface, from a HTTP server running on the local host.
+     *
+     * Example:<br>
+     * <blockquote>
+     * <code>
+     * ScriptEngine scriptEngine = EngineFactory.getInvocablePhpScriptEngine(this, application, request, response, "HTTP", 80);<br>
+     * ...<br>
+     * scriptEngine.eval(reader);<br>
+     * reader.close ();<br>
+     * Invocable invocableEngine = (Invocable)scriptEngine;<br>
+     * invocableEngine.invoceFunction("phpinfo", new Object[]{});<br>
+     * ...<br>
+     * scriptEngine.eval ((Reader)null);<br>
+     * </code>
+     * </blockquote>
+     * @param servlet the servlet
+     * @param ctx the servlet context
+     * @param req the request
+     * @param res the response
+     * @param protocol either "HTTP" or "HTTPS"
+     * @param port the port number
+     * @param port the name of the PHP proxy, for example "/JavaProxy.php"
+     * @return the invocable PHP JSR 223 ScriptEngine, an instance of the {@link InvocablePhpServletScriptEngine}
+     * @throws MalformedURLException
+     * @throws IllegalStateException
+     */
+    public static javax.script.ScriptEngine getInvocablePhpScriptEngine (Servlet servlet, 
+									 ServletContext ctx, 
+									 HttpServletRequest req, 
+									 HttpServletResponse res,
+									 String protocol,
+									 int port,
+									 String proxy) throws 
+									     MalformedURLException, IllegalStateException, URISyntaxException {
+	    return (javax.script.ScriptEngine)EngineFactory.getRequiredEngineFactory(ctx).getInvocableScriptEngine(servlet, ctx, req, res, protocol, port, proxy);
+    }
 
-    private static File getFile(File file, Reader reader) throws IOException {
+    private static ScriptFile getFile(ScriptFile file, Reader reader) throws IOException {
 	FileOutputStream fout = new FileOutputStream(file);
 	OutputStreamWriter writer = new OutputStreamWriter(fout);
 	char[] cbuf = new char[Util.BUF_SIZE];
@@ -172,24 +256,23 @@ public class EngineFactory {
      * @return A pointer to the cached PHP script, named: path+"._cache_.php"
      * @see #createPhpScriptFileReader(File)
      */
-    public static File getPhpScript (String path, Reader reader) {
+    public static ScriptFile getPhpScript (String path, Reader reader) {
 	try {
-	    return getFile(new File(path+"._cache_.php"), reader);
+	    return getFile(new ScriptFile(path+"._cache_.php"), reader);
 	} catch (IOException e) {
 	    Util.printStackTrace(e);
         }
 	return null;
     }
-    /**
+   /**
      * Get a PHP script from the given Path. This procedure can be used to cache dynamically-generated scripts
      * @param path the file path which should contain the cached script, must be within the web app directory
      * @return A pointer to the cached PHP script, usually named: path+"._cache_.php"
      * @see #createPhpScriptFileReader(File)
      */
-    public static File getPhpScript (String path) {
-	return new File(path+"._cache_.php");
+    public static ScriptFile getPhpScript (String path) {
+	return new ScriptFile(path+"._cache_.php");
     }
-    
     /**
      * Create a Reader from a given PHP script file. This procedure can be used to create
      * a reader from a cached script
@@ -212,9 +295,18 @@ public class EngineFactory {
      * @param phpScriptFile the file containing the cached script, obtained from {@link #getPhpScript(String, Reader)} or {@link #getPhpScript(String)}
      * @return A pointer to the cached PHP script, usually named: path+"._cache_.php"
      */
-    public static FileReader createPhpScriptFileReader (File phpScriptFile) {
+    public static FileReader createPhpScriptFileReader (ScriptFile phpScriptFile) {
 	try {
 	    return new ScriptFileReader(phpScriptFile);
+        } catch (IOException e) {
+	    Util.printStackTrace(e);
+        }
+	return null;
+    }
+    /** @deprecated Use {@link #createPhpScriptFileReader(ScriptFile)} instead */
+    public static FileReader createPhpScriptFileReader (File phpScriptFile) {
+	try {
+	    return new ScriptFileReader(new ScriptFile(phpScriptFile.getAbsolutePath()));
         } catch (IOException e) {
 	    Util.printStackTrace(e);
         }
@@ -227,9 +319,9 @@ public class EngineFactory {
      */
     public void releaseScriptEngines(List list) {
 	for (Iterator ii=list.iterator(); ii.hasNext(); ) {
-	    SimplePhpScriptEngine e = (SimplePhpScriptEngine) ii.next();
-	    PhpCGIServlet.releaseReservedContinuation();
-	    e.release();
+	    InvocablePhpServletLocalHttpServerScriptEngine engine = (InvocablePhpServletLocalHttpServerScriptEngine) ii.next();
+	    engine.releaseReservedContinuation();
+	    engine.release();
 	}
 	list.clear();
     }
@@ -241,13 +333,13 @@ public class EngineFactory {
      * @see #releaseScriptEngines(List)
      */
     public static void addManaged(HttpServletRequest req,
-            InvocablePhpServletLocalScriptEngine engine) throws ScriptException {
+	InvocablePhpServletLocalHttpServerScriptEngine engine) throws ScriptException {
 	ArrayList list = (ArrayList) req.getAttribute(RequestListener.ROOT_ENGINES_COLLECTION_ATTRIBUTE);
 	if (list!=null) {
 	    list.add(engine);
 	    
 	    // check
-	    PhpCGIServlet.reserveContinuation();
+	    engine.reserveContinuation();
 	}
     }
 }

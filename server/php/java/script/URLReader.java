@@ -155,7 +155,6 @@ public class URLReader extends Reader {
      */
     public void read(Map env, OutputStream out, HeaderParser headerParser) throws IOException {
         InputStream natIn = null;
-        OutputStream natOut = null;
         
         try {
             
@@ -188,12 +187,10 @@ public class URLReader extends Reader {
             int count;
             while ((count=natIn.read(buf)) > 0)
                 out.write (buf, 0, count);
-            natIn.close();
         } catch (IOException x) {
             Util.printStackTrace(x);
             throw x;
         } finally {
-            if(natOut!=null) try { natOut.close(); } catch (IOException e) {/*ignore*/}
             if(natIn!=null) try { natIn.close(); } catch (IOException e) {/*ignore*/}
         }
     }

@@ -2,15 +2,16 @@
 
 package php.java.script.servlet;
 
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.Map;
 
+import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
 import javax.servlet.Servlet;
@@ -19,10 +20,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
+import php.java.bridge.http.IContext;
+import php.java.script.IPhpScriptContext;
+import php.java.script.PhpScriptEngine;
 import php.java.script.PhpScriptException;
 import php.java.script.URLReader;
-import php.java.servlet.CGIServlet;
 import php.java.servlet.ContextLoaderListener;
+import php.java.servlet.PhpCGIServlet;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -66,7 +70,7 @@ import php.java.servlet.ContextLoaderListener;
  * <li> Acquire a PHP script engine from the {@link EngineFactory}:
  * <blockquote>
  * <code>
- * ScriptEngine scriptEngine = EngineFactory.getPhpScriptEngine(this, ctx, req, res);
+ * ScriptEngine scriptEngine = EngineFactory.getPhpScriptEngine(this, ctx, req, res, "HTTP", 80);
  * </code>
  * </blockquote> 
  * <li> Create a FileReader for the created script file:
@@ -95,58 +99,86 @@ import php.java.servlet.ContextLoaderListener;
  * </blockquote> 
  * </ol>
  * <br>
- * Alternatively one may use the following "quick and dirty" code which creates a new PHP script for 
- * each eval:
- * <blockquote>
- * <code>
- * ScriptEngine e = EngineFactory.getPhpScriptEngine(this, ctx, req, res);<br>
- * e.getContext().setWriter (out);<br>
- * e.eval("&lt;?php echo "hello java world"; ?&gt;");<br>
- * </code>
- * </blockquote>
  */
 
+public class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
+    protected Servlet servlet;
+    protected ServletContext servletCtx;
+    protected HttpServletRequest req;
+    protected HttpServletResponse res;
+    
+    protected PhpSimpleHttpScriptContext scriptContext;
 
-public final class PhpServletScriptEngine extends PhpServletLocalScriptEngine {
-    private File path;
-    public PhpServletScriptEngine(Servlet servlet, 
+    protected String webPath; 
+    
+    private URL url;
+    private int port;
+    private String protocol;
+    protected URL getURL(String filePath) throws MalformedURLException, URISyntaxException {
+	if (url!=null) return url;
+	
+	return url = new java.net.URI(protocol, null, Util.getHostAddress(), port, filePath, null, null).toURL();
+    }
+    public PhpServletLocalHttpServerScriptEngine(Servlet servlet, 
 				  ServletContext ctx, 
 				  HttpServletRequest req, 
 				  HttpServletResponse res,
 				  String protocol,
 				  int port) throws MalformedURLException {
-	super (servlet, ctx, req, res, protocol, port);
-	path = new File(CGIServlet.getRealPath(ctx, ""));
-    }
-    protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
+	super ();
 
-	// use a short path if the script file already exists
-	if (reader instanceof ScriptFileReader) return super.eval(reader, context, name);
+	this.servlet = servlet;
+	this.servletCtx = ctx;
+	this.req = req;
+	this.res = res;
+	    
+	scriptContext.initialize(servlet, servletCtx, req, res);
 	
-    	File tempfile = null;
-    	FileOutputStream fout = null;
-        Reader localReader = null;
+	this.port = port;
+	this.protocol = protocol;
+    }
+
+    protected ScriptContext getPhpScriptContext() {
+        Bindings namespace;
+        scriptContext = new PhpSimpleHttpScriptContext();
+        
+        namespace = createBindings();
+        scriptContext.setBindings(namespace,ScriptContext.ENGINE_SCOPE);
+        scriptContext.setBindings(getBindings(ScriptContext.GLOBAL_SCOPE),
+				  ScriptContext.GLOBAL_SCOPE);
+        
+        return scriptContext;
+    }    
+
+    /**
+     * Create a new context ID and a environment map which we send to the client.
+     *
+     */
+    protected void setNewContextFactory() {
+        IPhpScriptContext context = (IPhpScriptContext)getContext(); 
+	env = (Map) this.processEnvironment.clone();
+
+	ctx = PhpServletContextFactory.addNew((IContext)context, servlet, servletCtx, req, res);
+    	
+	/* send the session context now, otherwise the client has to 
+	 * call handleRedirectConnection */
+	setStandardEnvironmentValues(context, env);
+    }
+    
+    protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
   	if(reader==null) return null;
-  	
+	if (!(reader instanceof ScriptFileReader)) throw new IllegalArgumentException("reader must be a ScriptFileReader");
+    	ScriptFileReader fileReader = (ScriptFileReader) reader;
+    	URLReader localReader = null;
+    	
         try {
-	    fout = new FileOutputStream(tempfile=File.createTempFile("tempfile", ".php", path));
-	    OutputStreamWriter writer = new OutputStreamWriter(fout);
-	    char[] cbuf = new char[Util.BUF_SIZE];
-	    int length;
-
-	    while((length=reader.read(cbuf, 0, cbuf.length))>0) 
-		writer.write(cbuf, 0, length);
-	    writer.close();
-
-	    webPath = req.getContextPath()+"/"+tempfile.getName();
-
+	    webPath = fileReader.getFile().getWebPath(fileReader.getFile().getCanonicalPath(), req, servletCtx);
 	    setNewContextFactory();
 	    setName(name);
 	        
-	    
             /* now evaluate our script */
-	    
-	    reserveContinuation(); //  engines need a PHP- and an optional Java continuation
+
+	    reserveContinuation(); // engines need a PHP- and an optional Java continuation
 	    localReader = new URLReader(getURL(webPath));
             try { this.script = doEval(localReader, context);} catch (Exception e) {
         	Util.printStackTrace(e);
@@ -162,10 +194,43 @@ public final class PhpServletScriptEngine extends PhpServletLocalScriptEngine {
         } finally {
             releaseReservedContinuation();
             if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}
-            if(fout!=null) try { fout.close(); } catch (IOException e) {/*ignore*/}
-            if(tempfile!=null) tempfile.delete();
             release ();
         }
 	return null;
+    }
+    protected void releaseReservedContinuation() {
+	PhpCGIServlet.releaseReservedContinuation();
+    }
+    protected void reserveContinuation() throws ScriptException {
+	PhpCGIServlet.reserveContinuation();
+    }
+    /**
+     * Set the context id (X_JAVABRIDGE_CONTEXT) and the override flag (X_JAVABRIDGE_OVERRIDE_HOSTS) into env
+     * @param context the new context ID
+     * @param env the environment which will be passed to PHP
+     */
+    protected void setStandardEnvironmentValues (IPhpScriptContext context, Map env) {
+	/* send the session context now, otherwise the client has to 
+	 * call handleRedirectConnection */
+	env.put("X_JAVABRIDGE_CONTEXT", ctx.getId());
+	
+	/* the client should connect back to us */
+	StringBuffer buf = new StringBuffer();
+	if(!req.isSecure())
+	    buf.append("h:");
+	else
+	    buf.append("s:");
+	buf.append(Util.getHostAddress());
+	buf.append(':');
+	buf.append(context.getSocketName());
+	buf.append('/');
+	try {
+	    buf.append((new java.net.URI(null, null, webPath, null)).toASCIIString());
+        } catch (URISyntaxException e) {
+            Util.printStackTrace(e);
+            buf.append(webPath);
+        }
+	buf.append("javabridge");
+	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS",buf.toString());
     }
 }

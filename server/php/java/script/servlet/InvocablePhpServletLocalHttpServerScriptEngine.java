@@ -2,17 +2,17 @@
 
 package php.java.script.servlet;
 
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Map;
 
+import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
 import javax.servlet.Servlet;
@@ -23,11 +23,10 @@ import javax.servlet.http.HttpServletResponse;
 import php.java.bridge.Util;
 import php.java.bridge.http.IContext;
 import php.java.script.IPhpScriptContext;
+import php.java.script.InvocablePhpScriptEngine;
 import php.java.script.PhpScriptException;
 import php.java.script.URLReader;
-import php.java.servlet.CGIServlet;
 import php.java.servlet.ContextLoaderListener;
-import php.java.servlet.RequestListener;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -77,7 +76,7 @@ import php.java.servlet.RequestListener;
  * <li> Acquire a PHP invocable script engine from the {@link EngineFactory}:
  * <blockquote>
  * <code>
- * ScriptEngine scriptEngine = EngineFactory.getInvocablePhpScriptEngine(this, ctx, req, res);
+ * ScriptEngine scriptEngine = EngineFactory.getInvocablePhpScriptEngine(this, ctx, req, res, "HTTP", 80);
  * </code>
  * </blockquote> 
  * <li> Create a FileReader for the created script file:
@@ -118,36 +117,75 @@ import php.java.servlet.RequestListener;
  * </blockquote> 
  * </ol>
  * <br>
- * Alternatively one may use the following "quick and dirty" code which creates a new PHP script for 
- * each eval and removes it when the invocable is released:
- * <blockquote>
- * <code>
- * ScriptEngine e = EngineFactory.getInvocablePhpScriptEngine(this, ctx, req, res);<br>
- * e.eval("&lt;?php function f($v) {return "passed:".$v;} ?&gt;");<br>
- * ((Invocable)e).invoceFunction("f", new Object[]{"arg1"};<br>
- * e.eval((Reader)null);<br>
- * </code>
- * </blockquote>
  */
-public final class InvocablePhpServletScriptEngine extends InvocablePhpServletLocalScriptEngine {
-    private File path;
-    private File tempfile = null;
+public class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhpScriptEngine {
+    protected Servlet servlet;
+    protected ServletContext servletCtx;
+    protected HttpServletRequest req;
+    protected HttpServletResponse res;
     
-    public InvocablePhpServletScriptEngine(Servlet servlet, 
+    protected PhpSimpleHttpScriptContext scriptContext;
+
+    protected int port;
+    protected String protocol;
+    protected URL url;
+    private String proxy;
+    
+    protected String getProxy() {
+	if (proxy!=null) return proxy;
+	return proxy="/java/JavaProxy.php";
+    }
+    protected URL getURL(ServletContext ctx) throws MalformedURLException, URISyntaxException {
+	String filePath = req.getContextPath()+getProxy();
+	
+	return new java.net.URI(protocol, null, Util.getHostAddress(), port, filePath, null, null).toURL();
+    }
+    public InvocablePhpServletLocalHttpServerScriptEngine(Servlet servlet, 
 					   ServletContext ctx, 
 					   HttpServletRequest req, 
 					   HttpServletResponse res,
 					   String protocol,
 					   int port) throws MalformedURLException, URISyntaxException {
-	super(servlet, ctx, req, res, protocol, port);
-	path = new File(CGIServlet.getRealPath(ctx, ""));
+	this(servlet, ctx, req, res, protocol, port, null);
     }
- 
+    public InvocablePhpServletLocalHttpServerScriptEngine(Servlet servlet, 
+		   ServletContext ctx, 
+		   HttpServletRequest req, 
+		   HttpServletResponse res,
+		   String protocol,
+		   int port,
+		   String proxy) throws MalformedURLException, URISyntaxException {
+	super();
+
+	this.servlet = servlet;
+	this.servletCtx = ctx;
+	this.req = req;
+	this.res = res;
+
+	scriptContext.initialize(servlet, servletCtx, req, res);
+	
+	this.protocol = protocol;
+	this.port = port;
+	this.proxy = proxy;
+	this.url = getURL(ctx);
+    }
+    protected ScriptContext getPhpScriptContext() {
+	        Bindings namespace;
+	        scriptContext = new PhpSimpleHttpScriptContext();
+	        
+	        namespace = createBindings();
+	        scriptContext.setBindings(namespace,ScriptContext.ENGINE_SCOPE);
+	        scriptContext.setBindings(getBindings(ScriptContext.GLOBAL_SCOPE),
+					  ScriptContext.GLOBAL_SCOPE);
+	        
+	        return scriptContext;
+	    }    
     /**
      * Create a new context ID and a environment map which we send to the client.
+     * @throws IOException 
      *
      */
-    protected void setNewContextFactory() {
+    private void setNewLocalContextFactory(ScriptFileReader fileReader) throws IOException {
         IPhpScriptContext context = (IPhpScriptContext)getContext(); 
 	env = (Map) this.processEnvironment.clone();
 
@@ -156,33 +194,23 @@ public final class InvocablePhpServletScriptEngine extends InvocablePhpServletLo
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */
 	setStandardEnvironmentValues(context, env);
-	env.put("X_JAVABRIDGE_INCLUDE", tempfile.getPath());
+	env.put("X_JAVABRIDGE_INCLUDE", fileReader.getFile().getCanonicalPath());
     }
- 
+    
     protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
-
-	// use a short path, if the script file already exists
-	if (reader instanceof ScriptFileReader) return super.eval(reader, context, name);
-	
-	if(continuation != null) release();
-     	FileOutputStream fout = null;
+        if(continuation != null) release();
         Reader localReader = null;
   	if(reader==null) return null;
   	
+	if (!(reader instanceof ScriptFileReader)) throw new IllegalArgumentException("reader must be a ScriptFileReader");
+  	ScriptFileReader fileReader = (ScriptFileReader) reader;
+  	
         try {
-	    fout = new FileOutputStream(tempfile=File.createTempFile("tempfile", ".php", path));
-	    setNewContextFactory();
+	    setNewLocalContextFactory(fileReader);
 	    setName(name);
-	    OutputStreamWriter writer = new OutputStreamWriter(fout);
-	    char[] cbuf = new char[Util.BUF_SIZE];
-	    int length;
 
-	    while((length=reader.read(cbuf, 0, cbuf.length))>0) 
-		writer.write(cbuf, 0, length);
-	    writer.close();
-	  	
             /* now evaluate our script */
-	    
+
 	    EngineFactory.addManaged(req, this);
 	    localReader = new URLReader(url);
             try { this.script = doEval(localReader, context);} catch (Exception e) {
@@ -198,16 +226,39 @@ public final class InvocablePhpServletScriptEngine extends InvocablePhpServletLo
 	    Util.printStackTrace(e);
         } finally {
             if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}
-            if(fout!=null) try { fout.close(); } catch (IOException e) {/*ignore*/}
         }
 	return null;
     }
+    protected void releaseReservedContinuation() {}
+    protected void reserveContinuation() throws ScriptException {}
     /**
-     * Release the continuation. Must be called explicitly or
-     * via the {@link RequestListener}
+     * Set the context id (X_JAVABRIDGE_CONTEXT) and the override flag (X_JAVABRIDGE_OVERRIDE_HOSTS) into env
+     * @param context the new context ID
+     * @param env the environment which will be passed to PHP
      */
-    public void release() {
-	super.release();
-	if(tempfile!=null) tempfile.delete();
+    protected void setStandardEnvironmentValues (IPhpScriptContext context, Map env) {
+	/* send the session context now, otherwise the client has to 
+	 * call handleRedirectConnection */
+	env.put("X_JAVABRIDGE_CONTEXT", ctx.getId());
+	
+	/* the client should connect back to us */
+	StringBuffer buf = new StringBuffer();
+	if(!req.isSecure())
+	    buf.append("h:");
+	else
+	    buf.append("s:");
+	buf.append(Util.getHostAddress());
+	buf.append(':');
+	buf.append(context.getSocketName());
+	buf.append('/');
+	try {
+	    buf.append((new java.net.URI(null, null, req.getContextPath(), null)).toASCIIString());
+        } catch (URISyntaxException e) {
+            Util.printStackTrace(e);
+	    buf.append(req.getContextPath());
+        }
+	buf.append(getProxy());
+	buf.append("javabridge");
+	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS",buf.toString());
     }
 }

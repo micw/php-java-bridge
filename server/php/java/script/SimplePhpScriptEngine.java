@@ -151,15 +151,11 @@ public abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
     }
 
     /**
-     * Create a new context ID and a environment map which we send to the client.
-     *
+     * Set the context id (X_JAVABRIDGE_CONTEXT) and the override flag (X_JAVABRIDGE_OVERRIDE_HOSTS) into env
+     * @param context the new context ID
+     * @param env the environment which will be passed to PHP
      */
-    protected void setNewContextFactory() {
-        IPhpScriptContext context = (IPhpScriptContext)getContext(); 
-	env = (Map) this.processEnvironment.clone();
-
-	ctx = PhpScriptContextFactory.addNew((IContext)context);
-    	
+    protected void setStandardEnvironmentValues (IPhpScriptContext context, Map env) {
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */
 	env.put("X_JAVABRIDGE_CONTEXT", ctx.getId());
@@ -170,6 +166,18 @@ public abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
 	buf.append(':');
 	buf.append(context.getSocketName());
 	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS",buf.toString());
+    }
+    /**
+     * Create a new context ID and a environment map which we send to the client.
+     *
+     */
+    protected void setNewContextFactory() {
+        IPhpScriptContext context = (IPhpScriptContext)getContext(); 
+	env = (Map) this.processEnvironment.clone();
+
+	ctx = PhpScriptContextFactory.addNew((IContext)context);
+
+	setStandardEnvironmentValues(context, env);
     }
 
     protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {

@@ -1,19 +1,14 @@
-PHP/Java Bridge protocol version 4.2.2
+PHP/Java Bridge protocol version 5
 
 Requests are marked with "->", responses with "<-".  The server
 continues to process requests until EOF. Only the first character is
 significant.
 
-The communication must begin with [C]reateInstance or [I]nvoke. The
-server responds with a single ARG which also carries the last request
-context ID. The request context ID is your request context, for
-example the location of a cell where the response should be stored; a
-structure or something like that. In PHP for example we allocate a
-pval and pass it as the ID to the Invoke or Create request. When the
-response arrives, we receive our ID along with the result so we know
-exactly where to store the result. Context ID's are optional and can
-be switched off, if the client can keep track of the context, see
-NOTES below.
+The communication must begin with [C]reateInstance or [I]nvoke. If the
+client waits for a response (predicate==1) the server sends back a
+single ARG, as defined below. Returned object id's ("CID") are 32 bit
+unsigned integer values starting with 1, increased by 1.
+
 
 Example:
 
@@ -242,15 +237,15 @@ If the first byte is 0177, the following byte has a special meaning:
 
 Bit 1 0
 -------
-         keep object  keep array,   binary             comment/php
-          identity    Map, Coll.     data              impl. (pure
-                      identity                               PHP or C)
+         keep object  keep array,   binary             comment
+          identity    Map, Coll.     data              
+                      identity                         
 
     - -    no           no         base64 encoded      default
-    0 0    yes          yes        binary              PHP
-    0 1    no           yes        binary              PHP
-    1 0    no           yes        base64 encoded      PHP
-    1 1    yes          yes        base64 encoded      PHP
+    0 0    yes          yes        binary              
+    0 1    no           yes        binary              
+    1 0    no           yes        base64 encoded      
+    1 1    yes          yes        base64 encoded      
 
 Bit 2,3,4: log level (from java.log_level)
 

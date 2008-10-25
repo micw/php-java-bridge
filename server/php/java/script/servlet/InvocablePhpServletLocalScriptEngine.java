@@ -3,16 +3,10 @@
 package php.java.script.servlet;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Map;
 
-import javax.script.Bindings;
-import javax.script.ScriptContext;
 import javax.script.ScriptException;
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
@@ -20,14 +14,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
-import php.java.bridge.http.IContext;
-import php.java.script.IPhpScriptContext;
-import php.java.script.InvocablePhpScriptEngine;
-import php.java.script.PhpScriptException;
-import php.java.script.URLReader;
 import php.java.servlet.CGIServlet;
+import php.java.servlet.ContextLoaderListener;
 import php.java.servlet.PhpCGIServlet;
-import php.java.servlet.RequestListener;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -51,97 +40,96 @@ import php.java.servlet.RequestListener;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-abstract class InvocablePhpServletLocalScriptEngine extends InvocablePhpScriptEngine {
-    protected Servlet servlet;
-    protected ServletContext servletCtx;
-    protected HttpServletRequest req;
-    protected HttpServletResponse res;
-    
-    protected PhpSimpleHttpScriptContext scriptContext;
-
-    protected URL url;
-    private File scriptFile = null;
-  
+/**
+ * A PHP script engine which implements the Invocable interface for Servlets. See {@link ContextLoaderListener} for details.
+ * 
+ * PHP scripts are evaluated as follows:
+ * <ol>
+ * <li> &lt;?php require_once("http://127.0.0.1:CURRENT_PORT/CURRENT_WEBAPP/java/Java.inc"?&gt;<br>
+ * <li> Your script is evaluated
+ * <li> &lt;?php java_context()-&gt;call(java_closure());?&gt; is called in order to make the script invocable<br>
+ * </ol>
+ * In order to evaluate PHP methods follow these steps:<br>
+ * <ol>
+ * <li> Create a factory which creates a PHP script file from a reader using the methods from {@link EngineFactory}:
+ * <blockquote>
+ * <code>
+ * private static File script;<br>
+ * private static final File getScriptF() {<br>
+ * &nbsp;&nbsp; if (script!=null) return script;<br><br>
+ * &nbsp;&nbsp; String webCacheDir = ctx.getRealPath(req.getServletPath());<br>
+ * &nbsp;&nbsp; Reader reader = new StringReader ("&lt;?php function f($v) {return "passed:".$v;} ?&gt;");<br>
+ * &nbsp;&nbsp; return EngineFactory.getPhpScript(webCacheDir, reader);<br>
+ * }<br>
+ * </code>
+ * </blockquote>
+ * <li> Acquire a PHP invocable script engine from the {@link EngineFactory}:
+ * <blockquote>
+ * <code>
+ * ScriptEngine scriptEngine = EngineFactory.getInvocablePhpScriptEngine(this, ctx, req, res);
+ * </code>
+ * </blockquote> 
+ * <li> Create a FileReader for the created script file:
+ * <blockquote>
+ * <code>
+ * Reader readerF = EngineFactory.createPhpScriptFileReader(getScriptF());
+ * </code>
+ * </blockquote>
+ * <li> Evaluate the engine:
+ * <blockquote>
+ * <code>
+ * scriptEngine.eval(readerF);
+ * </code>
+ * </blockquote> 
+ * <li> Close the reader obtained from the {@link EngineFactory}:
+ * <blockquote>
+ * <code>
+ * readerF.close();
+ * </code>
+ * </blockquote> 
+ * <li> Cast the engine to Invocable:
+ * <blockquote>
+ * <code>
+ * Invocable invocableEngine = (Invocable)scriptEngine;
+ * </code>
+ * </blockquote> 
+ * <li> Call PHP functions or methods:
+ * <blockquote>
+ * <code>
+ * System.out.println("result from PHP:" + invocableEngine.invoceFunction(f, new Object[]{"arg1"}));
+ * </code>
+ * </blockquote> 
+ * <li> Release the invocable by evaluating the engine again with a NULL value.
+ * <blockquote>
+ * <code>
+ * scriptEngine.eval((Reader)null);
+ * </code>
+ * </blockquote> 
+ * </ol>
+ * <br>
+ */
+public class InvocablePhpServletLocalScriptEngine extends InvocablePhpServletLocalHttpServerScriptEngine {
     public InvocablePhpServletLocalScriptEngine(Servlet servlet, 
 					   ServletContext ctx, 
 					   HttpServletRequest req, 
-					   HttpServletResponse res) throws MalformedURLException, URISyntaxException {
-	super();
-
-	this.servlet = servlet;
-	this.servletCtx = ctx;
-	this.req = req;
-	this.res = res;
-
-	scriptContext.initialize(servlet, servletCtx, req, res);
+					   HttpServletResponse res, 
+					   String protocol,
+					   int port) throws MalformedURLException, URISyntaxException {
+	super(servlet, ctx, req, res, protocol, port);
+    }
+    protected URL getURL(ServletContext ctx) throws MalformedURLException, URISyntaxException {
 	String filePath;
-        url = new java.net.URL((req.getRequestURL().toString()));
 	if (!new File(CGIServlet.getRealPath(ctx, "java/JavaProxy.php")).exists())
-	    filePath = "/JavaBridge/java/JavaProxy.php";
+	    filePath = "/JavaBridge"+getProxy();
 	else
-	    filePath = req.getContextPath()+"/java/JavaProxy.php";
-	url = new java.net.URI(url.getProtocol(), null, url.getHost(), url.getPort(), filePath, null, null).toURL();
+	    filePath = req.getContextPath()+getProxy();
+	
+	return new java.net.URI(protocol, null, Util.getHostAddress(), port, filePath, null, null).toURL();
     }
-    protected ScriptContext getPhpScriptContext() {
-	        Bindings namespace;
-	        scriptContext = new PhpSimpleHttpScriptContext();
-	        
-	        namespace = createBindings();
-	        scriptContext.setBindings(namespace,ScriptContext.ENGINE_SCOPE);
-	        scriptContext.setBindings(getBindings(ScriptContext.GLOBAL_SCOPE),
-					  ScriptContext.GLOBAL_SCOPE);
-	        
-	        return scriptContext;
-	    }    
-    /**
-     * Create a new context ID and a environment map which we send to the client.
-     *
-     */
-    private void setNewLocalContextFactory() {
-        IPhpScriptContext context = (IPhpScriptContext)getContext(); 
-	env = (Map) this.processEnvironment.clone();
-
-	ctx = InvocablePhpServletContextFactory.addNew((IContext)context, servlet, servletCtx, req, res);
-    	
-	/* send the session context now, otherwise the client has to 
-	 * call handleRedirectConnection */
-	env.put("X_JAVABRIDGE_CONTEXT", ctx.getId());
-	env.put("X_JAVABRIDGE_INCLUDE", scriptFile.getPath());
-	// X_JAVABRIDGE_OVERRIDE_REDIRECT is set in the URLReader
+    protected void releaseReservedContinuation() {
+	PhpCGIServlet.releaseReservedContinuation();
     }
-    
-    protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
-  	ScriptFileReader scriptReader = (ScriptFileReader) reader;
-  	
-        if(continuation != null) release();
-        Reader localReader = null;
-  	if(reader==null) return null;
-  	
-        try {
-            scriptFile = scriptReader.getFile().getAbsoluteFile();
-            
-	    setNewLocalContextFactory();
-	    setName(name);
-
-            /* now evaluate our script */
-
-	    EngineFactory.addManaged(req, this);
-	    localReader = new URLReader(url);
-            try { this.script = doEval(localReader, context);} catch (Exception e) {
-        	Util.printStackTrace(e);
-        	throw new PhpScriptException("Could not evaluate script", e);
-            }
-            try { localReader.close(); localReader=null; } catch (IOException e) {throw new PhpScriptException("Could not close script", e);}
-            /* get the proxy, either the one from the user script or our default proxy */
-            try { this.scriptClosure = this.script.getProxy(new Class[]{}); } catch (Exception e) { return null; }
-	} catch (FileNotFoundException e) {
-	    Util.printStackTrace(e);
-	} catch (IOException e) {
-	    Util.printStackTrace(e);
-        } finally {
-            if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}
-        }
-	return null;
+    protected void reserveContinuation() throws ScriptException {
+	PhpCGIServlet.reserveContinuation();
     }
 }
