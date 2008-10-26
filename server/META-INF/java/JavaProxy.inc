@@ -94,8 +94,6 @@ function java_values_internal($object) {
  * 
  * <code>
  * $str = new java("java.lang.String", "hello");
- * echo $str;
- * => [o(String):"hello"]
  * echo java_values($str);
  * => hello
  * $chr = $str->toCharArray();
@@ -379,6 +377,14 @@ function java_server_name() {
  * <code>
  * java_get_context()->getHttpServletRequest();
  * </code>
+ *
+ * Example which fetches the servlet-, config and context:
+ * <code>
+ * $config = $ctx->getAttribute ( "php.java.servlet.ServletConfig",  100);
+ * $context = $ctx->getAttribute( "php.java.servlet.ServletContext", 100);
+ * $servlet = $ctx->getAttribute( "php.java.servlet.Servlet", 100);
+ * </code>
+ *
  * @access public
  * @see #java_session()
  */

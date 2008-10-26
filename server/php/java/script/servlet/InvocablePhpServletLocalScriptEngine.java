@@ -5,7 +5,6 @@ package php.java.script.servlet;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.net.URL;
 
 import javax.script.ScriptException;
 import javax.servlet.Servlet;
@@ -13,7 +12,6 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import php.java.bridge.Util;
 import php.java.servlet.CGIServlet;
 import php.java.servlet.ContextLoaderListener;
 import php.java.servlet.PhpCGIServlet;
@@ -45,7 +43,7 @@ import php.java.servlet.PhpCGIServlet;
  * 
  * PHP scripts are evaluated as follows:
  * <ol>
- * <li> &lt;?php require_once("http://127.0.0.1:CURRENT_PORT/CURRENT_WEBAPP/java/Java.inc"?&gt;<br>
+ * <li> "http://127.0.0.1:CURRENT_PORT/CURRENT_WEBAPP/java/JavaProxy.php" is requested from Java<br>
  * <li> Your script is evaluated
  * <li> &lt;?php java_context()-&gt;call(java_closure());?&gt; is called in order to make the script invocable<br>
  * </ol>
@@ -117,14 +115,13 @@ public class InvocablePhpServletLocalScriptEngine extends InvocablePhpServletLoc
 					   int port) throws MalformedURLException, URISyntaxException {
 	super(servlet, ctx, req, res, protocol, port);
     }
-    protected URL getURL(ServletContext ctx) throws MalformedURLException, URISyntaxException {
-	String filePath;
-	if (!new File(CGIServlet.getRealPath(ctx, "java/JavaProxy.php")).exists())
-	    filePath = "/JavaBridge"+getProxy();
+    protected String getProxy() {
+	if (proxy!=null) return proxy;
+
+	if (!new File(CGIServlet.getRealPath(servletCtx, "java/JavaProxy.php")).exists())
+	    return proxy="/JavaBridge/java/JavaProxy.php";
 	else
-	    filePath = req.getContextPath()+getProxy();
-	
-	return new java.net.URI(protocol, null, Util.getHostAddress(), port, filePath, null, null).toURL();
+	    return proxy=req.getContextPath()+"/java/JavaProxy.php";
     }
     protected void releaseReservedContinuation() {
 	PhpCGIServlet.releaseReservedContinuation();

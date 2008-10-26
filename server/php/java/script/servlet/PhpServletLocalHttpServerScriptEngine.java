@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
 import php.java.bridge.http.IContext;
+import php.java.bridge.http.IContextFactory;
 import php.java.script.IPhpScriptContext;
 import php.java.script.PhpScriptEngine;
 import php.java.script.PhpScriptException;
@@ -210,6 +211,11 @@ public class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
      * @param env the environment which will be passed to PHP
      */
     protected void setStandardEnvironmentValues (IPhpScriptContext context, Map env) {
+	setStandardEnvironmentValues(context, env, ctx, req, webPath);
+    }
+    static void setStandardEnvironmentValues(IPhpScriptContext context,
+            Map env, IContextFactory ctx, HttpServletRequest req,
+            String webPath) {
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */
 	env.put("X_JAVABRIDGE_CONTEXT", ctx.getId());

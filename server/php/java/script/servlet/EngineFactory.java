@@ -222,7 +222,7 @@ public class EngineFactory {
      * @param res the response
      * @param protocol either "HTTP" or "HTTPS"
      * @param port the port number
-     * @param port the name of the PHP proxy, for example "/JavaProxy.php"
+     * @param proxy the name of the PHP proxy, for example "/JavaProxy.php"
      * @return the invocable PHP JSR 223 ScriptEngine, an instance of the {@link InvocablePhpServletScriptEngine}
      * @throws MalformedURLException
      * @throws IllegalStateException

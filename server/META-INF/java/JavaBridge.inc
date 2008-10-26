@@ -127,6 +127,7 @@ a PHP 5.1.x executable, see php_exec in the WEB-INF/web.xml";
 
   /**
    * Load a set of java libraries and make them available in the current name space.
+   *
    * Available since php 5.2.0. Example:
    * <code>
    * java_autoload("itext.jar;log4j.jar");
@@ -171,6 +172,13 @@ a PHP 5.1.x executable, see php_exec in the WEB-INF/web.xml";
    * @see #java_closure();
    */
   function java_get_closure() {return java_closure_array(func_get_args());}
+
+  /**
+   * Alias for java_closure();
+   * @access private
+   * @see #java_closure();
+   */
+  function java_wrap() {return java_closure_array(func_get_args());}
   
   /**
    * Alias for java_values();
@@ -178,6 +186,13 @@ a PHP 5.1.x executable, see php_exec in the WEB-INF/web.xml";
    * @see #java_values();
    */
   function java_get_values($arg) { return java_values($arg); }
+
+  /**
+   * Alias for java_values();
+   * @access private
+   * @see #java_values();
+   */
+  function java_unwrap($arg) { return java_values($arg); }
 
   /**
    * Alias for java_session();

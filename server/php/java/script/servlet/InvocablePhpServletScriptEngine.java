@@ -10,7 +10,6 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Map;
 
 import javax.script.ScriptContext;
@@ -56,7 +55,7 @@ import php.java.servlet.RequestListener;
  * 
  * PHP scripts are evaluated as follows:
  * <ol>
- * <li> &lt;?php require_once("http://127.0.0.1:CURRENT_PORT/CURRENT_WEBAPP/java/Java.inc"?&gt;<br>
+ * <li> "http://127.0.0.1:CURRENT_PORT/CURRENT_WEBAPP/java/JavaProxy.php" is requested from Java<br>
  * <li> Your script is evaluated
  * <li> &lt;?php java_context()-&gt;call(java_closure());?&gt; is called in order to make the script invocable<br>
  * </ol>

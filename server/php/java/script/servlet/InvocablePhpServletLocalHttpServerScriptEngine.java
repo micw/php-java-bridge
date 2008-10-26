@@ -5,9 +5,7 @@ package php.java.script.servlet;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Map;
@@ -55,8 +53,8 @@ import php.java.servlet.ContextLoaderListener;
  * 
  * PHP scripts are evaluated as follows:
  * <ol>
- * <li> &lt;?php require_once("http://127.0.0.1:CURRENT_PORT/CURRENT_WEBAPP/java/Java.inc"?&gt;<br>
- * <li> Your script is evaluated
+ * <li> JavaProxy.php is requested from Java<br>
+ * <li> Your script is included and then evaluated
  * <li> &lt;?php java_context()-&gt;call(java_closure());?&gt; is called in order to make the script invocable<br>
  * </ol>
  * In order to evaluate PHP methods follow these steps:<br>
@@ -76,7 +74,7 @@ import php.java.servlet.ContextLoaderListener;
  * <li> Acquire a PHP invocable script engine from the {@link EngineFactory}:
  * <blockquote>
  * <code>
- * ScriptEngine scriptEngine = EngineFactory.getInvocablePhpScriptEngine(this, ctx, req, res, "HTTP", 80);
+ * ScriptEngine scriptEngine = EngineFactory.getInvocablePhpScriptEngine(this, ctx, req, res, "HTTP", 80, "/JavaProxy.php");
  * </code>
  * </blockquote> 
  * <li> Create a FileReader for the created script file:
@@ -125,20 +123,19 @@ public class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhp
     protected HttpServletResponse res;
     
     protected PhpSimpleHttpScriptContext scriptContext;
+    private String webPath; 
 
     protected int port;
     protected String protocol;
     protected URL url;
-    private String proxy;
+    protected String proxy;
     
     protected String getProxy() {
 	if (proxy!=null) return proxy;
-	return proxy="/java/JavaProxy.php";
+	return proxy=req.getContextPath()+"/java/JavaProxy.php";
     }
     protected URL getURL(ServletContext ctx) throws MalformedURLException, URISyntaxException {
-	String filePath = req.getContextPath()+getProxy();
-	
-	return new java.net.URI(protocol, null, Util.getHostAddress(), port, filePath, null, null).toURL();
+	return new java.net.URI(protocol, null, Util.getHostAddress(), port, getProxy(), null, null).toURL();
     }
     public InvocablePhpServletLocalHttpServerScriptEngine(Servlet servlet, 
 					   ServletContext ctx, 
@@ -206,6 +203,7 @@ public class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhp
   	ScriptFileReader fileReader = (ScriptFileReader) reader;
   	
         try {
+	    webPath = fileReader.getFile().getWebPath(fileReader.getFile().getCanonicalPath(), req, servletCtx);
 	    setNewLocalContextFactory(fileReader);
 	    setName(name);
 
@@ -237,28 +235,6 @@ public class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhp
      * @param env the environment which will be passed to PHP
      */
     protected void setStandardEnvironmentValues (IPhpScriptContext context, Map env) {
-	/* send the session context now, otherwise the client has to 
-	 * call handleRedirectConnection */
-	env.put("X_JAVABRIDGE_CONTEXT", ctx.getId());
-	
-	/* the client should connect back to us */
-	StringBuffer buf = new StringBuffer();
-	if(!req.isSecure())
-	    buf.append("h:");
-	else
-	    buf.append("s:");
-	buf.append(Util.getHostAddress());
-	buf.append(':');
-	buf.append(context.getSocketName());
-	buf.append('/');
-	try {
-	    buf.append((new java.net.URI(null, null, req.getContextPath(), null)).toASCIIString());
-        } catch (URISyntaxException e) {
-            Util.printStackTrace(e);
-	    buf.append(req.getContextPath());
-        }
-	buf.append(getProxy());
-	buf.append("javabridge");
-	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS",buf.toString());
+	PhpServletLocalHttpServerScriptEngine.setStandardEnvironmentValues(context, env, ctx, req, webPath);
     }
 }

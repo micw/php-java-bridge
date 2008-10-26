@@ -347,7 +347,6 @@ public class PhpCGIServlet extends FastCGIServlet {
     /**
      * Since each script captures up to two servlet instances, we must check the servlet engine's thread pool.
      * Check if a script continuation is available and capture it. Otherwise throw a PhpScriptException.
-     * @param how many entries should be reserved
      * @throws ScriptException
      */
     /*
