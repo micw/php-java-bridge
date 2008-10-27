@@ -9,6 +9,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Map;
 
 import javax.script.Bindings;
@@ -166,7 +169,20 @@ public class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
 	setStandardEnvironmentValues(context, env);
     }
     
-    protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
+    protected Object eval(final Reader reader, final ScriptContext context, final String name) throws ScriptException {
+	try {
+	    return AccessController.doPrivileged(new PrivilegedExceptionAction(){ 
+	        public Object run() throws Exception {
+	    	return evalInternal(reader, context, name);
+	        }
+	    });
+        } catch (PrivilegedActionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof RuntimeException) throw (RuntimeException)cause;
+            throw (ScriptException) e.getCause();
+        }
+    }
+    private Object evalInternal(Reader reader, ScriptContext context, String name) throws ScriptException {
   	if(reader==null) return null;
 	if (!(reader instanceof ScriptFileReader)) throw new IllegalArgumentException("reader must be a ScriptFileReader");
     	ScriptFileReader fileReader = (ScriptFileReader) reader;

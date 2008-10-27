@@ -8,10 +8,14 @@ import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Map;
 
 import javax.script.Bindings;
 import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
@@ -194,7 +198,20 @@ public class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhp
 	env.put("X_JAVABRIDGE_INCLUDE", fileReader.getFile().getCanonicalPath());
     }
     
-    protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
+    protected Object eval(final Reader reader, final ScriptContext context, final String name) throws ScriptException {
+	try {
+	    return AccessController.doPrivileged(new PrivilegedExceptionAction(){ 
+	        public Object run() throws Exception {
+	    	return evalInternal(reader, context, name);
+	        }
+	    });
+        } catch (PrivilegedActionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof RuntimeException) throw (RuntimeException)cause;
+            throw (ScriptException) e.getCause();
+        }
+    }
+    private Object evalInternal(Reader reader, ScriptContext context, String name) throws ScriptException {
         if(continuation != null) release();
         Reader localReader = null;
   	if(reader==null) return null;

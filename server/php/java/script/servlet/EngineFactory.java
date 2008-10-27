@@ -11,10 +11,15 @@ import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
@@ -127,12 +132,16 @@ public class EngineFactory {
      * @throws MalformedURLException
      * @throws IllegalStateException
      */
-    public static javax.script.ScriptEngine getPhpScriptEngine (Servlet servlet, 
-								ServletContext ctx, 
-								HttpServletRequest req, 
-								HttpServletResponse res) throws 
-								    MalformedURLException, IllegalStateException {
-	return (javax.script.ScriptEngine)EngineFactory.getRequiredEngineFactory(ctx).getScriptEngine(servlet, ctx, req, res);
+    public static javax.script.ScriptEngine getPhpScriptEngine (final Servlet servlet, 
+								final ServletContext ctx, 
+								final HttpServletRequest req, 
+								final HttpServletResponse res) throws 
+								    Exception {
+	return (ScriptEngine) AccessController.doPrivileged(new PrivilegedExceptionAction(){ 
+	    public Object run() throws Exception {
+		return (javax.script.ScriptEngine)EngineFactory.getRequiredEngineFactory(ctx).getScriptEngine(servlet, ctx, req, res);
+	    }
+	});
     }
     /**
      * Get a PHP JSR 223 ScriptEngine which implements the Invocable interface from the servlet context.
@@ -158,12 +167,16 @@ public class EngineFactory {
      * @throws MalformedURLException
      * @throws IllegalStateException
      */
-    public static javax.script.ScriptEngine getInvocablePhpScriptEngine (Servlet servlet, 
-									 ServletContext ctx, 
-									 HttpServletRequest req, 
-									 HttpServletResponse res) throws 
-									     MalformedURLException, IllegalStateException, URISyntaxException {
-	    return (javax.script.ScriptEngine)EngineFactory.getRequiredEngineFactory(ctx).getInvocableScriptEngine(servlet, ctx, req, res);
+    public static javax.script.ScriptEngine getInvocablePhpScriptEngine (final Servlet servlet, 
+									 final ServletContext ctx, 
+									 final HttpServletRequest req, 
+									 final HttpServletResponse res) throws 
+									     Exception {
+	return (ScriptEngine) AccessController.doPrivileged(new PrivilegedExceptionAction(){ 
+	    public Object run() throws Exception {
+		return (javax.script.ScriptEngine)EngineFactory.getRequiredEngineFactory(ctx).getInvocableScriptEngine(servlet, ctx, req, res);
+	    }
+	});
     }
     /**
      * Get a PHP JSR 223 ScriptEngine, which implements the Invocable interface, from a HTTP server running on the local host.
@@ -191,14 +204,18 @@ public class EngineFactory {
      * @throws MalformedURLException
      * @throws IllegalStateException
      */
-    public static javax.script.ScriptEngine getInvocablePhpScriptEngine (Servlet servlet, 
-									 ServletContext ctx, 
-									 HttpServletRequest req, 
-									 HttpServletResponse res,
-									 String protocol,
-									 int port) throws 
-									     MalformedURLException, IllegalStateException, URISyntaxException {
+    public static javax.script.ScriptEngine getInvocablePhpScriptEngine (final Servlet servlet, 
+									 final ServletContext ctx, 
+									 final HttpServletRequest req, 
+									 final HttpServletResponse res,
+									 final String protocol,
+									 final int port) throws 
+									     Exception {
+	return (ScriptEngine) AccessController.doPrivileged(new PrivilegedExceptionAction(){ 
+	    public Object run() throws Exception {
 	    return (javax.script.ScriptEngine)EngineFactory.getRequiredEngineFactory(ctx).getInvocableScriptEngine(servlet, ctx, req, res, protocol, port);
+	    }
+	});
     }
     /**
      * Get a PHP JSR 223 ScriptEngine, which implements the Invocable interface, from a HTTP server running on the local host.
@@ -227,15 +244,19 @@ public class EngineFactory {
      * @throws MalformedURLException
      * @throws IllegalStateException
      */
-    public static javax.script.ScriptEngine getInvocablePhpScriptEngine (Servlet servlet, 
-									 ServletContext ctx, 
-									 HttpServletRequest req, 
-									 HttpServletResponse res,
-									 String protocol,
-									 int port,
-									 String proxy) throws 
-									     MalformedURLException, IllegalStateException, URISyntaxException {
+    public static javax.script.ScriptEngine getInvocablePhpScriptEngine (final Servlet servlet, 
+									 final ServletContext ctx, 
+									 final HttpServletRequest req, 
+									 final HttpServletResponse res,
+									 final String protocol,
+									 final int port,
+									 final String proxy) throws 
+									     Exception {
+	return (ScriptEngine) AccessController.doPrivileged(new PrivilegedExceptionAction(){ 
+	    public Object run() throws Exception {
 	    return (javax.script.ScriptEngine)EngineFactory.getRequiredEngineFactory(ctx).getInvocableScriptEngine(servlet, ctx, req, res, protocol, port, proxy);
+	    }
+	});
     }
 
     private static ScriptFile getFile(ScriptFile file, Reader reader) throws IOException {
@@ -256,13 +277,17 @@ public class EngineFactory {
      * @return A pointer to the cached PHP script, named: path+"._cache_.php"
      * @see #createPhpScriptFileReader(File)
      */
-    public static ScriptFile getPhpScript (String path, Reader reader) {
-	try {
-	    return getFile(new ScriptFile(path+"._cache_.php"), reader);
-	} catch (IOException e) {
-	    Util.printStackTrace(e);
-        }
-	return null;
+    public static ScriptFile getPhpScript (final String path, final Reader reader) {
+	return (ScriptFile) AccessController.doPrivileged(new PrivilegedAction(){ 
+	    public Object run() {
+        	try {
+        	    return getFile(new ScriptFile(path+"._cache_.php"), reader);
+        	} catch (IOException e) {
+        	    Util.printStackTrace(e);
+                }
+        	return null;
+	    }
+	});
     }
    /**
      * Get a PHP script from the given Path. This procedure can be used to cache dynamically-generated scripts
@@ -270,8 +295,12 @@ public class EngineFactory {
      * @return A pointer to the cached PHP script, usually named: path+"._cache_.php"
      * @see #createPhpScriptFileReader(File)
      */
-    public static ScriptFile getPhpScript (String path) {
-	return new ScriptFile(path+"._cache_.php");
+    public static ScriptFile getPhpScript (final String path) {
+	return (ScriptFile) AccessController.doPrivileged(new PrivilegedAction(){ 
+	    public Object run() {
+		return new ScriptFile(path+"._cache_.php");
+	    }
+	});
     }
     /**
      * Create a Reader from a given PHP script file. This procedure can be used to create
@@ -295,35 +324,48 @@ public class EngineFactory {
      * @param phpScriptFile the file containing the cached script, obtained from {@link #getPhpScript(String, Reader)} or {@link #getPhpScript(String)}
      * @return A pointer to the cached PHP script, usually named: path+"._cache_.php"
      */
-    public static FileReader createPhpScriptFileReader (ScriptFile phpScriptFile) {
-	try {
-	    return new ScriptFileReader(phpScriptFile);
-        } catch (IOException e) {
-	    Util.printStackTrace(e);
-        }
-	return null;
+    public static FileReader createPhpScriptFileReader (final ScriptFile phpScriptFile) {
+	return (FileReader) AccessController.doPrivileged(new PrivilegedAction(){ 
+	    public Object run() {
+        	try {
+        	    return new ScriptFileReader(phpScriptFile);
+                } catch (IOException e) {
+        	    Util.printStackTrace(e);
+                }
+        	return null;
+	    }
+	});
     }
     /** @deprecated Use {@link #createPhpScriptFileReader(ScriptFile)} instead */
-    public static FileReader createPhpScriptFileReader (File phpScriptFile) {
-	try {
-	    return new ScriptFileReader(new ScriptFile(phpScriptFile.getAbsolutePath()));
-        } catch (IOException e) {
-	    Util.printStackTrace(e);
-        }
-	return null;
+    public static FileReader createPhpScriptFileReader (final File phpScriptFile) {
+	return (FileReader) AccessController.doPrivileged(new PrivilegedAction(){ 
+	    public Object run() {
+        	try {
+        	    return new ScriptFileReader(new ScriptFile(phpScriptFile.getAbsolutePath()));
+                } catch (IOException e) {
+        	    Util.printStackTrace(e);
+                }
+        	return null;
+	    }
+	});
     }
     /**
      * Release all managed script engines. Will be called automatically at the end of each request,
      * if a RequestListener has been declared.
      * @param list the list from the request attribute {@link RequestListener#ROOT_ENGINES_COLLECTION_ATTRIBUTE}
      */
-    public void releaseScriptEngines(List list) {
-	for (Iterator ii=list.iterator(); ii.hasNext(); ) {
-	    InvocablePhpServletLocalHttpServerScriptEngine engine = (InvocablePhpServletLocalHttpServerScriptEngine) ii.next();
-	    engine.releaseReservedContinuation();
-	    engine.release();
-	}
-	list.clear();
+    public void releaseScriptEngines(final List list) {
+	AccessController.doPrivileged(new PrivilegedAction(){ 
+	    public Object run() {
+        	for (Iterator ii=list.iterator(); ii.hasNext(); ) {
+        	    InvocablePhpServletLocalHttpServerScriptEngine engine = (InvocablePhpServletLocalHttpServerScriptEngine) ii.next();
+        	    engine.releaseReservedContinuation();
+        	    engine.release();
+        	}
+        	list.clear();
+        	return null;
+	    }
+	});
     }
     /**
      * Manage a script engine
@@ -333,13 +375,28 @@ public class EngineFactory {
      * @see #releaseScriptEngines(List)
      */
     public static void addManaged(HttpServletRequest req,
-	InvocablePhpServletLocalHttpServerScriptEngine engine) throws ScriptException {
-	ArrayList list = (ArrayList) req.getAttribute(RequestListener.ROOT_ENGINES_COLLECTION_ATTRIBUTE);
-	if (list!=null) {
-	    list.add(engine);
-	    
-	    // check
-	    engine.reserveContinuation();
+		InvocablePhpServletLocalHttpServerScriptEngine engine) throws ScriptException {
+	try {
+	    addManagedInternal(req, engine);
+	} catch (PrivilegedActionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof RuntimeException) throw (RuntimeException)cause;
+            throw (ScriptException) e.getCause();
 	}
+    }
+    private static void addManagedInternal(final HttpServletRequest req,
+	final InvocablePhpServletLocalHttpServerScriptEngine engine) throws PrivilegedActionException {
+	AccessController.doPrivileged(new PrivilegedExceptionAction() { 
+	    public Object run() throws Exception {
+		ArrayList list = (ArrayList) req.getAttribute(RequestListener.ROOT_ENGINES_COLLECTION_ATTRIBUTE);
+		if (list!=null) {
+		    list.add(engine);
+		    
+		    // check
+		    engine.reserveContinuation();
+		}
+		return null;
+	    }
+	});
     }
 }
