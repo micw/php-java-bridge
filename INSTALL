@@ -26,7 +26,7 @@ export INST LD_LIBRARY_PATH PATH
 (cd automake-1.9; ./configure --prefix=$INST && make && make install)
 (cd libtool-1.5.20; ./configure --prefix=$INST && make && make install)
 (cd php*; ./configure --prefix=$INST --disable-all --enable-fastcgi && make && make install)
-(cd php-java-bridge*; phpize && ./configure --with-java=/usr/java/jdk1.5.0 && make && make install)
+(cd php-java-bridge*; phpize && ./configure --with-java=/usr/java/default && make && make install)
 
 # test
 php php-java-bridge*/test.php >result.html
@@ -44,7 +44,7 @@ The following software components must be installed on your computer:
 
 * a Java VM. For example IBM JDK 1.4.2 or GNU Java version 3 or above.
 
-* optional: Oracle 9i/10g AS or IBM WebSphere 5/6.
+* optional: a J2EE server or servlet engine, for example Apache-Tomcat
 
 
 The following instructions build the components:
@@ -54,11 +54,8 @@ The following instructions build the components:
 * PHP as a apache module
 
 * the PHP/Java Bridge as a PHP module and/or as a J2EE
-  component (plugin) for IBM WebSphere or Oracle AS.
+  component (plugin)
 
-and optionally, if you want to run JSP and PHP from Apache/Tomcat:
-
-* mod_jk with Apache/Tomcat.
 
 The following build process first creates an artificial environment
 (PATH, LD_LIBRARY_PATH) and installs all components into INST
@@ -121,6 +118,9 @@ cd php-x.y.z
 make && su -c "make install"
 # now activate php in the httpd.conf
 su -c "echo 'AddType application/x-httpd-php .php' >>$INST/conf/httpd.conf"
+# configure and build the J2EE ("php-cgi" fastcgi) component
+./configure --prefix=$INST --disable-all
+make && su -c "make install"
 cd ..
 
 
@@ -172,10 +172,26 @@ for example.
 
 
 ------------------------------------
-Load balancer setup
--------------------
+Installation of the J2EE component
+----------------------------------
 
-Assuming that there are 3 tomcat nodes running on diego, carlos and
+Copy the file "JavaBridge.war" to the autodeploy folder of your J2EE
+server.
+
+Copy the php-cgi executable to the system PATH or into the WEB-INF/cgi
+folder within "JavaBridge.war" and add a .sh wrapper (see the
+WEB-INF/cgi/README for details).
+
+On Windows copy the php-cgi.exe and the phpXts.dll to the system PATH
+or into the WEB-INF/cgi folder within "JavaBridge.war" (see the
+WEB-INF/cgi/README for details).
+
+
+------------------------------------
+Apache/J2EE load balancer setup
+-------------------------------
+
+Assuming that there are 3 J2EE nodes running on diego, carlos and
 localhost, append the following lines at the end of your apache
 httpd.conf:
 
@@ -195,9 +211,3 @@ and, if SSL is enabled
     https://localhost/JavaBridge/jsp+php.jsp
 
 
-------------------------------------
-Installation of Tomcat/mod jk
------------------------------
-
-NOTE: MOD_JK SHOULD NOT BE USED ANYMORE. Please use Apache's ProxyPass
-directive instead, see above.

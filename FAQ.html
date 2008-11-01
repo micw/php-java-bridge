@@ -14,8 +14,9 @@ This file contains answers to frequently asked questions. Please see <a href="ht
 Furthermore IBM's Zero framework for Eclipse contains a PHP interpreter written in pure Java and a php to java bridge which can call Java methods in-process.</p>
 <p>The only free alternatives are SOAP and XML-RPC, which are up to 50 times slower than the XML protocol implementation used by this PHP/Java Bridge.</p>
 
-<H4>Does it support PHP 4?</H4>
-<p>No. Use PHP/Java Bridge version 4.3.2 or below instead.</p>
+<H4>How do I enable the Java extension in my php.ini file?</H4>
+<p>A Java extension does not exist, so you can't enable it.</p>
+<p>The PHP/Java Bridge is a network protocol, it requires a running Java VM, e.g. Apache/Tomcat. Or, if you want to call PHP libraries from Java, a running PHP container, e.g. Apache or IIS.</p>
 
 <H4>What about portability?</H4>
 <p>A portable PHP application can use the "new Java(...)" constructor
@@ -84,6 +85,32 @@ Example for the standalone container:
 java -Dphp.java.bridge.default_log_level=5 -jar JavaBridge.jar SERVLET:8080
 </code>
 </blockquote>
+</p>
+
+<H4>How can I set Java options?</H4>
+<p>
+With the -D flag. See <code>java -jar JavaBridge.jar --help for details. If tomcat is being used, one can set these options as follows:
+<blockquote>
+<code>
+JAVA_OPTS="-D... -D..." /opt/tomcat/bin/catalina.sh run
+</code>
+</blockquote>
+</p>
+
+<H4>How can I increase the memory available to Java?</H4>
+<p>
+Use a VM >= 1.6 and add more RAM to your computer. Older Java versions
+support the <code>Xmx</code> flag:
+<blockquote>
+<code>
+java -Xmx512M ... -jar JavaBridge.jar SERVLET:8080 
+</code>
+</blockquote>
+</p>
+
+<H4>How can I set PHP options?</H4>
+<p>
+With a <code>define</code> before a PHP library is loaded. Global options can also be set in the <code>php.ini</code> file. Use phpinfo() to see the location of this file.
 </p>
 
 <H4>How can I configure the bridge?</H4>
@@ -245,14 +272,17 @@ a "MonoBridge.exe" generated from "JavaBridge.jar". If you want to
 compile from source, use the configure
 option <code>--with-mono</code>.</p>
 
+<H4>Does it support PHP 4?</H4>
+<p>No. Use PHP/Java Bridge version 4.3.2 or below instead.</p>
+
 <H2>Class loading questions</H2>
 
-<a name="java-require">
+<a name="java-require"></a>
 <H4>How do I load Java libraries?</H4>
-<p> With <code>java_require("myApplication.jar;myLib1.jar;myDriver1.jar;...");</code>. See the README for details.</p>
+<p> During development simple libraries can be loaded dynamically with <code>java_require("myApplication.jar;myLib1.jar;myDriver1.jar;...");</code>. See the README for details.</p>
 
 <H4>Where can I store my java libraries for the PHP/Java Bridge?</H4>
-<p>In <code>php.java.bridge.base</code>/lib.</p>
+<p>Either within  your web application <code>WEB-INF/web.xml</code> directory or in <code>php.java.bridge.base</code>/lib.</p>
 <p> When the system property <code>php.java.bridge.base</code> is not set, libraries are loaded from <code>$HOME/lib</code> where <code>$HOME</code> denotes the home directory of the person or component which has started the java VM.</p>
 <p> If libraries should be available globally, store them in <code>java.ext.dirs</code>, for example in <code>/usr/share/java/ext</code>.</p>
 <p> If a library is not yet API-stable, store it into a sub directory of the <code>lib</code> directory and use the <code>java_require()</code> procedure. For example <code>java_require("myLibs0.2/foo.jar")</code> loads <code>foo.jar</code> from <code>php.java.bridge.base/lib/myLibs0.2</code>.</p>
@@ -270,8 +300,11 @@ class doesn't exist or it is not public or it throws a java.lang.Error
 during initialization. Check which library exports the feature and add
 the library to the <code>java_require()</code> statement.</code></p>
 
+<a name="java-dll-hell"></a>
 <H4>Why do I get a NoClassDefFoundError?</H4>
-<p>Because Java doesn't have a module system. All interconnected libraries must be loaded with a single <code>java_require()</code> call. See the README for details.</p>
+<p>Because Java doesn't have a module system.</p>
+<p>All interconnected libraries must be loaded by one class loader, for example by a single <code>java_require()</code> call. Furthermore all libraries must be stored at unique locations and all class loaders must load libraries from unique locations. See the README for details.</p>
+<p><strong>Please do not report NoClassDefFoundErrors to the mailing list or via the bug tracker. This is not a bug and we cannot help you any further!</strong></p>
 
 <H4>I cannot require my JDBC driver!?!</H4>
 <p> Please re-read the <a href="#java-require">class loading section</a>. The following code loads all interconnected libraries using a single java_require() call:
@@ -527,6 +560,13 @@ Download the J2EE binary and copy the <code>JavaBridge.jar</code> and the <code>
 <p>
 Copy the files <code>sessionSharing.jsp</code> and <code>sessionSharing.php</code> from the <code>JavaBridge.war</code> to <code>myApplication</code> and create <code>myApplication.war</code>, for example with the commands: <code>cd myApplication; jar cf ../myApplication.war *</code>. </p>
 <p>The web archive can now be distributed, copy it to the tomcat <code>webapps</code> directory and re-start tomcat. Visit <code>http://localhost/myApplication/sessionSharing.php</code> and <code>http://localhost/myApplication/sessionSharing.jsp</code>.
+</p>
+
+<a name="tomcat-security">
+<H4>I want to use Tomcat's security manager, how do I install the bridge?</H4>
+</a>
+<p>
+Remove all PHP/Java Bridge libraries from your application.war file and install them in the tomcat lib folder or some other folder which has the neccessary privileges.
 </p>
 
 

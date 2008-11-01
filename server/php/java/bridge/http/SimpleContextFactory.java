@@ -62,7 +62,7 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
     	setClassLoader(Util.getContextClassLoader());
     }
     
-    public void recycle(String id) throws SecurityException {
+    public void recycle(String id) {
         visited.recycle(id);
     }
 

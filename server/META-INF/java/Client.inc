@@ -597,6 +597,16 @@ class java_Client /* implements IDocHandler */ {
 	  if((!$object && !function_exists($name)) || ($object && !method_exists($object, $name))) throw new JavaException("java.lang.NoSuchMethodException", "$name");
 	  
 	  $res = call_user_func_array($ob, $res);
+      
+      if (is_object($res) && !($res instanceof java_JavaType)) {
+          trigger_error("object returned from $name() is not a Java object", E_USER_WARNING);
+ 
+          // correct this error by calling: $res=java_closure($res);
+          $this->protocol->invokeBegin(0, "makeClosure", "5", "6");
+          $this->protocol->writeULong($this->globalRef->add($res)); // proper PHP "long" -> Java 64 bit value conversion
+          $this->protocol->invokeEnd();
+          $res = $this->getResult();
+      }
 
 	  $this->protocol->resultBegin();
 	  $this->writeArg($res);

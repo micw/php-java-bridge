@@ -582,6 +582,10 @@ Build and execution instructions:
   If you receive this error when using a Java library, this may mean the
   following:
 
+    * a jar file is stored at more than one location or the same
+      location is accessed by more than one class loader. For example
+      java_require("WEB-INF/lib/") calls for trouble.
+      
     * an old or different JDK than expected by the library is used,
       for example GNU Java instead of SUN or IBM Java.
 

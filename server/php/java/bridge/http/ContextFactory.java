@@ -222,7 +222,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     /* (non-Javadoc)
      * @see php.java.bridge.http.IContextFactory#recycle(java.lang.String)
      */
-    public void recycle(String id) throws SecurityException {
+    public void recycle(String id) {
 	ContextFactory factory = null;
 	factory=((ContextFactory)contexts.get(id));
 	if(factory == null || factory == this) return;

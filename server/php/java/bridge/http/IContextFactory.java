@@ -44,7 +44,7 @@ public interface IContextFactory extends IJavaBridgeFactory {
    * @see php.java.bridge.Request#setBridge(php.java.bridge.JavaBridge)
    * @see php.java.bridge.Request#recycle()
    */
-    public void recycle(String id) throws SecurityException;
+    public void recycle(String id);
 
   /**
    * Removes the context factory from the classloader's list of context factories

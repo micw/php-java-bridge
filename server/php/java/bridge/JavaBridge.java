@@ -432,7 +432,7 @@ public class JavaBridge implements Runnable {
     private Exception getUnresolvedExternalReferenceException(Throwable e, String what) {
         return 	new ClassNotFoundException("Unresolved external reference: "+ e+ ". -- " +
 					   "Unable to "+what+", see the README section \"Java platform issues\" " +
-					   "for details.", e);
+					   "for details and DO NOT REPORT THIS PROBLEM TO THE PHP/Java Bridge MAILING LIST!", e);
     }
     
     /**
@@ -608,14 +608,7 @@ public class JavaBridge implements Runnable {
 
 	    for (int i=0; i<parms.length; i++) {
 		Object arg = args[i];
-		if(arg instanceof PhpProcedureProxy) {
-		    PhpProcedureProxy proxy = ((PhpProcedureProxy)arg);
-		    if(proxy.suppliedInterfaces==null) {
-			arg = args[i] = proxy.getNewFromInterface(null);
-		    } else {
-			arg = args[i] = proxy.getProxy(null);        
-		    }
-		}
+		arg = args[i] = resolvePhpProcedureProxy(arg);
 		if (arg!=null)
 		    w+=weight(parms[i], arg.getClass(), arg);
 	    }
@@ -1006,7 +999,13 @@ public class JavaBridge implements Runnable {
 	String dmsg = "\nResult "+objectDebugDescription(obj) + "\n";
 	Util.logDebug(dmsg);
     }
-
+    private Object resolvePhpProcedureProxy(Object object) {
+	if(object instanceof PhpProcedureProxy) {
+	    PhpProcedureProxy proxy = ((PhpProcedureProxy)object);
+	    object = proxy.getProxy(null);        
+	}
+	return object;
+    }
     /**
      * Invoke a method on a given object
      */
@@ -1032,6 +1031,7 @@ public class JavaBridge implements Runnable {
 		again = false;
 		ClassIterator iter;
 		if (selected==null) {
+		    object = resolvePhpProcedureProxy(object);
 		    for (iter = ClassIterator.getInstance(object, FindMatchingInterfaceForInvoke.getInstance(this, method, args, true, canModifySecurityPermission)); (jclass=iter.getNext())!=null;) {
 			Method methods[] = jclass.getMethods();
 			for (int i=0; i<methods.length; i++) {
