@@ -304,7 +304,7 @@ the library to the <code>java_require()</code> statement.</code></p>
 <H4>Why do I get a NoClassDefFoundError?</H4>
 <p>Because Java doesn't have a module system.</p>
 <p>All interconnected libraries must be loaded by one class loader, for example by a single <code>java_require()</code> call. Furthermore all libraries must be stored at unique locations and all class loaders must load libraries from unique locations. See the README for details.</p>
-<p><strong>Please do not report NoClassDefFoundErrors to the mailing list or via the bug tracker. This is not a bug and we cannot help you any further!</strong></p>
+<p><em>Please do not report NoClassDefFoundErrors to the mailing list or via the bug tracker. This is not a bug and we cannot help you any further!</em></p>
 
 <H4>I cannot require my JDBC driver!?!</H4>
 <p> Please re-read the <a href="#java-require">class loading section</a>. The following code loads all interconnected libraries using a single java_require() call:
@@ -566,7 +566,7 @@ Copy the files <code>sessionSharing.jsp</code> and <code>sessionSharing.php</cod
 <H4>I want to use Tomcat's security manager, how do I install the bridge?</H4>
 </a>
 <p>
-Remove all PHP/Java Bridge libraries from your application.war file and install them in the tomcat lib folder or some other folder which has the neccessary privileges.
+Remove all PHP/Java Bridge libraries from your application.war file and install them in the tomcat lib folder or some other folder which has the necessary privileges.
 </p>
 
 
