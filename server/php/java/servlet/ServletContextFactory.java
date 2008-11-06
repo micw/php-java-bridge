@@ -40,7 +40,7 @@ import javax.servlet.http.HttpServletResponse;
 public class ServletContextFactory extends SimpleServletContextFactory {
     protected ServletContextFactory(Servlet servlet, ServletContext ctx,
                         HttpServletRequest proxy, HttpServletRequest req,HttpServletResponse res) { super(servlet, ctx, proxy, req, res); }
-    public synchronized void waitForInitializedContext() throws InterruptedException {}
+    public synchronized void releaseManaged() throws InterruptedException {}
     public synchronized void waitFor(long timeout) throws InterruptedException {}
     /**
      * Create and add a new ContextFactory.

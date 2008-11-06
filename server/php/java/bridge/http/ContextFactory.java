@@ -120,7 +120,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     }
     private static synchronized void remove(String id) {
 	ContextFactory ob = (ContextFactory) liveContexts.remove(id);
-        if(Util.logLevel>4) Util.logDebug("contextfactory: removed context: " + ob.visitor + ", # of contexts: " + contexts.size());
+        if(Util.logLevel>4) Util.logDebug("contextfactory: removed context: " + (ob==null?"already handled":String.valueOf(ob.visitor)) + ", # of contexts: " + contexts.size());
     }
     private static synchronized ContextFactory moveContext(String id) {
         Object o;
@@ -147,7 +147,6 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     
     private void init(ICredentials cred) {
 	credentials = cred;
-        visitor.initialize();
     }
    /**
      * Only for internal use.
@@ -297,8 +296,8 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     /* (non-Javadoc)
      * @see php.java.bridge.http.IContextFactory#waitFor()
      */
-    public void waitForInitializedContext() throws InterruptedException {
-	    visitor.waitForInitializedContext();
+    public void releaseManaged() throws InterruptedException {
+	    visitor.releaseManaged();
     }
     /* (non-Javadoc)
      * @see php.java.bridge.http.IContextFactory#waitFor()
@@ -357,6 +356,14 @@ public final class ContextFactory extends SessionFactory implements IContextFact
         return super.getSession(name, clientIsNew, timeout);
     }
     /**
+     * Return a simple session which cannot be shared with JSP
+     * @param clientIsNew true, if the client wants a new session
+     * @param timeout expires in n seconds
+     */
+    public ISession getSimpleSession(boolean clientIsNew, int timeout) {
+        return super.getSession(clientIsNew, timeout);
+    }
+    /**
      * Return a standard session, shared with JSP
      * @param name The session name
      * @param clientIsNew true, if the client wants a new session
@@ -364,6 +371,15 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      */
     public ISession getSession(String name, boolean clientIsNew, int timeout) {
 	return visitor.getSession(name, clientIsNew, timeout);
+    }
+    /**
+     * Return a session, not shared with JSP
+     * @param name The session name
+     * @param clientIsNew true, if the client wants a new session
+     * @param timeout expires in n seconds
+     */
+    public ISession getSession(boolean clientIsNew, int timeout) {
+	return visitor.getSession(clientIsNew, timeout);
     }
     public synchronized void release() {
 	ContextFactory ob = (ContextFactory) contexts.remove(id);
@@ -378,5 +394,11 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     }
     public ClassLoader getClassLoader() {
 	return visitor.getClassLoader();
+    }
+    public void initialize() {
+	visitor.initialize();
+    }
+    public void invalidate() {
+	visitor.invalidate();
     }
 }

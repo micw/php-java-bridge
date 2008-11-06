@@ -52,6 +52,13 @@ public interface IJavaBridgeFactory {
     public ISession getSession(String name, boolean clientIsNew, int timeout);
 
     /**
+     * @param clientIsNew true if the client wants a new session
+     * @param timeout timeout in seconds. If 0 the session does not expire.
+     * @return The session
+     */
+    public ISession getSession(boolean clientIsNew, int timeout);
+
+    /**
      * Return the associated JSR223 context
      * @return The JSR223 context, if supported by the environment or null.
      * @see php.java.bridge.http.ContextFactory#getContext()

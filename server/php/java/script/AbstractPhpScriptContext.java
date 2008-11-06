@@ -33,7 +33,7 @@ import php.java.bridge.http.IContext;
 
 
 /**
- * A simple ScriptContext which can be used in servlet environments.
+ * A simple ScriptContext which can be used in servlet- or standalone environments.
  * 
  * @author jostb
  *

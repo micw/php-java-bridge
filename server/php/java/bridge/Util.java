@@ -836,8 +836,8 @@ public final class Util {
             /*
              * ... and construct a new argument array for this specific process.
              */
-            if(cgiBinary ==null)
-        	homeDir = HOME_DIR; // do not read ./php.ini
+            if(homeDir!=null && cgiBinary ==null)
+        	homeDir = HOME_DIR; // system PHP executables are always executed in the user's HOME dir
             
             if(homeDir!=null &&!homeDir.exists()) homeDir = null;
 	    String[] s = getArgumentArray(php, args);
@@ -987,7 +987,7 @@ public final class Util {
 	}
 	public synchronized int waitFor() throws InterruptedException {
 	    if(in==null) wait();
-	    return 0;
+	    return super.waitFor();
 	}
 
 	/**

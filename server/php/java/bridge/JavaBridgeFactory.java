@@ -63,6 +63,14 @@ public abstract class JavaBridgeFactory implements IJavaBridgeFactory {
     public abstract ISession getSession(String name, boolean clientIsNew, int timeout);
 
     /**
+     * Return an anonymous session for internal use.
+     * @param clientIsNew true if the client wants a new session
+     * @param timeout timeout in seconds. If 0 the session does not expire.
+     * @return The session
+     */
+    public abstract ISession getSession(boolean clientIsNew, int timeout);
+
+    /**
      * Return the associated JSR223 context
      * @return Always null
      * @see php.java.bridge.http.ContextFactory#getContext()

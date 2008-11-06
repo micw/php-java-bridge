@@ -176,12 +176,6 @@ public class JavaBridge implements Runnable {
 	if(sessionFactory==null) throw new NullPointerException("session factory");
 	return sessionFactory;
     }
-    private SessionFactory defaultSessionFactory;
-    private SessionFactory getDefaultSessionFactory() {
-	if(defaultSessionFactory==null) return defaultSessionFactory = new SessionFactory();
-	return defaultSessionFactory;
-    }
-    
     Options options;
     
     /**
@@ -1739,7 +1733,7 @@ public class JavaBridge implements Runnable {
      * @throws IllegalArgumentException if serialID does not exist anymore.
      */
     public int deserialize(String serialID, int timeout) {
-	ISession session = getDefaultSessionFactory().getSessionInternal(false, timeout);
+	ISession session = sessionFactory.getSession(false, timeout);
 	Object obj = session.get(serialID);
 	if(obj==null) throw new IllegalArgumentException("Session serialID " +  serialID + " expired.");
 	return globalRef.append(castToExact(obj));
@@ -1757,7 +1751,7 @@ public class JavaBridge implements Runnable {
      * @return the serialID
      */
     public String serialize(Object obj, int timeout) {
-    	ISession session = getDefaultSessionFactory().getSessionInternal(false, timeout);
+    	ISession session = sessionFactory.getSession(false, timeout);
     	String id = Integer.toHexString(getSerialID());
     	session.put(id, obj);
     	return (String)castToString(id);

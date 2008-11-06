@@ -125,6 +125,8 @@ public class ContextRunner implements Runnable {
 	
 	setIO(bridge, in, out);
 	this.request = bridge.request;
+	
+	ctx.initialize();
 	return true;
     }
    /**

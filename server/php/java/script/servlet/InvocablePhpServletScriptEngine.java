@@ -199,7 +199,7 @@ public final class InvocablePhpServletScriptEngine extends InvocablePhpServletLo
             if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}
             if(fout!=null) try { fout.close(); } catch (IOException e) {/*ignore*/}
         }
-	return null;
+	return resultProxy;
     }
     /**
      * Release the continuation. Must be called explicitly or

@@ -71,6 +71,7 @@ public abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
     protected IContextFactory ctx = null;
     
     private ScriptEngineFactory factory = null;
+    protected ResultProxy resultProxy;
 
     protected void initialize() {
 	setContext(getPhpScriptContext());
@@ -254,7 +255,7 @@ public abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
     	if(out instanceof OutputStreamWriter)
     	    headerParser = new HeaderParser((OutputStreamWriter)out);
 
-    	HttpProxy kont = new HttpProxy(reader, env, out,  err, headerParser); 
+    	HttpProxy kont = new HttpProxy(reader, env, out,  err, headerParser, resultProxy = new ResultProxy(this)); 
      	phpScriptContext.setContinuation(kont);
 	return kont;
     }
@@ -307,11 +308,10 @@ public abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
 	if(continuation != null) {
 	    try {
 		continuation.release();
-		ctx.waitForInitializedContext();
+		ctx.releaseManaged();
 	    } catch (InterruptedException e) {
 		    return;
 	    }
-	    ctx.release(); 
 	    ctx = null;
 	    
 	    continuation = null;

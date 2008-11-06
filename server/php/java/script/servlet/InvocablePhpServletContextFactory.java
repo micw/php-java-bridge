@@ -37,7 +37,7 @@ import php.java.bridge.http.IContextFactory;
  * This context factory waits for the script continuation. Use the PhpServletContextFactory if
  * you don't want to call php methods from Java.
  * @see #initialize()
- * @see #waitForInitializedContext() 
+ * @see #releaseManaged() 
  * @see PhpServletContextFactory
  * @author jostb
  *

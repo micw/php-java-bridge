@@ -80,8 +80,10 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
      */
     public Object invoke(String methodName, Object[] args)
 	throws ScriptException, NoSuchMethodException {
-        
-	if(scriptClosure==null) eval("<?php ?>");
+	if(scriptClosure==null) {
+	    if (Util.logLevel>4) Util.warn("Evaluating an empty script either because eval() has not been called or release() has been called.");
+	    eval("<?php ?>");
+	}
 	
 	try {
 	    return invoke(scriptClosure, methodName, args);
@@ -137,8 +139,8 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
      * @see javax.script.Invocable#getInterface(java.lang.Object, java.lang.Class)
      */
     public Object getInterface(Object thiz, Class clasz) {
-      checkPhpClosure(thiz);
-      return ((PhpProcedureProxy)thiz).getNewFromInterface(clasz);
+	checkPhpClosure(thiz);
+	return ((PhpProcedureProxy)thiz).getNewFromInterface(clasz);
     }
 
     protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
@@ -158,7 +160,7 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
 
         try {
             /* header: <? require_once("http://localhost:<ourPort>/JavaBridge/java/Java.inc"); ?> */
-            localReader = new StringReader("<?php require_once(\""+ctx.getContextString()+"/java/Java.inc\"); ?>");
+            localReader = new StringReader(PhpScriptEngine.getStandardHeader(ctx));
             try { while((c=localReader.read(buf))>0) w.write(buf, 0, c);} catch (IOException e) {throw new PhpScriptException("Could not read header", e);}
             try { localReader.close(); } catch (IOException e) {throw new PhpScriptException("Could not close header", e);}
     
@@ -183,14 +185,12 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
         	/* get the proxy, either the one from the user script or our default proxy */
         	try { this.scriptClosure = this.script.getProxy(new Class[]{}); } catch (Exception e) { return null; }
         	handleRelease();
-            } else {
-        	throw new PhpScriptException("Could not evaluate script, please check your php.ini file and see the error log for details.");
             }
         } finally {
             if(w!=null)  try { w.close(); } catch (IOException e) {/*ignore*/}
             if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}            
         }
-       return null;
+       return resultProxy;
     }
 
     protected void handleRelease() {

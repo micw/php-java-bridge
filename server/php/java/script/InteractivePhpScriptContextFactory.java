@@ -1,6 +1,6 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-package php.java.bridge.http;
+package php.java.script;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -24,16 +24,31 @@ package php.java.bridge.http;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import php.java.bridge.ISession;
+import php.java.bridge.http.IContext;
+import php.java.bridge.http.IContextFactory;
+
 /**
- * Interface that ContextFactory visitors must implement.
- * 
+ * A custom context factory, creates a ContextFactory for JSR223 contexts.  sessions which do not expire.
  * @author jostb
  *
  */
-public interface IContextFactoryVisitor extends IContextFactory {
- /**
-   * Called when a visitor has been attached.
-   * @param visited The context factory
-   */
-  public void visit(ContextFactory visited);
+public class InteractivePhpScriptContextFactory extends PhpScriptContextFactory {
+
+    /**
+     * Add the PhpScriptContext
+     * @param context
+     * @return The ContextFactory.
+     */
+    public static IContextFactory addNew(IContext context) {
+	InteractivePhpScriptContextFactory ctx = new InteractivePhpScriptContextFactory();
+	ctx.setContext(context);
+	return ctx;
+    }
+    
+    public ISession getSession(boolean clientIsNew, int timeout) {
+	// ignore timeout
+	return super.getSession(clientIsNew, 0);
+    }
 }
+

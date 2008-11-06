@@ -49,8 +49,8 @@ public class HttpProxy extends CGIRunner {
      * @param env - The environment, must contain values for X_JAVABRIDGE_CONTEXT. It may contain X_JAVABRIDGE_OVERRIDE_HOSTS.
      * @param out - The OutputStream
      */
-    public HttpProxy(Reader reader, Map env, OutputStream out, OutputStream err, HeaderParser headerParser) {
-	super("HttpProxy", reader, env, out, err, headerParser);
+    public HttpProxy(Reader reader, Map env, OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy resultProxy) {
+	super("HttpProxy", reader, env, out, err, headerParser, resultProxy);
     }
     
     /**
@@ -58,11 +58,11 @@ public class HttpProxy extends CGIRunner {
      * @param reader - The reader, for example a URLReader
      * @param ctx - The context
      */
-    public HttpProxy(Reader reader, String ctx, OutputStream out, OutputStream err, HeaderParser headerParser) {
+    public HttpProxy(Reader reader, String ctx, OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy resultProxy) {
 	this(reader, (new HashMap() {
 		private static final long serialVersionUID = 3257005462371971380L;
 		public HashMap init(String ctx) {put("X_JAVABRIDGE_CONTEXT", ctx); return this;}}
-	).init(ctx), out, err, headerParser);
+	).init(ctx), out, err, headerParser, resultProxy);
     }
 
     protected void doRun() throws IOException, PhpException {

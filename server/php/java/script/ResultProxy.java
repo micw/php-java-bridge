@@ -1,6 +1,6 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-package php.java.bridge.http;
+package php.java.script;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -24,16 +24,38 @@ package php.java.bridge.http;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/**
- * Interface that ContextFactory visitors must implement.
- * 
- * @author jostb
- *
- */
-public interface IContextFactoryVisitor extends IContextFactory {
- /**
-   * Called when a visitor has been attached.
-   * @param visited The context factory
-   */
-  public void visit(ContextFactory visited);
+public class ResultProxy extends Number {
+    private static final long serialVersionUID = 9126953496638654790L;
+    private int result;
+    private SimplePhpScriptEngine engine;
+    public ResultProxy(SimplePhpScriptEngine engine) {
+	this.engine = engine;
+    }
+
+    public void setResult(int result) {
+	this.result = result;
+    }
+    private int getResult() {
+	engine.release();
+	return result;
+    }
+    public String toString() {
+	return String.valueOf(getResult());
+    }
+
+    public double doubleValue() {
+	return (double)getResult();
+    }
+
+    public float floatValue() {
+	return (float)getResult();
+    }
+
+    public int intValue() {
+	return (int)getResult();
+    }
+
+    public long longValue() {
+	return (long)getResult();
+    }
 }

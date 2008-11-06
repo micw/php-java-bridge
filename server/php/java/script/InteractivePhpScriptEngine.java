@@ -25,12 +25,14 @@ package php.java.script;
  */
 
 import java.io.IOException;
+import java.util.Map;
 
 import javax.script.Invocable;
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
 
 import php.java.bridge.Util;
+import php.java.bridge.http.IContext;
 
 /**
  * A convenience variant of the PHP script engine which can be used interactively.<p>
@@ -112,6 +114,17 @@ public class InteractivePhpScriptEngine extends InvocablePhpScriptEngine {
 	    super.release();
 	    hasScript = false;
     }
- 
     
+    /**
+     * Create a new context ID and a environment map which we send to the client.
+     *
+     */
+    protected void setNewContextFactory() {
+        IPhpScriptContext context = (IPhpScriptContext)getContext(); 
+	env = (Map) this.processEnvironment.clone();
+
+	ctx = InteractivePhpScriptContextFactory.addNew((IContext)context);
+
+	setStandardEnvironmentValues(context, env);
+    }
 }

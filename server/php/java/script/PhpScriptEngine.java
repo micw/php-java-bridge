@@ -66,6 +66,20 @@ public class PhpScriptEngine extends SimplePhpScriptEngine {
         super(factory);
     }
 
+    private static final StringBuffer STANDARD_HEADER = new StringBuffer("<?php require_once(\"/java/Java.inc\");" +
+    		"$java_bindings = java_context()->getBindings(100);" +
+    		"$java_scriptname = @java_values($java_bindings['javax.script.filename']);"+
+    		"$java_argv = @java_values($java_bindings['javax.script.argv']);"+
+    		"$_SERVER['SCRIPT_FILENAME'] =  $java_scriptname ? $java_scriptname : '';"+
+    		"if (!$java_argv) $java_argv=array();"+
+    		"array_unshift($java_argv, $_SERVER['SCRIPT_FILENAME']);"+
+    		"$_SERVER['argv'] = $java_argv;"+
+    		"?>");
+    static String getStandardHeader (IPhpScriptContext ctx) {
+	StringBuffer buf = new StringBuffer(STANDARD_HEADER);
+	buf.insert(20, ctx.getContextString());
+	return buf.toString();
+    }
     protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
         if(continuation != null) release();
   	if(reader==null) return null;
@@ -82,7 +96,7 @@ public class PhpScriptEngine extends SimplePhpScriptEngine {
         int c;
         try {
              /* header: <? require_once("http://localhost:<ourPort>/JavaBridge/java/Java.inc"); ?> */
-            localReader = new StringReader("<?php require_once(\""+ctx.getContextString()+"/java/Java.inc\");?>");
+            localReader = new StringReader(getStandardHeader(ctx));
             try { while((c=localReader.read(buf))>0) w.write(buf, 0, c);} catch (IOException e) {throw new PhpScriptException("Could not read header", e);}
             try { localReader.close(); localReader=null;} catch (IOException e) {throw new PhpScriptException("Could not close header", e);}
     
@@ -108,6 +122,6 @@ public class PhpScriptEngine extends SimplePhpScriptEngine {
             release();
        }
         
-       return null;
+       return resultProxy;
     }
 }

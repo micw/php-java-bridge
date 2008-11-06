@@ -58,6 +58,7 @@ public abstract class CGIRunner extends Thread {
     
     private ScriptLock scriptLock = new ScriptLock();
     private Lock phpScript = new Lock();
+    private ResultProxy resultProxy;
 
     // used to wait for the script to terminate
     private static class ScriptLock {
@@ -95,13 +96,14 @@ public abstract class CGIRunner extends Thread {
 	    notify();
 	}
     }
-    protected CGIRunner(String name, Reader reader, Map env, OutputStream out, OutputStream err, HeaderParser headerParser) {
+    protected CGIRunner(String name, Reader reader, Map env, OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy resultProxy) {
 	super(name);
     	this.reader = reader;
 	this.env = env;
 	this.out = out;
 	this.err = err;
 	this.headerParser = headerParser;
+	this.resultProxy = resultProxy;
     }
     public void run() {
 	try {
@@ -153,6 +155,7 @@ public abstract class CGIRunner extends Thread {
 	byte[] buf = new byte[Util.BUF_SIZE];
 	Util.parseBody(buf, natIn, out, headerParser);
 	proc.waitFor();
+	resultProxy.setResult(proc.exitValue());
 	} catch (IOException e) {
 	    Util.printStackTrace(e);
 	    throw e;

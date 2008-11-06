@@ -2,12 +2,7 @@
 
 package test;
 
-import java.net.URL;
-
-import javax.script.Invocable;
-
 import php.java.script.PhpScriptEngine;
-import php.java.script.URLReader;
 
 /**
  * @author jostb
@@ -19,18 +14,19 @@ public class HelloWorld2 {
    * the web server document root must contain HelloWorld.php
    */
   public static void main(String[] args) {
+   	String l = "6";
+	System.setProperty("php.java.bridge.default_log_level", l);
+	System.setProperty("php.java.bridge.default_log_file", "");
+	System.setProperty("php.java.bridge.php_exec", "php-cgi");
+
 	try {
 	    PhpScriptEngine engine = new PhpScriptEngine();
-
-	    engine.put("key", "testVal");
-	    engine.eval(new URLReader(new URL("http://192.168.5.203:80/HelloWorld.php")));
-	    System.out.println(((Invocable)engine).invokeFunction("sayHello", new Object[]{}));
-
-	    engine.release();
+	    engine.eval("<?php echo new java('java.lang.String', 'hello1'); echo new java('java.lang.String', 'hello2'); ?>");
+	    engine.eval("<?php echo new java('java.lang.String', 'world1'); echo new java('java.lang.String', 'world2'); ?>");
+	    engine = new PhpScriptEngine();
+	    engine.eval("<?php class test {}; $s = java('java.lang.String');echo Test::type();?>");
 	} catch (Exception e) {
 	    e.printStackTrace();
-	    System.err.println("Please make sure that php.ini contains java.servlet=On and that HelloWorld.php exists in the web server document root.");
-	    System.err.println("On Security Enhanced Linux also check the audit log, switch off SEL protection with \"setenforce 0\", restart apache with \"service httpd restart\" and run the test again. Switch back with \"setenforce 1\" and extract the required permissions with audit2allow");
 	}
     }
 }

@@ -62,6 +62,7 @@ public final class PhpProcedureProxy {
      */
     public Object getProxy(Class[] interfaces) {
 	if(proxy!=null) return proxy;
+        if (interfaces==null) interfaces = EMPTY_INTERFACE;
 	return proxy=PhpProcedure.createProxy(bridge, name, names, suppliedInterfaces==null?interfaces:suppliedInterfaces, object);
     }
     

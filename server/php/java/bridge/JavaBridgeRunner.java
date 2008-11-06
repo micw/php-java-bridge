@@ -197,16 +197,16 @@ public class JavaBridgeRunner extends HttpServer {
         	r.handleRequests();
         
         	// redirect and re-open
-        	    if(bridge.logLevel>3) 
-        		bridge.logDebug("re-directing to port# "+ channelName);
+        	if(bridge.logLevel>3) 
+        	    bridge.logDebug("re-directing to port# "+ channelName);
          	res.setContentLength(sout.size());
         	resOut = res.getOutputStream();
         	sout.writeTo(resOut);
         	resOut.close();
                 ctxServer.start(channelName);
-        	    if(bridge.logLevel>3) 
-        		bridge.logDebug("waiting for context: " +ctx.getId());
-        	    try { ctx.waitFor(Util.MAX_WAIT); } catch (InterruptedException e) { Util.printStackTrace(e); }
+                if(bridge.logLevel>3) 
+                    bridge.logDebug("waiting for context: " +ctx.getId());
+                try { ctx.waitFor(Util.MAX_WAIT); } catch (InterruptedException e) { Util.printStackTrace(e); }
         	}
         else {
             ctx.destroy();

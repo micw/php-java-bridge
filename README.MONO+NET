@@ -1,11 +1,10 @@
 Overview
 --------
 
-The Linux binary associates a PHP script (or a HTTP Server) with a
-managed (and persistent) Mono VM or an external J2EE server. The
-"mono.so" file contained in the Linux binary packages is the PHP
-"Mono.inc" compiled to native code. It supports the Zend and the
-standard PHP extension mechanism.
+The MonoBridge.exe binary associates a PHP script with a
+managed (and persistent) Mono VM. 
+The "mono.so" file contained in the Linux binary packages starts a
+Mono VM as a sub process of the HTTP server.
 
 
 Installation on RedHat, Fedora, CentOS ...

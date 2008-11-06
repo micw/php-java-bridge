@@ -242,7 +242,7 @@ public class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhp
         } finally {
             if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}
         }
-	return null;
+	return resultProxy;
     }
     protected void releaseReservedContinuation() {}
     protected void reserveContinuation() throws ScriptException {}

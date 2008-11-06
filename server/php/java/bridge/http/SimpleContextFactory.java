@@ -53,7 +53,7 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
      */
     protected IContext context;
     
-    private boolean isInitialized = false;
+    private boolean isContextRunnerRunning = false;
     private boolean isValid = true;
     
     protected SimpleContextFactory(String webContext) {
@@ -73,18 +73,19 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
     
     public synchronized void invalidate() {
 	    isValid = false;
-	    notifyAll(); // the servlet and the http proxy, see SimplePhpScriptEngine.release
+	    notifyAll(); // notify waitForContextRunner() and waitFor()
     }
     public synchronized void initialize () {
-	isInitialized = true;
+	isContextRunnerRunning = true;
     }
     /**
-     * Wait for the context factory to finish. 
+     * Wait for the context factory to finish, then release
      */
-    public synchronized void waitForInitializedContext() throws InterruptedException {
-	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet is waiting for ContextFactory " +System.identityHashCode(this));
-	if (isInitialized && isValid) wait();
-	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet done waiting for ContextFactory " +System.identityHashCode(this));
+    public synchronized void releaseManaged() throws InterruptedException {
+	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet is waiting for ContextRunner " +System.identityHashCode(this));
+	if (isContextRunnerRunning && isValid) wait();
+	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet done waiting for ContextRunner " +System.identityHashCode(this));
+	destroy();
     }
     /**
      * Wait for the context factory to finish. 
@@ -125,6 +126,9 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
     public ISession getSession(String name, boolean clientIsNew, int timeout) {
 	if(session != null) return session;
 	return session = visited.getSimpleSession(name, clientIsNew, timeout);
+    }
+    public ISession getSession(boolean clientIsNew, int timeout) {
+	return visited.getSimpleSession(clientIsNew, timeout);
     }
     public void setContext(IContext context) {
         this.context = context;

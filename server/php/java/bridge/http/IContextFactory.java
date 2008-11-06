@@ -61,14 +61,14 @@ public interface IContextFactory extends IJavaBridgeFactory {
   public void release();
 
   /**
-   * Wait until this context is finished. This method returns immediately if this context
-   * is not in use yet or it is no longer in use. Call this method only if you're sure
-   * that the PHP script context is initialized! For example when the PHP script is finished, 
-   * you can use this method to wait until the remaining communication is finished.
+   * Wait until this context is finished and release/destroy it. This method returns immediately if this context
+   * is not in use yet or it is no longer in use. Call this method only if Java has initiated the communication and
+   * Java have full control over the connection, for example via a ScriptEngine's URLReader or CGIRunner. 
+   * For Apache/PHP initiated requests use a combination of #waitFor(long) and #release() instead.
    * @throws InterruptedException
    * @see php.java.bridge.http.ContextRunner
    */
-  public void waitForInitializedContext() throws InterruptedException;
+  public void releaseManaged() throws InterruptedException;
  
   /**
    * Wait until this context is finished.
@@ -120,4 +120,15 @@ public interface IContextFactory extends IJavaBridgeFactory {
     * @return The currentThreadContextClassLoader of the servlet.
     */
    public ClassLoader getClassLoader();
+   /**
+    * Called at the end of the visitor's life cycle
+    */
+   public void invalidate();
+
+   /**
+    * Called when the context runner starts
+    * @see IContextFactory#releaseManaged()
+    */
+   public void initialize ();
+
 }

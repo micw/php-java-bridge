@@ -213,7 +213,7 @@ public class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
             if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}
             release ();
         }
-	return null;
+	return resultProxy;
     }
     protected void releaseReservedContinuation() {
 	PhpCGIServlet.releaseReservedContinuation();

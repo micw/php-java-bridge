@@ -166,6 +166,6 @@ public final class PhpServletScriptEngine extends PhpServletLocalScriptEngine {
             if(tempfile!=null) tempfile.delete();
             release ();
         }
-	return null;
+	return resultProxy;
     }
 }
