@@ -201,7 +201,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	    if(Util.logLevel>4) Util.logDebug("contextfactory: setting new bridge. visited: " + bridge.getFactory() + " <= visitor: " + newBridge.getFactory()); 
 	    
 	    /* set the new bridge and the associated threadContextClassLoader, will be reset in recycle() */
-	    bridge.request.setBridge(newBridge);
+	    bridge.request.setBridge(newBridge); // TODO: bug in the object model; the request/response belongs to the ContextRunner
 	    bridge = newBridge;
 	    
 	    /* remove the fresh context factory and attach the visitor */

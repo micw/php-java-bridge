@@ -1,3 +1,48 @@
+2008-11-08  Jost Boekemeier  <jostb@intern>
+
+	* tests.php5/TestClosure1.java, tests.php5/TestClosure1.class, tests.php5/TestClosure.java, tests.php5/TestClosure.class, tests.php5/testClosure.php: New files.
+
+	* server/TestInstallation.java, server/php/java/bridge/Util.java: New default location
+
+	* server/test/GetResult.java: New file.
+
+	* server/php/java/servlet/ServletContextFactory.java 
+	(releaseManaged): New procedure
+	(waitForInitializedContext): Removed, use releaseManaged() instead.
+
+	* server/php/java/script/SimplePhpScriptEngine.java
+	(getContinuation): Pass result proxy.
+	
+	* server/php/java/script/HttpProxy.java, server/php/java/script/CGIRunner.java: Pass result proxy
+
+	* server/php/java/script/servlet/ScriptFile.java, server/php/java/script/servlet/PhpServletLocalHttpServerScriptEngine.java, server/php/java/script/servlet/InvocablePhpServletLocalHttpServerScriptEngine, server/php/java/script/ResultProxy.java, server/php/java/script/servlet/InteractivePhpScriptContextFactory, server/php/java/servlet/RequestListener: New files
+	
+	* server/php/java/script/servlet/PhpServletScriptEngine.java, server/php/java/script/servlet/PhpServletLocalScriptEngine.java, server/php/java/script/servlet/InvocablePhpServletScriptEngine.java, server/php/java/script/servlet/InvocablePhpServletLocalScriptEngine.java, server/php/java/script/servlet/EngineFactory.java, server/php/java/script/PhpScriptEngine.java, server/php/java/script/InvocablePhpScriptEngine.java, server/php/java/script/InteractivePhpScriptEngine.java: Rewritten
+
+	* server/php/java/bridge/JavaBridgeFactory.java
+	(getSession): New procedure, returns the "default" session.
+
+	* server/php/java/bridge/JavaBridge.java
+	(defaultSessionFactory, getDefaultSessionFactory): Removed. Use getSession() instead.
+	(resolvePhpProcedureProxy): New procedure
+	(Invoke, GetSetProp, CreateObject, setException): Non-InvocationTargetExceptions now print a stack trace.
+
+	* server/META-INF/java/Protocol.inc
+	(java_getHeader): New function
+
+	* server/prepend.sed: Rewritten
+
+	* server/META-INF/java/JavaBridge.inc
+	(java_wrap, java_unwrap): New functions, aliases for java_closure() and java_values()
+
+	* server/META-INF/java/Client.inc
+	(apply): Display a user warning when returning a non-Java object
+
+	* examples/bench/bench2.php: Rewritten
+
+	* examples/php+jsp/jsp+php2.jsp: New file
+	
+	
 2008-10-12  Jost Boekemeier  <jostb@intern>
 
 	* server/META-INF/java/Client.inc

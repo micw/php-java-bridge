@@ -6,7 +6,6 @@ $session = java_session();
 <TITLE>PHP and JSP session sharing</title>
 <BODY>
 <?php
-java_autoload();
 
 if(is_null(java_values($session->get("counter")))) {
   $session->put("counter", 1);

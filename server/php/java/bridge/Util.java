@@ -137,9 +137,9 @@ public final class Util {
     public static final String PHP_ARGS[] = new String[] {"-d", "allow_url_include=On", "-d", "display_errors=Off", "-d", "log_errors=On"};
     
     /**
-     * The default CGI locations: <code>"/usr/bin/php-cgi"</code>, <code>"c:/php/php-cgi.exe</code>
+     * The default CGI locations: <code>"/usr/bin/php-cgi"</code>, <code>"c:/Program Files/PHP/php-cgi.exe</code>
      */
-    public static final String DEFAULT_CGI_LOCATIONS[] = new String[] {"/usr/bin/php-cgi", "c:/php/php-cgi.exe"};
+    public static final String DEFAULT_CGI_LOCATIONS[] = new String[] {"/usr/bin/php-cgi", "c:/Program Files/PHP/php-cgi.exe"};
 
     /**
      * The default CGI header parser. The default implementation discards everything.

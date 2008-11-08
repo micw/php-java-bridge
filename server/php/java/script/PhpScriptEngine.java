@@ -66,7 +66,7 @@ public class PhpScriptEngine extends SimplePhpScriptEngine {
         super(factory);
     }
 
-    private static final StringBuffer STANDARD_HEADER = new StringBuffer("<?php require_once(\"/java/Java.inc\");" +
+    private static final String STANDARD_HEADER = new String("<?php require_once(\"/java/Java.inc\");" +
     		"$java_bindings = java_context()->getBindings(100);" +
     		"$java_scriptname = @java_values($java_bindings['javax.script.filename']);"+
     		"$java_argv = @java_values($java_bindings['javax.script.argv']);"+

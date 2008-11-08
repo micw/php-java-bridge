@@ -390,8 +390,10 @@ public class JavaBridge implements Runnable {
 	if (e instanceof InvocationTargetException) {
 	    Throwable t = ((InvocationTargetException)e).getTargetException();
 	    if (t!=null) e=t;
+	    if (logLevel>3) printStackTrace(e);
+	} else {
+	    printStackTrace(e);
 	}
-	if (logLevel>3) printStackTrace(e);
 	
 	StringBuffer buf=new StringBuffer(method);
 	buf.append(" failed: ");
@@ -487,19 +489,20 @@ public class JavaBridge implements Runnable {
   	    	response.setResult(selected.newInstance(coercedArgs), clazz, hasDeclaredExceptions);
   	    }
 	} catch (Throwable e) {
-	    if(e instanceof InvocationTargetException) e = ((InvocationTargetException)e).getTargetException();
-	    if(e instanceof Request.AbortException) {throw (Request.AbortException)e;}
-	    if(e instanceof OutOfMemoryError) {
+	    Throwable e1 = e;
+	    if(e1 instanceof InvocationTargetException) e1 = ((InvocationTargetException)e1).getTargetException();
+	    if(e1 instanceof Request.AbortException) {throw (Request.AbortException)e1;}
+	    if(e1 instanceof OutOfMemoryError) {
 		Util.logFatal("OutOfMemoryError");
-		throw (OutOfMemoryError)e; // abort
+		throw (OutOfMemoryError)e1; // abort
 	    }
-	    if(e instanceof NoClassDefFoundError) {
+	    if(e1 instanceof NoClassDefFoundError) {
 		getClassLoader().reset();
 		e = getUnresolvedExternalReferenceException(e, "call constructor");
 	    }
 	    setException(response, e, createInstance?"CreateInstance":"ReferenceClass", null, name, args, params);
 	    
-	    if (response.isAsync()) throw new JavaBridgeIllegalStateException ("Out of sync", e); // abort
+	    if (response.isAsync()) throw new JavaBridgeIllegalStateException ("Out of sync", e1); // abort
 	}
     }
 
@@ -1014,7 +1017,7 @@ public class JavaBridge implements Runnable {
 	LinkedList matches = new LinkedList();
 	Method selected = null;
 	try {
-	    if(object==null) {object = Request.PHPNULL;throw new NullPointerException("call object is null, check the server log file(s).");}
+	    if(object==null) {object = Request.PHPNULL;throw new NullPointerException("cannot call \""+method+"()\" on a null value, check your code.");}
 	    /* PR1616498: Do not use Util.getClass(): if object is a class, we must pass the class class.  
 	     * All VM, including gcc >= 3.3.3, return the class class for class.getClass(), not null. This is okay for the cache implementation. */
 	    MethodCache.Entry entry = methodCache.getEntry(method, object, args);
@@ -1063,18 +1066,19 @@ public class JavaBridge implements Runnable {
 	        response.setResult(selected.invoke(object, coercedArgs), selected.getReturnType(), hasDeclaredExceptions);	      
 	    }
 	} catch (Throwable e) {
-	    if(e instanceof InvocationTargetException) e = ((InvocationTargetException)e).getTargetException();
-	    if(e instanceof Request.AbortException) {throw (Request.AbortException)e;}
-	    if(e instanceof OutOfMemoryError) {
+	    Throwable e1 = e;
+	    if(e1 instanceof InvocationTargetException) e1 = ((InvocationTargetException)e1).getTargetException();
+	    if(e1 instanceof Request.AbortException) {throw (Request.AbortException)e1;}
+	    if(e1 instanceof OutOfMemoryError) {
 		Util.logFatal("OutOfMemoryError");
-		throw (OutOfMemoryError)e; // abort
+		throw (OutOfMemoryError)e1; // abort
 	    }
-	    if(e instanceof NoClassDefFoundError) {
+	    if(e1 instanceof NoClassDefFoundError) {
 		getClassLoader().reset();
 		e = getUnresolvedExternalReferenceException(e, "call the method");
 	    }
 	    
-            if (selected != null && e instanceof IllegalArgumentException) {
+            if (selected != null && e1 instanceof IllegalArgumentException) {
                 if (this.logLevel>3) {
                     String errMsg = "\nInvoked "+method + " on "+objectDebugDescription(object)+"\n";
                     errMsg += " Expected Arguments for this Method:\n";
@@ -1097,7 +1101,7 @@ public class JavaBridge implements Runnable {
             }
 	    setException(response, e, "Invoke", object, method, args, params);
 	    
-	    if (response.isAsync()) throw new JavaBridgeIllegalStateException ("Out of sync", e); // abort
+	    if (response.isAsync()) throw new JavaBridgeIllegalStateException ("Out of sync", e1); // abort
 	}
     }
 
@@ -1167,7 +1171,7 @@ public class JavaBridge implements Runnable {
 
 	try {
 	    Class jclass;
-	    if(object==null) {object=Request.PHPNULL; throw new NullPointerException("call object is null, check the server log file(s).");}
+	    if(object==null) {object=Request.PHPNULL; throw new NullPointerException("cannot get property \""+prop+"\" on a null value, check your code.");}
 	    
 	    // first search for the field *exactly*
 	    again2:		// because of security exception
@@ -1263,19 +1267,20 @@ public class JavaBridge implements Runnable {
 	    throw new NoSuchFieldException(String.valueOf(prop) + " (with args:" + Util.argsToString(args, params) + "). " + "Candidates: " + String.valueOf(matches));
 
 	} catch (Throwable e) {
-	    if(e instanceof InvocationTargetException) e = ((InvocationTargetException)e).getTargetException();
-	    if(e instanceof Request.AbortException) {throw (Request.AbortException)e;}
-	    if(e instanceof OutOfMemoryError) {
+	    Throwable e1 = e;
+	    if(e1 instanceof InvocationTargetException) e1 = ((InvocationTargetException)e1).getTargetException();
+	    if(e1 instanceof Request.AbortException) {throw (Request.AbortException)e1;}
+	    if(e1 instanceof OutOfMemoryError) {
 		Util.logFatal("OutOfMemoryError");
-		throw (OutOfMemoryError)e; // abort
+		throw (OutOfMemoryError)e1; // abort
 	    }
-	    if(e instanceof NoClassDefFoundError) {
+	    if(e1 instanceof NoClassDefFoundError) {
 		getClassLoader().reset();
 		e = getUnresolvedExternalReferenceException(e, "invoke a property");
 	    }
 	    setException(response, e, set?"SetProperty":"GetProperty", object, prop, args, params);
 	    
-	    if (response.isAsync()) throw new JavaBridgeIllegalStateException ("Out of sync.", e); // abort
+	    if (response.isAsync()) throw new JavaBridgeIllegalStateException ("Out of sync.", e1); // abort
 	}
     }
 

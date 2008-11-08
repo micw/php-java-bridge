@@ -26,7 +26,7 @@ export INST LD_LIBRARY_PATH PATH
 (cd automake-1.9; ./configure --prefix=$INST && make && make install)
 (cd libtool-1.5.20; ./configure --prefix=$INST && make && make install)
 (cd php*; ./configure --prefix=$INST --disable-all --enable-fastcgi && make && make install)
-(cd php-java-bridge*; phpize && ./configure --with-java=/usr/java/default && make && make install)
+(cd php-java-bridge*; phpize && ./configure --with-java=/usr/java/default && make && sh install.sh)
 
 # test
 php php-java-bridge*/test.php >result.html

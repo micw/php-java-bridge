@@ -122,66 +122,27 @@ Build and execution instructions:
   interface.
   
 ---------------------------------------------
-  High-level interface
-  --------------------
-
-  When the PHP standard library is available (PHP 5.2 and above), the
-  procedure java_autoload() can be used to import Java classes into PHP.
-  Example:
-
-  <?php require_once("http://localhost.8080/JavaBridge/java/Java.inc");
- 
-    java_autoload("lucene.jar");
- 
-    $searcher = new org_apache_lucene_search_IndexSearcher(getcwd());
-    $term = new org_apache_lucene_index_Term("name", "test.php");
-    $phrase = new org_apache_lucene_search_PhraseQuery();
-    $phrase->add($term);
-
-    $hits = $searcher->search($phrase);
-    $iter = $hits->iterator();
-
-    while($iter->hasNext()) {
-      $next = $iter->next();
-      $name = $next->get("name");
-      echo "found: $name\n";
-    }
-  ?>
-
-  The procedure type(<detail>) can be used to access class features. Example:
-
-  echo java_inspect(java_lang_System::type()->out);
-  
-  Details of <detail> can be accessed by appending $detail. Example:
-
-  package org.my.package;
-  public interface Php {
-    public class java {
-      public enum bridge {JavaBridge, JavaBridgeRunner};
-    }
-  }
-
-  <? require_once("http://localhost:8080/JavaBridge/java/Java.inc");
-    java_autoload("myPackage.jar");
-
-    echo org_my_package.Php::type('java$bridge');
-  ?>
-
----------------------------------------------
   AS/Servlet with PHP CGI/FastCGI
   -------------------------------
 
   Read the following instructions only if you don't want to use
   Apache or IIS.
 
-  Please deploy the JavaBridge.war into the Tomcat or J2EE server
-  (please see or FAQ section on http://php-java-bridge.sf.net), then
-  visit http://localhost:8080/JavaBridge and run the supplied JSP and
-  PHP examples.
+  Deploy the JavaBridge.war into the Tomcat or J2EE server (please see 
+  our FAQ section on http://php-java-bridge.sf.net), then visit 
+  http://localhost:8080/JavaBridge and run the supplied JSP and PHP 
+  examples.
 
   If the parameter name "use_fast_cgi" is set to "Autostart" in the
   web.xml, and a fcgi server does not listen on port 9667, and a fcgi
-  binary can be found as either /usr/bin/php-cgi or c:/php/php-cgi.exe,
+  binary can be found as either 
+
+    /usr/bin/php-cgi 
+
+  or 
+
+    c:/Program Files/PHP/php-cgi.exe,
+
   then the back end automatically starts the Fast-CGI server on this
   computer. With the command:
 
@@ -583,8 +544,7 @@ Build and execution instructions:
   following:
 
     * a jar file is stored at more than one location or the same
-      location is accessed by more than one class loader. For example
-      java_require("WEB-INF/lib/") calls for trouble.
+      location is accessed by more than one class loader. 
       
     * an old or different JDK than expected by the library is used,
       for example GNU Java instead of SUN or IBM Java.
@@ -598,21 +558,6 @@ Build and execution instructions:
     * the library may only work within a J2EE environment from a
       certain vendor, for example the WebSphere Application server or
       the Sun Java Application server.
-
-------------------------------------
-  PHP issues
-  ------------
-
-  All PHP versions between 4.4.1 and 5.0.3 crash when the dl()
-  function is used.
-
-  If you use one of these versions, please add the following entry
-  to your php.ini file:
-
-    extension=java.so ;; php_java.dll on windows
-    [java]
-    java.hosts=127.0.0.1:8080
-    java.servlet=On
 
 ---------------------------------------------
   GCJ/GNU Java issues
@@ -707,54 +652,6 @@ Build and execution instructions:
   * Click "connect".
 
   * Open the "Threads" tab and click on the thread you're interested in.
-
-------------------------------------
-  Creating thread dumps in Java < 6
-  ---------------------------------
-
-  Older Java VM must be started with the following options:
-  
-  -Xdebug -Xrunjdwp:transport=dt_socket,address=9147,server=y,suspend=n
-  
-  The following description assume that Java is running as a sub
-  component of Apache or IIS:
-
-  * On Windows set the "java.java" php .ini option (in the global php.ini
-    file) to:
-  
-    extension=php_java.dll
-    [java]
-    java.java="javaw -Xdebug -Xrunjdwp:transport=dt_socket,address=9147,server=y,suspend=n"
-  
-  * On Unix add the "java.wrapper" php .ini option (in the global php.ini
-    file or in /etc/php.d/java.ini):
-  
-    extension = java.so
-    [java]
-    java.wrapper = /tmp/java.wrapper
-  
-    Create the file /tmp/java.wrapper with the following content:
-  
-    #!/bin/sh
-    set -x
-    java=$1; shift
-    exec $java "-Xdebug -Xrunjdwp:transport=dt_socket,address=9147,server=y,suspend=n" "$@"
-  
-    Add the required permissions; in a command window type (as super user):
-    
-    chmod +x /tmp/java.wrapper
-    /usr/sbin/setenforce 0     # Security Enhanced Linux only
-  
-  * On Windows or Unix: restart the web server, for example with:
-
-    apachectl restart
-  
-  * Open a command window and type the following commands:
-  
-    jdb -attach 127.0.0.1:9147
-    suspend
-    where all
-    resume
 
 
 ------------------------------------

@@ -26,7 +26,7 @@ import javax.swing.text.html.HTMLFrameHyperlinkEvent;
 
 public class TestInstallation implements Runnable {
     // See Util.DEFAULT_CGI_LOCATIONS
-    public static final String DEFAULT_CGI_LOCATIONS[] = new String[] {"/usr/bin/php-cgi", "c:/php/php-cgi.exe"};
+    public static final String DEFAULT_CGI_LOCATIONS[] = new String[] {"/usr/bin/php-cgi", "c:/Program Files/PHP/php-cgi.exe"};
     private static String socket;
     private Process proc;
     private static Process runner;

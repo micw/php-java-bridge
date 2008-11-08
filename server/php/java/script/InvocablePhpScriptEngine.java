@@ -184,11 +184,11 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
             if (this.script!=null) {
         	/* get the proxy, either the one from the user script or our default proxy */
         	try { this.scriptClosure = this.script.getProxy(new Class[]{}); } catch (Exception e) { return null; }
-        	handleRelease();
             }
         } finally {
             if(w!=null)  try { w.close(); } catch (IOException e) {/*ignore*/}
             if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}            
+            handleRelease();
         }
        return resultProxy;
     }

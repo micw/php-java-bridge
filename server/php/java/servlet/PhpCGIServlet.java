@@ -386,7 +386,7 @@ public class PhpCGIServlet extends FastCGIServlet {
 	    buf.append("[.sh]|[.exe]");
     	    String wrapper = buf.toString();
  	    ServletException ex = new ServletException("An IO exception occured. " +
-	    		"Probably php was not installed as \"/usr/bin/php-cgi\" or \"c:/php/php-cgi.exe\"\n or \""+wrapper+"\".\n" +
+	    		"Probably php was not installed as \"/usr/bin/php-cgi\" or \"c:/Program Files/PHP/php-cgi.exe\"\n or \""+wrapper+"\".\n" +
 	    		"Please see \"php_exec\" in your WEB-INF/web.xml and WEB-INF/cgi/README for details.", e);
 	    php=null;
 	    checkCgiBinary(getServletConfig());

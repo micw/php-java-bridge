@@ -85,7 +85,7 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
 	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet is waiting for ContextRunner " +System.identityHashCode(this));
 	if (isContextRunnerRunning && isValid) wait();
 	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet done waiting for ContextRunner " +System.identityHashCode(this));
-	destroy();
+	release();
     }
     /**
      * Wait for the context factory to finish. 

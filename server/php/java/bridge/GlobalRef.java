@@ -85,7 +85,7 @@ class GlobalRef {
 	for (Entry e = globalRef[index]; e != null; e = e.next) {
 	    if(e.id == id) return e.value;
 	}
-	throw new NullPointerException();
+	throw new NullPointerException("cannot manipulate the object #"+id+" which has already been destroyed by PHP");
     }
     /**
      * Remove an element from the table.
