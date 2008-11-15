@@ -109,10 +109,10 @@ import php.java.servlet.RequestListener;
  * System.out.println("result from PHP:" + invocableEngine.invoceFunction(f, new Object[]{"arg1"}));
  * </code>
  * </blockquote> 
- * <li> Release the invocable by evaluating the engine again with a NULL value.
+ * <li> Release the invocable:
  * <blockquote>
  * <code>
- * scriptEngine.eval((Reader)null);
+ * ((Closeable)scriptEngine).close();
  * </code>
  * </blockquote> 
  * </ol>
@@ -124,7 +124,7 @@ import php.java.servlet.RequestListener;
  * ScriptEngine e = EngineFactory.getInvocablePhpScriptEngine(this, ctx, req, res);<br>
  * e.eval("&lt;?php function f($v) {return "passed:".$v;} ?&gt;");<br>
  * ((Invocable)e).invoceFunction("f", new Object[]{"arg1"};<br>
- * e.eval((Reader)null);<br>
+ * ((Closeable)e).close();<br>
  * </code>
  * </blockquote>
  */

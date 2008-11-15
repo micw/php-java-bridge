@@ -49,9 +49,10 @@ function java_defineHostFromInitialQuery($java_base) {
   return false;
 }
 
-// The version number of this pure PHP implementation
-
-define ("JAVA_PEAR_VERSION", "5.3.2");
+/**
+* The version number of this PHP library.
+*/
+define ("JAVA_PEAR_VERSION", "5.3.3");
 
 if(!defined("JAVA_SEND_SIZE")) 
   define("JAVA_SEND_SIZE", 8192);
@@ -59,73 +60,96 @@ if(!defined("JAVA_SEND_SIZE"))
 if(!defined("JAVA_RECV_SIZE")) 
   define("JAVA_RECV_SIZE", 8192);
  
-
-// parse "java.ini" for backward compatibility
 if (defined ("JAVA_PARSE_INI_FILE") && JAVA_PARSE_INI_FILE) {
   $ini=@parse_ini_file("java.ini");
+	/**
+	 * The address of the HTTP back end. 
+	 * 
+	 * For example "127.0.0.1:8080"
+	 * @see JAVA_SERVLET
+	 */
   if(array_key_exists("java.hosts", $ini)) define("JAVA_HOSTS", $ini["java.hosts"]);
-  if(array_key_exists("java.servlet", $ini)) define("JAVA_SERVLET", $ini["java.servlet"]);
-  if(array_key_exists("java.log_level", $ini)) define("JAVA_LOG_LEVEL", $ini["java.log_level"]);
+	/**
+	 * Rewrite rules for incoming HTTP requests.
+	 * 
+	 *Used in conjunction with
+	* JAVA_HOSTS and a servlet/J2EE back end 
+	* <ul>
+	* <li>
+	* "On"; Hard-codes the context to "JavaBridge":
+	* http://foo.com/test.php => http://host1:port1/JavaBridge/test.phpjavabridge
+	* cookie path: always "/"
+	*<li>
+	* "bar/JavaBridge.phpjavabridge"; Hard-codes the context to "bar":
+	* http://foo.com/test.php => http://host1:port1/bar/test.phpjavabridge
+	* cookie path: always "/"
+	*<li>
+	* "User"; Separates different web apps:
+	* http://foo.com/mApp1/test.php => http://host1:port1/mApp1/test.phpjavabridge
+	* cookie path: /mApp1
+	* http://foo.com/mApp2/test.php => http://host1:port1/mApp2/test.phpjavabridge
+	* cookie path: /mApp2
+	*<li>
+	* "Off" doesn't use a web context at all (no cookies are generated, no
+	* PHP/Java session sharing). Back-end must have been started with
+	* INET:PORT or INET_LOCAL:PORT, no Servlet engine, no J2EE server.
+	* </ul>
+	*/
+    if(array_key_exists("java.servlet", $ini)) define("JAVA_SERVLET", $ini["java.servlet"]);
+	/** The request log level between 0 (log off) and 4 (log debug). 
+	 * 
+	 * The
+	* default request log level is initialized with the value from to the
+	* Java system property "php.java.bridge.default_log_level".  The
+	* servlet's init-param: servlet_log_level (see WEB-INF/web.xml)
+	* overrides this value. The default level is 2.
+	* */
+      if(array_key_exists("java.log_level", $ini)) define("JAVA_LOG_LEVEL", $ini["java.log_level"]);
  }
 
-// Deploy JavaBridge.war and re-start the servlet engine or the
-// application server. The following settings direct PHP to the 
-// java virtual machine:
-if(!defined("JAVA_HOSTS")) {
+ if(!defined("JAVA_HOSTS")) {
   if(!java_defineHostFromInitialQuery($JAVA_BASE)) {
 	define("JAVA_HOSTS", "127.0.0.1:8080"); // host1:port1;host2:port2;...
   }
  }
 
-// Rewrite rules for incoming HTTP requests. Used in conjunction with
-// JAVA_HOSTS and a servlet/J2EE back end 
-// "On"; Hard-codes the context to "JavaBridge":
-// http://foo.com/test.php => http://host1:port1/JavaBridge/test.phpjavabridge
-// cookie path: always "/"
-//
-// "bar/JavaBridge.phpjavabridge"; Hard-codes the context to "bar":
-// http://foo.com/test.php => http://host1:port1/bar/test.phpjavabridge
-// cookie path: always "/"
-//
-// "User"; Separates different web apps:
-// http://foo.com/mApp1/test.php => http://host1:port1/mApp1/test.phpjavabridge
-// cookie path: /mApp1
-// http://foo.com/mApp2/test.php => http://host1:port1/mApp2/test.phpjavabridge
-// cookie path: /mApp2
-//
-// "Off" doesn't use a web context at all (no cookies are generated, no
-// PHP/Java session sharing). Back-end must have been started with
-// INET:PORT or INET_LOCAL:PORT, no Servlet engine, no J2EE server.
-//
-if(!defined("JAVA_SERVLET")) {
+ if(!defined("JAVA_SERVLET")) {
   define("JAVA_SERVLET", "On"); // On ;; On or User
 }
-// The request log level between 0 (log off) and 4 (log debug). The
-// default request log level is initialized with the value from to the
-// Java system property "php.java.bridge.default_log_level".  The
-// servlet's init-param: servlet_log_level (see WEB-INF/web.xml)
-// overrides this value. The default level is 2.
 
 if(!defined("JAVA_LOG_LEVEL"))
   define ("JAVA_LOG_LEVEL", null); // integer between 0 and 4
 
 
-// May we use named pipes instead of local TCP sockets?  Set this to
-// the directory in which the named pipes should be created.
-// Note that pipes are a little bit slower than persistent TCP
-// sockets. But they are more secure.
-// Example: define("JAVA_PIPE_DIR", "/tmp");
-// Default is to use /dev/shm on Linux, false otherwise.
+/** Use named pipes instead of local TCP sockets.  
+ * 
+ * Set this to
+* the directory in which the named pipes should be created.
+* Note that pipes are a little bit slower than persistent TCP
+* sockets. But they are more secure.
+* Example: define("JAVA_PIPE_DIR", "/tmp");
+* Default is to use /dev/shm on Linux, false otherwise.
+* */
 if(!defined("JAVA_PIPE_DIR")) {
   if (file_exists ("/dev/shm")) define("JAVA_PIPE_DIR", "/dev/shm" );
   elseif (file_exists ("/tmp")) define("JAVA_PIPE_DIR", "/tmp" );
   else                          define ("JAVA_PIPE_DIR", null);
 }
 
-// Set to 1 for compatibility with earlier versions
+/** Set to 1 for compatibility with earlier versions.
+ * 
+ * 
+* When this flag is set, a value (null, int, ...) is returned immediately. Otherwise
+* a proxy (Request$PHPNULL, Integer, ...) is returned and PHP must fetch its content
+* using java_values($proxy);
+**/
 if (!defined("JAVA_PREFER_VALUES"))
   define("JAVA_PREFER_VALUES", 0);
-
-// debug mode
+  
+/**
+* Debug mode for the client. 
+* 
+* This debug flag is for PHP only. To enable the VMBridge log restart Java with the -Dphp.java.bridge.default_log_level=... option.
+* */
 if(!defined("JAVA_DEBUG")) 
   define("JAVA_DEBUG", false);

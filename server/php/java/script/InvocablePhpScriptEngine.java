@@ -52,7 +52,7 @@ import php.java.bridge.Util;
  * ScriptEngine e = (new ScriptEngineManager()).getEngineByName("php-invocable");<br>
  * e.eval(&lt;? function f() {return java_server_name();}?&gt;<br>
  * System.out.println(((Invocable)e).invokeFunction("f", new Object[]{}));<br>
- * e.eval((String)null);<br>
+ * ((Closeable)e).close();<br>
  * </code><br>
  */
 public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements Invocable {

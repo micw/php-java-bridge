@@ -91,9 +91,11 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
      * Wait for the context factory to finish. 
      */
     public synchronized void waitFor(long timeout) throws InterruptedException {
-	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet is waiting for ContextFactory " +System.identityHashCode(this) + " for " +timeout+" ms");
+	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet waitFor() ContextFactory " +System.identityHashCode(this) + " for " +timeout+" ms");
 	if (isValid) wait(timeout);
-	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet done waiting for ContextFactory " +System.identityHashCode(this)+ " for " +timeout+" ms");
+	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet waitFor() ContextRunner " +System.identityHashCode(this));
+	if (isContextRunnerRunning && isValid) wait();
+	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet done waitFor() ContextRunner " +System.identityHashCode(this));
     }    
     public String getId() { 
         return visited.getId();

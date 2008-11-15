@@ -31,7 +31,7 @@ import java.io.OutputStream;
  * This class represents the physical FastCGI connection.
  * @author jostb
  */
-public abstract class Channel {
+abstract class Channel {
 
     public abstract InputStream getInputStream() throws IOException;
 

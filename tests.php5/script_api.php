@@ -25,8 +25,8 @@ include_once("java/Java.inc");
  * failed, start main().
  */
 $IRunnable = java("java.lang.Runnable");
-java_context()->call(java_closure(new Runnable(), null, $IRunnable));
 if (!java_values(java_context()->getAttribute("name", 100))) main();
+else java_context()->call(java_closure(new Runnable(), null, $IRunnable));
 
 /**
  * This class implements IRunnable. Its run method is called by each

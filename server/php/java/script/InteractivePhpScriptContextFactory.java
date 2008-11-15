@@ -29,7 +29,7 @@ import php.java.bridge.http.IContext;
 import php.java.bridge.http.IContextFactory;
 
 /**
- * A custom context factory, creates a ContextFactory for JSR223 contexts.  sessions which do not expire.
+ * A custom context factory, creates a ContextFactory for JSR223 contexts.  sessions do not expire.
  * @author jostb
  *
  */

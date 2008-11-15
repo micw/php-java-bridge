@@ -55,7 +55,7 @@ public abstract class ChannelName {
      * Start the FastCGI server
      * @return false if the FastCGI server failed to start.
      */
-    public final boolean startServer() {
+    protected final boolean startServer() {
 	    /*
 	     * Try to start the FastCGI server,
 	     */

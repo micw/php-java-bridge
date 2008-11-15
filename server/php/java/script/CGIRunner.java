@@ -49,7 +49,7 @@ import php.java.bridge.Util.HeaderParser;
  * @see php.java.script.HttpProxy
  */
 
-public abstract class CGIRunner extends Thread {
+abstract class CGIRunner extends Thread {
 	
     protected Map env;
     protected OutputStream out, err;

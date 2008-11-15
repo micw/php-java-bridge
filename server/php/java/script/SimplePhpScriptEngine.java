@@ -52,7 +52,7 @@ import php.java.bridge.http.IContextFactory;
  *@see php.java.script.InvocablePhpScriptEngine
  *@see php.java.script.PhpScriptEngine
  */
-public abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
+public abstract class SimplePhpScriptEngine extends AbstractScriptEngine implements java.io.Closeable {
 
 	
     /**
@@ -330,4 +330,10 @@ public abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
     public Bindings createBindings() {
         return new SimpleBindings();
     } 
+    /**
+     * Release the script engine.
+     */
+    public void close() throws IOException {
+	release();
+    }
 }

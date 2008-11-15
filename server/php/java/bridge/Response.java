@@ -515,6 +515,10 @@ public final class Response {
      	writer.setResult(value, type, hasDeclaredExceptions);
     }
 
+    /**
+     * Checks whether the asynchronous protocol is used
+     * @return true if the current writer is an AsyncWriter, false otherwise
+     */
     public boolean isAsync () {
 	return writer.isAsync();
     }

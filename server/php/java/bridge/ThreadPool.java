@@ -34,7 +34,7 @@ import java.util.LinkedList;
  * ThreadPool pool = new ThreadPool("MyThreadPool", 20);<br>
  * pool.start(new YourRunnable());<br>
  * </code>
- *
+ *@author jostb
  */
 public class ThreadPool {
     private String name;

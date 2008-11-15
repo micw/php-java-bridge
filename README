@@ -1,7 +1,7 @@
-What is the PHP/Java Bridge?
-----------------------------
+What is the VM Bridge?
+----------------------
 
-  The PHP/Java Bridge is a network protocol which can be used to
+  The VM Bridge is a network protocol which can be used to
   connect a native script engine, for example PHP, with a Java or ECMA
   335 VM.
 
@@ -11,13 +11,13 @@ What is the PHP/Java Bridge?
 Overview
 --------
 
-  The generic PHP/Java Bridge implementation is distributed as an
+  The generic VM Bridge implementation is distributed as an
   example web archive called "JavaBridge.war". It is a zip archive which
   contains the libraries "JavaBridge.jar", "php-script.jar" and
   "script-api.jar". Furthermore it contains some PHP examples which
   can be run in any pure Java J2EE server or servlet engine.
 
-  The PHP/Java Bridge web application contains two servlets. The
+  The VM Bridge web application contains two servlets. The
   "PhpJavaServlet" handles requests from remote PHP clients running in
   Apache/IIS or from the command line:
 
@@ -97,7 +97,7 @@ Build and execution instructions:
   to start an interactive PHP session.
 
 ---------------------------------------------
-  Starting the PHP/Java Bridge automatically
+  Starting the VM Bridge automatically
   ------------------------------------------
 
   For the web:
@@ -295,11 +295,11 @@ Build and execution instructions:
   exactly a) which resources of the operating system it needs in order
   to function properly and b) what it provides to other components.
 
-  The PHP/Java Bridge distribution contains two policy files,
+  The VM Bridge distribution contains two policy files,
   "php-java-bridge.te" and "php-java-bridge.fc". The
   "php-java-bridge.te" declares the javabridge_t domain and the
   resources it requires.  httpd and user domains are granted connect, 
-  read and write to the PHP/Java Bridge server socket, which is
+  read and write to the VM Bridge server socket, which is
   "@var/run/.php-java-bridge_socket" in the Linux abstract name-space,
   and file create/read/write in the tmp_t.  Everything else (connections
   to other servers, file access, ...) is currently denied.
@@ -315,7 +315,7 @@ Build and execution instructions:
 
         rpm -i selinux-policy-targeted-sources-1.17.30-2.19.noarch.rpm
 
-   2. Update the policy files with the PHP/Java Bridge policy:
+   2. Update the policy files with the VM Bridge policy:
 
         su -c "sh security/update_policy.sh /etc/selinux/targeted/src/policy"
 
@@ -346,7 +346,7 @@ Build and execution instructions:
         semodule -r javabridge
   
   If the default policy is too restrictive and e.g. you want to use
-  the PHP/Java Bridge to connect to your J2EE server, you can
+  the VM Bridge to connect to your J2EE server, you can
   temporarily set the policy to "permissive", for example with the
   command "setenforce Permissive". Connect to the server, then extract
   the permissions from the audit log, for example with the command
@@ -563,22 +563,26 @@ Build and execution instructions:
   GCJ/GNU Java issues
   -------------------
   
-  Running the PHP/Java Bridge under GCJ ("GNU Java") is supported on Linux
+  Running the VM Bridge under GCJ ("GNU Java") is supported on Linux
   and Solaris only.  If you run FreeBSD 5.3, please use Sun, Blackdown
   or IBM java instead.
 
 ---------------------------------------------
-  FreeBSD issues
-  --------------
+  FreeBSD and Mac OSX issues
+  --------------------------
   
-  FreeBSD and some other BSD variants contain an incorrect
-  implementation of Nagle's algorithm. Because of this 10 subsequent
-  HTTP GET requests on the local interface cost ~1 second, which makes
-  pure Java unusable on this operating system.
+  BSD variants contain an incorrect implementation of Nagle's
+  algorithm, which interacts badly with the ack delay found in the
+  original BSD TCP/IP implementation.
 
-  Either modify PHP so that it sets the socket option NDELAY, or switch
-  off the delay for local TCP sockets in the FreeBSD kernel or use unix
-  domain sockets to communicate with the Java VM:
+  If you use an operating system which does not contain the TCP/IP ack
+  delay fix, please upgrade your operating system to either Windows >=
+  2000, Linux >= RedHat Enterprise Linux 5 or (Open-)Solaris (any
+  version).
+
+  A workaround for Mac OSX or BSD is to switch off Nagle's algorithm
+  in the operating system kernel or to use Unix Domain Sockets instead
+  of BSD TCP/IP sockets:
 
   * Compile a java.so and natcJavaBridge.so and start the Java VM as
     follows:
@@ -596,7 +600,7 @@ Build and execution instructions:
   UTF-8
   -----
   
-  Since PHP does not support unicode, the PHP/Java Bridge uses UTF-8
+  Since PHP does not support unicode, the VM Bridge uses UTF-8
   to convert characters into the host representation. All strings are
   created with new String(..., "UTF-8") and all internal String->byte[]
   conversions use getBytes("UTF-8").
@@ -658,7 +662,7 @@ Build and execution instructions:
   Performance tuning
   ------------------
 
-  The PHP/Java Bridge protocol is very sensitive to network
+  The VM Bridge protocol is very sensitive to network
   latency. If the Java server and PHP client do not run on the same
   computer, the objective is to minimize the number of network
   round-trips; java_values() can be used to obtain a Java array, Map

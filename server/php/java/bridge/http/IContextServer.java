@@ -26,7 +26,7 @@ package php.java.bridge.http;
 
 
 /**
- * The interface that all ContextServer must implement.
+ * The interface that all ContextServers must implement.
  * 
  * @author jostb
  */

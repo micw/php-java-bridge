@@ -1,6 +1,13 @@
-This directory contains a pure PHP implementation of the PHP/Java
-Bridge: it doesn't require a Java extension ("java.so" or
-"php_java.dll") installed on the web server.
+The Java.inc and JavaProxy.php communicate with a 
+virtual machine by using the VM Bridge network 
+protocol.
+
+The Java.inc can be used by PHP libraries to call
+Java or .NET methods or procedures of a running 
+Java/.NET virtual machine.
+
+The JavaProxy.php can be used by Java to call PHP
+methods or procedures of a running HTTP server.
 
 
 Usage
@@ -8,12 +15,14 @@ Usage
 
 * Type java -jar JavaBridge.jar SERVLET:8080
 
-* To call out to your Java libraries require java/Java.inc
+* To access Java libraries require java/Java.inc
   and use the provided Java class as usual. Example:
 
 <?php
 
+  ini_set("allow_url_include", 1);
   require_once("http://localhost:8080/JavaBridge/java/Java.inc");
+
   $string = new Java("java.lang.String", "HelloWorld");
   echo $string;
 

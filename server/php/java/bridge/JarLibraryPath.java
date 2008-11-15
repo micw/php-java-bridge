@@ -36,7 +36,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 /** Holds a checked JarLibraryPath entry */
-public class JarLibraryPath {
+class JarLibraryPath {
     private String path;
 
     private boolean isCached;

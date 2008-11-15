@@ -86,7 +86,7 @@ import php.java.servlet.PhpCGIServlet;
  * <br>
  */
 
-public class PhpServletLocalScriptEngine extends PhpServletLocalHttpServerScriptEngine {
+class PhpServletLocalScriptEngine extends PhpServletLocalHttpServerScriptEngine {
     public PhpServletLocalScriptEngine(Servlet servlet, 
 				  ServletContext ctx, 
 				  HttpServletRequest req, 

@@ -351,6 +351,7 @@ class java_HttpHandler extends java_SocketHandler {
 	}
 	$this->close();
 	$this->protocol->handler = $this->protocol->socketHandler;
+	$this->protocol->flush(); // this write-write-read is necessary; otherwise the ContextFactory may time out
   }
 }
 

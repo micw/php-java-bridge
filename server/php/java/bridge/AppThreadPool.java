@@ -27,6 +27,7 @@ package php.java.bridge;
 /**
  * A specialized thread pool which automatically terminates all group threads at the end of the request.
  * When this thread pool is used, users cannot create long-running threads from PHP scripts
+ * @author jostb
  */
 public final class AppThreadPool extends ThreadPool {
 

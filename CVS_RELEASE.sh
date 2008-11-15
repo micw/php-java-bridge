@@ -4,7 +4,7 @@ LANG=C
 
 rm -rf [^C][^V][^S]* .??* *~
 cvs -Q update -APd 
-find . -print | xargs touch
+find . -print0 | xargs -0 touch
 dirs=`ls -l | grep '^d' | fgrep -v CVS | awk '{print $9}'`
 find $dirs -name "CVS" -print | xargs rm -rf
 

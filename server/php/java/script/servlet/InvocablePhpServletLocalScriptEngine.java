@@ -100,13 +100,13 @@ import php.java.servlet.PhpCGIServlet;
  * <li> Release the invocable by evaluating the engine again with a NULL value.
  * <blockquote>
  * <code>
- * scriptEngine.eval((Reader)null);
+ * ((Closeable)scriptEngine).close();
  * </code>
  * </blockquote> 
  * </ol>
  * <br>
  */
-public class InvocablePhpServletLocalScriptEngine extends InvocablePhpServletLocalHttpServerScriptEngine {
+class InvocablePhpServletLocalScriptEngine extends InvocablePhpServletLocalHttpServerScriptEngine {
     public InvocablePhpServletLocalScriptEngine(Servlet servlet, 
 					   ServletContext ctx, 
 					   HttpServletRequest req, 

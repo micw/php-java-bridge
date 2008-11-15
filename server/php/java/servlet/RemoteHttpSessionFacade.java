@@ -32,7 +32,7 @@ import javax.servlet.http.HttpServletResponse;
  * A custom session, used when remote PHP scripts access the servlet.In this case only the session object is available, the HttpServletRequest, HttpServletResponse and ServletContext
  * objects are set to null.
  */
-public class RemoteHttpSessionFacade extends HttpSessionFacade {
+class RemoteHttpSessionFacade extends HttpSessionFacade {
     protected RemoteHttpSessionFacade (SimpleServletContextFactory ctxFactory, ServletContext ctx, HttpServletRequest req, HttpServletResponse res, boolean clientIsNew, int timeout) {
 	super(ctxFactory, ctx, req, res, clientIsNew, timeout);
     }

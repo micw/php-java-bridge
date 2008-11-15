@@ -117,7 +117,7 @@ public class ContextRunner implements Runnable {
 	}
 	String name = readName();
     	ctx = (IContextFactory) ContextFactory.get(name, contextServer);
-    	if(ctx == null) throw new IOException("No context available for: " + name + ".");
+    	if(ctx == null) throw new IOException("No context available for: " + name + ". Please make sure that your script does not exceed php.java.bridge.max_wait, currently set to: "+Util.MAX_WAIT);
     	JavaBridge bridge = ctx.getBridge();
 	if(Util.logLevel>4) Util.logDebug(ctx + " created new thread, using class loader: " + System.identityHashCode(ctx.getClassLoader().getParent()));
 	SimpleJavaBridgeClassLoader loader = bridge.getClassLoader();

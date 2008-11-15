@@ -29,7 +29,7 @@ package php.java.bridge;
  * @author jostb
  *
  */
-public class ParserTag {
+class ParserTag {
     /**
      * The number of strings.
      */

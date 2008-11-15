@@ -128,15 +128,26 @@ a PHP 5.1.x executable, see php_exec in the WEB-INF/web.xml";
   /**
    * Load a set of java libraries and make them available in the current name space.
    *
-   * Available since php 5.2.0. Example:
+   * Available since php 5.3. Example:
    * <code>
-   * java_autoload("itext.jar;log4j.jar");
-   * $byte = java_lang_Byte::type()->TYPE;
-   * $reader = new com_lowagie_text_pdf_PdfReader("mypdf.pdf");
+   * java_autoload("lucene.jar:log4j.jar");
+   *
+   * use org::apache::lucene;
+   * use org::apache::lucene::index;
+   * use org::apache::lucene::search;
+   * use org::apache::lucene::search::IndexSearcher as LuceneSearcher;
+   *
+   * $searcher = new LuceneSearcher(...);
+   * $term = new index::Term("name", "someTerm");
+   * $phrase = new search::PhraseQuery();
+   *
+   * $phrase->add($term);
+   * $hits = $searcher->search($phrase);
    * ...
    *</code>
-   * @param $libs The libraries separated by a semicolon
+   * @param string The libraries separated by a semicolon
    * @access public
+   * @since PHP 5.3
    */
   function java_autoload($libs=null) {
 	static $once = false;
@@ -159,7 +170,7 @@ a PHP 5.1.x executable, see php_exec in the WEB-INF/web.xml";
    * Example: <code> java("java.lang.System")->getProperties(); </code>
    *
    * @access public
-   * @param $name The type name
+   * @param string The type name
    */
   function Java($name) { 
 	static $classMap = array();
@@ -169,117 +180,117 @@ a PHP 5.1.x executable, see php_exec in the WEB-INF/web.xml";
   /**
    * Alias for java_closure();
    * @access private
-   * @see #java_closure();
+   * @see java_closure();
    */
   function java_get_closure() {return java_closure_array(func_get_args());}
 
   /**
    * Alias for java_closure();
    * @access private
-   * @see #java_closure();
+   * @see java_closure();
    */
   function java_wrap() {return java_closure_array(func_get_args());}
   
   /**
    * Alias for java_values();
    * @access private
-   * @see #java_values();
+   * @see java_values();
    */
   function java_get_values($arg) { return java_values($arg); }
 
   /**
    * Alias for java_values();
    * @access private
-   * @see #java_values();
+   * @see java_values();
    */
   function java_unwrap($arg) { return java_values($arg); }
 
   /**
    * Alias for java_session();
    * @access private
-   * @see #java_session();
+   * @see java_session();
    */
   function java_get_session() {return java_session_array(func_get_args());}
 
   /**
    * Alias for java_context();
    * @access private
-   * @see #java_context();
+   * @see java_context();
    */
   function java_get_context() {return java_context(); }
 
   /**
    * Alias for java_server_name();
    * @access private
-   * @see #java_server_name();
+   * @see java_server_name();
    */
   function java_get_server_name() { return java_server_name(); }
 
   /**
    * Alias for java_is_null();
    * @access private
-   * @see #java_is_null();
+   * @see java_is_null();
    */
   function java_isnull($value) { return is_null (java_values ($value)); }
 
   /**
    * Checks whether a value is null or not.
    *
-   * Example: <code> java_is_null(java("java.lang.System")->;getProperty("foo")) </code>
+   * Example: <code> java_is_null(java("java.lang.System")->getProperty("foo")) </code>
    *
    * @access public
-   * @param $value A Java object or a PHP value
+   * @param mixed A Java object or a PHP value
    * @return true if $value is the PHP or Java null value.
    */
   function java_is_null($value) { return is_null (java_values ($value)); }
 
   /**
-   * Alias for java_is_null();
+   * Alias for java_is_true();
    * @access private
-   * @see #java_is_null();
+   * @see java_is_true();
    */
   function java_istrue($value) { return  (boolean)(java_values ($value)); }
 
   /**
-   * Checks whether a value is null or not.
+   * Checks whether a value is true or not.
    *
-   * Example: <code> java_is_null(java("java.lang.System")->;getProperty("foo")) </code>
+   * Example: <code> java_is_true(java("java.lang.System")->getProperty("foo")) </code>
    *
    * @access public
-   * @param $value A Java object or a PHP value
-   * @return true if $value is the PHP or Java null value.
+   * @param mixed A Java object or a PHP value
+   * @return true if the PHP or Java value is true.
    */
   function java_is_true($value) { return (boolean)(java_values ($value)); }
 
   /**
-   * Alias for java_is_null();
+   * Alias for java_is_false();
    * @access private
-   * @see #java_is_null();
+   * @see java_is_false();
    */
   function java_isfalse($value) { return !(java_values ($value)); }
 
   /**
-   * Checks whether a value is null or not.
+   * Checks whether a value is false or not.
    *
-   * Example: <code> java_is_null(java("java.lang.System")->;getProperty("foo")) </code>
+   * Example: <code> java_is_false(java("java.lang.System")->getProperty("foo")) </code>
    *
    * @access public
-   * @param $value A Java object or a PHP value
-   * @return true if $value is the PHP or Java null value.
+   * @param mixed A Java object or a PHP value
+   * @return true if the PHP or Java value is false.
    */
   function java_is_false($value) { return !(java_values ($value)); }
 
   /**
    * Alias for java_set_file_encoding();
    * @access private
-   * @see #java_set_file_encoding();
+   * @see java_set_file_encoding();
    */
   function java_set_encoding($enc) { return java_set_file_encoding ($enc); }
 
   /**
    * @deprecated: Use java_require() instead.
    * @access private
-   * @see #java_require();
+   * @see java_require();
    */
   function java_set_library_path($arg) { return java_require($arg); }
  } //!java_defined  DO NOT REMOVE THIS LINE

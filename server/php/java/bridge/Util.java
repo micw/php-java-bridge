@@ -62,8 +62,11 @@ public final class Util {
     // method to load a CLR assembly
     static Method loadMethod, loadFileMethod;
     static Class CLRAssembly;
-    /** how long shall we wait for a remote client to terminate? */
-    public static final int MAX_WAIT = 30000;
+    
+    /** Wait for the second Java statement of a script (in ms). Default is to wait for one minute. 
+     * @see system property <code>php.java.bridge.max_wait</code>
+     */
+    public static int MAX_WAIT;
     
     private Util() {}
     
@@ -252,6 +255,11 @@ public final class Util {
     public static File HOME_DIR;
 
     private static void initGlobals() {
+	try {
+	    MAX_WAIT = Integer.parseInt(System.getProperty("php.java.bridge.max_wait", "15000"));
+	} catch (Exception e) {
+	    MAX_WAIT = 15000;
+	}
 	try {
 	    HOME_DIR = new File(System.getProperty("user.home"));
 	} catch (Exception e) {

@@ -102,8 +102,6 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     private static final HashMap contexts = new HashMap();
     private static final HashMap liveContexts = new HashMap();
     
-    private static final long ORPHANED_TIMEOUT = 5000; // every 5 seconds
-
     private String id;
     private long timestamp;
 
@@ -268,7 +266,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	
         for(Iterator ii=contexts.values().iterator(); ii.hasNext();) {
 	    ContextFactory ctx = ((ContextFactory)ii.next());
-	    if(ctx.timestamp+ORPHANED_TIMEOUT<timestamp) {
+	    if(ctx.timestamp+Util.MAX_WAIT<timestamp) {
 	        ctx.visitor.invalidate();
 	        if(Util.logLevel>4) Util.logDebug("contextfactory: Orphaned context: " + ctx.visitor + " removed.");
 	        ii.remove();
@@ -374,7 +372,6 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     }
     /**
      * Return a session, not shared with JSP
-     * @param name The session name
      * @param clientIsNew true, if the client wants a new session
      * @param timeout expires in n seconds
      */

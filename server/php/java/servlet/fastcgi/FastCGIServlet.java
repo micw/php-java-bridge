@@ -204,6 +204,7 @@ public abstract class FastCGIServlet extends CGIServlet {
 	super.init(config);
     	try {
 	    value = config.getInitParameter("override_hosts");
+	    if (value==null) value = context.getInitParameter("override_hosts");
 	    if(value==null) value="";
 	    value = value.trim();
 	    value = value.toLowerCase();

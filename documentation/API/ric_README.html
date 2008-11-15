@@ -2,17 +2,23 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
   <html xmlns="http://www.w3.org/1999/xhtml">
 		<head>
-			<!-- template designed by Marco Von Ballmoos -->
+			<!-- template designed by Marco Von Ballmoos  -->
 			<title></title>
 			<link rel="stylesheet" href="media/stylesheet.css" />
-			<meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'/>
-		</head>
+											</head>
 		<body>
-						<h1 align="center">README</h1>
+						<div align="center"><h1>README</h1></div>
 <pre>
-This directory contains a pure PHP implementation of the PHP/Java
-Bridge: it doesn't require a Java extension (&quot;java.so&quot; or
-&quot;php_java.dll&quot;) installed on the web server.
+The Java.inc and JavaProxy.php communicate with a 
+virtual machine by using the VM Bridge network 
+protocol.
+
+The Java.inc can be used by PHP libraries to call
+Java or .NET methods or procedures of a running 
+Java/.NET virtual machine.
+
+The JavaProxy.php can be used by Java to call PHP
+methods or procedures of a running HTTP server.
 
 
 Usage
@@ -20,12 +26,14 @@ Usage
 
 * Type java -jar JavaBridge.jar SERVLET:8080
 
-* To call out to your Java libraries require java/Java.inc
+* To access Java libraries require java/Java.inc
   and use the provided Java class as usual. Example:
 
 &lt;?php
 
+  ini_set(&quot;allow_url_include&quot;, 1);
   require_once(&quot;http://localhost:8080/JavaBridge/java/Java.inc&quot;);
+
   $string = new Java(&quot;java.lang.String&quot;, &quot;HelloWorld&quot;);
   echo $string;
 
@@ -44,7 +52,7 @@ Please report bugs/problems to the mailing list:
 
 </pre>
 	<p class="notes" id="credit">
-		Documentation generated on Sun, 16 Mar 2008 19:11:33 +0100 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.0a2</a>
+		Documentation generated on Sat, 15 Nov 2008 10:44:18 +0100 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.0a2</a>
 	</p>
 	</body>
 </html>

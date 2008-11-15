@@ -51,7 +51,7 @@ function createDocument($jndiname, $serverArgs) {
     // access the home interface
     $home = javax_rmi_PortableRemoteObject::type()->narrow($objref, 
 						   DocumentHome::type());
-    if(is_null(java_values($home))) throw new Exception("home");
+    if(java_is_null($home)) throw new Exception("home");
 
     // create a new remote document and return it
     $doc = $home->create();

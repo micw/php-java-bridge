@@ -46,7 +46,7 @@ import java.util.jar.Manifest;
  * Instances of this class are shared. 
  * Use the JavaBridgeClassLoader if you need to access the current request-handling bridge instance. 
  * */
-public class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
+class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     protected DynamicJavaBridgeClassLoader(DynamicJavaBridgeClassLoader other) {
     	super(other);
     }

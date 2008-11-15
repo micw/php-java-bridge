@@ -31,7 +31,7 @@ package php.java.bridge;
  * @author jostb
  *
  */
-public class Options {
+class Options {
 
     protected byte options = 0;
     

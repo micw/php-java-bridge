@@ -6,6 +6,14 @@
     <!-- support for J2EE cluster -->
     <distributable/>
 
+    <!-- Override the define ("JAVA_HOSTS", "127.0.0.1:8080"); -->
+    <!-- setting from your PHP script, Config.inc or Java.inc or -->
+    <!-- JavaProxy.php, so that PHP connects back to the current VM. -->
+    <context-param>
+        <param-name>override_hosts</param-name>
+        <param-value>On</param-value>
+    </context-param>
+
     <!-- Attach the JSR223 script factory to the servlet context -->
    <listener>
         <listener-class>php.java.servlet.ContextLoaderListener</listener-class>
@@ -39,7 +47,7 @@
         -->
 
         <load-on-startup>0</load-on-startup>
-  </servlet>
+    </servlet>
 
     <!-- PHP CGI servlet: when IIS or Apache are not available -->
     <servlet>
@@ -47,7 +55,7 @@
         <servlet-class>php.java.servlet.PhpCGIServlet</servlet-class>
 
          <!-- Your php binary. Default is /usr/bin/php-cgi or -->
-         <!-- c:/php/php-cgi.exe -->
+         <!-- c:/Program Files/PHP/php-cgi.exe -->
         <!-- 
          <init-param>
            <param-name>php_exec</param-name>
@@ -73,7 +81,7 @@
         -->
 
         <load-on-startup>0</load-on-startup>
-  </servlet>
+    </servlet>
 
     <!-- PHP Servlet Mapping -->
     <servlet-mapping>

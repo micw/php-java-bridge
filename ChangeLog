@@ -1,3 +1,34 @@
+2008-11-15  Jost Boekemeier  <jostb@intern>
+	
+        * VERSION, php-java-bridge.spec: Version 5.3.3 released
+	
+	
+2008-11-13  Jost Boekemeier  <jostb@intern>
+
+	* server/META-INF/java/Protocol.inc
+	(redirect): Send the response immediately during a context switch,
+	otherwise the ContextRunner may time out after 30
+	seconds. Example: java(...); wait(more than 30 seconds);
+	java(...). Unfortunately this write-write-read on protocol level
+	will make the bridge 4 times slower on operating systems which use
+	BSD's original TCP/IP stack w/o John Nagle's ack delay
+	fix (introduced in 2006). The alternative would have been to make
+	the bridge a little bit slower on *all* operating systems by using
+	a write-read-write-read. But since all modern operating
+	systems (except *BSD and Mac OSX) already contain the fix, we have
+	decided against it. If your operating system uses the original BSD
+	TCP/IP protocol stack, please either upgrade your operating system
+	or switch off Nagle's algorithm for local TCP sockets. On BSD and
+	Mac OSX you can also use Unix Domain Sockets to communicate with
+	the back end, see the README "BSD and Mac OSX issues" for details.
+
+	* server/php/java/bridge/http/SimpleContextFactory.java
+	(waitFor): Wait for the ContextRunner to finish. Otherwise the
+	session may time out while the ContextRunner is running. Example
+	java(...); wait(more than 30 seconds); java(...);
+	$session=java_session();...
+
+	
 2008-11-08  Jost Boekemeier  <jostb@intern>
 
 	* tests.php5/TestClosure1.java, tests.php5/TestClosure1.class, tests.php5/TestClosure.java, tests.php5/TestClosure.class, tests.php5/testClosure.php: New files.

@@ -22,9 +22,9 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Vector;
 import java.util.WeakHashMap;
+//* <p>Title: php-java-bridge</p>
 
 /**
- * <p>Title: php-java-bridge</p>
  * <p>
  * This class implements a class loader, which keeps track of a dynamic list of other delegate URLClassLoaders
  * It is possible to change the list of these Classloaders during execution. The classloaders themselves, as well as

@@ -34,7 +34,7 @@ import java.util.Map;
  * @author jostb
  *
  */
-public abstract class PhpMap {
+abstract class PhpMap {
     JavaBridge _bridge;
     Object value;
     Class componentType;

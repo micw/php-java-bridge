@@ -30,7 +30,7 @@ import java.util.Date;
 /**
  * The classic PHP/Java Bridge logger, doesn't need any external libraries.
  */
-public class FileLogger implements ILogger { 
+class FileLogger implements ILogger { 
     static boolean haveDateFormat=true;
     private static Object _form;
     private boolean isInit = false;

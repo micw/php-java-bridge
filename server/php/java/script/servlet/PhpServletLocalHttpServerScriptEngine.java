@@ -105,7 +105,7 @@ import php.java.servlet.PhpCGIServlet;
  * <br>
  */
 
-public class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
+class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
     protected Servlet servlet;
     protected ServletContext servletCtx;
     protected HttpServletRequest req;
@@ -114,6 +114,8 @@ public class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
     protected PhpSimpleHttpScriptContext scriptContext;
 
     protected String webPath; 
+    
+    protected boolean overrideHosts = true;
     
     private URL url;
     private int port;
@@ -135,6 +137,14 @@ public class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
 	this.servletCtx = ctx;
 	this.req = req;
 	this.res = res;
+	
+    	try {
+	    String value = servlet.getServletConfig().getServletContext().getInitParameter("override_hosts");
+	    if(value==null) value="";
+	    value = value.trim();
+	    value = value.toLowerCase();
+	    if(value.equals("off") || value.equals("false")) overrideHosts = false;
+	} catch (Exception t) {Util.printStackTrace(t);}
 	    
 	scriptContext.initialize(servlet, servletCtx, req, res);
 	
@@ -227,32 +237,35 @@ public class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
      * @param env the environment which will be passed to PHP
      */
     protected void setStandardEnvironmentValues (IPhpScriptContext context, Map env) {
-	setStandardEnvironmentValues(context, env, ctx, req, webPath);
+	setStandardEnvironmentValues(context, env, ctx, req, webPath, overrideHosts);
     }
     static void setStandardEnvironmentValues(IPhpScriptContext context,
             Map env, IContextFactory ctx, HttpServletRequest req,
-            String webPath) {
+            String webPath, boolean overrideHosts) {
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */
 	env.put("X_JAVABRIDGE_CONTEXT", ctx.getId());
 	
 	/* the client should connect back to us */
 	StringBuffer buf = new StringBuffer();
-	if(!req.isSecure())
-	    buf.append("h:");
-	else
-	    buf.append("s:");
-	buf.append(Util.getHostAddress());
-	buf.append(':');
-	buf.append(context.getSocketName());
-	buf.append('/');
-	try {
-	    buf.append((new java.net.URI(null, null, webPath, null)).toASCIIString());
-        } catch (URISyntaxException e) {
-            Util.printStackTrace(e);
-            buf.append(webPath);
-        }
-	buf.append("javabridge");
+	
+	if (overrideHosts) {
+	    if(!req.isSecure())
+		buf.append("h:");
+	    else
+		buf.append("s:");
+	    buf.append(Util.getHostAddress());
+	    buf.append(':');
+	    buf.append(context.getSocketName());
+	    buf.append('/');
+	    try {
+		buf.append((new java.net.URI(null, null, webPath, null)).toASCIIString());
+	    } catch (URISyntaxException e) {
+		Util.printStackTrace(e);
+		buf.append(webPath);
+	    }
+	    buf.append("javabridge");
+	}
 	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS",buf.toString());
     }
 }

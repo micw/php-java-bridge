@@ -58,8 +58,7 @@ Example for i386 linux:
 
   php-cgi-i386-linux.sh  # starts the ./php-cgi-i386-linux binary
   php-cgi-i386-linux     # loads php-cgi-i386-linux.ini
-  php-cgi-i386-linux.ini # loads java-i386-linux.so
-  java-i386-linux.so     # the optimized PHP/Java Bridge extension
+  php-cgi-i386-linux.ini # custom PHP ini file
   
 
 On Windows copy the php-cgi.exe and the php5ts.dll into this
@@ -69,8 +68,7 @@ Example for php4, x86 windows:
 
   php-cgi-x86-windows.exe # php-cgi.exe, loads php.ini
   php4ts.dll              # required by the .exe
-  php.ini                 # loads java-x86-windows.dll
-  java-x86-windows.dll    # the optimized PHP/Java Bridge extension
+  php.ini                 # custom PHP ini file
 
 
 Start the web context, browse to http://localhost/webContext/test.php

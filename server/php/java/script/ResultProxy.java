@@ -2,6 +2,8 @@
 
 package php.java.script;
 
+import java.io.IOException;
+
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
  *
@@ -24,38 +26,74 @@ package php.java.script;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-public class ResultProxy extends Number {
+/**
+ * Returned by {@link javax.script.ScriptEngine#eval(java.io.Reader)} this class holds a proxy
+ * for the result code returned by PHP. Invoke any of its procedures to terminate the script
+ * engine to receive its result code.
+ * @author jostb
+ */
+public class ResultProxy extends Number implements java.io.Closeable {
     private static final long serialVersionUID = 9126953496638654790L;
     private int result;
     private SimplePhpScriptEngine engine;
-    public ResultProxy(SimplePhpScriptEngine engine) {
+    ResultProxy(SimplePhpScriptEngine engine) {
 	this.engine = engine;
     }
-
-    public void setResult(int result) {
+    void setResult(int result) {
 	this.result = result;
     }
-    private int getResult() {
+    /**
+     * Release the script engine and return the result code
+     * @return the result code from PHP
+     */
+    public int getResult() {
 	engine.release();
 	return result;
     }
+    /**
+     * Release the script engine and return the result code
+     * @return the result code from PHP
+     */
     public String toString() {
 	return String.valueOf(getResult());
     }
 
+    /**
+     * Release the script engine and return the result code
+     * @return the result code from PHP
+     */
     public double doubleValue() {
 	return (double)getResult();
     }
 
+    /**
+     * Release the script engine and return the result code
+     * @return the result code from PHP
+     */
     public float floatValue() {
 	return (float)getResult();
     }
 
+    /**
+     * Release the script engine and return the result code
+     * @return the result code from PHP
+     */
     public int intValue() {
 	return (int)getResult();
     }
 
+    /**
+     * Release the script engine and return the result code
+     * @return the result code from PHP
+     */
     public long longValue() {
 	return (long)getResult();
+    }
+
+    /**
+     * Release the script engine
+     */
+    public void close() throws IOException {
+	engine.release();
     }
 }

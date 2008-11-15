@@ -114,7 +114,7 @@ import php.java.servlet.ContextLoaderListener;
  * <li> Release the invocable by evaluating the engine again with a NULL value.
  * <blockquote>
  * <code>
- * scriptEngine.eval((Reader)null);
+ * ((Closeable)scriptEngine).close();
  * </code>
  * </blockquote> 
  * </ol>
@@ -133,6 +133,8 @@ public class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhp
     protected String protocol;
     protected URL url;
     protected String proxy;
+    
+    protected boolean overrideHosts = true;
     
     protected String getProxy() {
 	if (proxy!=null) return proxy;
@@ -162,6 +164,14 @@ public class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhp
 	this.servletCtx = ctx;
 	this.req = req;
 	this.res = res;
+
+	try {
+	    String value = servlet.getServletConfig().getServletContext().getInitParameter("override_hosts");
+	    if(value==null) value="";
+	    value = value.trim();
+	    value = value.toLowerCase();
+	    if(value.equals("off") || value.equals("false")) overrideHosts = false;
+	} catch (Exception t) {Util.printStackTrace(t);}
 
 	scriptContext.initialize(servlet, servletCtx, req, res);
 	
@@ -252,6 +262,6 @@ public class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhp
      * @param env the environment which will be passed to PHP
      */
     protected void setStandardEnvironmentValues (IPhpScriptContext context, Map env) {
-	PhpServletLocalHttpServerScriptEngine.setStandardEnvironmentValues(context, env, ctx, req, webPath);
+	PhpServletLocalHttpServerScriptEngine.setStandardEnvironmentValues(context, env, ctx, req, webPath, overrideHosts);
     }
 }

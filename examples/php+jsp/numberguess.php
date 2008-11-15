@@ -3,7 +3,7 @@
 /* PHP version of numberguess.jsp */
 $session = java_session();
 
-if(is_null(java_values($numguess=$session->get("bean")))) {
+if(java_is_null($numguess=$session->get("bean"))) {
   $session->put("bean", $numguess=new Java("num.NumberGuessBean"));
 }
 if($_POST['guess']) {

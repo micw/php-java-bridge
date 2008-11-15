@@ -41,7 +41,6 @@ import javax.servlet.http.HttpServletResponse;
 import php.java.bridge.Util;
 import php.java.bridge.Util.Process;
 import php.java.bridge.http.IContextFactory;
-import php.java.script.PhpScriptException;
 import php.java.script.servlet.PhpScriptTemporarilyOutOfResourcesException;
 import php.java.servlet.fastcgi.FastCGIServlet;
 

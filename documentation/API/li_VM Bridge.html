@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  <html xmlns="http://www.w3.org/1999/xhtml">
+		<head>
+			<!-- template designed by Marco Von Ballmoos  -->
+			<title></title>
+			<link rel="stylesheet" href="media/stylesheet.css" />
+						<script src="media/lib/classTree.js"></script>
+									<meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'/>
+			<link rel="stylesheet" href="media/banner.css" />
+			<style>
+			  body { padding: 1em }
+			</style>
+									<script language="javascript" type="text/javascript">
+				var imgPlus = new Image();
+				var imgMinus = new Image();
+				imgPlus.src = "media/images/plus.png";
+				imgMinus.src = "media/images/minus.png";
+				
+				function showNode(Node){
+							switch(navigator.family){
+								case 'nn4':
+									// Nav 4.x code fork...
+							var oTable = document.layers["span" + Node];
+							var oImg = document.layers["img" + Node];
+									break;
+								case 'ie4':
+									// IE 4/5 code fork...
+							var oTable = document.all["span" + Node];
+							var oImg = document.all["img" + Node];
+									break;
+								case 'gecko':
+									// Standards Compliant code fork...
+							var oTable = document.getElementById("span" + Node);
+							var oImg = document.getElementById("img" + Node);
+									break;
+							}
+					oImg.src = imgMinus.src;
+					oTable.style.display = "block";
+				}
+				
+				function hideNode(Node){
+							switch(navigator.family){
+								case 'nn4':
+									// Nav 4.x code fork...
+							var oTable = document.layers["span" + Node];
+							var oImg = document.layers["img" + Node];
+									break;
+								case 'ie4':
+									// IE 4/5 code fork...
+							var oTable = document.all["span" + Node];
+							var oImg = document.all["img" + Node];
+									break;
+								case 'gecko':
+									// Standards Compliant code fork...
+							var oTable = document.getElementById("span" + Node);
+							var oImg = document.getElementById("img" + Node);
+									break;
+							}
+					oImg.src = imgPlus.src;
+					oTable.style.display = "none";
+				}
+				
+				function nodeIsVisible(Node){
+							switch(navigator.family){
+								case 'nn4':
+									// Nav 4.x code fork...
+							var oTable = document.layers["span" + Node];
+									break;
+								case 'ie4':
+									// IE 4/5 code fork...
+							var oTable = document.all["span" + Node];
+									break;
+								case 'gecko':
+									// Standards Compliant code fork...
+							var oTable = document.getElementById("span" + Node);
+									break;
+							}
+					return (oTable && oTable.style.display == "block");
+				}
+				
+				function toggleNodeVisibility(Node){
+					if (nodeIsVisible(Node)){
+						hideNode(Node);
+					}else{
+						showNode(Node);
+					}
+				}
+			</script>
+					</head>
+		<body>
+						<h3 class="package-title">VM Bridge</h3>
+<div class="tree">
+<script language="Javascript">
+if (document.getElementById) {
+			var tree = new WebFXTree('<span class="package">VM Bridge</span>');
+		tree.setBehavior('classic');
+	
+		
+		var class_trees = new WebFXTreeItem('Class trees', 'classtrees_VM Bridge.html');
+		tree.add(class_trees);
+
+		var elements = new WebFXTreeItem('Index of elements', 'elementindex_VM Bridge.html');
+		tree.add(elements);
+
+		var parent_node;
+
+			
+		    		    			var tree_classe = new WebFXTreeItem('Interface(s)', '');
+    			
+    			    			        			    			        			    			            				var classe = new WebFXTreeItem('java_JavaType', 'VM Bridge/java_JavaType.html');
+        				tree_classe.add(classe);
+        			    			
+    			tree.add(tree_classe);
+    						    		    			var tree_classe = new WebFXTreeItem('Class(es)', '');
+    			
+    			    			            				var classe = new WebFXTreeItem('Java', 'VM Bridge/Java.html');
+        				tree_classe.add(classe);
+        			    			    			            				var classe = new WebFXTreeItem('JavaException', 'VM Bridge/JavaException.html');
+        				tree_classe.add(classe);
+        			    			    			        			    	
+    			tree.add(tree_classe);
+    				
+					var tree_function = new WebFXTreeItem('Function(s)', '');
+			
+							var fic = new WebFXTreeItem('Java', 'VM Bridge/_JavaBridge.inc.html#functionJava');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_autoload', 'VM Bridge/_JavaBridge.inc.html#functionjava_autoload');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_begin_document', 'VM Bridge/_JavaProxy.inc.html#functionjava_begin_document');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_cast', 'VM Bridge/_JavaProxy.inc.html#functionjava_cast');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_closure', 'VM Bridge/_JavaProxy.inc.html#functionjava_closure');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_context', 'VM Bridge/_JavaProxy.inc.html#functionjava_context');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_end_document', 'VM Bridge/_JavaProxy.inc.html#functionjava_end_document');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_inspect', 'VM Bridge/_JavaProxy.inc.html#functionjava_inspect');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_instanceof', 'VM Bridge/_JavaProxy.inc.html#functionjava_instanceof');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_is_false', 'VM Bridge/_JavaBridge.inc.html#functionjava_is_false');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_is_null', 'VM Bridge/_JavaBridge.inc.html#functionjava_is_null');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_is_true', 'VM Bridge/_JavaBridge.inc.html#functionjava_is_true');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_require', 'VM Bridge/_JavaProxy.inc.html#functionjava_require');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_reset', 'VM Bridge/_JavaProxy.inc.html#functionjava_reset');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_server_name', 'VM Bridge/_JavaProxy.inc.html#functionjava_server_name');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_session', 'VM Bridge/_JavaProxy.inc.html#functionjava_session');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_set_file_encoding', 'VM Bridge/_JavaProxy.inc.html#functionjava_set_file_encoding');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_values', 'VM Bridge/_JavaProxy.inc.html#functionjava_values');
+				tree_function.add(fic);
+					
+			tree.add(tree_function);
+			
+					var tree_file = new WebFXTreeItem('File(s)', '');
+	
+							var file = new WebFXTreeItem('Client.inc', 'VM Bridge/_Client.inc.html');
+				tree_file.add(file);
+							var file = new WebFXTreeItem('GlobalRef.inc', 'VM Bridge/_GlobalRef.inc.html');
+				tree_file.add(file);
+							var file = new WebFXTreeItem('JavaBridge.inc', 'VM Bridge/_JavaBridge.inc.html');
+				tree_file.add(file);
+							var file = new WebFXTreeItem('JavaProxy.inc', 'VM Bridge/_JavaProxy.inc.html');
+				tree_file.add(file);
+							var file = new WebFXTreeItem('NativeParser.inc', 'VM Bridge/_NativeParser.inc.html');
+				tree_file.add(file);
+							var file = new WebFXTreeItem('Options.inc', 'VM Bridge/_Options.inc.html');
+				tree_file.add(file);
+							var file = new WebFXTreeItem('Parser.inc', 'VM Bridge/_Parser.inc.html');
+				tree_file.add(file);
+							var file = new WebFXTreeItem('Protocol.inc', 'VM Bridge/_Protocol.inc.html');
+				tree_file.add(file);
+							var file = new WebFXTreeItem('SimpleParser.inc', 'VM Bridge/_SimpleParser.inc.html');
+				tree_file.add(file);
+				
+			tree.add(tree_file);
+		
+	
+document.write(tree);
+}
+</script>
+</div>
+<p class="notes">
+	Generated by 
+	<a href="http://www.phpdoc.org" target="_blank">phpDocumentor <span class="field">1.4.0a2</span></a>
+</p>
+</body>
+</html>

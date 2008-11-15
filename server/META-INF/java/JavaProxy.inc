@@ -85,7 +85,9 @@ function java_values_internal($object) {
   return $client->invokeMethod(0, "getValues", array($object));
 }
 /**
- * Evaluates the object and fetches its content, if possible.
+ * Unwraps a Java object.
+ * 
+ * Evaluates the object and fetches its content, if possible. Use java_values() to convert a Java object into an equivalent PHP value.
  *
  * A java array, Map or Collection object is returned
  * as a php array. An array, Map or Collection proxy is returned as a java array, Map or Collection object, and a null proxy is returned as null. All values of java types for which a primitive php type exists are returned as php values. Everything else is returned unevaluated. Please make sure that the values do not not exceed
@@ -108,7 +110,8 @@ function java_values_internal($object) {
  * => h
  * </code>
  * 
- * @param $object A java object or type.
+ * @see java_closure()
+ * @param object  A java object or type.
  * @access public
  */
 function java_values($object) {
@@ -140,7 +143,7 @@ function java_inspect_internal($object) {
  * <code>
  * echo java_inspect(java_get_context());
  * </code>
- * @param $object A java object or type.
+ * @param object A java object or type.
  * @access public
  */
 function java_inspect($object) {
@@ -156,7 +159,7 @@ function java_inspect($object) {
  * java_set_file_encoding("ISO-8859-1");
  * </code>
  *
- * @param $enc A valid file.encoding string. Please see your Java
+ * @param string A valid file.encoding string. Please see your Java
  * <code>file.encoding</code> documentation for a list of valid
  * encodings.
  * @access public
@@ -182,8 +185,8 @@ function java_instanceof_internal($ob, $clazz) {
  * <code>
  * return($o instanceof Java && $c instanceof Java && java_instanceof($o, $c)); 
  * </code>
- * @param $ob A java object
- * @param $clazz A java object or type.
+ * @param object A java object
+ * @param object A java object or type.
  * @access public
  */
 function java_instanceof($ob, $clazz) {
@@ -217,31 +220,32 @@ function java_cast_internal($object, $type) {
 /**
  * Converts the java object obj into a PHP value. 
  *
+ * This procedure converts the Java argument and then calls java_values() to fetch
+ * its content. Use java_values() if the conversion is not necessary.
+ * 
  * The second argument
  * must be [s]tring, [b]oolean, [i]nteger, [f]loat or [d]ouble,
- * [a]rray, [n]ull or [o]bject (which does nothing).<p> This procedure
- * is for compatibility with the pure PHP implementation, in the C
- * implementation this procedure is called automatically for each type
- * cast or when settype() is called.
+ * [a]rray, [n]ull or [o]bject (which does nothing).
  *
  * <br>
  * Example:
  * <code>
  * $str = new java("java.lang.String", "12");
- * echo $str;
- * => [o(String):"12"]
- * $phpString = "$str";
- * echo $phpString;
- * => "12"
- * $phpNumber = (integer)$str;
+ * echo is_string ($str) ? "#t":"#f";
+ * => #f
+ * $phpString = (string)$str;
+ * echo is_string ($phpString) ? "#t":"#f";
+ * => #t
+ * $phpNumber = (integer)(string)$str;
  * echo $phpNumber;
  * => 12
  * $phpNumber2 = java_cast($str, "integer");
  * echo $phpNumber2;
  * => 12
  * </code>
- * @param $object A java object
- * @param $type A PHP type description, either [Ss]tring, [Bb]oolean, [Ll]ong or [Ii]nteger, [Dd]ouble or [Ff]loat, [Nn]ull, [Aa]rray, [Oo]bject.
+ * @see java_values()
+ * @param object A java object
+ * @param string A PHP type description, either [Ss]tring, [Bb]oolean, [Ll]ong or [Ii]nteger, [Dd]ouble or [Ff]loat, [Nn]ull, [Aa]rray, [Oo]bject.
  * @access public
  */
 function java_cast($object, $type) { 
@@ -264,14 +268,12 @@ function java_cast($object, $type) {
  * java_require("http://php-java-bridge.sf.net/kawa.jar;...");
  * </code>
  *
- * Note that the classloader isolates the loaded libraries: When you
- * call java_require("foo.jar"); java_require("bar.jar"), the classes
- * from foo cannot see the classes loaded from bar. If you get a
- * NoClassDefFound error saying that one of your classes cannot
- * access the library you have loaded, you must reset the back-end to
- * clear the loader cache and load your classes and the library in one
- * java_require() call.
- * @param $arg The list of Java libraries.
+ * Note that Java doesn't have a module system. 
+ * Therefore libraries and their dependencies must be loaded by one and only one class loader;
+ * do not report a ClassCastException saying that a class is incompatible to itself or 
+ * a NoClassDefFoundError to the PHP/Java Bridge mailing list.
+ * @param string The list of Java libraries.
+ * @see java_autoload()
  * @access public
  */
 function java_require($arg) {
@@ -298,10 +300,6 @@ function java_session_array($args) {
   if(!isset($args[1])) $args[1]=false;
   if(!isset($args[2])) {
 	$args[2] = java_get_lifetime ();
-  }
-  if(function_exists("session_start")) {
-	@session_start();
-	$client->RUNTIME['SESSION']=true;
   }
   return $client->getSession($args);
 }
@@ -334,10 +332,10 @@ function java_session_array($args) {
  * java_get_session(null, true)->put("key", "val");
  * </code>
  *
- * The optional third argument specifies the default lifetime of the session, it defaults to \code session.gc_maxlifetime \endcode. The value 0 means that the session never times out.
+ * The optional third argument specifies the default lifetime of the session, it defaults to <code> session.gc_maxlifetime </code>. The value 0 means that the session never times out.
  *
  * @access public
- * @see #java_context()
+ * @see java_context()
  */
 function java_session() {
   return java_session_array(func_get_args());
@@ -386,7 +384,7 @@ function java_server_name() {
  * </code>
  *
  * @access public
- * @see #java_session()
+ * @see java_session()
  */
 function java_context() {
   $client=__javaproxy_Client_getClient();
@@ -417,8 +415,10 @@ function java_closure_array($args) {
   return $val;
 }
 /**
+ * Wraps a PHP environment.
+ * 
  * Closes over the php environment and packages it up as a java
- * class. 
+ * class. Use java_closure() to convert a PHP object into an equivalent Java object.
  *
  * Example: 
  * <code>
@@ -448,6 +448,7 @@ function java_closure_array($args) {
  *     return java_get_closure(new Listener(), null, array(new Java("java.awt.event.ActionListener")));
  * }
  * </code>
+ * @see java_values()
  * @access public
  */
 function java_closure() {
@@ -630,9 +631,11 @@ class java_ExceptionProxy extends java_JavaProxy {
  * already allocated Java, so that $wrap is false and the proxy is
  * returned and set into $__delegate. 
  * @access private
- * @see #java_InternalJava
+ * @see java_InternalJava
 */
 abstract class java_AbstractJava implements IteratorAggregate,ArrayAccess,java_JavaType {
+  public $__client;
+  
   public $__delegate;
 
   public $__serialID;
@@ -710,12 +713,18 @@ abstract class java_AbstractJava implements IteratorAggregate,ArrayAccess,java_J
 
 /**
  * The Java proxy class.
+ * 
+ * Use this constructor to create an instance. Use the Java function to access the type.
+ *
+ * Example which creates an instance:
+ * <code>
+ * $s = new Java("java.lang.String", "hello");
+ * </code>
+ * 
  * @access public
- * @see #JavaException
+ * @see JavaException
  */
 class Java extends java_AbstractJava {
-  public $__client;
-
   /**
    * Create a new instance of a java type. 
    *
@@ -731,7 +740,7 @@ class Java extends java_AbstractJava {
    * $s = Java("java.lang.System");
    * </code>
    *
-   * @see #Java()
+   * @see Java()
    */
   function Java() {
 	$client = $this->__client = __javaproxy_Client_getClient();
@@ -801,6 +810,7 @@ class Java extends java_AbstractJava {
 	  $this->__signature = $delegate->__signature;
 	}
   }
+  /** @access private */
   function __destruct() {
 	if(!isset($this->__client)) return;
 	$client = $this->__client;
@@ -836,8 +846,8 @@ class Java extends java_AbstractJava {
    *<code>
    * $s->substring(1, 10);
    * </code>
-   * @param $method The method name
-   * @param $args The argument array
+   * @param string The method name
+   * @param array The argument array
    */
   function __call($method, $args) { 
 	$client = $this->__client;
@@ -943,17 +953,22 @@ class JavaClass extends java_class{}
 /**
  * A decorator pattern which overrides all magic methods.
  * 
- * @access public
+ * @access private
  */
 class java_exception extends Exception implements java_JavaType {
+  /** @access private */
   public $__serialID, $__java, $__client;
+  /** @access private */
   public $__delegate;
+  /** @access private */
   public $__signature;
   
   /**
    * Create a new Exception.
+   * 
+   * Example:
    * <code>
-   * $ex = new JavaException("java.lang.NullPointerException");
+   * $ex = new java_exception("java.lang.NullPointerException");
    * throw $ex;
    * </code>
    */
@@ -1022,7 +1037,14 @@ class java_exception extends Exception implements java_JavaType {
   }
 }
 /**
- * The java exception proxy
+ * The java exception proxy.
+ * 
+ * Example:
+ * <code>
+ * $ex = new JavaException("java.lang.NullPointerException");
+ * throw $ex;
+ * </code>
+ * 
  * @access public
  */
 class JavaException extends java_exception {}

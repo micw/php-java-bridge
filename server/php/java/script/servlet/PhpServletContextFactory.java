@@ -43,7 +43,7 @@ import php.java.bridge.http.IContextFactory;
  * @author jostb
  *
  */
-public class PhpServletContextFactory extends php.java.servlet.ServletContextFactory {
+class PhpServletContextFactory extends php.java.servlet.ServletContextFactory {
 
     protected PhpServletContextFactory(Servlet servlet, ServletContext ctx,
 			HttpServletRequest proxy, HttpServletRequest req,

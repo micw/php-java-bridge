@@ -39,7 +39,7 @@ import php.java.bridge.ISession;
 /**
  * Wraps the J2EE session interface
  */
-public class HttpSessionFacade implements ISession {
+class HttpSessionFacade implements ISession {
 
     private HttpSession session;
     private int timeout;

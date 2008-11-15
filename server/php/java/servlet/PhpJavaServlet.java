@@ -173,7 +173,14 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	    Util.printStackTrace(e);
         }
     }
-    
+
+    /** Return the IS_DISTRIBUTABLE flag 
+     * 
+     * @return {@link #IS_DISTRIBUTABLE}
+     */
+    protected boolean getDistributable() {
+	return IS_DISTRIBUTABLE;
+    }
     /**
      * Handle a standard HTTP tunnel connection. Used when the local
      * channel is not available (security restrictions). Used by
@@ -192,7 +199,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	 * The alternative would be to store the context in the session and to mark the context and all the classes it depends on
 	 * (JavaBridge, ...) as java.io.Serializable.
 	 */
-	if(IS_DISTRIBUTABLE) Util.logMessage("HTTP tunnel not available in a distributable web application. " +
+	if(getDistributable()) Util.logMessage("HTTP tunnel not available in a distributable web application. " +
 			"Either enable the Pipe- or SocketContextServer or remove the distributable flag from PhpJavaServlet and WEB-INF/web.xml.");
 
 	InputStream in; ByteArrayOutputStream out;

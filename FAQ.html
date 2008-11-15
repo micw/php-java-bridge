@@ -2,9 +2,9 @@
 <HTML>
 <HEAD>
 	<META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html">
-	<TITLE>PHP/ Java Bridge FAQ</TITLE>
+	<TITLE>VM Bridge FAQ</TITLE>
 </HEAD>
-<H1>PHP/Java Bridge FAQ</H1>
+<H1>VM Bridge FAQ</H1>
 This file contains answers to frequently asked questions. Please see <a href="http://php-java-bridge.sourceforge.net/pjb">http://php-java-bridge.sourceforge.net</a> for more information.
 
 <H2>General questions</H2>
@@ -12,11 +12,11 @@ This file contains answers to frequently asked questions. Please see <a href="ht
 <H4>Which alternatives exist?</H4>
 <p>There are at least 4 other php to java bridges which offer a similar API. One was distributed with PHP 4.0.0 and has been discontinued. Two other bridges are proprietary software, built into a vendor-specific framework from Zend or a J2EE application server from Caucho.
 Furthermore IBM's Zero framework for Eclipse contains a PHP interpreter written in pure Java and a php to java bridge which can call Java methods in-process.</p>
-<p>The only free alternatives are SOAP and XML-RPC, which are up to 50 times slower than the XML protocol implementation used by this PHP/Java Bridge.</p>
+<p>The only free alternatives are SOAP and XML-RPC, which are up to 50 times slower than the XML protocol implementation used by this VM Bridge.</p>
 
 <H4>How do I enable the Java extension in my php.ini file?</H4>
 <p>A Java extension does not exist, so you can't enable it.</p>
-<p>The PHP/Java Bridge is a network protocol, it requires a running Java VM, e.g. Apache/Tomcat. Or, if you want to call PHP libraries from Java, a running PHP container, e.g. Apache or IIS.</p>
+<p>The VM Bridge is a network protocol, it requires a running Java VM, e.g. Apache/Tomcat. Or, if you want to call PHP libraries from Java, a running PHP container, e.g. Apache or IIS.</p>
 
 <H4>What about portability?</H4>
 <p>A portable PHP application can use the "new Java(...)" constructor
@@ -134,7 +134,7 @@ file (contained in the JavaBridge.war zip file) for details.
 </p>
 
 <H4>How do I start the bridge back end when there's another Java VM listening on port 8080?</H4>
-<p>Simply deploy the PHP/Java Bridge web archive into the servlet engine or application server listening on port 8080. Or use a different port.</p>
+<p>Simply deploy the VM Bridge web archive into the servlet engine or application server listening on port 8080. Or use a different port.</p>
 
 <H4>What's the difference between SERVLET_LOCAL:8080 and INET_LOCAL:8080?</H4>
 <p>The standalone option SERVLET_LOCAL emulates a servlet engine and starts a HTTP server which can select the fastest channel supported on this operating system. On Linux this is a named pipe created in /dev/shm or INET_LOCAL as a fall back.</p>
@@ -168,7 +168,7 @@ echo $i3-&gt;toString() . "\n";<br>
 </p>
 <p>The above simple "Java" class assumes that some Java VM has been
 started on host "127.0.0.1", port "9267". And it cannot handle values
-larger than 8192 bytes. Therefore the PHP/Java Bridge
+larger than 8192 bytes. Therefore the VM Bridge
 library <code>Java.inc</code> should be used. Scripts should contain
 the statement
 <blockquote>
@@ -247,10 +247,10 @@ cp ../webContext.war /usr/share/tomcat5/webapps/<br>
 </blockquote>
 </p>
 <p>
-Then they need to copy or symlink the created web context "webContext" (or whatever you've called it) to their Apache or IIS htdocs (sometimes called "public_html") directory. Example for Linux:
+Then they need to copy or symlink the created web context "webContext" (or whatever you've called it) to their Apache or IIS document root directory. Example for Linux:
 <blockquote>
 <code>
-ln -s /usr/share/tomcat5/webapps/webContext $HOME/public_html/webContext<br>
+ln -s /usr/share/tomcat5/webapps/webContext /var/www/html/webContext<br>
 </code>
 </blockquote>
 </p>
@@ -273,7 +273,7 @@ compile from source, use the configure
 option <code>--with-mono</code>.</p>
 
 <H4>Does it support PHP 4?</H4>
-<p>No. Use PHP/Java Bridge version 4.3.2 or below instead.</p>
+<p>No. Use VM Bridge version 4.3.2 or below instead.</p>
 
 <H2>Class loading questions</H2>
 
@@ -281,7 +281,7 @@ option <code>--with-mono</code>.</p>
 <H4>How do I load Java libraries?</H4>
 <p> During development simple libraries can be loaded dynamically with <code>java_require("myApplication.jar;myLib1.jar;myDriver1.jar;...");</code>. See the README for details.</p>
 
-<H4>Where can I store my java libraries for the PHP/Java Bridge?</H4>
+<H4>Where can I store my java libraries for the VM Bridge?</H4>
 <p>Either within  your web application <code>WEB-INF/lib</code> directory or in <code>php.java.bridge.base</code>/lib.</p>
 <p> When the system property <code>php.java.bridge.base</code> is not set, libraries are loaded from <code>$HOME/lib</code> where <code>$HOME</code> denotes the home directory of the person or component which has started the java VM.</p>
 <p> If libraries should be available globally, store them in <code>java.ext.dirs</code>, for example in <code>/usr/share/java/ext</code>.</p>
@@ -338,9 +338,9 @@ how the environment can handle impure Java libraries. A common approach is to st
 <H2>J2EE/Servlet questions</H2>
 
 <a name="load-balancing">
-<H4>How do I set up a load balancer for the PHP/Java Bridge cluster?</H4>
+<H4>How do I set up a load balancer for the VM Bridge cluster?</H4>
 <p>
-Set up the PHP/Java Bridge cluster as <a href="#cluster">described below</a>. The example uses two nodes named "carlos" and "diego". The HTTP server front end runs on the web server "timon".
+Set up the VM Bridge cluster as <a href="#cluster">described below</a>. The example uses two nodes named "carlos" and "diego". The HTTP server front end runs on the web server "timon".
 </p>
 <p>Install Apache 2.2.0 or higher.</p>
 <p>Enable <code>proxy_module</code> and <code>proxy_balancer_module</code>. The following example is for Linux (lines marked with "+" should be added to the <code>conf/httpd.conf</code> file):
@@ -381,7 +381,7 @@ ProxyPass /JavaBridge balancer://mycluster maxattempts=2<br>
 <a name="cluster">
 <H4>Ho do I set up a tomcat cluster?</H4>
 <p>
-Download tomcat 5 or higher, a Java JRE 5 or higher and the PHP/Java Bridge 4.1.6 or higher.
+Download tomcat 5 or higher, a Java JRE 5 or higher and the VM Bridge 4.1.6 or higher.
 </p>
 <p>
 The following example uses two nodes running on two machines called
@@ -566,7 +566,7 @@ Copy the files <code>sessionSharing.jsp</code> and <code>sessionSharing.php</cod
 <H4>I want to use Tomcat's security manager, how do I install the bridge?</H4>
 </a>
 <p>
-Remove all PHP/Java Bridge libraries from your application.war file and install them in the tomcat lib folder or some other folder which has the necessary privileges.
+Remove all VM Bridge libraries from your application.war file and install them in the tomcat lib folder or some other folder which has the necessary privileges.
 </p>
 
 
@@ -612,33 +612,20 @@ example is for Tomcat:
 Disable <code>override_hosts</code> in the web application <code>WEB-INF/web.xml</code>:
 <blockquote>
 <code>
-         &lt;init-param&gt;<br>
+         &lt;context-param&gt;<br>
            &lt;param-name&gt;override_hosts&lt;/param-name&gt;<br>
            &lt;param-value&gt;Off&lt;/param-value&gt;<br>
-         &lt;/init-param&gt;<br>
+         &lt;/context-param&gt;<br>
 </code>
 </blockquote>
- Open a local port in the tomcat <code>conf/server.xml</code> (only necessary if you have disabled the official non-SSL port):
+Either fetch the <code>Java.inc</code> directly from your back end (which also adjusts the <code>JAVA_HOSTS</code>) or change the <code>JAVA_HOSTS</code> option, for example:
 <blockquote>
 <code>
-  &lt;Service name="Catalina"&gt;<br>
-     [...]<br>
-     &lt;Connector port="9157" address="127.0.0.1"  /&gt;<br>
-     [...]<br>
-  &lt;/Service&gt;<br>
-</code>
-</blockquote>
- Set the communication port in the PHP <code>.ini</code> (the <code>phpinfo()</code> or <code>test.php</code> displays the location of the responsible <code>.ini</code> file):
-<blockquote>
-<code>
-  [java]<br>
-  java.hosts = 127.0.0.1:9157<br>
-  java.servlet = User<br>
+define("JAVA_HOSTS", "127.0.0.1:9090");
 </code>
 </blockquote>
 </ol>
-If you want to use the official non-SSL port (usually port number
-8080), change the <code>java.hosts</code> line accordingly.<p>
+<p>
 Restart the application server or servlet engine. Check the settings by running <code>phpinfo()</code> or by visiting the <code>test.php</code> page. 
 </p>
 
@@ -840,7 +827,7 @@ BORDER="1"
 ><TD
 >time jrunscript -l php t11.php</TD
 ><TD
->PHP5 + PHP/Java Bridge 4.3.3</TD
+>PHP5 + VM Bridge 4.3.3</TD
 ><TD
 >named pipes</TD
 ><TD
@@ -879,14 +866,14 @@ OutOfMemoryErrors may happen because a cached object cannot be released, either 
 <ol>
 <li> the object is permanently referenced by a request-handling thread or</li>
 <li> the object has been entered into the session or application store or 
- the object is referenced by a thread outside of the scope of the PHP/Java Bridge.</li>
+ the object is referenced by a thread outside of the scope of the VM Bridge.</li>
 </ol>
 </p>
 </p>
-<p>When a <code>java.lang.OutOfMemoryError</code> reaches the request-handling thread, the PHP/Java Bridge thread pool removes the thread from its pool and writes a message <code>FATAL: OutOfMemoryError</code> to the PHP/Java Bridge log file. The session store is cleaned and all client connections are terminated without confirmation.
+<p>When a <code>java.lang.OutOfMemoryError</code> reaches the request-handling thread, the VM Bridge thread pool removes the thread from its pool and writes a message <code>FATAL: OutOfMemoryError</code> to the VM Bridge log file. The session store is cleaned and all client connections are terminated without confirmation.
 </p>
 <p>
-If the OutOfMemoryError persists, this means that a thread outside of the PHP/Java Bridge has caused this error condition.
+If the OutOfMemoryError persists, this means that a thread outside of the VM Bridge has caused this error condition.
 </p>
 <p>
 The following code example could cause an OutOfMemoryError:<br><br>

@@ -49,7 +49,7 @@ import java.util.zip.ZipFile;
  * @author jostb
  *
  */
-public class DynamicJarURLConnection extends JarURLConnection {
+class DynamicJarURLConnection extends JarURLConnection {
 
     private DynamicHttpURLConnectionHandler handler;
     

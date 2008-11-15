@@ -33,7 +33,7 @@ import java.util.Map;
  * synchronization, so use this class per thread or per request
  * only.
  */
-public final class ConstructorCache {
+final class ConstructorCache {
     Map map;
     static final Entry noCache = new NoCache();
     

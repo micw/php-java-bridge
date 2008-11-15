@@ -1756,6 +1756,7 @@ public class JavaBridge implements Runnable {
      * @return the serialID
      */
     public String serialize(Object obj, int timeout) {
+	if(obj==null) obj=Request.PHPNULL;
     	ISession session = sessionFactory.getSession(false, timeout);
     	String id = Integer.toHexString(getSerialID());
     	session.put(id, obj);

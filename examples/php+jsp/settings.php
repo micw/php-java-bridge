@@ -84,13 +84,13 @@ It starts a PHP FastCGI server, if possible and neccessary. Requests for PHP scr
 <tr>
 <td>php_exec</td>
 <td><?php $val=java_values($config->getInitParameter("php_exec")); echo $val?$val:"php-cgi"?></td>
-<td>The PHP FastCGI or CGI binary.</td>
+<td>The name and location of your system_php_exec. For example <code>/opt/PHP/bin/php-cgi</code>. Default is <code>/usr/bin/php-cgi</code> or <code>c:/Program Files/PHP/php-cgi.exe</code> or a <code>php-cgi</code> from the PATH.</td>
 </tr>
 
 <tr>
 <td>prefer_system_php_exec</td>
 <td><?php $val=java_values($config->getInitParameter("prefer_system_php_exec")); echo $val?$val:"Off"?></td>
-<td>May we use /usr/bin/php-cgi or c:/php/php-cgi.exe if a local WEB-INF/cgi/php-cgi-ARCH-OS executable is available?</td>
+<td>Ignore a local <code>WEB-INF/cgi/php-cgi-ARCH-OS</code> executable from the web archive and use the specified <code>php_exec</code>. Default is Off.</td>
 </tr>
 
 <tr>
