@@ -1,3 +1,12 @@
+php-java-bridge (5.3.3-1) unstable; urgency=low
+
+  * New upstream release.
+  * Missing Java.inc and Mono.inc from native code package. But at this package,
+    the mono version is not built.
+    Thanks to Jan Wagner <waja@cyconet.org> to pointing this.
+
+ -- Andre Felipe Machado <andremachado@techforce.com.br>  Fri, 26 Nov 2008 10:25:18 -0300
+
 php-java-bridge (5.3.2.1.2-1) unstable; urgency=low
 
   * New upstream release.
