@@ -37,8 +37,6 @@ final class DefaultOptions extends Options {
     public boolean base64Data() { return true; }
 
     public boolean preferValues() { return true; }
-    
-    public boolean sendArraysAsValues() { return true; }
 
     public boolean passContext() { return false; }
 }

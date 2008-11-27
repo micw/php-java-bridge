@@ -2027,8 +2027,10 @@ public class JavaBridge implements Runnable {
     public boolean typeExists(String name) {
 	try {
 	    getClassLoader().forName(name);
+	    castToBoolean(null);
 	    return true;
 	} catch (ClassNotFoundException ex) {/*ignore*/}
+	castToBoolean(null);
 	return false;
     }
 }

@@ -1,32 +1,30 @@
-<?php
-require_once ("java/Java.inc");
+<?php include_once ("java/Java.inc");
+
 java_autoload("lucene.jar");
+
+use java::lang::System as SYS;
+use java::io as IO;
+use java::util as Util;
+use org::apache::lucene as Lucene;
 
 
 try {
   echo "indexing ... ";
-  /* Create an index */
-  $cwd=getcwd();
   /* create the index files in the tmp dir */
   $tmp = create_index_dir();
-  $analyzer = new org_apache_lucene_analysis_standard_StandardAnalyzer();
-  $writer = new org_apache_lucene_index_IndexWriter($tmp, $analyzer, true);
-  $file = new java_io_File($cwd);
+  $analyzer = new Lucene::analysis::standard::StandardAnalyzer();
+  $writer = new Lucene::index::IndexWriter($tmp, $analyzer, true);
+  $file = new IO::File(getcwd());
   $files = $file->listFiles();
-  if(is_null($files)) {
-    $user = java_lang_System::type()->getProperty("user.name");
-    echo("$cwd does not exist or is not readable.\n");
-    echo("The directory must be readable by the user $user and it must not\n");
-    echo("be protected by a SEL rule.\n");
-    exit(1);
-  }
+  assert (!java_is_null($files));
+
   foreach($files as $f) {
-    $doc = new org_apache_lucene_document_Document();
-    $doc->add(new org_apache_lucene_document_Field(
+    $doc = new Lucene::document::Document();
+    $doc->add(new Lucene::document::Field(
 	       "name", 
 	       $f->getName(), 
-	       org_apache_lucene_document_Field::type("Store")->YES, 
-	       org_apache_lucene_document_Field::type("Index")->UN_TOKENIZED));
+	       Lucene::document::Field::type("Store")->YES, 
+	       Lucene::document::Field::type("Index")->UN_TOKENIZED));
     $writer->addDocument($doc);
   }
   $writer->optimize();
@@ -35,13 +33,13 @@ try {
 
   echo "searching... ";
   /* Search */
-  $searcher = new org_apache_lucene_search_IndexSearcher($tmp);
-  $phrase = new org_apache_lucene_search_MatchAllDocsQuery();
+  $searcher = new Lucene::search::IndexSearcher($tmp);
+  $phrase = new Lucene::search::MatchAllDocsQuery();
   $hits = $searcher->search($phrase);
 
   /* Print result */
   $iter = $hits->iterator();
-  $n = java_values($hits->length());
+  $n = (int)(string)$hits->length();
   echo "done\n";
   echo "Hits: $n\n";
 
@@ -49,7 +47,7 @@ try {
    * LinkedList on the server side and then retrieve the list in one
    * query using java_values():
    */
-  $resultList = new java_util_LinkedList();
+  $resultList = new Util::LinkedList();
 
 				// create an XML document from the
 				// following PHP code, ...
@@ -84,12 +82,12 @@ $tmp_dir=null;
  */
 function create_index_dir() {
   global $tmp_file, $tmp_dir;
-  $javaTmpdir = java_lang_System::type()->getProperty("java.io.tmpdir");
-  $tmpdir = java_values($javaTmpdir);
+  $javaTmpdir = SYS::type()->getProperty("java.io.tmpdir");
+  $tmpdir = (string)$javaTmpdir;
   $tmp_file=tempnam($tmpdir, "idx");
-  $tmp_dir=new java_io_File("${tmp_file}.d");
+  $tmp_dir=new IO::File("${tmp_file}.d");
   $tmp_dir->mkdir();
-  return java_values($tmp_dir->toString());
+  return (string)$tmp_dir->toString();
 }
 
 /** delete the lucene index files */

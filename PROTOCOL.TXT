@@ -1,4 +1,4 @@
-VM Bridge protocol version 5
+VM Bridge protocol version 5.3
 
 Requests are marked with "->", responses with "<-".  The server
 continues to process requests until EOF. Only the first character is
@@ -63,11 +63,10 @@ Main requests:
 
 ->
 CreateInstance:
-<C v=name p=C|I [i=ID]> ...ARGS...
+<C v=name p=C|I> ...ARGS...
 </C>
 v: string
 p: char (Reference[C]lass, Create[I]nstance)
-i: unsigned long
 
 ->
 Invoke:
@@ -202,7 +201,7 @@ Exception:
 v: unsigned long
 m: string
 
-->  (or <->, if a header has been sent, see below)
+<->
 Composite:
 <X t=A|H /> ...PAIRS...
 </X>
@@ -238,14 +237,13 @@ If the first byte is 0177, the following byte has a special meaning:
 
 Bit 1 0
 -------
-         keep object  keep array,   binary             comment
-          identity    Map, Coll.     data              
-                      identity                         
-
-    0 0    yes          yes        binary              default
-    0 1    no           yes        binary              
-    1 0    no           yes        base64 encoded      
-    1 1    yes          yes        base64 encoded      default
+         return values  binary             comment
+         as proxies(*)  data              
+                                        
+    0 0    yes          binary             default
+    0 1    no           binary             if JAVA_PREFER_VALUES=1
+    1 0    no           base64 encoded     if JAVA_PREFER_VALUES=1
+    1 1    yes          base64 encoded     default
 
 Bit 2,3,4: log level (from java.log_level)
 
@@ -257,11 +255,14 @@ Bit 7: set to 1 if bit[2,4] are used
 
 If the header is missing, the following default values are used
 
-         keep object  keep array,   binary             comment
-          identity    Map, Coll.     data              
-                      identity                         
-           no           no         base64 encoded      default
+         return values  binary             comment
+         as proxies(*)  data              
 
+           no           base64 encoded     default
+
+
+(*) Primitive values like null, 1, false, etc. are proxied by
+Request$PhpNull, Integer, Boolean, etc. by default.
 
 It is possible to send the header even though the connection has
 already been established. The bridge will ignore the header if the

@@ -49,7 +49,7 @@ import php.java.servlet.ContextLoaderListener;
 /**
  * A PHP script engine for Servlets. See {@link ContextLoaderListener} for details.
  * 
- * In order to evaluate PHP methods follow these steps:<br>
+ * In order to evaluate PHP scripts follow these steps:<br>
  * <ol>
  * <li> Create a factory which creates a PHP script file from a reader using the methods from {@link EngineFactory}:
  * <blockquote>

@@ -1,11 +1,10 @@
 <?php require_once("java/Java.inc");
-java_autoload();
 
 header("Content-type: application/vnd.ms-excel");
 header("Content-Disposition: attachment; filename=downloaded.xls");
 
 // create a 50x40 excel sheet and return it to the client
-$workbook = new org_apache_poi_hssf_usermodel_HSSFWorkbook();
+$workbook = new java("org.apache.poi.hssf.usermodel.HSSFWorkbook");
 $sheet = $workbook->createSheet("new sheet");
 
 for($y=0; $y<40; $y++) {
@@ -17,7 +16,7 @@ for($y=0; $y<40; $y++) {
 }
 
 // create and return the excel sheet to the client
-$memoryStream = new java_io_ByteArrayOutputStream();
+$memoryStream = new java("java.io.ByteArrayOutputStream");
 $workbook->write($memoryStream);
 $memoryStream->close();
 echo java_values($memoryStream->toByteArray());

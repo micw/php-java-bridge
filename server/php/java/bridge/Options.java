@@ -63,17 +63,6 @@ class Options {
 	}
     }
    
-    
-    /**
-     * Returns true when the bridge must destroy array, Map, Collection identity (see PROTOCOL.TXT) due 
-     * to limitations in the client (for PHP4 for example). 
-     * This option stays the same for all packets.
-     * @return the appropriate value from the request header.
-     */
-    public boolean sendArraysAsValues() {
-	return false;
-    }
-
     private boolean valuesCache, valuesCacheSet=false;
     /**
      * Returns true when the bridge must destroy object identity (see PROTOCOL.TXT) due 

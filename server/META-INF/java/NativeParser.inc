@@ -86,7 +86,7 @@ class java_NativeParser {
 	  $buf = $this->buf = $this->handler->read(JAVA_RECV_SIZE); 
 	  $len = strlen($buf);
 	  if(!xml_parse($this->parser, $buf, $len==0)) {
-		die(sprintf("protocol error: %s, %s at col %d. Check the back end log for details.",
+		die(sprintf("protocol error: %s, %s at col %d. Check the back end log for OutOfMemoryErrors...",
 					$buf,
 					xml_error_string(xml_get_error_code($this->parser)),
 					xml_get_current_column_number($this->parser)));

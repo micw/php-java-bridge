@@ -136,7 +136,7 @@ class java_SimpleParser {
 	  if($this->c>=$this->pos) { 
 		
 		$this->buf=$this->handler->read(JAVA_RECV_SIZE); 
-		if(is_null($this->buf) || strlen($this->buf) == 0) die("protocol error. Check the back end log for details.");
+		if(is_null($this->buf) || strlen($this->buf) == 0) die("protocol error. Check the back end log for OutOfMemoryErrors...");
 		$this->pos=strlen($this->buf);
 		if($this->pos==0) break;
 		$this->c=0; 

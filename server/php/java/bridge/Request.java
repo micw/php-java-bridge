@@ -154,7 +154,7 @@ public final class Request implements IDocHandler {
      * There is only one response handle for each request object.
      * <code>response.reset()</code> or <code>response.flush()</code> must be called at the end of each packet.
      */
-    public Response response = null;
+    Response response = null;
 
     /**
      * Creates an empty request object.

@@ -45,7 +45,7 @@ class Parser {
 	tag=new ParserTag[]{new ParserTag(1), new ParserTag(MAX_ARGS), new ParserTag(MAX_ARGS) };
     }
     short initOptions(InputStream in) throws IOException {
-	if((pos=read(in, buf, 0, RECV_SIZE)) >0) { 
+	if((clen=read(in, buf, 0, RECV_SIZE)) >0) { 
 
 	    /*
 	     * Special handling if the first byte is neither a space nor "<"
@@ -62,10 +62,15 @@ class Parser {
 		// OPTIONS
 	    default:
 	    	if(ch==0177) { // extended header
-	    	    ch=buf[++c];
+	    	    if (++c==clen) {
+	    		if((clen=read(in, buf, 0, RECV_SIZE)) <= 0) throw new IllegalArgumentException ("Illegal header length");
+	    		ch = buf[c = 0];
+	    	    } else {
+	    		ch = buf[c];
+	    	    }
 	    	    bridge.options = new Options();
 	    	} else {
-	    	    throw new IllegalArgumentException ("Standard header not supported anymore. Use the extended header.");
+	    	    throw new IllegalArgumentException ("Illegal header.");
 	    	}
 	        if((ch&64)!=0) bridge.options.updateOptions((byte) (ch&3));
 	    	if((ch&128)!=0) {
@@ -99,7 +104,7 @@ class Parser {
     // VOJD is VOID for f... windows (VOID is in winsock2.h)
     private static final short BEGIN=0, KEY=1, VAL=2, ENTITY=3, VOJD=5, END=6; short type=VOJD;
     private short level=0, eof=0, eor=0; boolean in_dquote, eot=false;
-    private int pos=0, c=0, i=0, i0=0, e;
+    private int clen=0, c=0, i=0, i0=0, e;
 
     void RESET() {
     	type=VOJD;
@@ -159,9 +164,9 @@ class Parser {
     	if(eof!=0) return EOF;
     	
     	while(eor==0) {
-	    if(c==pos) { 
-	    	pos=read(in, buf, 0, RECV_SIZE); 
-		if(pos<=0) return eof=EOF;
+	    if(c==clen) { 
+	    	clen=read(in, buf, 0, RECV_SIZE); 
+		if(clen<=0) return eof=EOF;
 		c=0; 
 
 	    }
@@ -249,7 +254,7 @@ class Parser {
      */
     public void reset() {
 	eof=0;
-	pos=0;
+	clen=0;
 	c=0;
 	len=SLEN;
 	s=new byte[len];

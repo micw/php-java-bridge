@@ -594,7 +594,7 @@ class java_Client /* implements IDocHandler */ {
         
 	try {
   	$res = $arg->getResult(true);
-	  if((!$object && !function_exists($name)) || ($object && !method_exists($object, $name))) throw new JavaException("java.lang.NoSuchMethodException", "$name");
+	  if((!$object && !function_exists($name)) || ($object && !method_exists($object, $name))) throw new JavaException("java.lang.NoSuchMethodError", "$name");
 	  
 	  $res = call_user_func_array($ob, $res);
       

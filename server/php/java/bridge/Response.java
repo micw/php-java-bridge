@@ -429,10 +429,7 @@ public final class Response {
 	}
     }
     private DelegateWriter getDefaultDelegate() {
-	if(bridge.options.sendArraysAsValues())
-	    return new ArrayValuesWriter();
-	else
-	    return new ArrayWriter();
+	return new ArrayWriter();
     }
 	
     private Writer getDefaultWriter() {

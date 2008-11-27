@@ -61,36 +61,6 @@ public class PhpCGIServlet extends FastCGIServlet {
     private static final long serialVersionUID = 38983388211187962L;
 
     /**
-     * A local port which will be used by the SocketContextServer for high-speed local communication.<br>
-     * The SocketContextServer may use ports [9567,...[9667 (bound to
-     * the local interface), if named pipes are not available (Windows
-     * only). Use the system property
-     * <code>php.java.bridge.no_socket_server=true</code> to switch it
-     * off (not recommended).
-     * @see php.java.bridge.http.SocketContextServer
-     * @see php.java.bridge.http.PipeContextServer
-     */
-    public static final int CGI_CHANNEL = 9567;
-
-    /**
-     * A local port which will be used instead of the current SSL port. Requires that the J2EE server or
-     * servlet engine listens on this local port.<br>
-     * If SSL is used, the CGI servlet passes this number instead of the current port number to PHP.
-     * Example setting for tomcat conf/server.xml (add the line marked with a <code>+</code>):<blockquote><code>
-     *&lt;Service name="Catalina"&gt;<br>
-     *[...]<br>
-     *+  &lt;Connector port="9157" address="127.0.0.1"  /&gt;<br>
-     *[...]<br>
-     *&lt;/Service&gt;<br>
-     *</code></blockquote><br>
-     * To use a custom port#, switch off <code>override_hosts</code> in the <code>WEB-INF/web.xml</code> and add the following lines to your <code>php.ini</code> file:<blockquote><code>
-     * java.hosts=127.0.0.1:&lt;CUSTOM_NON_SSL_PORT&gt;<br>
-     * java.servlet=On<br>
-     * </code></blockquote><br>
-     */
-    public static final int CGI_SSL_CHANNEL = 9157;
-    
-    /**
      * The max. number of concurrent CGI requests. 
      * <p>The value should be less than 1/2 of the servlet engine's thread pool size as this 
      * servlet also consumes an instance of PhpJavaServlet.</p>

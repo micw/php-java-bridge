@@ -35,19 +35,25 @@
 	(begin (string-set! buf i c))))))
 
 ;; real work starts here
-(write 2 outp) ; arrays as values  , see PROTOCOL.TXT
+
+;; header: prefer values, not base 64 encoded
+(display (integer->char #o177) outp) 
+(display (integer->char #o101) outp)
+
 ;; create a java.util.ArrayList, add 3 entries to it ...
-(display "<C value=\"java.util.ArrayList\" p=\"I\" id=\"0\"></C>" outp)
+(display "<C value=\"java.util.ArrayList\" p=\"I\"></C>" outp)
 (read-document buf inp) ;discard received document
-(display "<I value=\"1\" method=\"add\" p=\"I\" id=\"0\"><String v=\"ENTRY 1\"/></I>" outp)
+(display "<I value=\"1\" method=\"add\" p=\"I\"><String v=\"ENTRY 1\"/></I>" outp)
 (read-document buf inp)
-(display "<I value=\"1\" method=\"add\" p=\"I\" id=\"0\"><String v=\"ENTRY 2\"/></I>" outp)
+(display "<I value=\"1\" method=\"add\" p=\"I\"><String v=\"ENTRY 2\"/></I>" outp)
 (read-document buf inp)
-(display "<I value=\"1\" method=\"add\" p=\"I\" id=\"0\"><String v=\"LAST ENTRY\"/></I>" outp)
+(display "<I value=\"1\" method=\"add\" p=\"I\"><String v=\"LAST ENTRY\"/></I>" outp)
 (read-document buf inp)
 
 ;; ... and ask for the array
-(display "<I value=\"1\" m=\"toArray\" p=\"Invoke\" id=\"0\"></I>" outp)
+(display "<I value=\"1\" m=\"toArray\" p=\"Invoke\"></I>" outp)
+(read-document buf inp)
+(display "<I value=\"0\" m=\"getValues\" p=\"Invoke\"><Object v=\"2\"/></I>" outp)
 (let ((count (read-document buf inp)))
   (display "Received:") (newline)
   ;; should have received an array of three values
@@ -55,3 +61,4 @@
   (newline))
 
 (exit 0)
+

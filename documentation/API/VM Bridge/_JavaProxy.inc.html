@@ -191,7 +191,7 @@
 <div class="oddrow">
 	
 	<div>
-		<span class="method-title">java_begin_document</span> (line <span class="line-number"><a href="../__filesource/fsource_VM Bridge__JavaProxy.inc.html#a474">474</a></span>)
+		<span class="method-title">java_begin_document</span> (line <span class="line-number"><a href="../__filesource/fsource_VM Bridge__JavaProxy.inc.html#a470">470</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -267,7 +267,7 @@
 <div class="oddrow">
 	
 	<div>
-		<span class="method-title">java_closure</span> (line <span class="line-number"><a href="../__filesource/fsource_VM Bridge__JavaProxy.inc.html#a458">458</a></span>)
+		<span class="method-title">java_closure</span> (line <span class="line-number"><a href="../__filesource/fsource_VM Bridge__JavaProxy.inc.html#a454">454</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -310,13 +310,13 @@
 <div class="evenrow">
 	
 	<div>
-		<span class="method-title">java_context</span> (line <span class="line-number"><a href="../__filesource/fsource_VM Bridge__JavaProxy.inc.html#a393">393</a></span>)
+		<span class="method-title">java_context</span> (line <span class="line-number"><a href="../__filesource/fsource_VM Bridge__JavaProxy.inc.html#a389">389</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
 <p class="short-description">Returns the jsr223 script context handle.</p>
 <p class="description"><p>Returns the jsr223 script context handle.
- Example which closes over the current environment and passes it back to java: <div class="src-code"><ol><li><div class="src-line">&nbsp;<span class="src-id">java_get_context</span><span class="src-sym">(</span><span class="src-sym">)</span><span class="src-sym">-&gt;</span><span class="src-id">call</span><span class="src-sym">(</span><a href="../VM Bridge/_JavaProxy.inc.html#functionjava_closure">java_closure</a><span class="src-sym">(</span><span class="src-sym">))&nbsp;</span>||&nbsp;<span class="src-key">die&nbsp;</span><span class="src-str">&quot;Script&nbsp;should&nbsp;be&nbsp;called&nbsp;from&nbsp;java&quot;</span><span class="src-sym">;</span></div></li>
+ Example which closes over the current environment and passes it back to java: <div class="src-code"><ol><li><div class="src-line">&nbsp;<span class="src-key">if</span><span class="src-sym">(</span><a href="../VM Bridge/_JavaBridge.inc.html#functionjava_is_false">java_is_false</a><span class="src-sym">(</span><span class="src-id">java_get_context</span><span class="src-sym">(</span><span class="src-sym">)</span><span class="src-sym">-&gt;</span><span class="src-id">call</span><span class="src-sym">(</span><a href="../VM Bridge/_JavaProxy.inc.html#functionjava_closure">java_closure</a><span class="src-sym">(</span><span class="src-sym">))))&nbsp;</span><span class="src-key">die&nbsp;</span><span class="src-str">&quot;Script&nbsp;should&nbsp;be&nbsp;called&nbsp;from&nbsp;java&quot;</span><span class="src-sym">;</span></div></li>
 </ol></div>
  It is possible to access implicit web objects (the session, the application store etc.) from the context. Please see the JSR223 documentation for details. Example: <div class="src-code"><ol><li><div class="src-line">&nbsp;<span class="src-id">java_get_context</span><span class="src-sym">(</span><span class="src-sym">)</span><span class="src-sym">-&gt;</span><span class="src-id">getHttpServletRequest</span><span class="src-sym">(</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
 </ol></div>
@@ -344,12 +344,13 @@
 <div class="oddrow">
 	
 	<div>
-		<span class="method-title">java_end_document</span> (line <span class="line-number"><a href="../__filesource/fsource_VM Bridge__JavaProxy.inc.html#a487">487</a></span>)
+		<span class="method-title">java_end_document</span> (line <span class="line-number"><a href="../__filesource/fsource_VM Bridge__JavaProxy.inc.html#a485">485</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
-<p class="short-description">Ends stream mode. stream mode raised an exception.</p>
-<p class="description"><p>Ends stream mode. Fires a JavaException if any statement executed during stream mode raised an exception.</p></p>
+<p class="short-description">Ends stream mode.</p>
+<p class="description"><p>Ends stream mode.
+ Fires a JavaException if any statement executed during stream mode raised an exception.</p></p>
 	<ul class="tags">
 				<li><span class="field">access:</span> public</li>
 			</ul>
@@ -497,7 +498,7 @@
 <div class="evenrow">
 	
 	<div>
-		<span class="method-title">java_server_name</span> (line <span class="line-number"><a href="../__filesource/fsource_VM Bridge__JavaProxy.inc.html#a359">359</a></span>)
+		<span class="method-title">java_server_name</span> (line <span class="line-number"><a href="../__filesource/fsource_VM Bridge__JavaProxy.inc.html#a355">355</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -526,7 +527,7 @@
 <div class="oddrow">
 	
 	<div>
-		<span class="method-title">java_session</span> (line <span class="line-number"><a href="../__filesource/fsource_VM Bridge__JavaProxy.inc.html#a344">344</a></span>)
+		<span class="method-title">java_session</span> (line <span class="line-number"><a href="../__filesource/fsource_VM Bridge__JavaProxy.inc.html#a340">340</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -642,7 +643,7 @@
 	</div>
 	
 	<p class="notes" id="credit">
-		Documentation generated on Sat, 15 Nov 2008 10:44:21 +0100 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.0a2</a>
+		Documentation generated on Sun, 23 Nov 2008 10:14:04 +0100 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.0a2</a>
 	</p>
 	</div></body>
 </html>

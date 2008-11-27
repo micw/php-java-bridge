@@ -568,8 +568,8 @@ Build and execution instructions:
   or IBM java instead.
 
 ---------------------------------------------
-  FreeBSD and Mac OSX issues
-  --------------------------
+  FreeBSD issues
+  --------------
   
   BSD variants contain an incorrect implementation of Nagle's
   algorithm, which interacts badly with the ack delay found in the
@@ -578,9 +578,9 @@ Build and execution instructions:
   If you use an operating system which does not contain the TCP/IP ack
   delay fix, please upgrade your operating system to either Windows >=
   2000, Linux >= RedHat Enterprise Linux 5 or (Open-)Solaris (any
-  version).
+  version) or OSX >= 10.4.
 
-  A workaround for Mac OSX or BSD is to switch off Nagle's algorithm
+  A workaround for BSD is to switch off Nagle's algorithm
   in the operating system kernel or to use Unix Domain Sockets instead
   of BSD TCP/IP sockets:
 

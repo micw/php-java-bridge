@@ -52,7 +52,7 @@ import php.java.bridge.http.IContextFactory;
  *@see php.java.script.InvocablePhpScriptEngine
  *@see php.java.script.PhpScriptEngine
  */
-public abstract class SimplePhpScriptEngine extends AbstractScriptEngine implements java.io.Closeable {
+abstract class SimplePhpScriptEngine extends AbstractScriptEngine implements java.io.Closeable {
 
 	
     /**

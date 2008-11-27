@@ -1,8 +1,6 @@
 <?php require_once("java/Java.inc");
 $session = java_session();
 
-java_autoload();
-
 /* The name of the remote document */
 $name = "RMIdocument";
 
@@ -12,8 +10,8 @@ if(!java_values($doc=$session->get("$name")))
 
 try {
   /* add pages to the remote document */
-  $doc->addPage(new Page(0, "this is page 1"));
-  $doc->addPage(new Page(0, "this is page 2"));
+  $doc->addPage(new java("Page", 0, "this is page 1"));
+  $doc->addPage(new java("Page", 0, "this is page 2"));
 
   /* and print a summary */
   print java_values($doc->analyze()) . "\n";
@@ -42,15 +40,14 @@ if($_GET['logout']) {
  */
 function createDocument($jndiname, $serverArgs) {
   // find initial context
-  $initial = new javax_naming_InitialContext($serverArgs);
+  $initial = new java("javax.naming.InitialContext", $serverArgs);
   
   try {
     // find the service
     $objref  = $initial->lookup("$jndiname");
     
     // access the home interface
-    $home = javax_rmi_PortableRemoteObject::type()->narrow($objref, 
-						   DocumentHome::type());
+    $home = java("javax.rmi.PortableRemoteObject")->narrow($objref, java("DocumentHome"));
     if(java_is_null($home)) throw new Exception("home");
 
     // create a new remote document and return it

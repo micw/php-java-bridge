@@ -177,10 +177,10 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * The servlet may use this procedure to check for a new context factory.
      * @param id The existing id.
      * @return The factory or null
-     * @throws IllegalStateException if the context is in use.
+     * @throws SecurityException if the context contains information.
      */
     public static synchronized IContextFactory peek(String id) {
-	if(liveContexts.get(id)!=null) throw new IllegalStateException(id);
+	if(liveContexts.get(id)!=null) throw new SecurityException(id);
 	ContextFactory factory = (ContextFactory) contexts.get(id);
 	return factory == null ? null : factory.visitor;
     }

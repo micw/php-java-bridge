@@ -366,7 +366,7 @@ function java_server_name() {
  *
  * Example which closes over the current environment and passes it back to java:
  * <code>
- * java_get_context()->call(java_closure()) || die "Script should be called from java";
+ * if(java_is_false(java_get_context()->call(java_closure()))) die "Script should be called from java";
  * </code>
  *
  * It is possible to access implicit web objects (the session, the
@@ -476,7 +476,9 @@ function java_begin_document() {
   $client->isAsync+=1;
 }
 /**
- * Ends stream mode. Fires a JavaException if any statement executed during
+ * Ends stream mode. 
+ * 
+ * Fires a JavaException if any statement executed during
  * stream mode raised an exception.
  * @access public
  */

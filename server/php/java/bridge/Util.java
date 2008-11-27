@@ -64,7 +64,7 @@ public final class Util {
     static Class CLRAssembly;
     
     /** Wait for the second Java statement of a script (in ms). Default is to wait for one minute. 
-     * @see system property <code>php.java.bridge.max_wait</code>
+     * See also system property <code>php.java.bridge.max_wait</code>
      */
     public static int MAX_WAIT;
     
@@ -91,7 +91,7 @@ public final class Util {
          * @param logger The specified logger.
          */
         public Logger(ILogger logger) {
-            try {this.clogger = Log4jLogger.createChainsawLogger();} catch (Throwable t) {
+            try {this.clogger = ChainsawLogger.createChainsawLogger();} catch (Throwable t) {
         	if(Util.logLevel>5) t.printStackTrace();
                 this.logger = logger;
             }

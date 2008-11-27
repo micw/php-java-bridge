@@ -368,8 +368,8 @@ public abstract class FastCGIServlet extends CGIServlet {
 	    try {
 	        parseBody();
 	    } catch (ConnectionException ex) {
-	        Util.logError("PHP application terminated unexpectedly, have you started php-cgi with the environment setting PHP_FCGI_MAX_REQUESTS=" + php_fcgi_max_requests + "? Trying again using a new connection: " + ex);
-	        parseBody();
+	        Util.logError("PHP application terminated unexpectedly, have you started php-cgi with the environment setting PHP_FCGI_MAX_REQUESTS=" + php_fcgi_max_requests + "?  Error: " + ex);
+	        throw ex;
 	    }
 	}
 	protected void execute() throws IOException, ServletException {

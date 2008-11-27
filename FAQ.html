@@ -18,21 +18,11 @@ Furthermore IBM's Zero framework for Eclipse contains a PHP interpreter written 
 <p>A Java extension does not exist, so you can't enable it.</p>
 <p>The VM Bridge is a network protocol, it requires a running Java VM, e.g. Apache/Tomcat. Or, if you want to call PHP libraries from Java, a running PHP container, e.g. Apache or IIS.</p>
 
-<H4>What about portability?</H4>
-<p>A portable PHP application can use the "new Java(...)" constructor
-and the "java(...)" function. To access a Java type use
-<blockquote>
-<code>
-$System = java("java.lang.System");
-</code>
-</blockquote>
-To create an instance of a Java type use
-<blockquote>
-<code>
-$hashMap = new java("java.util.HashMap");
-</code>
-</blockquote>
-</p>
+<H4>What do I need to communicate with Java?</H4>
+<p>Only the PHP code from <code>Java.inc</code> and a running Java application, for example <code>JavaBridge.jar</code>, or a Java servlet, for example <code>JavaBridge.war</code>.</p>
+
+<H4>What do I need to communicate with PHP?</H4>
+<p>Only the PHP code from <code>JavaProxy.php</code> within your PHP web application and the Java libraries <code>JavaBridge.jar</code>, <code>php-script.jar</code> and <code>php-servlet.jar</code> and a <code>ContextLoaderListener</code> declaration within your Java web application.</p>
 
 <H4>Do I need a Java Application Server or Servlet Engine?</H4>
 <p>Java needs an execution environment. Although there's a "java.so"
@@ -133,52 +123,6 @@ php.java.bridge.global.properties file, see the JavaBridge.jar zip
 file (contained in the JavaBridge.war zip file) for details.
 </p>
 
-<H4>How do I start the bridge back end when there's another Java VM listening on port 8080?</H4>
-<p>Simply deploy the VM Bridge web archive into the servlet engine or application server listening on port 8080. Or use a different port.</p>
-
-<H4>What's the difference between SERVLET_LOCAL:8080 and INET_LOCAL:8080?</H4>
-<p>The standalone option SERVLET_LOCAL emulates a servlet engine and starts a HTTP server which can select the fastest channel supported on this operating system. On Linux this is a named pipe created in /dev/shm or INET_LOCAL as a fall back.</p>
-<p>INET_LOCAL always uses local TCP socket communication.</p>
-
-<H4>Whenever I reboot my computer I have to start the bridge back end again. How can I automate this?</H4>
-<p>Download and install a servlet engine or J2EE server as a Windows
-or Unix service.</p>
-
-<H4>Do I have to require Java.inc in each of my scripts? Isn't that very slow?</H4>
-<p>In order to communicate with Java, a PHP "Java" class definition is needed. Here's a simple PHP "Java" class definition which fits into one line:
-<blockquote>
-<code>
-&lt;?php<br>
-// The following is the "Java" class definition, stripped down to fit into one line<br>
-// To use this sample start Java with: java -jar JavaBridge.jar INET:9267<br>
-// Or enable java.so or php_java.dll, which automatically start the above<br>
-// process Then type: php sample.php<br>
-//<br>
-class P {const Pc="&lt;C v=\"%s\" p=\"I\"&gt;", PC="&lt;/C&gt;"; const Pi="&lt;I v=\"%d\" m=\"%s\" p=\"I\"&gt;", PI="&lt;/I&gt;"; const Ps="&lt;S v=\"%s\"/&gt;", Pl="&lt;L v=\"%d\" p=\"%s\"/&gt;", Po="&lt;O v=\"%d\"/&gt;"; private $c; function str($s){fwrite($this-&gt;c, sprintf(self::Ps, $s));} function obj($s){fwrite($this-&gt;c, sprintf(self::Po, $s-&gt;java));} function __construct(){$this-&gt;c=fsockopen("127.0.0.1",9267);} function cBeg($s){fwrite($this-&gt;c, sprintf(self::Pc, $s));} function cEnd(){fwrite($this-&gt;c, self::PC);} function iBeg($o, $m){fwrite($this-&gt;c, sprintf(self::Pi, $o, $m));} function iEnd(){fwrite($this-&gt;c, self::PI);} function val($s){if(is_object($s))$this-&gt;obj($s);else $this-&gt;str((string)$s);} function res(){$r=sscanf(fread($this-&gt;c, 8192),"%s v=\"%[^\&quot;]\"");return $r[1];}} function gP() {static $p; if(!$p) $p=new P(); return $p;} class Java {var $java, $p; function __construct() {if(!func_num_args()) return; $this-&gt;p=gP(); $ar=func_get_args(); $this-&gt;p-&gt;cBeg(array_shift($ar)); foreach($ar as $arg) $this-&gt;p-&gt;val($arg); $this-&gt;p-&gt;cEnd(); $ar = sscanf($this-&gt;p-&gt;res(), "%d"); $this-&gt;java=$ar[0];} function __call($meth, $args) {$this-&gt;p-&gt;iBeg($this-&gt;java, $meth); foreach($args as $arg) $this-&gt;p-&gt;val($arg); $this-&gt;p-&gt;iEnd(); $proxy = new Java(); $ar = sscanf($this-&gt;p-&gt;res(), "%d"); $proxy-&gt;java=$ar[0]; $proxy-&gt;p=$this-&gt;p; return $proxy;} function toString() {$this-&gt;p-&gt;iBeg("", "castToString"); $this-&gt;p-&gt;val($this); $this-&gt;p-&gt;iEnd(); return base64_decode($this-&gt;p-&gt;res());}}<br>
-<br>
-// Test<br>
-$i1 = new Java("java.math.BigInteger",  "1");<br>
-$i2 = new Java("java.math.BigInteger",  "2");<br>
-$i3 = $i1-&gt;add($i2);<br>
-echo $i3-&gt;toString() . "\n";<br>
-<br>
-?&gt;<br>
-</code>
-</blockquote>
-</p>
-<p>The above simple "Java" class assumes that some Java VM has been
-started on host "127.0.0.1", port "9267". And it cannot handle values
-larger than 8192 bytes. Therefore the VM Bridge
-library <code>Java.inc</code> should be used. Scripts should contain
-the statement
-<blockquote>
-<code>
-&nbsp;&nbsp;require_once("...java/Java.inc");
-</code>
-</blockquote>
-at the beginning of each script. PHP compiles and caches PHP scripts, the <code>Java.inc</code> library is loaded only once.
-</p>
-
 <H4>Can I use Java libraries without installing java?</H4> <p>Yes. On a GNU operating system (e.g.: GNU/Linux, GNU/windows (aka "cygwin"), ...) you can use the GCC compiler to compile Java classes to native code. 
 Simply compile the C based extension and omit the
 <code>--with-java=</code> configure option. The bridge will use the
@@ -201,67 +145,6 @@ echo '&lt;?php require_once("http://localhost:8080/JavaBridge/java/Java.inc"); e
 </blockquote>
 works in the shell but not within apache, then there's something wrong with your <code>php.ini</code> file.
 </p>
-<H4>How do I create a distributable PHP web application and how can users publish PHP/Java pages?</H4>
-<p>
-Check if the ISP supports Java. Look for a servlet engine like "tomcat" or a J2EE application server like "resin". Check if your ISP supports PHP >= 4.3.2.
-</p>
-<p>
-In the following example we'll call our web context "webContext".
-</p>
-<p> Unzip the JavaBridge.jar file and edit Java.inc, replace 8080 with your j2EE port number and JAVA_SERVLET=On to JAVA_SERVLET=User. Example for Linux:
-<blockquote>
-<code>
-mkdir webContext <br>
-cd webContext <br>
-jar xvf ../JavaBridge.war<br>
-</code>
-</blockquote>
-Edit <code>java/Java.inc</code> as follows (lines marked with a "-" should be 
-removed, lines marked with a "+" should be added):
-<blockquote>
-<code>
-&nbsp;&nbsp;if(!defineHostFromInitialQuery($JAVA_BASE)) {<br>
--&nbsp;define("JAVA_HOSTS", "127.0.0.1:8080");<br>
-+&nbsp;define("JAVA_HOSTS", "127.0.0.1:YOUR_J2EE_PORT_NUMBER");<br>
--&nbsp;define("JAVA_SERVLET", "On");<br>
-+&nbsp;define("JAVA_SERVLET", "User");<br>
-&nbsp;&nbsp;}<br>
-</code>
-</blockquote>
-</p>
-<p>
-Create a Java web archive, for example "webContext.war". Example for Linux:
-<blockquote>
-<code>
-# ... still within the webContext directory ... <br>
-cp ../myJavaLibs/*.jar WEB-INF/lib/ <br>
-cp ../myPhpPages/*.php . <br>
-jar cvf ../webContext.war *<br>
-</code>
-</blockquote>
-Users can deploy it into their J2EE application server or servlet engine. Example for Linux:
-<blockquote>
-<code>
-cp ../webContext.war /usr/share/tomcat5/webapps/<br>
-</code>
-</blockquote>
-</p>
-<p>
-Then they need to copy or symlink the created web context "webContext" (or whatever you've called it) to their Apache or IIS document root directory. Example for Linux:
-<blockquote>
-<code>
-ln -s /usr/share/tomcat5/webapps/webContext /var/www/html/webContext<br>
-</code>
-</blockquote>
-</p>
-<p>
-After restarting the HTTP server, they can
-browse to <code>http://HOSTNAME/webContext/yourPhpScript.php</code>. Again, replace the web context "webContext" with the name of your web context.
-</p>
-<p>NOTE: If users want to run the Java VM on a different computer, they need to start 
-Tomcat or the J2EE server on that computer using the option <code>-Dphp.java.bridge.promiscuous=true</code>.
-And change the <code>127.0.0.1</code> above to the IP address of the computer running
-the Java VM and make sure that the computer cannot be accessed directly from the internet!
 
 <H4>Can I use Python instead of PHP?</H4>
 <p>Yes, see the examples folder from the source download.</p>
@@ -271,6 +154,9 @@ the Java VM and make sure that the computer cannot be accessed directly from the
 a "MonoBridge.exe" generated from "JavaBridge.jar". If you want to
 compile from source, use the configure
 option <code>--with-mono</code>.</p>
+
+<H4>What does a "protocol error ..." mean?</H4>
+<p>That your Java or .NET VM has problems, for example an OutOfMemoryError. Check the back end (Tomcat/J2EE/.NET/...) log for details.</p>
 
 <H4>Does it support PHP 4?</H4>
 <p>No. Use VM Bridge version 4.3.2 or below instead.</p>
@@ -558,6 +444,15 @@ Download the J2EE binary and copy the <code>JavaBridge.jar</code> and the <code>
 </blockquote>
 </p>
 <p>
+To call Java code from PHP, copy the <code>java/Java.inc</code> 
+to some directory and require it as usual, e.g.: <code>require_once("java/Java.inc");</code>.
+</p>
+<p>
+To call PHP code from Java, copy the <code>java/JavaProxy.php</code> 
+to some <em>web</em>directory and use the EngineFactory as usual, e.g.: <code>EngineFactory.getInvocablePhpScriptEngine(this, application, request, response);</code> or, if PHP is running somewhere else: <code>EngineFactory.getInvocablePhpScriptEngine(..., 80, "/phpApp/JavaProxy.php");</code>.
+</p>
+
+<p>
 Copy the files <code>sessionSharing.jsp</code> and <code>sessionSharing.php</code> from the <code>JavaBridge.war</code> to <code>myApplication</code> and create <code>myApplication.war</code>, for example with the commands: <code>cd myApplication; jar cf ../myApplication.war *</code>. </p>
 <p>The web archive can now be distributed, copy it to the tomcat <code>webapps</code> directory and re-start tomcat. Visit <code>http://localhost/myApplication/sessionSharing.php</code> and <code>http://localhost/myApplication/sessionSharing.jsp</code>.
 </p>
@@ -566,7 +461,7 @@ Copy the files <code>sessionSharing.jsp</code> and <code>sessionSharing.php</cod
 <H4>I want to use Tomcat's security manager, how do I install the bridge?</H4>
 </a>
 <p>
-Remove all VM Bridge libraries from your application.war file and install them in the tomcat lib folder or some other folder which has the necessary privileges.
+Install the PHP/Java Bridge for all web application as described <a href="#global-servlet">here</a>.
 </p>
 
 
@@ -687,7 +582,7 @@ function java($clazz) {<br>
 
 <H4>Why does java_context()-&gt;getHttpServletRequest()-&gt;getSession() return null?</H4>
 <p>
-PHP scripts must explicitly allocate a session with <code><a href="documentation/PHP-API/html/java_8c.html#doc25">java_session()</a></code>. For example:
+PHP scripts must explicitly allocate a session with <code><a href="API/VM%20Bridge/_JavaProxy.inc.html#functionjava_session">java_session()</a></code>. For example:
 <blockquote>
 <code>
 java_session(); <br>
@@ -710,15 +605,7 @@ configuration.</p>
 
 <H4>How do I make my script state (objects or variables) persistent?</H4> 
 <p>If you must code it yourself: with
-e.g. <code>java_session()-&gt;put("buf", $stringBuffer)</code> or via
-<code>$_SESSION["buf"]=$stringBuffer</code>. The
-<code>$_SESSION</code> is syntactic sugar provided by the <a
-href="http://www.php.net/manual/en/ref.session.php">php session
-module</a>, it uses <code><a
-href="documentation/PHP-API/html/java_8c.html#doc25">java_session()<a></code>
-internaly. If you don't want depend on the PHP session module, for
-example if you have compiled PHP without the <code>session.so</code>,
-use java_session() instead.</p> 
+e.g. <code>java_session()-&gt;put("buf", $stringBuffer)</code></p> 
 
 
 <H4>How many threads does the bridge start?</H4> 
@@ -876,16 +763,6 @@ OutOfMemoryErrors may happen because a cached object cannot be released, either 
 If the OutOfMemoryError persists, this means that a thread outside of the VM Bridge has caused this error condition.
 </p>
 <p>
-The following code example could cause an OutOfMemoryError:<br><br>
-<code>
-&lt;?php<br>
-session_start();<br>
-if(!$_SESSION["buffer"]) $_SESSION["buffer"]=new java("java.lang.StringBuffer");<br>
-$_SESSION["buffer"]-&gt;append(...);<br>
-?&gt;
-</code>
-</p>
-<p>
 OutOfMemory conditions can be debugged by running the back end with e.g.:<br><br>
 <code>
 java -agentlib:hprof=heap=sites -jar JavaBridge.jar<br>
@@ -894,7 +771,7 @@ java -agentlib:hprof=heap=sites -jar JavaBridge.jar<br>
  
 <H4>How can PHP classes extend Java classes and Java methods?</H4> 
 <p>
-By using <a href="documentation/PHP-API/html/java_8c.html#doc32"><code>java_closure()</code></a> and the visitor pattern for example. The <code>tests.php5</code> folder contains a <code>script_api.php</code> example which shows how to implement <code>java.lang.Runnable</code> to run multiple PHP threads, concurrently accessing a shared resource.
+By using <a href="API/VM%20Bridge/_JavaProxy.inc.html#functionjava_closure"><code>java_closure()</code></a> and the visitor pattern for example. The <code>tests.php5</code> folder contains a <code>script_api.php</code> example which shows how to implement <code>java.lang.Runnable</code> to run multiple PHP threads, concurrently accessing a shared resource.
 </p> 
 <H4>How can I execute PHP code on the server?</H4> 
 <p>
@@ -1027,6 +904,52 @@ public class Varargs {<br>
 <H4>NULL tests</H4>
 <p>
 Use <code>java_is_null($value)</code> or <code>is_null (java_values ($value))</code> to test for a (Java-) NULL value.
+</p>
+
+<H4>How do I start the bridge back end when there's another Java VM listening on port 8080?</H4>
+<p>Simply deploy the VM Bridge web archive into the servlet engine or application server listening on port 8080. Or use a different port.</p>
+
+<H4>What's the difference between SERVLET_LOCAL:8080 and INET_LOCAL:8080?</H4>
+<p>The standalone option SERVLET_LOCAL emulates a servlet engine and starts a HTTP server which can select the fastest channel supported on this operating system. On Linux this is a named pipe created in /dev/shm or INET_LOCAL as a fall back.</p>
+<p>INET_LOCAL always uses local TCP socket communication.</p>
+
+<H4>Whenever I reboot my computer I have to start the bridge back end again. How can I automate this?</H4>
+<p>Download and install a servlet engine or J2EE server as a Windows
+or Unix service.</p>
+
+<H4>Do I have to require Java.inc in each of my scripts? Isn't that very slow?</H4>
+<p>In order to communicate with Java, a PHP "Java" class definition is needed. Here's a simple PHP "Java" class definition which fits into one line:
+<blockquote>
+<code>
+&lt;?php<br>
+// The following is the "Java" class definition, stripped down to fit into one line<br>
+// To use this sample start Java with: java -jar JavaBridge.jar INET:9267<br>
+// Or enable java.so or php_java.dll, which automatically start the above<br>
+// process Then type: php sample.php<br>
+//<br>
+class P {const Pc="&lt;C v=\"%s\" p=\"I\"&gt;", PC="&lt;/C&gt;"; const Pi="&lt;I v=\"%d\" m=\"%s\" p=\"I\"&gt;", PI="&lt;/I&gt;"; const Ps="&lt;S v=\"%s\"/&gt;", Pl="&lt;L v=\"%d\" p=\"%s\"/&gt;", Po="&lt;O v=\"%d\"/&gt;"; private $c; function str($s){fwrite($this-&gt;c, sprintf(self::Ps, $s));} function obj($s){fwrite($this-&gt;c, sprintf(self::Po, $s-&gt;java));} function __construct(){$this-&gt;c=fsockopen("127.0.0.1",9267);} function cBeg($s){fwrite($this-&gt;c, sprintf(self::Pc, $s));} function cEnd(){fwrite($this-&gt;c, self::PC);} function iBeg($o, $m){fwrite($this-&gt;c, sprintf(self::Pi, $o, $m));} function iEnd(){fwrite($this-&gt;c, self::PI);} function val($s){if(is_object($s))$this-&gt;obj($s);else $this-&gt;str((string)$s);} function res(){$r=sscanf(fread($this-&gt;c, 8192),"%s v=\"%[^\&quot;]\"");return $r[1];}} function gP() {static $p; if(!$p) $p=new P(); return $p;} class Java {var $java, $p; function __construct() {if(!func_num_args()) return; $this-&gt;p=gP(); $ar=func_get_args(); $this-&gt;p-&gt;cBeg(array_shift($ar)); foreach($ar as $arg) $this-&gt;p-&gt;val($arg); $this-&gt;p-&gt;cEnd(); $ar = sscanf($this-&gt;p-&gt;res(), "%d"); $this-&gt;java=$ar[0];} function __call($meth, $args) {$this-&gt;p-&gt;iBeg($this-&gt;java, $meth); foreach($args as $arg) $this-&gt;p-&gt;val($arg); $this-&gt;p-&gt;iEnd(); $proxy = new Java(); $ar = sscanf($this-&gt;p-&gt;res(), "%d"); $proxy-&gt;java=$ar[0]; $proxy-&gt;p=$this-&gt;p; return $proxy;} function toString() {$this-&gt;p-&gt;iBeg("", "castToString"); $this-&gt;p-&gt;val($this); $this-&gt;p-&gt;iEnd(); return base64_decode($this-&gt;p-&gt;res());}}<br>
+<br>
+// Test<br>
+$i1 = new Java("java.math.BigInteger",  "1");<br>
+$i2 = new Java("java.math.BigInteger",  "2");<br>
+$i3 = $i1-&gt;add($i2);<br>
+echo $i3-&gt;toString() . "\n";<br>
+<br>
+?&gt;<br>
+</code>
+</blockquote>
+</p>
+<p>The above simple "Java" class assumes that some Java VM has been
+started on host "127.0.0.1", port "9267". And it cannot handle values
+larger than 8192 bytes. Therefore the VM Bridge
+library <code>Java.inc</code> should be used. Scripts should contain
+the statement
+<blockquote>
+<code>
+&nbsp;&nbsp;require_once("...java/Java.inc");
+</code>
+</blockquote>
+at the beginning of each script. PHP compiles and caches PHP scripts, the <code>Java.inc</code> library is loaded only once.
 </p>
 
 

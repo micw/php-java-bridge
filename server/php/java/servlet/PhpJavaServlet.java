@@ -64,7 +64,9 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     private ContextServer contextServer;
     protected int logLevel = -1;
     
-    private static Object illegalStateTest = new Object();
+    /** Make sure that there's exactly one instance per class loader 
+     * If initialized is true, we skip further initialization, but the shared config must not be destroyed */
+    private static boolean initialized = false;
     
     /**
      * If you want to use the HTTP tunnel , set the
@@ -76,18 +78,15 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     
     /**@inheritDoc*/
     public void init(ServletConfig config) throws ServletException {
-	if (illegalStateTest == null) {
-	    String msg = "FATAL ERROR: You're trying to recycle a destroyed servlet. Please unload this class!";
+	if (initialized) {
+	    String msg = "FATAL ERROR: There can be only one PhpJavaServlet per classloader!";
 	    System.err.println (msg);
 	    log (msg);
 	    throw new ServletException (msg);
 	}
+    	initialized = true;
 	
  	String value;
-        try {
-	    value = config.getInitParameter("servlet_log_level");
-	    if(value!=null && value.trim().length()!=0) logLevel=Integer.parseInt(value.trim());
-        } catch (Throwable t) {Util.printStackTrace(t);}      
   	try {
 	    value = config.getInitParameter("promiscuous");
 	    if(value==null) value="";
@@ -102,12 +101,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     	 
     	super.init(config);
        
-    	String logFile = null;
-        try {
-	    logFile = config.getInitParameter("servlet_log_file");
-        } catch (Throwable t) {Util.printStackTrace(t);}      
-    	if(!(Util.setConfiguredLogger(logFile)))
-    		Util.setLogger(new Util.Logger(new Logger(config.getServletContext())));
+    	Util.setLogger(new Util.Logger(new Logger(config.getServletContext())));
 
 	if(Util.VERSION!=null)
     	    Util.logMessage("PHP/Java Bridge servlet "+servletContextName+" version "+Util.VERSION+" ready.");
@@ -119,7 +113,6 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     public void destroy() {
       	contextServer.destroy();
     	super.destroy();
-    	illegalStateTest = null;
     }
     /**
      * This hook can be used to create a custom context factory. The default implementation checks if there's a ContextFactory 

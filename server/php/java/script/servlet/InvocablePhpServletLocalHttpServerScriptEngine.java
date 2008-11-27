@@ -111,7 +111,7 @@ import php.java.servlet.ContextLoaderListener;
  * System.out.println("result from PHP:" + invocableEngine.invoceFunction(f, new Object[]{"arg1"}));
  * </code>
  * </blockquote> 
- * <li> Release the invocable by evaluating the engine again with a NULL value.
+ * <li> Release the invocable:
  * <blockquote>
  * <code>
  * ((Closeable)scriptEngine).close();

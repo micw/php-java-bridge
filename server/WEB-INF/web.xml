@@ -37,15 +37,6 @@
          </init-param>
         -->
 
-         <!-- Default is the java.log_level from the php.ini. -->
-         <!-- See also the system property php.java.bridge.default_log_level -->
-        <!--
-         <init-param>
-           <param-name>servlet_log_level</param-name>
-           <param-value>2</param-value>
-         </init-param>
-        -->
-
         <load-on-startup>0</load-on-startup>
     </servlet>
 

@@ -2,7 +2,7 @@
 
 /** adjust these values **/
 $J2EE_LIBRARY_DIR="/opt/SUNWappserver/lib";
-$HOST="192.168.5.203";
+$HOST="127.0.0.1";
 $PORT=8080;
 
 
@@ -20,7 +20,7 @@ java_require("$here;$J2EE_LIBRARY_DIR");
 
 // compile wsdl, if necessary
 $stub=new java("java.io.File", "$here/org");
-if(!$stub->exists()) {
+if(java_is_false($stub->exists())) {
   $java=ini_get("java.java"); if(!$java) $java="java";
   echo "Compiling http://$HOST:$PORT/$SERVICE ...";
   system("$java $ws_libs com.sun.tools.ws.WsImport -keep http://$HOST:$PORT/$SERVICE");

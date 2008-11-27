@@ -1,5 +1,12 @@
 1i\
-<?php
+<?php\
+// compiled from JavaBridge.inc Options.inc Client.inc GlobalRef.inc NativeParser.inc Parser.inc Protocol.inc SimpleParser.inc JavaProxy.inc\
+// this library can communicate with a Java VM. Customization examples (see Options.inc for details):\
+// define ("JAVA_SERVLET", "User");\
+// define ("JAVA_SERVLET", "/MyWebApp/JavaBridge.phpjavabridge");\
+// define ("JAVA_HOSTS", "127.0.0.1:8787");\
+// define ("JAVA_PREFER_VALUES", 1);\
+// define ("JAVA_DEBUG", true);
 $a\
 }\
 ?>

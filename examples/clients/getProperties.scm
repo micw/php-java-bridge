@@ -60,13 +60,19 @@
 	(begin (string-set! buf i c))))))
 
 ;; real work starts here
-(write 2 outp)
-  ;; access java.lang.System
-(display "<C value=\"java.lang.System\" p=\"C\" id=\"0\"></C>" outp)
+
+;; header: prefer values, not base 64 encoded
+(display (integer->char #o177) outp) 
+(display (integer->char #o101) outp)
+
+;; access java.lang.System
+(display "<C value=\"java.lang.System\" p=\"C\"></C>" outp)
 (read-document buf inp)
 
 ;; ... and ask for getProperties
-(display "<I value=\"1\" m=\"getProperties\" p=\"Invoke\" id=\"0\"></I>" outp)
+(display "<I value=\"1\" m=\"getProperties\" p=\"Invoke\"></I>" outp)
+(read-document buf inp)
+(display "<I value=\"0\" m=\"getValues\" p=\"Invoke\"><Object v=\"2\"/></I>" outp)
 (let ((count (read-document buf inp)))
   ;; format the result
   (transform (substring buf 0 count) "formatArray.xsl") 

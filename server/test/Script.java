@@ -14,7 +14,7 @@ public class Script {
    */
   public static void main(String[] args) throws IOException, ScriptException {
       ScriptEngine eng = (new ScriptEngineManager()).getEngineByName("php");
-      System.out.println(eng.eval("<?php java_context()->call(java_closure()) || print('test okay'); ?>"));
+      System.out.println(eng.eval("<?php if(java_is_true(java_context()->call(java_closure()))) print('test okay'); ?>"));
       eng.eval((String)null);
   }
 }

@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 5.3.3
+%define version 5.3.3.1
 %define release 1
 %define PHP_MAJOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | sed 's/\\\..*$//')
 %define PHP_MINOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | LANG=C cut -d. -f2)
@@ -8,10 +8,10 @@
 %define have_policy_modules %(if test -f /etc/selinux/config && test -d /etc/selinux/%{__policy_tree}/modules; then echo 1; else echo 0; fi)
 %define have_policy_devel %(if test -f %{_datadir}/selinux/devel/Makefile; then echo 1; else echo 0; fi)
 
-%define tomcat_name        tomcat5
+%define tomcat_name			tomcat5
 %define tomcat_webapps		%{_localstatedir}/lib/%{tomcat_name}/webapps
-%define shared_java        %{_datadir}/java
-%define shared_pear        %{_datadir}/pear
+%define shared_java			%{_datadir}/java
+%define shared_pear			%{_datadir}/pear
 
 Name: php-java-bridge
 Summary: PHP Hypertext Preprocessor to Java Bridge
@@ -129,7 +129,7 @@ embedded PHP scripts.
 %prep
 echo Building for PHP %{PHP_MAJOR_VERSION}.
 
-%setup
+%setup -q
 
 %build
 set -x
@@ -157,7 +157,7 @@ echo "using java_dir: $java_dir"
 if test X$java_dir = X; then echo "ERROR: java not installed" >2; exit 1; fi
 
 phpize
-./configure --prefix=%{_exec_prefix} --with-java=$java_dir --with-mono
+./configure --libdir=%{_libdir} --prefix=%{_exec_prefix} --with-java=$java_dir --with-mono
 make
 %if %{have_policy_modules} == 1
 (cd security/module; make -f %{_datadir}/selinux/devel/Makefile; rm -rf tmp;)
@@ -259,12 +259,13 @@ echo $mod_dir/lib >>filelist
 # server also contains the server documentation
 mv server server.backup
 mkdir server
-mv server.backup/documentation server
-mv server.backup/javabridge.policy server 
-mv server.backup/WEB-INF server
-rm -rf server/WEB-INF/lib server/WEB-INF/classes server/WEB-INF/cgi
-mv server.backup/test server
-(cd documentation; ln -s ../server/documentation/API .)
+cp -r server.backup/documentation server
+cp -r server.backup/javabridge.policy server 
+cp server.backup/RunJavaBridge.c server
+cp server.backup/RunMonoBridge.c server
+cp server.backup/natcJavaBridge.c server
+(cd server.backup; find php -name "*.java" -print | cpio -dp ../server)
+cp server.backup/src.zip server
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -273,21 +274,21 @@ rm -rf $RPM_BUILD_ROOT
 if test -f /etc/selinux/config; then
   if test -d /etc/selinux/%{__policy_tree}/modules; then 
 	/sbin/service httpd stop > /dev/null 2>&1
-    %{_sbindir}/semodule -i %{_docdir}/%{name}-%{version}/security/module/php-java-bridge.pp
-    chcon -t javabridge_exec_t %{_libdir}/php/modules/RunJavaBridge
-    chcon -t bin_t %{_libdir}/php/modules/java
+	%{_sbindir}/semodule -i %{_docdir}/%{name}-%{version}/security/module/php-java-bridge.pp
+	chcon -t javabridge_exec_t %{_libdir}/php/modules/RunJavaBridge
+	chcon -t bin_t %{_libdir}/php/modules/java
 	/sbin/service httpd start > /dev/null 2>&1
   else
 	te=/etc/selinux/%{__policy_tree}/src/policy/domains/program/php-java-bridge.te
 	fc=/etc/selinux/%{__policy_tree}/src/policy/file_contexts/program/php-java-bridge.fc
-    echo "SECURITY ENHANCED LINUX"
-    echo "-----------------------"
+	echo "SECURITY ENHANCED LINUX"
+	echo "-----------------------"
 	echo "You are running a SELinx system. Please install the policy sources:"
 	echo "rpm -i selinux-policy-%{__policy_tree}-sources-*.rpm"
 	echo "sh %{_docdir}/%{name}-%{version}/security/update_policy.sh \\"
-    echo "                          /etc/selinux/%{__policy_tree}/src/policy"
+	echo "					/etc/selinux/%{__policy_tree}/src/policy"
 	echo "Please see INSTALL and README documents for more information."
-    echo
+	echo
   fi
 fi
 echo "PHP/Java Bridge installed."
@@ -300,20 +301,20 @@ if test -f /etc/selinux/config; then
   if test -d /etc/selinux/%{__policy_tree}/modules; then 
 	/sbin/service httpd stop > /dev/null 2>&1
 	/sbin/service tomcat5 stop > /dev/null 2>&1
-    %{_sbindir}/semodule -i %{_docdir}/%{name}-tomcat-%{version}/security/module/php-java-bridge-tomcat.pp
+	%{_sbindir}/semodule -i %{_docdir}/%{name}-tomcat-%{version}/security/module/php-java-bridge-tomcat.pp
 	/sbin/service httpd start > /dev/null 2>&1
 	/sbin/service tomcat5 start > /dev/null 2>&1
   else
 	te=/etc/selinux/%{__policy_tree}/src/policy/domains/program/php-java-bridge.te
 	fc=/etc/selinux/%{__policy_tree}/src/policy/file_contexts/program/php-java-bridge.fc
-    echo "SECURITY ENHANCED LINUX"
-    echo "-----------------------"
+	echo "SECURITY ENHANCED LINUX"
+	echo "-----------------------"
 	echo "You are running a SELinx system. Please install the policy sources:"
 	echo "rpm -i selinux-policy-%{__policy_tree}-sources-*.rpm"
 	echo "sh %{_docdir}/%{name}-tomcat-%{version}/security/update_policy.sh \\"
-    echo "                          /etc/selinux/%{__policy_tree}/src/policy"
+	echo "							/etc/selinux/%{__policy_tree}/src/policy"
 	echo "Please see INSTALL and README documents for more information."
-    echo
+	echo
   fi
 fi
 if test -d /var/www/html &&  ! test -e /var/www/html/JavaBridge; then
@@ -331,7 +332,7 @@ exit 0
 %preun
 if [ $1 = 0 ]; then
 	/sbin/service httpd stop > /dev/null 2>&1
-    if test -d /etc/selinux/%{__policy_tree}/modules; then 
+	if test -d /etc/selinux/%{__policy_tree}/modules; then 
 		%{_sbindir}/semodule -r javabridge
 	fi
 	/sbin/service httpd start > /dev/null 2>&1
@@ -340,17 +341,17 @@ fi
 %preun tomcat
 if [ $1 = 0 ]; then
 	if test -e /var/www/html/JavaBridge && test -e %{tomcat_webapps}/JavaBridge && test %{tomcat_webapps}/JavaBridge -ef /var/www/html/JavaBridge; then
-      rm -f /var/www/html/JavaBridge;
-    fi
+		rm -f /var/www/html/JavaBridge;
+	fi
 	rm -rf %{tomcat_webapps}/JavaBridge %{tomcat_webapps}/work/*
-    if test -d /etc/selinux/%{__policy_tree}/modules; then 
+	if test -d /etc/selinux/%{__policy_tree}/modules; then 
 		%{_sbindir}/semodule -r javabridge_tomcat
 	fi
 fi
 
 %preun devel
 if [ $1 = 0 ]; then
-   /bin/true
+	/bin/true
 fi
 
 
@@ -365,7 +366,7 @@ fi
 %attr(-,root,root) /etc/php.d/mono.ini
 %attr(111,root,root) %{_libdir}/php/modules/RunMonoBridge
 %attr(755,root,root) %{_libdir}/php/modules/MonoBridge.exe
-%doc README.MONO+NET COPYING CREDITS NEWS tests.mono+net
+%doc README.MONO+NET COPYING CREDITS NEWS
 
 %files itext -f filelist-itext
 %defattr(-,root,root)
@@ -383,4 +384,4 @@ fi
 %files devel -f filelist-devel
 %defattr(-,root,root)
 %attr(755,root,root) %{shared_java}/JavaBridge.jar
-%doc FAQ.html CREDITS README.GNU_JAVA README.MONO+NET ChangeLog README PROTOCOL.TXT COPYING server documentation examples tests.php5 php_java_lib NEWS INSTALL.LINUX INSTALL
+%doc FAQ.html CREDITS README.GNU_JAVA README.MONO+NET ChangeLog README PROTOCOL.TXT COPYING server documentation examples php_java_lib NEWS INSTALL.LINUX INSTALL

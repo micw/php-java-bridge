@@ -5,6 +5,7 @@
 
 import socket
 import sys
+import base64;
 
 HOST = 'localhost'    # The host running the server part of the bridge
 PORT = 9267           # The standard port of the bridge
@@ -30,24 +31,28 @@ if s is None:
     sys.exit(1)
 
 # ask for System.getProperties()
-s.send('<C value="java.lang.System" p="Class" id="0"></C>')
+s.send('<C value="java.lang.System" p="Class"></C>')
 data = s.recv(1024); # System: object=1
-s.send('<I value="1" method="getProperties" p="Invoke" id="0"></I>');
+s.send('<I value="1" method="getProperties" p="Invoke"></I>');
 data = s.recv(1024); # Properties: object=2
 # create a map for the properties object ...
-s.send('<I value="0" method="getPhpMap" p="Invoke" id="0"> <Object value="2"/> </I>')
+s.send('<I value="0" method="getPhpMap" p="Invoke"> <Object value="2"/> </I>')
 data = s.recv(1024); # PhpMap: object=3
 # ... to iterate over the values ...
-s.send('<I value="3" method="hasMore" p="Invoke" id="0"></I>');
+s.send('<I value="3" method="hasMore" p="Invoke"></I>');
 data = s.recv(1024); # yes
-s.send('<I value="3" method="currentKey" p="Invoke" id="0"></I>');
+s.send('<I value="3" method="currentKey" p="Invoke"></I>');
 key = s.recv(1024);  # string: key
 # ... show only the first entry.
-s.send('<I value="3" method="currentData" p="Invoke" id="0"></I>');
+s.send('<I value="3" method="currentData" p="Invoke"></I>');
 data = s.recv(1024); # the string object, #4
 # received the string object, call bridge.castToString(ob#4) to see the string:
-s.send('<I value="0" method="castToString" p="Invoke" id="0"><O value="4"/></I>');
+s.send('<I value="0" method="castToString" p="Invoke"><O value="4"/></I>');
 data = s.recv(1024); # value
 s.close()
 # should have received the first entry from java.lang.System.getProperties()
+data = str(data);
+data = data.replace('<S v="', "");
+data = data.replace('"/>', "");
+data = base64.decodestring(data);
 print 'Received:\n', `data`

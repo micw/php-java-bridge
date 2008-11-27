@@ -33,7 +33,7 @@ done
 cp examples/gui/gtk-button.php examples/gui/gtk-fileselector.php tests.mono+net/test.php tests.mono+net/sample_lib.cs tests.mono+net/sample_lib.dll tests.mono+net/load_assembly.php MONO.STANDALONE
 mkdir MONO.STANDALONE/mono
 cp server/META-INF/java/Mono.inc MONO.STANDALONE/mono
-cp MONO.STANDALONE
+cp README.MONO+NET MONO.STANDALONE
 
 mkdir JAVA.STANDALONE
 for i in JavaBridge.jar javabridge.policy php-script.jar script-api.jar; do
@@ -48,9 +48,10 @@ mkdir JAVA.STANDALONE/java
 cp server/META-INF/java/Java.inc JAVA.STANDALONE/java
 cp INSTALL.STANDALONE JAVA.STANDALONE
 
-cp  src.zip README FAQ.html INSTALL.J2EE INSTALL.J2SE NEWS documentation
+cp  src.zip README FAQ.html PROTOCOL.TXT INSTALL.J2EE INSTALL.J2SE NEWS documentation
+mv examples documentation
 mv server documentation
-list="JAVA.STANDALONE MONO.STANDALONE  documentation/API documentation/README documentation/FAQ.html documentation/INSTALL.J2EE documentation/INSTALL.J2SE documentation/src.zip documentation/NEWS JavaBridge.war documentation/server/documentation documentation/server/php_java_lib documentation/server/test documentation/server/tests.php5 documentation/server/javabridge.policy"
+list="JAVA.STANDALONE MONO.STANDALONE  documentation/API documentation/examples documentation/README documentation/FAQ.html documentation/PROTOCOL.TXT documentation/INSTALL.J2EE documentation/INSTALL.J2SE documentation/src.zip documentation/NEWS JavaBridge.war documentation/server/documentation documentation/server/php_java_lib documentation/server/test documentation/server/tests.php5 documentation/server/javabridge.policy"
 find $list -type d -name "CVS" -print | xargs rm -rf
 
 chmod +x JavaBridge.war
