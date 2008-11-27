@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  <html xmlns="http://www.w3.org/1999/xhtml">
+		<head>
+			<!-- template designed by Marco Von Ballmoos  -->
+			<title>Docs for page JavaBridge.inc</title>
+			<link rel="stylesheet" href="../media/stylesheet.css" />
+						<script src="../media/lib/classTree.js"></script>
+												<script language="javascript" type="text/javascript">
+				var imgPlus = new Image();
+				var imgMinus = new Image();
+				imgPlus.src = "../media/images/plus.png";
+				imgMinus.src = "../media/images/minus.png";
+				
+				function showNode(Node){
+							switch(navigator.family){
+								case 'nn4':
+									// Nav 4.x code fork...
+							var oTable = document.layers["span" + Node];
+							var oImg = document.layers["img" + Node];
+									break;
+								case 'ie4':
+									// IE 4/5 code fork...
+							var oTable = document.all["span" + Node];
+							var oImg = document.all["img" + Node];
+									break;
+								case 'gecko':
+									// Standards Compliant code fork...
+							var oTable = document.getElementById("span" + Node);
+							var oImg = document.getElementById("img" + Node);
+									break;
+							}
+					oImg.src = imgMinus.src;
+					oTable.style.display = "block";
+				}
+				
+				function hideNode(Node){
+							switch(navigator.family){
+								case 'nn4':
+									// Nav 4.x code fork...
+							var oTable = document.layers["span" + Node];
+							var oImg = document.layers["img" + Node];
+									break;
+								case 'ie4':
+									// IE 4/5 code fork...
+							var oTable = document.all["span" + Node];
+							var oImg = document.all["img" + Node];
+									break;
+								case 'gecko':
+									// Standards Compliant code fork...
+							var oTable = document.getElementById("span" + Node);
+							var oImg = document.getElementById("img" + Node);
+									break;
+							}
+					oImg.src = imgPlus.src;
+					oTable.style.display = "none";
+				}
+				
+				function nodeIsVisible(Node){
+							switch(navigator.family){
+								case 'nn4':
+									// Nav 4.x code fork...
+							var oTable = document.layers["span" + Node];
+									break;
+								case 'ie4':
+									// IE 4/5 code fork...
+							var oTable = document.all["span" + Node];
+									break;
+								case 'gecko':
+									// Standards Compliant code fork...
+							var oTable = document.getElementById("span" + Node);
+									break;
+							}
+					return (oTable && oTable.style.display == "block");
+				}
+				
+				function toggleNodeVisibility(Node){
+					if (nodeIsVisible(Node)){
+						hideNode(Node);
+					}else{
+						showNode(Node);
+					}
+				}
+			</script>
+					</head>
+		<body>
+			<div class="page-body">			
+<h2 class="file-name">/JavaBridge.inc</h2>
+
+<a name="sec-description"></a>
+<div class="info-box">
+	<div class="info-box-title">Description</div>
+	<div class="nav-bar">
+					<span class="disabled">Description</span> |
+									<a href="#sec-includes">Includes</a>
+			|											<a href="#sec-functions">Functions</a>
+			</div>
+	<div class="info-box-body">	
+		<!-- ========== Info from phpDoc block ========= -->
+	<ul class="tags">
+				<li><span class="field">filesource:</span> <a href="../__filesource/fsource_VM Bridge__JavaBridge.inc.html">Source Code for this file</a></li>
+			</ul>
+		
+			</div>
+</div>
+		
+
+	<a name="sec-includes"></a>	
+	<div class="info-box">
+		<div class="info-box-title">Includes</div>
+		<div class="nav-bar">
+			<a href="#sec-description">Description</a> |
+						<span class="disabled">Includes</span>
+			|													<a href="#sec-functions">Functions</a>
+					</div>
+		<div class="info-box-body">	
+			<a name="_${JAVA_BASE}/JavaProxy_inc"><!-- --></a>
+<div class="evenrow">
+	
+	<div>
+		<span class="include-title">
+			<span class="include-type">require_once</span>
+			(<span class="include-name">"${JAVA_BASE}/JavaProxy.inc"</span>)
+			(line <span class="line-number"><a href="../__filesource/fsource_VM Bridge__JavaBridge.inc.html#a62">62</a></span>)
+		</span>
+	</div>
+
+	<!-- ========== Info from phpDoc block ========= -->
+	
+</div>
+		</div>
+	</div>
+	
+	
+	
+	<a name="sec-functions"></a>	
+	<div class="info-box">
+		<div class="info-box-title">Functions</div>
+		<div class="nav-bar">
+			<a href="#sec-description">Description</a> |
+										<a href="#sec-includes">Includes</a>
+				|												<span class="disabled">Functions</span>
+		</div>
+		<div class="info-box-body">	
+			<a name="functionJava" id="functionJava"><!-- --></a>
+<div class="oddrow">
+	
+	<div>
+		<span class="method-title">Java</span> (line <span class="line-number"><a href="../__filesource/fsource_VM Bridge__JavaBridge.inc.html#a175">175</a></span>)
+	</div> 
+
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">Access the java type with the given name.</p>
+<p class="description"><p>Access the java type with the given name.
+ Example: <div class="src-code"><ol><li><div class="src-line">&nbsp;<span class="src-id">java</span><span class="src-sym">(</span><span class="src-str">&quot;java.lang.System&quot;</span><span class="src-sym">)</span><span class="src-sym">-&gt;</span><span class="src-id">getProperties</span><span class="src-sym">(</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
+</ol></div></p></p>
+	<ul class="tags">
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">void</span>
+		<span class="method-name">
+			Java
+		</span>
+					(<span class="var-type">string</span>&nbsp;<span class="var-name">$name</span>)
+			</div>
+
+			<ul class="parameters">
+					<li>
+				<span class="var-type">string</span>
+				<span class="var-name">$name</span><span class="var-description">: The type name</span>			</li>
+				</ul>
+		
+	
+</div>
+<a name="functionjava_autoload" id="functionjava_autoload"><!-- --></a>
+<div class="evenrow">
+	
+	<div>
+		<span class="method-title">java_autoload</span> (line <span class="line-number"><a href="../__filesource/fsource_VM Bridge__JavaBridge.inc.html#a152">152</a></span>)
+	</div> 
+
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">Load a set of java libraries and make them available in the current name space.</p>
+<p class="description"><p>Load a set of java libraries and make them available in the current name space.
+ Available since php 5.3. Example: <div class="src-code"><ol><li><div class="src-line">&nbsp;<a href="../VM Bridge/_JavaBridge.inc.html#functionjava_autoload">java_autoload</a><span class="src-sym">(</span><span class="src-str">&quot;lucene.jar:log4j.jar&quot;</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line">&nbsp;</div></li>
+<li><div class="src-line">&nbsp;use&nbsp;<span class="src-id">org</span><span class="src-sym">::</span><span class="src-id">apache</span><span class="src-sym">::</span><span class="src-id">lucene</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line">&nbsp;use&nbsp;<span class="src-id">org</span><span class="src-sym">::</span><span class="src-id">apache</span><span class="src-sym">::</span><span class="src-id">lucene</span><span class="src-sym">::</span><span class="src-id">index</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line">&nbsp;use&nbsp;<span class="src-id">org</span><span class="src-sym">::</span><span class="src-id">apache</span><span class="src-sym">::</span><span class="src-id">lucene</span><span class="src-sym">::</span><span class="src-id">search</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line">&nbsp;use&nbsp;<span class="src-id">org</span><span class="src-sym">::</span><span class="src-id">apache</span><span class="src-sym">::</span><span class="src-id">lucene</span><span class="src-sym">::</span><span class="src-id">search</span><span class="src-sym">::</span><span class="src-id">IndexSearcher&nbsp;</span><span class="src-key">as&nbsp;</span><span class="src-id">LuceneSearcher</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line">&nbsp;</div></li>
+<li><div class="src-line">&nbsp;<span class="src-var">$searcher&nbsp;</span>=&nbsp;<span class="src-key">new&nbsp;</span><span class="src-id">LuceneSearcher</span><span class="src-sym">(</span>...<span class="src-sym">)</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line">&nbsp;<span class="src-var">$term&nbsp;</span>=&nbsp;<span class="src-key">new&nbsp;</span><span class="src-id">index</span><span class="src-sym">::</span><span class="src-id">Term</span><span class="src-sym">(</span><span class="src-str">&quot;name&quot;</span><span class="src-sym">,&nbsp;</span><span class="src-str">&quot;someTerm&quot;</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line">&nbsp;<span class="src-var">$phrase&nbsp;</span>=&nbsp;<span class="src-key">new&nbsp;</span><span class="src-id">search</span><span class="src-sym">::</span><span class="src-id">PhraseQuery</span><span class="src-sym">(</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line">&nbsp;</div></li>
+<li><div class="src-line">&nbsp;<span class="src-var">$phrase</span><span class="src-sym">-&gt;</span><span class="src-id">add</span><span class="src-sym">(</span><span class="src-var">$term</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line">&nbsp;<span class="src-var">$hits&nbsp;</span>=&nbsp;<span class="src-var">$searcher</span><span class="src-sym">-&gt;</span><span class="src-id">search</span><span class="src-sym">(</span><span class="src-var">$phrase</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line">&nbsp;...</div></li>
+</ol></div></p></p>
+	<ul class="tags">
+				<li><span class="field">since:</span> PHP 5.3</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">void</span>
+		<span class="method-name">
+			java_autoload
+		</span>
+					([<span class="var-type">string</span>&nbsp;<span class="var-name">$libs</span> = <span class="var-default">null</span>])
+			</div>
+
+			<ul class="parameters">
+					<li>
+				<span class="var-type">string</span>
+				<span class="var-name">$libs</span><span class="var-description">: The libraries separated by a semicolon</span>			</li>
+				</ul>
+		
+	
+</div>
+<a name="functionjava_is_false" id="functionjava_is_false"><!-- --></a>
+<div class="oddrow">
+	
+	<div>
+		<span class="method-title">java_is_false</span> (line <span class="line-number"><a href="../__filesource/fsource_VM Bridge__JavaBridge.inc.html#a281">281</a></span>)
+	</div> 
+
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">Checks whether a value is false or not.</p>
+<p class="description"><p>Checks whether a value is false or not.
+ Example: <div class="src-code"><ol><li><div class="src-line">&nbsp;<a href="../VM Bridge/_JavaBridge.inc.html#functionjava_is_false">java_is_false</a><span class="src-sym">(</span><span class="src-id">java</span><span class="src-sym">(</span><span class="src-str">&quot;java.lang.System&quot;</span><span class="src-sym">)</span><span class="src-sym">-&gt;</span><span class="src-id">getProperty</span><span class="src-sym">(</span><span class="src-str">&quot;foo&quot;</span><span class="src-sym">))</span></div></li>
+</ol></div></p></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> if the PHP or Java value is false.</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">true</span>
+		<span class="method-name">
+			java_is_false
+		</span>
+					(<span class="var-type">mixed</span>&nbsp;<span class="var-name">$value</span>)
+			</div>
+
+			<ul class="parameters">
+					<li>
+				<span class="var-type">mixed</span>
+				<span class="var-name">$value</span><span class="var-description">: A Java object or a PHP value</span>			</li>
+				</ul>
+		
+	
+</div>
+<a name="functionjava_is_null" id="functionjava_is_null"><!-- --></a>
+<div class="evenrow">
+	
+	<div>
+		<span class="method-title">java_is_null</span> (line <span class="line-number"><a href="../__filesource/fsource_VM Bridge__JavaBridge.inc.html#a245">245</a></span>)
+	</div> 
+
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">Checks whether a value is null or not.</p>
+<p class="description"><p>Checks whether a value is null or not.
+ Example: <div class="src-code"><ol><li><div class="src-line">&nbsp;<a href="../VM Bridge/_JavaBridge.inc.html#functionjava_is_null">java_is_null</a><span class="src-sym">(</span><span class="src-id">java</span><span class="src-sym">(</span><span class="src-str">&quot;java.lang.System&quot;</span><span class="src-sym">)</span><span class="src-sym">-&gt;</span><span class="src-id">getProperty</span><span class="src-sym">(</span><span class="src-str">&quot;foo&quot;</span><span class="src-sym">))</span></div></li>
+</ol></div></p></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> if $value is the PHP or Java null value.</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">true</span>
+		<span class="method-name">
+			java_is_null
+		</span>
+					(<span class="var-type">mixed</span>&nbsp;<span class="var-name">$value</span>)
+			</div>
+
+			<ul class="parameters">
+					<li>
+				<span class="var-type">mixed</span>
+				<span class="var-name">$value</span><span class="var-description">: A Java object or a PHP value</span>			</li>
+				</ul>
+		
+	
+</div>
+<a name="functionjava_is_true" id="functionjava_is_true"><!-- --></a>
+<div class="oddrow">
+	
+	<div>
+		<span class="method-title">java_is_true</span> (line <span class="line-number"><a href="../__filesource/fsource_VM Bridge__JavaBridge.inc.html#a263">263</a></span>)
+	</div> 
+
+	<!-- ========== Info from phpDoc block ========= -->
+<p class="short-description">Checks whether a value is true or not.</p>
+<p class="description"><p>Checks whether a value is true or not.
+ Example: <div class="src-code"><ol><li><div class="src-line">&nbsp;<a href="../VM Bridge/_JavaBridge.inc.html#functionjava_is_true">java_is_true</a><span class="src-sym">(</span><span class="src-id">java</span><span class="src-sym">(</span><span class="src-str">&quot;java.lang.System&quot;</span><span class="src-sym">)</span><span class="src-sym">-&gt;</span><span class="src-id">getProperty</span><span class="src-sym">(</span><span class="src-str">&quot;foo&quot;</span><span class="src-sym">))</span></div></li>
+</ol></div></p></p>
+	<ul class="tags">
+				<li><span class="field">return:</span> if the PHP or Java value is true.</li>
+				<li><span class="field">access:</span> public</li>
+			</ul>
+	
+	<div class="method-signature">
+		<span class="method-result">true</span>
+		<span class="method-name">
+			java_is_true
+		</span>
+					(<span class="var-type">mixed</span>&nbsp;<span class="var-name">$value</span>)
+			</div>
+
+			<ul class="parameters">
+					<li>
+				<span class="var-type">mixed</span>
+				<span class="var-name">$value</span><span class="var-description">: A Java object or a PHP value</span>			</li>
+				</ul>
+		
+	
+</div>
+		</div>
+	</div>
+	
+	<p class="notes" id="credit">
+		Documentation generated on Sat, 15 Nov 2008 10:44:21 +0100 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.0a2</a>
+	</p>
+	</div></body>
+</html>
