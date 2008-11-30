@@ -132,7 +132,7 @@ public final class InvocablePhpServletScriptEngine extends InvocablePhpServletLo
     private File path;
     private File tempfile = null;
     
-    public InvocablePhpServletScriptEngine(Servlet servlet, 
+    protected InvocablePhpServletScriptEngine(Servlet servlet, 
 					   ServletContext ctx, 
 					   HttpServletRequest req, 
 					   HttpServletResponse res,

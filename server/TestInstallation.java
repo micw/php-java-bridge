@@ -24,9 +24,12 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLFrameHyperlinkEvent;
 
+/**
+ * Used only for release tests
+ */
 public class TestInstallation implements Runnable {
     // See Util.DEFAULT_CGI_LOCATIONS
-    public static final String DEFAULT_CGI_LOCATIONS[] = new String[] {"/usr/bin/php-cgi", "c:/Program Files/PHP/php-cgi.exe"};
+    static final String DEFAULT_CGI_LOCATIONS[] = new String[] {"/usr/bin/php-cgi", "c:/Program Files/PHP/php-cgi.exe"};
     private static String socket;
     private Process proc;
     private static Process runner;
@@ -37,9 +40,9 @@ public class TestInstallation implements Runnable {
     TestInstallation(Process proc) {
 	this.proc = proc;
     }
-    public static class SimpleBrowser implements Runnable,  HyperlinkListener {
+    static class SimpleBrowser implements Runnable,  HyperlinkListener {
 	private String port;
-	public SimpleBrowser(String port) {
+	SimpleBrowser(String port) {
 	    this.port = port;
 	}
 	public void hyperlinkUpdate(HyperlinkEvent e) {
@@ -204,6 +207,7 @@ public class TestInstallation implements Runnable {
 	System.out.flush();
 	System.err.flush();
     }
+    /**{@inheritDoc}*/
     public void run() {
 	try {
 	    if(proc==null) startRunner();
@@ -220,7 +224,11 @@ public class TestInstallation implements Runnable {
 	    return false;
 	}
     }
-   public static void main(String[] args) {
+    /**
+     * 
+     * @param args
+     */
+    public static void main(String[] args) {
 	try { // Hack for Unix: execute the standalone container using the default SUN VM
 	    if(args.length==0 && (new File("/usr/java/default/bin/java")).exists() && checkGNUVM() && (System.getProperty("php.java.bridge.exec_sun_vm", "true").equals("true"))) {
 		Process p = Runtime.getRuntime().exec(new String[] {"/usr/java/default/bin/java", "-Dphp.java.bridge.exec_sun_vm=false", "-classpath", System.getProperty("java.class.path"), "TestInstallation"});
@@ -247,7 +255,7 @@ public class TestInstallation implements Runnable {
 	    System.exit(1);
 	}
     }
-    public static void start(String[] args) throws Exception {
+    static void start(String[] args) throws Exception {
 	String socket = findSocket();
 	String os = null;
 	String separator = "/-+.,;: ";

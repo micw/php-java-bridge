@@ -29,7 +29,8 @@ import java.io.UnsupportedEncodingException;
 final class PhpParserString extends PhpString {
     ParserString st;
     private JavaBridge bridge;
-    /**
+    /** Create a new php parser string
+     * @param bridge The JavaBridge
      * @param st The ParserString
      */
     public PhpParserString(JavaBridge bridge, ParserString st) {
@@ -51,7 +52,6 @@ final class PhpParserString extends PhpString {
     }
     /**
      * Get the encoded string representation
-     * @param res The response.
      * @return The encoded string.
      */
     public String getString() {
@@ -59,6 +59,7 @@ final class PhpParserString extends PhpString {
     }
     /**
      * Use UTF-8 encoding, for debugging only
+     * @return The string UTF-8 encoded
      */
     public String toString() {
         try {

@@ -215,9 +215,7 @@ public final class Request implements IDocHandler {
 	}
     }
 
-    /* (non-Javadoc)
-     * @see php.java.bridge.IDocHandler#begin(php.java.bridge.ParserTag[])
-     */
+    /**{@inheritDoc}*/
     public boolean begin(ParserTag[] tag) {
 	boolean reply = true;
 	ParserString[] st=tag[2].strings;
@@ -357,9 +355,7 @@ public final class Request implements IDocHandler {
 	return reply;
     }
     
-    /* (non-Javadoc)
-     * @see php.java.bridge.IDocHandler#end(php.java.bridge.ParserString[])
-     */
+    /**{@inheritDoc}*/
     public void end(ParserString[] string) {
     	switch(string[0].string[0]) {
     	case 'X': {

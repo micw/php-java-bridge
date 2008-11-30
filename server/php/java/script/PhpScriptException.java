@@ -30,11 +30,18 @@ package php.java.script;
 public class PhpScriptException extends javax.script.ScriptException {
   private static final long serialVersionUID = 7664096304464958875L;
 
-  public PhpScriptException(String string) {
+  /**
+ * @param string
+ */
+public PhpScriptException(String string) {
       super(string);
   }
 
-  public PhpScriptException(String string, Throwable cause) {
+  /**
+ * @param string
+ * @param cause
+ */
+public PhpScriptException(String string, Throwable cause) {
       this(string + ": " + cause.getMessage());
       initCause(cause);
   }

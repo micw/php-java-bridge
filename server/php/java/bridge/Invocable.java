@@ -33,7 +33,7 @@ package php.java.bridge;
  * <br>
  * @see php.java.bridge.PhpProcedureProxy#getProxy(Class[])
  * @see php.java.bridge.PhpProcedure#invoke(Object, String, Object[])
- * @see php.java.bridge.PhpProcedure#invoke(Object, Method, Object[])
+ * @see php.java.bridge.PhpProcedure#invoke(Object, java.lang.reflect.Method, Object[])
  * @author jostb
  *
  */

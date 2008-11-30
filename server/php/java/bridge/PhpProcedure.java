@@ -40,8 +40,6 @@ public class PhpProcedure implements InvocationHandler {
     private long object;
     private Map names;
     protected String name;
-    private JavaBridge myBridge;
-	
     protected PhpProcedure(IJavaBridgeFactory bridge, long object, String name, Map names) {
 	this.bridge = bridge;
 	this.object = object;
@@ -94,7 +92,7 @@ public class PhpProcedure implements InvocationHandler {
      * @param method The php method name
      * @param args the arguments
      * @return the result or null.
-     * @throws a script exception.
+     * @throws Throwable script exception.
      */
     public Object invoke(Object proxy, String method, Object[] args) throws Throwable {
 	checkPhpContinuation();
@@ -109,9 +107,7 @@ public class PhpProcedure implements InvocationHandler {
 	}
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.reflect.InvocationHandler#invoke(java.lang.Object, java.lang.reflect.Method, java.lang.Object[])
-     */
+    /**{@inheritDoc}*/
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 	checkPhpContinuation ();
 	

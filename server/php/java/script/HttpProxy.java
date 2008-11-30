@@ -48,6 +48,9 @@ public class HttpProxy extends CGIRunner {
      * @param reader - The reader, for example a URLReader
      * @param env - The environment, must contain values for X_JAVABRIDGE_CONTEXT. It may contain X_JAVABRIDGE_OVERRIDE_HOSTS.
      * @param out - The OutputStream
+     * @param err The error stream
+     * @param headerParser The header parser
+     * @param resultProxy The return value proxy
      */
     public HttpProxy(Reader reader, Map env, OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy resultProxy) {
 	super("HttpProxy", reader, env, out, err, headerParser, resultProxy);
@@ -57,6 +60,10 @@ public class HttpProxy extends CGIRunner {
      * Create a HTTP proxy which can be used to allocate a php script from a HTTP server
      * @param reader - The reader, for example a URLReader
      * @param ctx - The context
+     * @param out The output stream
+     * @param err The error stream 
+     * @param headerParser The header parser
+     * @param resultProxy The return code proxy
      */
     public HttpProxy(Reader reader, String ctx, OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy resultProxy) {
 	this(reader, (new HashMap() {

@@ -45,6 +45,9 @@ public class PhpScriptContextFactory extends php.java.bridge.http.SimpleContextF
 	ctx.setContext(context);
 	return ctx;
     }
+    /**
+     * Create a simple context factory with an empty web context
+     */
     public PhpScriptContextFactory() {
 	super(ContextFactory.EMPTY_CONTEXT_NAME);
     }

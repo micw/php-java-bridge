@@ -91,13 +91,16 @@ public class PipeContextServer implements IContextServer {
      }
     /**
      * Create a new ContextServer using the ThreadPool. 
+     * @param contextServer The web context server 
      * @param threadPool Obtain runnables from this pool. If null, new threads will be created.
+     * @param contextName 
      */
     public PipeContextServer (ContextFactory.ICredentials contextServer, AppThreadPool threadPool, String contextName) {
         this.contextServer = contextServer;
     	this.threadPool = threadPool;
     	this.contextName = contextName;
     }
+    /**{@inheritDoc}*/
     public boolean start(AbstractChannelName channelName) {
         if(!isAvailable()) return false;
         try {

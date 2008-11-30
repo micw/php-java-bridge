@@ -115,6 +115,7 @@ public class ContextRunner implements Runnable {
 	    try {out.write(0); }catch(IOException e){}
 	    throw new IOException("Protocol violation");
 	}
+	out.write(0); out.flush(); // dummy write: avoid ack delay
 	String name = readName();
     	ctx = (IContextFactory) ContextFactory.get(name, contextServer);
     	if(ctx == null) throw new IOException("No context available for: " + name + ". Please make sure that your script does not exceed php.java.bridge.max_wait, currently set to: "+Util.MAX_WAIT);
@@ -136,6 +137,7 @@ public class ContextRunner implements Runnable {
     public AbstractChannel getChannel() {
 	return channel;
     }
+    /**{@inheritDoc}*/  
     public void run() {
 	try {
 	    if(init())

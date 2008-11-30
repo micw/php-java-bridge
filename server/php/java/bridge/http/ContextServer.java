@@ -151,6 +151,7 @@ public final class ContextServer implements ContextFactory.ICredentials {
         return ContextFactory.NO_CREDENTIALS; // SocketContextServer 
     }
     
+    /**{@inheritDoc}*/  
     public String toString () {
 	return "ContextServer: " + contextName;
     }

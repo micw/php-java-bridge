@@ -1,4 +1,4 @@
-VM Bridge protocol version 5.3
+VM Bridge protocol version 5.4
 
 Requests are marked with "->", responses with "<-".  The server
 continues to process requests until EOF. Only the first character is
@@ -264,16 +264,25 @@ If the header is missing, the following default values are used
 (*) Primitive values like null, 1, false, etc. are proxied by
 Request$PhpNull, Integer, Boolean, etc. by default.
 
+
+Context switches:
+-----------------
+
+A client may initiate a context switch when it has received 
+a context ID belonging to a different ContextServer while
+keeping a persistent connection to a ContextRunner. Or when
+switching from the initial HTTP PUT request to a new
+ContextRunner.
+
 It is possible to send the header even though the connection has
 already been established. The bridge will ignore the header if the
 second byte is not 0xFF. This is convenient as some clients don't know
 if they use a fresh or a recycled connection.
 
 Otherwise the back end interprets the following two bytes (low/high)
-as the length of the following context string. The client may initiate
-such a context switch if it has received a context ID belonging to a
-different ContextServer from a client (e.g.: PhpCGIServlet) while
-keeping a persistent connection to a ContextRunner.
+as the length of the following context string. The server acknowledges
+the context switch by sending the byte 0x0 on the new connection. The
+client must read and discard this byte.
 
 It is possible to "ping" the server by sending it the byte 0x0. If
 alive it will send back a 0x0.

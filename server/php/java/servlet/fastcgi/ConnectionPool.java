@@ -133,7 +133,7 @@ public class ConnectionPool {
 	/**
 	 * Returns the OutputStream associated with this connection.
 	 * @return The output stream.
-	 * @throws IOException
+	 * @throws ConnectionException 
 	 */
 	public OutputStream getOutputStream() throws ConnectionException {
 	    if(outputStream != null) return outputStream;
@@ -145,7 +145,7 @@ public class ConnectionPool {
 	/**
 	 * Returns the InputStream associated with this connection.
 	 * @return The input stream.
-	 * @throws IOException
+	 * @throws ConnectionException
 	 */
 	public InputStream getInputStream() throws ConnectionException {
 	    if(inputStream != null) return inputStream;
@@ -157,8 +157,10 @@ public class ConnectionPool {
     }
     /**
      * Create a new connection pool.
+     * @param channelName The channel name
      * 
      * @param limit The max. number of physical connections
+     * @param maxRequests 
      * @param factory A factory for creating In- and OutputStreams.
      * @throws ConnectException 
       * @see Factory
@@ -182,10 +184,9 @@ public class ConnectionPool {
     /**
      * Opens a connection to the back end.
      * @return The connection
-     * @throws UnknownHostException
      * @throws InterruptedException
+     * @throws ConnectException 
      * @throws SocketException 
-     * @throws IOException 
      */
     public synchronized Connection openConnection() throws InterruptedException, ConnectException, SocketException {
         Connection connection;

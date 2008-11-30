@@ -33,12 +33,19 @@ public class JavaBridgeIllegalStateException extends
      */
     private static final long serialVersionUID = -2335751296956301571L;
 
-public JavaBridgeIllegalStateException(String string, Throwable e) {
+    /**
+     * @param string
+     * @param e
+     */
+    public JavaBridgeIllegalStateException(String string, Throwable e) {
       super(string);
       initCause(e);
-  }
+    }
 
-  public JavaBridgeIllegalStateException(String string) {
+    /**
+     * @param string
+     */
+    public JavaBridgeIllegalStateException(String string) {
       super(string);
-  }
+    }
 }

@@ -111,6 +111,9 @@ public abstract class FastCGIServlet extends CGIServlet {
      */
     public static final String PHP_FCGI_MAX_REQUESTS = "5000";
 
+    /**
+     * The default channel name on Windows
+     */
     public static final String FCGI_PIPE = NPChannelName.PREFIX +"JavaBridge@9667";
     
     protected String php = null; 
@@ -196,6 +199,8 @@ public abstract class FastCGIServlet extends CGIServlet {
      * server for all subsequent requests until the server is
      * stopped. When FastCGI is not available (anymore), the parent
      * CGI servlet is used instead.
+     * @param config The servlet config
+     * @throws ServletException 
      * @see php.java.servlet.fastcgi.ConnectionPool
      * @see #destroy()
      */
@@ -338,7 +343,7 @@ public abstract class FastCGIServlet extends CGIServlet {
 	return env;
     }
 
-    public static boolean isJavaBridgeWc(String contextPath) {
+    static boolean isJavaBridgeWc(String contextPath) {
         return (contextPath!=null && contextPath.endsWith("JavaBridge"));
     }
 

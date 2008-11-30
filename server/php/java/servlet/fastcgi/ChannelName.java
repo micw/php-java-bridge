@@ -136,7 +136,7 @@ public abstract class ChannelName {
 	private boolean canStartFCGI() {
 	    return servlet.canStartFCGI;
 	}
-	public void destroy() {
+	void destroy() {
 	    if(proc==null) return;  	
 	    try {
 		proc.getOutputStream().close();
@@ -198,6 +198,7 @@ public abstract class ChannelName {
 	 * For backward compatibility the "JavaBridge" context uses the port 9667 (Linux/Unix) or \\.\pipe\JavaBridge@9667 (Windogs).
 	 * @param servlet The servlet
 	 * @param env The current CGI environment.
+	 * @param contextPath The path of the web context
 	 */
 	public void initialize(PhpCGIServlet servlet, PhpCGIServlet.CGIEnvironment env, String contextPath) {
 	    this.servlet = servlet;
@@ -237,6 +238,11 @@ public abstract class ChannelName {
 		return new NPChannelName();
 	}
 	
+	/** 
+	 * Return the channel name 
+	 * @return the channel name
+	 * 
+	 */
 	public String toString() {
 	    return "ChannelName@" + contextPath==null ? "<not initialized>" : contextPath;
 	}

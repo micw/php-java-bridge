@@ -129,6 +129,7 @@ public class EngineFactory {
      * @param req the request
      * @param res the response
      * @return the PHP JSR 223 ScriptEngine, an instance of the {@link PhpServletScriptEngine}
+     * @throws Exception 
      * @throws MalformedURLException
      * @throws IllegalStateException
      */
@@ -164,6 +165,7 @@ public class EngineFactory {
      * @param req the request
      * @param res the response
      * @return the invocable PHP JSR 223 ScriptEngine, an instance of the {@link InvocablePhpServletScriptEngine}
+     * @throws Exception 
      * @throws MalformedURLException
      * @throws IllegalStateException
      */
@@ -201,6 +203,7 @@ public class EngineFactory {
      * @param protocol either "HTTP" or "HTTPS"
      * @param port the port number
      * @return the invocable PHP JSR 223 ScriptEngine, an instance of the {@link InvocablePhpServletScriptEngine}
+     * @throws Exception 
      * @throws MalformedURLException
      * @throws IllegalStateException
      */
@@ -241,6 +244,7 @@ public class EngineFactory {
      * @param port the port number
      * @param proxy the name of the PHP proxy, for example "/JavaProxy.php"
      * @return the invocable PHP JSR 223 ScriptEngine, an instance of the {@link InvocablePhpServletScriptEngine}
+     * @throws Exception 
      * @throws MalformedURLException
      * @throws IllegalStateException
      */
@@ -336,8 +340,11 @@ public class EngineFactory {
 	    }
 	});
     }
-    /** @deprecated Use {@link #createPhpScriptFileReader(ScriptFile)} instead */
+    /** @param phpScriptFile 
+     * @return A new FileReader
+     * @deprecated Use {@link #createPhpScriptFileReader(ScriptFile)} instead */
     public static FileReader createPhpScriptFileReader (final File phpScriptFile) {
+	Util.warn("createPhpScriptFileReader deprecated. Use {@link #createPhpScriptFileReader(ScriptFile)} instead");
 	return (FileReader) AccessController.doPrivileged(new PrivilegedAction(){ 
 	    public Object run() {
         	try {

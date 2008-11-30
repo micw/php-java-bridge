@@ -19,6 +19,7 @@ public interface Bindings extends Map{
 	 * @param key the String value which uniquely identifies the 
      *            object
 	 * @param value the object to be stored.
+	 * @return The old value
 	 * @throws IllegalArgumentException if the key is null not an 
      *         instance of java.lang.String
      * */

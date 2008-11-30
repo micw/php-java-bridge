@@ -39,6 +39,11 @@ public class PhpScriptLogWriter extends PhpScriptWriter {
     private PhpScriptLogWriter(OutputStream out) {
 	super(out);
     }
+    /**
+     * Get a new log writer
+     * @param logger The logger
+     * @return The log writer
+     */
     public static final PhpScriptLogWriter getWriter (ILogger logger) {
 	    return new PhpScriptLogWriter (new LogOutputStream(logger));
     }

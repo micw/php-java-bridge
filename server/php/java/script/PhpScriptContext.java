@@ -62,6 +62,7 @@ public class PhpScriptContext extends AbstractPhpScriptContext implements IConte
      private Writer getWriter(boolean isStandalone) {
 	 return isStandalone ? PhpScriptLogWriter.getWriter(Util.getLogger()) : new PhpScriptWriter(System.out);
      }
+     /**{@inheritDoc}*/
     public Writer getWriter() {
 	if(writer == null) return writer =  getWriter(bridgeRunner.isStandalone());
 	else if(! (writer instanceof PhpScriptWriter)) setWriter(writer);
@@ -70,15 +71,18 @@ public class PhpScriptContext extends AbstractPhpScriptContext implements IConte
     private Writer getErrorWriter(boolean isStandalone) {
 	 return isStandalone ? PhpScriptLogWriter.getWriter(Util.getLogger()) : new PhpScriptWriter(System.err);
     }
+    /**{@inheritDoc}*/
     public Writer getErrorWriter() {
 	if(errorWriter == null) return errorWriter =  getErrorWriter(bridgeRunner.isStandalone());
 	else if(! (errorWriter instanceof PhpScriptWriter)) setErrorWriter(errorWriter);
 	return errorWriter;	
     }
 
+    /**{@inheritDoc}*/
     public String getSocketName() {
 	    return bridgeRunner.getSocket().getSocketName();
     }
+    /**{@inheritDoc}*/
     public String getContextString() {
 	    StringBuffer buf = new StringBuffer("http://127.0.0.1:");
 	    buf.append(getSocketName());

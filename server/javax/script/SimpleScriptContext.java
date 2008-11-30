@@ -21,6 +21,9 @@ public class SimpleScriptContext implements ScriptContext {
 	/** namespace of the scope of level ENGINE_SCOPE */
 	protected Bindings engineScope;
 
+	/**
+	 * Create a simple script context
+	 */
 	public SimpleScriptContext() {
 	        engineScope = new SimpleBindings();
 	}
@@ -31,6 +34,7 @@ public class SimpleScriptContext implements ScriptContext {
      * 
      * @param name the name of the attribute 
      * @return the value of the attribute
+     * @throws IllegalArgumentException 
      */
     public Object getAttribute(String name) throws IllegalArgumentException{
       
@@ -56,6 +60,7 @@ public class SimpleScriptContext implements ScriptContext {
      * @param scope the level of scope
      * @return the value value associated with the specified name in
      *         specified level of scope
+     * @throws IllegalArgumentException 
      */
     public Object getAttribute(String name, int scope) 
             throws IllegalArgumentException{
@@ -145,7 +150,7 @@ public class SimpleScriptContext implements ScriptContext {
      * @param name   the name of the attribute
      * @param value the value of the attribute
      * @param scope the level of the scope
-     * @throws IllegalArguementException if the name is null scope is
+     * @throws IllegalArgumentException if the name is null scope is
      *         invalid
      */
     public void setAttribute(String name, Object value, int scope) 
@@ -174,6 +179,7 @@ public class SimpleScriptContext implements ScriptContext {
 	 * @param namespace the namespace to be associated with specified
      *                  level of scope
      * @param scope     the level of scope 
+	 * @throws IllegalArgumentException 
 	 */	
 	public void setBindings(Bindings namespace, int scope) 
             throws IllegalArgumentException {
@@ -192,31 +198,37 @@ public class SimpleScriptContext implements ScriptContext {
     }
 
         private static final List scopes = Arrays.asList(new Integer[] {new Integer(ENGINE_SCOPE), new Integer(GLOBAL_SCOPE)});
+        /**{@inheritDoc}*/
 	public List getScopes() {
 	    return scopes;
         }
 
 	protected Writer errorWriter;
+	    /**{@inheritDoc}*/
 	public Writer getErrorWriter() {
 	    if(this.errorWriter==null) return this.errorWriter = new PrintWriter(System.err, true);
 	    return errorWriter;
 	}
 
+	    /**{@inheritDoc}*/
 	public void setErrorWriter(Writer writer) {
 	    this.errorWriter = writer;
 	}
 
 	protected Reader reader;
+	    /**{@inheritDoc}*/
 	public Reader getReader() {
 	    if(this.reader == null) return new InputStreamReader(System.in);
 	    return reader;
 	}
 
+	    /**{@inheritDoc}*/
 	public void setReader(Reader reader) {
 	    this.reader = reader;
 	}
 
 	protected Writer writer;
+	    /**{@inheritDoc}*/
         public Writer getWriter() {
             // autoflush is true so that I can see the output immediately
             if(writer==null) {
@@ -224,6 +236,7 @@ public class SimpleScriptContext implements ScriptContext {
                }
             return writer;
         }
+        /**{@inheritDoc}*/
 	public void setWriter(Writer writer) {
 	    this.writer = writer;
 	}

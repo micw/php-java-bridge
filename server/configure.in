@@ -69,13 +69,13 @@ JAVA_INCLUDES=`for i in \`find $PHP_JAVA_DIR/include -follow -type d -print\`; d
 AM_CPPFLAGS="${AM_CPPFLAGS} $JAVA_INCLUDES"
 AC_CHECK_PROG(have_ar, ar, "yes", "no")
 JAVA_CHECK_JNI
-if test "$have_jni" = "no"; then 
+if test "$jb_cv_have_jni" = "no"; then 
    JNI_LIBS=""
 fi
 else
 AC_CHECK_PROG(have_ar, ar, "yes", "no")
 JAVA_CHECK_JNI
-if test "$have_jni" = "no"; then 
+if test "$jb_cv_have_jni" = "no"; then 
    echo "FATAL: Native compilation not supported on this system."
    echo "Install a java SDK and run: ./configure --with-java=<JAVA_HOME>"
    exit 3
@@ -91,7 +91,7 @@ EXTENSION_DISPLAY_NAME="VMBridge"
 VM_BINARIES=
 
 if test "$PHP_JAVA" != "no"; then
-  if test X$PHP_JRE != X || test $have_jni = no || test $have_gcj = no; then
+  if test X$PHP_JRE != X || test $jb_cv_have_jni = no || test $have_gcj = no; then
    VM_BINARIES="RunJavaBridge"
   else
    VM_BINARIES="java RunJavaBridge"
@@ -193,7 +193,7 @@ dnl else
 dnl echo "  JAVA (compile time)    : $PHP_JAVA_DIR"
 dnl echo "  JAVA (run time)        : $PHP_JRE"
 dnl jni_available="available"
-dnl if test "$have_jni" = "no"; then 
+dnl if test "$jb_cv_have_jni" = "no"; then 
 dnl   jni_available="not available"
 dnl fi
 dnl echo "  LOCAL (secure) channel : $jni_available"

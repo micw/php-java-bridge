@@ -57,9 +57,7 @@ public class Context implements Invocable, IContext {
     private Map engineScope;
 
     protected Context() {}
-    /* (non-Javadoc)
-     * @see php.java.bridge.http.IContext#getAttribute(java.lang.String)
-     */
+    /**{@inheritDoc}*/
     public Object getAttribute(String name) throws IllegalArgumentException{
       
         if (name == null) {
@@ -75,9 +73,7 @@ public class Context implements Invocable, IContext {
         }
     }
 
-    /* (non-Javadoc)
-     * @see php.java.bridge.http.IContext#getAttribute(java.lang.String, int)
-     */
+    /**{@inheritDoc}*/
     public Object getAttribute(String name, int scope) 
 	throws IllegalArgumentException{
         
@@ -95,9 +91,7 @@ public class Context implements Invocable, IContext {
         }
     }
 
-    /* (non-Javadoc)
-     * @see php.java.bridge.http.IContext#getAttributesScope(java.lang.String)
-     */
+    /**{@inheritDoc}*/
     public int getAttributesScope(String name) {
         if (getEngineScope().containsKey(name)) {
             return ENGINE_SCOPE;
@@ -108,18 +102,14 @@ public class Context implements Invocable, IContext {
         return -1;
     }
     
-    /* (non-Javadoc)
-     * @see php.java.bridge.http.IContext#getWriter()
-     */
+    /**{@inheritDoc}*/
     public Writer getWriter() throws IOException {
         
         // autoflush is true so that I can see the output immediately
         return new PrintWriter(System.out, true); 
     }
     
-    /* (non-Javadoc)
-     * @see php.java.bridge.http.IContext#removeAttribute(java.lang.String, int)
-     */
+    /** {@inheritDoc}*/
     public Object removeAttribute(String name, int scope) 
 	throws IllegalArgumentException{ 
         
@@ -137,9 +127,7 @@ public class Context implements Invocable, IContext {
         }    
     }
     
-    /* (non-Javadoc)
-     * @see php.java.bridge.http.IContext#setAttribute(java.lang.String, java.lang.Object, int)
-     */
+    /** {@inheritDoc}*/
     public void setAttribute(String name, Object value, int scope) 
 	throws IllegalArgumentException{
         
@@ -159,29 +147,33 @@ public class Context implements Invocable, IContext {
         }
     }
 	
-    /* (non-Javadoc)
-     * @see php.java.bridge.http.IContext#getHttpServletRequest()
+    /**
+     * Throws IllegalStateException
+     * @return none
      */
     public Object getHttpServletRequest() {
 	throw new IllegalStateException("PHP not running in a servlet environment");
     }
     
-    /* (non-Javadoc)
-     * @see php.java.bridge.http.IContext#getServletContext()
+    /**
+     * Throws IllegalStateException
+     * @return none
      */
     public Object getServletContext() {
 	throw new IllegalStateException("PHP not running in a servlet environment");
     }
     
-    /* (non-Javadoc)
-     * @see php.java.bridge.http.IContext#getHttpServletResponse()
+    /**
+     * Throws IllegalStateException
+     * @return none
      */
     public Object getHttpServletResponse() {
 	throw new IllegalStateException("PHP not running in a servlet environment");
     }
 
-    /* (non-Javadoc)
-     * @see php.java.bridge.Invocable#call(php.java.bridge.PhpProcedureProxy)
+    /**
+     * @param kont dummy
+     * @return false
      */
     public boolean call(PhpProcedureProxy kont) {
 	return false;

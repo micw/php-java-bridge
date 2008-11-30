@@ -89,6 +89,7 @@ public class JavaBridgeRunner extends HttpServer {
     }
     /**
      * Return a instance.
+     * @param serverPort The server port name
      * @return a standalone runner
      * @throws IOException
      */
@@ -99,6 +100,7 @@ public class JavaBridgeRunner extends HttpServer {
     }
     /**
      * Return a instance.
+     * @param serverPort The server port name
      * @return a standalone runner
      */
     public static synchronized JavaBridgeRunner getInstance(String serverPort) {
@@ -151,6 +153,7 @@ public class JavaBridgeRunner extends HttpServer {
      * Create a server socket.
      * @param addr The host address, either INET:port or INET_LOCAL:port
      * @return The server socket.
+     * @throws IOException 
      */
     public ISocketFactory bind(String addr) throws IOException {
 	socket =  JavaBridge.bind(addr);
@@ -543,6 +546,7 @@ public class JavaBridgeRunner extends HttpServer {
     
     /**
      * For internal tests only.
+     * @param s The argument array
      * @throws InterruptedException 
      * @throws IOException 
      */

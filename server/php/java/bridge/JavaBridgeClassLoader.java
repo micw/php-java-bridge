@@ -37,6 +37,10 @@ import java.io.IOException;
  */
 public class JavaBridgeClassLoader extends SimpleJavaBridgeClassLoader {
     protected boolean clEnabled = false;
+    /**
+     * Create a new JavaBridge class loader 
+     * @param xloader The real class loader
+     */
     public JavaBridgeClassLoader(ClassLoader xloader) {
 	super(xloader);
     }
@@ -67,6 +71,8 @@ public class JavaBridgeClassLoader extends SimpleJavaBridgeClassLoader {
      * Append the path to the current library path
      * @param path A file or url list, separated by ';' 
      * @param extensionDir Usually ini_get("extension_dir"); 
+     * @param cwd The current working dir
+     * @param searchpath The search path
      * @throws IOException 
      */
     public void updateJarLibraryPath(String path, String extensionDir, String cwd, String searchpath) throws IOException {

@@ -232,6 +232,7 @@ class Parser {
 		case 0177: if(in_dquote) {APPEND(ch); break;}
 		    // the header used to be binary encoded
 		    if((0xFF&(buf[1]))!=0xFF) {c++; break;}
+		    bridge.out.write(0); bridge.out.flush(); // dummy write: avoid ack delay
 		    int len =(0xFF&buf[c+2]) | (0xFF00&(buf[c+3]<<8));
 		    String newContext = new String(buf, c+4, c+len,  Util.ASCII);
 		    IContextFactory factory = (IContextFactory)bridge.getFactory();

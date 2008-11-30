@@ -100,6 +100,7 @@ public interface ISession {
      * bound to the given name.
      *
      * @param name the name of the object to remove
+     * @return The old object
      * @exception IllegalStateException if an attempt is made to access 
      * session data after the session has been invalidated.
      */

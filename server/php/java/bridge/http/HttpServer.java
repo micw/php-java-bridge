@@ -68,6 +68,7 @@ public abstract class HttpServer implements Runnable {
      * Create a server socket.
      * @param addr The host address, either INET:port or INET_LOCAL:port
      * @return The server socket.
+     * @throws IOException 
      */
     public abstract ISocketFactory bind(String addr) throws IOException;
 
@@ -238,9 +239,7 @@ public abstract class HttpServer implements Runnable {
         else if(method == POST) doPost(req, res);
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Runnable#run()
-     */
+    /**{@inheritDoc}*/
     public void run() {
 	try {
 	    doRun();

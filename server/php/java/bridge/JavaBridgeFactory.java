@@ -90,7 +90,7 @@ public abstract class JavaBridgeFactory implements IJavaBridgeFactory {
 	if(Util.logLevel>=4) Util.logDebug("created new bridge: " + bridge);
 	return bridge;
     }
-
+    /**{@inheritDoc}*/
     public boolean isNew() {
 	return bridge==null;
     }

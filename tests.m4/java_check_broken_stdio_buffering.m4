@@ -1,6 +1,6 @@
 AC_DEFUN([JAVA_CHECK_BROKEN_STDIO_BUFFERING],[
   AC_MSG_CHECKING([for broken stdio buffering])
-  AC_CACHE_VAL(have_broken_stdio_buffering,[
+  AC_CACHE_VAL(jb_cv_have_broken_stdio_buffering,[
   AC_TRY_RUN([
 #include <stdio.h>
 #include <sys/types.h>
@@ -71,11 +71,11 @@ int main() {
   return ret;
 }
 ],
-[have_broken_stdio_buffering=no],
-[have_broken_stdio_buffering=yes])
+[jb_cv_have_broken_stdio_buffering=no],
+[jb_cv_have_broken_stdio_buffering=yes])
 ])
 
-  if test "$have_broken_stdio_buffering" = "yes"; then
+  if test "$jb_cv_have_broken_stdio_buffering" = "yes"; then
 	AC_MSG_RESULT(yes)
 	AC_DEFINE(HAVE_BROKEN_STDIO,1, [Define if your system cannot fdopen(socket, "r+")])
   else

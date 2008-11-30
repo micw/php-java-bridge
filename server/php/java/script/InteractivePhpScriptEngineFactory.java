@@ -31,10 +31,12 @@ import javax.script.ScriptEngine;
 
 public class InteractivePhpScriptEngineFactory extends InvocablePhpScriptEngineFactory {
 
+  /**{@inheritDoc}*/
   public String getLanguageName() {
     return "php-interactive";
   }
 
+  /**{@inheritDoc}*/
   public ScriptEngine getScriptEngine() {
       return new InteractivePhpScriptEngine(this);
   }

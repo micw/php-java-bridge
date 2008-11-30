@@ -100,6 +100,7 @@ public final class Util {
             if(logger==null) return logger=new FileLogger();
             return logger;
         }
+        /**{@inheritDoc}*/
 	public void printStackTrace(Throwable t) {
 	    if (clogger==null) logger.printStackTrace(t);
 	    else
@@ -111,6 +112,7 @@ public final class Util {
 		}
 	}
 
+        /**{@inheritDoc}*/
 	public void log(int level, String msg) {
 	    if(clogger==null) logger.log(level, msg);
 	    else
@@ -122,6 +124,7 @@ public final class Util {
 		}
 	}
 
+        /**{@inheritDoc}*/
 	public void warn(String msg) {
 	    if(clogger==null) logger.warn(msg);
 	    else
@@ -617,12 +620,18 @@ public final class Util {
      * @author jostb
      * @see Util#parseBody(byte[], InputStream, OutputStream, HeaderParser)
      */
-    public static class HeaderParser {public void parseHeader(String header) {/*template*/}}
+    public static class HeaderParser {
+      /**
+       * @param header The header string to parse
+       */
+      public void parseHeader(String header) {/*template*/}
+    }
     /**
      * Discards all header fields from a HTTP connection and write the body to the OutputStream
      * @param buf A buffer, for example new byte[BUF_SIZE]
      * @param natIn The InputStream
      * @param out The OutputStream
+     * @param parser The header parser
      * @throws UnsupportedEncodingException
      * @throws IOException
      */
@@ -739,34 +748,57 @@ public final class Util {
      * Convenience daemon thread class
       */
     public static class Thread extends java.lang.Thread {
+	/**Create a new thread */
 	public Thread() {
 	    super();
 	    initThread();
 	}
+	/**Create a new thread 
+	 * @param name */
 	public Thread(String name) {
 	    super(name);
 	    initThread();
 	}
+	/**Create a new thread 
+	 * @param target */
 	public Thread(Runnable target) {
 	    super(target);
 	    initThread();
 	}
+	/**Create a new thread 
+	 * @param group 
+	 * @param target */
 	public Thread(ThreadGroup group, Runnable target) {
 	    super(group, target);
 	    initThread();
 	}
+	/**Create a new thread 
+	 * @param group 
+	 * @param name */
 	public Thread(ThreadGroup group, String name) {
 	    super(group, name);
 	    initThread();
 	}
+	/**Create a new thread 
+	 * @param target 
+	 * @param name */
 	public Thread(Runnable target, String name) {
 	    super(target, name);
 	    initThread();
 	}
+	/**Create a new thread 
+	 * @param group 
+	 * @param target 
+	 * @param name */
 	public Thread(ThreadGroup group, Runnable target, String name) {
 	    super(group, target, name);
 	    initThread();
 	}
+	/**Create a new thread 
+	 * @param group 
+	 * @param target 
+	 * @param name 
+	 * @param stackSize */
 	public Thread(ThreadGroup group, Runnable target, String name, long stackSize) {
 	    super(group, target, name, stackSize);
 	    initThread();
@@ -865,6 +897,9 @@ public final class Util {
 	 * @param args The args array, e.g.: new String[]{null, "-b", ...};. If args is null or if args[0] is null, the function looks for the system property "php.java.bridge.php_exec".
 	 * @param homeDir The home directory. If null, the current working directory is used.
 	 * @param env The CGI environment. If null, Util.DEFAULT_CGI_ENVIRONMENT is used.
+         * @param tryOtherLocations true if we should check the DEFAULT_CGI_LOCATIONS first
+         * @param preferSystemPhp 
+         * @param err 
 	 * @return The process handle.
          * @throws IOException 
          * @throws NullPointerException 
@@ -898,46 +933,38 @@ public final class Util {
 	    }
 	};
 
+	/**
+	 * Check for a PHP fatal error and throw a PHP exception if necessary.
+	 * @throws PhpException
+	 */
 	public void checkError() throws PhpException {}
 
-        /* (non-Javadoc)
-         * @see java.lang.Process#getOutputStream()
-         */
+	/**{@inheritDoc}*/
         public OutputStream getOutputStream() {
             return proc.getOutputStream();
         }
 
-        /* (non-Javadoc)
-         * @see java.lang.Process#getInputStream()
-         */
+	/**{@inheritDoc}*/
         public InputStream getInputStream() {
             return proc.getInputStream();
         }
 
-        /* (non-Javadoc)
-         * @see java.lang.Process#getErrorStream()
-         */
+	/**{@inheritDoc}*/
         public InputStream getErrorStream() {
             return proc.getErrorStream();
         }
 
-        /* (non-Javadoc)
-         * @see java.lang.Process#waitFor()
-         */
+	/**{@inheritDoc}*/
         public int waitFor() throws InterruptedException {
             return proc.waitFor();
         }
 
-        /* (non-Javadoc)
-         * @see java.lang.Process#exitValue()
-         */
+	/**{@inheritDoc}*/
         public int exitValue() {
             return proc.exitValue();
         }
 
-        /* (non-Javadoc)
-         * @see java.lang.Process#destroy()
-         */
+	/**{@inheritDoc}*/
         public void destroy() {
             proc.destroy();
         }
@@ -960,13 +987,12 @@ public final class Util {
 	    super.start();
 	    (new Util.Thread("CGIErrorReader") {public void run() {readErrorStream();}}).start();
 	}
-        /**
-         * Throw a PhpException when a fatal error occured.
-         */	
+	/**{@inheritDoc}*/
 	public void checkError() throws PhpException {
 	    String errorString = error==null?null:Util.checkError(error.toString());
 	    if(errorString!=null) throw new PhpException(errorString);
 	}
+	/**{@inheritDoc}*/
 	public void destroy() {
 	    proc.destroy();
 	}
@@ -993,6 +1019,7 @@ public final class Util {
 		notify();
 	    }
 	}
+	/**{@inheritDoc}*/
 	public synchronized int waitFor() throws InterruptedException {
 	    if(in==null) wait();
 	    return super.waitFor();
@@ -1003,6 +1030,9 @@ public final class Util {
          * @param args The args array, e.g.: new String[]{null, "-b", ...};. If args is null or if args[0] is null, the function looks for the system property "php.java.bridge.php_exec".
          * @param homeDir The home directory. If null, the current working directory is used.
          * @param env The CGI environment. If null, Util.DEFAULT_CGI_ENVIRONMENT is used.
+	 * @param tryOtherLocations true if the should check DEFAULT_CGI_LOCATIONS 
+	 * @param preferSystemPhp true if the should check DEFAULT_CGI_LOCATIONS first
+	 * @param err The error stream
          * @return The process handle.
          * @throws IOException
          * @see Util#checkCgiBinary(StringBuffer)
@@ -1175,6 +1205,7 @@ public final class Util {
      * <code>String.valueOf(object) returns null, if object is a proxy and returns null.</code>
      * 
      * @param object The object or dynamic proxy
+     * @return The string representation of object
      */
     public static String stringValueOf(Object object) {
         String s = String.valueOf(object);
@@ -1182,6 +1213,11 @@ public final class Util {
         return s;
     }
 
+    /**
+     * Create a new AppThreadPool.
+     * @param name The pool name
+     * @return A new AppThreadPool for up to {@link #THREAD_POOL_MAX_SIZE} runnables
+     */
     public static AppThreadPool createThreadPool(String name) {
         AppThreadPool pool = null;
         int maxSize = 20;
@@ -1255,6 +1291,11 @@ public final class Util {
 	return false;
     }
 
+    /**
+     * Return the time in GMT
+     * @param ms the time in milliseconds
+     * @return The formatted date string
+     */
     public static String formatDateTime(long ms) {
 	java.sql.Timestamp t = new java.sql.Timestamp(ms);
 	DateFormat formatter = DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.LONG, Locale.ENGLISH);
@@ -1262,6 +1303,7 @@ public final class Util {
 	String str =  formatter.format(t);
 	return str;
     }
+    /**destroy the logger */
     public static void destroy () {
 	    Util.logLevel = 0;
     }

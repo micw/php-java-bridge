@@ -51,7 +51,11 @@ public class InvocablePhpServletContextFactory extends php.java.servlet.SimpleSe
 	}
     /**
      * Add the PhpScriptContext
-     * @param context
+     * @param context The passed context
+     * @param servlet The servlet
+     * @param ctx The servlet context
+     * @param req The servlet request
+     * @param res The servlet response
      * @return The ContextFactory.
      */
     public static IContextFactory addNew(IContext context, Servlet servlet, 

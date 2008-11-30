@@ -35,17 +35,24 @@ import php.java.bridge.Util;
  */
 public class Logger implements ILogger {
 	private ServletContext ctx;
+	/**
+	 * Create a new Logger
+	 * @param ctx The servlet context
+	 */
 	public Logger(ServletContext ctx) {
 	    this.ctx = ctx;
 	}
+	/**{@inheritDoc}*/
 	public void log(int level, String s) {
 	    if(Util.logLevel>5) System.out.println(s);
 	    ctx.log(s); 
 	}
+	/**{@inheritDoc}*/
 	public void printStackTrace(Throwable t) {
 	    //ctx.log("", t);
 	    if(Util.logLevel>5) t.printStackTrace();
 	}
+	/**{@inheritDoc}*/
 	public void warn(String msg) {
 	    ctx.log(msg);
 	}

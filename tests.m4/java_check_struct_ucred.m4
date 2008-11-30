@@ -1,6 +1,6 @@
 AC_DEFUN([JAVA_CHECK_STRUCT_UCRED],[
   AC_MSG_CHECKING([for struct ucred])
-  AC_CACHE_VAL(have_struct_ucred,[
+  AC_CACHE_VAL(jb_cv_have_struct_ucred,[
   AC_TRY_RUN([
 #include <stdio.h>
 #include <sys/types.h>
@@ -77,11 +77,11 @@ int main() {
   return ret;
 }
 ],
-[have_struct_ucred=yes],
-[have_struct_ucred=no])
+[jb_cv_have_struct_ucred=yes],
+[jb_cv_have_struct_ucred=no])
 ])
 
-  if test "$have_struct_ucred" = "yes"; then
+  if test "$jb_cv_have_struct_ucred" = "yes"; then
 	AC_MSG_RESULT(yes)
 	AC_DEFINE(HAVE_STRUCT_UCRED,1, [Define if your system supports struct ucred.])
   else

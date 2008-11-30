@@ -40,10 +40,19 @@ import php.java.script.PhpScriptException;
 public class PhpScriptTemporarilyOutOfResourcesException extends PhpScriptException {
     private static final long serialVersionUID = 8462790974758317348L;
 
+    /**
+     * Create a new exception.
+     * @param string The exception string
+     */
     public PhpScriptTemporarilyOutOfResourcesException(String string) {
       super(string);
     }
 
+    /**
+     * Create a new exception 
+     * @param string The exception string
+     * @param cause The chained exception
+     */
     public PhpScriptTemporarilyOutOfResourcesException(String string, Throwable cause) {
       super(string, cause);
     }

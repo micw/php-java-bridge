@@ -3,7 +3,6 @@ m4_include(tests.m4/threads.m4)
 m4_include(tests.m4/java_check_broken_stdio_buffering.m4)
 m4_include(tests.m4/java_check_struct_ucred.m4)
 m4_include(tests.m4/java_check_abstract_namespace.m4)
-m4_include(tests.m4/java_check_broken_gcc_installation.m4)
 m4_include(tests.m4/java_check_jni.m4)
 
 AC_ARG_WITH(java,  [  --with-java[[=JAVA_HOME,[JRE_HOME]]] 
@@ -52,7 +51,7 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
  	 JAVA_CHECK_JNI
          AC_CHECK_PROG(have_gcj, gcj, "yes", "no")
          COND_GCJ=1
-         if test X$PHP_JRE != X || test $have_jni = no || test $have_gcj = no; then
+         if test X$PHP_JRE != X || test $jb_cv_have_jni = no || test $have_gcj = no; then
 	   COND_GCJ=0
          fi
 	else
@@ -71,7 +70,7 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
 	  else
 		  PHP_JAVA_BIN="${PHP_JRE}/bin/java"
           fi
-	  if test "$have_jni" = "yes"; then
+	  if test "$jb_cv_have_jni" = "yes"; then
             JAVA_SOCKETNAME="/var/run/.php-java-bridge_socket"
           else
             JAVA_SOCKETNAME="9267"
@@ -123,13 +122,6 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
         done
         ln java.c bind.c php_java.h php_wrapper.h mono_dir
         fi
-
-
-       JAVA_CHECK_BROKEN_GCC_INSTALLATION
-       if test "$have_broken_gcc_installation" = "yes"; then
-         AC_MSG_WARN([Your GCC installation may be broken. It uses two different static libraries but only one dynamic library for -m32 and -m64 builds.])
-	  sleep 10
-       fi
 
 PHP_ADD_MAKEFILE_FRAGMENT
 if test "$PHP_BACKEND" = "yes" ; then

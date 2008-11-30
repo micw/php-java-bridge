@@ -52,8 +52,7 @@ public class ChainsawLogger extends SimpleLog4jLogger implements ILogger {
      * 
      * @param defaultHost The default host
      * @param defaultPort The default port
-     * @throws UnknownHostException Cannot happen.
-     * @throws IOException If chainsaw isn't running.
+     * @throws Exception If chainsaw isn't running.
      */
     public void configure (String defaultHost, int defaultPort) throws Exception {
         Socket s = new Socket(defaultHost, defaultPort);
@@ -82,15 +81,16 @@ public class ChainsawLogger extends SimpleLog4jLogger implements ILogger {
     }
     /**
      * Create a new chainsaw logger.
+     * @return The chainsaw logger
      * @see php.java.bridge.Util#setLogger(ILogger)
-     * @throws UnknownHostException If the host does not exist.
-     * @throws IOException If chainsaw isn't running.
+     * @throws Exception If chainsaw isn't running.
      */
     public static ChainsawLogger createChainsawLogger() throws Exception {
        ChainsawLogger logger = new ChainsawLogger();
        logger.init();
        return logger;
     }
+    /**{@inheritDoc}*/
     public String toString() {
 	return "Chainsaw logger, host: " + DEFAULT_HOST + ", port: " + DEFAULT_PORT; 
     }

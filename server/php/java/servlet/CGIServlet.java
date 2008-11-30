@@ -253,7 +253,7 @@ import php.java.bridge.Util;
  */
 public abstract class CGIServlet extends HttpServlet {
 
-    // IO buffer size
+    /** IO buffer size */
     public static final int BUF_SIZE = 8192;
 
     private static final long serialVersionUID = 3258132448955937337L;
@@ -277,6 +277,7 @@ public abstract class CGIServlet extends HttpServlet {
 
     private static final String UTF = "UTF-8";
 
+    /** Only for internal use */
     public HashMap processEnvironment = null;
     private static final File winnt = new File("c:/winnt");
     private static final File windows = new File("c:/windows");
@@ -956,7 +957,6 @@ public abstract class CGIServlet extends HttpServlet {
      * @param context2 The servlet context.
      * @param pathInfoCGI  may be "" or "/" for example.
      * @return a valid path or null
-     * @throws MalformedURLException 
      */
     public static String getRealPath(ServletContext context2, String pathInfoCGI) {
 	String ret = context2.getRealPath(pathInfoCGI);

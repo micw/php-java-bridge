@@ -36,18 +36,22 @@ import javax.script.ScriptEngine;
  */
 public class InvocablePhpScriptEngineFactory extends PhpScriptEngineFactory {
 
+    /**{@inheritDoc}*/
   public String getLanguageName() {
     return "php-invocable";
   }
+  /**{@inheritDoc}*/
   public List getNames() {
     return Arrays.asList(new String[]{getLanguageName()});
   }
 
   private List ext = Collections.unmodifiableList(new LinkedList());
+  /**{@inheritDoc}*/
   public List getExtensions() {
       return ext;
     }
 
+  /**{@inheritDoc}*/
   public ScriptEngine getScriptEngine() {
       return new InvocablePhpScriptEngine(this);
   }

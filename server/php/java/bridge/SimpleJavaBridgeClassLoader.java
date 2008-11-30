@@ -44,6 +44,10 @@ public class SimpleJavaBridgeClassLoader {
     protected DynamicJavaBridgeClassLoader cl = null;
     protected ClassLoader scl = null;
     
+    /**
+     * Return the thread context class loader
+     * @return The context class loader
+     */
     public static final ClassLoader getContextClassLoader() {
         ClassLoader loader = null;
         try {loader = Thread.currentThread().getContextClassLoader();} catch (SecurityException ex) {/*ignore*/}
@@ -62,6 +66,10 @@ public class SimpleJavaBridgeClassLoader {
 	    cl.clear();
     }
 
+    /**
+     * Create a new JavaBridgeClassLoader
+     * @param xloader The delegate
+     */
     public SimpleJavaBridgeClassLoader(ClassLoader xloader) {
 	this(null, xloader);
     }
@@ -112,6 +120,10 @@ public class SimpleJavaBridgeClassLoader {
 	return scl;
     }
     
+    /**
+     * Return the default class loader
+     * @return The default class loader
+     */
     public ClassLoader getDefaultClassLoader() {
 	return scl;
     }

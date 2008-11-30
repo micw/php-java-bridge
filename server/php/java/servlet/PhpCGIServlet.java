@@ -57,6 +57,7 @@ import php.java.servlet.fastcgi.FastCGIServlet;
  *  */
 public class PhpCGIServlet extends FastCGIServlet {
 
+    /** True if /bin/sh exists, false otherwise */
     public static final boolean USE_SH_WRAPPER = new File("/bin/sh").exists();
     private static final long serialVersionUID = 38983388211187962L;
 
@@ -81,7 +82,8 @@ public class PhpCGIServlet extends FastCGIServlet {
     
     private static final Object lockObject = new Object();   
     private static boolean servletPoolSizeDetermined = false;
-    /** Return the servlet pool size */
+    /** Return the servlet pool size 
+     * @return The  pool size*/
     public static int getServletPoolSize () {
 	synchronized (lockObject) {
 	    if (servletPoolSizeDetermined) return servletPoolSize;
@@ -100,6 +102,7 @@ public class PhpCGIServlet extends FastCGIServlet {
 	}
     }
     
+    /**{@inheritDoc}*/
     public void destroy() {
       super.destroy();
     }
@@ -109,7 +112,8 @@ public class PhpCGIServlet extends FastCGIServlet {
      */
     public class CGIEnvironment extends FastCGIServlet.CGIEnvironment {
     	protected SimpleServletContextFactory sessionFactory;
-	public HttpServletRequest req;
+	/** Only for internal use */
+    	public HttpServletRequest req;
     	
 	protected CGIEnvironment(HttpServletRequest req, HttpServletResponse res, ServletContext context) {
 	    super(req, res, context);

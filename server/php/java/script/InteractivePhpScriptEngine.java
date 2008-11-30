@@ -62,6 +62,7 @@ public class InteractivePhpScriptEngine extends InvocablePhpScriptEngine {
 
     /**
      * Create the interactive php script engine.
+     * @param factory The engine factory
      */
     public InteractivePhpScriptEngine(InteractivePhpScriptEngineFactory factory) {
         super(factory);
@@ -72,7 +73,11 @@ public class InteractivePhpScriptEngine extends InvocablePhpScriptEngine {
      * @see javax.script.ScriptEngine#eval(java.lang.String, javax.script.ScriptContext)
      */
     /**
-     * Create the interactive php script engine.
+     * Evaluate a PHP line.
+     * @param script The script line
+     * @param context The context
+     * @return The result
+     * @throws ScriptException 
      */
     public Object eval(String script, ScriptContext context)
 	throws ScriptException {
@@ -110,6 +115,7 @@ public class InteractivePhpScriptEngine extends InvocablePhpScriptEngine {
 	
 	return o;
     }
+    /**{@inheritDoc}*/
     public void release() {
 	    super.release();
 	    hasScript = false;

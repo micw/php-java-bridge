@@ -78,7 +78,7 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
     /* (non-Javadoc)
      * @see javax.script.Invocable#call(java.lang.String, java.lang.Object[])
      */
-    public Object invoke(String methodName, Object[] args)
+    private Object invoke(String methodName, Object[] args)
 	throws ScriptException, NoSuchMethodException {
 	if(scriptClosure==null) {
 	    if (Util.logLevel>4) Util.warn("Evaluating an empty script either because eval() has not been called or release() has been called.");
@@ -92,6 +92,7 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
 	    throw new ScriptException(e);
 	}
     }
+    /**{@inheritDoc}*/
     public Object invokeFunction(String methodName, Object[] args)
 	throws ScriptException, NoSuchMethodException {
 	return invoke(methodName, args);
@@ -103,7 +104,7 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
     /* (non-Javadoc)
      * @see javax.script.Invocable#call(java.lang.String, java.lang.Object, java.lang.Object[])
      */
-    public Object invoke(Object thiz, String methodName, Object[] args)
+    protected Object invoke(Object thiz, String methodName, Object[] args)
 	throws ScriptException, NoSuchMethodException {
 	checkPhpClosure(thiz);
 	PhpProcedure proc = (PhpProcedure)(Proxy.getInvocationHandler(thiz));
@@ -121,23 +122,17 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
 	    throw new PhpScriptException("Invocation threw exception ", e);
 	}
     }
-    /* (non-Javadoc)
-     * @see javax.script.Invocable#call(java.lang.String, java.lang.Object, java.lang.Object[])
-     */
+    /**{@inheritDoc}*/
     public Object invokeMethod(Object thiz, String methodName, Object[] args)
 	throws ScriptException, NoSuchMethodException {
 	return invoke(thiz, methodName, args);
     }
 
-    /* (non-Javadoc)
-     * @see javax.script.Invocable#getInterface(java.lang.Class)
-     */
+    /**{@inheritDoc}*/
     public Object getInterface(Class clasz) {
 	return getInterface(script, clasz);
     }
-    /* (non-Javadoc)
-     * @see javax.script.Invocable#getInterface(java.lang.Object, java.lang.Class)
-     */
+    /**{@inheritDoc}*/
     public Object getInterface(Object thiz, Class clasz) {
 	checkPhpClosure(thiz);
 	return ((PhpProcedureProxy)thiz).getNewFromInterface(clasz);
@@ -217,6 +212,7 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
     private void releaseInternal() {
 	super.release();
     }
+    /**{@inheritDoc}*/
     public void release() {
 	synchronized(engines) {
 	    releaseInternal();

@@ -39,37 +39,41 @@ import php.java.bridge.http.IContext;
  *
  */
 public class RemoteContext extends Context {
-    public RemoteContext(ServletContext kontext, HttpServletRequest req, HttpServletResponse res) {
+    protected RemoteContext(ServletContext kontext, HttpServletRequest req, HttpServletResponse res) {
 	super(kontext, req, res);
     }
-
     /**
-    *  Use java_context()->getAttribute(...) instead
+     * Return the response object
+     * @return The response
      */
     public Object getHttpServletResponse() {
 	return getAttribute(IContext.SERVLET_RESPONSE);
     }
     /**
-    *  Use java_context()->getAttribute(...) instead
+     * Return the request object
+     * @return The request
      */
     public Object getHttpServletRequest() {
 	return getAttribute(IContext.SERVLET_REQUEST);
     }
     /**
-    *  Use java_context()->getAttribute(...) instead
+     * Return the servlet
+     * @return the servlet
      */
     public Object getServlet() {
 	return getAttribute(IContext.SERVLET);
     }
     /**
-     *  Use java_context()->getAttribute(...) instead
-      */
+     * Return the servlet config
+     * @return the servlet config
+     */
      public Object getServletConfig() {
  	return getAttribute(IContext.SERVLET_CONFIG);
      }
      /**
-      *  Use java_context()->getAttribute(...) instead
-       */
+      * Return the servlet context
+      * @return the servlet context
+      */
       public Object getServletContext() {
   	return getAttribute(IContext.SERVLET_CONTEXT);
       }

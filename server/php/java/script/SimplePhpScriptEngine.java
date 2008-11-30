@@ -332,6 +332,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine implements jav
     } 
     /**
      * Release the script engine.
+     * @throws IOException 
      */
     public void close() throws IOException {
 	release();

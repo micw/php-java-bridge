@@ -63,6 +63,7 @@ public class SimpleServletContextFactory extends php.java.bridge.http.SimpleCont
      */
     protected void setSessionFactory(HttpServletRequest req) {
     }
+    /**{@inheritDoc}*/
     public ISession getSession(String name, boolean clientIsNew, int timeout) {
 	if(session != null) return session;
 	 // if name != null return a "named" php session which is not shared with jsp
@@ -72,10 +73,12 @@ public class SimpleServletContextFactory extends php.java.bridge.http.SimpleCont
 	return session = new HttpSessionFacade(this, kontext, proxy, res, clientIsNew, timeout);
     }
     
+    /**{@inheritDoc}*/
     public synchronized void destroy() {
     	super.destroy();
     	proxy=null;
     }
+    /**{@inheritDoc}*/
     public String toString() {
 	return super.toString() + ", HttpServletRequest: " + proxy ;
     }
@@ -97,6 +100,7 @@ public class SimpleServletContextFactory extends php.java.bridge.http.SimpleCont
 
     /**
      * Return the http session handle or null;
+     * @return The session handle
      */
     public HttpSession getSession() {
 	if(session!=null) return ((HttpSessionFacade)session).getCachedSession();

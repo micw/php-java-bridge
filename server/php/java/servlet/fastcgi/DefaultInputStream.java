@@ -48,9 +48,11 @@ public class DefaultInputStream extends InputStream {
           throw new ConnectionException(connection, e);
       }	  
   }
+  /**{@inheritDoc}*/  
   public int read(byte buf[]) throws ConnectionException {
       return read(buf, 0, buf.length);
   }
+  /**{@inheritDoc}*/  
   public int read(byte buf[], int off, int buflength) throws ConnectionException {
       try {
           int count = in.read(buf, off, buflength);
@@ -62,9 +64,11 @@ public class DefaultInputStream extends InputStream {
           throw new ConnectionException(connection, ex);
       }
   }
+  /**{@inheritDoc}*/  
   public int read() throws ConnectionException {
     throw new NotImplementedException();
   }      
+  /**{@inheritDoc}*/  
   public void close() throws ConnectionException {
       connection.state|=1;
       if(connection.state==connection.ostate)

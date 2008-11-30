@@ -40,14 +40,15 @@ public abstract class Factory {
     /**
      * Create a new socket and connect
      * it to the given host/port
+     * @param name The channel name.
      * @return The socket
-     * @throws UnknownHostException
-     * @throws ConnectionException
+     * @throws ConnectException
      */
     public abstract Channel connect(ChannelName name) throws ConnectException;
     /** 
      * Create a new InputStream.
      * @return The input stream. 
+     * @throws ConnectionException 
      */
     public InputStream createInputStream() throws ConnectionException {
        DefaultInputStream in = new DefaultInputStream();

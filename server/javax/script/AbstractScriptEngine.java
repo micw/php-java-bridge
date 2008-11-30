@@ -168,6 +168,7 @@ public abstract class AbstractScriptEngine implements ScriptEngine {
      * 
      * @param namespace the namespace to be associated with specified scope
      * @param scope     the level of scope of the specified namespace
+     * @throws UnsupportedOperationException 
      * @throws IllegalArgumentException if scope is invalid
      */
 	public void setBindings(Bindings namespace, int scope)

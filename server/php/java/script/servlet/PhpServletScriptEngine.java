@@ -109,7 +109,7 @@ import php.java.servlet.ContextLoaderListener;
 
 public final class PhpServletScriptEngine extends PhpServletLocalScriptEngine {
     private File path;
-    public PhpServletScriptEngine(Servlet servlet, 
+    protected PhpServletScriptEngine(Servlet servlet, 
 				  ServletContext ctx, 
 				  HttpServletRequest req, 
 				  HttpServletResponse res,

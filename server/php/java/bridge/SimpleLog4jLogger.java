@@ -72,6 +72,7 @@ public abstract class SimpleLog4jLogger implements ILogger {
      */
     protected SimpleLog4jLogger() {
     }
+    /**{@inheritDoc}*/
     public void printStackTrace(Throwable t) {
 	try {
 	    logger.error("JavaBridge exception ", t);
@@ -80,6 +81,7 @@ public abstract class SimpleLog4jLogger implements ILogger {
 	    throw new RuntimeException(e);
 	}
     }
+    /**{@inheritDoc}*/
     public void log(int level, String msg) {
 	try {
 	    logger.log(level, msg);
@@ -88,6 +90,7 @@ public abstract class SimpleLog4jLogger implements ILogger {
 	    throw new RuntimeException(e);
 	}
     }
+    /**{@inheritDoc}*/
     public void warn(String msg) {
 	try {
 	    logger.log(-1, msg);

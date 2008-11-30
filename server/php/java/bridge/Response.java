@@ -119,6 +119,7 @@ public final class Response {
 	}
 	/**
 	 * Called at the end of each packed.
+	 * @throws IOException 
 	 */
 	public void flush() throws IOException {
        	    if(bridge.logLevel>=4) {
@@ -352,6 +353,7 @@ public final class Response {
 	}
 	/**
 	 * Called at the end of each packed.
+	 * @throws IOException 
 	 */
 	public void flush() throws IOException {
      	    if(bridge.logLevel>=4) {
@@ -471,7 +473,9 @@ public final class Response {
         this.currentWriter = this.writer = this.defaultWriter = getDefaultWriter();      
     }
     /** Flush the current output buffer and create a new Response object 
-     * where are writers have their default value */
+     * where are writers have their default value 
+     * @return the fresh response
+     * @throws IOException */
     public Response copyResponse() throws IOException {
         flush();
         return new Response(bridge, buf);
@@ -507,6 +511,7 @@ public final class Response {
       * Set the result packet.
       * @param value The result object.
       * @param type The type of the result object.
+     * @param hasDeclaredExceptions true if the method/procedure has declared exceptions, false otherwise
       */
     public void setResult(Object value, Class type, boolean hasDeclaredExceptions) {
      	writer.setResult(value, type, hasDeclaredExceptions);
@@ -520,7 +525,7 @@ public final class Response {
 	return writer.isAsync();
     }
     
-    public void setFinish(boolean keepAlive) {
+    protected void setFinish(boolean keepAlive) {
 	setDefaultWriter();
         writer.setFinish(keepAlive);
     }
@@ -532,20 +537,10 @@ public final class Response {
     protected Writer setArrayValueWriter() {
 	return writer = getArrayValueWriter();
     }
-    /**
-     * Selects a specialized writer which writes arrays as values.
-     * Used by getValues() and in php 4.
-     * @see JavaBridge#getValues(Object)
-     */
-    public Writer setArrayValuesWriter() {
+    Writer setArrayValuesWriter() {
 	return writer = getArrayValuesWriter();
     }
-    /**
-     * Selects a specialized writer which casts the value.
-     * Used by cast().
-     * @see JavaBridge#cast(Object, Class)
-     */
-    public Writer setCoerceWriter() {
+    Writer setCoerceWriter() {
 	return writer = getCoerceWriter();
     }
     /**
@@ -763,6 +758,7 @@ public final class Response {
         reset();
         setDefaultWriter();
     }
+    /**{@inheritDoc}*/
     public String toString() {
     	return newString(buf.getFirstBytes());
     }

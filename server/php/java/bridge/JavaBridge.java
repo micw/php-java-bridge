@@ -172,6 +172,10 @@ public class JavaBridge implements Runnable {
 
     /** For internal use only. */
     private IJavaBridgeFactory sessionFactory;
+    /**
+     * Return the session/jsr223 factory associated with this bridge
+     * @return The session/jsr223 factory
+     */
     public IJavaBridgeFactory getFactory() {
 	if(sessionFactory==null) throw new NullPointerException("session factory");
 	return sessionFactory;
@@ -432,7 +436,11 @@ public class JavaBridge implements Runnable {
     }
     
     /**
-     * Create an new instance of a given class
+     * Create an new instance of a given class, to be called by clients.
+     * @param name The class name
+     * @param createInstance true if we should create an instance, false otherwise
+     * @param args The argument array
+     * @param response The response writer
      */
     public void CreateObject(String name, boolean createInstance,
 			     Object args[], Response response) {
@@ -982,7 +990,7 @@ public class JavaBridge implements Runnable {
 	}
     }
 
-    public static void logInvoke(Object obj, String method, Object args[]) {
+    private static void logInvoke(Object obj, String method, Object args[]) {
 	String dmsg = "\nInvoking "+objectDebugDescription(obj)+"."+method+"(";
 	for (int t =0;t<args.length;t++) {
 	    if (t>0) dmsg +=",";
@@ -992,7 +1000,7 @@ public class JavaBridge implements Runnable {
 	dmsg += ");\n";
 	Util.logDebug(dmsg);
     }
-    public static void logResult(Object obj) {
+    private static void logResult(Object obj) {
 	String dmsg = "\nResult "+objectDebugDescription(obj) + "\n";
 	Util.logDebug(dmsg);
     }
@@ -1004,10 +1012,15 @@ public class JavaBridge implements Runnable {
 	return object;
     }
     /**
-     * Invoke a method on a given object
+     * Invoke a method on a given object, to be called by clients.
+     * @param object The object
+     * @param method The method of the object
+     * @param args The argument array
+     * @param response The response writer
+     * @throws NullPointerException If the object was null
      */
     public void Invoke
-	(Object object, String method, Object args[], Response response)
+	(Object object, String method, Object args[], Response response) throws NullPointerException
     {
 	Class jclass;
 	boolean again;
@@ -1160,10 +1173,16 @@ public class JavaBridge implements Runnable {
     }
 
     /**
-     * Get or Set a property
+     * Get or Set a property, to be called by clients.
+     * @param object The object
+     * @param prop The object property
+     * @param args The argument array
+     * @param response The response writer
+     * @throws NullPointerException If the object is null
+     * 
      */
     public void GetSetProp
-	(Object object, String prop, Object args[], Response response)
+	(Object object, String prop, Object args[], Response response) throws NullPointerException
     {
     	LinkedList matches = new LinkedList();
 	boolean set = (args!=null && args.length>0);
@@ -1405,6 +1424,8 @@ public class JavaBridge implements Runnable {
      * setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");<br>
      * @param path A file or url list, usually separated by ';'
      * @param extensionDir The php extension directory. 
+     * @param cwd The current working dir
+     * @param searchpath The search path
      * @throws IOException 
      */
     public void updateJarLibraryPath(String path, String extensionDir, String cwd, String searchpath) throws IOException {
@@ -1423,6 +1444,8 @@ public class JavaBridge implements Runnable {
      * Update the library path for ECMA dll's
      * @param rawPath A file or url list, usually separated by ';'
      * @param extensionDir The php extension directory. 
+     * @param cwd The current working dir
+     * @param searchpath The search path
      */
     public void updateLibraryPath(String rawPath, String extensionDir, String cwd, String searchpath) {
     	
@@ -1914,6 +1937,7 @@ public class JavaBridge implements Runnable {
     }
     /**
      * Back to synchronous protocol mode
+     * @throws Throwable 
      */
     public void endDocument() throws Throwable {
 	Response res = request.response;
@@ -2023,7 +2047,11 @@ public class JavaBridge implements Runnable {
     Response createResponse() {
 	return new Response(this);
     }
-    
+    /**
+     * Check if a given class exists.
+     * @param name The class name
+     * @return true if the type exists, false otherwise
+     */
     public boolean typeExists(String name) {
 	try {
 	    getClassLoader().forName(name);

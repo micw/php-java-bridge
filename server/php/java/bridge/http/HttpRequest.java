@@ -167,7 +167,8 @@ public class HttpRequest {
 	this.count = 0;
 	this.contentLength = contentLength;
     }
-    /** Close the request */
+    /** Close the request 
+     * @throws IOException */
     public void close() throws IOException {
 	try {
 	    if(in!=null) in.close();

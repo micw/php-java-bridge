@@ -92,6 +92,7 @@ public class ResultProxy extends Number implements java.io.Closeable {
 
     /**
      * Release the script engine
+     * @throws IOException 
      */
     public void close() throws IOException {
 	engine.release();

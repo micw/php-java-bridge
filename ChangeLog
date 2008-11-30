@@ -1,8 +1,8 @@
-2008-11-26  Jost Boekemeier  <jostb@intern>
+2008-11-30  Jost Boekemeier  <jostb@intern>
 	
-        * server/php/java/bridge/JavaBridge.java
-        (typeExists): cast the result to boolean, so that java_autoload() can
-        report a failure.
+	* server/php/java/bridge/JavaBridge.java
+	(typeExists): cast the result to boolean, so that java_autoload() can
+	report a failure.
 
 	* examples/jsr223/PhpThreads, examples/jsr223/README: New files
 
@@ -25,8 +25,12 @@
 	* java.ini: Switch off java.security_policy per default as some VM
 	implementations don't understand the policy==... syntax.
 	
-        * VERSION, php-java-bridge.spec: Version 5.3.3.1
-        
+        * VERSION, php-java-bridge.spec: Version 5.3.4
+
+	* server/META-INF/java/Protocol.inc
+	(redirect): Use write/read/write/read instead
+	of write/write/read to avoid latency on BSD and
+	other systems.
 
 2008-11-15  Jost Boekemeier  <jostb@intern>
 	
@@ -39,18 +43,7 @@
 	(redirect): Send the response immediately during a context switch,
 	otherwise the ContextRunner may time out after 30
 	seconds. Example: java(...); wait(more than 30 seconds);
-	java(...). Unfortunately this write-write-read on protocol level
-	will make the bridge 4 times slower on operating systems which use
-	BSD's original TCP/IP stack w/o John Nagle's ack delay
-	fix (introduced in 2006). The alternative would have been to make
-	the bridge a little bit slower on *all* operating systems by using
-	a write-read-write-read. But since all modern operating
-	systems (except *BSD and Mac OSX) already contain the fix, we have
-	decided against it. If your operating system uses the original BSD
-	TCP/IP protocol stack, please either upgrade your operating system
-	or switch off Nagle's algorithm for local TCP sockets. On BSD and
-	Mac OSX you can also use Unix Domain Sockets to communicate with
-	the back end, see the README "BSD and Mac OSX issues" for details.
+	java(...).
 
 	* server/php/java/bridge/http/SimpleContextFactory.java
 	(waitFor): Wait for the ContextRunner to finish. Otherwise the

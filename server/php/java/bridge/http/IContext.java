@@ -85,6 +85,7 @@ public interface IContext {
      * 
      * @param name the name of the attribute 
      * @return the value of the attribute
+     * @throws IllegalArgumentException 
      */
     public abstract Object getAttribute(String name)
 	    throws IllegalArgumentException;
@@ -98,6 +99,7 @@ public interface IContext {
      * @param scope the level of scope
      * @return the value value associated with the specified name in
      *         specified level of scope
+     * @throws IllegalArgumentException 
      */
     public abstract Object getAttribute(String name, int scope)
 	    throws IllegalArgumentException;
@@ -117,6 +119,7 @@ public interface IContext {
      * scripts to display their output.
      * 
      * @return an instance of java.io.Writer
+     * @throws IOException 
      */
     public abstract Writer getWriter() throws IOException;
 
@@ -139,7 +142,7 @@ public interface IContext {
      * @param name   the name of the attribute
      * @param value the value of the attribute
      * @param scope the level of the scope
-     * @throws IllegalArguementException if the name is null scope is
+     * @throws IllegalArgumentException if the name is null scope is
      *         invlaid
      */
     public abstract void setAttribute(String name, Object value, int scope)

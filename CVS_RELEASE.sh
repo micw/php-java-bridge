@@ -24,7 +24,7 @@ else
 fi
 
 cp server/JavaBridge.war server/src.zip .
-cp -r php_java_lib tests.php5 server
+cp -r php_java_lib tests.php5 tests.jsr223 server
 
 mkdir MONO.STANDALONE
 for i in ICSharpCode.SharpZipLib.dll IKVM.GNU.Classpath.dll IKVM.Runtime.dll MonoBridge.exe; do
@@ -51,7 +51,7 @@ cp INSTALL.STANDALONE JAVA.STANDALONE
 cp  src.zip README FAQ.html PROTOCOL.TXT INSTALL.J2EE INSTALL.J2SE NEWS documentation
 mv examples documentation
 mv server documentation
-list="JAVA.STANDALONE MONO.STANDALONE  documentation/API documentation/examples documentation/README documentation/FAQ.html documentation/PROTOCOL.TXT documentation/INSTALL.J2EE documentation/INSTALL.J2SE documentation/src.zip documentation/NEWS JavaBridge.war documentation/server/documentation documentation/server/php_java_lib documentation/server/test documentation/server/tests.php5 documentation/server/javabridge.policy"
+list="JAVA.STANDALONE MONO.STANDALONE  documentation/API documentation/examples documentation/README documentation/FAQ.html documentation/PROTOCOL.TXT documentation/INSTALL.J2EE documentation/INSTALL.J2SE documentation/src.zip documentation/NEWS JavaBridge.war documentation/server/documentation documentation/server/php_java_lib documentation/server/tests.jsr223 documentation/server/tests.php5 documentation/server/javabridge.policy"
 find $list -type d -name "CVS" -print | xargs rm -rf
 
 chmod +x JavaBridge.war

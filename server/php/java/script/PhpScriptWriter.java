@@ -54,7 +54,8 @@ public class PhpScriptWriter extends PrintWriter {
 	return out;
     }
     
-    public void close () {
+    /**{@inheritDoc}*/
+   public void close () {
 	flush ();
     }
 }

@@ -47,6 +47,7 @@ public class SimpleBindings implements Bindings {
      * @param key the String value which uniquely identifies the 
      *            object
      * @param value the object to be stored.
+     * @return The old object
      * @throws IllegalArgumentException if the key is null or is not
      *         java.lang.String type
      */
@@ -80,42 +81,51 @@ public class SimpleBindings implements Bindings {
             
 		map.putAll(toMerge);	
 	}
-    
+    /**{@inheritDoc}*/
     public int size() {
         return map.size();
     }
     
+    /**{@inheritDoc}*/
     public void clear() {
         map.clear();    
     }
     
+    /**{@inheritDoc}*/
     public boolean isEmpty() {
         return map.isEmpty();
     }
     
+    /**{@inheritDoc}*/
 	public boolean containsKey(Object key) {
 		return map.containsKey(key);
 	}
+	    /**{@inheritDoc}*/
 	public boolean containsValue(Object value) {
 		return map.containsValue(value);
 	}
     
+	    /**{@inheritDoc}*/
     public Collection values() {
         return map.values();
     }
     
+    /**{@inheritDoc}*/
 	public Set entrySet() {
 		return map.entrySet();
 	}
 	
+	    /**{@inheritDoc}*/
     public Object get(Object key) {
 		return map.get(key);
 	}
 
+    /**{@inheritDoc}*/
 	public Set keySet() {
 		return map.keySet();
 	}
 
+	    /**{@inheritDoc}*/
     public Object remove(Object key) {
 		return map.remove(key);
 	}

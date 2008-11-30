@@ -74,6 +74,7 @@ public class JavaBridgeSecurityManager extends SecurityManager {
     /**
      * All user threads belong to the "JavaBridgeThreadPoolAppGroup" and all internal threads
      * to "JavaBridgeThreadPoolGroup".
+     * @return The current thread group
      */
     public ThreadGroup getThreadGroup() {
         try {

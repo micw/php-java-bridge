@@ -30,11 +30,20 @@ public class JavaBridgeIllegalArgumentException extends
 
   private static final long serialVersionUID = -6180293871441493489L;
 
+  /**
+   * For compatibility with jdk 1.4
+   * @param string The exception string
+   * @param e The chained exception
+   */
   public JavaBridgeIllegalArgumentException(String string, Exception e) {
       super(string);
       initCause(e);
   }
 
+  /**
+   * For compatibility with jdk 1.4
+   * @param string The exception string
+   */
   public JavaBridgeIllegalArgumentException(String string) {
       super(string);
   }

@@ -131,9 +131,7 @@ public class URLReader extends Reader {
         return url;
     }
 
-    /**
-     * @throws NotImplementedException
-     */
+    /**{@inheritDoc}*/
     public int read(char[] cbuf, int off, int len) throws IOException {
             throw new IllegalStateException("Use urlReader.read(Hashtable, OutputStream) or use a FileReader() instead.");
     }
@@ -150,6 +148,7 @@ public class URLReader extends Reader {
      * Read from the URL and write the data to out.
      * @param env The environment, must contain values for X_JAVABRIDGE_CONTEXT. It may contain X_JAVABRIDGE_OVERRIDE_HOSTS.
      * @param out The OutputStream.
+     * @param headerParser The header parser
      * @throws IOException
      */
     public void read(Map env, OutputStream out, HeaderParser headerParser) throws IOException {

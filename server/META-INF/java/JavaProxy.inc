@@ -141,7 +141,7 @@ function java_inspect_internal($object) {
  *
  * Example:
  * <code>
- * echo java_inspect(java_get_context());
+ * echo java_inspect(java_context());
  * </code>
  * @param object A java object or type.
  * @access public
@@ -310,7 +310,7 @@ function java_session_array($args) {
  * arguments, the session is shared with java.
  * Example: 
  * <code>
- * java_get_session()->put("key", new Java("java.lang.Object"));
+ * java_session()->put("key", new Java("java.lang.Object"));
  * [...]
  * </code>
  * The java components (jsp, servlets) can retrieve the value, for
@@ -319,17 +319,17 @@ function java_session_array($args) {
  * getSession().getAttribute("key");
  * </code>
  *
- * When java_get_session() is called with a session name, the session
+ * When java_session() is called with a session name, the session
  * is not shared with java and no cookies are set. Example:
  * <code>
- * java_get_session("myPublicApplicationStore")->put("key", "value");
+ * java_session("myPublicApplicationStore")->put("key", "value");
  * </code>
  *
- * When java_get_session() is called with a second argument set to true,
+ * When java_session() is called with a second argument set to true,
  * a new session is allocated, the old session is destroyed if necessary.
  * Example:
  * <code>
- * java_get_session(null, true)->put("key", "val");
+ * java_session(null, true)->put("key", "val");
  * </code>
  *
  * The optional third argument specifies the default lifetime of the session, it defaults to <code> session.gc_maxlifetime </code>. The value 0 means that the session never times out.
@@ -346,7 +346,7 @@ function java_session() {
  *
  * Example:
  * <code>
- * $backend = java_get_server_name();
+ * $backend = java_server_name();
  * if(!$backend) wakeup_administrator("back-end not running");
  * echo "Connected to the back-end: $backend\n";
  * </code>
@@ -366,21 +366,41 @@ function java_server_name() {
  *
  * Example which closes over the current environment and passes it back to java:
  * <code>
- * if(java_is_false(java_get_context()->call(java_closure()))) die "Script should be called from java";
+ * define ("ENGINE_SCOPE", 100);
+ * $ctx = java_context();
+ * if(java_is_false($ctx->call(java_closure()))) die "Script should be called from java";
  * </code>
- *
+ * 
+ * A second example which shows how to invoke PHP methods without the JSR 223 getInterface() and invokeMethod() 
+ * helper procedures:
+ * <code>
+ * String s = "<?php class Runnable { function run() {...} };
+ *            // example which captures an environment and 
+ *            // passes it as a continuation back to Java
+ *            $Runnable = java('java.lang.Runnable');
+ *            $closure = java_closure(new Runnable(), null, $Runnable);
+ *            java_context()->setAttribute("kont", $closure, ENGINE_SCOPE);
+ *            java_context()->call($closure);
+ *            ?>";
+ * ScriptEngine e = new ScriptEngineManager().getEngineByName("php-invocable");
+ * e.eval (s);
+ * Runnable r = e.get("kont");
+ * new Thread(r).start();
+ * </code>
+ * 
  * It is possible to access implicit web objects (the session, the
  * application store etc.) from the context. Please see the JSR223
  * documentation for details. Example:
  * <code>
- * java_get_context()->getHttpServletRequest();
+ * $req = $ctx->getHttpServletRequest();
+ * $res = $ctx->getHttpServletResponse();
  * </code>
  *
  * Example which fetches the servlet-, config and context:
  * <code>
- * $config = $ctx->getAttribute ( "php.java.servlet.ServletConfig",  100);
- * $context = $ctx->getAttribute( "php.java.servlet.ServletContext", 100);
- * $servlet = $ctx->getAttribute( "php.java.servlet.Servlet", 100);
+ * $config = $ctx->getAttribute ( "php.java.servlet.ServletConfig",  ENGINE_SCOPE);
+ * $context = $ctx->getAttribute( "php.java.servlet.ServletContext", ENGINE_SCOPE);
+ * $servlet = $ctx->getAttribute( "php.java.servlet.Servlet", ENGINE_SCOPE);
  * </code>
  *
  * @access public
@@ -423,16 +443,16 @@ function java_closure_array($args) {
  * Example: 
  * <code>
  * function toString() {return "helloWorld";};
- * $object = java_get_closure();
+ * $object = java_closure();
  * echo "Java says that PHP says: $object\n";
  * </code>
  *
- * When a php instance is supplied as an argument, the environment will be used
+ * When a php instance is supplied as an argument, the instance will be used
  * instead. When a string or key/value map is supplied as a second argument,
  * the java procedure names are mapped to the php procedure names. Example:
  * <code>
  * function hello() {return "hello";};
- * echo (string)java_get_closure(null, "hello");
+ * echo (string)java_closure(null, "hello");
  * </code>
  * 
  * When an array of java interfaces is supplied as a third argument,
@@ -445,7 +465,7 @@ function java_closure_array($args) {
  *     }
  * }
  * function getListener() {
- *     return java_get_closure(new Listener(), null, array(new Java("java.awt.event.ActionListener")));
+ *     return java_closure(new Listener(), null, array(new Java("java.awt.event.ActionListener")));
  * }
  * </code>
  * @see java_values()

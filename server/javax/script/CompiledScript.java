@@ -11,8 +11,8 @@ package javax.script;
  */
 public abstract class CompiledScript {
     
-    public CompiledScript(){
-    }
+     CompiledScript(){
+     }
     
     /**
      * Re-evaluates the pre-compiled script using the specified 

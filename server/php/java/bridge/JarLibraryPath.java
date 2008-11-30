@@ -102,7 +102,6 @@ class JarLibraryPath {
     /**
      * Return the urls associated with this entry
      * @return The url value
-     * @throws IOException 
      */
     public URL[] getURLs() {
         return urls;

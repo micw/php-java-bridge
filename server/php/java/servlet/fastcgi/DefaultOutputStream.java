@@ -48,9 +48,11 @@ public class DefaultOutputStream extends OutputStream {
           throw new ConnectionException(connection, e);
         }
     }
+    /**{@inheritDoc}*/  
     public void write(byte buf[]) throws ConnectionException {
         write(buf, 0, buf.length);
     }
+    /**{@inheritDoc}*/  
     public void write(byte buf[], int off, int buflength) throws ConnectionException {
       try {
           out.write(buf, off, buflength);
@@ -58,9 +60,11 @@ public class DefaultOutputStream extends OutputStream {
           throw new ConnectionException(connection, ex);
       }
     }
+    /**{@inheritDoc}*/  
     public void write(int b) throws ConnectionException {
         throw new NotImplementedException();
     }
+    /**{@inheritDoc}*/  
     public void close() throws ConnectionException {
         try { 
             flush();
@@ -74,6 +78,7 @@ public class DefaultOutputStream extends OutputStream {
     	  }
         }
     }
+    /**{@inheritDoc}*/  
     public void flush() throws ConnectionException {
         try {
             out.flush();

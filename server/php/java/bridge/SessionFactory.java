@@ -48,10 +48,15 @@ public class SessionFactory extends JavaBridgeFactory {
 
   private static final SessionTimer timer = new SessionTimer();
   
+  /**{@inheritDoc}*/
   public SimpleJavaBridgeClassLoader getJavaBridgeClassLoader() {
       if (javaBridgeClassLoader!=null) return javaBridgeClassLoader;
       return javaBridgeClassLoader=new SimpleJavaBridgeClassLoader(getClassLoader());
   }
+  /**
+   * Return the context loader
+   * @return The context class loader
+   */
   public ClassLoader getClassLoader() {
       return Util.getContextClassLoader();
   }

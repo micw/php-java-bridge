@@ -56,6 +56,7 @@ public class Context extends php.java.bridge.http.Context {
     /** Integer value for the level of APPLICATION_SCOPE */
     public static final int APPLICATION_SCOPE = PhpSimpleHttpScriptContext.APPLICATION_SCOPE;
 
+    /** {@inheritDoc}*/
     public Object getAttribute(String key, int scope){
 	if(scope == PhpSimpleHttpScriptContext.REQUEST_SCOPE){
 	    return request.getAttribute(key);
@@ -67,6 +68,7 @@ public class Context extends php.java.bridge.http.Context {
 	    return super.getAttribute(key, scope);
 	}
   }
+  /**{@inheritDoc}*/  
   public Object getAttribute(String name) throws IllegalArgumentException{
 	Object result;
 	if (name == null) {
@@ -89,6 +91,8 @@ public class Context extends php.java.bridge.http.Context {
 	
     /**
      * Create a new context.
+     * @param kontext The servlet context
+     * @param req The servlet request
      * @param res The HttpServletResponse
      */
     public Context(ServletContext kontext, HttpServletRequest req, HttpServletResponse res) {
@@ -97,36 +101,42 @@ public class Context extends php.java.bridge.http.Context {
       this.request = req;
     }
 	
+    /**{@inheritDoc}*/  
     public Writer getWriter() throws IOException {
 	return response.getWriter();
     }
     /**
-     * Use java_context()->getAttribute(...) instead
-      */
+     * Return the http servlet response
+     * @return The http servlet reponse
+     */
      public Object getHttpServletResponse() {
  	return getAttribute(IContext.SERVLET_RESPONSE);
      }
      /**
-     *  Use java_context()->getAttribute(...) instead
+      * Return the http servlet request
+      * @return The http servlet request
       */
      public Object getHttpServletRequest() {
  	return getAttribute(IContext.SERVLET_REQUEST);
      }
      /**
-     *  Use java_context()->getAttribute(...) instead
+      * Return the http servlet
+      * @return The http servlet
       */
      public Object getServlet() {
  	return getAttribute(IContext.SERVLET);
      }
      /**
-      *  Use java_context()->getAttribute(...) instead
-       */
+      * Return the servlet config
+      * @return The servlet config
+      */
       public Object getServletConfig() {
   	return getAttribute(IContext.SERVLET_CONFIG);
       }
       /**
-       *  Use java_context()->getAttribute(...) instead
-        */
+       * Return the servlet context
+       * @return The servlet context
+       */
        public Object getServletContext() {
    	return getAttribute(IContext.SERVLET_CONTEXT);
        }

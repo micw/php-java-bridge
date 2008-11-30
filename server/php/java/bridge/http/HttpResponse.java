@@ -124,7 +124,8 @@ public class HttpResponse {
 	this.headersWritten = true;
     }
 
-    /** Close the response */
+    /** Close the response 
+     * @throws IOException */
     public void close() throws IOException {
 	try {
 	    if(outputStream!=null) outputStream.close();

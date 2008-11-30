@@ -126,6 +126,11 @@ public final class ContextFactory extends SessionFactory implements IContextFact
         if((o = contexts.remove(id))!=null) { liveContexts.put(id, o); return (ContextFactory)o; }
         return null;
     }
+
+    /**
+     * Create a new ContextFactory.
+     * @param webContext The current web context or "@" 
+     */
     public ContextFactory(String webContext) {
       super();
       timestamp = System.currentTimeMillis();
@@ -216,9 +221,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 
 	if(Util.logLevel>4) Util.logDebug("contextfactory: accepted visitor: " + factory.visitor);
     }
-    /* (non-Javadoc)
-     * @see php.java.bridge.http.IContextFactory#recycle(java.lang.String)
-     */
+    /**{@inheritDoc}*/  
     public void recycle(String id) {
 	ContextFactory factory = null;
 	factory=((ContextFactory)contexts.get(id));
@@ -239,9 +242,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	    bridge.getClassLoader().switcheThreadContextClassLoader();
     }
     
-    /* (non-Javadoc)
-     * @see php.java.bridge.http.IContextFactory#destroy()
-     */
+    /**{@inheritDoc}*/  
     public void destroy() {
 	if(Util.logLevel>4) Util.logDebug("contextfactory: context destroyed (remove context factory): " +visitor);
 	remove(getId());
@@ -291,27 +292,19 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	    ii.remove();
 	}
     }
-    /* (non-Javadoc)
-     * @see php.java.bridge.http.IContextFactory#waitFor()
-     */
+    /**{@inheritDoc}*/  
     public void releaseManaged() throws InterruptedException {
 	    visitor.releaseManaged();
     }
-    /* (non-Javadoc)
-     * @see php.java.bridge.http.IContextFactory#waitFor()
-     */
+    /**{@inheritDoc}*/  
     public void waitFor(long timeout) throws InterruptedException {
 	    visitor.waitFor(timeout);
     }
-    /* (non-Javadoc)
-     * @see php.java.bridge.http.IContextFactory#getId()
-     */
+    /**{@inheritDoc}*/  
     public String getId() { 
 	return id; 
     }
-    /* (non-Javadoc)
-     * @see php.java.bridge.http.IContextFactory#toString()
-     */
+    /**{@inheritDoc}*/  
     public String toString() {
 	return "Context# " +id + ", credentials: " + credentials;
     }
@@ -349,6 +342,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * @param name The session name
      * @param clientIsNew true, if the client wants a new session
      * @param timeout expires in n seconds
+     * @return The session
      */
     public ISession getSimpleSession(String name, boolean clientIsNew, int timeout) {
         return super.getSession(name, clientIsNew, timeout);
@@ -357,6 +351,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * Return a simple session which cannot be shared with JSP
      * @param clientIsNew true, if the client wants a new session
      * @param timeout expires in n seconds
+     * @return The session
      */
     public ISession getSimpleSession(boolean clientIsNew, int timeout) {
         return super.getSession(clientIsNew, timeout);
@@ -366,6 +361,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * @param name The session name
      * @param clientIsNew true, if the client wants a new session
      * @param timeout expires in n seconds
+     * @return The session
      */
     public ISession getSession(String name, boolean clientIsNew, int timeout) {
 	return visitor.getSession(name, clientIsNew, timeout);
@@ -374,27 +370,34 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * Return a session, not shared with JSP
      * @param clientIsNew true, if the client wants a new session
      * @param timeout expires in n seconds
+     * @return The sessioin
      */
     public ISession getSession(boolean clientIsNew, int timeout) {
 	return visitor.getSession(clientIsNew, timeout);
     }
+    /**{@inheritDoc}*/  
     public synchronized void release() {
 	ContextFactory ob = (ContextFactory) contexts.remove(id);
         if(Util.logLevel>4) Util.logDebug("contextfactory: released empty context: " + (ob!=null?String.valueOf(ob.visitor):"<already handled>") + ", # of contexts: " + contexts.size()+", # of live contexts: "+ liveContexts.size());
     }
+    /**{@inheritDoc}*/  
     public void setClassLoader(ClassLoader loader) {
 	visitor.setClassLoader(loader);
     }
+    /**{@inheritDoc}*/  
     public SimpleJavaBridgeClassLoader getJavaBridgeClassLoader() {
 	if (javaBridgeClassLoader!=null) return javaBridgeClassLoader;
 	return javaBridgeClassLoader=new JavaBridgeClassLoader(getClassLoader());
     }
+    /**{@inheritDoc}*/  
     public ClassLoader getClassLoader() {
 	return visitor.getClassLoader();
     }
+    /**{@inheritDoc}*/  
     public void initialize() {
 	visitor.initialize();
     }
+    /**{@inheritDoc}*/  
     public void invalidate() {
 	visitor.invalidate();
     }

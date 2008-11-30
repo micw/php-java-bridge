@@ -47,8 +47,14 @@ public class DynamicClassLoader extends SecureClassLoader {
 
     protected static Map classLoaderCache = Collections.synchronizedMap(new HashMap()); // Global Cache Map of Classpath=>Soft Reference=>URLClassLoaderEntry
     protected static Map parentCacheMap = new WeakHashMap(); // Holds global caches for parent Classloaders
-    public static long defaultCacheTimeout = 2000;  // By default minumum file modification check interval is 2 seconds, that should be fast enough :)
-    public static boolean defaultLazy = true;  // By default lazy classpath addition
+    /**
+     * By default minumum file modification check interval is 2 seconds, that should be fast enough :)
+     */
+    public static long defaultCacheTimeout = 2000;
+    /**
+     *  By default lazy classpath addition
+     */
+    public static boolean defaultLazy = true; 
     protected static final String nf = "not found"; // Dummy entry for cache maps if a class or resource can't be found.
     private static int instanceCount = 0;
     private static long debugStart = System.currentTimeMillis();
@@ -76,11 +82,11 @@ public class DynamicClassLoader extends SecureClassLoader {
 	}
     }
 
-    public static void debugMsg(String str) {
+    static void debugMsg(String str) {
 	if(Util.logLevel>5) Util.logDebug((System.currentTimeMillis()-debugStart)+"::"+str);
     }
 
-    public static void clearCache() {
+    static void clearCache() {
 	classLoaderCache.clear();
     }
 
@@ -102,7 +108,7 @@ public class DynamicClassLoader extends SecureClassLoader {
 	classLoaderCache.remove(classpath);
     }
 
-    public final static String getStringFromURLArray(URL urls[]) {
+    final static String getStringFromURLArray(URL urls[]) {
 	if (urls.length==0) return "";
 	StringBuffer cp = new StringBuffer(urls[0].toExternalForm());
 	for (int i=1;i<urls.length;i++) {
@@ -112,7 +118,7 @@ public class DynamicClassLoader extends SecureClassLoader {
 	return cp.toString();
     }
 
-    public final static URL[] getURLArrayFromString(String cp) throws MalformedURLException {
+    final static URL[] getURLArrayFromString(String cp) throws MalformedURLException {
 	StringTokenizer st = new StringTokenizer(cp, ";", false);
 	ArrayList urls = new ArrayList();
 	while (st.hasMoreTokens()) {
@@ -156,7 +162,7 @@ public class DynamicClassLoader extends SecureClassLoader {
     protected DynamicClassLoader(DynamicClassLoader other) {
 	super(other.getParent());
     }
-    public DynamicClassLoader(ClassLoader parent) {
+    protected DynamicClassLoader(ClassLoader parent) {
 	super(parent);
 	init();
 	this.cacheTimeout = defaultCacheTimeout;
@@ -172,7 +178,7 @@ public class DynamicClassLoader extends SecureClassLoader {
 	}
     }
 
-    public DynamicClassLoader() {
+    protected DynamicClassLoader() {
 	super();
 	init();
 	ClassLoader parent = ClassLoader.getSystemClassLoader();
@@ -195,36 +201,36 @@ public class DynamicClassLoader extends SecureClassLoader {
 	urlsToAdd.clear();
     }
 
-    public void setLazy(boolean lazy) {
+    protected void setLazy(boolean lazy) {
 	this.lazy = lazy;
     }
 
-    public void setCacheTimeout(long cacheTimeoutMilliseconds) {
+    protected void setCacheTimeout(long cacheTimeoutMilliseconds) {
 	this.cacheTimeout = cacheTimeoutMilliseconds;
     }
 
-    public void addURLs(URL urls[]) {
+    protected void addURLs(URL urls[]) {
 	addURLs(getStringFromURLArray(urls), urls, lazy);
     }
 
-    public void addURLs(URL urls[], boolean lazy) {
+    protected void addURLs(URL urls[], boolean lazy) {
 	addURLs(getStringFromURLArray(urls), urls, lazy);
     }
 
-    public void addURLs(String urlClassPath) throws MalformedURLException {
+    protected void addURLs(String urlClassPath) throws MalformedURLException {
 	addURLs(urlClassPath, getURLArrayFromString(urlClassPath), lazy);
     }
 
-    public void addURLs(String urlClassPath, boolean lazy) throws MalformedURLException {
+    protected void addURLs(String urlClassPath, boolean lazy) throws MalformedURLException {
 	addURLs(urlClassPath, getURLArrayFromString(urlClassPath), lazy);
     }
 
-    public void addURL(URL url, boolean lazy) {
+    protected void addURL(URL url, boolean lazy) {
 	URL u[] = new URL[] {url};
 	addURLs(u, lazy);
     }
 
-    public void addURL(URL url) {
+    protected void addURL(URL url) {
 	URL u[] = new URL[] {url};
 	addURLs(u, lazy);
     }
@@ -302,7 +308,7 @@ public class DynamicClassLoader extends SecureClassLoader {
 	    return new URLClassLoader(urls, parent);
 	}
     }
-    public void setUrlClassLoaderFactory(URLClassLoaderFactory factory) {
+    protected void setUrlClassLoaderFactory(URLClassLoaderFactory factory) {
 	this.factory = factory;
     }
     /** the reference queue, used to get a notification when a class loader entry has been gc'ed */
@@ -432,9 +438,12 @@ public class DynamicClassLoader extends SecureClassLoader {
      *
      * I have decided to override loadClass instead of findClass,
      * so that this method will actually get to re-load
-     * classes if neccessary. Otherwise, the Java system would call
+     * classes if necessary. Otherwise, the Java system would call
      * the final method "getLoadedClass(name)", (i.e. use it's own caching) without
-     * dynamically re-loading classes if neccessary.
+     * dynamically re-loading classes if necessary.
+     * @param name The class name
+     * @return The class
+     * @throws ClassNotFoundException 
      */
     public Class loadClass(String name) throws ClassNotFoundException {
 	Class result = null;
@@ -498,7 +507,7 @@ public class DynamicClassLoader extends SecureClassLoader {
     }
 
     // Not cached
-    public Enumeration findResources(String name) throws java.io.IOException {
+    protected Enumeration findResources(String name) throws java.io.IOException {
 	Vector result = new Vector();
 	Enumeration enumeration = super.findResources(name);
 	while (enumeration.hasMoreElements()) {
@@ -524,7 +533,7 @@ public class DynamicClassLoader extends SecureClassLoader {
 	return result.elements();
     }
 
-    public URL findResource(String name)  {
+    protected URL findResource(String name)  {
 	String cacheName = "@"+name; // definitely different from class-names
 	Object c = null;
 	synchronized(parentCache) {

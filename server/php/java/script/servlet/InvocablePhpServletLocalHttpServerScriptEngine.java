@@ -15,7 +15,6 @@ import java.util.Map;
 
 import javax.script.Bindings;
 import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
@@ -143,7 +142,7 @@ public class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhp
     protected URL getURL(ServletContext ctx) throws MalformedURLException, URISyntaxException {
 	return new java.net.URI(protocol, null, Util.getHostAddress(), port, getProxy(), null, null).toURL();
     }
-    public InvocablePhpServletLocalHttpServerScriptEngine(Servlet servlet, 
+    protected InvocablePhpServletLocalHttpServerScriptEngine(Servlet servlet, 
 					   ServletContext ctx, 
 					   HttpServletRequest req, 
 					   HttpServletResponse res,
@@ -151,7 +150,7 @@ public class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhp
 					   int port) throws MalformedURLException, URISyntaxException {
 	this(servlet, ctx, req, res, protocol, port, null);
     }
-    public InvocablePhpServletLocalHttpServerScriptEngine(Servlet servlet, 
+    protected InvocablePhpServletLocalHttpServerScriptEngine(Servlet servlet, 
 		   ServletContext ctx, 
 		   HttpServletRequest req, 
 		   HttpServletResponse res,

@@ -110,6 +110,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	
     }
 
+    /**{@inheritDoc}*/
     public void destroy() {
       	contextServer.destroy();
     	super.destroy();

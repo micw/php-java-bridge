@@ -188,6 +188,7 @@ abstract class CGIRunner extends Thread {
     /**
      * One must call this function if one is interested in the php continuation.
      * @return The php continuation.
+     * @throws Exception 
      */
     public PhpProcedureProxy getPhpScript() throws Exception {
         Object val = phpScript.getVal(); 

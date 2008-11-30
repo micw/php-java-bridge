@@ -54,6 +54,7 @@ public class RemoteServletContextFactory extends SimpleServletContextFactory {
     	this.proxy = req;
     }
 
+    /**{@inheritDoc}*/
     public ISession getSession(String name, boolean clientIsNew, int timeout) {
 	if(session!=null) return session;
 	 // if name != null return a "named" php session which is not shared with jsp
@@ -65,6 +66,9 @@ public class RemoteServletContextFactory extends SimpleServletContextFactory {
     
     /**
      * Create and add a new ContextFactory.
+     * @param servlet The servlet
+     * @param kontext The servlet context
+     * @param proxy The request proxy
      * @param req The HttpServletRequest
      * @param res The HttpServletResponse
      * @return The created ContextFactory

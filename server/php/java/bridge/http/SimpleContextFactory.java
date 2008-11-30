@@ -62,24 +62,29 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
     	setClassLoader(Util.getContextClassLoader());
     }
     
-    public void recycle(String id) {
+    /**{@inheritDoc}*/
+   public void recycle(String id) {
         visited.recycle(id);
     }
 
+   /**{@inheritDoc}*/
     public void destroy() {
         visited.destroy();
         session = null;
     }
     
+    /**{@inheritDoc}*/
     public synchronized void invalidate() {
 	    isValid = false;
 	    notifyAll(); // notify waitForContextRunner() and waitFor()
     }
+    /**{@inheritDoc}*/
     public synchronized void initialize () {
 	isContextRunnerRunning = true;
     }
     /**
      * Wait for the context factory to finish, then release
+     * @throws InterruptedException 
      */
     public synchronized void releaseManaged() throws InterruptedException {
 	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet is waiting for ContextRunner " +System.identityHashCode(this));
@@ -89,6 +94,8 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
     }
     /**
      * Wait for the context factory to finish. 
+     * @param timeout The timeout
+     * @throws InterruptedException 
      */
     public synchronized void waitFor(long timeout) throws InterruptedException {
 	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet waitFor() ContextFactory " +System.identityHashCode(this) + " for " +timeout+" ms");
@@ -97,9 +104,11 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
 	if (isContextRunnerRunning && isValid) wait();
 	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet done waitFor() ContextRunner " +System.identityHashCode(this));
     }    
+    /**{@inheritDoc}*/
     public String getId() { 
         return visited.getId();
     }
+    /**{@inheritDoc}*/
     public String toString() {
 	return "ContextFactory: " + visited + ", SimpleContextFactory: " +getClass() + ", current loader: " + loader;
     }
@@ -110,32 +119,40 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
      */
     protected IContext createContext() {
       return new Context();
-  }
+    }
+    /**{@inheritDoc}*/
     public IContext getContext() {
 	if(context==null) setContext(createContext());
         return context;
     }
 
+    /**{@inheritDoc}*/
     public boolean isNew () {
 	return visited.isNew();
     }
+    /**{@inheritDoc}*/
     public JavaBridge getBridge() {
         return visited.getBridge();
     }
+    /**{@inheritDoc}*/
     public void visit(ContextFactory visited) {
         this.visited=visited;
     }
+    /**{@inheritDoc}*/
     public ISession getSession(String name, boolean clientIsNew, int timeout) {
 	if(session != null) return session;
 	return session = visited.getSimpleSession(name, clientIsNew, timeout);
     }
+    /**{@inheritDoc}*/
     public ISession getSession(boolean clientIsNew, int timeout) {
 	return visited.getSimpleSession(clientIsNew, timeout);
     }
+    /**{@inheritDoc}*/
     public void setContext(IContext context) {
         this.context = context;
         this.context.setAttribute(IContext.JAVA_BRIDGE, getBridge(), IContext.ENGINE_SCOPE);
     }
+    /**{@inheritDoc}*/
     public void release() {
         visited.release();
     }
@@ -159,6 +176,7 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
     /**
      * Return the JavaBridgeClassLoader, which wraps the
      * DynamicJavaBridgeClassLoader
+     * @return The class loader
      */
     public SimpleJavaBridgeClassLoader getJavaBridgeClassLoader() {
 	return visited.getJavaBridgeClassLoader();

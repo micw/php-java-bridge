@@ -30,7 +30,6 @@ import java.io.Writer;
 
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -56,10 +55,10 @@ public class PhpSimpleHttpScriptContext extends AbstractPhpScriptContext impleme
     
     /**
      * Initialize the context.
+     * @param servlet The servlet
      * @param ctx The ServletContext
      * @param req The HttpServletRequest
      * @param res The HttpServletResponse
-     * @throws ServletException
      */
     public void initialize(Servlet servlet,
 		    	   ServletContext ctx,
@@ -71,6 +70,7 @@ public class PhpSimpleHttpScriptContext extends AbstractPhpScriptContext impleme
 	this.servlet = servlet;
     }
 
+    /**{@inheritDoc}*/
     public Object getAttribute(String key, int scope){
 	if(scope == REQUEST_SCOPE){
 	    return request.getAttribute(key);
@@ -82,6 +82,7 @@ public class PhpSimpleHttpScriptContext extends AbstractPhpScriptContext impleme
 	    return super.getAttribute(key, scope);
 	}
     }
+    /**{@inheritDoc}*/
     public Object getAttribute(String name) throws IllegalArgumentException{
 	Object result;
 	if (name == null) {
@@ -102,6 +103,7 @@ public class PhpSimpleHttpScriptContext extends AbstractPhpScriptContext impleme
 	return null;
     }
 
+    /**{@inheritDoc}*/
     public void setAttribute(String key, Object value, int scope)
 	throws IllegalArgumentException {    	
 	if(scope == REQUEST_SCOPE){
@@ -139,6 +141,7 @@ public class PhpSimpleHttpScriptContext extends AbstractPhpScriptContext impleme
         return context;
     }
 
+    /**{@inheritDoc}*/
     public String getContextString() {
 	StringBuffer buf = new StringBuffer();
 	if(!request.isSecure())
@@ -154,6 +157,7 @@ public class PhpSimpleHttpScriptContext extends AbstractPhpScriptContext impleme
 	return buf.toString();
     }
 
+    /**{@inheritDoc}*/
     public String getSocketName() {
 	return String.valueOf(php.java.servlet.CGIServlet.getLocalPort(request));
     }
@@ -191,6 +195,7 @@ public class PhpSimpleHttpScriptContext extends AbstractPhpScriptContext impleme
     }
 
     private Reader _reader;
+    /**{@inheritDoc}*/
     public Reader getReader() {
         if (_reader == null)
 	        try {

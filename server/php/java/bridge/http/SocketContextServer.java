@@ -140,6 +140,7 @@ public final class SocketContextServer extends PipeContextServer implements Runn
 	}
 	return true;
     }
+    /**{@inheritDoc}*/
     public void run() {
 	while(serverSocket!=null) {
 	    if(!accept()) destroy();
@@ -187,6 +188,7 @@ public final class SocketContextServer extends PipeContextServer implements Runn
     public String getChannelName() {
         return serverSocket.getSocketName();
     }
+    /**{@inheritDoc}*/
     public boolean start(AbstractChannelName channelName) {
 	return isAvailable();
     }

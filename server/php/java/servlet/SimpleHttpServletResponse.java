@@ -35,6 +35,8 @@ final class SimpleHttpServletResponse extends HttpServletResponseWrapper impleme
 	super(res);
     }
     /**
+     * Return the output buffer contents
+     * @return The content of the output buffer
      * @see RemoteHttpServletResponse#getBufferContents()
      */
     public byte[] getBufferContents() {

@@ -3,20 +3,17 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 5.3.4
+
+* To be compatible with all operating systems, the bridge now uses
+  a dummy round-trip during context switches, effectively reverting
+  the change from version 5.3.3.
+
+
 Version 5.3.3
 
 * For context switches the bridge now uses write-write-read on
-  protocol level. This means that if you use an operating system which
-  still does not contain John Nagle's TCP/IP "ack delay" bug fix, the
-  bridge will run 4 times slower than before. A Java program which
-  checks if your operating system contains a broken TCP/IP
-  implementation is included in the unsupported folder of the source
-  download (TestServ.java and TestServ.class). The only known
-  operating system which still contains the bug from the original BSD
-  TCP/IP implementation is BSD, for example FreeBSD. -- On
-  FreeBSD one may use the FreeBSD PHP/Java Bridge port, which uses
-  Unix Domain Sockets instead of TCP/IP sockets to communicate with
-  Java.
+  protocol level. 
 
 * The PhpServlet* JSR 223 script engines have been rewritten to make
   it easier to call Apache or IIS PHP modules or libraries from

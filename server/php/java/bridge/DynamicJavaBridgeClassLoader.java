@@ -64,8 +64,9 @@ class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
      * The first char must be the token separator.
      * @param rawPath The path
      * @param rawContextDir The context dir, e.g. /usr/lib/php/extensions
- * @param searchpath 
- * @param cwd 
+     * @param searchpath The search path 
+     * @param cwd The current working dir
+     * @return The JarLibraryPath
      * @throws IOException 
      */
     public static JarLibraryPath checkJarLibraryPath(String rawPath, String rawContextDir, String cwd, String searchpath) throws IOException {
@@ -87,7 +88,6 @@ class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
     }
     /** Update the library path for the bridge instance. 
      * @param path the checked JarLibraryPath
-     * @throws IOException 
      * @see #checkJarLibraryPath(String, String, String, String)
      */
     public void updateJarLibraryPath(JarLibraryPath path) {
@@ -283,6 +283,8 @@ class DynamicJavaBridgeClassLoader extends DynamicClassLoader {
      * It may return null due to security restrictions on certain systems, so don't
      * use this method directly but call: 
      * new JavaBridgeClassLoader(bridge, DynamicJavaBridgeClassLoader.newInstance()) instead.
+     * @param parent The parent class loader
+     * @return A new DynamicJavaBridgeClassLoader
      */
     public static synchronized DynamicJavaBridgeClassLoader newInstance(ClassLoader parent) {
 	try {

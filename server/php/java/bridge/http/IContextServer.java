@@ -46,6 +46,7 @@ public interface IContextServer {
     /**
      * Start the runner.
      * @param channel The channel name
+     * @return true on success, false otherwise
      */
     public boolean start(AbstractChannelName channel);
 }

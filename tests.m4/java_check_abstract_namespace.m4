@@ -1,6 +1,6 @@
 AC_DEFUN([JAVA_CHECK_ABSTRACT_NAMESPACE],[
   AC_MSG_CHECKING([for abstract namespace])
-  AC_CACHE_VAL(have_abstract_namespace,[
+  AC_CACHE_VAL(jb_cv_have_abstract_namespace,[
   AC_TRY_RUN([
 #include <stdio.h>
 #include <sys/types.h>
@@ -60,11 +60,11 @@ int main() {
   return ret;
 }
 ],
-[have_abstract_namespace=yes],
-[have_abstract_namespace=no])
+[jb_cv_have_abstract_namespace=yes],
+[jb_cv_have_abstract_namespace=no])
 ])
 
-  if test "$have_abstract_namespace" = "yes"; then
+  if test "$jb_cv_have_abstract_namespace" = "yes"; then
 	AC_MSG_RESULT(yes)
 	AC_DEFINE(HAVE_ABSTRACT_NAMESPACE,1, [Define if your system supports the linux abstract namespace])
   else

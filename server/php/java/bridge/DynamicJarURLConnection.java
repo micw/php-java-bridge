@@ -142,6 +142,7 @@ class DynamicJarURLConnection extends JarURLConnection {
     }
     /**
      * Use the original value.
+     * @return The last modified time
      */
     public long getLastModified() {
 	long lastModified = 0;

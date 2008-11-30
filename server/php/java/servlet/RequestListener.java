@@ -50,10 +50,10 @@ import php.java.script.servlet.EngineFactory;
 public class RequestListener implements javax.servlet.ServletRequestListener {
     /** The key used to store the engine list in the servlet request */
     public static final String ROOT_ENGINES_COLLECTION_ATTRIBUTE = RequestListener.class.getName()+".ROOT";;
+    /**{@inheritDoc}*/
     public void requestDestroyed(ServletRequestEvent event) {
 	HttpServletRequest req = (HttpServletRequest) event.getServletRequest();
 	ServletContext ctx = event.getServletContext();
-	String isSubRequest = req.getHeader("X_JAVABRIDGE_CONTEXT");
 	List list = (List) req.getAttribute(ROOT_ENGINES_COLLECTION_ATTRIBUTE);
 	if (list == null) return;
 	
@@ -61,6 +61,7 @@ public class RequestListener implements javax.servlet.ServletRequestListener {
 	req.removeAttribute(ROOT_ENGINES_COLLECTION_ATTRIBUTE);
 	factory.releaseScriptEngines(list);
     }
+    /**{@inheritDoc}*/
     public void requestInitialized(ServletRequestEvent event) {
 	HttpServletRequest req = (HttpServletRequest) event.getServletRequest();
 	String isSubRequest = req.getHeader("X_JAVABRIDGE_CONTEXT");
