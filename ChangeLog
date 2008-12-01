@@ -1,3 +1,26 @@
+2008-12-01  Jost Boekemeier  <jostb@intern>
+
+	* server/META-INF/java/Client.inc
+	(__destruct): Don't forget to flush the preparedToSendBuffer,
+	before shutdown, otherwise the very last java() statement may get
+	lost!
+	
+	* server/php/java/servlet/PhpJavaServlet.java
+	(init): allow reload.
+	
+	* server/php/java/servlet/fastcgi/ChannelName.java
+	(destroy): allow reload.
+	
+	* server/php/java/bridge/http/ContextServer.java
+	(getAppThreadPool): New procedure
+	(destroyContextServer): New procedure
+	(destroy): allow reload.
+	
+	* server/META-INF/java/Client.inc
+	(getServerName, getSession, getContext): Use a cache.
+	
+	* VERSION, php-java-bridge.spec: Version 5.3.4 released
+	
 2008-11-30  Jost Boekemeier  <jostb@intern>
 	
 	* server/php/java/bridge/JavaBridge.java

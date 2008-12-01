@@ -53,8 +53,12 @@ public final class ContextServer implements ContextFactory.ICredentials {
     // No secutiry token
     private  static SocketContextServer sock = null; 
     // One pool for both, the Socket- and the PipeContextServer
-    private static final AppThreadPool pool = new AppThreadPool("JavaBridgeContextRunner", Integer.parseInt(Util.THREAD_POOL_MAX_SIZE));
+    private static AppThreadPool pool;
     
+    private static synchronized AppThreadPool getAppThreadPool() {
+	if (pool!=null) return pool; 
+	return pool = new AppThreadPool("JavaBridgeContextRunner", Integer.parseInt(Util.THREAD_POOL_MAX_SIZE));
+    }
     private class PipeChannelName extends AbstractChannelName {
         public PipeChannelName(String name, IContextFactory ctx) {super(name,  ctx);}
 
@@ -84,20 +88,29 @@ public final class ContextServer implements ContextFactory.ICredentials {
 	/*
          * We need both because the client may not support named pipes.
          */
-        ctx = new PipeContextServer(this, pool, contextName);
+        ctx = new PipeContextServer(this, getAppThreadPool(), contextName);
         /* socket context server will be created on demand */
+    }
+    
+    private synchronized static final void destroyContextServer () {
+        if(sock!=null) sock.destroy();
+        sock = null;
+        
+        ContextFactory.destroyAll();
+	php.java.bridge.SessionFactory.destroyTimer();
+	php.java.bridge.DynamicClassLoader.destroyObserver();
+
+	if(pool!=null) pool.destroy();
+	pool = null;
+
+	Util.destroy();
     }
     /**
      * Destroy the pipe or socket context server.
      */
     public void destroy() {
         ctx.destroy();
-        if(sock!=null) sock.destroy();
-        ContextFactory.destroyAll();
-	php.java.bridge.SessionFactory.destroyTimer();
-	php.java.bridge.DynamicClassLoader.destroyObserver();
-	pool.destroy();
-	Util.destroy();
+        destroyContextServer();
     }
 
     /**
@@ -108,7 +121,7 @@ public final class ContextServer implements ContextFactory.ICredentials {
      */
     public boolean isAvailable(String channelName) {
         if(channelName!=null && ctx.isAvailable()) return true;
-        SocketContextServer sock=getSocketContextServer(this, pool);
+        SocketContextServer sock=getSocketContextServer(this, getAppThreadPool());
         return sock!=null && sock.isAvailable();
     }
 
@@ -135,7 +148,7 @@ public final class ContextServer implements ContextFactory.ICredentials {
      */
     public AbstractChannelName getFallbackChannelName(String channelName, IContextFactory currentCtx) {
         if(channelName!=null && ctx.isAvailable()) return new PipeChannelName(channelName,  currentCtx);
-        SocketContextServer sock=getSocketContextServer(this, pool);
+        SocketContextServer sock=getSocketContextServer(this, getAppThreadPool());
         return new SocketChannelName(sock.getChannelName(),  currentCtx);
     }
     

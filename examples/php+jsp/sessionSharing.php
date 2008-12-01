@@ -14,7 +14,6 @@ if(java_is_null($session->get("counter"))) {
 $counter = java_values($session->get("counter"));
 print "HttpSession variable \"counter\": $counter<br>\n";
 $session->put("counter", $counter+1);
-unset ($session);
 ?>
 <a href="sessionSharing.jsp">JSP page</a>
 </BODY>

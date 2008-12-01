@@ -18,3 +18,4 @@ folder.
       java -classpath JavaBridge.jar:php-script.jar:. PhpThreads
  
 
+NOTE: Some operating systems use "\" instead of "/" and ";" instead of ":".

@@ -342,14 +342,17 @@ JAVA_HOME=/usr/java/default /opt/tomcat/bin/catalina.sh run
 </code>
 </blockquote>
 <li>
-Move(!) all libraries from the created webapps/JavaBridge/WEB-INF/lib folder to the tomcat lib folder. Example:
+Move(!) all libraries from the created webapps/JavaBridge/WEB-INF/lib folder to the tomcat lib folder and remove(!) webapps/JavaBridge/WEB-INF/web.xml.
+The only reason to keep the JavaBridge directory is the WEB-INF/cgi/launcher* FastCGI launcher and the java/Java.inc files. Example:
 <blockquote>
 <code>
-mv /opt/tomcat/webapps/JavaBridge/WEB-INF/lib/* /opt/tomcat/lib
+mv /opt/tomcat/webapps/JavaBridge/WEB-INF/lib/* /opt/tomcat/lib<br>
+rm /opt/tomcat/webapps/JavaBridge/WEB-INF/web.xml
 </code>
 </blockquote>
 <li> 
-Stop tomcat and remove webapps/JavaBridge.war. <em>Make sure that webapps/JavaBridge still exists but webapps/JavaBridge/WEB-INF/lib is empty!</em><br>
+Stop tomcat and remove webapps/JavaBridge.war. <em>Make sure that webapps/JavaBridge still exists, but without any libraries and web.xml!</em>
+<blockquote></blockquote>
 <li>
 Add the lines marked with a <code>+</code> to the tomcat <code>conf/web.xml</code>:
 <blockquote>
@@ -370,6 +373,7 @@ Add the lines marked with a <code>+</code> to the tomcat <code>conf/web.xml</cod
 +        &lt;servlet-name&gt;GlobalPhpCGIServlet&lt;/servlet-name&gt;<br>
 +        &lt;servlet-class&gt;php.java.servlet.PhpCGIServlet&lt;/servlet-class&gt;<br>
 +        &lt;init-param&gt; &lt;param-name&gt;shared_fast_cgi_pool&lt;/param-name&gt;&lt;param-value&gt;On&lt;/param-value&gt;&lt;/init-param&gt;<br>
++        &lt;init-param&gt; &lt;param-name&gt;prefer_system_php_exec&lt;/param-name&gt;&lt;param-value&gt;On&lt;/param-value&gt;&lt;/init-param&gt;<br>
 +    &lt;/servlet&gt;<br>
 <br>
    &lt;!-- The default servlet for all web applications, that serves static     --&gt;<br>
@@ -398,7 +402,7 @@ Add the lines marked with a <code>+</code> to the tomcat <code>conf/web.xml</cod
 <li>
 Start tomcat again.
 </ol>
-To test the above settings copy test.php to some other web context, for example "examples" and browse to
+To test the above settings copy test.php to some other web context, for example "examples", adjust its require/include path and browse to
 <code>http://yourHost.com:8080/examples/test.php</code>.
 </p>
 

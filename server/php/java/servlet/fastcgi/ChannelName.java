@@ -136,7 +136,11 @@ public abstract class ChannelName {
 	private boolean canStartFCGI() {
 	    return servlet.canStartFCGI;
 	}
+	
 	void destroy() {
+	  synchronized(ChannelName.fcgiStartLock) {
+	    fcgiStarted = false;
+	    fcgiActivatorRunning = false;
 	    if(proc==null) return;  	
 	    try {
 		proc.getOutputStream().close();
@@ -150,7 +154,7 @@ public abstract class ChannelName {
 	    }
 	    proc.destroy();
 	    proc=null;
-	    fcgiStarted = false;
+	  }
 	}
 
 	/**

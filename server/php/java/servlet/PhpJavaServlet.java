@@ -66,7 +66,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     
     /** Make sure that there's exactly one instance per class loader 
      * If initialized is true, we skip further initialization, but the shared config must not be destroyed */
-    private static boolean initialized = false;
+    private static boolean libraryInitialized = false;
     
     /**
      * If you want to use the HTTP tunnel , set the
@@ -78,16 +78,9 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     
     /**@inheritDoc*/
     public void init(ServletConfig config) throws ServletException {
-	if (initialized) {
-	    String msg = "FATAL ERROR: There can be only one PhpJavaServlet per classloader!";
-	    System.err.println (msg);
-	    log (msg);
-	    throw new ServletException (msg);
-	}
-    	initialized = true;
-	
  	String value;
-  	try {
+  	if(!libraryInitialized) 
+  	  try {
 	    value = config.getInitParameter("promiscuous");
 	    if(value==null) value="";
 	    value = value.trim();
@@ -101,13 +94,14 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     	 
     	super.init(config);
        
-    	Util.setLogger(new Util.Logger(new Logger(config.getServletContext())));
+    	if (!libraryInitialized) Util.setLogger(new Util.Logger(new Logger(config.getServletContext())));
 
 	if(Util.VERSION!=null)
     	    Util.logMessage("PHP/Java Bridge servlet "+servletContextName+" version "+Util.VERSION+" ready.");
 	else
 	    Util.logMessage("PHP/Java Bridge servlet "+servletContextName+" ready.");
 	
+    	libraryInitialized = true;
     }
 
     /**{@inheritDoc}*/

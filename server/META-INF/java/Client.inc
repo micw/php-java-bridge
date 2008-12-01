@@ -327,6 +327,7 @@ class java_Client /* implements IDocHandler */ {
 	if(JAVA_DEBUG) echo "the client destroyed\n";
 	if (!isset($this->protocol)) return;
 
+	if ($this->preparedToSendBuffer) $this->sendBuffer.=$this->preparedToSendBuffer;
 	if ($this->sendBuffer) $this->protocol->flush();
 	$this->protocol->keepAlive();
   }
@@ -646,13 +647,22 @@ class java_Client /* implements IDocHandler */ {
 	}
   }
   function getContext() {
-	return $this->invokeMethod(0, "getContext", array());
+	static $cache = null;
+	if ($cache) return $cache;
+	return $cache = $this->invokeMethod(0, "getContext", array());
   }
   function getSession($args) {
-	return $this->invokeMethod(0, "getSession", $args);
+	static $cache = null;
+	if ($cache) {
+	  trigger_error("java_session() should be called once at the beginning of the script", E_USER_WARNING);	  
+	  return $cache;
+	}
+	return $cache = $this->invokeMethod(0, "getSession", $args);
   }
   function getServerName() {
-	return $this->protocol->getServerName();
+	static $cache = null;
+	if ($cache) return $cache;
+	return $cache = $this->protocol->getServerName();
   }
 }
 ?>

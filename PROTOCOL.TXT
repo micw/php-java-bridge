@@ -1,8 +1,8 @@
 VM Bridge protocol version 5.4
 
-Requests are marked with "->", responses with "<-".  The server
-continues to process requests until EOF. Only the first character is
-significant.
+Requests are marked with "->", request arguments with -), responses
+with "<-".  The server continues to process requests until EOF. Only
+the first character is significant.
 
 The communication must begin with ReferenceClass, CreateInstance,
 Invoke or PropertyAccess. If the client waits for a response
@@ -129,33 +129,33 @@ String:
 <S v=str/>
 v: string
 
-<->
+<-)
 Boolean:
 <B v=T|F/>
 v: char ([T]rue, [F]alse)
 
-->
+-)
 Boolean:(alternate form)
 <T v=1]OTHER />
 v: char [1]: true, everything else: false
 
-<->
+<-)
 Long: 
 <L v=l p=[O|A]/>
 v: unsigned long
 p: char (p[O]sitive, neg[A]tive)
 
-->
+-)
 Long: (alternate form)
 <J v=l />
 v: long (signed number)
 
-<->
+<-)
 Double:
 <D v=d/>
 v: double
 
-->
+-)
 Object:
 <O v=object />
 v: unsigned long
@@ -195,19 +195,19 @@ Result:
 <R > ...ARG...
 </R>
 
-<->
+<-)
 Exception:
 <E v=object m=stringRepresentation/>
 v: unsigned long
 m: string
 
-<->
+<-)
 Composite:
 <X t=A|H /> ...PAIRS...
 </X>
 t: char ([A]rray, [H]ashtable)
 
-<->
+<-)
 Pair:
 <P [t=N|S v=key]> ...ARG...
 </P>
