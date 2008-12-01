@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  <html xmlns="http://www.w3.org/1999/xhtml">
+		<head>
+			<!-- template designed by Marco Von Ballmoos  -->
+			<title></title>
+			<link rel="stylesheet" href="media/stylesheet.css" />
+						<script src="media/lib/classTree.js"></script>
+									<meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'/>
+			<link rel="stylesheet" href="media/banner.css" />
+			<style>
+			  body { padding: 1em }
+			</style>
+									<script language="javascript" type="text/javascript">
+				var imgPlus = new Image();
+				var imgMinus = new Image();
+				imgPlus.src = "media/images/plus.png";
+				imgMinus.src = "media/images/minus.png";
+				
+				function showNode(Node){
+							switch(navigator.family){
+								case 'nn4':
+									// Nav 4.x code fork...
+							var oTable = document.layers["span" + Node];
+							var oImg = document.layers["img" + Node];
+									break;
+								case 'ie4':
+									// IE 4/5 code fork...
+							var oTable = document.all["span" + Node];
+							var oImg = document.all["img" + Node];
+									break;
+								case 'gecko':
+									// Standards Compliant code fork...
+							var oTable = document.getElementById("span" + Node);
+							var oImg = document.getElementById("img" + Node);
+									break;
+							}
+					oImg.src = imgMinus.src;
+					oTable.style.display = "block";
+				}
+				
+				function hideNode(Node){
+							switch(navigator.family){
+								case 'nn4':
+									// Nav 4.x code fork...
+							var oTable = document.layers["span" + Node];
+							var oImg = document.layers["img" + Node];
+									break;
+								case 'ie4':
+									// IE 4/5 code fork...
+							var oTable = document.all["span" + Node];
+							var oImg = document.all["img" + Node];
+									break;
+								case 'gecko':
+									// Standards Compliant code fork...
+							var oTable = document.getElementById("span" + Node);
+							var oImg = document.getElementById("img" + Node);
+									break;
+							}
+					oImg.src = imgPlus.src;
+					oTable.style.display = "none";
+				}
+				
+				function nodeIsVisible(Node){
+							switch(navigator.family){
+								case 'nn4':
+									// Nav 4.x code fork...
+							var oTable = document.layers["span" + Node];
+									break;
+								case 'ie4':
+									// IE 4/5 code fork...
+							var oTable = document.all["span" + Node];
+									break;
+								case 'gecko':
+									// Standards Compliant code fork...
+							var oTable = document.getElementById("span" + Node);
+									break;
+							}
+					return (oTable && oTable.style.display == "block");
+				}
+				
+				function toggleNodeVisibility(Node){
+					if (nodeIsVisible(Node)){
+						hideNode(Node);
+					}else{
+						showNode(Node);
+					}
+				}
+			</script>
+					</head>
+		<body>
+						<h3 class="package-title">JavaBridge</h3>
+<div class="tree">
+<script language="Javascript">
+if (document.getElementById) {
+			var tree = new WebFXTree('<span class="package">JavaBridge</span>');
+		tree.setBehavior('classic');
+	
+		
+		var class_trees = new WebFXTreeItem('Class trees', 'classtrees_JavaBridge.html');
+		tree.add(class_trees);
+
+		var elements = new WebFXTreeItem('Index of elements', 'elementindex_JavaBridge.html');
+		tree.add(elements);
+
+		var parent_node;
+
+			
+		    		    			var tree_classe = new WebFXTreeItem('Interface(s)', '');
+    			
+    			    			        			    			        			    			            				var classe = new WebFXTreeItem('java_JavaType', 'JavaBridge/java_JavaType.html');
+        				tree_classe.add(classe);
+        			    			
+    			tree.add(tree_classe);
+    						    		    			var tree_classe = new WebFXTreeItem('Class(es)', '');
+    			
+    			    			            				var classe = new WebFXTreeItem('Java', 'JavaBridge/Java.html');
+        				tree_classe.add(classe);
+        			    			    			            				var classe = new WebFXTreeItem('JavaException', 'JavaBridge/JavaException.html');
+        				tree_classe.add(classe);
+        			    			    			        			    	
+    			tree.add(tree_classe);
+    				
+					var tree_function = new WebFXTreeItem('Function(s)', '');
+			
+							var fic = new WebFXTreeItem('Java', 'JavaBridge/_JavaBridge.inc.html#functionJava');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_autoload', 'JavaBridge/_JavaBridge.inc.html#functionjava_autoload');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_begin_document', 'JavaBridge/_JavaProxy.inc.html#functionjava_begin_document');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_cast', 'JavaBridge/_JavaProxy.inc.html#functionjava_cast');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_closure', 'JavaBridge/_JavaProxy.inc.html#functionjava_closure');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_context', 'JavaBridge/_JavaProxy.inc.html#functionjava_context');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_end_document', 'JavaBridge/_JavaProxy.inc.html#functionjava_end_document');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_inspect', 'JavaBridge/_JavaProxy.inc.html#functionjava_inspect');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_instanceof', 'JavaBridge/_JavaProxy.inc.html#functionjava_instanceof');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_is_false', 'JavaBridge/_JavaBridge.inc.html#functionjava_is_false');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_is_null', 'JavaBridge/_JavaBridge.inc.html#functionjava_is_null');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_is_true', 'JavaBridge/_JavaBridge.inc.html#functionjava_is_true');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_require', 'JavaBridge/_JavaProxy.inc.html#functionjava_require');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_reset', 'JavaBridge/_JavaProxy.inc.html#functionjava_reset');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_server_name', 'JavaBridge/_JavaProxy.inc.html#functionjava_server_name');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_session', 'JavaBridge/_JavaProxy.inc.html#functionjava_session');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_set_file_encoding', 'JavaBridge/_JavaProxy.inc.html#functionjava_set_file_encoding');
+				tree_function.add(fic);
+							var fic = new WebFXTreeItem('java_values', 'JavaBridge/_JavaProxy.inc.html#functionjava_values');
+				tree_function.add(fic);
+					
+			tree.add(tree_function);
+			
+					var tree_file = new WebFXTreeItem('File(s)', '');
+	
+							var file = new WebFXTreeItem('Client.inc', 'JavaBridge/_Client.inc.html');
+				tree_file.add(file);
+							var file = new WebFXTreeItem('GlobalRef.inc', 'JavaBridge/_GlobalRef.inc.html');
+				tree_file.add(file);
+							var file = new WebFXTreeItem('JavaBridge.inc', 'JavaBridge/_JavaBridge.inc.html');
+				tree_file.add(file);
+							var file = new WebFXTreeItem('JavaProxy.inc', 'JavaBridge/_JavaProxy.inc.html');
+				tree_file.add(file);
+							var file = new WebFXTreeItem('NativeParser.inc', 'JavaBridge/_NativeParser.inc.html');
+				tree_file.add(file);
+							var file = new WebFXTreeItem('Options.inc', 'JavaBridge/_Options.inc.html');
+				tree_file.add(file);
+							var file = new WebFXTreeItem('Parser.inc', 'JavaBridge/_Parser.inc.html');
+				tree_file.add(file);
+							var file = new WebFXTreeItem('Protocol.inc', 'JavaBridge/_Protocol.inc.html');
+				tree_file.add(file);
+							var file = new WebFXTreeItem('SimpleParser.inc', 'JavaBridge/_SimpleParser.inc.html');
+				tree_file.add(file);
+				
+			tree.add(tree_file);
+		
+	
+document.write(tree);
+}
+</script>
+</div>
+<p class="notes">
+	Generated by 
+	<a href="http://www.phpdoc.org" target="_blank">phpDocumentor <span class="field">1.4.0a2</span></a>
+</p>
+</body>
+</html>
