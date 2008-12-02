@@ -90,6 +90,8 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
 	} catch (php.java.bridge.Request.AbortException e) {
 	    release ();
 	    throw new ScriptException(e);
+	} catch (NoSuchMethodError e) { // conform to jsr223
+	    throw new NoSuchMethodException(String.valueOf(e.getMessage()));
 	}
     }
     /**{@inheritDoc}*/
