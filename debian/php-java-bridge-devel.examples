@@ -13,5 +13,4 @@ tests.php5
 tests.quercus
 unsupported
 server/php/
-server/test/
 php_java_lib

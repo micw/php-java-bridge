@@ -1,3 +1,15 @@
+php-java-bridge (5.3.4-1) unstable; urgency=low
+
+  * New upstream release.
+  * Missing some tests: jsr223.
+  * java.ini: Switch off java.security_policy per default as some VM
+    implementations don't understand the policy==... syntax.
+    Thanks to Jan Wagner <waja@cyconet.org> to pointing this.
+  * New build location for Java.inc and included for j2ee package.
+  * Removed server/test directory from examples.
+
+ -- Andre Felipe Machado <andremachado@techforce.com.br>  Fri, 03 Dec 2008 11:06:18 -0300
+
 php-java-bridge (5.3.3-1) unstable; urgency=low
 
   * New upstream release.
