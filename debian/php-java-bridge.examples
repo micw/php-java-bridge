@@ -1,9 +1,13 @@
 examples/
 test.php
+test.bat
+test.sh
 run-tests.php
 security
+tests.jsr223
 tests.mono+net
 tests.php5
+tests.quercus
 unsupported
 server/php/
 server/test/
