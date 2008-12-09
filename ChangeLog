@@ -1,3 +1,53 @@
+2008-12-06  Jost Boekemeier  <jostb@intern>
+	
+	* server/META-INF/java/Client.inc
+	(__destruct): merge subsequent writes
+
+	* server/META-INF/java/Protocol.inc
+	(getKeepAlive): New function.
+	
+	* server/php/java/script/servlet/EngineFactoryHelper.java: New file
+
+	* server/php/java/script/servlet/CloseableInvocablePhpServletLocalHttpServerScriptEngine.java, server/php/java/script/servlet/CloseableInvocablePhpServletScriptEngine.java, server/php/java/script/servlet/CloseablePhpServletScriptEngine.java: New files
+
+	* server/php/java/script/servlet/EngineFactory.java, server/php/java/script/PhpScriptEngineFactory.java, server/php/java/script/InvocablePhpScriptEngineFactory.java, server/php/java/script/InteractivePhpScriptEngineFactory.java: Rewritten for backward compatibility with J2EE 1.3
+	
+	* server/php/java/servlet/PhpJavaServlet.java
+	(isLocal): Removed check, which triggered a reverse DNS lookup for
+	each request.
+	
+	* examples/php+jsp/jsp+php.jsp, examples/php+jsp/jsp+php.jsp,
+	examples/php+jsp/jsr223.jsp: In WebLogic 10 getRealPath() returns
+	null, use EngineFactory.getRealPath() instead.
+
+	*  server/php/java/script/servlet/EngineFactory.java
+	(getRealPath): New function.
+	(getPhpScript): Added optional webPath parameter
+	
+	* server/php/java/servlet/CGIServlet.java
+	(getRealPath): Throw IllegalArgumentException if the resource
+	cannot be resolved.
+	
+	* server/php/java/script/servlet/ScriptFile.java: publish to avoid
+	deprecation warning
+	
+	* examples/php+jsp/jsr.jsp, examples/php+jsp/jsp+php.jsp,
+	examples/php+jsp/jsp+php2.jsp: Avoid deprecation warning
+	
+	* server/php/java/script/InvocablePhpScriptEngine.java
+	(invoke): Conform to the JSR 223 API
+	
+	* server/javax/script/ScriptEngineFactory.java
+	(getMethodCallSyntax,getOutputStatement,getProgram): Procedures
+	required by JSR 223.
+	
+	* server/php/java/script/PhpScriptEngineFactory.java
+	(getMethodCallSyntax,getOutputStatement,getProgram): Re-added
+	these procedures
+	
+	* VERSION, php-java-bridge.spec: Version 5.3.4.1
+
+
 2008-12-01  Jost Boekemeier  <jostb@intern>
 
 	* server/META-INF/java/Client.inc

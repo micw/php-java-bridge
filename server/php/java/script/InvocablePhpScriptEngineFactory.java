@@ -36,6 +36,29 @@ import javax.script.ScriptEngine;
  */
 public class InvocablePhpScriptEngineFactory extends PhpScriptEngineFactory {
 
+    protected class Factory extends PhpScriptEngineFactory.Factory {
+	public Factory(boolean hasCloseable) {
+	    super(hasCloseable);
+        }
+
+	public ScriptEngine create () {
+	    if (hasCloseable) return new CloseableInvocablePhpScriptEngine(InvocablePhpScriptEngineFactory.this);
+	    else return new InvocablePhpScriptEngine(InvocablePhpScriptEngineFactory.this);
+	}
+    }
+    
+    /**
+     * Create a new EngineFactory
+     */
+    public InvocablePhpScriptEngineFactory () {
+	try {
+	    Class.forName("java.io.Closeable");
+	    factory = new Factory(true);
+	} catch (ClassNotFoundException e) {
+	    factory = new Factory(false);
+	}
+    }
+
     /**{@inheritDoc}*/
   public String getLanguageName() {
     return "php-invocable";
@@ -53,6 +76,6 @@ public class InvocablePhpScriptEngineFactory extends PhpScriptEngineFactory {
 
   /**{@inheritDoc}*/
   public ScriptEngine getScriptEngine() {
-      return new InvocablePhpScriptEngine(this);
+      return factory.create();
   }
 }

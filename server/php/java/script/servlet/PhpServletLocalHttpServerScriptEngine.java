@@ -28,7 +28,6 @@ import php.java.script.IPhpScriptContext;
 import php.java.script.PhpScriptEngine;
 import php.java.script.PhpScriptException;
 import php.java.script.URLReader;
-import php.java.servlet.ContextLoaderListener;
 import php.java.servlet.PhpCGIServlet;
 
 /*

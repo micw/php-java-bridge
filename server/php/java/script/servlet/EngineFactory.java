@@ -27,6 +27,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
+import php.java.servlet.CGIServlet;
 import php.java.servlet.RequestListener;
 
 
@@ -59,38 +60,57 @@ import php.java.servlet.RequestListener;
  * @see php.java.script.servlet.PhpServletScriptEngine
  *
  */
-public class EngineFactory {
+public final class EngineFactory {
     /** The key used to store the factory in the servlet context */
     public static final String ROOT_ENGINE_FACTORY_ATTRIBUTE = EngineFactory.class.getName()+".ROOT";
-    /** Only for internal use */
-    public EngineFactory() {}
+    private boolean hasCloseable;
+    /**
+     * Create a new EngineFactory
+     */
+    public EngineFactory () {
+	try {
+	    Class.forName("java.io.Closeable");
+	    hasCloseable = true;
+	} catch (ClassNotFoundException e) {
+	    hasCloseable = false;
+	}
+    }
     private Object getScriptEngine(Servlet servlet, 
 		     ServletContext ctx, 
 		     HttpServletRequest req, 
 		     HttpServletResponse res) throws MalformedURLException {
 	URL url = new java.net.URL((req.getRequestURL().toString()));
-	return new PhpServletScriptEngine(servlet, ctx, req, res, url.getProtocol(), url.getPort());
+	return hasCloseable ? 
+	    EngineFactoryHelper.newCloseablePhpServletScriptEngine(servlet, ctx, req, res, url.getProtocol(), url.getPort()):
+	    new PhpServletScriptEngine(servlet, ctx, req, res, url.getProtocol(), url.getPort());
     }
     private Object getInvocableScriptEngine(Servlet servlet, 
 		     ServletContext ctx, 
 		     HttpServletRequest req, 
 		     HttpServletResponse res) throws MalformedURLException, URISyntaxException {
 	URL url = new java.net.URL((req.getRequestURL().toString()));
-	return new InvocablePhpServletScriptEngine(servlet, ctx, req, res, url.getProtocol(), url.getPort());
+	return hasCloseable ? 
+	    EngineFactoryHelper.newCloseableInvocablePhpServletScriptEngine(servlet, ctx, req, res, url.getProtocol(), url.getPort()) :
+	    new InvocablePhpServletScriptEngine(servlet, ctx, req, res, url.getProtocol(), url.getPort());
     }
     private Object getInvocableScriptEngine(Servlet servlet, 
 	     ServletContext ctx, 
 	     HttpServletRequest req, 
 	     HttpServletResponse res, String protocol, int port) throws MalformedURLException, URISyntaxException {
-	return new InvocablePhpServletLocalHttpServerScriptEngine(servlet, ctx, req, res, protocol, port);
-   }
+	return hasCloseable ?
+	    EngineFactoryHelper.newCloseableInvocablePhpServletLocalHttpServerScriptEngine(servlet, ctx, req, res, protocol, port):
+	    new InvocablePhpServletLocalHttpServerScriptEngine(servlet, ctx, req, res, protocol, port);
+    }
     private Object getInvocableScriptEngine(Servlet servlet, 
 	     ServletContext ctx, 
 	     HttpServletRequest req, 
 	     HttpServletResponse res, String protocol, int port, String proxy) throws MalformedURLException, URISyntaxException {
-	return new InvocablePhpServletLocalHttpServerScriptEngine(servlet, ctx, req, res, protocol, port, proxy);
-   }
-   /** 
+	return hasCloseable ?
+		EngineFactoryHelper.newCloseableInvocablePhpServletLocalHttpServerScriptEngine(servlet, ctx, req, res, protocol, port, proxy) :
+		new InvocablePhpServletLocalHttpServerScriptEngine(servlet, ctx, req, res, protocol, port, proxy);
+    }
+
+    /** 
      * Get an engine factory from the servlet context
      * @param ctx The servlet context
      * @return the factory or null
@@ -282,10 +302,32 @@ public class EngineFactory {
      * @see #createPhpScriptFileReader(File)
      */
     public static ScriptFile getPhpScript (final String path, final Reader reader) {
+	if (path==null) throw new NullPointerException("path");
 	return (ScriptFile) AccessController.doPrivileged(new PrivilegedAction(){ 
 	    public Object run() {
         	try {
         	    return getFile(new ScriptFile(path+"._cache_.php"), reader);
+        	} catch (IOException e) {
+        	    Util.printStackTrace(e);
+                }
+        	return null;
+	    }
+	});
+    }
+    /**
+     * Get a PHP script from the given Path. This procedure can be used to cache dynamically-generated scripts
+     * @param webPath the web path of the script or the web path of a resource within the current context
+     * @param path the file path which should contain the cached script
+     * @param reader the JSR 223 script reader
+     * @return A pointer to the cached PHP script, named: path+"._cache_.php"
+     * @see #createPhpScriptFileReader(File)
+     */
+    public static ScriptFile getPhpScript (final String webPath, final String path, final Reader reader) {
+	if (path==null) throw new NullPointerException("path");
+	return (ScriptFile) AccessController.doPrivileged(new PrivilegedAction(){ 
+	    public Object run() {
+        	try {
+        	    return getFile(new ScriptFile(webPath, path+"._cache_.php"), reader);
         	} catch (IOException e) {
         	    Util.printStackTrace(e);
                 }
@@ -300,11 +342,37 @@ public class EngineFactory {
      * @see #createPhpScriptFileReader(File)
      */
     public static ScriptFile getPhpScript (final String path) {
+	if (path==null) throw new NullPointerException("path");
 	return (ScriptFile) AccessController.doPrivileged(new PrivilegedAction(){ 
 	    public Object run() {
 		return new ScriptFile(path+"._cache_.php");
 	    }
 	});
+    }
+    /**
+     * Get a PHP script from the given Path. This procedure can be used to cache dynamically-generated scripts
+     * @param webPath the web path of the script or the web path of a resource within the current context
+     * @param path the file path which should contain the cached script
+     * @return A pointer to the cached PHP script, usually named: path+"._cache_.php"
+     * @see #createPhpScriptFileReader(File)
+     */
+    public static ScriptFile getPhpScript (final String webPath, final String path) {
+	if (path==null) throw new NullPointerException("path");
+	return (ScriptFile) AccessController.doPrivileged(new PrivilegedAction(){ 
+	    public Object run() {
+		return new ScriptFile(webPath, path+"._cache_.php");
+	    }
+	});
+    }
+    
+    /**
+     * Wrapper for {@link ServletContext#getRealPath(String)}, throws an IllegalArgumentException if the path could not be determined.
+     * @param ctx ServletContext
+     * @param path the resource path
+     * @return The full path to the resource.
+     */
+    public static String getRealPath (ServletContext ctx, String path) {
+	return CGIServlet.getRealPath(ctx, path);
     }
     /**
      * Create a Reader from a given PHP script file. This procedure can be used to create
@@ -340,21 +408,12 @@ public class EngineFactory {
 	    }
 	});
     }
-    /** @param phpScriptFile 
+    /** Use {@link #createPhpScriptFileReader(ScriptFile)} instead 
+     * @param phpScriptFile 
      * @return A new FileReader
-     * @deprecated Use {@link #createPhpScriptFileReader(ScriptFile)} instead */
+     */
     public static FileReader createPhpScriptFileReader (final File phpScriptFile) {
-	Util.warn("createPhpScriptFileReader deprecated. Use {@link #createPhpScriptFileReader(ScriptFile)} instead");
-	return (FileReader) AccessController.doPrivileged(new PrivilegedAction(){ 
-	    public Object run() {
-        	try {
-        	    return new ScriptFileReader(new ScriptFile(phpScriptFile.getAbsolutePath()));
-                } catch (IOException e) {
-        	    Util.printStackTrace(e);
-                }
-        	return null;
-	    }
-	});
+	return createPhpScriptFileReader((ScriptFile)phpScriptFile);
     }
     /**
      * Release all managed script engines. Will be called automatically at the end of each request,
@@ -395,7 +454,12 @@ public class EngineFactory {
 	final InvocablePhpServletLocalHttpServerScriptEngine engine) throws PrivilegedActionException {
 	AccessController.doPrivileged(new PrivilegedExceptionAction() { 
 	    public Object run() throws Exception {
-		ArrayList list = (ArrayList) req.getAttribute(RequestListener.ROOT_ENGINES_COLLECTION_ATTRIBUTE);
+		
+		ArrayList list = null;
+		try {
+		    list = EngineFactoryHelper.getManagedEngineList(req);
+		} catch (NoClassDefFoundError e) { /**ignore for jdk 1.4*/ }
+		
 		if (list!=null) {
 		    list.add(engine);
 		    

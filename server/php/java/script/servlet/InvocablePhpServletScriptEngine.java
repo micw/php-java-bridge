@@ -128,7 +128,7 @@ import php.java.servlet.RequestListener;
  * </code>
  * </blockquote>
  */
-public final class InvocablePhpServletScriptEngine extends InvocablePhpServletLocalScriptEngine {
+public class InvocablePhpServletScriptEngine extends InvocablePhpServletLocalScriptEngine {
     private File path;
     private File tempfile = null;
     

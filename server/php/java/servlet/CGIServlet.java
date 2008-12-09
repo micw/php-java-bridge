@@ -963,21 +963,19 @@ public abstract class CGIServlet extends HttpServlet {
 	if(ret!=null) return ret;
 
 	// The following is the workaround for BEA WebLogic
-	boolean stripSlash=false; 
-	if(!pathInfoCGI.endsWith("/")) {
-	    stripSlash=true;
-	    if("".equals(pathInfoCGI)) pathInfoCGI = "/";
+	if(!pathInfoCGI.startsWith("/")) {
+	    pathInfoCGI = "/"+pathInfoCGI;
 	}
 	URL url = null;
 	try { 
 	    url = context2.getResource(pathInfoCGI);
 	} catch (MalformedURLException e) {
 	    Util.printStackTrace(e);
-	    return null;
 	}
-	if(!"file".equals(url.getProtocol())) return null;
+	if(url != null && !"file".equals(url.getProtocol())) url = null;
+	if (url == null) throw new IllegalArgumentException("Cannot access "+pathInfoCGI+" within the current web directory. Explode your application .war file and try again.");
+	
 	ret = url.getPath();
-	if(stripSlash&&ret.endsWith("/")) ret = ret.substring(0, ret.length()-1);
 	return ret.replace('/', File.separatorChar);
     }
 

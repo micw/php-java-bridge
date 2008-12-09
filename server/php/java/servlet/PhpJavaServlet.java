@@ -262,10 +262,6 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	}
     }
 
-    private boolean isLocal(HttpServletRequest req) {
-        return req.getRemoteAddr().startsWith("127.0.0.1");
-    }
-    
     private String getHeader(String key, HttpServletRequest req) {
   	String val = req.getHeader(key);
   	if(val==null) return null;
@@ -277,13 +273,9 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
      */
     protected void doPut (HttpServletRequest req, HttpServletResponse res)
 	throws ServletException, IOException {
-    	boolean local = Util.JAVABRIDGE_PROMISCUOUS || isLocal(req);
-    	if(!local) throw new SecurityException("Non-local clients not allowed per default. " +
-    			"Either \na) set promiscuous in your web.xml or \nb) start the Java VM with -Dphp.java.bridge.promiscuous=true " +
-    			"to enable the SocketContextServer for non-local clients.");
     	String channel = getHeader("X_JAVABRIDGE_CHANNEL", req);
 
-    	if(local && contextServer.isAvailable(channel)) 
+    	if(contextServer.isAvailable(channel)) 
     	    handleLocalConnection(req, res, channel); /* re-direct */
     	else
     	    handleHttpConnection(req, res, channel); /* standard http tunnel */

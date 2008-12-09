@@ -124,7 +124,7 @@ instance of the java bridge.
 
 
 ARGS or response:
-<->
+<-)
 String:
 <S v=str/>
 v: string

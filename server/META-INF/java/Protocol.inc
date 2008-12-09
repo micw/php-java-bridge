@@ -70,9 +70,11 @@ class java_SocketChannel {
   function fread($size) {
 	return fread($this->peer, $size);
   }
-  function keepAlive() {
+  function getKeepAlive() {
 	// keep alive, required by protocol
-	$this->fwrite("<F p=\"A\" />");
+	return "<F p=\"A\" />";
+  }
+  function keepAlive() {
 	$this->fread(10); // <F p="A"/>
   }
 }
@@ -87,6 +89,7 @@ class java_EmptyPipeChannel {
   function getName() {
 	return null;
   }
+  function getKeepAlive() {return "";}
   function keepAlive() {}
 }
 /**
@@ -151,6 +154,9 @@ class java_SocketHandler {
 	return $this->channel->fread($size);
   }
   function redirect() {}
+  function getKeepAlive() {
+    return $this->channel->getKeepAlive();
+  }
   function keepAlive() {
 	$this->channel->keepAlive();
   }
@@ -488,6 +494,9 @@ class java_Protocol {
 	  echo "sending::: "; echo $this->client->sendBuffer; echo "\n";
 	}
 	$this->sendData();
+  }
+  function getKeepAlive() {
+    return $this->handler->getKeepAlive();
   }
   function keepAlive() {
 	$this->handler->keepAlive();

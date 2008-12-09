@@ -327,8 +327,12 @@ class java_Client /* implements IDocHandler */ {
 	if(JAVA_DEBUG) echo "the client destroyed\n";
 	if (!isset($this->protocol)) return;
 
-	if ($this->preparedToSendBuffer) $this->sendBuffer.=$this->preparedToSendBuffer;
-	if ($this->sendBuffer) $this->protocol->flush();
+	if ($this->preparedToSendBuffer) 
+	  $this->sendBuffer.=$this->preparedToSendBuffer;
+
+	$this->sendBuffer.=$this->protocol->getKeepAlive();
+
+	$this->protocol->flush();
 	$this->protocol->keepAlive();
   }
 

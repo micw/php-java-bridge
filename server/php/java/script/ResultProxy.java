@@ -32,7 +32,7 @@ import java.io.IOException;
  * engine to receive its result code.
  * @author jostb
  */
-public class ResultProxy extends Number implements java.io.Closeable {
+public class ResultProxy extends Number {
     private static final long serialVersionUID = 9126953496638654790L;
     private int result;
     private SimplePhpScriptEngine engine;

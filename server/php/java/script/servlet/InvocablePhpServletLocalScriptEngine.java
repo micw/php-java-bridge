@@ -13,7 +13,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.servlet.CGIServlet;
-import php.java.servlet.ContextLoaderListener;
 import php.java.servlet.PhpCGIServlet;
 
 /*

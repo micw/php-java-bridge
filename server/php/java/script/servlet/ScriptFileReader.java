@@ -32,11 +32,11 @@ final class ScriptFileReader extends FileReader {
 
     private ScriptFile tempfile;
 
-    public ScriptFileReader(ScriptFile file) throws IOException {
+    ScriptFileReader(ScriptFile file) throws IOException {
 	super(file);
 	tempfile = file;
     }
-    public ScriptFile getFile() {
+    ScriptFile getFile() {
 	return tempfile;
     }
 }

@@ -18,7 +18,8 @@
    <listener>
         <listener-class>php.java.servlet.ContextLoaderListener</listener-class>
     </listener>
-    <!-- Terminate invocable scripts when the JSP/framework request finishes -->
+    <!-- Automatically terminate scripts when the JSP/framework request finishes -->
+    <!-- Remove this listener line for J2EE <= 1.4 to avoid a NoClassDefFoundError -->
    <listener>
         <listener-class>php.java.servlet.RequestListener</listener-class>
     </listener>

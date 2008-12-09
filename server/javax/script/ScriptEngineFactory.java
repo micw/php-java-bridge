@@ -86,4 +86,27 @@ public interface ScriptEngineFactory {
      * @return an instance of the associated ScriptEngine
      */
     public ScriptEngine getScriptEngine();
+
+    /** Return a syntax string for method calls
+     * @param obj The call object
+     * @param m The methods
+     * @param args The arguments
+     * @return A syntax string
+     */
+    public String getMethodCallSyntax(String obj, String m, String[] args);
+
+    /**
+     * Return the output syntax
+     * @param toDisplay The output string
+     * @return the output syntax
+     */
+    public String getOutputStatement(String toDisplay);
+    
+    /** 
+     * Return the program syntax
+     * @param statements The statement sequence
+     * @return The program syntax
+     */
+    public String getProgram(String[] statements);
+
 }

@@ -32,7 +32,14 @@ import php.java.servlet.CGIServlet;
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-final class ScriptFile extends File {
+
+/**
+ * This class tags a special PHP script file which can be used to create a PHP ScriptFile reader.
+ * @see EngineFactory#getPhpScript(String)
+ * @see EngineFactory#getPhpScript(String, java.io.Reader)
+ * @see EngineFactory#createPhpScriptFileReader(ScriptFile)
+ */
+public final class ScriptFile extends File {
     private static final long serialVersionUID = 5388841733118702557L;
     private String webPath;
     
@@ -46,11 +53,15 @@ final class ScriptFile extends File {
         if (!webDir.endsWith("/")) webDir+="/";
         return webDir+path3;
     }
-    public ScriptFile(String fileName) {
+    ScriptFile(String fileName) {
         super(fileName);
     }
+    ScriptFile(String webPath, String fileName) {
+        super(fileName);
+        this.webPath = webPath;
+    }
     
-    public String getWebPath(String fileName, HttpServletRequest req, ServletContext servletCtx) throws IOException {
+    String getWebPath(String fileName, HttpServletRequest req, ServletContext servletCtx) throws IOException {
         if (webPath!=null) return webPath;
         return webPath=getWebPath(req.getContextPath(), new File(CGIServlet.getRealPath(servletCtx, "")).getCanonicalPath(), fileName);
     }

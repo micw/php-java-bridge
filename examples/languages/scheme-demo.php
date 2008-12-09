@@ -1,5 +1,5 @@
 <?php
-
+define ("JAVA_PREFER_VALUES", true);
 require_once ("java/Java.inc");
 
 $system = new java("java.lang.System");
@@ -7,8 +7,8 @@ $t1=$system->currentTimeMillis();
 
 $here=getcwd();
 // load scheme interpreter
-// try to load local kawa.jar, otherwise load it from sf.net
-try { java_require("$here/../../unsupported/kawa.jar"); } catch (JavaException $e) {
+// try to load local ~/lib/kawa.jar, otherwise load it from sf.net
+try { java_require("kawa.jar"); } catch (JavaException $e) {
   java_require("http://php-java-bridge.sourceforge.net/kawa.jar");
 }
 
@@ -36,5 +36,5 @@ for($i=0; $i<100; $i++) {
 $t2=$system->currentTimeMillis();
 $delta=($t2-$t1)/1000.0;
 $now=new java("java.sql.Timestamp",$system->currentTimeMillis());
-echo  "Evaluation took $delta s -- at: ".java_cast($now, "S") . "\n";
+echo  "Evaluation took $delta s -- at: $now\n";
 ?>

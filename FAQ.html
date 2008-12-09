@@ -24,6 +24,14 @@ Furthermore IBM's Zero framework for Eclipse contains a PHP interpreter written 
 <H4>What do I need to communicate with PHP?</H4>
 <p>Only the PHP code from <code>JavaProxy.php</code> within your PHP web application and the Java libraries <code>JavaBridge.jar</code>, <code>php-script.jar</code> and <code>php-servlet.jar</code> and a <code>ContextLoaderListener</code> declaration within your Java web application.</p>
 
+<H4>Which versions are supported?</H4>
+<ul>
+<li>PHP >= 5.1.2. PHP >= 5.3 recommended.</li>
+<li>Java >= 1.4. Java >= 6 recommended.</li>
+<li>J2EE >= 1.3. For J2EE 1.3 remove the <code>RequestListener</code> declaration from the WEB-INF/web.xml.</li>
+<li>Mono >= 1.2.4 or .NET >= 2.</li>
+</ul>
+
 <H4>Do I need a Java Application Server or Servlet Engine?</H4>
 <p>Java needs an execution environment. Although there's a "java.so"
 and a "php_java.dll", which can start Java as a sub process of a HTTP
