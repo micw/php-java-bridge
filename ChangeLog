@@ -2,7 +2,7 @@
 
 	* INSTALL, README.GNU_JAVA, java-servlet.ini: Removed; a tomcat or J2EE back end or a unix domain socket channel is now required.
 
-	* parser.c, protocol.h, bind.c: Removed.
+	* protocol.c, bind.c: Removed.
 	
 	* README: FreeBSD is no longer supported by us. Use the PHP/Java
 	Bridge FreeBSD port instead.
