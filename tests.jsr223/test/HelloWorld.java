@@ -23,7 +23,7 @@ public class HelloWorld {
 
 	try {
 	    InvocablePhpScriptEngine engine = new InvocablePhpScriptEngine();
-	    String s = "<?php extension_loaded('java')||@dl('java.so')||@dl('php_java.dll'); echo 'HelloWorld!\n'; java_context()->call(java_closure()) ||die('oops!');?>";
+	    String s = "<?php echo 'HelloWorld!\n'; java_context()->call(java_closure()) ||die('oops!');?>";
 
 	    engine.eval(new StringReader(s));
 	    String name = (String) ((Invocable)engine).invokeFunction("java_get_server_name", new Object[]{});

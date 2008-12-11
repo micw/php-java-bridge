@@ -174,7 +174,7 @@ class java_HttpHandler extends java_SocketHandler {
   public $socket; // we write to the socket directly and keep the pipe channel for later use
   
   function createPipeChannel($host, $pipe_dir) {
-	if(!is_null($pipe_dir) && ($host == "127.0.0.1" || (substr($host,0,9) == "localhost")))
+	if($pipe_dir && ($host == "127.0.0.1" || (substr($host,0,9) == "localhost")))
 	  return new java_PipeChannel(tempnam($pipe_dir, ".php_java_bridge"));
 	return new java_EmptyPipeChannel();
   }
@@ -259,11 +259,12 @@ class java_HttpHandler extends java_SocketHandler {
   function write($data) {
 
 	$compatibility = $this->protocol->client->RUNTIME["PARSER"]=="NATIVE"
-	  ? chr(0103-JAVA_PREFER_VALUES)
-	  : chr(0100+JAVA_PREFER_VALUES);
+	  ? (0103-JAVA_PREFER_VALUES)
+	  : (0100+JAVA_PREFER_VALUES);
 	if(is_int(JAVA_LOG_LEVEL)) {
 	  $compatibility |= 128 | (7 & JAVA_LOG_LEVEL)<<2;
 	}
+	$compatibility = chr ($compatibility);
 
 	$this->headers = null;
 	$socket = $this->socket;
@@ -431,7 +432,8 @@ class java_Protocol {
   /**
    * connect to a local channel (no servlet engine or app server)
    */
-  function createSimpleHandler($channelName) {
+  function createSimpleHandler($name) {
+	$channelName = $name;
     if(!is_string($channelName)) {
       $errno = null; $errstr = null;
 	  $peer = pfsockopen($host="127.0.0.1", $channelName, $errno, $errstr, 30);
@@ -447,25 +449,35 @@ class java_Protocol {
 		$peer = pfsockopen($host, $channelName, $errno, $errstr, 30);
 	  }
 	}
-    if (!$peer) throw new java_ConnectException("Could not connect to the server $channelName. Error message: $errstr ($errno)\n");
+    if (!$peer) throw new java_ConnectException("Could not connect to the server $name. Error message: $errstr ($errno)\n");
     stream_set_timeout($peer, -1);
     $handler = new java_SocketHandler($this, new java_SocketChannel($peer, $this, $host, $channelName));
 
     $compatibility = $this->client->RUNTIME["PARSER"]=="NATIVE"
-	  ? chr(0103-JAVA_PREFER_VALUES)
-	  : chr(0100+JAVA_PREFER_VALUES);
+	  ? (0103-JAVA_PREFER_VALUES)
+	  : (0100+JAVA_PREFER_VALUES);
     
     if(is_int(JAVA_LOG_LEVEL)) {
       $compatibility |= 128 | (7 & JAVA_LOG_LEVEL)<<2;
     }
+	$compatibility = chr ($compatibility);
+
     $this->write("\177$compatibility");
     $this->serverName = "127.0.0.1:$channelName";
     return $handler;
   }
+  function java_get_simple_channel() {
+    if (JAVA_HOSTS && (!JAVA_SERVLET || (JAVA_SERVLET == "Off"))) {
+	  $hosts = explode(";", JAVA_HOSTS);
+	  return $hosts[0];
+	}
+    return null;
+  }
   function createHandler() {
     if(!java_getHeader('X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER)
      && function_exists("java_get_default_channel") &&
-      ($defaultChannel=java_get_default_channel())) {
+	   (($defaultChannel=java_get_default_channel())||
+		($defaultChannel=$this->java_get_simple_channel()))) {
       // if bind.c has started a local back end from Apache/IIS
       return $this->createSimpleHandler($defaultChannel);
     } else {

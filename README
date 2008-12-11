@@ -52,12 +52,6 @@ Build and execution instructions:
     ?>
 
 
-   To build and install an optimized implementation which doesn't need
-   any Java, download and unpack the source download archive and type:
-
-     phpize && ./configure && make && make install
-
-
 ------------------------------------
   Permanently activate the module
   -------------------------------
@@ -219,29 +213,6 @@ Build and execution instructions:
       permission java.net.SocketPermission  "*", "accept,resolve";
     };
 
-
-------------------------------------
-  Recognized CFLAGS
-  -----------------
-
-   The build scripts of the native implementation recognize the
-   following CFLAGS:
-
-   * -DJAVA_COMPILE_DEBUG: Enables the assert() statement and other
-     debug code.
-   
-   * -DJAVA_COMPILE_DEBUG -O0 -g3: Include full debug information into
-     the binary.
-
-   * -m64: Build 64 bit code. Required if you run a 64 bit JVM.
-
-   * -m32: Build 32 bit code. Required if you run a 32 bit JVM on a 64
-     bit system.
-
-   * -DCFG_JAVA_SOCKET_INET: Disables local ("unix domain") sockets on
-      systems which support them. 
-
-  Example: make CFLAGS="-O0 -g3"
 
 ------------------------------------
   Log level
@@ -560,41 +531,15 @@ Build and execution instructions:
       the Sun Java Application server.
 
 ---------------------------------------------
-  GCJ/GNU Java issues
-  -------------------
-  
-  Running the VM Bridge under GCJ ("GNU Java") is supported on Linux
-  and Solaris only.  If you run FreeBSD 5.3, please use Sun, Blackdown
-  or IBM java instead.
-
----------------------------------------------
   FreeBSD issues
   --------------
-  
-  BSD variants contain an incorrect implementation of Nagle's
-  algorithm, which interacts badly with the ack delay found in the
-  original BSD TCP/IP implementation.
+ 
+  FreeBSD is not directly supported. Please use the FreeBSD
+  PHP/Java Bridge port instead. 
 
-  If you use an operating system which does not contain the TCP/IP ack
-  delay fix, please upgrade your operating system to either Windows >=
-  2000, Linux >= RedHat Enterprise Linux 5 or (Open-)Solaris (any
-  version) or OSX >= 10.4.
-
-  A workaround for BSD is to switch off Nagle's algorithm
-  in the operating system kernel or to use Unix Domain Sockets instead
-  of BSD TCP/IP sockets:
-
-  * Compile a java.so and natcJavaBridge.so and start the Java VM as
-    follows:
-
-    export LD_LIBRARY_PATH=/path/to/dir/containing/natcJavaBridge.so
-    java -jar JavaBridge.jar LOCAL:/tmp/javabridge.socket
-   
-  * Add the following to your php.ini:
-
-    extension=java.so
-    [java]
-    java.socketname=/tmp/javabridge.socket
+  In order to use unix domain sockets on FreeBSD compile java.so,
+  libnatcJavaBridge.so and start JavaBridge.jar with the argument
+  LOCAL:/path/to/your/socket/file.
 
 ------------------------------------
   UTF-8

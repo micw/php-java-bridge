@@ -63,7 +63,7 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
 ## JAVA 
        	if test "$PHP_JAVA" != "no";then 
 # create java.so, compile with -DEXTENSION_DIR="\"$(EXTENSION_DIR)\""
-	PHP_NEW_EXTENSION(java, java.c parser.c bind.c init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\"])
+	PHP_NEW_EXTENSION(java, java.c init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\"])
           EXTENSION_NAME=JAVA
 	  if test X$PHP_JRE = X; then
 		  PHP_JAVA_BIN="java"
@@ -97,7 +97,7 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
          # --with-mono=/path/to/mono.exe,/path/to/ikvmc/dir
          PHP_JRE="`echo $PHP_MONO | LANG=C awk -F, '{print $1}'`"
 
-	PHP_NEW_EXTENSION(mono, mono_dir/java.c mono_dir/bind.c mono_dir/init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\" -Imono_dir])
+	PHP_NEW_EXTENSION(mono, mono_dir/java.c mono_dir/init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\" -Imono_dir])
           EXTENSION_NAME=MONO
 	  if test "X$PHP_JRE" = "X" || test "X$PHP_JRE" = "Xyes"; then
 		  PHP_JAVA_BIN="mono"
@@ -120,7 +120,7 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
              s*@BRIDGE_VERSION@*${BRIDGE_VERSION}*" \
             <$ext_builddir/${i}.in >$ext_builddir/mono_dir/${i}
         done
-        ln java.c bind.c php_java.h php_wrapper.h mono_dir
+        ln java.c php_java.h php_wrapper.h mono_dir
         fi
 
 PHP_ADD_MAKEFILE_FRAGMENT

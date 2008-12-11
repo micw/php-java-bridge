@@ -1,9 +1,6 @@
 Overview
 --------
 
-The "java.so" file contained in the Linux binary packages starts a
-Java VM as a sub process of the HTTP server.
-
 This document describes how to install the PHP/Java Bridge Linux
 packages. 
 
@@ -11,21 +8,12 @@ packages.
 Installation on RedHat, Fedora, CentOS ...
 ------------------------------------------
 
-* Check if the Java libraries you're interested in are available as
-  native binaries. If not, you need to install Java and the J2EE
-  component, see the INSTALL.J2EE or INSTALL.J2SE document and the 
-  Security Enhanced Linux secion in the README.
-
-* Download and install the PHP/Java Bridge base and the libraries. For
-  example:
+* Download and install the PHP/Java Bridge.
 
     rpm -i php-java-bridge-x.y.z-1-i386.rpm
-    rpm -i lucene4php-x.y.z-1.i386.rpm
-    rpm -i itext4php-x.y.z-1.i386.rpm
 
-* Each native library contains at least one PHP example in
 
-    /usr/share/doc/<libname>/example.
+* Restart the Tomcat back end and the HTTP server.
 
 
 * To rebuild the RPM files, download the php-java-bridge*.tar.gz

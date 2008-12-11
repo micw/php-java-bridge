@@ -77,21 +77,12 @@ void EXT_GLOBAL(update_servlet)(const char*new_value) {
 void EXT_GLOBAL(update_socketname)(const char*new_value) {
 	if((EXT_GLOBAL (ini_set) &U_SOCKNAME)) free(EXT_GLOBAL(cfg)->sockname);
 	EXT_GLOBAL(cfg)->sockname=strdup(new_value);
+#if defined(HAVE_ABSTRACT_NAMESPACE) && !defined(CFG_JAVA_SOCKET_INET)
+	EXT_GLOBAL(cfg)->sockname[0]='@';
+#endif
 	EXT_GLOBAL(cfg)->socketname_set=1;
 	assert(EXT_GLOBAL(cfg)->sockname); if(!EXT_GLOBAL(cfg)->sockname) exit(6);
 	EXT_GLOBAL(ini_updated)|=U_SOCKNAME;
-}
-void EXT_GLOBAL(update_persistent_connections)(const char*new_value) {
-  /* don't bother enabling persistent connections if this sapi cannot
-	 handle them */
-  if ((!EXT_GLOBAL(cfg)->is_cgi_servlet ||
-	   (EXT_GLOBAL(cfg)->is_cgi_servlet&&!EXT_GLOBAL(cfg)->is_cgi_servlet))) {
-	if(!strncasecmp(on, new_value, 2) || !strncasecmp(on2, new_value, 1))
-	  EXT_GLOBAL(cfg)->persistent_connections=1;
-	else
-	  EXT_GLOBAL(cfg)->persistent_connections=0;
-	EXT_GLOBAL(ini_updated)|=U_PERSISTENT_CONNECTIONS;
-  }
 }
 static void override_hosts(const char*new_value) {
   EXT_GLOBAL(update_hosts)(new_value);
@@ -183,37 +174,6 @@ static void override_ini_from_cgi(void) {
   }
 }
 
-#ifndef CFG_JAVA_SOCKET_INET
-#ifdef HAVE_ABSTRACT_NAMESPACE
-static void init_socket(void) {
-  static const char * const bridge="@java-bridge-";
-  size_t len = strlen(bridge)+ sizeof(pid_t)*2; //assuming byte=8bit
-
-  char *sockname=malloc(len+1);
-  assert(sockname); if(!sockname) exit(6);
-
-  EXT_GLOBAL(snprintf)(sockname, len+1, "%s%lx", bridge,(unsigned long)getpid());
-  EXT_GLOBAL(cfg)->default_sockname = sockname;
-}
-#else 
-static void init_socket(void) {
-	char *n;
-	char*s=SOCKNAME;
-	char *sockname=malloc(strlen(s)+1);
-	assert(sockname); if(!sockname) exit(6);
-	strcpy(sockname, s);
-	n = mktemp(sockname);
-	assert(n); if(!n) exit(6);
-	EXT_GLOBAL(cfg)->default_sockname = sockname;
-}
-#endif
-#else 
-static void init_socket(void) {
-  EXT_GLOBAL(cfg)->default_sockname = strdup(DEFAULT_PORT);
-  assert(EXT_GLOBAL(cfg)->default_sockname); if(!EXT_GLOBAL(cfg)->default_sockname) exit(6);
-}
-#endif
-
 void EXT_GLOBAL (init_cfg) (TSRMLS_D) {
 
 #ifdef CFG_JAVA_SOCKET_INET
@@ -224,56 +184,26 @@ void EXT_GLOBAL (init_cfg) (TSRMLS_D) {
 
   override_ini_from_cgi();
 
-  init_socket();
-  if(!(EXT_GLOBAL (ini_updated) &U_SOCKNAME)) {
-	EXT_GLOBAL(cfg)->sockname=strdup(EXT_GLOBAL(cfg)->default_sockname);
-	EXT_GLOBAL(cfg)->socketname_set=0;
-  }
+  if(!(EXT_GLOBAL (ini_updated) &U_SOCKNAME)) EXT_GLOBAL(cfg)->sockname=strdup("");
   if(!(EXT_GLOBAL (ini_updated) &U_SERVLET)) EXT_GLOBAL(cfg)->servlet=strdup(DEFAULT_SERVLET);
   if(!(EXT_GLOBAL (ini_updated) &U_HOSTS)) EXT_GLOBAL(cfg)->hosts=strdup("");
-  if(!(EXT_GLOBAL (ini_updated) &U_WRAPPER)) EXT_GLOBAL(cfg)->wrapper=strdup(DEFAULT_WRAPPER);
-  if(!(EXT_GLOBAL (ini_updated) &U_POLICY)) EXT_GLOBAL(cfg)->policy=0;
-  if(!(EXT_GLOBAL (ini_updated) &U_CLASSPATH)) EXT_GLOBAL(cfg)->classpath=strdup(CFG_CLASSPATH);
-  if(!(EXT_GLOBAL (ini_updated) &U_LIBRARY_PATH)) EXT_GLOBAL(cfg)->ld_library_path=strdup(CFG_LD_LIBRARY_PATH);
-  if(!(EXT_GLOBAL (ini_updated) &U_JAVA)) EXT_GLOBAL(cfg)->vm=strdup(CFG_JAVA);
-  if(!(EXT_GLOBAL (ini_updated) &U_JAVA_HOME)) EXT_GLOBAL(cfg)->vm_home=strdup(CFG_JAVA_HOME);
-#if defined(ZEND_ENGINE_2)
-  if(!(EXT_GLOBAL (ini_updated) &U_PERSISTENT_CONNECTIONS)) EXT_GLOBAL(cfg)->persistent_connections=1;
-#else  /* PHP4 */
-  if(!(EXT_GLOBAL (ini_updated) &U_PERSISTENT_CONNECTIONS)) EXT_GLOBAL(cfg)->persistent_connections=0; //BROKEN
-#endif
   if(!(EXT_GLOBAL (ini_updated) &U_LOGLEVEL)) {
 	EXT_GLOBAL(cfg)->logLevel=strdup(DEFAULT_LEVEL);
 	EXT_GLOBAL(cfg)->logLevel_val=atoi(DEFAULT_LEVEL);
   }
-  if(!(EXT_GLOBAL (ini_updated) &U_LOGFILE)) EXT_GLOBAL(cfg)->logFile=strdup(LOGFILE);
-  
   EXT_GLOBAL(ini_set)=~0;
   EXT_GLOBAL(ini_user)|=EXT_GLOBAL(ini_updated);
   EXT_GLOBAL(ini_updated)=0;
-
-  EXT_GLOBAL(cfg)->can_fork = 
-	!(EXT_GLOBAL (option_set_by_user) (U_SOCKNAME, EXT_GLOBAL(ini_user))) &&
-	!(EXT_GLOBAL (option_set_by_user) (U_HOSTS, EXT_GLOBAL(ini_user))) &&
-	!(EXT_GLOBAL (option_set_by_user) (U_SERVLET, EXT_GLOBAL(ini_user)));
 }
 
 void EXT_GLOBAL (destroy_cfg) (int EXT_GLOBAL (ini_updated) ) {
   assert(EXT_GLOBAL(ini_updated) == ~0);
   if(!(EXT_GLOBAL (ini_updated) &U_SERVLET)) free(EXT_GLOBAL(cfg)->servlet);
-  if(!(EXT_GLOBAL (ini_updated) &U_WRAPPER)) free(EXT_GLOBAL(cfg)->wrapper);
-  if(!(EXT_GLOBAL (ini_updated) &U_POLICY)) free(EXT_GLOBAL(cfg)->policy);
   if(!(EXT_GLOBAL (ini_updated) &U_HOSTS)) free(EXT_GLOBAL(cfg)->hosts);
 
   if(!(EXT_GLOBAL (ini_updated) &U_SOCKNAME)) free(EXT_GLOBAL(cfg)->sockname); 
-  free(EXT_GLOBAL(cfg)->default_sockname);
 
-  if(!(EXT_GLOBAL (ini_updated) &U_CLASSPATH)) free(EXT_GLOBAL(cfg)->classpath);
-  if(!(EXT_GLOBAL (ini_updated) &U_LIBRARY_PATH)) free(EXT_GLOBAL(cfg)->ld_library_path);
-  if(!(EXT_GLOBAL (ini_updated) &U_JAVA)) free(EXT_GLOBAL(cfg)->vm);
-  if(!(EXT_GLOBAL (ini_updated) &U_JAVA_HOME)) free(EXT_GLOBAL(cfg)->vm_home);
   if(!(EXT_GLOBAL (ini_updated) &U_LOGLEVEL)) free(EXT_GLOBAL(cfg)->logLevel);
-  if(!(EXT_GLOBAL (ini_updated) &U_LOGFILE)) free(EXT_GLOBAL(cfg)->logFile);
 }
 
 /*
@@ -287,18 +217,10 @@ short EXT_GLOBAL(option_set_by_user)(short option, int ini_user) {
   if((option & ini_user)==0) return 0;
 
   switch(option) {
-  case U_LOGFILE: entry = EXT_GLOBAL(cfg)->logFile; break;
   case U_LOGLEVEL: entry = EXT_GLOBAL(cfg)->logLevel; break;
-  case U_JAVA_HOME: entry = EXT_GLOBAL(cfg)->vm_home; break;
-  case U_JAVA: entry = EXT_GLOBAL(cfg)->vm; break;
-  case U_LIBRARY_PATH: entry = EXT_GLOBAL(cfg)->ld_library_path; break;
-  case U_CLASSPATH: entry = EXT_GLOBAL(cfg)->classpath; break;
   case U_SOCKNAME: entry = EXT_GLOBAL(cfg)->sockname; break;
-  case U_HOSTS: { TSRMLS_FETCH(); entry = JG(hosts) ? JG(hosts) : EXT_GLOBAL(cfg)->hosts; break; }
-  case U_SERVLET: { TSRMLS_FETCH(); entry = JG(servlet) ? JG(servlet) : EXT_GLOBAL(cfg)->servlet; break; }
-  case U_WRAPPER: entry = EXT_GLOBAL(cfg)->wrapper; break;
-  case U_POLICY: entry = EXT_GLOBAL(cfg)->policy; break;
-  case U_PERSISTENT_CONNECTIONS: return EXT_GLOBAL(cfg)->persistent_connections;
+  case U_HOSTS:    entry = EXT_GLOBAL(cfg)->hosts; break; 
+  case U_SERVLET:  entry = EXT_GLOBAL(cfg)->servlet; break;
   default: assert(0);
   }  
 
@@ -308,17 +230,6 @@ short EXT_GLOBAL(option_set_by_user)(short option, int ini_user) {
 	return 0;
   }
   return 1;
-}
-
-char *EXT_GLOBAL(get_servlet_context)(TSRMLS_D) {
-  if(!EXT_GLOBAL(option_set_by_user)(U_SERVLET, JG(ini_user))) return 0;
-  return JG(servlet);
-}
-
-char *EXT_GLOBAL(get_sockname)(TSRMLS_D) {
-  if(!EXT_GLOBAL(option_set_by_user)(U_SOCKNAME, EXT_GLOBAL(ini_user)))
-	return EXT_GLOBAL(cfg)->default_sockname;
-  return EXT_GLOBAL(cfg)->sockname;
 }
 
 #ifndef PHP_WRAPPER_H

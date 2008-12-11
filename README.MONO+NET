@@ -1,26 +1,19 @@
 Overview
 --------
 
-The MonoBridge.exe binary associates a PHP script with a
-managed (and persistent) Mono VM. 
-The "mono.so" file contained in the Linux binary packages starts a
-Mono VM as a sub process of the HTTP server.
+The MonoBridge.exe binary associates PHP scripts with a persistent
+Mono/.NET VM.
 
 
-Installation on RedHat, Fedora, CentOS ...
-------------------------------------------
+Installation
+------------
 
-* Download and install the PHP/Java Bridge base and the libraries. For
-  example:
-
-    rpm -i php-java-bridge-mono-x.y.z-1-i386.rpm
-
-  On non-Linux OS start the .NET VM by double-clicking on MonoBridge.exe
+* Start the .NET VM by double-clicking on MonoBridge.exe
 
 * There are three Mono/.NET examples which show how to create a GUI
   using GTK and how to load and access .NET assemblies.
 
-* To rebuild the RPM files, download the php-java-bridge*.tar.gz
+* To rebuild the Linux RPM files, download the php-java-bridge*.tar.gz
   archive and type (as root):
 
     rpmbuild -tb php-java-bridge*.tar.gz

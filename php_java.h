@@ -92,35 +92,16 @@
 #endif
 #endif 
 
-extern zend_module_entry EXT_GLOBAL(module_entry);
-extern zend_class_entry *EXT_GLOBAL(class_entry);
-extern zend_class_entry *EXT_GLOBAL(array_entry);
-extern zend_class_entry *EXT_GLOBAL(class_class_entry);
-extern zend_class_entry *EXT_GLOBAL(class_class_entry_jsr);
-extern zend_class_entry *EXT_GLOBAL(exception_class_entry);
-extern function_entry EXT_GLOBAL(class_functions[]);
-
-#ifdef ZEND_ENGINE_2
-extern zend_object_handlers EXT_GLOBAL(handlers);
-#endif
 extern const char * const EXT_GLOBAL(bridge_version);
 
 extern int EXT_GLOBAL(ini_updated), EXT_GLOBAL (ini_user), 
   EXT_GLOBAL (ini_set), EXT_GLOBAL(ini_override);
 
-#define U_LOGFILE (1<<1)
 #define U_LOGLEVEL (1<<2)
-#define U_JAVA_HOME (1<<3)
-#define U_JAVA (1<<4)
-#define U_LIBRARY_PATH (1<<5)
-#define U_CLASSPATH (1<<6)
 #define U_SOCKNAME (1<<7)
 #define U_HOSTS (1<<8)
 #define U_SERVLET (1<<9)
-#define U_WRAPPER (1<<10)
 #define U_SECURE (1<<11) /* if X_JAVABRIDGE_OVERRIDE contains a s: prefix */
-#define U_PERSISTENT_CONNECTIONS  (1<<12)
-#define U_POLICY (1<<13)
 
 #if EXTENSION == JAVA
 #define phpext_java_ptr &EXT_GLOBAL(module_entry)
@@ -137,45 +118,14 @@ PHP_MINFO_FUNCTION(EXT);
 
 struct cfg {
 
-  /** The socket address of the backend, used when java.socketname is set.*/
-  union {
-	struct sockaddr_in in;
-#ifndef CFG_JAVA_SOCKET_INET
-	struct sockaddr_un un;
-#endif
-  } saddr;
-
-  /** The process id of the backend, used when java.socketname, java.hosts and java.servlet are off */
-  int cid; // server's process id
-  /** The file descriptor of the backend, used when java.socketname, java.hosts and java.servlet are off */
-  int err; // file descriptor: server's return code
-
   /** The java.socketname */
   char*sockname;
-  /** The default socketname */
-  char *default_sockname;
   /** The java.hosts list */
   char*hosts;
-  /** The java.classpath */
-  char*classpath;	
-  /** The java.libpath*/
-  char*ld_library_path;
-  /** The java.wrapper */
-  char*wrapper;
-  /** The java.policy */
-  char*policy;
-  /** The java.java */
-  char*vm;
-  /** The java.java_home */
-  char*vm_home;
   /** The java.log_level */
   char*logLevel;
   /** The java.log_level as a number */
   unsigned short logLevel_val;
-  /** The java.log_file */
-  char*logFile;
-  /** 1: if java.socketname, java.hosts and java.servlet are not set */
-  short can_fork;				/* 0 if user has hard-coded the socketname */
   /** The java.servlet, defaults to /JavaBridge/JavaBridge.php */
   char* servlet;				/* On or servlet context */
   short servlet_is_default;		/* If java.servlet=On */
@@ -186,54 +136,16 @@ struct cfg {
   short is_cgi_servlet, is_fcgi_servlet; /* 1: cgi env available */
   /** 1: local backend; 0: backend from the host list */
   short socketname_set;
-  short persistent_connections;
 
   /* set to 1 if the back-end uses TCP sockets, 0 otherwise */
   short java_socket_inet;
-
-#ifndef __MINGW32__
-  pid_t pid; 						/* the pid of the group leader or 0 */
-#endif
 };
 extern struct cfg *EXT_GLOBAL(cfg);
-
-
-/* for user CB's */
-struct cb_stack_elem {
-  zval*exception;
-  zval **object;
-  zval *func;
-  zval **retval_ptr;
-  zval *func_params;
-};
 
 /**
  * The following structure contains per-request variables.
  */
 EXT_BEGIN_MODULE_GLOBALS(EXT)
-  proxyenv *jenv;
-  short is_closed; /* PR1176522: GC must not re-open the connection */
-
-  /* local copy of the shared variables above. Needed for channel
-	 re-directs */
-  char *hosts, *servlet;
-  char *redirect_port; 			/* the port sub-string from hosts */
-  int ini_user;
-  short java_socket_inet;		/* copy of java_socket_inet */
-
-  /* for user CB's */
-  zend_stack *cb_stack;
-
-  /* mapping of servlet context strings to persistent connections */
-  HashTable connections;
-
-  /* copy of the connection variables. Other connections
-   may share these and set (*env)->is_shared=1 */
-  int peer, peerr;
-  char *servlet_ctx;
-
-  /* Class name cache, used by the java() function */
-  HashTable classNameCache;
 EXT_END_MODULE_GLOBALS(EXT)
 
 
@@ -242,25 +154,5 @@ EXT_END_MODULE_GLOBALS(EXT)
 #else
 # define JG(v) EXT_GLOBAL(globals).v
 #endif
-
-extern char* EXT_GLOBAL(get_server_string)(TSRMLS_D);
-extern void EXT_GLOBAL(override_ini_for_redirect)(TSRMLS_D);
-extern proxyenv *EXT_GLOBAL(try_connect_to_server)(TSRMLS_D);
-extern proxyenv *EXT_GLOBAL(connect_to_server)(TSRMLS_D);
-extern short EXT_GLOBAL(close_connection)(proxyenv*env, short persistent_connection TSRMLS_DC);
-extern void EXT_GLOBAL(start_server)(TSRMLS_D);
-extern void EXT_GLOBAL(activate_connection)(proxyenv *env TSRMLS_DC);
-extern void EXT_GLOBAL(passivate_connection)(proxyenv *env TSRMLS_DC);
-extern void EXT_GLOBAL(clone_cfg)(TSRMLS_D);
-extern void EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_D);
-
-extern char* EXT_GLOBAL(test_server)(int *socket, short *is_local, struct sockaddr*saddr TSRMLS_DC);
-extern short EXT_GLOBAL(can_fork)(TSRMLS_D);
-
-/* returns the servlet context or null */
-extern char *EXT_GLOBAL(get_servlet_context)(TSRMLS_D);
-
-/* returns the local socketname or the default local socketname*/
-extern char *EXT_GLOBAL(get_sockname)(TSRMLS_D);
 
 #endif

@@ -102,12 +102,12 @@ PHP_RSHUTDOWN_FUNCTION(EXT)
 
 EXT_FUNCTION(EXT_GLOBAL(get_default_channel))
 {
-  if(EXT_GLOBAL(can_fork)(TSRMLS_C) && (EXT_GLOBAL(cfg)->default_sockname)) {
-	char *name = EXT_GLOBAL(cfg)->default_sockname;
+  if(EXT_GLOBAL(cfg)->socketname_set && (EXT_GLOBAL(cfg)->sockname)) {
+	char *name = EXT_GLOBAL(cfg)->sockname;
 	if(name[0]=='@' || name[0]=='/') { /* unix domain socket */
 	  RETURN_STRING(name, 1);
 	} else {					/* tcp socket */
-	  RETURN_LONG(atoi(EXT_GLOBAL(cfg)->default_sockname));
+	  RETURN_LONG(atoi(EXT_GLOBAL(cfg)->sockname));
 	}
   } else {
 	RETURN_NULL();
@@ -160,26 +160,6 @@ int EXT_GLOBAL(ini_user);
  */
 int EXT_GLOBAL(ini_set);
 
-static PHP_INI_MH(OnIniPolicy)
-{
-  if (new_value) {
-	if((EXT_GLOBAL (ini_set) &U_POLICY)) free(EXT_GLOBAL(cfg)->policy);
-	EXT_GLOBAL(cfg)->policy=strdup(new_value);
-	assert(EXT_GLOBAL(cfg)->policy); if(!EXT_GLOBAL(cfg)->policy) exit(6);
-	EXT_GLOBAL(ini_updated)|=U_POLICY;
-  }
-  return SUCCESS;
-}
-static PHP_INI_MH(OnIniWrapper)
-{
-  if (new_value) {
-	if((EXT_GLOBAL (ini_set) &U_WRAPPER)) free(EXT_GLOBAL(cfg)->wrapper);
-	EXT_GLOBAL(cfg)->wrapper=strdup(new_value);
-	assert(EXT_GLOBAL(cfg)->wrapper); if(!EXT_GLOBAL(cfg)->wrapper) exit(6);
-	EXT_GLOBAL(ini_updated)|=U_WRAPPER;
-  }
-  return SUCCESS;
-}
 static PHP_INI_MH(OnIniHosts)
 {
   if (new_value && !(EXT_GLOBAL(ini_override)&U_HOSTS)) {
@@ -202,46 +182,6 @@ static PHP_INI_MH(OnIniSockname)
   }
   return SUCCESS;
 }
-static PHP_INI_MH(OnIniClassPath)
-{
-  if (new_value) {
-	if((EXT_GLOBAL (ini_set) &U_CLASSPATH)) free(EXT_GLOBAL(cfg)->classpath);
-	EXT_GLOBAL(cfg)->classpath =strdup(new_value);
-	assert(EXT_GLOBAL(cfg)->classpath); if(!EXT_GLOBAL(cfg)->classpath) exit(6);
-	EXT_GLOBAL(ini_updated)|=U_CLASSPATH;
-  }
-  return SUCCESS;
-}
-static PHP_INI_MH(OnIniLibPath)
-{
-  if (new_value) {
-	if((EXT_GLOBAL (ini_set) &U_LIBRARY_PATH)) free(EXT_GLOBAL(cfg)->ld_library_path);
-	EXT_GLOBAL(cfg)->ld_library_path = strdup(new_value);
-	assert(EXT_GLOBAL(cfg)->ld_library_path); if(!EXT_GLOBAL(cfg)->ld_library_path) exit(6);
-	EXT_GLOBAL(ini_updated)|=U_LIBRARY_PATH;
-  }
-  return SUCCESS;
-}
-static PHP_INI_MH(OnIniJava)
-{
-  if (new_value) {
-	if((EXT_GLOBAL (ini_set) &U_JAVA)) free(EXT_GLOBAL(cfg)->vm);
-	EXT_GLOBAL(cfg)->vm = strdup(new_value);
-	assert(EXT_GLOBAL(cfg)->vm); if(!EXT_GLOBAL(cfg)->vm) exit(6);
-	EXT_GLOBAL(ini_updated)|=U_JAVA;
-  }
-  return SUCCESS;
-}
-static PHP_INI_MH(OnIniJavaHome)
-{
-  if (new_value) {
-	if((EXT_GLOBAL (ini_set) &U_JAVA_HOME)) free(EXT_GLOBAL(cfg)->vm_home);
-	EXT_GLOBAL(cfg)->vm_home = strdup(new_value);
-	assert(EXT_GLOBAL(cfg)->vm_home); if(!EXT_GLOBAL(cfg)->vm_home) exit(6);
-	EXT_GLOBAL(ini_updated)|=U_JAVA_HOME;
-  }
-  return SUCCESS;
-}
 static PHP_INI_MH(OnIniLogLevel)
 {
   if (new_value) {
@@ -253,29 +193,11 @@ static PHP_INI_MH(OnIniLogLevel)
   }
   return SUCCESS;
 }
-static PHP_INI_MH(OnIniLogFile)
-{
-  if (new_value) {
-	if((EXT_GLOBAL (ini_set) &U_LOGFILE)) free(EXT_GLOBAL(cfg)->logFile);
-	EXT_GLOBAL(cfg)->logFile = strdup(new_value);
-	assert(EXT_GLOBAL(cfg)->logFile); if(!EXT_GLOBAL(cfg)->logFile) exit(6);
-	EXT_GLOBAL(ini_updated)|=U_LOGFILE;
-  }
-  return SUCCESS;
-}
 PHP_INI_BEGIN()
   PHP_INI_ENTRY(EXT_NAME()/**/".servlet", NULL, PHP_INI_SYSTEM, OnIniServlet)
   PHP_INI_ENTRY(EXT_NAME()/**/".socketname", NULL, PHP_INI_SYSTEM, OnIniSockname)
   PHP_INI_ENTRY(EXT_NAME()/**/".hosts",   NULL, PHP_INI_SYSTEM, OnIniHosts)
-  PHP_INI_ENTRY(EXT_NAME()/**/".wrapper",   NULL, PHP_INI_SYSTEM, OnIniWrapper)
-  PHP_INI_ENTRY(EXT_NAME()/**/".security_policy",   NULL, PHP_INI_SYSTEM, OnIniPolicy)
-  PHP_INI_ENTRY(EXT_NAME()/**/".classpath", NULL, PHP_INI_SYSTEM, OnIniClassPath)
-  PHP_INI_ENTRY(EXT_NAME()/**/".libpath",   NULL, PHP_INI_SYSTEM, OnIniLibPath)
-  PHP_INI_ENTRY(EXT_NAME()/**/"."/**/EXT_NAME()/**/"",   NULL, PHP_INI_SYSTEM, OnIniJava)
-  PHP_INI_ENTRY(EXT_NAME()/**/"."/**/EXT_NAME()/**/"_home",   NULL, PHP_INI_SYSTEM, OnIniJavaHome)
-
   PHP_INI_ENTRY(EXT_NAME()/**/".log_level",   NULL, PHP_INI_SYSTEM, OnIniLogLevel)
-  PHP_INI_ENTRY(EXT_NAME()/**/".log_file",   NULL, PHP_INI_SYSTEM, OnIniLogFile)
   PHP_INI_END()
 
 /* PREFORK calls this once. All childs receive cloned values. However,
@@ -286,24 +208,7 @@ PHP_INI_BEGIN()
 }
 
 
-void EXT_GLOBAL(clone_cfg)(TSRMLS_D) {
-  JG(ini_user)=EXT_GLOBAL(ini_user);
-  JG(java_socket_inet) = EXT_GLOBAL(cfg)->java_socket_inet;
-  if(JG(hosts)) free(JG(hosts));
-  if(!(JG(hosts)=strdup(EXT_GLOBAL(cfg)->hosts))) exit(9);
-  if(JG(servlet)) free(JG(servlet));
-  if(!(JG(servlet)=strdup(EXT_GLOBAL(cfg)->servlet))) exit(9);
-}
-void EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_D) {
-  if(JG(hosts)) free(JG(hosts));
-  if(JG(servlet)) free(JG(servlet));
-  JG(ini_user)=0;
-  JG(java_socket_inet)=0;
-  JG(hosts)=0;
-  JG(servlet)=0;
-}
 
-static int pid;
 /**
  * Called when the module is initialized. Creates the Java and
  * JavaClass structures and tries to start the back-end if
@@ -316,10 +221,6 @@ static int pid;
  */
 PHP_MINIT_FUNCTION(EXT)
 {
-  zend_class_entry *parent;
-  
-  pid = getpid ();
-
   EXT_INIT_MODULE_GLOBALS(EXT, EXT_GLOBAL(alloc_globals_ctor), NULL);
   
   assert(!EXT_GLOBAL (cfg) );
@@ -327,16 +228,12 @@ PHP_MINIT_FUNCTION(EXT)
   if(!EXT_GLOBAL (cfg) ) exit(9);
 
   if(REGISTER_INI_ENTRIES()==SUCCESS) {
-	char *tmpdir, sockname_shm[] = SOCKNAME_SHM, sockname[] = SOCKNAME;
-	/* set the default values for all undefined */
-	
 	EXT_GLOBAL(init_cfg) (TSRMLS_C);
-	EXT_GLOBAL(cfg)->pid = pid;
-
-	EXT_GLOBAL(clone_cfg)(TSRMLS_C);
-	EXT_GLOBAL(start_server) (TSRMLS_C);
-	EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);
   } 
+
+  // disable named pipes if the socket option is set
+  if(EXT_GLOBAL(option_set_by_user)(U_SOCKNAME, EXT_GLOBAL(ini_user)))
+	REGISTER_STRING_CONSTANT(EXTU/**/"_PIPE_DIR", "", CONST_CS | CONST_PERSISTENT);
 
   /* 
    * don't bother setting JAVA_HOSTS if this is a fcgi servlet
@@ -347,37 +244,12 @@ PHP_MINIT_FUNCTION(EXT)
 	REGISTER_STRING_CONSTANT(EXTU/**/"_HOSTS", EXT_GLOBAL(cfg)->hosts, CONST_CS | CONST_PERSISTENT);
 	if(EXT_GLOBAL(option_set_by_user)(U_SERVLET, EXT_GLOBAL(ini_user)))
 	  REGISTER_STRING_CONSTANT(EXTU/**/"_SERVLET", EXT_GLOBAL(cfg)->servlet, CONST_CS | CONST_PERSISTENT);
+	else
+	  REGISTER_STRING_CONSTANT(EXTU/**/"_SERVLET", "", CONST_CS | CONST_PERSISTENT);
   }
+  if(EXT_GLOBAL(option_set_by_user)(U_LOGLEVEL, EXT_GLOBAL(ini_user)))
+	REGISTER_LONG_CONSTANT(EXTU/**/"_LOG_LEVEL", atoi(EXT_GLOBAL(cfg)->logLevel), CONST_CS | CONST_PERSISTENT);
   return SUCCESS;
-}
-/**
- * A stack element which keeps the current cfg.
- */
-struct save_cfg {
-  /** A copy of the ini options set by the user */
-  int ini_user;
-  /** A copy of servlet context */
-  char *servlet;
-  /** A copy of the host list */
-  char *hosts;
-  short java_socket_inet;
-};
-static void push_cfg(struct save_cfg*cfg TSRMLS_DC) {
-  cfg->ini_user = JG(ini_user);
-  cfg->java_socket_inet = JG(java_socket_inet);
-  cfg->servlet = JG(servlet);
-  cfg->hosts = JG(hosts);
-  JG(ini_user) = EXT_GLOBAL(ini_user);
-  if(!(JG(hosts)=strdup(EXT_GLOBAL(cfg)->hosts))) exit(9);
-  if(!(JG(servlet)=strdup(EXT_GLOBAL(cfg)->servlet))) exit(9);
-}
-static void pop_cfg(struct save_cfg*cfg TSRMLS_DC) {
-  JG(ini_user) = cfg->ini_user;
-  JG(java_socket_inet) = cfg->java_socket_inet;
-  if(JG(servlet)) free(JG(servlet)); 
-  JG(servlet) = cfg->servlet;
-  if(JG(hosts)) free(JG(hosts)); 
-  JG(hosts) = cfg->hosts;
 }
 
 /**
@@ -385,75 +257,20 @@ static void pop_cfg(struct save_cfg*cfg TSRMLS_DC) {
  */
 PHP_MINFO_FUNCTION(EXT)
 {
-  static const char on[]="On";
-  static const char off[]="Off";
-  short is_local=0, is_level;
-  char*s, *server=0;
-  struct save_cfg saved_cfg;
-
-  push_cfg(&saved_cfg TSRMLS_CC);
-  EXT_GLOBAL(clone_cfg)(TSRMLS_C);
-  s = EXT_GLOBAL(get_server_string) (TSRMLS_C);
-
-  if(!EXT_GLOBAL(cfg)->is_fcgi_servlet)
-	server = EXT_GLOBAL(test_server) (0, &is_local, 0 TSRMLS_CC);
-  else {						/* we don't own the back end */
-	zval retval;
-	static const char str[]=EXT_NAME()/**/"_server_name();";
-	static const char name[]=EXT_NAME()/**/"_server_name";
-	int val = zend_eval_string((char*)str, &retval, (char*)name TSRMLS_CC);
-	if(SUCCESS==val && (Z_TYPE(retval)==IS_STRING)) server = strdup(Z_STRVAL(retval));
-  }
-  is_level = ((EXT_GLOBAL (ini_user)&U_LOGLEVEL)!=0);
-
   php_info_print_table_start();
   php_info_print_table_row(2, EXT_NAME()/**/" support", "Enabled");
   php_info_print_table_row(2, EXT_NAME()/**/" bridge", EXT_GLOBAL(bridge_version));
-#if EXTENSION == JAVA
-  if(!server || is_local) {
-								/* don't show default value, they may
-								   not be used anyway */
-	if((EXT_GLOBAL(option_set_by_user) (U_LIBRARY_PATH, EXT_GLOBAL(ini_user))))
-	  php_info_print_table_row(2, EXT_NAME()/**/".libpath", EXT_GLOBAL(cfg)->ld_library_path);
-
-								/* don't show default value, they may
-								   not be used anyway */
-	if((EXT_GLOBAL(option_set_by_user) (U_CLASSPATH, EXT_GLOBAL(ini_user))))
-	  php_info_print_table_row(2, EXT_NAME()/**/".classpath", EXT_GLOBAL(cfg)->classpath);
+  if(EXT_GLOBAL(cfg)->socketname_set && EXT_GLOBAL(option_set_by_user) (U_SOCKNAME, EXT_GLOBAL(ini_user)))
+	php_info_print_table_row(2, EXT_NAME()/**/".socketname", EXT_GLOBAL(cfg)->sockname);
+  else {
+	if(EXT_GLOBAL(option_set_by_user) (U_HOSTS, EXT_GLOBAL(ini_user)))
+	  php_info_print_table_row(2, EXT_NAME()/**/".hosts", EXT_GLOBAL(cfg)->hosts);
+	if(EXT_GLOBAL(option_set_by_user) (U_SERVLET, EXT_GLOBAL(ini_user)))
+	  php_info_print_table_row(2, EXT_NAME()/**/".servlet", EXT_GLOBAL(cfg)->servlet);
   }
-#endif
-  if(!server || is_local) {
-	php_info_print_table_row(2, EXT_NAME()/**/"."/**/EXT_NAME()/**/"_home", EXT_GLOBAL(cfg)->vm_home);
-	php_info_print_table_row(2, EXT_NAME()/**/"."/**/EXT_NAME(), EXT_GLOBAL(cfg)->vm);
-	if((EXT_GLOBAL(option_set_by_user) (U_WRAPPER, EXT_GLOBAL(ini_user))))
-	  php_info_print_table_row(2, EXT_NAME()/**/".wrapper", EXT_GLOBAL(cfg)->wrapper);
-	if(strlen(EXT_GLOBAL(cfg)->logFile)==0) 
-	  php_info_print_table_row(2, EXT_NAME()/**/".log_file", "<stderr>");
-	else
-	  php_info_print_table_row(2, EXT_NAME()/**/".log_file", EXT_GLOBAL(cfg)->logFile);
-	
-	php_info_print_table_row(2, EXT_NAME()/**/".log_level", is_level ? EXT_GLOBAL(cfg)->logLevel : "no value (use back-end's default level)");
-	if(EXT_GLOBAL(option_set_by_user) (U_HOSTS, JG(ini_user)))  
-	  php_info_print_table_row(2, EXT_NAME()/**/".hosts", JG(hosts));
-	if(!EXT_GLOBAL(cfg)->policy) {
-	  php_info_print_table_row(2, EXT_NAME()/**/".security_policy", "Off");
-	} else {
-	  /* set by user */
-	  if(EXT_GLOBAL(option_set_by_user) (U_POLICY, EXT_GLOBAL(ini_user)))
-		php_info_print_table_row(2, EXT_NAME()/**/".security_policy", EXT_GLOBAL(cfg)->policy);
-	  else
-		php_info_print_table_row(2, EXT_NAME()/**/".security_policy", "Off");
-	}
-	php_info_print_table_row(2, EXT_NAME()/**/" command", s);
-  }
-  php_info_print_table_row(2, EXT_NAME()/**/" server", server?server:"localhost");
-  php_info_print_table_row(2, EXT_NAME()/**/" status", server?"running":"not running");
+  if(EXT_GLOBAL(option_set_by_user) (U_LOGLEVEL, EXT_GLOBAL(ini_user)))
+	php_info_print_table_row(2, EXT_NAME()/**/".log_level", EXT_GLOBAL(cfg)->logLevel);
   php_info_print_table_end();
-  
-  free(server);
-  free(s);
-  EXT_GLOBAL(destroy_cloned_cfg)(TSRMLS_C);
-  pop_cfg(&saved_cfg TSRMLS_CC);
 }
 
 /**
@@ -464,13 +281,10 @@ PHP_MINFO_FUNCTION(EXT)
  */
 PHP_MSHUTDOWN_FUNCTION(EXT) 
 {
-  if (pid != getpid()) return SUCCESS; // workaround for a PHP/Apache 2.2.8 bug
-
   EXT_GLOBAL(destroy_cfg) (EXT_GLOBAL(ini_set));
   EXT_GLOBAL(ini_user) = EXT_GLOBAL(ini_set) = 0;
 
   UNREGISTER_INI_ENTRIES();
-  EXT_GLOBAL(shutdown_library) ();
 
   assert(EXT_GLOBAL (cfg));
   if(EXT_GLOBAL (cfg) ) { 

@@ -64,7 +64,7 @@ overwrite="no"
 if test X$ini = X; then
 echo ""
 echo "This php installation does not have a config-file-scan-dir,"
-echo "java.ini and java-servlet.ini not installed,"
+echo "java.ini not installed,"
 echo "will use file $phpini instead."
 if test -f ${phpini}; then
    echo -n "Overwrite existing php.ini file (yes/no): "; read overwrite;
@@ -179,6 +179,7 @@ install_sel_module() {
 	/usr/bin/chcon -t bin_t $ext/java
 	if test X$javabridgeservice != X; then /usr/bin/chcon -t initrc_exec_t $javabridgeservice; fi
  )
+       (cd security/module; /usr/bin/make; /usr/sbin/semodule -i php-java-bridge-tomcat.pp) >/dev/null
 }
 
 j2ee=no
@@ -191,8 +192,7 @@ fi
 if test -f modules/JavaBridge.war; then
     echo ""
     echo "Do you want to start the Servlet/J2EE back-end as a service?";
-    echo "Say no, if you want to start the service automatically with Apache."
-    echo "If unsure, say no";
+    echo "If unsure, say yes";
     echo -n "install j2ee back-end (yes/no): "; read j2ee;
     if test "X$j2ee" != "Xno"; then
       webapps="`locate /webapps | fgrep tomcat | grep 'webapps$' | head -1`"
@@ -209,19 +209,17 @@ if test -f modules/JavaBridge.war; then
         echo "Installed in ${document_root}. "
       fi
       if test X$ini != X; then  
-	  /bin/cp $v java-servlet.ini $ini; 
+	  /bin/cp $v java.ini $ini; 
       else
 	  if test X$overwrite = "Xyes"; then
-	      /bin/cat java-servlet.ini >>"$phpini"; 
+	      /bin/cat java.ini >>"$phpini"; 
 	  fi
       fi
       if test -f /etc/selinux/config && test -f /usr/sbin/semodule; then 
         if test X$v = X; then
             install_sel_module >/dev/null
-	    (cd security/module; /usr/bin/make; /usr/sbin/semodule -i php-java-bridge-tomcat.pp) >/dev/null
 	else
             install_sel_module;
-	    (cd security/module; /usr/bin/make; /usr/sbin/semodule -i php-java-bridge-tomcat.pp) 
 	fi
       fi
       echo ""
