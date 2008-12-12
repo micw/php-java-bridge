@@ -1,10 +1,11 @@
 2008-12-06  Jost Boekemeier  <jostb@intern>
 
-	* INSTALL, README.GNU_JAVA, java-servlet.ini: Removed; a tomcat or J2EE back end or a unix domain socket channel is now required.
+	* INSTALL, README.GNU_JAVA, java-servlet.ini: Removed; a tomcat or
+	J2EE back end or a unix domain socket channel is now required.
 
 	* protocol.c, bind.c: Removed.
 	
-	* README: FreeBSD is no longer supported by us. Use the PHP/Java
+	* README: FreeBSD is no longer supported. Please use the PHP/Java
 	Bridge FreeBSD port instead.
 
 	* php-java-bridge.spec: tomcat is now required

@@ -163,7 +163,7 @@ for i in $files;
   echo %{shared_pear}/java/$i >>filelist
 done
 
-files='java libnatcJavaBridge.so java.so'
+files='java libnatcJavaBridge.so'
 mkdir -p $RPM_BUILD_ROOT/$mod_dir
 for i in $files; do
  if test -f $mod_dir/$i; then
@@ -186,7 +186,7 @@ for i in $files;
   echo %{shared_pear}/mono/$i >>filelist-mono
 done
 
-files='mono.so ICSharpCode.SharpZipLib.dll IKVM.AWT.WinForms.dll IKVM.GNU.Classpath.dll IKVM.Runtime.dll'
+files='ICSharpCode.SharpZipLib.dll IKVM.AWT.WinForms.dll IKVM.GNU.Classpath.dll IKVM.Runtime.dll'
 for i in $files; do
  if test -f $mod_dir/$i; then
   cp $mod_dir/$i $RPM_BUILD_ROOT/$mod_dir/$i
@@ -210,9 +210,6 @@ for i in $files;
 done
 
 mkdir -p $RPM_BUILD_ROOT/etc/php.d
-cat java.ini  >$RPM_BUILD_ROOT/etc/php.d/java.ini
-cat mono.ini  >$RPM_BUILD_ROOT/etc/php.d/mono.ini
-echo /etc/php.d/java.ini >>filelist
 
 mkdir $RPM_BUILD_ROOT/$mod_dir/lib
 echo $mod_dir/lib >>filelist
@@ -237,7 +234,7 @@ if test -f /etc/selinux/config; then
 	/sbin/service httpd stop > /dev/null 2>&1
 	/sbin/service %{tomcat_name} stop > /dev/null 2>&1
 	%{_sbindir}/semodule -i %{_docdir}/%{name}-%{version}/security/module/php-java-bridge.pp
-	%{_sbindir}/semodule -i %{_docdir}/%{name}-tomcat-%{version}/security/module/php-java-bridge-tomcat.pp
+	%{_sbindir}/semodule -i %{_docdir}/%{name}-%{version}/security/module/php-java-bridge-tomcat.pp
 	chcon -t javabridge_exec_t %{_libdir}/php/modules/RunJavaBridge
 	chcon -t bin_t %{_libdir}/php/modules/java
 	/sbin/service httpd start > /dev/null 2>&1
@@ -296,10 +293,9 @@ fi
 
 %files mono -f filelist-mono
 %defattr(-,root,root)
-%attr(-,root,root) /etc/php.d/mono.ini
 %attr(111,root,root) %{_libdir}/php/modules/RunMonoBridge
 %attr(755,root,root) %{_libdir}/php/modules/MonoBridge.exe
-%doc README.MONO+NET COPYING CREDITS NEWS
+%doc README.MONO+NET COPYING CREDITS NEWS tests.mono+net
 
 %files devel -f filelist-devel
 %defattr(-,root,root)

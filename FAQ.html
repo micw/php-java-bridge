@@ -16,13 +16,13 @@ Furthermore IBM's Zero framework for Eclipse contains a PHP interpreter written 
 
 <H4>How do I enable the Java extension in my php.ini file?</H4>
 <p>A Java extension does not exist, so you can't enable it.</p>
-<p>The VM Bridge is a network protocol, it requires a running Java VM, e.g. Apache/Tomcat. Or, if you want to call PHP libraries from Java, a running PHP container, e.g. Apache or IIS.</p>
+<p>The VM Bridge is a network protocol, it requires a running Java VM, for example the servlet container Apache/Tomcat. Or, if you want to call PHP libraries from Java, a running PHP container, e.g. Apache or IIS.</p>
 
 <H4>What do I need to communicate with Java?</H4>
-<p>Only the PHP code from <code>Java.inc</code> and a running Java application, for example <code>JavaBridge.jar</code>, or a Java servlet, for example <code>JavaBridge.war</code>.</p>
+<p>Only the PHP code from <code>Java.inc</code> and a running Java application, for example <code>JavaBridge.jar</code>, or a running Java servlet, for example <code>JavaBridge.war</code>.</p>
 
 <H4>What do I need to communicate with PHP?</H4>
-<p>Only the PHP code from <code>JavaProxy.php</code> within your PHP web application and the Java libraries <code>JavaBridge.jar</code>, <code>php-script.jar</code> and <code>php-servlet.jar</code> and a <code>ContextLoaderListener</code> declaration within your Java web application.</p>
+<p>Only the PHP code from <code>JavaProxy.php</code> within your PHP web application and the Java libraries <code>JavaBridge.jar</code>, <code>php-script.jar</code> and <code>php-servlet.jar</code>.</p>
 
 <H4>Which versions are supported?</H4>
 <ul>
@@ -36,8 +36,8 @@ Furthermore IBM's Zero framework for Eclipse contains a PHP interpreter written 
 <p>Java needs an execution environment.
 </p>
 <p>
-You can also add PHP support to your Java application by adding the
-following line to its main class:
+You can also add PHP support to your standalone Java application by
+adding the following line to its main class:
 <blockquote>
 <code>
 static final php.java.bridge.JavaBridgeRunner runner = php.java.bridge.JavaBridgeRunner.getInstance(8087);

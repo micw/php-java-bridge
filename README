@@ -537,7 +537,7 @@ Build and execution instructions:
   FreeBSD is not directly supported. Please use the FreeBSD
   PHP/Java Bridge port instead. 
 
-  In order to use unix domain sockets on FreeBSD compile java.so,
+  In order to use unix domain sockets on FreeBSD, compile java.so,
   libnatcJavaBridge.so and start JavaBridge.jar with the argument
   LOCAL:/path/to/your/socket/file.
 

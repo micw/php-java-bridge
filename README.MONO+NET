@@ -8,7 +8,8 @@ Mono/.NET VM.
 Installation
 ------------
 
-* Start the .NET VM by double-clicking on MonoBridge.exe
+* Start the .NET VM by double-clicking on MonoBridge.exe located in
+  the PHP extension directory, usually /usr/lib/php/modules.
 
 * There are three Mono/.NET examples which show how to create a GUI
   using GTK and how to load and access .NET assemblies.
