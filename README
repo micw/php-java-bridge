@@ -457,39 +457,23 @@ Build and execution instructions:
 
   nor
  
+    java_require("foo.jar;system-library.jar");
+    $foo = new Java("foo");
+    $foo->callWithSystemLibrary(); // fail if system-library has been loaded
+
+  nor
+
     java_require("myJdbcDriver.jar");
     java("java.sql.DriverManager")->doSomethingWith(myJdbcDriver);
 
   work as expected.
 
   In the first example the class was loaded from the bootstrap class
-  loader, which cannot access foo.jar's class loader. In the second example
-  foo and bar depend on each other, so that the call fails because bar
-  cannot be accessed from foo.jar's class loader.
-
-  The first example can be corrected by using the current class
-  loader:
-
-     java_require("foo.jar");
-     ...
-     Class.forName("foo",true,Thread.currentThread().getContextClassLoader());
-
-  or simply:
-
-      java_require("foo.jar");
-      new JavaClass("foo");
-
-  The second example can be corrected by loading the interconnected
-  libraries from the same class loader:
-   
-     java_require("foo.jar;bar.jar");
-
-  The third example can be corrected by loading the JDBC driver and a class
-  which uses the jdbc driver from the same class loader. For example:
-
-    java_require("myJdbcDriver.jar;myDriverManager.jar");
-
-  After that the "myDriverManager" class can access "myJdbcDriver" as usual.
+  loader, which cannot access foo.jar's class loader. In the second
+  example foo and bar depend on each other, so that the call fails
+  because bar cannot be accessed from foo.jar's class loader, and the
+  remaining examples try to inject new dependencies for already loaded
+  classes, the "system library" and the "DriverManager".
 
 ------------------------------------
   Sun java platform issues

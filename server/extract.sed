@@ -5,6 +5,7 @@
 // define ("JAVA_SERVLET", "User");\
 // define ("JAVA_SERVLET", "/MyWebApp/JavaBridge.phpjavabridge");\
 // define ("JAVA_HOSTS", "127.0.0.1:8787");\
+// define ("JAVA_PERSISTENT_SERVLET_CONNECTIONS", true);\
 // define ("JAVA_PREFER_VALUES", 1);\
 // define ("JAVA_DEBUG", true);\
 // define ("JAVA_PIPE_DIR", "/dev/shm");

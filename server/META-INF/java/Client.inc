@@ -583,7 +583,7 @@ class java_Client /* implements IDocHandler */ {
 	return $val;
   }
   function unref($object) {
-	$this->protocol->writeUnref($object);
+	if (isset($this->protocol)) $this->protocol->writeUnref($object);
   }
   function apply($arg) {
 	$name = $arg->p;

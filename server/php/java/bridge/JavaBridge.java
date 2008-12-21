@@ -215,11 +215,11 @@ public class JavaBridge implements Runnable {
 	    globalRef=null;
 	    logDebug("END: JavaBridge.run()");
 
-        } catch (Throwable t) {
+        } catch (Exception t) {
 	    printStackTrace(t);
         } finally {
-	    try {in.close();} catch (IOException e1) {printStackTrace(e1);}
-	    try {out.close();} catch (IOException e2) {printStackTrace(e2);}
+	    if(in!=null) try {in.close();} catch (IOException e1) {printStackTrace(e1);}
+	    if(out!=null) try {out.close();} catch (IOException e2) {printStackTrace(e2);}
 	    sessionFactory.destroy();
 	}
     }

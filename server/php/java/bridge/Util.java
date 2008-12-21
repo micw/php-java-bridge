@@ -140,7 +140,7 @@ public final class Util {
     /** 
      * The default PHP arguments
      */
-    public static final String PHP_ARGS[] = new String[] {"-d", "allow_url_include=On", "-d", "display_errors=Off", "-d", "log_errors=On"};
+    public static final String PHP_ARGS[] = new String[] {"-d", "allow_url_include=On", "-d", "display_errors=Off", "-d", "log_errors=On", "-d", "java.persistent_servlet_connections=On"};
     
     /**
      * The default CGI locations: <code>"/usr/bin/php-cgi"</code>, <code>"c:/Program Files/PHP/php-cgi.exe</code>

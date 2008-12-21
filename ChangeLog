@@ -1,3 +1,33 @@
+2008-12-19  Jost Boekemeier  <jostb@intern>
+	
+	* server/META-INF/java/Protocol.inc
+	(shutdownBrokenConnection,dieWithBrokenWindowsConnection): New procedures.
+
+	* server/META-INF/java/Client.inc
+	(unref): Check destroyed connection
+
+	* server/META-INF/java/Protocol.inc
+	(write,redirect): Destroy a broken connection. Workaround for a
+	windows/php pfsockopen problem.
+
+	* server/META-INF/java/Options.inc
+	(JAVA_PERSISTENT_SERVLET_CONNECTIONS): New config option
+
+	* server/php/java/bridge/Util.java
+	(PHP_ARGS): New config option
+
+	* java.c (MINIT): New config option
+	
+	* server/extract.sed: New config option
+	
+	* server/Makefile.am: Added missing dependency so that Java.inc
+	can be fetched from a gcj-compiled back end.
+
+	* README.GCJ: New file
+
+	* VERSION, php-java-bridge.spec: Version 5.4.1
+	
+	
 2008-12-06  Jost Boekemeier  <jostb@intern>
 
 	* INSTALL, README.GNU_JAVA, java-servlet.ini: Removed; a tomcat or

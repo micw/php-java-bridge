@@ -77,6 +77,9 @@ class java_SocketChannel {
   function keepAlive() {
 	$this->fread(10); // <F p="A"/>
   }
+  function shutdownBrokenConnection () {
+    fclose($this->peer);
+  } 
 }
 /**
  * @access private
@@ -91,6 +94,7 @@ class java_EmptyPipeChannel {
   }
   function getKeepAlive() {return "";}
   function keepAlive() {}
+  function shutdownBrokenConnection () {}
 }
 /**
  * @access private
@@ -135,6 +139,8 @@ class java_PipeChannel extends java_EmptyPipeChannel {
   function getName() {
 	return $this->name;
   }
+  // no need to fclose peer/peerr explicitly as PHP automatically closes 
+  // fopen'ed files in rshutdown.
 }
 
 /**
@@ -160,6 +166,15 @@ class java_SocketHandler {
   function keepAlive() {
 	$this->channel->keepAlive();
   }
+  function dieWithBrokenConnection($msg) {
+	unset($this->protocol->client->protocol);
+	$error = error_get_last();
+    die ("${msg} ".$error["message"]);
+  }
+  function shutdownBrokenConnection ($msg) {
+    $this->channel->shutdownBrokenConnection();
+	$this->dieWithBrokenConnection($msg);
+  }
 }
 /**
  * @access private
@@ -181,11 +196,18 @@ class java_HttpHandler extends java_SocketHandler {
   function close() {
     fclose($this->socket);
   }
+  function shutdownBrokenConnection ($msg) {
+    $this->close();
+    $this->dieWithBrokenConnection($msg);
+  }
   function open() {
   	$errno = null; $errstr = null;
   /* Do not pfsockopen here, the J2EE server may not be able to handle
     hundreds of persistent connections to the servlet very well */
-	$socket = fsockopen("{$this->ssl}{$this->host}", $this->port, $errno, $errstr, 30);
+	$socket = JAVA_PERSISTENT_SERVLET_CONNECTIONS ? 
+	  pfsockopen("{$this->ssl}{$this->host}", $this->port, $errno, $errstr, 30) :
+	   fsockopen("{$this->ssl}{$this->host}", $this->port, $errno, $errstr, 30);
+
 	if (!$socket) throw new java_ConnectException("Could not connect to the J2EE server {$this->ssl}{$this->host}:{$this->port}. Please start it, for example with the command: \"java -jar JavaBridge.jar SERVLET:8080 3 JavaBridge.log\" or, if the back end has been compiled to native code, with \"modules/java SERVLET:8080 3 JavaBridge.log\". Error message: $errstr ($errno)\n");
 	stream_set_timeout($socket, -1);
 	return $socket;
@@ -255,7 +277,6 @@ class java_HttpHandler extends java_SocketHandler {
 	  $context = "/JavaBridge/JavaBridge.phpjavabridge";
 	return $context;
   }
-
   function write($data) {
 
 	$compatibility = $this->protocol->client->RUNTIME["PARSER"]=="NATIVE"
@@ -276,7 +297,7 @@ class java_HttpHandler extends java_SocketHandler {
 	$redirect = $this->redirect;
 	$res = "PUT ";
 	$res .= $webapp;
-	$res .= " HTTP/1.0\r\n";
+	$res .= JAVA_PERSISTENT_SERVLET_CONNECTIONS ? " HTTP/1.1\r\n" : " HTTP/1.0\r\n"; 
 	$res .= "Host: localhost\r\n";
 	$res .= "Content-Length: "; $res .= $len; $res .= "\r\n";
 	$res .= $context;
@@ -287,7 +308,10 @@ class java_HttpHandler extends java_SocketHandler {
 	$res .= "\177";
 	$res .= $compatibility;
 	$res .= $data;
-	$count = fwrite($socket, $res); fflush($socket);
+	
+	$count = fwrite($socket, $res) or $this->shutdownBrokenConnection("Broken connection handle");
+	fflush($socket)                or $this->shutdownBrokenConnection("Broken connection handle");
+	
 	return $count;
   }
   function doSetCookie($key, $val, $path) {
@@ -318,6 +342,8 @@ class java_HttpHandler extends java_SocketHandler {
 	  } else if($str[0]=='C') { // Content-Length
 		if(!strncasecmp("CONTENT-LENGTH", $str, 14)) {
 		  $this->headers["content_length"]=trim(substr($str, 15));
+		} else if(!strncasecmp("CONNECTION", $str, 10)) {
+		  $this->headers["connection"]=trim(substr($str, 11));
 		}
 	  }
 	}
@@ -356,10 +382,23 @@ class java_HttpHandler extends java_SocketHandler {
 	  $this->protocol->write("\177${len0}${len1}${len2}${context}");
 	  $this->context = sprintf("X_JAVABRIDGE_CONTEXT: %s\r\n", $context);
 	}
-	$this->close();
+
+	// close persistent connection
+	if ((!JAVA_PERSISTENT_SERVLET_CONNECTIONS) || 
+		(array_key_exists("connection", $this->headers)&&
+		 !strncasecmp("close", $this->headers["connection"],5)))
+	  $this->close ();
+
 	$this->protocol->handler = $this->protocol->socketHandler;
-	$this->protocol->flush();          // avoid ContextRunner wait timeout
-	$this->protocol->handler->read(1); // dummy: avoid ack delay
+
+	// short path for $this->protocol->flush(): avoid ContextRunner wait timeout
+	$this->protocol->handler->write($this->protocol->client->sendBuffer)
+		or $this->protocol->handler->shutdownBrokenConnection("Broken local connection handle");
+	$this->protocol->client->sendBuffer=null;
+
+	// dummy: avoid ack delay
+	$this->protocol->handler->read(1)
+		or $this->protocol->handler->shutdownBrokenConnection("Broken local connection handle");
   }
 }
 

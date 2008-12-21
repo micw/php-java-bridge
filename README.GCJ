@@ -1,0 +1,45 @@
+  Using GNU Java
+  --------------
+
+  In case you don't want to ship a JVM or JRE with your product,
+  you can use GNU gcc to compile the java part and your classes
+  into native code. 
+  In the directory php-java-bridge_p.x.y type:
+
+   gcj --version  # must be gcj 3.3.3 or above (gcj 4.1 recommended).
+
+   phpize && ./configure && make && su -c "make install"
+
+  This creates a native, dynamic linked back-end in the PHP
+  extension directory.  
+
+  You can distribute the contents of the php-java-bridge-x.y.z/modules
+  directory. It should contain the files "java", "libnatcJavaBridge.so",
+  "java.so" (autoconf/libtool creates other files, you can delete
+  them). 
+
+  The back end can be started as usual. Example for RedHat/Fedora
+  Linux:
+
+   export EXT_DIR="`php-config --extension-dir`"
+   export LD_LIBRARY_PATH=$EXT_DIR
+   $EXT_DIR/java LOCAL:/dev/shm/vmbridge.socket 3 ""
+
+  The php.ini should contain the java.socketname option. Example:
+
+   extension = java.so
+   [java]
+   java.socketname="/dev/shm/vmbridge.socket"
+                
+  Additional shared libraries can be copied into the PHP extension
+  directory ($EXT_DIR), additional java libraries (.jar files) can be
+  installed in the sub-directory lib/ of the PHP extension directory.
+
+------------------------------------
+  Mailing List
+  ------------
+
+  Please report bugs/problems to the mailing list:
+
+    php-java-bridge-users@lists.sourceforge.net
+

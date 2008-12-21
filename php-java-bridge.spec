@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 5.4.0
+%define version 5.4.1
 %define release 1
 %define PHP_MAJOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | sed 's/\\\..*$//')
 %define PHP_MINOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | LANG=C cut -d. -f2)
@@ -163,7 +163,7 @@ for i in $files;
   echo %{shared_pear}/java/$i >>filelist
 done
 
-files='java libnatcJavaBridge.so'
+files='java libnatcJavaBridge.so java.so'
 mkdir -p $RPM_BUILD_ROOT/$mod_dir
 for i in $files; do
  if test -f $mod_dir/$i; then
@@ -210,6 +210,8 @@ for i in $files;
 done
 
 mkdir -p $RPM_BUILD_ROOT/etc/php.d
+cat java.ini  >$RPM_BUILD_ROOT/etc/php.d/java.ini
+echo /etc/php.d/java.ini >>filelist
 
 mkdir $RPM_BUILD_ROOT/$mod_dir/lib
 echo $mod_dir/lib >>filelist
@@ -289,7 +291,7 @@ fi
 %attr(6111,apache,apache) %{_libdir}/php/modules/RunJavaBridge
 %attr(755,root,root) %{_libdir}/php/modules/JavaBridge.jar
 %attr(-,tomcat,tomcat) %{tomcat_webapps}/JavaBridge.war
-%doc README FAQ.html COPYING CREDITS NEWS test.php INSTALL.J2EE INSTALL.LINUX security 
+%doc README README.GCJ FAQ.html COPYING CREDITS NEWS test.php INSTALL.J2EE INSTALL.LINUX security 
 
 %files mono -f filelist-mono
 %defattr(-,root,root)

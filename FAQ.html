@@ -194,7 +194,8 @@ the library to the <code>java_require()</code> statement.</code></p>
 <a name="java-dll-hell"></a>
 <H4>Why do I get a NoClassDefFoundError?</H4>
 <p>Because Java doesn't have a module system.</p>
-<p>All libraries and their dependencies must be loaded by one and only one class loader, for example with a single <code>java_require()</code> call. See the README for details.</p>
+<p>All libraries and their dependencies must be loaded by one, and only one class loader.</p>
+<p>Please read the previous sentence until you understand what it means; for example a simple file system copy(!) operation may be the cause for a NoClassDefFoundError.</p>
 <p><em>Please do not report NoClassDefFoundErrors to the mailing list or via the bug tracker. This is not a bug and we cannot help you any further!</em></p>
 
 <H4>I cannot require my JDBC driver!?!</H4>
