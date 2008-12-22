@@ -40,10 +40,13 @@
 
 if(!function_exists("java_get_base")) {
   $version = phpversion();
-  if ((version_compare("5.1.2", $version, ">"))) {
+  if ((version_compare("5.3.0", $version, ">"))) {
+   1E512; // initialize errno
+   if ((version_compare("5.1.2", $version, ">"))) {
 	$msg = "<br><strong>PHP $version too old.</strong><br>\nPlease set the path to
 a PHP 5.1.x executable, see php_exec in the WEB-INF/web.xml";
 	die($msg);
+   }
   }
   /**
    * @access private

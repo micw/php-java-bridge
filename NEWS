@@ -5,14 +5,14 @@ Please send bug reports, questions and suggestions to
 
 Version 5.4.1
 
-* When PHP is used within a J2EE server or servlet engine the option
+* If PHP is used within a J2EE server or servlet engine the option
   JAVA_PERSISTENT_SERVLET_CONNECTIONS is set. This means that the
   servlet option fcgi_children (see WEB-INF/web.xml) must be less than
   or equal to the servlet engine's thread pool size. It defaults to
   5. The smallest thread pool we've seen is the thread pool of the Sun
   J2EE server version 9, with 5 entries.
 
-* When PHP is used within Apache or IIS via the java.so or
+* If PHP is used within Apache or IIS via the java.so or
   php_java.dll the option JAVA_PERSISTENT_SERVLET_CONNECTIONS is
   set. This means that Apache/IIS "maxChilds" must be less than or
   equal to the servlet engine or J2EE server's "maxThreads" value,
@@ -20,12 +20,8 @@ Version 5.4.1
   RedHat Linux we have verified that Tomcat's maxThreads == Apache
   maxChilds. If you're unsure, do not use the php_java.dll/java.so.
 
-* When a windows Java back end is destroyed via the task manager, a
-  PHP/windows front end keeps using the old persistent connections to
-  the back end. If your Java back end requires a reboot (usually
-  because new software has been installed), reboot the entire windows
-  machine to avoid problems with old resources. Or use a unix machine
-  as the HTTP server front end instead.
+* Due to a bug in PHP versions < 5.3 persistent connections cannot be
+  used on Windows. Please make sure to switch them off.
 
 * All options can now be set on the command line. Example:
 
