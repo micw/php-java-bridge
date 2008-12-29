@@ -2,32 +2,15 @@
 
 package php.java.script.servlet;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import php.java.bridge.Util;
-import php.java.servlet.CGIServlet;
 import php.java.servlet.RequestListener;
 
 

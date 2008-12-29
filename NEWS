@@ -3,6 +3,52 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 5.4.2
+
+* JavaBridge.jar now supports a -Dphp.java.bridge.daemon=true option.
+  When this option is set, the bridge ignores all other options,
+  closes the in-, out- and error streams immediately and runs
+  as a daemon. Example
+
+	<html>
+	<head/>
+	<body>
+	<form method="POST" action="<?php $_SERVER['PHP_SELF']?>">
+	  <input type="submit" value="java_start" name="java_start">
+	  <input type="submit" value="java_stop" name="java_stop">
+	  <input type="submit" value="java_properties" name="java_properties">
+	</form>
+	<?php require_once("java/Java.inc");
+	
+	if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+	  $JAVA="javaw";
+	} else {
+	  $JAVA="nohup java";
+	}
+	
+	if (isset($_POST["java_start"])) {
+	  echo 
+	    system("$JAVA -Dphp.java.bridge.daemon='true' -jar java/JavaBridge.jar SERVLET_LOCAL:8080");
+	  exit (0);
+	}
+	
+	if (isset($_POST["java_stop"])) {
+	  $file = fsockopen("127.0.0.1", 8080) or die ("java not running");
+	  fwrite($file, "PUT /JavaBridge/JavaBridge.phpjavabridge HTTP/1.0\r\nHost: localhost\r\nContent-Length: 71\r\n\r\n<C v=\"java.lang.System\" p=\"C\" /><I v=\"1\" m=\"exit\" p=\"I\"><S v=\"0\" /></I>");
+	  fclose ($file);
+	  exit (0);
+	}
+	
+	try {
+	   echo java("java.lang.System")->getProperties();
+	} catch (Exception $e) {
+	  echo $e;
+	}
+	?>
+	</body>
+	</html>
+
+
 Version 5.4.1
 
 * If PHP is used within a J2EE server or servlet engine the option

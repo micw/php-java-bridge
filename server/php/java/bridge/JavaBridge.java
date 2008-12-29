@@ -506,7 +506,7 @@ public class JavaBridge implements Runnable {
 	    }
 	    if(e1 instanceof NoClassDefFoundError) {
 		getClassLoader().reset();
-		e = getUnresolvedExternalReferenceException(e, "call constructor");
+		e = getUnresolvedExternalReferenceException(e1, "call constructor");
 	    }
 	    setException(response, e, createInstance?"CreateInstance":"ReferenceClass", null, name, args, params);
 	    
@@ -1088,7 +1088,7 @@ public class JavaBridge implements Runnable {
 	    }
 	    if(e1 instanceof NoClassDefFoundError) {
 		getClassLoader().reset();
-		e = getUnresolvedExternalReferenceException(e, "call the method");
+		e = getUnresolvedExternalReferenceException(e1, "call the method");
 	    }
 	    
             if (selected != null && e1 instanceof IllegalArgumentException) {
@@ -1295,7 +1295,7 @@ public class JavaBridge implements Runnable {
 	    }
 	    if(e1 instanceof NoClassDefFoundError) {
 		getClassLoader().reset();
-		e = getUnresolvedExternalReferenceException(e, "invoke a property");
+		e = getUnresolvedExternalReferenceException(e1, "invoke a property");
 	    }
 	    setException(response, e, set?"SetProperty":"GetProperty", object, prop, args, params);
 	    

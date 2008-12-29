@@ -99,8 +99,9 @@ public class Standalone {
 	System.err.println("Example: java -jar JavaBridge.jar");
 	System.err.println("Example: LD_LIBRARY_PATH=/usr/lib/php/modules/ java -jar JavaBridge.jar LOCAL:/tmp/javabridge_native.socket 3 /var/log/php-java-bridge.log");
 	System.err.println("Example: java -jar JavaBridge.jar SERVLET_LOCAL:8080 3 JavaBridge.log");
-	System.err.println("Influential system properties: threads, ext_java_compatibility, php_exec, default_log_file, default_log_level, base.");
+	System.err.println("Influential system properties: threads, daemon, php_exec, default_log_file, default_log_level, base.");
 	System.err.println("Example: java -Djava.awt.headless=\"true\" -Dphp.java.bridge.threads=50 -Dphp.java.bridge.base=/usr/lib/php/modules -Dphp.java.bridge.php_exec=/usr/local/bin/php-cgi -Dphp.java.bridge.default_log_file= -Dphp.java.bridge.default_log_level=5 -jar JavaBridge.jar");
+	System.err.println("Example: java -Dphp.java.bridge.daemon=\"true\" -jar JavaBridge.jar");
     }
     protected void usage() {
 	if(Util.IS_MONO)
@@ -253,6 +254,32 @@ public class Standalone {
      * @param s an array of [socketname, level, logFile]
      */
     public static void main(String s[]) {
+	// check for -Dphp.java.bridge.daemon=true
+	if (System.getProperty("php.java.bridge.daemon", "false").equals("true")) {
+	    try { System.in.close(); } catch (IOException e) {e.printStackTrace();}
+	    System.out.close();
+	    System.err.close();
+	    
+	    final String[] args = new String[s.length + 4];
+	    args[0] = "java"; args[1]="-classpath"; 
+	    args[2]=System.getProperty("java.class.path", ".");
+	    args[3] = "php.java.bridge.Standalone";
+
+	    for (int i=0; i<s.length; i++) {
+		args[i+4]=s[i];
+	    }
+	    new Util.Thread(new Runnable () {
+		public void run() {
+		    try {
+			Runtime.getRuntime().exec(args);
+		    } catch (IOException e) {
+			e.printStackTrace();
+		    }
+		}
+	    }).start();
+	    System.exit (0);
+	}
+	
 	try {
 	    System.loadLibrary("natcJavaBridge");
 	} catch (Throwable t) {/*ignore*/}

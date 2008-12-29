@@ -1,3 +1,13 @@
+2008-12-27  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/JavaBridge.java
+	(GetSetProp,CreateObject,Invoke): Report the original exception
+
+	* server/php/java/bridge/Standlone.java
+	(main): New option: -Dphp.java.bridge.daemon=true
+
+	* VERSION, php-java-bridge.spec: Version 5.4.2
+
 2008-12-19  Jost Boekemeier  <jostb@intern>
 	
 	* server/META-INF/java/Protocol.inc
