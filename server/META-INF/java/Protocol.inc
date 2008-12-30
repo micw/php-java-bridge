@@ -506,17 +506,16 @@ class java_Protocol {
     return $handler;
   }
   function java_get_simple_channel() {
-    if (JAVA_HOSTS && (!JAVA_SERVLET || (JAVA_SERVLET == "Off"))) {
+	if (JAVA_HOSTS && (!JAVA_SERVLET || (JAVA_SERVLET == "Off")) && ($sel=JAVA_HOSTS) && ($sel[0]=='@' || ($sel[0]=='/'))) {
 	  $hosts = explode(";", JAVA_HOSTS);
 	  return $hosts[0];
 	}
     return null;
   }
   function createHandler() {
-    if(!java_getHeader('X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER)
-     && function_exists("java_get_default_channel") &&
-	   (($defaultChannel=java_get_default_channel())||
-		($defaultChannel=$this->java_get_simple_channel()))) {
+	if(!java_getHeader('X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER)&&
+	   ((function_exists("java_get_default_channel")&&($defaultChannel=java_get_default_channel())) ||
+		($defaultChannel=$this->java_get_simple_channel())) ) {
       // if bind.c has started a local back end from Apache/IIS
       return $this->createSimpleHandler($defaultChannel);
     } else {

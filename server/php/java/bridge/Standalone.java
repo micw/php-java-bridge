@@ -26,6 +26,8 @@ package php.java.bridge;
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 import javax.swing.JOptionPane;
 
@@ -245,6 +247,9 @@ public class Standalone {
 	    return false;
 	}
     }
+    private static String escape(String s) {
+	return (s.replace("\\", "\\\\").replace("\"", "\\\"").replace("'", "\\'").replace("$", "\\$"));
+    }
     /**
      * Start the PHP/Java Bridge. <br>
      * Example:<br>
@@ -255,28 +260,35 @@ public class Standalone {
      */
     public static void main(String s[]) {
 	// check for -Dphp.java.bridge.daemon=true
-	if (System.getProperty("php.java.bridge.daemon", "false").equals("true")) {
-	    try { System.in.close(); } catch (IOException e) {e.printStackTrace();}
-	    System.out.close();
-	    System.err.close();
-	    
-	    final String[] args = new String[s.length + 4];
-	    args[0] = "java"; args[1]="-classpath"; 
-	    args[2]=System.getProperty("java.class.path", ".");
-	    args[3] = "php.java.bridge.Standalone";
+	if (!(System.getProperty("php.java.bridge.daemon", "false").equals("false"))) {
+	    final String[] args = new String[s.length + 7];
+	    args[0] = System.getProperty("php.java.bridge.daemon");
+	    if ("true".equals(args[0])) args[0]="java";
+	    args[1]="-Djava.library.path="+System.getProperty("java.library.path", ".");
+	    args[2] = "-Djava.ext.dirs="+System.getProperty("java.ext.dirs", ".");
+	    args[3] = "-Djava.awt.headless="+System.getProperty("java.awt.headless", "true");
+	    args[4]="-classpath"; 
+	    args[5]=System.getProperty("java.class.path", ".");
+	    args[6] = "php.java.bridge.Standalone";
 
-	    for (int i=0; i<s.length; i++) {
-		args[i+4]=s[i];
+	    for (int j=0; j<s.length; j++) {
+		args[j+7]=s[j];
 	    }
 	    new Util.Thread(new Runnable () {
 		public void run() {
 		    try {
+			if(false && System.getProperty("php.java.bridge.daemon_debug", "false").equals("true")) { 
+			    try { System.in.close(); } catch (IOException e) {e.printStackTrace();}
+			    System.out.close();
+			    System.err.close();
+			}  
 			Runtime.getRuntime().exec(args);
 		    } catch (IOException e) {
 			e.printStackTrace();
 		    }
 		}
 	    }).start();
+	    try {Thread.sleep(20000);} catch (Throwable t) {}
 	    System.exit (0);
 	}
 	
