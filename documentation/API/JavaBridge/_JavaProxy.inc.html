@@ -2,11 +2,87 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
   <html xmlns="http://www.w3.org/1999/xhtml">
 		<head>
-			<!-- template designed by Marco Von Ballmoos -->
+			<!-- template designed by Marco Von Ballmoos  -->
 			<title>Docs for page JavaProxy.inc</title>
 			<link rel="stylesheet" href="../media/stylesheet.css" />
-			<meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'/>
-		</head>
+						<script src="../media/lib/classTree.js"></script>
+												<script language="javascript" type="text/javascript">
+				var imgPlus = new Image();
+				var imgMinus = new Image();
+				imgPlus.src = "../media/images/plus.png";
+				imgMinus.src = "../media/images/minus.png";
+				
+				function showNode(Node){
+							switch(navigator.family){
+								case 'nn4':
+									// Nav 4.x code fork...
+							var oTable = document.layers["span" + Node];
+							var oImg = document.layers["img" + Node];
+									break;
+								case 'ie4':
+									// IE 4/5 code fork...
+							var oTable = document.all["span" + Node];
+							var oImg = document.all["img" + Node];
+									break;
+								case 'gecko':
+									// Standards Compliant code fork...
+							var oTable = document.getElementById("span" + Node);
+							var oImg = document.getElementById("img" + Node);
+									break;
+							}
+					oImg.src = imgMinus.src;
+					oTable.style.display = "block";
+				}
+				
+				function hideNode(Node){
+							switch(navigator.family){
+								case 'nn4':
+									// Nav 4.x code fork...
+							var oTable = document.layers["span" + Node];
+							var oImg = document.layers["img" + Node];
+									break;
+								case 'ie4':
+									// IE 4/5 code fork...
+							var oTable = document.all["span" + Node];
+							var oImg = document.all["img" + Node];
+									break;
+								case 'gecko':
+									// Standards Compliant code fork...
+							var oTable = document.getElementById("span" + Node);
+							var oImg = document.getElementById("img" + Node);
+									break;
+							}
+					oImg.src = imgPlus.src;
+					oTable.style.display = "none";
+				}
+				
+				function nodeIsVisible(Node){
+							switch(navigator.family){
+								case 'nn4':
+									// Nav 4.x code fork...
+							var oTable = document.layers["span" + Node];
+									break;
+								case 'ie4':
+									// IE 4/5 code fork...
+							var oTable = document.all["span" + Node];
+									break;
+								case 'gecko':
+									// Standards Compliant code fork...
+							var oTable = document.getElementById("span" + Node);
+									break;
+							}
+					return (oTable && oTable.style.display == "block");
+				}
+				
+				function toggleNodeVisibility(Node){
+					if (nodeIsVisible(Node)){
+						hideNode(Node);
+					}else{
+						showNode(Node);
+					}
+				}
+			</script>
+					</head>
 		<body>
 			<div class="page-body">			
 <h2 class="file-name">/JavaProxy.inc</h2>
@@ -49,7 +125,7 @@
 						<a href="../JavaBridge/java_JavaType.html">java_JavaType</a>
 					</td>
 					<td>
-											implemented by JavaException and Java
+											Implemented by JavaException and Java.
 										</td>
 				</tr>
 								<tr>
@@ -115,7 +191,7 @@
 <div class="oddrow">
 	
 	<div>
-		<span class="method-title">java_begin_document</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a490">490</a></span>)
+		<span class="method-title">java_begin_document</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a492">492</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -142,7 +218,7 @@
 <div class="evenrow">
 	
 	<div>
-		<span class="method-title">java_cast</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a251">251</a></span>)
+		<span class="method-title">java_cast</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a253">253</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -191,7 +267,7 @@
 <div class="oddrow">
 	
 	<div>
-		<span class="method-title">java_closure</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a474">474</a></span>)
+		<span class="method-title">java_closure</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a476">476</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -200,7 +276,7 @@
  Closes over the php environment and packages it up as a java class. Use java_closure() to convert a PHP object into an equivalent Java object.
  Example: <div class="src-code"><ol><li><div class="src-line">&nbsp;<span class="src-key">function&nbsp;</span><span class="src-id">toString</span><span class="src-sym">(</span><span class="src-sym">)&nbsp;</span><span class="src-sym">{</span><span class="src-key">return&nbsp;</span><span class="src-str">&quot;helloWorld&quot;</span><span class="src-sym">;</span><span class="src-sym">}</span><span class="src-sym">;</span></div></li>
 <li><div class="src-line">&nbsp;<span class="src-var">$object&nbsp;</span>=&nbsp;<a href="../JavaBridge/_JavaProxy.inc.html#functionjava_closure">java_closure</a><span class="src-sym">(</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
-<li><div class="src-line">&nbsp;echo&nbsp;<span class="src-str">&quot;</span><span class="src-str"><span class="src-id">Java</span>&nbsp;<span class="src-id">says</span>&nbsp;<span class="src-id">that</span>&nbsp;<span class="src-id">PHP</span>&nbsp;<span class="src-id">says</span>:&nbsp;<span class="src-var">$object</span>\n</span><span class="src-str">&quot;</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line">&nbsp;echo&nbsp;<span class="src-str">&quot;</span><span class="src-str">Java&nbsp;says&nbsp;that&nbsp;PHP&nbsp;says:&nbsp;<span class="src-var">$object</span>\n</span><span class="src-str">&quot;</span><span class="src-sym">;</span></div></li>
 </ol></div>
  When a php instance is supplied as an argument, the instance will be used instead. When a string or key/value map is supplied as a second argument, the java procedure names are mapped to the php procedure names. Example: <div class="src-code"><ol><li><div class="src-line">&nbsp;<span class="src-key">function&nbsp;</span><span class="src-id">hello</span><span class="src-sym">(</span><span class="src-sym">)&nbsp;</span><span class="src-sym">{</span><span class="src-key">return&nbsp;</span><span class="src-str">&quot;hello&quot;</span><span class="src-sym">;</span><span class="src-sym">}</span><span class="src-sym">;</span></div></li>
 <li><div class="src-line">&nbsp;echo&nbsp;(string)<a href="../JavaBridge/_JavaProxy.inc.html#functionjava_closure">java_closure</a><span class="src-sym">(</span><span class="src-id">null</span><span class="src-sym">,&nbsp;</span><span class="src-str">&quot;hello&quot;</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
@@ -234,7 +310,7 @@
 <div class="evenrow">
 	
 	<div>
-		<span class="method-title">java_context</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a409">409</a></span>)
+		<span class="method-title">java_context</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a411">411</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -284,7 +360,7 @@
 <div class="oddrow">
 	
 	<div>
-		<span class="method-title">java_end_document</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a505">505</a></span>)
+		<span class="method-title">java_end_document</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a507">507</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -310,7 +386,7 @@
 <div class="evenrow">
 	
 	<div>
-		<span class="method-title">java_inspect</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a149">149</a></span>)
+		<span class="method-title">java_inspect</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a151">151</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -342,7 +418,7 @@
 <div class="oddrow">
 	
 	<div>
-		<span class="method-title">java_instanceof</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a192">192</a></span>)
+		<span class="method-title">java_instanceof</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a194">194</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -377,7 +453,7 @@
 <div class="evenrow">
 	
 	<div>
-		<span class="method-title">java_require</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a279">279</a></span>)
+		<span class="method-title">java_require</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a281">281</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -413,7 +489,7 @@
 <div class="oddrow">
 	
 	<div>
-		<span class="method-title">java_reset</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a124">124</a></span>)
+		<span class="method-title">java_reset</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a126">126</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -438,7 +514,7 @@
 <div class="evenrow">
 	
 	<div>
-		<span class="method-title">java_server_name</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a355">355</a></span>)
+		<span class="method-title">java_server_name</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a357">357</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -446,7 +522,7 @@
 <p class="description"><p>Returns the name of the back-end or null, if the back-end is not running.O
  Example: <div class="src-code"><ol><li><div class="src-line">&nbsp;<span class="src-var">$backend&nbsp;</span>=&nbsp;<a href="../JavaBridge/_JavaProxy.inc.html#functionjava_server_name">java_server_name</a><span class="src-sym">(</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
 <li><div class="src-line">&nbsp;<span class="src-key">if</span><span class="src-sym">(</span><span class="src-sym">!</span><span class="src-var">$backend</span><span class="src-sym">)&nbsp;</span><span class="src-id">wakeup_administrator</span><span class="src-sym">(</span><span class="src-str">&quot;back-end&nbsp;not&nbsp;running&quot;</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
-<li><div class="src-line">&nbsp;echo&nbsp;<span class="src-str">&quot;</span><span class="src-str"><span class="src-id">Connected</span>&nbsp;<span class="src-id">to</span>&nbsp;<span class="src-id">the</span>&nbsp;<span class="src-id">back</span>-<span class="src-id">end</span>:&nbsp;<span class="src-var">$backend</span>\n</span><span class="src-str">&quot;</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line">&nbsp;echo&nbsp;<span class="src-str">&quot;</span><span class="src-str">Connected&nbsp;to&nbsp;the&nbsp;back-end:&nbsp;<span class="src-var">$backend</span>\n</span><span class="src-str">&quot;</span><span class="src-sym">;</span></div></li>
 </ol></div></p></p>
 	<ul class="tags">
 				<li><span class="field">access:</span> public</li>
@@ -467,7 +543,7 @@
 <div class="oddrow">
 	
 	<div>
-		<span class="method-title">java_session</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a340">340</a></span>)
+		<span class="method-title">java_session</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a342">342</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -503,7 +579,7 @@
 <div class="evenrow">
 	
 	<div>
-		<span class="method-title">java_set_file_encoding</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a167">167</a></span>)
+		<span class="method-title">java_set_file_encoding</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a169">169</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -536,7 +612,7 @@
 <div class="oddrow">
 	
 	<div>
-		<span class="method-title">java_values</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a117">117</a></span>)
+		<span class="method-title">java_values</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a119">119</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -583,7 +659,7 @@
 	</div>
 	
 	<p class="notes" id="credit">
-		Documentation generated on Sun, 30 Nov 2008 10:51:47 +0100 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.0a2</a>
+		Documentation generated on Mon, 05 Jan 2009 21:10:56 +0100 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.2</a>
 	</p>
 	</div></body>
 </html>

@@ -41,7 +41,9 @@
 require_once("${JAVA_BASE}/Client.inc");
 
 /**
- * implemented by JavaException and Java 
+ * Implemented by JavaException and Java.
+ * @see Java
+ * @see JavaException
  * @access public
  */
 interface java_JavaType {};
@@ -736,7 +738,7 @@ abstract class java_AbstractJava implements IteratorAggregate,ArrayAccess,java_J
 /**
  * The Java proxy class.
  * 
- * Use this constructor to create an instance. Use the Java function to access the type.
+ * Use this class to create a Java instance. Use the Java function to access a Java type.
  *
  * Example which creates an instance:
  * <code>
@@ -745,12 +747,19 @@ abstract class java_AbstractJava implements IteratorAggregate,ArrayAccess,java_J
  * 
  * @access public
  * @see JavaException
+ * @see function Java
  */
 class Java extends java_AbstractJava {
   /**
-   * Create a new instance of a java type. 
+   * Create a new instance. 
    *
-   * Use this constructor to create an instance. Use the Java function to access the type.
+   * This constructor can be
+   * used to create an instance of a Java class to access its
+   * features.<br>
+   *
+   * To access constants or procedures within a class, use the java function instead.<br>
+   *
+   * To convert a Java object into a PHP value, use the java_values() function.<br>
    *
    * Example which creates an instance:
    * <code>
@@ -762,7 +771,25 @@ class Java extends java_AbstractJava {
    * $s = Java("java.lang.System");
    * </code>
    *
-   * @see Java()
+   * If the option JAVA_PREFER_VALUES is set, Java values are automatically coerced to PHP values.
+   * Example which sets the option JAVA_PREFER_VALUES:
+   * <code>
+   * define("JAVA_PREFER_VALUES", true);
+   * require_once("java/Java.inc");
+   * ...
+   * if (java("java.lang.System")->getProperty("foo", false)) ...
+   * </code>
+   * Otherwise java_values() must be used to fetch a PHP value from a Java object or Java value.
+   * The same example which usually executes 5 times faster:
+   * <code>
+   * require_once("java/Java.inc");
+   * ...
+   * if (java_values(java("java.lang.System")->getProperty("foo", false))) ...
+   * </code>
+   *
+   * @see JAVA_PREFER_VALUES
+   * @see function Java
+   * @see function java_values
    */
   function Java() {
 	$client = $this->__client = __javaproxy_Client_getClient();

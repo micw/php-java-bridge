@@ -42,7 +42,6 @@ import javax.script.ScriptContext;
 import javax.script.ScriptException;
 
 import php.java.bridge.PhpProcedure;
-import php.java.bridge.PhpProcedureProxy;
 import php.java.bridge.Util;
 
 /**
@@ -137,7 +136,8 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
     /**{@inheritDoc}*/
     public Object getInterface(Object thiz, Class clasz) {
 	checkPhpClosure(thiz);
-	return ((PhpProcedureProxy)thiz).getNewFromInterface(clasz);
+	Class[] interfaces = clasz==null?Util.ZERO_PARAM:new Class[]{clasz};
+	return PhpProcedure.createProxy(interfaces, (PhpProcedure)Proxy.getInvocationHandler(thiz));
     }
 
     protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {

@@ -210,9 +210,11 @@ public final class Util {
       */
     public static final int BACKLOG = 20;
 
-    static final Object[] ZERO_ARG = new Object[0];
+    /** Only for internal use */
+    public static final Object[] ZERO_ARG = new Object[0];
 
-    static final Class[] ZERO_PARAM = new Class[0];
+    /** Only for internal use */
+    public static final Class[] ZERO_PARAM = new Class[0];
 
     /** The name of the VM, for example "1.4.2@http://java.sun.com/" or "1.4.2@http://gcc.gnu.org/java/".*/
     public static String VM_NAME;

@@ -2,11 +2,87 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
   <html xmlns="http://www.w3.org/1999/xhtml">
 		<head>
-			<!-- template designed by Marco Von Ballmoos -->
+			<!-- template designed by Marco Von Ballmoos  -->
 			<title>Docs For Class Java</title>
 			<link rel="stylesheet" href="../media/stylesheet.css" />
-			<meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'/>
-		</head>
+						<script src="../media/lib/classTree.js"></script>
+												<script language="javascript" type="text/javascript">
+				var imgPlus = new Image();
+				var imgMinus = new Image();
+				imgPlus.src = "../media/images/plus.png";
+				imgMinus.src = "../media/images/minus.png";
+				
+				function showNode(Node){
+							switch(navigator.family){
+								case 'nn4':
+									// Nav 4.x code fork...
+							var oTable = document.layers["span" + Node];
+							var oImg = document.layers["img" + Node];
+									break;
+								case 'ie4':
+									// IE 4/5 code fork...
+							var oTable = document.all["span" + Node];
+							var oImg = document.all["img" + Node];
+									break;
+								case 'gecko':
+									// Standards Compliant code fork...
+							var oTable = document.getElementById("span" + Node);
+							var oImg = document.getElementById("img" + Node);
+									break;
+							}
+					oImg.src = imgMinus.src;
+					oTable.style.display = "block";
+				}
+				
+				function hideNode(Node){
+							switch(navigator.family){
+								case 'nn4':
+									// Nav 4.x code fork...
+							var oTable = document.layers["span" + Node];
+							var oImg = document.layers["img" + Node];
+									break;
+								case 'ie4':
+									// IE 4/5 code fork...
+							var oTable = document.all["span" + Node];
+							var oImg = document.all["img" + Node];
+									break;
+								case 'gecko':
+									// Standards Compliant code fork...
+							var oTable = document.getElementById("span" + Node);
+							var oImg = document.getElementById("img" + Node);
+									break;
+							}
+					oImg.src = imgPlus.src;
+					oTable.style.display = "none";
+				}
+				
+				function nodeIsVisible(Node){
+							switch(navigator.family){
+								case 'nn4':
+									// Nav 4.x code fork...
+							var oTable = document.layers["span" + Node];
+									break;
+								case 'ie4':
+									// IE 4/5 code fork...
+							var oTable = document.all["span" + Node];
+									break;
+								case 'gecko':
+									// Standards Compliant code fork...
+							var oTable = document.getElementById("span" + Node);
+									break;
+							}
+					return (oTable && oTable.style.display == "block");
+				}
+				
+				function toggleNodeVisibility(Node){
+					if (nodeIsVisible(Node)){
+						hideNode(Node);
+					}else{
+						showNode(Node);
+					}
+				}
+			</script>
+					</head>
 		<body>
 			<div class="page-body">			
 <h2 class="class-name">Class Java</h2>
@@ -23,15 +99,16 @@
         		<!-- ========== Info from phpDoc block ========= -->
 <p class="short-description">The Java proxy class.</p>
 <p class="description"><p>The Java proxy class.
- Use this constructor to create an instance. Use the Java function to access the type.
+ Use this class to create a Java instance. Use the Java function to access a Java type.
  Example which creates an instance: <div class="src-code"><ol><li><div class="src-line">&nbsp;<span class="src-var">$s&nbsp;</span>=&nbsp;<span class="src-key">new&nbsp;</span><a href="../JavaBridge/Java.html#methodJava">Java</a><span class="src-sym">(</span><span class="src-str">&quot;java.lang.String&quot;</span><span class="src-sym">,&nbsp;</span><span class="src-str">&quot;hello&quot;</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
 </ol></div></p></p>
 	<ul class="tags">
+				<li><span class="field">see:</span> <a href="../JavaBridge/_JavaBridge.inc.html#functionJava">Java()</a></li>
 				<li><span class="field">see:</span> <a href="../JavaBridge/JavaException.html">JavaException</a></li>
 				<li><span class="field">access:</span> public</li>
 			</ul>
 		<p class="notes">
-			Located in <a class="field" href="_JavaProxy.inc.html">/JavaProxy.inc</a> (line <span class="field"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a749">749</a></span>)
+			Located in <a class="field" href="_JavaProxy.inc.html">/JavaProxy.inc</a> (line <span class="field"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a752">752</a></span>)
 		</p>
 		
 				
@@ -54,18 +131,19 @@
 		</div>
 		<div class="info-box-body">			
 			<div class="method-summary">
-																				
-												<div class="method-definition">
+																														
+				<div class="method-definition">
 											<span class="method-result">Java</span>
 										<a href="#Java" title="details" class="method-name">Java</a>
 										()
 									</div>
-																<div class="method-definition">
+														
+				<div class="method-definition">
 											<span class="method-result">void</span>
 										<a href="#__call" title="details" class="method-name">__call</a>
 											(<span class="var-type">string</span>&nbsp;<span class="var-name">$method</span>, <span class="var-type">array</span>&nbsp;<span class="var-name">$args</span>)
 									</div>
-								</div>
+											</div>
 		</div>
 	</div>		
 
@@ -80,24 +158,35 @@
 		</div>
 		<div class="info-box-body">
 			<A NAME='method_detail'></A>
-
 <a name="methodJava" id="Java"><!-- --></a>
 <div class="evenrow">
 	
 	<div class="method-header">
-		<span class="method-title">Constructor Java</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a767">767</a></span>)
+		<span class="method-title">Constructor Java</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a794">794</a></span>)
 	</div> 
 	
 	<!-- ========== Info from phpDoc block ========= -->
-<p class="short-description">Create a new instance of a java type.</p>
-<p class="description"><p>Create a new instance of a java type.
- Use this constructor to create an instance. Use the Java function to access the type.
+<p class="short-description">Create a new instance.</p>
+<p class="description"><p>Create a new instance.
+ This constructor can be used to create an instance of a Java class to access its features.<br />
+ To access constants or procedures within a class, use the java function instead.<br />
+ To convert a Java object into a PHP value, use the java_values() function.<br />
  Example which creates an instance: <div class="src-code"><ol><li><div class="src-line">&nbsp;<span class="src-var">$s&nbsp;</span>=&nbsp;<span class="src-key">new&nbsp;</span><a href="../JavaBridge/Java.html#methodJava">Java</a><span class="src-sym">(</span><span class="src-str">&quot;java.lang.String&quot;</span><span class="src-sym">,&nbsp;</span><span class="src-str">&quot;hello&quot;</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
 </ol></div>
  Example which accesses the System class: <div class="src-code"><ol><li><div class="src-line">&nbsp;<span class="src-var">$s&nbsp;</span>=&nbsp;<a href="../JavaBridge/Java.html#methodJava">Java</a><span class="src-sym">(</span><span class="src-str">&quot;java.lang.System&quot;</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
+</ol></div>
+ If the option JAVA_PREFER_VALUES is set, Java values are automatically coerced to PHP values. Example which sets the option JAVA_PREFER_VALUES: <div class="src-code"><ol><li><div class="src-line">&nbsp;<a href="http://www.php.net/define">define</a><span class="src-sym">(</span><span class="src-str">&quot;JAVA_PREFER_VALUES&quot;</span><span class="src-sym">,&nbsp;</span><span class="src-id">true</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line">&nbsp;<span class="src-inc">require_once</span><span class="src-sym">(</span><span class="src-str">&quot;java/Java.inc&quot;</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line">&nbsp;...</div></li>
+<li><div class="src-line">&nbsp;<span class="src-key">if&nbsp;</span><span class="src-sym">(</span><span class="src-id">java</span><span class="src-sym">(</span><span class="src-str">&quot;java.lang.System&quot;</span><span class="src-sym">)</span><span class="src-sym">-&gt;</span><span class="src-id">getProperty</span><span class="src-sym">(</span><span class="src-str">&quot;foo&quot;</span><span class="src-sym">,&nbsp;</span><span class="src-id">false</span><span class="src-sym">))&nbsp;</span>...</div></li>
+</ol></div> Otherwise java_values() must be used to fetch a PHP value from a Java object or Java value. The same example which usually executes 5 times faster: <div class="src-code"><ol><li><div class="src-line">&nbsp;<span class="src-inc">require_once</span><span class="src-sym">(</span><span class="src-str">&quot;java/Java.inc&quot;</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line">&nbsp;...</div></li>
+<li><div class="src-line">&nbsp;<span class="src-key">if&nbsp;</span><span class="src-sym">(</span><a href="../JavaBridge/_JavaProxy.inc.html#functionjava_values">java_values</a><span class="src-sym">(</span><span class="src-id">java</span><span class="src-sym">(</span><span class="src-str">&quot;java.lang.System&quot;</span><span class="src-sym">)</span><span class="src-sym">-&gt;</span><span class="src-id">getProperty</span><span class="src-sym">(</span><span class="src-str">&quot;foo&quot;</span><span class="src-sym">,&nbsp;</span><span class="src-id">false</span><span class="src-sym">)))&nbsp;</span>...</div></li>
 </ol></div></p></p>
 	<ul class="tags">
-				<li><span class="field">see:</span> <a href="../JavaBridge/Java.html#methodJava">Java::Java()</a></li>
+				<li><span class="field">see:</span> <a href="../JavaBridge/_JavaProxy.inc.html#functionjava_values">java_values()</a></li>
+				<li><span class="field">see:</span> <a href="../JavaBridge/_JavaBridge.inc.html#functionJava">Java()</a></li>
+				<li><span class="field">see:</span> <a href="../JavaBridge/_Options.inc.html#defineJAVA_PREFER_VALUES">JAVA_PREFER_VALUES</a></li>
 			</ul>
 	
 	<div class="method-signature">
@@ -115,7 +204,7 @@
 <div class="oddrow">
 	
 	<div class="method-header">
-		<span class="method-title">__call</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a874">874</a></span>)
+		<span class="method-title">__call</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a901">901</a></span>)
 	</div> 
 	
 	<!-- ========== Info from phpDoc block ========= -->
@@ -149,7 +238,7 @@
 
 
 	<p class="notes" id="credit">
-		Documentation generated on Sun, 30 Nov 2008 10:51:49 +0100 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.0a2</a>
+		Documentation generated on Mon, 05 Jan 2009 21:10:59 +0100 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.2</a>
 	</p>
 	</div></body>
 </html>

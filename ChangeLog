@@ -1,3 +1,19 @@
+2008-01-06  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/Standalone.java
+	(escape): removed obsolete procedure
+	
+	* server/php/java/bridge/PhpProcedureProxy.java
+	(getNewFromInterface): Removed obsolete procedure
+	
+	* server/php/java/bridge/PhpProcedure.java
+	(createProxy): New procedure
+	
+	* server/php/java/script/InvocablePhpScriptEngine.java
+	(getInterface): Rewritten, fixed ClassCastException
+	
+	* VERSION, php-java-bridge.spec: Version 5.4.3
+
 2008-12-27  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/JavaBridge.java

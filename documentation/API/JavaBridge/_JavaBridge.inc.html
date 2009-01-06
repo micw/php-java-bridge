@@ -2,11 +2,87 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
   <html xmlns="http://www.w3.org/1999/xhtml">
 		<head>
-			<!-- template designed by Marco Von Ballmoos -->
+			<!-- template designed by Marco Von Ballmoos  -->
 			<title>Docs for page JavaBridge.inc</title>
 			<link rel="stylesheet" href="../media/stylesheet.css" />
-			<meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'/>
-		</head>
+						<script src="../media/lib/classTree.js"></script>
+												<script language="javascript" type="text/javascript">
+				var imgPlus = new Image();
+				var imgMinus = new Image();
+				imgPlus.src = "../media/images/plus.png";
+				imgMinus.src = "../media/images/minus.png";
+				
+				function showNode(Node){
+							switch(navigator.family){
+								case 'nn4':
+									// Nav 4.x code fork...
+							var oTable = document.layers["span" + Node];
+							var oImg = document.layers["img" + Node];
+									break;
+								case 'ie4':
+									// IE 4/5 code fork...
+							var oTable = document.all["span" + Node];
+							var oImg = document.all["img" + Node];
+									break;
+								case 'gecko':
+									// Standards Compliant code fork...
+							var oTable = document.getElementById("span" + Node);
+							var oImg = document.getElementById("img" + Node);
+									break;
+							}
+					oImg.src = imgMinus.src;
+					oTable.style.display = "block";
+				}
+				
+				function hideNode(Node){
+							switch(navigator.family){
+								case 'nn4':
+									// Nav 4.x code fork...
+							var oTable = document.layers["span" + Node];
+							var oImg = document.layers["img" + Node];
+									break;
+								case 'ie4':
+									// IE 4/5 code fork...
+							var oTable = document.all["span" + Node];
+							var oImg = document.all["img" + Node];
+									break;
+								case 'gecko':
+									// Standards Compliant code fork...
+							var oTable = document.getElementById("span" + Node);
+							var oImg = document.getElementById("img" + Node);
+									break;
+							}
+					oImg.src = imgPlus.src;
+					oTable.style.display = "none";
+				}
+				
+				function nodeIsVisible(Node){
+							switch(navigator.family){
+								case 'nn4':
+									// Nav 4.x code fork...
+							var oTable = document.layers["span" + Node];
+									break;
+								case 'ie4':
+									// IE 4/5 code fork...
+							var oTable = document.all["span" + Node];
+									break;
+								case 'gecko':
+									// Standards Compliant code fork...
+							var oTable = document.getElementById("span" + Node);
+									break;
+							}
+					return (oTable && oTable.style.display == "block");
+				}
+				
+				function toggleNodeVisibility(Node){
+					if (nodeIsVisible(Node)){
+						hideNode(Node);
+					}else{
+						showNode(Node);
+					}
+				}
+			</script>
+					</head>
 		<body>
 			<div class="page-body">			
 <h2 class="file-name">/JavaBridge.inc</h2>
@@ -45,7 +121,7 @@
 		<span class="include-title">
 			<span class="include-type">require_once</span>
 			(<span class="include-name">"${JAVA_BASE}/JavaProxy.inc"</span>)
-			(line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaBridge.inc.html#a62">62</a></span>)
+			(line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaBridge.inc.html#a65">65</a></span>)
 		</span>
 	</div>
 
@@ -70,15 +146,18 @@
 <div class="oddrow">
 	
 	<div>
-		<span class="method-title">Java</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaBridge.inc.html#a175">175</a></span>)
+		<span class="method-title">Java</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaBridge.inc.html#a184">184</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
 <p class="short-description">Access the java type with the given name.</p>
 <p class="description"><p>Access the java type with the given name.
- Example: <div class="src-code"><ol><li><div class="src-line">&nbsp;<span class="src-id">java</span><span class="src-sym">(</span><span class="src-str">&quot;java.lang.System&quot;</span><span class="src-sym">)</span><span class="src-sym">-&gt;</span><span class="src-id">getProperties</span><span class="src-sym">(</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
+ This procedure can be used to access constants or procedures within a class.  <br />
+ To access class features, use the java constructor instead.<br />
+ Example: <div class="src-code"><ol><li><div class="src-line">&nbsp;<span class="src-id">java</span><span class="src-sym">(</span><span class="src-str">&quot;java.lang.Long&quot;</span><span class="src-sym">)</span><span class="src-sym">-&gt;</span><span class="src-id">MAX_VALUE</span></div></li>
 </ol></div></p></p>
 	<ul class="tags">
+				<li><span class="field">see:</span> <a href="../JavaBridge/Java.html">Java</a></li>
 				<li><span class="field">access:</span> public</li>
 			</ul>
 	
@@ -102,7 +181,7 @@
 <div class="evenrow">
 	
 	<div>
-		<span class="method-title">java_autoload</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaBridge.inc.html#a152">152</a></span>)
+		<span class="method-title">java_autoload</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaBridge.inc.html#a155">155</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -148,7 +227,7 @@
 <div class="oddrow">
 	
 	<div>
-		<span class="method-title">java_is_false</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaBridge.inc.html#a281">281</a></span>)
+		<span class="method-title">java_is_false</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaBridge.inc.html#a290">290</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -181,7 +260,7 @@
 <div class="evenrow">
 	
 	<div>
-		<span class="method-title">java_is_null</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaBridge.inc.html#a245">245</a></span>)
+		<span class="method-title">java_is_null</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaBridge.inc.html#a254">254</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -214,7 +293,7 @@
 <div class="oddrow">
 	
 	<div>
-		<span class="method-title">java_is_true</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaBridge.inc.html#a263">263</a></span>)
+		<span class="method-title">java_is_true</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaBridge.inc.html#a272">272</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -247,7 +326,7 @@
 	</div>
 	
 	<p class="notes" id="credit">
-		Documentation generated on Sun, 30 Nov 2008 10:51:46 +0100 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.0a2</a>
+		Documentation generated on Mon, 05 Jan 2009 21:10:56 +0100 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.2</a>
 	</p>
 	</div></body>
 </html>

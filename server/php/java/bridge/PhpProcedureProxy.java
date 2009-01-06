@@ -62,19 +62,8 @@ public final class PhpProcedureProxy {
      */
     public Object getProxy(Class[] interfaces) {
 	if(proxy!=null) return proxy;
-        if (interfaces==null) interfaces = EMPTY_INTERFACE;
+        if (interfaces==null) interfaces = Util.ZERO_PARAM;
 	return proxy=PhpProcedure.createProxy(bridge, name, names, suppliedInterfaces==null?interfaces:suppliedInterfaces, object);
-    }
-    
-    private static final Class[] EMPTY_INTERFACE = new Class[0];
-    /**
-     * Generate a new proxy for the given interface
-     * @param iface The interface that the generated proxy should implement.
-     * @return The PhpProcedure.
-     */
-    public Object getNewFromInterface(Class iface) {
-        Class[] ifaces = iface==null ? EMPTY_INTERFACE : new Class[]{iface};
-        return PhpProcedure.createProxy(bridge, name, names, ifaces, object);
     }
 }
 

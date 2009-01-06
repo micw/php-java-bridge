@@ -1,7 +1,7 @@
 body 
 { 
-	background-color: #CCCCFF; 
-	margin: 0px; 
+	background: #EEEEEE url(bg_left.png) repeat;
+	margin: 0px;
 	padding: 0px;
 }
 
@@ -13,7 +13,7 @@ body
 { 
 	clear: both;
 	padding: .5em;
-	border-top: 2px solid #6666AA;	
+	border-top: 2px solid #999999;	
 }
 
 .banner-title 
@@ -26,7 +26,7 @@ body
 
 .package-selector 
 { 
-	background-color: #AAAADD; 
+	background-color: #EEEEEE; 
 	border: 1px solid black; 
-	color: yellow;
+	color: #0000C0;
 }

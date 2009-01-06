@@ -65,6 +65,15 @@ public class PhpProcedure implements InvocationHandler {
 	Object proxy = Proxy.newProxyInstance(loader, interfaces, handler);
 	return proxy;
     }
+    /**
+     * Called from getInterface().
+     * @param interfaces - The list of interfaces that this proxy must implement, may be empty. 
+     * @param proc - A procedure obtained from java_closure().
+     * @return A new proxy instance.
+     */
+    public static Object createProxy(Class interfaces[], PhpProcedure proc) {
+	return createProxy (proc.bridge, proc.name, proc.names, interfaces, proc.object);
+    }
 	
     private Object invoke(Object proxy, String method, Class returnType, Object[] args) throws Throwable {
 	JavaBridge bridge = this.bridge.getBridge();

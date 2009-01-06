@@ -2,11 +2,10 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
   <html xmlns="http://www.w3.org/1999/xhtml">
 		<head>
-			<!-- template designed by Marco Von Ballmoos -->
+			<!-- template designed by Marco Von Ballmoos  -->
 			<title>File Source for NativeParser.inc</title>
 			<link rel="stylesheet" href="../media/stylesheet.css" />
-			<meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'/>
-		</head>
+											</head>
 		<body>
 						<h1>Source for file NativeParser.inc</h1>
 <p>Documentation is available at <a href="../JavaBridge/_NativeParser.inc.html">NativeParser.inc</a></p>
@@ -51,7 +50,7 @@
 <li><div class="src-line"><a name="a38"></a><span class="src-comm">&nbsp;&nbsp;obligated&nbsp;to&nbsp;do&nbsp;so.&nbsp;&nbsp;If&nbsp;you&nbsp;do&nbsp;not&nbsp;wish&nbsp;to&nbsp;do&nbsp;so,&nbsp;delete&nbsp;this</span></div></li>
 <li><div class="src-line"><a name="a39"></a><span class="src-comm">&nbsp;&nbsp;exception&nbsp;statement&nbsp;from&nbsp;your&nbsp;version.&nbsp;*/</span></div></li>
 <li><div class="src-line"><a name="a40"></a>&nbsp;</div></li>
-<li><div class="src-line"><a name="a41"></a><span class="src-inc">require_once</span><span class="src-sym">(</span><span class="src-str">&quot;</span>${<span class="src-str">JAVA_BASE</span><span class="src-sym">}</span>/<span class="src-id">Client</span>.<span class="src-id">inc</span><span class="src-str">&quot;</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line"><a name="a41"></a><span class="src-inc">require_once</span><span class="src-sym">(</span><span class="src-str">&quot;</span>${<span class="src-str">JAVA_BASE</span><span class="src-sym">}</span>/Client.inc<span class="src-str">&quot;</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
 <li><div class="src-line"><a name="a42"></a>&nbsp;</div></li>
 <li><div class="src-line"><a name="a43"></a><span class="src-doc">/**</span></div></li>
 <li><div class="src-line"><a name="a44"></a><span class="src-doc">&nbsp;*&nbsp;</span><span class="src-doc-coretag">@access</span><span class="src-doc">&nbsp;private</span></div></li>
@@ -99,23 +98,25 @@
 <li><div class="src-line"><a name="a86"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-var">$buf&nbsp;</span>=&nbsp;<span class="src-var">$this</span><span class="src-sym">-&gt;</span><span class="src-var">buf&nbsp;</span>=&nbsp;<span class="src-var">$this</span><span class="src-sym">-&gt;</span><span class="src-var">handler</span><span class="src-sym">-&gt;</span><span class="src-id">read</span><span class="src-sym">(</span><span class="src-id"><a href="../JavaBridge/_Options.inc.html#defineJAVA_RECV_SIZE">JAVA_RECV_SIZE</a></span><span class="src-sym">)</span><span class="src-sym">;&nbsp;</span></div></li>
 <li><div class="src-line"><a name="a87"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-var">$len&nbsp;</span>=&nbsp;<a href="http://www.php.net/strlen">strlen</a><span class="src-sym">(</span><span class="src-var">$buf</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
 <li><div class="src-line"><a name="a88"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-key">if</span><span class="src-sym">(</span><span class="src-sym">!</span><a href="http://www.php.net/xml_parse">xml_parse</a><span class="src-sym">(</span><span class="src-var">$this</span><span class="src-sym">-&gt;</span><span class="src-var">parser</span><span class="src-sym">,&nbsp;</span><span class="src-var">$buf</span><span class="src-sym">,&nbsp;</span><span class="src-var">$len</span>==<span class="src-num">0</span><span class="src-sym">))&nbsp;</span><span class="src-sym">{</span></div></li>
-<li><div class="src-line"><a name="a89"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-key">die</span><span class="src-sym">(</span><a href="http://www.php.net/sprintf">sprintf</a><span class="src-sym">(</span><span class="src-str">&quot;protocol&nbsp;error:&nbsp;%s,&nbsp;%s&nbsp;at&nbsp;col&nbsp;%d.&nbsp;Check&nbsp;the&nbsp;back&nbsp;end&nbsp;log&nbsp;for&nbsp;OutOfMemoryErrors...&quot;</span><span class="src-sym">,</span></div></li>
-<li><div class="src-line"><a name="a90"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-var">$buf</span><span class="src-sym">,</span></div></li>
-<li><div class="src-line"><a name="a91"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://www.php.net/xml_error_string">xml_error_string</a><span class="src-sym">(</span><a href="http://www.php.net/xml_get_error_code">xml_get_error_code</a><span class="src-sym">(</span><span class="src-var">$this</span><span class="src-sym">-&gt;</span><span class="src-var">parser</span><span class="src-sym">))</span><span class="src-sym">,</span></div></li>
-<li><div class="src-line"><a name="a92"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://www.php.net/xml_get_current_column_number">xml_get_current_column_number</a><span class="src-sym">(</span><span class="src-var">$this</span><span class="src-sym">-&gt;</span><span class="src-var">parser</span><span class="src-sym">)))</span><span class="src-sym">;</span></div></li>
-<li><div class="src-line"><a name="a93"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-sym">}</span></div></li>
-<li><div class="src-line"><a name="a94"></a>&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-sym">}&nbsp;</span><span class="src-key">while</span><span class="src-sym">(</span><span class="src-sym">!</span><span class="src-var">$this</span><span class="src-sym">-&gt;</span><span class="src-var">event&nbsp;</span>||&nbsp;<span class="src-var">$this</span><span class="src-sym">-&gt;</span><span class="src-var">level</span>&gt;<span class="src-num">0</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
-<li><div class="src-line"><a name="a95"></a>&nbsp;&nbsp;<span class="src-sym">}</span></div></li>
-<li><div class="src-line"><a name="a96"></a>&nbsp;</div></li>
-<li><div class="src-line"><a name="a97"></a>&nbsp;&nbsp;<span class="src-key">function&nbsp;</span><span class="src-id">parserError</span><span class="src-sym">(</span><span class="src-sym">)&nbsp;</span><span class="src-sym">{</span></div></li>
-<li><div class="src-line"><a name="a98"></a>&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-key">die</span><span class="src-sym">(</span><a href="http://www.php.net/sprintf">sprintf</a><span class="src-sym">(</span><span class="src-str">&quot;protocol&nbsp;error:&nbsp;%s.&nbsp;Check&nbsp;the&nbsp;back&nbsp;end&nbsp;log&nbsp;for&nbsp;details.&quot;</span><span class="src-sym">,&nbsp;</span><span class="src-var">$this</span><span class="src-sym">-&gt;</span><span class="src-var">buf</span><span class="src-sym">))</span><span class="src-sym">;</span></div></li>
-<li><div class="src-line"><a name="a99"></a>&nbsp;&nbsp;<span class="src-sym">}</span></div></li>
-<li><div class="src-line"><a name="a100"></a><span class="src-sym">}</span></div></li>
-<li><div class="src-line"><a name="a101"></a><span class="src-php">?&gt;</span></div></li>
+<li><div class="src-line"><a name="a89"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-var">$this</span><span class="src-sym">-&gt;</span><span class="src-var">handler</span><span class="src-sym">-&gt;</span><span class="src-id">protocol</span><span class="src-sym">-&gt;</span><span class="src-id">handler</span><span class="src-sym">-&gt;</span><span class="src-id">shutdownBrokenConnection</span><span class="src-sym">(</span></div></li>
+<li><div class="src-line"><a name="a90"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://www.php.net/sprintf">sprintf</a><span class="src-sym">(</span><span class="src-str">&quot;protocol&nbsp;error:&nbsp;%s,&nbsp;%s&nbsp;at&nbsp;col&nbsp;%d.&nbsp;Check&nbsp;the&nbsp;back&nbsp;end&nbsp;log&nbsp;for&nbsp;OutOfMemoryErrors.&quot;</span><span class="src-sym">,</span></div></li>
+<li><div class="src-line"><a name="a91"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-var">$buf</span><span class="src-sym">,</span></div></li>
+<li><div class="src-line"><a name="a92"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://www.php.net/xml_error_string">xml_error_string</a><span class="src-sym">(</span><a href="http://www.php.net/xml_get_error_code">xml_get_error_code</a><span class="src-sym">(</span><span class="src-var">$this</span><span class="src-sym">-&gt;</span><span class="src-var">parser</span><span class="src-sym">))</span><span class="src-sym">,</span></div></li>
+<li><div class="src-line"><a name="a93"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://www.php.net/xml_get_current_column_number">xml_get_current_column_number</a><span class="src-sym">(</span><span class="src-var">$this</span><span class="src-sym">-&gt;</span><span class="src-var">parser</span><span class="src-sym">)))</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line"><a name="a94"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-sym">}</span></div></li>
+<li><div class="src-line"><a name="a95"></a>&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-sym">}&nbsp;</span><span class="src-key">while</span><span class="src-sym">(</span><span class="src-sym">!</span><span class="src-var">$this</span><span class="src-sym">-&gt;</span><span class="src-var">event&nbsp;</span>||&nbsp;<span class="src-var">$this</span><span class="src-sym">-&gt;</span><span class="src-var">level</span>&gt;<span class="src-num">0</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line"><a name="a96"></a>&nbsp;&nbsp;<span class="src-sym">}</span></div></li>
+<li><div class="src-line"><a name="a97"></a>&nbsp;</div></li>
+<li><div class="src-line"><a name="a98"></a>&nbsp;&nbsp;<span class="src-key">function&nbsp;</span><span class="src-id">parserError</span><span class="src-sym">(</span><span class="src-sym">)&nbsp;</span><span class="src-sym">{</span></div></li>
+<li><div class="src-line"><a name="a99"></a>&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-var">$this</span><span class="src-sym">-&gt;</span><span class="src-var">handler</span><span class="src-sym">-&gt;</span><span class="src-id">protocol</span><span class="src-sym">-&gt;</span><span class="src-id">handler</span><span class="src-sym">-&gt;</span><span class="src-id">shutdownBrokenConnection</span><span class="src-sym">(</span></div></li>
+<li><div class="src-line"><a name="a100"></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://www.php.net/sprintf">sprintf</a><span class="src-sym">(</span><span class="src-str">&quot;protocol&nbsp;error:&nbsp;%s.&nbsp;Check&nbsp;the&nbsp;back&nbsp;end&nbsp;log&nbsp;for&nbsp;details.&quot;</span><span class="src-sym">,&nbsp;</span><span class="src-var">$this</span><span class="src-sym">-&gt;</span><span class="src-var">buf</span><span class="src-sym">))</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line"><a name="a101"></a>&nbsp;&nbsp;<span class="src-sym">}</span></div></li>
+<li><div class="src-line"><a name="a102"></a><span class="src-sym">}</span></div></li>
+<li><div class="src-line"><a name="a103"></a><span class="src-php">?&gt;</span></div></li>
 </ol></div>
 </div>
 	<p class="notes" id="credit">
-		Documentation generated on Sun, 30 Nov 2008 10:51:49 +0100 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.0a2</a>
+		Documentation generated on Mon, 05 Jan 2009 21:11:00 +0100 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.2</a>
 	</p>
 	</body>
 </html>

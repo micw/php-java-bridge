@@ -168,12 +168,18 @@ a PHP 5.1.x executable, see php_exec in the WEB-INF/web.xml";
   }
 
   /**
-   * Access the java type with the given name.
+   * Access the java type with the given name. 
    *
-   * Example: <code> java("java.lang.System")->getProperties(); </code>
+   * This procedure can be
+   * used to access constants or procedures within a class.  <br>
+   *
+   * To access class features, use the java constructor instead.<br>
+   *
+   * Example: <code> java("java.lang.Long")->MAX_VALUE </code>
    *
    * @access public
    * @param string The type name
+   * @see Java
    */
   function Java($name) { 
 	static $classMap = array();

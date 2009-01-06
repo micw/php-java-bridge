@@ -26,8 +26,6 @@ package php.java.bridge;
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.Iterator;
-import java.util.Map.Entry;
 
 import javax.swing.JOptionPane;
 
@@ -246,9 +244,6 @@ public class Standalone {
 	} catch (Throwable t) {
 	    return false;
 	}
-    }
-    private static String escape(String s) {
-	return (s.replace("\\", "\\\\").replace("\"", "\\\"").replace("'", "\\'").replace("$", "\\$"));
     }
     /**
      * Start the PHP/Java Bridge. <br>
