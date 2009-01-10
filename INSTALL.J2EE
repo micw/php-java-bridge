@@ -19,23 +19,18 @@ The PHP/Java Bridge can be installed with one copy operation:
 Development
 -----------
 
-* Extract the JavaBridge.jar from the JavaBridge.war zip file from the
-  PHP/Java Bridge binary ("php-java-bridge*_j2ee.zip") download. For
-  example with the command:
+* Download and extract the php-java-bridge*_j2ee.zip file into a
+  folder.
 
-    java -classpath JavaBridge.war TestInstallation
+* Navigate to the created JAVA.STANDALONE folder.
 
-  Double-click on JavaBridge.jar or type:
+* Right-click on log4j.jar and select "open with Java ..."
 
-    java -jar JavaBridge.jar
+* Right-click on JavaBridge.jar and select "open with Java ...". In
+  the "Starting ..." dialog select SERVLET_LOCAL:8080.
 
-  and click "OK" to start a servlet engine back end for all computers
-  on the local network. Type:
-
-    java -jar JavaBridge.jar --help 
-
-  to see the list of available options.
-
+* Run your PHP scripts. For example browse to http://127.0.0.1:8080
+  and click on test.php.
 
 * Link Java.inc and your Java libraries into PHP at run-time. Example:
   
@@ -51,7 +46,6 @@ Development
     $myInstance  = NEW Java("myPackage.MyClass", ...); 
     $myInstance->callSomething(...);
    ?>
-
 
 * Create a PHP web archive for distribution, for example with the commands:
 
@@ -70,7 +64,6 @@ Deployment
 
 * Install a J2EE application server or servlet engine, for example
   Apache Geronimo, Tomcat, Glassfish, ...
-
 
 * Copy your web application myPhpApp.war to the autodeploy folder of
   your J2EE server or servlet engine. If you don't have a myPhpApp.war
@@ -93,30 +86,9 @@ Deployment
   test.php. 
 
 * If you want to run PHP as a sub component of Apache or IIS or from
-  the command line, copy the directory which contains the web
-  application "myPhpApp" over to the Apache/IIS document root or to
-  the some local directory accessible by the PHP command line
-  executable. Example for Apache Tomcat on Unix:
-
-    cp -r $CATALINA_HOME/webapps/myPhpApp/ /var/www/html/
-
-
-* Edit the copied web application, if necessary. For example edit
-  DOCUMENT_ROOT/myPhpApp/java/Java.inc so that it connects PHP with
-  the Java VM "127.0.0.1:8080/myPhpApp". For example:
-
-    define("JAVA_HOSTS", "127.0.0.1:8080"); 
-    define("JAVA_SERVLET", "/myPhpApp/JavaBridge.phpjavabridge"); 
-
-  Or set JAVA_PARSE_INI_FILE and use the following java.ini file:
-
-    [java]
-    java.servlet=/myPhpApp/JavaBridge.phpjavabridge
-    
-    <?php define ("JAVA_PARSE_INI_FILE", true);
-          require_once("java/Java.inc");
-      ...
-    ?>
+  the command line, require() Java.inc directly from the back end.
+  Or embed it into your PHP application and use the provided
+  Java class as usual.
 
 * Firewall-out the J2EE/Servlet port 8080, if necessary. Or modify the
   J2EE/Servlet so that it listens only on the local interface. Note that

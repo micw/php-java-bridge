@@ -72,7 +72,7 @@ internet browser &lt;--&gt; PhpCGIServlet &lt;--&gt; php-cgi &lt;--&gt; PhpJavaS
 </code>
 </blockquote>
 <p>
-It starts a PHP FastCGI server, if possible and neccessary. Requests for PHP scripts are delegated to the FastCGI server. If the PHP code contains Java calls, the PHP/Java Bridge protocol requests are delegated back to the current VM, to an instance of the <code>PhpJavaServlet</code>.
+It starts a PHP FastCGI server, if possible and necessary. Requests for PHP scripts are delegated to the FastCGI server. If the PHP code contains Java calls, the PHP/Java Bridge protocol requests are delegated back to the current VM, to an instance of the <code>PhpJavaServlet</code>.
 </p>
 <table BORDER=1 CELLSPACING=5 WIDTH="85%" >
 <tr VALIGN=TOP>

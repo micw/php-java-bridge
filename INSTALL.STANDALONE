@@ -28,6 +28,21 @@ Test the PHP/Java Bridge functionality:
 * Run your PHP scripts. For example browse to http://127.0.0.1:8080
   and click on test.php.
 
+* Link Java.inc and your Java libraries into PHP at run-time. Example:
+  
+   <?php
+    require_once("java/Java.inc");
+
+    // call Java libraries using the provided Java class...
+    java_require("myLibs/myLib.jar;dependentLib1.jar;...);
+
+    $SystemClazz =     Java("java.lang.System"); 
+    echo $SystemClazz->getProperties();
+
+    $myInstance  = NEW Java("myPackage.MyClass", ...); 
+    $myInstance->callSomething(...);
+   ?>
+
 
 Deployment
 ----------

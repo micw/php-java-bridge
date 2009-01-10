@@ -1056,7 +1056,7 @@ public class JavaBridge implements Runnable {
 		    }
 		    selected = (Method)select(matches, args);
 		    if (selected == null) 
-                  	throw new NoSuchMethodException(String.valueOf(method) + "(" + Util.argsToString(args, params) + "). " + "Candidates: " + String.valueOf(candidates));
+                  	checkM(object, String.valueOf(method) + "(" + Util.argsToString(args, params) + "). " + "Candidates: " + String.valueOf(candidates));
 		    methodCache.put(entry, selected);
 		    if(!iter.checkAccessible(selected)) {
 			logDebug("Security restriction: Cannot use setAccessible(), reverting to interface searching.");
@@ -1116,6 +1116,11 @@ public class JavaBridge implements Runnable {
 	    
 	    if (response.isAsync()) throw new JavaBridgeIllegalStateException ("Out of sync", e1); // abort
 	}
+    }
+
+    private void checkM(Object object, String string) throws NoSuchMethodException {
+	if (object instanceof Class) throw new NoSuchProcedureException(string);
+	else throw new NoSuchMethodException(string);
     }
 
     static private final int DISPLAY_MAX_ELEMENTS = 10;
@@ -1283,7 +1288,7 @@ public class JavaBridge implements Runnable {
 		    }
 		} catch (Exception ee) {/* may happen when field is not static */}
 	    }
-	    throw new NoSuchFieldException(String.valueOf(prop) + " (with args:" + Util.argsToString(args, params) + "). " + "Candidates: " + String.valueOf(matches));
+	    checkF(object, String.valueOf(prop) + " (with args:" + Util.argsToString(args, params) + "). " + "Candidates: " + String.valueOf(matches));
 
 	} catch (Throwable e) {
 	    Throwable e1 = e;
@@ -1304,6 +1309,10 @@ public class JavaBridge implements Runnable {
     }
 
 
+    private void checkF(Object object, String string) throws NoSuchFieldException {
+	if (object instanceof Class) throw new NoSuchConstantException(string);
+	else throw new NoSuchFieldException(string);
+    }
     /**
      * Convert Map or Collection into a PHP array,
      * sends the entire array, Map or Collection to the client. This
