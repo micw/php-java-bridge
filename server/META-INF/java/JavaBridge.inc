@@ -208,13 +208,6 @@ a PHP 5.1.x executable, see php_exec in the WEB-INF/web.xml";
   function java_get_values($arg) { return java_values($arg); }
 
   /**
-   * Alias for java_values();
-   * @access private
-   * @see java_values();
-   */
-  function java_unwrap($arg) { return java_values($arg); }
-
-  /**
    * Alias for java_session();
    * @access private
    * @see java_session();

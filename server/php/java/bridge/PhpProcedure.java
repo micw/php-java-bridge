@@ -122,4 +122,10 @@ public class PhpProcedure implements InvocationHandler {
 	
 	return invoke(proxy, method.getName(), method.getReturnType(), args);
     }
+    
+    static long unwrap (Object ob) {
+	InvocationHandler handler = Proxy.getInvocationHandler(ob);
+	PhpProcedure proc = (PhpProcedure)handler;
+	return proc.object;
+    }
 }

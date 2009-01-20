@@ -39,6 +39,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Proxy;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1328,6 +1329,16 @@ public class JavaBridge implements Runnable {
     }
  
     /**
+     * Returns the PHP object associated with a closure
+     * 
+     * @param closure The closure
+     * @return The php object
+     * @throws IllegalArgumentException
+     */
+    public long unwrapClosure (Object closure) throws IllegalArgumentException {
+	return PhpProcedure.unwrap(castToExact(closure));
+    }
+    /**
      * Cast a object to a type
      * @param ob - The object to cast
      * @param type - The target type
@@ -1660,7 +1671,7 @@ public class JavaBridge implements Runnable {
      * Example: <br>
      * java_closure($this, $map);<br>
      * 
-     * @param object the PHP environment (the php "class")
+     * @param object the PHP environment (the php instance)
      * @param names maps java to php names
      * @return the proxy
      */
@@ -1673,7 +1684,7 @@ public class JavaBridge implements Runnable {
      * Example: <br>
      * java_closure($this, $map, $interfaces);<br>
      * 
-     * @param object the PHP environment (the php "class")
+     * @param object the PHP environment (the php instance)
      * @param names maps java to php names
      * @param interfaces list of interfaces which the PHP environment must implement
      * @return the proxy
@@ -1687,7 +1698,7 @@ public class JavaBridge implements Runnable {
      * Example: <br>
      * java_closure($this, $map, $interfaces);<br>
      * 
-     * @param object the PHP environment (the php "class")
+     * @param object the PHP environment (the php instance)
      * @param names maps java to php names
      * @param iface interface which the PHP environment must implement
      * @return the proxy
@@ -1701,7 +1712,7 @@ public class JavaBridge implements Runnable {
      * Example: <br>
      * java_closure($this, "clickMe");<br>
      * 
-     * @param object  the PHP environment (the php "class")
+     * @param object  the PHP environment (the php instance)
      * @param name maps all java names to this php name
      * @return the proxy
      */
@@ -1714,7 +1725,7 @@ public class JavaBridge implements Runnable {
      * Example: <br>
      * java_closure($this, "clickMe", $interfaces);<br>
      * 
-     * @param object the PHP environment (the php "class")
+     * @param object the PHP environment (the php instance)
      * @param name maps all java names to this php name
      * @param interfaces  list of interfaces which the PHP environment must implement
      * @return the proxy
@@ -1731,7 +1742,7 @@ public class JavaBridge implements Runnable {
      * java_closure();<br>
      * java_closure($this);<br>
      * 
-     * @param object the PHP environment (the php "class")
+     * @param object the PHP environment (the php instance)
      * @return the proxy
      */
     public Object makeClosure(long object) {

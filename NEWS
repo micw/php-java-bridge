@@ -3,6 +3,20 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 5.4.3.1
+
+* java_unwrap($closure) can now used to retrieve the PHP object
+  associated with a java_closure(). Example:
+
+    class f{function __toString(){return "p";}function toString(){return "j"}};
+    $cl = java_closure(new f());
+    echo $cl;
+    => j
+    $cl = java_unwrap($cl)
+    echo $cl;
+    => p
+
+
 Version 5.4.2
 
 * JavaBridge.jar now supports a -Dphp.java.bridge.daemon=true option.

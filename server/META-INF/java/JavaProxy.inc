@@ -86,10 +86,31 @@ function java_values_internal($object) {
   $client=__javaproxy_Client_getClient();
   return $client->invokeMethod(0, "getValues", array($object));
 }
+
 /**
- * Unwraps a Java object.
+ * Unwrap a Java object.
  * 
- * Evaluates the object and fetches its content, if possible. Use java_values() to convert a Java object into an equivalent PHP value.
+ * Fetches the PHP object which has been wrapped by java_closure() or java_wrap(). Example:
+ * <code>
+ * class foo { function __toString() {return "php"; } function toString() {return "java";} }
+ * $foo = java_closure(new foo());
+ * echo $foo;
+ * => java;
+ * $foo = java_unwrap($foo);
+ * echo $foo;
+ * => php
+ * </code>
+ */
+function java_unwrap ($object) {
+  if(!$object instanceof java_JavaType) throw new java_IllegalArgumentException($object);
+  $client=__javaproxy_Client_getClient();
+  return $client->globalRef->get($client->invokeMethod(0, "unwrapClosure", array($object)));
+}  
+
+/**
+ * Evaluate a Java object.
+ * 
+ * Evaluate a object and fetch its content, if possible. Use java_values() to convert a Java object into an equivalent PHP value.
  *
  * A java array, Map or Collection object is returned
  * as a php array. An array, Map or Collection proxy is returned as a java array, Map or Collection object, and a null proxy is returned as null. All values of java types for which a primitive php type exists are returned as php values. Everything else is returned unevaluated. Please make sure that the values do not not exceed
@@ -426,7 +447,7 @@ function java_closure_array($args) {
   /* The following is identical to 
    return $client->invokeMethod(0, "makeClosure", $args); 
    except that the ref (args[0]) must be an unsigned value */
-  $client->protocol->invokeBegin(0, "makeClosure", "5", "6");
+  $client->protocol->invokeBegin(0, "makeClosure");
   $n = count($args);
   $client->protocol->writeULong($args[0]); // proper PHP "long" -> Java 64 bit value conversion
   for($i=1; $i<$n; $i++) {

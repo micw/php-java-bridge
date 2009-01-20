@@ -962,6 +962,17 @@ the statement
 at the beginning of each script. PHP compiles and caches PHP scripts, the <code>Java.inc</code> library is loaded only once.
 </p>
 
+<H4>What does "The requested method PUT is not allowed ... at localhost Port 80" mean?</H4>
+<p>It means that <code>request.getServerPort()</code> is lying. Port 80 is privileged and therefore cannot be the servlet engine's server port.</p>
+<p>If you use the AJP connector, for example via <code>ProxyPassMatch ^(/.*\.jsp)$ ajp://127.0.0.1$1</code>, set the correct <code>proxyPort</code> in <code>tomcat/conf/server.xml</code>. Example:
+<blockquote>
+<code>
+&lt;!-- Define an AJP 1.3 Connector on port 8009 --&gt;<br>
+- &lt;Connector port="8009" protocol="AJP/1.3" redirectPort="8443" /&gt;<br>
++ &lt;Connector port="8009" protocol="AJP/1.3" proxyPort="8080" redirectPort="8443" /&gt;<br>
+</code>
+</blockquote>
+ Please see the <a href="http://127.0.0.1:8080/docs/config/ajp.html#Proxy%20Support">AJP documentation<a> for details.
 
 </BODY>
 </HTML>
