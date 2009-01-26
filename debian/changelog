@@ -1,3 +1,12 @@
+php-java-bridge (5.4.3.1-1) unstable; urgency=low
+
+  * New upstream release.
+  * README.GNU_JAVA renamed to README.GCJ.
+  * java-servlet.ini not installed anymore.
+
+ -- Andre Felipe Machado <andremachado@techforce.com.br>  Mon, 26 Jan 2009 10:26:15 -0300
+
+
 php-java-bridge (5.3.4-1) unstable; urgency=low
 
   * New upstream release.
