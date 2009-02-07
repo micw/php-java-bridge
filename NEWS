@@ -3,6 +3,18 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 5.4.3.2
+
+* Users who want to run php from Java can pass arguments via
+  -Dphp.java.bridge.php_exec_args=ARGS. ARGS must be a list of
+  java.net.URLEncoded arguments, separated by a space. User-provided
+  PHP_EXEC_ARGS replace the standard args, which are: "-d
+  allow_url_include=On -d display_errors=Off -d log_errors=On -d
+  java.persistent_servlet_connections=On".
+
+* The java.security option is obsolete because a tomcat or J2EE back
+  end is now required.
+
 Version 5.4.3.1
 
 * java_unwrap($closure) can now used to retrieve the PHP object

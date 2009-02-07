@@ -11,4 +11,5 @@ BACKEND_VERSION = @BACKEND_VERSION@
 # DEFAULT_LOG_LEVEL = 3
 # DEFAULT_LOG_FILE = 
 # PHP_EXEC = /usr/bin/php-cgi
+# PHP_EXEC_ARGS = -d allow_url_include=On -d display_errors=Off -d log_errors=On -d java.persistent_servlet_connections=On
 # MAX_WAIT = 15000

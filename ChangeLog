@@ -1,3 +1,16 @@
+2008-02-06  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/JavaBridge.java
+	(GetSetProp, CreateObject, Invoke): Removed obsolete check
+
+	* server/php/java/bridge/Util.java
+	(initGlobals): Parse php.java.bridge.php_exec_args
+
+	* server/php/java/bridge/global.properties.in
+	(PHP_EXEC_ARGS): new option
+	
+	* VERSION, php-java-bridge.spec: Version 5.4.3.2
+	
 2008-01-19  Jost Boekemeier  <jostb@intern>
 
 	* server/META-INF/java/JavaProxy.inc 

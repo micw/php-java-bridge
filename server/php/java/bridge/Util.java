@@ -138,9 +138,11 @@ public final class Util {
     }
 
     /** 
-     * The default PHP arguments
+     * The default PHP arguments. Can be passed via -Dphp.java.bridge.php_exec_args=list of urlencoded strings separated by space
+     * Default: "-d allow_url_include=On -d display_errors=Off -d log_errors=On -d java.persistent_servlet_connections=On"
      */
-    public static final String PHP_ARGS[] = new String[] {"-d", "allow_url_include=On", "-d", "display_errors=Off", "-d", "log_errors=On", "-d", "java.persistent_servlet_connections=On"};
+    public static String[] PHP_ARGS;
+    private static final String DEFAULT_PHP_ARGS = "-d allow_url_include=On -d display_errors=Off -d log_errors=On -d java.persistent_servlet_connections=On";
     
     /**
      * The default CGI locations: <code>"/usr/bin/php-cgi"</code>, <code>"c:/Program Files/PHP/php-cgi.exe</code>
@@ -298,6 +300,20 @@ public final class Util {
 	};
 	try {
 	    THREAD_POOL_MAX_SIZE = getProperty(p, "THREADS", "20");
+	} catch (Throwable t) {
+	    //t.printStackTrace();
+	};
+	try {
+	    String str = getProperty(p, "PHP_EXEC_ARGS", DEFAULT_PHP_ARGS);
+	    String[] args = str.split(" ");
+	    for (int i=0; i<args.length; i++) {
+		try {
+		    args[i] = java.net.URLDecoder.decode(args[i], UTF8);
+		} catch (UnsupportedEncodingException e) {
+		    e.printStackTrace();
+		}
+	    }
+	    PHP_ARGS = args;
 	} catch (Throwable t) {
 	    //t.printStackTrace();
 	};

@@ -39,7 +39,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Proxy;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -510,8 +509,6 @@ public class JavaBridge implements Runnable {
 		e = getUnresolvedExternalReferenceException(e1, "call constructor");
 	    }
 	    setException(response, e, createInstance?"CreateInstance":"ReferenceClass", null, name, args, params);
-	    
-	    if (response.isAsync()) throw new JavaBridgeIllegalStateException ("Out of sync", e1); // abort
 	}
     }
 
@@ -1114,8 +1111,6 @@ public class JavaBridge implements Runnable {
                 }
             }
 	    setException(response, e, "Invoke", object, method, args, params);
-	    
-	    if (response.isAsync()) throw new JavaBridgeIllegalStateException ("Out of sync", e1); // abort
 	}
     }
 
@@ -1304,8 +1299,6 @@ public class JavaBridge implements Runnable {
 		e = getUnresolvedExternalReferenceException(e1, "invoke a property");
 	    }
 	    setException(response, e, set?"SetProperty":"GetProperty", object, prop, args, params);
-	    
-	    if (response.isAsync()) throw new JavaBridgeIllegalStateException ("Out of sync.", e1); // abort
 	}
     }
 
