@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -67,15 +68,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     /** Make sure that there's exactly one instance per class loader 
      * If initialized is true, we skip further initialization, but the shared config must not be destroyed */
     private static boolean libraryInitialized = false;
-    
-    /**
-     * If you want to use the HTTP tunnel , set the
-     * following flag to false and remove the &lt;distributable/&gt from
-     * the WEB-INF/web.xml.
-     * @see #handleHttpConnection(HttpServletRequest, HttpServletResponse, String)
-     */
-    public static final boolean IS_DISTRIBUTABLE = true;
-    
+        
     /**@inheritDoc*/
     public void init(ServletConfig config) throws ServletException {
  	String value;
@@ -106,6 +99,10 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 
     /**{@inheritDoc}*/
     public void destroy() {
+	ServletContext ctx = getServletContext();
+	ContextLoaderListener.destroyCloseables(ctx);
+	ContextLoaderListener.destroyScriptEngines(ctx);
+	
       	contextServer.destroy();
     	super.destroy();
     }
@@ -160,61 +157,6 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
         } catch (InterruptedException e) {
 	    Util.printStackTrace(e);
         }
-    }
-
-    /** Return the IS_DISTRIBUTABLE flag 
-     * 
-     * @return {@link #IS_DISTRIBUTABLE}
-     */
-    protected boolean getDistributable() {
-	return IS_DISTRIBUTABLE;
-    }
-    /**
-     * Handle a standard HTTP tunnel connection. Used when the local
-     * channel is not available (security restrictions). Used by
-     * Apache and cgi.
-     * 
-     * @param req
-     * @param res
-     * @throws ServletException
-     * @throws IOException
-     * @deprecated 
-     */
-    protected void handleHttpConnection (HttpServletRequest req, HttpServletResponse res, String channel)
-	throws ServletException, IOException {
-
-	/**
-	 * The alternative would be to store the context in the session and to mark the context and all the classes it depends on
-	 * (JavaBridge, ...) as java.io.Serializable.
-	 */
-	if(getDistributable()) Util.logMessage("HTTP tunnel not available in a distributable web application. " +
-			"Either enable the Pipe- or SocketContextServer or remove the distributable flag from PhpJavaServlet and WEB-INF/web.xml.");
-
-	InputStream in; ByteArrayOutputStream out;
-	SimpleServletContextFactory ctx = getContextFactory(req, res, contextServer.getCredentials(channel));
-	JavaBridge bridge = ctx.getBridge();
-	ctx.setSessionFactory(req);
-
-	if(req.getContentLength()==0) {
-	    if(req.getHeader("Connection").equals("Close")) {
-		bridge.logDebug("session closed.");
-		ctx.destroy();
-	    }
-	    return;
-	}
-	bridge.in = in = req.getInputStream();
-	bridge.out = out = new ByteArrayOutputStream();
-	Request r = bridge.request = new Request(bridge);
-	try {
-	    if(r.init(in, out)) {
-		r.handleRequests();
-	    }
-	} catch (Exception e) {
-	    Util.printStackTrace(e);
-	}
-	res.setContentLength(out.size());
-	out.writeTo(res.getOutputStream());
-	in.close();
     }
 
     /**
@@ -274,11 +216,12 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     protected void doPut (HttpServletRequest req, HttpServletResponse res)
 	throws ServletException, IOException {
     	String channel = getHeader("X_JAVABRIDGE_CHANNEL", req);
+    	if(Util.logLevel>3) Util.logDebug("doPut:"+req.getRequestURL()); 
 
     	if(contextServer.isAvailable(channel)) 
     	    handleLocalConnection(req, res, channel); /* re-direct */
     	else
-    	    handleHttpConnection(req, res, channel); /* standard http tunnel */
+    	    throw new ServletException("HTTP tunnel not implemented. Please allow PIPE- or SOCKET- connections. Please see the README section \"Security Issues\" for details.");
     }
     /** For backward compatibility */
     protected void doGet(HttpServletRequest req, HttpServletResponse res)

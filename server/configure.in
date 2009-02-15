@@ -98,7 +98,7 @@ if test "$PHP_JAVA" != "no"; then
   fi
 fi
 if test "$PHP_JAVA" != "yes" && test "$PHP_JAVA" != "no"; then
-  JAVA_BRIDGE_JAR="javabridge.policy JavaBridge.jar"
+  JAVA_BRIDGE_JAR="JavaBridge.jar"
 else
   SCRIPT="no"
   SERVLET="no"

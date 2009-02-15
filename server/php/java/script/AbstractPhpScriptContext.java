@@ -29,7 +29,6 @@ import java.io.Writer;
 import javax.script.SimpleScriptContext;
 
 import php.java.bridge.PhpProcedureProxy;
-import php.java.bridge.http.IContext;
 
 
 /**
@@ -38,7 +37,7 @@ import php.java.bridge.http.IContext;
  * @author jostb
  *
  */
-public abstract class AbstractPhpScriptContext extends SimpleScriptContext implements IContext, IPhpScriptContext {
+public abstract class AbstractPhpScriptContext extends SimpleScriptContext implements IPhpScriptContext {
 
    protected HttpProxy kont;
 

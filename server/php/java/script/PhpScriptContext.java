@@ -24,11 +24,12 @@ package php.java.script;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.io.Closeable;
 import java.io.Writer;
+import java.util.concurrent.Callable;
 
 import php.java.bridge.JavaBridgeRunner;
 import php.java.bridge.Util;
-import php.java.bridge.http.IContext;
 
 /**
  * This class implements a simple script context for PHP. It starts a standalone 
@@ -40,7 +41,7 @@ import php.java.bridge.http.IContext;
  * @author jostb
  *
  */
-public class PhpScriptContext extends AbstractPhpScriptContext implements IContext, IPhpScriptContext {
+public class PhpScriptContext extends AbstractPhpScriptContext implements IPhpScriptContext {
     static JavaBridgeRunner bridgeRunner = null;
 
     static {
@@ -88,5 +89,51 @@ public class PhpScriptContext extends AbstractPhpScriptContext implements IConte
 	    buf.append(getSocketName());
 	    buf.append("/JavaBridge");
 	    return buf.toString();
+    }
+    
+    /**{@inheritDoc}*/
+    public Object init(Callable callable) throws Exception {
+	return php.java.bridge.http.Context.getManageable(callable);
+    }
+    /**{@inheritDoc}*/
+    public void onShutdown(Closeable closeable) {
+	php.java.bridge.http.Context.handleManaged(closeable);
+    }
+    /**
+     * Throws IllegalStateException
+     * @return none
+     */
+    public Object getHttpServletRequest() {
+	throw new IllegalStateException("PHP not running in a servlet environment");
+    }
+    
+    /**
+     * Throws IllegalStateException
+     * @return none
+     */
+    public Object getServletContext() {
+	throw new IllegalStateException("PHP not running in a servlet environment");
+    }
+    
+    /**
+     * Throws IllegalStateException
+     * @return none
+     */
+    public Object getHttpServletResponse() {
+	throw new IllegalStateException("PHP not running in a servlet environment");
+    }
+    /**
+     * Throws IllegalStateException
+     * @return none
+     */
+    public Object getServlet() {
+	throw new IllegalStateException("PHP not running in a servlet environment");
+    }
+    /**
+     * Throws IllegalStateException
+     * @return none
+     */
+    public Object getServletConfig() {
+	throw new IllegalStateException("PHP not running in a servlet environment");
     }
 }

@@ -298,7 +298,7 @@ class java_HttpHandler extends java_SocketHandler {
 	$res = "PUT ";
 	$res .= $webapp;
 	$res .= JAVA_PERSISTENT_SERVLET_CONNECTIONS ? " HTTP/1.1\r\n" : " HTTP/1.0\r\n"; 
-	$res .= "Host: localhost\r\n";
+	$res .= "Host: {$this->host}:{$this->port}\r\n";
 	$res .= "Content-Length: "; $res .= $len; $res .= "\r\n";
 	$res .= $context;
 	$res .= $cookies;
@@ -367,7 +367,7 @@ class java_HttpHandler extends java_SocketHandler {
 
   function redirect() {
 	if(!isset($this->headers["redirect"])) { // no redirect received: must continue to send PUT requests
-	  throw new java_RuntimeException("no Pipe- or SocketContextServer available.");
+	  throw new java_RuntimeException("No Pipe- or SocketContextServer available. See README section \"Security Issues\" for details.");
 	}
 	if(!isset($this->protocol->socketHandler)) {
 	  $hostVec = java_Protocol::getHost();

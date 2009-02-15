@@ -28,7 +28,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
 import php.java.servlet.CGIServlet;
-import php.java.servlet.RequestListener;
 
 
 /*
@@ -416,9 +415,8 @@ public final class EngineFactory {
 	return createPhpScriptFileReader((ScriptFile)phpScriptFile);
     }
     /**
-     * Release all managed script engines. Will be called automatically at the end of each request,
-     * if a RequestListener has been declared.
-     * @param list the list from the request attribute {@link RequestListener#ROOT_ENGINES_COLLECTION_ATTRIBUTE}
+     * Release all managed script engines. Will be called automatically during shutdown,
+     * @param list the list of script engines 
      */
     public void releaseScriptEngines(final List list) {
 	AccessController.doPrivileged(new PrivilegedAction(){ 
@@ -435,29 +433,29 @@ public final class EngineFactory {
     }
     /**
      * Manage a script engine
-     * @param req the servlet request
+     * @param ctx the servlet context
      * @param engine the engine to manage
      * @throws ScriptException 
      * @see #releaseScriptEngines(List)
      */
-    public static void addManaged(HttpServletRequest req,
+    public static void addManaged(ServletContext ctx,
 		InvocablePhpServletLocalHttpServerScriptEngine engine) throws ScriptException {
 	try {
-	    addManagedInternal(req, engine);
+	    addManagedInternal(ctx, engine);
 	} catch (PrivilegedActionException e) {
             Throwable cause = e.getCause();
             if (cause instanceof RuntimeException) throw (RuntimeException)cause;
             throw (ScriptException) e.getCause();
 	}
     }
-    private static void addManagedInternal(final HttpServletRequest req,
+    private static void addManagedInternal(final ServletContext ctx,
 	final InvocablePhpServletLocalHttpServerScriptEngine engine) throws PrivilegedActionException {
 	AccessController.doPrivileged(new PrivilegedExceptionAction() { 
 	    public Object run() throws Exception {
 		
 		ArrayList list = null;
 		try {
-		    list = EngineFactoryHelper.getManagedEngineList(req);
+		    list = EngineFactoryHelper.getManagedEngineList(ctx);
 		} catch (NoClassDefFoundError e) { /**ignore for jdk 1.4*/ }
 		
 		if (list!=null) {

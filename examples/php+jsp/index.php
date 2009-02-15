@@ -93,12 +93,21 @@
 </tr>
 
 <tr VALIGN=TOP>
+<td>Report Generator (Eclipse BIRT)</td>
+
+<td WIDTH="30%"><a href="report.php">Execute</a></td>
+
+<td WIDTH="30%"><a href="source.php?source=report.php">Source</a></td>
+</tr>
+
+<tr VALIGN=TOP>
 <td>RMI/IIOP</td>
 
 <td WIDTH="30%"><a href="documentClient.php">Execute</a></td>
 
 <td WIDTH="30%"><a href="source.php?source=documentClient.php">Source</a></td>
 </tr>
+
 </table>
 
 </body>

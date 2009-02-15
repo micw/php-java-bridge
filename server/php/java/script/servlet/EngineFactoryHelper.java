@@ -11,7 +11,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import php.java.servlet.RequestListener;
+import php.java.servlet.ContextLoaderListener;
 
 
 /*
@@ -57,7 +57,7 @@ class EngineFactoryHelper {
             HttpServletResponse res, String protocol, int port, String proxy) throws MalformedURLException, URISyntaxException {
 	return new CloseableInvocablePhpServletLocalHttpServerScriptEngine(servlet, ctx, req, res, protocol, port, proxy);
     }
-    public static ArrayList getManagedEngineList (HttpServletRequest req) {
-	return (ArrayList) req.getAttribute(RequestListener.ROOT_ENGINES_COLLECTION_ATTRIBUTE);
+    public static ArrayList getManagedEngineList (ServletContext ctx) {
+	return (ArrayList) ctx.getAttribute(ContextLoaderListener.ENGINES);
     }
  }

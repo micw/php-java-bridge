@@ -4,6 +4,8 @@ package php.java.script;
 
 import java.io.IOException;
 
+import php.java.bridge.Util;
+
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
  *
@@ -55,6 +57,7 @@ public class ResultProxy extends Number {
      * @return the result code from PHP
      */
     public String toString() {
+	if (Util.logLevel>3) return "DEBUG WARNING: toString() did not terminate script because logLevel > 3!";
 	return String.valueOf(getResult());
     }
 

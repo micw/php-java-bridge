@@ -2,13 +2,17 @@
 
 package php.java.servlet;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import php.java.bridge.Util;
 import php.java.bridge.http.IContext;
 import php.java.script.servlet.PhpSimpleHttpScriptContext;
 
@@ -139,5 +143,29 @@ public class Context extends php.java.bridge.http.Context {
        */
        public Object getServletContext() {
    	return getAttribute(IContext.SERVLET_CONTEXT);
+       }
+
+       /**
+        * Only for internal use. <br><br>
+        * Used when scripts are running within of a servlet environment:
+        * Either php.java.servlet.Context or the JSR223 Context (see PhpSimpleHttpScriptContext).<br>
+        * Outside of a servlet environment use the ContextLoaderListener instead:
+        * Either the Standalone or the JSR223 Standalone (see PhpScriptContext).
+        * @param closeable The manageable beforeShutdown(), will be called by the {@link ContextLoaderListener#contextDestroyed(javax.servlet.ServletContextEvent)}
+        * @param ctx The ServletContext
+        */
+       public static void handleManaged(Closeable closeable, ServletContext ctx) {
+	 List list = (List) ctx.getAttribute(ContextLoaderListener.CLOSEABLES);
+	 list.add(closeable);
+       }
+       /**{@inheritDoc}*/
+       public Object init(Callable callable) throws Exception {
+	 if(Util.logLevel>3) Util.logDebug("calling servlet context init");
+	 return php.java.bridge.http.Context.getManageable(callable);
+       }
+       /**{@inheritDoc}*/
+       public void onShutdown(Closeable closeable) {
+	 if(Util.logLevel>3) Util.logDebug("calling servlet context register shutdown ");
+	 handleManaged(closeable, context);
        }
 }

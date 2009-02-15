@@ -220,7 +220,6 @@ echo $mod_dir/lib >>filelist
 mv server server.backup
 mkdir server
 cp -r server.backup/documentation server
-cp -r server.backup/javabridge.policy server 
 cp server.backup/RunJavaBridge.c server
 cp server.backup/RunMonoBridge.c server
 cp server.backup/natcJavaBridge.c server

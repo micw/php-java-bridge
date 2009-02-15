@@ -147,5 +147,34 @@ public interface IContext {
      */
     public abstract void setAttribute(String name, Object value, int scope)
 	    throws IllegalArgumentException;
-
+    
+    /**
+     * Return the http servlet response
+     * @return The http servlet reponse
+     */
+     public Object getHttpServletResponse();
+     
+     /**
+      * Return the http servlet request
+      * @return The http servlet request
+      */
+     public Object getHttpServletRequest();
+     
+     /**
+      * Return the http servlet
+      * @return The http servlet
+      */
+     public Object getServlet();
+     
+     /**
+      * Return the servlet config
+      * @return The servlet config
+      */
+      public Object getServletConfig();
+      
+      /**
+       * Return the servlet context
+       * @return The servlet context
+       */
+       public Object getServletContext();
 }

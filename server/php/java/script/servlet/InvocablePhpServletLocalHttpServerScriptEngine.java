@@ -235,7 +235,7 @@ public class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhp
 
             /* now evaluate our script */
 
-	    EngineFactory.addManaged(req, this);
+	    EngineFactory.addManaged(servletCtx, this);
 	    localReader = new URLReader(url);
             try { this.script = doEval(localReader, context);} catch (Exception e) {
         	Util.printStackTrace(e);

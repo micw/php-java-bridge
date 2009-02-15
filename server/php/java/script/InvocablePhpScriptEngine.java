@@ -131,7 +131,8 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
 
     /**{@inheritDoc}*/
     public Object getInterface(Class clasz) {
-	return getInterface(script, clasz);
+	checkPhpClosure(script);
+	return getInterface(script.getProxy(Util.ZERO_PARAM), clasz);
     }
     /**{@inheritDoc}*/
     public Object getInterface(Object thiz, Class clasz) {

@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 
 /**
  * This is the main interface of the PHP/Java Bridge. It
@@ -2073,5 +2074,18 @@ public class JavaBridge implements Runnable {
 	} catch (ClassNotFoundException ex) {/*ignore*/}
 	castToBoolean(null);
 	return false;
+    }
+    
+    /**
+     * Helper procedure which calls a callable within a synchronized block.
+     * @param callable The callable
+     * @param lock The lock object
+     * @return The result of the callable
+     * @throws Exception The exception, if any
+     */
+    public static Object callSynchronized (Callable callable, Object lock) throws Exception {
+	synchronized(lock) {
+	    return callable.call();
+	}
     }
 }

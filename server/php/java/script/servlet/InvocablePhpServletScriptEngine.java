@@ -26,7 +26,6 @@ import php.java.script.PhpScriptException;
 import php.java.script.URLReader;
 import php.java.servlet.CGIServlet;
 import php.java.servlet.ContextLoaderListener;
-import php.java.servlet.RequestListener;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -182,7 +181,7 @@ public class InvocablePhpServletScriptEngine extends InvocablePhpServletLocalScr
 	  	
             /* now evaluate our script */
 	    
-	    EngineFactory.addManaged(req, this);
+	    EngineFactory.addManaged(servletCtx, this);
 	    localReader = new URLReader(url);
             try { this.script = doEval(localReader, context);} catch (Exception e) {
         	Util.printStackTrace(e);
@@ -202,8 +201,7 @@ public class InvocablePhpServletScriptEngine extends InvocablePhpServletLocalScr
 	return resultProxy;
     }
     /**
-     * Release the continuation. Must be called explicitly or
-     * via the {@link RequestListener}
+     * Release the continuation. Must be called explicitly 
      */
     public void release() {
 	super.release();

@@ -27,6 +27,7 @@ package php.java.script;
 import java.io.Writer;
 
 import php.java.bridge.Invocable;
+import php.java.bridge.IManaged;
 import php.java.bridge.http.IContext;
 
 /**
@@ -35,7 +36,7 @@ import php.java.bridge.http.IContext;
  * @author jostb
  *
  */
-public interface IPhpScriptContext extends Invocable, IContext {
+public interface IPhpScriptContext extends IManaged, Invocable, IContext {
     
     /**
      * Returns the Writer

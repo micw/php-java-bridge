@@ -24,9 +24,11 @@ package php.java.script.servlet;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.concurrent.Callable;
 
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
@@ -46,7 +48,7 @@ import php.java.script.PhpScriptWriter;
  * @author jostb
  *
  */
-public class PhpSimpleHttpScriptContext extends AbstractPhpScriptContext implements IContext, IPhpScriptContext {
+public class PhpSimpleHttpScriptContext extends AbstractPhpScriptContext implements IPhpScriptContext {
 
     protected HttpServletRequest request;
     protected HttpServletResponse response;
@@ -68,6 +70,12 @@ public class PhpSimpleHttpScriptContext extends AbstractPhpScriptContext impleme
 	this.request = req;
 	this.response = res;
 	this.servlet = servlet;
+	
+	setAttribute(IContext.SERVLET_CONTEXT, ctx, IContext.ENGINE_SCOPE);
+	setAttribute(IContext.SERVLET_CONFIG, servlet.getServletConfig(), IContext.ENGINE_SCOPE);
+	setAttribute(IContext.SERVLET, servlet, IContext.ENGINE_SCOPE);
+	setAttribute(IContext.SERVLET_REQUEST, req, IContext.ENGINE_SCOPE);
+	setAttribute(IContext.SERVLET_RESPONSE, res, IContext.ENGINE_SCOPE);
     }
 
     /**{@inheritDoc}*/
@@ -205,4 +213,48 @@ public class PhpSimpleHttpScriptContext extends AbstractPhpScriptContext impleme
                 }
 	return reader;
     }
+    /**{@inheritDoc}*/
+    public Object init(Callable callable) throws Exception {
+	 return php.java.bridge.http.Context.getManageable(callable);
+    }
+    /**{@inheritDoc}*/
+    public void onShutdown(Closeable closeable) {
+	php.java.servlet.Context.handleManaged(closeable, context);
+    }
+    
+    /**
+     * Return the http servlet response
+     * @return The http servlet reponse
+     */
+     public Object getHttpServletResponse() {
+ 	return getAttribute(IContext.SERVLET_RESPONSE);
+     }
+     /**
+      * Return the http servlet request
+      * @return The http servlet request
+      */
+     public Object getHttpServletRequest() {
+ 	return getAttribute(IContext.SERVLET_REQUEST);
+     }
+     /**
+      * Return the http servlet
+      * @return The http servlet
+      */
+     public Object getServlet() {
+ 	return getAttribute(IContext.SERVLET);
+     }
+     /**
+      * Return the servlet config
+      * @return The servlet config
+      */
+      public Object getServletConfig() {
+  	return getAttribute(IContext.SERVLET_CONFIG);
+      }
+      /**
+       * Return the servlet context
+       * @return The servlet context
+       */
+      public Object getServletContext() {
+   	return getAttribute(IContext.SERVLET_CONTEXT);
+      }
 }

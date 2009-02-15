@@ -24,15 +24,20 @@ package php.java.bridge.http;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
-
+import php.java.bridge.IManaged;
 import php.java.bridge.Invocable;
 import php.java.bridge.PhpProcedureProxy;
+import php.java.bridge.Util;
 
 
 /**
@@ -48,7 +53,7 @@ import php.java.bridge.PhpProcedureProxy;
  * @author jostb
  *
  */
-public class Context implements Invocable, IContext {
+public class Context implements IManaged, Invocable, IContext {
 
     /** Map of the scope of level GLOBAL_SCOPE */
     private Map globalScope;
@@ -170,6 +175,20 @@ public class Context implements Invocable, IContext {
     public Object getHttpServletResponse() {
 	throw new IllegalStateException("PHP not running in a servlet environment");
     }
+    /**
+     * Throws IllegalStateException
+     * @return none
+     */
+    public Object getServlet() {
+	throw new IllegalStateException("PHP not running in a servlet environment");
+    }
+    /**
+     * Throws IllegalStateException
+     * @return none
+     */
+    public Object getServletConfig() {
+	throw new IllegalStateException("PHP not running in a servlet environment");
+    }
 
     /**
      * @param kont dummy
@@ -191,5 +210,62 @@ public class Context implements Invocable, IContext {
     protected Map getEngineScope() {
 	if(engineScope==null) engineScope=new HashMap();
 	return engineScope;
+    }
+    
+    private static boolean registeredHook = false;
+    private static LinkedList closeables = new LinkedList();
+    private static Object lockObject = new Object();
+
+    /**
+     * Only for internal use. <br><br>
+     * Used when scripts are running outside of a servlet environment:
+     * Either the Standalone or the JSR223 Standalone (see PhpScriptContext). <br>
+     * Within a servlet environment use the ContextLoaderListener instead:
+     * Either php.java.servlet.Context or the JSR223 Context (see PhpSimpleHttpScriptContext).
+     * @param closeable The procedure close(), will be called before the VM terminates
+     */
+    public static void handleManaged(Closeable closeable) {
+	// make sure to properly release them upon System.exit().
+	synchronized(closeables) {
+	    if(!registeredHook) {
+		registeredHook = true;
+		try {
+		    Runtime.getRuntime().addShutdownHook(new Util.Thread() {
+			public void run() {
+			    if (closeables==null) return;
+			    synchronized(closeables) {
+				for(Iterator ii = closeables.iterator(); ii.hasNext(); ii.remove()) {
+				    Closeable c = (Closeable) ii.next();
+				    try {
+	                                c.close();
+                                    } catch (IOException e) {
+	                                Util.printStackTrace(e);
+                                    }
+				}
+			    }
+			}});
+		} catch (SecurityException e) {/*ignore*/}
+	    }
+	    closeables.add(closeable);
+	}
+    }
+    /** Only for internal use 
+     * @param callable The callable
+     * @return The result of the Callable::call().
+     * @throws Exception 
+     */
+    public static Object getManageable(Callable callable) throws Exception {
+	synchronized(lockObject) {
+	    return callable.call();
+	}
+    }
+    /**{@inheritDoc}
+     * @throws Exception */
+    public Object init(Callable callable) throws Exception {
+	return getManageable(callable);
+    }
+    /**{@inheritDoc}*/
+    public void onShutdown(Closeable closeable) {
+	php.java.bridge.http.Context.handleManaged(closeable);
     }
 }
