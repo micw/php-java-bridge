@@ -84,7 +84,8 @@ src.zip: META-INF/java/Mono.inc META-INF/java/JavaProxy.php META-INF/java/Mono.i
 JavaBridge.war: src.zip JavaBridge.jar $(SERVLET) $(JAVA_BRIDGE_SERVLET_JAR) $(SCRIPT) $(JAVA_BRIDGE_SCRIPT_JAR) $(FACES) $(JAVA_BRIDGE_FACES_JAR) TestInstallation.class META-INF/java/JavaProxy.php
 	$(PHP_JAVA_DIR)/bin/javac $(SOURCE_VERSION) -classpath .:../unsupported:$(SERVLET):$(SCRIPT) php/java/script/*.java php/java/script/servlet/*.java php/java/bridge/http/*.java php/java/bridge/*.java php/java/servlet/*.java php/java/servlet/fastcgi/*.java 2>/dev/null
 	-mkdir WEB-INF/lib WEB-INF/classes
-	cp JavaBridge.jar $(SCRIPT) $(JAVA_BRIDGE_SERVLET_JAR) $(JAVA_BRIDGE_SCRIPT_JAR) $(JAVA_BRIDGE_FACES_JAR) ../unsupported/*.jar WEB-INF/lib
+	cp JavaBridge.jar $(SCRIPT) $(JAVA_BRIDGE_SERVLET_JAR) $(JAVA_BRIDGE_SCRIPT_JAR) $(JAVA_BRIDGE_FACES_JAR) ../unsupported/*.jar ../unsupported/eclipse.birt.lib/*.jar WEB-INF/lib
+	cp -r ../unsupported/platform WEB-INF/
 	cat WEB-INF/cgi/rename_to_php-cgi-i386-linux.ini | sed 's/i386-linux/x86-sunos/;s/^extension=.*$$/;&/' >WEB-INF/cgi/php-cgi-x86-sunos.ini
 	cat WEB-INF/cgi/rename_to_php-cgi-x86-linux.sh | sed 's/i386-linux/x86-sunos/g' >WEB-INF/cgi/php-cgi-x86-sunos.sh
 
@@ -105,7 +106,7 @@ JavaBridge.war: src.zip JavaBridge.jar $(SERVLET) $(JAVA_BRIDGE_SERVLET_JAR) $(S
 	rm -f META-INF/MANIFEST.MF.standalone
 	mv META-INF/MANIFEST.MF META-INF/MANIFEST.MF.standalone
 	sed '/Main-Class/s/php.java.bridge.Standalone/TestInstallation/' <META-INF/MANIFEST.MF.standalone >META-INF/MANIFEST.MF
-	$(PHP_JAVA_DIR)/bin/jar cf JavaBridge.war TestInstallation*.class *.php locale/* *.rpt* *.jsp WEB-INF/web.xml WEB-INF/cgi/* WEB-INF/cgi/README WEB-INF/lib/*.jar WEB-INF/platform/* WEB-INF/eclipse.birt.lib/* $(java_inc)
+	$(PHP_JAVA_DIR)/bin/jar cf JavaBridge.war TestInstallation*.class *.php locale/* *.rpt* *.jsp WEB-INF/web.xml WEB-INF/cgi/* WEB-INF/cgi/README WEB-INF/lib/*.jar WEB-INF/platform/* $(java_inc)
 	rm -f META-INF/MANIFEST.MF
 	rm -rf java
 	mv META-INF/MANIFEST.MF.standalone META-INF/MANIFEST.MF

@@ -5,7 +5,28 @@ Please send bug reports, questions and suggestions to
 
 Version 5.4.3.2
 
-* Users who want to run php from Java can pass arguments via
+* A shutdown hook can now be used to automatically shut down libraries
+  when the (servlet-) context is destroyed.
+
+* Invocable script engines are automatically destroyed when the 
+  (servlet-) context is destroyed.
+
+* Invocable script engines are no longer automatically destroyed at
+  the end of the request, as users may want to store them in the
+  application store for example. Use ((Closeable)engine).close() to
+  destroy a script engine explicitly.
+
+* The convenience procedures getHttpServletResponse(),
+  getHttpServletRequest(), getServlet(), getServletConfig(),
+  getServletContext(), getRealPath() have been added to the the
+  java_context().
+
+* On Solaris the directory /tmp is used instead of /dev/shm to create
+  the named pipes.
+
+* An Eclipse BIRT report example is included.
+
+* Users who want to run php from Java, can pass arguments via
   -Dphp.java.bridge.php_exec_args=ARGS. ARGS must be a list of
   java.net.URLEncoded arguments, separated by a space. User-provided
   PHP_EXEC_ARGS replace the standard args, which are: "-d

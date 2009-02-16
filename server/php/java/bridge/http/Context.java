@@ -25,6 +25,7 @@ package php.java.bridge.http;
  */
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
@@ -267,5 +268,21 @@ public class Context implements IManaged, Invocable, IContext {
     /**{@inheritDoc}*/
     public void onShutdown(Closeable closeable) {
 	php.java.bridge.http.Context.handleManaged(closeable);
+    }
+    
+    /** Only for internal use
+     * @param path the path
+     * @return the real path
+     */
+    public static String getRealPathInternal(String path) {
+	try {
+	    return new File(path).getCanonicalPath();
+        } catch (IOException e) {
+            return new File(path).getAbsolutePath();
+        }
+    }
+    /**{@inheritDoc}*/
+    public String getRealPath(String path) {
+	return getRealPathInternal(path);
     }
 }

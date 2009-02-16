@@ -3,6 +3,8 @@
 /* PHP version of numberguess.jsp */
 $session = java_session();
 
+java_require("./numberGuess.jar");
+
 if(java_is_null($numguess=$session->get("bean"))) {
   $session->put("bean", $numguess=new Java("num.NumberGuessBean"));
 }

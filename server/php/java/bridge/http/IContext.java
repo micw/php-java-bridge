@@ -177,4 +177,11 @@ public interface IContext {
        * @return The servlet context
        */
        public Object getServletContext();
+       
+       /**
+        * Get the full file system path for the given resource.
+        * @param path the relative path to an existing resource
+        * @return the file system path
+        */
+       public String getRealPath(String path);
 }

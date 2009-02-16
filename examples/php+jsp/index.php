@@ -53,14 +53,6 @@
 </tr>
 
 <tr VALIGN=TOP>
-<td>NumberGuess (jsp)</td>
-
-<td WIDTH="30%"><a href="numberguess.jsp">Execute</a></td>
-
-<td WIDTH="30%"><a href="source.php?source=numberguess.jsp">Source</a></td>
-</tr>
-
-<tr VALIGN=TOP>
 <td>Excel Sheet</td>
 
 <td WIDTH="30%"><a href="excel.php">Execute</a></td>

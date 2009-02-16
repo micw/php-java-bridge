@@ -168,4 +168,17 @@ public class Context extends php.java.bridge.http.Context {
 	 if(Util.logLevel>3) Util.logDebug("calling servlet context register shutdown ");
 	 handleManaged(closeable, context);
        }
+
+       /** Only for internal use
+        * @param path the path
+        * @param ctx the servlet context 
+        * @return the real path
+        */
+       public static String getRealPathInternal(String path, ServletContext ctx) {
+	   return CGIServlet.getRealPath(ctx, path);
+       }
+       /**{@inheritDoc}*/
+       public String getRealPath(String path) {
+   	return getRealPathInternal(path, context);
+       }
 }

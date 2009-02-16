@@ -1,3 +1,22 @@
+2008-02-16  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/IManaged.java: new interface
+	
+	* server/php/java/bridge/IContext.java
+	(getHttpServletResponse,getHttpServletRequest,getServlet,getServletConfig,getServletContext,getRealPath):
+	new convenience procedures
+
+	* server/php/java/servlet/RequestListener.java: Removed
+
+	* server/php/java/script/InvocablePhpScriptEngine.java
+	(getInterface): Rewritten
+
+	* server/php/java/servlet/ContextLoaderListener.java
+	(destroyCloseables, destroyScriptEngines): New procedures
+
+	* server/META-INF/java/Protocol.inc
+	(write): sent the real host and port number
+	
 2008-02-08  Jost Boekemeier  <jostb@intern>
 
 	* server/javabridge.policy: Removed obsolete file

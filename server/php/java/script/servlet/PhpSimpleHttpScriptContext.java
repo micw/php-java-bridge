@@ -257,4 +257,8 @@ public class PhpSimpleHttpScriptContext extends AbstractPhpScriptContext impleme
       public Object getServletContext() {
    	return getAttribute(IContext.SERVLET_CONTEXT);
       }
+      /**{@inheritDoc}*/
+      public String getRealPath(String path) {
+  	return php.java.servlet.Context.getRealPathInternal(path, context);
+      }
 }

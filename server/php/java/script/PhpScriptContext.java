@@ -136,4 +136,9 @@ public class PhpScriptContext extends AbstractPhpScriptContext implements IPhpSc
     public Object getServletConfig() {
 	throw new IllegalStateException("PHP not running in a servlet environment");
     }
+
+    /**{@inheritDoc}*/
+    public String getRealPath(String path) {
+	return php.java.bridge.http.Context.getRealPathInternal(path);
+    }
 }
