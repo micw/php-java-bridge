@@ -1,3 +1,9 @@
+php-java-bridge (5.4.3.2-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Andre Felipe Machado <andremachado@techforce.com.br>  Thu, 19 Feb 2009 16:55:08 -0300
+
 php-java-bridge (5.4.3.1-1) unstable; urgency=low
 
   * New upstream release.
