@@ -284,7 +284,7 @@ public final class Util {
 		    if ((filePath = new File(s, "php-cgi.exe")).exists()) { found = true; break; }
 		    if ((filePath = new File(s, "php-cgi")).exists())     { found = true; break; }
 		}
-		if (!found) found = ((filePath = new File("/usr/php/bin/php-cgi", "php-cgi")).exists());
+		if (!found) found = ((filePath = new File("/usr/php/bin/php-cgi")).exists());
 		if (found) 
 		    DEFAULT_CGI_LOCATIONS = new String[] {filePath.getCanonicalPath(), DEFAULT_CGI_LOCATIONS[0], DEFAULT_CGI_LOCATIONS[1]};
 
