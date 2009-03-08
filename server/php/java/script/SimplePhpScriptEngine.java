@@ -180,12 +180,12 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
     }
 
     protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
-        /* PHP executes a script and then terminates immediately. Use the php-invocable ScriptEngine to hold a PHP script */
+        if(reader == null) { release(); return null; }
+
+	/* PHP executes a script and then terminates immediately. Use the php-invocable ScriptEngine to hold a PHP script */
 	if(continuation != null) throw new IllegalStateException("continuation is not null.");
 
 	try {
-            if(reader==null) return null;
-      	
 	    setNewContextFactory();
             setName(name);
     

@@ -162,7 +162,7 @@ public class InvocablePhpServletScriptEngine extends InvocablePhpServletLocalScr
 	// use a short path, if the script file already exists
 	if (reader instanceof ScriptFileReader) return super.eval(reader, context, name);
 	
-	if(continuation != null) release();
+        if((continuation != null) || (reader == null) ) release();
      	FileOutputStream fout = null;
         Reader localReader = null;
   	if(reader==null) return null;

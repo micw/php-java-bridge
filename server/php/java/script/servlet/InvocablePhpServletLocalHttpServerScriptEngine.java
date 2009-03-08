@@ -221,7 +221,7 @@ public class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhp
         }
     }
     private Object evalInternal(Reader reader, ScriptContext context, String name) throws ScriptException {
-        if(continuation != null) release();
+        if((continuation != null) || (reader == null) ) release();
         Reader localReader = null;
   	if(reader==null) return null;
   	

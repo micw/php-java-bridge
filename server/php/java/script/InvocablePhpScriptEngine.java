@@ -142,7 +142,7 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
     }
 
     protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
-        if(continuation != null) release();
+        if((continuation != null) || (reader == null) ) release();
   	if(reader==null) return null;
   	
   	setNewContextFactory();
