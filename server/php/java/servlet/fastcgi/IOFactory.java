@@ -36,7 +36,7 @@ import java.io.OutputStream;
  * @author jostb
  *
  */
-public abstract class Factory {
+public abstract class IOFactory {
     /**
      * Create a new socket and connect
      * it to the given host/port
@@ -44,7 +44,7 @@ public abstract class Factory {
      * @return The socket
      * @throws ConnectException
      */
-    public abstract Channel connect(ChannelName name) throws ConnectException;
+    public abstract Channel connect(ChannelFactory name) throws ConnectException;
     /** 
      * Create a new InputStream.
      * @return The input stream. 

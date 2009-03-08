@@ -34,7 +34,7 @@ import php.java.servlet.CGIServlet;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-class NPChannelName extends ChannelName {
+class NPChannelFactory extends ChannelFactory {
     public static final String PREFIX="\\\\.\\pipe\\";
     
     private String raPath;

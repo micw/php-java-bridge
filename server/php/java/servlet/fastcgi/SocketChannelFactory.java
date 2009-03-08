@@ -37,7 +37,7 @@ import php.java.servlet.CGIServlet;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-class SocketChannelName extends ChannelName {
+class SocketChannelFactory extends ChannelFactory {
     public static final String LOCAL_HOST = "127.0.0.1";
     private int port;
 
@@ -93,8 +93,8 @@ class SocketChannelName extends ChannelName {
   		    s.close();
   		    break;
   		} catch (IOException e) {/*ignore*/}
-  		if(System.currentTimeMillis()-1600>T0) break;
-  		Thread.sleep(100);
+  		if(System.currentTimeMillis()-16000>T0) break;
+  		Thread.sleep(1000);
   	    }
   	    if(count==-1) Util.logError("Timeout waiting for PHP FastCGI daemon");
   	    if(Util.logLevel>3) Util.logDebug("done waiting for PHP FastCGI daemon");

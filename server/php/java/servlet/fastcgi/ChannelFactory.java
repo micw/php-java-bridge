@@ -40,7 +40,7 @@ import php.java.servlet.PhpCGIServlet;
  * A factory which creates FastCGI channels.
  * @author jostb
  */
-public abstract class ChannelName {
+public abstract class ChannelFactory {
     protected PhpCGIServlet servlet;
     protected PhpCGIServlet.CGIEnvironment env;
     protected String contextPath;
@@ -59,7 +59,7 @@ public abstract class ChannelName {
 	    /*
 	     * Try to start the FastCGI server,
 	     */
-	    synchronized(ChannelName.fcgiStartLock) {
+	    synchronized(ChannelFactory.fcgiStartLock) {
 	      if(!fcgiStarted) {
 		  if(servlet.delegateToJavaBridgeContext) {
 		      // if this is the GlobalPhpJavaServlet, try to delegate
@@ -138,7 +138,7 @@ public abstract class ChannelName {
 	}
 	
 	void destroy() {
-	  synchronized(ChannelName.fcgiStartLock) {
+	  synchronized(ChannelFactory.fcgiStartLock) {
 	    fcgiStarted = false;
 	    fcgiActivatorRunning = false;
 	    if(proc==null) return;  	
@@ -193,13 +193,13 @@ public abstract class ChannelName {
 		      Util.printStackTrace(e);
 		  } finally {
 		     if(in!=null) try { in.close(); } catch (Exception e){/*ignore*/}
-		     synchronized (ChannelName.fcgiStartLock) { fcgiStartLock.notify(); }
+		     synchronized (ChannelFactory.fcgiStartLock) { fcgiStartLock.notify(); }
 		  }
 	      }
 	    }).init(conn).start();
 	}
 	/**
-	 * For backward compatibility the "JavaBridge" context uses the port 9667 (Linux/Unix) or \\.\pipe\JavaBridge@9667 (Windogs).
+	 * For backward compatibility the "JavaBridge" context uses the port 9667 (Linux/Unix) or <code>\\.\pipe\JavaBridge@9667</code> (Windogs).
 	 * @param servlet The servlet
 	 * @param env The current CGI environment.
 	 * @param contextPath The path of the web context
@@ -232,14 +232,14 @@ public abstract class ChannelName {
 	public abstract void findFreePort(boolean select);
 
 	/**
-	 * Create a new ChannelName.
-	 * @return The concrete ChannelName (NP or Socket channel).
+	 * Create a new ChannelFactory.
+	 * @return The concrete ChannelFactory (NP or Socket channel factory).
 	 */
-	public static ChannelName getChannelName() {
+	public static ChannelFactory createChannelFactory() {
 	    if(PhpCGIServlet.USE_SH_WRAPPER)
-		return new SocketChannelName();
+		return new SocketChannelFactory();
 	    else 
-		return new NPChannelName();
+		return new NPChannelFactory();
 	}
 	
 	/** 
