@@ -127,10 +127,10 @@ public class InteractivePhpScriptEngine extends InvocablePhpScriptEngine {
      */
     protected void setNewContextFactory() {
         IPhpScriptContext context = (IPhpScriptContext)getContext(); 
-	env = (Map) this.processEnvironment.clone();
+	env = (Map) processEnvironment.clone();
 
 	ctx = InteractivePhpScriptContextFactory.addNew((IContext)context);
 
-	setStandardEnvironmentValues(context, env);
+	setStandardEnvironmentValues(env);
     }
 }

@@ -2,11 +2,9 @@
 
 package php.java.servlet;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -154,17 +152,17 @@ public class Context extends php.java.bridge.http.Context {
         * @param closeable The manageable beforeShutdown(), will be called by the {@link ContextLoaderListener#contextDestroyed(javax.servlet.ServletContextEvent)}
         * @param ctx The ServletContext
         */
-       public static void handleManaged(Closeable closeable, ServletContext ctx) {
+       public static void handleManaged(Object closeable, ServletContext ctx) {
 	 List list = (List) ctx.getAttribute(ContextLoaderListener.CLOSEABLES);
 	 list.add(closeable);
        }
        /**{@inheritDoc}*/
-       public Object init(Callable callable) throws Exception {
+       public Object init(Object callable) throws Exception {
 	 if(Util.logLevel>3) Util.logDebug("calling servlet context init");
 	 return php.java.bridge.http.Context.getManageable(callable);
        }
        /**{@inheritDoc}*/
-       public void onShutdown(Closeable closeable) {
+       public void onShutdown(Object closeable) {
 	 if(Util.logLevel>3) Util.logDebug("calling servlet context register shutdown ");
 	 handleManaged(closeable, context);
        }

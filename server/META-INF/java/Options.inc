@@ -130,7 +130,7 @@ if(!defined("JAVA_PIPE_DIR")) {
   if ($ini=get_cfg_var("java.pipe_dir"))  define("JAVA_PIPE_DIR", $ini); 
   else
 	if (file_exists ("/dev/shm"))         define("JAVA_PIPE_DIR", "/dev/shm" );
-	else if (PHP_OS===SunOS)              define("JAVA_PIPE_DIR", "/tmp"); # shared memory on Solaris
+	else if (PHP_OS==='SunOS')            define("JAVA_PIPE_DIR", "/tmp"); # shared memory on Solaris
 	else                                  define("JAVA_PIPE_DIR", null);
 }
 

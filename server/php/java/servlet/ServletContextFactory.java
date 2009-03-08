@@ -31,7 +31,7 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * Create session contexts for servlets.<p> In addition to the
- * standard ContextFactory this manager keeps a reference to the
+ * standard ContextFactory this factory keeps a reference to the
  * HttpServletRequest.
  *
  * @see php.java.bridge.http.ContextFactory
@@ -39,9 +39,9 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class ServletContextFactory extends SimpleServletContextFactory {
     protected ServletContextFactory(Servlet servlet, ServletContext ctx,
-                        HttpServletRequest proxy, HttpServletRequest req,HttpServletResponse res) { super(servlet, ctx, proxy, req, res); }
-    /**{@inheritDoc}*/
-    public synchronized void releaseManaged() throws InterruptedException {}
+                        HttpServletRequest proxy, HttpServletRequest req,HttpServletResponse res) { 
+	super(servlet, ctx, proxy, req, res, true); 
+    }
     /**{@inheritDoc}*/
     public synchronized void waitFor(long timeout) throws InterruptedException {}
     /**

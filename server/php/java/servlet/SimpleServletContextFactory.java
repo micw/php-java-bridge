@@ -24,6 +24,8 @@ package php.java.servlet;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.net.URI;
+
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -31,11 +33,12 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import php.java.bridge.ISession;
+import php.java.bridge.Util;
 import php.java.bridge.http.IContext;
 
 /**
  * Create session contexts for servlets.<p> In addition to the
- * standard ContextFactory this manager keeps a reference to the
+ * standard ContextFactory this factory keeps a reference to the
  * HttpServletRequest.
  *
  * @see php.java.bridge.http.ContextFactory
@@ -47,8 +50,8 @@ public class SimpleServletContextFactory extends php.java.bridge.http.SimpleCont
     protected ServletContext kontext;
     protected Servlet servlet;
 
-    protected SimpleServletContextFactory(Servlet servlet, ServletContext ctx, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res) {
-    	super(CGIServlet.getRealPath(ctx, ""));
+    protected SimpleServletContextFactory(Servlet servlet, ServletContext ctx, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res, boolean isManaged) {
+    	super(CGIServlet.getRealPath(ctx, ""), isManaged);
     	this.kontext = ctx;
     	this.proxy = proxy;
     	this.req = req;
@@ -78,10 +81,6 @@ public class SimpleServletContextFactory extends php.java.bridge.http.SimpleCont
     	super.destroy();
     	proxy=null;
     }
-    /**{@inheritDoc}*/
-    public String toString() {
-	return super.toString() + ", HttpServletRequest: " + proxy ;
-    }
     /**
      * Return an emulated JSR223 context.
      * @return The context.
@@ -105,5 +104,39 @@ public class SimpleServletContextFactory extends php.java.bridge.http.SimpleCont
     public HttpSession getSession() {
 	if(session!=null) return ((HttpSessionFacade)session).getCachedSession();
 	return null;
+    }
+    /**{@inheritDoc}*/
+    public String getRedirectString() {
+	return getRedirectString(req.getContextPath()+req.getServletPath());
+    }
+    /**{@inheritDoc}*/
+    public String getRedirectString(String webPath) {
+        try {
+            StringBuffer buf = new StringBuffer();
+            buf.append(getSocketName());
+            buf.append("/");
+            buf.append(webPath);
+            URI uri = new URI(req.isSecure()?"s:127.0.0.1":"h:127.0.0.1", buf.toString(), null);
+            return (uri.toASCIIString()+"javabridge");
+        } catch (Exception e) {
+            Util.printStackTrace(e);
+        }
+	StringBuffer buf = new StringBuffer();
+	if(!req.isSecure())
+		buf.append("h:");
+	else
+		buf.append("s:");
+	buf.append("127.0.0.1");
+	buf.append(":");
+	buf.append(getSocketName()); 
+	buf.append('/');
+	buf.append(webPath);
+	buf.append("javabridge");
+	return buf.toString();
+    }
+
+    /**{@inheritDoc}*/
+    public String getSocketName() {
+	return String.valueOf(php.java.servlet.CGIServlet.getLocalPort(req));
     }
 }

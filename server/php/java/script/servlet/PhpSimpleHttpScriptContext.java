@@ -24,11 +24,9 @@ package php.java.script.servlet;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
-import java.util.concurrent.Callable;
 
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
@@ -149,41 +147,20 @@ public class PhpSimpleHttpScriptContext extends AbstractPhpScriptContext impleme
         return context;
     }
 
-    /**{@inheritDoc}*/
-    public String getContextString() {
-	StringBuffer buf = new StringBuffer();
-	if(!request.isSecure())
-		buf.append("h:");
-	else
-		buf.append("s:");
-	buf.append("127.0.0.1");
-	buf.append(":");
-	buf.append(getSocketName()); 
-	buf.append('/');
-	buf.append(request.getRequestURI());
-	buf.append("javabridge");
-	return buf.toString();
-    }
-
-    /**{@inheritDoc}*/
-    public String getSocketName() {
-	return String.valueOf(php.java.servlet.CGIServlet.getLocalPort(request));
-    }
-    private Writer _writer;
     /** {@inheritDoc} */
     public Writer getWriter() {
- 	if(_writer == null)
+ 	if(writer == null)
  		try {
- 			_writer = writer =  response.getWriter(); 
+ 			writer =  response.getWriter(); 
  		} catch (IllegalStateException x) {
  			/*ignore*/
  		} catch (IOException e) {
  			/*ignore*/
  		}
  	
- 	if(_writer == null)
+ 	if(writer == null)
  		try { 
- 			_writer = writer = new PhpScriptWriter (response.getOutputStream());
+ 			writer = new PhpScriptWriter (response.getOutputStream());
  		} catch (IOException ex) { 
  			throw new RuntimeException(ex); 
  		}
@@ -192,33 +169,31 @@ public class PhpSimpleHttpScriptContext extends AbstractPhpScriptContext impleme
  	return writer;
     }
 
-    private Writer _errorWriter;
     /** {@inheritDoc} */
     public Writer getErrorWriter() {
- 	if(_errorWriter == null)
- 		_errorWriter = errorWriter = PhpScriptLogWriter.getWriter(new php.java.servlet.Logger(context));
+ 	if(errorWriter == null)
+ 		errorWriter = PhpScriptLogWriter.getWriter(new php.java.servlet.Logger(context));
 
  	if(! (errorWriter instanceof PhpScriptWriter)) setErrorWriter(errorWriter);
  	return errorWriter;	
     }
 
-    private Reader _reader;
     /**{@inheritDoc}*/
     public Reader getReader() {
-        if (_reader == null)
+        if (reader == null)
 	        try {
-	                _reader = reader = request.getReader();
+	                reader = request.getReader();
                 } catch (IOException e) {
                 	throw new RuntimeException(e);
                 }
 	return reader;
     }
     /**{@inheritDoc}*/
-    public Object init(Callable callable) throws Exception {
+    public Object init(Object callable) throws Exception {
 	 return php.java.bridge.http.Context.getManageable(callable);
     }
     /**{@inheritDoc}*/
-    public void onShutdown(Closeable closeable) {
+    public void onShutdown(Object closeable) {
 	php.java.servlet.Context.handleManaged(closeable, context);
     }
     

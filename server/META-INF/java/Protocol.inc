@@ -473,8 +473,8 @@ class java_Protocol {
    */
   function createSimpleHandler($name) {
 	$channelName = $name;
+    $errno = null; $errstr = null;
     if(!is_string($channelName)) {
-      $errno = null; $errstr = null;
 	  $peer = pfsockopen($host="127.0.0.1", $channelName, $errno, $errstr, 30);
 	} else {
 	  $type = $channelName[0];

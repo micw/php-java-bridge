@@ -147,13 +147,13 @@ public class InvocablePhpServletScriptEngine extends InvocablePhpServletLocalScr
      */
     protected void setNewContextFactory() {
         IPhpScriptContext context = (IPhpScriptContext)getContext(); 
-	env = (Map) this.processEnvironment.clone();
+	env = (Map) processEnvironment.clone();
 
 	ctx = InvocablePhpServletContextFactory.addNew((IContext)context, servlet, servletCtx, req, res);
     	
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */
-	setStandardEnvironmentValues(context, env);
+	setStandardEnvironmentValues(env);
 	env.put("X_JAVABRIDGE_INCLUDE", tempfile.getPath());
     }
  

@@ -5,6 +5,7 @@ package php.java.script.servlet;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.util.List;
 
 import javax.script.ScriptException;
 import javax.servlet.Servlet;
@@ -13,6 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.servlet.CGIServlet;
+import php.java.servlet.ContextLoaderListener;
 import php.java.servlet.PhpCGIServlet;
 
 /*
@@ -124,6 +126,8 @@ class InvocablePhpServletLocalScriptEngine extends InvocablePhpServletLocalHttpS
     }
     protected void releaseReservedContinuation() {
 	PhpCGIServlet.releaseReservedContinuation();
+	List list = EngineFactoryHelper.getManagedEngineList(servletCtx);
+	list.remove(this);
     }
     protected void reserveContinuation() throws ScriptException {
 	PhpCGIServlet.reserveContinuation();

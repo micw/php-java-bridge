@@ -3,6 +3,22 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 5.4.4
+
+* The handling of J2EE JSR 223 script engines (and scripts executed
+within a J2EE server) has been changed. They are no longer reclaimed
+automatically when they are idle for more than 15 seconds. Please see
+the ChangeLog file for details.
+
+* A system FastCGI server executable is now executed from the PATH.
+
+
+Version 5.4.3.3
+
+* The binary download has been split into a JavaBridgeTemplate5433.war
+  and a php-java-bridge_5.4.3.3_documentation.zip.
+
+
 Version 5.4.3.2
 
 * A shutdown hook can now be used to automatically shut down libraries

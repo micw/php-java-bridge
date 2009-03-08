@@ -24,15 +24,21 @@ package php.java.bridge.http;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 import php.java.bridge.ISession;
 import php.java.bridge.JavaBridge;
+import php.java.bridge.NotImplementedException;
 import php.java.bridge.Util;
 import php.java.bridge.SimpleJavaBridgeClassLoader;
 
 
 /**
  * Base of a set of visitors which can extend the standard ContextFactory.
- *  
+ * 
+ * Instances of this class are thrown away at the end of the request. 
+ *
  * @see php.java.servlet.ServletContextFactory
  * @see php.java.script.PhpScriptContextFactory
  */
@@ -55,9 +61,11 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
     
     private boolean isContextRunnerRunning = false;
     private boolean isValid = true;
+    private boolean isManaged;
     
-    protected SimpleContextFactory(String webContext) {
-  	visited = new ContextFactory(webContext);
+    protected SimpleContextFactory(String webContext, boolean isManaged) {
+	this.isManaged = isManaged;
+  	visited = new ContextFactory(webContext, isManaged);
   	visited.accept(this);
     	setClassLoader(Util.getContextClassLoader());
     }
@@ -81,6 +89,7 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
     /**{@inheritDoc}*/
     public synchronized void initialize () {
 	isContextRunnerRunning = true;
+        getContext().setAttribute(IContext.JAVA_BRIDGE, getBridge(), IContext.ENGINE_SCOPE);
     }
     /**
      * Wait for the context factory to finish, then release
@@ -88,9 +97,16 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
      */
     public synchronized void releaseManaged() throws InterruptedException {
 	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet is waiting for ContextRunner " +System.identityHashCode(this));
-	if (isContextRunnerRunning && isValid) wait();
-	if(Util.logLevel>4) Util.logDebug("contextfactory: servlet done waiting for ContextRunner " +System.identityHashCode(this));
-	release();
+	if (isContextRunnerRunning) {
+	    while(isValid) wait();
+	    if(Util.logLevel>4) Util.logDebug("contextfactory: servlet done waiting for ContextRunner " +System.identityHashCode(this));
+	} else {
+	    if(Util.logLevel>4) Util.logDebug("contextfactory: servlet done w/o ContextRunner " +System.identityHashCode(this));
+	    if (isManaged)
+		destroy();
+	    else
+		release();
+	}
     }
     /**
      * Wait for the context factory to finish. 
@@ -150,7 +166,6 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
     /**{@inheritDoc}*/
     public void setContext(IContext context) {
         this.context = context;
-        this.context.setAttribute(IContext.JAVA_BRIDGE, getBridge(), IContext.ENGINE_SCOPE);
     }
     /**{@inheritDoc}*/
     public void release() {
@@ -161,7 +176,7 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
      * Called by recycle at the end of the script
      */
     public void recycle() {
-	session = null;
+	visited.recycle();
     }
 
     private ClassLoader loader;
@@ -190,5 +205,33 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
 	if(loader==null) 
 	    throw new NullPointerException("loader");
 	this.loader = loader;
+    }
+
+    /**{@inheritDoc}*/
+    public String getSocketName() {
+	throw new NotImplementedException("Use the JSR 223 API or a servlet environment instead");
+    }
+    /**{@inheritDoc}*/
+    public String getRedirectString() {
+	return getRedirectString("/JavaBridge");
+    }
+    /**{@inheritDoc}*/
+    public String getRedirectString(String webPath) {
+	try {
+	    StringBuffer buf = new StringBuffer();
+	    buf.append(getSocketName());
+	    buf.append("/");
+	    buf.append(webPath);
+	    URI uri = new URI("h:127.0.0.1", buf.toString(), null);
+	    return (uri.toASCIIString()+"javabridge");
+	} catch (URISyntaxException e) {
+	    Util.printStackTrace(e);
+        }
+	StringBuffer buf = new StringBuffer("h:127.0.0.1:");
+	buf.append(getSocketName()); 
+	buf.append('/');
+	buf.append(webPath);
+	buf.append("javabridge");
+	return buf.toString();
     }
 }

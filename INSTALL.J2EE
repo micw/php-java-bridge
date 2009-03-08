@@ -10,60 +10,14 @@ embed PHP applications into a pure Java application server or servlet
 engine. Please see the INSTALL.J2SE document for details how to call
 PHP methods from a pure Java application.
 
-The PHP/Java Bridge can be installed with one copy operation:
-
-* the JavaBridge.war (renamed to "myPhpApp.war") should be copied into
-  the autodeploy folder of the J2EE server.
-
-
-Development
------------
-
-* Download and extract the php-java-bridge*_j2ee.zip file into a
-  folder.
-
-* Navigate to the created JAVA.STANDALONE folder.
-
-* Right-click on log4j.jar and select "open with Java ..."
-
-* Right-click on JavaBridge.jar and select "open with Java ...". In
-  the "Starting ..." dialog select SERVLET_LOCAL:8080.
-
-* Run your PHP scripts. For example browse to http://127.0.0.1:8080
-  and click on test.php.
-
-* Link Java.inc and your Java libraries into PHP at run-time. Example:
-  
-   <?php
-    require_once("java/Java.inc");
-
-    // call Java libraries using the provided Java class...
-    java_require("myLibs/myLib.jar;dependentLib1.jar;...);
-
-    $SystemClazz =     Java("java.lang.System"); 
-    echo $SystemClazz->getProperties();
-
-    $myInstance  = NEW Java("myPackage.MyClass", ...); 
-    $myInstance->callSomething(...);
-   ?>
-
-* Create a PHP web archive for distribution, for example with the commands:
-
-  mkdir JavaBridge
-  cd JavaBridge
-  jar xvf ../JavaBridge.war
-
-  cd ../myPhpApp
-  cp -r ../JavaBridge/WEB-INF JavaBridge/java .
-  cp -r MYLIBS/*.jar WEB-INF/lib
-  jar cvf ../myPhpApp.war *
-  
-
-Deployment
-----------
+Installation
+------------
 
 * Install a J2EE application server or servlet engine, for example
   Apache Geronimo, Tomcat, Glassfish, ...
+
+* Copy your Java libraries, PHP executables or PHP libraries into
+  JavaBridgeTemplate.war and rename it to "myPhpApp.war" or similar.
 
 * Copy your web application myPhpApp.war to the autodeploy folder of
   your J2EE server or servlet engine. If you don't have a myPhpApp.war

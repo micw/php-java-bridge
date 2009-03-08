@@ -168,13 +168,13 @@ class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
      */
     protected void setNewContextFactory() {
         IPhpScriptContext context = (IPhpScriptContext)getContext(); 
-	env = (Map) this.processEnvironment.clone();
+	env = (Map) processEnvironment.clone();
 
 	ctx = PhpServletContextFactory.addNew((IContext)context, servlet, servletCtx, req, res);
     	
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */
-	setStandardEnvironmentValues(context, env);
+	setStandardEnvironmentValues(ctx, env);
     }
     
     protected Object eval(final Reader reader, final ScriptContext context, final String name) throws ScriptException {
@@ -234,36 +234,17 @@ class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
      * @param context the new context ID
      * @param env the environment which will be passed to PHP
      */
-    protected void setStandardEnvironmentValues (IPhpScriptContext context, Map env) {
-	setStandardEnvironmentValues(context, env, ctx, req, webPath, overrideHosts);
+    protected void setStandardEnvironmentValues (IContextFactory ctx, Map env) {
+	setStandardEnvironmentValues(ctx, env, req, webPath, overrideHosts);
     }
-    static void setStandardEnvironmentValues(IPhpScriptContext context,
-            Map env, IContextFactory ctx, HttpServletRequest req,
+    static void setStandardEnvironmentValues(IContextFactory ctx,
+            Map env, HttpServletRequest req,
             String webPath, boolean overrideHosts) {
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */
 	env.put("X_JAVABRIDGE_CONTEXT", ctx.getId());
 	
 	/* the client should connect back to us */
-	StringBuffer buf = new StringBuffer();
-	
-	if (overrideHosts) {
-	    if(!req.isSecure())
-		buf.append("h:");
-	    else
-		buf.append("s:");
-	    buf.append(Util.getHostAddress());
-	    buf.append(':');
-	    buf.append(context.getSocketName());
-	    buf.append('/');
-	    try {
-		buf.append((new java.net.URI(null, null, webPath, null)).toASCIIString());
-	    } catch (URISyntaxException e) {
-		Util.printStackTrace(e);
-		buf.append(webPath);
-	    }
-	    buf.append("javabridge");
-	}
-	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS",buf.toString());
+	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", ctx.getRedirectString(webPath));
     }
 }

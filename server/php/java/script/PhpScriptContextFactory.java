@@ -49,7 +49,11 @@ public class PhpScriptContextFactory extends php.java.bridge.http.SimpleContextF
      * Create a simple context factory with an empty web context
      */
     public PhpScriptContextFactory() {
-	super(ContextFactory.EMPTY_CONTEXT_NAME);
+	super(ContextFactory.EMPTY_CONTEXT_NAME, true);
+    }
+    /**{@inheritDoc}*/
+    public String getSocketName() {
+	return PhpScriptContext.bridgeRunner.getSocket().getSocketName();
     }
 }
 

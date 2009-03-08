@@ -8,15 +8,12 @@
    * See the test.php4 if you still use PHP 4.
    */
 
-/* autoload NAME.jar from include_path/NAME/NAME.jar or ~/lib/NAME.jar */
-java_autoload(/*"myLib1.jar;myLib2.jar;..."*/);
-
 phpinfo();
 
 try {
 
   /* invoke java.lang.System.getProperties() */
-  $props = java_lang_System::type()->getProperties();
+  $props = java("java.lang.System")->getProperties();
   
   /* convert the result object into a PHP array */
   $array = java_values($props);
@@ -36,7 +33,7 @@ try {
   echo "<br>\n";
   
 
-  echo php_java_bridge_Util::type()->VERSION; echo "<br>\n";
+  echo java("php.java.bridge.Util")->VERSION; echo "<br>\n";
 
 } catch (JavaException $ex) {
   echo "An exception occured: "; echo $ex; echo "<br>\n";

@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.util.HashMap;
 
 import javax.script.ScriptException;
@@ -130,18 +131,30 @@ public class PhpCGIServlet extends FastCGIServlet {
 	    	/* Inform the client that we are a cgi servlet and send the re-direct port */
 	      String override;
 	      if(override_hosts) { 
-		    StringBuffer buf = new StringBuffer();
-		    if(!req.isSecure())
-			buf.append("h:");
-		    else
-			buf.append("s:");
-		    buf.append("127.0.0.1");
-		    buf.append(":");
-		    buf.append(this.environment.get("SERVER_PORT")); 
-		    buf.append('/');
-		    buf.append(req.getRequestURI());
-		    buf.append("javabridge");
-		    override = buf.toString();
+                    try {
+                	StringBuffer buf = new StringBuffer();
+                	buf.append(this.environment.get("SERVER_PORT"));
+                	buf.append("/");
+                	buf.append(req.getContextPath());
+                	buf.append(req.getServletPath());
+                	URI uri = new URI(req.isSecure()?"s:127.0.0.1":"h:127.0.0.1", buf.toString(), null);
+	                override = uri.toASCIIString()+"javabridge";
+                    } catch (Exception e) {
+                	Util.printStackTrace(e);
+      		  
+                	StringBuffer buf = new StringBuffer();
+                	if(!req.isSecure())
+                	    buf.append("h:");
+                	else
+                	    buf.append("s:");
+                	buf.append("127.0.0.1");
+                	buf.append(":");
+                	buf.append(this.environment.get("SERVER_PORT")); 
+                	buf.append('/');
+                	buf.append(req.getRequestURI());
+                	buf.append("javabridge");
+                	override = buf.toString();
+                    }
 	        }
 		else 
 		    override = "";

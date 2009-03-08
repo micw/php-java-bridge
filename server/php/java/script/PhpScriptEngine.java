@@ -75,9 +75,9 @@ public class PhpScriptEngine extends SimplePhpScriptEngine {
     		"array_unshift($java_argv, $_SERVER['SCRIPT_FILENAME']);"+
     		"$_SERVER['argv'] = $java_argv;"+
     		"?>");
-    static String getStandardHeader (IPhpScriptContext ctx) {
+    static String getStandardHeader (String filePath) {
 	StringBuffer buf = new StringBuffer(STANDARD_HEADER);
-	buf.insert(20, ctx.getContextString());
+	buf.insert(20, filePath);
 	return buf.toString();
     }
     protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
@@ -87,8 +87,6 @@ public class PhpScriptEngine extends SimplePhpScriptEngine {
   	setNewContextFactory();
         setName(name);
 
-        IPhpScriptContext ctx = (IPhpScriptContext)getContext(); 
-
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Writer w = new OutputStreamWriter(out);
         Reader localReader = null;
@@ -96,7 +94,7 @@ public class PhpScriptEngine extends SimplePhpScriptEngine {
         int c;
         try {
              /* header: <? require_once("http://localhost:<ourPort>/JavaBridge/java/Java.inc"); ?> */
-            localReader = new StringReader(getStandardHeader(ctx));
+            localReader = new StringReader(getStandardHeader("http://127.0.0.1:"+ctx.getSocketName()+"/JavaBridge"));
             try { while((c=localReader.read(buf))>0) w.write(buf, 0, c);} catch (IOException e) {throw new PhpScriptException("Could not read header", e);}
             try { localReader.close(); localReader=null;} catch (IOException e) {throw new PhpScriptException("Could not close header", e);}
     

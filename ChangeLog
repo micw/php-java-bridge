@@ -1,3 +1,75 @@
+2008-03-07  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/http/SimpleContextFactory.java
+	(SimpleContextFactory): Added managed flag.
+	(releaseManaged): Rewritten
+	(recycle): Bugfix: always forward to ContextFactory. Instances of
+	SimpleContextFactory don't need to be recycled, because they are
+	always destroyed at the end of the request.
+
+	* server/php/java/bridge/http/ContextFactory.java
+	(addNext,ContextFactory,addNew): Add "managed" contexts, e.g. jsr
+	223 or PHP FastCGI to the list of live contexts right away.
+	(recycle): Bugfix: Recycle must be called by the visitor.
+
+	* server/php/java/bridge/http/ContextFactory.java
+	(switchContext): Rewritten
+	
+	* server/php/java/servlet/RemoteServletContextFactory.java
+	(RemoteServletContextFactory): Remote Apache- or IIS- contexts are
+	the only contexts which cannot be managed by java.
+
+	* server/php/java/bridge/Util.java (appendTrace): Do not limit the
+	number of frames.
+
+	* server/php/java/servlet/fastcgi/Factory.java: Removed. Renamed
+	to IOFactory
+
+	* server/php/java/servlet/fastcgi/IOFactory.java: New
+	file. Renamed from IOFactory
+
+	* server/php/java/servlet/fastcgi/ChannelName.java:
+	Removed. Renamed to ChannelFactory
+
+	* server/php/java/servlet/fastcgi/ChannelFactory.java: New
+	file. Renamed from ChannelName
+
+	* server/php/java/script/IPhpScriptContext.java
+	(getContextString): New method. req.getRequestURI ignores mappings
+	defined in web.xml. We reconstruct the request url ourselfs to
+	allow requests to mappings defined in web.xml. Example:
+	http://.../JavaBridge/ => http://.../JavaBridge/welcome.php => PUT
+	http://.../welcome.phpjavabridge.
+
+	* server/php/java/script/servlet/PhpServletLocalHttpServerScriptEngine.java
+	(setStandardEnvironmentValues): Use new method
+	
+	* server/php/java/script/servlet/PhpSimpleHttpScriptContext.java
+	(getContextString): Use new method
+	
+	* server/php/java/servlet/PhpCGIServlet.java
+	(setCGIEnvironment): Use new method
+	
+2008-02-24  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/servlet/fastcgi/SocketChannelName.java
+	(waitForDaemon): timeout changed to 15s
+	
+	* server/php/java/script/servlet/PhpSimpleHttpScriptContext.java
+	(_writer,_errorWriter,_reader): removed duplicate
+    
+	* server/php/java/script/servlet/EngineFactory
+	(releaseScriptEngines): Make sure to decrement the ref count when
+	release() is called
+
+	* server/php/java/script/servlet/InvocableLocalHttpServerScriptEngine.java 
+	(release): Decrement the ref count here.
+
+	* server/META-INF/java/Options.inc
+	(JAVA_PIPE_DIR): avoid "SunOS" warning
+	
+	* VERSION, php-java-bridge.spec: Version 5.4.3.3
+	
 2008-02-16  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/IManaged.java: new interface

@@ -100,8 +100,12 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     /**{@inheritDoc}*/
     public void destroy() {
 	ServletContext ctx = getServletContext();
-	ContextLoaderListener.destroyCloseables(ctx);
-	ContextLoaderListener.destroyScriptEngines(ctx);
+	try {
+	    ContextLoaderListener.destroyCloseables(ctx);
+	    ContextLoaderListener.destroyScriptEngines(ctx);
+	} catch (Exception e) {
+	    Util.printStackTrace(e);
+	}
 	
       	contextServer.destroy();
     	super.destroy();
@@ -197,6 +201,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 		this.waitForContext(ctx);
 	    }
 	    else {
+		Util.warn("init failed");
 	        ctx.destroy();
 	    }
 	} catch (Exception e) {

@@ -66,7 +66,6 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
      * The continuation of the script
      */
     protected HttpProxy continuation = null;
-    protected final HashMap processEnvironment = getProcessEnvironment();
     protected Map env = null;
     protected IContextFactory ctx = null;
     
@@ -81,7 +80,9 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
     private static final Object[] EMPTY_ARG = new Object[0];
     private static final File winnt = new File("c:/winnt");
     private static final File windows = new File("c:/windows");
-
+    protected static final HashMap processEnvironment = getProcessEnvironment();
+    private static HashMap defaultEnv;
+    
     /**
      * Get the current process environment which will be passed to the sub-process.
      * Requires jdk1.5 or higher. In jdk1.4, where System.getenv() is not available,
@@ -99,8 +100,9 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
      * </code>
      * @return The current process environment.
      */
-    protected HashMap getProcessEnvironment() {
-	HashMap defaultEnv = new HashMap();
+    static HashMap getProcessEnvironment() {
+	if (defaultEnv!=null) return defaultEnv;
+	defaultEnv = new HashMap();
 	String val = null;
 	// Bug in WINNT and WINXP.
 	// If SystemRoot is missing, php cannot access winsock.
@@ -156,17 +158,13 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
      * @param context the new context ID
      * @param env the environment which will be passed to PHP
      */
-    protected void setStandardEnvironmentValues (IPhpScriptContext context, Map env) {
+    protected void setStandardEnvironmentValues (Map env) {
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */
 	env.put("X_JAVABRIDGE_CONTEXT", ctx.getId());
 	
 	/* the client should connect back to us */
-	StringBuffer buf = new StringBuffer("h:");
-	buf.append(Util.getHostAddress());
-	buf.append(':');
-	buf.append(context.getSocketName());
-	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS",buf.toString());
+	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", ctx.getRedirectString());
     }
     /**
      * Create a new context ID and a environment map which we send to the client.
@@ -174,11 +172,11 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
      */
     protected void setNewContextFactory() {
         IPhpScriptContext context = (IPhpScriptContext)getContext(); 
-	env = (Map) this.processEnvironment.clone();
+	env = (Map) processEnvironment.clone();
 
 	ctx = PhpScriptContextFactory.addNew((IContext)context);
 
-	setStandardEnvironmentValues(context, env);
+	setStandardEnvironmentValues(env);
     }
 
     protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {

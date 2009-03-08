@@ -10,12 +10,10 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -78,19 +76,17 @@ public final class EngineFactory {
 		     ServletContext ctx, 
 		     HttpServletRequest req, 
 		     HttpServletResponse res) throws MalformedURLException {
-	URL url = new java.net.URL((req.getRequestURL().toString()));
 	return hasCloseable ? 
-	    EngineFactoryHelper.newCloseablePhpServletScriptEngine(servlet, ctx, req, res, url.getProtocol(), url.getPort()):
-	    new PhpServletScriptEngine(servlet, ctx, req, res, url.getProtocol(), url.getPort());
+	    EngineFactoryHelper.newCloseablePhpServletScriptEngine(servlet, ctx, req, res, req.getScheme(), req.getServerPort()):
+	    new PhpServletScriptEngine(servlet, ctx, req, res, req.getScheme(), req.getServerPort());
     }
     private Object getInvocableScriptEngine(Servlet servlet, 
 		     ServletContext ctx, 
 		     HttpServletRequest req, 
 		     HttpServletResponse res) throws MalformedURLException, URISyntaxException {
-	URL url = new java.net.URL((req.getRequestURL().toString()));
 	return hasCloseable ? 
-	    EngineFactoryHelper.newCloseableInvocablePhpServletScriptEngine(servlet, ctx, req, res, url.getProtocol(), url.getPort()) :
-	    new InvocablePhpServletScriptEngine(servlet, ctx, req, res, url.getProtocol(), url.getPort());
+	    EngineFactoryHelper.newCloseableInvocablePhpServletScriptEngine(servlet, ctx, req, res, req.getScheme(), req.getServerPort()) :
+	    new InvocablePhpServletScriptEngine(servlet, ctx, req, res, req.getScheme(), req.getServerPort());
     }
     private Object getInvocableScriptEngine(Servlet servlet, 
 	     ServletContext ctx, 
@@ -147,7 +143,7 @@ public final class EngineFactory {
      * @param ctx the servlet context
      * @param req the request
      * @param res the response
-     * @return the PHP JSR 223 ScriptEngine, an instance of the {@link PhpServletScriptEngine}
+     * @return the PHP JSR 223 ScriptEngine
      * @throws Exception 
      * @throws MalformedURLException
      * @throws IllegalStateException
@@ -183,7 +179,7 @@ public final class EngineFactory {
      * @param ctx the servlet context
      * @param req the request
      * @param res the response
-     * @return the invocable PHP JSR 223 ScriptEngine, an instance of the {@link InvocablePhpServletScriptEngine}
+     * @return the invocable PHP JSR 223 ScriptEngine
      * @throws Exception 
      * @throws MalformedURLException
      * @throws IllegalStateException
@@ -221,7 +217,7 @@ public final class EngineFactory {
      * @param res the response
      * @param protocol either "HTTP" or "HTTPS"
      * @param port the port number
-     * @return the invocable PHP JSR 223 ScriptEngine, an instance of the {@link InvocablePhpServletScriptEngine}
+     * @return the invocable PHP JSR 223 ScriptEngine
      * @throws Exception 
      * @throws MalformedURLException
      * @throws IllegalStateException
@@ -262,7 +258,7 @@ public final class EngineFactory {
      * @param protocol either "HTTP" or "HTTPS"
      * @param port the port number
      * @param proxy the name of the PHP proxy, for example "/JavaProxy.php"
-     * @return the invocable PHP JSR 223 ScriptEngine, an instance of the {@link InvocablePhpServletScriptEngine}
+     * @return the invocable PHP JSR 223 ScriptEngine
      * @throws Exception 
      * @throws MalformedURLException
      * @throws IllegalStateException
@@ -415,6 +411,7 @@ public final class EngineFactory {
 	return createPhpScriptFileReader((ScriptFile)phpScriptFile);
     }
     /**
+     * Only for internal use.<br>
      * Release all managed script engines. Will be called automatically during shutdown,
      * @param list the list of script engines 
      */
@@ -423,7 +420,6 @@ public final class EngineFactory {
 	    public Object run() {
         	for (Iterator ii=list.iterator(); ii.hasNext(); ) {
         	    InvocablePhpServletLocalHttpServerScriptEngine engine = (InvocablePhpServletLocalHttpServerScriptEngine) ii.next();
-        	    engine.releaseReservedContinuation();
         	    engine.release();
         	}
         	list.clear();
@@ -438,7 +434,7 @@ public final class EngineFactory {
      * @throws ScriptException 
      * @see #releaseScriptEngines(List)
      */
-    public static void addManaged(ServletContext ctx,
+    static void addManaged(ServletContext ctx,
 		InvocablePhpServletLocalHttpServerScriptEngine engine) throws ScriptException {
 	try {
 	    addManagedInternal(ctx, engine);
@@ -453,7 +449,7 @@ public final class EngineFactory {
 	AccessController.doPrivileged(new PrivilegedExceptionAction() { 
 	    public Object run() throws Exception {
 		
-		ArrayList list = null;
+		List list = null;
 		try {
 		    list = EngineFactoryHelper.getManagedEngineList(ctx);
 		} catch (NoClassDefFoundError e) { /**ignore for jdk 1.4*/ }

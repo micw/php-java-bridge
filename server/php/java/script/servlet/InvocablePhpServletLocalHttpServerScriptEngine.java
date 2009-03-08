@@ -197,13 +197,13 @@ public class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhp
      */
     private void setNewLocalContextFactory(ScriptFileReader fileReader) throws IOException {
         IPhpScriptContext context = (IPhpScriptContext)getContext(); 
-	env = (Map) this.processEnvironment.clone();
+	env = (Map) processEnvironment.clone();
 
 	ctx = InvocablePhpServletContextFactory.addNew((IContext)context, servlet, servletCtx, req, res);
     	
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */
-	setStandardEnvironmentValues(context, env);
+	setStandardEnvironmentValues(env);
 	env.put("X_JAVABRIDGE_INCLUDE", fileReader.getFile().getCanonicalPath());
     }
     
@@ -255,12 +255,20 @@ public class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhp
     }
     protected void releaseReservedContinuation() {}
     protected void reserveContinuation() throws ScriptException {}
+    /**{@inheritDoc}*/
+    public void release() {
+	try {
+	    super.release();
+	} finally {
+	    releaseReservedContinuation();
+	}
+    }
     /**
      * Set the context id (X_JAVABRIDGE_CONTEXT) and the override flag (X_JAVABRIDGE_OVERRIDE_HOSTS) into env
      * @param context the new context ID
      * @param env the environment which will be passed to PHP
      */
-    protected void setStandardEnvironmentValues (IPhpScriptContext context, Map env) {
-	PhpServletLocalHttpServerScriptEngine.setStandardEnvironmentValues(context, env, ctx, req, webPath, overrideHosts);
+    protected void setStandardEnvironmentValues (Map env) {
+	PhpServletLocalHttpServerScriptEngine.setStandardEnvironmentValues(ctx, env, req, webPath, overrideHosts);
     }
 }

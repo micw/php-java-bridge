@@ -24,16 +24,15 @@ package php.java.bridge.http;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 import php.java.bridge.IManaged;
 import php.java.bridge.Invocable;
@@ -225,7 +224,7 @@ public class Context implements IManaged, Invocable, IContext {
      * Either php.java.servlet.Context or the JSR223 Context (see PhpSimpleHttpScriptContext).
      * @param closeable The procedure close(), will be called before the VM terminates
      */
-    public static void handleManaged(Closeable closeable) {
+    public static void handleManaged(Object closeable) {
 	// make sure to properly release them upon System.exit().
 	synchronized(closeables) {
 	    if(!registeredHook) {
@@ -236,10 +235,11 @@ public class Context implements IManaged, Invocable, IContext {
 			    if (closeables==null) return;
 			    synchronized(closeables) {
 				for(Iterator ii = closeables.iterator(); ii.hasNext(); ii.remove()) {
-				    Closeable c = (Closeable) ii.next();
+				    Object c = ii.next();
 				    try {
-	                                c.close();
-                                    } catch (IOException e) {
+					Method close = c.getClass().getMethod("close", Util.ZERO_PARAM);
+	                                close.invoke(c, Util.ZERO_ARG);
+                                    } catch (Exception e) {
 	                                Util.printStackTrace(e);
                                     }
 				}
@@ -255,18 +255,19 @@ public class Context implements IManaged, Invocable, IContext {
      * @return The result of the Callable::call().
      * @throws Exception 
      */
-    public static Object getManageable(Callable callable) throws Exception {
+    public static Object getManageable(Object callable) throws Exception {
 	synchronized(lockObject) {
-	    return callable.call();
+	    Method call = callable.getClass().getMethod("call", Util.ZERO_PARAM);
+	    return call.invoke(callable, Util.ZERO_ARG);
 	}
     }
     /**{@inheritDoc}
      * @throws Exception */
-    public Object init(Callable callable) throws Exception {
+    public Object init(Object callable) throws Exception {
 	return getManageable(callable);
     }
     /**{@inheritDoc}*/
-    public void onShutdown(Closeable closeable) {
+    public void onShutdown(Object closeable) {
 	php.java.bridge.http.Context.handleManaged(closeable);
     }
     

@@ -46,11 +46,6 @@ public interface IContextFactory extends IJavaBridgeFactory {
    */
     public void recycle(String id);
 
-  /**
-   * Removes the context factory from the classloader's list of context factories
-   * and destroys its content.
-   */
-  public void destroy();
 
   /**
    * Releases the context factory. This method should be called when the
@@ -121,14 +116,34 @@ public interface IContextFactory extends IJavaBridgeFactory {
     */
    public ClassLoader getClassLoader();
    /**
-    * Called at the end of the visitor's life cycle
+    * Hook is called at the end of the visitor's life cycle. 
+    * Either from destroy(), recycle() or from destroyOrphaned().
+    * @see #destroy()
+    * @see #recycle()
     */
    public void invalidate();
 
    /**
     * Called when the context runner starts
     * @see IContextFactory#releaseManaged()
+    * @see IContextFactory#destroy()
     */
    public void initialize ();
+   /**
+    * Return the redirect string, for example h:localhost:8080/webPath
+    * @param webPath Usually request.getContextPath()+request.getServletPath()
+    * @return the redirect string
+    */
+   public String getRedirectString(String webPath);
+   /**
+    * Return the redirect string, for example h:localhost:8080/JavaBridge/test.php
+    * @return the redirect string
+    */
+   public String getRedirectString();
 
+   /**
+    * Return the socket name, for example 8080
+    * @return the socket name
+    */
+   public String getSocketName();
 }

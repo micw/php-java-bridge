@@ -24,8 +24,10 @@ package php.java.bridge;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 
 import php.java.bridge.Util.Thread;
 import php.java.bridge.http.IContext;
@@ -44,7 +46,7 @@ import php.java.bridge.http.IContext;
 public class SessionFactory extends JavaBridgeFactory {
 
   /** Check for expired sessions or contexts every 10 minutes */
-  public static final long TIMER_DURATION = 600000;
+  public static final long TIMER_DURATION = 600;
 
   private static final SessionTimer timer = new SessionTimer();
   
@@ -124,7 +126,7 @@ public class SessionFactory extends JavaBridgeFactory {
 	    getTimer().interrupt();
     }
     protected static class SessionTimer implements Runnable {
-        LinkedList jobs = new LinkedList();
+        private List jobs = Collections.synchronizedList(new LinkedList());
 	private Thread thread;
         public SessionTimer() {
 

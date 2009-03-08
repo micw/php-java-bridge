@@ -148,8 +148,6 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
   	setNewContextFactory();
         setName(name);
 
-        IPhpScriptContext ctx = (IPhpScriptContext)getContext(); 
-        
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Writer w = new OutputStreamWriter(out);
         Reader localReader = null;
@@ -158,7 +156,7 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
 
         try {
             /* header: <? require_once("http://localhost:<ourPort>/JavaBridge/java/Java.inc"); ?> */
-            localReader = new StringReader(PhpScriptEngine.getStandardHeader(ctx));
+            localReader = new StringReader(PhpScriptEngine.getStandardHeader("http://127.0.0.1:"+ctx.getSocketName()+"/JavaBridge"));
             try { while((c=localReader.read(buf))>0) w.write(buf, 0, c);} catch (IOException e) {throw new PhpScriptException("Could not read header", e);}
             try { localReader.close(); } catch (IOException e) {throw new PhpScriptException("Could not close header", e);}
     

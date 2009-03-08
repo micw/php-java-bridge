@@ -37,7 +37,7 @@ import php.java.bridge.Util;
 /**
  * A connection pool. Example:<br><br>
  * <code>
- * ConnectionPool pool = new ConnectionPool("127.0.0.1", 8080, 20, 5000, new ConnectionPool.Factory());<br>
+ * ConnectionPool pool = new ConnectionPool("127.0.0.1", 8080, 20, 5000, new IOFactory());<br>
  * ConnectionPool.Connection conn = pool.openConnection();<br>
  * InputStream in =  conn.getInputStream();<br>
  * OutputStream out = conn.getOutputStream();<br>
@@ -50,9 +50,9 @@ import php.java.bridge.Util;
  * <p>Instead of using delegation (decorator pattern), it is possible to pass a factory 
  * which may create custom In- and OutputStreams. Example:<br><br>
  * <code>
- * new ConnectionPool(..., new ConnectionPool.Factory() {<br>
+ * new ConnectionPool(..., new IOFactory() {<br>
  * &nbsp;&nbsp;public InputStream getInputStream() {<br>
- * &nbsp;&nbsp;&nbsp;&nbsp;return new ConnectionPool.DefaultInputStream() {<br>
+ * &nbsp;&nbsp;&nbsp;&nbsp;return new DefaultInputStream() {<br>
  * &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<br>
  * &nbsp;&nbsp;&nbsp;&nbsp;}<br>
  * &nbsp;&nbsp;}<br>
@@ -68,9 +68,9 @@ public class ConnectionPool {
     private int connections = 0;
     private List freeList = new LinkedList();
     private List connectionList = new LinkedList();
-    private Factory factory;
+    private IOFactory factory;
     private int maxRequests;
-    private ChannelName channelName;
+    private ChannelFactory channelName;
     /**
      * Represents the connection kept by the pool.
      * 
@@ -79,12 +79,12 @@ public class ConnectionPool {
      */
     public final class Connection {
         protected int ostate, state; // bit0: input closed, bit1: output closed
-	protected ChannelName channelName;
+	protected ChannelFactory channelName;
 	protected Channel channel;
 	private DefaultOutputStream outputStream;
 	private DefaultInputStream inputStream;
 	private boolean isClosed;
-	private Factory factory;
+	private IOFactory factory;
 	private int maxRequests;
 	private int counter;
 	
@@ -102,7 +102,7 @@ public class ConnectionPool {
             this.isClosed = false;
             return this;
 	}
-	protected Connection(ChannelName channelName, int maxRequests, Factory factory) throws ConnectException, SocketException {
+	protected Connection(ChannelFactory channelName, int maxRequests, IOFactory factory) throws ConnectException, SocketException {
             this.channelName = channelName;
             this.factory = factory;
             this.isClosed = true;
@@ -163,9 +163,9 @@ public class ConnectionPool {
      * @param maxRequests 
      * @param factory A factory for creating In- and OutputStreams.
      * @throws ConnectException 
-      * @see Factory
+      * @see IOFactory
      */
-    public ConnectionPool(ChannelName channelName, int limit, int maxRequests, Factory factory) throws ConnectException {
+    public ConnectionPool(ChannelFactory channelName, int limit, int maxRequests, IOFactory factory) throws ConnectException {
 	if(Util.logLevel>3) Util.logDebug("Creating new connection pool for: " +channelName);
         this.channelName = channelName;
         this.limit = limit;

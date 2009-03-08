@@ -4,7 +4,7 @@ package php.java.script.servlet;
 
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
+import java.util.List;
 
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
@@ -57,7 +57,7 @@ class EngineFactoryHelper {
             HttpServletResponse res, String protocol, int port, String proxy) throws MalformedURLException, URISyntaxException {
 	return new CloseableInvocablePhpServletLocalHttpServerScriptEngine(servlet, ctx, req, res, protocol, port, proxy);
     }
-    public static ArrayList getManagedEngineList (ServletContext ctx) {
-	return (ArrayList) ctx.getAttribute(ContextLoaderListener.ENGINES);
+    public static List getManagedEngineList (ServletContext ctx) {
+	return (List) ctx.getAttribute(ContextLoaderListener.ENGINES);
     }
  }

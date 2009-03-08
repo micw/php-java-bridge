@@ -110,6 +110,7 @@ public class ContextRunner implements Runnable {
 
 	int c = in.read();
 	if(c!=0177) {
+	    
 	    if(c==-1) return false; // client has closed the connection
 	    
 	    try {out.write(0); }catch(IOException e){}
@@ -142,6 +143,8 @@ public class ContextRunner implements Runnable {
 	try {
 	    if(init())
 		request.handleRequests();
+	    else
+		Util.warn("context runner init failed");
 	} catch (IOException e) {
 	    if(Util.logLevel>4) Util.printStackTrace(e);
         } catch (Exception e) {

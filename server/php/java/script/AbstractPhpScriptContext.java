@@ -106,13 +106,4 @@ public abstract class AbstractPhpScriptContext extends SimpleScriptContext imple
     public void setErrorWriter(Writer writer) {
 	    super.setErrorWriter(new PhpScriptWriter(new OutputStreamWriter(writer)));
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    public abstract String getSocketName ();
-    /**
-     * {@inheritDoc}
-     */
-    public abstract String getContextString ();
 }

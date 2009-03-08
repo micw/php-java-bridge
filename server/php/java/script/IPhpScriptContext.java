@@ -60,16 +60,4 @@ public interface IPhpScriptContext extends IManaged, Invocable, IContext {
      */
     public HttpProxy getContinuation();
     
-    /**
-     * Return the context string, for example http://localhost:8080/JavaBridge
-     * @return the context string
-     */
-    public String getContextString();
-
-    /**
-     * Return the socket name, for example 8080
-     * @return the socket name
-     */
-    public String getSocketName();
-
 }

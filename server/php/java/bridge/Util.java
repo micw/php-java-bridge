@@ -147,7 +147,7 @@ public final class Util {
     /**
      * The default CGI locations: <code>"/usr/bin/php-cgi"</code>, <code>"c:/Program Files/PHP/php-cgi.exe</code>
      */
-    public static final String DEFAULT_CGI_LOCATIONS[] = new String[] {"/usr/bin/php-cgi", "c:/Program Files/PHP/php-cgi.exe"};
+    public static String DEFAULT_CGI_LOCATIONS[];
 
     /**
      * The default CGI header parser. The default implementation discards everything.
@@ -173,6 +173,14 @@ public final class Util {
      * The default buffer size
      */
     public static final int BUF_SIZE = 8192;
+
+    /**
+     * A map containing common environment values for JDK <= 1.4:
+     * "PATH", "LD_LIBRARY_PATH", "LD_ASSUME_KERNEL", "USER", "TMP", "TEMP", "HOME", "HOMEPATH", "LANG", "TZ", "OS"
+     * They can be set with e.g.: <code>java -DPATH="$PATH" -DHOME="$HOME" -jar JavaBridge.jar</code> or
+     * <code>java -DPATH="%PATH%" -jar JavaBridge.jar</code>. 
+     */
+    public static Map COMMON_ENVIRONMENT;
 
     /**
      * The default extension directories. If one of the directories
@@ -262,6 +270,26 @@ public final class Util {
     public static File HOME_DIR;
 
     private static void initGlobals() {
+	
+	COMMON_ENVIRONMENT = getCommonEnvironment();
+	DEFAULT_CGI_LOCATIONS = new String[] {"/usr/bin/php-cgi", "c:/Program Files/PHP/php-cgi.exe"};
+	if (!new File(DEFAULT_CGI_LOCATIONS[0]).exists() && !new File(DEFAULT_CGI_LOCATIONS[0]).exists())
+	    try {
+		File filePath = null;
+		boolean found = false;
+		String path = (String)COMMON_ENVIRONMENT.get("PATH");
+		StringTokenizer tok = new StringTokenizer(path, File.pathSeparator);
+		while(tok.hasMoreTokens()) {
+		    String s = tok.nextToken();
+		    if ((filePath = new File(s, "php-cgi.exe")).exists()) { found = true; break; }
+		    if ((filePath = new File(s, "php-cgi")).exists())     { found = true; break; }
+		}
+		if (!found) found = ((filePath = new File("/usr/php/bin/php-cgi", "php-cgi")).exists());
+		if (found) 
+		    DEFAULT_CGI_LOCATIONS = new String[] {filePath.getCanonicalPath(), DEFAULT_CGI_LOCATIONS[0], DEFAULT_CGI_LOCATIONS[1]};
+
+	} catch (Exception e) { /*ignore*/ }
+
 	try {
 	    MAX_WAIT = Integer.parseInt(System.getProperty("php.java.bridge.max_wait", "15000"));
 	} catch (Exception e) {
@@ -499,14 +527,12 @@ public final class Util {
 	    buf.append(" at:\n");
 	    StackTraceElement stack[] = throwable.getStackTrace();
 	    int top=stack.length;
-	    int count = 0;
 	    for(int i=0; i<top; i++) {
 		buf.append("#-");
 		buf.append(top-i);
 		buf.append(" ");
 		buf.append(stack[i].toString());
 		buf.append("\n");
-		if (++count==3) break;
 	    }
 	    buf.append(trace);
     }
@@ -1186,14 +1212,6 @@ public final class Util {
 	}
     }
 
-    private static final Class[] STRING_PARAM = new Class[]{String.class};
-    /**
-     * A map containing common environment values for JDK <= 1.4:
-     * "PATH", "LD_LIBRARY_PATH", "LD_ASSUME_KERNEL", "USER", "TMP", "TEMP", "HOME", "HOMEPATH", "LANG", "TZ", "OS"
-     * They can be set with e.g.: <code>java -DPATH="$PATH" -DHOME="$HOME" -jar JavaBridge.jar</code> or
-     * <code>java -DPATH="%PATH%" -jar JavaBridge.jar</code>. 
-     */
-    public static final Map COMMON_ENVIRONMENT = getCommonEnvironment();
     private static HashMap getCommonEnvironment() {
 	String entries[] = {
 	    "PATH", "LD_LIBRARY_PATH", "LD_ASSUME_KERNEL", "USER", "TMP", "TEMP", "HOME", "HOMEPATH", "LANG", "TZ", "OS"
@@ -1201,7 +1219,7 @@ public final class Util {
 	HashMap map = new HashMap(entries.length+10);
 	String val;
         Method m = null;
-        try {m = System.class.getMethod("getenv", STRING_PARAM);} catch (Exception e) {/*ignore*/}
+        try {m = System.class.getMethod("getenv", new Class[]{String.class});} catch (Exception e) {/*ignore*/}
 	for(int i=0; i<entries.length; i++) {
 	    val = null;
 	    if (m!=null) { 

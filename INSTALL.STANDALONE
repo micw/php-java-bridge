@@ -15,15 +15,11 @@ Development
 
 Test the PHP/Java Bridge functionality:
 
-* Download and extract the php-java-bridge*_j2ee.zip file into a
-  folder.
+* Download and extract the php-java-bridge*_j2ee.zip archive into a
+  folder and type: java -classpath JavaBridge.war TestInstallation.
 
-* Navigate to the created JAVA.STANDALONE folder.
-
-* Right-click on log4j.jar and select "open with Java ..."
-
-* Right-click on JavaBridge.jar and select "open with Java ...". In
-  the "Starting ..." dialog select SERVLET_LOCAL:8080.
+* Right-click on ext/JavaBridge.jar and select "open with Java ...". 
+  In the "Starting ..." dialog select SERVLET_LOCAL:8080.
 
 * Run your PHP scripts. For example browse to http://127.0.0.1:8080
   and click on test.php.

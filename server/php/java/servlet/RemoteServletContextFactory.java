@@ -35,7 +35,7 @@ import php.java.bridge.http.IContext;
 
 /**
  * Create session contexts for servlets.<p> In addition to the
- * standard ContextFactory this manager keeps a reference to the
+ * standard ContextFactory this factory keeps a reference to the
  * HttpServletRequest.
  *
  * @see php.java.bridge.http.ContextFactory
@@ -43,7 +43,7 @@ import php.java.bridge.http.IContext;
  */
 public class RemoteServletContextFactory extends SimpleServletContextFactory {
     protected RemoteServletContextFactory(Servlet servlet, ServletContext ctx, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res) {
-	super(servlet, ctx, proxy, req, res);
+	super(servlet, ctx, proxy, req, res, false);
     }
 
     /**

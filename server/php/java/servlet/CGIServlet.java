@@ -283,6 +283,7 @@ public abstract class CGIServlet extends HttpServlet {
     private static final File windows = new File("c:/windows");
     private static final Class[] EMPTY_PARAM = new Class[0];
     private static final Object[] EMPTY_ARG = new Object[0];
+    private static HashMap defaultEnv;
     /**
      * Get the current process environment which will be passed to the sub-process.
      * Requires jdk1.5 or higher. In jdk1.4, where System.getenv() is not available,
@@ -300,17 +301,14 @@ public abstract class CGIServlet extends HttpServlet {
      * </code>
      * @return The current process environment.
      */    
-    protected HashMap getProcessEnvironment() {
-	HashMap defaultEnv = new HashMap();
+    static synchronized HashMap getProcessEnvironment() {
+	if (defaultEnv!=null) return defaultEnv;
+	defaultEnv = new HashMap();
         String val = null;
 	// Bug in WINNT and WINXP.
 	// If SystemRoot is missing, php cannot access winsock.
 	if(winnt.isDirectory()) val="c:\\winnt";
 	else if(windows.isDirectory()) val = "c:\\windows";
-	try {
-	    String s = getServletConfig().getInitParameter("Windows.SystemRoot");
-	    if(s!=null) val=s;
-	} catch (Throwable t) {/*ignore*/}
 	try {
 	    String s = System.getenv("SystemRoot"); 
 	    if(s!=null) val=s;
@@ -390,7 +388,7 @@ public abstract class CGIServlet extends HttpServlet {
     }
 
     protected void handle(HttpServletRequest req, HttpServletResponse res, boolean handleInput)
-        throws ServletException, IOException {
+        throws ServletException, IOException{
     
         CGIEnvironment cgiEnv = createCGIEnvironment(req, res, getServletContext());
     
@@ -398,7 +396,7 @@ public abstract class CGIServlet extends HttpServlet {
         if (handleInput) cgi.setInput (req.getInputStream());
         
         cgi.setResponse(res);
-        cgi.execute();
+        try { cgi.execute(); } catch (InterruptedException e) { /*ignore*/}
     } //handle
 
     /**
@@ -1024,7 +1022,7 @@ public abstract class CGIServlet extends HttpServlet {
             this.wd = env.workingDirectory;
         }
 
-        protected abstract void execute() throws IOException, ServletException;
+        protected abstract void execute() throws IOException, ServletException, InterruptedException;
 
         /**
          * Sets HttpServletResponse object used to set headers and send

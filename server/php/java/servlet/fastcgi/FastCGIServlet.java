@@ -114,7 +114,7 @@ public abstract class FastCGIServlet extends CGIServlet {
     /**
      * The default channel name on Windows
      */
-    public static final String FCGI_PIPE = NPChannelName.PREFIX +"JavaBridge@9667";
+    public static final String FCGI_PIPE = NPChannelFactory.PREFIX +"JavaBridge@9667";
     
     protected String php = null; 
     protected boolean phpTryOtherLocations = false;
@@ -145,15 +145,15 @@ public abstract class FastCGIServlet extends CGIServlet {
     private static final Object javaBridgeCtxLock = new Object();
     private static ConnectionPool fcgiConnectionPool = null;
     
-    private final Factory defaultPoolFactory = new Factory() {
+    private final IOFactory defaultPoolFactory = new IOFactory() {
       public InputStream createInputStream() { return new FastCGIInputStream(FastCGIServlet.this); }
       public OutputStream createOutputStream() { return new FastCGIOutputStream(); }
-      public Channel connect(ChannelName name) throws ConnectException {
+      public Channel connect(ChannelFactory name) throws ConnectException {
 	  return name.connect();
     }
     };
     private final CGIRunnerFactory defaultCGIRunnerFactory = new CGIRunnerFactory();
-    protected ChannelName channelName;
+    protected ChannelFactory channelName;
 
     protected void checkCgiBinary(ServletConfig config) {
 	String value;
@@ -208,8 +208,7 @@ public abstract class FastCGIServlet extends CGIServlet {
 	String value;
 	super.init(config);
     	try {
-	    value = config.getInitParameter("override_hosts");
-	    if (value==null) value = context.getInitParameter("override_hosts");
+	    value = context.getInitParameter("override_hosts");
 	    if(value==null) value="";
 	    value = value.trim();
 	    value = value.toLowerCase();
@@ -252,7 +251,7 @@ public abstract class FastCGIServlet extends CGIServlet {
 	    if(value.equals("on") || value.equals("true")) 
 		delegateToJavaBridgeContext=true;
 	} catch (Throwable t) {/*ignore*/}
-	channelName = ChannelName.getChannelName();
+	channelName = ChannelFactory.createChannelFactory();
 	channelName.findFreePort(canStartFCGI && !delegateToJavaBridgeContext);
     }
     /**
@@ -377,7 +376,7 @@ public abstract class FastCGIServlet extends CGIServlet {
 	        throw ex;
 	    }
 	}
-	protected void execute() throws IOException, ServletException {
+	protected void execute() throws IOException, ServletException, InterruptedException {
 	    try {
 	        doExecute();
 	    } catch (ConnectException ex) {
@@ -400,7 +399,7 @@ public abstract class FastCGIServlet extends CGIServlet {
 	      }	      
 	      //throw new ServletException("IOException caused by internet browser", e);
 	    } finally {
-    		if(ctx!=null) ctx.release();
+    		if(ctx!=null) ctx.releaseManaged();
     		ctx = null;
 	    }
 	    

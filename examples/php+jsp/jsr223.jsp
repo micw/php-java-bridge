@@ -9,7 +9,7 @@
 private static File helloScript = null;
 
 /** return a new instance of the php hello script, or the cached script */
-private static File getHelloScript(String path) {
+private static synchronized File getHelloScript(String path) {
  if (helloScript!=null) return helloScript;
  return helloScript = EngineFactory.getPhpScript(path, 
         new StringReader("<?php echo 'Hello java world!'; ?>"));

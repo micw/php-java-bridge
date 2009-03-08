@@ -109,11 +109,15 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     private IContextFactoryVisitor visitor; 
 
     private static long counter = 0;
-    private static synchronized String addNext(String webContext, ContextFactory thiz) {
+    private static synchronized String addNext(String webContext, ContextFactory thiz, boolean isManaged) {
         String id;
         counter++;
         try {webContext=URLEncoder.encode(webContext, Util.DEFAULT_ENCODING);} catch (UnsupportedEncodingException e) {Util.printStackTrace(e);}
-        contexts.put(id=Long.toHexString(counter)+"@"+webContext, thiz);
+        id = Long.toHexString(counter)+"@"+webContext;
+        if (isManaged)
+            liveContexts.put(id, thiz);
+        else
+            contexts.put    (id, thiz);
         return id;
     }
     private static synchronized void remove(String id) {
@@ -130,11 +134,12 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     /**
      * Create a new ContextFactory.
      * @param webContext The current web context or "@" 
+     * @param isManaged true if the factory should NOT be gc'ed after MAX_TIMEOUT
      */
-    public ContextFactory(String webContext) {
+    public ContextFactory(String webContext, boolean isManaged) {
       super();
       timestamp = System.currentTimeMillis();
-      id=addNext(webContext, this);
+      id=addNext(webContext, this, isManaged);
       if(Util.logLevel>4) Util.logDebug("contextfactory: new context: " + id + " for web context" + webContext + ", # of contexts: " + contexts.size());
     }
 
@@ -145,7 +150,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * @see php.java.bridge.http.ContextFactory#get(String, ICredentials)
      */
     public static IContextFactory addNew() {
-    	return new SimpleContextFactory(EMPTY_CONTEXT_NAME);
+    	return new SimpleContextFactory(EMPTY_CONTEXT_NAME, false);
     }
     
     private void init(ICredentials cred) {
@@ -185,57 +190,71 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * @throws SecurityException if the context contains information.
      */
     public static synchronized IContextFactory peek(String id) {
-	if(liveContexts.get(id)!=null) throw new SecurityException(id);
-	ContextFactory factory = (ContextFactory) contexts.get(id);
-	return factory == null ? null : factory.visitor;
+	ContextFactory factory = (ContextFactory) liveContexts.get(id);
+	if (factory == null) factory = (ContextFactory) contexts.get(id);
+	if (factory == null) return null;
+	if (!factory.isNew()) throw new SecurityException("illegal access");
+	return factory.visitor;
     }
     
     /*
      * Attach the new factory to the persistent one
-     * @factory The fresh factory from the servlet
+     * @param id The fresh factory id from the servlet
+     * @param thiz The persistent factory
      */ 
-    private void switchContext(ContextFactory factory) {	
+    private static synchronized void switchContext(final String id, final ContextFactory thiz) {
+	boolean contextIsManaged = true;
+	ContextFactory factory = ((ContextFactory)liveContexts.get(id));
+	if (factory == null) {
+	    factory=((ContextFactory)contexts.get(id));
+	    contextIsManaged = false;
+	}
+	// May only happen if this is a simple ContextFactory outside of a J2EE environment
+	if(factory == null || factory == thiz) return;
+
 	if (factory.credentials != null) 
 	    throw new IllegalStateException ("context already initialized");
 	
-	JavaBridge bridge = getBridge();
+	JavaBridge bridge = thiz.getBridge();
 	JavaBridge newBridge = factory.checkBridge();
-	if(newBridge!=null) { // set the new bridge which keeps a reference to the fresh context
-	    if(Util.logLevel>4) Util.logDebug("contextfactory: setting new bridge. visited: " + bridge.getFactory() + " <= visitor: " + newBridge.getFactory()); 
+	if(newBridge == null) throw new IllegalStateException("recycle empty context");
+
+	if(Util.logLevel>4) Util.logDebug("contextfactory: setting new bridge. visited: " + bridge.getFactory() + " <= visitor: " + newBridge.getFactory()); 
+
+	// For historical and performance reasons the bridge keeps direct references to the threadContextClassLoader
+	// and the i/o channels, so we have to keep it.
+	// But we want to run with the new values from the bridge created from the servlet. So we keep the old
+	// bridge with its request, response and class-loader and set the new bridge temporarily into this request. 
+	// It will be cleaned up in recycle(). It is ugly, but this will stay that way.
+	bridge.request.setBridge(newBridge);
+	bridge = newBridge;
 	    
-	    /* set the new bridge and the associated threadContextClassLoader, will be reset in recycle() */
-	    bridge.request.setBridge(newBridge); // TODO: bug in the object model; the request/response belongs to the ContextRunner
-	    bridge = newBridge;
-	    
-	    /* remove the fresh context factory and attach the visitor */
-	    factory.visitor.release();
-	    accept(factory.visitor);
-	    visitor.initialize();
-	} else {
-		throw new IllegalStateException("recycle empty context");
+	/* release the fresh context factory and attach the visitor */
+	if (contextIsManaged) { // actually an empty factory, so move it back before releasing it
+	    liveContexts.remove(id);
+	    contexts.put(id, factory);
 	}
+	factory.visitor.release();
+	thiz.accept(factory.visitor);
+	thiz.visitor.initialize();
 	
 	if(factory.getClassLoader() !=bridge.getClassLoader().getDefaultClassLoader()) 
 	    throw new IllegalStateException("class loader");
-	if(Util.logLevel>4) Util.logDebug("contextfactory: " +this + " is swiching thread context, using classloader: " + System.identityHashCode( factory.getClassLoader().getParent()));
+	if(Util.logLevel>4) Util.logDebug("contextfactory: " +thiz + " is swiching thread context, using classloader: " + System.identityHashCode( factory.getClassLoader().getParent()));
 
 	if(Util.logLevel>4) Util.logDebug("contextfactory: accepted visitor: " + factory.visitor);
     }
+
     /**{@inheritDoc}*/  
     public void recycle(String id) {
-	ContextFactory factory = null;
-	factory=((ContextFactory)contexts.get(id));
-	if(factory == null || factory == this) return;
-
-	switchContext(factory);
-   }
+	switchContext(id, this);
+    }
     /**
      * Recycle the factory for new reqests.
      */    
     public void recycle() {
 	if(Util.logLevel>=4) Util.logDebug("contextfactory: finish context called (recycle context factory) " + this.visitor);
 	super.recycle();
-	visitor.recycle();
 	visitor.invalidate();
 	
 	if(bridge!=null) 
@@ -252,11 +271,10 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     
     /**
      * Orphaned contexts may appear when the PHP client has no interest in the new context
-     * that the client of the PHP client has allocated, for example when
-     * the php instance already has a connection and there is no need access the new context
-     * (php script contains no "java_session" and no "java_context"). 
+     * that the client of the PHP client has allocated, this may only happen if a remote client
+     * crashed directly after sending the initial PUT request. 
      * 
-     * Orphaned contexts will be automatically removed after 5 seconds. -- Even 10ms would 
+     * Orphaned contexts will be automatically removed after 15 seconds. -- Even 10ms would 
      * be sufficient because contexts only bridge the gap between a) the first statement executed
      * via the HTTP tunnel and the second statement executed via the ContextRunner or 
      * b) they pass initial information from a client of a PHP client to the PHP script. If one round-trip
@@ -269,7 +287,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	    ContextFactory ctx = ((ContextFactory)ii.next());
 	    if(ctx.timestamp+Util.MAX_WAIT<timestamp) {
 	        ctx.visitor.invalidate();
-	        if(Util.logLevel>4) Util.logDebug("contextfactory: Orphaned context: " + ctx.visitor + " removed.");
+	        Util.warn("contextfactory: Orphaned context: " + ctx.visitor + " removed.");
 	        ii.remove();
 	    }
 	}        
@@ -400,5 +418,17 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     /**{@inheritDoc}*/  
     public void invalidate() {
 	visitor.invalidate();
+    }
+    /**{@inheritDoc}*/  
+    public String getRedirectString() {
+	return visitor.getRedirectString();
+    }
+    /**{@inheritDoc}*/  
+    public String getRedirectString(String webPath) {
+	return visitor.getRedirectString(webPath);
+    }
+    /**{@inheritDoc}*/  
+    public String getSocketName() {
+	return visitor.getSocketName();
     }
 }

@@ -2,8 +2,6 @@
 
 package php.java.bridge;
 
-import java.io.Closeable;
-import java.util.concurrent.Callable;
 
 /*
  * Copyright (C) 2003-2009 Jost Boekemeier
@@ -44,12 +42,12 @@ public interface IManaged {
      * @return The result of the call() invocation.
      * @throws Exception The result of the call() invocation.
      */
-    public Object init(Callable callable) throws Exception;
+    public Object init(Object callable) throws Exception;
     
     /**
      * Register a shutdown hook for the library. This method may be called via java_context()->onShutdown(...)
      * to register a shutdown hook during init().
      * @param closeable Its close() method will be called before the context or the VM terminates.
      */
-    public void onShutdown(Closeable closeable);
+    public void onShutdown(Object closeable);
 }

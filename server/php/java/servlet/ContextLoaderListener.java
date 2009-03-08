@@ -2,9 +2,9 @@
 
 package php.java.servlet;
 
-import java.io.Closeable;
-import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -50,7 +50,7 @@ import php.java.script.servlet.EngineFactory;
  */
 public class ContextLoaderListener implements javax.servlet.ServletContextListener {
     /** The key used to store the closeables list in the servlet context, must be destroyed before the engines */
-    public static final String CLOSEABLES = PhpJavaServlet.class.getName()+".CLOSEABLES";
+    public static final String CLOSEABLES = ContextLoaderListener.class.getName()+".CLOSEABLES";
     /** The key used to store the jsr 223 engines list in the servlet context */
     public static final String ENGINES = ContextLoaderListener.class.getName()+".ENGINES";
 
@@ -63,10 +63,11 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
 	
 	try {
 	    for (Iterator ii = list.iterator(); ii.hasNext(); ) {
-		Closeable c = (Closeable) ii.next();
+		Object c = ii.next();
 		try {
-		    c.close ();
-		} catch (IOException e) {
+		    Method close = c.getClass().getMethod("close", Util.ZERO_PARAM);
+		    close.invoke(c, Util.ZERO_ARG);
+		} catch (Exception e) {
 		    Util.printStackTrace(e);
 		}
 	    }
@@ -99,9 +100,10 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
 	try {
 	    destroyCloseables(ctx);
 	    destroyScriptEngines(ctx);
-	} finally {
-	    ctx.removeAttribute(php.java.script.servlet.EngineFactory.ROOT_ENGINE_FACTORY_ATTRIBUTE);
+	} catch (Exception e) {
+	    Util.printStackTrace(e);
 	}
+	ctx.removeAttribute(php.java.script.servlet.EngineFactory.ROOT_ENGINE_FACTORY_ATTRIBUTE);
     }
     /**{@inheritDoc}*/  
     public void contextInitialized(ServletContextEvent event) {
@@ -109,7 +111,7 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
 	    Class clazz = Class.forName("php.java.script.servlet.EngineFactory",true,Thread.currentThread().getContextClassLoader());
 	    ServletContext ctx = event.getServletContext();
 	    ctx.setAttribute(php.java.script.servlet.EngineFactory.ROOT_ENGINE_FACTORY_ATTRIBUTE, clazz.newInstance());
-	    ctx.setAttribute(ENGINES, new ArrayList());
+	    ctx.setAttribute(ENGINES, Collections.synchronizedList(new ArrayList()));
 	    ctx.setAttribute(CLOSEABLES, new LinkedList());
         } catch (InstantiationException e) {
 	    e.printStackTrace();

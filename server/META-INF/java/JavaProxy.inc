@@ -410,6 +410,17 @@ function java_server_name() {
  * Runnable r = e.get("kont");
  * new Thread(r).start();
  * </code>
+ *
+ * A synchronized init() procedure can be called from the context to initialize a library once, and a shutdown hook can be registered to destroy the library before the (web-) context is destroyed. The init hook can be written in PHP, but the shutdown hook must be written in Java. Example:
+ * <code>
+ * function getShutdownHook() { return java("myJavaHelper")->getShutdownHook(); }
+ * function call() { // called by init()
+ *   ...
+ *   // register shutdown hook
+ *   java_context()->onShutdown(getShutdownHook());
+ * }
+ * java_context()->init(java_closure(null, null, java("java.util.concurrent.Callable")));
+ * </code>
  * 
  * It is possible to access implicit web objects (the session, the
  * application store etc.) from the context. Please see the JSR223

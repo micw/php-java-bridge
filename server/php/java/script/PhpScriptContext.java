@@ -24,9 +24,7 @@ package php.java.script;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import java.io.Closeable;
 import java.io.Writer;
-import java.util.concurrent.Callable;
 
 import php.java.bridge.JavaBridgeRunner;
 import php.java.bridge.Util;
@@ -80,23 +78,11 @@ public class PhpScriptContext extends AbstractPhpScriptContext implements IPhpSc
     }
 
     /**{@inheritDoc}*/
-    public String getSocketName() {
-	    return bridgeRunner.getSocket().getSocketName();
-    }
-    /**{@inheritDoc}*/
-    public String getContextString() {
-	    StringBuffer buf = new StringBuffer("http://127.0.0.1:");
-	    buf.append(getSocketName());
-	    buf.append("/JavaBridge");
-	    return buf.toString();
-    }
-    
-    /**{@inheritDoc}*/
-    public Object init(Callable callable) throws Exception {
+    public Object init(Object callable) throws Exception {
 	return php.java.bridge.http.Context.getManageable(callable);
     }
     /**{@inheritDoc}*/
-    public void onShutdown(Closeable closeable) {
+    public void onShutdown(Object closeable) {
 	php.java.bridge.http.Context.handleManaged(closeable);
     }
     /**

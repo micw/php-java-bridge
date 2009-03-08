@@ -47,7 +47,7 @@ public class InvocablePhpServletContextFactory extends php.java.servlet.SimpleSe
     protected InvocablePhpServletContextFactory(Servlet servlet, ServletContext ctx,
 			HttpServletRequest proxy, HttpServletRequest req,
 			HttpServletResponse res) {
-		super(servlet, ctx, proxy, req, res);
+		super(servlet, ctx, proxy, req, res, true);
 	}
     /**
      * Add the PhpScriptContext

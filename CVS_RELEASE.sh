@@ -26,36 +26,33 @@ fi
 cp server/JavaBridge.war server/src.zip .
 cp -r php_java_lib tests.php5 tests.jsr223 server
 
-mkdir MONO.STANDALONE
+mkdir MONO+NET.STANDALONE
 for i in ICSharpCode.SharpZipLib.dll IKVM.GNU.Classpath.dll IKVM.Runtime.dll MonoBridge.exe; do
- cp modules/$i MONO.STANDALONE
+ cp modules/$i MONO+NET.STANDALONE
 done
-cp examples/gui/gtk-button.php examples/gui/gtk-fileselector.php tests.mono+net/test.php tests.mono+net/sample_lib.cs tests.mono+net/sample_lib.dll tests.mono+net/load_assembly.php MONO.STANDALONE
-mkdir MONO.STANDALONE/mono
-cp server/META-INF/java/Mono.inc MONO.STANDALONE/mono
-cp README.MONO+NET MONO.STANDALONE
+cp examples/gui/gtk-button.php examples/gui/gtk-fileselector.php tests.mono+net/test.php tests.mono+net/sample_lib.cs tests.mono+net/sample_lib.dll tests.mono+net/load_assembly.php MONO+NET.STANDALONE
+mkdir MONO+NET.STANDALONE/mono
+cp server/META-INF/java/Mono.inc MONO+NET.STANDALONE/mono
+cp README.MONO+NET MONO+NET.STANDALONE
 
-mkdir JAVA.STANDALONE
-for i in JavaBridge.jar php-script.jar script-api.jar; do
- cp modules/$i JAVA.STANDALONE
+cp JavaBridge.war JavaBridgeTemplate.war
+for i in 'WEB-INF/lib/[^pJ]*.jar' 'WEB-INF/lib/poi.jar' 'WEB-INF/cgi/[^l]*' 'WEB-INF/cgi/launcher.c' 'WEB-INF/platform/*' 'locale/*' 'java/[^J]*' 'java/JavaBridge.inc' 'java/JavaProxy.inc' '*.class' '*.jsp' '*.rpt*' '[^jJt]*.php'; do
+  zip -d JavaBridgeTemplate.war "$i"; 
 done
-cp test.php JAVA.STANDALONE
-cp examples/bench/exceltest.jar examples/bench/ExcelTest.java examples/bench/excel_antitest.php JAVA.STANDALONE
-sed 's|\.\./\.\./unsupported/||' <examples/bench/bench.php >JAVA.STANDALONE/bench.php
-cp unsupported/poi.jar JAVA.STANDALONE
-cp unsupported/log4j.jar JAVA.STANDALONE
-mkdir JAVA.STANDALONE/java
-cp server/META-INF/java/Java.inc JAVA.STANDALONE/java
-cp INSTALL.STANDALONE JAVA.STANDALONE
+cp examples/php+jsp/settings.php ./index.php
+zip JavaBridgeTemplate.war index.php
 
-cp  src.zip README FAQ.html PROTOCOL.TXT INSTALL.J2EE INSTALL.J2SE NEWS documentation
+cp  src.zip README FAQ.html PROTOCOL.TXT INSTALL.STANDALONE INSTALL.J2EE INSTALL.J2SE NEWS documentation
 mv examples documentation
 mv server documentation
-list="JAVA.STANDALONE MONO.STANDALONE  documentation/API documentation/examples documentation/README documentation/FAQ.html documentation/PROTOCOL.TXT documentation/INSTALL.J2EE documentation/INSTALL.J2SE documentation/src.zip documentation/NEWS JavaBridge.war documentation/server/documentation documentation/server/php_java_lib documentation/server/tests.jsr223 documentation/server/tests.php5"
+list="MONO+NET.STANDALONE  documentation/API documentation/examples documentation/README documentation/FAQ.html documentation/PROTOCOL.TXT documentation/INSTALL.J2EE documentation/INSTALL.J2SE documentation/INSTALL.STANDALONE documentation/src.zip documentation/NEWS JavaBridge.war documentation/server/documentation documentation/server/php_java_lib documentation/server/tests.jsr223 documentation/server/tests.php5"
 find $list -type d -name "CVS" -print | xargs rm -rf
 
+
 chmod +x JavaBridge.war
+
 # create j2ee download
-zip -q -r php-java-bridge_${version}_j2ee.zip $list
+zip -q -r php-java-bridge_${version}_documentation.zip $list
+mv JavaBridgeTemplate.war "JavaBridgeTemplate`echo ${version}|sed 's/\.//g'`.war"
 rm -rf $dirs
 cvs -Q update -APd 
