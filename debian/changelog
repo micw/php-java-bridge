@@ -1,3 +1,10 @@
+php-java-bridge (5.4.4-1) unstable; urgency=low
+
+  * New upstream release.
+  * Compiled in Debian GNU/Linux 5.0 Lenny with Sun Java 6.
+
+ -- Andre Felipe Machado <andremachado@techforce.com.br>  Thu, 12 Mar 2009 14:05:04 -0300
+
 php-java-bridge (5.4.3.2-1) unstable; urgency=low
 
   * New upstream release.
