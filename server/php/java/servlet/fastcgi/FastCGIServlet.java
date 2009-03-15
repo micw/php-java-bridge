@@ -357,11 +357,6 @@ public abstract class FastCGIServlet extends CGIServlet {
 	private ConnectionPool connectionPool;
 	protected IContextFactory ctx;
 	
-	/**
-	 * @param command
-	 * @param env
-	 * @param wd
-	 */
 	protected CGIRunner(CGIServlet.CGIEnvironment env) {
 	    super(env);
 	    connectionPool = ((CGIEnvironment)env).connectionPool;

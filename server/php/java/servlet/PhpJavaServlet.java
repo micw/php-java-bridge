@@ -139,7 +139,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     }
     /**
      * Set the log level from the servlet into the bridge
-     * @param bridgeThe JavaBridge from the ContextFactory.
+     * @param bridge The JavaBridge from the ContextFactory.
      */
     protected void updateRequestLogLevel(JavaBridge bridge) {
 	if(logLevel>-1) bridge.logLevel = logLevel;

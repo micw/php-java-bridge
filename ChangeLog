@@ -1,3 +1,43 @@
+2008-03-14  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/script/servlet/PhpServletLocalScriptEngine.java: removed.
+	
+	* server/prepend.sed: Include a remote only file when necessary.
+
+	* server/META-INF/java/Protocol.inc
+	(redirect): Bugfix: Do not destroy the content of the host variable.
+
+	* server/php/java/script/servlet/EngineFactory
+	(getPhpScript): Use .inc instead of .php so that the script file
+	can be accessed remotely. All redirects must be changed
+	accordingly.
+	
+	* server/php/java/servlet/SimpleServletContextFactory
+	(getRedirectString): Always redirect to PhpJavaServlet
+
+	* server/php/java/servlet/PhpCgiServlet
+	(getRedirectString): Always redirect to PhpJavaServlet
+
+	* server/php/java/bridge/http/SimpleContextFactory
+	(getRedirectString): Always redirect to PhpJavaServlet
+
+	* server/php/java/script/servlet/EngineFactory
+	(getInvocablePhpScriptEngine): Added URI parameter
+
+	* server/php/java/script/servlet/EngineFactoryHelper
+	(getInvocablePhpScriptEngine): Added URI parameter
+
+	* server/php/java/script/servlet/InvocablePhpServletLocalHttpServerScriptEngine
+	(invoke): Use a short path which doesn't send INCLUDE if eval() is missing.
+	(evalShortPath): New method
+	(setNewScriptFileContextFactory): New, renamed from setNewLocalContextFactory
+	(setNewLocalContextFactory): Removed, renamed to setNewScriptFileContextFactory
+	
+	* server/php/java/script/servlet/InvocablePhpServletRemoteHttpServerScriptEngine.java,server/php/java/script/servlet/CloseableInvocablePhpServletRemoteHttpServerScriptEngine.java: New files.
+	
+	* VERSION, php-java-bridge.spec: Version 5.4.4.1
+
+
 2008-03-07  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/http/SimpleContextFactory.java
@@ -34,8 +74,8 @@
 	* server/php/java/servlet/fastcgi/ChannelFactory.java: New
 	file. Renamed from ChannelName
 
-	* server/php/java/script/IPhpScriptContext.java
-	(getContextString): New method. req.getRequestURI ignores mappings
+	* server/php/java/bridge/http/IContextFactory.java
+	(getRedirectString): New method. req.getRequestURI ignores mappings
 	defined in web.xml. We reconstruct the request url ourselfs to
 	allow requests to mappings defined in web.xml. Example:
 	http://.../JavaBridge/ => http://.../JavaBridge/welcome.php => PUT

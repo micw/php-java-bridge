@@ -155,7 +155,6 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
 
     /**
      * Set the context id (X_JAVABRIDGE_CONTEXT) and the override flag (X_JAVABRIDGE_OVERRIDE_HOSTS) into env
-     * @param context the new context ID
      * @param env the environment which will be passed to PHP
      */
     protected void setStandardEnvironmentValues (Map env) {

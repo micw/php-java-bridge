@@ -95,23 +95,20 @@ public class PhpScriptEngine extends SimplePhpScriptEngine {
         try {
              /* header: <? require_once("http://localhost:<ourPort>/JavaBridge/java/Java.inc"); ?> */
             localReader = new StringReader(getStandardHeader("http://127.0.0.1:"+ctx.getSocketName()+"/JavaBridge"));
-            try { while((c=localReader.read(buf))>0) w.write(buf, 0, c);} catch (IOException e) {throw new PhpScriptException("Could not read header", e);}
-            try { localReader.close(); localReader=null;} catch (IOException e) {throw new PhpScriptException("Could not close header", e);}
+            while((c=localReader.read(buf))>0) w.write(buf, 0, c);
+            localReader.close(); localReader=null;
     
             /* the script: */
-            try { while((c=reader.read(buf))>0) w.write(buf, 0, c);} catch (IOException e) {throw new PhpScriptException("Could not read script ", e);}
-            try { w.close();} catch (IOException e) {/*ignore*/}; w=null;
+            while((c=reader.read(buf))>0) w.write(buf, 0, c);
     
             /* now evaluate our script */
             localReader = new InputStreamReader(new ByteArrayInputStream(out.toByteArray()));
-            try { this.script = doEval(localReader, context);} catch (Exception e) {
-        	Util.printStackTrace(e);
-        	throw new PhpScriptException("Could not evaluate script: ", e);
-            }
-            try { localReader.close(); localReader=null;} catch (IOException e) {
-        	Util.printStackTrace(e);
-        	throw new PhpScriptException("Could not evaluate footer", e);
-            }
+            this.script = doEval(localReader, context);
+        } catch (Exception e) {
+            Util.printStackTrace(e);
+            if (e instanceof RuntimeException) throw (RuntimeException)e;
+            if (e instanceof ScriptException) throw (ScriptException)e;
+            throw new ScriptException(e);
          } finally {
             if(w!=null)  try { w.close(); } catch (IOException e) {/*ignore*/}
             if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}

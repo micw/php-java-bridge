@@ -138,7 +138,7 @@ public class PhpCGIServlet extends FastCGIServlet {
                 	buf.append(req.getContextPath());
                 	buf.append(req.getServletPath());
                 	URI uri = new URI(req.isSecure()?"s:127.0.0.1":"h:127.0.0.1", buf.toString(), null);
-	                override = uri.toASCIIString()+"javabridge";
+	                override = uri.toASCIIString()+".phpjavabridge";
                     } catch (Exception e) {
                 	Util.printStackTrace(e);
       		  
@@ -152,7 +152,7 @@ public class PhpCGIServlet extends FastCGIServlet {
                 	buf.append(this.environment.get("SERVER_PORT")); 
                 	buf.append('/');
                 	buf.append(req.getRequestURI());
-                	buf.append("javabridge");
+                	buf.append(".phpjavabridge");
                 	override = buf.toString();
                     }
 	        }

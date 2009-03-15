@@ -20,9 +20,29 @@ Furthermore IBM's Zero framework for Eclipse contains a PHP interpreter written 
 
 <H4>What do I need to communicate with Java?</H4>
 <p>Only the PHP code from <code>Java.inc</code> and a running Java application, for example <code>JavaBridge.jar</code>, or a running Java servlet, for example <code>JavaBridge.war</code>.</p>
+<p>Test code: 
+<blockquote>
+<code>
+&lt;?php require_once("http://localhost:8080/JavaBridge/java/Java.inc"); <br>
+echo java("java.lang.System")->getProperties(); ?&gt;
+</code>
+</blockquote>
+</p>
 
 <H4>What do I need to communicate with PHP?</H4>
-<p>Only the PHP code from <code>JavaProxy.php</code> within your PHP web application and the Java libraries <code>JavaBridge.jar</code>, <code>php-script.jar</code> and <code>php-servlet.jar</code>.</p>
+<p>Only the PHP code from <code>JavaProxy.php</code> within your PHP web application, the Java libraries <code>JavaBridge.jar</code>, <code>php-script.jar</code> and <code>php-servlet.jar</code>, and a <code>ContextLoaderListener</code> declaration in your <code>WEB-INF/web.xml</code></p>
+<p>Test code: 
+<blockquote>
+<code>
+&lt;% javax.script.ScriptEngine e = php.java.script.servlet.EngineFactory.getInvocablePhpScriptEngine (this, application, request, response, new java.net.URI("http://yourIntranetHost:80/yourPhpWebApp/JavaProxy.php"));<br>
+out.println("yourIntranetHost running PHP version: " + (String)((javax.script.Invocable)e).invokeFunction("phpversion", new Object[]{}));<br>
+((java.io.Closeable)e).close();
+%&gt;
+</code>
+</blockquote>
+</p>
+<p>There must not be a firewall in between, the servlet thread pool must not be limited or twice the size of the PHP container's pool size, the PHP option "allow_url_include" and the Java <code>WEB-INF/web.xml</code> "promiscuous" option must be enabled. Both components should be behind a firewall.
+</p>
 
 <H4>Which versions are supported?</H4>
 <ul>

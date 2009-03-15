@@ -26,7 +26,7 @@ ScriptEngine e = EngineFactory.getPhpScriptEngine (this,
 e.getContext().setWriter (out);
 
 /** evaluate the script, use the file: servlet +"._cache_.php" as a script cache */
-FileReader reader = EngineFactory.createPhpScriptFileReader(getHelloScript(EngineFactory.getRealPath(application, request.getServletPath())));
+FileReader reader = EngineFactory.createPhpScriptFileReader(getHelloScript(EngineFactory.getRealPath(application, request.getServletPath())+"._cache_.php"));
 e.eval (reader);
 reader.close();
 %>

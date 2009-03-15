@@ -3,13 +3,11 @@
 package php.java.script.servlet;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
@@ -19,7 +17,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
-import php.java.script.PhpScriptException;
 import php.java.script.URLReader;
 import php.java.servlet.CGIServlet;
 import php.java.servlet.ContextLoaderListener;
@@ -107,7 +104,7 @@ import php.java.servlet.ContextLoaderListener;
  */
 
 
-public class PhpServletScriptEngine extends PhpServletLocalScriptEngine {
+public class PhpServletScriptEngine extends PhpServletLocalHttpServerScriptEngine {
     private File path;
     protected PhpServletScriptEngine(Servlet servlet, 
 				  ServletContext ctx, 
@@ -148,20 +145,15 @@ public class PhpServletScriptEngine extends PhpServletLocalScriptEngine {
 	    
 	    reserveContinuation(); //  engines need a PHP- and an optional Java continuation
 	    localReader = new URLReader(getURL(webPath));
-            try { this.script = doEval(localReader, context);} catch (Exception e) {
-        	Util.printStackTrace(e);
-        	throw new PhpScriptException("Could not evaluate script", e);
-            }
-            try { localReader.close(); localReader=null; } catch (IOException e) {throw new PhpScriptException("Could not close script", e);}
-	} catch (FileNotFoundException e) {
-	    Util.printStackTrace(e);
-	} catch (IOException e) {
-	    Util.printStackTrace(e);
-        } catch (URISyntaxException e) {
+            this.script = doEval(localReader, context);
+        } catch (Exception e) {
             Util.printStackTrace(e);
+            if (e instanceof RuntimeException) throw (RuntimeException)e;
+            if (e instanceof ScriptException) throw (ScriptException)e;
+            throw new ScriptException(e);
         } finally {
-            releaseReservedContinuation();
             if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}
+            releaseReservedContinuation();
             if(fout!=null) try { fout.close(); } catch (IOException e) {/*ignore*/}
             if(tempfile!=null) tempfile.delete();
             release ();

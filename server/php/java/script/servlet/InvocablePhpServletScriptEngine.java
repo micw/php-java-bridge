@@ -3,7 +3,6 @@
 package php.java.script.servlet;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -22,7 +21,6 @@ import javax.servlet.http.HttpServletResponse;
 import php.java.bridge.Util;
 import php.java.bridge.http.IContext;
 import php.java.script.IPhpScriptContext;
-import php.java.script.PhpScriptException;
 import php.java.script.URLReader;
 import php.java.servlet.CGIServlet;
 import php.java.servlet.ContextLoaderListener;
@@ -183,17 +181,15 @@ public class InvocablePhpServletScriptEngine extends InvocablePhpServletLocalScr
 	    
 	    EngineFactory.addManaged(servletCtx, this);
 	    localReader = new URLReader(url);
-            try { this.script = doEval(localReader, context);} catch (Exception e) {
-        	Util.printStackTrace(e);
-        	throw new PhpScriptException("Could not evaluate script", e);
-            }
-            try { localReader.close(); localReader=null; } catch (IOException e) {throw new PhpScriptException("Could not close script", e);}
+            this.script = doEval(localReader, context);
             /* get the proxy, either the one from the user script or our default proxy */
-            try { this.scriptClosure = this.script.getProxy(new Class[]{}); } catch (Exception e) { return null; }
-	} catch (FileNotFoundException e) {
+	    if (this.script != null)
+		try { this.scriptClosure = this.script.getProxy(new Class[]{}); } catch (Exception e) { return null; }
+	} catch (Exception e) {
 	    Util.printStackTrace(e);
-	} catch (IOException e) {
-	    Util.printStackTrace(e);
+            if (e instanceof RuntimeException) throw (RuntimeException)e;
+            if (e instanceof ScriptException) throw (ScriptException)e;
+            throw new ScriptException(e);
         } finally {
             if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}
             if(fout!=null) try { fout.close(); } catch (IOException e) {/*ignore*/}

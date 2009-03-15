@@ -656,7 +656,7 @@ public abstract class CGIServlet extends HttpServlet {
          *                        cgi script, or null if no cgi was found
          * </ul>
          *
-         * @author Martin Dengler [root@martindengler.com]
+         * author Martin Dengler [root@martindengler.com]
          * @since Tomcat 4.0
          */
         protected String[] findCGI(String pathInfo, String webAppRootDir,
@@ -738,7 +738,7 @@ public abstract class CGIServlet extends HttpServlet {
          * Constructs the CGI environment to be supplied to the invoked CGI
          * script; relies heavliy on Servlet API methods and findCGI
          * @param res HttpServletResponse
-         * @param    HttpServletRequest request associated with the CGI
+         * @param req HttpServletRequest request associated with the CGI
          *           invokation
          *
          * @return   true if environment was set OK, false if there
@@ -884,7 +884,7 @@ public abstract class CGIServlet extends HttpServlet {
         /**
          * Converts null strings to blank strings ("")
          *
-         * @param    string to be converted if necessary
+         * @param s  string to be converted if necessary
          * @return   a non-null string, either the original or the empty string
          *           ("") if the original was <code>null</code>
          */
@@ -895,8 +895,8 @@ public abstract class CGIServlet extends HttpServlet {
         /**
          * Converts null strings to another string
          *
-         * @param    string to be converted if necessary
-         * @param    string to return instead of a null string
+         * @param couldBeNull   string to be converted if necessary
+         * @param subForNulls   string to return instead of a null string
          * @return   a non-null string, either the original or the substitute
          *           string if the original was <code>null</code>
          */
@@ -908,8 +908,8 @@ public abstract class CGIServlet extends HttpServlet {
         /**
          * Converts blank strings to another string
          *
-         * @param    string to be converted if necessary
-         * @param    string to return instead of a blank string
+         * @param couldBeBlank   string to be converted if necessary
+         * @param subForBlanks   string to return instead of a blank string
          * @return   a non-null string, either the original or the substitute
          *           string if the original was <code>null</code> or empty ("")
          */

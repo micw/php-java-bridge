@@ -32,9 +32,7 @@ class HexOutputBuffer extends ByteArrayOutputStream {
      * 
      */
     private final JavaBridge bridge;
-    /**
-     * @param response
-     */
+
     HexOutputBuffer(JavaBridge bridge) {
         this.bridge = bridge;
     }

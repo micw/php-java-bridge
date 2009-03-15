@@ -2,7 +2,6 @@
 
 package php.java.script.servlet;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
 import java.net.MalformedURLException;
@@ -23,11 +22,10 @@ import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
 import php.java.bridge.http.IContext;
+import php.java.bridge.http.IContextFactory;
 import php.java.script.IPhpScriptContext;
 import php.java.script.InvocablePhpScriptEngine;
-import php.java.script.PhpScriptException;
 import php.java.script.URLReader;
-import php.java.servlet.ContextLoaderListener;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -52,8 +50,13 @@ import php.java.servlet.ContextLoaderListener;
  */
 
 /**
- * A PHP script engine which implements the Invocable interface for Servlets. See {@link ContextLoaderListener} for details.
- * 
+ * This script engine connects a local PHP container with the current servlet container.
+ *
+ * There must not be a firewall in between, the servlet thread pool must not be 
+ * limited or twice the size of the PHP container's pool size, the PHP option 
+ * "allow_url_include" and the Java <code>WEB-INF/web.xml</code> "promiscuous" 
+ * option must be enabled. Both components should be behind a firewall.
+ * <br>	
  * PHP scripts are evaluated as follows:
  * <ol>
  * <li> JavaProxy.php is requested from Java<br>
@@ -120,13 +123,16 @@ import php.java.servlet.ContextLoaderListener;
  * <br>
  */
 public class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhpScriptEngine {
+    private static final Object EMPTY_INCLUDE = "@";
+    private static final String DUMMY_PHP_SCRIPT_NAME = "dummy php script";
+
     protected Servlet servlet;
     protected ServletContext servletCtx;
     protected HttpServletRequest req;
     protected HttpServletResponse res;
     
     protected PhpSimpleHttpScriptContext scriptContext;
-    private String webPath; 
+    protected String webPath; 
 
     protected int port;
     protected String protocol;
@@ -153,10 +159,7 @@ public class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhp
     protected InvocablePhpServletLocalHttpServerScriptEngine(Servlet servlet, 
 		   ServletContext ctx, 
 		   HttpServletRequest req, 
-		   HttpServletResponse res,
-		   String protocol,
-		   int port,
-		   String proxy) throws MalformedURLException, URISyntaxException {
+		   HttpServletResponse res) throws MalformedURLException, URISyntaxException {
 	super();
 
 	this.servlet = servlet;
@@ -173,7 +176,16 @@ public class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhp
 	} catch (Exception t) {Util.printStackTrace(t);}
 
 	scriptContext.initialize(servlet, servletCtx, req, res);
-	
+}
+    protected InvocablePhpServletLocalHttpServerScriptEngine(Servlet servlet, 
+		   ServletContext ctx, 
+		   HttpServletRequest req, 
+		   HttpServletResponse res,
+		   String protocol,
+		   int port,
+		   String proxy) throws MalformedURLException, URISyntaxException {
+	this(servlet, ctx, req, res);
+
 	this.protocol = protocol;
 	this.port = port;
 	this.proxy = proxy;
@@ -195,18 +207,33 @@ public class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhp
      * @throws IOException 
      *
      */
-    private void setNewLocalContextFactory(ScriptFileReader fileReader) throws IOException {
+    protected void setNewScriptFileContextFactory(ScriptFileReader fileReader) throws IOException, ScriptException {
         IPhpScriptContext context = (IPhpScriptContext)getContext(); 
 	env = (Map) processEnvironment.clone();
 
-	ctx = InvocablePhpServletContextFactory.addNew((IContext)context, servlet, servletCtx, req, res);
+	ctx = getPhpScriptContextFactory(context);
     	
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */
 	setStandardEnvironmentValues(env);
 	env.put("X_JAVABRIDGE_INCLUDE", fileReader.getFile().getCanonicalPath());
     }
-    
+    protected Object invoke(String methodName, Object[] args)
+	throws ScriptException, NoSuchMethodException {
+	if(scriptClosure==null) {
+	    if (Util.logLevel>4) Util.warn("Evaluating an empty script either because eval() has not been called or release() has been called.");
+	    evalShortPath();
+	}
+	
+	try {
+	    return invoke(scriptClosure, methodName, args);
+	} catch (php.java.bridge.Request.AbortException e) {
+	    release ();
+	    throw new ScriptException(e);
+	} catch (NoSuchMethodError e) { // conform to jsr223
+	    throw new NoSuchMethodException(String.valueOf(e.getMessage()));
+	}
+}
     protected Object eval(final Reader reader, final ScriptContext context, final String name) throws ScriptException {
 	try {
 	    return AccessController.doPrivileged(new PrivilegedExceptionAction(){ 
@@ -220,6 +247,46 @@ public class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhp
             throw (ScriptException) e.getCause();
         }
     }
+    protected IContextFactory getPhpScriptContextFactory (IPhpScriptContext context) {
+	return InvocablePhpServletContextFactory.addNew((IContext)context, servlet, servletCtx, req, res);
+    }
+    /** Short path used when eval() is missing */
+    protected Object evalShortPath() throws ScriptException {
+	Reader localReader = null; 
+	if((continuation != null)) release();
+	 try {
+	    StringBuffer buf = new StringBuffer(req.getContextPath());
+	    String pathInfo = req.getPathInfo();
+	    if (pathInfo != null) buf.append(pathInfo);
+	    buf.append("/JavaBridge"); // dummy for PhpJavaServlet
+	    webPath = buf.toString();
+	    IPhpScriptContext context = (IPhpScriptContext)getContext(); 
+	    env = (Map) processEnvironment.clone();
+	    ctx = getPhpScriptContextFactory (context);
+	    	
+	    /* send the session context now, otherwise the client has to 
+	     * call handleRedirectConnection */
+	    setStandardEnvironmentValues(env);
+	    setName(DUMMY_PHP_SCRIPT_NAME);
+	    env.put("X_JAVABRIDGE_INCLUDE", EMPTY_INCLUDE);
+            /* now evaluate JavaProxy.php */
+	    EngineFactory.addManaged(servletCtx, this);
+
+	    continuation = getContinuation(localReader = new URLReader(url), getContext());
+	    continuation.start();
+	    this.script = continuation.getPhpScript();
+	    if (this.script != null)
+		try { this.scriptClosure = this.script.getProxy(new Class[]{}); } catch (Exception e) { return null; }
+        } catch (Exception e) {
+	    Util.printStackTrace(e);
+            if (e instanceof RuntimeException) throw (RuntimeException)e;
+            if (e instanceof ScriptException) throw (ScriptException)e;
+            throw new ScriptException(e);
+        }  finally {
+            if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}
+        }
+	return resultProxy;
+    }
     private Object evalInternal(Reader reader, ScriptContext context, String name) throws ScriptException {
         if((continuation != null) || (reader == null) ) release();
         Reader localReader = null;
@@ -230,25 +297,23 @@ public class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhp
   	
         try {
 	    webPath = fileReader.getFile().getWebPath(fileReader.getFile().getCanonicalPath(), req, servletCtx);
-	    setNewLocalContextFactory(fileReader);
+	    setNewScriptFileContextFactory(fileReader);
 	    setName(name);
 
             /* now evaluate our script */
 
 	    EngineFactory.addManaged(servletCtx, this);
 	    localReader = new URLReader(url);
-            try { this.script = doEval(localReader, context);} catch (Exception e) {
-        	Util.printStackTrace(e);
-        	throw new PhpScriptException("Could not evaluate script", e);
-            }
-            try { localReader.close(); localReader=null; } catch (IOException e) {throw new PhpScriptException("Could not close script", e);}
+            this.script = doEval(localReader, context);
             /* get the proxy, either the one from the user script or our default proxy */
-            try { this.scriptClosure = this.script.getProxy(new Class[]{}); } catch (Exception e) { return null; }
-	} catch (FileNotFoundException e) {
+	    if (this.script != null)
+		try { this.scriptClosure = this.script.getProxy(new Class[]{}); } catch (Exception e) { return null; }
+	} catch (Exception e) {
 	    Util.printStackTrace(e);
-	} catch (IOException e) {
-	    Util.printStackTrace(e);
-        } finally {
+            if (e instanceof RuntimeException) throw (RuntimeException)e;
+            if (e instanceof ScriptException) throw (ScriptException)e;
+            throw new ScriptException(e);
+	} finally {
             if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}
         }
 	return resultProxy;
@@ -265,7 +330,6 @@ public class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhp
     }
     /**
      * Set the context id (X_JAVABRIDGE_CONTEXT) and the override flag (X_JAVABRIDGE_OVERRIDE_HOSTS) into env
-     * @param context the new context ID
      * @param env the environment which will be passed to PHP
      */
     protected void setStandardEnvironmentValues (Map env) {

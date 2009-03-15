@@ -225,7 +225,7 @@ public final class Util {
 
     /** Only for internal use */
     public static final Class[] ZERO_PARAM = new Class[0];
-
+    
     /** The name of the VM, for example "1.4.2@http://java.sun.com/" or "1.4.2@http://gcc.gnu.org/java/".*/
     public static String VM_NAME;
     /**

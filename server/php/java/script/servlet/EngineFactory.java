@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -103,7 +104,19 @@ public final class EngineFactory {
 	return hasCloseable ?
 		EngineFactoryHelper.newCloseableInvocablePhpServletLocalHttpServerScriptEngine(servlet, ctx, req, res, protocol, port, proxy) :
 		new InvocablePhpServletLocalHttpServerScriptEngine(servlet, ctx, req, res, protocol, port, proxy);
-    }
+   }
+    private Object getInvocableScriptEngine(Servlet servlet, 
+	     ServletContext ctx, 
+	     HttpServletRequest req, 
+	     HttpServletResponse res, 
+	     URI uri,
+	     String localName) throws MalformedURLException, URISyntaxException {
+	if(!Util.JAVABRIDGE_PROMISCUOUS) 
+	    throw new SecurityException("Access denied. Enable the \"promiscuous\" option in WEB-INF/web.xml or run the VM with -Dphp.java.bridge.promiscuous=true.");
+	return hasCloseable ?
+		EngineFactoryHelper.newCloseableInvocablePhpServletRemoteHttpServerScriptEngine(servlet, ctx, req, res, uri, localName) :
+		new InvocablePhpServletRemoteHttpServerScriptEngine(servlet, ctx, req, res, uri, localName);
+   }
 
     /** 
      * Get an engine factory from the servlet context
@@ -277,6 +290,80 @@ public final class EngineFactory {
 	    }
 	});
     }
+    /**
+     * Get a PHP JSR 223 ScriptEngine, which implements the Invocable interface, from a HTTP server running on the local host.
+     *
+     * Example:<br>
+     * <blockquote>
+     * <code>
+     * ScriptEngine scriptEngine = EngineFactory.getInvocablePhpScriptEngine(this, application, request, response, new URI("http://remoteHostName:80/JavaBridge/java/JavaProxy.php"), "thisHostName");<br>
+     * ...<br>
+     * scriptEngine.eval(reader);<br>
+     * reader.close ();<br>
+     * Invocable invocableEngine = (Invocable)scriptEngine;<br>
+     * invocableEngine.invoceFunction("phpinfo", new Object[]{});<br>
+     * ...<br>
+     * scriptEngine.eval ((Reader)null);<br>
+     * </code>
+     * </blockquote>
+     * @param servlet the servlet
+     * @param ctx the servlet context
+     * @param req the request
+     * @param res the response
+     * @param uri the URI of the remote PHP script engine. The localName is used by the remote script engine to connect back to the current host.
+     * @param localName the official STATIC(!) server name or ip address of this host (in case there's an IP based load balancer in between).
+     * @return the invocable PHP JSR 223 ScriptEngine
+     * @throws Exception 
+     * @throws MalformedURLException
+     * @throws IllegalStateException
+     */
+    public static javax.script.ScriptEngine getInvocablePhpScriptEngine (final Servlet servlet, 
+									 final ServletContext ctx, 
+									 final HttpServletRequest req, 
+									 final HttpServletResponse res,
+									 final URI uri,
+									 final String localName) throws 
+									     Exception {
+	return (ScriptEngine) AccessController.doPrivileged(new PrivilegedExceptionAction(){ 
+	    public Object run() throws Exception {
+	    return (javax.script.ScriptEngine)EngineFactory.getRequiredEngineFactory(ctx).getInvocableScriptEngine(servlet, ctx, req, res, uri, localName);
+	    }
+	});
+    }
+    /**
+     * Get a PHP JSR 223 ScriptEngine, which implements the Invocable interface, from a HTTP server running on the local host.
+     *
+     * Example:<br>
+     * <blockquote>
+     * <code>
+     * ScriptEngine scriptEngine = EngineFactory.getInvocablePhpScriptEngine(this, application, request, response, new URI("http://127.0.0.1:80/JavaBridge/java/JavaProxy.php"));<br>
+     * ...<br>
+     * scriptEngine.eval(reader);<br>
+     * reader.close ();<br>
+     * Invocable invocableEngine = (Invocable)scriptEngine;<br>
+     * invocableEngine.invoceFunction("phpinfo", new Object[]{});<br>
+     * ...<br>
+     * scriptEngine.eval ((Reader)null);<br>
+     * </code>
+     * </blockquote>
+     * @param servlet the servlet
+     * @param ctx the servlet context
+     * @param req the request
+     * @param res the response
+     * @param uri the URI of the remote PHP script engine, there must not be an IP-based load balancer in between
+     * @return the invocable PHP JSR 223 ScriptEngine
+     * @throws Exception 
+     * @throws MalformedURLException
+     * @throws IllegalStateException
+     */
+    public static javax.script.ScriptEngine getInvocablePhpScriptEngine (final Servlet servlet, 
+									 final ServletContext ctx, 
+									 final HttpServletRequest req, 
+									 final HttpServletResponse res,
+									 final URI uri) throws 
+									     Exception {
+	return getInvocablePhpScriptEngine(servlet, ctx, req, res, uri, req.getLocalName());
+    }
 
     private static ScriptFile getFile(ScriptFile file, Reader reader) throws IOException {
 	FileOutputStream fout = new FileOutputStream(file);
@@ -293,7 +380,7 @@ public final class EngineFactory {
      * Get a PHP script from the given Path. This procedure can be used to cache dynamically-generated scripts
      * @param path the file path which should contain the cached script, must be within the web app directory
      * @param reader the JSR 223 script reader
-     * @return A pointer to the cached PHP script, named: path+"._cache_.php"
+     * @return A pointer to the cached PHP script, named: path
      * @see #createPhpScriptFileReader(File)
      */
     public static ScriptFile getPhpScript (final String path, final Reader reader) {
@@ -301,7 +388,7 @@ public final class EngineFactory {
 	return (ScriptFile) AccessController.doPrivileged(new PrivilegedAction(){ 
 	    public Object run() {
         	try {
-        	    return getFile(new ScriptFile(path+"._cache_.php"), reader);
+        	    return getFile(new ScriptFile(path), reader);
         	} catch (IOException e) {
         	    Util.printStackTrace(e);
                 }
@@ -314,7 +401,7 @@ public final class EngineFactory {
      * @param webPath the web path of the script or the web path of a resource within the current context
      * @param path the file path which should contain the cached script
      * @param reader the JSR 223 script reader
-     * @return A pointer to the cached PHP script, named: path+"._cache_.php"
+     * @return A pointer to the cached PHP script
      * @see #createPhpScriptFileReader(File)
      */
     public static ScriptFile getPhpScript (final String webPath, final String path, final Reader reader) {
@@ -322,7 +409,7 @@ public final class EngineFactory {
 	return (ScriptFile) AccessController.doPrivileged(new PrivilegedAction(){ 
 	    public Object run() {
         	try {
-        	    return getFile(new ScriptFile(webPath, path+"._cache_.php"), reader);
+        	    return getFile(new ScriptFile(webPath, path), reader);
         	} catch (IOException e) {
         	    Util.printStackTrace(e);
                 }
@@ -333,14 +420,14 @@ public final class EngineFactory {
    /**
      * Get a PHP script from the given Path. This procedure can be used to cache dynamically-generated scripts
      * @param path the file path which should contain the cached script, must be within the web app directory
-     * @return A pointer to the cached PHP script, usually named: path+"._cache_.php"
+     * @return A pointer to the cached PHP script
      * @see #createPhpScriptFileReader(File)
      */
     public static ScriptFile getPhpScript (final String path) {
 	if (path==null) throw new NullPointerException("path");
 	return (ScriptFile) AccessController.doPrivileged(new PrivilegedAction(){ 
 	    public Object run() {
-		return new ScriptFile(path+"._cache_.php");
+		return new ScriptFile(path);
 	    }
 	});
     }
@@ -348,14 +435,14 @@ public final class EngineFactory {
      * Get a PHP script from the given Path. This procedure can be used to cache dynamically-generated scripts
      * @param webPath the web path of the script or the web path of a resource within the current context
      * @param path the file path which should contain the cached script
-     * @return A pointer to the cached PHP script, usually named: path+"._cache_.php"
+     * @return A pointer to the cached PHP script
      * @see #createPhpScriptFileReader(File)
      */
     public static ScriptFile getPhpScript (final String webPath, final String path) {
 	if (path==null) throw new NullPointerException("path");
 	return (ScriptFile) AccessController.doPrivileged(new PrivilegedAction(){ 
 	    public Object run() {
-		return new ScriptFile(webPath, path+"._cache_.php");
+		return new ScriptFile(webPath, path);
 	    }
 	});
     }
@@ -389,7 +476,7 @@ public final class EngineFactory {
      * </code>
      * </blockquote>
      * @param phpScriptFile the file containing the cached script, obtained from {@link #getPhpScript(String, Reader)} or {@link #getPhpScript(String)}
-     * @return A pointer to the cached PHP script, usually named: path+"._cache_.php"
+     * @return A pointer to the cached PHP script
      */
     public static FileReader createPhpScriptFileReader (final ScriptFile phpScriptFile) {
 	return (FileReader) AccessController.doPrivileged(new PrivilegedAction(){ 

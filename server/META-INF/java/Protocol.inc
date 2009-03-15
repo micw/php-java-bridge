@@ -370,8 +370,6 @@ class java_HttpHandler extends java_SocketHandler {
 	  throw new java_RuntimeException("No Pipe- or SocketContextServer available. See README section \"Security Issues\" for details.");
 	}
 	if(!isset($this->protocol->socketHandler)) {
-	  $hostVec = java_Protocol::getHost();
-	  $this->host = $hostVec[0];
 	  $channelName = $this->headers["redirect"];
 	  $context = $this->headers["context"];
 	  $len = strlen($context);

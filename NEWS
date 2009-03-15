@@ -3,7 +3,35 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 5.4.4.1
+
+* Remote PHP scripts can now be accessed as usual. The code:
+
+  <%@page import="java.io.*" %>
+  <%@page import="javax.script.*" %>
+  <%@page import="php.java.script.servlet.EngineFactory" %>
+  <%
+   ScriptEngine e = 
+     EngineFactory.getInvocablePhpScriptEngine (this,
+                                 application, request, response, 
+                    new java.net.URI("http://foo:80/myApp/JavaProxy.php"));
+
+   String result = (String)((Invocable)e).invokeFunction("phpversion", 
+                                                            new Object[]{});
+   ((Closeable)e).close();
+   out.println("yourApp running PHP version:" + result);
+  %>
+
+Will eval "phpversion()" on the server foo and return the result.
+
+There must not be a firewall in between, the servlet thread pool must not be 
+limited or twice the size of the PHP container's pool size, the PHP option 
+"allow_url_include" and the Java <code>WEB-INF/web.xml</code> "promiscuous" 
+option must be enabled. Both components should be behind a firewall.
+
+
 Version 5.4.4
+
 
 * The handling of J2EE JSR 223 script engines (and scripts executed
 within a J2EE server) has been changed. They are no longer reclaimed

@@ -223,7 +223,7 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
 	    buf.append("/");
 	    buf.append(webPath);
 	    URI uri = new URI("h:127.0.0.1", buf.toString(), null);
-	    return (uri.toASCIIString()+"javabridge");
+	    return (uri.toASCIIString()+".phpjavabridge");
 	} catch (URISyntaxException e) {
 	    Util.printStackTrace(e);
         }
@@ -231,7 +231,7 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
 	buf.append(getSocketName()); 
 	buf.append('/');
 	buf.append(webPath);
-	buf.append("javabridge");
+	buf.append(".phpjavabridge");
 	return buf.toString();
     }
 }

@@ -3,6 +3,7 @@
 package php.java.script.servlet;
 
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
@@ -56,6 +57,11 @@ class EngineFactoryHelper {
             Servlet servlet, ServletContext ctx, HttpServletRequest req,
             HttpServletResponse res, String protocol, int port, String proxy) throws MalformedURLException, URISyntaxException {
 	return new CloseableInvocablePhpServletLocalHttpServerScriptEngine(servlet, ctx, req, res, protocol, port, proxy);
+    }
+    public static InvocablePhpServletRemoteHttpServerScriptEngine newCloseableInvocablePhpServletRemoteHttpServerScriptEngine(
+            Servlet servlet, ServletContext ctx, HttpServletRequest req,
+            HttpServletResponse res, URI uri, String localName) throws MalformedURLException, URISyntaxException {
+	return new CloseableInvocablePhpServletRemoteHttpServerScriptEngine(servlet, ctx, req, res, uri, localName);
     }
     public static List getManagedEngineList (ServletContext ctx) {
 	return (List) ctx.getAttribute(ContextLoaderListener.ENGINES);

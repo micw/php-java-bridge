@@ -25,17 +25,7 @@ package php.java.script;
  */
 
 
-/**
- * This class implements the ScriptEngine.<p>
- * Example:<p>
- * <code>
- * ScriptEngine e = (new ScriptEngineManager()).getEngineByName("php");<br>
- * try { e.eval(&lt;?php foo() ?&gt;"); } catch (ScriptException e) { ... }<br>
- * </code>
- * @author jostb
- *
- */
-public class CloseablePhpScriptEngine extends PhpScriptEngine implements java.io.Closeable {
+class CloseablePhpScriptEngine extends PhpScriptEngine implements java.io.Closeable {
      
     /**
      * Create a new ScriptEngine with a default context.

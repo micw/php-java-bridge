@@ -2,7 +2,6 @@
 
 package php.java.script.servlet;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
 import java.net.MalformedURLException;
@@ -26,8 +25,8 @@ import php.java.bridge.http.IContext;
 import php.java.bridge.http.IContextFactory;
 import php.java.script.IPhpScriptContext;
 import php.java.script.PhpScriptEngine;
-import php.java.script.PhpScriptException;
 import php.java.script.URLReader;
+import php.java.servlet.ContextLoaderListener;
 import php.java.servlet.PhpCGIServlet;
 
 /*
@@ -174,7 +173,7 @@ class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
     	
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */
-	setStandardEnvironmentValues(ctx, env);
+	setStandardEnvironmentValues(env);
     }
     
     protected Object eval(final Reader reader, final ScriptContext context, final String name) throws ScriptException {
@@ -205,20 +204,15 @@ class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
 
 	    reserveContinuation(); // engines need a PHP- and an optional Java continuation
 	    localReader = new URLReader(getURL(webPath));
-            try { this.script = doEval(localReader, context);} catch (Exception e) {
-        	Util.printStackTrace(e);
-        	throw new PhpScriptException("Could not evaluate script", e);
-            }
-            try { localReader.close(); localReader=null; } catch (IOException e) {throw new PhpScriptException("Could not close script", e);}
-	} catch (FileNotFoundException e) {
-	    Util.printStackTrace(e);
-	} catch (IOException e) {
-	    Util.printStackTrace(e);
-        } catch (URISyntaxException e) {
+            this.script = doEval(localReader, context);
+        } catch (Exception e) {
             Util.printStackTrace(e);
+            if (e instanceof RuntimeException) throw (RuntimeException)e;
+            if (e instanceof ScriptException) throw (ScriptException)e;
+            throw new ScriptException(e);
         } finally {
-            releaseReservedContinuation();
             if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}
+            releaseReservedContinuation();
             release ();
         }
 	return resultProxy;
@@ -231,10 +225,9 @@ class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
     }
     /**
      * Set the context id (X_JAVABRIDGE_CONTEXT) and the override flag (X_JAVABRIDGE_OVERRIDE_HOSTS) into env
-     * @param context the new context ID
      * @param env the environment which will be passed to PHP
      */
-    protected void setStandardEnvironmentValues (IContextFactory ctx, Map env) {
+    protected void setStandardEnvironmentValues (Map env) {
 	setStandardEnvironmentValues(ctx, env, req, webPath, overrideHosts);
     }
     static void setStandardEnvironmentValues(IContextFactory ctx,

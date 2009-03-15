@@ -24,7 +24,7 @@ try {
  e.getContext().setWriter (out);
 
  /* evaluate the script, cache it in the file ".../jsp+php.jsp._cache_.php" */
- FileReader reader = EngineFactory.createPhpScriptFileReader(getScript(EngineFactory.getRealPath(application, request.getServletPath())));
+ FileReader reader = EngineFactory.createPhpScriptFileReader(getScript(EngineFactory.getRealPath(application, request.getServletPath())+"._cache_.php"));
  e.eval (reader);
  reader.close();
 

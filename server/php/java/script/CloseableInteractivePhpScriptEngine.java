@@ -25,19 +25,7 @@ package php.java.script;
  */
 
 
-/**
- * A convenience variant of the PHP script engine which can be used interactively.<p>
- * Example:<p>
- * <code>
- * ScriptEngine e = (new ScriptEngineManager()).getEngineByName("php-interactive);<br>
- * e.eval("$v = 1+2"); <br>
- * System.out.println(e.eval("echo $v")); <br>
- * e.eval((String)null);<br>
- * </code>
- * @author jostb
- *
- */
-public class CloseableInteractivePhpScriptEngine extends InvocablePhpScriptEngine implements java.io.Closeable {
+class CloseableInteractivePhpScriptEngine extends InvocablePhpScriptEngine implements java.io.Closeable {
     /**
      * Create the interactive php script engine.
      * @param factory The engine factory

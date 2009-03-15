@@ -61,6 +61,14 @@
 </tr>
 
 <tr VALIGN=TOP>
+<td>Report Generator (Eclipse BIRT)</td>
+
+<td WIDTH="30%"><a href="report.php">Execute</a></td>
+
+<td WIDTH="30%"><a href="source.php?source=report.php">Source</a></td>
+</tr>
+
+<tr VALIGN=TOP>
 <td>JSR 223 example</td>
 
 <td WIDTH="30%"><a href="jsr223.jsp">Execute</a></td>
@@ -85,11 +93,19 @@
 </tr>
 
 <tr VALIGN=TOP>
-<td>Report Generator (Eclipse BIRT)</td>
+<td>Calling injected PHP code on a remote PHP application server.</td>
 
-<td WIDTH="30%"><a href="report.php">Execute</a></td>
+<td WIDTH="30%"><a href="jsp%2Bphp3.jsp">Execute</a></td>
 
-<td WIDTH="30%"><a href="source.php?source=report.php">Source</a></td>
+<td WIDTH="30%"><a href="source.php?source=jsp%2Bphp3.jsp">Source</a></td>
+</tr>
+
+<tr VALIGN=TOP>
+<td>Calling a function on a remote PHP application server.</td>
+
+<td WIDTH="30%"><a href="jsp%2Bphp4.jsp">Execute</a></td>
+
+<td WIDTH="30%"><a href="source.php?source=jsp%2Bphp4.jsp">Source</a></td>
 </tr>
 
 <tr VALIGN=TOP>

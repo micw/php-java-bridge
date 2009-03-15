@@ -176,11 +176,8 @@ public class JavaBridgeRunner extends HttpServer {
 
     /**
      * Handles both, override-redirect and redirect, see
-     * @see php.java.servlet.PhpJavaServlet#handleSocketConnection(HttpServletRequest, HttpServletResponse, String, boolean)
-     * @see php.java.servlet.PhpJavaServlet#handleRedirectConnection(HttpServletRequest, HttpServletResponse)
-     * 
-     * @param req The HttpRequest
-     * @param res The HttpResponse
+     * see php.java.servlet.PhpJavaServlet#handleSocketConnection(HttpServletRequest, HttpServletResponse, String, boolean)
+     * see php.java.servlet.PhpJavaServlet#handleRedirectConnection(HttpServletRequest, HttpServletResponse)
      */
     protected void doPut (HttpRequest req, HttpResponse res) throws IOException {
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
@@ -323,7 +320,6 @@ public class JavaBridgeRunner extends HttpServer {
      * Evaluate the script engine. The engine is searched through the discovery mechanism. Add the "php-script.jar" or some other
      * JSR223 script engine to the java ext dirs (usually /usr/share/java/ext or /usr/java/packages/lib/ext) and start the HTTP server:
      * java -jar JavaBridge.jar SERVLET_LOCAL:8080. Browse to http://localhost:8080/test.php. 
-     * @param fullName The full name of the file
      * @param f The full name as a file
      * @param params The request parameter
      * @param length The length of the file
@@ -398,7 +394,6 @@ public class JavaBridgeRunner extends HttpServer {
     }
     /**
      * Display a simple text file
-     * @param fullName The full name of the file
      * @param f The full name as a file
      * @param params The request parameter
      * @param length The length of the file

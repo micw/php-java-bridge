@@ -24,18 +24,7 @@ package php.java.script;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-/**
- * This class implements the ScriptEngine.<p>
- * Example:<p>
- * <code>
- * ScriptEngine e = (new ScriptEngineManager()).getEngineByName("php-invocable");<br>
- * e.eval(&lt;? function f() {return java_server_name();}?&gt;<br>
- * System.out.println(((Invocable)e).invokeFunction("f", new Object[]{}));<br>
- * ((Closeable)e).close();<br>
- * </code><br>
- */
-public class CloseableInvocablePhpScriptEngine extends InvocablePhpScriptEngine implements java.io.Closeable {
+class CloseableInvocablePhpScriptEngine extends InvocablePhpScriptEngine implements java.io.Closeable {
      
     /**
      * Create a new ScriptEngine with a default context.

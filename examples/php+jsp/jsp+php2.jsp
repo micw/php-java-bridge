@@ -18,7 +18,7 @@ ScriptEngine e =
 try {
  e.getContext().setWriter (out);
 
- FileReader reader = EngineFactory.createPhpScriptFileReader(getScript(EngineFactory.getRealPath(application, request.getServletPath())));
+ FileReader reader = EngineFactory.createPhpScriptFileReader(getScript(EngineFactory.getRealPath(application, request.getServletPath())+"._cache_.php"));
  e.eval (reader); reader.close();
  Object result=
   ((Invocable)e).invokeFunction("f", new Object[]{new Integer(2)});

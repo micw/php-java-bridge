@@ -122,13 +122,6 @@ final class StringCache {
         map.put(entry, method);
     }
 
-    /**
-     * Get a cache entry from a name, class and arguments.
-     * @param name The method name
-     * @param clazz The class
-     * @param args The arguments
-     * @return A cache entry.
-     */
     protected Entry getEntry (byte[] name, int start, int length, String enc){
 	return new Entry(name, start, length, enc);
     }

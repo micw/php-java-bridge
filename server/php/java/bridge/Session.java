@@ -103,8 +103,7 @@ class Session implements ISession {
     }
 
     /** Check for expired sessions every 10 minutes 
-     * @see #CHECK_SESSION_TIMEOUT
-     * @param bridge the bridge
+     * see #CHECK_SESSION_TIMEOUT
      */
     static synchronized void expire() {
 	if(JavaBridge.sessionHash==null) return;
