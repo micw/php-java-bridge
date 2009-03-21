@@ -170,6 +170,7 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
             localReader.close(); localReader = null;
     
             /* now evaluate our script */
+            w.close(); w = null;
             localReader = new InputStreamReader(new ByteArrayInputStream(out.toByteArray()));
             this.script = doEval(localReader, context);
             if (this.script!=null) {
