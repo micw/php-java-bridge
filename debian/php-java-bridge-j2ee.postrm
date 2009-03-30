@@ -26,7 +26,7 @@ javaservletini=/etc/php5/conf.d/java-servlet.ini
 
 case "$1" in
     remove|upgrade)
-	invoke-rc.d tomcat5 restart;
+	invoke-rc.d tomcat5.5 restart;
     ;;
 
     purge|failed-upgrade|abort-install|abort-upgrade|disappear)
@@ -36,7 +36,7 @@ case "$1" in
 	fi
 	rm -f $javaini;
 	rm -f $javaservletini;
-	invoke-rc.d tomcat5 restart;
+	invoke-rc.d tomcat5.5 restart;
 	;;
 
     *)

@@ -20,11 +20,11 @@ set -e
 
 case "$1" in
     configure)
-	invoke-rc.d tomcat5 restart;
+	invoke-rc.d tomcat5.5 restart;
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
-	invoke-rc.d tomcat5 restart;
+	invoke-rc.d tomcat5.5 restart;
     ;;
 
     *)

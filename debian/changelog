@@ -1,3 +1,13 @@
+php-java-bridge (5.4.4.1-1) unstable; urgency=low
+
+  * New upstream release.
+  * Dependencies corrections for Tomcat 5.5 in Lenny.
+  * Correction at postrm and postinst scripts for Tomcat 5.5.
+  * Compiled in Debian GNU/Linux 5.0 Lenny with Sun Java 6.
+
+ -- Andre Felipe Machado <andremachado@techforce.com.br>  Thu, 30 Mar 2009 11:15:23 -0300
+
+
 php-java-bridge (5.4.4-1) unstable; urgency=low
 
   * New upstream release.
