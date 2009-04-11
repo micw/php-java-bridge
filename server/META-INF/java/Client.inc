@@ -323,19 +323,6 @@ class java_Client /* implements IDocHandler */ {
 	$this->methodCache = $this->defaultCache;
   }
 
-  function __destruct() { 
-	if(JAVA_DEBUG) echo "the client destroyed\n";
-	if (!isset($this->protocol)) return;
-
-	if ($this->preparedToSendBuffer) 
-	  $this->sendBuffer.=$this->preparedToSendBuffer;
-
-	$this->sendBuffer.=$this->protocol->getKeepAlive();
-
-	$this->protocol->flush();
-	$this->protocol->keepAlive();
-  }
-
   function read($size) {
 	return $this->protocol->read($size);
   }
@@ -669,4 +656,15 @@ class java_Client /* implements IDocHandler */ {
 	return $cache = $this->protocol->getServerName();
   }
 }
+function java_shutdown() {
+  $client = __javaproxy_Client_getClient();
+  if(JAVA_DEBUG) echo "the client destroyed\n";
+  if (!isset($client->protocol)) return;
+  if ($client->preparedToSendBuffer) 
+    $client->sendBuffer.=$client->preparedToSendBuffer;
+  $client->sendBuffer.=$client->protocol->getKeepAlive();
+  $client->protocol->flush();
+  $client->protocol->keepAlive();
+}
+register_shutdown_function("java_shutdown");
 ?>

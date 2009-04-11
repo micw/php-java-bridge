@@ -86,6 +86,20 @@ function java_values_internal($object) {
   $client=__javaproxy_Client_getClient();
   return $client->invokeMethod(0, "getValues", array($object));
 }
+/**
+ * Invoke a method dynamically. Example:
+ * <code>
+ * invokeMethod(new java("java.lang.String","hello"), "toString", array())
+ * </code>
+ * @param object A java object or type
+ * @param string A method string
+ * @param array A argument array
+ */
+function java_invoke($object, $method, $args) {
+  $client=__javaproxy_Client_getClient();
+  $id = $object?$object->__java:0;
+  return $client->invokeMethod($id, $method, $args);
+}
 
 /**
  * Unwrap a Java object.
@@ -276,27 +290,8 @@ function java_cast($object, $type) {
 }
 
 /**
- * Set the library path.
- *
- * Example: 
- * <code>
- * java_require("foo.jar;bar.jar"); 
- * </code>
- *
- * The .jar files should be stored in /usr/share/java or
- * extension_dir/lib one of its sub-directories or under the PHP
- * include_path/LIBNAME/LIBNAME.jar. However, it is also possible to
- * fetch .jar files from a remote server, for example:
- * <code>
- * java_require("http://php-java-bridge.sf.net/kawa.jar;...");
- * </code>
- *
- * Note that Java doesn't have a module system. 
- * Therefore libraries and their dependencies must be loaded by one and only one class loader;
- * do not report a ClassCastException saying that a class is incompatible to itself or 
- * a NoClassDefFoundError to the PHP/Java Bridge mailing list.
- * @param string The list of Java libraries.
- * @see java_autoload()
+ * Set the library path. This function should not be used in new programs.
+ * Please use tomcat or j2ee hot deployment instead.
  * @access public
  */
 function java_require($arg) {

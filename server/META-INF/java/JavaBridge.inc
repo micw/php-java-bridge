@@ -133,7 +133,7 @@ a PHP 5.1.x executable, see php_exec in the WEB-INF/web.xml";
    *
    * Available since php 5.3. Example:
    * <code>
-   * java_autoload("lucene.jar:log4j.jar");
+   * java_autoload();
    *
    * use org::apache::lucene;
    * use org::apache::lucene::index;
@@ -148,7 +148,6 @@ a PHP 5.1.x executable, see php_exec in the WEB-INF/web.xml";
    * $hits = $searcher->search($phrase);
    * ...
    *</code>
-   * @param string The libraries separated by a semicolon
    * @access public
    * @since PHP 5.3
    */
