@@ -223,7 +223,7 @@ public abstract class FastCGIServlet extends CGIServlet {
 	} catch (Throwable t) {Util.printStackTrace(t);}	
 	String val = null;
 	try {
-	    val = getServletConfig().getInitParameter("php_fcgi_children");
+	    val = config.getInitParameter("php_fcgi_children");
 	    if(val==null) val = getServletConfig().getInitParameter("PHP_FCGI_CHILDREN");
 	    if(val==null) val = System.getProperty("php.java.bridge.php_fcgi_children");
 	    if(val!=null) php_fcgi_children_number = Integer.parseInt(val);
@@ -232,7 +232,7 @@ public abstract class FastCGIServlet extends CGIServlet {
 	
 	val = null;
 	try {
-	    val = getServletConfig().getInitParameter("php_fcgi_max_requests");
+	    val = config.getInitParameter("php_fcgi_max_requests");
 	    if(val==null) val = getServletConfig().getInitParameter("PHP_FCGI_MAX_REQUESTS");
 	    if(val==null) val = System.getProperty("php.java.bridge.php_fcgi_max_requests");
 	    if(val != null) {

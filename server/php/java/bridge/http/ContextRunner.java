@@ -69,18 +69,15 @@ public class ContextRunner implements Runnable {
 	this.contextServer = contextServer;
 	this.channel = channel;
     }
+    private byte shortPathHeader;
     private int readLength() throws IOException{
 	byte buf[] = new byte[1];
 	in.read(buf);
-	int val = (0xFF&buf[0]);
-	if(val==0xFF) {
-	    buf = new byte[2];
-	    in.read(buf);
-	    val = (0xFF&buf[0]) | (0xFF00&(buf[1]<<8));
-	} else 
-	    throw new IllegalStateException("context length");
+	shortPathHeader = (byte) (0xFF&buf[0]);
 	
-	return val;
+	buf = new byte[2];
+	in.read(buf);
+	return (0xFF&buf[0]) | (0xFF00&(buf[1]<<8));
     }
     private String readString(int length) throws IOException {
 	byte buf[] = new byte[length];
@@ -125,6 +122,10 @@ public class ContextRunner implements Runnable {
 	SimpleJavaBridgeClassLoader loader = bridge.getClassLoader();
 	loader.switcheThreadContextClassLoader();
 	
+	if (shortPathHeader != 0xFF) { // short path S1: no PUT request
+	    bridge.request = new Request(bridge);
+	    bridge.request.init(shortPathHeader);
+	}
 	setIO(bridge, in, out);
 	this.request = bridge.request;
 	

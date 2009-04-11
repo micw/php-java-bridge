@@ -125,11 +125,7 @@ class InvocablePhpServletLocalScriptEngine extends InvocablePhpServletLocalHttpS
 	    return proxy=req.getContextPath()+"/java/JavaProxy.php";
     }
     protected void releaseReservedContinuation() {
-	PhpCGIServlet.releaseReservedContinuation();
 	List list = EngineFactoryHelper.getManagedEngineList(servletCtx);
 	list.remove(this);
-    }
-    protected void reserveContinuation() throws ScriptException {
-	PhpCGIServlet.reserveContinuation();
     }
 }

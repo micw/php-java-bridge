@@ -202,7 +202,6 @@ class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
 	        
             /* now evaluate our script */
 
-	    reserveContinuation(); // engines need a PHP- and an optional Java continuation
 	    localReader = new URLReader(getURL(webPath));
             this.script = doEval(localReader, context);
         } catch (Exception e) {
@@ -212,16 +211,9 @@ class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
             throw new ScriptException(e);
         } finally {
             if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}
-            releaseReservedContinuation();
             release ();
         }
 	return resultProxy;
-    }
-    protected void releaseReservedContinuation() {
-	PhpCGIServlet.releaseReservedContinuation();
-    }
-    protected void reserveContinuation() throws ScriptException {
-	PhpCGIServlet.reserveContinuation();
     }
     /**
      * Set the context id (X_JAVABRIDGE_CONTEXT) and the override flag (X_JAVABRIDGE_OVERRIDE_HOSTS) into env

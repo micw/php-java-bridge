@@ -32,7 +32,6 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.util.HashMap;
 
-import javax.script.ScriptException;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -41,8 +40,10 @@ import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
 import php.java.bridge.Util.Process;
+import php.java.bridge.http.AbstractChannelName;
+import php.java.bridge.http.ContextFactory;
+import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.IContextFactory;
-import php.java.script.servlet.PhpScriptTemporarilyOutOfResourcesException;
 import php.java.servlet.fastcgi.FastCGIServlet;
 
 /**
@@ -73,12 +74,30 @@ public class PhpCGIServlet extends FastCGIServlet {
     
     private String DOCUMENT_ROOT;
     private String SERVER_SIGNATURE;
+    private ContextServer contextServer; // shared with PhpJavaServlet, PhpCGIServlet
+    private boolean php_include_java;
+    
     /**@inheritDoc*/
     public void init(ServletConfig config) throws ServletException {
     	super.init(config);
 
+    	ServletContext context = config.getServletContext();
+	String servletContextName=CGIServlet.getRealPath(context, "");
+	if(servletContextName==null) servletContextName="";
+	contextServer = PhpJavaServlet.getContextServer(context);
+
 	DOCUMENT_ROOT = getRealPath(context, "");
 	SERVER_SIGNATURE = context.getServerInfo();
+
+	String val = null;
+	php_include_java = true;
+	try {
+	    val  = config.getInitParameter("php_include_java");
+	    if(val==null) val = config.getInitParameter("PHP_INCLUDE_JAVA");
+	    if(val==null) val = System.getProperty("php.java.bridge.php_include_java");
+	    if(val!=null && (val.equalsIgnoreCase("off") ||  val.equalsIgnoreCase("false")))
+		php_include_java = false;
+	} catch (Throwable t) {/*ignore*/}
     }
     
     private static final Object lockObject = new Object();   
@@ -115,15 +134,20 @@ public class PhpCGIServlet extends FastCGIServlet {
     	protected SimpleServletContextFactory sessionFactory;
 	/** Only for internal use */
     	public HttpServletRequest req;
+    	private boolean included_java;
     	
 	protected CGIEnvironment(HttpServletRequest req, HttpServletResponse res, ServletContext context) {
 	    super(req, res, context);
 	    this.req = req;
+	    this.included_java = php_include_java && req.getHeader("X_JAVABRIDGE_INCLUDE") == null;
 	}
 
 	/** PATH_INFO and PATH_TRANSLATED not needed for PHP, SCRIPT_FILENAME is enough */
         protected void setPathInfo(HttpServletRequest req, HashMap envp, String sCGIFullName) {
-            envp.put("SCRIPT_FILENAME", nullsToBlanks(getRealPath(context, servletPath)));          
+            if (included_java) 
+        	envp.put("SCRIPT_FILENAME", nullsToBlanks(getRealPath(context, "java/JavaProxy.php")));
+            else
+                envp.put("SCRIPT_FILENAME", nullsToBlanks(getRealPath(context, servletPath)));
         }
 	protected boolean setCGIEnvironment(HttpServletRequest req, HttpServletResponse res) {
 	    boolean ret = super.setCGIEnvironment(req, res);
@@ -159,6 +183,10 @@ public class PhpCGIServlet extends FastCGIServlet {
 		else 
 		    override = "";
 
+	        if (included_java) {
+	            this.environment.put("X_JAVABRIDGE_INCLUDE_ONLY", "1");
+	            this.environment.put("X_JAVABRIDGE_INCLUDE", CGIServlet.getRealPath(PhpCGIServlet.this.getServletContext(), req.getServletPath()));
+	        }
 	        this.environment.put("X_JAVABRIDGE_OVERRIDE_HOSTS", override);
 	        // same for fastcgi, which already contains X_JAVABRIDGE_OVERRIDE_HOSTS=/ in its environment
 	        this.environment.put("X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT", override); 
@@ -187,8 +215,17 @@ public class PhpCGIServlet extends FastCGIServlet {
 		/* send the session context now, otherwise the client has to 
 		 * call handleRedirectConnection */
 	    	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
-	    	if(id==null) 
+	    	if(id==null)
 	    	    id = (ctx=ServletContextFactory.addNew(PhpCGIServlet.this, PhpCGIServlet.this.getServletContext(), req, req, res)).getId();
+	    	else
+	    	    ctx = ContextFactory.peek(id);
+	    	// short path S1: no PUT request
+	    	AbstractChannelName channelName = contextServer.getFallbackChannelName(null, ctx);
+	    	if (channelName != null) {
+	    	    this.environment.put("X_JAVABRIDGE_REDIRECT", channelName.getName());
+	    	    ctx.getBridge();
+	    	    contextServer.start(channelName);
+	    	}
 	    	this.environment.put("X_JAVABRIDGE_CONTEXT", id);
 	    }
 	    return ret;
@@ -302,54 +339,7 @@ public class PhpCGIServlet extends FastCGIServlet {
     	    
         }
     } //class CGIRunner
-    
-    private static short count = 0;
-
-    /**
-     * This is necessary because some servlet engines only have one global servlet pool. 
-     * Since the PhpCGIServlet depends on the outcome of the PhpJavaServlet, we can have only
-     * <code>pool-size/2</code> PhpCGIServlet instances without running into a dead lock: PhpCGIServlet instance
-     * waiting for result from PhpJavaServlet instance, Servlet engine trying to allocate a PhpJavaServlet instance,
-     * waiting for the pool to release an old servlet instance. This may never happen when the pool is 
-     * filled up with PhpCGIServlet instances all waiting for PhpJavaServlet instances, which the pool cannot deliver.
-     * <p>
-     * It is recommended to use a servlet engine which uses a thread pool per servlet or to use the Apache/IIS
-     * front-end instead.
-     * </p>
-     * @param res The servlet response
-     * @return true if the number of active PhpCGIServlet instances is less than cgi_max_requests.
-     * @throws ServletException
-     * @throws IOException
-     */
-    private boolean checkPool(HttpServletResponse res) throws ServletException, IOException {
-	if(count++>=(getServletPoolSize()/2)) {
-            res.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Out of system resources. Try again shortly or use the Apache or IIS front end instead.");
-            Util.logFatal("Out of system resources. Adjust php.java.bridge.threads and the pool size in server.xml.");
-            return false;
-        }
-        return true;
-    }
-    private static int engineCount = 0;
-    /**
-     * Since each script captures up to two servlet instances, we must check the servlet engine's thread pool.
-     * Check if a script continuation is available and capture it. Otherwise throw a PhpScriptException.
-     * @throws ScriptException
-     */
-    /*
-     * @see PhpCGIServlet#checkPool(javax.servlet.http.HttpServletResponse)
-     * @see JavaBridgeRunner#doGet(php.java.bridge.http.HttpRequest, php.java.bridge.http.HttpResponse)
-     */
-    public static void reserveContinuation () throws ScriptException {
-	if (engineCount++ >= (PhpCGIServlet.getServletPoolSize()/3) || count>=(getServletPoolSize()/2)) 
-	    throw new PhpScriptTemporarilyOutOfResourcesException ("Out of system resources. Adjust php.java.bridge.threads and the pool size in server.xml.");
-    }
-    /** 
-     * Release a captured continuation
-     */
-    public static void releaseReservedContinuation () {
-	--engineCount;
-    }
-    
+        
     /**
      * Used when running as a cgi binary only.
      * 
@@ -359,7 +349,6 @@ public class PhpCGIServlet extends FastCGIServlet {
     protected void handle(HttpServletRequest req, HttpServletResponse res, boolean handleInput)
 	throws ServletException, IOException {
     	try {
-    	   if(!checkPool(res)) return;
  	    super.handle(req, res, handleInput);
     	} catch (IOException e) {
     	    try {res.reset();} catch (Exception ex) {/*ignore*/}
@@ -395,8 +384,6 @@ public class PhpCGIServlet extends FastCGIServlet {
     	    try {res.reset();} catch (Exception ex) {/*ignore*/}
 	    Util.printStackTrace(t);
     	    throw new ServletException(t);
-    	} finally {
-    	    count--;
     	}
    }
 }

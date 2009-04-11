@@ -168,6 +168,7 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
             localReader =  new StringReader("<?php java_context()->call(java_closure()); ?>");
             while((c=localReader.read(buf))>0) w.write(buf, 0, c);
             localReader.close(); localReader = null;
+            w.close(); w = null;
     
             /* now evaluate our script */
             w.close(); w = null;

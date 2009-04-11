@@ -427,14 +427,7 @@ public class JavaBridgeRunner extends HttpServer {
      * @param res The HttpResponse
      */
     protected void doGet (HttpRequest req, HttpResponse res) throws IOException {
-	try {
-	    if(count++>=(maxRunnables/2-1))
-		writeServiceUnavailable(req, res);
-	    else 
-		handleDoGet (req, res);
-	} finally {
-	    count--;
-	}
+	handleDoGet (req, res);
     }
 	
     private byte[] cache;

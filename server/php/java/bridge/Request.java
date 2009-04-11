@@ -169,6 +169,15 @@ public final class Request implements IDocHandler {
     static final Object ZERO_OBJECT=new Object();
     
     /**
+     * This method must be called with the current header option byte. 
+     * It initializes the request object.
+     * 
+     * @param ch the current php options.
+     */
+    public void init(byte ch) {
+	parser.initOptions(ch);
+    }
+    /**
      * This method must be called with the current input and output streams. 
      * It reads the protocol header and initializes the request object.
      * 

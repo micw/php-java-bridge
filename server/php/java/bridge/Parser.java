@@ -44,6 +44,16 @@ class Parser {
 	this.handler=handler;
 	tag=new ParserTag[]{new ParserTag(1), new ParserTag(MAX_ARGS), new ParserTag(MAX_ARGS) };
     }
+    void initOptions (byte ch) {
+	bridge.options = new Options();
+        if((ch&64)!=0) bridge.options.updateOptions((byte) (ch&3));
+    	if((ch&128)!=0) {
+    	    if(bridge.logLevel>3 && (bridge.logLevel!=((ch>>2)&7)))
+	        bridge.logDebug("Client changed its request log level to: " + ((ch>>2)&7));
+	            
+    	    bridge.logLevel = (ch>>2)&7;
+    	}
+    }
     short initOptions(InputStream in) throws IOException {
 	if((clen=read(in, buf, 0, RECV_SIZE)) >0) { 
 
@@ -68,17 +78,10 @@ class Parser {
 	    	    } else {
 	    		ch = buf[c];
 	    	    }
-	    	    bridge.options = new Options();
 	    	} else {
 	    	    throw new IllegalArgumentException ("Illegal header.");
 	    	}
-	        if((ch&64)!=0) bridge.options.updateOptions((byte) (ch&3));
-	    	if((ch&128)!=0) {
-	    	    if(bridge.logLevel>3 && (bridge.logLevel!=((ch>>2)&7)))
-		        bridge.logDebug("Client changed its request log level to: " + ((ch>>2)&7));
-		            
-	    	    bridge.logLevel = (ch>>2)&7;
-	    	}
+	    	initOptions (ch);
 	    	c++;
 	    }
 	} else {
@@ -231,12 +234,17 @@ class Parser {
 		    break;
 		case 0177: if(in_dquote) {APPEND(ch); break;}
 		    // the header used to be binary encoded
-		    if((0xFF&(buf[1]))!=0xFF) {c++; break;}
+		    
 		    bridge.out.write(0); bridge.out.flush(); // dummy write: avoid ack delay
 		    int len =(0xFF&buf[c+2]) | (0xFF00&(buf[c+3]<<8));
 		    String newContext = new String(buf, c+4, c+len,  Util.ASCII);
 		    IContextFactory factory = (IContextFactory)bridge.getFactory();
 		    factory.recycle(newContext);
+		    
+		    byte shortPathHeader = (byte) (0xFF&(buf[1]));
+		    if(shortPathHeader != 0xFF)  // short path: no previous PUT request
+			initOptions(shortPathHeader);
+
 		    c+=len+3;
 		    break;
 		default:

@@ -83,11 +83,12 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 
 	String servletContextName=CGIServlet.getRealPath(config.getServletContext(), "");
 	if(servletContextName==null) servletContextName="";
-	contextServer = new ContextServer(servletContextName);
+	ServletContext ctx = config.getServletContext();
+	contextServer = getContextServer(ctx);
     	 
     	super.init(config);
        
-    	if (!libraryInitialized) Util.setLogger(new Util.Logger(new Logger(config.getServletContext())));
+    	if (!libraryInitialized) Util.setLogger(new Util.Logger(new Logger(ctx)));
 
 	if(Util.VERSION!=null)
     	    Util.logMessage("PHP/Java Bridge servlet "+servletContextName+" version "+Util.VERSION+" ready.");
@@ -233,5 +234,18 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	throws ServletException, IOException {
       		String uri = req.getRequestURI();
      		req.getRequestDispatcher(uri.substring(0, uri.length()-10)).forward(req, res);
+    }
+
+    private static final String ROOT_CONTEXT_SERVER_ATTRIBUTE = ContextServer.class.getName()+".ROOT";
+    /** Only for internal use */
+    static synchronized ContextServer getContextServer(ServletContext context) {
+	ContextServer server = (ContextServer)context.getAttribute(ROOT_CONTEXT_SERVER_ATTRIBUTE);
+	if (server == null) {
+	    String servletContextName=CGIServlet.getRealPath(context, "");
+	    if(servletContextName==null) servletContextName="";
+	    server = new ContextServer(servletContextName);
+	    context.setAttribute(ROOT_CONTEXT_SERVER_ATTRIBUTE, server);
+	}
+	return server;
     }
 }

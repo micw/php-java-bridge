@@ -62,7 +62,6 @@ public abstract class HttpServer implements Runnable {
     protected ISocketFactory socket;
     protected Thread httpServer;
     private AppThreadPool pool;
-    protected int maxRunnables = Integer.MAX_VALUE;
 
     /**
      * Create a server socket.
@@ -106,7 +105,7 @@ public abstract class HttpServer implements Runnable {
         AppThreadPool pool = null;
         int maxSize = 20;
         try { maxSize = Integer.parseInt(Util.THREAD_POOL_MAX_SIZE); } catch (Throwable t) {/*ignore*/}
-        if(maxSize>0) pool = new AppThreadPool(name, maxRunnables=maxSize);
+        if(maxSize>0) pool = new AppThreadPool(name, maxSize);
  
         return pool;
     }

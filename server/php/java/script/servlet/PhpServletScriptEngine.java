@@ -143,7 +143,6 @@ public class PhpServletScriptEngine extends PhpServletLocalHttpServerScriptEngin
 	    
             /* now evaluate our script */
 	    
-	    reserveContinuation(); //  engines need a PHP- and an optional Java continuation
 	    localReader = new URLReader(getURL(webPath));
             this.script = doEval(localReader, context);
         } catch (Exception e) {
@@ -153,7 +152,6 @@ public class PhpServletScriptEngine extends PhpServletLocalHttpServerScriptEngin
             throw new ScriptException(e);
         } finally {
             if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}
-            releaseReservedContinuation();
             if(fout!=null) try { fout.close(); } catch (IOException e) {/*ignore*/}
             if(tempfile!=null) tempfile.delete();
             release ();
