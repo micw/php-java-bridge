@@ -9,13 +9,13 @@ java_SOURCES=php/java/bridge/JavaBridgeIllegalStateException.java php/java/bridg
 
 
 JavaRaw.inc:
-	cat META-INF/java/JavaBridge.inc META-INF/java/Options.inc META-INF/java/Client.inc META-INF/java/GlobalRef.inc META-INF/java/NativeParser.inc META-INF/java/Parser.inc META-INF/java/Protocol.inc META-INF/java/SimpleParser.inc META-INF/java/JavaProxy.inc | sed -f extract.sed | sed '/^\/\*/,/\*\/$$/d' >JavaRaw.inc
+	cat META-INF/java/JavaBridge.inc META-INF/java/Options.inc META-INF/java/Client.inc META-INF/java/GlobalRef.inc META-INF/java/NativeParser.inc META-INF/java/Parser.inc META-INF/java/Protocol.inc META-INF/java/SimpleParser.inc META-INF/java/JavaProxy.inc | sed -f extract.sed | sed '/^\/\*/,/\*\/$$/d' | sed '/^[	 ]*$$/d' >JavaRaw.inc
 
 META-INF/java/Java.inc: JavaRaw.inc
 	cat JavaRaw.inc | sed '/do not delete this line/d' >META-INF/java/Java.inc
 
 META-INF/java/JavaProxy.php: META-INF/java/Java.inc
-	cat META-INF/java/Java.inc | sed -f prepend.sed >META-INF/java/JavaProxy.php
+	cat META-INF/java/Java.inc | sed '$$d' | sed -f prepend.sed >META-INF/java/JavaProxy.php
 
 META-INF/java/Mono.inc: JavaRaw.inc
 	cat JavaRaw.inc | sed -f append.sed | sed 's/JAVA/MONO/g;s/java/mono/g;s/Java/Mono/g;s/updateJarLibraryPath/updateLibraryPath/;s/^.*do not delete this line.*$$/$$name="cli.".$$name;/;' >META-INF/java/Mono.inc

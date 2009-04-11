@@ -3,6 +3,33 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 5.4.4.2
+
+* A short path has been added so that scripts running within a java
+  servlet engine or J2EE server can access their Java back end.  This
+  can be switched off, for example
+
+    <servlet>
+        <servlet-name>PhpCGIServlet</servlet-name>
+        <servlet-class>php.java.servlet.PhpCGIServlet</servlet-class>
+         <init-param>
+           <param-name>php_include_java</param-name>
+           <param-value>Off</param-value>
+         </init-param>
+    </servlet>
+
+* A short path has been added so that scripts running within a java
+  servlet engine or J2EE server consume only one continuation. This
+  means that the bridge can now run on engines which have a limited
+  thread pool without having to check for a potential dead-lock
+  (e.g. thread pool is full of servlets waiting for another servlet to
+  start).
+
+* java_invoke is now an official API method
+
+* java_require() documentation has been removed. It is and will be
+  supported, but new users should use tomcat hot deployment instead.
+
 Version 5.4.4.1
 
 * Remote PHP scripts can now be accessed as usual. The code:
@@ -1319,3 +1346,4 @@ Version 3.0.1:
   }
   java_context()->call(java_closure()) || redirect();
   ?>
+  
