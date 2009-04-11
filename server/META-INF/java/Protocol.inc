@@ -54,6 +54,24 @@ function java_getHeader($name, $array) {
 /**
  * @access private
  */
+function java_getCompatibilityOption($client) {
+  static $compatibility = null;
+
+  if ($compatibility) return $compatibility;
+
+  $compatibility = $client->RUNTIME["PARSER"]=="NATIVE"
+    ? (0103-JAVA_PREFER_VALUES)
+    : (0100+JAVA_PREFER_VALUES);
+  if(is_int(JAVA_LOG_LEVEL)) {
+    $compatibility |= 128 | (7 & JAVA_LOG_LEVEL)<<2;
+  }
+  $compatibility = chr ($compatibility);
+  return $compatibility;
+}
+
+/**
+ * @access private
+ */
 class java_SocketChannel {
   public $peer, $protocol;
   private $channelName, $host;
@@ -178,47 +196,40 @@ class java_SocketHandler {
 }
 /**
  * @access private
+ * if REDIRECT is passed from java, we use a short path (i.e. no PUT request)
  */
-class java_HttpHandler extends java_SocketHandler {
+class java_SimpleHttpHandler extends java_SocketHandler {
   public $headers;
   public $redirect;
   
   public $context, $ssl, $port; // used by reopen
   public $host; // used when creating a socket channel lazily. the port# is passed via X_JAVABRIDGE_CHANNEL
-
-  public $socket; // we write to the socket directly and keep the pipe channel for later use
   
-  function createPipeChannel($host, $pipe_dir) {
-	if($pipe_dir && ($host == "127.0.0.1" || (substr($host,0,9) == "localhost")))
-	  return new java_PipeChannel(tempnam($pipe_dir, ".php_java_bridge"));
-	return new java_EmptyPipeChannel();
+  function createChannel() {
+	$channelName = java_getHeader("X_JAVABRIDGE_REDIRECT", $_SERVER);
+	$context = java_getHeader("X_JAVABRIDGE_CONTEXT", $_SERVER);
+	$len = strlen($context);
+	$len0 = java_getCompatibilityOption($this->protocol->client); // short path S1: no PUT request
+	$len1 = chr($len&0xFF); $len>>=8;
+	$len2 = chr($len&0xFF);
+	$this->protocol->socketHandler=new java_SocketHandler($this->protocol, $this->channel = $this->getChannel($channelName));
+	$this->protocol->write("\177${len0}${len1}${len2}${context}");
+	$this->context = sprintf("X_JAVABRIDGE_CONTEXT: %s\r\n", $context);
+	
+	$this->protocol->handler = $this->protocol->socketHandler;
+	$this->protocol->handler->write($this->protocol->client->sendBuffer)
+		or $this->protocol->handler->shutdownBrokenConnection("x1 Broken local connection handle");
+	$this->protocol->client->sendBuffer=null;
+	$this->protocol->handler->read(1)
+		or $this->protocol->handler->shutdownBrokenConnection("x2 Broken local connection handle");
   }
-  function close() {
-    fclose($this->socket);
-  }
-  function shutdownBrokenConnection ($msg) {
-    $this->close();
-    $this->dieWithBrokenConnection($msg);
-  }
-  function open() {
-  	$errno = null; $errstr = null;
-  /* Do not pfsockopen here, the J2EE server may not be able to handle
-    hundreds of persistent connections to the servlet very well */
-	$socket = JAVA_PERSISTENT_SERVLET_CONNECTIONS ? 
-	  pfsockopen("{$this->ssl}{$this->host}", $this->port, $errno, $errstr, 30) :
-	   fsockopen("{$this->ssl}{$this->host}", $this->port, $errno, $errstr, 30);
 
-	if (!$socket) throw new java_ConnectException("Could not connect to the J2EE server {$this->ssl}{$this->host}:{$this->port}. Please start it, for example with the command: \"java -jar JavaBridge.jar SERVLET:8080 3 JavaBridge.log\" or, if the back end has been compiled to native code, with \"modules/java SERVLET:8080 3 JavaBridge.log\". Error message: $errstr ($errno)\n");
-	stream_set_timeout($socket, -1);
-	return $socket;
-  }
-  function java_HttpHandler($protocol, $ssl, $host, $port) {
+  function java_SimpleHttpHandler($protocol, $ssl, $host, $port) {
 	$this->protocol = $protocol;
 	$this->ssl = $ssl;
 	$this->host = $host;
 	$this->port = $port;
-	$this->channel = $this->createPipeChannel($host, $protocol->client->RUNTIME['PIPE_DIR']);
-	$this->socket = $this->open();
+	$this->createChannel();
   }
   function getCookies() {
 	$str="";
@@ -278,41 +289,7 @@ class java_HttpHandler extends java_SocketHandler {
 	return $context;
   }
   function write($data) {
-
-	$compatibility = $this->protocol->client->RUNTIME["PARSER"]=="NATIVE"
-	  ? (0103-JAVA_PREFER_VALUES)
-	  : (0100+JAVA_PREFER_VALUES);
-	if(is_int(JAVA_LOG_LEVEL)) {
-	  $compatibility |= 128 | (7 & JAVA_LOG_LEVEL)<<2;
-	}
-	$compatibility = chr ($compatibility);
-
-	$this->headers = null;
-	$socket = $this->socket;
-	$len = 2 + strlen($data);
-	$webapp = $this->getWebApp();
-	$cookies = $this->getCookies();
-	$channel = $this->getChannelName();
-	$context = $this->getContext();
-	$redirect = $this->redirect;
-	$res = "PUT ";
-	$res .= $webapp;
-	$res .= JAVA_PERSISTENT_SERVLET_CONNECTIONS ? " HTTP/1.1\r\n" : " HTTP/1.0\r\n"; 
-	$res .= "Host: {$this->host}:{$this->port}\r\n";
-	$res .= "Content-Length: "; $res .= $len; $res .= "\r\n";
-	$res .= $context;
-	$res .= $cookies;
-	$res .= $redirect;
-	if(!is_null($channel)) $res .= $channel;
-	$res .= "\r\n";
-	$res .= "\177";
-	$res .= $compatibility;
-	$res .= $data;
-	
-	$count = fwrite($socket, $res) or $this->shutdownBrokenConnection("Broken connection handle");
-	fflush($socket)                or $this->shutdownBrokenConnection("Broken connection handle");
-	
-	return $count;
+	return $this->protocol->socketHandler->write($data);
   }
   function doSetCookie($key, $val, $path) {
 	$path=trim($path);
@@ -349,11 +326,7 @@ class java_HttpHandler extends java_SocketHandler {
 	}
   }
   function read($size) {
-  	if (false) $size = $size;
-  	
- 	if(is_null($this->headers)) $this->parseHeaders();
-	$data = fread($this->socket, $this->headers['content_length']);
-	return $data;
+	return $this->protocol->socketHandler->read($size);
   }
 
   function getChannel($channelName) {
@@ -365,21 +338,96 @@ class java_HttpHandler extends java_SocketHandler {
 	return new java_SocketChannel($peer, $this->protocol, $this->host, $channelName);
   }
 
+  function redirect() {}
+}
+
+/**
+ * @access private
+ */
+class java_HttpHandler extends java_SimpleHttpHandler {
+  public $socket; // we write to the socket directly and keep the pipe channel for later use
+  
+  function createChannel() {
+	$pipe_dir = $this->protocol->client->RUNTIME['PIPE_DIR'];
+	if($pipe_dir && ($this->host == "127.0.0.1" || (substr($this->host,0,9) == "localhost")))
+	  $this->channel = new java_PipeChannel(tempnam($pipe_dir, ".php_java_bridge"));
+	else
+	  $this->channel = new java_EmptyPipeChannel();
+  }
+  function close() {
+    fclose($this->socket);
+  }
+  function shutdownBrokenConnection ($msg) {
+    $this->close();
+    $this->dieWithBrokenConnection($msg);
+  }
+  function open() {
+  	$errno = null; $errstr = null;
+  /* Do not pfsockopen here, the J2EE server may not be able to handle
+    hundreds of persistent connections to the servlet very well */
+	$socket = JAVA_PERSISTENT_SERVLET_CONNECTIONS ? 
+	  pfsockopen("{$this->ssl}{$this->host}", $this->port, $errno, $errstr, 30) :
+	   fsockopen("{$this->ssl}{$this->host}", $this->port, $errno, $errstr, 30);
+
+	if (!$socket) throw new java_ConnectException("Could not connect to the J2EE server {$this->ssl}{$this->host}:{$this->port}. Please start it, for example with the command: \"java -jar JavaBridge.jar SERVLET:8080 3 JavaBridge.log\" or, if the back end has been compiled to native code, with \"modules/java SERVLET:8080 3 JavaBridge.log\". Error message: $errstr ($errno)\n");
+	stream_set_timeout($socket, -1);
+	return $socket;
+  }
+  function java_HttpHandler($protocol, $ssl, $host, $port) {
+	parent::java_SimpleHttpHandler($protocol, $ssl, $host, $port);
+	$this->socket = $this->open();
+  }
+  function write($data) {
+
+	$compatibility = java_getCompatibilityOption($this->protocol->client);
+	$this->headers = null;
+	$socket = $this->socket;
+	$len = 2 + strlen($data);
+	$webapp = $this->getWebApp();
+	$cookies = $this->getCookies();
+	$channel = $this->getChannelName();
+	$context = $this->getContext();
+	$redirect = $this->redirect;
+	$res = "PUT ";
+	$res .= $webapp;
+	$res .= JAVA_PERSISTENT_SERVLET_CONNECTIONS ? " HTTP/1.1\r\n" : " HTTP/1.0\r\n"; 
+	$res .= "Host: {$this->host}:{$this->port}\r\n";
+	$res .= "Content-Length: "; $res .= $len; $res .= "\r\n";
+	$res .= $context;
+	$res .= $cookies;
+	$res .= $redirect;
+	if(!is_null($channel)) $res .= $channel;
+	$res .= "\r\n";
+	$res .= "\177";
+	$res .= $compatibility;
+	$res .= $data;
+	
+	$count = fwrite($socket, $res) or $this->shutdownBrokenConnection("Broken connection handle");
+	fflush($socket)                or $this->shutdownBrokenConnection("Broken connection handle");
+	
+	return $count;
+  }
+  function read($size) {
+  	if (false) $size = $size;
+  	
+ 	if(is_null($this->headers)) $this->parseHeaders();
+	$data = fread($this->socket, $this->headers['content_length']);
+	return $data;
+  }
+
   function redirect() {
 	if(!isset($this->headers["redirect"])) { // no redirect received: must continue to send PUT requests
 	  throw new java_RuntimeException("No Pipe- or SocketContextServer available. See README section \"Security Issues\" for details.");
 	}
-	if(!isset($this->protocol->socketHandler)) {
-	  $channelName = $this->headers["redirect"];
-	  $context = $this->headers["context"];
-	  $len = strlen($context);
-	  $len0 = chr(0xFF);
-	  $len1 = chr($len&0xFF); $len>>=8;
-	  $len2 = chr($len&0xFF);
-	  $this->protocol->socketHandler=new java_SocketHandler($this->protocol, $this->getChannel($channelName));
-	  $this->protocol->write("\177${len0}${len1}${len2}${context}");
-	  $this->context = sprintf("X_JAVABRIDGE_CONTEXT: %s\r\n", $context);
-	}
+	$channelName = $this->headers["redirect"];
+	$context = $this->headers["context"];
+	$len = strlen($context);
+	$len0 = chr(0xFF);
+	$len1 = chr($len&0xFF); $len>>=8;
+	$len2 = chr($len&0xFF);
+	$this->protocol->socketHandler=new java_SocketHandler($this->protocol, $this->getChannel($channelName));
+	$this->protocol->write("\177${len0}${len1}${len2}${context}");
+	$this->context = sprintf("X_JAVABRIDGE_CONTEXT: %s\r\n", $context);
 
 	// close persistent connection
 	if ((!JAVA_PERSISTENT_SERVLET_CONNECTIONS) || 
@@ -464,6 +512,12 @@ class java_Protocol {
 	  $this->webContext = $webCtx;
 	}
 	$this->serverName = "$host:$port";
+
+	// short path S1: no PUT request
+	if ((array_key_exists("X_JAVABRIDGE_REDIRECT", $_SERVER)) || 
+		(array_key_exists("HTTP_X_JAVABRIDGE_REDIRECT", $_SERVER))) 
+	  return new java_SimpleHttpHandler($this, $ssl, $host, $port);
+
 	return new java_HttpHandler($this, $ssl, $host, $port);
   }
   /**
@@ -490,15 +544,7 @@ class java_Protocol {
     stream_set_timeout($peer, -1);
     $handler = new java_SocketHandler($this, new java_SocketChannel($peer, $this, $host, $channelName));
 
-    $compatibility = $this->client->RUNTIME["PARSER"]=="NATIVE"
-	  ? (0103-JAVA_PREFER_VALUES)
-	  : (0100+JAVA_PREFER_VALUES);
-    
-    if(is_int(JAVA_LOG_LEVEL)) {
-      $compatibility |= 128 | (7 & JAVA_LOG_LEVEL)<<2;
-    }
-	$compatibility = chr ($compatibility);
-
+    $compatibility = java_getCompatibilityOption($this->client);
     $this->write("\177$compatibility");
     $this->serverName = "127.0.0.1:$channelName";
     return $handler;
@@ -511,7 +557,7 @@ class java_Protocol {
     return null;
   }
   function createHandler() {
-	if(!java_getHeader('X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER)&&
+	if(!java_getHeader('X_JAVABRIDGE_OVERRIDE_HOSTS', $_SERVER)&&
 	   ((function_exists("java_get_default_channel")&&($defaultChannel=java_get_default_channel())) ||
 		($defaultChannel=$this->java_get_simple_channel())) ) {
       // if bind.c has started a local back end from Apache/IIS
