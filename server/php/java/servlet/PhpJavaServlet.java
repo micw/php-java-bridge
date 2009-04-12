@@ -238,7 +238,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 
     private static final String ROOT_CONTEXT_SERVER_ATTRIBUTE = ContextServer.class.getName()+".ROOT";
     /** Only for internal use */
-    static synchronized ContextServer getContextServer(ServletContext context) {
+    public static synchronized ContextServer getContextServer(ServletContext context) {
 	ContextServer server = (ContextServer)context.getAttribute(ROOT_CONTEXT_SERVER_ATTRIBUTE);
 	if (server == null) {
 	    String servletContextName=CGIServlet.getRealPath(context, "");

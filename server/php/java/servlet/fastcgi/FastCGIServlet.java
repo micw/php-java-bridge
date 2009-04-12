@@ -130,6 +130,7 @@ public abstract class FastCGIServlet extends CGIServlet {
     protected boolean delegateToJavaBridgeContext = false;
 
     protected String php_fcgi_children = PHP_FCGI_CHILDREN;
+    protected boolean php_include_java;
     protected int php_fcgi_children_number = Integer.parseInt(PHP_FCGI_CHILDREN);
     protected String php_fcgi_max_requests = PHP_FCGI_MAX_REQUESTS;
     protected int php_fcgi_max_requests_number = Integer.parseInt(PHP_FCGI_MAX_REQUESTS);
@@ -230,6 +231,16 @@ public abstract class FastCGIServlet extends CGIServlet {
 	} catch (Throwable t) {/*ignore*/}
 	if(val!=null) php_fcgi_children = val;
 	
+	val = null;
+	php_include_java = true;
+	try {
+	    val  = config.getInitParameter("php_include_java");
+	    if(val==null) val = config.getInitParameter("PHP_INCLUDE_JAVA");
+	    if(val==null) val = System.getProperty("php.java.bridge.php_include_java");
+	    if(val!=null && (val.equalsIgnoreCase("off") ||  val.equalsIgnoreCase("false")))
+		php_include_java = false;
+	} catch (Throwable t) {/*ignore*/}
+
 	val = null;
 	try {
 	    val = config.getInitParameter("php_fcgi_max_requests");

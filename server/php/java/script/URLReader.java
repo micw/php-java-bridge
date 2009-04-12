@@ -158,12 +158,18 @@ public class URLReader extends Reader {
             
             String overrideHosts = (String) env.get("X_JAVABRIDGE_OVERRIDE_HOSTS");
             String include = (String) env.get("X_JAVABRIDGE_INCLUDE");
+            String includeOnly = (String) env.get("X_JAVABRIDGE_INCLUDE_ONLY");
+            String redirect = (String) env.get("X_JAVABRIDGE_REDIRECT");
             byte[] buf = new byte[Util.BUF_SIZE];
             
             conn.setRequestMethod("GET");
             conn.setRequestProperty ("X_JAVABRIDGE_CONTEXT", (String)env.get("X_JAVABRIDGE_CONTEXT"));
             if(include!=null) 
                 conn.setRequestProperty("X_JAVABRIDGE_INCLUDE", include);
+            if (includeOnly!=null)
+                conn.setRequestProperty("X_JAVABRIDGE_INCLUDE_ONLY", includeOnly);
+            if (redirect!=null)
+                conn.setRequestProperty("X_JAVABRIDGE_REDIRECT", redirect);
             if(overrideHosts!=null) {
                 conn.setRequestProperty("X_JAVABRIDGE_OVERRIDE_HOSTS", overrideHosts);
                 // workaround for a problem in php (it confuses the OVERRIDE_HOSTS from the environment with OVERRIDE_HOSTS from the request meta-data 

@@ -15,9 +15,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
+import php.java.bridge.http.AbstractChannelName;
+import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.IContext;
 import php.java.bridge.http.IContextFactory;
 import php.java.script.IPhpScriptContext;
+import php.java.servlet.PhpJavaServlet;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -44,10 +47,10 @@ import php.java.script.IPhpScriptContext;
 /**
  * This script engine connects a remote PHP container with the current servlet container.
  * 
- * There must not be a firewall in between, the servlet thread pool must not be 
- * limited or twice the size of the PHP container's pool size, the PHP option 
- * "allow_url_include" and the Java <code>WEB-INF/web.xml</code> "promiscuous" 
- * option must be enabled. Both components should be behind a firewall.
+ * There must not be a firewall in between, and both components should be behind a firewall. The remote
+ * PHP application must have the PHP code from the PHP file <code>JavaProxy.php</code> embedded, otherwise invocation
+ * will fail. <code>JavaProxy.php</code> has the ability to inject PHP code dynamically into a running PHP application,
+ * provided that the administrator has set the php.ini option <code>allow_url_include = On</code>.
  * <br>	
  * 
  * PHP scripts are evaluated as follows:
@@ -76,22 +79,22 @@ import php.java.script.IPhpScriptContext;
  * ScriptEngine scriptEngine = EngineFactory.getInvocablePhpScriptEngine(this, ctx, req, res, new java.net.URI("http://diego.intern.com:80/phpApp/JavaProxy.php"), "timon.intern.com"));
  * </code>
  * </blockquote> 
- * <li> Create a FileReader for the created script file:
+ * <li> Optional: Create a FileReader for the created script file:
  * <blockquote>
  * <code>
- * Reader readerF = EngineFactory.createPhpScriptFileReader(getScriptF());
+ * <strike>Reader readerF = EngineFactory.createPhpScriptFileReader(getScriptF());</strike>
  * </code>
  * </blockquote>
- * <li> Evaluate the engine:
+ * <li> Optional: Evaluate the engine:
  * <blockquote>
  * <code>
- * scriptEngine.eval(readerF);
+ * <strike>scriptEngine.eval(readerF);</strike>
  * </code>
  * </blockquote> 
- * <li> Close the reader obtained from the {@link EngineFactory}:
+ * <li> Optional: Close the reader obtained from the {@link EngineFactory}:
  * <blockquote>
  * <code>
- * readerF.close();
+ * <strike>readerF.close();</strike>
  * </code>
  * </blockquote> 
  * <li> Cast the engine to Invocable:
@@ -113,13 +116,17 @@ import php.java.script.IPhpScriptContext;
  * </code>
  * </blockquote> 
  * </ol>
+ * Injecting code into a foreign remote PHP application using <code>scriptEngine.eval(readerF);</code> 
+ * requires that the PHP administrator has set the php.ini option <code>allow_url_include=On</code> for the remove PHP application, 
+ * the PHP code is fetched from your Java app using <code>require_once("your PHP code")</code>.
  * <br>
  */
 public class InvocablePhpServletRemoteHttpServerScriptEngine extends InvocablePhpServletLocalHttpServerScriptEngine {
     
     /** The official FIXED(!) IP# of the current host, */
     protected String localName;
-
+    protected ContextServer contextServer;
+    
     protected InvocablePhpServletRemoteHttpServerScriptEngine(Servlet servlet, 
 		   ServletContext ctx, 
 		   HttpServletRequest req, 
@@ -135,9 +142,18 @@ public class InvocablePhpServletRemoteHttpServerScriptEngine extends InvocablePh
 	this.proxy = uri.getPath();
 	this.url = uri.toURL();
 	
+	this.contextServer = PhpJavaServlet.getContextServer(ctx);
     }
     protected IContextFactory getPhpScriptContextFactory (IPhpScriptContext context) {
-	return InvocableRemotePhpServletContextFactory.addNew((IContext)context, servlet, servletCtx, req, res, localName);
+	IContextFactory ctx = InvocableRemotePhpServletContextFactory.addNew((IContext)context, servlet, servletCtx, req, res, localName);
+    	// short path S1: no PUT request
+    	AbstractChannelName channelName = contextServer.getFallbackChannelName(null, ctx);
+    	if (channelName != null) {
+    	    env.put("X_JAVABRIDGE_REDIRECT", channelName.getName());
+    	    ctx.getBridge();
+    	    contextServer.start(channelName);
+    	}
+    	return ctx;
     }
     /**
      * Create a new context ID and a environment map which we send to the client.

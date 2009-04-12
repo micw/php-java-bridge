@@ -85,11 +85,11 @@ public abstract class ChannelFactory {
     public abstract void test() throws ConnectException;
     
     protected abstract void waitForDaemon() throws UnknownHostException, InterruptedException;
-	    protected final void runFcgi(Map env, String php) {
+	    protected final void runFcgi(Map env, String php, boolean includeJava) {
 		    int c;
 		    byte buf[] = new byte[CGIServlet.BUF_SIZE];
 		    try {
-		    Process proc = doBind(env, php);
+		    Process proc = doBind(env, php, includeJava);
 		    if(proc==null) return;
 		    /// make sure that the wrapper script launcher.sh does not output to stdout
 		    proc.getInputStream().close();
@@ -100,14 +100,14 @@ public abstract class ChannelFactory {
 		    } catch (Exception e) {Util.logDebug("Could not start FCGI server: " + e);};
 	    }
 
-	    protected abstract Process doBind(Map env, String php) throws IOException;
+	    protected abstract Process doBind(Map env, String php, boolean includeJava) throws IOException;
 		protected void bind() throws InterruptedException, IOException {
 		    Thread t = (new Util.Thread("JavaBridgeFastCGIRunner") {
 			    public void run() {
 				Map env = (Map) servlet.processEnvironment.clone();
 				env.put("PHP_FCGI_CHILDREN", servlet.php_fcgi_children);
 				env.put("PHP_FCGI_MAX_REQUESTS", servlet.php_fcgi_max_requests);
-				runFcgi(env, servlet.php);
+				runFcgi(env, servlet.php, servlet.php_include_java);
 			    }
 			});
 		    t.start();

@@ -77,30 +77,6 @@
 </tr>
 
 <tr VALIGN=TOP>
-<td>JSR 223 example2</td>
-
-<td WIDTH="30%"><a href="jsp%2Bphp.jsp">Execute</a></td>
-
-<td WIDTH="30%"><a href="source.php?source=jsp%2Bphp.jsp">Source</a></td>
-</tr>
-
-<tr VALIGN=TOP>
-<td>JSR 223 and IIS/Apache interaction</td>
-
-<td WIDTH="30%"><a href="jsp%2Bphp2.jsp">Execute</a></td>
-
-<td WIDTH="30%"><a href="source.php?source=jsp%2Bphp2.jsp">Source</a></td>
-</tr>
-
-<tr VALIGN=TOP>
-<td>Calling injected PHP code on a remote PHP application server.</td>
-
-<td WIDTH="30%"><a href="jsp%2Bphp3.jsp">Execute</a></td>
-
-<td WIDTH="30%"><a href="source.php?source=jsp%2Bphp3.jsp">Source</a></td>
-</tr>
-
-<tr VALIGN=TOP>
 <td>Calling a function on a remote PHP application server.</td>
 
 <td WIDTH="30%"><a href="jsp%2Bphp4.jsp">Execute</a></td>

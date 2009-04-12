@@ -64,16 +64,9 @@ import php.java.bridge.http.IContextFactory;
  */
 public class JavaBridgeRunner extends HttpServer {
 
-    private static Class JavaInc;
     private boolean isStandalone = false;
     protected static JavaBridgeRunner runner;
 
-    static {
-	try {
-	    JavaInc = Class.forName("php.java.bridge.JavaInc");
-        } catch (Exception e) {/*ignore*/}
-    }
-    
     protected JavaBridgeRunner(String serverPort) throws IOException {
 	super(serverPort);
 	ctxServer = new ContextServer(ContextFactory.EMPTY_CONTEXT_NAME);	
@@ -471,10 +464,10 @@ public class JavaBridgeRunner extends HttpServer {
 	    return;
 	}
 	    
-	if(JavaInc!=null && name.endsWith("Java.inc")) {
+	if(Util.JavaInc!=null && name.endsWith("Java.inc")) {
 	    try {
-	        Field f = JavaInc.getField("bytes");
-	        cache = buf = (byte[]) f.get(JavaInc);
+	        Field f = Util.JavaInc.getField("bytes");
+	        cache = buf = (byte[]) f.get(Util.JavaInc);
 	        res.setContentLength(buf.length);
 		out =res.getOutputStream();
 		out.write(buf);

@@ -196,7 +196,6 @@ class java_SocketHandler {
 }
 /**
  * @access private
- * if REDIRECT is passed from java, we use a short path (i.e. no PUT request)
  */
 class java_SimpleHttpHandler extends java_SocketHandler {
   public $headers;

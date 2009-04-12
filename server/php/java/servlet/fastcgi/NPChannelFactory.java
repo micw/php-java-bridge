@@ -54,7 +54,7 @@ class NPChannelFactory extends ChannelFactory {
 	return doConnect();
     }
 
-     protected Process doBind(Map env, String php) throws IOException {
+     protected Process doBind(Map env, String php, boolean includeJava) throws IOException {
         if(proc!=null) return null;
 	if(raPath==null) throw new IOException("No pipe name available.");
 	// Set override hosts so that php does not try to start a VM.
@@ -63,7 +63,7 @@ class NPChannelFactory extends ChannelFactory {
 	// later.
 	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", servlet.override_hosts?"/":"");
 	env.put("REDIRECT_STATUS", "200");
-	String[] args = Util.getPhpArgs(new String[]{php, raPath});
+	String[] args = Util.getPhpArgs(new String[]{php, raPath}, includeJava);
 	File home = null;
 	if(php!=null) try { home = ((new File(php)).getParentFile()); } catch (Exception e) {Util.printStackTrace(e);}
 	proc = new FCGIProcess(args, home, env, CGIServlet.getRealPath(servlet.context, servlet.cgiPathPrefix), servlet.phpTryOtherLocations, servlet.preferSystemPhp);

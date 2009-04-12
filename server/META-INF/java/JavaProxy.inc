@@ -89,7 +89,7 @@ function java_values_internal($object) {
 /**
  * Invoke a method dynamically. Example:
  * <code>
- * invokeMethod(new java("java.lang.String","hello"), "toString", array())
+ * java_invoke(new java("java.lang.String","hello"), "toString", array())
  * </code>
  * @param object A java object or type
  * @param string A method string

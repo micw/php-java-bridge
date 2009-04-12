@@ -1,13 +1,36 @@
-2008-04-11  Jost Boekemeier  <jostb@intern>
+2009-04-12  Jost Boekemeier  <jostb@intern>
+
+	* ChangeLog: For some reason all entries for 2009 have had a 2008
+	time stamp.
+
+	* server/extract.sed: Squeeze Java.inc even further.
+	
+
+	* server/php/java/script/URLReader.java
+	(read): Pass short path options
+
+	* server/php/java/script/servlet/EngineFactory.java
+	(getInvocableScriptEngine): Deprecated, use the one with the URI
+	parameter instead.
+	
+	* server/php/java/script/servlet/InvocablePhpServletRemoteHttpServerScriptEngine.java
+	(getPhpScriptContextFactory): Added short path S1
+	
+	* server/php/java/servlet/PhpCGIServlet.java
+	(setCGIEnvironment): Moved short path for jsr223 to php.java.script.servlet.InvocablePhpServletRemoteHttpServerScriptEngine.getPhpScriptContextFactory
+
+	* VERSION, php-java-bridge.spec: Version 5.4.4.2_test2
+	
+2009-04-11  Jost Boekemeier  <jostb@intern>
 
 	* server/META-INF/java/Client.inc
 	(__destruct): Destruct is not called after a fatal error, we must
 	use shutdown instead.
 	(java_shutdown): New procedure from __destruct
 	
-	* VERSION, php-java-bridge.spec: Version 5.4.4.2
+	* VERSION, php-java-bridge.spec: Version 5.4.4.2_test1
 	
-2008-04-11  Jost Boekemeier  <jostb@intern>
+2009-04-11  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/servlet/PhpCGIServlet.java
 	(init): Added php_include_java option
@@ -17,7 +40,7 @@
 	* server/META-INF/java/JavaProxy.inc
 	(java_invoke): New procedure
 	
-2008-04-10  Jost Boekemeier  <jostb@intern>
+2009-04-10  Jost Boekemeier  <jostb@intern>
 
 	* server/extract.sed: Added copyright notice
 
@@ -49,7 +72,7 @@
 	(getContextServer) New procedure
 	
 	
-2008-03-14  Jost Boekemeier  <jostb@intern>
+2009-03-14  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/script/servlet/PhpServletHttpServerScriptEngine.java: removed.
 	
@@ -89,7 +112,7 @@
 	* VERSION, php-java-bridge.spec: Version 5.4.4.1
 
 
-2008-03-07  Jost Boekemeier  <jostb@intern>
+2009-03-07  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/http/SimpleContextFactory.java
 	(SimpleContextFactory): Added managed flag.
@@ -141,7 +164,7 @@
 	* server/php/java/servlet/PhpCGIServlet.java
 	(setCGIEnvironment): Use new method
 	
-2008-02-24  Jost Boekemeier  <jostb@intern>
+2009-02-24  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/servlet/fastcgi/SocketChannelName.java
 	(waitForDaemon): timeout changed to 15s
@@ -161,7 +184,7 @@
 	
 	* VERSION, php-java-bridge.spec: Version 5.4.3.3
 	
-2008-02-16  Jost Boekemeier  <jostb@intern>
+2009-02-16  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/IManaged.java: new interface
 	
@@ -180,11 +203,11 @@
 	* server/META-INF/java/Protocol.inc
 	(write): sent the real host and port number
 	
-2008-02-08  Jost Boekemeier  <jostb@intern>
+2009-02-08  Jost Boekemeier  <jostb@intern>
 
 	* server/javabridge.policy: Removed obsolete file
 	
-2008-02-06  Jost Boekemeier  <jostb@intern>
+2009-02-06  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/JavaBridge.java
 	(GetSetProp, CreateObject, Invoke): Removed obsolete check
@@ -195,7 +218,7 @@
 	* server/php/java/bridge/global.properties.in
 	(PHP_EXEC_ARGS): new option
 	
-2008-01-19  Jost Boekemeier  <jostb@intern>
+2009-01-19  Jost Boekemeier  <jostb@intern>
 
 	* server/META-INF/java/JavaProxy.inc 
 	(java_unwrap): New function
@@ -208,7 +231,7 @@
 
 	* VERSION, php-java-bridge.spec: Version 5.4.3.1
 
-2008-01-06  Jost Boekemeier  <jostb@intern>
+2009-01-06  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/Standalone.java
 	(escape): removed obsolete procedure

@@ -26,9 +26,11 @@ package php.java.servlet;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.HashMap;
 
@@ -75,7 +77,6 @@ public class PhpCGIServlet extends FastCGIServlet {
     private String DOCUMENT_ROOT;
     private String SERVER_SIGNATURE;
     private ContextServer contextServer; // shared with PhpJavaServlet, PhpCGIServlet
-    private boolean php_include_java;
     
     /**@inheritDoc*/
     public void init(ServletConfig config) throws ServletException {
@@ -89,15 +90,39 @@ public class PhpCGIServlet extends FastCGIServlet {
 	DOCUMENT_ROOT = getRealPath(context, "");
 	SERVER_SIGNATURE = context.getServerInfo();
 
-	String val = null;
-	php_include_java = true;
-	try {
-	    val  = config.getInitParameter("php_include_java");
-	    if(val==null) val = config.getInitParameter("PHP_INCLUDE_JAVA");
-	    if(val==null) val = System.getProperty("php.java.bridge.php_include_java");
-	    if(val!=null && (val.equalsIgnoreCase("off") ||  val.equalsIgnoreCase("false")))
-		php_include_java = false;
-	} catch (Throwable t) {/*ignore*/}
+	String javaDir = CGIServlet.getRealPath(context, "java");
+	if (javaDir != null) {
+	    File javaDirFile = new File (javaDir);
+	    if (!javaDirFile.exists()) {
+		javaDirFile.mkdir();
+	    }
+	    
+	    File javaIncFile = new File (javaDir, "Java.inc");
+	    if (!javaIncFile.exists()) {
+		try {
+		    Field f = Util.JavaInc.getField("bytes");
+		    byte[] buf = (byte[]) f.get(Util.JavaInc);
+		    OutputStream out = new FileOutputStream (javaIncFile);
+		    out.write(buf);
+		    out.close();
+		} catch (Exception e) {
+		    Util.printStackTrace(e);
+		}
+	    }
+	    
+	    File javaProxyFile = new File (javaDir, "JavaProxy.php");
+	    if (!javaProxyFile.exists()) {
+		try {
+		    Field f = Util.JavaProxy.getField("bytes");
+		    byte[] buf = (byte[]) f.get(Util.JavaProxy);
+		    OutputStream out = new FileOutputStream (javaProxyFile);
+		    out.write(buf);
+		    out.close();
+		} catch (Exception e) {
+		    Util.printStackTrace(e);
+		}
+	    }
+	}
     }
     
     private static final Object lockObject = new Object();   
@@ -215,16 +240,15 @@ public class PhpCGIServlet extends FastCGIServlet {
 		/* send the session context now, otherwise the client has to 
 		 * call handleRedirectConnection */
 	    	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
-	    	if(id==null)
+	    	if(id==null) {
 	    	    id = (ctx=ServletContextFactory.addNew(PhpCGIServlet.this, PhpCGIServlet.this.getServletContext(), req, req, res)).getId();
-	    	else
-	    	    ctx = ContextFactory.peek(id);
-	    	// short path S1: no PUT request
-	    	AbstractChannelName channelName = contextServer.getFallbackChannelName(null, ctx);
-	    	if (channelName != null) {
-	    	    this.environment.put("X_JAVABRIDGE_REDIRECT", channelName.getName());
-	    	    ctx.getBridge();
-	    	    contextServer.start(channelName);
+	    	    // short path S1: no PUT request
+	    	    AbstractChannelName channelName = contextServer.getFallbackChannelName(null, ctx);
+	    	    if (channelName != null) {
+	    		this.environment.put("X_JAVABRIDGE_REDIRECT", channelName.getName());
+	    		ctx.getBridge();
+	    		contextServer.start(channelName);
+	    	    }
 	    	}
 	    	this.environment.put("X_JAVABRIDGE_CONTEXT", id);
 	    }
@@ -295,7 +319,7 @@ public class PhpCGIServlet extends FastCGIServlet {
 	    OutputStream out = null;
 
 	    try {
-        	proc = Util.ProcessWithErrorHandler.start(Util.getPhpArgs(new String[]{php}), wd, env, phpTryOtherLocations, preferSystemPhp, natErr);
+        	proc = Util.ProcessWithErrorHandler.start(Util.getPhpArgs(new String[]{php}, php_include_java), wd, env, phpTryOtherLocations, preferSystemPhp, natErr);
 
         	byte[] buf = new byte[BUF_SIZE];// headers cannot be larger than this value!
 

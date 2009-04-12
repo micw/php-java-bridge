@@ -36,10 +36,10 @@ cp server/META-INF/java/Mono.inc MONO+NET.STANDALONE/mono
 cp README.MONO+NET MONO+NET.STANDALONE
 
 cp JavaBridge.war JavaBridgeTemplate.war
-for i in 'WEB-INF/lib/[^pJ]*.jar' 'WEB-INF/lib/poi.jar' 'WEB-INF/cgi/[^l]*' 'WEB-INF/cgi/launcher.c' 'WEB-INF/platform/*' 'locale/*' 'java/[^J]*' 'java/JavaBridge.inc' 'java/JavaProxy.inc' '*.class' '*.jsp' '*.rpt*' '[^jJt]*.php'; do
+for i in 'WEB-INF/lib/[^pJ]*.jar' 'WEB-INF/lib/poi.jar' 'WEB-INF/cgi/[^l]*' 'WEB-INF/cgi/launcher.c' 'WEB-INF/platform/*' 'locale/*' 'java/*' '*.class' '*.jsp' '*.rpt*' '[^jJt]*.php'; do
   zip -d JavaBridgeTemplate.war "$i"; 
 done
-cp examples/php+jsp/settings.php ./index.php
+cat examples/php+jsp/settings.php | sed 3d >./index.php
 zip JavaBridgeTemplate.war index.php
 
 cp  src.zip README FAQ.html PROTOCOL.TXT INSTALL.STANDALONE INSTALL.J2EE INSTALL.J2SE NEWS documentation

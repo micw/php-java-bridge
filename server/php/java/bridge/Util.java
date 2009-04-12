@@ -68,6 +68,11 @@ public final class Util {
      */
     public static int MAX_WAIT;
     
+    /** The java/Java.inc code */
+    public static Class JavaInc;
+    /** The java/JavaProxy.php code */
+    public static Class JavaProxy;
+    
     private Util() {}
     
     /**
@@ -270,7 +275,15 @@ public final class Util {
     public static File HOME_DIR;
 
     private static void initGlobals() {
-	
+
+	try {
+	    JavaInc = Class.forName("php.java.bridge.JavaInc");
+	} catch (Exception e) {/*ignore*/}
+	try {
+	    JavaProxy = Class.forName("php.java.bridge.JavaProxy");
+	} catch (Exception e) {/*ignore*/}
+	    
+
 	COMMON_ENVIRONMENT = getCommonEnvironment();
 	DEFAULT_CGI_LOCATIONS = new String[] {"/usr/bin/php-cgi", "c:/Program Files/PHP/php-cgi.exe"};
 	if (!new File(DEFAULT_CGI_LOCATIONS[0]).exists() && !new File(DEFAULT_CGI_LOCATIONS[0]).exists())
@@ -1392,17 +1405,28 @@ public final class Util {
 	    return false;
 	}
     }
+    private static final boolean includeJava = System.getProperty("php.java.bridge.php_include_java", "false").equalsIgnoreCase("false");
     /**
      * Return args + PHP_ARGS
      * @param args The prefix
      * @return args with PHP_ARGS appended
      */
     public static final String[] getPhpArgs(String[] args) {
-	String[] allArgs = new String[args.length+PHP_ARGS.length];
+	return getPhpArgs(args, includeJava);
+    }
+    /**
+     * Return args + PHP_ARGS
+     * @param args The prefix
+     * @param includeJava The option php_include_java
+     * @return args with PHP_ARGS appended
+     */
+    public static final String[] getPhpArgs(String[] args, boolean includeJava) {
+	String[] allArgs = new String[args.length+PHP_ARGS.length+(includeJava?1:0)];
 	int i=0;
 	for(i=0; i<args.length; i++) {
 	    allArgs[i]=args[i];
 	}
+	if (includeJava) allArgs[i++] = "-C"; // don't chdir, we'll do it
 	for(int j=0; j<PHP_ARGS.length; j++) {
 	    allArgs[i++]=PHP_ARGS[j];
 	}

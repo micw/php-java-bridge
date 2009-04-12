@@ -43,21 +43,6 @@ class EngineFactoryHelper {
             HttpServletResponse res, String protocol, int port) throws MalformedURLException {
 	return new CloseablePhpServletScriptEngine(servlet, ctx, req, res, protocol, port);
     }
-    public static InvocablePhpServletScriptEngine newCloseableInvocablePhpServletScriptEngine(
-            Servlet servlet, ServletContext ctx, HttpServletRequest req,
-            HttpServletResponse res, String protocol, int port) throws MalformedURLException, URISyntaxException {
-	return new CloseableInvocablePhpServletScriptEngine(servlet, ctx, req, res, protocol, port);
-    }
-    public static InvocablePhpServletLocalHttpServerScriptEngine newCloseableInvocablePhpServletLocalHttpServerScriptEngine(
-            Servlet servlet, ServletContext ctx, HttpServletRequest req,
-            HttpServletResponse res, String protocol, int port) throws MalformedURLException, URISyntaxException {
-	return new CloseableInvocablePhpServletLocalHttpServerScriptEngine(servlet, ctx, req, res, protocol, port);
-    }   
-    public static InvocablePhpServletLocalHttpServerScriptEngine newCloseableInvocablePhpServletLocalHttpServerScriptEngine(
-            Servlet servlet, ServletContext ctx, HttpServletRequest req,
-            HttpServletResponse res, String protocol, int port, String proxy) throws MalformedURLException, URISyntaxException {
-	return new CloseableInvocablePhpServletLocalHttpServerScriptEngine(servlet, ctx, req, res, protocol, port, proxy);
-    }
     public static InvocablePhpServletRemoteHttpServerScriptEngine newCloseableInvocablePhpServletRemoteHttpServerScriptEngine(
             Servlet servlet, ServletContext ctx, HttpServletRequest req,
             HttpServletResponse res, URI uri, String localName) throws MalformedURLException, URISyntaxException {

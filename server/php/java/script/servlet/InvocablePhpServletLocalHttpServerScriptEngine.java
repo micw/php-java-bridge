@@ -122,7 +122,7 @@ import php.java.script.URLReader;
  * </ol>
  * <br>
  */
-public class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhpScriptEngine {
+class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhpScriptEngine {
     private static final Object EMPTY_INCLUDE = "@";
     private static final String DUMMY_PHP_SCRIPT_NAME = "dummy php script";
 

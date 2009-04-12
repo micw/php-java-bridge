@@ -89,13 +89,6 @@ JSR 223 Script API
     ...
   %>
   
-  The script engine reserves up to three continuations, one for the
-  JSP, one for PHP (PhpCGIServlet) and a optional Java continuation
-  (PhpJavaServlet).  If the servlet engine thread pool cannot allocate
-  three threads, a PhpScriptTemporarilyOutOfResourcesException is
-  thrown.
-  
-
   The InvocablePhpScriptEngine can be accessed as follows:
 
   <%
@@ -110,11 +103,6 @@ JSR 223 Script API
     ...
     e.eval ((java.io.Reader)null);
   %>
-
-  The script engine reserves three continuations, one for the JSP, one
-  for PHP (PhpCGIServlet) and a Java continuation (PhpJavaServlet). If
-  the servlet engine thread pool cannot allocate three threads, a
-  PhpScriptTemporarilyOutOfResourcesException is thrown.
 
 
 Further information

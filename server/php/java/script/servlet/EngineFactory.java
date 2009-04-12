@@ -54,7 +54,6 @@ import php.java.servlet.CGIServlet;
 /**
  * Create JSR 223 script engines from a servlet context.
  * @see php.java.servlet.ContextLoaderListener
- * @see php.java.script.servlet.InvocablePhpServletScriptEngine
  * @see php.java.script.servlet.PhpServletScriptEngine
  *
  */
@@ -81,30 +80,6 @@ public final class EngineFactory {
 	    EngineFactoryHelper.newCloseablePhpServletScriptEngine(servlet, ctx, req, res, req.getScheme(), req.getServerPort()):
 	    new PhpServletScriptEngine(servlet, ctx, req, res, req.getScheme(), req.getServerPort());
     }
-    private Object getInvocableScriptEngine(Servlet servlet, 
-		     ServletContext ctx, 
-		     HttpServletRequest req, 
-		     HttpServletResponse res) throws MalformedURLException, URISyntaxException {
-	return hasCloseable ? 
-	    EngineFactoryHelper.newCloseableInvocablePhpServletScriptEngine(servlet, ctx, req, res, req.getScheme(), req.getServerPort()) :
-	    new InvocablePhpServletScriptEngine(servlet, ctx, req, res, req.getScheme(), req.getServerPort());
-    }
-    private Object getInvocableScriptEngine(Servlet servlet, 
-	     ServletContext ctx, 
-	     HttpServletRequest req, 
-	     HttpServletResponse res, String protocol, int port) throws MalformedURLException, URISyntaxException {
-	return hasCloseable ?
-	    EngineFactoryHelper.newCloseableInvocablePhpServletLocalHttpServerScriptEngine(servlet, ctx, req, res, protocol, port):
-	    new InvocablePhpServletLocalHttpServerScriptEngine(servlet, ctx, req, res, protocol, port);
-    }
-    private Object getInvocableScriptEngine(Servlet servlet, 
-	     ServletContext ctx, 
-	     HttpServletRequest req, 
-	     HttpServletResponse res, String protocol, int port, String proxy) throws MalformedURLException, URISyntaxException {
-	return hasCloseable ?
-		EngineFactoryHelper.newCloseableInvocablePhpServletLocalHttpServerScriptEngine(servlet, ctx, req, res, protocol, port, proxy) :
-		new InvocablePhpServletLocalHttpServerScriptEngine(servlet, ctx, req, res, protocol, port, proxy);
-   }
     private Object getInvocableScriptEngine(Servlet servlet, 
 	     ServletContext ctx, 
 	     HttpServletRequest req, 
@@ -196,6 +171,8 @@ public final class EngineFactory {
      * @throws Exception 
      * @throws MalformedURLException
      * @throws IllegalStateException
+     * @deprecated Use {@link #getInvocablePhpScriptEngine(Servlet, ServletContext, HttpServletRequest, HttpServletResponse, URI)} 
+     * or {@link #getInvocableScriptEngine(Servlet, ServletContext, HttpServletRequest, HttpServletResponse, URI, String)}
      */
     public static javax.script.ScriptEngine getInvocablePhpScriptEngine (final Servlet servlet, 
 									 final ServletContext ctx, 
@@ -204,7 +181,7 @@ public final class EngineFactory {
 									     Exception {
 	return (ScriptEngine) AccessController.doPrivileged(new PrivilegedExceptionAction(){ 
 	    public Object run() throws Exception {
-		return (javax.script.ScriptEngine)EngineFactory.getRequiredEngineFactory(ctx).getInvocableScriptEngine(servlet, ctx, req, res);
+		return getInvocablePhpScriptEngine(servlet, ctx, req, res, new URI(req.getScheme(), null, req.getLocalName(), req.getLocalPort(), req.getContextPath(), req.getQueryString(), null));
 	    }
 	});
     }
@@ -234,6 +211,8 @@ public final class EngineFactory {
      * @throws Exception 
      * @throws MalformedURLException
      * @throws IllegalStateException
+     * @deprecated Use {@link #getInvocablePhpScriptEngine(Servlet, ServletContext, HttpServletRequest, HttpServletResponse, URI)} 
+     * or {@link #getInvocableScriptEngine(Servlet, ServletContext, HttpServletRequest, HttpServletResponse, URI, String)}
      */
     public static javax.script.ScriptEngine getInvocablePhpScriptEngine (final Servlet servlet, 
 									 final ServletContext ctx, 
@@ -244,7 +223,7 @@ public final class EngineFactory {
 									     Exception {
 	return (ScriptEngine) AccessController.doPrivileged(new PrivilegedExceptionAction(){ 
 	    public Object run() throws Exception {
-	    return (javax.script.ScriptEngine)EngineFactory.getRequiredEngineFactory(ctx).getInvocableScriptEngine(servlet, ctx, req, res, protocol, port);
+		return getInvocablePhpScriptEngine(servlet, ctx, req, res, new URI(req.getScheme(), null, req.getLocalName(), req.getLocalPort(), req.getContextPath(), req.getQueryString(), null));
 	    }
 	});
     }
@@ -275,6 +254,8 @@ public final class EngineFactory {
      * @throws Exception 
      * @throws MalformedURLException
      * @throws IllegalStateException
+     * @deprecated Use {@link #getInvocablePhpScriptEngine(Servlet, ServletContext, HttpServletRequest, HttpServletResponse, URI)} 
+     * or {@link #getInvocableScriptEngine(Servlet, ServletContext, HttpServletRequest, HttpServletResponse, URI, String)}
      */
     public static javax.script.ScriptEngine getInvocablePhpScriptEngine (final Servlet servlet, 
 									 final ServletContext ctx, 
@@ -286,7 +267,7 @@ public final class EngineFactory {
 									     Exception {
 	return (ScriptEngine) AccessController.doPrivileged(new PrivilegedExceptionAction(){ 
 	    public Object run() throws Exception {
-	    return (javax.script.ScriptEngine)EngineFactory.getRequiredEngineFactory(ctx).getInvocableScriptEngine(servlet, ctx, req, res, protocol, port, proxy);
+		return getInvocablePhpScriptEngine(servlet, ctx, req, res, new URI(req.getScheme(), null, req.getLocalName(), req.getLocalPort(), req.getContextPath(), req.getQueryString(), null));
 	    }
 	});
     }
