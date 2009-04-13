@@ -48,6 +48,9 @@ require_once("${JAVA_BASE}/Client.inc");
  */
 interface java_JavaType {};
 
+/** Global flag is set if a client exists */
+$java_initialized = false;
+
 /**
  * @access private
  */
@@ -56,7 +59,11 @@ function __javaproxy_Client_getClient() {
   if(isset($client)) return $client;
   
   if (function_exists("java_create_client")) $client = java_create_client();
-  else $client=new java_Client();
+  else {
+	global $java_initialized;
+	$client=new java_Client();
+	$java_initialized = true;
+  }
   
   return $client;
 }

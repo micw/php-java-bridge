@@ -118,6 +118,8 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
 	    throw e;
 	} catch (RuntimeException e) {
 	    throw e; // don't wrap RuntimeException
+	} catch (NoSuchMethodError e) { // conform to jsr223
+	    throw new NoSuchMethodException(String.valueOf(e.getMessage()));
 	} catch (Error er) {
 	    throw er;
 	} catch (Throwable e) {
@@ -171,7 +173,6 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
             w.close(); w = null;
     
             /* now evaluate our script */
-            w.close(); w = null;
             localReader = new InputStreamReader(new ByteArrayInputStream(out.toByteArray()));
             this.script = doEval(localReader, context);
             if (this.script!=null) {

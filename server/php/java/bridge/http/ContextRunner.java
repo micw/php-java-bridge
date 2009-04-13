@@ -122,7 +122,7 @@ public class ContextRunner implements Runnable {
 	SimpleJavaBridgeClassLoader loader = bridge.getClassLoader();
 	loader.switcheThreadContextClassLoader();
 	
-	if (shortPathHeader != 0xFF) { // short path S1: no PUT request
+	if (shortPathHeader != (byte) 0xFF) { // short path S1: no PUT request
 	    bridge.request = new Request(bridge);
 	    bridge.request.init(shortPathHeader);
 	}

@@ -242,7 +242,7 @@ class Parser {
 		    factory.recycle(newContext);
 		    
 		    byte shortPathHeader = (byte) (0xFF&(buf[1]));
-		    if(shortPathHeader != 0xFF)  // short path: no previous PUT request
+		    if(shortPathHeader != (byte) 0xFF)  // short path: no previous PUT request
 			initOptions(shortPathHeader);
 
 		    c+=len+3;

@@ -657,6 +657,9 @@ class java_Client /* implements IDocHandler */ {
   }
 }
 function java_shutdown() {
+  global $java_initialized;
+  if (!$java_initialized) return;
+
   $client = __javaproxy_Client_getClient();
   if(JAVA_DEBUG) echo "the client destroyed\n";
   if (!isset($client->protocol)) return;

@@ -1066,6 +1066,22 @@ public abstract class CGIServlet extends HttpServlet {
 	    } catch (ArrayIndexOutOfBoundsException e) {/*not a valid header*/}
 	    catch (StringIndexOutOfBoundsException e){/*not a valid header*/}
         }
+        protected void addHeader(String key, String val) {
+	    try {
+		if (key.startsWith("Status")) {
+		    int i = val.indexOf(' ');
+		    if (i>0)
+			val = val.substring(0,i);
+
+		    response.setStatus(Integer.parseInt(val));
+		} else {
+                    response.addHeader
+                        (key,
+                         val);
+		}
+	    } catch (ArrayIndexOutOfBoundsException e) {/*not a valid header*/}
+	    catch (StringIndexOutOfBoundsException e){/*not a valid header*/}
+        }
 
     } //class CGIRunner
 

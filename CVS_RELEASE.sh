@@ -39,7 +39,7 @@ cp JavaBridge.war JavaBridgeTemplate.war
 for i in 'WEB-INF/lib/[^pJ]*.jar' 'WEB-INF/lib/poi.jar' 'WEB-INF/cgi/[^l]*' 'WEB-INF/cgi/launcher.c' 'WEB-INF/platform/*' 'locale/*' 'java/*' '*.class' '*.jsp' '*.rpt*' '[^jJt]*.php'; do
   zip -d JavaBridgeTemplate.war "$i"; 
 done
-cat examples/php+jsp/settings.php | sed 3d >./index.php
+cp examples/php+jsp/settings.php ./index.php
 zip JavaBridgeTemplate.war index.php
 
 cp  src.zip README FAQ.html PROTOCOL.TXT INSTALL.STANDALONE INSTALL.J2EE INSTALL.J2SE NEWS documentation

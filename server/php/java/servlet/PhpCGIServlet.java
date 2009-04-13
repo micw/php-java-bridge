@@ -43,7 +43,6 @@ import javax.servlet.http.HttpServletResponse;
 import php.java.bridge.Util;
 import php.java.bridge.Util.Process;
 import php.java.bridge.http.AbstractChannelName;
-import php.java.bridge.http.ContextFactory;
 import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.IContextFactory;
 import php.java.servlet.fastcgi.FastCGIServlet;
@@ -300,6 +299,9 @@ public class PhpCGIServlet extends FastCGIServlet {
     	public void parseHeader(String header) {
 	    runner.addHeader(header);
     	}
+        public void addHeader(String key, String val) {
+            runner.addHeader(key, val);
+        }
     }
     protected class CGIRunner extends CGIServlet.CGIRunner {
 	protected IContextFactory ctx;
@@ -338,7 +340,11 @@ public class PhpCGIServlet extends FastCGIServlet {
          	natIn = proc.getInputStream();
     		out = response.getOutputStream();
 
-    		Util.parseBody(buf, natIn, out, new Util.HeaderParser() {public void parseHeader(String header) {addHeader(header);}});
+    		Util.parseBody(buf, natIn, out, new Util.HeaderParser() {
+    		    public void parseHeader(String header) {CGIRunner.this.addHeader(header);}
+    		    public void addHeader(String key, String val) {CGIRunner.this.addHeader(key, val);}
+    		    }
+    		);
 
     		try {
      		    proc.waitFor();

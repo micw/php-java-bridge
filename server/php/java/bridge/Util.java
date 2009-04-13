@@ -157,7 +157,7 @@ public final class Util {
     /**
      * The default CGI header parser. The default implementation discards everything.
      */
-    public static final HeaderParser DEFAULT_HEADER_PARSER = new HeaderParser();
+    public static final HeaderParser DEFAULT_HEADER_PARSER = new SimpleHeaderParser();
 
     /**
      * ASCII encoding
@@ -677,11 +677,16 @@ public final class Util {
      * @author jostb
      * @see Util#parseBody(byte[], InputStream, OutputStream, HeaderParser)
      */
-    public static class HeaderParser {
+    public static abstract class HeaderParser {
       /**
        * @param header The header string to parse
        */
-      public void parseHeader(String header) {/*template*/}
+      public abstract void parseHeader(String header);
+      public abstract void addHeader (String key, String val);
+    }
+    public static class SimpleHeaderParser extends HeaderParser {
+	public void parseHeader(String header) {/*template*/}
+	public void addHeader (String key, String val) {/*template*/}
     }
     /**
      * Discards all header fields from a HTTP connection and write the body to the OutputStream
@@ -1405,14 +1410,13 @@ public final class Util {
 	    return false;
 	}
     }
-    private static final boolean includeJava = System.getProperty("php.java.bridge.php_include_java", "false").equalsIgnoreCase("false");
     /**
      * Return args + PHP_ARGS
      * @param args The prefix
      * @return args with PHP_ARGS appended
      */
     public static final String[] getPhpArgs(String[] args) {
-	return getPhpArgs(args, includeJava);
+	return getPhpArgs(args, false);
     }
     /**
      * Return args + PHP_ARGS

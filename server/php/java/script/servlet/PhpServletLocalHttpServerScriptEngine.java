@@ -21,13 +21,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
+import php.java.bridge.http.AbstractChannelName;
+import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.IContext;
 import php.java.bridge.http.IContextFactory;
 import php.java.script.IPhpScriptContext;
 import php.java.script.PhpScriptEngine;
-import php.java.script.URLReader;
-import php.java.servlet.ContextLoaderListener;
-import php.java.servlet.PhpCGIServlet;
+import php.java.servlet.PhpJavaServlet;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -51,58 +51,7 @@ import php.java.servlet.PhpCGIServlet;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/**
- * A PHP script engine for Servlets. See {@link ContextLoaderListener} for details.
- * 
- * In order to evaluate PHP methods follow these steps:<br>
- * <ol>
- * <li> Create a factory which creates a PHP script file from a reader using the methods from {@link EngineFactory}:
- * <blockquote>
- * <code>
- * private static File script;<br>
- * private static final File getHelloScript() {<br>
- * &nbsp;&nbsp; if (script!=null) return script;<br><br>
- * &nbsp;&nbsp; String webCacheDir = ctx.getRealPath(req.getServletPath());<br>
- * &nbsp;&nbsp; Reader reader = new StringReader ("&lt;?php echo 'hello from PHP'; ?&gt;");<br>
- * &nbsp;&nbsp; return EngineFactory.getPhpScript(webCacheDir, reader);<br>
- * }<br>
- * </code>
- * </blockquote>
- * <li> Acquire a PHP script engine from the {@link EngineFactory}:
- * <blockquote>
- * <code>
- * ScriptEngine scriptEngine = EngineFactory.getPhpScriptEngine(this, ctx, req, res, "HTTP", 80);
- * </code>
- * </blockquote> 
- * <li> Create a FileReader for the created script file:
- * <blockquote>
- * <code>
- * Reader readerHello = EngineFactory.createPhpScriptFileReader(getHelloScript());
- * </code>
- * </blockquote>
- * <li> Connect its output:
- * <blockquote>
- * <code>
- * scriptEngine.getContext().setWriter (out);
- * </code>
- * </blockquote>
- * <li> Evaluate the engine:
- * <blockquote>
- * <code>
- * scriptEngine.eval(readerHello);
- * </code>
- * </blockquote> 
- * <li> Close the reader:
- * <blockquote>
- * <code>
- * readerHello.close();
- * </code>
- * </blockquote> 
- * </ol>
- * <br>
- */
-
-class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
+abstract class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
     protected Servlet servlet;
     protected ServletContext servletCtx;
     protected HttpServletRequest req;
@@ -114,6 +63,8 @@ class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
     
     protected boolean overrideHosts = true;
     
+    protected ContextServer contextServer;
+
     private URL url;
     private int port;
     private String protocol;
@@ -147,6 +98,8 @@ class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
 	
 	this.port = port;
 	this.protocol = protocol;
+
+	this.contextServer = PhpJavaServlet.getContextServer(ctx);
     }
 
     protected ScriptContext getPhpScriptContext() {
@@ -170,6 +123,13 @@ class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
 	env = (Map) processEnvironment.clone();
 
 	ctx = PhpServletContextFactory.addNew((IContext)context, servlet, servletCtx, req, res);
+    	// short path S1: no PUT request
+    	AbstractChannelName channelName = contextServer.getFallbackChannelName(null, ctx);
+    	if (channelName != null) {
+    	    env.put("X_JAVABRIDGE_REDIRECT", channelName.getName());
+    	    ctx.getBridge();
+    	    contextServer.start(channelName);
+    	}
     	
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */
@@ -193,7 +153,7 @@ class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
   	if(reader==null) return null;
 	if (!(reader instanceof ScriptFileReader)) throw new IllegalArgumentException("reader must be a ScriptFileReader");
     	ScriptFileReader fileReader = (ScriptFileReader) reader;
-    	URLReader localReader = null;
+    	ServletReader localReader = null;
     	
         try {
 	    webPath = fileReader.getFile().getWebPath(fileReader.getFile().getCanonicalPath(), req, servletCtx);
@@ -201,8 +161,7 @@ class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
 	    setName(name);
 	        
             /* now evaluate our script */
-
-	    localReader = new URLReader(getURL(webPath));
+	    localReader = new ServletReader(servletCtx.getNamedDispatcher("PhpCGIServlet"), getURL(webPath), req);
             this.script = doEval(localReader, context);
         } catch (Exception e) {
             Util.printStackTrace(e);

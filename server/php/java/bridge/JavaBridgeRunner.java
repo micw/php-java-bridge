@@ -410,7 +410,6 @@ public class JavaBridgeRunner extends HttpServer {
 	in.close();
     }
 
-    private int count = 0;
     /**
      * Handle doGet requests. For example java_require("http://localhost:8080/JavaBridge/java/Java.inc");
      *

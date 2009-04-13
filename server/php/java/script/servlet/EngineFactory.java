@@ -86,8 +86,9 @@ public final class EngineFactory {
 	     HttpServletResponse res, 
 	     URI uri,
 	     String localName) throws MalformedURLException, URISyntaxException {
-	if(!Util.JAVABRIDGE_PROMISCUOUS) 
-	    throw new SecurityException("Access denied. Enable the \"promiscuous\" option in WEB-INF/web.xml or run the VM with -Dphp.java.bridge.promiscuous=true.");
+// FIXME the same code is now used for local script engines. Find an appropriate place for this check
+//	if(!Util.JAVABRIDGE_PROMISCUOUS) 
+//	    throw new SecurityException("Access denied. Enable the \"promiscuous\" option in WEB-INF/web.xml or run the VM with -Dphp.java.bridge.promiscuous=true.");
 	return hasCloseable ?
 		EngineFactoryHelper.newCloseableInvocablePhpServletRemoteHttpServerScriptEngine(servlet, ctx, req, res, uri, localName) :
 		new InvocablePhpServletRemoteHttpServerScriptEngine(servlet, ctx, req, res, uri, localName);

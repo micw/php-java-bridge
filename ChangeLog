@@ -1,3 +1,29 @@
+2009-04-13  Jost Boekemeier  <jostb@intern>
+
+	* server/php/java/bridge/Util.java
+	(SimpleHeaderParser): New class
+
+	* server/php/java/script/InvocablePhpScriptEngine.java
+	(invoke): conform to spec
+
+	* server/php/java/script/PhpScriptEngine.java
+	(eval): flush the output
+
+	
+	* server/php/java/script/ServletReader.java: New class for short
+	path S2
+	
+	* server/php/java/script/IScriptReader.java: New interface
+	
+	* server/php/java/script/URLReader.java
+	(read): Rewritten
+
+	* server/php/java/script/servlet/PhpServletLocalHttpServerScriptEngine.java
+	(setNewContextFactory): Added short path S1
+	(evalInternal): Added short path S2
+	
+	* VERSION, php-java-bridge.spec: Version 5.4.4.2_test2
+	
 2009-04-12  Jost Boekemeier  <jostb@intern>
 
 	* ChangeLog: For some reason all entries for 2009 have had a 2008

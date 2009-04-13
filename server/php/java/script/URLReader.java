@@ -63,7 +63,7 @@ import php.java.bridge.Util.HeaderParser;
  * @author jostb
  *
  */
-public class URLReader extends Reader {
+public class URLReader extends Reader implements IScriptReader {
 
     private URL url;
     private HttpURLConnection conn;
@@ -144,12 +144,8 @@ public class URLReader extends Reader {
                 buf.append ("; ");
         }
     }
-    /**
-     * Read from the URL and write the data to out.
-     * @param env The environment, must contain values for X_JAVABRIDGE_CONTEXT. It may contain X_JAVABRIDGE_OVERRIDE_HOSTS.
-     * @param out The OutputStream.
-     * @param headerParser The header parser
-     * @throws IOException
+    /* (non-Javadoc)
+     * @see php.java.script.IScriptReader#read(java.util.Map, java.io.OutputStream, php.java.bridge.Util.HeaderParser)
      */
     public void read(Map env, OutputStream out, HeaderParser headerParser) throws IOException {
         InputStream natIn = null;
@@ -181,11 +177,14 @@ public class URLReader extends Reader {
                 for (Iterator ii = conn.getHeaderFields().entrySet().iterator(); ii.hasNext(); )
                 {
                     Map.Entry e = (Entry) ii.next();
-                    sbuf.append (e.getKey());
-                    sbuf.append (": ");
-                    appendListValues (sbuf, (List) e.getValue());
-                    headerParser.parseHeader(sbuf.toString());
-                    sbuf.setLength(0);
+                    List list = (List) e.getValue();
+                    if (list.size()==1) {
+                        headerParser.addHeader(String.valueOf(e.getKey()), String.valueOf(list.get(0)));
+                    } else { 
+                	appendListValues (sbuf, list);
+                        headerParser.addHeader(String.valueOf(e.getKey()), sbuf.toString());
+                        sbuf.setLength(0);
+                    }
                 }
             }
             int count;

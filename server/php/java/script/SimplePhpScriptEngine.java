@@ -227,7 +227,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
 	    String val = header.substring(idx+1).trim();
 	    addHeader(key, val);
 	}
-	protected void addHeader(String key, String val) {
+	public void addHeader(String key, String val) {
 	    if(val!=null && key.equals("content-type")) {
 		int idx = val.indexOf(';');
 		if(idx==-1) return;

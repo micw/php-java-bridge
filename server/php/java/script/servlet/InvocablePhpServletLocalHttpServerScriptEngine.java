@@ -21,7 +21,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
-import php.java.bridge.http.IContext;
 import php.java.bridge.http.IContextFactory;
 import php.java.script.IPhpScriptContext;
 import php.java.script.InvocablePhpScriptEngine;
@@ -49,80 +48,7 @@ import php.java.script.URLReader;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/**
- * This script engine connects a local PHP container with the current servlet container.
- *
- * There must not be a firewall in between, the servlet thread pool must not be 
- * limited or twice the size of the PHP container's pool size, the PHP option 
- * "allow_url_include" and the Java <code>WEB-INF/web.xml</code> "promiscuous" 
- * option must be enabled. Both components should be behind a firewall.
- * <br>	
- * PHP scripts are evaluated as follows:
- * <ol>
- * <li> JavaProxy.php is requested from Java<br>
- * <li> Your script is included and then evaluated
- * <li> &lt;?php java_context()-&gt;call(java_closure());?&gt; is called in order to make the script invocable<br>
- * </ol>
- * In order to evaluate PHP methods follow these steps:<br>
- * <ol>
- * <li> Create a factory which creates a PHP script file from a reader using the methods from {@link EngineFactory}:
- * <blockquote>
- * <code>
- * private static File script;<br>
- * private static final File getScriptF() {<br>
- * &nbsp;&nbsp; if (script!=null) return script;<br><br>
- * &nbsp;&nbsp; String webCacheDir = ctx.getRealPath(req.getServletPath());<br>
- * &nbsp;&nbsp; Reader reader = new StringReader ("&lt;?php function f($v) {return "passed:".$v;} ?&gt;");<br>
- * &nbsp;&nbsp; return EngineFactory.getPhpScript(webCacheDir, reader);<br>
- * }<br>
- * </code>
- * </blockquote>
- * <li> Acquire a PHP invocable script engine from the {@link EngineFactory}:
- * <blockquote>
- * <code>
- * ScriptEngine scriptEngine = EngineFactory.getInvocablePhpScriptEngine(this, ctx, req, res, "HTTP", 80, "/JavaProxy.php");
- * </code>
- * </blockquote> 
- * <li> Create a FileReader for the created script file:
- * <blockquote>
- * <code>
- * Reader readerF = EngineFactory.createPhpScriptFileReader(getScriptF());
- * </code>
- * </blockquote>
- * <li> Evaluate the engine:
- * <blockquote>
- * <code>
- * scriptEngine.eval(readerF);
- * </code>
- * </blockquote> 
- * <li> Close the reader obtained from the {@link EngineFactory}:
- * <blockquote>
- * <code>
- * readerF.close();
- * </code>
- * </blockquote> 
- * <li> Cast the engine to Invocable:
- * <blockquote>
- * <code>
- * Invocable invocableEngine = (Invocable)scriptEngine;
- * </code>
- * </blockquote> 
- * <li> Call PHP functions or methods:
- * <blockquote>
- * <code>
- * System.out.println("result from PHP:" + invocableEngine.invoceFunction(f, new Object[]{"arg1"}));
- * </code>
- * </blockquote> 
- * <li> Release the invocable:
- * <blockquote>
- * <code>
- * ((Closeable)scriptEngine).close();
- * </code>
- * </blockquote> 
- * </ol>
- * <br>
- */
-class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhpScriptEngine {
+abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhpScriptEngine {
     private static final Object EMPTY_INCLUDE = "@";
     private static final String DUMMY_PHP_SCRIPT_NAME = "dummy php script";
 
@@ -207,17 +133,8 @@ class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhpScriptE
      * @throws IOException 
      *
      */
-    protected void setNewScriptFileContextFactory(ScriptFileReader fileReader) throws IOException, ScriptException {
-        IPhpScriptContext context = (IPhpScriptContext)getContext(); 
-	env = (Map) processEnvironment.clone();
+    abstract protected void setNewScriptFileContextFactory(ScriptFileReader fileReader) throws IOException, ScriptException;
 
-	ctx = getPhpScriptContextFactory(context);
-    	
-	/* send the session context now, otherwise the client has to 
-	 * call handleRedirectConnection */
-	setStandardEnvironmentValues(env);
-	env.put("X_JAVABRIDGE_INCLUDE", fileReader.getFile().getCanonicalPath());
-    }
     protected Object invoke(String methodName, Object[] args)
 	throws ScriptException, NoSuchMethodException {
 	if(scriptClosure==null) {
@@ -247,9 +164,8 @@ class InvocablePhpServletLocalHttpServerScriptEngine extends InvocablePhpScriptE
             throw (ScriptException) e.getCause();
         }
     }
-    protected IContextFactory getPhpScriptContextFactory (IPhpScriptContext context) {
-	return InvocablePhpServletContextFactory.addNew((IContext)context, servlet, servletCtx, req, res);
-    }
+    abstract protected IContextFactory getPhpScriptContextFactory (IPhpScriptContext context);
+    
     /** Short path used when eval() is missing */
     protected Object evalShortPath() throws ScriptException {
 	Reader localReader = null; 

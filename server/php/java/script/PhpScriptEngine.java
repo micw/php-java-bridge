@@ -100,7 +100,8 @@ public class PhpScriptEngine extends SimplePhpScriptEngine {
     
             /* the script: */
             while((c=reader.read(buf))>0) w.write(buf, 0, c);
-    
+            w.close(); w = null;
+            
             /* now evaluate our script */
             localReader = new InputStreamReader(new ByteArrayInputStream(out.toByteArray()));
             this.script = doEval(localReader, context);

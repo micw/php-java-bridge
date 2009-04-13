@@ -73,8 +73,8 @@ public class HttpProxy extends CGIRunner {
     }
 
     protected void doRun() throws IOException, PhpException {
-    	if(reader instanceof URLReader) {
-	    ((URLReader)reader).read(env, out, headerParser);
+    	if(reader instanceof IScriptReader) {
+	    ((IScriptReader)reader).read(env, out, headerParser);
      	} else {
 	    super.doRun();
      	}
