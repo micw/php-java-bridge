@@ -1,3 +1,63 @@
+2009-04-18    <jostb@carlos.intern.de>
+
+	* server/php/java/servlet/CGIServlet.java
+	(setupFromRequest): Check and use javax.servlet.include, if necessary
+	(getServletOutputStream): New method
+
+	* server/php/java/bridge/Util.java: 
+	(OutputStreamFactory): New class
+	(parseBody): Use factory
+
+	* server/php/java/servlet/fastcgi/FastCGIServlet.java
+	(execute): Do not discard IOExceptions
+	(execute): Use factory
+
+	* server/php/java/servlet/PhpCGIServlet.java
+	(execute): Use factory
+
+	* server/php/java/script/CGIRunner.java 
+	(doRun): Use factory
+
+	* server/php/java/bridge/http/DefaultCharsetWriterOutputStream.java: New class from server/php/java/script/DefaultCharsetOutputStreamWriter.java
+
+	* server/php/java/script/DefaultCharsetOutputStreamWriter.java: Removed
+	
+	* server/php/java/bridge/http/WriterOutputStream.java: New class from server/php/java/script/OutputStreamWriter.java
+	
+	* server/php/java/script/OutputStreamWriter.java: Removed
+
+2009-04-15  Jost Boekemeier  <jostb@intern>
+
+	* server/Makefile.am: Create launcher.exe and launcher.c if necessary.
+
+	* server/php/java/bridge/http/ContextServer.java
+	(getFallbackChannelName): Do not use short path if socket channel
+	is not available
+
+	* server/php/java/bridge/Util.java
+	(LAUNCHER_UNIX, LAUNCHER_WINDOWS, LAUNCHER_WINDOWS2, LAUNCHER_WINDOWS3, JAVA_INC, JAVA_PROXY): New constants
+
+	* server/php/java/script/servlet/InvocablePhpServletLocalHttpServerScriptEngine.java
+	(evalShortPath): Rewritten
+	
+	* server/php/java/script/SimplePhpScriptEngine.java
+	(setNewContextFactory): Rewritten so that descendants can use
+	addNewContextFactory
+	(addNewContextFactory): New method
+
+	* php-java-bridge/server/php/java/servlet/Logger.java
+	(printStackTrace): Bugfix: Do not discard all exceptions if log
+	level<6.
+
+	* server/php/java/servlet/PhpCGIServlet.java
+	(init): Create launcher.exe and launcher.sh, if necessary.
+	
+	* server/php/java/bridge/Util.java
+	(USE_SHORT_PATH_S1): New const, use short path only if this flag
+	is set.
+	
+	* VERSION, php-java-bridge.spec: Version 5.4.4.2rc
+
 2009-04-13  Jost Boekemeier  <jostb@intern>
 
 	* server/php/java/bridge/Util.java

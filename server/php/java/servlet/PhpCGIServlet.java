@@ -99,8 +99,8 @@ public class PhpCGIServlet extends FastCGIServlet {
 	    File javaIncFile = new File (javaDir, "Java.inc");
 	    if (!javaIncFile.exists()) {
 		try {
-		    Field f = Util.JavaInc.getField("bytes");
-		    byte[] buf = (byte[]) f.get(Util.JavaInc);
+		    Field f = Util.JAVA_INC.getField("bytes");
+		    byte[] buf = (byte[]) f.get(Util.JAVA_INC);
 		    OutputStream out = new FileOutputStream (javaIncFile);
 		    out.write(buf);
 		    out.close();
@@ -112,10 +112,49 @@ public class PhpCGIServlet extends FastCGIServlet {
 	    File javaProxyFile = new File (javaDir, "JavaProxy.php");
 	    if (!javaProxyFile.exists()) {
 		try {
-		    Field f = Util.JavaProxy.getField("bytes");
-		    byte[] buf = (byte[]) f.get(Util.JavaProxy);
+		    Field f = Util.JAVA_PROXY.getField("bytes");
+		    byte[] buf = (byte[]) f.get(Util.JAVA_PROXY);
 		    OutputStream out = new FileOutputStream (javaProxyFile);
 		    out.write(buf);
+		    out.close();
+		} catch (Exception e) {
+		    Util.printStackTrace(e);
+		}
+	    }
+	}
+	javaDir = CGIServlet.getRealPath(context, "WEB-INF/cgi");
+	if (javaDir != null) {
+	    File javaDirFile = new File (javaDir);
+	    if (!javaDirFile.exists()) {
+		javaDirFile.mkdir();
+	    }
+	    
+	    File javaIncFile = new File (javaDir, "launcher.sh");
+	    if (!javaIncFile.exists()) {
+		try {
+		    Field f = Util.LAUNCHER_UNIX.getField("bytes");
+		    byte[] buf = (byte[]) f.get(Util.LAUNCHER_UNIX);
+		    OutputStream out = new FileOutputStream (javaIncFile);
+		    out.write(buf);
+		    out.close();
+		} catch (Exception e) {
+		    Util.printStackTrace(e);
+		}
+	    }
+	    
+	    File javaProxyFile = new File (javaDir, "launcher.exe");
+	    if (!javaProxyFile.exists()) {
+		try {
+		    Field f =  Util.LAUNCHER_WINDOWS.getField("bytes");
+		    Field f2 = Util.LAUNCHER_WINDOWS2.getField("bytes");
+		    Field f3 = Util.LAUNCHER_WINDOWS3.getField("bytes");
+		    byte[] buf =  (byte[]) f.get(Util.LAUNCHER_WINDOWS);
+		    byte[] buf2 = (byte[]) f2.get(Util.LAUNCHER_WINDOWS2);
+		    byte[] buf3 = (byte[]) f3.get(Util.LAUNCHER_WINDOWS3);
+		    OutputStream out = new FileOutputStream (javaProxyFile);
+		    out.write(buf);
+		    out.write(buf2);
+		    out.write(buf3);
 		    out.close();
 		} catch (Exception e) {
 		    Util.printStackTrace(e);
@@ -183,8 +222,8 @@ public class PhpCGIServlet extends FastCGIServlet {
                 	StringBuffer buf = new StringBuffer();
                 	buf.append(this.environment.get("SERVER_PORT"));
                 	buf.append("/");
-                	buf.append(req.getContextPath());
-                	buf.append(req.getServletPath());
+                	buf.append(contextPath);
+                	buf.append(servletPath);
                 	URI uri = new URI(req.isSecure()?"s:127.0.0.1":"h:127.0.0.1", buf.toString(), null);
 	                override = uri.toASCIIString()+".phpjavabridge";
                     } catch (Exception e) {
@@ -199,7 +238,7 @@ public class PhpCGIServlet extends FastCGIServlet {
                 	buf.append(":");
                 	buf.append(this.environment.get("SERVER_PORT")); 
                 	buf.append('/');
-                	buf.append(req.getRequestURI());
+                	buf.append(requestUri);
                 	buf.append(".phpjavabridge");
                 	override = buf.toString();
                     }
@@ -209,7 +248,7 @@ public class PhpCGIServlet extends FastCGIServlet {
 
 	        if (included_java) {
 	            this.environment.put("X_JAVABRIDGE_INCLUDE_ONLY", "1");
-	            this.environment.put("X_JAVABRIDGE_INCLUDE", CGIServlet.getRealPath(PhpCGIServlet.this.getServletContext(), req.getServletPath()));
+	            this.environment.put("X_JAVABRIDGE_INCLUDE", CGIServlet.getRealPath(PhpCGIServlet.this.getServletContext(), servletPath));
 	        }
 	        this.environment.put("X_JAVABRIDGE_OVERRIDE_HOSTS", override);
 	        // same for fastcgi, which already contains X_JAVABRIDGE_OVERRIDE_HOSTS=/ in its environment
@@ -224,11 +263,11 @@ public class PhpCGIServlet extends FastCGIServlet {
 	            remotePort = String.valueOf(t);
 	        }
 	        this.environment.put("REMOTE_PORT", remotePort);
-	        String query = req.getQueryString();
+	        String query = queryString;
 	        if(query!=null)
-	            this.environment.put("REQUEST_URI", nullsToBlanks(req.getRequestURI() + "?" + query));
+	            this.environment.put("REQUEST_URI", nullsToBlanks(requestUri + "?" + query));
 	        else
-	            this.environment.put("REQUEST_URI", nullsToBlanks(req.getRequestURI()));	          
+	            this.environment.put("REQUEST_URI", nullsToBlanks(requestUri));	          
 	        
 	        this.environment.put("SERVER_ADDR", req.getServerName());
 	        this.environment.put("SERVER_SIGNATURE", SERVER_SIGNATURE);
@@ -241,12 +280,14 @@ public class PhpCGIServlet extends FastCGIServlet {
 	    	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
 	    	if(id==null) {
 	    	    id = (ctx=ServletContextFactory.addNew(PhpCGIServlet.this, PhpCGIServlet.this.getServletContext(), req, req, res)).getId();
-	    	    // short path S1: no PUT request
-	    	    AbstractChannelName channelName = contextServer.getFallbackChannelName(null, ctx);
-	    	    if (channelName != null) {
-	    		this.environment.put("X_JAVABRIDGE_REDIRECT", channelName.getName());
-	    		ctx.getBridge();
-	    		contextServer.start(channelName);
+	    	    if (Util.USE_SHORT_PATH_S1) {
+	    		// short path S1: no PUT request
+	    		AbstractChannelName channelName = contextServer.getFallbackChannelName(null, ctx);
+	    		if (channelName != null) {
+	    		    this.environment.put("X_JAVABRIDGE_REDIRECT", channelName.getName());
+	    		    ctx.getBridge();
+	    		    contextServer.start(channelName);
+	    		}
 	    	    }
 	    	}
 	    	this.environment.put("X_JAVABRIDGE_CONTEXT", id);
@@ -318,7 +359,6 @@ public class PhpCGIServlet extends FastCGIServlet {
 	    ByteArrayOutputStream natErr = new ByteArrayOutputStream();
 	    
 	    InputStream in = null;
-	    OutputStream out = null;
 
 	    try {
         	proc = Util.ProcessWithErrorHandler.start(Util.getPhpArgs(new String[]{php}, php_include_java), wd, env, phpTryOtherLocations, preferSystemPhp, natErr);
@@ -338,9 +378,8 @@ public class PhpCGIServlet extends FastCGIServlet {
         	
         	// header and body
          	natIn = proc.getInputStream();
-    		out = response.getOutputStream();
 
-    		Util.parseBody(buf, natIn, out, new Util.HeaderParser() {
+    		Util.parseBody(buf, natIn, new Util.OutputStreamFactory() { public OutputStream getOutputStream() throws IOException { return getServletOutputStream(response);}}, new Util.HeaderParser() {
     		    public void parseHeader(String header) {CGIRunner.this.addHeader(header);}
     		    public void addHeader(String key, String val) {CGIRunner.this.addHeader(key, val);}
     		    }
@@ -364,7 +403,7 @@ public class PhpCGIServlet extends FastCGIServlet {
     	    if (proc!=null)
     	    {
     	        if(natErr.size()>0) Util.logMessage(natErr.toString());
-    	        try {proc.checkError(); } catch (Util.Process.PhpException e) {throw new ServletException(e);}
+    	        try {proc.checkError(); } catch (Util.Process.PhpException e) {throw new IOException(e);}
     	    }
     	    
         }
@@ -390,22 +429,12 @@ public class PhpCGIServlet extends FastCGIServlet {
 	    buf.append(Util.osName);
 	    buf.append("[.sh]|[.exe]");
     	    String wrapper = buf.toString();
- 	    ServletException ex = new ServletException("An IO exception occured. " +
-	    		"Probably php was not installed as \"/usr/bin/php-cgi\" or \"c:/Program Files/PHP/php-cgi.exe\"\n or \""+wrapper+"\".\n" +
-	    		"Please see \"php_exec\" in your WEB-INF/web.xml and WEB-INF/cgi/README for details.", e);
+ 	    IOException ex = new IOException("An IO exception occured. " +
+	    		"Probably php was not installed correctly in \"/usr/bin/php-cgi\" or \"c:/Program Files/PHP/php-cgi.exe\" or \""+wrapper+"\"." +
+	    		"See \"php_exec\" in your WEB-INF/web.xml and WEB-INF/cgi/README. \nReason follows:", e);
 	    php=null;
 	    checkCgiBinary(getServletConfig());
 	    throw ex;
-    	} catch (SecurityException sec) {
-    	    try {res.reset();} catch (Exception ex) {/*ignore*/}
-    	    String base = CGIServlet.getRealPath(context, cgiPathPrefix);
-    	    
-	    ServletException ex = new ServletException(
-		    "A security exception occured, could not run PHP.\n" + channelName.getFcgiStartCommand(base, php_fcgi_max_requests));
-	    fcgiIsAvailable=fcgiIsConfigured;
-	    php=null;
-	    checkCgiBinary(getServletConfig());
-	    throw ex;    	    
     	} catch (ServletException e) {
     	    try {res.reset();} catch (Exception ex) {/*ignore*/}
     	    throw e;

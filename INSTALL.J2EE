@@ -69,9 +69,6 @@ JSR 223 Script API
    <listener>
        <listener-class>php.java.servlet.ContextLoaderListener</listener-class>
    </listener>
-   <listener>
-       <listener-class>php.java.servlet.RequestListener</listener-class>
-   </listener>
 
   And the JavaBridge.jar, php-servlet.jar, php-script.jar, script-api.jar
   must be available in the WEB-INF/lib directory.

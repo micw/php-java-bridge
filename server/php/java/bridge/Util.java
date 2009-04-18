@@ -69,9 +69,13 @@ public final class Util {
     public static int MAX_WAIT;
     
     /** The java/Java.inc code */
-    public static Class JavaInc;
+    public static Class JAVA_INC;
     /** The java/JavaProxy.php code */
-    public static Class JavaProxy;
+    public static Class JAVA_PROXY;
+    /** The launcher.sh code */
+    public static Class LAUNCHER_UNIX;
+    /** The launcher.exe code */
+    public static Class LAUNCHER_WINDOWS, LAUNCHER_WINDOWS2, LAUNCHER_WINDOWS3;
     
     private Util() {}
     
@@ -231,6 +235,9 @@ public final class Util {
     /** Only for internal use */
     public static final Class[] ZERO_PARAM = new Class[0];
     
+    /** True if the system property php.java.bridge.no_short_path is not set */
+    public static final boolean USE_SHORT_PATH_S1 = System.getProperty("php.java.bridge.no_short_path", "false").equals("false");
+    
     /** The name of the VM, for example "1.4.2@http://java.sun.com/" or "1.4.2@http://gcc.gnu.org/java/".*/
     public static String VM_NAME;
     /**
@@ -277,10 +284,18 @@ public final class Util {
     private static void initGlobals() {
 
 	try {
-	    JavaInc = Class.forName("php.java.bridge.JavaInc");
+	    JAVA_INC = Class.forName("php.java.bridge.JavaInc");
 	} catch (Exception e) {/*ignore*/}
 	try {
-	    JavaProxy = Class.forName("php.java.bridge.JavaProxy");
+	    JAVA_PROXY = Class.forName("php.java.bridge.JavaProxy");
+	} catch (Exception e) {/*ignore*/}
+	try {
+	    LAUNCHER_UNIX = Class.forName("php.java.bridge.LauncherUnix");
+	} catch (Exception e) {/*ignore*/}
+	try {
+	    LAUNCHER_WINDOWS = Class.forName("php.java.bridge.LauncherWindows");
+	    LAUNCHER_WINDOWS2 = Class.forName("php.java.bridge.LauncherWindows2");
+	    LAUNCHER_WINDOWS3 = Class.forName("php.java.bridge.LauncherWindows3");
 	} catch (Exception e) {/*ignore*/}
 	    
 
@@ -689,6 +704,16 @@ public final class Util {
 	public void addHeader (String key, String val) {/*template*/}
     }
     /**
+     * A default output stream factory for use with parseBody.
+     */
+    public static abstract class OutputStreamFactory {
+	/**
+	 * Return a new output stream
+	 * @return a new output stream
+	 */
+	public abstract OutputStream getOutputStream() throws IOException;
+    }
+    /**
      * Discards all header fields from a HTTP connection and write the body to the OutputStream
      * @param buf A buffer, for example new byte[BUF_SIZE]
      * @param natIn The InputStream
@@ -697,7 +722,7 @@ public final class Util {
      * @throws UnsupportedEncodingException
      * @throws IOException
      */
-    public static void parseBody(byte[] buf, InputStream natIn, OutputStream out, HeaderParser parser) throws UnsupportedEncodingException, IOException {
+    public static void parseBody(byte[] buf, InputStream natIn, OutputStreamFactory out, HeaderParser parser) throws UnsupportedEncodingException, IOException {
 	int i=0, n, s=0;
 	boolean eoh=false;
 	// the header and content
@@ -718,7 +743,7 @@ public final class Util {
 	    }
 	    // body
 	    if(eoh) {
-		if(out!=null && i<N) out.write(buf, i, N-i); 
+		if(i<N) out.getOutputStream().write(buf, i, N-i); 
 		i=0;
 	    }
 	}

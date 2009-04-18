@@ -399,11 +399,8 @@ public abstract class FastCGIServlet extends CGIServlet {
 	        }
 	        throw new ServletException("PHP FastCGI instance failed.", x);
 	    } catch (IOException e) {
-	      if(Util.logLevel>4) {
-		  Util.logDebug("IOException caused by internet browser: " + e);
-		  Util.printStackTrace(e);
-	      }	      
-	      //throw new ServletException("IOException caused by internet browser", e);
+		Util.printStackTrace(e);
+		throw e;
 	    } finally {
     		if(ctx!=null) ctx.releaseManaged();
     		ctx = null;
@@ -418,7 +415,6 @@ public abstract class FastCGIServlet extends CGIServlet {
 	 */
         protected void parseBody() throws IOException, ServletException {
 	    InputStream in = null;
-            OutputStream out = null;
 	    FastCGIInputStream natIn = null;
 	    FastCGIOutputStream natOut = null;
 	    ConnectionPool.Connection connection = null;
@@ -428,7 +424,6 @@ public abstract class FastCGIServlet extends CGIServlet {
 		natIn = (FastCGIInputStream) connection.getInputStream();
 
 		in = stdin;
-		out = response.getOutputStream();
         
 		// send the FCGI header
 		natOut.writeBegin();
@@ -471,7 +466,7 @@ public abstract class FastCGIServlet extends CGIServlet {
 		    }
 		    // body
 		    if(eoh) {
-			if(out!=null && i<N) out.write(buf, i, N-i);
+			if(i<N) getServletOutputStream(response).write(buf, i, N-i);
 			i=0;
 		    }
 		}
@@ -481,7 +476,8 @@ public abstract class FastCGIServlet extends CGIServlet {
 		if (phpError!=null) Util.logMessage(phpError.toString());
 		natIn = null; connection = null;
 		
-		if(phpFatalError!=null) throw new RuntimeException(phpFatalError);
+		if(phpFatalError!=null) 
+		    throw new RuntimeException(phpFatalError);
 	    } catch (InterruptedException e) {
 		throw new ServletException(e);
 	    } finally {

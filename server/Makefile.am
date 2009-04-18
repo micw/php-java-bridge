@@ -5,7 +5,7 @@ EXTRA_LTLIBRARIES = libnatcJavaBridge.la
 libnatcJavaBridge_la_SOURCES = natcJavaBridge.c
 libnatcJavaBridge_la_LDFLAGS = -rpath $(EXTENSION_DIR) -shared -avoid-version -prefer-pic
 libnatcJavaBridge_la_LIBADD = META-INF/java/Java.inc
-java_SOURCES=php/java/bridge/JavaBridgeIllegalStateException.java php/java/bridge/AppThreadPool.java php/java/bridge/Base64EncodingOutputBuffer.java php/java/bridge/ChainsawLogger.java php/java/bridge/ConstructorCache.java php/java/bridge/DefaultOptions.java php/java/bridge/DynamicClassLoader.java php/java/bridge/DynamicHttpURLConnectionHandler.java php/java/bridge/DynamicJarURLConnection.java php/java/bridge/DynamicJavaBridgeClassLoader.java php/java/bridge/FileLogger.java php/java/bridge/GlobalRef.java php/java/bridge/HexOutputBuffer.java php/java/bridge/IDocHandler.java php/java/bridge/IJavaBridgeFactory.java php/java/bridge/ILogger.java php/java/bridge/IntegerComparator.java php/java/bridge/Invocable.java php/java/bridge/ISession.java php/java/bridge/ISocketFactory.java php/java/bridge/JarLibraryPath.java php/java/bridge/JavaBridgeClassLoader.java php/java/bridge/JavaBridgeFactory.java php/java/bridge/JavaBridgeIllegalArgumentException.java php/java/bridge/JavaBridge.java php/java/bridge/JavaBridgeRunner.java php/java/bridge/JavaBridgeSecurityManager.java php/java/bridge/LocalServerSocket.java php/java/bridge/LocalSocketInputStream.java php/java/bridge/LocalSocket.java php/java/bridge/LocalSocketOutputStream.java php/java/bridge/MethodCache.java php/java/bridge/NotImplementedException.java php/java/bridge/Options.java php/java/bridge/Parser.java php/java/bridge/ParserString.java php/java/bridge/ParserTag.java php/java/bridge/PhpArray.java php/java/bridge/PhpExactNumber.java php/java/bridge/PhpMap.java php/java/bridge/PhpParserString.java php/java/bridge/PhpProcedure.java php/java/bridge/PhpProcedureProxy.java php/java/bridge/PhpString.java php/java/bridge/Request.java php/java/bridge/Response.java php/java/bridge/SessionFactory.java php/java/bridge/Session.java php/java/bridge/SimpleJavaBridgeClassLoader.java php/java/bridge/SimpleLog4jLogger.java php/java/bridge/SimplePhpString.java php/java/bridge/StandaloneGCC.java php/java/bridge/Standalone.java php/java/bridge/StringCache.java php/java/bridge/TCPServerSocket.java php/java/bridge/ThreadPool.java php/java/bridge/Util.java php/java/bridge/http/AbstractChannel.java php/java/bridge/http/AbstractChannelName.java php/java/bridge/http/ContextFactory.java php/java/bridge/http/Context.java php/java/bridge/http/ContextRunner.java php/java/bridge/http/ContextServer.java php/java/bridge/http/HttpRequest.java php/java/bridge/http/HttpResponse.java php/java/bridge/http/HttpServer.java php/java/bridge/http/IContextFactory.java php/java/bridge/http/IContextFactoryVisitor.java php/java/bridge/http/IContext.java php/java/bridge/http/IContextServer.java php/java/bridge/http/PipeContextServer.java php/java/bridge/http/SimpleContextFactory.java php/java/bridge/http/SocketContextServer.java php/java/bridge/JavaInc.java php/java/bridge/JavaProxy.java php/java/bridge/NoSuchConstantException.java php/java/bridge/NoSuchProcedureException.java php/java/bridge/IManaged.java
+java_SOURCES=php/java/bridge/JavaBridgeIllegalStateException.java php/java/bridge/AppThreadPool.java php/java/bridge/Base64EncodingOutputBuffer.java php/java/bridge/ChainsawLogger.java php/java/bridge/ConstructorCache.java php/java/bridge/DefaultOptions.java php/java/bridge/DynamicClassLoader.java php/java/bridge/DynamicHttpURLConnectionHandler.java php/java/bridge/DynamicJarURLConnection.java php/java/bridge/DynamicJavaBridgeClassLoader.java php/java/bridge/FileLogger.java php/java/bridge/GlobalRef.java php/java/bridge/HexOutputBuffer.java php/java/bridge/IDocHandler.java php/java/bridge/IJavaBridgeFactory.java php/java/bridge/ILogger.java php/java/bridge/IntegerComparator.java php/java/bridge/Invocable.java php/java/bridge/ISession.java php/java/bridge/ISocketFactory.java php/java/bridge/JarLibraryPath.java php/java/bridge/JavaBridgeClassLoader.java php/java/bridge/JavaBridgeFactory.java php/java/bridge/JavaBridgeIllegalArgumentException.java php/java/bridge/JavaBridge.java php/java/bridge/JavaBridgeRunner.java php/java/bridge/JavaBridgeSecurityManager.java php/java/bridge/LocalServerSocket.java php/java/bridge/LocalSocketInputStream.java php/java/bridge/LocalSocket.java php/java/bridge/LocalSocketOutputStream.java php/java/bridge/MethodCache.java php/java/bridge/NotImplementedException.java php/java/bridge/Options.java php/java/bridge/Parser.java php/java/bridge/ParserString.java php/java/bridge/ParserTag.java php/java/bridge/PhpArray.java php/java/bridge/PhpExactNumber.java php/java/bridge/PhpMap.java php/java/bridge/PhpParserString.java php/java/bridge/PhpProcedure.java php/java/bridge/PhpProcedureProxy.java php/java/bridge/PhpString.java php/java/bridge/Request.java php/java/bridge/Response.java php/java/bridge/SessionFactory.java php/java/bridge/Session.java php/java/bridge/SimpleJavaBridgeClassLoader.java php/java/bridge/SimpleLog4jLogger.java php/java/bridge/SimplePhpString.java php/java/bridge/StandaloneGCC.java php/java/bridge/Standalone.java php/java/bridge/StringCache.java php/java/bridge/TCPServerSocket.java php/java/bridge/ThreadPool.java php/java/bridge/Util.java php/java/bridge/http/AbstractChannel.java php/java/bridge/http/AbstractChannelName.java php/java/bridge/http/ContextFactory.java php/java/bridge/http/Context.java php/java/bridge/http/ContextRunner.java php/java/bridge/http/ContextServer.java php/java/bridge/http/HttpRequest.java php/java/bridge/http/HttpResponse.java php/java/bridge/http/HttpServer.java php/java/bridge/http/IContextFactory.java php/java/bridge/http/IContextFactoryVisitor.java php/java/bridge/http/IContext.java php/java/bridge/http/IContextServer.java php/java/bridge/http/PipeContextServer.java php/java/bridge/http/SimpleContextFactory.java php/java/bridge/http/SocketContextServer.java php/java/bridge/JavaInc.java php/java/bridge/LauncherUnix.java php/java/bridge/LauncherWindows.java php/java/bridge/LauncherWindows2.java php/java/bridge/LauncherWindows3.java php/java/bridge/JavaProxy.java php/java/bridge/NoSuchConstantException.java php/java/bridge/NoSuchProcedureException.java php/java/bridge/IManaged.java
 
 
 JavaRaw.inc:
@@ -28,6 +28,39 @@ php/java/bridge/JavaInc.java: META-INF/java/Java.inc
 	cat META-INF/java/Java.inc | sed '/^\/\//d;s/  / /g;s/		/	/g'| sed 's/\\/\\\\/g;s/"/\\"/g;s/.*/"&\\n"+/'  >>php/java/bridge/JavaInc.java
 	echo '"";' >>php/java/bridge/JavaInc.java
 	echo 'public static final byte[] bytes = data.getBytes(); }' >>php/java/bridge/JavaInc.java
+
+php/java/bridge/LauncherUnix.java: WEB-INF/cgi/launcher.sh
+	echo "package php.java.bridge;" >php/java/bridge/LauncherUnix.java
+	echo 'public class LauncherUnix {' >>php/java/bridge/LauncherUnix.java
+	echo 'private static final String data = ' >>php/java/bridge/LauncherUnix.java
+	cat WEB-INF/cgi/launcher.sh | sed '/^\/\//d;s/  / /g;s/		/	/g'| sed 's/\\/\\\\/g;s/"/\\"/g;s/.*/"&\\n"+/'  >>php/java/bridge/LauncherUnix.java
+	echo '"";' >>php/java/bridge/LauncherUnix.java
+	echo 'public static final byte[] bytes = data.getBytes(); }' >>php/java/bridge/LauncherUnix.java
+
+php/java/bridge/LauncherWindows.java: WEB-INF/cgi/launcher.sh
+	echo "package php.java.bridge;" >php/java/bridge/LauncherWindows.java
+	echo 'public class LauncherWindows {' >>php/java/bridge/LauncherWindows.java
+	echo 'public static final byte[] bytes = new byte[]{' >>php/java/bridge/LauncherWindows.java
+	cat  WEB-INF/cgi/launcher.exe | od -vb | sed 's/^[0-7]*//;s/^[^ ]* //;s/[0-7][0-7]*/(byte)0&,/g' | split -l600
+	cat xaa >>php/java/bridge/LauncherWindows.java
+	rm xaa
+	echo '};}' >>php/java/bridge/LauncherWindows.java
+
+php/java/bridge/LauncherWindows2.java: php/java/bridge/LauncherWindows.java
+	echo "package php.java.bridge;" >php/java/bridge/LauncherWindows2.java
+	echo 'public class LauncherWindows2 {' >>php/java/bridge/LauncherWindows2.java
+	echo 'public static final byte[] bytes = new byte[]{' >>php/java/bridge/LauncherWindows2.java
+	cat xab >>php/java/bridge/LauncherWindows2.java
+	rm xab
+	echo '};}' >>php/java/bridge/LauncherWindows2.java
+
+php/java/bridge/LauncherWindows3.java: php/java/bridge/LauncherWindows.java
+	echo "package php.java.bridge;" >php/java/bridge/LauncherWindows3.java
+	echo 'public class LauncherWindows3 {' >>php/java/bridge/LauncherWindows3.java
+	echo 'public static final byte[] bytes = new byte[]{' >>php/java/bridge/LauncherWindows3.java
+	cat xac >>php/java/bridge/LauncherWindows3.java
+	rm xac
+	echo '};}' >>php/java/bridge/LauncherWindows3.java
 
 php/java/bridge/JavaProxy.java: META-INF/java/JavaProxy.php
 	echo "package php.java.bridge;" >php/java/bridge/JavaProxy.java
@@ -60,12 +93,12 @@ RunMonoBridge_SOURCES=RunMonoBridge.c
 dist_data_DATA=$(JAVA_BRIDGE_JAR) $(JAVA_BRIDGE_WAR) $(MONO_BRIDGE_EXE) $(SCRIPT) $(JAVA_BRIDGE_SCRIPT_JAR) stamp
 mono_dlls=ICSharpCode.SharpZipLib.dll IKVM.AWT.WinForms.dll IKVM.GNU.Classpath.dll IKVM.Runtime.dll
 EXTRA_DATA=JavaBridge.jar JavaBridge.war MonoBridge.exe $(mono_dlls) script-api.jar php-script.jar 
-java_inc=-C META-INF java/JavaBridge.inc -C META-INF java/Java.inc -C META-INF java/JavaProxy.inc -C META-INF java/Mono.inc -C META-INF java/NativeParser.inc -C META-INF java/Options.inc -C META-INF java/Parser.inc -C META-INF java/Protocol.inc -C META-INF java/SimpleParser.inc -C META-INF java/JavaProxy.php -C META-INF java/README
+java_inc=-C META-INF java/Java.inc -C META-INF java/Mono.inc -C META-INF java/JavaProxy.php -C META-INF java/README
 
 stamp:
 	date >stamp
 
-JavaBridge.jar: META-INF/java/Java.inc META-INF/java/Mono.inc
+JavaBridge.jar: META-INF/java/Java.inc META-INF/java/Mono.inc php/java/bridge/JavaProxy.java php/java/bridge/LauncherWindows2.java php/java/bridge/LauncherWindows.java php/java/bridge/LauncherWindows3.java php/java/bridge/LauncherUnix.java php/java/bridge/JavaInc.java
 	$(PHP_JAVA_DIR)/bin/javac $(SOURCE_VERSION) -classpath . php/java/bridge/http/*.java php/java/bridge/*.java 2>/dev/null
 	$(PHP_JAVA_DIR)/bin/jar cMf JavaBridge.jar META-INF/java/*.inc META-INF/java/README META-INF/MANIFEST.MF php/java/bridge/http/*.class php/java/bridge/*.class  php/java/bridge/*.properties
 	chmod +x JavaBridge.jar
@@ -86,7 +119,7 @@ php-script.jar: JavaBridge.jar $(SCRIPT) $(SERVLET)
 	$(PHP_JAVA_DIR)/bin/jar cf php-script.jar META-INF/services/javax.script.ScriptEngineFactory php/java/script/*.class
 
 src.zip: META-INF/java/Mono.inc META-INF/java/JavaProxy.php META-INF/java/Mono.inc
-	$(PHP_JAVA_DIR)/bin/jar cf src.zip WEB-INF/cgi/launcher.c WEB-INF/cgi/launcher.sh WEB-INF/cgi/README WEB-INF/cgi/rename* javax/script/*.java php/java/bridge/http/*.java php/java/bridge/*.java php/java/servlet/fastcgi/*.java php/java/servlet/*.java php/java/script/*.java php/java/script/servlet/*.java $(java_inc)
+	$(PHP_JAVA_DIR)/bin/jar cf src.zip WEB-INF/cgi/launcher.c WEB-INF/cgi/launcher.sh WEB-INF/cgi/README WEB-INF/cgi/rename* javax/script/*.java php/java/bridge/http/*.java php/java/bridge/*.java php/java/servlet/fastcgi/*.java php/java/servlet/*.java php/java/script/*.java php/java/script/servlet/*.java $(java_in)
 
 
 JavaBridge.war: src.zip JavaBridge.jar $(SERVLET) $(JAVA_BRIDGE_SERVLET_JAR) $(SCRIPT) $(JAVA_BRIDGE_SCRIPT_JAR) $(FACES) $(JAVA_BRIDGE_FACES_JAR) TestInstallation.class META-INF/java/JavaProxy.php

@@ -49,7 +49,7 @@ public class Logger implements ILogger {
 	}
 	/**{@inheritDoc}*/
 	public void printStackTrace(Throwable t) {
-	    //ctx.log("", t);
+	    ctx.log("Exception occured", t);
 	    if(Util.logLevel>5) t.printStackTrace();
 	}
 	/**{@inheritDoc}*/

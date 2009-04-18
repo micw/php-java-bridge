@@ -62,7 +62,7 @@ invoke PHP methods from Java. Example:
     Object f = e.getContext().getAttribute("f", 100);
     System.out.println(i.invokeMethod(f, "a", new Object[] {new Integer(1)}));
 
-    e.eval ((Reader)null); // release the continuation, flush output
+    ((Closeable)e).close(); // release the continuation, flush output
     
 
 * Another convenience ScriptEngine can be used to implement a

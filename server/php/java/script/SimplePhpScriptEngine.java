@@ -42,10 +42,14 @@ import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 
+import php.java.bridge.JavaBridgeRunner;
 import php.java.bridge.PhpProcedureProxy;
 import php.java.bridge.Util;
+import php.java.bridge.http.AbstractChannelName;
+import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.IContext;
 import php.java.bridge.http.IContextFactory;
+import php.java.bridge.http.WriterOutputStream;
 
 /**
  * This class implements the ScriptEngine.<p>
@@ -165,17 +169,33 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
 	/* the client should connect back to us */
 	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", ctx.getRedirectString());
     }
+    protected void addNewContextFactory() {
+	ctx = PhpScriptContextFactory.addNew((IContext)getContext());
+    }
+    protected ContextServer getContextServer() {
+	return JavaBridgeRunner.contextServer;
+    }
     /**
      * Create a new context ID and a environment map which we send to the client.
      *
      */
     protected void setNewContextFactory() {
-        IPhpScriptContext context = (IPhpScriptContext)getContext(); 
 	env = (Map) processEnvironment.clone();
 
-	ctx = PhpScriptContextFactory.addNew((IContext)context);
-
-	setStandardEnvironmentValues(env);
+	addNewContextFactory();
+	
+    	// short path S1: no PUT request
+	if (Util.USE_SHORT_PATH_S1) {
+	    ContextServer contextServer = getContextServer();
+    		AbstractChannelName channelName = contextServer.getFallbackChannelName(null, ctx);
+    		if (channelName != null) {
+    		    env.put("X_JAVABRIDGE_REDIRECT", channelName.getName());
+    		    ctx.getBridge();
+    		    contextServer.start(channelName);
+    		}
+	}
+	
+    	setStandardEnvironmentValues(env);
     }
 
     protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
@@ -215,8 +235,8 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
 	}
     }
     private final class HeaderParser extends Util.HeaderParser {
-	private OutputStreamWriter writer;
-	public HeaderParser(OutputStreamWriter writer) {
+	private WriterOutputStream writer;
+	public HeaderParser(WriterOutputStream writer) {
 	    this.writer = writer;
 	}
 	public void parseHeader(String header) {
@@ -249,8 +269,8 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
 	/*
 	 * encode according to content-type charset
 	 */
-    	if(out instanceof OutputStreamWriter)
-    	    headerParser = new HeaderParser((OutputStreamWriter)out);
+    	if(out instanceof WriterOutputStream)
+    	    headerParser = new HeaderParser((WriterOutputStream)out);
 
     	HttpProxy kont = new HttpProxy(reader, env, out,  err, headerParser, resultProxy = new ResultProxy(this)); 
      	phpScriptContext.setContinuation(kont);

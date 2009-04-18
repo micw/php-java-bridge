@@ -149,7 +149,7 @@ public final class ContextServer implements ContextFactory.ICredentials {
     public AbstractChannelName getFallbackChannelName(String channelName, IContextFactory currentCtx) {
         if(channelName!=null && ctx.isAvailable()) return new PipeChannelName(channelName,  currentCtx);
         SocketContextServer sock=getSocketContextServer(this, getAppThreadPool());
-        return new SocketChannelName(sock.getChannelName(),  currentCtx);
+        return sock.isAvailable() ? new SocketChannelName(sock.getChannelName(),  currentCtx) : null;
     }
     
     /**

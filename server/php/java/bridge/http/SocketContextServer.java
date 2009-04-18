@@ -97,16 +97,12 @@ public final class SocketContextServer extends PipeContextServer implements Runn
     	super(ContextFactory.NO_CREDENTIALS, threadPool, ContextFactory.EMPTY_CONTEXT_NAME);
         try {
 	    serverSocket = JavaBridge.bind(BIND_PORT);
-	    try {
-	        SecurityManager sec = System.getSecurityManager();
-	        if(sec!=null) sec.checkAccept("127.0.0.1", Integer.parseInt(serverSocket.getSocketName()));
-	    } catch (SecurityException sec) {
-	        throw new Exception("Add the line: grant {permission java.net.SocketPermission \"*\", \"accept,resolve\";}; to your server.policy file or run this AS on an operating system which supports named pipes (e.g.: Unix, Linux, BSD, Mac OSX, ...).", sec);
-	    } catch (Throwable t) {/*ignore*/};
+	    SecurityManager sec = System.getSecurityManager();
+	    if(sec!=null) sec.checkAccept("127.0.0.1", Integer.parseInt(serverSocket.getSocketName()));
             Thread t = new Util.Thread(this, "JavaBridgeSocketContextServer("+serverSocket.getSocketName()+")");
 	    t.start();
         } catch (Throwable t) {
-	    Util.warn("Local communication channel not available. The PHP/Java bridge will be very slow.");
+	    Util.warn("Local communication channel not available.");
             Util.printStackTrace(t);
             if(serverSocket!=null) try{serverSocket.close();}catch(IOException e) {}
             serverSocket=null;

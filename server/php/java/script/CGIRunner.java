@@ -153,7 +153,7 @@ abstract class CGIRunner extends Thread {
 	}).start();
 
 	byte[] buf = new byte[Util.BUF_SIZE];
-	Util.parseBody(buf, natIn, out, headerParser);
+	Util.parseBody(buf, natIn, new Util.OutputStreamFactory() { public OutputStream getOutputStream() throws IOException {return out;}}, headerParser);
 	proc.waitFor();
 	resultProxy.setResult(proc.exitValue());
 	} catch (IOException e) {

@@ -69,7 +69,7 @@ public class JavaBridgeRunner extends HttpServer {
 
     protected JavaBridgeRunner(String serverPort) throws IOException {
 	super(serverPort);
-	ctxServer = new ContextServer(ContextFactory.EMPTY_CONTEXT_NAME);	
+	contextServer = new ContextServer(ContextFactory.EMPTY_CONTEXT_NAME);	
     }
     /**
      * Create a new JavaBridgeRunner and ContextServer.
@@ -78,7 +78,7 @@ public class JavaBridgeRunner extends HttpServer {
      */
     protected JavaBridgeRunner() throws IOException {
 	super();
-	ctxServer = new ContextServer(ContextFactory.EMPTY_CONTEXT_NAME);
+	contextServer = new ContextServer(ContextFactory.EMPTY_CONTEXT_NAME);
     }
     /**
      * Return a instance.
@@ -140,7 +140,8 @@ public class JavaBridgeRunner extends HttpServer {
 	runner.isStandalone = true;
 	return runner;
     }
-    private static ContextServer ctxServer = null;
+    /** Only for internal use */
+    public static ContextServer contextServer = null;
 
     /**
      * Create a server socket.
@@ -175,7 +176,7 @@ public class JavaBridgeRunner extends HttpServer {
     protected void doPut (HttpRequest req, HttpResponse res) throws IOException {
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
     	String channel = getHeader("X_JAVABRIDGE_CHANNEL", req);
-	ContextFactory.ICredentials credentials = ctxServer.getCredentials(channel);
+	ContextFactory.ICredentials credentials = contextServer.getCredentials(channel);
 	IContextFactory ctx = getContextFactory(req, res, credentials);
 	
     	JavaBridge bridge = ctx.getBridge();
@@ -185,7 +186,7 @@ public class JavaBridgeRunner extends HttpServer {
 	Request r = bridge.request = new Request(bridge);
         if(r.init(sin, sout)) {
         	AbstractChannelName channelName = 
-                    ctxServer.getFallbackChannelName(channel, ctx);
+                    contextServer.getFallbackChannelName(channel, ctx);
         	res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getName());
         	r.handleRequests();
         
@@ -196,7 +197,7 @@ public class JavaBridgeRunner extends HttpServer {
         	resOut = res.getOutputStream();
         	sout.writeTo(resOut);
         	resOut.close();
-                ctxServer.start(channelName);
+                contextServer.start(channelName);
                 if(bridge.logLevel>3) 
                     bridge.logDebug("waiting for context: " +ctx.getId());
                 try { ctx.waitFor(Util.MAX_WAIT); } catch (InterruptedException e) { Util.printStackTrace(e); }
@@ -463,10 +464,10 @@ public class JavaBridgeRunner extends HttpServer {
 	    return;
 	}
 	    
-	if(Util.JavaInc!=null && name.endsWith("Java.inc")) {
+	if(Util.JAVA_INC!=null && name.endsWith("Java.inc")) {
 	    try {
-	        Field f = Util.JavaInc.getField("bytes");
-	        cache = buf = (byte[]) f.get(Util.JavaInc);
+	        Field f = Util.JAVA_INC.getField("bytes");
+	        cache = buf = (byte[]) f.get(Util.JAVA_INC);
 	        res.setContentLength(buf.length);
 		out =res.getOutputStream();
 		out.write(buf);

@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Map;
 
 import javax.script.ScriptException;
 import javax.servlet.Servlet;
@@ -15,11 +14,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
-import php.java.bridge.http.AbstractChannelName;
 import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.IContext;
-import php.java.bridge.http.IContextFactory;
-import php.java.script.IPhpScriptContext;
 import php.java.servlet.PhpJavaServlet;
 
 /*
@@ -144,16 +140,11 @@ public class InvocablePhpServletRemoteHttpServerScriptEngine extends InvocablePh
 	
 	this.contextServer = PhpJavaServlet.getContextServer(ctx);
     }
-    protected IContextFactory getPhpScriptContextFactory (IPhpScriptContext context) {
-	IContextFactory ctx = InvocableRemotePhpServletContextFactory.addNew((IContext)context, servlet, servletCtx, req, res, localName);
-    	// short path S1: no PUT request
-    	AbstractChannelName channelName = contextServer.getFallbackChannelName(null, ctx);
-    	if (channelName != null) {
-    	    env.put("X_JAVABRIDGE_REDIRECT", channelName.getName());
-    	    ctx.getBridge();
-    	    contextServer.start(channelName);
-    	}
-    	return ctx;
+    protected ContextServer getContextServer() {
+	return contextServer;
+    }
+    protected void addNewContextFactory() {
+	ctx = InvocableRemotePhpServletContextFactory.addNew((IContext)getContext(), servlet, servletCtx, req, res, localName);
     }
     /**
      * Create a new context ID and a environment map which we send to the client.
@@ -161,15 +152,8 @@ public class InvocablePhpServletRemoteHttpServerScriptEngine extends InvocablePh
      *
      */
     protected void setNewScriptFileContextFactory(ScriptFileReader fileReader) throws IOException, ScriptException {
-        IPhpScriptContext context = (IPhpScriptContext)getContext(); 
-	env = (Map) processEnvironment.clone();
+	setNewContextFactory();
 
-	ctx = getPhpScriptContextFactory(context);
-
-	/* send the session context now, otherwise the client has to 
-	 * call handleRedirectConnection */
-	setStandardEnvironmentValues(env);
-	
 	ScriptFile file = fileReader.getFile();
 	URI include;
         try {

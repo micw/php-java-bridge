@@ -62,6 +62,7 @@ package php.java.servlet;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -84,6 +85,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
+import php.java.bridge.http.WriterOutputStream;
 
 
 /**
@@ -465,7 +467,11 @@ public abstract class CGIServlet extends HttpServlet {
      */
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
         throws ServletException, IOException {
-	if(Util.logLevel>3) Util.logDebug("doGet:"+req.getRequestURL());
+	
+	if(Util.logLevel>3) {
+	    if (req.getAttribute("javax.servlet.include.request_uri")!=null) Util.logDebug("doGet (included):"+req.getAttribute("javax.servlet.include.request_uri"));
+	    Util.logDebug("doGet:"+req.getRequestURI());
+	}
         handle (req, res, false);
     } //doGet
 
@@ -525,6 +531,12 @@ public abstract class CGIServlet extends HttpServlet {
 
         /** servlet URI of the enclosing servlet */
         protected String servletPath = null;
+
+        /** query string of the enclosing servlet */
+        protected String queryString = null;
+
+        /** query string of the enclosing servlet */
+        protected String requestUri = null;
 
         /** pathInfo for the current request */
         protected String pathInfo = null;
@@ -586,9 +598,21 @@ public abstract class CGIServlet extends HttpServlet {
          *               the Servlet API
          */
         protected void setupFromRequest(HttpServletRequest req) {
-            this.contextPath = req.getContextPath();
-            this.pathInfo = req.getPathInfo();
-            this.servletPath = req.getServletPath();
+            
+            this.contextPath = (String) req.getAttribute("javax.servlet.include.context_path");
+    	    if (this.contextPath == null) this.contextPath = req.getContextPath();
+    	    
+            this.pathInfo =  (String) req.getAttribute("javax.servlet.include.path_info");
+            if (this.pathInfo == null) this.pathInfo = req.getPathInfo();
+            
+            this.servletPath = (String) req.getAttribute("javax.servlet.include.servlet_path");
+            if (this.servletPath == null) this.servletPath = req.getServletPath();
+            
+            this.queryString = (String) req.getAttribute("javax.servlet.include.query_string");
+            if (this.queryString == null) this.queryString = req.getQueryString();
+            
+            this.requestUri = (String) req.getAttribute("javax.servlet.include.request_uri");
+            if (this.requestUri == null) this.requestUri = req.getRequestURI();
         }
 
 
@@ -778,7 +802,7 @@ public abstract class CGIServlet extends HttpServlet {
             envp.put("SERVER_PORT", iPort.toString());
             envp.put("REQUEST_METHOD", nullsToBlanks(req.getMethod()));
             envp.put("SCRIPT_NAME", nullsToBlanks(sCGINames[1]));
-            envp.put("QUERY_STRING", nullsToBlanks(req.getQueryString()));
+            envp.put("QUERY_STRING", nullsToBlanks(queryString));
             envp.put("REMOTE_HOST", nullsToBlanks(req.getRemoteHost()));
             envp.put("REMOTE_ADDR", nullsToBlanks(req.getRemoteAddr()));
             envp.put("AUTH_TYPE", nullsToBlanks(req.getAuthType()));
@@ -1082,6 +1106,16 @@ public abstract class CGIServlet extends HttpServlet {
 	    } catch (ArrayIndexOutOfBoundsException e) {/*not a valid header*/}
 	    catch (StringIndexOutOfBoundsException e){/*not a valid header*/}
         }
+
+	protected OutputStream getServletOutputStream(HttpServletResponse response) throws IOException {
+	   try {
+	       return response.getOutputStream();
+	   } catch (IllegalStateException e) {
+	       WriterOutputStream out = new WriterOutputStream(response.getWriter ());
+	       out.setEncoding(response.getCharacterEncoding());
+	       return out;
+	   }
+	}
 
     } //class CGIRunner
 

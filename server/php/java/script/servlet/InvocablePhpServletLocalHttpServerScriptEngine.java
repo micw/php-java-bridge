@@ -21,8 +21,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
-import php.java.bridge.http.IContextFactory;
-import php.java.script.IPhpScriptContext;
+import php.java.bridge.http.ContextServer;
 import php.java.script.InvocablePhpScriptEngine;
 import php.java.script.URLReader;
 
@@ -127,7 +126,9 @@ abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocableP
 					  ScriptContext.GLOBAL_SCOPE);
 	        
 	        return scriptContext;
-	    }    
+    }    
+    protected abstract ContextServer getContextServer ();
+    protected abstract void addNewContextFactory ();
     /**
      * Create a new context ID and a environment map which we send to the client.
      * @throws IOException 
@@ -164,8 +165,6 @@ abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocableP
             throw (ScriptException) e.getCause();
         }
     }
-    abstract protected IContextFactory getPhpScriptContextFactory (IPhpScriptContext context);
-    
     /** Short path used when eval() is missing */
     protected Object evalShortPath() throws ScriptException {
 	Reader localReader = null; 
@@ -176,13 +175,10 @@ abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocableP
 	    if (pathInfo != null) buf.append(pathInfo);
 	    buf.append("/JavaBridge"); // dummy for PhpJavaServlet
 	    webPath = buf.toString();
-	    IPhpScriptContext context = (IPhpScriptContext)getContext(); 
-	    env = (Map) processEnvironment.clone();
-	    ctx = getPhpScriptContextFactory (context);
+	    setNewContextFactory();
 	    	
 	    /* send the session context now, otherwise the client has to 
 	     * call handleRedirectConnection */
-	    setStandardEnvironmentValues(env);
 	    setName(DUMMY_PHP_SCRIPT_NAME);
 	    env.put("X_JAVABRIDGE_INCLUDE", EMPTY_INCLUDE);
             /* now evaluate JavaProxy.php */

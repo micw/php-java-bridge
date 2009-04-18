@@ -1,6 +1,6 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-package php.java.script;
+package php.java.bridge.http;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -35,7 +35,7 @@ import php.java.bridge.NotImplementedException;
  * @author jostb
  *
  */
-abstract class DefaultCharsetOutputStreamWriter extends OutputStream {
+abstract class DefaultCharsetWriterOutputStream extends OutputStream {
 
     protected Writer out;
  	
@@ -43,7 +43,7 @@ abstract class DefaultCharsetOutputStreamWriter extends OutputStream {
      * Create a new PhpScriptWriter.
      * @param out The OutputStream
      */
-    public DefaultCharsetOutputStreamWriter(Writer out) {
+    public DefaultCharsetWriterOutputStream(Writer out) {
 	this.out = out;
     }
     

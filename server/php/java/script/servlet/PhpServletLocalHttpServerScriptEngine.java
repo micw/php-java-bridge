@@ -21,11 +21,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
-import php.java.bridge.http.AbstractChannelName;
 import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.IContext;
 import php.java.bridge.http.IContextFactory;
-import php.java.script.IPhpScriptContext;
 import php.java.script.PhpScriptEngine;
 import php.java.servlet.PhpJavaServlet;
 
@@ -114,26 +112,15 @@ abstract class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
         return scriptContext;
     }    
 
+    protected ContextServer getContextServer() {
+	return contextServer;
+    }
     /**
-     * Create a new context ID and a environment map which we send to the client.
+     * Create a new context ID
      *
      */
-    protected void setNewContextFactory() {
-        IPhpScriptContext context = (IPhpScriptContext)getContext(); 
-	env = (Map) processEnvironment.clone();
-
-	ctx = PhpServletContextFactory.addNew((IContext)context, servlet, servletCtx, req, res);
-    	// short path S1: no PUT request
-    	AbstractChannelName channelName = contextServer.getFallbackChannelName(null, ctx);
-    	if (channelName != null) {
-    	    env.put("X_JAVABRIDGE_REDIRECT", channelName.getName());
-    	    ctx.getBridge();
-    	    contextServer.start(channelName);
-    	}
-    	
-	/* send the session context now, otherwise the client has to 
-	 * call handleRedirectConnection */
-	setStandardEnvironmentValues(env);
+    protected void addNewContextFactory() {
+	ctx = PhpServletContextFactory.addNew((IContext)getContext(), servlet, servletCtx, req, res);
     }
     
     protected Object eval(final Reader reader, final ScriptContext context, final String name) throws ScriptException {
@@ -161,7 +148,7 @@ abstract class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
 	    setName(name);
 	        
             /* now evaluate our script */
-	    localReader = new ServletReader(servletCtx.getNamedDispatcher("PhpCGIServlet"), getURL(webPath), req);
+	    localReader = new ServletReader(servletCtx, getURL(webPath), req);
             this.script = doEval(localReader, context);
         } catch (Exception e) {
             Util.printStackTrace(e);

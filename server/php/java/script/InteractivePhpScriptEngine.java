@@ -25,7 +25,6 @@ package php.java.script;
  */
 
 import java.io.IOException;
-import java.util.Map;
 
 import javax.script.Invocable;
 import javax.script.ScriptContext;
@@ -125,12 +124,7 @@ public class InteractivePhpScriptEngine extends InvocablePhpScriptEngine {
      * Create a new context ID and a environment map which we send to the client.
      *
      */
-    protected void setNewContextFactory() {
-        IPhpScriptContext context = (IPhpScriptContext)getContext(); 
-	env = (Map) processEnvironment.clone();
-
-	ctx = InteractivePhpScriptContextFactory.addNew((IContext)context);
-
-	setStandardEnvironmentValues(env);
+    protected void addNewContextFactory() {
+	ctx = InteractivePhpScriptContextFactory.addNew((IContext)getContext());
     }
 }
