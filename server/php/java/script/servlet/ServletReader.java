@@ -38,6 +38,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.Cookie;
@@ -46,6 +47,7 @@ import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.NotImplementedException;
+import php.java.bridge.Util;
 import php.java.bridge.Util.HeaderParser;
 import php.java.bridge.http.HttpServer;
 import php.java.script.IScriptReader;
@@ -66,14 +68,15 @@ public class ServletReader extends Reader implements IScriptReader {
     static final String[] HEADER = new String[]{"X_JAVABRIDGE_OVERRIDE_HOSTS", "X_JAVABRIDGE_INCLUDE", "X_JAVABRIDGE_INCLUDE", 
 	"X_JAVABRIDGE_REDIRECT", "X_JAVABRIDGE_CONTEXT", "X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT"};
     
-    public ServletReader(RequestDispatcher dispatcher, URL url, HttpServletRequest req) throws IOException {
-	this.dispatcher = dispatcher;
+    public ServletReader(ServletContext ctx, URL url, HttpServletRequest req) throws IOException {
 	this.url = url;
 	this.req = req;
 	
 	String path = url.getPath();
 	path = path.substring(req.getContextPath().length());
 	
+	this.dispatcher = req.getRequestDispatcher(path);
+	if(Util.logLevel>5) Util.logDebug("creating request dispatcher for: " +path);
 	this.servletPath = path;
     }
     /**
@@ -328,7 +331,7 @@ public class ServletReader extends Reader implements IScriptReader {
 
 	    
             public void setLocale(Locale arg0) {
-	        throw new NotImplementedException();	    //req.getRequestDispatcher(PhpCGIServlet.SERVLET_NAME).forward(req, res);
+	        throw new NotImplementedException();
 
             }};
             
@@ -343,7 +346,7 @@ public class ServletReader extends Reader implements IScriptReader {
 
     /** {@inheritDoc} */
     public int read(char[] cbuf, int off, int len) throws IOException {
-        throw new IllegalStateException("Use urlReader.read(Hashtable, OutputStream) or use a FileReader() instead.");
+        throw new IllegalStateException("Use servletReader.read(Hashtable, OutputStream) or use a FileReader() instead.");
     }
 
 }
