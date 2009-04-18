@@ -20,29 +20,9 @@ Furthermore IBM's Zero framework for Eclipse contains a PHP interpreter written 
 
 <H4>What do I need to communicate with Java?</H4>
 <p>Only the PHP code from <code>Java.inc</code> and a running Java application, for example <code>JavaBridge.jar</code>, or a running Java servlet, for example <code>JavaBridge.war</code>.</p>
-<p>Test code: 
-<blockquote>
-<code>
-&lt;?php require_once("http://localhost:8080/JavaBridge/java/Java.inc"); <br>
-echo java("java.lang.System")->getProperties(); ?&gt;
-</code>
-</blockquote>
-</p>
 
 <H4>What do I need to communicate with PHP?</H4>
-<p>Only the PHP code from <code>JavaProxy.php</code> within your PHP web application, the Java libraries <code>JavaBridge.jar</code>, <code>php-script.jar</code> and <code>php-servlet.jar</code>, and a <code>ContextLoaderListener</code> declaration in your <code>WEB-INF/web.xml</code></p>
-<p>Test code: 
-<blockquote>
-<code>
-&lt;% javax.script.ScriptEngine e = php.java.script.servlet.EngineFactory.getInvocablePhpScriptEngine (this, application, request, response, new java.net.URI("http://yourIntranetHost:80/yourPhpWebApp/JavaProxy.php"));<br>
-out.println("yourIntranetHost running PHP version: " + (String)((javax.script.Invocable)e).invokeFunction("phpversion", new Object[]{}));<br>
-((java.io.Closeable)e).close();
-%&gt;
-</code>
-</blockquote>
-</p>
-<p>There must not be a firewall in between, the servlet thread pool must not be limited or twice the size of the PHP container's pool size, the PHP option "allow_url_include" and the Java <code>WEB-INF/web.xml</code> "promiscuous" option must be enabled. Both components should be behind a firewall.
-</p>
+<p>Only the PHP code from <code>JavaProxy.php</code> within your PHP web application and the Java libraries <code>JavaBridge.jar</code>, <code>php-script.jar</code> and <code>php-servlet.jar</code>.</p>
 
 <H4>Which versions are supported?</H4>
 <ul>
@@ -359,44 +339,79 @@ Please see your HTTP server documentation and <a href="#load-balancing">the desc
 </a>
 <ol>
 <li>
-Download the PHP/Java Bridge binary.
+Download and install the J2EE binary: copy <code>JavaBridge.war</code> into the tomcat <code>webapps</code> folder.<br>
 <li>
-Copy <code>JavaBridge.jar</code>, <code>php-servlet.jar</code> and <code>php-script.jar</code> from the <code>JavaBridge.war</code> zip archive to <code>$CATALINA_HOME/lib</code>.
+Start tomcat, for example with: 
+<blockquote>
+<code>
+JAVA_HOME=/usr/java/default /opt/tomcat/bin/catalina.sh run
+</code>
+</blockquote>
 <li>
-Add the following 9 lines marked with a <code>+</code> to the tomcat <code>$CATALINA_HOME/conf/web.xml</code> web app:
+Move(!) all libraries from the created webapps/JavaBridge/WEB-INF/lib folder to the tomcat lib folder and remove(!) webapps/JavaBridge/WEB-INF/web.xml.
+The only reason to keep the JavaBridge directory is the WEB-INF/cgi/launcher* FastCGI launcher and the java/Java.inc files. Example:
+<blockquote>
+<code>
+mv /opt/tomcat/webapps/JavaBridge/WEB-INF/lib/* /opt/tomcat/lib<br>
+rm /opt/tomcat/webapps/JavaBridge/WEB-INF/web.xml
+</code>
+</blockquote>
+<li> 
+Stop tomcat and remove webapps/JavaBridge.war. <em>Make sure that webapps/JavaBridge still exists, but without any libraries and web.xml!</em>
+<blockquote></blockquote>
+<li>
+Add the lines marked with a <code>+</code> to the tomcat <code>conf/web.xml</code>:
 <blockquote>
 <code>
 <br>
-&lt;<em>web-app</em> xmlns=... &gt
-<br><br>
-+    &lt;listener&gt;&lt;listener-class&gt;php.java.servlet.ContextLoaderListener&lt;/listener-class&gt;&lt;/listener&gt;<br>
-+    &lt;servlet&gt;&lt;servlet-name&gt;PhpJavaServlet&lt;/servlet-name&gt;&lt;servlet-class&gt;php.java.servlet.PhpJavaServlet&lt;/servlet-class&gt;<br>
-+    &lt;/servlet&gt;<br>
-+    &lt;servlet&gt;&lt;servlet-name&gt;PhpCGIServlet&lt;/servlet-name&gt;&lt;servlet-class&gt;php.java.servlet.PhpCGIServlet&lt;/servlet-class&gt;<br>
-+        &lt;init-param&gt;&lt;param-name&gt;prefer_system_php_exec&lt;/param-name&gt;&lt;param-value&gt;On&lt;/param-value&gt;&lt;/init-param&gt;<br>
-+        &lt;init-param&gt;&lt;param-name&gt;php_include_java&lt;/param-name&gt;&lt;param-value&gt;On&lt;/param-value&gt;&lt;/init-param&gt;<br>
-+    &lt;/servlet&gt;<br>
-+    &lt;servlet-mapping&gt;&lt;servlet-name&gt;PhpJavaServlet&lt;/servlet-name&gt;&lt;url-pattern&gt;*.phpjavabridge&lt;/url-pattern&gt; &lt;/servlet-mapping&gt;<br>
-+    &lt;servlet-mapping&gt;&lt;servlet-name&gt;PhpCGIServlet&lt;/servlet-name&gt;&lt;url-pattern&gt;*.php&lt;/url-pattern&gt;&lt;/servlet-mapping&gt;<br>
-...<br>
+   &lt;!-- ================== Built In Servlet Definitions ==================== --&gt;<br>
 <br>
-&lt;<em>/web-app</em>&gt;
 
++    &lt;!-- PHP Servlet --&gt;<br>
++    &lt;listener&gt; &lt;listener-class&gt;php.java.servlet.ContextLoaderListener&lt;/listener-class&gt; &lt;/listener&gt;<br>
++    &lt;listener&gt; &lt;listener-class&gt;php.java.servlet.RequestListener&lt;/listener-class&gt; &lt;/listener&gt;<br>
++    &lt;servlet&gt;<br>
++        &lt;servlet-name&gt;GlobalPhpJavaServlet&lt;/servlet-name&gt;<br>
++        &lt;servlet-class&gt;php.java.servlet.PhpJavaServlet&lt;/servlet-class&gt;<br>
++    &lt;/servlet&gt;<br>
++    &lt;!-- PHP CGI Servlet --&gt;<br>
++    &lt;servlet&gt;<br>
++        &lt;servlet-name&gt;GlobalPhpCGIServlet&lt;/servlet-name&gt;<br>
++        &lt;servlet-class&gt;php.java.servlet.PhpCGIServlet&lt;/servlet-class&gt;<br>
++        &lt;init-param&gt; &lt;param-name&gt;shared_fast_cgi_pool&lt;/param-name&gt;&lt;param-value&gt;On&lt;/param-value&gt;&lt;/init-param&gt;<br>
++        &lt;init-param&gt; &lt;param-name&gt;prefer_system_php_exec&lt;/param-name&gt;&lt;param-value&gt;On&lt;/param-value&gt;&lt;/init-param&gt;<br>
++    &lt;/servlet&gt;<br>
+<br>
+   &lt;!-- The default servlet for all web applications, that serves static     --&gt;<br>
+   &lt;!-- resources.  It processes all requests that are not mapped to other   --&gt;<br>
+[...]<br>
+   &lt;!-- ================ Built In Servlet Mappings ========================= --&gt;<br>
+<br>
++    &lt;!-- PHP Servlet Mapping --&gt;<br>
++    &lt;servlet-mapping&gt;<br>
++        &lt;servlet-name&gt;GlobalPhpJavaServlet&lt;/servlet-name&gt;<br>
++        &lt;url-pattern&gt;*.phpjavabridge&lt;/url-pattern&gt;<br>
++    &lt;/servlet-mapping&gt;<br>
++    &lt;!-- CGI Servlet Mapping --&gt;<br>
++    &lt;servlet-mapping&gt;<br>
++        &lt;servlet-name&gt;GlobalPhpCGIServlet&lt;/servlet-name&gt;<br>
++        &lt;url-pattern&gt;*.php&lt;/url-pattern&gt;<br>
++    &lt;/servlet-mapping&gt;<br>
+<br>
+   &lt;!-- The servlet mappings for the built in servlets defined above.  Note  --&gt;<br>
+   &lt;!-- that, by default, the CGI and SSI servlets are *not* mapped.  You    --&gt;<br>
+<br>
+ &lt;/web-app&gt;<br>
 </code>
 </blockquote>
+</p>
 <li>
-Start tomcat.
+Start tomcat again.
 </ol>
-To test the above settings, add a file <code>test.php</code>:
-<blockquote>
-<code>
-&lt;?php echo java("java.lang.System")-&gt;getProperties(); ?&gt;
-</code>
-</blockquote>
-to some web context, for example "examples", and browse to <code>http://yourHost.com:8080/examples/test.php</code>.
-<p>
-In case you don't need to access Java from all of your scripts, you can set the <code>php_include_java</code> option to <code>Off</code> and <code>require_once("java/Java.inc")</code>, if needed.
-<p>
+To test the above settings copy test.php to some other web context, for example "examples", adjust its require/include path and browse to
+<code>http://yourHost.com:8080/examples/test.php</code>.
+</p>
+
 
 <a name="php-web-app">
 <H4>How do I create a standalone PHP web application for distribution and how can users deploy it into tomcat?</H4>
@@ -659,32 +674,37 @@ echo "You have typed: $str\n";<br>
 </code>
 </p>
 
- <H4>How fast is it?</H4> <p> 
+<a name="performance"></a> <H4>How fast is it?</H4> <p> 
 The following scripts were
-executed on one 1.688 GHZ x86 cpu running RedHat Fedora Core 4 Linux and Sun jdk1.6.0_02:
+executed on one 1.5 GHZ x86 cpu running RedHat Fedora 10 Linux and Sun jdk1.6.0_02.
+We have tested "Mozilla Rhino" 1.6 release 2 from <a href="http://java.sun.com">JDK 1.6</a>, <a href="http://caucho.com">Caucho "Quercus" version 3.2.1</a>, the <a href="http://php-java-bridge.sf.net">PHP/Java Bridge version 5.4.4</a>, and <a href="http://php.net/manual/en/book.java.php">PHP 4's ext/java</a>.
 </p>
-The PHP 5.2.2 code<br>
+The PHP code (<code>t11.php</code>):<br>
 <p>
 <code>
 &lt;?php<br>
-$buf=new java("java.lang.StringBuffer");<br>
-<br>
-$i=0;<br>
-while($i&lt;400000) {<br>
-&nbsp;&nbsp;$i=$i+1;<br>
-&nbsp;&nbsp;$buf-&gt;append($i);<br>
-}<br>
-<br>
-print $buf-&gt;length() . "\n";<br>
-?&gt;<br>
+$buf=new java("java.lang.StringBuilder");<br>
+for ($i=0; $i<400000; $i++) $buf-&gt;append($i);<br>
+echo $buf-&gt;length() . "\n";<br>
+?&gt;
 </code>
 </p>
-The ECMAScript ("Mozilla Rhino") code<br>
+Another PHP code is necessary for Quercus 3.2.1 because it cannot run the above standard PHP code correctly (<code>t12.php</code>):<br>
 <p>
 <code>
-buf = new java.lang.StringBuffer();<br>
-for(i=0; i<400000; i++) buf.append(new String(i));<br>
-print (buf.toString().length());<br>
+&lt;?php<br>
+$buf=new java("java.lang.StringBuilder");<br>
+for ($i=0; $i<400000; $i++) $buf-&gt;append(new java("java.lang.String", $i));<br>
+echo $buf-&gt;length() . "\n";<br>
+?&gt;
+</code>
+</p>
+The ECMAScript ("Mozilla Rhino") code (<code>t11.js</code>):<br>
+<p>
+<code>
+buf = new java.lang.StringBuilder();<br>
+for(i=0; i<400000; i++) buf.append(new java.lang.Integer(i));<br>
+print (buf.length());<br>
 </code>
 </p>
 <p>
@@ -704,33 +724,61 @@ BORDER="1"
 ></TR
 ></THEAD
 
-<TBODY
-><TR
-><TD
->time jrunscript -l php t11.php</TD
-><TD
->PHP5 + VM Bridge 4.3.3</TD
-><TD
->named pipes</TD
-><TD
->0m18.703s,<br>
-0m16.209s,<br>
-0m0.138s
-</TD
-></TR
->
-<TBODY
-><TR
+<TR
 ><TD
 >time jrunscript -l js t11.js</TD
 ><TD
->ECMA script</TD
+><a href="http://java.sun.com">"Mozilla Rhino" 1.6 release 2</a></TD
 ><TD
 >none (native code)</TD
 ><TD
->0m15.338s,<br>
-0m14.996s,<br>
-0m0.116s
+>0m7.932s,<br>
+0m7.701s,<br>
+0m0.113s
+</TD
+></TR
+>
+<TR
+><TD
+>time jrunscript -classpath quercus.jar:resin-util.jar:servlet-api.jar -l quercus t12.php</TD
+><TD
+><a href="http://caucho.com">Quercus 3.2.1</a></TD
+><TD
+>none (native code)</TD
+><TD
+>0m7.134s,<br>
+0m5.050s,<br>
+0m1.934s
+</TD
+></TR
+>
+
+<TR
+><TD
+>time jrunscript -classpath JavaBridge.jar -l php t11.php</TD
+><TD
+><a href="http://php-java-bridge.sf.net">PHP/Java Bridge 5.4.4</a></TD
+><TD
+>named pipes (XML protocol)</TD
+><TD
+>0m16.059s,<br>
+0m15.341s,<br>
+0m0.197s
+</TD
+></TR
+>
+
+<TR
+><TD
+>php t11.php</TD
+><TD
+><a href="http://php.net/manual/en/book.java.php">PHP 4.4.7/PHP-Java extension</a></TD
+><TD
+>JNI (binary protocol)</TD
+><TD
+>0m57.689s,<br>
+0m56.243s,<br>
+0m0.467s
 </TD
 ></TR
 >
@@ -957,7 +1005,7 @@ at the beginning of each script. PHP compiles and caches PHP scripts, the <code>
 + &lt;Connector port="8009" protocol="AJP/1.3" proxyPort="8080" redirectPort="8443" /&gt;<br>
 </code>
 </blockquote>
- Please see the <a href="http://127.0.0.1:8080/docs/config/ajp.html#Proxy%20Support">AJP documentation<a> for details.
+ Please see the <a href="http://tomcat.apache.org/tomcat-5.5-doc/config/ajp.html">AJP documentation<a> for details.
 
 </BODY>
 </HTML>
