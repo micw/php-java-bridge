@@ -35,6 +35,9 @@ Version 5.4.4.2
   and uses these arguments instead of the original arguments obtained
   via reqest.getRequestURL() etc.
 
+* The php.java.script.servlet.EngineFactory API has been revised.
+
+
 Version 5.4.4.1
 
 * Remote PHP scripts can now be accessed as usual. The code:
@@ -56,10 +59,8 @@ Version 5.4.4.1
 
 Will eval "phpversion()" on the server foo and return the result.
 
-There must not be a firewall in between, the servlet thread pool must not be 
-limited or twice the size of the PHP container's pool size, the PHP option 
-"allow_url_include" and the Java <code>WEB-INF/web.xml</code> "promiscuous" 
-option must be enabled. Both components should be behind a firewall.
+There must not be a firewall in between and both components should be
+behind a firewall.
 
 
 Version 5.4.4

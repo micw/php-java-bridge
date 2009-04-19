@@ -2,8 +2,17 @@
 
 package php.java.script.servlet;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+
+import javax.servlet.ServletContext;
+
+import php.java.bridge.Util;
+import php.java.servlet.CGIServlet;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -28,15 +37,56 @@ import java.io.IOException;
  */
 
 
-final class ScriptFileReader extends FileReader {
-
-    private ScriptFile tempfile;
-
-    ScriptFileReader(ScriptFile file) throws IOException {
-	super(file);
-	tempfile = file;
+final class ScriptFileReader extends Reader {
+    private String path;
+    private Reader reader;
+    private Reader realReader;
+    
+    ScriptFileReader(String path, Reader reader) throws IOException {
+	this.path = path;
+	this.reader = reader;
     }
-    ScriptFile getFile() {
-	return tempfile;
+    ScriptFileReader(String path) throws IOException {
+	this.path = path;
+	this.reader = null;
+    }
+    public String getResourcePath(ServletContext ctx) throws IOException {
+	init(CGIServlet.getRealPath(ctx, path));
+	return path;
+    }
+    private static void createFile(File file, Reader reader) throws IOException {
+	FileOutputStream fout = new FileOutputStream(file);
+	OutputStreamWriter writer = new OutputStreamWriter(fout);
+	char[] cbuf = new char[Util.BUF_SIZE];
+	int length;
+	while((length=reader.read(cbuf, 0, cbuf.length))>0) 
+	    writer.write(cbuf, 0, length);
+	writer.close();
+    }
+    private boolean readerIsClosed() {
+	try {
+	    reader.ready();
+	} catch (IOException e) {
+	    return true;
+	}
+	return false;
+    }
+    public void init(String realPath) throws IOException {
+	File realFile = new File(realPath);
+	if (reader!=null && !readerIsClosed()) {
+	    createFile(realFile, reader);
+	    reader.close();
+	    reader = null;
+	}
+	realReader = new FileReader(realFile);
+    }
+    public void close() throws IOException {
+	if (realReader!=null) {
+	    realReader.close();
+	    realReader = null;
+	}
+    }
+    public int read(char[] cbuf, int off, int len) throws IOException {
+	return realReader.read(cbuf, off, len);
     }
 }

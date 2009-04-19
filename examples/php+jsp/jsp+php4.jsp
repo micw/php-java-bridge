@@ -3,11 +3,10 @@
 <%@page import="javax.script.*" %>
 <%@page import="php.java.script.servlet.EngineFactory" %>
 <%
+
 /** 
  * This example demonstrates how to connect Java with a remote PHP application.
- * There must not be a firewall in between, the PHP option 
- * "allow_url_include" and the Java <code>WEB-INF/web.xml</code> "promiscuous" 
- * option must be enabled. Both components should be behind a firewall.
+ * There must not be a firewall in between, both components should be behind a firewall.
  */
 
 URI remotePhpApp = new URI("http://127.0.0.1:"+request.getLocalPort()+"/JavaBridge/java/JavaProxy.php");

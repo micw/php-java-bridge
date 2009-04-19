@@ -143,12 +143,13 @@ abstract class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
     	ServletReader localReader = null;
     	
         try {
-	    webPath = fileReader.getFile().getWebPath(fileReader.getFile().getCanonicalPath(), req, servletCtx);
+            String resourcePath = fileReader.getResourcePath(servletCtx);
+	    webPath = req.getContextPath()+resourcePath;
 	    setNewContextFactory();
 	    setName(name);
 	        
             /* now evaluate our script */
-	    localReader = new ServletReader(servletCtx, getURL(webPath), req);
+	    localReader = new ServletReader(servletCtx, resourcePath, getURL(webPath), req);
             this.script = doEval(localReader, context);
         } catch (Exception e) {
             Util.printStackTrace(e);

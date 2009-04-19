@@ -68,16 +68,13 @@ public class ServletReader extends Reader implements IScriptReader {
     static final String[] HEADER = new String[]{"X_JAVABRIDGE_OVERRIDE_HOSTS", "X_JAVABRIDGE_INCLUDE", "X_JAVABRIDGE_INCLUDE", 
 	"X_JAVABRIDGE_REDIRECT", "X_JAVABRIDGE_CONTEXT", "X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT"};
     
-    public ServletReader(ServletContext ctx, URL url, HttpServletRequest req) throws IOException {
+    public ServletReader(ServletContext ctx, String resourcePath, URL url, HttpServletRequest req) throws IOException {
 	this.url = url;
 	this.req = req;
 	
-	String path = url.getPath();
-	path = path.substring(req.getContextPath().length());
-	
-	this.dispatcher = req.getRequestDispatcher(path);
-	if(Util.logLevel>5) Util.logDebug("creating request dispatcher for: " +path);
-	this.servletPath = path;
+	this.dispatcher = req.getRequestDispatcher(resourcePath);
+	if(Util.logLevel>5) Util.logDebug("creating request dispatcher for: " +resourcePath);
+	this.servletPath = resourcePath;
     }
     /**
      * {@inheritDoc}

@@ -690,7 +690,7 @@ public final class Util {
      * Util.parseBody(buf, natIn, out, new Util.HeaderParser() {protected void parseHeader(String header) {System.out.println(header);}});<br>
      * </code>
      * @author jostb
-     * @see Util#parseBody(byte[], InputStream, OutputStream, HeaderParser)
+     * @see Util#parseBody(byte[], InputStream, OutputStreamFactory, HeaderParser)
      */
     public static abstract class HeaderParser {
       /**

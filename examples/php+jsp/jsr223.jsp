@@ -3,22 +3,12 @@
 <%@page import="php.java.script.servlet.EngineFactory" %>
 
 <%!
-/* The following code makes sure that the PHP script is generated with the servlet instance.
-   When the servlet is generated, a file .../jsr223.jsp._cache_.php appears */
-
-private static File helloScript = null;
-
-/** return a new instance of the php hello script, or the cached script */
-private static synchronized File getHelloScript(String path) {
- if (helloScript!=null) return helloScript;
- return helloScript = EngineFactory.getPhpScript(path, 
-        new StringReader("<?php echo 'Hello java world!'; ?>"));
-}
+private static final Reader HELLO_SCRIPT_READER = new StringReader("<?php echo 'Hello java world!'; ?>");
 %>
 
 <%
 /** access the JSR 223 script engine from the current web app */
-ScriptEngine e = EngineFactory.getPhpScriptEngine (this, 
+    ScriptEngine e = EngineFactory.getPhpScriptEngine (this, 
                                                     application, 
                                                     request, 
                                                     response);
@@ -26,7 +16,7 @@ ScriptEngine e = EngineFactory.getPhpScriptEngine (this,
 e.getContext().setWriter (out);
 
 /** evaluate the script, use the file: servlet +"._cache_.php" as a script cache */
-FileReader reader = EngineFactory.createPhpScriptFileReader(getHelloScript(EngineFactory.getRealPath(application, request.getServletPath())+"._cache_.php"));
+Reader reader = EngineFactory.createPhpScriptFileReader(request.getServletPath()+"._cache_.php", HELLO_SCRIPT_READER);
 e.eval (reader);
 reader.close();
 %>

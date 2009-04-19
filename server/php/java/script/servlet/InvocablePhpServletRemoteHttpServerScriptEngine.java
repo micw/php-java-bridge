@@ -57,16 +57,10 @@ import php.java.servlet.PhpJavaServlet;
  * </ol>
  * In order to evaluate PHP methods follow these steps:<br>
  * <ol>
- * <li> Create a factory which creates a PHP script file from a reader using the methods from {@link EngineFactory}:
+ * <li> Optional: Create a script reader:
  * <blockquote>
  * <code>
- * private static File script;<br>
- * private static final File getScriptF() {<br>
- * &nbsp;&nbsp; if (script!=null) return script;<br><br>
- * &nbsp;&nbsp; String webCacheDir = ctx.getRealPath(req.getServletPath());<br>
- * &nbsp;&nbsp; Reader reader = new StringReader ("&lt;?php function f($v) {return "passed:".$v;} ?&gt;");<br>
- * &nbsp;&nbsp; return EngineFactory.getPhpScript(webCacheDir, reader);<br>
- * }<br>
+ * <strike>private static final Reader HELLO_SCRIPT_READER = new StringReader("&lt;?php echo 'Hello java world!'; ?&gt;");</strike>
  * </code>
  * </blockquote>
  * <li> Acquire a PHP invocable script engine from the {@link EngineFactory}. The following example links the PHP app server "diego" with the current Java app server "timon":
@@ -78,7 +72,7 @@ import php.java.servlet.PhpJavaServlet;
  * <li> Optional: Create a FileReader for the created script file:
  * <blockquote>
  * <code>
- * <strike>Reader readerF = EngineFactory.createPhpScriptFileReader(getScriptF());</strike>
+ * <strike>Reader readerF = EngineFactory.createPhpScriptFileReader(request.getServletPath()+"._cache_.php", HELLO_SCRIPT_READER);</strike>
  * </code>
  * </blockquote>
  * <li> Optional: Evaluate the engine:
@@ -112,7 +106,7 @@ import php.java.servlet.PhpJavaServlet;
  * </code>
  * </blockquote> 
  * </ol>
- * Injecting code into a foreign remote PHP application using <code>scriptEngine.eval(readerF);</code> 
+ * Injecting code into a PHP application using <code>scriptEngine.eval(readerF);</code> 
  * requires that the PHP administrator has set the php.ini option <code>allow_url_include=On</code> for the remove PHP application, 
  * the PHP code is fetched from your Java app using <code>require_once("your PHP code")</code>.
  * <br>
@@ -154,10 +148,10 @@ public class InvocablePhpServletRemoteHttpServerScriptEngine extends InvocablePh
     protected void setNewScriptFileContextFactory(ScriptFileReader fileReader) throws IOException, ScriptException {
 	setNewContextFactory();
 
-	ScriptFile file = fileReader.getFile();
+	String path = fileReader.getResourcePath(servletCtx);
 	URI include;
         try {
-	    include = new URI(req.getScheme(), null, localName, req.getServerPort(), file.getWebPath(file.getName(), req, servletCtx), null, null);
+	    include = new URI(req.getScheme(), null, localName, req.getServerPort(), req.getContextPath()+path, null, null);
         } catch (URISyntaxException e) {
            Util.printStackTrace(e);
 	   throw new ScriptException(e);

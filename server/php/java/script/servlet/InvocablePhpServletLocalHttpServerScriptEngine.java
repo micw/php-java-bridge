@@ -208,7 +208,7 @@ abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocableP
   	ScriptFileReader fileReader = (ScriptFileReader) reader;
   	
         try {
-	    webPath = fileReader.getFile().getWebPath(fileReader.getFile().getCanonicalPath(), req, servletCtx);
+	    webPath = req.getContextPath()+fileReader.getResourcePath(servletCtx);
 	    setNewScriptFileContextFactory(fileReader);
 	    setName(name);
 

@@ -51,13 +51,7 @@ import php.java.servlet.ContextLoaderListener;
  * <li> Create a factory which creates a PHP script file from a reader using the methods from {@link EngineFactory}:
  * <blockquote>
  * <code>
- * private static File script;<br>
- * private static final File getHelloScript() {<br>
- * &nbsp;&nbsp; if (script!=null) return script;<br><br>
- * &nbsp;&nbsp; String webCacheDir = ctx.getRealPath(req.getServletPath());<br>
- * &nbsp;&nbsp; Reader reader = new StringReader ("&lt;?php echo 'hello from PHP'; ?&gt;");<br>
- * &nbsp;&nbsp; return EngineFactory.getPhpScript(webCacheDir, reader);<br>
- * }<br>
+ * private static final Reader HELLO_SCRIPT_READER = new StringReader("&lt;?php echo 'Hello java world!'; ?&gt;");
  * </code>
  * </blockquote>
  * <li> Acquire a PHP script engine from the {@link EngineFactory}:
@@ -69,7 +63,7 @@ import php.java.servlet.ContextLoaderListener;
  * <li> Create a FileReader for the created script file:
  * <blockquote>
  * <code>
- * Reader readerHello = EngineFactory.createPhpScriptFileReader(getHelloScript());
+ * Reader readerHello = EngineFactory.createPhpScriptFileReader(request.getServletPath()+"._cache_.php", HELLO_SCRIPT_READER);
  * </code>
  * </blockquote>
  * <li> Connect its output:

@@ -1,4 +1,26 @@
-2009-04-18    <jostb@carlos.intern.de>
+2009-04-19    <jostb@intern>
+
+	* server/php/java/script/servlet/EngineFactory.java: Rewritten
+
+	* server/php/java/script/servlet/ScriptFile.java: Rewritten
+
+	* server/php/java/script/servlet/ScriptFileReader.java: Rewritten
+
+	* server/php/java/script/servlet/InvocablePhpServletLocalHttpServerScriptEngine.java
+	(evalInternal): use the new ScriptFileReader
+	
+	* server/php/java/script/servlet/InvocablePhpServletRemoteHttpServerScriptEngine.java
+	(setNewScriptFileContextFactory): use the new ScriptFileReader
+
+	* server/php/java/script/servlet/PhpServletLocalHttpServerScriptEngine.java
+	(evalInternal): use the new ScriptFileReader
+
+	* server/php/java/script/servlet/ServletReader.java
+	(ServletReader): use the new ScriptFile
+	
+	* VERSION, php-java-bridge.spec: Version 5.4.4.2rc1
+	
+2009-04-18    <jostb@intern>
 
 	* server/php/java/servlet/CGIServlet.java
 	(setupFromRequest): Check and use javax.servlet.include, if necessary
