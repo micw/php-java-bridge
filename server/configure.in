@@ -44,6 +44,7 @@ AC_ARG_ENABLE(script,  [  --enable-script[[=JAR]]
 
 if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
 
+AC_CHECK_PROG(have_gcj, gcj, "yes", "no")
 JAVA_FUNCTION_CHECKS
 PTHREADS_CHECK
 PTHREADS_ASSIGN_VARS
@@ -51,6 +52,7 @@ PTHREADS_FLAGS
 JAVA_CHECK_BROKEN_STDIO_BUFFERING
 JAVA_CHECK_ABSTRACT_NAMESPACE
 JAVA_CHECK_STRUCT_UCRED
+JAVA_CHECK_OPTION_FTARGET
 
 AC_MSG_CHECKING(libtool)
 # On the Mac libtool is called "glibtool"
@@ -82,7 +84,6 @@ if test "$jb_cv_have_jni" = "no"; then
 fi
 fi
 
-AC_CHECK_PROG(have_gcj, gcj, "yes", "no")
 
 JAVA_BRIDGE_JAR=
 MONO_BRIDGE_EXE=
@@ -172,6 +173,7 @@ AC_SUBST(SERVLET)
 AC_SUBST(JAVA_BRIDGE_WAR)
 AC_SUBST(JAVA_BRIDGE_JAR)
 AC_SUBST(JAVA_BRIDGE_SERVLET_JAR)
+AC_SUBST(JAVA_FTARGET_FLAGS)
 
 # jni
 AC_SUBST(JNI_LIBS)

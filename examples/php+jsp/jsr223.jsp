@@ -3,7 +3,7 @@
 <%@page import="php.java.script.servlet.EngineFactory" %>
 
 <%!
-private static final Reader HELLO_SCRIPT_READER = new StringReader("<?php echo 'Hello java world!'; ?>");
+private static final Reader HELLO_SCRIPT_READER = EngineFactory.createPhpScriptReader("<?php echo 'Hello java world!'; ?>");
 %>
 
 <%

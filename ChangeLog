@@ -1,3 +1,16 @@
+2009-04-25    <jostb@intern>
+	
+	* VERSION, php-java-bridge.spec: Version 5.4.4.2 released
+	
+
+2009-04-19    <jostb@intern>
+
+	* tests.m4/java_check_option_ftarget.m4: New file
+
+	* server/configure.in (JAVA_FTARGET_FLAGS): New flags
+
+	* server/Makefile.am: Use flags
+	
 2009-04-19    <jostb@intern>
 
 	* server/php/java/script/servlet/EngineFactory.java: Rewritten

@@ -78,7 +78,7 @@ bin_PROGRAMS=$(VM_BINARIES)
 
 
 MonoBridge.exe: $(PHP_MONO) META-INF/java/Mono.inc
-	$(GCJ) -w -ftarget=1.4 -classpath .:$(SCRIPT) -C php/java/bridge/*.java php/java/bridge/http/*.java
+	$(GCJ) -w $(JAVA_FTARGET_FLAGS) -classpath .:$(SCRIPT) -C php/java/bridge/*.java php/java/bridge/http/*.java
 	fastjar cMf JavaBridge.jar META-INF/MANIFEST.MF php/java/bridge/*.class php/java/bridge/http/*.class php/java/bridge/*.properties || jar cMf JavaBridge.jar META-INF/MANIFEST.MF php/java/bridge/*.class php/java/bridge/http/*.class php/java/bridge/*.properties
 	$(PHP_MONO_BINARY) $(PHP_MONO)/ikvmc.exe JavaBridge.jar
 	for i in $(mono_dlls); do cp $(PHP_MONO)/$$i .; done

@@ -656,6 +656,9 @@ class java_Client /* implements IDocHandler */ {
 	return $cache = $this->protocol->getServerName();
   }
 }
+/**
+ * @access private
+ */
 function java_shutdown() {
   global $java_initialized;
   if (!$java_initialized) return;

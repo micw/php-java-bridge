@@ -39,13 +39,14 @@ import php.java.servlet.CGIServlet;
 
 final class ScriptFileReader extends Reader {
     private String path;
-    private Reader reader;
+    private IScriptReader reader;
     private Reader realReader;
     
-    ScriptFileReader(String path, Reader reader) throws IOException {
+    ScriptFileReader(String path, IScriptReader reader) throws IOException {
 	this.path = path;
 	this.reader = reader;
     }
+    
     ScriptFileReader(String path) throws IOException {
 	this.path = path;
 	this.reader = null;
@@ -54,7 +55,7 @@ final class ScriptFileReader extends Reader {
 	init(CGIServlet.getRealPath(ctx, path));
 	return path;
     }
-    private static void createFile(File file, Reader reader) throws IOException {
+    private static void createFile(File file, IScriptReader reader) throws IOException {
 	FileOutputStream fout = new FileOutputStream(file);
 	OutputStreamWriter writer = new OutputStreamWriter(fout);
 	char[] cbuf = new char[Util.BUF_SIZE];
@@ -64,12 +65,7 @@ final class ScriptFileReader extends Reader {
 	writer.close();
     }
     private boolean readerIsClosed() {
-	try {
-	    reader.ready();
-	} catch (IOException e) {
-	    return true;
-	}
-	return false;
+	return reader.isClosed();
     }
     public void init(String realPath) throws IOException {
 	File realFile = new File(realPath);

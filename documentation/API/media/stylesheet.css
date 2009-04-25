@@ -10,7 +10,7 @@ a:hover, a:active, a:focus
 	color: #6699CC 
 }
 
-body { background : #FFFFFF; font-family: "Courier New", Courier, fixed; font-size: 10pt }
+body { background: #FFFFFF; font-family: "Courier New", Courier, fixed; font-size: 10pt }
 table { font-size: 10pt }
 p, li { line-height: 140% }
 a img { border: 0px; }
@@ -151,46 +151,4 @@ dd { margin-left: 0px; padding-left: 1em; }
 .cmd-synopsis { margin: 1em 0em }
 .cmd-title { font-weight: bold }
 .toc { margin-left: 2em; padding-left: 0em }
-
-/*------------------------------------------------------------------------------
-    webfx-tree
-------------------------------------------------------------------------------*/
-
-.webfx-tree-container {
-	margin: 0px;
-	padding: 0px;
-	white-space: nowrap;
-	font: icon;
-}
-
-.webfx-tree-item {
-	padding: 0px;
-	margin: 0px;
-	color: black;
-	white-space: nowrap;
-	font: icon;
-}
-
-.webfx-tree-item a {
-	margin-left: 3px;
-	padding: 1px 2px 1px 2px;
-	color: black;
-	text-decoration: none;
-}
-
-.webfx-tree-item a:hover, .webfx-tree-item a:active, .webfx-tree-item a:focus { 
-	color: white; 
-	background: #6699CC; 
-	text-decoration: none 
-}
-
-.webfx-tree-item img {
-	vertical-align: middle;
-	border: 0px;
-}
-
-.webfx-tree-icon {
-	width: 16px;
-	height: 16px;
-}
 

@@ -75,30 +75,42 @@ JSR 223 Script API
 
   Servlets can then access PHP scripts as follows:
 
+  <%! 
+    private static final Reader HELLO_SCRIPT = 
+      php.java.script.servlet.EngineFactory.createPhpScriptReader(
+        "<?php echo 'Hello java world!'; ?>"); 
+  %>
   <%
     javax.script.ScriptEngine e = 
       php.java.script.servlet.EngineFactory.getPhpScriptEngine (this, 
                                                         application, 
                                                         request, response);
     e.getContext().setWriter (out);
-    e.eval ("<?php phpinfo(); ?>");
-    e.eval (new java.io.FileReader("otherScript.php"));
-    ...
+    Reader r = php.java.script.servlet.EngineFactory.createPhpScriptFileReader(
+      request.getServletPath()+"._cache_.php", HELLO_SCRIPT);
+    e.eval (r);
+    r.close ();
   %>
   
+  The code above is equivalent to:  
+
+   rd=application.getRequestDispatcher(request.getServletPath()+"._cache_.php");
+   rd.include(request, response);
+
+
   The InvocablePhpScriptEngine can be accessed as follows:
 
   <%
     javax.script.ScriptEngine e = 
-      php.java.script.servlet.EngineFactory.getInvocablePhpScriptEngine (this, 
-                                                        application, 
-                                                        request, response);
-    e.getContext().setWriter (out);
-    e.eval ("<?php function hello() {echo "hello";}; ?>");
-    javax.script.Invocable i = (javax.script.Invocable) e;
-    i.invokeFunction ("hello", new Object[]{});
-    ...
-    e.eval ((java.io.Reader)null);
+      php.java.script.servlet.EngineFactory.getInvocablePhpScriptEngine(this, 
+        application, reqest, response, 
+         new java.net.URI("http://PHP_SERVER:80/JavaProxy.php"));
+
+    Object result = ((javax.script.Invocable)e).invokeFunction ("phpversion", 
+      new Object[]{});
+
+    out.println("result from remote invocation:" + result);
+    ((java.io.Closeable)e).close();
   %>
 
 

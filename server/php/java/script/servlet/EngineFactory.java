@@ -2,6 +2,7 @@
 
 package php.java.script.servlet;
 
+import java.io.FilterReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.net.MalformedURLException;
@@ -116,7 +117,7 @@ public final class EngineFactory {
      * Example:<br>
      * <blockquote>
      * <code>
-     * private static final Reader HELLO_SCRIPT_READER = new StringReader("&lt;?php echo 'Hello!'; ?&gt;");<br>
+     * private static final Reader HELLO_SCRIPT_READER = EngineFactory.createPhpScriptReader("&lt;?php echo 'Hello!'; ?&gt;");<br>
      * Reader reader = EngineFactory.createPhpScriptFileReader(request.getServletPath()+"._cache_.php", HELLO_SCRIPT_READER);<br>
      * ScriptEngine scriptEngine = EngineFactory.getPhpScriptEngine(this, application, request, response);<br>
      * scriptEngine.eval(reader);<br>
@@ -129,8 +130,6 @@ public final class EngineFactory {
      * @param res the response
      * @return the PHP JSR 223 ScriptEngine
      * @throws Exception 
-     * @throws MalformedURLException
-     * @throws IllegalStateException
      */
     public static javax.script.ScriptEngine getPhpScriptEngine (final Servlet servlet, 
 								final ServletContext ctx, 
@@ -166,8 +165,6 @@ public final class EngineFactory {
      * @param localName the official STATIC(!) server name or ip address of this host (in case there's an IP based load balancer in between).
      * @return the invocable PHP JSR 223 ScriptEngine
      * @throws Exception 
-     * @throws MalformedURLException
-     * @throws IllegalStateException
      */
     public static javax.script.ScriptEngine getInvocablePhpScriptEngine (final Servlet servlet, 
 									 final ServletContext ctx, 
@@ -204,8 +201,6 @@ public final class EngineFactory {
      * @param uri the URI of the remote PHP script engine, there must not be an IP-based load balancer in between
      * @return the invocable PHP JSR 223 ScriptEngine
      * @throws Exception 
-     * @throws MalformedURLException
-     * @throws IllegalStateException
      */
     public static javax.script.ScriptEngine getInvocablePhpScriptEngine (final Servlet servlet, 
 									 final ServletContext ctx, 
@@ -215,6 +210,7 @@ public final class EngineFactory {
 									     Exception {
 	return getInvocablePhpScriptEngine(servlet, ctx, req, res, uri, req.getLocalName());
     }
+    
     /**
      * Create a Reader from a given PHP script file. This procedure can be used to create
      * a reader from a cached script
@@ -222,7 +218,65 @@ public final class EngineFactory {
      * Example:<br>
      * <blockquote>
      * <code>
-     * private static final Reader HELLO_READER = new StringReader("&lt;?php echo 'Hello!'; ?&gt;");<br>
+     * private static final Reader HELLO_READER = EngineFactory.createPhpScriptReader("&lt;?php echo 'Hello!'; ?&gt;");<br>
+     * Reader reader = EngineFactory.createPhpScriptFileReader(request.getServletPath()+"._cache_.php", HELLO_READER);<br>
+     * scriptEngine.eval (reader);<br>
+     * reader.close();<br>
+     * ...<br>
+     * </code>
+     * </blockquote>
+     * @param script the php script.
+     * @return A reference to the cached PHP script
+     */
+    public static Reader createPhpScriptReader (String script) {
+	return new ScriptReader(script);
+    }
+    /**
+     * Create a Reader from a given PHP script file. This procedure can be used to create
+     * a reader from a cached script
+     *
+     * Example:<br>
+     * <blockquote>
+     * <code>
+     * private static final Reader HELLO_READER = EngineFactory.createPhpScriptReader(new StringReader("&lt;?php echo 'Hello!'; ?&gt;"));<br>
+     * Reader reader = EngineFactory.createPhpScriptFileReader(request.getServletPath()+"._cache_.php", HELLO_READER);<br>
+     * scriptEngine.eval (reader);<br>
+     * reader.close();<br>
+     * ...<br>
+     * </code>
+     * </blockquote>
+     * @param script the script reader, will be closed automatically by the bridge.
+     * @return A reference to the cached PHP script
+     */
+    public static Reader createPhpScriptReader (Reader script) {
+	return new ScriptReader(script);
+    }
+
+    private static final class OneShotReader extends FilterReader implements IScriptReader {
+
+	protected OneShotReader(Reader in) {
+	    super(in);
+        }
+
+	public boolean isClosed() {
+	    try {
+		in.ready();
+	    } catch (IOException e) {
+		return true;
+	    }
+	    return false;
+        }
+	
+    }
+
+    /**
+     * Create a Reader from a given PHP script file. This procedure can be used to create
+     * a reader from a cached script
+     *
+     * Example:<br>
+     * <blockquote>
+     * <code>
+     * private static final Reader HELLO_READER = EngineFactory.createPhpScriptReader("&lt;?php echo 'Hello!'; ?&gt;");<br>
      * Reader reader = EngineFactory.createPhpScriptFileReader(request.getServletPath()+"._cache_.php", HELLO_READER);<br>
      * scriptEngine.eval (reader);<br>
      * reader.close();<br>
@@ -234,6 +288,39 @@ public final class EngineFactory {
      * @return A reference to the cached PHP script
      */
     public static Reader createPhpScriptFileReader (final String path, final Reader reader) {
+	return (Reader) AccessController.doPrivileged(new PrivilegedAction(){ 
+	    public Object run() {
+        	try {
+        	    if (reader instanceof ScriptReader) 
+        		return new ScriptFileReader(path, (ScriptReader)reader);
+        	    else
+        		return new ScriptFileReader(path, new OneShotReader(reader));
+                } catch (IOException e) {
+        	    Util.printStackTrace(e);
+                }
+        	return null;
+	    }
+	});
+    }
+    /**
+     * Create a Reader from a given PHP script file. This procedure can be used to create
+     * a reader from a cached script
+     *
+     * Example:<br>
+     * <blockquote>
+     * <code>
+     * private static final Reader HELLO_READER = EngineFactory.createPhpScriptReader("&lt;?php echo 'Hello!'; ?&gt;");<br>
+     * Reader reader = EngineFactory.createPhpScriptFileReader(request.getServletPath()+"._cache_.php", HELLO_READER);<br>
+     * scriptEngine.eval (reader);<br>
+     * reader.close();<br>
+     * ...<br>
+     * </code>
+     * </blockquote>
+     * @param path the file containing the cached script
+     * @param reader the reader, will be closed automatically by the bridge.
+     * @return A reference to the cached PHP script
+     */
+    public static Reader createPhpScriptFileReader (final String path, final ScriptReader reader) {
 	return (Reader) AccessController.doPrivileged(new PrivilegedAction(){ 
 	    public Object run() {
         	try {

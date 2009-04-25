@@ -2,10 +2,11 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
   <html xmlns="http://www.w3.org/1999/xhtml">
 		<head>
-			<!-- template designed by Marco Von Ballmoos  -->
+			<!-- template designed by Marco Von Ballmoos -->
 			<title>File Source for Client.inc</title>
 			<link rel="stylesheet" href="../media/stylesheet.css" />
-											</head>
+						<meta http-equiv='Content-Type' content='text/html; charset=iso-8859-1'/>
+		</head>
 		<body>
 						<h1>Source for file Client.inc</h1>
 <p>Documentation is available at <a href="../JavaBridge/_Client.inc.html">Client.inc</a></p>
@@ -668,21 +669,27 @@
 <li><div class="src-line"><a name="a656"></a></span><span class="src-str">&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-key">return</span>&nbsp;<span class="src-var">$cache</span>&nbsp;=&nbsp;<span class="src-var">$this</span><span class="src-sym">-&gt;</span><span class="src-var">protocol</span><span class="src-sym">-&gt;</span><span class="src-id">getServerName</span><span class="src-sym">(</span><span class="src-sym">)</span><span class="src-sym">;</span></span></div></li>
 <li><div class="src-line"><a name="a657"></a></span><span class="src-str">&nbsp;&nbsp;<span class="src-sym">}</span></span></div></li>
 <li><div class="src-line"><a name="a658"></a></span><span class="src-str"><span class="src-sym">}</span></span></div></li>
-<li><div class="src-line"><a name="a659"></a></span><span class="src-str"><span class="src-key">function</span>&nbsp;<a href="../JavaBridge/_Client.inc.html#functionjava_shutdown">java_shutdown</a><span class="src-sym">(</span><span class="src-sym">)</span>&nbsp;<span class="src-sym">{</span></span></div></li>
-<li><div class="src-line"><a name="a660"></a></span><span class="src-str">&nbsp;&nbsp;<span class="src-var">$client</span>&nbsp;=&nbsp;<span class="src-id">__javaproxy_Client_getClient</span><span class="src-sym">(</span><span class="src-sym">)</span><span class="src-sym">;</span></span></div></li>
-<li><div class="src-line"><a name="a661"></a></span><span class="src-str">&nbsp;&nbsp;<span class="src-key">if</span><span class="src-sym">(</span><span class="src-id">&lt;a&nbsp;href=&quot;../JavaBridge/_Options.inc.html#defineJAVA_DEBUG&quot;&gt;JAVA_DEBUG&lt;/a&gt;</span><span class="src-sym">)</span>&nbsp;echo&nbsp;<span class="src-str">&quot;the&nbsp;client&nbsp;destroyed\n&quot;</span><span class="src-sym">;</span></span></div></li>
-<li><div class="src-line"><a name="a662"></a></span><span class="src-str">&nbsp;&nbsp;<span class="src-key">if</span>&nbsp;<span class="src-sym">(</span><span class="src-sym">!</span>isset<span class="src-sym">(</span><span class="src-var">$client</span><span class="src-sym">-&gt;</span><span class="src-id">protocol</span><span class="src-sym">))</span>&nbsp;<span class="src-key">return</span><span class="src-sym">;</span></span></div></li>
-<li><div class="src-line"><a name="a663"></a></span><span class="src-str">&nbsp;&nbsp;<span class="src-key">if</span>&nbsp;<span class="src-sym">(</span><span class="src-var">$client</span><span class="src-sym">-&gt;</span><span class="src-id">preparedToSendBuffer</span><span class="src-sym">)</span>&nbsp;</span></div></li>
-<li><div class="src-line"><a name="a664"></a></span><span class="src-str">&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-var">$client</span><span class="src-sym">-&gt;</span><span class="src-id">sendBuffer</span>.=<span class="src-var">$client</span><span class="src-sym">-&gt;</span><span class="src-id">preparedToSendBuffer</span><span class="src-sym">;</span></span></div></li>
-<li><div class="src-line"><a name="a665"></a></span><span class="src-str">&nbsp;&nbsp;<span class="src-var">$client</span><span class="src-sym">-&gt;</span><span class="src-id">sendBuffer</span>.=<span class="src-var">$client</span><span class="src-sym">-&gt;</span><span class="src-id">protocol</span><span class="src-sym">-&gt;</span><span class="src-id">getKeepAlive</span><span class="src-sym">(</span><span class="src-sym">)</span><span class="src-sym">;</span></span></div></li>
-<li><div class="src-line"><a name="a666"></a></span><span class="src-str">&nbsp;&nbsp;<span class="src-var">$client</span><span class="src-sym">-&gt;</span><span class="src-id">protocol</span><span class="src-sym">-&gt;</span><span class="src-id">flush</span><span class="src-sym">(</span><span class="src-sym">)</span><span class="src-sym">;</span></span></div></li>
-<li><div class="src-line"><a name="a667"></a></span><span class="src-str">&nbsp;&nbsp;<span class="src-var">$client</span><span class="src-sym">-&gt;</span><span class="src-id">protocol</span><span class="src-sym">-&gt;</span><span class="src-id">keepAlive</span><span class="src-sym">(</span><span class="src-sym">)</span><span class="src-sym">;</span></span></div></li>
-<li><div class="src-line"><a name="a668"></a></span><span class="src-str"><span class="src-sym">}</span></span></div></li>
-<li><div class="src-line"><a name="a669"></a></span><span class="src-str"><a href="http://www.php.net/register_shutdown_function">register_shutdown_function</a><span class="src-sym">(</span><span class="src-str">&quot;java_shutdown&quot;</span><span class="src-sym">)</span><span class="src-sym">;</span></span></div></li>
+<li><div class="src-line"><a name="a659"></a></span><span class="src-str">/**</span></div></li>
+<li><div class="src-line"><a name="a660"></a></span><span class="src-str">&nbsp;*&nbsp;@access&nbsp;private</span></div></li>
+<li><div class="src-line"><a name="a661"></a></span><span class="src-str">&nbsp;*/</span></div></li>
+<li><div class="src-line"><a name="a662"></a></span><span class="src-str"><span class="src-key">function</span>&nbsp;<span class="src-id">java_shutdown</span><span class="src-sym">(</span><span class="src-sym">)</span>&nbsp;<span class="src-sym">{</span></span></div></li>
+<li><div class="src-line"><a name="a663"></a></span><span class="src-str">&nbsp;&nbsp;<span class="src-key">global</span>&nbsp;<span class="src-var">$java_initialized</span><span class="src-sym">;</span></span></div></li>
+<li><div class="src-line"><a name="a664"></a></span><span class="src-str">&nbsp;&nbsp;<span class="src-key">if</span>&nbsp;<span class="src-sym">(</span><span class="src-sym">!</span><span class="src-var">$java_initialized</span><span class="src-sym">)</span>&nbsp;<span class="src-key">return</span><span class="src-sym">;</span></span></div></li>
+<li><div class="src-line"><a name="a665"></a>&nbsp;</div></li>
+<li><div class="src-line"><a name="a666"></a></span><span class="src-str">&nbsp;&nbsp;<span class="src-var">$client</span>&nbsp;=&nbsp;<span class="src-id">__javaproxy_Client_getClient</span><span class="src-sym">(</span><span class="src-sym">)</span><span class="src-sym">;</span></span></div></li>
+<li><div class="src-line"><a name="a667"></a></span><span class="src-str">&nbsp;&nbsp;<span class="src-key">if</span><span class="src-sym">(</span><span class="src-id">&lt;a&nbsp;href=&quot;../JavaBridge/_Options.inc.html#defineJAVA_DEBUG&quot;&gt;JAVA_DEBUG&lt;/a&gt;</span><span class="src-sym">)</span>&nbsp;echo&nbsp;<span class="src-str">&quot;the&nbsp;client&nbsp;destroyed\n&quot;</span><span class="src-sym">;</span></span></div></li>
+<li><div class="src-line"><a name="a668"></a></span><span class="src-str">&nbsp;&nbsp;<span class="src-key">if</span>&nbsp;<span class="src-sym">(</span><span class="src-sym">!</span>isset<span class="src-sym">(</span><span class="src-var">$client</span><span class="src-sym">-&gt;</span><span class="src-id">protocol</span><span class="src-sym">))</span>&nbsp;<span class="src-key">return</span><span class="src-sym">;</span></span></div></li>
+<li><div class="src-line"><a name="a669"></a></span><span class="src-str">&nbsp;&nbsp;<span class="src-key">if</span>&nbsp;<span class="src-sym">(</span><span class="src-var">$client</span><span class="src-sym">-&gt;</span><span class="src-id">preparedToSendBuffer</span><span class="src-sym">)</span>&nbsp;</span></div></li>
+<li><div class="src-line"><a name="a670"></a></span><span class="src-str">&nbsp;&nbsp;&nbsp;&nbsp;<span class="src-var">$client</span><span class="src-sym">-&gt;</span><span class="src-id">sendBuffer</span>.=<span class="src-var">$client</span><span class="src-sym">-&gt;</span><span class="src-id">preparedToSendBuffer</span><span class="src-sym">;</span></span></div></li>
+<li><div class="src-line"><a name="a671"></a></span><span class="src-str">&nbsp;&nbsp;<span class="src-var">$client</span><span class="src-sym">-&gt;</span><span class="src-id">sendBuffer</span>.=<span class="src-var">$client</span><span class="src-sym">-&gt;</span><span class="src-id">protocol</span><span class="src-sym">-&gt;</span><span class="src-id">getKeepAlive</span><span class="src-sym">(</span><span class="src-sym">)</span><span class="src-sym">;</span></span></div></li>
+<li><div class="src-line"><a name="a672"></a></span><span class="src-str">&nbsp;&nbsp;<span class="src-var">$client</span><span class="src-sym">-&gt;</span><span class="src-id">protocol</span><span class="src-sym">-&gt;</span><span class="src-id">flush</span><span class="src-sym">(</span><span class="src-sym">)</span><span class="src-sym">;</span></span></div></li>
+<li><div class="src-line"><a name="a673"></a></span><span class="src-str">&nbsp;&nbsp;<span class="src-var">$client</span><span class="src-sym">-&gt;</span><span class="src-id">protocol</span><span class="src-sym">-&gt;</span><span class="src-id">keepAlive</span><span class="src-sym">(</span><span class="src-sym">)</span><span class="src-sym">;</span></span></div></li>
+<li><div class="src-line"><a name="a674"></a></span><span class="src-str"><span class="src-sym">}</span></span></div></li>
+<li><div class="src-line"><a name="a675"></a></span><span class="src-str"><a href="http://www.php.net/register_shutdown_function">register_shutdown_function</a><span class="src-sym">(</span><span class="src-str">&quot;java_shutdown&quot;</span><span class="src-sym">)</span><span class="src-sym">;</span></span></div></li>
 </ol></div>
 </div>
 	<p class="notes" id="credit">
-		Documentation generated on Sun, 12 Apr 2009 09:03:32 +0200 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.2</a>
+		Documentation generated on Sat, 25 Apr 2009 12:00:50 +0200 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.2</a>
 	</p>
 	</body>
 </html>

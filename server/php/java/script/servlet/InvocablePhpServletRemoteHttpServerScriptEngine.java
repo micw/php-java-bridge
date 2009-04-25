@@ -45,46 +45,15 @@ import php.java.servlet.PhpJavaServlet;
  * 
  * There must not be a firewall in between, and both components should be behind a firewall. The remote
  * PHP application must have the PHP code from the PHP file <code>JavaProxy.php</code> embedded, otherwise invocation
- * will fail. <code>JavaProxy.php</code> has the ability to inject PHP code dynamically into a running PHP application,
- * provided that the administrator has set the php.ini option <code>allow_url_include = On</code>.
+ * will fail.
  * <br>	
  * 
- * PHP scripts are evaluated as follows:
- * <ol>
- * <li> JavaProxy.php is requested from Java<br>
- * <li> Your script is included and then evaluated
- * <li> &lt;?php java_context()-&gt;call(java_closure());?&gt; is called in order to make the script invocable<br>
- * </ol>
  * In order to evaluate PHP methods follow these steps:<br>
  * <ol>
- * <li> Optional: Create a script reader:
- * <blockquote>
- * <code>
- * <strike>private static final Reader HELLO_SCRIPT_READER = new StringReader("&lt;?php echo 'Hello java world!'; ?&gt;");</strike>
- * </code>
- * </blockquote>
  * <li> Acquire a PHP invocable script engine from the {@link EngineFactory}. The following example links the PHP app server "diego" with the current Java app server "timon":
  * <blockquote>
  * <code>
  * ScriptEngine scriptEngine = EngineFactory.getInvocablePhpScriptEngine(this, ctx, req, res, new java.net.URI("http://diego.intern.com:80/phpApp/JavaProxy.php"), "timon.intern.com"));
- * </code>
- * </blockquote> 
- * <li> Optional: Create a FileReader for the created script file:
- * <blockquote>
- * <code>
- * <strike>Reader readerF = EngineFactory.createPhpScriptFileReader(request.getServletPath()+"._cache_.php", HELLO_SCRIPT_READER);</strike>
- * </code>
- * </blockquote>
- * <li> Optional: Evaluate the engine:
- * <blockquote>
- * <code>
- * <strike>scriptEngine.eval(readerF);</strike>
- * </code>
- * </blockquote> 
- * <li> Optional: Close the reader obtained from the {@link EngineFactory}:
- * <blockquote>
- * <code>
- * <strike>readerF.close();</strike>
  * </code>
  * </blockquote> 
  * <li> Cast the engine to Invocable:
@@ -106,10 +75,6 @@ import php.java.servlet.PhpJavaServlet;
  * </code>
  * </blockquote> 
  * </ol>
- * Injecting code into a PHP application using <code>scriptEngine.eval(readerF);</code> 
- * requires that the PHP administrator has set the php.ini option <code>allow_url_include=On</code> for the remove PHP application, 
- * the PHP code is fetched from your Java app using <code>require_once("your PHP code")</code>.
- * <br>
  */
 public class InvocablePhpServletRemoteHttpServerScriptEngine extends InvocablePhpServletLocalHttpServerScriptEngine {
     

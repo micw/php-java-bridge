@@ -51,7 +51,7 @@ import php.java.servlet.ContextLoaderListener;
  * <li> Create a factory which creates a PHP script file from a reader using the methods from {@link EngineFactory}:
  * <blockquote>
  * <code>
- * private static final Reader HELLO_SCRIPT_READER = new StringReader("&lt;?php echo 'Hello java world!'; ?&gt;");
+ * private static final Reader HELLO_SCRIPT_READER = EngineFactory.createPhpScriptReader("&lt;?php echo 'Hello java world!'; ?&gt;");
  * </code>
  * </blockquote>
  * <li> Acquire a PHP script engine from the {@link EngineFactory}:
@@ -60,7 +60,7 @@ import php.java.servlet.ContextLoaderListener;
  * ScriptEngine scriptEngine = EngineFactory.getPhpScriptEngine(this, ctx, req, res);
  * </code>
  * </blockquote> 
- * <li> Create a FileReader for the created script file:
+ * <li> Create a FileReader for the PHP script reader:
  * <blockquote>
  * <code>
  * Reader readerHello = EngineFactory.createPhpScriptFileReader(request.getServletPath()+"._cache_.php", HELLO_SCRIPT_READER);
@@ -86,7 +86,7 @@ import php.java.servlet.ContextLoaderListener;
  * </blockquote> 
  * </ol>
  * <br>
- * Alternatively one may use the following "quick and dirty" code which creates a new PHP script for 
+ * Alternatively one may use the following "quick and dirty" code which creates a new PHP script file for 
  * each eval:
  * <blockquote>
  * <code>
