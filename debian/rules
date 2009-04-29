@@ -16,7 +16,7 @@ export DH_VERBOSE=1
 # actions MUST start after a TAB, not blank spaces
 # builddir for using dh_install for .war files.
 
-# Copyright (C) 2008  Andre Felipe Machado <andremachado@techforce.com.br>
+# Copyright (C) 2009  Andre Felipe Machado <andremachado@techforce.com.br>
 # et al from Debian Project http://www.debian.org , Joey Hess, Craig Small.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -108,7 +108,7 @@ php-java-bridge-j2ee:
 #	dh_installexamples -p$@
 # using dh_installdirs and dh_install for this task
 # note the absence of leading "/"
-	dh_install  --fail-missing --package=$@ ${BUILDDIR}$(PHP_EXT_DIR)/JavaBridge.war var/lib/tomcat5/webapps
+	dh_install  --fail-missing --package=$@ ${BUILDDIR}$(PHP_EXT_DIR)/JavaBridge.war var/lib/tomcat5.5/webapps
 #	dh_install -i -p$@
 #	dh_installmenu -i
 #	dh_installdebconf -i

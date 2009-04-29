@@ -1,3 +1,13 @@
+php-java-bridge (5.4.4.2-1) unstable; urgency=low
+
+  * New upstream release.
+  * Corrections at the rules for installing at the Tomcat 5.5 auto deploy 
+    directory.
+  * Compiled in Debian GNU/Linux 5.0 Lenny with Sun Java 6.
+
+ -- Andre Felipe Machado <andremachado@techforce.com.br>  Thu, 30 Apr 2009 10:03:31 -0300
+
+
 php-java-bridge (5.4.4.1-1) unstable; urgency=low
 
   * New upstream release.
