@@ -380,7 +380,7 @@ Build and execution instructions:
   WEB-INF/lib. Libraries in these directories are automatically loaded
   by a static loader whenever the JVM starts.
 
-  The location of the php.java.bridge.base depends on the Java system
+  The location of a "php.java.bridge.base" depends on the Java system
   property -Dphp.java.bridge.base. It defaults to user.home. When
   the standalone component is invoked as a sub component of Apache or
   IIS, php.java.bridge.base is initialized with the PHP .ini
@@ -500,7 +500,7 @@ Build and execution instructions:
   this happens, a "NoClassDefFound" error is thrown. This error may
   not(!) indicate which class is missing and it certainly does not
   indicate which external library is missing. The tests.php4 folder
-  contains two tests, noClassDefFound.php and noClassDefFound2.php which
+  contains two tests, noClassDefFound.php and noClassDefFound2.php, which
   demonstrate this.
 
   To avoid this problem please document *exactly* (including the
