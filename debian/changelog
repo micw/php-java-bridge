@@ -1,3 +1,18 @@
+php-java-bridge (5.4.4.2-2) unstable; urgency=low
+
+  * Corrections at Tomcat 5.5 security policy. EXPERIMENTAL and TOO permissive.
+    Only suitable for security benign development environments.
+    Java security is not actually enough for blocking malicious code from php.
+    The production quality solution should be using Security Enhanced Linux 
+    policies. Read more at the "devel" package, 
+    "/usr/share/doc/php-java-bridge-devel/examples/security" directory.
+    As of today, you have to edit and compile SE Linux rules yourself.
+    Please, contribute improved rules.
+  * Compiled in Debian GNU/Linux 5.0 Lenny with Sun Java 6.
+
+ -- Andre Felipe Machado <andremachado@techforce.com.br>  Mon, 29 Jun 2009 14:28:05 -0300
+
+
 php-java-bridge (5.4.4.2-1) unstable; urgency=low
 
   * New upstream release.

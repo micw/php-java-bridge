@@ -21,7 +21,7 @@ set -e
 
 javaini=/etc/php5/conf.d/java.ini
 javaservletini=/etc/php5/conf.d/java-servlet.ini
-
+javabridgetomcatpolicy=/etc/tomcat5.5/policy.d/60JavaBridge.policy
 
 
 case "$1" in
@@ -33,9 +33,11 @@ case "$1" in
 	if which ucf >/dev/null 2>&1; then
 		ucf --purge $javaini;
 		ucf --purge $javaservletini;
+		ucf --purge $javabridgetomcatpolicy;
 	fi
 	rm -f $javaini;
 	rm -f $javaservletini;
+	rm -f $javabridgetomcatpolicy;
 	invoke-rc.d tomcat5.5 restart;
 	;;
 
