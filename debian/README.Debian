@@ -8,7 +8,14 @@ This version is not compatible with php 4.x.
 Use the command 
 debuild -rfakeroot -uc -us
 Compilation against GCJ is possible, but some tweaks must be done. Read the other document files.
-
+This package uses an EXPERIMENTAL and TOO permissive Tomcat 5.5 security policy.
+Only suitable for security benign development environments.
+Java security is not actually enough for blocking malicious code from php.
+The production quality solution should be using Security Enhanced Linux policies. 
+Read more at the "devel" package, 
+"/usr/share/doc/php-java-bridge-devel/examples/security" directory.
+As of today, you have to edit and compile SE Linux rules yourself.
+Please, contribute improved rules.
 
 1. Creating and Building Debian package directly from CVS
 Most steps are only needed if you will commit a new version to the repository.
