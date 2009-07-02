@@ -111,17 +111,17 @@ a PHP 5.1.x executable, see php_exec in the WEB-INF/web.xml";
    * @access private
    */
   function java_autoload_function($x) {
-    $idx = strrpos($x, "::"); if (!$idx) return java_autoload_function5($x);
+    $idx = strrpos($x, "\\"); if (!$idx) return java_autoload_function5($x);
 
-    $str=str_replace("::", ".", $x);
+    $str=str_replace("\\", ".", $x);
 
     $client=__javaproxy_Client_getClient();
     if(!($client->invokeMethod(0, "typeExists", array($str)))) return false;
 
     $package = substr($x,0, $idx);
-    $name = substr($x, 2+$idx);
-    $instance = "namespace $package; class ${name} extends ::Java {".
-	  "static function type(\$sub=null){if(\$sub) \$sub='\$'.\$sub;return ::java('${str}'.\"\$sub\");}".
+    $name = substr($x, 1+$idx);
+    $instance = "namespace $package; class ${name} extends \\Java {".
+	  "static function type(\$sub=null){if(\$sub) \$sub='\$'.\$sub;return \\java('${str}'.\"\$sub\");}".
 	  'function __construct() {$args = func_get_args();'.
 	  'array_unshift($args, '."'$str'".'); parent::__construct($args);}}';
 	eval ("$instance");
@@ -135,14 +135,14 @@ a PHP 5.1.x executable, see php_exec in the WEB-INF/web.xml";
    * <code>
    * java_autoload();
    *
-   * use org::apache::lucene;
-   * use org::apache::lucene::index;
-   * use org::apache::lucene::search;
-   * use org::apache::lucene::search::IndexSearcher as LuceneSearcher;
+   * use org\apache\lucene;
+   * use org\apache\lucene\index;
+   * use org\apache\lucene\search;
+   * use org\apache\lucene\search\IndexSearcher as LuceneSearcher;
    *
    * $searcher = new LuceneSearcher(...);
-   * $term = new index::Term("name", "someTerm");
-   * $phrase = new search::PhraseQuery();
+   * $term = new index\Term("name", "someTerm");
+   * $phrase = new search\PhraseQuery();
    *
    * $phrase->add($term);
    * $hits = $searcher->search($phrase);
