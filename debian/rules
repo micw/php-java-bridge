@@ -64,6 +64,8 @@ build-stamp: configure
 	# Add here commands to compile the package.
 	$(MAKE)
 	#docbook-to-man debian/php-java-bridge.sgml > php-java-bridge.1
+	#into makefiles, each line spawns own shell, so you need to write single line batches.
+	cd security/module; 	$(MAKE) -f Makefile; 	cd ../..
 	touch $@
 
 # using dpatch for flexibility
@@ -72,9 +74,11 @@ clean-patched:
 	dh_testroot
 	rm -f build-stamp configure-stamp
 	# Add here commands to clean up after the build process.
-	-$(MAKE) distclean
+#	-$(MAKE) distclean
+	dh_auto_clean
+	cd security/module; 	dh_auto_clean; 	cd ../..
 	dh_clean
-	rm -rf ${BUILDDIR}
+#	rm -rf ${BUILDDIR}
 
 install: installbasic
 
@@ -87,11 +91,13 @@ install: installbasic
 installbasic:
 	dh_testdir
 	dh_testroot
-	dh_clean --keep 
+#	dh_clean --keep  #deprecated form
+	dh_prep
+	cd security/module; 	dh_prep; 	cd ../..
 
 # Build architecture-independent files here.
 # creating also docs package without examples files. See /debian/*.docs file
-binary-indep: php-java-bridge-devel php-java-bridge-j2ee binarydocs
+binary-indep: php-java-bridge-devel php-java-bridge-j2ee php-java-bridge-j2ee-selinux binarydocs
 
 # creating j2ee package . See /debian/*j2ee.* files
 # note the -p$@ to use target name package files in /debian as parameters
@@ -110,6 +116,40 @@ php-java-bridge-j2ee:
 # note the absence of leading "/"
 	dh_install  --fail-missing --package=$@ ${BUILDDIR}$(PHP_EXT_DIR)/JavaBridge.war var/lib/tomcat5.5/webapps
 #	dh_install -i -p$@
+#	dh_installmenu -i
+#	dh_installdebconf -i
+#	dh_installlogrotate -i
+#	dh_installemacsen -i
+#	dh_installpam -i
+#	dh_installmime -i
+#	dh_python -i
+#	dh_installinit -i
+#	dh_installcron -i
+#	dh_installinfo -i
+	dh_installman  -p$@
+	dh_link  -p$@
+	dh_strip  -p$@
+	dh_compress  -p$@
+	dh_fixperms  -p$@
+#	dh_perl -i
+#	dh_makeshlibs -i
+	dh_installdeb -p$@
+	dh_shlibdeps  -p$@
+	dh_gencontrol  -p$@
+	dh_md5sums  -p$@
+	dh_builddeb  -p$@
+
+
+
+php-java-bridge-j2ee-selinux: 
+	dh_testdir
+	dh_testroot
+	dh_installdirs  -p$@
+	dh_installchangelogs  -p$@  ChangeLog
+	dh_installdocs  -p$@
+#	dh_installexamples -p$@
+	dh_installdirs -p$@
+	dh_install -i -p$@
 #	dh_installmenu -i
 #	dh_installdebconf -i
 #	dh_installlogrotate -i
@@ -257,7 +297,7 @@ binary-arch:
 # build and install are implicit, but THIS package source needs 2 cycles.
 # so the first cycle is implicity and this entry is for the second cycle.
 binary: build install binary-arch binary-indep
-.PHONY: build build-stamp clean clean-patched binary-indep binary-arch binarydocs binary install configure configure-stamp installdocs installbasic unpatch patchsource patch-stamp  php-java-bridge-j2ee php-java-bridge-devel php-java-bridge-docs php-java-bridge-j2ee-docs
+.PHONY: build build-stamp clean clean-patched binary-indep binary-arch binarydocs binary install configure configure-stamp installdocs installbasic unpatch patchsource patch-stamp  php-java-bridge-j2ee php-java-bridge-devel php-java-bridge-docs php-java-bridge-j2ee-docs php-java-bridge-j2ee-selinux
 
 # using dpatch for flexibility
 unpatch:

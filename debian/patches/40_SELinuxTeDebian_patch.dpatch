@@ -1,0 +1,16 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 40_SELinuxTeDebian_patch.dpatch by  <andremachado@debian.pae.serpro>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: No description.
+
+@DPATCH@
+diff -urNad php-java-bridge~/security/module/php-java-bridge.te php-java-bridge/security/module/php-java-bridge.te
+--- php-java-bridge~/security/module/php-java-bridge.te	2009-07-01 17:27:18.000000000 -0300
++++ php-java-bridge/security/module/php-java-bridge.te	2009-07-01 17:38:01.000000000 -0300
+@@ -1,4 +1,4 @@
+-policy_module(javabridge,5.2.2.1)
++policy_module(javabridge,5.4.4.2)
+ 
+ ########################################
+ #
