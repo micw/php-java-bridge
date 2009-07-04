@@ -176,6 +176,12 @@ a PHP 5.1.x executable, see php_exec in the WEB-INF/web.xml";
    *
    * Example: <code> java("java.lang.Long")->MAX_VALUE </code>
    *
+   *<br> Any declared exception can be caught by PHP code. <br>
+   * Exceptions derived from java.lang.RuntimeException or Error must
+   * not be caught unless declared in the methods throws clause -- OutOfMemoryErrors cannot be caught at all,
+   * even if declared.  <br> This is consistent with the JEE EJB
+   * specification.
+   *
    * @access public
    * @param string The type name
    * @see Java

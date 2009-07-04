@@ -115,7 +115,7 @@
 <div class="oddrow">
 	
 	<div>
-		<span class="method-title">java_begin_document</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a526">526</a></span>)
+		<span class="method-title">java_begin_document</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a533">533</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -142,7 +142,7 @@
 <div class="evenrow">
 	
 	<div>
-		<span class="method-title">java_cast</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a295">295</a></span>)
+		<span class="method-title">java_cast</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a302">302</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -191,7 +191,7 @@
 <div class="oddrow">
 	
 	<div>
-		<span class="method-title">java_closure</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a510">510</a></span>)
+		<span class="method-title">java_closure</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a517">517</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -234,7 +234,7 @@
 <div class="evenrow">
 	
 	<div>
-		<span class="method-title">java_context</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a445">445</a></span>)
+		<span class="method-title">java_context</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a452">452</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -292,7 +292,7 @@
 <div class="oddrow">
 	
 	<div>
-		<span class="method-title">java_end_document</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a541">541</a></span>)
+		<span class="method-title">java_end_document</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a548">548</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -318,7 +318,7 @@
 <div class="evenrow">
 	
 	<div>
-		<span class="method-title">java_inspect</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a193">193</a></span>)
+		<span class="method-title">java_inspect</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a200">200</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -350,7 +350,7 @@
 <div class="oddrow">
 	
 	<div>
-		<span class="method-title">java_instanceof</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a236">236</a></span>)
+		<span class="method-title">java_instanceof</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a243">243</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -385,13 +385,16 @@
 <div class="evenrow">
 	
 	<div>
-		<span class="method-title">java_invoke</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a105">105</a></span>)
+		<span class="method-title">java_invoke</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a112">112</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
-<p class="short-description">Invoke a method dynamically.</p>
+<p class="short-description">Invoke a method dynamically. <div class="src-code"><ol><li><div class="src-line">&nbsp;<a href="../JavaBridge/_JavaProxy.inc.html#functionjava_invoke">java_invoke</a><span class="src-sym">(</span><span class="src-key">new&nbsp;</span><span class="src-id">java</span><span class="src-sym">(</span><span class="src-str">&quot;</span><span class="src-str">java.</span></div></li>
+</ol></div>
+<br /> Any declared exception can be caught by PHP code. Exceptions derived from java. not be caught unless declared in the methods throws clause -- OutOfMemoryErrors cannot be caught at all, even if declared. specification.</p>
 <p class="description"><p>Invoke a method dynamically. Example: <div class="src-code"><ol><li><div class="src-line">&nbsp;<a href="../JavaBridge/_JavaProxy.inc.html#functionjava_invoke">java_invoke</a><span class="src-sym">(</span><span class="src-key">new&nbsp;</span><span class="src-id">java</span><span class="src-sym">(</span><span class="src-str">&quot;java.lang.String&quot;</span><span class="src-sym">,</span><span class="src-str">&quot;hello&quot;</span><span class="src-sym">)</span><span class="src-sym">,&nbsp;</span><span class="src-str">&quot;toString&quot;</span><span class="src-sym">,&nbsp;</span><span class="src-key">array</span><span class="src-sym">(</span><span class="src-sym">))</span></div></li>
-</ol></div></p></p>
+</ol></div>
+<br /> Any declared exception can be caught by PHP code. <br /> Exceptions derived from java.lang.RuntimeException or Error must not be caught unless declared in the methods throws clause -- OutOfMemoryErrors cannot be caught at all, even if declared.  <br /> This is consistent with the JEE EJB specification.</p></p>
 	
 	<div class="method-signature">
 		<span class="method-result">void</span>
@@ -419,7 +422,7 @@
 <div class="oddrow">
 	
 	<div>
-		<span class="method-title">java_require</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a304">304</a></span>)
+		<span class="method-title">java_require</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a311">311</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -449,7 +452,7 @@
 <div class="evenrow">
 	
 	<div>
-		<span class="method-title">java_reset</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a168">168</a></span>)
+		<span class="method-title">java_reset</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a175">175</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -474,7 +477,7 @@
 <div class="oddrow">
 	
 	<div>
-		<span class="method-title">java_server_name</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a380">380</a></span>)
+		<span class="method-title">java_server_name</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a387">387</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -503,7 +506,7 @@
 <div class="evenrow">
 	
 	<div>
-		<span class="method-title">java_session</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a365">365</a></span>)
+		<span class="method-title">java_session</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a372">372</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -539,7 +542,7 @@
 <div class="oddrow">
 	
 	<div>
-		<span class="method-title">java_set_file_encoding</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a211">211</a></span>)
+		<span class="method-title">java_set_file_encoding</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a218">218</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -572,7 +575,7 @@
 <div class="evenrow">
 	
 	<div>
-		<span class="method-title">java_unwrap</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a125">125</a></span>)
+		<span class="method-title">java_unwrap</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a132">132</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -607,7 +610,7 @@
 <div class="oddrow">
 	
 	<div>
-		<span class="method-title">java_values</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a161">161</a></span>)
+		<span class="method-title">java_values</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a168">168</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -654,7 +657,7 @@
 	</div>
 	
 	<p class="notes" id="credit">
-		Documentation generated on Sat, 25 Apr 2009 12:00:52 +0200 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.2</a>
+		Documentation generated on Sat, 04 Jul 2009 16:52:45 +0200 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.2</a>
 	</p>
 	</div></body>
 </html>

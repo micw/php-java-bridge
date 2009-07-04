@@ -25,14 +25,15 @@
 <p class="description"><p>The Java proxy class.
  Use this class to create a Java instance. Use the Java function to access a Java type.
  Example which creates an instance: <div class="src-code"><ol><li><div class="src-line">&nbsp;<span class="src-var">$s&nbsp;</span>=&nbsp;<span class="src-key">new&nbsp;</span><a href="../JavaBridge/Java.html#methodJava">Java</a><span class="src-sym">(</span><span class="src-str">&quot;java.lang.String&quot;</span><span class="src-sym">,&nbsp;</span><span class="src-str">&quot;hello&quot;</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
-</ol></div></p></p>
+</ol></div>
+<br /> Any declared exception can be caught by PHP code. <br /> Exceptions derived from java.lang.RuntimeException or Error must not be caught unless declared in the methods throws clause -- OutOfMemoryErrors cannot be caught at all, even if declared.  <br /> This is consistent with the JEE EJB specification.</p></p>
 	<ul class="tags">
 				<li><span class="field">see:</span> <a href="../JavaBridge/_JavaBridge.inc.html#functionJava">Java()</a></li>
 				<li><span class="field">see:</span> <a href="../JavaBridge/JavaException.html">JavaException</a></li>
 				<li><span class="field">access:</span> public</li>
 			</ul>
 		<p class="notes">
-			Located in <a class="field" href="_JavaProxy.inc.html">/JavaProxy.inc</a> (line <span class="field"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a786">786</a></span>)
+			Located in <a class="field" href="_JavaProxy.inc.html">/JavaProxy.inc</a> (line <span class="field"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a799">799</a></span>)
 		</p>
 		
 				
@@ -86,7 +87,7 @@
 <div class="evenrow">
 	
 	<div class="method-header">
-		<span class="method-title">Constructor Java</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a828">828</a></span>)
+		<span class="method-title">Constructor Java</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a841">841</a></span>)
 	</div> 
 	
 	<!-- ========== Info from phpDoc block ========= -->
@@ -128,7 +129,7 @@
 <div class="oddrow">
 	
 	<div class="method-header">
-		<span class="method-title">__call</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a935">935</a></span>)
+		<span class="method-title">__call</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaProxy.inc.html#a948">948</a></span>)
 	</div> 
 	
 	<!-- ========== Info from phpDoc block ========= -->
@@ -162,7 +163,7 @@
 
 
 	<p class="notes" id="credit">
-		Documentation generated on Sat, 25 Apr 2009 12:00:55 +0200 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.2</a>
+		Documentation generated on Sat, 04 Jul 2009 16:52:52 +0200 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.2</a>
 	</p>
 	</div></body>
 </html>

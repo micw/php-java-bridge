@@ -70,7 +70,7 @@
 <div class="oddrow">
 	
 	<div>
-		<span class="method-title">Java</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaBridge.inc.html#a183">183</a></span>)
+		<span class="method-title">Java</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaBridge.inc.html#a189">189</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -79,7 +79,8 @@
  This procedure can be used to access constants or procedures within a class.  <br />
  To access class features, use the java constructor instead.<br />
  Example: <div class="src-code"><ol><li><div class="src-line">&nbsp;<span class="src-id">java</span><span class="src-sym">(</span><span class="src-str">&quot;java.lang.Long&quot;</span><span class="src-sym">)</span><span class="src-sym">-&gt;</span><span class="src-id">MAX_VALUE</span></div></li>
-</ol></div></p></p>
+</ol></div>
+<br /> Any declared exception can be caught by PHP code. <br /> Exceptions derived from java.lang.RuntimeException or Error must not be caught unless declared in the methods throws clause -- OutOfMemoryErrors cannot be caught at all, even if declared.  <br /> This is consistent with the JEE EJB specification.</p></p>
 	<ul class="tags">
 				<li><span class="field">see:</span> <a href="../JavaBridge/Java.html">Java</a></li>
 				<li><span class="field">access:</span> public</li>
@@ -113,14 +114,14 @@
 <p class="description"><p>Load a set of java libraries and make them available in the current name space.
  Available since php 5.3. Example: <div class="src-code"><ol><li><div class="src-line">&nbsp;<a href="../JavaBridge/_JavaBridge.inc.html#functionjava_autoload">java_autoload</a><span class="src-sym">(</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
 <li><div class="src-line">&nbsp;</div></li>
-<li><div class="src-line">&nbsp;use&nbsp;<span class="src-id">org</span><span class="src-sym">::</span><span class="src-id">apache</span><span class="src-sym">::</span><span class="src-id">lucene</span><span class="src-sym">;</span></div></li>
-<li><div class="src-line">&nbsp;use&nbsp;<span class="src-id">org</span><span class="src-sym">::</span><span class="src-id">apache</span><span class="src-sym">::</span><span class="src-id">lucene</span><span class="src-sym">::</span><span class="src-id">index</span><span class="src-sym">;</span></div></li>
-<li><div class="src-line">&nbsp;use&nbsp;<span class="src-id">org</span><span class="src-sym">::</span><span class="src-id">apache</span><span class="src-sym">::</span><span class="src-id">lucene</span><span class="src-sym">::</span><span class="src-id">search</span><span class="src-sym">;</span></div></li>
-<li><div class="src-line">&nbsp;use&nbsp;<span class="src-id">org</span><span class="src-sym">::</span><span class="src-id">apache</span><span class="src-sym">::</span><span class="src-id">lucene</span><span class="src-sym">::</span><span class="src-id">search</span><span class="src-sym">::</span><span class="src-id">IndexSearcher&nbsp;</span><span class="src-key">as&nbsp;</span><span class="src-id">LuceneSearcher</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line">&nbsp;use&nbsp;<span class="src-id">orgapachelucene</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line">&nbsp;use&nbsp;<span class="src-id">orgapacheluceneindex</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line">&nbsp;use&nbsp;<span class="src-id">orgapachelucenesearch</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line">&nbsp;use&nbsp;<span class="src-id">orgapachelucenesearchIndexSearcher&nbsp;</span><span class="src-key">as&nbsp;</span><span class="src-id">LuceneSearcher</span><span class="src-sym">;</span></div></li>
 <li><div class="src-line">&nbsp;</div></li>
 <li><div class="src-line">&nbsp;<span class="src-var">$searcher&nbsp;</span>=&nbsp;<span class="src-key">new&nbsp;</span><span class="src-id">LuceneSearcher</span><span class="src-sym">(</span>...<span class="src-sym">)</span><span class="src-sym">;</span></div></li>
-<li><div class="src-line">&nbsp;<span class="src-var">$term&nbsp;</span>=&nbsp;<span class="src-key">new&nbsp;</span><span class="src-id">index</span><span class="src-sym">::</span><span class="src-id">Term</span><span class="src-sym">(</span><span class="src-str">&quot;name&quot;</span><span class="src-sym">,&nbsp;</span><span class="src-str">&quot;someTerm&quot;</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
-<li><div class="src-line">&nbsp;<span class="src-var">$phrase&nbsp;</span>=&nbsp;<span class="src-key">new&nbsp;</span><span class="src-id">search</span><span class="src-sym">::</span><span class="src-id">PhraseQuery</span><span class="src-sym">(</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line">&nbsp;<span class="src-var">$term&nbsp;</span>=&nbsp;<span class="src-key">new&nbsp;</span><span class="src-id">indexTerm</span><span class="src-sym">(</span><span class="src-str">&quot;name&quot;</span><span class="src-sym">,&nbsp;</span><span class="src-str">&quot;someTerm&quot;</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
+<li><div class="src-line">&nbsp;<span class="src-var">$phrase&nbsp;</span>=&nbsp;<span class="src-key">new&nbsp;</span><span class="src-id">searchPhraseQuery</span><span class="src-sym">(</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
 <li><div class="src-line">&nbsp;</div></li>
 <li><div class="src-line">&nbsp;<span class="src-var">$phrase</span><span class="src-sym">-&gt;</span><span class="src-id">add</span><span class="src-sym">(</span><span class="src-var">$term</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
 <li><div class="src-line">&nbsp;<span class="src-var">$hits&nbsp;</span>=&nbsp;<span class="src-var">$searcher</span><span class="src-sym">-&gt;</span><span class="src-id">search</span><span class="src-sym">(</span><span class="src-var">$phrase</span><span class="src-sym">)</span><span class="src-sym">;</span></div></li>
@@ -151,7 +152,7 @@
 <div class="oddrow">
 	
 	<div>
-		<span class="method-title">java_is_false</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaBridge.inc.html#a282">282</a></span>)
+		<span class="method-title">java_is_false</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaBridge.inc.html#a288">288</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -184,7 +185,7 @@
 <div class="evenrow">
 	
 	<div>
-		<span class="method-title">java_is_null</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaBridge.inc.html#a246">246</a></span>)
+		<span class="method-title">java_is_null</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaBridge.inc.html#a252">252</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -217,7 +218,7 @@
 <div class="oddrow">
 	
 	<div>
-		<span class="method-title">java_is_true</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaBridge.inc.html#a264">264</a></span>)
+		<span class="method-title">java_is_true</span> (line <span class="line-number"><a href="../__filesource/fsource_JavaBridge__JavaBridge.inc.html#a270">270</a></span>)
 	</div> 
 
 	<!-- ========== Info from phpDoc block ========= -->
@@ -250,7 +251,7 @@
 	</div>
 	
 	<p class="notes" id="credit">
-		Documentation generated on Sat, 25 Apr 2009 12:00:51 +0200 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.2</a>
+		Documentation generated on Sat, 04 Jul 2009 16:52:44 +0200 by <a href="http://www.phpdoc.org" target="_blank">phpDocumentor 1.4.2</a>
 	</p>
 	</div></body>
 </html>

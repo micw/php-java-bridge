@@ -98,6 +98,13 @@ function java_values_internal($object) {
  * <code>
  * java_invoke(new java("java.lang.String","hello"), "toString", array())
  * </code>
+ *
+ *<br> Any declared exception can be caught by PHP code. <br>
+ * Exceptions derived from java.lang.RuntimeException or Error must
+ * not be caught unless declared in the methods throws clause -- OutOfMemoryErrors cannot be caught at all,
+ * even if declared.  <br> This is consistent with the JEE EJB
+ * specification.
+ *
  * @param object A java object or type
  * @param string A method string
  * @param array A argument array
@@ -778,7 +785,13 @@ abstract class java_AbstractJava implements IteratorAggregate,ArrayAccess,java_J
  * <code>
  * $s = new Java("java.lang.String", "hello");
  * </code>
- * 
+ *
+ *<br> Any declared exception can be caught by PHP code. <br>
+ * Exceptions derived from java.lang.RuntimeException or Error must
+ * not be caught unless declared in the methods throws clause -- OutOfMemoryErrors cannot be caught at all,
+ * even if declared.  <br> This is consistent with the JEE EJB
+ * specification.
+ *
  * @access public
  * @see JavaException
  * @see function Java
@@ -821,12 +834,6 @@ class Java extends java_AbstractJava {
    * if (java_values(java("java.lang.System")->getProperty("foo", false))) ...
    * </code>
    *
-   * Any declared exception can be caught by PHP code. Exceptions
-   * derived from java.lang.RuntimeException or Error cannot be caught
-   * unless the method has declared that it throws it.
-   * This is consistent with the JEE EJB
-   * specification. EJB containers cannot handle undeclared RuntimeExceptions and
-   * Errors either.
    * @see JAVA_PREFER_VALUES
    * @see function Java
    * @see function java_values
@@ -1127,7 +1134,7 @@ class java_exception extends Exception implements java_JavaType {
 }
 /**
  * The java exception proxy.
- * 
+ *
  * Example:
  * <code>
  * $ex = new JavaException("java.lang.NullPointerException");
