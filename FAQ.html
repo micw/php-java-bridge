@@ -817,7 +817,7 @@ java_autoload();<br><br>
 use java\lang\String as JString;<br><br>
 class String extends JString {<br>
 &nbsp;&nbsp;function toString(){return "I am " . parent::toString();}<br>
-&nbsp;&nbsp;function __toString{return toString();}<br>
+&nbsp;&nbsp;function __toString() {return $this->toString();}<br>
 }<br><br>
 echo new String("foo");<br><br>
 =&gt; I am foo
