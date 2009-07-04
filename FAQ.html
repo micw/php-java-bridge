@@ -50,6 +50,17 @@ out.println("yourIntranetHost running PHP version: " + (String)((javax.script.In
 <li>Mono >= 1.2.4 or .NET >= 2.</li>
 </ul>
 
+<H4>Why doesn't the bridge catch java.lang.RuntimeExceptions or java.lang.Errors?</H4>
+<p>
+All exceptions crossing the php/java container <strong>must</strong> be declared, otherwise the behaviour is unspecified. If you want to catch these RuntimeException or Error, add a "throws" declaration. Example:
+<blockquote>
+<code>
+public Object calculateValue(...) throws RuntimeException;
+</code>
+</blockquote>
+However, it is a good programming practice to not allow <code>java.lang.RuntimeException</code> or <code>java.lang.Error</code> cross an application container boundary. A JEE "enterprise java beans" container for example will terminate a transaction immediately if it encounters an exception derived from Error or RuntimeException.
+</p>
+
 <H4>Do I need a Java Application Server or Servlet Engine?</H4>
 <p>Java needs an execution environment.
 </p>
@@ -797,7 +808,23 @@ java -agentlib:hprof=heap=sites -jar JavaBridge.jar<br>
  
 <H4>How can PHP classes extend Java classes and Java methods?</H4> 
 <p>
-By using <a href="API/VM%20Bridge/_JavaProxy.inc.html#functionjava_closure"><code>java_closure()</code></a> and the visitor pattern for example. The <code>tests.php5</code> folder contains a <code>script_api.php</code> example which shows how to implement <code>java.lang.Runnable</code> to run multiple PHP threads, concurrently accessing a shared resource.
+By using <a href="API/VM%20Bridge/_JavaProxy.inc.html#functionjava_closure"><code>java_closure()</code></a> and the <a href="http://en.wikipedia.org/wiki/Visitor_pattern">visitor pattern</a> for example. 
+</p>
+<p> In PHP 5.3 or above the following code can be used:
+<blockquote>
+<code>
+java_autoload();<br><br>
+use java\lang\String as JString;<br><br>
+class String extends JString {<br>
+&nbsp;&nbsp;function toString(){return "I am " . parent::toString();}<br>
+&nbsp;&nbsp;function __toString{return toString();}<br>
+}<br><br>
+echo new String("foo");<br><br>
+=&gt; I am foo
+</code>
+</blockquote>
+
+
 </p> 
 <H4>How can I execute PHP code on the server?</H4> 
 <p>

@@ -821,6 +821,12 @@ class Java extends java_AbstractJava {
    * if (java_values(java("java.lang.System")->getProperty("foo", false))) ...
    * </code>
    *
+   * Any declared exception can be caught by PHP code. Exceptions
+   * derived from java.lang.RuntimeException or Error cannot be caught
+   * unless the method has declared that it throws it.
+   * This is consistent with the JEE EJB
+   * specification. EJB containers cannot handle undeclared RuntimeExceptions and
+   * Errors either.
    * @see JAVA_PREFER_VALUES
    * @see function Java
    * @see function java_values
