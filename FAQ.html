@@ -52,17 +52,17 @@ out.println("yourIntranetHost running PHP version: " + (String)((javax.script.In
 
 <H4>Why doesn't the bridge catch java.lang.RuntimeExceptions or java.lang.Errors?</H4>
 <p>
-All exceptions crossing the php/java container <strong>must</strong> be declared, otherwise the behaviour is unspecified. If you want to catch these RuntimeException or Error, add a "throws" declaration. Example:
+All exceptions crossing the php/java container <strong>must</strong> be declared, otherwise the behaviour is unspecified. If you want to catch <code>java.lang.RuntimeException</code> or <code>java.lang.Error</code> from PHP code, add a "throws" declaration. Example:
 <blockquote>
 <code>
 public Object calculateValue(...) throws RuntimeException;
 </code>
 </blockquote>
-However, it is a good programming practice to not allow <code>java.lang.RuntimeException</code> or <code>java.lang.Error</code> cross an application container boundary. A JEE "enterprise java beans" container for example will terminate a transaction immediately if it encounters an exception derived from Error or RuntimeException.
+However, it is a good programming practice to not allow <code>java.lang.RuntimeException</code> and <code>java.lang.Error</code> to cross an application container boundary. A JEE "enterprise java beans" container for example will terminate a transaction immediately if it encounters an exception derived from Error or RuntimeException.
 </p>
 
 <H4>Do I need a Java Application Server or Servlet Engine?</H4>
-<p>Java needs an execution environment.
+<p>Yes, Java needs an execution environment. Experienced users may use the execution environment built into JavaBridge.jar, see <code>java -jar JavaBridge.jar --help</code> for help.
 </p>
 <p>
 You can also add PHP support to your standalone Java application by
