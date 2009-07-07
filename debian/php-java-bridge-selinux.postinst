@@ -17,15 +17,23 @@ set -e
 # for details, see http://www.debian.org/doc/debian-policy/ or
 # the debian-policy package
 
+javabridgeselinuxpolicy=/usr/share/selinux/default/php-java-bridge.pp
+javabridgepackage=php-java-bridge-selinux
+policystore=default
 
 case "$1" in
-    configure)
-	invoke-rc.d tomcat5.5 stop;
-	semodule --remove php-java-bridge-tomcat;
+    configure|install)
+	semodule --verbose --store $policystore  --install=$javabridgeselinuxpolicy;
+	ucfr $javabridgepackage $javabridgeselinuxpolicy;
+	invoke-rc.d apache2 restart;
     ;;
-
+    upgrade)
+	semodule --verbose --store $policystore  --upgrade=$javabridgeselinuxpolicy;
+	ucfr $javabridgepackage $javabridgeselinuxpolicy;
+	invoke-rc.d apache2 restart;
+    ;;
     abort-upgrade|abort-remove|abort-deconfigure)
-	invoke-rc.d tomcat5.5 restart;
+	invoke-rc.d apache2 restart;
     ;;
 
     *)

@@ -19,25 +19,24 @@ set -e
 # the debian-policy package
 
 
-javabridgetomcatselinuxpolicy=/usr/share/selinux/default/php-java-bridge-tomcat.pp
+javabridgeselinuxpolicy=/usr/share/selinux/default/php-java-bridge.pp
 policystore=default
-policymodulename=javabridge_tomcat
+policymodulename=javabridge
 # semodule --remove operates on module NAME as defined at its source code.
 # semodule --install operates on module FILE NAME.
 
-
 case "$1" in
     remove|upgrade)
-	invoke-rc.d tomcat5.5 restart;
+	invoke-rc.d apache2 restart;
     ;;
 
     purge|failed-upgrade|abort-install|abort-upgrade|disappear)
 	if which ucf >/dev/null 2>&1; then
-		ucf --purge $javabridgetomcatselinuxpolicy;
+		ucf --purge $javabridgeselinuxpolicy;
 	fi
-	rm -f $javabridgetomcatselinuxpolicy;
-	semodule  --verbose --store $policystore --remove=$policymodulename;
-	invoke-rc.d tomcat5.5 restart;
+	rm -f $javabridgeselinuxpolicy;
+        semodule --verbose --store $policystore  --remove=$policymodulename;
+	invoke-rc.d apache2 restart;
 	;;
 
     *)

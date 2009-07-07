@@ -1,8 +1,9 @@
 php-java-bridge (5.4.4.2-3) unstable; urgency=low
 
   * SELinux EXPERIMENTAL packaging.
+  * Corrections at directories packaging.
 
- -- Andre Felipe Machado <andremachado@techforce.com.br>  Thu, 03 Jul 2009 16:29:45 -0300
+ -- Andre Felipe Machado <andremachado@techforce.com.br>  Tue, 07 Jul 2009 14:04:32 -0300
 
 
 

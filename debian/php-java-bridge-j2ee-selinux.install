@@ -1,2 +1,2 @@
-security/module/php-java-bridge-tomcat.pp etc/php-java-bridge/security/selinux/modules
+security/module/php-java-bridge-tomcat.pp usr/share/selinux/default
 

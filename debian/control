@@ -20,6 +20,10 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm
  and more reliable than a communication via the Java Native 
  Interface.
  This Debian package installs C implementation as php modules.
+ The bridge C implementation is deprecated and unmaintained.
+ It is kept here for historical purposes.
+ You must modify your installation to use the J2EE version
+ as soon as possible.
 
 Package: php-java-bridge-j2ee
 Architecture: all
@@ -78,7 +82,7 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm
 
 Package: php-java-bridge-j2ee-selinux
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${php:Depends}, sun-java6-jre, tomcat5.5, liblucene-java, libitext-java
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${php:Depends}, sun-java6-jre, tomcat5.5, liblucene-java, libitext-java, php-java-bridge-j2ee
 Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm
  The PHP/Java Bridge is an optimized, XML-based network 
  protocol which can be used to connect a native script 
@@ -90,10 +94,13 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm
  This Debian package installs the bridge J2EE server 
  SE Linux rules contained in the package devel, 
  examples/security/module directory.
+ This package works only for tomcat5.5 and SELinux default policy.
+ Other J2EE server or policy should compile and install from your
+ modified source.
 
 Package: php-java-bridge-selinux
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${php:Depends}, sun-java6-jre, tomcat5.5, liblucene-java, libitext-java
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${php:Depends}, sun-java6-jre, tomcat5.5, liblucene-java, libitext-java, php-java-bridge
 Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm
  The PHP/Java Bridge is an optimized, XML-based network 
  protocol which can be used to connect a native script 
@@ -105,5 +112,8 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm
  This Debian package installs the bridge deprecated C version 
  SE Linux rules contained in the package devel, 
  examples/security/module directory.
-
+ The bridge C implementation is deprecated and unmaintained.
+ It is kept here for historical purposes.
+ You must modify your installation to use the J2EE version
+ as soon as possible.
 

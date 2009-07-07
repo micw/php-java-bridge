@@ -65,7 +65,7 @@ build-stamp: configure
 	$(MAKE)
 	#docbook-to-man debian/php-java-bridge.sgml > php-java-bridge.1
 	#into makefiles, each line spawns own shell, so you need to write single line batches.
-	cd security/module; 	$(MAKE) -f Makefile; 	cd ../..
+	cd security/module;	$(MAKE) -f Makefile; 	cd ../..
 	touch $@
 
 # using dpatch for flexibility
@@ -97,7 +97,7 @@ installbasic:
 
 # Build architecture-independent files here.
 # creating also docs package without examples files. See /debian/*.docs file
-binary-indep: php-java-bridge-devel php-java-bridge-j2ee php-java-bridge-j2ee-selinux binarydocs
+binary-indep: php-java-bridge-devel php-java-bridge-j2ee php-java-bridge-j2ee-selinux binarydocs php-java-bridge-selinux
 
 # creating j2ee package . See /debian/*j2ee.* files
 # note the -p$@ to use target name package files in /debian as parameters
@@ -149,7 +149,40 @@ php-java-bridge-j2ee-selinux:
 	dh_installdocs  -p$@
 #	dh_installexamples -p$@
 	dh_installdirs -p$@
-	dh_install -i -p$@
+	dh_install   --fail-missing -p$@
+#	dh_installmenu -i
+#	dh_installdebconf -i
+#	dh_installlogrotate -i
+#	dh_installemacsen -i
+#	dh_installpam -i
+#	dh_installmime -i
+#	dh_python -i
+#	dh_installinit -i
+#	dh_installcron -i
+#	dh_installinfo -i
+	dh_installman  -p$@
+	dh_link  -p$@
+	dh_strip  -p$@
+	dh_compress  -p$@
+	dh_fixperms  -p$@
+#	dh_perl -i
+#	dh_makeshlibs -i
+	dh_installdeb -p$@
+	dh_shlibdeps  -p$@
+	dh_gencontrol  -p$@
+	dh_md5sums  -p$@
+	dh_builddeb  -p$@
+
+
+php-java-bridge-selinux: 
+	dh_testdir
+	dh_testroot
+	dh_installdirs  -p$@
+	dh_installchangelogs  -p$@  ChangeLog
+	dh_installdocs  -p$@
+#	dh_installexamples -p$@
+	dh_installdirs -p$@
+	dh_install   --fail-missing -p$@
 #	dh_installmenu -i
 #	dh_installdebconf -i
 #	dh_installlogrotate -i
@@ -297,7 +330,7 @@ binary-arch:
 # build and install are implicit, but THIS package source needs 2 cycles.
 # so the first cycle is implicity and this entry is for the second cycle.
 binary: build install binary-arch binary-indep
-.PHONY: build build-stamp clean clean-patched binary-indep binary-arch binarydocs binary install configure configure-stamp installdocs installbasic unpatch patchsource patch-stamp  php-java-bridge-j2ee php-java-bridge-devel php-java-bridge-docs php-java-bridge-j2ee-docs php-java-bridge-j2ee-selinux
+.PHONY: build build-stamp clean clean-patched binary-indep binary-arch binarydocs binary install configure configure-stamp installdocs installbasic unpatch patchsource patch-stamp  php-java-bridge-j2ee php-java-bridge-devel php-java-bridge-docs php-java-bridge-j2ee-docs php-java-bridge-j2ee-selinux php-java-bridge-selinux
 
 # using dpatch for flexibility
 unpatch:
