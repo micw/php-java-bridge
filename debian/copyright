@@ -31,6 +31,10 @@ The Debian packaging is (C) 2006, Andre Felipe Machado
 <andremachado@techforce.com.br> and is licensed under the GPL, 
 see `/usr/share/common-licenses/GPL'.
 
+Portions of the code are licensed under terms and conditions of 
+GNU Lesser General Public License (LGPL) 2.0.
+A copy of the license is available at
+http://www.gnu.org/copyleft/lesser.html
 
 Portions of code at unsupported/platforms/plugins are licensed under
 COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0
