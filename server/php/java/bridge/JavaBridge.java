@@ -1028,7 +1028,7 @@ public class JavaBridge implements Runnable {
 	LinkedList matches = new LinkedList();
 	Method selected = null;
 	try {
-	    if(object==null) {object = Request.PHPNULL;throw new NullPointerException("cannot call \""+method+"()\" on a null value, check your code.");}
+	    if(object==null) {object = Request.PHPNULL;throw new NullPointerException("cannot call \""+method+"()\" on a Java null object. A previous Java call has returned a null value, use java_is_null($jvalue) to check.");}
 	    /* PR1616498: Do not use Util.getClass(): if object is a class, we must pass the class class.  
 	     * All VM, including gcc >= 3.3.3, return the class class for class.getClass(), not null. This is okay for the cache implementation. */
 	    MethodCache.Entry entry = methodCache.getEntry(method, object, args);
@@ -1191,7 +1191,7 @@ public class JavaBridge implements Runnable {
 
 	try {
 	    Class jclass;
-	    if(object==null) {object=Request.PHPNULL; throw new NullPointerException("cannot get property \""+prop+"\" on a null value, check your code.");}
+	    if(object==null) {object=Request.PHPNULL; throw new NullPointerException("cannot get property \""+prop+"\" from a Java null object. A previous Java call has returned a null value, use java_is_null($jvalue) to check");}
 	    
 	    // first search for the field *exactly*
 	    again2:		// because of security exception
