@@ -2,10 +2,11 @@ php-java-bridge (5.4.4.2-3) unstable; urgency=low
 
   * SELinux EXPERIMENTAL packaging.
   * Corrections at directories packaging.
+  * Corrections at JavaBridge TomCat security policy file for default Lenny.
+  * Improved dependency configuration.
+  * Corrections at installation scripts sequence.
 
- -- Andre Felipe Machado <andremachado@techforce.com.br>  Tue, 07 Jul 2009 14:04:32 -0300
-
-
+ -- Andre Felipe Machado <andremachado@techforce.com.br>  Tue, 16 Jul 2009 17:44:32 -0300
 
 
 php-java-bridge (5.4.4.2-2) unstable; urgency=low
