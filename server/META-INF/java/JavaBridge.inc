@@ -122,6 +122,7 @@ a PHP 5.1.x executable, see php_exec in the WEB-INF/web.xml";
     $name = substr($x, 1+$idx);
     $instance = "namespace $package; class ${name} extends \\Java {".
 	  "static function type(\$sub=null){if(\$sub) \$sub='\$'.\$sub;return \\java('${str}'.\"\$sub\");}".
+	  "static function __callStatic(\$procedure, \$args) {return \\java_invoke(\\java('${str}'), \$procedure, \$args);}".
 	  'function __construct() {$args = func_get_args();'.
 	  'array_unshift($args, '."'$str'".'); parent::__construct($args);}}';
 	eval ("$instance");
@@ -133,7 +134,7 @@ a PHP 5.1.x executable, see php_exec in the WEB-INF/web.xml";
    *
    * Available since php 5.3. Example:
    * <code>
-   * java_autoload();
+   * java_autoload("lucene.jar;mysql-connector-java.jar"); // load from /usr/share/java or $HOME/lib
    *
    * use org\apache\lucene;
    * use org\apache\lucene\index;
@@ -158,7 +159,7 @@ a PHP 5.1.x executable, see php_exec in the WEB-INF/web.xml";
 	$once = true;
 	java_require($libs);
 	if(function_exists("spl_autoload_register")) {
-	  spl_autoload_register("java_autoload_function");
+	  if(defined(JAVA_DISABLE_AUTOLOAD)) spl_autoload_register("java_autoload_function");
 	} else {
 	  function __autoload($x) {
 		return java_autoload_function($x);

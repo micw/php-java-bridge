@@ -43,7 +43,6 @@ import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 
 import php.java.bridge.JavaBridgeRunner;
-import php.java.bridge.PhpProcedureProxy;
 import php.java.bridge.Util;
 import php.java.bridge.http.AbstractChannelName;
 import php.java.bridge.http.ContextServer;
@@ -62,7 +61,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
     /**
      * The allocated script
      */
-    protected PhpProcedureProxy script = null;
+    protected Object script = null;
     protected Object scriptClosure = null;
     protected String name = null;
     
@@ -280,7 +279,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
     /*
      * Obtain a PHP instance for url.
      */
-    protected PhpProcedureProxy doEval(Reader reader, ScriptContext context) throws Exception {
+    protected Object doEval(Reader reader, ScriptContext context) throws Exception {
     	continuation = getContinuation(reader, context);
      	continuation.start();
     	return continuation.getPhpScript();

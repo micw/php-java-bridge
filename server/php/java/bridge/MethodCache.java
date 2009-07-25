@@ -154,7 +154,7 @@ final class MethodCache {
     	Class params[] = new Class[args.length];
     	for (int i=0; i<args.length; i++) {
 	    Class c = args[i] == null ? null : args[i].getClass();
-	    if(c == PhpArray.class || c == PhpProcedureProxy.class) return noCache;
+	    if(c == PhpArray.class) return noCache;
 	    params[i] = c;
     	}
 	return new Entry(name, obj, params);

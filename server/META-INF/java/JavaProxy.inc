@@ -94,7 +94,9 @@ function java_values_internal($object) {
   return $client->invokeMethod(0, "getValues", array($object));
 }
 /**
- * Invoke a method dynamically. Example:
+ * Invoke a method dynamically. 
+ 
+ * Example:
  * <code>
  * java_invoke(new java("java.lang.String","hello"), "toString", array())
  * </code>
@@ -111,7 +113,7 @@ function java_values_internal($object) {
  */
 function java_invoke($object, $method, $args) {
   $client=__javaproxy_Client_getClient();
-  $id = $object?$object->__java:0;
+  $id = ($object==null) ? 0 : $object->__java;
   return $client->invokeMethod($id, $method, $args);
 }
 
@@ -366,7 +368,15 @@ function java_session_array($args) {
  *
  * The optional third argument specifies the default lifetime of the session, it defaults to <code> session.gc_maxlifetime </code>. The value 0 means that the session never times out.
  *
+ * The synchronized init() and onShutdown() callbacks from
+ * java_context() and the JPersistenceAdapter (see
+ * JPersistenceAdapter.php from the php_java_lib directory) may also
+ * be useful to load a Java singleton object after the JavaBridge
+ * library has been initialized, and to store it right before the web
+ * context or the entire JVM will be terminated.
+ *
  * @access public
+ * @see java_
  * @see java_context()
  */
 function java_session() {
@@ -374,7 +384,7 @@ function java_session() {
 }
 
 /**
- * Returns the name of the back-end or null, if the back-end is not running.O
+ * Returns the name of the back-end or null, if the back-end is not running.
  *
  * Example:
  * <code>
@@ -404,20 +414,19 @@ function java_server_name() {
  * </code>
  * 
  * A second example which shows how to invoke PHP methods without the JSR 223 getInterface() and invokeMethod() 
- * helper procedures:
+ * helper procedures. The Java code can fetch the current PHP continuation from the context using the key "php.java.bridge.PhpProcedure":
  * <code>
  * String s = "<?php class Runnable { function run() {...} };
  *            // example which captures an environment and 
  *            // passes it as a continuation back to Java
  *            $Runnable = java('java.lang.Runnable');
- *            $closure = java_closure(new Runnable(), null, $Runnable);
- *            java_context()->setAttribute("kont", $closure, ENGINE_SCOPE);
- *            java_context()->call($closure);
+ *            java_context()->call(java_closure(new Runnable(), null, $Runnable));
  *            ?>";
  * ScriptEngine e = new ScriptEngineManager().getEngineByName("php-invocable");
  * e.eval (s);
- * Runnable r = e.get("kont");
- * new Thread(r).start();
+ * Thread t = new Thread((Runnable)e.get("php.java.bridge.PhpProcedure"));
+ * t.join ();
+ * ((Closeable)e).close ();
  * </code>
  *
  * A synchronized init() procedure can be called from the context to initialize a library once, and a shutdown hook can be registered to destroy the library before the (web-) context is destroyed. The init hook can be written in PHP, but the shutdown hook must be written in Java. Example:
@@ -927,7 +936,7 @@ class Java extends java_AbstractJava {
 	  $preparedToSendBuffer = null;
 	  $client->asyncCtx -= 1;
 	} else {
-	  if(!$this->__delegate) { // write unref ourselfs if we don't have a delegate yet (see cachedJavaPrototype and Java::__factory in __call below)
+	  if(!isset($this->__delegate)) { // write unref ourselfs if we don't have a delegate yet (see cachedJavaPrototype and Java::__factory in __call below)
 		if(JAVA_DEBUG) {
 		  echo "unref java:"; echo $this->__java; echo "\n";
 		}
@@ -1058,6 +1067,8 @@ class java_exception extends Exception implements java_JavaType {
   public $__delegate;
   /** @access private */
   public $__signature;
+  /** @access private */
+  public $__hasDeclaredExceptions;
   
   /**
    * Create a new Exception.
@@ -1077,7 +1088,9 @@ class java_exception extends Exception implements java_JavaType {
 	// compatibility with the C implementation
 	if(is_array($name)) { $args = $name; $name = array_shift($args); }
 
-	if (count($args) >= 1) Exception::__construct($args[0]);
+	if (count($args) == 0) throw new java_IllegalArgumentException("JavaException class name missing");
+
+	Exception::__construct($args[0]);
 
 	/* do not delete this line, it is used when generating Mono.inc from Java.inc */
 
@@ -1085,6 +1098,7 @@ class java_exception extends Exception implements java_JavaType {
 
 	$this->__java = $delegate->__java;
 	$this->__signature = $delegate->__signature;
+	$this->__hasDeclaredExceptions = 'T';
   }
   /**
    * @access private
@@ -1149,12 +1163,11 @@ class JavaException extends java_exception {}
  */
 class java_InternalException extends JavaException {
   function java_InternalException($proxy, $exception) {
-	Exception::__construct($exception);
-
 	$this->__delegate = $proxy;
 	$this->__java = $proxy->__java;
 	$this->__signature = $proxy->__signature;
 	$this->__client = $proxy->__client;
+	$this->__hasDeclaredExceptions = $exception;
   }
 }
 

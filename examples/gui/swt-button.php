@@ -32,7 +32,7 @@ class ButtonDemo {
 
     $button = new Java("org.eclipse.swt.widgets.Button", $this->shell, $SWT->PUSH);
     $button->setText("Click here.");
-    $button->addSelectionListener(java_closure($this));
+    $button->addSelectionListener(java_closure($this, null, java("org.eclipse.swt.events.SelectionListener")));
     $this->shell->open();
   }
 

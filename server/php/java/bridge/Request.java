@@ -77,13 +77,11 @@ public final class Request implements IDocHandler {
     private abstract class Arg {
     	protected byte type;
     	protected Object callObject;
-    	protected Throwable exception;
     	protected String method;
     	protected SimpleContext id = getContext();
     	protected byte predicate;
     	protected Object key;
     	protected byte composite;
-    	 protected int globalRefCID;
     	 
     	public abstract void add(Object val);
     	public abstract Object[] getArgs();
@@ -294,8 +292,10 @@ public final class Request implements IDocHandler {
 
 	case 'U': {
 	    int i=st[0].getIntValue();
-	    if(Util.logLevel>4) { 
-		Util.logDebug("unref: " + bridge.globalRef.get(i));
+	    if(Util.logLevel>4) {
+		Object obj = bridge.globalRef.get(i);
+		if (!(obj instanceof java.lang.reflect.Proxy))
+		    Util.logDebug("unref: " + obj);
 	    }
 	    bridge.globalRef.remove(i);
 	    reply=false; // U is the only top-level request which doesn't need a reply
@@ -375,7 +375,8 @@ public final class Request implements IDocHandler {
     private static final String SUB_FAILED = "PHP callback execution failed.";
     private void setIllegalStateException(String s) {
         IllegalStateException ex = new IllegalStateException(s);
-        response.setResultException(bridge.lastException = ex, s);
+	// PHP callbacks always generate a round-trip anyway
+        response.setResultException(bridge.lastException = ex, true);
     }
     private int handleRequest() throws IOException {
 	int retval;
@@ -654,8 +655,9 @@ public final class Request implements IDocHandler {
     public void recycle() {
         reset();
         if(arg != null) arg.reset();
-        resetBridge();
+
         if (response != null) response.recycle();
+        resetBridge();
     }
 
     /**

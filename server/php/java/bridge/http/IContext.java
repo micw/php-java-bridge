@@ -49,6 +49,11 @@ public interface IContext {
     static final int GLOBAL_SCOPE = ScriptContext.GLOBAL_SCOPE;
 
     /**
+     * This key can be used to get the current continuation.
+     * Example: <code>java_context-&gt;getAttribute("php.java.bridge.PhpProcedure");</code>
+     */
+    public static final String PHP_PROCEDURE = "php.java.bridge.PhpProcedure";
+    /**
      * This key can be used to get the current JavaBridge instance.
      * Example: <code>java_context-&gt;getAttribute("php.java.bridge.JavaBridge");</code>
      */

@@ -187,8 +187,7 @@ abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocableP
 	    continuation = getContinuation(localReader = new URLReader(url), getContext());
 	    continuation.start();
 	    this.script = continuation.getPhpScript();
-	    if (this.script != null)
-		try { this.scriptClosure = this.script.getProxy(new Class[]{}); } catch (Exception e) { return null; }
+	    if (this.script != null) this.scriptClosure = script;
         } catch (Exception e) {
 	    Util.printStackTrace(e);
             if (e instanceof RuntimeException) throw (RuntimeException)e;
@@ -219,7 +218,7 @@ abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocableP
             this.script = doEval(localReader, context);
             /* get the proxy, either the one from the user script or our default proxy */
 	    if (this.script != null)
-		try { this.scriptClosure = this.script.getProxy(new Class[]{}); } catch (Exception e) { return null; }
+		this.scriptClosure = script;
 	} catch (Exception e) {
 	    Util.printStackTrace(e);
             if (e instanceof RuntimeException) throw (RuntimeException)e;

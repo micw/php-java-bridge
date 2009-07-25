@@ -137,7 +137,13 @@ class java_ThrowExceptionProxyFactory extends java_ExceptionProxyFactory {
 	return $proxy;
   }
   function checkResult($result) {
-	throw $result;
+	if ($result->__hasDeclaredExceptions=='T')
+	  throw $result;
+	else {
+	  error_log ($result->__toString());
+	  trigger_error("Unchecked exception detected", E_USER_ERROR);
+	  die(1);
+	}
   }
 }
 
@@ -193,7 +199,7 @@ class java_Arg {
 	$this->signature = "@V";
 	// update cache
 	$key = $this->client->currentCacheKey;
-	if($key && $key[0]!='~') {			// don't cache array(...) or non-java objects
+	if($key && $key[0]!='~') {			// do not cache array(...) or non-java objects
 	  $this->client->currentArgumentsFormat[6]="3";
 	  if(JAVA_DEBUG) {
 	    echo "ignore further results:";  echo "\n";
@@ -209,7 +215,7 @@ class java_Arg {
 	$this->signature = $signature;
 	// update cache
 	$key = $this->client->currentCacheKey;
-	if($key && $key[0]!='~') {			// don't cache array(...) or non-java objects
+	if($key && $key[0]!='~') {			// do not cache array(...) or non-java objects
 	  if(JAVA_DEBUG) {
 		echo "updating cache $key, argformat: {$this->client->currentArgumentsFormat}, classType: {$this->signature}\n";
 	  }
@@ -377,6 +383,7 @@ class java_Client /* implements IDocHandler */ {
 	case 'A':
 	  $factory = $this->arrayProxyFactory;
 	  break;
+	default:
 	case 'O':
 	  $factory = $this->proxyFactory;
 	}
@@ -492,9 +499,13 @@ class java_Client /* implements IDocHandler */ {
 	if(is_string($arg)) {
 	  $this->protocol->writeString($arg);
 	} else if(is_object($arg)) {
-      if (!$arg instanceof java_JavaType) throw new java_IllegalArgumentException($arg);
-	  $this->protocol->writeObject($arg->__java);
-	  return $arg;
+      if ((!$arg instanceof java_JavaType)) {
+		error_log((string)new java_IllegalArgumentException($arg));
+		trigger_error("argument '".get_class($arg)."' is not a Java object, using NULL instead", E_USER_WARNING);
+		$this->protocol->writeObject(null);
+      } else {
+		$this->protocol->writeObject($arg->__java);
+	  }
 	} else if(is_null($arg)) {
 	  $this->protocol->writeObject(null);
 	} else if(is_bool($arg)) {
@@ -529,7 +540,6 @@ class java_Client /* implements IDocHandler */ {
 	  }
 	  $this->protocol->writeCompositeEnd();
 	}
-	return null;
   }
   function writeArgs($args) {
 	$n = count($args);
@@ -575,7 +585,7 @@ class java_Client /* implements IDocHandler */ {
   function apply($arg) {
 	$name = $arg->p;
 	$object = $arg->v;
-	$ob = $object ? array(&$object, $name) : $name;
+	$ob = ($object==null) ? $name : array(&$object, $name);
 
 	// save the current state
 	$isAsync                = $this->isAsync;
@@ -586,11 +596,11 @@ class java_Client /* implements IDocHandler */ {
         
 	try {
   	$res = $arg->getResult(true);
-	  if((!$object && !function_exists($name)) || ($object && !method_exists($object, $name))) throw new JavaException("java.lang.NoSuchMethodError", "$name");
+	if((($object==null) && !function_exists($name)) || (!($object==null) && !method_exists($object, $name))) throw new JavaException("java.lang.NoSuchMethodError", "$name");
 	  
 	  $res = call_user_func_array($ob, $res);
       
-      if (is_object($res) && !($res instanceof java_JavaType)) {
+      if (is_object($res) && (!($res instanceof java_JavaType))) {
           trigger_error("object returned from $name() is not a Java object", E_USER_WARNING);
  
           // correct this error by calling: $res=java_closure($res);
@@ -609,7 +619,9 @@ class java_Client /* implements IDocHandler */ {
 	  $this->protocol->writeException($e->__java, $trace);
 	  $this->protocol->resultEnd();
 	} catch(Exception $ex) {
-	   die ($ex);
+	  error_log($ex->__toString());
+	  trigger_error("Unchecked exception detected in callback", E_USER_ERROR);
+	  die (1);
 	}	  
 
 	// restore the state
@@ -639,12 +651,12 @@ class java_Client /* implements IDocHandler */ {
   }
   function getContext() {
 	static $cache = null;
-	if ($cache) return $cache;
+	if (!is_null($cache)) return $cache;
 	return $cache = $this->invokeMethod(0, "getContext", array());
   }
   function getSession($args) {
 	static $cache = null;
-	if ($cache) {
+	if (!is_null($cache)) {
 	  trigger_error("java_session() should be called once at the beginning of the script", E_USER_WARNING);	  
 	  return $cache;
 	}
@@ -652,7 +664,7 @@ class java_Client /* implements IDocHandler */ {
   }
   function getServerName() {
 	static $cache = null;
-	if ($cache) return $cache;
+	if (!is_null($cache)) return $cache;
 	return $cache = $this->protocol->getServerName();
   }
 }
@@ -673,4 +685,7 @@ function java_shutdown() {
   $client->protocol->keepAlive();
 }
 register_shutdown_function("java_shutdown");
+
+/** Autoload Java classes if not disabled via define("JAVA_DISABLE_AUTOLOAD", true); */
+if(!defined(JAVA_DISABLE_AUTOLOAD)) spl_autoload_register("java_autoload_function");
 ?>

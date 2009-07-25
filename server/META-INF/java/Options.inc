@@ -52,7 +52,7 @@ function java_defineHostFromInitialQuery($java_base) {
 /**
  * The version number of this PHP library.
  */
-define ("JAVA_PEAR_VERSION", "5.4.3");
+define ("JAVA_PEAR_VERSION", "5.5");
 
 if(!defined("JAVA_SEND_SIZE")) 
   define("JAVA_SEND_SIZE", 8192);
@@ -101,7 +101,7 @@ if(!defined("JAVA_HOSTS")) {
  */
  if(!defined("JAVA_SERVLET")) {
    if (!(($ini=get_cfg_var("java.servlet"))===false)) define("JAVA_SERVLET", $ini); 
-   else                                               define("JAVA_SERVLET", 1); // "Off"|0, "On"|1 or "User"
+   else                                               define("JAVA_SERVLET", 1); // Off|0, On|1 or User
 }
 
 /** The request log level between 0 (log off) and 4 (log debug). 
@@ -130,7 +130,7 @@ if(!defined("JAVA_PIPE_DIR")) {
   if ($ini=get_cfg_var("java.pipe_dir"))  define("JAVA_PIPE_DIR", $ini); 
   else
 	if (file_exists ("/dev/shm"))         define("JAVA_PIPE_DIR", "/dev/shm" );
-	else if (PHP_OS==='SunOS')            define("JAVA_PIPE_DIR", "/tmp"); # shared memory on Solaris
+	else if (PHP_OS==='SunOS')            define("JAVA_PIPE_DIR", "/tmp"); // shared memory on Solaris
 	else                                  define("JAVA_PIPE_DIR", null);
 }
 

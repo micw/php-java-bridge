@@ -3,6 +3,83 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 5.5
+
+* mono_closure() and java_closure no longer try to determine the type
+  automatically, pass the type as the third argument. Instead of:
+
+  $win->add_DeleteEvent (new Mono("Gtk.DeleteEventHandler", 
+         mono_closure($this, "delete")));
+
+  use:
+
+  $win->add_DeleteEvent (new Mono("Gtk.DeleteEventHandler", 
+         mono_closure($this, "delete", mono('Gtk.DeleteEventHandler$Method'))));
+
+  instead.
+
+* The current PHP continuation is now available from the engine scope,
+  key "php.java.bridge.PhpProcedure".
+
+* The bridge tries to autoload Java classes by default. For example
+
+    use java\lang\String as Str; echo new Str("hello");
+
+  will autoload the class JString. This can be switched off with
+  define("JAVA_DISABLE_AUTOLOAD", true); before including Java.inc.
+
+
+* PHP 5.3 classes can now extend Java classes easily. For example:
+
+  <?php 
+    use java\lang\String as JString;
+
+    class String extends JString {
+      function toString() { return "I am" . parent::toString(); }
+    }
+
+    $str = new String(" a php/java string");
+    echo $str->toString ();
+  ?>
+
+
+* Since PHP 5.3 TYPE::procedure() can be used instead of
+  TYPE::type()->procedure().
+
+  <?php 
+    use java\lang\System as Sys;
+
+    echo Sys::getProperties();
+    // equivalent to echo Sys::type()->getProperties()
+  ?>
+
+  However, to access a static procedure with the name "type" or a
+  sub-type of a type, you still have to use the TYPE::type(SUBTYPE)
+  syntax.
+    
+
+* Improved array handling:
+
+  $l = new java("java.util.ArrayList", array(1,2,3));
+  echo isset($l[3])?"t":"f";
+  => f
+  $l[] = 4;
+  echo isset($l[3])?"t":"f";
+  => t
+  unset($l[3]);
+  echo isset($l[3])?"t":"f";
+  => f
+  print_r(java_cast($l, "array"));
+  => array((object)1, (object)2, (object)3);
+  print_r(java_values($l));
+  => array(   (int)1,    (int)2,    (int)3);
+
+
+* The bridge no longer throws java.lang.RuntimeException or
+  java.lang.Error unless these exceptions are declared in the
+  procedure or method definition.
+
+
 Version 5.4.4.2
 
 * A fast path has been added so that scripts running within a java

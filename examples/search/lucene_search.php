@@ -2,29 +2,29 @@
 
 java_autoload("lucene.jar");
 
-use java::lang::System as SYS;
-use java::io as IO;
-use java::util as Util;
-use org::apache::lucene as Lucene;
+use java\lang\System as SYS;
+use java\io as IO;
+use java\util as Util;
+use org\apache\lucene as Lucene;
 
 
 try {
   echo "indexing ... ";
   /* create the index files in the tmp dir */
   $tmp = create_index_dir();
-  $analyzer = new Lucene::analysis::standard::StandardAnalyzer();
-  $writer = new Lucene::index::IndexWriter($tmp, $analyzer, true);
-  $file = new IO::File(getcwd());
+  $analyzer = new Lucene\analysis\standard\StandardAnalyzer();
+  $writer = new Lucene\index\IndexWriter($tmp, $analyzer, true);
+  $file = new IO\File(getcwd());
   $files = $file->listFiles();
   assert (!java_is_null($files));
 
   foreach($files as $f) {
-    $doc = new Lucene::document::Document();
-    $doc->add(new Lucene::document::Field(
+    $doc = new Lucene\document\Document();
+    $doc->add(new Lucene\document\Field(
 	       "name", 
 	       $f->getName(), 
-	       Lucene::document::Field::type("Store")->YES, 
-	       Lucene::document::Field::type("Index")->UN_TOKENIZED));
+	       Lucene\document\Field::type("Store")->YES, 
+	       Lucene\document\Field::type("Index")->UN_TOKENIZED));
     $writer->addDocument($doc);
   }
   $writer->optimize();
@@ -33,8 +33,8 @@ try {
 
   echo "searching... ";
   /* Search */
-  $searcher = new Lucene::search::IndexSearcher($tmp);
-  $phrase = new Lucene::search::MatchAllDocsQuery();
+  $searcher = new Lucene\search\IndexSearcher($tmp);
+  $phrase = new Lucene\search\MatchAllDocsQuery();
   $hits = $searcher->search($phrase);
 
   /* Print result */
@@ -47,7 +47,7 @@ try {
    * LinkedList on the server side and then retrieve the list in one
    * query using java_values():
    */
-  $resultList = new Util::LinkedList();
+  $resultList = new Util\LinkedList();
 
 				// create an XML document from the
 				// following PHP code, ...
@@ -85,7 +85,7 @@ function create_index_dir() {
   $javaTmpdir = SYS::type()->getProperty("java.io.tmpdir");
   $tmpdir = (string)$javaTmpdir;
   $tmp_file=tempnam($tmpdir, "idx");
-  $tmp_dir=new IO::File("${tmp_file}.d");
+  $tmp_dir=new IO\File("${tmp_file}.d");
   $tmp_dir->mkdir();
   return (string)$tmp_dir->toString();
 }

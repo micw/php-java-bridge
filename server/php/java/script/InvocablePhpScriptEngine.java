@@ -135,7 +135,7 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
     /**{@inheritDoc}*/
     public Object getInterface(Class clasz) {
 	checkPhpClosure(script);
-	return getInterface(script.getProxy(Util.ZERO_PARAM), clasz);
+	return getInterface(script, clasz);
     }
     /**{@inheritDoc}*/
     public Object getInterface(Object thiz, Class clasz) {
@@ -177,7 +177,7 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
             this.script = doEval(localReader, context);
             if (this.script!=null) {
         	/* get the proxy, either the one from the user script or our default proxy */
-        	try { this.scriptClosure = this.script.getProxy(new Class[]{}); } catch (Exception e) { return null; }
+        	this.scriptClosure = script;
             }
 	} catch (Exception e) {
 	    Util.printStackTrace(e);

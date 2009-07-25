@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 5.4.4.2
+%define version 5.5
 %define release 1
 %define PHP_MAJOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | sed 's/\\\..*$//')
 %define PHP_MINOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | LANG=C cut -d. -f2)
@@ -33,6 +33,9 @@ BuildRequires: httpd make
 BuildRequires: libtool >= 1.4.3
 BuildRequires: automake >= 1.6.3
 BuildRequires: autoconf >= 2.57
+BuildRequires: phpdoc >= 1.4.2
+BuildRequires: ant >= 1.7.1
+
 %if %{have_j3} == 1
 BuildRequires: jdk >= 1.4.2
 %else
@@ -146,15 +149,18 @@ echo >filelist-devel
 
 mod_dir=`cat install.log | sed -n '/Installing shared extensions:/s///p' | awk '{print $1}'`
 
-files="php-script.jar script-api.jar"
+files="php-script script-api"
 mkdir -p $RPM_BUILD_ROOT/%{shared_java}
 for i in $files; 
-  do cp $mod_dir/$i $RPM_BUILD_ROOT/%{shared_java}/$i; 
+  do cp $mod_dir/${i}.jar $RPM_BUILD_ROOT/%{shared_java}/${i}-%{version}.jar; 
+  (cd $RPM_BUILD_ROOT/%{shared_java}; ln -fs ${i}-%{version}.jar ${i}.jar;)
   rm -f $mod_dir/$i; 
-  echo %{shared_java}/$i >>filelist-devel
+  echo %{shared_java}/${i}-%{version}.jar >>filelist-devel
+  echo %{shared_java}/${i}.jar >>filelist-devel
 done
-cp $mod_dir/JavaBridge.jar $RPM_BUILD_ROOT/%{shared_java}/JavaBridge.jar; 
-#echo %{shared_java}/JavaBridge.jar >>filelist-devel
+cp $mod_dir/JavaBridge.jar $RPM_BUILD_ROOT/%{shared_java}/JavaBridge-%{version}.jar; 
+(cd $RPM_BUILD_ROOT/%{shared_java}; ln -fs JavaBridge-%{version}.jar JavaBridge.jar); 
+echo %{shared_java}/JavaBridge.jar >>filelist-devel
 
 files="Client.inc GlobalRef.inc Java.inc JavaBridge.inc JavaProxy.inc NativeParser.inc Options.inc Parser.inc Protocol.inc SimpleParser.inc JavaProxy.php"
 mkdir -p $RPM_BUILD_ROOT/%{shared_pear}/java
@@ -206,7 +212,7 @@ mkdir -p $RPM_BUILD_ROOT/%{tomcat_webapps}
 for i in $files; 
   do cp $mod_dir/$i $RPM_BUILD_ROOT/%{tomcat_webapps}
   rm -f $mod_dir/$i; 
-  echo %{tomcat_webapps}/$i >>filelist
+#  echo %{tomcat_webapps}/$i >>filelist
 done
 
 mkdir -p $RPM_BUILD_ROOT/etc/php.d
@@ -300,5 +306,5 @@ fi
 
 %files devel -f filelist-devel
 %defattr(-,root,root)
-%attr(755,root,root) %{shared_java}/JavaBridge.jar
+%attr(755,root,root) %{shared_java}/JavaBridge-%{version}.jar 
 %doc FAQ.html CREDITS README.MONO+NET ChangeLog README PROTOCOL.TXT COPYING server documentation examples php_java_lib NEWS INSTALL.LINUX

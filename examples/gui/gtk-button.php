@@ -21,7 +21,7 @@ class GtkDemo {
     // Name is a property of AssemblyName, set_Name(...) calls the
     // setter, get_Name() calls the getter
     $assemblyName->set_Name("gtk-sharp");
-    $assemblyName->set_Version(new Mono("System.Version", "2.10"));
+    $assemblyName->set_Version(new Mono("System.Version", "2.12"));
 
     // pack converts the hex string into a byte array
     $assemblyName->setPublicKeyToken(pack("H16", "35e10195dab3c99f"));
@@ -56,17 +56,11 @@ class GtkDemo {
     $Application->Init();
 
     $win = new Mono("Gtk.Window", "Hello");
-    $win->add_DeleteEvent (
-			   new Mono(
-				    "Gtk.DeleteEventHandler", 
-				    mono_closure($this, "delete")));
+    $win->add_DeleteEvent (new Mono("Gtk.DeleteEventHandler", mono_closure($this, "delete", mono('Gtk.DeleteEventHandler$Method'))));
 
     $btn = new Mono("Gtk.Button", "Show output from phpinfo()");
 
-    $btn->add_Clicked(
-		      new Mono(
-			       "System.EventHandler",
-			       mono_closure($this, "clicked")));
+    $btn->add_Clicked(new Mono("System.EventHandler", mono_closure($this, "clicked", mono('System.EventHandler$Method'))));
     $win->Add($btn);
     $win->ShowAll();
   }

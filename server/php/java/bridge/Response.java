@@ -69,8 +69,29 @@ public final class Response {
     protected HexOutputBuffer buf;
     long peer;
     protected JavaBridge bridge;
-
+    private boolean hasLastAsyncException, hasLastAsyncExceptionSet;
  
+    static final String MSG = "FATAL: UNDECLARED RuntimeException PASSED TO PHP.";
+    private static final class UndeclaredThrowableErrorMarker extends RuntimeException {
+        private static final long serialVersionUID = -578332461418889089L;
+	private Throwable e;
+	public UndeclaredThrowableErrorMarker (Throwable e) {
+	    this.e = e;
+	}
+	public String toString() {
+	    return MSG + " " + String.valueOf(e);
+	}
+	public Throwable getCause () {
+	    return this.e;
+	}
+    }
+
+    protected final Object wrapUndeclared(Throwable o, boolean hasDeclaredExceptions) {
+	if (hasDeclaredExceptions) return o;
+	bridge.warn(MSG + " " + o);
+	return new UndeclaredThrowableErrorMarker(o);
+    }
+
     protected abstract class DelegateWriter {
     	protected Class staticType;
 
@@ -84,6 +105,8 @@ public final class Response {
 	}
     }
     protected abstract class Writer extends DelegateWriter {
+	protected boolean hasDeclaredExceptions;
+
 	public boolean isAsync () {
 	    return false;
 	}
@@ -97,8 +120,9 @@ public final class Response {
 	    }
 	    writeApplyEnd();
 	}
-	public void setResultException(Throwable o, String str) {
-	    writeException(o, str);
+	public void setResultException(Throwable o, boolean hasDeclaredExceptions) {
+	    this.hasDeclaredExceptions = hasDeclaredExceptions;
+	    writeException(wrapUndeclared(o, hasDeclaredExceptions), hasDeclaredExceptions);
 	}
 	public void setResultObject(Object value) {
 	    writeObject(value);
@@ -107,6 +131,7 @@ public final class Response {
 	    writeClass(value);
 	}
 	public void setResult(Object value, Class type, boolean hasDeclaredExceptions) {
+	    this.hasDeclaredExceptions = hasDeclaredExceptions;
 	    setType(type);
 	    setResult(value);
 	}
@@ -290,11 +315,11 @@ public final class Response {
 	    return true;
 	}
     }
-    /** Writer used by the async protocol. It always returns <V ...> or <O ...>, even for NULL, Class values, although
-     * Exceptions are handled.
-     * When the client-side cache is enabled, the client will select an Async or AsyncVoidWriter in the next call. */
+    /** Writer used by the async protocol. It always returns <V ...>
+     * or <O ...>, even for NULL, Class values, although Exceptions
+     * are handled.  When the client-side cache is enabled, the client
+     * will select an Async or AsyncVoidWriter in the next call. */
     protected class DefaultObjectWriter extends Writer {
-	protected boolean hasDeclaredExceptions;
 	public void setResultObject(Object value) {
 	    if(staticType == java.lang.Void.TYPE)  { writeVoid(hasDeclaredExceptions); return; }
 
@@ -309,16 +334,16 @@ public final class Response {
 	    setResultObject(value);
 	    return true;
 	}
-	public void setResult(Object value, Class type, boolean hasDeclaredExceptions) {
-	    this.hasDeclaredExceptions = hasDeclaredExceptions;
-	    super.setResult(value, type, hasDeclaredExceptions);
-	}
     }
-    /** Writer used by the async protocol (begin/end document). It always returns <V ...> or <O ...>, even for NULL, Class or Exception values. 
-     * When the client-side cache is enabled, the client will select an Async or AsyncVoidWriter in the next call. */
+    /** Writer used by the async protocol (begin/end document). It
+     * always returns <V ...> or <O ...>, even for NULL, Class or
+     * Exception values.  When the client-side cache is enabled, the
+     * client will select an Async or AsyncVoidWriter in the next
+     * call. */
     protected final class ObjectWriter extends DefaultObjectWriter {
-	public void setResultException(Throwable o, String str) {
-	    setResultObject(bridge.lastAsyncException = o);
+	public void setResultException(Throwable o, boolean hasDeclaredExceptions) {
+	    this.hasDeclaredExceptions = hasDeclaredExceptions;
+	    setResultObject(wrapUndeclared(bridge.lastAsyncException = o, hasDeclaredExceptions));
 	}
     }
     /** Writer used by the async protocol. It writes nothing but stores the result in global ref*/
@@ -326,8 +351,9 @@ public final class Response {
 	public boolean isAsync () {
 	    return true;
 	}
-	public void setResultException(Throwable o, String str) {
-	    setResultObject(bridge.lastAsyncException = o);
+	public void setResultException(Throwable o, boolean hasDeclaredExceptions) {
+	    this.hasDeclaredExceptions = hasDeclaredExceptions;
+	    setResultObject(wrapUndeclared(bridge.lastAsyncException = o, hasDeclaredExceptions));
 	}
 	public void setResultObject(Object value) {
 	    if(staticType == java.lang.Void.TYPE)  throw new IllegalStateException ("Use the AsyncVoidWriter instead");
@@ -370,8 +396,9 @@ public final class Response {
 	public void setResultProcedure(long object, String cname, String name, Object[] args) {
 	    throw new IllegalStateException("Cannot call "+name+": callbacks not allowed in stream mode");
 	}
-	public void setResultException(Throwable o, String str) {
-	    bridge.lastAsyncException = o;
+	public void setResultException(Throwable o, boolean hasDeclaredExceptions) {
+	    this.hasDeclaredExceptions = hasDeclaredExceptions;
+	    wrapUndeclared(bridge.lastAsyncException = o, hasDeclaredExceptions);
 	}
 	public void setResultObject(Object value) {}
 	public void setResultClass(Class value) {}
@@ -400,8 +427,28 @@ public final class Response {
 		if(staticType == Boolean.TYPE) {
 		    if(value instanceof Boolean)
 		        writeBoolean(((Boolean) value).booleanValue());
-		    else 
-		        writeBoolean(value!=null);
+		    else {
+			if (value == null) {
+			    writeBoolean(false);
+			} else if (value instanceof byte[]) {
+			    writeBoolean(((byte[])value).length != 0);
+			} else if (value instanceof java.lang.String) {
+			    writeBoolean(((String)value).length() != 0);
+			} else if (value instanceof PhpString) {
+			    writeBoolean(((PhpString)value).getBytes().length != 0);
+			} else if (value instanceof java.lang.Number) {
+			    if (value instanceof java.lang.Integer ||
+				value instanceof java.lang.Short ||
+				value instanceof java.lang.Byte) {
+				writeBoolean(((Number)value).longValue() != 0);
+			    } else {
+				/* Float, Double, BigDecimal, BigInteger, Double, Long, ... */
+				writeBoolean(((Number)value).doubleValue() != 0.0);
+			    }
+			} else {
+			    writeBoolean(true);
+			}
+		    }
 		} else if(staticType == Byte.TYPE || staticType == Short.TYPE || staticType == Integer.TYPE || staticType == Long.TYPE) {
 		    if(value instanceof Number) 
 		        writeLong(((Number)value).longValue());
@@ -493,10 +540,11 @@ public final class Response {
     /**
       * Set the result packet.
       * @param value The throwable
-      * @param asString The string representation of the throwable
+      * @param hasDeclaredExceptions true if the method has declared
+      * to throw exception(s), false otherwise
       */
-    public void setResultException(Throwable value, String asString) {
-     	writer.setResultException(value, asString);
+    public void setResultException(Throwable value, boolean hasDeclaredExceptions) {
+     	writer.setResultException(value, hasDeclaredExceptions);
     }
 
     /**
@@ -526,8 +574,10 @@ public final class Response {
     }
     
     protected void setFinish(boolean keepAlive) {
+	if (!hasLastAsyncExceptionSet) hasLastAsyncException = bridge.lastAsyncException != null;
 	setDefaultWriter();
         writer.setFinish(keepAlive);
+	hasLastAsyncException = hasLastAsyncExceptionSet = false;
     }
     /**
      * Selects a specialized writer which writes objects as an array.
@@ -591,6 +641,8 @@ public final class Response {
     static final byte[] VoidF="<V n=\"F\"/>".getBytes();
     static final byte[] VoidT="<V n=\"T\"/>".getBytes();
     static final byte[] m="\" m=\"".getBytes();
+    static final byte[] mT="\" m=\"T".getBytes();
+    static final byte[] mF="\" m=\"F".getBytes();
     static final byte[] n="\" n=\"".getBytes();
     static final byte[] nT="\" n=\"T".getBytes();
     static final byte[] nF="\" n=\"F".getBytes();
@@ -608,8 +660,10 @@ public final class Response {
     static final byte[] Pn="<P t=\"N\" v=\"".getBytes();
     static final byte[] Ps="<P t=\"S\" v=\"".getBytes();
     static final byte[] Pe="</P>".getBytes();
-    static final byte[] Fa = "<F p=\"A\"/>".getBytes();
-    static final byte[] Fe = "<F p=\"E\"/>".getBytes();   
+    static final byte[] FA = "<F p=\"A\"/>".getBytes();
+    static final byte[] Fa = "<F p=\"a\"/>".getBytes();
+    static final byte[] FE = "<F p=\"E\"/>".getBytes();   
+    static final byte[] Fe = "<F p=\"e\"/>".getBytes();   
     static final byte[] quote="&quot;".getBytes();
     static final byte[] amp="&amp;".getBytes();
 
@@ -689,13 +743,17 @@ public final class Response {
 	buf.append(nT);
     	buf.append(e);
     }
-    void writeException(Object o, String str) {
+    void writeException(Object o, boolean hasDeclaredExceptions) {
 	buf.append(E); buf.append(this.bridge.globalRef.append(o));
-	buf.append(m); buf.appendQuoted(str);
+	buf.append(hasDeclaredExceptions?mT:mF);
 	buf.append(e);
     }
     void writeFinish(boolean keepAlive) {
-        if(keepAlive) buf.append(Fa); else buf.append(Fe);
+	if (hasLastAsyncException) {
+	    buf.append(keepAlive ? Fa : Fe);
+	} else {
+	    buf.append(keepAlive ? FA : FE);
+	}
     }
     void writeCompositeBegin_a() {
 	buf.append(Xa);
@@ -755,6 +813,9 @@ public final class Response {
     }
     /** re-initialize for keep alive */
     protected void recycle() {
+	hasLastAsyncException = bridge.lastAsyncException != null;
+	hasLastAsyncExceptionSet = true;
+	
         reset();
         setDefaultWriter();
     }

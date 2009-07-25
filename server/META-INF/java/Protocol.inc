@@ -93,7 +93,12 @@ class java_SocketChannel {
 	return "<F p=\"A\" />";
   }
   function keepAlive() {
-	$this->fread(10); // <F p="A"/>
+	$res = $this->fread(10); // <F p="A"/>
+	$val = $res[6];
+	if ($val != 'A' && $val !='E') {
+	  trigger_error("An unchecked exception occured during script execution. Please check the server log files for details.", E_USER_ERROR);
+	  die (1);
+	}
   }
   function shutdownBrokenConnection () {
     fclose($this->peer);
@@ -110,8 +115,15 @@ class java_EmptyPipeChannel {
   function getName() {
 	return null;
   }
-  function getKeepAlive() {return "";}
-  function keepAlive() {}
+  function getKeepAlive() {return "<F p=\"E\" />";}
+  function keepAlive() {
+	$res = $this->fread(10); // <F p="E"/>
+	$val = $res[6];
+	if ($val != 'E') {
+	  trigger_error("An unchecked exception occured during script execution. Please check the server log files for details.", E_USER_ERROR);
+	  die (1);
+	}
+  }
   function shutdownBrokenConnection () {}
 }
 /**
@@ -332,7 +344,7 @@ class java_SimpleHttpHandler extends java_SocketHandler {
   	$errstr = null; $errno = null;
 	if($channelName[0]=='/') return $this->channel->open($this);
 	$peer = pfsockopen($this->host, $channelName, $errno, $errstr, 30);
-	if (!$peer) throw new java_RuntimeException("Could not connect to the context server {$this->host}:{$channelName}. Error message: $errstr ($errno)\n");
+	if (!$peer) throw new java_RuntimeException("No Pipe- or SocketContextServer for {$this->host}:{$channelName} available. Set promiscuous mode. Please see INSTALL.J2EE document for details. Error message: $errstr ($errno)\n");
 	stream_set_timeout($peer, -1);
 	return new java_SocketChannel($peer, $this->protocol, $this->host, $channelName);
   }
@@ -368,7 +380,7 @@ class java_HttpHandler extends java_SimpleHttpHandler {
 	  pfsockopen("{$this->ssl}{$this->host}", $this->port, $errno, $errstr, 30) :
 	   fsockopen("{$this->ssl}{$this->host}", $this->port, $errno, $errstr, 30);
 
-	if (!$socket) throw new java_ConnectException("Could not connect to the J2EE server {$this->ssl}{$this->host}:{$this->port}. Please start it, for example with the command: \"java -jar JavaBridge.jar SERVLET:8080 3 JavaBridge.log\" or, if the back end has been compiled to native code, with \"modules/java SERVLET:8080 3 JavaBridge.log\". Error message: $errstr ($errno)\n");
+	if (!$socket) throw new java_ConnectException("Could not connect to the J2EE server {$this->ssl}{$this->host}:{$this->port}. Please start it, for example with the command: \"java -jar JavaBridge.jar SERVLET:8080 3 JavaBridge.log\". Error message: $errstr ($errno)\n");
 	stream_set_timeout($socket, -1);
 	return $socket;
   }
@@ -416,7 +428,7 @@ class java_HttpHandler extends java_SimpleHttpHandler {
 
   function redirect() {
 	if(!isset($this->headers["redirect"])) { // no redirect received: must continue to send PUT requests
-	  throw new java_RuntimeException("No Pipe- or SocketContextServer available. See README section \"Security Issues\" for details.");
+	  throw new java_RuntimeException("No Pipe- or SocketContextServer available. Set promiscuous mode. Please see INSTALL.J2EE document for details.");
 	}
 	$channelName = $this->headers["redirect"];
 	$context = $this->headers["context"];

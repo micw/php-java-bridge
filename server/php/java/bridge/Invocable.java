@@ -31,7 +31,6 @@ package php.java.bridge;
  * java_context()-&gt;call(java_closure());
  * </code>
  * <br>
- * @see php.java.bridge.PhpProcedureProxy#getProxy(Class[])
  * @see php.java.bridge.PhpProcedure#invoke(Object, String, Object[])
  * @see php.java.bridge.PhpProcedure#invoke(Object, java.lang.reflect.Method, Object[])
  * @author jostb
@@ -45,5 +44,5 @@ public interface Invocable {
      * @return True on success, false otherwise.
      * @throws Exception
      */
-    public boolean call(PhpProcedureProxy kont) throws Exception;
+    public boolean call(Object kont) throws Exception;
 }

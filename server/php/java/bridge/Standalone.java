@@ -272,11 +272,6 @@ public class Standalone {
 	    new Util.Thread(new Runnable () {
 		public void run() {
 		    try {
-			if(false && System.getProperty("php.java.bridge.daemon_debug", "false").equals("true")) { 
-			    try { System.in.close(); } catch (IOException e) {e.printStackTrace();}
-			    System.out.close();
-			    System.err.close();
-			}  
 			Runtime.getRuntime().exec(args);
 		    } catch (IOException e) {
 			e.printStackTrace();

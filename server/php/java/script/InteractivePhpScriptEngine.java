@@ -48,7 +48,7 @@ import php.java.bridge.http.IContext;
 public class InteractivePhpScriptEngine extends InvocablePhpScriptEngine {
 
     private static final String restoreState = "" +
-    		"$javabridge_values=unserialize(java_values(java_context()->getAttribute('javabridge_values', 100)));" +
+    		"$javabridge_values=unserialize(java_values(java_context()->getAttribute('php.java.bridge.JAVABRIDGE_TMP_VALUES', 100)));" +
     		"if($javabridge_values)" +
     		"foreach ($javabridge_values as $javabridge_key=>$javabridge_val) " +
     		"{eval(\"\\$$javabridge_key=\\$javabridge_values[\\$javabridge_key];\");}\n";
@@ -56,7 +56,7 @@ public class InteractivePhpScriptEngine extends InvocablePhpScriptEngine {
     		"foreach (get_defined_vars() as $javabridge_key=>$javabridge_val) " +
     		"{if(in_array($javabridge_key, $javabridge_ignored_keys)) continue;" +
     		"eval(\"\\$javabridge_values[\\$javabridge_key]=\\$$javabridge_key;\");};" +
-    		"java_context()->setAttribute('javabridge_values', serialize($javabridge_values), 100);\n";
+    		"java_context()->setAttribute('php.java.bridge.JAVABRIDGE_TMP_VALUES', serialize($javabridge_values), 100);\n";
 
 
     /**

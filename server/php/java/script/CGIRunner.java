@@ -33,7 +33,6 @@ import java.io.Reader;
 import java.io.Writer;
 import java.util.Map;
 
-import php.java.bridge.PhpProcedureProxy;
 import php.java.bridge.Util;
 import php.java.bridge.Util.HeaderParser;
 
@@ -180,7 +179,7 @@ abstract class CGIRunner extends Thread {
      * @param script - The php continuation
      * @throws InterruptedException
      */
-    public synchronized void call(PhpProcedureProxy script) throws InterruptedException {
+    public synchronized void call(Object script) throws InterruptedException {
 	phpScript.setVal(script);
 	wait();
     }
@@ -190,13 +189,10 @@ abstract class CGIRunner extends Thread {
      * @return The php continuation.
      * @throws Exception 
      */
-    public PhpProcedureProxy getPhpScript() throws Exception {
+    public Object getPhpScript() throws Exception {
         Object val = phpScript.getVal(); 
-        try {
-            return (PhpProcedureProxy)val;
-        } catch (ClassCastException e) {
-            throw (Exception)val; 
-        }
+        if (val instanceof Exception) throw (Exception)val; 
+        return val;
     }
 
     /* Release the cont.call(cont) from PHP. After that the PHP script may terminate */

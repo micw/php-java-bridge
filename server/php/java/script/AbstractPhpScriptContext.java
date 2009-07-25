@@ -28,7 +28,7 @@ import java.io.Writer;
 
 import javax.script.SimpleScriptContext;
 
-import php.java.bridge.PhpProcedureProxy;
+import php.java.bridge.http.IContext;
 import php.java.bridge.http.WriterOutputStream;
 
 
@@ -82,10 +82,13 @@ public abstract class AbstractPhpScriptContext extends SimpleScriptContext imple
 	    return kont;
     }
     /**@inheritDoc*/
-    public boolean call(PhpProcedureProxy kont) throws Exception {
+    public boolean call(Object kont) throws Exception {
 	    if(!continuationCalled) {
-		    this.kont.call(kont);
+		    this.setAttribute(IContext.PHP_PROCEDURE, kont, IContext.ENGINE_SCOPE);
+		    // prefer the user's java_context()->call(java_closure())
 		    continuationCalled = true;
+
+		    this.kont.call(kont);
 	    }
 	    return true;
     }

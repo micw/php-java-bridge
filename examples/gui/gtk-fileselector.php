@@ -22,7 +22,7 @@ class GtkFileSelectorDemo {
     // Name is a property of AssemblyName, set_Name(...) calls the
     // setter, get_Name() calls the getter
     $assemblyName->set_Name("gtk-sharp");
-    $assemblyName->set_Version(new Mono("System.Version", "2.10"));
+    $assemblyName->set_Version(new Mono("System.Version", "2.12"));
 
     // pack converts the hex string into a byte array
     $assemblyName->setPublicKeyToken(pack("H16", "35e10195dab3c99f"));
@@ -45,11 +45,11 @@ class GtkFileSelectorDemo {
     $Application->Init();
 
     $filew = $this->filew = new Mono("Gtk.FileSelection", "Open a file ...");
-    $filew->add_DeleteEvent (new Mono("Gtk.DeleteEventHandler", mono_closure($this, "quit")));
+    $filew->add_DeleteEvent (new Mono("Gtk.DeleteEventHandler", mono_closure($this, "quit", mono('Gtk.DeleteEventHandler$Method'))));
     $b=$filew->get_OkButton();
-    $b->add_Clicked (new Mono("System.EventHandler", mono_closure($this, "ok")));
+    $b->add_Clicked (new Mono("System.EventHandler", mono_closure($this, "ok", mono('System.EventHandler$Method'))));
     $b=$filew->get_CancelButton();
-    $b->add_Clicked (new Mono("System.EventHandler", mono_closure($this, "quit")));
+    $b->add_Clicked (new Mono("System.EventHandler", mono_closure($this, "quit", mono('System.EventHandler$Method'))));
     $filew->set_Filename ("penguin.png");
     $filew->Show();
   }

@@ -1,3 +1,62 @@
+2009-07-19    <jostb@intern>
+
+	* documentation/API: removed
+	
+	* server/documentation/API: removed
+	
+	* php-java-bridge.spec: BuildRequire ant and phpdoc
+	
+	* php-java-bridge.spec: Use version number
+
+	* examples/gui/gtk-button.php, examples/gui/gtk-fileselector.php, examples/gui/swt-button.php:
+	Set the interface.
+
+	* examples/search/lucene_search.php, examples/office/itext_pdf.php: PHP 5.3 uses \, not ::
+
+	* server/Makefile.am, server/extract.sed: Squeeze Java.inc even further
+	
+	* server/php/java/bridge/PhpProcedureProxy.php: Removed
+	
+	* server/META-INF/java/Client.inc
+	(checkResult): Undeclared exceptions signal a fatal error and terminate the script
+	
+	* server/META-INF/java/JavaProxy.inc
+	(java_exception): rewritten
+	(java_InternalException): rewritten
+
+	* server/META-INF/java/Protocol.inc
+	(getKeepAlive, keepAlive): Signal fatal error if an unchecked
+	exception occured during script execution.
+	
+	* server/META-INF/java/JavaBridge.inc
+	(java_autoload_function): Use class::procedure() to invoke static
+	java procedures.
+	
+	* server/META-INF/java/Client.inc
+	(spl_autoload_register): Enable autoload for PHP >= 5.3. Can be
+	disabled with JAVA_DISABLE_AUTOLOAD
+	
+	* server/php/java/bridge/Response.java
+	(setResult): Prepare for Scalar interface.
+	
+	* server/META-INF/java/Client.inc
+	(apply, getContext, getSession, getServerName): Prepare for Scalar
+	interface.
+	
+	* server/META-INF/java/JavaProxy.inc 
+	(java_invoke, __destruct): Prepare for Scalar interface.
+	
+2009-07-12    <jostb@intern>
+
+	* server/php/java/bridge/Response.java
+	(wrapUndeclated): New function
+	(setResultException): Do not throw undeclared RuntimeExceptions. 
+
+	* server/php/java/bridge/JavaBridge.java
+	(offsetSet): allow $list[]=$val syntax.
+	(offsetUnset): Remove a value from the list
+	(offsetExists): Force a round-trip
+	
 2009-07-02    <jostb@intern>
 
 	* server/META-INF/java/JavaBridge.inc

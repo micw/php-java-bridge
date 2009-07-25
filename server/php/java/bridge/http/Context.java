@@ -36,7 +36,6 @@ import java.util.Map;
 
 import php.java.bridge.IManaged;
 import php.java.bridge.Invocable;
-import php.java.bridge.PhpProcedureProxy;
 import php.java.bridge.Util;
 
 
@@ -194,7 +193,7 @@ public class Context implements IManaged, Invocable, IContext {
      * @param kont dummy
      * @return false
      */
-    public boolean call(PhpProcedureProxy kont) {
+    public boolean call(Object kont) {
 	return false;
     }
     protected void setGlobalScope(Map globalScope) {

@@ -1163,7 +1163,6 @@ public final class Util {
     }
     /** Wrapper for the Mono StreamWriter */ 
     private static class MonoOutputStream extends OutputStream {
-	Class StreamWriter;
 	Object streamWriter;
 	private Method Write, Close, Flush;
 	public MonoOutputStream(Class StreamWriter, Object streamWriter) throws SecurityException, NoSuchMethodException {

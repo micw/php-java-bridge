@@ -2,22 +2,22 @@
 
 java_autoload("itext.jar");
 
-use com::lowagie::text;
-use com::lowagie::text::pdf;
+use com\lowagie\text;
+use com\lowagie\text\pdf;
 
 try {
-  $document = new text::Document();
-  $out = new java::io::ByteArrayOutputStream();
-  $pdfWriter = pdf::PdfWriter::type()->getInstance($document, $out);
+  $document = new text\Document();
+  $out = new java\io\ByteArrayOutputStream();
+  $pdfWriter = pdf\PdfWriter::type()->getInstance($document, $out);
 
   $document->open();
-  $font = text::FontFactory::type()->getFont(
-	      text::FontFactory::type()->HELVETICA, 
+  $font = text\FontFactory::type()->getFont(
+	      text\FontFactory::type()->HELVETICA, 
 	      24, 
-	      text::Font::type()->BOLDITALIC, 
-	      new java::awt::Color(0, 0, 255));
+	      text\Font::type()->BOLDITALIC, 
+	      new java\awt\Color(0, 0, 255));
   
-  $paragraph = new text::Paragraph("Hello World", $font);
+  $paragraph = new text\Paragraph("Hello World", $font);
   $document->add($paragraph);
 
   $document->close();

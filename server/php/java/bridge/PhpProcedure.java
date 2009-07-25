@@ -34,7 +34,7 @@ import java.util.Map;
  * This class takes the supplied PHP environment and creates a dynamic
  * proxy for calling PHP code.
  */
-public class PhpProcedure implements InvocationHandler {
+public final class PhpProcedure implements InvocationHandler {
 	
     private IJavaBridgeFactory bridge;
     private long object;

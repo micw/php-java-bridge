@@ -3,7 +3,7 @@ set -x
 LANG=C
 
 rm -rf [^C][^V][^S]* .??* *~
-cvs -Q update -APd 
+cvs -Q update -rINITIAL_BRANCH -Pd 
 find . -print0 | xargs -0 touch
 dirs=`ls -l | grep '^d' | fgrep -v CVS | awk '{print $9}'`
 find $dirs -name "CVS" -print | xargs rm -rf
@@ -60,4 +60,4 @@ chmod +x JavaBridge.war
 zip -q -r php-java-bridge_${version}_documentation.zip $list
 mv JavaBridgeTemplate.war "JavaBridgeTemplate`echo ${version}|sed 's/\.//g'`.war"
 rm -rf $dirs
-cvs -Q update -APd 
+cvs -Q update -rINITIAL_BRANCH -Pd 

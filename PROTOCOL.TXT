@@ -1,4 +1,4 @@
-VM Bridge protocol version 5.4
+VM Bridge protocol version 5.5
 
 Requests are marked with "->", request arguments with -), responses
 with "<-".  The server continues to process requests until EOF. Only
@@ -197,9 +197,11 @@ Result:
 
 <-)
 Exception:
-<E v=object m=stringRepresentation/>
+<E v=object m=[T|F]/>
 v: unsigned long
-m: string
+m: T signals an unchecked exception, F a checked exception. 
+Unchecked exceptions (e.g.: RuntimeException or Error) should
+terminate the script immediately
 
 <-)
 Composite:
@@ -225,8 +227,10 @@ v: unsigned long
 
 <->
 EndConnection:
-<F p=A|E />
-p: char (Keep [A]live, [E]nd connection)
+<F p=A|E|a|e />
+p: char (Keep [A]live, [E]nd connection).
+Lower-case letters signal that an unchecked exception occured during
+script execution.
 
 
 
