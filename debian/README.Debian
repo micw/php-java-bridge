@@ -1,48 +1,66 @@
 php-java-bridge for Debian
 --------------------------
 
-This Debian package was compiled for installing php5 C modules, j2ee server, docs and development files using separated packages.
+This Debian package was compiled for installing php5 C modules, j2ee server, 
+docs and development files using separated packages.
 Also, it must use Sun Java 6 and Tomcat 5.5, as of today.
 You do not need C implementation and php J2EE server versions simultaneously.
+You must use the J2EE version as soon you could, as C implementation is obsolete
+and unmaintained. This is the last release that it will be compiled and 
+uploaded.
+It will still be built from sources, for those who want.
 This version is not compatible with php 4.x.
 Use the command 
 debuild -rfakeroot -uc -us
-Compilation against GCJ is possible, but some tweaks must be done. Read the other document files.
+at a directory you downloaded the .dsc, .changes, .diff.gz, orig.tar.gz files
+and given you already have all devscripts tool chain Debian packages installed.
+Compilation against GCJ is possible, but some tweaks must be done. Read the 
+other document files.
 This package uses an EXPERIMENTAL and TOO permissive Tomcat 5.5 security policy.
 Only suitable for security benign development environments.
 Java security is not actually enough for blocking malicious code from php.
-The production quality solution should be using Security Enhanced Linux policies. 
+The production quality solution should be using Security Enhanced Linux 
+policies. 
 Read more at the "devel" package, 
 "/usr/share/doc/php-java-bridge-devel/examples/security" directory.
-As of today, you have to edit and compile SE Linux rules yourself.
-Please, contribute improved rules.
+This version includes minimal SE Linux rules for starting Tomcat 5.5 and 
+php-java-bridge.
+Please, contribute improved rules to the project.
 
 1. Creating and Building Debian package directly from CVS
 Most steps are only needed if you will commit a new version to the repository.
-If you want only to build an already commited version, you will need only create a local working area (checkout module) as anonymous cvs user and then jump to the step "building the package".
+If you want only to build an already commited version, you will need only create
+ a local working area (checkout module) as anonymous cvs user and then jump to 
+the step "building the package".
 
 1.1 Creating package 
 
 1.1.1 Create your local project area (checkout module to your local CVS area).
 See http://sourceforge.net/cvs/?group_id=117793
-The commands below are suitable for cvs commiters. Use your sourceforge cvs username. 
-If you are only building the package, use anonymous cvs checkout as instructed in the URL. 
+The commands below are suitable for cvs commiters. Use your sourceforge cvs 
+username. 
+If you are only building the package, use anonymous cvs checkout as instructed 
+in the URL. 
 
 mkdir ~/projects
 cd ~/projects
 export CVS_RSH=ssh
 cvs -d:ext:your_sourcefoge_cvs_username@php-java-bridge.cvs.sourceforge.net:/cvsroot/php-java-bridge checkout php-java-bridge
 
-Now you should have your own local area (checked out module) in ~/projects/php-java-bridge
+Now you should have your own local area (checked out module) in 
+~/projects/php-java-bridge
 If you are only building the package, jump to the step 2.
 
-1.1.1.1 If you are trying to merge a downloaded and then expanded src.tgz into the cvs tree, use the command below, adapting it to the suitable version.
+1.1.1.1 If you are trying to merge a downloaded and then expanded src.tgz into 
+the cvs tree, use the command below, adapting it to the suitable version.
 
 cp --recursive --update --verbose --archive --preserve php-java-bridge-5.2.2/*  --target-directory=php-java-bridge
 
-1.1.2 Commit the (eventual) changes to the repository. Ideally, you will not to do this, if step 1.1.1.1 is not needed.
+1.1.2 Commit the (eventual) changes to the repository. Ideally, you will not to 
+do this, if step 1.1.1.1 is not needed.
 
-1.1.3 Create an upstream tag. The formating is VERY strict. Adapt to the suitable version.
+1.1.3 Create an upstream tag. The formating is VERY strict. Adapt to the 
+suitable version.
 cd ~/projects/php-java-bridge
 cvs -f tag 'upstream_version_5_2_2' '.'
 
@@ -51,32 +69,40 @@ cd ~/projects/php-java-bridge
 
 dpatch-edit-patch patch 10_MakefileFrag_patch
 
-Copy around from a personal template or edit the  Makefile.frag into the ./debian directory.
+Copy around from a personal template or edit the  Makefile.frag into the 
+./debian directory.
 Exit dpatch shell. 
-All your modifications were being recorded and will result in the defined patch file name into the ./debian/patches directory.
+All your modifications were being recorded and will result in the defined patch 
+file name into the ./debian/patches directory.
 
-1.1.5 Modify the Debian changelog in the correct way. It is very important to follow the strict formating, as the Debian changelog is actualy used as one of the package control files.
+1.1.5 Modify the Debian changelog in the correct way. It is very important to 
+follow the strict formating, as the Debian changelog is actualy used as one of 
+the package control files.
 debchange -v 5.2.2-1
 
 1.1.6 Modify some other */debian files, if needed.
 
 1.1.7 Commit all changes.
 
-1.1.8 Create the Debian version tag. The formating is very strict. Adapt to the suitable version.
+1.1.8 Create the Debian version tag. The formating is very strict. Adapt to the 
+suitable version.
 cd ~/projects/php-java-bridge
 cvs -f tag 'debian_version_5_2_2-1' '.'
 
 
 2. Building the package from cvs tree.
-If you are only building the package, you could use the anonymous cvs pserver login and checkout as explained in previous item.
+If you are only building the package, you could use the anonymous cvs pserver 
+login and checkout as explained in previous item.
 mkdir ~/compilation_tmp
 cd ~/projects/php-java-bridge
 
-Hint: You need to specify the absolute path to the temporary scratchpad working area instead of ~/.
+Hint: You need to specify the absolute path to the temporary scratchpad working 
+area instead of ~/.
 
 cvs-buildpackage  -rfakeroot -uc -us -R. -W/home/andremachado/compilation_tmp
 
-The generated files will result at the specified temporary scratchpad working area.
+The generated files will result at the specified temporary scratchpad working 
+area.
 
 
 
@@ -84,4 +110,4 @@ The generated files will result at the specified temporary scratchpad working ar
 
 
 
- -- Andre Felipe Machado <andremachado@techforce.com.br>  Thu, 26 Mar 2009 10:31:33 -0300
+ -- Andre Felipe Machado <andremachado@techforce.com.br>  Thu, 28 Jul 2009 10:35:10 -0300
