@@ -2,7 +2,7 @@ Source: php-java-bridge
 Section: web
 Priority: optional
 Maintainer: Andre Felipe Machado <andremachado@techforce.com.br>
-Build-Depends:  debhelper (>= 5), libncurses5-dev (>= 5.5-2 ), libselinux1-dev (>= 1.30 ), libsepol1-dev (>= 1.12.24 ), php5-dev (>= 5.1.0 ) , automake (>= 1.6.3 ) | automake1.7 | automake1.8 | automake1.9, sun-java6-jdk (>= 1 ),  locales (>= 2.3.6.ds1-4 ),  gcc (>= 3.2 ),  make (>= 1 ), liblucene-java, libitext-java, dpatch, libtomcat5.5-java, libaprutil1-dev, libapr1-dev, libtcnative-1
+Build-Depends:  debhelper (>= 5), libncurses5-dev (>= 5.5-2 ), libselinux1-dev (>= 1.30 ), libsepol1-dev (>= 1.12.24 ), php5-dev (>= 5.1.0 ) , automake (>= 1.6.3 ) | automake1.7 | automake1.8 | automake1.9, sun-java6-jdk (>= 1 ),  locales (>= 2.3.6.ds1-4 ),  gcc (>= 3.2 ),  make (>= 1 ), liblucene-java, libitext-java, dpatch, libtomcat5.5-java, libaprutil1-dev, libapr1-dev, libtcnative-1, php-pear
 Standards-Version: 3.8.0
 XBS-Homepage: http://php-java-bridge.sourceforge.net
 
@@ -10,7 +10,7 @@ XBS-Homepage: http://php-java-bridge.sourceforge.net
 
 Package: php-java-bridge
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${php:Depends}, sun-java6-jre, liblucene-java, libitext-java, php5-cli, php5-cgi, libaprutil1, libapr1, libtcnative-1
+Depends: sun-java6-jre, liblucene-java, libitext-java, php5-cli, php5-cgi, libaprutil1, libapr1, libtcnative-1
 Conflicts: php-java-bridge-j2ee
 Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm
  The PHP/Java Bridge is an optimized, XML-based network 
@@ -28,7 +28,7 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm
 
 Package: php-java-bridge-j2ee
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${php:Depends}, sun-java6-jre, tomcat5.5, liblucene-java, libitext-java, libapache2-mod-jk, php5-cli, php5-cgi, libaprutil1, libapr1, libtcnative-1
+Depends: sun-java6-jre, tomcat5.5, liblucene-java, libitext-java, libapache2-mod-jk, php5-cli, php5-cgi, libaprutil1, libapr1, libtcnative-1
 Conflicts: php-java-bridge
 Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm
  The PHP/Java Bridge is an optimized, XML-based network 
@@ -43,7 +43,7 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm
 
 Package: php-java-bridge-docs
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${php:Depends}
+Depends: 
 Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm
  The PHP/Java Bridge is an optimized, XML-based network 
  protocol which can be used to connect a native script 
@@ -56,7 +56,7 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm
 
 Package: php-java-bridge-j2ee-docs
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${php:Depends}
+Depends: 
 Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm
  The PHP/Java Bridge is an optimized, XML-based network 
  protocol which can be used to connect a native script 
@@ -69,7 +69,7 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm
 
 Package: php-java-bridge-devel
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${php:Depends}, sun-java6-jdk, liblucene-java, libitext-java, php-java-bridge | php-java-bridge-j2ee
+Depends: sun-java6-jdk, liblucene-java, libitext-java, php-java-bridge | php-java-bridge-j2ee
 Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm
  The PHP/Java Bridge is an optimized, XML-based network 
  protocol which can be used to connect a native script 
@@ -84,7 +84,7 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm
 
 Package: php-java-bridge-j2ee-selinux
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${php:Depends}, sun-java6-jre, tomcat5.5, liblucene-java, libitext-java, php-java-bridge-j2ee
+Depends: sun-java6-jre, tomcat5.5, liblucene-java, libitext-java, php-java-bridge-j2ee
 Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm security
  The PHP/Java Bridge is an optimized, XML-based network 
  protocol which can be used to connect a native script 
@@ -102,7 +102,7 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm se
 
 Package: php-java-bridge-selinux
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${php:Depends}, sun-java6-jre, tomcat5.5, liblucene-java, libitext-java, php-java-bridge
+Depends: sun-java6-jre, tomcat5.5, liblucene-java, libitext-java, php-java-bridge
 Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm security.
  The PHP/Java Bridge is an optimized, XML-based network 
  protocol which can be used to connect a native script 

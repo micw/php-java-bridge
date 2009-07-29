@@ -132,7 +132,7 @@ php-java-bridge-j2ee:
 	dh_compress  -p$@
 	dh_fixperms  -p$@
 #	dh_perl -i
-#	dh_makeshlibs -i
+	dh_makeshlibs -p$@
 	dh_installdeb -p$@
 	dh_shlibdeps  -p$@
 	dh_gencontrol  -p$@
@@ -166,7 +166,7 @@ php-java-bridge-j2ee-selinux:
 	dh_compress  -p$@
 	dh_fixperms  -p$@
 #	dh_perl -i
-#	dh_makeshlibs -i
+	dh_makeshlibs -p$@
 	dh_installdeb -p$@
 	dh_shlibdeps  -p$@
 	dh_gencontrol  -p$@
@@ -199,7 +199,7 @@ php-java-bridge-selinux:
 	dh_compress  -p$@
 	dh_fixperms  -p$@
 #	dh_perl -i
-#	dh_makeshlibs -i
+	dh_makeshlibs -p$@
 	dh_installdeb -p$@
 	dh_shlibdeps  -p$@
 	dh_gencontrol  -p$@
@@ -233,7 +233,7 @@ php-java-bridge-devel:
 	dh_compress  -p$@
 	dh_fixperms  -p$@
 #	dh_perl -i
-#	dh_makeshlibs -i
+	dh_makeshlibs -p$@
 	dh_installdeb  -p$@
 	dh_shlibdeps  -p$@
 	dh_gencontrol  -p$@
@@ -256,6 +256,7 @@ php-java-bridge-docs:
 	dh_strip  -p$@
 	dh_compress  -p$@
 	dh_fixperms  -p$@
+	dh_makeshlibs -p$@
 	dh_installdeb  -p$@
 	dh_shlibdeps  -p$@
 	dh_gencontrol  -p$@
@@ -286,7 +287,7 @@ php-java-bridge-j2ee-docs:
 	dh_compress  -p$@
 	dh_fixperms  -p$@
 #	dh_perl -i
-#	dh_makeshlibs -i
+	dh_makeshlibs -p$@
 	dh_installdeb  -p$@
 	dh_shlibdeps  -p$@
 	dh_gencontrol  -p$@
@@ -320,7 +321,7 @@ binary-arch:
 	dh_compress -a
 	dh_fixperms -a
 #	dh_perl -a
-#	dh_makeshlibs -a
+	dh_makeshlibs -p$@
 	dh_installdeb -a
 	dh_shlibdeps -a
 	dh_gencontrol -a
