@@ -26,6 +26,12 @@ Read more at the "devel" package,
 This version includes minimal SE Linux rules for starting Tomcat 5.5 and 
 php-java-bridge.
 Please, contribute improved rules to the project.
+This version needs PhpDocumentor in order to build. It is not packaged for
+Debian yet, so you must install pear package and then execute, logged as root 
+and if your Apache document root is at /var/www:
+# pear config-set data_dir /var/www/pear
+# pear  install --alldeps PhpDocumentor
+
 
 1. Creating and Building Debian package directly from CVS
 Most steps are only needed if you will commit a new version to the repository.
@@ -110,4 +116,4 @@ area.
 
 
 
- -- Andre Felipe Machado <andremachado@techforce.com.br>  Thu, 28 Jul 2009 10:35:10 -0300
+ -- Andre Felipe Machado <andremachado@techforce.com.br>  Thu, 06 Aug 2009 10:35:10 -0300
