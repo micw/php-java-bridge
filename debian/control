@@ -2,7 +2,7 @@ Source: php-java-bridge
 Section: web
 Priority: optional
 Maintainer: Andre Felipe Machado <andremachado@techforce.com.br>
-Build-Depends:  debhelper (>= 5), libncurses5-dev (>= 5.5-2 ), libselinux1-dev (>= 1.30 ), libsepol1-dev (>= 1.12.24 ), php5-dev (>= 5.1.0 ) , automake (>= 1.6.3 ) | automake1.7 | automake1.8 | automake1.9, sun-java6-jdk (>= 1 ),  locales (>= 2.3.6.ds1-4 ),  gcc (>= 3.2 ),  make (>= 1 ), liblucene-java, libitext-java, dpatch, libtomcat5.5-java, libaprutil1-dev, libapr1-dev, libtcnative-1, php-pear, libsemanage1, checkpolicy, libapache2-mod-jk, selinux-policy-dev, apache2-prefork-dev, libxalan110
+Build-Depends:  debhelper (>= 5), libncurses5-dev (>= 5.5-2 ), libselinux1-dev (>= 1.30 ), libsepol1-dev (>= 1.12.24 ), php5-dev (>= 5.1.0 ) , automake (>= 1.6.3 ) | automake1.7 | automake1.8 | automake1.9, sun-java6-jdk (>= 1 ),  locales (>= 2.3.6.ds1-4 ),  gcc (>= 3.2 ),  make (>= 1 ), liblucene-java, libitext-java, dpatch, libtomcat5.5-java, libaprutil1-dev, libapr1-dev, libtcnative-1, php-pear, libsemanage1, checkpolicy, libapache2-mod-jk, selinux-policy-dev, apache2-prefork-dev, libxalan110, dh-make, dh-make-php, php5-cli
 Standards-Version: 3.8.0
 XBS-Homepage: http://php-java-bridge.sourceforge.net
 
