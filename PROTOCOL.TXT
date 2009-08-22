@@ -269,29 +269,86 @@ If the header is missing, the following default values are used
 Request$PhpNull, Integer, Boolean, etc. by default.
 
 
-Context switches:
------------------
+Process communication
+---------------------
 
-When deployed into a servlet engine, the bridge uses a HTTP PUT
-request to a web application to initiate the communication. After that
-the client is redirected to use the fastest communication link
-available. A "ContextRunner" represents the communication link, and a
-"ContextServer" stands for the web application.
+  1) a simple client connects to a simple socket listener
 
-A client may initiate a context switch if it has received a context ID
-belonging to a different ContextServer while keeping a persistent
-connection to a ContextRunner. Or when switching from the initial HTTP
-PUT request to a new ContextRunner.
+  2) php connects to a simple socket or unix-domain socket listener
 
-It is possible to send the header even though the connection has
-already been established. The bridge will ignore the header if the
-second byte is not 0xFF. This is convenient as some clients don't know
-if they use a fresh or a recycled connection.
+  3) php connects to a JEE server
 
-Otherwise the back end interprets the following two bytes (low/high)
-as the length of the following context string. The server acknowledges
-the context switch by sending the byte 0x0 on the new or recycled
-connection. The client must read and discard this byte.
+  4) php is running within a JEE server
 
+
+ad 1) 
+  client opens socket connection
+  client sends protocol requests
+  client closes the socket connection
+
+ad 2)
+  php opens a socket connection
+  php sends the bytes \0177 OPTIONS to initiate the communication
+  php sends protocol requests
+  php finishes the communication sending <F p="A"/>
+   java sends back a <F p="A"/>
+  ...
+  php transparently re-uses the socket connection
+  php sends the bytes \0177 OPTIONS
+  php sends protocol requests
+  php finishes the communication sending <F p="E"/>
+   java sends back a <F p="E"/>
+  php closes the socket connection
+
+ad 3)
+  php opens a HTTP socket connection to ${JAVA_HOSTS}[0] e.g.: localhost:8080
+  php sends PUT ${JAVA_SERVLET}\r\n\r\n
+                      e.g.: PUT /JavaBridge/JavaBridge.phpjavabridge\r\n\r\n
+  php sends the bytes \0177 OPTIONS to initiate the communication
+  php sends protocol requests
+   java servlet responds with a protocol response
+   java servlet sends response HEADERS: redirect (e.g. 9267) and context ID
+  php opens a socket connection to port 9267
+  php sends a "redirect id"; the bytes \0177 \0377 LEN_ID[1] LEN_ID[0] ID
+   java thread sends \0 to avoid ack delay[1]
+  php sends protocol requests
+  php finishes the communication sending <F p="A"/> 
+   java thread sends back a <F p="A"/>
+  ...
+  php (re-)opens a HTTP socket connection to ${JAVA_HOSTS}[0] e.g.: localhost:8080
+  php sends PUT ${JAVA_SERVLET}\r\n\r\n
+                         e.g.: /JavaBridge/JavaBridge.phpjavabridge\r\n\r\n
+  php sends the bytes \0177 OPTIONS to initiate the communication
+  php sends protocol requests
+   java servlet responds with a protocol response
+   java servlet sends response HEADERS: redirect (e.g. 9267) and context ID
+  php transparently re-uses the socket connection to port 9267
+  php sends the bytes \0177 \0377 LEN_ID[1] LEN_ID[0] ID
+   java thread sends \0 to avoid ack delay[1]
+  php sends protocol requests
+  php finishes the communication sending <F p="E"/> 
+   java thread sends back a <F p="E"/>
+
+ad 4)
+  php opens a socket connection
+  php sends the bytes \0177 OPTIONS LEN_ID[1] LEN_ID[0] ID
+   java thread sends \0 to avoid ack delay[1]
+  php sends protocol requests
+  php finishes the communication sending <F p="A"/> 
+   java thread sends back a <F p="A"/>
+  ...
+  php transparently re-uses the socket connection
+  php sends the bytes \0177 OPTIONS LEN_ID[1] LEN_ID[0] ID
+   java thread sends \0 to avoid ack delay[1]
+  php sends protocol requests
+  php finishes the communication sending <F p="E"/> 
+   java thread sends back a <F p="E"/>
+
+
+[1] write/write/read delay is up to 500ms on free bsd operating
+system.
+
+NOTES  
+-----
 It is possible to "ping" the server by sending it the byte 0x0. If
 alive it will send back a 0x0.

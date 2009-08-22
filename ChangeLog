@@ -1,3 +1,70 @@
+2009-08-16    <jostb@intern>
+	
+	* security/module/php-java-bridge.te: Support Fedora 11
+	
+	* server/META-INF/java/JavaBridge.inc
+	(java_call_with_continuation): New procedure
+	
+	* config.m4: Removed mono.so
+
+	* init_cfg.c.in
+	(update_socketname): Do not set abstract namespace if unix domain
+	sockets are not used.
+
+	* server/META-INF/java/Protocol.inc
+	(createSimpleHandler): rewritten
+	(java_get_simple_channel): rewritten
+
+	* server/php/java/bridge/IDocHandler.java
+	(createParserString): Removed
+	(parseHeader): New method.
+
+	* server/php/java/bridge/IJavaBridgeFactory.java
+	(parseHeader): New method
+
+	* server/php/java/bridge/JavaBridgeFactory.java
+	(parseHeader): New method
+
+	* server/php/java/bridge/http/ContextFactory.java
+	(parseHeader): New method
+
+	* server/php/java/bridge/http/SimpleContextFactory.java
+	(parseHeader): New method
+	
+	* server/php/java/bridge/Request.java
+	(parseHeader): New method
+	
+	* server/php/java/bridge/Parser.java
+	(parse): Delegate to parseHeader()
+
+	* server/php/java/bridge/JavaBridgeRunner.java
+	(getRequiredStandaloneInstance): Removed
+	(handleDoGet): Cache Java.inc only
+
+	* server/php/java/bridge/Standalone.java
+	(init): Rewritten
+	
+	* server/php/java/bridge/StandaloneGCC.java
+	(main): Rewritten
+	
+	* server/php/java/script/InvocablePhpScriptEngine.java
+	(eval): Handle URLReader
+
+	* server/php/java/script/URLReader.java
+	(URLReader): New constructor
+	(read): Allow POST and PUT
+
+	* server/php/java/servlet/ContextLoaderListener.java
+	(contextInitialized): Catch a NoClassDefFoundError so that a
+	missing ScriptEngine API doesn't stop the deployment process.
+	
+2009-08-06    <jostb@intern>
+	
+	* server/META-INF/java/JavaBridge.inc: Removed obsolete version check.
+
+	* server/META-INF/java/JavaBridge.inc
+	(java_autoload): Documentation update
+
 2009-07-19    <jostb@intern>
 
 	* documentation/API: removed

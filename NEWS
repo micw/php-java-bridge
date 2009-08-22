@@ -3,6 +3,40 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 5.5.1
+
+* Improved unix-domain socket handling: If
+
+    java.socketname=/path/to/some/unix.socket
+
+  is set in the php ini file, the bridge starts a Java process
+  listening on that socket.
+
+* Improved local tcp socket handling: If 
+
+    define ("JAVA_SERVLET", false);
+    define ("JAVA_HOSTS", PORT); // e.g.: PORT = 9090
+
+  is set before including Java.inc, the bridge starts a Java process
+  listening on that port.
+
+* Improved JSR 223 standalone invocable script engine: When running in
+  standalone mode, the InvocablePhpScriptEngine can now connect to a
+  remote PHP application server, too. Example:
+
+  PHP script "hello.php":
+   <?php require_once("java/Java.inc");
+    function f() {return java_server_name();};
+    java_call_with_continuation(java_closure());
+   ?>
+
+  The Java code:
+    ScriptEngine e = (new ScriptEngineManager()).getEngineByName("php-invocable");
+    e.eval(new php.java.script.URLReader(new URL("http://localhost/hello.php")));
+    System.out.println(((Invocable)e).invokeMethod(e.get("php.java.bridge.PhpProcedure"), "f", new Object[]{}));
+    ((Closeable)e).close();
+ 
+
 Version 5.5
 
 * mono_closure() and java_closure no longer try to determine the type

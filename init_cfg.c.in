@@ -78,7 +78,8 @@ void EXT_GLOBAL(update_socketname)(const char*new_value) {
 	if((EXT_GLOBAL (ini_set) &U_SOCKNAME)) free(EXT_GLOBAL(cfg)->sockname);
 	EXT_GLOBAL(cfg)->sockname=strdup(new_value);
 #if defined(HAVE_ABSTRACT_NAMESPACE) && !defined(CFG_JAVA_SOCKET_INET)
-	EXT_GLOBAL(cfg)->sockname[0]='@';
+	if (EXT_GLOBAL(cfg)->sockname[0]=='/')
+	  EXT_GLOBAL(cfg)->sockname[0]='@';
 #endif
 	EXT_GLOBAL(cfg)->socketname_set=1;
 	assert(EXT_GLOBAL(cfg)->sockname); if(!EXT_GLOBAL(cfg)->sockname) exit(6);

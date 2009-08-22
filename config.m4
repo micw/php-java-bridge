@@ -91,38 +91,6 @@ if test "$PHP_JAVA" != "no" || test "$PHP_MONO" != "no"  ; then
         done
         fi
 
-## MONO
-        if test "$PHP_MONO" != "no";then 
-# create mono.so, compile with -DEXTENSION_DIR="\"$(EXTENSION_DIR)\""
-         # --with-mono=/path/to/mono.exe,/path/to/ikvmc/dir
-         PHP_JRE="`echo $PHP_MONO | LANG=C awk -F, '{print $1}'`"
-
-	PHP_NEW_EXTENSION(mono, mono_dir/java.c mono_dir/init_cfg.c ,$ext_shared,,[-DEXTENSION_DIR=\"\\\\\"\\\$(EXTENSION_DIR)\\\\\"\" -Imono_dir])
-          EXTENSION_NAME=MONO
-	  if test "X$PHP_JRE" = "X" || test "X$PHP_JRE" = "Xyes"; then
-		  PHP_JAVA_BIN="mono"
-	  else
-		  PHP_JAVA_BIN="${PHP_JRE}"
-          fi
-	  COND_GCJ=0
-          PHP_JRE=${EXTENSION_DIR} # home dir
-# create init_cfg.c from the template (same as AC_CONFIG_FILES)
-# note: PHP_JAVA is JRE_HOME, PHP_JAVA_SDK is JAVA_HOME and 
-# PHP_JAVA_BIN is ${JRE_HOME}/bin/java
-        mkdir $ext_builddir/mono_dir 2>/dev/null
-	BRIDGE_VERSION="`cat $ext_builddir/VERSION`"
-        for i in init_cfg.c init_cfg.h; do 
-	  sed "s*@PHP_JAVA@*${PHP_JRE}*
-	     s*@PHP_JAVA_SDK@*${PHP_JAVA}*
-	     s*@COND_GCJ@*${COND_GCJ}*
-             s*@PHP_JAVA_BIN@*${PHP_JAVA_BIN}*
-             s*@EXTENSION@*${EXTENSION_NAME}*
-             s*@BRIDGE_VERSION@*${BRIDGE_VERSION}*" \
-            <$ext_builddir/${i}.in >$ext_builddir/mono_dir/${i}
-        done
-        ln java.c php_java.h php_wrapper.h mono_dir
-        fi
-
 PHP_ADD_MAKEFILE_FRAGMENT
 if test "$PHP_BACKEND" = "yes" ; then
 # bootstrap the server's configure script
