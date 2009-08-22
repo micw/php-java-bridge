@@ -29,7 +29,7 @@ package php.java.bridge;
  * @author jostb
  *
  */
-class ParserString {
+final class ParserString {
     protected byte[] string;
     protected int off;
     protected int length;

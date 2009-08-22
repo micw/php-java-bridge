@@ -128,18 +128,6 @@ public class JavaBridgeRunner extends HttpServer {
 	runner.isStandalone = true;
 	return runner;
     }
-    /**
-     * Return a standalone instance. 
-     * It sets a flag which indicates that the runner will be used as a standalone component outside of the Servlet environment.
-     * @return a standalone runner
-     * @throws IOException
-     */
-    public static synchronized JavaBridgeRunner getRequiredStandaloneInstance() throws IOException {
-	if(runner!=null) return runner;
-	runner = new JavaBridgeRunner();
-	runner.isStandalone = true;
-	return runner;
-    }
     /** Only for internal use */
     public static ContextServer contextServer = null;
 
@@ -434,7 +422,6 @@ public class JavaBridgeRunner extends HttpServer {
 	byte[] buf;
 	OutputStream out;
 	int c;
-	boolean ignoreCache = false;
 	String name =req.getRequestURI();
 
 	if(name==null) { super.doGet(req, res); return; }
@@ -458,7 +445,7 @@ public class JavaBridgeRunner extends HttpServer {
 	    showTextFile(name, params, f, length, req, res);
 	    return;
 	}
-	if(cache != null) {
+	if(cache != null && name.endsWith("Java.inc")) {
 	    res.setContentLength(cache.length);
 	    res.getOutputStream().write(cache);
 	    return;
@@ -475,14 +462,11 @@ public class JavaBridgeRunner extends HttpServer {
             } catch (SecurityException e) {/*ignore*/        	
             } catch (Exception e) {Util.printStackTrace(e);
             }
-	} else {
-	    ignoreCache = true;
 	}
 	name = name.replaceFirst("/JavaBridge", "META-INF");
 	InputStream in = JavaBridgeRunner.class.getClassLoader().getResourceAsStream(name);
 	if(in==null) { // Java.inc may not exist in the source download, use JavaBridge.inc instead.
 	    name = name.replaceFirst("Java\\.inc", "JavaBridge.inc");
-	    ignoreCache = true;
 	    in = JavaBridgeRunner.class.getClassLoader().getResourceAsStream(name);
 	    if(in==null) {
 		res.setContentLength(ERROR.length); res.getOutputStream().write(ERROR); 
@@ -500,9 +484,7 @@ public class JavaBridgeRunner extends HttpServer {
 	    res.addHeader("Last-Modified", "Wed, 17 Jan 2007 19:52:43 GMT"); // bogus
 	    res.setContentLength(bout.size());
 	    out = res.getOutputStream();
-	    byte[] cache = bout.toByteArray();
-	    out.write(cache);
-	    if(!ignoreCache) this.cache = cache;
+	    out.write(bout.toByteArray());
 	} catch (IOException e) { 
 	    /* may happen when the client is not interested, see require_once() */
 	 } finally {

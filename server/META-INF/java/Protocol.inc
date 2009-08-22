@@ -38,8 +38,8 @@
   obligated to do so.  If you do not wish to do so, delete this
   exception statement from your version. */
 
-require_once ("${JAVA_BASE}/Options.inc");
-require_once ("${JAVA_BASE}/Client.inc");
+require_once (java_get_base()."/Options.inc");
+require_once (java_get_base()."/Client.inc");
 
 /**
  * @access private
@@ -109,7 +109,6 @@ class java_SocketChannel {
  */
 class java_EmptyPipeChannel {
   function open($handler) {
-  	if (false) $handler = $handler;
 	throw new java_RuntimeException("protocol error: socket channel names must not start with a slash");
   }
   function getName() {
@@ -144,7 +143,6 @@ class java_PipeChannel extends java_EmptyPipeChannel {
 	umask($mask);
   }
   function open($handler) {
-  	if (false) $handler = $handler;
   	
 	$this->peerr = fopen($this->iname, "r");
 	$this->peerr_desc = array($this->peerr);
@@ -343,8 +341,8 @@ class java_SimpleHttpHandler extends java_SocketHandler {
   function getChannel($channelName) {
   	$errstr = null; $errno = null;
 	if($channelName[0]=='/') return $this->channel->open($this);
-	$peer = pfsockopen($this->host, $channelName, $errno, $errstr, 30);
-	if (!$peer) throw new java_RuntimeException("No Pipe- or SocketContextServer for {$this->host}:{$channelName} available. Set promiscuous mode. Please see INSTALL.J2EE document for details. Error message: $errstr ($errno)\n");
+	$peer = pfsockopen($this->host, $channelName, $errno, $errstr, 20);
+	if (!$peer) throw new java_IllegalStateException("No Pipe- or SocketContextServer for {$this->host}:{$channelName} available. Set promiscuous mode. Please see INSTALL.J2EE document for details. Error message: $errstr ($errno)\n");
 	stream_set_timeout($peer, -1);
 	return new java_SocketChannel($peer, $this->protocol, $this->host, $channelName);
   }
@@ -377,10 +375,10 @@ class java_HttpHandler extends java_SimpleHttpHandler {
   /* Do not pfsockopen here, the J2EE server may not be able to handle
     hundreds of persistent connections to the servlet very well */
 	$socket = JAVA_PERSISTENT_SERVLET_CONNECTIONS ? 
-	  pfsockopen("{$this->ssl}{$this->host}", $this->port, $errno, $errstr, 30) :
-	   fsockopen("{$this->ssl}{$this->host}", $this->port, $errno, $errstr, 30);
+	  pfsockopen("{$this->ssl}{$this->host}", $this->port, $errno, $errstr, 20) :
+	   fsockopen("{$this->ssl}{$this->host}", $this->port, $errno, $errstr, 20);
 
-	if (!$socket) throw new java_ConnectException("Could not connect to the J2EE server {$this->ssl}{$this->host}:{$this->port}. Please start it, for example with the command: \"java -jar JavaBridge.jar SERVLET:8080 3 JavaBridge.log\". Error message: $errstr ($errno)\n");
+	if (!$socket) throw new java_ConnectException("Could not connect to the J2EE server {$this->ssl}{$this->host}:{$this->port}. Please start it. Or define('JAVA_HOSTS', 8080); define('JAVA_SERVLET', false); before including 'Java.inc' and try again. Error message: $errstr ($errno)\n");
 	stream_set_timeout($socket, -1);
 	return $socket;
   }
@@ -419,7 +417,6 @@ class java_HttpHandler extends java_SimpleHttpHandler {
 	return $count;
   }
   function read($size) {
-  	if (false) $size = $size;
   	
  	if(is_null($this->headers)) $this->parseHeaders();
 	$data = fread($this->socket, $this->headers['content_length']);
@@ -428,7 +425,7 @@ class java_HttpHandler extends java_SimpleHttpHandler {
 
   function redirect() {
 	if(!isset($this->headers["redirect"])) { // no redirect received: must continue to send PUT requests
-	  throw new java_RuntimeException("No Pipe- or SocketContextServer available. Set promiscuous mode. Please see INSTALL.J2EE document for details.");
+	  throw new java_IllegalStateException("No Pipe- or SocketContextServer available. Set promiscuous mode. Please see INSTALL.J2EE document for details.");
 	}
 	$channelName = $this->headers["redirect"];
 	$context = $this->headers["context"];
@@ -534,24 +531,44 @@ class java_Protocol {
   /**
    * connect to a local channel (no servlet engine or app server)
    */
-  function createSimpleHandler($name) {
+  function createSimpleHandler($name, $again=true) {
 	$channelName = $name;
     $errno = null; $errstr = null;
-    if(!is_string($channelName)) {
-	  $peer = pfsockopen($host="127.0.0.1", $channelName, $errno, $errstr, 30);
+    if(is_numeric($channelName)) {
+	  $peer = @pfsockopen($host="127.0.0.1", $channelName, $errno, $errstr, 5);
+      /* raise mono connect exception--do not delete this line, it is used when generating Mono.inc from Java.inc */
 	} else {
 	  $type = $channelName[0];
 	  if($type=='@' || $type=='/') {		 // unix domain socket
 		if($type=='@') $channelName[0]="\0"; // abstract name space
-		$peer = pfsockopen($host="unix://${channelName}", null, $errno, $errstr, 30);
-        $channelName = null;
-	  }
-	  else {					// tcp socket
+		$peer = @pfsockopen($host="unix://${channelName}", $channelName = null, $errno, $errstr, 5);
+	  } else {					// tcp socket
 		list($host, $channelName) = explode(":", $channelName);
-		$peer = pfsockopen($host, $channelName, $errno, $errstr, 30);
+		$peer = pfsockopen($host, $channelName, $errno, $errstr, 20);
+		if (!$peer) 
+		    throw new java_ConnectException("No Java server at $host:$channelName. Error message: $errstr ($errno)");
 	  }
 	}
-    if (!$peer) throw new java_ConnectException("Could not connect to the server $name. Error message: $errstr ($errno)\n");
+    if (!$peer) {
+
+	  if(is_null($channelName) && ($type=='@' || $type=='/')) {
+	      // unix domain sockets
+		  $java = (ini_get("extension_dir")."/java");
+		  if (!file_exists($java)) trigger_error("Could not find $java. Remove java.so and php_java.dll and try again.", E_USER_ERROR);
+          $java_cmd = "$java -Dphp.java.bridge.daemon=true LOCAL:$name 0";
+      } else {
+	  	  $java=file_exists(ini_get("extension_dir")."/JavaBridge.jar")?ini_get("extension_dir")."/JavaBridge.jar":(java_get_base()."/JavaBridge.jar");
+		  if (!file_exists($java)) 
+		      throw new java_IOException("Could not find $java in ".getcwd().". Download http://php-java-bridge.sf.net/pjb/java/JavaBridge.jar and try again.");
+	      $java_cmd = "java -Dphp.java.bridge.daemon=true -jar $java INET_LOCAL:$channelName 0"; 
+      }
+
+	  if (!$again) 
+	     throw new java_ConnectException("No Java! Please run it with: $java_cmd. Error message: $errstr ($errno)");
+
+	  system ($java_cmd);
+	  return $this->createSimpleHandler($name, false);
+    }
     stream_set_timeout($peer, -1);
     $handler = new java_SocketHandler($this, new java_SocketChannel($peer, $this, $host, $channelName));
 
@@ -561,11 +578,7 @@ class java_Protocol {
     return $handler;
   }
   function java_get_simple_channel() {
-	if (JAVA_HOSTS && (!JAVA_SERVLET || (JAVA_SERVLET == "Off")) && ($sel=JAVA_HOSTS) && ($sel[0]=='@' || ($sel[0]=='/'))) {
-	  $hosts = explode(";", JAVA_HOSTS);
-	  return $hosts[0];
-	}
-    return null;
+	return (JAVA_HOSTS&&(!JAVA_SERVLET||(JAVA_SERVLET=="Off"))) ? JAVA_HOSTS : null;
   }
   function createHandler() {
 	if(!java_getHeader('X_JAVABRIDGE_OVERRIDE_HOSTS', $_SERVER)&&

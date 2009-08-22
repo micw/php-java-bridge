@@ -55,10 +55,10 @@ import php.java.bridge.Util.HeaderParser;
  * This class can be used to connect to a HTTP server to allocate and to invoke php scripts.
  * Example:<p>
  * <code>
- * PhpScriptEngine e = new PhpScriptEngine();<br>
- * e.eval(new URLReader(new URL("http://localhost:80/foo.php"));<br>
+ * ScriptEngine e = new ScriptEngineManager().getEngineByName("php-invocable");<br>
+ * e.eval(new URLReader(new URL("http://localhost:80/JavaProxy.php"));<br>
  * System.out.println(((Invocable)e).invoke("java_get_server_name", new Object[]{}));<br>
- * e.release();<br>
+ * ((Closeable)e).close();<br>
  * </code>
  * @author jostb
  *
@@ -109,6 +109,30 @@ public class URLReader extends Reader implements IScriptReader {
         }
             
         this.conn.setDoInput(true);
+        conn.setRequestMethod("GET");
+    }
+
+    /**
+     * Create a special reader which can be used to read data from a URL.
+     *
+     * Example: <br>
+     * <blockquote>
+     * <code>
+     * URL url = new URL("http://....");
+     * HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+     * conn.setDoInput(true);
+     * conn.setRequestMethod("GET");
+     * conn.setRequestProperty ("SOME_VAR", SOME_VAL);
+     * scriptEngine.eval(new URLReader(conn));
+     * ((Invocable)scriptEngine).invokeFunction(...);
+     * ((Closeable)scriptEngine).close();
+     * </code>
+     * </blockquote>
+     *
+     * @param conn the URL connection
+     */
+    public URLReader(HttpURLConnection conn) {
+        this.conn = conn;
     }
         
     private void allowSelfSignedCertificates() {
@@ -158,7 +182,6 @@ public class URLReader extends Reader implements IScriptReader {
             String redirect = (String) env.get("X_JAVABRIDGE_REDIRECT");
             byte[] buf = new byte[Util.BUF_SIZE];
             
-            conn.setRequestMethod("GET");
             conn.setRequestProperty ("X_JAVABRIDGE_CONTEXT", (String)env.get("X_JAVABRIDGE_CONTEXT"));
             if(include!=null) 
                 conn.setRequestProperty("X_JAVABRIDGE_INCLUDE", include);

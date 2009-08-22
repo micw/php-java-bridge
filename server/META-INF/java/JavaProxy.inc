@@ -38,7 +38,7 @@
   obligated to do so.  If you do not wish to do so, delete this
   exception statement from your version. */
 
-require_once("${JAVA_BASE}/Client.inc");
+require_once(java_get_base()."/Client.inc");
 
 /**
  * Implemented by JavaException and Java.
@@ -104,8 +104,7 @@ function java_values_internal($object) {
  *<br> Any declared exception can be caught by PHP code. <br>
  * Exceptions derived from java.lang.RuntimeException or Error must
  * not be caught unless declared in the methods throws clause -- OutOfMemoryErrors cannot be caught at all,
- * even if declared.  <br> This is consistent with the JEE EJB
- * specification.
+ * even if declared.
  *
  * @param object A java object or type
  * @param string A method string
@@ -172,11 +171,10 @@ function java_values($object) {
 }
 /**
  * Only for internal use.
- * @access public
+ * @access private
  */
 function java_reset() {
   $client=__javaproxy_Client_getClient();
-  user_error("Your script has called the privileged procedure \"java_reset()\" which resets the java back-end to its initial state. Therefore all java caches are gone.");
   return $client->invokeMethod(0, "reset", array());
 }
 /**
@@ -798,8 +796,7 @@ abstract class java_AbstractJava implements IteratorAggregate,ArrayAccess,java_J
  *<br> Any declared exception can be caught by PHP code. <br>
  * Exceptions derived from java.lang.RuntimeException or Error must
  * not be caught unless declared in the methods throws clause -- OutOfMemoryErrors cannot be caught at all,
- * even if declared.  <br> This is consistent with the JEE EJB
- * specification.
+ * even if declared.
  *
  * @access public
  * @see JavaException

@@ -24,6 +24,7 @@ package php.java.bridge.http;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
@@ -32,6 +33,7 @@ import java.util.Iterator;
 import php.java.bridge.ISession;
 import php.java.bridge.JavaBridge;
 import php.java.bridge.JavaBridgeClassLoader;
+import php.java.bridge.Request;
 import php.java.bridge.SessionFactory;
 import php.java.bridge.SimpleJavaBridgeClassLoader;
 import php.java.bridge.Util;
@@ -430,5 +432,10 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     /**{@inheritDoc}*/  
     public String getSocketName() {
 	return visitor.getSocketName();
+    }
+    
+    /**{@inheritDoc}*/  
+    public int parseHeader(Request req, byte[] header, int pos) throws IOException {
+	return visitor.parseHeader(req, header, pos);
     }
 }

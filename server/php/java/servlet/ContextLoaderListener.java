@@ -13,7 +13,6 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 
 import php.java.bridge.Util;
-import php.java.script.servlet.EngineFactory;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -83,7 +82,10 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
      * */
     public static void destroyScriptEngines (ServletContext ctx) {
 	try {
-	    EngineFactory factory = (EngineFactory)ctx.getAttribute(php.java.script.servlet.EngineFactory.ROOT_ENGINE_FACTORY_ATTRIBUTE);
+	    php.java.script.servlet.EngineFactory factory = null;
+	    try {
+		factory = (php.java.script.servlet.EngineFactory)ctx.getAttribute(php.java.script.servlet.EngineFactory.ROOT_ENGINE_FACTORY_ATTRIBUTE);
+	    } catch (NoClassDefFoundError e) { /* ignore */ }
 	    if (factory == null) return;
 	
 	    List list = (List) ctx.getAttribute(ENGINES);
@@ -118,6 +120,8 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
         } catch (IllegalAccessException e) {
 	    e.printStackTrace();
         } catch (ClassNotFoundException e) {
+	    e.printStackTrace();
+        } catch (NoClassDefFoundError e) {
 	    e.printStackTrace();
         }
     }

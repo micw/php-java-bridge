@@ -38,7 +38,7 @@
   obligated to do so.  If you do not wish to do so, delete this
   exception statement from your version. */
 
-require_once("${JAVA_BASE}/Client.inc");
+require_once(java_get_base()."/Client.inc");
 
 /**
  * @access private

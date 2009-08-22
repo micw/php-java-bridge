@@ -67,7 +67,7 @@ if(!defined("JAVA_RECV_SIZE"))
  * @see JAVA_SERVLET
  */
 if(!defined("JAVA_HOSTS")) {
-  if(!java_defineHostFromInitialQuery($JAVA_BASE)) {
+  if(!java_defineHostFromInitialQuery(java_get_base())) {
 	if ($ini=get_cfg_var("java.hosts")) define("JAVA_HOSTS", $ini); 
 	else                                define("JAVA_HOSTS", "127.0.0.1:8080"); // host1:port1;host2:port2;...
   }

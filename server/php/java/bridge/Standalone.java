@@ -199,14 +199,17 @@ public class Standalone {
 	    }
 	    checkServlet(logLevel, sockname, s);
 	    ISocketFactory socket = bind(logLevel, sockname);
-	    StringBuffer buf = new StringBuffer();
-	    buf.append('@');
-	    buf.append(socket.getSocketName());
-	    buf.append('\n');
-	    if(s.length>1) {
+
+            // invoked directly from apache or iis, not used anymore
+	    if( System.getProperty("php.java.bridge.asDaemon", "false").equals("false") && s.length>1) {
+	        StringBuffer buf = new StringBuffer();
+	        buf.append('@');
+	        buf.append(socket.getSocketName());
+	        buf.append('\n');
 		System.out.write(buf.toString().getBytes());
 		System.out.close(); 
 	    }
+
 	    if("true".equals(System.getProperty("php.java.bridge.test.startup"))) System.exit(0);
 	    JavaBridge.initLog(String.valueOf(socket), logLevel, s);
 	    JavaBridge.init(socket, logLevel, s);
@@ -256,25 +259,34 @@ public class Standalone {
     public static void main(String s[]) {
 	// check for -Dphp.java.bridge.daemon=true
 	if (!(System.getProperty("php.java.bridge.daemon", "false").equals("false"))) {
-	    final String[] args = new String[s.length + 7];
+	    final String[] args = new String[s.length + 8];
 	    args[0] = System.getProperty("php.java.bridge.daemon");
 	    if ("true".equals(args[0])) args[0]="java";
 	    args[1]="-Djava.library.path="+System.getProperty("java.library.path", ".");
 	    args[2] = "-Djava.ext.dirs="+System.getProperty("java.ext.dirs", ".");
 	    args[3] = "-Djava.awt.headless="+System.getProperty("java.awt.headless", "true");
-	    args[4]="-classpath"; 
-	    args[5]=System.getProperty("java.class.path", ".");
-	    args[6] = "php.java.bridge.Standalone";
+	    args[4] = "-Dphp.java.bridge.asDaemon=true";
+	    args[5]="-classpath"; 
+	    args[6]=System.getProperty("java.class.path", ".");
+	    args[7] = "php.java.bridge.Standalone";
 
 	    for (int j=0; j<s.length; j++) {
-		args[j+7]=s[j];
+		args[j+8]=s[j];
 	    }
+	    try {
+	        System.in.close();
+	        System.out.close();
+		System.err.close();
+	    } catch (java.io.IOException e) {
+		System.exit(12);
+	    }
+
 	    new Util.Thread(new Runnable () {
 		public void run() {
 		    try {
 			Runtime.getRuntime().exec(args);
 		    } catch (IOException e) {
-			e.printStackTrace();
+			System.exit(13);
 		    }
 		}
 	    }).start();

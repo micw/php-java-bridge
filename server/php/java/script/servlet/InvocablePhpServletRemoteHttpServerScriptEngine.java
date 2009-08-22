@@ -44,8 +44,9 @@ import php.java.servlet.PhpJavaServlet;
  * This script engine connects a remote PHP container with the current servlet container.
  * 
  * There must not be a firewall in between, and both components should be behind a firewall. The remote
- * PHP application must have the PHP code from the PHP file <code>JavaProxy.php</code> embedded, otherwise invocation
- * will fail.
+ * PHP application must end with the line <code>java_call_with_continuation(<yourClosure>)</code>, otherwise invocation will fail.
+ * The following description uses the <code>JavaProxy.php</code> sample script (from the <code>JavaBridge.jar</code> or <code>JavaBridge.war</code> zip file). 
+ * It is an empty script which ends with <code>java_call_with_continuation(java_closure())</code>.
  * <br>	
  * 
  * In order to evaluate PHP methods follow these steps:<br>

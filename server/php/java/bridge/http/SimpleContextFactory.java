@@ -24,12 +24,14 @@ package php.java.bridge.http;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
 import php.java.bridge.ISession;
 import php.java.bridge.JavaBridge;
 import php.java.bridge.NotImplementedException;
+import php.java.bridge.Request;
 import php.java.bridge.Util;
 import php.java.bridge.SimpleJavaBridgeClassLoader;
 
@@ -233,5 +235,26 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
 	buf.append(webPath);
 	buf.append(".phpjavabridge");
 	return buf.toString();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public int parseHeader(Request req, byte[] header, int pos) throws IOException {
+	JavaBridge bridge = getBridge();
+
+	// the header used to be binary encoded
+	byte shortPathHeader = (byte) (0xFF&(header[pos+1]));
+
+	bridge.out.write(0); bridge.out.flush(); // dummy write: avoid ack delay
+	int len =(0xFF&header[pos+2]) | (0xFF00&(header[pos+3]<<8));
+	String newContext = new String(header, pos+4, pos+len,  Util.ASCII);
+	IContextFactory factory = (IContextFactory)bridge.getFactory();
+	factory.recycle(newContext);
+
+	if(shortPathHeader != (byte) 0xFF)  // short path: no previous PUT request
+	    req.init(shortPathHeader);
+
+	return pos+len+3;
     }
 }

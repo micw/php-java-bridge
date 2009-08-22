@@ -25,6 +25,8 @@ package php.java.bridge;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.io.IOException;
+
 import php.java.bridge.http.IContext;
 
 /**
@@ -86,4 +88,15 @@ public interface IJavaBridgeFactory {
      * Destroy the factory
      */
     public void destroy();
+    
+    /**
+     * Called for the request header
+     * 
+     * @param req the current request
+     * @param header the buffer
+     * @param pos the current position within buf
+     * @return the new position within buf
+     * @throws IOException
+     */
+    public int parseHeader(Request req, byte[] header, int pos) throws IOException;
 }

@@ -10,18 +10,18 @@ java_SOURCES=php/java/bridge/JavaBridgeIllegalStateException.java php/java/bridg
 
 JavaRaw.inc:
 	rm -f META-INF/java/Java.inc
-	phpdoc -j -c PHPDocConfig.ini
-	cat META-INF/java/JavaBridge.inc META-INF/java/Options.inc META-INF/java/Client.inc META-INF/java/GlobalRef.inc META-INF/java/NativeParser.inc META-INF/java/Parser.inc META-INF/java/Protocol.inc META-INF/java/SimpleParser.inc META-INF/java/JavaProxy.inc | sed -f extract.sed | sed '/^\/\*/,/\*\/$$/d' | sed '/^[	 ]*$$/d' | tee ~/a.inc | sed "s|//[^'\"]*\$$||;s|\\(^[^'\"]*\\)//.*\$$|\\1|;s|[	 ][	 ]*| |g;s|^[	 ]*||;/^\$$/d"  | sed ':repeat $$!N; s/\n}/}/; t repeat; P; D;' | sed ':repeat $$!N; s/{[	 ]*\n/{/; t repeat; P; D;' >JavaRaw.inc
+	phpdoc -j -c PHPDocConfig.ini >/dev/null
+	cat META-INF/java/JavaBridge.inc META-INF/java/Options.inc META-INF/java/Client.inc META-INF/java/GlobalRef.inc META-INF/java/NativeParser.inc META-INF/java/Parser.inc META-INF/java/Protocol.inc META-INF/java/SimpleParser.inc META-INF/java/JavaProxy.inc | sed -f extract.sed | sed '/^\/\*/,/\*\/$$/d' | sed '/^[	 ]*$$/d' | sed "s|//[^'\"]*\$$||;s|\\(^[^'\"]*\\)//.*\$$|\\1|;s|[	 ][	 ]*| |g;s|^[	 ]*||;/^\$$/d" >JavaRaw.inc
 
 META-INF/java/Java.inc: JavaRaw.inc
-	cat JavaRaw.inc | sed '/do not delete this line/d' >META-INF/java/Java.inc
+	cat JavaRaw.inc | sed '/do not delete this line/d' | sed ':repeat $$!N; s/\n}/}/; t repeat; P; D;' | sed ':repeat $$!N; s/{[	 ]*\n/{/; t repeat; P; D;'  >META-INF/java/Java.inc
 	rm -f ../documentation/API/errors.html
 
 META-INF/java/JavaProxy.php: META-INF/java/Java.inc
-	cat META-INF/java/Java.inc | sed '$$d' | sed -f prepend.sed >META-INF/java/JavaProxy.php
+	cat META-INF/java/Java.inc | sed '$$d' | sed '$$s|}$$|\n}|' | sed -f prepend.sed >META-INF/java/JavaProxy.php
 
 META-INF/java/Mono.inc: JavaRaw.inc
-	cat JavaRaw.inc | sed -f append.sed | sed 's/JAVA/MONO/g;s/java/mono/g;s/Java/Mono/g;s/updateJarLibraryPath/updateLibraryPath/;s/^.*do not delete this line.*$$/$$name="cli.".$$name;/;' >META-INF/java/Mono.inc
+	cat JavaRaw.inc | sed -f append.sed | sed 's/JAVA/MONO/g;s/java/mono/g;s/Java/Mono/g;s/updateJarLibraryPath/updateLibraryPath/;s/^.*raise mono connect exception--do not delete this line.*$$/if(!$$peer)throw new mono_ConnectException("No Mono! Please start MonoBridge.exe. Error message: $$errstr ($$errno)");/;s/^.*do not delete this line.*$$/$$name="cli.".$$name;/;' | sed ':repeat $$!N; s/\n}/}/; t repeat; P; D;' | sed ':repeat $$!N; s/{[	 ]*\n/{/; t repeat; P; D;' >META-INF/java/Mono.inc
 
 
 php/java/bridge/JavaInc.java: META-INF/java/Java.inc
@@ -96,14 +96,15 @@ RunMonoBridge_SOURCES=RunMonoBridge.c
 dist_data_DATA=$(JAVA_BRIDGE_JAR) $(JAVA_BRIDGE_WAR) $(MONO_BRIDGE_EXE) $(SCRIPT) $(JAVA_BRIDGE_SCRIPT_JAR) stamp
 mono_dlls=ICSharpCode.SharpZipLib.dll IKVM.AWT.WinForms.dll IKVM.GNU.Classpath.dll IKVM.Runtime.dll
 EXTRA_DATA=JavaBridge.jar JavaBridge.war MonoBridge.exe $(mono_dlls) script-api.jar php-script.jar 
-java_inc=-C META-INF java/Java.inc -C META-INF java/Mono.inc -C META-INF java/JavaProxy.php -C META-INF java/README
+java_inc1=META-INF/java/Java.inc META-INF/java/Mono.inc META-INF/java/JavaProxy.php META-INF/java/README
+java_inc2=-C META-INF java/Java.inc -C META-INF java/Mono.inc -C META-INF java/JavaProxy.php -C META-INF java/README
 
 stamp:
 	date >stamp
 
 JavaBridge.jar: META-INF/java/Java.inc META-INF/java/Mono.inc php/java/bridge/JavaProxy.java php/java/bridge/LauncherWindows2.java php/java/bridge/LauncherWindows.java php/java/bridge/LauncherWindows3.java php/java/bridge/LauncherUnix.java php/java/bridge/JavaInc.java
 	$(PHP_JAVA_DIR)/bin/javac $(SOURCE_VERSION) -classpath . php/java/bridge/http/*.java php/java/bridge/*.java 2>/dev/null
-	$(PHP_JAVA_DIR)/bin/jar cMf JavaBridge.jar META-INF/java/*.inc META-INF/java/README META-INF/MANIFEST.MF php/java/bridge/http/*.class php/java/bridge/*.class  php/java/bridge/*.properties
+	$(PHP_JAVA_DIR)/bin/jar cMf JavaBridge.jar META-INF/MANIFEST.MF $(java_inc1) php/java/bridge/http/*.class php/java/bridge/*.class  php/java/bridge/*.properties
 	chmod +x JavaBridge.jar
 
 TestInstallation.class: TestInstallation.java
@@ -150,7 +151,7 @@ JavaBridge.war: src.zip JavaBridge.jar $(SERVLET) $(JAVA_BRIDGE_SERVLET_JAR) $(S
 	rm -f META-INF/MANIFEST.MF.standalone
 	mv META-INF/MANIFEST.MF META-INF/MANIFEST.MF.standalone
 	sed '/Main-Class/s/php.java.bridge.Standalone/TestInstallation/' <META-INF/MANIFEST.MF.standalone >META-INF/MANIFEST.MF
-	$(PHP_JAVA_DIR)/bin/jar cf JavaBridge.war TestInstallation*.class *.php locale/* *.rpt* *.jsp WEB-INF/web.xml WEB-INF/cgi/* WEB-INF/cgi/README WEB-INF/lib/*.jar WEB-INF/platform/* $(java_inc)
+	$(PHP_JAVA_DIR)/bin/jar cf JavaBridge.war TestInstallation*.class *.php locale/* *.rpt* *.jsp WEB-INF/web.xml WEB-INF/cgi/* WEB-INF/cgi/README WEB-INF/lib/*.jar WEB-INF/platform/* $(java_inc2)
 	rm -f META-INF/MANIFEST.MF
 	rm -rf java
 	mv META-INF/MANIFEST.MF.standalone META-INF/MANIFEST.MF

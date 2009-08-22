@@ -38,7 +38,7 @@
   obligated to do so.  If you do not wish to do so, delete this
   exception statement from your version. */
 
-require_once("${JAVA_BASE}/Client.inc");
+require_once(java_get_base()."/Client.inc");
 
 /**
  * @access private
@@ -59,7 +59,6 @@ class java_NativeParser {
 	$this->level = 0;
   }
   function begin($parser, $name, $param) {
-  	if (false) $parser = $parser;
   	
 	$this->event = true;
 	switch($name) {
@@ -68,7 +67,6 @@ class java_NativeParser {
 	$this->handler->begin($name, $param);
   }
   function end($parser, $name) {
-  	if (false) $parser = $parser;
   	
 	$this->handler->end($name);
 	switch($name) {

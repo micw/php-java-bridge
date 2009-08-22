@@ -28,8 +28,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketException;
 
-import php.java.bridge.http.IContextFactory;
-
 class Parser {
     static final int RECV_SIZE = 8192; // initial size of the receive buffer
     static final int MAX_ARGS = 100; // max # of method arguments
@@ -154,7 +152,7 @@ class Parser {
 	ParserString str[] = tag[t].strings;
 	short n = tag[t].n;
 	s[i]=0;
-	if(str[n]==null) str[n]=handler.createParserString();
+	if(str[n]==null) str[n]=createParserString();
 	str[n].string=s;
 	str[n].off=i0;
 	str[n].length=i-i0;
@@ -233,19 +231,8 @@ class Parser {
 		    }
 		    break;
 		case 0177: if(in_dquote) {APPEND(ch); break;}
-		    // the header used to be binary encoded
-		    
-		    bridge.out.write(0); bridge.out.flush(); // dummy write: avoid ack delay
-		    int len =(0xFF&buf[c+2]) | (0xFF00&(buf[c+3]<<8));
-		    String newContext = new String(buf, c+4, c+len,  Util.ASCII);
-		    IContextFactory factory = (IContextFactory)bridge.getFactory();
-		    factory.recycle(newContext);
-		    
-		    byte shortPathHeader = (byte) (0xFF&(buf[1]));
-		    if(shortPathHeader != (byte) 0xFF)  // short path: no previous PUT request
-			initOptions(shortPathHeader);
-
-		    c+=len+3;
+		    // handled differently by socket- and JEE implementation
+		    c = handler.parseHeader(buf, c);
 		    break;
 		default:
 		    APPEND(ch);
@@ -274,5 +261,9 @@ class Parser {
      */
     public void setBridge(JavaBridge bridge) {
 	this.bridge = bridge;
+    }
+    
+    private ParserString createParserString () {
+	return new ParserString(bridge);
     }
 }

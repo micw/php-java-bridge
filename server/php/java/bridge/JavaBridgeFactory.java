@@ -2,6 +2,8 @@
 
 package php.java.bridge;
 
+import java.io.IOException;
+
 import php.java.bridge.IJavaBridgeFactory;
 import php.java.bridge.JavaBridge;
 import php.java.bridge.Util;
@@ -107,5 +109,16 @@ public abstract class JavaBridgeFactory implements IJavaBridgeFactory {
      */
     public void destroy() {
 	this.bridge = null;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @throws IOException 
+     */
+    public int parseHeader (Request req, byte[] header, int pos) throws IOException {
+	byte option = (byte)(0xFF&header[pos+1]);
+	if (option==(byte)0xFF) throw new IllegalStateException("not within a JEE environment");
+	req.init(option);
+	return pos+1;
     }
 }

@@ -63,27 +63,64 @@ public class StandaloneGCC extends Standalone {
      * @param s an array of [socketname, level, logFile]
      */
     public static void main(String s[]) {
-	String args[];
+	java.util.LinkedList list = new java.util.LinkedList();
+	for (int i=0; i<s.length; i++) {
+	    boolean consumed = false;
+	    if (s[i].startsWith("-D")) {
+		String str = s[i].substring(2);
+		int p=str.indexOf('=');
+		if (p!=-1) {
+		    String key = str.substring(0, p).trim();
+		    String val = str.substring(p+1).trim();
+		    System.setProperty(key, val);
+		    consumed = true;
+		}
+	    }
+	    if (!consumed) list.add(s[i]);
+	}
+
+	String[] args = (String[])list.toArray(new String[0]);
+
+	// check for -Dphp.java.bridge.daemon=true
+	if (!(System.getProperty("php.java.bridge.daemon", "false").equals("false"))) {
+	    java.util.LinkedList list2 = new java.util.LinkedList();
+
+	    list2.add(System.getProperty("gnu.gcj.progname", "java"));
+	    list2.add("-Djava.awt.headless="+System.getProperty("java.awt.headless", "true"));
+	    list2.add("-Dphp.java.bridge.asDaemon=true");
+	    for (int i=0; i<args.length; i++) {
+		if(args[i].startsWith("-D") && args[i].substring(2).trim().startsWith("php.java.bridge.daemon"))
+		   continue;
+
+		list2.add(args[i]);
+	    }
+
+	    final String[] args2 = (String[])list2.toArray(new String[0]);
+
+	    try {
+	        System.in.close();
+	        System.out.close();
+		System.err.close();
+	    } catch (java.io.IOException e) {
+		System.exit(12);
+	    }
+	    new Util.Thread(new Runnable () {
+		public void run() {
+		    try {
+			Runtime.getRuntime().exec(args2);
+		    } catch (java.io.IOException e) {
+			System.exit(13);
+		    }
+		}
+	    }).start();
+	    try {Thread.sleep(20000);} catch (Throwable t) {}
+	    System.exit (0);
+	}
+
 	try {
 	    System.loadLibrary("natcJavaBridge");
 	} catch (Throwable t) {/*ignore*/}
-	try {
-	    int length = s.length;
-	    if((length==7 || length==8) && !s[0].startsWith("--")) {
-		System.setProperty("java.library.path", s[0].substring(20));
-		System.setProperty("java.class.path", s[1].substring(18));
-		int p=s[2].indexOf('=');
-		System.setProperty(s[2].substring(2,p), s[2].substring(p+1));
-		System.setProperty("php.java.bridge.base", s[3].substring(23));
-		
-		args = length==7 ? new String[] {s[5], s[6]} :  new String[] {s[5], s[6], s[7]};
-	    } else {
-		args = s;
-	    }
-	    (new StandaloneGCC()).init(args);
-	} catch (Throwable t) {
-	    t.printStackTrace();
-	    System.exit(9);
-	}
+
+	(new StandaloneGCC()).init(args);
     }
 }

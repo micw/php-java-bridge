@@ -48,7 +48,8 @@ import php.java.servlet.ContextLoaderListener;
  * 
  * In order to evaluate PHP scripts follow these steps:<br>
  * <ol>
- * <li> Create a factory which creates a PHP script file from a reader using the methods from {@link EngineFactory}:
+ * <li> Create a factory which creates a PHP script file from a reader using the methods from {@link EngineFactory}. 
+ * The following line is static final so that a READER is created whenever the JSP is compiled to Java code:
  * <blockquote>
  * <code>
  * private static final Reader HELLO_SCRIPT_READER = EngineFactory.createPhpScriptReader("&lt;?php echo 'Hello java world!'; ?&gt;");
@@ -64,6 +65,12 @@ import php.java.servlet.ContextLoaderListener;
  * <blockquote>
  * <code>
  * Reader readerHello = EngineFactory.createPhpScriptFileReader(request.getServletPath()+"._cache_.php", HELLO_SCRIPT_READER);
+ * </code>
+ * </blockquote>
+ * or simply, if your script file doesn't need to be re-created for each JSP to Java compilation:
+ * <blockquote>
+ * <code>
+ * Reader readerHello = EngineFactory.createPhpScriptFileReader("/myScriptFile.php");
  * </code>
  * </blockquote>
  * <li> Connect its output:

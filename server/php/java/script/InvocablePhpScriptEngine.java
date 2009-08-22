@@ -45,16 +45,37 @@ import php.java.bridge.PhpProcedure;
 import php.java.bridge.Util;
 
 /**
- * This class implements the ScriptEngine.<p>
- * Example:<p>
+ * This class implements the ScriptEngine and the Invocable interface.<p>
+ * Example:
+ * <blockquote>
  * <code>
  * ScriptEngine e = (new ScriptEngineManager()).getEngineByName("php-invocable");<br>
  * e.eval(&lt;? function f() {return java_server_name();}?&gt;<br>
  * System.out.println(((Invocable)e).invokeFunction("f", new Object[]{}));<br>
  * ((Closeable)e).close();<br>
- * </code><br>
+ * </code>
+ * </blockquote><br>
+ * Another example which invokes a remote PHP "method" bound in the closed-over PHP environment. The PHP script "hello.php":
+ * <blockquote>
+ * <code>
+ * &lt;?php require_once("java/Java.inc");<br>
+ * function f() {return java_server_name();};<br>
+ * java_call_with_continuation(java_closure());<br>
+ * ?&gt;<br>
+ * </code>
+ * </blockquote><br>
+ *  The Java code:
+ * <blockquote>
+ * <code>
+ * ScriptEngine e = (new ScriptEngineManager()).getEngineByName("php-invocable");<br>
+ * e.eval(new php.java.script.URLReader(new URL("http://localhost/hello.php")));<br>
+ * System.out.println(((Invocable)e).invokeMethod(e.get("php.java.bridge.PhpProcedure"), "f", new Object[]{}));<br>
+ * ((Closeable)e).close();<br>
+ * </code>
+ * </blockquote>
  */
 public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements Invocable {
+    protected static final Object EMPTY_INCLUDE = "@";
     private static boolean registeredHook = false;
     private static final List engines = new LinkedList();
     private static final String PHP_EMPTY_SCRIPT = "<?php ?>";
@@ -145,6 +166,8 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
     }
 
     protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
+	if (reader instanceof URLReader) return eval((URLReader)reader, context, name);
+	
         if((continuation != null) || (reader == null) ) release();
   	if(reader==null) return null;
   	
@@ -187,6 +210,34 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
        } finally {
             if(w!=null)  try { w.close(); } catch (IOException e) {/*ignore*/}
             if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}            
+            handleRelease();
+        }
+       return resultProxy;
+    }
+
+    protected Object eval(URLReader reader, ScriptContext context, String name) throws ScriptException {
+        if((continuation != null) || (reader == null) ) release();
+  	if(reader==null) return null;
+  	
+  	setNewContextFactory();
+        setName(name);
+	env.put("X_JAVABRIDGE_INCLUDE", EMPTY_INCLUDE);
+	
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Writer w = new OutputStreamWriter(out);
+        try {
+            this.script = doEval(reader, context);
+            if (this.script!=null) {
+        	/* get the proxy, either the one from the user script or our default proxy */
+        	this.scriptClosure = script;
+            }
+	} catch (Exception e) {
+	    Util.printStackTrace(e);
+            if (e instanceof RuntimeException) throw (RuntimeException)e;
+            if (e instanceof ScriptException) throw (ScriptException)e;
+            throw new ScriptException(e);
+       } finally {
+            if(w!=null)  try { w.close(); } catch (IOException e) {/*ignore*/}
             handleRelease();
         }
        return resultProxy;

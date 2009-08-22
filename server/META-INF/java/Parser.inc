@@ -39,23 +39,20 @@
    obligated to do so.  If you do not wish to do so, delete this
    exception statement from your version. */
 
-require_once("${JAVA_BASE}/SimpleParser.inc");
-require_once("${JAVA_BASE}/NativeParser.inc");
+require_once(java_get_base()."/SimpleParser.inc");
+require_once(java_get_base()."/NativeParser.inc");
 
 /**
  * @access private
  */
 class java_Parser {
-  public $ENABLE_NATIVE = true;
-  public $DISABLE_SIMPLE= false;
   public $parser;
 
   function java_Parser($handler) {
-    if($this->ENABLE_NATIVE && function_exists("xml_parser_create")) {
+    if(function_exists("xml_parser_create")) {
       $this->parser = new java_NativeParser($handler);
 	  $handler->RUNTIME["PARSER"]="NATIVE";
     } else {
-      if($this->DISABLE_SIMPLE) die("no parser");
       $this->parser = new java_SimpleParser($handler);
 	  $handler->RUNTIME["PARSER"]="SIMPLE";
     }

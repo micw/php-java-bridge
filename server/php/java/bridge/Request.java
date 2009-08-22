@@ -660,11 +660,10 @@ public final class Request implements IDocHandler {
         resetBridge();
     }
 
-    /**
-     * Create a parser string, according to options
-     * @return The parser string
+    /** 
+     * {@inheritDoc}
      */
-    public ParserString createParserString() {
-	return new ParserString(bridge);
+    public int parseHeader(byte[] header, int pos) throws IOException {
+	return bridge.getFactory().parseHeader(this, header, pos);
     }
 }

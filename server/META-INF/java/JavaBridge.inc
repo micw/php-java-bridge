@@ -39,15 +39,6 @@
   exception statement from your version. */
 
 if(!function_exists("java_get_base")) {
-  $version = phpversion();
-  if ((version_compare("5.3.0", $version, ">"))) {
-   1E512; // initialize errno
-   if ((version_compare("5.1.2", $version, ">"))) {
-	$msg = "<br><strong>PHP $version too old.</strong><br>\nPlease set the path to
-a PHP 5.1.x executable, see php_exec in the WEB-INF/web.xml";
-	die($msg);
-   }
-  }
   /**
    * @access private
    */
@@ -61,8 +52,8 @@ a PHP 5.1.x executable, see php_exec in the WEB-INF/web.xml";
 	  return "java/";
 	}
   }
-  $JAVA_BASE=java_get_base();
-  require_once("${JAVA_BASE}/JavaProxy.inc");
+  require_once(java_get_base()."/Options.inc");
+  require_once(java_get_base()."/JavaProxy.inc");
 
   /**
    * @access private
@@ -128,38 +119,41 @@ a PHP 5.1.x executable, see php_exec in the WEB-INF/web.xml";
 	eval ("$instance");
 	return true;
   }
+  /** Autoload Java classes if not disabled via define("JAVA_DISABLE_AUTOLOAD", true); */
+  if(!defined("JAVA_DISABLE_AUTOLOAD") && function_exists("spl_autoload_register")) spl_autoload_register("java_autoload_function");
 
   /**
    * Load a set of java libraries and make them available in the current name space.
-   *
    * Available since php 5.3. Example:
-   * <code>
-   * java_autoload("lucene.jar;mysql-connector-java.jar"); // load from /usr/share/java or $HOME/lib
-   *
-   * use org\apache\lucene;
-   * use org\apache\lucene\index;
-   * use org\apache\lucene\search;
-   * use org\apache\lucene\search\IndexSearcher as LuceneSearcher;
-   *
-   * $searcher = new LuceneSearcher(...);
-   * $term = new index\Term("name", "someTerm");
-   * $phrase = new search\PhraseQuery();
-   *
-   * $phrase->add($term);
-   * $hits = $searcher->search($phrase);
-   * ...
-   *</code>
+   * {@source 4 14}
    * @access public
    * @since PHP 5.3
    */
-  function java_autoload($libs=null) {
+  function java_autoload() 
+  {
+/*
+    java_autoload("lucene.jar");
+   
+    use org\apache\lucene;
+    use org\apache\lucene\index;
+    use org\apache\lucene\search;
+    use org\apache\lucene\search\IndexSearcher as LuceneSearcher;
+   
+    $searcher = new LuceneSearcher(...);
+    $term = new index\Term("name", "someTerm");
+    $phrase = new search\PhraseQuery();
+   
+    $phrase->add($term);
+    $hits = $searcher->search($phrase);
+    ...
+*/
 	static $once = false;
 	if($once) 
 	  throw new java_IllegalStateException("java_autoload called more than once");
 	$once = true;
 	java_require($libs);
 	if(function_exists("spl_autoload_register")) {
-	  if(defined(JAVA_DISABLE_AUTOLOAD)) spl_autoload_register("java_autoload_function");
+	  if(defined("JAVA_DISABLE_AUTOLOAD")) spl_autoload_register("java_autoload_function");
 	} else {
 	  function __autoload($x) {
 		return java_autoload_function($x);
@@ -180,8 +174,7 @@ a PHP 5.1.x executable, see php_exec in the WEB-INF/web.xml";
    *<br> Any declared exception can be caught by PHP code. <br>
    * Exceptions derived from java.lang.RuntimeException or Error must
    * not be caught unless declared in the methods throws clause -- OutOfMemoryErrors cannot be caught at all,
-   * even if declared.  <br> This is consistent with the JEE EJB
-   * specification.
+   * even if declared.
    *
    * @access public
    * @param string The type name
@@ -301,5 +294,73 @@ a PHP 5.1.x executable, see php_exec in the WEB-INF/web.xml";
    * @see java_require();
    */
   function java_set_library_path($arg) { return java_require($arg); }
+  
+  /**
+   * Call the Java continuation with the closed-over PHP environment
+   * $kontinuation as its argument.
+   *
+   * This procedure can be used to transfer control back to a Java
+   * continuation so that Java can call PHP procedures defined within
+   * the passed environment. If the script has not been requested by
+   * Java, the procedure does nothing.
+   *
+   *
+   * Example PHP script:
+   * <code>
+   * <?php require_once("java/Java.inc");
+   * require_once("sales_functions.inc");
+   *
+   * // ... calculate sales for a given month ...
+   *
+   * write_response($response);
+   *
+   * // prepare for out-of-band data: make our top-level environment
+   * // available to Java. But only if it has been requested by Java:
+   * java_call_with_continuation(java_closure());
+   * ?>
+   * </code>
+   *
+   * Assuming the PHP script above is named
+   * "calculateSales.php", using the JSR 223 API one can invoke the
+   * script functions or methods to debug or test certain
+   * functionality from Java while keeping the script running in a
+   * production environment. The Java code follows:
+   * <code>
+   * import javax.script.*;
+   * import java.net.*;
+   * import java.io.*;
+   * class SalesTest {
+   *     public static void test(Integer month) throws Exception {
+   *         ScriptEngine e = new ScriptEngineManager().getEngineByName("php-invocable");
+   *		 ByteArrayOutputStream out;
+   *		 OutputStreamWriter writer;
+   *	     e.getContext().setWriter(writer=new OutputStreamWriter(out=new ByteArrayOutputStream()));
+   *         Object res=e.eval(new php.java.bridge.URLReader(new URL("http://localhost/calculateSales.php")));
+   *         System.err.println(((Invocable)e).invokeFunction("calculateSales", new Object[]{month}));
+   *         ((Closeable)e).close();
+   *         System.err.println("PHP exit() code:" + String.valueOf(res));
+   *         System.err.println("PHP output:" + String.valueOf(out));
+   *      }
+   *      public static void main(String s[]) throws Exception {
+   *         test(new Integer(12));
+   *      }
+   * }
+   * </code>
+   *
+   * The above Java program opens a URL connection to the PHP script,
+   * invokes the calculateSales() function from the passed PHP 
+   * environment and then outputs the exit code and the HTML response
+   * of the PHP script.
+   *
+   * @access public
+   * @param mixed A PHP environment.
+   */
+  function java_call_with_continuation($kontinuation) {
+	if ($java_script = java_getHeader("X_JAVABRIDGE_INCLUDE", $_SERVER)) { 
+	  if ($java_script!="@") {chdir (dirname ($java_script)); require($java_script);} 
+	  if(!java_getHeader("X_JAVABRIDGE_INCLUDE_ONLY", $_SERVER)) java_context()->call($kontinuation); 
+	}
+  }
+
  } //!java_defined  DO NOT REMOVE THIS LINE
 ?>

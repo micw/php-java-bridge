@@ -24,6 +24,8 @@
 
 package php.java.bridge;
 
+import java.io.IOException;
+
 /**
  * Defines the parser callbacks.
  * @author jostb
@@ -46,10 +48,15 @@ public interface IDocHandler {
      */
     public void end(ParserString[] strings);
 
-    /** 
-     * Parser string factory
-     * @return The parser string
+    /**
+     * Called for the header
+     * 
+     * @param buf the buffer
+     * @param pos the current position within buf
+     * @return the new position within buf
+     * @throws IOException
      */
-    public ParserString createParserString();
+    public int parseHeader(byte[] buf, int pos) throws IOException;
+    
 }
  

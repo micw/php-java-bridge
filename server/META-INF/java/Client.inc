@@ -38,10 +38,10 @@
   obligated to do so.  If you do not wish to do so, delete this
   exception statement from your version. */
 
-require_once("${JAVA_BASE}/JavaProxy.inc");
-require_once("${JAVA_BASE}/Parser.inc");
-require_once("${JAVA_BASE}/Protocol.inc");
-require_once("${JAVA_BASE}/GlobalRef.inc");
+require_once(java_get_base()."/JavaProxy.inc");
+require_once(java_get_base()."/Parser.inc");
+require_once(java_get_base()."/Protocol.inc");
+require_once(java_get_base()."/GlobalRef.inc");
 
 /**
  * @access private
@@ -52,11 +52,9 @@ class java_SimpleFactory {
 	$this->client = $client;
   }
   function getProxy($result, $signature, $exception, $wrap) {
-	if (false) { $signature = $signature; $wrap = $wrap; $exception = $exception; }
   	return $result;
   }
   function checkResult($result) {
-  	if (false) $result = $result;
   }
 }
 /**
@@ -73,7 +71,6 @@ class java_ProxyFactory extends java_SimpleFactory {
 	return new java_InternalJava($proxy);
   }
   function getProxy($result, $signature, $exception, $wrap) {
-	if (false) { $exception = $exception; }
 	$proxy = $this->create($result, $signature);
 	if($wrap) $proxy = $this->createInternal($proxy);
 	return $proxy;
@@ -125,7 +122,6 @@ class java_ThrowExceptionProxyFactory extends java_ExceptionProxyFactory {
 	parent::java_ExceptionProxyFactory($client);
   }
   function getProxy($result, $signature, $exception, $wrap) {
-	if (false) { $wrap = $wrap; }
   	$proxy = $this->create($result, $signature);
 	// don't check for $wrap, which may be wrong (type Java instead of
 	// JavaException) when the user has managed to create an exception
@@ -686,6 +682,4 @@ function java_shutdown() {
 }
 register_shutdown_function("java_shutdown");
 
-/** Autoload Java classes if not disabled via define("JAVA_DISABLE_AUTOLOAD", true); */
-if(!defined(JAVA_DISABLE_AUTOLOAD)) spl_autoload_register("java_autoload_function");
 ?>
