@@ -50,6 +50,7 @@
 #endif
 
 /* socket */
+#include <stddef.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -272,6 +273,7 @@ JNIEXPORT jint JNICALL Java_php_java_bridge_JavaBridge_startNative
   struct sockaddr_in saddr;
 #endif
   int sock, n;
+  size_t len;
 
   logLevel = _logLevel;
   bridge = self;
@@ -289,10 +291,14 @@ JNIEXPORT jint JNICALL Java_php_java_bridge_JavaBridge_startNative
 #ifndef CFG_JAVA_SOCKET_INET
   saddr.sun_family = AF_LOCAL;
   memset(saddr.sun_path, 0, sizeof saddr.sun_path);
-  strcpy(saddr.sun_path, sockname);
+  strncpy(saddr.sun_path, sockname, sizeof (saddr.sun_path)-1);
+  len = strlen(saddr.sun_path); 
+  if (len >= sizeof (saddr.sun_path)) len = sizeof (saddr.sun_path)-1;
 # ifndef HAVE_ABSTRACT_NAMESPACE
+  len = offsetof (struct sockaddr_un, sun_path) + len + 1;
   unlink(sockname);
 # else
+  len = offsetof (struct sockaddr_un, sun_path) + len;
   *saddr.sun_path=0;
 # endif
   sock = socket (PF_LOCAL, SOCK_STREAM, 0);
@@ -304,8 +310,9 @@ JNIEXPORT jint JNICALL Java_php_java_bridge_JavaBridge_startNative
   saddr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
   sock = socket (PF_INET, SOCK_STREAM, 0);
   if(!sock) {logSysFatal(env, "could not create socket"); return 0;}
+  len = sizeof (saddr);
 #endif
-  n = bind(sock,(struct sockaddr*)&saddr, sizeof saddr);
+  n = bind(sock,(struct sockaddr*)&saddr, len);
   if(n==-1) {logSysFatal(env, "could not bind socket"); return 0;}
 #if !defined(HAVE_ABSTRACT_NAMESPACE) && !defined(CFG_JAVA_SOCKET_INET)
   chmod(sockname, 0666); // the childs usually run as "nobody"

@@ -43,8 +43,15 @@ package php.java.bridge;
 
 public class StandaloneGCC extends Standalone {
 
+    protected void checkOption(String s[]) {
+	if ("--version".equals(s[0])) {
+	    System.out.println("PHP/Java Bridge GCC/GCJ");
+	    System.exit(0);
+	}
+	usage();
+    }
     protected void javaUsage() {
-	System.err.println("PHP/Java Bridge version "+Util.VERSION);
+	System.err.println("PHP/Java Bridge GCC/GCJ");
 	disclaimer();
 	System.err.println("Usage: java [SOCKETNAME LOGLEVEL LOGFILE]");
 	System.err.println("SOCKETNAME is one of LOCAL, INET_LOCAL, INET, SERVLET_LOCAL, SERVLET");

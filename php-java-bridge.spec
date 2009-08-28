@@ -75,7 +75,6 @@ Requires: %{tomcat_name}
 Requires: libgcj
 %if %{have_policy_modules} == 1
 Requires: policycoreutils coreutils
-Requires: php-process
 %endif
 
 

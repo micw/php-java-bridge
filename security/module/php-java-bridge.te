@@ -1,4 +1,4 @@
-policy_module(javabridge,5.2.2.1)
+policy_module(javabridge,5.5.1)
 
 ########################################
 #
@@ -23,7 +23,7 @@ files_pid_file(javabridge_var_run_t)
 # javabridge local policy
 #
 gen_require(`
-	type httpd_log_t,sbin_t,inaddr_any_node_t,netif_t,lo_node_t,httpd_sys_content_t,port_t,var_log_t,devpts_t,httpd_t,java_exec_t;
+	type httpd_log_t,sbin_t,inaddr_any_node_t,netif_t,lo_node_t,httpd_sys_content_t,port_t,var_log_t,devpts_t,httpd_t,java_exec_t,user_tmp_t;
 ')
 
 ####################
@@ -77,7 +77,12 @@ kernel_read_network_state(javabridge_t)
 kernel_read_system_state(javabridge_t)
 kernel_read_all_sysctls(javabridge_t)
 kernel_search_vm_sysctl(javabridge_t)
-userdom_write_user_tmp_sockets(javabridge,javabridge_t)
+
+# compatibility with fedora 10, fedora 11
+#userdom_write_user_tmp_sockets(javabridge_t)
+files_search_tmp(javabridge_t)
+write_sock_files_pattern(javabridge_t, user_tmp_t, user_tmp_t)
+
 
 dev_read_sound(javabridge_t)
 dev_write_sound(javabridge_t)
@@ -105,7 +110,7 @@ miscfiles_read_fonts(javabridge_t)
 # Read /var/www
 allow javabridge_t httpd_sys_content_t:dir list_dir_perms;
 allow javabridge_t httpd_sys_content_t:file read_file_perms;
-allow javabridge_t httpd_sys_content_t:lnk_file read_file_perms;
+allow javabridge_t httpd_sys_content_t:lnk_file {getattr read};
 
 sysnet_read_config(javabridge_t)
 
