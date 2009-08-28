@@ -1,8 +1,9 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
 %define version 5.5.1
-%define release 1
+%define release 2
 %define PHP_MAJOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | sed 's/\\\..*$//')
 %define PHP_MINOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | LANG=C cut -d. -f2)
+%define PHP_RELEASE_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | LANG=C cut -d. -f3)
 %define have_j2 %((rpm -q --whatprovides j2sdk) >/dev/null && echo 1 || echo 0)
 %define have_j3 %((rpm -q --whatprovides jdk) >/dev/null && echo 1 || echo 0)
 %define have_policy_modules %(if test -f /etc/selinux/config && test -d /etc/selinux/%{__policy_tree}/modules; then echo 1; else echo 0; fi)
@@ -61,8 +62,12 @@ Requires: php < 5.0.0
 %if %{PHP_MAJOR_VERSION} == 5
 Requires: php >= 5.1.1
 Requires: php < 6.0.0
+%if (%{PHP_MINOR_VERSION} == 2 && %{PHP_RELEASE_VERSION} > 6) || (%{PHP_MINOR_VERSION} > 2)
+Requires: php-process
+%endif
 %else
 Requires: php >= 5.2.0
+Requires: php-process
 %endif
 %endif
 Requires: httpd 
@@ -70,6 +75,7 @@ Requires: %{tomcat_name}
 Requires: libgcj
 %if %{have_policy_modules} == 1
 Requires: policycoreutils coreutils
+Requires: php-process
 %endif
 
 
