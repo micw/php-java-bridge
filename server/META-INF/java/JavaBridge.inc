@@ -39,6 +39,9 @@
   exception statement from your version. */
 
 if(!function_exists("java_get_base")) {
+
+  1.0E512; // Workaround pfsockopen bug; initialize the socket subsystem
+
   /**
    * @access private
    */
