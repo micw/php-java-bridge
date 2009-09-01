@@ -1,3 +1,11 @@
+2009-09-01    <jostb@intern>
+
+      * server/META-INF/java/Client.inc
+      (begin): Fixed regression; "T"/"F" is not base64_encoded.
+
+      * server/php/java/bridge/JavaBridgeRunner.java
+      (showTextFile): Format PHP source code
+
 2009-08-16    <jostb@intern>
 	
 	* security/module/php-java-bridge.te: Support Fedora 11
