@@ -199,13 +199,20 @@ option <code>--with-mono</code>.</p>
 
 <a name="java-require"></a>
 <H4>How do I load Java libraries?</H4>
-<p> During development simple libraries can be loaded dynamically with <code>java_require("myApplication.jar;myLib1.jar;myDriver1.jar;...");</code>. See the README for details.</p>
-
+<p>You should link your Java application as described in the 
+<a href="http://php-java-bridge.sourceforge.net/pjb/standalone.php">Java standalone</a>
+or 
+<a href="http://php-java-bridge.sourceforge.net/pjb/webapp.php">Java webapps</a>
+documents. 
+</p>
+<p>For backward compatibility the PHP/Java Bridge also supports a <code>java_require()</code> procedure, which <strong>may</strong> load libraries dynamically.
+But this procedure should not be used in new programs.
+Please see the README from the documentation download and the PHP/Java Bridge API for details.
+</p>
 <H4>Where can I store my java libraries for the VM Bridge?</H4>
 <p>Either within  your web application <code>WEB-INF/lib</code> directory or in <code>php.java.bridge.base</code>/lib.</p>
 <p> When the system property <code>php.java.bridge.base</code> is not set, libraries are loaded from <code>$HOME/lib</code> where <code>$HOME</code> denotes the home directory of the person or component which has started the java VM.</p>
 <p> If libraries should be available globally, store them in <code>java.ext.dirs</code>, for example in <code>/usr/share/java/ext</code>.</p>
-<p> If a library is not yet API-stable, store it into a sub directory of the <code>lib</code> directory and use the <code>java_require()</code> procedure. For example <code>java_require("myLibs0.2/foo.jar")</code> loads <code>foo.jar</code> from <code>php.java.bridge.base/lib/myLibs0.2</code>.</p>
 
 <H4>Why can't Apache load my /foo/bar/baz.jar file?</H4>
 <p>It probably doesn't have the permission to access it. Check if
@@ -217,8 +224,7 @@ Security Enhanced Linux permissions from the audit log.</p>
 <H4>Why do I get a ClassNotFoundException?</H4>
 <p>You probably haven't required the relevant Java library. Or the
 class doesn't exist or it is not public or it throws a java.lang.Error
-during initialization. Check which library exports the feature and add
-the library to the <code>java_require()</code> statement.</code></p>
+during initialization.</p>
 
 <a name="java-dll-hell"></a>
 <H4>Why do I get a NoClassDefFoundError?</H4>

@@ -129,7 +129,7 @@ if(!function_exists("java_get_base")) {
    * Load a set of java libraries and make them available in the current name space.
    * Available since php 5.3. Example:
    * {@source 4 14}
-   * @access public
+   * @access private
    * @since PHP 5.3
    */
   function java_autoload() 
@@ -323,9 +323,9 @@ if(!function_exists("java_get_base")) {
    * ?>
    * </code>
    *
-   * Assuming the PHP script above is named
-   * "calculateSales.php", using the JSR 223 API one can invoke the
-   * script functions or methods to debug or test certain
+   * If the above PHP script is named
+   * "calculateSales.php", the JSR 223 API can be used to invoke its
+   * functions or methods, to debug or test certain
    * functionality from Java while keeping the script running in a
    * production environment. The Java code follows:
    * <code>

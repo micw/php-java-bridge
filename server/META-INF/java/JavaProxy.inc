@@ -305,7 +305,7 @@ function java_cast($object, $type) {
 
 /**
  * Set the library path. This function should not be used in new programs.
- * Please use tomcat or j2ee hot deployment instead.
+ * Please use <a href="http://php-java-bridge.sourceforge.net/pjb/webapp.php>tomcat or jee hot deployment</a> instead.
  * @access public
  */
 function java_require($arg) {

@@ -383,8 +383,7 @@ public class JavaBridgeRunner extends HttpServer {
      * @param res The HTTP response object
      * @throws IOException
      */
-    protected void showTextFile(String name, String params, File f, int length, HttpRequest req, HttpResponse res) throws IOException {
-	boolean show = "show".equals(params);
+    protected void showTextFile(String name, String params, File f, int length, HttpRequest req, HttpResponse res, boolean show) throws IOException {
 	byte[] buf;
 	OutputStream out;
 	int c;
@@ -442,7 +441,7 @@ public class JavaBridgeRunner extends HttpServer {
 	    int length = (int)l;
 	    if(showDirectory(name, f, length, req, res)) return;
 	    if(handleScriptContent(name, params,  f, length , req, res)) return;
-	    showTextFile(name, params, f, length, req, res);
+	    showTextFile(name, params, f, length, req, res, (!name.endsWith(".html")) || "show".equals(params));
 	    return;
 	}
 	if(cache != null && name.endsWith("Java.inc")) {

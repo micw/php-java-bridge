@@ -472,7 +472,7 @@ class java_Client /* implements IDocHandler */ {
 	case 'E':
 	  $arg->setFactory($this->throwExceptionProxyFactory);
 	  if(JAVA_DEBUG) {echo "setresult exception:"; echo sprintf("%x", $this->asyncCtx); echo "\n";}
-	  $arg->setException($this->parser->getData($st['m']));
+	  $arg->setException($st['m']);
 	  $arg->setResult($this->asyncCtx=$this->getExact($st['v']));
 	  break;
 	default: 
