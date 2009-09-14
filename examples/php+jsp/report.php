@@ -60,6 +60,6 @@ $task->run ();
 $task->close();
 
 // Return the generated output to the client
-echo (string)$out;
+echo java_values($out);
 
 ?>

@@ -1,3 +1,15 @@
+2009-09-13    <jostb@intern>
+
+      * java.c (MINIT): Set JAVA_PIPE_DIR if /dev/shm exists
+	
+      * server/META-INF/java/Options.inc
+	(JAVA_PIPE_DIR): Disable on non-SEL systems
+
+      * server/META-INF/java/Protocol.inc
+	(getChannel): remove the pipes in any case
+	(unlink): New method
+	(createChannel): Initialize pipe channel
+	
 2009-09-01    <jostb@intern>
 
       * server/META-INF/java/Client.inc

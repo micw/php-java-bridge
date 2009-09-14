@@ -124,6 +124,7 @@ class java_EmptyPipeChannel {
 	}
   }
   function shutdownBrokenConnection () {}
+  function unlink () {}
 }
 /**
  * @access private
@@ -142,6 +143,11 @@ class java_PipeChannel extends java_EmptyPipeChannel {
 	$this->fifo = posix_mkfifo($this->oname, 0666);
 	umask($mask);
   }
+  function unlink () {
+	unlink($this->iname);
+	unlink($this->oname);
+	unlink($this->name);
+  }
   function open($handler) {
   	
 	$this->peerr = fopen($this->iname, "r");
@@ -150,9 +156,7 @@ class java_PipeChannel extends java_EmptyPipeChannel {
 	stream_set_timeout($this->peerr, -1);
 
 	$this->peer = fopen($this->oname, "w");
-	unlink($this->iname);
-	unlink($this->oname);
-	unlink($this->name);
+	$this->unlink ();
 	stream_set_timeout($this->peer, -1);
 	return $this;
   }
@@ -221,6 +225,7 @@ class java_SimpleHttpHandler extends java_SocketHandler {
 	$len0 = java_getCompatibilityOption($this->protocol->client); // short path S1: no PUT request
 	$len1 = chr($len&0xFF); $len>>=8;
 	$len2 = chr($len&0xFF);
+	$this->channel = new java_EmptyPipeChannel();
 	$this->protocol->socketHandler=new java_SocketHandler($this->protocol, $this->channel = $this->getChannel($channelName));
 	$this->protocol->write("\177${len0}${len1}${len2}${context}");
 	$this->context = sprintf("X_JAVABRIDGE_CONTEXT: %s\r\n", $context);
@@ -341,6 +346,7 @@ class java_SimpleHttpHandler extends java_SocketHandler {
   function getChannel($channelName) {
   	$errstr = null; $errno = null;
 	if($channelName[0]=='/') return $this->channel->open($this);
+    $this->channel->unlink(); // remove the created pipes (if any)
 	$peer = pfsockopen($this->host, $channelName, $errno, $errstr, 20);
 	if (!$peer) throw new java_IllegalStateException("No Pipe- or SocketContextServer for {$this->host}:{$channelName} available. Set promiscuous mode. Please see INSTALL.J2EE document for details. Error message: $errstr ($errno)\n");
 	stream_set_timeout($peer, -1);
@@ -482,10 +488,6 @@ class java_Protocol {
 	return $host;
   }
   function createHttpHandler() {
-	$hostVec = java_Protocol::getHost();
-	$host = $hostVec[0];
-	$port = $hostVec[1];
-
 	$overrideHosts = $this->getOverrideHosts();
 	$ssl = "";
 	if($overrideHosts) {
@@ -518,7 +520,12 @@ class java_Protocol {
  
      if($webCtx) $webCtx = substr($s, $webCtx+1);
 	  $this->webContext = $webCtx;
+	} else {
+	  $hostVec = java_Protocol::getHost();
+	  $host = $hostVec[0];
+	  $port = $hostVec[1];
 	}
+
 	$this->serverName = "$host:$port";
 
 	// short path S1: no PUT request

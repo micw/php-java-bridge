@@ -51,8 +51,10 @@
 
 #include "php_java.h"
 
-/* wait */
+/* wait, stat */
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <sys/wait.h>
 /* miscellaneous */
 #include <stdio.h>
@@ -232,9 +234,11 @@ PHP_MINIT_FUNCTION(EXT)
   } 
 
   // disable named pipes if the socket option is set
-  if(EXT_GLOBAL(option_set_by_user)(U_SOCKNAME, EXT_GLOBAL(ini_user)))
-	REGISTER_STRING_CONSTANT(EXTU/**/"_PIPE_DIR", "", CONST_CS | CONST_PERSISTENT);
-
+  if(!EXT_GLOBAL(option_set_by_user)(U_SOCKNAME, EXT_GLOBAL(ini_user))) {
+	struct stat buf;
+	if ((0==stat("/dev/shm", &buf)) && (S_ISDIR(buf.st_mode)))
+	  REGISTER_STRING_CONSTANT(EXTU/**/"_PIPE_DIR", "/dev/shm", CONST_CS | CONST_PERSISTENT);
+  }
   /* 
    * don't bother setting JAVA_HOSTS if this is a fcgi servlet
    * (getenv("X_JAVABRIDGE_OVERRIDE_HOSTS")=="/") as the servlet will

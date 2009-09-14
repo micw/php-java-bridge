@@ -127,11 +127,7 @@ if(!defined("JAVA_LOG_LEVEL"))
  * Default is to use /dev/shm on Linux, false otherwise.
  */
 if(!defined("JAVA_PIPE_DIR")) {
-  if ($ini=get_cfg_var("java.pipe_dir"))  define("JAVA_PIPE_DIR", $ini); 
-  else
-	if (file_exists ("/dev/shm"))         define("JAVA_PIPE_DIR", "/dev/shm" );
-	else if (PHP_OS==='SunOS')            define("JAVA_PIPE_DIR", "/tmp"); // shared memory on Solaris
-	else                                  define("JAVA_PIPE_DIR", null);
+  define("JAVA_PIPE_DIR", null);
 }
 
 /** Set to 1 for compatibility with earlier versions.

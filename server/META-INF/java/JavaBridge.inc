@@ -132,7 +132,7 @@ if(!function_exists("java_get_base")) {
    * @access private
    * @since PHP 5.3
    */
-  function java_autoload() 
+  function java_autoload($libs=null) 
   {
 /*
     java_autoload("lucene.jar");
