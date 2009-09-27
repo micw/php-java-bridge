@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import php.java.bridge.ILogger;
 import php.java.bridge.JavaBridge;
 import php.java.bridge.Request;
 import php.java.bridge.SimpleJavaBridgeClassLoader;
@@ -64,10 +65,12 @@ public class ContextRunner implements Runnable {
     private OutputStream out;
     private AbstractChannel channel;
     private ContextFactory.ICredentials contextServer; /* the ContextServer of the web application, used for security checks in ContextFactory.get(...)  */
+    private ILogger logger;
     
-    protected ContextRunner(ContextFactory.ICredentials contextServer, AbstractChannel channel) {
+    protected ContextRunner(ContextFactory.ICredentials contextServer, AbstractChannel channel, ILogger logger) {
 	this.contextServer = contextServer;
 	this.channel = channel;
+	this.logger = logger;
     }
     private byte shortPathHeader;
     private int readLength() throws IOException{
@@ -101,6 +104,8 @@ public class ContextRunner implements Runnable {
     }
 
     private boolean init() throws IOException {
+	Util.setLogger(logger);
+
 	if(Util.logLevel>4) Util.logDebug("starting a new ContextRunner " + this);
 	out = channel.getOuptutStream();
 	in = channel.getInputStream();

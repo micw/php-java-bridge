@@ -467,10 +467,9 @@ public abstract class CGIServlet extends HttpServlet {
      */
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
         throws ServletException, IOException {
-	
 	if(Util.logLevel>3) {
 	    if (req.getAttribute("javax.servlet.include.request_uri")!=null) Util.logDebug("doGet (included):"+req.getAttribute("javax.servlet.include.request_uri"));
-	    Util.logDebug("doGet:"+req.getRequestURI());
+	    log("doGet:"+req.getRequestURI());
 	}
         handle (req, res, false);
     } //doGet

@@ -13,7 +13,7 @@ $here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
 if(!$here) $here=getcwd();
 java_require("$here/../tests.php5/callback.jar");
 
-$closure=java_closure(null, array("c1" => "x1"));
+$closure=java_closure(null, array("c1" => "x1"), java("Callback"));
 $callbackTest=new java('Callback$Test', $closure);
 
 if($callbackTest->test()) {

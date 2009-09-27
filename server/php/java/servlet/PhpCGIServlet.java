@@ -81,10 +81,9 @@ public class PhpCGIServlet extends FastCGIServlet {
     public void init(ServletConfig config) throws ServletException {
     	super.init(config);
 
-    	ServletContext context = config.getServletContext();
 	String servletContextName=CGIServlet.getRealPath(context, "");
 	if(servletContextName==null) servletContextName="";
-	contextServer = PhpJavaServlet.getContextServer(context);
+	contextServer = PhpJavaServlet.getContextServer(context, promiscuous);
 
 	DOCUMENT_ROOT = getRealPath(context, "");
 	SERVER_SIGNATURE = context.getServerInfo();
@@ -286,7 +285,7 @@ public class PhpCGIServlet extends FastCGIServlet {
 	    		if (channelName != null) {
 	    		    this.environment.put("X_JAVABRIDGE_REDIRECT", channelName.getName());
 	    		    ctx.getBridge();
-	    		    contextServer.start(channelName);
+	    		    contextServer.start(channelName, logger);
 	    		}
 	    	    }
 	    	}
@@ -418,6 +417,7 @@ public class PhpCGIServlet extends FastCGIServlet {
     protected void handle(HttpServletRequest req, HttpServletResponse res, boolean handleInput)
 	throws ServletException, IOException {
     	try {
+    	    Util.setLogger(logger);
  	    super.handle(req, res, handleInput);
     	} catch (IOException e) {
     	    try {res.reset();} catch (Exception ex) {/*ignore*/}
@@ -441,7 +441,7 @@ public class PhpCGIServlet extends FastCGIServlet {
     	}
     	catch (Throwable t) {
     	    try {res.reset();} catch (Exception ex) {/*ignore*/}
-	    Util.printStackTrace(t);
+	    if (Util.logLevel>4) Util.printStackTrace(t);
     	    throw new ServletException(t);
     	}
    }

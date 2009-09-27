@@ -11,6 +11,7 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Map;
 
+import php.java.bridge.ILogger;
 import php.java.bridge.Util;
 import php.java.bridge.Util.Process;
 import php.java.servlet.CGIServlet;
@@ -44,6 +45,9 @@ class SocketChannelFactory extends ChannelFactory {
     private  ServerSocket fcgiTestSocket = null;
     private  int fcgiTestPort;
     
+    public SocketChannelFactory (boolean promiscuous) {
+	this.promiscuous = promiscuous;
+    }
     public void test() throws ConnectException {
         Socket testSocket;
 	try {
@@ -103,7 +107,7 @@ class SocketChannelFactory extends ChannelFactory {
 	    /* Start a fast CGI Server process on this computer. Switched off per default. */
 	    protected Process doBind(Map env, String php, boolean includeJava) throws IOException {
 	        if(proc!=null) return null;
-	        	StringBuffer buf = new StringBuffer(Util.JAVABRIDGE_PROMISCUOUS ? "" : LOCAL_HOST); // bind to all available or loopback only
+	        	StringBuffer buf = new StringBuffer(promiscuous ? "" : LOCAL_HOST); // bind to all available or loopback only
 	        	buf.append(':');
 	        	buf.append(String.valueOf(getPort()));
 	        	String port = buf.toString();
@@ -148,9 +152,9 @@ class SocketChannelFactory extends ChannelFactory {
 				getPort()+"\n\n";
 		        return msg;
 		    }
-	    protected void bind() throws InterruptedException, IOException {
+	    protected void bind(ILogger logger) throws InterruptedException, IOException {
 		if(fcgiTestSocket!=null) { fcgiTestSocket.close(); fcgiTestSocket=null; }// replace the allocated socket# with the real fcgi server
-		super.bind();
+		super.bind(logger);
 	    }
 		
 	    public void findFreePort(boolean select) {

@@ -34,6 +34,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import php.java.bridge.AppThreadPool;
+import php.java.bridge.ILogger;
 import php.java.bridge.ISocketFactory;
 import php.java.bridge.JavaBridge;
 import php.java.bridge.Util;
@@ -60,6 +61,7 @@ import php.java.bridge.Util;
 public final class SocketContextServer extends PipeContextServer implements Runnable {
     private ISocketFactory serverSocket = null;
     protected List sockets = Collections.synchronizedList(new ArrayList());
+    private ILogger logger;
     
     protected class Channel extends PipeContextServer.Channel {
         protected Socket sock;
@@ -88,15 +90,14 @@ public final class SocketContextServer extends PipeContextServer implements Runn
             shutdown(sock);
          }    
     }
-    private static final String BIND_PORT=Util.JAVABRIDGE_PROMISCUOUS?"INET:0":"INET_LOCAL:0";
     /**
      * Create a new ContextServer using the ThreadPool. 
      * @param threadPool Obtain runnables from this pool. If null, new threads will be created.
      */
-    public SocketContextServer (AppThreadPool threadPool) {
-    	super(ContextFactory.NO_CREDENTIALS, threadPool, ContextFactory.EMPTY_CONTEXT_NAME);
+    public SocketContextServer (AppThreadPool threadPool, boolean promiscuous) {
+    	super(ContextFactory.NO_CREDENTIALS, threadPool, ContextFactory.EMPTY_CONTEXT_NAME, promiscuous);
         try {
-	    serverSocket = JavaBridge.bind(BIND_PORT);
+	    serverSocket = JavaBridge.bind(promiscuous?"INET:0":"INET_LOCAL:0");
 	    SecurityManager sec = System.getSecurityManager();
 	    if(sec!=null) sec.checkAccept("127.0.0.1", Integer.parseInt(serverSocket.getSocketName()));
             Thread t = new Util.Thread(this, "JavaBridgeSocketContextServer("+serverSocket.getSocketName()+")");
@@ -118,7 +119,7 @@ public final class SocketContextServer extends PipeContextServer implements Runn
 	    try {socket = this.serverSocket.accept();} catch (IOException ex) {return false;} // socket closed
 	    in=socket.getInputStream();
 	    out=socket.getOutputStream();
-	    ContextRunner runner = new ContextRunner(contextServer, channel = new Channel(getChannelName(), in, out, socket));
+	    ContextRunner runner = new ContextRunner(contextServer, channel = new Channel(getChannelName(), in, out, socket), logger);
 	    if(threadPool!=null) {
 	        threadPool.start(runner);
 	    } else {
@@ -185,7 +186,8 @@ public final class SocketContextServer extends PipeContextServer implements Runn
         return serverSocket.getSocketName();
     }
     /**{@inheritDoc}*/
-    public boolean start(AbstractChannelName channelName) {
+    public boolean start(AbstractChannelName channelName, ILogger logger) {
+	this.logger = logger;
 	return isAvailable();
     }
 }

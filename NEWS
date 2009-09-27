@@ -3,6 +3,34 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 5.5.3
+
+* The bridge can now handle java.lang.RuntimeException/Errors: If the
+  option JAVA_PREFER_VALUES is set, each RuntimeException/Error is
+  thrown as a PHP JavaException. Otherwise java_last_exception_get()
+  can be used to fetch the last RuntimeException/Error. Example:
+
+   define ("JAVA_PREFER_VALUES", false);
+   require ("http://localhost:8080/JavaBridge/java/Java.inc");
+
+   try {
+     @new java("java.lang.String", null);
+     if ($ex = java_last_exception_get()) {
+       echo "OOPS, ";
+       java_last_exception_clear();
+       throw $ex;
+     }
+   } catch (JavaException $e) {
+    echo "Received Exception or Error:" . $e->getMessage();
+   }
+
+* java_begin_document()/java_end_document() are now dummy calls and
+  have been removed from the documentation.
+
+* java_last_exception_get()/java_last_exception_clear() are no longer
+  deprecated.
+  
+
 Version 5.5.1
 
 * Improved unix-domain socket handling: If

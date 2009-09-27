@@ -97,8 +97,8 @@ public class InvocablePhpServletRemoteHttpServerScriptEngine extends InvocablePh
 	this.port = uri.getPort();
 	this.proxy = uri.getPath();
 	this.url = uri.toURL();
-	
-	this.contextServer = PhpJavaServlet.getContextServer(ctx);
+
+	this.contextServer = PhpJavaServlet.getContextServer(ctx, promiscuous);
     }
     protected ContextServer getContextServer() {
 	return contextServer;

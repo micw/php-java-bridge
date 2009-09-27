@@ -1,5 +1,5 @@
 <?php
-require_once("http://127.0.0.1:8080/JavaBridge/java/Java.inc");
+require_once("java/Java.inc");
 include("../php_java_lib/JspTag.php");
 $session = java_session ();
 $here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));

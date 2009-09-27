@@ -68,8 +68,8 @@ public class JavaBridgeRunner extends HttpServer {
     protected static JavaBridgeRunner runner;
 
     protected JavaBridgeRunner(String serverPort) throws IOException {
-	super(serverPort);
-	contextServer = new ContextServer(ContextFactory.EMPTY_CONTEXT_NAME);	
+	super(serverPort, Util.JAVABRIDGE_PROMISCUOUS);
+	contextServer = new ContextServer(ContextFactory.EMPTY_CONTEXT_NAME, Util.JAVABRIDGE_PROMISCUOUS);	
     }
     /**
      * Create a new JavaBridgeRunner and ContextServer.
@@ -77,8 +77,8 @@ public class JavaBridgeRunner extends HttpServer {
      * @see ContextServer
      */
     protected JavaBridgeRunner() throws IOException {
-	super();
-	contextServer = new ContextServer(ContextFactory.EMPTY_CONTEXT_NAME);
+	super(Util.JAVABRIDGE_PROMISCUOUS);
+	contextServer = new ContextServer(ContextFactory.EMPTY_CONTEXT_NAME, Util.JAVABRIDGE_PROMISCUOUS);
     }
     /**
      * Return a instance.
@@ -185,7 +185,7 @@ public class JavaBridgeRunner extends HttpServer {
         	resOut = res.getOutputStream();
         	sout.writeTo(resOut);
         	resOut.close();
-                contextServer.start(channelName);
+                contextServer.start(channelName, Util.getLogger());
                 if(bridge.logLevel>3) 
                     bridge.logDebug("waiting for context: " +ctx.getId());
                 try { ctx.waitFor(Util.MAX_WAIT); } catch (InterruptedException e) { Util.printStackTrace(e); }

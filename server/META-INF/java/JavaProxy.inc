@@ -55,8 +55,8 @@ $java_initialized = false;
  * @access private
  */
 function __javaproxy_Client_getClient() {
-  static $client;
-  if(isset($client)) return $client;
+  static $client = null;
+  if(!is_null($client)) return $client;
   
   if (function_exists("java_create_client")) $client = java_create_client();
   else {
@@ -69,20 +69,61 @@ function __javaproxy_Client_getClient() {
 }
 
 /**
- * @deprecated: Use PHP5 try/catch instead
- * @access private
+ * Return the last stored Java exception. 
+
+ * The last stored Java exception is the first undeclared
+ * java.lang.RuntimeException or java.lang.Error after the last
+ * java_last_exception_clear() invocation or, if no
+ * RuntimeException/Error occured, the last declared exception
+ * reported via the script engine's try/catch mechanism.
+ * 
+ * Useful for script engines which do not support try/catch or if
+ * you want to handle java.lang.RuntimeException or java.lang.Error
+ * in your PHP code.
+ * <br>
+ * Note the distinction between java.lang.Exception, which can be
+ * caught on PHP level, and
+ * java.lang.RuntimeException/java.lang.Error, which raise a fatal PHP
+ * error at the end of the php script (unless the error condition is
+ * cleared using java_last_exception_clear()).
+ * <br>
+ * java.lang.Exception is a typical exception in your business logic,
+ * java.lang.RuntimeException is an exception caused by a bug in your
+ * program, for example java.lang.NullPointerException.
+ * java.lang.Error marks a serious problem, for example
+ * java.lang.OutOfMemoryError.
+ * 
+ * Example:
+ * <code>
+ * define ("JAVA_PREFER_VALUES", false);
+ * require_once("http://localhost:8080/JavaBridge/java/Java.inc");
+ * try {
+ * new java("java.lang.String", null); // raises java.lang.RuntimeException
+ * assert (is_null(java_last_exception_get());	
+ * } catch (JavaException $e) {
+ *	echo $e;
+ * }
+ * </code>
+ *
+ * 
+ * @return mixed The last stored Java exception or null
+ * @access public
+ * @see java_last_exception_clear()
+ * @see JAVA_PREFER_VALUES
  */
 function java_last_exception_get() {
   $client=__javaproxy_Client_getClient();
-  return $client->getProperty(0, "lastException");
+  return $client->invokeMethod(0, "getLastException", array());
 }
 /**
- * @deprecated: Use PHP5 try/catch instead.
- * @access private
+ * Clear a stored Java exception.
+ *  
+ * @access public
+ * @see java_last_exception_get()
  */
 function java_last_exception_clear() {
   $client=__javaproxy_Client_getClient();
-  $client->setProperty(0, "lastException", null);
+  $client->invokeMethod(0, "clearLastException", array());
 }
 /**
  * Only for internal use
@@ -102,7 +143,7 @@ function java_values_internal($object) {
  * </code>
  *
  *<br> Any declared exception can be caught by PHP code. <br>
- * Exceptions derived from java.lang.RuntimeException or Error must
+ * Exceptions derived from java.lang.RuntimeException or Error should
  * not be caught unless declared in the methods throws clause -- OutOfMemoryErrors cannot be caught at all,
  * even if declared.
  *
@@ -119,7 +160,7 @@ function java_invoke($object, $method, $args) {
 /**
  * Unwrap a Java object.
  * 
- * Fetches the PHP object which has been wrapped by java_closure() or java_wrap(). Example:
+ * Fetches the PHP object which has been wrapped by java_closure(). Example:
  * <code>
  * class foo { function __toString() {return "php"; } function toString() {return "java";} }
  * $foo = java_closure(new foo());
@@ -535,30 +576,20 @@ function java_closure() {
  * mode when you have a large number of set operations and you don't
  * expect an exception. Any exception raised during stream mode is
  * reported when java_end_document() is called.
- * @access public
+ * @deprecated
+ * @access private
  */
 function java_begin_document() {
-  $client = __javaproxy_Client_getClient();
-  if (!$client->isAsync) {
-	$client->invokeMethod(0, "beginDocument", array());
-	$client->setAsyncHandler();
-  }
-  $client->isAsync+=1;
 }
 /**
  * Ends stream mode. 
  * 
  * Fires a JavaException if any statement executed during
  * stream mode raised an exception.
- * @access public
+ * @deprecated
+ * @access private
  */
 function java_end_document() {
-  $client = __javaproxy_Client_getClient();
-  if ($client->isAsync==1) {
-	$client->setDefaultHandler();
-	$client->invokeMethod(0, "endDocument", array());
-  }
-  if ($client->isAsync > 0) $client->isAsync-=1;
 }
 
 /**
@@ -611,7 +642,7 @@ class java_JavaProxy implements java_JavaType {
     try {
       return $this->__client->invokeMethod(0,"ObjectToString",array($this));
     } catch (JavaException $ex) {
-	  trigger_error("Exception in Java::__toString(): ". (string)$ex, E_USER_WARNING);
+	  trigger_error("Exception in Java::__toString(): ". java_truncate((string)$ex), E_USER_WARNING);
 	  return "";
     }
   }
@@ -794,9 +825,9 @@ abstract class java_AbstractJava implements IteratorAggregate,ArrayAccess,java_J
  * </code>
  *
  *<br> Any declared exception can be caught by PHP code. <br>
- * Exceptions derived from java.lang.RuntimeException or Error must
- * not be caught unless declared in the methods throws clause -- OutOfMemoryErrors cannot be caught at all,
- * even if declared.
+ * Exceptions derived from java.lang.RuntimeException or Error should
+ * not be caught unless declared in the methods throws clause --
+ * OutOfMemoryErrors cannot be caught at all, even if declared.
  *
  * @access public
  * @see JavaException

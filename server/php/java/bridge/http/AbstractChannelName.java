@@ -2,6 +2,8 @@
 
 package php.java.bridge.http;
 
+import php.java.bridge.ILogger;
+
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
  *
@@ -59,13 +61,13 @@ package php.java.bridge.http;
         /**
          * Start the channel. This method calls IContextServer.start()
          */
-        protected abstract boolean startChannel();
+        protected abstract boolean startChannel(ILogger logger);
 	/**
 	 * Start a new ContextRunner for a given ContextServer. The current ContextFactory becomes the 
 	 * default for this runner.
 	 * @return true, if the channel is available, false otherwise.
 	 */
-	public boolean start() {
-	    return startChannel();
+	public boolean start(ILogger logger) {
+	    return startChannel(logger);
 	}
     }

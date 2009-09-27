@@ -11,14 +11,14 @@ java_SOURCES=php/java/bridge/JavaBridgeIllegalStateException.java php/java/bridg
 JavaRaw.inc:
 	rm -f META-INF/java/Java.inc
 	phpdoc -j -c PHPDocConfig.ini >/dev/null
-	cat META-INF/java/JavaBridge.inc META-INF/java/Options.inc META-INF/java/Client.inc META-INF/java/GlobalRef.inc META-INF/java/NativeParser.inc META-INF/java/Parser.inc META-INF/java/Protocol.inc META-INF/java/SimpleParser.inc META-INF/java/JavaProxy.inc | sed -f extract.sed | sed '/^\/\*/,/\*\/$$/d' | sed '/^[	 ]*$$/d' | sed "s|//[^'\"]*\$$||;s|\\(^[^'\"]*\\)//.*\$$|\\1|;s|[	 ][	 ]*| |g;s|^[	 ]*||;/^\$$/d" >JavaRaw.inc
+	cat META-INF/java/JavaBridge.inc META-INF/java/Options.inc META-INF/java/Client.inc META-INF/java/GlobalRef.inc META-INF/java/NativeParser.inc META-INF/java/Parser.inc META-INF/java/Protocol.inc META-INF/java/SimpleParser.inc META-INF/java/JavaProxy.inc | sed -f extract.sed | sed '/^\/\*/,/\*\/$$/d' | sed '/^[	 ]*$$/d' | sed "s|//[^'\"]*\$$||;s|\\(^[^'\"]*\\)//.*\$$|\\1|;s|[	 ][	 ]*| |g;s|^[	 ]*||;/^\$$/d" | sed '/define ("JAVA_PEAR_VERSION"/s|, ".*")|, "'"`cat ../VERSION`"'")|' >JavaRaw.inc
 
 META-INF/java/Java.inc: JavaRaw.inc
 	cat JavaRaw.inc | sed '/do not delete this line/d' | sed ':repeat $$!N; s/\n}/}/; t repeat; P; D;' | sed ':repeat $$!N; s/{[	 ]*\n/{/; t repeat; P; D;'  >META-INF/java/Java.inc
 	rm -f ../documentation/API/errors.html
 
 META-INF/java/JavaProxy.php: META-INF/java/Java.inc
-	cat META-INF/java/Java.inc | sed '$$d' | sed '$$s|}$$|\n}|' | sed -f prepend.sed >META-INF/java/JavaProxy.php
+	echo '<?php if(!function_exists("java_get_base")) {require_once("Java.inc"); java_call_with_continuation();} ?>' >META-INF/java/JavaProxy.php
 
 META-INF/java/Mono.inc: JavaRaw.inc
 	cat JavaRaw.inc | sed -f append.sed | sed 's/JAVA/MONO/g;s/java/mono/g;s/Java/Mono/g;s/updateJarLibraryPath/updateLibraryPath/;s/^.*raise mono connect exception--do not delete this line.*$$/if(!$$peer)throw new mono_ConnectException("No Mono! Please start MonoBridge.exe. Error message: $$errstr ($$errno)");/;s/^.*do not delete this line.*$$/$$name="cli.".$$name;/;' | sed ':repeat $$!N; s/\n}/}/; t repeat; P; D;' | sed ':repeat $$!N; s/{[	 ]*\n/{/; t repeat; P; D;' >META-INF/java/Mono.inc
@@ -122,8 +122,8 @@ php-script.jar: JavaBridge.jar $(SCRIPT) $(SERVLET)
 	$(PHP_JAVA_DIR)/bin/javac $(SOURCE_VERSION) -classpath .:../unsupported:$(SERVLET):$(SCRIPT) php/java/bridge/http/*.java php/java/bridge/*.java php/java/script/*.java php/java/script/servlet/*.java 2>/dev/null
 	$(PHP_JAVA_DIR)/bin/jar cf php-script.jar META-INF/services/javax.script.ScriptEngineFactory php/java/script/*.class
 
-src.zip: META-INF/java/Mono.inc META-INF/java/JavaProxy.php META-INF/java/Mono.inc
-	$(PHP_JAVA_DIR)/bin/jar cf src.zip WEB-INF/cgi/launcher.c WEB-INF/cgi/launcher.sh WEB-INF/cgi/README WEB-INF/cgi/rename* javax/script/*.java php/java/bridge/http/*.java php/java/bridge/*.java php/java/servlet/fastcgi/*.java php/java/servlet/*.java php/java/script/*.java php/java/script/servlet/*.java $(java_in)
+src.zip: META-INF/java/Mono.inc META-INF/java/JavaProxy.php META-INF/java/Java.inc
+	$(PHP_JAVA_DIR)/bin/jar cf src.zip WEB-INF/cgi/launcher.c WEB-INF/cgi/launcher.sh WEB-INF/cgi/README WEB-INF/cgi/rename* javax/script/*.java php/java/bridge/http/*.java php/java/bridge/*.java php/java/servlet/fastcgi/*.java php/java/servlet/*.java php/java/script/*.java php/java/script/servlet/*.java META-INF/java/*
 
 
 JavaBridge.war: src.zip JavaBridge.jar $(SERVLET) $(JAVA_BRIDGE_SERVLET_JAR) $(SCRIPT) $(JAVA_BRIDGE_SCRIPT_JAR) $(FACES) $(JAVA_BRIDGE_FACES_JAR) TestInstallation.class META-INF/java/JavaProxy.php

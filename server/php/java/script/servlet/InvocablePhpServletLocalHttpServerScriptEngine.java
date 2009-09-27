@@ -16,6 +16,7 @@ import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
 import javax.servlet.Servlet;
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -65,12 +66,14 @@ abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocableP
     
     protected boolean overrideHosts = true;
     
+    protected boolean promiscuous = false;
+    
     protected String getProxy() {
 	if (proxy!=null) return proxy;
 	return proxy=req.getContextPath()+"/java/JavaProxy.php";
     }
     protected URL getURL(ServletContext ctx) throws MalformedURLException, URISyntaxException {
-	return new java.net.URI(protocol, null, Util.getHostAddress(), port, getProxy(), null, null).toURL();
+	return new java.net.URI(protocol, null, Util.getHostAddress(promiscuous), port, getProxy(), null, null).toURL();
     }
     protected InvocablePhpServletLocalHttpServerScriptEngine(Servlet servlet, 
 					   ServletContext ctx, 
@@ -91,12 +94,22 @@ abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocableP
 	this.req = req;
 	this.res = res;
 
+	ServletConfig config = servlet.getServletConfig();
 	try {
-	    String value = servlet.getServletConfig().getServletContext().getInitParameter("override_hosts");
+	    String value = config.getServletContext().getInitParameter("override_hosts");
 	    if(value==null) value="";
 	    value = value.trim();
 	    value = value.toLowerCase();
 	    if(value.equals("off") || value.equals("false")) overrideHosts = false;
+	} catch (Exception t) {Util.printStackTrace(t);}
+	
+	try {
+	    String value = config.getInitParameter("promiscuous");
+	    if(value==null) value="";
+	    value = value.trim();
+	    value = value.toLowerCase();
+	    
+	    if(value.equals("on") || value.equals("true")) promiscuous=true;
 	} catch (Exception t) {Util.printStackTrace(t);}
 
 	scriptContext.initialize(servlet, servletCtx, req, res);

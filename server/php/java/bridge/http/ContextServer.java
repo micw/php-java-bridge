@@ -25,6 +25,7 @@ package php.java.bridge.http;
  */
 
 import php.java.bridge.AppThreadPool;
+import php.java.bridge.ILogger;
 import php.java.bridge.Util;
 import php.java.bridge.http.ContextFactory.ICredentials;
 
@@ -49,6 +50,8 @@ public final class ContextServer implements ContextFactory.ICredentials {
     // One PipeContextServer for each web context, carries this ContextServer as a security token.
     private PipeContextServer ctx;
     private String contextName;
+    private boolean promiscuous;
+    
     // There's only one  shared SocketContextServer instance, otherwise we have to allocate a new ServerSocket for each web context
     // No secutiry token
     private  static SocketContextServer sock = null; 
@@ -62,8 +65,8 @@ public final class ContextServer implements ContextFactory.ICredentials {
     private class PipeChannelName extends AbstractChannelName {
         public PipeChannelName(String name, IContextFactory ctx) {super(name,  ctx);}
 
-        public boolean startChannel() {
-            return ctx.start(this);
+        public boolean startChannel(ILogger logger) {
+            return ctx.start(this, logger);
         }
         public String toString() {
             return "Pipe:"+getName();
@@ -72,8 +75,8 @@ public final class ContextServer implements ContextFactory.ICredentials {
     private class SocketChannelName extends AbstractChannelName {
         public SocketChannelName(String name,IContextFactory ctx) {super(name,  ctx);}
         
-        public boolean startChannel() {
-            return sock.start(this);
+        public boolean startChannel(ILogger logger) {
+            return sock.start(this, logger);
         }
         public String toString() {
             return "Socket:"+getName();
@@ -83,13 +86,23 @@ public final class ContextServer implements ContextFactory.ICredentials {
      * Create a new ContextServer using a thread pool.
      * @param contextName The the name of the web context to which this server belongs.
      */
-    public ContextServer(String contextName) {
+    public ContextServer(String contextName, boolean promiscuous) {
         this.contextName = contextName;
+        this.promiscuous = promiscuous;
+        
 	/*
          * We need both because the client may not support named pipes.
          */
-        ctx = new PipeContextServer(this, getAppThreadPool(), contextName);
+        ctx = new PipeContextServer(this, getAppThreadPool(), contextName, promiscuous);
         /* socket context server will be created on demand */
+    }
+    
+    /**
+     * @return true for all network interfaces, false for loopback only
+     * 
+     */
+    public boolean isPromiscuous () {
+	return this.promiscuous;
     }
     
     private synchronized static final void destroyContextServer () {
@@ -127,7 +140,7 @@ public final class ContextServer implements ContextFactory.ICredentials {
 
     private static synchronized SocketContextServer getSocketContextServer(ContextServer server, AppThreadPool pool) {
 	if(sock!=null) return sock;
-	return sock=new SocketContextServer(pool);
+	return sock=new SocketContextServer(pool, server.isPromiscuous());
     }
 
     /**
@@ -135,8 +148,8 @@ public final class ContextServer implements ContextFactory.ICredentials {
      * @param channelName The ChannelName.
      * @throws IllegalStateException if there's no Pipe- or SocketContextServer available
      */
-    public void start(AbstractChannelName channelName) {
-	boolean started = channelName.start();
+    public void start(AbstractChannelName channelName, ILogger logger) {
+	boolean started = channelName.start(logger);
 	if(!started) throw new IllegalStateException("Pipe- and SocketContextServer not available");
     }
 

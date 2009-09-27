@@ -190,7 +190,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
     		if (channelName != null) {
     		    env.put("X_JAVABRIDGE_REDIRECT", channelName.getName());
     		    ctx.getBridge();
-    		    contextServer.start(channelName);
+    		    contextServer.start(channelName, Util.getLogger());
     		}
 	}
 	

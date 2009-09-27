@@ -84,10 +84,20 @@ public final class Response {
 	public Throwable getCause () {
 	    return this.e;
 	}
+	public String getMessage() {
+	    return e.getMessage();
+	}
+	public String getLocalizedMessage() {
+	    return e.getLocalizedMessage();
+	}
+	public StackTraceElement[] getStackTrace() {
+	    return e.getStackTrace();
+	}
     }
 
     protected final Object wrapUndeclared(Throwable o, boolean hasDeclaredExceptions) {
-	if (hasDeclaredExceptions) return o;
+	if (hasDeclaredExceptions || bridge.options.preferValues()) return o;
+	bridge.setLastAsyncException(o);
 	bridge.warn(MSG + " " + o);
 	return new UndeclaredThrowableErrorMarker(o);
     }
@@ -343,7 +353,7 @@ public final class Response {
     protected final class ObjectWriter extends DefaultObjectWriter {
 	public void setResultException(Throwable o, boolean hasDeclaredExceptions) {
 	    this.hasDeclaredExceptions = hasDeclaredExceptions;
-	    setResultObject(wrapUndeclared(bridge.lastAsyncException = o, hasDeclaredExceptions));
+	    setResultObject(wrapUndeclared(o, hasDeclaredExceptions));
 	}
     }
     /** Writer used by the async protocol. It writes nothing but stores the result in global ref*/
@@ -353,7 +363,7 @@ public final class Response {
 	}
 	public void setResultException(Throwable o, boolean hasDeclaredExceptions) {
 	    this.hasDeclaredExceptions = hasDeclaredExceptions;
-	    setResultObject(wrapUndeclared(bridge.lastAsyncException = o, hasDeclaredExceptions));
+	    setResultObject(wrapUndeclared(o, hasDeclaredExceptions));
 	}
 	public void setResultObject(Object value) {
 	    if(staticType == java.lang.Void.TYPE)  throw new IllegalStateException ("Use the AsyncVoidWriter instead");
@@ -398,7 +408,7 @@ public final class Response {
 	}
 	public void setResultException(Throwable o, boolean hasDeclaredExceptions) {
 	    this.hasDeclaredExceptions = hasDeclaredExceptions;
-	    wrapUndeclared(bridge.lastAsyncException = o, hasDeclaredExceptions);
+	    wrapUndeclared(o, hasDeclaredExceptions);
 	}
 	public void setResultObject(Object value) {}
 	public void setResultClass(Class value) {}

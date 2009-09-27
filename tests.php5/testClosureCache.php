@@ -8,7 +8,5 @@ function toString() {return "ccl";}
 $tc = new Java("TestClosureCache");
 "ichild::ccl"==$tc->proc1(java_closure(null, null, java('TestClosureCache$IChild'))) ||die(1);
 "iface::ccl"==$tc->proc1(java_closure(null, null, java('TestClosureCache$IFace'))) || die(2);
-"object::ccl"==$tc->proc1(java_closure(null, null, null)) || die(3);
-"object::ccl"==$tc->proc1(java_closure()) || die(4);
 echo "test okay\n";
 ?>

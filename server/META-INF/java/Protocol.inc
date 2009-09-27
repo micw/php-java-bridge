@@ -200,7 +200,10 @@ class java_SocketHandler {
   }
   function dieWithBrokenConnection($msg) {
 	unset($this->protocol->client->protocol);
-	$error = error_get_last();
+	if (function_exists("error_get_last"))
+		$error = error_get_last();
+	else
+		$error = array("message"=>"broken connection error");
     die ("${msg} ".$error["message"]);
   }
   function shutdownBrokenConnection ($msg) {
@@ -213,7 +216,6 @@ class java_SocketHandler {
  */
 class java_SimpleHttpHandler extends java_SocketHandler {
   public $headers;
-  public $redirect;
   
   public $context, $ssl, $port; // used by reopen
   public $host; // used when creating a socket channel lazily. the port# is passed via X_JAVABRIDGE_CHANNEL
@@ -384,7 +386,7 @@ class java_HttpHandler extends java_SimpleHttpHandler {
 	  pfsockopen("{$this->ssl}{$this->host}", $this->port, $errno, $errstr, 20) :
 	   fsockopen("{$this->ssl}{$this->host}", $this->port, $errno, $errstr, 20);
 
-	if (!$socket) throw new java_ConnectException("Could not connect to the J2EE server {$this->ssl}{$this->host}:{$this->port}. Please start it. Or define('JAVA_HOSTS', 8080); define('JAVA_SERVLET', false); before including 'Java.inc' and try again. Error message: $errstr ($errno)\n");
+	if (!$socket) throw new java_ConnectException("Could not connect to the J2EE server {$this->ssl}{$this->host}:{$this->port}. Please start it. Or define('JAVA_HOSTS', 9267); define('JAVA_SERVLET', false); before including 'Java.inc' and try again. Error message: $errstr ($errno)\n");
 	stream_set_timeout($socket, -1);
 	return $socket;
   }
@@ -402,7 +404,6 @@ class java_HttpHandler extends java_SimpleHttpHandler {
 	$cookies = $this->getCookies();
 	$channel = $this->getChannelName();
 	$context = $this->getContext();
-	$redirect = $this->redirect;
 	$res = "PUT ";
 	$res .= $webapp;
 	$res .= JAVA_PERSISTENT_SERVLET_CONNECTIONS ? " HTTP/1.1\r\n" : " HTTP/1.0\r\n"; 
@@ -410,7 +411,6 @@ class java_HttpHandler extends java_SimpleHttpHandler {
 	$res .= "Content-Length: "; $res .= $len; $res .= "\r\n";
 	$res .= $context;
 	$res .= $cookies;
-	$res .= $redirect;
 	if(!is_null($channel)) $res .= $channel;
 	$res .= "\r\n";
 	$res .= "\177";
@@ -480,8 +480,8 @@ class java_Protocol {
 		java_getHeader('X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT', $_SERVER);
   }
   static function getHost() {
-	static $host;
-	if(!isset($host)) {
+	static $host = null;
+	if(is_null($host)) {
 	  $hosts = explode(";", JAVA_HOSTS);
 	  $host = explode(":", $hosts[0]); // TODO: check host list
 	}
@@ -566,8 +566,8 @@ class java_Protocol {
       } else {
 	  	  $java=file_exists(ini_get("extension_dir")."/JavaBridge.jar")?ini_get("extension_dir")."/JavaBridge.jar":(java_get_base()."/JavaBridge.jar");
 		  if (!file_exists($java)) 
-		      throw new java_IOException("Could not find $java in ".getcwd().". Download http://php-java-bridge.sf.net/pjb/java/JavaBridge.jar and try again.");
-	      $java_cmd = "java -Dphp.java.bridge.daemon=true -jar $java INET_LOCAL:$channelName 0"; 
+		      throw new java_IOException("Could not find $java in ".getcwd().". Download it from http://sf.net/projects/php-java-bridge/files/Binary%20package/php-java-bridge_".JAVA_PEAR_VERSION."/JavaBridge.jar/download and try again.");
+	      $java_cmd = "java -Dphp.java.bridge.daemon=true -jar \"${java}\" INET_LOCAL:$channelName 0"; 
       }
 
 	  if (!$again) 

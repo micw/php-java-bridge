@@ -394,7 +394,7 @@ public class JavaBridge implements Runnable {
 	if (e instanceof InvocationTargetException) {
 	    Throwable t = ((InvocationTargetException)e).getTargetException();
 	    if (t!=null) e=t;
-	    if (logLevel>3 || !hasDeclaredExceptions) printStackTrace(e);
+	    if (logLevel>3 || (!options.preferValues() && !hasDeclaredExceptions)) printStackTrace(e);
 	} else {
 	    printStackTrace(e);
 	}
@@ -2076,5 +2076,24 @@ public class JavaBridge implements Runnable {
 	} catch (ClassNotFoundException ex) {/*ignore*/}
 	castToBoolean(null);
 	return false;
+    }
+    /**
+     * Return the first java.lang.RuntimeException/java.lang.Error in a chain or the last java.lang.Exception.
+     * @return the last stored exception or null 
+     */
+    public Throwable getLastException () {
+	request.response.setCoerceWriter().setType(Object.class);
+	if (lastAsyncException != null) return lastAsyncException;
+	return lastException;
+    }
+    protected Throwable setLastAsyncException(Throwable t) {
+	if (lastAsyncException==null) lastException = lastAsyncException = t;
+	return t;
+    }
+    /**
+     * Clear the last Exception
+     */
+    public void clearLastException() {
+	lastException = lastAsyncException = null;
     }
 }

@@ -1,3 +1,48 @@
+2009-09-26    <jostb@intern>
+
+	* server/Makefile.am: JavaProxy.php now references Java.inc.
+	
+	* server/META-INF/java/JavaProxy.inc
+	(__javaproxy_Client_getClient): Avoid warning from eclipse ide
+	(java_last_exception_get,java_last_exception_clear): Undeprecated
+	(java_begin_document,java_end_document): Void implementation,
+	removed from documentation. PHP 5.3 has a "goto".
+	
+	* server/META-INF/java/JavaProxy.inc
+	(dieWithBrokenConnection): Compatibility with php 5.1.2
+	(write): removed dead code
+	(getHost): Avoid warning from eclipse ide
+
+	* server/php/java/bridge/Util.java
+	(logger): Now a ThreadLocal to support servlet engines
+	(getLogger): Rewritten
+
+	* server/php/java/servlet/PhpCGIServlet.java
+	(handle): Set logger for this thread
+
+	* server/php/java/servlet/PhpJavaServlet.java
+	(init): logger is now a thread local
+	(libraryInitialized): removed, obsolete
+	(doPut): Set logger for this thread
+
+	* server/php/java/bridge/http/ContextRunner.java
+	(init): Set logger for this thread
+	
+2009-09-24    <jostb@intern>
+
+	* server/META-INF/java/Protocol.inc
+	(createSimpleHandler): File or folder names may contain spaces
+
+	* server/META-INF/java/Client.inc
+	(checkResult): if JAVA_PREFER_VALUES is set, throw
+	java.lang.RuntimeException/Error as usual.
+
+	* server/META-INF/java/JavaBridge.inc
+	(java_call_with_continuation): Make the argument optional.
+
+	* server/php/java/bridge/JavaBridge.java
+	(clearLastException,getLastException,setAsyncException): New methods.
+	
 2009-09-13    <jostb@intern>
 
       * java.c (MINIT): Set JAVA_PIPE_DIR if /dev/shm exists

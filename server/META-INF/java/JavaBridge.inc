@@ -55,6 +55,14 @@ if(!function_exists("java_get_base")) {
 	  return "java/";
 	}
   }
+  /**
+   * @access private
+   */
+  function java_truncate($str) {
+    if (strlen($str)>955)
+      return substr($str, 0, 475).'[...]'.substr($str,-475);
+    return $str;
+  }
   require_once(java_get_base()."/Options.inc");
   require_once(java_get_base()."/JavaProxy.inc");
 
@@ -188,6 +196,7 @@ if(!function_exists("java_get_base")) {
 	if(array_key_exists($name, $classMap)) return $classMap[$name];
 	return $classMap[$name]=new JavaClass($name);
   }
+
   /**
    * Alias for java_closure();
    * @access private
@@ -358,10 +367,10 @@ if(!function_exists("java_get_base")) {
    * @access public
    * @param mixed A PHP environment.
    */
-  function java_call_with_continuation($kontinuation) {
+  function java_call_with_continuation($kontinuation=null) {
 	if ($java_script = java_getHeader("X_JAVABRIDGE_INCLUDE", $_SERVER)) { 
 	  if ($java_script!="@") {chdir (dirname ($java_script)); require($java_script);} 
-	  if(!java_getHeader("X_JAVABRIDGE_INCLUDE_ONLY", $_SERVER)) java_context()->call($kontinuation); 
+	  if(!java_getHeader("X_JAVABRIDGE_INCLUDE_ONLY", $_SERVER)) java_context()->call(is_null($kontinuation)?java_closure():$kontinuation); 
 	}
   }
 

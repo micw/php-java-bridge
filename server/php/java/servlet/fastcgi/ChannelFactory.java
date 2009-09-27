@@ -9,6 +9,7 @@ import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.util.Map;
 
+import php.java.bridge.ILogger;
 import php.java.bridge.Util;
 import php.java.bridge.Util.Process;
 import php.java.servlet.CGIServlet;
@@ -44,6 +45,7 @@ public abstract class ChannelFactory {
     protected PhpCGIServlet servlet;
     protected PhpCGIServlet.CGIEnvironment env;
     protected String contextPath;
+    protected boolean promiscuous;
     
     /* The fast CGI Server process on this computer. Switched off per default. */
     protected static FCGIProcess proc = null;
@@ -55,7 +57,7 @@ public abstract class ChannelFactory {
      * Start the FastCGI server
      * @return false if the FastCGI server failed to start.
      */
-    protected final boolean startServer() {
+    protected final boolean startServer(ILogger logger) {
 	    /*
 	     * Try to start the FastCGI server,
 	     */
@@ -66,11 +68,11 @@ public abstract class ChannelFactory {
 		      // to the JavaBridge context
 		      // check if this is the JavaBridge wc
 		      boolean isJavaBridgeWc = FastCGIServlet.isJavaBridgeWc(contextPath);
-		      delegateOrStartFCGI(isJavaBridgeWc);
+		      delegateOrStartFCGI(isJavaBridgeWc, logger);
 		  } else {
 		      if(canStartFCGI()) 
 			  try {
-			      bind();
+			      bind(logger);
 			  } catch (Exception e) {/*ignore*/}
 		  }
 		 fcgiStarted = true; // mark as started, even if start failed
@@ -101,9 +103,10 @@ public abstract class ChannelFactory {
 	    }
 
 	    protected abstract Process doBind(Map env, String php, boolean includeJava) throws IOException;
-		protected void bind() throws InterruptedException, IOException {
+		protected void bind(final ILogger logger) throws InterruptedException, IOException {
 		    Thread t = (new Util.Thread("JavaBridgeFastCGIRunner") {
 			    public void run() {
+				Util.setLogger(logger);
 				Map env = (Map) servlet.processEnvironment.clone();
 				env.put("PHP_FCGI_CHILDREN", servlet.php_fcgi_children);
 				env.put("PHP_FCGI_MAX_REQUESTS", servlet.php_fcgi_max_requests);
@@ -118,10 +121,10 @@ public abstract class ChannelFactory {
 	/*
 	 * Delegate to the JavaBridge context, if necessary.
 	 */
-	private void delegateOrStartFCGI(boolean isJavaBridgeContext) {
+	private void delegateOrStartFCGI(boolean isJavaBridgeContext, ILogger logger) {
       try {
           if(isJavaBridgeContext) {
-              if(canStartFCGI()) bind();
+              if(canStartFCGI()) bind(logger);
           } else {
               if(canStartFCGI()) {
                   if(!fcgiActivatorRunning) activateFCGI(); fcgiActivatorRunning = true;
@@ -235,9 +238,9 @@ public abstract class ChannelFactory {
 	 * Create a new ChannelFactory.
 	 * @return The concrete ChannelFactory (NP or Socket channel factory).
 	 */
-	public static ChannelFactory createChannelFactory() {
+	public static ChannelFactory createChannelFactory(boolean promiscuous) {
 	    if(PhpCGIServlet.USE_SH_WRAPPER)
-		return new SocketChannelFactory();
+		return new SocketChannelFactory(promiscuous);
 	    else 
 		return new NPChannelFactory();
 	}

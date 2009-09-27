@@ -25,7 +25,7 @@ $here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
 if(!$here) $here=getcwd();
 java_require("$here/callback.jar");
 $c=new c();
-$closure=java_closure($c);
+$closure=java_closure($c, null, java("Callback"));
 $callbackTest=new java('Callback$Test', $closure);
 
 if($callbackTest->test()) {

@@ -76,8 +76,8 @@ public abstract class HttpServer implements Runnable {
      * @throws IOException 
      * @see HttpServer#destroy()
      */
-    protected HttpServer() throws IOException {
-	this(null);
+    protected HttpServer(boolean promiscuous) throws IOException {
+	this(null, promiscuous);
     }
     /**
      * Create a new HTTP Server.
@@ -85,9 +85,9 @@ public abstract class HttpServer implements Runnable {
      * @throws IOException 
      * @see HttpServer#destroy()
      */
-    protected HttpServer(String serverPort) throws IOException {
+    protected HttpServer(String serverPort, boolean promiscuous) throws IOException {
 	if(serverPort==null) serverPort = "0";
-	if(!serverPort.startsWith("INET")) serverPort = (Util.JAVABRIDGE_PROMISCUOUS ? "INET:" : "INET_LOCAL:") + serverPort;
+	if(!serverPort.startsWith("INET")) serverPort = (promiscuous ? "INET:" : "INET_LOCAL:") + serverPort;
 	socket = bind(serverPort);
 	try {
 		pool = createThreadPool(Util.EXTENSION_NAME+"HttpServerThreadPool");

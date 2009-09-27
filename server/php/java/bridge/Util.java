@@ -404,7 +404,7 @@ public final class Util {
     /**
      * The logger
      */
-    private static ILogger logger;
+    private static ThreadLocal logger = new ThreadLocal();
     
     /**
      * The loglevel:<br>
@@ -770,14 +770,17 @@ public final class Util {
      * @param logger The logger to set.
      */
     public static synchronized void setLogger(ILogger logger) {
-	Util.logger = logger;
+	Util.logger.set(logger);
     }
     /**
      * @return Returns the logger.
      */
     public static synchronized ILogger getLogger() {
-        if(logger == null) setDefaultFileLogger();
-        return logger;
+        Object l = logger.get();
+	if(l != null) return (ILogger)l;
+	
+	setDefaultFileLogger();
+        return (ILogger) logger.get();
     }
 
     /**
@@ -785,10 +788,10 @@ public final class Util {
      * the real host address is returned.
      * @return The host address as a string.
      */
-    public static String getHostAddress() {
+    public static String getHostAddress(boolean promiscuous) {
 	String addr = "127.0.0.1";
 	try {
-	    if(JAVABRIDGE_PROMISCUOUS) 
+	    if(promiscuous) 
 		addr = InetAddress.getLocalHost().getHostAddress();
 	} catch (UnknownHostException e) {/*ignore*/}
 	return addr;

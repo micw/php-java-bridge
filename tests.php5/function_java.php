@@ -1,6 +1,6 @@
 <?php
   // check if the java() function caches the allocated classes
-require_once("http://127.0.0.1:8080/JavaBridge/java/JavaBridge.inc");
+require_once("java/Java.inc");
 $here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
 if(!$here) $here=getcwd();
 

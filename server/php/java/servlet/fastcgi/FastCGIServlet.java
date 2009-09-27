@@ -33,9 +33,11 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import php.java.bridge.ILogger;
 import php.java.bridge.Util;
 import php.java.bridge.http.IContextFactory;
 import php.java.servlet.CGIServlet;
+import php.java.servlet.Logger;
 import php.java.servlet.PhpCGIServlet;
 
 /**
@@ -135,6 +137,10 @@ public abstract class FastCGIServlet extends CGIServlet {
     protected String php_fcgi_max_requests = PHP_FCGI_MAX_REQUESTS;
     protected int php_fcgi_max_requests_number = Integer.parseInt(PHP_FCGI_MAX_REQUESTS);
 
+    protected ILogger logger;
+
+    protected boolean promiscuous = false;
+    
     /* There may be two connection pools accessing only one FastCGI server. 
      * We reserve 1 connection for the JavaBridge web context, the remaining 4 connections
      * can be used by the GlobalPhpJavaServlet.
@@ -208,6 +214,17 @@ public abstract class FastCGIServlet extends CGIServlet {
     public void init(ServletConfig config) throws ServletException {
 	String value;
 	super.init(config);
+
+	logger = new Util.Logger(new Logger(context));
+
+	try {
+	    value = config.getInitParameter("promiscuous");
+	    if(value==null) value="";
+	    value = value.trim();
+	    value = value.toLowerCase();
+	    
+	    if(value.equals("on") || value.equals("true")) promiscuous=true;
+	} catch (Throwable t) {Util.printStackTrace(t);}
     	try {
 	    value = context.getInitParameter("override_hosts");
 	    if(value==null) value="";
@@ -262,7 +279,7 @@ public abstract class FastCGIServlet extends CGIServlet {
 	    if(value.equals("on") || value.equals("true")) 
 		delegateToJavaBridgeContext=true;
 	} catch (Throwable t) {/*ignore*/}
-	channelName = ChannelFactory.createChannelFactory();
+	channelName = ChannelFactory.createChannelFactory(promiscuous);
 	channelName.findFreePort(canStartFCGI && !delegateToJavaBridgeContext);
     }
     /**
@@ -337,7 +354,7 @@ public abstract class FastCGIServlet extends CGIServlet {
 	    channelName.initialize((PhpCGIServlet)FastCGIServlet.this, (PhpCGIServlet.CGIEnvironment)this, contextPath);
 
 	    // Start the launcher.exe or launcher.sh
-	    fcgiIsAvailable = channelName.startServer();
+	    fcgiIsAvailable = channelName.startServer(logger);
 	    return new ConnectionPool(channelName, children, php_fcgi_max_requests_number, defaultPoolFactory);
 	}
     }
@@ -473,7 +490,7 @@ public abstract class FastCGIServlet extends CGIServlet {
 		natIn.close(); 
 		String phpFatalError = natIn.checkError();
 		StringBuffer phpError = natIn.getError();
-		if (phpError!=null) Util.logMessage(phpError.toString());
+		if ((phpError!=null) && (Util.logLevel>4)) Util.logDebug(phpError.toString());
 		natIn = null; connection = null;
 		
 		if(phpFatalError!=null) 

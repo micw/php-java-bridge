@@ -1,4 +1,4 @@
-<?php require_once("http://localhost:8080/JavaBridge/java/Java.inc");
+<?php require_once("java/Java.inc");
 
 $here=getcwd();
 java_require("$here");

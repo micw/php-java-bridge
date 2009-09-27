@@ -608,16 +608,11 @@ Build and execution instructions:
   latency. If the Java server and PHP client do not run on the same
   computer, the objective is to minimize the number of network
   round-trips; java_values() can be used to obtain a Java array, Map
-  or Collection in one round-trip and java_begin_document(),
-  java_end_document() can be used to execute PHP code on the server.
+  or Collection in one round-trip.
   
   The call java_values($obj) evaluates $obj on the server-side and, if
   it is a Java array, Map or Collection, retrieves its values in one
   call.
-
-  The java_begin_document()/java_end_document() pair encapsulates PHP
-  code, sends an image of it (as a streamed XML document) to the server
-  and executes it there. This works for all PHP statements.
 
   Example:
 
@@ -625,12 +620,10 @@ Build and execution instructions:
     $resultList = new Java("java.util.LinkedList");  // 1 round trip
     $n = $hits->length()                             // 1 round trip
 
-    java_begin_document();                           // 1 round trip
     while($n--) {
       $next = $iter->next();
       $resultList->add($next->get("name"));
     }
-    java_end_document();                             // 1 round trip
     $ar = java_values($resultList);                  // 1 round trip
 
   Assuming that a ping to the back-end reveals an average round-trip

@@ -133,12 +133,10 @@ class java_ThrowExceptionProxyFactory extends java_ExceptionProxyFactory {
 	return $proxy;
   }
   function checkResult($result) {
-	if ($result->__hasDeclaredExceptions=='T')
+	if (JAVA_PREFER_VALUES || ($result->__hasDeclaredExceptions=='T'))
 	  throw $result;
 	else {
-	  error_log ($result->__toString());
-	  trigger_error("Unchecked exception detected", E_USER_ERROR);
-	  die(1);
+	  trigger_error("Unchecked exception detected: ".java_truncate($result->__toString()), E_USER_WARNING);
 	}
   }
 }

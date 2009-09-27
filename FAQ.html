@@ -50,15 +50,18 @@ out.println("yourIntranetHost running PHP version: " + (String)((javax.script.In
 <li>Mono >= 1.2.4 or .NET >= 2.</li>
 </ul>
 
-<H4>Why doesn't the bridge catch java.lang.RuntimeExceptions or java.lang.Errors?</H4>
+<H4>Why doesn't the bridge throw a java.lang.RuntimeException or Error as a PHP JavaException by default?</H4>
 <p>
-All exceptions crossing the php/java container <strong>must</strong> be declared, otherwise the behaviour is unspecified. If you want to catch <code>java.lang.RuntimeException</code> or <code>java.lang.Error</code> from PHP code, add a "throws" declaration. Example:
+All exceptions crossing the php/java container <strong>must</strong> be declared. If you want to catch <code>java.lang.RuntimeException</code> or <code>java.lang.Error</code> from PHP code, add a "throws" declaration. Example:
 <blockquote>
 <code>
 public Object calculateValue(...) throws RuntimeException;
 </code>
 </blockquote>
-However, it is a good programming practice to not allow <code>java.lang.RuntimeException</code> and <code>java.lang.Error</code> to cross an application container boundary. A JEE "enterprise java beans" container for example will terminate a transaction immediately if it encounters an exception derived from Error or RuntimeException.
+It is a good programming practice to not allow <code>java.lang.RuntimeException</code> and <code>java.lang.Error</code> to cross an application container boundary. A JEE "enterprise java beans" container for example will terminate a transaction immediately if it encounters an exception derived from Error or RuntimeException.
+</p>
+<p>
+However, since PHP/Java Bridge version 5.5.3 the bridge reports a java.lang.RuntimeException/Error as a PHP JavaException if the option <code>JAVA_PREFER_VALUES</code> is set. Please see the NEWS entry for version 5.5.3 from the PHP/Java Bridge documentation download for details.
 </p>
 
 <H4>Do I need a Java Application Server or Servlet Engine?</H4>
@@ -191,9 +194,29 @@ option <code>--with-mono</code>.</p>
 
 <H4>What does a "protocol error ..." mean?</H4>
 <p>That your Java or .NET VM has problems, for example an OutOfMemoryError. Check the back end (Tomcat/J2EE/.NET/...) log for details.</p>
+<p>It could also indicate a setup problem. If you use a servlet back end but haven't set the <code>java.servlet</code> or <code>JAVA_SERVLET</code> option, the PHP library <code>Java.inc</code> will confuse the HTML response from the servlet engine with the XML protocol used by the bridge.</p>
 
 <H4>Does it support PHP 4?</H4>
-<p>No. Use VM Bridge version 4.3.2 or below instead.</p>
+<p>Start a simple socket listener and use the following "Java" class:
+<blockquote>
+<code>
+&lt;?php<br>
+// The following is the "Java" class definition, stripped down to fit<br>
+// into one line. To use this sample start Java with: java -jar<br>
+// JavaBridge.jar INET:9267. Then type: php sample.php<br>
+//<br>
+class P{var$Pc="&lt;C v=\"%s\" p=\"I\"&gt;",$PC="&lt;/C&gt;",$Pi="&lt;I v=\"%d\" m=\"%s\" p=\"I\"&gt;",$PI="&lt;/I&gt;",$Ps="&lt;S v=\"%s\"/&gt;",$Pl="&lt;L v=\"%d\" p=\"%s\"/&gt;",$Po="&lt;O v=\"%d\"/&gt;",$c;function str($s){fwrite($this-&gt;c,sprintf($this-&gt;Ps,$s));}function obj($s){fwrite($this-&gt;c,sprintf($this-&gt;Po,$s-&gt;j));}function P(){$this-&gt;c=fsockopen("127.0.0.1",9267);}function cB($s){fwrite($this-&gt;c,sprintf($this-&gt;Pc,$s));}function cE(){fwrite($this-&gt;c,$this-&gt;PC);}function iB($o,$m){fwrite($this-&gt;c,sprintf($this-&gt;Pi,$o,$m));}function iE(){fwrite($this-&gt;c,$this-&gt;PI);}function v($s){if(is_object($s))$this-&gt;obj($s);else$this-&gt;str((string)$s);}function res(){$r=sscanf(fread($this-&gt;c,8192),"%s v=\"%[^\"]\"");return$r[1];}}function gP(){static$p;if(!$p)$p=new P();return$p;}class Java{var$j,$p;function Java(){if(!func_num_args())return;$this-&gt;p=gP();$ar=func_get_args();$this-&gt;p-&gt;cB(array_shift($ar));foreach($ar as$arg)$this-&gt;p-&gt;v($arg);$this-&gt;p-&gt;cE();$ar=sscanf($this-&gt;p-&gt;res(),"%d");$this-&gt;j=$ar[0];}function __call($m,$a,&$rv){$this-&gt;p-&gt;iB($this-&gt;j,$m);foreach($a as$arg)$this-&gt;p-&gt;v($arg);$this-&gt;p-&gt;iE();$p=new Java();$ar=sscanf($this-&gt;p-&gt;res(),"%d");$p-&gt;j=$ar[0];$p-&gt;p=$this-&gt;p;$rv=$p;return true;}function toString(){$this-&gt;p-&gt;iB("","castToString");$this-&gt;p-&gt;v($this);$this-&gt;p-&gt;iE();return base64_decode($this-&gt;p-&gt;res());}}overload("Java");<br>
+<br>
+<br>
+// Test<br>
+$i1 = new Java("java.math.BigInteger",  "1");<br>
+$i2 = new Java("java.math.BigInteger",  "2");<br>
+$i3 = $i1-&gt;add($i2);<br>
+echo $i3-&gt;toString() . "\n";<br>
+?&gt;<br>
+</code>
+</blockquote>
+</p> 
 
 <H2>Class loading questions</H2>
 
@@ -209,10 +232,12 @@ documents.
 But this procedure should not be used in new programs.
 Please see the README from the documentation download and the PHP/Java Bridge API for details.
 </p>
+
 <H4>Where can I store my java libraries for the VM Bridge?</H4>
 <p>Either within  your web application <code>WEB-INF/lib</code> directory or in <code>php.java.bridge.base</code>/lib.</p>
 <p> When the system property <code>php.java.bridge.base</code> is not set, libraries are loaded from <code>$HOME/lib</code> where <code>$HOME</code> denotes the home directory of the person or component which has started the java VM.</p>
 <p> If libraries should be available globally, store them in <code>java.ext.dirs</code>, for example in <code>/usr/share/java/ext</code>.</p>
+<p> If a library is not yet API-stable, store it into a sub directory of the <code>lib</code> directory and use the <code>java_require()</code> procedure. For example <code>java_require("myLibs0.2/foo.jar")</code> loads <code>foo.jar</code> from <code>php.java.bridge.base/lib/myLibs0.2</code>.</p>
 
 <H4>Why can't Apache load my /foo/bar/baz.jar file?</H4>
 <p>It probably doesn't have the permission to access it. Check if
@@ -224,7 +249,8 @@ Security Enhanced Linux permissions from the audit log.</p>
 <H4>Why do I get a ClassNotFoundException?</H4>
 <p>You probably haven't required the relevant Java library. Or the
 class doesn't exist or it is not public or it throws a java.lang.Error
-during initialization.</p>
+during initialization. Check which library exports the feature and add
+the library to the <code>java_require()</code> statement.</code></p>
 
 <a name="java-dll-hell"></a>
 <H4>Why do I get a NoClassDefFoundError?</H4>
@@ -454,13 +480,6 @@ Download the J2EE binary and copy the <code>JavaBridge.jar</code> and the <code>
 </blockquote>
 </p>
 <p>
-To call Java code from PHP, copy the <code>java/Java.inc</code> 
-to some directory and require it as usual, e.g.: <code>require_once("java/Java.inc");</code>.
-</p>
-<p>
-To call PHP code from Java, copy the <code>java/JavaProxy.php</code> 
-to some <em>web</em>directory and use the EngineFactory as usual, e.g.: <code>EngineFactory.getInvocablePhpScriptEngine(this, application, request, response);</code> or, if PHP is running somewhere else: <code>EngineFactory.getInvocablePhpScriptEngine(..., 80, "/phpApp/JavaProxy.php");</code>.
-</p>
 
 <p>
 Copy the files <code>sessionSharing.jsp</code> and <code>sessionSharing.php</code> from the <code>JavaBridge.war</code> to <code>myApplication</code> and create <code>myApplication.war</code>, for example with the commands: <code>cd myApplication; jar cf ../myApplication.war *</code>. </p>
@@ -819,7 +838,6 @@ By using <a href="API/VM%20Bridge/_JavaProxy.inc.html#functionjava_closure"><cod
 <p> In PHP 5.3 or above the following code can be used:
 <blockquote>
 <code>
-java_autoload();<br><br>
 use java\lang\String as JString;<br><br>
 class String extends JString {<br>
 &nbsp;&nbsp;function toString(){return "I am " . parent::toString();}<br>
@@ -830,21 +848,6 @@ echo new String("foo");<br><br>
 </code>
 </blockquote>
 
-
-</p> 
-<H4>How can I execute PHP code on the server?</H4> 
-<p>
-With <code>java_begin_document()/java_end_document()</code>. For example:
-<blockquote>
-<code>
-&nbsp;&nbsp;java_begin_document();<br>
-&nbsp;&nbsp;$s = new Java("java.lang.StringBuffer");<br>
-&nbsp;&nbsp;for($i=0; $i<10000; $i++) $s-&gt;append($i);<br>
-&nbsp;&nbsp;java_end_document();<br>
-</code>
-</blockquote>
-The above code sends the PHP code as an XML image to the server and executes it there.
-</p> 
 <H4>How can I convert a Java object into a PHP value?</H4>
 <p>
 With <code>java_values()</code>. For example:
@@ -981,19 +984,18 @@ or Unix service.</p>
 <blockquote>
 <code>
 &lt;?php<br>
-// The following is the "Java" class definition, stripped down to fit into one line<br>
-// To use this sample start Java with: java -jar JavaBridge.jar INET:9267<br>
-// Or enable java.so or php_java.dll, which automatically start the above<br>
-// process Then type: php sample.php<br>
+// The following is the "Java" class definition, stripped down to fit<br>
+// into one line. To use this sample start Java with: java -jar<br>
+// JavaBridge.jar INET:9267.Then type: php sample.php<br>
 //<br>
-class P {const Pc="&lt;C v=\"%s\" p=\"I\"&gt;", PC="&lt;/C&gt;"; const Pi="&lt;I v=\"%d\" m=\"%s\" p=\"I\"&gt;", PI="&lt;/I&gt;"; const Ps="&lt;S v=\"%s\"/&gt;", Pl="&lt;L v=\"%d\" p=\"%s\"/&gt;", Po="&lt;O v=\"%d\"/&gt;"; private $c; function str($s){fwrite($this-&gt;c, sprintf(self::Ps, $s));} function obj($s){fwrite($this-&gt;c, sprintf(self::Po, $s-&gt;java));} function __construct(){$this-&gt;c=fsockopen("127.0.0.1",9267);} function cBeg($s){fwrite($this-&gt;c, sprintf(self::Pc, $s));} function cEnd(){fwrite($this-&gt;c, self::PC);} function iBeg($o, $m){fwrite($this-&gt;c, sprintf(self::Pi, $o, $m));} function iEnd(){fwrite($this-&gt;c, self::PI);} function val($s){if(is_object($s))$this-&gt;obj($s);else $this-&gt;str((string)$s);} function res(){$r=sscanf(fread($this-&gt;c, 8192),"%s v=\"%[^\&quot;]\"");return $r[1];}} function gP() {static $p; if(!$p) $p=new P(); return $p;} class Java {var $java, $p; function __construct() {if(!func_num_args()) return; $this-&gt;p=gP(); $ar=func_get_args(); $this-&gt;p-&gt;cBeg(array_shift($ar)); foreach($ar as $arg) $this-&gt;p-&gt;val($arg); $this-&gt;p-&gt;cEnd(); $ar = sscanf($this-&gt;p-&gt;res(), "%d"); $this-&gt;java=$ar[0];} function __call($meth, $args) {$this-&gt;p-&gt;iBeg($this-&gt;java, $meth); foreach($args as $arg) $this-&gt;p-&gt;val($arg); $this-&gt;p-&gt;iEnd(); $proxy = new Java(); $ar = sscanf($this-&gt;p-&gt;res(), "%d"); $proxy-&gt;java=$ar[0]; $proxy-&gt;p=$this-&gt;p; return $proxy;} function toString() {$this-&gt;p-&gt;iBeg("", "castToString"); $this-&gt;p-&gt;val($this); $this-&gt;p-&gt;iEnd(); return base64_decode($this-&gt;p-&gt;res());}}<br>
+class P{var$Pc="&lt;C v=\"%s\" p=\"I\"&gt;",$PC="&lt;/C&gt;",$Pi="&lt;I v=\"%d\" m=\"%s\" p=\"I\"&gt;",$PI="&lt;/I&gt;",$Ps="&lt;S v=\"%s\"/&gt;",$Pl="&lt;L v=\"%d\" p=\"%s\"/&gt;",$Po="&lt;O v=\"%d\"/&gt;",$c;function str($s){fwrite($this-&gt;c,sprintf($this-&gt;Ps,$s));}function obj($s){fwrite($this-&gt;c,sprintf($this-&gt;Po,$s-&gt;j));}function P(){$this-&gt;c=fsockopen("127.0.0.1",9267);}function cB($s){fwrite($this-&gt;c,sprintf($this-&gt;Pc,$s));}function cE(){fwrite($this-&gt;c,$this-&gt;PC);}function iB($o,$m){fwrite($this-&gt;c,sprintf($this-&gt;Pi,$o,$m));}function iE(){fwrite($this-&gt;c,$this-&gt;PI);}function v($s){if(is_object($s))$this-&gt;obj($s);else$this-&gt;str((string)$s);}function res(){$r=sscanf(fread($this-&gt;c,8192),"%s v=\"%[^\"]\"");return$r[1];}}function gP(){static$p;if(!$p)$p=new P();return$p;}class Java{var$j,$p;function Java(){if(!func_num_args())return;$this-&gt;p=gP();$ar=func_get_args();$this-&gt;p-&gt;cB(array_shift($ar));foreach($ar as$arg)$this-&gt;p-&gt;v($arg);$this-&gt;p-&gt;cE();$ar=sscanf($this-&gt;p-&gt;res(),"%d");$this-&gt;j=$ar[0];}function __call($m,$a){$this-&gt;p-&gt;iB($this-&gt;j,$m);foreach($a as$arg)$this-&gt;p-&gt;v($arg);$this-&gt;p-&gt;iE();$p=new Java();$ar=sscanf($this-&gt;p-&gt;res(),"%d");$p-&gt;j=$ar[0];$p-&gt;p=$this-&gt;p;return$p;}function toString(){$this-&gt;p-&gt;iB("","castToString");$this-&gt;p-&gt;v($this);$this-&gt;p-&gt;iE();return base64_decode($this-&gt;p-&gt;res());}};<br>
+<br>
 <br>
 // Test<br>
 $i1 = new Java("java.math.BigInteger",  "1");<br>
 $i2 = new Java("java.math.BigInteger",  "2");<br>
 $i3 = $i1-&gt;add($i2);<br>
 echo $i3-&gt;toString() . "\n";<br>
-<br>
 ?&gt;<br>
 </code>
 </blockquote>

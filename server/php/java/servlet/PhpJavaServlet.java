@@ -64,38 +64,32 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 
     private ContextServer contextServer;
     protected int logLevel = -1;
+    private Util.Logger logger;
+    protected boolean promiscuous = false;
     
-    /** Make sure that there's exactly one instance per class loader 
-     * If initialized is true, we skip further initialization, but the shared config must not be destroyed */
-    private static boolean libraryInitialized = false;
-        
     /**@inheritDoc*/
     public void init(ServletConfig config) throws ServletException {
- 	String value;
-  	if(!libraryInitialized) 
-  	  try {
-	    value = config.getInitParameter("promiscuous");
-	    if(value==null) value="";
-	    value = value.trim();
-	    value = value.toLowerCase();
-	    if(value.equals("on") || value.equals("true")) Util.JAVABRIDGE_PROMISCUOUS=true;
-	} catch (Throwable t) {Util.printStackTrace(t);}      
-
-	String servletContextName=CGIServlet.getRealPath(config.getServletContext(), "");
+ 	String servletContextName=CGIServlet.getRealPath(config.getServletContext(), "");
 	if(servletContextName==null) servletContextName="";
 	ServletContext ctx = config.getServletContext();
-	contextServer = getContextServer(ctx);
+
+	String value = config.getInitParameter("promiscuous");
+	if(value==null) value="";
+	value = value.trim();
+	value = value.toLowerCase();
+	
+	if(value.equals("on") || value.equals("true")) promiscuous=true;
+	
+	contextServer = getContextServer(ctx, promiscuous);
     	 
     	super.init(config);
        
-    	if (!libraryInitialized) Util.setLogger(new Util.Logger(new Logger(ctx)));
-
+    	logger = new Util.Logger(new Logger(ctx));
+    	
 	if(Util.VERSION!=null)
     	    Util.logMessage("PHP/Java Bridge servlet "+servletContextName+" version "+Util.VERSION+" ready.");
 	else
 	    Util.logMessage("PHP/Java Bridge servlet "+servletContextName+" ready.");
-	
-    	libraryInitialized = true;
     }
 
     /**{@inheritDoc}*/
@@ -198,7 +192,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	    	sin.close();
 		try {res.flushBuffer(); } catch (Throwable t) {Util.printStackTrace(t);} // resin ignores resOut.close()
 		try {resOut.close(); } catch (Throwable t) {Util.printStackTrace(t);} // Sun Java System AS 9 ignores flushBuffer()
-		contextServer.start(channelName);
+		contextServer.start(channelName, logger);
 		this.waitForContext(ctx);
 	    }
 	    else {
@@ -221,6 +215,8 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
      */
     protected void doPut (HttpServletRequest req, HttpServletResponse res)
 	throws ServletException, IOException {
+    	Util.setLogger(logger);
+
     	String channel = getHeader("X_JAVABRIDGE_CHANNEL", req);
     	if(Util.logLevel>3) Util.logDebug("doPut:"+req.getRequestURL()); 
 
@@ -238,12 +234,12 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 
     private static final String ROOT_CONTEXT_SERVER_ATTRIBUTE = ContextServer.class.getName()+".ROOT";
     /** Only for internal use */
-    public static synchronized ContextServer getContextServer(ServletContext context) {
+    public static synchronized ContextServer getContextServer(ServletContext context, boolean promiscuous) {
 	ContextServer server = (ContextServer)context.getAttribute(ROOT_CONTEXT_SERVER_ATTRIBUTE);
 	if (server == null) {
 	    String servletContextName=CGIServlet.getRealPath(context, "");
 	    if(servletContextName==null) servletContextName="";
-	    server = new ContextServer(servletContextName);
+	    server = new ContextServer(servletContextName, promiscuous);
 	    context.setAttribute(ROOT_CONTEXT_SERVER_ATTRIBUTE, server);
 	}
 	return server;

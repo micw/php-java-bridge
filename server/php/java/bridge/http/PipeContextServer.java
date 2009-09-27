@@ -33,6 +33,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import php.java.bridge.AppThreadPool;
+import php.java.bridge.ILogger;
 import php.java.bridge.Util;
 
 /**
@@ -52,6 +53,7 @@ public class PipeContextServer implements IContextServer {
     protected ContextFactory.ICredentials contextServer;
     private boolean isAvailable = true;
     protected String contextName;
+    protected boolean promiscuous;
     
     protected static class Channel extends AbstractChannel {
         protected InputStream in = null;
@@ -95,16 +97,17 @@ public class PipeContextServer implements IContextServer {
      * @param threadPool Obtain runnables from this pool. If null, new threads will be created.
      * @param contextName 
      */
-    public PipeContextServer (ContextFactory.ICredentials contextServer, AppThreadPool threadPool, String contextName) {
+    public PipeContextServer (ContextFactory.ICredentials contextServer, AppThreadPool threadPool, String contextName, boolean promiscuous) {
         this.contextServer = contextServer;
     	this.threadPool = threadPool;
     	this.contextName = contextName;
+    	this.promiscuous = promiscuous;
     }
     /**{@inheritDoc}*/
-    public boolean start(AbstractChannelName channelName) {
+    public boolean start(AbstractChannelName channelName, ILogger logger) {
         if(!isAvailable()) return false;
         try {
-            ContextRunner runner = new ContextRunner(contextServer, new Channel(channelName.getName()));
+            ContextRunner runner = new ContextRunner(contextServer, new Channel(channelName.getName()), logger);
             if(threadPool!=null) {
 	        threadPool.start(runner);
 	    } else {
@@ -136,12 +139,12 @@ public class PipeContextServer implements IContextServer {
      * -Dphp.java.bridge.promiscuous=true or 
      * -Dphp.java.bridge.no_pipe_server=true
      */
-    private static final boolean pipeServer = !Util.JAVABRIDGE_PROMISCUOUS && checkTestTunnel("php.java.bridge.no_pipe_server");
+    private static final boolean pipeServer = checkTestTunnel("php.java.bridge.no_pipe_server");
     /**
      * Check if the ContextServer is ready
      * @return true, if the server is available
      */
     public boolean isAvailable() {
-    	return pipeServer && isAvailable;
+    	return !promiscuous &&  pipeServer && isAvailable;
     }
 }

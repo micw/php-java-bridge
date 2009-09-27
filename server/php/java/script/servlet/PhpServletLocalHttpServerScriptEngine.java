@@ -16,6 +16,7 @@ import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
 import javax.servlet.Servlet;
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -62,14 +63,15 @@ abstract class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
     protected boolean overrideHosts = true;
     
     protected ContextServer contextServer;
-
+    protected boolean promiscuous;
+    
     private URL url;
     private int port;
     private String protocol;
     protected URL getURL(String filePath) throws MalformedURLException, URISyntaxException {
 	if (url!=null) return url;
 	
-	return url = new java.net.URI(protocol, null, Util.getHostAddress(), port, filePath, null, null).toURL();
+	return url = new java.net.URI(protocol, null, Util.getHostAddress(promiscuous), port, filePath, null, null).toURL();
     }
     public PhpServletLocalHttpServerScriptEngine(Servlet servlet, 
 				  ServletContext ctx, 
@@ -84,12 +86,22 @@ abstract class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
 	this.req = req;
 	this.res = res;
 	
+	ServletConfig config = servlet.getServletConfig();
     	try {
-	    String value = servlet.getServletConfig().getServletContext().getInitParameter("override_hosts");
+	    String value = config.getServletContext().getInitParameter("override_hosts");
 	    if(value==null) value="";
 	    value = value.trim();
 	    value = value.toLowerCase();
 	    if(value.equals("off") || value.equals("false")) overrideHosts = false;
+	} catch (Exception t) {Util.printStackTrace(t);}
+	
+	try {
+	    String value = config.getInitParameter("promiscuous");
+	    if(value==null) value="";
+	    value = value.trim();
+	    value = value.toLowerCase();
+	    
+	    if(value.equals("on") || value.equals("true")) promiscuous=true;
 	} catch (Exception t) {Util.printStackTrace(t);}
 	    
 	scriptContext.initialize(servlet, servletCtx, req, res);
@@ -97,7 +109,7 @@ abstract class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
 	this.port = port;
 	this.protocol = protocol;
 
-	this.contextServer = PhpJavaServlet.getContextServer(ctx);
+	this.contextServer = PhpJavaServlet.getContextServer(ctx, promiscuous);
     }
 
     protected ScriptContext getPhpScriptContext() {

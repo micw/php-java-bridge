@@ -2,6 +2,8 @@
 
 package php.java.bridge.http;
 
+import php.java.bridge.ILogger;
+
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
  *
@@ -48,5 +50,5 @@ public interface IContextServer {
      * @param channel The channel name
      * @return true on success, false otherwise
      */
-    public boolean start(AbstractChannelName channel);
+    public boolean start(AbstractChannelName channel, ILogger logger);
 }

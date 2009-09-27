@@ -20,7 +20,7 @@ if($argc<2) {
  }
 
 /**
- * Swing's native peers are switched off by default (we don't want to
+ * Swing's native peers are switched off by defaul t (we don't want to
  * run in one of the many swing related bugs or crashes).
  * Switch it on for this test.
  */
@@ -44,7 +44,7 @@ class SwingApplication {
 
     // set the label before we close over $this
     $this->label = new java("javax.swing.JLabel");
-    $button->addActionListener(java_closure($this));
+    $button->addActionListener(java_closure($this, null, java("java.awt.event.ActionListener")));
 
     $this->label->setLabelFor($button); 
     $pane = new java("javax.swing.JPanel", new java("java.awt.GridLayout", 0, 1)); 
@@ -73,7 +73,7 @@ class SwingApplication {
 $swing = new SwingApplication();
 $swing->init();
 $SwingUtilities = new JavaClass("javax.swing.SwingUtilities");
-$SwingUtilities->invokeAndWait(java_closure($swing));
+$SwingUtilities->invokeAndWait(java_closure($swing, null, java("java.lang.Runnable")));
 
 // Due to swings insane design we don't know when the UI thread
 // terminates. It may even be that the thread and therefore the VM

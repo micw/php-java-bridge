@@ -133,9 +133,13 @@ if(!defined("JAVA_PIPE_DIR")) {
 /** Set to 1 for compatibility with earlier versions.
  * 
  * 
- * When this flag is set, a value (null, int, ...) is returned immediately. Otherwise
- * a proxy (Request$PHPNULL, Integer, ...) is returned and PHP must fetch its content
- * using java_values($proxy);
+ * When this flag is set, a value (null, int, ...) is returned
+ * immediately and java.lang.RuntimeException/java.lang.Error is
+ * thrown as a normal PHP JavaException. Otherwise a proxy
+ * (RuntimeExceptionErrorMarker, Request$PHPNULL, Integer,
+ * Boolean, ...) is returned and PHP must fetch Java values using
+ * java_values($proxy) and Java RuntimeException/Errors using
+ * java_last_exception_get().
  */
 if (!defined("JAVA_PREFER_VALUES"))
   if ($ini=get_cfg_var("java.prefer_values")) define("JAVA_PREFER_VALUES", $ini); 
@@ -153,7 +157,7 @@ if(!defined("JAVA_DEBUG"))
 
 /** Whether or not the PHP should keep persistent connections to the servlet.
  * 
- * Set this to true if you can guarantee that IE or Apache's "maxClients" is less than
+ * Set this to true if you can guarantee that IIS or Apache's "maxClients" is less than
  * or equal to the SERVLET's thread pool size (usually named "maxThreads").
  **/
 if(!defined("JAVA_PERSISTENT_SERVLET_CONNECTIONS")) 
