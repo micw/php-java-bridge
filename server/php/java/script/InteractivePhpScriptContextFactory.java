@@ -46,9 +46,9 @@ public class InteractivePhpScriptContextFactory extends PhpScriptContextFactory 
 	return ctx;
     }
     /**{@inheritDoc}*/
-    public ISession getSession(boolean clientIsNew, int timeout) {
+    public ISession getSession(String name, boolean clientIsNew, int timeout) {
 	// ignore timeout
-	return super.getSession(clientIsNew, 0);
+	return super.getSession(name, clientIsNew, 0);
     }
 }
 

@@ -119,7 +119,7 @@ public class HttpRequest {
 	}
 		
 	public int read(byte[] b, int start, int length) throws IOException {
-	    if(count==contentLength) return -1;
+	    if(contentLength > -1 && count==contentLength) return -1;
 			
 	    if(bufStart!=bufEnd) {
 		if(bufEnd - bufStart < length) length = bufEnd - bufStart;

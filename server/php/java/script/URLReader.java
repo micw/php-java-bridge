@@ -176,19 +176,15 @@ public class URLReader extends Reader implements IScriptReader {
         
         try {
             
-            String overrideHosts = (String) env.get("X_JAVABRIDGE_OVERRIDE_HOSTS");
-            String include = (String) env.get("X_JAVABRIDGE_INCLUDE");
-            String includeOnly = (String) env.get("X_JAVABRIDGE_INCLUDE_ONLY");
-            String redirect = (String) env.get("X_JAVABRIDGE_REDIRECT");
             byte[] buf = new byte[Util.BUF_SIZE];
             
-            conn.setRequestProperty ("X_JAVABRIDGE_CONTEXT", (String)env.get("X_JAVABRIDGE_CONTEXT"));
-            if(include!=null) 
-                conn.setRequestProperty("X_JAVABRIDGE_INCLUDE", include);
-            if (includeOnly!=null)
-                conn.setRequestProperty("X_JAVABRIDGE_INCLUDE_ONLY", includeOnly);
-            if (redirect!=null)
-                conn.setRequestProperty("X_JAVABRIDGE_REDIRECT", redirect);
+            for (int i=0; i < IScriptReader.HEADER.length; i++) {
+        	String key = IScriptReader.HEADER[i];
+        	String val = (String) env.get(key);
+        	if (val!=null) conn.setRequestProperty (key, val);
+            }
+            
+            String overrideHosts = (String) env.get("X_JAVABRIDGE_OVERRIDE_HOSTS");
             if(overrideHosts!=null) {
                 conn.setRequestProperty("X_JAVABRIDGE_OVERRIDE_HOSTS", overrideHosts);
                 // workaround for a problem in php (it confuses the OVERRIDE_HOSTS from the environment with OVERRIDE_HOSTS from the request meta-data 

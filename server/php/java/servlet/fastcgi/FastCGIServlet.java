@@ -218,27 +218,27 @@ public abstract class FastCGIServlet extends CGIServlet {
 	logger = new Util.Logger(new Logger(context));
 
 	try {
-	    value = config.getInitParameter("promiscuous");
+	    value = context.getInitParameter("promiscuous");
 	    if(value==null) value="";
 	    value = value.trim();
 	    value = value.toLowerCase();
 	    
 	    if(value.equals("on") || value.equals("true")) promiscuous=true;
-	} catch (Throwable t) {Util.printStackTrace(t);}
+	} catch (Throwable t) {t.printStackTrace();}
     	try {
 	    value = context.getInitParameter("override_hosts");
 	    if(value==null) value="";
 	    value = value.trim();
 	    value = value.toLowerCase();
 	    if(value.equals("off") || value.equals("false")) override_hosts=false;
-	} catch (Throwable t) {Util.printStackTrace(t);}
+	} catch (Throwable t) {t.printStackTrace();}
     	try {
 	    value = config.getInitParameter("prefer_system_php_exec");
 	    if(value==null) value="";
 	    value = value.trim();
 	    value = value.toLowerCase();
 	    if(value.equals("on") || value.equals("true")) preferSystemPhp=true;
-	} catch (Throwable t) {Util.printStackTrace(t);}	
+	} catch (Throwable t) {t.printStackTrace();}	
 	String val = null;
 	try {
 	    val = config.getInitParameter("php_fcgi_children");

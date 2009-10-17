@@ -35,6 +35,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import php.java.bridge.ISession;
+import php.java.bridge.http.IContextFactory;
 
 /**
  * Wraps the J2EE session interface
@@ -45,7 +46,7 @@ class HttpSessionFacade implements ISession {
     private int timeout;
     private HttpSession sessionCache=null;
     private boolean isNew;
-    private SimpleServletContextFactory ctxFactory;
+    private IContextFactory ctxFactory;
     
     HttpSession getCachedSession() {
 	if(sessionCache!=null) return sessionCache;
@@ -53,7 +54,7 @@ class HttpSessionFacade implements ISession {
 	sessionCache.setMaxInactiveInterval(timeout);
 	return sessionCache;
     }
-    protected HttpSessionFacade (SimpleServletContextFactory ctxFactory, ServletContext ctx, HttpServletRequest req, HttpServletResponse res, boolean clientIsNew, int timeout) {
+    protected HttpSessionFacade (IContextFactory ctxFactory, ServletContext ctx, HttpServletRequest req, HttpServletResponse res, boolean clientIsNew, int timeout) {
 	this.ctxFactory = ctxFactory;
 	this.session = clientIsNew? req.getSession(true) : req.getSession();
 	this.timeout = timeout;

@@ -91,59 +91,65 @@ public class PhpCGIServlet extends FastCGIServlet {
 	String javaDir = CGIServlet.getRealPath(context, "java");
 	if (javaDir != null) {
 	    File javaDirFile = new File (javaDir);
-	    if (!javaDirFile.exists()) {
-		javaDirFile.mkdir();
-	    }
+	    try {
+		if (!javaDirFile.exists()) {
+		    javaDirFile.mkdir();
+    	    	}
+	    } catch (Exception e) {/*ignore*/}
 	    
 	    File javaIncFile = new File (javaDir, "Java.inc");
-	    if (!javaIncFile.exists()) {
-		try {
+	    try {
+		if (!javaIncFile.exists()) {
 		    Field f = Util.JAVA_INC.getField("bytes");
 		    byte[] buf = (byte[]) f.get(Util.JAVA_INC);
 		    OutputStream out = new FileOutputStream (javaIncFile);
 		    out.write(buf);
 		    out.close();
-		} catch (Exception e) {
-		    Util.printStackTrace(e);
 		}
+	    } catch (Exception e) {
+		e.printStackTrace();
 	    }
 	    
 	    File javaProxyFile = new File (javaDir, "JavaProxy.php");
-	    if (!javaProxyFile.exists()) {
-		try {
+	    try {
+		if (!javaProxyFile.exists()) {
 		    Field f = Util.JAVA_PROXY.getField("bytes");
 		    byte[] buf = (byte[]) f.get(Util.JAVA_PROXY);
 		    OutputStream out = new FileOutputStream (javaProxyFile);
 		    out.write(buf);
 		    out.close();
-		} catch (Exception e) {
-		    Util.printStackTrace(e);
 		}
+	    } catch (Exception e) {
+		e.printStackTrace();
 	    }
 	}
 	javaDir = CGIServlet.getRealPath(context, "WEB-INF/cgi");
 	if (javaDir != null) {
 	    File javaDirFile = new File (javaDir);
-	    if (!javaDirFile.exists()) {
-		javaDirFile.mkdir();
+	    try {
+		if (!javaDirFile.exists()) {
+		    javaDirFile.mkdir();
+		}
+	    } catch (Exception e) {
+		e.printStackTrace();
 	    }
 	    
 	    File javaIncFile = new File (javaDir, "launcher.sh");
-	    if (!javaIncFile.exists()) {
-		try {
+	    try {
+		if (!javaIncFile.exists()) {
 		    Field f = Util.LAUNCHER_UNIX.getField("bytes");
 		    byte[] buf = (byte[]) f.get(Util.LAUNCHER_UNIX);
 		    OutputStream out = new FileOutputStream (javaIncFile);
 		    out.write(buf);
 		    out.close();
-		} catch (Exception e) {
-		    Util.printStackTrace(e);
 		}
+	    } catch (Exception e) {
+		e.printStackTrace();
 	    }
 	    
 	    File javaProxyFile = new File (javaDir, "launcher.exe");
-	    if (!javaProxyFile.exists()) {
-		try {
+	    try {
+		if (!javaProxyFile.exists()) {
 		    Field f =  Util.LAUNCHER_WINDOWS.getField("bytes");
 		    Field f2 = Util.LAUNCHER_WINDOWS2.getField("bytes");
 		    Field f3 = Util.LAUNCHER_WINDOWS3.getField("bytes");
@@ -155,9 +161,9 @@ public class PhpCGIServlet extends FastCGIServlet {
 		    out.write(buf2);
 		    out.write(buf3);
 		    out.close();
-		} catch (Exception e) {
-		    Util.printStackTrace(e);
 		}
+	    } catch (Exception e) {
+		e.printStackTrace();
 	    }
 	}
     }
@@ -201,7 +207,7 @@ public class PhpCGIServlet extends FastCGIServlet {
 	protected CGIEnvironment(HttpServletRequest req, HttpServletResponse res, ServletContext context) {
 	    super(req, res, context);
 	    this.req = req;
-	    this.included_java = php_include_java && req.getHeader("X_JAVABRIDGE_INCLUDE") == null;
+	    this.included_java = php_include_java && PhpJavaServlet.getHeader("X_JAVABRIDGE_INCLUDE", req) == null;
 	}
 
 	/** PATH_INFO and PATH_TRANSLATED not needed for PHP, SCRIPT_FILENAME is enough */
@@ -276,9 +282,9 @@ public class PhpCGIServlet extends FastCGIServlet {
 	        
 		/* send the session context now, otherwise the client has to 
 		 * call handleRedirectConnection */
-	    	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
+	    	String id = PhpJavaServlet.getHeader("X_JAVABRIDGE_CONTEXT", req);
 	    	if(id==null) {
-	    	    id = (ctx=ServletContextFactory.addNew(PhpCGIServlet.this, PhpCGIServlet.this.getServletContext(), req, req, res)).getId();
+	    	    id = (ctx=ServletContextFactory.addNew(contextServer, PhpCGIServlet.this, PhpCGIServlet.this.getServletContext(), req, req, res)).getId();
 	    	    if (Util.USE_SHORT_PATH_S1) {
 	    		// short path S1: no PUT request
 	    		AbstractChannelName channelName = contextServer.getFallbackChannelName(null, ctx);

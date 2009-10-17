@@ -118,7 +118,7 @@ public class FooTag
      */
     public int doStartTag() throws JspException {
         i = 0;
-	return EVAL_BODY_TAG;
+	return EVAL_BODY_INCLUDE;
     }
 
     public void doInitBody() throws JspException {
@@ -134,10 +134,9 @@ public class FooTag
             } else
                 pageContext.setAttribute("member", atts[i]);
             i++;
-            return EVAL_BODY_TAG;
+            return EVAL_BODY_AGAIN;
         } catch (IOException ex) {
             throw new JspTagException(ex.toString());
         }
     }
 }
-

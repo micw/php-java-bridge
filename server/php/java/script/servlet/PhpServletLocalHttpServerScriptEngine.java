@@ -16,7 +16,6 @@ import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
 import javax.servlet.Servlet;
-import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -25,6 +24,7 @@ import php.java.bridge.Util;
 import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.IContext;
 import php.java.bridge.http.IContextFactory;
+import php.java.script.IScriptReader;
 import php.java.script.PhpScriptEngine;
 import php.java.servlet.PhpJavaServlet;
 
@@ -86,9 +86,8 @@ abstract class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
 	this.req = req;
 	this.res = res;
 	
-	ServletConfig config = servlet.getServletConfig();
     	try {
-	    String value = config.getServletContext().getInitParameter("override_hosts");
+	    String value = ctx.getInitParameter("override_hosts");
 	    if(value==null) value="";
 	    value = value.trim();
 	    value = value.toLowerCase();
@@ -96,7 +95,7 @@ abstract class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
 	} catch (Exception t) {Util.printStackTrace(t);}
 	
 	try {
-	    String value = config.getInitParameter("promiscuous");
+	    String value = ctx.getInitParameter("promiscuous");
 	    if(value==null) value="";
 	    value = value.trim();
 	    value = value.toLowerCase();
@@ -132,7 +131,7 @@ abstract class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
      *
      */
     protected void addNewContextFactory() {
-	ctx = PhpServletContextFactory.addNew((IContext)getContext(), servlet, servletCtx, req, res);
+	ctx = PhpServletContextFactory.addNew(getContextServer(), (IContext)getContext(), servlet, servletCtx, req, res);
     }
     
     protected Object eval(final Reader reader, final ScriptContext context, final String name) throws ScriptException {
@@ -184,11 +183,12 @@ abstract class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
     static void setStandardEnvironmentValues(IContextFactory ctx,
             Map env, HttpServletRequest req,
             String webPath, boolean overrideHosts) {
+	
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */
-	env.put("X_JAVABRIDGE_CONTEXT", ctx.getId());
+	env.put(IScriptReader.X_JAVABRIDGE_CONTEXT, ctx.getId());
 	
 	/* the client should connect back to us */
-	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", ctx.getRedirectString(webPath));
+	env.put(IScriptReader.X_JAVABRIDGE_OVERRIDE_HOSTS, ctx.getRedirectString(webPath));
     }
 }

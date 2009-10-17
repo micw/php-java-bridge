@@ -25,6 +25,7 @@
 package php.java.bridge;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Defines the parser callbacks.
@@ -51,12 +52,10 @@ public interface IDocHandler {
     /**
      * Called for the header
      * 
-     * @param buf the buffer
-     * @param pos the current position within buf
-     * @return the new position within buf
+     * @param in the input stream
      * @throws IOException
      */
-    public int parseHeader(byte[] buf, int pos) throws IOException;
+    public void parseHeader(InputStream in) throws IOException;
     
 }
  

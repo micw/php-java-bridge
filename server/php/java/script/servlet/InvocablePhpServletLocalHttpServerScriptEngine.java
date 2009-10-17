@@ -16,7 +16,6 @@ import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
 import javax.servlet.Servlet;
-import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -94,9 +93,8 @@ abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocableP
 	this.req = req;
 	this.res = res;
 
-	ServletConfig config = servlet.getServletConfig();
 	try {
-	    String value = config.getServletContext().getInitParameter("override_hosts");
+	    String value = ctx.getInitParameter("override_hosts");
 	    if(value==null) value="";
 	    value = value.trim();
 	    value = value.toLowerCase();
@@ -104,7 +102,7 @@ abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocableP
 	} catch (Exception t) {Util.printStackTrace(t);}
 	
 	try {
-	    String value = config.getInitParameter("promiscuous");
+	    String value = ctx.getInitParameter("promiscuous");
 	    if(value==null) value="";
 	    value = value.trim();
 	    value = value.toLowerCase();

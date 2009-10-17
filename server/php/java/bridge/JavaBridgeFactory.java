@@ -3,10 +3,8 @@
 package php.java.bridge;
 
 import java.io.IOException;
+import java.io.InputStream;
 
-import php.java.bridge.IJavaBridgeFactory;
-import php.java.bridge.JavaBridge;
-import php.java.bridge.Util;
 import php.java.bridge.http.IContext;
 
 /*
@@ -65,14 +63,6 @@ public abstract class JavaBridgeFactory implements IJavaBridgeFactory {
     public abstract ISession getSession(String name, boolean clientIsNew, int timeout);
 
     /**
-     * Return an anonymous session for internal use.
-     * @param clientIsNew true if the client wants a new session
-     * @param timeout timeout in seconds. If 0 the session does not expire.
-     * @return The session
-     */
-    public abstract ISession getSession(boolean clientIsNew, int timeout);
-
-    /**
      * Return the associated JSR223 context
      * @return Always null
      * @see php.java.bridge.http.ContextFactory#getContext()
@@ -115,10 +105,12 @@ public abstract class JavaBridgeFactory implements IJavaBridgeFactory {
      * {@inheritDoc}
      * @throws IOException 
      */
-    public int parseHeader (Request req, byte[] header, int pos) throws IOException {
-	byte option = (byte)(0xFF&header[pos+1]);
+    public void parseHeader (Request req, InputStream in) throws IOException {
+	
+	in.read();
+	
+	byte option = (byte)(0xFF&in.read());
 	if (option==(byte)0xFF) throw new IllegalStateException("not within a JEE environment");
 	req.init(option);
-	return pos+1;
     }
 }

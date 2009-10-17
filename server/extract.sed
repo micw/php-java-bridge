@@ -8,7 +8,6 @@
 # define ("JAVA_SERVLET", "/MyWebApp/JavaBridge.phpjavabridge");\
 # define ("JAVA_PERSISTENT_SERVLET_CONNECTIONS", true);\
 # define ("JAVA_PREFER_VALUES", 1);\
-# define ("JAVA_DEBUG", true);\
 # define ("JAVA_PIPE_DIR", "/dev/shm");
 $a\
 }\

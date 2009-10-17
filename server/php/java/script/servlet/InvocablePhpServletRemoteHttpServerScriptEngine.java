@@ -104,7 +104,7 @@ public class InvocablePhpServletRemoteHttpServerScriptEngine extends InvocablePh
 	return contextServer;
     }
     protected void addNewContextFactory() {
-	ctx = InvocableRemotePhpServletContextFactory.addNew((IContext)getContext(), servlet, servletCtx, req, res, localName);
+	ctx = InvocableRemotePhpServletContextFactory.addNew(getContextServer(), (IContext)getContext(), servlet, servletCtx, req, res, localName);
     }
     /**
      * Create a new context ID and a environment map which we send to the client.

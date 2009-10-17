@@ -69,11 +69,17 @@ if(!function_exists("java_get_base")) {
   /**
    * @access private
    */
-  class java_RuntimeException extends Exception {};
+  class java_JavaException  extends Exception {
+	function __toString() {return $this->getMessage();}
+  };
   /**
    * @access private
    */
-  class java_IOException extends Exception {};
+  class java_RuntimeException extends java_JavaException {};
+  /**
+   * @access private
+   */
+  class java_IOException extends java_JavaException {};
   /**
    * @access private
    */
@@ -91,29 +97,11 @@ if(!function_exists("java_get_base")) {
 	}
   };
 
-
-  /**
-   * @access private
-   */
-  function java_autoload_function5($x) {
-	$str=str_replace("_", ".", $x);
-
-    $client=__javaproxy_Client_getClient();
-    if(!($client->invokeMethod(0, "typeExists", array($str)))) return false;
-
-	$instance = "class ${x} extends Java {".
-	  "static function type(\$sub=null){if(\$sub) \$sub='\$'.\$sub; return java('${str}'.\"\$sub\");}".
-	  'function __construct() {$args = func_get_args();'.
-	  'array_unshift($args, '."'$str'".'); parent::__construct($args);}}';
-	eval ("$instance");
-	return true;
-  }
-
   /**
    * @access private
    */
   function java_autoload_function($x) {
-    $idx = strrpos($x, "\\"); if (!$idx) return java_autoload_function5($x);
+    $idx = strrpos($x, "\\"); if (!$idx) return false;
 
     $str=str_replace("\\", ".", $x);
 
@@ -320,15 +308,16 @@ if(!function_exists("java_get_base")) {
    * Example PHP script:
    * <code>
    * <?php require_once("java/Java.inc");
-   * require_once("sales_functions.inc");
    *
+   * class my_SalesCalculator { function calculateSales($month) {return ((int)(string)$month)+1;} ... }
+   * 
    * // ... calculate sales for a given month ...
    *
    * write_response($response);
    *
    * // prepare for out-of-band data: make our top-level environment
    * // available to Java. But only if it has been requested by Java:
-   * java_call_with_continuation(java_closure());
+   * java_call_with_continuation(new mySalesCalculator());
    * ?>
    * </code>
    *
@@ -347,7 +336,7 @@ if(!function_exists("java_get_base")) {
    *		 ByteArrayOutputStream out;
    *		 OutputStreamWriter writer;
    *	     e.getContext().setWriter(writer=new OutputStreamWriter(out=new ByteArrayOutputStream()));
-   *         Object res=e.eval(new php.java.bridge.URLReader(new URL("http://localhost/calculateSales.php")));
+   *         Object res=e.eval(new php.java.script.URLReader(new URL("http://localhost/calculateSales.php")));
    *         System.err.println(((Invocable)e).invokeFunction("calculateSales", new Object[]{month}));
    *         ((Closeable)e).close();
    *         System.err.println("PHP exit() code:" + String.valueOf(res));
@@ -365,12 +354,12 @@ if(!function_exists("java_get_base")) {
    * of the PHP script.
    *
    * @access public
-   * @param mixed A PHP environment.
+   * @param mixed If a PHP object is provided, the object is passed to Java. Otherwise the current environment is used.
    */
   function java_call_with_continuation($kontinuation=null) {
 	if ($java_script = java_getHeader("X_JAVABRIDGE_INCLUDE", $_SERVER)) { 
 	  if ($java_script!="@") {chdir (dirname ($java_script)); require($java_script);} 
-	  if(!java_getHeader("X_JAVABRIDGE_INCLUDE_ONLY", $_SERVER)) java_context()->call(is_null($kontinuation)?java_closure():$kontinuation); 
+	  if(!java_getHeader("X_JAVABRIDGE_INCLUDE_ONLY", $_SERVER)) java_context()->call(is_null($kontinuation)?java_closure():(($kontinuation instanceof java_JavaType)?$kontinuation:java_closure($kontinuation)));
 	}
   }
 

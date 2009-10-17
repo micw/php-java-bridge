@@ -133,6 +133,8 @@ public final class ContextServer implements ContextFactory.ICredentials {
      * @return true if either the pipe or the socket context server is available.
      */
     public boolean isAvailable(String channelName) {
+	if(!SocketContextServer.SOCKET_SERVER_AVAIL && !PipeContextServer.PIPE_SERVER_AVAIL) return false;
+	
         if(channelName!=null && ctx.isAvailable()) return true;
         SocketContextServer sock=getSocketContextServer(this, getAppThreadPool());
         return sock!=null && sock.isAvailable();

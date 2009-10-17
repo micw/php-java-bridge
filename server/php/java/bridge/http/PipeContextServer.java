@@ -115,10 +115,12 @@ public class PipeContextServer implements IContextServer {
 	    	t.start();
 	    }
 	} catch (SecurityException t) {
+	    System.out.println("n1");
 	    ContextFactory.destroyAll();
 	    Util.printStackTrace(t);
 	    return isAvailable=false;
 	} catch (Throwable t) {
+	    System.out.println("n2");
 	    Util.printStackTrace(t);
 	    return isAvailable=false;
 	}
@@ -133,18 +135,22 @@ public class PipeContextServer implements IContextServer {
     protected static boolean checkTestTunnel(String property) {
         try {
           return !"true".equals(System.getProperty(property));
-        } catch (Throwable t) {return false;}
+	}catch (SecurityException e) {
+	    return false;
+	} catch (Throwable t) {
+	    return true;
+	}
     }
     /** Don't use named pipes if 
      * -Dphp.java.bridge.promiscuous=true or 
      * -Dphp.java.bridge.no_pipe_server=true
      */
-    private static final boolean pipeServer = checkTestTunnel("php.java.bridge.no_pipe_server");
+    public static final boolean PIPE_SERVER_AVAIL = checkTestTunnel("php.java.bridge.no_pipe_server");
     /**
      * Check if the ContextServer is ready
      * @return true, if the server is available
      */
     public boolean isAvailable() {
-    	return !promiscuous &&  pipeServer && isAvailable;
+    	return !(promiscuous||Util.JAVABRIDGE_PROMISCUOUS) &&  PIPE_SERVER_AVAIL && isAvailable;
     }
 }

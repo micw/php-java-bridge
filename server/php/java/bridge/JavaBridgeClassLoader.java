@@ -35,7 +35,7 @@ import java.io.IOException;
  * @see DynamicJavaBridgeClassLoader
  * @see java.lang.ClassLoader
  */
-public class JavaBridgeClassLoader extends SimpleJavaBridgeClassLoader {
+public class JavaBridgeClassLoader extends StandaloneJavaBridgeClassLoader {
     protected boolean clEnabled = false;
     /**
      * Create a new JavaBridge class loader 
@@ -102,6 +102,6 @@ public class JavaBridgeClassLoader extends SimpleJavaBridgeClassLoader {
         }
         try {
             Thread.currentThread().setContextClassLoader(getClassLoader());
-        } catch (SecurityException e) {Util.printStackTrace(e);}
+        } catch (SecurityException e) {if (Util.logLevel>4) Util.printStackTrace(e);}
     }    
 }

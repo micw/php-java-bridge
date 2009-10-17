@@ -29,8 +29,11 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.IContext;
 import php.java.bridge.http.IContextFactory;
+import php.java.servlet.PhpJavaServlet;
+import php.java.servlet.RemoteHttpServletContextFactory;
 
 /**
  * A custom context factory, creates a ContextFactory for JSR223 contexts.
@@ -39,7 +42,7 @@ import php.java.bridge.http.IContextFactory;
  * Use the InvocablePhpServletContextFactory if you need to wait for
  * the end of the php to java communication.
  * 
- * @see InvocablePhpServletContextFactory
+ * @see InvocableRemotePhpServletContextFactory
  * @author jostb
  *
  */
@@ -54,15 +57,20 @@ public class PhpServletContextFactory extends php.java.servlet.ServletContextFac
      * Add the PhpScriptContext
      * @param context The context
      * @param servlet The servlet
-     * @param ctx The servlet context
+     * @param kontext The servlet context
      * @param req The servlet request
      * @param res The servlet response
      * @return The ContextFactory.
      */
-    public static IContextFactory addNew(IContext context, Servlet servlet, 
-		    ServletContext ctx, HttpServletRequest req, HttpServletResponse res) {
-	    PhpServletContextFactory kontext = new PhpServletContextFactory(servlet, ctx, req, req, res);
-	    kontext.setContext(context);
-	    return kontext;
+    public static IContextFactory addNew(ContextServer server, IContext context, Servlet servlet, 
+		    ServletContext kontext, HttpServletRequest req, HttpServletResponse res) {
+	IContextFactory ctx;
+        if (server.isAvailable(PhpJavaServlet.getHeader("X_JAVABRIDGE_CHANNEL", req)))
+            ctx = new PhpServletContextFactory(servlet, kontext, req, req, res);
+        else 
+           ctx = RemoteHttpServletContextFactory.addNew(servlet, kontext, req, req, res, new PhpServletContextFactory(servlet, kontext, req, req, res));
+        
+        ctx.setContext(context);
+        return ctx;
     }
 }

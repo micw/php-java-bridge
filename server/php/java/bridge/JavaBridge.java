@@ -71,11 +71,6 @@ public class JavaBridge implements Runnable {
     // array of objects in use in the current script
     GlobalRef globalRef=new GlobalRef();
 
-    /**
-     * For internal use only. The classloader. 
-     */
-    private SimpleJavaBridgeClassLoader cl = null;
-
     static HashMap sessionHash = new HashMap();
 
     /**
@@ -1384,7 +1379,6 @@ public class JavaBridge implements Runnable {
      */
     public JavaBridge(IJavaBridgeFactory factory) {
 	setFactory(factory);
-	setClassLoader(factory.getJavaBridgeClassLoader());
     }
     /**
      * Return map for the value (PHP 5 only)
@@ -1428,7 +1422,7 @@ public class JavaBridge implements Runnable {
      * @param rawPath A file or url list, usually separated by ';'
      * @param extensionDir The php extension directory. 
      */
-    public void updateLibraryPath(String rawPath, String extensionDir) {
+    public void updateLibraryPath(String rawPath, String extensionDir) throws Exception  {
     	updateLibraryPath(rawPath, extensionDir, null, null);
     }
     /**
@@ -1438,7 +1432,7 @@ public class JavaBridge implements Runnable {
      * @param cwd The current working dir
      * @param searchpath The search path
      */
-    public void updateLibraryPath(String rawPath, String extensionDir, String cwd, String searchpath) {
+    public void updateLibraryPath(String rawPath, String extensionDir, String cwd, String searchpath) throws IOException {
     	
     	if(rawPath==null || rawPath.length()<2) return;
         String contextDir = new File(extensionDir, "lib").getAbsolutePath();
@@ -1765,8 +1759,8 @@ public class JavaBridge implements Runnable {
      * @return the new object identity.
      * @throws IllegalArgumentException if serialID does not exist anymore.
      */
-    public int deserialize(String serialID, int timeout) {
-	ISession session = sessionFactory.getSession(false, timeout);
+    public int deserialize(String serialID, int timeout) throws IllegalArgumentException {
+	ISession session = sessionFactory.getSession(JavaBridge.INTERNAL_PHPSESSION, false, timeout);
 	Object obj = session.get(serialID);
 	if(obj==null) throw new IllegalArgumentException("Session serialID " +  serialID + " expired.");
 	return globalRef.append(castToExact(obj));
@@ -1783,30 +1777,20 @@ public class JavaBridge implements Runnable {
      * @param timeout The timeout, usually 1400 seconds
      * @return the serialID
      */
-    public String serialize(Object obj, int timeout) {
+    public String serialize(Object obj, int timeout) throws IllegalArgumentException {
 	if(obj==null) obj=Request.PHPNULL;
-    	ISession session = sessionFactory.getSession(false, timeout);
+    	ISession session = sessionFactory.getSession(JavaBridge.INTERNAL_PHPSESSION, false, timeout);
     	String id = Integer.toHexString(getSerialID());
     	session.put(id, obj);
     	return (String)castToString(id);
     }
     
-    private SimpleJavaBridgeClassLoader defaultClassLoader=null;
-    /**
-     * Set a new ClassLoader
-     * @param cl The ClassLoader
-     * 
-     */
-    public void setClassLoader(SimpleJavaBridgeClassLoader cl) {
-	defaultClassLoader = this.cl;
-	this.cl = cl;
-    }
     /**
      * Return the current ClassLoader
      * @return The ClassLoader.
      */
     public SimpleJavaBridgeClassLoader getClassLoader() {
-	return cl;
+	return getFactory().getJavaBridgeClassLoader();
     }
     /**
      * Checks if a given position exists.
@@ -2008,13 +1992,6 @@ public class JavaBridge implements Runnable {
 	this.sessionCache = null;
         globalRef = new GlobalRef();
 	
-        /* resets the classLoader: make sure to set the default loader before calling sessionFactory.recycle() */
-        if(defaultClassLoader!=null)  {
-	    cl = defaultClassLoader;
-	    defaultClassLoader = null;
-        }
-        cl.recycle();
-        
         options.recycle();
         
         /* resets the bridge: make sure to set the original bridge before calling sessionFactory.recycle() */

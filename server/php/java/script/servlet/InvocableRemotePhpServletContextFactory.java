@@ -32,8 +32,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
+import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.IContext;
 import php.java.bridge.http.IContextFactory;
+import php.java.servlet.PhpJavaServlet;
+import php.java.servlet.RemoteHttpServletContextFactory;
 
 /**
  * A custom context factory, creates a ContextFactory for JSR223 contexts.
@@ -45,7 +48,7 @@ import php.java.bridge.http.IContextFactory;
  * @author jostb
  *
  */
-public class InvocableRemotePhpServletContextFactory extends InvocablePhpServletContextFactory {
+public class InvocableRemotePhpServletContextFactory extends php.java.servlet.SimpleServletContextFactory {
 
     /** The official FIXED(!) IP# of the current host, */
     protected String localName;
@@ -53,24 +56,29 @@ public class InvocableRemotePhpServletContextFactory extends InvocablePhpServlet
     protected InvocableRemotePhpServletContextFactory(Servlet servlet, ServletContext ctx,
 			HttpServletRequest proxy, HttpServletRequest req,
 			HttpServletResponse res, String localName) {
-		super(servlet, ctx, proxy, req, res);
+	        super(servlet, ctx, proxy, req, res, true);
 		this.localName = localName;
 	}
     /**
      * Add the PhpScriptContext
      * @param context The passed context
      * @param servlet The servlet
-     * @param ctx The servlet context
+     * @param kontext The servlet context
      * @param req The servlet request
      * @param res The servlet response
      * @param localName The official server name or IP# from the remote script engine's point of view. There must not be an IP based load balancer in between.
      * @return The ContextFactory.
      */
-    public static IContextFactory addNew(IContext context, Servlet servlet, 
-		    ServletContext ctx, HttpServletRequest req, HttpServletResponse res, String localName) {
-	    InvocableRemotePhpServletContextFactory kontext = new InvocableRemotePhpServletContextFactory(servlet, ctx, req, req, res, localName);
-	    kontext.setContext(context);
-	    return kontext;
+    public static IContextFactory addNew(ContextServer server, IContext context, Servlet servlet, 
+		    ServletContext kontext, HttpServletRequest req, HttpServletResponse res, String localName) {
+	IContextFactory ctx;
+        if (server.isAvailable(PhpJavaServlet.getHeader("X_JAVABRIDGE_CHANNEL", req)))
+	    ctx = new InvocableRemotePhpServletContextFactory(servlet, kontext, req, req, res, localName);
+        else 
+           ctx = RemoteHttpServletContextFactory.addNew(servlet, kontext, req, req, res, new InvocableRemotePhpServletContextFactory(servlet, kontext, req, req, res, localName));
+            
+        ctx.setContext(context);
+        return ctx;
     }
     /**{@inheritDoc}*/
     public String getRedirectString(String webPath) {
@@ -99,6 +107,4 @@ public class InvocableRemotePhpServletContextFactory extends InvocablePhpServlet
 	buf.append(".phpjavabridge");
 	return buf.toString();
     }
-
-
 }

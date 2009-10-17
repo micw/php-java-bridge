@@ -41,7 +41,6 @@ import java.io.IOException;
  */
 public class SimpleJavaBridgeClassLoader {
 
-    protected DynamicJavaBridgeClassLoader cl = null;
     protected ClassLoader scl = null;
     
     /**
@@ -54,42 +53,24 @@ public class SimpleJavaBridgeClassLoader {
 	if(loader==null) loader = JavaBridge.class.getClassLoader();
         return loader;
     }
-    /**
-     * Create a bridge ClassLoader using a dynamic loader.
-     * @param loader The dynamic loader, may be null.
-     */
-    private SimpleJavaBridgeClassLoader(DynamicJavaBridgeClassLoader loader, ClassLoader xloader) {
-	cl = loader;
-    	if(cl==null)
-    	    scl = xloader; 
-	else 
-	    cl.clear();
-    }
 
     /**
      * Create a new JavaBridgeClassLoader
      * @param xloader The delegate
      */
     public SimpleJavaBridgeClassLoader(ClassLoader xloader) {
-	this(null, xloader);
+	scl = xloader; 
     }
-    /** pass path from the first HTTP statement to the ContextRunner */
-    protected JarLibraryPath cachedPath;
     protected boolean checkCl() {
-      	return cl!=null;
+      	return false;
     }
     /**
      * Set a DynamicJavaBridgeClassLoader.
      * @param loader The dynamic class loader
-     * @throws IOException 
+     * @throws SecurityException 
      */
     protected void setClassLoader(DynamicJavaBridgeClassLoader loader) {
-        if(loader==null) { cachedPath = null; cl = null; return; }
-	if(cl != null) throw new IllegalStateException("cl");
-	cl = loader;
-	if(cachedPath != null) {
-	    cl.updateJarLibraryPath(cachedPath);
-	}
+	throw new SecurityException("java_require() not availabie in this environment");
     }
     /**
      * Append the path to the current library path
@@ -100,15 +81,7 @@ public class SimpleJavaBridgeClassLoader {
      * @throws IOException 
      */
     public void updateJarLibraryPath(String path, String extensionDir, String cwd, String searchpath) throws IOException  {
-	if(!checkCl()) {
-	    DynamicJavaBridgeClassLoader loader = DynamicJavaBridgeClassLoader.newInstance(scl);
-	    setClassLoader(loader);
-	    try {
-		Thread.currentThread().setContextClassLoader(getClassLoader());
-	    }catch (SecurityException e) {Util.printStackTrace(e);}
-	}
-	    
-	cl.updateJarLibraryPath(path, extensionDir, cwd, searchpath);
+	throw new SecurityException("java_require() not availabie in this environment");
     }
 
     /**
@@ -116,8 +89,7 @@ public class SimpleJavaBridgeClassLoader {
      * @return the classloader
      */
     public ClassLoader getClassLoader() {
-	if(checkCl()) return (ClassLoader)cl;
-	return scl;
+	return getDefaultClassLoader();
     }
     
     /**
@@ -133,18 +105,12 @@ public class SimpleJavaBridgeClassLoader {
      * This is only called by the API function "java_reset()", used only for testing.
      */
     protected void doReset() {
-	cl.reset(); 
-	cl=cl.clearVMLoader();
-	try {
-	Thread.currentThread().setContextClassLoader(cl);
-	}catch (SecurityException e) {Util.printStackTrace(e);}
     }
     /**
      * reset loader to the initial state
      * This is only called by the API function "java_reset()", used only for testing.
      */
     public void reset() {
-	if (checkCl()) doReset();
     }
 
     /**
@@ -154,26 +120,18 @@ public class SimpleJavaBridgeClassLoader {
      * @throws ClassNotFoundException
      */
     public Class forName(String name) throws ClassNotFoundException {
-    	if(!checkCl()) return Class.forName(name, false, scl);
-    	return Class.forName(name, false, cl);
+    	return Class.forName(name, false, scl);
     }
     protected void doClear() {
-	cl.clear(); 
     }
     /**
      * clear caches and the input vectors
      */
     public void clear() {
-	if(checkCl()) doClear();
     }
     
     /** re-initialize for keep alive */
     protected void recycle() {
-      	cl = null;
-      	cachedPath = null;
-      	try {
-      	    Thread.currentThread().setContextClassLoader(scl);
-      	}catch (SecurityException e) {Util.printStackTrace(e);}
     }
     /**
      * Switch the current thread context class loader.

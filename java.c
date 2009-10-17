@@ -162,6 +162,13 @@ int EXT_GLOBAL(ini_user);
  */
 int EXT_GLOBAL(ini_set);
 
+static PHP_INI_MH(OnIniPersistentServletConnections)
+{
+  if (new_value && !(EXT_GLOBAL(ini_override)&U_PERSISTENT_SERVLET_CONNECTIONS)) {
+	EXT_GLOBAL(update_persistent_servlet_connections)(new_value);
+  }
+  return SUCCESS;
+}
 static PHP_INI_MH(OnIniHosts)
 {
   if (new_value && !(EXT_GLOBAL(ini_override)&U_HOSTS)) {
@@ -199,6 +206,7 @@ PHP_INI_BEGIN()
   PHP_INI_ENTRY(EXT_NAME()/**/".servlet", NULL, PHP_INI_SYSTEM, OnIniServlet)
   PHP_INI_ENTRY(EXT_NAME()/**/".socketname", NULL, PHP_INI_SYSTEM, OnIniSockname)
   PHP_INI_ENTRY(EXT_NAME()/**/".hosts",   NULL, PHP_INI_SYSTEM, OnIniHosts)
+  PHP_INI_ENTRY(EXT_NAME()/**/".persistent_servlet_connections",   NULL, PHP_INI_SYSTEM, OnIniPersistentServletConnections)
   PHP_INI_ENTRY(EXT_NAME()/**/".log_level",   NULL, PHP_INI_SYSTEM, OnIniLogLevel)
   PHP_INI_END()
 
@@ -253,7 +261,10 @@ PHP_MINIT_FUNCTION(EXT)
   }
   if(EXT_GLOBAL(option_set_by_user)(U_LOGLEVEL, EXT_GLOBAL(ini_user)))
 	REGISTER_LONG_CONSTANT(EXTU/**/"_LOG_LEVEL", atoi(EXT_GLOBAL(cfg)->logLevel), CONST_CS | CONST_PERSISTENT);
-  REGISTER_LONG_CONSTANT(EXTU/**/"_PERSISTENT_SERVLET_CONNECTIONS", 1, CONST_CS | CONST_PERSISTENT);
+
+  if(EXT_GLOBAL(option_set_by_user)(U_PERSISTENT_SERVLET_CONNECTIONS, EXT_GLOBAL(ini_user)))
+	REGISTER_LONG_CONSTANT(EXTU/**/"_PERSISTENT_SERVLET_CONNECTIONS", 1, CONST_CS | CONST_PERSISTENT);
+
   return SUCCESS;
 }
 
@@ -272,6 +283,8 @@ PHP_MINFO_FUNCTION(EXT)
 	  php_info_print_table_row(2, EXT_NAME()/**/".hosts", EXT_GLOBAL(cfg)->hosts);
 	if(EXT_GLOBAL(option_set_by_user) (U_SERVLET, EXT_GLOBAL(ini_user)))
 	  php_info_print_table_row(2, EXT_NAME()/**/".servlet", EXT_GLOBAL(cfg)->servlet);
+	if(EXT_GLOBAL(option_set_by_user) (U_PERSISTENT_SERVLET_CONNECTIONS, EXT_GLOBAL(ini_user)))
+	  php_info_print_table_row(2, EXT_NAME()/**/".persistent_servlet_connections", EXT_GLOBAL(cfg)->persistent_servlet_connections);
   }
   if(EXT_GLOBAL(option_set_by_user) (U_LOGLEVEL, EXT_GLOBAL(ini_user)))
 	php_info_print_table_row(2, EXT_NAME()/**/".log_level", EXT_GLOBAL(cfg)->logLevel);

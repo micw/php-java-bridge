@@ -3,6 +3,78 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 5.5.4
+
+* Bugfix: Throwing JavaException w/o messages is possible again.
+
+* A bug has been fixed in the JSR 223 handling which could cause the
+  JSR 223 script engine to crash. See the ChangeLog for details.
+
+* If the Java environment doesn't allow java.lang.Threads, Sockets, or
+  if the back end doesn't run on localhost
+  ("127.0.0.1".equals(req.getRemoteAddr()), or if the promiscuous
+  option is set, the bridge now uses a HTTP tunnel to communicate with
+  the back end.  Example:
+
+  --
+  telnet YOURHOST.com 8080 
+PUT /JavaBridge/foo.phpjavabridge HTTP/1.1
+Host: YOURHOST.com:8080
+Transfer-Encoding: chunked
+
+22
+<H p="1" v="java.lang.String"></H>
+b
+<F p="E" />
+0
+
+   --
+
+* Due to the new communication channel, version 5.5.4 may not be
+  compatible with earlier versions. Please make sure to upgrade both,
+  the "Java.inc" PHP library and the "JavaBridge.jar" Java library.
+
+* An option "java.persistent_servlet_connections" has been added to
+  the java.ini. Due to a bug in some Tomcat versions,
+  JAVA_PERSISTENT_SERVLET_CONNECTIONS cannot be used with
+  Transfer-Encoding: chunked. Tomcat 6.0.14 sends back a valid body
+  without Content-Length and Transfer-Encoding: chunked if it wants to
+  close a persistent chunked connection via Connection: close (see
+  tomcats connectionTimeout setting). An attempt to use the new
+  communication channel with JAVA_PERSISTENT_SERVLET_CONNECTIONS will
+  immediately raises a fatal error. Either enable the Pipe- or
+  SocketContextServer or disable JAVA_PERSISTENT_SERVLET_CONNECTIONS
+  in your PHP script or in the java.ini
+
+* The promiscuous option is not required anymore. If set as a context
+  parameter, it switches off the Pipe- and SocketContextServer. 
+  Example web.xml:
+
+    ...
+    </listener>
+
+    <!-- force the bridge to use the HTTP tunnel -->
+    <context-param>
+      <param-name>promiscuous</param-name>
+      <param-value>On</param-value>
+    </context-param>
+
+    <context-param>
+      <param-name>override_hosts</param-name>
+    ...
+
+
+* The option -Dphp.java.bridge.default_log_file=FILE redirects all log
+  output to FILE. The following example sends all log output to
+  standard out: JAVA_OPTS="-Dphp.java.bridge.default_log_file="
+  bin/catalina.sh run
+
+* The JAVA_DEBUG option has been removed from Java.inc, so that
+   Java.inc fits into 64K. Use JavaBridge.inc from the src.zip or a
+   PHP source level debugger (for example the Zend Debugger) if you
+   want to debug the PHP bridge code.
+
+
 Version 5.5.3
 
 * The bridge can now handle java.lang.RuntimeException/Errors: If the

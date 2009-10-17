@@ -32,6 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.ISession;
 import php.java.bridge.http.IContext;
+import php.java.bridge.http.IContextFactory;
 
 /**
  * Create session contexts for servlets.<p> In addition to the
@@ -56,9 +57,10 @@ public class RemoteServletContextFactory extends SimpleServletContextFactory {
 
     /**{@inheritDoc}*/
     public ISession getSession(String name, boolean clientIsNew, int timeout) {
-	if(session!=null) return session;
 	 // if name != null return a "named" php session which is not shared with jsp
-	if(name!=null) return session = visited.getSimpleSession(name, clientIsNew, timeout);
+	if(name!=null) return visited.getSimpleSession(name, clientIsNew, timeout);
+
+	if(session!=null) return session;
 	
     	if(proxy==null) throw new NullPointerException("This context "+getId()+" doesn't have a session proxy.");
 	return session = new RemoteHttpSessionFacade(this, kontext, proxy, res, clientIsNew, timeout);
@@ -73,7 +75,7 @@ public class RemoteServletContextFactory extends SimpleServletContextFactory {
      * @param res The HttpServletResponse
      * @return The created ContextFactory
      */
-    public static RemoteServletContextFactory addNew(Servlet servlet, ServletContext kontext, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res) {
+    public static IContextFactory addNew(Servlet servlet, ServletContext kontext, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res) {
         RemoteServletContextFactory ctx = new RemoteServletContextFactory(servlet, kontext, proxy, req, res);
     	return ctx;
     }

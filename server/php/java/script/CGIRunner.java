@@ -167,7 +167,7 @@ abstract class CGIRunner extends Thread {
 	
 	proc.checkError();
     }
-
+    private Object lockObject = new Object();
     /**
      * The PHP script must call this function with the current
      * continuation as an argument.<p>
@@ -179,9 +179,11 @@ abstract class CGIRunner extends Thread {
      * @param script - The php continuation
      * @throws InterruptedException
      */
-    public synchronized void call(Object script) throws InterruptedException {
-	phpScript.setVal(script);
-	wait();
+    public void call(Object script) throws InterruptedException {
+	synchronized (lockObject) {
+	    phpScript.setVal(script);
+	    lockObject.wait();
+	}
     }
 	
     /**
@@ -195,10 +197,6 @@ abstract class CGIRunner extends Thread {
         return val;
     }
 
-    /* Release the cont.call(cont) from PHP. After that the PHP script may terminate */
-    private synchronized void releaseContinuation () {
-	notify();
-    }
     /**
      * This function must be called to release the allocated php continuation.
      * Note that simply calling this method does not guarantee that
@@ -208,7 +206,10 @@ abstract class CGIRunner extends Thread {
      *
      */
     public void release() throws InterruptedException {
-	    releaseContinuation();
+	    /* Release the cont.call(cont) from PHP. After that the PHP script may terminate */
+	    synchronized (lockObject) {
+		lockObject.notify();
+	    }
 	    scriptLock.waitForRunner();
     }
 }

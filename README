@@ -342,34 +342,17 @@ Build and execution instructions:
   Security Issues
   ---------------
 
-  The bridge uses abstract local sockets, named pipes (located in
-  /dev/shm/) or local TCP sockets as communication channels.
+  If the JEE or servlet back end is used, the bridge opens a local TCP
+  port on 9167 (MonoBridge.exe) or 9267 (JavaBridge.jar), 9567
+  (JavaBridge.war) or 9667 (FastCGI). Please make sure that the ports
+  in the range [9167, ..., 9667] cannot be accessed from the internet.
 
-  It is recommended to use the local back end on a Unix machine which
-  supports abstract local ("unix domain") sockets or "/dev/shm".
-  On these systems the communication channel is not visible and cannot be
-  attacked. If you are running a Security Enhanced Linux kernel, which
-  is standard since RHEL4 or FC3, the back end is also protected by the
-  SEL policy. The servlet back end uses a HTTP tunnel to execute one
-  statement and then switches to named pipes for the rest of the
-  communication.
+  If your application server denies socket listen/accept, add the
+  following line to your AS policy file (for example
+  ...\domains\domain1\config\server.policy or tomcat/conf/catalina.policy):
 
-  On other systems, such as Windows and Mac OSX, the bridge opens a
-  local TCP port on 9167 (MonoBridge.exe) or 9267 (JavaBridge.jar), 9567
-  (JavaBridge.war) or 9667 (FastCGI). Please make sure that the ports in
-  the range [9167, ..., 9667] cannot be accessed from the internet.
+  grant {permission java.net.SocketPermission  "localhost:9267-","listen,accept";};
 
-  If the directory "/dev/shm" exists, or if the Java.inc option 
-  JAVA_PIPE_DIR points to an existing directory, the bridge uses 
-  named pipes. On Windows, where standard named pipes are not available, 
-  the bridge uses TCP sockets. If your application server denies socket 
-  accept/resolve, please either run the AS on a Unix operating system or 
-  add the following lines to your AS policy file (for 
-  example ...\domains\domain1\config\server.policy):
-
-    grant {
-      permission java.net.SocketPermission  "*", "accept,resolve";
-    };
 
 ------------------------------------
   Loading user classes and libraries

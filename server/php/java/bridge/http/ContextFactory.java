@@ -25,6 +25,7 @@ package php.java.bridge.http;
  */
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
@@ -98,7 +99,11 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     };
 
     static {
-       getTimer().addJob(new Runnable() {public void run() {destroyOrphaned();}});
+	try {
+	    getTimer().addJob(new Runnable() {public void run() {destroyOrphaned();}});
+	} catch (Throwable t) {
+	    Util.printStackTrace(t);
+	}
     }
 
     private static final HashMap contexts = new HashMap();
@@ -368,15 +373,6 @@ public final class ContextFactory extends SessionFactory implements IContextFact
         return super.getSession(name, clientIsNew, timeout);
     }
     /**
-     * Return a simple session which cannot be shared with JSP
-     * @param clientIsNew true, if the client wants a new session
-     * @param timeout expires in n seconds
-     * @return The session
-     */
-    public ISession getSimpleSession(boolean clientIsNew, int timeout) {
-        return super.getSession(clientIsNew, timeout);
-    }
-    /**
      * Return a standard session, shared with JSP
      * @param name The session name
      * @param clientIsNew true, if the client wants a new session
@@ -385,15 +381,6 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      */
     public ISession getSession(String name, boolean clientIsNew, int timeout) {
 	return visitor.getSession(name, clientIsNew, timeout);
-    }
-    /**
-     * Return a session, not shared with JSP
-     * @param clientIsNew true, if the client wants a new session
-     * @param timeout expires in n seconds
-     * @return The sessioin
-     */
-    public ISession getSession(boolean clientIsNew, int timeout) {
-	return visitor.getSession(clientIsNew, timeout);
     }
     /**{@inheritDoc}*/  
     public synchronized void release() {
@@ -434,8 +421,25 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	return visitor.getSocketName();
     }
     
-    /**{@inheritDoc}*/  
-    public int parseHeader(Request req, byte[] header, int pos) throws IOException {
-	return visitor.parseHeader(req, header, pos);
+    /**{@inheritDoc}
+     */  
+    public void parseHeader(Request req,InputStream in) throws IOException {
+	JavaBridge bridge = getBridge();
+
+	in.read();
+	
+	// the header used to be binary encoded
+	byte shortPathHeader = (byte) (0xFF&in.read());
+
+	bridge.out.write(0); bridge.out.flush(); // dummy write: avoid ack delay
+	int len =(0xFF&in.read()) | (0xFF&in.read()<<8);
+	byte[] buf = new byte[len];
+	in.read(buf);
+	String newContext = new String(buf, 0, len,  Util.ASCII);
+	IContextFactory factory = (IContextFactory)bridge.getFactory();
+	factory.recycle(newContext);
+
+	if(shortPathHeader != (byte) 0xFF)  // short path: no previous PUT request
+	    req.init(shortPathHeader);
     }
 }

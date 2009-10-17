@@ -24,6 +24,7 @@ package php.java.bridge;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -46,14 +47,22 @@ import php.java.bridge.http.IContext;
 public class SessionFactory extends JavaBridgeFactory {
 
   /** Check for expired sessions or contexts every 10 minutes */
-  public static final long TIMER_DURATION = 600;
+  public static final long TIMER_DURATION = 36000000;
 
-  private static final SessionTimer timer = new SessionTimer();
+  private static final SessionTimer timer = getSessionTimer();
+  private static SessionTimer getSessionTimer() {
+      try {
+	  return new SessionTimer();
+      } catch (Throwable e) {
+	  Util.printStackTrace(e);
+	  return null;
+      }
+  }
   
   /**{@inheritDoc}*/
   public SimpleJavaBridgeClassLoader getJavaBridgeClassLoader() {
       if (javaBridgeClassLoader!=null) return javaBridgeClassLoader;
-      return javaBridgeClassLoader=new SimpleJavaBridgeClassLoader(getClassLoader());
+      return javaBridgeClassLoader=new StandaloneJavaBridgeClassLoader(getClassLoader());
   }
   /**
    * Return the context loader
@@ -97,18 +106,6 @@ public class SessionFactory extends JavaBridgeFactory {
 	return session(name, clientIsNew, timeout);
   }
 
-  /**
-   * Return an anonymous session for internal use.
-   * @param clientIsNew true if the client wants a new session
-   * @param timeout timeout in seconds. If 0 the session does not expire.
-   * @return The session
-   */
-  public ISession getSession(boolean clientIsNew, int timeout) {
-	String name=JavaBridge.INTERNAL_PHPSESSION;
-	return session(name, clientIsNew, timeout);
-  }
-		
-	
     /**
      * Return the associated context
      * @return Always null
@@ -167,4 +164,10 @@ public class SessionFactory extends JavaBridgeFactory {
 		    System.out.println ("lifecycle: session timer terminating"+System.identityHashCode(SessionFactory.class));
         }
     }
+    
+   
+    /**{@inheritDoc} */  
+   public void flushBuffer () throws IOException {
+       bridge.out.flush();
+   }
 }

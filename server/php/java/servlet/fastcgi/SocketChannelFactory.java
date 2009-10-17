@@ -107,23 +107,23 @@ class SocketChannelFactory extends ChannelFactory {
 	    /* Start a fast CGI Server process on this computer. Switched off per default. */
 	    protected Process doBind(Map env, String php, boolean includeJava) throws IOException {
 	        if(proc!=null) return null;
-	        	StringBuffer buf = new StringBuffer(promiscuous ? "" : LOCAL_HOST); // bind to all available or loopback only
-	        	buf.append(':');
-	        	buf.append(String.valueOf(getPort()));
-	        	String port = buf.toString();
-	        	
-			// Set override hosts so that php does not try to start a VM.
-			// The value itself doesn't matter, we'll pass the real value
-			// via the (HTTP_)X_JAVABRIDGE_OVERRIDE_HOSTS header field
-			// later.
-			env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", servlet.override_hosts?"/":"");
-			env.put("REDIRECT_STATUS", "200");
-			String[] args = Util.getPhpArgs(new String[]{php, "-b", port}, includeJava);
-			File home = null;
-			if(php!=null) try { home = ((new File(php)).getParentFile()); } catch (Exception e) {Util.printStackTrace(e);}
-			proc = new FCGIProcess(args, home, env, CGIServlet.getRealPath(servlet.context, servlet.cgiPathPrefix), servlet.phpTryOtherLocations, servlet.preferSystemPhp);
-			proc.start();
-	            return (Process)proc;
+		StringBuffer buf = new StringBuffer((Util.JAVABRIDGE_PROMISCUOUS || promiscuous) ? "" : LOCAL_HOST); // bind to all available or loopback only
+		buf.append(':');
+		buf.append(String.valueOf(getPort()));
+		String port = buf.toString();
+	        
+		// Set override hosts so that php does not try to start a VM.
+		// The value itself doesn't matter, we'll pass the real value
+		// via the (HTTP_)X_JAVABRIDGE_OVERRIDE_HOSTS header field
+		// later.
+		env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", servlet.override_hosts?"/":"");
+		env.put("REDIRECT_STATUS", "200");
+		String[] args = Util.getPhpArgs(new String[]{php, "-b", port}, includeJava);
+		File home = null;
+		if(php!=null) try { home = ((new File(php)).getParentFile()); } catch (Exception e) {Util.printStackTrace(e);}
+		proc = new FCGIProcess(args, home, env, CGIServlet.getRealPath(servlet.context, servlet.cgiPathPrefix), servlet.phpTryOtherLocations, servlet.preferSystemPhp);
+		proc.start();
+		return (Process)proc;
 	    }
 	    public int getPort() {
 		return port;

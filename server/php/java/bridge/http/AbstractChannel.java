@@ -25,6 +25,7 @@ package php.java.bridge.http;
  */
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -39,13 +40,13 @@ public abstract class AbstractChannel {
      * @return The InputStream
      * @throws FileNotFoundException
      */
-    public abstract InputStream getInputStream() throws FileNotFoundException;
+    public abstract InputStream getInputStream() throws IOException;
     /**
      * Returns the channel's output stream.
      * @return The OutputStream.
      * @throws FileNotFoundException
      */
-    public abstract OutputStream getOuptutStream() throws FileNotFoundException;
+    public abstract OutputStream getOuptutStream() throws IOException;
     /**
      * Shut down the channel, closes the in- and output stream and other resources.
      */

@@ -677,9 +677,6 @@ class java_objectIterator implements Iterator {
  * @access private
  */
 class java_IteratorProxy extends java_JavaProxy implements IteratorAggregate {
-  function java_IteratorProxy($java, $signature) {
-	parent::java_JavaProxy($java, $signature);
-  }
   function getIterator() {
 	return new java_ObjectIterator($this);
   }
@@ -688,10 +685,6 @@ class java_IteratorProxy extends java_JavaProxy implements IteratorAggregate {
  * @access private
  */
 class java_ArrayProxy extends java_IteratorProxy implements ArrayAccess {
-  
-  function java_ArrayProxy($java, $signature) {
-	parent::java_JavaProxy($java, $signature);
-  }
   function offsetExists($idx) {
 	$ar = array($this, $idx);
     return $this->__client->invokeMethod(0,"offsetExists", $ar);
@@ -713,9 +706,6 @@ class java_ArrayProxy extends java_IteratorProxy implements ArrayAccess {
  * @access private
  */
 class java_ExceptionProxy extends java_JavaProxy {
-  function java_ExceptionProxy($java, $signature){ 
-	parent::java_JavaProxy($java, $signature);
-  }
   function __toExceptionString($trace) {
 	$args = array($this, $trace);
 	return $this->__client->invokeMethod(0,"ObjectToString",$args);
@@ -924,10 +914,7 @@ class Java extends java_AbstractJava {
 	  
 	  $client->preparedToSendBuffer=vsprintf($cacheEntry->fmt, $args2);
 
-	  if(JAVA_DEBUG) {
-		print_r($args2);
-		echo "set prepared to send buffer: $client->preparedToSendBuffer, $cacheEntry->fmt, for key: $sig\n";
-	  }
+	  if(JAVA_DEBUG) {print_r($args2); echo "set prepared to send buffer: $client->preparedToSendBuffer, $cacheEntry->fmt, for key: $sig\n";}
 	  $this->__java = ++$client->asyncCtx;
 
 	  if(JAVA_DEBUG) {echo "setresult from new Java cache: object:"; echo sprintf("%x", $client->asyncCtx); echo "\n";}
@@ -957,17 +944,13 @@ class Java extends java_AbstractJava {
 	   $client->cancelProxyCreationTag==$this->__cancelProxyCreationTag) {
 
 	  $preparedToSendBuffer[6]="3";
-	  if(JAVA_DEBUG) {
-		echo "cancel result proxy creation:"; echo $this->__java; echo " {$client->preparedToSendBuffer}"; echo "\n";
-	  }
+	  if(JAVA_DEBUG) {echo "cancel result proxy creation:"; echo $this->__java; echo " {$client->preparedToSendBuffer}"; echo "\n";}
 	  $client->sendBuffer.=$preparedToSendBuffer;
 	  $preparedToSendBuffer = null;
 	  $client->asyncCtx -= 1;
 	} else {
 	  if(!isset($this->__delegate)) { // write unref ourselfs if we don't have a delegate yet (see cachedJavaPrototype and Java::__factory in __call below)
-		if(JAVA_DEBUG) {
-		  echo "unref java:"; echo $this->__java; echo "\n";
-		}
+		if(JAVA_DEBUG) {echo "unref java:"; echo $this->__java; echo "\n";}
 		$client->unref($this->__java);
 	  }
 	}	
@@ -1021,10 +1004,7 @@ class Java extends java_AbstractJava {
 	      $client->sendBuffer=null;
 	  }
 	  $client->preparedToSendBuffer=vsprintf($cacheEntry->fmt, $args2);
-	  if(JAVA_DEBUG) {
-		print_r($args2);
-		echo "set prepared to send buffer: {$client->preparedToSendBuffer}, {$cacheEntry->fmt}\n";
-	  }
+	  if(JAVA_DEBUG) {print_r($args2); echo "set prepared to send buffer: {$client->preparedToSendBuffer}, {$cacheEntry->fmt}\n";}
 	  if($cacheEntry->resultVoid) {
 		$client->cancelProxyCreationTag += 1; // expire tag
 		return null;
@@ -1116,9 +1096,10 @@ class java_exception extends Exception implements java_JavaType {
 	// compatibility with the C implementation
 	if(is_array($name)) { $args = $name; $name = array_shift($args); }
 
-	if (count($args) == 0) throw new java_IllegalArgumentException("JavaException class name missing");
-
-	Exception::__construct($args[0]);
+	if (count($args) == 0) 
+	  Exception::__construct($name);
+	else
+	  Exception::__construct($args[0]);
 
 	/* do not delete this line, it is used when generating Mono.inc from Java.inc */
 
@@ -1186,6 +1167,7 @@ class java_exception extends Exception implements java_JavaType {
  * @access public
  */
 class JavaException extends java_exception {}
+
 /**
  * @access private
  */

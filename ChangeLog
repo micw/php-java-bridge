@@ -1,3 +1,99 @@
+2009-10-17    <jostb@intern>
+
+	* server/php/java/bridge/php/java/script/CGIRunner.java
+	(call, release): Do not synchronize on this. Util.Process already
+	synchronizes on this. Since both, CGIRunner and HttpProxy inherit
+	from Util.Process, the JSR 223 script API did not work reliably.
+	In general synchronized methods (something like public
+	synchronized (){} should be avoided.
+
+	* server/META-INF/java/JavaProxy.php
+	(java_exception): Allow exceptions w/o messages: throw new
+	JavaException("java.io.IOException") is valid.
+	
+	* VERSION, php-java-bridge.spec: Version 5.5.4 released
+	
+2009-10-12    <jostb@intern>
+
+	* server/php/java/bridge/SessionFactory.java
+	(TIMER_DURATION): Value was set to 600ms, changed back to original value.
+	
+2009-10-10    <jostb@intern>
+
+	* server/php/java/bridge/Parser.java
+	(java_EmptyPipeChannelP, java_SocketChannelP, java_ChunkedSocketChannelP): New classes
+	(java_EmptyPipeChannel, java_SocketChannel, java_ChunkedSocketChannel): Rewritten
+	(java_PipeChannel): Use new methods
+	(java_SocketHandler, java_SimpleHttpHandler, java_HttpTunnelHandler, java_HttpHandler): Rewritten
+	
+	* server/php/java/bridge/http/ChunkedInputStream.java: New File
+	
+	* server/php/java/bridge/http/ChunkedOutputStream.java: New File
+
+	* server/php/java/bridge/JavaBridgeRunner.java
+	(doPut): Use chunked.
+	
+	* server/php/java/bridge/Util.java 
+	(getLogger): rewritten
+
+	* server/php/java/bridge/http/IContextFactory.java
+	(getSimpleSession): Added to interface
+	
+	* server/php/java/script/IScriptReader.java
+	(X_JAVABRIDGE_CONTEXT,COOKIE,X_JAVABRIDGE_OVERRIDE_HOSTS,HEADER): New constants
+	
+	* server/php/java/script/servlet/InvocablePhpServletContextFactory.java: Removed
+	
+	* server/php/java/script/servlet/InvocableRemotePhpServletContextFactory.java
+	(addNew): Use the HTTP tunnel if necessary
+
+	* server/php/java/script/servlet/PhpServletContextFactory.java
+	(addNew): Use the HTTP tunnel if necessary
+
+	* php-java-bridge/server/php/java/servlet/ServletContextFactory.java
+	(addNew)  Use the HTTP tunnel if necessary
+	
+	* server/php/java/script/servlet/PhpServletLocalHttpServerScriptEngine.java
+	(setStandardEnvironmentValues): Pass the ID for the HTTP cookie
+	
+	* php-java-bridge/server/php/java/servlet/PhpJavaServlet.java
+	(doPut): Use HTTP tunnel if not local addr
+	
+2009-10-04    <jostb@intern>
+
+	* server/php/java/servlet/PhpJavaServlet.java
+	(handleChunkedLocalConnection, handlePersistentLocalConnection):
+	New procedures.
+	(handleLocalConnection): Rewritten
+	
+	* server/META-INF/java/JavaBridge.inc
+	(java_call_with_continuation): Accept plain PHP objects
+	(java_autoload_function5): Removed
+
+	* server/php/java/bridge/http/ContextRunner.java
+	(getChannel): Removed
+
+	* server/php/java/servlet/PhpJavaServlet.java
+	(handleHttpConnection): New procedure
+	(doPut): use new procedure
+	
+	* server/META-INF/java/Protocol.inc
+	(java_ChunkedSocketChannel): New class
+	(java_SocketChannel): Removed $channelName parameter
+	(java_HttpTunnelHandler): New class
+	(java_SimpleHttpHandler): Pass cookies to tunnel
+	(parseHeaders): Pass cookies to tunnel
+	(getContext): Use cache
+	(redirect): Use tunnel
+
+	* server/php/java/bridge/Parser.java
+	(initOptions,read,parse): Flush output before reading input
+
+	* server/php/java/bridge/StandaloneJavaBridgeClassLoader.java: New
+	class
+	
+	* VERSION, php-java-bridge.spec: Version 5.5.4experimental
+	
 2009-09-26    <jostb@intern>
 
 	* server/Makefile.am: JavaProxy.php now references Java.inc.

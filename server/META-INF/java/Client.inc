@@ -61,9 +61,6 @@ class java_SimpleFactory {
  * @access private
  */
 class java_ProxyFactory extends java_SimpleFactory {
-  function java_ProxyFactory($client) {
-	parent::java_SimpleFactory($client);
-  }
   function create($result, $signature) {
 	return new java_JavaProxy($result, $signature);
   }
@@ -80,9 +77,6 @@ class java_ProxyFactory extends java_SimpleFactory {
  * @access private
  */
 class java_ArrayProxyFactory extends java_ProxyFactory {
-  function java_ArrayProxyFactory($client) {
-	parent::java_ProxyFactory($client);
-  }
   function create($result, $signature) {
 	return new java_ArrayProxy($result, $signature);
   }	
@@ -91,9 +85,6 @@ class java_ArrayProxyFactory extends java_ProxyFactory {
  * @access private
  */
 class java_IteratorProxyFactory extends java_ProxyFactory {
-  function java_IteratorProxyFactory($client) {
-	parent::java_ProxyFactory($client);
-  }
   function create($result, $signature) {
 	return new java_IteratorProxy($result, $signature);
   }	
@@ -102,9 +93,6 @@ class java_IteratorProxyFactory extends java_ProxyFactory {
  * @access private
  */
 class java_ExceptionProxyFactory extends java_SimpleFactory {
-  function java_ExceptionProxyFactory($client) {
-	parent::java_SimpleFactory($client);
-  }
   function create($result, $signature) {
 	return new java_ExceptionProxy($result, $signature);
   }
@@ -118,9 +106,6 @@ class java_ExceptionProxyFactory extends java_SimpleFactory {
  * @access private
  */
 class java_ThrowExceptionProxyFactory extends java_ExceptionProxyFactory {
-  function java_ThrowExceptionProxyFactory($client) {
-	parent::java_ExceptionProxyFactory($client);
-  }
   function getProxy($result, $signature, $exception, $wrap) {
   	$proxy = $this->create($result, $signature);
 	// don't check for $wrap, which may be wrong (type Java instead of
@@ -195,12 +180,8 @@ class java_Arg {
 	$key = $this->client->currentCacheKey;
 	if($key && $key[0]!='~') {			// do not cache array(...) or non-java objects
 	  $this->client->currentArgumentsFormat[6]="3";
-	  if(JAVA_DEBUG) {
-	    echo "ignore further results:";  echo "\n";
-	  }
-	  if(JAVA_DEBUG) {
-	    echo "updating cache $key, argformat: {$this->client->currentArgumentsFormat}, classType: {$this->signature}\n";
-	  }
+	  if(JAVA_DEBUG) {echo "ignore further results:";  echo "\n";}
+	  if(JAVA_DEBUG) {echo "updating cache $key, argformat: {$this->client->currentArgumentsFormat}, classType: {$this->signature}\n";}
 	  $cacheEntry = new java_CacheEntry($this->client->currentArgumentsFormat, $this->signature, $this->factory, true);
 	  $this->client->methodCache[$key]=$cacheEntry;
     }
@@ -210,9 +191,7 @@ class java_Arg {
 	// update cache
 	$key = $this->client->currentCacheKey;
 	if($key && $key[0]!='~') {			// do not cache array(...) or non-java objects
-	  if(JAVA_DEBUG) {
-		echo "updating cache $key, argformat: {$this->client->currentArgumentsFormat}, classType: {$this->signature}\n";
-	  }
+	  if(JAVA_DEBUG) {echo "updating cache $key, argformat: {$this->client->currentArgumentsFormat}, classType: {$this->signature}\n";}
 	  $cacheEntry = new java_CacheEntry($this->client->currentArgumentsFormat, $this->signature, $this->factory, false);
 	  $this->client->methodCache[$key]=$cacheEntry;
 	}
@@ -337,8 +316,8 @@ class java_Client /* implements IDocHandler */ {
 
 
   function handleRequests() {
+	$tail_call = false;
 	do {
-	  $tail_call = false;
 	  $this->stack=array($this->arg=$this->simpleArg);
 	  $this->idx = 0;
 	  $this->parser->parse();
@@ -347,9 +326,9 @@ class java_Client /* implements IDocHandler */ {
 	  if((count($this->stack)) > 1) {
 		$arg = array_pop($this->stack);
 		$this->apply($arg);
-		$tail_call = 1;			// we don't expect a result
+		$tail_call = true;			// we don't expect a result
 	  } else {
-		$tail_call = 0;
+		$tail_call = false;
 	  }
 
 	  $this->stack=null;

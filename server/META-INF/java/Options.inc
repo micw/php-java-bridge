@@ -77,7 +77,7 @@ if(!defined("JAVA_HOSTS")) {
  * Rewrite rules for incoming HTTP requests.
  * 
  *Used in conjunction with
- * JAVA_HOSTS and a servlet/J2EE back end 
+ * JAVA_HOSTS and a servlet/JEE back end 
  * <ul>
  * <li>
  * "On" or 1; Hard-codes the context to "JavaBridge":
@@ -96,7 +96,7 @@ if(!defined("JAVA_HOSTS")) {
  *<li>
  * "Off" or 0 doesn't use a web context at all (no cookies are generated, no
  * PHP/Java session sharing). Back-end must have been started with
- * INET:PORT or INET_LOCAL:PORT, no Servlet engine, no J2EE server.
+ * INET:PORT or INET_LOCAL:PORT, no Servlet engine, no JEE server.
  * </ul>
  */
  if(!defined("JAVA_SERVLET")) {
@@ -138,8 +138,10 @@ if(!defined("JAVA_PIPE_DIR")) {
  * thrown as a normal PHP JavaException. Otherwise a proxy
  * (RuntimeExceptionErrorMarker, Request$PHPNULL, Integer,
  * Boolean, ...) is returned and PHP must fetch Java values using
- * java_values($proxy) and Java RuntimeException/Errors using
- * java_last_exception_get().
+ * java_values($proxy) or with (string)$proxy. java.lang.Exceptions are thrown as usual. 
+ * But java.lang.RuntimeException/Errors raise a warning and terminate the script with
+ * a fatal PHP error, unless the error condition is fetched and cleared within the
+ * current try/catch block using java_last_exception_get()/java_last_exception_clear().
  */
 if (!defined("JAVA_PREFER_VALUES"))
   if ($ini=get_cfg_var("java.prefer_values")) define("JAVA_PREFER_VALUES", $ini); 

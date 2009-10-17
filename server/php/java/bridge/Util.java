@@ -63,7 +63,7 @@ public final class Util {
     static Method loadMethod, loadFileMethod;
     static Class CLRAssembly;
     
-    /** Wait for the second Java statement of a script (in ms). Default is to wait for one minute. 
+    /** Used by the watchdog. After MAX_WAIT (default 1500ms) the ContextRunner times out. Raise this value if you want to debug the bridge.
      * See also system property <code>php.java.bridge.max_wait</code>
      */
     public static int MAX_WAIT;
@@ -76,6 +76,8 @@ public final class Util {
     public static Class LAUNCHER_UNIX;
     /** The launcher.exe code */
     public static Class LAUNCHER_WINDOWS, LAUNCHER_WINDOWS2, LAUNCHER_WINDOWS3;
+    /** Only for internal use */
+    public static final byte HEX_DIGITS[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
     
     private Util() {}
     
@@ -235,8 +237,11 @@ public final class Util {
     /** Only for internal use */
     public static final Class[] ZERO_PARAM = new Class[0];
     
+    /** Only for internal use */
+    public static final byte[] RN = Util.toBytes("\r\n");
+    
     /** True if the system property php.java.bridge.no_short_path is not set */
-    public static final boolean USE_SHORT_PATH_S1 = System.getProperty("php.java.bridge.no_short_path", "false").equals("false");
+    public static boolean USE_SHORT_PATH_S1;
     
     /** The name of the VM, for example "1.4.2@http://java.sun.com/" or "1.4.2@http://gcc.gnu.org/java/".*/
     public static String VM_NAME;
@@ -253,6 +258,8 @@ public final class Util {
      */
     public static String DEFAULT_LOG_FILE;
 
+    private static boolean DEFAULT_LOG_FILE_SET;
+    
     /** The base directory of the PHP/Java Bridge. Usually /usr/php/modules/ or $HOME  */
     public static String JAVABRIDGE_BASE;
     
@@ -277,12 +284,14 @@ public final class Util {
     /** Only for internal use */
     public static String PHP_EXEC;
     /** Only for internal use */
-    public static boolean EXT_JAVA_COMPATIBILITY;
-    /** Only for internal use */
     public static File HOME_DIR;
 
     private static void initGlobals() {
 
+	try {
+	    USE_SHORT_PATH_S1 = System.getProperty("php.java.bridge.no_short_path", "false").equals("false");
+	} catch (Throwable t) {/*ignore*/}
+	    
 	try {
 	    JAVA_INC = Class.forName("php.java.bridge.JavaInc");
 	} catch (Exception e) {/*ignore*/}
@@ -301,23 +310,24 @@ public final class Util {
 
 	COMMON_ENVIRONMENT = getCommonEnvironment();
 	DEFAULT_CGI_LOCATIONS = new String[] {"/usr/bin/php-cgi", "c:/Program Files/PHP/php-cgi.exe"};
-	if (!new File(DEFAULT_CGI_LOCATIONS[0]).exists() && !new File(DEFAULT_CGI_LOCATIONS[0]).exists())
-	    try {
-		File filePath = null;
-		boolean found = false;
-		String path = (String)COMMON_ENVIRONMENT.get("PATH");
-		StringTokenizer tok = new StringTokenizer(path, File.pathSeparator);
-		while(tok.hasMoreTokens()) {
-		    String s = tok.nextToken();
-		    if ((filePath = new File(s, "php-cgi.exe")).exists()) { found = true; break; }
-		    if ((filePath = new File(s, "php-cgi")).exists())     { found = true; break; }
-		}
-		if (!found) found = ((filePath = new File("/usr/php/bin/php-cgi")).exists());
-		if (found) 
-		    DEFAULT_CGI_LOCATIONS = new String[] {filePath.getCanonicalPath(), DEFAULT_CGI_LOCATIONS[0], DEFAULT_CGI_LOCATIONS[1]};
-
-	} catch (Exception e) { /*ignore*/ }
-
+	try {
+	    if (!new File(DEFAULT_CGI_LOCATIONS[0]).exists() && !new File(DEFAULT_CGI_LOCATIONS[0]).exists())
+		try {
+		    File filePath = null;
+		    boolean found = false;
+		    String path = (String)COMMON_ENVIRONMENT.get("PATH");
+		    StringTokenizer tok = new StringTokenizer(path, File.pathSeparator);
+		    while(tok.hasMoreTokens()) {
+			String s = tok.nextToken();
+			if ((filePath = new File(s, "php-cgi.exe")).exists()) { found = true; break; }
+			if ((filePath = new File(s, "php-cgi")).exists())     { found = true; break; }
+		    }
+		    if (!found) found = ((filePath = new File("/usr/php/bin/php-cgi")).exists());
+		    if (found) 
+			DEFAULT_CGI_LOCATIONS = new String[] {filePath.getCanonicalPath(), DEFAULT_CGI_LOCATIONS[0], DEFAULT_CGI_LOCATIONS[1]};
+		    
+		} catch (Exception e) { /*ignore*/ }
+	} catch (Throwable xe) {/*ignore*/}
 	try {
 	    MAX_WAIT = Integer.parseInt(System.getProperty("php.java.bridge.max_wait", "15000"));
 	} catch (Exception e) {
@@ -352,9 +362,11 @@ public final class Util {
 	    p.load(in);
 	    VERSION = p.getProperty("BACKEND_VERSION");
 	} catch (Throwable t) {
+	    VERSION = "unknown";
 	    //t.printStackTrace();
 	};
 	try {
+	    THREAD_POOL_MAX_SIZE = "20";
 	    THREAD_POOL_MAX_SIZE = getProperty(p, "THREADS", "20");
 	} catch (Throwable t) {
 	    //t.printStackTrace();
@@ -373,15 +385,28 @@ public final class Util {
 	} catch (Throwable t) {
 	    //t.printStackTrace();
 	};
-	EXTENSION_NAME = getProperty(p, "EXTENSION_DISPLAY_NAME", "JavaBridge");
-	PHP_EXEC = getProperty(p, "PHP_EXEC", null);
+	try {
+	    EXTENSION_NAME = "JavaBridge";
+	    EXTENSION_NAME = getProperty(p, "EXTENSION_DISPLAY_NAME", "JavaBridge");
+	} catch (Throwable t) {
+	    //t.printStackTrace();
+	};
+	try {
+	    PHP_EXEC = getProperty(p, "PHP_EXEC", null);
+	} catch (Throwable t) {
+	    //t.printStackTrace();
+	}
 	try {
 	    String s = getProperty(p, "DEFAULT_LOG_LEVEL", "3");
 	    DEFAULT_LOG_LEVEL = Integer.parseInt(s);
 	    Util.logLevel=Util.DEFAULT_LOG_LEVEL; /* java.log_level in php.ini overrides */
-	} catch (NumberFormatException e) {/*ignore*/}
-	DEFAULT_LOG_FILE = getProperty(p, "DEFAULT_LOG_FILE", Util.EXTENSION_NAME+".log");
-	EXT_JAVA_COMPATIBILITY = "true".equals(getProperty(p, "EXT_JAVA_COMPATIBILITY", "false"));
+	} catch (Throwable t) {/*ignore*/}
+	try {
+	    DEFAULT_LOG_FILE_SET = false;
+	    DEFAULT_LOG_FILE = getProperty(p, "DEFAULT_LOG_FILE", Util.EXTENSION_NAME+".log");
+	    DEFAULT_LOG_FILE_SET = System.getProperty("php.java.bridge.default_log_file") != null;
+	} catch (Throwable t) {/*ignore*/}
+
 	String separator = "/-+.,;: ";
 	try {
 	    String val = System.getProperty("os.arch").toLowerCase();
@@ -772,15 +797,21 @@ public final class Util {
     public static synchronized void setLogger(ILogger logger) {
 	Util.logger.set(logger);
     }
+    
+    private static ILogger sharedLogger;
     /**
      * @return Returns the logger.
      */
     public static synchronized ILogger getLogger() {
-        Object l = logger.get();
-	if(l != null) return (ILogger)l;
+	if (!DEFAULT_LOG_FILE_SET) {
+	    Object l = logger.get();
+	    if(l != null) return (ILogger)l;
 	
-	setDefaultFileLogger();
-        return (ILogger) logger.get();
+	    setDefaultFileLogger();
+	    return (ILogger) logger.get();
+	}
+        if (sharedLogger == null) sharedLogger = new Logger(new FileLogger());
+        return sharedLogger;
     }
 
     /**
@@ -791,7 +822,7 @@ public final class Util {
     public static String getHostAddress(boolean promiscuous) {
 	String addr = "127.0.0.1";
 	try {
-	    if(promiscuous) 
+	    if(JAVABRIDGE_PROMISCUOUS || promiscuous) 
 		addr = InetAddress.getLocalHost().getHostAddress();
 	} catch (UnknownHostException e) {/*ignore*/}
 	return addr;

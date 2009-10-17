@@ -59,21 +59,21 @@ import php.java.bridge.Util;
  */
 public class ContextRunner implements Runnable {
     
-    private IContextFactory ctx; /* the persistent ContextFactory */
-    private Request request;
-    private InputStream in;
-    private OutputStream out;
-    private AbstractChannel channel;
-    private ContextFactory.ICredentials contextServer; /* the ContextServer of the web application, used for security checks in ContextFactory.get(...)  */
-    private ILogger logger;
+    protected IContextFactory ctx; /* the persistent ContextFactory */
+    protected Request request;
+    protected InputStream in;
+    protected OutputStream out;
+    protected AbstractChannel channel;
+    protected ContextFactory.ICredentials contextServer; /* the ContextServer of the web application, used for security checks in ContextFactory.get(...)  */
+    protected ILogger logger;
     
     protected ContextRunner(ContextFactory.ICredentials contextServer, AbstractChannel channel, ILogger logger) {
 	this.contextServer = contextServer;
 	this.channel = channel;
 	this.logger = logger;
     }
-    private byte shortPathHeader;
-    private int readLength() throws IOException{
+    protected byte shortPathHeader;
+    protected int readLength() throws IOException{
 	byte buf[] = new byte[1];
 	in.read(buf);
 	shortPathHeader = (byte) (0xFF&buf[0]);
@@ -82,13 +82,13 @@ public class ContextRunner implements Runnable {
 	in.read(buf);
 	return (0xFF&buf[0]) | (0xFF00&(buf[1]<<8));
     }
-    private String readString(int length) throws IOException {
+    protected String readString(int length) throws IOException {
 	byte buf[] = new byte[length];
 	in.read(buf);
 	return new String(buf, Util.ASCII);
     }
 
-    private String readName() throws IOException {
+    protected String readName() throws IOException {
 	return readString(readLength());
     }
     /**
@@ -97,15 +97,13 @@ public class ContextRunner implements Runnable {
      * @param in the new InputStream
      * @param out the new OutputStream
      */
-    private void setIO(JavaBridge bridge, InputStream in, OutputStream out) {
+    protected void setIO(JavaBridge bridge, InputStream in, OutputStream out) {
 	bridge.request.reset();
     	bridge.in=in;
     	bridge.out=out;	
     }
 
-    private boolean init() throws IOException {
-	Util.setLogger(logger);
-
+    protected boolean init() throws IOException {
 	if(Util.logLevel>4) Util.logDebug("starting a new ContextRunner " + this);
 	out = channel.getOuptutStream();
 	in = channel.getInputStream();
@@ -137,16 +135,12 @@ public class ContextRunner implements Runnable {
 	ctx.initialize();
 	return true;
     }
-   /**
-     * Return the channel of the current runner.
-     * @return The Channel
-     */
-    public AbstractChannel getChannel() {
-	return channel;
-    }
+
     /**{@inheritDoc}*/  
     public void run() {
 	try {
+	    Util.setLogger(logger);
+
 	    if(init())
 		request.handleRequests();
 	    else

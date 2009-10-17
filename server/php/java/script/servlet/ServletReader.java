@@ -65,9 +65,6 @@ public class ServletReader extends Reader implements IScriptReader {
     final HttpServletRequest req;
     final String servletPath;
     
-    static final String[] HEADER = new String[]{"X_JAVABRIDGE_OVERRIDE_HOSTS", "X_JAVABRIDGE_INCLUDE", "X_JAVABRIDGE_INCLUDE", 
-	"X_JAVABRIDGE_REDIRECT", "X_JAVABRIDGE_CONTEXT", "X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT"};
-    
     public ServletReader(ServletContext ctx, String resourcePath, URL url, HttpServletRequest req) throws IOException {
 	this.url = url;
 	this.req = req;
@@ -91,7 +88,7 @@ public class ServletReader extends Reader implements IScriptReader {
             }
 	    
             public Enumeration getHeaderNames() {
-		return Collections.enumeration(Arrays.asList(HEADER));
+		return Collections.enumeration(Arrays.asList(IScriptReader.HEADER));
 	    }
 
 	    

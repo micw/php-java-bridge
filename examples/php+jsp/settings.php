@@ -55,7 +55,7 @@ echo $System->getProperties();<br>
 </tr>
 <tr>
 <td>promiscuous</td>
-<td><?php echo java_values($Util->JAVABRIDGE_PROMISCUOUS) ? "On" : "Off" ?></td>
+<td><?php $val=java_values($context->getInitParameter("promiscuous")); echo $val?$val:"Off"?></td>
 <td>Shall the bridge accept requests from <strong>non-local</strong> PHP scripts?</td>
 </tr>
 </table>

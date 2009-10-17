@@ -55,6 +55,12 @@ EXT_EXTERN_MODULE_GLOBALS(EXT)
 static const char on[]="On";
 static const char on2[]="1";
 static const char off[]="Off";
+void EXT_GLOBAL(update_persistent_servlet_connections)(const char*new_value) {
+	if((EXT_GLOBAL (ini_set) &U_PERSISTENT_SERVLET_CONNECTIONS)) free(EXT_GLOBAL(cfg)->persistent_servlet_connections);
+	EXT_GLOBAL(cfg)->persistent_servlet_connections=strdup(new_value);
+	assert(EXT_GLOBAL(cfg)->persistent_servlet_connections); if(!EXT_GLOBAL(cfg)->persistent_servlet_connections) exit(6);
+	EXT_GLOBAL(ini_updated)|=U_PERSISTENT_SERVLET_CONNECTIONS;
+}
 void EXT_GLOBAL(update_hosts)(const char*new_value) {
 	if((EXT_GLOBAL (ini_set) &U_HOSTS)) free(EXT_GLOBAL(cfg)->hosts);
 	EXT_GLOBAL(cfg)->hosts=strdup(new_value);
@@ -188,6 +194,7 @@ void EXT_GLOBAL (init_cfg) (TSRMLS_D) {
   if(!(EXT_GLOBAL (ini_updated) &U_SOCKNAME)) EXT_GLOBAL(cfg)->sockname=strdup("");
   if(!(EXT_GLOBAL (ini_updated) &U_SERVLET)) EXT_GLOBAL(cfg)->servlet=strdup(DEFAULT_SERVLET);
   if(!(EXT_GLOBAL (ini_updated) &U_HOSTS)) EXT_GLOBAL(cfg)->hosts=strdup("");
+  if(!(EXT_GLOBAL (ini_updated) &U_PERSISTENT_SERVLET_CONNECTIONS)) EXT_GLOBAL(cfg)->persistent_servlet_connections=strdup("");
   if(!(EXT_GLOBAL (ini_updated) &U_LOGLEVEL)) {
 	EXT_GLOBAL(cfg)->logLevel=strdup(DEFAULT_LEVEL);
 	EXT_GLOBAL(cfg)->logLevel_val=atoi(DEFAULT_LEVEL);
@@ -201,6 +208,7 @@ void EXT_GLOBAL (destroy_cfg) (int EXT_GLOBAL (ini_updated) ) {
   assert(EXT_GLOBAL(ini_updated) == ~0);
   if(!(EXT_GLOBAL (ini_updated) &U_SERVLET)) free(EXT_GLOBAL(cfg)->servlet);
   if(!(EXT_GLOBAL (ini_updated) &U_HOSTS)) free(EXT_GLOBAL(cfg)->hosts);
+  if(!(EXT_GLOBAL (ini_updated) &U_PERSISTENT_SERVLET_CONNECTIONS)) free(EXT_GLOBAL(cfg)->persistent_servlet_connections);
 
   if(!(EXT_GLOBAL (ini_updated) &U_SOCKNAME)) free(EXT_GLOBAL(cfg)->sockname); 
 
@@ -222,6 +230,7 @@ short EXT_GLOBAL(option_set_by_user)(short option, int ini_user) {
   case U_SOCKNAME: entry = EXT_GLOBAL(cfg)->sockname; break;
   case U_HOSTS:    entry = EXT_GLOBAL(cfg)->hosts; break; 
   case U_SERVLET:  entry = EXT_GLOBAL(cfg)->servlet; break;
+  case U_PERSISTENT_SERVLET_CONNECTIONS:  entry = EXT_GLOBAL(cfg)->persistent_servlet_connections; break;
   default: assert(0);
   }  
 

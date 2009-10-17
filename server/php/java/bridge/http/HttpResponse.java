@@ -49,13 +49,20 @@ public class HttpResponse {
     /**
      * Create a new HTTP response with the given OutputStream
      * @param outputStream The OutputStream.
-     */
+   	/*  */
     public HttpResponse(OutputStream outputStream) {
-	this.outputStream = new BufferedOutputStream(outputStream);
 	this.headers = new HashMap();
-	this.headersWritten = false;
+	
+	this.outputStream = new BufferedOutputStream (outputStream){ 
+	    public void write (byte buf[], int pos, int len) throws IOException {
+		if (!headersWritten) {
+		    headersWritten = true;
+		    writeHeaders();
+		}
+		super.write(buf, pos, len);
+	    }
+	};
     }
-
     /**
      * Set the response header
      * @param string The header key
@@ -71,7 +78,6 @@ public class HttpResponse {
      * @see HttpRequest#setContentLength(int)
      */
     public OutputStream getOutputStream() {
-	if(!this.headersWritten) throw new IllegalStateException("Use setContentLength() before calling getOutputStream.");
 	return outputStream;
     }
 
@@ -95,7 +101,6 @@ public class HttpResponse {
 
     private final byte[] h1 = Util.toBytes("HTTP/1.0 200 OK\r\n"); 
     private final byte[] h2 = Util.toBytes("Host: localhost\r\nConnection: close\r\n"); 
-    private final byte[] h3 = Util.toBytes("\r\n"); 
     private final byte[] h4 = Util.toBytes(": ");
     private void writeHeaders() throws IOException {
     	java.io.ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -107,9 +112,9 @@ public class HttpResponse {
 	    out.write(Util.toBytes((String)key));
 	    out.write(h4);
 	    out.write(Util.toBytes((String)val));
-	    out.write(h3);
+	    out.write(Util.RN);
     	}
-    	out.write(h3);
+    	out.write(Util.RN);
     	out.writeTo(outputStream);
     }
     /**
@@ -120,8 +125,6 @@ public class HttpResponse {
      */
     public void setContentLength(int length) throws IOException {
 	setHeader("Content-Length", String.valueOf(length));
-	writeHeaders();
-	this.headersWritten = true;
     }
 
     /** Close the response 

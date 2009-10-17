@@ -42,6 +42,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import php.java.bridge.http.AbstractChannelName;
+import php.java.bridge.http.ChunkedInputStream;
+import php.java.bridge.http.ChunkedOutputStream;
 import php.java.bridge.http.ContextFactory;
 import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.HttpRequest;
@@ -68,7 +70,7 @@ public class JavaBridgeRunner extends HttpServer {
     protected static JavaBridgeRunner runner;
 
     protected JavaBridgeRunner(String serverPort) throws IOException {
-	super(serverPort, Util.JAVABRIDGE_PROMISCUOUS);
+	super(serverPort);
 	contextServer = new ContextServer(ContextFactory.EMPTY_CONTEXT_NAME, Util.JAVABRIDGE_PROMISCUOUS);	
     }
     /**
@@ -77,7 +79,7 @@ public class JavaBridgeRunner extends HttpServer {
      * @see ContextServer
      */
     protected JavaBridgeRunner() throws IOException {
-	super(Util.JAVABRIDGE_PROMISCUOUS);
+	super();
 	contextServer = new ContextServer(ContextFactory.EMPTY_CONTEXT_NAME, Util.JAVABRIDGE_PROMISCUOUS);
     }
     /**
@@ -156,36 +158,43 @@ public class JavaBridgeRunner extends HttpServer {
   	return val;
     }
 
+    private static final byte[] EOF = new byte[0];
     /**
      * Handles both, override-redirect and redirect, see
      * see php.java.servlet.PhpJavaServlet#handleSocketConnection(HttpServletRequest, HttpServletResponse, String, boolean)
      * see php.java.servlet.PhpJavaServlet#handleRedirectConnection(HttpServletRequest, HttpServletResponse)
      */
     protected void doPut (HttpRequest req, HttpResponse res) throws IOException {
-	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
+	InputStream sin=null; OutputStream sout = null;
     	String channel = getHeader("X_JAVABRIDGE_CHANNEL", req);
+    	String transferEncoding = getHeader("Transfer-Encoding", req);
+    	boolean isChunked = "chunked".equals(transferEncoding);
+    	if (!isChunked) throw new IllegalStateException ("Please use a JEE server or servlet engine. Or define (\"JAVA_PERSISTENT_CONNECTIONS\", false); and try again.");
 	ContextFactory.ICredentials credentials = contextServer.getCredentials(channel);
 	IContextFactory ctx = getContextFactory(req, res, credentials);
 	
     	JavaBridge bridge = ctx.getBridge();
 
-	bridge.in = sin=req.getInputStream();
-	bridge.out = sout = new ByteArrayOutputStream();
+	bridge.in = sin = new ChunkedInputStream(req.getInputStream());
+	bridge.out = sout = new ChunkedOutputStream(res.getOutputStream());
 	Request r = bridge.request = new Request(bridge);
         if(r.init(sin, sout)) {
         	AbstractChannelName channelName = 
                     contextServer.getFallbackChannelName(channel, ctx);
+        	if (channelName == null) throw new NullPointerException ("No Pipe- or SocketContextServer available.");
         	res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getName());
-        	r.handleRequests();
+        	res.setHeader("Transfer-Encoding", "chunked");
+
+        	// start the context runner before generating the first response
+                contextServer.start(channelName, Util.getLogger());
+
+		// redirect and re-open
+                r.handleRequests();
         
         	// redirect and re-open
-        	if(bridge.logLevel>3) 
-        	    bridge.logDebug("re-directing to port# "+ channelName);
-         	res.setContentLength(sout.size());
-        	resOut = res.getOutputStream();
-        	sout.writeTo(resOut);
-        	resOut.close();
-                contextServer.start(channelName, Util.getLogger());
+        	if(bridge.logLevel>3) bridge.logDebug("re-directing to port# "+ channelName);
+        	sout.write(EOF);
+        	sout.close();
                 if(bridge.logLevel>3) 
                     bridge.logDebug("waiting for context: " +ctx.getId());
                 try { ctx.waitFor(Util.MAX_WAIT); } catch (InterruptedException e) { Util.printStackTrace(e); }

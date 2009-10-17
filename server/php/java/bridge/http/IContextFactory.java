@@ -105,6 +105,15 @@ public interface IContextFactory extends IJavaBridgeFactory {
    public ISession getSession(String name, boolean clientIsNew, int timeout);
 
    /**
+    * @param name The session name. If name is null, the name PHPSESSION will be used.
+    * @param clientIsNew true if the client wants a new session
+    * @param timeout timeout in seconds. If 0 the session does not expire.
+    * @return The session
+    * @see php.java.bridge.ISession
+    */
+    public ISession getSimpleSession(String name, boolean clientIsNew, int timeout);
+
+   /**
     * Set the class loader obtained from the current servlet into the context.
     * @param loader The currentThreadContextClassLoader
     */

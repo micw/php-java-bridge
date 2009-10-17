@@ -98,6 +98,7 @@ extern int EXT_GLOBAL(ini_updated), EXT_GLOBAL (ini_user),
   EXT_GLOBAL (ini_set), EXT_GLOBAL(ini_override);
 
 #define U_LOGLEVEL (1<<2)
+#define U_PERSISTENT_SERVLET_CONNECTIONS (1<<3)
 #define U_SOCKNAME (1<<7)
 #define U_HOSTS (1<<8)
 #define U_SERVLET (1<<9)
@@ -122,6 +123,8 @@ struct cfg {
   char*sockname;
   /** The java.hosts list */
   char*hosts;
+  /** The java.persistent_servlet_connections value (On, Off, 1, "") */
+  char*persistent_servlet_connections;
   /** The java.log_level */
   char*logLevel;
   /** The java.log_level as a number */

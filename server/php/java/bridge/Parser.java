@@ -26,6 +26,8 @@ package php.java.bridge;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
+import java.io.OutputStream;
 import java.net.SocketException;
 
 class Parser {
@@ -52,8 +54,8 @@ class Parser {
     	    bridge.logLevel = (ch>>2)&7;
     	}
     }
-    short initOptions(InputStream in) throws IOException {
-	if((clen=read(in, buf, 0, RECV_SIZE)) >0) { 
+    short initOptions(InputStream in, OutputStream out) throws IOException {
+	if((clen=read(in)) >0) { 
 
 	    /*
 	     * Special handling if the first byte is neither a space nor "<"
@@ -71,7 +73,7 @@ class Parser {
 	    default:
 	    	if(ch==0177) { // extended header
 	    	    if (++c==clen) {
-	    		if((clen=read(in, buf, 0, RECV_SIZE)) <= 0) throw new IllegalArgumentException ("Illegal header length");
+	    		if((clen=read(in)) <= 0) throw new IllegalArgumentException ("Illegal header length");
 	    		ch = buf[c = 0];
 	    	    } else {
 	    		ch = buf[c];
@@ -87,12 +89,19 @@ class Parser {
 	}
 	return OK; 
     }
-     private static int read(InputStream in, byte[] buf2, int j, int recv_size2) throws IOException {
+     private int read(InputStream in) throws IOException {
 	try {
-	    return in.read(buf2, j, recv_size2);
+	    return in.read(buf, 0, RECV_SIZE);
 	} catch (SocketException e) {
 	    // may happen if we reload the context and destroy the socket
 	    if(Util.logLevel>5) Util.printStackTrace(e);
+	    return -1;
+	} catch (InterruptedIOException e) {
+	    if(Util.logLevel>5) Util.printStackTrace(e);
+	    return -1;
+	} catch (IOException e) {
+	    System.err.println(new String(buf, 0, 160));
+	    //throw e;
 	    return -1;
 	}
     }
@@ -160,13 +169,12 @@ class Parser {
 	APPEND((byte)0);
 	i0=i;
     }
-    short parse(InputStream in) throws IOException {
-  
+    short parse(final InputStream in) throws IOException {
     	if(eof!=0) return EOF;
     	
     	while(eor==0) {
 	    if(c==clen) { 
-	    	clen=read(in, buf, 0, RECV_SIZE); 
+	    	clen=read(in); 
 		if(clen<=0) return eof=EOF;
 		c=0; 
 
@@ -232,7 +240,17 @@ class Parser {
 		    break;
 		case 0177: if(in_dquote) {APPEND(ch); break;}
 		    // handled differently by socket- and JEE implementation
-		    c = handler.parseHeader(buf, c);
+		    handler.parseHeader(new InputStream() {
+                       public int read() throws IOException {
+                	   if (c==clen) {
+                	       clen = Parser.this.read(in);
+                	       if(clen<=0) throw new IOException("parse header");
+                	       c=0;
+                	   }
+                	   return buf[c++];
+                       }
+		    });
+		    c--;
 		    break;
 		default:
 		    APPEND(ch);

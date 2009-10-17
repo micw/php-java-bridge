@@ -97,7 +97,7 @@ public final class SocketContextServer extends PipeContextServer implements Runn
     public SocketContextServer (AppThreadPool threadPool, boolean promiscuous) {
     	super(ContextFactory.NO_CREDENTIALS, threadPool, ContextFactory.EMPTY_CONTEXT_NAME, promiscuous);
         try {
-	    serverSocket = JavaBridge.bind(promiscuous?"INET:0":"INET_LOCAL:0");
+	    serverSocket = JavaBridge.bind((promiscuous||Util.JAVABRIDGE_PROMISCUOUS)?"INET:0":"INET_LOCAL:0");
 	    SecurityManager sec = System.getSecurityManager();
 	    if(sec!=null) sec.checkAccept("127.0.0.1", Integer.parseInt(serverSocket.getSocketName()));
             Thread t = new Util.Thread(this, "JavaBridgeSocketContextServer("+serverSocket.getSocketName()+")");
@@ -169,13 +169,13 @@ public final class SocketContextServer extends PipeContextServer implements Runn
 	}
     }
     
-    private static final boolean socketServer = checkTestTunnel("php.java.bridge.no_socket_server");
+    public static final boolean SOCKET_SERVER_AVAIL = checkTestTunnel("php.java.bridge.no_socket_server");
     /**
      * Check if the ContextServer is ready, i.e. it has created a server socket.
      * @return true if there's a server socket listening, false otherwise.
      */
     public boolean isAvailable() {
-    	return socketServer && serverSocket!=null;
+    	return !(promiscuous||Util.JAVABRIDGE_PROMISCUOUS) && SOCKET_SERVER_AVAIL && serverSocket!=null;
     }
 
     /**

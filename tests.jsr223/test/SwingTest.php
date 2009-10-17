@@ -18,7 +18,7 @@ class SwingApplication {
 
     // set the label before we close over $this
     $this->label = new java("javax.swing.JLabel");
-    $button->addActionListener(java_closure($this));
+    $button->addActionListener(java_closure($this, null, java("java.awt.event.ActionListener")));
 
     $this->label->setLabelFor($button); 
     $pane = new java("javax.swing.JPanel", new java("java.awt.GridLayout", 0, 1)); 

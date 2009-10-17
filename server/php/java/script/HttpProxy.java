@@ -27,7 +27,6 @@ package php.java.script;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
-import java.util.HashMap;
 import java.util.Map;
 
 import php.java.bridge.Util.HeaderParser;
@@ -56,22 +55,6 @@ public class HttpProxy extends CGIRunner {
 	super("HttpProxy", reader, env, out, err, headerParser, resultProxy);
     }
     
-    /**
-     * Create a HTTP proxy which can be used to allocate a php script from a HTTP server
-     * @param reader - The reader, for example a URLReader
-     * @param ctx - The context
-     * @param out The output stream
-     * @param err The error stream 
-     * @param headerParser The header parser
-     * @param resultProxy The return code proxy
-     */
-    public HttpProxy(Reader reader, String ctx, OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy resultProxy) {
-	this(reader, (new HashMap() {
-		private static final long serialVersionUID = 3257005462371971380L;
-		public HashMap init(String ctx) {put("X_JAVABRIDGE_CONTEXT", ctx); return this;}}
-	).init(ctx), out, err, headerParser, resultProxy);
-    }
-
     protected void doRun() throws IOException, PhpException {
     	if(reader instanceof IScriptReader) {
 	    ((IScriptReader)reader).read(env, out, headerParser);

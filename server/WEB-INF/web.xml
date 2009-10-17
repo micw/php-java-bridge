@@ -3,9 +3,9 @@
 
 <web-app>
 
-    <!-- support for J2EE cluster -->
+    <!-- support for JEE cluster -->
     <distributable/>
-
+    
     <!-- Attach the JSR223 script factory to the servlet context -->
     <listener>
         <listener-class>php.java.servlet.ContextLoaderListener</listener-class>
@@ -15,15 +15,6 @@
     <servlet>
         <servlet-name>PhpJavaServlet</servlet-name>
         <servlet-class>php.java.servlet.PhpJavaServlet</servlet-class>
-
-         <!-- Allow non-local PHP clients.  Default is Off. -->
-         <!-- Leave this off if your server is connected to the internet. --> 
-       <!--
-         <init-param>
-           <param-name>promiscuous</param-name>
-           <param-value>On</param-value>
-         </init-param>
-        -->
 
         <load-on-startup>0</load-on-startup>
     </servlet>

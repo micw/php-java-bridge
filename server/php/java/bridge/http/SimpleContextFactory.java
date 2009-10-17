@@ -25,6 +25,7 @@ package php.java.bridge.http;
  */
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -32,8 +33,8 @@ import php.java.bridge.ISession;
 import php.java.bridge.JavaBridge;
 import php.java.bridge.NotImplementedException;
 import php.java.bridge.Request;
-import php.java.bridge.Util;
 import php.java.bridge.SimpleJavaBridgeClassLoader;
+import php.java.bridge.Util;
 
 
 /**
@@ -54,7 +55,7 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
     /**
      * The visited ContextFactory
      */
-    protected ContextFactory visited;
+    protected IContextFactory visited;
 
     /**
      * The jsr223 context or the emulated jsr223 context.
@@ -67,9 +68,10 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
     
     protected SimpleContextFactory(String webContext, boolean isManaged) {
 	this.isManaged = isManaged;
-  	visited = new ContextFactory(webContext, isManaged);
+  	ContextFactory visited = new ContextFactory(webContext, isManaged);
   	visited.accept(this);
     	setClassLoader(Util.getContextClassLoader());
+    	this.visited = visited;
     }
     
     /**{@inheritDoc}*/
@@ -153,17 +155,18 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
         return visited.getBridge();
     }
     /**{@inheritDoc}*/
-    public void visit(ContextFactory visited) {
+    public void visit(IContextFactory visited) {
         this.visited=visited;
     }
     /**{@inheritDoc}*/
     public ISession getSession(String name, boolean clientIsNew, int timeout) {
-	if(session != null) return session;
-	return session = visited.getSimpleSession(name, clientIsNew, timeout);
+	return getSimpleSession(name, clientIsNew, timeout);
     }
     /**{@inheritDoc}*/
-    public ISession getSession(boolean clientIsNew, int timeout) {
-	return visited.getSimpleSession(clientIsNew, timeout);
+    public ISession getSimpleSession(String name, boolean clientIsNew, int timeout) {
+	if (name!=null) return visited.getSimpleSession(name, clientIsNew, timeout);
+	if(session != null) return session;
+	return session = visited.getSimpleSession(name, clientIsNew, timeout);
     }
     /**{@inheritDoc}*/
     public void setContext(IContext context) {
@@ -237,24 +240,19 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
 	return buf.toString();
     }
 
+    
     /**
      * {@inheritDoc}
      */
-    public int parseHeader(Request req, byte[] header, int pos) throws IOException {
-	JavaBridge bridge = getBridge();
-
-	// the header used to be binary encoded
-	byte shortPathHeader = (byte) (0xFF&(header[pos+1]));
-
-	bridge.out.write(0); bridge.out.flush(); // dummy write: avoid ack delay
-	int len =(0xFF&header[pos+2]) | (0xFF00&(header[pos+3]<<8));
-	String newContext = new String(header, pos+4, pos+len,  Util.ASCII);
-	IContextFactory factory = (IContextFactory)bridge.getFactory();
-	factory.recycle(newContext);
-
-	if(shortPathHeader != (byte) 0xFF)  // short path: no previous PUT request
-	    req.init(shortPathHeader);
-
-	return pos+len+3;
+    public void flushBuffer() throws IOException {
+	visited.flushBuffer();
     }
+
+    /**
+     * {@inheritDoc}
+     */
+   public void parseHeader(Request req, InputStream in)
+            throws IOException {
+	visited.parseHeader(req, in);
+    } 
 }

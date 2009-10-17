@@ -80,7 +80,7 @@ class HexOutputBuffer extends ByteArrayOutputStream {
 	protected void append(long i) {
         int pos = 16;
 	    do {
-	        buf[--pos] = Response.digits[(int)(i & 0xF)];
+	        buf[--pos] = Util.HEX_DIGITS[(int)(i & 0xF)];
 	        i >>>= 4;
 	    } while (i != 0);
 	    write(buf, pos, 16-pos);

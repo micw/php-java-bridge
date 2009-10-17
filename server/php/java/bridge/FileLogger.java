@@ -36,7 +36,7 @@ class FileLogger implements ILogger {
     private boolean isInit = false;
     private void init() {
 	if(Util.logStream==null) {
-	    if(Util.DEFAULT_LOG_FILE.trim().length()==0)  Util.logStream = System.err;
+	    if((Util.DEFAULT_LOG_FILE==null) || (Util.DEFAULT_LOG_FILE.trim().length()==0))  Util.logStream = System.err;
 	    else 
 		try {
 		    Util.logStream=new java.io.PrintStream(new java.io.FileOutputStream(Util.DEFAULT_LOG_FILE));

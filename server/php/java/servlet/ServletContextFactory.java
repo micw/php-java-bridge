@@ -29,6 +29,9 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import php.java.bridge.http.ContextServer;
+import php.java.bridge.http.IContextFactory;
+
 /**
  * Create session contexts for servlets.<p> In addition to the
  * standard ContextFactory this factory keeps a reference to the
@@ -53,8 +56,11 @@ public class ServletContextFactory extends SimpleServletContextFactory {
      * @param res The HttpServletResponse
      * @return The created ContextFactory
      */
-    public static ServletContextFactory addNew(Servlet servlet, ServletContext kontext, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res) {
-        ServletContextFactory ctx = new ServletContextFactory(servlet, kontext, proxy, req, res);
-    	return ctx;
+    public static IContextFactory addNew(ContextServer server, Servlet servlet, ServletContext kontext, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res) {
+        if (server.isAvailable(PhpJavaServlet.getHeader("X_JAVABRIDGE_CHANNEL", req)))
+            return new ServletContextFactory(servlet, kontext, proxy, req, res);
+        else 
+           return RemoteHttpServletContextFactory.addNew(servlet, kontext, proxy, req, res, new ServletContextFactory(servlet, kontext, proxy, req, res));
+            
     }	
 }

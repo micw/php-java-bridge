@@ -35,5 +35,5 @@ public interface IContextFactoryVisitor extends IContextFactory {
    * Called when a visitor has been attached.
    * @param visited The context factory
    */
-  public void visit(ContextFactory visited);
+  public void visit(IContextFactory visited);
 }

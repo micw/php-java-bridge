@@ -185,7 +185,7 @@ public final class Request implements IDocHandler {
      * @throws IOException
      */
     public boolean init(InputStream in, OutputStream out) throws IOException {
-    	switch(parser.initOptions(in)) {
+    	switch(parser.initOptions(in, out)) {
 
     	case Parser.PING:
             bridge.logDebug("PING - PONG - Closing Request");
@@ -663,7 +663,7 @@ public final class Request implements IDocHandler {
     /** 
      * {@inheritDoc}
      */
-    public int parseHeader(byte[] header, int pos) throws IOException {
-	return bridge.getFactory().parseHeader(this, header, pos);
+    public void parseHeader(InputStream in) throws IOException {
+	bridge.getFactory().parseHeader(this, in);
     }
 }

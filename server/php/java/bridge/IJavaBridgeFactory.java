@@ -26,6 +26,7 @@ package php.java.bridge;
  */
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import php.java.bridge.http.IContext;
 
@@ -52,14 +53,6 @@ public interface IJavaBridgeFactory {
      * @see php.java.bridge.ISession
      */
     public ISession getSession(String name, boolean clientIsNew, int timeout);
-
-    /**
-     * @param clientIsNew true if the client wants a new session
-     * @param timeout timeout in seconds. If 0 the session does not expire.
-     * @return The session
-     */
-    public ISession getSession(boolean clientIsNew, int timeout);
-
     /**
      * Return the associated JSR223 context
      * @return The JSR223 context, if supported by the environment or null.
@@ -93,10 +86,15 @@ public interface IJavaBridgeFactory {
      * Called for the request header
      * 
      * @param req the current request
-     * @param header the buffer
-     * @param pos the current position within buf
-     * @return the new position within buf
+     * @param in the input stream
      * @throws IOException
      */
-    public int parseHeader(Request req, byte[] header, int pos) throws IOException;
+    public void parseHeader(Request req, InputStream in) throws IOException;
+
+    /**
+     * Flush the response buffer
+     * @throws IOException 
+     */
+   public void flushBuffer() throws IOException;
+
 }

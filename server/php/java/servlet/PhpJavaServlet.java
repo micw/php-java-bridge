@@ -25,6 +25,7 @@ package php.java.servlet;
  */
 
 import java.io.ByteArrayOutputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -66,6 +67,9 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     protected int logLevel = -1;
     private Util.Logger logger;
     protected boolean promiscuous = false;
+
+    // workaround for a bug in weblogic server, see below
+    private boolean isWebLogic = false;
     
     /**@inheritDoc*/
     public void init(ServletConfig config) throws ServletException {
@@ -73,23 +77,25 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	if(servletContextName==null) servletContextName="";
 	ServletContext ctx = config.getServletContext();
 
-	String value = config.getInitParameter("promiscuous");
+	String value = ctx.getInitParameter("promiscuous");
 	if(value==null) value="";
 	value = value.trim();
 	value = value.toLowerCase();
 	
 	if(value.equals("on") || value.equals("true")) promiscuous=true;
-	
-	contextServer = getContextServer(ctx, promiscuous);
+	try { contextServer = getContextServer(ctx, promiscuous); } catch (Throwable e) {/*ignore*/}
     	 
     	super.init(config);
        
     	logger = new Util.Logger(new Logger(ctx));
     	
 	if(Util.VERSION!=null)
-    	    Util.logMessage("PHP/Java Bridge servlet "+servletContextName+" version "+Util.VERSION+" ready.");
+    	    log("PHP/Java Bridge servlet "+servletContextName+" version "+Util.VERSION+" ready.");
 	else
-	    Util.logMessage("PHP/Java Bridge servlet "+servletContextName+" ready.");
+	    log("PHP/Java Bridge servlet "+servletContextName+" ready.");
+	
+	String name = ctx.getServerInfo();
+	if (name != null && (name.startsWith("WebLogic"))) isWebLogic = true;
     }
 
     /**{@inheritDoc}*/
@@ -102,7 +108,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	    Util.printStackTrace(e);
 	}
 	
-      	contextServer.destroy();
+      	if (contextServer != null) contextServer.destroy();
     	super.destroy();
     }
     /**
@@ -121,12 +127,12 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
     	if(id!=null) ctx = (SimpleServletContextFactory) ContextFactory.get(id, credentials);
     	if(ctx==null) {
-    	  ctx = RemoteServletContextFactory.addNew(this, getServletContext(), null, req, res); // no session sharing
+    	  ctx = (SimpleServletContextFactory) RemoteServletContextFactory.addNew(this, getServletContext(), null, req, res); // no session sharing
     	  bridge = ctx.getBridge();
-    	  bridge.logDebug("first request (session is new).");
+    	  bridge.logDebug("HTTP request");
     	} else {
     	    bridge = ctx.getBridge();
-    	    bridge.logDebug("cont. session");
+    	    bridge.logDebug("redirect");
     	}
     	updateRequestLogLevel(bridge);
     	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
@@ -167,7 +173,49 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
      * @throws ServletException
      * @throws IOException
      */
-    protected void handleLocalConnection (HttpServletRequest req, HttpServletResponse res, String channel)
+    protected void handleChunkedLocalConnection (HttpServletRequest req, HttpServletResponse res, String channel)
+	throws ServletException, IOException {
+	InputStream sin=null; OutputStream sout = null;
+	SimpleServletContextFactory ctx = getContextFactory(req, res, null);
+	JavaBridge bridge = ctx.getBridge();
+	ctx.setSessionFactory(req);
+	
+	bridge.in = sin=req.getInputStream();
+	bridge.out = sout = res.getOutputStream();
+	Request r = bridge.request = new Request(bridge);
+
+	if(r.init(sin, sout)) {
+	    AbstractChannelName channelName = contextServer.getFallbackChannelName(channel, ctx);
+	    res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getName());
+
+	    // start the context runner before generating the first response
+	    contextServer.start(channelName, logger);
+	    	
+	    // generate response
+	    r.handleRequests();
+
+	    // redirect and re-open
+	    if(bridge.logLevel>3) bridge.logDebug("redirecting to port# "+ channelName);
+	    sin.close();
+	    try {res.flushBuffer(); } catch (Throwable t) {Util.printStackTrace(t);} // resin ignores resOut.close()
+	    try {sout.close(); } catch (Throwable t) {Util.printStackTrace(t);} // Sun Java System AS 9 ignores flushBuffer()
+	    this.waitForContext(ctx);
+	}
+	else {
+	    Util.warn("handleChunkedLocalConnection init failed");
+	    ctx.destroy();
+	}
+    }
+    /**
+     * Handle a redirected connection. The local channel is more than 50 
+     * times faster than the HTTP tunnel. Used by Apache and cgi.
+     * 
+     * @param req
+     * @param res
+     * @throws ServletException
+     * @throws IOException
+     */
+    protected void handlePersistentLocalConnection (HttpServletRequest req, HttpServletResponse res, String channel)
 	throws ServletException, IOException {
 	InputStream sin=null; ByteArrayOutputStream sout; OutputStream resOut = null;
 	SimpleServletContextFactory ctx = getContextFactory(req, res, null);
@@ -178,53 +226,135 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	bridge.out = sout = new ByteArrayOutputStream();
 	Request r = bridge.request = new Request(bridge);
 	
-	try {
-	    if(r.init(sin, sout)) {
-		AbstractChannelName channelName = contextServer.getFallbackChannelName(channel, ctx);
-		res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getName());
-	    	r.handleRequests();
+	if(r.init(sin, sout)) {
+	    AbstractChannelName channelName = contextServer.getFallbackChannelName(channel, ctx);
+	    res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getName());
 
-		// redirect and re-open
-		res.setContentLength(sout.size());
-		resOut = res.getOutputStream();
-		sout.writeTo(resOut);
-		if(bridge.logLevel>3) bridge.logDebug("redirecting to port# "+ channelName);
-	    	sin.close();
-		try {res.flushBuffer(); } catch (Throwable t) {Util.printStackTrace(t);} // resin ignores resOut.close()
-		try {resOut.close(); } catch (Throwable t) {Util.printStackTrace(t);} // Sun Java System AS 9 ignores flushBuffer()
-		contextServer.start(channelName, logger);
-		this.waitForContext(ctx);
-	    }
-	    else {
-		Util.warn("init failed");
-	        ctx.destroy();
-	    }
-	} catch (Exception e) {
-	    Util.printStackTrace(e);
+	    // start the context runner before generating the first response
+	    contextServer.start(channelName, logger);
+	    	
+	    // generate response
+	    r.handleRequests();
+
+	    // redirect and re-open
+	    res.setContentLength(sout.size());
+	    resOut = res.getOutputStream();
+	    sout.writeTo(resOut);
+	    if(bridge.logLevel>3) bridge.logDebug("redirecting to port# "+ channelName);
+	    sin.close();
+	    try {res.flushBuffer(); } catch (Throwable t) {Util.printStackTrace(t);} // resin ignores resOut.close()
+	    try {resOut.close(); } catch (Throwable t) {Util.printStackTrace(t);} // Sun Java System AS 9 ignores flushBuffer()
+	    this.waitForContext(ctx);
+	}
+	else {
+	    Util.warn("handlePersistentLocalConnection init failed");
+	    ctx.destroy();
 	}
     }
-
-    private String getHeader(String key, HttpServletRequest req) {
+    protected void handleLocalConnection (HttpServletRequest req, HttpServletResponse res, String channel)
+	throws ServletException, IOException {
+	if (getHeader("Content-Length", req)==null) {
+	    handleChunkedLocalConnection (req, res, channel);
+	} else {
+	    handlePersistentLocalConnection (req, res, channel);
+	}
+    }
+   
+    /** Only for internal use */
+    public static String getHeader(String key, HttpServletRequest req) {
   	String val = req.getHeader(key);
   	if(val==null) return null;
   	if(val.length()==0) val=null;
   	return val;
     }
-    /**
-     * Dispatcher for the "http tunnel", "local channel" or "override redirect".
-     */
-    protected void doPut (HttpServletRequest req, HttpServletResponse res)
+    private InputStream getInputStream (HttpServletRequest req) throws IOException {
+	InputStream in = req.getInputStream();
+	if (!isWebLogic) return in;
+	
+	return new FilterInputStream(in) {
+	    /**
+	     * Stupid workaround for WebLogic's insane chunked reader implementation, it blocks instead of simply returning what's available so far.
+	     * in.getAvailable() can't be used either, because it returns the bytes in weblogics internal cache: For 003\r\n123\r\n weblogic 10.3 returns
+	     * 10 instead of 3(!) 
+	     */
+	    public int read(byte[] buf, int pos, int length) throws IOException {
+		return in.read(buf, pos, 1);
+	    }
+	};
+    }
+    protected void handleHttpConnection (HttpServletRequest req, HttpServletResponse res) 
 	throws ServletException, IOException {
-    	Util.setLogger(logger);
+	boolean destroyCtx = false;
+
+	if (getHeader("Content-Length", req)!=null) 
+	    log("WARNING: Pipe- and SocketContextServer switched off in the back end. Either enable them or define(\"JAVA_PERSISTENT_SERVLET_CONNECTION\", false) in \"java/Java.inc\" and try again.");
+
+	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
+	RemoteHttpServletContextFactory ctx;
+	if (id!=null) {
+	    ctx = (RemoteHttpServletContextFactory) RemoteHttpServletContextFactory.get(id);
+	    if (ctx==null) throw new IllegalStateException("Cannot find RemoteHttpServletContextFactory in session");
+	} else {
+	    ctx = new RemoteHttpServletContextFactory(this, getServletContext(), req, req, res);
+	    destroyCtx = true;
+	}
+	
+	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
+	res.setHeader("Pragma", "no-cache");
+	res.setHeader("Cache-Control", "no-cache");
+	InputStream sin=null; OutputStream sout = null;
+	JavaBridge bridge = ctx.getBridge();
+    	
+	bridge.in = sin = getInputStream (req);
+	bridge.out = sout = res.getOutputStream();
+	ctx.setResponse (res);
+	Request r = bridge.request = new Request(bridge);
+	try {
+	    if(r.init(sin, sout)) {
+		r.handleRequests();
+	    }
+	    else {
+		Util.warn("handleHttpConnection init failed");
+	    }
+	} finally {
+	    if (destroyCtx) ctx.destroy();
+	}
+    }
+
+    private static final String LOCAL_ADDR = "127.0.0.1";
+
+    protected void handlePut (HttpServletRequest req, HttpServletResponse res)
+	throws ServletException, IOException {
+	Util.setLogger(logger);
 
     	String channel = getHeader("X_JAVABRIDGE_CHANNEL", req);
     	if(Util.logLevel>3) Util.logDebug("doPut:"+req.getRequestURL()); 
 
-    	if(contextServer.isAvailable(channel)) 
+    	if(LOCAL_ADDR.equals(req.getRemoteAddr()) && contextServer!=null && contextServer.isAvailable(channel)) 
     	    handleLocalConnection(req, res, channel); /* re-direct */
     	else
-    	    throw new ServletException("HTTP tunnel not implemented. Please allow PIPE- or SOCKET- connections. Please see the README section \"Security Issues\" for details.");
+    	    handleHttpConnection(req, res);
     }
+    
+    /**
+     * Dispatcher for the "http tunnel", "local channel" or "override redirect".
+     */
+    protected void doPut (HttpServletRequest req, HttpServletResponse res) 
+    	throws ServletException, IOException {
+	try {
+	    handlePut(req, res);
+	} catch (RuntimeException e) {
+	    Util.printStackTrace(e);
+	    throw new ServletException(e);
+	} catch (IOException e) {
+	    Util.printStackTrace(e);
+	    throw e;
+	} catch (ServletException e) {
+	    Util.printStackTrace(e);
+	    throw e;
+	}
+    }
+
     /** For backward compatibility */
     protected void doGet(HttpServletRequest req, HttpServletResponse res)
 	throws ServletException, IOException {

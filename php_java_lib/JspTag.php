@@ -18,7 +18,7 @@ if(!class_exists("java_Tag")) {
     var $pc = null;
 
     function java_PageContext($java_session) {
-      if (!(string)$java_session) throw new Exception ("session is null");
+      if (java_is_null($java_session)) throw new Exception ("session is null");
       $ctx = java_context();
       $this->servlet = $ctx->getAttribute("php.java.servlet.Servlet");
       $this->response = $ctx->getAttribute("php.java.servlet.HttpServletResponse");
@@ -65,10 +65,10 @@ if(!class_exists("java_Tag")) {
      * @return true, if the body should be evaluated.
      */
     function start() {
-      $this->evalTag = $this->clazz->doStartTag();
-      if($this->evalTag != Java("javax.servlet.jsp.tagext.Tag")->SKIP_BODY) {
+      $this->evalTag = java_values($this->clazz->doStartTag());
+      if($this->evalTag != java_values(Java("javax.servlet.jsp.tagext.Tag")->SKIP_BODY)) {
 	$this->noend=true;
-	if($this->evalTag != Java("javax.servlet.jsp.tagext.Tag")->EVAL_BODY_INCLUDE) {
+	if($this->evalTag == java_values(Java("javax.servlet.jsp.tagext.Tag")->EVAL_BODY_INCLUDE)) {
 	  $out = $this->pc->pc->pushBody();
 	  $this->clazz->setBodyContent($out);
 	  $this->clazz->doInitBody();
@@ -83,8 +83,8 @@ if(!class_exists("java_Tag")) {
      * @return true if the body should be evaluated again.
      */
     function repeat() {
-      $evalDoAfterBody = $this->clazz->doAfterBody();
-      if ($evalDoAfterBody != Java("javax.servlet.jsp.tagext.BodyTag")->EVAL_BODY_AGAIN) {
+      $evalDoAfterBody = java_values($this->clazz->doAfterBody());
+      if ($evalDoAfterBody != java_values(Java("javax.servlet.jsp.tagext.BodyTag")->EVAL_BODY_AGAIN)) {
 	return false;
       }
 
@@ -96,7 +96,7 @@ if(!class_exists("java_Tag")) {
      */
     function end($autoflush = true) {
       if(!$this->noend) {
-	if ($this->evalTag != Java("javax.servlet.jsp.tagext.Tag")->EVAL_BODY_INCLUDE) {
+	if ($this->evalTag != java_values(Java("javax.servlet.jsp.tagext.Tag")->EVAL_BODY_INCLUDE)) {
 	  $this->pc->pc->popBody();
 	}
       }

@@ -56,7 +56,6 @@ public final class Response {
     // used in getFirstBytes() only
     static final byte append_for_OutBuf_getFirstBytes[] = new byte[] {'.', '.', '.' }; 
     static final byte append_none_for_OutBuf_getFirstBytes[] = new byte[0];
-    static final byte digits[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'}; 
 
     private class Base64OutputBuffer extends Base64EncodingOutputBuffer {
 	Base64OutputBuffer(JavaBridge bridge) {
@@ -161,6 +160,8 @@ public final class Response {
       	     bridge.logDebug(" <-- " +newString(buf.getFirstBytes()));
        	    }
        	    buf.writeTo(bridge.out);
+       	    bridge.getFactory().flushBuffer();
+       	    
        	    reset();
 	}
     }
