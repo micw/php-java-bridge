@@ -18,7 +18,7 @@ META-INF/java/Java.inc: JavaRaw.inc
 	rm -f ../documentation/API/errors.html
 
 META-INF/java/JavaProxy.php: META-INF/java/Java.inc
-	echo '<?php if(!function_exists("java_get_base")) {require_once("Java.inc"); java_call_with_continuation();} ?>' >META-INF/java/JavaProxy.php
+	echo '<?php /* wrapper for Java.inc */ if(!function_exists("java_get_base")) {require_once("Java.inc"); if ($$java_script = java_getHeader("X_JAVABRIDGE_INCLUDE", $$_SERVER)) {if ($$java_script!="@") {chdir (dirname ($$java_script)); require_once($$java_script);}}; java_call_with_continuation();} ?>' >META-INF/java/JavaProxy.php
 
 META-INF/java/Mono.inc: JavaRaw.inc
 	cat JavaRaw.inc | sed -f append.sed | sed 's/JAVA/MONO/g;s/java/mono/g;s/Java/Mono/g;s/updateJarLibraryPath/updateLibraryPath/;s/^.*raise mono connect exception--do not delete this line.*$$/if(!$$peer)throw new mono_ConnectException("No Mono! Please start MonoBridge.exe. Error message: $$errstr ($$errno)");/;s/^.*do not delete this line.*$$/$$name="cli.".$$name;/;' | sed ':repeat $$!N; s/\n}/}/; t repeat; P; D;' | sed ':repeat $$!N; s/{[	 ]*\n/{/; t repeat; P; D;' >META-INF/java/Mono.inc

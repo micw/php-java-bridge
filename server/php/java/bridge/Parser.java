@@ -100,9 +100,8 @@ class Parser {
 	    if(Util.logLevel>5) Util.printStackTrace(e);
 	    return -1;
 	} catch (IOException e) {
-	    System.err.println(new String(buf, 0, 160));
-	    //throw e;
-	    return -1;
+	    Util.printStackTrace(e);
+	    throw e;
 	}
     }
     private boolean response = true;

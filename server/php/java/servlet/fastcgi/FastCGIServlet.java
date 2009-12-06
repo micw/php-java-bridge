@@ -162,6 +162,9 @@ public abstract class FastCGIServlet extends CGIServlet {
     private final CGIRunnerFactory defaultCGIRunnerFactory = new CGIRunnerFactory();
     protected ChannelFactory channelName;
 
+    // workaround for a bug in jboss server, which uses the log4j port 4445 for its internal purposes(!)
+    private boolean isJBoss;
+
     protected void checkCgiBinary(ServletConfig config) {
 	String value;
 	if (php==null) {
@@ -215,7 +218,10 @@ public abstract class FastCGIServlet extends CGIServlet {
 	String value;
 	super.init(config);
 
-	logger = new Util.Logger(new Logger(context));
+	String name = context.getServerInfo();
+	if (name != null && (name.startsWith("JBoss")))    isJBoss    = true;
+
+	logger = new Util.Logger(!isJBoss, new Logger(context));
 
 	try {
 	    value = context.getInitParameter("promiscuous");
@@ -249,13 +255,13 @@ public abstract class FastCGIServlet extends CGIServlet {
 	if(val!=null) php_fcgi_children = val;
 	
 	val = null;
-	php_include_java = true;
+	php_include_java = false;
 	try {
 	    val  = config.getInitParameter("php_include_java");
 	    if(val==null) val = config.getInitParameter("PHP_INCLUDE_JAVA");
 	    if(val==null) val = System.getProperty("php.java.bridge.php_include_java");
-	    if(val!=null && (val.equalsIgnoreCase("off") ||  val.equalsIgnoreCase("false")))
-		php_include_java = false;
+	    if(val!=null && (val.equalsIgnoreCase("on") ||  val.equalsIgnoreCase("true")))
+		php_include_java = true;
 	} catch (Throwable t) {/*ignore*/}
 
 	val = null;

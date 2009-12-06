@@ -276,11 +276,7 @@ class java_SocketHandler {
   }
   function dieWithBrokenConnection($msg) {
 	unset($this->protocol->client->protocol);
-	if (function_exists("error_get_last"))
-		$error = error_get_last();
-	else
-		$error = array("message"=>"broken connection error");
-    trigger_error ("${msg} ".$error["message"], E_USER_ERROR);
+    trigger_error ("${msg}", E_USER_ERROR);
   }
   function shutdownBrokenConnection ($msg) {
     $this->channel->shutdownBrokenConnection();
@@ -323,10 +319,10 @@ class java_SimpleHttpHandler extends java_SocketHandler {
 	
 	$this->protocol->handler = $this->protocol->socketHandler;
 	$this->protocol->handler->write($this->protocol->client->sendBuffer)
-		or $this->protocol->handler->shutdownBrokenConnection("x1 Broken local connection handle");
+		or $this->protocol->handler->shutdownBrokenConnection("Broken local connection handle");
 	$this->protocol->client->sendBuffer=null;
 	$this->protocol->handler->read(1)
-		or $this->protocol->handler->shutdownBrokenConnection("x2 Broken local connection handle");
+		or $this->protocol->handler->shutdownBrokenConnection("Broken local connection handle");
   }
 
   function java_SimpleHttpHandler($protocol, $ssl, $host, $port) {

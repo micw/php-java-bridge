@@ -47,19 +47,23 @@ public class ChainsawLogger extends SimpleLog4jLogger implements ILogger {
     /** The default cainsaw host */    
     public static final String DEFAULT_HOST="127.0.0.1";
 
+    /** Eg: java -Dchainsaw.port=14445 ... */
+    private int configuredPort;
+    
     /** override this method, if you want to connect to a different
      * host or port
      * 
      * @param defaultHost The default host
-     * @param defaultPort The default port
+     * @param configuredPort The default port
      * @throws Exception If chainsaw isn't running.
      */
-    public void configure (String defaultHost, int defaultPort) throws Exception {
-        Socket s = new Socket(defaultHost, defaultPort);
+    public void configure (String defaultHost, int configuredPort) throws Exception {
+        this.configuredPort = configuredPort;
+	Socket s = new Socket(defaultHost, configuredPort);
         s.close();
         Class clazz = Class.forName("org.apache.log4j.net.SocketAppender");
         Constructor constructor = clazz.getConstructor(new Class[]{String.class, int.class});
-        Object socketAppender = constructor.newInstance(new Object[]{defaultHost, new Integer(defaultPort)});
+        Object socketAppender = constructor.newInstance(new Object[]{defaultHost, new Integer(configuredPort)});
         clazz = Class.forName("org.apache.log4j.BasicConfigurator");
         Method method = clazz.getMethod("resetConfiguration", Util.ZERO_PARAM);
         method.invoke(clazz, Util.ZERO_ARG);
@@ -92,6 +96,6 @@ public class ChainsawLogger extends SimpleLog4jLogger implements ILogger {
     }
     /**{@inheritDoc}*/
     public String toString() {
-	return "Chainsaw logger, host: " + DEFAULT_HOST + ", port: " + DEFAULT_PORT; 
+	return "Chainsaw logger, host: " + DEFAULT_HOST + ", port: " + configuredPort; 
     }
 }

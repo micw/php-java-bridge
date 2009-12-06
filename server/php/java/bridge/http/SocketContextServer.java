@@ -62,6 +62,7 @@ public final class SocketContextServer extends PipeContextServer implements Runn
     private ISocketFactory serverSocket = null;
     protected List sockets = Collections.synchronizedList(new ArrayList());
     private ILogger logger;
+    private String origContextName;
     
     protected class Channel extends PipeContextServer.Channel {
         protected Socket sock;
@@ -94,8 +95,9 @@ public final class SocketContextServer extends PipeContextServer implements Runn
      * Create a new ContextServer using the ThreadPool. 
      * @param threadPool Obtain runnables from this pool. If null, new threads will be created.
      */
-    public SocketContextServer (AppThreadPool threadPool, boolean promiscuous) {
+    public SocketContextServer (AppThreadPool threadPool, boolean promiscuous, String contextName) {
     	super(ContextFactory.NO_CREDENTIALS, threadPool, ContextFactory.EMPTY_CONTEXT_NAME, promiscuous);
+	this.origContextName = contextName;
         try {
 	    serverSocket = JavaBridge.bind((promiscuous||Util.JAVABRIDGE_PROMISCUOUS)?"INET:0":"INET_LOCAL:0");
 	    SecurityManager sec = System.getSecurityManager();
@@ -175,7 +177,8 @@ public final class SocketContextServer extends PipeContextServer implements Runn
      * @return true if there's a server socket listening, false otherwise.
      */
     public boolean isAvailable() {
-    	return !(promiscuous||Util.JAVABRIDGE_PROMISCUOUS) && SOCKET_SERVER_AVAIL && serverSocket!=null;
+    	// The standalone runner sets an empty context name, otherwise the promiscuous option means that the servlet engine should use chunked encoding
+	return ((this.origContextName == ContextFactory.EMPTY_CONTEXT_NAME) && SOCKET_SERVER_AVAIL && serverSocket!=null) || (!(promiscuous||Util.JAVABRIDGE_PROMISCUOUS) && SOCKET_SERVER_AVAIL && serverSocket!=null);
     }
 
     /**

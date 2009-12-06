@@ -102,8 +102,14 @@ public final class Util {
          * @param logger The specified logger.
          */
         public Logger(ILogger logger) {
-            try {this.clogger = ChainsawLogger.createChainsawLogger();} catch (Throwable t) {
+            this(!DEFAULT_LOG_FILE_SET, logger);
+        }
+        public Logger(boolean useChainsaw, ILogger logger) {
+            if (useChainsaw) 
+              try {this.clogger = ChainsawLogger.createChainsawLogger();} catch (Throwable t) {
         	if(Util.logLevel>5) t.printStackTrace();
+                this.logger = logger;
+            } else {
                 this.logger = logger;
             }
         }

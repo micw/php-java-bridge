@@ -100,8 +100,24 @@ if(!function_exists("java_get_base")) {
   /**
    * @access private
    */
+  function java_autoload_function5($x) {
+	$s=str_replace("_", ".", $x);
+
+    $c=__javaproxy_Client_getClient();
+    if(!($c->invokeMethod(0, "typeExists", array($s)))) return false;
+
+	$i = "class ${x} extends Java {".
+	  "static function type(\$sub=null){if(\$sub) \$sub='\$'.\$sub; return java('${s}'.\"\$sub\");}".
+	  'function __construct() {$args = func_get_args();'.
+	  'array_unshift($args, '."'$s'".'); parent::__construct($args);}}';
+	eval ("$i");
+	return true;
+  }
+  /**
+   * @access private
+   */
   function java_autoload_function($x) {
-    $idx = strrpos($x, "\\"); if (!$idx) return false;
+    $idx = strrpos($x, "\\"); if (!$idx) return java_autoload_function5($x);
 
     $str=str_replace("\\", ".", $x);
 
@@ -358,7 +374,7 @@ if(!function_exists("java_get_base")) {
    */
   function java_call_with_continuation($kontinuation=null) {
 	if ($java_script = java_getHeader("X_JAVABRIDGE_INCLUDE", $_SERVER)) { 
-	  if ($java_script!="@") {chdir (dirname ($java_script)); require($java_script);} 
+	  if ($java_script!="@") {chdir (dirname ($java_script)); require_once($java_script);} 
 	  if(!java_getHeader("X_JAVABRIDGE_INCLUDE_ONLY", $_SERVER)) java_context()->call(is_null($kontinuation)?java_closure():(($kontinuation instanceof java_JavaType)?$kontinuation:java_closure($kontinuation)));
 	}
   }

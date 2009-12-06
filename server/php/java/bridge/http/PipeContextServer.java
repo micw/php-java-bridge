@@ -115,12 +115,10 @@ public class PipeContextServer implements IContextServer {
 	    	t.start();
 	    }
 	} catch (SecurityException t) {
-	    System.out.println("n1");
 	    ContextFactory.destroyAll();
 	    Util.printStackTrace(t);
 	    return isAvailable=false;
 	} catch (Throwable t) {
-	    System.out.println("n2");
 	    Util.printStackTrace(t);
 	    return isAvailable=false;
 	}

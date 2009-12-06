@@ -70,7 +70,7 @@ public final class Response {
     protected JavaBridge bridge;
     private boolean hasLastAsyncException, hasLastAsyncExceptionSet;
  
-    static final String MSG = "FATAL: UNDECLARED RuntimeException PASSED TO PHP.";
+    static final String MSG = "FATAL: Undeclared java.lang.RuntimeException detected.";
     private static final class UndeclaredThrowableErrorMarker extends RuntimeException {
         private static final long serialVersionUID = -578332461418889089L;
 	private Throwable e;

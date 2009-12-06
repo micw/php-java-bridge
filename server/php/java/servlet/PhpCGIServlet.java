@@ -408,7 +408,7 @@ public class PhpCGIServlet extends FastCGIServlet {
     	    if (proc!=null)
     	    {
     	        if(natErr.size()>0) Util.logMessage(natErr.toString());
-    	        try {proc.checkError(); } catch (Util.Process.PhpException e) {throw new IOException(e);}
+    	        try {proc.checkError(); } catch (Util.Process.PhpException e) {IOException ex = new IOException("php fatal error"); ex.initCause(e); throw ex;}
     	    }
     	    
         }
@@ -437,7 +437,8 @@ public class PhpCGIServlet extends FastCGIServlet {
     	    String wrapper = buf.toString();
  	    IOException ex = new IOException("An IO exception occured. " +
 	    		"Probably php was not installed correctly in \"/usr/bin/php-cgi\" or \"c:/Program Files/PHP/php-cgi.exe\" or \""+wrapper+"\"." +
-	    		"See \"php_exec\" in your WEB-INF/web.xml and WEB-INF/cgi/README. \nReason follows:", e);
+	    		"See \"php_exec\" in your WEB-INF/web.xml and WEB-INF/cgi/README. \nReason follows:");
+ 	    ex.initCause(e);
 	    php=null;
 	    checkCgiBinary(getServletConfig());
 	    throw ex;

@@ -64,13 +64,17 @@ public class SimpleJavaBridgeClassLoader {
     protected boolean checkCl() {
       	return false;
     }
+    private void throwNotAvailableException() {
+	throw new SecurityException("java_require() not supported by SimpleJavaBridgeClassLoader. Enable the Pipe- or SocketContextServer and try again.");
+    }
+	
     /**
      * Set a DynamicJavaBridgeClassLoader.
      * @param loader The dynamic class loader
      * @throws SecurityException 
      */
     protected void setClassLoader(DynamicJavaBridgeClassLoader loader) {
-	throw new SecurityException("java_require() not availabie in this environment");
+	throwNotAvailableException();
     }
     /**
      * Append the path to the current library path
@@ -81,7 +85,7 @@ public class SimpleJavaBridgeClassLoader {
      * @throws IOException 
      */
     public void updateJarLibraryPath(String path, String extensionDir, String cwd, String searchpath) throws IOException  {
-	throw new SecurityException("java_require() not availabie in this environment");
+	throwNotAvailableException();
     }
 
     /**
@@ -138,6 +142,6 @@ public class SimpleJavaBridgeClassLoader {
      * @throws IllegalStateException A SimpleJavaBridgeClassLoader cannot be used in a web environment.
      */
     public void switcheThreadContextClassLoader() {
-	throw new IllegalStateException("Use the JavaBridgeClassLoader instead");
+	throwNotAvailableException();
     }
 }

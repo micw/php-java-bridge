@@ -16,6 +16,8 @@
     <servlet>
         <servlet-name>PhpCGIServlet</servlet-name>
         <servlet-class>php.java.servlet.PhpCGIServlet</servlet-class>
+        <!-- the following line conveniently adds require_once("java/Java.inc") to each PHP script. You may remove it. -->
+        <init-param><param-name>php_include_java</param-name><param-value>On</param-value></init-param>
         <load-on-startup>0</load-on-startup>
     </servlet>
 

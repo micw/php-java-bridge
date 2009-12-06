@@ -70,6 +70,8 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 
     // workaround for a bug in weblogic server, see below
     private boolean isWebLogic = false;
+    // workaround for a bug in jboss server, which uses the log4j port 4445 for its internal purposes(!)
+    private boolean isJBoss = false;
     
     /**@inheritDoc*/
     public void init(ServletConfig config) throws ServletException {
@@ -87,15 +89,17 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     	 
     	super.init(config);
        
-    	logger = new Util.Logger(new Logger(ctx));
+	String name = ctx.getServerInfo();
+	if (name != null && (name.startsWith("WebLogic"))) isWebLogic = true;
+	if (name != null && (name.startsWith("JBoss")))    isJBoss    = true;
+
+	logger = new Util.Logger(!isJBoss, new Logger(ctx));
     	
 	if(Util.VERSION!=null)
     	    log("PHP/Java Bridge servlet "+servletContextName+" version "+Util.VERSION+" ready.");
 	else
 	    log("PHP/Java Bridge servlet "+servletContextName+" ready.");
 	
-	String name = ctx.getServerInfo();
-	if (name != null && (name.startsWith("WebLogic"))) isWebLogic = true;
     }
 
     /**{@inheritDoc}*/

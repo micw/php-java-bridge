@@ -136,13 +136,13 @@ public final class ContextServer implements ContextFactory.ICredentials {
 	if(!SocketContextServer.SOCKET_SERVER_AVAIL && !PipeContextServer.PIPE_SERVER_AVAIL) return false;
 	
         if(channelName!=null && ctx.isAvailable()) return true;
-        SocketContextServer sock=getSocketContextServer(this, getAppThreadPool());
+        SocketContextServer sock=getSocketContextServer(this, getAppThreadPool(), contextName);
         return sock!=null && sock.isAvailable();
     }
 
-    private static synchronized SocketContextServer getSocketContextServer(ContextServer server, AppThreadPool pool) {
+    private static synchronized SocketContextServer getSocketContextServer(ContextServer server, AppThreadPool pool, String contextName) {
 	if(sock!=null) return sock;
-	return sock=new SocketContextServer(pool, server.isPromiscuous());
+	return sock=new SocketContextServer(pool, server.isPromiscuous(), contextName);
     }
 
     /**
@@ -163,7 +163,7 @@ public final class ContextServer implements ContextFactory.ICredentials {
      */
     public AbstractChannelName getFallbackChannelName(String channelName, IContextFactory currentCtx) {
         if(channelName!=null && ctx.isAvailable()) return new PipeChannelName(channelName,  currentCtx);
-        SocketContextServer sock=getSocketContextServer(this, getAppThreadPool());
+        SocketContextServer sock=getSocketContextServer(this, getAppThreadPool(), contextName);
         return sock.isAvailable() ? new SocketChannelName(sock.getChannelName(),  currentCtx) : null;
     }
     

@@ -332,7 +332,9 @@ public class ServletReader extends Reader implements IScriptReader {
             try {
 	        dispatcher.include(req, res);
             } catch (ServletException e) {
-        	throw new IOException("include failed", e);
+        	IOException ex = new IOException("include failed");
+        	ex.initCause(e);
+        	throw ex;
             }
     }
     /** {@inheritDoc} */
