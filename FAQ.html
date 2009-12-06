@@ -561,8 +561,8 @@ In JBoss' default setup the code:
 <blockquote>
 <code>
   // access the home interface<br>
-  $DocumentHome = new JavaClass("DocumentHome");<br>
-  $PortableRemoteObject = new JavaClass("javax.rmi.PortableRemoteObject");<br>
+  $DocumentHome = java("DocumentHome");<br>
+  $PortableRemoteObject = java("javax.rmi.PortableRemoteObject");<br>
   $home=$PortableRemoteObject-&gt;narrow($objref, $DocumentHome);<br>
 </code>
 </blockquote>
@@ -682,11 +682,11 @@ The above code is not a good programming example but it demonstrates why a diffe
 Primitive types are wrapped by associated java classes. 
 The following example uses <code>reflect.Array</code> to create a new <code>byte</code> array:<br><br>
 <code>
-$Byte = new JavaClass("java.lang.Byte");<br>
+$Byte = java("java.lang.Byte");<br>
 $byte = $Byte-&gt;TYPE;<br>
-$Array = new JavaClass("java.lang.reflect.Array");<br>
+$Array = java("java.lang.reflect.Array");<br>
 $byteArray = $Array-&gt;newInstance($byte, 255);<br>
-$System = new JavaClass("java.lang.System");<br>
+$System = java("java.lang.System");<br>
 $length = $System-&gt;in-&gt;read($byteArray);<br>
 $str = new Java("java.lang.String", $byteArray, 0, $length);<br>
 echo "You have typed: $str\n";<br>
@@ -853,10 +853,9 @@ echo new String("foo");<br><br>
 With <code>java_values()</code>. For example:
 <blockquote>
 <code>
-&nbsp;&nbsp;$s = new Java("java.lang.String");<br>
-&nbsp;&nbsp;$c = $chr = $s-&gt;toCharArray();<br>
-&nbsp;&nbsp;print  (java_values($s));<br>
-&nbsp;&nbsp;print_r(java_values($c));<br>
+&nbsp;&nbsp;$ar = java("java.lang.reflect.Array")->newInstance(java("java.lang.Integer"), 2);<br>
+&nbsp;&nbsp;$ar[0] = new java("java.lang.Integer", 2);$ar[1] = new java("java.lang.Integer", 5);<br>
+&nbsp;&nbsp;print_r(java_values($ar));<br>
 </code>
 </blockquote>
 </p>

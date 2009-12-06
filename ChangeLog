@@ -1,3 +1,36 @@
+2009-12-05    <jostb@intern>
+
+	* server/php/java/bridge/http/SocketContextServer.java
+	(checkAvailable): Standalone SERVLET:8080 still uses a
+	ContextRunner.
+	
+	* server/example-web.xml: Added php_include_java option
+
+	* server/META-INF/java/JavaBridge.inc
+	(java_autoload_function5): Re-added
+	(java_call_with_continuation): Called from top-level environment
+
+	* server/php/java/bridge/ChainsawLogger.java: Added -Dchainsaw.port option
+
+	* server/php/java/servlet/PhpJavaServlet.java,
+	server/php/java/servlet/PhpCgiServlet.java: Switch off log4j
+	chainsaw if running in jboss.
+	
+	* server/META-INF/java/Protocol.inc
+	(dieWithBrokenConnection): Do not show system error as function
+	may be invoked for all kinds of errors. error_get_last() doesn't seem
+	to work right, anyway.
+
+	* server/php/java/bridge/SimpleJavaBridgeClassLoader.java
+	(throwNotAvailableException): New procedure
+
+	* server/php/java/bridge/Util.java
+	(Logger): Do not use chainsaw if a log file has been set using
+	-Dphp.java.bridge.default_log_file=FILE or
+	-Dphp.java.bridge.default_log_file=""
+	
+	* VERSION, php-java-bridge.spec: Version 5.5.4.1 released
+	
 2009-10-17    <jostb@intern>
 
 	* server/php/java/bridge/php/java/script/CGIRunner.java

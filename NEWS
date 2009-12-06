@@ -3,6 +3,30 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 5.5.4.1
+
+* The "JBoss" application server abuses the log4j port 4445 for its
+  internal purposes. The bridge now switches off log4j "chainsaw" if
+  getServletContext().getServerInfo().startsWith("JBoss").
+
+* The namespace separator "_" (e.g.: new org_foo_bar_baz(...) syntax),
+  which has been used by some projects, is available again. However,
+  new projects should use the official namespace separator, which
+  defaults to "\".
+
+* If the option -Dphp.java.bridge.default_log_file= is set, the bridge
+  switches off log4j chainsaw completely.
+
+* The default value of php_include_java has been set to Off.
+
+* A configuration option has been added to the JavaBridgeTemplate.war
+  which sets php_include_java to On.
+
+* Bugfix: If php_include_java is set, global PHP variables are no
+  longer discarded; the PHP scripts are required from the top-level
+  environment.
+
+
 Version 5.5.4
 
 * Bugfix: Throwing JavaException w/o messages is possible again.
@@ -41,8 +65,8 @@ b
   without Content-Length and Transfer-Encoding: chunked if it wants to
   close a persistent chunked connection via Connection: close (see
   tomcats connectionTimeout setting). An attempt to use the new
-  communication channel with JAVA_PERSISTENT_SERVLET_CONNECTIONS will
-  immediately raises a fatal error. Either enable the Pipe- or
+  communication channel with JAVA_PERSISTENT_SERVLET_CONNECTIONS 
+  raises a fatal error immediately. Either enable the Pipe- or
   SocketContextServer or disable JAVA_PERSISTENT_SERVLET_CONNECTIONS
   in your PHP script or in the java.ini
 
