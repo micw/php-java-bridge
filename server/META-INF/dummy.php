@@ -1,56 +1,51 @@
 <?php /*-*- mode: php; tab-width:4 -*-*/
 
-/*
- * dummy.php version 1.0alpha -- A PHP debugger.
- *
- * Copyright (C) 2009 Jost Boekemeier.
- *
- * Permission is hereby granted, free of charge, to any person
- * obtaining a copy of this file (the "Software"), to deal in the
- * Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute,
- * sublicense, and/or sell copies of the Software, and to permit
- * persons to whom the Software is furnished to do so, subject to the
- * following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
- */
+  /*
+   * dummy.php version 1.0alpha -- A PHP Debugger for Eclipse.
+   *
+   * Copyright (C) 2009 Jost Boekemeier.
+   *
+   * Permission is hereby granted, free of charge, to any person
+   * obtaining a copy of this file (the "Software"), to deal in the
+   * Software without restriction, including without limitation the
+   * rights to use, copy, modify, merge, publish, distribute,
+   * sublicense, and/or sell copies of the Software, and to permit
+   * persons to whom the Software is furnished to do so, subject to the
+   * following conditions:
+   *
+   * The above copyright notice and this permission notice shall be included in
+   * all copies or substantial portions of the Software.
+   *
+   * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+   * THE COPYRIGHT HOLDER(S) OR AUTHOR(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
+   * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+   * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+   * OTHER DEALINGS IN THE SOFTWARE.
+   */
 
 
 define ("PDB_DEBUG", 0);
 
-  /**
-   * Quick Installation:
-   *
-   * Disable/remove ZendDebugger and xdebug debugger (if any).
-   *
-   * 
-   * Example configuration for eclipse:
-   *
-   * 1. Copy this file to /tmp/phpdebugger.php
-   *
-   * 2. In the eclipse preferences/php/debug/installed debugger select
-   *  "ZendDebugger". Click configure. In the Zend Debugger Settings
-   *  dialog type "/tmp/phpdebugger.php" into the "Dummy File Name"
-   *  box.
-   *
-   * Or:
-   * 
-   * include() this file in the PHP script you want to debug and
-   * request your PHP script from the debugger.
-   *
-   * 3. Debug your PHP scripts as usual. 
-   *
-   */
+/**
+ * Quick Installation:
+ *
+ * Disable/remove ZendDebugger and xdebug debugger (if any).
+ *
+ * 
+ * Example configuration for eclipse:
+ *
+ * 1. Copy this file to /tmp/phpdebugger.php
+ *
+ * 2. In the eclipse preferences/php/debug/installed debugger select
+ *  "ZendDebugger". Click configure. In the Zend Debugger Settings
+ *  dialog type "/tmp/phpdebugger.php" into the "Dummy File Name"
+ *  box.
+ *
+ * 3. Debug your PHP scripts as usual. 
+ *
+ */
 
 /**
  * The PHP parser
@@ -81,24 +76,24 @@ class pdb_Parser {
   }
 
   private function toggleDQuote($chr) {
-	if ($chr == '"') $this->inDQuote = !$this->inDQuote;
+    if ($chr == '"') $this->inDQuote = !$this->inDQuote;
   }
 
   private function each() {
-	$next = each ($this->code);
-	if ($next) {
-	  $cur = current($this->code);
-	  if (is_array($cur)) {
-		$this->currentLine = $cur[2];
-		if ($this->isWhitespace($cur)) {
-		  $this->write($cur[1]);
-		  return $this->each();
-		}
-	  }
-	  else 
-		$this->toggleDQuote($cur);
+    $next = each ($this->code);
+    if ($next) {
+      $cur = current($this->code);
+      if (is_array($cur)) {
+	$this->currentLine = $cur[2];
+	if ($this->isWhitespace($cur)) {
+	  $this->write($cur[1]);
+	  return $this->each();
 	}
-	return $next;
+      }
+      else 
+	$this->toggleDQuote($cur);
+    }
+    return $next;
   }
 
   private function write($code) {
@@ -109,13 +104,13 @@ class pdb_Parser {
   private function writeInclude() {
     $name = "";
     while(1) {
-	  if (!$this->each()) die("parse error");
+      if (!$this->each()) die("parse error");
       $val = current($this->code);
       if (is_array($val)) {
-		$name.=$val[1];
+	$name.=$val[1];
       } else {
-		if ($val==';') break;
-		$name.=$val;
+	if ($val==';') break;
+	$name.=$val;
       }
     }
     if (PDB_DEBUG == 2) 
@@ -126,16 +121,16 @@ class pdb_Parser {
 
   private function writeCall() {
     while(1) {
-	  if (!$this->each()) die("parse error");
+      if (!$this->each()) die("parse error");
       $val = current($this->code);
       if (is_array($val)) {
-		$this->write($val[1]);
+	$this->write($val[1]);
       } else {
-		$this->write($val);
-		if ($val=='{') break;
+	$this->write($val);
+	if ($val=='{') break;
       }
     }
-	$scriptName = $this->scriptName;
+    $scriptName = $this->scriptName;
     $this->write("\$__pdb_CurrentFrame=pdb_startCall(\"$scriptName\");");
   }
 
@@ -145,17 +140,17 @@ class pdb_Parser {
       $lastLine = $this->line = $this->currentLine;
       $scriptName = $this->scriptName;
       if (PDB_DEBUG == 2)
-		$this->write(";STEP($lastLine);");
+	$this->write(";STEP($lastLine);");
       else
-		$this->write(";pdb_step(\"$scriptName\", $lastLine, pdb_getDefinedVars(get_defined_vars(), (isset(\$this) ? \$this : NULL)));");
+	$this->write(";pdb_step(\"$scriptName\", $lastLine, pdb_getDefinedVars(get_defined_vars(), (isset(\$this) ? \$this : NULL)));");
     }
   }
 
   private function writeNext() {
-	$this->next();
-	$token = current($this->code);
-	if (is_array($token)) $token = $token[1];
-	$this->write($token);
+    $this->next();
+    $token = current($this->code);
+    if (is_array($token)) $token = $token[1];
+    $this->write($token);
   }
 
   private function nextIs($chr) {
@@ -164,18 +159,18 @@ class pdb_Parser {
       $cur = current($this->code);
       $i++;
       if (is_array($cur)) {
-		switch ($cur[0]) {
-		case T_COMMENT:
-		case T_DOC_COMMENT:
-		case T_WHITESPACE:
-		  break;		/* skip */
-		default: 
-		  while($i--) prev($this->code);
-		  return false;		/* not found */
-		}
+	switch ($cur[0]) {
+	case T_COMMENT:
+	case T_DOC_COMMENT:
+	case T_WHITESPACE:
+	  break;		/* skip */
+	default: 
+	  while($i--) prev($this->code);
+	  return false;		/* not found */
+	}
       } else {
-		while($i--) prev($this->code);
-		return $cur == $chr;	/* found */
+	while($i--) prev($this->code);
+	return $cur == $chr;	/* found */
       }
     }
     while($i--) prev($this->code);
@@ -188,17 +183,17 @@ class pdb_Parser {
       $cur = current($this->code);
       $i++;
       if (is_array($cur)) {
-		switch ($cur[0]) {
-		case T_COMMENT:
-		case T_DOC_COMMENT:
-		case T_WHITESPACE:
-		  break;		/* skip */
-		default: 
-		  while($i--) prev($this->code);
-		  return (in_array($cur[0], $ar));
-		}
+	switch ($cur[0]) {
+	case T_COMMENT:
+	case T_DOC_COMMENT:
+	case T_WHITESPACE:
+	  break;		/* skip */
+	default: 
+	  while($i--) prev($this->code);
+	  return (in_array($cur[0], $ar));
+	}
       } else {
-		break; /* not found */
+	break; /* not found */
       }
     }
     while($i--) prev($this->code);
@@ -208,220 +203,220 @@ class pdb_Parser {
   private function isWhitespace($token) {
     $isWhitespace = false;
     switch($token[0]) {
-	case T_COMMENT:
-	case T_DOC_COMMENT:
-	case T_WHITESPACE:
-	  $isWhitespace = true;
-	  break;
+    case T_COMMENT:
+    case T_DOC_COMMENT:
+    case T_WHITESPACE:
+      $isWhitespace = true;
+      break;
     }
     return $isWhitespace;
   }
   private function next() {
-	if (!$this->each()) trigger_error("parse error", E_USER_ERROR);
+    if (!$this->each()) trigger_error("parse error", E_USER_ERROR);
   }
 
   private function parseBlock () {
-	$this->parse(self::BLOCK);
+    $this->parse(self::BLOCK);
   }
   private function parseStatement () {
-	$this->parse(self::STATEMENT);
+    $this->parse(self::STATEMENT);
   }
   private function parseExpression () {
-	$this->parse(self::EXPRESSION);
+    $this->parse(self::EXPRESSION);
   }
 
   private function parse ($type) {
-	pdb_Logger::debug("parse:::$type");
+    pdb_Logger::debug("parse:::$type");
 
     $this->beginStatement = true;
-	$pLevel = 0;
+    $pLevel = 0;
 
     do {
       $token = current($this->code);
       if (!is_array($token)) {
-		pdb_Logger::debug(":::".$token);
-		$this->write($token);
-		if ($this->inPhp && !$this->inDQuote) {
-		  $this->beginStatement = false; 
-		  switch($token) {
-		  case '(': 
-			$pLevel++;
-			break;
-		  case ')':
-			if (!--$pLevel && $type==self::EXPRESSION) return;
-			break;
-		  case '{':  
-			$this->next();
-			$this->parseBlock(); 
-			break;
-		  case '}': 
-			if (!$pLevel) return;
-			break;
-		  case ';':
-			if (!$pLevel) {
-			  if ($type==self::STATEMENT) return;
-			  $this->beginStatement = true; 
-			}
-			break;
-		  }
-		}
+	pdb_Logger::debug(":::".$token);
+	$this->write($token);
+	if ($this->inPhp && !$this->inDQuote) {
+	  $this->beginStatement = false; 
+	  switch($token) {
+	  case '(': 
+	    $pLevel++;
+	    break;
+	  case ')':
+	    if (!--$pLevel && $type==self::EXPRESSION) return;
+	    break;
+	  case '{':  
+	    $this->next();
+	    $this->parseBlock(); 
+	    break;
+	  case '}': 
+	    if (!$pLevel) return;
+	    break;
+	  case ';':
+	    if (!$pLevel) {
+	      if ($type==self::STATEMENT) return;
+	      $this->beginStatement = true; 
+	    }
+	    break;
+	  }
+	}
       } else {
-		pdb_Logger::debug(":::".$token[1].":(".token_name($token[0]).')');
+	pdb_Logger::debug(":::".$token[1].":(".token_name($token[0]).')');
 
-		if ($this->inDQuote) {
-		  $this->write($token[1]);
-		  continue;
-		}
+	if ($this->inDQuote) {
+	  $this->write($token[1]);
+	  continue;
+	}
 
-		switch($token[0]) {
+	switch($token[0]) {
 
-		case T_OPEN_TAG: 
-		case T_START_HEREDOC:
-		case T_OPEN_TAG_WITH_ECHO: 
-		  $this->beginStatement = $this->inPhp = true;
-		  $this->write($token[1]);
-		  break;
+	case T_OPEN_TAG: 
+	case T_START_HEREDOC:
+	case T_OPEN_TAG_WITH_ECHO: 
+	  $this->beginStatement = $this->inPhp = true;
+	  $this->write($token[1]);
+	  break;
 
-		case T_END_HEREDOC:
-		case T_CLOSE_TAG: 
-		  $this->writeStep($pLevel);
+	case T_END_HEREDOC:
+	case T_CLOSE_TAG: 
+	  $this->writeStep($pLevel);
 
-		  $this->write($token[1]);
-		  $this->beginStatement = $this->inPhp = false; 
-		  break;
+	  $this->write($token[1]);
+	  $this->beginStatement = $this->inPhp = false; 
+	  break;
 
-		case T_FUNCTION:
-		  $this->write($token[1]);
-		  $this->writeCall();
-		  $this->beginStatement = true;
-		  break;
+	case T_FUNCTION:
+	  $this->write($token[1]);
+	  $this->writeCall();
+	  $this->beginStatement = true;
+	  break;
 
-		case T_ELSE:
-		  $this->write($token[1]);
-		  if ($this->nextIs('{')) {
-			$this->writeNext();
-			$this->next();
+	case T_ELSE:
+	  $this->write($token[1]);
+	  if ($this->nextIs('{')) {
+	    $this->writeNext();
+	    $this->next();
 
-			$this->parseBlock();
-		  } else {
-			$this->next();
+	    $this->parseBlock();
+	  } else {
+	    $this->next();
 
-			/* create an artificial block */
-			$this->write('{');
-			$this->beginStatement = true;
-			$this->writeStep($pLevel);
-			$this->parseStatement();
-			$this->write('}');
+	    /* create an artificial block */
+	    $this->write('{');
+	    $this->beginStatement = true;
+	    $this->writeStep($pLevel);
+	    $this->parseStatement();
+	    $this->write('}');
 
-		  }
-		  if ($type==self::STATEMENT) return;
+	  }
+	  if ($type==self::STATEMENT) return;
 
-		  $this->beginStatement = true;
-		  break;
+	  $this->beginStatement = true;
+	  break;
 
-		case T_DO:
-		  $this->writeStep($pLevel);
-		  $this->write($token[1]);
-		  if ($this->nextIs('{')) {
-			$this->writeNext();
-			$this->next();
+	case T_DO:
+	  $this->writeStep($pLevel);
+	  $this->write($token[1]);
+	  if ($this->nextIs('{')) {
+	    $this->writeNext();
+	    $this->next();
 
-			$this->parseBlock();
-			$this->next();
+	    $this->parseBlock();
+	    $this->next();
 
-		  } else {
-			$this->next();
+	  } else {
+	    $this->next();
 
-			/* create an artificial block */
-			$this->write('{');
-			$this->beginStatement = true;
-			$this->writeStep($pLevel);
-			$this->parseStatement();
-			$this->next();
-			$this->write('}');
-		  }
-		  $token = current($this->code);
-		  $this->write($token[1]);
+	    /* create an artificial block */
+	    $this->write('{');
+	    $this->beginStatement = true;
+	    $this->writeStep($pLevel);
+	    $this->parseStatement();
+	    $this->next();
+	    $this->write('}');
+	  }
+	  $token = current($this->code);
+	  $this->write($token[1]);
 
-		  if ($token[0]!=T_WHILE) trigger_error("parse error", E_USER_ERROR);
-		  $this->next();
-		  $this->parseExpression();
+	  if ($token[0]!=T_WHILE) trigger_error("parse error", E_USER_ERROR);
+	  $this->next();
+	  $this->parseExpression();
 
-		  if ($type==self::STATEMENT) return;
+	  if ($type==self::STATEMENT) return;
 
-		  $this->beginStatement = true;
-		  break;
+	  $this->beginStatement = true;
+	  break;
 
-		case T_IF:
+	case T_IF:
         case T_ELSEIF:
         case T_FOR:
-		case T_WHILE:
-		  $this->writeStep($pLevel);
+	case T_WHILE:
+	  $this->writeStep($pLevel);
 
-		  $this->write($token[1]);
-		  $this->next();
+	  $this->write($token[1]);
+	  $this->next();
 
-		  $this->parseExpression();
+	  $this->parseExpression();
 
-		  if ($this->nextIs('{')) {
-			$this->writeNext();
-			$this->next();
+	  if ($this->nextIs('{')) {
+	    $this->writeNext();
+	    $this->next();
 
-			$this->parseBlock();
+	    $this->parseBlock();
 
 
-		  } else {
-			$this->next();
+	  } else {
+	    $this->next();
 
-			/* create an artificial block */
-			$this->write('{');
-			$this->beginStatement = true;
-			$this->writeStep($pLevel);
-			$this->parseStatement();
-			$this->write('}');
-		  }
+	    /* create an artificial block */
+	    $this->write('{');
+	    $this->beginStatement = true;
+	    $this->writeStep($pLevel);
+	    $this->parseStatement();
+	    $this->write('}');
+	  }
 
-		  if ($this->nextTokenIs(array(T_ELSE, T_ELSEIF))) {
-			$this->beginStatement = false;
-		  } else {
-			if ($type==self::STATEMENT) return;
-			$this->beginStatement = true;
-		  }
-		  break;
+	  if ($this->nextTokenIs(array(T_ELSE, T_ELSEIF))) {
+	    $this->beginStatement = false;
+	  } else {
+	    if ($type==self::STATEMENT) return;
+	    $this->beginStatement = true;
+	  }
+	  break;
 
-		case T_INCLUDE: 
-		case T_INCLUDE_ONCE: 
-		case T_REQUIRE: 
-		case T_REQUIRE_ONCE: // FIXME: implement require and _once
-		  $this->writeStep($pLevel);
-		  $this->writeInclude();
+	case T_INCLUDE: 
+	case T_INCLUDE_ONCE: 
+	case T_REQUIRE: 
+	case T_REQUIRE_ONCE: // FIXME: implement require and _once
+	  $this->writeStep($pLevel);
+	  $this->writeInclude();
 
-		  if ($type==self::STATEMENT) return;
+	  if ($type==self::STATEMENT) return;
 
-		  $this->beginStatement = true;
-		  break;
+	  $this->beginStatement = true;
+	  break;
 
-		case T_CLASS:
-		case T_CASE:
-		case T_DEFAULT:
-		case T_PUBLIC:
-		case T_PRIVATE:
-		case T_PROTECTED:
-		case T_STATIC:
-		case T_CONST:
-		case T_GLOBAL:
-		case T_ABSTRACT:
-		  $this->write($token[1]);
-		  $this->beginStatement = false;
-		  break;
+	case T_CLASS:
+	case T_CASE:
+	case T_DEFAULT:
+	case T_PUBLIC:
+	case T_PRIVATE:
+	case T_PROTECTED:
+	case T_STATIC:
+	case T_CONST:
+	case T_GLOBAL:
+	case T_ABSTRACT:
+	  $this->write($token[1]);
+	  $this->beginStatement = false;
+	  break;
 
-		default:
-		  $this->writeStep($pLevel);
-		  $this->write($token[1]);
-		  $this->beginStatement = false;
-		  break;
+	default:
+	  $this->writeStep($pLevel);
+	  $this->write($token[1]);
+	  $this->beginStatement = false;
+	  break;
 	
-		}
+	}
       }
     } while($this->each());
   }
@@ -449,39 +444,39 @@ class pdb_Logger {
   private static $logFileName = "/tmp/pdb_PHPDebugger.inc.log";
 
   private static function println($msg, $level) {
-	if (!self::$logLevel) self::$logLevel=PDB_DEBUG?self::DEBUG:self::INFO;
-	if ($level <= self::$logLevel) {
-	  static $file = null;
-	  if (!$file) $file = fopen(self::$logFileName, "ab") or die("fopen");
-	  fwrite($file, time().": ");
-	  fwrite($file, $msg."\n");
-	  fflush($file);
-	}
+    if (!self::$logLevel) self::$logLevel=PDB_DEBUG?self::DEBUG:self::INFO;
+    if ($level <= self::$logLevel) {
+      static $file = null;
+      if (!$file) $file = fopen(self::$logFileName, "ab") or die("fopen");
+      fwrite($file, time().": ");
+      fwrite($file, $msg."\n");
+      fflush($file);
+    }
   }
 
   public static function logFatal($msg) {
-	self::println($msg, self::FATAL);
+    self::println($msg, self::FATAL);
   }
   public static function logInfo($msg) {
-	self::println($msg, self::INFO);
+    self::println($msg, self::INFO);
   }
   public static function logMessage($msg) {
-	self::println($msg, self::VERBOSE);
+    self::println($msg, self::VERBOSE);
   }
   public static function logDebug($msg) {
-	self::println($msg, self::DEBUG);
+    self::println($msg, self::DEBUG);
   }
   public static function debug($msg) {
-	self::logDebug($msg);
+    self::logDebug($msg);
   }
   public static function log($msg) {
-	self::logMessage($msg);
+    self::logMessage($msg);
   }
   public static function setLogLevel($level) {
-	self::$logLevel=$level;
+    self::$logLevel=$level;
   }
   public static function setLogFileName($name) {
-	self::$logFileName = $name;
+    self::$logFileName = $name;
   }
 }
 
@@ -564,7 +559,7 @@ abstract class pdb_Message {
     return true; // exit
   }
   public function handleRequests () {
-	$this->ignoreInterrupt = false;
+    $this->ignoreInterrupt = false;
 
     $this->serialize();
     while(1) {
@@ -649,7 +644,7 @@ class pdb_DebugSessionStart extends pdb_Message {
     $this->breakpoints = $this->lines = array();
 
     $this->environments = array ($this->currentFrame = new pdb_Environment($filename, false));
-	$this->ignoreInterrupt = false;
+    $this->ignoreInterrupt = false;
 
     $errno = 0; $errstr = "";
     $io = fsockopen("127.0.0.1", 10137, $errno, $errstr, 5) or trigger_error("fsockopen", E_USER_ERROR);
@@ -685,8 +680,8 @@ class pdb_DebugSessionStart extends pdb_Message {
     return false;
   }
   function parseCode($filename, $contents) {
-	$parser = new pdb_Parser($filename, $contents);
-	return $parser->parseScript();
+    $parser = new pdb_Parser($filename, $contents);
+    return $parser->parseScript();
   }
 
   public function __toString() {

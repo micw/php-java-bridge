@@ -1,9 +1,20 @@
+2010-01-23    <jostb@intern>
+
+	* server/php/java/servlet/CGIServlet.java
+	(setupFromRequest): use values passed via
+	RequestDispatcher.forward() as well as RequestDispatcher.include()
+
+	* server/php/java/servlet/PhpCGIServlet.java
+	(setPathInfo): Set PATH_INFO and PATH_TRANSLATED, if necessary
+
+	* server/php/java/servletPhpCGIFilter.java: New file.
+
 2009-12-05    <jostb@intern>
 
 	* server/php/java/bridge/http/SocketContextServer.java
 	(checkAvailable): Standalone SERVLET:8080 still uses a
 	ContextRunner.
-	
+
 	* server/example-web.xml: Added php_include_java option
 
 	* server/META-INF/java/JavaBridge.inc
@@ -15,7 +26,7 @@
 	* server/php/java/servlet/PhpJavaServlet.java,
 	server/php/java/servlet/PhpCgiServlet.java: Switch off log4j
 	chainsaw if running in jboss.
-	
+
 	* server/META-INF/java/Protocol.inc
 	(dieWithBrokenConnection): Do not show system error as function
 	may be invoked for all kinds of errors. error_get_last() doesn't seem

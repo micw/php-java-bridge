@@ -11,6 +11,14 @@
         <listener-class>php.java.servlet.ContextLoaderListener</listener-class>
     </listener>
 
+    <!-- Handle PHP urls which cannot be expressed using a standard
+	 servlet spec 2.2 url-pattern, e.g.: *.php/delete/from?what=that 
+         You may remove this and the filter-mapping below -->
+    <filter>
+        <filter-name>PhpCGIFilter</filter-name>
+        <filter-class>php.java.servlet.PhpCGIFilter</filter-class>
+    </filter>
+
     <!-- PHP Servlet: back-end for Apache or IIS -->
     <servlet>
         <servlet-name>PhpJavaServlet</servlet-name>
@@ -72,6 +80,12 @@
         <servlet-name>PhpCGIServlet</servlet-name>
         <url-pattern>*.php</url-pattern>
     </servlet-mapping>
+
+   <!-- PHP CGI Filter Mapping -->
+    <filter-mapping>
+        <filter-name>PhpCGIFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
 
     <!-- Welcome files -->
     <welcome-file-list>

@@ -599,18 +599,23 @@ public abstract class CGIServlet extends HttpServlet {
         protected void setupFromRequest(HttpServletRequest req) {
             
             this.contextPath = (String) req.getAttribute("javax.servlet.include.context_path");
+    	    if (this.contextPath == null) this.contextPath = (String) req.getAttribute("javax.servlet.forward.context_path");
     	    if (this.contextPath == null) this.contextPath = req.getContextPath();
     	    
             this.pathInfo =  (String) req.getAttribute("javax.servlet.include.path_info");
+            if (this.pathInfo == null) this.pathInfo =  (String) req.getAttribute("javax.servlet.forward.path_info");
             if (this.pathInfo == null) this.pathInfo = req.getPathInfo();
             
             this.servletPath = (String) req.getAttribute("javax.servlet.include.servlet_path");
+            if (this.servletPath == null) this.servletPath = (String) req.getAttribute("javax.servlet.forward.servlet_path");
             if (this.servletPath == null) this.servletPath = req.getServletPath();
             
             this.queryString = (String) req.getAttribute("javax.servlet.include.query_string");
+            if (this.queryString == null) this.queryString = (String) req.getAttribute("javax.servlet.forward.query_string");
             if (this.queryString == null) this.queryString = req.getQueryString();
             
             this.requestUri = (String) req.getAttribute("javax.servlet.include.request_uri");
+            if (this.requestUri == null) this.requestUri = (String) req.getAttribute("javax.servlet.forward.request_uri");
             if (this.requestUri == null) this.requestUri = req.getRequestURI();
         }
 

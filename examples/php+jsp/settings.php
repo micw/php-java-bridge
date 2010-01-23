@@ -53,11 +53,6 @@ echo $System->getProperties();<br>
 <td><?php echo java_values($bridge->getlogLevel());?></td>
 <td>The request log level.</td>
 </tr>
-<tr>
-<td>promiscuous</td>
-<td><?php $val=java_values($context->getInitParameter("promiscuous")); echo $val?$val:"Off"?></td>
-<td>Shall the bridge accept requests from <strong>non-local</strong> PHP scripts?</td>
-</tr>
 </table>
 </p>
 <p>
@@ -91,6 +86,12 @@ It starts a PHP FastCGI server, if possible and necessary. Requests for PHP scri
 <td>prefer_system_php_exec</td>
 <td><?php $val=java_values($config->getInitParameter("prefer_system_php_exec")); echo $val?$val:"Off"?></td>
 <td>Ignore a local <code>WEB-INF/cgi/php-cgi-ARCH-OS</code> executable from the web archive and use the specified <code>php_exec</code>. Default is Off.</td>
+</tr>
+
+<tr>
+<td>php_include_java</td>
+<td><?php $val=java_values($config->getInitParameter("php_include_java")); echo $val?$val:"Off"?></td>
+<td>Shall the server add <code>&lt?php include_once("java/Java.inc");?&gt;</code> at the top of each PHP script? Default is Off.</td>
 </tr>
 
 <tr>

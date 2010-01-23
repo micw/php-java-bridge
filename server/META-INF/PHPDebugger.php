@@ -1,46 +1,45 @@
 <?php /*-*- mode: php; tab-width:4 -*-*/
 
   /**
-	 PHPDebugger.inc version 1.0alpha -- A pure PHP debugger.
+     PHPDebugger.inc version 1.0alpha -- A pure PHP PHP debugger.
 
-	 Copyright (C) 2009 Jost Boekemeier
+     Copyright (C) 2009 Jost Boekemeier
 
-	 This file is part of the PHPDebugger.
+     This file is part of the PHPDebugger.
 
-	 The PHPDebugger ("the library") is free software; you can
-	 redistribute it and/or modify it under the terms of the GNU General
-	 Public License as published by the Free Software Foundation; either
-	 version 2, or (at your option) any later version.
+     The PHPDebugger ("the library") is free software; you can
+     redistribute it and/or modify it under the terms of the GNU General
+     Public License as published by the Free Software Foundation; either
+     version 2, or (at your option) any later version.
 
-	 The library is distributed in the hope that it will be useful, but
-	 WITHOUT ANY WARRANTY; without even the implied warranty of
-	 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-	 General Public License for more details.
+     The library is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     General Public License for more details.
 
-	 You should have received a copy of the GNU General Public License
-	 along with the PHPDebugger; see the file COPYING.  If not, write to the
-	 Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-	 02111-1307 USA.
+     You should have received a copy of the GNU General Public License
+     along with the PHPDebugger; see the file COPYING.  If not, write to the
+     Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+     02111-1307 USA.
 
-	 Linking this file statically or dynamically with other modules is
-	 making a combined work based on this library.  Thus, the terms and
-	 conditions of the GNU General Public License cover the whole
-	 combination.
+     Linking this file statically or dynamically with other modules is
+     making a combined work based on this library.  Thus, the terms and
+     conditions of the GNU General Public License cover the whole
+     combination.
 
-	 As a special exception, the copyright holders of this library give you
-	 permission to link this library with independent modules to produce an
-	 executable, regardless of the license terms of these independent
-	 modules, and to copy and distribute the resulting executable under
-	 terms of your choice, provided that you also meet, for each linked
-	 independent module, the terms and conditions of the license of that
-	 module.  An independent module is a module which is not derived from
-	 or based on this library.  If you modify this library, you may extend
-	 this exception to your version of the library, but you are not
-	 obligated to do so.  If you do not wish to do so, delete this
-	 exception statement from your version. */
+     As a special exception, the copyright holders of this library give you
+     permission to link this library with independent modules to produce an
+     executable, regardless of the license terms of these independent
+     modules, and to copy and distribute the resulting executable under
+     terms of your choice, provided that you also meet, for each linked
+     independent module, the terms and conditions of the license of that
+     module.  An independent module is a module which is not derived from
+     or based on this library.  If you modify this library, you may extend
+     this exception to your version of the library, but you are not
+     obligated to do so.  If you do not wish to do so, delete this
+     exception statement from your version. */
 
 define ("PDB_DEBUG", 0);
-define ("PDB_DISABLE_JAVA", false);
 ini_set("max_execution_time", 60);
 
 
@@ -58,101 +57,6 @@ ini_set("max_execution_time", 60);
    *
    */
 
-
-/** Use the PHP/Java Bridge, if it is available */
-if (!PDB_DISABLE_JAVA) @include_once("Java.inc");
-
-/** Use our own json coder, if no native implementation is available */
-if (!function_exists("json_encode")) {
-  function json_decode($v) {
-	$length = strlen($v);
-	$inDquote = false;
-	$inQuote = false;
-	$decoded = array();
-	$ctr = 0;
-	$str = "";
-	
-	for ($i=0; $i<$length; $i++) {
-	  $val = $v[$i];
-	  if ($inDquote) {
-		if ($inQuote) {
-		  $inQuote = false;
-		  switch($val) {
-		  case 'b': $str.="\b"; break;
-		  case 't': $str.="\t"; break;
-		  case 'n': $str.="\n"; break;
-		  case 'r': $str.="\r"; break;
-		  case 'f': $str.="\f"; break;
-		  case '\"': $str.="\""; break;
-		  case '/':  $str.="/"; break;
-		  case '\\':  $str.='\\'; break;
-		  default: 
-			trigger_error("Cannot json decode value ${val}", E_USER_ERROR);
-		  }
-		} else {
-		  switch($val) {
-		  case '"': $inDquote = false; break;
-		  case '\\': $inQuote = true; break;
-		  default: $str .= $val; break;
-		  }
-		}
-	  } else {
-		switch($val) {
-		case ':': $key = $str; $str = ""; break;
-		case '}':
-		case ',': $val = $str; $str = ""; $decoded[$key]=$val; break;
-		case '"': $inDquote = true; break;
-		}
-	  }
-	}
-	return (object)$decoded;
-  }
-  function json_encode($array) {
-	$first = true;
-	$encoded = "{";
-	foreach ($array as $k=>$v) {
-	  
-	  if (!$first) 
-		$encoded.=","; 
-	  else 
-		$first = false;
-	  
-	  $encoded.='"';
-	  $encoded.=$k;
-	  $encoded.='":"';
-	  $length = strlen($v);
-	  for ($i=0; $i<$length; $i++) {
-		$val = $v[$i];
-		switch($val) {
-		case "\b": $encoded.='\b'; break;
-		case "\t": $encoded.='\t'; break;
-		case "\n": $encoded.='\n'; break;
-		case "\r": $encoded.='\r'; break;
-		case "\f": $encoded.='\f'; break;
-		case "\"": $encoded.='\"'; break;
-		case "/":  $encoded.='\/'; break;
-		case "\\": $encoded.="\\\\"; break;
-		default: 
-		  $code = ord($val);
-		  if ($code > 0x7f) {
-			trigger_error("Cannot json encode non-ascii value ${val}", E_USER_WARNING); 
-			$encoded.= chr(0x7f & $code);
-		  } else {
-			$encoded.=$val;
-		  }
-		  break;
-		}
-	  }
-	  $encoded.='"';
-	}
-	
-	$encoded.="}";
-	return $encoded;
-  }
-}
-/**
- * a simple logger
- */
 class pdb_Logger {
   const FATAL = 1;
   const INFO = 2;
@@ -199,74 +103,53 @@ class pdb_Logger {
   }
 }
 
-interface pdb_Queue {
-
-  /** 
-   * Read a string from the queue
-   * @return string a json encoded string of values
-   */
-  public function read();
-
-  /**
-   * Write a string to the queue
-   * @param string a json encoded string of values or TRUE
-   */
-  public function write($val);
-
-  /**
-   * Mark the channel as dead. If marked, read will return boolean
-   * TRUE, write will do nothing.
-   */
-  public function shutdown();
-}
-
 /**
  * This class represents the debugger front end connection.  It
  * communicates with the debugger back end using a shared-memory queue.
- * It is slow, but it does not require any special library.
- * @see pdb_JavaClientConnection 
  */
-class pdb_PollingClientConnection implements pdb_Queue {
+class pdb_ClientConnection {
   protected $id;
   protected $role, $to;
-  protected $chanTrm; // "back end terminated" flag
-  const TIMER_DURATION = 200000; // every 200ms
+  const TIMER_DURATION = 200000; // 200ms
 
   /**
    * Create a new communication using a unique id
    */
-  public function pdb_PollingClientConnection($id) {
+  public function pdb_ClientConnection($id) {
     $this->id = $id;
-    $this->chanTrm = "pdb_trmserver{$this->id}";
     $this->init();
   }
-  protected function checkTrm() {
-	return isset($_SESSION[$this->chanTrm]);
-  }
-
   protected function init() {
     $this->role = "client";
     $this->to   = "server";
   }
+  private function getCookies() {
+    $str="";
+    $first=true;
+    foreach($_COOKIE as $k => $v) {
+      $str .= ($first ? "Cookie: $k=$v":"; $k=$v");
+      $first=false;
+    }
+    if(!$first) $str .= "\r\n";
+    return $str;
+  }
 
   protected function poll() {
+    $val = "";
     $chanCtr = "pdb_ctr{$this->role}{$this->id}";
     $chan = "pdb_{$this->role}{$this->id}";
     session_start();
-	if (!($val = $this->checkTrm())) {
-	  pdb_Logger::debug("...{$this->role}, {$this->id} poll...");
-	  if (!isset($_SESSION[$chanCtr])) $_SESSION[$chanCtr] = 0; 
-	  if (isset($_SESSION[$chan]) && (count($_SESSION[$chan]) > $_SESSION[$chanCtr])) {
-		$val = $_SESSION[$chan][$_SESSION[$chanCtr]++];
-	  }
-	}
+    if (!isset($_SESSION[$chanCtr])) $_SESSION[$chanCtr] = 0; 
+    if (isset($_SESSION[$chan]) && (count($_SESSION[$chan]) > $_SESSION[$chanCtr])) {
+      $val = $_SESSION[$chan][$_SESSION[$chanCtr]++];
+    }
     session_write_close();
     return $val;
   }
   protected function send($val) {
     $chan = "pdb_{$this->to}{$this->id}";
     session_start();
-	if (!$this->checkTrm()) $_SESSION[$chan][]=$val;
+    $_SESSION[$chan][]=$val;
     session_write_close();
   }
 
@@ -275,91 +158,23 @@ class pdb_PollingClientConnection implements pdb_Queue {
    */
   public function read() {
     $val = null;
-	$cntr = 0;
-	while(!($val=$this->poll())) {
-	  if ($cntr++<=20) 
-		usleep(self::TIMER_DURATION);
-	  else
-		usleep(self::TIMER_DURATION*5);
-	}
+    while(!($val=$this->poll())) {
+      usleep(self::TIMER_DURATION);
+    }
     return $val;
   }
   /**
    * write a new value to the write queue
    */
   public function write($val) {
-	$this->send($val);
+    $this->send($val);
   }
   /**
    * shut down the communication channel
    */
-  public function shutdown() {}
-}
-
-/**
- * This class represents the debugger front end connection.  It
- * communicates with the debugger back end using a LinkedBlockingQueue.
- * Requires the PHP/Java Bridge library.
- * @see pdb_PollingClientConnection
- */
-class pdb_JavaClientConnection implements pdb_Queue {
-  protected $session;
-  protected $id;
-  protected $queue;
-  protected $role, $to;
-  protected $chanTrm; // "back end terminated" flag
-
-  public function pdb_JavaClientConnection($id) {
-	$this->session = java_session();
-	$this->id = $id;
-    $this->chanTrm = "pdb_trmserver{$this->id}";
-	$this->session->put($this->chanTrm, false);
-
-	$this->init();
-  }
-  protected function checkTrm() {
-	return java_is_true($this->session->get($this->chanTrm));
-  }
-
-  protected function init() {
-    $this->role = "client";
-    $this->to   = "server";
-  }
-  /**{@inheritDoc}*/
-  public function read() {
-    $chan = "pdb_{$this->role}{$this->id}";
-	if (!$this->checkTrm()) {
-	  $queue = $this->session->get($chan);
-	  $val = $queue->remove();
-	  $val = java_is_null($val) ? true : (string)$val;
-	  pdb_Logger::log("${this} read: ${val}");
-	  return $val;
-	}
-	return true;
-  }
-  /**{@inheritDoc}*/
-  public function write($val) {
-    $chan = "pdb_{$this->to}{$this->id}";
-	$queue = $this->session->get($chan);
-	if(!$this->checkTrm()) {
-	  $queue->add($val);
-	  pdb_Logger::log("${this} wrote: ${val}");
-	}
-  }
-  /**{@inheritDoc}*/
   public function shutdown() {
-    $chan = "pdb_{$this->role}{$this->id}";
-	$queue = $this->session->get($chan);
-	if (!java_is_null($queue)) $queue->shutdown();
-
-    $chan = "pdb_{$this->to}{$this->id}";
-	$queue = $this->session->get($chan);
-	if (!java_is_null($queue)) $queue->shutdown();
-
-	$this->session->put($this->chanTrm, false);
-  }
-  public function __toString() {
-	return "java {$this->role} queue for {$this->id}";
+	pdb_Logger::debug("shutdown comm channel");
+	session_destroy();
   }
 }
 
@@ -760,7 +575,6 @@ class pdb_JSDebuggerClient {
 	$scriptName = basename($script);
 	return $scriptName == "PHPDebugger.php" ? $script :"java/PHPDebugger.php";
   }
-		
   private static function getCurrentRootDir() {
 	$scriptName = $_SERVER['SCRIPT_NAME'];
 	$scriptFilename = $_SERVER['SCRIPT_FILENAME'];
@@ -778,21 +592,6 @@ class pdb_JSDebuggerClient {
 	}
 	return substr($scriptDir, 0, strlen($scriptDir)-strlen($scriptDirName));
   }
-  /*
-   * Return the script name
-   * Example: %2Fopt%2Fappserv%2Fapache-tomcat-6.0.14%2Fwebapps%2FJavaBridge%2Ftest.php"
-   *
-   * @return An urlencoded file name.
-   */
-  public static function getDebugScriptName() {
-	return urlencode($_SERVER['SCRIPT_FILENAME']);
-  }
-  /**
-   * Return the debugger URL. 
-   * Example: "/JavaBridge/java/PHPDebugger.php?source=settings.php"
-   *
-   * @return The debugger URL.
-   */
   public static function getDebuggerURL() {
 	$path = realpath(self::getDebuggerFilename());
 	if (!$path) 
@@ -828,46 +627,19 @@ class pdb_JSDebuggerClient {
 	return $str;
   }
 
-  /**
-   * Get the server's uniqe session ID
-   * @return a uniqe session ID
-   */ 
   public static function getServerID() {
-	/*
 	if (!isset($_SESSION['pdb_ServerID'])) 
 	  return $_SESSION['pdb_ServerID'] = 1;
-	else  {
-	  $oldId = $_SESSION['pdb_ServerID'];
-	  $conn = self::getConnection($oldId);
-	  $conn->shutdown();
+	else 
 	  return ++$_SESSION['pdb_ServerID'];
-	}
-	*/
-	// TODO: allow more than one debug session
-	$oldId = 1;
-	$conn = self::getConnection($oldId);
-	$conn->shutdown();
-	return $oldId;
   }
-  
-  private static function getConnection($id) {
-	if (!PDB_DISABLE_JAVA && function_exists("java_get_base") && java_server_name()) 
-	  return new pdb_JavaClientConnection($id);
-	else
-	  return new pdb_PollingClientConnection($id);
-  }
-  /**
-   * Pass the command and arguments to the debug back end and
-   * output the response to JavaScript.
-   *
-   * @arg array The command arguments
-   */
+
   public static function handleRequest($vars) {
 	$msg = (object)$vars;
 	
-	if ($msg->cmd == "begin") sleep(1); // wait for the server to settle
+	if ($msg->cmd == "begin") sleep(1); // FIXME wait for the server to settle
 	pdb_Logger::debug("beginHandleRequest: ".$msg->cmd);
-	$conn = self::getConnection($msg->serverID);
+	$conn = new pdb_ClientConnection($msg->serverID);
 	$conn->write(json_encode($msg));
 	$response = $conn->read();
 	
@@ -893,6 +665,7 @@ class pdb_View {
   public $parentView;
 
   protected $bpCounter, $lineCounter, $code;
+
   /**
    * Create a new view frame
    * @param object the parent frame
@@ -905,24 +678,14 @@ class pdb_View {
     $this->bpCounter = $this->lineCounter = 1;
     $this->code = null;
   }
-
-  private function lineCB ($val) {
-	return $val.(string)$this->lineCounter++;
+  private function breakpointCounter ($val) {
+    if ($val[0]=="line#") 
+      return (string)$this->lineCounter++;
+    else
+      return 'id="bp_'.$this->bpCounter++.'"';
   }
-  private function breakpointCB ($val) {
-	return 	$val.'id="bp_'.(string)$this->bpCounter++.'"';
-  }
-  function replaceCallback($code, $split, $cb) {
-	$ar = explode($split, $code);
-	$last = array_pop($ar);
-	$ar = array_map($cb, $ar);
-	array_push($ar, $last);
-	return implode($ar);
-  }
-
-
   /**
-   * Return a HTML representation of the current script
+   * Return the HTML representation of the current script
    * @return string the clickable HTML representation of the current script
    */
   public function getHtmlScriptSource() {
@@ -933,20 +696,16 @@ class pdb_View {
 		'<span class="linenumber">line#</span>'.
 		'<span class="breakpointIndicator normal"></span>'.
 		'</span><br />';
-
-	  $code=show_source($this->scriptName, true);
-
-	  // br => span id=pb_ ...
-      $code = ereg_replace('<br />', $c, $code);
-	  // handle incomplete last line, identical to preg: '|(?<!<br >)</span>\n</span>\n</code>$|'
-      $code = ereg_replace('"(([^>])|([^/]>)|([^ ]/>)|([^r] />)|([^b]r />)|([^<]br />))(</span>\n</span>\n</code>)"', '\1 $c \8', $code);
-
-	  $code = $this->replaceCallback($code, 'id="bp_"', array($this, "breakpointCB"));
-	  $code = $this->replaceCallback($code, 'line#', array($this, "lineCB"));
-
-	  $this->code = $code;
-	}
-
+      $this->code = 
+		preg_replace_callback(array('|id="bp_"|', // id=bp_ => id=bp_$n
+									'|line#|'),  // lineno => $n
+							  array($this, "breakpointCounter"),
+							  preg_replace(array('|<br />|', // br => span id=pb_ ...
+												 '|<span style="color: #0000BB">\?&gt;</span>|'), // handle incomplete last line
+										   array($c, 
+												 '<span style="color: #0000BB">?&gt;'.$c.'</span>'),
+										   show_source($this->scriptName, true)));
+    }
     return $this->code;
   }
 }
@@ -968,11 +727,7 @@ class pdb_VariableView extends pdb_View {
    * {@inheritDoc}
    */
   public function getHtmlScriptSource() {
-	if (!PDB_DISABLE_JAVA && function_exists("java_get_base") && java_server_name() && 
-		is_object($this->value) && ($this->value instanceof java_JavaType)) 
-	  return (highlight_string(java_cast($this->value, "S"), true));
-	else
-	  return (highlight_string($this->value, true));
+    return $this->value;
   }
 }
 /**
@@ -1109,7 +864,7 @@ final class pdb_Session {
    * @param object the current comm. channel
    * @param object the breakpoint
    */
-  public function writeToggleBreakpoint($channel, $breakpoint) {
+  public function toggleBreakpoint($channel, $breakpoint) {
     $id = $breakpoint."@".$this->getCurrentViewScriptName();
     if (!isset($this->breakpoints[$id])) {
       $this->breakpoints[$id] = new pdb_Breakpoint($breakpoint, $this->getCurrentViewScriptName(), substr($breakpoint, 3));
@@ -1174,13 +929,11 @@ final class pdb_Session {
 /**
  * This class represents the debugger back end connection.  It
  * communicates with the debugger front end using a shared-memory queue.
- * It is slow, but it does not require any special library.
- * @see pdb_JavaServerConnection
  */
-class pdb_PollingServerConnection extends pdb_PollingClientConnection {
+class pdb_ServerConnection extends pdb_ClientConnection {
   protected function init() {
-    $this->role = "server";
-    $this->to   = "client";
+    $this->to = "client";
+    $this->role   = "server";
   }
 
   protected function poll() {
@@ -1188,54 +941,15 @@ class pdb_PollingServerConnection extends pdb_PollingClientConnection {
     $chanCtr = "pdb_ctr{$this->role}{$this->id}";
     $chan = "pdb_{$this->role}{$this->id}";
     session_start();
-	if (!($val = $this->checkTrm())) {
-	  pdb_Logger::debug("...{$this->role}, {$this->id} poll...");
-	  if(!isset($_SESSION[$chanCtr])) { 
-		$_SESSION[$chan] = array(); 
-		$_SESSION[$chanCtr]=0; 
-	  }
-	  if (count($_SESSION[$chan]) > $_SESSION[$chanCtr]) {
-		$val = $_SESSION[$chan][$_SESSION[$chanCtr]++];
-	  }
-	}
+    if(!isset($_SESSION[$chanCtr])) { $_SESSION[$chan] = array(); $_SESSION[$chanCtr]=0; }
+    if (count($_SESSION[$chan]) > $_SESSION[$chanCtr]) {
+      $val = $_SESSION[$chan][$_SESSION[$chanCtr]++];
+    }
     session_write_close();
     return $val;
   }
-  /**
-   * shut down the communication channel
-   */
-  public function shutdown() {
-	pdb_Logger::debug("session terminated: {$this->chanTrm}");
-    session_start();
-	$_SESSION[$this->chanTrm] = 1;
-    session_write_close();
-  }
+
 }    
-/**
- * This class represents the debugger back end connection.  It
- * communicates with the debugger front end using a LinkedBlockingQueue.
- * Requires the PHP/Java Bridge library.
- * @see pdb_PollingServerConnection
- */
-class pdb_JavaServerConnection extends pdb_JavaClientConnection {
-  public function pdb_JavaServerConnection($id) {
-	parent::pdb_JavaClientConnection($id);
-
-	$queue = new java("php.java.bridge.BlockingQueue");
-    $chan = "pdb_{$this->role}{$this->id}";
-	$this->session->put($chan, $queue);
-
-	$queue = new java("php.java.bridge.BlockingQueue");
-    $chan = "pdb_{$this->to}{$this->id}";
-	$this->session->put($chan, $queue);
-  }
-
-  protected function init() {
-    $this->role = "server";
-    $this->to   = "client";
-  }
-}
-
 /**
  * The java script debugger server daemon. Contains a debug session
  * and handles debug requests from the client.
@@ -1254,12 +968,6 @@ class pdb_JSDebugger {
   const GO        = 4;
 
 
-  private function getConnection($id) {
-	if (!PDB_DISABLE_JAVA && function_exists("java_get_base") && java_server_name()) 
-	  return new pdb_JavaServerConnection($id);
-	else
-	  return new pdb_PollingServerConnection($id);
-  }
 
   /**
    * Create new PHP debugger using a given comm. ID
@@ -1268,7 +976,7 @@ class pdb_JSDebugger {
   public function pdb_JSDebugger($id) {
 
     $this->id = $id;
-    $this->conn = $this->getConnection($id);
+    $this->conn = new pdb_ServerConnection($id);
 
     $this->end = false;
 
@@ -1286,8 +994,7 @@ class pdb_JSDebugger {
    * @return object the data 
    */
   public function read() {
-	$val = $this->conn->read();
-	return $val===true?$val:json_decode($val);
+    return json_decode($this->conn->read());
   }
   /**
    * Write data to the front end
@@ -1308,20 +1015,15 @@ class pdb_JSDebugger {
 	$this->ignoreInterrupt = false;
 
     while(true) {
-      if (PDB_DEBUG) pdb_Logger::debug("handleRequests: accept");
+      if (PDB_DEBUG) pdb_Logger::debug("accept\n");
       
-      if (($this->packet = $this->read()) === true) break; // ignore __destructors after shutdown
+      $this->packet = $this->read();
 
-      if (PDB_DEBUG) pdb_Logger::debug("handleRequests: done accept ".$this->packet->cmd);
+      if (PDB_DEBUG) pdb_Logger::debug("done accept\n". print_r($this->packet, true));
 
       switch($this->packet->cmd) {
       case "status":
-		$this->write(array("cmd"=>$this->packet->cmd, 
-						   "line"=>$this->session->currentFrame->line, 
-						   "scriptName"=>$this->session->getCurrentViewScriptName(), 
-						   "breakpoints"=>$this->session->getBreakpoints()));
-		break;
-	  case "extendedStatus":
+	
 		$this->write(array("cmd"=>$this->packet->cmd, 
 						   "line"=>$this->session->currentFrame->line, 
 						   "scriptName"=>$this->session->getCurrentViewScriptName(), 
@@ -1355,7 +1057,7 @@ class pdb_JSDebugger {
 		$this->ack();
 		return self::GO;
       case "toggleBreakpoint":
-		$this->session->writeToggleBreakpoint($this, $this->packet->breakpoint);
+		$this->session->toggleBreakpoint($this, $this->packet->breakpoint);
 		break;
       case "switchView":
 		$name = urldecode($this->packet->scriptName);
@@ -1390,11 +1092,7 @@ class pdb_JSDebugger {
 		$this->session->currentView = null;
 		$this->ack();
 		$this->shutdown();
-		//return;
 		exit(0);
-	  default:
-		pdb_Logger::debug("illegal packet: " . print_r($this->packet, true));
-		exit(1);
       }
     }
   }
@@ -1420,10 +1118,9 @@ class pdb_JSDebugger {
   protected function resolveIncludePath($scriptName) {
     if (file_exists($scriptName)) return realpath($scriptName);
     $paths = explode(PATH_SEPARATOR, get_include_path());
-	$name = $scriptName;
     foreach ($paths as $path) {
-      $scriptName = realpath("${path}${name}");
-      if ($scriptName) return $scriptName;
+      $scriptName="$path/$scriptName";
+      if (file_exists($scriptName)) return realpath($scriptName);
     }
     trigger_error("file $scriptName not found", E_USER_ERROR);
   }
@@ -1472,7 +1169,7 @@ class pdb_JSDebugger {
 	if ($this->ignoreInterrupt) return; // avoid spurious step calls from __destruct() method
 	$this->ignoreInterrupt = true;
 
-	pdb_Logger::logDebug("step: $scriptName @ $line");
+	pdb_Logger::logDebug("step:::$scriptName @ $line");
     // pull the current frame from the stack or the top-level environment
     $this->session->currentFrame = (isset($vars['__pdb_CurrentFrame'])) ? $vars['__pdb_CurrentFrame'] : end($this->session->environments);
     unset($vars['__pdb_CurrentFrame']);
@@ -1481,12 +1178,10 @@ class pdb_JSDebugger {
 
     if ($this->session->hasBreakpoint($scriptName, $line)) {
       $stepNext = $this->handleRequests();
-	  pdb_Logger::logDebug("continue");
       $this->session->currentFrame->stepNext = $stepNext != pdb_JSDebugger::GO ? $stepNext : false;
     }
 
 	$this->ignoreInterrupt = false;
-	pdb_Logger::logDebug("endStep: $scriptName @ $line");
   }
 }
 
@@ -1541,10 +1236,7 @@ if (PDB_DEBUG==2) {
 
 /* * The JavaScript part, invoked after the debugger has been included() * */
 if (!isset($_SERVER['HTTP_XPDB_DEBUGGER'])) {
-
     session_start();
-	if (!PDB_DISABLE_JAVA && function_exists("java_get_base") && java_server_name()) java_session();
-
     header("Expires: Sat, 1 Jan 2005 00:00:00 GMT");
     header("Last-Modified: ".gmdate( "D, d M Y H:i:s")." GMT");
     header("Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
@@ -1625,6 +1317,17 @@ PHPDebugger version 1.0
     background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAANCAYAAACgu+4kAAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwc3GnvIoSQAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABH0lEQVQoz5WToU4DQRCGvzZLspUn+wpIJLLyJDiQEBLMJZDAA1QgTlRUU1tXCY+A5BGoPHFiKkhukm4yiD3CNr3S9k8mu/l3Z+af2dme1GJ04HM6hBPP2f2S/9DvIj/KjNG4gUbZh36Xc15GURr2B3Abzi8Z+cQABTyqkdu8BTjP+WMV91KLSS22eMDMGjOrzNZfZuvKzCSxJlnN3p4wqcVclD3kYlJBWEJQCACrJLNvVwXnwWVoSErQbwUEwgq0+ZMa2JYfBuAV1aSJo7EwvzsFmpj515y2/WjNKbim5SN66Ry8P2dcTRexDGBWXDNwHSoc5GPZfoW8FGZFxs30FYCBi9xRc3BZCrPiNoZ2/rg5SIPMi+GO0030dv2FQ/EDM7CYPt7DsBMAAAAASUVORK5CYII=') no-repeat;
 }
  
+.breakpoint {
+    float: left;
+    margin-right: 1em;
+    width: auto;
+    height: 13px;
+    background: #efefef;
+    display: block;
+    position: relative;
+    overflow: hidden;
+    margin: 2px solid black;
+}
 .normal {
     background: transparent;
 }
@@ -1635,54 +1338,27 @@ PHPDebugger version 1.0
     background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwYOGJqAJ4UAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAA+0lEQVQoz5XSMUvDUBSG4bcXhyM4pFsudBE6GEfB5UKGZLOjq5uCIE7iPyjdxEXQoZC/4OgipIOQbqZDMW6OcbsZBO8Q0MEWkWJJ3vl7lsPpWGu/WOQqy8s44X2S8ukcmyL4Uczu6QnidZczOktUPqY8HB/Bh2OlLWEwTtAHg19kXwvuQwM1/7cBh08Z3Z0ABZCena8HAPViB6hymlHNcppUzXLKaYaq5gVtquYFitq1QtQO5fWDVsbrBygdGqTnNwLS89GhQSFCfJc0QvHNLYj8nFyHBjMcrQVmOEJH8d+PALD5M/nVNW+TFJwDEbajmODiEr2/t/pGbfoGcP1aToLr9OAAAAAASUVORK5CYII=') no-repeat;
 }
 
-#navigationBar {
-    display: block;
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 20px;
-    width: 100%;
-    z-index: 100;
-}
-#code {
-    display: block;
-    position: absolute;
-    left: 92px;
-    top: 22px;
-    z-index: 50;
-}
-
-.breakpoint {
-    display: inline;
-    position: absolute;
-    left: -92px;
-    width: 90px;
-    height: 13px;
-    background: #efefef;
-    overflow: hidden;
-}
-
 .linenumber {
-    display: inline-block;
+    width: 3em;
+    height: inherit;
     position: relative;
-    width: 59px;
-    height: 13px;
+    display: block;
     text-align: right;
     margin-right: 5px;
     float: right;
     color: black;
 }
 .currentlineIndicator {
-    display: inline-block;
-    position: relative;
     width: 13px;
     height: 13px;
+    position: relative;
+    display: inline-block;
 }
 .breakpointIndicator {
-    display: inline-block;
-    position: relative;
     width: 13px;
     height: 13px;
+    position: relative;
+    display: inline-block;
 }
 </style>
 
@@ -1690,8 +1366,7 @@ PHPDebugger version 1.0
 var http = createRequestObject();
 var httpCtrl = createRequestObject();
 var serverID = <?php echo pdb_JSDebuggerClient::getServerID(); ?>;
-var scriptName = "<?php echo pdb_JSDebuggerClient::getDebugScriptName(); ?>";
-var currentScriptName = "";
+var scriptName = "<?php echo urlencode($_SERVER['SCRIPT_FILENAME']); ?>";
 var cwd = "<?php echo urlencode(getcwd()); ?>";
 var debuggerURL = "<?php echo pdb_JSDebuggerClient::getDebuggerURL(); ?>";
 var date = "<?php echo gmdate( 'D, d M Y H:i:s').' GMT'; ?>";
@@ -1726,8 +1401,6 @@ function doCmd(text) {
 
     case 'status':		showStatusCB(text); break;
 
-    case 'extendedStatus': showExtendedStatusCB(text); break;
-
     case 'setBreakpoint':	setBreakpointCB(text); break;
 
     case 'unsetBreakpoint':	unsetBreakpointCB(text); break;
@@ -1744,7 +1417,7 @@ function sendCmd(cmd) {
     http.setRequestHeader("Cache-Control", "no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
     http.setRequestHeader("Last-Modified", date);
     http.setRequestHeader("Pragma", "no-cache");
-    http.setRequestHeader("Expires", "Sat, 1 Jan 2005 00:00:00 GMT");
+    http.setRequestHeader("Expires", "Thu, 19 Nov 1981 08:52:00 GMT");
     http.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
     http.setRequestHeader("Content-Length", data.length);
     http.setRequestHeader("XPDB-DEBUGGER", 0);
@@ -1786,9 +1459,17 @@ function stepOut() {
 }
 function getStatusCB(cmd) {
     setServerID(cmd.serverID);
-	sendCmd("cmd=status");
+    sendCmd("cmd=status");
 }
 
+var currentScriptName="";
+function setScript(cmd) {
+    if (currentScriptName != cmd.scriptName) {
+	currentScriptName = cmd.scriptName;
+	document.getElementById("code").innerHTML = cmd.script;
+	document.title = cmd.scriptName;
+    }
+}
 function loaded() {
     startServer();
     sendCmd("cmd=begin&scriptName="+scriptName+"&cwd="+cwd);
@@ -1810,8 +1491,10 @@ function showOutputCB(cmd) {
     currentScriptName = "";
     document.getElementById("code").innerHTML = cmd.output;
 }
+function showStatusCB(cmd) {
+    setServerID(cmd.serverID);
+    setScript(cmd);
 
-function doShowStatusCB(cmd) {
     lines = document.getElementsByClassName("currentlineIndicator");
     for (i=0; i<lines.length; i++) {
 	line = lines[i];
@@ -1824,31 +1507,13 @@ function doShowStatusCB(cmd) {
 
     currentLine = document.getElementById("bp_"+(cmd.line)).firstChild;
 	currentLine.className="currentlineIndicator selected";
-	code = document.getElementById("code");
+	codeArea = document.getElementById("codeArea");
 	codeLine = currentLine.parentNode;
-    scrollBarHeight = 30;
-	if ((codeLine.offsetTop - document.body.scrollTop + currentLine.clientHeight + scrollBarHeight + code.clientTop > document.body.clientHeight) ||
-		(codeLine.offsetTop - document.body.scrollTop + code.clientTop  <= 0)) {
-	  currentLine.scrollIntoView(false);
+	if ((codeLine.offsetTop - codeArea.scrollTop > codeArea.offsetHeight) ||
+		(codeLine.offsetTop - codeLine.offsetHeight - codeArea.scrollTop <= 0)) {
+	  currentLine.scrollIntoView(true);
 	}
 }
-function showStatusCB(cmd) {
-    setServerID(cmd.serverID);
-	if (currentScriptName == cmd.scriptName)
-	  doShowStatusCB(cmd);
-	else
-	  sendCmd("cmd=extendedStatus"); // another round-trip 
-}
-function showExtendedStatusCB(cmd) {
-    setServerID(cmd.serverID);
-
-	currentScriptName = cmd.scriptName;
-	document.getElementById("code").innerHTML = cmd.script;
-	document.title = cmd.scriptName;
-
-	doShowStatusCB(cmd);
-}
-
 function stepInto(el, event) {
     sendCmd("cmd=stepNext");
     return false;
@@ -1917,7 +1582,8 @@ Please enable JavaScript in your browser.
 <a id="output" onmousedown="return output(this, event);"></a>
 <a id="backView" onmousedown="return backView(this, event);"></a>
 </div>
-  <div onmousemove="return mousemove(this, event);" onmousedown="return mousedown(this, event);" id="code"><span>loading...</span>
+<div id="codeArea" style="height:97%;width:97%;overflow:auto;">
+  <div style="height:100%;width:10000px;" onmousemove="return mousemove(this, event);" onmousedown="return mousedown(this, event);" id="code"><span>loading...</span></div>
 </div>
 
 </body>
@@ -1936,7 +1602,6 @@ Please enable JavaScript in your browser.
   header("Content-Encoding: identity");
   $dbg = new pdb_JSDebugger((int)$serverID);
   $dbg->handleRequests();
-  pdb_Logger::debug("SERVER TERMINATED!");
   exit(0);
 } else {
 /* * The front end part, invoked from JavaScript using json calls * */

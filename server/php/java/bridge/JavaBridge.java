@@ -989,7 +989,7 @@ public class JavaBridge implements Runnable {
      * @throws NullPointerException If the object was null
      */
     public void Invoke
-	(Object object, String method, Object args[], Response response) throws NullPointerException
+	(Object object, String method, Object args[], Response response) 
     {
 	Class jclass;
 	boolean again;

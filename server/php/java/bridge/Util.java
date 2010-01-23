@@ -159,7 +159,7 @@ public final class Util {
      * Default: "-d allow_url_include=On -d display_errors=Off -d log_errors=On -d java.persistent_servlet_connections=On"
      */
     public static String[] PHP_ARGS;
-    private static final String DEFAULT_PHP_ARGS = "-d allow_url_include=On -d display_errors=Off -d log_errors=On -d java.persistent_servlet_connections=On";
+    private static String DEFAULT_PHP_ARGS;
     
     /**
      * The default CGI locations: <code>"/usr/bin/php-cgi"</code>, <code>"c:/Program Files/PHP/php-cgi.exe</code>
@@ -377,6 +377,7 @@ public final class Util {
 	} catch (Throwable t) {
 	    //t.printStackTrace();
 	};
+	DEFAULT_PHP_ARGS = "-d session.save_path="+System.getProperty("java.io.tmpdir", "/tmp")+" -d java.session=On -d allow_url_include=On -d display_errors=Off -d log_errors=On -d java.persistent_servlet_connections=On";
 	try {
 	    String str = getProperty(p, "PHP_EXEC_ARGS", DEFAULT_PHP_ARGS);
 	    String[] args = str.split(" ");
@@ -800,15 +801,16 @@ public final class Util {
      * }<br>
      * @param logger The logger to set.
      */
-    public static synchronized void setLogger(ILogger logger) {
+    public static void setLogger(ILogger logger) {
 	Util.logger.set(logger);
     }
     
+    private static final Object sharedLoggerLockObject = new Object();
     private static ILogger sharedLogger;
     /**
      * @return Returns the logger.
      */
-    public static synchronized ILogger getLogger() {
+    public static ILogger getLogger() {
 	if (!DEFAULT_LOG_FILE_SET) {
 	    Object l = logger.get();
 	    if(l != null) return (ILogger)l;
@@ -816,8 +818,11 @@ public final class Util {
 	    setDefaultFileLogger();
 	    return (ILogger) logger.get();
 	}
-        if (sharedLogger == null) sharedLogger = new Logger(new FileLogger());
-        return sharedLogger;
+	
+	synchronized (sharedLoggerLockObject) {
+	    if (sharedLogger == null) sharedLogger = new Logger(new FileLogger());
+	    return sharedLogger;
+	}
     }
 
     /**

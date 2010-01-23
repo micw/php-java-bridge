@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 5.5.4.1
+%define version 5.5.5
 %define release 1
 %define PHP_MAJOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | sed 's/\\\..*$//')
 %define PHP_MINOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | LANG=C cut -d. -f2)
@@ -26,6 +26,7 @@ Source0: http://osdn.dl.sourceforge.net/sourceforge/php-java-bridge/php-java-bri
 
 BuildRequires: php-devel >= 4.3.4
 BuildRequires: gcc >= 3.2.3
+BuildRequires: gcj >= 4.1.2
 BuildRequires: mono-core >= 1.1.8
 BuildRequires: gcc-c++
 BuildRequires: gcc-java >= 3.3.3

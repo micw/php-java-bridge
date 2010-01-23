@@ -648,6 +648,7 @@ function java_shutdown() {
   global $java_initialized;
   if (!$java_initialized) return;
 
+  if (session_id()) session_write_close();
   $client = __javaproxy_Client_getClient();
   if(JAVA_DEBUG) echo "the client destroyed\n";
   if (!isset($client->protocol)) return;

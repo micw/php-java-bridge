@@ -93,9 +93,9 @@ VM_BINARIES=
 
 if test "$PHP_JAVA" != "no"; then
   if test X$PHP_JRE != X || test $jb_cv_have_jni = no || test $have_gcj = no; then
-   VM_BINARIES="RunJavaBridge"
+   VM_BINARIES=""
   else
-   VM_BINARIES="java RunJavaBridge"
+   VM_BINARIES="java"
   fi
 fi
 if test "$PHP_JAVA" != "yes" && test "$PHP_JAVA" != "no"; then
@@ -108,7 +108,7 @@ fi
 if test "$PHP_MONO" != "no"; then
 
    MONO_BRIDGE_EXE="MonoBridge.exe ICSharpCode.SharpZipLib.dll IKVM.AWT.WinForms.dll IKVM.GNU.Classpath.dll IKVM.Runtime.dll"
-   VM_BINARIES="${VM_BINARIES} ${MONO_BRIDGE_EXE} RunMonoBridge"
+   VM_BINARIES="${VM_BINARIES} ${MONO_BRIDGE_EXE}"
    
    # --with-mono=/path/to/mono.exe,/path/to/ikvmc/dir
    PHP_MONO_BINARY="`echo $PHP_MONO | LANG=C awk -F, '{print $1}'`"
@@ -157,7 +157,7 @@ SOURCE_VERSION="-source 1.4 -target 1.4"
 if test "X${PHP_JRE}" != "X"; then SOURCE_VERSION=; fi
 
 BACKEND_VERSION=`cat ../VERSION`
-AC_CONFIG_FILES([RunJavaBridge.c RunMonoBridge.c php/java/bridge/global.properties])
+AC_CONFIG_FILES([php/java/bridge/global.properties])
 AC_SUBST(SOURCE_VERSION)
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(BACKEND_VERSION)

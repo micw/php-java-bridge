@@ -3,6 +3,29 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 5.5.5
+
+* PHP scripts running within a JEE server can now use PHP paths like:
+  
+    .../MOODLE/dir/do.php/something?with=what 
+
+  This feature can be switched off by removing the <filter> and
+  <filter-mapping> from the web application web.xml.
+
+* PHP scripts running within a JEE server now use java.io.tmpdir as
+  their the session.save_path. This can be changed as usual, see
+  php.java.bridge.global.properties PHP_EXEC_ARGS. Use
+  Util.DEFAULT_PHP_ARGS as a template.
+
+* A beta test version of the PHPDebugger is now part of the PHP/Java
+  Bridge.
+
+* The build system doesn't create RunJavaBridge and RunMonoBridge
+  executables anymore. java.so, libnatcJavaBridge.so and a "java"
+  binary are still created for compatibility with GNU "gcj"
+  "Java". Please ignore or delete them if you're using Java instead of
+  GNU "gcj" "Java".
+
 Version 5.5.4.1
 
 * The "JBoss" application server abuses the log4j port 4445 for its

@@ -54,6 +54,14 @@ function java_getHeader($name, $array) {
 /**
  * @access private
  */
+function java_checkCliSapi() {
+  $sapi=substr(php_sapi_name(), 0, 3);
+  return ((($sapi == 'cgi') && !get_cfg_var("java.session")) || ($sapi == 'cli'));
+}
+
+/**
+ * @access private
+ */
 function java_getCompatibilityOption($client) {
   static $compatibility = null;
 
@@ -489,8 +497,13 @@ class java_HttpTunnelHandler extends java_SimpleHttpHandler {
     $this->dieWithBrokenConnection($msg);
   }
   function checkSocket($socket, &$errno, &$errstr) {
-  	if (!$socket) 
-	  throw new java_ConnectException("Could not connect to the JEE server {$this->ssl}{$this->host}:{$this->port}. Please start it. Or define('JAVA_HOSTS', 9267); define('JAVA_SERVLET', false); before including 'Java.inc' and try again. Error message: $errstr ($errno)\n");
+  	if (!$socket) {
+	  $msg="Could not connect to the JEE server {$this->ssl}{$this->host}:{$this->port}. Please start it.";
+	  $msg.=java_checkCliSapi()
+		?" Or define('JAVA_HOSTS', 9267); define('JAVA_SERVLET', false); before including 'Java.inc' and try again. Error message: $errstr ($errno)\n"
+		:" Error message: $errstr ($errno)\n";
+	  throw new java_ConnectException($msg);
+	}
   }
   function open() {
   	$errno = null; $errstr = null;
@@ -795,14 +808,18 @@ class java_Protocol {
       } else {
 	  	  $java=file_exists(ini_get("extension_dir")."/JavaBridge.jar")?ini_get("extension_dir")."/JavaBridge.jar":(java_get_base()."/JavaBridge.jar");
 		  if (!file_exists($java)) 
-		      throw new java_IOException("Could not find $java in ".getcwd().". Download it from http://sf.net/projects/php-java-bridge/files/Binary%20package/php-java-bridge_".JAVA_PEAR_VERSION."/JavaBridge.jar/download and try again.");
+		      throw new java_IOException("Could not find $java in ".getcwd().". Download it from http://sf.net/projects/php-java-bridge/files/Binary%20package/php-java-bridge_".JAVA_PEAR_VERSION."/exploded/JavaBridge.jar/download and try again.");
 	      $java_cmd = "java -Dphp.java.bridge.daemon=true -jar \"${java}\" INET_LOCAL:$channelName 0"; 
       }
 
 	  if (!$again) 
-	     throw new java_ConnectException("No Java! Please run it with: $java_cmd. Error message: $errstr ($errno)");
+	     throw new java_ConnectException("No Java back end! Please run it with: $java_cmd. Error message: $errstr ($errno)");
+
+	  if (!java_checkCliSapi()) 
+		trigger_error("This PHP SAPI requires a JEE or SERVLET back end. Start it, define ('JAVA_SERVLET', true); define('JAVA_HOSTS', ...); and try again.", E_USER_ERROR);
 
 	  system ($java_cmd);
+
 	  return $this->createSimpleHandler($name, false);
     }
     stream_set_timeout($peer, -1);

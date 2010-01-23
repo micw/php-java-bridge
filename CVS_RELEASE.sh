@@ -14,7 +14,8 @@ ln -s `pwd` php-java-bridge-${version}
 # create archive
 tar czhf php-java-bridge_${version}.tar.gz --exclude "php-java-bridge-${version}/php-java-bridge[_-]*" --exclude CVS --exclude ".??*" php-java-bridge-${version}
 
-(phpize && ./configure --with-java=/usr/lib/jvm/java/ --with-mono && make) >build.log 2>build.err
+#(phpize && ./configure --with-java=/usr/lib/jvm/java/ --with-mono && make) >build.log 2>build.err
+(phpize && ./configure --with-java=/usr/lib/jvm/java/ && make) >build.log 2>build.err
 
 # create RPM files if we're root
 if test `id -u` = 0 ; then 

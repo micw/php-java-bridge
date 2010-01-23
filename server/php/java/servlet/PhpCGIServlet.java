@@ -210,12 +210,16 @@ public class PhpCGIServlet extends FastCGIServlet {
 	    this.included_java = php_include_java && PhpJavaServlet.getHeader("X_JAVABRIDGE_INCLUDE", req) == null;
 	}
 
-	/** PATH_INFO and PATH_TRANSLATED not needed for PHP, SCRIPT_FILENAME is enough */
+	/** calculate PATH_INFO, PATH_TRANSLATED and SCRIPT_FILENAME */
         protected void setPathInfo(HttpServletRequest req, HashMap envp, String sCGIFullName) {
-            if (included_java) 
-        	envp.put("SCRIPT_FILENAME", nullsToBlanks(getRealPath(context, "java/JavaProxy.php")));
-            else
-                envp.put("SCRIPT_FILENAME", nullsToBlanks(getRealPath(context, servletPath)));
+
+            String pathInfo = req.getPathInfo();
+            if (pathInfo!=null) {
+        	envp.put("PATH_INFO", pathInfo);
+        	envp.put("PATH_TRANSLATED", DOCUMENT_ROOT+pathInfo);
+            }
+            envp.put("SCRIPT_FILENAME", getRealPath(context, servletPath));
+        
         }
 	protected boolean setCGIEnvironment(HttpServletRequest req, HttpServletResponse res) {
 	    boolean ret = super.setCGIEnvironment(req, res);

@@ -295,7 +295,7 @@ public class RemoteHttpServletContextFactory extends JavaBridgeFactory implement
 
    /**
     * Set the current response 
-    * @param res the PhpJavaServlet response
+    * @param out the PhpJavaServlet response
     */
    public void setResponse(HttpServletResponse out) {
        this.out = out;
