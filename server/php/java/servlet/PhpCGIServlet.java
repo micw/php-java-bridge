@@ -218,7 +218,11 @@ public class PhpCGIServlet extends FastCGIServlet {
         	envp.put("PATH_INFO", pathInfo);
         	envp.put("PATH_TRANSLATED", DOCUMENT_ROOT+pathInfo);
             }
-            envp.put("SCRIPT_FILENAME", getRealPath(context, servletPath));
+
+        if (included_java)
+        	envp.put("SCRIPT_FILENAME", getRealPath(context, "java/JavaProxy.php"));
+            else
+                envp.put("SCRIPT_FILENAME", getRealPath(context, servletPath));
         
         }
 	protected boolean setCGIEnvironment(HttpServletRequest req, HttpServletResponse res) {

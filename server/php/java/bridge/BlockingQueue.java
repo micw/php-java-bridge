@@ -38,6 +38,7 @@ public class BlockingQueue implements java.io.Serializable {
     private static final long serialVersionUID = -5471314729763001963L;
     private LinkedList queue;
     private boolean destroyed;
+    private String reason;
     
     /**
      * Create a new queue
@@ -74,8 +75,21 @@ public class BlockingQueue implements java.io.Serializable {
     /**
      * Shut down the queue. All locks are released, add and remove become void operations.
      */
-    public synchronized void shutdown () {
+    public synchronized void shutdown (String reason) {
 	destroyed = true;
+	this.reason = reason;
 	notifyAll();
+    }
+    /**
+     * @return  true if the queue has been destroyed
+     */
+    public synchronized boolean isDestroyed() {
+	return destroyed;
+    }
+    /**
+     * @return the shutdown reason
+     */
+    public synchronized String getResult() {
+	return reason;
     }
 }

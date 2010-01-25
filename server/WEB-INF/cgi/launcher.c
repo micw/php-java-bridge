@@ -160,9 +160,11 @@ int main(int argc, char **argv) {
 	
 								/* the command line */
   for(*cmd=len=0, i=2, argc-=2; argc--; i++) {
-    len += 1+strlen(argv[i]);
+    len += 3+strlen(argv[i]);
     if(len>=sizeof(cmd)) abort();
+    strcat(cmd, "\"");
     strcat(cmd, argv[i]);
+    strcat(cmd, "\"");
     if(argc) strcat(cmd, " ");
   }
 

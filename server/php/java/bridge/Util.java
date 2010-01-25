@@ -377,7 +377,7 @@ public final class Util {
 	} catch (Throwable t) {
 	    //t.printStackTrace();
 	};
-	DEFAULT_PHP_ARGS = "-d session.save_path="+System.getProperty("java.io.tmpdir", "/tmp")+" -d java.session=On -d allow_url_include=On -d display_errors=Off -d log_errors=On -d java.persistent_servlet_connections=On";
+	DEFAULT_PHP_ARGS = "-d session.save_path=\""+System.getProperty("java.io.tmpdir", "/tmp")+"\" -d java.session=On -d allow_url_include=On -d display_errors=Off -d log_errors=On -d java.persistent_servlet_connections=On";
 	try {
 	    String str = getProperty(p, "PHP_EXEC_ARGS", DEFAULT_PHP_ARGS);
 	    String[] args = str.split(" ");

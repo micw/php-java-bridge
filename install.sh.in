@@ -175,7 +175,6 @@ install_sel_module() {
 	cd security/module; 
 	/usr/bin/make -f /usr/share/selinux/devel/Makefile 
 	/usr/sbin/semodule -i php-java-bridge.pp
-	/usr/bin/chcon -t javabridge_exec_t $ext/RunJavaBridge
 	/usr/bin/chcon -t bin_t $ext/java
 	if test X$javabridgeservice != X; then /usr/bin/chcon -t initrc_exec_t $javabridgeservice; fi
  )

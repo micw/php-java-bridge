@@ -26,7 +26,6 @@ Source0: http://osdn.dl.sourceforge.net/sourceforge/php-java-bridge/php-java-bri
 
 BuildRequires: php-devel >= 4.3.4
 BuildRequires: gcc >= 3.2.3
-BuildRequires: gcj >= 4.1.2
 BuildRequires: mono-core >= 1.1.8
 BuildRequires: gcc-c++
 BuildRequires: gcc-java >= 3.3.3
@@ -184,9 +183,6 @@ for i in $files; do
   echo $mod_dir/$i >>filelist
  fi
 done
-i=RunJavaBridge
-cp $mod_dir/$i $RPM_BUILD_ROOT/$mod_dir/$i
-rm -f $mod_dir/$i
 i=JavaBridge.jar
 cp $mod_dir/$i $RPM_BUILD_ROOT/$mod_dir/$i
 rm -f $mod_dir/$i
@@ -206,9 +202,6 @@ for i in $files; do
   echo $mod_dir/$i >>filelist-mono
  fi
 done
-i=RunMonoBridge
-cp $mod_dir/$i $RPM_BUILD_ROOT/$mod_dir/$i
-rm -f $mod_dir/$i
 i=MonoBridge.exe
 cp $mod_dir/$i $RPM_BUILD_ROOT/$mod_dir/$i
 rm -f $mod_dir/$i
@@ -232,8 +225,6 @@ echo $mod_dir/lib >>filelist
 mv server server.backup
 mkdir server
 cp -r server.backup/documentation server
-cp server.backup/RunJavaBridge.c server
-cp server.backup/RunMonoBridge.c server
 cp server.backup/natcJavaBridge.c server
 (cd server.backup; find php -name "*.java" -print | cpio -dp ../server)
 cp server.backup/src.zip server
@@ -248,7 +239,6 @@ if test -f /etc/selinux/config; then
 	/sbin/service %{tomcat_name} stop > /dev/null 2>&1
 	%{_sbindir}/semodule -i %{_docdir}/%{name}-%{version}/security/module/php-java-bridge.pp
 	%{_sbindir}/semodule -i %{_docdir}/%{name}-%{version}/security/module/php-java-bridge-tomcat.pp
-	chcon -t javabridge_exec_t %{_libdir}/php/modules/RunJavaBridge
 	chcon -t bin_t %{_libdir}/php/modules/java
 	/sbin/service httpd start > /dev/null 2>&1
 	/sbin/service %{tomcat_name} start > /dev/null 2>&1
@@ -299,15 +289,12 @@ fi
 
 %files -f filelist
 %defattr(-,root,root)
-%attr(6111,apache,apache) %{_libdir}/php/modules/RunJavaBridge
 %attr(755,root,root) %{_libdir}/php/modules/JavaBridge.jar
 %attr(-,tomcat,tomcat) %{tomcat_webapps}/JavaBridge.war
 %doc README README.GCJ FAQ.html COPYING CREDITS NEWS test.php INSTALL.J2EE INSTALL.LINUX security 
 
 %files mono -f filelist-mono
 %defattr(-,root,root)
-%attr(111,root,root) %{_libdir}/php/modules/RunMonoBridge
-%attr(755,root,root) %{_libdir}/php/modules/MonoBridge.exe
 %doc README.MONO+NET COPYING CREDITS NEWS tests.mono+net
 
 %files devel -f filelist-devel

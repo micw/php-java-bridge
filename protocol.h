@@ -88,8 +88,6 @@
 #define N_MONO_SENV 1
 #define DEFAULT_MONO_PORT "9167" /* default port for tcp/ip */
 #define DEFAULT_JAVA_PORT "9267" /* default port for tcp/ip */
-#define DEFAULT_JAVA_WRAPPER EXTENSION_DIR/**/"/RunJavaBridge"
-#define DEFAULT_MONO_WRAPPER EXTENSION_DIR/**/"/RunMonoBridge"
 #define DEFAULT_HOST "127.0.0.1"
 #define DEFAULT_SERVLET "/JavaBridge/JavaBridge.phpjavabridge"
 

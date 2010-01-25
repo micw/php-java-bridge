@@ -41,7 +41,7 @@
 
 define ("PDB_DEBUG", 0);
 define ("PDB_DISABLE_JAVA", false);
-ini_set("max_execution_time", 60);
+ini_set("max_execution_time", 40);
 
 
   /**
@@ -214,6 +214,16 @@ interface pdb_Queue {
   public function write($val);
 
   /**
+   * Set the script output before server shutdown
+   */
+  public function setOutput($output);
+
+  /**
+   * Get the script output
+   */
+  public function getOutput();
+
+  /**
    * Mark the channel as dead. If marked, read will return boolean
    * TRUE, write will do nothing.
    */
@@ -230,6 +240,7 @@ class pdb_PollingClientConnection implements pdb_Queue {
   protected $id;
   protected $role, $to;
   protected $chanTrm; // "back end terminated" flag
+  protected $output;
   const TIMER_DURATION = 200000; // every 200ms
 
   /**
@@ -238,10 +249,12 @@ class pdb_PollingClientConnection implements pdb_Queue {
   public function pdb_PollingClientConnection($id) {
     $this->id = $id;
     $this->chanTrm = "pdb_trmserver{$this->id}";
+	$this->output = "<missing>";
+
     $this->init();
   }
   protected function checkTrm() {
-	return isset($_SESSION[$this->chanTrm]);
+	return false!==$_SESSION[$this->chanTrm];
   }
 
   protected function init() {
@@ -291,6 +304,19 @@ class pdb_PollingClientConnection implements pdb_Queue {
 	$this->send($val);
   }
   /**
+   * Set the script output
+   */
+  public function setOutput($output) {
+	$this->output = $output;
+  }
+  /**
+   * Get the script output
+   */
+  public function getOutput() {
+	return $_SESSION[$this->chanTrm];
+  }
+
+  /**
    * shut down the communication channel
    */
   public function shutdown() {}
@@ -308,17 +334,28 @@ class pdb_JavaClientConnection implements pdb_Queue {
   protected $queue;
   protected $role, $to;
   protected $chanTrm; // "back end terminated" flag
+  protected $output;
 
   public function pdb_JavaClientConnection($id) {
 	$this->session = java_session();
 	$this->id = $id;
-    $this->chanTrm = "pdb_trmserver{$this->id}";
-	$this->session->put($this->chanTrm, false);
+	$this->output = "<missing>";
 
 	$this->init();
   }
-  protected function checkTrm() {
-	return java_is_true($this->session->get($this->chanTrm));
+  /**
+   * Set the script output
+   */
+  public function setOutput($output) {
+	$this->output = $output;
+  }
+  /**
+   * Get the script output
+   */
+  public function getOutput() {
+    $chan = "pdb_{$this->role}{$this->id}";
+	$queue = $this->session->get($chan);
+	return java_values($queue->getResult());
   }
 
   protected function init() {
@@ -328,36 +365,22 @@ class pdb_JavaClientConnection implements pdb_Queue {
   /**{@inheritDoc}*/
   public function read() {
     $chan = "pdb_{$this->role}{$this->id}";
-	if (!$this->checkTrm()) {
-	  $queue = $this->session->get($chan);
-	  $val = $queue->remove();
-	  $val = java_is_null($val) ? true : (string)$val;
-	  pdb_Logger::log("${this} read: ${val}");
-	  return $val;
-	}
-	return true;
+	$queue = $this->session->get($chan);
+	$val = java_values($queue->remove());
+	$val = $val === null ? true : (string)$val;
+	pdb_Logger::log("${this} read: ${val}");
+	return $val;
   }
   /**{@inheritDoc}*/
   public function write($val) {
     $chan = "pdb_{$this->to}{$this->id}";
 	$queue = $this->session->get($chan);
-	if(!$this->checkTrm()) {
-	  $queue->add($val);
-	  pdb_Logger::log("${this} wrote: ${val}");
-	}
+	$queue->add($val);
+	pdb_Logger::log("${this} wrote: ${val}");
   }
   /**{@inheritDoc}*/
-  public function shutdown() {
-    $chan = "pdb_{$this->role}{$this->id}";
-	$queue = $this->session->get($chan);
-	if (!java_is_null($queue)) $queue->shutdown();
+  public function shutdown() {}
 
-    $chan = "pdb_{$this->to}{$this->id}";
-	$queue = $this->session->get($chan);
-	if (!java_is_null($queue)) $queue->shutdown();
-
-	$this->session->put($this->chanTrm, false);
-  }
   public function __toString() {
 	return "java {$this->role} queue for {$this->id}";
   }
@@ -773,7 +796,7 @@ class pdb_JSDebuggerClient {
 	  $scriptDirName = ltrim($scriptDirName, "/");
 	  $idx = strpos($scriptDirName, '/');
 	  $scriptDirName = $idx===false ? '' : substr($scriptDirName, $idx);
-	} elseif ((strlen($scriptDirName)==1) && ($scriptDirName[0]=='/')) {
+	} elseif ((strlen($scriptDirName)==1) && (($scriptDirName[0]=='/') || ($scriptDirName[0]=='\\'))) {
 	  $scriptDirName = '';
 	}
 	return substr($scriptDir, 0, strlen($scriptDir)-strlen($scriptDirName));
@@ -810,7 +833,7 @@ class pdb_JSDebuggerClient {
 	  $prefix = '/' . ($idx ? substr($scriptDirName, 0, $idx): $scriptDirName);
 	}
     
-	$path = "${prefix}" . substr($path, strlen($root));
+	$path = "${prefix}" . str_replace('\\', '/', substr($path, strlen($root)));
 	$pathInfo = isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : "";
 	$query = isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : "";
 
@@ -833,21 +856,8 @@ class pdb_JSDebuggerClient {
    * @return a uniqe session ID
    */ 
   public static function getServerID() {
-	/*
-	if (!isset($_SESSION['pdb_ServerID'])) 
-	  return $_SESSION['pdb_ServerID'] = 1;
-	else  {
-	  $oldId = $_SESSION['pdb_ServerID'];
-	  $conn = self::getConnection($oldId);
-	  $conn->shutdown();
-	  return ++$_SESSION['pdb_ServerID'];
-	}
-	*/
 	// TODO: allow more than one debug session
-	$oldId = 1;
-	$conn = self::getConnection($oldId);
-	$conn->shutdown();
-	return $oldId;
+	return 1;
   }
   
   private static function getConnection($id) {
@@ -869,10 +879,10 @@ class pdb_JSDebuggerClient {
 	pdb_Logger::debug("beginHandleRequest: ".$msg->cmd);
 	$conn = self::getConnection($msg->serverID);
 	$conn->write(json_encode($msg));
-	$response = $conn->read();
-	
-	if ($msg->cmd == "end") $conn->shutdown();
 
+	if (($response = $conn->read()) === true) 
+	  $response = json_encode(array("cmd"=>"term", "output"=>$conn->getOutput()));
+	
 	$output = $response;
 	echo "($output)";
 	pdb_Logger::debug("endHandleRequest");
@@ -1006,7 +1016,7 @@ class pdb_Environment extends pdb_View {
    */
   public function update ($line, &$vars) {
     $this->line = $line;
-    $this->vars = &$vars;
+    $this->vars = $vars;
   }
 }
 /**
@@ -1069,7 +1079,6 @@ final class pdb_Session {
     $this->environments = array($this->currentFrame = new pdb_Environment($scriptName, true));
 
     $this->currentView = null;
-    $this->end = false;
   }
   /**
    * Return the clickable HTML script source, either from the cusom view or from the current frame
@@ -1109,15 +1118,15 @@ final class pdb_Session {
    * @param object the current comm. channel
    * @param object the breakpoint
    */
-  public function writeToggleBreakpoint($channel, $breakpoint) {
+  public function toggleBreakpoint($breakpoint) {
     $id = $breakpoint."@".$this->getCurrentViewScriptName();
     if (!isset($this->breakpoints[$id])) {
       $this->breakpoints[$id] = new pdb_Breakpoint($breakpoint, $this->getCurrentViewScriptName(), substr($breakpoint, 3));
-      $channel->write(array("cmd"=>"setBreakpoint", "scriptName"=>$this->getCurrentViewScriptName(), "breakpoint"=>$breakpoint));
+	  return false;
     } else {
       $bp = $this->breakpoints[$id];
       unset ($this->breakpoints[$id]);
-      $channel->write(array("cmd"=>"unsetBreakpoint", "scriptName"=>$bp->scriptName, "breakpoint"=>$bp->breakpoint));
+	  return $bp;
     }
   }
   /**
@@ -1159,7 +1168,7 @@ final class pdb_Session {
    * parse and execute script
    * @return the script output
    */
-  public function parseScript() {
+  public function evalScript() {
     $code = $this->parseCode($this->getScriptName(), file_get_contents($this->getScriptName()));
 
     if (PDB_DEBUG) pdb_Logger::debug("eval:::$code,".$this->getScriptName()."\n");
@@ -1179,8 +1188,30 @@ final class pdb_Session {
  */
 class pdb_PollingServerConnection extends pdb_PollingClientConnection {
   protected function init() {
+    session_start();
+
+	parent::init();
+    $chanCtr = "pdb_ctr{$this->role}{$this->id}";
+    $chan = "pdb_{$this->role}{$this->id}";
+	unset ($_SESSION[$chan]);
+	unset ($_SESSION[$chanCtr]);
+
     $this->role = "server";
     $this->to   = "client";
+
+    $chanCtr = "pdb_ctr{$this->role}{$this->id}";
+    $chan = "pdb_{$this->role}{$this->id}";
+	unset ($_SESSION[$chan]);
+	unset ($_SESSION[$chanCtr]);
+
+	if (isset($_SESSION[$this->chanTrm]) && !$this->checkTrm()) {
+	  $_SESSION[$this->chanTrm] = true;
+	  session_write_close();
+	  sleep(1);
+	  session_start();
+	}
+	$_SESSION[$this->chanTrm] = false;
+	session_write_close();
   }
 
   protected function poll() {
@@ -1207,7 +1238,7 @@ class pdb_PollingServerConnection extends pdb_PollingClientConnection {
   public function shutdown() {
 	pdb_Logger::debug("session terminated: {$this->chanTrm}");
     session_start();
-	$_SESSION[$this->chanTrm] = 1;
+	$_SESSION[$this->chanTrm] = $this->output;
     session_write_close();
   }
 }    
@@ -1223,16 +1254,28 @@ class pdb_JavaServerConnection extends pdb_JavaClientConnection {
 
 	$queue = new java("php.java.bridge.BlockingQueue");
     $chan = "pdb_{$this->role}{$this->id}";
+	$old = $this->session->get($chan);
+	if (!java_is_null($old) && java_is_false($old->isDestroyed())) $old->shutdown("");
 	$this->session->put($chan, $queue);
 
 	$queue = new java("php.java.bridge.BlockingQueue");
     $chan = "pdb_{$this->to}{$this->id}";
+	$old = $this->session->get($chan);
+	if (!java_is_null($old) && java_is_false($old->isDestroyed())) $old->shutdown("");
 	$this->session->put($chan, $queue);
   }
-
   protected function init() {
     $this->role = "server";
     $this->to   = "client";
+  }
+  public function shutdown() {
+    $chan = "pdb_{$this->role}{$this->id}";
+	$queue = $this->session->get($chan);
+	if (!java_is_null($queue)) $queue->shutdown("");
+
+    $chan = "pdb_{$this->to}{$this->id}";
+	$queue = $this->session->get($chan);
+	if (!java_is_null($queue)) $queue->shutdown($this->output);
   }
 }
 
@@ -1271,6 +1314,7 @@ class pdb_JSDebugger {
     $this->conn = $this->getConnection($id);
 
     $this->end = false;
+	$this->session = null;
 
 	$this->ignoreInterrupt = false;
   }
@@ -1301,13 +1345,21 @@ class pdb_JSDebugger {
   private function ack() {
     $this->write(array("cmd"=>$this->packet->cmd));
   }
+
+  private function getOutput() {
+	if (!$this->session) return "";
+
+	if (!$this->end) $output = $this->session->output = ob_get_contents();
+	return $this->session->output;
+  }
+
   /**
    * Handle requests from the front end
    */
   public function handleRequests() {
 	$this->ignoreInterrupt = false;
 
-    while(true) {
+    while(!$this->end) {
       if (PDB_DEBUG) pdb_Logger::debug("handleRequests: accept");
       
       if (($this->packet = $this->read()) === true) break; // ignore __destructors after shutdown
@@ -1335,7 +1387,7 @@ class pdb_JSDebugger {
 						   "scriptName"=>$this->packet->scriptName, 
 						   "script"=>$this->session->getCurrentViewHtmlScriptSource()));
 
-		$this->session->parseScript();
+		$this->session->evalScript();
 		$this->end = true;
 		break;
       case "stepNext":
@@ -1355,12 +1407,19 @@ class pdb_JSDebugger {
 		$this->ack();
 		return self::GO;
       case "toggleBreakpoint":
-		$this->session->writeToggleBreakpoint($this, $this->packet->breakpoint);
+		$bp = $this->session->toggleBreakpoint($this->packet->breakpoint);
+		$this->write($bp ? 
+					 (array("cmd"=>"unsetBreakpoint", "scriptName"=>$bp->scriptName, 
+							"breakpoint"=>$bp->breakpoint)) :
+					 (array("cmd"=>"setBreakpoint", "scriptName"=>$this->session->getCurrentViewScriptName(), 
+							"breakpoint"=>$this->packet->breakpoint)));
 		break;
       case "switchView":
 		$name = urldecode($this->packet->scriptName);
 		if ($name[0]=='$') {
-		  $value = $this->session->currentFrame->vars[substr($name, 1)];
+		  $idx = substr($name, 1);
+		  $value = $this->session->currentFrame->vars["$idx"];
+
 		  $this->session->currentView = new pdb_VariableView($this->session->currentView, $name, $value);
 		} else {
 		  $value = eval("return ".$name.";");
@@ -1378,20 +1437,16 @@ class pdb_JSDebugger {
 		break;
       case "output":
 		if ($this->session) {
-		  if (!$this->end)
-			$this->session->output = ob_get_contents();
-		  $this->write(array("cmd"=>$this->packet->cmd, 
-							 "output"=>$this->session->output));
+		  $this->write(array("cmd"=>$this->packet->cmd, "output"=>$this->getOutput()));
 		} else {
 		  $this->ack();
 		}
 		break;
       case "end":
 		$this->session->currentView = null;
-		$this->ack();
-		$this->shutdown();
-		//return;
-		exit(0);
+		$this->write(array("cmd"=>$this->packet->cmd, "output"=>$this->getOutput()));
+		$this->end = true;
+		break;
 	  default:
 		pdb_Logger::debug("illegal packet: " . print_r($this->packet, true));
 		exit(1);
@@ -1402,6 +1457,7 @@ class pdb_JSDebugger {
    * shut down the current comm. channel
    */
   public function shutdown() {
+	$this->conn->setOutput($this->getOutput());
     $this->conn->shutdown();
   }
 
@@ -1506,7 +1562,7 @@ function pdb_getDefinedVars($vars1, $vars2) {
  */
 function pdb_startCall($scriptName) {
   global $dbg;
-  return $dbg->startCall($scriptName);
+  if (isset($dbg)) return $dbg->startCall($scriptName);
 }
 
 /**
@@ -1514,7 +1570,8 @@ function pdb_startCall($scriptName) {
  */
 function pdb_startInclude($scriptName) {
   global $dbg;
-  return $dbg->startInclude($scriptName);
+  if (isset($dbg)) return $dbg->startInclude($scriptName);
+  else return "";
 }
 
 /**
@@ -1522,7 +1579,7 @@ function pdb_startInclude($scriptName) {
  */
 function pdb_endInclude() {
   global $dbg;
-  $dbg->endInclude();
+  if (isset($dbg)) $dbg->endInclude();
 }
 
 /**
@@ -1530,7 +1587,7 @@ function pdb_endInclude() {
  */
 function pdb_step($scriptName, $line, $vars) {
   global $dbg;
-  $dbg->step($scriptName, $line, $vars);
+  if (isset($dbg)) $dbg->step($scriptName, $line, $vars);
 }
 
 if (PDB_DEBUG==2) {
@@ -1551,28 +1608,20 @@ if (!isset($_SERVER['HTTP_XPDB_DEBUGGER'])) {
     header("Pragma: no-cache");
     header("Content-Type: text/html");
 ?>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
 <title>
 PHPDebugger version 1.0 
 </title>
 <style type="text/css">
-#navigationBar {
-    display: block;
-    position: relative;
-    background: #efefef;
-    width: 100%;
-    height: auto;
-    overflow: hidden;
-    margin-bottom: 2px;
-}
 #run {
     height: 13px;
     width: 17px;
     display: inline-block;
     position: relative;
     margin: 1px 10px 1px 10px;
-   background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAANCAYAAABPeYUaAAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwcXGXdF1DwAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABEUlEQVQoz62SoWvDUBDGfx0Rry6VzzUyg4lEVgYmRulfMVUKVWOqTFVWDULVbNxsTSETg8jOzm+QwcSL28ECmwhJGpqwwnrmfXfv7nvf3b2e+TQ//NMsgPRlQfoeQ14E9TBAe0uC9QyAeBoeQfK6IZjuqmC89tHeEoDFxP+TzKqQJK0JksPNlQ/QSWYBiJQVKShd+4DJa+f68hyA0f0M7fR5nKyaSiQTlHwgatB4JXkzB+q8C12RJfNwr522Vr4hy7PjtgOgbAWZKs6SRASt+gfZ8bPBcQck83B/Jl/Fre3S8AGlarx5Kuazu33o2I4atUq1LYi27cUNEj0cE925VdBxxxWOttJZXFrvFN/+jBPYL4uJYFb2zCiIAAAAAElFTkSuQmCC') no-repeat;
+   background:green url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAANCAYAAABPeYUaAAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwcXGXdF1DwAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABEUlEQVQoz62SoWvDUBDGfx0Rry6VzzUyg4lEVgYmRulfMVUKVWOqTFVWDULVbNxsTSETg8jOzm+QwcSL28ECmwhJGpqwwnrmfXfv7nvf3b2e+TQ//NMsgPRlQfoeQ14E9TBAe0uC9QyAeBoeQfK6IZjuqmC89tHeEoDFxP+TzKqQJK0JksPNlQ/QSWYBiJQVKShd+4DJa+f68hyA0f0M7fR5nKyaSiQTlHwgatB4JXkzB+q8C12RJfNwr522Vr4hy7PjtgOgbAWZKs6SRASt+gfZ8bPBcQck83B/Jl/Fre3S8AGlarx5Kuazu33o2I4atUq1LYi27cUNEj0cE925VdBxxxWOttJZXFrvFN/+jBPYL4uJYFb2zCiIAAAAAElFTkSuQmCC') no-repeat;
 }
 #terminate {
     height: 13px;
@@ -1580,7 +1629,7 @@ PHPDebugger version 1.0
     display: inline-block;
     position: relative;
     margin: 1px 10px 1px 10px;
-    background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwYrNECrm4EAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAAwUlEQVQoz52SLQ7CQBCFvyaI4nYlciWSI3CEFkVQGAyOcBU0ClCARCKRHGFlN0HsuK4D0RRasWnKJOPel/fmJ/Ev/6ZnDQD89YzcL51iNc3R2ayC5HZkslx3Qs/97gcBEEBOh7jLfNGOh5RY8egQd7HiQcoG9HULPRZRwthagvdR4chapBUPQELVsZKAL8HUkBZApVVHN5FWuhoKzlEYg06HUaYwhuBcO55RGjbxWynANWdSWc5jte3+iCwHIPnn9z7J30SR7ayFNQAAAABJRU5ErkJggg==') no-repeat;
+    background:red url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwYrNECrm4EAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAAwUlEQVQoz52SLQ7CQBCFvyaI4nYlciWSI3CEFkVQGAyOcBU0ClCARCKRHGFlN0HsuK4D0RRasWnKJOPel/fmJ/Ev/6ZnDQD89YzcL51iNc3R2ayC5HZkslx3Qs/97gcBEEBOh7jLfNGOh5RY8egQd7HiQcoG9HULPRZRwthagvdR4chapBUPQELVsZKAL8HUkBZApVVHN5FWuhoKzlEYg06HUaYwhuBcO55RGjbxWynANWdSWc5jte3+iCwHIPnn9z7J30SR7ayFNQAAAABJRU5ErkJggg==') no-repeat;
 }
 #stepInto {
     height: 13px;
@@ -1588,7 +1637,7 @@ PHPDebugger version 1.0
     display: inline-block;
     position: relative;
     margin: 1px 10px 1px 10px;
-    background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAANCAYAAABPeYUaAAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwYtD6f61SMAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAA6ElEQVQoz2N8//r9fwYKAQuMcWy6JlYFmq4lDIIqyYQNOTZdk8Gr8jpWBdvaNRkUPz9nkDSswWkII8w72Fyi6JjMoGmRw7Ct3ZDBKvM6Ye9gU3RsuiaDpkkywTBhIqjizwfiAxbdBQhDfqCIYXMxVkN+fGdgCCqaCzXkPYNXJoS9ri+ZeO84FV1nWNYUDfEKFC9rimZwKrpOWph41d1nWNaWzcDw5zvDsrZsBq+6+/ijOHn+MQbBzxBF73kVGeYmWiHSSZMiigHY1LIwMDAw/Di/lOHaC4giQYljDAxIhqC7AJtaRmrkHQBYX2Q4HZvQSwAAAABJRU5ErkJggg==') no-repeat;
+    background: yellow url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAANCAYAAABPeYUaAAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwYtD6f61SMAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAA6ElEQVQoz2N8//r9fwYKAQuMcWy6JlYFmq4lDIIqyYQNOTZdk8Gr8jpWBdvaNRkUPz9nkDSswWkII8w72Fyi6JjMoGmRw7Ct3ZDBKvM6Ye9gU3RsuiaDpkkywTBhIqjizwfiAxbdBQhDfqCIYXMxVkN+fGdgCCqaCzXkPYNXJoS9ri+ZeO84FV1nWNYUDfEKFC9rimZwKrpOWph41d1nWNaWzcDw5zvDsrZsBq+6+/ijOHn+MQbBzxBF73kVGeYmWiHSSZMiigHY1LIwMDAw/Di/lOHaC4giQYljDAxIhqC7AJtaRmrkHQBYX2Q4HZvQSwAAAABJRU5ErkJggg==') no-repeat;
 }
 #stepOver {
     height: 13px;
@@ -1596,7 +1645,7 @@ PHPDebugger version 1.0
     display: inline-block;
     position: relative;
     margin: 1px 10px 1px 10px;
-    background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAANCAYAAABPeYUaAAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwYsOAZcQW0AAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABSklEQVQoz62TP0jDQBTGv5QMdSgYcEjGgEvHdsyYsW6Kg27SKeJki1PpEAShqJPYKTilHUS3dOyYbu1mhpZmERqIcIEOyRA4h9qaeCcK+uA43uPj9/7cO4GEhOKPJmYdMrMQTJ5A3nxGKO2okCsHkHbr30PIzII/slA9vMO2XGWEUTDG+PEMyXIBpdJiIWuAbjiIXkcYXJUZiHZ0A91wMOzuoVhS8hWRkFDHlCmN55RMbeqYMiUhYY5jypRMbUrjOaMpbGhpBLffgGZ43OFphge33wDSiD+TJAaQJqubY243016a5GKa4UFYP/HAVFFr+1zI8LaM/dNLoKh8BpMFnu9b0M8zkJ9sYKo4vrgGxC0gjdHrNDdJC79dqFrbR6/TZAAA+JXUH1xIy5WIlFRYJ1quoq9ti7ysycTGS/CxqbILZCC8uQn/8XfeAUbdtbmYIYl8AAAAAElFTkSuQmCC') no-repeat;
+    background: yellow url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAANCAYAAABPeYUaAAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwYsOAZcQW0AAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABSklEQVQoz62TP0jDQBTGv5QMdSgYcEjGgEvHdsyYsW6Kg27SKeJki1PpEAShqJPYKTilHUS3dOyYbu1mhpZmERqIcIEOyRA4h9qaeCcK+uA43uPj9/7cO4GEhOKPJmYdMrMQTJ5A3nxGKO2okCsHkHbr30PIzII/slA9vMO2XGWEUTDG+PEMyXIBpdJiIWuAbjiIXkcYXJUZiHZ0A91wMOzuoVhS8hWRkFDHlCmN55RMbeqYMiUhYY5jypRMbUrjOaMpbGhpBLffgGZ43OFphge33wDSiD+TJAaQJqubY243016a5GKa4UFYP/HAVFFr+1zI8LaM/dNLoKh8BpMFnu9b0M8zkJ9sYKo4vrgGxC0gjdHrNDdJC79dqFrbR6/TZAAA+JXUH1xIy5WIlFRYJ1quoq9ti7ysycTGS/CxqbILZCC8uQn/8XfeAUbdtbmYIYl8AAAAAElFTkSuQmCC') no-repeat;
 }
 #stepOut {
     height: 13px;
@@ -1604,7 +1653,7 @@ PHPDebugger version 1.0
     display: inline-block;
     position: relative;
     margin: 1px 10px 1px 10px;
-    background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAANCAYAAABPeYUaAAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwYsF62NfDQAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABAUlEQVQoz62Tv2vCQBTHP5GsDoJDV8f8C44ZM+Y/EOnSgoOCQ4YOxVE6BH9MoZMdM3TI6CLcJNzmLULGCg4p6HBgoB0SFH9gKvYtj7v3fR/ufe/OSNbJD3dG6RaxGFuIsXUfhB04j0OEfwwyi/q+ZI94NjlsVG2cpyGRb1FvKQCMa54kywAZ9XE9eV78FoSjZ+yWun4S+dnH9aao+QAVBQC43hS2ktDvYLfVXz3RqCjYN5wCiiEpkOos5+vw7RhQbGyqIU2yDNhddfs70TlIFwxsAjTfBZVNnN1IuUbQqJ+i9nFJawJoOWGxykSVBwE5xPFiPl5rOC/xAXlBa/zH3/kFlslu4rTXaTUAAAAASUVORK5CYII=') no-repeat;
+    background: yellow url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAANCAYAAABPeYUaAAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwYsF62NfDQAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABAUlEQVQoz62Tv2vCQBTHP5GsDoJDV8f8C44ZM+Y/EOnSgoOCQ4YOxVE6BH9MoZMdM3TI6CLcJNzmLULGCg4p6HBgoB0SFH9gKvYtj7v3fR/ufe/OSNbJD3dG6RaxGFuIsXUfhB04j0OEfwwyi/q+ZI94NjlsVG2cpyGRb1FvKQCMa54kywAZ9XE9eV78FoSjZ+yWun4S+dnH9aao+QAVBQC43hS2ktDvYLfVXz3RqCjYN5wCiiEpkOos5+vw7RhQbGyqIU2yDNhddfs70TlIFwxsAjTfBZVNnN1IuUbQqJ+i9nFJawJoOWGxykSVBwE5xPFiPl5rOC/xAXlBa/zH3/kFlslu4rTXaTUAAAAASUVORK5CYII=') no-repeat;
 }
 #output {
     height: 13px;
@@ -1613,7 +1662,7 @@ PHPDebugger version 1.0
     position: relative;
     margin: 1px 10px 1px 10px;
     visibility: visible;
-    background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLCQYlB4EnoCoAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABCklEQVQoz42Rv0oDQRCHv4MJbCCFgoUHvkBKXyGPEDufwUokhdFGokWwt7IRbISkTHmvcIUPcUKK3eJgp1g4i92Ld4gxWw2z329+8ye7vF81pcs59J0fVUjpcsZaHCwq3QQBD8Ddcv6vYDF7BDxCACMGgPFov8iIgQACChKTVw9rvCrqPK52+FopPjodCBA0Og1H0el5Nv1VXcNPPDQGHAhBMcnpZrlOJFi1aK1orXhVNm/zxGnbXnRaXE//nEchcm17ZpB+ggImIaaDx9gMaBfhQeD95bVfWiLQi4W48vzkmM1ndfBx89OczG5t001ePBVUX1UPWt1OesLMbm2zA4Puhk3n7LucxQLfZ4Norb3ftQMAAAAASUVORK5CYII=') no-repeat;
+    background: blue url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLCQYlB4EnoCoAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABCklEQVQoz42Rv0oDQRCHv4MJbCCFgoUHvkBKXyGPEDufwUokhdFGokWwt7IRbISkTHmvcIUPcUKK3eJgp1g4i92Ld4gxWw2z329+8ye7vF81pcs59J0fVUjpcsZaHCwq3QQBD8Ddcv6vYDF7BDxCACMGgPFov8iIgQACChKTVw9rvCrqPK52+FopPjodCBA0Og1H0el5Nv1VXcNPPDQGHAhBMcnpZrlOJFi1aK1orXhVNm/zxGnbXnRaXE//nEchcm17ZpB+ggImIaaDx9gMaBfhQeD95bVfWiLQi4W48vzkmM1ndfBx89OczG5t001ePBVUX1UPWt1OesLMbm2zA4Puhk3n7LucxQLfZ4Norb3ftQMAAAAASUVORK5CYII=') no-repeat;
 }
 #backView {
     height: 13px;
@@ -1622,27 +1671,28 @@ PHPDebugger version 1.0
     position: relative;
     margin: 1px 10px 1px 10px;
     visibility: visible;
-    background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAANCAYAAACgu+4kAAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwc3GnvIoSQAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABH0lEQVQoz5WToU4DQRCGvzZLspUn+wpIJLLyJDiQEBLMJZDAA1QgTlRUU1tXCY+A5BGoPHFiKkhukm4yiD3CNr3S9k8mu/l3Z+af2dme1GJ04HM6hBPP2f2S/9DvIj/KjNG4gUbZh36Xc15GURr2B3Abzi8Z+cQABTyqkdu8BTjP+WMV91KLSS22eMDMGjOrzNZfZuvKzCSxJlnN3p4wqcVclD3kYlJBWEJQCACrJLNvVwXnwWVoSErQbwUEwgq0+ZMa2JYfBuAV1aSJo7EwvzsFmpj515y2/WjNKbim5SN66Ry8P2dcTRexDGBWXDNwHSoc5GPZfoW8FGZFxs30FYCBi9xRc3BZCrPiNoZ2/rg5SIPMi+GO0030dv2FQ/EDM7CYPt7DsBMAAAAASUVORK5CYII=') no-repeat;
+    background: yellow url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAANCAYAAACgu+4kAAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwc3GnvIoSQAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABH0lEQVQoz5WToU4DQRCGvzZLspUn+wpIJLLyJDiQEBLMJZDAA1QgTlRUU1tXCY+A5BGoPHFiKkhukm4yiD3CNr3S9k8mu/l3Z+af2dme1GJ04HM6hBPP2f2S/9DvIj/KjNG4gUbZh36Xc15GURr2B3Abzi8Z+cQABTyqkdu8BTjP+WMV91KLSS22eMDMGjOrzNZfZuvKzCSxJlnN3p4wqcVclD3kYlJBWEJQCACrJLNvVwXnwWVoSErQbwUEwgq0+ZMa2JYfBuAV1aSJo7EwvzsFmpj515y2/WjNKbim5SN66Ry8P2dcTRexDGBWXDNwHSoc5GPZfoW8FGZFxs30FYCBi9xRc3BZCrPiNoZ2/rg5SIPMi+GO0030dv2FQ/EDM7CYPt7DsBMAAAAASUVORK5CYII=') no-repeat;
 }
  
 .normal {
     background: transparent;
 }
 .selected {
-    background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwYQB8PJFa8AAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABNElEQVQoz4WPsUsCYRjGf8YNNzTo7vJBDgUNHTSc4KBbro6ORy5KU5tN0VhjS+FfEDXaEFxbY9cQuQSfQ3BCwyck3At9YIOieZo98MAL7/vjed6MMWYMcH6aQxUqePsBaqvKOm0A6PcQpaDoh4QPdcL7E8xQr4EsmC9BLKg8NA8hm72kc+Xx9Hi2GhIryMgAIHZibw9aDZDRBZ3rIs9RZ7neTDK3C1RKUC336L0cc3tTR/fDFGTByLLdTagegMp36d7VAHAWQuSPzy0Mh5BM987vxSoojiGKQBUCgkYzBQGSzOdkBNEr4Pj45QBvtza7XkhCILGg+6A1FEttPL+F67oL6RPIcZFveJse72wHBEdtctncyhcz5tOM40GM1iHxR4jnN1F5L1U8DRkzFhGwTGo4/KsfXjWDCQ6TmRMAAAAASUVORK5CYII=') no-repeat;
+    background: yellow url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwYQB8PJFa8AAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABNElEQVQoz4WPsUsCYRjGf8YNNzTo7vJBDgUNHTSc4KBbro6ORy5KU5tN0VhjS+FfEDXaEFxbY9cQuQSfQ3BCwyck3At9YIOieZo98MAL7/vjed6MMWYMcH6aQxUqePsBaqvKOm0A6PcQpaDoh4QPdcL7E8xQr4EsmC9BLKg8NA8hm72kc+Xx9Hi2GhIryMgAIHZibw9aDZDRBZ3rIs9RZ7neTDK3C1RKUC336L0cc3tTR/fDFGTByLLdTagegMp36d7VAHAWQuSPzy0Mh5BM987vxSoojiGKQBUCgkYzBQGSzOdkBNEr4Pj45QBvtza7XkhCILGg+6A1FEttPL+F67oL6RPIcZFveJse72wHBEdtctncyhcz5tOM40GM1iHxR4jnN1F5L1U8DRkzFhGwTGo4/KsfXjWDCQ6TmRMAAAAASUVORK5CYII=') no-repeat;
 }
 .breakpointSet {
-    background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwYOGJqAJ4UAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAA+0lEQVQoz5XSMUvDUBSG4bcXhyM4pFsudBE6GEfB5UKGZLOjq5uCIE7iPyjdxEXQoZC/4OgipIOQbqZDMW6OcbsZBO8Q0MEWkWJJ3vl7lsPpWGu/WOQqy8s44X2S8ukcmyL4Uczu6QnidZczOktUPqY8HB/Bh2OlLWEwTtAHg19kXwvuQwM1/7cBh08Z3Z0ABZCena8HAPViB6hymlHNcppUzXLKaYaq5gVtquYFitq1QtQO5fWDVsbrBygdGqTnNwLS89GhQSFCfJc0QvHNLYj8nFyHBjMcrQVmOEJH8d+PALD5M/nVNW+TFJwDEbajmODiEr2/t/pGbfoGcP1aToLr9OAAAAAASUVORK5CYII=') no-repeat;
+    background: red url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwYOGJqAJ4UAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAA+0lEQVQoz5XSMUvDUBSG4bcXhyM4pFsudBE6GEfB5UKGZLOjq5uCIE7iPyjdxEXQoZC/4OgipIOQbqZDMW6OcbsZBO8Q0MEWkWJJ3vl7lsPpWGu/WOQqy8s44X2S8ukcmyL4Uczu6QnidZczOktUPqY8HB/Bh2OlLWEwTtAHg19kXwvuQwM1/7cBh08Z3Z0ABZCena8HAPViB6hymlHNcppUzXLKaYaq5gVtquYFitq1QtQO5fWDVsbrBygdGqTnNwLS89GhQSFCfJc0QvHNLYj8nFyHBjMcrQVmOEJH8d+PALD5M/nVNW+TFJwDEbajmODiEr2/t/pGbfoGcP1aToLr9OAAAAAASUVORK5CYII=') no-repeat;
 }
 
 #navigationBar {
     display: block;
     position: fixed;
-    top: 0;
-    left: 0;
+    top: 0px;
+    left: 0px;
     height: 20px;
     width: 100%;
     z-index: 100;
+    background: #efefef;
 }
 #code {
     display: block;
@@ -1671,18 +1721,21 @@ PHPDebugger version 1.0
     margin-right: 5px;
     float: right;
     color: black;
+    
 }
 .currentlineIndicator {
     display: inline-block;
     position: relative;
     width: 13px;
     height: 13px;
+    float: left;
 }
 .breakpointIndicator {
     display: inline-block;
     position: relative;
     width: 13px;
     height: 13px;
+    float: left;
 }
 </style>
 
@@ -1705,7 +1758,7 @@ function setServerID(port) {
 function createRequestObject() {
     var req;
     var browser = navigator.appName;
-    if (browser ==" Microsoft Internet Explorer") {
+    if (browser == "Microsoft Internet Explorer") {
 	req = new ActiveXObject("Microsoft.XMLHTTP");
     } else {
 	req = new XMLHttpRequest();
@@ -1732,10 +1785,33 @@ function doCmd(text) {
 
     case 'unsetBreakpoint':	unsetBreakpointCB(text); break;
 
+    case 'term':
     case 'end':			endCB(text); break;
 
     default: alert("illegal cmd: " + text.cmd); break;
     }
+}
+function hasClassName(element, className) {
+    var elementClassName = element.className;
+    if (elementClassName.length == 0) return false;
+    if (elementClassName == className ||
+        elementClassName.match(new RegExp("(^|\\s)" + className + "(\\s|$)")))
+      return true;
+    return false;
+}
+if (document.getElementsByClassName == undefined) {
+  document.getElementsByClassName = function(className) {
+	var children = document.body.getElementsByTagName('*');
+	var elements = [], child;
+	for (var i = 0, length = children.length; i < length; i++) {
+	  child = children[i];
+	  
+	  if (hasClassName(child, className)) {
+		elements.push(child);
+	  }
+	}
+	return elements;
+  }
 }
 function sendCmd(cmd) {
     var url = debuggerURL;
@@ -1755,7 +1831,7 @@ function sendCmd(cmd) {
     }
     http.send(data);
 }
-function startServer() {
+function startServer() { 
     var url = debuggerURL;
 	data = "<?php echo pdb_JSDebuggerClient::getPostData(); ?>";
 	method = "<?php echo $_SERVER['REQUEST_METHOD']; ?>";
@@ -1813,6 +1889,8 @@ function showOutputCB(cmd) {
 
 function doShowStatusCB(cmd) {
     lines = document.getElementsByClassName("currentlineIndicator");
+     if (lines.length == 0) return; // no lines to mark
+
     for (i=0; i<lines.length; i++) {
 	line = lines[i];
 	line.className = "currentlineIndicator normal";
@@ -1821,14 +1899,15 @@ function doShowStatusCB(cmd) {
 	breakpoint = cmd.breakpoints[i];
 	document.getElementById(breakpoint).lastChild.className="breakpointIndicator breakpointSet";
     }
-
     currentLine = document.getElementById("bp_"+(cmd.line)).firstChild;
+
 	currentLine.className="currentlineIndicator selected";
-	code = document.getElementById("code");
+
+	codeDiv = document.getElementById("code");
 	codeLine = currentLine.parentNode;
     scrollBarHeight = 30;
-	if ((codeLine.offsetTop - document.body.scrollTop + currentLine.clientHeight + scrollBarHeight + code.clientTop > document.body.clientHeight) ||
-		(codeLine.offsetTop - document.body.scrollTop + code.clientTop  <= 0)) {
+	if ((codeLine.offsetTop - document.body.scrollTop + currentLine.clientHeight + scrollBarHeight + codeDiv.clientTop > document.body.clientHeight) ||
+		(codeLine.offsetTop - document.body.scrollTop + codeDiv.clientTop  <= 0)) {
 	  currentLine.scrollIntoView(false);
 	}
 }
@@ -1866,9 +1945,7 @@ function end(el, event) {
     return false;
 }
 function endCB(cmd) {
-    setServerID(cmd.serverID);
-    document.getElementById("code").innerHTML = "";
-    document.title = "PDB";
+    document.body.innerHTML = cmd.output;
 }
 function go(el, event) {
     sendCmd("cmd=go");
@@ -1890,12 +1967,17 @@ function output(el, event) {
 function mousemove(el, event) {
 }
 function trim(str) {
-    return str.replace(/^\s*/, "").replace(/\s*$/, "");
+    nbspChar = String.fromCharCode(160);
+    return str.replace(/^\s*/, "").replace(/\s*$/, "").replace(nbspChar,"");
+}
+function getEventSource(event) {
+  if (event.target != undefined) return event.target;
+  return event.srcElement;
 }
 function mousedown(el, event) {
-    if (event.target.parentNode.className=="breakpoint") return true;
-    if (event.target && event.target.firstChild && event.target.firstChild.data) {
-	switchView(trim(event.target.firstChild.data));
+    if (getEventSource(event).parentNode.className=="breakpoint") return true;
+    if (getEventSource(event)&& getEventSource(event).firstChild && getEventSource(event).firstChild.data) {
+	switchView(trim(getEventSource(event).firstChild.data));
     }
    return false;
 }
@@ -1936,6 +2018,7 @@ Please enable JavaScript in your browser.
   header("Content-Encoding: identity");
   $dbg = new pdb_JSDebugger((int)$serverID);
   $dbg->handleRequests();
+  $dbg->shutdown();
   pdb_Logger::debug("SERVER TERMINATED!");
   exit(0);
 } else {

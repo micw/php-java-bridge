@@ -14,7 +14,6 @@
 #define EXTENSION @EXTENSION@
 #if EXTENSION == JAVA
 #define java_snprintf ap_php_snprintf 
-#define DEFAULT_WRAPPER DEFAULT_JAVA_WRAPPER
 #define DEFAULT_PORT DEFAULT_JAVA_PORT /* init_cfg.h overrides */
 #define N_SARGS N_JAVA_SARGS	/* # of server args for exec */
 #define N_SENV N_JAVA_SENV		/* # of server env entries */
@@ -24,7 +23,6 @@
 #else
 #define mono_snprintf ap_php_snprintf 
 #define DEFAULT_PORT DEFAULT_MONO_PORT
-#define DEFAULT_WRAPPER DEFAULT_MONO_WRAPPER
 #define N_SARGS N_MONO_SARGS
 #define N_SENV N_MONO_SENV
 #define EXT mono
