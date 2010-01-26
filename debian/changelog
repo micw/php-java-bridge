@@ -1,3 +1,17 @@
+php-java-bridge (5.5.5-1) unstable; urgency=low
+
+  * New upstream version.
+  * Improved README.Debian.
+
+ -- Andre Felipe Machado <andremachado@techforce.com.br>  Fri, 26 Jan 2009 10:40:12 -0200
+
+
+php-java-bridge (5.5.4.1-1) unstable; urgency=low
+
+  * New upstream version.
+
+ -- Andre Felipe Machado <andremachado@techforce.com.br>  Fri, 09 Dec 2009 14:15:41 -0300
+
 php-java-bridge (5.5.1-1) unstable; urgency=low
 
   * New upstream version.

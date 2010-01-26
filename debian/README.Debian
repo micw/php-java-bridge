@@ -142,5 +142,10 @@ $ cvs-buildpackage  -rfakeroot -uc -us -R. -W/home/andremachado/compilation_tmp
 The generated files will result at the specified temporary scratchpad working 
 area.
 
+3. Different port on Debian systems
+The Tomcat php-java-bridge deployment could be tested at 
+http://localhost:8180/JavaBridge
+with or without SE Linux packaged rules installed.
+The port is configured 8180 in order to avoid conflict with Apache.
 
- -- Andre Felipe Machado <andremachado@techforce.com.br>  Thu, 13 Aug 2009 15:26:12 -0300
+ -- Andre Felipe Machado <andremachado@techforce.com.br>  Tue, 26 Jan 2010 15:47:03 -0300
