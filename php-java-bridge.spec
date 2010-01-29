@@ -295,6 +295,7 @@ fi
 
 %files mono -f filelist-mono
 %defattr(-,root,root)
+%attr(755,root,root) %{_libdir}/php/modules/MonoBridge.exe
 %doc README.MONO+NET COPYING CREDITS NEWS tests.mono+net
 
 %files devel -f filelist-devel

@@ -23,7 +23,7 @@
 <td WIDTH="25%"><a href="settings.php">Show</a></td>
 
 <td WIDTH="25%"><a href="source.php?source=settings.php">Source</a></td>
-<td WIDTH="25%"><a href="debug.php?source=settings.php">Debug</a></td>
+<td WIDTH="25%"><a href="debug.php?source=settings.php">Debug (beta)</a></td>
 </tr>
 
 <tr/>
@@ -35,7 +35,7 @@
 <td WIDTH="25%"><a href="hello.php">Execute</a></td>
 
 <td WIDTH="25%"><a href="source.php?source=hello.php">Source</a></td>
-<td WIDTH="25%"><a href="debug.php?source=hello.php">Debug</a></td>
+<td WIDTH="25%"><a href="debug.php?source=hello.php">Debug (beta)</a></td>
 </tr>
 
 <tr VALIGN=TOP>
@@ -44,7 +44,7 @@
 <td WIDTH="25%"><a href="sessionSharing.php">Execute</a></td>
 
 <td WIDTH="25%"><a href="source.php?source=sessionSharing.php">Source</a></td>
-<td WIDTH="25%"><a href="debug.php?source=sessionSharing.php">Debug</a></td>
+<td WIDTH="25%"><a href="debug.php?source=sessionSharing.php">Debug (beta)</a></td>
 </tr>
 
 <tr VALIGN=TOP>
@@ -53,7 +53,7 @@
 <td WIDTH="25%"><a href="numberguess.php">Execute</a></td>
 
 <td WIDTH="25%"><a href="source.php?source=numberguess.php">Source</a></td>
-<td WIDTH="25%"><a href="debug.php?source=numberguess.php">Debug</a></td>
+<td WIDTH="25%"><a href="debug.php?source=numberguess.php">Debug (beta)</a></td>
 </tr>
 
 <tr VALIGN=TOP>
@@ -62,7 +62,7 @@
 <td WIDTH="25%"><a href="excel.php">Execute</a></td>
 
 <td WIDTH="25%"><a href="source.php?source=excel.php">Source</a></td>
-<td WIDTH="25%"><a href="debug.php?source=excel.php">Debug</a></td>
+<td WIDTH="25%"><a href="debug.php?source=excel.php">Debug (beta)</a></td>
 </tr>
 
 <tr VALIGN=TOP>
@@ -71,7 +71,7 @@
 <td WIDTH="25%"><a href="report.php">Execute</a></td>
 
 <td WIDTH="25%"><a href="source.php?source=report.php">Source</a></td>
-<td WIDTH="25%"><a href="debug.php?source=report.php">Debug</a></td>
+<td WIDTH="25%"><a href="debug.php?source=report.php">Debug (beta)</a></td>
 </tr>
 
 <tr VALIGN=TOP>
@@ -98,7 +98,7 @@
 <td WIDTH="25%"><a href="documentClient.php">Execute</a></td>
 
 <td WIDTH="25%"><a href="source.php?source=documentClient.php">Source</a></td>
-<td WIDTH="25%"><a href="debug.php?source=documentClient.php">Debug</a></td>
+<td WIDTH="25%"><a href="debug.php?source=documentClient.php">Debug (beta)</a></td>
 </tr>
 
 </table>
