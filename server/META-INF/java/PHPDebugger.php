@@ -1,7 +1,7 @@
 <?php /*-*- mode: php; tab-width:4 -*-*/
 
   /**
-	 PHPDebugger.inc version 1.0alpha -- A pure PHP debugger.
+	 PHPDebugger.inc version 1.0beta -- A pure PHP debugger.
 
 	 Copyright (C) 2009 Jost Boekemeier
 
@@ -40,10 +40,13 @@
 	 exception statement from your version. */
 
 define ("PDB_DEBUG", 0);
-define ("PDB_DISABLE_JAVA", false);
 ini_set("max_execution_time", 40);
 
+$pdb_version = phpversion();
+if ((version_compare("5.3.0", $pdb_version, ">")))
+  trigger_error("<br><strong>PHP ${pdb_version} too old.</strong><br>\nPlease set the path to a PHP >= 5.3 executable, see php_exec in the WEB-INF/web.xml", E_USER_ERROR);
 
+  
   /**
    * Usage:
    * 
@@ -59,11 +62,11 @@ ini_set("max_execution_time", 40);
    */
 
 
-/** Use the PHP/Java Bridge, if it is available */
-if (!PDB_DISABLE_JAVA) @include_once("Java.inc");
-
 /** Use our own json coder, if no native implementation is available */
 if (!function_exists("json_encode")) {
+  /**
+   * @access private
+   */
   function json_decode($v) {
 	$length = strlen($v);
 	$inDquote = false;
@@ -107,6 +110,9 @@ if (!function_exists("json_encode")) {
 	}
 	return (object)$decoded;
   }
+  /**
+   * @access private
+   */
   function json_encode($array) {
 	$first = true;
 	$encoded = "{";
@@ -152,6 +158,7 @@ if (!function_exists("json_encode")) {
 }
 /**
  * a simple logger
+ * @access private
  */
 class pdb_Logger {
   const FATAL = 1;
@@ -199,33 +206,41 @@ class pdb_Logger {
   }
 }
 
+  /**
+   * @access private
+   */
 interface pdb_Queue {
 
   /** 
    * Read a string from the queue
    * @return string a json encoded string of values
+   * @access private
    */
   public function read();
 
   /**
    * Write a string to the queue
    * @param string a json encoded string of values or TRUE
+   * @access private
    */
   public function write($val);
 
   /**
    * Set the script output before server shutdown
+   * @access private
    */
   public function setOutput($output);
 
   /**
    * Get the script output
+   * @access private
    */
   public function getOutput();
 
   /**
    * Mark the channel as dead. If marked, read will return boolean
    * TRUE, write will do nothing.
+   * @access private
    */
   public function shutdown();
 }
@@ -234,7 +249,7 @@ interface pdb_Queue {
  * This class represents the debugger front end connection.  It
  * communicates with the debugger back end using a shared-memory queue.
  * It is slow, but it does not require any special library.
- * @see pdb_JavaClientConnection 
+ * @access private
  */
 class pdb_PollingClientConnection implements pdb_Queue {
   protected $id;
@@ -245,6 +260,7 @@ class pdb_PollingClientConnection implements pdb_Queue {
 
   /**
    * Create a new communication using a unique id
+   * @access private
    */
   public function pdb_PollingClientConnection($id) {
     $this->id = $id;
@@ -285,6 +301,7 @@ class pdb_PollingClientConnection implements pdb_Queue {
 
   /**
    * read a new value from the read queue
+   * @access private
    */
   public function read() {
     $val = null;
@@ -299,18 +316,21 @@ class pdb_PollingClientConnection implements pdb_Queue {
   }
   /**
    * write a new value to the write queue
+   * @access private
    */
   public function write($val) {
 	$this->send($val);
   }
   /**
    * Set the script output
+   * @access private
    */
   public function setOutput($output) {
 	$this->output = $output;
   }
   /**
    * Get the script output
+   * @access private
    */
   public function getOutput() {
 	return $_SESSION[$this->chanTrm];
@@ -318,76 +338,14 @@ class pdb_PollingClientConnection implements pdb_Queue {
 
   /**
    * shut down the communication channel
+   * @access private
    */
   public function shutdown() {}
-}
-
-/**
- * This class represents the debugger front end connection.  It
- * communicates with the debugger back end using a LinkedBlockingQueue.
- * Requires the PHP/Java Bridge library.
- * @see pdb_PollingClientConnection
- */
-class pdb_JavaClientConnection implements pdb_Queue {
-  protected $session;
-  protected $id;
-  protected $queue;
-  protected $role, $to;
-  protected $chanTrm; // "back end terminated" flag
-  protected $output;
-
-  public function pdb_JavaClientConnection($id) {
-	$this->session = java_session();
-	$this->id = $id;
-	$this->output = "<missing>";
-
-	$this->init();
-  }
-  /**
-   * Set the script output
-   */
-  public function setOutput($output) {
-	$this->output = $output;
-  }
-  /**
-   * Get the script output
-   */
-  public function getOutput() {
-    $chan = "pdb_{$this->role}{$this->id}";
-	$queue = $this->session->get($chan);
-	return java_values($queue->getResult());
-  }
-
-  protected function init() {
-    $this->role = "client";
-    $this->to   = "server";
-  }
-  /**{@inheritDoc}*/
-  public function read() {
-    $chan = "pdb_{$this->role}{$this->id}";
-	$queue = $this->session->get($chan);
-	$val = java_values($queue->remove());
-	$val = $val === null ? true : (string)$val;
-	pdb_Logger::log("${this} read: ${val}");
-	return $val;
-  }
-  /**{@inheritDoc}*/
-  public function write($val) {
-    $chan = "pdb_{$this->to}{$this->id}";
-	$queue = $this->session->get($chan);
-	$queue->add($val);
-	pdb_Logger::log("${this} wrote: ${val}");
-  }
-  /**{@inheritDoc}*/
-  public function shutdown() {}
-
-  public function __toString() {
-	return "java {$this->role} queue for {$this->id}";
-  }
 }
 
 /**
  * The PHP parser
+ * @access private
  */
 class pdb_Parser {
   const BLOCK = 1;
@@ -404,6 +362,7 @@ class pdb_Parser {
    * Create a new PHP parser
    * @param string the script name
    * @param string the script content
+   * @access private
    */
   public function pdb_Parser($scriptName, $content) {
     $this->scriptName = $scriptName;
@@ -763,6 +722,7 @@ class pdb_Parser {
   /**
    * parse the given PHP script
    * @return the parsed PHP script
+   * @access private
    */
   public function parseScript() {
     do {
@@ -776,6 +736,7 @@ class pdb_Parser {
 /**
  * This structure represents the debugger front-end.  It is used by the
  * JavaScript code to communicate with the debugger back end.
+ * @access private
  */
 class pdb_JSDebuggerClient {
   private static function getDebuggerFilename() {
@@ -815,6 +776,7 @@ class pdb_JSDebuggerClient {
    * Example: "/JavaBridge/java/PHPDebugger.php?source=settings.php"
    *
    * @return The debugger URL.
+   * @access private
    */
   public static function getDebuggerURL() {
 	$path = realpath(self::getDebuggerFilename());
@@ -854,6 +816,7 @@ class pdb_JSDebuggerClient {
   /**
    * Get the server's uniqe session ID
    * @return a uniqe session ID
+   * @access private
    */ 
   public static function getServerID() {
 	// TODO: allow more than one debug session
@@ -861,16 +824,14 @@ class pdb_JSDebuggerClient {
   }
   
   private static function getConnection($id) {
-	if (!PDB_DISABLE_JAVA && function_exists("java_get_base") && java_server_name()) 
-	  return new pdb_JavaClientConnection($id);
-	else
-	  return new pdb_PollingClientConnection($id);
+	return new pdb_PollingClientConnection($id);
   }
   /**
    * Pass the command and arguments to the debug back end and
    * output the response to JavaScript.
    *
    * @arg array The command arguments
+   * @access private
    */
   public static function handleRequest($vars) {
 	$msg = (object)$vars;
@@ -895,6 +856,7 @@ class pdb_JSDebuggerClient {
  * breakpoints for this file.
  *
  * View will be discarded when go, step, end is invoked.
+ * @access private
  */
 class pdb_View {
   /** The current script name */
@@ -962,6 +924,7 @@ class pdb_View {
 }
 /**
  * The current view. Used to show the contents of a variable
+ * @access private
  */
 class pdb_VariableView extends pdb_View {
   /**
@@ -978,7 +941,7 @@ class pdb_VariableView extends pdb_View {
    * {@inheritDoc}
    */
   public function getHtmlScriptSource() {
-	if (!PDB_DISABLE_JAVA && function_exists("java_get_base") && java_server_name() && 
+	if (function_exists("java_get_base") && java_server_name() && 
 		is_object($this->value) && ($this->value instanceof java_JavaType)) 
 	  return (highlight_string(java_cast($this->value, "S"), true));
 	else
@@ -988,6 +951,7 @@ class pdb_VariableView extends pdb_View {
 /**
  * The current execution frame. Contains the current run-time script
  * name along with its state
+ * @access private
  */
 class pdb_Environment extends pdb_View {
   /** bool true if a dynamic breakpoint should be inserted at the next line, false otherwise */
@@ -1021,6 +985,7 @@ class pdb_Environment extends pdb_View {
 }
 /**
  * Represents a breakpoint
+ * @access private
  */
 class pdb_Breakpoint {
   /** The script name */
@@ -1056,6 +1021,7 @@ class pdb_Breakpoint {
  * The current debug session. Contains the current environment stack,
  * script output and all breakpoints set by the client.  An optional
  * view is set by the switchView command.
+ * @access private
  */
 final class pdb_Session {
   /** The collection of breakpoints */
@@ -1184,7 +1150,7 @@ final class pdb_Session {
  * This class represents the debugger back end connection.  It
  * communicates with the debugger front end using a shared-memory queue.
  * It is slow, but it does not require any special library.
- * @see pdb_JavaServerConnection
+ * @access private
  */
 class pdb_PollingServerConnection extends pdb_PollingClientConnection {
   protected function init() {
@@ -1242,46 +1208,11 @@ class pdb_PollingServerConnection extends pdb_PollingClientConnection {
     session_write_close();
   }
 }    
-/**
- * This class represents the debugger back end connection.  It
- * communicates with the debugger front end using a LinkedBlockingQueue.
- * Requires the PHP/Java Bridge library.
- * @see pdb_PollingServerConnection
- */
-class pdb_JavaServerConnection extends pdb_JavaClientConnection {
-  public function pdb_JavaServerConnection($id) {
-	parent::pdb_JavaClientConnection($id);
-
-	$queue = new java("php.java.bridge.BlockingQueue");
-    $chan = "pdb_{$this->role}{$this->id}";
-	$old = $this->session->get($chan);
-	if (!java_is_null($old) && java_is_false($old->isDestroyed())) $old->shutdown("");
-	$this->session->put($chan, $queue);
-
-	$queue = new java("php.java.bridge.BlockingQueue");
-    $chan = "pdb_{$this->to}{$this->id}";
-	$old = $this->session->get($chan);
-	if (!java_is_null($old) && java_is_false($old->isDestroyed())) $old->shutdown("");
-	$this->session->put($chan, $queue);
-  }
-  protected function init() {
-    $this->role = "server";
-    $this->to   = "client";
-  }
-  public function shutdown() {
-    $chan = "pdb_{$this->role}{$this->id}";
-	$queue = $this->session->get($chan);
-	if (!java_is_null($queue)) $queue->shutdown("");
-
-    $chan = "pdb_{$this->to}{$this->id}";
-	$queue = $this->session->get($chan);
-	if (!java_is_null($queue)) $queue->shutdown($this->output);
-  }
-}
 
 /**
  * The java script debugger server daemon. Contains a debug session
  * and handles debug requests from the client.
+ * @access private
  */
 class pdb_JSDebugger {
   /** The pdb_Session */
@@ -1298,10 +1229,7 @@ class pdb_JSDebugger {
 
 
   private function getConnection($id) {
-	if (!PDB_DISABLE_JAVA && function_exists("java_get_base") && java_server_name()) 
-	  return new pdb_JavaServerConnection($id);
-	else
-	  return new pdb_PollingServerConnection($id);
+	return new pdb_PollingServerConnection($id);
   }
 
   /**
@@ -1473,6 +1401,9 @@ class pdb_JSDebugger {
     return new pdb_Environment($scriptName, $stepNext);
   }
 
+  /**
+   * @access private
+   */
   protected function resolveIncludePath($scriptName) {
     if (file_exists($scriptName)) return realpath($scriptName);
     $paths = explode(PATH_SEPARATOR, get_include_path());
@@ -1548,6 +1479,7 @@ class pdb_JSDebugger {
 
 /**
  * Convenience function called by the executor
+ * @access private
  */
 function pdb_getDefinedVars($vars1, $vars2) {
   if(isset($vars2)) $vars1['pbd_This'] = $vars2;
@@ -1559,6 +1491,7 @@ function pdb_getDefinedVars($vars1, $vars2) {
 
 /**
  * Convenience function called by the executor
+ * @access private
  */
 function pdb_startCall($scriptName) {
   global $dbg;
@@ -1567,6 +1500,7 @@ function pdb_startCall($scriptName) {
 
 /**
  * Convenience function called by the executor
+ * @access private
  */
 function pdb_startInclude($scriptName) {
   global $dbg;
@@ -1576,6 +1510,7 @@ function pdb_startInclude($scriptName) {
 
 /**
  * Convenience function called by the executor
+ * @access private
  */
 function pdb_endInclude() {
   global $dbg;
@@ -1584,6 +1519,7 @@ function pdb_endInclude() {
 
 /**
  * Convenience function called by the executor
+ * @access private
  */
 function pdb_step($scriptName, $line, $vars) {
   global $dbg;
@@ -1600,8 +1536,6 @@ if (PDB_DEBUG==2) {
 if (!isset($_SERVER['HTTP_XPDB_DEBUGGER'])) {
 
     session_start();
-	if (!PDB_DISABLE_JAVA && function_exists("java_get_base") && java_server_name()) java_session();
-
     header("Expires: Sat, 1 Jan 2005 00:00:00 GMT");
     header("Last-Modified: ".gmdate( "D, d M Y H:i:s")." GMT");
     header("Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0");

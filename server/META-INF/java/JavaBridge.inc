@@ -269,7 +269,13 @@ if(!function_exists("java_get_base")) {
   function java_istrue($value) { return  (boolean)(java_values ($value)); }
 
   /**
-   * Checks whether a value is true or not.
+   * Checks whether a value is not NULL, 0, "" or false. Note that if
+   * you want to check if a value is boolean true, use the following
+   * test: java_values($value)===true.
+   * 
+   * java_is_true(new java.lang.String("12")) => true
+   * java_is_true(new java.lang.String("") => false
+   * java_is_true(1==1) => true
    *
    * Example: <code> java_is_true(java("java.lang.System")->getProperty("foo")) </code>
    *
@@ -287,7 +293,13 @@ if(!function_exists("java_get_base")) {
   function java_isfalse($value) { return !(java_values ($value)); }
 
   /**
-   * Checks whether a value is false or not.
+   * Checks whether a value is NULL, 0, "" or false. Note that if
+   * you want to check if a value is boolean false, use the following
+   * test: java_values($value)===false.
+   * 
+   * java_is_false(new java.lang.String("12")) => false
+   * java_is_false(new java.lang.String("") => true
+   * java_is_false(1==1) => false
    *
    * Example: <code> java_is_false(java("java.lang.System")->getProperty("foo")) </code>
    *

@@ -1,7 +1,7 @@
 <?php /*-*- mode: php; tab-width:4 -*-*/
 
 /*
- * dummy.php version 1.0alpha -- A PHP debugger.
+ * dummy.php version 1.0beta -- A PHP debugger.
  *
  * Copyright (C) 2009 Jost Boekemeier.
  *
@@ -36,17 +36,12 @@ define ("PDB_DEBUG", 0);
    * 
    * Example configuration for eclipse:
    *
-   * 1. Copy this file to /tmp/phpdebugger.php
+   * 1. Copy this file to your HTTP server document root.
    *
    * 2. In the eclipse preferences/php/debug/installed debugger select
    *  "ZendDebugger". Click configure. In the Zend Debugger Settings
-   *  dialog type "/tmp/phpdebugger.php" into the "Dummy File Name"
+   *  dialog type "dummy.php" into the "Dummy File Name"
    *  box.
-   *
-   * Or:
-   * 
-   * include() this file in the PHP script you want to debug and
-   * request your PHP script from the debugger.
    *
    * 3. Debug your PHP scripts as usual. 
    *
@@ -54,6 +49,7 @@ define ("PDB_DEBUG", 0);
 
 /**
  * The PHP parser
+ * @access private
  */
 class pdb_Parser {
   const BLOCK = 1;
@@ -70,6 +66,7 @@ class pdb_Parser {
    * Create a new PHP parser
    * @param string the script name
    * @param string the script content
+   * @access private
    */
   public function pdb_Parser($scriptName, $content) {
     $this->scriptName = $scriptName;
@@ -429,6 +426,7 @@ class pdb_Parser {
   /**
    * parse the given PHP script
    * @return the parsed PHP script
+   * @access private
    */
   public function parseScript() {
     do {
@@ -439,6 +437,9 @@ class pdb_Parser {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_Logger {
   const FATAL = 1;
   const INFO = 2;
@@ -485,6 +486,9 @@ class pdb_Logger {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_Environment {
   public $filename, $stepNext;
   public $vars, $line;
@@ -501,6 +505,9 @@ class pdb_Environment {
   }
 }
 
+/**
+ * @access private
+ */
 abstract class pdb_Message {
   public $session;
 
@@ -616,10 +623,16 @@ abstract class pdb_Message {
     }
   }
 }
+/**
+ * @access private
+ */
 abstract class pdb_MessageRequest extends pdb_Message {
   public abstract function ack();
 }
 
+/**
+ * @access private
+ */
 class pdb_DebugSessionStart extends pdb_Message {
   const TYPE = 2005;
 
@@ -695,6 +708,9 @@ class pdb_DebugSessionStart extends pdb_Message {
 }
 
 
+/**
+ * @access private
+ */
 class pdb_HeaderOutputNotification extends pdb_Message {
   const TYPE = 2008;
   private $out;
@@ -727,6 +743,9 @@ class pdb_HeaderOutputNotification extends pdb_Message {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_OutputNotification extends pdb_HeaderOutputNotification {
   const TYPE = 2004;
 
@@ -741,6 +760,9 @@ class pdb_OutputNotification extends pdb_HeaderOutputNotification {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_DebugScriptEndedNotification extends pdb_Message {
   const TYPE = 2002;
 
@@ -762,6 +784,9 @@ class pdb_DebugScriptEndedNotification extends pdb_Message {
 }
 
 
+/**
+ * @access private
+ */
 class pdb_ReadyNotification extends pdb_Message {
   const TYPE = 2003;
   
@@ -787,6 +812,9 @@ class pdb_ReadyNotification extends pdb_Message {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_SetProtocolRequest extends pdb_MessageRequest {
   const TYPE = 10000;
   public $id;
@@ -810,6 +838,9 @@ class pdb_SetProtocolRequest extends pdb_MessageRequest {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_SetProtocolResponse extends pdb_Message {
   const TYPE = 11000;
   private $req;
@@ -835,6 +866,9 @@ class pdb_SetProtocolResponse extends pdb_Message {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_StartRequest extends pdb_MessageRequest {
   const TYPE = 1;
   public $id;
@@ -858,6 +892,9 @@ class pdb_StartRequest extends pdb_MessageRequest {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_StartResponse extends pdb_Message {
   const TYPE = 1001;
   private $req;
@@ -882,6 +919,9 @@ class pdb_StartResponse extends pdb_Message {
     return "pdb_StartResponse: ";
   }
 }
+/**
+ * @access private
+ */
 class pdb_StartProcessFileNotification extends pdb_Message {
   const TYPE = 2009;
   public function pdb_StartProcessFileNotification ($session) {
@@ -905,6 +945,9 @@ class pdb_StartProcessFileNotification extends pdb_Message {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_ContinueProcessFileNotification extends pdb_Message {
   const TYPE = 2010;
   public function getType() {
@@ -918,6 +961,9 @@ class pdb_ContinueProcessFileNotification extends pdb_Message {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_FileContentRequest extends pdb_Message {
   const TYPE = 10001;
   protected $id;
@@ -950,6 +996,9 @@ class pdb_FileContentRequest extends pdb_Message {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_FileContentExtendedRequest extends pdb_FileContentRequest {
   const TYPE = 10002;
   const BASE = 65521;
@@ -986,6 +1035,9 @@ class pdb_FileContentExtendedRequest extends pdb_FileContentRequest {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_FileContentResponse extends pdb_Message {
   const TYPE = 11001;
   public $script;
@@ -1007,6 +1059,9 @@ class pdb_FileContentResponse extends pdb_Message {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_Breakpoint {
   public $type, $lifeTime, $file, $line, $condition;
   private $id;
@@ -1023,6 +1078,9 @@ class pdb_Breakpoint {
     return "pdb_Breakpoint: ";
   }
 }
+/**
+ * @access private
+ */
 class pdb_AddBreakpointResponse extends pdb_Message {
   const TYPE = 1021;
   private $req;
@@ -1057,6 +1115,9 @@ class pdb_AddBreakpointResponse extends pdb_Message {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_AddBreakpointRequest extends pdb_MessageRequest {
   const TYPE = 21;
   public $id;
@@ -1101,6 +1162,9 @@ class pdb_AddBreakpointRequest extends pdb_MessageRequest {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_GetCallStackResponse extends pdb_Message {
   const TYPE = 1034;
   private $req;
@@ -1142,6 +1206,9 @@ class pdb_GetCallStackResponse extends pdb_Message {
     return "pdb_GetCallStackResponse: ";
   }
 }
+/**
+ * @access private
+ */
 class pdb_GetCallStackRequest extends pdb_MessageRequest {
   const TYPE = 34;
   public $id;
@@ -1164,6 +1231,9 @@ class pdb_GetCallStackRequest extends pdb_MessageRequest {
 }
 
 
+/**
+ * @access private
+ */
 class pdb_GetCWDResponse extends pdb_Message {
   const TYPE = 1036;
   private $req;
@@ -1190,6 +1260,9 @@ class pdb_GetCWDResponse extends pdb_Message {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_GetCWDRequest extends pdb_MessageRequest {
   const TYPE = 36;
   public $id;
@@ -1211,6 +1284,9 @@ class pdb_GetCWDRequest extends pdb_MessageRequest {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_GetVariableValueResponse extends pdb_Message {
   const TYPE = 1032;
   private $req;
@@ -1241,6 +1317,9 @@ class pdb_GetVariableValueResponse extends pdb_Message {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_GetVariableValueRequest extends pdb_MessageRequest {
   const TYPE = 32;
   public $id;
@@ -1273,6 +1352,9 @@ class pdb_GetVariableValueRequest extends pdb_MessageRequest {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_StepOverResponse extends pdb_Message {
   const TYPE = 1012;
   private $req;
@@ -1298,6 +1380,9 @@ class pdb_StepOverResponse extends pdb_Message {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_StepOverRequest extends pdb_MessageRequest {
   const TYPE = 12;
   public $id;
@@ -1319,6 +1404,9 @@ class pdb_StepOverRequest extends pdb_MessageRequest {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_StepIntoResponse extends pdb_StepOverResponse {
   const TYPE = 1011;
   public function getType() {
@@ -1329,6 +1417,9 @@ class pdb_StepIntoResponse extends pdb_StepOverResponse {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_StepIntoRequest extends pdb_StepOverRequest {
   const TYPE = 11;
   public function getType() {
@@ -1343,6 +1434,9 @@ class pdb_StepIntoRequest extends pdb_StepOverRequest {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_StepOutResponse extends pdb_StepOverResponse {
   const TYPE = 1013;
   public function getType() {
@@ -1353,6 +1447,9 @@ class pdb_StepOutResponse extends pdb_StepOverResponse {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_StepOutRequest extends pdb_StepOverRequest {
   const TYPE = 13;
   public function getType() {
@@ -1367,6 +1464,9 @@ class pdb_StepOutRequest extends pdb_StepOverRequest {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_GoResponse extends pdb_Message {
   const TYPE = 1014;
   private $req;
@@ -1392,6 +1492,9 @@ class pdb_GoResponse extends pdb_Message {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_GoRequest extends pdb_MessageRequest {
   const TYPE = 14;
   public $id;
@@ -1413,6 +1516,9 @@ class pdb_GoRequest extends pdb_MessageRequest {
   }
 }
 
+/**
+ * @access private
+ */
 class pdb_In {
   private $in;
   private $len;
@@ -1467,6 +1573,9 @@ class pdb_In {
     return "pdb_In: ";
   }
 }
+/**
+ * @access private
+ */
 class pdb_Out {
   private $out;
   private $buf;
@@ -1523,6 +1632,9 @@ pdb_Message::register(new pdb_DebugScriptEndedNotification($dbg));
 pdb_Message::register(new pdb_HeaderOutputNotification($dbg));
 pdb_Message::register(new pdb_OutputNotification($dbg));
 
+/**
+ * @access private
+ */
 function pdb_getDefinedVars($vars1, $vars2) {
   if(isset($vars2)) $vars1['pbd_This'] = $vars2;
 
@@ -1530,6 +1642,9 @@ function pdb_getDefinedVars($vars1, $vars2) {
 
   return $vars1;   
 }
+/**
+ * @access private
+ */
 function pdb_startCall() {
   global $dbg;
 
@@ -1541,6 +1656,9 @@ function pdb_startCall() {
   return $currentFrame;
 }
 
+/**
+ * @access private
+ */
 function pdb_resolveIncludePath($filename) {
   if (file_exists($filename)) return realpath($filename);
   $paths = get_include_path();
@@ -1550,6 +1668,9 @@ function pdb_resolveIncludePath($filename) {
   }
   trigger_error("file $filename not found", E_USER_ERROR);
 }
+/**
+ * @access private
+ */
 function pdb_startInclude($filename) {
   global $dbg;
 
@@ -1574,6 +1695,9 @@ function pdb_startInclude($filename) {
 
   return $code; // eval -> pdb_step/MSG_READY or pdb_endInclude/MSG_READY OR FINISH
 }
+/**
+ * @access private
+ */
 function pdb_endInclude() {
   global $dbg;
 
@@ -1583,6 +1707,9 @@ function pdb_endInclude() {
 }
 
 
+/**
+ * @access private
+ */
 function pdb_step($filename, $line, &$vars) {
   global $dbg;
   if ($dbg->ignoreInterrupt) return;
