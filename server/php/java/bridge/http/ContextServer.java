@@ -111,7 +111,6 @@ public final class ContextServer implements ContextFactory.ICredentials {
         
         ContextFactory.destroyAll();
 	php.java.bridge.SessionFactory.destroyTimer();
-	php.java.bridge.DynamicClassLoader.destroyObserver();
 
 	if(pool!=null) pool.destroy();
 	pool = null;

@@ -42,17 +42,17 @@ class FastCGIOutputStream extends DefaultOutputStream {
     public void write(int type, byte buf[], int buflength) throws IOException {
         int requestId = 1;
         byte[] header = new byte[] {
-    	1, (byte)type, 
-    	(byte)((requestId >> 8) & 0xff), (byte)((requestId) & 0xff),
-    	(byte)((FastCGIServlet.FCGI_BUF_SIZE >> 8) & 0xff), (byte)((FastCGIServlet.FCGI_BUF_SIZE) & 0xff),
-    	0, //padding
-    	0};
+	    1, (byte)type, 
+	    (byte)((requestId >> 8) & 0xff), (byte)((requestId) & 0xff),
+	    (byte)((FastCGIServlet.FCGI_BUF_SIZE >> 8) & 0xff), (byte)((FastCGIServlet.FCGI_BUF_SIZE) & 0xff),
+	    0, //padding
+	    0};
         int contentLength = buflength;
         int pos=0;
         while(pos + FastCGIServlet.FCGI_BUF_SIZE <= contentLength) {
-    	write(header);
-    	write(buf, pos, FastCGIServlet.FCGI_BUF_SIZE);
-    	pos += FastCGIServlet.FCGI_BUF_SIZE;
+	    write(header);
+	    write(buf, pos, FastCGIServlet.FCGI_BUF_SIZE);
+	    pos += FastCGIServlet.FCGI_BUF_SIZE;
         }
         contentLength = buflength % FastCGIServlet.FCGI_BUF_SIZE;
         header[4] = (byte)((contentLength >> 8) & 0xff);
@@ -64,39 +64,39 @@ class FastCGIOutputStream extends DefaultOutputStream {
     public void writeBegin() throws IOException {
         int role = FastCGIServlet.FCGI_RESPONDER;
         byte[] body = new byte[] {
-    	(byte)((role >> 8) & 0xff), (byte)((role) & 0xff),
-    	FastCGIServlet.FCGI_KEEP_CONN,
-    	0,0,0,0,0};
+	    (byte)((role >> 8) & 0xff), (byte)((role) & 0xff),
+	    FastCGIServlet.FCGI_KEEP_CONN,
+	    0,0,0,0,0};
             
         write(FastCGIServlet.FCGI_BEGIN_REQUEST, body);
     }
     public void writeLength(ByteArrayOutputStream out, int keyLen) throws IOException {
         if (keyLen < 0x80) {
-    	out.write((byte)keyLen);
+	    out.write((byte)keyLen);
         }else {
-    	byte[] b = new byte[] {
-    	    (byte)(((keyLen >> 24) | 0x80) & 0xff),
-    	    (byte)((keyLen >> 16) & 0xff),
-    	    (byte)((keyLen >> 8) & 0xff),
-    	    (byte)keyLen};
-    	out.write(b);
+	    byte[] b = new byte[] {
+		(byte)(((keyLen >> 24) | 0x80) & 0xff),
+		(byte)((keyLen >> 16) & 0xff),
+		(byte)((keyLen >> 8) & 0xff),
+		(byte)keyLen};
+	    out.write(b);
         }
     }
     public void writeParams(Map props) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         for(Iterator ii = props.keySet().iterator(); ii.hasNext();) {
-    	Object k = ii.next();
-    	Object v = props.get(k);
-    	String key = String.valueOf(k);
-    	String val = String.valueOf(v);
-    	int keyLen = key.length();
-    	int valLen = val.length();
-    	if(keyLen==0 || valLen==0) continue;
+	    Object k = ii.next();
+	    Object v = props.get(k);
+	    String key = String.valueOf(k);
+	    String val = String.valueOf(v);
+	    int keyLen = key.length();
+	    int valLen = val.length();
+	    if(keyLen==0 || valLen==0) continue;
     		
-    	writeLength(out, keyLen);
-    	writeLength(out, valLen);
-    	out.write(key.getBytes(Util.ASCII)); 	
-    	out.write(val.getBytes(Util.ASCII)); 	
+	    writeLength(out, keyLen);
+	    writeLength(out, valLen);
+	    out.write(key.getBytes(Util.ASCII)); 	
+	    out.write(val.getBytes(Util.ASCII)); 	
         }
         write(FastCGIServlet.FCGI_PARAMS, out.toByteArray());
         write(FastCGIServlet.FCGI_PARAMS, FastCGIServlet.FCGI_EMPTY_RECORD);

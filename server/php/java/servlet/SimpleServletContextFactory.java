@@ -51,7 +51,7 @@ public class SimpleServletContextFactory extends php.java.bridge.http.SimpleCont
     protected Servlet servlet;
 
     protected SimpleServletContextFactory(Servlet servlet, ServletContext ctx, HttpServletRequest proxy, HttpServletRequest req, HttpServletResponse res, boolean isManaged) {
-    	super(CGIServlet.getRealPath(ctx, ""), isManaged);
+    	super(ServletUtil.getRealPath(ctx, ""), isManaged);
     	this.kontext = ctx;
     	this.proxy = proxy;
     	this.req = req;
@@ -138,6 +138,6 @@ public class SimpleServletContextFactory extends php.java.bridge.http.SimpleCont
 
     /**{@inheritDoc}*/
     public String getSocketName() {
-	return String.valueOf(php.java.servlet.CGIServlet.getLocalPort(req));
+	return String.valueOf(ServletUtil.getLocalPort(req));
     }
 }

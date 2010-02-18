@@ -31,7 +31,6 @@ import java.io.OutputStream;
 import php.java.bridge.ILogger;
 import php.java.bridge.JavaBridge;
 import php.java.bridge.Request;
-import php.java.bridge.SimpleJavaBridgeClassLoader;
 import php.java.bridge.Util;
 
 /**
@@ -121,9 +120,7 @@ public class ContextRunner implements Runnable {
     	ctx = (IContextFactory) ContextFactory.get(name, contextServer);
     	if(ctx == null) throw new IOException("No context available for: " + name + ". Please make sure that your script does not exceed php.java.bridge.max_wait, currently set to: "+Util.MAX_WAIT);
     	JavaBridge bridge = ctx.getBridge();
-	if(Util.logLevel>4) Util.logDebug(ctx + " created new thread, using class loader: " + System.identityHashCode(ctx.getClassLoader().getParent()));
-	SimpleJavaBridgeClassLoader loader = bridge.getClassLoader();
-	loader.switcheThreadContextClassLoader();
+	if(Util.logLevel>4) Util.logDebug(ctx + " created new thread" );
 	
 	if (shortPathHeader != (byte) 0xFF) { // short path S1: no PUT request
 	    bridge.request = new Request(bridge);

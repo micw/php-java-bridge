@@ -27,7 +27,6 @@ package php.java.bridge;
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -48,7 +47,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.StringTokenizer;
 import java.util.Map.Entry;
 
 /**
@@ -110,57 +108,6 @@ public class JavaBridge implements Runnable {
 
     // false if we detect that setAccessible is not possible
     boolean canModifySecurityPermission = true;
-
-    // native accept fills these (if available)
-    int uid =-1, gid =-1;
-
-    /**
-     * Open a system log file with the correct (Unix) permissions.
-     * @param logFile The log file or "" for standard out
-     * @return true if it was possible to re-direct stdout and stderr.
-     * If yes, we can simply print to standard out.
-     */
-    static native boolean openLog(String logFile);
-    /**
-     * Create a local ("Unix domain") socket for sockname and return the handle.
-     * If it was possible to obtain the user credentials, setGlobals will be called with
-     * the uid and gid.
-     * @param logLevel The current log level.
-     * @param backlog The current backlog.
-     * @param sockname The sockename.
-     * @return local socket handle ("Unix domain socket")
-     */
-    static native int startNative(int logLevel, int backlog, String sockname);
-
-    /**
-     * Accept a connection from the "unix domain" socket.
-     * @param socket The socket number
-     * @return The socket number.
-     */
-    static native int accept(int socket);
-    /**
-     * Write bytes to a local socket.
-     * @param peer The socket handle
-     * @param buf the byte buffer.
-     * @param nmemb number of bytes
-     * @return number of bytes written.
-     */
-    static native int swrite(int peer, byte buf[], int nmemb);
-    /**
-     * Read bytes from a local socket.
-     * @param peer The socket handle
-     * @param buf the byte buffer.
-     * @param nmemb number of bytes
-     * @return number of bytes written.
-     */
-    static native int sread(int peer, byte buf[], int nmemb);
-
-    /**
-     * Close a local socket.
-     * @param peer The socket handle
-     */
-    public static native void sclose(int peer);
-
     private MethodCache methodCache = new MethodCache();
     private ConstructorCache constructorCache = new ConstructorCache();
     StringCache stringCache = new StringCache(this);
@@ -200,7 +147,6 @@ public class JavaBridge implements Runnable {
 		printStackTrace(e);
 		return;
 	    }
-	    if(logLevel>3) logDebug("Request from client with uid/gid "+uid+"/"+gid);
 	    try {
 		request.handleRequests();
 	    } catch (Exception e) {
@@ -260,12 +206,8 @@ public class JavaBridge implements Runnable {
 	    }catch (Throwable t) {
 		t.printStackTrace();
 	    }
-	    boolean redirectOutput = false;
-	    try {
-	    	redirectOutput = logFile==null || openLog(logFile);
-	    } catch (Throwable t) {/*ignore*/}
 
-	    Util.redirectOutput(redirectOutput, logFile);
+	    Util.redirectOutput( logFile);
 	    Util.logMessage("VM                  : " + Util.VM_NAME);
 	    if(Util.VERSION != null)
 		Util.logMessage(Util.EXTENSION_NAME+  " version             : " + Util.VERSION);
@@ -446,7 +388,7 @@ public class JavaBridge implements Runnable {
 	    Constructor selected = null;
 	    ConstructorCache.Entry entry = null;
 	    
-	    Class clazz = getClassLoader().forName(name);
+	    Class clazz = Util.classForName(name);
 	    if(createInstance) {
 		entry = constructorCache.getEntry(name, args);
 		selected = constructorCache.get(entry);
@@ -499,7 +441,6 @@ public class JavaBridge implements Runnable {
 		throw (OutOfMemoryError)e1; // abort
 	    }
 	    if(e1 instanceof NoClassDefFoundError) {
-		getClassLoader().reset();
 		e = getUnresolvedExternalReferenceException(e1, "call constructor");
 	    }
 	    setException(response, e, createInstance?"CreateInstance":"ReferenceClass", null, name, args, params, hasDeclaredExceptions);
@@ -1057,7 +998,6 @@ public class JavaBridge implements Runnable {
 		throw (OutOfMemoryError)e1; // abort
 	    }
 	    if(e1 instanceof NoClassDefFoundError) {
-		getClassLoader().reset();
 		e = getUnresolvedExternalReferenceException(e1, "call the method");
 	    }
 	    
@@ -1268,7 +1208,6 @@ public class JavaBridge implements Runnable {
 		throw (OutOfMemoryError)e1; // abort
 	    }
 	    if(e1 instanceof NoClassDefFoundError) {
-		getClassLoader().reset();
 		e = getUnresolvedExternalReferenceException(e1, "invoke a property");
 	    }
 	    setException(response, e, set?"SetProperty":"GetProperty", object, prop, args, params, hasDeclaredExceptions);
@@ -1390,89 +1329,6 @@ public class JavaBridge implements Runnable {
 	return PhpMap.getPhpMap(value, this);
     }
 
-    /**
-     * Append the path to the current library path<br>
-     * Examples:<br>
-     * setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");<br>
-     * setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");<br>
-     * @param path A file or url list, usually separated by ';'
-     * @param extensionDir The php extension directory. 
-     * @throws IOException 
-     */
-    public void updateJarLibraryPath(String path, String extensionDir) throws IOException {
-    	updateJarLibraryPath(path, extensionDir, null, null);
-    }
-    /**
-     * Append the path to the current library path<br>
-     * Examples:<br>
-     * setJarLibPath(";file:///tmp/test.jar;file:///tmp/my.jar");<br>
-     * setJarLibPath("|file:c:/t.jar|http://.../a.jar|jar:file:///tmp/x.jar!/");<br>
-     * @param path A file or url list, usually separated by ';'
-     * @param extensionDir The php extension directory. 
-     * @param cwd The current working dir
-     * @param searchpath The search path
-     * @throws IOException 
-     */
-    public void updateJarLibraryPath(String path, String extensionDir, String cwd, String searchpath) throws IOException {
-    	getClassLoader().updateJarLibraryPath(path, extensionDir.intern(), cwd, searchpath);   	
-    }
-    
-    /**
-     * Update the library path for ECMA dll's
-     * @param rawPath A file or url list, usually separated by ';'
-     * @param extensionDir The php extension directory. 
-     */
-    public void updateLibraryPath(String rawPath, String extensionDir) throws Exception  {
-    	updateLibraryPath(rawPath, extensionDir, null, null);
-    }
-    /**
-     * Update the library path for ECMA dll's
-     * @param rawPath A file or url list, usually separated by ';'
-     * @param extensionDir The php extension directory. 
-     * @param cwd The current working dir
-     * @param searchpath The search path
-     */
-    public void updateLibraryPath(String rawPath, String extensionDir, String cwd, String searchpath) throws IOException {
-    	
-    	if(rawPath==null || rawPath.length()<2) return;
-        String contextDir = new File(extensionDir, "lib").getAbsolutePath();
-        // add a token separator if first char is alnum
-	char c=rawPath.charAt(0);
-	if((c>='A' && c<='Z') || (c>='a' && c<='z') ||
-	   (c>='0' && c<='9') || (c!='.' || c!='/'))
-	    rawPath = ";" + rawPath;
-
-	String path = rawPath.substring(1);
-	StringTokenizer st = new StringTokenizer(path, rawPath.substring(0, 1));
-	while (st.hasMoreTokens()) {
-	    String s = st.nextToken();
-	    try {
-		File f=null;
-		StringBuffer buf= new StringBuffer();
-		if((f=new File(s)).isFile() || f.isAbsolute()) {
-		    buf.append(s);
-		    Util.loadFileMethod.invoke(Util.CLRAssembly, new Object[] {buf.toString()} );
-		} else if ((f=new File(contextDir, s)).isFile()) {
-		    buf.append(f.getAbsolutePath());
-		    Util.loadFileMethod.invoke(Util.CLRAssembly, new Object[] {buf.toString()} );
-		} else if ((f=new File(Util.JAVABRIDGE_LIB, s)).isFile()) {
-		    buf.append(f.getAbsolutePath());
-		    Util.loadFileMethod.invoke(Util.CLRAssembly, new Object[] {buf.toString()} );
-		} else if ((f=JarLibraryPath.checkSearchPath(s, searchpath))!=null) {
-		    buf.append(f.getAbsolutePath());
-		    Util.loadFileMethod.invoke(Util.CLRAssembly, new Object[] {buf.toString()} );
-		} else if ((cwd!=null) && (f=new File(cwd, s)).isFile()) {
-		    buf.append(f.getAbsolutePath());
-		    Util.loadFileMethod.invoke(Util.CLRAssembly, new Object[] {buf.toString()} );
-		} else {
-		    buf.append(s);
-		    Util.loadMethod.invoke(Util.CLRAssembly, new Object[] {buf.toString()} );
-		}
-	    }  catch (Exception e1) {
-		logError("Could not load cli."+ s +".");
-	    }
-	}
-    }
     /**
      * For internal use only.
      * @param object The java object
@@ -1727,17 +1583,6 @@ public class JavaBridge implements Runnable {
     public Object makeClosure(long object) {
     	return PhpProcedure.createProxy(getFactory(), null, emptyMap, Util.ZERO_PARAM, object);
     }
-
-    /**
-     * Reset the global caches of the bridge.  Currently this is the
-     * classloader. This is a no-op when the backend
-     * is running in a servlet engine or application server.
-     * @see php.java.bridge.Session#reset()
-     */
-    public void reset() {
-	if(logLevel>3) warn("Your PHP script has called the privileged procedure \"reset()\", which resets the backend to its initial state. Therefore all session variables and all caches are now gone.");
-	getClassLoader().reset();
-    }
     /**
      * This method sets a new session factory. Used by the servlet to
      * implement session sharing.
@@ -1783,14 +1628,6 @@ public class JavaBridge implements Runnable {
     	String id = Integer.toHexString(getSerialID());
     	session.put(id, obj);
     	return (String)castToString(id);
-    }
-    
-    /**
-     * Return the current ClassLoader
-     * @return The ClassLoader.
-     */
-    public SimpleJavaBridgeClassLoader getClassLoader() {
-	return getFactory().getJavaBridgeClassLoader();
     }
     /**
      * Checks if a given position exists.
@@ -2047,7 +1884,7 @@ public class JavaBridge implements Runnable {
      */
     public boolean typeExists(String name) {
 	try {
-	    getClassLoader().forName(name);
+	    Util.classForName(name);
 	    castToBoolean(null);
 	    return true;
 	} catch (ClassNotFoundException ex) {/*ignore*/}

@@ -138,44 +138,28 @@ if(!function_exists("java_get_base")) {
   if(!defined("JAVA_DISABLE_AUTOLOAD") && function_exists("spl_autoload_register")) spl_autoload_register("java_autoload_function");
 
   /**
-   * Load a set of java libraries and make them available in the current name space.
-   * Available since php 5.3. Example:
-   * {@source 4 14}
    * @access private
-   * @since PHP 5.3
    */
-  function java_autoload($libs=null) 
-  {
-/*
-    java_autoload("lucene.jar");
-   
-    use org\apache\lucene;
-    use org\apache\lucene\index;
-    use org\apache\lucene\search;
-    use org\apache\lucene\search\IndexSearcher as LuceneSearcher;
-   
-    $searcher = new LuceneSearcher(...);
-    $term = new index\Term("name", "someTerm");
-    $phrase = new search\PhraseQuery();
-   
-    $phrase->add($term);
-    $hits = $searcher->search($phrase);
-    ...
-*/
-	static $once = false;
-	if($once) 
-	  throw new java_IllegalStateException("java_autoload called more than once");
-	$once = true;
-	java_require($libs);
-	if(function_exists("spl_autoload_register")) {
-	  if(defined("JAVA_DISABLE_AUTOLOAD")) spl_autoload_register("java_autoload_function");
-	} else {
-	  function __autoload($x) {
-		return java_autoload_function($x);
-	  }
-	}
+  function java_autoload($libs=null) {
+	trigger_error('Please use <a href="http://php-java-bridge.sourceforge.net/pjb/webapp.php>tomcat or jee hot deployment</a> instead', E_USER_WARNING);
   }
 
+  /**
+   * Include the outcome of some other local (.jsp, .asp, ...) resource.
+   *
+   * Example: <code>virtual("/test.jsp");</code>
+   *
+   * @access public
+   * @param string The local resource
+   * @see Java
+   */
+  if (!function_exists("virtual")) {
+	function virtual($path) {
+	  $req = java_context()->getHttpServletRequest();
+	  $res = java_context()->getHttpServletResponse();
+	  $req->getRequestDispatcher($path)->include($req, $res);
+	}
+  }
   /**
    * Access the java type with the given name. 
    *
@@ -316,13 +300,6 @@ if(!function_exists("java_get_base")) {
    */
   function java_set_encoding($enc) { return java_set_file_encoding ($enc); }
 
-  /**
-   * @deprecated: Use java_require() instead.
-   * @access private
-   * @see java_require();
-   */
-  function java_set_library_path($arg) { return java_require($arg); }
-  
   /**
    * Call the Java continuation with the closed-over PHP environment
    * $kontinuation as its argument.

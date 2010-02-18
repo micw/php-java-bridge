@@ -51,8 +51,8 @@ public abstract class IOFactory {
      * @throws ConnectionException 
      */
     public InputStream createInputStream() throws ConnectionException {
-       DefaultInputStream in = new DefaultInputStream();
-       return in;
+	DefaultInputStream in = new DefaultInputStream();
+	return in;
     }
     /**
      * Create a new OutputStream.

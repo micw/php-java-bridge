@@ -58,9 +58,7 @@ public final class PhpProcedure implements InvocationHandler {
      */
     protected static Object createProxy(IJavaBridgeFactory bridge, String name, Map names, Class interfaces[], long object) {
 	PhpProcedure handler = new PhpProcedure(bridge, object, name, names);
-	SimpleJavaBridgeClassLoader bridgeClassLoader = bridge.getJavaBridgeClassLoader();
-
-	ClassLoader loader = bridgeClassLoader.getClassLoader();
+	ClassLoader loader = Util.getContextClassLoader();
 
 	Object proxy = Proxy.newProxyInstance(loader, interfaces, handler);
 	return proxy;
@@ -106,14 +104,7 @@ public final class PhpProcedure implements InvocationHandler {
     public Object invoke(Object proxy, String method, Object[] args) throws Throwable {
 	checkPhpContinuation();
 	
-	Thread thread = Thread.currentThread();
-	ClassLoader loader = thread.getContextClassLoader();
-	try {
-	    try { thread.setContextClassLoader(bridge.getBridge().getClassLoader().getClassLoader()); } catch (SecurityException e) {/*ignore*/}
-	    return invoke(proxy, method, Object.class, args);
-	} finally {
-	  try { thread.setContextClassLoader(loader); } catch (SecurityException e) {/*ignore*/}
-	}
+	return invoke(proxy, method, Object.class, args);
     }
 
     /**{@inheritDoc}*/

@@ -31,9 +31,6 @@ import java.io.RandomAccessFile;
 import php.java.bridge.NotImplementedException;
 
 class RandomAccessFileOutputStream extends OutputStream {
-    /**
-     * 
-     */
     private final NPChannel channel;
     private RandomAccessFile raFile;
 
@@ -47,7 +44,7 @@ class RandomAccessFileOutputStream extends OutputStream {
      */
     public void close() throws IOException {
         if(this.channel.readIsClosed)
-    	this.raFile.close();
+	    this.raFile.close();
         this.channel.writeIsClosed=true;	
     }
 

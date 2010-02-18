@@ -18,8 +18,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
 import php.java.script.URLReader;
-import php.java.servlet.CGIServlet;
 import php.java.servlet.ContextLoaderListener;
+import php.java.servlet.ServletUtil;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -114,7 +114,7 @@ public class PhpServletScriptEngine extends PhpServletLocalHttpServerScriptEngin
 				  String protocol,
 				  int port) throws MalformedURLException {
 	super (servlet, ctx, req, res, protocol, port);
-	path = new File(CGIServlet.getRealPath(ctx, ""));
+	path = new File(ServletUtil.getRealPath(ctx, ""));
     }
     protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
 

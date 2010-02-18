@@ -75,7 +75,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     
     /**@inheritDoc*/
     public void init(ServletConfig config) throws ServletException {
- 	String servletContextName=CGIServlet.getRealPath(config.getServletContext(), "");
+ 	String servletContextName=ServletUtil.getRealPath(config.getServletContext(), "");
 	if(servletContextName==null) servletContextName="";
 	ServletContext ctx = config.getServletContext();
 
@@ -371,7 +371,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     public static synchronized ContextServer getContextServer(ServletContext context, boolean promiscuous) {
 	ContextServer server = (ContextServer)context.getAttribute(ROOT_CONTEXT_SERVER_ATTRIBUTE);
 	if (server == null) {
-	    String servletContextName=CGIServlet.getRealPath(context, "");
+	    String servletContextName=ServletUtil.getRealPath(context, "");
 	    if(servletContextName==null) servletContextName="";
 	    server = new ContextServer(servletContextName, promiscuous);
 	    context.setAttribute(ROOT_CONTEXT_SERVER_ATTRIBUTE, server);

@@ -29,7 +29,7 @@ import php.java.servlet.fastcgi.ConnectionPool.Connection;
 
 /** Thrown when an IO exception occurs */
 public class ConnectionException extends IOException {
-   private static final long serialVersionUID = -5174286702617481362L;
+    private static final long serialVersionUID = -5174286702617481362L;
     protected ConnectionException(Connection con, IOException ex) {
         super();
         initCause(ex);

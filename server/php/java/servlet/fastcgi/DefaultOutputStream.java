@@ -43,9 +43,9 @@ public class DefaultOutputStream extends OutputStream {
     protected void setConnection(Connection connection) throws ConnectionException {
         this.connection = connection;
         try {
-          this.out = new BufferedOutputStream(connection.channel.getOutputStream());
+	    this.out = new BufferedOutputStream(connection.channel.getOutputStream());
         } catch (IOException e) {
-          throw new ConnectionException(connection, e);
+	    throw new ConnectionException(connection, e);
         }
     }
     /**{@inheritDoc}*/  
@@ -54,11 +54,11 @@ public class DefaultOutputStream extends OutputStream {
     }
     /**{@inheritDoc}*/  
     public void write(byte buf[], int off, int buflength) throws ConnectionException {
-      try {
-          out.write(buf, off, buflength);
-      } catch (IOException ex) {
-          throw new ConnectionException(connection, ex);
-      }
+	try {
+	    out.write(buf, off, buflength);
+	} catch (IOException ex) {
+	    throw new ConnectionException(connection, ex);
+	}
     }
     /**{@inheritDoc}*/  
     public void write(int b) throws ConnectionException {
@@ -71,11 +71,11 @@ public class DefaultOutputStream extends OutputStream {
         } finally {
             connection.state|=2;
             if(connection.state==connection.ostate)
-    	  try {
-    	    connection.close();
-    	  } catch (IOException e) {
-    	      throw new ConnectionException(connection, e);
-    	  }
+		try {
+		    connection.close();
+		} catch (IOException e) {
+		    throw new ConnectionException(connection, e);
+		}
         }
     }
     /**{@inheritDoc}*/  

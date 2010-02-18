@@ -65,6 +65,7 @@ import php.java.bridge.Util;
 public class ConnectionPool {
 
     private int limit;
+    private long timeout;
     private int connections = 0;
     private List freeList = new LinkedList();
     private List connectionList = new LinkedList();
@@ -95,7 +96,7 @@ public class ConnectionPool {
             inputStream = null;
             outputStream = null;
             counter = maxRequests; 
-           reset();
+	    reset();
 	}
 	protected Connection reopen() throws ConnectException, SocketException {
             if(isClosed) this.channel = factory.connect(channelName);
@@ -163,17 +164,32 @@ public class ConnectionPool {
      * @param maxRequests 
      * @param factory A factory for creating In- and OutputStreams.
      * @throws ConnectException 
-      * @see IOFactory
+     * @see IOFactory
      */
-    public ConnectionPool(ChannelFactory channelName, int limit, int maxRequests, IOFactory factory) throws ConnectException {
+    private ConnectionPool(ChannelFactory channelName, int limit, int maxRequests, IOFactory factory) throws ConnectException {
 	if(Util.logLevel>3) Util.logDebug("Creating new connection pool for: " +channelName);
         this.channelName = channelName;
         this.limit = limit;
         this.factory = factory;
         this.maxRequests = maxRequests;
+        this.timeout = -1;
         channelName.test();
     }
-
+    /**
+     * Create a new connection pool.
+     * @param channelName The channel name
+     * 
+     * @param limit The max. number of physical connections
+     * @param maxRequests 
+     * @param factory A factory for creating In- and OutputStreams.
+     * @param timeout The pool timeout in milliseconds.
+     * @throws ConnectException 
+     * @see IOFactory
+     */
+    public ConnectionPool(ChannelFactory channelName, int limit, int maxRequests, IOFactory factory, long timeout) throws ConnectException {
+	this(channelName, limit, maxRequests, factory);
+	this.timeout = timeout;
+    }
     /* helper for openConnection() */
     private Connection createNewConnection() throws ConnectException, SocketException {
         Connection connection = new Connection(channelName, maxRequests, factory);
@@ -193,7 +209,17 @@ public class ConnectionPool {
       	if(freeList.isEmpty() && connections<limit) {
       	    connection = createNewConnection();
       	} else {
-      	    while(freeList.isEmpty()) wait();
+      	    while(freeList.isEmpty()) {
+      		if (timeout > 0) {
+      		    long t1 = System.currentTimeMillis();
+      		    wait(timeout);
+      		    long t2 = System.currentTimeMillis();
+      		    long t = t2 - t1;
+      		    if (t >= timeout) throw new ConnectException(new IOException("pool timeout "+timeout+" exceeded: "+t));
+      		} else {
+      		    wait();
+      		}
+      	    }
       	    connection = (Connection) freeList.remove(0);
       	    connection.reset();
       	}

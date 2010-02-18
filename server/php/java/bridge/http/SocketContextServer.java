@@ -99,7 +99,7 @@ public final class SocketContextServer extends PipeContextServer implements Runn
     	super(ContextFactory.NO_CREDENTIALS, threadPool, ContextFactory.EMPTY_CONTEXT_NAME, promiscuous);
 	this.origContextName = contextName;
         try {
-	    serverSocket = JavaBridge.bind((promiscuous||Util.JAVABRIDGE_PROMISCUOUS)?"INET:0":"INET_LOCAL:0");
+	    serverSocket = JavaBridge.bind("INET_LOCAL:0");
 	    SecurityManager sec = System.getSecurityManager();
 	    if(sec!=null) sec.checkAccept("127.0.0.1", Integer.parseInt(serverSocket.getSocketName()));
             Thread t = new Util.Thread(this, "JavaBridgeSocketContextServer("+serverSocket.getSocketName()+")");

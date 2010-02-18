@@ -33,10 +33,8 @@ import java.util.Iterator;
 
 import php.java.bridge.ISession;
 import php.java.bridge.JavaBridge;
-import php.java.bridge.JavaBridgeClassLoader;
 import php.java.bridge.Request;
 import php.java.bridge.SessionFactory;
-import php.java.bridge.SimpleJavaBridgeClassLoader;
 import php.java.bridge.Util;
 
 
@@ -245,9 +243,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	thiz.accept(factory.visitor);
 	thiz.visitor.initialize();
 	
-	if(factory.getClassLoader() !=bridge.getClassLoader().getDefaultClassLoader()) 
-	    throw new IllegalStateException("class loader");
-	if(Util.logLevel>4) Util.logDebug("contextfactory: " +thiz + " is swiching thread context, using classloader: " + System.identityHashCode( factory.getClassLoader().getParent()));
+	if(Util.logLevel>4) Util.logDebug("contextfactory: " +thiz + " is swiching thread context" );
 
 	if(Util.logLevel>4) Util.logDebug("contextfactory: accepted visitor: " + factory.visitor);
     }
@@ -264,8 +260,6 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	super.recycle();
 	visitor.invalidate();
 	
-	if(bridge!=null) 
-	    bridge.getClassLoader().switcheThreadContextClassLoader();
     }
     
     /**{@inheritDoc}*/  
@@ -386,19 +380,6 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     public synchronized void release() {
 	ContextFactory ob = (ContextFactory) contexts.remove(id);
         if(Util.logLevel>4) Util.logDebug("contextfactory: released empty context: " + (ob!=null?String.valueOf(ob.visitor):"<already handled>") + ", # of contexts: " + contexts.size()+", # of live contexts: "+ liveContexts.size());
-    }
-    /**{@inheritDoc}*/  
-    public void setClassLoader(ClassLoader loader) {
-	visitor.setClassLoader(loader);
-    }
-    /**{@inheritDoc}*/  
-    public SimpleJavaBridgeClassLoader getJavaBridgeClassLoader() {
-	if (javaBridgeClassLoader!=null) return javaBridgeClassLoader;
-	return javaBridgeClassLoader=new JavaBridgeClassLoader(getClassLoader());
-    }
-    /**{@inheritDoc}*/  
-    public ClassLoader getClassLoader() {
-	return visitor.getClassLoader();
     }
     /**{@inheritDoc}*/  
     public void initialize() {

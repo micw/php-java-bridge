@@ -44,8 +44,7 @@ class TCPServerSocket implements ISocketFactory {
 
 	if(name==null) throw new NullPointerException ("name");
 	if(name.startsWith("INET:")) name=name.substring(5);
-	if(name.startsWith("INET_LOCAL:")) { local = true; name=name.substring(11); }
-	else if(name.startsWith("LOCAL:")) return null;
+	else if(name.startsWith("INET_LOCAL:")) { local = true; name=name.substring(11); }
 	    
 	p=Integer.parseInt(name);
 	TCPServerSocket s = new TCPServerSocket(p, backlog, local);

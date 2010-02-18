@@ -34,16 +34,6 @@ import php.java.bridge.http.IContext;
  * Create PHP/Java Bridge instances.
  */
 public interface IJavaBridgeFactory {
-
-    /**
-     * Return an instance of the JavaBridgeClassLoader. 
-     * Return an instance of SimpleJavaBridgeClassLoader, or, if you want to support java_require(), an instance of the JavaBridgeClassLoader
-     * with the current thread context class loader as a delegate.
-     * @see php.java.bridge.Util#getContextClassLoader() 
-     * @return The JavaBridgeClassLoader
-     */
-    public SimpleJavaBridgeClassLoader getJavaBridgeClassLoader();
-    
     /**
      * Return a session for the JavaBridge
      * @param name The session name. If name is null, the name PHPSESSION will be used.

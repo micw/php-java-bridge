@@ -59,9 +59,6 @@ public final class Util {
         initGlobals();
     }
 
-    // method to load a CLR assembly
-    static Method loadMethod, loadFileMethod;
-    static Class CLRAssembly;
     
     /** Used by the watchdog. After MAX_WAIT (default 1500ms) the ContextRunner times out. Raise this value if you want to debug the bridge.
      * See also system property <code>php.java.bridge.max_wait</code>
@@ -75,7 +72,7 @@ public final class Util {
     /** The launcher.sh code */
     public static Class LAUNCHER_UNIX;
     /** The launcher.exe code */
-    public static Class LAUNCHER_WINDOWS, LAUNCHER_WINDOWS2, LAUNCHER_WINDOWS3;
+    public static Class LAUNCHER_WINDOWS, LAUNCHER_WINDOWS2, LAUNCHER_WINDOWS3, LAUNCHER_WINDOWS4;
     /** Only for internal use */
     public static final byte HEX_DIGITS[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
     
@@ -286,8 +283,6 @@ public final class Util {
     /** Only for internal use */
     public static String osName;
     /** Only for internal use */
-    public static boolean IS_MONO;
-    /** Only for internal use */
     public static String PHP_EXEC;
     /** Only for internal use */
     public static File HOME_DIR;
@@ -311,6 +306,7 @@ public final class Util {
 	    LAUNCHER_WINDOWS = Class.forName("php.java.bridge.LauncherWindows");
 	    LAUNCHER_WINDOWS2 = Class.forName("php.java.bridge.LauncherWindows2");
 	    LAUNCHER_WINDOWS3 = Class.forName("php.java.bridge.LauncherWindows3");
+	    LAUNCHER_WINDOWS4 = Class.forName("php.java.bridge.LauncherWindows4");
 	} catch (Exception e) {/*ignore*/}
 	    
 
@@ -359,8 +355,6 @@ public final class Util {
     	    JAVABRIDGE_PROMISCUOUS = false;
 	    JAVABRIDGE_PROMISCUOUS = System.getProperty("php.java.bridge.promiscuous", "false").toLowerCase().equals("true");	    
 	} catch (Exception e) {/*ignore*/}
-
-	IS_MONO = Standalone.checkMono();
 
     	Properties p = new Properties();
 	try {
@@ -755,8 +749,12 @@ public final class Util {
      * @throws IOException
      */
     public static void parseBody(byte[] buf, InputStream natIn, OutputStreamFactory out, HeaderParser parser) throws UnsupportedEncodingException, IOException {
-	int i=0, n, s=0;
-	boolean eoh=false;
+	int i = 0, n, s = 0;
+	boolean eoh = false;
+	boolean rn = false;
+	String remain = null;
+	String line;
+
 	// the header and content
 	while((n = natIn.read(buf, i, buf.length-i)) !=-1 ) {
 	    int N = i + n;
@@ -765,21 +763,40 @@ public final class Util {
 		switch(buf[i++]) {
 		
 		case '\n':
-		    if(s+2==i && buf[s]=='\r') {
+		    if(rn) {
 			eoh=true;
 		    } else {
-		    	parser.parseHeader(new String(buf, s, i-s-2, ASCII));
+			if (remain != null) {
+			    line = remain + new String(buf, s, i-s, Util.ASCII);
+			    line = line.substring(0, line.length()-2);
+			    remain = null;
+			} else {
+			    line = new String(buf, s, i-s-2, Util.ASCII);
+			}
+		    	parser.parseHeader(line);
 		    	s=i;
 		    }
+		    rn=true;
+		    break;
+		    
+		case '\r': break;
+
+		default: rn=false;	
+			
 		}
 	    }
 	    // body
 	    if(eoh) {
 		if(i<N) out.getOutputStream().write(buf, i, N-i); 
-		i=0;
+	    }  else { 
+		if (remain != null) {
+		    remain += new String(buf, s, i-s, Util.ASCII);
+		} else {
+		    remain = new String(buf, s, i-s, Util.ASCII);
+		}
 	    }
+	    s = i = 0;
 	}
-
     }
     
     /**
@@ -873,7 +890,7 @@ public final class Util {
      */
     public static String checkError(String s) {
         // Is there a better way to check for a fatal error?
-        return s.indexOf("PHP Fatal error:")>-1 || s.indexOf("PHP Parse error:")>-1 ? s : null;
+        return (s.startsWith("PHP") && (s.indexOf("error:")>-1)) ? s : null;
     }
 
     /** 
@@ -944,7 +961,7 @@ public final class Util {
      */
     public static class Process extends java.lang.Process {
 
-        java.lang.Process proc;
+        protected java.lang.Process proc;
 	private String[] args;
 	private File homeDir;
 	private Map env;
@@ -1124,10 +1141,6 @@ public final class Util {
 	    String errorString = error==null?null:Util.checkError(error.toString());
 	    if(errorString!=null) throw new PhpException(errorString);
 	}
-	/**{@inheritDoc}*/
-	public void destroy() {
-	    proc.destroy();
-	}
 	private synchronized void readErrorStream() {
 	    byte[] buf = new byte[BUF_SIZE];
 	    int c;
@@ -1176,12 +1189,6 @@ public final class Util {
         }
     }
 
-    /**
-     * @return The thread context class loader.
-      */
-    public static ClassLoader getContextClassLoader() {
-          return JavaBridgeClassLoader.getContextClassLoader();
-    }
     /** Redirect System.out and System.err to the configured logFile or System.err.
      * System.out is always redirected, either to the logFile or to System.err.
      * This is because System.out is reserved to report the status back to the 
@@ -1189,21 +1196,16 @@ public final class Util {
      * @param redirectOutput this flag is set, if natcJavaBridge has already redirected stdin, stdout, stderr
      * @param logFile the log file
      */
-    static void redirectOutput(boolean redirectOutput, String logFile) {
-	if(IS_MONO)
-	    redirectMonoOutput(redirectOutput, logFile); 
-	else
-	    redirectJavaOutput(redirectOutput, logFile);
+    static void redirectOutput(String logFile) {
+	redirectJavaOutput(logFile);
     }
-    static void redirectJavaOutput(boolean redirectOutput, String logFile) {
+    static void redirectJavaOutput(String logFile) {
         Util.logStream = System.err;
-	if(!redirectOutput) {
-	    if(logFile != null && logFile.length()>0) 
-		try {
-		    Util.logStream=new java.io.PrintStream(new java.io.FileOutputStream(logFile));
-		} catch (Exception e) {e.printStackTrace();}
-	    try { System.setErr(logStream); } catch (Exception e) {e.printStackTrace(); }
-	}
+        if(logFile != null && logFile.length()>0) 
+            try {
+        	Util.logStream=new java.io.PrintStream(new java.io.FileOutputStream(logFile));
+            } catch (Exception e) {e.printStackTrace();}
+            try { System.setErr(logStream); } catch (Exception e) {e.printStackTrace(); }
 	try { System.setOut(logStream); } catch (Exception e) {e.printStackTrace(); System.exit(9); }
     }
     /** Wrapper for the Mono StreamWriter */ 
@@ -1504,5 +1506,18 @@ public final class Util {
 	    allArgs[i++]=PHP_ARGS[j];
 	}
 	return allArgs;
+    }
+    /**
+     * Return the thread context class loader
+     * @return The context class loader
+     */
+    public static final ClassLoader getContextClassLoader() {
+        ClassLoader loader = null;
+        try {loader = Thread.currentThread().getContextClassLoader();} catch (SecurityException ex) {/*ignore*/}
+	if(loader==null) loader = JavaBridge.class.getClassLoader();
+        return loader;
+    }
+    public static final Class classForName(String name) throws ClassNotFoundException {
+	return Class.forName(name, true, getContextClassLoader());
     }
 }

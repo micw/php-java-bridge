@@ -29,9 +29,6 @@ import java.io.IOException;
 import php.java.bridge.Util;
 
 class FastCGIInputStream extends DefaultInputStream {
-    /**
-     * 
-     */
     private final FastCGIServlet servlet;
     /**
      * @param servlet
@@ -48,53 +45,53 @@ class FastCGIInputStream extends DefaultInputStream {
     }
     public int read(byte buf[]) throws ConnectionException {
         try {
-          return doRead(buf);
+	    return doRead(buf);
         } catch (ConnectionException ex) {
-    	throw ex;
+	    throw ex;
         } catch (IOException e) {
             throw new ConnectionException(connection, e);
         }
     }
-   private byte header[] = new byte[FastCGIServlet.FCGI_HEADER_LEN];
-   public int doRead(byte buf[]) throws IOException {
+    private byte header[] = new byte[FastCGIServlet.FCGI_HEADER_LEN];
+    public int doRead(byte buf[]) throws IOException {
         int n, i;
         //assert if(buf.length!=FCGI_BUF_SIZE) throw new IOException("Invalid block size");
         for(n=0; (i=read(header, n, FastCGIServlet.FCGI_HEADER_LEN-n)) > 0; )  n+=i;
         if(FastCGIServlet.FCGI_HEADER_LEN != n) 
-    	throw new IOException ("Protocol error");
+	    throw new IOException ("Protocol error");
         int type = header[1] & 0xFF;
         int contentLength = ((header[4] & 0xFF) << 8) | (header[5] & 0xFF);
         int paddingLength = header[6] & 0xFF;
         switch(type) {
         case FastCGIServlet.FCGI_STDERR: 
         case FastCGIServlet.FCGI_STDOUT: {
-    	for(n=0; (i=read(buf, n, contentLength-n)) > 0; ) n+=i;
-    	if(n!=contentLength) 
-    	    throw new IOException("Protocol error while reading FCGI data");
-    	if(type==FastCGIServlet.FCGI_STDERR) { 
-    	    String s = new String(buf, 0, n, Util.ASCII);
-    	    this.servlet.log(s); 
-    	    contentLength = 0;
+	    for(n=0; (i=read(buf, n, contentLength-n)) > 0; ) n+=i;
+	    if(n!=contentLength) 
+		throw new IOException("Protocol error while reading FCGI data");
+	    if(type==FastCGIServlet.FCGI_STDERR) { 
+		String s = new String(buf, 0, n, Util.ASCII);
+		this.servlet.log(s); 
+		contentLength = 0;
 
-    	    if(error==null) error = new StringBuffer(s);
-    	    else error.append(s);
-    	}
-    	if(paddingLength>0) {
-    	    byte b[] = new byte[paddingLength];
-    	    for(n=0; (i=read(b, n, b.length-n)) > 0; ) n+=i;
-    	    if(n!=paddingLength) 
-    		throw new IOException("Protocol error while reading FCGI padding");
-    	}
-    	return contentLength;
+		if(error==null) error = new StringBuffer(s);
+		else error.append(s);
+	    }
+	    if(paddingLength>0) {
+		byte b[] = new byte[paddingLength];
+		for(n=0; (i=read(b, n, b.length-n)) > 0; ) n+=i;
+		if(n!=paddingLength) 
+		    throw new IOException("Protocol error while reading FCGI padding");
+	    }
+	    return contentLength;
         }
         case FastCGIServlet.FCGI_END_REQUEST: {
-    	for(n=0; (i=read(buf, n, contentLength-n)) > 0; ) n+=i;
-    	if(n!=contentLength) throw new IOException("Protocol error while reading EOF data");
-    	if(paddingLength>0) {
-    	    n = super.read(buf, 0, paddingLength);		
-    	    if(n!=paddingLength) throw new IOException("Protocol error while reading EOF padding");
-    	}
-    	return -1;
+	    for(n=0; (i=read(buf, n, contentLength-n)) > 0; ) n+=i;
+	    if(n!=contentLength) throw new IOException("Protocol error while reading EOF data");
+	    if(paddingLength>0) {
+		n = super.read(buf, 0, paddingLength);		
+		if(n!=paddingLength) throw new IOException("Protocol error while reading EOF padding");
+	    }
+	    return -1;
         }
         }
         throw new IOException("Received unknown type");

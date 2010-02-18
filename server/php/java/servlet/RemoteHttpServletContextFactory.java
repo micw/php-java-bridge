@@ -40,7 +40,6 @@ import javax.servlet.http.HttpSession;
 import php.java.bridge.ISession;
 import php.java.bridge.JavaBridgeFactory;
 import php.java.bridge.Request;
-import php.java.bridge.SimpleJavaBridgeClassLoader;
 import php.java.bridge.http.IContext;
 import php.java.bridge.http.IContextFactory;
 import php.java.bridge.http.IContextFactoryVisitor;
@@ -98,9 +97,8 @@ public class RemoteHttpServletContextFactory extends JavaBridgeFactory implement
     	this.req = req;
     	this.res = res;
     	this.servlet = servlet;
-    	this.javaBridgeClassLoader = new SimpleJavaBridgeClassLoader(getClassLoader());
     	
-    	this.id = addNext(this, CGIServlet.getRealPath(ctx, ""));
+    	this.id = addNext(this, ServletUtil.getRealPath(ctx, ""));
     }
     protected void accept (IContextFactoryVisitor impl) {
 	this.impl = impl;
@@ -136,9 +134,6 @@ public class RemoteHttpServletContextFactory extends JavaBridgeFactory implement
 	RemoteHttpServletContextFactory factory = new RemoteHttpServletContextFactory(servlet, kontext, proxy, req, res);
 	factory.accept(impl);
 	return factory;
-    }
-    public ClassLoader getClassLoader() {
-	return Thread.currentThread().getContextClassLoader();
     }
     /**{@inheritDoc}*/
     public String getId() {
@@ -213,14 +208,8 @@ public class RemoteHttpServletContextFactory extends JavaBridgeFactory implement
     }
 
     /**{@inheritDoc}*/
-    public void setClassLoader(ClassLoader loader) {}
-
-    /**{@inheritDoc}*/
     public void waitFor(long timeout) throws InterruptedException {}
 
-    public SimpleJavaBridgeClassLoader getJavaBridgeClassLoader() {
-	return javaBridgeClassLoader;
-    }
     /**
      * {@inheritDoc}
      */

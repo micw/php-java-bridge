@@ -10,7 +10,7 @@ import java.util.Map;
 
 import php.java.bridge.Util;
 import php.java.bridge.Util.Process;
-import php.java.servlet.CGIServlet;
+import php.java.servlet.ServletUtil;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -54,7 +54,7 @@ class NPChannelFactory extends ChannelFactory {
 	return doConnect();
     }
 
-     protected Process doBind(Map env, String php, boolean includeJava) throws IOException {
+    protected Process doBind(Map env, String php, boolean includeJava) throws IOException {
         if(proc!=null) return null;
 	if(raPath==null) throw new IOException("No pipe name available.");
 	// Set override hosts so that php does not try to start a VM.
@@ -66,9 +66,9 @@ class NPChannelFactory extends ChannelFactory {
 	String[] args = Util.getPhpArgs(new String[]{php, raPath}, includeJava);
 	File home = null;
 	if(php!=null) try { home = ((new File(php)).getParentFile()); } catch (Exception e) {Util.printStackTrace(e);}
-	proc = new FCGIProcess(args, home, env, CGIServlet.getRealPath(servlet.context, servlet.cgiPathPrefix), servlet.phpTryOtherLocations, servlet.preferSystemPhp);
+	proc = new FCGIProcess(args, home, env, ServletUtil.getRealPath(servlet.context, FastCGIServlet.cgiPathPrefix), servlet.phpTryOtherLocations, servlet.preferSystemPhp);
 	proc.start();
-    return (Process)proc;
+	return (Process)proc;
     }
     protected void waitForDaemon() throws UnknownHostException, InterruptedException {
 	Thread.sleep(5000);
@@ -82,34 +82,34 @@ class NPChannelFactory extends ChannelFactory {
 	buf.append(Util.osName);
 	String wrapper = buf.toString();
 	String msg =
-		"Please start Apache or IIS or start a standalone PHP server.\n"+
-		"For example with the commands: \n\n" +
-		"cd " + base + "\n" + 
-		"set %REDIRECT_STATUS%=200\n"+ 
-		"set %X_JAVABRIDGE_OVERRIDE_HOSTS%=/\n"+ 
-		"set %PHP_FCGI_CHILDREN%=5\n"+ 
-		"set %PHP_FCGI_MAX_REQUESTS%=php_fcgi_max_requests\n"+ 
-		"php-cgi -d allow_url_include=On -n\n\n" + 
-		"Or copy your php-cgi.exe to " + wrapper + "\n\n.";
+	    "Please start Apache or IIS or start a standalone PHP server.\n"+
+	    "For example with the commands: \n\n" +
+	    "cd " + base + "\n" + 
+	    "set %REDIRECT_STATUS%=200\n"+ 
+	    "set %X_JAVABRIDGE_OVERRIDE_HOSTS%=/\n"+ 
+	    "set %PHP_FCGI_CHILDREN%=5\n"+ 
+	    "set %PHP_FCGI_MAX_REQUESTS%=php_fcgi_max_requests\n"+ 
+	    "php-cgi -d allow_url_include=On -n\n\n" + 
+	    "Or copy your php-cgi.exe to " + wrapper + "\n\n.";
         return msg;
     }
-   public void findFreePort(boolean select) {
+    public void findFreePort(boolean select) {
 	try {
 	    if(select) {
 		File testRafile = File.createTempFile("JavaBridge", ".socket");
 		testRaPath = PREFIX+testRafile.getPath();
 		testRafile.delete();
-	} else {
+	    } else {
 		testRaPath  = FastCGIServlet.FCGI_PIPE;
 	    }
-		} catch (IOException e) {
-		    Util.printStackTrace(e);
+	} catch (IOException e) {
+	    Util.printStackTrace(e);
 	}
     }
     public void setDefaultPort() {
-	    raPath=FastCGIServlet.FCGI_PIPE;
+	raPath=FastCGIServlet.FCGI_PIPE;
     }
     protected void setDynamicPort() {
-	    raPath=testRaPath;
+	raPath=testRaPath;
     }
 }

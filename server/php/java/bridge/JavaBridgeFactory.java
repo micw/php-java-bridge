@@ -44,14 +44,7 @@ import php.java.bridge.http.IContext;
 public abstract class JavaBridgeFactory implements IJavaBridgeFactory {
     
     protected JavaBridge bridge = null;
-    protected SimpleJavaBridgeClassLoader javaBridgeClassLoader;
-    
-    /**
-     * Return an instance of the JavaBridgeClassLoader
-     * @return The JavaBridgeClassLoader
-     */
-    public abstract SimpleJavaBridgeClassLoader getJavaBridgeClassLoader();
-    
+
     /**
      * Return a session for the JavaBridge
      * @param name The session name. If name is null, the name PHPSESSION will be used.
@@ -91,7 +84,6 @@ public abstract class JavaBridgeFactory implements IJavaBridgeFactory {
      * Recycle the factory for new reqests.
      */
     public void recycle() {
-	javaBridgeClassLoader = null;
     }
 
     /**

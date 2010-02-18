@@ -115,13 +115,16 @@ public abstract class HttpServer implements Runnable {
      * @param req The HttpRequest
      * @throws UnsupportedEncodingException
      * @throws IOException
+     * @return true if the header has been parsed successfully, false otherwise
      */
     protected boolean parseHeader(HttpRequest req) throws UnsupportedEncodingException, IOException {
 	byte buf[] = new byte[Util.BUF_SIZE];
-		
 	InputStream natIn = req.getInputStream();
 	int i=0, n, s=0;
 	boolean eoh=false;
+	boolean rn = false;
+	String remain = null;
+	String line;
 	// the header and content
 	while((n = natIn.read(buf, i, buf.length-i)) !=-1 ) {
 	    int N = i + n;
@@ -130,21 +133,42 @@ public abstract class HttpServer implements Runnable {
 		switch(buf[i++]) {
     			
 		case '\n':
-		    if(s+2==i && buf[s]=='\r') {
+		    if(rn) {
 			eoh=true;
 		    } else {
-			req.addHeader(new String(buf, s, i-s-2, Util.ASCII));
+			if (remain != null) {
+			    line = remain + new String(buf, s, i-s, Util.ASCII);
+			    line = line.substring(0, line.length()-2);
+			    remain = null;
+			} else {
+			    line = new String(buf, s, i-s-2, Util.ASCII);
+			}
+			req.addHeader(line);
 			s=i;
 		    }
+		    rn=true;
+		    break;
+		    
+		case '\r': break;
+
+		default: rn=false;	
+		    
 		}
 	    }
 	    // body
 	    if(eoh) {
 		req.pushBack(buf, i, N-i);
-		break;
+		return true;
+	    } else { 
+		if (remain != null) {
+		    remain += new String(buf, s, i-s, Util.ASCII);
+		} else {
+		    remain = new String(buf, s, i-s, Util.ASCII);
+		}
+		s = i = 0;
 	    }
 	}
-	return i!=0;
+	return false;
     }
 		
     private class Runner implements Runnable {

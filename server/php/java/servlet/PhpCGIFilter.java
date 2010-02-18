@@ -117,7 +117,7 @@ public class PhpCGIFilter implements Filter {
      * {@inheritDoc}
      */
     public void init(FilterConfig config) throws ServletException {
-	DOCUMENT_ROOT = CGIServlet.getRealPath(config.getServletContext(), "");
+	DOCUMENT_ROOT = ServletUtil.getRealPath(config.getServletContext(), "");
     }
 
     /**

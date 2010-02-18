@@ -12,7 +12,7 @@ import java.io.Reader;
 import javax.servlet.ServletContext;
 
 import php.java.bridge.Util;
-import php.java.servlet.CGIServlet;
+import php.java.servlet.ServletUtil;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -52,7 +52,7 @@ final class ScriptFileReader extends Reader {
 	this.reader = null;
     }
     public String getResourcePath(ServletContext ctx) throws IOException {
-	init(CGIServlet.getRealPath(ctx, path));
+	init(ServletUtil.getRealPath(ctx, path));
 	return path;
     }
     private static void createFile(File file, IScriptReader reader) throws IOException {

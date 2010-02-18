@@ -124,18 +124,18 @@ class java_EmptyPipeChannel {
   }
   /** Used by socket channel (phase 2) */
   function keepAliveS() {
-	$this->res = $this->fread(10); // <F p="E"/>
+	for ($this->res = $this->fread(10); strlen($this->res) < 10; $this->res.=$this->fread(10-strlen($this->res))); // <F p="E"/>
   }
   /** Used by chunked socket channel (phase 2) */
   function keepAliveSC() {
-	$this->res = $this->fread(10); // <F p="E"/>
+	for ($this->res = $this->fread(10); strlen($this->res) < 10; $this->res.=$this->fread(10-strlen($this->res)));// <F p="E"/>
 	$this->fwrite(""); // 0\r\n\r\n
-	$this->fread(5);   // 0\r\n\r\n
+	$this->fread(JAVA_RECV_SIZE); // read 0\r\n\r\n  JAVA_RECV_SIZE is dummy
   }
 
   /** Used by EmptyPipeChannel (phase 1) */
   function keepAliveH() {
-	$this->res = $this->handler->read(10); //  HTTP response <F p="E"/>
+	for ($this->res = $this->handler->read(10); strlen($this->res) < 10; $this->res.= $this->handler->read(10-strlen($this->res))); //  HTTP response <F p="E"/>
   }
 
   function keepAlive() {
@@ -205,7 +205,7 @@ class java_ChunkedSocketChannel extends java_SocketChannel {
 	  $length -= strlen($str);
 	  $data .= $str;
 	}
-  	fread($this->peer, 2);
+	fgets($this->peer, 3); // \r\n
   	return $data;
   }
   function keepAlive() { $this->keepAliveSC(); $this->checkE(); fclose ($this->peer); }
@@ -523,7 +523,7 @@ class java_HttpTunnelHandler extends java_SimpleHttpHandler {
 	  $length -= strlen($str);
 	  $data .= $str;
 	}
-  	fread($this->socket, 2);
+  	fgets($this->socket, 3); //\r\n
   	return $data;
   }
   // fallback for EmptyPipeChannel
@@ -533,7 +533,8 @@ class java_HttpTunnelHandler extends java_SimpleHttpHandler {
   }
   function close() {
 	fwrite($this->socket, "0\r\n\r\n");
-	fgets($this->socket, JAVA_RECV_SIZE); fread($this->socket, 2);
+	fgets($this->socket, JAVA_RECV_SIZE); // 0\r\n
+	fgets($this->socket, 3); // \r\n
     fclose($this->socket);
   }
   function java_HttpTunnelHandler($protocol, $ssl, $host, $port) {
@@ -543,7 +544,9 @@ class java_HttpTunnelHandler extends java_SimpleHttpHandler {
   function read($size) {
  	if(is_null($this->headers)) $this->parseHeaders();
 	if (isset($this->headers["http_error"])) {
-	   $this->shutdownBrokenConnection(fread($this->socket, $this->headers['content_length']), $this->headers["http_error"]);
+	  $len = $this->headers['content_length'];
+	  for($str=fread($this->socket, $len); strlen($str)<$len; $str.=fread($this->socket,$len-strlen($str)));
+	  $this->shutdownBrokenConnection($str);
 	}
 	return $this->fread(JAVA_RECV_SIZE);
   }
@@ -654,55 +657,6 @@ class java_HttpTunnelHandler extends java_SimpleHttpHandler {
 	}
   }
 }
-/**
- * Used when PHP connects to a servlet environment and the option
- * JAVA_PERSISTENT_SERVLET_CONNECTIONS is on.  It uses a non-chunked
- * persistent stream in phase 1 and will redirect to a simple
- * java_SocketHandler for phase 2.
- *
- * @access private
- */
-class java_HttpHandler extends java_HttpTunnelHandler {
-  function open() {
-  	$errno = null; $errstr = null;
-	$socket = pfsockopen("{$this->ssl}{$this->host}", $this->port, $errno, $errstr, 20);
-	$this->checkSocket($socket, $errno, $errstr);
-	stream_set_timeout($socket, -1);
-	$this->socket = $socket;
-  }
-  function close() {
-	if (isset($this->headers["connection_close"]))
-	  fclose ($this->socket);
-	else
-	  fflush($this->socket);
-  }
-  function parseHeaders() {
-	parent::parseHeaders();
-	if (!isset($this->headers["redirect"])) {
-	  $this->shutdownBrokenConnection ("No ContextServer. define ('JAVA_PERSISTENT_SERVLET_CONNECTIONS', false); or set java.persistent_servlet_connections = Off and try again.<br>\n See files: \"Java.inc\", \"java.ini\". Or, if you run PHP from java, the file \"global.properties\" within JavaBridge.jar within the JavaBridge.war zip file.");
-	}
-  }
-  function read($size) {
- 	if(is_null($this->headers)) $this->parseHeaders();
-	if (isset($this->headers["http_error"])) {
-	  shutdownBrokenConnection(fread($this->socket, $this->headers['content_length']), $this->headers["http_error"]);
-	}
-	return $this->fread($this->headers['content_length']);
-  }
-  function fread($size) {
-	return fread($this->socket, $size);
-  }
-  function fwrite($data) {
-	return fwrite($this->socket, $data);
-  }
-  function getBodyFor ($compat, $data) {
-	$len = 2+strlen($data);
-	return "Content-Length: ${len}\r\nConnection: keep-alive\r\n\r\n\177${compat}${data}";
-  }	
-  function createSimpleChannel () {
-	$this->channel = new java_EmptyPipeChannelP($this);
-  }
-}
 
 /**
  * @access private
@@ -775,7 +729,7 @@ class java_Protocol {
 		(array_key_exists("HTTP_X_JAVABRIDGE_REDIRECT", $_SERVER))) 
 	  return new java_SimpleHttpHandler($this, $ssl, $host, $port);
 
-	return JAVA_PERSISTENT_SERVLET_CONNECTIONS ? new java_HttpHandler($this, $ssl, $host, $port) : new java_HttpTunnelHandler($this, $ssl, $host, $port);
+	return new java_HttpTunnelHandler($this, $ssl, $host, $port);
   }
   /**
    * connect to a local channel (no servlet engine or app server)

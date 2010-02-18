@@ -34,8 +34,7 @@ import javax.swing.JOptionPane;
  * the standalone back-end, listenes for protocol requests and handles
  * CreateInstance, GetSetProp and Invoke requests. Supported protocol
  * modes are INET (listens on all interfaces), INET_LOCAL (loopback
- * only), LOCAL (uses a local, invisible communication channel,
- * requires natcJavaBridge.so), SERVLET and SERVLET_LOCAL 
+ * only), SERVLET and SERVLET_LOCAL 
  * (starts the built-in servlet engine listening on all interfaces or loopback).  
  * <p> Example:<br> <code> java
  * -Djava.awt.headless=true -jar JavaBridge.jar INET_LOCAL:9676 5
@@ -53,8 +52,7 @@ public class Standalone {
     public static final int HTTP_PORT_BASE = 8080;
 
     /**
-     * Create a new server socket and return it. This procedure should only
-     * be used at boot time. Use JavaBridge.bind instead.
+     * Create a new server socket and return it. 
      * @param logLevel the current logLevel
      * @param sockname the socket name
      * @return the server socket
@@ -62,17 +60,7 @@ public class Standalone {
      */
     static ISocketFactory bind(int logLevel, String sockname) throws IOException {
 	ISocketFactory socket = null;
-	try {
-	    socket = LocalServerSocket.create(logLevel, sockname, Util.BACKLOG);
-	} catch (Throwable e) {
-	    try {
-	    // do not access Util at this point, static final fields are an exception.
-	    boolean promiscuous = System.getProperty("php.java.bridge.promiscuous", "false").toLowerCase().equals("true");
-	    socket = TCPServerSocket.create(promiscuous?"INET:0":"INET_LOCAL:0", Util.BACKLOG);
-	    } catch(Throwable t) {/*ignore*/}
-	}
-	if(null==socket)
-	    socket = TCPServerSocket.create(sockname, Util.BACKLOG);
+	socket = TCPServerSocket.create(sockname, Util.BACKLOG);
 
 	if(null==socket)
 	    throw new IOException("Could not create socket: " + sockname);
@@ -84,30 +72,21 @@ public class Standalone {
 	System.err.println("This is free software; see the source for copying conditions.  There is NO");
 	System.err.println("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.");
     }
-    private static void monoUsage() {
-	System.err.println("PHP/Mono+NET Bridge version "+Util.VERSION);
-	disclaimer();
-	System.err.println("Usage: MonoBridge.exe [SOCKETNAME LOGLEVEL LOGFILE]");
-	System.err.println("Example: MonoBridge.exe");
-	System.err.println("Example: MonoBridge.exe INET_LOCAL:0 3 MonoBridge.log");
-    }
     protected void javaUsage() {
 	System.err.println("PHP/Java Bridge version "+Util.VERSION);
 	disclaimer();
 	System.err.println("Usage: java -jar JavaBridge.jar [SOCKETNAME LOGLEVEL LOGFILE]");
-	System.err.println("SOCKETNAME is one of LOCAL, INET_LOCAL, INET, SERVLET_LOCAL, SERVLET");
+	System.err.println("SOCKETNAME is one of INET_LOCAL, INET, SERVLET_LOCAL, SERVLET");
+	System.err.println("");
 	System.err.println("Example: java -jar JavaBridge.jar");
-	System.err.println("Example: LD_LIBRARY_PATH=/usr/lib/php/modules/ java -jar JavaBridge.jar LOCAL:/tmp/javabridge_native.socket 3 /var/log/php-java-bridge.log");
 	System.err.println("Example: java -jar JavaBridge.jar SERVLET_LOCAL:8080 3 JavaBridge.log");
+	System.err.println("");
 	System.err.println("Influential system properties: threads, daemon, php_exec, default_log_file, default_log_level, base.");
 	System.err.println("Example: java -Djava.awt.headless=\"true\" -Dphp.java.bridge.threads=50 -Dphp.java.bridge.base=/usr/lib/php/modules -Dphp.java.bridge.php_exec=/usr/local/bin/php-cgi -Dphp.java.bridge.default_log_file= -Dphp.java.bridge.default_log_level=5 -jar JavaBridge.jar");
 	System.err.println("Example: java -Dphp.java.bridge.daemon=\"true\" -jar JavaBridge.jar");
     }
     protected void usage() {
-	if(Util.IS_MONO)
-	    monoUsage();
-	else
-	    javaUsage();
+	javaUsage();
 	
 	System.exit(1);
     }
@@ -134,21 +113,7 @@ public class Standalone {
 	return start;
    }
 
-    /**
-     * Copy of Util.IS_MONO. This is here because Util must not be accessed during startup.
-     * @return true if this is the Mono VM, false otherwise
-     */
-    static boolean checkMono () {
-        boolean IS_MONO = false;
-        try {
-            Util.CLRAssembly = Class.forName("cli.System.Reflection.Assembly");
-            Util.loadFileMethod = Util.CLRAssembly.getMethod("LoadFile", new Class[] {String.class});
-            Util.loadMethod = Util.CLRAssembly.getMethod("Load", new Class[] {String.class});
-            IS_MONO=true;
-        } catch (Exception e) {/*ignore*/}
-        return IS_MONO;
-    }
-    
+   
     /**
      * Global init. Redirects System.out and System.err to the server
      * log file(s) or to System.err and creates and opens the
@@ -160,8 +125,7 @@ public class Standalone {
     protected void init(String s[]) {
 	String sockname=null;
 	int logLevel = -1;
-	boolean isMono = checkMono();
-        String tcpSocketName = isMono ? "9167" : "9267";
+        String tcpSocketName = "9267";
 	
 	if(s.length>3) checkOption(s);
 	try {
@@ -178,14 +142,14 @@ public class Standalone {
 	    } catch (Throwable t) {
 		t.printStackTrace();
 	    }
-	    if(s.length==0 && !isMono) {
+	    if(s.length==0) {
 		try {
 		    int tcpSocket = Integer.parseInt(tcpSocketName);
 		    int freeJavaPort = findFreePort(tcpSocket);
 		    int freeHttpPort = findFreePort(Standalone.HTTP_PORT_BASE);
 		    Object result = JOptionPane. showInputDialog(null,
 			    "Start a socket listener on port", "Starting the PHP/Java Bridge ...", JOptionPane.QUESTION_MESSAGE, null,
-		            new String[] {"LOCAL:/var/run/.php-java-bridge_socket", 
+		            new String[] {
 			    "INET_LOCAL:"+freeJavaPort,"INET:"+freeJavaPort,
 			    "SERVLET_LOCAL:"+freeHttpPort,"SERVLET:"+freeHttpPort}, "SERVLET_LOCAL:"+freeHttpPort);
 		       if(result==null) System.exit(0);
@@ -197,24 +161,14 @@ public class Standalone {
 		// do not access Util unless invoked as standalone component
 		TCPServerSocket.TCP_PORT_BASE=Integer.parseInt(tcpSocketName);
 	    }
-	    checkServlet(logLevel, sockname, s);
+	    if (checkServlet(logLevel, sockname, s)) return;
+	    
 	    ISocketFactory socket = bind(logLevel, sockname);
-
-            // invoked directly from apache or iis, not used anymore
-	    if( System.getProperty("php.java.bridge.asDaemon", "false").equals("false") && s.length>1) {
-	        StringBuffer buf = new StringBuffer();
-	        buf.append('@');
-	        buf.append(socket.getSocketName());
-	        buf.append('\n');
-		System.out.write(buf.toString().getBytes());
-		System.out.close(); 
-	    }
 
 	    if("true".equals(System.getProperty("php.java.bridge.test.startup"))) System.exit(0);
 	    JavaBridge.initLog(String.valueOf(socket), logLevel, s);
 	    JavaBridge.init(socket, logLevel, s);
-	} catch (RuntimeException e) { throw e; } 
-	catch (Throwable ex) { throw new RuntimeException(ex); }
+	} catch (Exception e) { throw new RuntimeException(e);} 
     }
 
     /**
@@ -229,16 +183,16 @@ public class Standalone {
                 return new File(path);
         }
     }
-    private static void checkServlet(int logLevel, String sockname, String[] s) throws InterruptedException, IOException {
-	if(sockname==null) return;
+    private static boolean checkServlet(int logLevel, String sockname, String[] s) throws InterruptedException, IOException {
+	if(sockname==null) return false;
 	if(sockname.startsWith("SERVLET_LOCAL:")) System.setProperty("php.java.bridge.promiscuous", "false");
 	else if(sockname.startsWith("SERVLET:"))  System.setProperty("php.java.bridge.promiscuous", "true");
-	else return;
+	else return false;
 	
 	JavaBridge.initLog(sockname, logLevel, s);
 	sockname=sockname.substring(sockname.indexOf(':')+1);
 	JavaBridgeRunner.main(new String[] {sockname});
-	return;
+	return false;
     }
     /* Don't use Util or DynamicJavaBridgeClassLoader at this stage! */
     private static final boolean checkGNUVM() {

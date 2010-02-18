@@ -49,7 +49,7 @@ class RandomAccessFileInputStream extends InputStream {
      */
     public void close() throws IOException {
         if(this.channel.writeIsClosed) 
-    	this.raFile.close();
+	    this.raFile.close();
         this.channel.readIsClosed=true;
     }
 

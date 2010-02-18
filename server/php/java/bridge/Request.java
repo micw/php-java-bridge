@@ -640,7 +640,6 @@ public final class Request implements IDocHandler {
 	this.bridge.request = this;
 	response.setBridge(bridge);
 	parser.setBridge(bridge);
-	bridge.getClassLoader().switcheThreadContextClassLoader();
     }
     private void resetBridge() {
         if(defaultBridge!=null) {
@@ -648,7 +647,6 @@ public final class Request implements IDocHandler {
             response.setBridge(bridge);
             parser.setBridge(bridge);
             defaultBridge = null;
-            // bridge.getClassLoader().switcheThreadContextClassLoader() will be called in contextFactory.recycle()
         }
     }
     /** re-initialize for new requests */

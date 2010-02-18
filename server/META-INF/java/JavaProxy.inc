@@ -211,14 +211,6 @@ function java_values($object) {
   return java_values_internal($object);
 }
 /**
- * Only for internal use.
- * @access private
- */
-function java_reset() {
-  $client=__javaproxy_Client_getClient();
-  return $client->invokeMethod(0, "reset", array());
-}
-/**
  * Only for internal use
  * @access private
  */
@@ -347,12 +339,10 @@ function java_cast($object, $type) {
 /**
  * Set the library path. This function should not be used in new programs.
  * Please use <a href="http://php-java-bridge.sourceforge.net/pjb/webapp.php>tomcat or jee hot deployment</a> instead.
- * @access public
+ * @access private
  */
 function java_require($arg) {
-  $client=__javaproxy_Client_getClient();
-  return $client->invokeMethod(0, "updateJarLibraryPath", 
-							   array($arg, ini_get("extension_dir"), getcwd(), ini_get("include_path")));
+	trigger_error('Please use <a href="http://php-java-bridge.sourceforge.net/pjb/webapp.php>tomcat or jee hot deployment</a> instead', E_USER_WARNING);
 }
 /**
  * @access private

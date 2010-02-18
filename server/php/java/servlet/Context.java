@@ -173,7 +173,7 @@ public class Context extends php.java.bridge.http.Context {
         * @return the real path
         */
        public static String getRealPathInternal(String path, ServletContext ctx) {
-	   return CGIServlet.getRealPath(ctx, path);
+	   return ServletUtil.getRealPath(ctx, path);
        }
        /**{@inheritDoc}*/
        public String getRealPath(String path) {

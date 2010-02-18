@@ -33,7 +33,6 @@ import php.java.bridge.ISession;
 import php.java.bridge.JavaBridge;
 import php.java.bridge.NotImplementedException;
 import php.java.bridge.Request;
-import php.java.bridge.SimpleJavaBridgeClassLoader;
 import php.java.bridge.Util;
 
 
@@ -70,7 +69,6 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
 	this.isManaged = isManaged;
   	ContextFactory visited = new ContextFactory(webContext, isManaged);
   	visited.accept(this);
-    	setClassLoader(Util.getContextClassLoader());
     	this.visited = visited;
     }
     
@@ -130,7 +128,7 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
     }
     /**{@inheritDoc}*/
     public String toString() {
-	return "ContextFactory: " + visited + ", SimpleContextFactory: " +getClass() + ", current loader: " + loader;
+	return "ContextFactory: " + visited + ", SimpleContextFactory: " +getClass();
     }
     /**
      * Create a new context. The default implementation
@@ -182,34 +180,6 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
      */
     public void recycle() {
 	visited.recycle();
-    }
-
-    private ClassLoader loader;
-    /**
-     * Return the current class loader.
-     * @return the current DynamicJavaBridgeClassLoader
-     */
-    public ClassLoader getClassLoader() {
-	return loader;
-    }
-
-    /**
-     * Return the JavaBridgeClassLoader, which wraps the
-     * DynamicJavaBridgeClassLoader
-     * @return The class loader
-     */
-    public SimpleJavaBridgeClassLoader getJavaBridgeClassLoader() {
-	return visited.getJavaBridgeClassLoader();
-    }
-
-    /**
-     * Set the current class loader
-     * @param loader The DynamicJavaBridgeClassLoader
-     */
-    public void setClassLoader(ClassLoader loader) {
-	if(loader==null) 
-	    throw new NullPointerException("loader");
-	this.loader = loader;
     }
 
     /**{@inheritDoc}*/

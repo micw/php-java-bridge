@@ -29,7 +29,7 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import php.java.bridge.Util;
-import php.java.servlet.PhpCGIServlet;
+import php.java.servlet.ServletUtil;
 
 /**
  * Represents the FastCGI process.
@@ -40,25 +40,25 @@ import php.java.servlet.PhpCGIServlet;
 class FCGIProcess extends Util.Process {
     String realPath;
     public FCGIProcess(String[] args, File homeDir, Map env, String realPath, boolean tryOtherLocations, boolean preferSystemPhp) throws IOException {
-         super(args, homeDir, env, tryOtherLocations, preferSystemPhp);
-         this.realPath = realPath;
+	super(args, homeDir, env, tryOtherLocations, preferSystemPhp);
+	this.realPath = realPath;
     }
     protected String[] getArgumentArray(String[] php, String[] args) {
         LinkedList buf = new LinkedList();
-        if(PhpCGIServlet.USE_SH_WRAPPER) {
-    	buf.add("/bin/sh");
-    	buf.add(realPath+"/launcher.sh");
-    	buf.addAll(java.util.Arrays.asList(php));
-    	for(int i=1; i<args.length; i++) {
-    	    buf.add(args[i]);
-    	}
+        if(ServletUtil.USE_SH_WRAPPER) {
+	    buf.add("/bin/sh");
+	    buf.add(realPath+"/launcher.sh");
+	    buf.addAll(java.util.Arrays.asList(php));
+	    for(int i=1; i<args.length; i++) {
+		buf.add(args[i]);
+	    }
         } else {
-    	buf.add(realPath+File.separator+"launcher.exe");
-    	buf.addAll(java.util.Arrays.asList(php));
-    	for(int i=1; i<args.length; i++) {
-    	    buf.add(args[i]);
-    	}
-         }
+	    buf.add(realPath+File.separator+"launcher.exe");
+	    buf.addAll(java.util.Arrays.asList(php));
+	    for(int i=1; i<args.length; i++) {
+		buf.add(args[i]);
+	    }
+	}
         return (String[]) buf.toArray(new String[buf.size()]);
     }
     public void start() throws NullPointerException, IOException {

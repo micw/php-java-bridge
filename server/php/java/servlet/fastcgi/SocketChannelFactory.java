@@ -14,7 +14,7 @@ import java.util.Map;
 import php.java.bridge.ILogger;
 import php.java.bridge.Util;
 import php.java.bridge.Util.Process;
-import php.java.servlet.CGIServlet;
+import php.java.servlet.ServletUtil;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -51,10 +51,10 @@ class SocketChannelFactory extends ChannelFactory {
     public void test() throws ConnectException {
         Socket testSocket;
 	try {
-	  testSocket = new Socket(InetAddress.getByName(getName()), port);
-	  testSocket.close();
+	    testSocket = new Socket(InetAddress.getByName(getName()), port);
+	    testSocket.close();
 	} catch (IOException e) {
-	  throw new ConnectException(e);
+	    throw new ConnectException(e);
 	}
     }
     /**
@@ -68,17 +68,17 @@ class SocketChannelFactory extends ChannelFactory {
      */
     private Socket doConnect(String host, int port) throws ConnectException {
         Socket s = null;
-	  try {
+	try {
             s = new Socket(InetAddress.getByName(host), port);
-	  } catch (IOException e) {
-	        throw new ConnectException(e);
-	    }
-	  try {
-		    s.setTcpNoDelay(true);
-	  } catch (SocketException e) {
-		    Util.printStackTrace(e);
-	  }
-	  return s;
+	} catch (IOException e) {
+	    throw new ConnectException(e);
+	}
+	try {
+	    s.setTcpNoDelay(true);
+	} catch (SocketException e) {
+	    Util.printStackTrace(e);
+	}
+	return s;
     }
 
     public Channel connect() throws ConnectException {
@@ -86,97 +86,97 @@ class SocketChannelFactory extends ChannelFactory {
 	return new SocketChannel(s); 	
     }
     
-	protected void waitForDaemon() throws UnknownHostException, InterruptedException {
-  	    long T0 = System.currentTimeMillis();
-  	    int count = 15;
-  	    InetAddress addr = InetAddress.getByName(LOCAL_HOST);
-  	    if(Util.logLevel>3) Util.logDebug("Waiting for PHP FastCGI daemon");
-  	    while(count-->0) {
-  		try {
-  		    Socket s = new Socket(addr, getPort());
-  		    s.close();
-  		    break;
-  		} catch (IOException e) {/*ignore*/}
-  		if(System.currentTimeMillis()-16000>T0) break;
-  		Thread.sleep(1000);
-  	    }
-  	    if(count==-1) Util.logError("Timeout waiting for PHP FastCGI daemon");
-  	    if(Util.logLevel>3) Util.logDebug("done waiting for PHP FastCGI daemon");
+    protected void waitForDaemon() throws UnknownHostException, InterruptedException {
+	long T0 = System.currentTimeMillis();
+	int count = 15;
+	InetAddress addr = InetAddress.getByName(LOCAL_HOST);
+	if(Util.logLevel>3) Util.logDebug("Waiting for PHP FastCGI daemon");
+	while(count-->0) {
+	    try {
+		Socket s = new Socket(addr, getPort());
+		s.close();
+		break;
+	    } catch (IOException e) {/*ignore*/}
+	    if(System.currentTimeMillis()-16000>T0) break;
+	    Thread.sleep(1000);
 	}
+	if(count==-1) Util.logError("Timeout waiting for PHP FastCGI daemon");
+	if(Util.logLevel>3) Util.logDebug("done waiting for PHP FastCGI daemon");
+    }
 	    
-	    /* Start a fast CGI Server process on this computer. Switched off per default. */
-	    protected Process doBind(Map env, String php, boolean includeJava) throws IOException {
-	        if(proc!=null) return null;
-		StringBuffer buf = new StringBuffer((Util.JAVABRIDGE_PROMISCUOUS || promiscuous) ? "" : LOCAL_HOST); // bind to all available or loopback only
-		buf.append(':');
-		buf.append(String.valueOf(getPort()));
-		String port = buf.toString();
+    /* Start a fast CGI Server process on this computer. Switched off per default. */
+    protected Process doBind(Map env, String php, boolean includeJava) throws IOException {
+	if(proc!=null) return null;
+	StringBuffer buf = new StringBuffer((Util.JAVABRIDGE_PROMISCUOUS || promiscuous) ? "" : LOCAL_HOST); // bind to all available or loopback only
+	buf.append(':');
+	buf.append(String.valueOf(getPort()));
+	String port = buf.toString();
 	        
-		// Set override hosts so that php does not try to start a VM.
-		// The value itself doesn't matter, we'll pass the real value
-		// via the (HTTP_)X_JAVABRIDGE_OVERRIDE_HOSTS header field
-		// later.
-		env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", servlet.override_hosts?"/":"");
-		env.put("REDIRECT_STATUS", "200");
-		String[] args = Util.getPhpArgs(new String[]{php, "-b", port}, includeJava);
-		File home = null;
-		if(php!=null) try { home = ((new File(php)).getParentFile()); } catch (Exception e) {Util.printStackTrace(e);}
-		proc = new FCGIProcess(args, home, env, CGIServlet.getRealPath(servlet.context, servlet.cgiPathPrefix), servlet.phpTryOtherLocations, servlet.preferSystemPhp);
-		proc.start();
-		return (Process)proc;
-	    }
-	    public int getPort() {
-		return port;
-	    }
-	    public String getName() {
-		return LOCAL_HOST;
-	    }
-	    public String getFcgiStartCommand(String base, String php_fcgi_max_requests) {
-			StringBuffer buf = new StringBuffer(".");
-			buf.append(File.separator);
-			buf.append("php-cgi-");
-			buf.append(Util.osArch);
-			buf.append("-");
-			buf.append(Util.osName);
-			String wrapper = buf.toString();
-			String msg =null;
-			    msg=
-				"Please start Apache or IIS or start a standalone PHP server.\n"+
-				"For example with the commands: \n\n" +
-				"cd " + base + "\n" + 
-				"chmod +x " + wrapper + "\n" + 
-				"REDIRECT_STATUS=200 " +
-				"X_JAVABRIDGE_OVERRIDE_HOSTS=\"/\" " +
-				"PHP_FCGI_CHILDREN=\"5\" " +
-				"PHP_FCGI_MAX_REQUESTS=\""+php_fcgi_max_requests+"\" "+wrapper+" -d allow_url_include=On -c "+wrapper+".ini -b 127.0.0.1:" +
-				getPort()+"\n\n";
-		        return msg;
-		    }
-	    protected void bind(ILogger logger) throws InterruptedException, IOException {
-		if(fcgiTestSocket!=null) { fcgiTestSocket.close(); fcgiTestSocket=null; }// replace the allocated socket# with the real fcgi server
-		super.bind(logger);
-	    }
+	// Set override hosts so that php does not try to start a VM.
+	// The value itself doesn't matter, we'll pass the real value
+	// via the (HTTP_)X_JAVABRIDGE_OVERRIDE_HOSTS header field
+	// later.
+	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", servlet.override_hosts?"/":"");
+	env.put("REDIRECT_STATUS", "200");
+	String[] args = Util.getPhpArgs(new String[]{php, "-b", port}, includeJava);
+	File home = null;
+	if(php!=null) try { home = ((new File(php)).getParentFile()); } catch (Exception e) {Util.printStackTrace(e);}
+	proc = new FCGIProcess(args, home, env, ServletUtil.getRealPath(servlet.context, FastCGIServlet.cgiPathPrefix), servlet.phpTryOtherLocations, servlet.preferSystemPhp);
+	proc.start();
+	return (Process)proc;
+    }
+    public int getPort() {
+	return port;
+    }
+    public String getName() {
+	return LOCAL_HOST;
+    }
+    public String getFcgiStartCommand(String base, String php_fcgi_max_requests) {
+	StringBuffer buf = new StringBuffer(".");
+	buf.append(File.separator);
+	buf.append("php-cgi-");
+	buf.append(Util.osArch);
+	buf.append("-");
+	buf.append(Util.osName);
+	String wrapper = buf.toString();
+	String msg =null;
+	msg=
+	    "Please start Apache or IIS or start a standalone PHP server.\n"+
+	    "For example with the commands: \n\n" +
+	    "cd " + base + "\n" + 
+	    "chmod +x " + wrapper + "\n" + 
+	    "REDIRECT_STATUS=200 " +
+	    "X_JAVABRIDGE_OVERRIDE_HOSTS=\"/\" " +
+	    "PHP_FCGI_CHILDREN=\"5\" " +
+	    "PHP_FCGI_MAX_REQUESTS=\""+php_fcgi_max_requests+"\" "+wrapper+" -d allow_url_include=On -c "+wrapper+".ini -b 127.0.0.1:" +
+	    getPort()+"\n\n";
+	return msg;
+    }
+    protected void bind(ILogger logger) throws InterruptedException, IOException {
+	if(fcgiTestSocket!=null) { fcgiTestSocket.close(); fcgiTestSocket=null; }// replace the allocated socket# with the real fcgi server
+	super.bind(logger);
+    }
 		
-	    public void findFreePort(boolean select) {
-		    fcgiTestPort=FastCGIServlet.FCGI_PORT; 
-		    fcgiTestSocket=null;
-		    for(int i=FastCGIServlet.FCGI_PORT+1; select && (i<FastCGIServlet.FCGI_PORT+100); i++) {
-		        try {
-		    	ServerSocket s = new ServerSocket(i, Util.BACKLOG, InetAddress.getByName(LOCAL_HOST));
-		    	fcgiTestPort = i;
-		    	fcgiTestSocket = s;
-		    	break;
-		        } catch (IOException e) {/*ignore*/}
-		    }
-		}
-	    public void setDefaultPort() {
-		port = FastCGIServlet.FCGI_PORT;
-	    }
-	    protected void setDynamicPort() {
-		port = fcgiTestPort;
-	    }
-	    public void destroy() {
-		super.destroy();
-	    	if(fcgiTestSocket!=null) try { fcgiTestSocket.close(); fcgiTestSocket=null;} catch (Exception e) {/*ignore*/}
-	    }	    
+    public void findFreePort(boolean select) {
+	fcgiTestPort=FastCGIServlet.FCGI_PORT; 
+	fcgiTestSocket=null;
+	for(int i=FastCGIServlet.FCGI_PORT+1; select && (i<FastCGIServlet.FCGI_PORT+100); i++) {
+	    try {
+		ServerSocket s = new ServerSocket(i, Util.BACKLOG, InetAddress.getByName(LOCAL_HOST));
+		fcgiTestPort = i;
+		fcgiTestSocket = s;
+		break;
+	    } catch (IOException e) {/*ignore*/}
+	}
+    }
+    public void setDefaultPort() {
+	port = FastCGIServlet.FCGI_PORT;
+    }
+    protected void setDynamicPort() {
+	port = fcgiTestPort;
+    }
+    public void destroy() {
+	super.destroy();
+	if(fcgiTestSocket!=null) try { fcgiTestSocket.close(); fcgiTestSocket=null;} catch (Exception e) {/*ignore*/}
+    }	    
 }

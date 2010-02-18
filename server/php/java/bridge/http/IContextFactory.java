@@ -114,17 +114,6 @@ public interface IContextFactory extends IJavaBridgeFactory {
     public ISession getSimpleSession(String name, boolean clientIsNew, int timeout);
 
    /**
-    * Set the class loader obtained from the current servlet into the context.
-    * @param loader The currentThreadContextClassLoader
-    */
-   public void setClassLoader(ClassLoader loader);
-   
-   /**
-    * Get the class loader from the servlet.
-    * @return The currentThreadContextClassLoader of the servlet.
-    */
-   public ClassLoader getClassLoader();
-   /**
     * Hook is called at the end of the visitor's life cycle. 
     * Either from destroy(), recycle() or from destroyOrphaned().
     * @see #destroy()

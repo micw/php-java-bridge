@@ -1,7 +1,7 @@
 <?php /*-*- mode: php; tab-width:4 -*-*/
 
   /**
-	 PHPDebugger.inc version 1.0beta -- A pure PHP debugger.
+	 PHPDebugger.php version 1.0beta -- A pure PHP debugger.
 
 	 Copyright (C) 2009 Jost Boekemeier
 
@@ -246,12 +246,12 @@ interface pdb_Queue {
 }
 
 /**
- * This class represents the debugger front end connection.  It
- * communicates with the debugger back end using a shared-memory queue.
+ * This class represents the debugger back end connection.  It
+ * communicates with the debugger front end using a shared-memory queue.
  * It is slow, but it does not require any special library.
  * @access private
  */
-class pdb_PollingClientConnection implements pdb_Queue {
+class pdb_PollingServerConnection implements pdb_Queue {
   protected $id;
   protected $role, $to;
   protected $chanTrm; // "back end terminated" flag
@@ -262,16 +262,131 @@ class pdb_PollingClientConnection implements pdb_Queue {
    * Create a new communication using a unique id
    * @access private
    */
-  public function pdb_PollingClientConnection($id) {
+  public function pdb_PollingServerConnection($id) {
     $this->id = $id;
     $this->chanTrm = "pdb_trmserver{$this->id}";
 	$this->output = "<missing>";
 
     $this->init();
   }
+
   protected function checkTrm() {
 	return false!==$_SESSION[$this->chanTrm];
   }
+
+  protected function init() {
+    session_start();
+
+    $this->role = "client";
+    $this->to   = "server";
+
+    $chanCtr = "pdb_ctr{$this->role}{$this->id}";
+    $chan = "pdb_{$this->role}{$this->id}";
+	unset ($_SESSION[$chan]);
+	unset ($_SESSION[$chanCtr]);
+
+    $this->role = "server";
+    $this->to   = "client";
+
+    $chanCtr = "pdb_ctr{$this->role}{$this->id}";
+    $chan = "pdb_{$this->role}{$this->id}";
+	unset ($_SESSION[$chan]);
+	unset ($_SESSION[$chanCtr]);
+
+	if (isset($_SESSION[$this->chanTrm]) && !$this->checkTrm()) {
+	  $_SESSION[$this->chanTrm] = true;
+	  session_write_close();
+	  sleep(1);
+	  session_start();
+	}
+	$_SESSION[$this->chanTrm] = false;
+	session_write_close();
+  }
+
+  protected function poll() {
+    $val = "";
+    $chanCtr = "pdb_ctr{$this->role}{$this->id}";
+    $chan = "pdb_{$this->role}{$this->id}";
+    session_start();
+	if (!($val = $this->checkTrm())) {
+	  pdb_Logger::debug("...{$this->role}, {$this->id} poll...");
+	  if(!isset($_SESSION[$chanCtr])) { 
+		$_SESSION[$chan] = array(); 
+		$_SESSION[$chanCtr]=0; 
+	  }
+	  if (count($_SESSION[$chan]) > $_SESSION[$chanCtr]) {
+		$val = json_decode($_SESSION[$chan][$_SESSION[$chanCtr]++]);
+	  }
+	}
+    session_write_close();
+    return $val;
+  }
+  protected function send($val) {
+    $chan = "pdb_{$this->to}{$this->id}";
+    session_start();
+	if (!$this->checkTrm()) $_SESSION[$chan][]=json_encode($val);
+    session_write_close();
+  }
+
+  /**
+   * read a new value from the read queue
+   * @access private
+   */
+  public function read() {
+    $val = null;
+	$cntr = 0;
+	while(!($val=$this->poll())) {
+	  if ($cntr<=20) {
+		$cntr++;
+		usleep(self::TIMER_DURATION);
+	  }
+	  else
+		usleep(self::TIMER_DURATION*5);
+	}
+    return $val === true ? null : $val;
+  }
+  /**
+   * write a new value to the write queue
+   * @access private
+   */
+  public function write($val) {
+	$this->send($val);
+  }
+
+  /**
+   * Set the script output
+   * @access private
+   */
+  public function setOutput($output) {
+	$this->output = $output;
+  }
+  /**
+   * Get the script output
+   * @access private
+   */
+  public function getOutput() {
+	return $_SESSION[$this->chanTrm];
+  }
+
+  /**
+   * shut down the communication channel
+   */
+  public function shutdown() {
+	pdb_Logger::debug("session terminated: {$this->chanTrm}");
+    session_start();
+	$_SESSION[$this->chanTrm] = $this->output;
+    session_write_close();
+  }
+}    
+
+/**
+ * This class represents the debugger front end connection.  It
+ * communicates with the debugger back end using a shared-memory queue.
+ * It is slow, but it does not require any special library.
+ * @access private
+ */
+class pdb_PollingClientConnection extends pdb_PollingServerConnection {
+  private $seq;
 
   protected function init() {
     $this->role = "client";
@@ -286,54 +401,25 @@ class pdb_PollingClientConnection implements pdb_Queue {
 	  pdb_Logger::debug("...{$this->role}, {$this->id} poll...");
 	  if (!isset($_SESSION[$chanCtr])) $_SESSION[$chanCtr] = 0; 
 	  if (isset($_SESSION[$chan]) && (count($_SESSION[$chan]) > $_SESSION[$chanCtr])) {
-		$val = $_SESSION[$chan][$_SESSION[$chanCtr]++];
+		$val = json_decode($_SESSION[$chan][$_SESSION[$chanCtr]]);
+		if ($val->seq == $this->seq) 
+		  $_SESSION[$chanCtr]++;
+		else
+		  $val = false;
 	  }
 	}
     session_write_close();
     return $val;
   }
-  protected function send($val) {
-    $chan = "pdb_{$this->to}{$this->id}";
-    session_start();
-	if (!$this->checkTrm()) $_SESSION[$chan][]=$val;
-    session_write_close();
-  }
 
-  /**
-   * read a new value from the read queue
-   * @access private
-   */
-  public function read() {
-    $val = null;
-	$cntr = 0;
-	while(!($val=$this->poll())) {
-	  if ($cntr++<=20) 
-		usleep(self::TIMER_DURATION);
-	  else
-		usleep(self::TIMER_DURATION*5);
-	}
-    return $val;
-  }
   /**
    * write a new value to the write queue
    * @access private
    */
   public function write($val) {
-	$this->send($val);
-  }
-  /**
-   * Set the script output
-   * @access private
-   */
-  public function setOutput($output) {
-	$this->output = $output;
-  }
-  /**
-   * Get the script output
-   * @access private
-   */
-  public function getOutput() {
-	return $_SESSION[$this->chanTrm];
+	$this->seq = $val->seq;
+
+	parent::write($val);
   }
 
   /**
@@ -839,12 +925,13 @@ class pdb_JSDebuggerClient {
 	if ($msg->cmd == "begin") sleep(1); // wait for the server to settle
 	pdb_Logger::debug("beginHandleRequest: ".$msg->cmd);
 	$conn = self::getConnection($msg->serverID);
-	$conn->write(json_encode($msg));
+	$conn->write($msg);
 
-	if (($response = $conn->read()) === true) 
-	  $response = json_encode(array("cmd"=>"term", "output"=>$conn->getOutput()));
+	if (!($response = $conn->read())) 
+	  $output = json_encode(array("cmd"=>"term", "output"=>$conn->getOutput()));
+	else
+	  $output = json_encode($response);
 	
-	$output = $response;
 	echo "($output)";
 	pdb_Logger::debug("endHandleRequest");
   }
@@ -862,7 +949,7 @@ class pdb_View {
   /** The current script name */
   public $scriptName;
   /** Back-link to the parent or null */
-  public $parentView;
+  public $parent;
 
   protected $bpCounter, $lineCounter, $code;
   /**
@@ -870,8 +957,8 @@ class pdb_View {
    * @param object the parent frame
    * @param string the script name
    */
-  public function pdb_View($parentView, $scriptName) {
-    $this->parentView = $parentView;
+  public function pdb_View($parent, $scriptName) {
+    $this->parent = $parent;
     $this->scriptName = $scriptName;
 
     $this->bpCounter = $this->lineCounter = 1;
@@ -933,8 +1020,8 @@ class pdb_VariableView extends pdb_View {
    * @param string the variable name
    * @param string the variable value
    */
-  public function pdb_VariableView($parentView, $name, $value) {
-    parent::pdb_View($parentView, $name);
+  public function pdb_VariableView($parent, $name, $value) {
+    parent::pdb_View($parent, $name);
     $this->value = $value;
   }
   /**
@@ -966,11 +1053,10 @@ class pdb_Environment extends pdb_View {
    * @param string the script name
    * @param bool true if a dynamic breakpoint should be inserted at the next line, false otherwise
    */
-  public function pdb_Environment($scriptName, $stepNext) {
-    parent::pdb_View(null, $scriptName);
+  public function pdb_Environment($parent, $scriptName, $stepNext) {
+    parent::pdb_View($parent, $scriptName);
     $this->stepNext = $stepNext;
     $this->line = -1;
-
   }
   /**
    * Update the execution frame with the current state
@@ -981,6 +1067,10 @@ class pdb_Environment extends pdb_View {
   public function update ($line, &$vars) {
     $this->line = $line;
     $this->vars = $vars;
+  }
+
+  public function __toString() {
+	return "pdb_Environment: {$this->scriptName}, {$this->line}";
   }
 }
 /**
@@ -1027,8 +1117,10 @@ final class pdb_Session {
   /** The collection of breakpoints */
   public $breakpoints;
 
-  /** The environment tree */
-  public $environments;
+  /** List of all frames */
+  public $allFrames;
+  /** The current top level frame */
+  public $currentTopLevelFrame;
   /** The current execution frame */
   public $currentFrame;
   /** The current view */
@@ -1042,7 +1134,8 @@ final class pdb_Session {
    */
   public function pdb_Session($scriptName) {
     $this->breakpoints = $this->lines = array();
-    $this->environments = array($this->currentFrame = new pdb_Environment($scriptName, true));
+    $this->currentTopLevelFrame = $this->currentFrame = new pdb_Environment(null, $scriptName, true);
+	$this->allFrames[] = $this->currentFrame;
 
     $this->currentView = null;
   }
@@ -1146,68 +1239,6 @@ final class pdb_Session {
     return $this->output;
   }
 }
-/**
- * This class represents the debugger back end connection.  It
- * communicates with the debugger front end using a shared-memory queue.
- * It is slow, but it does not require any special library.
- * @access private
- */
-class pdb_PollingServerConnection extends pdb_PollingClientConnection {
-  protected function init() {
-    session_start();
-
-	parent::init();
-    $chanCtr = "pdb_ctr{$this->role}{$this->id}";
-    $chan = "pdb_{$this->role}{$this->id}";
-	unset ($_SESSION[$chan]);
-	unset ($_SESSION[$chanCtr]);
-
-    $this->role = "server";
-    $this->to   = "client";
-
-    $chanCtr = "pdb_ctr{$this->role}{$this->id}";
-    $chan = "pdb_{$this->role}{$this->id}";
-	unset ($_SESSION[$chan]);
-	unset ($_SESSION[$chanCtr]);
-
-	if (isset($_SESSION[$this->chanTrm]) && !$this->checkTrm()) {
-	  $_SESSION[$this->chanTrm] = true;
-	  session_write_close();
-	  sleep(1);
-	  session_start();
-	}
-	$_SESSION[$this->chanTrm] = false;
-	session_write_close();
-  }
-
-  protected function poll() {
-    $val = "";
-    $chanCtr = "pdb_ctr{$this->role}{$this->id}";
-    $chan = "pdb_{$this->role}{$this->id}";
-    session_start();
-	if (!($val = $this->checkTrm())) {
-	  pdb_Logger::debug("...{$this->role}, {$this->id} poll...");
-	  if(!isset($_SESSION[$chanCtr])) { 
-		$_SESSION[$chan] = array(); 
-		$_SESSION[$chanCtr]=0; 
-	  }
-	  if (count($_SESSION[$chan]) > $_SESSION[$chanCtr]) {
-		$val = $_SESSION[$chan][$_SESSION[$chanCtr]++];
-	  }
-	}
-    session_write_close();
-    return $val;
-  }
-  /**
-   * shut down the communication channel
-   */
-  public function shutdown() {
-	pdb_Logger::debug("session terminated: {$this->chanTrm}");
-    session_start();
-	$_SESSION[$this->chanTrm] = $this->output;
-    session_write_close();
-  }
-}    
 
 /**
  * The java script debugger server daemon. Contains a debug session
@@ -1225,6 +1256,7 @@ class pdb_JSDebugger {
 
   const STEP_INTO = 1;
   const STEP_OVER = 2;
+  const STEP_OUT  = 3;
   const GO        = 4;
 
 
@@ -1258,8 +1290,7 @@ class pdb_JSDebugger {
    * @return object the data 
    */
   public function read() {
-	$val = $this->conn->read();
-	return $val===true?$val:json_decode($val);
+	return $this->conn->read();
   }
   /**
    * Write data to the front end
@@ -1268,10 +1299,11 @@ class pdb_JSDebugger {
   public function write($data) {
     $data["serverID"] = $this->getServerID();
     if (PDB_DEBUG) pdb_Logger::debug("->".print_r($data, true));
-    return $this->conn->write(json_encode($data));
+    return $this->conn->write($data);
   }
   private function ack() {
-    $this->write(array("cmd"=>$this->packet->cmd));
+    $this->write(array("cmd"=>$this->packet->cmd,
+					   "seq"=>$this->packet->seq));
   }
 
   private function getOutput() {
@@ -1290,19 +1322,21 @@ class pdb_JSDebugger {
     while(!$this->end) {
       if (PDB_DEBUG) pdb_Logger::debug("handleRequests: accept");
       
-      if (($this->packet = $this->read()) === true) break; // ignore __destructors after shutdown
+      if (!($this->packet = $this->read())) break; // ignore __destructors after shutdown
 
       if (PDB_DEBUG) pdb_Logger::debug("handleRequests: done accept ".$this->packet->cmd);
 
       switch($this->packet->cmd) {
       case "status":
-		$this->write(array("cmd"=>$this->packet->cmd, 
+		$this->write(array("cmd"=>$this->packet->cmd,
+						   "seq"=>$this->packet->seq, 
 						   "line"=>$this->session->currentFrame->line, 
 						   "scriptName"=>$this->session->getCurrentViewScriptName(), 
 						   "breakpoints"=>$this->session->getBreakpoints()));
 		break;
 	  case "extendedStatus":
-		$this->write(array("cmd"=>$this->packet->cmd, 
+		$this->write(array("cmd"=>$this->packet->cmd,
+						   "seq"=>$this->packet->seq, 
 						   "line"=>$this->session->currentFrame->line, 
 						   "scriptName"=>$this->session->getCurrentViewScriptName(), 
 						   "script"=>$this->session->getCurrentViewHtmlScriptSource(),
@@ -1311,7 +1345,8 @@ class pdb_JSDebugger {
       case "begin":
 		chdir (urldecode($this->packet->cwd));
 		$this->session = new pdb_Session(urldecode($this->packet->scriptName));
-		$this->write(array("cmd"=>$this->packet->cmd, 
+		$this->write(array("cmd"=>$this->packet->cmd,
+						   "seq"=>$this->packet->seq, 
 						   "scriptName"=>$this->packet->scriptName, 
 						   "script"=>$this->session->getCurrentViewHtmlScriptSource()));
 
@@ -1328,18 +1363,26 @@ class pdb_JSDebugger {
 		$this->session->currentView = null;
 		$this->ack();
 		return self::STEP_OVER;
-      case "stepOut":
       case "go":
 		if ($this->end) break;
 		$this->session->currentView = null;
 		$this->ack();
 		return self::GO;
+      case "stepOut":
+		if ($this->end) break;
+		$this->session->currentView = null;
+		$this->ack();
+		return self::STEP_OUT;
       case "toggleBreakpoint":
 		$bp = $this->session->toggleBreakpoint($this->packet->breakpoint);
 		$this->write($bp ? 
-					 (array("cmd"=>"unsetBreakpoint", "scriptName"=>$bp->scriptName, 
+					 (array("cmd"=>"unsetBreakpoint", 
+							"seq"=>$this->packet->seq,
+							"scriptName"=>$bp->scriptName, 
 							"breakpoint"=>$bp->breakpoint)) :
-					 (array("cmd"=>"setBreakpoint", "scriptName"=>$this->session->getCurrentViewScriptName(), 
+					 (array("cmd"=>"setBreakpoint", 
+							"seq"=>$this->packet->seq,
+							"scriptName"=>$this->session->getCurrentViewScriptName(), 
 							"breakpoint"=>$this->packet->breakpoint)));
 		break;
       case "switchView":
@@ -1360,19 +1403,23 @@ class pdb_JSDebugger {
 		break;
       case "backView":
 		if ($this->session->currentView)
-		  $this->session->currentView = $this->session->currentView->parentView;
+		  $this->session->currentView = $this->session->currentView->parent;
 		$this->ack();
 		break;
       case "output":
 		if ($this->session) {
-		  $this->write(array("cmd"=>$this->packet->cmd, "output"=>$this->getOutput()));
+		  $this->write(array("cmd"=>$this->packet->cmd,
+							 "seq"=>$this->packet->seq, 
+							 "output"=>$this->getOutput()));
 		} else {
 		  $this->ack();
 		}
 		break;
       case "end":
 		$this->session->currentView = null;
-		$this->write(array("cmd"=>$this->packet->cmd, "output"=>$this->getOutput()));
+		$this->write(array("cmd"=>$this->packet->cmd,
+						   "seq"=>$this->packet->seq, 
+						   "output"=>$this->getOutput()));
 		$this->end = true;
 		break;
 	  default:
@@ -1380,6 +1427,7 @@ class pdb_JSDebugger {
 		exit(1);
       }
     }
+	return self::GO;
   }
   /**
    * shut down the current comm. channel
@@ -1398,7 +1446,9 @@ class pdb_JSDebugger {
     $stepNext = $this->session->currentFrame->stepNext == pdb_JSDebugger::STEP_INTO ? pdb_JSDebugger::STEP_INTO : false;
 	
 	pdb_Logger::debug("startCall::$scriptName, $stepNext");
-    return new pdb_Environment($scriptName, $stepNext);
+    $env = new pdb_Environment($this->session->currentFrame, $scriptName, $stepNext);
+	$this->session->allFrames[] = $env;
+	return $env;
   }
 
   /**
@@ -1427,14 +1477,15 @@ class pdb_JSDebugger {
 	pdb_Logger::debug("scriptName::$scriptName, $isDebugger");
 
     $stepNext = $this->session->currentFrame->stepNext == pdb_JSDebugger::STEP_INTO ? pdb_JSDebugger::STEP_INTO : false;
-    $this->session->currentFrame = new pdb_Environment($scriptName, $stepNext);
+    $this->session->currentFrame = new pdb_Environment($this->session->currentFrame, $scriptName, $stepNext);
+	$this->session->allFrames[] = $this->session->currentFrame;
 
     if ($isDebugger) // do not debug self
       $code = "<?php ?>";
     else
       $code = $this->session->parseCode(realpath($scriptName), file_get_contents($scriptName));
 
-    array_push($this->session->environments, $this->session->currentFrame);
+	$this->session->currentTopLevelFrame = $this->session->currentFrame;
 
 	pdb_Logger::debug("include:::".$code);
     return $code; // eval -> pdb_step/MSG_READY or pdb_endInclude/MSG_READY OR FINISH
@@ -1444,9 +1495,8 @@ class pdb_JSDebugger {
    * called at run-time after the script has been included
    */
   public function endInclude() {
-    array_pop($this->session->environments);
-
-    $this->session->currentFrame = end($this->session->environments);
+	$this->session->currentFrame = $this->session->currentTopLevelFrame = 
+	  $this->session->currentTopLevelFrame->parent;
   }
 
   /**
@@ -1461,7 +1511,7 @@ class pdb_JSDebugger {
 
 	pdb_Logger::logDebug("step: $scriptName @ $line");
     // pull the current frame from the stack or the top-level environment
-    $this->session->currentFrame = (isset($vars['__pdb_CurrentFrame'])) ? $vars['__pdb_CurrentFrame'] : end($this->session->environments);
+    $this->session->currentFrame = (isset($vars['__pdb_CurrentFrame'])) ? $vars['__pdb_CurrentFrame'] : $this->session->currentTopLevelFrame;
     unset($vars['__pdb_CurrentFrame']);
 
     $this->session->currentFrame->update($line, $vars);
@@ -1469,8 +1519,25 @@ class pdb_JSDebugger {
     if ($this->session->hasBreakpoint($scriptName, $line)) {
       $stepNext = $this->handleRequests();
 	  pdb_Logger::logDebug("continue");
-      $this->session->currentFrame->stepNext = $stepNext != pdb_JSDebugger::GO ? $stepNext : false;
-    }
+
+	  /* clear all dynamic breakpoints */
+	  foreach ($this->session->allFrames as $currentFrame)
+		$currentFrame->stepNext = false;
+
+	  /* set new dynamic breakpoint */
+	  if ($stepNext != pdb_JSDebugger::GO) {
+		$currentFrame = $this->session->currentFrame;
+
+		/* break in current frame or frame below */
+		if ($stepNext != pdb_JSDebugger::STEP_OUT)
+		  $currentFrame->stepNext = $stepNext;
+
+		/* or break in any parent */
+		while ($currentFrame = $currentFrame->parent) {
+		  $currentFrame->stepNext = $stepNext;
+		}
+	  }
+	}
 
 	$this->ignoreInterrupt = false;
 	pdb_Logger::logDebug("endStep: $scriptName @ $line");
@@ -1546,7 +1613,7 @@ if (!isset($_SERVER['HTTP_XPDB_DEBUGGER'])) {
 <html>
 <head>
 <title>
-PHPDebugger version 1.0 
+PHPDebugger version 1.0beta
 </title>
 <style type="text/css">
 #run {
@@ -1682,12 +1749,13 @@ var currentScriptName = "";
 var cwd = "<?php echo urlencode(getcwd()); ?>";
 var debuggerURL = "<?php echo pdb_JSDebuggerClient::getDebuggerURL(); ?>";
 var date = "<?php echo gmdate( 'D, d M Y H:i:s').' GMT'; ?>";
+var seq = 1;
 
+function getSeq() {
+  return seq++;
+}
 function getServerID() {
     return serverID;
-}
-function setServerID(port) {
-    serverID = port;
 }
 function createRequestObject() {
     var req;
@@ -1749,7 +1817,7 @@ if (document.getElementsByClassName == undefined) {
 }
 function sendCmd(cmd) {
     var url = debuggerURL;
-    data = cmd+"&serverID="+getServerID();
+    data = cmd+"&serverID="+getServerID()+"&seq="+getSeq();
     http.open("POST", url, true);
     http.setRequestHeader("Cache-Control", "no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
     http.setRequestHeader("Last-Modified", date);
@@ -1779,8 +1847,7 @@ function startServer() {
     httpCtrl.setRequestHeader("XPDB-DEBUGGER", getServerID());
     httpCtrl.onreadystatechange = function() {
 	 if(httpCtrl.readyState == 4 && httpCtrl.status == 200) {
-	     // alert("debugger exited. Debugger debug output: " +httpCtrl.responseText);
-	    document.getElementById("code").innerHTML = httpCtrl.responseText;
+	   //alert("debugger exited. Debugger debug output: " +httpCtrl.responseText);
 	 }
     }
     httpCtrl.send(data);
@@ -1795,7 +1862,6 @@ function stepOut() {
     sendCmd("cmd=stepOut");
 }
 function getStatusCB(cmd) {
-    setServerID(cmd.serverID);
 	sendCmd("cmd=status");
 }
 
@@ -1808,15 +1874,12 @@ function toggleBreakpoint(el, event) {
     return false;
 }
 function setBreakpointCB(cmd) {
-    setServerID(cmd.serverID);
     document.getElementById(cmd.breakpoint).lastChild.className="breakpointIndicator breakpointSet";
 }
 function unsetBreakpointCB(cmd) {
-    setServerID(cmd.serverID);
     document.getElementById(cmd.breakpoint).lastChild.className="breakpointIndicator normal";
 }
 function showOutputCB(cmd) {
-    setServerID(cmd.serverID);
     currentScriptName = "";
     document.getElementById("code").innerHTML = cmd.output;
 }
@@ -1846,15 +1909,12 @@ function doShowStatusCB(cmd) {
 	}
 }
 function showStatusCB(cmd) {
-    setServerID(cmd.serverID);
 	if (currentScriptName == cmd.scriptName)
 	  doShowStatusCB(cmd);
 	else
 	  sendCmd("cmd=extendedStatus"); // another round-trip 
 }
 function showExtendedStatusCB(cmd) {
-    setServerID(cmd.serverID);
-
 	currentScriptName = cmd.scriptName;
 	document.getElementById("code").innerHTML = cmd.script;
 	document.title = cmd.scriptName;

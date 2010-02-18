@@ -46,7 +46,7 @@ out.println("yourIntranetHost running PHP version: " + (String)((javax.script.In
 <ul>
 <li>PHP >= 5.1.2. PHP >= 5.3 recommended.</li>
 <li>Java >= 1.4. Java >= 6 recommended.</li>
-<li>J2EE >= 1.3. For J2EE 1.3 remove the <code>RequestListener</code> declaration from the WEB-INF/web.xml.</li>
+<li>J2EE >= 1.3.</li>
 <li>Mono >= 1.2.4 or .NET >= 2.</li>
 </ul>
 
@@ -228,7 +228,7 @@ or
 <a href="http://php-java-bridge.sourceforge.net/pjb/webapp.php">Java webapps</a>
 documents. 
 </p>
-<p>For backward compatibility the PHP/Java Bridge also supports a <code>java_require()</code> procedure, which <strong>may</strong> load libraries dynamically.
+<p>For backward compatibility the PHP/Java Bridge also supports a <code>java_require('myApp.jar;myLib1.jar;myLibN.jar');</code> procedure, which <strong>may</strong> load java apps and their libraries dynamically.
 But this procedure should not be used in new programs.
 Please see the README from the documentation download and the PHP/Java Bridge API for details.
 </p>
@@ -249,8 +249,7 @@ Security Enhanced Linux permissions from the audit log.</p>
 <H4>Why do I get a ClassNotFoundException?</H4>
 <p>You probably haven't required the relevant Java library. Or the
 class doesn't exist or it is not public or it throws a java.lang.Error
-during initialization. Check which library exports the feature and add
-the library to the <code>java_require()</code> statement.</code></p>
+during initialization. Check which library exports the feature and add the library to your web application WEB-INF/lib directory.</p>
 
 <a name="java-dll-hell"></a>
 <H4>Why do I get a NoClassDefFoundError?</H4>
@@ -279,7 +278,7 @@ accessed by the jdbc driver. This constraint is checked by the DriverManager:
 &nbsp;&nbsp;java("java.sql.DriverManager")-&gt;getDriver("myJdbcURL"); // FAILS!<br>
 </code>
 </blockquote>
-If you really need to access the driver directly from PHP code, either use the driver API directly or load "JavaBridge.jar" and "myJdbcDriver.jar" from the same class loader so that the DriverManager can link them together. Use the extra library directory (usually <code>~/lib/</code>) or the global repository (usually <code>/usr/java/packages/lib/ext</code>).
+If you really need to access the driver directly from PHP code, either use the driver API directly or load "JavaBridge.jar" and "myJdbcDriver.jar" from the same class loader so that the DriverManager can link them together. Use the web application WEB-INF/lib directory or the global repository (usually <code>/usr/java/packages/lib/ext</code>).
 </p>
 
 <H4>How do I load impure Java libraries?</H4>
@@ -592,6 +591,15 @@ can be used to access the JSR 223 ScriptEngine from the framework, provided that
 </p>
 
 <H2>General runtime questions</H2>
+
+<H4>How do I include a local (*.asp, *.jsp, ...) resource?</H4>
+<p>Use the <code><a href="http://us.php.net/manual/en/function.virtual.php">virtual()</a></code> function.
+If PHP is running in a JEE server or servlet engine, the <code>virtual()</code> function is an alias for 
+<blockquote>
+<code>java_context()-&gt;getHttpServletRequest()-&gt;getRequestDispatcher()-&gt;include()</code>
+</blockquote>
+</p>
+<p><strong>Warning:</strong> Do not open a "loop back" url connection (e.g. via <code>fopen("http://localhost.../foo.asp")</code>) to include the <em>local</em> resource. This might exceed the HTTP server's pool size and create a deadlock!</p>
 
 <H4>How do I reference a class w/o creating an instance?</H4>
 <p>
