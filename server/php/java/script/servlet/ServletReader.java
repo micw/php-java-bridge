@@ -108,7 +108,7 @@ public class ServletReader extends Reader implements IScriptReader {
 
 	    
             public String getPathInfo() {
-		return url.getPath();
+		return null;
 	    }
 
 	    
@@ -123,12 +123,7 @@ public class ServletReader extends Reader implements IScriptReader {
 
 	    
             public String getRequestURI() {
-		try {
-	            return url.toURI().toASCIIString();
-                } catch (URISyntaxException e) {
-	            e.printStackTrace();
-	            return null;
-                }
+        	return this.getContextPath()+this.getServletPath();
             }
 
 	    

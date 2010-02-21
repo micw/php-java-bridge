@@ -145,20 +145,36 @@ if(!function_exists("java_get_base")) {
   }
 
   /**
-   * Include the outcome of some other local (.jsp, .asp, ...) resource.
+   * Include the output of some Java resource.
+
+   * java_virtual() uses the PHP/Java Bridge protocol to render .jsp,
+   * .jsf or other Java resources through PHP scripts running within
+   * Apache, IIS or as a JEE sub component.
    *
-   * Example: <code>virtual("/test.jsp");</code>
+   * Example: 
+   * <code>
+   * <?php require_once("java/Java.inc");
+   * java_session();
+   * echo java_virtual("/test.jsp", true);
+   * ?>
+   * </code>
    *
    * @access public
    * @param string The local resource
-   * @see Java
+   * @param bool return the response
+   * @return mixed The response or true
+   * @see http://php.net/manual/en/function.virtual.php
+   * @see java_session();
    */
-  if (!function_exists("virtual")) {
-	function virtual($path) {
-	  $req = java_context()->getHttpServletRequest();
-	  $res = java_context()->getHttpServletResponse();
-	  $req->getRequestDispatcher($path)->include($req, $res);
-	}
+  function java_virtual($path, $return=false) {
+	$req = java_context()->getHttpServletRequest();
+	$req = new java("php.java.servlet.VoidInputHttpServletRequest", $req);
+	$res = new java("php.java.servlet.RemoteHttpServletResponse");
+	$req->getRequestDispatcher($path)->include($req, $res);
+	if ($return) return $res->getBufferContents();
+
+	echo $res->getBufferContents();
+	return true;
   }
   /**
    * Access the java type with the given name. 
@@ -253,13 +269,26 @@ if(!function_exists("java_get_base")) {
   function java_istrue($value) { return  (boolean)(java_values ($value)); }
 
   /**
-   * Checks whether a value is not NULL, 0, "" or false. Note that if
+   * Checks whether a value is not NULL, 0, "" or false. 
+
+   * Note that if
    * you want to check if a value is boolean true, use the following
-   * test: java_values($value)===true.
+   * test: <code>java_values($value)===true</code>
    * 
+   * Example:
+   * <code>
    * java_is_true(new java.lang.String("12")) => true
-   * java_is_true(new java.lang.String("") => false
+   * </code>
+   *
+   * Example:
+   * <code>
+   * java_is_true(new java.lang.String("")) => false
+   * </code>
+   *
+   * Example:
+   * <code>
    * java_is_true(1==1) => true
+   * </code>
    *
    * Example: <code> java_is_true(java("java.lang.System")->getProperty("foo")) </code>
    *
@@ -277,13 +306,25 @@ if(!function_exists("java_get_base")) {
   function java_isfalse($value) { return !(java_values ($value)); }
 
   /**
-   * Checks whether a value is NULL, 0, "" or false. Note that if
-   * you want to check if a value is boolean false, use the following
-   * test: java_values($value)===false.
+   * Checks whether a value is NULL, 0, "" or false. 
+   *
+   * Note that if you want to check if a value is boolean false, use
+   * the following test: <code>java_values($value)===false</code>
    * 
+   * Example:
+   * <code>
    * java_is_false(new java.lang.String("12")) => false
-   * java_is_false(new java.lang.String("") => true
+   * </code>
+   *
+   * Example:
+   * <code>
+   * java_is_false(new java.lang.String("")) => true
+   * </code>
+   *
+   * Example:
+   * <code>
    * java_is_false(1==1) => false
+   * </code>
    *
    * Example: <code> java_is_false(java("java.lang.System")->getProperty("foo")) </code>
    *

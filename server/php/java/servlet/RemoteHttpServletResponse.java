@@ -33,24 +33,32 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
-import php.java.bridge.NotImplementedException;
-
-final class RemoteHttpServletResponse implements HttpServletResponse, BufferedResponse {
+/**
+ * A servlet response which writes its output to an internal buffer. The buffer can be fetched using
+ * "getBufferContents()". May be used by remote PHP scripts (those accessing PhpJavaServlet) through the "java_context()->getHttpServletResponse()" API. 
+ * Also used by the "java_virtual()" API.
+ * 
+ * @author jostb
+ *
+ */
+public class RemoteHttpServletResponse implements HttpServletResponse, BufferedResponse {
     
     private ByteArrayOutputStream buffer;
 
     public RemoteHttpServletResponse() {
 	this.buffer = new ByteArrayOutputStream();
     }
-    public byte[] getBufferContents() {
-	    return buffer.toByteArray();
+    public byte[] getBufferContents() throws IOException {
+	committed = true;
+	flushBuffer();
+	return buffer.toByteArray();
     }
     public void flushBuffer() throws IOException {
-	buffer.flush();
+	getWriter().flush();
     }
 
     public int getBufferSize() {
-        return buffer.size();
+	return buffer.size();
     }
 
     private String encoding;
@@ -67,18 +75,21 @@ final class RemoteHttpServletResponse implements HttpServletResponse, BufferedRe
 	return locale;
     }
 
+    private ServletOutputStream out = null;
     public ServletOutputStream getOutputStream() throws IOException {
-	return new ServletOutputStream() {
+	if (out!=null) return out;
+	return out = new ServletOutputStream() {
 	    public void write(byte[] arg0, int arg1, int arg2) throws IOException {
 		buffer.write(arg0, arg1, arg2);
 	    }
 	    public void write(int arg0) throws IOException {
-		throw new NotImplementedException();
+		buffer.write(arg0);
 	    }};
     }
-
+    private PrintWriter writer = null;
     public PrintWriter getWriter() throws IOException {
-        return new PrintWriter(buffer);
+	if (writer != null) return writer;
+        return writer = new PrintWriter(getOutputStream());
     }
 
     private boolean committed; 

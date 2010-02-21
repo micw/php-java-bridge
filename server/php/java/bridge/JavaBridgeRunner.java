@@ -144,9 +144,9 @@ public class JavaBridgeRunner extends HttpServer {
 	return socket;
     }
 
-    private static IContextFactory getContextFactory(HttpRequest req, HttpResponse res, ContextFactory.ICredentials credentials) {
+    private static IContextFactory getContextFactory(HttpRequest req, HttpResponse res) {
     	String id = getHeader("X_JAVABRIDGE_CONTEXT", req);
-    	IContextFactory ctx = ContextFactory.get(id, credentials);
+    	IContextFactory ctx = ContextFactory.peek(id);
 	if(ctx==null) ctx = ContextFactory.addNew();
      	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
     	return ctx;
@@ -166,12 +166,10 @@ public class JavaBridgeRunner extends HttpServer {
      */
     protected void doPut (HttpRequest req, HttpResponse res) throws IOException {
 	InputStream sin=null; OutputStream sout = null;
-    	String channel = getHeader("X_JAVABRIDGE_CHANNEL", req);
     	String transferEncoding = getHeader("Transfer-Encoding", req);
     	boolean isChunked = "chunked".equals(transferEncoding);
-    	if (!isChunked) throw new IllegalStateException ("Please use a JEE server or servlet engine. Or define (\"JAVA_PERSISTENT_CONNECTIONS\", false); and try again.");
-	ContextFactory.ICredentials credentials = contextServer.getCredentials(channel);
-	IContextFactory ctx = getContextFactory(req, res, credentials);
+    	if (!isChunked) throw new IllegalStateException ("Please use a JEE server or servlet engine.");
+	IContextFactory ctx = getContextFactory(req, res);
 	
     	JavaBridge bridge = ctx.getBridge();
 
@@ -180,7 +178,7 @@ public class JavaBridgeRunner extends HttpServer {
 	Request r = bridge.request = new Request(bridge);
         if(r.init(sin, sout)) {
         	AbstractChannelName channelName = 
-                    contextServer.getFallbackChannelName(channel, ctx);
+                    contextServer.getChannelName(ctx);
         	if (channelName == null) throw new NullPointerException ("No Pipe- or SocketContextServer available.");
         	res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getName());
         	res.setHeader("Transfer-Encoding", "chunked");

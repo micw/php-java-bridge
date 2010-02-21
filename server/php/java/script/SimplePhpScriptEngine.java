@@ -186,7 +186,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
     	// short path S1: no PUT request
 	if (Util.USE_SHORT_PATH_S1) {
 	    ContextServer contextServer = getContextServer();
-    		AbstractChannelName channelName = contextServer.getFallbackChannelName(null, ctx);
+    		AbstractChannelName channelName = contextServer.getChannelName(ctx);
     		if (channelName != null) {
     		    env.put("X_JAVABRIDGE_REDIRECT", channelName.getName());
     		    ctx.getBridge();

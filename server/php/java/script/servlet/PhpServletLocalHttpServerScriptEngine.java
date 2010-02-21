@@ -26,7 +26,7 @@ import php.java.bridge.http.IContext;
 import php.java.bridge.http.IContextFactory;
 import php.java.script.IScriptReader;
 import php.java.script.PhpScriptEngine;
-import php.java.servlet.PhpJavaServlet;
+import php.java.servlet.ServletUtil;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -108,7 +108,7 @@ abstract class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
 	this.port = port;
 	this.protocol = protocol;
 
-	this.contextServer = PhpJavaServlet.getContextServer(ctx, promiscuous);
+	this.contextServer = ServletUtil.getContextServer(ctx, promiscuous);
     }
 
     protected ScriptContext getPhpScriptContext() {

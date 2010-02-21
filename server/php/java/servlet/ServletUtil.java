@@ -14,6 +14,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
+import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.WriterOutputStream;
 
 /*
@@ -43,7 +44,9 @@ public class ServletUtil {
     /** True if /bin/sh exists, false otherwise */
     public static final boolean USE_SH_WRAPPER = new File("/bin/sh").exists();
 
-    /**
+    private ServletUtil() {}
+    
+   /**
      * Identical to context2.getRealPath(pathInfoCGI). On BEA
      * WebLogic, which has a broken getRealPath() implementation, we
      * use context2.getResource(pathInfoCGI)) instead.
@@ -122,4 +125,17 @@ public class ServletUtil {
         }
     }
 
+    /** Only for internal use */
+    public static synchronized ContextServer getContextServer(ServletContext context, boolean promiscuous) {
+        ContextServer server = (ContextServer)context.getAttribute(ServletUtil.ROOT_CONTEXT_SERVER_ATTRIBUTE);
+        if (server == null) {
+            String servletContextName=getRealPath(context, "");
+            if(servletContextName==null) servletContextName="";
+            server = new ContextServer(servletContextName, promiscuous);
+            context.setAttribute(ServletUtil.ROOT_CONTEXT_SERVER_ATTRIBUTE, server);
+        }
+        return server;
+    }
+
+    static final String ROOT_CONTEXT_SERVER_ATTRIBUTE = ContextServer.class.getName()+".ROOT";
 }

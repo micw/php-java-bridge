@@ -67,6 +67,8 @@ public final class Util {
     
     /** The java/Java.inc code */
     public static Class JAVA_INC;
+    /** The java/Java.inc code */
+    public static Class PHPDEBUGGER_PHP;
     /** The java/JavaProxy.php code */
     public static Class JAVA_PROXY;
     /** The launcher.sh code */
@@ -295,6 +297,9 @@ public final class Util {
 	    
 	try {
 	    JAVA_INC = Class.forName("php.java.bridge.JavaInc");
+	} catch (Exception e) {/*ignore*/}
+	try {
+	    PHPDEBUGGER_PHP = Class.forName("php.java.bridge.PhpDebuggerPHP");
 	} catch (Exception e) {/*ignore*/}
 	try {
 	    JAVA_PROXY = Class.forName("php.java.bridge.JavaProxy");

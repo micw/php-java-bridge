@@ -27,7 +27,6 @@ package php.java.bridge.http;
 import php.java.bridge.AppThreadPool;
 import php.java.bridge.ILogger;
 import php.java.bridge.Util;
-import php.java.bridge.http.ContextFactory.ICredentials;
 
 /**
  * A bridge pattern which either uses the PipeContextServer or the SocketContextServer, 
@@ -46,9 +45,7 @@ import php.java.bridge.http.ContextFactory.ICredentials;
  * @see php.java.bridge.http.PipeContextServer
  * @see php.java.bridge.http.SocketContextServer
  */
-public final class ContextServer implements ContextFactory.ICredentials {
-    // One PipeContextServer for each web context, carries this ContextServer as a security token.
-    private PipeContextServer ctx;
+public final class ContextServer {
     private String contextName;
     private boolean promiscuous;
     
@@ -61,16 +58,6 @@ public final class ContextServer implements ContextFactory.ICredentials {
     private static synchronized AppThreadPool getAppThreadPool() {
 	if (pool!=null) return pool; 
 	return pool = new AppThreadPool("JavaBridgeContextRunner", Integer.parseInt(Util.THREAD_POOL_MAX_SIZE));
-    }
-    private class PipeChannelName extends AbstractChannelName {
-        public PipeChannelName(String name, IContextFactory ctx) {super(name,  ctx);}
-
-        public boolean startChannel(ILogger logger) {
-            return ctx.start(this, logger);
-        }
-        public String toString() {
-            return "Pipe:"+getName();
-        }
     }
     private class SocketChannelName extends AbstractChannelName {
         public SocketChannelName(String name,IContextFactory ctx) {super(name,  ctx);}
@@ -89,11 +76,6 @@ public final class ContextServer implements ContextFactory.ICredentials {
     public ContextServer(String contextName, boolean promiscuous) {
         this.contextName = contextName;
         this.promiscuous = promiscuous;
-        
-	/*
-         * We need both because the client may not support named pipes.
-         */
-        ctx = new PipeContextServer(this, getAppThreadPool(), contextName, promiscuous);
         /* socket context server will be created on demand */
     }
     
@@ -121,7 +103,6 @@ public final class ContextServer implements ContextFactory.ICredentials {
      * Destroy the pipe or socket context server.
      */
     public void destroy() {
-        ctx.destroy();
         destroyContextServer();
     }
 
@@ -132,9 +113,8 @@ public final class ContextServer implements ContextFactory.ICredentials {
      * @return true if either the pipe or the socket context server is available.
      */
     public boolean isAvailable(String channelName) {
-	if(!SocketContextServer.SOCKET_SERVER_AVAIL && !PipeContextServer.PIPE_SERVER_AVAIL) return false;
+	if(!SocketContextServer.SOCKET_SERVER_AVAIL) return false;
 	
-        if(channelName!=null && ctx.isAvailable()) return true;
         SocketContextServer sock=getSocketContextServer(this, getAppThreadPool(), contextName);
         return sock!=null && sock.isAvailable();
     }
@@ -151,31 +131,17 @@ public final class ContextServer implements ContextFactory.ICredentials {
      */
     public void start(AbstractChannelName channelName, ILogger logger) {
 	boolean started = channelName.start(logger);
-	if(!started) throw new IllegalStateException("Pipe- and SocketContextServer not available");
+	if(!started) throw new IllegalStateException("SocketContextServer not available");
     }
 
     /**
      * Return the channelName which be passed to the client as X_JAVABRIDGE_REDIRECT
-     * @param channelName The name of the channel, see X_JAVABRIDGE_CHANNEL
      * @param currentCtx The current ContextFactory, see X_JAVABRIDGE_CONTEXT
      * @return The channel name of the Pipe- or SocketContextServer.
      */
-    public AbstractChannelName getFallbackChannelName(String channelName, IContextFactory currentCtx) {
-        if(channelName!=null && ctx.isAvailable()) return new PipeChannelName(channelName,  currentCtx);
+    public AbstractChannelName getChannelName(IContextFactory currentCtx) {
         SocketContextServer sock=getSocketContextServer(this, getAppThreadPool(), contextName);
         return sock.isAvailable() ? new SocketChannelName(sock.getChannelName(),  currentCtx) : null;
-    }
-    
-    /**
-     * Return the credentials provided by the ContextServer. The SocketContextServer is insecure and cannot provide any, because there's 
-     * only one SocketContextServer instance for all shared web contexts. The PipeContextServer
-     * returns a token which will be used in ContextFactory.get() to check if the web context is allowed to access this contextFactory instance or not.
-     * @param channelName The name of the channel, see X_JAVABRIDGE_CHANNEL
-     * @return A security token.
-     */
-    public ICredentials getCredentials(String channelName) {
-        if(channelName!=null && ctx.isAvailable()) return this; // PipeContextServer
-        return ContextFactory.NO_CREDENTIALS; // SocketContextServer 
     }
     
     /**{@inheritDoc}*/  

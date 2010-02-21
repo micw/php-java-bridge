@@ -63,11 +63,9 @@ public class ContextRunner implements Runnable {
     protected InputStream in;
     protected OutputStream out;
     protected AbstractChannel channel;
-    protected ContextFactory.ICredentials contextServer; /* the ContextServer of the web application, used for security checks in ContextFactory.get(...)  */
     protected ILogger logger;
     
-    protected ContextRunner(ContextFactory.ICredentials contextServer, AbstractChannel channel, ILogger logger) {
-	this.contextServer = contextServer;
+    protected ContextRunner(AbstractChannel channel, ILogger logger) {
 	this.channel = channel;
 	this.logger = logger;
     }
@@ -117,7 +115,7 @@ public class ContextRunner implements Runnable {
 	}
 	out.write(0); out.flush(); // dummy write: avoid ack delay
 	String name = readName();
-    	ctx = (IContextFactory) ContextFactory.get(name, contextServer);
+    	ctx = (IContextFactory) ContextFactory.get(name);
     	if(ctx == null) throw new IOException("No context available for: " + name + ". Please make sure that your script does not exceed php.java.bridge.max_wait, currently set to: "+Util.MAX_WAIT);
     	JavaBridge bridge = ctx.getBridge();
 	if(Util.logLevel>4) Util.logDebug(ctx + " created new thread" );

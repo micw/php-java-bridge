@@ -25,6 +25,8 @@ package php.java.servlet;
  */
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -86,7 +88,7 @@ public class PhpCGIFilter implements Filter {
 	if (idx != -1) {
 	    final String pathInfo = uri.substring(idx+PHP_SUFFIX_LEN-1);
 	    final String pathTranslated = DOCUMENT_ROOT + pathInfo;
-	    String dispatch = uri.substring(0, idx+PHP_SUFFIX_LEN-1);
+	    final String dispatch = uri.substring(0, idx+PHP_SUFFIX_LEN-1);
 	    
 	    String servletPathOrig = ((HttpServletRequest)request).getServletPath();
 	    idx = servletPathOrig.indexOf(PHP_SUFFIX);
@@ -105,7 +107,19 @@ public class PhpCGIFilter implements Filter {
                 public String getServletPath() {
     	        	return servletPath;
                 }
-    	    
+                public String getRequestURI() {
+                    return dispatch;
+                }
+                public StringBuffer getRequestURL() {
+                    try {
+	                return new StringBuffer(new java.net.URI(getScheme(), null, getServerName(), getServerPort(), getRequestURI(), null, null).toURL().toExternalForm());
+                    } catch (MalformedURLException e) {
+	                e.printStackTrace();
+                    } catch (URISyntaxException e) {
+	                e.printStackTrace();
+                    }
+                    return null;
+                }
     	    };
     	    request.getRequestDispatcher(dispatch).forward(req, response);
 	} else {

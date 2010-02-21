@@ -2,6 +2,8 @@
 
 package php.java.servlet;
 
+import java.io.IOException;
+
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
  *
@@ -25,5 +27,5 @@ package php.java.servlet;
  */
 
 interface BufferedResponse {
-    public byte[] getBufferContents();
+    public byte[] getBufferContents() throws IOException;
 }

@@ -84,17 +84,10 @@ import php.java.bridge.Util;
  */
 public final class ContextFactory extends SessionFactory implements IContextFactory {
 
-    /** The credentials provided by the web context, usually this ContextFactory. */
-    public static interface ICredentials {}
-
     /** This context name can be used when a ContextFactory is used 
      * outside of a servlet environment */
     public static final String EMPTY_CONTEXT_NAME = "";
     
-    /** Use this if you don't care about security. This is used by the {@link php.java.bridge.http.SocketContextServer} */
-    public static final ICredentials NO_CREDENTIALS = new ICredentials() {
-	public String toString () { return "[no credentials]"; }
-    };
 
     static {
 	try {
@@ -110,8 +103,8 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     private String id;
     private long timestamp;
 
-    private ICredentials credentials = null;
-    private IContextFactoryVisitor visitor; 
+    private IContextFactoryVisitor visitor;
+    private boolean initialized; 
 
     private static long counter = 0;
     private static synchronized String addNext(String webContext, ContextFactory thiz, boolean isManaged) {
@@ -158,33 +151,6 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     	return new SimpleContextFactory(EMPTY_CONTEXT_NAME, false);
     }
     
-    private void init(ICredentials cred) {
-	credentials = cred;
-    }
-   /**
-     * Only for internal use.
-     *  
-     * Returns the context factory associated with the given <code>id</code>
-     * @param id The ID
-     * @param server Your context server.
-     * @return The ContextFactory or null.
-     * @see php.java.bridge.http.ContextFactory#addNew()
-     * @throws SecurityException if id belongs to a different ContextServer.
-     */
-    /* See PhpJavaServlet#contextServer, http.ContextRunner#contextServer and 
-     * JavaBridgeRunner#ctxServer. */
-    public static IContextFactory get(String id, ICredentials server) {
-	if(server == null) return peek(id);
-
-        ContextFactory factory = moveContext(id); 
-        if(factory==null) return null;
-        
-        if(factory.credentials==null) factory.init(server);
-        if(factory.credentials != server) 
-            throw new SecurityException("Illegal access");
-        
-        return factory.visitor;
-    }
     /**
      * Only for internal use.
      * The same as {@link #get(String, php.java.bridge.http.ContextFactory.ICredentials)} with the second argument set to null.
@@ -200,6 +166,26 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	if (factory == null) return null;
 	if (!factory.isNew()) throw new SecurityException("illegal access");
 	return factory.visitor;
+    }
+   /**
+     * Only for internal use.
+     *  
+     * Returns the context factory associated with the given <code>id</code>
+     * @param id The ID
+     * @return The ContextFactory or null.
+     * @see php.java.bridge.http.ContextFactory#addNew()
+     * @throws SecurityException if id belongs to a different ContextServer.
+     */
+    /* See PhpJavaServlet#contextServer, http.ContextRunner#contextServer and 
+     * JavaBridgeRunner#ctxServer. */
+    public static IContextFactory get(String id) {
+        ContextFactory factory = moveContext(id); 
+        if(factory==null) return null;
+        
+        if (factory.initialized) throw new SecurityException("illegal access");
+        factory.initialized = true;
+        
+        return factory.visitor;
     }
     
     /*
@@ -217,9 +203,6 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	// May only happen if this is a simple ContextFactory outside of a J2EE environment
 	if(factory == null || factory == thiz) return;
 
-	if (factory.credentials != null) 
-	    throw new IllegalStateException ("context already initialized");
-	
 	JavaBridge bridge = thiz.getBridge();
 	JavaBridge newBridge = factory.checkBridge();
 	if(newBridge == null) throw new IllegalStateException("recycle empty context");
@@ -253,13 +236,12 @@ public final class ContextFactory extends SessionFactory implements IContextFact
 	switchContext(id, this);
     }
     /**
-     * Recycle the factory for new reqests.
+     * Called before destroy()
      */    
     public void recycle() {
 	if(Util.logLevel>=4) Util.logDebug("contextfactory: finish context called (recycle context factory) " + this.visitor);
 	super.recycle();
 	visitor.invalidate();
-	
     }
     
     /**{@inheritDoc}*/  
@@ -325,7 +307,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     }
     /**{@inheritDoc}*/  
     public String toString() {
-	return "Context# " +id + ", credentials: " + credentials;
+	return "Context# " +id;
     }
     /**
      * Returns the context.

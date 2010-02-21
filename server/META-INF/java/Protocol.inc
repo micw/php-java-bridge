@@ -82,11 +82,11 @@ function java_getCompatibilityOption($client) {
  *
  * @access private
  */
-class java_EmptyPipeChannel {
+class java_EmptyChannel {
   protected $handler;
   private $res;
 
-  function java_EmptyPipeChannel($handler) {
+  function java_EmptyChannel($handler) {
     $this->handler = $handler;
   }
   function shutdownBrokenConnection () {}
@@ -133,7 +133,7 @@ class java_EmptyPipeChannel {
 	$this->fread(JAVA_RECV_SIZE); // read 0\r\n\r\n  JAVA_RECV_SIZE is dummy
   }
 
-  /** Used by EmptyPipeChannel (phase 1) */
+  /** Used by EmptyChannel (phase 1) */
   function keepAliveH() {
 	for ($this->res = $this->handler->read(10); strlen($this->res) < 10; $this->res.= $this->handler->read(10-strlen($this->res))); //  HTTP response <F p="E"/>
   }
@@ -145,22 +145,12 @@ class java_EmptyPipeChannel {
 }
 
 /**
- * Persistent version of the above
- *
- * @access private
- */
-class java_EmptyPipeChannelP extends java_EmptyPipeChannel {
-  function getKeepAlive() {return $this->getKeepAliveA();}
-  function keepAlive() { $this->keepAliveH(); $this->checkA(); }
-}
-
-/**
  * A simple socket channel, used in phase 2 or
  * when connecting to a simple socket listener
  *
  * @access private
  */
-abstract class java_SocketChannel extends java_EmptyPipeChannel {
+abstract class java_SocketChannel extends java_EmptyChannel {
   public $peer, $host;
 
   function java_SocketChannel($peer, $host) {
@@ -212,44 +202,6 @@ class java_ChunkedSocketChannel extends java_SocketChannel {
 }
 
 /**
- * Named Pipes are used on Linux only to avoid socket-based
- * SecurityEnhancedLinux rules. Used in phase 2.
- *
- * @access private
- */
-class java_PipeChannel extends java_EmptyPipeChannel {
-  protected $peer, $peerr, $peerr_desc;
-
-  function java_PipeChannel($handler) {
-	parent::java_EmptyPipeChannel($handler);
-
-	$this->peerr = fopen($this->handler->iname, "r");
-	$this->peerr_desc = array($this->peerr);
-	stream_set_blocking($this->peerr, false);
-	stream_set_timeout($this->peerr, -1);
-
-	$this->peer = fopen($this->handler->oname, "w");
-	$this->handler->unlink ();
-	stream_set_timeout($this->peer, -1);
-	return $this;
-  }
-  function fwrite($data) {
-      return fwrite($this->peer, $data);
-  }
-  function fread($size) {
-	static $empty = NULL;
-	stream_select($this->peerr_desc, $empty, $empty, 1677216);
-	return fread($this->peerr, $size);
-  }
-  function keepAlive() {
-	$this->keepAliveS();
-	$this->checkE();
-  }
-  // no need to fclose peer/peerr explicitly as PHP automatically closes 
-  // fopen'ed files in rshutdown.
-}
-
-/**
  * Used when PHP connects to a non-http socket or in phase 2
  *
  * Always uses a persistent connection to the socket.
@@ -266,13 +218,13 @@ class java_SocketHandler {
   function write($data) {
       return $this->channel->fwrite($data);
   }
-  // fallback for EmptyPipeChannel
+  // fallback for EmptyChannel
   function fwrite($data) {return $this->write($data);}
 
   function read($size) {
 	return $this->channel->fread($size);
   }
-  // fallback for EmptyPipeChannel
+  // fallback for EmptyChannel
   function fread($size) {return $this->read($size);}
 
   function redirect() {}
@@ -305,11 +257,12 @@ class java_SimpleHttpHandler extends java_SocketHandler {
   public $headers, $cookies;
   
   public $context, $ssl, $port; // used by reopen
-  public $host; // used when creating a socket channel lazily. the port# is passed via X_JAVABRIDGE_CHANNEL
+  public $host; // used when creating a socket channel lazily.
   /**
    * Create a SocketChannel which is used to communicate with the SocketContextServer
    */
   function createChannel() {
+	// fast path; used by the JEE or servlet back end to connect to PHP
 	$channelName = java_getHeader("X_JAVABRIDGE_REDIRECT", $_SERVER);
 	$context = java_getHeader("X_JAVABRIDGE_CONTEXT", $_SERVER);
 	$len = strlen($context);
@@ -317,7 +270,7 @@ class java_SimpleHttpHandler extends java_SocketHandler {
 	$len1 = chr($len&0xFF); $len>>=8;
 	$len2 = chr($len&0xFF);
 	// simulate phase 1: PUT request to the back end
-	$this->channel = new java_EmptyPipeChannel($this);
+	$this->channel = new java_EmptyChannel($this);
 	// simulate phase 2 : parse headers and extract comm. channel
 	$this->channel = $this->getChannel($channelName);
 	// we know the comm. channel is a socket channel, otherwise this class wouldn't be used
@@ -354,9 +307,6 @@ class java_SimpleHttpHandler extends java_SocketHandler {
   function getContextFromCgiEnvironment() {
 	$ctx = java_getHeader('X_JAVABRIDGE_CONTEXT', $_SERVER);
 	return $ctx;
-  }
-  function getChannelName() {
-	return null;
   }
   function getContext() {
 	static $context = null;
@@ -412,28 +362,16 @@ class java_SimpleHttpHandler extends java_SocketHandler {
   function read($size) {
 	return $this->protocol->socketHandler->read($size);
   }
-  /**
-   * Unlink a pipe channel, if any. 
-   */
-  function unlink() {}
-  /**
-   * Create a PipeChannel, if necessary
-  */
+
   function getChannel($channelName) {
   	$errstr = null; $errno = null;
-	if($channelName[0]=='/') return new java_PipeChannel($this);
-    $this->unlink(); // remove the created pipes as early as possible
 	$peer = pfsockopen($this->host, $channelName, $errno, $errstr, 20);
 	if (!$peer) throw new java_IllegalStateException("No ContextServer for {$this->host}:{$channelName}. Error: $errstr ($errno)\n");
 	stream_set_timeout($peer, -1);
 	return new java_SocketChannelP($peer, $this->host);
   }
-  /**
-   * unlink the PipeChannel created by getChannel()
-   */
   function keepAlive() {
 	parent::keepAlive();
-	$this->unlink();
   }
 
   /**
@@ -450,46 +388,15 @@ class java_SimpleHttpHandler extends java_SocketHandler {
  *
  * @access private
  */
-class java_HttpTunnelHandler extends java_SimpleHttpHandler {
+class java_HttpTunnelHandler extends java_SimpleHttpHandler  {
   // the initial socket connection, may redirect to
-  // a pipe- or socket connection later on
+  // a socket connection later on
   public $socket;
 
-  // the proposed pipe connection channel sent to the server
-  // if it accepts it via X_JAVABRIDGE_REDIRECT, it is opened
-  // in function redirect()
-  public $name, $iname, $fifor, $oname, $fifo;
-
-  /**
-   * Unlink a pipe channel, if any. 
-   */
-  function unlink() {
-	if (isset($this->name)) {
-	  unlink($this->iname);
-	  unlink($this->oname);
-	  unlink($this->name);
-	  unset ($this->name);
-	}
-  }
-
-  function getChannelName() {
-	return isset($this->name) ? sprintf("X_JAVABRIDGE_CHANNEL: %s\r\n", $this->name) : null;
-  }
-
   function createSimpleChannel () {
-	$this->channel = new java_EmptyPipeChannel($this);
+	$this->channel = new java_EmptyChannel($this);
   }
   function createChannel() {
-	$pipe_dir = $this->protocol->client->RUNTIME['PIPE_DIR'];
-	if($pipe_dir && ($this->host == "127.0.0.1" || (substr($this->host,0,9) == "localhost"))) {
-	  $this->name = tempnam($pipe_dir, ".php_java_bridge");
-	  $this->iname = $this->name . ".i";
-	  $mask = umask(0);
-	  $this->fifor = posix_mkfifo($this->iname, 0666);
-	  $this->oname = $this->name . ".o";
-	  $this->fifo = posix_mkfifo($this->oname, 0666);
-	  umask($mask);
-	}
 	$this->createSimpleChannel();
   }
   function shutdownBrokenConnection ($msg) {
@@ -514,7 +421,7 @@ class java_HttpTunnelHandler extends java_SimpleHttpHandler {
 	stream_set_timeout($socket, -1);
 	$this->socket = $socket;
   }
-  // fallback for EmptyPipeChannel
+  // fallback for EmptyChannel
   function fread($size) {
   	$length = hexdec(fgets($this->socket, JAVA_RECV_SIZE));
 	$data = "";
@@ -526,7 +433,7 @@ class java_HttpTunnelHandler extends java_SimpleHttpHandler {
   	fgets($this->socket, 3); //\r\n
   	return $data;
   }
-  // fallback for EmptyPipeChannel
+  // fallback for EmptyChannel
   function fwrite($data) {
     $len = dechex(strlen($data));
     return fwrite($this->socket, "${len}\r\n${data}\r\n");
@@ -560,7 +467,6 @@ class java_HttpTunnelHandler extends java_SimpleHttpHandler {
 	$socket = $this->socket;
 	$webapp = $this->getWebApp();
 	$cookies = $this->getCookies();
-	$channel = $this->getChannelName();
 	$context = $this->getContext();
 	$res = "PUT ";
 	$res .= $webapp;
@@ -568,7 +474,6 @@ class java_HttpTunnelHandler extends java_SimpleHttpHandler {
 	$res .= "Host: {$this->host}:{$this->port}\r\n";
 	$res .= $context;
 	$res .= $cookies;
-	if(!is_null($channel)) $res .= $channel;
 	$res .= $this->getBodyFor($compat, $data);
 	
 	$count = fwrite($socket, $res) or $this->shutdownBrokenConnection("Broken connection handle");
@@ -620,7 +525,6 @@ class java_HttpTunnelHandler extends java_SimpleHttpHandler {
 	}
   }
   function getSimpleChannel() {
-    $this->unlink(); // remove the created pipes as early as possible
 	return new java_ChunkedSocketChannel($this->socket, $this->protocol, $this->host);
   }
 
@@ -634,8 +538,8 @@ class java_HttpTunnelHandler extends java_SimpleHttpHandler {
 	$len0 = chr(0xFF);
 	$len1 = chr($len&0xFF); $len>>=8;
 	$len2 = chr($len&0xFF);
-	if ($this->isRedirect) { 
-	  /* Pipe- or SocketContextServer: redirect to ContextRunner */
+	if ($this->isRedirect) { // slow path; used by JavaBridgeRunner back end
+	  /* SocketContextServer: redirect to ContextRunner */
 	  $this->protocol->socketHandler=new java_SocketHandler($this->protocol, $this->getChannel($channelName));
 	  $this->protocol->write("\177${len0}${len1}${len2}${context}");
 	  $this->context = sprintf("X_JAVABRIDGE_CONTEXT: %s\r\n", $context);
@@ -651,8 +555,8 @@ class java_HttpTunnelHandler extends java_SimpleHttpHandler {
 	  // dummy: avoid ack delay
       $this->protocol->handler->read(1)
 		or $this->protocol->handler->shutdownBrokenConnection("Broken local connection handle");
-	} else           { 
-	   /* No Pipe- or SocketContextServer: keep using the current HTTP connection */
+	} else           { // fast path; used by JEE or servlet engine
+	   /* No SocketContextServer: keep using the current HTTP connection */
 	  $this->protocol->handler = $this->protocol->socketHandler=new java_SocketHandler($this->protocol, $this->getSimpleChannel());
 	}
   }
@@ -739,32 +643,19 @@ class java_Protocol {
     $errno = null; $errstr = null;
     if(is_numeric($channelName)) {
 	  $peer = @pfsockopen($host="127.0.0.1", $channelName, $errno, $errstr, 5);
-      /* raise mono connect exception--do not delete this line, it is used when generating Mono.inc from Java.inc */
 	} else {
 	  $type = $channelName[0];
-	  if($type=='@' || $type=='/') {		 // unix domain socket
-		if($type=='@') $channelName[0]="\0"; // abstract name space
-		$peer = @pfsockopen($host="unix://${channelName}", $channelName = null, $errno, $errstr, 5);
-	  } else {					// tcp socket
-		list($host, $channelName) = explode(":", $channelName);
-		$peer = pfsockopen($host, $channelName, $errno, $errstr, 20);
-		if (!$peer) 
-		    throw new java_ConnectException("No Java server at $host:$channelName. Error message: $errstr ($errno)");
-	  }
+	  list($host, $channelName) = explode(":", $channelName);
+	  $peer = pfsockopen($host, $channelName, $errno, $errstr, 20);
+	  if (!$peer) 
+		throw new java_ConnectException("No Java server at $host:$channelName. Error message: $errstr ($errno)");
 	}
     if (!$peer) {
 
-	  if(is_null($channelName) && ($type=='@' || $type=='/')) {
-	      // unix domain sockets
-		  $java = (ini_get("extension_dir")."/java");
-		  if (!file_exists($java)) trigger_error("Could not find $java. Remove java.so and php_java.dll and try again.", E_USER_ERROR);
-          $java_cmd = "$java -Dphp.java.bridge.daemon=true LOCAL:$name 0";
-      } else {
-	  	  $java=file_exists(ini_get("extension_dir")."/JavaBridge.jar")?ini_get("extension_dir")."/JavaBridge.jar":(java_get_base()."/JavaBridge.jar");
-		  if (!file_exists($java)) 
-		      throw new java_IOException("Could not find $java in ".getcwd().". Download it from http://sf.net/projects/php-java-bridge/files/Binary%20package/php-java-bridge_".JAVA_PEAR_VERSION."/exploded/JavaBridge.jar/download and try again.");
-	      $java_cmd = "java -Dphp.java.bridge.daemon=true -jar \"${java}\" INET_LOCAL:$channelName 0"; 
-      }
+	  $java=file_exists(ini_get("extension_dir")."/JavaBridge.jar")?ini_get("extension_dir")."/JavaBridge.jar":(java_get_base()."/JavaBridge.jar");
+	  if (!file_exists($java)) 
+		throw new java_IOException("Could not find $java in ".getcwd().". Download it from http://sf.net/projects/php-java-bridge/files/Binary%20package/php-java-bridge_".JAVA_PEAR_VERSION."/exploded/JavaBridge.jar/download and try again.");
+	  $java_cmd = "java -Dphp.java.bridge.daemon=true -jar \"${java}\" INET_LOCAL:$channelName 0"; 
 
 	  if (!$again) 
 	     throw new java_ConnectException("No Java back end! Please run it with: $java_cmd. Error message: $errstr ($errno)");

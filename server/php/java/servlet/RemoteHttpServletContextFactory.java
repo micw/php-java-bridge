@@ -157,7 +157,7 @@ public class RemoteHttpServletContextFactory extends JavaBridgeFactory implement
     /**{@inheritDoc}*/
     public ISession getSimpleSession(String name, boolean clientIsNew,
             int timeout) {
-	throw new IllegalStateException("Named sessions not supported by HTTP tunnel. Enable the Pipe- or SocketContextServer and try again.");
+	throw new IllegalStateException("Named sessions not supported by servlet.");
     }
     /**{@inheritDoc}*/
     public ISession getSession(String name, boolean clientIsNew, int timeout) {
@@ -171,11 +171,13 @@ public class RemoteHttpServletContextFactory extends JavaBridgeFactory implement
    }
 
     /**
-     * Return the http session handle or null;
+     * Return the http session handle;
+     * @throws IllegalStateException if java_session has not been called at the beginning of the PHP script
      * @return The session handle
      */
     HttpSession getCurrentSession() {
 	if(session!=null) return ((HttpSessionFacade)session).getCachedSession();
+	SimpleServletContextFactory.throwJavaSessionException();
 	return null;
     }
 

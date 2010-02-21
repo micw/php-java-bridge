@@ -16,7 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 import php.java.bridge.Util;
 import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.IContext;
-import php.java.servlet.PhpJavaServlet;
+import php.java.servlet.ServletUtil;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -98,7 +98,7 @@ public class InvocablePhpServletRemoteHttpServerScriptEngine extends InvocablePh
 	this.proxy = uri.getPath();
 	this.url = uri.toURL();
 
-	this.contextServer = PhpJavaServlet.getContextServer(ctx, promiscuous);
+	this.contextServer = ServletUtil.getContextServer(ctx, promiscuous);
     }
     protected ContextServer getContextServer() {
 	return contextServer;

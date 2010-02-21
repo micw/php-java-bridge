@@ -58,18 +58,30 @@ import php.java.bridge.Util;
  * @see php.java.bridge.http.PipeContextServer
  * @see php.java.bridge.http.ContextServer
  */
-public final class SocketContextServer extends PipeContextServer implements Runnable {
+public final class SocketContextServer implements Runnable {
+    private AppThreadPool threadPool;
     private ISocketFactory serverSocket = null;
     protected List sockets = Collections.synchronizedList(new ArrayList());
     private ILogger logger;
     private String origContextName;
-    
-    protected class Channel extends PipeContextServer.Channel {
+    private boolean promiscuous;
+    private String contextName;
+  
+    protected class Channel extends AbstractChannel {
         protected Socket sock;
+        protected InputStream in;
+        protected OutputStream out;
+        protected String name;
         
         public Channel(String name, InputStream in, OutputStream out, Socket sock) {
-            super(name, in, out);
-	    sockets.add(this.sock = sock);
+            this.name = name;
+            this.in = in;
+            this.out = out;
+            this.sock = sock;
+	    sockets.add(sock);
+        }
+        public String getName() {
+            return name;
         }
         public InputStream getInputStream() {
             return in;
@@ -82,13 +94,10 @@ public final class SocketContextServer extends PipeContextServer implements Runn
         public Socket getSocket() {
             return sock;
         }
-        protected void shutdown(Socket sock) {
-            if(sockets.remove(sock)) try {sock.close();}catch (IOException e){}
-        }
-
         public void shutdown() {
-            super.shutdown();
-            shutdown(sock);
+            if(in!=null) try {in.close();}catch (IOException e){/*ignore*/}
+            if(out!=null) try {out.close();}catch (IOException e){/*ignore*/}
+            if(sockets.remove(sock)) try {sock.close();}catch (IOException e){/*ignore*/}
          }    
     }
     /**
@@ -96,7 +105,9 @@ public final class SocketContextServer extends PipeContextServer implements Runn
      * @param threadPool Obtain runnables from this pool. If null, new threads will be created.
      */
     public SocketContextServer (AppThreadPool threadPool, boolean promiscuous, String contextName) {
-    	super(ContextFactory.NO_CREDENTIALS, threadPool, ContextFactory.EMPTY_CONTEXT_NAME, promiscuous);
+    	this.threadPool = threadPool;
+    	this.contextName = contextName;
+    	this.promiscuous = promiscuous;
 	this.origContextName = contextName;
         try {
 	    serverSocket = JavaBridge.bind("INET_LOCAL:0");
@@ -121,7 +132,7 @@ public final class SocketContextServer extends PipeContextServer implements Runn
 	    try {socket = this.serverSocket.accept();} catch (IOException ex) {return false;} // socket closed
 	    in=socket.getInputStream();
 	    out=socket.getOutputStream();
-	    ContextRunner runner = new ContextRunner(contextServer, channel = new Channel(getChannelName(), in, out, socket), logger);
+	    ContextRunner runner = new ContextRunner(channel = new Channel(getChannelName(), in, out, socket), logger);
 	    if(threadPool!=null) {
 	        threadPool.start(runner);
 	    } else {
@@ -129,12 +140,12 @@ public final class SocketContextServer extends PipeContextServer implements Runn
 	    	t.start();
 	    }
 	} catch (SecurityException t) {
-	    if(channel!=null) channel.shutdown(socket);
+	    if(channel!=null) channel.shutdown();
 	    ContextFactory.destroyAll();
 	    Util.printStackTrace(t);
 	    return false;
 	} catch (Throwable t) {
-	    if(channel!=null) channel.shutdown(socket);
+	    if(channel!=null) channel.shutdown();
 	    Util.printStackTrace(t);
 	}
 	return true;
@@ -161,8 +172,6 @@ public final class SocketContextServer extends PipeContextServer implements Runn
      *
      */
     public void destroy() {
-        super.destroy();
-
         closeAllSockets();
 
 	if(serverSocket!=null) {
@@ -170,7 +179,16 @@ public final class SocketContextServer extends PipeContextServer implements Runn
 	    serverSocket = null;
 	}
     }
-    
+    private static boolean checkTestTunnel(String property) {
+        try {
+          return !"true".equals(System.getProperty(property));
+	}catch (SecurityException e) {
+	    return false;
+	} catch (Throwable t) {
+	    return true;
+	}
+    }
+   
     public static final boolean SOCKET_SERVER_AVAIL = checkTestTunnel("php.java.bridge.no_socket_server");
     /**
      * Check if the ContextServer is ready, i.e. it has created a server socket.

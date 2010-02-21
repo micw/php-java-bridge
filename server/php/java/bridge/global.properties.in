@@ -1,11 +1,10 @@
 ## auto-generated variables
 ## do not edit
-TCP_SOCKETNAME = @TCP_SOCKETNAME@
-EXTENSION_DISPLAY_NAME = @EXTENSION_DISPLAY_NAME@
 BACKEND_VERSION = @BACKEND_VERSION@    
 
 ## You can adjust and enable the following properties:
 ##
+EXTENSION_DISPLAY_NAME = JavaBridge
 # BASE = <PATH TO YOUR HOME/BASE DIRECTORY, DEFAULT IS $HOME>
 # THREADS = 20
 # DEFAULT_LOG_LEVEL = 3

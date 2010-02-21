@@ -143,8 +143,6 @@ public class FastCGIServlet extends HttpServlet {
     
     /** default: true. Switched off when fcgi is not configured */
     protected boolean fcgiIsConfigured;
-    /** default: true. Switched off when fcgi is not configured or if fcgi server failed */
-    protected boolean fcgiIsAvailable;
 
     protected boolean canStartFCGI = false;
     protected boolean override_hosts = true;
@@ -162,24 +160,19 @@ public class FastCGIServlet extends HttpServlet {
 
     protected boolean promiscuous = false;
     
-    private ConnectionPool connectionPool;
-    protected IContextFactory ctx;
 
-    private String contextPath;
-
-    private String pathInfo;
-
-    private String servletPath;
-
-    private String queryString;
-
-    private String requestUri;
-
-    private HashMap environment;
-
-    private boolean includedJava;
-
-    private ArrayList allHeaders;
+    private static class Environment {
+	protected IContextFactory ctx;
+	public ConnectionPool connectionPool;
+	public String contextPath;
+	public String pathInfo;
+	public String servletPath;
+	public String queryString;
+	public String requestUri;
+	public HashMap environment;
+	public boolean includedJava;
+	public ArrayList allHeaders;
+    }
     
     /* There may be two connection pools accessing only one FastCGI server. 
      * We reserve 1 connection for the JavaBridge web context, the remaining 4 connections
@@ -219,23 +212,21 @@ public class FastCGIServlet extends HttpServlet {
 		php = value;
 	    }  catch (Throwable t) {Util.printStackTrace(t);}      
 	}      
-	if(fcgiIsAvailable)
-	    try {
-		// fcgiIsAvailable is initialized to true, it is switched off, if the FastCGIServlet fails
-		value = config.getServletContext().getInitParameter("use_fast_cgi");
-		if(value==null) try { value = System.getProperty("php.java.bridge.use_fast_cgi"); } catch (Exception e) {/*ignore*/}
-		if("false".equalsIgnoreCase(value) || "off".equalsIgnoreCase(value)) fcgiIsConfigured=fcgiIsAvailable=false;
-		else {
-		    value = config.getInitParameter("use_fast_cgi");
-		    if(value==null) value="auto";
-		    value=value.trim();
-		    value = value.toLowerCase();
-		    boolean autostart = value.startsWith("auto");
-		    boolean notAvailable = value.equals("false") || value.equals("off");
-		    if(notAvailable) fcgiIsConfigured=fcgiIsAvailable=false;
-		    if(autostart) canStartFCGI = true;
-		}
-	    }  catch (Throwable t) {Util.printStackTrace(t);}      
+	try {
+	    value = config.getServletContext().getInitParameter("use_fast_cgi");
+	    if(value==null) try { value = System.getProperty("php.java.bridge.use_fast_cgi"); } catch (Exception e) {/*ignore*/}
+	    if("false".equalsIgnoreCase(value) || "off".equalsIgnoreCase(value)) fcgiIsConfigured=false;
+	    else {
+		value = config.getInitParameter("use_fast_cgi");
+		if(value==null) value="auto";
+		value=value.trim();
+		value = value.toLowerCase();
+		boolean autostart = value.startsWith("auto");
+		boolean notAvailable = value.equals("false") || value.equals("off");
+		if(notAvailable) fcgiIsConfigured=false;
+		if(autostart) canStartFCGI = true;
+	    }
+	}  catch (Throwable t) {Util.printStackTrace(t);}
     }
     private String DOCUMENT_ROOT;
     private String SERVER_SIGNATURE;
@@ -315,7 +306,7 @@ public class FastCGIServlet extends HttpServlet {
 
 	String servletContextName=ServletUtil.getRealPath(context, "");
 	if(servletContextName==null) servletContextName="";
-	contextServer = PhpJavaServlet.getContextServer(context, promiscuous);
+	contextServer = ServletUtil.getContextServer(context, promiscuous);
 
 	DOCUMENT_ROOT = ServletUtil.getRealPath(context, "");
 	SERVER_SIGNATURE = context.getServerInfo();
@@ -341,6 +332,19 @@ public class FastCGIServlet extends HttpServlet {
 	    } catch (Exception e) {
 		e.printStackTrace();
 	    }
+
+	    File phpDebuggerFile = new File (javaDir, "PHPDebugger.php");
+	    try {
+		if (!phpDebuggerFile.exists()) {
+		    Field f = Util.PHPDEBUGGER_PHP.getField("bytes");
+		    byte[] buf = (byte[]) f.get(Util.PHPDEBUGGER_PHP);
+		    OutputStream out = new FileOutputStream (phpDebuggerFile);
+		    out.write(buf);
+		    out.close();
+		}
+	    } catch (Exception e) {
+		e.printStackTrace();
+	    }
 	    
 	    File javaProxyFile = new File (javaDir, "JavaProxy.php");
 	    try {
@@ -350,6 +354,17 @@ public class FastCGIServlet extends HttpServlet {
 		    OutputStream out = new FileOutputStream (javaProxyFile);
 		    out.write(buf);
 		    out.close();
+		}
+	    } catch (Exception e) {
+		e.printStackTrace();
+	    }
+	}
+	String pearDir = ServletUtil.getRealPath(context, "WEB-INF/pear");
+	if (pearDir != null) {
+	    File pearDirFile = new File (pearDir);
+	    try {
+		if (!pearDirFile.exists()) {
+		    pearDirFile.mkdir();
 		}
 	    } catch (Exception e) {
 		e.printStackTrace();
@@ -385,21 +400,81 @@ public class FastCGIServlet extends HttpServlet {
 		    Field f =  Util.LAUNCHER_WINDOWS.getField("bytes");
 		    Field f2 = Util.LAUNCHER_WINDOWS2.getField("bytes");
 		    Field f3 = Util.LAUNCHER_WINDOWS3.getField("bytes");
+		    Field f4 = Util.LAUNCHER_WINDOWS4.getField("bytes");
 		    byte[] buf =  (byte[]) f.get(Util.LAUNCHER_WINDOWS);
 		    byte[] buf2 = (byte[]) f2.get(Util.LAUNCHER_WINDOWS2);
 		    byte[] buf3 = (byte[]) f3.get(Util.LAUNCHER_WINDOWS3);
+		    byte[] buf4 = (byte[]) f4.get(Util.LAUNCHER_WINDOWS4);
 		    OutputStream out = new FileOutputStream (javaProxyFile);
 		    out.write(buf);
 		    out.write(buf2);
 		    out.write(buf3);
+		    out.write(buf4);
 		    out.close();
 		}
 	    } catch (Exception e) {
 		e.printStackTrace();
 	    }
 	}
-
-	
+	if (ServletUtil.USE_SH_WRAPPER) {
+	    try {
+		File phpCgi = new File (javaDir, "php-cgi-"+Util.osArch+"-"+Util.osName);
+		if (phpCgi.exists()) {
+		    File wrapper = new File(javaDir, "php-cgi-"+Util.osArch+"-"+Util.osName+".sh");
+		    if (!wrapper.exists()) {
+			byte[] data = ("#!/bin/sh\nchmod +x ./php-cgi-"+Util.osArch+"-"+Util.osName+"\n"+
+				"exec ./php-cgi-"+Util.osArch+"-"+Util.osName+" -c php-cgi-" +Util.osArch+"-"+Util.osName+".ini \"$@\"").getBytes();
+			OutputStream out = new FileOutputStream (wrapper);
+			out.write(data);
+			out.close();
+		    }
+		    File ini = new File(javaDir, "php-cgi-"+Util.osArch+"-"+Util.osName+".ini");
+		    if (!ini.exists()) {
+			byte[] data = (";; -*- mode: Scheme; tab-width:4 -*-\n;; A simple php.ini\n"+
+				"extension_dir=\""+javaDir+"\"\n"+
+				"include_path=\""+pearDir+":/usr/share/pear:.\"\n").getBytes();
+			OutputStream out = new FileOutputStream (ini);
+			out.write(data);
+			out.close();
+		    }
+		} else {
+		    File readme = new File(javaDir, "php-cgi-"+Util.osArch+"-"+Util.osName+".MISSING.README.txt");
+		    if (!readme.exists()) {
+			byte[] data = ("You can rename your php fastcgi binary to \"php-cgi-"+Util.osArch+"-"+Util.osName+"\", add it to your web application WEB-INF/cgi directory and re-deploy your web application.\n").getBytes();
+			OutputStream out = new FileOutputStream (readme);
+			out.write(data);
+			out.close();
+		    }
+		}
+	    } catch (Exception e) {
+		e.printStackTrace();
+	    }
+	} else {
+	    try {
+		File phpCgi = new File (javaDir, "php-cgi-"+Util.osArch+"-"+Util.osName+".exe");
+		if (phpCgi.exists()) {
+		File ini = new File(javaDir, "php.ini");
+		if (!ini.exists()) {
+		    byte[] data = (";; -*- mode: Scheme; tab-width:4 -*-\n;; A simple php.ini\n"+
+			    "extension_dir=\""+javaDir+"\"\n"+
+			    "include_path=\""+pearDir+";.\"\n").getBytes();
+		    OutputStream out = new FileOutputStream (ini);
+		    out.write(data);
+		    out.close();
+		}
+		} else {
+		    File readme = new File(javaDir, "php-cgi-"+Util.osArch+"-"+Util.osName+"exe.MISSING.README.txt");
+		    if (!readme.exists()) {
+			byte[] data = ("You can rename your php fastcgi binary to \"php-cgi-"+Util.osArch+"-"+Util.osName+".exe\", add it and its phpXts.dll (!) to your web application WEB-INF/cgi directory and re-deploy your web application.\n").getBytes();
+			OutputStream out = new FileOutputStream (readme);
+			out.write(data);
+			out.close();
+		    }
+		}
+	    } catch (Exception e) {
+		e.printStackTrace();
+	    }
+	}
 	String name = context.getServerInfo();
 	if (name != null && (name.startsWith("JBoss")))    isJBoss    = true;
 
@@ -466,7 +541,7 @@ public class FastCGIServlet extends HttpServlet {
 		php_fcgi_max_requests = val;
 	    }
 	} catch (Throwable t) {/*ignore*/}
-	fcgiIsAvailable = fcgiIsConfigured = true;
+	fcgiIsConfigured = true;
 	checkCgiBinary(config);
 	
 	try {
@@ -490,63 +565,46 @@ public class FastCGIServlet extends HttpServlet {
     	fcgiConnectionPool = null;
     }
 
-    protected void setupRequestVariables(HttpServletRequest req) {
-	this.allHeaders = new ArrayList();
-
-	this.includedJava = php_include_java && PhpJavaServlet.getHeader("X_JAVABRIDGE_INCLUDE", req) == null;
+    protected void setupRequestVariables(HttpServletRequest req, Environment env) {
+	env.allHeaders = new ArrayList();
+	env.includedJava = php_include_java && PhpJavaServlet.getHeader("X_JAVABRIDGE_INCLUDE", req) == null;
             
-	this.contextPath = (String) req.getAttribute("javax.servlet.include.context_path");
-	if (this.contextPath == null) this.contextPath = (String) req.getAttribute("javax.servlet.forward.context_path");
-	if (this.contextPath == null) this.contextPath = req.getContextPath();
-    	    
-	this.pathInfo =  (String) req.getAttribute("javax.servlet.include.path_info");
-	if (this.pathInfo == null) this.pathInfo =  (String) req.getAttribute("javax.servlet.forward.path_info");
-	if (this.pathInfo == null) this.pathInfo = req.getPathInfo();
-            
-	this.servletPath = (String) req.getAttribute("javax.servlet.include.servlet_path");
-	if (this.servletPath == null) this.servletPath = (String) req.getAttribute("javax.servlet.forward.servlet_path");
-	if (this.servletPath == null) this.servletPath = req.getServletPath();
-            
-	this.queryString = (String) req.getAttribute("javax.servlet.include.query_string");
-	if (this.queryString == null) this.queryString = (String) req.getAttribute("javax.servlet.forward.query_string");
-	if (this.queryString == null) this.queryString = req.getQueryString();
-            
-	this.requestUri = (String) req.getAttribute("javax.servlet.include.request_uri");
-	if (this.requestUri == null) this.requestUri = (String) req.getAttribute("javax.servlet.forward.request_uri");
-	if (this.requestUri == null) this.requestUri = req.getRequestURI();
+	env.contextPath = req.getContextPath();
+	env.pathInfo = req.getPathInfo();
+	env.servletPath = req.getServletPath();
+	env.queryString = req.getQueryString();
+	env.requestUri = req.getRequestURI();
     }
     
-    private ConnectionPool createConnectionPool(HttpServletRequest req, int children) throws ConnectException {
-	channelName.initialize(this, req, contextPath);
+    private ConnectionPool createConnectionPool(HttpServletRequest req, int children, Environment env) throws ConnectException {
+	channelName.initialize(this, req, env.contextPath);
 
 	// Start the launcher.exe or launcher.sh
-	fcgiIsAvailable = channelName.startServer(logger);
+	channelName.startServer(logger);
 	return new ConnectionPool(channelName, children, php_fcgi_max_requests_number, defaultPoolFactory, php_fcgi_connection_pool_timeout_number);
     }
 
     /** calculate PATH_INFO, PATH_TRANSLATED and SCRIPT_FILENAME */
-    protected void setPathInfo(HttpServletRequest req, HashMap envp) {
+    protected void setPathInfo(HttpServletRequest req, HashMap envp, Environment env) {
 
-	String pathInfo = req.getPathInfo();
+	String pathInfo = env.pathInfo;
 	if (pathInfo!=null) {
 	    envp.put("PATH_INFO", pathInfo);
 	    envp.put("PATH_TRANSLATED", DOCUMENT_ROOT+pathInfo);
 	}
 
-        if (includedJava)
+        if (env.includedJava)
 	    envp.put("SCRIPT_FILENAME", ServletUtil.getRealPath(context, "java/JavaProxy.php"));
 	else
-	    envp.put("SCRIPT_FILENAME", ServletUtil.getRealPath(context, servletPath));
+	    envp.put("SCRIPT_FILENAME", ServletUtil.getRealPath(context, env.servletPath));
         
     }
 
-    protected void setupFastCGIServer(HttpServletRequest req) throws ServletException {
-	boolean isJavaBridgeWc = ServletUtil.isJavaBridgeWc(contextPath);
+    protected void setupFastCGIServer(HttpServletRequest req, Environment env) throws ConnectException {
+	boolean isJavaBridgeWc = ServletUtil.isJavaBridgeWc(env.contextPath);
 	Object lockObject = isJavaBridgeWc?javaBridgeCtxLock:globalCtxLock;
 	synchronized(lockObject) {
-	    if(!fcgiIsAvailable) throw new ServletException("bleh");// FIXME
-	    if(null == (connectionPool=fcgiConnectionPool))
-		try {
+	    if(null == (env.connectionPool=fcgiConnectionPool)) {
 		    int children = php_fcgi_connection_pool_size_number;
 		    if(delegateToJavaBridgeContext) { 
 			// NOTE: the shared_fast_cgi_pool options
@@ -554,18 +612,12 @@ public class FastCGIServlet extends HttpServlet {
 			// the PhpCGIServlet must match.
 			children = isJavaBridgeWc ? JAVABRIDGE_RESERVE : php_fcgi_connection_pool_size_number-JAVABRIDGE_RESERVE;
 		    }
-		    fcgiConnectionPool=connectionPool = createConnectionPool(req, children);
-		} catch (Exception e) {
-		    String base = ServletUtil.getRealPath(context, cgiPathPrefix);
-		    Util.logDebug(e+": FastCGI channel not available, switching off fast cgi. " + 
-				  channelName.getFcgiStartCommand(base, php_fcgi_max_requests));
-                	
-		    fcgiIsAvailable=false;
+		    env.connectionPool = fcgiConnectionPool= createConnectionPool(req, children, env);
 		}
 	}
 
     }
-    protected void setupCGIEnvironment(HttpServletRequest req, HttpServletResponse res) throws ServletException {
+    protected void setupCGIEnvironment(HttpServletRequest req, HttpServletResponse res, Environment env) throws ServletException {
 	HashMap envp = (HashMap)PROCESS_ENVIRONMENT.clone();
 
 	envp.put("SERVER_SOFTWARE", "TOMCAT");
@@ -576,15 +628,15 @@ public class FastCGIServlet extends HttpServlet {
 	Integer iPort = (port == 0 ? new Integer(-1) : new Integer(port));
 	envp.put("SERVER_PORT", iPort.toString());
 	envp.put("REQUEST_METHOD", ServletUtil.nullsToBlanks(req.getMethod()));
-	envp.put("SCRIPT_NAME", contextPath+servletPath);
-	envp.put("QUERY_STRING", ServletUtil.nullsToBlanks(queryString));
+	envp.put("SCRIPT_NAME", env.contextPath+env.servletPath);
+	envp.put("QUERY_STRING", ServletUtil.nullsToBlanks(env.queryString));
 	envp.put("REMOTE_HOST", ServletUtil.nullsToBlanks(req.getRemoteHost()));
 	envp.put("REMOTE_ADDR", ServletUtil.nullsToBlanks(req.getRemoteAddr()));
 	envp.put("AUTH_TYPE", ServletUtil.nullsToBlanks(req.getAuthType()));
 	envp.put("REMOTE_USER", ServletUtil.nullsToBlanks(req.getRemoteUser()));
 	envp.put("REMOTE_IDENT", ""); //not necessary for full compliance
 	envp.put("CONTENT_TYPE", ServletUtil.nullsToBlanks(req.getContentType()));
-	setPathInfo(req, envp);
+	setPathInfo(req, envp, env);
 
 	/* Note CGI spec says CONTENT_LENGTH must be NULL ("") or undefined
 	 * if there is no content, so we cannot put 0 or -1 in as per the
@@ -620,7 +672,7 @@ public class FastCGIServlet extends HttpServlet {
 	}
 
 
-	this.environment = envp;
+	env.environment = envp;
 
 	    
 	/* Inform the client that we are a cgi servlet and send the re-direct port */
@@ -628,10 +680,10 @@ public class FastCGIServlet extends HttpServlet {
 	if(override_hosts) { 
 	    try {
 		StringBuffer buf = new StringBuffer();
-		buf.append(this.environment.get("SERVER_PORT"));
+		buf.append(env.environment.get("SERVER_PORT"));
 		buf.append("/");
-		buf.append(contextPath);
-		buf.append(servletPath);
+		buf.append(env.contextPath);
+		buf.append(env.servletPath);
 		URI uri = new URI(req.isSecure()?"s:127.0.0.1":"h:127.0.0.1", buf.toString(), null);
 		override = uri.toASCIIString()+".phpjavabridge";
 	    } catch (Exception e) {
@@ -644,9 +696,9 @@ public class FastCGIServlet extends HttpServlet {
 		    buf.append("s:");
 		buf.append("127.0.0.1");
 		buf.append(":");
-		buf.append(this.environment.get("SERVER_PORT")); 
+		buf.append(env.environment.get("SERVER_PORT")); 
 		buf.append('/');
-		buf.append(requestUri);
+		buf.append(env.requestUri);
 		buf.append(".phpjavabridge");
 		override = buf.toString();
 	    }
@@ -654,51 +706,51 @@ public class FastCGIServlet extends HttpServlet {
 	else 
 	    override = "";
 
-	if (includedJava) {
-	    this.environment.put("X_JAVABRIDGE_INCLUDE_ONLY", "1");
-	    this.environment.put("X_JAVABRIDGE_INCLUDE", ServletUtil.getRealPath(getServletContext(), servletPath));
+	if (env.includedJava) {
+	    env.environment.put("X_JAVABRIDGE_INCLUDE_ONLY", "1");
+	    env.environment.put("X_JAVABRIDGE_INCLUDE", ServletUtil.getRealPath(getServletContext(), env.servletPath));
 	}
-	this.environment.put("X_JAVABRIDGE_OVERRIDE_HOSTS", override);
+	env.environment.put("X_JAVABRIDGE_OVERRIDE_HOSTS", override);
 	// same for fastcgi, which already contains X_JAVABRIDGE_OVERRIDE_HOSTS=/ in its environment
-	this.environment.put("X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT", override); 
-	this.environment.put("REDIRECT_STATUS", "200");
-	this.environment.put("SERVER_SOFTWARE", Util.EXTENSION_NAME);
-	this.environment.put("HTTP_HOST", this.environment.get("SERVER_NAME")+":"+this.environment.get("SERVER_PORT"));
+	env.environment.put("X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT", override); 
+	env.environment.put("REDIRECT_STATUS", "200");
+	env.environment.put("SERVER_SOFTWARE", Util.EXTENSION_NAME);
+	env.environment.put("HTTP_HOST", env.environment.get("SERVER_NAME")+":"+env.environment.get("SERVER_PORT"));
 	String remotePort = null;
 	try {
 	    remotePort = String.valueOf(req.getRemotePort());
 	} catch (Throwable t) {
 	    remotePort = String.valueOf(t);
 	}
-	this.environment.put("REMOTE_PORT", remotePort);
-	String query = queryString;
+	env.environment.put("REMOTE_PORT", remotePort);
+	String query = env.queryString;
 	if(query!=null)
-	    this.environment.put("REQUEST_URI", ServletUtil.nullsToBlanks(requestUri + "?" + query));
+	    env.environment.put("REQUEST_URI", ServletUtil.nullsToBlanks(env.requestUri + "?" + query));
 	else
-	    this.environment.put("REQUEST_URI", ServletUtil.nullsToBlanks(requestUri));	          
+	    env.environment.put("REQUEST_URI", ServletUtil.nullsToBlanks(env.requestUri));	          
 	        
-	this.environment.put("SERVER_ADDR", req.getServerName());
-	this.environment.put("SERVER_SIGNATURE", SERVER_SIGNATURE);
-	this.environment.put("DOCUMENT_ROOT", DOCUMENT_ROOT);
-	if(req.isSecure()) this.environment.put("HTTPS", "On");
+	env.environment.put("SERVER_ADDR", req.getServerName());
+	env.environment.put("SERVER_SIGNATURE", SERVER_SIGNATURE);
+	env.environment.put("DOCUMENT_ROOT", DOCUMENT_ROOT);
+	if(req.isSecure()) env.environment.put("HTTPS", "On");
 	        
 	        
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */
 	String id = PhpJavaServlet.getHeader("X_JAVABRIDGE_CONTEXT", req);
 	if(id==null) {
-	    id = (ctx=ServletContextFactory.addNew(contextServer, this, getServletContext(), req, req, res)).getId();
+	    id = (env.ctx=ServletContextFactory.addNew(contextServer, this, getServletContext(), req, req, res)).getId();
 	    if (Util.USE_SHORT_PATH_S1) {
 		// short path S1: no PUT request
-		AbstractChannelName channelName = contextServer.getFallbackChannelName(null, ctx);
+		AbstractChannelName channelName = contextServer.getChannelName(env.ctx);
 		if (channelName != null) {
-		    this.environment.put("X_JAVABRIDGE_REDIRECT", channelName.getName());
-		    ctx.getBridge();
+		    env.environment.put("X_JAVABRIDGE_REDIRECT", channelName.getName());
+		    env.ctx.getBridge();
 		    contextServer.start(channelName, logger);
 		}
 	    }
 	}
-	this.environment.put("X_JAVABRIDGE_CONTEXT", id);
+	env.environment.put("X_JAVABRIDGE_CONTEXT", id);
     }
     /**
      * Optimized run method for FastCGI. Makes use of the large FCGI_BUF_SIZE and the specialized in.read(). 
@@ -706,22 +758,28 @@ public class FastCGIServlet extends HttpServlet {
      * @throws InterruptedException 
      * @see Util#parseBody(byte[], InputStream, OutputStream, HeaderParser)
      */
-    protected void parseBody(HttpServletRequest req, HttpServletResponse res) throws IOException, ServletException {
-	InputStream in = null;
+    protected void parseBody(HttpServletRequest req, HttpServletResponse res, Environment env) throws IOException, ServletException {
 	final byte[] buf = new byte[FCGI_BUF_SIZE];// headers cannot be larger than this value!
+	
+	InputStream in = null;
+	OutputStream out = null;
+	
 	FastCGIInputStream natIn = null;
 	FastCGIOutputStream natOut = null;
+
 	ConnectionPool.Connection connection = null;
+	
 	try {
-	    connection = connectionPool.openConnection();
+	    connection = env.connectionPool.openConnection();
 	    natOut = (FastCGIOutputStream) connection.getOutputStream();
 	    natIn = (FastCGIInputStream) connection.getInputStream();
 
-	    in = req.getInputStream();
+	    in = req.getInputStream(); // do not close in, otherwise requestDispatcher().include() will receive a closed input stream
+	    out = ServletUtil.getServletOutputStream(res);
         
 	    // send the FCGI header
 	    natOut.writeBegin();
-	    natOut.writeParams(environment);
+	    natOut.writeParams(env.environment);
 		
 	    String line = null;
 	    int i=0, n, s=0;
@@ -735,20 +793,19 @@ public class FastCGIServlet extends HttpServlet {
 		// used by either http/1.1 chunked connections or "WebSockets", 
 		// see http://tools.ietf.org/html/draft-hixie-thewebsocketprotocol-70
 		final InputStream inputStream = in; in = null;
-		final FastCGIOutputStream outputStream = natOut; natOut = null;
+		final FastCGIOutputStream natOutputStream = natOut; natOut = null;
 		(new Thread() {
 		    public void run() {
 			int n;
 			try {
 			    while((n=inputStream.read(buf))!=-1) {
-				outputStream.write(buf, n);
+				natOutputStream.write(buf, n);
 			    }
 			} catch (IOException e) {
 			    // TODO Auto-generated catch block
 			    e.printStackTrace();
 			} finally {
-			    try {inputStream.close();} catch (IOException e) {}
-			    try {outputStream.close();} catch (IOException e) {}
+			    try {natOutputStream.close();} catch (IOException e) {}
 			}
 		    }
 		}).start();
@@ -757,10 +814,9 @@ public class FastCGIServlet extends HttpServlet {
 		while((n=in.read(buf))!=-1) {
 		    natOut.write(buf, n);
 		}
-		in.close(); in = null;
 		natOut.close(); natOut = null;
 	    } 
-		
+	    
 	    // the header and content
 	    String remain = null;
 	    while((n = natIn.read(buf)) !=-1) {
@@ -780,7 +836,7 @@ public class FastCGIServlet extends HttpServlet {
 			    } else {
 				line = new String(buf, s, i-s-2, Util.ASCII);
 			    }
-			    addHeader(res, line);
+			    addHeader(res, line, env);
 			    s=i;
 			}
 			rn=true;
@@ -793,7 +849,7 @@ public class FastCGIServlet extends HttpServlet {
 		}
 		// body
 		if(eoh) {
-		    if(i<N) ServletUtil.getServletOutputStream(res).write(buf, i, N-i);
+		    if(i<N) out.write(buf, i, N-i);
 		} else { 
 		    if (remain != null) {
 			remain += new String(buf, s, i-s, Util.ASCII);
@@ -818,15 +874,14 @@ public class FastCGIServlet extends HttpServlet {
 	    // so that the PHP side doesn't keep unsent data
 	    // A more elegant approach would be to use the FCGI ABORT request.
 	    if(connection!=null) connection.setIsClosed(); 
-	    if(in!=null) try {in.close();} catch (IOException e) {}
 	    if(natIn!=null) try {natIn.close();} catch (IOException e) {}
 	    if(natOut!=null) try {natOut.close();} catch (IOException e) {}
 	}
     }
 
-    protected void doExecute(HttpServletRequest req, HttpServletResponse res) throws IOException, ServletException {
+    protected void doExecute(HttpServletRequest req, HttpServletResponse res, Environment env) throws IOException, ServletException {
 	try {
-	    parseBody(req, res);
+	    parseBody(req, res, env);
 	} catch (ConnectionException ex) {
 	    Util.logError("PHP application terminated unexpectedly, have you started php-cgi with the environment setting PHP_FCGI_MAX_REQUESTS=" + php_fcgi_max_requests + "?  Error: " + ex);
 	    throw ex;
@@ -836,19 +891,19 @@ public class FastCGIServlet extends HttpServlet {
 
     protected void execute(HttpServletRequest req, HttpServletResponse res) throws IOException, ServletException, InterruptedException {
 
-	setupRequestVariables(req);
-	setupFastCGIServer(req);
-	setupCGIEnvironment(req, res);
+	Environment env = new Environment();
+	setupRequestVariables(req, env);
+	setupFastCGIServer(req, env);
+	setupCGIEnvironment(req, res, env);
 
 	try {
-	    doExecute(req, res);
+	    doExecute(req, res, env);
 	} catch (ConnectException ex) {
-	    fcgiIsAvailable = false;
 	    if(Util.logLevel>1) {
-		Util.logDebug("PHP FastCGI server failed, switching off FastCGI SAPI: " + ex);
+		Util.logDebug("PHP FastCGI server failed: " + ex);
 		Util.printStackTrace(ex);
 	    }
-	    throw new ServletException("PHP FastCGI server failed, switching off FastCGI SAPI.", ex);
+	    throw new ServletException("PHP FastCGI server failed: ", ex);
 	} catch (ConnectionException x) {
 	    if(Util.logLevel>1) {
 		Util.logDebug("PHP FastCGI instance failed: " + x);
@@ -859,12 +914,12 @@ public class FastCGIServlet extends HttpServlet {
 	    Util.printStackTrace(e);
 	    throw e;
 	} finally {
-	    if(ctx!=null) ctx.releaseManaged();
-	    ctx = null;
+	    if(env.ctx!=null) env.ctx.releaseManaged();
+	    env.ctx = null;
 	}
 	    
     }
-    protected void addHeader(HttpServletResponse response, String line) {
+    protected void addHeader(HttpServletResponse response, String line, Environment env) {
 	try {
 	    if (line.startsWith("Status")) {
 		line = line.substring(line.indexOf(":") + 1).trim();
@@ -874,11 +929,11 @@ public class FastCGIServlet extends HttpServlet {
 
 		response.setStatus(Integer.parseInt(line));
 	    } else {
-		if (!allHeaders.contains(line)) {
+		if (!env.allHeaders.contains(line)) {
 		    response.addHeader
 			(line.substring(0, line.indexOf(":")).trim(),
 			 line.substring(line.indexOf(":") + 1).trim());
-		    allHeaders.add(line);
+		    env.allHeaders.add(line);
 		}
 	    }
 	} catch (ArrayIndexOutOfBoundsException e) {/*not a valid header*/}
@@ -897,11 +952,11 @@ public class FastCGIServlet extends HttpServlet {
 	    buf.append(Util.osArch);
 	    buf.append("-");
 	    buf.append(Util.osName);
-	    buf.append("[.sh]|[.exe]");
+	    if (!ServletUtil.USE_SH_WRAPPER) buf.append(".exe");
 	    String wrapper = buf.toString();
-	    IOException ex = new IOException("An IO exception occured. " +
-					     "Probably php was not installed correctly in \"/usr/bin/php-cgi\" or \"c:/Program Files/PHP/php-cgi.exe\" or \""+wrapper+"\"." +
-					     "See \"php_exec\" in your WEB-INF/web.xml and WEB-INF/cgi/README. \nReason follows:");
+	    IOException ex = new IOException("No suitable php fastcgi sapi found. " +
+					     "Install PHP as either \"/usr/bin/php-cgi\" or \"c:/Program Files/PHP/php-cgi.exe\" or \""+wrapper+"\". " +
+					     "See also \"php_exec\" in your WEB-INF/web.xml. \nReason follows:");
 	    ex.initCause(e);
 	    php=null;
 	    checkCgiBinary(getServletConfig());
@@ -933,7 +988,7 @@ public class FastCGIServlet extends HttpServlet {
 	throws ServletException, IOException {
 	if(Util.logLevel>4) {
 	    if (req.getAttribute("javax.servlet.include.request_uri")!=null) log("doGet (included):"+req.getAttribute("javax.servlet.include.request_uri"));
-	    log("doGet:"+req.getRequestURI());
+	    log("XdoGet:"+req.getRequestURI());
 	}
 	handle (req, res);
     }

@@ -67,9 +67,14 @@ public class SimpleServletContextFactory extends php.java.bridge.http.SimpleCont
     protected void setSessionFactory(HttpServletRequest req) {
     }
     /**{@inheritDoc}*/
+    public ISession getSimpleSession(String name, boolean clientIsNew,
+            int timeout) {
+	throw new IllegalStateException("Named sessions not supported by servlet.");
+    }
+    /**{@inheritDoc}*/
     public ISession getSession(String name, boolean clientIsNew, int timeout) {
 	 // if name != null return a "named" php session which is not shared with jsp
-	if(name!=null) return visited.getSimpleSession(name, clientIsNew, timeout);
+	if(name!=null) return getSimpleSession(name, clientIsNew, timeout);
 	
 	if(session != null) return session;
 
@@ -97,13 +102,19 @@ public class SimpleServletContextFactory extends php.java.bridge.http.SimpleCont
 	ctx.setAttribute(IContext.SERVLET_RESPONSE, new SimpleHttpServletResponse(res), IContext.ENGINE_SCOPE);
 	return ctx;
     }
+    /** Only for internal use */
+    public static void throwJavaSessionException() {
+	throw new IllegalStateException ("Cannot call java_session() anymore. Response headers already sent! java_session() must be called at the beginning of the php script. Please add \"java_session();\" to the beginning of your PHP script.");
+    }
 
     /**
-     * Return the http session handle or null;
+     * Return the http session handle;
+     * @throws IllegalStateException if java_session has not been called at the beginning of the PHP script
      * @return The session handle
      */
     public HttpSession getSession() {
 	if(session!=null) return ((HttpSessionFacade)session).getCachedSession();
+	throwJavaSessionException();
 	return null;
     }
     /**{@inheritDoc}*/
