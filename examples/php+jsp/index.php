@@ -75,6 +75,15 @@
 </tr>
 
 <tr VALIGN=TOP>
+<td WIDTH="25%">Include output of local JSP resource</td>
+
+<td WIDTH="25%"><a href="virtual.php/foo/bar?baz=42">Execute</a></td>
+
+<td WIDTH="25%"><a href="source.php?source=virtual.php">Source</a></td>
+<td WIDTH="25%"></td>
+</tr>
+
+<tr VALIGN=TOP>
 <td WIDTH="25%">JSR 223 example</td>
 
 <td WIDTH="25%"><a href="jsr223.jsp">Execute</a></td>

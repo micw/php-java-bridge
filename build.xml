@@ -1,182 +1,218 @@
 <?xml version="1.0"?>
 <project name="JavaBridge" basedir="." default="JavaBridgeWar">
-	<target name="init">
-		<property name="javaBaseDir" value="${basedir}/server" />
-		<property name="javaSourceDir" value="${javaBaseDir}" />
-		<property name="javaClassDir" value="${basedir}/bin" />
-		<property name="distDir" value="${basedir}/dist" />
-		<property name="libDir" value="${basedir}/unsupported" />
-		<property name="cgiDir" value="${javaBaseDir}/WEB-INF/cgi" />
-		<property name="sampleWebDir" value="${basedir}/examples/php+jsp" />
+  <target name="init">
+    <property name="javaBaseDir" value="${basedir}/server" />
+    <property name="javaSourceDir" value="${javaBaseDir}" />
+    <property name="javaClassDir" value="${basedir}/bin" />
+    <property name="distDir" value="${basedir}/dist" />
+    <property name="libDir" value="${basedir}/unsupported" />
+    <property name="cgiDir" value="${javaBaseDir}/WEB-INF/cgi" />
+    <property name="sampleWebDir" value="${basedir}/examples/php+jsp" />
 
-		<path id="compilePath">
-			<fileset dir="${libDir}" />
-		</path>
+    <path id="compilePath">
+      <fileset dir="${libDir}" />
+    </path>
 
-		<mkdir dir="${distDir}" />
-		<mkdir dir="${javaClassDir}" />
-	</target>
+    <mkdir dir="${distDir}" />
+    <mkdir dir="${javaClassDir}" />
+  </target>
 
-	<target name="compile" depends="init,JavaIncJava,JavaProxyPhpJava,LauncherUnix,LauncherWindows">
-		<javac srcdir="${javaSourceDir}" source="1.4" target="1.4" destdir="${javaClassDir}" debug="false" deprecation="false">
-			<classpath refid="compilePath" />
-		</javac>
-	</target>
-	<target name="SrcZip" depends="init,JavaBridgeProperties,JavaInc,JavaProxyPhp">
-	  <zip zipfile="${distDir}/src.zip" compress="true">
-	    <fileset dir="${javaClassDir}">
-	      <include name="php/java/**/*.java" />
-	      <include name="php/java/bridge/global.properties" />
-	      <include name="WEB-INF/cgi/launcher.c" />
-	      <include name="WEB-INF/cgi/launcher.sh" />
-	      <include name="WEB-INF/cgi/README.sh" />
-	      <include name="WEB-INF/cgi/rename*" />
-	    </fileset>
-	    <fileset dir="${javaBaseDir}/META-INF">
-	      <include name="java/*.inc" />
-	      <include name="java/*.php" />
-	    </fileset>
-	  </zip>
-	</target>
-	<target name="JavaBridgeJar" depends="init,compile,JavaInc,JavaProxyPhp,JavaBridgeProperties">
-	  <jar jarfile="${distDir}/JavaBridge.jar" manifest="${javaSourceDir}/META-INF/MANIFEST.MF" compress="true">
-	    <fileset dir="${javaClassDir}">
-	      <include name="php/java/bridge/*.class" />
-	      <include name="php/java/bridge/global.properties" />
-	      <include name="php/java/bridge/http/*.class" />
-	    </fileset>
-	    <metainf dir="${javaBaseDir}/META-INF">
-	      <include name="java/*.inc" />
-	      <include name="java/*.php" />
-	    </metainf>
-	  </jar>
-	</target>
-	<target name="PhpScriptJar" depends="init,compile">
-	  <jar jarfile="${distDir}/php-script.jar" compress="true">
-	    <fileset dir="${javaClassDir}">
-	      <include name="php/java/script/*.class" />
-	    </fileset>
-	    <metainf dir="${javaBaseDir}/META-INF">
-	      <include name="services/javax.script.ScriptEngineFactory" />
-	    </metainf>
-	  </jar>
-	</target>
-	<target name="PhpServletJar" depends="init,compile">
-	  <jar jarfile="${distDir}/php-servlet.jar" compress="true">
-	    <fileset dir="${javaClassDir}">
-	      <include name="php/java/servlet/*.class" />
-	      <include name="php/java/servlet/fastcgi/*.class" />
-	      <include name="php/java/script/servlet/*.class" />
-	    </fileset>
-	  </jar>
-	</target>
-	<target name="JavaInc" depends="init">
-	  <apply executable = "/bin/sh" failonerror = "true" dir="${javaBaseDir}" parallel="true">
-	    <arg value="buildJavaInc.sh" />
-	    <fileset dir="${javaBaseDir}" >
-	      <include name="META-INF/java/*.inc" />
-	      <exclude name="META-INF/java/Java.inc" />
-	    </fileset>
-	  </apply>
-	</target>
-	<target name="JavaIncJava" depends="JavaInc,init">
-	  <apply executable = "/bin/sh" failonerror = "true" dir="${javaBaseDir}" parallel="true">
-	    <arg value="${javaBaseDir}/buildJavaIncJava.sh" />
-	    <fileset dir="${javaBaseDir}" >
-	      <include name="META-INF/java/Java.inc" />
-	    </fileset>
-	  </apply>
-	</target>
-	<target name="JavaProxyPhp" depends="JavaInc,init">
-	  <apply executable = "/bin/sh" failonerror = "true" dir="${javaBaseDir}" parallel="true">
-	    <arg value="${javaBaseDir}/buildJavaProxyPhp.sh" />
-	    <fileset dir="${javaBaseDir}" >
-	      <include name="META-INF/java/Java.inc" />
-	    </fileset>
-	  </apply>
-	</target>
-	<target name="JavaProxyPhpJava" depends="JavaProxyPhp,init">
-	  <apply executable = "/bin/sh" failonerror = "true" dir="${javaBaseDir}" parallel="true">
-	    <arg value="${javaBaseDir}/buildJavaProxyPhpJava.sh" />
-	    <fileset dir="${javaBaseDir}" >
-	      <include name="META-INF/java/JavaProxy.php" />
-	    </fileset>
-	  </apply>
-	</target>
-	<target name="BuildCgi" depends="init">
-	  <apply executable = "/bin/sh" failonerror = "true" dir="${javaBaseDir}" parallel="true">
-	    <arg value="${javaBaseDir}/buildCgi.sh" />
-	    <fileset dir="${javaBaseDir}" >
-	      <include name="buildCgi.sh" />
-	    </fileset>
-	  </apply>
-	</target>
-	<target name="LauncherUnix" depends="init">
-	  <apply executable = "/bin/sh" failonerror = "true" dir="${javaBaseDir}" parallel="true">
-	    <arg value="${javaBaseDir}/buildLauncherUnix.sh" />
-	    <fileset dir="${javaBaseDir}" >
-	      <include name="WEB-INF/cgi/launcher.sh" />
-	    </fileset>
-	  </apply>
-	</target>
-	<target name="LauncherWindows" depends="init">
-	  <apply executable = "/bin/sh" failonerror = "true" dir="${javaBaseDir}" parallel="true">
-	    <arg value="${javaBaseDir}/buildLauncherWindows.sh" />
-	    <fileset dir="${javaBaseDir}" >
-	      <include name="WEB-INF/cgi/launcher.exe" />
-	    </fileset>
-	  </apply>
-	</target>
-	<target name="JavaBridgeProperties" depends="init">
-	  <apply executable = "/bin/sh" failonerror = "true" dir="${javaBaseDir}" parallel="true">
-	    <arg value="${javaBaseDir}/buildJavaBridgeProperties.sh" />
-	    <fileset dir="${javaBaseDir}" >
-	      <include name="php/java/bridge/global.properties.in" />
-	    </fileset>
-	  </apply>
-	  <move file="${javaBaseDir}/php/java/bridge/global.properties" tofile="${javaClassDir}/php/java/bridge/global.properties" />
-	</target>
-	<target name="JavaBridgeTemplateWar" depends="JavaBridgeJar,PhpServletJar,PhpScriptJar,JavaInc,JavaProxyPhp,BuildCgi,init">
-	  <copy file="${sampleWebDir}/settings.php" tofile="./index.php" />
-	  <war destfile="${distDir}/JavaBridgeTemplate.war" webxml="${javaBaseDir}/example-web.xml">
-	    <fileset dir=".">
-	      <include name="index.php" />
-	    </fileset>
-	    <lib dir=".">
-	      <include name="JavaBridge.jar" />
-	      <include name="php-script.jar" />
-	      <include name="php-servlet.jar" />
-	    </lib>
-	  </war>
-	  <delete file="./index.php" />
-	</target>
-	<target name="JavaBridgeWar" depends="JavaBridgeJar,PhpServletJar,PhpScriptJar,JavaInc,JavaProxyPhp,BuildCgi,init">
-	  <war destfile="${distDir}/JavaBridge.war" webxml="${javaBaseDir}/WEB-INF/web.xml">
-	    <fileset dir="${sampleWebDir}">
-	      <include name="*/.php" />
-	      <include name="*/.jsp" />
-	      <include name="locale/**/*" />
-	    </fileset>
-	    <lib dir="${libDir}">
-	      <include name="*.jar" />
-	      <include name="platform/**/*" />
-	      <exclude name="log4j.jar" />
-	      <exclude name="servlet-api.jar" />
-	    </lib>
-	    <lib dir="${libDir}/eclipse.birt.lib">
-	      <include name="*" />
-	    </lib>
-	    <lib dir=".">
-	      <include name="JavaBridge.jar" />
-	      <include name="php-script.jar" />
-	      <exclude name="php-servlet.jar" />
-	    </lib>
-	    <webinf dir="${javaBaseDir}/WEB-INF">
-	      <include name="cgi/php*" />
-	      <include name="cgi/launcher.exe" />
-	      <include name="cgi/launcher.sh" />
-	      <include name="cgi/README" />
-	    </webinf>
-	  </war>
-	</target>
+  <target name="compile" depends="init,JavaIncJava,JavaProxyPhpJava,PhpDebuggerPHPJava,LauncherUnix,LauncherWindows">
+    <javac srcdir="${javaSourceDir}" source="1.4" target="1.4" destdir="${javaClassDir}" debug="false" deprecation="false">
+      <classpath refid="compilePath" />
+    </javac>
+  </target>
+  <target name="SrcZip" depends="init,JavaBridgeProperties,JavaInc,JavaProxyPhp">
+    <zip zipfile="${distDir}/src.zip" compress="true">
+      <fileset dir="${javaSourceDir}">
+	<include name="php/java/**/*.java" />	
+    <include name="javax/script/*.java" />
+	<include name="php/java/bridge/global.properties" />
+	<include name="WEB-INF/cgi/launcher.c" />
+	<include name="WEB-INF/cgi/launcher.sh" />
+	<include name="WEB-INF/cgi/README.sh" />
+	<include name="WEB-INF/cgi/rename*" />
+      </fileset>
+      <fileset dir="${javaClassDir}">
+	<include name="php/java/bridge/global.properties" />
+      </fileset>
+      <fileset dir="${javaBaseDir}/META-INF">
+	<include name="java/*.inc" />
+	<include name="java/*.php" />
+      </fileset>
+    </zip>
+  </target>
+  <target name="JavaBridgeJar" depends="init,compile,JavaInc,JavaProxyPhp,JavaBridgeProperties">
+    <jar jarfile="${distDir}/JavaBridge.jar" manifest="${javaSourceDir}/META-INF/MANIFEST.MF" compress="true">
+      <fileset dir="${javaClassDir}">
+	<include name="php/java/bridge/*.class" />
+	<include name="php/java/bridge/global.properties" />
+	<include name="php/java/bridge/http/*.class" />
+      </fileset>
+      <metainf dir="${javaBaseDir}/META-INF">
+	<include name="java/*.inc" />
+	<include name="java/*.php" />
+      </metainf>
+    </jar>
+  </target>
+  <target name="PhpScriptJar" depends="init,compile">
+    <jar jarfile="${distDir}/php-script.jar" compress="true">
+      <fileset dir="${javaClassDir}">
+	<include name="php/java/script/*.class" />
+      </fileset>
+      <metainf dir="${javaBaseDir}/META-INF">
+	<include name="services/javax.script.ScriptEngineFactory" />
+      </metainf>
+    </jar>
+  </target>
+  <target name="ScriptApiJar" depends="init,compile">
+    <jar jarfile="${distDir}/script-api.jar" compress="true">
+      <fileset dir="${javaClassDir}">
+	<include name="javax/script/*.class" />
+      </fileset>
+    </jar>
+  </target>
+  <target name="PhpServletJar" depends="init,compile">
+    <jar jarfile="${distDir}/php-servlet.jar" compress="true">
+      <fileset dir="${javaClassDir}">
+	<include name="php/java/servlet/*.class" />
+	<include name="php/java/servlet/fastcgi/*.class" />
+	<include name="php/java/script/servlet/*.class" />
+      </fileset>
+    </jar>
+  </target>
+  <target name="JavaInc" depends="init">
+    <apply executable = "/bin/sh" failonerror = "true" dir="${javaBaseDir}" parallel="true">
+      <arg value="buildJavaInc.sh" />
+      <fileset dir="${javaBaseDir}" >
+	<include name="META-INF/java/*.inc" />
+	<exclude name="META-INF/java/Java.inc" />
+      </fileset>
+    </apply>
+    <copy file="${javaBaseDir}/META-INF/java/Java.inc" todir="${distDir}" />
+  </target>
+  <target name="JavaIncJava" depends="JavaInc,init">
+    <apply executable = "/bin/sh" failonerror = "true" dir="${javaBaseDir}" parallel="true">
+      <arg value="${javaBaseDir}/buildJavaIncJava.sh" />
+      <fileset dir="${javaBaseDir}" >
+	<include name="META-INF/java/Java.inc" />
+      </fileset>
+    </apply>
+  </target>
+  <target name="JavaProxyPhp" depends="JavaInc,init">
+    <apply executable = "/bin/sh" failonerror = "true" dir="${javaBaseDir}" parallel="true">
+      <arg value="${javaBaseDir}/buildJavaProxyPhp.sh" />
+      <fileset dir="${javaBaseDir}" >
+	<include name="META-INF/java/Java.inc" />
+      </fileset>
+    </apply>
+  </target>
+  <target name="JavaProxyPhpJava" depends="JavaProxyPhp,init">
+    <apply executable = "/bin/sh" failonerror = "true" dir="${javaBaseDir}" parallel="true">
+      <arg value="${javaBaseDir}/buildJavaProxyPhpJava.sh" />
+      <fileset dir="${javaBaseDir}" >
+	<include name="META-INF/java/JavaProxy.php" />
+      </fileset>
+    </apply>
+  </target>
+  <target name="PhpDebuggerPHPJava" depends="init">
+    <apply executable = "/bin/sh" failonerror = "true" dir="${javaBaseDir}" parallel="true">
+      <arg value="${javaBaseDir}/buildPhpDebuggerPHPJava.sh" />
+      <fileset dir="${javaBaseDir}" >
+	<include name="META-INF/java/PHPDebugger.php" />
+      </fileset>
+    </apply>
+  </target>
+  <target name="LauncherUnix" depends="init">
+    <apply executable = "/bin/sh" failonerror = "true" dir="${javaBaseDir}" parallel="true">
+      <arg value="${javaBaseDir}/buildLauncherUnix.sh" />
+      <fileset dir="${javaBaseDir}" >
+	<include name="WEB-INF/cgi/launcher.sh" />
+      </fileset>
+    </apply>
+  </target>
+  <target name="LauncherWindows" depends="init">
+    <apply executable = "/bin/sh" failonerror = "true" dir="${javaBaseDir}" parallel="true">
+      <arg value="${javaBaseDir}/buildLauncherWindows.sh" />
+      <fileset dir="${javaBaseDir}" >
+	<include name="WEB-INF/cgi/launcher.exe" />
+      </fileset>
+    </apply>
+  </target>
+  <target name="JavaBridgeProperties" depends="init">
+    <apply executable = "/bin/sh" failonerror = "true" dir="${javaBaseDir}" parallel="true">
+      <arg value="${javaBaseDir}/buildJavaBridgeProperties.sh" />
+      <fileset dir="${javaBaseDir}" >
+	<include name="php/java/bridge/global.properties.in" />
+      </fileset>
+    </apply>
+    <move file="${javaBaseDir}/php/java/bridge/global.properties" tofile="${javaClassDir}/php/java/bridge/global.properties" />
+  </target>
+  <target name="JavaBridgeTemplateWar" depends="JavaBridgeJar,PhpServletJar,PhpScriptJar,JavaInc,JavaProxyPhp,init">
+    <copy file="${sampleWebDir}/settings.php" tofile="./index.php" />
+    <war destfile="${distDir}/JavaBridgeTemplate.war" webxml="${javaBaseDir}/example-web.xml">
+      <fileset dir=".">
+	<include name="index.php" />
+      </fileset>
+      <lib dir="${distDir}">
+	<include name="JavaBridge.jar" />
+	<include name="php-script.jar" />
+	<include name="php-servlet.jar" />
+      </lib>
+    </war>
+    <delete file="./index.php" />
+  </target>
+  <target name="JavaDoc" depends="init">
+    <javadoc access="public" author="true" classpath="unsupported/servlet-api.jar" destdir="server/documentation/API" doctitle="PHP/Java Bridge" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" packagenames="php.java.servlet,javax.script,php.java.servlet.fastcgi,php.java.bridge,php.java.script,php.java.script.servlet,php.java.bridge.http" source="1.4" sourcepath="server" splitindex="true" use="true" version="true"/>
+  </target>
+  <target name="PhpDoc" depends="init">
+    <apply executable = "phpdoc" failonerror = "true" dir="${javaBaseDir}" parallel="true">
+      <arg value="-j" />
+      <arg value="-c" />
+      <fileset dir="${javaBaseDir}" >
+	<include name="PHPDocConfig.ini" />
+      </fileset>
+    </apply>
+    <delete file="documentation/API/errors.html" />
+  </target>
+  <target name="JavaBridgeWar" depends="JavaBridgeJar,PhpServletJar,ScriptApiJar,PhpScriptJar,JavaInc,JavaProxyPhp,init">
+    <war destfile="${distDir}/JavaBridge.war" webxml="${javaBaseDir}/WEB-INF/web.xml">
+      <fileset dir="${javaClassDir}">
+	<include name="*.class" />
+      </fileset>
+      <fileset dir="${sampleWebDir}">
+	<include name="*.php" />
+	<include name="*.jsp" />
+	<include name="*.rptdesign" />
+	<include name="locale/**/*" />
+      </fileset>
+      <fileset dir="${basedir}">
+	<include name="*test.php" />
+      </fileset>
+      <lib dir="${libDir}">
+	<include name="*.jar" />
+	<exclude name="log4j.jar" />
+	<exclude name="servlet-api.jar" />
+      </lib>
+      <lib dir="${libDir}/eclipse.birt.lib">
+	<include name="*" />
+      </lib>
+      <lib dir="${distDir}">
+	<include name="JavaBridge.jar" />
+	<include name="php-script.jar" />
+	<include name="php-servlet.jar" />
+	<include name="script-api.jar" />
+      </lib>
+      <lib dir="${sampleWebDir}">
+	<include name="*.jar" />
+      </lib>
+      <webinf dir="${javaBaseDir}/WEB-INF">
+	<include name="cgi/php*" />
+	<include name="cgi/README" />
+      </webinf>
+      <webinf dir="${libDir}">
+	<include name="platform/**/*" />
+      </webinf>
+    </war>
+  </target>
 </project>

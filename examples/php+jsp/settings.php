@@ -7,7 +7,6 @@ $ctx = java_context();
 $bridge = $ctx->getAttribute(  "php.java.bridge.JavaBridge",      100);
 $config = $ctx->getAttribute ( "php.java.servlet.ServletConfig",  100);
 $context = $ctx->getAttribute( "php.java.servlet.ServletContext", 100);
-$CGIServlet = java("php.java.servlet.PhpCGIServlet");
 $servlet = $ctx->getAttribute( "php.java.servlet.Servlet", 100);
 ?>
 <head>
@@ -17,9 +16,9 @@ $servlet = $ctx->getAttribute( "php.java.servlet.Servlet", 100);
 <H1>PHP/Java Bridge settings</H1>
 <p>
 The PHP/Java Bridge web application contains two servlets. The <code>PhpJavaServlet</code> handles requests from remote PHP scripts running in Apache/IIS or from the command line. 
-The second servlet <code>PhpCGIServlet</code> can handle requests from internet clients directly. 
+The second servlet <code>PhpFastCGIServlet</code> can handle requests from internet clients directly. 
 <p>
-The following shows the settings of the <code>PhpJavaServlet</code> and the <code>PhpCGIServlet</code>.
+The following shows the settings of the <code>PhpJavaServlet</code> and the <code>PhpFastCGIServlet</code>.
 </p>
 <H2>PhpJavaServlet</H2>
 <p>
@@ -56,14 +55,14 @@ echo $System->getProperties();<br>
 </table>
 </p>
 <p>
-<?php if (java_instanceof ($servlet, $CGIServlet)) { ?>
-<H2>PhpCGIServlet</H2>
+<?php if (java_instanceof ($servlet, java('php.java.servlet.fastcgi.FastCGIServlet'))) { ?>
+<H2>PhpFastCGIServlet</H2>
 <p>
-The <code>PhpCGIServlet</code> runs PHP scripts within the J2EE/Servlet engine.
+The <code>PhpFastCGIServlet</code> runs PHP scripts within the J2EE/Servlet engine.
 </p>
 <blockquote>
 <code>
-internet browser &lt;--&gt; PhpCGIServlet &lt;--&gt; php-cgi &lt;--&gt; PhpJavaServlet
+internet browser &lt;--&gt; PhpFastCGIServlet &lt;--&gt; php-cgi &lt;--&gt; PhpJavaServlet
 </code>
 </blockquote>
 <p>
@@ -94,21 +93,13 @@ It starts a PHP FastCGI server, if possible and necessary. Requests for PHP scri
 <td>Shall the server add <code>&lt?php include_once("java/Java.inc");?&gt;</code> at the top of each PHP script? Default is Off.</td>
 </tr>
 
-<tr>
-<td>thread pool size</td>
-<td><?php $val=java_values($servlet->getServletPoolSize()); echo $val?$val:"unknown"?></td>
-<td>The servlet thread pool size, taken from <code>Util.getMBeanProperty("*:type=ThreadPool,name=http*", "maxThreads")</code> or 
-      <code>Util.getMBeanProperty("*:ServiceModule=*,J2EEServer=*,name=JettyWebConnector,j2eeType=*", "maxThreads");</code> or 
-     from the system property <code>php.java.bridge.threads</code>.</td>
-</tr>
-
 </table>
 </p>
 
-<?php /* current sevlet is CGIServlet */ } ?>
+<?php /* current sevlet is PhpFastCGIServlet */ } ?>
 
 The settings were taken from the <a href="file://<?php 
-echo java_values($CGIServlet->getRealPath($context, '/WEB-INF/web.xml'))
+echo java_values(java('php.java.servlet.ServletUtil')->getRealPath($context, '/WEB-INF/web.xml'))
 ?>">WEB-INF/web.xml</a>.
 </body>
 </html>

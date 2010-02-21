@@ -14,26 +14,13 @@ ln -s `pwd` php-java-bridge-${version}
 # create archive
 tar czhf php-java-bridge_${version}.tar.gz --exclude "php-java-bridge-${version}/php-java-bridge[_-]*" --exclude CVS --exclude ".??*" php-java-bridge-${version}
 
-(phpize && ./configure --with-java=/usr/lib/jvm/java/ --with-mono && make) >build.log 2>build.err
+ant && 
+ant PhpDoc 2>/dev/null >/dev/null && 
+ant JavaDoc &&
+ant SrcZip
 
-# create RPM files if we're root
-if test `id -u` = 0 ; then 
-    (rpmbuild -tb php-java-bridge_${version}.tar.gz) >build_rpm.log 2>build_rpm.err
-else 
-    echo "Must be root to re-build the RPM files" >&2 
-fi
-
-cp server/JavaBridge.war server/src.zip .
+cp dist/*.war dist/src.zip .
 cp -r php_java_lib tests.php5 tests.jsr223 server
-
-mkdir MONO+NET.STANDALONE
-for i in ICSharpCode.SharpZipLib.dll IKVM.GNU.Classpath.dll IKVM.Runtime.dll MonoBridge.exe; do
- cp modules/$i MONO+NET.STANDALONE
-done
-cp examples/gui/gtk-button.php examples/gui/gtk-fileselector.php tests.mono+net/test.php tests.mono+net/sample_lib.cs tests.mono+net/sample_lib.dll tests.mono+net/load_assembly.php MONO+NET.STANDALONE
-mkdir MONO+NET.STANDALONE/mono
-cp server/META-INF/java/Mono.inc MONO+NET.STANDALONE/mono
-cp README.MONO+NET MONO+NET.STANDALONE
 
 cp JavaBridge.war JavaBridgeTemplate.war
 for i in 'META-INF/*' 'WEB-INF/lib/[^pJ]*.jar' 'WEB-INF/lib/poi.jar' 'WEB-INF/cgi/*' 'WEB-INF/web.xml' 'WEB-INF/platform/*' 'locale/*' 'java/*' '*.class' '*.jsp' '*.rpt*' '*.php'; do
@@ -50,7 +37,7 @@ rm -f test.php
 cp  src.zip README FAQ.html PROTOCOL.TXT INSTALL.STANDALONE INSTALL.J2EE INSTALL.J2SE NEWS documentation
 mv examples documentation
 mv server documentation
-list="MONO+NET.STANDALONE  documentation/API documentation/examples documentation/README documentation/FAQ.html documentation/PROTOCOL.TXT documentation/INSTALL.J2EE documentation/INSTALL.J2SE documentation/INSTALL.STANDALONE documentation/src.zip documentation/NEWS JavaBridge.war documentation/server/documentation documentation/server/php_java_lib documentation/server/tests.jsr223 documentation/server/tests.php5"
+list="documentation/API documentation/examples documentation/README documentation/FAQ.html documentation/PROTOCOL.TXT documentation/INSTALL.J2EE documentation/INSTALL.J2SE documentation/INSTALL.STANDALONE documentation/src.zip documentation/NEWS JavaBridge.war documentation/server/documentation documentation/server/php_java_lib documentation/server/tests.jsr223 documentation/server/tests.php5"
 find $list -type d -name "CVS" -print | xargs rm -rf
 
 

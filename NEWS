@@ -3,6 +3,51 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 6.0.0
+
+* Apache or IIS PHP scripts can now use "java_virtual()" to include
+  the output of JSP scripts, Java servlets or Java frameworks into PHP
+  pages.
+
+* MS .NET support has been removed: The "MonoBridge.exe" is not
+  available anymore.
+
+* Support for GNU "Java", GNU Autoconf/Makefile has been removed: The
+  only remaining targets "JavaBridgeTemplate.war" and "JavaBridge.war"
+  can now be build by a java "ant" build script.
+
+* FreeBSD support has been removed: The "unix domain" socket channel
+  (implemented by a JNI "libnatcJavaBridge.so") cannot be used
+  anymore, therefore the bridge will be very slow on this operating
+  system kernel. FreeBSD users must use local TCP sockets and switch
+  off the Nagle algorithm or fix their kernel or add a TCP_NDELAY
+  option to the PHP streams implementation.
+
+* Dynamic class loading has been removed: The java_require() procedure
+  is not available anymore. Please use standard JEE or servlet
+  autodeployment instead.
+
+* Support for the Tomcat "CGIServlet.java" has been removed: PHP must
+  support the FastCGI SAPI. PHP >= 5.2.0 support the FastCGI SAPI by
+  default. If you have a php-cgi binary < version 5.2.0, recompile it
+  with the --enable-fastcgi option. The FastCGI servlet has been
+  rewritten to support HTTP/1.1 chunked connections and the
+  "WebSockets" protocol used by google "Chrome".
+
+* The named pipe communication channel has been removed: On Security
+  Enhanced Linux please use HTTP/1.1 chunked connections instead.
+
+* The servlet or JEE back end must support HTTP/1.1 chunked
+  connections or the communication will fail. This has been tested on
+  the following AS: Glassfish, Jetty 7, Tomcat, Oracle/BEA WebLogic, Sun
+  AS 9.
+
+* The low-level protocol has not been changed. But due to the above
+  changes an old "Java.inc" might not work with a new JavaBridge.war
+  back end anymore. Please make sure to upgrade your "Java.inc" PHP
+  library.
+
+
 Version 5.5.5
 
 * PHP scripts running within a JEE server can now use PHP paths like:
