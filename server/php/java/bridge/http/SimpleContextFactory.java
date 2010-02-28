@@ -224,5 +224,5 @@ public class SimpleContextFactory implements IContextFactoryVisitor {
    public void parseHeader(Request req, InputStream in)
             throws IOException {
 	visited.parseHeader(req, in);
-    } 
+    }
 }

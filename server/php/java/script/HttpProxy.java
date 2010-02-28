@@ -29,6 +29,7 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.util.Map;
 
+import php.java.bridge.ILogger;
 import php.java.bridge.Util.HeaderParser;
 import php.java.bridge.Util.Process.PhpException;
 
@@ -51,8 +52,8 @@ public class HttpProxy extends CGIRunner {
      * @param headerParser The header parser
      * @param resultProxy The return value proxy
      */
-    public HttpProxy(Reader reader, Map env, OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy resultProxy) {
-	super("HttpProxy", reader, env, out, err, headerParser, resultProxy);
+    public HttpProxy(Reader reader, Map env, OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy resultProxy, ILogger logger) {
+	super("HttpProxy", reader, env, out, err, headerParser, resultProxy, logger);
     }
     
     protected void doRun() throws IOException, PhpException {

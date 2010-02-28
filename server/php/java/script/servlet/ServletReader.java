@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.Reader;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
@@ -45,6 +44,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponseWrapper;
 
 import php.java.bridge.NotImplementedException;
 import php.java.bridge.Util;
@@ -63,11 +63,13 @@ public class ServletReader extends Reader implements IScriptReader {
     final RequestDispatcher dispatcher;
     final URL url;
     final HttpServletRequest req;
+    final HttpServletResponse res;
     final String servletPath;
     
-    public ServletReader(ServletContext ctx, String resourcePath, URL url, HttpServletRequest req) throws IOException {
+    public ServletReader(ServletContext ctx, String resourcePath, URL url, HttpServletRequest req, HttpServletResponse res) throws IOException {
 	this.url = url;
 	this.req = req;
+	this.res = res;
 	
 	this.dispatcher = req.getRequestDispatcher(resourcePath);
 	if(Util.logLevel>5) Util.logDebug("creating request dispatcher for: " +resourcePath);
@@ -153,7 +155,7 @@ public class ServletReader extends Reader implements IScriptReader {
 	    }
 
 	};
-	HttpServletResponse res = new HttpServletResponse() {
+	HttpServletResponse res = new HttpServletResponseWrapper(this.res) {
 
 	    
             public void addCookie(Cookie arg0) {

@@ -271,7 +271,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
     	if(out instanceof WriterOutputStream)
     	    headerParser = new HeaderParser((WriterOutputStream)out);
 
-    	HttpProxy kont = new HttpProxy(reader, env, out,  err, headerParser, resultProxy = new ResultProxy(this)); 
+    	HttpProxy kont = new HttpProxy(reader, env, out,  err, headerParser, resultProxy = new ResultProxy(this), Util.getLogger()); 
      	phpScriptContext.setContinuation(kont);
 	return kont;
     }

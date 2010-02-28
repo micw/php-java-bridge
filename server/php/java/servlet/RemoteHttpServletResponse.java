@@ -27,11 +27,10 @@ package php.java.servlet;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Locale;
 
 import javax.servlet.ServletOutputStream;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponseWrapper;
 
 /**
  * A servlet response which writes its output to an internal buffer. The buffer can be fetched using
@@ -41,11 +40,12 @@ import javax.servlet.http.HttpServletResponse;
  * @author jostb
  *
  */
-public class RemoteHttpServletResponse implements HttpServletResponse, BufferedResponse {
+public class RemoteHttpServletResponse extends HttpServletResponseWrapper implements BufferedResponse {
     
     private ByteArrayOutputStream buffer;
 
-    public RemoteHttpServletResponse() {
+    public RemoteHttpServletResponse(HttpServletResponse res) {
+	super(res);
 	this.buffer = new ByteArrayOutputStream();
     }
     public byte[] getBufferContents() throws IOException {
@@ -59,20 +59,6 @@ public class RemoteHttpServletResponse implements HttpServletResponse, BufferedR
 
     public int getBufferSize() {
 	return buffer.size();
-    }
-
-    private String encoding;
-    public String getCharacterEncoding() {
-	return encoding;
-    }
-    private String contentType;
-    public String getContentType() {
-	return contentType;
-    }
-
-    private Locale locale;
-    public Locale getLocale() {
-	return locale;
     }
 
     private ServletOutputStream out = null;
@@ -106,97 +92,5 @@ public class RemoteHttpServletResponse implements HttpServletResponse, BufferedR
     }
 
     public void setBufferSize(int arg0) {
-    }
-
-    public void setCharacterEncoding(String arg0) {
-	encoding = arg0;
-    }
-
-    public void setContentLength(int arg0) {
-    }
-
-    public void setContentType(String arg0) {
-	contentType = arg0;
-    }
-
-    public void setLocale(Locale arg0) {
-	locale = arg0;
-    }
-
-    public void addCookie(Cookie arg0) {
-	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
-    }
-
-    public void addDateHeader(String arg0, long arg1) {
-	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
-    }
-
-    public void addHeader(String arg0, String arg1) {
-	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
-    }
-
-    public void addIntHeader(String arg0, int arg1) {
-	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
-    }
-
-    public boolean containsHeader(String arg0) {
-	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
-    }
-
-    public String encodeRedirectURL(String arg0) {
-	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
-    }
-
-    /**@param arg0 
-     * @return none
-     * @deprecated*/
-    public String encodeRedirectUrl(String arg0) {
-	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
-    }
-
-    public String encodeURL(String arg0) {
-	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
-    }
-
-    /**@param arg0 
-     * @return none
-     * @deprecated*/
-    public String encodeUrl(String arg0) {
-	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
-    }
-
-    public void sendError(int arg0) throws IOException {
-	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
-    }
-
-    public void sendError(int arg0, String arg1) throws IOException {
-	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
-    }
-
-    public void sendRedirect(String arg0) throws IOException {
-	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
-    }
-
-    public void setDateHeader(String arg0, long arg1) {
-	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
-    }
-
-    public void setHeader(String arg0, String arg1) {
-	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
-    }
-
-    public void setIntHeader(String arg0, int arg1) {
-	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
-    }
-
-    public void setStatus(int arg0) {
-	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
-    }
-
-    /**@param arg0 
-     * @param arg1 
-     * @deprecated*/
-    public void setStatus(int arg0, String arg1) {
-	throw new IllegalStateException("Use the appropriate PHP API procedure instead");
     }
 }

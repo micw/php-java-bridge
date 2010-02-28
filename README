@@ -364,112 +364,12 @@ Build and execution instructions:
   by a static loader whenever the JVM starts.
 
   The location of a "php.java.bridge.base" depends on the Java system
-  property -Dphp.java.bridge.base. It defaults to user.home. When
-  the standalone component is invoked as a sub component of Apache or
-  IIS, php.java.bridge.base is initialized with the PHP .ini
-  extension_dir setting, which is usually /usr/lib/php/modules or
-  c:\php.
+  property -Dphp.java.bridge.base. It defaults to user.home. 
   
-  Java libraries can also be loaded or re-loaded on demand by a
-  dynamic loader. They should have the following file name:
-  <name>-<version>.jar and be stored in a sub directory of the
-  php.java.bridge.base/lib/ directory or in a sub directory of the
-  /usr/share/java directory. For example:
-
-    /usr/share/java/batStore/batStore-1.0.jar.
-
   Java libraries can be created from .class files with the following
   command:
 
     jar cvf myLibrary-0.1.jar my/package/*.class 
-
-  The dynamic loader can link java libraries into PHP files at
-  run-time if the PHP files contain the command:
-
-    java_require("<library1>;<libraryN>");
-
-  Note that <library> can also be a directory containing .jar files.
-
-  For example:
-
-    <?php
-      // process order
-      java_require("j2ee.jar;myProject/myLibrary-0.1.jar");
-
-      $proc = new Java("my.package.InputProcessor", ...);
-      $proc->doSomething($_POST);
-      ...
-    ?>
-
-  Minor upgrades of dynamic-loaded libraries can be installed at
-  run-time. When the dynamic loader detects that the time stamp or the
-  version number of the .jar file has changed, it automatically loads
-  the new version.
-
-  Disadvantages of the dynamic loader:
-
-  * An attempt to load an impure java library immediately throws an
-    UnsatisfiedLinkError.
-
-  * Class loading via the dynamic loader is slower, because it
-    cannot use the global VM class cache.
-
-  * Libraries must be explicitly required by using the php
-    java_require() procedure.
-
-  Disadvantages of the static loader:
-
-  * All java libraries are loaded when the Java- or Mono VM
-    starts. For the PHP CLI component, which usually starts a new VM for
-    each PHP invocation (unless java.hosts or java.socketname is set),
-    this may cause a noticeable delay (a few 100 ms).
-
-  * The static loader can only load libraries which are stored in the
-    /usr/share/java/ext directory. Hot deployment is not possible
-    because all classes are loaded when the VM starts.
-
-  * The standard directories /usr/share/java/ext or
-    /usr/java/packages/lib/ext/ don't exist on Windows so that users must
-    check the windows registry to find the "standard" java extension dir.
-
-  It is recommended to store Java libraries which are API stable or
-  use the java native interface into java.ext.dirs. All other
-  libraries can go into a project specific directory within
-  php.java.bridge.base/lib/ or /usr/share/java/ and be loaded
-  on-demand.
-
-  Note that classes loaded from two different class loader instances
-  cannot access each other. This means that, e.g., neither
-
-    java_require("foo.jar");
-    ...
-    Class.forName("foo");  // wrong!
-
-  nor 
-
-    java_require("foo.jar"); java_require("bar.jar");
-    $foo = new Java("foo");
-    $foo->callWithBar(); // error!
-
-  nor
- 
-    java_require("foo.jar;system-library.jar");
-    $foo = new Java("foo");
-    $foo->callWithSystemLibrary(); // fail if system-library has been loaded
-
-  nor
-
-    java_require("myJdbcDriver.jar");
-    java("java.sql.DriverManager")->doSomethingWith(myJdbcDriver);
-
-  work as expected.
-
-  In the first example the class was loaded from the bootstrap class
-  loader, which cannot access foo.jar's class loader. In the second
-  example foo and bar depend on each other, so that the call fails
-  because bar cannot be accessed from foo.jar's class loader, and the
-  remaining examples try to inject new dependencies for already loaded
-  classes, the "system library" and the "DriverManager".
 
 ------------------------------------
   Sun java platform issues
@@ -499,9 +399,6 @@ Build and execution instructions:
       
     * an old or different JDK than expected by the library is used,
       for example GNU Java instead of SUN or IBM Java.
-
-    * java_require("foo.jar"); java_require("bar.jar"); was used instead of
-      java_require("foo.jar;bar.jar"); to load two interconnected libraries.
 
     * the library is simply broken or it expects certain parameters in
       its environment (applet parameter or system property or property file).

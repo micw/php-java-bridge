@@ -274,7 +274,7 @@ public class RemoteHttpServletContextFactory extends JavaBridgeFactory implement
 	    
 	}, IContext.ENGINE_SCOPE);
 		
-	ctx.setAttribute(IContext.SERVLET_RESPONSE, new RemoteHttpServletResponse(), IContext.ENGINE_SCOPE);
+	ctx.setAttribute(IContext.SERVLET_RESPONSE, new RemoteHttpServletResponse(res), IContext.ENGINE_SCOPE);
 	
 	return ctx;
     }

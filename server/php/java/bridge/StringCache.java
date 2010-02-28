@@ -83,7 +83,6 @@ final class StringCache {
 	    Entry that = (Entry) o;
 	    if(enc!=that.enc) return false;
 	    if(length!=that.length) return false;
-	    if(that.start!=0) throw new RuntimeException("bleh");
 	    for(int i=length; i-->0;) {
 	        // that.name.start is always 0
 	        if(name[i+start]!=that.name[i]) return false;

@@ -3,16 +3,19 @@
 
 <web-app>
 
-    <listener>
-        <listener-class>php.java.servlet.ContextLoaderListener</listener-class>
-    </listener>
-
-    <!-- the following 4 lines and the 4 "filter-mapping" lines below extend the servlet spec 2.2 "url-pattern" to handle PHP PATH_INFO: *.php/something?what=that. Remove the 8 lines, if you don't need this feature. -->
+    <!-- the following 8 extend the servlet spec 2.2 "url-pattern" to handle PHP PATH_INFO: *.php/something?what=that. Remove them, if you don't need this feature. -->
     <filter>
         <filter-name>PhpCGIFilter</filter-name>
         <filter-class>php.java.servlet.PhpCGIFilter</filter-class>
     </filter>
+    <filter-mapping>
+        <filter-name>PhpCGIFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
 
+    <listener>
+        <listener-class>php.java.servlet.ContextLoaderListener</listener-class>
+    </listener>
 
     <servlet>
         <servlet-name>PhpJavaServlet</servlet-name>
@@ -21,7 +24,7 @@
 
     <servlet>
         <servlet-name>PhpCGIServlet</servlet-name>
-        <servlet-class>php.java.servlet.PhpCGIServlet</servlet-class>
+        <servlet-class>php.java.servlet.fastcgi.FastCGIServlet</servlet-class>
         <!-- the following line conveniently adds require_once("java/Java.inc") to each PHP script. Remove the line, if you don't need this feature. -->
         <init-param><param-name>php_include_java</param-name><param-value>On</param-value></init-param>
         <load-on-startup>0</load-on-startup>
@@ -37,12 +40,6 @@
         <servlet-name>PhpCGIServlet</servlet-name>
         <url-pattern>*.php</url-pattern>
     </servlet-mapping>
-
-    <filter-mapping>
-        <filter-name>PhpCGIFilter</filter-name>
-        <url-pattern>/*</url-pattern>
-    </filter-mapping>
-
 
     <welcome-file-list>
         <welcome-file>index.php</welcome-file>

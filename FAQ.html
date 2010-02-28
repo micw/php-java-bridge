@@ -228,16 +228,11 @@ or
 <a href="http://php-java-bridge.sourceforge.net/pjb/webapp.php">Java webapps</a>
 documents. 
 </p>
-<p>For backward compatibility the PHP/Java Bridge also supports a <code>java_require('myApp.jar;myLib1.jar;myLibN.jar');</code> procedure, which <strong>may</strong> load java apps and their libraries dynamically.
-But this procedure should not be used in new programs.
-Please see the README from the documentation download and the PHP/Java Bridge API for details.
-</p>
 
 <H4>Where can I store my java libraries for the VM Bridge?</H4>
 <p>Either within  your web application <code>WEB-INF/lib</code> directory or in <code>php.java.bridge.base</code>/lib.</p>
 <p> When the system property <code>php.java.bridge.base</code> is not set, libraries are loaded from <code>$HOME/lib</code> where <code>$HOME</code> denotes the home directory of the person or component which has started the java VM.</p>
 <p> If libraries should be available globally, store them in <code>java.ext.dirs</code>, for example in <code>/usr/share/java/ext</code>.</p>
-<p> If a library is not yet API-stable, store it into a sub directory of the <code>lib</code> directory and use the <code>java_require()</code> procedure. For example <code>java_require("myLibs0.2/foo.jar")</code> loads <code>foo.jar</code> from <code>php.java.bridge.base/lib/myLibs0.2</code>.</p>
 
 <H4>Why can't Apache load my /foo/bar/baz.jar file?</H4>
 <p>It probably doesn't have the permission to access it. Check if
@@ -247,7 +242,7 @@ folder accessible by the apache user and then extract the required
 Security Enhanced Linux permissions from the audit log.</p>
 
 <H4>Why do I get a ClassNotFoundException?</H4>
-<p>You probably haven't required the relevant Java library. Or the
+<p>You probably haven't loaded the relevant Java library. Or the
 class doesn't exist or it is not public or it throws a java.lang.Error
 during initialization. Check which library exports the feature and add the library to your web application WEB-INF/lib directory.</p>
 
@@ -257,29 +252,6 @@ during initialization. Check which library exports the feature and add the libra
 <p>All libraries and their dependencies must be loaded by one, and only one class loader.</p>
 <p>Please read the previous sentence until you understand what it means; for example a simple file system copy(!) operation may be the cause for a NoClassDefFoundError.</p>
 <p><em>Please do not report NoClassDefFoundErrors to the mailing list or via the bug tracker. This is not a bug and we cannot help you any further!</em></p>
-
-<H4>I cannot require my JDBC driver!?!</H4>
-<p> Please re-read the <a href="#java-require">class loading section</a>. The following code loads all interconnected libraries using a single java_require() call:
-<blockquote>
-<code>
-&nbsp;&nbsp;java_require("myApplication.jar;myJdbcDriver.jar");<br>
-&nbsp;&nbsp; ...<br>
-&nbsp;&nbsp;$myApplication->callWithMyJdbcDriver();<br>
-</code>
-</blockquote>
-</p>
-<p>
-The following incorrect code fails because the application (the "JavaBridge.jar" in this case) cannot be
-accessed by the jdbc driver. This constraint is checked by the DriverManager:
-<blockquote>
-<code>
-&nbsp;&nbsp;java_require("myJdbcDriver.jar"); // WRONG!<br>
-&nbsp;&nbsp;new java("my.jdbc.Driver");<br>
-&nbsp;&nbsp;java("java.sql.DriverManager")-&gt;getDriver("myJdbcURL"); // FAILS!<br>
-</code>
-</blockquote>
-If you really need to access the driver directly from PHP code, either use the driver API directly or load "JavaBridge.jar" and "myJdbcDriver.jar" from the same class loader so that the DriverManager can link them together. Use the web application WEB-INF/lib directory or the global repository (usually <code>/usr/java/packages/lib/ext</code>).
-</p>
 
 <H4>How do I load impure Java libraries?</H4>
 <p>You can't. Java libraries must be pure Java.</p>
@@ -677,7 +649,6 @@ public interface php {<br>
 can be accessed with:<br><br>
 <code>
 &lt;?php<br>
-java_require(getcwd()); // load php.class<br>
 $bridge = new java('php$java$bridge');<br>
 echo $bridge-&gt;JavaBridgeRunner;<br>
 ?&gt;<br>
@@ -888,7 +859,6 @@ Example:
 <blockquote>
 <code>
 require_once("http://localhost:8080/JavaBridge/java/Java.inc");<br>
-java_require("myLibs/baz-taglib.jar");<br>
 $tag = new Java("foo.bar.BazTag");<br>
 <br>
 $session = java_session();<br>
@@ -938,7 +908,6 @@ Pass them as a PHP array. Example:
 <blockquote>
 <code>
 &lt;?php require_once("http://localhost:8080/JavaBridge/java/Java.inc");<br>
-$here=getcwd(); java_require("$here/varargs.jar");<br>
 $t1 = new java('Varargs$Test', 1);<br>
 $t2 = new java('Varargs$Test', 2);<br>
 echo java("Varargs")-&gt;varargs(array($t1, $t2));<br>

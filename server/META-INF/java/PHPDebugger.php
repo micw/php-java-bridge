@@ -14,16 +14,16 @@
 
 	 The library is distributed in the hope that it will be useful, but
 	 WITHOUT ANY WARRANTY; without even the implied warranty of
-	 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+	 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 	 General Public License for more details.
 
 	 You should have received a copy of the GNU General Public License
-	 along with the PHPDebugger; see the file COPYING.  If not, write to the
+	 along with the PHPDebugger; see the file COPYING. If not, write to the
 	 Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 	 02111-1307 USA.
 
 	 Linking this file statically or dynamically with other modules is
-	 making a combined work based on this library.  Thus, the terms and
+	 making a combined work based on this library. Thus, the terms and
 	 conditions of the GNU General Public License cover the whole
 	 combination.
 
@@ -33,10 +33,10 @@
 	 modules, and to copy and distribute the resulting executable under
 	 terms of your choice, provided that you also meet, for each linked
 	 independent module, the terms and conditions of the license of that
-	 module.  An independent module is a module which is not derived from
-	 or based on this library.  If you modify this library, you may extend
+	 module. An independent module is a module which is not derived from
+	 or based on this library. If you modify this library, you may extend
 	 this exception to your version of the library, but you are not
-	 obligated to do so.  If you do not wish to do so, delete this
+	 obligated to do so. If you do not wish to do so, delete this
 	 exception statement from your version. */
 
 define ("PDB_DEBUG", 0);
@@ -46,20 +46,20 @@ $pdb_version = phpversion();
 if ((version_compare("5.3.0", $pdb_version, ">")))
   trigger_error("<br><strong>PHP ${pdb_version} too old.</strong><br>\nPlease set the path to a PHP >= 5.3 executable, see php_exec in the WEB-INF/web.xml", E_USER_ERROR);
 
-  
-  /**
-   * Usage:
-   * 
-   * 1. include() this file at the beginning of your script
-   *
-   * 2. browse to your script using firefox 
-   *
-   * 3. set breakpoints using the JavaScript GUI, click on any
-   * variable or included file to visit that variable or file
-   * 
-   * 4. click on the stop button to terminate the debug session
-   *
-   */
+ 
+/**
+ * Usage:
+ * 
+ * 1. include() this file at the beginning of your script
+ *
+ * 2. browse to your script using firefox 
+ *
+ * 3. set breakpoints using the JavaScript GUI, click on any
+ * variable or included file to visit that variable or file
+ * 
+ * 4. click on the stop button to terminate the debug session
+ *
+ */
 
 
 /** Use our own json coder, if no native implementation is available */
@@ -87,8 +87,8 @@ if (!function_exists("json_encode")) {
 		  case 'r': $str.="\r"; break;
 		  case 'f': $str.="\f"; break;
 		  case '\"': $str.="\""; break;
-		  case '/':  $str.="/"; break;
-		  case '\\':  $str.='\\'; break;
+		  case '/': $str.="/"; break;
+		  case '\\': $str.='\\'; break;
 		  default: 
 			trigger_error("Cannot json decode value ${val}", E_USER_ERROR);
 		  }
@@ -117,12 +117,12 @@ if (!function_exists("json_encode")) {
 	$first = true;
 	$encoded = "{";
 	foreach ($array as $k=>$v) {
-	  
+	 
 	  if (!$first) 
 		$encoded.=","; 
 	  else 
 		$first = false;
-	  
+	 
 	  $encoded.='"';
 	  $encoded.=$k;
 	  $encoded.='":"';
@@ -136,7 +136,7 @@ if (!function_exists("json_encode")) {
 		case "\r": $encoded.='\r'; break;
 		case "\f": $encoded.='\f'; break;
 		case "\"": $encoded.='\"'; break;
-		case "/":  $encoded.='\/'; break;
+		case "/": $encoded.='\/'; break;
 		case "\\": $encoded.="\\\\"; break;
 		default: 
 		  $code = ord($val);
@@ -206,9 +206,9 @@ class pdb_Logger {
   }
 }
 
-  /**
-   * @access private
-   */
+/**
+ * @access private
+ */
 interface pdb_Queue {
 
   /** 
@@ -246,7 +246,7 @@ interface pdb_Queue {
 }
 
 /**
- * This class represents the debugger back end connection.  It
+ * This class represents the debugger back end connection. It
  * communicates with the debugger front end using a shared-memory queue.
  * It is slow, but it does not require any special library.
  * @access private
@@ -263,11 +263,11 @@ class pdb_PollingServerConnection implements pdb_Queue {
    * @access private
    */
   public function pdb_PollingServerConnection($id) {
-    $this->id = $id;
-    $this->chanTrm = "pdb_trmserver{$this->id}";
+	$this->id = $id;
+	$this->chanTrm = "pdb_trmserver{$this->id}";
 	$this->output = "<missing>";
 
-    $this->init();
+	$this->init();
   }
 
   protected function checkTrm() {
@@ -275,21 +275,21 @@ class pdb_PollingServerConnection implements pdb_Queue {
   }
 
   protected function init() {
-    session_start();
+	session_start();
 
-    $this->role = "client";
-    $this->to   = "server";
+	$this->role = "client";
+	$this->to  = "server";
 
-    $chanCtr = "pdb_ctr{$this->role}{$this->id}";
-    $chan = "pdb_{$this->role}{$this->id}";
+	$chanCtr = "pdb_ctr{$this->role}{$this->id}";
+	$chan = "pdb_{$this->role}{$this->id}";
 	unset ($_SESSION[$chan]);
 	unset ($_SESSION[$chanCtr]);
 
-    $this->role = "server";
-    $this->to   = "client";
+	$this->role = "server";
+	$this->to  = "client";
 
-    $chanCtr = "pdb_ctr{$this->role}{$this->id}";
-    $chan = "pdb_{$this->role}{$this->id}";
+	$chanCtr = "pdb_ctr{$this->role}{$this->id}";
+	$chan = "pdb_{$this->role}{$this->id}";
 	unset ($_SESSION[$chan]);
 	unset ($_SESSION[$chanCtr]);
 
@@ -304,10 +304,10 @@ class pdb_PollingServerConnection implements pdb_Queue {
   }
 
   protected function poll() {
-    $val = "";
-    $chanCtr = "pdb_ctr{$this->role}{$this->id}";
-    $chan = "pdb_{$this->role}{$this->id}";
-    session_start();
+	$val = "";
+	$chanCtr = "pdb_ctr{$this->role}{$this->id}";
+	$chan = "pdb_{$this->role}{$this->id}";
+	session_start();
 	if (!($val = $this->checkTrm())) {
 	  pdb_Logger::debug("...{$this->role}, {$this->id} poll...");
 	  if(!isset($_SESSION[$chanCtr])) { 
@@ -318,14 +318,14 @@ class pdb_PollingServerConnection implements pdb_Queue {
 		$val = json_decode($_SESSION[$chan][$_SESSION[$chanCtr]++]);
 	  }
 	}
-    session_write_close();
-    return $val;
+	session_write_close();
+	return $val;
   }
   protected function send($val) {
-    $chan = "pdb_{$this->to}{$this->id}";
-    session_start();
+	$chan = "pdb_{$this->to}{$this->id}";
+	session_start();
 	if (!$this->checkTrm()) $_SESSION[$chan][]=json_encode($val);
-    session_write_close();
+	session_write_close();
   }
 
   /**
@@ -333,7 +333,7 @@ class pdb_PollingServerConnection implements pdb_Queue {
    * @access private
    */
   public function read() {
-    $val = null;
+	$val = null;
 	$cntr = 0;
 	while(!($val=$this->poll())) {
 	  if ($cntr<=20) {
@@ -343,7 +343,7 @@ class pdb_PollingServerConnection implements pdb_Queue {
 	  else
 		usleep(self::TIMER_DURATION*5);
 	}
-    return $val === true ? null : $val;
+	return $val === true ? null : $val;
   }
   /**
    * write a new value to the write queue
@@ -373,14 +373,14 @@ class pdb_PollingServerConnection implements pdb_Queue {
    */
   public function shutdown() {
 	pdb_Logger::debug("session terminated: {$this->chanTrm}");
-    session_start();
+	session_start();
 	$_SESSION[$this->chanTrm] = $this->output;
-    session_write_close();
+	session_write_close();
   }
-}    
+}  
 
 /**
- * This class represents the debugger front end connection.  It
+ * This class represents the debugger front end connection. It
  * communicates with the debugger back end using a shared-memory queue.
  * It is slow, but it does not require any special library.
  * @access private
@@ -389,14 +389,14 @@ class pdb_PollingClientConnection extends pdb_PollingServerConnection {
   private $seq;
 
   protected function init() {
-    $this->role = "client";
-    $this->to   = "server";
+	$this->role = "client";
+	$this->to  = "server";
   }
 
   protected function poll() {
-    $chanCtr = "pdb_ctr{$this->role}{$this->id}";
-    $chan = "pdb_{$this->role}{$this->id}";
-    session_start();
+	$chanCtr = "pdb_ctr{$this->role}{$this->id}";
+	$chan = "pdb_{$this->role}{$this->id}";
+	session_start();
 	if (!($val = $this->checkTrm())) {
 	  pdb_Logger::debug("...{$this->role}, {$this->id} poll...");
 	  if (!isset($_SESSION[$chanCtr])) $_SESSION[$chanCtr] = 0; 
@@ -408,8 +408,8 @@ class pdb_PollingClientConnection extends pdb_PollingServerConnection {
 		  $val = false;
 	  }
 	}
-    session_write_close();
-    return $val;
+	session_write_close();
+	return $val;
   }
 
   /**
@@ -443,7 +443,7 @@ class pdb_Parser {
   private $output;
   private $line, $currentLine;
   private $beginStatement, $inPhp, $inDQuote;
-  
+ 
   /**
    * Create a new PHP parser
    * @param string the script name
@@ -451,12 +451,12 @@ class pdb_Parser {
    * @access private
    */
   public function pdb_Parser($scriptName, $content) {
-    $this->scriptName = $scriptName;
-    $this->content = $content;
-    $this->code = token_get_all($content);
-    $this->output = "";
-    $this->line = $this->currentLine = 0;
-    $this->beginStatement = $this->inPhp = $this->inDQuote = false;
+	$this->scriptName = $scriptName;
+	$this->content = $content;
+	$this->code = token_get_all($content);
+	$this->output = "";
+	$this->line = $this->currentLine = 0;
+	$this->beginStatement = $this->inPhp = $this->inDQuote = false;
   }
 
   private function toggleDQuote($chr) {
@@ -481,53 +481,53 @@ class pdb_Parser {
   }
 
   private function write($code) {
-    //echo "write:::".$code."\n";
-    $this->output.=$code;
+	//echo "write:::".$code."\n";
+	$this->output.=$code;
   }
 
   private function writeInclude() {
-    $name = "";
-    while(1) {
+	$name = "";
+	while(1) {
 	  if (!$this->each()) die("parse error");
-      $val = current($this->code);
-      if (is_array($val)) {
+	  $val = current($this->code);
+	  if (is_array($val)) {
 		$name.=$val[1];
-      } else {
+	  } else {
 		if ($val==';') break;
 		$name.=$val;
-      }
-    }
-    if (PDB_DEBUG == 2) 
-      $this->write("EVAL($name);");
-    else
-      $this->write("eval('?>'.pdb_startInclude($name)); pdb_endInclude();");
+	  }
+	}
+	if (PDB_DEBUG == 2) 
+	  $this->write("EVAL($name);");
+	else
+	  $this->write("eval('?>'.pdb_startInclude($name)); pdb_endInclude();");
   }
 
   private function writeCall() {
-    while(1) {
+	while(1) {
 	  if (!$this->each()) die("parse error");
-      $val = current($this->code);
-      if (is_array($val)) {
+	  $val = current($this->code);
+	  if (is_array($val)) {
 		$this->write($val[1]);
-      } else {
+	  } else {
 		$this->write($val);
 		if ($val=='{') break;
-      }
-    }
+	  }
+	}
 	$scriptName = $this->scriptName;
-    $this->write("\$__pdb_CurrentFrame=pdb_startCall(\"$scriptName\");");
+	$this->write("\$__pdb_CurrentFrame=pdb_startCall(\"$scriptName\");");
   }
 
   private function writeStep($pLevel) {
-    $token = current($this->code);
-    if ($this->inPhp && !$pLevel && !$this->inDQuote && $this->beginStatement && !$this->isWhitespace($token) && ($this->line != $this->currentLine)) {
-      $lastLine = $this->line = $this->currentLine;
-      $scriptName = $this->scriptName;
-      if (PDB_DEBUG == 2)
+	$token = current($this->code);
+	if ($this->inPhp && !$pLevel && !$this->inDQuote && $this->beginStatement && !$this->isWhitespace($token) && ($this->line != $this->currentLine)) {
+	  $lastLine = $this->line = $this->currentLine;
+	  $scriptName = $this->scriptName;
+	  if (PDB_DEBUG == 2)
 		$this->write(";STEP($lastLine);");
-      else
+	  else
 		$this->write(";pdb_step(\"$scriptName\", $lastLine, pdb_getDefinedVars(get_defined_vars(), (isset(\$this) ? \$this : NULL)));");
-    }
+	}
   }
 
   private function writeNext() {
@@ -538,62 +538,62 @@ class pdb_Parser {
   }
 
   private function nextIs($chr) {
-    $i = 0;
-    while(each($this->code)) {
-      $cur = current($this->code);
-      $i++;
-      if (is_array($cur)) {
+	$i = 0;
+	while(each($this->code)) {
+	  $cur = current($this->code);
+	  $i++;
+	  if (is_array($cur)) {
 		switch ($cur[0]) {
 		case T_COMMENT:
 		case T_DOC_COMMENT:
 		case T_WHITESPACE:
-		  break;		/* skip */
+		  break;	/* skip */
 		default: 
 		  while($i--) prev($this->code);
-		  return false;		/* not found */
+		  return false;	/* not found */
 		}
-      } else {
+	  } else {
 		while($i--) prev($this->code);
 		return $cur == $chr;	/* found */
-      }
-    }
-    while($i--) prev($this->code);
-    return false;		/* not found */
+	  }
+	}
+	while($i--) prev($this->code);
+	return false;	/* not found */
   }
 
   private function nextTokenIs($ar) {
-    $i = 0;
-    while(each($this->code)) {
-      $cur = current($this->code);
-      $i++;
-      if (is_array($cur)) {
+	$i = 0;
+	while(each($this->code)) {
+	  $cur = current($this->code);
+	  $i++;
+	  if (is_array($cur)) {
 		switch ($cur[0]) {
 		case T_COMMENT:
 		case T_DOC_COMMENT:
 		case T_WHITESPACE:
-		  break;		/* skip */
+		  break;	/* skip */
 		default: 
 		  while($i--) prev($this->code);
 		  return (in_array($cur[0], $ar));
 		}
-      } else {
+	  } else {
 		break; /* not found */
-      }
-    }
-    while($i--) prev($this->code);
-    return false;		/* not found */
+	  }
+	}
+	while($i--) prev($this->code);
+	return false;	/* not found */
   }
 
   private function isWhitespace($token) {
-    $isWhitespace = false;
-    switch($token[0]) {
+	$isWhitespace = false;
+	switch($token[0]) {
 	case T_COMMENT:
 	case T_DOC_COMMENT:
 	case T_WHITESPACE:
 	  $isWhitespace = true;
 	  break;
-    }
-    return $isWhitespace;
+	}
+	return $isWhitespace;
   }
   private function next() {
 	if (!$this->each()) trigger_error("parse error", E_USER_ERROR);
@@ -612,12 +612,12 @@ class pdb_Parser {
   private function parse ($type) {
 	pdb_Logger::debug("parse:::$type");
 
-    $this->beginStatement = true;
+	$this->beginStatement = true;
 	$pLevel = 0;
 
-    do {
-      $token = current($this->code);
-      if (!is_array($token)) {
+	do {
+	  $token = current($this->code);
+	  if (!is_array($token)) {
 		pdb_Logger::debug(":::".$token);
 		$this->write($token);
 		if ($this->inPhp && !$this->inDQuote) {
@@ -629,7 +629,7 @@ class pdb_Parser {
 		  case ')':
 			if (!--$pLevel && $type==self::EXPRESSION) return;
 			break;
-		  case '{':  
+		  case '{': 
 			$this->next();
 			$this->parseBlock(); 
 			break;
@@ -644,7 +644,7 @@ class pdb_Parser {
 			break;
 		  }
 		}
-      } else {
+	  } else {
 		pdb_Logger::debug(":::".$token[1].":(".token_name($token[0]).')');
 
 		if ($this->inDQuote) {
@@ -732,8 +732,8 @@ class pdb_Parser {
 		  break;
 
 		case T_IF:
-        case T_ELSEIF:
-        case T_FOR:
+		case T_ELSEIF:
+		case T_FOR:
 		case T_WHILE:
 		  $this->writeStep($pLevel);
 
@@ -801,8 +801,8 @@ class pdb_Parser {
 		  break;
 	
 		}
-      }
-    } while($this->each());
+	  }
+	} while($this->each());
   }
 
   /**
@@ -811,16 +811,16 @@ class pdb_Parser {
    * @access private
    */
   public function parseScript() {
-    do {
-      $this->parseBlock();
-    } while($this->each());
+	do {
+	  $this->parseBlock();
+	} while($this->each());
 
-    return $this->output;
+	return $this->output;
   }
 }
 
 /**
- * This structure represents the debugger front-end.  It is used by the
+ * This structure represents the debugger front-end. It is used by the
  * JavaScript code to communicate with the debugger back end.
  * @access private
  */
@@ -830,15 +830,15 @@ class pdb_JSDebuggerClient {
 	$scriptName = basename($script);
 	return $scriptName == "PHPDebugger.php" ? $script :"java/PHPDebugger.php";
   }
-		
+	
   private static function getCurrentRootDir() {
 	$scriptName = $_SERVER['SCRIPT_NAME'];
 	$scriptFilename = $_SERVER['SCRIPT_FILENAME'];
-  
-  
+ 
+ 
 	$scriptDirName = dirname($scriptName);
-	$scriptDir     = dirname($scriptFilename);
-  
+	$scriptDir   = dirname($scriptFilename);
+ 
 	if ((strlen($scriptDirName)>1) && ($scriptDirName[1]=='~')) {
 	  $scriptDirName = ltrim($scriptDirName, "/");
 	  $idx = strpos($scriptDirName, '/');
@@ -846,7 +846,11 @@ class pdb_JSDebuggerClient {
 	} elseif ((strlen($scriptDirName)==1) && (($scriptDirName[0]=='/') || ($scriptDirName[0]=='\\'))) {
 	  $scriptDirName = '';
 	}
-	return substr($scriptDir, 0, strlen($scriptDir)-strlen($scriptDirName));
+	if ((strlen($scriptDir) < strlen($scriptDirName)) || 
+		(substr($scriptDir, -strlen($scriptDirName)) != $scriptDirName))
+	  return null;
+	else
+	  return substr($scriptDir, 0, strlen($scriptDir)-strlen($scriptDirName));
   }
   /*
    * Return the script name
@@ -880,8 +884,12 @@ class pdb_JSDebuggerClient {
 	  $idx = strpos($scriptDirName, '/');
 	  $prefix = '/' . ($idx ? substr($scriptDirName, 0, $idx): $scriptDirName);
 	}
-    
-	$path = "${prefix}" . str_replace('\\', '/', substr($path, strlen($root)));
+  
+	if ($root)
+	  $path = "${prefix}" . str_replace('\\', '/', substr($path, strlen($root)));
+	else // could not calculate debugger path
+	  $path = dirname($_SERVER['SCRIPT_NAME']) . "/java/PHPDebugger.php";
+
 	$pathInfo = isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : "";
 	$query = isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : "";
 
@@ -891,11 +899,11 @@ class pdb_JSDebuggerClient {
   }
 
   public static function getPostData() {
-    $str = '';
-    foreach ($_POST as $key => $value) {
-        if ($str) $str .= '&';
-        $str .= $key . '=' . urlencode($value);
-    }
+	$str = '';
+	foreach ($_POST as $key => $value) {
+	  if ($str) $str .= '&';
+	  $str .= $key . '=' . urlencode($value);
+	}
 	return $str;
   }
 
@@ -908,7 +916,7 @@ class pdb_JSDebuggerClient {
 	// TODO: allow more than one debug session
 	return 1;
   }
-  
+ 
   private static function getConnection($id) {
 	return new pdb_PollingClientConnection($id);
   }
@@ -958,11 +966,11 @@ class pdb_View {
    * @param string the script name
    */
   public function pdb_View($parent, $scriptName) {
-    $this->parent = $parent;
-    $this->scriptName = $scriptName;
+	$this->parent = $parent;
+	$this->scriptName = $scriptName;
 
-    $this->bpCounter = $this->lineCounter = 1;
-    $this->code = null;
+	$this->bpCounter = $this->lineCounter = 1;
+	$this->code = null;
   }
 
   private function lineCB ($val) {
@@ -985,8 +993,8 @@ class pdb_View {
    * @return string the clickable HTML representation of the current script
    */
   public function getHtmlScriptSource() {
-    if (!$this->code) {
-      $c=
+	if (!$this->code) {
+	  $c=
 		'<span class="breakpoint" id="bp_" onmousedown="return toggleBreakpoint(this, event);">'.
 		'<span class="currentlineIndicator normal"></span>'.
 		'<span class="linenumber">line#</span>'.
@@ -996,9 +1004,9 @@ class pdb_View {
 	  $code=show_source($this->scriptName, true);
 
 	  // br => span id=pb_ ...
-      $code = ereg_replace('<br />', $c, $code);
+	  $code = ereg_replace('<br />', $c, $code);
 	  // handle incomplete last line, identical to preg: '|(?<!<br >)</span>\n</span>\n</code>$|'
-      $code = ereg_replace('"(([^>])|([^/]>)|([^ ]/>)|([^r] />)|([^b]r />)|([^<]br />))(</span>\n</span>\n</code>)"', '\1 $c \8', $code);
+	  $code = ereg_replace('"(([^>])|([^/]>)|([^ ]/>)|([^r] />)|([^b]r />)|([^<]br />))(</span>\n</span>\n</code>)"', '\1 $c \8', $code);
 
 	  $code = $this->replaceCallback($code, 'id="bp_"', array($this, "breakpointCB"));
 	  $code = $this->replaceCallback($code, 'line#', array($this, "lineCB"));
@@ -1006,7 +1014,7 @@ class pdb_View {
 	  $this->code = $code;
 	}
 
-    return $this->code;
+	return $this->code;
   }
 }
 /**
@@ -1021,8 +1029,8 @@ class pdb_VariableView extends pdb_View {
    * @param string the variable value
    */
   public function pdb_VariableView($parent, $name, $value) {
-    parent::pdb_View($parent, $name);
-    $this->value = $value;
+	parent::pdb_View($parent, $name);
+	$this->value = $value;
   }
   /**
    * {@inheritDoc}
@@ -1054,9 +1062,9 @@ class pdb_Environment extends pdb_View {
    * @param bool true if a dynamic breakpoint should be inserted at the next line, false otherwise
    */
   public function pdb_Environment($parent, $scriptName, $stepNext) {
-    parent::pdb_View($parent, $scriptName);
-    $this->stepNext = $stepNext;
-    $this->line = -1;
+	parent::pdb_View($parent, $scriptName);
+	$this->stepNext = $stepNext;
+	$this->line = -1;
   }
   /**
    * Update the execution frame with the current state
@@ -1065,8 +1073,8 @@ class pdb_Environment extends pdb_View {
    * @param mixed the current variables
    */
   public function update ($line, &$vars) {
-    $this->line = $line;
-    $this->vars = $vars;
+	$this->line = $line;
+	$this->vars = $vars;
   }
 
   public function __toString() {
@@ -1094,11 +1102,11 @@ class pdb_Breakpoint {
    * @param int the line
    */
   public function pdb_Breakpoint($breakpointName, $scriptName, $line) {
-    $this->breakpoint = $breakpointName;
-    $this->scriptName = $scriptName;
-    $this->line = $line;
+	$this->breakpoint = $breakpointName;
+	$this->scriptName = $scriptName;
+	$this->line = $line;
 
-    $this->type = 1;
+	$this->type = 1;
   }
   /**
    * @return the string representation of the breakpoint
@@ -1109,7 +1117,7 @@ class pdb_Breakpoint {
 }
 /**
  * The current debug session. Contains the current environment stack,
- * script output and all breakpoints set by the client.  An optional
+ * script output and all breakpoints set by the client. An optional
  * view is set by the switchView command.
  * @access private
  */
@@ -1133,44 +1141,44 @@ final class pdb_Session {
    * @param string the script name
    */
   public function pdb_Session($scriptName) {
-    $this->breakpoints = $this->lines = array();
-    $this->currentTopLevelFrame = $this->currentFrame = new pdb_Environment(null, $scriptName, true);
+	$this->breakpoints = $this->lines = array();
+	$this->currentTopLevelFrame = $this->currentFrame = new pdb_Environment(null, $scriptName, true);
 	$this->allFrames[] = $this->currentFrame;
 
-    $this->currentView = null;
+	$this->currentView = null;
   }
   /**
    * Return the clickable HTML script source, either from the cusom view or from the current frame
    * @return string the HTML script source
    */
   public function getCurrentViewHtmlScriptSource () {
-    return $this->currentView ? $this->currentView->getHtmlScriptSource() : $this->currentFrame->getHtmlScriptSource();
-  }      
+	return $this->currentView ? $this->currentView->getHtmlScriptSource() : $this->currentFrame->getHtmlScriptSource();
+  }   
   /**
    * Return the current frame script name
    * @return string the script name of the current frame
    */
   public function getScriptName () {
-    return $this->currentFrame->scriptName;
+	return $this->currentFrame->scriptName;
   }
   /**
    * Return the current script name, either from the view or from the current frame
    * @return string the current script name
    */
   public function getCurrentViewScriptName () {
-    return $this->currentView ? $this->currentView->scriptName : $this->getScriptName();
-  }      
+	return $this->currentView ? $this->currentView->scriptName : $this->getScriptName();
+  }   
   /**
    * Return the breakpoints for the current script
    * @return object the breakpoints
    */
   public function getBreakpoints () {
-    $bp = array();
-    foreach ($this->breakpoints as $breakpoint) {
-      if ($this->getCurrentViewScriptName() != $breakpoint->scriptName) continue;
-      array_push($bp, $breakpoint->breakpoint);
-    }
-    return $bp;
+	$bp = array();
+	foreach ($this->breakpoints as $breakpoint) {
+	  if ($this->getCurrentViewScriptName() != $breakpoint->scriptName) continue;
+	  array_push($bp, $breakpoint->breakpoint);
+	}
+	return $bp;
   }
   /**
    * toggle and write breakpoint reply
@@ -1178,15 +1186,15 @@ final class pdb_Session {
    * @param object the breakpoint
    */
   public function toggleBreakpoint($breakpoint) {
-    $id = $breakpoint."@".$this->getCurrentViewScriptName();
-    if (!isset($this->breakpoints[$id])) {
-      $this->breakpoints[$id] = new pdb_Breakpoint($breakpoint, $this->getCurrentViewScriptName(), substr($breakpoint, 3));
+	$id = $breakpoint."@".$this->getCurrentViewScriptName();
+	if (!isset($this->breakpoints[$id])) {
+	  $this->breakpoints[$id] = new pdb_Breakpoint($breakpoint, $this->getCurrentViewScriptName(), substr($breakpoint, 3));
 	  return false;
-    } else {
-      $bp = $this->breakpoints[$id];
-      unset ($this->breakpoints[$id]);
+	} else {
+	  $bp = $this->breakpoints[$id];
+	  unset ($this->breakpoints[$id]);
 	  return $bp;
-    }
+	}
   }
   /**
    * check if there's a breakpoint
@@ -1195,20 +1203,20 @@ final class pdb_Session {
    * @return true if a breakpoint exists at line, false otherwise
    */
   public function hasBreakpoint($scriptName, $line) {
-    static $first = true;
-    
-    if ($this->currentFrame->stepNext) return true;
-    
-    foreach ($this->breakpoints as $breakpoint) {
-	  pdb_Logger::debug("process breakpoint::: $scriptName, $line::  $breakpoint");
-      if($breakpoint->type==1) {
+	static $first = true;
+  
+	if ($this->currentFrame->stepNext) return true;
+  
+	foreach ($this->breakpoints as $breakpoint) {
+	  pdb_Logger::debug("process breakpoint::: $scriptName, $line:: $breakpoint");
+	  if($breakpoint->type==1) {
 		if ($first && $breakpoint->scriptName==$scriptName&&$breakpoint->line==-1) {
 		  $first = false; return true;
 		}
 		if ($breakpoint->scriptName==$scriptName&&$breakpoint->line==$line) return true;
-      }
-    }
-    return false;
+	  }
+	}
+	return false;
   }
   /**
    * parse code
@@ -1221,22 +1229,22 @@ final class pdb_Session {
 	return $parser->parseScript();
   }
   private static function doEval($__pdb_Code) {
-    return  eval ("?>".$__pdb_Code);
+	return eval ("?>".$__pdb_Code);
   }
   /**
    * parse and execute script
    * @return the script output
    */
   public function evalScript() {
-    $code = $this->parseCode($this->getScriptName(), file_get_contents($this->getScriptName()));
+	$code = $this->parseCode($this->getScriptName(), file_get_contents($this->getScriptName()));
 
-    if (PDB_DEBUG) pdb_Logger::debug("eval:::$code,".$this->getScriptName()."\n");
-    if (!PDB_DEBUG) ob_start();
-    self::doEval ($code);
-    $this->output = ob_get_contents();
-    if(!PDB_DEBUG) ob_end_clean();
+	if (PDB_DEBUG) pdb_Logger::debug("eval:::$code,".$this->getScriptName()."\n");
+	if (!PDB_DEBUG) ob_start();
+	self::doEval ($code);
+	$this->output = ob_get_contents();
+	if(!PDB_DEBUG) ob_end_clean();
 
-    return $this->output;
+	return $this->output;
   }
 }
 
@@ -1249,15 +1257,15 @@ class pdb_JSDebugger {
   /** The pdb_Session */
   public $session;
   private $id;
-  
+ 
   private $end;
   private $conn;
   private $ignoreInterrupt;
 
   const STEP_INTO = 1;
   const STEP_OVER = 2;
-  const STEP_OUT  = 3;
-  const GO        = 4;
+  const STEP_OUT = 3;
+  const GO    = 4;
 
 
   private function getConnection($id) {
@@ -1270,10 +1278,10 @@ class pdb_JSDebugger {
    */
   public function pdb_JSDebugger($id) {
 
-    $this->id = $id;
-    $this->conn = $this->getConnection($id);
+	$this->id = $id;
+	$this->conn = $this->getConnection($id);
 
-    $this->end = false;
+	$this->end = false;
 	$this->session = null;
 
 	$this->ignoreInterrupt = false;
@@ -1283,7 +1291,7 @@ class pdb_JSDebugger {
    * @return int the communication address
    */
   public function getServerID() {
-    return $this->id;
+	return $this->id;
   }
   /**
    * Read data from the front end
@@ -1297,12 +1305,12 @@ class pdb_JSDebugger {
    * @param object the data
    */
   public function write($data) {
-    $data["serverID"] = $this->getServerID();
-    if (PDB_DEBUG) pdb_Logger::debug("->".print_r($data, true));
-    return $this->conn->write($data);
+	$data["serverID"] = $this->getServerID();
+	if (PDB_DEBUG) pdb_Logger::debug("->".print_r($data, true));
+	return $this->conn->write($data);
   }
   private function ack() {
-    $this->write(array("cmd"=>$this->packet->cmd,
+	$this->write(array("cmd"=>$this->packet->cmd,
 					   "seq"=>$this->packet->seq));
   }
 
@@ -1319,15 +1327,15 @@ class pdb_JSDebugger {
   public function handleRequests() {
 	$this->ignoreInterrupt = false;
 
-    while(!$this->end) {
-      if (PDB_DEBUG) pdb_Logger::debug("handleRequests: accept");
-      
-      if (!($this->packet = $this->read())) break; // ignore __destructors after shutdown
+	while(!$this->end) {
+	  if (PDB_DEBUG) pdb_Logger::debug("handleRequests: accept");
+   
+	  if (!($this->packet = $this->read())) break; // ignore __destructors after shutdown
 
-      if (PDB_DEBUG) pdb_Logger::debug("handleRequests: done accept ".$this->packet->cmd);
+	  if (PDB_DEBUG) pdb_Logger::debug("handleRequests: done accept ".$this->packet->cmd);
 
-      switch($this->packet->cmd) {
-      case "status":
+	  switch($this->packet->cmd) {
+	  case "status":
 		$this->write(array("cmd"=>$this->packet->cmd,
 						   "seq"=>$this->packet->seq, 
 						   "line"=>$this->session->currentFrame->line, 
@@ -1342,7 +1350,7 @@ class pdb_JSDebugger {
 						   "script"=>$this->session->getCurrentViewHtmlScriptSource(),
 						   "breakpoints"=>$this->session->getBreakpoints()));
 		break;
-      case "begin":
+	  case "begin":
 		chdir (urldecode($this->packet->cwd));
 		$this->session = new pdb_Session(urldecode($this->packet->scriptName));
 		$this->write(array("cmd"=>$this->packet->cmd,
@@ -1353,27 +1361,27 @@ class pdb_JSDebugger {
 		$this->session->evalScript();
 		$this->end = true;
 		break;
-      case "stepNext":
+	  case "stepNext":
 		if ($this->end) break;
 		$this->session->currentView = null;
 		$this->ack();
 		return self::STEP_INTO;
-      case "stepOver":
+	  case "stepOver":
 		if ($this->end) break;
 		$this->session->currentView = null;
 		$this->ack();
 		return self::STEP_OVER;
-      case "go":
+	  case "go":
 		if ($this->end) break;
 		$this->session->currentView = null;
 		$this->ack();
 		return self::GO;
-      case "stepOut":
+	  case "stepOut":
 		if ($this->end) break;
 		$this->session->currentView = null;
 		$this->ack();
 		return self::STEP_OUT;
-      case "toggleBreakpoint":
+	  case "toggleBreakpoint":
 		$bp = $this->session->toggleBreakpoint($this->packet->breakpoint);
 		$this->write($bp ? 
 					 (array("cmd"=>"unsetBreakpoint", 
@@ -1385,7 +1393,7 @@ class pdb_JSDebugger {
 							"scriptName"=>$this->session->getCurrentViewScriptName(), 
 							"breakpoint"=>$this->packet->breakpoint)));
 		break;
-      case "switchView":
+	  case "switchView":
 		$name = urldecode($this->packet->scriptName);
 		if ($name[0]=='$') {
 		  $idx = substr($name, 1);
@@ -1401,12 +1409,12 @@ class pdb_JSDebugger {
 		}
 		$this->ack();
 		break;
-      case "backView":
+	  case "backView":
 		if ($this->session->currentView)
 		  $this->session->currentView = $this->session->currentView->parent;
 		$this->ack();
 		break;
-      case "output":
+	  case "output":
 		if ($this->session) {
 		  $this->write(array("cmd"=>$this->packet->cmd,
 							 "seq"=>$this->packet->seq, 
@@ -1415,7 +1423,7 @@ class pdb_JSDebugger {
 		  $this->ack();
 		}
 		break;
-      case "end":
+	  case "end":
 		$this->session->currentView = null;
 		$this->write(array("cmd"=>$this->packet->cmd,
 						   "seq"=>$this->packet->seq, 
@@ -1425,8 +1433,8 @@ class pdb_JSDebugger {
 	  default:
 		pdb_Logger::debug("illegal packet: " . print_r($this->packet, true));
 		exit(1);
-      }
-    }
+	  }
+	}
 	return self::GO;
   }
   /**
@@ -1434,7 +1442,7 @@ class pdb_JSDebugger {
    */
   public function shutdown() {
 	$this->conn->setOutput($this->getOutput());
-    $this->conn->shutdown();
+	$this->conn->shutdown();
   }
 
   /**
@@ -1442,11 +1450,11 @@ class pdb_JSDebugger {
    * @return the current frame
    */
   public function startCall($scriptName) {
-    /* check for stepOver and stepOut */
-    $stepNext = $this->session->currentFrame->stepNext == pdb_JSDebugger::STEP_INTO ? pdb_JSDebugger::STEP_INTO : false;
+	/* check for stepOver and stepOut */
+	$stepNext = $this->session->currentFrame->stepNext == pdb_JSDebugger::STEP_INTO ? pdb_JSDebugger::STEP_INTO : false;
 	
 	pdb_Logger::debug("startCall::$scriptName, $stepNext");
-    $env = new pdb_Environment($this->session->currentFrame, $scriptName, $stepNext);
+	$env = new pdb_Environment($this->session->currentFrame, $scriptName, $stepNext);
 	$this->session->allFrames[] = $env;
 	return $env;
   }
@@ -1455,14 +1463,14 @@ class pdb_JSDebugger {
    * @access private
    */
   protected function resolveIncludePath($scriptName) {
-    if (file_exists($scriptName)) return realpath($scriptName);
-    $paths = explode(PATH_SEPARATOR, get_include_path());
+	if (file_exists($scriptName)) return realpath($scriptName);
+	$paths = explode(PATH_SEPARATOR, get_include_path());
 	$name = $scriptName;
-    foreach ($paths as $path) {
-      $scriptName = realpath("${path}${name}");
-      if ($scriptName) return $scriptName;
-    }
-    trigger_error("file $scriptName not found", E_USER_ERROR);
+	foreach ($paths as $path) {
+	  $scriptName = realpath("${path}${name}");
+	  if ($scriptName) return $scriptName;
+	}
+	trigger_error("file $scriptName not found", E_USER_ERROR);
   }
   /**
    * called at run-time for each included file
@@ -1476,19 +1484,19 @@ class pdb_JSDebugger {
 
 	pdb_Logger::debug("scriptName::$scriptName, $isDebugger");
 
-    $stepNext = $this->session->currentFrame->stepNext == pdb_JSDebugger::STEP_INTO ? pdb_JSDebugger::STEP_INTO : false;
-    $this->session->currentFrame = new pdb_Environment($this->session->currentFrame, $scriptName, $stepNext);
+	$stepNext = $this->session->currentFrame->stepNext == pdb_JSDebugger::STEP_INTO ? pdb_JSDebugger::STEP_INTO : false;
+	$this->session->currentFrame = new pdb_Environment($this->session->currentFrame, $scriptName, $stepNext);
 	$this->session->allFrames[] = $this->session->currentFrame;
 
-    if ($isDebugger) // do not debug self
-      $code = "<?php ?>";
-    else
-      $code = $this->session->parseCode(realpath($scriptName), file_get_contents($scriptName));
+	if ($isDebugger) // do not debug self
+	  $code = "<?php ?>";
+	else
+	  $code = $this->session->parseCode(realpath($scriptName), file_get_contents($scriptName));
 
 	$this->session->currentTopLevelFrame = $this->session->currentFrame;
 
 	pdb_Logger::debug("include:::".$code);
-    return $code; // eval -> pdb_step/MSG_READY or pdb_endInclude/MSG_READY OR FINISH
+	return $code; // eval -> pdb_step/MSG_READY or pdb_endInclude/MSG_READY OR FINISH
   }
 
   /**
@@ -1510,14 +1518,14 @@ class pdb_JSDebugger {
 	$this->ignoreInterrupt = true;
 
 	pdb_Logger::logDebug("step: $scriptName @ $line");
-    // pull the current frame from the stack or the top-level environment
-    $this->session->currentFrame = (isset($vars['__pdb_CurrentFrame'])) ? $vars['__pdb_CurrentFrame'] : $this->session->currentTopLevelFrame;
-    unset($vars['__pdb_CurrentFrame']);
+	// pull the current frame from the stack or the top-level environment
+	$this->session->currentFrame = (isset($vars['__pdb_CurrentFrame'])) ? $vars['__pdb_CurrentFrame'] : $this->session->currentTopLevelFrame;
+	unset($vars['__pdb_CurrentFrame']);
 
-    $this->session->currentFrame->update($line, $vars);
+	$this->session->currentFrame->update($line, $vars);
 
-    if ($this->session->hasBreakpoint($scriptName, $line)) {
-      $stepNext = $this->handleRequests();
+	if ($this->session->hasBreakpoint($scriptName, $line)) {
+	  $stepNext = $this->handleRequests();
 	  pdb_Logger::logDebug("continue");
 
 	  /* clear all dynamic breakpoints */
@@ -1551,9 +1559,9 @@ class pdb_JSDebugger {
 function pdb_getDefinedVars($vars1, $vars2) {
   if(isset($vars2)) $vars1['pbd_This'] = $vars2;
 
-  unset($vars1['__pdb_Code']);	     // see pdb_Message::doEval()
+  unset($vars1['__pdb_Code']);	   // see pdb_Message::doEval()
 
-  return $vars1;   
+  return $vars1;  
 }
 
 /**
@@ -1594,20 +1602,20 @@ function pdb_step($scriptName, $line, $vars) {
 }
 
 if (PDB_DEBUG==2) {
-  $parser = new pdb_Parser("test.php", file_get_contents("test.php"));
-  echo $parser->parseScript();
-  exit (2);
+ $parser = new pdb_Parser("test.php", file_get_contents("test.php"));
+ echo $parser->parseScript();
+ exit (2);
 }
 
 /* * The JavaScript part, invoked after the debugger has been included() * */
 if (!isset($_SERVER['HTTP_XPDB_DEBUGGER'])) {
 
-    session_start();
-    header("Expires: Sat, 1 Jan 2005 00:00:00 GMT");
-    header("Last-Modified: ".gmdate( "D, d M Y H:i:s")." GMT");
-    header("Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
-    header("Pragma: no-cache");
-    header("Content-Type: text/html");
+  session_start();
+  header("Expires: Sat, 1 Jan 2005 00:00:00 GMT");
+  header("Last-Modified: ".gmdate( "D, d M Y H:i:s")." GMT");
+  header("Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
+  header("Pragma: no-cache");
+  header("Content-Type: text/html");
 ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
@@ -1617,126 +1625,126 @@ PHPDebugger version 1.0beta
 </title>
 <style type="text/css">
 #run {
-    height: 13px;
-    width: 17px;
-    display: inline-block;
-    position: relative;
-    margin: 1px 10px 1px 10px;
-   background:green url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAANCAYAAABPeYUaAAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwcXGXdF1DwAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABEUlEQVQoz62SoWvDUBDGfx0Rry6VzzUyg4lEVgYmRulfMVUKVWOqTFVWDULVbNxsTSETg8jOzm+QwcSL28ECmwhJGpqwwnrmfXfv7nvf3b2e+TQ//NMsgPRlQfoeQ14E9TBAe0uC9QyAeBoeQfK6IZjuqmC89tHeEoDFxP+TzKqQJK0JksPNlQ/QSWYBiJQVKShd+4DJa+f68hyA0f0M7fR5nKyaSiQTlHwgatB4JXkzB+q8C12RJfNwr522Vr4hy7PjtgOgbAWZKs6SRASt+gfZ8bPBcQck83B/Jl/Fre3S8AGlarx5Kuazu33o2I4atUq1LYi27cUNEj0cE925VdBxxxWOttJZXFrvFN/+jBPYL4uJYFb2zCiIAAAAAElFTkSuQmCC') no-repeat;
+  height: 13px;
+  width: 17px;
+  display: inline-block;
+  position: relative;
+  margin: 1px 10px 1px 10px;
+  background:green url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAANCAYAAABPeYUaAAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwcXGXdF1DwAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABEUlEQVQoz62SoWvDUBDGfx0Rry6VzzUyg4lEVgYmRulfMVUKVWOqTFVWDULVbNxsTSETg8jOzm+QwcSL28ECmwhJGpqwwnrmfXfv7nvf3b2e+TQ//NMsgPRlQfoeQ14E9TBAe0uC9QyAeBoeQfK6IZjuqmC89tHeEoDFxP+TzKqQJK0JksPNlQ/QSWYBiJQVKShd+4DJa+f68hyA0f0M7fR5nKyaSiQTlHwgatB4JXkzB+q8C12RJfNwr522Vr4hy7PjtgOgbAWZKs6SRASt+gfZ8bPBcQck83B/Jl/Fre3S8AGlarx5Kuazu33o2I4atUq1LYi27cUNEj0cE925VdBxxxWOttJZXFrvFN/+jBPYL4uJYFb2zCiIAAAAAElFTkSuQmCC') no-repeat;
 }
 #terminate {
-    height: 13px;
-    width: 13px;
-    display: inline-block;
-    position: relative;
-    margin: 1px 10px 1px 10px;
-    background:red url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwYrNECrm4EAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAAwUlEQVQoz52SLQ7CQBCFvyaI4nYlciWSI3CEFkVQGAyOcBU0ClCARCKRHGFlN0HsuK4D0RRasWnKJOPel/fmJ/Ev/6ZnDQD89YzcL51iNc3R2ayC5HZkslx3Qs/97gcBEEBOh7jLfNGOh5RY8egQd7HiQcoG9HULPRZRwthagvdR4chapBUPQELVsZKAL8HUkBZApVVHN5FWuhoKzlEYg06HUaYwhuBcO55RGjbxWynANWdSWc5jte3+iCwHIPnn9z7J30SR7ayFNQAAAABJRU5ErkJggg==') no-repeat;
+  height: 13px;
+  width: 13px;
+  display: inline-block;
+  position: relative;
+  margin: 1px 10px 1px 10px;
+  background:red url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwYrNECrm4EAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAAwUlEQVQoz52SLQ7CQBCFvyaI4nYlciWSI3CEFkVQGAyOcBU0ClCARCKRHGFlN0HsuK4D0RRasWnKJOPel/fmJ/Ev/6ZnDQD89YzcL51iNc3R2ayC5HZkslx3Qs/97gcBEEBOh7jLfNGOh5RY8egQd7HiQcoG9HULPRZRwthagvdR4chapBUPQELVsZKAL8HUkBZApVVHN5FWuhoKzlEYg06HUaYwhuBcO55RGjbxWynANWdSWc5jte3+iCwHIPnn9z7J30SR7ayFNQAAAABJRU5ErkJggg==') no-repeat;
 }
 #stepInto {
-    height: 13px;
-    width: 17px;
-    display: inline-block;
-    position: relative;
-    margin: 1px 10px 1px 10px;
-    background: yellow url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAANCAYAAABPeYUaAAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwYtD6f61SMAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAA6ElEQVQoz2N8//r9fwYKAQuMcWy6JlYFmq4lDIIqyYQNOTZdk8Gr8jpWBdvaNRkUPz9nkDSswWkII8w72Fyi6JjMoGmRw7Ct3ZDBKvM6Ye9gU3RsuiaDpkkywTBhIqjizwfiAxbdBQhDfqCIYXMxVkN+fGdgCCqaCzXkPYNXJoS9ri+ZeO84FV1nWNYUDfEKFC9rimZwKrpOWph41d1nWNaWzcDw5zvDsrZsBq+6+/ijOHn+MQbBzxBF73kVGeYmWiHSSZMiigHY1LIwMDAw/Di/lOHaC4giQYljDAxIhqC7AJtaRmrkHQBYX2Q4HZvQSwAAAABJRU5ErkJggg==') no-repeat;
+  height: 13px;
+  width: 17px;
+  display: inline-block;
+  position: relative;
+  margin: 1px 10px 1px 10px;
+  background: yellow url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAANCAYAAABPeYUaAAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwYtD6f61SMAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAA6ElEQVQoz2N8//r9fwYKAQuMcWy6JlYFmq4lDIIqyYQNOTZdk8Gr8jpWBdvaNRkUPz9nkDSswWkII8w72Fyi6JjMoGmRw7Ct3ZDBKvM6Ye9gU3RsuiaDpkkywTBhIqjizwfiAxbdBQhDfqCIYXMxVkN+fGdgCCqaCzXkPYNXJoS9ri+ZeO84FV1nWNYUDfEKFC9rimZwKrpOWph41d1nWNaWzcDw5zvDsrZsBq+6+/ijOHn+MQbBzxBF73kVGeYmWiHSSZMiigHY1LIwMDAw/Di/lOHaC4giQYljDAxIhqC7AJtaRmrkHQBYX2Q4HZvQSwAAAABJRU5ErkJggg==') no-repeat;
 }
 #stepOver {
-    height: 13px;
-    width: 17px;
-    display: inline-block;
-    position: relative;
-    margin: 1px 10px 1px 10px;
-    background: yellow url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAANCAYAAABPeYUaAAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwYsOAZcQW0AAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABSklEQVQoz62TP0jDQBTGv5QMdSgYcEjGgEvHdsyYsW6Kg27SKeJki1PpEAShqJPYKTilHUS3dOyYbu1mhpZmERqIcIEOyRA4h9qaeCcK+uA43uPj9/7cO4GEhOKPJmYdMrMQTJ5A3nxGKO2okCsHkHbr30PIzII/slA9vMO2XGWEUTDG+PEMyXIBpdJiIWuAbjiIXkcYXJUZiHZ0A91wMOzuoVhS8hWRkFDHlCmN55RMbeqYMiUhYY5jypRMbUrjOaMpbGhpBLffgGZ43OFphge33wDSiD+TJAaQJqubY243016a5GKa4UFYP/HAVFFr+1zI8LaM/dNLoKh8BpMFnu9b0M8zkJ9sYKo4vrgGxC0gjdHrNDdJC79dqFrbR6/TZAAA+JXUH1xIy5WIlFRYJ1quoq9ti7ysycTGS/CxqbILZCC8uQn/8XfeAUbdtbmYIYl8AAAAAElFTkSuQmCC') no-repeat;
+  height: 13px;
+  width: 17px;
+  display: inline-block;
+  position: relative;
+  margin: 1px 10px 1px 10px;
+  background: yellow url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAANCAYAAABPeYUaAAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwYsOAZcQW0AAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABSklEQVQoz62TP0jDQBTGv5QMdSgYcEjGgEvHdsyYsW6Kg27SKeJki1PpEAShqJPYKTilHUS3dOyYbu1mhpZmERqIcIEOyRA4h9qaeCcK+uA43uPj9/7cO4GEhOKPJmYdMrMQTJ5A3nxGKO2okCsHkHbr30PIzII/slA9vMO2XGWEUTDG+PEMyXIBpdJiIWuAbjiIXkcYXJUZiHZ0A91wMOzuoVhS8hWRkFDHlCmN55RMbeqYMiUhYY5jypRMbUrjOaMpbGhpBLffgGZ43OFphge33wDSiD+TJAaQJqubY243016a5GKa4UFYP/HAVFFr+1zI8LaM/dNLoKh8BpMFnu9b0M8zkJ9sYKo4vrgGxC0gjdHrNDdJC79dqFrbR6/TZAAA+JXUH1xIy5WIlFRYJ1quoq9ti7ysycTGS/CxqbILZCC8uQn/8XfeAUbdtbmYIYl8AAAAAElFTkSuQmCC') no-repeat;
 }
 #stepOut {
-    height: 13px;
-    width: 17px;
-    display: inline-block;
-    position: relative;
-    margin: 1px 10px 1px 10px;
-    background: yellow url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAANCAYAAABPeYUaAAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwYsF62NfDQAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABAUlEQVQoz62Tv2vCQBTHP5GsDoJDV8f8C44ZM+Y/EOnSgoOCQ4YOxVE6BH9MoZMdM3TI6CLcJNzmLULGCg4p6HBgoB0SFH9gKvYtj7v3fR/ufe/OSNbJD3dG6RaxGFuIsXUfhB04j0OEfwwyi/q+ZI94NjlsVG2cpyGRb1FvKQCMa54kywAZ9XE9eV78FoSjZ+yWun4S+dnH9aao+QAVBQC43hS2ktDvYLfVXz3RqCjYN5wCiiEpkOos5+vw7RhQbGyqIU2yDNhddfs70TlIFwxsAjTfBZVNnN1IuUbQqJ+i9nFJawJoOWGxykSVBwE5xPFiPl5rOC/xAXlBa/zH3/kFlslu4rTXaTUAAAAASUVORK5CYII=') no-repeat;
+  height: 13px;
+  width: 17px;
+  display: inline-block;
+  position: relative;
+  margin: 1px 10px 1px 10px;
+  background: yellow url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAANCAYAAABPeYUaAAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwYsF62NfDQAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABAUlEQVQoz62Tv2vCQBTHP5GsDoJDV8f8C44ZM+Y/EOnSgoOCQ4YOxVE6BH9MoZMdM3TI6CLcJNzmLULGCg4p6HBgoB0SFH9gKvYtj7v3fR/ufe/OSNbJD3dG6RaxGFuIsXUfhB04j0OEfwwyi/q+ZI94NjlsVG2cpyGRb1FvKQCMa54kywAZ9XE9eV78FoSjZ+yWun4S+dnH9aao+QAVBQC43hS2ktDvYLfVXz3RqCjYN5wCiiEpkOos5+vw7RhQbGyqIU2yDNhddfs70TlIFwxsAjTfBZVNnN1IuUbQqJ+i9nFJawJoOWGxykSVBwE5xPFiPl5rOC/xAXlBa/zH3/kFlslu4rTXaTUAAAAASUVORK5CYII=') no-repeat;
 }
 #output {
-    height: 13px;
-    width: 13px;
-    display: inline-block;
-    position: relative;
-    margin: 1px 10px 1px 10px;
-    visibility: visible;
-    background: blue url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLCQYlB4EnoCoAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABCklEQVQoz42Rv0oDQRCHv4MJbCCFgoUHvkBKXyGPEDufwUokhdFGokWwt7IRbISkTHmvcIUPcUKK3eJgp1g4i92Ld4gxWw2z329+8ye7vF81pcs59J0fVUjpcsZaHCwq3QQBD8Ddcv6vYDF7BDxCACMGgPFov8iIgQACChKTVw9rvCrqPK52+FopPjodCBA0Og1H0el5Nv1VXcNPPDQGHAhBMcnpZrlOJFi1aK1orXhVNm/zxGnbXnRaXE//nEchcm17ZpB+ggImIaaDx9gMaBfhQeD95bVfWiLQi4W48vzkmM1ndfBx89OczG5t001ePBVUX1UPWt1OesLMbm2zA4Puhk3n7LucxQLfZ4Norb3ftQMAAAAASUVORK5CYII=') no-repeat;
+  height: 13px;
+  width: 13px;
+  display: inline-block;
+  position: relative;
+  margin: 1px 10px 1px 10px;
+  visibility: visible;
+  background: blue url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLCQYlB4EnoCoAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABCklEQVQoz42Rv0oDQRCHv4MJbCCFgoUHvkBKXyGPEDufwUokhdFGokWwt7IRbISkTHmvcIUPcUKK3eJgp1g4i92Ld4gxWw2z329+8ye7vF81pcs59J0fVUjpcsZaHCwq3QQBD8Ddcv6vYDF7BDxCACMGgPFov8iIgQACChKTVw9rvCrqPK52+FopPjodCBA0Og1H0el5Nv1VXcNPPDQGHAhBMcnpZrlOJFi1aK1orXhVNm/zxGnbXnRaXE//nEchcm17ZpB+ggImIaaDx9gMaBfhQeD95bVfWiLQi4W48vzkmM1ndfBx89OczG5t001ePBVUX1UPWt1OesLMbm2zA4Puhk3n7LucxQLfZ4Norb3ftQMAAAAASUVORK5CYII=') no-repeat;
 }
 #backView {
-    height: 13px;
-    width: 16px;
-    display: inline-block;
-    position: relative;
-    margin: 1px 10px 1px 10px;
-    visibility: visible;
-    background: yellow url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAANCAYAAACgu+4kAAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwc3GnvIoSQAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABH0lEQVQoz5WToU4DQRCGvzZLspUn+wpIJLLyJDiQEBLMJZDAA1QgTlRUU1tXCY+A5BGoPHFiKkhukm4yiD3CNr3S9k8mu/l3Z+af2dme1GJ04HM6hBPP2f2S/9DvIj/KjNG4gUbZh36Xc15GURr2B3Abzi8Z+cQABTyqkdu8BTjP+WMV91KLSS22eMDMGjOrzNZfZuvKzCSxJlnN3p4wqcVclD3kYlJBWEJQCACrJLNvVwXnwWVoSErQbwUEwgq0+ZMa2JYfBuAV1aSJo7EwvzsFmpj515y2/WjNKbim5SN66Ry8P2dcTRexDGBWXDNwHSoc5GPZfoW8FGZFxs30FYCBi9xRc3BZCrPiNoZ2/rg5SIPMi+GO0030dv2FQ/EDM7CYPt7DsBMAAAAASUVORK5CYII=') no-repeat;
+  height: 13px;
+  width: 16px;
+  display: inline-block;
+  position: relative;
+  margin: 1px 10px 1px 10px;
+  visibility: visible;
+  background: yellow url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAANCAYAAACgu+4kAAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwc3GnvIoSQAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABH0lEQVQoz5WToU4DQRCGvzZLspUn+wpIJLLyJDiQEBLMJZDAA1QgTlRUU1tXCY+A5BGoPHFiKkhukm4yiD3CNr3S9k8mu/l3Z+af2dme1GJ04HM6hBPP2f2S/9DvIj/KjNG4gUbZh36Xc15GURr2B3Abzi8Z+cQABTyqkdu8BTjP+WMV91KLSS22eMDMGjOrzNZfZuvKzCSxJlnN3p4wqcVclD3kYlJBWEJQCACrJLNvVwXnwWVoSErQbwUEwgq0+ZMa2JYfBuAV1aSJo7EwvzsFmpj515y2/WjNKbim5SN66Ry8P2dcTRexDGBWXDNwHSoc5GPZfoW8FGZFxs30FYCBi9xRc3BZCrPiNoZ2/rg5SIPMi+GO0030dv2FQ/EDM7CYPt7DsBMAAAAASUVORK5CYII=') no-repeat;
 }
  
 .normal {
-    background: transparent;
+  background: transparent;
 }
 .selected {
-    background: yellow url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwYQB8PJFa8AAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABNElEQVQoz4WPsUsCYRjGf8YNNzTo7vJBDgUNHTSc4KBbro6ORy5KU5tN0VhjS+FfEDXaEFxbY9cQuQSfQ3BCwyck3At9YIOieZo98MAL7/vjed6MMWYMcH6aQxUqePsBaqvKOm0A6PcQpaDoh4QPdcL7E8xQr4EsmC9BLKg8NA8hm72kc+Xx9Hi2GhIryMgAIHZibw9aDZDRBZ3rIs9RZ7neTDK3C1RKUC336L0cc3tTR/fDFGTByLLdTagegMp36d7VAHAWQuSPzy0Mh5BM987vxSoojiGKQBUCgkYzBQGSzOdkBNEr4Pj45QBvtza7XkhCILGg+6A1FEttPL+F67oL6RPIcZFveJse72wHBEdtctncyhcz5tOM40GM1iHxR4jnN1F5L1U8DRkzFhGwTGo4/KsfXjWDCQ6TmRMAAAAASUVORK5CYII=') no-repeat;
+  background: yellow url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwYQB8PJFa8AAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAABNElEQVQoz4WPsUsCYRjGf8YNNzTo7vJBDgUNHTSc4KBbro6ORy5KU5tN0VhjS+FfEDXaEFxbY9cQuQSfQ3BCwyck3At9YIOieZo98MAL7/vjed6MMWYMcH6aQxUqePsBaqvKOm0A6PcQpaDoh4QPdcL7E8xQr4EsmC9BLKg8NA8hm72kc+Xx9Hi2GhIryMgAIHZibw9aDZDRBZ3rIs9RZ7neTDK3C1RKUC336L0cc3tTR/fDFGTByLLdTagegMp36d7VAHAWQuSPzy0Mh5BM987vxSoojiGKQBUCgkYzBQGSzOdkBNEr4Pj45QBvtza7XkhCILGg+6A1FEttPL+F67oL6RPIcZFveJse72wHBEdtctncyhcz5tOM40GM1iHxR4jnN1F5L1U8DRkzFhGwTGo4/KsfXjWDCQ6TmRMAAAAASUVORK5CYII=') no-repeat;
 }
 .breakpointSet {
-    background: red url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwYOGJqAJ4UAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAA+0lEQVQoz5XSMUvDUBSG4bcXhyM4pFsudBE6GEfB5UKGZLOjq5uCIE7iPyjdxEXQoZC/4OgipIOQbqZDMW6OcbsZBO8Q0MEWkWJJ3vl7lsPpWGu/WOQqy8s44X2S8ukcmyL4Uczu6QnidZczOktUPqY8HB/Bh2OlLWEwTtAHg19kXwvuQwM1/7cBh08Z3Z0ABZCena8HAPViB6hymlHNcppUzXLKaYaq5gVtquYFitq1QtQO5fWDVsbrBygdGqTnNwLS89GhQSFCfJc0QvHNLYj8nFyHBjMcrQVmOEJH8d+PALD5M/nVNW+TFJwDEbajmODiEr2/t/pGbfoGcP1aToLr9OAAAAAASUVORK5CYII=') no-repeat;
+  background: red url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAANCAYAAABy6+R8AAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9kLBwYOGJqAJ4UAAAAZdEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIEdJTVBXgQ4XAAAA+0lEQVQoz5XSMUvDUBSG4bcXhyM4pFsudBE6GEfB5UKGZLOjq5uCIE7iPyjdxEXQoZC/4OgipIOQbqZDMW6OcbsZBO8Q0MEWkWJJ3vl7lsPpWGu/WOQqy8s44X2S8ukcmyL4Uczu6QnidZczOktUPqY8HB/Bh2OlLWEwTtAHg19kXwvuQwM1/7cBh08Z3Z0ABZCena8HAPViB6hymlHNcppUzXLKaYaq5gVtquYFitq1QtQO5fWDVsbrBygdGqTnNwLS89GhQSFCfJc0QvHNLYj8nFyHBjMcrQVmOEJH8d+PALD5M/nVNW+TFJwDEbajmODiEr2/t/pGbfoGcP1aToLr9OAAAAAASUVORK5CYII=') no-repeat;
 }
 
 #navigationBar {
-    display: block;
-    position: fixed;
-    top: 0px;
-    left: 0px;
-    height: 20px;
-    width: 100%;
-    z-index: 100;
-    background: #efefef;
+  display: block;
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  height: 20px;
+  width: 100%;
+  z-index: 100;
+  background: #efefef;
 }
 #code {
-    display: block;
-    position: absolute;
-    left: 92px;
-    top: 22px;
-    z-index: 50;
+  display: block;
+  position: absolute;
+  left: 92px;
+  top: 22px;
+  z-index: 50;
 }
 
 .breakpoint {
-    display: inline;
-    position: absolute;
-    left: -92px;
-    width: 90px;
-    height: 13px;
-    background: #efefef;
-    overflow: hidden;
+  display: inline;
+  position: absolute;
+  left: -92px;
+  width: 90px;
+  height: 13px;
+  background: #efefef;
+  overflow: hidden;
 }
 
 .linenumber {
-    display: inline-block;
-    position: relative;
-    width: 59px;
-    height: 13px;
-    text-align: right;
-    margin-right: 5px;
-    float: right;
-    color: black;
-    
+  display: inline-block;
+  position: relative;
+  width: 59px;
+  height: 13px;
+  text-align: right;
+  margin-right: 5px;
+  float: right;
+  color: black;
+  
 }
 .currentlineIndicator {
-    display: inline-block;
-    position: relative;
-    width: 13px;
-    height: 13px;
-    float: left;
+  display: inline-block;
+  position: relative;
+  width: 13px;
+  height: 13px;
+  float: left;
 }
 .breakpointIndicator {
-    display: inline-block;
-    position: relative;
-    width: 13px;
-    height: 13px;
-    float: left;
+  display: inline-block;
+  position: relative;
+  width: 13px;
+  height: 13px;
+  float: left;
 }
 </style>
 
@@ -1752,167 +1760,167 @@ var date = "<?php echo gmdate( 'D, d M Y H:i:s').' GMT'; ?>";
 var seq = 1;
 
 function getSeq() {
-  return seq++;
+ return seq++;
 }
 function getServerID() {
-    return serverID;
+  return serverID;
 }
 function createRequestObject() {
-    var req;
-    var browser = navigator.appName;
-    if (browser == "Microsoft Internet Explorer") {
+  var req;
+  var browser = navigator.appName;
+  if (browser == "Microsoft Internet Explorer") {
 	req = new ActiveXObject("Microsoft.XMLHTTP");
-    } else {
+  } else {
 	req = new XMLHttpRequest();
-    }
-    return req;
+  }
+  return req;
 }
 function doCmd(text) {
-    switch(text.cmd) {
-    case 'stepNext': 
-    case 'stepOver': 
-    case 'go':
-    case 'switchView':
-    case 'backView':
-    case 'begin':
-    case 'stepOut':		getStatusCB(text); break;
+  switch(text.cmd) {
+  case 'stepNext': 
+  case 'stepOver': 
+  case 'go':
+  case 'switchView':
+  case 'backView':
+  case 'begin':
+  case 'stepOut':	getStatusCB(text); break;
 
-    case 'output':		showOutputCB(text); break;
+  case 'output':	showOutputCB(text); break;
 
-    case 'status':		showStatusCB(text); break;
+  case 'status':	showStatusCB(text); break;
 
-    case 'extendedStatus': showExtendedStatusCB(text); break;
+  case 'extendedStatus': showExtendedStatusCB(text); break;
 
-    case 'setBreakpoint':	setBreakpointCB(text); break;
+  case 'setBreakpoint':	setBreakpointCB(text); break;
 
-    case 'unsetBreakpoint':	unsetBreakpointCB(text); break;
+  case 'unsetBreakpoint':	unsetBreakpointCB(text); break;
 
-    case 'term':
-    case 'end':			endCB(text); break;
+  case 'term':
+  case 'end':		endCB(text); break;
 
-    default: alert("illegal cmd: " + text.cmd); break;
-    }
+  default: alert("illegal cmd: " + text.cmd); break;
+  }
 }
 function hasClassName(element, className) {
-    var elementClassName = element.className;
-    if (elementClassName.length == 0) return false;
-    if (elementClassName == className ||
-        elementClassName.match(new RegExp("(^|\\s)" + className + "(\\s|$)")))
-      return true;
-    return false;
+  var elementClassName = element.className;
+  if (elementClassName.length == 0) return false;
+  if (elementClassName == className ||
+    elementClassName.match(new RegExp("(^|\\s)" + className + "(\\s|$)")))
+   return true;
+  return false;
 }
 if (document.getElementsByClassName == undefined) {
-  document.getElementsByClassName = function(className) {
+ document.getElementsByClassName = function(className) {
 	var children = document.body.getElementsByTagName('*');
 	var elements = [], child;
 	for (var i = 0, length = children.length; i < length; i++) {
-	  child = children[i];
-	  
-	  if (hasClassName(child, className)) {
-		elements.push(child);
-	  }
+	 child = children[i];
+	 
+	 if (hasClassName(child, className)) {
+	elements.push(child);
+	 }
 	}
 	return elements;
-  }
+ }
 }
 function sendCmd(cmd) {
-    var url = debuggerURL;
-    data = cmd+"&serverID="+getServerID()+"&seq="+getSeq();
-    http.open("POST", url, true);
-    http.setRequestHeader("Cache-Control", "no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
-    http.setRequestHeader("Last-Modified", date);
-    http.setRequestHeader("Pragma", "no-cache");
-    http.setRequestHeader("Expires", "Sat, 1 Jan 2005 00:00:00 GMT");
-    http.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-    http.setRequestHeader("Content-Length", data.length);
-    http.setRequestHeader("XPDB-DEBUGGER", 0);
-    http.onreadystatechange = function() {
+  var url = debuggerURL;
+  data = cmd+"&serverID="+getServerID()+"&seq="+getSeq();
+  http.open("POST", url, true);
+  http.setRequestHeader("Cache-Control", "no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
+  http.setRequestHeader("Last-Modified", date);
+  http.setRequestHeader("Pragma", "no-cache");
+  http.setRequestHeader("Expires", "Sat, 1 Jan 2005 00:00:00 GMT");
+  http.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+  http.setRequestHeader("Content-Length", data.length);
+  http.setRequestHeader("XPDB-DEBUGGER", 0);
+  http.onreadystatechange = function() {
 	 if(http.readyState == 4 && http.status == 200) {
-	    doCmd(eval(http.responseText));
+	  doCmd(eval(http.responseText));
 	 }
-    }
-    http.send(data);
+  }
+  http.send(data);
 }
 function startServer() { 
-    var url = debuggerURL;
+  var url = debuggerURL;
 	data = "<?php echo pdb_JSDebuggerClient::getPostData(); ?>";
 	method = "<?php echo $_SERVER['REQUEST_METHOD']; ?>";
-    httpCtrl.open(method, url, true);
-    httpCtrl.setRequestHeader("Cache-Control", "no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
-    httpCtrl.setRequestHeader("Last-Modified", date);
-    httpCtrl.setRequestHeader("Pragma", "no-cache");
-    httpCtrl.setRequestHeader("Expires", "Sat, 1 Jan 2005 00:00:00 GMT");
-    httpCtrl.setRequestHeader("Content-Length", data.length);
-    httpCtrl.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-    httpCtrl.setRequestHeader("XPDB-DEBUGGER", getServerID());
-    httpCtrl.onreadystatechange = function() {
+  httpCtrl.open(method, url, true);
+  httpCtrl.setRequestHeader("Cache-Control", "no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
+  httpCtrl.setRequestHeader("Last-Modified", date);
+  httpCtrl.setRequestHeader("Pragma", "no-cache");
+  httpCtrl.setRequestHeader("Expires", "Sat, 1 Jan 2005 00:00:00 GMT");
+  httpCtrl.setRequestHeader("Content-Length", data.length);
+  httpCtrl.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+  httpCtrl.setRequestHeader("XPDB-DEBUGGER", getServerID());
+  httpCtrl.onreadystatechange = function() {
 	 if(httpCtrl.readyState == 4 && httpCtrl.status == 200) {
-	   //alert("debugger exited. Debugger debug output: " +httpCtrl.responseText);
+	  //alert("debugger exited. Debugger debug output: " +httpCtrl.responseText);
 	 }
-    }
-    httpCtrl.send(data);
+  }
+  httpCtrl.send(data);
 }
 function stepNext() {
-    sendCmd("cmd=stepNext");
+  sendCmd("cmd=stepNext");
 }
 function stepOver() {
-    sendCmd("cmd=stepOver");
+  sendCmd("cmd=stepOver");
 }
 function stepOut() {
-    sendCmd("cmd=stepOut");
+  sendCmd("cmd=stepOut");
 }
 function getStatusCB(cmd) {
 	sendCmd("cmd=status");
 }
 
 function loaded() {
-    startServer();
-    sendCmd("cmd=begin&scriptName="+scriptName+"&cwd="+cwd);
+  startServer();
+  sendCmd("cmd=begin&scriptName="+scriptName+"&cwd="+cwd);
 }
 function toggleBreakpoint(el, event) {
-    sendCmd("cmd=toggleBreakpoint&breakpoint="+el.id);
-    return false;
+  sendCmd("cmd=toggleBreakpoint&breakpoint="+el.id);
+  return false;
 }
 function setBreakpointCB(cmd) {
-    document.getElementById(cmd.breakpoint).lastChild.className="breakpointIndicator breakpointSet";
+  document.getElementById(cmd.breakpoint).lastChild.className="breakpointIndicator breakpointSet";
 }
 function unsetBreakpointCB(cmd) {
-    document.getElementById(cmd.breakpoint).lastChild.className="breakpointIndicator normal";
+  document.getElementById(cmd.breakpoint).lastChild.className="breakpointIndicator normal";
 }
 function showOutputCB(cmd) {
-    currentScriptName = "";
-    document.getElementById("code").innerHTML = cmd.output;
+  currentScriptName = "";
+  document.getElementById("code").innerHTML = cmd.output;
 }
 
 function doShowStatusCB(cmd) {
-    lines = document.getElementsByClassName("currentlineIndicator");
-     if (lines.length == 0) return; // no lines to mark
+  lines = document.getElementsByClassName("currentlineIndicator");
+   if (lines.length == 0) return; // no lines to mark
 
-    for (i=0; i<lines.length; i++) {
+  for (i=0; i<lines.length; i++) {
 	line = lines[i];
 	line.className = "currentlineIndicator normal";
-    }
-    for (i=0; i<cmd.breakpoints.length; i++) {
+  }
+  for (i=0; i<cmd.breakpoints.length; i++) {
 	breakpoint = cmd.breakpoints[i];
 	document.getElementById(breakpoint).lastChild.className="breakpointIndicator breakpointSet";
-    }
-    currentLine = document.getElementById("bp_"+(cmd.line)).firstChild;
+  }
+  currentLine = document.getElementById("bp_"+(cmd.line)).firstChild;
 
 	currentLine.className="currentlineIndicator selected";
 
 	codeDiv = document.getElementById("code");
 	codeLine = currentLine.parentNode;
-    scrollBarHeight = 30;
+  scrollBarHeight = 30;
 	if ((codeLine.offsetTop - document.body.scrollTop + currentLine.clientHeight + scrollBarHeight + codeDiv.clientTop > document.body.clientHeight) ||
-		(codeLine.offsetTop - document.body.scrollTop + codeDiv.clientTop  <= 0)) {
-	  currentLine.scrollIntoView(false);
+	(codeLine.offsetTop - document.body.scrollTop + codeDiv.clientTop <= 0)) {
+	 currentLine.scrollIntoView(false);
 	}
 }
 function showStatusCB(cmd) {
 	if (currentScriptName == cmd.scriptName)
-	  doShowStatusCB(cmd);
+	 doShowStatusCB(cmd);
 	else
-	  sendCmd("cmd=extendedStatus"); // another round-trip 
+	 sendCmd("cmd=extendedStatus"); // another round-trip 
 }
 function showExtendedStatusCB(cmd) {
 	currentScriptName = cmd.scriptName;
@@ -1923,57 +1931,57 @@ function showExtendedStatusCB(cmd) {
 }
 
 function stepInto(el, event) {
-    sendCmd("cmd=stepNext");
-    return false;
+  sendCmd("cmd=stepNext");
+  return false;
 }
 function stepOver(el, event) {
-    sendCmd("cmd=stepOver");
-    return false;
+  sendCmd("cmd=stepOver");
+  return false;
 }
 function stepOut(el, event) {
-    sendCmd("cmd=stepOut");
-    return false;
+  sendCmd("cmd=stepOut");
+  return false;
 }
 function end(el, event) {
-    sendCmd("cmd=end");
-    return false;
+  sendCmd("cmd=end");
+  return false;
 }
 function endCB(cmd) {
-    document.body.innerHTML = cmd.output;
+  document.body.innerHTML = cmd.output;
 }
 function go(el, event) {
-    sendCmd("cmd=go");
-    return false;
+  sendCmd("cmd=go");
+  return false;
 }
 function switchView(data) {
-    sendCmd("cmd=switchView&scriptName="+data);
-    return false;
+  sendCmd("cmd=switchView&scriptName="+data);
+  return false;
 }
 function backView(el, event) {
-    sendCmd("cmd=backView");
-    return false;
+  sendCmd("cmd=backView");
+  return false;
 }
 function output(el, event) {
-    sendCmd("cmd=output");
-    return false;
+  sendCmd("cmd=output");
+  return false;
 }
 
 function mousemove(el, event) {
 }
 function trim(str) {
-    nbspChar = String.fromCharCode(160);
-    return str.replace(/^\s*/, "").replace(/\s*$/, "").replace(nbspChar,"");
+  nbspChar = String.fromCharCode(160);
+  return str.replace(/^\s*/, "").replace(/\s*$/, "").replace(nbspChar,"");
 }
 function getEventSource(event) {
-  if (event.target != undefined) return event.target;
-  return event.srcElement;
+ if (event.target != undefined) return event.target;
+ return event.srcElement;
 }
 function mousedown(el, event) {
-    if (getEventSource(event).parentNode.className=="breakpoint") return true;
-    if (getEventSource(event)&& getEventSource(event).firstChild && getEventSource(event).firstChild.data) {
+  if (getEventSource(event).parentNode.className=="breakpoint") return true;
+  if (getEventSource(event)&& getEventSource(event).firstChild && getEventSource(event).firstChild.data) {
 	switchView(trim(getEventSource(event).firstChild.data));
-    }
-   return false;
+  }
+  return false;
 }
 </script>
 
@@ -1993,36 +2001,36 @@ Please enable JavaScript in your browser.
 <a id="output" onmousedown="return output(this, event);"></a>
 <a id="backView" onmousedown="return backView(this, event);"></a>
 </div>
-  <div onmousemove="return mousemove(this, event);" onmousedown="return mousedown(this, event);" id="code"><span>loading...</span>
+ <div onmousemove="return mousemove(this, event);" onmousedown="return mousedown(this, event);" id="code"><span>loading...</span>
 </div>
 
 </body>
 <script type="text/javascript">
-  loaded();
+ loaded();
 </script>
 </html>
 <?php
-  exit (0);
+ exit (0);
 } elseif (($serverID = $_SERVER['HTTP_XPDB_DEBUGGER']) != "0") {
 /* * The back end part, invoked from JavaScript using a json call. $serverID is a uniq ID generated from JavaScript * */
-  header("Expires: Sat, 1 Jan 2005 00:00:00 GMT");
-  header("Last-Modified: ".gmdate( "D, d M Y H:i:s")." GMT");
-  header("Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
-  header("Pragma: no-cache");
-  header("Content-Encoding: identity");
-  $dbg = new pdb_JSDebugger((int)$serverID);
-  $dbg->handleRequests();
-  $dbg->shutdown();
-  pdb_Logger::debug("SERVER TERMINATED!");
-  exit(0);
+ header("Expires: Sat, 1 Jan 2005 00:00:00 GMT");
+ header("Last-Modified: ".gmdate( "D, d M Y H:i:s")." GMT");
+ header("Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
+ header("Pragma: no-cache");
+ header("Content-Encoding: identity");
+ $dbg = new pdb_JSDebugger((int)$serverID);
+ $dbg->handleRequests();
+ $dbg->shutdown();
+ pdb_Logger::debug("SERVER TERMINATED!");
+ exit(0);
 } else {
 /* * The front end part, invoked from JavaScript using json calls * */
-  header("Expires: Sat, 1 Jan 2005 00:00:00 GMT");
-  header("Last-Modified: ".gmdate( "D, d M Y H:i:s")." GMT");
-  header("Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
-  header("Pragma: no-cache");
-  header("Content-Encoding: identity");
-  pdb_JSDebuggerClient::handleRequest ($_POST);
-  exit(0);
+ header("Expires: Sat, 1 Jan 2005 00:00:00 GMT");
+ header("Last-Modified: ".gmdate( "D, d M Y H:i:s")." GMT");
+ header("Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
+ header("Pragma: no-cache");
+ header("Content-Encoding: identity");
+ pdb_JSDebuggerClient::handleRequest ($_POST);
+ exit(0);
 }
 ?>

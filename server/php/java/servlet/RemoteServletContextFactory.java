@@ -92,7 +92,7 @@ public class RemoteServletContextFactory extends SimpleServletContextFactory {
 	ctx.setAttribute(IContext.SERVLET, servlet, IContext.ENGINE_SCOPE);
 
 	ctx.setAttribute(IContext.SERVLET_REQUEST, new RemoteHttpServletRequest(this, req), IContext.ENGINE_SCOPE);
-	ctx.setAttribute(IContext.SERVLET_RESPONSE, new RemoteHttpServletResponse(), IContext.ENGINE_SCOPE);
+	ctx.setAttribute(IContext.SERVLET_RESPONSE, new RemoteHttpServletResponse(res), IContext.ENGINE_SCOPE);
 	
 	return ctx;
     }

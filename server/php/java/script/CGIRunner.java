@@ -33,6 +33,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.util.Map;
 
+import php.java.bridge.ILogger;
 import php.java.bridge.Util;
 import php.java.bridge.Util.HeaderParser;
 
@@ -58,6 +59,7 @@ abstract class CGIRunner extends Thread {
     private ScriptLock scriptLock = new ScriptLock();
     private Lock phpScript = new Lock();
     private ResultProxy resultProxy;
+    private ILogger logger;
 
     // used to wait for the script to terminate
     private static class ScriptLock {
@@ -95,7 +97,7 @@ abstract class CGIRunner extends Thread {
 	    notify();
 	}
     }
-    protected CGIRunner(String name, Reader reader, Map env, OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy resultProxy) {
+    protected CGIRunner(String name, Reader reader, Map env, OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy resultProxy, ILogger logger) {
 	super(name);
     	this.reader = reader;
 	this.env = env;
@@ -103,16 +105,18 @@ abstract class CGIRunner extends Thread {
 	this.err = err;
 	this.headerParser = headerParser;
 	this.resultProxy = resultProxy;
+	this.logger = logger;
     }
     public void run() {
 	try {
+	    Util.setLogger(logger);
 	    doRun();
 	} catch (IOException e) {
-	    Util.printStackTrace(e);
 	    phpScript.val = e;
 	} catch (Util.Process.PhpException e1) {
 	    phpScript.val = e1;	    
 	} catch (Exception ex) {
+	    phpScript.val = ex;
 	    Util.printStackTrace(ex);
         } finally {
 	    phpScript.finish();

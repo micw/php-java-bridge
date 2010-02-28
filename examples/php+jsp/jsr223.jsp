@@ -17,7 +17,11 @@ e.getContext().setWriter (out);
 
 /** evaluate the script, use the file: servlet +"._cache_.php" as a script cache */
 Reader reader = EngineFactory.createPhpScriptFileReader(getClass().getName()+"._cache_.php", HELLO_SCRIPT_READER);
-e.eval (reader);
+try {
+    e.eval (reader);
+} catch (Exception ex) {
+  ex.printStackTrace(new java.io.PrintWriter(out));
+}
 reader.close();
 out.println("<br><br><code>request variables:<br>");
 out.println("<br>contextPath:&nbsp;"+request.getContextPath());

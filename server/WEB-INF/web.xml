@@ -34,7 +34,7 @@
 
     <!-- PHP CGI servlet: when IIS or Apache are not available -->
     <servlet>
-        <servlet-name>PhpFastCGIServlet</servlet-name>
+        <servlet-name>PhpCGIServlet</servlet-name>
         <servlet-class>php.java.servlet.fastcgi.FastCGIServlet</servlet-class>
 
          <!-- Your php binary. Default is /usr/bin/php-cgi or -->
@@ -82,7 +82,7 @@
 
     <!-- PHP CGI Servlet Mapping -->
     <servlet-mapping>
-        <servlet-name>PhpFastCGIServlet</servlet-name>
+        <servlet-name>PhpCGIServlet</servlet-name>
         <url-pattern>*.php</url-pattern>
     </servlet-mapping>
 

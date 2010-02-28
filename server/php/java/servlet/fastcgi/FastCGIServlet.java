@@ -162,7 +162,7 @@ public class FastCGIServlet extends HttpServlet {
     
 
     private static class Environment {
-	protected IContextFactory ctx;
+	public IContextFactory ctx;
 	public ConnectionPool connectionPool;
 	public String contextPath;
 	public String pathInfo;
@@ -463,7 +463,7 @@ public class FastCGIServlet extends HttpServlet {
 		    out.close();
 		}
 		} else {
-		    File readme = new File(javaDir, "php-cgi-"+Util.osArch+"-"+Util.osName+"exe.MISSING.README.txt");
+		    File readme = new File(javaDir, "php-cgi-"+Util.osArch+"-"+Util.osName+".exe.MISSING.README.txt");
 		    if (!readme.exists()) {
 			byte[] data = ("You can rename your php fastcgi binary to \"php-cgi-"+Util.osArch+"-"+Util.osName+".exe\", add it and its phpXts.dll (!) to your web application WEB-INF/cgi directory and re-deploy your web application.\n").getBytes();
 			OutputStream out = new FileOutputStream (readme);
@@ -903,7 +903,7 @@ public class FastCGIServlet extends HttpServlet {
 		Util.logDebug("PHP FastCGI server failed: " + ex);
 		Util.printStackTrace(ex);
 	    }
-	    throw new ServletException("PHP FastCGI server failed: ", ex);
+	    throw new IOException("PHP FastCGI server failed: ", ex);
 	} catch (ConnectionException x) {
 	    if(Util.logLevel>1) {
 		Util.logDebug("PHP FastCGI instance failed: " + x);
@@ -988,7 +988,7 @@ public class FastCGIServlet extends HttpServlet {
 	throws ServletException, IOException {
 	if(Util.logLevel>4) {
 	    if (req.getAttribute("javax.servlet.include.request_uri")!=null) log("doGet (included):"+req.getAttribute("javax.servlet.include.request_uri"));
-	    log("XdoGet:"+req.getRequestURI());
+	    log("doGet:"+req.getRequestURI());
 	}
 	handle (req, res);
     }

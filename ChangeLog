@@ -1,3 +1,52 @@
+2010-02-28  <jostb@intern>
+
+	* build.xml: New file
+
+	* config.m4, init_cfg.h.in, init_cfg.c.in, java.c, INSTALL.LINUX, install.sh.in, java_bridge.h, java.ini, Makefile.frag, mono.ini, php_java.h, php_wrapper.h, protocol.h, README.GCJ, README.MONO+NET, test.bat, test.php4, test.sh: Removed
+
+	* unsupported/ICSharpCode.SharpZipLib.dll, unsupported/IKVM.AWT.WinForms.dll, IKVM.GNU.Classpath.dll, IKVM.Runtime.dll: Removed
+
+	* tests.quercus/README, tests.quercus/simple.quercus: Removed
+
+	* tests.mono+net/helloworld.php, tests.mono+net/load_assembly.php, tests.mono+net/params.php, tests.mono+net/sample_lib.cs, tests.mono+net/sample_lib.dll, tests.mono+net/stack.php, tests.mono+net/test.php: Removed
+
+	* tests.m4/function_checks.m4, tests.m4/java_check_abstract_namespace.m4, tests.m4/java_check_broken_stdio_buffer.m4, tests.m4/java_check_jni.m4, tests.m4/java_check_option_ftarget.m4, tests.m4/java_check_struct_ucred.m4, tests.m4/threads.m4: Removed
+	* examples/php+jsp/debug.php, examples/php+jsp/virtual.php: New files
+
+	* examples/php+jsp/settings.php, examples/php+jsp/jsr223.jsp, examples/php+jsp/index.php: Rewritten
+
+	* server/acinclude.m4, server/append.sed, server/configure.gnu.in, server/configure.in, server/extract.sed, server/javabridge.policy, server/javadoc.xml, server/Makefile.am, server/natcJavaBridge.c, server/prepend.sed, server/RunJavaBridge.c.in, server/RunMonoBridge.c.in: Removed
+
+	* server/buildClassFromTextFile.php, server/buildJavaBridgeProperties.php, server/buildJavaInc.php, server/buildJavaProxy.php, server/buildLauncherWindows.php: New files
+
+	* server/example-web.xml, server/WEB-INF/web.xml: Rewritten
+
+	* server/WEB-INF/cgi/launcher.c: Quote Arguments
+
+	* server/WEB-INF/cgi/launcher.exe, server/WEB-INF/cgi/launcher.exe, server/WEB-INF/cgi/php5ts.dll, server/WEB-INF/cgi/php-cgi-i386-freebsd, server/WEB-INF/cgi/php-cgi-i386-linux, server/WEB-INF/cgi/php-cgi-x86-sunos, server/WEB-INF/cgi/php-cgi-x86-windows.exe: Updated to version 5.3.1
+
+	* server/META-INF/PHPDebugger.php, server/META-INF/dummy.php: Rewritten
+
+	* server/php/java/servlet/CGIServlet.java, server/php/java/servlet/HttpChannel.java, server/php/java/servlet/PhpCGIServlet.java: Removed
+
+	* server/php/java/servlet/HttpContextRunner.java, server/php/java/servlet/PhpCGIFilter.java, server/php/java/servlet/ServletUtil.java, server/php/java/servlet/VoidInputHttpServletRequest.java: New files
+
+	* server/php/java/servlet/fastcgi/FastCGIServlet.java: Rewritten
+
+	* server/php/java/script/CGIRunner.java
+	(CGIRunner): pass the logger
+
+	* server/php/java/script/HttpProxy.java
+	(HttpProxy): pass the logger
+
+	* server/php/java/bridge/http/PipeContextServer.java: Removed
+
+	* server/php/java/bridge/DynamicClassLoader.java, server/php/java/bridge/DynamicHttpURLConnection.java, DynamicJarURLConnection.java, server/php/java/bridge/DynamicJavaBridgeClassLoader.java, server/php/java/bridge/JarLibraryPath.java, server/php/java/bridge/JavaBridgeClassLoader.java, php/java/bridge/SimpleJavaBridgeClassLoader.java, php/java/bridge/StandaloneJavaBridgeClassLoader.java: Removed
+
+	* php/java/bridge/LocalServerSocket.java, php/java/bridge/LocalSocket.java, php/java/bridge/LocalSocketInputStream.java, php/java/bridge/LocalSocketOutputStream.java, php/java/bridge/StandaloneGCC.java: Removed
+
+	* VERSION, php-java-bridge.spec: Version 6.0.3 released
+
 2010-01-23    <jostb@intern>
 
 	* server/php/java/servlet/CGIServlet.java

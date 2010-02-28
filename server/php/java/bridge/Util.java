@@ -376,7 +376,17 @@ public final class Util {
 	} catch (Throwable t) {
 	    //t.printStackTrace();
 	};
-	DEFAULT_PHP_ARGS = "-d session.save_path=\""+System.getProperty("java.io.tmpdir", "/tmp")+"\" -d java.session=On -d allow_url_include=On -d display_errors=Off -d log_errors=On -d java.persistent_servlet_connections=On";
+	
+	// resolve java.io.tmpdir for windows; PHP doesn't like dos short file names like foo~1\bar~2\...
+	File tmpdir = new File(System.getProperty("java.io.tmpdir", "/tmp"));
+	if (!(tmpdir.exists() && tmpdir.isDirectory())) tmpdir = null;
+	String tmpdirPath = null;
+	if (tmpdir != null) try {tmpdirPath = tmpdir.getCanonicalPath(); } catch (IOException ex) {/*ignore*/}
+	if (tmpdirPath != null)
+	    DEFAULT_PHP_ARGS = "-d session.save_path=\""+tmpdirPath+"\" -d java.session=On -d allow_url_include=On -d display_errors=Off -d log_errors=On -d java.persistent_servlet_connections=On";
+	else
+	    DEFAULT_PHP_ARGS = "-d java.session=On -d allow_url_include=On -d display_errors=Off -d log_errors=On -d java.persistent_servlet_connections=On";
+	    
 	try {
 	    String str = getProperty(p, "PHP_EXEC_ARGS", DEFAULT_PHP_ARGS);
 	    String[] args = str.split(" ");

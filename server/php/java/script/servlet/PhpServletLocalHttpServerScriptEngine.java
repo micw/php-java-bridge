@@ -160,7 +160,7 @@ abstract class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
 	    setName(name);
 	        
             /* now evaluate our script */
-	    localReader = new ServletReader(servletCtx, resourcePath, getURL(webPath), req);
+	    localReader = new ServletReader(servletCtx, resourcePath, getURL(webPath), req, res);
             this.script = doEval(localReader, context);
         } catch (Exception e) {
             Util.printStackTrace(e);

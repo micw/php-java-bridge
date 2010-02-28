@@ -167,9 +167,13 @@ if(!function_exists("java_get_base")) {
    * @see java_session();
    */
   function java_virtual($path, $return=false) {
+
 	$req = java_context()->getHttpServletRequest();
 	$req = new java("php.java.servlet.VoidInputHttpServletRequest", $req);
-	$res = new java("php.java.servlet.RemoteHttpServletResponse");
+
+	$res = java_context()->getHttpServletResponse();
+	$res = new java("php.java.servlet.RemoteHttpServletResponse", $res);
+
 	$req->getRequestDispatcher($path)->include($req, $res);
 	if ($return) return $res->getBufferContents();
 
@@ -403,11 +407,9 @@ if(!function_exists("java_get_base")) {
    * @param mixed If a PHP object is provided, the object is passed to Java. Otherwise the current environment is used.
    */
   function java_call_with_continuation($kontinuation=null) {
-	if ($java_script = java_getHeader("X_JAVABRIDGE_INCLUDE", $_SERVER)) { 
-	  if ($java_script!="@") {chdir (dirname ($java_script)); require_once($java_script);} 
-	  if(!java_getHeader("X_JAVABRIDGE_INCLUDE_ONLY", $_SERVER)) java_context()->call(is_null($kontinuation)?java_closure():(($kontinuation instanceof java_JavaType)?$kontinuation:java_closure($kontinuation)));
+	if (java_getHeader("X_JAVABRIDGE_INCLUDE", $_SERVER) && !java_getHeader("X_JAVABRIDGE_INCLUDE_ONLY", $_SERVER)) {
+	  java_context()->call(is_null($kontinuation)?java_closure():(($kontinuation instanceof java_JavaType)?$kontinuation:java_closure($kontinuation)));
 	}
   }
-
  } //!java_defined  DO NOT REMOVE THIS LINE
 ?>

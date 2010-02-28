@@ -117,19 +117,6 @@ if(!defined("JAVA_LOG_LEVEL"))
   else                                                 define("JAVA_LOG_LEVEL", null); // integer between 0 and 4
 
 
-/** Use named pipes instead of local TCP sockets.  
- * 
- * Set this to
- * the directory in which the named pipes should be created.
- * Note that pipes are a little bit slower than persistent TCP
- * sockets. But they are more secure.
- * Example: define("JAVA_PIPE_DIR", "/tmp");
- * Default is to use /dev/shm on Linux, false otherwise.
- */
-if(!defined("JAVA_PIPE_DIR")) {
-  define("JAVA_PIPE_DIR", null);
-}
-
 /** Set to 1 for compatibility with earlier versions.
  * 
  * 
@@ -156,12 +143,3 @@ if (!defined("JAVA_PREFER_VALUES"))
 if(!defined("JAVA_DEBUG")) 
   if ($ini=get_cfg_var("java.debug")) define("JAVA_DEBUG", $ini); 
   else                                define("JAVA_DEBUG", false);
-
-/** Whether or not the PHP should keep persistent connections to the servlet.
- * 
- * Set this to true if you can guarantee that IIS or Apache's "maxClients" is less than
- * or equal to the SERVLET's thread pool size (usually named "maxThreads").
- **/
-if(!defined("JAVA_PERSISTENT_SERVLET_CONNECTIONS")) 
-  if ($ini=get_cfg_var("java.persistent_servlet_connections")) define("JAVA_PERSISTENT_SERVLET_CONNECTIONS", $ini); 
-  else                                                         define("JAVA_PERSISTENT_SERVLET_CONNECTIONS", false);

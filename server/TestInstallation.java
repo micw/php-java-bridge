@@ -8,6 +8,7 @@ import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -294,9 +295,6 @@ public class TestInstallation implements Runnable {
 	in = loader.getResourceAsStream("test.php");
 	extractFile(in, new File(base, "test.php").getAbsoluteFile());
 	in.close();
-	in = loader.getResourceAsStream("java/Java.inc");
-	extractFile(in, new File(java, "Java.inc").getAbsoluteFile());
-	in.close();
 	
 	// start back end
 	(new Thread(new TestInstallation())).start();
@@ -306,7 +304,14 @@ public class TestInstallation implements Runnable {
 	    try {Socket s = new Socket("127.0.0.1", Integer.parseInt(socket)); if(s!=null) s.close(); break;} catch (IOException e) {/* ignore */}
 	}
 	if(count==0) throw new IOException("Could not start test servlet engine");
-		
+	// Fetch the Java.inc file
+	URL url = new URL("http://127.0.0.1:"+socket+"/JavaBridge/java/Java.inc");
+	URLConnection conn = url.openConnection();
+	conn.connect();
+	in = conn.getInputStream();
+	extractFile(in, new File(java, "Java.inc").getAbsoluteFile());
+	in.close();
+
 	FileOutputStream o = new FileOutputStream(new File(base,"RESULT.html"));
 	String php = "php-cgi";
 	for(int i=0; i<DEFAULT_CGI_LOCATIONS.length; i++) {

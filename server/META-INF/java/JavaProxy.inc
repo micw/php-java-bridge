@@ -342,7 +342,7 @@ function java_cast($object, $type) {
  * @access private
  */
 function java_require($arg) {
-	trigger_error('Please use <a href="http://php-java-bridge.sourceforge.net/pjb/webapp.php>tomcat or jee hot deployment</a> instead', E_USER_WARNING);
+	trigger_error('java_require() not supported anymore. Please use <a href="http://php-java-bridge.sourceforge.net/pjb/webapp.php>tomcat or jee hot deployment</a> instead', E_USER_WARNING);
 }
 /**
  * @access private

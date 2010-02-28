@@ -18,7 +18,7 @@
   </target>
 
   <target name="compile" depends="init,JavaIncJava,JavaProxyPhpJava,PhpDebuggerPHPJava,LauncherUnix,LauncherWindows">
-    <javac srcdir="${javaSourceDir}" source="1.4" target="1.4" destdir="${javaClassDir}" debug="false" deprecation="false">
+    <javac srcdir="${javaSourceDir}" source="1.4" target="1.4" destdir="${javaClassDir}" debug="true" deprecation="true">
       <classpath refid="compilePath" />
     </javac>
   </target>
@@ -82,66 +82,84 @@
     </jar>
   </target>
   <target name="JavaInc" depends="init">
-    <apply executable = "/bin/sh" failonerror = "true" dir="${javaBaseDir}" parallel="true">
-      <arg value="buildJavaInc.sh" />
+    <apply executable = "php" failonerror = "true" dir="${javaBaseDir}" parallel="true">
+      <arg value="buildJavaInc.php" />
+      <arg value="META-INF/java/Java.inc" />
+      <arg value="META-INF/java/JavaBridge.inc" />
+      <arg value="META-INF/java/Options.inc" />
+      <arg value="META-INF/java/Client.inc" />
+      <arg value="META-INF/java/GlobalRef.inc" />
+      <arg value="META-INF/java/NativeParser.inc" />
+      <arg value="META-INF/java/Parser.inc" />
+      <arg value="META-INF/java/Protocol.inc" />
+      <arg value="META-INF/java/SimpleParser.inc" />
       <fileset dir="${javaBaseDir}" >
-	<include name="META-INF/java/*.inc" />
-	<exclude name="META-INF/java/Java.inc" />
+	<include name="META-INF/java/JavaProxy.inc" />
       </fileset>
     </apply>
     <copy file="${javaBaseDir}/META-INF/java/Java.inc" todir="${distDir}" />
   </target>
   <target name="JavaIncJava" depends="JavaInc,init">
-    <apply executable = "/bin/sh" failonerror = "true" dir="${javaBaseDir}" parallel="true">
-      <arg value="${javaBaseDir}/buildJavaIncJava.sh" />
+    <apply executable = "php" failonerror = "true" dir="${javaBaseDir}" parallel="true">
+      <arg value="${javaBaseDir}/buildClassFromTextFile.php" />
+      <arg value="${javaBaseDir}/php/java/bridge/JavaInc.java" />
+      <arg value="JavaInc" />
       <fileset dir="${javaBaseDir}" >
 	<include name="META-INF/java/Java.inc" />
       </fileset>
     </apply>
   </target>
   <target name="JavaProxyPhp" depends="JavaInc,init">
-    <apply executable = "/bin/sh" failonerror = "true" dir="${javaBaseDir}" parallel="true">
-      <arg value="${javaBaseDir}/buildJavaProxyPhp.sh" />
+    <apply executable = "php" failonerror = "true" dir="${javaBaseDir}" parallel="true">
+      <arg value="${javaBaseDir}/buildJavaProxy.php" />
+      <arg value="${javaBaseDir}/META-INF/java/JavaProxy.php" />
       <fileset dir="${javaBaseDir}" >
 	<include name="META-INF/java/Java.inc" />
       </fileset>
     </apply>
   </target>
   <target name="JavaProxyPhpJava" depends="JavaProxyPhp,init">
-    <apply executable = "/bin/sh" failonerror = "true" dir="${javaBaseDir}" parallel="true">
-      <arg value="${javaBaseDir}/buildJavaProxyPhpJava.sh" />
+    <apply executable = "php" failonerror = "true" dir="${javaBaseDir}" parallel="true">
+      <arg value="${javaBaseDir}/buildClassFromTextFile.php" />
+      <arg value="${javaBaseDir}/php/java/bridge/JavaProxy.java" />
+      <arg value="JavaProxy" />
       <fileset dir="${javaBaseDir}" >
 	<include name="META-INF/java/JavaProxy.php" />
       </fileset>
     </apply>
   </target>
   <target name="PhpDebuggerPHPJava" depends="init">
-    <apply executable = "/bin/sh" failonerror = "true" dir="${javaBaseDir}" parallel="true">
-      <arg value="${javaBaseDir}/buildPhpDebuggerPHPJava.sh" />
+    <apply executable = "php" failonerror = "true" dir="${javaBaseDir}" parallel="true">
+      <arg value="${javaBaseDir}/buildClassFromTextFile.php" />
+      <arg value="${javaBaseDir}/php/java/bridge/PhpDebuggerPHP.java" />
+      <arg value="PhpDebuggerPHP" />
       <fileset dir="${javaBaseDir}" >
 	<include name="META-INF/java/PHPDebugger.php" />
       </fileset>
     </apply>
   </target>
   <target name="LauncherUnix" depends="init">
-    <apply executable = "/bin/sh" failonerror = "true" dir="${javaBaseDir}" parallel="true">
-      <arg value="${javaBaseDir}/buildLauncherUnix.sh" />
+    <apply executable = "php" failonerror = "true" dir="${javaBaseDir}" parallel="true">
+      <arg value="${javaBaseDir}/buildClassFromTextFile.php" />
+      <arg value="${javaBaseDir}/php/java/bridge/LauncherUnix.java" />
+      <arg value="LauncherUnix" />
       <fileset dir="${javaBaseDir}" >
 	<include name="WEB-INF/cgi/launcher.sh" />
       </fileset>
     </apply>
   </target>
   <target name="LauncherWindows" depends="init">
-    <apply executable = "/bin/sh" failonerror = "true" dir="${javaBaseDir}" parallel="true">
-      <arg value="${javaBaseDir}/buildLauncherWindows.sh" />
+    <apply executable = "php" failonerror = "true" dir="${javaBaseDir}" parallel="true">
+      <arg value="${javaBaseDir}/buildLauncherWindows.php" />
       <fileset dir="${javaBaseDir}" >
 	<include name="WEB-INF/cgi/launcher.exe" />
       </fileset>
     </apply>
   </target>
   <target name="JavaBridgeProperties" depends="init">
-    <apply executable = "/bin/sh" failonerror = "true" dir="${javaBaseDir}" parallel="true">
-      <arg value="${javaBaseDir}/buildJavaBridgeProperties.sh" />
+    <apply executable = "php" failonerror = "true" dir="${javaBaseDir}" parallel="true">
+      <arg value="${javaBaseDir}/buildJavaBridgeProperties.php" />
+      <arg value="${javaBaseDir}/php/java/bridge/global.properties" />
       <fileset dir="${javaBaseDir}" >
 	<include name="php/java/bridge/global.properties.in" />
       </fileset>
