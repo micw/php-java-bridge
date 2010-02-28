@@ -42,6 +42,7 @@ $str = <<<EOF
 EOF;
 
 $str .= "${s}}\n?>\n";
+$str = preg_replace('|\r|', '', $str);
 
 file_put_contents($outfile, $str);
 
