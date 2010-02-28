@@ -384,7 +384,7 @@ Add the following 9 lines marked with a <code>+</code> to the tomcat <code>$CATA
 +    &lt;listener&gt;&lt;listener-class&gt;php.java.servlet.ContextLoaderListener&lt;/listener-class&gt;&lt;/listener&gt;<br>
 +    &lt;servlet&gt;&lt;servlet-name&gt;PhpJavaServlet&lt;/servlet-name&gt;&lt;servlet-class&gt;php.java.servlet.PhpJavaServlet&lt;/servlet-class&gt;<br>
 +    &lt;/servlet&gt;<br>
-+    &lt;servlet&gt;&lt;servlet-name&gt;PhpCGIServlet&lt;/servlet-name&gt;&lt;servlet-class&gt;php.java.servlet.PhpCGIServlet&lt;/servlet-class&gt;<br>
++    &lt;servlet&gt;&lt;servlet-name&gt;PhpCGIServlet&lt;/servlet-name&gt;&lt;servlet-class&gt;php.java.servletfastcgi.FastCGIServlet&lt;/servlet-class&gt;<br>
 +        &lt;init-param&gt;&lt;param-name&gt;prefer_system_php_exec&lt;/param-name&gt;&lt;param-value&gt;On&lt;/param-value&gt;&lt;/init-param&gt;<br>
 +        &lt;init-param&gt;&lt;param-name&gt;php_include_java&lt;/param-name&gt;&lt;param-value&gt;On&lt;/param-value&gt;&lt;/init-param&gt;<br>
 +    &lt;/servlet&gt;<br>
@@ -428,7 +428,7 @@ Download the J2EE binary and copy the <code>JavaBridge.jar</code> and the <code>
     &lt;!-- PHP CGI processing servlet, used when Apache/IIS are not available --&gt;<br>
     &lt;servlet&gt;<br>
         &lt;servlet-name&gt;PhpCGIServlet&lt;/servlet-name&gt;<br>
-        &lt;servlet-class&gt;php.java.servlet.PhpCGIServlet&lt;/servlet-class&gt;<br>
+        &lt;servlet-class&gt;php.java.servletfastcgi.FastCGIServlet&lt;/servlet-class&gt;<br>
     &lt;/servlet&gt;<br>
 <br>
     &lt;!-- PHP Servlet Mapping --&gt;<br>

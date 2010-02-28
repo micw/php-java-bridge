@@ -3,7 +3,7 @@
 $s = "";
 array_shift($argv);
 $outfile = array_shift($argv);
-foreach($argv as $file) $s.= file_get_contents($file);
+foreach($argv as $file) $s.= preg_replace('/\r/', '', file_get_contents($file));
 
 $s = preg_replace('/^.*JAVA_DEBUG.*$/m', '', $s);
 $s = preg_replace('/^.*!java_defined.*$/m', '', $s);
