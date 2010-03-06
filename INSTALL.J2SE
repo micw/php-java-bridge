@@ -21,23 +21,22 @@ Install PHP into J2SE
 ---------------------
 
 * Install Java 1.6 or above. For older Java versions you'll need the
-script-api.jar contained in the JavaBridge.war file.
+  script-api.jar contained in the JavaBridge.war file.
 
 * Install PHP 5.1.4 or above.
 
-* Download and extract the php-java-bridge*_j2ee.zip archive into a
-folder and type: java -classpath JavaBridge.war TestInstallation
+* Type: java -classpath JavaBridge.war TestInstallation
 
 * Copy the created "JavaBridge.jar" and "php-script.jar" from the
-"ext" folder to the J2SE library path. On Windows the location depends
-on the version and vendor of the JDK (see java.ext.dirs from the above
-RESULT.html). On Linux the directory is:
+  "ext" folder to the J2SE library path. On Windows the location
+  depends on the version and vendor of the JDK (see java.ext.dirs from
+  the above RESULT.html). On Linux the directory is:
 
   /usr/java/packages/lib/ext/
 
 
 * Use the command "jrunscript" to evaluate PHP scripts from Java, for
-example:
+  example:
 
     jrunscript -l php phpFile.php 
 
@@ -47,9 +46,7 @@ example:
 
 
 * A convenience ScriptEngine is available which makes it easier to
-invoke PHP methods from Java. Example:
-
-    System.setProperty("php.java.bridge.default_log_file", "");
+  invoke PHP methods from Java. Example:
 
     ScriptEngineManager manager = new ScriptEngineManager();
     ScriptEngine e = manager.getEngineByName("php-invocable");

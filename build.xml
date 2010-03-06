@@ -17,6 +17,23 @@
     <mkdir dir="${javaClassDir}" />
   </target>
 
+  <target name="clean" depends="init">
+    <delete dir="server/documentation" />
+    <delete dir="documentation" />
+    <delete dir="dist" />
+    <delete dir="bin" />
+    <delete file="server/META-INF/java/Java.inc" />
+    <delete file="server/META-INF/java/JavaProxy.php" />
+    <delete file="server/php/java/bridge/JavaInc.java" />
+    <delete file="server/php/java/bridge/JavaProxy.java" />
+    <delete file="server/php/java/bridge/PhpDebuggerPHP.java" />
+    <delete file="server/php/java/bridge/LauncherUnix.java" />
+    <delete file="server/php/java/bridge/LauncherWindows.java" />
+    <delete file="server/php/java/bridge/LauncherWindows2.java" />
+    <delete file="server/php/java/bridge/LauncherWindows3.java" />
+    <delete file="server/php/java/bridge/LauncherWindows4.java" />
+  </target>
+
   <target name="compile" depends="init,JavaIncJava,JavaProxyPhpJava,PhpDebuggerPHPJava,LauncherUnix,LauncherWindows">
     <javac srcdir="${javaSourceDir}" source="1.4" target="1.4" destdir="${javaClassDir}" debug="true" deprecation="true">
       <classpath refid="compilePath" />
@@ -187,8 +204,17 @@
     <apply executable = "phpdoc" failonerror = "true" dir="${javaBaseDir}" parallel="true">
       <arg value="-j" />
       <arg value="-c" />
+      <arg value="PHPDocConfig.ini" />
       <fileset dir="${javaBaseDir}" >
-	<include name="PHPDocConfig.ini" />
+	<include name="META-INF/java/JavaBridge.inc" />
+	<include name="META-INF/java/Options.inc" />
+	<include name="META-INF/java/Client.inc" />
+	<include name="META-INF/java/GlobalRef.inc" />
+	<include name="META-INF/java/NativeParser.inc" />
+	<include name="META-INF/java/Parser.inc" />
+	<include name="META-INF/java/Protocol.inc" />
+	<include name="META-INF/java/SimpleParser.inc" />
+	<include name="META-INF/java/JavaProxy.inc" />
       </fileset>
     </apply>
     <delete file="documentation/API/errors.html" />

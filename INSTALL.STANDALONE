@@ -1,47 +1,17 @@
 Overview
 --------
 
-The standalone JavaBridge.jar associates Java applications with PHP
-scripts.
+The standalone JavaBridge.jar associates PHP scripts with Java
+applications.
 
-This document describes how to call a non-J2EE application. Please see
-the INSTALL.J2SE document for details how to call PHP methods from
-Java. Please see the INSTALL.J2EE document for details how to embed
-PHP into a pure J2EE application server or how to call Java/J2EE
-methods from PHP.
+This document describes how to call non-JEE ("desktop") application
+Java methods. Please see the INSTALL.J2SE document for details how to
+call PHP methods from Java. Please see the INSTALL.JEE document for
+details how to embed PHP into a pure JEE application server or how to
+call Java/JEE methods from PHP.
 
-Development
------------
-
-Test the PHP/Java Bridge functionality:
-
-* Download and extract the php-java-bridge*_j2ee.zip archive into a
-  folder and type: java -classpath JavaBridge.war TestInstallation.
-
-* Right-click on ext/JavaBridge.jar and select "open with Java ...". 
-  In the "Starting ..." dialog select SERVLET_LOCAL:8080.
-
-* Run your PHP scripts. For example browse to http://127.0.0.1:8080
-  and click on test.php.
-
-* Link Java.inc and your Java libraries into PHP at run-time. Example:
-  
-   <?php
-    require_once("java/Java.inc");
-
-    // call Java libraries using the provided Java class...
-    java_require("myLibs/myLib.jar;dependentLib1.jar;...);
-
-    $SystemClazz =     Java("java.lang.System"); 
-    echo $SystemClazz->getProperties();
-
-    $myInstance  = NEW Java("myPackage.MyClass", ...); 
-    $myInstance->callSomething(...);
-   ?>
-
-
-Deployment
-----------
+Installation
+------------
 
 Add the PHP/Java Bridge to your Java application(s):
 
@@ -50,17 +20,17 @@ Add the PHP/Java Bridge to your Java application(s):
 
    java -classpath JavaBridge.war TestInstallation
    
-* Add JavaBridge.jar to the main library of you non-J2EE
-application. This can be done by adding the following line to your
-application's META-INF/MANIFEST.MF:
+* Add JavaBridge.jar to the main library of you non-JEE
+  application. This can be done by adding the following line to your
+  application's META-INF/MANIFEST.MF:
   
     Class-Path: JavaBridge.jar
 
-It is also possible to simply merge all files into your non-J2EE
-application..
+  It is also possible to simply merge all files into your non-JEE
+  application.
 
-* Add the following 3 lines to the main class of your non-J2EE
-application:
+* Add the following 3 lines to the main class of your non-JEE
+  application:
 
      public static final String JAVABRIDGE_PORT="8087";
      static final php.java.bridge.JavaBridgeRunner runner = 

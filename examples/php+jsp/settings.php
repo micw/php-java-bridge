@@ -16,9 +16,9 @@ $servlet = $ctx->getAttribute( "php.java.servlet.Servlet", 100);
 <H1>PHP/Java Bridge settings</H1>
 <p>
 The PHP/Java Bridge web application contains two servlets. The <code>PhpJavaServlet</code> handles requests from remote PHP scripts running in Apache/IIS or from the command line. 
-The second servlet <code>PhpFastCGIServlet</code> can handle requests from internet clients directly. 
+The second servlet <code>PhpCGIServlet</code> can handle requests from internet clients directly. 
 <p>
-The following shows the settings of the <code>PhpJavaServlet</code> and the <code>PhpFastCGIServlet</code>.
+The following shows the settings of the <code>PhpJavaServlet</code> and the <code>PhpCGIServlet</code>.
 </p>
 <H2>PhpJavaServlet</H2>
 <p>
@@ -56,13 +56,13 @@ echo $System->getProperties();<br>
 </p>
 <p>
 <?php if (java_instanceof ($servlet, java('php.java.servlet.fastcgi.FastCGIServlet'))) { ?>
-<H2>PhpFastCGIServlet</H2>
+<H2>PhpCGIServlet</H2>
 <p>
-The <code>PhpFastCGIServlet</code> runs PHP scripts within the J2EE/Servlet engine.
+The <code>PhpCGIServlet</code> runs PHP scripts within the J2EE/Servlet engine.
 </p>
 <blockquote>
 <code>
-internet browser &lt;--&gt; PhpFastCGIServlet &lt;--&gt; php-cgi &lt;--&gt; PhpJavaServlet
+internet browser &lt;--&gt; PhpCGIServlet &lt;--&gt; php-cgi &lt;--&gt; PhpJavaServlet
 </code>
 </blockquote>
 <p>
@@ -96,7 +96,7 @@ It starts a PHP FastCGI server, if possible and necessary. Requests for PHP scri
 </table>
 </p>
 
-<?php /* current sevlet is PhpFastCGIServlet */ } ?>
+<?php /* current sevlet is PhpCGIServlet */ } ?>
 
 The settings were taken from the <a href="file://<?php 
 echo java_values(java('php.java.servlet.ServletUtil')->getRealPath($context, '/WEB-INF/web.xml'))

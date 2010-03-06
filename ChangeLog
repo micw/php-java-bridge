@@ -1,3 +1,11 @@
+2010-03-06  <jostb@intern>
+
+      * php-java-bridge.spec: Updated for version 6
+
+      * build.xml (clean): New target
+
+	* VERSION, php-java-bridge.spec: Version 6.0.4 released
+
 2010-02-28  <jostb@intern>
 
 	* build.xml: New file

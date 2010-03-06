@@ -221,6 +221,27 @@ echo $i3-&gt;toString() . "\n";<br>
 <H2>Class loading questions</H2>
 
 <a name="java-require"></a>
+<H4>Why has java_require() been deprecated?</H4>
+
+<p>
+Because Java doesn't have a module system.
+</p>
+<p>
+For example a library "lucene-2.3.1.jar" required by application B,
+cannot be loaded if an older version of the library, required by
+application A, is already cached.<br>
+An attempt to link the library anyway will cause "NoClassDefFound" or "NoSuchMethod" errors at runtime. Or some procedures may throw checked exceptions even though they haven't declared them.
+</p>
+<p>
+To protect PHP developers from Java's "dll hell", I have removed the
+dynamic class loading mechanism from PHP/Java Bridge version 6.0;
+java_require() issues a warning.
+</p>
+<p>
+A proper Java module system must use special Java VM hooks, which don't
+exist until now.
+</p>
+
 <H4>How do I load Java libraries?</H4>
 <p>You should link your Java application as described in the 
 <a href="http://php-java-bridge.sourceforge.net/pjb/standalone.php">Java standalone</a>
@@ -233,13 +254,6 @@ documents.
 <p>Either within  your web application <code>WEB-INF/lib</code> directory or in <code>php.java.bridge.base</code>/lib.</p>
 <p> When the system property <code>php.java.bridge.base</code> is not set, libraries are loaded from <code>$HOME/lib</code> where <code>$HOME</code> denotes the home directory of the person or component which has started the java VM.</p>
 <p> If libraries should be available globally, store them in <code>java.ext.dirs</code>, for example in <code>/usr/share/java/ext</code>.</p>
-
-<H4>Why can't Apache load my /foo/bar/baz.jar file?</H4>
-<p>It probably doesn't have the permission to access it. Check if
-baz.jar is a valid Java archive and if its main class is public. Try
-to disable Security Enhanced Linux and store the jar file into a
-folder accessible by the apache user and then extract the required
-Security Enhanced Linux permissions from the audit log.</p>
 
 <H4>Why do I get a ClassNotFoundException?</H4>
 <p>You probably haven't loaded the relevant Java library. Or the
