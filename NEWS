@@ -3,6 +3,22 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 6.1.0
+
+* Some Windows PHP install procedures destroy a local PHP executable
+  by setting a "PHPRC" environment variable. This environment variable
+  may have been useful in the past, but it disturbs modern PHP executables.
+  Environment entries passed to PHP are now filtered through a blacklist, 
+  see PHP_ENV_BLACKLIST in global.properties in JavaBridge.jar. 
+  The list can be changed as usual. Example global.properties file:
+  
+    PHP_ENV_BLACKLIST = KEY1 KEY2 KEYN
+    
+  Example command line:
+  
+    java -Dphp.java.bridge.php_env_blacklist="key1 key2 keyN" -jar JavaBridge.jar ...
+    
+
 Version 6.0.0
 
 * Apache or IIS PHP scripts can now use "java_virtual()" to include

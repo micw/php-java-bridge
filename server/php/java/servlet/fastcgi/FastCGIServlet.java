@@ -29,12 +29,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Map;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -45,6 +43,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.ILogger;
 import php.java.bridge.Util;
+import php.java.bridge.Util.HeaderParser;
 import php.java.bridge.http.AbstractChannelName;
 import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.IContextFactory;
@@ -232,57 +231,10 @@ public class FastCGIServlet extends HttpServlet {
     private String SERVER_SIGNATURE;
     private ContextServer contextServer; // shared with PhpJavaServlet, FastCGIServlet
 
-    private static final File winnt = new File("c:/winnt");
-    private static final File windows = new File("c:/windows");
-    private static final Class[] EMPTY_PARAM = new Class[0];
-    private static final Object[] EMPTY_ARG = new Object[0];
-
     ServletContext context;
-    static final HashMap PROCESS_ENVIRONMENT = getProcessEnvironment();
+    static final HashMap PROCESS_ENVIRONMENT = 
+	Util.COMMON_ENVIRONMENT;
 
-
-    /**
-     * Get the current process environment which will be passed to the sub-process.
-     * Requires jdk1.5 or higher. In jdk1.4, where System.getenv() is not available,
-     * we allocate an empty map.<p>
-     * To add custom environment variables (such as PATH=... or LD_ASSUME_KERNEL=2.4.21, ...),
-     * use a custom PhpCgiServlet, for example:<br>
-     * <code>
-     * public class MyPhpCgiServlet extends PhpCgiServlet {<br>
-     * &nbsp;&nbsp;protected HashMap getProcessEnvironment() {<br>
-     * &nbsp;&nbsp;&nbsp;&nbsp;HashMap map = new HashMap();<br>
-     * &nbsp;&nbsp;&nbsp;&nbsp;map.put("PATH", "/usr/local/bin");<br>
-     * &nbsp;&nbsp;&nbsp;&nbsp;return map; <br>
-     * &nbsp;&nbsp;}<br>
-     * }<br>
-     * </code>
-     * @return The current process environment.
-     */    
-    private static HashMap getProcessEnvironment() {
-	HashMap defaultEnv = new HashMap();
-        String val = null;
-	// Bug in WINNT and WINXP.
-	// If SystemRoot is missing, php cannot access winsock.
-	if(winnt.isDirectory()) val="c:\\winnt";
-	else if(windows.isDirectory()) val = "c:\\windows";
-	try {
-	    String s = System.getenv("SystemRoot"); 
-	    if(s!=null) val=s;
-        } catch (Throwable t) {/*ignore*/}
-        try {
-	    String s = System.getProperty("Windows.SystemRoot");
-	    if(s!=null) val=s;
-        } catch (Throwable t) {/*ignore*/}
-	if(val!=null) defaultEnv.put("SystemRoot", val);
-        try {
-	    Method m = System.class.getMethod("getenv", EMPTY_PARAM);
-	    Map map = (Map) m.invoke(System.class, EMPTY_ARG);
-	    defaultEnv.putAll(map);
-	} catch (Exception e) {
-	    defaultEnv.putAll(Util.COMMON_ENVIRONMENT);
-	}
-	return defaultEnv;
-    }
     /**
      * Create a new FastCGI servlet which connects to a PHP FastCGI server using a connection pool.
      * 

@@ -346,28 +346,27 @@ if(!function_exists("java_get_base")) {
   function java_set_encoding($enc) { return java_set_file_encoding ($enc); }
 
   /**
-   * Call the Java continuation with the closed-over PHP environment
+   * Call the current Java continuation with the closed-over PHP environment
    * $kontinuation as its argument.
    *
    * This procedure can be used to transfer control back to a Java
    * continuation so that Java can call PHP procedures defined within
-   * the passed environment. If the script has not been requested by
-   * Java, the procedure does nothing.
+   * the passed environment. If no current Java continuation exists,
+   * the procedure does nothing.
    *
    *
    * Example PHP script:
    * <code>
    * <?php require_once("java/Java.inc");
    *
-   * class my_SalesCalculator { function calculateSales($month) {return ((int)(string)$month)+1;} ... }
-   * 
    * // ... calculate sales for a given month ...
+   * function calculateSales($month) {return ((int)(string)$month)+1;}
    *
    * write_response($response);
    *
    * // prepare for out-of-band data: make our top-level environment
    * // available to Java. But only if it has been requested by Java:
-   * java_call_with_continuation(new mySalesCalculator());
+   * java_call_with_continuation();
    * ?>
    * </code>
    *
@@ -404,11 +403,18 @@ if(!function_exists("java_get_base")) {
    * of the PHP script.
    *
    * @access public
-   * @param mixed If a PHP object is provided, the object is passed to Java. Otherwise the current environment is used.
+   * @param mixed May either be null, a PHP function name, a PHP object or a java_closure. If a PHP object is provided, the object is passed to Java. If a function name is provided, the function must return a java_closure. Otherwise the current environment is used.
    */
   function java_call_with_continuation($kontinuation=null) {
 	if (java_getHeader("X_JAVABRIDGE_INCLUDE", $_SERVER) && !java_getHeader("X_JAVABRIDGE_INCLUDE_ONLY", $_SERVER)) {
-	  java_context()->call(is_null($kontinuation)?java_closure():(($kontinuation instanceof java_JavaType)?$kontinuation:java_closure($kontinuation)));
+	  if (is_null($kontinuation))
+		java_context()->call(java_closure());
+	  elseif (is_string($kontinuation)) 
+		java_context()->call(call_user_func($kontinuation));
+	  elseif ($kontinuation instanceof java_JavaType) 
+		java_context()->call($kontinuation);
+	  else
+		java_context()->call(java_closure($kontinuation));
 	}
   }
  } //!java_defined  DO NOT REMOVE THIS LINE

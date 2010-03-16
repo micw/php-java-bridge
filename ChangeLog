@@ -1,8 +1,26 @@
+2010-03-13  <jostb@intern>
+
+	* server/php/java/bridge/Util.java
+	(ENVIRONMENT_BLACKLIST, getEnvironmentBlacklist): New features
+	(getCommonEnvironment): Rewritten
+	
+	* server/php/java/servlet/FastCGIServlet.java
+	(getProcessEnvironment): Removed
+	(PROCESS_ENVIRONMENT): Use ENVIRONMENT_BLACKLIST
+	
+	* server/php/java/bridge/global.properties.in
+	(PHP_ENV_BLACKLIST): New entry
+	
+	* VERSION, php-java-bridge.spec: Version 6.1.0 released	
+
+2010-03-07  <jostb@intern>
+
+	* server/META-INF/java/JavaBridge.inc
+	(java_call_with_continuation): Rewritten
+
 2010-03-06  <jostb@intern>
 
-      * php-java-bridge.spec: Updated for version 6
-
-      * build.xml (clean): New target
+	* build.xml (clean): New target
 
 	* VERSION, php-java-bridge.spec: Version 6.0.4 released
 

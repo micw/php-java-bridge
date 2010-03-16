@@ -65,11 +65,13 @@
 
         <!-- Automatically include java/JavaProxy.php  -->
         <!-- Switch this off if you don't use Java in all of your scripts -->
-        <!-- Default is On. -->
+        <!-- Default is Off. -->
+        <!-- 
          <init-param>
            <param-name>php_include_java</param-name>
-           <param-value>Off</param-value>
+           <param-value>On</param-value>
          </init-param>
+        -->
 
         <load-on-startup>0</load-on-startup>
     </servlet>

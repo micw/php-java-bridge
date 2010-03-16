@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
@@ -46,6 +47,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.Vector;
+import java.util.Map.Entry;
 
 
 /**
@@ -190,13 +192,16 @@ public final class Util {
      */
     public static final int BUF_SIZE = 8192;
 
+    /** Environment entries which should NOT be passed to PHP. For example PHPRC, which is set by some broken PHP installers */
+    
+    public static List ENVIRONMENT_BLACKLIST;
     /**
-     * A map containing common environment values for JDK <= 1.4:
+     * A map containing environment values not in ENVIRONMENT_BLACKLIST. At least:
      * "PATH", "LD_LIBRARY_PATH", "LD_ASSUME_KERNEL", "USER", "TMP", "TEMP", "HOME", "HOMEPATH", "LANG", "TZ", "OS"
      * They can be set with e.g.: <code>java -DPATH="$PATH" -DHOME="$HOME" -jar JavaBridge.jar</code> or
      * <code>java -DPATH="%PATH%" -jar JavaBridge.jar</code>. 
      */
-    public static Map COMMON_ENVIRONMENT;
+    public static HashMap COMMON_ENVIRONMENT;
 
     /**
      * The default extension directories. If one of the directories
@@ -314,8 +319,17 @@ public final class Util {
 	    LAUNCHER_WINDOWS4 = Class.forName("php.java.bridge.LauncherWindows4");
 	} catch (Exception e) {/*ignore*/}
 	    
-
-	COMMON_ENVIRONMENT = getCommonEnvironment();
+    	Properties p = new Properties();
+	try {
+	    InputStream in = Util.class.getResourceAsStream("global.properties");
+	    p.load(in);
+	    VERSION = p.getProperty("BACKEND_VERSION");
+	} catch (Throwable t) {
+	    VERSION = "unknown";
+	    //t.printStackTrace();
+	};
+	ENVIRONMENT_BLACKLIST = getEnvironmentBlacklist(p);
+	COMMON_ENVIRONMENT = getCommonEnvironment(ENVIRONMENT_BLACKLIST);
 	DEFAULT_CGI_LOCATIONS = new String[] {"/usr/bin/php-cgi", "c:/Program Files/PHP/php-cgi.exe"};
 	try {
 	    if (!new File(DEFAULT_CGI_LOCATIONS[0]).exists() && !new File(DEFAULT_CGI_LOCATIONS[0]).exists())
@@ -336,7 +350,7 @@ public final class Util {
 		} catch (Exception e) { /*ignore*/ }
 	} catch (Throwable xe) {/*ignore*/}
 	try {
-	    MAX_WAIT = Integer.parseInt(System.getProperty("php.java.bridge.max_wait", "15000"));
+	    MAX_WAIT = Integer.parseInt(getProperty(p, "php.java.bridge.max_wait", "15000"));
 	} catch (Exception e) {
 	    MAX_WAIT = 15000;
 	}
@@ -346,7 +360,7 @@ public final class Util {
 	    HOME_DIR = null;
 	}
 	try {
-	    JAVABRIDGE_BASE = System.getProperty("php.java.bridge.base",  System.getProperty("user.home"));
+	    JAVABRIDGE_BASE = getProperty(p, "php.java.bridge.base",  System.getProperty("user.home"));
 	    JAVABRIDGE_LIB =  JAVABRIDGE_BASE + File.separator +"lib";
 	} catch (Exception e) {
 	    JAVABRIDGE_BASE=".";
@@ -358,18 +372,9 @@ public final class Util {
 	} catch (Exception e) {/*ignore*/}
     	try {
     	    JAVABRIDGE_PROMISCUOUS = false;
-	    JAVABRIDGE_PROMISCUOUS = System.getProperty("php.java.bridge.promiscuous", "false").toLowerCase().equals("true");	    
+	    JAVABRIDGE_PROMISCUOUS = getProperty(p, "php.java.bridge.promiscuous", "false").toLowerCase().equals("true");	    
 	} catch (Exception e) {/*ignore*/}
 
-    	Properties p = new Properties();
-	try {
-	    InputStream in = Util.class.getResourceAsStream("global.properties");
-	    p.load(in);
-	    VERSION = p.getProperty("BACKEND_VERSION");
-	} catch (Throwable t) {
-	    VERSION = "unknown";
-	    //t.printStackTrace();
-	};
 	try {
 	    THREAD_POOL_MAX_SIZE = "20";
 	    THREAD_POOL_MAX_SIZE = getProperty(p, "THREADS", "20");
@@ -1316,12 +1321,26 @@ public final class Util {
 	}
     }
 
-    private static HashMap getCommonEnvironment() {
+    private static List getEnvironmentBlacklist(Properties p) {
+	List l = new LinkedList();
+	try {
+	    String s = getProperty(p, "PHP_ENV_BLACKLIST", "PHPRC");
+	    StringTokenizer t = new StringTokenizer(s, " ");
+	    while(t.hasMoreTokens()) l.add(t.nextToken());
+	} catch (Exception e) {
+	    e.printStackTrace();
+	    l = new LinkedList ();
+	    l.add("PHPRC");
+	}
+	return l;
+    }
+    
+    private static HashMap getCommonEnvironment(List blacklist) {
 	String entries[] = {
-	    "PATH", "LD_LIBRARY_PATH", "LD_ASSUME_KERNEL", "USER", "TMP", "TEMP", "HOME", "HOMEPATH", "LANG", "TZ", "OS"
+		"PATH", "PATH", "LD_LIBRARY_PATH", "LD_ASSUME_KERNEL", "USER", "TMP", "TEMP", "HOME", "HOMEPATH", "LANG", "TZ", "OS"
 	};
-	HashMap map = new HashMap(entries.length+10);
-	String val;
+	HashMap defaultEnv = new HashMap();
+	String key, val;
         Method m = null;
         try {m = System.class.getMethod("getenv", new Class[]{String.class});} catch (Exception e) {/*ignore*/}
 	for(int i=0; i<entries.length; i++) {
@@ -1336,9 +1355,41 @@ public final class Util {
 	    if(val==null) {
 	        try { val = System.getProperty(entries[i]); } catch (Exception e) {/*ignore*/}
 	    }
-	    if(val!=null) map.put(entries[i], val);
+	    if((val!=null) && (!blacklist.contains(entries[i])))
+		defaultEnv.put(entries[i], val);
 	}
-	return map;
+	
+	// check for windows SystemRoot, needed for socket operations
+	key = val = null;
+	if((new File("c:/winnt")).isDirectory()) val="c:\\winnt";
+	else if((new File("c:/windows")).isDirectory()) val = "c:\\windows";
+	try {
+	    String s = System.getenv(key = "SystemRoot"); 
+	    if(s!=null) val=s;
+        } catch (Throwable t) {/*ignore*/}
+        try {
+	    String s = System.getProperty(key = "Windows.SystemRoot");
+	    if(s!=null) val=s;
+        } catch (Throwable t) {/*ignore*/}
+	if(val!=null && (!blacklist.contains(key))) defaultEnv.put("SystemRoot", val);
+
+	// add all non-blacklisted environment entries
+	try {
+	    m = System.class.getMethod("getenv", ZERO_PARAM);
+	    Map map = (Map) m.invoke(System.class, ZERO_ARG);
+	    for (Iterator ii = map.entrySet().iterator(); ii.hasNext(); ) {
+		Entry entry = (Entry) ii.next();
+		key = (String) entry.getKey();
+		val = (String) entry.getValue();
+		
+		if (!blacklist.contains(key)) 
+		    defaultEnv.put(key, val);
+	    }
+	} catch (Exception e) {
+	    e.printStackTrace();
+	}
+	
+	return defaultEnv;
     }
     /** 
      * This procedure should be used whenever <code>object</code> may be a dynamic proxy: 

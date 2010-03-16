@@ -4,7 +4,13 @@ BACKEND_VERSION = @BACKEND_VERSION@
 
 ## You can adjust and enable the following properties:
 ##
+
+# The name of the library, usually JavaBridge or MonoBridge
 EXTENSION_DISPLAY_NAME = JavaBridge
+
+# A white space delimited list of environment entries; NOT to be passed to PHP
+PHP_ENV_BLACKLIST = PHPRC
+
 # BASE = <PATH TO YOUR HOME/BASE DIRECTORY, DEFAULT IS $HOME>
 # THREADS = 20
 # DEFAULT_LOG_LEVEL = 3

@@ -828,13 +828,12 @@ class pdb_JSDebuggerClient {
   private static function getDebuggerFilename() {
 	$script = __FILE__;
 	$scriptName = basename($script);
-	return $scriptName == "PHPDebugger.php" ? $script :"java/PHPDebugger.php";
+	return realpath($scriptName == "PHPDebugger.php" ? $script :"java/PHPDebugger.php");
   }
 	
   private static function getCurrentRootDir() {
 	$scriptName = $_SERVER['SCRIPT_NAME'];
 	$scriptFilename = $_SERVER['SCRIPT_FILENAME'];
- 
  
 	$scriptDirName = dirname($scriptName);
 	$scriptDir   = dirname($scriptFilename);
@@ -869,9 +868,9 @@ class pdb_JSDebuggerClient {
    * @access private
    */
   public static function getDebuggerURL() {
-	$path = realpath(self::getDebuggerFilename());
+	$path = self::getDebuggerFilename();
 	if (!$path) 
-	  trigger_error("No such file or directory: $path", E_USER_ERROR);
+	  trigger_error("java/PHPDebugger.php not found in document root", E_USER_ERROR);
 
 	$root = self::getCurrentRootDir();
 
@@ -885,7 +884,7 @@ class pdb_JSDebuggerClient {
 	  $prefix = '/' . ($idx ? substr($scriptDirName, 0, $idx): $scriptDirName);
 	}
   
-	if ($root)
+	if ($root && (strlen($root) < strlen($path)) && (!strncmp($path, $root, strlen($root))))
 	  $path = "${prefix}" . str_replace('\\', '/', substr($path, strlen($root)));
 	else // could not calculate debugger path
 	  $path = dirname($_SERVER['SCRIPT_NAME']) . "/java/PHPDebugger.php";

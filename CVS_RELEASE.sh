@@ -14,6 +14,10 @@ ln -s `pwd` php-java-bridge-${version}
 # create archive
 tar czhf php-java-bridge_${version}.tar.gz --exclude "php-java-bridge-${version}/php-java-bridge[_-]*" --exclude CVS --exclude ".??*" php-java-bridge-${version}
 
+rpmbuild -tb php-java-bridge_${version}.tar.gz
+mv ~/rpmbuild/RPMS/i386/php-java-bridge-${version}-1.i386.rpm "./php-java-bridge-${version}-1.fc`cat /etc/issue | sed 1q | awk '{print $3}'`.i386.rpm"
+mv ~/rpmbuild/RPMS/i386/php-java-bridge-devel-${version}-1.i386.rpm "./php-java-bridge-devel-${version}-1.fc`cat /etc/issue | sed 1q | awk '{print $3}'`.i386.rpm"
+
 ant && 
 ant PhpDoc 2>/dev/null >/dev/null && 
 ant JavaDoc &&
