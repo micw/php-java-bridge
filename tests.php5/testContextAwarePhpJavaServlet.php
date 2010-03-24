@@ -1,6 +1,6 @@
 <?php
 try {
-  require_once ("java/Java.inc");
+  include_once ("java/Java.inc");
   $ctx = java_context();
   $request = $ctx->getServletContext();
   echo $request;

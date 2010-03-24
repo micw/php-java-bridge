@@ -1,7 +1,7 @@
 #!/usr/bin/php
 
 <?php
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 
 $h=array("k"=>"v", "k2"=>"v2");
 $m=new java("java.util.HashMap",$h);

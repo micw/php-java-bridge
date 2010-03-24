@@ -87,4 +87,11 @@ public interface IJavaBridgeFactory {
      */
    public void flushBuffer() throws IOException;
 
+   /**
+    * Hook is called at the end of the visitor's life cycle. 
+    * Either from destroy(), recycle() or from destroyOrphaned().
+    * @see #destroy()
+    * @see #recycle()
+    */
+   public void invalidate();
 }

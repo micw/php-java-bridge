@@ -56,7 +56,7 @@ import php.java.bridge.Util;
  *   &lt;/filter-mapping&gt;<br>
  * </code>
  * </blockquote>
- * @see php.java.servlet.PhpCGIServlet
+ * @see php.java.servlet.fastcgi.FastCGIServlet
  *  */
 public class PhpCGIFilter implements Filter {
 

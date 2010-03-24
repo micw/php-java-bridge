@@ -107,6 +107,8 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	}
 	
     	super.destroy();
+    	
+    	Util.destroy();
     }
     /*    /**
      * Set the log level from the servlet into the bridge
@@ -142,14 +144,11 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	throws ServletException, IOException {
 	boolean destroyCtx = false;
 
-	if (getHeader("Content-Length", req)!=null) 
-	    log("WARNING: Pipe- and SocketContextServer switched off in the back end. Either enable them or define(\"JAVA_PERSISTENT_SERVLET_CONNECTION\", false) in \"java/Java.inc\" and try again.");
-
 	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
 	RemoteHttpServletContextFactory ctx;
 	if (id!=null) {
 	    ctx = (RemoteHttpServletContextFactory) RemoteHttpServletContextFactory.get(id);
-	    if (ctx==null) throw new IllegalStateException("Cannot find RemoteHttpServletContextFactory in session");
+	    if (ctx==null) throw new IllegalStateException("Cannot find RemoteHttpServletContextFactory");
 	} else {
 	    ctx = new RemoteHttpServletContextFactory(this, getServletContext(), req, req, res);
 	    destroyCtx = true;

@@ -34,15 +34,16 @@
  * @access private
  */
 function java_defineHostFromInitialQuery($java_base) {
-  if($java_base!="java/") {
+  if($java_base!="java") {
 	$url = parse_url($java_base);
-	if(isset($url["scheme"]) && ($url["scheme"]=="http")) {
+	if(isset($url["scheme"]) && ($url["scheme"]=="http" || $url["scheme"]=="https")) {
+	  $scheme = $url["scheme"] == "https" ? "ssl://" : "";
 	  $host = $url["host"];
 	  $port = $url["port"];
 	  $path = $url["path"];
-	  define ("JAVA_HOSTS", "$host:$port");
+	  define ("JAVA_HOSTS", "${scheme}${host}:${port}");
 	  $dir = dirname($path);
-	  define ("JAVA_SERVLET", "$dir/JavaBridge.phpjavabridge"); // On ;; On or User
+	  define ("JAVA_SERVLET", "$dir/servlet.phpjavabridge"); // On ;; On or User
 	  return true;
 	}
   }
@@ -52,7 +53,7 @@ function java_defineHostFromInitialQuery($java_base) {
 /**
  * The version number of this PHP library.
  */
-define ("JAVA_PEAR_VERSION", "5.5");
+define ("JAVA_PEAR_VERSION", "6.1");
 
 if(!defined("JAVA_SEND_SIZE")) 
   define("JAVA_SEND_SIZE", 8192);

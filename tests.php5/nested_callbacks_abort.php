@@ -1,7 +1,7 @@
 #!/usr/bin/php
 
 <?php
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 /*
  The server log should contain:
  --> <F p="A" />

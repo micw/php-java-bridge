@@ -157,4 +157,7 @@ public class SessionFactory extends JavaBridgeFactory {
    public void flushBuffer () throws IOException {
        bridge.out.flush();
    }
+   /**{@ineritDoc}*/
+   public void invalidate() {
+   }
 }

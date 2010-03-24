@@ -114,14 +114,6 @@ public interface IContextFactory extends IJavaBridgeFactory {
     public ISession getSimpleSession(String name, boolean clientIsNew, int timeout);
 
    /**
-    * Hook is called at the end of the visitor's life cycle. 
-    * Either from destroy(), recycle() or from destroyOrphaned().
-    * @see #destroy()
-    * @see #recycle()
-    */
-   public void invalidate();
-
-   /**
     * Called when the context runner starts
     * @see IContextFactory#releaseManaged()
     * @see IContextFactory#destroy()

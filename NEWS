@@ -3,6 +3,33 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 6.1.1
+
+* The bridge now supports all available PHP stream transports. Example:
+
+  <?php require_once("https://secure-host.com:8443/JavaBridge/java/Java.inc");
+    echo java_context()->getHttpServletRequest()->getScheme();
+    echo ", ";
+    echo java_server_name();
+  ?>        
+
+  The above is equivalent to: 
+
+  <?php
+    define("JAVA_HOSTS", "ssl://secure-host.com:8443");
+    define("JAVA_SERVLET", "/JavaBridge/servlet.phpjavabridge");
+    require_once("java/Java.inc");
+
+    echo java_context()->getHttpServletRequest()->getScheme();
+    echo ", ";
+    echo java_server_name();
+  ?>
+
+  => https, ssl://my-secure-host.com:8443
+
+  Please see the PHP documentation stream_get_transports() for
+  details.
+
 Version 6.1.0
 
 * Some Windows PHP install procedures destroy a local PHP executable

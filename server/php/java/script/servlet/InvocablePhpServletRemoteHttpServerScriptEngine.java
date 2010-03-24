@@ -14,9 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
-import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.IContext;
-import php.java.servlet.ServletUtil;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -81,7 +79,6 @@ public class InvocablePhpServletRemoteHttpServerScriptEngine extends InvocablePh
     
     /** The official FIXED(!) IP# of the current host, */
     protected String localName;
-    protected ContextServer contextServer;
     
     protected InvocablePhpServletRemoteHttpServerScriptEngine(Servlet servlet, 
 		   ServletContext ctx, 
@@ -97,11 +94,6 @@ public class InvocablePhpServletRemoteHttpServerScriptEngine extends InvocablePh
 	this.port = uri.getPort();
 	this.proxy = uri.getPath();
 	this.url = uri.toURL();
-
-	this.contextServer = ServletUtil.getContextServer(ctx, promiscuous);
-    }
-    protected ContextServer getContextServer() {
-	return contextServer;
     }
     protected void addNewContextFactory() {
 	ctx = InvocableRemotePhpServletContextFactory.addNew(getContextServer(), (IContext)getContext(), servlet, servletCtx, req, res, localName);

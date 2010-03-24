@@ -13,6 +13,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 
 import php.java.bridge.Util;
+import php.java.bridge.http.ContextServer;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -106,6 +107,13 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
 	    Util.printStackTrace(e);
 	}
 	ctx.removeAttribute(php.java.script.servlet.EngineFactory.ROOT_ENGINE_FACTORY_ATTRIBUTE);
+	
+	ContextServer contextServer = (ContextServer)ctx.getAttribute(ContextServer.ROOT_CONTEXT_SERVER_ATTRIBUTE);
+    	if (contextServer != null) contextServer.destroy();
+	ctx.removeAttribute(ContextServer.ROOT_CONTEXT_SERVER_ATTRIBUTE);
+	
+	ctx.removeAttribute(ServletUtil.HOST_ADDR_ATTRIBUTE);
+	
     }
     /**{@inheritDoc}*/  
     public void contextInitialized(ServletContextEvent event) {
@@ -115,7 +123,21 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
 	    ctx.setAttribute(php.java.script.servlet.EngineFactory.ROOT_ENGINE_FACTORY_ATTRIBUTE, clazz.newInstance());
 	    ctx.setAttribute(ENGINES, Collections.synchronizedList(new ArrayList()));
 	    ctx.setAttribute(CLOSEABLES, new LinkedList());
-        } catch (InstantiationException e) {
+
+	    boolean promiscuous = false;
+	    try {
+		String value = ctx.getInitParameter("promiscuous");
+		if(value==null) value="";
+		value = value.trim();
+		value = value.toLowerCase();
+		    
+		if(value.equals("on") || value.equals("true")) promiscuous=true;
+	    } catch (Exception t) {Util.printStackTrace(t);}
+	    ServletUtil.getContextServer(ctx, promiscuous);
+	    
+	    ctx.setAttribute(ServletUtil.HOST_ADDR_ATTRIBUTE, Util.getHostAddress(promiscuous));
+
+	} catch (InstantiationException e) {
 	    e.printStackTrace();
         } catch (IllegalAccessException e) {
 	    e.printStackTrace();

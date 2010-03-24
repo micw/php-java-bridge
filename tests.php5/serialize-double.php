@@ -1,7 +1,7 @@
 #!/usr/bin/php
 
 <?php
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 
 $val=1234523456.789;
 $v=new java("java.lang.Double", $val);

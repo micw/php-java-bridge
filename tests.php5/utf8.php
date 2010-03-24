@@ -1,6 +1,6 @@
 #!/usr/bin/php
 <?php
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 
 $sys = new java("java.lang.System");
 $sys->setProperty("utf8", "Cześć! -- שלום -- Grüß Gott -- Dobrý deň -- Dobrý den -- こんにちは, ｺﾝﾆﾁﾊ");

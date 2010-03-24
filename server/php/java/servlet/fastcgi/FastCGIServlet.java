@@ -229,7 +229,7 @@ public class FastCGIServlet extends HttpServlet {
     }
     private String DOCUMENT_ROOT;
     private String SERVER_SIGNATURE;
-    private ContextServer contextServer; // shared with PhpJavaServlet, FastCGIServlet
+    private ContextServer contextServer; // shared with FastCGIServlet
 
     ServletContext context;
     static final HashMap PROCESS_ENVIRONMENT = 
@@ -515,6 +515,9 @@ public class FastCGIServlet extends HttpServlet {
     	channelName.destroy();
     	super.destroy();
     	fcgiConnectionPool = null;
+
+    	if (contextServer != null) contextServer.destroy();
+    	Util.destroy();
     }
 
     protected void setupRequestVariables(HttpServletRequest req, Environment env) {

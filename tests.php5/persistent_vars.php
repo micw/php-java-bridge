@@ -2,7 +2,7 @@
 
 <?php
 
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 
 include("../php_java_lib/JPersistence.php");
 $ser="persist.ser";

@@ -1,4 +1,4 @@
-<?php require_once("java/Java.inc");
+<?php include_once("java/Java.inc");
 
 $ex = new JavaException("java.lang.Exception", "bleh");
 echo $ex->getMessage();

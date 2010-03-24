@@ -42,15 +42,15 @@ import php.java.bridge.Util;
  * The SocketContextServer uses only one server socket for all shared web contexts and cannot do any security checks.
  * </p>
  * @author jostb
- * @see php.java.bridge.http.PipeContextServer
  * @see php.java.bridge.http.SocketContextServer
  */
 public final class ContextServer {
     private String contextName;
     private boolean promiscuous;
+    /** Only for internal use */
+    public static final String ROOT_CONTEXT_SERVER_ATTRIBUTE = ContextServer.class.getName()+".ROOT";
     
     // There's only one  shared SocketContextServer instance, otherwise we have to allocate a new ServerSocket for each web context
-    // No secutiry token
     private  static SocketContextServer sock = null; 
     // One pool for both, the Socket- and the PipeContextServer
     private static AppThreadPool pool;
@@ -96,8 +96,6 @@ public final class ContextServer {
 
 	if(pool!=null) pool.destroy();
 	pool = null;
-
-	Util.destroy();
     }
     /**
      * Destroy the pipe or socket context server.

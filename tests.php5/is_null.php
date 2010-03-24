@@ -1,7 +1,7 @@
 #!/usr/bin/php
 
 <?php
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 
 $s = new JavaClass("java.lang.System");
 if(!$s) die("test failed1\n");

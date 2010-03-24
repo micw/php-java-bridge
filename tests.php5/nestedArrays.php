@@ -2,7 +2,7 @@
 
 <?php
 
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 
 $v = new java("java.util.Vector");
 $ar=(array("one"=>1, "two"=>2, "three"=>3, array("a",array(1,2,3,array("a","b"),5,"c","d"), "five"=>5, "six"=>6)));

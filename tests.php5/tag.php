@@ -1,5 +1,5 @@
 <?php
-require_once("java/Java.inc");
+include_once("java/Java.inc");
 include("../php_java_lib/JspTag.php");
 $session = java_session ();
 $here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));

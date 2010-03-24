@@ -1,7 +1,7 @@
 #!/usr/bin/php
 
 <?php
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 
 $here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
 if(!$here) $here=getcwd();

@@ -1,6 +1,6 @@
 <?php
 
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 
 is_string(java_cast(1, "string")) || die("string");
 is_long(java_cast("1", "long")) || die("long");

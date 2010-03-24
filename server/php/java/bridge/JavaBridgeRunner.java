@@ -354,17 +354,12 @@ public class JavaBridgeRunner extends HttpServer {
 
 		setErrorWriter.invoke(ctx, new Object[] {writer});
 
-		Method getBindings = engine.getClass().getMethod("getBindings", new Class[] {int.class});
-		Object bindings = getBindings.invoke(engine, new Object[] {new Integer(200)});
-		Method put = bindings.getClass().getMethod("put", new Class[] {Object.class, Object.class});
 		StringBuffer buf = new StringBuffer("/");
 		buf.append(name);
 		if(params!=null) {
 		    buf.append("?");
 		    buf.append(params);
 		}
-		put.invoke(bindings, new Object[] {"REQUEST_URI", buf.toString()});
-		put.invoke(bindings, new Object[] {"SCRIPT_FILENAME", f.getAbsolutePath()});
 
 		FileReader r = null;;
 		try {

@@ -1,17 +1,73 @@
+2010-03-20  <jostb@intern>
+
+	* server/php/java/bridge/IJavaBridgeFactory.java
+	(invalidate): Added from IContextFactory
+
+	* server/php/java/bridge/http/IContextFactory.java
+	(invalidate): Removed
+
+	* server/php/java/bridge/Request.java
+	(handleRequest): Invalidate after flushing the output buffer
+	(handleSubRequest): Do not recycle after an AbortException
+
+	* server/META-INF/java/Protocol.inc
+	(keepAlive): close the socket if <F p="E">
+
+	* server/php/java/bridge/http/ContextFactory.java
+	(recycle): Do not invalidate before flushing the output buffer
+
+	* server/META-INF/java/JavaBridge.inc
+	(java_get_base): Rewritten
+
+	* server/META-INF/java/Options.inc
+	(java_defineHostFromInitialQuery): Rewritten
+
+	* server/META-INF/java/Protocol.inc
+	(getHost): Rewritten
+	(createHttpHandler): extract and set HTTP scheme
+
+	* server/php/java/bridge/JavaBridgeRunner.java
+	(handleScriptContent): Do not set REQUEST_URI; php should read the
+	script passed via PhpScriptEngine.eval(), which reads Java.inc and
+	passes argv and argc to the script.
+
+	* server/php/java/bridge/Util.java
+	(destroy): Regression: shut down thread local
+
+	* server/php/java/servlet/ContextLoaderListener.java
+	(contextInitialized, contextDestroyed): Regression: shut down threads
+
+	* server/php/java/servlet/PhpJavaServlet.java
+	(destroy): Regression: shut down thread local
+
+	* server/php/java/servlet/fastcgi/FastCGIServlet.java
+	(destroy): Regression: shut down threads
+
+	* server/php/java/script/servlet/InvocablePhpServletRemoteHttpServerScriptEngine.java
+	(InvocablePhpServletRemoteHttpServerScriptEngine): Rewritten
+
+	* server/php/java/script/servlet/PhpServletLocalHttpServerScriptEngine.java
+	(PhpServletLocalHttpServerScriptEngine): Rewritten
+
+	* server/php/java/script/PhpScriptEngine.java
+	(STANDARD_HEADER): Rewritten
+
+	* VERSION, php-java-bridge.spec: Version 6.1.1 released
+
 2010-03-13  <jostb@intern>
 
 	* server/php/java/bridge/Util.java
 	(ENVIRONMENT_BLACKLIST, getEnvironmentBlacklist): New features
 	(getCommonEnvironment): Rewritten
-	
+
 	* server/php/java/servlet/FastCGIServlet.java
 	(getProcessEnvironment): Removed
 	(PROCESS_ENVIRONMENT): Use ENVIRONMENT_BLACKLIST
-	
+
 	* server/php/java/bridge/global.properties.in
 	(PHP_ENV_BLACKLIST): New entry
-	
-	* VERSION, php-java-bridge.spec: Version 6.1.0 released	
+
+	* VERSION, php-java-bridge.spec: Version 6.1.0 released
 
 2010-03-07  <jostb@intern>
 

@@ -52,7 +52,7 @@ if(!function_exists("java_get_base")) {
 	  $thiz = $ar[$arLen-1];
 	  return dirname($thiz);
 	} else {
-	  return "java/";
+	  return "java";
 	}
   }
   /**

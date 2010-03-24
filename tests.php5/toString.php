@@ -1,7 +1,7 @@
 #!/usr/bin/php
 <?php
 
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 
 $Object = new java_class ("java.lang.Object");
 $ObjectC = new JavaClass ("java.lang.Object");

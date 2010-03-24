@@ -1,7 +1,7 @@
 #!/usr/bin/php
 
 <?php
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 
 
 $ar=array(1, 2, 3, 5, 7, 11, -13, -17.01, 19);

@@ -2,7 +2,7 @@
 
 <?php
 
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 
 $file_encoding="ASCII";
 java_set_file_encoding($file_encoding);

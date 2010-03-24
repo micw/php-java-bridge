@@ -4,7 +4,7 @@
 //
 // this test must be called twice with a standalone or J2EE back end
 //
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 
 $rc=false;
 for($i=0; $i<100; $i++) {

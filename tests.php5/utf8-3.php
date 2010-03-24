@@ -1,7 +1,7 @@
 #!/usr/bin/php
 
 <?php
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 
 // Start server with:
 // java -Dfile.encoding=ASCII -jar JavaBridge.jar INET:0 4 ""

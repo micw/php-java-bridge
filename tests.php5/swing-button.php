@@ -12,7 +12,7 @@
 // as an "execution environment" for php scripts and uses System.exit()
 // to avoid issues with swing's background threads.
 
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 ini_set("max_execution_time", 0);
 if($argc<2) {
   echo "No automatic test. Use php swing-button.php --force to run this test.\n";

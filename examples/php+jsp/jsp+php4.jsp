@@ -9,7 +9,7 @@
  * There must not be a firewall in between, both components should be behind a firewall.
  */
 
-URI remotePhpApp = new URI("http://127.0.0.1:"+request.getLocalPort()+"/JavaBridge/java/JavaProxy.php");
+URI remotePhpApp = new URI(request.getScheme(), null, "127.0.0.1", request.getLocalPort(), "/JavaBridge/java/JavaProxy.php", null, null);
 ScriptEngine e = 
   EngineFactory.getInvocablePhpScriptEngine (this,
                                application, request, response, remotePhpApp);

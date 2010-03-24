@@ -1,7 +1,7 @@
 #!/usr/bin/php
 
 <?php 
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 
 $Array = new java_class("java.lang.reflect.Array");
 $String = new java_class("java.lang.String");

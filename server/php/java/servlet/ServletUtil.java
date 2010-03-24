@@ -43,6 +43,8 @@ public class ServletUtil {
 
     /** True if /bin/sh exists, false otherwise */
     public static final boolean USE_SH_WRAPPER = new File("/bin/sh").exists();
+    /** Only for internal use */
+    public static final String HOST_ADDR_ATTRIBUTE = ServletUtil.class.getName()+".HOST_ADDR";
 
     private ServletUtil() {}
     
@@ -126,16 +128,14 @@ public class ServletUtil {
     }
 
     /** Only for internal use */
-    public static synchronized ContextServer getContextServer(ServletContext context, boolean promiscuous) {
-        ContextServer server = (ContextServer)context.getAttribute(ServletUtil.ROOT_CONTEXT_SERVER_ATTRIBUTE);
+    public static ContextServer getContextServer(ServletContext context, boolean promiscuous) {
+        ContextServer server = (ContextServer)context.getAttribute(ContextServer.ROOT_CONTEXT_SERVER_ATTRIBUTE);
         if (server == null) {
             String servletContextName=getRealPath(context, "");
             if(servletContextName==null) servletContextName="";
             server = new ContextServer(servletContextName, promiscuous);
-            context.setAttribute(ServletUtil.ROOT_CONTEXT_SERVER_ATTRIBUTE, server);
+            context.setAttribute(ContextServer.ROOT_CONTEXT_SERVER_ATTRIBUTE, server);
         }
         return server;
     }
-
-    static final String ROOT_CONTEXT_SERVER_ATTRIBUTE = ContextServer.class.getName()+".ROOT";
 }

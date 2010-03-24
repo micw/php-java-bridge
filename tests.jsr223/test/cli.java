@@ -31,7 +31,7 @@ public class cli {
 	eng.eval("$b->add(2);");
 	eng.eval("$b->add(3);");
 	try { System.out.println(eng.eval("die();")); } catch (Exception e) {System.err.println("got exception: " + e);}
-	try { System.out.println(eng.eval("echo 'a:'. $a")); catch (Exception e) {System.err.println("got exception: " + e);}
+	try { System.out.println(eng.eval("echo 'a:'. $a"));} catch (Exception e) {System.err.println("got exception: " + e);}
 	System.out.println(eng.eval("echo 'b:'. $b"));
 	eng.eval((String)null);
 

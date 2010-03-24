@@ -1,6 +1,6 @@
 #!/usr/bin/php
 
-<?php require_once("java/Java.inc");
+<?php include_once("java/Java.inc");
 
 
 try {

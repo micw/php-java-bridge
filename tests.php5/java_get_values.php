@@ -1,7 +1,7 @@
 #!/usr/bin/php
 
 <?php 
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 ini_set("max_execution_time", 0);
 
 $System=new JavaClass("java.lang.System");

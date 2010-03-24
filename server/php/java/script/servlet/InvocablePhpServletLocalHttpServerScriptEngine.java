@@ -24,6 +24,7 @@ import php.java.bridge.Util;
 import php.java.bridge.http.ContextServer;
 import php.java.script.InvocablePhpScriptEngine;
 import php.java.script.URLReader;
+import php.java.servlet.ServletUtil;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -62,17 +63,16 @@ abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocableP
     protected String protocol;
     protected URL url;
     protected String proxy;
-    
-    protected boolean overrideHosts = true;
-    
-    protected boolean promiscuous = false;
+
+    protected String localHostAddr;
+    protected ContextServer contextServer;
     
     protected String getProxy() {
 	if (proxy!=null) return proxy;
 	return proxy=req.getContextPath()+"/java/JavaProxy.php";
     }
     protected URL getURL(ServletContext ctx) throws MalformedURLException, URISyntaxException {
-	return new java.net.URI(protocol, null, Util.getHostAddress(promiscuous), port, getProxy(), null, null).toURL();
+	return new java.net.URI(protocol, null, localHostAddr, port, getProxy(), null, null).toURL();
     }
     protected InvocablePhpServletLocalHttpServerScriptEngine(Servlet servlet, 
 					   ServletContext ctx, 
@@ -93,25 +93,11 @@ abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocableP
 	this.req = req;
 	this.res = res;
 
-	try {
-	    String value = ctx.getInitParameter("override_hosts");
-	    if(value==null) value="";
-	    value = value.trim();
-	    value = value.toLowerCase();
-	    if(value.equals("off") || value.equals("false")) overrideHosts = false;
-	} catch (Exception t) {Util.printStackTrace(t);}
-	
-	try {
-	    String value = ctx.getInitParameter("promiscuous");
-	    if(value==null) value="";
-	    value = value.trim();
-	    value = value.toLowerCase();
-	    
-	    if(value.equals("on") || value.equals("true")) promiscuous=true;
-	} catch (Exception t) {Util.printStackTrace(t);}
+	this.localHostAddr = (String)ctx.getAttribute(ServletUtil.HOST_ADDR_ATTRIBUTE);
+	this.contextServer = (ContextServer)ctx.getAttribute(ContextServer.ROOT_CONTEXT_SERVER_ATTRIBUTE);
 
 	scriptContext.initialize(servlet, servletCtx, req, res);
-}
+    }
     protected InvocablePhpServletLocalHttpServerScriptEngine(Servlet servlet, 
 		   ServletContext ctx, 
 		   HttpServletRequest req, 
@@ -137,7 +123,9 @@ abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocableP
 	        
 	        return scriptContext;
     }    
-    protected abstract ContextServer getContextServer ();
+    protected ContextServer getContextServer() {
+	return contextServer;
+    }
     protected abstract void addNewContextFactory ();
     /**
      * Create a new context ID and a environment map which we send to the client.
@@ -254,6 +242,6 @@ abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocableP
      * @param env the environment which will be passed to PHP
      */
     protected void setStandardEnvironmentValues (Map env) {
-	PhpServletLocalHttpServerScriptEngine.setStandardEnvironmentValues(ctx, env, req, webPath, overrideHosts);
+	PhpServletLocalHttpServerScriptEngine.setStandardEnvironmentValues(ctx, env, req, webPath);
     }
 }

@@ -1,11 +1,10 @@
 <?php
 
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 ini_set("max_execution_time", 0);
 
 $here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
 if(!$here) $here=getcwd();
-java_set_library_path("$here/binaryData.jar");
 
 $binaryData = new java("BinaryData");
 $data = java_values($binaryData->getData(700*1024));

@@ -1,6 +1,6 @@
 #!/usr/bin/php
 <?php
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 
 session_id("test");
 session_start();

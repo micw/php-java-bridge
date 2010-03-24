@@ -1,7 +1,7 @@
 #!/usr/bin/php
 
 <?php
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 ini_set("max_execution_time", 0);
 if($argc<2) {
   echo "No automatic test. Use php swing-button.php --force to run this test.\n";
@@ -10,7 +10,6 @@ if($argc<2) {
 
 $here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
 if(!$here) $here=getcwd();
-java_set_library_path("$here/arrayArray.jar");
 $Array = new java_class("ArrayArray");
 $n=60;
 $arrayArray=$Array->create($n);

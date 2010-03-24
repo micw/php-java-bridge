@@ -2,7 +2,7 @@
 
 <?php
 
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 
 $ListClass=new java_class("java.util.ArrayList");
 $list = new java("java.util.ArrayList");

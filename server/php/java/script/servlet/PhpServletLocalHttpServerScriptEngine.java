@@ -63,7 +63,7 @@ abstract class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
     protected boolean overrideHosts = true;
     
     protected ContextServer contextServer;
-    protected boolean promiscuous;
+    protected String localHostAddr;
     
     private URL url;
     private int port;
@@ -71,7 +71,7 @@ abstract class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
     protected URL getURL(String filePath) throws MalformedURLException, URISyntaxException {
 	if (url!=null) return url;
 	
-	return url = new java.net.URI(protocol, null, Util.getHostAddress(promiscuous), port, filePath, null, null).toURL();
+	return url = new java.net.URI(protocol, null, localHostAddr, port, filePath, null, null).toURL();
     }
     public PhpServletLocalHttpServerScriptEngine(Servlet servlet, 
 				  ServletContext ctx, 
@@ -85,30 +85,14 @@ abstract class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
 	this.servletCtx = ctx;
 	this.req = req;
 	this.res = res;
-	
-    	try {
-	    String value = ctx.getInitParameter("override_hosts");
-	    if(value==null) value="";
-	    value = value.trim();
-	    value = value.toLowerCase();
-	    if(value.equals("off") || value.equals("false")) overrideHosts = false;
-	} catch (Exception t) {Util.printStackTrace(t);}
-	
-	try {
-	    String value = ctx.getInitParameter("promiscuous");
-	    if(value==null) value="";
-	    value = value.trim();
-	    value = value.toLowerCase();
-	    
-	    if(value.equals("on") || value.equals("true")) promiscuous=true;
-	} catch (Exception t) {Util.printStackTrace(t);}
 	    
 	scriptContext.initialize(servlet, servletCtx, req, res);
 	
 	this.port = port;
 	this.protocol = protocol;
 
-	this.contextServer = ServletUtil.getContextServer(ctx, promiscuous);
+	this.contextServer = (ContextServer)ctx.getAttribute(ContextServer.ROOT_CONTEXT_SERVER_ATTRIBUTE);
+	this.localHostAddr = (String)ctx.getAttribute(ServletUtil.HOST_ADDR_ATTRIBUTE);
     }
 
     protected ScriptContext getPhpScriptContext() {
@@ -178,11 +162,11 @@ abstract class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
      * @param env the environment which will be passed to PHP
      */
     protected void setStandardEnvironmentValues (Map env) {
-	setStandardEnvironmentValues(ctx, env, req, webPath, overrideHosts);
+	setStandardEnvironmentValues(ctx, env, req, webPath);
     }
     static void setStandardEnvironmentValues(IContextFactory ctx,
             Map env, HttpServletRequest req,
-            String webPath, boolean overrideHosts) {
+            String webPath) {
 	
 	/* send the session context now, otherwise the client has to 
 	 * call handleRedirectConnection */

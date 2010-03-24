@@ -105,7 +105,7 @@ JSR 223 Script API
                                                         request, response);
     e.getContext().setWriter (out);
     Reader r = php.java.script.servlet.EngineFactory.createPhpScriptFileReader(
-      request.getServletPath()+"._cache_.php", HELLO_SCRIPT);
+      getClass().getName()+"._cache_.php", HELLO_SCRIPT);
     e.eval (r);
     r.close ();
   %>

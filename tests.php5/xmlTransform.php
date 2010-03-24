@@ -1,7 +1,7 @@
 #!/usr/bin/php
 
 <?php
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 
 $j_tfClass = new java_class("javax.xml.transform.TransformerFactory");
 $j_tf = $j_tfClass->newInstance();

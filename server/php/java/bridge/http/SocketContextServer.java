@@ -55,10 +55,9 @@ import php.java.bridge.Util;
  * off this server by setting the VM property
  * php.java.bridge.no_socket_server to true, e.g.:
  * -Dphp.java.bridge.no_socket_server=true.  </p>
- * @see php.java.bridge.http.PipeContextServer
  * @see php.java.bridge.http.ContextServer
  */
-public final class SocketContextServer implements Runnable {
+public final class SocketContextServer implements Runnable, IContextServer {
     private AppThreadPool threadPool;
     private ISocketFactory serverSocket = null;
     protected List sockets = Collections.synchronizedList(new ArrayList());

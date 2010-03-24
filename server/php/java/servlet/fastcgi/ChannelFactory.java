@@ -207,7 +207,7 @@ public abstract class ChannelFactory {
     /**
      * For backward compatibility the "JavaBridge" context uses the port 9667 (Linux/Unix) or <code>\\.\pipe\JavaBridge@9667</code> (Windogs).
      * @param servlet The servlet
-     * @param env The current CGI environment.
+     * @param req The current request.
      * @param contextPath The path of the web context
      */
     public void initialize(FastCGIServlet servlet, HttpServletRequest req, String contextPath) {

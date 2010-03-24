@@ -110,8 +110,9 @@ class java_EmptyChannel {
   function error() {
 	trigger_error("An unchecked exception occured during script execution. Please check the server log files for details.", E_USER_ERROR);
   }
-  function checkA() {
-	$val = $this->res[6];
+  function checkA($peer) {
+	$val=$this->res[6];
+	if ($val !='A') fclose($peer);
 	if ($val !='A' && $val !='E') {
 	  $this->error();
 	}
@@ -174,7 +175,7 @@ abstract class java_SocketChannel extends java_EmptyChannel {
  */
 class java_SocketChannelP extends java_SocketChannel {
   function getKeepAlive() {return $this->getKeepAliveA();}
-  function keepAlive() { $this->keepAliveS(); $this->checkA(); }
+  function keepAlive() { $this->keepAliveS(); $this->checkA($this->peer); }
 }
 
 /**
@@ -415,7 +416,6 @@ class java_HttpTunnelHandler extends java_SimpleHttpHandler  {
   function open() {
   	$errno = null; $errstr = null;
 	$socket = fsockopen("{$this->ssl}{$this->host}", $this->port, $errno, $errstr, 20);
-	$this->socket_desc = array($socket);
 	$this->checkSocket($socket, $errno, $errstr);
 	
 	stream_set_timeout($socket, -1);
@@ -584,6 +584,10 @@ class java_Protocol {
 	if(is_null($host)) {
 	  $hosts = explode(";", JAVA_HOSTS);
 	  $host = explode(":", $hosts[0]); // TODO: check host list
+	  
+	  // backward compatibility; changed from host:port to [ssl:]host:port
+	  while(count ($host) < 3) array_unshift($host, "");
+	  if (substr($host[1], 0, 2) == "//") $host[1] = substr($host[1], 2);
 	}
 	return $host;
   }
@@ -622,11 +626,12 @@ class java_Protocol {
 	  $this->webContext = $webCtx;
 	} else {
 	  $hostVec = java_Protocol::getHost();
-	  $host = $hostVec[0];
-	  $port = $hostVec[1];
+	  if ($ssl = $hostVec[0]) $ssl .= "://";
+	  $host = $hostVec[1];
+	  $port = $hostVec[2];
 	}
 
-	$this->serverName = "$host:$port";
+	$this->serverName = "${ssl}${host}:$port";
 
 	// short path S1: no PUT request
 	if ((array_key_exists("X_JAVABRIDGE_REDIRECT", $_SERVER)) || 

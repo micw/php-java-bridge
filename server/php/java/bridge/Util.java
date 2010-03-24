@@ -273,9 +273,6 @@ public final class Util {
     /** The base directory of the PHP/Java Bridge. Usually /usr/php/modules/ or $HOME  */
     public static String JAVABRIDGE_BASE;
     
-    /** The library directory of the PHP/Java Bridge. Usually /usr/php/modules/lib or $HOME/lib */
-    public static String JAVABRIDGE_LIB;
-    
     private static String getProperty(Properties p, String key, String defaultValue) {
 	String s = null;
 	if(p!=null) s = p.getProperty(key);
@@ -361,10 +358,8 @@ public final class Util {
 	}
 	try {
 	    JAVABRIDGE_BASE = getProperty(p, "php.java.bridge.base",  System.getProperty("user.home"));
-	    JAVABRIDGE_LIB =  JAVABRIDGE_BASE + File.separator +"lib";
 	} catch (Exception e) {
 	    JAVABRIDGE_BASE=".";
-	    JAVABRIDGE_LIB=".";	    
 	}
 	try {
     	    VM_NAME = "unknown";
@@ -848,7 +843,7 @@ public final class Util {
      * @return Returns the logger.
      */
     public static ILogger getLogger() {
-	if (!DEFAULT_LOG_FILE_SET) {
+	if (!DEFAULT_LOG_FILE_SET && logger != null) {
 	    Object l = logger.get();
 	    if(l != null) return (ILogger)l;
 	
@@ -1496,7 +1491,12 @@ public final class Util {
     }
     /**destroy the logger */
     public static void destroy () {
-	    Util.logLevel = 0;
+	Util.logLevel = 0;
+	try {
+	    logger.remove();
+	} catch (Throwable e) {
+	    e.printStackTrace();
+	}
     }
     /**
      * Return an mbean property.

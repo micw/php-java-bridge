@@ -1,7 +1,7 @@
 #!/usr/bin/php
 
 <?php
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 
 $s=new java("java.lang.String", 12);
 $c=$s->getBytes("ASCII");

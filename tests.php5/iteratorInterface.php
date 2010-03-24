@@ -2,7 +2,7 @@
 
 <?php
 
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 
 $conversion = new  java("java.util.Properties");
 $conversion->put("long", "java.lang.Byte java.lang.Short java.lang.Integer");

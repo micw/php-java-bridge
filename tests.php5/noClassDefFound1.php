@@ -1,7 +1,7 @@
 #!/usr/bin/php
 
 <?php
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 
 // the following tests if a class "NoClassDefFound" which contains a
 // constructor and a method which internally reference an external

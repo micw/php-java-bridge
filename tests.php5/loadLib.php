@@ -1,7 +1,7 @@
 #!/usr/bin/php
 
 <?php
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 
 $here=realpath(dirname($_SERVER["SCRIPT_FILENAME"]));
 if(!$here) $here=getcwd();
@@ -18,7 +18,6 @@ if(file_exists("$ext/lib/array")) {
 mkdir("$ext/lib/array");
 copy("$here/array.jar", "$ext/lib/array/array.jar");
 try {
-  java_set_library_path("array/array.jar");
   $testvar = new Java('Array');
   echo "Test okay\n";
   exit(0);

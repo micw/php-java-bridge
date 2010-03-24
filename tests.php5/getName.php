@@ -1,7 +1,7 @@
 #!/usr/bin/php
 
 <?php
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 
 $Thread = new JavaClass("java.lang.Thread");
 $name=java_values($Thread->getName());

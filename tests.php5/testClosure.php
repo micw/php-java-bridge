@@ -1,4 +1,4 @@
-<?php require_once("java/Java.inc");
+<?php include_once("java/Java.inc");
 
 $here=getcwd();
 java_require("$here");

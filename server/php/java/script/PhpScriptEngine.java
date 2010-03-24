@@ -69,11 +69,12 @@ public class PhpScriptEngine extends SimplePhpScriptEngine {
     private static final String STANDARD_HEADER = new String("<?php require_once(\"/java/Java.inc\");" +
     		"$java_bindings = java_context()->getBindings(100);" +
     		"$java_scriptname = @java_values($java_bindings['javax.script.filename']);"+
-    		"$java_argv = @java_values($java_bindings['javax.script.argv']);"+
-    		"$_SERVER['SCRIPT_FILENAME'] =  $java_scriptname ? $java_scriptname : '';"+
-    		"if (!$java_argv) $java_argv=array();"+
-    		"array_unshift($java_argv, $_SERVER['SCRIPT_FILENAME']);"+
-    		"$_SERVER['argv'] = $java_argv;"+
+    		"if(!isset($argv)) $argv = @java_values($java_bindings['javax.script.argv']);"+
+    		"if(!isset($argv)) $argv=array();"+
+    		"$_SERVER['SCRIPT_FILENAME'] =  isset($java_scriptname) ? $java_scriptname : '';"+
+    		"array_unshift($argv, $_SERVER['SCRIPT_FILENAME']);"+
+    		"if (!isset($argc)) $argc = count($argv);"+
+    		"$_SERVER['argv'] = $argv;"+
     		"?>");
     static String getStandardHeader (String filePath) {
 	StringBuffer buf = new StringBuffer(STANDARD_HEADER);

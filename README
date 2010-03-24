@@ -363,13 +363,11 @@ Build and execution instructions:
   WEB-INF/lib. Libraries in these directories are automatically loaded
   by a static loader whenever the JVM starts.
 
-  The location of a "php.java.bridge.base" depends on the Java system
-  property -Dphp.java.bridge.base. It defaults to user.home. 
-  
-  Java libraries can be created from .class files with the following
-  command:
+  Java libraries can be created with:
 
+    javac -Djava.ext.dirs=. my/package/*.java
     jar cvf myLibrary-0.1.jar my/package/*.class 
+
 
 ------------------------------------
   Sun java platform issues

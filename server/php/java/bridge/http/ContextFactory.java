@@ -75,7 +75,7 @@ import php.java.bridge.Util;
  * <p>
  * In a shared environment with k web contexts there can be up to n*k active JavaBridge/ContextFactory instances 
  * (where n is the number of active php clients). All ContextFactories are kept in a shared, per-loader
- * map. But the map can only be accessed via {@link #get(String, ICredentials)}, which checks if the ContextFactory
+ * map. But the map can only be accessed via {@link #get(String)}, which checks if the ContextFactory
  * belongs to the same ContextServer.
  * </p>
  * @see php.java.servlet.ServletContextFactory
@@ -145,7 +145,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
      * Create a new simple ContextFactory (a factory which creates an emulated JSR223 context) and add it 
      * to the list of context factories kept by this classloader.
      * @return The created ContextFactory.
-     * @see php.java.bridge.http.ContextFactory#get(String, ICredentials)
+     * @see php.java.bridge.http.ContextFactory#get(String)
      */
     public static IContextFactory addNew() {
     	return new SimpleContextFactory(EMPTY_CONTEXT_NAME, false);
@@ -153,7 +153,7 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     
     /**
      * Only for internal use.
-     * The same as {@link #get(String, php.java.bridge.http.ContextFactory.ICredentials)} with the second argument set to null.
+     * The same as {@link #get(String)} with the second argument set to null.
      * 
      * The servlet may use this procedure to check for a new context factory.
      * @param id The existing id.
@@ -241,7 +241,6 @@ public final class ContextFactory extends SessionFactory implements IContextFact
     public void recycle() {
 	if(Util.logLevel>=4) Util.logDebug("contextfactory: finish context called (recycle context factory) " + this.visitor);
 	super.recycle();
-	visitor.invalidate();
     }
     
     /**{@inheritDoc}*/  

@@ -392,7 +392,8 @@ public final class Request implements IDocHandler {
 			}
 			response.flush();
 		      } catch (AbortException sub) {
-			  bridge.printStackTrace(sub);
+			  Util.printStackTrace(sub);
+			  retval = Parser.EOF;
 		      }
 		      break;
 	    case 'G':
@@ -405,7 +406,8 @@ public final class Request implements IDocHandler {
 			}
 			response.flush();
 		      } catch (AbortException sub) {
-			  bridge.printStackTrace(sub);
+			  Util.printStackTrace(sub);
+			  retval = Parser.EOF;
 		      }
 		      break;
 	    case 'Y':
@@ -418,7 +420,8 @@ public final class Request implements IDocHandler {
 			}
 			response.flush();
 		      } catch (AbortException sub) {
-			  bridge.printStackTrace(sub);
+			  Util.printStackTrace(sub);
+			  retval = Parser.EOF;
 		      }
 		      break;
 	    case 'C':
@@ -430,7 +433,8 @@ public final class Request implements IDocHandler {
 			}
 			response.flush();
 		      } catch (AbortException sub) {
-			  bridge.printStackTrace(sub);
+			  Util.printStackTrace(sub);
+			  retval = Parser.EOF;
 		      }
 		      break;
 	    case 'H':
@@ -443,7 +447,8 @@ public final class Request implements IDocHandler {
 			}
 			response.flush();
 		      } catch (AbortException sub) {
-			  bridge.printStackTrace(sub);
+			  Util.printStackTrace(sub);
+			  retval = Parser.EOF;
 		      }
 		      break;
 	    case 'K':
@@ -456,11 +461,13 @@ public final class Request implements IDocHandler {
 			}
 			response.flush();
 		      } catch (AbortException sub) {
-			  bridge.printStackTrace(sub);
+			  Util.printStackTrace(sub);
+			  retval = Parser.EOF;
 		      }
 		      break;
 	   case 'F': 
-	         if(arg.predicate=='A') { // keep alive
+	        IJavaBridgeFactory factory = bridge.getFactory(); 
+	       	if(arg.predicate=='A') { // keep alive
 	           bridge.recycle();
 	           try {
 	     	       ((AppThreadPool.Delegate)Thread.currentThread()).setPersistent();
@@ -468,10 +475,12 @@ public final class Request implements IDocHandler {
 	           response.setFinish(true);
 	         } else { // terminate or terminate keep alive
 	           response.setFinish(false);
+	           retval = Parser.EOF;
 	         }
 	         response.flush();
+	         factory.invalidate();
 	         break;
-	   case 'R':
+	   case 'R': // should not happen
 	       setIllegalStateException(SUB_FAILED);
 	       response.flush();
 	       break;
@@ -582,23 +591,13 @@ public final class Request implements IDocHandler {
 		}
 		response.flush();
 		break;
-	    case 'F':	
-	        if(arg.predicate=='A') { // keep alive
-	            bridge.recycle();
-	            try {
-			((AppThreadPool.Delegate)Thread.currentThread()).setPersistent();
-		    	response.setFinish(true);
-		    } catch (ClassCastException ex) {
-			/* no thread pool */
-		    	response.setFinish(false);			
-		    }
-	        } else { // terminate or terminate keep alive
-	            response.setFinish(false);
-	        }
+	    case 'F': // may happen due to a fatal error in a sub request
+		response.setFinish(false);
 	        response.flush();
 	 	response = currentResponse;
 	 	arg = current;
-		throw new AbortException();	         
+	 	throw new AbortException();
+	 	// no factory.invalidate necessary; ContextRunner will terminate and call factory.destroy()
 	    case 'R':
 	    	Arg ret = arg;
 	    	arg = current;
@@ -612,6 +611,9 @@ public final class Request implements IDocHandler {
 	    }
 	    arg.reset();
 	}
+	// should not happen
+	response.setFinish(false);
+        response.flush();
 	arg = current;
 	response = currentResponse;
 	throw new AbortException();

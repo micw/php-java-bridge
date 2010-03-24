@@ -11,7 +11,7 @@
 
 
 <?php
-     require_once ("java/Java.inc");
+     include_once ("java/Java.inc");
 
 java_set_file_encoding("ISO-8859-1");
 

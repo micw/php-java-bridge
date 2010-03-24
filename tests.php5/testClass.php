@@ -1,7 +1,7 @@
 #!/usr/bin/php
 
 <?php
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 
 $class = new java_class("java.lang.Class");
 $arr = java_get_values($class->getConstructors());

@@ -1,7 +1,7 @@
 #!/usr/bin/php
 
 <?php
-require_once ("java/Java.inc");
+include_once ("java/Java.inc");
 class c {
   function c1($s1, $o1) {
     echo "c1: $s1, $o1\n";
