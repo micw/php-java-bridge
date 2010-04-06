@@ -51,9 +51,7 @@ configure: patchsource configure-stamp
 configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
-#	phpize --clean
-	phpize
-	./configure --with-java=/usr/lib/jvm/java-6-sun --prefix=${DESTDIR}
+
 	touch configure-stamp
 
 build: build-stamp
@@ -62,7 +60,7 @@ build: build-stamp
 build-stamp: configure 
 	dh_testdir
 	# Add here commands to compile the package.
-	$(MAKE)
+	dh_auto_build  --buildsystem=ant
 	#docbook-to-man debian/php-java-bridge.sgml > php-java-bridge.1
 	#into makefiles, each line spawns own shell, so you need to write single line batches.
 	cd security/module;	$(MAKE) -f Makefile; 	cd ../..
@@ -74,8 +72,7 @@ clean-patched:
 	dh_testroot
 	rm -f build-stamp configure-stamp
 	# Add here commands to clean up after the build process.
-#	-$(MAKE) distclean
-	dh_auto_clean
+	dh_auto_clean   --buildsystem=ant
 	cd security/module; 	dh_auto_clean; 	cd ../..
 	dh_clean
 #	rm -rf ${BUILDDIR}
@@ -85,7 +82,7 @@ install: installbasic
 	# Add here commands to install the package into debian/php-java-bridge.
 
 # specifiy destdir debian way
-	$(MAKE) install DESTDIR=${DESTDIR}
+	dh_auto_install  --buildsystem=ant DESTDIR=${DESTDIR}
 
 # avoid multiple binary packages conflicts with --keep
 installbasic:
@@ -97,7 +94,7 @@ installbasic:
 
 # Build architecture-independent files here.
 # creating also docs package without examples files. See /debian/*.docs file
-binary-indep: php-java-bridge-devel php-java-bridge-j2ee php-java-bridge-j2ee-selinux binarydocs php-java-bridge-selinux
+binary-indep: php-java-bridge-devel php-java-bridge-j2ee php-java-bridge-j2ee-selinux binarydocs
 
 # creating j2ee package . See /debian/*j2ee.* files
 # note the -p$@ to use target name package files in /debian as parameters
@@ -114,7 +111,7 @@ php-java-bridge-j2ee:
 #	dh_installexamples -p$@
 # using dh_installdirs and dh_install for this task
 # note the absence of leading "/"
-	dh_install  --fail-missing --package=$@ ${BUILDDIR}$(PHP_EXT_DIR)/JavaBridge.war var/lib/tomcat5.5/webapps
+	dh_install  --fail-missing --package=$@ dist/JavaBridge.war var/lib/tomcat5.5/webapps
 #	dh_install -i -p$@
 #	dh_installmenu -i
 #	dh_installdebconf -i
@@ -215,7 +212,7 @@ php-java-bridge-devel:
 	dh_installchangelogs  ChangeLog
 	dh_installdocs  -p$@
 	dh_installexamples  -p$@
-	dh_install  --fail-missing -p$@ ${BUILDDIR}$(PHP_EXT_DIR)/*.jar $(PHP_INCLUDE_DIR)/ext/php-java-bridge
+	dh_install  --fail-missing -p$@ dist/*.jar $(PHP_INCLUDE_DIR)/ext/php-java-bridge
 #	dh_install -i -p$@
 #	dh_installmenu -i
 #	dh_installdebconf -i
@@ -304,7 +301,7 @@ binary-arch:
 	dh_installchangelogs -a ChangeLog
 	dh_installdocs -a
 #	dh_installexamples -a
-	dh_install --exclude=JavaBridge.war -a --fail-missing ${BUILDDIR}$(PHP_EXT_DIR)/* $(PHP_EXT_DIR)
+#	dh_install --exclude=JavaBridge.war -a --fail-missing ${BUILDDIR}$(PHP_EXT_DIR)/* $(PHP_EXT_DIR)
 #	dh_installmenu -a
 #	dh_installdebconf -a	
 #	dh_installlogrotate -a
@@ -330,7 +327,7 @@ binary-arch:
 
 # build and install are implicit, but THIS package source needs 2 cycles.
 # so the first cycle is implicity and this entry is for the second cycle.
-binary: build install binary-arch binary-indep
+binary: build install binary-indep
 .PHONY: build build-stamp clean clean-patched binary-indep binary-arch binarydocs binary install configure configure-stamp installdocs installbasic unpatch patchsource patch-stamp  php-java-bridge-j2ee php-java-bridge-devel php-java-bridge-docs php-java-bridge-j2ee-docs php-java-bridge-j2ee-selinux php-java-bridge-selinux
 
 # using dpatch for flexibility

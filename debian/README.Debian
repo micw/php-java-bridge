@@ -4,13 +4,14 @@ php-java-bridge for Debian
 This Debian package was compiled for installing php5 C modules, j2ee server, 
 docs and development files using separated packages.
 Also, it must use Sun Java 6 and Tomcat 5.5, as of today.
-You do not need C implementation and php J2EE server versions simultaneously.
-You must use the J2EE version as soon you could, as C implementation is obsolete
-and unmaintained. This file release do not include C implementation binary.
-It could still be built from package source, for those who want.
+You must use the J2EE version, because C implementation was removed from 
+distribution and source tree. 
+This file release do not include C implementation binary.
 This version is not compatible with php 4.x.
 Compilation against GCJ is possible, but some tweaks must be done. Read the 
 other document files.
+This version needs debhelper >= 7.4.11~bpo50+1 for build.
+This version uses ant build environment, and only SELinux still use make.
 This package uses an EXPERIMENTAL and TOO permissive Tomcat 5.5 security policy.
 Only suitable for security benign development environments.
 Java security is not actually enough for blocking malicious code from php.
@@ -97,7 +98,7 @@ do this, if step 1.1.1.1 is not needed.
 suitable version.
 
 $ cd ~/projects/php-java-bridge
-$ cvs -f tag 'upstream_version_5_2_2' '.'
+$ cvs -f tag 'upstream_version_6_1_1' '.'
 
 1.1.4 Create or edit the Debian php-java-bridge specific patches.
 
@@ -114,7 +115,7 @@ file name into the ./debian/patches directory.
 follow the strict formating, as the Debian changelog is actualy used as one of 
 the package control files.
 
-$ debchange -v 5.2.2-1
+$ debchange -v 6.1.1-1
 
 1.1.6 Modify some other */debian files, if needed.
 
@@ -124,7 +125,7 @@ $ debchange -v 5.2.2-1
 suitable version.
 
 $ cd ~/projects/php-java-bridge
-$ cvs -f tag 'debian_version_5_2_2-1' '.'
+$ cvs -f tag 'debian_version_6_1_1-1' '.'
 
 
 2. Building the package from cvs tree.
@@ -148,4 +149,4 @@ http://localhost:8180/JavaBridge
 with or without SE Linux packaged rules installed.
 The port is configured 8180 in order to avoid conflict with Apache.
 
- -- Andre Felipe Machado <andremachado@techforce.com.br>  Tue, 26 Jan 2010 15:47:03 -0300
+ -- Andre Felipe Machado <andre.machado@serpro.gov.br>  Tue, 06 Apr 2010 13:53:02 -0300

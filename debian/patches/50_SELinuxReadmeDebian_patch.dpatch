@@ -1,5 +1,5 @@
 #! /bin/sh /usr/share/dpatch/dpatch-run
-## 50_SELinuxReadmeDebian_patch.dpatch by  <andremachado@debian.pae.serpro>
+## 50_SELinuxReadmeDebian_patch.dpatch by  <andre.machado@serpro.gov.br>
 ##
 ## All lines beginning with `## DP:' are a description of the patch.
 ## DP: No description.

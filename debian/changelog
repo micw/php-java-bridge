@@ -1,3 +1,13 @@
+php-java-bridge (6.1.1-1) unstable; urgency=low
+
+  * New upstream version.
+  * Removed C binary package and its SE Linux companion package.
+  * Dependency on debhelper from backports.org
+
+ -- Andre Felipe Machado <andre.machado@serpro.gov.br>  Mon, 06 Apr 2010 13:57:23 -0300
+
+
+
 php-java-bridge (5.5.5-1) unstable; urgency=low
 
   * New upstream version.
