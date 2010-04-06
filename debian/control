@@ -8,24 +8,6 @@ XBS-Homepage: http://php-java-bridge.sourceforge.net
 
 
 
-Package: php-java-bridge
-Architecture: any
-Depends: ${shlibs:Depends}, sun-java6-jre, liblucene-java, libitext-java, php5-cli, php5-cgi, libaprutil1, libapr1, libtcnative-1
-Conflicts: php-java-bridge-j2ee
-Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm
- The PHP/Java Bridge is an optimized, XML-based network 
- protocol which can be used to connect a native script 
- engine with a Java or ECMA 335 virtual machine. 
- It is more than 50 times faster than local RPC via SOAP, 
- uses less resources on the web-server side and it is faster 
- and more reliable than a communication via the Java Native 
- Interface.
- This Debian package installs C implementation as php modules.
- The bridge C implementation is deprecated and unmaintained.
- It is kept here for historical purposes.
- You must modify your installation to use the J2EE version
- as soon as possible.
-
 Package: php-java-bridge-j2ee
 Architecture: all
 Depends:  sun-java6-jre, tomcat5.5, liblucene-java, libitext-java, libapache2-mod-jk, php5-cli, php5-cgi, libaprutil1, libapr1, libtcnative-1, libxalan110
@@ -99,23 +81,4 @@ Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm se
  This package works only for tomcat5.5 and SELinux default policy.
  Other J2EE server or policy should compile and install from your
  modified source.
-
-Package: php-java-bridge-selinux
-Architecture: all
-Depends:  sun-java6-jre, tomcat5.5, liblucene-java, libitext-java, php-java-bridge
-Description: XML-based net connection protocol between PHP-Java / ECMA 335 vm security
- The PHP/Java Bridge is an optimized, XML-based network 
- protocol which can be used to connect a native script 
- engine with a Java or ECMA 335 virtual machine. 
- It is more than 50 times faster than local RPC via SOAP, 
- uses less resources on the web-server side and it is faster 
- and more reliable than a communication via the Java Native 
- Interface.
- This Debian package installs the bridge deprecated C version 
- SE Linux rules contained in the package devel, 
- examples/security/module directory.
- The bridge C implementation is deprecated and unmaintained.
- It is kept here for historical purposes.
- You must modify your installation to use the J2EE version
- as soon as possible.
 
