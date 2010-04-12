@@ -20,12 +20,10 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import php.java.bridge.ILogger;
 import php.java.bridge.Util;
 import php.java.bridge.http.ContextServer;
 import php.java.script.InvocablePhpScriptEngine;
 import php.java.script.URLReader;
-import php.java.servlet.ContextLoaderListener;
 import php.java.servlet.ServletUtil;
 
 /*

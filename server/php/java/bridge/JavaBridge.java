@@ -104,6 +104,34 @@ public class JavaBridge implements Runnable {
      * Handle requests from the InputStream, write the responses to OutputStream
      * @param in the InputStream
      * @param out the OutputStream
+     * @param logger the logger
+     * @throws IOException
+     * Example:
+     * <blockquote>
+     * <code>
+     * protected void doPut (HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException { <br>
+     * &nbsp;&nbsp;IContextFactory ctx = new RemoteHttpServletContextFactory(this, getServletContext(), req, req, res);<br>
+     * &nbsp;&nbsp;res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());<br>
+     * &nbsp;&nbsp;res.setHeader("Pragma", "no-cache");<br>
+     * &nbsp;&nbsp;res.setHeader("Cache-Control", "no-cache");<br>
+     * &nbsp;&nbsp;try { ctx.getBridge().handleRequests(req.getInputStream(), res.getOutputStream()); } finally { ctx.destroy(); }<br>
+     * }
+     * </code>
+     * </blockquote>
+     */
+    public void handleRequests (InputStream in, OutputStream out, ILogger logger) throws IOException {
+	try {
+	    Util.setLogger(logger);
+	    handleRequests(in, out);
+	} finally {
+	    Util.unsetLogger();
+	}
+	
+    }
+    /**
+     * Handle requests from the InputStream, write the responses to OutputStream
+     * @param in the InputStream
+     * @param out the OutputStream
      * @throws IOException
      * Example:
      * <blockquote>
