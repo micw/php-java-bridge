@@ -30,12 +30,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.DateFormat;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -43,7 +41,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.Vector;
@@ -442,10 +439,17 @@ public final class Util {
      */
     static PrintStream logStream;
     
+    private static ILogger defaultLogger =  new Logger(new FileLogger());
+    
     /**
      * The logger
      */
-    private static ThreadLocal logger = new ThreadLocal();
+    private static final ThreadLocal logger = new ThreadLocal() {
+	protected Object initialValue() {
+	    //new Exception("no thread local set").printStackTrace();
+            return null;
+	};
+    };
     
     /**
      * The loglevel:<br>
@@ -740,7 +744,7 @@ public final class Util {
       public abstract void parseHeader(String header);
       public abstract void addHeader (String key, String val);
     }
-    public static class SimpleHeaderParser extends HeaderParser {
+    static class SimpleHeaderParser extends HeaderParser {
 	public void parseHeader(String header) {/*template*/}
 	public void addHeader (String key, String val) {/*template*/}
     }
@@ -815,46 +819,74 @@ public final class Util {
     }
     
     /**
-     * Set the default logger.
-     *
+     * Sets the fall back logger, used when no thread-local logger exists. The default logger is initialized with: <code>new Logger(new FileLogger())</code>. 
+     * @param logger the logger
+     * @see #logDebug
      */
-    public static synchronized void setDefaultFileLogger() {
-        setLogger(new Logger(new FileLogger()));
+    public static synchronized void setDefaultLogger(ILogger logger) {
+	Util.defaultLogger = logger;
     }
     /**
-     * Set a new logger. Example:<br><br>
+     * Set a new thread-local logger. Example:<br><br>
+     * <blockquote>
      * <code>
-     * public class MyServlet extends PhpJavaServlet { <br>
-     * &nbsp;&nbsp;public static final String LOG_HOST="192.168.5.99";<br>
-     * &nbsp;&nbsp;public void init(ServletConfig config) throws ServletException {<br>
-     * &nbsp;&nbsp;&nbsp;&nbsp;super.init(config);<br>
-     * &nbsp;&nbsp;&nbsp;&nbsp;Util.setLogger(new php.java.bridge.ChainsawLogger() {public void configure(String host, int port) throws Exception {super.configure(LOG_HOST, port);}}); <br>
-     * &nbsp;&nbsp;}<br>
-     * }<br>
+     * &nbsp;&nbsp;// servlet engine must support Transfer-Encoding: chunked <br>
+     * protected void doPut (HttpServletRequest req, HttpServletResponse res) { <br>
+     * &nbsp;try {<br>
+     * &nbsp;&nbsp;Util.setLogger(myLogger);<br>
+     * &nbsp;&nbsp;IContextFactory ctx = new RemoteHttpServletContextFactory(this, getServletContext(), req, req, res)<br>
+     * &nbsp;&nbsp;res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());<br>
+     * &nbsp;&nbsp;res.setHeader("Pragma", "no-cache");<br>
+     * &nbsp;&nbsp;res.setHeader("Cache-Control", "no-cache");<br>
+     * &nbsp;&nbsp;try { ctx.getBridge().handleRequests(req.getInputStream(), res.getOutputStream()); } finally { ctx.destroy(); }<br>
+     * &nbsp;} finally {<br>
+     * &nbsp;&nbsp; Util.unsetLogger();<br>
+     * }
+     * </code>
+     * </blockquote>
      * @param logger The logger to set.
+     * @see #setDefaultLogger(ILogger)
+     * @see #logDebug
      */
     public static void setLogger(ILogger logger) {
 	Util.logger.set(logger);
     }
-    
-    private static final Object sharedLoggerLockObject = new Object();
-    private static ILogger sharedLogger;
+    /**
+     * Remove the thread-local logger. Example:<br><br>
+     * <blockquote>
+     * <code>
+     * &nbsp;&nbsp;// servlet engine must support Transfer-Encoding: chunked <br>
+     * protected void doPut (HttpServletRequest req, HttpServletResponse res) throws IOException, ServletException { <br>
+     * &nbsp;try {<br>
+     * &nbsp;&nbsp;Util.setLogger(myLogger);<br>
+     * &nbsp;&nbsp;IContextFactory ctx = new RemoteHttpServletContextFactory(this, getServletContext(), req, req, res);<br>
+     * &nbsp;&nbsp;res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());<br>
+     * &nbsp;&nbsp;res.setHeader("Pragma", "no-cache");<br>
+     * &nbsp;&nbsp;res.setHeader("Cache-Control", "no-cache");<br>
+     * &nbsp;&nbsp;try { ctx.getBridge().handleRequests(req.getInputStream(), res.getOutputStream()); } finally { ctx.destroy(); }<br>
+     * &nbsp;} finally {<br>
+     * &nbsp;&nbsp; Util.unsetLogger();<br>
+     * }
+     * </code>
+     * </blockquote>
+     */
+    public static void unsetLogger() {
+	try {
+	    logger.remove();
+	} catch (Throwable t) {
+	    /*ignore*/
+	}
+    }
     /**
      * @return Returns the logger.
      */
     public static ILogger getLogger() {
-	if (!DEFAULT_LOG_FILE_SET && logger != null) {
-	    Object l = logger.get();
-	    if(l != null) return (ILogger)l;
+	if (Util.DEFAULT_LOG_FILE_SET) return defaultLogger;
 	
-	    setDefaultFileLogger();
-	    return (ILogger) logger.get();
-	}
+	ILogger logger = (ILogger)Util.logger.get();
+	if (logger == null) return defaultLogger;
 	
-	synchronized (sharedLoggerLockObject) {
-	    if (sharedLogger == null) sharedLogger = new Logger(new FileLogger());
-	    return sharedLogger;
-	}
+	return logger;
     }
 
     /**
@@ -1223,98 +1255,6 @@ public final class Util {
             try { System.setErr(logStream); } catch (Exception e) {e.printStackTrace(); }
 	try { System.setOut(logStream); } catch (Exception e) {e.printStackTrace(); System.exit(9); }
     }
-    /** Wrapper for the Mono StreamWriter */ 
-    private static class MonoOutputStream extends OutputStream {
-	Object streamWriter;
-	private Method Write, Close, Flush;
-	public MonoOutputStream(Class StreamWriter, Object streamWriter) throws SecurityException, NoSuchMethodException {
-	    this.streamWriter = StreamWriter;
-	    this.streamWriter = streamWriter;
-	    Write = StreamWriter.getMethod("Write", new Class[]{String.class});
-	    Close = StreamWriter.getMethod("Close", ZERO_PARAM);
-	    Flush = StreamWriter.getMethod("Flush", ZERO_PARAM);
-	}
-	public void write(byte b[], int off, int len) throws IOException {
-	    try {
-		String s = new String(b, off, len);
-		Write.invoke(streamWriter, new Object[]{s});
-	    } catch (Exception e) {
-		IOException ex = new IOException();
-		ex.initCause(e);
-		throw ex;
-	    }
-	}
-	public void write(int b) throws IOException {
-	    throw new NotImplementedException();
-	}
-	public void flush() throws IOException {
-	    try {
-		Flush.invoke(streamWriter, ZERO_ARG);
-	    } catch (Exception e) { 
-		IOException ex = new IOException();
-		ex.initCause(e);
-		throw ex;
-	    }	    
-	}
-	public void close() throws IOException {
-	    try {
-		Close.invoke(streamWriter, ZERO_ARG);
-	    } catch (Exception e) { 
-		IOException ex = new IOException();
-		ex.initCause(e);
-		throw ex;
-	    }	    
-	}
-    }
-    static void redirectMonoOutput(boolean redirectOutput, String logFile) {
-	try {
-	    boolean redirected = false;
-	    Class Console = Class.forName("cli.System.Console");
-	    Class TextWriter = Class.forName("cli.System.IO.TextWriter");
-	    Class StreamWriter = Class.forName("cli.System.IO.StreamWriter");
-	    Method get_Error = Console.getMethod("get_Error", new Class[]{});
-	    Object errorStream = get_Error.invoke(Console, new Object[]{});
-	    Method setOut = Console.getMethod("SetOut", new Class[]{TextWriter});
-	    if(!redirectOutput && (logFile != null && logFile.length()>0)) {
-		// redirect to log file, if possible
-		try {
-		    Constructor constructor = StreamWriter.getConstructor(new Class[]{String.class});
-		    Object streamWriter = constructor.newInstance(new Object[]{logFile});
-		    Method set_AutoFlush = StreamWriter.getMethod("set_AutoFlush", new Class[]{Boolean.TYPE});
-		    set_AutoFlush.invoke(streamWriter, new Object[]{Boolean.TRUE});
-		    Method setErr = Console.getMethod("SetError", new Class[]{TextWriter});
-		    Object[] args = new Object[]{streamWriter};
-		    setOut.invoke(Console, args);
-		    setErr.invoke(Console, args);
-
-		    MonoOutputStream out = new MonoOutputStream(StreamWriter, streamWriter);
-		    logStream = new PrintStream(out, true);
-		    System.setErr(logStream);
-		    System.setOut(logStream);
-		    redirected = true;
-		} catch (Exception e) {e.printStackTrace();}
-	    } 
-	    if(!redirected) { 
-		// else redirect to mono stderr
-		try { 
-		    setOut.invoke(Console, new Object[]{errorStream});
-
-		    MonoOutputStream out = new MonoOutputStream(TextWriter, errorStream);
-		    logStream = new PrintStream(out, true);
-		    System.setErr(logStream);
-		    System.setOut(logStream);
-		    redirected = true;
-		} catch (Exception e) {e.printStackTrace(); }
-	    }
-	    if(!redirected) {
-		// redirect to mono failed, at least do not print anything to stdout, because that's connected
-		// with a pipe
-		try {System.setOut(System.err); } catch (Exception e) {e.printStackTrace(); System.exit(9); }
-	    }
-	} catch (Exception ex) {
-	    ex.printStackTrace(); 
-	}
-    }
 
     private static List getEnvironmentBlacklist(Properties p) {
 	List l = new LinkedList();
@@ -1424,12 +1364,12 @@ public final class Util {
      * @param logFile The log file from the PHP .ini file
      * @return true, if we can use the log4j logger, false otherwise.
      */
-    public static boolean setConfiguredLogger(String logFile) {
+    static boolean setConfiguredLogger(String logFile) {
         try {
 	  return tryConfiguredChainsawLogger(logFile);
 	} catch (Exception e) {
 	  printStackTrace(e);
-	  Util.setLogger(new FileLogger());
+	  Util.setDefaultLogger(new FileLogger());
 	}
 	return true;
     }
@@ -1471,7 +1411,8 @@ public final class Util {
 	    } else {
 		if(logFile.length()>0) host = logFile;
 	    }
-	    Util.setLogger(ConfiguredChainsawLogger.createLogger(host, port));
+	    ILogger logger = ConfiguredChainsawLogger.createLogger(host, port);
+	    Util.setDefaultLogger(logger);
 	    return true;
 	}
 	return false;
@@ -1489,57 +1430,6 @@ public final class Util {
 	String str =  formatter.format(t);
 	return str;
     }
-    /**destroy the logger */
-    public static void destroy () {
-	Util.logLevel = 0;
-	try {
-	    logger.remove();
-	} catch (Throwable e) {
-	    e.printStackTrace();
-	}
-    }
-    /**
-     * Return an mbean property.
-     * Example: <code>Util.getMBeanProperty("*:type=ThreadPool,name=http*", "maxThreads")</code> or 
-     * <code>Util.getMBeanProperty("*:ServiceModule=*,J2EEServer=*,name=JettyWebConnector,j2eeType=*", "maxThreads");</code>
-     * @param pattern the pattern string 
-     * @param property the property key
-     * @return the property value
-     */
-    public static int getMBeanProperty(String pattern, String property) {
-            try {
-             Class objectNameClazz = Class.forName("javax.management.ObjectName");
-             Constructor constructor = objectNameClazz.getConstructor(new Class[]{String.class});
-             Object objectName = constructor.newInstance(new Object[]{pattern});
-             
-             
-             Class clazz = Class.forName("javax.management.MBeanServerFactory");
-             Method method = clazz.getMethod("findMBeanServer", new Class[]{String.class});
-             ArrayList servers = (ArrayList)method.invoke(clazz, new Object[]{null});
-             Object server = servers.get(0);
-             
-             Class mBeanServerClazz = Class.forName("javax.management.MBeanServer");
-             clazz = Class.forName("javax.management.QueryExp");
-             method = mBeanServerClazz.getMethod("queryMBeans", new Class[]{objectNameClazz, clazz});
-             
-             Set s = (Set)method.invoke(server, new Object[]{objectName, null});
-             Iterator ii = s.iterator(); 
-             
-             if (ii.hasNext()) {
-        	     clazz = Class.forName("javax.management.ObjectInstance");
-             method = clazz.getMethod("getObjectName", Util.ZERO_PARAM);
-             objectName = method.invoke(ii.next(), Util.ZERO_ARG);
-             
-             method = mBeanServerClazz.getMethod("getAttribute", new Class[]{objectNameClazz, String.class});
-        	     Object result = method.invoke(server, new Object[]{objectName, property});
-        	     return Integer.parseInt(String.valueOf(result));
-             }
-	} catch (Exception t) {
-		if (Util.logLevel>5) Util.printStackTrace(t);
-	}
-	return 0;
-   }
-
     static final boolean checkVM() {
 	try {
 	    return "libgcj".equals(System.getProperty("gnu.classpath.vm.shortname"));
@@ -1562,10 +1452,41 @@ public final class Util {
      * @return args with PHP_ARGS appended
      */
     public static final String[] getPhpArgs(String[] args, boolean includeJava) {
-	String[] allArgs = new String[args.length+PHP_ARGS.length+(includeJava?1:0)];
+	return getPhpArgs(args, false, null, null, null);
+    }
+    /**
+     * Return args + PHP_ARGS
+     * @param args The prefix
+     * @param includeJava The option php_include_java
+     * @param cgiDir The WEB-INF/cgi directory
+     * @param pearDir The WEB-INF/pear directory
+     * @param webInfDir The WEB-INF directory
+     * @return args with PHP_ARGS appended
+     */
+    public static final String[] getPhpArgs(String[] args, boolean includeJava, String cgiDir, String pearDir, String webInfDir) {
+	String[] allArgs = new String[args.length+PHP_ARGS.length+(includeJava?1:0)+(cgiDir!=null?2:0)+(pearDir!=null?2:0)+(webInfDir!=null?2:0)];
 	int i=0;
 	for(i=0; i<args.length; i++) {
 	    allArgs[i]=args[i];
+	}
+	if (cgiDir!=null) {
+	    File extDir = new File(cgiDir, Util.osArch+"-"+Util.osName);
+	    try {
+		cgiDir = extDir.getCanonicalPath();
+	    } catch (IOException e) {
+		Util.printStackTrace(e);
+		cgiDir = extDir.getAbsolutePath();
+	    }
+	    allArgs[i++] = "-d";
+	    allArgs[i++] = "java.os_arch_dir=\""+cgiDir+"\"";	    
+	}
+	if (pearDir!=null) {
+	    allArgs[i++] = "-d";
+	    allArgs[i++] = "java.pear_dir=\""+pearDir+"\"";	    
+	}
+	if (webInfDir!=null) {
+	    allArgs[i++] = "-d";
+	    allArgs[i++] = "java.web_inf_dir=\""+webInfDir+"\"";	    
 	}
 	if (includeJava) allArgs[i++] = "-C"; // don't chdir, we'll do it
 	for(int j=0; j<PHP_ARGS.length; j++) {

@@ -76,4 +76,8 @@ public class ChunkedOutputStream extends FilterOutputStream {
     	}
 	out.flush();
     }
+    public void close () throws IOException {
+	writeEOF();
+	super.flush();
+    }
 }

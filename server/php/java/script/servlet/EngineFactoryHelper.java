@@ -12,6 +12,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import php.java.script.PhpScriptEngine;
 import php.java.servlet.ContextLoaderListener;
 
 
@@ -50,5 +51,8 @@ class EngineFactoryHelper {
     }
     public static List getManagedEngineList (ServletContext ctx) {
 	return (List) ctx.getAttribute(ContextLoaderListener.ENGINES);
+    }
+    public static void destroyEngineFactory () {
+	PhpScriptEngine.pool.destroy();
     }
  }

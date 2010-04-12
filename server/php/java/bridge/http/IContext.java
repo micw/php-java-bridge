@@ -27,6 +27,7 @@ package php.java.bridge.http;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Map;
 
 import javax.script.ScriptContext;
 
@@ -189,4 +190,36 @@ public interface IContext {
         * @return the file system path
         */
        public String getRealPath(String path);
+       
+       /**
+        * Add a new binding to the engine scope
+        * @param key the key
+        * @param val the value
+        */
+       public void put(String key, Object val);
+
+       /**
+        * Get a binding from the engine scope
+        * @param key the key
+        * @return the value
+        */
+       public Object get(String key);
+       
+       /**
+        * Remove a bindings from the engine scope
+        * @param key the key
+        */
+       public void remove(String key);
+       
+       /**
+        * Put all bindings to the engine scope
+        * @param map the map
+        */
+       public void putAll(Map map);
+       
+       /**
+        * Get all bindings from the engine scope
+        * @return the map
+        */
+       public Map getAll();
 }

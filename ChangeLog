@@ -1,3 +1,65 @@
+2010-04-11  <jostb@intern>
+
+	* CVS_Release.sh, php-java-bridge.spec: clean before creating
+	documentation.
+
+	* server/php/java/bridge/Util.java
+	(unsetLogger): New procedure
+	(getLogger): Rewritten
+
+	* server/php/java/script/InteractivePhpScriptEngine.java
+	(eval): flush the output on error
+
+	* server/php/java/script/SimplePhpScriptEngine.java
+	(getProcessEnvironment): rewritten
+	(pool, doEval): Use a thread pool for the PHP continuations
+
+	* server/php/java/script/servlet/EngineFactory.java
+	(destroy): New method
+	(addManaged): Set the logger for the current thread
+
+	* server/php/java/script/servlet/EngineFactoryHelper.java
+	(destroyEngineFactory): remove current thread logger
+
+	* server/php/java/script/servlet/InvocablePhpServletLocalHttpServerScriptEngine.java
+	(evalInternal): removed: renamed to evalWithPrivileges
+	(evalWithPrivileges): new from evalInternal
+	(evalShortPath): Use thread pool
+	(release): remove current thread logger
+
+	* server/php/java/script/servlet/PhpServletScriptEngine.java
+	(eval): set logger
+	(evalInternal): removed: renamed to evalWithPrivileges
+	(evalWithPrivileges): new from evalInternal
+
+	* server/php/java/servlet/ContextLoaderListener.java
+	(contextInitialized): set logger
+
+	* server/php/java/servlet/fastcgi/FastCGIServlet.java
+	(init): create WEB-INF/cgi/OS-ARCH/{conf.d, ext}
+
+	* server/php/java/bridge/http/ChunkedInputStream.java
+	(close): consume eof
+
+	* server/php/java/bridge/http/ChunkedOutputStream.java
+	(close): write eof
+
+	* server/php/java/bridge/http/RemoteHttpContextFactory.java: New
+	file
+
+	* server/php/java/bridge/JavaBridgeRunner.java
+	(doPut): Rewritten to use chunked encoding for the entire
+	connection
+
+	* server/php/java/servlet/RemoteHtpServletContextFactory.java
+	(initialize, invalidate, recycle, release, releaseManaged): Do not
+	unnecessarily throw exceptions
+
+	* server/php/java/bridge/JavaBridge.java
+	(handleRequests): New method
+
+	* VERSION, php-java-bridge.spec: Version 6.1.2 test
+
 2010-03-20  <jostb@intern>
 
 	* server/php/java/bridge/IJavaBridgeFactory.java

@@ -39,6 +39,11 @@ import php.java.bridge.http.WriterOutputStream;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/**
+ * Miscellaneous servlet functions.
+ * @author jostb
+ *
+ */
 public class ServletUtil {
 
     /** True if /bin/sh exists, false otherwise */

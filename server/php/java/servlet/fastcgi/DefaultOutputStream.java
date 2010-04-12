@@ -37,7 +37,7 @@ import php.java.servlet.fastcgi.ConnectionPool.Connection;
  *
  */
 public class DefaultOutputStream extends OutputStream {
-    private Connection connection;
+    protected Connection connection;
     private BufferedOutputStream out;
     
     protected void setConnection(Connection connection) throws ConnectionException {

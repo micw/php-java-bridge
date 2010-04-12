@@ -49,7 +49,7 @@ import php.java.bridge.Util.HeaderParser;
  * @see php.java.script.HttpProxy
  */
 
-abstract class CGIRunner extends Thread {
+abstract class CGIRunner implements Runnable {
 	
     protected Map env;
     protected OutputStream out, err;
@@ -60,7 +60,6 @@ abstract class CGIRunner extends Thread {
     private Lock phpScript = new Lock();
     private ResultProxy resultProxy;
     private ILogger logger;
-
     // used to wait for the script to terminate
     private static class ScriptLock {
 	    private boolean running = true;
@@ -97,8 +96,7 @@ abstract class CGIRunner extends Thread {
 	    notify();
 	}
     }
-    protected CGIRunner(String name, Reader reader, Map env, OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy resultProxy, ILogger logger) {
-	super(name);
+    protected CGIRunner(Reader reader, Map env, OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy resultProxy, ILogger logger) {
     	this.reader = reader;
 	this.env = env;
 	this.out = out;

@@ -24,12 +24,10 @@ package php.java.script;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -42,6 +40,7 @@ import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 
+import php.java.bridge.AppThreadPool;
 import php.java.bridge.JavaBridgeRunner;
 import php.java.bridge.Util;
 import php.java.bridge.http.AbstractChannelName;
@@ -79,55 +78,13 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
 	setContext(getPhpScriptContext());
     }
 
-    private static final Class[] EMPTY_PARAM = new Class[0];
-    private static final Object[] EMPTY_ARG = new Object[0];
-    private static final File winnt = new File("c:/winnt");
-    private static final File windows = new File("c:/windows");
-    protected static final HashMap processEnvironment = getProcessEnvironment();
-    private static HashMap defaultEnv;
-    
-    /**
-     * Get the current process environment which will be passed to the sub-process.
-     * Requires jdk1.5 or higher. In jdk1.4, where System.getenv() is not available,
-     * we allocate an empty map.<p>
-     * To add custom environment variables (such as PATH=... or LD_ASSUME_KERNEL=2.4.21, ...),
-     * use a custom PhpScriptEngine, for example:<br>
-     * <code>
-     * public class MyPhpScriptEngine extends PhpScriptEngine {<br>
-     * &nbsp;&nbsp;protected HashMap getProcessEnvironment() {<br>
-     * &nbsp;&nbsp;&nbsp;&nbsp;HashMap map = new HashMap();<br>
-     * &nbsp;&nbsp;&nbsp;&nbsp;map.put("PATH", "/usr/local/bin");<br>
-     * &nbsp;&nbsp;&nbsp;&nbsp;return map; <br>
-     * &nbsp;&nbsp;}<br>
-     * }<br>
-     * </code>
-     * @return The current process environment.
-     */
     static HashMap getProcessEnvironment() {
-	if (defaultEnv!=null) return defaultEnv;
-	defaultEnv = new HashMap();
-	String val = null;
-	// Bug in WINNT and WINXP.
-	// If SystemRoot is missing, php cannot access winsock.
-	if(winnt.isDirectory()) val="c:\\winnt";
-	else if(windows.isDirectory()) val = "c:\\windows";
-	try {
-	    String s = System.getenv("SystemRoot"); 
-	    if(s!=null) val=s;
-	} catch (Throwable t) {/*ignore*/}
-	try {
-	    String s = System.getProperty("Windows.SystemRoot");
-	    if(s!=null) val=s;
-	} catch (Throwable t) {/*ignore*/}
-	if(val!=null) defaultEnv.put("SystemRoot", val);
-	try {
-	    Method m = System.class.getMethod("getenv", EMPTY_PARAM);
-	    Map map = (Map) m.invoke(System.class, EMPTY_ARG);
-	    defaultEnv.putAll(map);
-	} catch (Exception e) {
-	    defaultEnv.putAll(Util.COMMON_ENVIRONMENT);
-	}
-	return defaultEnv;
+	return Util.COMMON_ENVIRONMENT;
+    }
+
+    public static final AppThreadPool pool = getAppThreadPool();
+    private static synchronized AppThreadPool getAppThreadPool() {
+	return new AppThreadPool("JavaBridgeHttpProxy", Integer.parseInt(Util.THREAD_POOL_MAX_SIZE));
     }
 
     /**
@@ -179,7 +136,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
      *
      */
     protected void setNewContextFactory() {
-	env = (Map) processEnvironment.clone();
+	env = (Map) getProcessEnvironment().clone();
 
 	addNewContextFactory();
 	
@@ -281,7 +238,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
      */
     protected Object doEval(Reader reader, ScriptContext context) throws Exception {
     	continuation = getContinuation(reader, context);
-     	continuation.start();
+     	pool.start(continuation);
     	return continuation.getPhpScript();
     }
 

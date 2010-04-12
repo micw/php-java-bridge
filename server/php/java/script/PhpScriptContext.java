@@ -25,9 +25,12 @@ package php.java.script;
  */
 
 import java.io.Writer;
+import java.util.Collections;
+import java.util.Map;
 
 import php.java.bridge.JavaBridgeRunner;
 import php.java.bridge.Util;
+import php.java.bridge.http.IContext;
 
 /**
  * This class implements a simple script context for PHP. It starts a standalone 
@@ -126,5 +129,25 @@ public class PhpScriptContext extends AbstractPhpScriptContext implements IPhpSc
     /**{@inheritDoc}*/
     public String getRealPath(String path) {
 	return php.java.bridge.http.Context.getRealPathInternal(path);
+    }
+    /**{@inheritDoc}*/
+    public Object get(String key) {
+	  return getBindings(IContext.ENGINE_SCOPE).get(key);
+    }
+    /**{@inheritDoc}*/
+    public void put(String key, Object val) {
+	  getBindings(IContext.ENGINE_SCOPE).put(key, val);
+    }
+    /**{@inheritDoc}*/
+    public void remove(String key) {
+	  getBindings(IContext.ENGINE_SCOPE).remove(key);
+    }
+    /**{@inheritDoc}*/
+    public void putAll(Map map) {
+	  getBindings(IContext.ENGINE_SCOPE).putAll(map);
+    }
+    /**{@inheritDoc}*/
+    public Map getAll() {
+	return Collections.unmodifiableMap(getBindings(IContext.ENGINE_SCOPE));
     }
 }

@@ -435,6 +435,50 @@ function java_server_name() {
 /**
  * Returns the jsr223 script context handle.
  *
+ * Exposes the bindings from the ENGINE_SCOPE to PHP scripts. Values
+ * set with engine.set("key", val) can be fetched from PHP with
+ * java_context()->get("key"). Values set with
+ * java_context()->put("key", java_closure($val)) can be fetched from
+ * Java with engine.get("key"). The get/put methods are convenience shortcuts for getAttribute/setAttribute. Example:
+ * <code>
+ * engine.put("key1", 2);
+ * engine.eval("<?php java_context()->put("key2", 1+(int)(string)java_context()->get('key1'));?>"); 
+ * System.out.println(engine.get("key2"));
+ *</code>
+ * 
+ * A synchronized init() procedure can be called from the context to initialize a library once, and a shutdown hook can be registered to destroy the library before the (web-) context is destroyed. The init hook can be written in PHP, but the shutdown hook must be written in Java. Example:
+ * <code>
+ * function getShutdownHook() { return java("myJavaHelper")->getShutdownHook(); }
+ * function call() { // called by init()
+ *   ...
+ *   // register shutdown hook
+ *   java_context()->onShutdown(getShutdownHook());
+ * }
+ * java_context()->init(java_closure(null, null, java("java.util.concurrent.Callable")));
+ * </code>
+ * 
+ * It is possible to access implicit web objects (the session, the
+ * application store etc.) from the context. Example:
+ * <code>
+ * $req = $ctx->getHttpServletRequest();
+ * $res = $ctx->getHttpServletResponse();
+ * $servlet = $ctx->getServlet();
+ * $config = $ctx->getServletConfig();
+ * $context = $ctx->getServletContext();
+ * </code>
+ *
+ * The global bindings (shared with all available script engines) are
+ * available from the GLOBAL_SCOPE, the script engine bindings are
+ * available from the ENGINE_SCOPE. Example
+ *
+ * <code>
+ * define ("ENGINE_SCOPE", 100);
+ * define ("GLOBAL_SCOPE", 200);
+ * echo java_context()->getBindings(ENGINE_SCOPE)->keySet();
+ * echo java_context()->getBindings(GLOBAL_SCOPE)->keySet();
+ * </code>
+ *
+ * Furthermore the context exposes the java continuation to PHP scripts.
  * Example which closes over the current environment and passes it back to java:
  * <code>
  * define ("ENGINE_SCOPE", 100);
@@ -456,32 +500,6 @@ function java_server_name() {
  * Thread t = new Thread((Runnable)e.get("php.java.bridge.PhpProcedure"));
  * t.join ();
  * ((Closeable)e).close ();
- * </code>
- *
- * A synchronized init() procedure can be called from the context to initialize a library once, and a shutdown hook can be registered to destroy the library before the (web-) context is destroyed. The init hook can be written in PHP, but the shutdown hook must be written in Java. Example:
- * <code>
- * function getShutdownHook() { return java("myJavaHelper")->getShutdownHook(); }
- * function call() { // called by init()
- *   ...
- *   // register shutdown hook
- *   java_context()->onShutdown(getShutdownHook());
- * }
- * java_context()->init(java_closure(null, null, java("java.util.concurrent.Callable")));
- * </code>
- * 
- * It is possible to access implicit web objects (the session, the
- * application store etc.) from the context. Please see the JSR223
- * documentation for details. Example:
- * <code>
- * $req = $ctx->getHttpServletRequest();
- * $res = $ctx->getHttpServletResponse();
- * </code>
- *
- * Example which fetches the servlet-, config and context:
- * <code>
- * $config = $ctx->getAttribute ( "php.java.servlet.ServletConfig",  ENGINE_SCOPE);
- * $context = $ctx->getAttribute( "php.java.servlet.ServletContext", ENGINE_SCOPE);
- * $servlet = $ctx->getAttribute( "php.java.servlet.Servlet", ENGINE_SCOPE);
  * </code>
  *
  * @access public

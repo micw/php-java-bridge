@@ -63,10 +63,10 @@ class NPChannelFactory extends ChannelFactory {
 	// later.
 	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", servlet.override_hosts?"/":"");
 	env.put("REDIRECT_STATUS", "200");
-	String[] args = Util.getPhpArgs(new String[]{php, raPath}, includeJava);
+	String[] args = Util.getPhpArgs(new String[]{php, raPath}, includeJava, ServletUtil.getRealPath(servlet.context, FastCGIServlet.CGI_DIR), ServletUtil.getRealPath(servlet.context, FastCGIServlet.PEAR_DIR), ServletUtil.getRealPath(servlet.context, FastCGIServlet.WEB_INF_DIR));
 	File home = null;
 	if(php!=null) try { home = ((new File(php)).getParentFile()); } catch (Exception e) {Util.printStackTrace(e);}
-	proc = new FCGIProcess(args, home, env, ServletUtil.getRealPath(servlet.context, FastCGIServlet.cgiPathPrefix), servlet.phpTryOtherLocations, servlet.preferSystemPhp);
+	proc = new FCGIProcess(args, home, env, ServletUtil.getRealPath(servlet.context, FastCGIServlet.CGI_DIR), servlet.phpTryOtherLocations, servlet.preferSystemPhp);
 	proc.start();
 	return (Process)proc;
     }

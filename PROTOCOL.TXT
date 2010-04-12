@@ -302,32 +302,16 @@ ad 2)
 
 ad 3)
   php opens a HTTP socket connection to ${JAVA_HOSTS}[0] e.g.: localhost:8080
-  php sends PUT ${JAVA_SERVLET}\r\n\r\n
-                      e.g.: PUT /JavaBridge/JavaBridge.phpjavabridge\r\n\r\n
+  php sends PUT ${JAVA_SERVLET}\r\rTransfer-Encoding: chunked\r\n\r\n
+                      e.g.: PUT /JavaBridge/servlet.phpjavabridge\r\n\r\n
   php sends the bytes \0177 OPTIONS to initiate the communication
   php sends protocol requests
-   java servlet responds with a protocol response
-   java servlet sends response HEADERS: redirect (e.g. 9267) and context ID
-  php opens a socket connection to port 9267
-  php sends a "redirect id"; the bytes \0177 \0377 LEN_ID[1] LEN_ID[0] ID
-   java thread sends \0 to avoid ack delay[1]
-  php sends protocol requests
-  php finishes the communication sending <F p="A"/> 
-   java thread sends back a <F p="A"/>
-  ...
-  php (re-)opens a HTTP socket connection to ${JAVA_HOSTS}[0] e.g.: localhost:8080
-  php sends PUT ${JAVA_SERVLET}\r\n\r\n
-                         e.g.: /JavaBridge/JavaBridge.phpjavabridge\r\n\r\n
-  php sends the bytes \0177 OPTIONS to initiate the communication
-  php sends protocol requests
-   java servlet responds with a protocol response
-   java servlet sends response HEADERS: redirect (e.g. 9267) and context ID
-  php transparently re-uses the socket connection to port 9267
-  php sends the bytes \0177 \0377 LEN_ID[1] LEN_ID[0] ID
-   java thread sends \0 to avoid ack delay[1]
-  php sends protocol requests
-  php finishes the communication sending <F p="E"/> 
-   java thread sends back a <F p="E"/>
+   java servlet responds with protocol responses
+  php finishes the communication sending <F p="E"/>
+   java servlet sends back a <F p="E"/>
+  php sends final chunk: 0000\r\n\r\n
+   java servlet sends final chunk: 0000\r\n\r\n
+  php closes the socket connection
 
 ad 4)
   php opens a socket connection
@@ -343,6 +327,7 @@ ad 4)
   php sends protocol requests
   php finishes the communication sending <F p="E"/> 
    java thread sends back a <F p="E"/>
+  php closes the socket connection
 
 
 [1] write/write/read delay is up to 500ms on free bsd operating

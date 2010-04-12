@@ -3,6 +3,56 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 6.1.2
+
+* The "servlet engine" built into JavaBridge.jar now handles PHP/Java
+  Bridge protocol requests as efficient as a real servlet engine back
+  end; 
+
+    java -jar JavaBridge.jar SERVLET_LOCAL:8080 
+
+  now uses HTTP/1.1 Transfer-Encoding: chunked. Example:
+
+telnet localhost 8080
+
+PUT /JavaBridge/servlet.phpjavabridge HTTP/1.1
+Host: localhost:8080
+Transfer-Encoding: chunked
+
+22
+<H p="1" v="java.lang.String"></H>
+b
+<F p="E" />
+0
+
+
+* It is now easy to use the bridge back-end in an existing
+  servlet. Example code:
+
+  public class MyServlet extends HttpServlet {
+    ...
+    public String hello() { return "hello from MyServlet"; }
+    ...
+    protected void doPut (HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+       IContextFactory ctx = new RemoteHttpServletContextFactory(this, getServletContext(), req, req, res);
+       res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
+       res.setHeader("Pragma", "no-cache");
+       res.setHeader("Cache-Control", "no-cache");
+       try { ctx.getBridge().handleRequests(req.getInputStream(), res.getOutputStream()); } finally { ctx.destroy(); }
+     }
+  }
+
+  If MyServlet listens on localhost:8080/MyWebApp/MyServlet, PHP scripts can call it:
+
+  <?php
+    define("JAVA_HOSTS", "localhost:8080");
+    define("JAVA_SERVLET", "/MyWebApp/MyServlet");
+    require_once("java/Java.inc");
+    
+    echo java_context()->getServlet()->hello();
+  ?>
+
+
 Version 6.1.1
 
 * The bridge now supports all available PHP stream transports. Example:

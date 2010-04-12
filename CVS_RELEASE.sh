@@ -18,9 +18,10 @@ rpmbuild -tb php-java-bridge_${version}.tar.gz
 mv ~/rpmbuild/RPMS/i386/php-java-bridge-${version}-1.i386.rpm "./php-java-bridge-${version}-1.fc`cat /etc/issue | sed 1q | awk '{print $3}'`.i386.rpm"
 mv ~/rpmbuild/RPMS/i386/php-java-bridge-devel-${version}-1.i386.rpm "./php-java-bridge-devel-${version}-1.fc`cat /etc/issue | sed 1q | awk '{print $3}'`.i386.rpm"
 
-ant && 
+ant clean &&
 ant PhpDoc 2>/dev/null >/dev/null && 
 ant JavaDoc &&
+ant && 
 ant SrcZip
 
 cp dist/*.war dist/src.zip .

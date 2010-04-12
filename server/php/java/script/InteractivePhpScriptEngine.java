@@ -107,10 +107,14 @@ public class InteractivePhpScriptEngine extends InvocablePhpScriptEngine {
 	}
 	script=script.trim() + ";";
 	Object o = null;
-	try {o=((Invocable)this).invokeFunction("javabridge_eval", new Object[]{script});}catch(NoSuchMethodException ex){/*ignore*/};
-
-	try { context.getWriter().flush(); }      catch (IOException e) { Util.printStackTrace(e); }
-	try { context.getErrorWriter().flush(); } catch (IOException e) { Util.printStackTrace(e); }
+	try {
+	    o=((Invocable)this).invokeFunction("javabridge_eval", new Object[]{script});
+	} catch(NoSuchMethodException ex){
+	    /*ignore*/
+	} finally {
+	    try { context.getWriter().flush(); }      catch (IOException e) { Util.printStackTrace(e); }
+	    try { context.getErrorWriter().flush(); } catch (IOException e) { Util.printStackTrace(e); }
+	}
 	
 	return o;
     }

@@ -108,7 +108,7 @@ public abstract class ChannelFactory {
     protected void bind(final ILogger logger) throws InterruptedException, IOException {
 	Thread t = (new Util.Thread("JavaBridgeFastCGIRunner") {
 		public void run() {
-		    Util.setLogger(logger);
+	            Util.setLogger(logger);
 		    Map env = (Map) FastCGIServlet.PROCESS_ENVIRONMENT.clone();
 		    env.put("PHP_FCGI_CHILDREN", servlet.php_fcgi_connection_pool_size);
 		    env.put("PHP_FCGI_MAX_REQUESTS", servlet.php_fcgi_max_requests);

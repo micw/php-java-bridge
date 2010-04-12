@@ -27,7 +27,6 @@ package php.java.servlet;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -37,7 +36,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.JavaBridge;
-import php.java.bridge.Request;
 import php.java.bridge.Util;
 
 /**
@@ -88,7 +86,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	if (name != null && (name.startsWith("JBoss")))    isJBoss    = true;
 
 	logger = new Util.Logger(!isJBoss, new Logger(ctx));
-    	
+
 	if(Util.VERSION!=null)
     	    log("PHP/Java Bridge servlet "+servletContextName+" version "+Util.VERSION+" ready.");
 	else
@@ -107,8 +105,6 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	}
 	
     	super.destroy();
-    	
-    	Util.destroy();
     }
     /*    /**
      * Set the log level from the servlet into the bridge
@@ -146,9 +142,10 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 
 	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
 	RemoteHttpServletContextFactory ctx;
-	if (id!=null) {
+	if (id!=null) { // kept for backward compatibility
 	    ctx = (RemoteHttpServletContextFactory) RemoteHttpServletContextFactory.get(id);
 	    if (ctx==null) throw new IllegalStateException("Cannot find RemoteHttpServletContextFactory");
+	    ctx.setResponse(res);
 	} else {
 	    ctx = new RemoteHttpServletContextFactory(this, getServletContext(), req, req, res);
 	    destroyCtx = true;
@@ -157,41 +154,23 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
 	res.setHeader("Pragma", "no-cache");
 	res.setHeader("Cache-Control", "no-cache");
-	InputStream sin=null; OutputStream sout = null;
-	JavaBridge bridge = ctx.getBridge();
     	
-	bridge.in = sin = getInputStream (req);
-	bridge.out = sout = res.getOutputStream();
-	ctx.setResponse (res);
-	Request r = bridge.request = new Request(bridge);
 	try {
-	    if(r.init(sin, sout)) {
-		r.handleRequests();
-	    }
-	    else {
-		Util.warn("handleHttpConnection init failed");
-	    }
+	    ctx.getBridge().handleRequests(getInputStream(req), res.getOutputStream());
 	} finally {
 	    if (destroyCtx) ctx.destroy();
 	}
     }
 
-    protected void handlePut (HttpServletRequest req, HttpServletResponse res)
-	throws ServletException, IOException {
-	Util.setLogger(logger);
-
-    	if(Util.logLevel>3) Util.logDebug("doPut:"+req.getRequestURL()); 
-
-    	handleHttpConnection(req, res);
-    }
-    
     /**
      * Dispatcher for the "http tunnel", "local channel" or "override redirect".
      */
     protected void doPut (HttpServletRequest req, HttpServletResponse res) 
     	throws ServletException, IOException {
-	try {
-	    handlePut(req, res);
+    	try {
+    	    Util.setLogger(logger);
+    	    if(Util.logLevel>3) Util.logDebug("doPut:"+req.getRequestURL()); 
+    	    handleHttpConnection(req, res);
 	} catch (RuntimeException e) {
 	    Util.printStackTrace(e);
 	    throw new ServletException(e);
@@ -201,6 +180,8 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	} catch (ServletException e) {
 	    Util.printStackTrace(e);
 	    throw e;
+	} finally {
+	    Util.unsetLogger();
 	}
     }
 }

@@ -101,6 +101,37 @@ public class JavaBridge implements Runnable {
     }
     
     /**
+     * Handle requests from the InputStream, write the responses to OutputStream
+     * @param in the InputStream
+     * @param out the OutputStream
+     * @throws IOException
+     * Example:
+     * <blockquote>
+     * <code>
+     * protected void doPut (HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException { <br>
+     * &nbsp;&nbsp;IContextFactory ctx = new RemoteHttpServletContextFactory(this, getServletContext(), req, req, res);<br>
+     * &nbsp;&nbsp;res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());<br>
+     * &nbsp;&nbsp;res.setHeader("Pragma", "no-cache");<br>
+     * &nbsp;&nbsp;res.setHeader("Cache-Control", "no-cache");<br>
+     * &nbsp;&nbsp;try { ctx.getBridge().handleRequests(req.getInputStream(), res.getOutputStream()); } finally { ctx.destroy(); }<br>
+     * }
+     * </code>
+     * </blockquote>
+     */
+    public void handleRequests (InputStream in, OutputStream out) throws IOException {
+	this.request = new Request(this);
+	this.in = in;
+	this.out = out;
+	
+	if(this.request.init(this.in, this.out)) {
+	    this.request.handleRequests();
+	}
+	else {
+	    Util.warn("handleHttpConnection init failed");
+	}
+
+    }
+    /**
      * For internal use only. The current request (if any)
      * 
      */
@@ -200,7 +231,7 @@ public class JavaBridge implements Runnable {
 		    if(Util.setConfiguredLogger(logFile))
 		        logFile=null; // when log4j is used, System.out and System.err are not redirected
 		    else
-		        Util.setLogger(new FileLogger()); // use specified log file
+		        Util.setDefaultLogger(new FileLogger()); // use specified log file
 		    if(Util.logLevel>3) System.err.println(Util.EXTENSION_NAME+" log: " + rawLogFile);
 		}
 	    }catch (Throwable t) {

@@ -12,6 +12,7 @@ import java.util.List;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 
+import php.java.bridge.ILogger;
 import php.java.bridge.Util;
 import php.java.bridge.http.ContextServer;
 
@@ -53,6 +54,10 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
     public static final String CLOSEABLES = ContextLoaderListener.class.getName()+".CLOSEABLES";
     /** The key used to store the jsr 223 engines list in the servlet context */
     public static final String ENGINES = ContextLoaderListener.class.getName()+".ENGINES";
+    /** The key used to store the jsr 223 engines list in the servlet context */
+    public static final String LOGGER = ContextLoaderListener.class.getName()+".LOGGER";
+
+    protected ILogger logger;
 
     /** Only for internal use 
      * @param ctx The servlet context 
@@ -68,11 +73,11 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
 		    Method close = c.getClass().getMethod("close", Util.ZERO_PARAM);
 		    close.invoke(c, Util.ZERO_ARG);
 		} catch (Exception e) {
-		    Util.printStackTrace(e);
+		    e.printStackTrace();
 		}
 	    }
 	} catch (Throwable t) {
-	    Util.printStackTrace(t);
+	    t.printStackTrace();
 	} finally {
 	    ctx.removeAttribute(CLOSEABLES);
 	}
@@ -90,11 +95,12 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
 	    if (factory == null) return;
 	
 	    List list = (List) ctx.getAttribute(ENGINES);
-	    if (list == null) return;
-	
-	    factory.releaseScriptEngines(list);
+	    if (list != null)
+		factory.releaseScriptEngines(list);
+	    factory.destroy();
 	} finally {
 	    ctx.removeAttribute(ENGINES);
+	    ctx.removeAttribute(LOGGER);
 	}
     }
     /**{@inheritDoc}*/  
@@ -104,7 +110,7 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
 	    destroyCloseables(ctx);
 	    destroyScriptEngines(ctx);
 	} catch (Exception e) {
-	    Util.printStackTrace(e);
+	    e.printStackTrace();
 	}
 	ctx.removeAttribute(php.java.script.servlet.EngineFactory.ROOT_ENGINE_FACTORY_ATTRIBUTE);
 	
@@ -123,7 +129,15 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
 	    ctx.setAttribute(php.java.script.servlet.EngineFactory.ROOT_ENGINE_FACTORY_ATTRIBUTE, clazz.newInstance());
 	    ctx.setAttribute(ENGINES, Collections.synchronizedList(new ArrayList()));
 	    ctx.setAttribute(CLOSEABLES, new LinkedList());
+	
+	    boolean isJBoss = false;
+	    String name = ctx.getServerInfo();
+	    if (name != null && (name.startsWith("JBoss")))    isJBoss    = true;
+	    
+	    logger = new Util.Logger(!isJBoss, new Logger(ctx));
+	    ctx.setAttribute(LOGGER, logger);
 
+	    
 	    boolean promiscuous = false;
 	    try {
 		String value = ctx.getInitParameter("promiscuous");
@@ -132,7 +146,7 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
 		value = value.toLowerCase();
 		    
 		if(value.equals("on") || value.equals("true")) promiscuous=true;
-	    } catch (Exception t) {Util.printStackTrace(t);}
+	    } catch (Exception t) {t.printStackTrace();}
 	    ServletUtil.getContextServer(ctx, promiscuous);
 	    
 	    ctx.setAttribute(ServletUtil.HOST_ADDR_ATTRIBUTE, Util.getHostAddress(promiscuous));

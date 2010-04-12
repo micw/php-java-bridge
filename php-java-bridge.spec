@@ -1,5 +1,5 @@
 #-*- mode: rpm-spec; tab-width:4 -*-
-%define version 6.1.1
+%define version 6.1.2
 %define release 1
 %define PHP_MAJOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | sed 's/\\\..*$//')
 %define PHP_MINOR_VERSION %(((LANG=C rpm -q --queryformat "%{VERSION}" php) || echo "4.0.0") | tail -1 | LANG=C cut -d. -f2)
@@ -115,9 +115,10 @@ fi
 echo "using java_dir: $java_dir"
 if test X$java_dir = X; then echo "ERROR: java not installed" >2; exit 1; fi
 
-ant && 
+ant clean &&
 ant PhpDoc 2>/dev/null >/dev/null && 
 ant JavaDoc &&
+ant && 
 ant SrcZip
 
 %if %{have_policy_modules} == 1

@@ -77,7 +77,7 @@ public class ChainsawLogger extends SimpleLog4jLogger implements ILogger {
     }
     /**
      * Create a new chainsaw logger.
-     * @see php.java.bridge.Util#setLogger(ILogger)
+     * @see php.java.bridge.Util#setDefaultLogger(ILogger)
      * @throws UnknownHostException If the host does not exist.
      */
     protected ChainsawLogger() {
@@ -86,7 +86,7 @@ public class ChainsawLogger extends SimpleLog4jLogger implements ILogger {
     /**
      * Create a new chainsaw logger.
      * @return The chainsaw logger
-     * @see php.java.bridge.Util#setLogger(ILogger)
+     * @see php.java.bridge.Util#setDefaultLogger(ILogger)
      * @throws Exception If chainsaw isn't running.
      */
     public static ChainsawLogger createChainsawLogger() throws Exception {

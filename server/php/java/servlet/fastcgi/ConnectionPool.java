@@ -27,7 +27,6 @@ package php.java.servlet.fastcgi;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.SocketException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -98,12 +97,12 @@ public class ConnectionPool {
             counter = maxRequests; 
 	    reset();
 	}
-	protected Connection reopen() throws ConnectException, SocketException {
+	protected Connection reopen() throws ConnectException {
             if(isClosed) this.channel = factory.connect(channelName);
             this.isClosed = false;
             return this;
 	}
-	protected Connection(ChannelFactory channelName, int maxRequests, IOFactory factory) throws ConnectException, SocketException {
+	protected Connection(ChannelFactory channelName, int maxRequests, IOFactory factory) {
             this.channelName = channelName;
             this.factory = factory;
             this.isClosed = true;
@@ -114,7 +113,7 @@ public class ConnectionPool {
 	public void setIsClosed() {
 	    isClosed=true;
 	}
-	protected void close() throws ConnectException, SocketException {
+	protected void close() throws ConnectException {
 	    // PHP child terminated: mark as closed, so that reopen() can allocate 
 	    // a new connection for the new PHP child
 	    if (maxRequests>0 && --counter==0) isClosed = true;
@@ -191,7 +190,7 @@ public class ConnectionPool {
 	this.timeout = timeout;
     }
     /* helper for openConnection() */
-    private Connection createNewConnection() throws ConnectException, SocketException {
+    private Connection createNewConnection() {
         Connection connection = new Connection(channelName, maxRequests, factory);
         connectionList.add(connection);
         connections++;
@@ -202,9 +201,8 @@ public class ConnectionPool {
      * @return The connection
      * @throws InterruptedException
      * @throws ConnectException 
-     * @throws SocketException 
      */
-    public synchronized Connection openConnection() throws InterruptedException, ConnectException, SocketException {
+    public synchronized Connection openConnection() throws InterruptedException, ConnectException {
         Connection connection;
       	if(freeList.isEmpty() && connections<limit) {
       	    connection = createNewConnection();

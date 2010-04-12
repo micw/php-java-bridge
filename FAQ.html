@@ -47,7 +47,6 @@ out.println("yourIntranetHost running PHP version: " + (String)((javax.script.In
 <li>PHP >= 5.1.2. PHP >= 5.3 recommended.</li>
 <li>Java >= 1.4. Java >= 6 recommended.</li>
 <li>J2EE >= 1.3.</li>
-<li>Mono >= 1.2.4 or .NET >= 2.</li>
 </ul>
 
 <H4>Why doesn't the bridge throw a java.lang.RuntimeException or Error as a PHP JavaException by default?</H4>
@@ -142,13 +141,11 @@ With a <code>define</code> before a PHP library is loaded. Global options can al
 
 <H4>How can I configure the bridge?</H4>
 
-<p>Useful options which can be set before the Java.inc/Mono.inc is loaded are:
+<p>Useful options which can be set before the Java.inc is loaded are:
 <blockquote>
 <code>
-define ("JAVA_DEBUG", false);<br>
 define ("JAVA_PREFER_VALUES", false);<br>
 define ("JAVA_HOSTS", "127.0.0.1:8080");<br>
-define ("JAVA_PIPE_DIR", null);<br>
 require_once ("java/Java.inc");<br>
 ...
 </code>
@@ -165,6 +162,9 @@ Simply compile the C based extension and omit the
 <code>--with-java=</code> configure option. The bridge will use the
 <code>libgcj</code> library, which is part of the GNU gcc compiler. This library also uses much less system
 resources (memory, files) than a "real" Java VM.</p> 
+<p>GCJ support has been removed in PHP/Java Bridge version 6. If
+you want to compile JavaBridge.jar to native code, please use PHP/Java
+Bridge version 5.5.4 instead.</p>
 
 <H4>I can't load the resource or file from the current working directory!?!</H4>
 <p>
@@ -187,13 +187,16 @@ works in the shell but not within apache, then there's something wrong with your
 <p>Yes, see the examples folder from the source download.</p>
 
 <H4>Can I access Mono or .NET libraries using the pure PHP implementation?</H4>
-<p>Yes, there's a PHP library "Mono.inc" generated from "Java.inc" and
-a "MonoBridge.exe" generated from "JavaBridge.jar". If you want to
-compile from source, use the configure
-option <code>--with-mono</code>.</p>
+<p>Yes, PHP/Java Bridge version < 6 contains a PHP library
+"Mono.inc" generated from "Java.inc" and a "MonoBridge.exe" generated
+from "JavaBridge.jar". If you want to compile from source, use the
+configure option <code>--with-mono</code>.</p>
+<p>Mono/.NET support has been removed in PHP/Java Bridge version
+6. If you want to access Mono/.NET libraries, please use PHP/Java
+Bridge version 5.5.4 instead.</p>
 
 <H4>What does a "protocol error ..." mean?</H4>
-<p>That your Java or .NET VM has problems, for example an OutOfMemoryError. Check the back end (Tomcat/J2EE/.NET/...) log for details.</p>
+<p>That your Java has problems, for example an OutOfMemoryError. Check the back end (Tomcat/J2EE/...) log for details.</p>
 <p>It could also indicate a setup problem. If you use a servlet back end but haven't set the <code>java.servlet</code> or <code>JAVA_SERVLET</code> option, the PHP library <code>Java.inc</code> will confuse the HTML response from the servlet engine with the XML protocol used by the bridge.</p>
 
 <H4>Does it support PHP 4?</H4>
@@ -233,7 +236,7 @@ application A, is already cached.<br>
 An attempt to link the library anyway will cause "NoClassDefFound" or "NoSuchMethod" errors at runtime. Or some procedures may throw checked exceptions even though they haven't declared them.
 </p>
 <p>
-To protect PHP developers from Java's "dll hell", I have removed the
+To protect PHP developers from Java's "<a href="http://en.wikipedia.org/wiki/JAR_hell">jar hell</a>", I have removed the
 dynamic class loading mechanism from PHP/Java Bridge version 6.0;
 java_require() issues a warning.
 </p>
@@ -251,8 +254,7 @@ documents.
 </p>
 
 <H4>Where can I store my java libraries for the VM Bridge?</H4>
-<p>Either within  your web application <code>WEB-INF/lib</code> directory or in <code>php.java.bridge.base</code>/lib.</p>
-<p> When the system property <code>php.java.bridge.base</code> is not set, libraries are loaded from <code>$HOME/lib</code> where <code>$HOME</code> denotes the home directory of the person or component which has started the java VM.</p>
+<p>In your web application <code>WEB-INF/lib</code> directory.</p>
 <p> If libraries should be available globally, store them in <code>java.ext.dirs</code>, for example in <code>/usr/share/java/ext</code>.</p>
 
 <H4>Why do I get a ClassNotFoundException?</H4>
@@ -274,6 +276,71 @@ documentation of your J2EE server, Servlet engine or Java VM to see if and
 how the environment can handle impure Java libraries. A common approach is to store the Java part in <code>java.ext.dirs</code> and the native part in <code>java.library.path</code>.</p>
 
 <H2>J2EE/Servlet questions</H2>
+
+<a name="php-extensions">
+<H4>I want to ship my own PHP web application. Where do I put PHP and PHP extensions?</H4>
+<p>
+PHP binaries go to <code>WEB-INF/cgi/</code> and should be named <code>php-cgi-ARCHITECTURE-OS.exe</code> (Windows) or <code>php-cgi-ARCHITECTURE-OS</code> (Linux/Unix).
+</p>
+<p>
+PHP extensions go to <code>WEB-INF/cgi/ARCHITECTORE-OS/ext</code>. The extension can be customized with a <code>WEB-INF/cgi/ARCHITECTURE-OS/conf.d/EXTENSION.ini</code> file.
+<p>
+Pure PHP libraries go to <code>WEB-INF/pear/</code>.
+</p>
+<p>
+Example for the PHP mysql extension for Linux and Windows (i386/x86):
+<blockquote>
+<code>
+WEB-INF&nbsp;---&nbsp;cgi&nbsp;---&nbsp;php-cgi-x86-windows.exe<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;---&nbsp;x86-windows&nbsp;---&nbsp;conf.d&nbsp;---&nbsp;mysql.ini&nbsp;[extension="php_mysql.dll"]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;---&nbsp;ext&nbsp;---&nbsp;php_mysql.dll<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;---&nbsp;php-cgi-i386-linux<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;---&nbsp;i386-linux&nbsp;---&nbsp;conf.d&nbsp;---&nbsp;mysql.ini&nbsp;[extension="mysql.so"]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;---&nbsp;ext&nbsp;---&nbsp;mysql.so<br>
+</code>
+</blockquote>
+
+<a name="custom-servlet">
+<H4>I have written my own servlet. How do I call it from PHP?</H4>
+<p>
+Add the following code to your servlet:
+<blockquote>
+<code>
+public String hello() { return "hello from MyServlet"; }<br>
+[...]<br>
+protected void doPut (HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {<br>
+&nbsp;IContextFactory ctx = new RemoteHttpServletContextFactory(this, getServletContext(), req, req, res);<br>
+&nbsp;res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());<br>
+&nbsp;res.setHeader("Pragma", "no-cache");<br>
+&nbsp;res.setHeader("Cache-Control", "no-cache");<br>
+&nbsp;try { ctx.getBridge().handleRequests(req.getInputStream(), res.getOutputStream()); } finally { ctx.destroy(); }<br>
+}<br>
+</code>
+</blockquote>
+</p>
+<p>
+Then copy the libraries <code>JavaBridge.jar</code> and <code>php-servlet.jar</code> to your <code>WEB-INF/lib</code> directory and re-deploy your web application.
+</p>
+<p>
+If your servlet is programmed so that it listens on localhost:8080/MyWebApp/MyServlet, set <code>JAVA_HOSTS</code> and <code>JAVA_SERVLET</code> to these values:
+<blockquote>
+<code>
+&lt;?php
+define("JAVA_HOSTS", "localhost:8080");<br>
+define("JAVA_SERVLET", "/MyWebApp/MyServlet");<br>
+require_once("java/Java.inc");<br>
+<br>
+echo java_context()-&gt;getServlet()-&gt;hello();<br>
+?&gt;
+</code>
+</blockquote>
+</p>
 
 <a name="load-balancing">
 <H4>How do I set up a load balancer for the VM Bridge cluster?</H4>
@@ -492,52 +559,10 @@ for details.
 <H4>Does the
 bridge run native code within my servlet engine or application
 server?</H4> <p>No. The bridge back end is written in pure java, it
-doesn't use any native code. Native PHP runs within Apache, IIS, a
-FCGI server or via CGI. If the PHP instance crashes, an error page is
+doesn't use any native code. Native PHP runs within Apache, IIS, or a
+FCGI server. If the PHP instance crashes, an error page is
 returned to the client and the Apache, IIS, CGI container usually starts a new PHP instance for the next
 request.</p> 
-
-
-<a name="ssl">
-<H4>On Windows some PHP binaries do not support HTTPS/SSL</H4> 
-</a>
-<p>
-If you see the message:
-<blockquote>
-<code>
-Warning: fsockopen() [function.fsockopen]: unable to connect to ssl://127.0.0.1:8443
-(Unable to find the socket transport "ssl" - did you forget to enable it when you configured PHP?)
-</code>
-</blockquote>
-this means that PHP cannot connect back to the official SSL port. 
-Please check the 
-"Registered Stream Socket Transports" from the <code>phpinfo()</code> (see the <code>test.php</code> page), it should display: <code>tcp, udp, ssl, sslv3, sslv2, tls</code>. If not, please recompile PHP with SSL enabled, use the flag <code>--with-openssl</code>.
-<p>
-A workaround is to use the official non-SSL port or to open a
-dedicated local port for the PHP-Java communication. The following
-example is for Tomcat:
-<p>
-<ol>
-Disable <code>override_hosts</code> in the web application <code>WEB-INF/web.xml</code>:
-<blockquote>
-<code>
-         &lt;context-param&gt;<br>
-           &lt;param-name&gt;override_hosts&lt;/param-name&gt;<br>
-           &lt;param-value&gt;Off&lt;/param-value&gt;<br>
-         &lt;/context-param&gt;<br>
-</code>
-</blockquote>
-Either fetch the <code>Java.inc</code> directly from your back end (which also adjusts the <code>JAVA_HOSTS</code>) or change the <code>JAVA_HOSTS</code> option, for example:
-<blockquote>
-<code>
-define("JAVA_HOSTS", "127.0.0.1:9090");
-</code>
-</blockquote>
-</ol>
-<p>
-Restart the application server or servlet engine. Check the settings by running <code>phpinfo()</code> or by visiting the <code>test.php</code> page. 
-</p>
-
 
 <H4>The EJB example works with the Sun J2EE server, but in JBoss I get a ClassCastException, what's wrong?</H4> 
 <p>It's a JBoss problem, although this problem may also appear in other application servers which do not strictly separate the application/bean domains. The JavaBridge.war already contains the <code>documentClient.jar</code> as a library, so JBoss references the library classes instead of the bean classes. Just remove the <code>documentClient.jar</code> from the <code>JavaBridge.war</code>, re-deploy <code>JavaBridge.war</code> and run the test again.
@@ -579,11 +604,7 @@ can be used to access the JSR 223 ScriptEngine from the framework, provided that
 <H2>General runtime questions</H2>
 
 <H4>How do I include a local (*.asp, *.jsp, ...) resource?</H4>
-<p>Use the <code><a href="http://us.php.net/manual/en/function.virtual.php">virtual()</a></code> function.
-If PHP is running in a JEE server or servlet engine, the <code>virtual()</code> function is an alias for 
-<blockquote>
-<code>java_context()-&gt;getHttpServletRequest()-&gt;getRequestDispatcher()-&gt;include()</code>
-</blockquote>
+<p>Use the <code><a href="http://us.php.net/manual/en/function.virtual.php">virtual()</a></code> or <code><a href="API/JavaBridge/_JavaBridge.inc.html#functionjava_virtual">java_virtual()</a></code> function.
 </p>
 <p><strong>Warning:</strong> Do not open a "loop back" url connection (e.g. via <code>fopen("http://localhost.../foo.asp")</code>) to include the <em>local</em> resource. This might exceed the HTTP server's pool size and create a deadlock!</p>
 
@@ -605,7 +626,7 @@ function java($clazz) {<br>
 
 <H4>Why does java_context()-&gt;getHttpServletRequest()-&gt;getSession() return null?</H4>
 <p>
-PHP scripts must explicitly allocate a session with <code><a href="API/VM%20Bridge/_JavaProxy.inc.html#functionjava_session">java_session()</a></code>. For example:
+PHP scripts must explicitly allocate a session with <code><a href="API/JavaBridge/_JavaProxy.inc.html#functionjava_session">java_session()</a></code>. For example:
 <blockquote>
 <code>
 java_session(); <br>
@@ -826,7 +847,7 @@ java -agentlib:hprof=heap=sites -jar JavaBridge.jar<br>
  
 <H4>How can PHP classes extend Java classes and Java methods?</H4> 
 <p>
-By using <a href="API/VM%20Bridge/_JavaProxy.inc.html#functionjava_closure"><code>java_closure()</code></a> and the <a href="http://en.wikipedia.org/wiki/Visitor_pattern">visitor pattern</a> for example. 
+By using <a href="API/JavaBridge/_JavaProxy.inc.html#functionjava_closure"><code>java_closure()</code></a> and the <a href="http://en.wikipedia.org/wiki/Visitor_pattern">visitor pattern</a> for example. 
 </p>
 <p> In PHP 5.3 or above the following code can be used:
 <blockquote>
@@ -862,7 +883,7 @@ With <code>java_closure()</code>. For example:
 &nbsp;&nbsp;}<br>
 &nbsp;&nbsp;$foo = new Foo();<br>
 &nbsp;&nbsp;$jObj = java_closure($foo);<br>
-&nbsp;&nbsp;$String = new Java("java.lang.String");<br>
+&nbsp;&nbsp;$String = java("java.lang.String");<br>
 &nbsp;&nbsp;echo $String-&gt;valueOf($jObj);<br>
 </code>
 </blockquote>

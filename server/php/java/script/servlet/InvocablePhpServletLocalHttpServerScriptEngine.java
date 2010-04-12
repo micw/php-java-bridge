@@ -20,10 +20,12 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import php.java.bridge.ILogger;
 import php.java.bridge.Util;
 import php.java.bridge.http.ContextServer;
 import php.java.script.InvocablePhpScriptEngine;
 import php.java.script.URLReader;
+import php.java.servlet.ContextLoaderListener;
 import php.java.servlet.ServletUtil;
 
 /*
@@ -149,12 +151,12 @@ abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocableP
 	} catch (NoSuchMethodError e) { // conform to jsr223
 	    throw new NoSuchMethodException(String.valueOf(e.getMessage()));
 	}
-}
+    }
     protected Object eval(final Reader reader, final ScriptContext context, final String name) throws ScriptException {
 	try {
 	    return AccessController.doPrivileged(new PrivilegedExceptionAction(){ 
 	        public Object run() throws Exception {
-	    	return evalInternal(reader, context, name);
+	    	return evalWithPrivileges(reader, context, name);
 	        }
 	    });
         } catch (PrivilegedActionException e) {
@@ -164,9 +166,10 @@ abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocableP
         }
     }
     /** Short path used when eval() is missing */
-    protected Object evalShortPath() throws ScriptException {
+    private Object evalShortPath() throws ScriptException {
 	Reader localReader = null; 
 	if((continuation != null)) release();
+	
 	 try {
 	    StringBuffer buf = new StringBuffer(req.getContextPath());
 	    String pathInfo = req.getPathInfo();
@@ -183,7 +186,7 @@ abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocableP
 	    EngineFactory.addManaged(servletCtx, this);
 
 	    continuation = getContinuation(localReader = new URLReader(url), getContext());
-	    continuation.start();
+	    pool.start(continuation);
 	    this.script = continuation.getPhpScript();
 	    if (this.script != null) this.scriptClosure = script;
         } catch (Exception e) {
@@ -196,11 +199,11 @@ abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocableP
         }
 	return resultProxy;
     }
-    private Object evalInternal(Reader reader, ScriptContext context, String name) throws ScriptException {
+    private Object evalWithPrivileges(Reader reader, ScriptContext context, String name) throws ScriptException {
         if((continuation != null) || (reader == null) ) release();
         Reader localReader = null;
   	if(reader==null) return null;
-  	
+
 	if (!(reader instanceof ScriptFileReader)) throw new IllegalArgumentException("reader must be a ScriptFileReader");
   	ScriptFileReader fileReader = (ScriptFileReader) reader;
   	
@@ -235,6 +238,7 @@ abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocableP
 	    super.release();
 	} finally {
 	    releaseReservedContinuation();
+	    Util.unsetLogger();
 	}
     }
     /**

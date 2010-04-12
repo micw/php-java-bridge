@@ -53,7 +53,7 @@ public class HttpProxy extends CGIRunner {
      * @param resultProxy The return value proxy
      */
     public HttpProxy(Reader reader, Map env, OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy resultProxy, ILogger logger) {
-	super("HttpProxy", reader, env, out, err, headerParser, resultProxy, logger);
+	super(reader, env, out, err, headerParser, resultProxy, logger);
     }
     
     protected void doRun() throws IOException, PhpException {

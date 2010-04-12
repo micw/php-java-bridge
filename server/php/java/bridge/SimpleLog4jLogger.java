@@ -68,7 +68,7 @@ public abstract class SimpleLog4jLogger implements ILogger {
     }
     /**
      * Create a new log4j logger using the default appender.
-     * @see php.java.bridge.Util#setLogger(ILogger)
+     * @see php.java.bridge.Util#setDefaultLogger(ILogger)
      */
     protected SimpleLog4jLogger() {
     }

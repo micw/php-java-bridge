@@ -33,13 +33,13 @@ import php.java.bridge.NotImplementedException;
 import php.java.bridge.Util;
 
 class FastCGIOutputStream extends DefaultOutputStream {
-    private void write(int type, byte buf[]) throws IOException {
+    private void write(int type, byte buf[]) throws ConnectionException {
         write(type, buf, buf.length);
     }
-    public void write(byte buf[], int buflength) throws IOException {
+    public void write(byte buf[], int buflength) throws ConnectionException {
         write(FastCGIServlet.FCGI_STDIN, buf, buflength);
     }
-    public void write(int type, byte buf[], int buflength) throws IOException {
+    public void write(int type, byte buf[], int buflength) throws ConnectionException {
         int requestId = 1;
         byte[] header = new byte[] {
 	    1, (byte)type, 
@@ -61,7 +61,7 @@ class FastCGIOutputStream extends DefaultOutputStream {
         write(buf, pos, contentLength);
     }
 
-    public void writeBegin() throws IOException {
+    public void writeBegin() throws ConnectionException {
         int role = FastCGIServlet.FCGI_RESPONDER;
         byte[] body = new byte[] {
 	    (byte)((role >> 8) & 0xff), (byte)((role) & 0xff),
@@ -70,7 +70,7 @@ class FastCGIOutputStream extends DefaultOutputStream {
             
         write(FastCGIServlet.FCGI_BEGIN_REQUEST, body);
     }
-    public void writeLength(ByteArrayOutputStream out, int keyLen) throws IOException {
+    private void writeLength(ByteArrayOutputStream out, int keyLen) throws IOException {
         if (keyLen < 0x80) {
 	    out.write((byte)keyLen);
         }else {
@@ -79,10 +79,10 @@ class FastCGIOutputStream extends DefaultOutputStream {
 		(byte)((keyLen >> 16) & 0xff),
 		(byte)((keyLen >> 8) & 0xff),
 		(byte)keyLen};
-	    out.write(b);
+		out.write(b);
         }
     }
-    public void writeParams(Map props) throws IOException {
+    public void writeParams(Map props) throws ConnectionException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         for(Iterator ii = props.keySet().iterator(); ii.hasNext();) {
 	    Object k = ii.next();
@@ -92,11 +92,14 @@ class FastCGIOutputStream extends DefaultOutputStream {
 	    int keyLen = key.length();
 	    int valLen = val.length();
 	    if(keyLen==0 || valLen==0) continue;
-    		
-	    writeLength(out, keyLen);
-	    writeLength(out, valLen);
-	    out.write(key.getBytes(Util.ASCII)); 	
-	    out.write(val.getBytes(Util.ASCII)); 	
+	    try {
+	    	writeLength(out, keyLen);
+	    	writeLength(out, valLen);
+		out.write(key.getBytes(Util.ASCII)); 	
+		out.write(val.getBytes(Util.ASCII));
+	    } catch (IOException e) {
+		throw new ConnectionException(connection, e);
+	    }
         }
         write(FastCGIServlet.FCGI_PARAMS, out.toByteArray());
         write(FastCGIServlet.FCGI_PARAMS, FastCGIServlet.FCGI_EMPTY_RECORD);

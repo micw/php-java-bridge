@@ -41,7 +41,6 @@ import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.List;
 
-import php.java.bridge.http.AbstractChannelName;
 import php.java.bridge.http.ChunkedInputStream;
 import php.java.bridge.http.ChunkedOutputStream;
 import php.java.bridge.http.ContextFactory;
@@ -49,7 +48,7 @@ import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.HttpRequest;
 import php.java.bridge.http.HttpResponse;
 import php.java.bridge.http.HttpServer;
-import php.java.bridge.http.IContextFactory;
+import php.java.bridge.http.RemoteHttpContextFactory;
 
 /**
  * This is the main entry point for the PHP/Java Bridge library.
@@ -144,13 +143,6 @@ public class JavaBridgeRunner extends HttpServer {
 	return socket;
     }
 
-    private static IContextFactory getContextFactory(HttpRequest req, HttpResponse res) {
-    	String id = getHeader("X_JAVABRIDGE_CONTEXT", req);
-    	IContextFactory ctx = ContextFactory.peek(id);
-	if(ctx==null) ctx = ContextFactory.addNew();
-     	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
-    	return ctx;
-    }
     private static String getHeader(String key, HttpRequest req) {
   	String val = req.getHeader(key);
   	if(val==null) return null;
@@ -158,7 +150,6 @@ public class JavaBridgeRunner extends HttpServer {
   	return val;
     }
 
-    private static final byte[] EOF = new byte[0];
     /**
      * Handles both, override-redirect and redirect, see
      * see php.java.servlet.PhpJavaServlet#handleSocketConnection(HttpServletRequest, HttpServletResponse, String, boolean)
@@ -169,37 +160,31 @@ public class JavaBridgeRunner extends HttpServer {
     	String transferEncoding = getHeader("Transfer-Encoding", req);
     	boolean isChunked = "chunked".equals(transferEncoding);
     	if (!isChunked) throw new IllegalStateException ("Please use a JEE server or servlet engine.");
-	IContextFactory ctx = getContextFactory(req, res);
-	
-    	JavaBridge bridge = ctx.getBridge();
+	sin = new ChunkedInputStream(req.getInputStream());
+	sout = new ChunkedOutputStream(res.getOutputStream());
 
-	bridge.in = sin = new ChunkedInputStream(req.getInputStream());
-	bridge.out = sout = new ChunkedOutputStream(res.getOutputStream());
-	Request r = bridge.request = new Request(bridge);
-        if(r.init(sin, sout)) {
-        	AbstractChannelName channelName = 
-                    contextServer.getChannelName(ctx);
-        	if (channelName == null) throw new NullPointerException ("No Pipe- or SocketContextServer available.");
-        	res.setHeader("X_JAVABRIDGE_REDIRECT", channelName.getName());
-        	res.setHeader("Transfer-Encoding", "chunked");
+	boolean destroyCtx = false;
+	RemoteHttpContextFactory ctx;
+	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
 
-        	// start the context runner before generating the first response
-                contextServer.start(channelName, Util.getLogger());
-
-		// redirect and re-open
-                r.handleRequests();
-        
-        	// redirect and re-open
-        	if(bridge.logLevel>3) bridge.logDebug("re-directing to port# "+ channelName);
-        	sout.write(EOF);
-        	sout.close();
-                if(bridge.logLevel>3) 
-                    bridge.logDebug("waiting for context: " +ctx.getId());
-                try { ctx.waitFor(Util.MAX_WAIT); } catch (InterruptedException e) { Util.printStackTrace(e); }
-        	}
-        else {
-            ctx.destroy();
-        }
+	if (id!=null) { // kept for backward compatibility
+	    ctx = (RemoteHttpContextFactory) RemoteHttpContextFactory.get(id);
+	    if (ctx==null) throw new IllegalStateException("Cannot find RemoteHttpContextFactory");
+	    ctx.setResponse(res);
+	} else {
+	    ctx = new RemoteHttpContextFactory(req, res);
+	    destroyCtx = true;
+	}
+	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
+	res.setHeader("Pragma", "no-cache");
+	res.setHeader("Cache-Control", "no-cache");
+	try {
+	    ctx.getBridge().handleRequests(sin, sout);
+	} finally {
+	    if (destroyCtx) ctx.destroy();
+	    try {sin.close(); } catch (Exception e) {/*ignore*/}
+	    try {sout.close(); } catch (Exception e) {/*ignore*/}
+	}
     }
     /**
      * Return the current directory to the browser

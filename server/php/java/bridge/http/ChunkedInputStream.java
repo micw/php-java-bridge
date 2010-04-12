@@ -29,6 +29,8 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import php.java.bridge.Util;
+
 /**
  * An output stream which reads data in HTTP chunks.
  * 
@@ -131,5 +133,10 @@ public class ChunkedInputStream extends FilterInputStream {
 	if (in.read() == -1) throw new IOException ("read chunked packet length");
 
 	return n;
+    }
+    private byte[] buf = new byte[Util.BUF_SIZE];
+    public void close() throws IOException {
+	// consume remaining 0\r\n
+	read(buf, 0, buf.length);
     }
 }

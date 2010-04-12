@@ -27,6 +27,8 @@ package php.java.script.servlet;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.Collections;
+import java.util.Map;
 
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
@@ -235,5 +237,25 @@ public class PhpSimpleHttpScriptContext extends AbstractPhpScriptContext impleme
       /**{@inheritDoc}*/
       public String getRealPath(String path) {
   	return php.java.servlet.Context.getRealPathInternal(path, context);
+      }
+      /**{@inheritDoc}*/
+      public Object get(String key) {
+	  return getBindings(IContext.ENGINE_SCOPE).get(key);
+      }
+      /**{@inheritDoc}*/
+      public void put(String key, Object val) {
+	  getBindings(IContext.ENGINE_SCOPE).put(key, val);
+      }
+      /**{@inheritDoc}*/
+      public void remove(String key) {
+	  getBindings(IContext.ENGINE_SCOPE).remove(key);
+      }
+      /**{@inheritDoc}*/
+      public void putAll(Map map) {
+	  getBindings(IContext.ENGINE_SCOPE).putAll(map);
+      }
+      /**{@inheritDoc}*/
+      public Map getAll() {
+  	return Collections.unmodifiableMap(getBindings(IContext.ENGINE_SCOPE));
       }
 }

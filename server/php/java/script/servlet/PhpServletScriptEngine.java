@@ -8,6 +8,9 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.net.MalformedURLException;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
@@ -16,6 +19,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import php.java.bridge.ILogger;
 import php.java.bridge.Util;
 import php.java.script.URLReader;
 import php.java.servlet.ContextLoaderListener;
@@ -116,7 +120,24 @@ public class PhpServletScriptEngine extends PhpServletLocalHttpServerScriptEngin
 	super (servlet, ctx, req, res, protocol, port);
 	path = new File(ServletUtil.getRealPath(ctx, ""));
     }
-    protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
+    protected Object eval(final Reader reader, final ScriptContext context, final String name) throws ScriptException {
+	try {
+	    Util.setLogger((ILogger) servletCtx.getAttribute(ContextLoaderListener.LOGGER));
+	    return AccessController.doPrivileged(new PrivilegedExceptionAction(){ 
+	        public Object run() throws Exception {
+	    	return evalWithPrivileges(reader, context, name);
+	        }
+	    });
+        } catch (PrivilegedActionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof RuntimeException) throw (RuntimeException)cause;
+            throw (ScriptException) e.getCause();
+        } finally {
+            Util.unsetLogger();
+        }
+        
+    }   
+    private Object evalWithPrivileges(Reader reader, ScriptContext context, String name) throws ScriptException {
 
 	// use a short path if the script file already exists
 	if (reader instanceof ScriptFileReader) return super.eval(reader, context, name);

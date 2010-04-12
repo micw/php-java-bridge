@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -284,5 +285,25 @@ public class Context implements IManaged, Invocable, IContext {
     /**{@inheritDoc}*/
     public String getRealPath(String path) {
 	return getRealPathInternal(path);
+    }
+    /**{@inheritDoc}*/
+    public Object get(String key) {
+	return getEngineScope().get(key);
+    }
+    /**{@inheritDoc}*/
+    public void put(String key, Object val) {
+	getEngineScope().put(key, val);
+    }
+    /**{@inheritDoc}*/
+    public void remove(String key) {
+	getEngineScope().remove(key);
+    }
+    /**{@inheritDoc}*/
+    public void putAll(Map map) {
+	getEngineScope().putAll(map);
+    }
+    /**{@inheritDoc}*/
+    public Map getAll() {
+	return Collections.unmodifiableMap(getEngineScope());
     }
 }

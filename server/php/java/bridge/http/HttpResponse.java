@@ -136,4 +136,7 @@ public class HttpResponse {
 	    outputStream = null;
 	}
     }
+    public void flushBuffer() throws IOException {
+	if (outputStream != null) outputStream.flush();
+    }
 }

@@ -74,7 +74,9 @@ public class FastCGIServlet extends HttpServlet {
 
     private static final int JAVABRIDGE_RESERVE = 1;
 
-    static final String cgiPathPrefix = "/WEB-INF/cgi";
+    static final String PEAR_DIR = "/WEB-INF/pear";
+    static final String CGI_DIR = "/WEB-INF/cgi";
+    static final String WEB_INF_DIR = "/WEB-INF";
  
     // IO buffer size
     static final int FCGI_BUF_SIZE = 65535;
@@ -206,7 +208,7 @@ public class FastCGIServlet extends HttpServlet {
 		}
 		File f = new File(value);
 		if(!f.isAbsolute()) {
-		    value = ServletUtil.getRealPath(config.getServletContext(), cgiPathPrefix)+File.separator+value;
+		    value = ServletUtil.getRealPath(config.getServletContext(), CGI_DIR)+File.separator+value;
 		}
 		php = value;
 	    }  catch (Throwable t) {Util.printStackTrace(t);}      
@@ -232,9 +234,21 @@ public class FastCGIServlet extends HttpServlet {
     private ContextServer contextServer; // shared with FastCGIServlet
 
     ServletContext context;
-    static final HashMap PROCESS_ENVIRONMENT = 
-	Util.COMMON_ENVIRONMENT;
-
+    static final HashMap PROCESS_ENVIRONMENT = getProcessEnvironment();
+    
+    private static void updateProcessEnvironment(File conf) {
+	try {
+	    PROCESS_ENVIRONMENT.put("PHP_INI_SCAN_DIR", conf.getCanonicalPath());
+	} catch (IOException e) {
+	    e.printStackTrace();
+	    PROCESS_ENVIRONMENT.put("PHP_INI_SCAN_DIR", conf.getAbsolutePath());
+	}
+    }
+    private static HashMap getProcessEnvironment() {
+	HashMap map = new HashMap(Util.COMMON_ENVIRONMENT);
+	return map;
+    }
+    
     /**
      * Create a new FastCGI servlet which connects to a PHP FastCGI server using a connection pool.
      * 
@@ -311,7 +325,7 @@ public class FastCGIServlet extends HttpServlet {
 		e.printStackTrace();
 	    }
 	}
-	String pearDir = ServletUtil.getRealPath(context, "WEB-INF/pear");
+	String pearDir = ServletUtil.getRealPath(context, PEAR_DIR);
 	if (pearDir != null) {
 	    File pearDirFile = new File (pearDir);
 	    try {
@@ -322,18 +336,73 @@ public class FastCGIServlet extends HttpServlet {
 		e.printStackTrace();
 	    }
 	}
-	javaDir = ServletUtil.getRealPath(context, "WEB-INF/cgi");
-	if (javaDir != null) {
-	    File javaDirFile = new File (javaDir);
+	String cgiDir = ServletUtil.getRealPath(context, CGI_DIR);
+	if (cgiDir != null) {
+	    File conf = new File(new File(cgiDir, Util.osArch+"-"+Util.osName), "conf.d");
+	    File ext = new File(new File(cgiDir, Util.osArch+"-"+Util.osName), "ext");
+	    File cgiDirFile = new File (cgiDir);
 	    try {
-		if (!javaDirFile.exists()) {
-		    javaDirFile.mkdir();
+		if (!cgiDirFile.exists()) {
+		    cgiDirFile.mkdirs();
 		}
 	    } catch (Exception e) {
 		e.printStackTrace();
 	    }
 	    
-	    File javaIncFile = new File (javaDir, "launcher.sh");
+	    try {
+		if (!conf.exists()) {
+		    conf.mkdirs ();
+		}
+	    } catch (Exception e) {
+		e.printStackTrace();
+	    }
+
+	    File tmpl = new File(conf, "mysql.ini");
+	    if (!tmpl.exists()) {
+		String str;
+		if (ServletUtil.USE_SH_WRAPPER) {
+		    str = ";; -*- mode: Scheme; tab-width:4 -*-\n"+
+                        ";; Example extension.ini file: mysql.ini.\n"+
+			";; Copy the correct version (see phpinfo()) of the PHP extension \"mysql.so\" to the ./../ext directory and uncomment the following line\n"+
+			"; extension = mysql.so\n";
+		} else {
+		    str = ";; -*- mode: Scheme; tab-width:4 -*-\r\n"+
+                        ";; Example extension.ini file: mysql.ini.\r\n"+
+			";; Copy the correct version (see phpinfo()) of the PHP extension \"php_mysql.dll\" to the .\\..\\ext directory and uncomment the following line\r\n"+
+			"; extension = php_mysql.dll\r\n";
+		}
+		byte[] data = str.getBytes();
+		try {
+		    OutputStream out = new FileOutputStream (tmpl);
+		    out.write(data);
+		    out.close();
+		} catch (Exception e) {
+		    e.printStackTrace();
+		}
+	    }
+
+	    try {
+		if (!ext.exists()) {
+		    ext.mkdir();
+		}
+	    } catch (Exception e) {
+		e.printStackTrace();
+	    }
+
+	    tmpl = new File(conf, "mysql.ini");
+	    if (!tmpl.exists()) {
+		String str = ServletUtil.USE_SH_WRAPPER ? ";extension = php_mysql.dll" : ";extension = mysql.so";
+		byte[] data = str.getBytes();
+		try {
+		    OutputStream out = new FileOutputStream (tmpl);
+		    out.write(data);
+		    out.close();
+		} catch (Exception e) {
+		    e.printStackTrace();
+		}
+	    }
+
+	    File javaIncFile = new File (cgiDir, "launcher.sh");
 	    try {
 		if (!javaIncFile.exists()) {
 		    Field f = Util.LAUNCHER_UNIX.getField("bytes");
@@ -346,7 +415,7 @@ public class FastCGIServlet extends HttpServlet {
 		e.printStackTrace();
 	    }
 	    
-	    File javaProxyFile = new File (javaDir, "launcher.exe");
+	    File javaProxyFile = new File (cgiDir, "launcher.exe");
 	    try {
 		if (!javaProxyFile.exists()) {
 		    Field f =  Util.LAUNCHER_WINDOWS.getField("bytes");
@@ -367,64 +436,72 @@ public class FastCGIServlet extends HttpServlet {
 	    } catch (Exception e) {
 		e.printStackTrace();
 	    }
-	}
-	if (ServletUtil.USE_SH_WRAPPER) {
-	    try {
-		File phpCgi = new File (javaDir, "php-cgi-"+Util.osArch+"-"+Util.osName);
-		if (phpCgi.exists()) {
-		    File wrapper = new File(javaDir, "php-cgi-"+Util.osArch+"-"+Util.osName+".sh");
-		    if (!wrapper.exists()) {
-			byte[] data = ("#!/bin/sh\nchmod +x ./php-cgi-"+Util.osArch+"-"+Util.osName+"\n"+
-				"exec ./php-cgi-"+Util.osArch+"-"+Util.osName+" -c php-cgi-" +Util.osArch+"-"+Util.osName+".ini \"$@\"").getBytes();
-			OutputStream out = new FileOutputStream (wrapper);
-			out.write(data);
-			out.close();
+	    if (ServletUtil.USE_SH_WRAPPER) {
+		try {
+		    File phpCgi = new File (cgiDir, "php-cgi-"+Util.osArch+"-"+Util.osName);
+		    if (phpCgi.exists()) {
+			updateProcessEnvironment(conf);
+			File wrapper = new File(cgiDir, "php-cgi-"+Util.osArch+"-"+Util.osName+".sh");
+			if (!wrapper.exists()) {
+			    byte[] data = ("#!/bin/sh\nchmod +x ./php-cgi-"+Util.osArch+"-"+Util.osName+"\n"+
+					   "exec ./php-cgi-"+Util.osArch+"-"+Util.osName+" -c php-cgi-" +Util.osArch+"-"+Util.osName+".ini \"$@\"").getBytes();
+			    OutputStream out = new FileOutputStream (wrapper);
+			    out.write(data);
+			    out.close();
+			}
+			File ini = new File(cgiDir, "php-cgi-"+Util.osArch+"-"+Util.osName+".ini");
+			if (!ini.exists()) {
+			    byte[] data = (";; -*- mode: Scheme; tab-width:4 -*-\n;; A simple php.ini\n"+
+					   ";; DO NOT EDIT THIS FILE!\n" +
+					   ";; Add your configuration files to the "+conf+" instead.\n"+
+					   ";; PHP extensions go to "+ext+". Please see phpinfo() for ABI version details.\n"+
+					   "extension_dir=\""+ext+"\"\n"+
+					   "include_path=\""+pearDir+":/usr/share/pear:.\"\n").getBytes();
+			    OutputStream out = new FileOutputStream (ini);
+			    out.write(data);
+			    out.close();
+			}
+		    } else {
+			File readme = new File(cgiDir, "php-cgi-"+Util.osArch+"-"+Util.osName+".MISSING.README.txt");
+			if (!readme.exists()) {
+			    byte[] data = ("You can rename your php fastcgi binary to \"php-cgi-"+Util.osArch+"-"+Util.osName+"\", add it to your web application WEB-INF/cgi directory and re-deploy your web application.\n").getBytes();
+			    OutputStream out = new FileOutputStream (readme);
+			    out.write(data);
+			    out.close();
+			}
 		    }
-		    File ini = new File(javaDir, "php-cgi-"+Util.osArch+"-"+Util.osName+".ini");
-		    if (!ini.exists()) {
-			byte[] data = (";; -*- mode: Scheme; tab-width:4 -*-\n;; A simple php.ini\n"+
-				"extension_dir=\""+javaDir+"\"\n"+
-				"include_path=\""+pearDir+":/usr/share/pear:.\"\n").getBytes();
-			OutputStream out = new FileOutputStream (ini);
-			out.write(data);
-			out.close();
-		    }
-		} else {
-		    File readme = new File(javaDir, "php-cgi-"+Util.osArch+"-"+Util.osName+".MISSING.README.txt");
-		    if (!readme.exists()) {
-			byte[] data = ("You can rename your php fastcgi binary to \"php-cgi-"+Util.osArch+"-"+Util.osName+"\", add it to your web application WEB-INF/cgi directory and re-deploy your web application.\n").getBytes();
-			OutputStream out = new FileOutputStream (readme);
-			out.write(data);
-			out.close();
-		    }
+		} catch (Exception e) {
+		    e.printStackTrace();
 		}
-	    } catch (Exception e) {
-		e.printStackTrace();
-	    }
-	} else {
-	    try {
-		File phpCgi = new File (javaDir, "php-cgi-"+Util.osArch+"-"+Util.osName+".exe");
-		if (phpCgi.exists()) {
-		File ini = new File(javaDir, "php.ini");
-		if (!ini.exists()) {
-		    byte[] data = (";; -*- mode: Scheme; tab-width:4 -*-\n;; A simple php.ini\n"+
-			    "extension_dir=\""+javaDir+"\"\n"+
-			    "include_path=\""+pearDir+";.\"\n").getBytes();
-		    OutputStream out = new FileOutputStream (ini);
-		    out.write(data);
-		    out.close();
-		}
-		} else {
-		    File readme = new File(javaDir, "php-cgi-"+Util.osArch+"-"+Util.osName+".exe.MISSING.README.txt");
-		    if (!readme.exists()) {
-			byte[] data = ("You can rename your php fastcgi binary to \"php-cgi-"+Util.osArch+"-"+Util.osName+".exe\", add it and its phpXts.dll (!) to your web application WEB-INF/cgi directory and re-deploy your web application.\n").getBytes();
-			OutputStream out = new FileOutputStream (readme);
-			out.write(data);
-			out.close();
+	    } else {
+		try {
+		    File phpCgi = new File (cgiDir, "php-cgi-"+Util.osArch+"-"+Util.osName+".exe");
+		    if (phpCgi.exists()) {
+			updateProcessEnvironment(conf);
+			File ini = new File(cgiDir, "php.ini");
+			if (!ini.exists()) {
+			    byte[] data = (";; -*- mode: Scheme; tab-width:4 -*-\r\n;; A simple php.ini\r\n"+
+					   ";; DO NOT EDIT THIS FILE!\r\n" +
+					   ";; Add your configuration files to the "+conf+" instead.\r\n"+
+					   ";; PHP extensions go to "+ext+". Please see phpinfo() for ABI version details.\r\n"+
+					   "extension_dir=\""+ext+"\"\r\n"+
+					   "include_path=\""+pearDir+";.\"\r\n").getBytes();
+			    OutputStream out = new FileOutputStream (ini);
+			    out.write(data);
+			    out.close();
+			}
+		    } else {
+			File readme = new File(cgiDir, "php-cgi-"+Util.osArch+"-"+Util.osName+".exe.MISSING.README.txt");
+			if (!readme.exists()) {
+			    byte[] data = ("You can rename your php fastcgi binary to \"php-cgi-"+Util.osArch+"-"+Util.osName+".exe\", add it and its phpXts.dll (!) to your web application WEB-INF/cgi directory and re-deploy your web application.\r\n").getBytes();
+			    OutputStream out = new FileOutputStream (readme);
+			    out.write(data);
+			    out.close();
+			}
 		    }
+		} catch (Exception e) {
+		    e.printStackTrace();
 		}
-	    } catch (Exception e) {
-		e.printStackTrace();
 	    }
 	}
 	String name = context.getServerInfo();
@@ -517,7 +594,6 @@ public class FastCGIServlet extends HttpServlet {
     	fcgiConnectionPool = null;
 
     	if (contextServer != null) contextServer.destroy();
-    	Util.destroy();
     }
 
     protected void setupRequestVariables(HttpServletRequest req, Environment env) {
@@ -560,15 +636,15 @@ public class FastCGIServlet extends HttpServlet {
 	Object lockObject = isJavaBridgeWc?javaBridgeCtxLock:globalCtxLock;
 	synchronized(lockObject) {
 	    if(null == (env.connectionPool=fcgiConnectionPool)) {
-		    int children = php_fcgi_connection_pool_size_number;
-		    if(delegateToJavaBridgeContext) { 
-			// NOTE: the shared_fast_cgi_pool options
-			// from the GlobalPhpCGIServlet and from
-			// the PhpCGIServlet must match.
-			children = isJavaBridgeWc ? JAVABRIDGE_RESERVE : php_fcgi_connection_pool_size_number-JAVABRIDGE_RESERVE;
-		    }
-		    env.connectionPool = fcgiConnectionPool= createConnectionPool(req, children, env);
+		int children = php_fcgi_connection_pool_size_number;
+		if(delegateToJavaBridgeContext) { 
+		    // NOTE: the shared_fast_cgi_pool options
+		    // from the GlobalPhpCGIServlet and from
+		    // the PhpCGIServlet must match.
+		    children = isJavaBridgeWc ? JAVABRIDGE_RESERVE : php_fcgi_connection_pool_size_number-JAVABRIDGE_RESERVE;
 		}
+		env.connectionPool = fcgiConnectionPool= createConnectionPool(req, children, env);
+	    }
 	}
 
     }
@@ -713,7 +789,7 @@ public class FastCGIServlet extends HttpServlet {
      * @throws InterruptedException 
      * @see Util#parseBody(byte[], InputStream, OutputStream, HeaderParser)
      */
-    protected void parseBody(HttpServletRequest req, HttpServletResponse res, Environment env) throws IOException, ServletException {
+    protected void parseBody(HttpServletRequest req, HttpServletResponse res, Environment env) throws ConnectionException, ConnectException, IOException, ServletException {
 	final byte[] buf = new byte[FCGI_BUF_SIZE];// headers cannot be larger than this value!
 	
 	InputStream in = null;
@@ -750,20 +826,20 @@ public class FastCGIServlet extends HttpServlet {
 		final InputStream inputStream = in; in = null;
 		final FastCGIOutputStream natOutputStream = natOut; natOut = null;
 		(new Thread() {
-		    public void run() {
-			int n;
-			try {
-			    while((n=inputStream.read(buf))!=-1) {
-				natOutputStream.write(buf, n);
+			public void run() {
+			    int n;
+			    try {
+				while((n=inputStream.read(buf))!=-1) {
+				    natOutputStream.write(buf, n);
+				}
+			    } catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			    } finally {
+				try {natOutputStream.close();} catch (IOException e) {}
 			    }
-			} catch (IOException e) {
-			    // TODO Auto-generated catch block
-			    e.printStackTrace();
-			} finally {
-			    try {natOutputStream.close();} catch (IOException e) {}
 			}
-		    }
-		}).start();
+		    }).start();
 	    } else {
 		// write the post data before reading the response
 		while((n=in.read(buf))!=-1) {
@@ -834,16 +910,6 @@ public class FastCGIServlet extends HttpServlet {
 	}
     }
 
-    protected void doExecute(HttpServletRequest req, HttpServletResponse res, Environment env) throws IOException, ServletException {
-	try {
-	    parseBody(req, res, env);
-	} catch (ConnectionException ex) {
-	    Util.logError("PHP application terminated unexpectedly, have you started php-cgi with the environment setting PHP_FCGI_MAX_REQUESTS=" + php_fcgi_max_requests + "?  Error: " + ex);
-	    throw ex;
-	}
-    }
-
-
     protected void execute(HttpServletRequest req, HttpServletResponse res) throws IOException, ServletException, InterruptedException {
 
 	Environment env = new Environment();
@@ -852,7 +918,7 @@ public class FastCGIServlet extends HttpServlet {
 	setupCGIEnvironment(req, res, env);
 
 	try {
-	    doExecute(req, res, env);
+	    parseBody(req, res, env);
 	} catch (ConnectException ex) {
 	    if(Util.logLevel>1) {
 		Util.logDebug("PHP FastCGI server failed: " + ex);
@@ -860,14 +926,15 @@ public class FastCGIServlet extends HttpServlet {
 	    }
 	    throw new IOException("PHP FastCGI server failed: ", ex);
 	} catch (ConnectionException x) {
+	    Util.logError("PHP application terminated unexpectedly, have you started php-cgi with the environment setting PHP_FCGI_MAX_REQUESTS=" + php_fcgi_max_requests + "?  Error: " + x);
 	    if(Util.logLevel>1) {
 		Util.logDebug("PHP FastCGI instance failed: " + x);
 		Util.printStackTrace(x);
 	    }
 	    throw new ServletException("PHP FastCGI instance failed.", x);
 	} catch (IOException e) {
-	    Util.printStackTrace(e);
-	    throw e;
+	    // ignore client abort exception
+	    if (Util.logLevel > 4) Util.printStackTrace(e);
 	} finally {
 	    if(env.ctx!=null) env.ctx.releaseManaged();
 	    env.ctx = null;
@@ -901,7 +968,7 @@ public class FastCGIServlet extends HttpServlet {
 	    execute(req, res);
 	} catch (IOException e) {
 	    try {res.reset();} catch (Exception ex) {/*ignore*/}
-	    StringBuffer buf = new StringBuffer(ServletUtil.getRealPath(getServletConfig().getServletContext(), cgiPathPrefix));
+	    StringBuffer buf = new StringBuffer(ServletUtil.getRealPath(getServletConfig().getServletContext(), CGI_DIR));
 	    buf.append(File.separator);
 	    buf.append("php-cgi-");
 	    buf.append(Util.osArch);
@@ -924,6 +991,8 @@ public class FastCGIServlet extends HttpServlet {
 	    try {res.reset();} catch (Exception ex) {/*ignore*/}
 	    if (Util.logLevel>4) Util.printStackTrace(t);
 	    throw new ServletException(t);
+	} finally {
+	    Util.unsetLogger();
 	}
     }
 

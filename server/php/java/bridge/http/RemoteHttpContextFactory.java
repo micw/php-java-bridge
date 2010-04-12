@@ -1,6 +1,6 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-package php.java.servlet;
+package php.java.bridge.http;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -30,19 +30,9 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.util.HashMap;
 
-import javax.servlet.Servlet;
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
 import php.java.bridge.ISession;
-import php.java.bridge.JavaBridgeFactory;
 import php.java.bridge.Request;
-import php.java.bridge.http.IContext;
-import php.java.bridge.http.IContextFactory;
-import php.java.bridge.http.IContextFactoryVisitor;
+import php.java.bridge.SessionFactory;
 
 /**
  * Create session contexts for servlets.<p> 
@@ -52,34 +42,20 @@ import php.java.bridge.http.IContextFactoryVisitor;
  * @see php.java.bridge.http.ContextServer
  * @author jostb
  */
-public class RemoteHttpServletContextFactory extends JavaBridgeFactory implements IContextFactory, Serializable {
+public class RemoteHttpContextFactory extends SessionFactory implements IContextFactory, Serializable {
 
     private static final HashMap contexts = new HashMap();
-    
-    public static final String CONTEXT_FACTORY_ATTRIBUTE = RemoteHttpServletContextFactory.class.getName()+".ROOT";
-    
+     
+    /** The response */
+    private HttpResponse out;
+
     private static final long serialVersionUID = -7009009517347609467L;
-
-    /** The PhpCGIServlet */
-    protected Servlet servlet;
-    /** The ServletContext of the PhpCGIServlet */
-    protected ServletContext kontext;
-    /** The session proxy (HttpServletRequest) of the PhpCGIServlet or the PhpJavaServlet */
-    protected HttpServletRequest proxy;
-    /** The PhpCGIServlet request */
-    protected HttpServletRequest  req;
-    /** The PhpCGIServlet response */
-    protected HttpServletResponse res;     
-    /** The PhpJavaServlet response */
-    protected HttpServletResponse out;
-
     private IContext context;
-    private ISession session;
     private IContextFactoryVisitor impl;
     private String id;
     
     private static long counter = 0;
-    private static synchronized String addNext(RemoteHttpServletContextFactory thiz, String webContext) {
+    protected static synchronized String addNext(RemoteHttpContextFactory thiz, String webContext) {
         String id;
         counter++;
         id = Long.toHexString(counter)+"@"+webContext;
@@ -87,17 +63,11 @@ public class RemoteHttpServletContextFactory extends JavaBridgeFactory implement
         return id;
     }
 
-    public RemoteHttpServletContextFactory(Servlet servlet,
-            ServletContext ctx, HttpServletRequest proxy,
-            HttpServletRequest req, HttpServletResponse res) {
+    public RemoteHttpContextFactory(HttpRequest req, HttpResponse res) {
     	super();
-    	this.kontext = ctx;
-    	this.proxy = proxy;
-    	this.req = req;
-    	this.out = this.res = res;
-    	this.servlet = servlet;
+    	this.out = res;
     	
-    	this.id = addNext(this, ServletUtil.getRealPath(ctx, ""));
+    	this.id = addNext(this, ContextFactory.EMPTY_CONTEXT_NAME);
     }
     protected void accept (IContextFactoryVisitor impl) {
 	this.impl = impl;
@@ -120,17 +90,12 @@ public class RemoteHttpServletContextFactory extends JavaBridgeFactory implement
     
     /**
      * Create and add a new ContextFactory.
-     * @param servlet The servlet
-     * @param kontext The servlet context
-     * @param proxy The request proxy
-     * @param req The HttpServletRequest
-     * @param res The HttpServletResponse
+     * @param req The HttpRequest
+     * @param res The HttpResponse
      * @return The created ContextFactory
      */
-    public static IContextFactory addNew(Servlet servlet,
-            ServletContext kontext, HttpServletRequest proxy,
-            HttpServletRequest req, HttpServletResponse res, IContextFactoryVisitor impl) {
-	RemoteHttpServletContextFactory factory = new RemoteHttpServletContextFactory(servlet, kontext, proxy, req, res);
+    public static IContextFactory addNew(HttpRequest req, HttpResponse res, IContextFactoryVisitor impl) {
+	RemoteHttpContextFactory factory = new RemoteHttpContextFactory(req, res);
 	factory.accept(impl);
 	return factory;
     }
@@ -152,32 +117,6 @@ public class RemoteHttpServletContextFactory extends JavaBridgeFactory implement
     public String getSocketName() {
 	if (impl != null) return impl.getSocketName();
 	throw new IllegalStateException("getSocketName");
-    }
-    /**{@inheritDoc}*/
-    public ISession getSimpleSession(String name, boolean clientIsNew,
-            int timeout) {
-	throw new IllegalStateException("Named sessions not supported by servlet.");
-    }
-    /**{@inheritDoc}*/
-    public ISession getSession(String name, boolean clientIsNew, int timeout) {
-	 // if name != null return a "named" php session which is not shared with jsp
-	if(name!=null) return getSimpleSession(name, clientIsNew, timeout);
-
-	if(session != null) return session;
-
-   	if(proxy==null) throw new NullPointerException("This context "+getId()+" doesn't have a session proxy.");
-	return session = new HttpSessionFacade(this, kontext, proxy, res, clientIsNew, timeout);
-   }
-
-    /**
-     * Return the http session handle;
-     * @throws IllegalStateException if java_session has not been called at the beginning of the PHP script
-     * @return The session handle
-     */
-    HttpSession getCurrentSession() {
-	if(session!=null) return ((HttpSessionFacade)session).getCachedSession();
-	SimpleServletContextFactory.throwJavaSessionException();
-	return null;
     }
 
     /**{@inheritDoc}*/
@@ -238,35 +177,7 @@ public class RemoteHttpServletContextFactory extends JavaBridgeFactory implement
      * @see php.java.servlet.Context
      */
     private IContext createContext() {
-	
-	IContext ctx = new Context(kontext, req, res);
-	ctx.setAttribute(IContext.SERVLET_CONTEXT, kontext, IContext.ENGINE_SCOPE);
-	ctx.setAttribute(IContext.SERVLET_CONFIG, servlet.getServletConfig(), IContext.ENGINE_SCOPE);
-	ctx.setAttribute(IContext.SERVLET, servlet, IContext.ENGINE_SCOPE);
-
-	ctx.setAttribute(IContext.SERVLET_REQUEST, new HttpServletRequestWrapper(req) {
-	    /*
-	     * Return the session obtained from the servlet.
-	     */
-	    public HttpSession getSession() {
-		return RemoteHttpServletContextFactory.this.getCurrentSession();
-	    }
-
-	    /*
-	     * Return the old session or give up.
-	     */
-	    public HttpSession getSession(boolean clientIsNew) {
-		HttpSession session = getSession();
-		if(clientIsNew && !session.isNew())
-		    throw new IllegalStateException("To obtain a new session call java_session() or \"java_session(null, -1, TRUE)\" at the beginning of your PHP script.");
-		return session;
-	    }
-	    
-	}, IContext.ENGINE_SCOPE);
-		
-	ctx.setAttribute(IContext.SERVLET_RESPONSE, new RemoteHttpServletResponse(res), IContext.ENGINE_SCOPE);
-	
-	return ctx;
+	return new Context();
     }
 
     /**{@inheritDoc}*/
@@ -278,7 +189,14 @@ public class RemoteHttpServletContextFactory extends JavaBridgeFactory implement
     * Set the current response 
     * @param out the PhpJavaServlet response
     */
-   public void setResponse(HttpServletResponse out) {
+   public void setResponse(HttpResponse out) {
        this.out = out;
    }
+
+   /**{@inheritDoc}*/
+   public ISession getSimpleSession(String name, boolean clientIsNew,
+           int timeout) {
+	return super.getSession(name, clientIsNew, timeout);
+   }
+
 }
