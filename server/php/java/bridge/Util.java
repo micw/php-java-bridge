@@ -247,9 +247,6 @@ public final class Util {
     /** Only for internal use */
     public static final byte[] RN = Util.toBytes("\r\n");
     
-    /** True if the system property php.java.bridge.no_short_path is not set */
-    public static boolean USE_SHORT_PATH_S1;
-    
     /** The name of the VM, for example "1.4.2@http://java.sun.com/" or "1.4.2@http://gcc.gnu.org/java/".*/
     public static String VM_NAME;
     /**
@@ -290,10 +287,6 @@ public final class Util {
 
     private static void initGlobals() {
 
-	try {
-	    USE_SHORT_PATH_S1 = System.getProperty("php.java.bridge.no_short_path", "false").equals("false");
-	} catch (Throwable t) {/*ignore*/}
-	    
 	try {
 	    JAVA_INC = Class.forName("php.java.bridge.JavaInc");
 	} catch (Exception e) {/*ignore*/}
@@ -834,11 +827,6 @@ public final class Util {
      * protected void doPut (HttpServletRequest req, HttpServletResponse res) { <br>
      * &nbsp;try {<br>
      * &nbsp;&nbsp;Util.setLogger(myLogger);<br>
-     * &nbsp;&nbsp;IContextFactory ctx = new RemoteHttpServletContextFactory(this, getServletContext(), req, req, res)<br>
-     * &nbsp;&nbsp;res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());<br>
-     * &nbsp;&nbsp;res.setHeader("Pragma", "no-cache");<br>
-     * &nbsp;&nbsp;res.setHeader("Cache-Control", "no-cache");<br>
-     * &nbsp;&nbsp;try { ctx.getBridge().handleRequests(req.getInputStream(), res.getOutputStream()); } finally { ctx.destroy(); }<br>
      * &nbsp;} finally {<br>
      * &nbsp;&nbsp; Util.unsetLogger();<br>
      * }
@@ -859,11 +847,6 @@ public final class Util {
      * protected void doPut (HttpServletRequest req, HttpServletResponse res) throws IOException, ServletException { <br>
      * &nbsp;try {<br>
      * &nbsp;&nbsp;Util.setLogger(myLogger);<br>
-     * &nbsp;&nbsp;IContextFactory ctx = new RemoteHttpServletContextFactory(this, getServletContext(), req, req, res);<br>
-     * &nbsp;&nbsp;res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());<br>
-     * &nbsp;&nbsp;res.setHeader("Pragma", "no-cache");<br>
-     * &nbsp;&nbsp;res.setHeader("Cache-Control", "no-cache");<br>
-     * &nbsp;&nbsp;try { ctx.getBridge().handleRequests(req.getInputStream(), res.getOutputStream()); } finally { ctx.destroy(); }<br>
      * &nbsp;} finally {<br>
      * &nbsp;&nbsp; Util.unsetLogger();<br>
      * }

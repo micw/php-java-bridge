@@ -138,27 +138,16 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     }
     protected void handleHttpConnection (HttpServletRequest req, HttpServletResponse res) 
 	throws ServletException, IOException {
-	boolean destroyCtx = false;
 
-	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
-	RemoteHttpServletContextFactory ctx;
-	if (id!=null) { // kept for backward compatibility
-	    ctx = (RemoteHttpServletContextFactory) RemoteHttpServletContextFactory.get(id);
-	    if (ctx==null) throw new IllegalStateException("Cannot find RemoteHttpServletContextFactory");
-	    ctx.setResponse(res);
-	} else {
-	    ctx = new RemoteHttpServletContextFactory(this, getServletContext(), req, req, res);
-	    destroyCtx = true;
-	}
-	
+	RemoteHttpServletContextFactory ctx = new RemoteHttpServletContextFactory(this, getServletContext(), req, req, res);
 	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
 	res.setHeader("Pragma", "no-cache");
 	res.setHeader("Cache-Control", "no-cache");
     	
 	try {
-	    ctx.getBridge().handleRequests(getInputStream(req), res.getOutputStream());
+	    ctx.getBridge().handleRequestsInternal(getInputStream(req), res.getOutputStream());
 	} finally {
-	    if (destroyCtx) ctx.destroy();
+	    ctx.destroy();
 	}
     }
 

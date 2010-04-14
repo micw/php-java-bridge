@@ -163,25 +163,14 @@ public class JavaBridgeRunner extends HttpServer {
 	sin = new ChunkedInputStream(req.getInputStream());
 	sout = new ChunkedOutputStream(res.getOutputStream());
 
-	boolean destroyCtx = false;
-	RemoteHttpContextFactory ctx;
-	String id = req.getHeader("X_JAVABRIDGE_CONTEXT");
-
-	if (id!=null) { // kept for backward compatibility
-	    ctx = (RemoteHttpContextFactory) RemoteHttpContextFactory.get(id);
-	    if (ctx==null) throw new IllegalStateException("Cannot find RemoteHttpContextFactory");
-	    ctx.setResponse(res);
-	} else {
-	    ctx = new RemoteHttpContextFactory(req, res);
-	    destroyCtx = true;
-	}
+	RemoteHttpContextFactory ctx = new RemoteHttpContextFactory(req, res);
 	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
 	res.setHeader("Pragma", "no-cache");
 	res.setHeader("Cache-Control", "no-cache");
 	try {
-	    ctx.getBridge().handleRequests(sin, sout);
+	    ctx.getBridge().handleRequestsInternal(sin, sout);
 	} finally {
-	    if (destroyCtx) ctx.destroy();
+	    ctx.destroy();
 	    try {sin.close(); } catch (Exception e) {/*ignore*/}
 	    try {sout.close(); } catch (Exception e) {/*ignore*/}
 	}

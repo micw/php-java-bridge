@@ -104,17 +104,17 @@ public class JavaBridge implements Runnable {
      * Handle requests from the InputStream, write the responses to OutputStream
      * @param in the InputStream
      * @param out the OutputStream
-     * @param logger the logger
+     * @param logger the default logger can be obtained via <code>getServletContext().getAttribute(ContextLoaderListener.LOGGER)</code>
      * @throws IOException
      * Example:
      * <blockquote>
      * <code>
      * protected void doPut (HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException { <br>
-     * &nbsp;&nbsp;IContextFactory ctx = new RemoteHttpServletContextFactory(this, getServletContext(), req, req, res);<br>
+     * &nbsp;&nbsp;IContextFactory ctx = new RemoteHttpServletContextFactory(this, getServletContext(), req, req, resr);<br>
      * &nbsp;&nbsp;res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());<br>
      * &nbsp;&nbsp;res.setHeader("Pragma", "no-cache");<br>
      * &nbsp;&nbsp;res.setHeader("Cache-Control", "no-cache");<br>
-     * &nbsp;&nbsp;try { ctx.getBridge().handleRequests(req.getInputStream(), res.getOutputStream()); } finally { ctx.destroy(); }<br>
+     * &nbsp;&nbsp;try { ctx.getBridge().handleRequests(req.getInputStream(), res.getOutputStream(), myLogge); } finally { ctx.destroy(); }<br>
      * }
      * </code>
      * </blockquote>
@@ -122,31 +122,16 @@ public class JavaBridge implements Runnable {
     public void handleRequests (InputStream in, OutputStream out, ILogger logger) throws IOException {
 	try {
 	    Util.setLogger(logger);
-	    handleRequests(in, out);
+	    handleRequestsInternal(in, out);
 	} finally {
 	    Util.unsetLogger();
 	}
 	
     }
     /**
-     * Handle requests from the InputStream, write the responses to OutputStream
-     * @param in the InputStream
-     * @param out the OutputStream
-     * @throws IOException
-     * Example:
-     * <blockquote>
-     * <code>
-     * protected void doPut (HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException { <br>
-     * &nbsp;&nbsp;IContextFactory ctx = new RemoteHttpServletContextFactory(this, getServletContext(), req, req, res);<br>
-     * &nbsp;&nbsp;res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());<br>
-     * &nbsp;&nbsp;res.setHeader("Pragma", "no-cache");<br>
-     * &nbsp;&nbsp;res.setHeader("Cache-Control", "no-cache");<br>
-     * &nbsp;&nbsp;try { ctx.getBridge().handleRequests(req.getInputStream(), res.getOutputStream()); } finally { ctx.destroy(); }<br>
-     * }
-     * </code>
-     * </blockquote>
+     * Only for internal use. Use {@link php.java.bridge.http.IContextFactory#handleRequests(InputStream, OutputStream)} instead.
      */
-    public void handleRequests (InputStream in, OutputStream out) throws IOException {
+   public void handleRequestsInternal (InputStream in, OutputStream out) throws IOException {
 	this.request = new Request(this);
 	this.in = in;
 	this.out = out;

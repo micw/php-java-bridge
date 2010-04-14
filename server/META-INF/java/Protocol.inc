@@ -451,8 +451,14 @@ class java_HttpTunnelHandler extends java_SimpleHttpHandler  {
   function read($size) {
  	if(is_null($this->headers)) $this->parseHeaders();
 	if (isset($this->headers["http_error"])) {
-	  $len = $this->headers['content_length'];
-	  for($str=fread($this->socket, $len); strlen($str)<$len; $str.=fread($this->socket,$len-strlen($str)));
+	  if (isset($this->headers["transfer_chunked"])) {
+		$str = $this->fread(JAVA_RECV_SIZE);
+	  } elseif (isset($this->headers['content_length'])) {
+		$len = $this->headers['content_length'];
+		for($str=fread($this->socket, $len); strlen($str)<$len; $str.=fread($this->socket,$len-strlen($str)));
+	  } else {
+		$str=fread($this->socket, JAVA_RECV_SIZE);
+	  }
 	  $this->shutdownBrokenConnection($str);
 	}
 	return $this->fread(JAVA_RECV_SIZE);
@@ -519,7 +525,6 @@ class java_HttpTunnelHandler extends java_SimpleHttpHandler  {
 	  } else  if($str[0]=='T') { // Transfer-Encoding
 		if(!strncasecmp("TRANSFER-ENCODING", $str, 17) && !strncasecmp("chunked", trim(substr($str, 18)), 7)) {
 			$this->headers["transfer_chunked"] = true;
-			unset ($this->headers["http_errors"]); // automatically handled by parser
 		}
 	  }
 	}

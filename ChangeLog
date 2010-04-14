@@ -1,3 +1,9 @@
+2010-04-14  <jostb@intern>
+
+	* server/META-INF/java/Protocol.inc
+	(read): http_error may be sent with content_length or chunked
+	(parseHeaders): Fixed typo
+
 2010-04-11  <jostb@intern>
 
 	* CVS_Release.sh, php-java-bridge.spec: clean before creating

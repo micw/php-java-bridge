@@ -27,9 +27,8 @@ package php.java.bridge.http;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
-import java.util.HashMap;
-
 import php.java.bridge.ISession;
 import php.java.bridge.Request;
 import php.java.bridge.SessionFactory;
@@ -43,8 +42,6 @@ import php.java.bridge.SessionFactory;
  * @author jostb
  */
 public class RemoteHttpContextFactory extends SessionFactory implements IContextFactory, Serializable {
-
-    private static final HashMap contexts = new HashMap();
      
     /** The response */
     private HttpResponse out;
@@ -54,38 +51,15 @@ public class RemoteHttpContextFactory extends SessionFactory implements IContext
     private IContextFactoryVisitor impl;
     private String id;
     
-    private static long counter = 0;
-    protected static synchronized String addNext(RemoteHttpContextFactory thiz, String webContext) {
-        String id;
-        counter++;
-        id = Long.toHexString(counter)+"@"+webContext;
-        contexts.put(id, thiz);
-        return id;
-    }
-
     public RemoteHttpContextFactory(HttpRequest req, HttpResponse res) {
     	super();
     	this.out = res;
     	
-    	this.id = addNext(this, ContextFactory.EMPTY_CONTEXT_NAME);
+    	this.id = ContextFactory.EMPTY_CONTEXT_NAME; // dummy
     }
     protected void accept (IContextFactoryVisitor impl) {
 	this.impl = impl;
 	impl.visit(this);
-    }
-    
-    /**
-     * Only for internal use.
-     *  
-     * Returns the context factory associated with the given <code>id</code>
-     * @param id The ID
-     */
-    public static synchronized IContextFactory get(String id) {
-	return (IContextFactory) contexts.get(id);
-    }
-    
-    private static synchronized IContextFactory remove(String id) {
-	return (IContextFactory) contexts.remove(id);
     }
     
     /**
@@ -168,7 +142,6 @@ public class RemoteHttpContextFactory extends SessionFactory implements IContext
     /**{@inheritDoc}*/
    public void destroy() {
 	super.destroy();
-	remove(getId());
    }
 
     /**
@@ -198,5 +171,4 @@ public class RemoteHttpContextFactory extends SessionFactory implements IContext
            int timeout) {
 	return super.getSession(name, clientIsNew, timeout);
    }
-
 }

@@ -27,8 +27,8 @@ package php.java.servlet;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
-import java.util.HashMap;
 
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
@@ -37,9 +37,11 @@ import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import php.java.bridge.ILogger;
 import php.java.bridge.ISession;
 import php.java.bridge.JavaBridgeFactory;
 import php.java.bridge.Request;
+import php.java.bridge.http.ContextFactory;
 import php.java.bridge.http.IContext;
 import php.java.bridge.http.IContextFactory;
 import php.java.bridge.http.IContextFactoryVisitor;
@@ -54,8 +56,6 @@ import php.java.bridge.http.IContextFactoryVisitor;
  */
 public class RemoteHttpServletContextFactory extends JavaBridgeFactory implements IContextFactory, Serializable {
 
-    private static final HashMap contexts = new HashMap();
-    
     public static final String CONTEXT_FACTORY_ATTRIBUTE = RemoteHttpServletContextFactory.class.getName()+".ROOT";
     
     private static final long serialVersionUID = -7009009517347609467L;
@@ -78,15 +78,6 @@ public class RemoteHttpServletContextFactory extends JavaBridgeFactory implement
     private IContextFactoryVisitor impl;
     private String id;
     
-    private static long counter = 0;
-    private static synchronized String addNext(RemoteHttpServletContextFactory thiz, String webContext) {
-        String id;
-        counter++;
-        id = Long.toHexString(counter)+"@"+webContext;
-        contexts.put(id, thiz);
-        return id;
-    }
-
     public RemoteHttpServletContextFactory(Servlet servlet,
             ServletContext ctx, HttpServletRequest proxy,
             HttpServletRequest req, HttpServletResponse res) {
@@ -96,28 +87,13 @@ public class RemoteHttpServletContextFactory extends JavaBridgeFactory implement
     	this.req = req;
     	this.out = this.res = res;
     	this.servlet = servlet;
-    	
-    	this.id = addNext(this, ServletUtil.getRealPath(ctx, ""));
+    	this.id = ContextFactory.EMPTY_CONTEXT_NAME; // dummy
     }
     protected void accept (IContextFactoryVisitor impl) {
 	this.impl = impl;
 	impl.visit(this);
     }
-    
-    /**
-     * Only for internal use.
-     *  
-     * Returns the context factory associated with the given <code>id</code>
-     * @param id The ID
-     */
-    public static synchronized IContextFactory get(String id) {
-	return (IContextFactory) contexts.get(id);
-    }
-    
-    private static synchronized IContextFactory remove(String id) {
-	return (IContextFactory) contexts.remove(id);
-    }
-    
+        
     /**
      * Create and add a new ContextFactory.
      * @param servlet The servlet
@@ -229,7 +205,6 @@ public class RemoteHttpServletContextFactory extends JavaBridgeFactory implement
     /**{@inheritDoc}*/
    public void destroy() {
 	super.destroy();
-	remove(getId());
    }
 
     /**
@@ -280,5 +255,26 @@ public class RemoteHttpServletContextFactory extends JavaBridgeFactory implement
     */
    public void setResponse(HttpServletResponse out) {
        this.out = out;
+   }
+   /**
+    * Handle requests from the InputStream, write the responses to OutputStream
+    * @param in the InputStream
+    * @param out the OutputStream
+    * @throws IOException
+    * Example:
+    * <blockquote>
+    * <code>
+    * protected void doPut (HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException { <br>
+    * &nbsp;&nbsp;IContextFactory ctx = new RemoteHttpServletContextFactory(this, getServletContext(), req, req, res);<br>
+    * &nbsp;&nbsp;res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());<br>
+    * &nbsp;&nbsp;res.setHeader("Pragma", "no-cache");<br>
+    * &nbsp;&nbsp;res.setHeader("Cache-Control", "no-cache");<br>
+    * &nbsp;&nbsp;try { ctx.handleRequests(req.getInputStream(), res.getOutputStream()); } finally { ctx.destroy(); }<br>
+    * }
+    * </code>
+    * </blockquote>
+    */
+   public void handleRequests(InputStream in, OutputStream out) throws IOException {
+       getBridge().handleRequests(in, out, (ILogger) kontext.getAttribute(ContextLoaderListener.LOGGER));
    }
 }

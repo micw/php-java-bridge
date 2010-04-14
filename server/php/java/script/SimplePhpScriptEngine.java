@@ -141,7 +141,6 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
 	addNewContextFactory();
 	
     	// short path S1: no PUT request
-	if (Util.USE_SHORT_PATH_S1) {
 	    ContextServer contextServer = getContextServer();
     		AbstractChannelName channelName = contextServer.getChannelName(ctx);
     		if (channelName != null) {
@@ -149,7 +148,6 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
     		    ctx.getBridge();
     		    contextServer.start(channelName, Util.getLogger());
     		}
-	}
 	
     	setStandardEnvironmentValues(env);
     }

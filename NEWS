@@ -5,6 +5,28 @@ Please send bug reports, questions and suggestions to
 
 Version 6.1.2
 
+* The bridge now sets the config dir to cgi/OS-ARCH/conf.d. It makes
+  it easier to add custom PHP extensions to the Java web
+  application. Please see the phpinfo() output.
+
+  Example for the PHP mysql extension for Linux and Windows (i386/x86):
+
+    WEB-INF --- cgi --- php-cgi-x86-windows.exe
+                   |
+                    --- x86-windows --- conf.d --- mysql.ini [extension="php_mysql.dll"]
+                   |               |
+                   |                --- ext --- php_mysql.dll
+                   |
+                   |
+                    --- php-cgi-i386-linux
+                   |
+                    --- i386-linux --- conf.d --- mysql.ini [extension="mysql.so"]
+                                  |
+                                   --- ext --- mysql.so
+
+  Please see the FAQ entry "I want to ship my own PHP web
+  application. Where do I put PHP and PHP extensions?" for details.
+
 * The "servlet engine" built into JavaBridge.jar now handles PHP/Java
   Bridge protocol requests as efficient as a real servlet engine back
   end; 
@@ -38,7 +60,7 @@ b
        res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
        res.setHeader("Pragma", "no-cache");
        res.setHeader("Cache-Control", "no-cache");
-       try { ctx.getBridge().handleRequests(req.getInputStream(), res.getOutputStream()); } finally { ctx.destroy(); }
+       try { ctx.handleRequests(req.getInputStream(), res.getOutputStream()); } finally { ctx.destroy(); }
      }
   }
 

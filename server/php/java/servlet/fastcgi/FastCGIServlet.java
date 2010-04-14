@@ -771,7 +771,6 @@ public class FastCGIServlet extends HttpServlet {
 	String id = PhpJavaServlet.getHeader("X_JAVABRIDGE_CONTEXT", req);
 	if(id==null) {
 	    id = (env.ctx=ServletContextFactory.addNew(contextServer, this, getServletContext(), req, req, res)).getId();
-	    if (Util.USE_SHORT_PATH_S1) {
 		// short path S1: no PUT request
 		AbstractChannelName channelName = contextServer.getChannelName(env.ctx);
 		if (channelName != null) {
@@ -779,7 +778,6 @@ public class FastCGIServlet extends HttpServlet {
 		    env.ctx.getBridge();
 		    contextServer.start(channelName, logger);
 		}
-	    }
 	}
 	env.environment.put("X_JAVABRIDGE_CONTEXT", id);
     }
