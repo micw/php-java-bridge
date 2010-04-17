@@ -34,9 +34,10 @@ define ("PDB_DEBUG", 0);
    * Install "Eclipse for PHP Developers" version >= 3.5.2
    * 
    * 1. Open your project in PHP explorer and drag and drop this file to the
-   * "PHP Include Path"
+   * PHP project
    *
-   * 2. Open Menu/Project/Properties, open "PHP Debug", select "Enable
+   * 2. Activate the PHPDebugger in your php.ini file:
+   * Open Menu/Project/Properties, open "PHP Debug", select "Enable
    * Project specific settings", select "Zend Debugger" if not already
    * selected, click on "PHP executables ...", then "Edit" and select
    * a php.ini file with at least the following content:
