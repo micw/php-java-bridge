@@ -1202,16 +1202,11 @@ final class pdb_Session {
    * @return true if a breakpoint exists at line, false otherwise
    */
   public function hasBreakpoint($scriptName, $line) {
-	static $first = true;
-  
 	if ($this->currentFrame->stepNext) return true;
   
 	foreach ($this->breakpoints as $breakpoint) {
 	  pdb_Logger::debug("process breakpoint::: $scriptName, $line:: $breakpoint");
 	  if($breakpoint->type==1) {
-		if ($first && $breakpoint->scriptName==$scriptName&&$breakpoint->line==-1) {
-		  $first = false; return true;
-		}
 		if ($breakpoint->scriptName==$scriptName&&$breakpoint->line==$line) return true;
 	  }
 	}

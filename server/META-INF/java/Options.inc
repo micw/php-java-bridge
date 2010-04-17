@@ -69,7 +69,7 @@ if(!defined("JAVA_RECV_SIZE"))
  */
 if(!defined("JAVA_HOSTS")) {
   if(!java_defineHostFromInitialQuery(java_get_base())) {
-	if ($ini=get_cfg_var("java.hosts")) define("JAVA_HOSTS", $ini); 
+	if ($java_ini=get_cfg_var("java.hosts")) define("JAVA_HOSTS", $java_ini); 
 	else                                define("JAVA_HOSTS", "127.0.0.1:8080"); // host1:port1;host2:port2;...
   }
 }
@@ -101,7 +101,7 @@ if(!defined("JAVA_HOSTS")) {
  * </ul>
  */
  if(!defined("JAVA_SERVLET")) {
-   if (!(($ini=get_cfg_var("java.servlet"))===false)) define("JAVA_SERVLET", $ini); 
+   if (!(($java_ini=get_cfg_var("java.servlet"))===false)) define("JAVA_SERVLET", $java_ini); 
    else                                               define("JAVA_SERVLET", 1); // Off|0, On|1 or User
 }
 
@@ -114,7 +114,7 @@ if(!defined("JAVA_HOSTS")) {
  * overrides this value. The default level is 2.
  */
 if(!defined("JAVA_LOG_LEVEL"))
-  if (!(($ini=get_cfg_var("java.log_level"))===false)) define("JAVA_LOG_LEVEL", (int)$ini); 
+  if (!(($java_ini=get_cfg_var("java.log_level"))===false)) define("JAVA_LOG_LEVEL", (int)$java_ini); 
   else                                                 define("JAVA_LOG_LEVEL", null); // integer between 0 and 4
 
 
@@ -132,7 +132,7 @@ if(!defined("JAVA_LOG_LEVEL"))
  * current try/catch block using java_last_exception_get()/java_last_exception_clear().
  */
 if (!defined("JAVA_PREFER_VALUES"))
-  if ($ini=get_cfg_var("java.prefer_values")) define("JAVA_PREFER_VALUES", $ini); 
+  if ($java_ini=get_cfg_var("java.prefer_values")) define("JAVA_PREFER_VALUES", $java_ini); 
   else                                        define("JAVA_PREFER_VALUES", 0);
   
 /**
@@ -142,5 +142,5 @@ if (!defined("JAVA_PREFER_VALUES"))
  * Java with the -Dphp.java.bridge.default_log_level=... option.
  */
 if(!defined("JAVA_DEBUG")) 
-  if ($ini=get_cfg_var("java.debug")) define("JAVA_DEBUG", $ini); 
+  if ($java_ini=get_cfg_var("java.debug")) define("JAVA_DEBUG", $java_ini); 
   else                                define("JAVA_DEBUG", false);

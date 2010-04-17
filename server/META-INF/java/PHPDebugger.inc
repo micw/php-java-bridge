@@ -1,9 +1,9 @@
 <?php /*-*- mode: php; tab-width:4 -*-*/
 
 /*
- * dummy.php version 1.0beta -- A PHP debugger.
+ * PHPDebugger.inc version 1.0 -- A PHP debugger for Eclipse for PHP Developers
  *
- * Copyright (C) 2009 Jost Boekemeier.
+ * Copyright (C) 2009,2010 Jost Boekemeier.
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this file (the "Software"), to deal in the
@@ -31,22 +31,25 @@ define ("PDB_DEBUG", 0);
   /**
    * Quick Installation:
    *
-   * Disable/remove ZendDebugger and xdebug debugger (if any).
-   *
+   * Install "Eclipse for PHP Developers" version >= 3.5.2
    * 
-   * Example configuration for eclipse:
+   * 1. Open your project in PHP explorer and drag and drop this file to the
+   * "PHP Include Path"
    *
-   * 1. Copy this file to your HTTP server document root.
+   * 2. Open Menu/Project/Properties, open "PHP Debug", select "Enable
+   * Project specific settings", select "Zend Debugger" if not already
+   * selected, click on "PHP executables ...", then "Edit" and select
+   * a php.ini file with at least the following content:
    *
-   * 2. In the eclipse preferences/php/debug/installed debugger select
-   *  "ZendDebugger". Click configure. In the Zend Debugger Settings
-   *  dialog type "dummy.php" into the "Dummy File Name"
-   *  box.
+   * ;; activate the PHPDebugger in the php.ini file
+   * auto_prepend_file=PHPDebugger.inc
+   *
    *
    * 3. Debug your PHP scripts as usual. 
    *
    */
 
+if (!class_exists("pdb_Parser")) {
 /**
  * The PHP parser
  * @access private
@@ -61,7 +64,7 @@ class pdb_Parser {
   private $output;
   private $line, $currentLine;
   private $beginStatement, $inPhp, $inDQuote;
-  
+ 
   /**
    * Create a new PHP parser
    * @param string the script name
@@ -69,12 +72,12 @@ class pdb_Parser {
    * @access private
    */
   public function pdb_Parser($scriptName, $content) {
-    $this->scriptName = $scriptName;
-    $this->content = $content;
-    $this->code = token_get_all($content);
-    $this->output = "";
-    $this->line = $this->currentLine = 0;
-    $this->beginStatement = $this->inPhp = $this->inDQuote = false;
+	$this->scriptName = $scriptName;
+	$this->content = $content;
+	$this->code = token_get_all($content);
+	$this->output = "";
+	$this->line = $this->currentLine = 0;
+	$this->beginStatement = $this->inPhp = $this->inDQuote = false;
   }
 
   private function toggleDQuote($chr) {
@@ -99,53 +102,53 @@ class pdb_Parser {
   }
 
   private function write($code) {
-    //echo "write:::".$code."\n";
-    $this->output.=$code;
+	//echo "write:::".$code."\n";
+	$this->output.=$code;
   }
 
   private function writeInclude() {
-    $name = "";
-    while(1) {
+	$name = "";
+	while(1) {
 	  if (!$this->each()) die("parse error");
-      $val = current($this->code);
-      if (is_array($val)) {
+	  $val = current($this->code);
+	  if (is_array($val)) {
 		$name.=$val[1];
-      } else {
+	  } else {
 		if ($val==';') break;
 		$name.=$val;
-      }
-    }
-    if (PDB_DEBUG == 2) 
-      $this->write("EVAL($name);");
-    else
-      $this->write("eval('?>'.pdb_startInclude($name)); pdb_endInclude();");
+	  }
+	}
+	if (PDB_DEBUG == 2) 
+	  $this->write("EVAL($name);");
+	else
+	  $this->write("eval('?>'.pdb_startInclude($name)); pdb_endInclude();");
   }
 
   private function writeCall() {
-    while(1) {
+	while(1) {
 	  if (!$this->each()) die("parse error");
-      $val = current($this->code);
-      if (is_array($val)) {
+	  $val = current($this->code);
+	  if (is_array($val)) {
 		$this->write($val[1]);
-      } else {
+	  } else {
 		$this->write($val);
 		if ($val=='{') break;
-      }
-    }
+	  }
+	}
 	$scriptName = $this->scriptName;
-    $this->write("\$__pdb_CurrentFrame=pdb_startCall(\"$scriptName\");");
+	$this->write("\$__pdb_CurrentFrame=pdb_startCall(\"$scriptName\");");
   }
 
   private function writeStep($pLevel) {
-    $token = current($this->code);
-    if ($this->inPhp && !$pLevel && !$this->inDQuote && $this->beginStatement && !$this->isWhitespace($token) && ($this->line != $this->currentLine)) {
-      $lastLine = $this->line = $this->currentLine;
-      $scriptName = $this->scriptName;
-      if (PDB_DEBUG == 2)
+	$token = current($this->code);
+	if ($this->inPhp && !$pLevel && !$this->inDQuote && $this->beginStatement && !$this->isWhitespace($token) && ($this->line != $this->currentLine)) {
+	  $lastLine = $this->line = $this->currentLine;
+	  $scriptName = $this->scriptName;
+	  if (PDB_DEBUG == 2)
 		$this->write(";STEP($lastLine);");
-      else
+	  else
 		$this->write(";pdb_step(\"$scriptName\", $lastLine, pdb_getDefinedVars(get_defined_vars(), (isset(\$this) ? \$this : NULL)));");
-    }
+	}
   }
 
   private function writeNext() {
@@ -156,62 +159,62 @@ class pdb_Parser {
   }
 
   private function nextIs($chr) {
-    $i = 0;
-    while(each($this->code)) {
-      $cur = current($this->code);
-      $i++;
-      if (is_array($cur)) {
+	$i = 0;
+	while(each($this->code)) {
+	  $cur = current($this->code);
+	  $i++;
+	  if (is_array($cur)) {
 		switch ($cur[0]) {
 		case T_COMMENT:
 		case T_DOC_COMMENT:
 		case T_WHITESPACE:
-		  break;		/* skip */
+		  break;	/* skip */
 		default: 
 		  while($i--) prev($this->code);
-		  return false;		/* not found */
+		  return false;	/* not found */
 		}
-      } else {
+	  } else {
 		while($i--) prev($this->code);
 		return $cur == $chr;	/* found */
-      }
-    }
-    while($i--) prev($this->code);
-    return false;		/* not found */
+	  }
+	}
+	while($i--) prev($this->code);
+	return false;	/* not found */
   }
 
   private function nextTokenIs($ar) {
-    $i = 0;
-    while(each($this->code)) {
-      $cur = current($this->code);
-      $i++;
-      if (is_array($cur)) {
+	$i = 0;
+	while(each($this->code)) {
+	  $cur = current($this->code);
+	  $i++;
+	  if (is_array($cur)) {
 		switch ($cur[0]) {
 		case T_COMMENT:
 		case T_DOC_COMMENT:
 		case T_WHITESPACE:
-		  break;		/* skip */
+		  break;	/* skip */
 		default: 
 		  while($i--) prev($this->code);
 		  return (in_array($cur[0], $ar));
 		}
-      } else {
+	  } else {
 		break; /* not found */
-      }
-    }
-    while($i--) prev($this->code);
-    return false;		/* not found */
+	  }
+	}
+	while($i--) prev($this->code);
+	return false;	/* not found */
   }
 
   private function isWhitespace($token) {
-    $isWhitespace = false;
-    switch($token[0]) {
+	$isWhitespace = false;
+	switch($token[0]) {
 	case T_COMMENT:
 	case T_DOC_COMMENT:
 	case T_WHITESPACE:
 	  $isWhitespace = true;
 	  break;
-    }
-    return $isWhitespace;
+	}
+	return $isWhitespace;
   }
   private function next() {
 	if (!$this->each()) trigger_error("parse error", E_USER_ERROR);
@@ -230,12 +233,12 @@ class pdb_Parser {
   private function parse ($type) {
 	pdb_Logger::debug("parse:::$type");
 
-    $this->beginStatement = true;
+	$this->beginStatement = true;
 	$pLevel = 0;
 
-    do {
-      $token = current($this->code);
-      if (!is_array($token)) {
+	do {
+	  $token = current($this->code);
+	  if (!is_array($token)) {
 		pdb_Logger::debug(":::".$token);
 		$this->write($token);
 		if ($this->inPhp && !$this->inDQuote) {
@@ -247,7 +250,7 @@ class pdb_Parser {
 		  case ')':
 			if (!--$pLevel && $type==self::EXPRESSION) return;
 			break;
-		  case '{':  
+		  case '{': 
 			$this->next();
 			$this->parseBlock(); 
 			break;
@@ -262,7 +265,7 @@ class pdb_Parser {
 			break;
 		  }
 		}
-      } else {
+	  } else {
 		pdb_Logger::debug(":::".$token[1].":(".token_name($token[0]).')');
 
 		if ($this->inDQuote) {
@@ -350,8 +353,8 @@ class pdb_Parser {
 		  break;
 
 		case T_IF:
-        case T_ELSEIF:
-        case T_FOR:
+		case T_ELSEIF:
+		case T_FOR:
 		case T_WHILE:
 		  $this->writeStep($pLevel);
 
@@ -419,8 +422,8 @@ class pdb_Parser {
 		  break;
 	
 		}
-      }
-    } while($this->each());
+	  }
+	} while($this->each());
   }
 
   /**
@@ -429,12 +432,13 @@ class pdb_Parser {
    * @access private
    */
   public function parseScript() {
-    do {
-      $this->parseBlock();
-    } while($this->each());
+	do {
+	  $this->parseBlock();
+	} while($this->each());
 
-    return $this->output;
+	return $this->output;
   }
+}
 }
 
 /**
@@ -492,8 +496,10 @@ class pdb_Logger {
 class pdb_Environment {
   public $filename, $stepNext;
   public $vars, $line;
+  public $parent;
 
-  public function pdb_Environment($filename, $stepNext) {
+  public function pdb_Environment($parent, $filename, $stepNext) {
+	$this->parent = $parent;
     $this->filename = $filename;
     $this->stepNext = $stepNext;
     $this->line = -1;
@@ -502,6 +508,9 @@ class pdb_Environment {
   public function update ($line, &$vars) {
     $this->line = $line;
     $this->vars = &$vars;
+  }
+  public function __toString() {
+	return "pdb_Environment: {$this->filename}, {$this->line}";
   }
 }
 
@@ -538,34 +547,26 @@ abstract class pdb_Message {
   }
 
   protected function handleContinueProcessFile($message) {
-    $this->getMessageById(pdb_FileContentRequest::TYPE)->serialize();
-    return false;
+	$code = $this->session->parseCode($this->currentFrame->filename, file_get_contents($this->currentFrame->filename));
+	if (PDB_DEBUG) pdb_Logger::debug( "parse file:::" . $code ."\n");
+	if (!PDB_DEBUG) ob_start();
+	self::doEval ($code);
+	$output = $this->getMessageById(pdb_OutputNotification::TYPE);
+	if(!PDB_DEBUG) $output->setOutput(ob_get_contents());
+	if(!PDB_DEBUG) ob_end_clean();
+	$output->serialize();
+	$this->status = 42; //FIXME
+	$this->getMessageById(pdb_DebugScriptEndedNotification::TYPE)->serialize();
+    return true;
   }
   private static function doEval($__pdb_Code) {
     return  eval ("?>".$__pdb_Code);
-  }
-  protected function handleFileContentResponse($message) {
-    if(!$message->status) {
-      $code = $this->session->parseCode($this->currentFrame->filename, $message->script);
-      if (PDB_DEBUG) echo "parse file:::" . $code ."\n";
-      if (!PDB_DEBUG) ob_start();
-      self::doEval ($code);
-      $output = $this->getMessageById(pdb_OutputNotification::TYPE);
-      if(!PDB_DEBUG) $output->setOutput(ob_get_contents());
-      if(!PDB_DEBUG) ob_end_clean();
-      $output->serialize();
-      $this->status = 42; //FIXME
-      $this->getMessageById(pdb_DebugScriptEndedNotification::TYPE)->serialize();
-    } else {
-      trigger_error ("invalid status:: ".$message->status, E_USER_ERROR);
-    }
-    return true;
   }
   protected function handleStep($message) {
     return false;
   }
   protected function handleGo($message) {
-    foreach ($this->session->environments as $frame) {
+    foreach ($this->session->allFrames as $frame) {
       $frame->stepNext = false;
     }
     return true; // exit
@@ -586,9 +587,6 @@ abstract class pdb_Message {
 	break;
       case pdb_ContinueProcessFileNotification::TYPE:
 	if ($this->handleContinueProcessFile($message)) return pdb_ContinueProcessFileNotification::TYPE;
-	break;
-      case pdb_FileContentResponse::TYPE:
-	if ($this->handleFileContentResponse($message)) return pdb_FileContentResponse::TYPE;
 	break;
       case pdb_AddBreakpointRequest::TYPE:
 	$message->ack();
@@ -616,7 +614,7 @@ abstract class pdb_Message {
 	break;
       case pdb_StepOutRequest::TYPE:
 	$message->ack();
-	if ($this->handleStep($message)) return pdb_GoRequest::TYPE; // until stepNext of parent frame
+	if ($this->handleStep($message)) return pdb_StepOutRequest::TYPE;
 	break;
       default: trigger_error("protocol error: $message", E_USER_ERROR);
       }
@@ -638,37 +636,85 @@ class pdb_DebugSessionStart extends pdb_Message {
 
   public $status;
 
+  private $breakFirstLine;
+  private $enable;
   public $uri;
   public $query;
   public $options;
   
   public $in, $out;
+  private $outputNotification;
 
   public $lines;
   public $breakpoints;
 
-  public $environments, $currentFrame;
+  public $currentTopLevelFrame, $currentFrame;
+  public $allFrames; // should be a weak map so that frames could be gc'ed
 
   public $ignoreInterrupt; 
 
   public function getType() {
     return self::TYPE;
   }
-  public function pdb_DebugSessionStart($filename, $uri, $query, $options) {
+  public function pdb_DebugSessionStart($options) {
     parent::pdb_Message($this);
+	if (isset($_SERVER["PATH_INFO"]) && isset($_SERVER["QUERY_STRING"])&&!extension_loaded("Zend Debugger")) {
+	  $filename = $uri = $_SERVER["PATH_INFO"];
+	  $queryStr = $_SERVER["QUERY_STRING"];
+	} else {
+	  $this->enable = false;
+	  return;
+	}
+
+	$params = explode('&', $queryStr);
+	$args = array();
+	for ($i=0; $i<count($params); $i++) {
+	  $arg=explode( '=', $params[$i]);
+	  $args[$arg[0]] = $arg[1];
+	}
+	$this->enable = $args["start_debug"];
+	$this->breakFirstLine = isset($args["debug_stop"]) ? $args["debug_stop"] : 0;
     $this->uri = $uri;
-    $this->query = $query;
+    $this->query = $queryStr;
     $this->options = $options;
     $this->breakpoints = $this->lines = array();
 
-    $this->environments = array ($this->currentFrame = new pdb_Environment($filename, false));
+	$this->currentTopLevelFrame = $this->currentFrame = new pdb_Environment(null, $filename, false);
+	$this->allFrames[] = $this->currentFrame;
 	$this->ignoreInterrupt = false;
 
     $errno = 0; $errstr = "";
-    $io = fsockopen("127.0.0.1", 10137, $errno, $errstr, 5) or trigger_error("fsockopen", E_USER_ERROR);
+    $io = fsockopen($args["debug_host"], $args['debug_port'], $errno, $errstr, 5) or trigger_error("fsockopen", E_USER_ERROR);
     $this->in =new pdb_In($io);
     $this->out=new pdb_Out($io);
   }
+
+  /**
+   * @access private
+   */
+  public function flushOutput() {
+	if (!isset($this->outputNotification))
+	  $this->outputNotification = $this->getMessageById(pdb_OutputNotification::TYPE);
+
+	$this->outputNotification->setOutput(ob_get_contents());
+	ob_clean();
+	$this->outputNotification->serialize();
+  }
+
+  /**
+   * @access private
+   */
+  public function resolveIncludePath($scriptName) {
+	if (file_exists($scriptName)) return realpath($scriptName);
+	$paths = explode(PATH_SEPARATOR, get_include_path());
+	$name = $scriptName;
+	foreach ($paths as $path) {
+	  $scriptName = realpath("${path}${name}");
+	  if ($scriptName) return $scriptName;
+	}
+	trigger_error("file $scriptName not found", E_USER_ERROR);
+  }
+
   public function serialize() {
     $out = $this->session->out;
     parent::serialize();
@@ -678,20 +724,23 @@ class pdb_DebugSessionStart extends pdb_Message {
     $out->writeString($this->query);
     $out->writeString($this->options);
     $out->flush();
-    if (PDB_DEBUG) echo "$this\n";
+    if (PDB_DEBUG) pdb_Logger::debug( "$this");
   }
-
+  public function handleRequests () {
+	if ($this->enable) { 
+	  set_error_handler("pdb_error_handler");
+	  register_shutdown_function("pdb_shutdown");
+	  parent::handleRequests(); 
+	  exit ($this->status); }
+  }
   public function hasBreakpoint($scriptName, $line) {
-    static $first = true;
+	if ($this->breakFirstLine) {$this->breakFirstLine = false; return true;}
 
     if ($this->currentFrame->stepNext) return true;
 
     foreach ($this->breakpoints as $breakpoint) {
       if($breakpoint->type==1) {
-	if ($first && $breakpoint->file==$scriptName&&$breakpoint->line==-1) {
-	  $first = false; return true;
-	}
-	if ($breakpoint->file==$scriptName&&$breakpoint->line==$line) return true;
+		if ($breakpoint->file==$scriptName&&$breakpoint->line==$line) return true;
       }
     }
 
@@ -736,7 +785,7 @@ class pdb_HeaderOutputNotification extends pdb_Message {
     parent::serialize();
     $out->writeString($this->getOutput());
     $out->flush();
-    if (PDB_DEBUG) echo "$this\n";
+    if (PDB_DEBUG) pdb_Logger::debug( "$this");
   }
   public function __toString () {
     return "pdb_HeaderOutputNotification: ".$this->getOutput();
@@ -763,6 +812,38 @@ class pdb_OutputNotification extends pdb_HeaderOutputNotification {
 /**
  * @access private
  */
+class pdb_ErrorNotification extends pdb_Message {
+  const TYPE = 2006;
+  private $type, $filename, $lineno, $error;
+
+  public function getType() {
+    return self::TYPE;
+  }
+  public function setError($type, $filename, $lineno, $error) {
+	$this->type = $type;
+	$this->filename = $filename;
+	$this->lineno = $lineno;
+	$this->error = $error;
+  }
+
+  public function serialize() {
+    $out = $this->session->out;
+    parent::serialize();
+    $out->writeInt($this->type);
+	$out->writeString($this->filename);
+	$out->writeInt($this->lineno);
+	$out->writeString($this->error);
+    $out->flush();
+    if (PDB_DEBUG) pdb_Logger::debug( "$this");
+  }
+  public function __toString () {
+    return "pdb_ErrorNotification: {$this->error} at {$this->filename} line {$this->lineno}";
+  }
+}
+
+/**
+ * @access private
+ */
 class pdb_DebugScriptEndedNotification extends pdb_Message {
   const TYPE = 2002;
 
@@ -771,12 +852,11 @@ class pdb_DebugScriptEndedNotification extends pdb_Message {
   }
 
   public function serialize() {
-    if (PDB_DEBUG) echo "XXX SER";
     $out = $this->session->out;
     parent::serialize();
     $out->writeShort($this->session->status);
     $out->flush();
-    if (PDB_DEBUG) echo "$this\n";
+    if (PDB_DEBUG) pdb_Logger::debug( "$this");
   }
   public function __toString () {
     return "pdb_DebugScriptEndedNotification: {$this->session->status}";
@@ -805,7 +885,7 @@ class pdb_ReadyNotification extends pdb_Message {
     $out->writeInt($this->session->currentFrame->line);
     $out->writeInt(0);
     $out->flush();
-    if (PDB_DEBUG) echo "$this\n";
+    if (PDB_DEBUG) pdb_Logger::debug( "$this");
   }
   public function __toString () {
     return "pdb_ReadyNotification: ";
@@ -827,14 +907,14 @@ class pdb_SetProtocolRequest extends pdb_MessageRequest {
     $in = $this->session->in;
     $this->id = $in->readInt();
     $this->protocolId = $in->readInt();
-    if (PDB_DEBUG) echo "$this\n";
+    if (PDB_DEBUG) pdb_Logger::debug( "$this");
   }
   public function ack() {
     $res = new pdb_SetProtocolResponse($this);
     $res->serialize();
   }
   public function __toString () {
-    return "pdb_SetProtocolRequest: ";
+    return "pdb_SetProtocolRequest: ". $this->protocolId;
   }
 }
 
@@ -857,9 +937,12 @@ class pdb_SetProtocolResponse extends pdb_Message {
     $out = $this->session->out;
     parent::serialize();
     $out->writeInt($this->req->id);
-    $out->writeInt($this->req->protocolId);
+
+    // use fixed id instead of $out->writeInt($this->req->protocolId);
+	$out->writeInt(2006040705);
+
     $out->flush();
-    if (PDB_DEBUG) echo "$this\n";
+    if (PDB_DEBUG) pdb_Logger::debug( "$this");
   }
   public function __toString () {
     return "pdb_SetProtocolResponse: ";
@@ -880,7 +963,7 @@ class pdb_StartRequest extends pdb_MessageRequest {
   public function deserialize() {
     $in = $this->session->in;
     $this->id = $in->readInt();
-    if (PDB_DEBUG) echo "$this\n";
+    if (PDB_DEBUG) pdb_Logger::debug( "$this");
   }
 
   public function ack() {
@@ -913,7 +996,7 @@ class pdb_StartResponse extends pdb_Message {
     $out->writeInt($this->req->id);
     $out->writeInt(0);
     $out->flush();
-    if (PDB_DEBUG) echo "$this\n";
+    if (PDB_DEBUG) pdb_Logger::debug( "$this");
   }
   public function __toString () {
     return "pdb_StartResponse: ";
@@ -938,7 +1021,7 @@ class pdb_StartProcessFileNotification extends pdb_Message {
     parent::serialize();
     $out->writeString($this->session->currentFrame->filename);
     $out->flush();
-    if (PDB_DEBUG) echo "$this\n";
+    if (PDB_DEBUG) pdb_Logger::debug( "$this");
   }
   public function __toString () {
     return "pdb_StartProcessFileNotification: {$this->session->currentFrame->filename}";
@@ -954,108 +1037,10 @@ class pdb_ContinueProcessFileNotification extends pdb_Message {
     return self::TYPE;
   }
   public function deserialize() {
-    if (PDB_DEBUG) echo "$this\n";
+    if (PDB_DEBUG) pdb_Logger::debug( "$this");
   }
   public function __toString () {
     return "pdb_ContinueProcessFileNotification: ";
-  }
-}
-
-/**
- * @access private
- */
-class pdb_FileContentRequest extends pdb_Message {
-  const TYPE = 10001;
-  protected $id;
-
-  private static function getId() {
-    static $id = 0;
-    return ++$id;
-  }
-  public function getType() {
-    return self::TYPE;
-  }
-
-  public function  pdb_FileContentRequest ($session) {
-    parent::pdb_Message($session);
-    $this->id = pdb_FileContentRequest::getId();
-  }
-  protected function doSerialize($out) {
-    parent::serialize();
-    $out->writeInt($this->id);
-    $out->writeString($this->session->currentFrame->filename);
-  }
-  public function serialize() {
-    $out = $this->session->out;
-    $this->doSerialize($out);
-    $out->flush();
-    if (PDB_DEBUG) echo "$this\n";
-  }    
-  public function __toString () {
-    return "pdb_FileContentRequest: ";
-  }
-}
-
-/**
- * @access private
- */
-class pdb_FileContentExtendedRequest extends pdb_FileContentRequest {
-  const TYPE = 10002;
-  const BASE = 65521;
-
-  public function getType() {
-    return self::TYPE;
-  }
-  protected function handleFileContentResponse($message) {
-    return true; // next
-  }    
-  public function adler32($data) {
-    $s1 = 1; 
-    $s2 = 0; 
-    $len = strlen($data);
-
-    for($idx = 0; $len-->0; ) {
-      $s1 = ($s1 + ord($data[$idx++])) % self::BASE;
-      $s2 = ($s2 + $s1) % self::BASE;
-    }
-    return ($s2 << 16) | $s1;
-  }
-
-  public function serialize() {
-    $data = file_get_contents($this->session->currentFrame->filename);
-    $out = $this->session->out;
-    parent::doSerialize($out);
-    $out->writeInt(strlen($data));
-    $out->writeInt($this->adler32($data));
-    $out->flush();
-    if (PDB_DEBUG) echo "$this\n";
-  }
-  public function __toString () {
-    return "pdb_FileContentExtendedRequest: {$this->name}";
-  }
-}
-
-/**
- * @access private
- */
-class pdb_FileContentResponse extends pdb_Message {
-  const TYPE = 11001;
-  public $script;
-  public $id;
-  public $status;
-
-  public function getType() {
-    return self::TYPE;
-  }
-  public function deserialize() {
-    $in = $this->session->in;
-    $this->id = $in->readInt();
-    $this->status = $in->readInt();
-    $this->script = $in->readString();
-    if (PDB_DEBUG) echo "$this\n";
-  }
-  public function __toString () {
-    return "pdb_FileContentResponse: {$this->script}";
   }
 }
 
@@ -1108,7 +1093,7 @@ class pdb_AddBreakpointResponse extends pdb_Message {
     $out->writeInt(0);
     $out->writeInt($this->id);
     $out->flush();
-    if (PDB_DEBUG) echo "$this\n";
+    if (PDB_DEBUG) pdb_Logger::debug( "$this");
   }
   public function __toString () {
     return "pdb_AddBreakpointResponse: {$this->id}";
@@ -1148,7 +1133,7 @@ class pdb_AddBreakpointRequest extends pdb_MessageRequest {
     default: 
       trigger_error("invalid breakpoint", E_USER_ERROR);
     }
-    if (PDB_DEBUG) echo "$this\n";
+    if (PDB_DEBUG) pdb_Logger::debug( "$this");
   }
   public function ack() {
     $res = new pdb_AddBreakpointResponse ($this);
@@ -1181,7 +1166,12 @@ class pdb_GetCallStackResponse extends pdb_Message {
     $out = $this->session->out;
     parent::serialize();
     $out->writeInt($this->req->id);
-    $n = count($this->session->environments);
+	for($frame=$this->session->currentFrame; $frame; $frame=$frame->parent)
+	  $environments[] = $frame;
+
+	$environments = array_reverse($environments);
+    $n = count($environments);
+
     $out->writeInt($n);
     $out->writeInt(0);
     $out->writeInt(-1);
@@ -1189,18 +1179,18 @@ class pdb_GetCallStackResponse extends pdb_Message {
 
     for ($i=0; $i<$n; $i++) {
       if ($i>0) {
-	$out->writeString($this->session->environments[$i-1]->filename);
-	$out->writeInt(/*$this->session->environments[$i-1]->line*/1); //FIXME
-	$out->writeInt(0);
+		$out->writeString($environments[$i-1]->filename);
+		$out->writeInt(/*$environments[$i-1]->line*/1); //FIXME
+		$out->writeInt(0);
       }
-      $out->writeString($this->session->environments[$i]->filename);
-      $out->writeInt(/*$this->session->environments[$i]->line*/1); //FIXME
+      $out->writeString($environments[$i]->filename);
+      $out->writeInt(/*$environments[$i]->line*/1); //FIXME
       $out->writeInt(0);
-
+	  
       $out->writeInt(0);
     }
-    $out->flush();
-    if (PDB_DEBUG) echo "$this\n";
+	$out->flush();
+    if (PDB_DEBUG) pdb_Logger::debug( "$this");
   }
   public function __toString () {
     return "pdb_GetCallStackResponse: ";
@@ -1219,7 +1209,7 @@ class pdb_GetCallStackRequest extends pdb_MessageRequest {
   public function deserialize() {
     $in = $this->session->in;
     $this->id = $in->readInt();
-    if (PDB_DEBUG) echo "$this\n";
+    if (PDB_DEBUG) pdb_Logger::debug( "$this");
   }
   public function ack() {
     $res = new pdb_GetCallStackResponse ($this);
@@ -1253,7 +1243,7 @@ class pdb_GetCWDResponse extends pdb_Message {
     $out->writeInt(0);
     $out->writeString(getcwd());    
     $out->flush();
-    if (PDB_DEBUG) echo "$this\n";
+    if (PDB_DEBUG) pdb_Logger::debug( "$this");
   }
   public function __toString () {
     return "pdb_GetCWDResponse: ";
@@ -1273,7 +1263,7 @@ class pdb_GetCWDRequest extends pdb_MessageRequest {
   public function deserialize() {
     $in = $this->session->in;
     $this->id = $in->readInt();
-    if (PDB_DEBUG) echo "$this\n";
+    if (PDB_DEBUG) pdb_Logger::debug( "$this");
   }
   public function ack() {
     $res = new pdb_GetCWDResponse($this);
@@ -1304,13 +1294,13 @@ class pdb_GetVariableValueResponse extends pdb_Message {
     parent::serialize();
     $out->writeInt($this->req->id);
     $out->writeInt(0);
-    if (PDB_DEBUG) echo "evalcode:::".$this->req->code."\n";
+    if (PDB_DEBUG) pdb_Logger::debug( "evalcode:::".$this->req->code."\n");
     if ($this->req->code[0]=='$') 
       $out->writeString(serialize($this->session->currentFrame->vars[substr($this->req->code, 1)]));
     else
       $out->writeString(serialize($this->session->currentFrame->vars));
     $out->flush();
-    if (PDB_DEBUG) echo "$this\n";
+    if (PDB_DEBUG) pdb_Logger::debug( "$this");
   }
   public function __toString () {
     return "pdb_GetVariableValueResponse: ";
@@ -1341,7 +1331,7 @@ class pdb_GetVariableValueRequest extends pdb_MessageRequest {
     while($length--) {
       $this->paths[] = $in->readString();
     }
-    if (PDB_DEBUG) echo "$this\n";
+    if (PDB_DEBUG) pdb_Logger::debug( "$this");
   }
   public function ack() {
     $res = new pdb_GetVariableValueResponse($this);
@@ -1373,7 +1363,7 @@ class pdb_StepOverResponse extends pdb_Message {
     $out->writeInt($this->req->id);
     $out->writeInt(0);
     $out->flush();
-    if (PDB_DEBUG) echo "$this\n";
+    if (PDB_DEBUG) pdb_Logger::debug( "$this");
   }
   public function __toString () {
     return "pdb_StepOverResponse: ";
@@ -1393,7 +1383,7 @@ class pdb_StepOverRequest extends pdb_MessageRequest {
   public function deserialize() {
     $in = $this->session->in;
     $this->id = $in->readInt();
-    if (PDB_DEBUG) echo "$this\n";
+    if (PDB_DEBUG) pdb_Logger::debug( "$this");
   }
   public function ack() {
     $res = new pdb_StepOverResponse($this);
@@ -1485,7 +1475,7 @@ class pdb_GoResponse extends pdb_Message {
     $out->writeInt($this->req->id);
     $out->writeInt(0);
     $out->flush();
-    if (PDB_DEBUG) echo "$this\n";
+    if (PDB_DEBUG) pdb_Logger::debug( "$this");
   }
   public function __toString () {
     return "pdb_GoResponse: ";
@@ -1505,7 +1495,7 @@ class pdb_GoRequest extends pdb_MessageRequest {
   public function deserialize() {
     $in = $this->session->in;
     $this->id = $in->readInt();
-    if (PDB_DEBUG) echo "$this\n";
+    if (PDB_DEBUG) pdb_Logger::debug( "$this");
   }
   public function ack() {
     $res = new pdb_GoResponse($this);
@@ -1513,6 +1503,23 @@ class pdb_GoRequest extends pdb_MessageRequest {
   }
   public function __toString () {
     return "pdb_GoRequest: ";
+  }
+}
+/**
+ * @access private
+ */
+class pdb_End extends pdb_Message {
+  const TYPE = 3;
+  public $id;
+ 
+  public function getType() {
+    return self::TYPE;
+  }
+  public function deserialize() {
+    if (PDB_DEBUG) pdb_Logger::debug( "$this");
+  }
+  public function __toString () {
+    return "pdb_End: ";
   }
 }
 
@@ -1609,28 +1616,26 @@ class pdb_Out {
     return "pdb_Out: ";
   }
 }
-$pdb_me = $_SERVER["PATH_INFO"];
-$dbg = new pdb_DebugSessionStart($pdb_me, $pdb_me, $_SERVER["QUERY_STRING"], "&debug_fastfile=1");
-pdb_Message::register(new pdb_SetProtocolRequest($dbg));
-pdb_Message::register(new pdb_StartRequest($dbg));
-pdb_Message::register(new pdb_ContinueProcessFileNotification($dbg));
-pdb_Message::register(new pdb_FileContentResponse($dbg));
-pdb_Message::register(new pdb_AddBreakpointRequest($dbg));
-pdb_Message::register(new pdb_GetCallStackRequest($dbg));
-pdb_Message::register(new pdb_GetCWDRequest($dbg));
-pdb_Message::register(new pdb_GetVariableValueRequest($dbg));
-pdb_Message::register(new pdb_StepOverRequest($dbg));
-pdb_Message::register(new pdb_StepIntoRequest($dbg));
-pdb_Message::register(new pdb_StepOutRequest($dbg));
-pdb_Message::register(new pdb_GoRequest($dbg));
+$pdb_dbg = new pdb_DebugSessionStart("&debug_fastfile=1");
+pdb_Message::register(new pdb_SetProtocolRequest($pdb_dbg));
+pdb_Message::register(new pdb_StartRequest($pdb_dbg));
+pdb_Message::register(new pdb_ContinueProcessFileNotification($pdb_dbg));
+pdb_Message::register(new pdb_AddBreakpointRequest($pdb_dbg));
+pdb_Message::register(new pdb_GetCallStackRequest($pdb_dbg));
+pdb_Message::register(new pdb_GetCWDRequest($pdb_dbg));
+pdb_Message::register(new pdb_GetVariableValueRequest($pdb_dbg));
+pdb_Message::register(new pdb_StepOverRequest($pdb_dbg));
+pdb_Message::register(new pdb_StepIntoRequest($pdb_dbg));
+pdb_Message::register(new pdb_StepOutRequest($pdb_dbg));
+pdb_Message::register(new pdb_GoRequest($pdb_dbg));
+pdb_Message::register(new pdb_End($pdb_dbg));
 
-pdb_Message::register(new pdb_StartProcessFileNotification($dbg));
-pdb_Message::register(new pdb_FileContentRequest($dbg));
-pdb_Message::register(new pdb_FileContentExtendedRequest($dbg));
-pdb_Message::register(new pdb_ReadyNotification($dbg));
-pdb_Message::register(new pdb_DebugScriptEndedNotification($dbg));
-pdb_Message::register(new pdb_HeaderOutputNotification($dbg));
-pdb_Message::register(new pdb_OutputNotification($dbg));
+pdb_Message::register(new pdb_StartProcessFileNotification($pdb_dbg));
+pdb_Message::register(new pdb_ReadyNotification($pdb_dbg));
+pdb_Message::register(new pdb_DebugScriptEndedNotification($pdb_dbg));
+pdb_Message::register(new pdb_HeaderOutputNotification($pdb_dbg));
+pdb_Message::register(new pdb_OutputNotification($pdb_dbg));
+pdb_Message::register(new pdb_ErrorNotification($pdb_dbg));
 
 /**
  * @access private
@@ -1645,92 +1650,114 @@ function pdb_getDefinedVars($vars1, $vars2) {
 /**
  * @access private
  */
-function pdb_startCall() {
-  global $dbg;
+function pdb_startCall($scriptName) {
+  global $pdb_dbg;
 
-  $currentFrame = clone($dbg->currentFrame);
+  $stepNext = $pdb_dbg->currentFrame->stepNext == pdb_StepIntoRequest::TYPE ? pdb_StepIntoRequest::TYPE : false;
 
-  /* check for stepOver and stepReturn */
-  $currentFrame->stepNext = $dbg->currentFrame->stepNext == pdb_StepIntoRequest::TYPE ? pdb_StepIntoRequest::TYPE : false;
+  pdb_Logger::debug("startCall::$scriptName, $stepNext");
 
-  return $currentFrame;
+  $env = new pdb_Environment($pdb_dbg->currentFrame, $scriptName, $stepNext);
+  $pdb_dbg->allFrames[] = $env;
+
+  return $env;
 }
 
-/**
- * @access private
- */
-function pdb_resolveIncludePath($filename) {
-  if (file_exists($filename)) return realpath($filename);
-  $paths = get_include_path();
-  foreach ($paths as $path) {
-    $file="$path/$filename";
-    if (file_exists($file)) return realpath($file);
-  }
-  trigger_error("file $filename not found", E_USER_ERROR);
-}
 /**
  * @access private
  */
 function pdb_startInclude($filename) {
-  global $dbg;
+  global $pdb_dbg;
 
-  $filename = pdb_resolveIncludePath($filename);
-  $stepNext = $dbg->currentFrame->stepNext == pdb_StepIntoRequest::TYPE ? pdb_StepIntoRequest::TYPE : false;
-  $dbg->currentFrame = new pdb_Environment($filename, $stepNext);
+  $filename = $pdb_dbg->resolveIncludePath($filename);
+  $stepNext = $pdb_dbg->currentFrame->stepNext == pdb_StepIntoRequest::TYPE ? pdb_StepIntoRequest::TYPE : false;
+  $pdb_dbg->currentFrame = new pdb_Environment($pdb_dbg->currentFrame, $filename, $stepNext);
+  $pdb_dbg->allFrames[] = $pdb_dbg->currentFrame;
 
   /* BEGIN: StartProcessFileNotification */
-  $dbg->getMessageById(pdb_StartProcessFileNotification::TYPE)->handleRequests();
+  $pdb_dbg->getMessageById(pdb_StartProcessFileNotification::TYPE)->handleRequests();
   /* ...  set breakpoints ... */
   /* END: ContinueProcessFileNotification */
 
-  $code = $dbg->parseCode(realpath($filename), file_get_contents($filename));
+  $code = $pdb_dbg->parseCode(realpath($filename), file_get_contents($filename));
 
-  /* BEGIN: FileContentExtendedRequest */
-  $dbg->getMessageById(pdb_FileContentExtendedRequest::TYPE)->handleRequests();
-  /* ... get call stack, getcwd .. */
-  /* END: FileContentResponse */
-
-
-  array_push($dbg->environments, $dbg->currentFrame);
-
+  if (PDB_DEBUG) pdb_Logger::debug("include:::$code");
   return $code; // eval -> pdb_step/MSG_READY or pdb_endInclude/MSG_READY OR FINISH
 }
 /**
  * @access private
  */
 function pdb_endInclude() {
-  global $dbg;
+  global $pdb_dbg;
 
-  array_pop($dbg->environments);
-
-  $dbg->currentFrame = end($dbg->environments);
+  $pdb_dbg->currentFrame = $pdb_dbg->currentTopLevelFrame = $pdb_dbg->currentTopLevelFrame->parent;
 }
 
 
 /**
  * @access private
  */
-function pdb_step($filename, $line, &$vars) {
-  global $dbg;
-  if ($dbg->ignoreInterrupt) return;
+function pdb_step($filename, $line, $vars) {
+  global $pdb_dbg;
+  if ($pdb_dbg->ignoreInterrupt) return;
 
-  $dbg->ignoreInterrupt = true;
+  $pdb_dbg->ignoreInterrupt = true;
 
   // pull the current frame from the stack or the top-level environment
-  $dbg->currentFrame = (isset($vars['__pdb_CurrentFrame'])) ? $vars['__pdb_CurrentFrame'] : end($dbg->environments);
+  $pdb_dbg->currentFrame = (isset($vars['__pdb_CurrentFrame'])) ? $vars['__pdb_CurrentFrame'] : $pdb_dbg->currentTopLevelFrame;
   unset($vars['__pdb_CurrentFrame']);
 
-  $dbg->currentFrame->update($line, $vars);
+  $pdb_dbg->currentFrame->update($line, $vars);
 
-  if ($dbg->hasBreakpoint($filename, $line)) {
-    $stepNext = $dbg->getMessageById(pdb_ReadyNotification::TYPE)->handleRequests();
-    $dbg->currentFrame->stepNext = $stepNext != pdb_GoRequest::TYPE ? $stepNext : false;
+  if ($pdb_dbg->hasBreakpoint($filename, $line)) {
+	$pdb_dbg->flushOutput();
+	$stepNext = $pdb_dbg->getMessageById(pdb_ReadyNotification::TYPE)->handleRequests();
+	pdb_Logger::logDebug("continue");
+	/* clear all dynamic breakpoints */
+	foreach ($pdb_dbg->allFrames as $currentFrame)
+	  $currentFrame->stepNext = false;
+
+	/* set new dynamic breakpoint */
+	if ($stepNext != pdb_GoRequest::TYPE) {
+		$currentFrame = $pdb_dbg->currentFrame;
+
+		/* break in current frame or frame below */
+		if ($stepNext != pdb_StepOutRequest::TYPE)
+		  $currentFrame->stepNext = $stepNext;
+
+		/* or break in any parent */
+		while ($currentFrame = $currentFrame->parent) {
+		  $currentFrame->stepNext = $stepNext;
+		}
+	}
   }
-  
-  $dbg->ignoreInterrupt = false;
-
+  $pdb_dbg->ignoreInterrupt = false;
 }
 
-$dbg->handleRequests();
+/**
+ * @access private
+ */
+function pdb_error_handler($errno, $errstr, $errfile, $errline) {
+  global $pdb_dbg;
+  $msg = $pdb_dbg->getMessageById(pdb_ErrorNotification::TYPE);
+  $msg->setError($errno, $errfile, $errline, $errstr);
+  $msg->serialize();
+  return true;
+}
+
+/**
+ * @access private
+ */
+function pdb_shutdown() {
+  global $pdb_dbg;
+  $error = error_get_last();
+  if ($error) {
+	$msg = $pdb_dbg->getMessageById(pdb_ErrorNotification::TYPE);
+	$msg->setError($error['type'], $error['file'], $error['line'], $error['message']);
+	$msg->serialize();
+  }
+}
+
+$pdb_dbg->handleRequests();
 
 ?>
