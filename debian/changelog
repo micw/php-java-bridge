@@ -1,3 +1,12 @@
+php-java-bridge (6.1.2-1) unstable; urgency=low
+
+  * New upstream version.
+  * Rules file cleanup, removing deprecated packages.
+
+ -- Andre Felipe Machado <andre.machado@serpro.gov.br>  Mon, 22 Apr 2010 10:12:21 -0300
+
+
+
 php-java-bridge (6.1.1-2) unstable; urgency=low
 
   * Corrections at control file, removing deprecated packages.
