@@ -26,29 +26,29 @@
    */
 
 
+set_time_limit (0);
 define ("PDB_DEBUG", 0);
 
-  /**
-   * Quick Installation:
-   *
-   * Install "Eclipse for PHP Developers" version >= 3.5.2
-   * 
-   * 1. Open your project in PHP explorer and drag and drop this file
-   * to PHP project folder.
-   *
-   * 2. Activate the PHPDebugger in your php.ini file. For example:
-   * Open Menu/Project/Properties, open "PHP Debug", select "Enable
-   * Project specific settings", select "Zend Debugger" if not already
-   * selected, click on "PHP executables ...", then "Edit" and select
-   * a php.ini file with at least the following content:
-   *
-   * ;; activate the PHPDebugger in the php.ini file
-   * auto_prepend_file=PHPDebugger.inc
-   *
-   *
-   * 3. Debug your PHP scripts as usual. 
-   *
-   */
+/**
+ * Quick Installation:
+ *
+ * Install "Eclipse for PHP Developers" version >= 3.5.2
+ * 
+ * 1. Open your project in PHP explorer and drag and drop this file to the
+ * "PHP Include Path"
+ *
+ * 2. Open Menu/Project/Properties, open "PHP Debug", select "Enable
+ * Project specific settings", select "Zend Debugger" if not already
+ * selected, click on "PHP executables ...", then "Edit" and select
+ * a php.ini file with at least the following content:
+ *
+ * ;; activate the PHPDebugger in the php.ini file
+ * auto_prepend_file=PHPDebugger.inc
+ *
+ *
+ * 3. Debug your PHP scripts as usual. 
+ *
+ */
 
 if (!class_exists("pdb_Parser")) {
   /**
@@ -136,7 +136,7 @@ if (!class_exists("pdb_Parser")) {
 		  if ($val=='{') break;
 		}
 	  }
-	  $scriptName = addslashes($this->scriptName);
+	  $scriptName = $this->scriptName;
 	  $this->write("\$__pdb_CurrentFrame=pdb_startCall(\"$scriptName\");");
 	}
 
@@ -144,11 +144,11 @@ if (!class_exists("pdb_Parser")) {
 	  $token = current($this->code);
 	  if ($this->inPhp && !$pLevel && !$this->inDQuote && $this->beginStatement && !$this->isWhitespace($token) && ($this->line != $this->currentLine)) {
 		$lastLine = $this->line = $this->currentLine;
-		$scriptName = addslashes($this->scriptName);
+		$scriptName = $this->scriptName;
 		if (PDB_DEBUG == 2)
 		  $this->write(";STEP($lastLine);");
 		else
-		  $this->write(";pdb_step(\"$scriptName\", $lastLine, pdb_getDefinedVars(get_defined_vars(), (isset(\$this) ? \$this : NULL)));");
+		  $this->write(";pdb_step(\"$scriptName\", $lastLine, pdb_getDefinedVars(get_defined_vars()));");
 	  }
 	}
 
@@ -640,11 +640,94 @@ abstract class pdb_MessageRequest extends pdb_Message {
 /**
  * @access private
  */
+class pdb_Serializer {
+  private $serial;
+  private $visited;
+  private $depth;
+
+  private function serializeRef(&$r) {
+    $serial = &$this->serial;
+
+    foreach($this->visited as $k=>$v) {
+      if ($v===$r) {
+		$serial.="r:";
+		$serial.=$k+1;
+		$serial.=";";
+		return true;
+      }
+    }
+    die("ref not found");
+  }
+  private function doSerialize ($o, $depth) {
+    $serial = &$this->serial;
+
+    switch(gettype($o)) {
+    case 'object':
+      if (in_array($o, $this->visited)) {
+		$this->serializeRef($o);
+		return;
+      }
+
+      $serial.="O:";
+      $serial.=strlen(get_class($o));
+      $serial.=":\"";
+      $serial.=get_class($o);
+      $serial.="\":";
+      $serial.=count((array)$o);
+      $this->visited[] = $o;
+
+	  if ($depth <= $this->depth) {
+		$serial.=":{";
+		foreach((array)$o as $k=>$v) {
+		  $serial.=serialize($k);
+		  $this->doSerialize($v, $depth+1);
+		}
+		$serial.="}";
+	  } else {
+		$serial .= ";";
+	  }
+      break;
+
+    case 'array':
+      $serial.="a:";
+      $serial.=count($o);
+
+	  if ($depth <= $this->depth) {
+		$serial.=":{";
+		foreach($o as $k=>$v) {
+		  $serial.=serialize($k);
+		  $this->doSerialize($v, $depth+1);
+		}
+		$serial.="}";
+	  } else {
+		$serial.=";";
+	  }
+      break;
+    default:
+      $serial.=serialize($o);
+      break;
+    }
+  }
+
+  public function serialize ($obj, $depth) {
+    $this->serial = "";
+    $this->visited = array();
+	$this->depth = $depth;
+
+    $this->doSerialize ($obj, 1);
+
+    return $this->serial;
+  }
+}
+
+/**
+ * @access private
+ */
 class pdb_DebugSessionStart extends pdb_Message {
   const TYPE = 2005;
 
   public $status;
-  public $eof;
+  public $end;
 
   private $breakFirstLine;
   private $enable;
@@ -663,12 +746,14 @@ class pdb_DebugSessionStart extends pdb_Message {
 
   public $ignoreInterrupt; 
 
+  public $serializer;
+
   public function getType() {
     return self::TYPE;
   }
   public function pdb_DebugSessionStart($options) {
     parent::pdb_Message($this);
-	$this->eof = true;
+	$this->end = true;
 	if (isset($_SERVER["PATH_INFO"]) && isset($_SERVER["QUERY_STRING"])&&!extension_loaded("Zend Debugger")) {
 	  $filename = $uri = $_SERVER["PATH_INFO"];
 	  $queryStr = $_SERVER["QUERY_STRING"];
@@ -690,19 +775,22 @@ class pdb_DebugSessionStart extends pdb_Message {
     $this->options = $options;
     $this->breakpoints = $this->lines = array();
 
+	$this->serializer = new pdb_Serializer();
+
 	$this->currentTopLevelFrame = $this->currentFrame = new pdb_Environment(null, $filename, false);
 	$this->allFrames[] = $this->currentFrame;
 	$this->ignoreInterrupt = false;
 
     $errno = 0; $errstr = "";
     $io = fsockopen($args["debug_host"], $args['debug_port'], $errno, $errstr, 5) or trigger_error("fsockopen", E_USER_ERROR);
-	$this->eof = false;
+	$this->end = false;
 
     $this->in =new pdb_In($io, $this);
     $this->out=new pdb_Out($io, $this);
   }
   public function end() {
-	$this->eof = true;
+	$this->end = true;
+	if (PDB_DEBUG) pdb_Logger::debug( "end() called");
 	exit(0);
   }
   /**
@@ -747,6 +835,7 @@ class pdb_DebugSessionStart extends pdb_Message {
 	  set_error_handler("pdb_error_handler");
 	  register_shutdown_function("pdb_shutdown");
 	  parent::handleRequests(); 
+	  if (PDB_DEBUG) pdb_Logger::debug( "exit({$this->status})");
 	  exit ($this->status); }
   }
   public function hasBreakpoint($scriptName, $line) {
@@ -904,7 +993,7 @@ class pdb_ReadyNotification extends pdb_Message {
     if (PDB_DEBUG) pdb_Logger::debug( "$this");
   }
   public function __toString () {
-    return "pdb_ReadyNotification: ";
+    return "pdb_ReadyNotification: {$this->session->currentFrame->filename}, {$this->session->currentFrame->line}";
   }
 }
 
@@ -1411,6 +1500,8 @@ class pdb_GetVariableValueResponse extends pdb_Message {
   const TYPE = 1032;
   private $req;
 
+  private $visited;
+
   public function pdb_GetVariableValueResponse ($req) {
     parent::pdb_Message($req->session);
     $this->req = $req;
@@ -1419,16 +1510,40 @@ class pdb_GetVariableValueResponse extends pdb_Message {
   public function getType() {
     return self::TYPE;
   }
+
   public function serialize() {
     $out = $this->session->out;
     parent::serialize();
     $out->writeInt($this->req->id);
-    $out->writeInt(0);
     if (PDB_DEBUG) pdb_Logger::debug( "evalcode:::".$this->req->code."\n");
-    if ($this->req->code[0]=='$') 
-      $out->writeString(serialize($this->session->currentFrame->vars[substr($this->req->code, 1)]));
-    else
-      $out->writeString(serialize($this->session->currentFrame->vars));
+	$error = 0;
+    if ($this->req->code[0]=='$') {
+	  if (PDB_DEBUG) pdb_Logger::debug(print_r($this->session->currentFrame->vars, true));
+
+	  $this->session->end = true;
+	  $key = substr($this->req->code, 1);
+	  if (isset($this->session->currentFrame->vars[$key])) {
+		$var = $this->session->currentFrame->vars[$key];
+	  } else {
+		$var = "${key} not found!";
+		$error = -1;
+	  }
+	  $ser = $this->session->serializer->serialize($var, $this->req->depth);
+	  $this->session->end = false;
+
+	  $out->writeInt($error);
+      $out->writeString($ser);
+    } else {
+	  if (PDB_DEBUG) pdb_Logger::debug(print_r($this->session->currentFrame->vars, true));
+
+	  $this->session->end = true;
+	  $vars = $this->session->currentFrame->vars;
+	  $ser = $this->session->serializer->serialize($vars, $this->req->depth);
+	  $this->session->end = false;
+
+	  $out->writeInt($error);
+	  $out->writeString($ser);
+	}
     $out->flush();
     if (PDB_DEBUG) pdb_Logger::debug( "$this");
   }
@@ -1468,7 +1583,7 @@ class pdb_GetVariableValueRequest extends pdb_MessageRequest {
     $res->serialize();
   }
   public function __toString () {
-    return "pdb_GetVariableValueRequest: ";
+    return "pdb_GetVariableValueRequest: {$this->code}, {$this->depth}, paths::".print_r($this->paths, true);
   }
 }
 
@@ -1670,7 +1785,7 @@ class pdb_In {
     $str = "";
     while ($n) {
       $s = fread($this->in, $n);
-	  if (feof($this->in)) $session->end();
+	  if (feof($this->in)) $this->session->end();
 
       $n -= strlen($s);
 
@@ -1744,7 +1859,7 @@ class pdb_Out {
     $length = strlen($this->buf);
     $this->buf = pack("N", $length).$this->buf;
     fwrite($this->out, $this->buf);
-	if (feof($this->out)) $session->end();
+	if (feof($this->out)) $this->session->end();
     $this->buf = "";
   }
   public function __toString () {
@@ -1777,8 +1892,8 @@ pdb_Message::register(new pdb_ErrorNotification($pdb_dbg));
 /**
  * @access private
  */
-function pdb_getDefinedVars($vars1, $vars2) {
-  if(isset($vars2)) $vars1['pbd_This'] = $vars2;
+function pdb_getDefinedVars($vars1) {
+  //  if(isset($vars2)) $vars1['pbd_This'] = $vars2;
 
   unset($vars1['__pdb_Code']);	     // see pdb_Message::doEval()
 
@@ -1879,7 +1994,7 @@ function pdb_step($filename, $line, $vars) {
 function pdb_error_handler($errno, $errstr, $errfile, $errline) {
   global $pdb_dbg;
   if (PDB_DEBUG) pdb_Logger::debug("PHP error $errno: $errstr in $errfile line $errline");
-  if ($pdb_dbg->eof) return false;
+  if ($pdb_dbg->end) return false;
 
   $msg = $pdb_dbg->getMessageById(pdb_ErrorNotification::TYPE);
   $msg->setError($errno, $errfile, $errline, $errstr);
@@ -1893,7 +2008,7 @@ function pdb_error_handler($errno, $errstr, $errfile, $errline) {
 function pdb_shutdown() {
   global $pdb_dbg;
   if (PDB_DEBUG) pdb_Logger::debug("PHP error: ".print_r(error_get_last(), true));
-  if ($pdb_dbg->eof) return;
+  if ($pdb_dbg->end) return;
 
   $error = error_get_last();
   if ($error) {
