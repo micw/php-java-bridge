@@ -29,26 +29,27 @@
 set_time_limit (0);
 define ("PDB_DEBUG", 0);
 
-/**
- * Quick Installation:
- *
- * Install "Eclipse for PHP Developers" version >= 3.5.2
- * 
- * 1. Open your project in PHP explorer and drag and drop this file to the
- * "PHP Include Path"
- *
- * 2. Open Menu/Project/Properties, open "PHP Debug", select "Enable
- * Project specific settings", select "Zend Debugger" if not already
- * selected, click on "PHP executables ...", then "Edit" and select
- * a php.ini file with at least the following content:
- *
- * ;; activate the PHPDebugger in the php.ini file
- * auto_prepend_file=PHPDebugger.inc
- *
- *
- * 3. Debug your PHP scripts as usual. 
- *
- */
+  /**
+   * Quick Installation:
+   *
+   * Install "Eclipse for PHP Developers" version >= 3.5.2
+   * 
+   * 1. Open your project in PHP explorer and drag and drop this file
+   * to PHP project folder.
+   *
+   * 2. Activate the PHPDebugger in your php.ini file. For example:
+   * Open Menu/Project/Properties, open "PHP Debug", select "Enable
+   * Project specific settings", select "Zend Debugger" if not already
+   * selected, click on "PHP executables ...", then "Edit" and select
+   * a php.ini file with at least the following content:
+   *
+   * ;; activate the PHPDebugger in the php.ini file
+   * auto_prepend_file=PHPDebugger.inc
+   *
+   *
+   * 3. Debug your PHP scripts as usual. 
+   *
+   */
 
 if (!class_exists("pdb_Parser")) {
   /**
@@ -136,7 +137,7 @@ if (!class_exists("pdb_Parser")) {
 		  if ($val=='{') break;
 		}
 	  }
-	  $scriptName = $this->scriptName;
+	  $scriptName = addslashes($this->scriptName);
 	  $this->write("\$__pdb_CurrentFrame=pdb_startCall(\"$scriptName\");");
 	}
 
@@ -144,7 +145,7 @@ if (!class_exists("pdb_Parser")) {
 	  $token = current($this->code);
 	  if ($this->inPhp && !$pLevel && !$this->inDQuote && $this->beginStatement && !$this->isWhitespace($token) && ($this->line != $this->currentLine)) {
 		$lastLine = $this->line = $this->currentLine;
-		$scriptName = $this->scriptName;
+		$scriptName = addslashes($this->scriptName);
 		if (PDB_DEBUG == 2)
 		  $this->write(";STEP($lastLine);");
 		else
@@ -1893,7 +1894,6 @@ pdb_Message::register(new pdb_ErrorNotification($pdb_dbg));
  * @access private
  */
 function pdb_getDefinedVars($vars1) {
-  //  if(isset($vars2)) $vars1['pbd_This'] = $vars2;
 
   unset($vars1['__pdb_Code']);	     // see pdb_Message::doEval()
 
