@@ -40,11 +40,11 @@
 	 exception statement from your version. */
 
 set_time_limit (0);
-define ("PDBJS_DEBUG", 0);
+define ("PDB_DEBUG", 0);
 
-$pdbjs_version = phpversion();
-if ((version_compare("5.3.0", $pdbjs_version, ">")))
-  trigger_error("<br><strong>PHP ${pdbjs_version} too old.</strong><br>\nPlease set the path to a PHP >= 5.3 executable, see php_exec in the WEB-INF/web.xml", E_USER_ERROR);
+$pdb_version = phpversion();
+if ((version_compare("5.3.0", $pdb_version, ">")))
+  trigger_error("<br><strong>PHP ${pdb_version} too old.</strong><br>\nPlease set the path to a PHP >= 5.3 executable, see php_exec in the WEB-INF/web.xml", E_USER_ERROR);
 
  
 /**
@@ -66,17 +66,17 @@ if ((version_compare("5.3.0", $pdbjs_version, ">")))
  * a simple logger
  * @access private
  */
-class pdbjs_Logger {
+class pdb_Logger {
   const FATAL = 1;
   const INFO = 2;
   const VERBOSE = 3;
   const DEBUG = 4;
 
   private static $logLevel = 0;
-  private static $logFileName = "/tmp/pdbjs_PHPDebugger.log";
+  private static $logFileName = "/tmp/pdb_PHPDebugger.log";
 
   private static function println($msg, $level) {
-	if (!self::$logLevel) self::$logLevel=PDBJS_DEBUG?self::DEBUG:self::INFO;
+	if (!self::$logLevel) self::$logLevel=PDB_DEBUG?self::DEBUG:self::INFO;
 	if ($level <= self::$logLevel) {
 	  static $file = null;
 	  if (!$file) $file = fopen(self::$logFileName, "ab") or die("fopen");
@@ -115,7 +115,7 @@ class pdbjs_Logger {
 /**
  * @access private
  */
-interface pdbjs_Queue {
+interface pdb_Queue {
 
   /** 
    * Read a string from the queue
@@ -157,7 +157,7 @@ interface pdbjs_Queue {
  * It is slow, but it does not require any special library.
  * @access private
  */
-class pdbjs_PollingServerConnection implements pdbjs_Queue {
+class pdb_PollingServerConnection implements pdb_Queue {
   protected $id;
   protected $role, $to;
   protected $chanTrm; // "back end terminated" flag
@@ -168,9 +168,9 @@ class pdbjs_PollingServerConnection implements pdbjs_Queue {
    * Create a new communication using a unique id
    * @access private
    */
-  public function pdbjs_PollingServerConnection($id) {
+  public function pdb_PollingServerConnection($id) {
 	$this->id = $id;
-	$this->chanTrm = "pdbjs_trmserver{$this->id}";
+	$this->chanTrm = "pdb_trmserver{$this->id}";
 	$this->output = "<missing>";
 
 	$this->init();
@@ -186,16 +186,16 @@ class pdbjs_PollingServerConnection implements pdbjs_Queue {
 	$this->role = "client";
 	$this->to  = "server";
 
-	$chanCtr = "pdbjs_ctr{$this->role}{$this->id}";
-	$chan = "pdbjs_{$this->role}{$this->id}";
+	$chanCtr = "pdb_ctr{$this->role}{$this->id}";
+	$chan = "pdb_{$this->role}{$this->id}";
 	unset ($_SESSION[$chan]);
 	unset ($_SESSION[$chanCtr]);
 
 	$this->role = "server";
 	$this->to  = "client";
 
-	$chanCtr = "pdbjs_ctr{$this->role}{$this->id}";
-	$chan = "pdbjs_{$this->role}{$this->id}";
+	$chanCtr = "pdb_ctr{$this->role}{$this->id}";
+	$chan = "pdb_{$this->role}{$this->id}";
 	unset ($_SESSION[$chan]);
 	unset ($_SESSION[$chanCtr]);
 
@@ -211,11 +211,11 @@ class pdbjs_PollingServerConnection implements pdbjs_Queue {
 
   protected function poll() {
 	$val = "";
-	$chanCtr = "pdbjs_ctr{$this->role}{$this->id}";
-	$chan = "pdbjs_{$this->role}{$this->id}";
+	$chanCtr = "pdb_ctr{$this->role}{$this->id}";
+	$chan = "pdb_{$this->role}{$this->id}";
 	session_start();
 	if (!($val = $this->checkTrm())) {
-	  pdbjs_Logger::debug("...{$this->role}, {$this->id} poll...");
+	  pdb_Logger::debug("...{$this->role}, {$this->id} poll...");
 	  if(!isset($_SESSION[$chanCtr])) { 
 		$_SESSION[$chan] = array(); 
 		$_SESSION[$chanCtr]=0; 
@@ -228,7 +228,7 @@ class pdbjs_PollingServerConnection implements pdbjs_Queue {
 	return $val;
   }
   protected function send($val) {
-	$chan = "pdbjs_{$this->to}{$this->id}";
+	$chan = "pdb_{$this->to}{$this->id}";
 	session_start();
 	if (!$this->checkTrm()) $_SESSION[$chan][]=json_encode($val);
 	session_write_close();
@@ -278,7 +278,7 @@ class pdbjs_PollingServerConnection implements pdbjs_Queue {
    * shut down the communication channel
    */
   public function shutdown() {
-	pdbjs_Logger::debug("session terminated: {$this->chanTrm}");
+	pdb_Logger::debug("session terminated: {$this->chanTrm}");
 	session_start();
 	$_SESSION[$this->chanTrm] = $this->output;
 	session_write_close();
@@ -291,7 +291,7 @@ class pdbjs_PollingServerConnection implements pdbjs_Queue {
  * It is slow, but it does not require any special library.
  * @access private
  */
-class pdbjs_PollingClientConnection extends pdbjs_PollingServerConnection {
+class pdb_PollingClientConnection extends pdb_PollingServerConnection {
   private $seq;
 
   protected function init() {
@@ -300,11 +300,11 @@ class pdbjs_PollingClientConnection extends pdbjs_PollingServerConnection {
   }
 
   protected function poll() {
-	$chanCtr = "pdbjs_ctr{$this->role}{$this->id}";
-	$chan = "pdbjs_{$this->role}{$this->id}";
+	$chanCtr = "pdb_ctr{$this->role}{$this->id}";
+	$chan = "pdb_{$this->role}{$this->id}";
 	session_start();
 	if (!($val = $this->checkTrm())) {
-	  pdbjs_Logger::debug("...{$this->role}, {$this->id} poll...");
+	  pdb_Logger::debug("...{$this->role}, {$this->id} poll...");
 	  if (!isset($_SESSION[$chanCtr])) $_SESSION[$chanCtr] = 0; 
 	  if (isset($_SESSION[$chan]) && (count($_SESSION[$chan]) > $_SESSION[$chanCtr])) {
 		$val = json_decode($_SESSION[$chan][$_SESSION[$chanCtr]]);
@@ -335,402 +335,416 @@ class pdbjs_PollingClientConnection extends pdbjs_PollingServerConnection {
   public function shutdown() {}
 }
 
-/**
- * The PHP parser
- * @access private
- */
-class pdbjs_Parser {
-  const BLOCK = 1;
-  const STATEMENT = 2;
-  const EXPRESSION = 3;
-
-  private $scriptName, $content;
-  private $code;
-  private $output;
-  private $line, $currentLine;
-  private $beginStatement, $inPhp, $inDQuote;
- 
+if (!class_exists("pdb_Parser")) {
   /**
-   * Create a new PHP parser
-   * @param string the script name
-   * @param string the script content
+   * The PHP parser
    * @access private
    */
-  public function pdbjs_Parser($scriptName, $content) {
-	$this->scriptName = $scriptName;
-	$this->content = $content;
-	$this->code = token_get_all($content);
-	$this->output = "";
-	$this->line = $this->currentLine = 0;
-	$this->beginStatement = $this->inPhp = $this->inDQuote = false;
-  }
+  class pdb_Parser {
+	const BLOCK = 1;
+	const STATEMENT = 2;
+	const EXPRESSION = 3;
 
-  private function toggleDQuote($chr) {
-	if ($chr == '"') $this->inDQuote = !$this->inDQuote;
-  }
+	private $scriptName, $content;
+	private $code;
+	private $output;
+	private $line, $currentLine;
+	private $beginStatement, $inPhp, $inDQuote;
+ 
+	/**
+	 * Create a new PHP parser
+	 * @param string the script name
+	 * @param string the script content
+	 * @access private
+	 */
+	public function pdb_Parser($scriptName, $content) {
+	  $this->scriptName = $scriptName;
+	  $this->content = $content;
+	  $this->code = token_get_all($content);
+	  $this->output = "";
+	  $this->line = $this->currentLine = 0;
+	  $this->beginStatement = $this->inPhp = $this->inDQuote = false;
+	}
 
-  private function each() {
-	$next = each ($this->code);
-	if ($next) {
-	  $cur = current($this->code);
-	  if (is_array($cur)) {
-		$this->currentLine = $cur[2];
-		if ($this->isWhitespace($cur)) {
-		  $this->write($cur[1]);
-		  return $this->each();
+	private function toggleDQuote($chr) {
+	  if ($chr == '"') $this->inDQuote = !$this->inDQuote;
+	}
+
+	private function each() {
+	  $next = each ($this->code);
+	  if ($next) {
+		$cur = current($this->code);
+		if (is_array($cur)) {
+		  $this->currentLine = $cur[2];
+		  if ($this->isWhitespace($cur)) {
+			$this->write($cur[1]);
+			return $this->each();
+		  }
+		}
+		else 
+		  $this->toggleDQuote($cur);
+	  }
+	  return $next;
+	}
+
+	private function write($code) {
+	  //echo "write:::".$code."\n";
+	  $this->output.=$code;
+	}
+
+	private function writeInclude() {
+	  $name = "";
+	  while(1) {
+		if (!$this->each()) die("parse error");
+		$val = current($this->code);
+		if (is_array($val)) {
+		  $name.=$val[1];
+		} else {
+		  if ($val==';') break;
+		  $name.=$val;
 		}
 	  }
-	  else 
-		$this->toggleDQuote($cur);
-	}
-	return $next;
-  }
-
-  private function write($code) {
-	//echo "write:::".$code."\n";
-	$this->output.=$code;
-  }
-
-  private function writeInclude() {
-	$name = "";
-	while(1) {
-	  if (!$this->each()) die("parse error");
-	  $val = current($this->code);
-	  if (is_array($val)) {
-		$name.=$val[1];
-	  } else {
-		if ($val==';') break;
-		$name.=$val;
-	  }
-	}
-	if (PDBJS_DEBUG == 2) 
-	  $this->write("EVAL($name);");
-	else
-	  $this->write("eval('?>'.pdbjs_startInclude($name)); pdbjs_endInclude();");
-  }
-
-  private function writeCall() {
-	while(1) {
-	  if (!$this->each()) die("parse error");
-	  $val = current($this->code);
-	  if (is_array($val)) {
-		$this->write($val[1]);
-	  } else {
-		$this->write($val);
-		if ($val=='{') break;
-	  }
-	}
-	$scriptName = $this->scriptName;
-	$this->write("\$__pdbjs_CurrentFrame=pdbjs_startCall(\"$scriptName\");");
-  }
-
-  private function writeStep($pLevel) {
-	$token = current($this->code);
-	if ($this->inPhp && !$pLevel && !$this->inDQuote && $this->beginStatement && !$this->isWhitespace($token) && ($this->line != $this->currentLine)) {
-	  $lastLine = $this->line = $this->currentLine;
-	  $scriptName = $this->scriptName;
-	  if (PDBJS_DEBUG == 2)
-		$this->write(";STEP($lastLine);");
+	  if (PDB_DEBUG == 2) 
+		$this->write("EVAL($name);");
 	  else
-		$this->write(";pdbjs_step(\"$scriptName\", $lastLine, pdbjs_getDefinedVars(get_defined_vars(), (isset(\$this) ? \$this : NULL)));");
+		$this->write("eval('?>'.pdb_startInclude($name)); pdb_endInclude();");
 	}
-  }
 
-  private function writeNext() {
-	$this->next();
-	$token = current($this->code);
-	if (is_array($token)) $token = $token[1];
-	$this->write($token);
-  }
-
-  private function nextIs($chr) {
-	$i = 0;
-	while(each($this->code)) {
-	  $cur = current($this->code);
-	  $i++;
-	  if (is_array($cur)) {
-		switch ($cur[0]) {
-		case T_COMMENT:
-		case T_DOC_COMMENT:
-		case T_WHITESPACE:
-		  break;	/* skip */
-		default: 
-		  while($i--) prev($this->code);
-		  return false;	/* not found */
+	private function writeCall() {
+	  while(1) {
+		if (!$this->each()) die("parse error");
+		$val = current($this->code);
+		if (is_array($val)) {
+		  $this->write($val[1]);
+		} else {
+		  $this->write($val);
+		  if ($val=='{') break;
 		}
-	  } else {
-		while($i--) prev($this->code);
-		return $cur == $chr;	/* found */
 	  }
+	  $scriptName = addslashes($this->scriptName);
+	  $this->write("\$__pdb_CurrentFrame=pdb_startCall(\"$scriptName\", $this->currentLine);");
 	}
-	while($i--) prev($this->code);
-	return false;	/* not found */
-  }
 
-  private function nextTokenIs($ar) {
-	$i = 0;
-	while(each($this->code)) {
-	  $cur = current($this->code);
-	  $i++;
-	  if (is_array($cur)) {
-		switch ($cur[0]) {
-		case T_COMMENT:
-		case T_DOC_COMMENT:
-		case T_WHITESPACE:
-		  break;	/* skip */
-		default: 
-		  while($i--) prev($this->code);
-		  return (in_array($cur[0], $ar));
-		}
-	  } else {
-		break; /* not found */
-	  }
-	}
-	while($i--) prev($this->code);
-	return false;	/* not found */
-  }
-
-  private function isWhitespace($token) {
-	$isWhitespace = false;
-	switch($token[0]) {
-	case T_COMMENT:
-	case T_DOC_COMMENT:
-	case T_WHITESPACE:
-	  $isWhitespace = true;
-	  break;
-	}
-	return $isWhitespace;
-  }
-  private function next() {
-	if (!$this->each()) trigger_error("parse error", E_USER_ERROR);
-  }
-
-  private function parseBlock () {
-	$this->parse(self::BLOCK);
-  }
-  private function parseStatement () {
-	$this->parse(self::STATEMENT);
-  }
-  private function parseExpression () {
-	$this->parse(self::EXPRESSION);
-  }
-
-  private function parse ($type) {
-	pdbjs_Logger::debug("parse:::$type");
-
-	$this->beginStatement = true;
-	$pLevel = 0;
-
-	do {
+	private function writeStep($pLevel) {
 	  $token = current($this->code);
-	  if (!is_array($token)) {
-		pdbjs_Logger::debug(":::".$token);
-		$this->write($token);
-		if ($this->inPhp && !$this->inDQuote) {
-		  $this->beginStatement = false; 
-		  switch($token) {
-		  case '(': 
-			$pLevel++;
+	  if ($this->inPhp && !$pLevel && !$this->inDQuote && $this->beginStatement && !$this->isWhitespace($token) && ($this->line != $this->currentLine)) {
+		$line = $this->line = $this->currentLine;
+		$scriptName = addslashes($this->scriptName);
+		if (PDB_DEBUG == 2)
+		  $this->write(";STEP($line);");
+		else
+		  $this->write(";pdb_step(\"$scriptName\", $line, pdb_getDefinedVars(get_defined_vars()));");
+	  }
+	}
+
+	private function writeNext() {
+	  $this->next();
+	  $token = current($this->code);
+	  if (is_array($token)) $token = $token[1];
+	  $this->write($token);
+	}
+
+	private function nextIs($chr) {
+	  $i = 0;
+	  while(each($this->code)) {
+		$cur = current($this->code);
+		$i++;
+		if (is_array($cur)) {
+		  switch ($cur[0]) {
+		  case T_COMMENT:
+		  case T_DOC_COMMENT:
+		  case T_WHITESPACE:
+			break;	/* skip */
+		  default: 
+			while($i--) prev($this->code);
+			return false;	/* not found */
+		  }
+		} else {
+		  while($i--) prev($this->code);
+		  return $cur == $chr;	/* found */
+		}
+	  }
+	  while($i--) prev($this->code);
+	  return false;	/* not found */
+	}
+
+	private function nextTokenIs($ar) {
+	  $i = 0;
+	  while(each($this->code)) {
+		$cur = current($this->code);
+		$i++;
+		if (is_array($cur)) {
+		  switch ($cur[0]) {
+		  case T_COMMENT:
+		  case T_DOC_COMMENT:
+		  case T_WHITESPACE:
+			break;	/* skip */
+		  default: 
+			while($i--) prev($this->code);
+			return (in_array($cur[0], $ar));
+		  }
+		} else {
+		  break; /* not found */
+		}
+	  }
+	  while($i--) prev($this->code);
+	  return false;	/* not found */
+	}
+
+	private function isWhitespace($token) {
+	  $isWhitespace = false;
+	  switch($token[0]) {
+	  case T_COMMENT:
+	  case T_DOC_COMMENT:
+	  case T_WHITESPACE:
+		$isWhitespace = true;
+		break;
+	  }
+	  return $isWhitespace;
+	}
+	private function next() {
+	  if (!$this->each()) trigger_error("parse error", E_USER_ERROR);
+	}
+
+	private function parseBlock () {
+	  $this->parse(self::BLOCK);
+	}
+	private function parseStatement () {
+	  $this->parse(self::STATEMENT);
+	}
+	private function parseExpression () {
+	  $this->parse(self::EXPRESSION);
+	}
+
+	private function parse ($type) {
+	  pdb_Logger::debug("parse:::$type");
+
+	  $this->beginStatement = true;
+	  $pLevel = 0;
+
+	  do {
+		$token = current($this->code);
+		if (!is_array($token)) {
+		  pdb_Logger::debug(":::".$token);
+		  $this->write($token);
+		  if ($this->inPhp && !$this->inDQuote) {
+			$this->beginStatement = false; 
+			switch($token) {
+			case '(': 
+			  $pLevel++;
+			  break;
+			case ')':
+			  if (!--$pLevel && $type==self::EXPRESSION) return;
+			  break;
+			case '{': 
+			  $this->next();
+			  $this->parseBlock(); 
+			  break;
+			case '}': 
+			  if (!$pLevel) return;
+			  break;
+			case ';':
+			  if (!$pLevel) {
+				if ($type==self::STATEMENT) return;
+				$this->beginStatement = true; 
+			  }
+			  break;
+			}
+		  }
+		} else {
+		  pdb_Logger::debug(":::".$token[1].":(".token_name($token[0]).')');
+
+		  if ($this->inDQuote) {
+			$this->write($token[1]);
+			continue;
+		  }
+
+		  switch($token[0]) {
+
+		  case T_OPEN_TAG: 
+		  case T_START_HEREDOC:
+		  case T_OPEN_TAG_WITH_ECHO: 
+			$this->beginStatement = $this->inPhp = true;
+			$this->write($token[1]);
 			break;
-		  case ')':
-			if (!--$pLevel && $type==self::EXPRESSION) return;
+
+		  case T_END_HEREDOC:
+		  case T_CLOSE_TAG: 
+			$this->writeStep($pLevel);
+
+			$this->write($token[1]);
+			$this->beginStatement = $this->inPhp = false; 
 			break;
-		  case '{': 
+
+		  case T_FUNCTION:
+			$this->write($token[1]);
+			$this->writeCall();
+			$this->beginStatement = true;
+			break;
+
+		  case T_ELSE:
+			$this->write($token[1]);
+			if ($this->nextIs('{')) {
+			  $this->writeNext();
+			  $this->next();
+
+			  $this->parseBlock();
+			} else {
+			  $this->next();
+
+			  /* create an artificial block */
+			  $this->write('{');
+			  $this->beginStatement = true;
+			  $this->writeStep($pLevel);
+			  $this->parseStatement();
+			  $this->write('}');
+
+			}
+			if ($type==self::STATEMENT) return;
+
+			$this->beginStatement = true;
+			break;
+
+		  case T_DO:
+			$this->writeStep($pLevel);
+			$this->write($token[1]);
+			if ($this->nextIs('{')) {
+			  $this->writeNext();
+			  $this->next();
+
+			  $this->parseBlock();
+			  $this->next();
+
+			} else {
+			  $this->next();
+
+			  /* create an artificial block */
+			  $this->write('{');
+			  $this->beginStatement = true;
+			  $this->writeStep($pLevel);
+			  $this->parseStatement();
+			  $this->next();
+			  $this->write('}');
+			}
+			$token = current($this->code);
+			$this->write($token[1]);
+
+			if ($token[0]!=T_WHILE) trigger_error("parse error", E_USER_ERROR);
 			$this->next();
-			$this->parseBlock(); 
+			$this->parseExpression();
+
+			if ($type==self::STATEMENT) return;
+
+			$this->beginStatement = true;
 			break;
-		  case '}': 
-			if (!$pLevel) return;
-			break;
-		  case ';':
-			if (!$pLevel) {
+
+		  case T_IF:
+		  case T_ELSEIF:
+		  case T_FOR:
+		  case T_WHILE:
+			$this->writeStep($pLevel);
+
+			$this->write($token[1]);
+			$this->next();
+
+			$this->parseExpression();
+
+			if ($this->nextIs('{')) {
+			  $this->writeNext();
+			  $this->next();
+
+			  $this->parseBlock();
+
+
+			} else {
+			  $this->next();
+
+			  /* create an artificial block */
+			  $this->write('{');
+			  $this->beginStatement = true;
+			  $this->writeStep($pLevel);
+			  $this->parseStatement();
+			  $this->write('}');
+			}
+
+			if ($this->nextTokenIs(array(T_ELSE, T_ELSEIF))) {
+			  $this->beginStatement = false;
+			} else {
 			  if ($type==self::STATEMENT) return;
-			  $this->beginStatement = true; 
+			  $this->beginStatement = true;
 			}
 			break;
-		  }
-		}
-	  } else {
-		pdbjs_Logger::debug(":::".$token[1].":(".token_name($token[0]).')');
 
-		if ($this->inDQuote) {
-		  $this->write($token[1]);
-		  continue;
-		}
-
-		switch($token[0]) {
-
-		case T_OPEN_TAG: 
-		case T_START_HEREDOC:
-		case T_OPEN_TAG_WITH_ECHO: 
-		  $this->beginStatement = $this->inPhp = true;
-		  $this->write($token[1]);
-		  break;
-
-		case T_END_HEREDOC:
-		case T_CLOSE_TAG: 
-		  $this->writeStep($pLevel);
-
-		  $this->write($token[1]);
-		  $this->beginStatement = $this->inPhp = false; 
-		  break;
-
-		case T_FUNCTION:
-		  $this->write($token[1]);
-		  $this->writeCall();
-		  $this->beginStatement = true;
-		  break;
-
-		case T_ELSE:
-		  $this->write($token[1]);
-		  if ($this->nextIs('{')) {
-			$this->writeNext();
-			$this->next();
-
-			$this->parseBlock();
-		  } else {
-			$this->next();
-
-			/* create an artificial block */
-			$this->write('{');
-			$this->beginStatement = true;
+		  case T_INCLUDE: 
+		  case T_INCLUDE_ONCE: 
+		  case T_REQUIRE: 
+		  case T_REQUIRE_ONCE: // FIXME: implement require and _once
 			$this->writeStep($pLevel);
-			$this->parseStatement();
-			$this->write('}');
+			$this->writeInclude();
 
-		  }
-		  if ($type==self::STATEMENT) return;
-
-		  $this->beginStatement = true;
-		  break;
-
-		case T_DO:
-		  $this->writeStep($pLevel);
-		  $this->write($token[1]);
-		  if ($this->nextIs('{')) {
-			$this->writeNext();
-			$this->next();
-
-			$this->parseBlock();
-			$this->next();
-
-		  } else {
-			$this->next();
-
-			/* create an artificial block */
-			$this->write('{');
-			$this->beginStatement = true;
-			$this->writeStep($pLevel);
-			$this->parseStatement();
-			$this->next();
-			$this->write('}');
-		  }
-		  $token = current($this->code);
-		  $this->write($token[1]);
-
-		  if ($token[0]!=T_WHILE) trigger_error("parse error", E_USER_ERROR);
-		  $this->next();
-		  $this->parseExpression();
-
-		  if ($type==self::STATEMENT) return;
-
-		  $this->beginStatement = true;
-		  break;
-
-		case T_IF:
-		case T_ELSEIF:
-		case T_FOR:
-		case T_WHILE:
-		  $this->writeStep($pLevel);
-
-		  $this->write($token[1]);
-		  $this->next();
-
-		  $this->parseExpression();
-
-		  if ($this->nextIs('{')) {
-			$this->writeNext();
-			$this->next();
-
-			$this->parseBlock();
-
-
-		  } else {
-			$this->next();
-
-			/* create an artificial block */
-			$this->write('{');
-			$this->beginStatement = true;
-			$this->writeStep($pLevel);
-			$this->parseStatement();
-			$this->write('}');
-		  }
-
-		  if ($this->nextTokenIs(array(T_ELSE, T_ELSEIF))) {
-			$this->beginStatement = false;
-		  } else {
 			if ($type==self::STATEMENT) return;
+
 			$this->beginStatement = true;
-		  }
-		  break;
+			break;
 
-		case T_INCLUDE: 
-		case T_INCLUDE_ONCE: 
-		case T_REQUIRE: 
-		case T_REQUIRE_ONCE: // FIXME: implement require and _once
-		  $this->writeStep($pLevel);
-		  $this->writeInclude();
+		  case T_CLASS:
+			$this->write($token[1]);
+			$this->writeNext();
+			$this->writeNext();
+			if ($this->nextIs('{')) {
+			  $this->parseBlock(); 
+			  $this->beginStatement = true;
+			} else {
+			  $this->beginStatement = false;
+			}
+			break;
 
-		  if ($type==self::STATEMENT) return;
+		  case T_CASE:
+		  case T_DEFAULT:
+		  case T_PUBLIC:
+		  case T_PRIVATE:
+		  case T_PROTECTED:
+		  case T_STATIC:
+		  case T_CONST:
+		  case T_GLOBAL:
+		  case T_ABSTRACT:
+			$this->write($token[1]);
+			$this->beginStatement = false;
+			break;
 
-		  $this->beginStatement = true;
-		  break;
-
-		case T_CLASS:
-		case T_CASE:
-		case T_DEFAULT:
-		case T_PUBLIC:
-		case T_PRIVATE:
-		case T_PROTECTED:
-		case T_STATIC:
-		case T_CONST:
-		case T_GLOBAL:
-		case T_ABSTRACT:
-		  $this->write($token[1]);
-		  $this->beginStatement = false;
-		  break;
-
-		default:
-		  $this->writeStep($pLevel);
-		  $this->write($token[1]);
-		  $this->beginStatement = false;
-		  break;
+		  default:
+			$this->writeStep($pLevel);
+			$this->write($token[1]);
+			$this->beginStatement = false;
+			break;
 	
+		  }
 		}
-	  }
-	} while($this->each());
-  }
+	  } while($this->each());
+	}
 
-  /**
-   * parse the given PHP script
-   * @return the parsed PHP script
-   * @access private
-   */
-  public function parseScript() {
-	do {
-	  $this->parseBlock();
-	} while($this->each());
+	/**
+	 * parse the given PHP script
+	 * @return the parsed PHP script
+	 * @access private
+	 */
+	public function parseScript() {
+	  do {
+		$this->parseBlock();
+	  } while($this->each());
 
-	return $this->output;
+	  return $this->output;
+	}
   }
 }
+
 
 /**
  * This structure represents the debugger front-end. It is used by the
  * JavaScript code to communicate with the debugger back end.
  * @access private
  */
-class pdbjs_JSDebuggerClient {
+class pdb_JSDebuggerClient {
   private static function getDebuggerFilename() {
 	$script = __FILE__;
 	$scriptName = basename($script);
@@ -751,7 +765,7 @@ class pdbjs_JSDebuggerClient {
 	} elseif ((strlen($scriptDirName)==1) && (($scriptDirName[0]=='/') || ($scriptDirName[0]=='\\'))) {
 	  $scriptDirName = '';
 	}
-	pdbjs_Logger::debug("scriptDir: $scriptDir, scriptDirName: $scriptDirName");
+	pdb_Logger::debug("scriptDir: $scriptDir, scriptDirName: $scriptDirName");
 
 	if ((strlen($scriptDir) < strlen($scriptDirName)) || ($scriptDirName &&
 														  (substr($scriptDir, -strlen($scriptDirName)) != $scriptDirName)))
@@ -792,7 +806,7 @@ class pdbjs_JSDebuggerClient {
 	  $prefix = '/' . ($idx ? substr($scriptDirName, 0, $idx): $scriptDirName);
 	}
   
-	pdbjs_Logger::debug("serverRoot: $root - path: $path");
+	pdb_Logger::debug("serverRoot: $root - path: $path");
 	if ($root && (strlen($root) < strlen($path)) && (!strncmp($path, $root, strlen($root))))
 	  $path = "${prefix}" . str_replace('\\', '/', substr($path, strlen($root)));
 	else // could not calculate debugger path
@@ -826,7 +840,7 @@ class pdbjs_JSDebuggerClient {
   }
  
   private static function getConnection($id) {
-	return new pdbjs_PollingClientConnection($id);
+	return new pdb_PollingClientConnection($id);
   }
   /**
    * Pass the command and arguments to the debug back end and
@@ -839,7 +853,7 @@ class pdbjs_JSDebuggerClient {
 	$msg = (object)$vars;
 	
 	if ($msg->cmd == "begin") sleep(1); // wait for the server to settle
-	pdbjs_Logger::debug("beginHandleRequest: ".$msg->cmd);
+	pdb_Logger::debug("beginHandleRequest: ".$msg->cmd);
 	$conn = self::getConnection($msg->serverID);
 	$conn->write($msg);
 
@@ -849,7 +863,7 @@ class pdbjs_JSDebuggerClient {
 	  $output = json_encode($response);
 	
 	echo "($output)";
-	pdbjs_Logger::debug("endHandleRequest");
+	pdb_Logger::debug("endHandleRequest");
   }
 }
 
@@ -861,7 +875,7 @@ class pdbjs_JSDebuggerClient {
  * View will be discarded when go, step, end is invoked.
  * @access private
  */
-class pdbjs_View {
+class pdb_View {
   /** The current script name */
   public $scriptName;
   /** Back-link to the parent or null */
@@ -873,7 +887,7 @@ class pdbjs_View {
    * @param object the parent frame
    * @param string the script name
    */
-  public function pdbjs_View($parent, $scriptName) {
+  public function pdb_View($parent, $scriptName) {
 	$this->parent = $parent;
 	$this->scriptName = $scriptName;
 
@@ -929,15 +943,15 @@ class pdbjs_View {
  * The current view. Used to show the contents of a variable
  * @access private
  */
-class pdbjs_VariableView extends pdbjs_View {
+class pdb_VariableView extends pdb_View {
   /**
    * Create a new variable view
    * @param object the parent frame
    * @param string the variable name
    * @param string the variable value
    */
-  public function pdbjs_VariableView($parent, $name, $value) {
-	parent::pdbjs_View($parent, $name);
+  public function pdb_VariableView($parent, $name, $value) {
+	parent::pdb_View($parent, $name);
 	$this->value = $value;
   }
   /**
@@ -952,7 +966,7 @@ class pdbjs_VariableView extends pdbjs_View {
  * name along with its state
  * @access private
  */
-class pdbjs_Environment extends pdbjs_View {
+class pdb_Environment extends pdb_View {
   /** bool true if a dynamic breakpoint should be inserted at the next line, false otherwise */
   public $stepNext;
   /** The execution vars */
@@ -965,8 +979,8 @@ class pdbjs_Environment extends pdbjs_View {
    * @param string the script name
    * @param bool true if a dynamic breakpoint should be inserted at the next line, false otherwise
    */
-  public function pdbjs_Environment($parent, $scriptName, $stepNext) {
-	parent::pdbjs_View($parent, $scriptName);
+  public function pdb_Environment($parent, $scriptName, $stepNext) {
+	parent::pdb_View($parent, $scriptName);
 	$this->stepNext = $stepNext;
 	$this->line = -1;
   }
@@ -982,14 +996,14 @@ class pdbjs_Environment extends pdbjs_View {
   }
 
   public function __toString() {
-	return "pdbjs_Environment: {$this->scriptName}, {$this->line}";
+	return "pdb_Environment: {$this->scriptName}, {$this->line}";
   }
 }
 /**
  * Represents a breakpoint
  * @access private
  */
-class pdbjs_Breakpoint {
+class pdb_Breakpoint {
   /** The script name */
   public $scriptName;
   /** The current line */
@@ -1005,7 +1019,7 @@ class pdbjs_Breakpoint {
    * @param string the script name
    * @param int the line
    */
-  public function pdbjs_Breakpoint($breakpointName, $scriptName, $line) {
+  public function pdb_Breakpoint($breakpointName, $scriptName, $line) {
 	$this->breakpoint = $breakpointName;
 	$this->scriptName = $scriptName;
 	$this->line = $line;
@@ -1025,7 +1039,7 @@ class pdbjs_Breakpoint {
  * view is set by the switchView command.
  * @access private
  */
-final class pdbjs_Session {
+final class pdb_Session {
   /** The collection of breakpoints */
   public $breakpoints;
 
@@ -1044,9 +1058,9 @@ final class pdbjs_Session {
    * Create a new debug session for a given script
    * @param string the script name
    */
-  public function pdbjs_Session($scriptName) {
+  public function pdb_Session($scriptName) {
 	$this->breakpoints = $this->lines = array();
-	$this->currentTopLevelFrame = $this->currentFrame = new pdbjs_Environment(null, $scriptName, true);
+	$this->currentTopLevelFrame = $this->currentFrame = new pdb_Environment(null, $scriptName, true);
 	$this->allFrames[] = $this->currentFrame;
 
 	$this->currentView = null;
@@ -1092,7 +1106,7 @@ final class pdbjs_Session {
   public function toggleBreakpoint($breakpoint) {
 	$id = $breakpoint."@".$this->getCurrentViewScriptName();
 	if (!isset($this->breakpoints[$id])) {
-	  $this->breakpoints[$id] = new pdbjs_Breakpoint($breakpoint, $this->getCurrentViewScriptName(), substr($breakpoint, 3));
+	  $this->breakpoints[$id] = new pdb_Breakpoint($breakpoint, $this->getCurrentViewScriptName(), substr($breakpoint, 3));
 	  return false;
 	} else {
 	  $bp = $this->breakpoints[$id];
@@ -1110,7 +1124,7 @@ final class pdbjs_Session {
 	if ($this->currentFrame->stepNext) return true;
   
 	foreach ($this->breakpoints as $breakpoint) {
-	  pdbjs_Logger::debug("process breakpoint::: $scriptName, $line:: $breakpoint");
+	  pdb_Logger::debug("process breakpoint::: $scriptName, $line:: $breakpoint");
 	  if($breakpoint->type==1) {
 		if ($breakpoint->scriptName==$scriptName&&$breakpoint->line==$line) return true;
 	  }
@@ -1124,11 +1138,11 @@ final class pdbjs_Session {
    * @return the parsed script
    */
   public function parseCode($scriptName, $content) {
-	$parser = new pdbjs_Parser($scriptName, $content);
+	$parser = new pdb_Parser($scriptName, $content);
 	return $parser->parseScript();
   }
-  private static function doEval($__pdbjs_Code) {
-	return eval ("?>".$__pdbjs_Code);
+  private static function doEval($__pdb_Code) {
+	return eval ("?>".$__pdb_Code);
   }
   /**
    * parse and execute script
@@ -1137,11 +1151,11 @@ final class pdbjs_Session {
   public function evalScript() {
 	$code = $this->parseCode($this->getScriptName(), file_get_contents($this->getScriptName()));
 
-	if (PDBJS_DEBUG) pdbjs_Logger::debug("eval:::$code,".$this->getScriptName()."\n");
-	if (!PDBJS_DEBUG) ob_start();
+	if (PDB_DEBUG) pdb_Logger::debug("eval:::$code,".$this->getScriptName()."\n");
+	if (!PDB_DEBUG) ob_start();
 	self::doEval ($code);
 	$this->output = ob_get_contents();
-	if(!PDBJS_DEBUG) ob_end_clean();
+	if(!PDB_DEBUG) ob_end_clean();
 
 	return $this->output;
   }
@@ -1152,8 +1166,8 @@ final class pdbjs_Session {
  * and handles debug requests from the client.
  * @access private
  */
-class pdbjs_JSDebugger {
-  /** The pdbjs_Session */
+class pdb_JSDebugger {
+  /** The pdb_Session */
   public $session;
   private $id;
  
@@ -1168,14 +1182,14 @@ class pdbjs_JSDebugger {
 
 
   private function getConnection($id) {
-	return new pdbjs_PollingServerConnection($id);
+	return new pdb_PollingServerConnection($id);
   }
 
   /**
    * Create new PHP debugger using a given comm. ID
    * @param int the communication address
    */
-  public function pdbjs_JSDebugger($id) {
+  public function pdb_JSDebugger($id) {
 
 	$this->id = $id;
 	$this->conn = $this->getConnection($id);
@@ -1184,8 +1198,8 @@ class pdbjs_JSDebugger {
 	$this->session = null;
 
 	$this->ignoreInterrupt = false;
-	set_error_handler("pdbjs_error_handler");
-	register_shutdown_function("pdbjs_shutdown");
+	set_error_handler("pdb_error_handler");
+	register_shutdown_function("pdb_shutdown");
   }
   public function setError($errno, $errfile, $errline, $errstr) {
 	highlight_string("PHP error $errno: $errstr in $errfile line $errline");
@@ -1210,7 +1224,7 @@ class pdbjs_JSDebugger {
    */
   public function write($data) {
 	$data["serverID"] = $this->getServerID();
-	if (PDBJS_DEBUG) pdbjs_Logger::debug("->".print_r($data, true));
+	if (PDB_DEBUG) pdb_Logger::debug("->".print_r($data, true));
 	return $this->conn->write($data);
   }
   private function ack() {
@@ -1232,11 +1246,11 @@ class pdbjs_JSDebugger {
 	$this->ignoreInterrupt = false;
 
 	while(!$this->end) {
-	  if (PDBJS_DEBUG) pdbjs_Logger::debug("handleRequests: accept");
+	  if (PDB_DEBUG) pdb_Logger::debug("handleRequests: accept");
    
 	  if (!($this->packet = $this->read())) break; // ignore __destructors after shutdown
 
-	  if (PDBJS_DEBUG) pdbjs_Logger::debug("handleRequests: done accept ".$this->packet->cmd);
+	  if (PDB_DEBUG) pdb_Logger::debug("handleRequests: done accept ".$this->packet->cmd);
 
 	  switch($this->packet->cmd) {
 	  case "status":
@@ -1256,7 +1270,7 @@ class pdbjs_JSDebugger {
 		break;
 	  case "begin":
 		chdir (urldecode($this->packet->cwd));
-		$this->session = new pdbjs_Session(urldecode($this->packet->scriptName));
+		$this->session = new pdb_Session(urldecode($this->packet->scriptName));
 		$this->write(array("cmd"=>$this->packet->cmd,
 						   "seq"=>$this->packet->seq, 
 						   "scriptName"=>$this->packet->scriptName, 
@@ -1304,13 +1318,13 @@ class pdbjs_JSDebugger {
 		  $env = (object) $this->session->currentFrame->vars;
 		  $code = "return \$env->$idx;";
 		  $value = eval($code);
-		  $this->session->currentView = new pdbjs_VariableView($this->session->currentView, $name, $value);
+		  $this->session->currentView = new pdb_VariableView($this->session->currentView, $name, $value);
 		} else {
 		  $value = eval("return ".$name.";");
 		  if (file_exists($value)) 
-			$this->session->currentView = new pdbjs_View($this->session->currentView, realpath($value));
+			$this->session->currentView = new pdb_View($this->session->currentView, realpath($value));
 		  else
-			$this->session->currentView = new pdbjs_VariableView($this->session->currentView, $name, $value);
+			$this->session->currentView = new pdb_VariableView($this->session->currentView, $name, $value);
 		}
 		$this->ack();
 		break;
@@ -1332,7 +1346,7 @@ class pdbjs_JSDebugger {
 		$this->end();
 		break;
 	  default:
-		pdbjs_Logger::debug("illegal packet: " . print_r($this->packet, true));
+		pdb_Logger::debug("illegal packet: " . print_r($this->packet, true));
 		exit(1);
 	  }
 	}
@@ -1359,10 +1373,10 @@ class pdbjs_JSDebugger {
    */
   public function startCall($scriptName) {
 	/* check for stepOver and stepOut */
-	$stepNext = $this->session->currentFrame->stepNext == pdbjs_JSDebugger::STEP_INTO ? pdbjs_JSDebugger::STEP_INTO : false;
+	$stepNext = $this->session->currentFrame->stepNext == pdb_JSDebugger::STEP_INTO ? pdb_JSDebugger::STEP_INTO : false;
 	
-	pdbjs_Logger::debug("startCall::$scriptName, $stepNext");
-	$env = new pdbjs_Environment($this->session->currentFrame, $scriptName, $stepNext);
+	pdb_Logger::debug("startCall::$scriptName, $stepNext");
+	$env = new pdb_Environment($this->session->currentFrame, $scriptName, $stepNext);
 	$this->session->allFrames[] = $env;
 	return $env;
   }
@@ -1390,10 +1404,10 @@ class pdbjs_JSDebugger {
 	if (!$isDebugger)
 	  $scriptName = $this->resolveIncludePath($scriptName);
 
-	pdbjs_Logger::debug("scriptName::$scriptName, $isDebugger");
+	pdb_Logger::debug("scriptName::$scriptName, $isDebugger");
 
-	$stepNext = $this->session->currentFrame->stepNext == pdbjs_JSDebugger::STEP_INTO ? pdbjs_JSDebugger::STEP_INTO : false;
-	$this->session->currentFrame = new pdbjs_Environment($this->session->currentFrame, $scriptName, $stepNext);
+	$stepNext = $this->session->currentFrame->stepNext == pdb_JSDebugger::STEP_INTO ? pdb_JSDebugger::STEP_INTO : false;
+	$this->session->currentFrame = new pdb_Environment($this->session->currentFrame, $scriptName, $stepNext);
 	$this->session->allFrames[] = $this->session->currentFrame;
 
 	if ($isDebugger) // do not debug self
@@ -1403,8 +1417,8 @@ class pdbjs_JSDebugger {
 
 	$this->session->currentTopLevelFrame = $this->session->currentFrame;
 
-	pdbjs_Logger::debug("include:::".$code);
-	return $code; // eval -> pdbjs_step/MSG_READY or pdbjs_endInclude/MSG_READY OR FINISH
+	pdb_Logger::debug("include:::".$code);
+	return $code; // eval -> pdb_step/MSG_READY or pdb_endInclude/MSG_READY OR FINISH
   }
 
   /**
@@ -1425,27 +1439,27 @@ class pdbjs_JSDebugger {
 	if ($this->ignoreInterrupt) return; // avoid spurious step calls from __destruct() method
 	$this->ignoreInterrupt = true;
 
-	pdbjs_Logger::logDebug("step: $scriptName @ $line");
+	pdb_Logger::logDebug("step: $scriptName @ $line");
 	// pull the current frame from the stack or the top-level environment
-	$this->session->currentFrame = (isset($vars['__pdbjs_CurrentFrame'])) ? $vars['__pdbjs_CurrentFrame'] : $this->session->currentTopLevelFrame;
-	unset($vars['__pdbjs_CurrentFrame']);
+	$this->session->currentFrame = (isset($vars['__pdb_CurrentFrame'])) ? $vars['__pdb_CurrentFrame'] : $this->session->currentTopLevelFrame;
+	unset($vars['__pdb_CurrentFrame']);
 
 	$this->session->currentFrame->update($line, $vars);
 
 	if ($this->session->hasBreakpoint($scriptName, $line)) {
 	  $stepNext = $this->handleRequests();
-	  pdbjs_Logger::logDebug("continue");
+	  pdb_Logger::logDebug("continue");
 
 	  /* clear all dynamic breakpoints */
 	  foreach ($this->session->allFrames as $currentFrame)
 		$currentFrame->stepNext = false;
 
 	  /* set new dynamic breakpoint */
-	  if ($stepNext != pdbjs_JSDebugger::GO) {
+	  if ($stepNext != pdb_JSDebugger::GO) {
 		$currentFrame = $this->session->currentFrame;
 
 		/* break in current frame or frame below */
-		if ($stepNext != pdbjs_JSDebugger::STEP_OUT)
+		if ($stepNext != pdb_JSDebugger::STEP_OUT)
 		  $currentFrame->stepNext = $stepNext;
 
 		/* or break in any parent */
@@ -1456,7 +1470,7 @@ class pdbjs_JSDebugger {
 	}
 
 	$this->ignoreInterrupt = false;
-	pdbjs_Logger::logDebug("endStep: $scriptName @ $line");
+	pdb_Logger::logDebug("endStep: $scriptName @ $line");
   }
 }
 
@@ -1464,10 +1478,10 @@ class pdbjs_JSDebugger {
  * Convenience function called by the executor
  * @access private
  */
-function pdbjs_getDefinedVars($vars1, $vars2) {
+function pdb_getDefinedVars($vars1, $vars2) {
   if(isset($vars2)) $vars1['pbd_This'] = $vars2;
 
-  unset($vars1['__pdbjs_Code']);	   // see pdbjs_Message::doEval()
+  unset($vars1['__pdb_Code']);	   // see pdb_Message::doEval()
 
   return $vars1;  
 }
@@ -1476,18 +1490,18 @@ function pdbjs_getDefinedVars($vars1, $vars2) {
  * Convenience function called by the executor
  * @access private
  */
-function pdbjs_startCall($scriptName) {
-  global $pdbjs_dbg;
-  if (isset($pdbjs_dbg)) return $pdbjs_dbg->startCall($scriptName);
+function pdb_startCall($scriptName, $line) {
+  global $pdb_dbg;
+  if (isset($pdb_dbg)) return $pdb_dbg->startCall($scriptName);
 }
 
 /**
  * Convenience function called by the executor
  * @access private
  */
-function pdbjs_startInclude($scriptName) {
-  global $pdbjs_dbg;
-  if (isset($pdbjs_dbg)) return $pdbjs_dbg->startInclude($scriptName);
+function pdb_startInclude($scriptName) {
+  global $pdb_dbg;
+  if (isset($pdb_dbg)) return $pdb_dbg->startInclude($scriptName);
   else return "";
 }
 
@@ -1495,30 +1509,30 @@ function pdbjs_startInclude($scriptName) {
  * Convenience function called by the executor
  * @access private
  */
-function pdbjs_endInclude() {
-  global $pdbjs_dbg;
-  if (isset($pdbjs_dbg)) $pdbjs_dbg->endInclude();
+function pdb_endInclude() {
+  global $pdb_dbg;
+  if (isset($pdb_dbg)) $pdb_dbg->endInclude();
 }
 
 /**
  * Convenience function called by the executor
  * @access private
  */
-function pdbjs_step($scriptName, $line, $vars) {
-  global $pdbjs_dbg;
-  if (isset($pdbjs_dbg)) $pdbjs_dbg->step($scriptName, $line, $vars);
+function pdb_step($scriptName, $line, $vars) {
+  global $pdb_dbg;
+  if (isset($pdb_dbg)) $pdb_dbg->step($scriptName, $line, $vars);
 }
 
 /**
  * @access private
  */
-function pdbjs_error_handler($errno, $errstr, $errfile, $errline) {
-  global $pdbjs_dbg;
-  if (PDBJS_DEBUG) pdbjs_Logger::debug("PHP error $errno: $errstr in $errfile line $errline");
-  if ($pdbjs_dbg->end) return false;
+function pdb_error_handler($errno, $errstr, $errfile, $errline) {
+  global $pdb_dbg;
+  if (PDB_DEBUG) pdb_Logger::debug("PHP error $errno: $errstr in $errfile line $errline");
+  if ($pdb_dbg->end) return false;
  
  if (strncmp(basename($errfile),"PHPDebugger", 11)) 
-   $pdbjs_dbg->setError($errno, $errfile, $errline, $errstr);
+   $pdb_dbg->setError($errno, $errfile, $errline, $errstr);
 
   return true;
 }
@@ -1526,27 +1540,27 @@ function pdbjs_error_handler($errno, $errstr, $errfile, $errline) {
 /**
  * @access private
  */
-function pdbjs_shutdown() {
-  global $pdbjs_dbg;
-  if (PDBJS_DEBUG) pdbjs_Logger::debug("PHP error: ".print_r(error_get_last(), true));
-  if ($pdbjs_dbg->end) return;
+function pdb_shutdown() {
+  global $pdb_dbg;
+  if (PDB_DEBUG) pdb_Logger::debug("PHP error: ".print_r(error_get_last(), true));
+  if ($pdb_dbg->end) return;
 
   $error = error_get_last();
   if ($error) {
-	$pdbjs_dbg->setError($error['type'], $error['file'], $error['line'], $error['message']);
-	$pdbjs_dbg->end();
-	$pdbjs_dbg->shutdown();
+	$pdb_dbg->setError($error['type'], $error['file'], $error['line'], $error['message']);
+	$pdb_dbg->end();
+	$pdb_dbg->shutdown();
   }
 }
 
-if (PDBJS_DEBUG==2) {
- $parser = new pdbjs_Parser("test.php", file_get_contents("test.php"));
+if (PDB_DEBUG==2) {
+  $parser = new pdb_Parser($argv[1], file_get_contents($argv[1]));
  echo $parser->parseScript();
  exit (2);
 }
 
 /* * The JavaScript part, invoked after the debugger has been included() * */
-if (!isset($_SERVER['HTTP_XPDBJS_DEBUGGER'])) {
+if (!isset($_SERVER['HTTP_XPDB_DEBUGGER'])) {
 
   session_start();
   header("Expires: Sat, 1 Jan 2005 00:00:00 GMT");
@@ -1689,11 +1703,11 @@ PHPDebugger version 1.0
 <script type="text/javascript">
 var http = createRequestObject();
 var httpCtrl = createRequestObject();
-var serverID = <?php echo pdbjs_JSDebuggerClient::getServerID(); ?>;
-var scriptName = "<?php echo pdbjs_JSDebuggerClient::getDebugScriptName(); ?>";
+var serverID = <?php echo pdb_JSDebuggerClient::getServerID(); ?>;
+var scriptName = "<?php echo pdb_JSDebuggerClient::getDebugScriptName(); ?>";
 var currentScriptName = "";
 var cwd = "<?php echo urlencode(getcwd()); ?>";
-var debuggerURL = "<?php echo pdbjs_JSDebuggerClient::getDebuggerURL(); ?>";
+var debuggerURL = "<?php echo pdb_JSDebuggerClient::getDebuggerURL(); ?>";
 var date = "<?php echo gmdate( 'D, d M Y H:i:s').' GMT'; ?>";
 var seq = 1;
 
@@ -1771,7 +1785,7 @@ function sendCmd(cmd) {
   http.setRequestHeader("Expires", "Sat, 1 Jan 2005 00:00:00 GMT");
   http.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
   http.setRequestHeader("Content-Length", data.length);
-  http.setRequestHeader("XPDBJS-DEBUGGER", 0);
+  http.setRequestHeader("XPDB-DEBUGGER", 0);
   http.onreadystatechange = function() {
 	 if(http.readyState == 4 && http.status == 200) {
 	  doCmd(eval(http.responseText));
@@ -1781,7 +1795,7 @@ function sendCmd(cmd) {
 }
 function startServer() { 
   var url = debuggerURL;
-	data = "<?php echo pdbjs_JSDebuggerClient::getPostData(); ?>";
+	data = "<?php echo pdb_JSDebuggerClient::getPostData(); ?>";
 	method = "<?php echo $_SERVER['REQUEST_METHOD']; ?>";
   httpCtrl.open(method, url, true);
   httpCtrl.setRequestHeader("Cache-Control", "no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
@@ -1790,7 +1804,7 @@ function startServer() {
   httpCtrl.setRequestHeader("Expires", "Sat, 1 Jan 2005 00:00:00 GMT");
   httpCtrl.setRequestHeader("Content-Length", data.length);
   httpCtrl.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-  httpCtrl.setRequestHeader("XPDBJS-DEBUGGER", getServerID());
+  httpCtrl.setRequestHeader("XPDB-DEBUGGER", getServerID());
   httpCtrl.onreadystatechange = function() {
 	 if(httpCtrl.readyState == 4 && httpCtrl.status == 200) {
 	  //alert("debugger exited. Debugger debug output: " +httpCtrl.responseText);
@@ -1954,17 +1968,17 @@ Please enable JavaScript in your browser.
 </html>
 <?php
  exit (0);
-} elseif (($serverID = $_SERVER['HTTP_XPDBJS_DEBUGGER']) != "0") {
+} elseif (($serverID = $_SERVER['HTTP_XPDB_DEBUGGER']) != "0") {
 /* * The back end part, invoked from JavaScript using a json call. $serverID is a uniq ID generated from JavaScript * */
  header("Expires: Sat, 1 Jan 2005 00:00:00 GMT");
  header("Last-Modified: ".gmdate( "D, d M Y H:i:s")." GMT");
  header("Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
  header("Pragma: no-cache");
  header("Content-Encoding: identity");
- $pdbjs_dbg = new pdbjs_JSDebugger((int)$serverID);
- $pdbjs_dbg->handleRequests();
- $pdbjs_dbg->shutdown();
- pdbjs_Logger::debug("SERVER TERMINATED!");
+ $pdb_dbg = new pdb_JSDebugger((int)$serverID);
+ $pdb_dbg->handleRequests();
+ $pdb_dbg->shutdown();
+ pdb_Logger::debug("SERVER TERMINATED!");
  exit(0);
 } else {
 /* * The front end part, invoked from JavaScript using json calls * */
@@ -1973,7 +1987,7 @@ Please enable JavaScript in your browser.
  header("Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
  header("Pragma: no-cache");
  header("Content-Encoding: identity");
- pdbjs_JSDebuggerClient::handleRequest ($_POST);
+ pdb_JSDebuggerClient::handleRequest ($_POST);
  exit(0);
 }
 ?>

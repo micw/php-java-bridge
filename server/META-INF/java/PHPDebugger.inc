@@ -404,6 +404,17 @@ if (!class_exists("pdb_Parser")) {
 			break;
 
 		  case T_CLASS:
+			$this->write($token[1]);
+			$this->writeNext();
+			$this->writeNext();
+			if ($this->nextIs('{')) {
+			  $this->parseBlock(); 
+			  $this->beginStatement = true;
+			} else {
+			  $this->beginStatement = false;
+			}
+			break;
+
 		  case T_CASE:
 		  case T_DEFAULT:
 		  case T_PUBLIC:
@@ -644,39 +655,19 @@ abstract class pdb_MessageRequest extends pdb_Message {
  */
 class pdb_Serializer {
   private $serial;
-  private $visited;
   private $depth;
 
-  private function serializeRef(&$r) {
-    $serial = &$this->serial;
-
-    foreach($this->visited as $k=>$v) {
-      if ($v===$r) {
-		$serial.="r:";
-		$serial.=$k+1;
-		$serial.=";";
-		return true;
-      }
-    }
-    die("ref not found");
-  }
   private function doSerialize ($o, $depth) {
     $serial = &$this->serial;
 
     switch(gettype($o)) {
     case 'object':
-      if (in_array($o, $this->visited)) {
-		$this->serializeRef($o);
-		return;
-      }
-
       $serial.="O:";
       $serial.=strlen(get_class($o));
       $serial.=":\"";
       $serial.=get_class($o);
       $serial.="\":";
       $serial.=count((array)$o);
-      $this->visited[] = $o;
 
 	  if ($depth <= $this->depth) {
 		$serial.=":{";
@@ -713,7 +704,6 @@ class pdb_Serializer {
 
   public function serialize ($obj, $depth) {
     $this->serial = "";
-    $this->visited = array();
 	$this->depth = $depth;
 
     $this->doSerialize ($obj, 1);
@@ -1504,8 +1494,6 @@ class pdb_GetVariableValueResponse extends pdb_Message {
   const TYPE = 1032;
   private $req;
 
-  private $visited;
-
   public function pdb_GetVariableValueResponse ($req) {
     parent::pdb_Message($req->session);
     $this->req = $req;
@@ -1522,12 +1510,19 @@ class pdb_GetVariableValueResponse extends pdb_Message {
     if (PDB_DEBUG) pdb_Logger::debug( "evalcode:::".$this->req->code."\n");
 	$error = 0;
     if ($this->req->code[0]=='$') {
-	  if (PDB_DEBUG) pdb_Logger::debug(print_r($this->session->currentFrame->vars, true));
 
 	  $this->session->end = true;
 	  $key = substr($this->req->code, 1);
 	  if (isset($this->session->currentFrame->vars[$key])) {
 		$var = $this->session->currentFrame->vars[$key];
+		$paths = $this->req->paths;
+		foreach ($paths as $path) {
+		  if (is_object($var)) {
+			$var = $var->$path;
+		  } else {
+			$var = $var[$path];
+		  }
+		}
 	  } else {
 		$var = "${key} not found!";
 		$error = -1;
@@ -1537,6 +1532,7 @@ class pdb_GetVariableValueResponse extends pdb_Message {
 
 	  $out->writeInt($error);
       $out->writeString($ser);
+	  if (PDB_DEBUG) pdb_Logger::debug("pdb_GetVariableValueResponse: ".print_r($var, true).": ${ser}, error: ${error}");
     } else {
 	  if (PDB_DEBUG) pdb_Logger::debug(print_r($this->session->currentFrame->vars, true));
 
@@ -1547,9 +1543,9 @@ class pdb_GetVariableValueResponse extends pdb_Message {
 
 	  $out->writeInt($error);
 	  $out->writeString($ser);
+	  if (PDB_DEBUG) pdb_Logger::debug("pdb_GetVariableValueResponse: ".print_r($vars, true).": ${ser}, error: ${error}");
 	}
     $out->flush();
-    if (PDB_DEBUG) pdb_Logger::debug( "$this");
   }
   public function __toString () {
     return "pdb_GetVariableValueResponse: ";
@@ -1575,7 +1571,7 @@ class pdb_GetVariableValueRequest extends pdb_MessageRequest {
     $this->code = $in->readString();
     $this->depth = $in->readInt();
 
-    $paths = array();
+    $this->paths = array();
     $length = $in->readInt();
     while($length--) {
       $this->paths[] = $in->readString();
