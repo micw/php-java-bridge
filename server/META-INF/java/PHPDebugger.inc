@@ -35,7 +35,7 @@ define ("PDB_DEBUG", 0);
    * Install "Eclipse for PHP Developers" version >= 3.5.2
    * 
    * 1. Open your project in PHP explorer and drag and drop this file
-   * to PHP project folder.
+   * to the PHP project folder.
    *
    * 2. Activate the PHPDebugger in your php.ini file. For example:
    * Open Menu/Project/Properties, open "PHP Debug", select "Enable
@@ -138,18 +138,18 @@ if (!class_exists("pdb_Parser")) {
 		}
 	  }
 	  $scriptName = addslashes($this->scriptName);
-	  $this->write("\$__pdb_CurrentFrame=pdb_startCall(\"$scriptName\");");
+	  $this->write("\$__pdb_CurrentFrame=pdb_startCall(\"$scriptName\", $this->currentLine);");
 	}
 
 	private function writeStep($pLevel) {
 	  $token = current($this->code);
 	  if ($this->inPhp && !$pLevel && !$this->inDQuote && $this->beginStatement && !$this->isWhitespace($token) && ($this->line != $this->currentLine)) {
-		$lastLine = $this->line = $this->currentLine;
+		$line = $this->line = $this->currentLine;
 		$scriptName = addslashes($this->scriptName);
 		if (PDB_DEBUG == 2)
-		  $this->write(";STEP($lastLine);");
+		  $this->write(";STEP($line);");
 		else
-		  $this->write(";pdb_step(\"$scriptName\", $lastLine, pdb_getDefinedVars(get_defined_vars()));");
+		  $this->write(";pdb_step(\"$scriptName\", $line, pdb_getDefinedVars(get_defined_vars()));");
 	  }
 	}
 
@@ -497,13 +497,14 @@ class pdb_Logger {
  */
 class pdb_Environment {
   public $filename, $stepNext;
-  public $vars, $line;
+  public $vars, $line, $firstLine;
   public $parent;
 
-  public function pdb_Environment($parent, $filename, $stepNext) {
+  public function pdb_Environment($parent, $filename, $stepNext, $firstLine) {
 	$this->parent = $parent;
     $this->filename = $filename;
     $this->stepNext = $stepNext;
+	$this->firstLine = $firstLine;
     $this->line = -1;
   }
 
@@ -512,7 +513,7 @@ class pdb_Environment {
     $this->vars = &$vars;
   }
   public function __toString() {
-	return "pdb_Environment: {$this->filename}, {$this->line}";
+	return "pdb_Environment: {$this->filename}, {$this->firstLine} - {$this->line}";
   }
 }
 
@@ -778,7 +779,7 @@ class pdb_DebugSessionStart extends pdb_Message {
 
 	$this->serializer = new pdb_Serializer();
 
-	$this->currentTopLevelFrame = $this->currentFrame = new pdb_Environment(null, $filename, false);
+	$this->currentTopLevelFrame = $this->currentFrame = new pdb_Environment(null, $filename, false, 1);
 	$this->allFrames[] = $this->currentFrame;
 	$this->ignoreInterrupt = false;
 
@@ -1399,12 +1400,14 @@ class pdb_GetCallStackResponse extends pdb_Message {
 
     for ($i=0; $i<$n; $i++) {
       if ($i>0) {
-		$out->writeString($environments[$i-1]->filename);
-		$out->writeInt($environments[$i-1]->line); //FIXME
+		$env = $environments[$i-1];
+		$out->writeString($env->filename);
+		$out->writeInt($env->line);
 		$out->writeInt(0);
       }
-      $out->writeString($environments[$i]->filename);
-      $out->writeInt($environments[$i]->line); //FIXME
+	  $env = $environments[$i];
+      $out->writeString($env->filename);
+      $out->writeInt($env->firstLine);
       $out->writeInt(0);
 	  
       $out->writeInt(0);
@@ -1902,14 +1905,14 @@ function pdb_getDefinedVars($vars1) {
 /**
  * @access private
  */
-function pdb_startCall($scriptName) {
+function pdb_startCall($scriptName, $line) {
   global $pdb_dbg;
 
   $stepNext = $pdb_dbg->currentFrame->stepNext == pdb_StepIntoRequest::TYPE ? pdb_StepIntoRequest::TYPE : false;
 
   pdb_Logger::debug("startCall::$scriptName, $stepNext");
 
-  $env = new pdb_Environment($pdb_dbg->currentFrame, $scriptName, $stepNext);
+  $env = new pdb_Environment($pdb_dbg->currentFrame, $scriptName, $stepNext, $line);
   $pdb_dbg->allFrames[] = $env;
 
   return $env;
@@ -1923,7 +1926,7 @@ function pdb_startInclude($filename) {
 
   $filename = $pdb_dbg->resolveIncludePath($filename);
   $stepNext = $pdb_dbg->currentFrame->stepNext == pdb_StepIntoRequest::TYPE ? pdb_StepIntoRequest::TYPE : false;
-  $pdb_dbg->currentFrame = new pdb_Environment($pdb_dbg->currentFrame, $filename, $stepNext);
+  $pdb_dbg->currentFrame = new pdb_Environment($pdb_dbg->currentFrame, $filename, $stepNext, 1);
   $pdb_dbg->allFrames[] = $pdb_dbg->currentFrame;
 
   /* BEGIN: StartProcessFileNotification */
