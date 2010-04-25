@@ -3,6 +3,40 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 6.1.2.1
+
+* Security fix: Even if the PHP option allow_url_include it set, it is
+  no longer possible to load arbitrary resources using the JSR 223
+  script interface. The following eval() will fail if the "remote"
+  interface is not 127.0.0.1:
+
+<%!
+private static final Reader R = EngineFactory.createPhpScriptReader("<?php function f($a) {return 'hello '.$a;}; ?>");
+%>
+<%
+Reader r = EngineFactory.createPhpScriptFileReader(getClass().getName()+"._cache_.inc", R);
+ScriptEngine e = 
+  EngineFactory.getInvocablePhpScriptEngine (this,
+                               application, request, response, 
+			       new URI("http://127.0.0.1/java/JavaProxy.php"););
+try {
+
+  // inject the above PHP code into the PHP app server and execute it
+  // will fail if the URI is not http://127.0.0.1/...
+  e.eval(r); r.close();
+
+  // call the injected code
+  Object result = ((Invocable)e).invokeFunction("f", new Object[]{"you"});
+  out.println ("result: " + result);
+
+} catch (Exception ex) {
+ out.println(ex);
+} finally { 
+  ((Closeable)e).close()
+}
+%>
+
+
 Version 6.1.2
 
 * The bridge now sets the config dir to cgi/OS-ARCH/conf.d. It makes

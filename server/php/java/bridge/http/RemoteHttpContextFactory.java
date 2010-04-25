@@ -27,7 +27,6 @@ package php.java.bridge.http;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.Serializable;
 import php.java.bridge.ISession;
 import php.java.bridge.Request;

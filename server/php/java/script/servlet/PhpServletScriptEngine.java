@@ -68,7 +68,7 @@ import php.java.servlet.ServletUtil;
  * <li> Create a FileReader for the PHP script reader:
  * <blockquote>
  * <code>
- * Reader readerHello = EngineFactory.createPhpScriptFileReader(request.getServletPath()+"._cache_.php", HELLO_SCRIPT_READER);
+ * Reader readerHello = EngineFactory.createPhpScriptFileReader(this.getClass().getName()+"._cache_.php", HELLO_SCRIPT_READER);
  * </code>
  * </blockquote>
  * or simply, if your script file doesn't need to be re-created for each JSP to Java compilation:

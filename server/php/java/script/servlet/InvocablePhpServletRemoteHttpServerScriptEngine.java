@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
 import php.java.bridge.http.IContext;
+import php.java.servlet.ServletUtil;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -43,8 +44,8 @@ import php.java.bridge.http.IContext;
  * 
  * There must not be a firewall in between, and both components should be behind a firewall. The remote
  * PHP application must end with the line <code>java_call_with_continuation(<yourClosure>)</code>, otherwise invocation will fail.
- * The following description uses the <code>JavaProxy.php</code> sample script (from the <code>JavaBridge.jar</code> or <code>JavaBridge.war</code> zip file). 
- * It is an empty script which ends with <code>java_call_with_continuation(java_closure())</code>.
+ * The following description uses the <code>JavaProxy.php</code> sample script (from the <code>JavaBridge.jar</code> zip file). 
+ * It is an empty script which ends with <code>java_call_with_continuation()</code>.
  * <br>	
  * 
  * In order to evaluate PHP methods follow these steps:<br>
@@ -105,15 +106,6 @@ public class InvocablePhpServletRemoteHttpServerScriptEngine extends InvocablePh
      */
     protected void setNewScriptFileContextFactory(ScriptFileReader fileReader) throws IOException, ScriptException {
 	setNewContextFactory();
-
-	String path = fileReader.getResourcePath(servletCtx);
-	URI include;
-        try {
-	    include = new URI(req.getScheme(), null, localName, req.getServerPort(), req.getContextPath()+path, null, null);
-        } catch (URISyntaxException e) {
-           Util.printStackTrace(e);
-	   throw new ScriptException(e);
-        }
-	env.put("X_JAVABRIDGE_INCLUDE", include.toASCIIString());
+	env.put("X_JAVABRIDGE_INCLUDE", ServletUtil.getRealPath(servletCtx, fileReader.getResourcePath(servletCtx)));
     }
 }

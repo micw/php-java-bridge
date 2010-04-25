@@ -120,7 +120,7 @@ public final class EngineFactory {
      * <blockquote>
      * <code>
      * private static final Reader HELLO_SCRIPT_READER = EngineFactory.createPhpScriptReader("&lt;?php echo 'Hello!'; ?&gt;");<br>
-     * Reader reader = EngineFactory.createPhpScriptFileReader(request.getServletPath()+"._cache_.php", HELLO_SCRIPT_READER);<br>
+     * Reader reader = EngineFactory.createPhpScriptFileReader(this.getClass().getName()+"._cache_.php", HELLO_SCRIPT_READER);<br>
      * ScriptEngine scriptEngine = EngineFactory.getPhpScriptEngine(this, application, request, response);<br>
      * scriptEngine.eval(reader);<br>
      * reader.close();<br>
@@ -221,7 +221,7 @@ public final class EngineFactory {
      * <blockquote>
      * <code>
      * private static final Reader HELLO_READER = EngineFactory.createPhpScriptReader("&lt;?php echo 'Hello!'; ?&gt;");<br>
-     * Reader reader = EngineFactory.createPhpScriptFileReader(request.getServletPath()+"._cache_.php", HELLO_READER);<br>
+     * Reader reader = EngineFactory.createPhpScriptFileReader(this.getClass().getName()+"._cache_.php", HELLO_READER);<br>
      * scriptEngine.eval (reader);<br>
      * reader.close();<br>
      * ...<br>
@@ -241,7 +241,7 @@ public final class EngineFactory {
      * <blockquote>
      * <code>
      * private static final Reader HELLO_READER = EngineFactory.createPhpScriptReader(new StringReader("&lt;?php echo 'Hello!'; ?&gt;"));<br>
-     * Reader reader = EngineFactory.createPhpScriptFileReader(request.getServletPath()+"._cache_.php", HELLO_READER);<br>
+     * Reader reader = EngineFactory.createPhpScriptFileReader(this.getClass().getName()+"._cache_.php", HELLO_READER);<br>
      * scriptEngine.eval (reader);<br>
      * reader.close();<br>
      * ...<br>
@@ -279,7 +279,7 @@ public final class EngineFactory {
      * <blockquote>
      * <code>
      * private static final Reader HELLO_READER = EngineFactory.createPhpScriptReader("&lt;?php echo 'Hello!'; ?&gt;");<br>
-     * Reader reader = EngineFactory.createPhpScriptFileReader(request.getServletPath()+"._cache_.php", HELLO_READER);<br>
+     * Reader reader = EngineFactory.createPhpScriptFileReader(this.getClass().getName()+"._cache_.php", HELLO_READER);<br>
      * scriptEngine.eval (reader);<br>
      * reader.close();<br>
      * ...<br>
@@ -312,7 +312,7 @@ public final class EngineFactory {
      * <blockquote>
      * <code>
      * private static final Reader HELLO_READER = EngineFactory.createPhpScriptReader("&lt;?php echo 'Hello!'; ?&gt;");<br>
-     * Reader reader = EngineFactory.createPhpScriptFileReader(request.getServletPath()+"._cache_.php", HELLO_READER);<br>
+     * Reader reader = EngineFactory.createPhpScriptFileReader(this.getClass().getName()+"._cache_.php", HELLO_READER);<br>
      * scriptEngine.eval (reader);<br>
      * reader.close();<br>
      * ...<br>

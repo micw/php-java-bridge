@@ -43,16 +43,26 @@ final class ScriptFileReader extends Reader {
     private Reader realReader;
     
     ScriptFileReader(String path, IScriptReader reader) throws IOException {
+	if (!path.startsWith("/")) path = "/"+path;
 	this.path = path;
 	this.reader = reader;
     }
     
     ScriptFileReader(String path) throws IOException {
+	if (!path.startsWith("/")) path = "/"+path;
 	this.path = path;
 	this.reader = null;
     }
     public String getResourcePath(ServletContext ctx) throws IOException {
-	init(ServletUtil.getRealPath(ctx, path));
+	if (realReader==null) {
+	    File realFile = new File(ServletUtil.getRealPath(ctx, path));
+	    if (reader!=null && !readerIsClosed()) {
+		createFile(realFile, reader);
+		reader.close();
+		reader = null;
+	    }
+	    realReader = new FileReader(realFile);
+	}
 	return path;
     }
     private static void createFile(File file, IScriptReader reader) throws IOException {
@@ -66,15 +76,6 @@ final class ScriptFileReader extends Reader {
     }
     private boolean readerIsClosed() {
 	return reader.isClosed();
-    }
-    public void init(String realPath) throws IOException {
-	File realFile = new File(realPath);
-	if (reader!=null && !readerIsClosed()) {
-	    createFile(realFile, reader);
-	    reader.close();
-	    reader = null;
-	}
-	realReader = new FileReader(realFile);
     }
     public void close() throws IOException {
 	if (realReader!=null) {

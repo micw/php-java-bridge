@@ -1,3 +1,18 @@
+2010-04-24  <jostb@intern>
+
+	* server/buildJavaProxy.php: Removed whitespace before <?.
+
+	* server/buildJavaProxy.php: Security fix; Do not allow users to
+	include PHP files outside of the DOCUMENT_ROOT, unless the request
+	came from 127.0.0.1.
+
+	* server/php/java/script/servlet/InvocablePhpServletRemoteHttpServerScriptEngine.java
+	(setNewScriptFileContextFactory): The bridge doesn't include
+	remote resources anymore. Pass a local file instead of a remote
+	resource.
+
+	* VERSION, php-java-bridge.spec: Version 6.1.2.1 released
+
 2010-04-14  <jostb@intern>
 
 	* server/META-INF/java/Protocol.inc

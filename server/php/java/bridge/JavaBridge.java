@@ -129,7 +129,7 @@ public class JavaBridge implements Runnable {
 	
     }
     /**
-     * Only for internal use. Use {@link php.java.bridge.http.IContextFactory#handleRequests(InputStream, OutputStream)} instead.
+     * Only for internal use. Use {@link #handleRequests(InputStream, OutputStream, ILogger)} instead.
      */
    public void handleRequestsInternal (InputStream in, OutputStream out) throws IOException {
 	this.request = new Request(this);
