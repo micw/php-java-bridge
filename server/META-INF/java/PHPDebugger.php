@@ -751,8 +751,10 @@ class pdbjs_JSDebuggerClient {
 	} elseif ((strlen($scriptDirName)==1) && (($scriptDirName[0]=='/') || ($scriptDirName[0]=='\\'))) {
 	  $scriptDirName = '';
 	}
-	if ((strlen($scriptDir) < strlen($scriptDirName)) || 
-		(substr($scriptDir, -strlen($scriptDirName)) != $scriptDirName))
+	pdbjs_Logger::debug("scriptDir: $scriptDir, scriptDirName: $scriptDirName");
+
+	if ((strlen($scriptDir) < strlen($scriptDirName)) || ($scriptDirName &&
+														  (substr($scriptDir, -strlen($scriptDirName)) != $scriptDirName)))
 	  return null;
 	else
 	  return substr($scriptDir, 0, strlen($scriptDir)-strlen($scriptDirName));
@@ -790,6 +792,7 @@ class pdbjs_JSDebuggerClient {
 	  $prefix = '/' . ($idx ? substr($scriptDirName, 0, $idx): $scriptDirName);
 	}
   
+	pdbjs_Logger::debug("serverRoot: $root - path: $path");
 	if ($root && (strlen($root) < strlen($path)) && (!strncmp($path, $root, strlen($root))))
 	  $path = "${prefix}" . str_replace('\\', '/', substr($path, strlen($root)));
 	else // could not calculate debugger path
@@ -1556,7 +1559,7 @@ if (!isset($_SERVER['HTTP_XPDBJS_DEBUGGER'])) {
 <html>
 <head>
 <title>
-PHPDebugger version 1.0beta
+PHPDebugger version 1.0
 </title>
 <style type="text/css">
 #run {
