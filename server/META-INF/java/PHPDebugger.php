@@ -375,7 +375,7 @@ if (!class_exists("pdb_Parser")) {
 	  if ($next) {
 		$cur = current($this->code);
 		if (is_array($cur)) {
-		  $this->currentLine = $cur[2];
+		  $this->currentLine = $cur[2] + ($cur[1][0] == "\n" ? substr_count($cur[1], "\n") : 0);
 		  if ($this->isWhitespace($cur)) {
 			$this->write($cur[1]);
 			return $this->each();
@@ -433,7 +433,7 @@ if (!class_exists("pdb_Parser")) {
 		if (PDB_DEBUG == 2)
 		  $this->write(";STEP($line);");
 		else
-		  $this->write(";pdb_step(\"$scriptName\", $line, pdb_getDefinedVars(get_defined_vars()));");
+		  $this->write(";pdb_step(\"$scriptName\", $line, pdb_getDefinedVars(get_defined_vars(), (isset(\$this) ? \$this : NULL)));");
 	  }
 	}
 
@@ -526,6 +526,7 @@ if (!class_exists("pdb_Parser")) {
 		$token = current($this->code);
 		if (!is_array($token)) {
 		  pdb_Logger::debug(":::".$token);
+		  if (!$pLevel && $type==self::BLOCK && $token=='}') $this->writeStep($pLevel);
 		  $this->write($token);
 		  if ($this->inPhp && !$this->inDQuote) {
 			$this->beginStatement = false; 
@@ -579,6 +580,8 @@ if (!class_exists("pdb_Parser")) {
 		  case T_FUNCTION:
 			$this->write($token[1]);
 			$this->writeCall();
+			$this->next();
+			$this->parseBlock();
 			$this->beginStatement = true;
 			break;
 
