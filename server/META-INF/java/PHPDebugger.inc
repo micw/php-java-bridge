@@ -747,7 +747,7 @@ class pdb_DebugSessionStart extends pdb_Message {
 
   public $serializer;
 
-  private $includedScripts;
+  public $includedScripts;
 
   public function getType() {
     return self::TYPE;
@@ -1928,17 +1928,17 @@ function pdb_startCall($scriptName, $line) {
 /**
  * @access private
  */
-function pdb_startInclude($filename, $once) {
+function pdb_startInclude($scriptName, $once) {
   global $pdb_dbg;
 
-  $filename = $pdb_dbg->resolveIncludePath($filename);
+  $scriptName = $pdb_dbg->resolveIncludePath($scriptName);
 
   // include only from a top-level environment
   // initial line# and vars may be wrong due to a side-effect in step
-  $this->session->currentFrame = $this->session->currentTopLevelFrame;
+  $pdb_dbg->session->currentFrame = $pdb_dbg->session->currentTopLevelFrame;
 
   $stepNext = $pdb_dbg->currentFrame->stepNext == pdb_StepIntoRequest::TYPE ? pdb_StepIntoRequest::TYPE : false;
-  $pdb_dbg->currentFrame = new pdb_Environment($pdb_dbg->currentFrame, $filename, $stepNext, 1);
+  $pdb_dbg->currentFrame = new pdb_Environment($pdb_dbg->currentFrame, $scriptName, $stepNext, 1);
   $pdb_dbg->allFrames[] = $pdb_dbg->currentFrame;
 
   /* BEGIN: StartProcessFileNotification */
@@ -1946,16 +1946,16 @@ function pdb_startInclude($filename, $once) {
   /* ...  set breakpoints ... */
   /* END: ContinueProcessFileNotification */
 
-  if ($once && isset($this->includedScripts[$scriptName]))
+  if ($once && isset($pdb_dbg->includedScripts[$scriptName]))
 	$code = "<?php ?>";
   else
-	$code = $pdb_dbg->parseCode(realpath($filename), file_get_contents($filename));
+	$code = $pdb_dbg->parseCode(realpath($scriptName), file_get_contents($scriptName));
 
   $pdb_dbg->currentTopLevelFrame = $pdb_dbg->currentFrame;
 
   if (PDB_DEBUG) pdb_Logger::debug("include:::$code");
 
-  if ($once) $this->includedScripts[$scriptName] = true;
+  if ($once) $pdb_dbg->includedScripts[$scriptName] = true;
   return $code; // eval -> pdb_step/MSG_READY or pdb_endInclude/MSG_READY OR FINISH
 }
 /**
