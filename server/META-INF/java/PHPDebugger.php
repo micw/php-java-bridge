@@ -173,11 +173,22 @@ class pdb_PollingServerConnection implements pdb_Queue {
 	$this->chanTrm = "pdb_trmserver{$this->id}";
 	$this->output = "<missing>";
 
+	$this->prepareCookies();
 	$this->init();
   }
 
   protected function checkTrm() {
 	return false!==$_SESSION[$this->chanTrm];
+  }
+
+  protected function prepareCookies() {
+	ini_set("session.use_cookies", true);
+	session_start();
+	session_write_close();
+
+	/* avoid PHP bug, which repeats set-cookie header for each
+	   iteration of session_start/session_write_close */
+	ini_set("session.use_cookies", false);
   }
 
   protected function init() {
