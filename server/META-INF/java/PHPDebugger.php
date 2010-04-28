@@ -1974,10 +1974,6 @@ function mousedown(el, event) {
 }
 </script>
 
-<noscript>
-Please enable JavaScript in your browser.
-</noscript>
-
 </head>
 <body>
 
@@ -1990,7 +1986,7 @@ Please enable JavaScript in your browser.
 <a id="output" onmousedown="return output(this, event);"></a>
 <a id="backView" onmousedown="return backView(this, event);"></a>
 </div>
- <div onmousemove="return mousemove(this, event);" onmousedown="return mousedown(this, event);" id="code"><span>loading...</span>
+ <div onmousemove="return mousemove(this, event);" onmousedown="return mousedown(this, event);" id="code"><span>loading...<noscript>failed! Please enable JavaScript and try again.</noscript></span>
 </div>
 </body>
 <script type="text/javascript">
