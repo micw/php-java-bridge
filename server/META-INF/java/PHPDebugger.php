@@ -162,7 +162,7 @@ class pdb_PollingServerConnection implements pdb_Queue {
   protected $role, $to;
   protected $chanTrm; // "back end terminated" flag
   protected $output;
-  const TIMER_DURATION = 200000; // every 200ms
+  const TIMER_DURATION = 150000; // every 150ms
 
   /**
    * Create a new communication using a unique id
@@ -344,6 +344,7 @@ if (!class_exists("pdb_Parser")) {
 	const BLOCK = 1;
 	const STATEMENT = 2;
 	const EXPRESSION = 3;
+	const FUNCTION_BLOCK = 4; // BLOCK w/ STEP() as last statement
 
 	private $scriptName, $content;
 	private $code;
@@ -392,7 +393,7 @@ if (!class_exists("pdb_Parser")) {
 	  $this->output.=$code;
 	}
 
-	private function writeInclude() {
+	private function writeInclude($once) {
 	  $name = "";
 	  while(1) {
 		if (!$this->each()) die("parse error");
@@ -407,7 +408,7 @@ if (!class_exists("pdb_Parser")) {
 	  if (PDB_DEBUG == 2) 
 		$this->write("EVAL($name);");
 	  else
-		$this->write("eval('?>'.pdb_startInclude($name)); pdb_endInclude();");
+		$this->write("eval('?>'.pdb_startInclude($name, $once)); pdb_endInclude();");
 	}
 
 	private function writeCall() {
@@ -422,7 +423,7 @@ if (!class_exists("pdb_Parser")) {
 		}
 	  }
 	  $scriptName = addslashes($this->scriptName);
-	  $this->write("\$__pdb_CurrentFrame=pdb_startCall(\"$scriptName\", $this->currentLine);");
+	  $this->write("\$__pdb_CurrentFrame=pdb_startCall(\"$scriptName\", {$this->currentLine});");
 	}
 
 	private function writeStep($pLevel) {
@@ -509,6 +510,9 @@ if (!class_exists("pdb_Parser")) {
 	private function parseBlock () {
 	  $this->parse(self::BLOCK);
 	}
+	private function parseFunction () {
+	  $this->parse(self::FUNCTION_BLOCK);
+	}
 	private function parseStatement () {
 	  $this->parse(self::STATEMENT);
 	}
@@ -526,7 +530,7 @@ if (!class_exists("pdb_Parser")) {
 		$token = current($this->code);
 		if (!is_array($token)) {
 		  pdb_Logger::debug(":::".$token);
-		  if (!$pLevel && $type==self::BLOCK && $token=='}') $this->writeStep($pLevel);
+		  if (!$pLevel && $type==self::FUNCTION_BLOCK && $token=='}') $this->writeStep($pLevel);
 		  $this->write($token);
 		  if ($this->inPhp && !$this->inDQuote) {
 			$this->beginStatement = false; 
@@ -581,7 +585,7 @@ if (!class_exists("pdb_Parser")) {
 			$this->write($token[1]);
 			$this->writeCall();
 			$this->next();
-			$this->parseBlock();
+			$this->parseFunction();
 			$this->beginStatement = true;
 			break;
 
@@ -678,12 +682,12 @@ if (!class_exists("pdb_Parser")) {
 			}
 			break;
 
-		  case T_INCLUDE: 
+		  case T_REQUIRE_ONCE:
 		  case T_INCLUDE_ONCE: 
+		  case T_INCLUDE: 
 		  case T_REQUIRE: 
-		  case T_REQUIRE_ONCE: // FIXME: implement require and _once
 			$this->writeStep($pLevel);
-			$this->writeInclude();
+			$this->writeInclude((($token[0]==T_REQUIRE_ONCE) || ($token[0]==T_INCLUDE_ONCE)) ? 1 : 0);
 
 			if ($type==self::STATEMENT) return;
 
@@ -1175,6 +1179,7 @@ class pdb_JSDebugger {
   private $id;
  
   public $end;
+  private $includedScripts;
   private $conn;
   private $ignoreInterrupt;
 
@@ -1199,6 +1204,8 @@ class pdb_JSDebugger {
 
 	$this->end = false;
 	$this->session = null;
+
+	$this->includedScripts = array();
 
 	$this->ignoreInterrupt = false;
 	set_error_handler("pdb_error_handler");
@@ -1402,12 +1409,19 @@ class pdb_JSDebugger {
    * @param string the script name
    * @return string the code
    */
-  public function startInclude($scriptName) {
+  public function startInclude($scriptName, $once) {
 	$isDebugger = (basename($scriptName) == "PHPDebugger.php");
 	if (!$isDebugger)
 	  $scriptName = $this->resolveIncludePath($scriptName);
 
 	pdb_Logger::debug("scriptName::$scriptName, $isDebugger");
+
+	if ($once && isset($this->includedScripts[$scriptName]))
+	  $isDebugger = true;
+
+	// include only from a top-level environment
+	// initial line# and vars may be wrong due to a side-effect in step
+	$this->session->currentFrame = $this->session->currentTopLevelFrame;
 
 	$stepNext = $this->session->currentFrame->stepNext == pdb_JSDebugger::STEP_INTO ? pdb_JSDebugger::STEP_INTO : false;
 	$this->session->currentFrame = new pdb_Environment($this->session->currentFrame, $scriptName, $stepNext);
@@ -1420,14 +1434,18 @@ class pdb_JSDebugger {
 
 	$this->session->currentTopLevelFrame = $this->session->currentFrame;
 
-	pdb_Logger::debug("include:::".$code);
-	return $code; // eval -> pdb_step/MSG_READY or pdb_endInclude/MSG_READY OR FINISH
+	pdb_Logger::debug("startInclude:::".$this->session->currentTopLevelFrame . " parent: " . $this->session->currentTopLevelFrame->parent . " code: ".$code);
+
+	if ($once) $this->includedScripts[$scriptName] = true;
+	return $code;
   }
 
   /**
    * called at run-time after the script has been included
    */
   public function endInclude() {
+	pdb_Logger::debug("endInclude:::".$this->session->currentTopLevelFrame . "parent: ".$this->session->currentTopLevelFrame->parent);
+
 	$this->session->currentFrame = $this->session->currentTopLevelFrame = 
 	  $this->session->currentTopLevelFrame->parent;
   }
@@ -1502,9 +1520,9 @@ function pdb_startCall($scriptName, $line) {
  * Convenience function called by the executor
  * @access private
  */
-function pdb_startInclude($scriptName) {
+function pdb_startInclude($scriptName, $once) {
   global $pdb_dbg;
-  if (isset($pdb_dbg)) return $pdb_dbg->startInclude($scriptName);
+  if (isset($pdb_dbg)) return $pdb_dbg->startInclude($scriptName, $once);
   else return "";
 }
 
@@ -1865,10 +1883,9 @@ function doShowStatusCB(cmd) {
 
 	codeDiv = document.getElementById("code");
 	codeLine = currentLine.parentNode;
-  scrollBarHeight = 30;
-	if ((codeLine.offsetTop - document.body.scrollTop + currentLine.clientHeight + scrollBarHeight + codeDiv.clientTop > document.body.clientHeight) ||
-	(codeLine.offsetTop - document.body.scrollTop + codeDiv.clientTop <= 0)) {
-	 currentLine.scrollIntoView(false);
+	toolsHeight = 30;
+	if (codeLine.offsetTop < window.pageYOffset || codeLine.offsetTop + codeLine.clientHeight +toolsHeight > window.pageYOffset+window.innerHeight) {
+	  window.scrollTo(0, codeLine.offsetTop + toolsHeight - window.innerHeight/2);
 	}
 }
 function showStatusCB(cmd) {

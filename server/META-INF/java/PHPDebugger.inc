@@ -60,6 +60,7 @@ if (!class_exists("pdb_Parser")) {
 	const BLOCK = 1;
 	const STATEMENT = 2;
 	const EXPRESSION = 3;
+	const FUNCTION_BLOCK = 4; // BLOCK w/ STEP() as last statement
 
 	private $scriptName, $content;
 	private $code;
@@ -108,7 +109,7 @@ if (!class_exists("pdb_Parser")) {
 	  $this->output.=$code;
 	}
 
-	private function writeInclude() {
+	private function writeInclude($once) {
 	  $name = "";
 	  while(1) {
 		if (!$this->each()) die("parse error");
@@ -123,7 +124,7 @@ if (!class_exists("pdb_Parser")) {
 	  if (PDB_DEBUG == 2) 
 		$this->write("EVAL($name);");
 	  else
-		$this->write("eval('?>'.pdb_startInclude($name)); pdb_endInclude();");
+		$this->write("eval('?>'.pdb_startInclude($name, $once)); pdb_endInclude();");
 	}
 
 	private function writeCall() {
@@ -138,7 +139,7 @@ if (!class_exists("pdb_Parser")) {
 		}
 	  }
 	  $scriptName = addslashes($this->scriptName);
-	  $this->write("\$__pdb_CurrentFrame=pdb_startCall(\"$scriptName\", $this->currentLine);");
+	  $this->write("\$__pdb_CurrentFrame=pdb_startCall(\"$scriptName\", {$this->currentLine});");
 	}
 
 	private function writeStep($pLevel) {
@@ -225,6 +226,9 @@ if (!class_exists("pdb_Parser")) {
 	private function parseBlock () {
 	  $this->parse(self::BLOCK);
 	}
+	private function parseFunction () {
+	  $this->parse(self::FUNCTION_BLOCK);
+	}
 	private function parseStatement () {
 	  $this->parse(self::STATEMENT);
 	}
@@ -242,7 +246,7 @@ if (!class_exists("pdb_Parser")) {
 		$token = current($this->code);
 		if (!is_array($token)) {
 		  pdb_Logger::debug(":::".$token);
-		  if (!$pLevel && $type==self::BLOCK && $token=='}') $this->writeStep($pLevel);
+		  if (!$pLevel && $type==self::FUNCTION_BLOCK && $token=='}') $this->writeStep($pLevel);
 		  $this->write($token);
 		  if ($this->inPhp && !$this->inDQuote) {
 			$this->beginStatement = false; 
@@ -297,7 +301,7 @@ if (!class_exists("pdb_Parser")) {
 			$this->write($token[1]);
 			$this->writeCall();
 			$this->next();
-			$this->parseBlock();
+			$this->parseFunction();
 			$this->beginStatement = true;
 			break;
 
@@ -394,12 +398,12 @@ if (!class_exists("pdb_Parser")) {
 			}
 			break;
 
-		  case T_INCLUDE: 
+		  case T_REQUIRE_ONCE:
 		  case T_INCLUDE_ONCE: 
+		  case T_INCLUDE: 
 		  case T_REQUIRE: 
-		  case T_REQUIRE_ONCE: // FIXME: implement require and _once
 			$this->writeStep($pLevel);
-			$this->writeInclude();
+			$this->writeInclude((($token[0]==T_REQUIRE_ONCE) || ($token[0]==T_INCLUDE_ONCE)) ? 1 : 0);
 
 			if ($type==self::STATEMENT) return;
 
@@ -743,6 +747,8 @@ class pdb_DebugSessionStart extends pdb_Message {
 
   public $serializer;
 
+  private $includedScripts;
+
   public function getType() {
     return self::TYPE;
   }
@@ -775,6 +781,7 @@ class pdb_DebugSessionStart extends pdb_Message {
 	$this->currentTopLevelFrame = $this->currentFrame = new pdb_Environment(null, $filename, false, 1);
 	$this->allFrames[] = $this->currentFrame;
 	$this->ignoreInterrupt = false;
+	$this->includedScripts = array();
 
     $errno = 0; $errstr = "";
     $io = fsockopen($args["debug_host"], $args['debug_port'], $errno, $errstr, 5) or trigger_error("fsockopen", E_USER_ERROR);
@@ -1921,10 +1928,15 @@ function pdb_startCall($scriptName, $line) {
 /**
  * @access private
  */
-function pdb_startInclude($filename) {
+function pdb_startInclude($filename, $once) {
   global $pdb_dbg;
 
   $filename = $pdb_dbg->resolveIncludePath($filename);
+
+  // include only from a top-level environment
+  // initial line# and vars may be wrong due to a side-effect in step
+  $this->session->currentFrame = $this->session->currentTopLevelFrame;
+
   $stepNext = $pdb_dbg->currentFrame->stepNext == pdb_StepIntoRequest::TYPE ? pdb_StepIntoRequest::TYPE : false;
   $pdb_dbg->currentFrame = new pdb_Environment($pdb_dbg->currentFrame, $filename, $stepNext, 1);
   $pdb_dbg->allFrames[] = $pdb_dbg->currentFrame;
@@ -1934,11 +1946,16 @@ function pdb_startInclude($filename) {
   /* ...  set breakpoints ... */
   /* END: ContinueProcessFileNotification */
 
-  $code = $pdb_dbg->parseCode(realpath($filename), file_get_contents($filename));
+  if ($once && isset($this->includedScripts[$scriptName]))
+	$code = "<?php ?>";
+  else
+	$code = $pdb_dbg->parseCode(realpath($filename), file_get_contents($filename));
 
   $pdb_dbg->currentTopLevelFrame = $pdb_dbg->currentFrame;
 
   if (PDB_DEBUG) pdb_Logger::debug("include:::$code");
+
+  if ($once) $this->includedScripts[$scriptName] = true;
   return $code; // eval -> pdb_step/MSG_READY or pdb_endInclude/MSG_READY OR FINISH
 }
 /**
