@@ -1,7 +1,7 @@
 <?php /*-*- mode: php; tab-width:4 -*-*/
 
-  /*
-   * PHPDebugger.inc version 1.0 -- A PHP debugger for Eclipse for PHP Developers
+  /**
+   * PHPDebugger.inc -- A PHP debugger for Eclipse for PHP Developers
    *
    * Copyright (C) 2009,2010 Jost Boekemeier.
    *
@@ -23,33 +23,36 @@
    * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
    * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
    * OTHER DEALINGS IN THE SOFTWARE.
-   */
-
-
-set_time_limit (0);
-define ("PDB_DEBUG", 0);
-
-  /**
-   * Quick Installation:
+   *
+   * Installation:
    *
    * Install "Eclipse for PHP Developers" version >= 3.5.2
    * 
-   * 1. Open your project in PHP explorer and drag and drop this file
-   * to the PHP project folder.
+   * - Open your project in PHP explorer and drag and drop this file to the PHP project folder.
    *
-   * 2. Activate the PHPDebugger in your php.ini file. For example:
-   * Open Menu/Project/Properties, open "PHP Debug", select "Enable
-   * Project specific settings", select "Zend Debugger" if not already
-   * selected, click on "PHP executables ...", then "Edit" and select
-   * a php.ini file with at least the following content:
+   * - Activate the PHPDebugger in your php.ini file. For example open Menu/Project/Properties, open "PHP Debug", select "Enable Project specific settings", select "Zend Debugger" if not already selected, click on "PHP executables ...", then "Edit" and select  a php.ini file with at least the following content:
    *
-   * ;; activate the PHPDebugger in the php.ini file
+   *<code>
+   * ;; activate the PHPDebugger in the php.ini
    * auto_prepend_file=PHPDebugger.inc
+   *</code>
+   *
+   * - Debug your PHP scripts as usual. 
    *
    *
-   * 3. Debug your PHP scripts as usual. 
-   *
+   * @category   java
+   * @package    pdb
+   * @author     Jost Boekemeier
+   * @license    MIT
+   * @version    1.0
+   * @link       http://php-java-bridge.sf.net/phpdebugger
+   * @see        PHPDebugger.php
    */
+
+
+/** @access private */
+define ("PDB_DEBUG", 0);
+set_time_limit (0);
 
 if (!class_exists("pdb_Parser")) {
   /**
@@ -361,9 +364,11 @@ if (!class_exists("pdb_Parser")) {
 			$this->beginStatement = true;
 			break;
 
+		  case T_CATCH:
 		  case T_IF:
 		  case T_ELSEIF:
 		  case T_FOR:
+		  case T_FOREACH:
 		  case T_WHILE:
 			$this->writeStep($pLevel);
 
@@ -381,7 +386,6 @@ if (!class_exists("pdb_Parser")) {
 
 			} else {
 			  $this->next();
-
 			  /* create an artificial block */
 			  $this->write('{');
 			  $this->beginStatement = true;
@@ -390,7 +394,7 @@ if (!class_exists("pdb_Parser")) {
 			  $this->write('}');
 			}
 
-			if ($this->nextTokenIs(array(T_ELSE, T_ELSEIF))) {
+			if ($this->nextTokenIs(array(T_ELSE, T_ELSEIF, T_CATCH))) {
 			  $this->beginStatement = false;
 			} else {
 			  if ($type==self::STATEMENT) return;
@@ -413,11 +417,13 @@ if (!class_exists("pdb_Parser")) {
 		  case T_CLASS:
 			$this->write($token[1]);
 			$this->writeNext();
-			$this->writeNext();
 			if ($this->nextIs('{')) {
+			  $this->writeNext();
+			  $this->next();
 			  $this->parseBlock(); 
 			  $this->beginStatement = true;
 			} else {
+			  $this->writeNext();
 			  $this->beginStatement = false;
 			}
 			break;
@@ -471,12 +477,15 @@ class pdb_Logger {
   const DEBUG = 4;
 
   private static $logLevel = 0;
-  private static $logFileName = "/tmp/pdb_PHPDebugger.inc.log";
+  private static $logFileName;
 
   private static function println($msg, $level) {
 	if (!self::$logLevel) self::$logLevel=PDB_DEBUG?self::DEBUG:self::INFO;
 	if ($level <= self::$logLevel) {
 	  static $file = null;
+	  if(!isset(self::$logFileName)) {
+		self::$logFileName = $_SERVER['HOME'].DIRECTORY_SEPARATOR."pdb_PHPDebugger.inc.log";
+	  }
 	  if (!$file) $file = fopen(self::$logFileName, "ab") or die("fopen");
 	  fwrite($file, time().": ");
 	  fwrite($file, $msg."\n");

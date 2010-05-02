@@ -148,7 +148,7 @@ class SocketChannelFactory extends ChannelFactory {
 	    "REDIRECT_STATUS=200 " +
 	    "X_JAVABRIDGE_OVERRIDE_HOSTS=\"/\" " +
 	    "PHP_FCGI_CHILDREN=\"5\" " +
-	    "PHP_FCGI_MAX_REQUESTS=\""+php_fcgi_max_requests+"\" "+wrapper+" -d allow_url_include=On -c "+wrapper+".ini -b 127.0.0.1:" +
+	    "PHP_FCGI_MAX_REQUESTS=\""+php_fcgi_max_requests+"\" "+wrapper+" -c "+wrapper+".ini -b 127.0.0.1:" +
 	    getPort()+"\n\n";
 	return msg;
     }

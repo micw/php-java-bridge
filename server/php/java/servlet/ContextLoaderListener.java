@@ -71,6 +71,7 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
 		Object c = ii.next();
 		try {
 		    Method close = c.getClass().getMethod("close", Util.ZERO_PARAM);
+		    close.setAccessible(true);
 		    close.invoke(c, Util.ZERO_ARG);
 		} catch (Exception e) {
 		    e.printStackTrace();

@@ -154,7 +154,7 @@ public final class Util {
 
     /** 
      * The default PHP arguments. Can be passed via -Dphp.java.bridge.php_exec_args=list of urlencoded strings separated by space
-     * Default: "-d allow_url_include=On -d display_errors=Off -d log_errors=On -d java.persistent_servlet_connections=On"
+     * Default: "-d display_errors=Off -d log_errors=On -d java.persistent_servlet_connections=On"
      */
     public static String[] PHP_ARGS;
     private static String DEFAULT_PHP_ARGS;
@@ -373,9 +373,9 @@ public final class Util {
 	String tmpdirPath = null;
 	if (tmpdir != null) try {tmpdirPath = tmpdir.getCanonicalPath(); } catch (IOException ex) {/*ignore*/}
 	if (tmpdirPath != null)
-	    DEFAULT_PHP_ARGS = "-d session.save_path=\""+tmpdirPath+"\" -d java.session=On -d allow_url_include=On -d display_errors=Off -d log_errors=On -d java.persistent_servlet_connections=On";
+	    DEFAULT_PHP_ARGS = "-d session.save_path=\""+tmpdirPath+"\" -d java.session=On -d display_errors=Off -d log_errors=On -d java.persistent_servlet_connections=On";
 	else
-	    DEFAULT_PHP_ARGS = "-d java.session=On -d allow_url_include=On -d display_errors=Off -d log_errors=On -d java.persistent_servlet_connections=On";
+	    DEFAULT_PHP_ARGS = "-d java.session=On -d display_errors=Off -d log_errors=On -d java.persistent_servlet_connections=On";
 	    
 	try {
 	    String str = getProperty(p, "PHP_EXEC_ARGS", DEFAULT_PHP_ARGS);

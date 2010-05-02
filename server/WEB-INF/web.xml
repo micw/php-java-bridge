@@ -38,7 +38,7 @@
         <servlet-class>php.java.servlet.fastcgi.FastCGIServlet</servlet-class>
 
          <!-- Your php binary. Default is /usr/bin/php-cgi or -->
-         <!-- c:/Program Files/PHP/php-cgi.exe -->
+         <!-- c:/Program Files/PHP/php-cgi.exe  or a binary from the system PATH -->
         <!-- 
          <init-param>
            <param-name>php_exec</param-name>

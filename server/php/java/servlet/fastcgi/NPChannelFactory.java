@@ -89,7 +89,7 @@ class NPChannelFactory extends ChannelFactory {
 	    "set %X_JAVABRIDGE_OVERRIDE_HOSTS%=/\n"+ 
 	    "set %PHP_FCGI_CHILDREN%=5\n"+ 
 	    "set %PHP_FCGI_MAX_REQUESTS%=php_fcgi_max_requests\n"+ 
-	    "php-cgi -d allow_url_include=On -n\n\n" + 
+	    "php-cgi -n\n\n" + 
 	    "Or copy your php-cgi.exe to " + wrapper + "\n\n.";
         return msg;
     }

@@ -202,7 +202,6 @@
   </target>
   <target name="PhpDoc" depends="init">
     <apply executable = "phpdoc" failonerror = "true" dir="${javaBaseDir}" parallel="true">
-      <arg value="-j" />
       <arg value="-c" />
       <arg value="PHPDocConfig.ini" />
       <fileset dir="${javaBaseDir}" >
@@ -215,6 +214,8 @@
 	<include name="META-INF/java/Protocol.inc" />
 	<include name="META-INF/java/SimpleParser.inc" />
 	<include name="META-INF/java/JavaProxy.inc" />
+	<include name="META-INF/java/PHPDebugger.inc" />
+	<include name="META-INF/java/PHPDebugger.php" />
       </fileset>
     </apply>
     <delete file="documentation/API/errors.html" />

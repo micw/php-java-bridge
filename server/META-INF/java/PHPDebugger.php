@@ -1,67 +1,70 @@
 <?php /*-*- mode: php; tab-width:4 -*-*/
 
   /**
-	 PHPDebugger.php version 1.0 -- A pure PHP debugger (JavaScript version)
+   *  PHPDebugger.php -- The PHP debugger (JavaScript GUI)
+   * 
+   * Copyright (C) 2009 Jost Boekemeier
+   * 
+   * The PHPDebugger ("the library") is free software; you can
+   * redistribute it and/or modify it under the terms of the GNU General
+   * Public License as published by the Free Software Foundation; either
+   * version 2, or (at your option) any later version.
+   * 
+   * The library is distributed in the hope that it will be useful, but
+   * WITHOUT ANY WARRANTY; without even the implied warranty of
+   * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+   * General Public License for more details.
+   * 
+   * You should have received a copy of the GNU General Public License
+   * along with the PHPDebugger; see the file COPYING. If not, write to the
+   * Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+   * 02111-1307 USA.
+   * 
+   * Linking this file statically or dynamically with other modules is
+   * making a combined work based on this library. Thus, the terms and
+   * conditions of the GNU General Public License cover the whole
+   * combination.
+   * 
+   * As a special exception, the copyright holders of this library give you
+   * permission to link this library with independent modules to produce an
+   * executable, regardless of the license terms of these independent
+   * modules, and to copy and distribute the resulting executable under
+   * terms of your choice, provided that you also meet, for each linked
+   * independent module, the terms and conditions of the license of that
+   * module. An independent module is a module which is not derived from
+   * or based on this library. If you modify this library, you may extend
+   * this exception to your version of the library, but you are not
+   * obligated to do so. If you do not wish to do so, delete this
+   * exception statement from your version. 
+   *
+   * Usage:
+   * 
+   * - include() this file at the beginning of your script
+   *
+   * - browse to your script using firefox 
+   *
+   * - set breakpoints using the JavaScript GUI, click on any variable or included file to visit that variable or file
+   * 
+   * - click on the stop button to terminate the debug session
+   *
+   * @category   java
+   * @package    pdb
+   * @author     Jost Boekemeier
+   * @license    GPL
+   * @version    1.0
+   * @link       http://php-java-bridge.sf.net/phpdebugger
+   * @see        PHPDebugger.inc
+   */
 
-	 Copyright (C) 2009 Jost Boekemeier
-
-	 This file is part of the PHPDebugger.
-
-	 The PHPDebugger ("the library") is free software; you can
-	 redistribute it and/or modify it under the terms of the GNU General
-	 Public License as published by the Free Software Foundation; either
-	 version 2, or (at your option) any later version.
-
-	 The library is distributed in the hope that it will be useful, but
-	 WITHOUT ANY WARRANTY; without even the implied warranty of
-	 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-	 General Public License for more details.
-
-	 You should have received a copy of the GNU General Public License
-	 along with the PHPDebugger; see the file COPYING. If not, write to the
-	 Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-	 02111-1307 USA.
-
-	 Linking this file statically or dynamically with other modules is
-	 making a combined work based on this library. Thus, the terms and
-	 conditions of the GNU General Public License cover the whole
-	 combination.
-
-	 As a special exception, the copyright holders of this library give you
-	 permission to link this library with independent modules to produce an
-	 executable, regardless of the license terms of these independent
-	 modules, and to copy and distribute the resulting executable under
-	 terms of your choice, provided that you also meet, for each linked
-	 independent module, the terms and conditions of the license of that
-	 module. An independent module is a module which is not derived from
-	 or based on this library. If you modify this library, you may extend
-	 this exception to your version of the library, but you are not
-	 obligated to do so. If you do not wish to do so, delete this
-	 exception statement from your version. */
-
-set_time_limit (0);
+/** @access private */
 define ("PDB_DEBUG", 0);
+set_time_limit (0);
 
 $pdb_version = phpversion();
 if ((version_compare("5.3.0", $pdb_version, ">")))
   trigger_error("<br><strong>PHP ${pdb_version} too old.</strong><br>\nPlease set the path to a PHP >= 5.3 executable, see php_exec in the WEB-INF/web.xml", E_USER_ERROR);
 
  
-/**
- * Usage:
- * 
- * 1. include() this file at the beginning of your script
- *
- * 2. browse to your script using firefox 
- *
- * 3. set breakpoints using the JavaScript GUI, click on any
- * variable or included file to visit that variable or file
- * 
- * 4. click on the stop button to terminate the debug session
- *
- */
-
-
 /**
  * a simple logger
  * @access private
@@ -73,12 +76,14 @@ class pdb_Logger {
   const DEBUG = 4;
 
   private static $logLevel = 0;
-  private static $logFileName = "/tmp/pdb_PHPDebugger.log";
-
+  private static $logFileName;
   private static function println($msg, $level) {
 	if (!self::$logLevel) self::$logLevel=PDB_DEBUG?self::DEBUG:self::INFO;
 	if ($level <= self::$logLevel) {
 	  static $file = null;
+	  if(!isset(self::$logFileName)) {
+		self::$logFileName = $_SERVER['DOCUMENT_ROOT'].DIRECTORY_SEPARATOR."pdb_PHPDebugger.log";
+	  }
 	  if (!$file) $file = fopen(self::$logFileName, "ab") or die("fopen");
 	  fwrite($file, time().": ");
 	  fwrite($file, $msg."\n");
@@ -162,7 +167,7 @@ class pdb_PollingServerConnection implements pdb_Queue {
   protected $role, $to;
   protected $chanTrm; // "back end terminated" flag
   protected $output;
-  const TIMER_DURATION = 150000; // every 150ms
+  const TIMER_DURATION = 200000; // every 200ms
 
   /**
    * Create a new communication using a unique id
@@ -226,7 +231,7 @@ class pdb_PollingServerConnection implements pdb_Queue {
 	$chan = "pdb_{$this->role}{$this->id}";
 	session_start();
 	if (!($val = $this->checkTrm())) {
-	  pdb_Logger::debug("...{$this->role}, {$this->id} poll...");
+	  if (PDB_DEBUG) pdb_Logger::debug("...{$this->role}, {$this->id} poll...");
 	  if(!isset($_SESSION[$chanCtr])) { 
 		$_SESSION[$chan] = array(); 
 		$_SESSION[$chanCtr]=0; 
@@ -289,7 +294,7 @@ class pdb_PollingServerConnection implements pdb_Queue {
    * shut down the communication channel
    */
   public function shutdown() {
-	pdb_Logger::debug("session terminated: {$this->chanTrm}");
+	if (PDB_DEBUG) pdb_Logger::debug("session terminated: {$this->chanTrm}");
 	session_start();
 	$_SESSION[$this->chanTrm] = $this->output;
 	session_write_close();
@@ -315,7 +320,7 @@ class pdb_PollingClientConnection extends pdb_PollingServerConnection {
 	$chan = "pdb_{$this->role}{$this->id}";
 	session_start();
 	if (!($val = $this->checkTrm())) {
-	  pdb_Logger::debug("...{$this->role}, {$this->id} poll...");
+	  if (PDB_DEBUG) pdb_Logger::debug("...{$this->role}, {$this->id} poll...");
 	  if (!isset($_SESSION[$chanCtr])) $_SESSION[$chanCtr] = 0; 
 	  if (isset($_SESSION[$chan]) && (count($_SESSION[$chan]) > $_SESSION[$chanCtr])) {
 		$val = json_decode($_SESSION[$chan][$_SESSION[$chanCtr]]);
@@ -532,7 +537,7 @@ if (!class_exists("pdb_Parser")) {
 	}
 
 	private function parse ($type) {
-	  pdb_Logger::debug("parse:::$type");
+	  if (PDB_DEBUG) pdb_Logger::debug("parse:::$type");
 
 	  $this->beginStatement = true;
 	  $pLevel = 0;
@@ -540,7 +545,7 @@ if (!class_exists("pdb_Parser")) {
 	  do {
 		$token = current($this->code);
 		if (!is_array($token)) {
-		  pdb_Logger::debug(":::".$token);
+		  if (PDB_DEBUG) pdb_Logger::debug(":::".$token);
 		  if (!$pLevel && $type==self::FUNCTION_BLOCK && $token=='}') $this->writeStep($pLevel);
 		  $this->write($token);
 		  if ($this->inPhp && !$this->inDQuote) {
@@ -568,7 +573,7 @@ if (!class_exists("pdb_Parser")) {
 			}
 		  }
 		} else {
-		  pdb_Logger::debug(":::".$token[1].":(".token_name($token[0]).')');
+		  if (PDB_DEBUG) pdb_Logger::debug(":::".$token[1].":(".token_name($token[0]).')');
 
 		  if ($this->inDQuote) {
 			$this->write($token[1]);
@@ -656,9 +661,11 @@ if (!class_exists("pdb_Parser")) {
 			$this->beginStatement = true;
 			break;
 
+		  case T_CATCH:
 		  case T_IF:
 		  case T_ELSEIF:
 		  case T_FOR:
+		  case T_FOREACH:
 		  case T_WHILE:
 			$this->writeStep($pLevel);
 
@@ -676,7 +683,6 @@ if (!class_exists("pdb_Parser")) {
 
 			} else {
 			  $this->next();
-
 			  /* create an artificial block */
 			  $this->write('{');
 			  $this->beginStatement = true;
@@ -685,7 +691,7 @@ if (!class_exists("pdb_Parser")) {
 			  $this->write('}');
 			}
 
-			if ($this->nextTokenIs(array(T_ELSE, T_ELSEIF))) {
+			if ($this->nextTokenIs(array(T_ELSE, T_ELSEIF, T_CATCH))) {
 			  $this->beginStatement = false;
 			} else {
 			  if ($type==self::STATEMENT) return;
@@ -708,11 +714,13 @@ if (!class_exists("pdb_Parser")) {
 		  case T_CLASS:
 			$this->write($token[1]);
 			$this->writeNext();
-			$this->writeNext();
 			if ($this->nextIs('{')) {
+			  $this->writeNext();
+			  $this->next();
 			  $this->parseBlock(); 
 			  $this->beginStatement = true;
 			} else {
+			  $this->writeNext();
 			  $this->beginStatement = false;
 			}
 			break;
@@ -783,7 +791,7 @@ class pdb_JSDebuggerClient {
 	} elseif ((strlen($scriptDirName)==1) && (($scriptDirName[0]=='/') || ($scriptDirName[0]=='\\'))) {
 	  $scriptDirName = '';
 	}
-	pdb_Logger::debug("scriptDir: $scriptDir, scriptDirName: $scriptDirName");
+	if (PDB_DEBUG) pdb_Logger::debug("scriptDir: $scriptDir, scriptDirName: $scriptDirName");
 
 	if ((strlen($scriptDir) < strlen($scriptDirName)) || ($scriptDirName &&
 														  (substr($scriptDir, -strlen($scriptDirName)) != $scriptDirName)))
@@ -824,7 +832,7 @@ class pdb_JSDebuggerClient {
 	  $prefix = '/' . ($idx ? substr($scriptDirName, 0, $idx): $scriptDirName);
 	}
   
-	pdb_Logger::debug("serverRoot: $root - path: $path");
+	if (PDB_DEBUG) pdb_Logger::debug("serverRoot: $root - path: $path");
 	if ($root && (strlen($root) < strlen($path)) && (!strncmp($path, $root, strlen($root))))
 	  $path = "${prefix}" . str_replace('\\', '/', substr($path, strlen($root)));
 	else // could not calculate debugger path
@@ -860,6 +868,14 @@ class pdb_JSDebuggerClient {
   private static function getConnection($id) {
 	return new pdb_PollingClientConnection($id);
   }
+  private static function stripslashes($value) {
+	 $value = is_array($value) ?
+	   array_map("self::stripslashes", $value) :
+	   stripslashes($value);
+	 
+	 return $value;
+   }
+
   /**
    * Pass the command and arguments to the debug back end and
    * output the response to JavaScript.
@@ -868,10 +884,11 @@ class pdb_JSDebuggerClient {
    * @access private
    */
   public static function handleRequest($vars) {
+		if (get_magic_quotes_gpc()) $vars = self::stripslashes($vars);
 	$msg = (object)$vars;
 	
 	if ($msg->cmd == "begin") sleep(1); // wait for the server to settle
-	pdb_Logger::debug("beginHandleRequest: ".$msg->cmd);
+	if (PDB_DEBUG) pdb_Logger::debug("beginHandleRequest: ".$msg->cmd);
 	$conn = self::getConnection($msg->serverID);
 	$conn->write($msg);
 
@@ -881,7 +898,7 @@ class pdb_JSDebuggerClient {
 	  $output = json_encode($response);
 	
 	echo "($output)";
-	pdb_Logger::debug("endHandleRequest");
+	if (PDB_DEBUG) pdb_Logger::debug("endHandleRequest");
   }
 }
 
@@ -944,7 +961,7 @@ class pdb_View {
 	  $code=show_source($this->scriptName, true);
 
 	  // br => span id=pb_ ...
-	  $code = ereg_replace('<br />', $c, $code);
+	  $code = str_replace('<br />', $c, $code);
 	  // handle incomplete last line, identical to preg: '|(?<!<br >)</span>\n</span>\n</code>$|'
 	  $code = ereg_replace('"(([^>])|([^/]>)|([^ ]/>)|([^r] />)|([^b]r />)|([^<]br />))(</span>\n</span>\n</code>)"', '\1 $c \8', $code);
 
@@ -1142,7 +1159,7 @@ final class pdb_Session {
 	if ($this->currentFrame->stepNext) return true;
   
 	foreach ($this->breakpoints as $breakpoint) {
-	  pdb_Logger::debug("process breakpoint::: $scriptName, $line:: $breakpoint");
+	  if (PDB_DEBUG) pdb_Logger::debug("process breakpoint::: $scriptName, $line:: $breakpoint");
 	  if($breakpoint->type==1) {
 		if ($breakpoint->scriptName==$scriptName&&$breakpoint->line==$line) return true;
 	  }
@@ -1332,20 +1349,51 @@ class pdb_JSDebugger {
 							"scriptName"=>$this->session->getCurrentViewScriptName(), 
 							"breakpoint"=>$this->packet->breakpoint)));
 		break;
-	  case "switchView":
-		$name = urldecode($this->packet->scriptName);
+	  case "toolTip":
+		$name = urldecode($this->packet->item);
+		$value = "";
 		if ($name[0]=='$') {
 		  $idx = substr($name, 1);
 		  $env = (object) $this->session->currentFrame->vars;
 		  $code = "return \$env->$idx;";
 		  $value = eval($code);
+		  if (is_object($value)) {
+			$value = get_class($value) . " object";
+		  } elseif (is_array($value)) {
+			$value = "array[".count($value)."]";
+		  } elseif (!isset($value)) {
+			$value = "<undefined>";
+		  } else {
+			$value = print_r($value, true);
+		  }
+		} else {
+		  $value = $this->packet->item;
+		}
+		$this->write(array("cmd"=>$this->packet->cmd,
+						   "seq"=>$this->packet->seq,
+						   "item"=>$this->packet->item,
+						   "value"=>$value));
+		break;
+	  case "switchView":
+		if (PDB_DEBUG) pdb_Logger::debug("switchView here");
+		$name = urldecode($this->packet->scriptName);
+		if (PDB_DEBUG) pdb_Logger::debug("switchView $name");
+		if ($name[0]=='$') {
+		  $idx = substr($name, 1);
+		  $env = (object) $this->session->currentFrame->vars;
+		  $code = "return \$env->$idx;";
+
+		  $pdb_dbg->end = true;
+		  $value = eval($code);
+		  $pdb_dbg->end = false;
+
 		  $this->session->currentView = new pdb_VariableView($this->session->currentView, $name, $value);
 		} else {
-		  $value = eval("return ".$name.";");
-		  if (file_exists($value)) 
-			$this->session->currentView = new pdb_View($this->session->currentView, realpath($value));
-		  else
-			$this->session->currentView = new pdb_VariableView($this->session->currentView, $name, $value);
+		  $this->end = true;
+		  $value = self::resolveIncludePath(eval("return ${name};"));
+		  $this->end = false;
+
+		  $this->session->currentView = new pdb_View($this->session->currentView, realpath($value));
 		}
 		$this->ack();
 		break;
@@ -1367,7 +1415,7 @@ class pdb_JSDebugger {
 		$this->end();
 		break;
 	  default:
-		pdb_Logger::debug("illegal packet: " . print_r($this->packet, true));
+		if (PDB_DEBUG) pdb_Logger::debug("illegal packet: " . print_r($this->packet, true));
 		exit(1);
 	  }
 	}
@@ -1396,7 +1444,7 @@ class pdb_JSDebugger {
 	/* check for stepOver and stepOut */
 	$stepNext = $this->session->currentFrame->stepNext == pdb_JSDebugger::STEP_INTO ? pdb_JSDebugger::STEP_INTO : false;
 	
-	pdb_Logger::debug("startCall::$scriptName, $stepNext");
+	if (PDB_DEBUG) pdb_Logger::debug("startCall::$scriptName, $stepNext");
 	$env = new pdb_Environment($this->session->currentFrame, $scriptName, $stepNext);
 	$this->session->allFrames[] = $env;
 	return $env;
@@ -1407,9 +1455,12 @@ class pdb_JSDebugger {
    */
   protected function resolveIncludePath($scriptName) {
 	if (file_exists($scriptName)) return realpath($scriptName);
+
 	$paths = explode(PATH_SEPARATOR, get_include_path());
 	$name = $scriptName;
 	foreach ($paths as $path) {
+	  $x = substr($path, -1);
+	  if ($x != "/" && $x != DIRECTORY_SEPARATOR) $path.=DIRECTORY_SEPARATOR;
 	  $scriptName = realpath("${path}${name}");
 	  if ($scriptName) return $scriptName;
 	}
@@ -1425,7 +1476,7 @@ class pdb_JSDebugger {
 	if (!$isDebugger)
 	  $scriptName = $this->resolveIncludePath($scriptName);
 
-	pdb_Logger::debug("scriptName::$scriptName, $isDebugger");
+	if (PDB_DEBUG) pdb_Logger::debug("scriptName::$scriptName, $isDebugger");
 
 	if ($once && isset($this->includedScripts[$scriptName]))
 	  $isDebugger = true;
@@ -1445,7 +1496,7 @@ class pdb_JSDebugger {
 
 	$this->session->currentTopLevelFrame = $this->session->currentFrame;
 
-	pdb_Logger::debug("startInclude:::".$this->session->currentTopLevelFrame . " parent: " . $this->session->currentTopLevelFrame->parent . " code: ".$code);
+	if (PDB_DEBUG) pdb_Logger::debug("startInclude:::".$this->session->currentTopLevelFrame . " parent: " . $this->session->currentTopLevelFrame->parent . " code: ".$code);
 
 	if ($once) $this->includedScripts[$scriptName] = true;
 	return $code;
@@ -1455,7 +1506,7 @@ class pdb_JSDebugger {
    * called at run-time after the script has been included
    */
   public function endInclude() {
-	pdb_Logger::debug("endInclude:::".$this->session->currentTopLevelFrame . "parent: ".$this->session->currentTopLevelFrame->parent);
+	if (PDB_DEBUG) pdb_Logger::debug("endInclude:::".$this->session->currentTopLevelFrame . "parent: ".$this->session->currentTopLevelFrame->parent);
 
 	$this->session->currentFrame = $this->session->currentTopLevelFrame = 
 	  $this->session->currentTopLevelFrame->parent;
@@ -1471,7 +1522,7 @@ class pdb_JSDebugger {
 	if ($this->ignoreInterrupt) return; // avoid spurious step calls from __destruct() method
 	$this->ignoreInterrupt = true;
 
-	pdb_Logger::logDebug("step: $scriptName @ $line");
+	if (PDB_DEBUG) pdb_Logger::logDebug("step: $scriptName @ $line");
 	// pull the current frame from the stack or the top-level environment
 	$this->session->currentFrame = (isset($vars['__pdb_CurrentFrame'])) ? $vars['__pdb_CurrentFrame'] : $this->session->currentTopLevelFrame;
 	unset($vars['__pdb_CurrentFrame']);
@@ -1480,7 +1531,7 @@ class pdb_JSDebugger {
 
 	if ($this->session->hasBreakpoint($scriptName, $line)) {
 	  $stepNext = $this->handleRequests();
-	  pdb_Logger::logDebug("continue");
+	  if (PDB_DEBUG) pdb_Logger::logDebug("continue");
 
 	  /* clear all dynamic breakpoints */
 	  foreach ($this->session->allFrames as $currentFrame)
@@ -1502,7 +1553,7 @@ class pdb_JSDebugger {
 	}
 
 	$this->ignoreInterrupt = false;
-	pdb_Logger::logDebug("endStep: $scriptName @ $line");
+	if (PDB_DEBUG) pdb_Logger::logDebug("endStep: $scriptName @ $line");
   }
 }
 
@@ -1608,6 +1659,26 @@ if (!isset($_SERVER['HTTP_XPDB_DEBUGGER'])) {
 PHPDebugger version 1.0
 </title>
 <style type="text/css">
+#tooltip {
+  background:#EFEFEF none repeat scroll 0 0;
+  height:auto;
+  width:auto;
+  min-width: 1px;
+  min-height: 1.5ex;
+  display: block;
+  border:1px solid black;
+  background-color:gray; color:white;
+  position:absolute;
+  text-align: center;
+  z-index:75;
+}
+.tt {
+  visibility: hidden;
+}
+.ttHover {
+  visibility: visible;
+}
+
 #run {
   height: 13px;
   width: 17px;
@@ -1781,6 +1852,7 @@ function doCmd(text) {
 
   case 'term':
   case 'end':		endCB(text); break;
+  case 'toolTip':   showToolTipCB(text); break;
 
   default: alert("illegal cmd: " + text.cmd); break;
   }
@@ -1810,7 +1882,10 @@ if (document.getElementsByClassName == undefined) {
 function sendCmd(cmd) {
   var url = debuggerURL;
   data = cmd+"&serverID="+getServerID()+"&seq="+getSeq();
-  http.open("POST", url, true);
+
+  /* use synchronous requests to avoid out of order execution of 
+	 step -> status -> extended status sequences */
+  http.open("POST", url, false);
   http.setRequestHeader("Cache-Control", "no-store, no-cache, must-revalidate, post-check=0, pre-check=0");
   http.setRequestHeader("Last-Modified", date);
   http.setRequestHeader("Pragma", "no-cache");
@@ -1818,12 +1893,17 @@ function sendCmd(cmd) {
   http.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
   http.setRequestHeader("Content-Length", data.length);
   http.setRequestHeader("XPDB-DEBUGGER", 0);
+  /*
   http.onreadystatechange = function() {
 	 if(http.readyState == 4 && http.status == 200) {
-	  doCmd(eval(http.responseText));
+	   doCmd(eval(http.responseText));
 	 }
   }
+  */
+
   http.send(data);
+
+  doCmd(eval(http.responseText));
 }
 function startServer() { 
   var url = debuggerURL;
@@ -1859,10 +1939,10 @@ function getStatusCB(cmd) {
 
 function loaded() {
   startServer();
-  sendCmd("cmd=begin&scriptName="+scriptName+"&cwd="+cwd);
+  sendCmd("cmd=begin&scriptName="+encodeURI(scriptName)+"&cwd="+encodeURI(cwd));
 }
 function toggleBreakpoint(el, event) {
-  sendCmd("cmd=toggleBreakpoint&breakpoint="+el.id);
+  sendCmd("cmd=toggleBreakpoint&breakpoint="+encodeURI(el.id));
   return false;
 }
 function setBreakpointCB(cmd) {
@@ -1880,6 +1960,7 @@ function doShowStatusCB(cmd) {
   lines = document.getElementsByClassName("currentlineIndicator");
    if (lines.length == 0) return; // no lines to mark
 
+  lines = document.getElementsByClassName("currentlineIndicator selected");
   for (i=0; i<lines.length; i++) {
 	line = lines[i];
 	line.className = "currentlineIndicator normal";
@@ -1937,6 +2018,7 @@ function go(el, event) {
   return false;
 }
 function switchView(data) {
+  data = encodeURI(data);
   sendCmd("cmd=switchView&scriptName="+data);
   return false;
 }
@@ -1949,7 +2031,63 @@ function output(el, event) {
   return false;
 }
 
+var currentEl, tooltipItem;
+var currentX, currentY;
+var timer;
+var tt;
+function getToolTip() {
+  if(tt) return tt;
+  return tt = document.getElementById("tooltip");
+}
+function mouseout(el, event) {
+  getToolTip().className = "tt";
+  if (timer) {
+	window.clearTimeout(timer);
+	timer = null;
+  }
+  return true;
+}
 function mousemove(el, event) {
+  if (timer) {
+	window.clearTimeout(timer);
+	getToolTip().className = "tt";
+	timer = null;
+  }
+  if (getEventSource(event).parentNode.className=="breakpoint") return true;
+  el = getEventSource(event);
+  if (el.nodeName !="SPAN") return true;
+
+  currentEl = el;
+  currentX = getEventX(event) + window.pageXOffset;
+  currentY = getEventY(event) + window.pageYOffset;
+  timer = window.setTimeout("showToolTip()", 600);
+  return false;
+}
+function toolTipCmd(el) {
+  el=encodeURI(el);
+  sendCmd("cmd=toolTip&item="+el);
+  return false;
+}
+function showToolTip() {
+  el = currentEl;
+  if (el && el.firstChild && el.firstChild.data) {
+	data = trim(el.firstChild.data);
+	while (el && el.previousSibling && el.previousSibling.firstChild && el.previousSibling.firstChild.data && trim(el.previousSibling.firstChild.data)=='->') {
+	  el = el.previousSibling.previousSibling;
+	  if (el && el.firstChild && el.firstChild.data) data = trim(el.firstChild.data)+"->"+data;
+	}
+  }
+    toolTipCmd(data);
+}
+function showToolTipCB(cmd) {
+  tt = getToolTip();
+  if(tooltipItem) tt.removeChild(tooltipItem);
+  tooltipItem = (document.createTextNode(cmd.value));
+  tt.appendChild(tooltipItem);
+  tt.style.top=(currentY+10) + "px";
+  tt.style.left=(currentX+10) + "px";
+  tt.className = "ttHover";
+
 }
 function trim(str) {
   nbspChar = String.fromCharCode(160);
@@ -1959,7 +2097,17 @@ function getEventSource(event) {
  if (event.target != undefined) return event.target;
  return event.srcElement;
 }
+function getEventX(event) {
+  if (event.clientX != undefined) return event.clientX;
+  return event.offsetX;
+}
+function getEventY(event) {
+  if (event.clientY != undefined) return event.clientY;
+  return event.offsetY;
+}
 function mousedown(el, event) {
+  getToolTip().className = "tt";
+
   if (getEventSource(event).parentNode.className=="breakpoint") return true;
   el = getEventSource(event);
   if (el && el.firstChild && el.firstChild.data) {
@@ -1986,12 +2134,18 @@ function mousedown(el, event) {
 <a id="output" onmousedown="return output(this, event);"></a>
 <a id="backView" onmousedown="return backView(this, event);"></a>
 </div>
- <div onmousemove="return mousemove(this, event);" onmousedown="return mousedown(this, event);" id="code"><span>loading...<noscript>failed! Please enable JavaScript and try again.</noscript></span>
+ <div onmouseout="return mouseout(this, event);" onmousemove="return mousemove(this, event);" onmousedown="return mousedown(this, event);">
+ <div id="code">
+<span>loading...
+<noscript>failed! Please enable JavaScript and try again.</noscript>
+</span>
 </div>
-</body>
+<div id="tooltip" class="tt" />
+</div>
 <script type="text/javascript">
  loaded();
 </script>
+</body>
 </html>
 <?php
  exit (0);
@@ -2005,7 +2159,7 @@ function mousedown(el, event) {
  $pdb_dbg = new pdb_JSDebugger((int)$serverID);
  $pdb_dbg->handleRequests();
  $pdb_dbg->shutdown();
- pdb_Logger::debug("SERVER TERMINATED!");
+ if (PDB_DEBUG) pdb_Logger::debug("SERVER TERMINATED!");
  exit(0);
 } else {
 /* * The front end part, invoked from JavaScript using json calls * */

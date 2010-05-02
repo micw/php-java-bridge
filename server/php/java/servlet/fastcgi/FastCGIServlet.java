@@ -248,7 +248,25 @@ public class FastCGIServlet extends HttpServlet {
 	HashMap map = new HashMap(Util.COMMON_ENVIRONMENT);
 	return map;
     }
-    
+    private  boolean useSystemPhp(File f) {
+	
+	// path hard coded in web.xml
+	if (!phpTryOtherLocations) return true;
+	
+	// no local php exists
+	if (!f.exists()) return true;
+	
+	// local exists
+	if(!preferSystemPhp) return false;
+	
+	// check default locations for preferred system php
+	for(int i=0; i<Util.DEFAULT_CGI_LOCATIONS.length; i++) {
+	    File location = new File(Util.DEFAULT_CGI_LOCATIONS[i]);
+	    if(location.exists()) return true;
+	}
+	
+	return false;
+    }
     /**
      * Create a new FastCGI servlet which connects to a PHP FastCGI server using a connection pool.
      * 
@@ -276,6 +294,91 @@ public class FastCGIServlet extends HttpServlet {
 
 	DOCUMENT_ROOT = ServletUtil.getRealPath(context, "");
 	SERVER_SIGNATURE = context.getServerInfo();
+
+	String name = context.getServerInfo();
+	if (name != null && (name.startsWith("JBoss")))    isJBoss    = true;
+
+	logger = new Util.Logger(!isJBoss, new Logger(context));
+
+	try {
+	    value = context.getInitParameter("promiscuous");
+	    if(value==null) value="";
+	    value = value.trim();
+	    value = value.toLowerCase();
+	    
+	    if(value.equals("on") || value.equals("true")) promiscuous=true;
+	} catch (Throwable t) {t.printStackTrace();}
+    	try {
+	    value = context.getInitParameter("override_hosts");
+	    if(value==null) value="";
+	    value = value.trim();
+	    value = value.toLowerCase();
+	    if(value.equals("off") || value.equals("false")) override_hosts=false;
+	} catch (Throwable t) {t.printStackTrace();}
+    	try {
+	    value = config.getInitParameter("prefer_system_php_exec");
+	    if(value==null) value="";
+	    value = value.trim();
+	    value = value.toLowerCase();
+	    if(value.equals("on") || value.equals("true")) preferSystemPhp=true;
+	} catch (Throwable t) {t.printStackTrace();}	
+	String val = null;
+	try {
+	    val = config.getInitParameter("php_fcgi_children");
+	    if(val==null) val = config.getInitParameter("PHP_FCGI_CHILDREN");
+	    if(val==null) val = System.getProperty("php.java.bridge.php_fcgi_children");
+	    if(val==null) val = config.getInitParameter("php_fcgi_connection_pool_size");
+	    if(val==null) val = System.getProperty("php.java.bridge.php_fcgi_connection_pool_size");
+	    if(val!=null) php_fcgi_connection_pool_size_number = Integer.parseInt(val);
+	} catch (Throwable t) {/*ignore*/}
+	if(val!=null) php_fcgi_connection_pool_size = val;
+
+	val = null;
+	try {
+	    val = config.getInitParameter("php_fcgi_connection_pool_timeout");
+	    if(val==null) val = System.getProperty("php.java.bridge.php_fcgi_connection_pool_timeout");
+	    if(val!=null) php_fcgi_connection_pool_timeout_number = Integer.parseInt(val);
+	} catch (Throwable t) {/*ignore*/}
+	if(val!=null) php_fcgi_connection_pool_timeout = val;
+	
+	val = null;
+	php_include_java = false;
+	try {
+	    val  = config.getInitParameter("php_include_java");
+	    if(val==null) val = config.getInitParameter("PHP_INCLUDE_JAVA");
+	    if(val==null) val = System.getProperty("php.java.bridge.php_include_java");
+	    if(val!=null && (val.equalsIgnoreCase("on") ||  val.equalsIgnoreCase("true")))
+		php_include_java = true;
+	} catch (Throwable t) {/*ignore*/}
+
+	val = null;
+	try {
+	    val = config.getInitParameter("php_fcgi_max_requests");
+	    if(val==null) val = getServletConfig().getInitParameter("PHP_FCGI_MAX_REQUESTS");
+	    if(val==null) val = System.getProperty("php.java.bridge.php_fcgi_max_requests");
+	    if(val != null) {
+		php_fcgi_max_requests_number = Integer.parseInt(val);
+		php_fcgi_max_requests = val;
+	    }
+	} catch (Throwable t) {/*ignore*/}
+	fcgiIsConfigured = true;
+	checkCgiBinary(config);
+	
+	try {
+	    value = config.getInitParameter("shared_fast_cgi_pool");
+	    if(value==null) value="";
+	    value = value.trim();
+	    value = value.toLowerCase();
+	    if(value.equals("on") || value.equals("true")) 
+		delegateToJavaBridgeContext=true;
+	} catch (Throwable t) {/*ignore*/}
+	channelName = ChannelFactory.createChannelFactory(promiscuous);
+	channelName.findFreePort(canStartFCGI && !delegateToJavaBridgeContext);
+
+	createPhpFiles ();
+    }
+    
+    private void createPhpFiles () {
 
 	String javaDir = ServletUtil.getRealPath(context, "java");
 	if (javaDir != null) {
@@ -439,7 +542,7 @@ public class FastCGIServlet extends HttpServlet {
 	    if (ServletUtil.USE_SH_WRAPPER) {
 		try {
 		    File phpCgi = new File (cgiDir, "php-cgi-"+Util.osArch+"-"+Util.osName);
-		    if (phpCgi.exists()) {
+		    if (!useSystemPhp(phpCgi)) {
 			updateProcessEnvironment(conf);
 			File wrapper = new File(cgiDir, "php-cgi-"+Util.osArch+"-"+Util.osName+".sh");
 			if (!wrapper.exists()) {
@@ -476,7 +579,7 @@ public class FastCGIServlet extends HttpServlet {
 	    } else {
 		try {
 		    File phpCgi = new File (cgiDir, "php-cgi-"+Util.osArch+"-"+Util.osName+".exe");
-		    if (phpCgi.exists()) {
+		    if (!useSystemPhp(phpCgi)) {
 			updateProcessEnvironment(conf);
 			File ini = new File(cgiDir, "php.ini");
 			if (!ini.exists()) {
@@ -504,86 +607,8 @@ public class FastCGIServlet extends HttpServlet {
 		}
 	    }
 	}
-	String name = context.getServerInfo();
-	if (name != null && (name.startsWith("JBoss")))    isJBoss    = true;
-
-	logger = new Util.Logger(!isJBoss, new Logger(context));
-
-	try {
-	    value = context.getInitParameter("promiscuous");
-	    if(value==null) value="";
-	    value = value.trim();
-	    value = value.toLowerCase();
-	    
-	    if(value.equals("on") || value.equals("true")) promiscuous=true;
-	} catch (Throwable t) {t.printStackTrace();}
-    	try {
-	    value = context.getInitParameter("override_hosts");
-	    if(value==null) value="";
-	    value = value.trim();
-	    value = value.toLowerCase();
-	    if(value.equals("off") || value.equals("false")) override_hosts=false;
-	} catch (Throwable t) {t.printStackTrace();}
-    	try {
-	    value = config.getInitParameter("prefer_system_php_exec");
-	    if(value==null) value="";
-	    value = value.trim();
-	    value = value.toLowerCase();
-	    if(value.equals("on") || value.equals("true")) preferSystemPhp=true;
-	} catch (Throwable t) {t.printStackTrace();}	
-	String val = null;
-	try {
-	    val = config.getInitParameter("php_fcgi_children");
-	    if(val==null) val = config.getInitParameter("PHP_FCGI_CHILDREN");
-	    if(val==null) val = System.getProperty("php.java.bridge.php_fcgi_children");
-	    if(val==null) val = config.getInitParameter("php_fcgi_connection_pool_size");
-	    if(val==null) val = System.getProperty("php.java.bridge.php_fcgi_connection_pool_size");
-	    if(val!=null) php_fcgi_connection_pool_size_number = Integer.parseInt(val);
-	} catch (Throwable t) {/*ignore*/}
-	if(val!=null) php_fcgi_connection_pool_size = val;
-
-	val = null;
-	try {
-	    val = config.getInitParameter("php_fcgi_connection_pool_timeout");
-	    if(val==null) val = System.getProperty("php.java.bridge.php_fcgi_connection_pool_timeout");
-	    if(val!=null) php_fcgi_connection_pool_timeout_number = Integer.parseInt(val);
-	} catch (Throwable t) {/*ignore*/}
-	if(val!=null) php_fcgi_connection_pool_timeout = val;
-	
-	val = null;
-	php_include_java = false;
-	try {
-	    val  = config.getInitParameter("php_include_java");
-	    if(val==null) val = config.getInitParameter("PHP_INCLUDE_JAVA");
-	    if(val==null) val = System.getProperty("php.java.bridge.php_include_java");
-	    if(val!=null && (val.equalsIgnoreCase("on") ||  val.equalsIgnoreCase("true")))
-		php_include_java = true;
-	} catch (Throwable t) {/*ignore*/}
-
-	val = null;
-	try {
-	    val = config.getInitParameter("php_fcgi_max_requests");
-	    if(val==null) val = getServletConfig().getInitParameter("PHP_FCGI_MAX_REQUESTS");
-	    if(val==null) val = System.getProperty("php.java.bridge.php_fcgi_max_requests");
-	    if(val != null) {
-		php_fcgi_max_requests_number = Integer.parseInt(val);
-		php_fcgi_max_requests = val;
-	    }
-	} catch (Throwable t) {/*ignore*/}
-	fcgiIsConfigured = true;
-	checkCgiBinary(config);
-	
-	try {
-	    value = config.getInitParameter("shared_fast_cgi_pool");
-	    if(value==null) value="";
-	    value = value.trim();
-	    value = value.toLowerCase();
-	    if(value.equals("on") || value.equals("true")) 
-		delegateToJavaBridgeContext=true;
-	} catch (Throwable t) {/*ignore*/}
-	channelName = ChannelFactory.createChannelFactory(promiscuous);
-	channelName.findFreePort(canStartFCGI && !delegateToJavaBridgeContext);
     }
+    
     /**
      * Destroys the FastCGI connection pool, if it exists.
      */

@@ -71,7 +71,7 @@
 <td WIDTH="25%"><a href="report.php">Execute</a></td>
 
 <td WIDTH="25%"><a href="source.php?source=report.php">Source</a></td>
-<td WIDTH="25%"><a href="debug.php?source=report.php"></a></td>
+<td WIDTH="25%"><a href="debug.php">debug</a></td>
 </tr>
 
 <tr VALIGN=TOP>
