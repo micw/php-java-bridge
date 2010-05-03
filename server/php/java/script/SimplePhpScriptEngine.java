@@ -40,8 +40,8 @@ import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 
-import php.java.bridge.AppThreadPool;
 import php.java.bridge.JavaBridgeRunner;
+import php.java.bridge.ThreadPool;
 import php.java.bridge.Util;
 import php.java.bridge.http.AbstractChannelName;
 import php.java.bridge.http.ContextServer;
@@ -82,9 +82,15 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
 	return Util.COMMON_ENVIRONMENT;
     }
 
-    public static final AppThreadPool pool = getAppThreadPool();
-    private static synchronized AppThreadPool getAppThreadPool() {
-	return new AppThreadPool("JavaBridgeHttpProxy", Integer.parseInt(Util.THREAD_POOL_MAX_SIZE));
+    public static final ThreadPool pool = getThreadPool();
+    private static synchronized ThreadPool getThreadPool() {
+	return new ThreadPool("JavaBridgeHttpProxy", Integer.parseInt(Util.THREAD_POOL_MAX_SIZE)) {
+	    protected Delegate createDelegate(String name) {
+		Delegate d = super.createDelegate(name);
+		d.setDaemon(true);
+		return d;
+	    }
+	};
     }
 
     /**

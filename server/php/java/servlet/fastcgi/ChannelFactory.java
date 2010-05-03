@@ -242,7 +242,7 @@ public abstract class ChannelFactory {
      * @return The concrete ChannelFactory (NP or Socket channel factory).
      */
     public static ChannelFactory createChannelFactory(boolean promiscuous) {
-	if(ServletUtil.USE_SH_WRAPPER)
+	if(Util.USE_SH_WRAPPER)
 	    return new SocketChannelFactory(promiscuous);
 	else 
 	    return new NPChannelFactory();

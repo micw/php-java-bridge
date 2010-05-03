@@ -463,7 +463,7 @@ public class FastCGIServlet extends HttpServlet {
 	    File tmpl = new File(conf, "mysql.ini");
 	    if (!tmpl.exists()) {
 		String str;
-		if (ServletUtil.USE_SH_WRAPPER) {
+		if (Util.USE_SH_WRAPPER) {
 		    str = ";; -*- mode: Scheme; tab-width:4 -*-\n"+
                         ";; Example extension.ini file: mysql.ini.\n"+
 			";; Copy the correct version (see phpinfo()) of the PHP extension \"mysql.so\" to the ./../ext directory and uncomment the following line\n"+
@@ -494,7 +494,7 @@ public class FastCGIServlet extends HttpServlet {
 
 	    tmpl = new File(conf, "mysql.ini");
 	    if (!tmpl.exists()) {
-		String str = ServletUtil.USE_SH_WRAPPER ? ";extension = php_mysql.dll" : ";extension = mysql.so";
+		String str = Util.USE_SH_WRAPPER ? ";extension = php_mysql.dll" : ";extension = mysql.so";
 		byte[] data = str.getBytes();
 		try {
 		    OutputStream out = new FileOutputStream (tmpl);
@@ -539,7 +539,7 @@ public class FastCGIServlet extends HttpServlet {
 	    } catch (Exception e) {
 		e.printStackTrace();
 	    }
-	    if (ServletUtil.USE_SH_WRAPPER) {
+	    if (Util.USE_SH_WRAPPER) {
 		try {
 		    File phpCgi = new File (cgiDir, "php-cgi-"+Util.osArch+"-"+Util.osName);
 		    if (!useSystemPhp(phpCgi)) {
@@ -997,7 +997,7 @@ public class FastCGIServlet extends HttpServlet {
 	    buf.append(Util.osArch);
 	    buf.append("-");
 	    buf.append(Util.osName);
-	    if (!ServletUtil.USE_SH_WRAPPER) buf.append(".exe");
+	    if (!Util.USE_SH_WRAPPER) buf.append(".exe");
 	    String wrapper = buf.toString();
 	    IOException ex = new IOException("No suitable php fastcgi sapi found. " +
 					     "Install PHP as either \"/usr/bin/php-cgi\" or \"c:/Program Files/PHP/php-cgi.exe\" or \""+wrapper+"\". " +

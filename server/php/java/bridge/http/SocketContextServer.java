@@ -154,7 +154,7 @@ public final class SocketContextServer implements Runnable, IContextServer {
 	while(serverSocket!=null) {
 	    if(!accept()) destroy();
 	}
-	Util.logDebug("SocketContextServer stopped, the local channel is not available anymore.");
+	if (Util.logLevel>4) System.err.println("SocketContextServer stopped, the local channel is not available anymore.");
     }
 
     private void closeAllSockets () {

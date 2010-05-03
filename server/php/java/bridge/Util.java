@@ -76,6 +76,9 @@ public final class Util {
     public static Class LAUNCHER_WINDOWS, LAUNCHER_WINDOWS2, LAUNCHER_WINDOWS3, LAUNCHER_WINDOWS4;
     /** Only for internal use */
     public static final byte HEX_DIGITS[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+
+    /** True if /bin/sh exists, false otherwise */
+    public static final boolean USE_SH_WRAPPER = new File("/bin/sh").exists();
     
     private Util() {}
     
@@ -156,8 +159,9 @@ public final class Util {
      * The default PHP arguments. Can be passed via -Dphp.java.bridge.php_exec_args=list of urlencoded strings separated by space
      * Default: "-d display_errors=Off -d log_errors=On -d java.persistent_servlet_connections=On"
      */
-    public static String[] PHP_ARGS;
+    private static String[] PHP_ARGS;
     private static String DEFAULT_PHP_ARGS;
+    private static final String[] URL_INCLUDE = {"-d", "allow_url_include=On"};
     
     /**
      * The default CGI locations: <code>"/usr/bin/php-cgi"</code>, <code>"c:/Program Files/PHP/php-cgi.exe</code>
@@ -370,12 +374,21 @@ public final class Util {
 	// resolve java.io.tmpdir for windows; PHP doesn't like dos short file names like foo~1\bar~2\...
 	File tmpdir = new File(System.getProperty("java.io.tmpdir", "/tmp"));
 	if (!(tmpdir.exists() && tmpdir.isDirectory())) tmpdir = null;
-	String tmpdirPath = null;
-	if (tmpdir != null) try {tmpdirPath = tmpdir.getCanonicalPath(); } catch (IOException ex) {/*ignore*/}
-	if (tmpdirPath != null)
-	    DEFAULT_PHP_ARGS = "-d session.save_path=\""+tmpdirPath+"\" -d java.session=On -d display_errors=Off -d log_errors=On -d java.persistent_servlet_connections=On";
-	else
+	String sessionSavePath = null;
+	if (tmpdir != null) try {sessionSavePath = tmpdir.getCanonicalPath(); } catch (IOException ex) {/*ignore*/}
+	if (sessionSavePath != null) {
+	    try {
+		sessionSavePath = java.net.URLEncoder.encode("session.save_path='"+sessionSavePath+"'", "UTF-8");
+	    } catch (UnsupportedEncodingException e) {
+		e.printStackTrace();
+		sessionSavePath = null;
+	    }
+	}
+	if (sessionSavePath != null) {
+	    DEFAULT_PHP_ARGS = "-d "+sessionSavePath+" -d java.session=On -d display_errors=Off -d log_errors=On -d java.persistent_servlet_connections=On";
+	} else {
 	    DEFAULT_PHP_ARGS = "-d java.session=On -d display_errors=Off -d log_errors=On -d java.persistent_servlet_connections=On";
+	}
 	    
 	try {
 	    String str = getProperty(p, "PHP_EXEC_ARGS", DEFAULT_PHP_ARGS);
@@ -1001,9 +1014,11 @@ public final class Util {
 	protected String[] getArgumentArray(String[] php, String[] args) {
 	    LinkedList buf = new LinkedList();
 	    buf.addAll(java.util.Arrays.asList(php));
+	    buf.addAll(java.util.Arrays.asList(URL_INCLUDE));
 	    for(int i=1; i<args.length; i++) {
 		buf.add(args[i]);
 	    }
+	    
 	    return  (String[]) buf.toArray(new String[buf.size()]);
 	}
 	protected void start() throws NullPointerException, IOException {
@@ -1060,6 +1075,11 @@ public final class Util {
             
             if(homeDir!=null &&!homeDir.exists()) homeDir = null;
 	    String[] s = getArgumentArray(php, args);
+	    
+	    // quote all args for windows
+	    if (!USE_SH_WRAPPER)
+		for(int j=0; j<s.length; j++) 
+		    if(s[j]!=null) s[j] = "\""+s[j]+"\""; 
 	    
 	    proc = rt.exec(s, hashToStringArray(env), homeDir);
 	    if(Util.logLevel>3) Util.logDebug("Started "+ java.util.Arrays.asList(s));
@@ -1460,21 +1480,22 @@ public final class Util {
 		Util.printStackTrace(e);
 		cgiDir = extDir.getAbsolutePath();
 	    }
-	    allArgs[i++] = "-d";
-	    allArgs[i++] = "java.os_arch_dir=\""+cgiDir+"\"";	    
+	    allArgs[i++] = "-d";	    
+	    allArgs[i++] = "java.os_arch_dir='"+cgiDir+"'";	    
 	}
 	if (pearDir!=null) {
-	    allArgs[i++] = "-d";
-	    allArgs[i++] = "java.pear_dir=\""+pearDir+"\"";	    
+	    allArgs[i++] = "-d";	    
+	    allArgs[i++] = "java.pear_dir='"+pearDir+"'";	    
 	}
 	if (webInfDir!=null) {
-	    allArgs[i++] = "-d";
-	    allArgs[i++] = "java.web_inf_dir=\""+webInfDir+"\"";	    
+	    allArgs[i++] = "-d";	    
+	    allArgs[i++] = "java.web_inf_dir='"+webInfDir+"'";	    
 	}
 	if (includeJava) allArgs[i++] = "-C"; // don't chdir, we'll do it
 	for(int j=0; j<PHP_ARGS.length; j++) {
 	    allArgs[i++]=PHP_ARGS[j];
 	}
+	
 	return allArgs;
     }
     /**

@@ -1,3 +1,14 @@
+2010-05-02  <jostb@intern>
+
+	* server/php/java/bridge/Util.java
+	(start): re-add allow_url_include=on for the console
+	ScriptEngine.
+
+	* server/php/java/script/SimplePhpScriptEngine.java
+	(getAppThreadPool): removed. JavaBridgeHttpProxy must be daemon
+	threads so that the console ScriptEngine can terminated.
+	(getThreadPool): New procedure to create a daemon thread pool
+
 2010-04-24  <jostb@intern>
 
 	* server/buildJavaProxy.php: Removed whitespace before <?.

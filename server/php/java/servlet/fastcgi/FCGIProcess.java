@@ -29,7 +29,6 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import php.java.bridge.Util;
-import php.java.servlet.ServletUtil;
 
 /**
  * Represents the FastCGI process.
@@ -45,7 +44,7 @@ class FCGIProcess extends Util.Process {
     }
     protected String[] getArgumentArray(String[] php, String[] args) {
         LinkedList buf = new LinkedList();
-        if(ServletUtil.USE_SH_WRAPPER) {
+        if(Util.USE_SH_WRAPPER) {
 	    buf.add("/bin/sh");
 	    buf.add(realPath+"/launcher.sh");
 	    buf.addAll(java.util.Arrays.asList(php));

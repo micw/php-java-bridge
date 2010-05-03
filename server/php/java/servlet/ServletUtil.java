@@ -46,8 +46,6 @@ import php.java.bridge.http.WriterOutputStream;
  */
 public class ServletUtil {
 
-    /** True if /bin/sh exists, false otherwise */
-    public static final boolean USE_SH_WRAPPER = new File("/bin/sh").exists();
     /** Only for internal use */
     public static final String HOST_ADDR_ATTRIBUTE = ServletUtil.class.getName()+".HOST_ADDR";
 
