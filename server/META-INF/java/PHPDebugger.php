@@ -231,22 +231,30 @@ class pdb_PollingServerConnection implements pdb_Queue {
 	$chan = "pdb_{$this->role}{$this->id}";
 	session_start();
 	if (!($val = $this->checkTrm())) {
-	  if (PDB_DEBUG) pdb_Logger::debug("...{$this->role}, {$this->id} poll...");
 	  if(!isset($_SESSION[$chanCtr])) { 
 		$_SESSION[$chan] = array(); 
 		$_SESSION[$chanCtr]=0; 
 	  }
-	  if (count($_SESSION[$chan]) > $_SESSION[$chanCtr]) {
-		$val = json_decode($_SESSION[$chan][$_SESSION[$chanCtr]++]);
+	  $seq = $_SESSION[$chanCtr];
+	  $seqNext = count($_SESSION[$chan]);
+	  if (PDB_DEBUG) pdb_Logger::debug("...{$this->role}, {$this->id} poll next # ${seqNext} (${seq}) ...");
+	  if ($seqNext > $seq) {
+		$val = json_decode($_SESSION[$chan][$seq]);
+		$_SESSION[$chan][$seq]=null;
+		$_SESSION[$chanCtr]++;
+		if (PDB_DEBUG) pdb_Logger::debug("...{$this->role}, {$this->id} polled next # ${seqNext} (${seq}), got: {$val->seq}");
 	  }
 	}
 	session_write_close();
 	return $val;
   }
   protected function send($val) {
+	
+	$seq = $val->seq;
 	$chan = "pdb_{$this->to}{$this->id}";
 	session_start();
-	if (!$this->checkTrm()) $_SESSION[$chan][]=json_encode($val);
+	if (!$this->checkTrm()) $_SESSION[$chan][$seq]=json_encode($val);
+	if (PDB_DEBUG) pdb_Logger::debug("...{$this->role}, {$this->id} send: ${seq} ...");
 	session_write_close();
   }
 
@@ -267,12 +275,13 @@ class pdb_PollingServerConnection implements pdb_Queue {
 	}
 	return $val === true ? null : $val;
   }
+
   /**
    * write a new value to the write queue
    * @access private
    */
   public function write($val) {
-	$this->send($val);
+	$this->send((object)$val);
   }
 
   /**
@@ -316,18 +325,14 @@ class pdb_PollingClientConnection extends pdb_PollingServerConnection {
   }
 
   protected function poll() {
-	$chanCtr = "pdb_ctr{$this->role}{$this->id}";
 	$chan = "pdb_{$this->role}{$this->id}";
 	session_start();
 	if (!($val = $this->checkTrm())) {
-	  if (PDB_DEBUG) pdb_Logger::debug("...{$this->role}, {$this->id} poll...");
-	  if (!isset($_SESSION[$chanCtr])) $_SESSION[$chanCtr] = 0; 
-	  if (isset($_SESSION[$chan]) && (count($_SESSION[$chan]) > $_SESSION[$chanCtr])) {
-		$val = json_decode($_SESSION[$chan][$_SESSION[$chanCtr]]);
-		if ($val->seq == $this->seq) 
-		  $_SESSION[$chanCtr]++;
-		else
-		  $val = false;
+	  if (PDB_DEBUG) pdb_Logger::debug("...{$this->role}, {$this->id} poll for {$this->seq} ...");
+	  if (isset($_SESSION[$chan][$this->seq])) {
+		$val = json_decode($_SESSION[$chan][$this->seq]);
+		if (PDB_DEBUG) pdb_Logger::debug("...{$this->role}, {$this->id} polled for {$this->seq}, got: {$val->seq}");
+		unset($_SESSION[$chan][$this->seq]);
 	  }
 	}
 	session_write_close();
@@ -1187,10 +1192,10 @@ final class pdb_Session {
 	$code = $this->parseCode($this->getScriptName(), file_get_contents($this->getScriptName()));
 
 	if (PDB_DEBUG) pdb_Logger::debug("eval:::$code,".$this->getScriptName()."\n");
-	if (!PDB_DEBUG) ob_start();
+	ob_start();
 	self::doEval ($code);
 	$this->output = ob_get_contents();
-	if(!PDB_DEBUG) ob_end_clean();
+	ob_end_clean();
 
 	return $this->output;
   }
@@ -1612,7 +1617,7 @@ function pdb_step($scriptName, $line, $vars) {
 function pdb_error_handler($errno, $errstr, $errfile, $errline) {
   global $pdb_dbg;
   if (PDB_DEBUG) pdb_Logger::debug("PHP error $errno: $errstr in $errfile line $errline");
-  if ($pdb_dbg->end) return false;
+  if ($pdb_dbg->end) return true;
  
  if (strncmp(basename($errfile),"PHPDebugger", 11)) 
    $pdb_dbg->setError($errno, $errfile, $errline, $errstr);
@@ -1954,11 +1959,15 @@ function unsetBreakpointCB(cmd) {
 function showOutputCB(cmd) {
   currentScriptName = "";
   document.getElementById("code").innerHTML = cmd.output;
+  window.scrollTo(0, 0);
 }
 
 function doShowStatusCB(cmd) {
   lines = document.getElementsByClassName("currentlineIndicator");
-   if (lines.length == 0) return; // no lines to mark
+   if (lines.length == 0) {
+     window.scrollTo (0, 0);
+     return; // no lines to mark
+   }
 
   lines = document.getElementsByClassName("currentlineIndicator selected");
   for (i=0; i<lines.length; i++) {
