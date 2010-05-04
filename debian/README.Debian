@@ -98,7 +98,7 @@ do this, if step 1.1.1.1 is not needed.
 suitable version.
 
 $ cd ~/projects/php-java-bridge
-$ cvs -f tag 'upstream_version_6_1_1' '.'
+$ cvs -f tag 'upstream_version_6_1_2_1' '.'
 
 1.1.4 Create or edit the Debian php-java-bridge specific patches.
 
@@ -115,7 +115,7 @@ file name into the ./debian/patches directory.
 follow the strict formating, as the Debian changelog is actualy used as one of 
 the package control files.
 
-$ debchange -v 6.1.1-1
+$ debchange -v 6.1.2.1-1
 
 1.1.6 Modify some other */debian files, if needed.
 
@@ -125,7 +125,7 @@ $ debchange -v 6.1.1-1
 suitable version.
 
 $ cd ~/projects/php-java-bridge
-$ cvs -f tag 'debian_version_6_1_1-1' '.'
+$ cvs -f tag 'debian_version_6_1_2_1-1' '.'
 
 
 2. Building the package from cvs tree.
@@ -149,4 +149,4 @@ http://localhost:8180/JavaBridge
 with or without SE Linux packaged rules installed.
 The port is configured 8180 in order to avoid conflict with Apache.
 
- -- Andre Felipe Machado <andre.machado@serpro.gov.br>  Tue, 06 Apr 2010 13:53:02 -0300
+ -- Andre Felipe Machado <andre.machado@serpro.gov.br>  Tue, 04 May 2010 16:55:22 -0300

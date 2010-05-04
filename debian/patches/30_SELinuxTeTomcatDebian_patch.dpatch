@@ -5,12 +5,18 @@
 ## DP: No description.
 
 @DPATCH@
-diff -urNad php-java-bridge~/security/module/php-java-bridge-tomcat.te php-java-bridge/security/module/php-java-bridge-tomcat.te
---- php-java-bridge~/security/module/php-java-bridge-tomcat.te	2006-08-08 14:20:45.000000000 -0300
-+++ php-java-bridge/security/module/php-java-bridge-tomcat.te	2010-04-06 13:44:31.000000000 -0300
-@@ -1,4 +1,4 @@
--policy_module(javabridge_tomcat,3.1.7)
-+policy_module(javabridge_tomcat,6.1.1)
- 
- ########################################
- #
+diff -urNad php-java-bridge~/security/module/php-java-bridge-tomcat.te.rej php-java-bridge/security/module/php-java-bridge-tomcat.te.rej
+--- php-java-bridge~/security/module/php-java-bridge-tomcat.te.rej	1969-12-31 21:00:00.000000000 -0300
++++ php-java-bridge/security/module/php-java-bridge-tomcat.te.rej	2010-05-04 16:48:22.000000000 -0300
+@@ -0,0 +1,11 @@
++***************
++*** 1,4 ****
++- policy_module(javabridge_tomcat,3.1.7)
++  
++  ########################################
++  #
++--- 1,4 ----
+++ policy_module(javabridge_tomcat,6.1.2.1)
++  
++  ########################################
++  #
