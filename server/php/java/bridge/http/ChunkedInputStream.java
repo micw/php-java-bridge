@@ -74,21 +74,20 @@ public class ChunkedInputStream extends FilterInputStream {
 	int c, i;
 	int count;
 
+	if (len <= 0) return len;
 	if (eof) return -1;
-	
-	int offset = 0;
+
 	// check remaining
 	if (remaining != null) {
-	    if (len <= remainLen) {
+	    if (len < remainLen) {
 		System.arraycopy(remaining, remainPos, buf, pos, len);
 		remainPos += len;
 		remainLen -= len;
 		return len;
 	    } else {
 		System.arraycopy(remaining, remainPos, buf, pos, remainLen);
-		pos += remainLen;
-		len -= remainLen;
-		offset = remainLen;
+            remaining = null;
+            return remainLen;
 	    }
 	}
 
@@ -113,7 +112,7 @@ public class ChunkedInputStream extends FilterInputStream {
 	    System.arraycopy(remaining, 0, buf, pos, packetLen);
 	    remaining = null;
 	} else {
-	    count = offset + len;
+	    count = len;
 	    System.arraycopy(remaining, 0, buf, pos, len);
 	    remainPos = len;
 	    remainLen = packetLen - len;
