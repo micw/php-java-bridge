@@ -1,5 +1,13 @@
 2010-05-02  <jostb@intern>
 
+	* server/php/java/bridge/http/ChunkedInputStream.java
+	(read): PR#3005379: Return the buffer contents before reading from the network, in order to avoid deadlock. 
+      Thanks to Oliver Billmann.
+
+	* VERSION, php-java-bridge.spec: JavaBridge.jar download updated to version 6.1.2.2
+
+2010-05-02  <jostb@intern>
+
 	* server/php/java/bridge/Util.java
 	(start): re-add allow_url_include=on for the console
 	ScriptEngine.
