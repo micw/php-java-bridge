@@ -108,7 +108,7 @@ public class ChunkedInputStream extends FilterInputStream {
 	
 	// store remaining
 	if (len >= packetLen) {
-	    count = packetLen + offset;
+	    count = packetLen;
 	    System.arraycopy(remaining, 0, buf, pos, packetLen);
 	    remaining = null;
 	} else {
