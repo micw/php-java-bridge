@@ -76,7 +76,10 @@ public class ChunkedOutputStream extends FilterOutputStream {
     	}
 	out.flush();
     }
-    public void close () throws IOException {
+    /**
+     * Write trailing 0\r\n and flush the underlying output stream 
+     */
+    public void eof() throws IOException {
 	writeEOF();
 	super.flush();
     }

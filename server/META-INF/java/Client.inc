@@ -276,6 +276,9 @@ class java_Client /* implements IDocHandler */ {
   // send buffer
   public $sendBuffer, $preparedToSendBuffer;
 
+  // do not finish protocol if ags construction fails due to PHP OutOfMemory error
+  public $inArgs;
+  
   function java_Client() {
 	$this->RUNTIME = array();
 	$this->RUNTIME["NOTICE"]='***USE echo java_inspect(jVal) OR print_r(java_values(jVal)) TO SEE THE CONTENTS OF THIS JAVA OBJECT!***';
@@ -299,6 +302,8 @@ class java_Client /* implements IDocHandler */ {
 	$this->asyncCtx = $this->cancelProxyCreationCounter = 0;
 	
 	$this->methodCache = $this->defaultCache;
+	
+	$this->inArgs = false;
   }
 
   function read($size) {
@@ -514,10 +519,12 @@ class java_Client /* implements IDocHandler */ {
 	}
   }
   function writeArgs($args) {
+  	$this->inArgs = true;
 	$n = count($args);
 	for($i=0; $i<$n; $i++) {
 	  $this->writeArg($args[$i]);
 	}
+	$this->inArgs = false;
   }
   function createObject($name, $args) {
     $this->protocol->createObjectBegin($name);
@@ -650,7 +657,7 @@ function java_shutdown() {
   if (session_id()) session_write_close();
   $client = __javaproxy_Client_getClient();
   if(JAVA_DEBUG) echo "the client destroyed\n";
-  if (!isset($client->protocol)) return;
+  if (!isset($client->protocol) || $client->inArgs) return;
   if ($client->preparedToSendBuffer) 
     $client->sendBuffer.=$client->preparedToSendBuffer;
   $client->sendBuffer.=$client->protocol->getKeepAlive();

@@ -1,8 +1,24 @@
-2010-05-02  <jostb@intern>
+2010-05-23  <jostb@intern>
 
 	* server/php/java/bridge/http/ChunkedInputStream.java
 	(read): PR#3005379: Return the buffer contents before reading from the network, in order to avoid deadlock. 
       Thanks to Oliver Billmann.
+
+	* server/php/java/bridge/http/ChunkedInputStream.java
+      (eof): New method
+
+      * server/php/java/bridge/http/ChunkedOutputStream.java
+      (eof): New method
+
+      * server/php/java/bridge/JavaBridgeRunner.java
+      (doPut): do not read/write 0\r\n chunk after an exception (e.g.: OutOfMemoryError or RequestAbortException) occured
+
+      * server/META-INF/java/Client.inc
+      (inArgs): New property
+      (writeArgs): protect for java_shutdown
+      (java_shutdown): do not read/write 0\r\n chunk after an error (e.g.: PHP memory error)
+
+      * tests.php5/testOOM.php: New file
 
 	* VERSION, php-java-bridge.spec: JavaBridge.jar download updated to version 6.1.2.2
 

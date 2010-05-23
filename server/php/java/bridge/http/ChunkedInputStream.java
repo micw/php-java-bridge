@@ -134,7 +134,12 @@ public class ChunkedInputStream extends FilterInputStream {
 	return n;
     }
     private byte[] buf = new byte[Util.BUF_SIZE];
-    public void close() throws IOException {
+
+    /**
+     * read trailing 0\r\n
+     * @throws IOException
+     */
+    public void eof() throws IOException {
 	// consume remaining 0\r\n
 	read(buf, 0, buf.length);
     }

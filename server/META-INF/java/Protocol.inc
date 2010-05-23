@@ -240,8 +240,8 @@ class java_SocketHandler {
 	$this->channel->keepAlive();
   }
   function dieWithBrokenConnection($msg) {
-	unset($this->protocol->client->protocol);
-    trigger_error ("${msg}", E_USER_ERROR);
+  	unset($this->protocol->client->protocol);
+    trigger_error ($msg?$msg:"unknown error: please see back end log for details", E_USER_ERROR);
   }
   function shutdownBrokenConnection ($msg) {
     $this->channel->shutdownBrokenConnection();

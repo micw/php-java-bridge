@@ -156,7 +156,7 @@ public class JavaBridgeRunner extends HttpServer {
      * see php.java.servlet.PhpJavaServlet#handleRedirectConnection(HttpServletRequest, HttpServletResponse)
      */
     protected void doPut (HttpRequest req, HttpResponse res) throws IOException {
-	InputStream sin=null; OutputStream sout = null;
+	ChunkedInputStream sin=null; ChunkedOutputStream sout = null;
     	String transferEncoding = getHeader("Transfer-Encoding", req);
     	boolean isChunked = "chunked".equals(transferEncoding);
     	if (!isChunked) throw new IllegalStateException ("Please use a JEE server or servlet engine.");
@@ -169,10 +169,10 @@ public class JavaBridgeRunner extends HttpServer {
 	res.setHeader("Cache-Control", "no-cache");
 	try {
 	    ctx.getBridge().handleRequestsInternal(sin, sout);
+	    sin.eof();
+	    sout.eof();
 	} finally {
 	    ctx.destroy();
-	    try {sin.close(); } catch (Exception e) {/*ignore*/}
-	    try {sout.close(); } catch (Exception e) {/*ignore*/}
 	}
     }
     /**
