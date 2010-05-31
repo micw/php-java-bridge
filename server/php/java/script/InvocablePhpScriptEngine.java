@@ -173,6 +173,7 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
   	
   	setNewContextFactory();
         setName(name);
+	env.put("X_JAVABRIDGE_INCLUDE", EMPTY_INCLUDE);
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Writer w = new OutputStreamWriter(out);
