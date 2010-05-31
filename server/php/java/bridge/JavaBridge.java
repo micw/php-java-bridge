@@ -1462,12 +1462,8 @@ public class JavaBridge implements Runnable {
      * @return A string representation.
      */
     public String ObjectToString(byte[] ob) {
-	if (ob==null) return ObjectToString((Object) null);   
-	try {
-	    return new String ((byte[])castToString(ob), options.getEncoding());
-    	} catch (UnsupportedEncodingException e) {
-    	    return new String ((byte[])castToString(ob));
-    	}
+	if (ob==null) return ObjectToString((Object) null);
+	return (String)castToString(ob);
     }
  
     /**
