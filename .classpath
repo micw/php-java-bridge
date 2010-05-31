@@ -4,7 +4,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="unsupported/itext.jar"/>
 	<classpathentry kind="lib" path="unsupported/log4j.jar"/>
-	<classpathentry kind="lib" path="unsupported/lucene.jar"/>
 	<classpathentry kind="lib" path="unsupported/poi.jar"/>
 	<classpathentry kind="lib" path="unsupported/servlet-api.jar"/>
 	<classpathentry kind="output" path="bin"/>
