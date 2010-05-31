@@ -721,8 +721,7 @@ public final class Util {
      * @return The String
      * @throws NullPointerException
      */
-    public static String[] hashToStringArray(Map h)
-	throws NullPointerException {
+    public static String[] hashToStringArray(Map h) {
 	Vector v = new Vector();
 	Iterator e = h.keySet().iterator();
 	while (e.hasNext()) {
@@ -903,22 +902,34 @@ public final class Util {
      * @param buf The base name, e.g.: /opt/tomcat/webapps/JavaBridge/WEB-INF/cgi/php-cgi
      * @return The full name or null.
      */
-    public static String[] checkCgiBinary(StringBuffer buf) {
+    public static String[] checkCgiBinary(String php) {
     	File location;
  
-    	buf.append("-");
+    	File phpFile = new File(php);
+    	String path = phpFile.getParent();
+    	String file = phpFile.getName();
+    	
+    	StringBuffer buf = new StringBuffer();
+    	if (path != null) {
+    	    buf.append(path);
+    	    buf.append(File.separatorChar);
+    	}
 	buf.append(osArch);
 	buf.append("-");
 	buf.append(osName);
-
-	location = new File(buf.toString() + ".sh");
-	if(Util.logLevel>3) Util.logDebug("trying: " + location);
-	if(location.exists()) return new String[] {"/bin/sh", location.getAbsolutePath()};
-		
-	location = new File(buf.toString() + ".exe");
-	if(Util.logLevel>3) Util.logDebug("trying: " + location);
-	if(location.exists()) return new String[] {location.getAbsolutePath()};
-
+	buf.append(File.separatorChar);
+	buf.append(file);
+	
+	if (USE_SH_WRAPPER) {
+	    location = new File(buf.toString() + ".sh");
+	    if(Util.logLevel>3) Util.logDebug("trying: " + location);
+	    if(location.exists()) return new String[] {"/bin/sh", location.getAbsolutePath()};
+	} else {
+	    location = new File(buf.toString() + ".exe");
+	    if(Util.logLevel>3) Util.logDebug("trying: " + location);
+	    if(location.exists()) return new String[] {location.getAbsolutePath()};
+	}
+	
 	location = new File(buf.toString());
 	if(Util.logLevel>3) Util.logDebug("trying: " + location);
 	if(location.exists()) return new String[] {location.getAbsolutePath()};
@@ -1011,6 +1022,73 @@ public final class Util {
 	private boolean tryOtherLocations;
 	private boolean preferSystemPhp;
 	
+	protected String[] quoteArgs(String[] s) {
+	    // quote all args for windows
+	    if (!USE_SH_WRAPPER)
+		for(int j=0; j<s.length; j++) 
+		    if(s[j]!=null) s[j] = "\""+s[j]+"\"";
+	    return s;
+	}
+	protected boolean testPhp(String[] php, String[] args) {
+	    Runtime rt = Runtime.getRuntime();
+	    String[] s = quoteArgs(getTestArgumentArray(php, args));
+	    byte[] buf = new byte[BUF_SIZE];
+	    int c, result, errCode;
+	    InputStream in = null;
+	    OutputStream out = null;
+	    InputStream err = null;
+	    
+	    try {
+	        proc = rt.exec(s, hashToStringArray(env), homeDir);
+	        in = proc.getInputStream();
+	        err = proc.getErrorStream();
+	        out = proc.getOutputStream();
+	            
+	        out.close();
+	        out = null;
+	        
+	        while((c=err.read(buf))>0) 
+	            Util.logError(new String(buf, 0, c, ASCII));
+	        err.close();
+	        err = null;
+	        
+	        while((c=in.read(buf))>0)
+	            ;
+	        in.close();
+	        in = null;
+	        
+	        errCode = proc.waitFor();
+	        result = proc.exitValue();
+	        
+	        if (errCode != 0 || result != 0) 
+	            throw new IOException("php could not be run, returned error code: " + errCode + ", result: " + result);
+	        
+            } catch (IOException e) {
+        	Util.logFatal("Fatal Error: Failed to start PHP "+java.util.Arrays.asList(s)+", reason: " + e);
+        	return false;
+            } catch (InterruptedException e) {
+        	return false;
+            } finally {
+        	try {if (in!=null) in.close(); } catch (Exception e) {/*ignore*/}
+        	try {if (out!=null) out.close(); } catch (Exception e) {/*ignore*/}
+        	try {if (err!=null) err.close(); } catch (Exception e) {/*ignore*/}
+            }
+	    return true;
+	}
+	protected void runPhp(String[] php, String[] args) throws IOException {
+	    Runtime rt = Runtime.getRuntime();
+	    String[] s = quoteArgs(getArgumentArray(php, args));
+
+	    proc = rt.exec(s, hashToStringArray(env), homeDir);
+	    if(Util.logLevel>3) Util.logDebug("Started "+ java.util.Arrays.asList(s));
+	}
+	protected String[] getTestArgumentArray(String[] php, String[] args) {
+	    LinkedList buf = new LinkedList();
+	    buf.addAll(java.util.Arrays.asList(php));
+	    buf.add("-v");
+	    
+	    return  (String[]) buf.toArray(new String[buf.size()]);
+	}
 	protected String[] getArgumentArray(String[] php, String[] args) {
 	    LinkedList buf = new LinkedList();
 	    buf.addAll(java.util.Arrays.asList(php));
@@ -1023,8 +1101,6 @@ public final class Util {
 	}
 	protected void start() throws NullPointerException, IOException {
 	    File location;
-	    Runtime rt = Runtime.getRuntime();
-
 	    /*
 	     * Extract the php executable from args[0] ...
 	     */
@@ -1035,7 +1111,7 @@ public final class Util {
 	    if(PHP_EXEC==null) {
 	      if(!preferSystemPhp) {
 		if(phpExec != null && 
-				((cgiBinary=checkCgiBinary(new StringBuffer(phpExec))) != null)) php = cgiBinary;
+				((cgiBinary=checkCgiBinary(phpExec)) != null)) php = cgiBinary;
 		/*
 		 * ... resolve it ..
 		 */            
@@ -1059,7 +1135,7 @@ public final class Util {
 		    }
 		}
 		if(phpExec != null && 
-				(php[0]==null &&  (cgiBinary=checkCgiBinary(new StringBuffer(phpExec))) != null)) php = cgiBinary;
+				(php[0]==null &&  (cgiBinary=checkCgiBinary(phpExec)) != null)) php = cgiBinary;
 	      }
 	    }
             if(php[0]==null && tryOtherLocations) php[0]=PHP_EXEC;
@@ -1074,15 +1150,9 @@ public final class Util {
         	homeDir = HOME_DIR; // system PHP executables are always executed in the user's HOME dir
             
             if(homeDir!=null &&!homeDir.exists()) homeDir = null;
-	    String[] s = getArgumentArray(php, args);
-	    
-	    // quote all args for windows
-	    if (!USE_SH_WRAPPER)
-		for(int j=0; j<s.length; j++) 
-		    if(s[j]!=null) s[j] = "\""+s[j]+"\""; 
-	    
-	    proc = rt.exec(s, hashToStringArray(env), homeDir);
-	    if(Util.logLevel>3) Util.logDebug("Started "+ java.util.Arrays.asList(s));
+            
+            if (testPhp(php, args)) 
+        	runPhp(php, args);
         }
 	protected Process(String[] args, File homeDir, Map env, boolean tryOtherLocations, boolean preferSystemPhp) {
 	    this.args = args;

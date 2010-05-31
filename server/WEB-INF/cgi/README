@@ -1,7 +1,8 @@
 If this directory contains a PHP FastCGI executable called
-php-cgi-<architecture>-<os>[.exe|.sh], the PHP/Java Bridge library
-tries to call it via a /bin/sh wrapper (see launcher.sh) or via a
-"launcher.exe" when the server or the web context starts:
+<architecture>-<os>/php-cgi.sh] or <architecture>-<os>/php-cgi.exe,
+the PHP/Java Bridge library tries to call it via a /bin/sh wrapper 
+(see launcher.sh) or via a "launcher.exe" when the server 
+or the web context starts:
 
 
    internet 
@@ -32,7 +33,7 @@ REDIRECT_STATUS="200" \
 X_JAVABRIDGE_OVERRIDE_HOSTS="/" \
 PHP_FCGI_CHILDREN="5" \
 PHP_FCGI_MAX_REQUESTS="5000" \
-launcher.sh php-cgi-arch-os -c php-cgi-arch-os.ini -b 127.0.0.1:9667
+arch-os/launcher.sh arch-os/php-cgi -c php-cgi.ini -b 127.0.0.1:9667
 
 
 WINDOWS: If /bin/sh is not available or if the php-cgi.exe does not
@@ -44,37 +45,4 @@ set X_JAVABRIDGE_OVERRIDE_HOSTS "/"
 set PHP_FCGI_CHILDREN "5" 
 set PHP_FCGI_MAX_REQUESTS "5000"
 launcher.exe PHP-CGI NAMED-PIPE PHP-OPTIONS
-
-
-----------------------------------------------------------------------
-Installation:
-
-On Unix compile a FastCGI PHP binary and copy it into this directory
-and rename it to php-cgi-arch-os. Create a /bin/sh wrapper called
-php-cgi-arch-os.sh and create a PHP .ini file, see the
-php-cgi-i386-linux.sh and php-cgi-i386-linux.ini for a template.
-
-Example for i386 linux:
-
-  php-cgi-i386-linux.sh  # starts the ./php-cgi-i386-linux binary
-  php-cgi-i386-linux     # loads php-cgi-i386-linux.ini
-  php-cgi-i386-linux.ini # custom PHP ini file
-  
-
-On Windows copy the php-cgi.exe and the php5ts.dll into this
-directory. Create a PHP .ini file called php-cgi.ini.
-
-Example for php4, x86 windows:
-
-  php-cgi-x86-windows.exe # php-cgi.exe, loads php.ini
-  php4ts.dll              # required by the .exe
-  php.ini                 # custom PHP ini file
-
-
-Start the web context, browse to http://localhost/webContext/test.php
-and check if the application server has started 5 php-cgi-arch-os
-executables.
-
-If the FastCGI SAPI fails, the bridge writes a message to the log, the
-FastCGIServlet is switched off and the PhpCGIServlet takes over.
 

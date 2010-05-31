@@ -48,7 +48,6 @@
 	<include name="WEB-INF/cgi/launcher.c" />
 	<include name="WEB-INF/cgi/launcher.sh" />
 	<include name="WEB-INF/cgi/README.sh" />
-	<include name="WEB-INF/cgi/rename*" />
       </fileset>
       <fileset dir="${javaClassDir}">
 	<include name="php/java/bridge/global.properties" />
@@ -252,7 +251,7 @@
 	<include name="*.jar" />
       </lib>
       <webinf dir="${javaBaseDir}/WEB-INF">
-	<include name="cgi/php*" />
+	<include name="cgi/**/*" />
 	<include name="cgi/README" />
       </webinf>
       <webinf dir="${libDir}">
