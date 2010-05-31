@@ -1,3 +1,20 @@
+2010-05-31  <jostb@intern>
+
+    * server/php/java/bridge/JavaBridge.java
+    (ObjectToString): Do not convert byte[] to String to avoid encoding problems
+    
+    * server/php/java/bridge/Util.java
+    (Process): test php before execution
+    
+    * server/php/java/servlet/fastcgi/FastCGIServlet.java
+    (init): Support for x64
+    
+    * server/php/java/servlet/fastcgi/FCGIProcess.java
+    (getArgumentArray): Support for x64
+    
+    * server/php/java/script/InvocablePhpScriptEngine.java
+    (eval): added missing X_JAVABRIDGE_INCLUDE, required by java_call_with_continuation()
+    
 2010-05-23  <jostb@intern>
 
 	* server/php/java/bridge/http/ChunkedInputStream.java

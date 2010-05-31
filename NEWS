@@ -3,6 +3,38 @@ php-java-bridge NEWS -- history of user-visible changes.
 Please send bug reports, questions and suggestions to
 <php-java-bridge-users@lists.sourceforge.net>.
 
+Version 6.2.1
+
+* $s = new java("java.lang.String", "hello");
+  $b = $s->getBytes("ASCII");
+  echo (string)$b;
+  
+  The (string) cast no longer converts the byte[] array to a 
+  java.lang.String using the encoding set with
+  java_set_file_encoding() but returns the byte[] array as a 
+  PHP string directly.
+  
+  In previous versions one had to use java_cast($b, "string") 
+  to do a binary-safe conversion from byte[] to PHP string.
+  
+    
+* To support both x64 and 386 windows dll's, the layout has been changed:
+
+    WEB-INF --- cgi 
+                   |
+                    --- x86-windows --- conf.d --- mysql.ini [extension="php_mysql.dll"]
+                   |               |
+                   |                --- ext --- php_mysql.dll
+                   |                --- php-cgi.exe <-- moved here
+                   |
+                   |
+                   |
+                    --- i386-linux --- conf.d --- mysql.ini [extension="mysql.so"]
+                                  |
+                                   --- ext --- mysql.so
+                                   --- php-cgi      <-- moved here
+
+
 Version 6.1.2.1
 
 * Security fix: Even if the PHP option allow_url_include it set, it is
