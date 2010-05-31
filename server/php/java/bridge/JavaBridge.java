@@ -1431,9 +1431,9 @@ public class JavaBridge implements Runnable {
      * @param ob The object
      * @return A string representation.
      */
-    public String ObjectToString(Object ob) {
+    public Object ObjectToString(Object ob) {
 	if (ob==null && !options.preferValues()) ob = Request.PHPNULL;
-	return (String)castToString(Util.stringValueOf(ob));
+	return castToString(Util.stringValueOf(ob));
     }
 
     /**
@@ -1441,9 +1441,9 @@ public class JavaBridge implements Runnable {
      * @param ob The object
      * @return A string representation.
      */
-    public String ObjectToString(Boolean ob) {
+    public Object ObjectToString(Boolean ob) {
 	if (ob==null) return ObjectToString((Object) null);   
-	return (String)castToString(ob.booleanValue()?"1":"");
+	return castToString(ob.booleanValue()?"1":"");
     }
 
     /**
@@ -1451,9 +1451,9 @@ public class JavaBridge implements Runnable {
      * @param ob The object
      * @return A string representation.
      */
-    public String ObjectToString(String ob) {
+    public Object ObjectToString(String ob) {
 	if (ob==null) return ObjectToString((Object) null);   
-	return (String)castToString(ob);
+	return castToString(ob);
     }
 
     /**
@@ -1461,9 +1461,9 @@ public class JavaBridge implements Runnable {
      * @param ob The object
      * @return A string representation.
      */
-    public String ObjectToString(byte[] ob) {
+    public Object ObjectToString(byte[] ob) {
 	if (ob==null) return ObjectToString((Object) null);
-	return (String)castToString(ob);
+	return castToString(ob);
     }
  
     /**
@@ -1472,7 +1472,7 @@ public class JavaBridge implements Runnable {
      * @param trace The stack trace
      * @return A string representation.
      */
-    public String ObjectToString(Throwable ob, String trace) {
+    public Object ObjectToString(Throwable ob, String trace) {
 	StringBuffer buf = new StringBuffer("[");
 	try {
 	    Util.appendObject(ob, buf);
@@ -1490,7 +1490,7 @@ public class JavaBridge implements Runnable {
 	    buf.append("]");
 	}
 	buf.append("]");
-	return (String)castToString(buf.toString());
+	return castToString(buf.toString());
     }
     
     private Object contextCache = null;
