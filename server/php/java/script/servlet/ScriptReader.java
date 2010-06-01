@@ -2,6 +2,7 @@
 
 package php.java.script.servlet;
 
+import java.io.File;
 import java.io.FilterReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -53,7 +54,7 @@ class ScriptReader extends FilterReader implements IScriptReader {
     }
     
     /** {@inheritDoc} */
-    public synchronized void close () throws IOException {
+    public void close () throws IOException {
 	super.close ();
 	isClosed = true;
     }
@@ -61,7 +62,15 @@ class ScriptReader extends FilterReader implements IScriptReader {
     /* (non-Javadoc)
      * @see php.java.script.servlet.IScriptReader#isClosed()
      */
-    public synchronized boolean isClosed () {
+    public boolean isClosed () {
 	return isClosed;
+    }
+
+    /** {@inheritDoc} */
+    public synchronized void createScriptFile(File realFile) throws IOException {
+	if(!isClosed()) {
+	    ScriptFileReader.createFile(realFile, this);
+	    close();
+	}
     }
 }

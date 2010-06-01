@@ -1,6 +1,7 @@
 package php.java.script.servlet;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -32,4 +33,10 @@ public interface IScriptReader extends  Closeable {
      * @exception  IOException  If an I/O error occurs
      */
     public abstract int read(char cbuf[], int off, int len) throws IOException;
+
+    /**
+     * Create a PHP script file at most once.
+     * @param realFile The file to create
+     */
+    public abstract void createScriptFile(File realFile) throws IOException;
 }

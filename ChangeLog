@@ -1,3 +1,18 @@
+2010-06-01  <jostb@intern>
+
+    * php/java/script/servlet/EngineFactory.java
+    (createScriptFile): New method
+
+    * php/java/script/servlet/IScriptReader.java
+    (createScriptFile): New method
+
+    * php/java/script/servlet/ScriptReader.java
+    (readerIsClosed): Removed
+    (createScriptFile): New method
+
+    * php/java/script/servlet/ScriptFileReader.java
+    (getResourcePath): Synchronize properly
+
 2010-05-31  <jostb@intern>
 
     * server/php/java/bridge/JavaBridge.java

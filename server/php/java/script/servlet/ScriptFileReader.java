@@ -56,16 +56,14 @@ final class ScriptFileReader extends Reader {
     public String getResourcePath(ServletContext ctx) throws IOException {
 	if (realReader==null) {
 	    File realFile = new File(ServletUtil.getRealPath(ctx, path));
-	    if (reader!=null && !readerIsClosed()) {
-		createFile(realFile, reader);
-		reader.close();
-		reader = null;
+	    if (reader!=null) {
+		reader.createScriptFile(realFile);
 	    }
 	    realReader = new FileReader(realFile);
 	}
 	return path;
     }
-    private static void createFile(File file, IScriptReader reader) throws IOException {
+    static void createFile(File file, IScriptReader reader) throws IOException {
 	FileOutputStream fout = new FileOutputStream(file);
 	OutputStreamWriter writer = new OutputStreamWriter(fout);
 	char[] cbuf = new char[Util.BUF_SIZE];
@@ -73,9 +71,6 @@ final class ScriptFileReader extends Reader {
 	while((length=reader.read(cbuf, 0, cbuf.length))>0) 
 	    writer.write(cbuf, 0, length);
 	writer.close();
-    }
-    private boolean readerIsClosed() {
-	return reader.isClosed();
     }
     public void close() throws IOException {
 	if (realReader!=null) {

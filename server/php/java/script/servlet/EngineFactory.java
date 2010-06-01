@@ -2,6 +2,7 @@
 
 package php.java.script.servlet;
 
+import java.io.File;
 import java.io.FilterReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -268,7 +269,12 @@ public final class EngineFactory {
 	    }
 	    return false;
         }
-	
+        public synchronized void createScriptFile(File realFile) throws IOException {
+		if(!isClosed()) {
+		    ScriptFileReader.createFile(realFile, this);
+		    close();
+		}
+        }
     }
 
     /**
