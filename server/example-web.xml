@@ -29,7 +29,7 @@
         <servlet-name>PhpCGIServlet</servlet-name>
         <servlet-class>php.java.servlet.fastcgi.FastCGIServlet</servlet-class>
         <!-- the following line conveniently adds require_once("java/Java.inc") to each PHP script. Remove the line, if you don't need this feature. -->
-        <init-param><param-name>php_include_java</param-name><param-value>On</param-value></init-param>
+        <!-- <init-param><param-name>php_include_java</param-name><param-value>On</param-value></init-param> -->
         <!-- If PHP is not in the PATH, uncomment and change the following line to e.g.: c:/Program Files/PHP/php-cgi.exe or /usr/local/bin/php-cgi  -->
         <!-- <init-param><param-name>php_exec</param-name><param-value>php-cgi</param-value></init-param>  -->
         <load-on-startup>0</load-on-startup>

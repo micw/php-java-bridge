@@ -74,7 +74,7 @@ public class ServletUtil {
             Util.printStackTrace(e);
         }
         if(url != null && !"file".equals(url.getProtocol())) url = null;
-        if (url == null) throw new IllegalArgumentException("Cannot access "+pathInfoCGI+" within the current web directory. Explode your application .war file and try again.");
+        if (url == null) throw new IllegalStateException("Cannot access "+pathInfoCGI+" within the current web application. Please explode it: Unzip the application .war file into a directory and deploy the directory instead.");
         
         ret = url.getPath();
         return ret.replace('/', File.separatorChar);

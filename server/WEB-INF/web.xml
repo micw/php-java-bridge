@@ -45,6 +45,10 @@
            <param-value>php-cgi</param-value>
          </init-param>
         -->
+        
+        <!-- the following line conveniently adds require_once("java/Java.inc") -->
+        <!-- to each PHP script. Remove the line, if you don't need this feature. -->
+        <init-param><param-name>php_include_java</param-name><param-value>On</param-value></init-param>
 
          <!-- Prefer the system php-cgi executable (see DEFAULT_CGI_LOCATIONS) -->
          <!-- over a local WEB-INF/cgi/php-cgi-xxx-yyy[.sh|.exe]? -->
