@@ -72,8 +72,6 @@ import php.java.servlet.ServletUtil;
 public class FastCGIServlet extends HttpServlet {
     private static final long serialVersionUID = 3545800996174312757L;
 
-    private static final int JAVABRIDGE_RESERVE = 1;
-
     static final String PEAR_DIR = "/WEB-INF/pear";
     static final String CGI_DIR = "/WEB-INF/cgi";
     static final String WEB_INF_DIR = "/WEB-INF";
@@ -147,7 +145,6 @@ public class FastCGIServlet extends HttpServlet {
 
     protected boolean canStartFCGI = false;
     protected boolean override_hosts = true;
-    protected boolean delegateToJavaBridgeContext = false;
 
     protected String php_fcgi_connection_pool_size = PHP_FCGI_CONNECTION_POOL_SIZE;
     protected String php_fcgi_connection_pool_timeout = PHP_FCGI_CONNECTION_POOL_TIMEOUT;
@@ -364,16 +361,8 @@ public class FastCGIServlet extends HttpServlet {
 	fcgiIsConfigured = true;
 	checkCgiBinary(config);
 	
-	try {
-	    value = config.getInitParameter("shared_fast_cgi_pool");
-	    if(value==null) value="";
-	    value = value.trim();
-	    value = value.toLowerCase();
-	    if(value.equals("on") || value.equals("true")) 
-		delegateToJavaBridgeContext=true;
-	} catch (Throwable t) {/*ignore*/}
 	channelName = ChannelFactory.createChannelFactory(promiscuous);
-	channelName.findFreePort(canStartFCGI && !delegateToJavaBridgeContext);
+	channelName.findFreePort(canStartFCGI);
 
 	createPhpFiles ();
     }
@@ -441,74 +430,36 @@ public class FastCGIServlet extends HttpServlet {
 	}
 	String cgiDir = ServletUtil.getRealPath(context, CGI_DIR);
 	File cgiOsDir = new File(cgiDir, Util.osArch+"-"+Util.osName);
-	if (cgiDir != null) {
-	    File conf = new File(cgiOsDir, "conf.d");
-	    File ext = new File(cgiOsDir, "ext");
-	    File cgiDirFile = new File (cgiDir);
+	File conf = new File(cgiOsDir, "conf.d");
+	File ext = new File(cgiOsDir, "ext");
+	File cgiDirFile = new File (cgiDir);
+	try {
+	    if (!cgiDirFile.exists()) {
+		cgiDirFile.mkdirs();
+	    }
+	} catch (Exception e) {
+	    e.printStackTrace();
+	}
+
+	try {
+	    if (!conf.exists()) {
+		conf.mkdirs ();
+	    }
+	} catch (Exception e) {
+	    e.printStackTrace();
+	}
+
+	try {
+	    if (!ext.exists()) {
+		ext.mkdir();
+	    }
+	} catch (Exception e) {
+	    e.printStackTrace();
+	}
+
+	File javaIncFile = new File (cgiOsDir, "launcher.sh");
+	if (Util.USE_SH_WRAPPER) {
 	    try {
-		if (!cgiDirFile.exists()) {
-		    cgiDirFile.mkdirs();
-		}
-	    } catch (Exception e) {
-		e.printStackTrace();
-	    }
-	    
-	    try {
-		if (!conf.exists()) {
-		    conf.mkdirs ();
-		}
-	    } catch (Exception e) {
-		e.printStackTrace();
-	    }
-
-	    File tmpl = new File(conf, "mysql.ini");
-	    if (!tmpl.exists()) {
-		String str;
-		if (Util.USE_SH_WRAPPER) {
-		    str = ";; -*- mode: Scheme; tab-width:4 -*-\n"+
-                        ";; Example extension.ini file: mysql.ini.\n"+
-			";; Copy the correct version (see phpinfo()) of the PHP extension \"mysql.so\" to the ./../ext directory and uncomment the following line\n"+
-			"; extension = mysql.so\n";
-		} else {
-		    str = ";; -*- mode: Scheme; tab-width:4 -*-\r\n"+
-                        ";; Example extension.ini file: mysql.ini.\r\n"+
-			";; Copy the correct version (see phpinfo()) of the PHP extension \"php_mysql.dll\" to the .\\..\\ext directory and uncomment the following line\r\n"+
-			"; extension = php_mysql.dll\r\n";
-		}
-		byte[] data = str.getBytes();
-		try {
-		    OutputStream out = new FileOutputStream (tmpl);
-		    out.write(data);
-		    out.close();
-		} catch (Exception e) {
-		    e.printStackTrace();
-		}
-	    }
-
-	    try {
-		if (!ext.exists()) {
-		    ext.mkdir();
-		}
-	    } catch (Exception e) {
-		e.printStackTrace();
-	    }
-
-	    tmpl = new File(conf, "mysql.ini");
-	    if (!tmpl.exists()) {
-		String str = Util.USE_SH_WRAPPER ? ";extension = php_mysql.dll" : ";extension = mysql.so";
-		byte[] data = str.getBytes();
-		try {
-		    OutputStream out = new FileOutputStream (tmpl);
-		    out.write(data);
-		    out.close();
-		} catch (Exception e) {
-		    e.printStackTrace();
-		}
-	    }
-
-	    File javaIncFile = new File (cgiOsDir, "launcher.sh");
-	    if (Util.USE_SH_WRAPPER) {
-	      try {
 		if (!javaIncFile.exists()) {
 		    Field f = Util.LAUNCHER_UNIX.getField("bytes");
 		    byte[] buf = (byte[]) f.get(Util.LAUNCHER_UNIX);
@@ -516,13 +467,13 @@ public class FastCGIServlet extends HttpServlet {
 		    out.write(buf);
 		    out.close();
 		}
-	      } catch (Exception e) {
+	    } catch (Exception e) {
 		e.printStackTrace();
-	      }
 	    }
-	    File javaProxyFile = new File (cgiOsDir, "launcher.exe");
-	    if (!Util.USE_SH_WRAPPER) {
-	      try {
+	}
+	File javaProxyFile = new File (cgiOsDir, "launcher.exe");
+	if (!Util.USE_SH_WRAPPER) {
+	    try {
 		if (!javaProxyFile.exists()) {
 		    Field f =  Util.LAUNCHER_WINDOWS.getField("bytes");
 		    Field f2 = Util.LAUNCHER_WINDOWS2.getField("bytes");
@@ -539,76 +490,102 @@ public class FastCGIServlet extends HttpServlet {
 		    out.write(buf4);
 		    out.close();
 		}
-	      } catch (Exception e) {
+	    } catch (Exception e) {
 		e.printStackTrace();
-	      }
 	    }
+	}
+	boolean exeExists = true;
+	if (Util.USE_SH_WRAPPER) {
+	    try {
+		File phpCgi = new File (cgiOsDir, "php-cgi");
+		if (!useSystemPhp(phpCgi)) {
+		    updateProcessEnvironment(conf);
+		    File wrapper = new File(cgiOsDir, "php-cgi.sh");
+		    if (!wrapper.exists()) {
+			byte[] data = ("#!/bin/sh\nchmod +x ./php-cgi-"+Util.osArch+"-"+Util.osName+"\n"+
+			"exec ./php-cgi -c php-cgi.ini \"$@\"").getBytes();
+			OutputStream out = new FileOutputStream (wrapper);
+			out.write(data);
+			out.close();
+		    }
+		    File ini = new File(cgiOsDir, "php-cgi.ini");
+		    if (!ini.exists()) {
+			byte[] data = (";; -*- mode: Scheme; tab-width:4 -*-\n;; A simple php.ini\n"+
+				";; DO NOT EDIT THIS FILE!\n" +
+				";; Add your configuration files to the "+conf+" instead.\n"+
+				";; PHP extensions go to "+ext+". Please see phpinfo() for ABI version details.\n"+
+				"extension_dir=\""+ext+"\"\n"+
+				"include_path=\""+pearDir+":/usr/share/pear:.\"\n").getBytes();
+			OutputStream out = new FileOutputStream (ini);
+			out.write(data);
+			out.close();
+		    }
+		} else {
+		    exeExists = false;
+		    File readme = new File(cgiOsDir, "php-cgi.MISSING.README.txt");
+		    if (!readme.exists()) {
+			byte[] data = ("You can add \"php-cgi\" to your web application WEB-INF/cgi directory and re-deploy your web application.\n").getBytes();
+			OutputStream out = new FileOutputStream (readme);
+			out.write(data);
+			out.close();
+		    }
+		}
+	    } catch (Exception e) {
+		e.printStackTrace();
+	    }
+	} else {
+	    try {
+		File phpCgi = new File (cgiOsDir, "php-cgi.exe");
+		if (!useSystemPhp(phpCgi)) {
+		    updateProcessEnvironment(conf);
+		    File ini = new File(cgiOsDir, "php.ini");
+		    if (!ini.exists()) {
+			byte[] data = (";; -*- mode: Scheme; tab-width:4 -*-\r\n;; A simple php.ini\r\n"+
+				";; DO NOT EDIT THIS FILE!\r\n" +
+				";; Add your configuration files to the "+conf+" instead.\r\n"+
+				";; PHP extensions go to "+ext+". Please see phpinfo() for ABI version details.\r\n"+
+				"extension_dir=\""+ext+"\"\r\n"+
+				"include_path=\""+pearDir+";.\"\r\n").getBytes();
+			OutputStream out = new FileOutputStream (ini);
+			out.write(data);
+			out.close();
+		    }
+		} else {
+		    exeExists = false;
+		    File readme = new File(cgiOsDir, "php-cgi.exe.MISSING.README.txt");
+		    if (!readme.exists()) {
+			byte[] data = ("You can add \"php-cgi.exe\" to your web application WEB-INF/cgi directory and re-deploy your web application.\r\n").getBytes();
+			OutputStream out = new FileOutputStream (readme);
+			out.write(data);
+			out.close();
+		    }
+		}
+	    } catch (Exception e) {
+		e.printStackTrace();
+	    }
+	}
+
+	File tmpl = new File(conf, "mysql.ini");
+	if (exeExists && !tmpl.exists()) {
+	    String str;
 	    if (Util.USE_SH_WRAPPER) {
-		try {
-		    File phpCgi = new File (cgiOsDir, "php-cgi");
-		    if (!useSystemPhp(phpCgi)) {
-			updateProcessEnvironment(conf);
-			File wrapper = new File(cgiOsDir, "php-cgi.sh");
-			if (!wrapper.exists()) {
-			    byte[] data = ("#!/bin/sh\nchmod +x ./php-cgi-"+Util.osArch+"-"+Util.osName+"\n"+
-					   "exec ./php-cgi -c php-cgi.ini \"$@\"").getBytes();
-			    OutputStream out = new FileOutputStream (wrapper);
-			    out.write(data);
-			    out.close();
-			}
-			File ini = new File(cgiOsDir, "php-cgi.ini");
-			if (!ini.exists()) {
-			    byte[] data = (";; -*- mode: Scheme; tab-width:4 -*-\n;; A simple php.ini\n"+
-					   ";; DO NOT EDIT THIS FILE!\n" +
-					   ";; Add your configuration files to the "+conf+" instead.\n"+
-					   ";; PHP extensions go to "+ext+". Please see phpinfo() for ABI version details.\n"+
-					   "extension_dir=\""+ext+"\"\n"+
-					   "include_path=\""+pearDir+":/usr/share/pear:.\"\n").getBytes();
-			    OutputStream out = new FileOutputStream (ini);
-			    out.write(data);
-			    out.close();
-			}
-		    } else {
-			File readme = new File(cgiOsDir, "php-cgi.MISSING.README.txt");
-			if (!readme.exists()) {
-			    byte[] data = ("You can add \"php-cgi\" to your web application WEB-INF/cgi directory and re-deploy your web application.\n").getBytes();
-			    OutputStream out = new FileOutputStream (readme);
-			    out.write(data);
-			    out.close();
-			}
-		    }
-		} catch (Exception e) {
-		    e.printStackTrace();
-		}
+		str = ";; -*- mode: Scheme; tab-width:4 -*-\n"+
+		";; Example extension.ini file: mysql.ini.\n"+
+		";; Copy the correct version (see phpinfo()) of the PHP extension \"mysql.so\" to the ./../ext directory and uncomment the following line\n"+
+		"; extension = mysql.so\n";
 	    } else {
-		try {
-		    File phpCgi = new File (cgiOsDir, "php-cgi.exe");
-		    if (!useSystemPhp(phpCgi)) {
-			updateProcessEnvironment(conf);
-			File ini = new File(cgiOsDir, "php.ini");
-			if (!ini.exists()) {
-			    byte[] data = (";; -*- mode: Scheme; tab-width:4 -*-\r\n;; A simple php.ini\r\n"+
-					   ";; DO NOT EDIT THIS FILE!\r\n" +
-					   ";; Add your configuration files to the "+conf+" instead.\r\n"+
-					   ";; PHP extensions go to "+ext+". Please see phpinfo() for ABI version details.\r\n"+
-					   "extension_dir=\""+ext+"\"\r\n"+
-					   "include_path=\""+pearDir+";.\"\r\n").getBytes();
-			    OutputStream out = new FileOutputStream (ini);
-			    out.write(data);
-			    out.close();
-			}
-		    } else {
-			File readme = new File(cgiOsDir, "php-cgi.exe.MISSING.README.txt");
-			if (!readme.exists()) {
-			    byte[] data = ("You can add \"php-cgi.exe\" to your web application WEB-INF/cgi directory and re-deploy your web application.\r\n").getBytes();
-			    OutputStream out = new FileOutputStream (readme);
-			    out.write(data);
-			    out.close();
-			}
-		    }
-		} catch (Exception e) {
-		    e.printStackTrace();
-		}
+		str = ";; -*- mode: Scheme; tab-width:4 -*-\r\n"+
+		";; Example extension.ini file: mysql.ini.\r\n"+
+		";; Copy the correct version (see phpinfo()) of the PHP extension \"php_mysql.dll\" to the .\\..\\ext directory and uncomment the following line\r\n"+
+		"; extension = php_mysql.dll\r\n";
+	    }
+	    byte[] data = str.getBytes();
+	    try {
+		OutputStream out = new FileOutputStream (tmpl);
+		out.write(data);
+		out.close();
+	    } catch (Exception e) {
+		e.printStackTrace();
 	    }
 	}
     }
@@ -666,12 +643,6 @@ public class FastCGIServlet extends HttpServlet {
 	synchronized(lockObject) {
 	    if(null == (env.connectionPool=fcgiConnectionPool)) {
 		int children = php_fcgi_connection_pool_size_number;
-		if(delegateToJavaBridgeContext) { 
-		    // NOTE: the shared_fast_cgi_pool options
-		    // from the GlobalPhpCGIServlet and from
-		    // the PhpCGIServlet must match.
-		    children = isJavaBridgeWc ? JAVABRIDGE_RESERVE : php_fcgi_connection_pool_size_number-JAVABRIDGE_RESERVE;
-		}
 		env.connectionPool = fcgiConnectionPool= createConnectionPool(req, children, env);
 	    }
 	}
@@ -860,7 +831,6 @@ public class FastCGIServlet extends HttpServlet {
 				    natOutputStream.write(buf, n);
 				}
 			    } catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			    } finally {
 				try {natOutputStream.close();} catch (IOException e) {}

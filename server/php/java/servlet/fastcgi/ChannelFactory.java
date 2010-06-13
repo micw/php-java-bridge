@@ -1,12 +1,9 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 package php.java.servlet.fastcgi;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URL;
-import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.util.Map;
 
@@ -47,7 +44,6 @@ public abstract class ChannelFactory {
     protected FastCGIServlet servlet;
     protected String contextPath;
     protected boolean promiscuous;
-    private HttpServletRequest req;
     
     /* The fast CGI Server process on this computer. Switched off per default. */
     protected static FCGIProcess proc = null;
@@ -65,18 +61,11 @@ public abstract class ChannelFactory {
 	 */
 	synchronized(ChannelFactory.fcgiStartLock) {
 	    if(!fcgiStarted) {
-		if(servlet.delegateToJavaBridgeContext) {
-		    // if this is the GlobalPhpJavaServlet, try to delegate
-		    // to the JavaBridge context
-		    // check if this is the JavaBridge wc
-		    boolean isJavaBridgeWc = ServletUtil.isJavaBridgeWc(contextPath);
-		    delegateOrStartFCGI(isJavaBridgeWc, logger);
-		} else {
 		    if(canStartFCGI()) 
 			try {
 			    bind(logger);
 			} catch (Exception e) {/*ignore*/}
-		}
+		
 		fcgiStarted = true; // mark as started, even if start failed
 	    } 
 	}
@@ -94,7 +83,7 @@ public abstract class ChannelFactory {
 	byte buf[] = new byte[Util.BUF_SIZE];
 	try {
 	    Process proc = doBind(env, php, includeJava);
-	    if(proc==null) return;
+	    if(proc==null || proc.getInputStream() == null) return;
 	    /// make sure that the wrapper script launcher.sh does not output to stdout
 	    proc.getInputStream().close();
 	    // proc.OutputStream should be closed in shutdown, see PhpCGIServlet.destroy()
@@ -119,25 +108,6 @@ public abstract class ChannelFactory {
 	waitForDaemon();
     }
 
-    private static boolean fcgiActivatorRunning = false;
-    /*
-     * Delegate to the JavaBridge context, if necessary.
-     */
-    private void delegateOrStartFCGI(boolean isJavaBridgeContext, ILogger logger) {
-	try {
-	    if(isJavaBridgeContext) {
-		if(canStartFCGI()) bind(logger);
-	    } else {
-		if(canStartFCGI()) {
-		    if(!fcgiActivatorRunning) activateFCGI(); fcgiActivatorRunning = true;
-		    // stop all childs until the fcgi activator has started the fcgi processes
-		    try { fcgiStartLock.wait(); } catch (InterruptedException e) {/*ignore*/}
-		}
-	    }
-	} catch (Exception e) {
-	    Util.printStackTrace(e);
-	}
-    }
     private boolean canStartFCGI() {
 	return servlet.canStartFCGI;
     }
@@ -145,7 +115,6 @@ public abstract class ChannelFactory {
     void destroy() {
 	synchronized(ChannelFactory.fcgiStartLock) {
 	    fcgiStarted = false;
-	    fcgiActivatorRunning = false;
 	    if(proc==null) return;  	
 	    try {
 		OutputStream out = proc.getOutputStream();
@@ -171,40 +140,6 @@ public abstract class ChannelFactory {
     public abstract Channel connect() throws ConnectException;
 
     /**
-     * If this context is not JavaBridge but is set up to connect to a FastCGI server,
-     * try to start the JavaBridge FCGI server.
-     * @throws IOException
-     * @throws InterruptedException 
-     */
-    private void activateFCGI() throws IOException, InterruptedException {
-	URL url = new URL("http", "127.0.0.1", ServletUtil.getLocalPort(req), "/JavaBridge/.php");
-	URLConnection conn = url.openConnection();
-	// use a new thread to avoid a dead lock if the servlet's thread pool is full.
-	(new Util.Thread("JavaBridgeFCGIActivator") {
-		URLConnection conn;
-		public Thread init(URLConnection conn) {
-		    this.conn=conn;
-		    return this;
-		}
-		public void run() {
-		    InputStream in = null;
-		    try {
-			try {
-			    conn.connect();
-			    in = conn.getInputStream();
-			    byte b[] = new byte[Util.BUF_SIZE];
-			    while(-1!=in.read(b));
-			} catch (FileNotFoundException e1) {/* file ".php" should not exist*/}
-		    } catch (Exception e) {
-			Util.printStackTrace(e);
-		    } finally {
-			if(in!=null) try { in.close(); } catch (Exception e){/*ignore*/}
-			synchronized (ChannelFactory.fcgiStartLock) { fcgiStartLock.notify(); }
-		    }
-		}
-	    }).init(conn).start();
-    }
-    /**
      * For backward compatibility the "JavaBridge" context uses the port 9667 (Linux/Unix) or <code>\\.\pipe\JavaBridge@9667</code> (Windogs).
      * @param servlet The servlet
      * @param req The current request.
@@ -212,7 +147,6 @@ public abstract class ChannelFactory {
      */
     public void initialize(FastCGIServlet servlet, HttpServletRequest req, String contextPath) {
 	this.servlet = servlet;
-	this.req = req;
 	this.contextPath = contextPath;
 	if(ServletUtil.isJavaBridgeWc(contextPath)) {
 	    setDefaultPort();
