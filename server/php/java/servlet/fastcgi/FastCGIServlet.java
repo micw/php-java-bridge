@@ -605,12 +605,21 @@ public class FastCGIServlet extends HttpServlet {
     protected void setupRequestVariables(HttpServletRequest req, Environment env) {
 	env.allHeaders = new ArrayList();
 	env.includedJava = php_include_java && PhpJavaServlet.getHeader("X_JAVABRIDGE_INCLUDE", req) == null;
-            
-	env.contextPath = req.getContextPath();
-	env.pathInfo = req.getPathInfo();
-	env.servletPath = req.getServletPath();
-	env.queryString = req.getQueryString();
-	env.requestUri = req.getRequestURI();
+
+	env.contextPath = (String) req.getAttribute("javax.servlet.include.context_path");
+	if (env.contextPath == null) env.contextPath = req.getContextPath();
+
+	env.pathInfo = (String) req.getAttribute("javax.servlet.include.path_info");
+	if (env.pathInfo == null) env.pathInfo = req.getPathInfo();
+
+	env.servletPath = (String) req.getAttribute("javax.servlet.include.servlet_path");
+	if (env.servletPath == null) env.servletPath = req.getServletPath();
+
+	env.queryString = (String) req.getAttribute("javax.servlet.include.query_string");
+	if (env.queryString == null) env.queryString = req.getQueryString();
+
+	env.requestUri = (String) req.getAttribute("javax.servlet.include.request_uri");
+	if (env.requestUri == null) env.requestUri = req.getRequestURI();
     }
     
     private ConnectionPool createConnectionPool(HttpServletRequest req, int children, Environment env) throws ConnectException {
@@ -877,7 +886,7 @@ public class FastCGIServlet extends HttpServlet {
 		}
 		// body
 		if(eoh) {
-		    if(i<N) out.write(buf, i, N-i);
+		    if(i<N) { System.out.println("str:::" + new String(buf, i, N-i)); out.write(buf, i, N-i); }
 		} else { 
 		    if (remain != null) {
 			remain += new String(buf, s, i-s, Util.ASCII);
