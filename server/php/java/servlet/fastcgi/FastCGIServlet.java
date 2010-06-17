@@ -886,7 +886,7 @@ public class FastCGIServlet extends HttpServlet {
 		}
 		// body
 		if(eoh) {
-		    if(i<N) { System.out.println("str:::" + new String(buf, i, N-i)); out.write(buf, i, N-i); }
+		    if(i<N) out.write(buf, i, N-i);
 		} else { 
 		    if (remain != null) {
 			remain += new String(buf, s, i-s, Util.ASCII);
@@ -974,7 +974,12 @@ public class FastCGIServlet extends HttpServlet {
 	    execute(req, res);
 	} catch (IOException e) {
 	    try {res.reset();} catch (Exception ex) {/*ignore*/}
-	    IOException ex = new IOException("PHP FastCGI server not running. Please see server log for details or start a PHP FastCGI server.");
+	    StringBuffer buf = new StringBuffer("PHP FastCGI server not running. Please see server log for details.");
+	    if (channelName!=null && context!=null) {
+		 buf.append(" Or start a PHP FastCGI server using the command:\n");
+		 buf.append(channelName.getFcgiStartCommand(ServletUtil.getRealPath(context, CGI_DIR), php_fcgi_max_requests));
+	    }
+	    IOException ex = new IOException(buf.toString());
 	    ex.initCause(e);
 	    php=null;
 	    checkCgiBinary(getServletConfig());

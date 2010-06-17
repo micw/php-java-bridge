@@ -74,23 +74,14 @@ class NPChannelFactory extends ChannelFactory {
 	Thread.sleep(5000);
     }
     public String getFcgiStartCommand(String base, String php_fcgi_max_requests) {
-	StringBuffer buf = new StringBuffer(".");
-	buf.append(File.separator);
-	buf.append("php-cgi-");
-	buf.append(Util.osArch);
-	buf.append("-");
-	buf.append(Util.osName);
-	String wrapper = buf.toString();
 	String msg =
-	    "Please start Apache or IIS or start a standalone PHP server.\n"+
-	    "For example with the commands: \n\n" +
-	    "cd " + base + "\n" + 
+	    "cd \"" + base + File.separator + Util.osArch + "-" + Util.osName+ "\"\n" + 
 	    "set %REDIRECT_STATUS%=200\n"+ 
 	    "set %X_JAVABRIDGE_OVERRIDE_HOSTS%=/\n"+ 
 	    "set %PHP_FCGI_CHILDREN%=5\n"+ 
-	    "set %PHP_FCGI_MAX_REQUESTS%=php_fcgi_max_requests\n"+ 
-	    "php-cgi -n\n\n" + 
-	    "Or copy your php-cgi.exe to " + wrapper + "\n\n.";
+	    "set %PHP_FCGI_MAX_REQUESTS%=\""+php_fcgi_max_requests+"\"\n"+
+	    "\"c:\\Program Files\\PHP\\php-cgi.exe\" -v\n"+
+	    ".\\launcher.exe \"c:\\Program Files\\PHP\\php-cgi.exe\" \"" + getPath() +"\"\n\n";
         return msg;
     }
     public void findFreePort(boolean select) {
@@ -111,5 +102,8 @@ class NPChannelFactory extends ChannelFactory {
     }
     protected void setDynamicPort() {
 	raPath=testRaPath;
+    }
+    protected String getPath() {
+	return raPath;
     }
 }

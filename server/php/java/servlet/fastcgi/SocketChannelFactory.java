@@ -125,30 +125,19 @@ class SocketChannelFactory extends ChannelFactory {
 	proc.start();
 	return (Process)proc;
     }
-    public int getPort() {
+    protected int getPort() {
 	return port;
     }
-    public String getName() {
+    protected String getName() {
 	return LOCAL_HOST;
     }
     public String getFcgiStartCommand(String base, String php_fcgi_max_requests) {
-	StringBuffer buf = new StringBuffer(".");
-	buf.append(File.separator);
-	buf.append("php-cgi-");
-	buf.append(Util.osArch);
-	buf.append("-");
-	buf.append(Util.osName);
-	String wrapper = buf.toString();
-	String msg =null;
-	msg=
-	    "Please start Apache or IIS or start a standalone PHP server.\n"+
-	    "For example with the commands: \n\n" +
-	    "cd " + base + "\n" + 
-	    "chmod +x " + wrapper + "\n" + 
+	String msg=
+	    "cd " + base + File.separator + Util.osArch + "-" + Util.osName+ "\n" + 
 	    "REDIRECT_STATUS=200 " +
 	    "X_JAVABRIDGE_OVERRIDE_HOSTS=\"/\" " +
 	    "PHP_FCGI_CHILDREN=\"5\" " +
-	    "PHP_FCGI_MAX_REQUESTS=\""+php_fcgi_max_requests+"\" "+wrapper+" -c "+wrapper+".ini -b 127.0.0.1:" +
+	    "PHP_FCGI_MAX_REQUESTS=\""+php_fcgi_max_requests+"\" /usr/bin/php-cgi -b 127.0.0.1:" +
 	    getPort()+"\n\n";
 	return msg;
     }
