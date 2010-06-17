@@ -101,11 +101,12 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
      */
     protected Object invoke(String methodName, Object[] args)
 	throws ScriptException, NoSuchMethodException {
+	if (methodName==null) { release(); return null; }
+	
 	if(scriptClosure==null) {
 	    if (Util.logLevel>4) Util.warn("Evaluating an empty script either because eval() has not been called or release() has been called.");
 	    eval(PHP_EMPTY_SCRIPT);
 	}
-	
 	try {
 	    return invoke(scriptClosure, methodName, args);
 	} catch (php.java.bridge.Request.AbortException e) {
