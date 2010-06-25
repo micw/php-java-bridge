@@ -31,7 +31,7 @@ import java.io.InputStream;
 import php.java.bridge.http.IContext;
 
 /**
- * Create PHP/Java Bridge instances.
+ * Create {@link JavaBridge}, {@link IContext} and {@link ISession} instances.
  */
 public interface IJavaBridgeFactory {
     /**
@@ -88,7 +88,7 @@ public interface IJavaBridgeFactory {
    public void flushBuffer() throws IOException;
 
    /**
-    * Hook is called at the end of the visitor's life cycle. 
+    * Hook is called at the end of the life cycle. 
     * Either from destroy(), recycle() or from destroyOrphaned().
     * @see #destroy()
     * @see #recycle()

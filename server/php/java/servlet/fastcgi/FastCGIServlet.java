@@ -524,7 +524,7 @@ public class FastCGIServlet extends HttpServlet {
 		    exeExists = false;
 		    File readme = new File(cgiOsDir, "php-cgi.MISSING.README.txt");
 		    if (!readme.exists()) {
-			byte[] data = ("You can add \"php-cgi\" to your web application WEB-INF/cgi directory and re-deploy your web application.\n").getBytes();
+			byte[] data = ("You can add \"php-cgi\" to this directory and re-deploy your web application.\n").getBytes();
 			OutputStream out = new FileOutputStream (readme);
 			out.write(data);
 			out.close();
@@ -554,7 +554,7 @@ public class FastCGIServlet extends HttpServlet {
 		    exeExists = false;
 		    File readme = new File(cgiOsDir, "php-cgi.exe.MISSING.README.txt");
 		    if (!readme.exists()) {
-			byte[] data = ("You can add \"php-cgi.exe\" to your web application WEB-INF/cgi directory and re-deploy your web application.\r\n").getBytes();
+			byte[] data = ("You can add \"php-cgi.exe\" to this directory and re-deploy your web application.\r\n").getBytes();
 			OutputStream out = new FileOutputStream (readme);
 			out.write(data);
 			out.close();
