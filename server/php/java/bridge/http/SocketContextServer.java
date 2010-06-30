@@ -62,8 +62,6 @@ public final class SocketContextServer implements Runnable, IContextServer {
     private ISocketFactory serverSocket = null;
     protected List sockets = Collections.synchronizedList(new ArrayList());
     private ILogger logger;
-    private String origContextName;
-    private boolean promiscuous;
     private String contextName;
   
     protected class Channel extends AbstractChannel {
@@ -106,8 +104,6 @@ public final class SocketContextServer implements Runnable, IContextServer {
     public SocketContextServer (AppThreadPool threadPool, boolean promiscuous, String contextName) {
     	this.threadPool = threadPool;
     	this.contextName = contextName;
-    	this.promiscuous = promiscuous;
-	this.origContextName = contextName;
         try {
 	    serverSocket = JavaBridge.bind(promiscuous?"INET:0":"INET_LOCAL:0");
 	    SecurityManager sec = System.getSecurityManager();

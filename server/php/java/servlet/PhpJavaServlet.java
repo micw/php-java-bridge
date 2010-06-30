@@ -258,7 +258,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     	if(Util.logLevel>3) Util.logDebug("doPut:"+req.getRequestURL()); 
     	boolean isLocal = LOCAL_ADDR.equals(req.getRemoteAddr());
     	
-    	if(contextServer!=null && contextServer.isAvailable(null) && (!isLocal==promiscuous)) 
+    	if(contextServer!=null && contextServer.isAvailable(null) && (isLocal || (!isLocal && promiscuous))) 
     	    handleLocalConnection(req, res); /* re-direct */
     	else
     	    handleHttpConnection(req, res);

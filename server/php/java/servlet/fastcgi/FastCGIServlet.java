@@ -156,7 +156,7 @@ public class FastCGIServlet extends HttpServlet {
 
     protected ILogger logger;
 
-    protected boolean promiscuous = false;
+    protected boolean promiscuous = true;
     
 
     private static class Environment {
@@ -285,6 +285,15 @@ public class FastCGIServlet extends HttpServlet {
 	
 	context = config.getServletContext();
 
+	try {
+	    value = context.getInitParameter("promiscuous");
+	    if(value==null) value="";
+	    value = value.trim();
+	    value = value.toLowerCase();
+	    
+	    if(value.equals("off") || value.equals("false")) promiscuous=false;
+	} catch (Throwable t) {t.printStackTrace();}
+
 	String servletContextName=ServletUtil.getRealPath(context, "");
 	if(servletContextName==null) servletContextName="";
 	contextServer = ServletUtil.getContextServer(context, promiscuous);
@@ -298,14 +307,6 @@ public class FastCGIServlet extends HttpServlet {
 	logger = new Util.Logger(!isJBoss, new Logger());
     	Util.setDefaultLogger(logger);
 
-	try {
-	    value = context.getInitParameter("promiscuous");
-	    if(value==null) value="";
-	    value = value.trim();
-	    value = value.toLowerCase();
-	    
-	    if(value.equals("on") || value.equals("true")) promiscuous=true;
-	} catch (Throwable t) {t.printStackTrace();}
     	try {
 	    value = context.getInitParameter("override_hosts");
 	    if(value==null) value="";
