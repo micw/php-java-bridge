@@ -23,9 +23,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import php.java.bridge.ILogger;
 import php.java.bridge.Util;
-import php.java.servlet.ContextLoaderListener;
 
 
 /*
@@ -395,7 +393,6 @@ public final class EngineFactory {
     static void addManaged(ServletContext ctx,
 		InvocablePhpServletLocalHttpServerScriptEngine engine) throws ScriptException {
 	try {
-	    Util.setLogger((ILogger) ctx.getAttribute(ContextLoaderListener.LOGGER));
 	    addManagedInternal(ctx, engine);
 	} catch (PrivilegedActionException e) {
             Throwable cause = e.getCause();

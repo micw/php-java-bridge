@@ -295,7 +295,8 @@ public class FastCGIServlet extends HttpServlet {
 	String name = context.getServerInfo();
 	if (name != null && (name.startsWith("JBoss")))    isJBoss    = true;
 
-	logger = new Util.Logger(!isJBoss, new Logger(context));
+	logger = new Util.Logger(!isJBoss, new Logger());
+    	Util.setDefaultLogger(logger);
 
 	try {
 	    value = context.getInitParameter("promiscuous");
@@ -970,7 +971,6 @@ public class FastCGIServlet extends HttpServlet {
     protected void handle(HttpServletRequest req, HttpServletResponse res)
 	throws ServletException, IOException {
 	try {
-	    Util.setLogger(logger);
 	    execute(req, res);
 	} catch (IOException e) {
 	    try {res.reset();} catch (Exception ex) {/*ignore*/}
@@ -992,8 +992,6 @@ public class FastCGIServlet extends HttpServlet {
 	    try {res.reset();} catch (Exception ex) {/*ignore*/}
 	    if (Util.logLevel>4) Util.printStackTrace(t);
 	    throw new ServletException(t);
-	} finally {
-	    Util.unsetLogger();
 	}
     }
 

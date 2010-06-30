@@ -174,7 +174,7 @@ public class PhpSimpleHttpScriptContext extends AbstractPhpScriptContext impleme
     /** {@inheritDoc} */
     public Writer getErrorWriter() {
  	if(errorWriter == null)
- 		errorWriter = PhpScriptLogWriter.getWriter(new php.java.servlet.Logger(context));
+ 		errorWriter = PhpScriptLogWriter.getWriter(new php.java.servlet.Logger());
 
  	if(! (errorWriter instanceof PhpScriptWriter)) setErrorWriter(errorWriter);
  	return errorWriter;	

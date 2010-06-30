@@ -453,16 +453,6 @@ public final class Util {
     private static ILogger defaultLogger =  new Logger(new FileLogger());
     
     /**
-     * The logger
-     */
-    private static final ThreadLocal logger = new ThreadLocal() {
-	protected Object initialValue() {
-	    //new Exception("no thread local set").printStackTrace();
-            return null;
-	};
-    };
-    
-    /**
      * The loglevel:<br>
      * 0: log off <br>
      * 1: log fatal <br>
@@ -837,56 +827,10 @@ public final class Util {
 	Util.defaultLogger = logger;
     }
     /**
-     * Set a new thread-local logger. Example:<br><br>
-     * <blockquote>
-     * <code>
-     * &nbsp;&nbsp;// servlet engine must support Transfer-Encoding: chunked <br>
-     * protected void doPut (HttpServletRequest req, HttpServletResponse res) { <br>
-     * &nbsp;try {<br>
-     * &nbsp;&nbsp;Util.setLogger(myLogger);<br>
-     * &nbsp;} finally {<br>
-     * &nbsp;&nbsp; Util.unsetLogger();<br>
-     * }
-     * </code>
-     * </blockquote>
-     * @param logger The logger to set.
-     * @see #setDefaultLogger(ILogger)
-     * @see #logDebug
-     */
-    public static void setLogger(ILogger logger) {
-	Util.logger.set(logger);
-    }
-    /**
-     * Remove the thread-local logger. Example:<br><br>
-     * <blockquote>
-     * <code>
-     * &nbsp;&nbsp;// servlet engine must support Transfer-Encoding: chunked <br>
-     * protected void doPut (HttpServletRequest req, HttpServletResponse res) throws IOException, ServletException { <br>
-     * &nbsp;try {<br>
-     * &nbsp;&nbsp;Util.setLogger(myLogger);<br>
-     * &nbsp;} finally {<br>
-     * &nbsp;&nbsp; Util.unsetLogger();<br>
-     * }
-     * </code>
-     * </blockquote>
-     */
-    public static void unsetLogger() {
-	try {
-	    logger.remove();
-	} catch (Throwable t) {
-	    /*ignore*/
-	}
-    }
-    /**
      * @return Returns the logger.
      */
     public static ILogger getLogger() {
-	if (Util.DEFAULT_LOG_FILE_SET) return defaultLogger;
-	
-	ILogger logger = (ILogger)Util.logger.get();
-	if (logger == null) return defaultLogger;
-	
-	return logger;
+	return defaultLogger;
     }
 
     /**

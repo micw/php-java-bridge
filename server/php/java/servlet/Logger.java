@@ -24,36 +24,23 @@ package php.java.servlet;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import javax.servlet.ServletContext;
-
 import php.java.bridge.ILogger;
-import php.java.bridge.Util;
 
 /**
  * A logger class, uses log4j if possible 
  *
  */
 public class Logger implements ILogger {
-	private ServletContext ctx;
-	/**
-	 * Create a new Logger
-	 * @param ctx The servlet context
-	 */
-	public Logger(ServletContext ctx) {
-	    this.ctx = ctx;
-	}
 	/**{@inheritDoc}*/
 	public void log(int level, String s) {
-	    if(Util.logLevel>5) System.out.println(s);
-	    ctx.log(s); 
+	    System.err.println(s);
 	}
 	/**{@inheritDoc}*/
 	public void printStackTrace(Throwable t) {
-	    ctx.log("Exception occured", t);
-	    if(Util.logLevel>5) t.printStackTrace();
+	    t.printStackTrace();
 	}
 	/**{@inheritDoc}*/
 	public void warn(String msg) {
-	    ctx.log(msg);
+	    System.err.println(msg);
 	}
      }

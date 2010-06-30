@@ -236,7 +236,6 @@ abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocableP
 	    super.release();
 	} finally {
 	    releaseReservedContinuation();
-	    Util.unsetLogger();
 	}
     }
     /**

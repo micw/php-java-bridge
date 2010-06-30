@@ -135,9 +135,9 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
 	    String name = ctx.getServerInfo();
 	    if (name != null && (name.startsWith("JBoss")))    isJBoss    = true;
 	    
-	    logger = new Util.Logger(!isJBoss, new Logger(ctx));
+	    logger = new Util.Logger(!isJBoss, new Logger());
 	    ctx.setAttribute(LOGGER, logger);
-
+	    Util.setDefaultLogger(logger);
 	    
 	    boolean promiscuous = false;
 	    try {

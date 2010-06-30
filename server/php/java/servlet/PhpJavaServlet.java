@@ -93,7 +93,8 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	if (name != null && (name.startsWith("WebLogic"))) isWebLogic = true;
 	if (name != null && (name.startsWith("JBoss")))    isJBoss    = true;
 
-	logger = new Util.Logger(!isJBoss, new Logger(ctx));
+	logger = new Util.Logger(!isJBoss, new Logger());
+    	Util.setDefaultLogger(logger);
     	
 	if(Util.VERSION!=null)
     	    log("PHP/Java Bridge servlet "+servletContextName+" version "+Util.VERSION+" ready.");
@@ -253,7 +254,6 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 
     protected void handlePut (HttpServletRequest req, HttpServletResponse res)
 	throws ServletException, IOException {
-	Util.setLogger(logger);
 
     	String channel = getHeader("X_JAVABRIDGE_CHANNEL", req);
     	if(Util.logLevel>3) Util.logDebug("doPut:"+req.getRequestURL()); 

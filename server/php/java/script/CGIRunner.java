@@ -59,7 +59,6 @@ abstract class CGIRunner implements Runnable {
     private ScriptLock scriptLock = new ScriptLock();
     private Lock phpScript = new Lock();
     private ResultProxy resultProxy;
-    private ILogger logger;
     // used to wait for the script to terminate
     private static class ScriptLock {
 	    private boolean running = true;
@@ -103,11 +102,9 @@ abstract class CGIRunner implements Runnable {
 	this.err = err;
 	this.headerParser = headerParser;
 	this.resultProxy = resultProxy;
-	this.logger = logger;
     }
     public void run() {
 	try {
-	    Util.setLogger(logger);
 	    doRun();
 	} catch (IOException e) {
 	    phpScript.val = e;

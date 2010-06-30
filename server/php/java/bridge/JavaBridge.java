@@ -120,13 +120,7 @@ public class JavaBridge implements Runnable {
      * </blockquote>
      */
     public void handleRequests (InputStream in, OutputStream out, ILogger logger) throws IOException {
-	try {
-	    Util.setLogger(logger);
 	    handleRequestsInternal(in, out);
-	} finally {
-	    Util.unsetLogger();
-	}
-	
     }
     /**
      * Only for internal use. Use {@link #handleRequests(InputStream, OutputStream, ILogger)} instead.

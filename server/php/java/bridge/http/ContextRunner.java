@@ -134,7 +134,6 @@ public class ContextRunner implements Runnable {
     /**{@inheritDoc}*/  
     public void run() {
 	try {
-	    Util.setLogger(logger);
 
 	    if(init())
 		request.handleRequests();
