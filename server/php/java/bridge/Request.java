@@ -500,6 +500,15 @@ public final class Request implements IDocHandler {
 	while(Parser.OK==handleRequest())
 	    ;
     }
+    /**
+     * Start handling requests until EOF. Creates a response object and handles all packets.
+     * @throws IOException
+     */
+    public boolean handleOneRequest() throws IOException {
+    	if(response==null) response=bridge.createResponse();
+	this.arg=new SimpleArg();    	
+	return(Parser.OK==handleRequest());
+    }
     /** This exception isn't an exception but a construct to emulate a one-shot continuation in Java. 
      * It is used to quickly clear the stack and to jumb back to some top-level loop.
      * <p>

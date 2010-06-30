@@ -223,13 +223,13 @@ class java_SocketHandler {
   function write($data) {
       return $this->channel->fwrite($data);
   }
-  // fallback for EmptyChannel
+  // fallback for EmptyChannel, phase 1
   function fwrite($data) {return $this->write($data);}
 
   function read($size) {
 	return $this->channel->fread($size);
   }
-  // fallback for EmptyChannel
+  // fallback for EmptyChannel, phase 1
   function fread($size) {return $this->read($size);}
 
   function redirect() {}
@@ -393,11 +393,12 @@ class java_SimpleHttpHandler extends java_SocketHandler {
  *
  * @access private
  */
-class java_HttpTunnelHandler extends java_SimpleHttpHandler  {
+class java_SimpleHttpTunnelHandler extends java_SimpleHttpHandler  {
   // the initial socket connection, may redirect to
   // a socket connection later on
   public $socket;
-
+  protected $hasContentLength = false;
+  
   function createSimpleChannel () {
 	$this->channel = new java_EmptyChannel($this);
   }
@@ -425,7 +426,7 @@ class java_HttpTunnelHandler extends java_SimpleHttpHandler  {
 	stream_set_timeout($socket, -1);
 	$this->socket = $socket;
   }
-  // fallback for EmptyChannel
+  // fallback for EmptyChannel, phase 1
   function fread($size) {
   	$length = hexdec(fgets($this->socket, JAVA_RECV_SIZE));
 	$data = "";
@@ -437,7 +438,7 @@ class java_HttpTunnelHandler extends java_SimpleHttpHandler  {
   	fgets($this->socket, 3); //\r\n
   	return $data;
   }
-  // fallback for EmptyChannel
+  // fallback for EmptyChannel, phase 1
   function fwrite($data) {
     $len = dechex(strlen($data));
     return fwrite($this->socket, "${len}\r\n${data}\r\n");
@@ -448,7 +449,7 @@ class java_HttpTunnelHandler extends java_SimpleHttpHandler  {
 	fgets($this->socket, 3); // \r\n
     fclose($this->socket);
   }
-  function java_HttpTunnelHandler($protocol, $ssl, $host, $port) {
+  function java_SimpleHttpTunnelHandler($protocol, $ssl, $host, $port) {
 	parent::java_SimpleHttpHandler($protocol, $ssl, $host, $port);
 	$this->open();
   }
@@ -494,7 +495,6 @@ class java_HttpTunnelHandler extends java_SimpleHttpHandler  {
      
   function parseHeaders() {
 	$this->headers = array();
-
 	$line = trim(fgets($this->socket, JAVA_RECV_SIZE));
 	$ar = explode (" ", $line);
 
@@ -523,6 +523,7 @@ class java_HttpTunnelHandler extends java_SimpleHttpHandler  {
 	  } else if($str[0]=='C') { // Content-Length
 		if(!strncasecmp("CONTENT-LENGTH", $str, 14)) {
 		  $this->headers["content_length"]=trim(substr($str, 15));
+		  $this->hasContentLength = true;
 		} else if(!strncasecmp("CONNECTION", $str, 10) && !strncasecmp("close", trim(substr($str, 11)), 5)) {
 		  $this->headers["connection_close"] = true;
 		}
@@ -570,7 +571,37 @@ class java_HttpTunnelHandler extends java_SimpleHttpHandler  {
 	}
   }
 }
-
+/**
+ * Used when PHP connects to a servlet environment using a PUT request.
+ * It uses a chunked, non-persistent stream in phase 1 and will
+ * redirect to a simple java_SocketHandler for phase 2.
+ *
+ * @access private
+ */
+class java_HttpTunnelHandler extends java_SimpleHttpTunnelHandler {
+  // fallback for EmptyChannel, phase 1
+  function fread($size) {
+  	if ($this->hasContentLength) 
+  		return fread($this->socket, $this->headers["content_length"]);
+  	else
+  		return parent::fread($size);
+  }
+  // fallback for EmptyChannel, phase 1
+  function fwrite($data) {
+  	if ($this->hasContentLength) 
+  		return fwrite($this->socket, $data);
+  	else
+  		return parent::fwrite($data);
+  }
+  function close() {
+  	if ($this->hasContentLength) {
+		fwrite($this->socket, "0\r\n\r\n");
+  		fclose($this->socket);
+  	} else {
+  		parent::fclose($this->socket);
+  	}
+  }
+}
 /**
  * @access private
  */
