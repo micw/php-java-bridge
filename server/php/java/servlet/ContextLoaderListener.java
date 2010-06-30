@@ -139,14 +139,14 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
 	    ctx.setAttribute(LOGGER, logger);
 	    Util.setDefaultLogger(logger);
 	    
-	    boolean promiscuous = false;
+	    boolean promiscuous = true;
 	    try {
 		String value = ctx.getInitParameter("promiscuous");
 		if(value==null) value="";
 		value = value.trim();
 		value = value.toLowerCase();
 		    
-		if(value.equals("on") || value.equals("true")) promiscuous=true;
+		if(value.equals("off") || value.equals("false")) promiscuous=false;
 	    } catch (Exception t) {t.printStackTrace();}
 	    ServletUtil.getContextServer(ctx, promiscuous);
 	    

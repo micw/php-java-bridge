@@ -66,7 +66,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     private ContextServer contextServer;
     protected int logLevel = -1;
     private Util.Logger logger;
-    protected boolean promiscuous = false;
+    protected boolean promiscuous = true;
 
     // workaround for a bug in weblogic server, see below
     private boolean isWebLogic = false;
@@ -84,7 +84,7 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	value = value.trim();
 	value = value.toLowerCase();
 	
-	if(value.equals("on") || value.equals("true")) promiscuous=true;
+	if(value.equals("off") || value.equals("false")) promiscuous=false;
 	try { contextServer = getContextServer(ctx, promiscuous); } catch (Throwable e) {/*ignore*/}
     	 
     	super.init(config);
@@ -251,14 +251,14 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	    ctx.destroy();
 	}
     }
-
+    private static final String LOCAL_ADDR = "127.0.0.1"; 
     protected void handlePut (HttpServletRequest req, HttpServletResponse res)
 	throws ServletException, IOException {
 
-    	String channel = getHeader("X_JAVABRIDGE_CHANNEL", req);
     	if(Util.logLevel>3) Util.logDebug("doPut:"+req.getRequestURL()); 
-
-    	if(contextServer!=null && contextServer.isAvailable(channel)) 
+    	boolean isLocal = LOCAL_ADDR.equals(req.getRemoteAddr());
+    	
+    	if(contextServer!=null && contextServer.isAvailable(null) && (!isLocal==promiscuous)) 
     	    handleLocalConnection(req, res); /* re-direct */
     	else
     	    handleHttpConnection(req, res);

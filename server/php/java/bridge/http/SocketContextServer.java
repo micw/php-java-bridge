@@ -109,7 +109,7 @@ public final class SocketContextServer implements Runnable, IContextServer {
     	this.promiscuous = promiscuous;
 	this.origContextName = contextName;
         try {
-	    serverSocket = JavaBridge.bind("INET_LOCAL:0");
+	    serverSocket = JavaBridge.bind(promiscuous?"INET:0":"INET_LOCAL:0");
 	    SecurityManager sec = System.getSecurityManager();
 	    if(sec!=null) sec.checkAccept("127.0.0.1", Integer.parseInt(serverSocket.getSocketName()));
             Thread t = new Util.Thread(this, "JavaBridgeSocketContextServer("+serverSocket.getSocketName()+")");
@@ -195,7 +195,7 @@ public final class SocketContextServer implements Runnable, IContextServer {
      */
     public boolean isAvailable() {
     	// The standalone runner sets an empty context name, otherwise the promiscuous option means that the servlet engine should use chunked encoding
-	return ((this.origContextName == ContextFactory.EMPTY_CONTEXT_NAME) && SOCKET_SERVER_AVAIL && serverSocket!=null) || (!(promiscuous||Util.JAVABRIDGE_PROMISCUOUS) && SOCKET_SERVER_AVAIL && serverSocket!=null);
+	return (SOCKET_SERVER_AVAIL && serverSocket!=null);
     }
 
     /**
