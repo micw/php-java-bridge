@@ -1,6 +1,6 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-package php.java.servlet.fastcgi;
+package php.java.bridge.http;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -26,51 +26,21 @@ package php.java.servlet.fastcgi;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.RandomAccessFile;
+import java.io.OutputStream;
+import java.net.Socket;
 
-class RandomAccessFileInputStream extends InputStream {
-    private final NPChannel channel;
-    private RandomAccessFile raFile;
-
-    RandomAccessFileInputStream(NPChannel channel, RandomAccessFile file) {
-        this.channel = channel;
-        this.raFile = file;
+class SocketChannel extends Channel {
+    public Socket socket;
+    public SocketChannel(Socket socket) {
+        this.socket = socket;
     }
-
-    /**
-     * @see java.io.InputStream#available()
-     */
-    public int available() throws IOException {
-        return -1;
-    }
-
-    /**
-     * @see java.io.InputStream#close()
-     */
     public void close() throws IOException {
-        if(this.channel.writeIsClosed) 
-	    this.raFile.close();
-        this.channel.readIsClosed=true;
+        socket.close();
     }
-
-    /**
-     * @see java.io.InputStream#read()
-     */
-    public int read() throws IOException {
-        return this.raFile.read();
+    public InputStream getInputStream() throws IOException {
+        return socket.getInputStream();
     }
-
-    /**
-     * @see java.io.InputStream#read(byte[])
-     */
-    public int read(byte[] b) throws IOException {
-        return this.raFile.read(b);
-    }
-
-    /**
-     * @see java.io.InputStream#read(byte[], int, int)
-     */
-    public int read(byte[] b, int off, int len) throws IOException {
-        return this.raFile.read(b, off, len);
+    public OutputStream getOutputStream() throws IOException {
+        return socket.getOutputStream();
     }
 }

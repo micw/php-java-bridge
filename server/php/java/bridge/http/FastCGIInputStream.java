@@ -1,6 +1,6 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-package php.java.servlet.fastcgi;
+package php.java.bridge.http;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -28,13 +28,13 @@ import java.io.IOException;
 
 import php.java.bridge.Util;
 
-class FastCGIInputStream extends DefaultInputStream {
-    private final FastCGIServlet servlet;
+public class FastCGIInputStream extends DefaultInputStream {
+    private final IFCGIProcessFactory processFactory;
     /**
      * @param servlet
      */
-    FastCGIInputStream(FastCGIServlet servlet) {
-        this.servlet = servlet;
+    public FastCGIInputStream(IFCGIProcessFactory processFactory) {
+        this.processFactory = processFactory;
     }
     private StringBuffer error;
     public StringBuffer getError () {
@@ -52,25 +52,25 @@ class FastCGIInputStream extends DefaultInputStream {
             throw new ConnectionException(connection, e);
         }
     }
-    private byte header[] = new byte[FastCGIServlet.FCGI_HEADER_LEN];
+    private byte header[] = new byte[FCGIUtil.FCGI_HEADER_LEN];
     public int doRead(byte buf[]) throws IOException {
         int n, i;
         //assert if(buf.length!=FCGI_BUF_SIZE) throw new IOException("Invalid block size");
-        for(n=0; (i=read(header, n, FastCGIServlet.FCGI_HEADER_LEN-n)) > 0; )  n+=i;
-        if(FastCGIServlet.FCGI_HEADER_LEN != n) 
+        for(n=0; (i=read(header, n, FCGIUtil.FCGI_HEADER_LEN-n)) > 0; )  n+=i;
+        if(FCGIUtil.FCGI_HEADER_LEN != n) 
 	    throw new IOException ("Protocol error");
         int type = header[1] & 0xFF;
         int contentLength = ((header[4] & 0xFF) << 8) | (header[5] & 0xFF);
         int paddingLength = header[6] & 0xFF;
         switch(type) {
-        case FastCGIServlet.FCGI_STDERR: 
-        case FastCGIServlet.FCGI_STDOUT: {
+        case FCGIUtil.FCGI_STDERR: 
+        case FCGIUtil.FCGI_STDOUT: {
 	    for(n=0; (i=read(buf, n, contentLength-n)) > 0; ) n+=i;
 	    if(n!=contentLength) 
 		throw new IOException("Protocol error while reading FCGI data");
-	    if(type==FastCGIServlet.FCGI_STDERR) { 
+	    if(type==FCGIUtil.FCGI_STDERR) { 
 		String s = new String(buf, 0, n, Util.ASCII);
-		this.servlet.log(s); 
+		this.processFactory.log(s); 
 		contentLength = 0;
 
 		if(error==null) error = new StringBuffer(s);
@@ -84,7 +84,7 @@ class FastCGIInputStream extends DefaultInputStream {
 	    }
 	    return contentLength;
         }
-        case FastCGIServlet.FCGI_END_REQUEST: {
+        case FCGIUtil.FCGI_END_REQUEST: {
 	    for(n=0; (i=read(buf, n, contentLength-n)) > 0; ) n+=i;
 	    if(n!=contentLength) throw new IOException("Protocol error while reading EOF data");
 	    if(paddingLength>0) {

@@ -1,5 +1,5 @@
 /*-*- mode: Java; tab-width:8 -*-*/
-package php.java.servlet.fastcgi;
+package php.java.bridge.http;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -24,12 +24,18 @@ package php.java.servlet.fastcgi;
  */
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
-/** Thrown when the server is not available anymore */
-public class ConnectException extends IOException {
-    private static final long serialVersionUID = 5242564093021250550L;
-    protected ConnectException(IOException ex) {
-        super();
-        initCause(ex);
-    }
+/**
+ * This class represents the physical FastCGI connection.
+ * @author jostb
+ */
+public abstract class Channel {
+
+    public abstract InputStream getInputStream() throws IOException;
+
+    public abstract OutputStream getOutputStream() throws IOException;
+
+    public abstract void close() throws IOException; 
 }

@@ -46,7 +46,7 @@ import php.java.bridge.Util;
  * @see php.java.bridge.http.HttpRequest
  * @see php.java.bridge.http.HttpResponse
  * 
- * @see php.java.script.CGIRunner
+ * @see php.java.script.Continuation
  * @see php.java.script.URLReader
  * @see php.java.script.HttpProxy
  *

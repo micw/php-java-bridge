@@ -1,6 +1,5 @@
 /*-*- mode: Java; tab-width:8 -*-*/
-
-package php.java.servlet.fastcgi;
+package php.java.bridge.http;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -24,48 +23,13 @@ package php.java.servlet.fastcgi;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import java.io.IOException;
 import java.io.OutputStream;
-import java.io.RandomAccessFile;
 
-import php.java.bridge.NotImplementedException;
-
-class RandomAccessFileOutputStream extends OutputStream {
-    private final NPChannel channel;
-    private RandomAccessFile raFile;
-
-    RandomAccessFileOutputStream(NPChannel channel, RandomAccessFile file) {
-        this.channel = channel;
-        this.raFile = file;
+final class BufferedOutputStream extends java.io.BufferedOutputStream {
+    public BufferedOutputStream(OutputStream out) {
+        super(out);
     }
-
-    /**
-     * @see java.io.OutputStream#close()
-     */
-    public void close() throws IOException {
-        if(this.channel.readIsClosed)
-	    this.raFile.close();
-        this.channel.writeIsClosed=true;	
-    }
-
-    /**
-     * @see java.io.OutputStream#write(byte[])
-     */
-    public void write(byte[] b) throws IOException {
-        this.raFile.write(b);
-    }
-
-    /**
-     * @see java.io.OutputStream#write(byte[], int, int)
-     */
-    public void write(byte[] b, int off, int len) throws IOException {
-        this.raFile.write(b, off, len);
-    }
-
-    /**
-     * @see java.io.OutputStream#write(int)
-     */
-    public void write(int b) throws IOException {
-	throw new NotImplementedException();
+    public byte[] getBuffer() {
+        return buf;
     }
 }

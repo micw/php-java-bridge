@@ -1,6 +1,6 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-package php.java.servlet.fastcgi;
+package php.java.bridge.http;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,7 +10,6 @@ import java.util.Map;
 
 import php.java.bridge.Util;
 import php.java.bridge.Util.Process;
-import php.java.servlet.ServletUtil;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -34,11 +33,15 @@ import php.java.servlet.ServletUtil;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-class NPChannelFactory extends ChannelFactory {
+public class NPChannelFactory extends ChannelFactory {
     public static final String PREFIX="\\\\.\\pipe\\";
     
     private String raPath;
     private String testRaPath;
+    
+    public NPChannelFactory(IFCGIProcessFactory processFactory) {
+	super(processFactory);
+    }
     
     public void test() throws ConnectException {
 	if(!new File(raPath).canWrite()) throw new ConnectException(new IOException("File " + raPath + " not writable"));
@@ -61,12 +64,10 @@ class NPChannelFactory extends ChannelFactory {
 	// The value itself doesn't matter, we'll pass the real value
 	// via the (HTTP_)X_JAVABRIDGE_OVERRIDE_HOSTS header field
 	// later.
-	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", servlet.override_hosts?"/":"");
-	env.put("REDIRECT_STATUS", "200");
-	String[] args = Util.getPhpArgs(new String[]{php, raPath}, includeJava, ServletUtil.getRealPath(servlet.context, FastCGIServlet.CGI_DIR), ServletUtil.getRealPath(servlet.context, FastCGIServlet.PEAR_DIR), ServletUtil.getRealPath(servlet.context, FastCGIServlet.WEB_INF_DIR));
+	String[] args = Util.getPhpArgs(new String[]{php, raPath}, includeJava, processFactory.getCgiDir(), processFactory.getPearDir(), processFactory.getWebInfDir());
 	File home = null;
 	if(php!=null) try { home = ((new File(php)).getParentFile()); } catch (Exception e) {Util.printStackTrace(e);}
-	proc = new FCGIProcess(args, home, env, ServletUtil.getRealPath(servlet.context, FastCGIServlet.CGI_DIR), servlet.phpTryOtherLocations, servlet.preferSystemPhp);
+	proc = processFactory.createFCGIProcess(args, home, env);
 	proc.start();
 	return (Process)proc;
     }
@@ -91,14 +92,14 @@ class NPChannelFactory extends ChannelFactory {
 		testRaPath = PREFIX+testRafile.getPath();
 		testRafile.delete();
 	    } else {
-		testRaPath  = FastCGIServlet.FCGI_PIPE;
+		testRaPath  = FCGIUtil.FCGI_PIPE;
 	    }
 	} catch (IOException e) {
 	    Util.printStackTrace(e);
 	}
     }
     public void setDefaultPort() {
-	raPath=FastCGIServlet.FCGI_PIPE;
+	raPath=FCGIUtil.FCGI_PIPE;
     }
     protected void setDynamicPort() {
 	raPath=testRaPath;

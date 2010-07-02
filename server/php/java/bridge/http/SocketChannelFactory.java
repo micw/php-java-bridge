@@ -1,6 +1,6 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-package php.java.servlet.fastcgi;
+package php.java.bridge.http;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,7 +14,6 @@ import java.util.Map;
 import php.java.bridge.ILogger;
 import php.java.bridge.Util;
 import php.java.bridge.Util.Process;
-import php.java.servlet.ServletUtil;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -45,7 +44,8 @@ class SocketChannelFactory extends ChannelFactory {
     private  ServerSocket fcgiTestSocket = null;
     private  int fcgiTestPort;
     
-    public SocketChannelFactory (boolean promiscuous) {
+    public SocketChannelFactory (IFCGIProcessFactory processFactory, boolean promiscuous) {
+	super(processFactory);
 	this.promiscuous = promiscuous;
     }
     public void test() throws ConnectException {
@@ -116,12 +116,10 @@ class SocketChannelFactory extends ChannelFactory {
 	// The value itself doesn't matter, we'll pass the real value
 	// via the (HTTP_)X_JAVABRIDGE_OVERRIDE_HOSTS header field
 	// later.
-	env.put("X_JAVABRIDGE_OVERRIDE_HOSTS", servlet.override_hosts?"/":"");
-	env.put("REDIRECT_STATUS", "200");
-	String[] args = Util.getPhpArgs(new String[]{php, "-b", port}, includeJava, ServletUtil.getRealPath(servlet.context, FastCGIServlet.CGI_DIR), ServletUtil.getRealPath(servlet.context, FastCGIServlet.PEAR_DIR), ServletUtil.getRealPath(servlet.context, FastCGIServlet.WEB_INF_DIR));
+	String[] args = Util.getPhpArgs(new String[]{php, "-b", port}, includeJava, processFactory.getCgiDir(), processFactory.getPearDir(), processFactory.getWebInfDir());
 	File home = null;
 	if(php!=null) try { home = ((new File(php)).getParentFile()); } catch (Exception e) {Util.printStackTrace(e);}
-	proc = new FCGIProcess(args, home, env, ServletUtil.getRealPath(servlet.context, FastCGIServlet.CGI_DIR), servlet.phpTryOtherLocations, servlet.preferSystemPhp);
+	proc = processFactory.createFCGIProcess(args, home, env);
 	proc.start();
 	return (Process)proc;
     }
@@ -147,9 +145,9 @@ class SocketChannelFactory extends ChannelFactory {
     }
 		
     public void findFreePort(boolean select) {
-	fcgiTestPort=FastCGIServlet.FCGI_PORT; 
+	fcgiTestPort=FCGIUtil.FCGI_PORT; 
 	fcgiTestSocket=null;
-	for(int i=FastCGIServlet.FCGI_PORT+1; select && (i<FastCGIServlet.FCGI_PORT+100); i++) {
+	for(int i=FCGIUtil.FCGI_PORT+1; select && (i<FCGIUtil.FCGI_PORT+100); i++) {
 	    try {
 		ServerSocket s = new ServerSocket(i, Util.BACKLOG, InetAddress.getByName(LOCAL_HOST));
 		fcgiTestPort = i;
@@ -159,7 +157,7 @@ class SocketChannelFactory extends ChannelFactory {
 	}
     }
     public void setDefaultPort() {
-	port = FastCGIServlet.FCGI_PORT;
+	port = FCGIUtil.FCGI_PORT;
     }
     protected void setDynamicPort() {
 	port = fcgiTestPort;

@@ -1,5 +1,6 @@
 /*-*- mode: Java; tab-width:8 -*-*/
-package php.java.servlet.fastcgi;
+
+package php.java.bridge.http;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -24,15 +25,26 @@ package php.java.servlet.fastcgi;
  */
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
 
-import php.java.servlet.fastcgi.ConnectionPool.Connection;
+class NPChannel extends Channel {
+    boolean readIsClosed = false;
+    boolean writeIsClosed = false;
 
-/** Thrown when an IO exception occurs */
-public class ConnectionException extends IOException {
-    private static final long serialVersionUID = -5174286702617481362L;
-    protected ConnectionException(Connection con, IOException ex) {
-        super();
-        initCause(ex);
-        con.setIsClosed();
+    private RandomAccessFile raFile;
+
+    public NPChannel(RandomAccessFile raFile) {
+        this.raFile = raFile;
+    }
+    public void close() throws IOException {
+	raFile.close();
+    }
+    public InputStream getInputStream() throws IOException {
+        return new RandomAccessFileInputStream(this, raFile);
+    }
+    public OutputStream getOutputStream() throws IOException {
+	return new RandomAccessFileOutputStream(this, raFile);
     }
 }

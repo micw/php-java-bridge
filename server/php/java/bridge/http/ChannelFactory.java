@@ -1,13 +1,11 @@
 /*-*- mode: Java; tab-width:8 -*-*/
-package php.java.servlet.fastcgi;
+package php.java.bridge.http;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.UnknownHostException;
 import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
 
 import php.java.bridge.ILogger;
 import php.java.bridge.Util;
@@ -41,21 +39,24 @@ import php.java.servlet.ServletUtil;
  * @author jostb
  */
 public abstract class ChannelFactory {
-    protected FastCGIServlet servlet;
     protected String contextPath;
     protected boolean promiscuous;
+    protected IFCGIProcessFactory processFactory;
     
     /* The fast CGI Server process on this computer. Switched off per default. */
-    protected static FCGIProcess proc = null;
+    protected static IFCGIProcess proc = null;
     private static boolean fcgiStarted = false;
     private static final Object fcgiStartLock = new Object(); // one lock for all servlet intances of this class loader
     
     
+    public ChannelFactory(IFCGIProcessFactory processFactory) {
+	this.processFactory = processFactory;
+    }
     /**
      * Start the FastCGI server
      * @return false if the FastCGI server failed to start.
      */
-    protected final boolean startServer(ILogger logger) {
+    public final boolean startServer(ILogger logger) {
 	/*
 	 * Try to start the FastCGI server,
 	 */
@@ -97,10 +98,10 @@ public abstract class ChannelFactory {
     protected void bind(final ILogger logger) throws InterruptedException, IOException {
 	Thread t = (new Util.Thread("JavaBridgeFastCGIRunner") {
 		public void run() {
-		    Map env = (Map) FastCGIServlet.PROCESS_ENVIRONMENT.clone();
-		    env.put("PHP_FCGI_CHILDREN", servlet.php_fcgi_connection_pool_size);
-		    env.put("PHP_FCGI_MAX_REQUESTS", servlet.php_fcgi_max_requests);
-		    runFcgi(env, servlet.php, servlet.php_include_java);
+		    Map env = (Map) processFactory.getEnvironment().clone();
+		    env.put("PHP_FCGI_CHILDREN", processFactory.getPhpConnectionPoolSize());
+		    env.put("PHP_FCGI_MAX_REQUESTS", processFactory.getPhpMaxRequests());
+		    runFcgi(env, processFactory.getPhp(), processFactory.getPhpIncludeJava());
 		}
 	    });
 	t.start();
@@ -108,10 +109,10 @@ public abstract class ChannelFactory {
     }
 
     private boolean canStartFCGI() {
-	return servlet.canStartFCGI;
+	return processFactory.canStartFCGI();
     }
 	
-    void destroy() {
+    public void destroy() {
 	synchronized(ChannelFactory.fcgiStartLock) {
 	    fcgiStarted = false;
 	    if(proc==null) return;  	
@@ -144,8 +145,7 @@ public abstract class ChannelFactory {
      * @param req The current request.
      * @param contextPath The path of the web context
      */
-    public void initialize(FastCGIServlet servlet, HttpServletRequest req, String contextPath) {
-	this.servlet = servlet;
+    public void initialize(String contextPath) {
 	this.contextPath = contextPath;
 	if(ServletUtil.isJavaBridgeWc(contextPath)) {
 	    setDefaultPort();
@@ -174,11 +174,11 @@ public abstract class ChannelFactory {
      * Create a new ChannelFactory.
      * @return The concrete ChannelFactory (NP or Socket channel factory).
      */
-    public static ChannelFactory createChannelFactory(boolean promiscuous) {
+    public static ChannelFactory createChannelFactory(IFCGIProcessFactory processFactory, boolean promiscuous) {
 	if(Util.USE_SH_WRAPPER)
-	    return new SocketChannelFactory(promiscuous);
+	    return new SocketChannelFactory(processFactory, promiscuous);
 	else 
-	    return new NPChannelFactory();
+	    return new NPChannelFactory(processFactory);
     }
 	
     /** 

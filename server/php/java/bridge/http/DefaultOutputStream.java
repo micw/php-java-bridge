@@ -1,6 +1,6 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-package php.java.servlet.fastcgi;
+package php.java.bridge.http;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -25,57 +25,65 @@ package php.java.servlet.fastcgi;
  */
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.OutputStream;
 
 import php.java.bridge.NotImplementedException;
-import php.java.servlet.fastcgi.ConnectionPool.Connection;
+import php.java.bridge.http.ConnectionPool.Connection;
 
 /**
- * Default InputStream used by the connection pool.
+ * Default OutputStream used by the connection pool.
  * 
  * @author jostb
  *
  */
-public class DefaultInputStream extends InputStream {
+public class DefaultOutputStream extends OutputStream {
     protected Connection connection;
-    private InputStream in;
-
+    private BufferedOutputStream out;
+    
     protected void setConnection(Connection connection) throws ConnectionException {
-	this.connection = connection;	  
-	try {
-	    this.in = connection.channel.getInputStream();
-	} catch (IOException e) {
+        this.connection = connection;
+        try {
+	    this.out = new BufferedOutputStream(connection.channel.getOutputStream());
+        } catch (IOException e) {
 	    throw new ConnectionException(connection, e);
-	}	  
+        }
     }
     /**{@inheritDoc}*/  
-    public int read(byte buf[]) throws ConnectionException {
-	return read(buf, 0, buf.length);
+    public void write(byte buf[]) throws ConnectionException {
+        write(buf, 0, buf.length);
     }
     /**{@inheritDoc}*/  
-    public int read(byte buf[], int off, int buflength) throws ConnectionException {
+    public void write(byte buf[], int off, int buflength) throws ConnectionException {
 	try {
-	    int count = in.read(buf, off, buflength);
-	    if(count==-1) {
-		connection.setIsClosed();
-	    }
-	    return count;
+	    out.write(buf, off, buflength);
 	} catch (IOException ex) {
 	    throw new ConnectionException(connection, ex);
 	}
     }
     /**{@inheritDoc}*/  
-    public int read() throws ConnectionException {
-	throw new NotImplementedException();
-    }      
+    public void write(int b) throws ConnectionException {
+        throw new NotImplementedException();
+    }
     /**{@inheritDoc}*/  
     public void close() throws ConnectionException {
-	connection.state|=1;
-	if(connection.state==connection.ostate)
-	    try {
-		connection.close();
-	    } catch (IOException e) {
-		throw new ConnectionException(connection, e);
-	    }
+        try { 
+            flush();
+        } finally {
+            connection.state|=2;
+            if(connection.state==connection.ostate)
+		try {
+		    connection.close();
+		} catch (IOException e) {
+		    throw new ConnectionException(connection, e);
+		}
+        }
+    }
+    /**{@inheritDoc}*/  
+    public void flush() throws ConnectionException {
+        try {
+            out.flush();
+        } catch (IOException ex) {
+            throw new ConnectionException(connection, ex);
+        }
     }
 }

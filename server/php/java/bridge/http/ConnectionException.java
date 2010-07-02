@@ -1,6 +1,5 @@
 /*-*- mode: Java; tab-width:8 -*-*/
-
-package php.java.servlet.fastcgi;
+package php.java.bridge.http;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -24,43 +23,16 @@ package php.java.servlet.fastcgi;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.IOException;
 
+import php.java.bridge.http.ConnectionPool.Connection;
 
-/**
- * In-/OutputStream factory.
- * 
- * Override this class if you want to use your own streams.
- * 
- * @author jostb
- *
- */
-public abstract class IOFactory {
-    /**
-     * Create a new socket and connect
-     * it to the given host/port
-     * @param name The channel name.
-     * @return The socket
-     * @throws ConnectException
-     */
-    public abstract Channel connect(ChannelFactory name) throws ConnectException;
-    /** 
-     * Create a new InputStream.
-     * @return The input stream. 
-     * @throws ConnectionException 
-     */
-    public InputStream createInputStream() throws ConnectionException {
-	DefaultInputStream in = new DefaultInputStream();
-	return in;
-    }
-    /**
-     * Create a new OutputStream.
-     * @return The output stream.
-     * @throws ConnectionException
-     */
-    public OutputStream createOutputStream() throws ConnectionException {
-        DefaultOutputStream out = new DefaultOutputStream();
-        return out;
+/** Thrown when an IO exception occurs */
+public class ConnectionException extends IOException {
+    private static final long serialVersionUID = -5174286702617481362L;
+    protected ConnectionException(Connection con, IOException ex) {
+        super();
+        initCause(ex);
+        con.setIsClosed();
     }
 }

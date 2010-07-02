@@ -1,6 +1,11 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-package php.java.servlet.fastcgi;
+package php.java.bridge.http;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -24,27 +29,27 @@ package php.java.servlet.fastcgi;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.RandomAccessFile;
+public interface IFCGIProcessFactory {
+    public void log(String msg);
 
-class NPChannel extends Channel {
-    boolean readIsClosed = false;
-    boolean writeIsClosed = false;
+    public IFCGIProcess createFCGIProcess(String[] args, File home, Map env) throws IOException;
 
-    private RandomAccessFile raFile;
+    public String getPhpConnectionPoolSize();
 
-    public NPChannel(RandomAccessFile raFile) {
-        this.raFile = raFile;
-    }
-    public void close() throws IOException {
-	raFile.close();
-    }
-    public InputStream getInputStream() throws IOException {
-        return new RandomAccessFileInputStream(this, raFile);
-    }
-    public OutputStream getOutputStream() throws IOException {
-	return new RandomAccessFileOutputStream(this, raFile);
-    }
+    public Object getPhpMaxRequests();
+
+    public String getPhp();
+
+    public boolean getPhpIncludeJava();
+
+    public HashMap getEnvironment();
+
+    public boolean canStartFCGI();
+
+    public String getCgiDir();
+
+    public String getPearDir();
+
+    public String getWebInfDir();
+    
 }

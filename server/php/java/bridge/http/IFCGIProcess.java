@@ -1,6 +1,6 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-package php.java.servlet.fastcgi;
+package php.java.bridge.http;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -25,22 +25,16 @@ package php.java.servlet.fastcgi;
  */
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.Socket;
 
-class SocketChannel extends Channel {
-    public Socket socket;
-    public SocketChannel(Socket socket) {
-        this.socket = socket;
-    }
-    public void close() throws IOException {
-        socket.close();
-    }
-    public InputStream getInputStream() throws IOException {
-        return socket.getInputStream();
-    }
-    public OutputStream getOutputStream() throws IOException {
-        return socket.getOutputStream();
-    }
+public interface IFCGIProcess {
+
+    public void start() throws NullPointerException, IOException;
+
+    public int waitFor() throws InterruptedException;
+
+    public OutputStream getOutputStream();
+
+    public void destroy();
+
 }

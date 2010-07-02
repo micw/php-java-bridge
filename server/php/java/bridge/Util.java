@@ -250,6 +250,8 @@ public final class Util {
     
     /** Only for internal use */
     public static final byte[] RN = Util.toBytes("\r\n");
+
+    public static File TMPDIR;
     
     /** The name of the VM, for example "1.4.2@http://java.sun.com/" or "1.4.2@http://gcc.gnu.org/java/".*/
     public static String VM_NAME;
@@ -377,11 +379,12 @@ public final class Util {
 	};
 	
 	// resolve java.io.tmpdir for windows; PHP doesn't like dos short file names like foo~1\bar~2\...
-	File tmpdir = new File(System.getProperty("java.io.tmpdir", "/tmp"));
-	if (!(tmpdir.exists() && tmpdir.isDirectory())) tmpdir = null;
+	TMPDIR = new File(System.getProperty("java.io.tmpdir", "/tmp"));
+	if (!(TMPDIR.exists() && TMPDIR.isDirectory())) TMPDIR = null;
 	String sessionSavePath = null;
-	if (tmpdir != null) try {sessionSavePath = tmpdir.getCanonicalPath(); } catch (IOException ex) {/*ignore*/}
-	if (sessionSavePath != null) {
+	if (TMPDIR != null) try {TMPDIR = TMPDIR.getCanonicalFile(); } catch (IOException ex) {/*ignore*/}
+	
+	if (TMPDIR != null) {
 	    try {
 		sessionSavePath = java.net.URLEncoder.encode("session.save_path='"+sessionSavePath+"'", "UTF-8");
 	    } catch (UnsupportedEncodingException e) {

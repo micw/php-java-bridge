@@ -33,6 +33,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -45,8 +46,19 @@ import php.java.bridge.ILogger;
 import php.java.bridge.Util;
 import php.java.bridge.Util.HeaderParser;
 import php.java.bridge.http.AbstractChannelName;
+import php.java.bridge.http.Channel;
+import php.java.bridge.http.ChannelFactory;
+import php.java.bridge.http.ConnectException;
+import php.java.bridge.http.ConnectionException;
+import php.java.bridge.http.ConnectionPool;
 import php.java.bridge.http.ContextServer;
+import php.java.bridge.http.FCGIUtil;
+import php.java.bridge.http.FastCGIInputStream;
+import php.java.bridge.http.FastCGIOutputStream;
 import php.java.bridge.http.IContextFactory;
+import php.java.bridge.http.IFCGIProcess;
+import php.java.bridge.http.IFCGIProcessFactory;
+import php.java.bridge.http.IOFactory;
 import php.java.servlet.Logger;
 import php.java.servlet.PhpJavaServlet;
 import php.java.servlet.ServletContextFactory;
@@ -69,73 +81,13 @@ import php.java.servlet.ServletUtil;
  * @see php.java.bridge.Util#DEFAULT_CGI_LOCATIONS
  * @author jostb
  */
-public class FastCGIServlet extends HttpServlet {
+public class FastCGIServlet extends HttpServlet implements IFCGIProcessFactory {
     private static final long serialVersionUID = 3545800996174312757L;
 
     static final String PEAR_DIR = "/WEB-INF/pear";
     static final String CGI_DIR = "/WEB-INF/cgi";
     static final String WEB_INF_DIR = "/WEB-INF";
  
-    // IO buffer size
-    static final int FCGI_BUF_SIZE = 65535;
-
-    static final int FCGI_HEADER_LEN = 8;
-    /*
-     * Values for type component of FCGI_Header
-     */
-    protected static final int FCGI_BEGIN_REQUEST =      1;
-    protected static final int FCGI_ABORT_REQUEST =      2;
-    protected static final int FCGI_END_REQUEST   =      3;
-    protected static final int FCGI_PARAMS        =      4;
-    protected static final int FCGI_STDIN         =      5;
-    protected static final int FCGI_STDOUT        =      6;
-    protected static final int FCGI_STDERR        =      7;
-    protected static final int FCGI_DATA          =      8;
-    protected static final int FCGI_GET_VALUES    =      9;
-    protected static final int FCGI_GET_VALUES_RESULT = 10;
-    protected static final int FCGI_UNKNOWN_TYPE      = 11;
-    protected static final byte[] FCGI_EMPTY_RECORD = new byte[0];
-    
-    /*
-     * Mask for flags component of FCGI_BeginRequestBody
-     */
-    protected static final int FCGI_KEEP_CONN  = 1;
-
-    /*
-     * Values for role component of FCGI_BeginRequestBody
-     */
-    protected static final int FCGI_RESPONDER  = 1;
-    protected static final int FCGI_AUTHORIZER = 2;
-    protected static final int FCGI_FILTER     = 3;
-
-    /**
-     * The Fast CGI default port
-     */ 
-    public static final int FCGI_PORT = 9667;
-    
-    /**
-     * This controls how many child processes the PHP process spawns.
-     * Default is 5. The value should be less than THREAD_POOL_MAX_SIZE
-     * @see Util#THREAD_POOL_MAX_SIZE
-     */
-    public static final String PHP_FCGI_CONNECTION_POOL_SIZE = "5"; // should be less than Util.THREAD_POOL_MAX_SIZE;
-    /**
-     * This controls how long the pool waits for a PHP script to terminate.
-     * Default is -1, which means: "wait forever".
-     */
-    public static final String PHP_FCGI_CONNECTION_POOL_TIMEOUT = "-1"; // no timeout
-    
-    /**
-     * This controls how many requests each child process will handle before
-     * exitting. When one process exits, another will be created. Default is 5000.
-     */
-    public static final String PHP_FCGI_MAX_REQUESTS = "5000";
-
-    /**
-     * The default channel name on Windows
-     */
-    public static final String FCGI_PIPE = NPChannelFactory.PREFIX +"JavaBridge@9667";
-    
     protected String php = null; 
     protected boolean phpTryOtherLocations = false;
     protected boolean preferSystemPhp = false; // prefer /usr/bin/php-cgi over WEB-INF/cgi/php-cgi?
@@ -146,13 +98,13 @@ public class FastCGIServlet extends HttpServlet {
     protected boolean canStartFCGI = false;
     protected boolean override_hosts = true;
 
-    protected String php_fcgi_connection_pool_size = PHP_FCGI_CONNECTION_POOL_SIZE;
-    protected String php_fcgi_connection_pool_timeout = PHP_FCGI_CONNECTION_POOL_TIMEOUT;
+    protected String php_fcgi_connection_pool_size = FCGIUtil.PHP_FCGI_CONNECTION_POOL_SIZE;
+    protected String php_fcgi_connection_pool_timeout = FCGIUtil.PHP_FCGI_CONNECTION_POOL_TIMEOUT;
     protected boolean php_include_java;
-    protected int php_fcgi_connection_pool_size_number = Integer.parseInt(PHP_FCGI_CONNECTION_POOL_SIZE);
-    protected long php_fcgi_connection_pool_timeout_number = Long.parseLong(PHP_FCGI_CONNECTION_POOL_TIMEOUT);
-    protected String php_fcgi_max_requests = PHP_FCGI_MAX_REQUESTS;
-    protected int php_fcgi_max_requests_number = Integer.parseInt(PHP_FCGI_MAX_REQUESTS);
+    protected int php_fcgi_connection_pool_size_number = Integer.parseInt(FCGIUtil.PHP_FCGI_CONNECTION_POOL_SIZE);
+    protected long php_fcgi_connection_pool_timeout_number = Long.parseLong(FCGIUtil.PHP_FCGI_CONNECTION_POOL_TIMEOUT);
+    protected String php_fcgi_max_requests = FCGIUtil.PHP_FCGI_MAX_REQUESTS;
+    protected int php_fcgi_max_requests_number = Integer.parseInt(FCGIUtil.PHP_FCGI_MAX_REQUESTS);
 
     protected ILogger logger;
 
@@ -276,7 +228,7 @@ public class FastCGIServlet extends HttpServlet {
      * CGI servlet is used instead.
      * @param config The servlet config
      * @throws ServletException 
-     * @see php.java.servlet.fastcgi.ConnectionPool
+     * @see php.java.bridge.http.ConnectionPool
      * @see #destroy()
      */
     public void init(ServletConfig config) throws ServletException {
@@ -363,7 +315,7 @@ public class FastCGIServlet extends HttpServlet {
 	fcgiIsConfigured = true;
 	checkCgiBinary(config);
 	
-	channelName = ChannelFactory.createChannelFactory(promiscuous);
+	channelName = ChannelFactory.createChannelFactory(this, promiscuous);
 	channelName.findFreePort(canStartFCGI);
 
 	createPhpFiles ();
@@ -625,7 +577,7 @@ public class FastCGIServlet extends HttpServlet {
     }
     
     private ConnectionPool createConnectionPool(HttpServletRequest req, int children, Environment env) throws ConnectException {
-	channelName.initialize(this, req, env.contextPath);
+	channelName.initialize(env.contextPath);
 
 	// Start the launcher.exe or launcher.sh
 	channelName.startServer(logger);
@@ -799,7 +751,7 @@ public class FastCGIServlet extends HttpServlet {
      * @see Util#parseBody(byte[], InputStream, OutputStream, HeaderParser)
      */
     protected void parseBody(HttpServletRequest req, HttpServletResponse res, Environment env) throws ConnectionException, ConnectException, IOException, ServletException {
-	final byte[] buf = new byte[FCGI_BUF_SIZE];// headers cannot be larger than this value!
+	final byte[] buf = new byte[FCGIUtil.FCGI_BUF_SIZE];// headers cannot be larger than this value!
 	
 	InputStream in = null;
 	OutputStream out = null;
@@ -839,8 +791,9 @@ public class FastCGIServlet extends HttpServlet {
 			    int n;
 			    try {
 				while((n=inputStream.read(buf))!=-1) {
-				    natOutputStream.write(buf, n);
+				    natOutputStream.write(FCGIUtil.FCGI_STDIN, buf, n);
 				}
+				natOutputStream.write(FCGIUtil.FCGI_STDIN, FCGIUtil.FCGI_EMPTY_RECORD);
 			    } catch (IOException e) {
 				e.printStackTrace();
 			    } finally {
@@ -851,8 +804,9 @@ public class FastCGIServlet extends HttpServlet {
 	    } else {
 		// write the post data before reading the response
 		while((n=in.read(buf))!=-1) {
-		    natOut.write(buf, n);
+		    natOut.write(FCGIUtil.FCGI_STDIN, buf, n);
 		}
+		natOut.write(FCGIUtil.FCGI_STDIN, FCGIUtil.FCGI_EMPTY_RECORD);
 		natOut.close(); natOut = null;
 	    } 
 	    
@@ -1016,5 +970,53 @@ public class FastCGIServlet extends HttpServlet {
 	}
 	handle (req, res);
     }
-
+    
+    /** required by IFCGIProcessFactory */
+    /** {@inheritDoc} */
+    public IFCGIProcess createFCGIProcess(String[] args, File home, Map env)
+            throws IOException {
+	return new FCGIProcess(args, home, env, getCgiDir(), phpTryOtherLocations, preferSystemPhp);
+    }
+    /** {@inheritDoc} */
+    public String getPhpConnectionPoolSize() {
+	return php_fcgi_connection_pool_size;
+    }
+    /** {@inheritDoc} */
+    public Object getPhpMaxRequests() {
+	return php_fcgi_max_requests; 
+    }
+    /** {@inheritDoc} */
+    public String getPhp() {
+	return php;
+    }
+    /** {@inheritDoc} */
+    public boolean getPhpIncludeJava() {
+	return php_include_java;
+    }
+    /** {@inheritDoc} */
+    public HashMap getEnvironment () {
+	return FastCGIServlet.getProcessEnvironment();
+    }
+    /** {@inheritDoc} */
+    public boolean canStartFCGI() {
+	return canStartFCGI;
+    }
+    private String cgiDir;
+    /** {@inheritDoc} */
+    public String getCgiDir() {
+	if (cgiDir != null) return cgiDir;
+	return cgiDir = ServletUtil.getRealPath(context, FastCGIServlet.CGI_DIR);
+    }
+    private String pearDir;
+    /** {@inheritDoc} */
+    public String getPearDir() {
+	if (pearDir != null) return pearDir;
+	return pearDir = ServletUtil.getRealPath(context, FastCGIServlet.PEAR_DIR);
+    }
+    private String webInfDir;
+    /** {@inheritDoc} */
+   public String getWebInfDir() {
+	if (webInfDir != null) return webInfDir;
+	return webInfDir = ServletUtil.getRealPath(context, FastCGIServlet.WEB_INF_DIR);
+   }
 }

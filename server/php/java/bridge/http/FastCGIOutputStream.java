@@ -1,6 +1,6 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-package php.java.servlet.fastcgi;
+package php.java.bridge.http;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -32,29 +32,26 @@ import java.util.Map;
 import php.java.bridge.NotImplementedException;
 import php.java.bridge.Util;
 
-class FastCGIOutputStream extends DefaultOutputStream {
-    private void write(int type, byte buf[]) throws ConnectionException {
+public class FastCGIOutputStream extends DefaultOutputStream {
+    public void write(int type, byte buf[]) throws ConnectionException {
         write(type, buf, buf.length);
-    }
-    public void write(byte buf[], int buflength) throws ConnectionException {
-        write(FastCGIServlet.FCGI_STDIN, buf, buflength);
     }
     public void write(int type, byte buf[], int buflength) throws ConnectionException {
         int requestId = 1;
         byte[] header = new byte[] {
 	    1, (byte)type, 
 	    (byte)((requestId >> 8) & 0xff), (byte)((requestId) & 0xff),
-	    (byte)((FastCGIServlet.FCGI_BUF_SIZE >> 8) & 0xff), (byte)((FastCGIServlet.FCGI_BUF_SIZE) & 0xff),
+	    (byte)((FCGIUtil.FCGI_BUF_SIZE >> 8) & 0xff), (byte)((FCGIUtil.FCGI_BUF_SIZE) & 0xff),
 	    0, //padding
 	    0};
         int contentLength = buflength;
         int pos=0;
-        while(pos + FastCGIServlet.FCGI_BUF_SIZE <= contentLength) {
+        while(pos + FCGIUtil.FCGI_BUF_SIZE <= contentLength) {
 	    write(header);
-	    write(buf, pos, FastCGIServlet.FCGI_BUF_SIZE);
-	    pos += FastCGIServlet.FCGI_BUF_SIZE;
+	    write(buf, pos, FCGIUtil.FCGI_BUF_SIZE);
+	    pos += FCGIUtil.FCGI_BUF_SIZE;
         }
-        contentLength = buflength % FastCGIServlet.FCGI_BUF_SIZE;
+        contentLength = buflength % FCGIUtil.FCGI_BUF_SIZE;
         header[4] = (byte)((contentLength >> 8) & 0xff);
         header[5] = (byte)((contentLength) & 0xff);
         write(header);
@@ -62,13 +59,13 @@ class FastCGIOutputStream extends DefaultOutputStream {
     }
 
     public void writeBegin() throws ConnectionException {
-        int role = FastCGIServlet.FCGI_RESPONDER;
+        int role = FCGIUtil.FCGI_RESPONDER;
         byte[] body = new byte[] {
 	    (byte)((role >> 8) & 0xff), (byte)((role) & 0xff),
-	    FastCGIServlet.FCGI_KEEP_CONN,
+	    FCGIUtil.FCGI_KEEP_CONN,
 	    0,0,0,0,0};
             
-        write(FastCGIServlet.FCGI_BEGIN_REQUEST, body);
+        write(FCGIUtil.FCGI_BEGIN_REQUEST, body);
     }
     private void writeLength(ByteArrayOutputStream out, int keyLen) throws IOException {
         if (keyLen < 0x80) {
@@ -101,8 +98,8 @@ class FastCGIOutputStream extends DefaultOutputStream {
 		throw new ConnectionException(connection, e);
 	    }
         }
-        write(FastCGIServlet.FCGI_PARAMS, out.toByteArray());
-        write(FastCGIServlet.FCGI_PARAMS, FastCGIServlet.FCGI_EMPTY_RECORD);
+        write(FCGIUtil.FCGI_PARAMS, out.toByteArray());
+        write(FCGIUtil.FCGI_PARAMS, FCGIUtil.FCGI_EMPTY_RECORD);
     }
 
     /* (non-Javadoc)

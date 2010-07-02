@@ -1,5 +1,6 @@
 /*-*- mode: Java; tab-width:8 -*-*/
-package php.java.servlet.fastcgi;
+
+package php.java.script;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -47,13 +48,13 @@ class FCGIProcess extends Util.Process implements IFCGIProcess {
         LinkedList buf = new LinkedList();
         if(Util.USE_SH_WRAPPER) {
 	    buf.add("/bin/sh");
-	    buf.add(realPath+File.separator+Util.osArch+"-"+Util.osName+File.separator+"launcher.sh");
+	    buf.add(realPath+File.separator+"launcher.sh");
 	    buf.addAll(java.util.Arrays.asList(php));
 	    for(int i=1; i<args.length; i++) {
 		buf.add(args[i]);
 	    }
         } else {
-	    buf.add(realPath+File.separator+Util.osArch+"-"+Util.osName+File.separator+"launcher.exe");
+	    buf.add(realPath+File.separator+"launcher.exe");
 	    buf.addAll(java.util.Arrays.asList(php));
 	    for(int i=1; i<args.length; i++) {
 		buf.add(args[i]);

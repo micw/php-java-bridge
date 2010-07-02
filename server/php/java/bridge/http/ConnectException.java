@@ -1,5 +1,5 @@
 /*-*- mode: Java; tab-width:8 -*-*/
-package php.java.servlet.fastcgi;
+package php.java.bridge.http;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -23,13 +23,13 @@ package php.java.servlet.fastcgi;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import java.io.OutputStream;
+import java.io.IOException;
 
-final class BufferedOutputStream extends java.io.BufferedOutputStream {
-    public BufferedOutputStream(OutputStream out) {
-        super(out);
-    }
-    public byte[] getBuffer() {
-        return buf;
+/** Thrown when the server is not available anymore */
+public class ConnectException extends IOException {
+    private static final long serialVersionUID = 5242564093021250550L;
+    protected ConnectException(IOException ex) {
+        super();
+        initCause(ex);
     }
 }
