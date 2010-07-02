@@ -129,18 +129,18 @@ class java_EmptyChannel {
   }
   /** Used by socket channel (phase 2) */
   function keepAliveS() {
-	for ($this->res = $this->fread(10); strlen($this->res) < 10; $this->res.=$this->fread(10-strlen($this->res))); // <F p="E"/>
+	$this->res = $this->fread(10); // <F p="E"/>
   }
   /** Used by chunked socket channel (phase 2) */
   function keepAliveSC() {
-	for ($this->res = $this->fread(10); strlen($this->res) < 10; $this->res.=$this->fread(10-strlen($this->res)));// <F p="E"/>
+	$this->res = $this->fread(10);// <F p="E"/>
 	$this->fwrite(""); // 0\r\n\r\n
 	$this->fread(JAVA_RECV_SIZE); // read 0\r\n\r\n  JAVA_RECV_SIZE is dummy
   }
 
   /** Used by EmptyChannel (phase 1) */
   function keepAliveH() {
-	for ($this->res = $this->handler->read(10); strlen($this->res) < 10; $this->res.= $this->handler->read(10-strlen($this->res))); //  HTTP response <F p="E"/>
+	$this->res = $this->handler->read(10);//  HTTP response <F p="E"/>
   }
 
   function keepAlive() {
@@ -197,6 +197,8 @@ class java_ChunkedSocketChannel extends java_SocketChannel {
 	$data = "";
 	while ($length > 0) {
 	  $str = fread($this->peer, $length);
+	  if (feof ($this->socket)) return null;
+	  	  
 	  $length -= strlen($str);
 	  $data .= $str;
 	}
@@ -432,6 +434,8 @@ class java_SimpleHttpTunnelHandler extends java_SimpleHttpHandler  {
 	$data = "";
 	while ($length > 0) {
 	  $str = fread($this->socket, $length);
+	  if (feof ($this->socket)) return null;
+	  
 	  $length -= strlen($str);
 	  $data .= $str;
 	}
@@ -460,7 +464,8 @@ class java_SimpleHttpTunnelHandler extends java_SimpleHttpHandler  {
 		$str = $this->fread(JAVA_RECV_SIZE);
 	  } elseif (isset($this->headers['content_length'])) {
 		$len = $this->headers['content_length'];
-		for($str=fread($this->socket, $len); strlen($str)<$len; $str.=fread($this->socket,$len-strlen($str)));
+		for($str=fread($this->socket, $len); strlen($str)<$len; $str.=fread($this->socket,$len-strlen($str)))
+			if (feof ($this->socket)) break;
 	  } else {
 		$str=fread($this->socket, JAVA_RECV_SIZE);
 	  }

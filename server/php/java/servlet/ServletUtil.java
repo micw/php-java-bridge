@@ -5,9 +5,14 @@ package php.java.servlet;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.Set;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletRequest;
@@ -141,4 +146,45 @@ public class ServletUtil {
         }
         return server;
     }
+    /**
+     * Return an mbean property.
+     * Example: <code>Util.getMBeanProperty("*:type=ThreadPool,name=http*", "maxThreads")</code> or 
+     * <code>Util.getMBeanProperty("*:ServiceModule=*,J2EEServer=*,name=JettyWebConnector,j2eeType=*", "maxThreads");</code>
+     * @param pattern the pattern string 
+     * @param property the property key
+     * @return the property value
+     */
+    public static int getMBeanProperty(String pattern, String property) {
+            try {
+             Class objectNameClazz = Class.forName("javax.management.ObjectName");
+             Constructor constructor = objectNameClazz.getConstructor(new Class[]{String.class});
+             Object objectName = constructor.newInstance(new Object[]{pattern});
+             
+             
+             Class clazz = Class.forName("javax.management.MBeanServerFactory");
+             Method method = clazz.getMethod("findMBeanServer", new Class[]{String.class});
+             ArrayList servers = (ArrayList)method.invoke(clazz, new Object[]{null});
+             Object server = servers.get(0);
+             
+             Class mBeanServerClazz = Class.forName("javax.management.MBeanServer");
+             clazz = Class.forName("javax.management.QueryExp");
+             method = mBeanServerClazz.getMethod("queryMBeans", new Class[]{objectNameClazz, clazz});
+             
+             Set s = (Set)method.invoke(server, new Object[]{objectName, null});
+             Iterator ii = s.iterator(); 
+             
+             if (ii.hasNext()) {
+        	     clazz = Class.forName("javax.management.ObjectInstance");
+             method = clazz.getMethod("getObjectName", Util.ZERO_PARAM);
+             objectName = method.invoke(ii.next(), Util.ZERO_ARG);
+             
+             method = mBeanServerClazz.getMethod("getAttribute", new Class[]{objectNameClazz, String.class});
+        	     Object result = method.invoke(server, new Object[]{objectName, property});
+        	     return Integer.parseInt(String.valueOf(result));
+             }
+	} catch (Exception t) {
+		if (Util.logLevel>5) Util.printStackTrace(t);
+	}
+	return 0;
+   }
 }

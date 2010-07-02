@@ -501,7 +501,7 @@ public final class Request implements IDocHandler {
 	    ;
     }
     /**
-     * Start handling requests until EOF. Creates a response object and handles all packets.
+     * Start handling one request. Creates a response object and handles one packet.
      * @throws IOException
      */
     public boolean handleOneRequest() throws IOException {

@@ -1354,7 +1354,7 @@ public class JavaBridge implements Runnable {
      * Create a new bridge using a factory.
      * @param factory The session/context factory.
      */
-    public JavaBridge(IJavaBridgeFactory factory) {
+    protected JavaBridge(IJavaBridgeFactory factory) {
 	setFactory(factory);
     }
     /**

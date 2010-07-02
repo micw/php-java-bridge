@@ -66,15 +66,27 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
     private ContextServer contextServer;
     protected int logLevel = -1;
     private Util.Logger logger;
-    protected boolean promiscuous = true;
+    protected boolean promiscuous = false;
 
-    // workaround for a bug in weblogic server, see below
-    private boolean isWebLogic = false;
     // workaround for a bug in jboss server, which uses the log4j port 4445 for its internal purposes(!)
     private boolean isJBoss = false;
-    
+
+    protected int maxKeepAliveRequests;
+    protected int keepAliveTimeout;
+    private String keepAliveParam;
+
     /**@inheritDoc*/
     public void init(ServletConfig config) throws ServletException {
+	maxKeepAliveRequests = ServletUtil.getMBeanProperty("*:type=Connector,port=8080", "maxKeepAliveRequests");
+	keepAliveTimeout = ServletUtil.getMBeanProperty("*:type=Connector,port=8080", "keepAliveTimeout");
+	StringBuffer buf = new StringBuffer("timeout=");
+	buf.append(keepAliveTimeout);
+	buf.append(", max=");
+	buf.append(maxKeepAliveRequests);
+	// use redirect if maxKeepAliveRequests and keepAliveTimeout are not set to infinity
+	promiscuous = !(maxKeepAliveRequests != -1 && keepAliveTimeout == -1);
+	keepAliveParam = buf.toString();
+	
  	String servletContextName=ServletUtil.getRealPath(config.getServletContext(), "");
 	if(servletContextName==null) servletContextName="";
 	ServletContext ctx = config.getServletContext();
@@ -85,12 +97,12 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	value = value.toLowerCase();
 	
 	if(value.equals("off") || value.equals("false")) promiscuous=false;
+	if(value.equals("on") || value.equals("true")) promiscuous=true;
 	try { contextServer = getContextServer(ctx, promiscuous); } catch (Throwable e) {/*ignore*/}
     	 
     	super.init(config);
        
 	String name = ctx.getServerInfo();
-	if (name != null && (name.startsWith("WebLogic"))) isWebLogic = true;
 	if (name != null && (name.startsWith("JBoss")))    isJBoss    = true;
 
 	logger = new Util.Logger(!isJBoss, new Logger());
@@ -222,21 +234,6 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
   	if(val.length()==0) val=null;
   	return val;
     }
-    private InputStream getInputStream (HttpServletRequest req) throws IOException {
-	InputStream in = req.getInputStream();
-	if (!isWebLogic) return in;
-	
-	return new FilterInputStream(in) {
-	    /**
-	     * Stupid workaround for WebLogic's insane chunked reader implementation, it blocks instead of simply returning what's available so far.
-	     * in.getAvailable() can't be used either, because it returns the bytes in weblogics internal cache: For 003\r\n123\r\n weblogic 10.3 returns
-	     * 10 instead of 3(!) 
-	     */
-	    public int read(byte[] buf, int pos, int length) throws IOException {
-		return in.read(buf, pos, 1);
-	    }
-	};
-    }
     protected void handleHttpConnection (HttpServletRequest req, HttpServletResponse res) 
 	throws ServletException, IOException {
 
@@ -244,9 +241,10 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
 	res.setHeader("Pragma", "no-cache");
 	res.setHeader("Cache-Control", "no-cache");
+	res.setHeader("Keep-Alive", keepAliveParam);
 	
 	try {
-	    ctx.getBridge().handleRequestsInternal(getInputStream(req), res.getOutputStream());
+	    ctx.getBridge().handleRequestsInternal(req.getInputStream(), res.getOutputStream());
 	} finally {
 	    ctx.destroy();
 	}
