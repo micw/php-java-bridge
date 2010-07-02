@@ -60,7 +60,11 @@ import php.java.bridge.http.IOFactory;
  * @see php.java.script.HttpProxy
  */
 
-abstract class FastCGIProxy extends Continuation implements IFCGIProcessFactory {
+public class FastCGIProxy extends Continuation implements IFCGIProcessFactory {
+    private static final String PROCESSES = FCGIUtil.PHP_FCGI_CONNECTION_POOL_SIZE;
+    private static final String MAX_REQUESTS = FCGIUtil.PHP_FCGI_MAX_REQUESTS;
+    private static final String CGI_DIR = Util.TMPDIR.getName();
+    
     protected FastCGIProxy(Reader reader, Map env, OutputStream out,
             OutputStream err, HeaderParser headerParser,
             ResultProxy resultProxy, ILogger logger) {
@@ -80,6 +84,7 @@ abstract class FastCGIProxy extends Continuation implements IFCGIProcessFactory 
 		return name.connect();
 	    }
 	};
+
    private ConnectionPool createConnectionPool(int children) throws ConnectException {
 	channelName = ChannelFactory.createChannelFactory(this, false);
 	channelName.findFreePort(true);
@@ -184,9 +189,72 @@ abstract class FastCGIProxy extends Continuation implements IFCGIProcessFactory 
         }
 */
     }
-    public IFCGIProcess createFCGIProcess(String[] args, File home, Map env,
-            String cgiDir, boolean phpTryOtherLocations, boolean preferSystemPhp) throws IOException {
+    /** required by IFCGIProcessFactory */
+    /** {@inheritDoc} */
+    public IFCGIProcess createFCGIProcess(String[] args, File home, Map env) throws IOException {
 	return new FCGIProcess(args, home, env,
-	            cgiDir, phpTryOtherLocations, preferSystemPhp);
+		getCgiDir(), true, true);
+    }
+
+
+    /** {@inheritDoc} */
+    public boolean canStartFCGI() {
+	return true;
+    }
+
+
+
+    /** {@inheritDoc} */
+    public String getCgiDir() {
+	return CGI_DIR;
+    }
+
+
+    /** {@inheritDoc} */
+    public HashMap getEnvironment() {
+	return getProcessEnvironment();
+    }
+
+
+    /** {@inheritDoc} */
+    public String getPearDir() {
+	return CGI_DIR;
+    }
+
+
+    /** {@inheritDoc} */
+    public String getPhp() {
+	return null;
+    }
+
+
+    /** {@inheritDoc} */
+    public String getPhpConnectionPoolSize() {
+	return PROCESSES;
+    }
+
+
+    /** {@inheritDoc} */
+    public boolean getPhpIncludeJava() {
+	// FIXME
+	return false;
+    }
+
+
+    /** {@inheritDoc} */
+    public String getPhpMaxRequests() {
+	return MAX_REQUESTS;
+    }
+
+
+    /** {@inheritDoc} */
+    public String getWebInfDir() {
+	return CGI_DIR;
+    }
+
+
+    /** {@inheritDoc} */
+    public void log(String msg) {
+	Util.logMessage(msg);
     }
 }

@@ -30,26 +30,74 @@ import java.util.Map;
  */
 
 public interface IFCGIProcessFactory {
+    /** 
+     * Log message through preferred log mechanism, for example servlet.log() 
+     * @param msg The message to log
+     */
     public void log(String msg);
 
+    /**
+     * Create a FastCGI Process
+     * @param args The PHP arguments
+     * @param home The PHP home dir or null
+     * @param env The process environment
+     * @return a FastCGI process object
+     * @throws IOException
+     */
     public IFCGIProcess createFCGIProcess(String[] args, File home, Map env) throws IOException;
 
+    /**
+     * Get the connection pool size, usually FCGIUtil#PHP_FCGI_CONNECTION_POOL_SIZE
+     * @return The connection pool size
+     */
     public String getPhpConnectionPoolSize();
 
-    public Object getPhpMaxRequests();
+    /**
+     * Get the max requests value, usually {@link FCGIUtil#PHP_FCGI_MAX_REQUESTS}
+     * @return The connection pool size
+     */
+    public String getPhpMaxRequests();
 
+    /**
+     * Get the path to the PHP binary. For example "/usr/bin/php-cgi".
+     * @return The path or the name of the PHP FastCGI binary or null (defaults to php-cgi or php-cgi.exe on the PATH)
+     */
     public String getPhp();
 
+    /**
+     * Get the value of the php_include_java option from the WEB-INF/web.xml. Should return true in most cases.
+     * @return the php_include_java option
+     */
     public boolean getPhpIncludeJava();
 
+    /**
+     * Get the process environment map used for PHP.
+     * @return the process environment.
+     */
     public HashMap getEnvironment();
 
+    /**
+     * Used for debugging only. Should always return true.
+     * @return true
+     */
     public boolean canStartFCGI();
 
+    /**
+     * The full path to the pear dir. Defaults to WEB-INF/cgi. Use TMPDIR for a standalone runner.
+     * @return the full path to the cgi dir
+     */
     public String getCgiDir();
 
+    /**
+     * The full path to the pear dir. Defaults to WEB-INF/pear. Use TMPDIR for a standalone runner.
+     * @return the full path to the pear dir
+     */
     public String getPearDir();
 
+    /**
+     * The full path to the web-inf dir. Defaults to WEB-INF. Use TMPDIR for a standalone runner.
+     * @return the full path to the WEB-INF dir
+     */
     public String getWebInfDir();
     
 }

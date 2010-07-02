@@ -982,7 +982,7 @@ public class FastCGIServlet extends HttpServlet implements IFCGIProcessFactory {
 	return php_fcgi_connection_pool_size;
     }
     /** {@inheritDoc} */
-    public Object getPhpMaxRequests() {
+    public String getPhpMaxRequests() {
 	return php_fcgi_max_requests; 
     }
     /** {@inheritDoc} */
