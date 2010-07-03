@@ -48,7 +48,7 @@ import javax.servlet.http.HttpServletResponseWrapper;
 
 import php.java.bridge.NotImplementedException;
 import php.java.bridge.Util;
-import php.java.bridge.Util.HeaderParser;
+import php.java.bridge.http.HeaderParser;
 import php.java.bridge.http.HttpServer;
 import php.java.script.IScriptReader;
 

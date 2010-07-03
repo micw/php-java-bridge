@@ -49,7 +49,7 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
 
 import php.java.bridge.Util;
-import php.java.bridge.Util.HeaderParser;
+import php.java.bridge.http.HeaderParser;
 
 /**
  * This class can be used to connect to a HTTP server to allocate and to invoke php scripts.
@@ -191,7 +191,7 @@ public class URLReader extends Reader implements IScriptReader {
                 conn.setRequestProperty("X_JAVABRIDGE_OVERRIDE_HOSTS_REDIRECT", overrideHosts);
             }
             natIn = conn.getInputStream();
-            if (headerParser != Util.DEFAULT_HEADER_PARSER) {
+            if (headerParser != HeaderParser.DEFAULT_HEADER_PARSER) {
                 StringBuffer sbuf = new StringBuffer ();
                 for (Iterator ii = conn.getHeaderFields().entrySet().iterator(); ii.hasNext(); )
                 {

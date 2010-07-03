@@ -9,7 +9,7 @@ import java.util.Map;
 import javax.script.Bindings;
 
 import php.java.bridge.ILogger;
-import php.java.bridge.Util.HeaderParser;
+import php.java.bridge.http.HeaderParser;
 
 /**
  * Abstract class for ScriptContexts. The abstract class itself provides default methods that pass 

@@ -26,7 +26,6 @@ package php.java.script;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -195,27 +194,13 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
         }
     }
     
-    protected void doCompile(Reader reader, ScriptContext context) throws IOException {
-	FileWriter writer = new FileWriter(this.compilerOutputFile);
-	char[] buf = new char[Util.BUF_SIZE];
-	Reader localReader = getLocalReader(reader);
-	try {
-		int c;
-		while((c = localReader.read(buf))>0) 
-		    writer.write(buf, 0, c);
-		writer.close();
-	} finally {
-	    localReader.close();
-	}
-    }
-    protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
+    protected Object doEvalPhp(Reader reader, ScriptContext context, String name) throws ScriptException {
 	if (reader instanceof URLReader) return eval((URLReader)reader, context, name);
 	
         if((continuation != null) || (reader == null) ) release();
   	if(reader==null) return null;
   	
   	setNewContextFactory();
-        setName(name);
 	env.put("X_JAVABRIDGE_INCLUDE", EMPTY_INCLUDE);
 	Reader localReader = null;
         try {
@@ -236,13 +221,34 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
         }
        return resultProxy;
     }
+    protected Object doEvalCompiledPhp(Reader reader, ScriptContext context, String name) throws ScriptException {
+        if((continuation != null) || (reader == null) ) release();
+  	if(reader==null) return null;
+  	
+  	setNewContextFactory();
+	env.put("X_JAVABRIDGE_INCLUDE", EMPTY_INCLUDE);
+        try {
+            this.script = doEval(reader, context);
+            if (this.script!=null) {
+        	/* get the proxy, either the one from the user script or our default proxy */
+        	this.scriptClosure = script;
+            }
+	} catch (Exception e) {
+	    Util.printStackTrace(e);
+            if (e instanceof RuntimeException) throw (RuntimeException)e;
+            if (e instanceof ScriptException) throw (ScriptException)e;
+            throw new ScriptException(e);
+       } finally {
+            handleRelease();
+        }
+       return resultProxy;
+    }
 
     protected Object eval(URLReader reader, ScriptContext context, String name) throws ScriptException {
         if((continuation != null) || (reader == null) ) release();
   	if(reader==null) return null;
   	
   	setNewContextFactory();
-        setName(name);
 	env.put("X_JAVABRIDGE_INCLUDE", EMPTY_INCLUDE);
 	
         ByteArrayOutputStream out = new ByteArrayOutputStream();

@@ -35,8 +35,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import php.java.bridge.ILogger;
+import php.java.bridge.OutputStreamFactory;
 import php.java.bridge.Util;
-import php.java.bridge.Util.HeaderParser;
 import php.java.bridge.http.Channel;
 import php.java.bridge.http.ChannelFactory;
 import php.java.bridge.http.ConnectException;
@@ -44,6 +44,7 @@ import php.java.bridge.http.ConnectionPool;
 import php.java.bridge.http.FCGIUtil;
 import php.java.bridge.http.FastCGIInputStream;
 import php.java.bridge.http.FastCGIOutputStream;
+import php.java.bridge.http.HeaderParser;
 import php.java.bridge.http.IFCGIProcess;
 import php.java.bridge.http.IFCGIProcessFactory;
 import php.java.bridge.http.IOFactory;
@@ -169,7 +170,7 @@ public class FastCGIProxy extends Continuation implements IFCGIProcessFactory {
 	    natOut.writeParams(env);
 	    natOut.write(FCGIUtil.FCGI_STDIN, FCGIUtil.FCGI_EMPTY_RECORD);
 	    natOut.close();
-	    Util.parseBody(buf, natIn, new Util.OutputStreamFactory() { public OutputStream getOutputStream() throws IOException {return out;}}, headerParser);
+	    HeaderParser.parseBody(buf, natIn, new OutputStreamFactory() { public OutputStream getOutputStream() throws IOException {return out;}}, headerParser);
 	    natIn.close();
 	} catch (InterruptedException e) {
 	    // TODO Auto-generated catch block

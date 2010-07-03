@@ -136,7 +136,7 @@ abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocableP
 	    throw new NoSuchMethodException(String.valueOf(e.getMessage()));
 	}
     }
-    protected Object eval(final Reader reader, final ScriptContext context, final String name) throws ScriptException {
+    protected Object doEvalPhp(final Reader reader, final ScriptContext context, final String name) throws ScriptException {
 	try {
 	    return AccessController.doPrivileged(new PrivilegedExceptionAction(){ 
 	        public Object run() throws Exception {
@@ -164,7 +164,6 @@ abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocableP
 	    	
 	    /* send the session context now, otherwise the client has to 
 	     * call handleRedirectConnection */
-	    setName(DUMMY_PHP_SCRIPT_NAME);
 	    env.put("X_JAVABRIDGE_INCLUDE", EMPTY_INCLUDE);
             /* now evaluate JavaProxy.php */
 	    EngineFactory.addManaged(servletCtx, this);
@@ -194,7 +193,6 @@ abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocableP
         try {
 	    webPath = req.getContextPath()+fileReader.getResourcePath(servletCtx);
 	    setNewScriptFileContextFactory(fileReader);
-	    setName(name);
 
             /* now evaluate our script */
 

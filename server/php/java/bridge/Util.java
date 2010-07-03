@@ -47,6 +47,7 @@ import java.util.Vector;
 import java.util.Map.Entry;
 
 
+
 /**
  * Miscellaneous functions.
  * @author jostb
@@ -79,6 +80,9 @@ public final class Util {
 
     /** True if /bin/sh exists, false otherwise */
     public static final boolean USE_SH_WRAPPER = new File("/bin/sh").exists();
+    
+    /** The PHP argument allow_url_include=On, passed to all JSR223 script engines */
+    public static final String[] ALLOW_URL_INCLUDE = {"-d", "allow_url_include=On"};
     
     private Util() {}
     
@@ -161,17 +165,11 @@ public final class Util {
      */
     private static String[] PHP_ARGS;
     private static String DEFAULT_PHP_ARGS;
-    private static final String[] URL_INCLUDE = {"-d", "allow_url_include=On"};
     
     /**
      * The default CGI locations: <code>"/usr/bin/php-cgi"</code>, <code>"c:/Program Files/PHP/php-cgi.exe</code>
      */
     public static String DEFAULT_CGI_LOCATIONS[];
-
-    /**
-     * The default CGI header parser. The default implementation discards everything.
-     */
-    public static final HeaderParser DEFAULT_HEADER_PARSER = new SimpleHeaderParser();
 
     /**
      * ASCII encoding
@@ -732,96 +730,6 @@ public final class Util {
     }
 
     /**
-     * A procedure class which can be used to capture the HTTP header strings.
-     * Example:<br>
-     * <code>
-     * Util.parseBody(buf, natIn, out, new Util.HeaderParser() {protected void parseHeader(String header) {System.out.println(header);}});<br>
-     * </code>
-     * @author jostb
-     * @see Util#parseBody(byte[], InputStream, OutputStreamFactory, HeaderParser)
-     */
-    public static abstract class HeaderParser {
-      /**
-       * @param header The header string to parse
-       */
-      public abstract void parseHeader(String header);
-      public abstract void addHeader (String key, String val);
-    }
-    static class SimpleHeaderParser extends HeaderParser {
-	public void parseHeader(String header) {/*template*/}
-	public void addHeader (String key, String val) {/*template*/}
-    }
-    /**
-     * A default output stream factory for use with parseBody.
-     */
-    public static abstract class OutputStreamFactory {
-	/**
-	 * Return a new output stream
-	 * @return a new output stream
-	 */
-	public abstract OutputStream getOutputStream() throws IOException;
-    }
-    /**
-     * Discards all header fields from a HTTP connection and write the body to the OutputStream
-     * @param buf A buffer, for example new byte[BUF_SIZE]
-     * @param natIn The InputStream
-     * @param out The OutputStream
-     * @param parser The header parser
-     * @throws UnsupportedEncodingException
-     * @throws IOException
-     */
-    public static void parseBody(byte[] buf, InputStream natIn, OutputStreamFactory out, HeaderParser parser) throws UnsupportedEncodingException, IOException {
-	int i = 0, n, s = 0;
-	boolean eoh = false;
-	boolean rn = false;
-	String remain = null;
-	String line;
-
-	// the header and content
-	while((n = natIn.read(buf)) !=-1 ) {
-	    int N = i + n;
-	    // header
-	    while(!eoh && i<N) {
-		switch(buf[i++]) {
-		
-		case '\n':
-		    if(rn) {
-			eoh=true;
-		    } else {
-			if (remain != null) {
-			    line = remain + new String(buf, s, i-s, Util.ASCII);
-			    line = line.substring(0, line.length()-2);
-			    remain = null;
-			} else {
-			    line = new String(buf, s, i-s-2, Util.ASCII);
-			}
-		    	parser.parseHeader(line);
-		    	s=i;
-		    }
-		    rn=true;
-		    break;
-		    
-		case '\r': break;
-
-		default: rn=false;	
-			
-		}
-	    }
-	    // body
-	    if(eoh) {
-		if(i<N) out.getOutputStream().write(buf, i, N-i);
-	    }  else { 
-		if (remain != null) {
-		    remain += new String(buf, s, i-s, Util.ASCII);
-		} else {
-		    remain = new String(buf, s, i-s, Util.ASCII);
-		}
-	    }
-	    s = i = 0;
-	}
-    }
-    
-    /**
      * Sets the fall back logger, used when no thread-local logger exists. The default logger is initialized with: <code>new Logger(new FileLogger())</code>. 
      * @param logger the logger
      * @see #logDebug
@@ -1044,7 +952,7 @@ public final class Util {
 	protected String[] getArgumentArray(String[] php, String[] args) {
 	    LinkedList buf = new LinkedList();
 	    buf.addAll(java.util.Arrays.asList(php));
-	    buf.addAll(java.util.Arrays.asList(URL_INCLUDE));
+	    buf.addAll(java.util.Arrays.asList(ALLOW_URL_INCLUDE));
 	    for(int i=1; i<args.length; i++) {
 		buf.add(args[i]);
 	    }

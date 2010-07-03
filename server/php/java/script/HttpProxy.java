@@ -30,8 +30,8 @@ import java.io.Reader;
 import java.util.Map;
 
 import php.java.bridge.ILogger;
-import php.java.bridge.Util.HeaderParser;
 import php.java.bridge.Util.Process.PhpException;
+import php.java.bridge.http.HeaderParser;
 
 /**
  * Represents the script continuation.

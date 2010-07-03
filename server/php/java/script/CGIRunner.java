@@ -34,8 +34,9 @@ import java.io.Writer;
 import java.util.Map;
 
 import php.java.bridge.ILogger;
+import php.java.bridge.OutputStreamFactory;
 import php.java.bridge.Util;
-import php.java.bridge.Util.HeaderParser;
+import php.java.bridge.http.HeaderParser;
 
 /**
  * This class can be used to run a PHP CGI binary. Used only when
@@ -90,7 +91,7 @@ public class CGIRunner extends Continuation {
 	}).start();
 
 	byte[] buf = new byte[Util.BUF_SIZE];
-	Util.parseBody(buf, natIn, new Util.OutputStreamFactory() { public OutputStream getOutputStream() throws IOException {return out;}}, headerParser);
+	HeaderParser.parseBody(buf, natIn, new OutputStreamFactory() { public OutputStream getOutputStream() throws IOException {return out;}}, headerParser);
 	proc.waitFor();
 	resultProxy.setResult(proc.exitValue());
 	} catch (IOException e) {

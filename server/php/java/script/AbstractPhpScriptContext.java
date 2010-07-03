@@ -91,7 +91,8 @@ public abstract class AbstractPhpScriptContext extends SimpleScriptContext imple
      * @param writer The new <code>Writer</code>.
      */
     public void setWriter(Writer writer) {
-	    super.setWriter(new PhpScriptWriter(new WriterOutputStream(writer)));
+	    super.setWriter(this.writer=new PhpScriptWriter(new WriterOutputStream(writer)));
+	    super.getWriter();getWriter();
     }
     
     /**
@@ -100,6 +101,6 @@ public abstract class AbstractPhpScriptContext extends SimpleScriptContext imple
      * @param writer The <code>Writer</code>.
      */
     public void setErrorWriter(Writer writer) {
-	    super.setErrorWriter(new PhpScriptWriter(new WriterOutputStream(writer)));
+	    super.setErrorWriter(this.errorWriter=new PhpScriptWriter(new WriterOutputStream(writer)));
     }
 }

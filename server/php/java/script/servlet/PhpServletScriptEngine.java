@@ -121,7 +121,7 @@ public class PhpServletScriptEngine extends PhpServletLocalHttpServerScriptEngin
 	
 	path = new File(ServletUtil.getRealPath(ctx, ""));
     }
-    protected Object eval(final Reader reader, final ScriptContext context, final String name) throws ScriptException {
+    protected Object doEvalPhp(final Reader reader, final ScriptContext context, final String name) throws ScriptException {
 	try {
 	    return AccessController.doPrivileged(new PrivilegedExceptionAction(){ 
 	        public Object run() throws Exception {
@@ -137,7 +137,7 @@ public class PhpServletScriptEngine extends PhpServletLocalHttpServerScriptEngin
     private Object evalWithPrivileges(Reader reader, ScriptContext context, String name) throws ScriptException {
 
 	// use a short path if the script file already exists
-	if (reader instanceof ScriptFileReader) return super.eval(reader, context, name);
+	if (reader instanceof ScriptFileReader) return super.doEvalPhp(reader, context, name);
 	
     	File tempfile = null;
     	FileOutputStream fout = null;
@@ -157,7 +157,6 @@ public class PhpServletScriptEngine extends PhpServletLocalHttpServerScriptEngin
 	    webPath = req.getContextPath()+"/"+tempfile.getName();
 
 	    setNewContextFactory();
-	    setName(name);
 	        
 	    
             /* now evaluate our script */

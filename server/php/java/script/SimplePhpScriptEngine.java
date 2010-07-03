@@ -25,6 +25,7 @@ package php.java.script;
  */
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
@@ -49,6 +50,7 @@ import php.java.bridge.ThreadPool;
 import php.java.bridge.Util;
 import php.java.bridge.http.AbstractChannelName;
 import php.java.bridge.http.ContextServer;
+import php.java.bridge.http.HeaderParser;
 import php.java.bridge.http.IContext;
 import php.java.bridge.http.IContextFactory;
 import php.java.bridge.http.WriterOutputStream;
@@ -128,13 +130,6 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine implements IPh
         this.factory = factory;
     }
 
-    protected void setName(String name) {
-        int length = name.length();
-        if(length>160) length=160;
-        name = name.substring(0, length);
-        this.name = name;
-    }
-
     /**
      * Set the context id (X_JAVABRIDGE_CONTEXT) and the override flag (X_JAVABRIDGE_OVERRIDE_HOSTS) into env
      * @param env the environment which will be passed to PHP
@@ -174,26 +169,6 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine implements IPh
     	setStandardEnvironmentValues(env);
     }
 
-    protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
-        if(reader == null) { release(); return null; }
-
-	/* PHP executes a script and then terminates immediately. Use the php-invocable ScriptEngine to hold a PHP script */
-	if(continuation != null) throw new IllegalStateException("continuation is not null.");
-	
-	try {
-	    setNewContextFactory();
-            setName(name);
-    
-            try { doEval(reader, context); } catch (Exception e) {
-        	Util.printStackTrace(e);
-        	throw new PhpScriptException("Could not evaluate script", e);
-            }
-        } finally {
-            release();
-        }
-	return null;
-    }
-
     /* (non-Javadoc)
      * @see javax.script.ScriptEngine#eval(java.io.Reader, javax.script.ScriptContext)
      */
@@ -204,7 +179,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine implements IPh
      * @see javax.script.ScriptEngine#eval(java.io.Reader, javax.script.ScriptContext)
      */
     protected Object evalPhp(Reader reader, ScriptContext context) throws ScriptException {
-        return eval(reader, getContext(), String.valueOf(reader));
+        return doEvalPhp(reader, getContext(), String.valueOf(reader));
     }
     private void updateGlobalEnvironment(ScriptContext context) throws IOException {
 	Bindings bindings = context.getBindings(ScriptContext.GLOBAL_SCOPE);
@@ -217,9 +192,9 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine implements IPh
 	}
 	if (compilerOutputFile != null) env.put("SCRIPT_FILENAME", compilerOutputFile.getCanonicalPath());
     }
-    private final class HeaderParser extends Util.HeaderParser {
+    private final class SimpleHeaderParser extends HeaderParser {
 	private WriterOutputStream writer;
-	public HeaderParser(WriterOutputStream writer) {
+	public SimpleHeaderParser(WriterOutputStream writer) {
 	    this.writer = writer;
 	}
 	public void parseHeader(String header) {
@@ -243,7 +218,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine implements IPh
 	}
     }
     protected Continuation getContinuation(Reader reader, ScriptContext context) throws IOException {
-    	Util.HeaderParser headerParser = Util.DEFAULT_HEADER_PARSER; // ignore encoding, we pass everything directly
+	HeaderParser headerParser = HeaderParser.DEFAULT_HEADER_PARSER; // ignore encoding, we pass everything directly
 	IPhpScriptContext phpScriptContext = (IPhpScriptContext)context;
     	updateGlobalEnvironment(context);
     	OutputStream out =((PhpScriptWriter)(context.getWriter())).getOutputStream();
@@ -253,20 +228,38 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine implements IPh
 	 * encode according to content-type charset
 	 */
     	if(out instanceof WriterOutputStream)
-    	    headerParser = new HeaderParser((WriterOutputStream)out);
+    	    headerParser = new SimpleHeaderParser((WriterOutputStream)out);
 
     	Continuation kont = phpScriptContext.createContinuation(reader, env, out,  err, headerParser, resultProxy = new ResultProxy(this), Util.getLogger());
 
     	phpScriptContext.setContinuation(kont);
 	return kont;
     }
+    /** Method called to evaluate a PHP file w/o compilation */
+    protected abstract Object doEvalPhp(Reader reader, ScriptContext context, String name) throws ScriptException;
+    protected abstract Object doEvalCompiledPhp(Reader reader, ScriptContext context, String name) throws ScriptException;
 
-    protected abstract void doCompile(Reader reader, ScriptContext context) throws IOException;
+    protected abstract Reader getLocalReader(Reader reader) throws IOException;
+    protected void doCompile(Reader reader, ScriptContext context) throws IOException {
+  	setNewContextFactory();
+  	
+	FileWriter writer = new FileWriter(this.compilerOutputFile);
+	char[] buf = new char[Util.BUF_SIZE];
+	Reader localReader = getLocalReader(reader);
+	try {
+		int c;
+		while((c = localReader.read(buf))>0) 
+		    writer.write(buf, 0, c);
+		writer.close();
+	} finally {
+	    localReader.close();
+	}
+    }
     
     /*
      * Obtain a PHP instance for url.
      */
-    protected Object doEval(Reader reader, ScriptContext context) throws Exception {
+    final protected Object doEval(Reader reader, ScriptContext context) throws Exception {
     	continuation = getContinuation(reader, context);
      	pool.start(continuation);
     	return continuation.getPhpScript();
@@ -278,7 +271,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine implements IPh
     /**@inheritDoc*/
     public Object eval(String script, ScriptContext context)
 	throws ScriptException {
-      	if(script==null) return eval((Reader)null, context, null);
+      	if(script==null) return doEvalPhp((Reader)null, context, null);
       	
 	script = script.trim();
 	Reader localReader = new StringReader(script);
@@ -368,7 +361,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine implements IPh
 	    public Object eval(final ScriptContext context) throws ScriptException {
 		setContext(new PhpCompiledScriptContextDecorator((IPhpScriptContext)getContext()));
 		try {
-	            return SimplePhpScriptEngine.this.doEval(DUMMY_READER, getContext());
+	            return SimplePhpScriptEngine.this.doEvalCompiledPhp(DUMMY_READER, getContext(), null);
                 } catch (Exception e) {
                     throw new ScriptException(e);
                 }

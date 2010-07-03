@@ -44,7 +44,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.ILogger;
 import php.java.bridge.Util;
-import php.java.bridge.Util.HeaderParser;
 import php.java.bridge.http.AbstractChannelName;
 import php.java.bridge.http.Channel;
 import php.java.bridge.http.ChannelFactory;
@@ -55,6 +54,7 @@ import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.FCGIUtil;
 import php.java.bridge.http.FastCGIInputStream;
 import php.java.bridge.http.FastCGIOutputStream;
+import php.java.bridge.http.HeaderParser;
 import php.java.bridge.http.IContextFactory;
 import php.java.bridge.http.IFCGIProcess;
 import php.java.bridge.http.IFCGIProcessFactory;
@@ -748,7 +748,7 @@ public class FastCGIServlet extends HttpServlet implements IFCGIProcessFactory {
      * Optimized run method for FastCGI. Makes use of the large FCGI_BUF_SIZE and the specialized in.read(). 
      * It is a modified copy of the parseBody. 
      * @throws InterruptedException 
-     * @see Util#parseBody(byte[], InputStream, OutputStream, HeaderParser)
+     * @see HeaderParser#parseBody(byte[], InputStream, OutputStream, HeaderParser)
      */
     protected void parseBody(HttpServletRequest req, HttpServletResponse res, Environment env) throws ConnectionException, ConnectException, IOException, ServletException {
 	final byte[] buf = new byte[FCGIUtil.FCGI_BUF_SIZE];// headers cannot be larger than this value!

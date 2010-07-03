@@ -31,7 +31,7 @@ import java.util.Map;
 
 import php.java.bridge.ILogger;
 import php.java.bridge.Util;
-import php.java.bridge.Util.HeaderParser;
+import php.java.bridge.http.HeaderParser;
 
 /**
  * This class represents the logic to run PHP scripts through CGI, FastCGI or on a remote HTTP server

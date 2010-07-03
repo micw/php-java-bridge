@@ -26,7 +26,6 @@ package php.java.script;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -67,16 +66,16 @@ public class PhpScriptEngine extends SimplePhpScriptEngine {
         super(factory);
     }
 
-    private static final String STANDARD_HEADER = new String("<?php require_once(\"/java/Java.inc\");" +
-    		"$java_bindings = java_context()->getBindings(100);" +
-    		"$java_scriptname = @java_values($java_bindings['javax.script.filename']);"+
-    		"if(!isset($argv)) $argv = @java_values($java_bindings['javax.script.argv']);"+
-    		"if(!isset($argv)) $argv=array();"+
-    		"$_SERVER['SCRIPT_FILENAME'] =  isset($java_scriptname) ? $java_scriptname : '';"+
-    		"array_unshift($argv, $_SERVER['SCRIPT_FILENAME']);"+
-    		"if (!isset($argc)) $argc = count($argv);"+
-    		"$_SERVER['argv'] = $argv;"+
-    		"?>");
+    private static final String STANDARD_HEADER = new String("<?php require_once(\"/java/Java.inc\");\n" +
+		"$java_bindings = java_context()->getBindings(100);\n" +
+		"$java_scriptname = @java_values($java_bindings['javax.script.filename']);\n"+
+		"if(!isset($argv)) $argv = @java_values($java_bindings['javax.script.argv']);\n"+
+		"if(!isset($argv)) $argv=array();\n"+
+		"$_SERVER['SCRIPT_FILENAME'] =  isset($java_scriptname) ? $java_scriptname : '';\n"+
+		"array_unshift($argv, $_SERVER['SCRIPT_FILENAME']);\n"+
+		"if (!isset($argc)) $argc = count($argv);\n"+
+		"$_SERVER['argv'] = $argv;\n"+
+		"?>");
     static String getStandardHeader (String filePath) {
 	StringBuffer buf = new StringBuffer(STANDARD_HEADER);
 	buf.insert(20, filePath);
@@ -105,27 +104,12 @@ public class PhpScriptEngine extends SimplePhpScriptEngine {
 	    if (w!=null) try {w.close();} catch (IOException e) {/*ignore*/}
 	}
     }
-    protected void doCompile(Reader reader, ScriptContext context) throws IOException {
-	setNewContextFactory();
-	FileWriter writer = new FileWriter(this.compilerOutputFile);
-	char[] buf = new char[Util.BUF_SIZE];
-	Reader localReader = getLocalReader(reader);
-	try {
-		int c;
-		while((c = localReader.read(buf))>0) 
-		    writer.write(buf, 0, c);
-		writer.close();
-	} finally {
-	    localReader.close();
-	}
-    }
 
-    protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
+    protected Object doEvalPhp(Reader reader, ScriptContext context, String name) throws ScriptException {
         if((continuation != null) || (reader == null) ) release();
   	if(reader==null) return null;
   	
   	setNewContextFactory();
-        setName(name);
         Reader localReader = null;
         
         try {
@@ -138,6 +122,26 @@ public class PhpScriptEngine extends SimplePhpScriptEngine {
             throw new ScriptException(e);
          } finally {
             if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}
+
+            // release the engine, so that any error reported by the script can trigger a Java exception
+            release();
+       }
+        
+       return resultProxy;
+    }
+    protected Object doEvalCompiledPhp(Reader reader, ScriptContext context, String name) throws ScriptException {
+        if((continuation != null) || (reader == null) ) release();
+  	if(reader==null) return null;
+  	
+  	setNewContextFactory();
+        try {
+            this.script = doEval(reader, context);
+        } catch (Exception e) {
+            Util.printStackTrace(e);
+            if (e instanceof RuntimeException) throw (RuntimeException)e;
+            if (e instanceof ScriptException) throw (ScriptException)e;
+            throw new ScriptException(e);
+         } finally {
 
             // release the engine, so that any error reported by the script can trigger a Java exception
             release();

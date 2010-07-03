@@ -100,7 +100,7 @@ abstract class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
 	ctx = PhpServletContextFactory.addNew(getContextServer(), (IContext)getContext(), servlet, servletCtx, req, res);
     }
     
-    protected Object eval(final Reader reader, final ScriptContext context, final String name) throws ScriptException {
+    protected Object doEvalPhp(final Reader reader, final ScriptContext context, final String name) throws ScriptException {
   	if(reader==null) return null;
 	if (!(reader instanceof ScriptFileReader)) throw new IllegalArgumentException("reader must be a ScriptFileReader");
     	ScriptFileReader fileReader = (ScriptFileReader) reader;
@@ -110,7 +110,6 @@ abstract class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
             String resourcePath = fileReader.getResourcePath(servletCtx);
 	    webPath = req.getContextPath()+resourcePath;
 	    setNewContextFactory();
-	    setName(name);
 	        
             /* now evaluate our script */
 	    localReader = new ServletReader(servletCtx, resourcePath, getURL(webPath), req, res);

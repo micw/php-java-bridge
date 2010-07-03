@@ -37,7 +37,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.ILogger;
-import php.java.bridge.Util.HeaderParser;
+import php.java.bridge.http.HeaderParser;
 import php.java.bridge.http.IContext;
 import php.java.script.AbstractPhpScriptContext;
 import php.java.script.Continuation;

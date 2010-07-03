@@ -35,7 +35,7 @@ import javax.script.ScriptContext;
 import php.java.bridge.ILogger;
 import php.java.bridge.JavaBridgeRunner;
 import php.java.bridge.Util;
-import php.java.bridge.Util.HeaderParser;
+import php.java.bridge.http.HeaderParser;
 import php.java.bridge.http.IContext;
 
 /**
@@ -63,7 +63,6 @@ public class PhpScriptContext extends AbstractPhpScriptContext implements IPhpSc
      private Writer getWriter(boolean isStandalone) {
 	 return isStandalone ? PhpScriptLogWriter.getWriter(Util.getLogger()) : new PhpScriptWriter(System.out);
      }
-     private Writer writer;
      /**{@inheritDoc}*/
     public Writer getWriter() {
 	if(writer == null) return writer =  getWriter(bridgeRunner.isStandalone());
@@ -73,7 +72,6 @@ public class PhpScriptContext extends AbstractPhpScriptContext implements IPhpSc
     private Writer getErrorWriter(boolean isStandalone) {
 	 return isStandalone ? PhpScriptLogWriter.getWriter(Util.getLogger()) : new PhpScriptWriter(System.err);
     }
-    private Writer errorWriter;
     /**{@inheritDoc}*/
     public Writer getErrorWriter() {
 	if(errorWriter == null) return errorWriter =  getErrorWriter(bridgeRunner.isStandalone());

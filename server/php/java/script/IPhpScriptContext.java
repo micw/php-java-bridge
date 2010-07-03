@@ -33,7 +33,7 @@ import javax.script.ScriptContext;
 import php.java.bridge.ILogger;
 import php.java.bridge.IManaged;
 import php.java.bridge.Invocable;
-import php.java.bridge.Util;
+import php.java.bridge.http.HeaderParser;
 import php.java.bridge.http.IContext;
 
 /**
@@ -56,5 +56,5 @@ public interface IPhpScriptContext extends IManaged, Invocable, IContext, Script
     public Continuation getContinuation();
 
     /* FIXME */
-    public Continuation createContinuation(Reader reader, Map env, OutputStream out, OutputStream err, Util.HeaderParser headerParser, ResultProxy result, ILogger logger);
+    public Continuation createContinuation(Reader reader, Map env, OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy result, ILogger logger);
 }

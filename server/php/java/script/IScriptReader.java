@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
 
-import php.java.bridge.Util.HeaderParser;
+import php.java.bridge.http.HeaderParser;
 
 /**
  * Read data from a URL or from a servlet and write the result to the output stream and a header parser.

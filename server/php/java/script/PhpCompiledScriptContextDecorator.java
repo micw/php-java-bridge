@@ -9,7 +9,7 @@ import java.util.Map;
 import javax.script.ScriptContext;
 
 import php.java.bridge.ILogger;
-import php.java.bridge.Util.HeaderParser;
+import php.java.bridge.http.HeaderParser;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier

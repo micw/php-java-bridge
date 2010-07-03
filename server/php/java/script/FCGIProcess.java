@@ -53,12 +53,14 @@ class FCGIProcess extends Util.Process implements IFCGIProcess {
 	    for(int i=1; i<args.length; i++) {
 		buf.add(args[i]);
 	    }
+	    buf.addAll(java.util.Arrays.asList(Util.ALLOW_URL_INCLUDE));
         } else {
 	    buf.add(realPath+File.separator+"launcher.exe");
 	    buf.addAll(java.util.Arrays.asList(php));
 	    for(int i=1; i<args.length; i++) {
 		buf.add(args[i]);
 	    }
+	    buf.addAll(java.util.Arrays.asList(Util.ALLOW_URL_INCLUDE));
 	}
         return (String[]) buf.toArray(new String[buf.size()]);
     }
