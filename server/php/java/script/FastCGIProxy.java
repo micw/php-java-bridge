@@ -35,7 +35,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import php.java.bridge.ILogger;
-import php.java.bridge.OutputStreamFactory;
 import php.java.bridge.Util;
 import php.java.bridge.http.Channel;
 import php.java.bridge.http.ChannelFactory;
@@ -48,6 +47,7 @@ import php.java.bridge.http.HeaderParser;
 import php.java.bridge.http.IFCGIProcess;
 import php.java.bridge.http.IFCGIProcessFactory;
 import php.java.bridge.http.IOFactory;
+import php.java.bridge.http.OutputStreamFactory;
 
 /**
  * This class can be used to run a PHP CGI binary. Used only when

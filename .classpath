@@ -6,5 +6,6 @@
 	<classpathentry kind="lib" path="unsupported/log4j.jar"/>
 	<classpathentry kind="lib" path="unsupported/poi.jar"/>
 	<classpathentry kind="lib" path="unsupported/servlet-api.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
