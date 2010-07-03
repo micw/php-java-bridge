@@ -809,8 +809,7 @@ public final class Util {
 	    }
 	    // body
 	    if(eoh) {
-		if(i<N) {System.err.println("xxx:" + new String(buf,i, N-i, "ASCII")); 
-		out.getOutputStream().write(buf, i, N-i);} 
+		if(i<N) out.getOutputStream().write(buf, i, N-i);
 	    }  else { 
 		if (remain != null) {
 		    remain += new String(buf, s, i-s, Util.ASCII);
