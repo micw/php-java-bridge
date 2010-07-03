@@ -2,6 +2,15 @@
 
 package php.java.script;
 
+import java.io.OutputStream;
+import java.io.Reader;
+import java.util.Map;
+
+import javax.script.ScriptContext;
+
+import php.java.bridge.ILogger;
+import php.java.bridge.Util.HeaderParser;
+
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
  *
@@ -24,37 +33,27 @@ package php.java.script;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import java.io.OutputStream;
-import java.io.Reader;
-import java.util.Map;
-
-import javax.script.ScriptContext;
-
-import php.java.bridge.ILogger;
-import php.java.bridge.IManaged;
-import php.java.bridge.Invocable;
-import php.java.bridge.Util;
-import php.java.bridge.http.IContext;
 
 /**
- * Common methods for all PHP ScriptContexts
+ * This class implements a simple script context for PHP. It starts a standalone 
+ * <code>JavaBridgeRunner</code> which listens for requests from php instances.<p>
  * 
+ * In a servlet environment please use a <code>php.java.script.PhpSimpleHttpScriptContext</code> instead.
+ * @see php.java.script.PhpScriptContext
+ * @see php.java.bridge.JavaBridgeRunner
  * @author jostb
  *
  */
-public interface IPhpScriptContext extends IManaged, Invocable, IContext, ScriptContext {
-       
-    /**
-     * Set the php continuation
-     * @param kont The continuation.
-     */
-    public void setContinuation(Continuation kont);
-    /**
-     * Get the php continuation
-     * @return The HttpProxy
-     */
-    public Continuation getContinuation();
+public class PhpCompiledScriptContextDecorator extends PhpScriptContextDecorator {
 
-    /* FIXME */
-    public Continuation createContinuation(Reader reader, Map env, OutputStream out, OutputStream err, Util.HeaderParser headerParser, ResultProxy result, ILogger logger);
+    public PhpCompiledScriptContextDecorator(IPhpScriptContext ctx) {
+	super(ctx);
+    }
+
+    /**{@inheritDoc}*/
+    public Continuation createContinuation(Reader reader, Map env,
+            OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy result,
+            ILogger logger) {
+    		return new FastCGIProxy(reader, env, out,  err, headerParser, result, logger); 
+    }
 }

@@ -24,12 +24,18 @@ package php.java.script;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.io.OutputStream;
+import java.io.Reader;
 import java.io.Writer;
 import java.util.Collections;
 import java.util.Map;
 
+import javax.script.ScriptContext;
+
+import php.java.bridge.ILogger;
 import php.java.bridge.JavaBridgeRunner;
 import php.java.bridge.Util;
+import php.java.bridge.Util.HeaderParser;
 import php.java.bridge.http.IContext;
 
 /**
@@ -43,6 +49,7 @@ import php.java.bridge.http.IContext;
  *
  */
 public class PhpScriptContext extends AbstractPhpScriptContext implements IPhpScriptContext {
+
     static JavaBridgeRunner bridgeRunner = null;
 
     static {
@@ -52,18 +59,11 @@ public class PhpScriptContext extends AbstractPhpScriptContext implements IPhpSc
 	    Util.printStackTrace(e);
 	}
     }
- 	
-    /**
-     * Create a standalone PHP script context.
-     *
-     */
-    public PhpScriptContext() {
-        super();
-    }
 
      private Writer getWriter(boolean isStandalone) {
 	 return isStandalone ? PhpScriptLogWriter.getWriter(Util.getLogger()) : new PhpScriptWriter(System.out);
      }
+     private Writer writer;
      /**{@inheritDoc}*/
     public Writer getWriter() {
 	if(writer == null) return writer =  getWriter(bridgeRunner.isStandalone());
@@ -73,6 +73,7 @@ public class PhpScriptContext extends AbstractPhpScriptContext implements IPhpSc
     private Writer getErrorWriter(boolean isStandalone) {
 	 return isStandalone ? PhpScriptLogWriter.getWriter(Util.getLogger()) : new PhpScriptWriter(System.err);
     }
+    private Writer errorWriter;
     /**{@inheritDoc}*/
     public Writer getErrorWriter() {
 	if(errorWriter == null) return errorWriter =  getErrorWriter(bridgeRunner.isStandalone());
@@ -149,5 +150,11 @@ public class PhpScriptContext extends AbstractPhpScriptContext implements IPhpSc
     /**{@inheritDoc}*/
     public Map getAll() {
 	return Collections.unmodifiableMap(getBindings(IContext.ENGINE_SCOPE));
+    }
+    /**{@inheritDoc}*/
+    public Continuation createContinuation(Reader reader, Map env,
+            OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy result,
+            ILogger logger) {
+    		return new HttpProxy(reader, env, out,  err, headerParser, result, logger); 
     }
 }

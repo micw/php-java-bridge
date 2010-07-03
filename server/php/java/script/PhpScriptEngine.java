@@ -26,6 +26,7 @@ package php.java.script;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -81,30 +82,54 @@ public class PhpScriptEngine extends SimplePhpScriptEngine {
 	buf.insert(20, filePath);
 	return buf.toString();
     }
+    protected Reader getLocalReader(Reader reader) throws IOException {
+        /* header: <? require_once("http://localhost:<ourPort>/JavaBridge/java/Java.inc"); ?> */
+	ByteArrayOutputStream out = new ByteArrayOutputStream();
+	Writer w = new OutputStreamWriter(out);
+	try {
+	    Reader localReader = null;
+	    char[] buf = new char[Util.BUF_SIZE];
+	    int c;
+	    localReader = new StringReader(getStandardHeader("http://127.0.0.1:"+ctx.getSocketName()+"/JavaBridge"));
+	    while((c=localReader.read(buf))>0) w.write(buf, 0, c);
+	    localReader.close(); localReader=null;
+
+	    /* the script: */
+	    while((c=reader.read(buf))>0) w.write(buf, 0, c);
+	    w.close(); w = null;
+        
+	    /* now evaluate our script */
+	    localReader = new InputStreamReader(new ByteArrayInputStream(out.toByteArray()));
+	    return localReader;
+	} finally {
+	    if (w!=null) try {w.close();} catch (IOException e) {/*ignore*/}
+	}
+    }
+    protected void doCompile(Reader reader, ScriptContext context) throws IOException {
+	setNewContextFactory();
+	FileWriter writer = new FileWriter(this.compilerOutputFile);
+	char[] buf = new char[Util.BUF_SIZE];
+	Reader localReader = getLocalReader(reader);
+	try {
+		int c;
+		while((c = localReader.read(buf))>0) 
+		    writer.write(buf, 0, c);
+		writer.close();
+	} finally {
+	    localReader.close();
+	}
+    }
+
     protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
         if((continuation != null) || (reader == null) ) release();
   	if(reader==null) return null;
   	
   	setNewContextFactory();
         setName(name);
-
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Writer w = new OutputStreamWriter(out);
         Reader localReader = null;
-        char[] buf = new char[Util.BUF_SIZE];
-        int c;
+        
         try {
-             /* header: <? require_once("http://localhost:<ourPort>/JavaBridge/java/Java.inc"); ?> */
-            localReader = new StringReader(getStandardHeader("http://127.0.0.1:"+ctx.getSocketName()+"/JavaBridge"));
-            while((c=localReader.read(buf))>0) w.write(buf, 0, c);
-            localReader.close(); localReader=null;
-    
-            /* the script: */
-            while((c=reader.read(buf))>0) w.write(buf, 0, c);
-            w.close(); w = null;
-            
-            /* now evaluate our script */
-            localReader = new InputStreamReader(new ByteArrayInputStream(out.toByteArray()));
+            localReader = getLocalReader(reader);
             this.script = doEval(localReader, context);
         } catch (Exception e) {
             Util.printStackTrace(e);
@@ -112,7 +137,6 @@ public class PhpScriptEngine extends SimplePhpScriptEngine {
             if (e instanceof ScriptException) throw (ScriptException)e;
             throw new ScriptException(e);
          } finally {
-            if(w!=null)  try { w.close(); } catch (IOException e) {/*ignore*/}
             if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}
 
             // release the engine, so that any error reported by the script can trigger a Java exception

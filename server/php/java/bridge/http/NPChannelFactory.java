@@ -89,7 +89,7 @@ public class NPChannelFactory extends ChannelFactory {
 	try {
 	    if(select) {
 		File testRafile = File.createTempFile("JavaBridge", ".socket");
-		testRaPath = PREFIX+testRafile.getPath();
+		testRaPath = PREFIX+testRafile.getCanonicalPath();
 		testRafile.delete();
 	    } else {
 		testRaPath  = FCGIUtil.FCGI_PIPE;

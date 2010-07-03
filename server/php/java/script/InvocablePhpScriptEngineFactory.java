@@ -42,7 +42,7 @@ public class InvocablePhpScriptEngineFactory extends PhpScriptEngineFactory {
         }
 
 	public ScriptEngine create () {
-	    if (hasCloseable) return new CloseableInvocablePhpScriptEngine(InvocablePhpScriptEngineFactory.this);
+	    if (hasCloseable) return new CloseableScriptEngineDecorator(new InvocablePhpScriptEngine(InvocablePhpScriptEngineFactory.this));
 	    else return new InvocablePhpScriptEngine(InvocablePhpScriptEngineFactory.this);
 	}
     }

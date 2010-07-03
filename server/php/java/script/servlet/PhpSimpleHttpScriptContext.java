@@ -25,6 +25,7 @@ package php.java.script.servlet;
  */
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.Collections;
@@ -35,11 +36,16 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import php.java.bridge.ILogger;
+import php.java.bridge.Util.HeaderParser;
 import php.java.bridge.http.IContext;
 import php.java.script.AbstractPhpScriptContext;
+import php.java.script.Continuation;
+import php.java.script.HttpProxy;
 import php.java.script.IPhpScriptContext;
 import php.java.script.PhpScriptLogWriter;
 import php.java.script.PhpScriptWriter;
+import php.java.script.ResultProxy;
 
 
 /**
@@ -50,34 +56,21 @@ import php.java.script.PhpScriptWriter;
  */
 public class PhpSimpleHttpScriptContext extends AbstractPhpScriptContext implements IPhpScriptContext {
 
+    /** Integer value for the level of SCRIPT_SCOPE */
+    public static final int REQUEST_SCOPE = 0;
+    
+    /** Integer value for the level of SESSION_SCOPE */   
+    public static final int SESSION_SCOPE = 150;
+    
+    /** Integer value for the level of APPLICATION_SCOPE */
+    public static final int APPLICATION_SCOPE = 175;
+
+
     protected HttpServletRequest request;
     protected HttpServletResponse response;
     protected ServletContext context;
     protected Servlet servlet;
     
-    /**
-     * Initialize the context.
-     * @param servlet The servlet
-     * @param ctx The ServletContext
-     * @param req The HttpServletRequest
-     * @param res The HttpServletResponse
-     */
-    public void initialize(Servlet servlet,
-		    	   ServletContext ctx,
-			   HttpServletRequest req,
-			   HttpServletResponse res) {
-	this.context = ctx;
-	this.request = req;
-	this.response = res;
-	this.servlet = servlet;
-	
-	setAttribute(IContext.SERVLET_CONTEXT, ctx, IContext.ENGINE_SCOPE);
-	setAttribute(IContext.SERVLET_CONFIG, servlet.getServletConfig(), IContext.ENGINE_SCOPE);
-	setAttribute(IContext.SERVLET, servlet, IContext.ENGINE_SCOPE);
-	setAttribute(IContext.SERVLET_REQUEST, req, IContext.ENGINE_SCOPE);
-	setAttribute(IContext.SERVLET_RESPONSE, res, IContext.ENGINE_SCOPE);
-    }
-
     /**{@inheritDoc}*/
     public Object getAttribute(String key, int scope){
 	if(scope == REQUEST_SCOPE){
@@ -96,12 +89,9 @@ public class PhpSimpleHttpScriptContext extends AbstractPhpScriptContext impleme
 	if (name == null) {
 	    throw new IllegalArgumentException("name cannot be null");
 	}
-	          
-	if ((engineScope!=null) && (result=engineScope.get(name)) != null) {
-	    return result;
-	} else if ((globalScope!=null) && (result=globalScope.get(name)) != null) {
-	    return result;
-	} else if ((result=request.getAttribute(name)) != null)  {
+	if ((result = super.getAttribute(name))!=null) return result;
+
+	if ((result=request.getAttribute(name)) != null)  {
 	    return result;
 	} else if ((result=request.getSession().getAttribute(name)) != null)  {
 	    return result;
@@ -151,7 +141,7 @@ public class PhpSimpleHttpScriptContext extends AbstractPhpScriptContext impleme
 
     /** {@inheritDoc} */
     public Writer getWriter() {
- 	if(writer == null)
+	if(writer == null)
  		try {
  			writer =  response.getWriter(); 
  		} catch (IllegalStateException x) {
@@ -180,6 +170,7 @@ public class PhpSimpleHttpScriptContext extends AbstractPhpScriptContext impleme
  	return errorWriter;	
     }
 
+    protected Reader reader;
     /**{@inheritDoc}*/
     public Reader getReader() {
         if (reader == null)
@@ -257,5 +248,11 @@ public class PhpSimpleHttpScriptContext extends AbstractPhpScriptContext impleme
       /**{@inheritDoc}*/
       public Map getAll() {
   	return Collections.unmodifiableMap(getBindings(IContext.ENGINE_SCOPE));
+      }
+      /**{@inheritDoc}*/
+      public Continuation createContinuation(Reader reader, Map env,
+              OutputStream out, OutputStream err, HeaderParser headerParser,
+              ResultProxy result, ILogger logger) {
+  	return new HttpProxy(reader, env, out,  err, headerParser, result, logger); 
       }
 }

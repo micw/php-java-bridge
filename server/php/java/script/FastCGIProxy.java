@@ -63,9 +63,9 @@ import php.java.bridge.http.IOFactory;
 public class FastCGIProxy extends Continuation implements IFCGIProcessFactory {
     private static final String PROCESSES = FCGIUtil.PHP_FCGI_CONNECTION_POOL_SIZE;
     private static final String MAX_REQUESTS = FCGIUtil.PHP_FCGI_MAX_REQUESTS;
-    private static final String CGI_DIR = Util.TMPDIR.getName();
+    private static final String CGI_DIR = Util.TMPDIR.getAbsolutePath();
     
-    protected FastCGIProxy(Reader reader, Map env, OutputStream out,
+    public FastCGIProxy(Reader reader, Map env, OutputStream out,
             OutputStream err, HeaderParser headerParser,
             ResultProxy resultProxy, ILogger logger) {
 	super(reader, env, out, err, headerParser, resultProxy, logger);
@@ -87,7 +87,7 @@ public class FastCGIProxy extends Continuation implements IFCGIProcessFactory {
 
    private ConnectionPool createConnectionPool(int children) throws ConnectException {
 	channelName = ChannelFactory.createChannelFactory(this, false);
-	channelName.findFreePort(true);
+	channelName.findFreePort(false); //FIXME
 	channelName.initialize(CONTEXT_PATH);
 	File cgiOsDir = Util.TMPDIR;
 	File javaIncFile = new File (cgiOsDir, "launcher.sh");
@@ -130,12 +130,12 @@ public class FastCGIProxy extends Continuation implements IFCGIProcessFactory {
 
 	// Start the launcher.exe or launcher.sh
 	Map map = (Map) PROCESS_ENVIRONMENT.clone();
-	map.put("PHP_FCGI_CHILDREN", "1"/*FCGIUtil.PHP_FCGI_CONNECTION_POOL_SIZE FIXME*/);
-	map.put("PHP_FCGI_MAX_REQUESTS", FCGIUtil.PHP_FCGI_MAX_REQUESTS);
+	map.put("PHP_FCGI_CHILDREN", PROCESSES);
+	map.put("PHP_FCGI_MAX_REQUESTS", MAX_REQUESTS);
 	channelName.startServer(Util.getLogger());
 		
-	return new ConnectionPool(channelName, /*children FIXME*/1, 
-		Integer.parseInt(FCGIUtil.PHP_FCGI_MAX_REQUESTS), 
+	return new ConnectionPool(channelName, children, 
+		Integer.parseInt(MAX_REQUESTS), 
 		defaultPoolFactory, 
 		Integer.parseInt(FCGIUtil.PHP_FCGI_CONNECTION_POOL_TIMEOUT));
     }
@@ -144,8 +144,7 @@ public class FastCGIProxy extends Continuation implements IFCGIProcessFactory {
     protected void setupFastCGIServer() throws ConnectException {
 	synchronized(globalCtxLock) {
 	    if(null == fcgiConnectionPool) {
-		int children = Integer.parseInt(FCGIUtil.PHP_FCGI_CONNECTION_POOL_SIZE);
-		fcgiConnectionPool= createConnectionPool(children);
+		fcgiConnectionPool= createConnectionPool(Integer.parseInt(PROCESSES));
 	    }
 	}
 
@@ -153,9 +152,8 @@ public class FastCGIProxy extends Continuation implements IFCGIProcessFactory {
     
 
     protected void doRun() throws IOException, Util.Process.PhpException {
+	byte[] buf = new byte[FCGIUtil.FCGI_BUF_SIZE];
 	setupFastCGIServer();
-/* TODO
-	final byte[] buf = new byte[FCGIUtil.FCGI_BUF_SIZE];
 	
 	FastCGIInputStream natIn = null;
 	FastCGIOutputStream natOut = null;
@@ -168,18 +166,10 @@ public class FastCGIProxy extends Continuation implements IFCGIProcessFactory {
 	    natIn = (FastCGIInputStream) connection.getInputStream();
 
 	    natOut.writeBegin();
-	    HashMap environment = (HashMap)PROCESS_ENVIRONMENT.clone();
-		environment.put("REDIRECT_STATUS", "200");
-		environment.put("SERVER_SOFTWARE", Util.EXTENSION_NAME);
-		environment.put("SCRIPT_FILENAME", "C:\\Programme\\Apache Software Foundation\\Tomcat 6.0\\webapps\\JavaBridge\\xtest.txt");
-	    natOut.writeParams(environment);
-	    natOut.writeStdin(FCGIUtil.FCGI_EMPTY_RECORD);
+	    natOut.writeParams(env);
+	    natOut.write(FCGIUtil.FCGI_STDIN, FCGIUtil.FCGI_EMPTY_RECORD);
 	    natOut.close();
-
-	    byte[] xxbuf = new byte[1024]; int c;
-	    while((c=natIn.read(xxbuf))>0) {
-		System.err.println(new String(xxbuf, 0, c, "ASCII"));
-	    }
+	    Util.parseBody(buf, natIn, new Util.OutputStreamFactory() { public OutputStream getOutputStream() throws IOException {return out;}}, headerParser);
 	    natIn.close();
 	} catch (InterruptedException e) {
 	    // TODO Auto-generated catch block
@@ -187,7 +177,6 @@ public class FastCGIProxy extends Continuation implements IFCGIProcessFactory {
         } catch (Throwable t) {
             t.printStackTrace();
         }
-*/
     }
     /** required by IFCGIProcessFactory */
     /** {@inheritDoc} */

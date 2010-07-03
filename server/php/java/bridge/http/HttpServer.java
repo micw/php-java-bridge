@@ -48,7 +48,7 @@ import php.java.bridge.Util;
  * 
  * @see php.java.script.Continuation
  * @see php.java.script.URLReader
- * @see php.java.script.HttpProxy
+ * @see php.java.script.Continuation
  *
  */
 public abstract class HttpServer implements Runnable {

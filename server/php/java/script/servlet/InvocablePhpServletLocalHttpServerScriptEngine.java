@@ -12,7 +12,6 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Map;
 
-import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
 import javax.servlet.Servlet;
@@ -95,8 +94,6 @@ abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocableP
 
 	this.localHostAddr = (String)ctx.getAttribute(ServletUtil.HOST_ADDR_ATTRIBUTE);
 	this.contextServer = (ContextServer)ctx.getAttribute(ContextServer.ROOT_CONTEXT_SERVER_ATTRIBUTE);
-
-	scriptContext.initialize(servlet, servletCtx, req, res);
     }
     protected InvocablePhpServletLocalHttpServerScriptEngine(Servlet servlet, 
 		   ServletContext ctx, 
@@ -112,17 +109,6 @@ abstract class InvocablePhpServletLocalHttpServerScriptEngine extends InvocableP
 	this.proxy = proxy;
 	this.url = getURL(ctx);
     }
-    protected ScriptContext getPhpScriptContext() {
-	        Bindings namespace;
-	        scriptContext = new PhpSimpleHttpScriptContext();
-	        
-	        namespace = createBindings();
-	        scriptContext.setBindings(namespace,ScriptContext.ENGINE_SCOPE);
-	        scriptContext.setBindings(getBindings(ScriptContext.GLOBAL_SCOPE),
-					  ScriptContext.GLOBAL_SCOPE);
-	        
-	        return scriptContext;
-    }    
     protected ContextServer getContextServer() {
 	return contextServer;
     }

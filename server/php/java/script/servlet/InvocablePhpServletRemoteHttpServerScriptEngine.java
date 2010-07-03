@@ -2,6 +2,7 @@
 
 package php.java.script.servlet;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -85,9 +86,11 @@ public class InvocablePhpServletRemoteHttpServerScriptEngine extends InvocablePh
 		   HttpServletRequest req, 
 		   HttpServletResponse res,
     		   URI uri,
-    		   String localName) throws MalformedURLException, URISyntaxException {
+    		   File compilerOutputFile, String localName) throws MalformedURLException, URISyntaxException {
 	super(servlet, ctx, req, res);
-
+	
+	this.compilerOutputFile = compilerOutputFile;
+	
 	this.localName = localName;
 	
 	this.protocol = uri.getScheme();

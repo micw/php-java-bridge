@@ -36,12 +36,13 @@ import php.java.bridge.Util.Process.PhpException;
 /**
  * Represents the script continuation.
  * This class can be used to allocate php scripts on a HTTP server.
+ * Although this class accidentally inherits from <code>CGIRunner</code> it doesn't necessarily run CGI binaries.
  * If you pass a URLReader, it calls its read method which opens a URLConnection to the remote server
  * and holds the allocated remote script instance hostage until release is called.
  * @author jostb
  *
  */
-public class HttpProxy extends Continuation {
+public class HttpProxy extends CGIRunner {
     /**
      * Create a HTTP proxy which can be used to allocate a php script from a HTTP server
      * @param reader - The reader, for example a URLReader
@@ -56,7 +57,10 @@ public class HttpProxy extends Continuation {
     }
     
     protected void doRun() throws IOException, PhpException {
-	((IScriptReader)reader).read(env, out, headerParser);
+    	if(reader instanceof URLReader) {
+	    ((URLReader)reader).read(env, out, headerParser);
+     	} else {
+	    super.doRun();
+     	}
     }
-    
 }

@@ -7,6 +7,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import php.java.script.FastCGIProxy;
+import php.java.servlet.fastcgi.FastCGIServlet;
+
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
  *
@@ -29,6 +32,10 @@ import java.util.Map;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/**
+ * Implementing classes are able to use the FastCGI machinery.
+ * Currently implemented by {@link FastCGIServlet} and {@link FastCGIProxy}
+ */
 public interface IFCGIProcessFactory {
     /** 
      * Log message through preferred log mechanism, for example servlet.log() 

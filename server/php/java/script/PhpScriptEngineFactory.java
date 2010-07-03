@@ -42,7 +42,7 @@ public class PhpScriptEngineFactory implements ScriptEngineFactory {
 	    this.hasCloseable = hasCloseable;
 	}
 	public ScriptEngine create () {
-	    if (hasCloseable) return new CloseablePhpScriptEngine(PhpScriptEngineFactory.this);
+	    if (hasCloseable) return new CloseableScriptEngineDecorator(new PhpScriptEngine(PhpScriptEngineFactory.this));
 	    else return new PhpScriptEngine(PhpScriptEngineFactory.this);
 	}
     }

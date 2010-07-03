@@ -4,6 +4,8 @@ package php.java.script;
 
 import java.io.IOException;
 
+import javax.script.ScriptEngine;
+
 import php.java.bridge.Util;
 
 /*
@@ -37,8 +39,8 @@ import php.java.bridge.Util;
 public class ResultProxy extends Number {
     private static final long serialVersionUID = 9126953496638654790L;
     private int result;
-    private SimplePhpScriptEngine engine;
-    ResultProxy(SimplePhpScriptEngine engine) {
+    private IPhpScriptEngine engine;
+    ResultProxy(IPhpScriptEngine engine) {
 	this.engine = engine;
     }
     void setResult(int result) {

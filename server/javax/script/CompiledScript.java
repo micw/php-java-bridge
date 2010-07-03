@@ -11,22 +11,36 @@ package javax.script;
  */
 public abstract class CompiledScript {
     
-     CompiledScript(){
+     public CompiledScript(){
      }
     
-    /**
-     * Re-evaluates the pre-compiled script using the specified 
-     * namespace as the SCRIPT_SCOPE and using ENGINE_SCOPE, 
-     * GLOBAL_SCOPE of the associated ScriptEngine.
-     *   
-     * @param namespace the namespace to be used as the SCRIPT_SCOPE
-     * @return resultant object after the re-evaluation
-     * @throws ScriptException if the re-evaluation fails due to any
-     *         reason
-     */
-    public Object eval(Bindings namespace) throws ScriptException{
-        return eval(getEngine().getContext());
-    }
+     /**
+      * Re-evaluates the pre-compiled script using the specified 
+      * namespace as the SCRIPT_SCOPE and using ENGINE_SCOPE, 
+      * GLOBAL_SCOPE of the associated ScriptEngine.
+      *   
+      * @param namespace the namespace to be used as the SCRIPT_SCOPE
+      * @return resultant object after the re-evaluation
+      * @throws ScriptException if the re-evaluation fails due to any
+      *         reason
+      */
+     public Object eval() throws ScriptException{
+         return eval(getEngine().getContext());
+     }
+     /**
+      * Re-evaluates the pre-compiled script using the specified 
+      * namespace as the SCRIPT_SCOPE and using ENGINE_SCOPE, 
+      * GLOBAL_SCOPE of the associated ScriptEngine.
+      *   
+      * @param namespace the namespace to be used as the SCRIPT_SCOPE
+      * @return resultant object after the re-evaluation
+      * @throws ScriptException if the re-evaluation fails due to any
+      *         reason
+      */
+     public Object eval(Bindings namespace) throws ScriptException{
+	 getEngine().getContext().setBindings(namespace, ScriptContext.ENGINE_SCOPE);
+         return eval(getEngine().getContext());
+     }
     
     /**
      * Re-evaluates the recompiled script using the specified 

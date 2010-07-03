@@ -26,6 +26,7 @@ package php.java.script;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -165,26 +166,15 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
 	Class[] interfaces = clasz==null?Util.ZERO_PARAM:new Class[]{clasz};
 	return PhpProcedure.createProxy(interfaces, (PhpProcedure)Proxy.getInvocationHandler(thiz));
     }
-
-    protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
-	if (reader instanceof URLReader) return eval((URLReader)reader, context, name);
-	
-        if((continuation != null) || (reader == null) ) release();
-  	if(reader==null) return null;
-  	
-  	setNewContextFactory();
-        setName(name);
-	env.put("X_JAVABRIDGE_INCLUDE", EMPTY_INCLUDE);
-
+    protected Reader getLocalReader(Reader reader) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Writer w = new OutputStreamWriter(out);
-        Reader localReader = null;
+        Reader localReader = new StringReader(PhpScriptEngine.getStandardHeader("http://127.0.0.1:"+ctx.getSocketName()+"/JavaBridge"));
+
         char[] buf = new char[Util.BUF_SIZE];
         int c;
-
         try {
             /* header: <? require_once("http://localhost:<ourPort>/JavaBridge/java/Java.inc"); ?> */
-            localReader = new StringReader(PhpScriptEngine.getStandardHeader("http://127.0.0.1:"+ctx.getSocketName()+"/JavaBridge"));
             while((c=localReader.read(buf))>0) w.write(buf, 0, c);
             localReader.close(); localReader = null;
     
@@ -199,6 +189,37 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
     
             /* now evaluate our script */
             localReader = new InputStreamReader(new ByteArrayInputStream(out.toByteArray()));
+            return localReader;
+        } finally {
+	    if (w!=null) try {w.close();} catch (IOException e) {/*ignore*/}
+        }
+    }
+    
+    protected void doCompile(Reader reader, ScriptContext context) throws IOException {
+	FileWriter writer = new FileWriter(this.compilerOutputFile);
+	char[] buf = new char[Util.BUF_SIZE];
+	Reader localReader = getLocalReader(reader);
+	try {
+		int c;
+		while((c = localReader.read(buf))>0) 
+		    writer.write(buf, 0, c);
+		writer.close();
+	} finally {
+	    localReader.close();
+	}
+    }
+    protected Object eval(Reader reader, ScriptContext context, String name) throws ScriptException {
+	if (reader instanceof URLReader) return eval((URLReader)reader, context, name);
+	
+        if((continuation != null) || (reader == null) ) release();
+  	if(reader==null) return null;
+  	
+  	setNewContextFactory();
+        setName(name);
+	env.put("X_JAVABRIDGE_INCLUDE", EMPTY_INCLUDE);
+	Reader localReader = null;
+        try {
+            localReader = getLocalReader(reader);
             this.script = doEval(localReader, context);
             if (this.script!=null) {
         	/* get the proxy, either the one from the user script or our default proxy */
@@ -210,7 +231,6 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
             if (e instanceof ScriptException) throw (ScriptException)e;
             throw new ScriptException(e);
        } finally {
-            if(w!=null)  try { w.close(); } catch (IOException e) {/*ignore*/}
             if(localReader!=null) try { localReader.close(); } catch (IOException e) {/*ignore*/}            
             handleRelease();
         }

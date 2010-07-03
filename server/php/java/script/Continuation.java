@@ -34,9 +34,8 @@ import php.java.bridge.Util;
 import php.java.bridge.Util.HeaderParser;
 
 /**
- * This class can be used to run a PHP CGI binary. Used only when
- * running local php scripts.  To allocate and invoke remote scripts
- * please use a HttpProxy and a URLReader instead.
+ * This class represents the logic to run PHP scripts through CGI, FastCGI or on a remote HTTP server
+ * (accessed through URLReader).
  *  
  * @author jostb
  *
@@ -45,7 +44,7 @@ import php.java.bridge.Util.HeaderParser;
  * @see php.java.script.HttpProxy
  */
 
-abstract class Continuation implements IContinuation, Runnable {
+public abstract class Continuation implements IContinuation, Runnable {
 	
     protected Map env;
     protected OutputStream out, err;

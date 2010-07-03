@@ -114,9 +114,11 @@ public class PhpServletScriptEngine extends PhpServletLocalHttpServerScriptEngin
 				  ServletContext ctx, 
 				  HttpServletRequest req, 
 				  HttpServletResponse res,
-				  String protocol,
+				  File compilerOutputFile, String protocol,
 				  int port) throws MalformedURLException {
 	super (servlet, ctx, req, res, protocol, port);
+	this.compilerOutputFile = compilerOutputFile;
+	
 	path = new File(ServletUtil.getRealPath(ctx, ""));
     }
     protected Object eval(final Reader reader, final ScriptContext context, final String name) throws ScriptException {

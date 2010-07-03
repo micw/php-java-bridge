@@ -9,7 +9,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Map;
 
-import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptException;
 import javax.servlet.Servlet;
@@ -83,26 +82,12 @@ abstract class PhpServletLocalHttpServerScriptEngine extends PhpScriptEngine {
 	this.req = req;
 	this.res = res;
 	    
-	scriptContext.initialize(servlet, servletCtx, req, res);
-	
 	this.port = port;
 	this.protocol = protocol;
 
 	this.contextServer = (ContextServer)ctx.getAttribute(ContextServer.ROOT_CONTEXT_SERVER_ATTRIBUTE);
 	this.localHostAddr = (String)ctx.getAttribute(ServletUtil.HOST_ADDR_ATTRIBUTE);
     }
-
-    protected ScriptContext getPhpScriptContext() {
-        Bindings namespace;
-        scriptContext = new PhpSimpleHttpScriptContext();
-        
-        namespace = createBindings();
-        scriptContext.setBindings(namespace,ScriptContext.ENGINE_SCOPE);
-        scriptContext.setBindings(getBindings(ScriptContext.GLOBAL_SCOPE),
-				  ScriptContext.GLOBAL_SCOPE);
-        
-        return scriptContext;
-    }    
 
     protected ContextServer getContextServer() {
 	return contextServer;

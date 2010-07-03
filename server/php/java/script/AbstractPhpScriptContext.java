@@ -39,19 +39,10 @@ import php.java.bridge.http.WriterOutputStream;
  *
  */
 public abstract class AbstractPhpScriptContext extends SimpleScriptContext implements IPhpScriptContext {
-
-   protected HttpProxy kont;
-
-    /** Integer value for the level of SCRIPT_SCOPE */
-    public static final int REQUEST_SCOPE = 0;
-    
-    /** Integer value for the level of SESSION_SCOPE */   
-    public static final int SESSION_SCOPE = 150;
-    
-    /** Integer value for the level of APPLICATION_SCOPE */
-    public static final int APPLICATION_SCOPE = 175;
+    protected Continuation kont;
 
     /** {@inheritDoc} */
+   protected Writer writer;
    public Writer getWriter() {
 	if(writer == null) writer =  super.getWriter ();
 	if(! (writer instanceof PhpScriptWriter)) setWriter(writer);
@@ -59,6 +50,7 @@ public abstract class AbstractPhpScriptContext extends SimpleScriptContext imple
    }
 
    /** {@inheritDoc} */
+   protected Writer errorWriter;
    public Writer getErrorWriter() {
 	if(errorWriter == null) errorWriter = super.getErrorWriter ();
 	if(! (errorWriter instanceof PhpScriptWriter)) setErrorWriter(errorWriter);
@@ -73,12 +65,12 @@ public abstract class AbstractPhpScriptContext extends SimpleScriptContext imple
    private boolean continuationCalled;
 
     /**@inheritDoc*/
-    public void setContinuation(HttpProxy kont) {
+    public void setContinuation(Continuation kont) {
 	    this.kont = kont;
 	    continuationCalled = false;
     }
     /**@inheritDoc*/
-    public HttpProxy getContinuation() {
+    public Continuation getContinuation() {
 	    return kont;
     }
     /**@inheritDoc*/

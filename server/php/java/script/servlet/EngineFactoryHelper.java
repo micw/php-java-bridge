@@ -2,16 +2,19 @@
 
 package php.java.script.servlet;
 
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import javax.script.ScriptEngine;
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import php.java.script.CloseableScriptEngineDecorator;
 import php.java.script.PhpScriptEngine;
 import php.java.servlet.ContextLoaderListener;
 
@@ -39,15 +42,15 @@ import php.java.servlet.ContextLoaderListener;
  */
 
 class EngineFactoryHelper {
-    public static PhpServletScriptEngine newCloseablePhpServletScriptEngine(
+    public static ScriptEngine newCloseablePhpServletScriptEngine(
             Servlet servlet, ServletContext ctx, HttpServletRequest req,
-            HttpServletResponse res, String protocol, int port) throws MalformedURLException {
-	return new CloseablePhpServletScriptEngine(servlet, ctx, req, res, protocol, port);
+            HttpServletResponse res, File compilerOutputFile, String protocol, int port) throws MalformedURLException {
+	return new CloseableScriptEngineDecorator(new PhpServletScriptEngine(servlet, ctx, req, res, compilerOutputFile, protocol, port));
     }
-    public static InvocablePhpServletRemoteHttpServerScriptEngine newCloseableInvocablePhpServletRemoteHttpServerScriptEngine(
+    public static ScriptEngine newCloseableInvocablePhpServletRemoteHttpServerScriptEngine(
             Servlet servlet, ServletContext ctx, HttpServletRequest req,
-            HttpServletResponse res, URI uri, String localName) throws MalformedURLException, URISyntaxException {
-	return new CloseableInvocablePhpServletRemoteHttpServerScriptEngine(servlet, ctx, req, res, uri, localName);
+            HttpServletResponse res, URI uri, File compilerOutputFile, String localName) throws MalformedURLException, URISyntaxException {
+	return new CloseableScriptEngineDecorator(new InvocablePhpServletRemoteHttpServerScriptEngine(servlet, ctx, req, res, uri, compilerOutputFile, localName));
     }
     public static List getManagedEngineList (ServletContext ctx) {
 	return (List) ctx.getAttribute(ContextLoaderListener.ENGINES);

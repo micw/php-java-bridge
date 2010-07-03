@@ -24,6 +24,7 @@ package php.java.script;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
@@ -35,7 +36,10 @@ import java.util.Map.Entry;
 
 import javax.script.AbstractScriptEngine;
 import javax.script.Bindings;
+import javax.script.Compilable;
+import javax.script.CompiledScript;
 import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
 import javax.script.SimpleBindings;
@@ -54,7 +58,7 @@ import php.java.bridge.http.WriterOutputStream;
  *@see php.java.script.InvocablePhpScriptEngine
  *@see php.java.script.PhpScriptEngine
  */
-abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
+abstract class SimplePhpScriptEngine extends AbstractScriptEngine implements IPhpScriptEngine, Compilable, java.io.FileFilter {
 
 	
     /**
@@ -67,16 +71,28 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
     /**
      * The continuation of the script
      */
-    protected HttpProxy continuation = null;
+    protected Continuation continuation = null;
     protected Map env = null;
     protected IContextFactory ctx = null;
     
     private ScriptEngineFactory factory = null;
     protected ResultProxy resultProxy;
+    protected File compilerOutputFile;
 
     protected void initialize() {
 	setContext(getPhpScriptContext());
     }
+    protected ScriptContext getPhpScriptContext() {
+        Bindings namespace;
+        ScriptContext scriptContext = new PhpScriptContext();
+        
+        namespace = createBindings();
+        scriptContext.setBindings(namespace,ScriptContext.ENGINE_SCOPE);
+        scriptContext.setBindings(getBindings(ScriptContext.GLOBAL_SCOPE),
+				  ScriptContext.GLOBAL_SCOPE);
+        
+        return scriptContext;
+    }    
 
     static HashMap getProcessEnvironment() {
 	return Util.COMMON_ENVIRONMENT;
@@ -98,8 +114,8 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
      */
     public SimplePhpScriptEngine() {
         initialize(); 	// initialize it here, otherwise we have to override all inherited methods.
-        		// needed because parent (JDK1.6) initializes and uses a protected context field 
-        		// instead of calling getContext() when appropriate.
+	// needed because parent (JDK1.6) initializes and uses a protected context field 
+	// instead of calling getContext() when appropriate.
     }
 
     /**
@@ -163,7 +179,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
 
 	/* PHP executes a script and then terminates immediately. Use the php-invocable ScriptEngine to hold a PHP script */
 	if(continuation != null) throw new IllegalStateException("continuation is not null.");
-
+	
 	try {
 	    setNewContextFactory();
             setName(name);
@@ -177,14 +193,20 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
         }
 	return null;
     }
+
     /* (non-Javadoc)
      * @see javax.script.ScriptEngine#eval(java.io.Reader, javax.script.ScriptContext)
      */
     public Object eval(Reader reader, ScriptContext context) throws ScriptException {
-        return eval(reader, context, String.valueOf(reader));
+        return evalPhp(reader, context);
     }
-
-    private void updateGlobalEnvironment(ScriptContext context) {
+    /* (non-Javadoc)
+     * @see javax.script.ScriptEngine#eval(java.io.Reader, javax.script.ScriptContext)
+     */
+    protected Object evalPhp(Reader reader, ScriptContext context) throws ScriptException {
+        return eval(reader, getContext(), String.valueOf(reader));
+    }
+    private void updateGlobalEnvironment(ScriptContext context) throws IOException {
 	Bindings bindings = context.getBindings(ScriptContext.GLOBAL_SCOPE);
 	if(bindings==null) return;
 	for(Iterator ii = bindings.entrySet().iterator(); ii.hasNext(); ) {
@@ -193,6 +215,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
 	    Object val = entry.getValue();
 	    env.put(key, val);
 	}
+	if (compilerOutputFile != null) env.put("SCRIPT_FILENAME", compilerOutputFile.getCanonicalPath());
     }
     private final class HeaderParser extends Util.HeaderParser {
 	private WriterOutputStream writer;
@@ -219,7 +242,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
 	    }
 	}
     }
-    protected HttpProxy getContinuation(Reader reader, ScriptContext context) {
+    protected Continuation getContinuation(Reader reader, ScriptContext context) throws IOException {
     	Util.HeaderParser headerParser = Util.DEFAULT_HEADER_PARSER; // ignore encoding, we pass everything directly
 	IPhpScriptContext phpScriptContext = (IPhpScriptContext)context;
     	updateGlobalEnvironment(context);
@@ -232,11 +255,14 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
     	if(out instanceof WriterOutputStream)
     	    headerParser = new HeaderParser((WriterOutputStream)out);
 
-    	HttpProxy kont = new HttpProxy(reader, env, out,  err, headerParser, resultProxy = new ResultProxy(this), Util.getLogger()); 
-     	phpScriptContext.setContinuation(kont);
+    	Continuation kont = phpScriptContext.createContinuation(reader, env, out,  err, headerParser, resultProxy = new ResultProxy(this), Util.getLogger());
+
+    	phpScriptContext.setContinuation(kont);
 	return kont;
     }
 
+    protected abstract void doCompile(Reader reader, ScriptContext context) throws IOException;
+    
     /*
      * Obtain a PHP instance for url.
      */
@@ -256,27 +282,17 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
       	
 	script = script.trim();
 	Reader localReader = new StringReader(script);
-	Object obj = eval(localReader, context, String.valueOf(script));
-	try { localReader.close(); } catch (IOException e) {/*ignore*/}
-	return obj;
+	try {
+	    return eval(localReader, context);
+	} finally {
+	    try { localReader.close(); } catch (IOException e) {/*ignore*/}
+	}
     }
 
     /**@inheritDoc*/
     public ScriptEngineFactory getFactory() {
 	return this.factory;
     }
-
-    protected ScriptContext getPhpScriptContext() {
-        Bindings namespace;
-        ScriptContext scriptContext = new PhpScriptContext();
-        
-        namespace = createBindings();
-        scriptContext.setBindings(namespace,ScriptContext.ENGINE_SCOPE);
-        scriptContext.setBindings(getBindings(ScriptContext.GLOBAL_SCOPE),
-				  ScriptContext.GLOBAL_SCOPE);
-        
-        return scriptContext;
-    }    
 
     /**
      * Release the continuation
@@ -313,5 +329,59 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine {
      */
     public void close() throws IOException {
 	release();
+    }
+
+    /** {@inheritDoc} */
+    public CompiledScript compile(String script) throws ScriptException {
+	Reader reader = new StringReader(script);
+	try {
+	    return compile(reader);
+	} finally {
+	    try {
+	        reader.close();
+            } catch (IOException e) {
+	        Util.printStackTrace(e);
+            }
+	}
+    }
+    private static final Reader DUMMY_READER = new Reader() {
+	/** {@inheritDoc} */
+        public void close() throws IOException {
+            throw new IllegalStateException("use compiled file");
+        }
+	/** {@inheritDoc} */
+        public int read(char[] cbuf, int off, int len)
+                throws IOException {
+            throw new IllegalStateException("use compiled file");
+       }};
+       
+    /** {@inheritDoc} */
+    public CompiledScript compile(final Reader reader) throws ScriptException {
+	if (this.compilerOutputFile==null) throw new IllegalStateException("No output file given");
+	try {
+	    doCompile(reader, getContext());
+        } catch (IOException e) {
+            throw new ScriptException(e);
+        }
+	return new CompiledScript() {
+	    /** {@inheritDoc} */
+	    public Object eval(final ScriptContext context) throws ScriptException {
+		setContext(new PhpCompiledScriptContextDecorator((IPhpScriptContext)getContext()));
+		try {
+	            return SimplePhpScriptEngine.this.doEval(DUMMY_READER, getContext());
+                } catch (Exception e) {
+                    throw new ScriptException(e);
+                }
+	    }
+	    /** {@inheritDoc} */
+	    public ScriptEngine getEngine() {
+		return SimplePhpScriptEngine.this;
+	    }
+	};
+    }
+    /** {@inheritDoc} */
+    public boolean accept(File outputFile) {
+	this.compilerOutputFile = outputFile;
+	return true;
     }
 }
