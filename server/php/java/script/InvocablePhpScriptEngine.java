@@ -194,8 +194,8 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
         }
     }
     
-    protected Object doEvalPhp(Reader reader, ScriptContext context, String name) throws ScriptException {
-	if (reader instanceof URLReader) return eval((URLReader)reader, context, name);
+    protected Object doEvalPhp(Reader reader, ScriptContext context) throws ScriptException {
+	if (reader instanceof URLReader) return eval((URLReader)reader, context);
 	
         if((continuation != null) || (reader == null) ) release();
   	if(reader==null) return null;
@@ -221,7 +221,7 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
         }
        return resultProxy;
     }
-    protected Object doEvalCompiledPhp(Reader reader, ScriptContext context, String name) throws ScriptException {
+    protected Object doEvalCompiledPhp(Reader reader, ScriptContext context) throws ScriptException {
         if((continuation != null) || (reader == null) ) release();
   	if(reader==null) return null;
   	

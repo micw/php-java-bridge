@@ -50,6 +50,10 @@ import php.java.bridge.http.IContext;
  */
 public class PhpScriptContext extends AbstractPhpScriptContext implements IPhpScriptContext {
 
+    public PhpScriptContext(ScriptContext ctx) {
+	super(ctx);
+    }
+    
     static JavaBridgeRunner bridgeRunner = null;
 
     static {
@@ -58,25 +62,6 @@ public class PhpScriptContext extends AbstractPhpScriptContext implements IPhpSc
 	} catch (Exception e) {
 	    Util.printStackTrace(e);
 	}
-    }
-
-     private Writer getWriter(boolean isStandalone) {
-	 return isStandalone ? PhpScriptLogWriter.getWriter(Util.getLogger()) : new PhpScriptWriter(System.out);
-     }
-     /**{@inheritDoc}*/
-    public Writer getWriter() {
-	if(writer == null) return writer =  getWriter(bridgeRunner.isStandalone());
-	else if(! (writer instanceof PhpScriptWriter)) setWriter(writer);
-	return writer;
-    }
-    private Writer getErrorWriter(boolean isStandalone) {
-	 return isStandalone ? PhpScriptLogWriter.getWriter(Util.getLogger()) : new PhpScriptWriter(System.err);
-    }
-    /**{@inheritDoc}*/
-    public Writer getErrorWriter() {
-	if(errorWriter == null) return errorWriter =  getErrorWriter(bridgeRunner.isStandalone());
-	else if(! (errorWriter instanceof PhpScriptWriter)) setErrorWriter(errorWriter);
-	return errorWriter;	
     }
 
     /**{@inheritDoc}*/

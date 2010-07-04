@@ -26,7 +26,7 @@ package php.java.script;
 
 import java.io.Writer;
 
-import javax.script.SimpleScriptContext;
+import javax.script.ScriptContext;
 
 import php.java.bridge.http.IContext;
 import php.java.bridge.http.WriterOutputStream;
@@ -38,7 +38,12 @@ import php.java.bridge.http.WriterOutputStream;
  * @author jostb
  *
  */
-public abstract class AbstractPhpScriptContext extends SimpleScriptContext implements IPhpScriptContext {
+public abstract class AbstractPhpScriptContext extends ScriptContextDecorator implements IPhpScriptContext {
+
+    public AbstractPhpScriptContext(ScriptContext ctx) {
+	super(ctx);
+    }
+
     protected Continuation kont;
 
     /** {@inheritDoc} */

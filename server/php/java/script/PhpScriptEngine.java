@@ -105,7 +105,7 @@ public class PhpScriptEngine extends SimplePhpScriptEngine {
 	}
     }
 
-    protected Object doEvalPhp(Reader reader, ScriptContext context, String name) throws ScriptException {
+    protected Object doEvalPhp(Reader reader, ScriptContext context) throws ScriptException {
         if((continuation != null) || (reader == null) ) release();
   	if(reader==null) return null;
   	
@@ -129,7 +129,7 @@ public class PhpScriptEngine extends SimplePhpScriptEngine {
         
        return resultProxy;
     }
-    protected Object doEvalCompiledPhp(Reader reader, ScriptContext context, String name) throws ScriptException {
+    protected Object doEvalCompiledPhp(Reader reader, ScriptContext context) throws ScriptException {
         if((continuation != null) || (reader == null) ) release();
   	if(reader==null) return null;
   	

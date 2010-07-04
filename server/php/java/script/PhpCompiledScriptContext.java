@@ -1,12 +1,15 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-package php.java.script.servlet;
+package php.java.script;
 
-import java.io.File;
-import java.io.FilterReader;
-import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Reader;
-import java.io.StringReader;
+import java.util.Map;
+
+import javax.script.ScriptContext;
+
+import php.java.bridge.ILogger;
+import php.java.bridge.http.HeaderParser;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -30,47 +33,27 @@ import java.io.StringReader;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+
 /**
- * This reader should be used to create a "one-shot", shared reader
+ * This class implements a simple script context for PHP. It starts a standalone 
+ * <code>JavaBridgeRunner</code> which listens for requests from php instances.<p>
+ * 
+ * In a servlet environment please use a <code>php.java.script.PhpSimpleHttpScriptContext</code> instead.
+ * @see php.java.script.PhpScriptContext
+ * @see php.java.bridge.JavaBridgeRunner
+ * @author jostb
+ *
  */
-class ScriptReader extends FilterReader implements IScriptReader {
-    
-    private boolean isClosed;
-    
-    /**
-     * Create a new reader
-     * @param in the php input stream
-     */
-    public ScriptReader(Reader in) {
-	super(in);
+public class PhpCompiledScriptContext extends PhpScriptContext {
+
+    public PhpCompiledScriptContext(ScriptContext ctx) {
+	super(ctx);
     }
 
-    /**
-     * Create a new reader
-     * @param str the php string
-     */
-    public ScriptReader (String str) {
-	super(new StringReader(str));
-    }
-    
-    /** {@inheritDoc} */
-    public void close () throws IOException {
-	super.close ();
-	isClosed = true;
-    }
- 
-    /* (non-Javadoc)
-     * @see php.java.script.servlet.IScriptReader#isClosed()
-     */
-    public boolean isClosed () {
-	return isClosed;
-    }
-
-    /** {@inheritDoc} */
-    public synchronized void createScriptFile(File realFile) throws IOException {
-	if(!isClosed()) {
-	    ScriptFileReader.createFile(realFile, this);
-	    close();
-	}
+    /**{@inheritDoc}*/
+    public Continuation createContinuation(Reader reader, Map env,
+            OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy result,
+            ILogger logger) {
+    		return new FastCGIProxy(reader, env, out,  err, headerParser, result, logger); 
     }
 }

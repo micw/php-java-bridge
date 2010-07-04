@@ -12,7 +12,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import php.java.bridge.Util;
 import php.java.bridge.http.IContext;
-import php.java.script.servlet.PhpSimpleHttpScriptContext;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -49,27 +48,6 @@ public class Context extends php.java.bridge.http.Context {
     protected ServletContext context;
     protected HttpServletRequest request;
 
-    /** Integer value for the level of SCRIPT_SCOPE */
-    public static final int REQUEST_SCOPE = PhpSimpleHttpScriptContext.REQUEST_SCOPE;
-    
-    /** Integer value for the level of SESSION_SCOPE */   
-    public static final int SESSION_SCOPE = PhpSimpleHttpScriptContext.SESSION_SCOPE;
-    
-    /** Integer value for the level of APPLICATION_SCOPE */
-    public static final int APPLICATION_SCOPE = PhpSimpleHttpScriptContext.APPLICATION_SCOPE;
-
-    /** {@inheritDoc}*/
-    public Object getAttribute(String key, int scope){
-	if(scope == PhpSimpleHttpScriptContext.REQUEST_SCOPE){
-	    return request.getAttribute(key);
-	}else if(scope == SESSION_SCOPE){
-	    return request.getSession().getAttribute(key);
-	}else if(scope == APPLICATION_SCOPE){
-	    return context.getAttribute(key);	                        
-	}else{
-	    return super.getAttribute(key, scope);
-	}
-  }
   /**{@inheritDoc}*/  
   public Object getAttribute(String name) throws IllegalArgumentException{
 	Object result;

@@ -3,8 +3,6 @@
 package php.java.servlet;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -52,9 +50,6 @@ import php.java.bridge.http.ContextServer;
 public class ContextLoaderListener implements javax.servlet.ServletContextListener {
     /** The key used to store the closeables list in the servlet context, must be destroyed before the engines */
     public static final String CLOSEABLES = ContextLoaderListener.class.getName()+".CLOSEABLES";
-    /** The key used to store the jsr 223 engines list in the servlet context */
-    public static final String ENGINES = ContextLoaderListener.class.getName()+".ENGINES";
-    /** The key used to store the jsr 223 engines list in the servlet context */
     public static final String LOGGER = ContextLoaderListener.class.getName()+".LOGGER";
 
     protected ILogger logger;
@@ -83,38 +78,14 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
 	    ctx.removeAttribute(CLOSEABLES);
 	}
     }
-
-    /** Only for internal use 
-     * @param ctx The servlet context
-     * */
-    public static void destroyScriptEngines (ServletContext ctx) {
-	try {
-	    php.java.script.servlet.EngineFactory factory = null;
-	    try {
-		factory = (php.java.script.servlet.EngineFactory)ctx.getAttribute(php.java.script.servlet.EngineFactory.ROOT_ENGINE_FACTORY_ATTRIBUTE);
-	    } catch (NoClassDefFoundError e) { /* ignore */ }
-	    if (factory == null) return;
-	
-	    List list = (List) ctx.getAttribute(ENGINES);
-	    if (list != null)
-		factory.releaseScriptEngines(list);
-	    factory.destroy();
-	} finally {
-	    ctx.removeAttribute(ENGINES);
-	    ctx.removeAttribute(LOGGER);
-	}
-    }
     /**{@inheritDoc}*/  
     public void contextDestroyed(ServletContextEvent event) {
 	ServletContext ctx = event.getServletContext();
 	try {
 	    destroyCloseables(ctx);
-	    destroyScriptEngines(ctx);
 	} catch (Exception e) {
 	    e.printStackTrace();
 	}
-	ctx.removeAttribute(php.java.script.servlet.EngineFactory.ROOT_ENGINE_FACTORY_ATTRIBUTE);
-	
 	ContextServer contextServer = (ContextServer)ctx.getAttribute(ContextServer.ROOT_CONTEXT_SERVER_ATTRIBUTE);
     	if (contextServer != null) contextServer.destroy();
 	ctx.removeAttribute(ContextServer.ROOT_CONTEXT_SERVER_ATTRIBUTE);
@@ -125,10 +96,7 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
     /**{@inheritDoc}*/  
     public void contextInitialized(ServletContextEvent event) {
 	try {
-	    Class clazz = Class.forName("php.java.script.servlet.EngineFactory",true,Thread.currentThread().getContextClassLoader());
 	    ServletContext ctx = event.getServletContext();
-	    ctx.setAttribute(php.java.script.servlet.EngineFactory.ROOT_ENGINE_FACTORY_ATTRIBUTE, clazz.newInstance());
-	    ctx.setAttribute(ENGINES, Collections.synchronizedList(new ArrayList()));
 	    ctx.setAttribute(CLOSEABLES, new LinkedList());
 	
 	    boolean isJBoss = false;
@@ -152,13 +120,7 @@ public class ContextLoaderListener implements javax.servlet.ServletContextListen
 	    
 	    ctx.setAttribute(ServletUtil.HOST_ADDR_ATTRIBUTE, Util.getHostAddress(promiscuous));
 
-	} catch (InstantiationException e) {
-	    e.printStackTrace();
-        } catch (IllegalAccessException e) {
-	    e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-	    e.printStackTrace();
-        } catch (NoClassDefFoundError e) {
+	} catch (NoClassDefFoundError e) {
 	    e.printStackTrace();
         }
     }

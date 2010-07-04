@@ -65,7 +65,6 @@ import php.java.bridge.http.RemoteHttpContextFactory;
  */
 public class JavaBridgeRunner extends HttpServer {
 
-    private boolean isStandalone = false;
     protected static JavaBridgeRunner runner;
 
     protected JavaBridgeRunner(String serverPort) throws IOException {
@@ -126,7 +125,6 @@ public class JavaBridgeRunner extends HttpServer {
     private static synchronized JavaBridgeRunner getRequiredStandaloneInstance(String serverPort) throws IOException {
 	if(runner!=null) return runner;
 	runner = new JavaBridgeRunner(serverPort);
-	runner.isStandalone = true;
 	return runner;
     }
     /** Only for internal use */
@@ -471,13 +469,6 @@ public class JavaBridgeRunner extends HttpServer {
 	 } finally {
 	     try {in.close();} catch (IOException e) {/*ignore*/}
 	 }
-    }
-    /**
-     * Return true if this is a standalone server
-     * @return true if this runner is a standalone runner (see {@link #main(String[])}) , false otherwise.
-     */
-    public boolean isStandalone() {
-	return isStandalone;
     }
     
     /**

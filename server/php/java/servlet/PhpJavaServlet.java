@@ -119,7 +119,6 @@ public /*singleton*/ class PhpJavaServlet extends HttpServlet {
 	ServletContext ctx = getServletContext();
 	try {
 	    ContextLoaderListener.destroyCloseables(ctx);
-	    ContextLoaderListener.destroyScriptEngines(ctx);
 	} catch (Exception e) {
 	    Util.printStackTrace(e);
 	}
