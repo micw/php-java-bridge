@@ -4,8 +4,6 @@ package php.java.script;
 
 import java.io.IOException;
 
-import javax.script.ScriptEngine;
-
 import php.java.bridge.Util;
 
 /*

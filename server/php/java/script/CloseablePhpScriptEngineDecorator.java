@@ -29,9 +29,9 @@ package php.java.script;
  * A ScriptEngineDecorator implementing the Java 1.5 Closeable interface.
  * @author jostb
  */
-public class CloseableScriptEngineDecorator extends PhpScriptEngineDecorator implements java.io.Closeable {
+public class CloseablePhpScriptEngineDecorator extends PhpScriptEngineDecorator implements java.io.Closeable {
 
-    public CloseableScriptEngineDecorator(IPhpScriptEngine engine) {
+    public CloseablePhpScriptEngineDecorator(IPhpScriptEngine engine) {
 	super(engine);
     }
 }

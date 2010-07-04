@@ -60,7 +60,7 @@ import php.java.bridge.http.WriterOutputStream;
  *@see php.java.script.InvocablePhpScriptEngine
  *@see php.java.script.PhpScriptEngine
  */
-abstract class SimplePhpScriptEngine extends AbstractScriptEngine implements IPhpScriptEngine, Compilable, java.io.FileFilter {
+abstract class AbstractPhpScriptEngine extends AbstractScriptEngine implements IPhpScriptEngine, Compilable, java.io.FileFilter {
 
 	
     /**
@@ -98,7 +98,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine implements IPh
     /**
      * Create a new ScriptEngine with a default context.
      */
-    public SimplePhpScriptEngine() {
+    public AbstractPhpScriptEngine() {
     }
 
     /**
@@ -106,7 +106,7 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine implements IPh
      * @param factory The factory
      * @see #getFactory()
      */
-    public SimplePhpScriptEngine(PhpScriptEngineFactory factory) {
+    public AbstractPhpScriptEngine(PhpScriptEngineFactory factory) {
         this();
         this.factory = factory;
     }
@@ -159,10 +159,10 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine implements IPh
     
     protected Object evalPhp(Reader reader, ScriptContext context) throws ScriptException {
 	setContext(new PhpScriptContext(context));
-        return doEvalPhp(reader, new PhpScriptContext(context));
+        return doEvalPhp(reader, getContext());
     }
     protected Object evalCompiledPhp(Reader reader, ScriptContext context) throws ScriptException {
-	setContext(new PhpCompiledScriptContext(context));
+	setContext(new PhpCompiledScriptContext(new PhpScriptContext(context)));
 	return doEvalCompiledPhp(reader, getContext());
     }
     protected void compilePhp(Reader reader, ScriptContext context) throws IOException {
@@ -343,14 +343,14 @@ abstract class SimplePhpScriptEngine extends AbstractScriptEngine implements IPh
 		/** {@inheritDoc} */
 		public Object eval(final ScriptContext context) throws ScriptException {
 		    try {
-			return SimplePhpScriptEngine.this.evalCompiledPhp(DUMMY_READER, getContext());
+			return AbstractPhpScriptEngine.this.evalCompiledPhp(DUMMY_READER, getContext());
 		    } catch (Exception e) {
 			throw new ScriptException(e);
 		    }
 		}
 		/** {@inheritDoc} */
 		public ScriptEngine getEngine() {
-		    return SimplePhpScriptEngine.this;
+		    return AbstractPhpScriptEngine.this;
 		}
 	    };
         } catch (IOException e) {

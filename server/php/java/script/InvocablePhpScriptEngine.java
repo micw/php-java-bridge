@@ -74,7 +74,11 @@ import php.java.bridge.Util;
  * </code>
  * </blockquote>
  */
-public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements Invocable {
+public class InvocablePhpScriptEngine extends AbstractPhpScriptEngine implements Invocable {
+    private static final String X_JAVABRIDGE_INCLUDE = "X_JAVABRIDGE_INCLUDE";
+    private static final String JAVA_BRIDGE = "/JavaBridge";
+    private static final String HTTP_127_0_0_1 = "http://127.0.0.1:";
+    private static final String PHP_JAVA_CONTEXT_CALL_JAVA_CLOSURE = "<?php java_context()->call(java_closure()); ?>";
     protected static final Object EMPTY_INCLUDE = "@";
     private static boolean registeredHook = false;
     private static final List engines = new LinkedList();
@@ -168,7 +172,7 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
     protected Reader getLocalReader(Reader reader) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Writer w = new OutputStreamWriter(out);
-        Reader localReader = new StringReader(PhpScriptEngine.getStandardHeader("http://127.0.0.1:"+ctx.getSocketName()+"/JavaBridge"));
+        Reader localReader = new StringReader(PhpScriptEngine.getStandardHeader(HTTP_127_0_0_1+ctx.getSocketName()+JAVA_BRIDGE));
 
         char[] buf = new char[Util.BUF_SIZE];
         int c;
@@ -181,7 +185,7 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
             while((c=reader.read(buf))>0) w.write(buf, 0, c);
     
             /* get the default, top-level, closure and call it, to stop the script from terminating */
-            localReader =  new StringReader("<?php java_context()->call(java_closure()); ?>");
+            localReader =  new StringReader(PHP_JAVA_CONTEXT_CALL_JAVA_CLOSURE);
             while((c=localReader.read(buf))>0) w.write(buf, 0, c);
             localReader.close(); localReader = null;
             w.close(); w = null;
@@ -201,7 +205,7 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
   	if(reader==null) return null;
   	
   	setNewContextFactory();
-	env.put("X_JAVABRIDGE_INCLUDE", EMPTY_INCLUDE);
+	env.put(X_JAVABRIDGE_INCLUDE, EMPTY_INCLUDE);
 	Reader localReader = null;
         try {
             localReader = getLocalReader(reader);
@@ -226,7 +230,7 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
   	if(reader==null) return null;
   	
   	setNewContextFactory();
-	env.put("X_JAVABRIDGE_INCLUDE", EMPTY_INCLUDE);
+	env.put(X_JAVABRIDGE_INCLUDE, EMPTY_INCLUDE);
         try {
             this.script = doEval(reader, context);
             if (this.script!=null) {
@@ -249,7 +253,7 @@ public class InvocablePhpScriptEngine extends SimplePhpScriptEngine implements I
   	if(reader==null) return null;
   	
   	setNewContextFactory();
-	env.put("X_JAVABRIDGE_INCLUDE", EMPTY_INCLUDE);
+	env.put(X_JAVABRIDGE_INCLUDE, EMPTY_INCLUDE);
 	
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Writer w = new OutputStreamWriter(out);

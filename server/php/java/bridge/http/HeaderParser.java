@@ -68,6 +68,7 @@ public abstract class HeaderParser {
 
 	// the header and content
 	while((n = natIn.read(buf)) !=-1 ) {
+	    //System.err.println("HEADER:::"+new String(buf, 0, n, "ASCII"));
 	    int N = i + n;
 	    // header
 	    while(!eoh && i<N) {
@@ -98,7 +99,10 @@ public abstract class HeaderParser {
 	    }
 	    // body
 	    if(eoh) {
-		if(i<N) out.getOutputStream().write(buf, i, N-i);
+		if(i<N) {
+		    //System.err.println("BODY:::"+new String(buf, i, N-i, "ASCII")); 
+		    out.getOutputStream().write(buf, i, N-i);
+		}
 	    }  else { 
 		if (remain != null) {
 		    remain += new String(buf, s, i-s, Util.ASCII);

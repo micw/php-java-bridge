@@ -22,6 +22,7 @@ public class TestPhpScriptEngine extends TestCase {
     private ScriptEngine e;
     private Bindings b;
     private String script;
+    private ScriptEngineManager m;
 
     public TestPhpScriptEngine(String name) {
 	super(name);
@@ -29,7 +30,7 @@ public class TestPhpScriptEngine extends TestCase {
 
     protected void setUp() throws Exception {
 	super.setUp();
-	ScriptEngineManager m = new ScriptEngineManager();
+	m = new ScriptEngineManager();
 	e = m.getEngineByName("php");
 	b = new SimpleBindings();
 	script = "<?php exit(1+2);?>";
@@ -79,6 +80,8 @@ public class TestPhpScriptEngine extends TestCase {
 	try {
 	    ByteArrayOutputStream out = new ByteArrayOutputStream();
 	    OutputStreamWriter writer = new OutputStreamWriter(out);
+	    ScriptEngine e = m.getEngineByName("php");
+	    
 	    e.getContext().setWriter(writer);
 	    ((java.io.FileFilter)e).accept(new File(System.getProperty("java.io.tmpdir", "/tmp")+File.separator+"test.php"));
 	    CompiledScript s = ((Compilable)e).compile("<?php echo 1+2;?>");

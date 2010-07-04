@@ -42,7 +42,7 @@ import javax.script.ScriptException;
  */
 public abstract class PhpScriptEngineDecorator implements IPhpScriptEngine {
 
-    private IPhpScriptEngine engine;
+    protected IPhpScriptEngine engine;
 
     /**
      * Create a new ScriptEngineDecorator

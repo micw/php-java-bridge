@@ -197,7 +197,7 @@ class java_ChunkedSocketChannel extends java_SocketChannel {
 	$data = "";
 	while ($length > 0) {
 	  $str = fread($this->peer, $length);
-	  if (feof ($this->socket)) return null;
+	  if (feof ($this->peer)) return null;
 	  	  
 	  $length -= strlen($str);
 	  $data .= $str;

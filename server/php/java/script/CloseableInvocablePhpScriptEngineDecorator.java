@@ -2,6 +2,9 @@
 
 package php.java.script;
 
+import javax.script.Invocable;
+import javax.script.ScriptException;
+
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
  *
@@ -24,39 +27,36 @@ package php.java.script;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import java.io.IOException;
-import java.io.OutputStream;
-
-import php.java.bridge.ILogger;
-import php.java.bridge.NotImplementedException;
 
 /**
- * A PrintWriter which uses the JavaBridge logger.
- *
+ * A ScriptEngineDecorator implementing the Java 1.5 Closeable and Invocable interface.
+ * @author jostb
  */
-public class PhpScriptLogWriter extends PhpScriptWriter {
+public class CloseableInvocablePhpScriptEngineDecorator extends PhpScriptEngineDecorator implements Invocable, java.io.Closeable {
 
-    private PhpScriptLogWriter(OutputStream out) {
-	super(out);
+    public CloseableInvocablePhpScriptEngineDecorator(IPhpScriptEngine engine) {
+	super(engine);
     }
-    /**
-     * Get a new log writer
-     * @param logger The logger
-     * @return The log writer
-     */
-    public static final PhpScriptLogWriter getWriter (ILogger logger) {
-	    return new PhpScriptLogWriter (new LogOutputStream(logger));
+
+    /** {@inheritDoc} */
+    public Object getInterface(Object thiz, Class clasz) {
+	return ((Invocable)engine).getInterface(thiz, clasz);
     }
-    static class LogOutputStream extends OutputStream {
-	private ILogger logger;
-	public LogOutputStream(ILogger logger) {
-	    this.logger = logger;
-	}
-	    public void write(int b) throws IOException {
-		throw new NotImplementedException();
-	    }
-	    public void write(byte b[], int off, int len) throws IOException {
-		logger.log(ILogger.INFO, new String(b, off, len));
-	    }
+
+    /** {@inheritDoc} */
+    public Object getInterface(Class clasz) {
+	return ((Invocable)engine).getInterface(clasz);
+    }
+
+    /** {@inheritDoc} */
+    public Object invokeFunction(String methodName, Object[] args)
+            throws ScriptException, NoSuchMethodException {
+	return ((Invocable)engine).invokeFunction(methodName, args);
+    }
+
+    /** {@inheritDoc} */
+    public Object invokeMethod(Object thiz, String methodName, Object[] args)
+            throws ScriptException, NoSuchMethodException {
+	return ((Invocable)engine).invokeMethod(thiz, methodName, args);
     }
 }

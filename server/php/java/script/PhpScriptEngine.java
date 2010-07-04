@@ -48,7 +48,7 @@ import php.java.bridge.Util;
  * @author jostb
  *
  */
-public class PhpScriptEngine extends SimplePhpScriptEngine {
+public class PhpScriptEngine extends AbstractPhpScriptEngine {
      
     /**
      * Create a new ScriptEngine with a default context.
@@ -66,15 +66,15 @@ public class PhpScriptEngine extends SimplePhpScriptEngine {
         super(factory);
     }
 
-    private static final String STANDARD_HEADER = new String("<?php require_once(\"/java/Java.inc\");\n" +
-		"$java_bindings = java_context()->getBindings(100);\n" +
-		"$java_scriptname = @java_values($java_bindings['javax.script.filename']);\n"+
-		"if(!isset($argv)) $argv = @java_values($java_bindings['javax.script.argv']);\n"+
+    private static final String STANDARD_HEADER = new String("<?php require_once(\"/java/Java.inc\");" +
+		"$java_bindings = java_context()->getBindings(100);" +
+		"$java_scriptname = @java_values($java_bindings['javax.script.filename']);"+
+		"if(!isset($argv)) $argv = @java_values($java_bindings['javax.script.argv']);"+
 		"if(!isset($argv)) $argv=array();\n"+
-		"$_SERVER['SCRIPT_FILENAME'] =  isset($java_scriptname) ? $java_scriptname : '';\n"+
-		"array_unshift($argv, $_SERVER['SCRIPT_FILENAME']);\n"+
-		"if (!isset($argc)) $argc = count($argv);\n"+
-		"$_SERVER['argv'] = $argv;\n"+
+		"$_SERVER['SCRIPT_FILENAME'] =  isset($java_scriptname) ? $java_scriptname : '';"+
+		"array_unshift($argv, $_SERVER['SCRIPT_FILENAME']);"+
+		"if (!isset($argc)) $argc = count($argv);"+
+		"$_SERVER['argv'] = $argv;"+
 		"?>");
     static String getStandardHeader (String filePath) {
 	StringBuffer buf = new StringBuffer(STANDARD_HEADER);

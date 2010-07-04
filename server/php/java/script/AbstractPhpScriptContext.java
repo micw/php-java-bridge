@@ -97,7 +97,6 @@ public abstract class AbstractPhpScriptContext extends ScriptContextDecorator im
      */
     public void setWriter(Writer writer) {
 	    super.setWriter(this.writer=new PhpScriptWriter(new WriterOutputStream(writer)));
-	    super.getWriter();getWriter();
     }
     
     /**

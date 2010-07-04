@@ -10,6 +10,7 @@ import java.io.StringReader;
 import javax.script.Bindings;
 import javax.script.Compilable;
 import javax.script.CompiledScript;
+import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
@@ -22,6 +23,8 @@ public class TestInvocablePhpScriptEngine extends TestCase {
     private ScriptEngine e;
     private Bindings b;
     private String script;
+    private ScriptEngineManager m;
+    private String invocableScript;
 
     public TestInvocablePhpScriptEngine(String name) {
 	super(name);
@@ -29,11 +32,14 @@ public class TestInvocablePhpScriptEngine extends TestCase {
 
     protected void setUp() throws Exception {
 	super.setUp();
-	ScriptEngineManager m = new ScriptEngineManager();
+
+	m = new ScriptEngineManager();
 	e = m.getEngineByName("php-invocable");
 	b = new SimpleBindings();
 	script = "<?php function f($arg) {return 1 + (string)$arg;}; exit(1+2); ?>";
-    }
+	invocableScript = "<?php function f($arg) {return 1 + (string)$arg;}; ?>"; // no exit()
+
+   }
 
     protected void tearDown() throws Exception {
 	super.tearDown();
@@ -76,28 +82,52 @@ public class TestInvocablePhpScriptEngine extends TestCase {
     }
     public void testEvalCompilableString() {
 	try {
+	    ScriptEngine e = m.getEngineByName("php-invocable");
 	    ByteArrayOutputStream out = new ByteArrayOutputStream();
 	    OutputStreamWriter writer = new OutputStreamWriter(out);
-	    e.getContext().setWriter(writer);
+	    e.getContext().setWriter(writer);e.getContext().getWriter();
 	    ((java.io.FileFilter)e).accept(new File(System.getProperty("java.io.tmpdir", "/tmp")+File.separator+"test.php"));
 	    CompiledScript s = ((Compilable)e).compile("<?php echo 1+2;?>");
 
 	    long t1 = System.currentTimeMillis();
 	    for (int i=0; i<100; i++) {
 		s.eval(); 
-		assertTrue("3".equals(out.toString())); out.reset();
+		((Closeable)e).close();
+		assertTrue("3".equals(out.toString())); 
+		out.reset();
 	    }
 	    long t2 = System.currentTimeMillis();
-	    System.out.println("testEvalCompilableString time:" + (t2-t1));
+	    System.out.println("testEvalInvocableCompilableString time:" + (t2-t1));
 
 	} catch (Exception e) {
             fail(String.valueOf(e));
         }
     }
-//    public void testInvokeFunction() {
-//	fail("Not yet implemented");
-//    }
-//
+    public void testInvokeFunction() {
+	try {
+	    ScriptEngine e = m.getEngineByName("php-invocable");
+	    e.eval(invocableScript);
+	    assertTrue(6==(Integer)((Invocable)e).invokeFunction("f",new Object[]{"5"}));
+	    ((Closeable)e).close();
+	} catch (Exception e) {
+            fail(String.valueOf(e));
+        }
+    }
+    public void testInvokeFunctionCompiled() {
+	try {
+	    ScriptEngine e = m.getEngineByName("php-invocable");
+	    ((java.io.FileFilter)e).accept(new File(System.getProperty("java.io.tmpdir", "/tmp")+File.separator+"test.php"));
+	    CompiledScript c = ((Compilable)e).compile(invocableScript);
+	    c.eval();
+	    assertTrue(6==(Integer)((Invocable)e).invokeFunction("f",new Object[]{"5"}));
+	    c.eval();
+	    assertTrue(6==(Integer)((Invocable)e).invokeFunction("f",new Object[]{"5"}));
+	    ((Closeable)e).close();
+	} catch (Exception e) {
+            fail(String.valueOf(e));
+        }
+    }
+
 //    public void testInvokeMethod() {
 //	fail("Not yet implemented");
 //    }

@@ -72,8 +72,10 @@ public class CGIRunner extends Continuation {
 	    public void doRun() throws IOException {
 		char[] cbuf = new char[Util.BUF_SIZE]; 
 		int n;    
-		while((n = reader.read(cbuf))!=-1) 
-			writer.write(cbuf, 0, n);
+		while((n = reader.read(cbuf))!=-1) {
+		    //System.err.println("SCRIPT:::"+new String(cbuf, 0, n));
+		    writer.write(cbuf, 0, n);
+		}
 	    }
 	    public void run() { 
 		    try {

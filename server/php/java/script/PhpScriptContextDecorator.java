@@ -24,25 +24,33 @@ package php.java.script;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.List;
+import java.util.Map;
 
 import javax.script.Bindings;
-import javax.script.ScriptContext;
+
+import php.java.bridge.ILogger;
+import php.java.bridge.http.HeaderParser;
 
 /**
- * Abstract class for ScriptContexts. The abstract class itself provides default methods that pass 
- * all requests to the contained ScriptContext. Subclasses of ScriptContextDecorator should override some of
- * these methods and may also provide additional methods and fields. 
+ * Abstract class for IPhpScriptContexts. The abstract class itself provides default methods that pass 
+ * all requests to the contained IPhpScriptContext. Subclasses of PhpScriptContextDecoratorDecorator should 
+ * override some of these methods and may also provide additional methods and fields.  
  * 
  * @author jostb
  */
-public abstract class ScriptContextDecorator implements ScriptContext {
+public abstract class PhpScriptContextDecorator implements IPhpScriptContext {
 
-    protected ScriptContext ctx;
+    private IPhpScriptContext ctx;
 
-    public ScriptContextDecorator(ScriptContext ctx) {
+    /**
+     * Create a new ScriptEngineDecorator
+     * @param engine the ScriptEngine to decorate.
+     */
+    public PhpScriptContextDecorator (IPhpScriptContext ctx) {
 	this.ctx = ctx;
     }
     /**{@inheritDoc}*/
@@ -87,8 +95,9 @@ public abstract class ScriptContextDecorator implements ScriptContext {
     }
 
     /**{@inheritDoc}*/
-    public Object removeAttribute(String name, int scope) {
-    	return ctx.removeAttribute(name, scope);
+    public Object removeAttribute(String name, int scope)
+	    throws IllegalArgumentException {
+	return ctx.removeAttribute(name, scope);
     }
 
     /**{@inheritDoc}*/
@@ -108,13 +117,84 @@ public abstract class ScriptContextDecorator implements ScriptContext {
 	ctx.setErrorWriter(writer);
     }
 
-    /**{@inheritDoc}*/    
+    /**{@inheritDoc}*/
     public void setReader(Reader reader) {
 	ctx.setReader(reader);
     }
 
-    /**{@inheritDoc}*/    
+    /**{@inheritDoc}*/
     public void setWriter(Writer writer) {
 	ctx.setWriter(writer);
+    }
+
+    /**{@inheritDoc}*/
+    public Continuation getContinuation() {
+	return ctx.getContinuation();
+    }
+    /**{@inheritDoc}*/
+    public void setContinuation(Continuation kont) {
+	ctx.setContinuation(kont);
+    }
+    /**{@inheritDoc}*/
+    public Object init(Object callable) throws Exception {
+	return ctx.init(callable);
+    }
+    /**{@inheritDoc}*/
+    public void onShutdown(Object closeable) {
+	ctx.onShutdown(closeable);
+    }
+    /**{@inheritDoc}*/
+    public boolean call(Object kont) throws Exception {
+	return ctx.call(kont);
+    }
+    /**{@inheritDoc}*/
+    public Object get(String key) {
+	return ctx.get(key);
+    }
+    /**{@inheritDoc}*/
+    public Map getAll() {
+	return ctx.getAll();
+    }
+    /**{@inheritDoc}*/
+    public Object getHttpServletRequest() {
+	return ctx.getHttpServletRequest();
+    }
+    /**{@inheritDoc}*/
+    public Object getHttpServletResponse() {
+	return ctx.getHttpServletResponse();
+    }
+    /**{@inheritDoc}*/
+    public String getRealPath(String path) {
+	return ctx.getRealPath(path);
+    }
+    /**{@inheritDoc}*/
+    public Object getServlet() {
+	return ctx.getServlet();
+    }
+    /**{@inheritDoc}*/
+    public Object getServletConfig() {
+	return ctx.getServletConfig();
+    }
+    /**{@inheritDoc}*/
+    public Object getServletContext() {
+	return ctx.getServletContext();
+    }
+    /**{@inheritDoc}*/
+    public void put(String key, Object val) {
+	ctx.put(key, val);
+    }
+    /**{@inheritDoc}*/
+    public void putAll(Map map) {
+	ctx.putAll(map);
+    }
+    /**{@inheritDoc}*/
+    public void remove(String key) {
+	ctx.remove(key);
+    }
+    /**{@inheritDoc}*/
+    public Continuation createContinuation(Reader reader, Map env,
+            OutputStream out, OutputStream err, HeaderParser headerParser,
+            ResultProxy result, ILogger logger) {
+	return ctx.createContinuation(reader, env, out, err, headerParser, result, logger);
     }
 }

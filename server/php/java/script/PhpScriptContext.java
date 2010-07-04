@@ -26,7 +26,6 @@ package php.java.script;
 
 import java.io.OutputStream;
 import java.io.Reader;
-import java.io.Writer;
 import java.util.Collections;
 import java.util.Map;
 
@@ -48,7 +47,7 @@ import php.java.bridge.http.IContext;
  * @author jostb
  *
  */
-public class PhpScriptContext extends AbstractPhpScriptContext implements IPhpScriptContext {
+public final class PhpScriptContext extends AbstractPhpScriptContext implements IPhpScriptContext {
 
     public PhpScriptContext(ScriptContext ctx) {
 	super(ctx);

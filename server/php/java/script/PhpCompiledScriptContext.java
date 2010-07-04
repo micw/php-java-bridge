@@ -6,8 +6,6 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.util.Map;
 
-import javax.script.ScriptContext;
-
 import php.java.bridge.ILogger;
 import php.java.bridge.http.HeaderParser;
 
@@ -44,12 +42,12 @@ import php.java.bridge.http.HeaderParser;
  * @author jostb
  *
  */
-public class PhpCompiledScriptContext extends PhpScriptContext {
+public class PhpCompiledScriptContext extends PhpScriptContextDecorator {
 
-    public PhpCompiledScriptContext(ScriptContext ctx) {
+    /**{@inheritDoc}*/
+    public PhpCompiledScriptContext(IPhpScriptContext ctx) {
 	super(ctx);
     }
-
     /**{@inheritDoc}*/
     public Continuation createContinuation(Reader reader, Map env,
             OutputStream out, OutputStream err, HeaderParser headerParser, ResultProxy result,
