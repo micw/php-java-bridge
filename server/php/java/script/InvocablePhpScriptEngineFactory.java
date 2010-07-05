@@ -63,19 +63,17 @@ public class InvocablePhpScriptEngineFactory extends PhpScriptEngineFactory {
   public String getLanguageName() {
     return "php-invocable";
   }
+
+  private List names;
   /**{@inheritDoc}*/
   public List getNames() {
-    return Arrays.asList(new String[]{getLanguageName()});
+      if (names!=null) return names;
+      return names=Arrays.asList(new String[]{getLanguageName()});
   }
 
-  private List ext = Collections.unmodifiableList(new LinkedList());
+  private static final List ext = Collections.unmodifiableList(new LinkedList());
   /**{@inheritDoc}*/
   public List getExtensions() {
       return ext;
     }
-
-  /**{@inheritDoc}*/
-  public ScriptEngine getScriptEngine() {
-      return factory.create();
-  }
 }

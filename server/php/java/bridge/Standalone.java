@@ -34,7 +34,7 @@ import javax.swing.JOptionPane;
  * the standalone back-end, listenes for protocol requests and handles
  * CreateInstance, GetSetProp and Invoke requests. Supported protocol
  * modes are INET (listens on all interfaces), INET_LOCAL (loopback
- * only), SERVLET and SERVLET_LOCAL 
+ * only), HTTP, HTTP_LOCAL, HTTPS and HTTPS_LOCAL
  * (starts the built-in servlet engine listening on all interfaces or loopback).  
  * <p> Example:<br> <code> java
  * -Djava.awt.headless=true -jar JavaBridge.jar INET_LOCAL:9676 5
@@ -50,6 +50,8 @@ public class Standalone {
 
     /** The default HTTP port for management clients */
     public static final int HTTP_PORT_BASE = 8080;
+    /** The default HTTP port for management clients */
+    public static final int HTTPS_PORT_BASE = 8443;
 
     /**
      * Create a new server socket and return it. 
@@ -76,10 +78,12 @@ public class Standalone {
 	System.err.println("PHP/Java Bridge version "+Util.VERSION);
 	disclaimer();
 	System.err.println("Usage: java -jar JavaBridge.jar [SOCKETNAME LOGLEVEL LOGFILE]");
-	System.err.println("SOCKETNAME is one of INET_LOCAL, INET, SERVLET_LOCAL, SERVLET");
+	System.err.println("SOCKETNAME is one of INET_LOCAL, INET, HTTP_LOCAL, HTTP, HTTPS_LOCAL, HTTPS");
 	System.err.println("");
-	System.err.println("Example: java -jar JavaBridge.jar");
-	System.err.println("Example: java -jar JavaBridge.jar SERVLET_LOCAL:8080 3 JavaBridge.log");
+	System.err.println("Example 1: java -jar JavaBridge.jar");
+	System.err.println("Example 2: java -jar JavaBridge.jar HTTP_LOCAL:8080 3 JavaBridge.log");
+	System.err.println("Example 3: java -Djavax.net.ssl.keyStore=mySrvKeystore -Djavax.net.ssl.keyStorePassword=YOURPASSWD -jar JavaBridge.jar HTTPS:8443 3 JavaBridge.log");
+	System.err.println("The certificate for example 3 can be created with e.g.: jdk1.6.0/bin/keytool -keystore mySrvKeystore -genkey -keyalg RSA");
 	System.err.println("");
 	System.err.println("Influential system properties: threads, daemon, php_exec, default_log_file, default_log_level, base.");
 	System.err.println("Example: java -Djava.awt.headless=\"true\" -Dphp.java.bridge.threads=50 -Dphp.java.bridge.base=/usr/lib/php/modules -Dphp.java.bridge.php_exec=/usr/local/bin/php-cgi -Dphp.java.bridge.default_log_file= -Dphp.java.bridge.default_log_level=5 -jar JavaBridge.jar");
@@ -147,11 +151,14 @@ public class Standalone {
 		    int tcpSocket = Integer.parseInt(tcpSocketName);
 		    int freeJavaPort = findFreePort(tcpSocket);
 		    int freeHttpPort = findFreePort(Standalone.HTTP_PORT_BASE);
+		    int freeHttpsPort = findFreePort(Standalone.HTTPS_PORT_BASE);
 		    Object result = JOptionPane. showInputDialog(null,
 			    "Start a socket listener on port", "Starting the PHP/Java Bridge ...", JOptionPane.QUESTION_MESSAGE, null,
 		            new String[] {
 			    "INET_LOCAL:"+freeJavaPort,"INET:"+freeJavaPort,
-			    "SERVLET_LOCAL:"+freeHttpPort,"SERVLET:"+freeHttpPort}, "SERVLET_LOCAL:"+freeHttpPort);
+			    "HTTP_LOCAL:"+freeHttpPort,"HTTP:"+freeHttpPort,
+			    "HTTPS_LOCAL:"+freeHttpsPort,"HTTPS:"+freeHttpsPort}, "HTTP_LOCAL:"+freeHttpPort
+			    );
 		       if(result==null) System.exit(0);
 		      sockname  = result.toString();
 		} catch (Throwable t) {/*ignore*/}
@@ -185,14 +192,26 @@ public class Standalone {
     }
     private static boolean checkServlet(int logLevel, String sockname, String[] s) throws InterruptedException, IOException {
 	if(sockname==null) return false;
-	if(sockname.startsWith("SERVLET_LOCAL:")) System.setProperty("php.java.bridge.promiscuous", "false");
-	else if(sockname.startsWith("SERVLET:"))  System.setProperty("php.java.bridge.promiscuous", "true");
-	else return false;
+	if(sockname.startsWith("SERVLET_LOCAL:")||sockname.startsWith("HTTP_LOCAL:")||sockname.startsWith("HTTPS_LOCAL:")) {
+	    Util.JAVABRIDGE_PROMISCUOUS = false;
+	    System.setProperty("php.java.bridge.promiscuous", "false");
+	} else if(sockname.startsWith("SERVLET:")||sockname.startsWith("HTTP:")||sockname.startsWith("HTTPS:")) {
+	    Util.JAVABRIDGE_PROMISCUOUS = true;
+	    System.setProperty("php.java.bridge.promiscuous", "true");
+	} else 
+	    return false;
 	
+	boolean isSecure = sockname.startsWith("HTTPS");
 	JavaBridge.initLog(sockname, logLevel, s);
 	sockname=sockname.substring(sockname.indexOf(':')+1);
-	JavaBridgeRunner.main(new String[] {sockname});
-	return false;
+	String serverPort = (Util.JAVABRIDGE_PROMISCUOUS ? "INET:" :"INET_LOCAL:") +sockname;
+	Util.logMessage("JavaBridgeRunner started on port " + serverPort);
+
+	JavaBridgeRunner r = JavaBridgeRunner.getRequiredInstance(serverPort, isSecure);
+	r.waitFor();
+	r.destroy();
+
+	return true;
     }
     /* Don't use Util or DynamicJavaBridgeClassLoader at this stage! */
     private static final boolean checkGNUVM() {

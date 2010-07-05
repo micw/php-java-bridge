@@ -38,8 +38,12 @@ import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.ServerSocket;
 import java.util.Iterator;
 import java.util.List;
+
+import javax.net.ServerSocketFactory;
+import javax.net.ssl.SSLServerSocketFactory;
 
 import php.java.bridge.http.ChunkedInputStream;
 import php.java.bridge.http.ChunkedOutputStream;
@@ -67,9 +71,12 @@ public class JavaBridgeRunner extends HttpServer {
 
     protected static JavaBridgeRunner runner;
 
-    protected JavaBridgeRunner(String serverPort) throws IOException {
-	super(serverPort);
+    protected JavaBridgeRunner(String serverPort, boolean isSecure) throws IOException {
+	super(serverPort, isSecure);
 	contextServer = new ContextServer(ContextFactory.EMPTY_CONTEXT_NAME, Util.JAVABRIDGE_PROMISCUOUS);	
+    }
+    protected JavaBridgeRunner(String serverPort) throws IOException {
+	this(serverPort, false);
     }
     /**
      * Create a new JavaBridgeRunner and ContextServer.
@@ -77,8 +84,34 @@ public class JavaBridgeRunner extends HttpServer {
      * @see ContextServer
      */
     protected JavaBridgeRunner() throws IOException {
-	super();
-	contextServer = new ContextServer(ContextFactory.EMPTY_CONTEXT_NAME, Util.JAVABRIDGE_PROMISCUOUS);
+	this(null);
+    }
+    /**
+     * Return a instance.
+     * @param serverPort The server port name
+     * @param isSecure use https instead of http
+     * @return a standalone runner
+     * @throws IOException
+     */
+    public static synchronized JavaBridgeRunner getRequiredInstance(String serverPort, boolean isSecure) throws IOException {
+	if(runner!=null) return runner;
+	runner = new JavaBridgeRunner(serverPort, isSecure);
+	return runner;
+    }
+    /**
+     * Return a instance.
+     * @param serverPort The server port name
+     * @param isSecure use https instead of http
+     * @return a standalone runner
+     */
+    public static synchronized JavaBridgeRunner getInstance(String serverPort, boolean isSecure) {
+	if(runner!=null) return runner;
+	try {
+	    runner = new JavaBridgeRunner(serverPort, isSecure);
+        } catch (IOException e) {
+	    Util.printStackTrace(e);
+        }
+	return runner;
     }
     /**
      * Return a instance.
@@ -116,17 +149,6 @@ public class JavaBridgeRunner extends HttpServer {
 	return runner;
     }
     
-    /**
-     * Return a standalone instance. 
-     * It sets a flag which indicates that the runner will be used as a standalone component outside of the Servlet environment.
-     * @return a standalone runner
-     * @throws IOException
-     */
-    private static synchronized JavaBridgeRunner getRequiredStandaloneInstance(String serverPort) throws IOException {
-	if(runner!=null) return runner;
-	runner = new JavaBridgeRunner(serverPort);
-	return runner;
-    }
     /** Only for internal use */
     public static ContextServer contextServer = null;
 
@@ -139,6 +161,22 @@ public class JavaBridgeRunner extends HttpServer {
     public ISocketFactory bind(String addr) throws IOException {
 	socket =  JavaBridge.bind(addr);
 	return socket;
+    }
+    /**
+     * Create a server socket.
+     * @param addr The host address, either INET:port or INET_LOCAL:port
+     * @return The server socket.
+     * @throws IOException 
+     */
+    public ISocketFactory bindSecure(String addr) throws IOException {
+	boolean isLocal = true;
+	if(addr.startsWith("INET_LOCAL:")) {
+	    addr = addr.substring(11);
+	} else if(addr.startsWith("INET:")) { 
+	    isLocal = false; 
+	    addr = addr.substring(5);
+	}
+	return SSLServerSocketHelper.bind(Integer.parseInt(addr));
     }
 
     private static String getHeader(String key, HttpRequest req) {
@@ -164,7 +202,7 @@ public class JavaBridgeRunner extends HttpServer {
 	RemoteHttpContextFactory ctx = new RemoteHttpContextFactory(req, res);
 	res.setHeader("X_JAVABRIDGE_CONTEXT", ctx.getId());
 	res.setHeader("Pragma", "no-cache");
-	res.setHeader("Cache-Control", "no-cache");
+	res.setHeader("Keep-Alive", "timeout=-1, max=-1");
 	try {
 	    ctx.getBridge().handleRequestsInternal(sin, sout);
 	    sin.eof();
@@ -285,7 +323,7 @@ public class JavaBridgeRunner extends HttpServer {
     /**
      * Evaluate the script engine. The engine is searched through the discovery mechanism. Add the "php-script.jar" or some other
      * JSR223 script engine to the java ext dirs (usually /usr/share/java/ext or /usr/java/packages/lib/ext) and start the HTTP server:
-     * java -jar JavaBridge.jar SERVLET_LOCAL:8080. Browse to http://localhost:8080/test.php. 
+     * java -jar JavaBridge.jar HTTP_LOCAL:8080. Browse to http://localhost:8080/test.php. 
      * @param f The full name as a file
      * @param params The request parameter
      * @param length The length of the file
@@ -477,22 +515,5 @@ public class JavaBridgeRunner extends HttpServer {
      */
     public void waitFor () throws InterruptedException {
         runner.httpServer.join();
-    }
-    
-    /**
-     * For internal tests only.
-     * @param s The argument array
-     * @throws InterruptedException 
-     * @throws IOException 
-     */
-    public static void main(String s[]) throws InterruptedException, IOException {
-	String serverPort = null; 
-	if(s!=null) {
-	     if(s.length>0 && s[0]!=null) serverPort = (Util.JAVABRIDGE_PROMISCUOUS ? "INET:" :"INET_LOCAL:") +s[0];
-	 }
-	 Util.logMessage("JavaBridgeRunner started on port " + serverPort);
-	 JavaBridgeRunner r = getRequiredStandaloneInstance(serverPort);
-	 r.httpServer.join();
-	 r.destroy();
     }
 }

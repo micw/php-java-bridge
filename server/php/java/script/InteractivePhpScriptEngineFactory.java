@@ -59,9 +59,4 @@ public class InteractivePhpScriptEngineFactory extends InvocablePhpScriptEngineF
   public String getLanguageName() {
     return "php-interactive";
   }
-
-  /**{@inheritDoc}*/
-  public ScriptEngine getScriptEngine() {
-      return new InteractivePhpScriptEngine(this);
-  }
 }

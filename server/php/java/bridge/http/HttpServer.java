@@ -70,6 +70,13 @@ public abstract class HttpServer implements Runnable {
      * @throws IOException 
      */
     public abstract ISocketFactory bind(String addr) throws IOException;
+    /**
+     * Create a server socket.
+     * @param addr The host address, either INET:port or INET_LOCAL:port
+     * @return The server socket.
+     * @throws IOException 
+     */
+    public abstract ISocketFactory bindSecure(String addr) throws IOException;
 
     /**
      * Create a new HTTP Server.
@@ -82,18 +89,29 @@ public abstract class HttpServer implements Runnable {
     /**
      * Create a new HTTP Server.
      * @param serverPort The port# as a string. Prefix may be INET: or INET_LOCAL:
+     * @param isSecure use https instead of http
      * @throws IOException 
      * @see HttpServer#destroy()
      */
-    protected HttpServer(String serverPort) throws IOException {
+    protected HttpServer(String serverPort, boolean isSecure) throws IOException {
 	if(serverPort==null) serverPort = "0";
 	if(!serverPort.startsWith("INET")) serverPort = (Util.JAVABRIDGE_PROMISCUOUS ? "INET:" : "INET_LOCAL:") + serverPort;
-	socket = bind(serverPort);
+	socket = isSecure ? bindSecure(serverPort) : bind(serverPort);
 	try {
 		pool = createThreadPool(Util.EXTENSION_NAME+"HttpServerThreadPool");
 	} catch (SecurityException e) {/*ignore*/}
 	httpServer = new Util.Thread(this, Util.EXTENSION_NAME+"HttpServer");
         httpServer.start();
+    }
+    /**
+     * Create a new HTTP Server.
+     * @param serverPort The port# as a string. Prefix may be INET: or INET_LOCAL:
+     * @param isSecure 
+     * @throws IOException 
+     * @see HttpServer#destroy()
+     */
+    protected HttpServer(String serverPort) throws IOException {
+	this(serverPort, false);
     }
 
     /**
@@ -199,7 +217,14 @@ public abstract class HttpServer implements Runnable {
     protected void doRun() throws IOException {
 	while(true) {
 	    Socket sock;
-	    try {sock = socket.accept();} catch (IOException e) {return;} // socket closed
+
+	    try {
+		sock = socket.accept();
+	    } catch (IOException e) {
+		Util.printStackTrace(e);
+		return;
+	    } // socket closed
+	    
 	    Util.logDebug("Socket connection accepted");
 	    if(pool==null) {
 		Util.logDebug("Starting new HTTP server thread");
