@@ -37,7 +37,7 @@ import php.java.bridge.http.IContext;
  * Create new session instances
  * @see php.java.bridge.Session
  * @see php.java.bridge.http.Context
- * @see php.java.servlet.Context
+ * @see php.java.servlet.HttpContext
  * @see php.java.bridge.http.ContextFactory
  * @see php.java.servlet.ServletContextFactory
  * @see php.java.script.PhpScriptContextFactory

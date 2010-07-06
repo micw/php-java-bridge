@@ -64,28 +64,28 @@ class HttpSessionFacade implements ISession {
     /**
      * Returns the HttpServletRequest
      * @return The HttpServletRequest.
-     * Use {@link Context#getHttpServletRequest()}
+     * Use {@link HttpContext#getHttpServletRequest()}
      */
     public HttpServletRequest getHttpServletRequest() {
-    	return (HttpServletRequest) ((Context)ctxFactory.getContext()).getHttpServletRequest();
+    	return (HttpServletRequest) ((HttpContext)ctxFactory.getContext()).getHttpServletRequest();
     }
     
     /**
      * Returns the ServletContext
      * @return The ServletContext.
-     *  Use {@link Context#getServletContext()}
+     *  Use {@link HttpContext#getServletContext()}
      */
     public ServletContext getServletContext() {
-        return (ServletContext) ((Context)ctxFactory.getContext()).getServletContext();
+        return (ServletContext) ((HttpContext)ctxFactory.getContext()).getServletContext();
     }
     
     /**
      * Returns the ServletResponse
      * @return The ServletResponse.
-     *  Use {@link Context#getHttpServletResponse()}
+     *  Use {@link HttpContext#getHttpServletResponse()}
      */
     public HttpServletResponse getHttpServletResponse() {
-        return (HttpServletResponse) ((Context)ctxFactory.getContext()).getHttpServletResponse();
+        return (HttpServletResponse) ((HttpContext)ctxFactory.getContext()).getHttpServletResponse();
     }
     /**@inheritDoc*/
     public Object get(Object ob) {

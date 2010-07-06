@@ -61,16 +61,16 @@ import php.java.bridge.Util;
  * @author jostb
  *
  */
-public class ConnectionPool {
+public class FCGIConnectionPool {
 
     private int limit;
     private long timeout;
     private int connections = 0;
     private List freeList = new LinkedList();
     private List connectionList = new LinkedList();
-    private IOFactory factory;
+    private FCGIIOFactory factory;
     private int maxRequests;
-    private ChannelFactory channelName;
+    private FCGIConnectionFactory channelName;
     /**
      * Represents the connection kept by the pool.
      * 
@@ -79,12 +79,12 @@ public class ConnectionPool {
      */
     public final class Connection {
         protected int ostate, state; // bit0: input closed, bit1: output closed
-	protected ChannelFactory channelName;
-	protected Channel channel;
-	private DefaultOutputStream outputStream;
-	private DefaultInputStream inputStream;
+	protected FCGIConnectionFactory channelName;
+	protected FCGIConnection channel;
+	private FCGIConnectionOutputStream outputStream;
+	private FCGIConnectionInputStream inputStream;
 	private boolean isClosed;
-	private IOFactory factory;
+	private FCGIIOFactory factory;
 	private int maxRequests;
 	private int counter;
 	
@@ -97,12 +97,12 @@ public class ConnectionPool {
             counter = maxRequests; 
 	    reset();
 	}
-	protected Connection reopen() throws ConnectException {
+	protected Connection reopen() throws FCGIConnectException {
             if(isClosed) this.channel = factory.connect(channelName);
             this.isClosed = false;
             return this;
 	}
-	protected Connection(ChannelFactory channelName, int maxRequests, IOFactory factory) {
+	protected Connection(FCGIConnectionFactory channelName, int maxRequests, FCGIIOFactory factory) {
             this.channelName = channelName;
             this.factory = factory;
             this.isClosed = true;
@@ -113,7 +113,7 @@ public class ConnectionPool {
 	public void setIsClosed() {
 	    isClosed=true;
 	}
-	protected void close() throws ConnectException {
+	protected void close() throws FCGIConnectException {
 	    // PHP child terminated: mark as closed, so that reopen() can allocate 
 	    // a new connection for the new PHP child
 	    if (maxRequests>0 && --counter==0) isClosed = true;
@@ -133,11 +133,11 @@ public class ConnectionPool {
 	/**
 	 * Returns the OutputStream associated with this connection.
 	 * @return The output stream.
-	 * @throws ConnectionException 
+	 * @throws FCGIConnectionException 
 	 */
-	public OutputStream getOutputStream() throws ConnectionException {
+	public OutputStream getOutputStream() throws FCGIConnectionException {
 	    if(outputStream != null) return outputStream;
-	    DefaultOutputStream outputStream = (DefaultOutputStream) factory.createOutputStream();
+	    FCGIConnectionOutputStream outputStream = (FCGIConnectionOutputStream) factory.createOutputStream();
 	    outputStream.setConnection(this);
 	    ostate |= 2;
 	    return outputStream;
@@ -145,11 +145,11 @@ public class ConnectionPool {
 	/**
 	 * Returns the InputStream associated with this connection.
 	 * @return The input stream.
-	 * @throws ConnectionException
+	 * @throws FCGIConnectionException
 	 */
-	public InputStream getInputStream() throws ConnectionException {
+	public InputStream getInputStream() throws FCGIConnectionException {
 	    if(inputStream != null) return inputStream;
-	    DefaultInputStream inputStream = (DefaultInputStream) factory.createInputStream();
+	    FCGIConnectionInputStream inputStream = (FCGIConnectionInputStream) factory.createInputStream();
 	    inputStream.setConnection(this);
 	    ostate |= 1;
 	    return inputStream;
@@ -162,10 +162,10 @@ public class ConnectionPool {
      * @param limit The max. number of physical connections
      * @param maxRequests 
      * @param factory A factory for creating In- and OutputStreams.
-     * @throws ConnectException 
-     * @see IOFactory
+     * @throws FCGIConnectException 
+     * @see FCGIIOFactory
      */
-    private ConnectionPool(ChannelFactory channelName, int limit, int maxRequests, IOFactory factory) throws ConnectException {
+    private FCGIConnectionPool(FCGIConnectionFactory channelName, int limit, int maxRequests, FCGIIOFactory factory) throws FCGIConnectException {
 	if(Util.logLevel>3) Util.logDebug("Creating new connection pool for: " +channelName);
         this.channelName = channelName;
         this.limit = limit;
@@ -182,10 +182,10 @@ public class ConnectionPool {
      * @param maxRequests 
      * @param factory A factory for creating In- and OutputStreams.
      * @param timeout The pool timeout in milliseconds.
-     * @throws ConnectException 
-     * @see IOFactory
+     * @throws FCGIConnectException 
+     * @see FCGIIOFactory
      */
-    public ConnectionPool(ChannelFactory channelName, int limit, int maxRequests, IOFactory factory, long timeout) throws ConnectException {
+    public FCGIConnectionPool(FCGIConnectionFactory channelName, int limit, int maxRequests, FCGIIOFactory factory, long timeout) throws FCGIConnectException {
 	this(channelName, limit, maxRequests, factory);
 	this.timeout = timeout;
     }
@@ -200,9 +200,9 @@ public class ConnectionPool {
      * Opens a connection to the back end.
      * @return The connection
      * @throws InterruptedException
-     * @throws ConnectException 
+     * @throws FCGIConnectException 
      */
-    public synchronized Connection openConnection() throws InterruptedException, ConnectException {
+    public synchronized Connection openConnection() throws InterruptedException, FCGIConnectException {
         Connection connection;
       	if(freeList.isEmpty() && connections<limit) {
       	    connection = createNewConnection();
@@ -213,7 +213,7 @@ public class ConnectionPool {
       		    wait(timeout);
       		    long t2 = System.currentTimeMillis();
       		    long t = t2 - t1;
-      		    if (t >= timeout) throw new ConnectException(new IOException("pool timeout "+timeout+" exceeded: "+t));
+      		    if (t >= timeout) throw new FCGIConnectException(new IOException("pool timeout "+timeout+" exceeded: "+t));
       		} else {
       		    wait();
       		}

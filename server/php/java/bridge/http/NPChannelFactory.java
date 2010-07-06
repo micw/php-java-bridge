@@ -32,28 +32,46 @@ import php.java.bridge.Util.Process;
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+/**
+ * A factory which creates FastCGI "named pipe" channels.
+ * @author jostb
+ */
 
-public class NPChannelFactory extends ChannelFactory {
+public class NPChannelFactory extends FCGIConnectionFactory {
+    /**
+     * The named pipe prefix
+     */
     public static final String PREFIX="\\\\.\\pipe\\";
     
     private String raPath;
     private String testRaPath;
     
+    /**
+     * Create a new factory using a given processFactory
+     * @param processFactory the FCGIProcessFactory
+     */
     public NPChannelFactory(IFCGIProcessFactory processFactory) {
 	super(processFactory);
     }
-    
-    public void test() throws ConnectException {
-	if(!new File(raPath).canWrite()) throw new ConnectException(new IOException("File " + raPath + " not writable"));
+    /**
+     * Tests if the channel will be available.
+     * @throws FCGIConnectException
+     */
+    public void test() throws FCGIConnectException {
+	if(!new File(raPath).canWrite()) throw new FCGIConnectException(new IOException("File " + raPath + " not writable"));
     }
-    private NPChannel doConnect() throws ConnectException {
+    private NPChannel doConnect() throws FCGIConnectException {
 	try {
 	    return new NPChannel(new RandomAccessFile(raPath, "rw"));
 	} catch (IOException e) {
-	    throw new ConnectException(e);
+	    throw new FCGIConnectException(e);
 	}
     }
-    public Channel connect() throws ConnectException {
+    /**
+     * Create a FCGIConnection
+     * @throws FCGIConnectException
+     */
+    public FCGIConnection connect() throws FCGIConnectException {
 	return doConnect();
     }
 
@@ -74,6 +92,11 @@ public class NPChannelFactory extends ChannelFactory {
     protected void waitForDaemon() throws UnknownHostException, InterruptedException {
 	Thread.sleep(5000);
     }
+    
+    /**
+     * Return the OS command used to start the FCGI process
+     * @return the fcgi start command.
+     */
     public String getFcgiStartCommand(String base, String php_fcgi_max_requests) {
 	String msg =
 	    "cd \"" + base + File.separator + Util.osArch + "-" + Util.osName+ "\"\n" + 
@@ -85,6 +108,10 @@ public class NPChannelFactory extends ChannelFactory {
 	    ".\\launcher.exe \"c:\\Program Files\\PHP\\php-cgi.exe\" \"" + getPath() +"\"\n\n";
         return msg;
     }
+    /**
+     * Find a free socket port. After that {@link #setDynamicPort()} should be called
+     * @param select wether or not some hard-coded path should be used
+     */
     public void findFreePort(boolean select) {
 	try {
 	    if(select) {
@@ -98,13 +125,23 @@ public class NPChannelFactory extends ChannelFactory {
 	    Util.printStackTrace(e);
 	}
     }
+    /**
+     * Set the a default port, overriding the port selected by {@link #findFreePort(boolean)}
+     */
     public void setDefaultPort() {
 	raPath=FCGIUtil.FCGI_PIPE;
     }
-    protected void setDynamicPort() {
+    /**
+     * Set the dynamic port selected by {@link #findFreePort(boolean)}
+     */
+    public void setDynamicPort() {
 	raPath=testRaPath;
     }
-    protected String getPath() {
+    /**
+     * Return the path selected by {@link #setDefaultPort()} or {@link #setDynamicPort()}
+     * @return the path
+     */
+    public String getPath() {
 	return raPath;
     }
 }

@@ -26,38 +26,87 @@ package php.java.bridge.http;
 
 import php.java.bridge.Util;
 
+/**
+ * Constants and common procedures for FastCGI
+ * @author user
+ *
+ */
 public class FCGIUtil {
 
-    // IO buffer size
+    /**
+     * IO buffer size
+     */
     public static final int FCGI_BUF_SIZE = 65535;
 
+    /**
+     * header length
+     */
     public static final int FCGI_HEADER_LEN = 8;
-    /*
+    /**
      * Values for type component of FCGI_Header
      */
     public static final int FCGI_BEGIN_REQUEST =      1;
+    /**
+     * Values for type component of FCGI_Header
+     */
     public static final int FCGI_ABORT_REQUEST =      2;
+    /**
+     * Values for type component of FCGI_Header
+     */
     public static final int FCGI_END_REQUEST   =      3;
+    /**
+     * Values for type component of FCGI_Header
+     */
     public static final int FCGI_PARAMS        =      4;
+    /**
+     * Values for type component of FCGI_Header
+     */
     public static final int FCGI_STDIN         =      5;
+    /**
+     * Values for type component of FCGI_Header
+     */
     public static final int FCGI_STDOUT        =      6;
+    /**
+     * Values for type component of FCGI_Header
+     */
     public static final int FCGI_STDERR        =      7;
+    /**
+     * Values for type component of FCGI_Header
+     */
     public static final int FCGI_DATA          =      8;
+    /**
+     * Values for type component of FCGI_Header
+     */
     public static final int FCGI_GET_VALUES    =      9;
+    /**
+     * Values for type component of FCGI_Header
+     */
     public static final int FCGI_GET_VALUES_RESULT = 10;
+    /**
+     * Values for type component of FCGI_Header
+     */
     public static final int FCGI_UNKNOWN_TYPE      = 11;
+    /**
+     * Values for type component of FCGI_Header
+     */
     public static final byte[] FCGI_EMPTY_RECORD = new byte[0];
     
-    /*
+    /**
      * Mask for flags component of FCGI_BeginRequestBody
      */
     public static final int FCGI_KEEP_CONN  = 1;
 
-    /*
+    /**
      * Values for role component of FCGI_BeginRequestBody
      */
     public static final int FCGI_RESPONDER  = 1;
+    /**
+     * Values for role component of FCGI_BeginRequestBody
+     */
     public static final int FCGI_AUTHORIZER = 2;
+    /**
+     * Values for role component of FCGI_BeginRequestBody
+     */
     public static final int FCGI_FILTER     = 3;
 
     /**

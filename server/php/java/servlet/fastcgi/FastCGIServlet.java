@@ -45,20 +45,20 @@ import javax.servlet.http.HttpServletResponse;
 import php.java.bridge.ILogger;
 import php.java.bridge.Util;
 import php.java.bridge.http.AbstractChannelName;
-import php.java.bridge.http.Channel;
-import php.java.bridge.http.ChannelFactory;
-import php.java.bridge.http.ConnectException;
-import php.java.bridge.http.ConnectionException;
-import php.java.bridge.http.ConnectionPool;
+import php.java.bridge.http.FCGIConnection;
+import php.java.bridge.http.FCGIConnectionFactory;
+import php.java.bridge.http.FCGIConnectException;
+import php.java.bridge.http.FCGIConnectionException;
+import php.java.bridge.http.FCGIConnectionPool;
 import php.java.bridge.http.ContextServer;
 import php.java.bridge.http.FCGIUtil;
-import php.java.bridge.http.FastCGIInputStream;
-import php.java.bridge.http.FastCGIOutputStream;
+import php.java.bridge.http.FCGIInputStream;
+import php.java.bridge.http.FCGIOutputStream;
 import php.java.bridge.http.HeaderParser;
 import php.java.bridge.http.IContextFactory;
 import php.java.bridge.http.IFCGIProcess;
 import php.java.bridge.http.IFCGIProcessFactory;
-import php.java.bridge.http.IOFactory;
+import php.java.bridge.http.FCGIIOFactory;
 import php.java.servlet.Logger;
 import php.java.servlet.PhpJavaServlet;
 import php.java.servlet.ServletContextFactory;
@@ -113,7 +113,7 @@ public class FastCGIServlet extends HttpServlet implements IFCGIProcessFactory {
 
     private static class Environment {
 	public IContextFactory ctx;
-	public ConnectionPool connectionPool;
+	public FCGIConnectionPool connectionPool;
 	public String contextPath;
 	public String pathInfo;
 	public String servletPath;
@@ -133,16 +133,16 @@ public class FastCGIServlet extends HttpServlet implements IFCGIProcessFactory {
      */
     private static final Object globalCtxLock = new Object();
     private static final Object javaBridgeCtxLock = new Object();
-    private static ConnectionPool fcgiConnectionPool = null;
+    private static FCGIConnectionPool fcgiConnectionPool = null;
     
-    private final IOFactory defaultPoolFactory = new IOFactory() {
-	    public InputStream createInputStream() { return new FastCGIInputStream(FastCGIServlet.this); }
-	    public OutputStream createOutputStream() { return new FastCGIOutputStream(); }
-	    public Channel connect(ChannelFactory name) throws ConnectException {
+    private final FCGIIOFactory defaultPoolFactory = new FCGIIOFactory() {
+	    public InputStream createInputStream() { return new FCGIInputStream(FastCGIServlet.this); }
+	    public OutputStream createOutputStream() { return new FCGIOutputStream(); }
+	    public FCGIConnection connect(FCGIConnectionFactory name) throws FCGIConnectException {
 		return name.connect();
 	    }
 	};
-    protected ChannelFactory channelName;
+    protected FCGIConnectionFactory channelName;
 
     // workaround for a bug in jboss server, which uses the log4j port 4445 for its internal purposes(!)
     private boolean isJBoss;
@@ -228,7 +228,7 @@ public class FastCGIServlet extends HttpServlet implements IFCGIProcessFactory {
      * CGI servlet is used instead.
      * @param config The servlet config
      * @throws ServletException 
-     * @see php.java.bridge.http.ConnectionPool
+     * @see php.java.bridge.http.FCGIConnectionPool
      * @see #destroy()
      */
     public void init(ServletConfig config) throws ServletException {
@@ -315,7 +315,7 @@ public class FastCGIServlet extends HttpServlet implements IFCGIProcessFactory {
 	fcgiIsConfigured = true;
 	checkCgiBinary(config);
 	
-	channelName = ChannelFactory.createChannelFactory(this, promiscuous);
+	channelName = FCGIConnectionFactory.createChannelFactory(this, promiscuous);
 	channelName.findFreePort(canStartFCGI);
 
 	createPhpFiles ();
@@ -576,12 +576,12 @@ public class FastCGIServlet extends HttpServlet implements IFCGIProcessFactory {
 	if (env.requestUri == null) env.requestUri = req.getRequestURI();
     }
     
-    private ConnectionPool createConnectionPool(HttpServletRequest req, int children, Environment env) throws ConnectException {
+    private FCGIConnectionPool createConnectionPool(HttpServletRequest req, int children, Environment env) throws FCGIConnectException {
 	channelName.initialize(env.contextPath);
 
 	// Start the launcher.exe or launcher.sh
 	channelName.startServer(logger);
-	return new ConnectionPool(channelName, children, php_fcgi_max_requests_number, defaultPoolFactory, php_fcgi_connection_pool_timeout_number);
+	return new FCGIConnectionPool(channelName, children, php_fcgi_max_requests_number, defaultPoolFactory, php_fcgi_connection_pool_timeout_number);
     }
 
     /** calculate PATH_INFO, PATH_TRANSLATED and SCRIPT_FILENAME */
@@ -600,7 +600,7 @@ public class FastCGIServlet extends HttpServlet implements IFCGIProcessFactory {
         
     }
 
-    protected void setupFastCGIServer(HttpServletRequest req, Environment env) throws ConnectException {
+    protected void setupFastCGIServer(HttpServletRequest req, Environment env) throws FCGIConnectException {
 	boolean isJavaBridgeWc = ServletUtil.isJavaBridgeWc(env.contextPath);
 	Object lockObject = isJavaBridgeWc?javaBridgeCtxLock:globalCtxLock;
 	synchronized(lockObject) {
@@ -750,21 +750,21 @@ public class FastCGIServlet extends HttpServlet implements IFCGIProcessFactory {
      * @throws InterruptedException 
      * @see HeaderParser#parseBody(byte[], InputStream, OutputStream, HeaderParser)
      */
-    protected void parseBody(HttpServletRequest req, HttpServletResponse res, Environment env) throws ConnectionException, ConnectException, IOException, ServletException {
+    protected void parseBody(HttpServletRequest req, HttpServletResponse res, Environment env) throws FCGIConnectionException, FCGIConnectException, IOException, ServletException {
 	final byte[] buf = new byte[FCGIUtil.FCGI_BUF_SIZE];// headers cannot be larger than this value!
 	
 	InputStream in = null;
 	OutputStream out = null;
 	
-	FastCGIInputStream natIn = null;
-	FastCGIOutputStream natOut = null;
+	FCGIInputStream natIn = null;
+	FCGIOutputStream natOut = null;
 
-	ConnectionPool.Connection connection = null;
+	FCGIConnectionPool.Connection connection = null;
 	
 	try {
 	    connection = env.connectionPool.openConnection();
-	    natOut = (FastCGIOutputStream) connection.getOutputStream();
-	    natIn = (FastCGIInputStream) connection.getInputStream();
+	    natOut = (FCGIOutputStream) connection.getOutputStream();
+	    natIn = (FCGIInputStream) connection.getInputStream();
 
 	    in = req.getInputStream(); // do not close in, otherwise requestDispatcher().include() will receive a closed input stream
 	    out = ServletUtil.getServletOutputStream(res);
@@ -785,7 +785,7 @@ public class FastCGIServlet extends HttpServlet implements IFCGIProcessFactory {
 		// used by either http/1.1 chunked connections or "WebSockets", 
 		// see http://tools.ietf.org/html/draft-hixie-thewebsocketprotocol-70
 		final InputStream inputStream = in; in = null;
-		final FastCGIOutputStream natOutputStream = natOut; natOut = null;
+		final FCGIOutputStream natOutputStream = natOut; natOut = null;
 		(new Thread() {
 			public void run() {
 			    int n;
@@ -881,13 +881,13 @@ public class FastCGIServlet extends HttpServlet implements IFCGIProcessFactory {
 
 	try {
 	    parseBody(req, res, env);
-	} catch (ConnectException ex) {
+	} catch (FCGIConnectException ex) {
 	    if(Util.logLevel>1) {
 		Util.logDebug("PHP FastCGI server failed: " + ex);
 		Util.printStackTrace(ex);
 	    }
 	    throw new IOException("PHP FastCGI server failed: ", ex);
-	} catch (ConnectionException x) {
+	} catch (FCGIConnectionException x) {
 	    Util.logError("PHP application terminated unexpectedly, have you started php-cgi with the environment setting PHP_FCGI_MAX_REQUESTS=" + php_fcgi_max_requests + "?  Error: " + x);
 	    if(Util.logLevel>1) {
 		Util.logDebug("PHP FastCGI instance failed: " + x);

@@ -28,12 +28,18 @@ import java.io.IOException;
 
 import php.java.bridge.Util;
 
-public class FastCGIInputStream extends DefaultInputStream {
+/**
+ * A FastCGI input stream
+ * @author jostb
+ *
+ */
+public class FCGIInputStream extends FCGIConnectionInputStream {
     private final IFCGIProcessFactory processFactory;
     /**
-     * @param servlet
+     * Create
+     * @param processFactory
      */
-    public FastCGIInputStream(IFCGIProcessFactory processFactory) {
+    public FCGIInputStream(IFCGIProcessFactory processFactory) {
         this.processFactory = processFactory;
     }
     private StringBuffer error;
@@ -43,13 +49,13 @@ public class FastCGIInputStream extends DefaultInputStream {
     public String checkError() {
         return error==null?null:Util.checkError(error.toString());
     }
-    public int read(byte buf[]) throws ConnectionException {
+    public int read(byte buf[]) throws FCGIConnectionException {
         try {
 	    return doRead(buf);
-        } catch (ConnectionException ex) {
+        } catch (FCGIConnectionException ex) {
 	    throw ex;
         } catch (IOException e) {
-            throw new ConnectionException(connection, e);
+            throw new FCGIConnectionException(connection, e);
         }
     }
     private byte header[] = new byte[FCGIUtil.FCGI_HEADER_LEN];

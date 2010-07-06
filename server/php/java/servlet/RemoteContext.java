@@ -38,7 +38,7 @@ import php.java.bridge.http.IContext;
  * @author jostb
  *
  */
-public class RemoteContext extends Context {
+public class RemoteContext extends HttpContext {
     protected RemoteContext(ServletContext kontext, HttpServletRequest req, HttpServletResponse res) {
 	super(kontext, req, res);
     }

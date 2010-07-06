@@ -44,7 +44,11 @@ import php.java.bridge.http.HeaderParser;
  */
 public class PhpCompiledScriptContext extends PhpScriptContextDecorator {
 
-    /**{@inheritDoc}*/
+    /**
+     * Create a new PhpCompiledScriptContext using an existing
+     * PhpScriptContext
+     * @param ctx the script context to be decorated
+     */
     public PhpCompiledScriptContext(IPhpScriptContext ctx) {
 	super(ctx);
     }

@@ -8,8 +8,8 @@ import java.io.OutputStream;
  */
 public abstract class OutputStreamFactory {
     /**
-     * Return a new output stream
-     * @return a new output stream
+     * Return an output stream
+     * @return an output stream
      */
     public abstract OutputStream getOutputStream() throws IOException;
 }

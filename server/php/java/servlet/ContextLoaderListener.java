@@ -36,8 +36,8 @@ import php.java.bridge.http.ContextServer;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 /**
- * Register a PHP JSR 223 EngineFactory when the web context starts. Used when the web application
- * WEB-INF/web.xml contains a listener attribute:
+ * Register the PHP/Java Bridge when the web context starts. Used by java_context()->onShutdown(proc). The
+ * WEB-INF/web.xml should contain a listener attribute:
  * <blockquote>
  * <code>
  * &lt;listener&gt;
@@ -45,7 +45,6 @@ import php.java.bridge.http.ContextServer;
  *&lt;/listener&gt;
  * </code>
  * </blockquote>
- * @see php.java.script.servlet.EngineFactory
  */
 public class ContextLoaderListener implements javax.servlet.ServletContextListener {
     /** The key used to store the closeables list in the servlet context, must be destroyed before the engines */

@@ -146,7 +146,7 @@ public class RemoteHttpContextFactory extends SessionFactory implements IContext
     /**
      * Return an emulated JSR223 context.
      * @return The context.
-     * @see php.java.servlet.Context
+     * @see php.java.servlet.HttpContext
      */
     private IContext createContext() {
 	return new Context();

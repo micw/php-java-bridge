@@ -36,17 +36,17 @@ import java.util.Map;
 
 import php.java.bridge.ILogger;
 import php.java.bridge.Util;
-import php.java.bridge.http.Channel;
-import php.java.bridge.http.ChannelFactory;
-import php.java.bridge.http.ConnectException;
-import php.java.bridge.http.ConnectionPool;
+import php.java.bridge.http.FCGIConnection;
+import php.java.bridge.http.FCGIConnectionFactory;
+import php.java.bridge.http.FCGIConnectException;
+import php.java.bridge.http.FCGIConnectionPool;
 import php.java.bridge.http.FCGIUtil;
-import php.java.bridge.http.FastCGIInputStream;
-import php.java.bridge.http.FastCGIOutputStream;
+import php.java.bridge.http.FCGIInputStream;
+import php.java.bridge.http.FCGIOutputStream;
 import php.java.bridge.http.HeaderParser;
 import php.java.bridge.http.IFCGIProcess;
 import php.java.bridge.http.IFCGIProcessFactory;
-import php.java.bridge.http.IOFactory;
+import php.java.bridge.http.FCGIIOFactory;
 import php.java.bridge.http.OutputStreamFactory;
 
 /**
@@ -71,23 +71,23 @@ public class FastCGIProxy extends Continuation implements IFCGIProcessFactory {
             ResultProxy resultProxy, ILogger logger) {
 	super(reader, env, out, err, headerParser, resultProxy, logger);
     }
-    private ChannelFactory channelName;
+    private FCGIConnectionFactory channelName;
     private static final String CONTEXT_PATH="";
     static final HashMap PROCESS_ENVIRONMENT = getProcessEnvironment();
     private static HashMap getProcessEnvironment() {
 	HashMap map = new HashMap(Util.COMMON_ENVIRONMENT);
 	return map;
     }
-    private final IOFactory defaultPoolFactory = new IOFactory() {
-	    public InputStream createInputStream() { return new FastCGIInputStream(FastCGIProxy.this); }
-	    public OutputStream createOutputStream() { return new FastCGIOutputStream(); }
-	    public Channel connect(ChannelFactory name) throws ConnectException {
+    private final FCGIIOFactory defaultPoolFactory = new FCGIIOFactory() {
+	    public InputStream createInputStream() { return new FCGIInputStream(FastCGIProxy.this); }
+	    public OutputStream createOutputStream() { return new FCGIOutputStream(); }
+	    public FCGIConnection connect(FCGIConnectionFactory name) throws FCGIConnectException {
 		return name.connect();
 	    }
 	};
 
-   private ConnectionPool createConnectionPool(int children) throws ConnectException {
-	channelName = ChannelFactory.createChannelFactory(this, false);
+   private FCGIConnectionPool createConnectionPool(int children) throws FCGIConnectException {
+	channelName = FCGIConnectionFactory.createChannelFactory(this, false);
 	channelName.findFreePort(false); //FIXME
 	channelName.initialize(CONTEXT_PATH);
 	File cgiOsDir = Util.TMPDIR;
@@ -135,14 +135,14 @@ public class FastCGIProxy extends Continuation implements IFCGIProcessFactory {
 	map.put("PHP_FCGI_MAX_REQUESTS", MAX_REQUESTS);
 	channelName.startServer(Util.getLogger());
 		
-	return new ConnectionPool(channelName, children, 
+	return new FCGIConnectionPool(channelName, children, 
 		Integer.parseInt(MAX_REQUESTS), 
 		defaultPoolFactory, 
 		Integer.parseInt(FCGIUtil.PHP_FCGI_CONNECTION_POOL_TIMEOUT));
     }
     private static final Object globalCtxLock = new Object();
-    private static ConnectionPool fcgiConnectionPool = null;
-    protected void setupFastCGIServer() throws ConnectException {
+    private static FCGIConnectionPool fcgiConnectionPool = null;
+    protected void setupFastCGIServer() throws FCGIConnectException {
 	synchronized(globalCtxLock) {
 	    if(null == fcgiConnectionPool) {
 		fcgiConnectionPool= createConnectionPool(Integer.parseInt(PROCESSES));
@@ -156,15 +156,15 @@ public class FastCGIProxy extends Continuation implements IFCGIProcessFactory {
 	byte[] buf = new byte[FCGIUtil.FCGI_BUF_SIZE];
 	setupFastCGIServer();
 	
-	FastCGIInputStream natIn = null;
-	FastCGIOutputStream natOut = null;
+	FCGIInputStream natIn = null;
+	FCGIOutputStream natOut = null;
 
-	ConnectionPool.Connection connection = null;
+	FCGIConnectionPool.Connection connection = null;
 	
 	try {
 	    connection = fcgiConnectionPool.openConnection();
-	    natOut = (FastCGIOutputStream) connection.getOutputStream();
-	    natIn = (FastCGIInputStream) connection.getInputStream();
+	    natOut = (FCGIOutputStream) connection.getOutputStream();
+	    natIn = (FCGIInputStream) connection.getInputStream();
 
 	    natOut.writeBegin();
 	    natOut.writeParams(env);

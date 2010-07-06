@@ -38,7 +38,7 @@ import php.java.servlet.ServletUtil;
  * A factory which creates FastCGI channels.
  * @author jostb
  */
-public abstract class ChannelFactory {
+public abstract class FCGIConnectionFactory {
     protected String contextPath;
     protected boolean promiscuous;
     protected IFCGIProcessFactory processFactory;
@@ -48,8 +48,11 @@ public abstract class ChannelFactory {
     private static boolean fcgiStarted = false;
     private static final Object fcgiStartLock = new Object(); // one lock for all servlet intances of this class loader
     
-    
-    public ChannelFactory(IFCGIProcessFactory processFactory) {
+    /**
+     * Create a new FCGIConnectionFactory using a FCGIProcessFactory
+     * @param processFactory the FCGIProcessFactory
+     */
+    public FCGIConnectionFactory(IFCGIProcessFactory processFactory) {
 	this.processFactory = processFactory;
     }
     /**
@@ -60,7 +63,7 @@ public abstract class ChannelFactory {
 	/*
 	 * Try to start the FastCGI server,
 	 */
-	synchronized(ChannelFactory.fcgiStartLock) {
+	synchronized(FCGIConnectionFactory.fcgiStartLock) {
 	    if(!fcgiStarted) {
 		    if(canStartFCGI()) 
 			try {
@@ -74,9 +77,9 @@ public abstract class ChannelFactory {
     }
     /**
      * Test the FastCGI server.
-     * @throws ConnectException thrown if a IOException occured.
+     * @throws FCGIConnectException thrown if a IOException occured.
      */
-    public abstract void test() throws ConnectException;
+    public abstract void test() throws FCGIConnectException;
     
     protected abstract void waitForDaemon() throws UnknownHostException, InterruptedException;
     protected final void runFcgi(Map env, String php, boolean includeJava) {
@@ -113,7 +116,7 @@ public abstract class ChannelFactory {
     }
 	
     public void destroy() {
-	synchronized(ChannelFactory.fcgiStartLock) {
+	synchronized(FCGIConnectionFactory.fcgiStartLock) {
 	    fcgiStarted = false;
 	    if(proc==null) return;  	
 	    try {
@@ -135,14 +138,12 @@ public abstract class ChannelFactory {
     /**
      * Connect to the FastCGI server and return the connection handle.
      * @return The FastCGI Channel
-     * @throws ConnectException thrown if a IOException occured.
+     * @throws FCGIConnectException thrown if a IOException occured.
      */
-    public abstract Channel connect() throws ConnectException;
+    public abstract FCGIConnection connect() throws FCGIConnectException;
 
     /**
      * For backward compatibility the "JavaBridge" context uses the port 9667 (Linux/Unix) or <code>\\.\pipe\JavaBridge@9667</code> (Windogs).
-     * @param servlet The servlet
-     * @param req The current request.
      * @param contextPath The path of the web context
      */
     public void initialize(String contextPath) {
@@ -174,7 +175,7 @@ public abstract class ChannelFactory {
      * Create a new ChannelFactory.
      * @return The concrete ChannelFactory (NP or Socket channel factory).
      */
-    public static ChannelFactory createChannelFactory(IFCGIProcessFactory processFactory, boolean promiscuous) {
+    public static FCGIConnectionFactory createChannelFactory(IFCGIProcessFactory processFactory, boolean promiscuous) {
 	if(Util.USE_SH_WRAPPER)
 	    return new SocketChannelFactory(processFactory, promiscuous);
 	else 

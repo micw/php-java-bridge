@@ -24,15 +24,31 @@ package php.java.bridge.http;
  */
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
-import php.java.bridge.http.ConnectionPool.Connection;
+/**
+ * This class represents the physical FastCGI connection.
+ * @author jostb
+ */
+public abstract class FCGIConnection {
 
-/** Thrown when an IO exception occurs */
-public class ConnectionException extends IOException {
-    private static final long serialVersionUID = -5174286702617481362L;
-    protected ConnectionException(Connection con, IOException ex) {
-        super();
-        initCause(ex);
-        con.setIsClosed();
-    }
+    /**
+     * Return the input stream
+     * @return the InputStream
+     * @throws IOException
+     */
+    public abstract InputStream getInputStream() throws IOException;
+    /**
+     * Return the output stream
+     * @return the OutputStream
+     * @throws IOException
+     */
+    public abstract OutputStream getOutputStream() throws IOException;
+
+    /**
+     * Close the connection
+     * @throws IOException
+     */
+    public abstract void close() throws IOException; 
 }

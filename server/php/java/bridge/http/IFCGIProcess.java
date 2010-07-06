@@ -27,14 +27,35 @@ package php.java.bridge.http;
 import java.io.IOException;
 import java.io.OutputStream;
 
+/**
+ * Common methods for all FCGIProcesses
+ * @author user
+ *
+ */
 public interface IFCGIProcess {
 
-    public void start() throws NullPointerException, IOException;
+    /**
+     * Start a new FCGIProcess
+     * @throws IOException
+     */
+    public void start() throws IOException;
 
+    /**
+     * Wait for a FCGIProcess until it has been terminated or interrupted
+     * @return the process return value
+     * @throws InterruptedException
+     */
     public int waitFor() throws InterruptedException;
 
+    /**
+     * Get the process output stream
+     * @return the output stream
+     */
     public OutputStream getOutputStream();
 
+    /**
+     * Terminate the process
+     */
     public void destroy();
 
 }

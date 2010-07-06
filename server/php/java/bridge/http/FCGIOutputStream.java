@@ -32,11 +32,23 @@ import java.util.Map;
 import php.java.bridge.NotImplementedException;
 import php.java.bridge.Util;
 
-public class FastCGIOutputStream extends DefaultOutputStream {
-    public void write(int type, byte buf[]) throws ConnectionException {
+/**
+ * A FastCGI OutputStream
+ * @author jostb
+ *
+ */
+public class FCGIOutputStream extends FCGIConnectionOutputStream {
+    public void write(int type, byte buf[]) throws FCGIConnectionException {
         write(type, buf, buf.length);
     }
-    public void write(int type, byte buf[], int buflength) throws ConnectionException {
+    /**
+     * Write a FCGI packet
+     * @param type the packet type
+     * @param buf the output buffer
+     * @param length the packet length
+     * @throws FCGIConnectionException
+     */
+    public void write(int type, byte buf[], int length) throws FCGIConnectionException {
         int requestId = 1;
         byte[] header = new byte[] {
 	    1, (byte)type, 
@@ -44,21 +56,24 @@ public class FastCGIOutputStream extends DefaultOutputStream {
 	    (byte)((FCGIUtil.FCGI_BUF_SIZE >> 8) & 0xff), (byte)((FCGIUtil.FCGI_BUF_SIZE) & 0xff),
 	    0, //padding
 	    0};
-        int contentLength = buflength;
+        int contentLength = length;
         int pos=0;
         while(pos + FCGIUtil.FCGI_BUF_SIZE <= contentLength) {
 	    write(header);
 	    write(buf, pos, FCGIUtil.FCGI_BUF_SIZE);
 	    pos += FCGIUtil.FCGI_BUF_SIZE;
         }
-        contentLength = buflength % FCGIUtil.FCGI_BUF_SIZE;
+        contentLength = length % FCGIUtil.FCGI_BUF_SIZE;
         header[4] = (byte)((contentLength >> 8) & 0xff);
         header[5] = (byte)((contentLength) & 0xff);
         write(header);
         write(buf, pos, contentLength);
     }
-
-    public void writeBegin() throws ConnectionException {
+    /**
+     * Start the FCGI_RESPONDER conversation
+     * @throws FCGIConnectionException
+     */
+    public void writeBegin() throws FCGIConnectionException {
         int role = FCGIUtil.FCGI_RESPONDER;
         byte[] body = new byte[] {
 	    (byte)((role >> 8) & 0xff), (byte)((role) & 0xff),
@@ -79,7 +94,12 @@ public class FastCGIOutputStream extends DefaultOutputStream {
 		out.write(b);
         }
     }
-    public void writeParams(Map props) throws ConnectionException {
+    /**
+     * Write FCGI Params according to FCGI spec
+     * @param props
+     * @throws FCGIConnectionException
+     */
+    public void writeParams(Map props) throws FCGIConnectionException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         for(Iterator ii = props.keySet().iterator(); ii.hasNext();) {
 	    Object k = ii.next();
@@ -95,7 +115,7 @@ public class FastCGIOutputStream extends DefaultOutputStream {
 		out.write(key.getBytes(Util.ASCII)); 	
 		out.write(val.getBytes(Util.ASCII));
 	    } catch (IOException e) {
-		throw new ConnectionException(connection, e);
+		throw new FCGIConnectionException(connection, e);
 	    }
         }
         write(FCGIUtil.FCGI_PARAMS, out.toByteArray());

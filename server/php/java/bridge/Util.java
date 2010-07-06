@@ -759,7 +759,7 @@ public final class Util {
     }
     /**
      * Checks if the cgi binary buf-&lt;os.arch&gt;-&lt;os.name&gt;.sh or buf-&lt;os.arch&gt;-&lt;os.name&gt;.exe or buf-&lt;os.arch&gt;-&lt;os.name&gt; exists.
-     * @param buf The base name, e.g.: /opt/tomcat/webapps/JavaBridge/WEB-INF/cgi/php-cgi
+     * @param php the php binary or null
      * @return The full name or null.
      */
     public static String[] checkCgiBinary(String php) {
@@ -1033,7 +1033,7 @@ public final class Util {
          * @throws IOException 
          * @throws NullPointerException 
 	 * @throws IOException
-	 * @see Util#checkCgiBinary(StringBuffer)
+	 * @see Util#checkCgiBinary(String)
 	 */	  
         public static Process start(String[] args, File homeDir, Map env, boolean tryOtherLocations, boolean preferSystemPhp, OutputStream err) throws IOException {
             Process proc = new Process(args, homeDir, env, tryOtherLocations, preferSystemPhp);
@@ -1160,7 +1160,7 @@ public final class Util {
 	 * @param err The error stream
          * @return The process handle.
          * @throws IOException
-         * @see Util#checkCgiBinary(StringBuffer)
+         * @see Util#checkCgiBinary(String)
          */
         public static Process start(String[] args, File homeDir, Map env, boolean tryOtherLocations, boolean preferSystemPhp, OutputStream err) throws IOException {
             Process proc = new ProcessWithErrorHandler(args, homeDir, env, tryOtherLocations, preferSystemPhp, err);

@@ -1,8 +1,8 @@
 package php.java.script;
 
 /**
- * Represents the script continuation.
- * Classes implementing this interface can be used to allocate php scripts on a HTTP- or FastCGI server.
+ * Classes implementing this interface represent the script continuation;
+ * they can be used to allocate php scripts on a HTTP- or FastCGI server.
  * @author jostb
  *
  */

@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import php.java.bridge.NotImplementedException;
-import php.java.bridge.http.ConnectionPool.Connection;
+import php.java.bridge.http.FCGIConnectionPool.Connection;
 
 /**
  * Default OutputStream used by the connection pool.
@@ -37,36 +37,36 @@ import php.java.bridge.http.ConnectionPool.Connection;
  * @author jostb
  *
  */
-public class DefaultOutputStream extends OutputStream {
+public class FCGIConnectionOutputStream extends OutputStream {
     protected Connection connection;
     private BufferedOutputStream out;
     
-    protected void setConnection(Connection connection) throws ConnectionException {
+    protected void setConnection(Connection connection) throws FCGIConnectionException {
         this.connection = connection;
         try {
 	    this.out = new BufferedOutputStream(connection.channel.getOutputStream());
         } catch (IOException e) {
-	    throw new ConnectionException(connection, e);
+	    throw new FCGIConnectionException(connection, e);
         }
     }
     /**{@inheritDoc}*/  
-    public void write(byte buf[]) throws ConnectionException {
+    public void write(byte buf[]) throws FCGIConnectionException {
         write(buf, 0, buf.length);
     }
     /**{@inheritDoc}*/  
-    public void write(byte buf[], int off, int buflength) throws ConnectionException {
+    public void write(byte buf[], int off, int buflength) throws FCGIConnectionException {
 	try {
 	    out.write(buf, off, buflength);
 	} catch (IOException ex) {
-	    throw new ConnectionException(connection, ex);
+	    throw new FCGIConnectionException(connection, ex);
 	}
     }
     /**{@inheritDoc}*/  
-    public void write(int b) throws ConnectionException {
+    public void write(int b) throws FCGIConnectionException {
         throw new NotImplementedException();
     }
     /**{@inheritDoc}*/  
-    public void close() throws ConnectionException {
+    public void close() throws FCGIConnectionException {
         try { 
             flush();
         } finally {
@@ -75,16 +75,16 @@ public class DefaultOutputStream extends OutputStream {
 		try {
 		    connection.close();
 		} catch (IOException e) {
-		    throw new ConnectionException(connection, e);
+		    throw new FCGIConnectionException(connection, e);
 		}
         }
     }
     /**{@inheritDoc}*/  
-    public void flush() throws ConnectionException {
+    public void flush() throws FCGIConnectionException {
         try {
             out.flush();
         } catch (IOException ex) {
-            throw new ConnectionException(connection, ex);
+            throw new FCGIConnectionException(connection, ex);
         }
     }
 }

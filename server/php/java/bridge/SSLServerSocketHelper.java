@@ -1,6 +1,6 @@
 /*-*- mode: Java; tab-width:8 -*-*/
 
-package php.java.bridge.http;
+package php.java.bridge;
 
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
@@ -24,43 +24,33 @@ package php.java.bridge.http;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 
+import javax.net.ServerSocketFactory;
+import javax.net.ssl.SSLServerSocketFactory;
 
-/**
- * In-/OutputStream factory.
- * 
- * Override this class if you want to use your own streams.
- * 
- * @author jostb
- *
- */
-public abstract class IOFactory {
-    /**
-     * Create a new socket and connect
-     * it to the given host/port
-     * @param name The channel name.
-     * @return The socket
-     * @throws ConnectException
-     */
-    public abstract Channel connect(ChannelFactory name) throws ConnectException;
-    /** 
-     * Create a new InputStream.
-     * @return The input stream. 
-     * @throws ConnectionException 
-     */
-    public InputStream createInputStream() throws ConnectionException {
-	DefaultInputStream in = new DefaultInputStream();
-	return in;
-    }
-    /**
-     * Create a new OutputStream.
-     * @return The output stream.
-     * @throws ConnectionException
-     */
-    public OutputStream createOutputStream() throws ConnectionException {
-        DefaultOutputStream out = new DefaultOutputStream();
-        return out;
+class SSLServerSocketHelper {
+    public static final ISocketFactory bind(final int port) throws IOException {
+	ServerSocketFactory ssocketFactory = SSLServerSocketFactory.getDefault(); 
+	final ServerSocket ssocket = ssocketFactory.createServerSocket(port);
+	return new ISocketFactory() {
+	    
+	    /**{@inheritDoc}*/
+	    public String getSocketName() {
+		return String.valueOf(port);
+	    }
+	    
+	    /**{@inheritDoc}*/
+	    public void close() throws IOException {
+		ssocket.close();
+	    }
+	    
+	    /**{@inheritDoc}*/
+	    public Socket accept() throws IOException {
+		return ssocket.accept();
+	    }
+	};
     }
 }

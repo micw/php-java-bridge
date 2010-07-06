@@ -29,7 +29,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
-class SocketChannel extends Channel {
+class SocketChannel extends FCGIConnection {
     public Socket socket;
     public SocketChannel(Socket socket) {
         this.socket = socket;

@@ -2,7 +2,6 @@
 
 package php.java.bridge.http;
 
-
 /*
  * Copyright (C) 2003-2007 Jost Boekemeier
  *
@@ -25,17 +24,43 @@ package php.java.bridge.http;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+import java.io.InputStream;
+import java.io.OutputStream;
+
+
 /**
- * A procedure class which can be used to capture the HTTP header strings.
- * This template discards all headers.
+ * FastCGI In-/OutputStream factory.
+ * 
+ * Override this class if you want to use your own streams.
+ * 
+ * @author jostb
+ *
  */
-public class SimpleHeaderParser extends HeaderParser {
+public abstract class FCGIIOFactory {
     /**
-     * Template discards parsed header
+     * Create a new socket and connect
+     * it to the given host/port
+     * @param name The channel name.
+     * @return The socket
+     * @throws FCGIConnectException
      */
-    public void parseHeader(String header) {/*template*/}
+    public abstract FCGIConnection connect(FCGIConnectionFactory name) throws FCGIConnectException;
+    /** 
+     * Create a new InputStream.
+     * @return The input stream. 
+     * @throws FCGIConnectionException 
+     */
+    public InputStream createInputStream() throws FCGIConnectionException {
+	FCGIConnectionInputStream in = new FCGIConnectionInputStream();
+	return in;
+    }
     /**
-     * Template discards parsed header
+     * Create a new OutputStream.
+     * @return The output stream.
+     * @throws FCGIConnectionException
      */
-    public void addHeader (String key, String val) {/*template*/}
+    public OutputStream createOutputStream() throws FCGIConnectionException {
+        FCGIConnectionOutputStream out = new FCGIConnectionOutputStream();
+        return out;
+    }
 }

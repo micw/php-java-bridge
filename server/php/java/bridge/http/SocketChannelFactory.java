@@ -37,7 +37,7 @@ import php.java.bridge.Util.Process;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-class SocketChannelFactory extends ChannelFactory {
+class SocketChannelFactory extends FCGIConnectionFactory {
     public static final String LOCAL_HOST = "127.0.0.1";
     private int port;
 
@@ -48,13 +48,13 @@ class SocketChannelFactory extends ChannelFactory {
 	super(processFactory);
 	this.promiscuous = promiscuous;
     }
-    public void test() throws ConnectException {
+    public void test() throws FCGIConnectException {
         Socket testSocket;
 	try {
 	    testSocket = new Socket(InetAddress.getByName(getName()), port);
 	    testSocket.close();
 	} catch (IOException e) {
-	    throw new ConnectException(e);
+	    throw new FCGIConnectException(e);
 	}
     }
     /**
@@ -64,14 +64,14 @@ class SocketChannelFactory extends ChannelFactory {
      * @param port The port, for example 9667
      * @return The socket
      * @throws UnknownHostException
-     * @throws ConnectionException
+     * @throws FCGIConnectionException
      */
-    private Socket doConnect(String host, int port) throws ConnectException {
+    private Socket doConnect(String host, int port) throws FCGIConnectException {
         Socket s = null;
 	try {
             s = new Socket(InetAddress.getByName(host), port);
 	} catch (IOException e) {
-	    throw new ConnectException(e);
+	    throw new FCGIConnectException(e);
 	}
 	try {
 	    s.setTcpNoDelay(true);
@@ -81,7 +81,7 @@ class SocketChannelFactory extends ChannelFactory {
 	return s;
     }
 
-    public Channel connect() throws ConnectException {
+    public FCGIConnection connect() throws FCGIConnectException {
 	Socket s = doConnect(getName(), getPort());
 	return new SocketChannel(s); 	
     }

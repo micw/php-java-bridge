@@ -46,9 +46,15 @@ public abstract class HeaderParser {
      */
     public static final HeaderParser DEFAULT_HEADER_PARSER = new SimpleHeaderParser();
     /**
+     * Parse a header
      * @param header The header string to parse
      */
     public abstract void parseHeader(String header);
+    /**
+     * Add a header
+     * @param key the key
+     * @param val the value
+     */
     public abstract void addHeader (String key, String val);
     /**
      * Discards all header fields from a HTTP connection and write the body to the OutputStream

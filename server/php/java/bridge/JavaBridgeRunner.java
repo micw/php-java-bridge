@@ -38,12 +38,8 @@ import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.net.ServerSocket;
 import java.util.Iterator;
 import java.util.List;
-
-import javax.net.ServerSocketFactory;
-import javax.net.ssl.SSLServerSocketFactory;
 
 import php.java.bridge.http.ChunkedInputStream;
 import php.java.bridge.http.ChunkedOutputStream;
@@ -176,6 +172,7 @@ public class JavaBridgeRunner extends HttpServer {
 	    isLocal = false; 
 	    addr = addr.substring(5);
 	}
+	// FIXME check isLocal
 	return SSLServerSocketHelper.bind(Integer.parseInt(addr));
     }
 

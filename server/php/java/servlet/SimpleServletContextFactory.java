@@ -90,10 +90,10 @@ public class SimpleServletContextFactory extends php.java.bridge.http.SimpleCont
     /**
      * Return an emulated JSR223 context.
      * @return The context.
-     * @see php.java.servlet.Context
+     * @see php.java.servlet.HttpContext
      */
     public IContext createContext() {
-	IContext ctx = new Context(kontext, req, res);
+	IContext ctx = new HttpContext(kontext, req, res);
 	ctx.setAttribute(IContext.SERVLET_CONTEXT, kontext, IContext.ENGINE_SCOPE);
 	ctx.setAttribute(IContext.SERVLET_CONFIG, servlet.getServletConfig(), IContext.ENGINE_SCOPE);
 	ctx.setAttribute(IContext.SERVLET, servlet, IContext.ENGINE_SCOPE);

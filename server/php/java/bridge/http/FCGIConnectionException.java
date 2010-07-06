@@ -25,11 +25,14 @@ package php.java.bridge.http;
 
 import java.io.IOException;
 
-/** Thrown when the server is not available anymore */
-public class ConnectException extends IOException {
-    private static final long serialVersionUID = 5242564093021250550L;
-    protected ConnectException(IOException ex) {
+import php.java.bridge.http.FCGIConnectionPool.Connection;
+
+/** Thrown when an IO exception occurs */
+public class FCGIConnectionException extends IOException {
+    private static final long serialVersionUID = -5174286702617481362L;
+    protected FCGIConnectionException(Connection con, IOException ex) {
         super();
         initCause(ex);
+        con.setIsClosed();
     }
 }

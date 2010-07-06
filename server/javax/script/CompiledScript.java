@@ -15,11 +15,8 @@ public abstract class CompiledScript {
      }
     
      /**
-      * Re-evaluates the pre-compiled script using the specified 
-      * namespace as the SCRIPT_SCOPE and using ENGINE_SCOPE, 
-      * GLOBAL_SCOPE of the associated ScriptEngine.
+      * Re-evaluates the pre-compiled script
       *   
-      * @param namespace the namespace to be used as the SCRIPT_SCOPE
       * @return resultant object after the re-evaluation
       * @throws ScriptException if the re-evaluation fails due to any
       *         reason

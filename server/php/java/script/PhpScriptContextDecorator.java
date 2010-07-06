@@ -47,8 +47,8 @@ public abstract class PhpScriptContextDecorator implements IPhpScriptContext {
     private IPhpScriptContext ctx;
 
     /**
-     * Create a new ScriptEngineDecorator
-     * @param engine the ScriptEngine to decorate.
+     * Create a new PhpScriptContextDecorator
+     * @param ctx the PhpScriptContext to decorate.
      */
     public PhpScriptContextDecorator (IPhpScriptContext ctx) {
 	this.ctx = ctx;
